@@ -530,8 +530,19 @@ scalar_usub = ScalarUsub()
 
 
 class BatchNorm(Primitive):
-    """
-    BatchNorm.
+    r"""
+    .. code-block::
+
+        prim = ops.BatchNorm(is_training, epsilon, momentum, data_format)
+        out = prim(input_x, scale, bias, mean, variance)
+
+    is equivalent to
+
+    .. code-block::
+
+        ops.batch_norm_(input_x, scale, bias, mean, variance, is_training, epsilon, momentum, data_format)
+
+    Refer to :func:`mindspore.ops.batch_norm_` for more details.
     """
     __mindspore_signature__ = (sig.make_sig('input_x', dtype=sig.sig_dtype.T1),
                                sig.make_sig('scale',
@@ -845,11 +856,11 @@ def tile(input, multiples):
         the dimension of `input` is `input.dim`, and the shape of `input` is :math:`(x_1, x_2, ..., x_S)`.
 
         - If `input.dim = d`, then the shape of their corresponding positions can be multiplied, and
-        the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_S)`.
+          the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_S)`.
         - If `input.dim < d`, fill in multiple 1 in the length of the shape of `input` until their
-        lengths are consistent. Such as set the shape of `input` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
-        then the shape of their corresponding positions can be multiplied, and the shape of Outputs is
-        :math:`(1*y_1, ..., x_R*y_R, x_S*y_S)`.
+          lengths are consistent. Such as set the shape of `input` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
+          then the shape of their corresponding positions can be multiplied, and the shape of Outputs is
+          :math:`(1*y_1, ..., x_R*y_R, x_S*y_S)`.
 
     Raises:
         TypeError: If `multiples` is not a tuple or its elements are not all int.
@@ -1044,10 +1055,3 @@ def infer_value_for_Reshape(x, shape):
                              f" shape of 'input_x': {arr_prod}, product of 'input_shape': {dim_prod}.")
         out = Tensor(x.asnumpy().reshape(shape))
     return out
-
-
-def infer_value_for_Range(start_value, limit_value, delta_value, maxlen):
-    """Infer the value of input for Range."""
-    if start_value is not None and limit_value is not None and delta_value is not None:
-        return Tensor(np.arange(start_value, limit_value, delta_value))
-    return None

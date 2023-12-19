@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -315,7 +315,7 @@ bool MallocForKernelInput(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
   for (size_t i = 0; i < input_size; ++i) {
     if (common::AnfAlgo::IsNoneInput(node, i)) {
       MS_EXCEPTION_IF_NULL(node);
-      MS_LOG(DEBUG) << "Input [" << i << "] of " << node->fullname_with_scope() << " is None.";
+      MS_LOG(DEBUG) << "Input [" << i << "] of " << node->fullname_with_scope() << " is None, no need to allocate.";
       continue;
     }
     auto input_address = runtime_info->GetInputDeviceAddress(i);
@@ -384,12 +384,6 @@ std::vector<kernel::KernelTensor *> GetInputKernelTensors(const std::shared_ptr<
   auto input_size = runtime_info->GetInputSize();
   std::vector<kernel::KernelTensor *> inputs;
   for (size_t i = 0; i < input_size; ++i) {
-    if (common::AnfAlgo::IsNoneInput(node, i)) {
-      (void)inputs.emplace_back(std::make_shared<kernel::KernelTensor>().get());
-      MS_LOG(DEBUG) << "Input[" << i << "]:"
-                    << " is None Input";
-      continue;
-    }
     auto device_address = runtime_info->GetInputDeviceAddress(i);
     MS_EXCEPTION_IF_NULL(device_address);
     (void)inputs.emplace_back(device_address->kernel_tensor().get());
@@ -405,12 +399,6 @@ std::vector<abstract::AbstractBasePtr> GetInputKernelTensorsForInfer(const std::
   auto input_size = runtime_info->GetInputSize();
   std::vector<abstract::AbstractBasePtr> inputs;
   for (size_t i = 0; i < input_size; ++i) {
-    if (common::AnfAlgo::IsNoneInput(node, i)) {
-      (void)inputs.emplace_back(nullptr);
-      MS_LOG(DEBUG) << "Input[" << i << "]:"
-                    << " is None Input";
-      continue;
-    }
     auto device_address = runtime_info->GetInputDeviceAddress(i);
     MS_EXCEPTION_IF_NULL(device_address);
     (void)inputs.emplace_back(device_address->kernel_tensor());
@@ -595,7 +583,7 @@ device::DeviceAddressPtr CreateTensorDeviceAddressWithTensorAndCachedInfo(
   auto format = cached_device_address->format();
   auto dtype = cached_device_address->type_id();
   const auto &shape = tensor->shape();
-  size_t tensor_size = GetTensorDeviceSize(device_context, node, shape, format, dtype, 0);
+  size_t tensor_size = DeviceAddressUtils::GetTensorDeviceSize(device_context, node, shape, format, dtype, 0);
 
   // Update shape and size for cached device address.
   cached_device_address->set_host_shape(shape);
@@ -637,7 +625,8 @@ void UpdateTensorCache(const DeviceContext *device_context, const device::Device
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(input_device_address);
   auto format = cached_device_address->format();
-  auto size = GetTensorDeviceSize(device_context, node, tensor->shape(), format, cached_device_address->type_id(), 0);
+  auto size = DeviceAddressUtils::GetTensorDeviceSize(device_context, node, tensor->shape(), format,
+                                                      cached_device_address->type_id(), 0);
   cached_device_address->SetSize(size);
   cached_device_address->set_host_shape(tensor->shape());
   cached_device_address->kernel_tensor()->SetShapeVector(tensor->shape());
@@ -836,11 +825,11 @@ void UpdateOutputAddressForRef(const OpCompilerInfoPtr &op_compiler_info,
     auto &input_pair = iter.second;
     auto &ref_node = output_pair.first;
     auto output_index = output_pair.second;
-    auto input_address = GetInputAddressForRef(input_pair.first, op_compiler_info);
+    auto input_address = DeviceAddressUtils::GetInputAddressForRef(input_pair.first, op_compiler_info);
     if (input_address == nullptr) {
       continue;
     }
-    auto output_address = GetOutputAddressForRef(ref_node, op_compiler_info, output_index);
+    auto output_address = DeviceAddressUtils::GetOutputAddressForRef(ref_node, op_compiler_info, output_index);
     MS_EXCEPTION_IF_NULL(output_address);
     output_address->set_ptr(input_address->GetMutablePtr());
     output_address->set_from_mem_pool(input_address->from_mem_pool());

@@ -18,6 +18,7 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "transform/acl_ir/acl_helper.h"
+#include "kernel/framework_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -50,7 +51,6 @@ KernelModPtr AclOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
     return kernel_mod_ptr;
   }
 
-  kernel_mod_ptr->CreateAclConverter();
   std::string format = transform::AclHelper::GetFormatFromAttr(kernel_mod_ptr->primitive());
   if (format.empty()) {
     format = kernel_mod_ptr->GetFormatFromInput(input_kernel_tensors);

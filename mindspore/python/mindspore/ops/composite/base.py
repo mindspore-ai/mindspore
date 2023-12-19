@@ -31,7 +31,7 @@ from mindspore._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFu
     ListClear_, ListReverse_, ListExtend_, DictClear_, DictHasKey_, DictUpdate_, DictFromKeys_, \
     ZerosLike_, TensorIndexGetitem_, TensorIndexSetitem_, ListAdd_, DictSetItem_, \
     HandleBoolTensor_, HandleEmptySlice_, PreSetitemByTuple_, HandleScalarTensorIndex_, StarredGetItem_,\
-    StarredUnpack_, StarredUnpackMerge_
+    StarredUnpack_, StarredUnpackMerge_, IterConverter_, HasNext_, Next_
 from mindspore.common import dtype as mstype
 from mindspore.common.api import jit, _pynative_executor, _wrap_func
 from mindspore.common.api import _add_flags, _core
@@ -793,10 +793,6 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
         return deco
 
     def register_default(self):
-        """
-        Register a default function for jit fallback.
-        """
-
         def deco(fn):
             self.default_func = fn
             return fn
@@ -1241,3 +1237,45 @@ class _StarredUnpackMerge(StarredUnpackMerge_):
 
 starred_unpack_merge = _StarredUnpackMerge('starred_unpack_merge')
 """`starred_unpack_merge` will generate a tuple of starred unpack merge for inputs."""
+
+class _IterConverter(IterConverter_):
+    """Convert input to interable object"""
+
+    def __init__(self, name):
+        """Initialize _IterConverter."""
+        IterConverter_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+iter_converter = _IterConverter('iter_converter')
+"""`iter_converter` will convert input to ietrable object"""
+
+class _HasNext(HasNext_):
+    """Check whether the input has next value"""
+
+    def __init__(self, name):
+        """Initialize _HasNext."""
+        HasNext_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+ms_hasnext = _HasNext('has_next')
+"""`ms_hasnext` will check whether the input has next value"""
+
+class _Next(Next_):
+    """Get next element and res elements for input"""
+
+    def __init__(self, name):
+        """Initialize _Next."""
+        Next_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+ms_next = _Next('next')
+"""`ms_next` will get next element and res elements for input"""

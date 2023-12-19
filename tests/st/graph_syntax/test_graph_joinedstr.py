@@ -148,3 +148,23 @@ def test_joinedstr_dynamic_shape_scalar():
     net = Net()
     out = net(input_np, indices_np)
     print("out:", out)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_joinedstr_with_nested_pyinterpret():
+    """
+    Feature: Support joinedstr.
+    Description: Support joinedstr.
+    Expectation: No exception.
+    """
+    @jit
+    def joined_net(x):
+        return f"{type(x).__name__}"
+
+    input_x = Tensor([1, 2, 3])
+    out = joined_net(input_x)
+    assert str(out) == "Tensor"

@@ -228,10 +228,12 @@ Status GeneratorOp::operator()() {
 #ifndef ENABLE_SECURITY
         auto end = ProfilingTime::GetCurMilliSecond();
         if ((end - start) / num_parallel_workers_ > kGetItemTimeOutMilliSeconds) {
-          MS_LOG(WARNING) << "Bad performance attention, it takes more than 25 seconds to generator.__next__ new row, "
-                             "which might cause `GetNext` timeout problem when sink_mode=True. You can increase the "
-                             "parameter num_parallel_workers in GeneratorDataset / optimize the efficiency of "
-                             "obtaining samples in the user-defined generator function.";
+          MS_LOG(WARNING) << "Bad performance attention, it takes more than " +
+                               std::to_string(kGetItemTimeOutMilliSeconds) +
+                               " seconds to generator.__next__ new row, "
+                               "which might cause `GetNext` timeout problem when sink_mode=True. You can increase the "
+                               "parameter num_parallel_workers in GeneratorDataset / optimize the efficiency of "
+                               "obtaining samples in the user-defined generator function.";
         }
 #endif
         generator_counter_++;

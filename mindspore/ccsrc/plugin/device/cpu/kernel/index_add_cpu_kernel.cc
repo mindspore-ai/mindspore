@@ -198,7 +198,7 @@ bool IndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *
 
   if (index_mismatch) {
     MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', the indices are out of range with input_shape: " << GetShapes(inputs_) << ".";
+                  << "', the indices are out of range with input_shape: " << GetShapes(inputs) << ".";
     return false;
   }
 

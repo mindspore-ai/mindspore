@@ -25,6 +25,7 @@
 #include "kernel/common_utils.h"
 #include "kernel/format_utils.h"
 #include "kernel/oplib/oplib.h"
+#include "mindapi/base/type_id.h"
 #include "mindspore/ccsrc/include/common/debug/common.h"
 #include "ops/array_op_name.h"
 #include "ops/conv_pool_op_name.h"
@@ -186,62 +187,57 @@ inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
   return std::make_pair(input_tensors, output_tensors);
 }
 
-inline InOutKernelTensors AbstractInOutFromDeviceAddress(
-  KernelMod *const kernel_mod, const std::vector<device::DeviceAddressPtr> &inputs_device_address,
-  const std::vector<device::DeviceAddressPtr> &outputs_device_address, const AbstractBasePtr &out_abstract) {
-  MS_EXCEPTION_IF_NULL(out_abstract);
-  // Makeup input KernelTensors, meta_types can be tensor, scalar, tuple, list.
-  auto &input_tensors = kernel_mod->GetInputs();
-  size_t input_num = inputs_device_address.size();
-  KernelTensorPtr input_tensor;
-  for (size_t input_idx = 0; input_idx < input_num; ++input_idx) {
-    if (input_idx >= input_tensors.size()) {
-      input_tensor = std::make_shared<KernelTensor>();
-      (void)input_tensors.emplace_back(input_tensor);
-    } else {
-      input_tensor = input_tensors[input_idx];
-    }
-    const auto &input_device_address = inputs_device_address[input_idx];
-    if (input_device_address == nullptr) {
-      MS_LOG(WARNING) << "None input create None KernelTensor.";
-      continue;
-    }
-    auto shape = input_device_address->host_shape();
-    auto new_abstract =
-      std::make_shared<abstract::AbstractTensor>(TypeIdToType(input_device_address->type_id()), shape);
-    TensorInfo tensor_info{GetFormatFromStrToEnum(input_device_address->format()), new_abstract};
-    input_tensor->SetTensorInfo(tensor_info);
-    input_tensor->SetMetaType(kObjectTypeTensorType);
+std::pair<std::vector<DataType>, std::vector<DataType>> GetInOutDataTypesFromKernelAttr(const KernelAttr &kernel_attr) {
+  size_t input_attr_size = kernel_attr.GetInputSize();
+  std::vector<DataType> input_data_types;
+  for (size_t i = 0; i < input_attr_size; ++i) {
+    input_data_types.push_back(kernel_attr.GetInputAttr(i));
   }
 
-  // Makeup output tensors.
-
-  auto &output_tensors = kernel_mod->GetOutputs();
-  size_t output_num = outputs_device_address.size();
-  KernelTensorPtr output_tensor;
-  for (size_t output_idx = 0; output_idx < output_num; ++output_idx) {
-    if (output_idx >= output_tensors.size()) {
-      output_tensor = std::make_shared<KernelTensor>();
-      (void)output_tensors.emplace_back(output_tensor);
-    } else {
-      output_tensor = output_tensors[output_idx];
-    }
-    AbstractBasePtr new_abstract;
-    const auto &output_device_address = outputs_device_address[output_idx];
-    auto shape = output_device_address->host_shape();
-    if (out_abstract->isa<abstract::AbstractTuple>()) {
-      auto abstract_tuple = out_abstract->cast<abstract::AbstractTuplePtr>();
-      new_abstract = abstract_tuple->elements()[output_idx];
-    } else {
-      new_abstract = out_abstract;
-    }
-    auto kernel_tensor_abstract = std::make_shared<abstract::AbstractTensor>(
-      TypeIdToType(output_device_address->type_id()), new_abstract->BuildShape());
-    TensorInfo tensor_info{GetFormatFromStrToEnum(output_device_address->format()), kernel_tensor_abstract};
-    output_tensor->SetTensorInfo(tensor_info);
-    output_tensor->SetMetaType(kObjectTypeTensorType);
+  size_t output_attr_size = kernel_attr.GetOutputSize();
+  std::vector<DataType> output_data_types;
+  for (size_t i = 0; i < output_attr_size; ++i) {
+    output_data_types.push_back(kernel_attr.GetOutputAttr(i));
   }
-  return std::make_pair(input_tensors, output_tensors);
+
+  return std::make_pair(input_data_types, output_data_types);
+}
+
+bool IsObjectTypeStrictlyMatched(const std::vector<TypeId> &object_types,
+                                 const std::vector<DataType> &kernel_data_types) {
+  if (object_types.size() != kernel_data_types.size()) {
+    return false;
+  }
+
+  for (size_t i = 0; i < object_types.size(); i++) {
+    // For optional input, the real input object type can be a None.
+    if ((object_types[i] != kernel_data_types[i].object_type) &&
+        !(object_types[i] == kMetaTypeNone && kernel_data_types[i].is_optional)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool IsObjectTypeWeaklyMatched(const std::vector<TypeId> &object_types, const std::vector<DataType> &kernel_data_types,
+                               bool all_same, size_t element_num) {
+  // 1. The size equal can trigger the kernel object backoff(For example Reshape op).
+  if (object_types.size() == kernel_data_types.size()) {
+    return true;
+  }
+
+  // 2. AllSame is the tupleUnfold type(For example Split/Addn op).
+  if (all_same) {
+    return true;
+  }
+
+  // 3. Multiple outputs are expanded in the kernel attr(For example BatchNorm op).
+  if (kernel_data_types.size() == element_num) {
+    return true;
+  }
+
+  return false;
 }
 }  // namespace
 
@@ -825,57 +821,34 @@ bool IsDynamicParamKernel(const std::string &op_name) {
   return true;
 }
 
-bool IsObjectTypeMatched(const std::vector<TypeId> &object_types, const std::vector<TypeId> &kernel_object_types,
-                         const KernelAttr &ori_kernel_attr, size_t element_num, bool strict) {
-  // Full matched.
-  if (object_types.size() == kernel_object_types.size()) {
-    size_t equal_num = 0;
-    for (size_t i = 0; i < object_types.size(); i++) {
-      if (object_types[i] == kernel_object_types[i]) {
-        ++equal_num;
-      }
-    }
-    if (equal_num == object_types.size()) {
-      return true;
-    }
-  }
-
-  if (strict) {
-    return false;
-  }
-
-  // Check the matched without strict.
-  // 1. The size equal can trigger the kernel object backoff(For example Reshape op).
-  if (object_types.size() == kernel_object_types.size()) {
-    return true;
-  }
-  // 2. AllSame is the tupleUnfold type(For example Split/Addn op).
-  if (ori_kernel_attr.GetAllSame()) {
-    return true;
-  }
-  // 3. Multiple outputs are expanded in the kernel attr(For example BatchNorm op).
-  if (kernel_object_types.size() == element_num) {
-    return true;
-  }
-
-  return false;
-}
-
-bool SelectKernelByObjectType(const CNodePtr &kernel_node, const std::vector<KernelAttr> &ori_kernel_attrs,
-                              std::vector<KernelAttr> *selected_kernel_attrs, bool strict) {
+bool SelectKernelByObjectType(const CNodePtr &kernel_node, const std::vector<KernelAttr> &registered_kernel_attrs,
+                              std::vector<KernelAttr> *selected_kernel_attrs) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(selected_kernel_attrs);
   const auto &inputs_object_types = AnfAlgo::GetAllInputObjectType(kernel_node);
   const auto &output_object_types = AnfAlgo::GetAllOutputObjectType(kernel_node);
+
+  // 1. Try match all object type firstly.
+  for (auto &cur_kernel_attr : registered_kernel_attrs) {
+    const auto &[input_data_types, output_data_types] = GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
+    if (IsObjectTypeStrictlyMatched(inputs_object_types, input_data_types) &&
+        IsObjectTypeStrictlyMatched(output_object_types, output_data_types)) {
+      (void)selected_kernel_attrs->emplace_back(cur_kernel_attr);
+    }
+  }
+  if (!selected_kernel_attrs->empty()) {
+    return true;
+  }
+
+  // 2. Precise matching failed, try fuzzy one again.
   auto input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   auto output_num = AnfAlgo::GetOutputElementNum(kernel_node);
-
-  for (auto &ori_kernel_attr : ori_kernel_attrs) {
-    const auto &kernel_inputs_object_types = GetInputObjectTypeListFromKernelAttr(ori_kernel_attr);
-    const auto &kernel_outputs_object_types = GetOutputObjectTypeListFromKernelAttr(ori_kernel_attr);
-    if (IsObjectTypeMatched(inputs_object_types, kernel_inputs_object_types, ori_kernel_attr, input_num, strict) &&
-        IsObjectTypeMatched(output_object_types, kernel_outputs_object_types, ori_kernel_attr, output_num, strict)) {
-      (void)selected_kernel_attrs->emplace_back(ori_kernel_attr);
+  for (auto &cur_kernel_attr : registered_kernel_attrs) {
+    const auto &[input_data_types, output_data_types] = GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
+    auto all_same = cur_kernel_attr.GetAllSame();
+    if (IsObjectTypeWeaklyMatched(inputs_object_types, input_data_types, all_same, input_num) &&
+        IsObjectTypeWeaklyMatched(output_object_types, output_data_types, all_same, output_num)) {
+      (void)selected_kernel_attrs->emplace_back(cur_kernel_attr);
     }
   }
 
@@ -1048,17 +1021,6 @@ KernelArgs AbstractArgsFromCNode(const CNodePtr &cnode) {
   return args;
 }
 
-KernelArgs AbstractArgsFromDeviceAddress(KernelMod *const kernel_mod,
-                                         const std::vector<device::DeviceAddressPtr> &inputs_device_address,
-                                         const std::vector<device::DeviceAddressPtr> &outputs_device_address,
-                                         const AbstractBasePtr &abstract) {
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  auto [input_tensors, output_tensors] =
-    AbstractInOutFromDeviceAddress(kernel_mod, inputs_device_address, outputs_device_address, abstract);
-  KernelArgs args = {input_tensors, output_tensors};
-  return args;
-}
-
 BaseOperatorPtr CreateOperatorByCNode(const CNodePtr &cnode) {
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   if (prim == nullptr) {
@@ -1160,11 +1122,13 @@ void UpdateNodeShape(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  if (!kernel_mod->IsNeedRetrieveOutputShape()) {
+  if (!kernel_mod->IsNeedUpdateOutputShapeAndSize()) {
     return;
   }
 
-  auto output_tensor = kernel_mod->RetrieveOutputShape();
+  auto output_tensor = AnfAlgo::GetOrCreateAllOutputKernelTensors(cnode);
+  auto input_tensor = AnfAlgo::GetOrCreateAllInputKernelTensors(cnode);
+  kernel_mod->UpdateOutputShapeAndSize(input_tensor, output_tensor);
   if (output_tensor.empty()) {
     return;
   }

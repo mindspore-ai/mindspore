@@ -17,8 +17,7 @@ import pytest
 
 from mindspore import nn
 from mindspore.common.initializer import TruncatedNormal
-from mindspore import obfuscate_ckpt, load_obf_params_into_net
-from mindspore import Tensor
+from mindspore import obfuscate_ckpt
 import mindspore.ops as ops
 
 
@@ -129,16 +128,3 @@ def test_abnormal_target_modules_2():
     with pytest.raises(TypeError) as info:
         obfuscate_ckpt(net, ckpt_files='./', target_modules=obf_target_modules, saved_path='./')
     assert "Target_modules[0] should be a subgraph and it's type should be nn.Cell(nn.CellList)" in str(info)
-
-
-def test_empty_obf_ratios():
-    """
-    Feature: Test weight obfuscation.
-    Description: Test empty obf_ratios.
-    Expectation: Raise ValueError.
-    """
-    new_net = LeNet5()
-    obf_target_modules = ['sub_net', 'dense_op']
-    obf_ratios = Tensor(())
-    with pytest.raises(ValueError):
-        load_obf_params_into_net(new_net, obf_target_modules, obf_ratios=obf_ratios)

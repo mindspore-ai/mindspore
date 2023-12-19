@@ -231,7 +231,7 @@ void BasicOpInferShape::InferShapeRealKernel(const CNodePtr &cnode) {
 
 void BasicOpInferShape::InsertAbstract(const CNodePtr &cnode) { SetAbstract(cnode); }
 
-void BasicOpInferShape::InferShape(const CNodePtr &cnode) {
+void BasicOpInferShape::Infer(const CNodePtr &cnode) {
   if (AnfUtils::IsRealKernel(cnode)) {
     InferShapeRealKernel(cnode);
   } else {

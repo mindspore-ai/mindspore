@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_KERNEL_SELECT_ASCEND_ANFALGO_H_
-#define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_KERNEL_SELECT_ASCEND_ANFALGO_H_
 #include <utility>
 #include <string>
 #include <tuple>
@@ -29,30 +26,10 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-enum KernelSelectStatus {
-  kNoMatched = -1,
-  kStatusAllMatched = 0,
-  kStatusReducePrecision = 1,
-  kStatusRaisePrecision = 2,
-};
-KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node,
-                                    KernelType kernel_type = KernelType::UNKNOWN_KERNEL_TYPE);
-std::tuple<KernelSelectStatus, std::string, ExceptionType> SelectKernelInfoWithMsg(
-  const CNodePtr &kernel_node, KernelType kernel_type = KernelType::UNKNOWN_KERNEL_TYPE);
-void SetTensorDeviceInfo(const CNodePtr &kernel_node);
-void SelectGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func_graph);
-void SetAscendKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type);
-// After operator selection in graph optimization, new nodes will be added, select kernel info for those nodes
-// check whether the node has completed the operator selection. If not, the operator
-// selection needs to be performed to set kernel info.
-void SelectKernelInfoAfterKernelSelect(const std::vector<CNodePtr> &nodes);
-std::string TryBackoffCpu(const KernelGraphPtr &graph, const CNodePtr &node,
-                          const std::pair<std::string, ExceptionType> &failure_info);
-// Mark the kernel backoff with failure info when setting operator info fails.
 void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node,
                                const std::pair<std::string, ExceptionType> &failure_info);
+std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const CNodePtr &node, bool enable_aclnn = false);
+void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes);
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_KERNEL_SELECT_ASCEND_ANFALGO_H_

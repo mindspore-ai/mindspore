@@ -185,6 +185,8 @@ def test_builtin_function_min_with_tensor_1d(mode):
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_builtin_function_max_min_with_tuple_with_variable(mode):

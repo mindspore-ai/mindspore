@@ -69,6 +69,8 @@ def train_allreduce_8p(q, device_id, device_num):
 
 
 @pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
 def test_pynative_hccl_allreduce_8p():
     device_num = 8

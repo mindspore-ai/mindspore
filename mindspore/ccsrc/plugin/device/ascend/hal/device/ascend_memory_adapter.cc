@@ -19,7 +19,6 @@
 #include <algorithm>
 #include <set>
 #include "ir/func_graph.h"
-#include "runtime/mem.h"
 #include "acl/acl_rt.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
@@ -248,15 +247,11 @@ std::string AscendMemAdapter::DevMemDetailInfo() const {
 }
 
 size_t AscendMemAdapter::GetDeviceMemSizeFromContext() const {
-  static const std::set<std::string> kAscend910BVersions = {"Ascend910B1", "Ascend910B2", "Ascend910B2C", "Ascend910B3",
-                                                            "Ascend910B4"};
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   size_t size_from_context;
   auto max_device_memory = context->get_param<float>(MS_CTX_MAX_DEVICE_MEMORY);
-  auto soc_version = device::ascend::GetSocVersion();
-  const float kAscendMaxDeviceMemory =
-    kAscend910BVersions.find(soc_version) != kAscend910BVersions.end() ? 64.0f : 32.0f;
+  const float kAscendMaxDeviceMemory = context->ascend_soc_version() == kAscendVersion910b ? 64.0f : 32.0f;
   if (max_device_memory <= kAscendMaxDeviceMemory) {
     MS_LOG(INFO) << "context max_device_memory:" << max_device_memory;
     size_from_context = FloatToSize(max_device_memory * kGBToByte);
@@ -315,7 +310,7 @@ bool AscendMemAdapter::FreeToRts(void *devPtr, const size_t size) const {
       return AscendGmemAdapter::GetInstance().MunmapMemory(devPtr, size);
     }
     auto ret = aclrtFree(devPtr);
-    if (ret != RT_ERROR_NONE) {
+    if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "aclrtFree mem [" << devPtr << "] fail, ret[" << ret << "]";
       return false;
     }

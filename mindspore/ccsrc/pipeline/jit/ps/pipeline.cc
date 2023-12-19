@@ -301,44 +301,21 @@ std::string ToOrdinal(const size_t &i) {
   return std::to_string(i) + suffix;
 }
 
-AnfNodePtr GetRealOutput(const AnfNodePtr &node) {
-  constexpr size_t real_node_index = 1;
-  if (IsPrimitiveCNode(node, prim::kPrimDepend)) {
-    const auto cnode = dyn_cast<CNode>(node);
-    MS_EXCEPTION_IF_NULL(cnode);
-    return GetRealOutput(cnode->input(real_node_index));
-  }
-  return node;
-}
-
-kernel::PyExecuteOutputUserDataPtr GetUserDataFromNode(const AnfNodePtr &output) {
-  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
-  if (allow_fallback_runtime) {
-    const auto &real_output = GetRealOutput(output);
-    MS_LOG(DEBUG) << "Real output: " << real_output << ", " << real_output->DebugString()
-                  << ", has \'PyExecuteOutputUserData\': "
-                  << real_output->has_user_data<kernel::PyExecuteOutputUserData>();
-    if (real_output->has_user_data<kernel::PyExecuteOutputUserData>()) {
-      py::gil_scoped_acquire gil_acquire;
-      const auto &output_data = real_output->user_data<kernel::PyExecuteOutputUserData>();
-      // Need support real none.
-      return output_data;
-    }
-  }
-  return nullptr;
-}
-
 kernel::PyExecuteOutputUserDataPtr GetUserDataFromAddress(const py::object &res) {
+  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
+  if (!allow_fallback_runtime) {
+    return nullptr;
+  }
+
   if (py::isinstance<tensor::Tensor>(res) || IsStubTensor(res)) {
     auto res_tensor = IsStubTensor(res) ? ConvertStubTensor(res) : res.cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(res_tensor);
     if (res_tensor->device_address() != nullptr) {
       auto tensor_address = std::dynamic_pointer_cast<DeviceTensor>(res_tensor->device_address());
       MS_LOG(DEBUG) << "res tensor_address:" << tensor_address;
-      AnfNodePtr real_node = AnfNodePtr(tensor_address->node_index().first.lock());
-      if (real_node != nullptr) {
-        MS_LOG(DEBUG) << "real_node:" << real_node->DebugString();
-        return GetUserDataFromNode(real_node);
+      MS_EXCEPTION_IF_NULL(tensor_address);
+      if (tensor_address->user_data() != nullptr) {
+        return tensor_address->user_data()->get<kernel::PyExecuteOutputUserData>(kernel::PyExecuteOutputUserData::key);
       }
     }
   }
@@ -370,7 +347,8 @@ py::object GetVectorRefPyDataWithAbstract(const VectorRef &value_list, const abs
 }
 
 py::object GetVectorRefPyData(const VectorRef &value_list, const AbstractBasePtr &abs) {
-  if (abs == nullptr || abs->isa<abstract::AbstractCSRTensor>() || abs->isa<abstract::AbstractCOOTensor>()) {
+  if (abs == nullptr || abs->isa<abstract::AbstractCSRTensor>() || abs->isa<abstract::AbstractCOOTensor>() ||
+      abs->isa<abstract::AbstractAny>()) {
     return BaseRefToPyData(value_list, abs);
   }
   // Need to consider AbstractAny with vector ref scene later.
@@ -399,6 +377,8 @@ py::object BaseRefToPyDataWithUserData(const BaseRef &value, const AbstractBaseP
     const auto user_data = GetUserDataFromAddress(res);
     if (user_data != nullptr) {
       return user_data->obj;
+    } else {
+      MS_LOG(INFO) << "user data is empty";
     }
   } else if (utils::isa<VectorRef>(value)) {
     auto vec_ref = utils::cast<VectorRef>(value);
@@ -910,14 +890,7 @@ bool IsPhaseLoadFromMindIR(const std::string &phase) {
 
 std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::string &phase, bool use_vm) {
   MS_EXCEPTION_IF_NULL(resource);
-  bool is_air = IsPhaseExportAir(phase);
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  std::string backend = ms_context->backend_policy();
   compile::SetMindRTEnable();
-  if (use_vm && backend != "ge" && !is_air && IsPhaseLoadFromMindIR(phase)) {
-    return MindIRPipeline();
-  }
   return VmPipeline(resource);
 }
 
@@ -1612,7 +1585,10 @@ void GraphExecutorPy::InitParams(const py::dict &init_params, const std::string 
   }
   DeviceContext *device_context = nullptr;
   try {
-    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({"GE", 0});
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kAscendDevice, device_id});
   } catch (const std::exception &) {
     return;
   }
@@ -1629,7 +1605,10 @@ FuncGraphPtr GraphExecutorPy::BuildGraph(const py::dict &init_params, const std:
   }
   DeviceContext *device_context = nullptr;
   try {
-    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({"GE", 0});
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kAscendDevice, device_id});
   } catch (const std::exception &) {
     return nullptr;
   }
@@ -1908,7 +1887,10 @@ void GraphExecutorPy::ExportGraph(const std::string &file_name, const std::strin
                                   char *key) {
   DeviceContext *device_context = nullptr;
   try {
-    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({"GE", 0});
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kAscendDevice, device_id});
   } catch (const std::exception &) {
     MS_EXCEPTION(ValueError) << "Only support export file in 'AIR' format with Ascend backend.";
   }
@@ -2049,50 +2031,58 @@ FuncGraphPtr SplitDynamicMindIR(const std::string &file_name, size_t device_num,
   parallel_context->set_full_batch(true);
   parallel_context->set_group_ckpt_save_file("group_info");
 
-  FuncGraphManagerPtr func_graph_manager = func_graph->manager();
+  for (size_t rank_id_iter = 0; rank_id_iter < device_num; rank_id_iter++) {
+    auto tmp_func_graph = mindspore::BasicClone(func_graph);
+    FuncGraphManagerPtr func_graph_manager = tmp_func_graph->manager();
 
-  MS_LOG(INFO) << "func_graph_manager is not null";
-  if (func_graph_manager == nullptr) {
-    std::vector<FuncGraphPtr> graphs{func_graph};
-    func_graph_manager = std::make_shared<FuncGraphManager>(graphs);
-    func_graph_manager->AddFuncGraph(func_graph);
+    if (func_graph_manager == nullptr) {
+      MS_LOG(INFO) << "func_graph_manager is null";
+      std::vector<FuncGraphPtr> graphs{tmp_func_graph};
+      func_graph_manager = std::make_shared<FuncGraphManager>(graphs);
+      func_graph_manager->AddFuncGraph(tmp_func_graph);
+    }
+
+    auto inputs = tmp_func_graph->get_inputs();
+    for (std::size_t i = 0; i < inputs.size(); i++) {
+      auto input = inputs[i]->abstract();
+      (void)parallel::ExtendInputArgsAbstractShape(input, i);
+    }
+
+    auto res = parallel::StepAssignedParallel(tmp_func_graph, func_graph_manager, device_num, rank_id_iter, sapp);
+    if (!res) {
+      MS_LOG(ERROR) << "StepAssignedParallel failed. Please check.";
+      return nullptr;
+    }
+    pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
+    resource->set_is_load(False);
+    resource->set_manager(func_graph_manager);
+    resource->set_func_graph(tmp_func_graph);
+    // Get the parameters items and add the value to args_abs.
+    auto params = tmp_func_graph->parameters();
+    AbstractBasePtrList args_abs_list;
+    (void)std::transform(params.begin(), params.end(), std::back_inserter(args_abs_list),
+                         [](const AnfNodePtr &p) -> AbstractBasePtr { return p->abstract(); });
+    tmp_func_graph = pipeline::Renormalize(resource, tmp_func_graph, args_abs_list);
+
+#ifdef ENABLE_DUMP_IR
+    auto re_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(re_context);
+    if (re_context->CanDump(kIntroductory)) {
+      string renormalize_net_name = "Renomalize_" + std::to_string(rank_id_iter) + ".ir";
+      DumpIR(renormalize_net_name, tmp_func_graph);
+    }
+#endif
+
+    parallel::HandleGroupInfo();
+    string net_save_name = "split_net" + std::to_string(rank_id_iter);
+    MindIRExporter mindir_exporter;
+    res = mindir_exporter.ExportProto(tmp_func_graph, net_save_name, nullptr);
+    if (!res) {
+      MS_LOG(ERROR) << "Export MindIR file failed failed. Please check.";
+      return nullptr;
+    }
   }
-  pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
-  resource->set_manager(func_graph_manager);
-  resource->set_func_graph(func_graph);
 
-  // Get the parameters items and add the value to args_abs.
-
-  auto inputs = func_graph->get_inputs();
-  for (std::size_t i = 0; i < inputs.size(); i++) {
-    auto input = inputs[i]->abstract();
-    (void)parallel::ExtendInputArgsAbstractShape(input, i);
-  }
-
-  auto res = parallel::StepAssignedParallel(func_graph, func_graph_manager, device_num, rank_id, sapp);
-  if (!res) {
-    MS_LOG(ERROR) << "StepAssignedParallel failed. Please check.";
-    return nullptr;
-  }
-  resource->set_is_load(False);
-  resource->set_manager(func_graph_manager);
-  resource->set_func_graph(func_graph);
-  auto params = func_graph->parameters();
-  AbstractBasePtrList args_abs_list;
-  (void)std::transform(params.begin(), params.end(), std::back_inserter(args_abs_list),
-                       [](const AnfNodePtr &p) -> AbstractBasePtr { return p->abstract(); });
-  func_graph = pipeline::Renormalize(resource, func_graph, args_abs_list);
-
-  parallel::HandleGroupInfo();
-  DumpIR("Renormalize.ir", func_graph);
-  MindIRExporter mindir_exporter;
-  res = mindir_exporter.ExportProto(func_graph, "split_net", nullptr);
-  if (!res) {
-    MS_LOG(ERROR) << "Export MindIR file failed failed. Please check.";
-    return nullptr;
-  }
-
-  func_graph = mindir_loader.LoadMindIR("split_net_graph.mindir");
   return func_graph;
 }
 
@@ -2238,11 +2228,15 @@ void ClearResPart2() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->backend_policy() == "ge") {
-    DeviceContext *device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({"GE", 0});
+    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    DeviceContext *device_context =
+      device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kAscendDevice, device_id});
     MS_EXCEPTION_IF_NULL(device_context);
     MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
     device_context->GetDeprecatedInterface()->ClearGraphWrapper();
     device_context->GetDeprecatedInterface()->ClearOpAdapterMap();
+    // unregister external allocator, before clear stream and graphrunner
+    device_context->GetDeprecatedInterface()->UnregisterExternalAllocator();
     // clear runtime resource after clear graph when ge
     MS_LOG(INFO) << "Start clear kernel runtime...";
     device::KernelRuntimeManager::Instance().ClearRuntimeResource();

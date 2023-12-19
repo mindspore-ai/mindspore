@@ -25,6 +25,7 @@ file(GLOB_RECURSE MS_OPTIMIZER_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "./format_type/set_fracz_group_attr.cc"
         "./format_type/utils.cc"
         "./format_type/deal_ref_output.cc"
+        "./common/gllo_utils.cc"
         "./ir_fission/cdist_fission.cc"
         "./ir_fission/bn_split.cc"
         "./ir_fission/bn_grad_split.cc"
@@ -37,8 +38,7 @@ file(GLOB_RECURSE MS_OPTIMIZER_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "./ir_fusion/batchnormgrad_to_bninfergrad.cc"
         "./ir_fusion/histogram_fixed_width_fusion.cc"
         "./ir_fusion/adaptive_max_pool2d_fusion.cc"
-        "./enhancer/add_placeholder_for_dynamic_rnn.cc"
-        "./enhancer/add_placeholder_for_dynamic_gru.cc"
+        "./ir_fusion/flash_attention_fusion.cc"
         )
 list(REMOVE_ITEM MS_OPTIMIZER_910B
         "mindir/ascend_vm_op_adapter.cc"
@@ -54,5 +54,4 @@ set_property(SOURCE ${_PREACTIVATE_SRC_LIST} ${MS_OPTIMIZER_910B} PROPERTY COMPI
 
 if(ENABLE_D OR ENABLE_ACL)
     add_library(_mindspore_plugin_device_ascend_optimizer_910b_obj OBJECT ${MS_OPTIMIZER_910B})
-    add_library(_mindspore_plugin_device_ascend_optimizer_obj OBJECT ${_PREACTIVATE_SRC_LIST})
 endif()

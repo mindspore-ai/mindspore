@@ -493,10 +493,11 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateConcatNode(const FuncGraphPtr &gra
                                                          int64_t input_nums) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto maketuple_node = CreateMakeTupleNode(graph, input_nodes);
-  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(kConcatDOpName)), maketuple_node};
+  auto axis_node = opt::CreateValueNodeWithKernelInfo(graph, MakeValue(static_cast<int64_t>(axis)));
+  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(kConcatDOpName)), maketuple_node,
+                                           axis_node};
   auto concat = NewCNode(concat_inputs, graph);
   MS_EXCEPTION_IF_NULL(concat);
-  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(axis), concat);
   return concat;
 }
 

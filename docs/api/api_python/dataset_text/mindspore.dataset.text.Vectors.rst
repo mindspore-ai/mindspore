@@ -6,6 +6,7 @@
     预训练词向量。
 
     .. py:method:: from_file(file_path, max_vectors=None)
+        :classmethod:
 
         加载预训练向量集文件。
 

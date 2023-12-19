@@ -20,7 +20,6 @@
 #include <string>
 #include <map>
 #include "runtime/rt.h"
-#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_ext_info_handle.h"
 
@@ -72,13 +71,6 @@ class AicpuOpKernelMod : public KernelMod {
     MS_LOG(EXCEPTION) << "Deprecated aicpu kernel module launch interface.";
   }
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override {
-    MS_LOG(EXCEPTION) << "Deprecated aicpu kernel module resize interface.";
-  }
-
  protected:
   std::string args_;
   std::string ext_info_;
@@ -102,7 +94,7 @@ class AicpuOpKernelMod : public KernelMod {
   bool IsOutputAllEmptyTensor(const std::vector<KernelTensor *> &outputs);
   std::vector<int64_t> input_list_;
   std::vector<int64_t> output_list_;
-  rtEvent_t rt_event_ = nullptr;
+  aclrtEvent rt_event_ = nullptr;
   bool is_blocking_;  // is op has asyncflag
   bool need_skip_execute_ = false;
   bool is_output_all_empty_tensor_{false};

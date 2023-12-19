@@ -24,7 +24,6 @@
 #include "mindspore/core/base/base_ref_utils.h"
 #include "backend/common/session/executor_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
-#include "runtime/dev.h"
 #include "acl/acl_rt.h"
 #include "acl/acl.h"
 #include "include/common/utils/python_adapter.h"

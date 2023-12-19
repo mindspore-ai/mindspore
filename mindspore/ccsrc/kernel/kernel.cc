@@ -22,6 +22,7 @@
 #include <numeric>
 #include "kernel/format_utils.h"
 #include "kernel/common_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
@@ -128,6 +129,30 @@ KernelTensor::KernelTensor(const KernelTensor &other) {
   device_synchronizer_ = other.device_synchronizer_;
 }
 
+namespace {
+ShapeVector GetShapeVectorByBaseShape(const abstract::BaseShapePtr &base_shape) {
+  MS_EXCEPTION_IF_NULL(base_shape);
+  if (base_shape->isa<abstract::NoShape>()) {
+    return {};
+  } else if (base_shape->isa<abstract::Shape>()) {
+    return base_shape->cast<abstract::ShapePtr>()->shape();
+  } else if (base_shape->isa<abstract::DynamicSequenceShape>()) {
+    return {-1};
+  } else if (base_shape->isa<abstract::SequenceShape>()) {
+    const auto &sequence_shape = base_shape->cast<abstract::SequenceShapePtr>();
+    MS_EXCEPTION_IF_NULL(sequence_shape);
+    if (sequence_shape->size() == 0) {
+      return {0};
+    }
+    ShapeVector shape_vector = {SizeToLong(sequence_shape->size())};
+    const auto &sub_shape_vector = GetShapeVectorByBaseShape(sequence_shape->shape()[0]);
+    shape_vector.insert(shape_vector.end(), sub_shape_vector.begin(), sub_shape_vector.end());
+    return shape_vector;
+  }
+  MS_LOG(EXCEPTION) << "Invalid shape:" << base_shape->ToString();
+}
+}  // namespace
+
 void KernelTensor::SetShape(const abstract::BaseShapePtr &shape) {
   MS_EXCEPTION_IF_NULL(shape);
   shape_ = shape;
@@ -157,9 +182,12 @@ void KernelTensor::SetShape(const abstract::BaseShapePtr &shape) {
       return;
     }
     const auto &element_shape = shapes[0];
-    MS_EXCEPTION_IF_NULL(seq_shape);
+    MS_EXCEPTION_IF_NULL(element_shape);
     if (element_shape->isa<abstract::TensorShape>()) {
       const ShapeVector &element_shape_vector = element_shape->GetShapeVector();
+      shape_vector_.insert(shape_vector_.end(), element_shape_vector.begin(), element_shape_vector.end());
+    } else if (element_shape->isa<abstract::SequenceShape>()) {
+      const ShapeVector &element_shape_vector = GetShapeVectorByBaseShape(element_shape);
       shape_vector_.insert(shape_vector_.end(), element_shape_vector.begin(), element_shape_vector.end());
     }
   }
@@ -337,6 +365,40 @@ void KernelTensor::SetSequenceDType(const TypePtr &element_type) {
     // String type element.
     dtype_ = element_type;
     dtype_id_ = dtype_->type_id();
+  } else if (element_type->object_type() == kObjectTypeTuple) {
+    // Sequence type element.
+    auto tuple_type = element_type->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_type);
+    if (tuple_type->dynamic_len()) {
+      if (tuple_type->dynamic_element_type() == nullptr) {
+        return;
+      }
+      SetSequenceDType(tuple_type->dynamic_element_type());
+      return;
+    }
+    const TypePtrList &element_types = tuple_type->elements();
+    if (element_types.empty() || element_types[0] == nullptr) {
+      return;
+    }
+    SetSequenceDType(element_types[0]);
+    return;
+  } else if (element_type->object_type() == kObjectTypeList) {
+    // Sequence type element.
+    auto list_type = element_type->cast<ListPtr>();
+    MS_EXCEPTION_IF_NULL(list_type);
+    if (list_type->dynamic_len()) {
+      if (list_type->dynamic_element_type() == nullptr) {
+        return;
+      }
+      SetSequenceDType(list_type->dynamic_element_type());
+      return;
+    }
+    const TypePtrList &element_types = list_type->elements();
+    if (element_types.empty() || element_types[0] == nullptr) {
+      return;
+    }
+    SetSequenceDType(element_types[0]);
+    return;
   } else {
     MS_LOG(EXCEPTION) << "Unsupported element type[" << element_type->ToString()
                       << "] to set element data type for KernelTensor.";
@@ -353,14 +415,27 @@ void KernelTensor::set_padding_type(const std::string &padding_type) { padding_t
 
 bool KernelTensor::SyncDataFromDeviceToHost() const {
   if (device_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "Not malloc device memory yet, sync data from device to host side failed.";
+    MS_LOG(ERROR) << "Not malloc device memory yet, sync data from device to host side failed, size: " << size_;
     return false;
+  }
+
+  // For performance, the CPU back-end does not need to copy the device to host, and directly uses the
+  // device pointer in the kernel Tensor.
+  if (device_name_ == kCPUDevice) {
+    if (!kernel_tensor_value_) {
+      kernel_tensor_value_ = std::make_shared<KernelTensorValue>(device_ptr_, size_, type_);
+    } else {
+      kernel_tensor_value_->SetDataPtr(device_ptr_);
+      kernel_tensor_value_->Resize(size_);
+    }
+    return true;
   }
 
   if (!kernel_tensor_value_) {
     kernel_tensor_value_ = std::make_shared<KernelTensorValue>(size_, type_);
+  } else {
+    kernel_tensor_value_->Resize(size_);
   }
-  kernel_tensor_value_->Resize(size_);
 
   if (size_ == 0) {
     return true;
@@ -370,9 +445,9 @@ bool KernelTensor::SyncDataFromDeviceToHost() const {
   MS_EXCEPTION_IF_NULL(host_ptr);
 
   MS_EXCEPTION_IF_NULL(device_synchronizer_);
-  if (!device_synchronizer_->SyncDeviceToHost(host_ptr, device_ptr_, size_, format_, shape_vector_, stream_id_,
-                                              user_data_)) {
-    MS_LOG(EXCEPTION) << "Sync data form device to host side failed";
+  if (!device_synchronizer_->SyncDeviceToHost(host_ptr, device_ptr_, size_, device_name_, device_id_, format_,
+                                              shape_vector_, stream_id_, user_data_)) {
+    MS_LOG(EXCEPTION) << "Sync data from device to host side failed";
   }
   return true;
 }
@@ -606,17 +681,6 @@ void KernelTensor::SetBaseShape(const abstract::BaseShapePtr &base_shape) {
   info.base_->set_shape(base_shape);
 }
 
-int KernelMod::Resize(const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  return Resize(this->op_, this->inputs_, this->outputs_, inputsOnHost);
-}
-
-int KernelMod::Resize(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  inputs_ = inputs;
-  outputs_ = outputs;
-  return Resize(this->op_, inputs, outputs, inputsOnHost);
-}
-
 int KernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto ret = KRET_OK;
   workspace_size_list_.clear();
@@ -652,70 +716,6 @@ int KernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vect
     }
     (void)output_size_list_.emplace_back(tensor_size);
   }
-  return static_cast<int>(ret);
-}
-
-int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                      const std::vector<KernelTensorPtr> &outputs,
-                      const std::map<uint32_t, tensor::TensorPtr> & /* inputsOnHost */) {
-  MS_LOG(DEBUG) << "Resize start for operator:" << base_operator->name();
-  auto ret = KRET_OK;
-  workspace_size_list_.clear();
-  input_size_list_.clear();
-  output_size_list_.clear();
-  for (size_t idx = 0; idx < inputs.size(); idx++) {
-    auto &input = inputs[idx];
-    size_t tensor_size = 0;
-    MS_EXCEPTION_IF_NULL(input);
-    size_t type_size = GetTypeByte(TypeIdToType(input->GetDtype()));
-    auto shape = input->GetShapeVector();
-    if (!IsValidShape(shape)) {
-      MS_LOG(DEBUG) << "input " << idx << " is not valid shape:" << shape << " for op:" << kernel_name_;
-      // early stop if any input shape contains -1/-2, which means input shape is dynamic
-      return KRET_UNKNOWN_SHAPE;
-    } else {
-      tensor_size =
-        shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
-      tensor_size = std::max(tensor_size, type_size);
-    }
-    (void)input_size_list_.emplace_back(tensor_size);
-  }
-
-  for (size_t idx = 0; idx < outputs.size(); idx++) {
-    auto &output = outputs[idx];
-    size_t tensor_size = 0;
-    MS_EXCEPTION_IF_NULL(output);
-    size_t type_size = GetTypeByte(TypeIdToType(output->GetDtype()));
-    auto shape = output->GetShapeVector();
-    if (!IsValidShape(shape)) {
-      // Note:
-      // If output shape is unknown, the op is a compute-depended op and max_shape should not be empty,
-      // and the output_size_list_ can be set by max_shape
-      auto max_shape = output->GetMaxShape();
-      if (max_shape.empty()) {
-        MS_LOG(DEBUG) << "For " << kernel_name_ << ", the max_shape should not be empty when input shape is known.";
-        ret = KRET_UNKNOWN_OUT_SHAPE;
-      } else {
-        tensor_size = SizeOf(max_shape) * type_size;
-        ret = KRET_UNKNOWN_OUT_SHAPE;
-      }
-    } else {
-      if (shape.empty()) {
-        tensor_size = type_size;
-      } else {
-        auto cur_out_shape_num = SizeOf(shape);
-        tensor_size = cur_out_shape_num * type_size;
-        if (type_size != 0 && tensor_size / type_size != cur_out_shape_num) {
-          MS_EXCEPTION(ValueError) << "For " << kernel_name_ << ", the shape of outputs[" << output_size_list_.size()
-                                   << "]: " << shape
-                                   << " is too big, mindspore cannot apply for such a large amount of memory.";
-        }
-      }
-      tensor_size = std::max(tensor_size, type_size);
-    }
-    (void)output_size_list_.emplace_back(tensor_size);
-  }
-  MS_LOG(DEBUG) << "Resize end for operator:" << base_operator->name();
   return static_cast<int>(ret);
 }
 

@@ -99,15 +99,9 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   void CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context,
                             bool is_dynamic_shape = false) const;
 
-  // Get saved OpBuildTask in OpExecutor and build all the kernels together in PyNative mode.
-  void CompileSingleOpGraphs(const std::vector<std::shared_ptr<pynative::DeviceOpBuildTask>> &build_tasks) const;
-
   // In PyNative mode, the size of single op cache list will be increasing, which lead to memory cost increasing,
   // so the latest single op cache should be erased when cache list size exceeds threshold value.
   void EraseSingleOpCache(const GraphInfo &graph_info) const;
-
-  // Execute OpBuildTask and OpRunTask when the OpExecutor queue is full in PyNative mode.
-  void BatchBuildCallback() const;
 
   // Run op or dispatch  build task and run task.
   void RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr &op_compiler_info,

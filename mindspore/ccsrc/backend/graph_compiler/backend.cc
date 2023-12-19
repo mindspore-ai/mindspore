@@ -778,8 +778,6 @@ void MindRTBackend::RunMsGradGraph(const CNodePtr &kernel, const VectorRef &args
 void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_info, const VectorRef &args,
                                        VectorRef *outputs) {
   WaitTaskFinish();
-  auto &op_executor = runtime::OpExecutor::GetInstance();
-  op_executor.Register([this]() { BatchBuildCallback(); });
 
   MS_LOG(INFO) << "Status record: begin run graph by single op";
   MS_EXCEPTION_IF_NULL(graph_compiler_);
@@ -811,17 +809,16 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
     }
 
     GilReleaseWithCheck gil_release;
+    auto is_dynamic = root_graph_->has_flag(kFlagPyNativeBpropGraphIsDynamic);
     for (const auto &kernel : graph->execution_order()) {
       MS_LOG(DEBUG) << "Split and run op " << kernel->fullname_with_scope();
       InputInfo input_info;
       VectorRef op_outputs;
       if (common::AnfAlgo::IsBpropCutOpExecInBackend(kernel)) {
-        WaitTaskFinish();
         const auto &origin_parameters = graph_compiler_info.origin_parameters_order_;
         RunControlOperator(graph_compiler_, origin_parameters, args, graph, kernel, op_output_map, parameter_index,
                            inputs[graph_index], &input_info, &op_outputs);
         // Execute remaining lazy tasks before PyNative hook exit.
-        WaitTaskFinish();
       } else if (common::AnfAlgo::HasNodeAttr(kAttrJitCallNode, kernel)) {
         WaitTaskFinish();
         graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index],
@@ -834,7 +831,6 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
         RunMsGradGraph(kernel, input_args, &op_outputs);
         WaitTaskFinish();
       } else {
-        auto is_dynamic = common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, kernel);
         session::BackendOpRunInfoPtr op_run_info;
         graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index],
                                                  &input_info);
@@ -900,29 +896,6 @@ void MindRTBackend::ReleaseForwardOutput(const std::vector<ValuePtr> &input_valu
   graph_compiler_->UpdateForwardOpOutputRefCount(input_values, &forward_op_output_tensor_id_);
 }
 
-void MindRTBackend::CompileSingleOpGraphs(
-  const std::vector<std::shared_ptr<pynative::DeviceOpBuildTask>> &build_tasks) const {
-  if (build_tasks.empty()) {
-    return;
-  }
-  std::vector<KernelGraphPtr> graphs;
-  for (const auto &task : build_tasks) {
-    MS_EXCEPTION_IF_NULL(task);
-    const auto &context = task->context();
-    MS_EXCEPTION_IF_NULL(context);
-    graphs.push_back(context->graph());
-  }
-  MS_EXCEPTION_IF_NULL(build_tasks[0]);
-  auto &task_context = build_tasks[0]->context();
-  MS_EXCEPTION_IF_NULL(task_context);
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, task_context->is_pynative_infer());
-
-  auto device_context = task_context->device_context();
-  pynative::OpCompiler::GetInstance().BatchBuild(graphs, device_context);
-}
-
 void MindRTBackend::OpRunCallback(const std::shared_ptr<pynative::OpTaskContext> &context) {
   MS_LOG(DEBUG) << "OpRunCallback start";
   auto ms_context = MsContext::GetInstance();
@@ -967,53 +940,6 @@ void MindRTBackend::OpRunCallbackDynamic(const std::shared_ptr<pynative::OpTaskC
   MS_LOG(DEBUG) << "OpRunCallback end";
 }
 
-void MindRTBackend::BatchBuildCallback() const {
-  auto &op_executor = runtime::OpExecutor::GetInstance();
-  if (op_executor.BuildQueueEmpty()) {
-    return;
-  }
-
-  try {
-    MS_LOG(DEBUG) << "Start";
-    auto ms_context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(ms_context);
-    auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
-
-    auto build_tasks_in_queue = op_executor.PopOpBuildTasks();
-    CompileSingleOpGraphs(build_tasks_in_queue);
-    for (auto &task : build_tasks_in_queue) {
-      MS_EXCEPTION_IF_NULL(task);
-      task->SetBuildReady(true);
-    }
-
-    ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, infer_flag);
-    MS_LOG(DEBUG) << "End";
-  } catch (const py::type_error &ex) {
-    op_executor.Reset();
-    throw py::type_error(ex);
-  } catch (const py::value_error &ex) {
-    op_executor.Reset();
-    throw py::value_error(ex);
-  } catch (const py::index_error &ex) {
-    op_executor.Reset();
-    throw py::index_error(ex);
-  } catch (const py::name_error &ex) {
-    op_executor.Reset();
-    throw py::name_error(ex);
-  } catch (const std::exception &ex) {
-    op_executor.Reset();
-    throw(std::runtime_error(ex.what()));
-  } catch (...) {
-    op_executor.Reset();
-#ifndef _MSC_VER
-    std::string exName(abi::__cxa_current_exception_type()->name());
-    MS_LOG(EXCEPTION) << "Error occurred when execute task in queue. Exception name: " << exName;
-#else
-    MS_LOG(EXCEPTION) << "Error occurred when execute task in queue.";
-#endif
-  }
-}
-
 void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
                                    const OpCompilerInfoPtr &op_compiler_info,
                                    const session::BackendOpRunInfoPtr &op_run_info) {
@@ -1032,26 +958,15 @@ void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
   auto run_op_context = std::make_shared<pynative::OpTaskContext>(graph->graph_id(), graph, op_run_info,
                                                                   op_compiler_info->device_context_, infer_flag);
 
-  // Save build task and run task.
-  std::promise<bool> promise;
-  auto future = promise.get_future();
-
   auto &op_executor = runtime::OpExecutor::GetInstance();
   if (!single_op_cache_hit) {
-    op_executor.PushOpBuildTask(std::make_shared<pynative::DeviceOpBuildTask>(run_op_context, std::move(promise)));
-  } else {
-    promise.set_value(true);
+    CompileSingleOpGraph(graph, op_compiler_info->device_context_);
   }
+
   auto run_task = std::make_shared<pynative::DeviceOpRunTask>(
-    run_op_context, [this](const std::shared_ptr<pynative::OpTaskContext> &ctx) { OpRunCallback(ctx); },
-    std::move(future));
+    run_op_context, [this](const std::shared_ptr<pynative::OpTaskContext> &ctx) { OpRunCallback(ctx); });
   run_task->set_task_id(op_compiler_info->graph_id_);
   op_executor.PushOpRunTask(run_task);
-
-  op_executor.Register([this]() { BatchBuildCallback(); });
-  if (op_executor.BuildQueueFull()) {
-    WaitTaskFinish();
-  }
 }
 
 void MindRTBackend::DispatchOpTaskDynamic(VectorRef *outputs, const OpCompilerInfoPtr &op_compiler_info,
@@ -1068,20 +983,10 @@ void MindRTBackend::DispatchOpTaskDynamic(VectorRef *outputs, const OpCompilerIn
                                                                   op_compiler_info->device_context_, infer_flag);
   run_op_context->set_op_compiler_info(op_compiler_info);
   run_op_context->set_device_address_list(device_address_list);
-  // Save build task and run task.
-  std::promise<bool> promise;
-  auto future = promise.get_future();
 
   auto &op_executor = runtime::OpExecutor::GetInstance();
-  promise.set_value(true);
   op_executor.PushOpRunTask(std::make_shared<pynative::DeviceOpRunTask>(
-    run_op_context, [this](const std::shared_ptr<pynative::OpTaskContext> &ctx) { OpRunCallbackDynamic(ctx); },
-    std::move(future)));
-
-  op_executor.Register([this]() { BatchBuildCallback(); });
-  if (op_executor.BuildQueueFull()) {
-    WaitTaskFinish();
-  }
+    run_op_context, [this](const std::shared_ptr<pynative::OpTaskContext> &ctx) { OpRunCallbackDynamic(ctx); }));
 }
 
 void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr &op_compiler_info,

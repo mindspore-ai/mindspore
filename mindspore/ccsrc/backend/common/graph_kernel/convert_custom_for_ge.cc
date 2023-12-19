@@ -36,10 +36,10 @@ AnfNodePtr ConvertCustomForGE::CreateCustomOp(const FuncGraphPtr &func_graph, co
   auto input_num = AnfUtils::GetInputTensorNum(cnode);
   auto output_num = AnfUtils::GetOutputTensorNum(cnode);
   std::vector<std::string> input_names;
-  std::vector<std::string> output_names;
   for (size_t i = 0; i < input_num; ++i) {
     input_names.push_back("x" + std::to_string(i));
   }
+  std::vector<std::string> output_names;
   for (size_t i = 0; i < output_num; ++i) {
     output_names.push_back("y" + std::to_string(i));
   }

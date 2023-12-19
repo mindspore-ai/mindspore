@@ -33,6 +33,7 @@
 #include "cce/fwk_adpt_struct.h"
 #include "external/graph/types.h"
 #include "cce/aicpu_engine_struct.h"
+#include "kernel/framework_utils.h"
 
 namespace mindspore {
 namespace kernel {

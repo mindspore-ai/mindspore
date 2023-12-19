@@ -23,7 +23,7 @@ class NumpyDtype(Enum):
     """numpy data type class"""
     INT32 = np.dtype('int32')
     INT64 = np.dtype('int64')
-    FLOAT = np.dtype('float32')
+    FLOAT32 = np.dtype('float32')
     FLOAT64 = np.dtype('float64')
     FLOAT16 = np.dtype('float16')
     UINT8 = np.dtype('uint8')

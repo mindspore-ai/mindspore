@@ -123,7 +123,7 @@ def test_pow_type_cast():
     """
     ms.set_context(precompile_only=True, mode=ms.GRAPH_MODE)
     net = PowNet()
-    out = net(ms.Tensor(1), 2)
+    out = net(1, 2)
 
 
 @pytest.mark.level0
@@ -140,7 +140,7 @@ def test_pow_create_instance_type_cast():
     """
     ms.set_context(precompile_only=True, mode=ms.GRAPH_MODE)
     net = PowCreateInstanceNet()
-    out = net(1.0, ms.Tensor(2))
+    out = net(1.0, 2)
 
 
 class LSTM(nn.Cell):
@@ -226,3 +226,25 @@ def test_lstm_ops():
     net.lstm.b_ih_list = b_ih_list
     net.lstm.b_hh_list = b_hh_list
     out = net(input_ms, h0, c0)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@test_utils.run_test_func
+def test_op_with_default_init_args():
+    """
+    Feature: DynamicShape.
+    Description: Test default init args.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func(x, size):
+        return ops.ResizeNearestNeighbor(size)(x)
+
+    ms.set_context(precompile_only=True, mode=ms.GRAPH_MODE)
+    x = ms.Tensor(np.array([[[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]]), ms.float32)
+    size = ms.mutable((2, 2))
+    func(x, size)

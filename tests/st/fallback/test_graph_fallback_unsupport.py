@@ -360,7 +360,7 @@ def test_generate_tensor_using_variable_numpy_array():
     assert (out == Tensor([0, 1])).all()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

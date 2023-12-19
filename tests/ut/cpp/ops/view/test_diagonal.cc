@@ -38,11 +38,11 @@ TEST_F(TestViewDiagonal, View) {
   auto offset_ = MakeValue(input_offset);
   auto dim1_ = MakeValue(input_dim1);
   auto dim2_ = MakeValue(input_dim2);
-  prim->AddAttr("offset", offset_);
-  prim->AddAttr("dim1", dim1_);
-  prim->AddAttr("dim2", dim2_);
   std::vector<ValuePtr> inputs_a;
   inputs_a.emplace_back(input_tensor);
+  inputs_a.emplace_back(offset_);
+  inputs_a.emplace_back(dim1_);
+  inputs_a.emplace_back(dim2_);
   auto storage_info = DiagonalCalc(prim, inputs_a);
   std::vector<int64_t> expect_shape({1, 2});
   std::vector<int64_t> expect_strides({8, 5});

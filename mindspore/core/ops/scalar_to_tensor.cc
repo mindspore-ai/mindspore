@@ -98,14 +98,19 @@ class ScalarToTensorInfer : public abstract::OpInferBase {
 
     auto attr = primitive->GetAttr("dtype");
     if (attr == nullptr) {
-      auto type_abs = input_args[kIndex1];
-      if (type_abs->GetType()->type_id() != kMetaTypeTypeType) {
-        MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the input[" << kIndex1 << "] should be a "
-                                << TypeIdToType(kMetaTypeTypeType)->ToString() << ", but got "
-                                << type_abs->GetType()->ToString() << ".";
+      // If type not set, use input0's original type.
+      if (input_args.size() == 1) {
+        attr = elem->GetType();
+      } else {
+        auto type_abs = input_args[kIndex1];
+        if (type_abs->GetType()->type_id() != kMetaTypeTypeType) {
+          MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the input[" << kIndex1 << "] should be a "
+                                  << TypeIdToType(kMetaTypeTypeType)->ToString() << ", but got "
+                                  << type_abs->GetType()->ToString() << ".";
+        }
+        attr = type_abs->GetValue();
+        MS_EXCEPTION_IF_NULL(attr);
       }
-      attr = type_abs->GetValue();
-      MS_EXCEPTION_IF_NULL(attr);
     }
     if (!attr->isa<Type>()) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "the second input must be a `Type`, but got "

@@ -35,6 +35,13 @@ Summary &Summary::GetInstance() {
 void Summary::RecurseSetSummaryNodesForAllGraphs(KernelGraph *graph) {
   MS_LOG(INFO) << "Recurse set summary nodes for all graphs in graph: " << graph->graph_id() << " start";
   MS_EXCEPTION_IF_NULL(graph);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string backend = ms_context->backend_policy();
+  if (backend == "ge" && graph->is_graph_run_mode()) {
+    MS_LOG(INFO) << "This function should be skipped on GE backend.";
+    return;
+  }
   SetSummaryNodes(graph);
   auto &summary_nodes = graph->summary_nodes();
   std::map<std::string, std::pair<AnfNodePtr, int>> summary;
@@ -51,9 +58,12 @@ void Summary::RecurseSetSummaryNodesForAllGraphs(KernelGraph *graph) {
 }
 
 void Summary::SummaryTensor(KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
   auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
   std::string backend = ms_context->backend_policy();
-  if (backend == "ge") {
+  if (backend == "ge" && graph->is_graph_run_mode()) {
+    MS_LOG(INFO) << "This function should be skipped on GE backend.";
     return;
   }
 
@@ -97,6 +107,13 @@ void Summary::RegisterSummaryCallBackFunc(const CallBackFunc &callback) { summar
 void Summary::SetSummaryNodes(KernelGraph *graph) {
   MS_LOG(DEBUG) << "Update summary Start";
   MS_EXCEPTION_IF_NULL(graph);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string backend = ms_context->backend_policy();
+  if (backend == "ge" && graph->is_graph_run_mode()) {
+    MS_LOG(INFO) << "This function should be skipped on GE backend.";
+    return;
+  }
   if (!graph->summary_node_exist()) {
     return;
   }

@@ -130,9 +130,7 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
   if (node->isa<ValueNode>()) {
     auto value = node->cast<ValueNodePtr>()->value();
     MS_EXCEPTION_IF_NULL(value);
-    if (value->isa<None>()) {
-      return ret;
-    } else if (value->isa<ValueSequence>()) {
+    if (value->isa<ValueSequence>()) {
       auto value_tuple = value->cast<ValueSequencePtr>();
       auto value_tuple_size = CountValueNum(value_tuple);
       for (size_t i = 0; i < value_tuple_size; ++i) {
@@ -210,11 +208,13 @@ bool IsNodeDynamicShape(const AnfNodePtr &node) {
   auto out_dynamic = AnfAlgo::IsNodeOutputDynamicShape(cnode);
   if (in_dynamic && !AnfAlgo::HasNodeAttr(kAttrInputIsDynamicShape, cnode)) {
     AnfAlgo::SetNodeAttrSafely(kAttrInputIsDynamicShape, MakeValue(true), cnode);
-    MS_LOG(DEBUG) << "Set Input Dynamic Shape Attr to Node:" << cnode->fullname_with_scope();
+    MS_LOG(DEBUG) << "Set Input Dynamic Shape Attr to Node:" << cnode->fullname_with_scope()
+                  << " debug string:" << cnode->DebugString();
   }
   if (out_dynamic && !AnfAlgo::HasNodeAttr(kAttrOutputIsDynamicShape, cnode)) {
     AnfAlgo::SetNodeAttrSafely(kAttrOutputIsDynamicShape, MakeValue(true), cnode);
-    MS_LOG(DEBUG) << "Set Output Dynamic Shape Attr to Node:" << cnode->fullname_with_scope();
+    MS_LOG(DEBUG) << "Set Output Dynamic Shape Attr to Node:" << cnode->fullname_with_scope()
+                  << " debug string:" << cnode->DebugString();
   }
   if (IsPrimitiveCNode(node, prim::kPrimPyExecute) && node->abstract()->isa<abstract::AbstractSequence>()) {
     AnfAlgo::SetNodeAttrSafely(kAttrOutputIsDynamicShape, MakeValue(true), cnode);
@@ -665,95 +665,81 @@ std::vector<TypeId> AnfAlgo::GetRealPrevNodesOutputInferDataType(const AnfNodePt
   return res;
 }
 
+namespace {
 inline ShapeVector GetShape(const abstract::BaseShapePtr &base_shape) {
-  auto shape_ptr = base_shape->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(shape_ptr);
-  return shape_ptr->shape();
+  MS_EXCEPTION_IF_NULL(base_shape);
+  if (base_shape->isa<abstract::Shape>()) {
+    auto shape_ptr = base_shape->cast<abstract::ShapePtr>();
+    MS_EXCEPTION_IF_NULL(shape_ptr);
+    return shape_ptr->shape();
+  }
+  return {};
 }
 
-namespace {
-bool IsStaticNoEmptyTuple(const abstract::AbstractSequencePtr &sequence_abs) {
-  MS_EXCEPTION_IF_NULL(sequence_abs);
-  auto element_abs = sequence_abs->dynamic_len_element_abs();
-  return (!sequence_abs->dynamic_len()) && element_abs == nullptr && (!sequence_abs->elements().empty());
+ShapeVector GetOutputShape(const abstract::AbstractBasePtr &abstract, size_t output_idx, bool is_real_squence_output) {
+  MS_EXCEPTION_IF_NULL(abstract);
+  if (abstract->isa<abstract::AbstractTensor>() || abstract->isa<abstract::AbstractMapTensor>()) {
+    if (output_idx != 0) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The abstract " << abstract->ToString()
+                                 << "is single output but got index:" << output_idx;
+    }
+    const auto &shape = abstract->GetShape();
+    return GetShape(shape);
+  } else if (abstract->isa<abstract::AbstractScalar>() || abstract->isa<abstract::AbstractMonad>()) {
+    return ShapeVector();
+  } else if (abstract->isa<abstract::AbstractSparseTensor>()) {
+    const auto &shape = abstract->GetShape();
+    MS_EXCEPTION_IF_NULL(shape);
+    const auto &tuple_shape = shape->cast<abstract::TupleShapePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_shape);
+    if (output_idx >= tuple_shape->size()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Output index " << output_idx << "is larger than output number "
+                                 << tuple_shape->size() << " of tuple shape:" << tuple_shape->ToString()
+                                 << " in abstract:" << abstract;
+    }
+    return GetShape(tuple_shape->shape()[output_idx]);
+  }
+
+  if (!abstract->isa<abstract::AbstractSequence>()) {
+    MS_LOG(INFO) << "Unknown abstract for get shape:" << abstract->ToString();
+    return {};
+  }
+
+  const auto &sequence_abstract = abstract->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(sequence_abstract);
+  if (sequence_abstract->dynamic_len()) {
+    const auto &element_abstract = sequence_abstract->dynamic_len_element_abs();
+    if (element_abstract == nullptr) {
+      MS_LOG(ERROR) << "Invalid abstract for get shape:" << sequence_abstract->ToString();
+      return ShapeVector();
+    }
+    return GetOutputShape(element_abstract, 0, true);
+  }
+
+  if (sequence_abstract->size() == 0) {
+    return ShapeVector();
+  }
+
+  if (!is_real_squence_output) {
+    if (output_idx >= sequence_abstract->size()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Output index " << output_idx << "is larger than output number "
+                                 << sequence_abstract->size() << " of abstract:" << sequence_abstract->ToString();
+    }
+    MS_EXCEPTION_IF_NULL(sequence_abstract->elements()[output_idx]);
+    return GetOutputShape(sequence_abstract->elements()[output_idx], 0, true);
+  }
+  ShapeVector shape_vector = {SizeToLong(sequence_abstract->size())};
+  const auto &element_abstract = sequence_abstract->elements()[0];
+  MS_EXCEPTION_IF_NULL(element_abstract);
+  const auto &element_shape_vector = GetOutputShape(element_abstract, 0, true);
+  (void)shape_vector.insert(shape_vector.end(), element_shape_vector.begin(), element_shape_vector.end());
+  return shape_vector;
 }
 }  // namespace
 
-ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract::BaseShapePtr &base_shape,
-                                         size_t output_idx, bool is_real_squence_output) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(base_shape);
-  if (base_shape->isa<abstract::Shape>()) {
-    if (output_idx != 0) {
-      MS_LOG(INTERNAL_EXCEPTION) << "The node " << node->DebugString() << "is a single output node but got index ["
-                                 << output_idx << trace::DumpSourceLines(node);
-    }
-
-    return GetShape(base_shape);
-  } else if (base_shape->isa<abstract::SequenceShape>()) {
-    auto tuple_shape = base_shape->cast<abstract::SequenceShapePtr>();
-    MS_EXCEPTION_IF_NULL(tuple_shape);
-    if (tuple_shape->size() == 0) {
-      return ShapeVector();
-    }
-    if (IsDynamicSequence(node) || is_real_squence_output || IsAnyTypeOutput(node)) {
-      const auto &sequence_abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
-      MS_EXCEPTION_IF_NULL(sequence_abs);
-      auto element_abs = sequence_abs->dynamic_len_element_abs();
-      ShapeVector shape_vector = {SizeToLong(tuple_shape->size())};
-      if (IsStaticNoEmptyTuple(sequence_abs)) {
-        element_abs = sequence_abs->elements()[0];
-        MS_EXCEPTION_IF_NULL(element_abs);
-      } else if (element_abs == nullptr || (!element_abs->isa<abstract::AbstractTensor>())) {
-        return shape_vector;
-      }
-      MS_LOG(DEBUG) << "Element of dynamic sequence is tensor:" << element_abs->ToString()
-                    << " node:" << node->fullname_with_scope();
-      const auto &element_shape = element_abs->BuildShape();
-      MS_EXCEPTION_IF_NULL(element_shape);
-      const auto &element_shape_vector = GetOutputInferShape(node, element_shape, 0);
-      (void)shape_vector.insert(shape_vector.end(), element_shape_vector.begin(), element_shape_vector.end());
-      return shape_vector;
-    }
-    if (output_idx >= tuple_shape->size()) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Output index " << output_idx << "is larger than output number "
-                                 << tuple_shape->size() << node->DebugString() << trace::DumpSourceLines(node);
-    }
-    auto b_shp = (*tuple_shape)[output_idx];
-    if (b_shp->isa<abstract::Shape>()) {
-      return GetShape(b_shp);
-    } else if (b_shp->isa<abstract::NoShape>()) {
-      return ShapeVector();
-    } else if (b_shp->isa<abstract::SequenceShape>()) {
-      // Usually there is no tuple in tuple for the shape of the kernel graph parameter, but there will be such a
-      // scenario when dump ir is in the compilation process, here return an empty shape so that dump ir can work
-      // normally.
-      MS_LOG(INFO) << "The output shape of node:" << node->DebugString() << " index:" << output_idx
-                   << " is a TupleShape:" << base_shape->ToString();
-      return ShapeVector();
-    } else if (b_shp->isa<abstract::DynamicSequenceShape>()) {
-      const auto &base_seq_shape = GetDynamicSequenceShape(node, output_idx);
-      return GetOutputInferShape(node, base_seq_shape, 0);
-    } else {
-      MS_LOG(INTERNAL_EXCEPTION) << "The output type of ApplyKernel index:" << output_idx
-                                 << " should be a NoShape , ArrayShape or a TupleShape, but it is "
-                                 << base_shape->ToString() << "node :" << node->DebugString() << "."
-                                 << trace::DumpSourceLines(node) << " dst shape:" << b_shp->ToString();
-    }
-  } else if (base_shape->isa<abstract::NoShape>()) {
-    return ShapeVector();
-  } else if (base_shape->isa<abstract::DynamicSequenceShape>()) {
-    const auto &base_seq_shape = GetDynamicSequenceShape(node, output_idx);
-    return GetOutputInferShape(node, base_seq_shape, 0);
-  }
-  MS_LOG(INTERNAL_EXCEPTION)
-    << "The output type of ApplyKernel should be a NoShape , ArrayShape or a TupleShape, but it is "
-    << base_shape->ToString() << " node : " << node->DebugString() << trace::DumpSourceLines(node);
-}
-
 ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, size_t output_idx, bool is_real_squence_output) {
   MS_EXCEPTION_IF_NULL(node);
-  return GetOutputInferShape(node, node->Shape(), output_idx, is_real_squence_output);
+  return GetOutputShape(node->abstract(), output_idx, is_real_squence_output || AnfAlgo::IsDynamicSequence(node));
 }
 
 ShapeVector AnfAlgo::GetPrevNodeOutputInferShape(const AnfNodePtr &node, size_t input_idx) {
@@ -777,13 +763,7 @@ TypeId AnfAlgo::GetOutputInferDataType(const TypePtr &type, size_t output_idx) {
     }
     if (tuple_ptr->dynamic_len()) {
       MS_EXCEPTION_IF_NULL(tuple_ptr->dynamic_element_type());
-      if (tuple_ptr->dynamic_element_type()->isa<TensorType>()) {
-        const auto &tensor_type = tuple_ptr->dynamic_element_type()->cast<TensorTypePtr>();
-        MS_EXCEPTION_IF_NULL(tensor_type);
-        const auto &element_type = tensor_type->element();
-        return element_type->type_id();
-      }
-      return tuple_ptr->dynamic_element_type()->type_id();
+      return GetOutputInferDataType(tuple_ptr->dynamic_element_type(), 0);
     }
     MS_EXCEPTION_IF_NULL(tuple_ptr);
     if (output_idx >= tuple_ptr->size()) {
@@ -807,13 +787,7 @@ TypeId AnfAlgo::GetOutputInferDataType(const TypePtr &type, size_t output_idx) {
     }
     if (list_ptr->dynamic_len()) {
       MS_EXCEPTION_IF_NULL(list_ptr->dynamic_element_type());
-      if (list_ptr->dynamic_element_type()->isa<TensorType>()) {
-        const auto &tensor_type = list_ptr->dynamic_element_type()->cast<TensorTypePtr>();
-        MS_EXCEPTION_IF_NULL(tensor_type);
-        const auto &element_type = tensor_type->element();
-        return element_type->type_id();
-      }
-      return list_ptr->dynamic_element_type()->type_id();
+      return GetOutputInferDataType(list_ptr->dynamic_element_type(), 0);
     }
     MS_EXCEPTION_IF_NULL(list_ptr);
     if (output_idx >= list_ptr->size()) {
@@ -838,12 +812,33 @@ TypeId AnfAlgo::GetOutputInferDataType(const TypePtr &type, size_t output_idx) {
     MS_EXCEPTION_IF_NULL(elem);
     return elem->type_id();
   }
+  if (type_ptr->isa<Tuple>() || type_ptr->isa<List>()) {
+    return GetOutputInferDataType(type_ptr, 0);
+  }
   return type_ptr->type_id();
 }
 
+namespace {
+bool IsTupleInTupleValueNode(const AnfNodePtr &node) {
+  if (node == nullptr || !node->isa<ValueNode>()) {
+    return false;
+  }
+  const auto &value_node = node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  const auto &value = value_node->value();
+  if (value == nullptr || !value->isa<ValueSequence>()) {
+    return false;
+  }
+  const auto &value_sequence = value->cast<ValueSequencePtr>();
+  MS_EXCEPTION_IF_NULL(value_sequence);
+  return std::any_of(value_sequence->value().begin(), value_sequence->value().end(),
+                     [](const ValuePtr &sub_value) { return sub_value != nullptr && sub_value->isa<ValueSequence>(); });
+}
+}  // namespace
+
 TypeId AnfAlgo::GetOutputInferDataType(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
-  if (IsCallNode(node)) {
+  if (IsCallNode(node) || IsTupleInTupleValueNode(node)) {
     if (node->abstract() == nullptr) {
       MS_LOG(INTERNAL_EXCEPTION) << "Empty abstract of call node:" << node->DebugString();
     }
@@ -1147,9 +1142,9 @@ bool AnfAlgo::IsInplaceNode(const mindspore::AnfNodePtr &kernel, const string &t
 }
 
 bool AnfAlgo::IsCommunicationOp(const AnfNodePtr &node) {
-  static const std::set<std::string> kCommunicationOpNames = {kAllReduceOpName,     kAllGatherOpName,  kBroadcastOpName,
-                                                              kReduceScatterOpName, kSendOpName,       kReceiveOpName,
-                                                              kAllToAllvOpName,     kMuxReceiveOpName, kMuxSendOpName};
+  static const std::set<std::string> kCommunicationOpNames = {
+    kAllReduceOpName, kAllGatherOpName,  kBroadcastOpName, kReduceScatterOpName, kSendOpName,   kReceiveOpName,
+    kAllToAllvOpName, kMuxReceiveOpName, kMuxSendOpName,   kReduceOpName,        kBarrierOpName};
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return false;
@@ -1869,17 +1864,18 @@ bool AnfAlgo::IsNonTaskOp(const CNodePtr &node) {
 
 bool AnfAlgo::IsNoneInput(const AnfNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
-  static std::set<std::string> node_set = {kDynamicRNNOpName, kDynamicGRUV2OpName};
-  auto cnode_name = common::AnfAlgo::GetCNodeName(node);
-  if (node_set.find(cnode_name) == node_set.end()) {
-    return false;
+  auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, index);
+  auto prev_node = kernel_with_index.first;
+  MS_EXCEPTION_IF_NULL(prev_node);
+  // Only const optional input(None) support now.
+  if (prev_node->isa<ValueNode>()) {
+    auto value = prev_node->cast<ValueNodePtr>()->value();
+    MS_EXCEPTION_IF_NULL(value);
+    if (value->isa<None>()) {
+      return true;
+    }
   }
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (common::AnfAlgo::HasNodeAttr(kAttrPlaceHolderIndex, cnode)) {
-    auto none_index = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrPlaceHolderIndex);
-    return find(none_index.begin(), none_index.end(), index) != none_index.end();
-  }
+
   return false;
 }
 
@@ -2358,6 +2354,10 @@ abstract::AbstractBasePtr AnfAlgo::FetchAbstractByIndex(const AbstractBasePtr &a
 }
 
 std::string AnfAlgo::GetInputName(const CNodePtr &origin_op, size_t input_index) {
+  auto prim_func_input_name = ops::GetInputNameByIndex(GetCNodeName(origin_op), input_index);
+  if (prim_func_input_name != "") {
+    return prim_func_input_name;
+  }
   auto origin_primitive = GetCNodePrimitive(origin_op);
   MS_EXCEPTION_IF_NULL(origin_primitive);
   auto input_names = origin_primitive->GetAttr(kAttrInputNames);
@@ -2383,6 +2383,47 @@ bool AnfAlgo::IsNoOuputNode(const AnfNodePtr &node) {
     return true;
   }
   return false;
+}
+
+ValuePtr AnfAlgo::ValueToScalar(const ValuePtr &value, TypeId type_id) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (!value->isa<KernelTensorValue>()) {
+    return nullptr;
+  }
+  const auto &kernel_tensor_value = value->cast<KernelTensorValuePtr>();
+  MS_EXCEPTION_IF_NULL(kernel_tensor_value);
+  MS_EXCEPTION_IF_NULL(kernel_tensor_value->GetDataPtr());
+  switch (type_id) {
+    case kNumberTypeBool:
+      return MakeValue(*reinterpret_cast<const bool *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeInt16:
+      return MakeValue(*reinterpret_cast<const int16_t *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeUInt16:
+      return MakeValue(*reinterpret_cast<const uint16_t *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeInt8:
+      return MakeValue(*reinterpret_cast<const int8_t *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeUInt8:
+      return MakeValue(*reinterpret_cast<const uint8_t *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeInt32:
+      return MakeValue(*reinterpret_cast<const int32_t *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeUInt32:
+      return MakeValue(*reinterpret_cast<const uint32_t *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeInt64:
+      return MakeValue(*reinterpret_cast<const int64_t *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeUInt64:
+      return MakeValue(*reinterpret_cast<const uint64_t *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeFloat16:
+      return MakeValue(*reinterpret_cast<const uint16_t *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeFloat32:
+      return MakeValue(*reinterpret_cast<const float *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeFloat64:
+      return MakeValue(*reinterpret_cast<const double *>(kernel_tensor_value->GetDataPtr()));
+    case kNumberTypeBFloat16:
+      return MakeValue(*reinterpret_cast<const uint16_t *>(kernel_tensor_value->GetDataPtr()));
+    default:
+      MS_LOG(DEBUG) << "Not support scalar type:" << type_id;
+  }
+  return nullptr;
 }
 }  // namespace common
 }  // namespace mindspore

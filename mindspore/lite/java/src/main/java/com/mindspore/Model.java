@@ -95,8 +95,8 @@ public class Model {
      */
     public boolean build(final MappedByteBuffer buffer, int modelType, MSContext context, char[] decKey, String decMode,
                          String croptoLibPath) {
-        boolean isValid = (context != null && buffer != null && decKey != null && decMode != null &&
-                           croptoLibPath != null);
+        boolean isValid = (context != null && buffer != null && decKey != null && decMode != null
+                           && croptoLibPath != null);
         if (!isValid) {
             return false;
         }
@@ -133,8 +133,8 @@ public class Model {
      */
     public boolean build(String modelPath, int modelType, MSContext context, char[] decKey, String decMode,
                          String croptoLibPath) {
-        boolean isValid = (context != null && modelPath != null && decKey != null && decMode != null &&
-                                   croptoLibPath != null);
+        boolean isValid = (context != null && modelPath != null && decKey != null && decMode != null
+                           && croptoLibPath != null);
         if (!isValid) {
             return false;
         }
@@ -247,9 +247,9 @@ public class Model {
      * @return input tensor.
      */
     public MSTensor getInputByTensorName(String tensorName) {
-        List<MSTensor> inputTensors = this.getInputs();
-        for (int i = 0; i < inputTensors.size(); i++) {
-            MSTensor tensor = inputTensors.get(i);
+        List<MSTensor> inputs = this.getInputs();
+        for (int i = 0; i < inputs.size(); i++) {
+            MSTensor tensor = inputs.get(i);
             if (tensor.tensorName().equals(tensorName)) {
                 return tensor;
             }
@@ -351,20 +351,20 @@ public class Model {
     /**
      * Export model's weights, which can be used in micro only.
      *
-     * @param weightFile                  The path of exported weight file.
-     * @param isInference                 Whether to export weights from a reasoning model. Currently, only support`true`.
-     * @param enableFp16                  Float-weight is whether to be saved in float16 format.
-     * @param changeableWeightNames       The set the name of these weight tensors, whose shape is changeable.
-     * @return
+     * @param weightFile               The path of exported weight file.
+     * @param isInference              Whether to export weights from a reasoning model. Currently, only support`true`.
+     * @param enableFp16               Float-weight is whether to be saved in float16 format.
+     * @param changeableWeightNames    The set the name of these weight tensors, whose shape is changeable.
+     * @return                         Whether to export successfully
      */
     public boolean exportWeightsCollaborateWithMicro(String weightFile, boolean isInference,
-                                 boolean enableFp16, List<String> changeableWeightNames) {
+                                                     boolean enableFp16, List<String> changeableWeightNames) {
         if (weightFile == null || weightFile.length() == 0) {
             LOGGER.severe("Input params invalid.");
             return false;
         }
         return exportWeightsCollaborateWithMicro(modelPtr, weightFile, isInference, enableFp16,
-                             changeableWeightNames.toArray(new String[0]));
+                                                 changeableWeightNames.toArray(new String[0]));
     }
 
     /**

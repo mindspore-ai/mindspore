@@ -27,7 +27,8 @@
 #include "ir/func_graph.h"
 #include "frontend/expander/bprop/bprop.h"
 #include "pipeline/pynative/base.h"
-#include "mindspore/ccsrc/include/backend/kernel_graph.h"
+#include "pipeline/pynative/grad/bprop_pass.h"
+#include "include/backend/kernel_graph.h"
 #include "runtime/pynative/async/async_hqueue.h"
 
 namespace mindspore {
@@ -137,6 +138,7 @@ struct AdParam {
   OrderedSet<VariableAdjointPtr> variable_adjoint_set_;
   // Record cnode's input map for tape_
   expander::bprop::UserMap users_;
+  UserType reverse_users_;
   std::vector<std::tuple<AnfNodePtr, CNodePtr, size_t>> lazy_user_data_;
 };
 using AdParamPtr = std::shared_ptr<AdParam>;
@@ -163,6 +165,7 @@ class AutoGradCellImpl {
   // Input node is user cnode one of input, index is user input index
   // User->input(index) is input node
   void AddUser(const AnfNodePtr &input, const CNodePtr &user, size_t index);
+  void AddReverseUser(const AnfNodePtr &input, const CNodePtr &user, size_t index);
   inline bool grad_by_value() { return grad_by_value_; }
 
  private:
@@ -176,6 +179,8 @@ class AutoGradCellImpl {
   CNodePtr GetBPropCNode(const GradParamPtr &grad_param, const AnfNodePtrList &args, const FuncGraphPtr &bprop_graph,
                          bool cache_hit, AnfNodePtr *const tape_dout);
   void GradGraphByExpander(const GradParamPtr &grad_param);
+  void GradCNode(const PrimitivePtr &prim, const CNodePtr &cnode, const GradParamPtr &grad_param,
+                 const ValuePtrList &inputs_value, AnfNodePtrList *cnode_inputs);
   ValuePtrList GetInputArgs(const CNodePtr &cnode, AnfNodePtrList *cnode_inputs) const;
   void CreateParameterAdjoint(const GradParamPtr &grad_param) const;
   void ProcessMetaFuncGraphOp(const GradParamPtr &grad_param, const PrimitivePtr &prim, const CNodePtr &cnode,
@@ -183,11 +188,14 @@ class AutoGradCellImpl {
   // Construct input as cnode for expander
   CNodePtr ConstructBpropGraphInput(const GradParamPtr &grad_param, const AnfNodePtr &dout,
                                     const VariableAdjointPtr &variable_adjoint, bool is_custom_prim);
+  void PrepareGradCNodeInputs(const PrimitivePtr &prim, const CNodePtr &cnode, ValuePtrList *inputs_value,
+                              AnfNodePtrList *cnode_inputs);
   // Back propagate for one node;
   void UpdateNextEdgesAsync(const VariableAdjointPtr &variable, const std::vector<CNodePtr> &dins,
                             const GradParamPtr &grad_param);
   void UpdateNextEdges(const VariableAdjointPtr &variable, const std::vector<CNodePtr> &dins,
-                       const ValuePtrList &input_value, const abstract::AbstractBasePtrList &abs, bool grad_by_value);
+                       const ValuePtrList &inputs_value, const abstract::AbstractBasePtrList &abs,
+                       const string &op_name = "");
   void UpdateNextEdge(const FunctionNodePtr &fn, const AnfNodePtr &din, const ValuePtr &input_arg,
                       const AbstractBasePtr &abs);
 
@@ -208,7 +216,7 @@ class AutoGradCellImpl {
   void ReplacePrimalParameter(bool has_sens_arg);
   void UpdateTapeParameter(const tensor::TensorPtr &tensor);
   void DoParameterReplaceByManager(bool has_sens_arg);
-  void DoParameterReplaceByUser(bool has_sens_arg);
+  void DoParameterReplaceByUser(bool has_sens_arg, UserType *user);
   // Set sens and weights parameter nodes by user input info
   void SetSensAndWeights(const tensor::TensorPtrList &weights, bool has_sens_arg);
   // get last reverse iterator
@@ -242,6 +250,7 @@ class AutoGradCellImpl {
 
   // Last cnode of this Cell, may be a primitive op or cell with user defined bprop.
   AdParamPtr ad_param_{nullptr};
+  std::shared_ptr<bprop_pass::PyNativePassForward> pass_forward_;
   // Top cell inputs
   std::vector<std::pair<AnfNodePtr, VariableAdjointPtr>> cell_inputs_;
   // These weights need to calculate gradient.

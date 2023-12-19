@@ -253,14 +253,33 @@ EvalResultPtr ConvertToPyInterpretCall(const CNodePtr &cnode, const AnfNodeConfi
   // Handle inputs.
   const std::string call_prefix = "__input_";
   for (size_t i = 1; i < cnode_inputs.size(); ++i) {
-    const std::string cur_str = call_prefix + std::to_string(i - 1) + "__";
     auto cur_node = cnode_inputs[i];
     if (IsPrimitiveCNode(cur_node, prim::kPrimMakeKeywordArg)) {
-      script_buffer << "**";
+      const std::string value_cur_str = call_prefix + "_value_" + std::to_string(i - 1) + "__";
+      constexpr size_t key_inputs_index = 1;
+      constexpr size_t value_inputs_index = 2;
+      constexpr size_t expect_inputs_size = 3;
+      if (cur_node->cast<CNodePtr>()->size() != expect_inputs_size) {
+        MS_LOG(INTERNAL_EXCEPTION) << "The make_keyword_arg node should have " << expect_inputs_size
+                                   << " inputs, but got " << cnode->size();
+      }
+      auto key_node = cur_node->cast<CNodePtr>()->input(key_inputs_index);
+      if (!IsValueNode<StringImm>(key_node)) {
+        MS_LOG(INTERNAL_EXCEPTION) << "The key in make_keyword args must be string, but got "
+                                   << key_node->DebugString();
+      }
+      auto key_string = GetValue<std::string>(GetValueNode(key_node));
+      std::string key_value_str = key_string + "=" + value_cur_str;
+      (void)local_key_inputs.emplace_back(NewValueNode(value_cur_str));
+      script_buffer << key_value_str << ",";
+      auto value_node = cur_node->cast<CNodePtr>()->input(value_inputs_index);
+      (void)local_value_inputs.emplace_back(value_node);
+    } else {
+      const std::string cur_str = call_prefix + std::to_string(i - 1) + "__";
+      script_buffer << cur_str << ",";
+      (void)local_key_inputs.emplace_back(NewValueNode(cur_str));
+      (void)local_value_inputs.emplace_back(cur_node);
     }
-    script_buffer << cur_str << ",";
-    (void)local_key_inputs.emplace_back(NewValueNode(cur_str));
-    (void)local_value_inputs.emplace_back(cur_node);
   }
   script_buffer << ")";
   const auto &script = script_buffer.str();
@@ -277,7 +296,11 @@ EvalResultPtr ConvertToPyInterpretCall(const CNodePtr &cnode, const AnfNodeConfi
 }
 
 EvalResultPtr ParsePyObjToFunc(const py::object &py_fn, const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
-  auto list_func_fg = parse::ParsePythonCode(py_fn);
+  FuncGraphPtr list_func_fg = nullptr;
+  {
+    MS_LOG_TRY_CATCH_SCOPE;
+    list_func_fg = parse::ParsePythonCode(py_fn);
+  }
   if (list_func_fg != nullptr) {
     auto fg = cnode->func_graph();
     MS_EXCEPTION_IF_NULL(fg);

@@ -82,6 +82,11 @@ Status SplitVInfo::GetAttrs() {
   }
   axis_ = LongToSize(axis);
 
+  auto prim = GetCNodePrimitive(cnode_);
+  if (prim->HasAttr(parallel::SKIP_REDISTRIBUTION)) {
+    skip_redistribution_ = GetValue<bool>(prim->GetAttr(parallel::SKIP_REDISTRIBUTION));
+  }
+
   return SUCCESS;
 }
 
@@ -103,7 +108,7 @@ Status SplitInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  if (stra[0][axis_] != 1) {
+  if (stra[0][axis_] != 1 && !skip_redistribution_) {
     MS_LOG(ERROR) << name_ << ": The axis can not be split";
     return FAILED;
   }

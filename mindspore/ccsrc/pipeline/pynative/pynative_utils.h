@@ -58,7 +58,7 @@ struct Common {
   static ShapeVector GetShapeFromAbstract(const abstract::AbstractBasePtr &abs);
   static ValuePtr CreatOutputTensorValueByAbstract(const abstract::AbstractBasePtr &abs);
   static void ReplaceCNodeWithValueNode(const FuncGraphPtr &bprop_graph);
-  static std::shared_ptr<PyNativeExecutor> GetPyNativeExecutor();
+  static const std::shared_ptr<PyNativeExecutor> &GetPyNativeExecutor();
   static void StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info);
   static TensorPtr StubNodeToTensor(const ValuePtr &value);
   static std::optional<tensor::TensorPtr> StubNodeToTensorOptional(const std::optional<ValuePtr> &value);
@@ -79,6 +79,7 @@ struct Common {
   static void SetGraphInputAndWeightsInfo(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &func_graph,
                                           const TopCellInfoPtr &top_cell);
   static void ProcessTupleParam(const FuncGraphPtr &bprop_graph, size_t position);
+  static void FreeFuncGraphForwardNodes(const FuncGraphPtr &func_graph);
 };
 
 // Parser python
@@ -120,15 +121,24 @@ struct PyBoost {
   static FrontendOpRunInfoPtr Init(const py::args &args);
   static void DoGrad(const FrontendOpRunInfoPtr &op_run_info);
   static void MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const std::vector<TensorPtr> &outputs);
+  static void UpdateOutputTensorGradInfo(const std::vector<TensorPtr> &outputs);
   static void UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &abstract);
   static void UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<ValuePtr> &op_inputs,
                               const FrontendOpRunInfoPtr &op_run_info);
+  static py::object RunPyFunction(const py::args &args);
   template <typename T>
   static ValuePtr OptionalToValue(const std::optional<T> &val) {
     if (!val.has_value()) {
       return kNone;
     }
     return val.value();
+  }
+
+  template <typename Tuple, size_t... N>
+  static std::vector<ValuePtr> TupleToVector(const Tuple &tuple, std::index_sequence<N...>) {
+    std::vector<ValuePtr> inputs;
+    ((void)inputs.emplace_back(OptionalToValue(std::get<N>(tuple))), ...);
+    return inputs;
   }
 
   template <typename T>
@@ -140,13 +150,14 @@ struct PyBoost {
   static auto SetPyBoostCastForInputs(const FrontendOpRunInfoPtr &op_run_info, T... t) {
     MS_EXCEPTION_IF_NULL(op_run_info);
     // For auto grad use
-    op_run_info->op_grad_info->input_value = {OptionalToValue(t)...};
-    op_run_info->input_size = sizeof...(t);
+
     if (op_run_info->base_op_run_info.op_name == kCast) {
       return std::make_tuple(t...);
     }
     const auto &pyboost_cast_operation = Common::GetPyNativeExecutor()->forward_executor()->pyboost_cast_operation();
     const auto &ret = pyboost_cast_operation->DoMixPrecisionCast(op_run_info, t...);
+    op_run_info->op_grad_info->input_value = TupleToVector(ret, std::make_index_sequence<sizeof...(t)>());
+    op_run_info->input_size = sizeof...(t);
     return pyboost_cast_operation->DoImplicitCast(op_run_info, ret);
   }
 };

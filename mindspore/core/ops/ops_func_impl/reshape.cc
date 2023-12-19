@@ -56,8 +56,8 @@ BaseShapePtr ReshapeFuncImpl::InferShape(const PrimitivePtr &primitive,
       if (!IsDynamic(input_shape_vec)) {
         // If shape has an element -1, and the input shape is known, the -1 dim can be inferred from the remaining
         // dimensions and the number of elements in the input.
-        auto input_element =
-          std::accumulate(input_shape_vec.begin(), input_shape_vec.end(), 1, std::multiplies<int64_t>());
+        auto input_element = std::accumulate(input_shape_vec.begin(), input_shape_vec.end(), static_cast<int64_t>(1),
+                                             std::multiplies<int64_t>());
         auto itr = std::find(shape_vec.begin(), shape_vec.end(), -1);
         auto index = LongToSize(std::distance(shape_vec.begin(), itr));
         auto computed_dim_value = input_element;
@@ -70,9 +70,10 @@ BaseShapePtr ReshapeFuncImpl::InferShape(const PrimitivePtr &primitive,
       }
     }
     if (!IsDynamic(input_shape_vec)) {
-      auto input_element =
-        std::accumulate(input_shape_vec.begin(), input_shape_vec.end(), 1, std::multiplies<int64_t>());
-      auto shape_number = std::accumulate(shape_vec.begin(), shape_vec.end(), 1, std::multiplies<int64_t>());
+      auto input_element = std::accumulate(input_shape_vec.begin(), input_shape_vec.end(), static_cast<int64_t>(1),
+                                           std::multiplies<int64_t>());
+      auto shape_number =
+        std::accumulate(shape_vec.begin(), shape_vec.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
       if (input_element != shape_number) {
         MS_EXCEPTION(ValueError) << "For primitive[" << primitive->name()
                                  << "], the accumulate of x_shape must be equal to out_shape, but got x_shape: "

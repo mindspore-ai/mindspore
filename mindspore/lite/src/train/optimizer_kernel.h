@@ -46,7 +46,7 @@ class OptimizerKernel : public LiteKernel {
   WeightUpdateMode get_optimizer_mode() { return weight_update_mod_; }
 
   int Prepare() override {
-    default_lr_ = reinterpret_cast<float *>(in_tensors_.at(lr_idx_)->MutableData())[0];
+    default_lr_ = reinterpret_cast<float *>(in_tensors_.at(static_cast<size_t>(lr_idx_))->MutableData())[0];
     lr_ = default_lr_;
     return RET_OK;
   }
@@ -209,7 +209,7 @@ class OptimizerKernel : public LiteKernel {
     if (ctx->IsCpuFloat16Enabled()) {
       auto t = in_tensors_.at(grad_idx_);
       auto gradient = reinterpret_cast<float *>(t->data());
-      int length = in_tensors_.at(grad_idx_)->ElementsNum();
+      int length = static_cast<int>(in_tensors_.at(static_cast<size_t>(grad_idx_))->ElementsNum());
 
       for (int i = 0; i < length; ++i) {
         if (std::isnan(gradient[i]) || std::isinf(gradient[i])) {

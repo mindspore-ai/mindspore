@@ -42,7 +42,7 @@ def run_testcase(testcase_name, expect_memory_usage):
     with open(log_filename, "r") as f:
         data = f.read()
     mem_uses = re.findall(match_dyn_mem, data)
-    assert len(mem_uses) == 3
+    assert len(mem_uses) == 2
     max_mem = get_max(mem_uses)
     assert max_mem == expect_memory_usage
     # Clear log file
@@ -50,6 +50,8 @@ def run_testcase(testcase_name, expect_memory_usage):
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_recompute_cell_recompute():
     """
@@ -57,10 +59,12 @@ def test_recompute_cell_recompute():
     Description: Each block is set recompute by the cell recompute api.
     Expectation: Run successfully and the memory usage is reduced.
     """
-    run_testcase("test_recompute_block_recompute", 34)
+    run_testcase("test_recompute_block_recompute", 32)
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_recompute_op_recompute1():
     """
@@ -68,10 +72,12 @@ def test_recompute_op_recompute1():
     Description: Each block is set recompute by the primitive recompute api.
     Expectation: Run successfully and the memory usage is reduced.
     """
-    run_testcase("test_recompute_op_recompute1", 58)
+    run_testcase("test_recompute_op_recompute1", 51)
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_recompute_op_recompute2():
     """
@@ -79,10 +85,12 @@ def test_recompute_op_recompute2():
     Description: Each block is set recompute by the primitive recompute api.
     Expectation: Run successfully and the memory usage is reduced.
     """
-    run_testcase("test_recompute_op_recompute2", 49)
+    run_testcase("test_recompute_op_recompute2", 37)
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_recompute_cell_and_op_recompute1():
     """
@@ -90,10 +98,12 @@ def test_recompute_cell_and_op_recompute1():
     Description: Each block is set recompute by both the primitive and cell recompute api.
     Expectation: Run successfully and the memory usage is reduced.
     """
-    run_testcase("test_recompute_cell_and_op_recompute1", 58)
+    run_testcase("test_recompute_cell_and_op_recompute1", 51)
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_recompute_cell_and_op_recompute2():
     """
@@ -101,4 +111,4 @@ def test_recompute_cell_and_op_recompute2():
     Description: Each block is set recompute by both the primitive and cell recompute api.
     Expectation: Run successfully and the memory usage is reduced.
     """
-    run_testcase("test_recompute_cell_and_op_recompute2", 64)
+    run_testcase("test_recompute_cell_and_op_recompute2", 51)

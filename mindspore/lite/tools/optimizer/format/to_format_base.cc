@@ -294,7 +294,9 @@ STATUS ToFormatBase::DealConv2dTransposeFusionNode(const FuncGraphPtr &func_grap
   MS_CHECK_TRUE_MSG(gather_input != nullptr, RET_ERROR, "gather input is nullptr");
   auto abstract = gather_input->abstract();
   MS_CHECK_TRUE_MSG(abstract != nullptr, RET_ERROR, "abstract is nullptr");
-  std::vector<int> gather_indices_n, gather_indices_hw, gather_indices_c;
+  std::vector<int> gather_indices_n;
+  std::vector<int> gather_indices_hw;
+  std::vector<int> gather_indices_c;
   auto value_ptr = MakeValue<int64_t>(NCHW);
   if (perm == kNH2NC) {          // NHWC To NCHW
     gather_indices_n = {0};      // fetch N dimension
@@ -461,6 +463,7 @@ bool ToFormatBase::BasicProcess(const FuncGraphPtr &func_graph, bool main_graph)
       return false;
     }
   }
+
   if (main_graph && save_type_ != kMindIR) {
     status = HandleGraphInput(func_graph);
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {

@@ -38,6 +38,102 @@ std::pair<std::vector<MSTensorPtr>, Status> PyLLMEnginePredict(LLMEngine *llm_en
   return {MSTensorToMSTensorPtr(outputs), status};
 }
 
+std::pair<std::vector<MSTensorPtr>, Status> PyLLMEnginePredictBatch(LLMEngine *llm_engine,
+                                                                    const std::vector<LLMReq> &req,
+                                                                    const std::vector<MSTensorPtr> &inputs_ptr) {
+  if (llm_engine == nullptr) {
+    MS_LOG(ERROR) << "Model object cannot be nullptr";
+    return {};
+  }
+  std::vector<MSTensor> inputs = MSTensorPtrToMSTensor(inputs_ptr);
+  std::vector<MSTensor> outputs;
+  auto status = llm_engine->Predict(req, inputs, &outputs);
+  if (!status.IsOk()) {
+    return {{}, status};
+  }
+  return {MSTensorToMSTensorPtr(outputs), status};
+}
+
+Status PyLLMEnginePreloadPromptPrefix(LLMEngine *llm_engine, const LLMReq &req,
+                                      const std::vector<MSTensorPtr> &inputs_ptr) {
+  if (llm_engine == nullptr) {
+    MS_LOG(ERROR) << "Model object cannot be nullptr";
+    return kLiteError;
+  }
+  std::vector<MSTensor> inputs = MSTensorPtrToMSTensor(inputs_ptr);
+  return llm_engine->PreloadPromptPrefix(req, inputs);
+}
+
+std::pair<Status, std::vector<Status>> PyLLMEngineLinkClusters(LLMEngine *llm_engine,
+                                                               const std::vector<LLMClusterInfo> &clusters,
+                                                               int32_t timeout) {
+  if (llm_engine == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine object cannot be nullptr";
+    return {kLiteError, {}};
+  }
+  std::vector<Status> rets;
+  auto ret = llm_engine->LinkClusters(clusters, &rets, timeout);
+  return {ret, rets};
+}
+
+std::pair<Status, std::vector<Status>> PyLLMEngineUnlinkClusters(LLMEngine *llm_engine,
+                                                                 const std::vector<LLMClusterInfo> &clusters,
+                                                                 int32_t timeout) {
+  if (llm_engine == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine object cannot be nullptr";
+    return {kLiteError, {}};
+  }
+  std::vector<Status> rets;
+  auto ret = llm_engine->UnlinkClusters(clusters, &rets, timeout);
+  return {ret, rets};
+}
+
+void PyLLMClusterAppendLocalIpInfo(LLMClusterInfo *cluster_info, uint32_t ip, uint16_t port) {
+  if (cluster_info == nullptr) {
+    MS_LOG(ERROR) << "LLMClusterInfo object cannot be nullptr";
+    return;
+  }
+  LLMIpInfo ip_info;
+  ip_info.ip = ip;
+  ip_info.port = port;
+  cluster_info->local_ip_infos.push_back(ip_info);
+}
+
+std::vector<std::pair<uint32_t, uint16_t>> PyLLMClusterGetLocalIpInfo(LLMClusterInfo *cluster_info) {
+  if (cluster_info == nullptr) {
+    MS_LOG(ERROR) << "LLMClusterInfo object cannot be nullptr";
+    return {};
+  }
+  std::vector<std::pair<uint32_t, uint16_t>> ip_infos;
+  auto &local_ip_infos = cluster_info->local_ip_infos;
+  (void)std::transform(local_ip_infos.begin(), local_ip_infos.end(), std::back_inserter(ip_infos),
+                       [](auto &item) { return std::make_pair(item.ip, item.port); });
+  return ip_infos;
+}
+
+void PyLLMClusterAppendRemoteIpInfo(LLMClusterInfo *cluster_info, uint32_t ip, uint16_t port) {
+  if (cluster_info == nullptr) {
+    MS_LOG(ERROR) << "LLMClusterInfo object cannot be nullptr";
+    return;
+  }
+  LLMIpInfo ip_info;
+  ip_info.ip = ip;
+  ip_info.port = port;
+  cluster_info->remote_ip_infos.push_back(ip_info);
+}
+
+std::vector<std::pair<uint32_t, uint16_t>> PyLLMClusterGetRemoteIpInfo(LLMClusterInfo *cluster_info) {
+  if (cluster_info == nullptr) {
+    MS_LOG(ERROR) << "LLMClusterInfo object cannot be nullptr";
+    return {};
+  }
+  std::vector<std::pair<uint32_t, uint16_t>> ip_infos;
+  auto &remote_ip_infos = cluster_info->remote_ip_infos;
+  (void)std::transform(remote_ip_infos.begin(), remote_ip_infos.end(), std::back_inserter(ip_infos),
+                       [](auto &item) { return std::make_pair(item.ip, item.port); });
+  return ip_infos;
+}
+
 void LLMEnginePyBind(const py::module &m) {
   (void)py::enum_<LLMRole>(m, "LLMRole_", py::arithmetic())
     .value("Prompt", LLMRole::kLLMRolePrompt)
@@ -48,7 +144,17 @@ void LLMEnginePyBind(const py::module &m) {
     .def_readwrite("req_id", &LLMReq::req_id)
     .def_readwrite("prompt_length", &LLMReq::prompt_length)
     .def_readwrite("prompt_cluster_id", &LLMReq::prompt_cluster_id)
-    .def_readwrite("decoder_cluster_id", &LLMReq::decoder_cluster_id);
+    .def_readwrite("decoder_cluster_id", &LLMReq::decoder_cluster_id)
+    .def_readwrite("prefix_id", &LLMReq::prefix_id);
+
+  py::class_<LLMClusterInfo>(m, "LLMClusterInfo_")
+    .def(py::init<>())
+    .def_readwrite("remote_cluster_id", &LLMClusterInfo::remote_cluster_id)
+    .def_readwrite("remote_role_type", &LLMClusterInfo::remote_role_type)
+    .def("append_local_ip_info", &PyLLMClusterAppendLocalIpInfo)
+    .def("append_remote_ip_info", &PyLLMClusterAppendRemoteIpInfo)
+    .def("get_local_ip_infos", &PyLLMClusterGetLocalIpInfo)
+    .def("get_remote_ip_infos", &PyLLMClusterGetRemoteIpInfo);
 
   py::class_<LLMEngineStatus>(m, "LLMEngineStatus_")
     .def(py::init<>())
@@ -59,7 +165,14 @@ void LLMEnginePyBind(const py::module &m) {
     .def("init", &LLMEngine::Init, py::call_guard<py::gil_scoped_release>())
     .def("finalize", &LLMEngine::Finalize, py::call_guard<py::gil_scoped_release>())
     .def("predict", &PyLLMEnginePredict, py::call_guard<py::gil_scoped_release>())
+    .def("predict_batch", &PyLLMEnginePredictBatch, py::call_guard<py::gil_scoped_release>())
     .def("complete_request", &LLMEngine::CompleteRequest, py::call_guard<py::gil_scoped_release>())
-    .def("fetch_status", &LLMEngine::FetchStatus, py::call_guard<py::gil_scoped_release>());
+    .def("fetch_status", &LLMEngine::FetchStatus, py::call_guard<py::gil_scoped_release>())
+    .def("preload_prompt_prefix", &PyLLMEnginePreloadPromptPrefix, py::call_guard<py::gil_scoped_release>())
+    .def("release_prompt_prefix", &LLMEngine::ReleasePromptPrefix, py::call_guard<py::gil_scoped_release>())
+    .def("pull_kv", &LLMEngine::PullKV, py::call_guard<py::gil_scoped_release>())
+    .def("merge_kv", &LLMEngine::MergeKV, py::call_guard<py::gil_scoped_release>())
+    .def("link_clusters", &PyLLMEngineLinkClusters, py::call_guard<py::gil_scoped_release>())
+    .def("unlink_clusters", &PyLLMEngineUnlinkClusters, py::call_guard<py::gil_scoped_release>());
 }
 }  // namespace mindspore::lite

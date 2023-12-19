@@ -23,8 +23,6 @@
 #include "include/backend/optimizer/optimizer.h"
 #ifdef ENABLE_D
 #include "runtime/hardware/device_context_manager.h"
-#else
-#include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.h"
 #endif
 #include "cxx_api/model/acl/model_converter.h"
 #include "cxx_api/model/acl/acl_model_options.h"
@@ -67,7 +65,6 @@ GraphId MultiGraphAclSession::CompileGraphImpl(const AnfNodePtrList &lst, const 
 #else
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>("310_multi_graph_pm");
-  pm->AddPass(std::make_shared<opt::InsertPlaceholderForDynamicRNN>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
 #endif

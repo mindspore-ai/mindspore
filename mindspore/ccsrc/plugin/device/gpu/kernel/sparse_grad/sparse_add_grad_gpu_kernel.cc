@@ -98,7 +98,6 @@ bool SparseAddGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
-  is_need_retrieve_output_shape_ = true;
   return true;
 }
 

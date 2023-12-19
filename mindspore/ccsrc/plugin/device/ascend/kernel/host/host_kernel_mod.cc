@@ -16,10 +16,9 @@
 
 #include "plugin/device/ascend/kernel/host/host_kernel_mod.h"
 
-#include "runtime/mem.h"
 #include "utils/ms_context.h"
 #include "kernel/common_utils.h"
-#include "runtime/device/kernel_runtime.h"
+#include "kernel/framework_utils.h"
 
 namespace mindspore {
 namespace kernel {

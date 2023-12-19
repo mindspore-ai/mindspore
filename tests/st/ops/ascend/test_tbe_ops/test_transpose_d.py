@@ -110,7 +110,7 @@ def test_transpose_dynamic_perm2(mode):
     Expectation: none.
     """
     context.set_context(mode=mode)
-    perm = (1, 2, 3, -1)
+    perm = (1, 2, -1, 0)
     in_shape = (8, 24, 1, 1)
     np_value = np.random.uniform(0, 100, size=in_shape).astype(np.float16)
     transpose = Net(perm)

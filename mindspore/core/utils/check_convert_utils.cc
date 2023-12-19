@@ -320,11 +320,11 @@ size_t CheckAndConvertUtils::CheckAbstractShapeSame(const std::vector<AbstractBa
   }
   const auto &first_elem_abs = abs_list[0];
   MS_EXCEPTION_IF_NULL(first_elem_abs);
-  auto abs1_shape = first_elem_abs->BuildShape();
+  auto abs1_shape = first_elem_abs->GetShape();
   MS_EXCEPTION_IF_NULL(abs1_shape);
   for (size_t i = 0; i < abs_list.size(); ++i) {
     MS_EXCEPTION_IF_NULL(abs_list[i]);
-    auto abs2_shape = abs_list[i]->BuildShape();
+    auto abs2_shape = abs_list[i]->GetShape();
     MS_EXCEPTION_IF_NULL(abs2_shape);
     if (*abs1_shape != *abs2_shape) {
       MS_LOG(ERROR) << "Abstract shapes are not same, shape1:" << abs1_shape->ToString()

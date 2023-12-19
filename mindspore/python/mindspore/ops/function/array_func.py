@@ -31,7 +31,6 @@ from mindspore.ops.operations._inner_ops import DynamicBroadcastTo
 from mindspore.ops.operations._sequence_ops import TupleToTensor
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.operations._sequence_ops import TensorToList
-from mindspore.ops.operations.math_ops import Diagonal
 
 from mindspore.ops.operations.array_ops import (
     UniqueConsecutive,
@@ -62,55 +61,69 @@ from mindspore import _checkparam as validator
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
 
-from mindspore.ops.auto_generate import concat_
+from mindspore.ops.auto_generate import concat_, range, scatter_nd, deepcopy
 from mindspore.ops.operations.manually_defined import tile
 
-tuple_to_tensor_ = TupleToTensor()
+arg_max_with_value_ = P.ArgMaxWithValue()
+batch_to_space_nd_v2_ = P.BatchToSpaceNDV2()
+cast_ = P.Cast()
+diag_ = P.Diag()
+dynamic_broadcast_to_ = DynamicBroadcastTo()
+expand_ = Expand()
+expand_dims_ = P.ExpandDims()
 eye_ = P.Eye()
 fills_ = Fills()
-ones_ = P.Ones()
-ones_like_ = P.OnesLike()
-tile_ = P.Tile()
-unique_with_pad_ = P.UniqueWithPad()
-size_ = P.Size()
-shape_ = P.Shape()
-rank_ = P.Rank()
-tensor_shape_ = P.TensorShape()
-reshape_ = P.Reshape()
-tensor_slice = P.Slice()
-expand_dims_ = P.ExpandDims()
-transpose_ = P.Transpose()
-scatter_add_ = P.ScatterAdd()
-scatter_max_ = P.ScatterMax()
-scatter_min_ = P.ScatterMin()
-scatter_mul_ = P.ScatterMul()
-scatter_div_ = P.ScatterDiv()
-scatter_nd_ = P.ScatterNd()
+fillv2_ = P.FillV2()
+flatten_ = P.Flatten()
 gather_ = P.Gather()
 gather_d_ = P.GatherD()
 gather_nd_ = P.GatherNd()
-nonzero_ = NonZero()
-scalar_cast_ = P.ScalarCast()
-tensor_scatter_add_ = P.TensorScatterAdd()
-tensor_scatter_sub_ = P.TensorScatterSub()
-tensor_scatter_mul_ = P.TensorScatterMul()
-tensor_scatter_div_ = P.TensorScatterDiv()
-tensor_scatter_min_ = P.TensorScatterMin()
-tensor_scatter_max_ = P.TensorScatterMax()
-scalar_to_tensor_ = P.ScalarToTensor()
-tuple_to_array_ = P.TupleToArray()
+ger_ = P.Ger()
+index_fill_ = IndexFill()
+lstsq_ = Lstsq()
 masked_select_ = P.MaskedSelect()
 matrix_band_part_ = P.array_ops.MatrixBandPart()
-ger_ = P.Ger()
-diag_ = P.Diag()
-zeros_like_ = P.ZerosLike()
-cast_ = P.Cast()
-tensor_select_ = P.Select()
-index_fill_ = IndexFill()
-unsorted_segment_sum_ = P.UnsortedSegmentSum()
+nonzero_ = NonZero()
+ones_ = P.Ones()
+ones_like_ = P.OnesLike()
 population_count_ = P.PopulationCount()
-reduce_max = P.ReduceMax()
-reduce_min = P.ReduceMin()
+range_ = P.Range()
+rank_ = P.Rank()
+reduce_max_ = P.ReduceMax()
+reduce_min_ = P.ReduceMin()
+reshape_ = P.Reshape()
+scalar_cast_ = P.ScalarCast()
+scalar_to_array_ = P.ScalarToArray()
+scalar_to_tensor_ = P.ScalarToTensor()
+scatter_add_ = P.ScatterAdd()
+scatter_div_ = P.ScatterDiv()
+scatter_max_ = P.ScatterMax()
+scatter_min_ = P.ScatterMin()
+scatter_mul_ = P.ScatterMul()
+scatter_nd_ = P.ScatterNd()
+scatter_update_ = P.ScatterUpdate()
+shape_ = P.Shape()
+size_ = P.Size()
+tensor_scatter_add_ = P.TensorScatterAdd()
+tensor_scatter_div_ = P.TensorScatterDiv()
+tensor_scatter_max_ = P.TensorScatterMax()
+tensor_scatter_min_ = P.TensorScatterMin()
+tensor_scatter_mul_ = P.TensorScatterMul()
+tensor_scatter_sub_ = P.TensorScatterSub()
+tensor_select_ = P.Select()
+tensor_shape_ = P.TensorShape()
+tensor_slice = P.Slice()
+tile_ = P.Tile()
+transpose_ = P.Transpose()
+tuple_to_array_ = P.TupleToArray()
+tuple_to_tensor_ = TupleToTensor()
+unique_ = P.Unique()
+unique_with_pad_ = P.UniqueWithPad()
+unsorted_segment_max_ = P.UnsortedSegmentMax()
+unsorted_segment_min_ = P.UnsortedSegmentMin()
+unsorted_segment_prod_ = P.UnsortedSegmentProd()
+unsorted_segment_sum_ = P.UnsortedSegmentSum()
+zeros_like_ = P.ZerosLike()
 
 
 @_primexpr
@@ -240,8 +253,7 @@ def arange(start=0, end=None, step=1, *, dtype=None):
     if start.shape != () or end.shape != () or step.shape != ():
         raise ValueError(f"For arange, the input args must be a TensorScalar,"
                          f" but got start shape:{start.shape}, end shape:{end.shape}, step shape:{step.shape}")
-    range_op = _get_cache_prim(P.Range)()
-    data = range_op(start, end, step)
+    data = range_(start, end, step)
     if dtype is not None:
         data = cast_(data, dtype)
     return data
@@ -474,8 +486,7 @@ def where(condition, x, y):
     condition = broadcast_to(condition, output_shape)
     x = broadcast_to(x, output_shape)
     y = broadcast_to(y, output_shape)
-    _select = P.Select()
-    return _select(condition, x, y)
+    return tensor_select_(condition, x, y)
 
 
 def reverse(x, axis):
@@ -515,7 +526,7 @@ def reverse(x, axis):
         [[8 7 6 5]
          [4 3 2 1]]
     """
-    return P.ReverseV2(axis)(x)
+    return _get_cache_prim(P.ReverseV2)(axis)(x)
 
 
 def ravel(input):
@@ -662,15 +673,15 @@ def one_hot(indices, depth, on_value=1, off_value=0, axis=-1):
 
     Note:
         If the input `indices` has rank `N`, the output will have rank `N+1`.
-        The new axis is created at dimension `axis`.
+        The new axis is created at dimension `axis`. On Ascend, if `on_value` is Int64 dtype, `indices` must be
+        Int64 dtype.
 
     Args:
         indices(Tensor): A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
             Data type must be int32 or int64.
         depth(int): A scalar defining the depth of the one-hot dimension.
         on_value(Union[Tensor, int, float], optional): A value to fill in output when `indices[j] = i`.
-            Support uint8, uint16, uint32, uint64, int8, int16, int32, int64, float16, float32, float64,
-            bool, complex64, complex128. Default: ``1`` .
+            Data type must be int32, int64, float16 or float32. Default: ``1`` .
         off_value(Union[Tensor, int, float], optional): A value to fill in output when `indices[j] != i`.
             Has the same data type as `on_value`. Default: ``0`` .
         axis(int, optional): Position to insert the value. e.g. If shape of `self` is :math:`(N, C)`, and `axis` is -1,
@@ -679,11 +690,13 @@ def one_hot(indices, depth, on_value=1, off_value=0, axis=-1):
             Default: ``-1`` .
 
     Returns:
-        Tensor, one-hot tensor. Tensor of shape :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)`.
+        Tensor, one-hot tensor. Tensor of shape :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)`,
+            and it has the same data type as `on_value`.
 
     Raises:
         TypeError: If `axis` or `depth` is not an int.
         TypeError: If dtype of `indices` is not int32 or int64.
+        TypeError: If dtype of `on_value` is not int32, int64, float16 or float32.
         TypeError: If `indices`, `on_value` or `off_value` is not a Tensor.
         ValueError: If `axis` is not in range [-1, ndim].
         ValueError: If `depth` is less than 0.
@@ -745,7 +758,7 @@ def fill(type, shape, value):  # pylint: disable=redefined-outer-name
          [0. 0. 0.]]
     """
     value = cast_(value, type)
-    return _get_cache_prim(P.FillV2)()(shape, value)
+    return fillv2_(shape, value)
 
 
 def full(size, fill_value, *, dtype=None):  # pylint: disable=redefined-outer-name
@@ -885,9 +898,9 @@ def chunk(input, chunks, axis=0):
     length_along_dim = arr_shape[arr_axis]
 
     if chunks > length_along_dim:
-        res = P.Split(arr_axis, length_along_dim)(input)
+        res = _get_cache_prim(P.Split)(arr_axis, length_along_dim)(input)
     elif length_along_dim % chunks == 0:
-        res = P.Split(arr_axis, chunks)(input)
+        res = _get_cache_prim(P.Split)(arr_axis, chunks)(input)
     else:
         block_size = int(np.ceil(length_along_dim / chunks))
         true_chunks = int(length_along_dim // block_size)
@@ -897,9 +910,9 @@ def chunk(input, chunks, axis=0):
         size1 = _tuple_setitem(arr_shape, arr_axis, length1)
         start2 = _tuple_setitem(start1, arr_axis, length1)
         size2 = _tuple_setitem(arr_shape, arr_axis, length2)
-        res = P.Split(arr_axis, true_chunks)(tensor_slice(input, start1, size1))
+        res = _get_cache_prim(P.Split)(arr_axis, true_chunks)(tensor_slice(input, start1, size1))
         if length2:
-            res += P.Split(arr_axis, 1)(tensor_slice(input, start2, size2))
+            res += _get_cache_prim(P.Split)(arr_axis, 1)(tensor_slice(input, start2, size2))
     return res
 
 
@@ -954,15 +967,17 @@ def ones(shape, dtype=None):  # pylint: disable=redefined-outer-name
          [1. 1.]]
     """
     _dtype = mstype.float32 if dtype is None else dtype
-    ones_op = _get_cache_prim(P.FillV2)()
     value = Tensor(1, _dtype)
     if isinstance(shape, int):
         shape = tuple([shape])
     elif isinstance(shape, list):
-        shape = Tensor(shape, dtype=mstype.int64)
+        if not shape:
+            shape = Tensor_(shape, dtype=mstype.int64)
+        else:
+            shape = Tensor(shape, dtype=mstype.int64)
     elif isinstance(shape, Tensor) and shape.ndim == 0 and shape.size == 1:
         shape = shape.reshape(1)
-    output = ones_op(shape, value)
+    output = fillv2_(shape, value)
     return output
 
 
@@ -995,8 +1010,7 @@ def ones_like(input, *, dtype=None):
         [[1 1]
          [1 1]]
     """
-    ones_like_op = _get_cache_prim(P.OnesLike)()
-    output = ones_like_op(input)
+    output = ones_like_(input)
     _dtype = input.dtype if dtype is None else dtype
     output = cast_(output, _dtype)
     return output
@@ -1030,16 +1044,18 @@ def zeros(size, dtype=None):  # pylint: disable=redefined-outer-name
         [[0. 0.]
          [0. 0.]]
     """
-    zero_op = _get_cache_prim(P.FillV2)()
     _dtype = mstype.float32 if dtype is None else dtype
     value = Tensor(0, _dtype)
     if isinstance(size, int):
         size = tuple([size])
     elif isinstance(size, list):
-        size = Tensor(size, dtype=mstype.int64)
+        if not size:
+            size = Tensor_(size, dtype=mstype.int64)
+        else:
+            size = Tensor(size, dtype=mstype.int64)
     elif isinstance(size, Tensor) and size.ndim == 0 and size.size == 1:
         size = size.reshape(1)
-    output = zero_op(size, value)
+    output = fillv2_(size, value)
     return output
 
 
@@ -1076,10 +1092,8 @@ def zeros_like(input, *, dtype=None):
          [0. 0.]]
     """
     _dtype = input.dtype if dtype is None else dtype
-    _zeros_like = _get_cache_prim(P.ZerosLike)()
-    _cast = _get_cache_prim(P.Cast)()
-    output = _zeros_like(input)
-    output = _cast(output, _dtype)
+    output = zeros_like_(input)
+    output = cast_(output, _dtype)
     return output
 
 
@@ -1134,15 +1148,11 @@ def unique(input):
         >>> print(idx)
         [0 1 2 1]
     """
-
-    unique_op = _get_cache_prim(P.Unique)()
-    reshape_op = _get_cache_prim(P.Reshape)()
-
     shape_x = input.shape
     length_x = get_x_shape(shape_x)
-    input = reshape_op(input, length_x)
-    y, idx = unique_op(input)
-    idx = reshape_op(idx, shape_x)
+    input = reshape_(input, length_x)
+    y, idx = unique_(input)
+    idx = reshape_(idx, shape_x)
     return y, idx
 
 
@@ -1527,7 +1537,7 @@ def reverse_sequence(x, seq_lengths, seq_dim, batch_dim=0):
         [[4. 3. 2. 1.]
          [8. 7. 6. 5.]]
     """
-    return P.ReverseSequence(seq_dim=seq_dim, batch_dim=batch_dim)(x, seq_lengths)
+    return _get_cache_prim(P.ReverseSequence)(seq_dim=seq_dim, batch_dim=batch_dim)(x, seq_lengths)
 
 
 def flatten(input, order='C', *, start_dim=1, end_dim=-1):
@@ -1596,7 +1606,7 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
             return reshape_(input, (-1,))
         perm = ops.make_range(0, x_rank)
         new_order = ops.tuple_reversed(perm)
-        input = _get_cache_prim(P.Transpose)()(input, new_order)
+        input = transpose_(input, new_order)
 
     # Handle the default case.
     x_shape = shape_(input)
@@ -1604,7 +1614,7 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
     if start_dim == 1 and end_dim == -1:
         if x_rank in (0, 1):
             return reshape_(input, (-1,))
-        return _get_cache_prim(P.Flatten)()(input)
+        return flatten_(input)
 
     # Check axis.
     start_dim = canonicalize_axis(start_dim, x_rank)
@@ -2646,112 +2656,6 @@ def scatter_div(input_x, indices, updates):
     """
     return scatter_div_(input_x, indices, updates)
 
-
-def scatter_nd(indices, updates, shape):
-    r"""
-    Scatters a tensor into a new tensor depending on the specified indices.
-
-    Creates an empty tensor with the given `shape`, and set values by scattering the update tensor
-    depending on indices. The empty tensor has rank :math:`P` and `indices` has rank :math:`Q`.
-
-    The `shape` is :math:`(s_0, s_1, ..., s_{P-1})`, where :math:`P \ge 1`.
-
-    `indices` has shape :math:`(i_0, i_1, ..., i_{Q-2}, N)`, where :math:`Q \ge 2` and :math:`N \le P`.
-
-    The last dimension of `indices` (with length :math:`N` ) indicates slices along the :math:`N` th dimension of the
-    empty tensor.
-
-    `updates` is a tensor of rank :math:`Q-1+P-N`, and
-    its shape is :math:`(i_0, i_1, ..., i_{Q-2}, s_N, s_{N+1}, ..., s_{P-1})`.
-
-    If `indices` contains duplicates, the duplicate `updates` are summed.
-
-    The following figure shows the calculation process of inserting two new value matrices into the first dimension
-    with rank-3:
-
-    .. image:: ScatterNd.png
-
-    Args:
-        indices (Tensor): Define the index of scattering in the new tensor with int32 or int64 data type.
-            The rank of `indices` must be at least 2 and `indices.shape[-1] <= len(shape)`.
-        updates (Tensor): Define the source Tensor to be updated.
-            It has shape `indices.shape[:-1] + shape[indices.shape[-1]:]`.
-        shape (tuple[int]): Define the shape of the output tensor, has the same data type as indices.
-            `shape` can not be empty, and the elements in `shape` must be greater than or equal to 1.
-
-    Returns:
-        Tensor, the new tensor, has the same type as `update` and the same shape as `shape`.
-
-    Raises:
-        TypeError: If `shape` is not a tuple.
-        ValueError: If any element of `shape` is less than 1.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
-        >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2],
-        ...                             [3, 3, 3, 3], [4, 4, 4, 4]],
-        ...                            [[1, 1, 1, 1], [2, 2, 2, 2],
-        ...                             [3, 3, 3, 3], [4, 4, 4, 4]]]), mindspore.float32)
-        >>> shape = (4, 4, 4)
-        >>> output = ops.scatter_nd(indices, updates, shape)
-        >>> print(output)
-        [[[1. 1. 1. 1.]
-          [2. 2. 2. 2.]
-          [3. 3. 3. 3.]
-          [4. 4. 4. 4.]]
-         [[0. 0. 0. 0.]
-          [0. 0. 0. 0.]
-          [0. 0. 0. 0.]
-          [0. 0. 0. 0.]]
-         [[1. 1. 1. 1.]
-          [2. 2. 2. 2.]
-          [3. 3. 3. 3.]
-          [4. 4. 4. 4.]]
-         [[0. 0. 0. 0.]
-          [0. 0. 0. 0.]
-          [0. 0. 0. 0.]
-          [0. 0. 0. 0.]]]
-        >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
-        >>> updates = Tensor(np.array([3.2, 1.1]), mindspore.float32)
-        >>> shape = (3, 3)
-        >>> output = ops.scatter_nd(indices, updates, shape)
-        >>> # In order to facilitate understanding, explain the operator pseudo-operation process step by step:
-        >>> # Step 1: Generate an empty Tensor of the specified shape according to the shape
-        >>> # [
-        >>> #     [0. 0. 0.]
-        >>> #     [0. 0. 0.]
-        >>> #     [0. 0. 0.]
-        >>> # ]
-        >>> # Step 2: Modify the data at the specified location according to the indicators
-        >>> # 0th row of indices is [0, 1], 0th row of updates is 3.2.
-        >>> # means that the empty tensor in the 0th row and 1st col set to 3.2
-        >>> # [
-        >>> #     [0. 3.2. 0.]
-        >>> #     [0. 0.   0.]
-        >>> #     [0. 0.   0.]
-        >>> # ]
-        >>> # 1th row of indices is [1, 1], 1th row of updates is 1.1.
-        >>> # means that the empty tensor in the 1th row and 1st col set to 1.1
-        >>> # [
-        >>> #     [0. 3.2. 0.]
-        >>> #     [0. 1.1  0.]
-        >>> #     [0. 0.   0.]
-        >>> # ]
-        >>> # The final result is as follows:
-        >>> print(output)
-        [[0. 3.2 0.]
-         [0. 1.1 0.]
-         [0. 0.  0.]]
-    """
-    return scatter_nd_(indices, updates, shape)
-
-
 def scatter_update(input_x, indices, updates):
     r"""
     Updates tensor values by using input indices and value.
@@ -2801,8 +2705,7 @@ def scatter_update(input_x, indices, updates):
         [[2. 1.2  1.]
          [3. 1.2  1.]]
     """
-    scatter_update_inner = _get_cache_prim(P.ScatterUpdate)()
-    return scatter_update_inner(input_x, indices, updates)
+    return scatter_update_(input_x, indices, updates)
 
 
 def scatter_nd_add(input_x, indices, updates, use_locking=False):
@@ -3351,7 +3254,7 @@ def gather(input_params, input_indices, axis, batch_dims=0):
     where params represents the input `input_params`, and indices represents the index to be sliced `input_indices`.
 
     .. note::
-        1. The value of input_indices must be in the range of `[0, input_param.shape[axis])`.
+        1. The value of input_indices must be in the range of `[0, input_params.shape[axis])`.
            On CPU and GPU, an error is raised if an out of bound indice is found. On Ascend, the results may be
            undefined.
 
@@ -3378,7 +3281,7 @@ def gather(input_params, input_indices, axis, batch_dims=0):
         ValueError: If `axis` is a Tensor and its size is not 1.
         TypeError:  If `input_params` is not a tensor.
         TypeError:  If `input_indices` is not a tensor of type int.
-        RuntimeError: If `input_indices` is out of range `[0, input_param.shape[axis])` on CPU or GPU.
+        RuntimeError: If `input_indices` is out of range `[0, input_params.shape[axis])` on CPU or GPU.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4161,8 +4064,7 @@ def batch_to_space_nd(input_x, block_shape, crops):
            [3.  4.]]]]
     """
     if isinstance(block_shape, Tensor):
-        _batch_to_space_ndv2 = _get_cache_prim(P.BatchToSpaceNDV2)()
-        return _batch_to_space_ndv2(input_x, block_shape, crops)
+        return batch_to_space_nd_v2_(input_x, block_shape, crops)
     _batch_to_space_nd = _get_cache_prim(P.BatchToSpaceND)(block_shape, crops)
     return _batch_to_space_nd(input_x)
 
@@ -4657,8 +4559,7 @@ def broadcast_to(input, shape):  # pylint: disable=redefined-outer-name
          [2. 2.]]
     """
     if isinstance(shape, Tensor) or ops.is_sequence_value_unknown(shape):
-        _dyn_broadcast_to = _get_cache_prim(DynamicBroadcastTo)()
-        return _dyn_broadcast_to(input, shape)
+        return dynamic_broadcast_to_(input, shape)
     _broadcast_to = _get_cache_prim(P.BroadcastTo)(shape)
     return _broadcast_to(input)
 
@@ -4709,7 +4610,6 @@ def unsorted_segment_min(x, segment_ids, num_segments):
         [[1. 2. 3.]
          [4. 2. 1.]]
     """
-    unsorted_segment_min_ = P.UnsortedSegmentMin()
     return unsorted_segment_min_(x, segment_ids, num_segments)
 
 
@@ -4759,7 +4659,6 @@ def unsorted_segment_max(x, segment_ids, num_segments):
         [[1. 2. 3.]
          [4. 5. 6.]]
     """
-    unsorted_segment_max_ = P.UnsortedSegmentMax()
     return unsorted_segment_max_(x, segment_ids, num_segments)
 
 
@@ -4802,7 +4701,6 @@ def unsorted_segment_prod(x, segment_ids, num_segments):
         [[4. 4. 3.]
          [4. 5. 6.]]
     """
-    unsorted_segment_prod_ = P.UnsortedSegmentProd()
     return unsorted_segment_prod_(x, segment_ids, num_segments)
 
 
@@ -5162,7 +5060,7 @@ def scalar_to_array(input_x):
     """
     The  interface is deprecated. Please use the :func:`mindspore.ops.scalar_to_tensor` instead.
     """
-    return P.ScalarToArray()(input_x)
+    return scalar_to_array_(input_x)
 
 
 def scalar_to_tensor(input_x, dtype=mstype.float32):
@@ -5732,13 +5630,13 @@ def _tensor_split_sub_int(x, indices_or_sections, axis):
     arr_shape = x.shape
     length_along_dim = arr_shape[axis]
     if indices_or_sections > length_along_dim:
-        res = P.Split(axis, length_along_dim)(x)
+        res = _get_cache_prim(P.Split)(axis, length_along_dim)(x)
         indices_or_sections_n = [length_along_dim, length_along_dim + 1]
         res2 = _tensor_split_sub_tensors(x, indices_or_sections_n, axis)
         for _ in np.arange(length_along_dim, indices_or_sections):
             res += tuple(res2)[1:]
     elif length_along_dim % indices_or_sections == 0:
-        res = P.Split(axis, indices_or_sections)(x)
+        res = _get_cache_prim(P.Split)(axis, indices_or_sections)(x)
     else:
         num_long_tensor = length_along_dim % indices_or_sections
         num_short_tensor = indices_or_sections - num_long_tensor
@@ -5748,8 +5646,8 @@ def _tensor_split_sub_int(x, indices_or_sections, axis):
         size1 = _tuple_setitem(arr_shape, axis, length1)
         start2 = _tuple_setitem(start1, axis, length1)
         size2 = _tuple_setitem(arr_shape, axis, length2)
-        res = P.Split(axis, num_long_tensor)(tensor_slice(x, start1, size1)) + \
-              P.Split(axis, num_short_tensor)(tensor_slice(x, start2, size2))
+        res = _get_cache_prim(P.Split)(axis, num_long_tensor)(tensor_slice(x, start1, size1)) + \
+              _get_cache_prim(P.Split)(axis, num_short_tensor)(tensor_slice(x, start2, size2))
     return res
 
 
@@ -6011,8 +5909,7 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
     if not input.shape:
         return (input, Tensor(0, dtype=mstype.int32))
     if axis is None:
-        reduce_max_op = _get_cache_prim(P.ReduceMax)()
-        return (reduce_max_op(input), Tensor(0, dtype=mstype.int32))
+        return (reduce_max_(input), Tensor(0, dtype=mstype.int32))
     if initial is not None and not isinstance(initial, numbers.Number):
         raise TypeError(f"For 'max', 'initial' must be a scalar, but got {type(initial)}")
     if axis is not None and not isinstance(axis, int):
@@ -6128,7 +6025,7 @@ def min(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
     if not input.shape:
         return (input, Tensor(0, dtype=mstype.int32))
     if axis is None:
-        return (reduce_min(input), Tensor(0, dtype=mstype.int32))
+        return (reduce_min_(input), Tensor(0, dtype=mstype.int32))
     if initial is not None and not isinstance(initial, numbers.Number):
         raise TypeError(f"For 'min', 'initial' must be a scalar, but got {type(initial)}")
     if axis is not None and not isinstance(axis, int):
@@ -6193,8 +6090,8 @@ def aminmax(input, *, axis=0, keepdims=False):
             output0 = ops.reshape(output0, [1] * input.ndim)
             output1 = ops.reshape(output1, [1] * input.ndim)
         return output0, output1
-    argmin_with_value_op = P.ArgMinWithValue(axis, keepdims)
-    argmax_with_value_op = P.ArgMaxWithValue(axis, keepdims)
+    argmin_with_value_op = _get_cache_prim(P.ArgMinWithValue)(axis, keepdims)
+    argmax_with_value_op = _get_cache_prim(P.ArgMaxWithValue)(axis, keepdims)
     _, output0 = argmin_with_value_op(input)
     _, output1 = argmax_with_value_op(input)
     if keepdims is True and input.ndim == 0:
@@ -6249,7 +6146,7 @@ def narrow(input, axis, start, length):
     begins[axis] = start
     sizes = list(input.shape)
     sizes[axis] = length
-    return P.Slice()(input, begins, sizes)
+    return tensor_slice(input, begins, sizes)
 
 
 def unsorted_segment_sum(input_x, segment_ids, num_segments):
@@ -6406,8 +6303,7 @@ def expand(input_x, size):
     :func:`mindspore.ops.expand` will be deprecated in the future.
     Please use :func:`mindspore.ops.broadcast_to` instead.
     """
-    expand_op = _get_cache_prim(Expand)()
-    return expand_op(input_x, size)
+    return expand_(input_x, size)
 
 
 @_primexpr
@@ -6600,57 +6496,6 @@ def _check_diagonal_axes(dim1, dim2, x_ndim):
     return axes
 
 
-def diagonal(input, offset=0, dim1=0, dim2=1):
-    """
-    Returns specified diagonals of `input`.
-
-    If `input` is 2-D, returns the diagonal of `input` with the given offset.
-    If `input` has more than two
-    dimensions, then the axes specified by `dim1` and `dim2` are used to determine
-    the 2-D sub-array whose diagonal is returned. In this case, remove the `dim1` and `dim2` dimensions of `input`
-    and insert the last dimension of `input` by the diagonal elements determined by `dim1` and `dim2`.
-
-    Args:
-        input (Tensor): Array from which the diagonals are taken.
-        offset (int, optional): Offset of the diagonal from the main diagonal.
-            Can be positive or negative. Default: ``0`` .
-        dim1 (int, optional): Axis to be used as the first axis of the 2-D
-            sub-arrays from which the diagonals should be taken. Defaults to
-            first axis (0). Default: ``0`` .
-        dim2 (int, optional): Axis to be used as the second axis of the 2-D
-            sub-arrays from which the diagonals should be taken. Defaults to
-            second axis (1). Default: ``1`` .
-
-    Returns:
-        Tensor, if `input` is 2-D, then `input` 1-D array containing the diagonal. If
-        ``input.ndim > 2``, then the dimensions specified by `dim1` and `dim2` are removed,
-        and a new axis inserted at the end corresponding to the diagonal.
-
-    Raises:
-        TypeError: if `dim1` or `dim2` are not an int.
-        ValueError: if the input tensor has less than two dimensions.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore import Tensor, ops
-        >>> from mindspore import dtype as mstype
-        >>> x = Tensor([[0, 1], [2, 3]], mstype.float32)
-        >>> output = ops.diagonal(x)
-        >>> print(output)
-        [0 3]
-    """
-    x_ndim = input.ndim
-    if x_ndim < 2:
-        raise ValueError(f"For 'ops.diagonal', the original tensor requires at least two dimensions, but got {x_ndim}")
-    _check_attr_dtype("dim1", dim1, [int], "diagonal")
-    _check_attr_dtype("dim2", dim2, [int], "diagonal")
-
-    _diagonal = _get_cache_prim(Diagonal)(offset, dim1, dim2)
-    return _diagonal(input)
-
-
 def _check_is_tensor(param_name, input, cls_name):
     """Returns True if input is Tensor."""
     if not isinstance(input, Tensor):
@@ -6800,8 +6645,7 @@ def lstsq(input, A):
          [-6.5000005 -4.500001 ]
          [-3.500002  -2.5000017]]
     """
-    lstsq_op = _get_cache_prim(Lstsq)()
-    return lstsq_op(input, A)
+    return lstsq_(input, A)
 
 
 def mvlgamma(input, p):
@@ -6913,14 +6757,13 @@ def column_stack(tensors):
         raise TypeError(f"For column_stack, the input must be list or tuple of tensors, but got {type(tensors)}.")
 
     trans_x = ()
-    _expand_dims = _get_cache_prim(P.ExpandDims)()
     for tensor in tensors:
         if not isinstance(tensor, Tensor):
             raise TypeError(f"For column_stack, the input element must be tensor, but got {type(tensor)}.")
         if tensor.ndim < 1:
-            tensor = _expand_dims(tensor, 0)
+            tensor = expand_dims_(tensor, 0)
         if tensor.ndim == 1:
-            tensor = _expand_dims(tensor, 1)
+            tensor = expand_dims_(tensor, 1)
         trans_x += (tensor,)
     if not trans_x:
         raise ValueError(f"For column_stack, the input must have at least 1 tensor, but got 0.")
@@ -7066,7 +6909,7 @@ def movedim(x, source, destination):
             f"For `source` and `destination` arguments, the number of elements must be the same, but got 'source':"
             f" {len(source)} and 'destination': {len(destination)}.")
     perm = _get_moved_perm(ndim, source, destination)
-    return _get_cache_prim(P.Transpose)()(x, perm)
+    return transpose_(x, perm)
 
 
 def moveaxis(x, source, destination):
@@ -7141,7 +6984,7 @@ def swapaxes(input, axis0, axis1):
         new_perm = perm[0:axis0] + perm[axis1:axis1 + 1] + \
                    perm[axis0 + 1:axis1] + perm[axis0:axis0 + 1]
 
-    return _get_cache_prim(P.Transpose)()(input, new_perm)
+    return transpose_(input, new_perm)
 
 
 def swapdims(input, dim0, dim1):
@@ -7289,20 +7132,15 @@ def repeat_elements(x, rep, axis=0):
     const_utils.check_type_valid(ops.dtype(x), mstype.number_type, 'input x')
     rep = _check_positive_int(rep, "rep", "repeat_elements")
     axis = _check_is_int(axis, "axis", "repeat_elements")
-    shape_op = P.Shape()
-    rank_op = P.Rank()
-    tile_op = P.Tile()
-    expand_dims_op = P.ExpandDims()
-    reshape_op = P.Reshape()
-    x_rank = rank_op(x)
+    x_rank = rank_(x)
     axis = _check_axis_range(axis, x_rank, "axis", "repeat_elements")
     expand_axis = axis + 1
-    x_expand = expand_dims_op(x, expand_axis)
+    x_expand = expand_dims_(x, expand_axis)
     rep_dims = _cal_repeat_dims(x_rank, rep, expand_axis)
-    x_expand = tile_op(x_expand, rep_dims)
-    x_shape = shape_op(x)
+    x_expand = tile_(x_expand, rep_dims)
+    x_shape = shape_(x)
     x_reshape = _cal_reshape(x_shape, rep, axis)
-    x_rep = reshape_op(x_expand, x_reshape)
+    x_rep = reshape_(x_expand, x_reshape)
     return x_rep
 
 
@@ -7369,29 +7207,20 @@ def sequence_mask(lengths, maxlen=None):
          [[ True  True False False ]
           [ True  True  True  True ]]]
     """
-
-    argmax_op = P.ArgMaxWithValue()
-    reshape_op = P.Reshape()
-    range_op = P.Range()
-    expand_op = P.ExpandDims()
-    cast_op = P.Cast()
-    to_tensor_op = P.ScalarToTensor()
-    shape_op = P.Shape()
-
     const_utils.check_type_valid(ops.dtype(lengths), [mstype.int64, mstype.int32], 'lengths')
-    _check_sequence_mask_input_len(shape_op(lengths), "sequence_mask")
+    _check_sequence_mask_input_len(shape_(lengths), "sequence_mask")
 
     if maxlen is None:
-        flatten_data = reshape_op(lengths, (-1,))
-        flatten_data = cast_op(flatten_data, mstype.float32)
-        _, value = argmax_op(flatten_data)
-        maxlen = cast_op(value, mstype.int32)
+        flatten_data = reshape_(lengths, (-1,))
+        flatten_data = cast_(flatten_data, mstype.float32)
+        _, value = arg_max_with_value_(flatten_data)
+        maxlen = cast_(value, mstype.int32)
     else:
         maxlen = _check_positive_int(maxlen, "maxlen", "sequence_mask")
-        maxlen = to_tensor_op(maxlen, mstype.int32)
+        maxlen = scalar_to_tensor_(maxlen, mstype.int32)
 
-    range_vector = range_op(to_tensor_op(0, mstype.int32), maxlen, to_tensor_op(1, mstype.int32))
-    mask = expand_op(lengths, -1)
+    range_vector = range_(scalar_to_tensor_(0, mstype.int32), maxlen, scalar_to_tensor_(1, mstype.int32))
+    mask = expand_dims_(lengths, -1)
     result = range_vector < mask
     return result
 
@@ -7430,6 +7259,7 @@ __all__ = [
     'full_like',
     'dyn_shape',
     'arange',
+    'range',
     'reshape',
     'reshape_',
     'flatten',
@@ -7518,7 +7348,6 @@ __all__ = [
     'expand',
     'fold',
     'unfold',
-    'diagonal',
     'diagonal_scatter',
     'lstsq',
     'mvlgamma',
@@ -7536,6 +7365,7 @@ __all__ = [
     'moveaxis',
     'aminmax',
     'sort',
-    'top_k'
+    'top_k',
+    'deepcopy'
 ]
 __all__.sort()

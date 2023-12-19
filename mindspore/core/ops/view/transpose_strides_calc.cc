@@ -25,15 +25,14 @@ constexpr size_t kTransposeCalcInputsNum = 2;
 TensorStorageInfoPtrList StridesCalc(const tensor::TensorPtr &tensor, const std::vector<int64_t> &input_perm) {
   MS_EXCEPTION_IF_NULL(tensor);
   const auto &x_shape = tensor->shape();
-  (void)CheckAndConvertUtils::CheckInteger("input_x size", SizeToLong(x_shape.size()), kGreaterThan, 0, "Transpose");
-  if (x_shape[0] == 0) {
-    MS_EXCEPTION(ValueError) << "For 'Transpose', first dim of input_x's shape can not be 0, but got 0.";
+  if (x_shape.size() == 0 || x_shape[0] == 0) {
+    MS_EXCEPTION(ValueError) << "For 'Transpose', x_shape is invalid, x_shape:" << x_shape;
   }
 
   auto old_tensor_info = GetOldTensorInfo(tensor);
-  auto old_shape = old_tensor_info->old_shape;
-  auto old_strides = old_tensor_info->old_strides;
-  auto old_storage_offset = old_tensor_info->old_offset;
+  const auto &old_shape = old_tensor_info->old_shape;
+  const auto &old_strides = old_tensor_info->old_strides;
+  const auto &old_storage_offset = old_tensor_info->old_offset;
 
   auto &dims = input_perm;
   const auto ndim = old_shape.size();
@@ -55,10 +54,10 @@ TensorStorageInfoPtrList StridesCalc(const tensor::TensorPtr &tensor, const std:
     new_strides[i] = old_strides[wrap_dim];
   }
 
-  bool is_contiguouts = IsContiguous(new_shape, new_strides);
+  bool is_contiguous = IsContiguous(new_shape, new_strides);
   auto new_storage_info =
     std::make_shared<TensorStorageInfo>(new_shape, new_strides, old_storage_offset, old_tensor_info->ori_shape,
-                                        old_tensor_info->ori_strides, is_contiguouts);
+                                        old_tensor_info->ori_strides, is_contiguous);
   return {new_storage_info};
 }
 
@@ -68,7 +67,7 @@ TensorStorageInfoPtrList TransposeCalc(const PrimitivePtr &prim, const std::vect
     return {};
   }
   auto tensor = inputs[0]->cast<tensor::TensorPtr>();
-  auto dims = CheckAndConvertUtils::CheckTupleInt("perm", inputs[1], "Transpose");
+  const auto &dims = GetValue<std::vector<int64_t>>(inputs[1]);
   return StridesCalc(tensor, dims);
 }
 

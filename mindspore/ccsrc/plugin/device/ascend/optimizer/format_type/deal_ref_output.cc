@@ -35,15 +35,9 @@ namespace mindspore {
 namespace opt {
 namespace {
 AnfNodePtr GetRefInfo(const std::string &op_name, const CNodePtr &cnode, const size_t cur_out_index) {
-#ifdef ASCEND_910B
   auto info = transform::GeAdapterManager::GetInstance().GetInfo(op_name, true);
   auto ref_infos = info->GetRefMappingInfo();
   if (!ref_infos.empty()) {
-#else
-  auto op_info = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(op_name, cnode);
-  if (op_info != nullptr && op_info->is_ref()) {
-    auto ref_infos = op_info->ref_infos();
-#endif
     if (ref_infos.count(cur_out_index) != 0) {
       auto in_index = ref_infos.at(cur_out_index);
       if (in_index > cnode->inputs().size()) {
@@ -129,60 +123,11 @@ AnfNodePtr DealRefOutput::AddAdditionalToRefOutput(const FuncGraphPtr &func_grap
   MS_LOG(DEBUG) << "DealRefTransAndCast the node input index " << input_index << ", find origin op is "
                 << origin_pair.first->DebugString() << ", index is " << origin_pair.second;
 
-#ifndef ASCEND_910B
-  bool need_refresh_ref_addr = false;
-  auto origin_format = AnfAlgo::GetOutputFormat(origin_pair.first, origin_pair.second);
-  auto origin_type = AnfAlgo::GetOutputDeviceDataType(origin_pair.first, origin_pair.second);
-  auto cur_format = AnfAlgo::GetOutputFormat(cnode, output_index);
-  auto cur_type = AnfAlgo::GetOutputDeviceDataType(cnode, output_index);
-  auto cur_shape = common::AnfAlgo::GetOutputInferShape(cnode, output_index);
-  auto detail_shape = AnfAlgo::GetOutputDetailShape(cnode, output_index);
-  // insert trans
-  if (origin_format != cur_format && cur_shape.size() > 1) {
-    auto kernel_select = std::make_shared<KernelSelect>();
-    if (cur_format != kOpFormat_DEFAULT) {
-      auto cur_reshape_type = AnfAlgo::GetOutputReshapeType(cnode, output_index);
-      final_node = AddTransOpNodeToGraphWithFormat(func_graph, final_node, final_node, kernel_select, cur_format,
-                                                   kOpFormat_DEFAULT, cur_reshape_type, cur_type);
-    }
-    if (origin_format != kOpFormat_DEFAULT) {
-      int64_t groups = common::AnfAlgo::GetAttrGroups(origin_pair.first, origin_pair.second);
-      auto origin_reshape_type = AnfAlgo::GetOutputReshapeType(origin_pair.first, origin_pair.second);
-      final_node = AddTransOpNodeToGraphWithFormat(func_graph, final_node, final_node, kernel_select, kOpFormat_DEFAULT,
-                                                   origin_format, origin_reshape_type, cur_type, groups);
-    }
-    final_index = 0;
-    need_refresh_ref_addr = true;
-    MS_EXCEPTION_IF_NULL(final_node);
-    MS_LOG(INFO) << "DealRefTransAndCast add trans op, op debug info is " << final_node->DebugString();
-  }
-  // insert cast
-  if (origin_type != cur_type) {
-    final_node =
-      AddCastOpNodeToGraph(func_graph, final_node, cnode, origin_format, cur_type, origin_type, detail_shape, cur_type);
-    MS_EXCEPTION_IF_NULL(final_node);
-    final_node->set_scope(cnode->scope());
-    final_index = 0;
-    need_refresh_ref_addr = true;
-    MS_LOG(INFO) << "DealRefTransAndCast add cast op, op debug info is " << final_node->DebugString();
-  }
-#endif
-
   // add ref pair
   auto ref_final_node =
     common::AnfAlgo::GetCNodeName(final_node) == kReshapeOpName ? final_node->cast<CNodePtr>()->input(1) : final_node;
   AddRefPairToKernelGraph(func_graph, cnode, get_item, ref_final_node, final_index, origin_pair);
 
-#ifndef ASCEND_910B
-  if (need_refresh_ref_addr) {
-    AddRefNodePairToKernelGraph(func_graph, cnode, output_index, input_index);
-  }
-  // insert depend
-  if (origin_format != cur_format || origin_type != cur_type) {
-    final_node = MakeDependency(get_item, final_node, cnode, func_graph);
-    MS_LOG(INFO) << "DealRefTranshwAndCast add denpend, op debug info is " << final_node->DebugString();
-  }
-#endif
   return final_node;
 }
 
@@ -281,7 +226,6 @@ const AnfNodePtr DealRefOutput::Process(const FuncGraphPtr &graph, const AnfNode
 
   auto op_name = common::AnfAlgo::GetCNodeName(cnode);
 
-#ifdef ASCEND_910B
   auto info = transform::GeAdapterManager::GetInstance().GetInfo(op_name, true);
   if (info == nullptr) {
     return nullptr;
@@ -290,16 +234,6 @@ const AnfNodePtr DealRefOutput::Process(const FuncGraphPtr &graph, const AnfNode
   if (ref_infos.empty()) {
     return nullptr;
   }
-#else
-  auto op_info = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(op_name, cnode);
-  if (op_info == nullptr || !op_info->is_ref()) {
-    return nullptr;
-  }
-  auto ref_infos = op_info->ref_infos();
-  if (ref_infos.empty()) {
-    return nullptr;
-  }
-#endif
 
   auto type = cnode->Type();
   MS_EXCEPTION_IF_NULL(type);

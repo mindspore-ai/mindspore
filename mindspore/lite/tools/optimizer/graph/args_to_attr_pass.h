@@ -27,7 +27,7 @@ namespace mindspore {
 namespace opt {
 class ArgsToAttrPass : public Pass {
  public:
-  explicit ArgsToAttrPass(const std::string &name = "InferShapePass") : Pass(name) {}
+  explicit ArgsToAttrPass(const std::string &name = "ArgsToAttrPass") : Pass(name) {}
   ~ArgsToAttrPass() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 };

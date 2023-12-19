@@ -97,8 +97,18 @@ AnfNodePtr GetNodeAfterTypeConversion(const std::string &prim_name, const AnfNod
   if (src_cast_dtype_list.empty() || ops::ValidateArgsType(abs_arg, dst_cast_dtype)) {
     return node;
   }
+
   bool mismatch = true;
   std::stringstream ss;
+  if (op_arg.is_optional_) {
+    auto abs_type = abs_arg->BuildType();
+    MS_EXCEPTION_IF_NULL(abs_type);
+    if (abs_type->isa<TypeNone>()) {
+      return node;
+    }
+    ss << "None, ";
+  }
+
   for (auto src_cast_dtype : src_cast_dtype_list) {
     if (ops::ValidateArgsType(abs_arg, src_cast_dtype)) {
       mismatch = false;
@@ -107,6 +117,7 @@ AnfNodePtr GetNodeAfterTypeConversion(const std::string &prim_name, const AnfNod
     ss << ops::EnumToString(src_cast_dtype) << ", ";
   }
   ss << ops::EnumToString(dst_cast_dtype);
+
   if (mismatch) {
     std::string dtype_list_str = ss.str();
     MS_EXCEPTION(TypeError) << "For Operator[" << prim_name << "], the supported dtype list of '" << op_arg.arg_name_
@@ -132,41 +143,67 @@ AnfNodePtr GetNodeAfterArgHandler(const AnfNodePtr &node, const ops::OpInputArg 
   return fg->NewCNodeInOrder({NewValueNode(arg_handler_fg), node});
 }
 
-void DoTypeConversionWithOpDef(AnalysisEnginePtr engine, const PrimitivePtr &prim, std::vector<AnfNodePtr> *params_list,
-                               AbstractBasePtrList *args_abs_list, const AnfNodeConfigPtr &out_conf) {
+AnfNodePtrList DoTypeConversionForPrimitiveInputs(const PrimitivePtr &prim, const AnfNodePtrList &params_list,
+                                                  const FuncGraphPtr &fg, const AnalysisEnginePtr &engine,
+                                                  const AnfNodeConfigPtr &out_conf) {
   auto op_def = mindspore::ops::GetOpDef(prim->name());
-  if (op_def == nullptr || ContainsAbstractAny(*args_abs_list)) {
-    return;
+  if (op_def == nullptr) {
+    return params_list;
   }
-  auto params_size = params_list->size();
-  if (params_size != args_abs_list->size()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Op: " << prim->name()
-                               << " abstract size should equal to inputs size, but abstract size "
-                               << args_abs_list->size() << ", inputs size " << params_size;
-  }
+  auto params_size = params_list.size();
   if (op_def->args_.size() < params_size) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Op: " << prim->name() << " OpArg size should less than inputs size, but OpArg size "
-                               << op_def->args_.size() << ", inputs size " << params_size;
+    MS_LOG(INTERNAL_EXCEPTION) << "For Operator[" << prim->name() << "], inputs size should be less than or equal to "
+                               << op_def->args_.size() << ", but got " << params_size << ".";
   }
+
+  AnfNodePtrList op_inputs;
   for (size_t i = 0; i < params_size; i++) {
-    auto input = (*params_list)[i];
+    auto input = params_list[i];
     auto op_arg = op_def->args_[i];
     if (op_arg.as_init_arg_) {
-      MS_LOG(INTERNAL_EXCEPTION) << op_arg.arg_name_ << " of " << prim->name()
+      MS_LOG(INTERNAL_EXCEPTION) << "For Operator[" << prim->name() << "], " << op_arg.arg_name_
                                  << " is an initialization argument and it does not need type conversion here. "
                                  << "Please check if the number of inputs is correct.";
     }
-    auto new_input =
-      GetNodeAfterTypeConversion(prim->name(), input, op_arg, (*args_abs_list)[i], out_conf->node()->func_graph());
-    if (new_input != input) {
-      AnfNodeConfigPtr input_conf = engine->MakeConfig(new_input, out_conf->context(), out_conf->func_graph());
-      MS_EXCEPTION_IF_NULL(input_conf);
-      const auto &eval_result = input_conf->ObtainEvalResult();
-      MS_EXCEPTION_IF_NULL(eval_result);
-      (*params_list)[i] = new_input;
-      (*args_abs_list)[i] = eval_result->abstract();
-    }
+    AnfNodeConfigPtr input_conf = engine->MakeConfig(input, out_conf->context(), out_conf->func_graph());
+    MS_EXCEPTION_IF_NULL(input_conf);
+    const auto &eval_result = input_conf->ObtainEvalResult();
+    MS_EXCEPTION_IF_NULL(eval_result);
+    auto abs = eval_result->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    auto new_input = GetNodeAfterTypeConversion(prim->name(), input, op_arg, abs, fg);
+    (void)op_inputs.emplace_back(new_input);
   }
+  return op_inputs;
+}
+
+CNodePtr DoSignatureEvaluator::GenerateNewNodeBySignatures(const ValuePtr &func,
+                                                           const AbstractBasePtrList &args_abs_list,
+                                                           const AnalysisEnginePtr &engine,
+                                                           const AnfNodeConfigPtr &out_conf) {
+  if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Node of out_conf should be CNode";
+  }
+  auto out_cnode = dyn_cast<CNode>(out_conf->node());
+  MS_EXCEPTION_IF_NULL(out_cnode);
+  auto fg = out_cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  const auto &out_node_inputs = out_cnode->inputs();
+  if (out_cnode->inputs().size() == 0 || (out_node_inputs.size() - 1) != args_abs_list.size()) {
+    MS_LOG(EXCEPTION) << "Op: " << func->ToString() << " args size should equal to inputs size minus 1, but args size "
+                      << args_abs_list.size() << ", inputs size " << out_node_inputs.size();
+  }
+
+  // Handle primitive signatures.
+  AnfNodePtrList args_inputs{out_node_inputs.begin() + 1, out_node_inputs.end()};
+  auto op_inputs = prim::GetNewInputsBySignatures(fg, prim_->ToString(), func, args_abs_list, args_inputs);
+  // Do type conversion for primitive inputs.
+  if (func->isa<Primitive>() && !ContainsAbstractAny(args_abs_list)) {
+    op_inputs = DoTypeConversionForPrimitiveInputs(func->cast<PrimitivePtr>(), op_inputs, fg, engine, out_conf);
+  }
+  AnfNodePtrList new_inputs{NewValueNode(func)};
+  (void)std::copy(op_inputs.begin(), op_inputs.end(), std::back_inserter(new_inputs));
+  return fg->NewCNodeInOrder(new_inputs);
 }
 
 EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
@@ -177,17 +214,6 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   MS_EXCEPTION_IF_NULL(do_signature);
   auto &func = do_signature->function();
   MS_EXCEPTION_IF_NULL(func);
-  if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Node of out_conf should be CNode";
-  }
-  auto out_cnode = dyn_cast<CNode>(out_conf->node());
-  MS_EXCEPTION_IF_NULL(out_cnode);
-  const auto &out_node_inputs = out_cnode->inputs();
-  if (out_cnode->inputs().size() == 0 || (out_node_inputs.size() - 1) != args_conf_list.size()) {
-    MS_LOG(EXCEPTION) << "Op: " << func->ToString() << " args size should equal to inputs size minus 1, but args size "
-                      << args_conf_list.size() << ", inputs size " << out_node_inputs.size();
-  }
-  AnfNodePtrList args_inputs{out_node_inputs.begin() + 1, out_node_inputs.end()};
 
   AbstractBasePtrList args_abs_list;
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_abs_list),
@@ -199,8 +225,6 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
                        });
   if (func->isa<Primitive>()) {
     auto do_signature_func = func->cast<PrimitivePtr>();
-    // Type implicit conversion.
-    DoTypeConversionWithOpDef(engine, do_signature_func, &args_inputs, &args_abs_list, out_conf);
     if (do_signature_func->name() == kIsInstanceOpName) {
       // Handle for DDE.
       for (size_t i = 0; i < args_abs_list.size(); ++i) {
@@ -223,22 +247,22 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
     }
   }
 
-  AnfNodePtr new_node = nullptr;
+  CNodePtr new_cnode = nullptr;
   ScopePtr scope = out_conf->node()->scope();
   ScopeGuard scope_guard(scope);
   if (bound_node() != nullptr) {
     TraceGuard trace_guard(std::make_shared<TraceDoSignature>(bound_node()->debug_info()));
-    new_node = prim::GenerateCNode(out_cnode->func_graph(), prim_->ToString(), func, args_abs_list, args_inputs);
+    new_cnode = GenerateNewNodeBySignatures(func, args_abs_list, engine, out_conf);
   } else {
-    new_node = prim::GenerateCNode(out_cnode->func_graph(), prim_->ToString(), func, args_abs_list, args_inputs);
+    new_cnode = GenerateNewNodeBySignatures(func, args_abs_list, engine, out_conf);
   }
   // Update new CNode info.
-  auto new_cnode = dyn_cast<CNode>(new_node);
-  MS_EXCEPTION_IF_NULL(new_cnode);
+  auto out_cnode = dyn_cast<CNode>(out_conf->node());
+  MS_EXCEPTION_IF_NULL(out_cnode);
   new_cnode->CloneCNodeInfo(out_cnode);
 
   // Do forward with old config and new config.
-  AnfNodeConfigPtr new_conf = engine->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
+  AnfNodeConfigPtr new_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
   return engine->ForwardConfig(out_conf, new_conf);
 }
 
@@ -1171,7 +1195,7 @@ EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &en
   auto &added_attrs = prim_py->evaluate_added_attrs();
   eval_result = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>(added_attrs));
   if (py::hasattr(prim_py->GetPyObj(), PY_PRIM_METHOD_INFER_VALUE)) {
-    // Call 'infer_value()' method if it is exsited, for constant propagation.
+    // Call 'infer_value()' method if it is existed, for constant propagation.
     eval_result = RunPyInferValue(engine, eval_result->abstract(), args);
   }
   // Save infer result to caches (evaluator cache and global cache).
@@ -1237,6 +1261,16 @@ void CheckSequenceArgumentForPythonPrimitive(const PrimitivePtr &prim, const Abs
     }
   }
 }
+
+bool ValidateArgOptional(const AbstractBasePtr &abs_arg, const ops::OpInputArg &input_arg) {
+  if (!input_arg.is_optional_) {
+    return false;
+  }
+
+  auto abs_type = abs_arg->BuildType();
+  MS_EXCEPTION_IF_NULL(abs_type);
+  return abs_type->isa<TypeNone>();
+}
 }  // namespace
 
 PrimitiveFunctionEvaluator::PrimitiveFunctionEvaluator(const PrimitivePtr &prim_func)
@@ -1259,9 +1293,11 @@ void PrimitiveFunctionEvaluator::CheckArgsSizeAndType(const AbstractBasePtrList 
     MS_LOG(EXCEPTION) << "For Operator[" << op_def_->name_ << "], the inputs number should be " << op_args.size()
                       << " but got " << real_abs_args.size() << ".";
   }
+
   // Check inputs type.
   for (size_t i = 0; i < op_args.size(); i++) {
-    if (!ops::ValidateArgsType(real_abs_args[i], op_args[i].arg_dtype_)) {
+    if (!ValidateArgOptional(real_abs_args[i], op_args[i]) &&
+        !ops::ValidateArgsType(real_abs_args[i], op_args[i].arg_dtype_)) {
       std::vector<std::string> op_type_list;
       for (const auto &op_abs : real_abs_args) {
         (void)op_type_list.emplace_back(op_abs->BuildType()->ToString());
@@ -1545,6 +1581,24 @@ void CheckObjAttrValid(const TypePtr &data_type, const std::string &item_name, c
   }
 }
 
+AnfNodePtr SetTypeForGetAttr(const AnfNodePtr &getattr_node, const AbstractBasePtr &value_abs) {
+  // Set setattr's abstract as getattr's abstract.
+  if (value_abs != nullptr &&
+      (value_abs->isa<abstract::AbstractTensor>() || value_abs->isa<abstract::AbstractScalar>())) {
+    auto type = value_abs->BuildType();
+    auto shape = value_abs->BuildShape();
+    fallback::SetRealType<AnfNode, Type>(getattr_node, type);
+    fallback::SetRealShape<AnfNode, abstract::BaseShape>(getattr_node, shape);
+    auto abs_tensor = value_abs->cast_ptr<abstract::AbstractTensor>();
+    if (abs_tensor != nullptr) {
+      if (abs_tensor != nullptr && abs_tensor->is_adapter()) {
+        getattr_node->set_user_data<bool>(fallback::kAdapterTag, std::make_shared<bool>(true));
+      }
+    }
+  }
+  return getattr_node;
+}
+
 EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, const AnfNodeConfigPtr &out_conf) {
   MS_EXCEPTION_IF_NULL(out_conf);
   auto out_node = out_conf->node();
@@ -1596,6 +1650,8 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
       auto getattr_cnode = getattr_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(getattr_cnode);
       getattr_cnode->add_input(cnode->input(args_size));
+      constexpr auto value_index = 2;
+      getattr_node = SetTypeForGetAttr(getattr_cnode, args_abs_list[value_index]);
     }
   } else {
     getattr_node = fallback::ConvertGetAttrNodeToPyInterpret(fg, cnode, attr_name);
@@ -1664,6 +1720,21 @@ EvalResultPtr InterpretSetAttrNode(const AbstractBasePtrList &args_abs_list, con
   const auto setattr_node =
     fallback::CreatePyExecuteCNode(cnode, NewValueNode(script_setattr_str), NewValueNode(key_tuple), value_tuple_node);
   MS_LOG(DEBUG) << "setattr_node: " << setattr_node->DebugString(debug_recursive_level);
+
+  // Save abstract for getattr.
+  constexpr auto value_abs_index = 2;
+  auto value_abs = args_abs_list[value_abs_index];
+  if (value_abs != nullptr &&
+      (value_abs->isa<abstract::AbstractTensor>() || value_abs->isa<abstract::AbstractScalar>())) {
+    auto type = value_abs->BuildType();
+    auto shape = value_abs->BuildShape();
+    fallback::SetRealType<AnfNode, Type>(setattr_node, type);
+    fallback::SetRealShape<AnfNode, abstract::BaseShape>(setattr_node, shape);
+    auto abs_tensor = value_abs->cast_ptr<abstract::AbstractTensor>();
+    if (abs_tensor != nullptr && abs_tensor->is_adapter()) {
+      setattr_node->set_user_data<bool>(fallback::kAdapterTag, std::make_shared<bool>(true));
+    }
+  }
 
   auto eng = out_conf->engine();
   MS_EXCEPTION_IF_NULL(eng);
@@ -1771,29 +1842,69 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AbstractBasePtrList &arg
 EvalResultPtr GenerateFuncGraphForOverriddenMethod(AnfNodePtr node, const ValuePtr &item_value,
                                                    const AnfNodeConfigPtr &out_conf) {
   const auto &item_str = item_value->cast_ptr<StringImm>();
-  if (item_str == nullptr) {
+  FuncGraphPtr inner_fg = nullptr;
+  py::object overridden_method = py::none();
+  py::object value_obj = py::none();
+  if (item_str != nullptr) {
+    const std::string &item_name = item_str->value();
+    if (node->has_user_data(item_name)) {
+      value_obj = *node->user_data<py::object>(item_name);
+      overridden_method = value_obj.attr("__class__").attr(item_name.c_str());
+    }
+  }
+  bool is_getattr = node->has_user_data("__getattr__");
+  if (is_getattr) {
+    value_obj = *node->user_data<py::object>("__getattr__");
+    try {
+      overridden_method = value_obj.attr("__class__").attr("__getattr__");
+    } catch (const std::exception &e) {
+      MS_LOG(DEBUG) << value_obj << " has no attribute getattr.";
+    }
+  }
+  if (py::isinstance<py::none>(overridden_method) || py::isinstance<py::none>(overridden_method)) {
     return nullptr;
   }
-  const std::string &item_name = item_str->value();
-  auto value_obj = *node->user_data<py::object>(item_name);
-  py::object overridden_method = value_obj.attr("__class__").attr(item_name.c_str());
-  auto inner_fg = parse::ParsePythonCode(overridden_method);
+
+  inner_fg = parse::ParsePythonCode(overridden_method);
+  MS_EXCEPTION_IF_NULL(out_conf);
+  auto eng = out_conf->engine();
+  MS_EXCEPTION_IF_NULL(eng);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  FuncGraphPtr func_graph = node->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  const auto &inputs = cnode->inputs();
   if (inner_fg == nullptr) {
-    return nullptr;
+    std::vector<AnfNodePtr> new_inputs;
+    for (size_t i = 0; i < inputs.size(); i++) {
+      if (i == 1) {
+        const auto &interpreted_obj = std::make_shared<parse::InterpretedObject>(value_obj);
+        const auto &value_node = NewValueNode(interpreted_obj);
+        new_inputs.push_back(value_node);
+      } else {
+        new_inputs.push_back(inputs[i]);
+      }
+    }
+    CNodePtr new_cnode = func_graph->NewCNode(new_inputs);
+    auto fn_conf = eng->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
+    return eng->ForwardConfig(out_conf, fn_conf);
+  }
+  AddToManager(eng, inner_fg);
+  if (is_getattr) {
+    std::vector<AnfNodePtr> new_inputs = {NewValueNode(inner_fg)};
+    for (size_t i = 0; i < inputs.size(); i++) {
+      if (i > 0) {
+        new_inputs.push_back(inputs[i]);
+      }
+    }
+    CNodePtr new_cnode = func_graph->NewCNode(new_inputs);
+    auto fn_conf = eng->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
+    return eng->ForwardConfig(out_conf, fn_conf);
   }
   std::vector<AnfNodePtr> input = {NewValueNode(prim::kPrimPartial)};
   input.push_back(NewValueNode(inner_fg));
-  MS_EXCEPTION_IF_NULL(out_conf);
-  MS_EXCEPTION_IF_NULL(out_conf->node());
-  auto cnode = out_conf->node()->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
   input.push_back(cnode->input(1));
-  FuncGraphPtr func_graph = out_conf->node()->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
   CNodePtr new_cnode = func_graph->NewCNode(input);
-  auto eng = out_conf->engine();
-  MS_EXCEPTION_IF_NULL(eng);
-  AddToManager(eng, inner_fg);
   auto fn_conf = eng->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
   return eng->ForwardConfig(out_conf, fn_conf);
 }
@@ -2064,34 +2175,28 @@ EvalResultPtr GetFuncAbstractAttr(const AbstractFunctionPtr &data_args, const Ab
     return nullptr;
   }
   // Get attribute or method of FuncGraphAbstractClosure, the object could be nn.Cell/ms_class object.
-  auto data_func_graph = dyn_cast_ptr<FuncGraphAbstractClosure>(data_args);
-  if (data_func_graph != nullptr) {
-    auto func_value = data_func_graph->func_graph();
-    MS_EXCEPTION_IF_NULL(func_value);
-    auto python_obj = func_value->python_obj();
-    if (python_obj != nullptr) {
-      auto wrapper = dyn_cast_ptr<parse::PyObjectWrapper>(python_obj);
-      MS_EXCEPTION_IF_NULL(wrapper);
-      auto cls_obj = wrapper->obj();
-      if (py::isinstance<Cell>(cls_obj) || py::hasattr(cls_obj, PYTHON_MS_CLASS)) {
-        return GetClassAttrFromPyObject(cls_obj, wrapper->name(), args_abs_list, out_conf);
-      }
-    }
-    return nullptr;
+  const auto &cls_obj = fallback::GetPyObjForFuncGraphAbstractClosure(data_args);
+  if (py::isinstance<Cell>(cls_obj) || py::hasattr(cls_obj, PYTHON_MS_CLASS)) {
+    return GetClassAttrFromPyObject(cls_obj, py::str(cls_obj), args_abs_list, out_conf);
   }
   return GetEvaluatedValueForPrimitiveAttr(args_abs_list, data_args);
 }
 
 bool CheckHasOverriddenMethod(AnfNodePtr node, ValuePtr item_value) {
   const auto &item_str = item_value->cast_ptr<StringImm>();
+  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
   if (item_str != nullptr) {
     const std::string &item_name = item_str->value();
     if (node->has_user_data(item_name)) {
       auto value_obj = *node->user_data<py::object>(item_name);
-      py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
       py::bool_ check = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_CHECK_ATTRS, value_obj, item_name);
       return py::cast<bool>(check);
     }
+  }
+  if (node->has_user_data("__getattr__")) {
+    auto value_obj = *node->user_data<py::object>("__getattr__");
+    py::bool_ check = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_CHECK_ATTRS, value_obj, "__getattr__");
+    return py::cast<bool>(check);
   }
   return false;
 }
@@ -2315,10 +2420,10 @@ TypePtr GetLocalArgsUniqueDtype(const AnfNodePtr &node, const AbstractBasePtrLis
 
 void AddLabelsToPrimitiveFunction(const PrimitivePtr &prim_func) {
   auto prim_name = prim_func->name();
-  py::module mod = py::module::import(parse::PYTHON_MOD_PRIMITIVE_OP_LABELS_MODULE);
+  py::module mod = py::module::import(parse::PYTHON_MOD_PRIMITIVE_OP_CREATE_INSTANCE_HELPER_MODULE);
   if (!py::hasattr(mod, parse::PYTHON_MOD_PRIMITIVE_OP_LABELS_DICT)) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Can not found " << parse::PYTHON_MOD_PRIMITIVE_OP_LABELS_DICT << "in "
-                               << parse::PYTHON_MOD_PRIMITIVE_OP_LABELS_MODULE << ".";
+    MS_LOG(INTERNAL_EXCEPTION) << "Can not found " << parse::PYTHON_MOD_PRIMITIVE_OP_LABELS_DICT << " in "
+                               << parse::PYTHON_MOD_PRIMITIVE_OP_CREATE_INSTANCE_HELPER_MODULE << ".";
   }
   py::dict op_labels = mod.attr(parse::PYTHON_MOD_PRIMITIVE_OP_LABELS_DICT);
   if (!op_labels.contains(py::str(prim_name))) {
@@ -2340,6 +2445,75 @@ void AddLabelsToPrimitiveFunction(const PrimitivePtr &prim_func) {
     MS_LOG(DEBUG) << "Add attr {" << attr_name << ": " << converted_ret->ToString() << "} to " << prim_name;
     (void)prim_func->AddAttr(attr_name, converted_ret);
   }
+}
+
+void AddSignaturesToPrimitiveFunction(const PrimitivePtr &prim_func) {
+  // Set primitive signatures.
+  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+  py::tuple prim_signatures =
+    python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_PRIMITIVE_SIGNATURES, prim_func->name());
+  std::vector<Signature> signatures;
+  for (const auto &sign : prim_signatures) {
+    (void)signatures.emplace_back(sign.cast<Signature>());
+  }
+  prim_func->set_signatures(signatures);
+  prim_func->set_has_signature(!signatures.empty());
+}
+
+ValueNodePtr GetArgDefaultValue(const std::string &prim_name, const std::string &arg_name) {
+  py::module mod = py::module::import(parse::PYTHON_MOD_PRIMITIVE_OP_CREATE_INSTANCE_HELPER_MODULE);
+  if (!py::hasattr(mod, parse::PYTHON_MOD_PRIMITIVE_OP_DEFAULT_VALUE_DICT)) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Can not found " << parse::PYTHON_MOD_PRIMITIVE_OP_DEFAULT_VALUE_DICT << "in "
+                               << parse::PYTHON_MOD_PRIMITIVE_OP_CREATE_INSTANCE_HELPER_MODULE << ".";
+  }
+  py::dict op_default_dict = mod.attr(parse::PYTHON_MOD_PRIMITIVE_OP_DEFAULT_VALUE_DICT);
+  if (!op_default_dict.contains(py::str(prim_name))) {
+    MS_LOG(EXCEPTION) << "For Operator[" << prim_name
+                      << "], the number of arguments is incorrect. Please check inputs of the operator.";
+  }
+  py::dict prim_default_dict = op_default_dict[py::str(prim_name)];
+  if (!prim_default_dict.contains(py::str(arg_name))) {
+    MS_LOG(EXCEPTION) << "For Operator[" << prim_name << "], '" << arg_name
+                      << "' has no default value. Please check inputs of the operator.";
+  }
+  auto default_value = prim_default_dict[py::str(arg_name)];
+  ValuePtr converted_ret = nullptr;
+  bool converted = parse::ConvertData(default_value, &converted_ret);
+  if (!converted) {
+    MS_LOG(EXCEPTION) << "For Operator[" << prim_name << "], '" << py::str(default_value)
+                      << "' is not supported as the default value for '" << arg_name << "'.";
+  }
+  return NewValueNode(converted);
+}
+
+std::vector<AnfNodePtr> GenerateNewPrimitiveArgs(const ops::OpDefPtr &op_def, const std::vector<AnfNodePtr> &args_nodes,
+                                                 const AbstractBasePtrList &args_abs_list, const FuncGraphPtr &fg,
+                                                 bool check_init) {
+  auto prim_name = op_def->name_;
+  std::vector<AnfNodePtr> prim_arg_nodes;
+  size_t arg_index = 0;
+  size_t args_size = op_def->args_.size();
+  for (size_t i = 0; i < args_size; i++) {
+    auto op_arg = op_def->args_[i];
+    if ((check_init && !op_arg.as_init_arg_) || (!check_init && op_arg.as_init_arg_)) {
+      continue;
+    }
+
+    AnfNodePtr input_node = nullptr;
+    AbstractBasePtr input_abs = nullptr;
+    if (arg_index < args_nodes.size()) {
+      input_node = args_nodes[arg_index];
+      input_abs = args_abs_list[arg_index];
+    } else {
+      input_node = GetArgDefaultValue(prim_name, op_arg.arg_name_);
+      input_abs = input_node->cast<ValueNodePtr>()->value()->ToAbstract();
+    }
+    arg_index++;
+    auto new_input = GetNodeAfterTypeConversion(prim_name, input_node, op_arg, input_abs, fg);
+    new_input = GetNodeAfterArgHandler(new_input, op_arg, fg);
+    (void)prim_arg_nodes.emplace_back(new_input);
+  }
+  return prim_arg_nodes;
 }
 
 std::vector<AnfNodePtr> ConvertArgsToInputs(const PrimitivePtr &prim, const std::vector<AnfNodePtr> &inputs,
@@ -2448,33 +2622,50 @@ EvalResultPtr DoTransPrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePt
   auto prim_name = prim_func->name();
   auto op_def = mindspore::ops::GetOpDef(prim_name);
   if (op_def == nullptr) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Currently DoTransPrimitiveFunction only supports Primitive with OpDef, but got "
-                               << prim_name << ".";
+    MS_LOG(INTERNAL_EXCEPTION) << "DoTransPrimitiveFunction only supports Primitive with OpDef, but got " << prim_name
+                               << ".";
   }
-  auto args_size = op_def->args_.size();
-  if (args_abs_list.size() != args_size) {
-    MS_LOG(EXCEPTION) << "For Operator[" << prim_name << "], the inputs number should be " << args_size << ", but got "
-                      << args_abs_list.size() << ".";
+  if (cnode->size() != args_abs_list.size() + 1) {
+    MS_LOG(INTERNAL_EXCEPTION) << "For Operator[" << prim_name << "], the number of cnode inputs should be "
+                               << args_abs_list.size() + 1 << ", but got " << cnode->size()
+                               << ".\nnode: " << cnode->DebugString();
   }
   // Handle primitive labels.
   AddLabelsToPrimitiveFunction(prim_func);
-  // Get init args and inputs of primitive.
-  std::vector<AnfNodePtr> prim_input_nodes;
-  std::vector<AnfNodePtr> prim_init_arg_nodes;
-  for (size_t i = 0; i < args_size; i++) {
-    auto op_arg = op_def->args_[i];
-    // Handle the implicit conversion of inputs.
-    auto new_input = GetNodeAfterTypeConversion(prim_name, cnode->input(i + 1), op_arg, args_abs_list[i], fg);
-    new_input = GetNodeAfterArgHandler(new_input, op_arg, fg);
-    if (op_arg.as_init_arg_) {
-      (void)prim_init_arg_nodes.emplace_back(new_input);
-    } else {
-      (void)prim_input_nodes.emplace_back(new_input);
+  // Handle primitive signatures.
+  AddSignaturesToPrimitiveFunction(prim_func);
+  // Get init args size.
+  size_t init_args_size = 0;
+  if (do_trans_prim_func->has_given_init_size()) {
+    // Might need to handle default arguments.
+    init_args_size = do_trans_prim_func->given_init_size();
+  } else {
+    // All call args and init args should have been provided.
+    size_t op_args_size = op_def->args_.size();
+    if (op_args_size != args_abs_list.size()) {
+      MS_LOG(EXCEPTION) << "For Primitive Function '" << prim_name << "', the number of inputs should be "
+                        << op_args_size << ", but got " << args_abs_list.size()
+                        << ". Please check inputs of the operator.";
+    }
+    for (size_t i = 0; i < op_args_size; i++) {
+      if (op_def->args_[i].as_init_arg_) {
+        ++init_args_size;
+      }
     }
   }
-  // Handle signatures for primitive inputs.
-  AbstractBasePtrList prim_input_abs_list;
-  (void)std::transform(prim_input_nodes.begin(), prim_input_nodes.end(), std::back_inserter(prim_input_abs_list),
+  // Handle init args.
+  AnfNodePtrList cnode_inputs = cnode->inputs();
+  AnfNodePtrList origin_init_arg_nodes(cnode_inputs.begin() + cnode_inputs.size() - init_args_size, cnode_inputs.end());
+  AbstractBasePtrList origin_init_abs_list(args_abs_list.begin() + args_abs_list.size() - init_args_size,
+                                           args_abs_list.end());
+  auto prim_init_arg_nodes = GenerateNewPrimitiveArgs(op_def, origin_init_arg_nodes, origin_init_abs_list, fg, true);
+  // Handle call args.
+  AnfNodePtrList origin_call_arg_nodes(cnode_inputs.begin() + 1, cnode_inputs.end() - init_args_size);
+  AbstractBasePtrList origin_call_abs_list(args_abs_list.begin(), args_abs_list.end() - init_args_size);
+  auto sign_input_nodes =
+    prim::GetNewInputsBySignatures(fg, prim_name, prim_func, origin_call_abs_list, origin_call_arg_nodes);
+  AbstractBasePtrList sign_abs_list;
+  (void)std::transform(sign_input_nodes.begin(), sign_input_nodes.end(), std::back_inserter(sign_abs_list),
                        [&engine, &out_conf](const AnfNodePtr &node) -> AbstractBasePtr {
                          AnfNodeConfigPtr config =
                            engine->MakeConfig(node, out_conf->context(), out_conf->func_graph());
@@ -2483,9 +2674,13 @@ EvalResultPtr DoTransPrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePt
                          MS_EXCEPTION_IF_NULL(eval_result);
                          return eval_result->abstract();
                        });
-  std::vector<AnfNodePtr> op_inputs =
-    prim::GetNewInputsBySignatures(fg, prim_func->name(), prim_func, prim_input_abs_list, prim_input_nodes);
+  auto prim_input_nodes = GenerateNewPrimitiveArgs(op_def, sign_input_nodes, sign_abs_list, fg, false);
+
+  // Handle primitive labels.
+  AddLabelsToPrimitiveFunction(prim_func);
   // Append init args after inputs of node.
+  std::vector<AnfNodePtr> op_inputs{NewValueNode(prim_func)};
+  (void)std::copy(prim_input_nodes.begin(), prim_input_nodes.end(), std::back_inserter(op_inputs));
   (void)std::copy(prim_init_arg_nodes.begin(), prim_init_arg_nodes.end(), std::back_inserter(op_inputs));
   // Create new node.
   auto new_cnode = fg->NewCNodeInOrder(op_inputs);
@@ -2611,6 +2806,13 @@ EvalResultPtr MakeTupleEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
   auto abs = std::make_shared<AbstractTuple>(args_abs_list, sequence_nodes);
   auto res = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>());
   evaluator_cache_mgr_->SetValue(args_abs_list, res);
+  // pass the need_unpack tag from the AnfNode to the abstract
+  auto node = out_conf->node();
+  constexpr auto need_unpack_str = "need_unpack";
+  auto need_unpack = node->user_data<bool>(need_unpack_str);
+  if (need_unpack != nullptr && *need_unpack) {
+    abs->SetData<bool>(need_unpack_str, std::make_shared<bool>(true));
+  }
   return res;
 }
 
@@ -2639,6 +2841,36 @@ EvalResultPtr MakeListEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abstr
   }
   auto res = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>());
   evaluator_cache_mgr_->SetValue(args_abs_list, res);
+  return res;
+}
+
+AbstractBasePtr CreateRealAbstract(const TypePtr &preset_type, const BaseShapePtr &shape, const AnfNodePtr &node,
+                                   const AbstractBasePtrList &args_abs_list) {
+  AbstractBasePtr res = nullptr;
+  if (preset_type->isa<Scalar>()) {
+    res = std::make_shared<AbstractScalar>(preset_type);
+  } else if (preset_type->isa<List>() || preset_type->isa<Tuple>()) {
+    res = fallback::GenerateAbstractSequence(shape, preset_type, true);
+  } else if (preset_type->isa<TensorType>() && !preset_type->isa<AnyType>()) {
+    auto tensor_type = preset_type->cast_ptr<TensorType>();
+    MS_EXCEPTION_IF_NULL(tensor_type);
+    auto element = std::make_shared<abstract::AbstractScalar>(kValueAny, tensor_type->element());
+    res = std::make_shared<abstract::AbstractTensor>(element, shape);
+    auto abs_tensor = res->cast_ptr<abstract::AbstractTensor>();
+    if (node->has_user_data(fallback::kAdapterTag)) {
+      abs_tensor->set_is_adapter(true);
+    }
+  } else {
+    const auto any_abstract = std::make_shared<AbstractAny>();
+    // If no annotation dtype, try to use unique tensor dtype.
+    auto dtype = GetLocalArgsUniqueDtype(node, args_abs_list);
+    if (dtype != nullptr) {
+      MS_EXCEPTION_IF_NULL(any_abstract->element());
+      any_abstract->element()->set_type(dtype);
+      any_abstract->set_supposed_tensor_dtype(true);
+    }
+    res = any_abstract;
+  }
   return res;
 }
 
@@ -2691,11 +2923,7 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
     MS_LOG(DEBUG) << "preset_type: " << preset_type->ToString();
     const auto &shape = fallback::GetRealShape<AnfNode, BaseShape>(node);
     MS_LOG(DEBUG) << "shape: " << shape->ToString();
-    if (preset_type->isa<List>()) {
-      res = fallback::GenerateAbstractSequence(shape, preset_type, true);
-    } else {
-      res = std::make_shared<AbstractTensor>(preset_type, shape);
-    }
+    res = CreateRealAbstract(preset_type, shape, node, args_abs_list);
   } else if (fallback::HasRealType(node) && fallback::GetRealType<AnfNode, Type>(node)->isa<NegligibleType>()) {
     res = std::make_shared<AbstractNegligible>();
   } else {
@@ -2735,33 +2963,27 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     if (args_abs_list.empty()) {
       MS_LOG(INTERNAL_EXCEPTION) << "'args_abs_list' should not be empty";
     }
-
     auto node = out_conf->node();
     MS_EXCEPTION_IF_NULL(node);
     MS_LOG(DEBUG) << "The current interpret node: " << node->DebugString();
-    // Get the type parameter.
-    MS_EXCEPTION_IF_NULL(args_abs_list[0]);
-    ValuePtr value_track = args_abs_list[0]->GetValueTrack();
-    MS_EXCEPTION_IF_NULL(value_track);
 
-    // Make global and local parameters.
-    non_const_err_ = false;
-    std::string script;
-    auto new_args_abs_list = args_abs_list;
-    auto script_obj = dyn_cast_ptr<parse::Script>(value_track);
-    if (script_obj != nullptr) {
-      script = script_obj->script();
-    } else {
-      // Process the PyInterpret operator defined by the frontend.
-      // Its global information is empty, and its script input is string.
-      script = value_track->ToString();
-      parse::PyObjectWrapperPtr empty_global_dict = std::make_shared<parse::InterpretedObject>(py::dict());
-      new_args_abs_list[1] =
-        std::make_shared<abstract::AbstractScalar>(empty_global_dict, std::make_shared<External>());
+    // If the interpret node contains FuncGraph node input, need to convert the Graph node to Interpreted object.
+    AnfNodePtr converted_interpret_node = ConvertPyInterpretNode(node, args_abs_list);
+    if (converted_interpret_node != nullptr) {
+      AnalysisEnginePtr eng = out_conf->engine();
+      MS_EXCEPTION_IF_NULL(eng);
+      AnfNodeConfigPtr fn_conf = eng->MakeConfig(converted_interpret_node, out_conf->context(), out_conf->func_graph());
+      return eng->ForwardConfig(out_conf, fn_conf);
     }
+
+    non_const_err_ = false;
     check_list_dict_inplace_ =
       node->has_user_data(fallback::kCheckListDictInplace) && *node->user_data<bool>(fallback::kCheckListDictInplace);
-    py::tuple params = MakeParameters(new_args_abs_list, script);
+
+    constexpr size_t script_index = 0;
+    const std::string &script = GetScriptStr(args_abs_list[script_index]);
+    // Make global and local parameters.
+    py::tuple params = MakeParameters(args_abs_list, script);
     // Would convert PyInterpret to PyExecute then.
     if (non_const_err_ || fallback::GetJitAnnotationSideEffectFromComment(node)) {
       // Make abstract by type and shape.
@@ -2809,14 +3031,16 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
       converted = true;
     } else {
       converted = parse::ConvertData(obj, &converted_val, true);
-      if (converted_val->isa<FuncGraph>()) {
-        converted_val = std::make_shared<parse::InterpretedObject>(obj);
-      }
     }
     if (!converted) {
       MS_LOG(INTERNAL_EXCEPTION) << "Convert the python object failed";
     }
     MS_EXCEPTION_IF_NULL(converted_val);
+    auto fg = node->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    auto mng = fg->manager();
+    MS_EXCEPTION_IF_NULL(mng);
+    AddManagerForFuncGraphValue(converted_val, mng);
     if (converted_val->isa<tensor::Tensor>() && HasConstArgAttr(obj)) {
       MS_LOG(WARNING) << "The tensor " << converted_val->ToString()
                       << " which is not used for network input argument should not be set const.";
@@ -2832,6 +3056,35 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
     evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
     return infer_result;
+  }
+
+  void AddManagerForFuncGraphValue(const ValuePtr &val, const FuncGraphManagerPtr &mng) const {
+    // mng has been checked before using.
+    MS_EXCEPTION_IF_NULL(val);
+    if (val->isa<ValueSequence>()) {
+      auto val_seq = val->cast<ValueSequencePtr>();
+      const auto &values = val_seq->value();
+      std::for_each(values.begin(), values.end(),
+                    [this, &mng](const ValuePtr &e) { AddManagerForFuncGraphValue(e, mng); });
+      return;
+    }
+    if (val->isa<ValueDictionary>()) {
+      auto val_dict = val->cast<ValueDictionaryPtr>();
+      const auto &values = val_dict->value();
+      std::for_each(values.begin(), values.end(), [this, &mng](const std::pair<ValuePtr, ValuePtr> &pair) {
+        // Key for value dictionary can not have function graph.
+        AddManagerForFuncGraphValue(pair.second, mng);
+      });
+      return;
+    }
+    if (val->isa<FuncGraph>()) {
+      auto val_fg = val->cast<FuncGraphPtr>();
+      if (val_fg->manager() == nullptr) {
+        mng->AddFuncGraph(val_fg);
+        val_fg->set_manager(mng);
+      }
+    }
+    return;
   }
 
   void CheckInterpretInput(const AbstractDictionaryPtr &abstract_dict, const std::string &script) const {
@@ -2874,17 +3127,12 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     for (const auto &element : global_dict_elements) {
       const auto &element_name = element.first;
       const auto &element_abs = element.second;
-      if (element_abs->isa<abstract::FuncGraphAbstractClosure>()) {
-        auto element_abs_fn = element_abs->cast_ptr<abstract::FuncGraphAbstractClosure>();
-        auto fg = element_abs_fn->func_graph();
-        MS_EXCEPTION_IF_NULL(fg);
-        auto wrapper_obj = fg->python_obj();
-        if (wrapper_obj != nullptr && wrapper_obj->isa<parse::PyObjectWrapper>()) {
-          auto fn_py_obj = wrapper_obj->cast_ptr<parse::PyObjectWrapper>()->obj();
-          MS_EXCEPTION_IF_NULL(element_name);
-          (*global_params_dict)[ValueToPyData(element_name->BuildValue())] = fn_py_obj;
-          MS_LOG(DEBUG) << "Found global python function object for " << element_name << ", add it to global dict.";
-        }
+      MS_EXCEPTION_IF_NULL(element_name);
+      MS_EXCEPTION_IF_NULL(element_abs);
+      const auto &fn_py_obj = fallback::GetPyObjForFuncGraphAbstractClosure(element_abs);
+      if (!py::isinstance<py::none>(fn_py_obj)) {
+        (*global_params_dict)[ValueToPyData(element_name->BuildValue())] = fn_py_obj;
+        MS_LOG(DEBUG) << "Found global python function object for " << element_name << ", add it to global dict.";
       }
     }
     return;
@@ -2902,40 +3150,9 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     auto params = py::tuple(params_size - 1);
 
     // Make the global parameters.
-    MS_EXCEPTION_IF_NULL(args_abs_list[1]);
-    // Get global parameters dict from InterpretedObject.
-    auto global_dict_scalar = dyn_cast<AbstractScalar>(args_abs_list[1]);
-    if (global_dict_scalar == nullptr) {
-      MS_LOG(INTERNAL_EXCEPTION) << "The second argument should be a scalar(InterpretedObject), but got "
-                                 << args_abs_list[1]->ToString();
-    }
-    auto global_dict_scalar_value = global_dict_scalar->BuildValue();
-    MS_EXCEPTION_IF_NULL(global_dict_scalar_value);
-    auto global_dict_interpreted = dyn_cast<parse::InterpretedObject>(global_dict_scalar_value);
-    MS_EXCEPTION_IF_NULL(global_dict_interpreted);
-    const py::object &global_params_dict_obj = global_dict_interpreted->obj();
-    MS_LOG(DEBUG) << "Convert global dict: " << py::str(global_params_dict_obj);
-    ValuePtr globals_converted_value = nullptr;
-    if (!parse::ConvertData(global_params_dict_obj, &globals_converted_value)) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Convert data failed";
-    }
-    MS_EXCEPTION_IF_NULL(globals_converted_value);
-    // Filter global parameters dict.
-    auto global_dict = dyn_cast<AbstractDictionary>(globals_converted_value->ToAbstract());
-    if (global_dict == nullptr) {
-      MS_LOG(INTERNAL_EXCEPTION) << "The second argument should be a dictionary, but got "
-                                 << globals_converted_value->ToAbstract()->ToString();
-    }
-    auto filtered_global_dict = FilterParameters(global_dict);
-    MS_LOG(DEBUG) << "arg_1, global_dict: " << global_dict->ToString()
-                  << ", filtered_global_dict: " << filtered_global_dict->ToString();
-    ValuePtr global_dict_value = filtered_global_dict->BuildValue();
-    MS_EXCEPTION_IF_NULL(global_dict_value);
-    py::object global_params_dict = ValueToPyData(global_dict_value);
-    MS_LOG(DEBUG) << "arg_1, python global_params_dict: " << global_dict_value->ToString() << " -> "
-                  << py::str(global_params_dict);
-    // Add global python function to global_params_dict.
-    AddGlobalPythonFunction(global_dict, &global_params_dict);
+    constexpr size_t global_index = 1;
+    auto global_abs = args_abs_list[global_index];
+    const py::object &global_params_dict = GetGlobalObject(global_abs);
     params[0] = global_params_dict;
 
     // Make the local parameters.
@@ -2990,6 +3207,193 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
   bool HasConstArgAttr(const py::object &obj) const {
     constexpr char const_arg_attr[] = "const_arg";
     return py::hasattr(obj, const_arg_attr) && py::cast<bool>(py::getattr(obj, const_arg_attr));
+  }
+
+  std::string GetScriptStr(const AbstractBasePtr &abs) const {
+    // When PyInterpret node is built in python, the value of script abstract should be StringImm.
+    // Otherwise, the value of script should be Script type.
+    MS_EXCEPTION_IF_NULL(abs);
+    ValuePtr value_track = abs->GetValueTrack();
+    MS_EXCEPTION_IF_NULL(value_track);
+    if (value_track->isa<parse::Script>()) {
+      auto script_value_track = dyn_cast_ptr<parse::Script>(value_track);
+      return script_value_track->script();
+    }
+    if (!value_track->isa<StringImm>()) {
+      MS_INTERNAL_EXCEPTION(TypeError) << "Wrong script type for PyInterpret node, script abs: " << abs->ToString();
+    }
+    return value_track->ToString();
+  }
+
+  py::object GetGlobalObject(const AbstractBasePtr &abs) const {
+    MS_EXCEPTION_IF_NULL(abs);
+    if (!abs->isa<abstract::AbstractScalar>() && !abs->isa<abstract::AbstractDictionary>()) {
+      MS_INTERNAL_EXCEPTION(TypeError) << "The second argument should be a scalar(InterpretedObject) or dictionary, "
+                                       << "but got " << abs->ToString();
+    }
+    auto val = abs->BuildValue();
+    MS_EXCEPTION_IF_NULL(val);
+    AbstractDictionaryPtr global_dict = nullptr;
+    py::object global_params_dict;
+    if (abs->isa<abstract::AbstractDictionary>()) {
+      global_dict = abs->cast<abstract::AbstractDictionaryPtr>();
+      auto filtered_global_dict = FilterParameters(global_dict);
+      global_params_dict = ValueToPyData(filtered_global_dict->BuildValue());
+    } else {
+      auto global_dict_interpreted = dyn_cast<parse::InterpretedObject>(val);
+      MS_EXCEPTION_IF_NULL(global_dict_interpreted);
+      const py::object &global_params_dict_obj = global_dict_interpreted->obj();
+      ValuePtr globals_converted_value = nullptr;
+      if (!parse::ConvertData(global_params_dict_obj, &globals_converted_value)) {
+        MS_LOG(INTERNAL_EXCEPTION) << "Convert data failed";
+      }
+      MS_EXCEPTION_IF_NULL(globals_converted_value);
+      // Filter global parameters dict.
+      global_dict = dyn_cast<AbstractDictionary>(globals_converted_value->ToAbstract());
+      if (global_dict == nullptr) {
+        MS_LOG(INTERNAL_EXCEPTION) << "The second argument should be a dictionary, but got "
+                                   << globals_converted_value->ToAbstract()->ToString();
+      }
+      auto filtered_global_dict = FilterParameters(global_dict);
+      MS_LOG(DEBUG) << "arg_1, global_dict: " << global_dict->ToString()
+                    << ", filtered_global_dict: " << filtered_global_dict->ToString();
+      ValuePtr global_dict_value = filtered_global_dict->BuildValue();
+      global_params_dict = ValueToPyData(global_dict_value);
+    }
+    // Add filtered global python function to global_params_dict.
+    AddGlobalPythonFunction(global_dict, &global_params_dict);
+    return global_params_dict;
+  }
+
+  AnfNodePtr ConvertLocalValueInputNode(const AnfNodePtr &local_node, const AbstractBasePtr &local_abs) const {
+    MS_EXCEPTION_IF_NULL(local_node);
+    MS_EXCEPTION_IF_NULL(local_abs);
+    AnfNodePtr ret_node = nullptr;
+    // Not consider AbstractDictionary scene yet.
+    if (local_abs->isa<abstract::AbstractSequence>() &&
+        IsOneOfPrimitiveCNode(local_node, {prim::kPrimMakeTuple, prim::kPrimMakeList})) {
+      auto local_cnode = local_node->cast<CNodePtr>();
+      auto local_abs_seq = local_abs->cast<abstract::AbstractSequencePtr>();
+      if (local_cnode->size() - 1 != local_abs_seq->size()) {
+        MS_LOG(INTERNAL_EXCEPTION) << "For node: " << local_node->DebugString() << ", input size is "
+                                   << local_cnode->size() << " and abstract size is " << local_abs_seq->size()
+                                   << ". Size not matched.";
+      }
+      const auto &local_cnode_inputs = local_cnode->inputs();
+      const auto &local_elements_abs = local_abs_seq->elements();
+      AnfNodePtrList new_inputs;
+      (void)new_inputs.emplace_back(local_cnode_inputs[0]);
+      for (size_t i = 1; i < local_cnode_inputs.size(); ++i) {
+        (void)new_inputs.emplace_back(ConvertLocalValueInputNode(local_cnode_inputs[i], local_elements_abs[i - 1]));
+      }
+      auto fg = local_cnode->func_graph();
+      MS_EXCEPTION_IF_NULL(fg);
+      ret_node = fg->NewCNode(new_inputs);
+    } else {
+      auto py_obj = fallback::GetPyObjForFuncGraphAbstractClosure(local_abs);
+      if (py::isinstance<py::none>(py_obj)) {
+        return local_node;
+      }
+      ret_node = NewValueNode(std::make_shared<parse::InterpretedObject>(py_obj));
+    }
+    MS_EXCEPTION_IF_NULL(ret_node);
+    ret_node->set_debug_info(local_node->debug_info());
+    return ret_node;
+  }
+
+  AnfNodePtr ConvertPyInterpretNode(const AnfNodePtr &node, const AbstractBasePtrList &args_abs_list) const {
+    MS_EXCEPTION_IF_NULL(node);
+    // Ensure the same node only check local dict once.
+    if (node->has_user_data(fallback::kLocalDictCheck) && *node->user_data<bool>(fallback::kLocalDictCheck)) {
+      return nullptr;
+    }
+    node->set_user_data(fallback::kLocalDictCheck, std::make_shared<bool>(true));
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    constexpr size_t interpret_min_len = 4;
+    if (cnode->size() < interpret_min_len) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The minimum input number for PyInterpret node should be " << interpret_min_len
+                                 << " but got " << cnode->size();
+    }
+    if (args_abs_list.size() < interpret_min_len - 1) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The minimum number for PyInterpret input abstract should be "
+                                 << interpret_min_len - 1 << " but got " << args_abs_list.size();
+    }
+    constexpr size_t local_index = 3;
+    auto local_node = cnode->input(local_index);
+    auto local_node_abs = args_abs_list[local_index - 1];
+    MS_EXCEPTION_IF_NULL(local_node);
+    MS_EXCEPTION_IF_NULL(local_node_abs);
+    if (!IsPrimitiveCNode(local_node, prim::kPrimMakeDict)) {
+      return nullptr;
+    }
+    auto local_cnode = local_node->cast<CNodePtr>();
+    constexpr size_t make_dict_len = 3;
+    if (local_cnode->size() != make_dict_len) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Make dict mode input size should be " << make_dict_len << " but got "
+                                 << local_cnode->size();
+    }
+
+    const auto &check_abs_function = [](const AbstractBasePtr &input) {
+      std::function<bool(const AbstractBasePtr &)> check_abs_function_inner;
+      check_abs_function_inner = [&](const AbstractBasePtr &abs) {
+        MS_EXCEPTION_IF_NULL(abs);
+        if (abs->isa<abstract::AbstractSequence>()) {
+          auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+          const auto &elements = abs_seq->elements();
+          return std::any_of(elements.begin(), elements.end(),
+                             [check_abs_function_inner](const AbstractBasePtr &inner_abs) {
+                               return check_abs_function_inner(inner_abs);
+                             });
+        }
+        if (abs->isa<abstract::AbstractDictionary>()) {
+          auto abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
+          const auto elements = abs_dict->elements();
+          return std::any_of(elements.begin(), elements.end(),
+                             [check_abs_function_inner](const abstract::AbstractElementPair &inner_abs) {
+                               // Dictionary key can not be abstract function, no need to check.
+                               return check_abs_function_inner(inner_abs.second);
+                             });
+        }
+        return abs->isa<abstract::FuncGraphAbstractClosure>();
+      };
+      return check_abs_function_inner(input);
+    };
+
+    if (!check_abs_function(local_node_abs)) {
+      return nullptr;
+    }
+    auto local_node_abs_dict = local_node_abs->cast<abstract::AbstractDictionaryPtr>();
+    MS_EXCEPTION_IF_NULL(local_node_abs_dict);
+    const auto &elements_pair = local_node_abs_dict->elements();
+    std::vector<abstract::AbstractBasePtr> element_abs{};
+    std::transform(elements_pair.begin(), elements_pair.end(), std::back_inserter(element_abs),
+                   [](const AbstractElementPair &pairs) { return pairs.second; });
+    auto local_value_abs = std::make_shared<abstract::AbstractTuple>(element_abs);
+    constexpr size_t value_index = 2;
+    auto local_value_node = local_cnode->input(value_index);
+    auto new_local_value_node = ConvertLocalValueInputNode(local_value_node, local_value_abs);
+    std::vector<AnfNodePtr> new_local_node_inputs;
+    for (size_t i = 0; i < value_index; ++i) {
+      new_local_node_inputs.push_back(local_cnode->input(i));
+    }
+    new_local_node_inputs.push_back(new_local_value_node);
+    auto fg = node->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    auto new_local_cnode = fg->NewCNode(new_local_node_inputs);
+    new_local_cnode->set_debug_info(local_cnode->debug_info());
+    std::vector<AnfNodePtr> new_cnode_inputs;
+    for (size_t i = 0; i < local_index; ++i) {
+      new_cnode_inputs.push_back(cnode->input(i));
+    }
+    new_cnode_inputs.push_back(new_local_cnode);
+    for (size_t i = local_index + 1; i < cnode->size(); ++i) {
+      new_cnode_inputs.push_back(cnode->input(i));
+    }
+    auto new_cnode = fg->NewCNode(new_cnode_inputs);
+    new_cnode->set_debug_info(cnode->debug_info());
+    new_cnode->set_user_data(fallback::kLocalDictCheck, std::make_shared<bool>(true));
+    return new_cnode;
   }
 
  private:
@@ -3311,22 +3715,10 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
                                                         const AnfNodeConfigPtr &out_conf) const {
     // Create Primitive instance with variable arguments.
     auto prim_func = std::make_shared<Primitive>(cls_name);
-    // Handle primitive signatures.
-    py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-    py::tuple prim_signatures = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_PRIMITIVE_SIGNATURES, cls_obj);
-    std::vector<Signature> signatures;
-    for (const auto &sign : prim_signatures) {
-      (void)signatures.emplace_back(sign.cast<Signature>());
-    }
-    prim_func->set_signatures(signatures);
-    prim_func->set_has_signature(!signatures.empty());
     auto do_trans_prim_func = std::make_shared<prim::DoTransPrimitiveFunction>(prim_func);
-
-    AbstractBasePtrList partial_args_abs_list;
     // Ignore the first input which is ClassType.
-    for (size_t i = 1; i < args_abs_list.size(); i++) {
-      (void)partial_args_abs_list.emplace_back(args_abs_list[i]);
-    }
+    AbstractBasePtrList partial_args_abs_list(args_abs_list.begin() + 1, args_abs_list.end());
+    do_trans_prim_func->set_given_init_size(partial_args_abs_list.size());
     auto func_ptr = std::make_shared<abstract::PrimitiveAbstractClosure>(do_trans_prim_func);
     auto ret_val =
       std::make_shared<abstract::PartialAbstractClosure>(func_ptr, partial_args_abs_list, out_conf->node());
@@ -3677,8 +4069,7 @@ class CondEvaluator : public TransitionPrimEvaluator {
       const auto key_value_tuple = cur_graph->NewCNode(key_value_list);
       new_node =
         fallback::CreatePyExecuteCNodeInOrder(cnode, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
-      fallback::SetRealType(new_node, kBool);
-
+      fallback::SetRealType<AnfNode, Type>(new_node, std::make_shared<TensorType>(kBool));
       fallback::SetRealShape(new_node, std::make_shared<abstract::Shape>(std::vector<int64_t>{Shape::kShapeDimAny}));
     } else if (cond_abs->isa<AbstractTensor>() && is_while_condition(flag_node)) {
       // When the condition of while is a tensor, do not use standard_method.tensor_bool

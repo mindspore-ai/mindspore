@@ -128,7 +128,7 @@ ValueNodePtr InputsUnifyMindIR::CreateValueTensor(const FuncGraphPtr &func_graph
     tensor = ScalarToTensor(value->cast<ScalarPtr>());
   } else if (value->isa<ValueSequence>()) {
     tensor = SequenceToTensor(value->cast<ValueSequencePtr>());
-  } else if (value->isa<tensor::Tensor>() || value->isa<StringImm>()) {
+  } else if (value->isa<tensor::Tensor>() || value->isa<StringImm>() || value->isa<None>()) {
     return node->cast<ValueNodePtr>();
   } else {
     MS_LOG(WARNING) << "Value is unsupported type. Value: " << value->ToString();
@@ -153,7 +153,7 @@ CNodePtr InputsUnifyMindIR::CreateScalarToTensor(const FuncGraphPtr &func_graph,
   common::AnfAlgo::SetNodeAttr(kAttrDType, TypeIdToType(data_type), scalar_to_tensor);
 
   // set abstract
-  auto abs = abstract::MakeAbstract(std::make_shared<abstract::Shape>(ShapeVector{1}), TypeIdToType(data_type));
+  auto abs = abstract::MakeAbstract(std::make_shared<abstract::Shape>(ShapeVector{}), TypeIdToType(data_type));
   MS_EXCEPTION_IF_NULL(abs);
   MS_LOG(DEBUG) << "Abstract for ScalarToTensor op is " << abs->ToString();
   scalar_to_tensor->set_abstract(abs);

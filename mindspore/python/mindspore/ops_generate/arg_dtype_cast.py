@@ -29,25 +29,23 @@ def int_to_float(data):
     return float(data)
 
 
-def scalar_to_tuple(data, dst_type):
-    if dst_type == PY_DT_TUPLE_INT:
-        return (int(data),)
+def scalar_to_tuple(data):
     return (data,)
 
 
-def list_to_tuple(data, dst_type):
+def list_to_tuple(data):
     # tuple() currently does not support Any from JIT Fallback.
     res = ()
     for element in data:
-        if dst_type == PY_DT_TUPLE_INT:
-            res += (int(element),)
-        else:
-            res += (element,)
+        res += (element,)
     return res
 
 
-def tensor_to_tuple(data, dst_type):
-    if dst_type == PY_DT_TUPLE_INT:
+def tensor_to_tuple(data):
+    # Since tuple is not supported for precision conversion during KernelSelect, the original int32 tensor input cases
+    # would be failed. Thus, the tuple precision is raised from int32 to int64 at frontend. But sequence data type cast
+    # must be adapted in future version.
+    if data.dtype == ms.int32:
         data = ops.cast(data, ms.int64)
     return tensor_to_tuple_(data)
 
@@ -66,8 +64,8 @@ def tuple_to_tensor(data):
     return ops.tuple_to_array(data)
 
 
-def list_to_tensor(data, dst_type):
-    return ops.tuple_to_array(list_to_tuple(data, dst_type))
+def list_to_tensor(data):
+    return ops.tuple_to_array(list_to_tuple(data))
 
 # type
 PY_DT_TYPE = OpDtype.PY_DT_TYPE.value
@@ -199,20 +197,22 @@ def do_type_cast(data, dst_type):
             return int_to_float(data)
     elif is_tuple(dst_type):
         if isinstance(data, (int, float, bool)):
-            return scalar_to_tuple(data, dst_type)
+            return scalar_to_tuple(data)
         if isinstance(data, list):
-            return list_to_tuple(data, dst_type)
+            return list_to_tuple(data)
         if isinstance(data, Tensor):
-            return tensor_to_tuple(data, dst_type)
+            return tensor_to_tuple(data)
     elif dst_type == PY_DT_TENSOR:
         if isinstance(data, (int, float, bool)):
             return scalar_to_tensor(data)
         if isinstance(data, tuple):
             return tuple_to_tensor(data)
         if isinstance(data, list):
-            return list_to_tensor(data, dst_type)
+            return list_to_tensor(data)
     elif is_number(dst_type):
         if isinstance(data, Tensor):
+            if dst_type == PY_DT_INT:
+                data = ops.cast(data, ms.int64)
             ret = TensorToScalar()(data)
             return ret
     raise TypeError("Type conversion failed.")

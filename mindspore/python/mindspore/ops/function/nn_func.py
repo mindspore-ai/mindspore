@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,18 +43,53 @@ from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple,
 from mindspore.common.api import _function_forbid_reuse
 from mindspore.ops.auto_generate import log_softmax
 
-slice_ = P.Slice()
-fast_gelu_ = P.FastGeLU()
-softsign_ = P.Softsign()
-hardswish_ = P.HSwish()
-mish_ = NN_OPS.Mish()
-selu_ = NN_OPS.SeLU()
-scalar_to_tensor_ = P.ScalarToTensor()
-list_to_tensor_ = ListToTensor()
-tuple_to_tensor_ = TupleToTensor()
-tensor_to_tuple_ = TensorToTuple()
+abs_ = P.Abs()
+add_ = P.Add()
+bias_add_ = P.BiasAdd()
 cast_ = P.Cast()
-sigmoid_ = NN_OPS.Sigmoid()
+div_ = P.Div()
+dtype_ = P.DType()
+equal_ = P.Equal()
+erf_ = P.Erf()
+exp_ = P.Exp()
+expand_dims_ = P.ExpandDims()
+fast_gelu_ = P.FastGeLU()
+fillv2_ = P.FillV2()
+gather_ = P.Gather()
+gather_d_ = P.GatherD()
+gelu_ = P.GeLU()
+greater_ = P.Greater()
+hardswish_ = P.HSwish()
+less_ = P.Less()
+list_to_tensor_ = ListToTensor()
+log_ = P.Log()
+matmul_ = P.MatMul()
+maximum_ = P.Maximum()
+minimum_ = P.Minimum()
+mish_ = NN_OPS.Mish()
+mul_ = P.Mul()
+neg_ = P.Neg()
+ones_like_ = P.OnesLike()
+reduce_mean_ = P.ReduceMean()
+reduce_sum_ = P.ReduceSum()
+reshape_ = P.Reshape()
+scalar_to_tensor_ = P.ScalarToTensor()
+select_ = P.Select()
+selu_ = NN_OPS.SeLU()
+shape_ = P.Shape()
+sigmoid_ = P.Sigmoid()
+sign_ = P.Sign()
+slice_ = P.Slice()
+softplus_ = P.Softplus()
+softsign_ = P.Softsign()
+sqrt_ = P.Sqrt()
+square_ = P.Square()
+sub_ = P.Sub()
+tensor_shape_ = P.TensorShape()
+tensor_to_tuple_ = TensorToTuple()
+transpose_ = P.Transpose()
+tuple_to_tensor_ = TupleToTensor()
+
 check_positive_int_const = validator.check_positive_int
 check_positive_int_sequence_const = validator.check_positive_int_sequence
 check_positive_float_const = validator.check_positive_float
@@ -320,7 +355,6 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
             raise ValueError("For avg_pool1d, stride should be int or tuple of length 1.")
         stride = stride[0]
 
-    expand_op = _get_cache_prim(P.ExpandDims)()
     squeeze_op = _get_cache_prim(P.Squeeze)((2, 3))
     avg_pool_op = _get_cache_prim(P.AvgPool3D)(kernel_size=(1, 1, kernel_size),
                                                strides=(1, 1, stride),
@@ -328,8 +362,8 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
                                                pad=padding,
                                                ceil_mode=ceil_mode,
                                                count_include_pad=count_include_pad)
-    input_x = expand_op(input_x, 2)
-    input_x = expand_op(input_x, 2)
+    input_x = expand_dims_(input_x, 2)
+    input_x = expand_dims_(input_x, 2)
     input_x = avg_pool_op(input_x)
     input_x = squeeze_op(input_x)
     return input_x
@@ -467,8 +501,6 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     stride = _check_avgpool_2d_stride(stride)
     padding = _check_avgpool_2d_padding(padding)
     _check_avg_pool2d_type_and_value(ceil_mode, count_include_pad, divisor_override)
-
-    expand_op = _get_cache_prim(P.ExpandDims)()
     squeeze_op = _get_cache_prim(P.Squeeze)(2)
     avg_pool_op = _get_cache_prim(P.AvgPool3D)(kernel_size=kernel_size,
                                                strides=stride,
@@ -477,7 +509,7 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
                                                ceil_mode=ceil_mode,
                                                count_include_pad=count_include_pad,
                                                divisor_override=divisor_override)
-    input_x = expand_op(input_x, 2)
+    input_x = expand_dims_(input_x, 2)
     input_x = avg_pool_op(input_x)
     input_x = squeeze_op(input_x)
     return input_x
@@ -639,7 +671,7 @@ def adaptive_max_pool1d(input, output_size):
     _check_adaptive_max_pool1d_output_size(output_size)
 
     x_in_shape = input.shape
-    x_dtype = _get_cache_prim(P.DType)()(input)
+    x_dtype = dtype_(input)
 
     if len(x_in_shape) != 3:
         raise ValueError(f"For adaptive_max_pool1d input must have 3 dim, but got {len(x_in_shape)}.")
@@ -658,18 +690,14 @@ def adaptive_max_pool1d(input, output_size):
             raise TypeError(f"For adaptive_max_pool1d, the input dtype must be float16 or float32, "
                             f"but got {x_dtype}.")
 
-    expand_ = _get_cache_prim(P.ExpandDims)()
     squeeze_ = _get_cache_prim(P.Squeeze)(2)
-
     width = x_in_shape[2]
     stride = width // output_size
     kernel_size = width - (output_size - 1) * stride
     stride = (1, width // output_size)
     kernel_size = (1, kernel_size)
-
     max_pool_ = _get_cache_prim(NN_OPS.MaxPool)(kernel_size=kernel_size, strides=stride)
-
-    input = expand_(input, 2)
+    input = expand_dims_(input, 2)
     input = max_pool_(input)
     input = squeeze_(input)
 
@@ -808,6 +836,8 @@ def adaptive_max_pool3d(input, output_size, return_indices=False):
         >>> print(output[1].asnumpy())
         [[[[33 35]]]]
     """
+    if isinstance(output_size, int):
+        output_size = (output_size, output_size, output_size)
     adaptive_max_pool3d_ = _get_cache_prim(NN_OPS.AdaptiveMaxPool3D)()
     output_size_ = Tensor(output_size, dtype=mstype.int32)
     out = adaptive_max_pool3d_(input, output_size_)
@@ -886,9 +916,8 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
     if stride is None:
         stride = kernel_size
 
-    shape = P.Shape()
-    x_shape = shape(x)
-    indices_shape = shape(indices)
+    x_shape = shape_(x)
+    indices_shape = shape_(indices)
     x_dim = len(x_shape)
     check_shape(x_shape, indices_shape, "max_unpool1d")
     if x_dim not in (2, 3):
@@ -1010,9 +1039,8 @@ def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=No
     if stride is None:
         stride = kernel_size
 
-    shape = P.Shape()
-    x_shape = shape(x)
-    indices_shape = shape(indices)
+    x_shape = shape_(x)
+    indices_shape = shape_(indices)
     x_dim = len(x_shape)
     check_shape(x_shape, indices_shape, "max_unpool2d")
     if x_dim not in (3, 4):
@@ -1119,8 +1147,8 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
     if stride is None:
         stride = kernel_size
 
-    x_shape = P.Shape()(x)
-    indices_shape = P.Shape()(indices)
+    x_shape = shape_(x)
+    indices_shape = shape_(indices)
     x_dim = len(x_shape)
     check_shape(x_shape, indices_shape, "max_unpool3d")
     if x_dim not in (4, 5):
@@ -1308,6 +1336,11 @@ def celu(x, alpha=1.0):
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
+
+    CELU Activation Function Graph:
+
+    .. image:: ../images/CELU.png
+        :align: center
 
     Args:
         x (Tensor): The input of celu with data type of float16 or float32.
@@ -1531,6 +1564,11 @@ def fast_gelu(x):
         \text{output} = \frac {x} {1 + \exp(-1.702 * \left| x \right|)} * \exp(0.851 * (x - \left| x \right|)),
 
     where :math:`x` is the element of the input.
+
+    FastGelu Activation Function Graph:
+
+    .. image:: ../images/FastGelu.png
+        :align: center
 
     Args:
         x (Tensor): Input to compute the FastGeLU with data type of float16 or float32.
@@ -1867,20 +1905,20 @@ def kl_div(logits, labels, reduction='mean'):
                          f"'['none', 'mean', 'batchmean', 'sum']', but got '{reduction}'.")
 
     if reduction == 'batchmean':
-        kl_div_sum = P.KLDivLoss(reduction='sum')(logits, labels)
-        shape = P.Shape()(logits)
+        kl_div_sum = _get_cache_prim(P.KLDivLoss)(reduction='sum')(logits, labels)
+        shape = shape_(logits)
         batch_size = shape[0]
         return kl_div_sum / batch_size
 
     if reduction == 'mean':
-        kl_div_sum = P.KLDivLoss(reduction='sum')(logits, labels)
-        shape = P.Shape()(logits)
+        kl_div_sum = _get_cache_prim(P.KLDivLoss)(reduction='sum')(logits, labels)
+        shape = shape_(logits)
         total_size = 1
         for dim in shape:
             total_size = total_size * dim
         return kl_div_sum / total_size
 
-    return P.KLDivLoss(reduction=reduction)(logits, labels)
+    return _get_cache_prim(P.KLDivLoss)(reduction=reduction)(logits, labels)
 
 
 def hardshrink(x, lambd=0.5):
@@ -1896,6 +1934,11 @@ def hardshrink(x, lambd=0.5):
         x, & \text{ if } x < -\lambda \\
         0, & \text{ otherwise }
         \end{cases}
+
+    HShrink Activation Function Graph:
+
+    .. image:: ../images/HShrink.png
+        :align: center
 
     Args:
         x (Tensor): The input of Hard Shrink with data type of float16 or float32.
@@ -2127,6 +2170,11 @@ def hardswish(x):
 
     where :math:`x_i` is an element of the input Tensor.
 
+    HSwish Activation Function Graph:
+
+    .. image:: ../images/HSwish.png
+        :align: center
+
     Args:
         x (Tensor): The input to compute the Hard Swish.
 
@@ -2160,7 +2208,7 @@ def _is_dim_unknown(shape):
 def _interploate_make_tuple(rank, value):
     s = tuple_to_tensor_((rank,), mstype.int32)
     v = Tensor(value)
-    t = _get_cache_prim(P.FillV2)()(s, v)
+    t = fillv2_(s, v)
     out = tensor_to_tuple_(t)
     return out
 
@@ -2342,7 +2390,7 @@ def interpolate(input,
             x = x.unsqueeze(-1)
             x = _get_cache_prim(P.ResizeNearestNeighborV2)()(
                 x, size)
-            x = P.Squeeze(-1)(x)
+            x = _get_cache_prim(P.Squeeze)(-1)(x)
         elif size is not None and x_rank == 4:
             size = seq.TupleToTensor()(size[:2], mstype.int32)
             x = _get_cache_prim(P.ResizeNearestNeighborV2)()(
@@ -2394,7 +2442,7 @@ def interpolate(input,
                 align_corners=False,
                 half_pixel_centers=True)
             x = resize(x, size)
-            x = P.Squeeze(-1)(x)
+            x = _get_cache_prim(P.Squeeze)(-1)(x)
         if x_rank == 4:
             if isinstance(size, int):
                 size = F.scalar_to_tensor(size, mstype.int32)
@@ -2550,6 +2598,11 @@ def softsign(x):
 
     .. math::
         \text{SoftSign}(x) = \frac{x}{1 + |x|}
+
+    Softsign Activation Function Graph:
+
+    .. image:: ../images/Softsign.png
+        :align: center
 
     Args:
         x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
@@ -2740,6 +2793,11 @@ def softshrink(x, lambd=0.5):
         0, & \text{ otherwise }
         \end{cases}
 
+    SoftShrink Activation Function Graph:
+
+    .. image:: ../images/Softshrink.png
+        :align: center
+
     Args:
         x (Tensor): The input of soft shrink with data type of float16 or float32.
         lambd (float): The :math:`\lambda` must be no less than zero. Default: ``0.5`` .
@@ -2822,9 +2880,8 @@ def softplus(input, beta=1, threshold=20): # pylint:disable=redefined-outer-name
         >>> print(output)
         [0.7443967 0.79813886 30. 25.]
     """
-    softplus_op = _get_cache_prim(P.Softplus)()
     scaling_input = beta * input
-    op_output = (1 / beta) * softplus_op(scaling_input)
+    op_output = (1 / beta) * softplus_(scaling_input)
     return ops.select(input * beta > threshold, input, op_output)
 
 
@@ -2842,6 +2899,11 @@ def silu(x):
         \text{sigma}(x_i) = \frac{1}{1 + \exp(-x_i)},
 
     where :math:`x_i` is an element of the x.
+
+    SiLU Activation Function Graph:
+
+    .. image:: ../images/SiLU.png
+        :align: center
 
     For more details, please refer to :class:`mindspore.nn.SiLU`.
 
@@ -2880,6 +2942,11 @@ def selu(input_x):
 
     See more details in `Self-Normalizing Neural Networks <https://arxiv.org/abs/1706.02515>`_.
 
+    SeLU Activation Function Graph:
+
+    .. image:: ../images/SeLU.png
+        :align: center
+
     Args:
         input_x (Tensor): Tensor of any dimension, the data type is float16 or float32.
 
@@ -2914,6 +2981,11 @@ def sigmoid(input):
         \text{sigmoid}(input_i) = \frac{1}{1 + \exp(-input_i)}
 
     where :math:`input_i` is an element of the input.
+
+    Sigmoid Activation Function Graph:
+
+    .. image:: ../images/Sigmoid.png
+        :align: center
 
     Args:
         input (Tensor): Tensor of any dimension, the data type is float16, float32, float64, complex64 or complex128.
@@ -2951,6 +3023,11 @@ def logsigmoid(x):
 
     where :math:`x_{i}` is the element of the input.
 
+    LogSigmoid Activation Function Graph:
+
+    .. image:: ../images/LogSigmoid.png
+        :align: center
+
     Args:
         x (Tensor): The input of LogSigmoid with data type of float16 or float32.
           The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
@@ -2973,8 +3050,8 @@ def logsigmoid(x):
         >>> print(output)
         [-0.31326166 -0.12692806 -0.04858734]
     """
-    output = _get_cache_prim(P.Sigmoid)()(x)
-    ret = _get_cache_prim(P.Log)()(output)
+    output = sigmoid_(x)
+    ret = log_(output)
     return ret
 
 
@@ -3120,13 +3197,11 @@ def bidense(input1, input2, weight, bias=None):
         input1 = input1.reshape((-1, input1_shape[-1]))
         input2 = input2.reshape((-1, input2_shape[-1]))
     batch_size = input1.shape[0]
-    matmul_ = P.MatMul()
     output = matmul_(input1, weight.transpose(1, 2, 0).view(input1_shape[-1], -1))
     output = output.view(batch_size, input2_shape[-1], weight.shape[0])
     output = output.transpose(2, 0, 1) * input2
     output = output.sum(2).swapaxes(0, 1)
     if bias is not None:
-        bias_add_ = P.BiasAdd()
         output = bias_add_(output, bias)
     if len(input1_shape) != 2:
         output_shape = input1_shape[:-1] + (-1,)
@@ -3221,13 +3296,10 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
                                                                    deformable_groups,
                                                                    modulated)
     fm_offset = deformable_offsets(x, offsets)
-
     weight_shape = weight.shape
     out_channel = weight_shape[0]
     strides_conv = (kernel_size[0], kernel_size[1])
     conv = _get_cache_prim(P.Conv2D)(out_channel, kernel_size, 1, "valid", 0, strides_conv, 1, groups)
-    bias_add_ = _get_cache_prim(P.BiasAdd)()
-
     output = conv(fm_offset, weight)
     if bias is not None:
         output = bias_add_(output, bias)
@@ -3441,6 +3513,11 @@ def relu(input):
         In general, this operator is more commonly used. The difference from `ReLuV2` is that the `ReLuV2` will
         output one more Mask.
 
+    ReLU Activation Function Graph:
+
+    .. image:: ../images/ReLU.png
+        :align: center
+
     Args:
         input (Tensor): Input Tensor of numeric types.
 
@@ -3477,6 +3554,11 @@ def relu6(x):
         \text{ReLU6}(x) = \min(\max(0,x), 6)
 
     It returns :math:`\min(\max(0,x), 6)` element-wise.
+
+    ReLU6 Activation Function Graph:
+
+    .. image:: ../images/ReLU6.png
+        :align: center
 
     Args:
         x (Tensor): Tensor of shape :math:`(N, *)`,
@@ -3564,13 +3646,12 @@ def rrelu(input, lower=1.0 / 8, upper=1.0 / 3):
     _upper = Tensor(upper, mstype.float32)
     _size = input.shape
     if ops.is_sequence_value_unknown(_size):
-        dyn_shape = _get_cache_prim(P.TensorShape)()
-        _size = dyn_shape(input)
-    sign_matrix = _get_cache_prim(P.Sign)()(input)
+        _size = tensor_shape_(input)
+    sign_matrix = sign_(input)
     negative_filter = sign_matrix.clip(None, 0)
     positive_filter = sign_matrix.clip(0, None)
-    _dtype = _get_cache_prim(P.DType)()(input)
-    mask = ops.uniform(_size, _lower, _upper).astype(_dtype)
+    input_dtype = dtype_(input)
+    mask = ops.uniform(_size, _lower, _upper).astype(input_dtype)
     negative_mask = negative_filter * mask * -1
     total_mask = negative_mask + positive_filter
     out = total_mask * input
@@ -3742,8 +3823,6 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
 
 def _cross_entropy(inputs, target, target_dim, weight=None, reduction='mean', label_smoothing=0.0):
     """cross entropy inner function"""
-    _ones_like = _get_cache_prim(P.OnesLike)()
-
     class_dim = 0 if inputs.ndim == 1 else 1
     n_classes = inputs.shape[class_dim]
     inputs = _innner_log_softmax(inputs, class_dim)
@@ -3751,7 +3830,7 @@ def _cross_entropy(inputs, target, target_dim, weight=None, reduction='mean', la
         target = target * (1 - label_smoothing) + label_smoothing / n_classes
 
     if weight is None:
-        weight = _ones_like(inputs)
+        weight = ones_like_(inputs)
     elif inputs.ndim != 1:
         broadcast_shape = [1 for _ in range(inputs.ndim)]
         broadcast_shape[1] = weight.shape[0]
@@ -3849,33 +3928,27 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
 
 def _nll_loss(inputs, target, target_dim=-1, weight=None, ignore_index=None, reduction='none', label_smoothing=0.0):
     """nll loss inner function"""
-    _neg = _get_cache_prim(P.Neg)()
-    _gather_d = _get_cache_prim(P.GatherD)()
-    _gather = _get_cache_prim(P.Gather)()
-    _ones_like = _get_cache_prim(P.OnesLike)()
-    _equal = _get_cache_prim(P.Equal)()
-
     if target.ndim == inputs.ndim - 1:
         target = target.expand_dims(target_dim)
     if ignore_index is not None:
-        non_pad_mask = _equal(target, ignore_index)
+        non_pad_mask = equal_(target, ignore_index)
         target = target.masked_fill(non_pad_mask, 0)
     else:
         non_pad_mask = target
     if weight is not None:
-        loss_weights = _gather(weight, target, 0)
+        loss_weights = gather_(weight, target, 0)
         orig_shape = inputs.shape
         if inputs.ndim != 2:
             inputs = inputs.view(orig_shape[:2] + (-1,))
             weight = weight.view(weight.shape + (1,))
         weighted_inputs = inputs * weight
         weighted_inputs = weighted_inputs.view(orig_shape)
-        loss = _neg(_gather_d(weighted_inputs, target_dim, target))
-        smooth_loss = _neg(weighted_inputs.sum(axis=target_dim, keepdims=True))
+        loss = neg_(gather_d_(weighted_inputs, target_dim, target))
+        smooth_loss = neg_(weighted_inputs.sum(axis=target_dim, keepdims=True))
     else:
-        loss = _neg(_gather_d(inputs, target_dim, target))
-        smooth_loss = _neg(inputs.sum(axis=target_dim, keepdims=True))
-        loss_weights = _ones_like(loss)
+        loss = neg_(gather_d_(inputs, target_dim, target))
+        smooth_loss = neg_(inputs.sum(axis=target_dim, keepdims=True))
+        loss_weights = ones_like_(loss)
     if ignore_index is not None:
         loss = loss.masked_fill(non_pad_mask, 0.)
         loss_weights = loss_weights.masked_fill(non_pad_mask, 0.)
@@ -3957,7 +4030,7 @@ def l1_loss(input, target, reduction='mean'):
     _check_is_tensor('target', target, "l1_loss")
     if reduction not in ('mean', 'sum', 'none'):
         raise ValueError(f"For l1_loss, the 'reduction' must be in ['mean', 'sum', 'none'], but got {reduction}.")
-    loss = _get_cache_prim(P.Abs)()(input - target)
+    loss = abs_(input - target)
     return _get_loss(loss, reduction, "l1_loss")
 
 
@@ -4070,13 +4143,13 @@ def threshold(input, thr, value):
     _check_is_tensor('input', input, "threshold")
     _check_value_type("thr", thr, [float, int], "threshold")
     _check_value_type("value", value, [float, int], "threshold")
-    cond = _get_cache_prim(P.Greater)()(input, thr)
+    cond = greater_(input, thr)
     input_type = input.dtype
     value = Tensor(value, input_type)
     input_shape = input.shape
-    shape_tensor = _get_cache_prim(TupleToTensor)()(input_shape, mstype.int64)
-    value = _get_cache_prim(P.FillV2)()(shape_tensor, value)
-    return _get_cache_prim(P.Select)()(cond, input, value)
+    shape_tensor = tuple_to_tensor_(input_shape, mstype.int64)
+    value = fillv2_(shape_tensor, value)
+    return select_(cond, input, value)
 
 
 def leaky_relu(input, alpha=0.2):
@@ -4093,6 +4166,11 @@ def leaky_relu(input, alpha=0.2):
 
     For more details, see `Rectifier Nonlinearities Improve Neural Network Acoustic Models
     <https://ai.stanford.edu/~amaas/papers/relu_hybrid_icml2013_final.pdf>`_.
+
+    LeakyReLU Activation Function Graph:
+
+    .. image:: ../images/LeakyReLU.png
+        :align: center
 
     Args:
         input (Tensor): The input of leaky_relu is a Tensor of any dimension.
@@ -4120,10 +4198,10 @@ def leaky_relu(input, alpha=0.2):
     """
     _check_is_tensor('input', input, "leaky_relu")
     _check_value_type("alpha", alpha, [float, int], "leaky_relu")
-    select_op = _get_cache_prim(P.Maximum)()
+    select_op = maximum_
     if alpha > 1:
-        select_op = _get_cache_prim(P.Minimum)()
-    alpha = _get_cache_prim(P.Cast)()(F.scalar_to_tensor(alpha), input.dtype)
+        select_op = minimum_
+    alpha = cast_(F.scalar_to_tensor(alpha), input.dtype)
     return select_op(alpha * input, input)
 
 
@@ -4232,6 +4310,11 @@ def mish(x):
     See more details in `A Self Regularized Non-Monotonic Neural Activation Function
     <https://arxiv.org/abs/1908.08681>`_.
 
+    Mish Activation Function Graph:
+
+    .. image:: ../images/Mish.png
+        :align: center
+
     Args:
         x (Tensor): The input Tensor.
             Supported dtypes:
@@ -4298,21 +4381,15 @@ def _get_loss(x, reduction, cls_name, weights=1.0):
     if reduction not in ('mean', 'sum', 'none'):
         raise ValueError(f"For '{cls_name}', the 'reduction' must be in ['mean', 'sum', 'none'], "
                          f"but got {reduction}.")
-
-    reduce_mean = P.ReduceMean()
-    reduce_sum = P.ReduceSum()
-    mul = P.Mul()
-    cast = P.Cast()
-
     input_dtype = x.dtype
-    x = cast(x, mstype.float32)
-    weights = cast(weights, mstype.float32)
-    x = mul(weights, x)
+    x = cast_(x, mstype.float32)
+    weights = cast_(weights, mstype.float32)
+    x = mul_(weights, x)
     if reduction == 'mean':
-        x = reduce_mean(x, _get_axis(x))
+        x = reduce_mean_(x, _get_axis(x))
     if reduction == 'sum':
-        x = reduce_sum(x, _get_axis(x))
-    x = cast(x, input_dtype)
+        x = reduce_sum_(x, _get_axis(x))
+    x = cast_(x, input_dtype)
     return x
 
 
@@ -4391,10 +4468,9 @@ def margin_ranking_loss(input1, input2, target, margin=0.0, reduction='mean'):
     _check_is_tensor('input1', input1, "margin_ranking_loss")
     _check_is_tensor('input2', input2, "margin_ranking_loss")
     _check_is_tensor('target', target, "margin_ranking_loss")
-    maximum = P.Maximum()
     _check_type_and_shape_same('input1', input1, 'input2', input2, 'margin_ranking_loss')
     _check_type_and_shape_same('target', target, 'input1', input1, 'margin_ranking_loss')
-    x = maximum(-target * (input1 - input2) + margin, 0)
+    x = maximum_(-target * (input1 - input2) + margin, 0)
     return _get_loss(x, reduction, "margin_ranking_loss")
 
 
@@ -4471,14 +4547,14 @@ def cosine_embedding_loss(input1, input2, target, margin=0.0, reduction="mean"):
     if margin_f > 1.0 or margin_f < -1.0:
         raise ValueError(f"For ops.cosine_embedding_loss, the value of 'margin' should be in [-1, 1],"
                          f"but got {margin_f}.")
-    prod_sum = _get_cache_prim(P.ReduceSum)()(input1 * input2, (1,))
-    square1 = _get_cache_prim(P.ReduceSum)()(ops.square(input1), (1,))
-    square2 = _get_cache_prim(P.ReduceSum)()(ops.square(input2), (1,))
+    prod_sum = reduce_sum_(input1 * input2, (1,))
+    square1 = reduce_sum_(ops.square(input1), (1,))
+    square2 = reduce_sum_(ops.square(input2), (1,))
     denom = ops.sqrt(square1) * ops.sqrt(square2)
     cosine = prod_sum / denom
 
     pos_value = 1.0 - cosine
-    neg_value = _get_cache_prim(P.Maximum)()(cosine - margin_f, 0.0)
+    neg_value = maximum_(cosine - margin_f, 0.0)
     zeros = ops.zeros_like(cosine)
     pos_part = ops.select(target == 1, pos_value, zeros)
     neg_part = ops.select(target == -1, neg_value, zeros)
@@ -4841,12 +4917,10 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
             pass
         else:
             raise ValueError(f"For 'gaussian_nll_loss', 'var' must be able to correctly broadcast to 'x' and 'target'.")
-    max_op = P.Maximum()
-    log_op = P.Log()
-    square_op = P.Square()
-    maxima = max_op(var, eps)
-    logarithm = log_op(maxima)
-    squared_loss = square_op(x - target)
+
+    maxima = maximum_(var, eps)
+    logarithm = log_(maxima)
+    squared_loss = square_(x - target)
     c = 0 if not full else 0.5 * log(2 * pi)
     loss = 0.5 * (logarithm + squared_loss / maxima) + c
     if reduction == 'mean':
@@ -5264,13 +5338,12 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         raise ValueError(f"For 'conv1d', the input must be a 3D Tensor, but got input of {input.ndim}D.")
     if weight.ndim != 3:
         raise ValueError(f"For 'conv1d', the weight must be a 3D Tensor, but got input of {weight.ndim}D.")
-    _expand = _get_cache_prim(P.ExpandDims)()
-    expanded_input = _expand(input, 2)
+    expanded_input = expand_dims_(input, 2)
     sqz = _get_cache_prim(P.Squeeze)(2)
     weight_shape = weight.shape
     out_channel = weight_shape[0]
     kernel_size = (1, weight_shape[2])
-    expanded_weight = _expand(weight, 2)
+    expanded_weight = expand_dims_(weight, 2)
     if isinstance(padding, int):
         padding = (0, 0, padding, padding)
     elif isinstance(padding, (tuple, list)):
@@ -5450,6 +5523,11 @@ def hardsigmoid(input):
 
     where :math:`x_i` is an element of the input Tensor.
 
+    HSigmoid Activation Function Graph:
+
+    .. image:: ../images/HSigmoid.png
+        :align: center
+
     Args:
         input (Tensor): The input Tensor.
 
@@ -5489,6 +5567,11 @@ def hardtanh(input, min_val=-1.0, max_val=1.0):
 
     Linear region range :math:`[min\_val, max\_val]` can be adjusted using `min_val` and `max_val`.
 
+    Hardtanh Activation Function Graph:
+
+    .. image:: ../images/Hardtanh.png
+        :align: center
+
     Args:
         input (Tensor): Input Tensor.
         min_val (Union[int, float], optional): Minimum value of the linear region range. Default: ``-1.0`` .
@@ -5517,8 +5600,8 @@ def hardtanh(input, min_val=-1.0, max_val=1.0):
     _check_value_type("min_val", min_val, [int, float], "hardtanh")
     _check_value_type("max_val", max_val, [int, float], "hardtanh")
     input_dtype = input.dtype
-    input = _get_cache_prim(P.Maximum)()(input, min_val)
-    input = _get_cache_prim(P.Minimum)()(input, max_val)
+    input = maximum_(input, min_val)
+    input = minimum_(input, max_val)
     return input.astype(input_dtype)
 
 
@@ -5595,14 +5678,12 @@ def huber_loss(input, target, reduction='mean', delta=1.0):
     _check_is_tensor('target', target, "huber_loss")
     _check_value_type("delta", delta, [int, float], "huber_loss")
     _check_number_gt_value("delta", delta, 0.0, "huber_loss")
-    sub = _get_cache_prim(P.Sub)()
-    multi = _get_cache_prim(P.Mul)()
-    z = sub(input, target)
-    z = _get_cache_prim(P.Abs)()(z)
-    cond = _get_cache_prim(P.Less)()(z, delta)
-    l1 = multi(0.5, _get_cache_prim(P.Square)()(z))
-    l2 = multi(delta, sub(z, 0.5 * delta))
-    loss = _get_cache_prim(P.Select)()(cond, l1, l2)
+    z = sub_(input, target)
+    z = abs_(z)
+    cond = less_(z, delta)
+    l1 = mul_(0.5, square_(z))
+    l2 = mul_(delta, sub_(z, 0.5 * delta))
+    loss = select_(cond, l1, l2)
     return _get_loss(loss, reduction, "huber_loss")
 
 
@@ -5654,7 +5735,7 @@ def adaptive_avg_pool1d(input, output_size):
     """
     def _check(x, output_size):
         x_in_shape = x.shape
-        x_dtype = _get_cache_prim(P.DType)()(x)
+        x_dtype = dtype_(x)
         if not isinstance(x, (Tensor, Tensor_)):
             raise TypeError("For adaptive_avg_pool1d, the input input must be tensor")
 
@@ -5674,21 +5755,16 @@ def adaptive_avg_pool1d(input, output_size):
 
     _check(input, output_size)
     x_in_shape = input.shape
-    expand_ = _get_cache_prim(P.ExpandDims)()
     squeeze_ = _get_cache_prim(P.Squeeze)(2)
-
     width = x_in_shape[2]
     stride = width // output_size
     kernel_size = width - (output_size - 1) * stride
     stride = (1, width // output_size)
     kernel_size = (1, kernel_size)
-
     avg_pool_ = _get_cache_prim(P.AvgPool)(kernel_size=kernel_size, strides=stride)
-
-    input = expand_(input, 2)
+    input = expand_dims_(input, 2)
     input = avg_pool_(input)
     input = squeeze_(input)
-
     return input
 
 
@@ -6103,21 +6179,19 @@ def pixel_shuffle(input, upscale_factor):
     _check_positive_int(upscale_factor, "upscale_factor")
     _check_is_tensor("input", input, "pixel_shuffle")
     _check_pixel_shuffle_unshuffle_input_shape(input, "pixel_shuffle")
-    idx = P.Shape()(input)
+    idx = shape_(input)
     length = input.ndim
     pre = idx[:-3]
     c, h, w = idx[-3:]
     _check_pxiel_shuffle_valid(c, upscale_factor)
     c = c // upscale_factor ** 2
     input_perm = (pre + (c, upscale_factor, upscale_factor, h, w))
-    reshape = _get_cache_prim(P.Reshape)()
-    transpose = _get_cache_prim(P.Transpose)()
-    input = reshape(input, input_perm)
+    input = reshape_(input, input_perm)
     input_perm = [i for i in range(length - 2)]
     input_perm = input_perm + [length, length - 2, length + 1, length - 1]
     input_perm = tuple(input_perm)
-    input = transpose(input, input_perm)
-    input = reshape(input, (pre + (c, upscale_factor * h, upscale_factor * w)))
+    input = transpose_(input, input_perm)
+    input = reshape_(input, (pre + (c, upscale_factor * h, upscale_factor * w)))
     return input
 
 
@@ -6168,7 +6242,7 @@ def pixel_unshuffle(input, downscale_factor):
     _check_positive_int(downscale_factor, "downscale_factor")
     _check_is_tensor("input", input, "pixel_unshuffle")
     _check_pixel_shuffle_unshuffle_input_shape(input, "pixel_unshuffle")
-    idx = P.Shape()(input)
+    idx = shape_(input)
     length = input.ndim
     pre = idx[:-3]
     c, h, w = idx[-3:]
@@ -6176,14 +6250,12 @@ def pixel_unshuffle(input, downscale_factor):
     h = h // downscale_factor
     w = w // downscale_factor
     input_perm = (pre + (c, h, downscale_factor, w, downscale_factor))
-    reshape = _get_cache_prim(P.Reshape)()
-    transpose = _get_cache_prim(P.Transpose)()
-    input = reshape(input, input_perm)
+    input = reshape_(input, input_perm)
     input_perm = [i for i in range(length - 2)]
     input_perm = input_perm + [length - 1, length + 1, length - 2, length]
     input_perm = tuple(input_perm)
-    input = transpose(input, input_perm)
-    input = reshape(input, (pre + (c * downscale_factor * downscale_factor, h, w)))
+    input = transpose_(input, input_perm)
+    input = reshape_(input, (pre + (c * downscale_factor * downscale_factor, h, w)))
     return input
 
 
@@ -6426,20 +6498,15 @@ def multilabel_soft_margin_loss(input, target, weight=None, reduction='mean'):
             f"input: {input.ndim}, target: {target.ndim} "
         )
 
-    mul_op = _get_cache_prim(P.Mul)()
-    exp_op = _get_cache_prim(P.Exp)()
-    add_op = _get_cache_prim(P.Add)()
-    log_op = _get_cache_prim(P.Log)()
-    dyn_shape = _get_cache_prim(P.TensorShape)()
     input_shape = input.shape
     if ops.is_sequence_value_unknown(input_shape):
-        input_shape = dyn_shape(input)
+        input_shape = tensor_shape_(input)
 
-    pos = log_op(add_op(exp_op(-input), 1))
-    neg = log_op(add_op(exp_op(input), 1))
-    loss = mul_op(target, pos) + mul_op(1 - target, neg)
+    pos = log_(add_(exp_(-input), 1))
+    neg = log_(add_(exp_(input), 1))
+    loss = mul_(target, pos) + mul_(1 - target, neg)
     if weight is not None:
-        loss = mul_op(loss, weight)
+        loss = mul_(loss, weight)
     class_dim = input.ndim - 1
     loss = loss.sum(axis=class_dim) / input_shape[class_dim]
     return _get_loss(loss, reduction, cls_name)
@@ -6464,6 +6531,11 @@ def elu(input_x, alpha=1.0):
     it determines the smoothness of ELU.
     The picture about ELU looks like this `ELU <https://en.wikipedia.org/wiki/
     Activation_function#/media/File:Activation_elu.svg>`_ .
+
+    ELU Activation Function Graph:
+
+    .. image:: ../images/ELU.png
+        :align: center
 
     Args:
         input_x (Tensor): The input of ELU is a Tensor of any dimension with data type of float16 or float32.
@@ -6515,6 +6587,11 @@ def gelu(input_x, approximate='none'):
     .. math::
         GELU(x_i) = 0.5 * x_i * (1 + \tanh(\sqrt(2 / \pi) * (x_i + 0.044715 * x_i^3)))
 
+    GELU Activation Function Graph:
+
+    .. image:: ../images/GELU.png
+        :align: center
+
     Args:
         input_x (Tensor): The input of the activation function GeLU, the data type is float16, float32 or float64.
         approximate (str): the gelu approximation algorithm to use. Acceptable vaslues are ``'none'`` and ``'tanh'`` .
@@ -6542,16 +6619,16 @@ def gelu(input_x, approximate='none'):
     if approximate not in ['none', 'tanh']:
         raise ValueError("For ops.gelu, approximate value should be either 'none' or 'tanh'.")
 
-    x_dtype = _get_cache_prim(P.DType)()(input_x)
+    x_dtype = dtype_(input_x)
     if x_dtype not in [mstype.float16, mstype.float32, mstype.float64]:
         raise TypeError(f"For gelu, the input dtype must be float16, float32 or float64, "
                         f"but got {x_dtype}.")
     if approximate == 'tanh':
-        output = _get_cache_prim(P.GeLU)()(input_x)
+        output = gelu_(input_x)
     else:
-        output = _get_cache_prim(P.Sqrt)()(Tensor(2.0, x_dtype))
-        output = _get_cache_prim(P.Div)()(input_x, output)
-        output = _get_cache_prim(P.Erf)()(output) + Tensor(1.0, x_dtype)
+        output = sqrt_(Tensor(2.0, x_dtype))
+        output = div_(input_x, output)
+        output = erf_(output) + Tensor(1.0, x_dtype)
         output = input_x * output * Tensor(0.5, x_dtype)
 
     return output
@@ -6826,13 +6903,13 @@ def mse_loss(input, target, reduction='mean'):
     if reduction not in ['mean', 'none', 'sum']:
         raise ValueError("For ops.mse_loss, `reduction` value should be either 'mean', 'none' or 'sum'.")
 
-    x = _get_cache_prim(P.Square)()(input - target)
+    x = square_(input - target)
     float_type = (mstype.float16, mstype.float32, mstype.float64)
     if x.dtype not in float_type:
         input_dtype = mstype.float32
     else:
         input_dtype = x.dtype
-    x = _get_cache_prim(P.Cast)()(x, mstype.float32)
+    x = cast_(x, mstype.float32)
 
     average_flag = True
     reduce_flag = True
@@ -6842,12 +6919,12 @@ def mse_loss(input, target, reduction='mean'):
         reduce_flag = False
 
     if reduce_flag and average_flag:
-        x = _get_cache_prim(P.ReduceMean)()(x, _get_axis(x))
+        x = reduce_mean_(x, _get_axis(x))
 
     if reduce_flag and not average_flag:
-        x = _get_cache_prim(P.ReduceSum)()(x, _get_axis(x))
+        x = reduce_sum_(x, _get_axis(x))
 
-    return _get_cache_prim(P.Cast)()(x, input_dtype)
+    return cast_(x, input_dtype)
 
 
 def msort(input):
@@ -7248,7 +7325,7 @@ def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_head
 
     if attn_mask is not None and attn_mask.dtype == mstype.bool_:
         new_attn_mask = ops.zeros_like(attn_mask, dtype=q.dtype)
-        attn_mask = new_attn_mask.masked_fill(attn_mask, ops.scalar_cast(float("-inf"), attn_mask.dtype))
+        attn_mask = new_attn_mask.masked_fill(attn_mask, float("-inf"))
 
     if attn_mask is not None:
         if attn_mask.shape[0] == 1:

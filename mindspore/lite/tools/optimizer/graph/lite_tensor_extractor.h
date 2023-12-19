@@ -37,8 +37,7 @@ class LiteTensorExtractor {
                                  const bool &copy_data, std::vector<TensorPtr> *const_ms_inputs);
   static int GetCNodeConstInput(const CNodePtr &cnode, const size_t &index, const converter::FmkType &fmk_type,
                                 const bool &train_flag, const bool &copy_data, std::vector<TensorPtr> *const_ms_inputs);
-  static int GetCNodeVarInput(const CNodePtr &cnode, const size_t &index, const converter::FmkType &fmk_type,
-                              std::vector<TensorPtr> *var_ms_inputs);
+  static int GetCNodeVarInput(const CNodePtr &cnode, const size_t &index, std::vector<TensorPtr> *var_ms_inputs);
   static int GetCNodeConstInputToAbstract(const CNodePtr &cnode, const AbstractBasePtrList &abs_list,
                                           converter::FmkType fmk_type, bool train_flag);
 };

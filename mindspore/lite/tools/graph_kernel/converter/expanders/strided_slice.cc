@@ -25,9 +25,12 @@ class StridedSlice : public OpDesc {
   ~StridedSlice() = default;
 
  protected:
+  bool CheckInputs() override {
+    const size_t onnx_strided_slice_input_num = 5;
+    return inputs_info_.size() == onnx_strided_slice_input_num;
+  }
+
   NodePtrList Expand(const NodePtrList &inputs) override {
-    const size_t onnx_slice_input_num = 5;
-    if (inputs.size() != onnx_slice_input_num) return {};
     std::vector<inner::DShape> shp;
     (void)shp.emplace_back(outputs_info_[0].shape);
     auto result = gb.Emit("StridedSliceOnnx", inputs, {{"output_shape", MakeValue(shp)}});

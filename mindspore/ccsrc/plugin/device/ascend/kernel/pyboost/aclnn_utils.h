@@ -26,6 +26,8 @@
 #define LAUNCH_ACLNN(aclnn_api, device_context, stream_ptr, ...)                                                    \
   do {                                                                                                              \
     static const std::string aclnn_name = #aclnn_api;                                                               \
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,                                          \
+                                       runtime::ProfilerEvent::kPyBoostLaunchAclnn, aclnn_name, false);             \
     auto [ws_size, executor_handle, release_function] = GEN_EXECUTOR(aclnn_name, __VA_ARGS__);                      \
     if (ws_size == 0) {                                                                                             \
       RUN_OP_API_ASYNC(aclnn_name, nullptr, 0, executor_handle, stream_ptr, release_function);                      \
@@ -33,6 +35,12 @@
       auto workspace_device_address = runtime::DeviceAddressUtils::CreateWorkspaceAddress(device_context, ws_size); \
       RUN_OP_API_ASYNC(aclnn_name, workspace_device_address->GetMutablePtr(), ws_size, executor_handle, stream_ptr, \
                        release_function);                                                                           \
+    }                                                                                                               \
+    static auto sync = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);               \
+    if (sync) {                                                                                                     \
+      if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams()) {                                       \
+        MS_LOG(EXCEPTION) << "SyncStream failed for op " << aclnn_name;                                             \
+      }                                                                                                             \
     }                                                                                                               \
   } while (false)
 

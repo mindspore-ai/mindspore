@@ -110,6 +110,7 @@ from .array_func import (
     space_to_batch_nd,
     batch_to_space_nd,
     arange,
+    range,
     select,
     one_hot,
     matrix_diag,
@@ -140,7 +141,6 @@ from .array_func import (
     expand,
     fold,
     unfold,
-    diagonal,
     diagonal_scatter,
     lstsq,
     mvlgamma,
@@ -158,7 +158,8 @@ from .array_func import (
     searchsorted,
     aminmax,
     sort,
-    top_k
+    top_k,
+    deepcopy,
 )
 from .parameter_func import (
     assign_add,
@@ -709,7 +710,7 @@ from .other_func import (
     partial,
 )
 from ..operations.manually_defined import (rank,)
-from ..auto_generate import (assign, masked_fill, minimum, prelu, randperm, real, sin, sinc, sinh, roll_,)
+from ..auto_generate import (assign, masked_fill, minimum, prelu, randperm, real, sin, sinc, sinh, roll_, diagonal,)
 
 __all__ = [
     'assign',
@@ -722,6 +723,7 @@ __all__ = [
     'sin',
     'sinc',
     'sinh',
+    'diagonal',
 ]
 __all__.extend(array_func.__all__)
 __all__.extend(parameter_func.__all__)

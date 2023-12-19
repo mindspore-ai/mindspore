@@ -704,11 +704,6 @@ std::string AnfRuntimeAlgorithm::GetInputReshapeType(const AnfNodePtr &node, siz
 
 std::string AnfRuntimeAlgorithm::GetOutputReshapeType(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
-  if (output_idx > AnfAlgo::GetOutputElementNum(node)) {
-    MS_LOG(EXCEPTION) << "The index [" << output_idx << "] is out of range of the node's output size [ "
-                      << AnfAlgo::GetOutputElementNum(node) << "#node[ " << node->DebugString() << "]"
-                      << trace::DumpSourceLines(node);
-  }
   if (!AnfUtils::IsRealKernel(node)) {
     return GetPrevNodeOutputReshapeType(node, output_idx);
   }
@@ -1244,6 +1239,7 @@ void AnfRuntimeAlgorithm::SetSelectKernelBuildInfo(const KernelBuildInfoPtr &sel
       select_kernel_build_info->SetInputsKernelObjectType(input_object_types);
     }
     if (!output_object_types.empty() && select_kernel_build_info->GetAllOutputKernelObjectTypes().empty()) {
+      MS_LOG(DEBUG) << "set kernel object type:" << output_object_types << " for node:" << node->fullname_with_scope();
       select_kernel_build_info->SetOutputsKernelObjectType(output_object_types);
     }
   }
@@ -1647,9 +1643,6 @@ void AnfRuntimeAlgorithm::CacheAddrForKernel(const AnfNodePtr &node, kernel::Ker
   auto skip_nop_node = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
   for (size_t i = 0; i < input_num; ++i) {
-    if (common::AnfAlgo::IsNoneInput(node, i)) {
-      continue;
-    }
     auto real_input = GetInputGraphIdxByKernelIdx(node, i);
     auto device_address = GetPrevNodeOutputAddr(node, real_input, skip_nop_node);
     MS_EXCEPTION_IF_NULL(device_address);
@@ -1812,7 +1805,7 @@ bool AnfRuntimeAlgorithm::IsNeedUpdateShapeAndTypeAfterLaunch(const AnfNodePtr &
   if (kernel_mod == nullptr) {
     return true;
   }
-  return kernel_mod->IsNeedRetrieveOutputShape();
+  return kernel_mod->IsNeedUpdateOutputShapeAndSize();
 }
 
 void AnfRuntimeAlgorithm::UpdateOutputAddrSize(device::KernelInfo const *kernel_info, const CNodePtr &kernel) {
@@ -2017,6 +2010,10 @@ TypeId AnfRuntimeAlgorithm::GetAbstractObjectType(const AbstractBasePtr &abstrac
     // scalar input may not converted to tensor
     return kObjectTypeNumber;
   }
+  if (abstract->isa<abstract::AbstractNone>()) {
+    return kMetaTypeNone;
+  }
+
   return kTypeUnknown;
 }
 
@@ -2459,8 +2456,8 @@ abstract::AbstractBasePtr AnfRuntimeAlgorithm::GetNodeAbstractByIndex(const AnfN
       (node->isa<CNode>() && !mindspore::AnfAlgo::GetOutputKernelObjectTypes(node).empty() &&
        (mindspore::session::AnfRuntimeAlgorithm::GetOutputKernelObjectType(node, 0) ==
         kernel::KernelObjectType::TUPLE))) {
-    MS_EXCEPTION_IF_CHECK_FAIL((index == 0),
-                               "Cannot get " + std::to_string(index) + " child abstract from " + abstract->ToString());
+    MS_EXCEPTION_IF_CHECK_FAIL((index == 0), "Cannot get " + std::to_string(index) + " child abstract from " +
+                                               abstract->ToString() + " in node:" + node->fullname_with_scope());
     return abstract;
   }
 

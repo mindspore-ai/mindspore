@@ -35,13 +35,13 @@ AclLiteKernel::AclLiteKernel(std::shared_ptr<mindspore::kernel::KernelMod> kerne
 }
 
 int AclLiteKernel::Prepare() {
-  bool ret = kernel_mod_->Init_(this->base_operator_, inputs_, outputs_);
+  bool ret = kernel_mod_->Init(inputs_, outputs_);
   return ret ? ReSize() : RET_ERROR;
 }
 
 int AclLiteKernel::ReSize() {
   // acl custom kernel last input is om data, do not pass to resize
-  std::vector<KernelTensorPtr> kernel_inputs;
+  std::vector<KernelTensor *> kernel_inputs;
   kernel_inputs.assign(inputs_.begin(), inputs_.end() - 1);
 
   return kernel_mod_->Resize(kernel_inputs, outputs_);
@@ -88,26 +88,12 @@ int AclLiteKernel::InferShape() {
 }
 
 int AclLiteKernel::Run() {
-  auto inputs = CloudTensorUtils::LiteTensorToAddressPtrVec(in_tensors_);
-  auto outputs = CloudTensorUtils::LiteTensorToAddressPtrVec(out_tensors_);
-
-  // acl custom kernel last input is om data, do not pass to run
-  std::vector<AddressPtr> kernel_inputs;
-  kernel_inputs.assign(inputs.begin(), inputs.end() - 1);
-
-  AddressPtrList workspace;
-  auto workspace_size = kernel_mod_->GetWorkspaceSizeList();
-  for (size_t i = 0; i < workspace_size.size(); i++) {
-    auto buffer = context_->allocator->Malloc(workspace_size.at(i));
-    std::shared_ptr<Address> address = std::make_shared<Address>(buffer, workspace_size.at(i));
-    workspace.push_back(address);
-  }
-
+  std::vector<kernel::KernelTensor *> workspace;
   if (in_tensors_.size() != inputs_.size()) {
     MS_LOG(ERROR) << "Given inputs size " << in_tensors_.size() << " != graph inputs size " << inputs_.size();
     return kLiteError;
   }
-  for (size_t i = 0; i < in_tensors_.size(); i++) {
+  for (size_t i = 0; i < in_tensors_.size() - 1; i++) {
     auto &input = in_tensors_[i];
     auto &kernel_input = inputs_[i];
     if (input->Size() != kernel_input->GetSizeInBytes()) {
@@ -137,7 +123,7 @@ int AclLiteKernel::Run() {
     });
   }
   if (out_tensors_.size() != outputs_.size()) {
-    MS_LOG(ERROR) << "Given outputs size " << outputs.size() << " != graph inputs size " << outputs_.size();
+    MS_LOG(ERROR) << "Given outputs size " << out_tensors_.size() << " != graph inputs size " << outputs_.size();
     return kLiteError;
   }
   for (size_t i = 0; i < out_tensors_.size(); i++) {
@@ -160,11 +146,8 @@ int AclLiteKernel::Run() {
     }
   }
 
-  auto ret = kernel_mod_->Launch(kernel_inputs, workspace, outputs, nullptr);
+  auto ret = kernel_mod_->Launch(workspace, workspace, workspace, nullptr);
 
-  for (auto address : workspace) {
-    context_->allocator->Free(address->addr);
-  }
   return ret ? RET_OK : RET_ERROR;
 }
 }  // namespace mindspore::kernel

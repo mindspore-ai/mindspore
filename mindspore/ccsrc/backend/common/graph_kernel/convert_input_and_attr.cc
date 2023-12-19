@@ -129,7 +129,7 @@ void ConvertInputToAttr::AddConstInputToAttr(const CNodePtr &cnode, const size_t
   if (value->isa<ValueAny>()) {
     MS_LOG(EXCEPTION) << cnode->ToString() << " is ValueAny.";
   }
-  if (!arg_handler.empty()) {
+  if (!arg_handler.empty() && !value->isa<None>()) {
     auto arg_handler_func = GetArgHandlerFunc(arg_handler);
     MS_EXCEPTION_IF_NULL(arg_handler_func);
     value = arg_handler_func(value);

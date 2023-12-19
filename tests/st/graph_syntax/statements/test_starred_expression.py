@@ -14,7 +14,7 @@
 # ============================================================================
 """ test graph starred expression. """
 import pytest
-from mindspore import context, jit, Tensor
+from mindspore import context, jit, Tensor, nn
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -556,3 +556,22 @@ def test_starred_expression_dict_key_deduplicate():
 
     ret = foo()
     assert ret == {'x': 2}
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_starred_expression_dict_non_literal():
+    """
+    Feature: Support starred expression.
+    Description: Support starred expression in graph mode.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, kwarg):
+            return {**kwarg, "a": 3, ("d", "e"): 4}
+
+    net = Net()
+    arg_dict = {"a": 1, "b": 2}
+    out = net(arg_dict)
+    assert out == {"a": 3, "b": 2, ("d", "e"): 4}

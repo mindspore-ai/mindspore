@@ -168,3 +168,33 @@ def test_switch_layer_add_func_in_construct():
     i = Tensor(2, mstype.int32)
     ret = net(i, inputs)
     assert ret.shape == (2, 3, 4, 5)
+
+
+@case_register.level0
+@case_register.target_ascend
+@case_register.target_gpu
+def test_parser_switch_layer_func_primitive():
+    """
+    Feature: Switch layer.
+    Description: test switch layer.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self, funcs):
+            super().__init__()
+            self.funcs = funcs
+
+        def construct(self, i, x):
+            return self.funcs[i](x)
+
+    func1 = P.ReLU()
+    func2 = P.Softmax()
+    funcs = (func1, func2)
+    net = Net(funcs)
+
+    context.set_context(mode=context.GRAPH_MODE)
+    x = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
+    i = Tensor(1, mstype.int32)
+    out = net(i, x)
+    expect = func2(x)
+    assert np.all(out.asnumpy() == expect.asnumpy())

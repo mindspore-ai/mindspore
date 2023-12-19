@@ -210,7 +210,6 @@ bool SparseCrossCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   hash_key_ = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("hash_key")));
   hash_out_ = GetValue<bool>(primitive_->GetAttr("hashed_output"));
   num_buckets_ = GetValue<int64_t>(primitive_->GetAttr("num_buckets"));
-  is_need_retrieve_output_shape_ = true;
   return true;
 }
 

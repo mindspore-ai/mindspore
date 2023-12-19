@@ -23,6 +23,7 @@
 #include <fstream>
 #include <iostream>
 #include <stack>
+#include <list>
 #include <utility>
 #include <nlohmann/json.hpp>
 #include "mindspore/core/ops/structure_ops.h"
@@ -2029,9 +2030,14 @@ bool MSANFModelParser::BuildFuncGraph(const FuncGraphPtr &output_graph, const mi
   }
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
+  const bool graph_op_run = common::GetEnv("GRAPH_OP_RUN") == "1";
+  const bool force_no_inline = common::GetEnv("MS_FORCE_NO_INLINE") == "1";
   if (output_graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
     const bool enable_ge = context->backend_policy() == "ge";
-    const auto cell_reuse_level = enable_ge ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
+    auto cell_reuse_level = (enable_ge && !graph_op_run) ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
+    if (force_no_inline) {
+      cell_reuse_level = CellReuseLevel::kNoInline;
+    }
     context->SetCellReuseLevel(cell_reuse_level);
   }
   return true;
@@ -2733,6 +2739,37 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const std::string &file_name,
     layout_map_ = model_parser.ParseLayout(origin_model);
   }
   return dstgraph_ptr;
+}
+
+bool MindIRLoader::LoadMindIR(const void *buffer, const size_t &size, const std::string &mindir_path,
+                              FuncGraphPtr *func_graph, std::string *user_info_string) {
+  mind_ir::ModelProto model;
+  auto ret = model.ParseFromArray(buffer, SizeToInt(size));
+  if (!ret) {
+    MS_LOG(ERROR) << "ParseFromArray failed.";
+    return false;
+  }
+  if (!CheckModelConfigureInfo(model)) {
+    MS_LOG(ERROR) << "Check configuration info for pb file failed!";
+    return false;
+  }
+  MSANFModelParser model_parser;
+  InitModelParser(&model_parser, this);
+  model_parser.SetMindIRPath(mindir_path);
+  *func_graph = model_parser.Parse(model);
+  std::stringstream user_info_buffer;
+  // user_info to string
+  auto user_info = model.user_info();
+  user_info_buffer << "{";
+  for (auto it = user_info.begin(); it != user_info.end(); it++) {
+    if (it != user_info.begin()) {
+      user_info_buffer << ", ";
+    }
+    user_info_buffer << "\"" << it->first << "\": \"" << it->second + "\"";
+  }
+  user_info_buffer << "}";
+  *user_info_string = user_info_buffer.str();
+  return true;
 }
 
 FuncGraphPtr MindIRLoader::LoadMindIR(const void *buffer, const size_t &size, const std::string &mindir_path) {

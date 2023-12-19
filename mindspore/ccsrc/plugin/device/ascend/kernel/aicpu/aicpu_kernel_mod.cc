@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <functional>
 
 #include "ops/structure_op_name.h"
 #include "ops/array_ops.h"
@@ -27,7 +28,6 @@
 #include "ops/lite_op_name.h"
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
-#include "include/common/utils/convert_utils.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_proto_util.h"
 #include "plugin/device/ascend/hal/device/ascend_data_queue.h"
@@ -39,8 +39,7 @@
 #include "include/backend/data_queue/data_queue_mgr.h"
 #include "aicpu/common/aicpu_task_struct.h"
 #include "external/graph/types.h"
-using AicpuTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::AicpuTaskInfo>;
-using EventWaitTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::EventWaitTaskInfo>;
+
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -173,7 +172,7 @@ bool AicpuOpKernelMod::CheckDeviceSupportBlockingAicpuOpProcess() const {
   }
   int32_t value = 0;
   ret = rtGetDeviceCapability(device_id, FEATURE_TYPE_BLOCKING_OPERATOR, RT_MODULE_TYPE_AICPU, &value);
-  if (ret != RT_ERROR_NONE) {
+  if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rtGetDeviceCapability failed, ret: " << ret;
   }
   if ((value != RT_AICPU_BLOCKING_OP_NOT_SUPPORT) && (value != RT_AICPU_BLOCKING_OP_SUPPORT)) {
@@ -342,9 +341,9 @@ bool AicpuOpKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const s
     MS_LOG(INFO) << "For AICPU ,The node " << node_scope_name_ << " Need Skip.";
     // cppcheck-suppress unreadVariable
     auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
-    rtError_t status = aclrtMemcpyAsync(outputs[0]->device_ptr(), inputs[0]->size(), inputs[0]->device_ptr(),
-                                        inputs[0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
-    if (status != RT_ERROR_NONE) {
+    aclError status = aclrtMemcpyAsync(outputs[0]->device_ptr(), inputs[0]->size(), inputs[0]->device_ptr(),
+                                       inputs[0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
+    if (status != ACL_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "AclrtMemcpyAsync failed for " << node_scope_name_;
     }
 
@@ -369,7 +368,7 @@ bool AicpuOpKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const s
     auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
     auto ret = aclrtMemcpyAsync(ext_info_addr_dev_, ext_info_size_, ext_info_handler_->GetExtInfo(),
                                 ext_info_handler_->GetExtInfoLen(), ACL_MEMCPY_HOST_TO_DEVICE, stream_ptr);
-    if (ret != RT_ERROR_NONE) {
+    if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "UpdateExtInfo aclrtMemcpy failed. Node info: " << node_scope_name_;
       return false;
     }
@@ -402,7 +401,7 @@ bool AicpuOpKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const s
   argsInfo.argsSize = static_cast<uint32_t>(args_.length());
   if (rtCpuKernelLaunchWithFlag(reinterpret_cast<const void *>(node_so_.c_str()),
                                 reinterpret_cast<const void *>(node_name_.c_str()), 1, &argsInfo, nullptr, stream_ptr,
-                                flag) != RT_ERROR_NONE) {
+                                flag) != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Aicpu op launch failed! node: " << node_scope_name_;
     return false;
   }
@@ -432,9 +431,9 @@ bool AicpuOpKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const s
 
 bool AicpuOpKernelMod::IsNeedUpdateOutputShapeAndSize() {
   if (IsOneOfComputeDepend(kernel_name_)) {
-    is_need_retrieve_output_shape_ = true;
+    return true;
   }
-  return is_need_retrieve_output_shape_;
+  return false;
 }
 
 void AicpuOpKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
@@ -449,7 +448,7 @@ void AicpuOpKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *
   auto lock = device::KernelRuntime::LockRuntime(stream_);
   auto ret = aclrtMemcpyAsync(ext_info_handler_->GetExtInfo(), ext_info_handler_->GetExtInfoLen(), ext_info_addr_dev_,
                               ext_info_size_, ACL_MEMCPY_DEVICE_TO_HOST, stream_);
-  if (ret != RT_ERROR_NONE) {
+  if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "AclrtMemcpyAsync output shape failed. Op name: " << node_scope_name_;
   }
   ret = aclrtSynchronizeStreamWithTimeout(stream_, -1);
@@ -468,6 +467,10 @@ void AicpuOpKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *
                         << " contains negative value.";
     }
     outputs[i]->SetShapeVector(shape);
+    size_t dtype_byte = GetTypeByte(TypeIdToType(outputs[i]->dtype_id()));
+    size_t update_size =
+      LongToSize(std::accumulate(shape.begin(), shape.end(), dtype_byte, std::multiplies<int64_t>()));
+    outputs[i]->set_size(update_size);
   }
 }
 

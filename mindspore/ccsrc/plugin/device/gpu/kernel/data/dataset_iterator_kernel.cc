@@ -67,8 +67,6 @@ bool DatasetIteratorKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     }
   }
 
-  is_need_retrieve_output_shape_ = true;
-
 #ifndef ENABLE_SECURITY
   auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);

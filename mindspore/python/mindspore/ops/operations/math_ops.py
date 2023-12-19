@@ -40,7 +40,7 @@ from ..auto_generate import (Add, Addcdiv, Addcmul, ReduceMean, ReduceSum, Reduc
                              LinSpace, MatrixDeterminant, LogMatrixDeterminant, Erfinv, Conj,
                              Real, Complex, Angle, MatrixExp, CholeskyInverse, Trace, Cholesky,
                              FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum, Div, CumProd,
-                             CumSum, Less, LessEqual)
+                             CumSum, Less, LessEqual, Diagonal)
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
     """Common infer for reduce operator"""
@@ -1340,68 +1340,6 @@ class Einsum(Primitive):
         if len(seg_equation) > 2:
             raise TypeError("the equation can contain only one arrow !")
         self.init_prim_io_names(inputs=['inputs'], outputs=['output'])
-
-
-class Diagonal(Primitive):
-    """
-    Create a tensor with specific diagonal elements of input. This operator extracts the diagonal elements with
-    offset from the 2-D sub-tensors which specified by dim1 and dim2.
-    The shape of output tensor can be dertermined by removing dim1 and dim2 form the shape of input and appending
-    a dimension at the end. The size of the last dimension is the length of diagonal.
-
-    Args:
-        offset (int): The offset of main diagonal, which controls which diagonal to consider. If :math:`offset=0`,
-            return the main diagonal elements with respect to dim1 and dim2. If :math:`offset>0`, return the
-            diagonal elements that are `offset` units upward from the main diagonal. If :math:`offset<0`, return the
-            diagonal elements that are `offset` units downward from the main diagonal. Default: ``0`` .
-        dim1 (int): The first dimension with respect to which to take diagonal. Default: ``0`` .
-        dim2 (int): The second dimension with respect to which to take diagonal. Default: ``1`` .
-
-    Inputs:
-        - **x** (Tensor) - The input to take diagonal, with float32 or double data type.
-          The input must be at least 2-dimensional.
-          The shape is :math:`(N_{0}, N_{1}, *)` where :math:`*` means, any number of additional dimensions.
-
-    Outputs:
-        - **y** (Tensor) - A tensor whose values are diagonal of input, with the same data type as input.
-          The shape of the output is one dimension lower than the input.
-          If the shape of `x` is :math:`(d_{0}, d_{1}, ..., d_{n-1})`, the size of the `dim1` dimension
-          is :math:`d_{i}` and the size of the `dim2` dimension is :math:`d_{j}`, the shape of `y` is the same
-          as the input shape with `dim1` and `dim2` dimension removed and the diagonal dimension appended.
-          If the `offset` is nonnegative, the size of output's last dimension is
-          :math:`max(min(d_{i}, d_{j}-offset), 0)`. But if the `offset` is negative, the size of output's
-          last dimension is :math:`max(min(d_{i} + offset, d_{j}), 0)`.
-
-    Raises:
-        TypeError: If dtype of `x` is neither float32 nor double.
-        TypeError: If `offset` is not an int.
-        TypeError: If `dim1` is not an int.
-        TypeError: If `dim2` is not an int.
-        ValueError: If the dimension of input is less than 2 dimensions.
-        ValueError: If `dim1` is not in range of [-len(x.shape), len(x.shape)).
-        ValueError: If `dim2` is not in range of [-len(x.shape), len(x.shape)).
-        ValueError: If `dim1` and `dim2` are identical.
-
-    Supported Platforms:
-        ``Ascend``  ``CPU``
-
-    Examples:
-        >>> x = Tensor(np.array([[[ 0.,  1.,  2.,  3.], [ 4.,  5.,  6.,  7.], [ 8.,  9., 10., 11.]],
-        ... [[12., 13., 14., 15.], [16., 17., 18., 19.], [20., 21., 22., 23.]]]), mindspore.float32)
-        >>> diagonal_ops = ops.Diagonal(offset=1, dim1=-1, dim2=1)
-        >>> y = diagonal_ops(x)
-        >>> print(y)
-        [[ 4.  9.]
-         [16. 21.]]
-    """
-
-    @prim_attr_register
-    def __init__(self, offset=0, dim1=0, dim2=1):
-        """Initialize Diagonal"""
-        self.init_prim_io_names(inputs=['x'], outputs=['y'])
-        validator.check_is_int(offset, "offset", self.name)
-        validator.check_is_int(dim1, "dim1", self.name)
-        validator.check_is_int(dim2, "dim2", self.name)
 
 
 class Histogram(Primitive):

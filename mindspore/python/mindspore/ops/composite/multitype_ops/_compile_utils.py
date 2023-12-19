@@ -26,16 +26,16 @@ from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.operations._inner_ops import TensorCopySlices, SliceGetItem, \
     TopTypeof, issubclass_, IsParameter, GetitemTensorIndexInfo, SetitemTensorIndexInfo, \
     SelectView, CopyWithSlice
-from mindspore.ops.operations._sequence_ops import TensorToTuple
+from mindspore.ops.operations._sequence_ops import TensorToTuple, TensorToScalar
 from mindspore.common import dtype as mstype
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.common.initializer import Zero
-from mindspore.common import Tensor, CSRTensor, COOTensor
-from mindspore.common import mutable
+from mindspore.common import Tensor, CSRTensor, COOTensor, mutable
 from mindspore import ops
 from mindspore.ops.primitive import _primexpr
 from mindspore import _checkparam as validator
 from mindspore.common._stub_tensor import _convert_stub
+from mindspore._c_expression import Tensor as Tensor_
 
 slice_get_item = SliceGetItem()
 hyper_map = base.HyperMap()
@@ -318,14 +318,14 @@ def tensor_item(data, *args):
     # transform a.item(tuple(int)) -> a.item(int1,int2...intN)
     if data.ndim == 0:
         _check_scalar_tensor_args(args)
-        return data.asnumpy().item()
+        return TensorToScalar()(data)
     if len(args) == 1 and isinstance(args[0], tuple):
         args = args[0]
 
     args_types = hyper_map(F.typeof, args)
     if not args or const_utils.judge_index_type(args_types[0], mstype.type_none):
         if data.shape == (1,):
-            return data.asnumpy().item()
+            return TensorToScalar()(data[0])
         const_utils.raise_value_error("Can only convert an array of size 1 to a Python scalar")
 
     if not const_utils.judge_indexes_types(args_types, mstype.int64):
@@ -990,7 +990,7 @@ def _tensor_getitem_by_tuple(data, tuple_index, op_name):
                 _tensor_getitem_by_tuple_parse_tensor_index(index, tuple_index_new,
                                                             tensor_indexes, tensor_positions_new)
             if tuple_index_new is None:
-                return Tensor([])
+                return Tensor_([])
         elif i in slice_positions:
             slice_ele_list_index = const_utils.transform_slice_to_ele_list(index, dim_size)
             slice_shapes += (len(slice_ele_list_index),)

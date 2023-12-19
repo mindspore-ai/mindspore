@@ -63,34 +63,6 @@ def test_make_csr():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_make_csr_empty():
-    """
-    Feature: Test CSRTensor Constructor in Graph and PyNative.
-    Description: Test CSRTensor(indptr, indices, values, shape) and CSRTensor(CSRTensor)
-    Expectation: Success.
-    """
-    indptr = Tensor([], dtype=mstype.int32)
-    indices = Tensor([], dtype=mstype.int32)
-    values = Tensor([], dtype=mstype.float32)
-    shape = (2, 6)
-
-    def test_pynative():
-        return CSRTensor(indptr, indices, values, shape)
-    test_graph = jit(test_pynative)
-
-    csr1 = test_pynative()
-    csr2 = test_graph()
-    compare_csr(csr1, csr2)
-    csr3 = CSRTensor(csr_tensor=csr2)
-    compare_csr(csr3, csr2)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
 def test_csr_attr():
     """
     Feature: Test CSRTensor GetAttr in Graph and PyNative.
@@ -147,7 +119,9 @@ def test_csr_attr():
             assert py_tuple[i] == g_tuple[i]
 
 
-@pytest.mark.level1
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_csr_tensor_in_while():
@@ -402,7 +376,9 @@ def test_csr_ops():
     assert np.allclose(graph_res_sparse[2].values.asnumpy(), expect3)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

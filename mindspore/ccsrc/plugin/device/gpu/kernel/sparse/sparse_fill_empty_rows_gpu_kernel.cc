@@ -61,7 +61,6 @@ void SparseFillEmptyRowsGpuKernelMod::ResetResource() noexcept {
 
 int SparseFillEmptyRowsGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                             const std::vector<KernelTensor *> &outputs) {
-  is_need_retrieve_output_shape_ = true;  // infershape dynamic in gpu kernel.
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();

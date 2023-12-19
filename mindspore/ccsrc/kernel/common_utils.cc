@@ -32,6 +32,7 @@
 #include "ir/graph_utils.h"
 #include "kernel/oplib/oplib.h"
 #include "kernel/format_utils.h"
+#include "mindapi/base/type_id.h"
 #include "mindspore/ccsrc/include/common/debug/common.h"
 #include "nlohmann/json.hpp"
 #include "ops/array_op_name.h"
@@ -408,12 +409,20 @@ void SetKernelObjectTypeWithSelectedAttr(const CNodePtr &kernel_node, const kern
   if (HasOutputElementsKernelObjectType(output_kernel_object_types)) {
     output_element_object_types = CalOutputElementObjectTypes(kernel_node, selected_kernel_attr);
   }
+  MS_LOG(DEBUG) << "Set kernel object type:" << output_kernel_object_types
+                << " for node:" << kernel_node->fullname_with_scope();
   SetKernelObjectTypeBuildInfo(kernel_node, input_kernel_object_types, output_kernel_object_types,
                                output_element_object_types);
 }
 
 KernelAttr &KernelAttr::AddInputAttr(const TypeId &object_type, const TypeId &ms_type, const std::string &format) {
   (void)input_type_.emplace_back(DataType(ms_type, format, object_type));
+  return *this;
+}
+
+KernelAttr &KernelAttr::AddOptionalInputAttr(const TypeId &object_type, const TypeId &ms_type,
+                                             const std::string &format) {
+  (void)input_type_.emplace_back(DataType(ms_type, format, object_type, true));
   return *this;
 }
 
@@ -424,6 +433,11 @@ KernelAttr &KernelAttr::AddOutputAttr(const TypeId &object_type, const TypeId &m
 
 KernelAttr &KernelAttr::AddInputAttr(const TypeId &ms_type, const std::string &format) {
   (void)input_type_.emplace_back(DataType(ms_type, format));
+  return *this;
+}
+
+KernelAttr &KernelAttr::AddOptionalInputAttr(const TypeId &ms_type, const std::string &format) {
+  (void)input_type_.emplace_back(DataType(ms_type, format, kObjectTypeTensorType, true));
   return *this;
 }
 
@@ -495,6 +509,9 @@ std::ostream &operator<<(std::ostream &os, KernelAttr kernel_attr) {
     ss << ", input(";
     for (size_t i = 0; i < input_num; ++i) {
       ss << TypeIdLabel(kernel_attr.GetInputAttr(i).dtype);
+      if (kernel_attr.GetInputAttr(i).is_optional) {
+        ss << "|None";
+      }
       if (i != input_num - 1) {
         ss << ",";
       }
@@ -601,7 +618,8 @@ bool CheckAttrForAllSameInput(const size_t input_num, const std::vector<mindspor
   for (size_t i = cur_all_same_input_num; i < cur_standalone_input_num; ++i) {
     auto dtype = cur_kernel_attr.GetInputAttr(i).dtype;
     auto start = each_attr_input_num * cur_all_same_input_num + i;
-    if (input_types[start] != dtype && input_types[start] != kTypeUnknown) {
+    if (!(cur_kernel_attr.GetInputAttr(i).is_optional && input_types[start] == kMetaTypeNone) &&
+        (input_types[start] != dtype && input_types[start] != kTypeUnknown)) {
       return true;
     }
   }

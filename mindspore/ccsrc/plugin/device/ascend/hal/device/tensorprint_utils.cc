@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/hal/device/tensorprint_utils.h"
 #include <ctime>
 #include <fstream>
+#include <sstream>
 #include <memory>
 #include <string>
 #include <thread>
@@ -412,9 +413,8 @@ void CreateTensorPrintThread(const PrintThreadCrt &ctr) {
     return;
   }
   uint32_t device_id = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  std::string channel_name = "_npu_log";
 
-  if (!AclHandle::GetInstance().CreateChannel(device_id, channel_name, kMbufCapacitySize)) {
+  if (!AclHandle::GetInstance().CreateChannel(device_id, kChannelNameNpuLog, kMbufCapacitySize)) {
     MS_LOG(EXCEPTION) << "create acl channel failed";
   }
   MS_LOG(INFO) << "Success to create acl channel handle, tsd reference = "

@@ -7,10 +7,13 @@ tensor_copy_slices:
             dtype: tensor
         begin:
             dtype: tuple[int]
+            type_cast: list[int], tensor
         end:
             dtype: tuple[int]
+            type_cast: list[int], tensor
         strides:
             dtype: tuple[int]
+            type_cast: list[int], tensor
     returns:
         output:
             dtype: tensor

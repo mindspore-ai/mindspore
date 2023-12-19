@@ -660,7 +660,7 @@ def test_fallback_meta_fg_not_support_type_greater_equal_1():
     net = InnerClass()
     with pytest.raises(TypeError) as err:
         net()
-    assert "'>=' not supported between instances of 'list' and 'tuple'." in str(err.value)
+    assert "'>=' not supported between instances of 'list' and 'tuple'" in str(err.value)
 
 
 @pytest.mark.level1
@@ -1213,3 +1213,49 @@ def test_multitype_as_input_hyper_map():
     net = ConcatNet(utils.c)
     with pytest.raises((RuntimeError, TypeError)):
         net(x)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multitype_generated_by_inner_method_1():
+    """
+    Feature: multitype_generated_by_inner_method
+    Description: test multitype_generated_by_inner_method
+    Expectation: throw RuntimeError
+    """
+
+    class Net(nn.Cell):
+        def construct(self, x):
+            out = x[::2]
+            return out
+
+    x = [0, 1, 0, 1]
+    net = Net()
+    res = net(x)
+    assert res == [0, 0]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multitype_generated_by_inner_method_2():
+    """
+    Feature: multitype_generated_by_inner_method
+    Description: test multitype_generated_by_inner_method
+    Expectation: throw RuntimeError
+    """
+
+    class Net(nn.Cell):
+        def construct(self, x):
+            out = x[:, 0]
+            return out
+
+    x = Tensor([[0, 1], [1, 0], [2, 0], [2, 2]])
+    net = Net()
+    res = net(x)
+    assert np.allclose(res.asnumpy(), np.array([0, 1, 2, 2]))

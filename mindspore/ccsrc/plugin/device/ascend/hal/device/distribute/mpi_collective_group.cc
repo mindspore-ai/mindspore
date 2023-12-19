@@ -16,9 +16,7 @@
 
 #include <algorithm>
 #include "hccl/hccl.h"
-#include "runtime/rt.h"
 #include "acl/acl_rt.h"
-#include "acl/acl.h"
 #include "plugin/device/ascend/hal/device/distribute/mpi_collective_group.h"
 namespace mindspore {
 namespace device {

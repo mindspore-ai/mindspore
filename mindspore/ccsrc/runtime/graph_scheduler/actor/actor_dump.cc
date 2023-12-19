@@ -226,6 +226,7 @@ void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) {
       << "\toutputs_num:" << AnfAlgo::GetOutputTensorNum(kernel) << "\tis_dynamic_shape:" << actor->is_dynamic_shape()
       << "\tis_launch_skipped:" << actor->is_launch_skipped() << "\n";
   const auto &somas_outputs = kernel_info->somas_output_result();
+  const auto &somas_graph_output_indexes = actor->somas_graph_output_indexes();
   for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(kernel); ++i) {
     const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
     MS_EXCEPTION_IF_NULL(device_tensor);
@@ -234,7 +235,8 @@ void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) {
         << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count() << "\tflag:" << device_tensor->flag()
         << "\tis_somas_enable:" << kernel_info->IsTensorEnableSomas(somas_outputs, i)
         << "\tsomas_offset:" << kernel_info->GetTensorSomasOffset(somas_outputs, i)
-        << "\tsomas_aligned_size:" << kernel_info->GetTensorSomasAlignedSize(somas_outputs, i) << "\n ";
+        << "\tsomas_aligned_size:" << kernel_info->GetTensorSomasAlignedSize(somas_outputs, i)
+        << "\tsoams_whether_graph_output:" << somas_graph_output_indexes.count(i) << "\n ";
   }
   const auto &somas_workspace = kernel_info->somas_workspace_result();
   const auto &workspace_addresses = kernel_info->workspace_address_list();

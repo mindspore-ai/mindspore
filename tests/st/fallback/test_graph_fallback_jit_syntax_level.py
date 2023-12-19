@@ -78,7 +78,7 @@ def test_dict_in_function():
     assert isinstance(out2, dict)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -94,38 +94,39 @@ def test_custom_class_in_cell():
             self.number = 2
 
         def func(self, x):
-            return self.number * x
+            return self.number * x.asnumpy()
 
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
             self.cls = InnerNet()
 
-        def construct(self):
-            return self.cls.func(self.cls.number)
+        def construct(self, x):
+            return self.cls.func(x)
 
     os.unsetenv("MS_DEV_JIT_SYNTAX_LEVEL")
     # The jit_syntax_level is LAX here due to ms.context.
     ms.set_context(jit_syntax_level=ms.LAX)
+    x = ms.Tensor(2)
     net1 = Net()
-    assert net1() == 4
+    assert net1(x) == 4
 
     # JitConfig will override the jit_syntax_level of ms.context.
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         net2 = Net()
         net2.set_jit_config(jit_config_compatible)
-        net2()
+        net2(x)
 
     # Environment variable 'MS_DEV_JIT_SYNTAX_LEVEL' has the highest priority.
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         net3 = Net()
         net3.set_jit_config(jit_config_lax)
-        net3()
+        net3(x)
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -141,27 +142,28 @@ def test_custom_class_in_function():
             self.number = 2
 
         def func(self, x):
-            return self.number * x
+            return self.number * x.asnumpy()
 
     cls = InnerNet()
 
-    def func():
-        return cls.func(cls.number)
+    def func(x):
+        return cls.func(x)
 
     os.unsetenv("MS_DEV_JIT_SYNTAX_LEVEL")
     # The jit_syntax_level is LAX here due to ms.context.
     ms.set_context(jit_syntax_level=ms.LAX)
     func1 = ms.jit(fn=func)
-    assert func1() == 4
+    x = ms.Tensor(2)
+    assert func1(x) == 4
 
     # JitConfig will override the jit_syntax_level of ms.context.
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         func2 = ms.jit(fn=func, jit_config=jit_config_compatible)
-        func2()
+        func2(x)
 
     # Environment variable 'MS_DEV_JIT_SYNTAX_LEVEL' has the highest priority.
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         func3 = ms.jit(fn=func, jit_config=jit_config_lax)
-        func3()
+        func3(x)
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'

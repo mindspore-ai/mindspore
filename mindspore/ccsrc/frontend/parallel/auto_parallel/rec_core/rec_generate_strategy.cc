@@ -149,6 +149,10 @@ size_t FindIndexOfOperatorIncoming(const std::vector<std::shared_ptr<OperatorInf
       break;
     }
   }
+  if (incoming_op_index != SIZE_MAX &&
+      ops.at(incoming_op_index)->name().find(VIRTUALDATASETINFO) != std::string::npos) {
+    return SIZE_MAX;
+  }
   return incoming_op_index;
 }
 
@@ -205,6 +209,23 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
   } else {
     propagator.GenerateStrategyV1();
   }
+}
+
+Strategies PrepareFillV2(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra) {
+  Strategies strategies;
+
+  if (op->outputs_shape().size() == 0) {
+    MS_LOG(EXCEPTION) << op->name() << " output tensor info is empty.";
+  }
+
+  for (size_t i = basic_stra.size(); i < op->outputs_shape()[0].size(); i++) {
+    basic_stra.push_back(1);
+  }
+
+  strategies.push_back(basic_stra);
+  basic_stra.clear();
+  strategies.push_back(basic_stra);
+  return strategies;
 }
 
 Dimensions PrepareMatMulStrategy(Graph::NodeType *node, bool transpose_a, bool transpose_b, size_t iter_op_inputs) {
@@ -609,11 +630,13 @@ Strategies GatherForDynamicShape(const std::shared_ptr<OperatorInfo> &op, const 
   }
   Dimensions gather_input_0_strategy(gather_input_0_shape.size(), 1);
   size_t num_device = LongToSize(g_device_manager->stage_device_num());
-  size_t cut = 1;
-  while (gather_input_0_shape[dim] > 0 && gather_input_0_shape[dim] % SIZE_TWO == 0 && cut < num_device) {
-    gather_input_0_shape[dim] /= SIZE_TWO;
-    cut *= SIZE_TWO;
-    gather_input_0_strategy[dim] *= SIZE_TWO;
+  if (gather_input_0_shape[dim] % num_device == 0) {
+    size_t cut = 1;
+    while (gather_input_0_shape[dim] > 0 && gather_input_0_shape[dim] % SIZE_TWO == 0 && cut < num_device) {
+      gather_input_0_shape[dim] /= SIZE_TWO;
+      cut *= SIZE_TWO;
+      gather_input_0_strategy[dim] *= SIZE_TWO;
+    }
   }
   strategies.push_back(gather_input_0_strategy);
   for (size_t i = 1; i < op->inputs_shape().size(); i++) {
@@ -625,7 +648,13 @@ Strategies GatherForDynamicShape(const std::shared_ptr<OperatorInfo> &op, const 
 
 Strategies PrepareGather(const std::shared_ptr<OperatorInfo> &op, Dimensions strategy, bool dyn_shape_tmp_fix) {
   if (dyn_shape_tmp_fix) {
-    return GatherForDynamicShape(op, 0);
+    Strategies strategies;
+    strategies.push_back(strategy);
+    for (size_t i = 1; i < op->inputs_shape().size(); i++) {
+      Dimensions gather_input_i_strategy(op->inputs_shape()[i].size(), 1);
+      strategies.push_back(gather_input_i_strategy);
+    }
+    return strategies;
   }
 
   Strategies strategies;
@@ -933,7 +962,7 @@ void SetBackToRawStrategy(const std::shared_ptr<OperatorInfo> &op) {
 }
 
 Strategies PrepareStrategy(Graph::NodeType *node, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                           const size_t iter_ops) {
+                           const size_t iter_ops, const bool dyn_shape_tmp_fix) {
   if (ops.empty()) {
     MS_LOG(EXCEPTION) << "Failure: Operators is empty.";
   }
@@ -945,6 +974,8 @@ Strategies PrepareStrategy(Graph::NodeType *node, const std::vector<std::shared_
   auto type = ops[iter_ops]->type();
   if (type == MATMUL) {
     return PrepareMatMul(node, ops[iter_ops]);
+  } else if (dyn_shape_tmp_fix && type == BATCH_MATMUL) {
+    return PrepareBatchMatMul(node, ops[iter_ops]);
   } else if (type == LAYER_NORM) {
     return PrepareAxisRelatedStrategy(node, ops, iter_ops);
   } else if (type == SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS) {
@@ -1302,6 +1333,7 @@ Dimensions ModifyStrategyIfSqueezeIncoming(const std::vector<std::shared_ptr<Ope
 
   auto axis_list = GetAxisList(ops, SizeToLong(incoming_op_index));
   for (auto axis : axis_list) {
+    axis = (axis < 0) ? (strategy.size() + axis) : axis;
     auto it = find(stra_dim_list.begin(), stra_dim_list.end(), axis);
     if (it == stra_dim_list.end()) {
       MS_LOG(EXCEPTION) << "Failure: Can not find dimension indexes in Axis.";
@@ -1464,6 +1496,12 @@ Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Oper
     MS_LOG(EXCEPTION) << "Failure: Operators' elements out of range.";
   }
 
+  auto type = ops[iter_ops]->type();
+  if (type == FILLV2) {
+    auto stra = PrepareFillV2(ops[iter_ops], basic_stra);
+    return stra;
+  }
+
   Strategies strategies;
   if (basic_stra.size() == 0) {
     for (size_t iter_op_inputs = 0; iter_op_inputs < (size_t)ops[iter_ops]->inputs_shape().size(); iter_op_inputs++) {
@@ -1471,8 +1509,6 @@ Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Oper
     }
     return strategies;
   }
-
-  auto type = ops[iter_ops]->type();
 
   auto s_ptr = std::make_shared<Dimensions>(basic_stra);
   if (type == BIAS_ADD) {
@@ -1510,7 +1546,7 @@ Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Oper
     strategies.push_back(basic_stra);
     return strategies;
   }
-  if (type == BATCH_MATMUL) {
+  if (!dyn_shape_tmp_fix && type == BATCH_MATMUL) {
     return PreparePropagateBatchMatMul(ops[iter_ops], basic_stra);
   }
 
@@ -1840,7 +1876,7 @@ Dimensions RecStrategyPropagator::GetDefaultStrategy(size_t i_op) {
 }
 
 bool StopPropAtOP(std::string op_type) {
-  const std::set<std::string> stop_at = {GATHERV2, ASSIGN, EXPAND_DIMS};
+  const std::set<std::string> stop_at = {GATHERV2, ASSIGN, EXPAND_DIMS, RESHAPE};
   return stop_at.find(op_type) != stop_at.end();
 }
 
@@ -2213,7 +2249,7 @@ size_t RecStrategyPropagator::CopyMainOperatorsStrategy() {
     Strategies strategies;
     size_t iter_graph = index_list_->at(i_op);
     if (iter_graph != SIZE_MAX && ops_[i_op]->type() != GET_NEXT) {
-      strategies = PrepareStrategy(&graph_->nodes[iter_graph], ops_, i_op);
+      strategies = PrepareStrategy(&graph_->nodes[iter_graph], ops_, i_op, graph_->dyn_shape_tmp_fix);
     }
     if (!strategies.empty()) {
       source_ops_.push_back(i_op);
@@ -2259,6 +2295,9 @@ void RecStrategyPropagator::FixInvalidStra() {
     if (!HasStrategy(op)) {
       continue;
     }
+    if (op->type() == FILLV2) {
+      continue;
+    }
     if (graph_->dyn_shape_tmp_fix && (op->type() == ASSIGN || op->type() == ONEHOT)) {
       continue;
     }
@@ -2268,6 +2307,10 @@ void RecStrategyPropagator::FixInvalidStra() {
       Dimensions strategies;
       for (size_t iter_op_input_stra = 0; iter_op_input_stra < op->inputs_shape()[iter_op_inputs].size();
            iter_op_input_stra++) {
+        if (graph_->dyn_shape_tmp_fix && op->inputs_shape()[iter_op_inputs][iter_op_input_stra] == -1) {
+          strategies.push_back(old_strategys->GetInputDim()[iter_op_inputs][iter_op_input_stra]);
+          continue;
+        }
         if (op->inputs_shape()[iter_op_inputs][iter_op_input_stra] <
               old_strategys->GetInputDim()[iter_op_inputs][iter_op_input_stra] ||
             op->inputs_shape()[iter_op_inputs][iter_op_input_stra] %

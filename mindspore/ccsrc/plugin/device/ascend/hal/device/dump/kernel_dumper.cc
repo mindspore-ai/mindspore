@@ -26,7 +26,6 @@
 #include "include/common/utils/anfalgo.h"
 #include "graph/def_types.h"
 #include "include/backend/anf_runtime_algorithm.h"
-#include "runtime/kernel.h"
 #include "plugin/device/ascend/hal/device/ge_types_convert.h"
 #include "proto/op_mapping_info.pb.h"
 #include "include/common/utils/comm_manager.h"
@@ -50,7 +49,7 @@ constexpr size_t kHcomIndex = 4;
 }  // namespace
 DUMPER_REG(kAscendDevice, KernelDumper);
 std::mutex KernelDumper::dumper_mutex_;
-std::map<rtStream_t, std::unique_ptr<OpDebugTask>> KernelDumper::op_debug_tasks;
+std::map<aclrtStream, std::unique_ptr<OpDebugTask>> KernelDumper::op_debug_tasks;
 std::map<uint32_t, bool> KernelDumper::is_data_map;
 std::map<std::string, std::string> KernelDumper::stream_task_graphs;
 
@@ -190,7 +189,7 @@ void KernelDumper::Init() {
   }
 }
 
-void KernelDumper::DumpHcclOutput(const std::shared_ptr<HcclTaskInfo> &task_info, const rtStream_t &stream) {
+void KernelDumper::DumpHcclOutput(const std::shared_ptr<HcclTaskInfo> &task_info, const aclrtStream &stream) {
   if (!DumpJsonParser::GetInstance().async_dump_enabled()) {
     MS_LOG(INFO) << "Async dump is not enabled, no need to insert dump op for hccl task.";
     return;
@@ -222,8 +221,8 @@ void KernelDumper::DumpHcclOutput(const std::shared_ptr<HcclTaskInfo> &task_info
   dump_task->set_end_graph(false);
   uint32_t task_id_rt = 0;
   uint32_t stream_id_rt = 0;
-  rtError_t rt_ret = rtGetTaskIdAndStreamID(&task_id_rt, &stream_id_rt);
-  if (rt_ret != RT_ERROR_NONE) {
+  aclError rt_ret = rtGetTaskIdAndStreamID(&task_id_rt, &stream_id_rt);
+  if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "[KernelDumper] rtGetTaskIdAndStreamID failed, rt_ret = " << rt_ret;
     return;
   }
@@ -242,7 +241,7 @@ void KernelDumper::DumpHcclOutput(const std::shared_ptr<HcclTaskInfo> &task_info
   ExecutorDumpOp(dump_info, stream);
 }
 
-void KernelDumper::ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_info, const rtStream_t &stream_) {
+void KernelDumper::ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_info, const aclrtStream &stream_) {
   MS_EXCEPTION_IF_NULL(stream_);
   std::string proto_msg;
   const size_t proto_size = op_mapping_info.ByteSizeLong();
@@ -253,8 +252,8 @@ void KernelDumper::ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_i
   }
   std::string proto_json;
   (void)google::protobuf::util::MessageToJsonString(op_mapping_info, &proto_json);
-  rtError_t rt_ret = aclrtMalloc(&proto_dev_mem_, proto_size, ACL_MEM_TYPE_HIGH_BAND_WIDTH);
-  if (rt_ret != RT_ERROR_NONE) {
+  aclError rt_ret = aclrtMalloc(&proto_dev_mem_, proto_size, ACL_MEM_TYPE_HIGH_BAND_WIDTH);
+  if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "[KernelDumper] Call rt api rtMalloc failed, ret = " << rt_ret;
     return;
   }
@@ -266,7 +265,7 @@ void KernelDumper::ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_i
   }
 
   rt_ret = aclrtMalloc(&proto_size_dev_mem_, sizeof(size_t), ACL_MEM_TYPE_HIGH_BAND_WIDTH);
-  if (rt_ret != RT_ERROR_NONE) {
+  if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "[KernelDumper] Call rt api rtMalloc failed, ret = " << rt_ret;
     return;
   }
@@ -292,7 +291,7 @@ void KernelDumper::ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_i
                              &args[0], args_size,
                              nullptr,  // no need smDesc
                              stream_);
-  if (rt_ret != RT_ERROR_NONE) {
+  if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "[KernelDumper] Call rt api rtCpuKernelLaunch Failed, rt_ret = " << rt_ret;
     return;
   }
@@ -304,8 +303,8 @@ void KernelDumper::ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_i
 
 void KernelDumper::ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aicpu::dump::Task *> dump_task) {
   dump_task->set_end_graph(false);
-  rtError_t rt_ret = rtGetTaskIdAndStreamID(&task_id_, &stream_id_);
-  if (rt_ret != RT_ERROR_NONE) {
+  aclError rt_ret = rtGetTaskIdAndStreamID(&task_id_, &stream_id_);
+  if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "[KernelDumper] rtGetTaskIdAndStreamID failed, rt_ret = " << rt_ret;
     return;
   }
@@ -464,13 +463,13 @@ void KernelDumper::SetOpMappingInfoRegister(NotNull<aicpu::dump::OpMappingInfo *
 void KernelDumper::MallocP2PDebugMem(const void *const op_debug_addr) {
   const uint64_t debug_addrs_tmp = ::ge::PtrToValue(op_debug_addr);
   int64_t value = 0;
-  rtError_t rt_ret = rtGetRtCapability(FEATURE_TYPE_MEMORY, static_cast<int32_t>(MEMORY_INFO_TS_LIMITED), &value);
-  if (rt_ret != RT_ERROR_NONE) {
+  aclError rt_ret = rtGetRtCapability(FEATURE_TYPE_MEMORY, static_cast<int32_t>(MEMORY_INFO_TS_LIMITED), &value);
+  if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "[KernelDumper] Call rt api rtGetRtCapability failed, ret = " << rt_ret;
   }
   auto memory_type = (value == static_cast<int64_t>(RT_CAPABILITY_SUPPORT)) ? RT_MEMORY_TS : RT_MEMORY_HBM;
   rt_ret = rtMalloc(&p2p_debug_addr_, kDebugP2pSize, memory_type, 0);
-  if (rt_ret != RT_ERROR_NONE) {
+  if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "[KernelDumper] Call rtMalloc failed, ret = " << rt_ret;
     return;
   }
@@ -519,18 +518,18 @@ void KernelDumper::OpDebugRegisterForStream(const CNodePtr &kernel) {
     op_debug_task = std::make_unique<OpDebugTask>();
 
     int64_t value = 0;
-    rtError_t rt_ret = rtGetRtCapability(FEATURE_TYPE_MEMORY, static_cast<int32_t>(MEMORY_INFO_TS_LIMITED), &value);
-    if (rt_ret != RT_ERROR_NONE) {
+    aclError rt_ret = rtGetRtCapability(FEATURE_TYPE_MEMORY, static_cast<int32_t>(MEMORY_INFO_TS_LIMITED), &value);
+    if (rt_ret != ACL_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "[KernelDumper] Call rt api rtGetRtCapability failed, ret = " << rt_ret;
     }
     auto memory_type = (value == static_cast<int64_t>(RT_CAPABILITY_SUPPORT)) ? RT_MEMORY_TS : RT_MEMORY_HBM;
     rt_ret = rtMalloc(&op_debug_task->op_debug_addr, kOpDebugMemorySize, memory_type, 0);
-    if (rt_ret != RT_ERROR_NONE) {
+    if (rt_ret != ACL_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "[KernelDumper] Call rt api rtMalloc failed, ret = " << rt_ret;
     }
     rt_ret = rtDebugRegisterForStream(stream, op_debug_mode, op_debug_task->op_debug_addr,
                                       &op_debug_task->debug_stream_id, &op_debug_task->debug_task_id);
-    if (rt_ret != RT_ERROR_NONE) {
+    if (rt_ret != ACL_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "[KernelDumper] Call rtDebugRegisterForStream failed, ret = " << rt_ret;
     }
     MallocP2PDebugMem(op_debug_task->op_debug_addr);
@@ -545,8 +544,8 @@ void KernelDumper::OpDebugRegisterForStream(const CNodePtr &kernel) {
 
 void KernelDumper::OpDebugUnregisterForStream() {
   for (auto iter = KernelDumper::op_debug_tasks.begin(); iter != KernelDumper::op_debug_tasks.end(); iter++) {
-    rtError_t rt_ret = rtDebugUnRegisterForStream(iter->first);
-    if (rt_ret != RT_ERROR_NONE) {
+    aclError rt_ret = rtDebugUnRegisterForStream(iter->first);
+    if (rt_ret != ACL_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "[KernelDumper] Call rtDebugUnRegisterForStream failed, ret = " << rt_ret;
     }
   }

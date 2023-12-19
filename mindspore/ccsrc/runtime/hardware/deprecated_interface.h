@@ -34,11 +34,6 @@ class DeprecatedInterface {
 
   // ge
   virtual void DoExecNonInputGraph(const std::string &phase) {}
-  virtual bool InitExecDataset(const std::string &queue_name, int64_t size, int64_t batch_size,
-                               const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
-                               const std::vector<int64_t> &input_indexes, const std::string &phase) {
-    return true;
-  }
   virtual void ExportDFGraph(const std::string &file_name, const std::string &phase, const pybind11::object &encrypt,
                              char *key) {}
 
@@ -48,6 +43,7 @@ class DeprecatedInterface {
   virtual void RunInitGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params) {}
   virtual void ClearGraphWrapper() {}
   virtual void ClearOpAdapterMap() {}
+  virtual void UnregisterExternalAllocator() {}
 
   // ascend
   virtual void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {}

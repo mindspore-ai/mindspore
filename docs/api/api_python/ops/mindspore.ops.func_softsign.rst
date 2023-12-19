@@ -10,6 +10,11 @@ mindspore.ops.softsign
     .. math::
         \text{SoftSign}(x) = \frac{x}{1 + |x|}
 
+    Softsign函数图：
+
+    .. image:: ../images/Softsign.png
+        :align: center
+
     参数：
         - **x** (Tensor) - shape为 :math:`(N, *)` 的Tensor，其中 :math:`*` 表示任意个数的维度。它的数据类型必须为float16或float32。
 

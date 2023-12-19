@@ -14,6 +14,10 @@
 # ============================================================================
 """pyboost utils."""
 
+import os
+import logging
+from gen_utils import safe_load_yaml
+
 
 def is_optional_param(op_arg):
     if op_arg.as_init_arg and str(op_arg.default) == 'None':
@@ -83,7 +87,7 @@ def get_convert_type_str(dtype: str, optional):
         'list[bool]': 'ToBoolList<py::list>',
         'list[tensor]': 'ToTensorList<py::list>',
         'tensor': 'ToTensor',
-        'str': 'ToStr',
+        'str': 'ToString',
         'type': 'ToDtype',
     }
     optional_type_convert = {
@@ -91,6 +95,14 @@ def get_convert_type_str(dtype: str, optional):
         'float': 'ToFloatOptional',
         'number': 'ToScalarOptional',
         'tensor': 'ToTensorOptional',
+        'type': 'ToDtypeOptional',
+        'str': 'ToStringOptional',
+        'tuple[int]': 'ToIntListOptional<py::tuple>',
+        'tuple[float]': 'ToFloatListOptional<py::tuple>',
+        'tuple[bool]': 'ToBoolListOptional<py::tuple>',
+        'list[int]': 'ToIntListOptional<py::list>',
+        'list[float]': 'ToFloatListOptional<py::list>',
+        'list[bool]': 'ToBoolListOptional<py::list>',
     }
     if optional:
         if dtype in optional_type_convert:
@@ -154,6 +166,7 @@ def get_input_dtype(dtype: str, optional):
         'str': 'StringImmPtr',
         'type': 'TypePtr',
     }
+    kValueTuplePtrOptional = 'std::optional<ValueTuplePtr>'
     optional_type_convert = {
         'int': 'std::optional<Int64ImmPtr>',
         'float': 'std::optional<FP32ImmPtr>',
@@ -162,6 +175,9 @@ def get_input_dtype(dtype: str, optional):
         'tensor': 'std::optional<TensorPtr>',
         'str': 'std::optional<StringImmPtr>',
         'type': 'std::optional<TypePtr>',
+        'tuple[int]': kValueTuplePtrOptional,
+        'tuple[float]': kValueTuplePtrOptional,
+        'tuple[bool]': kValueTuplePtrOptional,
     }
     if optional:
         if dtype in optional_type_convert:
@@ -178,26 +194,6 @@ def is_cube(class_name):
         return True
     return False
 
-
-def get_aclnn_interface(class_name):
-    """
-    get aclnn interface name.
-    :param class_name:
-    :return:
-    """
-    aclnn_map = {
-        'Bmm': 'aclnnBatchMatMul',
-        'SiLU': 'aclnnSilu',
-        'Pow': 'aclnnPowTensorTensor',
-        'MatMul': 'aclnnMatmul',
-        'MaskedFill': 'aclnnInplaceMaskedFillTensor',
-        'GreaterEqual': 'aclnnGeTensor',
-        'Less': 'aclnnLtTensor',
-        'Sum': 'aclnnReduceSum',
-    }
-    if class_name in aclnn_map.keys():
-        return aclnn_map[class_name]
-    return "aclnn" + class_name
 
 def get_return_type(dtype: str):
     """
@@ -271,3 +267,57 @@ def is_pyboost_enable(operator_data):
         if enable:
             return True
     return False
+
+
+def convert_types(inputs):
+    '''convert type to acl type'''
+    inputs_dtypes = {}
+    flag = False
+    for i in inputs:
+        inputs_dtypes[i] = inputs.get(i).get('dtype')
+        if inputs_dtypes[i] != 'tensor':
+            flag = True
+        if 'tuple' in inputs_dtypes[i]:
+            data_type = inputs_dtypes[i].split('[')[1].strip(']')
+            if  data_type == 'tensor':
+                logging.info("Not support tuple[tensor] input.")
+            elif data_type == 'int':
+                inputs_dtypes[i] = 'std::vector<int64_t>'
+            elif data_type == 'float':
+                inputs_dtypes[i] = 'std::vector<float>'
+            elif data_type == 'bool':
+                inputs_dtypes[i] = 'std::vector<uint8_t>'
+            else:
+                logging.warning("Not support tuple[%s]] input.", data_type)
+        if inputs_dtypes[i] == 'number':
+            inputs_dtypes[i] = 'ScalarPtr'
+    return inputs_dtypes, flag
+
+
+def get_dtypes(op_yaml):
+    """get op inputs and outputs dtypes"""
+    inputs = op_yaml.get('args')
+    outputs = op_yaml.get('returns')
+    inputs_dtypes, flag_in = convert_types(inputs)
+    outputs_dtypes, flag_out = convert_types(outputs)
+    none_tensor_exist = (flag_in or flag_out)
+    return inputs_dtypes, outputs_dtypes, none_tensor_exist
+
+
+class AclnnUtils:
+    """
+    aclnn utils
+    """
+    work_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../../")
+    aclnn_map = safe_load_yaml(os.path.join(work_path, "./mindspore/python/mindspore/ops_generate/aclnn_config.yaml"))
+
+    @staticmethod
+    def get_aclnn_interface(class_name):
+        """
+        get aclnn interface name.
+        :param class_name:
+        :return:
+        """
+        if class_name in AclnnUtils.aclnn_map.keys():
+            return AclnnUtils.aclnn_map[class_name]
+        return "aclnn" + class_name

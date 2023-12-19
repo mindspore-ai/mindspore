@@ -78,9 +78,6 @@ bool RpcRecvKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std
     recv_monad_ = true;
   }
 
-  // RpcRecv kernel is similar with Unique, the next op's infer op must be launched after RpcRecv kernel is done.
-  is_need_retrieve_output_shape_ = true;
-
   // The dynamic shape flag affects the 'Launch' method.
   is_dynamic_shape_ = std::any_of(inputs.begin(), inputs.end(),
                                   [](const auto &kernel_tensor) { return kernel_tensor->IsDynamicShape(); });

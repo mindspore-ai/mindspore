@@ -38,10 +38,6 @@ class CPUDeviceResManager : public DeviceResManager {
 
   std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list) const override;
 
-  DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,
-                                       const ShapeVector &shape = ShapeVector(),
-                                       const UserDataPtr &user_data = nullptr) const override;
-
   DeviceAddressPtr CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const override;
 
   bool LoadCollectiveCommLib() override;
@@ -49,6 +45,8 @@ class CPUDeviceResManager : public DeviceResManager {
   // Relevant function to allocate and free device memory of raw ptr.
   void *AllocateMemory(size_t size) const override;
   void FreeMemory(void *ptr) const override;
+  void FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
+                       const std::vector<size_t> &keep_addr_sizes) const override;
 
  private:
   std::shared_ptr<MemoryManager> mem_manager_;
@@ -62,6 +60,7 @@ class CPUKernelExecutor : public KernelExecutor {
   void OptimizeGraph(const FuncGraphPtr &graph) const override;
 
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
+  kernel::KernelModPtr CreateKernelMod(const std::string &op_name) const override;
 
   // Kernel that is not supported by other device can be backed off and rebuilt on the CPU.
   // The function will set kernel info and create kernel mod.

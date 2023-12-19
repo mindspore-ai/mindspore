@@ -14,270 +14,243 @@
 # ============================================================================
 import numpy as np
 import pytest
+import test_utils
+
+from mindspore import ops
 import mindspore as ms
-from  mindspore import context
-from mindspore import nn
-from mindspore import Tensor
-from mindspore.ops import operations as P
 
 
-context.set_context(precompile_only=True)
+@test_utils.run_with_cell
+def scatter_nd_forward_func(indices, updates, shape):
+    return ops.scatter_nd(indices, updates, shape)
 
 
-class Net(nn.Cell):
-    def __init__(self, _shape):
-        super(Net, self).__init__()
-        self.shape = _shape
-        self.scatternd = P.ScatterNd()
-
-    def construct(self, indices, update):
-        return self.scatternd(indices, update, self.shape)
+@test_utils.run_with_cell
+def scatter_nd_backward_func(indices, updates, shape):
+    return ops.grad(scatter_nd_forward_func, (0, 1))(indices, updates, shape)
 
 
-def scatternd_net(indices, update, _shape, expect):
-    scatternd = Net(_shape)
-    _ = scatternd(Tensor(indices), Tensor(update))
-    #error = np.ones(shape=output.asnumpy().shape) * 1.0e-6
-    #diff = output.asnumpy() - expect
-    #assert np.all(diff < error)
-    #assert np.all(-diff < error)
+@test_utils.run_with_cell
+def scatter_nd_vmap_func(indices, updates, shape):
+    return ops.vmap(scatter_nd_forward_func, in_axes=(0, 0, None), out_axes=0)(indices, updates, shape)
 
 
-def scatternd_positive(nptype, mode):
-    context.set_context(mode=mode)
-
-    arr_indices = np.array([[0, 1], [1, 1], [0, 1], [0, 1], [0, 1]]).astype(np.int16)
-    arr_update = np.array([3.2, 1.1, 5.3, -2.2, -1.0]).astype(nptype)
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize("data_type", [np.float32, np.float16, np.int64, np.int32, np.int16, np.int8])
+@test_utils.run_test_func
+def test_scatter_nd_op_forward(context_mode, data_type):
+    """
+    Feature: Ops.
+    Description: test op scatter_nd forward.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=context_mode)
+    indices_type = np.int32
+    # For Ascend backend, if data_type is neither np.float32 nor np.int32, the op will be executed by AICPU.
+    # In this case, the indices_type must be same as shape_type.
+    if (ms.context.get_context("device_target") == "Ascend") and data_type not in [np.float32, np.int32]:
+        indices_type = np.int64
+    indices = ms.Tensor(np.array([[1, 0], [1, 1], [1, 0], [1, 0], [1, 0]]).astype(indices_type))
+    updates = ms.Tensor(np.array([-13.4, -3.1, 5.1, -12.1, -1.0]).astype(data_type))
     shape = (2, 2)
-    expect = np.array([[0., 5.3],
-                       [0., 1.1]]).astype(nptype)
-    scatternd_net(arr_indices, arr_update, shape, expect)
+    out = scatter_nd_forward_func(indices, updates, shape)
+    expect_out = np.array([[0., 0.], [-21.4, -3.1]]).astype(data_type)
+    np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-6)
 
-    arr_indices = np.array([[0, 1], [1, 1], [0, 1], [0, 1], [0, 1]]).astype(np.int32)
-    arr_update = np.array([3.2, 1.1, 5.3, -2.2, -1.0]).astype(nptype)
+    indices_type = np.int64
+    indices = ms.Tensor(np.array([[0, 1], [1, 1], [0, 1], [0, 1], [0, 1]]).astype(indices_type))
+    updates = ms.Tensor(np.array([3.2, 1.1, 5.3, -2.2, -1.0]).astype(data_type))
     shape = (2, 2)
-    expect = np.array([[0., 5.3],
-                       [0., 1.1]]).astype(nptype)
-    scatternd_net(arr_indices, arr_update, shape, expect)
+    out = scatter_nd_forward_func(indices, updates, shape)
+    expect_out = np.array([[0., 5.3], [0., 1.1]]).astype(data_type)
+    np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-6)
 
-    arr_indices = np.array([[0, 1], [1, 1], [0, 1], [0, 1], [0, 1]]).astype(np.int64)
-    arr_update = np.array([3.2, 1.1, 5.3, -2.2, -1.0]).astype(nptype)
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize("data_type", [np.float32, np.float16, np.int64, np.int32, np.int16, np.int8])
+@test_utils.run_test_func
+def test_scatter_nd_op_backward(context_mode, data_type):
+    """
+    Feature: Ops.
+    Description: test op scatter_nd forward.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=context_mode)
+    indices_type = np.int32
+    if (ms.context.get_context("device_target") == "Ascend") and data_type not in [np.float32, np.int32]:
+        indices_type = np.int64
+    indices = ms.Tensor(np.array([[1, 0], [1, 1], [1, 0], [1, 0], [1, 0]]).astype(indices_type))
+    updates = ms.Tensor(np.array([-13.4, -3.1, 5.1, -12.1, -1.0]).astype(data_type))
     shape = (2, 2)
-    expect = np.array([[0., 5.3],
-                       [0., 1.1]]).astype(nptype)
-    scatternd_net(arr_indices, arr_update, shape, expect)
+    grad_out_0, grad_out_1 = scatter_nd_backward_func(indices, updates, shape)
+    expect_out_0 = np.array([[0., 0.], [0., 0.], [0., 0.], [0., 0.], [0., 0.]]).astype(data_type)
+    expect_out_1 = np.array([1.0, 1.0, 1.0, 1.0, 1.0]).astype(data_type)
+    np.testing.assert_allclose(grad_out_0.asnumpy(), expect_out_0, rtol=1e-6)
+    np.testing.assert_allclose(grad_out_1.asnumpy(), expect_out_1, rtol=1e-6)
 
-
-def scatternd_negative(nptype, mode):
-    context.set_context(mode=mode)
-
-    arr_indices = np.array([[1, 0], [1, 1], [1, 0], [1, 0], [1, 0]]).astype(np.int16)
-    arr_update = np.array([-13.4, -3.1, 5.1, -12.1, -1.0]).astype(nptype)
+    indices_type = np.int64
+    indices = ms.Tensor(np.array([[0, 1], [1, 1], [0, 1], [0, 1], [0, 1]]).astype(indices_type))
+    updates = ms.Tensor(np.array([3.2, 1.1, 5.3, -2.2, -1.0]).astype(data_type))
     shape = (2, 2)
-    expect = np.array([[0., 0.],
-                       [-21.4, -3.1]]).astype(nptype)
-    scatternd_net(arr_indices, arr_update, shape, expect)
+    grad_out_0, grad_out_1 = scatter_nd_backward_func(indices, updates, shape)
+    expect_out_0 = np.array([[0., 0.], [0., 0.], [0., 0.], [0., 0.], [0., 0.]]).astype(data_type)
+    expect_out_1 = np.array([1.0, 1.0, 1.0, 1.0, 1.0]).astype(data_type)
+    np.testing.assert_allclose(grad_out_0.asnumpy(), expect_out_0, rtol=1e-6)
+    np.testing.assert_allclose(grad_out_1.asnumpy(), expect_out_1, rtol=1e-6)
 
-    arr_indices = np.array([[1, 0], [1, 1], [1, 0], [1, 0], [1, 0]]).astype(np.int32)
-    arr_update = np.array([-13.4, -3.1, 5.1, -12.1, -1.0]).astype(nptype)
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize("data_type", [np.float32, np.int32])
+@test_utils.run_test_func
+def test_scatter_nd_op_vmap(context_mode, data_type):
+    """
+    Feature: test vmap function.
+    Description: test scatter_nd op vmap.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=context_mode)
+    indices = ms.Tensor(np.array([[[1, 0], [1, 1], [1, 0], [1, 0], [1, 0]],
+                                  [[0, 1], [1, 1], [0, 1], [0, 1], [0, 1]]]).astype(np.int32))
+    updates = ms.Tensor(np.array([[-13.4, -3.1, 5.1, -12.1, -1.0],
+                                  [3.2, 1.1, 5.3, -2.2, -1.0]]).astype(data_type))
     shape = (2, 2)
-    expect = np.array([[0., 0.],
-                       [-21.4, -3.1]]).astype(nptype)
-    scatternd_net(arr_indices, arr_update, shape, expect)
+    out = scatter_nd_vmap_func(indices, updates, shape)
+    expect_out = np.array([[[0., 0.], [-21.4, -3.1]],
+                           [[0., 5.3], [0., 1.1]]]).astype(data_type)
+    np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-6)
 
-    arr_indices = np.array([[1, 0], [1, 1], [1, 0], [1, 0], [1, 0]]).astype(np.int64)
-    arr_update = np.array([-13.4, -3.1, 5.1, -12.1, -1.0]).astype(nptype)
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize("data_type", [ms.float32, ms.int64])
+@test_utils.run_test_func
+def test_scatter_nd_op_dynamic_shape(context_mode, data_type):
+    """
+    Feature: Ops.
+    Description: test op scatter_nd dynamic_shape.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=context_mode)
+    indices_type = ms.int32
+    if (ms.context.get_context("device_target") == "Ascend") and data_type not in [np.float32, np.int32]:
+        indices_type = ms.int64
+    np_type = np.float32 if data_type == ms.float32 else np.int64
+    indices_dyn = ms.Tensor(shape=[None, None], dtype=indices_type)
+    updates_dyn = ms.Tensor(shape=[None], dtype=data_type)
+    test_cell = test_utils.to_cell_obj(ops.scatter_nd)
     shape = (2, 2)
-    expect = np.array([[0., 0.],
-                       [-21.4, -3.1]]).astype(nptype)
-    scatternd_net(arr_indices, arr_update, shape, expect)
+    test_cell.set_inputs(indices_dyn, updates_dyn, shape)
+
+    indices = ms.Tensor(np.array([[1, 0], [1, 1], [1, 0], [1, 0], [1, 0]])).astype(indices_type)
+    updates = ms.Tensor(np.array([-13.4, -3.1, 5.1, -12.1, -1.0])).astype(data_type)
+    out = test_cell(indices, updates, shape)
+    expect_out = np.array([[0., 0.], [-21.4, -3.1]]).astype(np_type)
+    np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-6)
+
+    indices = ms.Tensor(np.array([[1, 0], [1, 1], [1, 0], [1, 0]])).astype(indices_type)
+    updates = ms.Tensor(np.array([-13.4, -3.1, 5.1, -12.1])).astype(data_type)
+    out = test_cell(indices, updates, shape)
+    expect_out = np.array([[0., 0.], [-20.4, -3.1]]).astype(np_type)
+    np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-6)
 
 
-def scatternd_positive_uint(nptype, mode):
-    context.set_context(mode=mode)
-
-    arr_indices = np.array([[0, 1], [1, 1], [0, 1], [0, 1], [0, 1]]).astype(np.int32)
-    arr_update = np.array([3.2, 1.1, 5.3, 3.8, 1.2]).astype(nptype)
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize("data_type", [ms.float32, ms.int64])
+@test_utils.run_test_func
+def test_scatter_nd_op_dynamic_rank(context_mode, data_type):
+    """
+    Feature: Ops.
+    Description: test op scatter_nd dynamic_rank.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=context_mode)
+    indices_type = ms.int32
+    if (ms.context.get_context("device_target") == "Ascend") and data_type not in [np.float32, np.int32]:
+        indices_type = ms.int64
+    np_type = np.float32 if data_type == ms.float32 else np.int64
+    indices_dyn = ms.Tensor(shape=None, dtype=indices_type)
+    updates_dyn = ms.Tensor(shape=None, dtype=data_type)
+    test_cell = test_utils.to_cell_obj(ops.scatter_nd)
     shape = (2, 2)
-    expect = np.array([[0., 12.],
-                       [0., 1.]]).astype(nptype)
-    scatternd_net(arr_indices, arr_update, shape, expect)
+    test_cell.set_inputs(indices_dyn, updates_dyn, shape)
 
-    arr_indices = np.array([[0, 1], [1, 1], [0, 1], [0, 1], [0, 1]]).astype(np.int64)
-    arr_update = np.array([3.2, 1.1, 5.3, 3.8, 1.2]).astype(nptype)
-    shape = (2, 2)
-    expect = np.array([[0., 12.],
-                       [0., 1.]]).astype(nptype)
-    scatternd_net(arr_indices, arr_update, shape, expect)
+    indices = ms.Tensor(np.array([[1, 0], [1, 1], [1, 0], [1, 0], [1, 0]])).astype(indices_type)
+    updates = ms.Tensor(np.array([-13.4, -3.1, 5.1, -12.1, -1.0])).astype(data_type)
+    out = test_cell(indices, updates, shape)
+    expect_out = np.array([[0., 0.], [-21.4, -3.1]]).astype(np_type)
+    np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-6)
+
+    indices = ms.Tensor(np.array([[0], [1]])).astype(indices_type)
+    updates = ms.Tensor(np.array([[1.0, 2.0], [3.0, 4.0]])).astype(data_type)
+    out = test_cell(indices, updates, shape)
+    expect_out = np.array([[1.0, 2.0], [3.0, 4.0]]).astype(np_type)
+    np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-6)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
+def test_scatter_nd_op_1d_shape(context_mode):
+    """
+    Feature: Ops.
+    Description: test op scatter_nd forward.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=context_mode)
+    indices = ms.Tensor(np.array([[1], [3], [5], [7], [9]]).astype(np.int64))
+    updates = ms.Tensor(np.array([-13.4, -3.1, 5.1, -12.1, -1.0]).astype(np.float32))
+    shape = (10,)
+    out = scatter_nd_forward_func(indices, updates, shape)
+    expect_out = np.array([0, -13.4, 0, -3.1, 0, 5.1, 0, -12.1, 0, -1.0]).astype(np.float32)
+    np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-6)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_scatternd_float64(mode):
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
+def test_scatter_nd_exception(context_mode):
     """
-    Feature: ScatterNd
-    Description: statternd with float64 dtype
-    Expectation: success
+    Feature: test exception case.
+    Description: test scatter_nd op  exception case.
+    Expectation: expect catching the error.
     """
-    scatternd_positive(np.float64, mode)
-    scatternd_negative(np.float64, mode)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_scatternd_float32(mode):
-    """
-    Feature: ScatterNd
-    Description: statternd with float32 dtype
-    Expectation: success
-    """
-    scatternd_positive(np.float32, mode)
-    scatternd_negative(np.float32, mode)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_scatternd_float16(mode):
-    """
-    Feature: ScatterNd
-    Description: statternd with float32 dtype
-    Expectation: success
-    """
-    scatternd_positive(np.float16, mode)
-    scatternd_negative(np.float16, mode)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_scatternd_int64(mode):
-    """
-    Feature: ScatterNd
-    Description: statternd with int64 dtype
-    Expectation: success
-    """
-    scatternd_positive(np.int64, mode)
-    scatternd_negative(np.int64, mode)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_scatternd_int32(mode):
-    """
-    Feature: ScatterNd
-    Description: statternd with int16 dtype
-    Expectation: success
-    """
-    scatternd_positive(np.int32, mode)
-    scatternd_negative(np.int32, mode)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_scatternd_int16(mode):
-    """
-    Feature: ScatterNd
-    Description: statternd with int16 dtype
-    Expectation: success
-    """
-    scatternd_positive(np.int16, mode)
-    scatternd_negative(np.int16, mode)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_scatternd_int8(mode):
-    """
-    Feature: ScatterNd
-    Description: statternd with int16 dtype
-    Expectation: success
-    """
-    scatternd_positive(np.int8, mode)
-    scatternd_negative(np.int8, mode)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_scatternd_uint64(mode):
-    """
-    Feature: ScatterNd
-    Description: statternd positive value of uint64 dtype
-    Expectation: success
-    """
-    scatternd_positive_uint(np.uint64, mode)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_scatternd_uint32(mode):
-    """
-    Feature: ScatterNd
-    Description: statternd positive value of uint32 dtype
-    Expectation: success
-    """
-    scatternd_positive_uint(np.uint32, mode)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_scatternd_uint16(mode):
-    """
-    Feature: ScatterNd
-    Description: statternd positive value of uint16 dtype
-    Expectation: success
-    """
-    scatternd_positive_uint(np.uint16, mode)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_scatternd_uint8(mode):
-    """
-    Feature: ScatterNd
-    Description: statternd positive value of uint8 dtype
-    Expectation: success
-    """
-    scatternd_positive_uint(np.uint8, mode)
+    np.random.seed(98094768)
+    indices = ms.Tensor(np.random.uniform(-10, 10, size=()).astype(np.int64))
+    updates = ms.Tensor(np.random.uniform(-10, 10, size=[2]).astype(np.float32))
+    shape = (-23, 9, 36, -4)
+    try:
+        _ = scatter_nd_forward_func(indices, updates, shape)
+    except RuntimeError as e:
+        assert "a scalar" in str(e)

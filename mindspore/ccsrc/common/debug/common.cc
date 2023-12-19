@@ -54,6 +54,9 @@ std::string Common::GetRandomStr(size_t str_len) {
 
 std::string Common::GetRandomStr() {
   std::string npy_suffix = ".npy";
+#if defined(SYSTEM_ENV_POSIX)
+  std::lock_guard<std::mutex> guard(random_data_lock_);
+#endif
 #ifndef _MSC_VER
   unsigned int seed = static_cast<unsigned int>(GetTimeStamp());
   std::string random_name = std::to_string(rand_r(&seed)) + npy_suffix;
@@ -298,10 +301,10 @@ std::string Common::AddId(const std::string &filename, const std::string &suffix
   const int spaces = 4;
   if (i >= filename.size()) {
     s << filename;
-    s << "_" << std::setfill('0') << std::setw(spaces) << (g_id_ - 1);
+    s << "_" << std::setfill('0') << std::setw(spaces) << (g_id_);
   } else {
     s << filename.substr(0, i);
-    s << "_" << std::setfill('0') << std::setw(spaces) << (g_id_ - 1);
+    s << "_" << std::setfill('0') << std::setw(spaces) << (g_id_);
     if (i + 1 < filename.size()) {
       s << filename.substr(i);
     }

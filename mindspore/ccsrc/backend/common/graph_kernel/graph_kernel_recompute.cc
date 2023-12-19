@@ -723,7 +723,7 @@ void GraphKernelRecompute::LinkIntoTargetFuncGraph(
   AnfNodePtrList outputs;
   kernel::GetFuncGraphOutputNodes(gt, &outputs);
   gt_node->set_kernel_info(std::make_shared<device::KernelInfo>());
-  SetNewKernelInfo(gt_node, gt, new_inputs, outputs);
+  Callback::Instance()->SetGraphKernelNodeKernelInfo(gt_node);
   mng->RemoveRoots();
   mng->KeepRoots({gt});
 }

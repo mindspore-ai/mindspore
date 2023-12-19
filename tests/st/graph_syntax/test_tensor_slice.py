@@ -13,8 +13,10 @@
 # limitations under the License.
 # ============================================================================
 import pytest
-from mindspore import Tensor, context, nn
+import mindspore as ms
+from mindspore import Tensor, context, nn, jit
 from mindspore.common import dtype as mstype
+import numpy as np
 
 
 @pytest.mark.level1
@@ -22,7 +24,7 @@ from mindspore.common import dtype as mstype
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_tensor_slice():
+def test_tensor_slice_1():
     """
     Feature: Test tensor slice.
     Description: Tensor getitem by a single bool value.
@@ -39,3 +41,25 @@ def test_tensor_slice():
     context.set_context(mode=context.PYNATIVE_MODE)
     pynative_out = net(x)
     assert graph_out == pynative_out
+
+
+@pytest.mark.skip(reason="this case depending on other property")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_tensor_slice_2():
+    """
+    Feature: Test tensor slice.
+    Description: Tensor getitem by slice.
+    Expectation: No exception.
+    """
+    data = Tensor(np.array([[2, 3.2], [3, 4.1]]).astype(np.float32))
+    @jit(input_signature=(Tensor(shape=None, dtype=ms.int64), data))
+    def my_index(x):
+        out = x[3:2:1]
+        return out
+
+    out = my_index(data)
+    assert out.shape == (0, 2)

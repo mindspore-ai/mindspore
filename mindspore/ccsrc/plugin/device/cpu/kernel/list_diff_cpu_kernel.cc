@@ -38,7 +38,6 @@ constexpr size_t kListDiffOutputNum = 2;
 }  // namespace
 
 bool ListDiffCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  is_need_retrieve_output_shape_ = true;
   TypeId x_type = inputs.at(kIndex0)->dtype_id();
   TypeId y_type = inputs.at(kIndex1)->dtype_id();
   out_type_ = outputs.at(kIndex0)->dtype_id();

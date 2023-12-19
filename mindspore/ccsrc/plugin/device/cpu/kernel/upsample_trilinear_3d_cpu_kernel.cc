@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include <utility>
 #include "kernel/kernel_get_value.h"
 #include "kernel/ops_utils.h"
+#include "mindapi/base/type_id.h"
 #include "ops/upsample_trilinear_3d.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -84,19 +85,26 @@ int UpsampleTrilinear3DCpuKernelMod::Resize(const std::vector<KernelTensor *> &i
   workspace_size_list_.push_back(unit_size * LongToSize(y_shape_[kIndex2]));
   workspace_size_list_.push_back(unit_size * LongToSize(y_shape_[kIndex3]));
   workspace_size_list_.push_back(unit_size * LongToSize(y_shape_[kIndex4]));
-  // none_list
-  none_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrNoneList));
-  if (none_list_.size() != kIndex1) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
-  }
-  if (none_list_[kIndex0] == static_cast<int64_t>(kIndex2)) {
+
+  auto type = inputs[kIndex1]->GetType();
+  MS_EXCEPTION_IF_NULL(type);
+  auto output_size_none = type->isa<TypeNone>();
+  if (!output_size_none) {
     scales_ = std::vector<float>(kIndex3, kValueZero);
   } else {
-    scales_ = inputs[kIndex2]->GetValueWithCheck<std::vector<float>>();
+    auto scales_opt = inputs[kIndex2]->GetOptionalValueWithCheck<std::vector<float>>();
+    bool scales_none = !scales_opt.has_value();
+    if (scales_none) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', output_size or scales should be specified.";
+      return KRET_RESIZE_FAILED;
+    }
+    scales_ = scales_opt.value();
     if (scales_.empty()) {
-      MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get scales input! ";
+      MS_LOG(ERROR) << "For " << kernel_name_ << " can't get scales input! ";
+      return KRET_RESIZE_FAILED;
     }
   }
+
   return KRET_OK;
 }
 
@@ -204,22 +212,25 @@ bool UpsampleTrilinear3DCpuKernelMod::LaunchKernel(const std::vector<kernel::Ker
   return true;
 }
 
-#define UpsampleTrilinear3D_CPU_KERNEL_REG(M_S, M_T, S, T)             \
-  KernelAttr().AddInputAttr(M_S).AddInputAttr(M_T).AddOutputAttr(M_S), \
-    &UpsampleTrilinear3DCpuKernelMod::LaunchKernel<S, T>
+#define UpsampleTrilinear3D_CPU_KERNEL_REG(M_S, S, T)                   \
+  std::make_pair(KernelAttr()                                           \
+                   .AddInputAttr(M_S)                                   \
+                   .AddOptionalInputAttr(kNumberTypeInt32)              \
+                   .AddOptionalInputAttr(kNumberTypeFloat32)            \
+                   .AddOutputAttr(M_S),                                 \
+                 &UpsampleTrilinear3DCpuKernelMod::LaunchKernel<S, T>), \
+    std::make_pair(KernelAttr()                                         \
+                     .AddInputAttr(M_S)                                 \
+                     .AddOptionalInputAttr(kNumberTypeInt64)            \
+                     .AddOptionalInputAttr(kNumberTypeFloat32)          \
+                     .AddOutputAttr(M_S),                               \
+                   &UpsampleTrilinear3DCpuKernelMod::LaunchKernel<S, T>)
 
 std::vector<std::pair<KernelAttr, UpsampleTrilinear3DCpuKernelMod::KernelRunFunc>>
   UpsampleTrilinear3DCpuKernelMod::func_list_ = {
-    {UpsampleTrilinear3D_CPU_KERNEL_REG(kNumberTypeFloat16, kNumberTypeInt32, float16, float)},
-    {UpsampleTrilinear3D_CPU_KERNEL_REG(kNumberTypeFloat32, kNumberTypeInt32, float, float)},
-    {UpsampleTrilinear3D_CPU_KERNEL_REG(kNumberTypeFloat64, kNumberTypeInt32, double, double)},
-    {UpsampleTrilinear3D_CPU_KERNEL_REG(kNumberTypeFloat16, kNumberTypeInt64, float16, float)},
-    {UpsampleTrilinear3D_CPU_KERNEL_REG(kNumberTypeFloat32, kNumberTypeInt64, float, float)},
-    {UpsampleTrilinear3D_CPU_KERNEL_REG(kNumberTypeFloat64, kNumberTypeInt64, double, double)},
-    {UpsampleTrilinear3D_CPU_KERNEL_REG(kNumberTypeFloat16, kNumberTypeFloat32, float16, float)},
-    {UpsampleTrilinear3D_CPU_KERNEL_REG(kNumberTypeFloat32, kNumberTypeFloat32, float, float)},
-    {UpsampleTrilinear3D_CPU_KERNEL_REG(kNumberTypeFloat64, kNumberTypeFloat32, double, double)},
-};
+    UpsampleTrilinear3D_CPU_KERNEL_REG(kNumberTypeFloat16, float16, float),
+    UpsampleTrilinear3D_CPU_KERNEL_REG(kNumberTypeFloat32, float, float),
+    UpsampleTrilinear3D_CPU_KERNEL_REG(kNumberTypeFloat64, double, double)};
 
 std::vector<KernelAttr> UpsampleTrilinear3DCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

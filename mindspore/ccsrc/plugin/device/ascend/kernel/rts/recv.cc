@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/ascend/kernel/rts/recv.h"
-#include "runtime/stream.h"
 #include "utils/ms_context.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
@@ -41,14 +40,14 @@ bool RecvKernel::Init(const AnfNodePtr &anf_node) {
   event_id_ = GetValue<uint32_t>(primitive->GetAttr(kAttrEventId));
 
   if (common::AnfAlgo::HasNodeAttr(kAttrWaitEvent, anf_node->cast<CNodePtr>())) {
-    event_ = reinterpret_cast<rtEvent_t>(GetValue<uintptr_t>(primitive->GetAttr(kAttrWaitEvent)));
+    event_ = reinterpret_cast<aclrtEvent>(GetValue<uintptr_t>(primitive->GetAttr(kAttrWaitEvent)));
   }
   MS_LOG(INFO) << "recv op event_id_:" << event_id_;
   return true;
 }
 
-bool RecvKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                        const std::vector<AddressPtr> &, void *stream_ptr) {
+bool RecvKernel::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                        const std::vector<KernelTensor *> &, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(event_);
   MS_EXCEPTION_IF_NULL(stream_ptr);
   auto status = aclrtStreamWaitEvent(stream_ptr, event_);

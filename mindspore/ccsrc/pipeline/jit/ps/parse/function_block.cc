@@ -228,7 +228,6 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
     // need resolve to determine whether it needs to be marked with interpret.
     auto resolve_node = MakeResolveSymbol(var_name);
     MS_EXCEPTION_IF_NULL(resolve_node);
-    CheckUndefinedSymbol(var_name, resolve_node);
     phi_param->set_interpret(resolve_node->interpret());
     phi_param->set_interpret_internal_type(resolve_node->interpret_internal_type());
     if (resolve_node->isa<Parameter>()) {
@@ -572,7 +571,11 @@ void FunctionBlock::CheckVariableNotDefined(const std::pair<std::string, AnfNode
     oss << "The local variable '" << var << "' is not defined in " << not_defined_branch_name << ", but defined in "
         << (not_defined_branch_name == "true branch" ? "false branch" : "true branch") << ".\n";
   }
-  oss << GetVariableDefinedLocation(this, var, start_line);
+  std::string location_info = GetVariableDefinedLocation(this, var, start_line);
+  if (location_info.empty()) {
+    return;
+  }
+  oss << location_info;
   MS_EXCEPTION(UnboundLocalError) << oss.str();
 }
 

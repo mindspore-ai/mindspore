@@ -19,7 +19,6 @@
 #include <string>
 #include "transform/graph_ir/op_adapter_map.h"
 #include "plugin/device/ascend/kernel/acl/acl_kernel_mod.h"
-#include "plugin/device/ascend/hal/device/ascend_launch_transdata.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "ops/op_name.h"
 #include "ops/view/view_strides_calculator.h"

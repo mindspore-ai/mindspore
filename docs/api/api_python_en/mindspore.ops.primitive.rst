@@ -5,6 +5,8 @@ operators that can be used for constructor function of Cell
 
 For more information about dynamic shape support status, please refer to `Dynamic Shape Support Status of primitive Interface <https://mindspore.cn/docs/en/master/note/dynamic_shape_primitive.html>`_ .
 
+For more information about the support for the bfloat16 data type, please refer to `Support List <https://mindspore.cn/docs/en/r2.3/note/bfloat16_support.html>`_ .
+
 For the details about the usage constraints of each operator in the operator parallel process,
 refer to `Usage Constraints During Operator Parallel <https://www.mindspore.cn/docs/en/master/note/operator_list_parallel.html>`_ .
 
@@ -639,6 +641,7 @@ Debugging Operator
     mindspore.ops.ImageSummary
     mindspore.ops.ScalarSummary
     mindspore.ops.TensorSummary
+    mindspore.ops.TensorDump
     mindspore.ops.Print
     mindspore.ops.NPUAllocFloatStatus
     mindspore.ops.NPUClearFloatStatus

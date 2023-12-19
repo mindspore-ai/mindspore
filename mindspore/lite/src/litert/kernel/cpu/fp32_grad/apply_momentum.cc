@@ -65,8 +65,8 @@ int ApplyMomentumCPUKernel::DoExecute(int task_id) {
   int start = stride * task_id;
   int end = start + count;
 
-  DoApplyMomentum(weight, accumulate, learning_rate, gradient, moment, apply_momentum_param_->use_nesterov_, start,
-                  end);
+  (void)DoApplyMomentum(weight, accumulate, learning_rate, gradient, moment, apply_momentum_param_->use_nesterov_,
+                        start, end);
   return RET_OK;
 }
 
@@ -135,10 +135,10 @@ int ApplyMomentumCPUKernel::OptimizerStep() {
   if (grad_sum_ != nullptr && valid_grad_sum_) {
     size_t start = 0;
     size_t end = length;
-    DoApplyMomentum(weight, accumulate, learning_rate, grad_sum_, moment, apply_momentum_param_->use_nesterov_, start,
-                    end);
+    (void)DoApplyMomentum(weight, accumulate, learning_rate, grad_sum_, moment, apply_momentum_param_->use_nesterov_,
+                          start, end);
     std::fill(grad_sum_, grad_sum_ + length, 0);
-    OptimizerKernel::OptimizerStep();
+    (void)OptimizerKernel::OptimizerStep();
   }
   return RET_OK;
 }

@@ -41,15 +41,20 @@ tensor::TensorPtr UpsampleNearest1dAscendCustomize(const std::shared_ptr<OpRunne
 
   std::vector<int64_t> output_size_vector = ConvertValueTupleToVector<int64_t>(output_size);
 
+  PyBoostUtils::PrepareOpInputs(op->device_context(), input_tensor);
+  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
+
   // Async
-  DispatchRun(std::make_shared<pynative::PyBoostDeviceTask>([op, input_tensor, output_size_vector]() {
+  PyBoostUtils::DispatchRun(std::make_shared<pynative::PyBoostDeviceTask>([op, input_tensor, output_size_vector]() {
+    MS_LOG(DEBUG) << "Run device task UpsampleNearest1d start";
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();
     // Malloc for input tensors
-    runtime::DeviceAddressUtils::CreateInputAddress(device_context, input_tensor, "input_tensor");
+    PyBoostUtils::MallocOpInputs(device_context, input_tensor);
     // Malloc for output tensors
-    PrepareOpOutputs(device_context, outputs, op->device_sync_promises());
+    PyBoostUtils::MallocOpOutputs(device_context, outputs);
     UpsampleNearest1dAscendCall(op->primitive(), device_context, input_tensor, output_size_vector, outputs);
+    MS_LOG(DEBUG) << "Run device task UpsampleNearest1d end";
   }));
   return op->output(0);
 }

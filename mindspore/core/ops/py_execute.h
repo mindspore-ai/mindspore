@@ -51,7 +51,8 @@ class MIND_API PyExecuteInfer : public abstract::OpInferBase {
 
   std::set<int64_t> GetValueDependArgIndices() const override;
 
-  using InferHandler = abstract::AbstractBasePtr (*)(const std::vector<AbstractBasePtr> &);
+  using InferHandler = abstract::AbstractBasePtr (*)(const PrimitivePtr &,
+                                                     const std::vector<abstract::AbstractBase *> &);
   static void set_infer_handler(const InferHandler &infer_handler) { infer_handler_ = infer_handler; }
 
  private:

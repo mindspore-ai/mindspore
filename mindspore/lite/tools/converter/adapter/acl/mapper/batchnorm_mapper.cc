@@ -41,6 +41,10 @@ STATUS BatchNormMapper::Mapper(const CNodePtr &cnode) {
       return RET_ERROR;
     }
   }
+  if (src_prim->HasAttr(ops::kFormat)) {
+    // the attr format has been changed to data_format because of dynamic(defined in gen_lite_ops.h)
+    src_prim->AddAttr(kAttrDataFormat, src_prim->GetAttr(ops::kFormat));
+  }
   return RET_OK;
 }
 

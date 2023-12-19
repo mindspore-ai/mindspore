@@ -292,9 +292,6 @@ class OrderEnforcer {
       (void)processed_nodes_.insert(load_user);
       if (!IsInUpdateState(load_user, update_state)) {
         manager_->AddEdge(update_state, load_user);
-        // Need update the toposort map, otherwise may occur cycle.
-        topo_sort_map_.clear();
-        (void)MakeTopoSortMap();
       }
     }
   }

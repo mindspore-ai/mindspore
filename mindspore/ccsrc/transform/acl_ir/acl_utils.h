@@ -18,14 +18,13 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 #include <utility>
 #include <map>
 #include "acl/acl_op_compiler.h"
 #include "acl/acl_base.h"
 #include "include/transform/graph_ir/types.h"
 #include "transform/acl_ir/ge_adapter_info.h"
-
-#define MAX_INPUT_TO_HOST 25
 
 namespace mindspore {
 namespace transform {
@@ -37,45 +36,47 @@ struct AclExecParam {
   aclopAttr *attr = nullptr;
 };
 
+struct AclHostInfo {
+  AclHostInfo() : host_addr(nullptr), size(0), dtype_id(kTypeUnknown) {}
+  AclHostInfo(void *addr, size_t addr_size, TypeId type_id) : host_addr(addr), size(addr_size), dtype_id(type_id) {}
+  void *host_addr;
+  size_t size;
+  TypeId dtype_id;
+};
+using AclHostInfoPtr = std::shared_ptr<AclHostInfo>;
+
 class AclInputToHost {
  public:
-  AclInputToHost() { clear(); }
-
-  void clear() {
-    for (auto &item : input_to_host_) {
-      item = nullptr;
-    }
-    size_ = 0;
+  AclInputToHost() {
+    static constexpr size_t reserve_size = 40;
+    input_to_host_.reserve(reserve_size);
   }
 
-  tensor::TensorPtr get(size_t index) const {
-    if (index >= MAX_INPUT_TO_HOST) {
-      MS_LOG(EXCEPTION) << "Index is bigger than max input to host size, index: " << index
-                        << ", max_input_to_host: " << MAX_INPUT_TO_HOST;
+  void clear() { input_to_host_.clear(); }
+
+  AclHostInfoPtr get(size_t index) const {
+    if (index >= input_to_host_.size()) {
+      return nullptr;
     }
     return input_to_host_[index];
   }
 
-  void emplace(size_t index, const tensor::TensorPtr &tensor_ptr) {
-    auto origin_tensor = get(index);
-    if (origin_tensor == nullptr && tensor_ptr != nullptr) {
-      size_++;
+  void emplace(size_t index, const AclHostInfoPtr &acl_input) {
+    if (index >= input_to_host_.size()) {
+      input_to_host_.resize(index + 1, nullptr);
     }
-    input_to_host_[index] = tensor_ptr;
+    input_to_host_[index] = acl_input;
   }
 
-  void build(const std::map<uint32_t, tensor::TensorPtr> &inputs_on_host) {
+  void build(const std::map<uint32_t, AclHostInfoPtr> &inputs_on_host) {
     clear();
-    for (auto &kv : inputs_on_host) {
+    for (const auto &kv : inputs_on_host) {
       emplace(kv.first, kv.second);
     }
   }
 
-  bool empty() const { return size_ == 0; }
-
  private:
-  tensor::TensorPtr input_to_host_[MAX_INPUT_TO_HOST];
-  size_t size_{};
+  std::vector<AclHostInfoPtr> input_to_host_;
 };
 
 class AclAttrMaker {
@@ -157,7 +158,9 @@ class AclTensorBufferMaker {
       type_size = GetTypeByte(TypeIdToType(type));
     }
     auto real_size = type_size * size;
-    if (addr == nullptr || real_size == 0) {
+    if (type == kObjectTypeString) {
+      data_buffer_ = aclCreateDataBuffer(addr, size + sizeof(ge::StringHead));
+    } else if (addr == nullptr || real_size == 0) {
       data_buffer_ = aclCreateDataBuffer(nullptr, 0);
     } else {
       data_buffer_ = aclCreateDataBuffer(addr, size);
@@ -237,13 +240,16 @@ class AclRunner {
     }
     MS_EXCEPTION_IF_CHECK_FAIL(acl_param_.input_desc.size() == acl_param_.input_buffer.size(),
                                "Acl param input_desc size is not equal to acl param input_buffer size");
-    for (size_t i = acl_param_.input_desc.size() - 1; i >= 0; --i) {
+    for (int i = static_cast<int>(acl_param_.input_desc.size()) - 1; i >= 0; --i) {
       if (acl_param_.input_desc[i] != nullptr && acl_param_.input_buffer[i] != nullptr) {
         return i + 1;
       }
     }
     return 0;
   }
+
+  // fill null optional input in the range of inputs with place holder
+  void FillOptInputWithPlaceHolder();
 
   void ResizeOpOutputs(size_t size) {
     (void)std::for_each(acl_param_.output_desc.begin(), acl_param_.output_desc.end(), [](const aclTensorDesc *desc) {

@@ -108,11 +108,48 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
     graph_manager_.AddSavedGraphs(std::to_string(it->id_));
     if (!it->is_added_to_ge_session_) {
       MS_LOG(INFO) << "Add the graph " << (*it).name_ << " to GE, it's id is: " << (*it).id_;
-      (void)sess_->AddGraph(static_cast<uint32_t>(it->id_), *(it->graph_ptr_), it->options_);
+      auto ret = sess_->AddGraph(static_cast<uint32_t>(it->id_), *(it->graph_ptr_), it->options_);
+      if (ret != ::ge::GRAPH_SUCCESS) {
+        MS_LOG(EXCEPTION) << "Call GE AddGraph Failed, ret is: " << ret;
+      }
       it->is_added_to_ge_session_ = true;
     }
   }
 #endif
+}
+
+Status GraphRunner::AddGraph(const std::string &name) {
+  DfGraphWrapperPtr wrap_ptr = graph_manager_.GetGraphByName(name);
+  if (wrap_ptr == nullptr) {
+    MS_LOG(WARNING) << "Get graph form DfGraphManager failed!";
+    return Status::NOT_FOUND;
+  }
+
+#if (defined ENABLE_D) || (defined ENABLE_LITE_ACL)
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->backend_policy() != "ge") {
+    return Status::SUCCESS;
+  }
+  std::set<string> saved_graph = graph_manager_.GetSavedGraphs();
+  auto iter_find = saved_graph.find(std::to_string(wrap_ptr->id_));
+  if (iter_find != saved_graph.end()) {
+    MS_LOG(INFO) << "The graph is already added, graph name: " << name;
+    return Status::SUCCESS;
+  }
+
+  graph_manager_.AddSavedGraphs(std::to_string(wrap_ptr->id_));
+  if (!wrap_ptr->is_added_to_ge_session_) {
+    MS_LOG(INFO) << "Add the graph " << (*wrap_ptr).name_ << " to GE, it's id is: " << (*wrap_ptr).id_;
+    auto ret = sess_->AddGraph(static_cast<uint32_t>(wrap_ptr->id_), *(wrap_ptr->graph_ptr_), wrap_ptr->options_);
+    if (ret != ge::GRAPH_SUCCESS) {
+      MS_LOG(ERROR) << "AddGraph to Ge Session failed, ret: " << ret;
+      return Status::FAILED;
+    }
+    wrap_ptr->is_added_to_ge_session_ = true;
+  }
+#endif
+  return Status::SUCCESS;
 }
 
 Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<GeTensorPtr> &inputs,

@@ -2,6 +2,82 @@
 
 [View English](./RELEASE.md)
 
+## MindSpore 2.2.10 Release Notes
+
+### 主要特性及增强
+
+#### 算子
+
+- [STABLE] FastGelu、BatchMatMul、AllReduce、AllGather、Broadcast、ReduceScatter算子支持bfloat16数据类型
+- [STABLE] AllGather、ReduceScatter支持unit8数据类型
+
+### 问题修复
+
+- [#I8ALW3]修复Faster R-CNN、DeepTextMask、RCNN-ResNet50等网络在Ascend 910上8卡训练RandomChoiceWithMask算子报错问题
+- [#I8LKG7]修复UNet-2D在Ascend 910 1卡、8卡图编译报错问题
+- [#I8KU3X]修复CRNN-ResNet34在Ascend 910 1卡、8卡PyNative模式下训练进程卡住问题
+- [#I8KTHH]修复在Ascend 910 8卡上使能enable_parallel_optimizer=True，不使用allreduce分组融合时，BERT网络训练报错问题
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+李林杰, TuDouNi, chengxb7532, Henry Shi, rms-infer-type, 朱家兴, zhouyaqiang0, tanghuikang, gaoyong10, gengdongjie, yao_yf, hujiahui8, hanhuifeng, shenyaxin, KevinYi, 冯一航, chengfeng27, JuiceZ, zhangyanhui, jijiarong, xiaoxiongzhu, 没有窗户的小巷, ling, liyan2022, haozhang, zangqx, xiaoyao, liujunzhu, 胡彬, panzhihui, wangshaocong, linqingke, jianghui58, qiuzhongya, yangruoqi713, zhangminli, moran, 王禹程, shaojunsong, wangtongyu6, zhupuxu, luoyang, 徐安越, qinzheng, caifubi, 徐永飞, chenkang, youshu, XinDu, liubuyu, jxl, yeyunpeng2020, huoxinyou, yefeng, jiaorui, wangpingan, cao1zhg, zjun, zyli2020, yanjiaming, Cynthia叶, 胡安东, 李良灿, liruyu, liuluobin, lihao, huangbingjian, YijieChen, jjfeing, looop5, 刘力力, xiaoxin_zhang, yangluhang, chenweifeng, jiangshanfeng, zichun_ye, 陈宇, NaCN, ligan, YingLai Lin, huangziling, chenjianping, DeshiChen, chengbin, kairui_kou, ccsszz, yanghaoran, zhangdanyang, Yanzhi_YI, zhengzuohe, hangq, TronZhang, wanghenchang, HighCloud, 吕浩宇, VectorSL, ZPaC, mengyuanli, maning202007, 刘勇琪, r1chardf1d0, fary86, 刘崇鸣, yuchaojie, douzhixing, fengyixing
+
+欢迎以任何形式对项目提供贡献！
+
+## MindSpore Lite 2.2.10 Release Notes
+
+### 问题修复
+
+- [#I8K7CC]优化get_model_info接口传入非str字段的报错
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+gengdongjie, zhangyanhui, xiaoxiongzhu, wangshaocong, jianghui58, moran, wangtongyu6, 徐安越, qinzheng, 徐永飞, youshu, XinDu, yeyunpeng2020, yefeng, wangpingan, zjun, 胡安东, 刘力力, 陈宇, chenjianping, kairui_kou, zhangdanyang, hangq, mengyuanli, 刘崇鸣
+
+欢迎以任何形式对项目提供贡献！
+
+## MindSpore 2.2.1 Release Notes
+
+### Bug Fixes
+
+- [#I7R3R5] 修复昇腾平台ResNet-50网络精度劣化问题。
+- [#I8A9RH] 修复昇腾平台DBNet（ResNet-50）网络精度劣化问题。
+- [#I8B8IW] 修复多维Tensor赋值越界导致段错误的问题。
+- [#I8J0F4] 修复多维Tensor扩展维度在动态图执行失败的问题。
+- [#I87P3P] 修复昇腾平台二次训练编译缓存加载失败的问题。
+- [#I86GP9] 修复昇腾平台UNet3D网络推理精度劣化问题。
+- [#I89B4K] 修复Windows平台动态图动态rank执行卡住的问题。
+- [#I8CX0C] 修复昇腾平台上动态图混合精度模式下偶现失败的问题。
+- [#I8BGCF] 修复昇腾平台AIRNet网络动态图模式下执行出现段错误的问题。
+- [#I8L5DS] 修复昇腾平台ResNet-50图像分割网络动态图执行慢的问题。
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+yufan, dingcheng, lvzhangcheng, zhunaipan, fangwenyi, weiyang, changzherui, chujinjin, zangqingxiang, yuchaojie, wuweikang, tanghuikang, xiaoyao, huangbinjian, zhoupeichen, chenfei_mindspore, hedongdong, wangnan, zhengzuohe, yanghaoran, zouliqin, luoyang, liuchongmin, lujiale, machenggui, wangcong, lixiangyi, wangting, huangyong
+
+欢迎以任何形式对项目提供贡献！
+
+## MindSpore Lite 2.2.1 Release Notes
+
+### Bug Fixes
+
+- [#I88055] 修复MindSpore Lite推理gridsample算子format设置错误的问题。
+- [#I8D80Y] 修复MindSpore Lite推理单算子调用流程资源释放异常的问题。
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+zhanghaibo, wangsiyuan, yefeng, wangshaocong, chenjianping
+
+欢迎以任何形式对项目提供贡献！
+
 ## MindSpore 2.2.0 Release Notes
 
 ### 主要特性和增强

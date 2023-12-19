@@ -60,10 +60,12 @@ enum ParseTargetType {
 const char PYTHON_MOD_MODULE[] = "mindspore";
 const char PYTHON_MOD_PARSE_MODULE[] = "mindspore._extends.parse";
 const char PYTHON_MOD_PRIMITIVE_ARG_HANDLER_MODULE[] = "mindspore.ops.auto_generate.gen_arg_handler";
-const char PYTHON_MOD_PRIMITIVE_ARG_DTYPE_CAST_MODULE[] = "mindspore.ops_generate.arg_dtype_cast";
-const char PYTHON_MOD_PRIMITIVE_OP_LABELS_MODULE[] = "mindspore.ops.auto_generate.gen_labels";
+const char PYTHON_MOD_PRIMITIVE_ARG_DTYPE_CAST_MODULE[] = "mindspore.ops.auto_generate.gen_arg_dtype_cast";
+const char PYTHON_MOD_PRIMITIVE_OP_CREATE_INSTANCE_HELPER_MODULE[] =
+  "mindspore.ops.auto_generate.cpp_create_prim_instance_helper";
 const char PYTHON_MOD_PRIMITIVE_OP_TYPE_CAST[] = "do_type_cast";
 const char PYTHON_MOD_PRIMITIVE_OP_LABELS_DICT[] = "op_labels";
+const char PYTHON_MOD_PRIMITIVE_OP_DEFAULT_VALUE_DICT[] = "op_args_default_value";
 const char PYTHON_MOD_PARSE_OBJECT_FUNCTION[] = "parse_cb";
 const char PYTHON_MOD_RESOLVE_FUNCTION[] = "resolve_symbol";
 const char PYTHON_MOD_RESOLVE_GET_OBJ_KEY[] = "get_object_key";
@@ -87,7 +89,6 @@ const char PYTHON_MOD_GET_PARSE_METHOD[] = "get_parse_method_of_class";
 const char PYTHON_MOD_GET_BPROP_METHOD[] = "get_bprop_method_of_class";
 const char PYTHON_MOD_GET_OBJECT_DESCRIPTION[] = "get_object_description";
 const char PYTHON_MOD_IS_CELL_LIST[] = "is_cell_list";
-const char PYTHON_MOD_IS_MODULE_LIST[] = "is_module_list";
 const char PYTHON_MOD_CONVERT_CELL_LIST_TO_SEQUENCE[] = "convert_cell_list_to_sequence";
 const char PYTHON_MOD_GET_ITEM_FROM_SEQUENCE[] = "get_obj_from_sequence";
 const char PYTHON_MOD_CONVERT_TO_MS_TENSOR[] = "convert_to_ms_tensor";

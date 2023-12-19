@@ -382,7 +382,14 @@ static inline MS_FLOAT32X8 MS_TANHX8_F32(MS_FLOAT32X8 src) {
     MS_MUL256_F32(MS_FMADD256_F32(MS_FMADD256_F32(MS_ADD256_F32(square, data0), square, data1), square, data2), src);
   MS_FLOAT32X8 b =
     MS_FMADD256_F32(MS_FMADD256_F32(MS_FMADD256_F32(data3, square, data4), square, data5), square, data2);
-  return MS_MIN256_F32(MS_MAX256_F32(MS_DIV256_F32(a, b), neg), pos);
+  MS_FLOAT32X8 res = MS_DIV256_F32(a, b);
+  MS_FLOAT32X8 up_limit = MS_MOV256_F32(5.0f);
+  MS_FLOAT32X8 down_limit = MS_MOV256_F32(-5.0f);
+  MS_FLOAT32X8 up_mask = MS_CMPGT256_F32(src, up_limit);
+  MS_FLOAT32X8 down_mask = MS_CMPLT256_F32(src, down_limit);
+  res = MS_BLEND256_F32(res, pos, up_mask);
+  res = MS_BLEND256_F32(res, neg, down_mask);
+  return res;
 }
 
 #define MS_TANH256_F32 MS_TANHX8_F32

@@ -115,10 +115,6 @@ _unsupported_python_builtin_type = (
     set, dict, slice, complex, reversed, type,
 )
 
-_hybrid_type = (
-    print, enumerate, zip, map, filter, abs, round, max, min, sum, getattr, hasattr, list, tuple
-)
-
 # Unsupported python builtin type in JIT Fallback.
 _fallback_unsupported_python_builtin_type = (
     compile, eval, exec
@@ -327,6 +323,14 @@ def get_obj_id(obj):
     return str(id(obj))
 
 
+def is_lambda_function(obj):
+    """Determine whether is a lambda function."""
+    if isinstance(obj, types.FunctionType):
+        source_code = inspect.getsource(obj)
+        return "lambda" in source_code and "<function" in str(obj) and "<lambda>" in str(obj)
+    return False
+
+
 def get_obj_type(obj):
     """Get the obj type."""
     logger.debug("Get object type: %r", obj)
@@ -491,17 +495,12 @@ def is_cell_list(obj):
     return isinstance(obj, nn.CellList)
 
 
-def is_module_list(obj):
-    """Check if obj is nn.ModuleList"""
-    return hasattr(obj, "__cell_as_list__") and not isinstance(obj, nn.CellList)
-
-
 def convert_cell_list_to_sequence(obj):
     """Convert nn.CellList to sequence."""
     if not hasattr(obj, "__cell_as_list__"):
         raise TypeError(f"Obj should be nn.CellList, but got {obj}")
     if not hasattr(obj, "_cells"):
-        raise AttributeError(f"nn.CellList is missing _cells property.")
+        raise AttributeError(f"nn.CellList or nn.ModuleList is missing _cells property.")
     cells = getattr(obj, "_cells")
     return list(cells.values())
 
@@ -768,8 +767,11 @@ def get_args(node):
     return args
 
 
-def get_primitive_signatures(prim):
+def get_primitive_signatures(prim_name):
     """Get primitive signatures."""
+    if not hasattr(ops, prim_name):
+        raise ValueError(f"Unable to find {prim_name} in mindspore.ops.")
+    prim = getattr(ops, prim_name)
     if not hasattr(prim, "__mindspore_signature__"):
         return ()
     signatures = getattr(prim, "__mindspore_signature__")
@@ -788,12 +790,12 @@ def _convert_stub_tensor(data):
             fields = data_dict.keys()
             return namedtuple(type_name, fields)(**_convert_stub_tensor(data_dict))
         return tuple(_convert_stub_tensor(x) for x in data)
-    if isinstance(data, list):
+    if data.__class__ is list:
         # Keep the list object not change.
         for i in range(len(data)):
             data[i] = _convert_stub_tensor(data[i])
         return data
-    if isinstance(data, dict):
+    if data.__class__ is dict:
         # Keep the dict object not change.
         keys = tuple(data.keys())
         for key in keys:
@@ -842,6 +844,11 @@ def get_script_id_attrs(script):
     return res
 
 
+def generate_lambda_object(script):
+    """Generate lambda expression object using script"""
+    return eval(script, {}, {})
+
+
 def get_global_params():
     """Get the global parameter."""
     logger.debug(f"get global_dict: {_global_params}")
@@ -854,7 +861,11 @@ def get_dtype(name: str):
 
 
 def check_attrs(target_object, func_name: str):
-    if hasattr(target_object, func_name) and hasattr(target_object.__class__.__base__, func_name):
+    if isinstance(target_object, Tensor):
+        return False
+    if hasattr(target_object, func_name):
+        if not hasattr(target_object.__class__.__base__, func_name):
+            return True
         if getattr(target_object.__class__, func_name) is not getattr(target_object.__class__.__base__, func_name):
             return True
     return False
@@ -1069,15 +1080,6 @@ class Parser:
         return False
 
     @staticmethod
-    def is_hybrid_type(value):
-        """To check if hybrid type, such as print"""
-        for item in _hybrid_type:
-            if value == item:
-                logger.debug(f"Found hybrid type: '{value}'.")
-                return True
-        return False
-
-    @staticmethod
     def get_convert_object_for_mutable(value):
         """Get the convert object for value which don't support to be converted in C++."""
         # The value may not be supported to do ConvertData such as api 'mutable',
@@ -1098,9 +1100,16 @@ class Parser:
                 return SYNTAX_UNSUPPORTED_NAMESPACE
             if self.is_unsupported_python_builtin_type(value):
                 return SYNTAX_UNSUPPORTED_EXTERNAL_TYPE
-            if self.is_hybrid_type(value):
-                return SYNTAX_HYBRID_TYPE
         return SYNTAX_SUPPORTED
+
+    def check_lambda(self, src):
+        obj_type = get_obj_type(self.fn)
+        if (obj_type != RESOLVE_TYPE_FUNCTION or src[:4] == "def ") and is_lambda_function(self.fn):
+            logger.debug("fn is lambda: %r", self.fn)
+            raise ValueError("An error occurred while parsing the positional information of the lambda expression. "
+                             "Please write the lambda expression on a separate line.\nFor example, "
+                             "the code 'def __init__(self, combine_fn=lambda x: x + 1):' rewritten as\n"
+                             "'def __init__(self, combine_fn=\nlambda x: x + 1\n):' will solve the problem.")
 
     def parse(self):
         """Parse the function or method."""
@@ -1137,6 +1146,7 @@ class Parser:
                 self.col_offset = \
                     len(original_src.split('\n')[0]) - len(src.split('\n')[0])
                 logger.debug("Get source: %s", src)
+                self.check_lambda(src)
                 try:
                     if self.pack_builder:
                         src = self.pack_builder.get_code_source()
@@ -1156,6 +1166,16 @@ class Parser:
         logger.error("Fn type is invalid")
         return None, None
 
+    def get_name_from_namespace(self, value):
+        try:
+            value_str = value.__name__
+            logger.debug(
+                f"value: {type(value)}, '{value_str}', hasattr(__name__): {hasattr(value, '__name__')}.")
+        except:
+            value_str = str(value)
+            logger.debug(f"value: {type(value)}, '{value_str}'.")
+        return value_str
+
     def get_namespace_symbol(self, var: str):
         """Get mindspore builtin namespace and symbol."""
         if var in self.closure_namespace:
@@ -1168,8 +1188,7 @@ class Parser:
         if var in self.global_namespace:
             logger.debug(f"Found '{var}' in global_namespace {self.global_namespace.__str__()}.")
             value = self.global_namespace[var]
-            value_str = value.__name__ if hasattr(value, '__name__') else str(value)
-            logger.debug(f"value: {type(value)}, '{value_str}', hasattr(__name__): {hasattr(value, '__name__')}.")
+            self.get_name_from_namespace(value)
             # To check if allowed to support.
             value = self.get_convert_object_for_mutable(value)
             support_type = self.get_syntax_support_type(value)
@@ -1204,8 +1223,7 @@ class Parser:
         if var in self.global_namespace:
             logger.debug(f"Found '{var}' in global_namespace {self.global_namespace.__str__()}.")
             value = self.global_namespace[var]
-            value_str = value.__name__ if hasattr(value, '__name__') else str(value)
-            logger.debug(f"value: {type(value)}, '{value_str}', hasattr(__name__): {hasattr(value, '__name__')}.")
+            value_str = self.get_name_from_namespace(value)
             value = self.get_convert_object_for_mutable(value)
             if is_from_third_party_library(value):
                 logger.debug(f"value: '{value}' is from third party library.")

@@ -469,10 +469,10 @@ bool CPUKernelRuntime::Run(const session::KernelGraph &kernel_graph, bool) {
     }
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
       AnfAlgo::InferShape(kernel);
-      auto args = kernel::GetArgsFromCNode(kernel);
-      MS_EXCEPTION_IF_NULL(args);
-      if (cpu_kernel != nullptr && cpu_kernel->Resize(args->inputs, args->outputs, args->depend_tensor_map) ==
-                                     static_cast<int>(kernel::KRET_RESIZE_FAILED)) {
+      auto inputs = AnfAlgo::GetOrCreateAllInputKernelTensors(kernel);
+      auto outputs = AnfAlgo::GetOrCreateAllOutputKernelTensors(kernel);
+      if (cpu_kernel != nullptr &&
+          cpu_kernel->Resize(inputs, outputs) == static_cast<int>(kernel::KRET_RESIZE_FAILED)) {
         MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed!";
       }
     }

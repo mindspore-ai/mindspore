@@ -40,15 +40,19 @@ void SquareAscendCall(const device::DeviceContext *device_context, const tensor:
 tensor::TensorPtr SquareAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor) {
   OpRunner::InferOpOutput(op, x_tensor);
   // No need to convert input
+  PyBoostUtils::PrepareOpInputs(op->device_context(), x_tensor);
+  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
   // Async
-  DispatchRun(std::make_shared<pynative::PyBoostDeviceTask>([op, x_tensor]() {
+  PyBoostUtils::DispatchRun(std::make_shared<pynative::PyBoostDeviceTask>([op, x_tensor]() {
+    MS_LOG(DEBUG) << "Run device task Square start";
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();
     // Malloc for input tensors
-    runtime::DeviceAddressUtils::CreateInputAddress(device_context, x_tensor, "x_tensor");
+    PyBoostUtils::MallocOpInputs(device_context, x_tensor);
     // Malloc for output tensors
-    PrepareOpOutputs(device_context, outputs, op->device_sync_promises());
+    PyBoostUtils::MallocOpOutputs(device_context, outputs);
     SquareAscendCall(device_context, x_tensor, outputs);
+    MS_LOG(DEBUG) << "Run device task Square end";
   }));
   return op->output(0);
 }

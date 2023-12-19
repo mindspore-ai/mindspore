@@ -14,35 +14,43 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/kernel/opapi/aclnn/matmul_aclnn_kernel.h"
-#include <algorithm>
 #include <vector>
-#include <map>
-#include <memory>
-#include <functional>
 #include "ir/tensor.h"
-#include "runtime/stream.h"
-#include "runtime/device/kernel_runtime.h"
-#include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "plugin/device/ascend/hal/hardware/ge_device_context.h"
 
 namespace mindspore {
 namespace kernel {
 void MMAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                         const std::vector<KernelTensor *> &outputs) {
-  auto return_value =
-    GEN_EXECUTOR(op_type_, inputs[kIndex0], inputs[kIndex1], outputs[kIndex0], OpApiUtil::GetCubeMathType());
+  const auto &attr_list = primitive()->attrs();
+  bool trans_a = false;
+  bool trans_b = false;
+  if (attr_list.at("transpose_a") && attr_list.at("transpose_b")) {
+    trans_a = GetValue<bool>(attr_list.at("transpose_a"));
+    trans_b = GetValue<bool>(attr_list.at("transpose_b"));
+  }
+  auto shape_a = inputs[kIndex0]->GetShapeVector();
+  auto shape_b = inputs[kIndex1]->GetShapeVector();
+  if ((shape_a.size() == shape_b.size()) && (shape_a.size() == kIndex2)) {
+    op_type_ = "aclnnMm";
+  }
+  input_a_ = std::pair<KernelTensor *, bool>(inputs[kIndex0], trans_a);
+  input_b_ = std::pair<KernelTensor *, bool>(inputs[kIndex1], trans_b);
+  auto return_value = GEN_EXECUTOR(op_type_, input_a_, input_b_, outputs[kIndex0], OpApiUtil::GetCubeMathType());
   UpdateWorkspace(return_value);
 }
 
 bool MMAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  ParseGenExecutor(
-    GEN_EXECUTOR(op_type_, inputs[kIndex0], inputs[kIndex1], outputs[kIndex0], OpApiUtil::GetCubeMathType()));
+  input_a_.first = inputs[kIndex0];
+  input_b_.first = inputs[kIndex1];
+  ParseGenExecutor(GEN_EXECUTOR(op_type_, input_a_, input_b_, outputs[kIndex0], OpApiUtil::GetCubeMathType()));
   RunOp(stream_ptr, workspace);
   return true;
 }
+MS_ACLLNN_KERNEL_FACTORY_REG(MatMul, MMAclnnKernelMod);
+MS_ACLLNN_KERNEL_FACTORY_REG(MatMulV2, MMAclnnKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

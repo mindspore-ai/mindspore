@@ -69,7 +69,7 @@ class AicpuOpKernelLoad {
   std::map<std::string, std::string> so_name_and_realpath_map_;
   std::map<uintptr_t, std::map<std::string, OpKernelBinPtr>> cust_aicpu_so_;
   std::mutex cust_aicpu_mutex_;
-  std::vector<rtStream_t> stream_list_;
+  std::vector<aclrtStream> stream_list_;
   std::vector<std::vector<void *>> allocated_mem_list_;
   std::vector<BatchLoadOpFromBufArgs> batch_args_;
 };

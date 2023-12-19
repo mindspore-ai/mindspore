@@ -39,7 +39,6 @@ OutputInfo GetNodeOutputInfo(const AnfNodePtr &node) {
   std::vector<std::string> output_format;
   std::vector<TypeId> output_device_dtype;
   auto type_ptr = node->Type();
-  auto shape_ptr = node->Shape();
   size_t output_num = AnfAlgo::GetOutputTensorNum(node);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
@@ -47,7 +46,7 @@ OutputInfo GetNodeOutputInfo(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(build_info);
   for (size_t i = 0; i < output_num; i++) {
     (void)output_infer_dtype.emplace_back(common::AnfAlgo::GetOutputInferDataType(type_ptr, i));
-    (void)output_infer_shape.emplace_back(common::AnfAlgo::GetOutputInferShape(node, shape_ptr, i));
+    (void)output_infer_shape.emplace_back(common::AnfAlgo::GetOutputInferShape(node, i));
     (void)output_format.emplace_back(build_info->GetOutputFormat(i));
     (void)output_device_dtype.emplace_back(build_info->GetOutputDeviceType(i));
   }

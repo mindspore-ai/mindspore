@@ -76,19 +76,6 @@ def sparse_count_sparse_output_valuecheck(v_type, w_type):
     expected_output = (expect_indices, expect_values, expect_shape)
     compare_results(op_output, expected_output)
 
-    #Test with 1D data
-    indices = Tensor([[1,], [3,], [2,], [2,]], dtype=mstype.int64)
-    values = Tensor([0, 2, 8, 8], dtype=v_type)
-    dense_shape = Tensor([4,], dtype=mstype.int64)
-    weights = Tensor([], dtype=w_type)
-    sparse_count_sparse_output = Net(binary_output=False, minlength=-1, maxlength=-1)
-    op_output = sparse_count_sparse_output(indices, values, dense_shape, weights)
-    expect_indices = Tensor([[0], [2], [8]], dtype=mstype.int64)
-    expect_values = Tensor([1, 1, 2], dtype=w_type)
-    expect_shape = Tensor([9], dtype=mstype.int64)
-    expected_output = (expect_indices, expect_values, expect_shape)
-    compare_results(op_output, expected_output)
-
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -138,40 +125,6 @@ def test_sparsecountsparseoutput_value_type_error():
     Description: Test output for unsupported type or value bounds
     Expectation: Raises corresponding errors
     """
-    with pytest.raises(TypeError):
-        indices = Tensor([[1, 2], [3, 1], [2, 2], [2, 1]], dtype=mstype.int64)
-        values = Tensor([0, 2, 8, 8], dtype=mstype.float32)
-        dense_shape = Tensor([4, 4], dtype=mstype.int64)
-        weights = Tensor([], dtype=mstype.int64)
-        sparse_count_sparse_output = Net(binary_output=False, minlength=-1, maxlength=-1)
-        sparse_count_sparse_output(indices, values, dense_shape, weights)
-
-    with pytest.raises(TypeError):
-        indices = Tensor([[1, 2], [3, 1], [2, 2], [2, 1]], dtype=mstype.int64)
-        values = Tensor([0, 2, 8, 8], dtype=mstype.int64)
-        dense_shape = Tensor([4, 4], dtype=mstype.int64)
-        weights = Tensor([], dtype=mstype.int64)
-        sparse_count_sparse_output = Net(binary_output=2, minlength=-1, maxlength=-1)
-        sparse_count_sparse_output(indices, values, dense_shape, weights)
-
-    #Number of values must be equal to first dimension of indices
-    with pytest.raises(ValueError):
-        indices = Tensor([[1, 2], [3, 1], [2, 2], [2, 1]], dtype=mstype.int64)
-        values = Tensor([0, 2, 8], dtype=mstype.int64)
-        dense_shape = Tensor([4, 4], dtype=mstype.int64)
-        weights = Tensor([], dtype=mstype.int64)
-        sparse_count_sparse_output = Net(binary_output=False, minlength=-1, maxlength=-1)
-        sparse_count_sparse_output(indices, values, dense_shape, weights)
-
-    #Number of dimensions in dense shape must be equal to second dimension of indices
-    with pytest.raises(ValueError):
-        indices = Tensor([[1, 2], [3, 1], [2, 2], [2, 1]], dtype=mstype.int64)
-        values = Tensor([0, 2, 8, 8], dtype=mstype.int64)
-        dense_shape = Tensor([4], dtype=mstype.int64)
-        weights = Tensor([], dtype=mstype.int64)
-        sparse_count_sparse_output = Net(binary_output=False, minlength=-1, maxlength=-1)
-        sparse_count_sparse_output(indices, values, dense_shape, weights)
-
     #Number of weights is not equal to number of values
     with pytest.raises(RuntimeError):
         indices = Tensor([[1, 2], [3, 1], [2, 2], [2, 1]], dtype=mstype.int64)

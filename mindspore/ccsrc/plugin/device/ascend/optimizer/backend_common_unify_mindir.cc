@@ -33,8 +33,6 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/batchnorm_to_bninfer.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/batchnormgrad_to_bninfergrad.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/histogram_fixed_width_fusion.h"
-#include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.h"
-#include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_gru.h"
 #include "plugin/device/ascend/optimizer/mindir/renorm_split.h"
 #include "plugin/device/ascend/optimizer/mindir/optimizer_unify_output.h"
 #include "plugin/device/ascend/optimizer/mindir/space_batch_nd_attr_update.h"
@@ -52,6 +50,7 @@
 #include "plugin/device/ascend/optimizer/mindir/dropout_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/ascend_mindir_op_adapter.h"
 #include "plugin/device/ascend/optimizer/mindir/sparse_softmax_cross_entropy_with_logits_unify_mindir.h"
+#include "plugin/device/ascend/optimizer/mindir/adam_weight_decay_unify_mindir.h"
 
 namespace mindspore {
 namespace opt {
@@ -67,14 +66,12 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::TensorArrayAddFlowCond2>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::GeTensorArrayCastIndex>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::TensorArrayPrepare>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<opt::InsertPlaceholderForDynamicGRUV2>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<opt::InsertPlaceholderForDynamicRNN>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::SpaceToBatchNDAttrUpdate>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::BatchToSpaceNDAttrUpdate>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::CenteredRMSPropUnifyOutput>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<opt::AdamWeightDecayFission>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AvgPoolGradUnifyMindIR>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::RMSPropUnifyOutput>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::AdamWeightDecayUnifyMindIR>());
   (*unify_mindir_pm)->AddPass(std::make_shared<CdistFission>());
   (*unify_mindir_pm)->AddPass(std::make_shared<CdistGradFission>());
 
@@ -88,7 +85,6 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
   } else if (graph_mode) {
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::FtrlUnifyOutput>());
-    (*unify_mindir_pm)->AddPass(std::make_shared<opt::MomentumUnifyOutput>());
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::DropoutAndDropoutGradUnifyMindIR>());
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::DropoutUnifyMindIR0>());
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
@@ -100,7 +96,6 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
     // TODO(hbhu_bin): In mindspore, SparseSoftmaxCrossEntropyWithLogits has different outputs based on the "is_grad"
     // attribute, but it has two outputs in CANN. These pass cann be removed when convert "is_grad" attribute to input.
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::FtrlUnifyOutput>());
-    (*unify_mindir_pm)->AddPass(std::make_shared<opt::MomentumUnifyOutput>());
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2>());
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());

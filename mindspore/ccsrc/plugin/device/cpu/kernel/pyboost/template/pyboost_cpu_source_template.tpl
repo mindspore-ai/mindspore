@@ -16,8 +16,6 @@
 
 #include "plugin/device/cpu/kernel/pyboost/auto_generate/${operator_name}.h"
 #include "runtime/hardware/device_context_manager.h"
-#include "plugin/factory/ms_factory.h"
-#include "plugin/device/cpu/kernel/cpu_kernel.h"
 ${customize_include}
 
 namespace mindspore {

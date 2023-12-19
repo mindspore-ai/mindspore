@@ -31,15 +31,14 @@
 #include "include/backend/debug/profiler/profiling.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
-#include "plugin/device/ascend/hal/hardware/ge_utils.h"
-#include "plugin/device/ascend/hal/common/ascend_utils.h"
-#include "runtime/config.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "include/common/utils/compile_cache_context.h"
 #include "mindspore/core/utils/file_utils.h"
 #include "toolchain/adx_datadump_server.h"
 #include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
 #include "plugin/device/ascend/optimizer/ge_backend_optimization.h"
+#include "acl/acl_base.h"
+#include "runtime/config.h"
 
 namespace mindspore {
 namespace device {
@@ -47,6 +46,8 @@ namespace ascend {
 namespace {
 constexpr auto kOpDebugConfigFile = "ge_op_debug_config.ini";
 constexpr char kGeDumpMode[3][7] = {"all", "input", "output"};
+constexpr auto kSaturationMode = "Saturation";
+constexpr auto kINFNANMode = "INFNAN";
 
 bool IsDynamicShapeFuncGraph(const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
@@ -67,6 +68,9 @@ bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (IsDynamicShapeFuncGraph(func_graph)) {
+    if (GetRunMode(func_graph) == RunMode::kKernelMode) {
+      return true;
+    }
     opt::GEDynamicUnifyMindIR(func_graph);
     bool all_support = true;
     auto mng = func_graph->manager();
@@ -145,13 +149,14 @@ void GeDeviceContext::Initialize() {
   // set overflow mode in ascend910b
   const auto &soc_version = ms_context->ascend_soc_version();
   if (soc_version == "ascend910b") {
-    bool is_infnan = (common::GetEnv("MS_ASCEND_CHECK_OVERFLOW_MODE") == "INFNAN_MODE");
-    if (is_infnan) {
-      auto mode = aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_INFNAN;
-      auto ret = aclrtSetDeviceSatMode(mode);
-      if (ret != ACL_SUCCESS) {
-        MS_LOG(EXCEPTION) << "aclrtSetDeviceSatMode failed";
-      }
+    bool is_sat = (common::GetEnv("MS_ASCEND_CHECK_OVERFLOW_MODE") == "SATURATION_MODE");
+    auto mode = (is_sat) ? aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_SATURATION
+                         : aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_INFNAN;
+    auto overflow_mode = (is_sat) ? kSaturationMode : kINFNANMode;
+    MS_LOG(INFO) << "The current overflow detection mode is " << overflow_mode << ".";
+    auto ret = aclrtSetDeviceSatMode(mode);
+    if (ret != ACL_SUCCESS) {
+      MS_LOG(EXCEPTION) << "Set " << overflow_mode << " mode failed.";
     }
   }
   MS_EXCEPTION_IF_NULL(device_res_manager_);
@@ -220,6 +225,20 @@ void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
       MS_LOG(EXCEPTION) << "Initialize GE failed!";
     }
   }
+
+  GeDeviceResManager::CreateSessionAndGraphRunner();
+  auto graph_runner = transform::GetGraphRunner();
+  MS_EXCEPTION_IF_NULL(graph_runner);
+  if (IsEnableRefMode()) {
+    transform::Status ret = transform::RegisterExternalAllocator(
+      graph_runner, dynamic_cast<GeDeviceResManager *>(device_res_manager_.get())->GetStream(),
+      dynamic_cast<GeDeviceResManager *>(device_res_manager_.get())->GetAllocator());
+    if (ret != transform::Status::SUCCESS) {
+      MS_LOG(EXCEPTION) << "RegisterExternalAllocator failed";
+    }
+    MS_LOG(INFO) << "Create session and graphrunner successful.";
+  }
+
   inst_context->increase_param<uint32_t>(MS_CTX_GE_REF);
   MS_LOG(INFO) << "Init ge successful, ge reference = " << inst_context->get_param<uint32_t>(MS_CTX_GE_REF) << ".";
   return;
@@ -547,10 +566,51 @@ DeprecatedInterface *GeDeviceContext::GetDeprecatedInterface() {
   return deprecated_interface_.get();
 }
 
-constexpr auto kGeDevice = "GE";
-MS_REGISTER_DEVICE(kGeDevice, GeDeviceContext);
-#ifdef ASCEND_910B
 MS_REGISTER_DEVICE(kAscendDevice, GeDeviceContext);
+#ifdef WITH_BACKEND
+namespace {
+void SetContextSocVersion(MsContext *ctx) {
+  const std::map<std::string, std::string> kAscendSocVersions = {
+    {"Ascend910A", "ascend910"},    {"Ascend910B", "ascend910"},    {"Ascend910PremiumA", "ascend910"},
+    {"Ascend910ProA", "ascend910"}, {"Ascend910ProB", "ascend910"}, {"Ascend910B1", "ascend910b"},
+    {"Ascend910B2", "ascend910b"},  {"Ascend910B2C", "ascend910b"}, {"Ascend910B3", "ascend910b"},
+    {"Ascend910B4", "ascend910b"}};
+  const char *soc_name_c = aclrtGetSocName();
+  if (soc_name_c == nullptr) {
+    MS_LOG(ERROR) << "Get soc name failed.";
+    return;
+  }
+  std::string version(soc_name_c);
+  MS_LOG(INFO) << "The soc version :" << version;
+  ctx->set_ascend_detail_soc_version(version);
+  auto iter = kAscendSocVersions.find(version);
+  if (iter == kAscendSocVersions.end()) {
+    ctx->set_ascend_soc_version(version);
+  } else {
+    ctx->set_ascend_soc_version(iter->second);
+  }
+}
+}  // namespace
+
+MSCONTEXT_REGISTER_INIT_FUNC(kAscendDevice, [](MsContext *ctx) -> void {
+  MS_EXCEPTION_IF_NULL(ctx);
+  if (ctx->backend_policy() != "ge") {
+    (void)ctx->set_backend_policy("ge");
+  }
+  common::SetEnv("MS_ENABLE_GE", "1");
+  // if format not set, user default format
+  auto format_mode = common::GetEnv("MS_ENABLE_FORMAT_MODE");
+  if (format_mode.empty()) {
+    common::SetEnv("MS_ENABLE_FORMAT_MODE", "1");
+  }
+  // MS_DEV_FORCE_ACL 1: ACL with special format, 2: ACL with default format.
+  auto force_acl = common::GetEnv("MS_DEV_FORCE_ACL");
+  auto disable_ref = common::GetEnv("MS_DISABLE_REF_MODE");
+  if (force_acl.empty() && disable_ref != "1") {
+    common::SetEnv("MS_DEV_FORCE_ACL", "1");
+  }
+  SetContextSocVersion(ctx);
+});
 #endif
 }  // namespace ascend
 }  // namespace device

@@ -18,6 +18,8 @@
 #define MINDSPORE_CCSRC_TRANSFORM_ACL_IR_OP_API_CACHE_H_
 
 #include <string>
+#include <vector>
+#include <utility>
 #include "transform/acl_ir/op_api_convert.h"
 
 namespace mindspore::transform {
@@ -44,18 +46,41 @@ inline void MemcpyToBuf(const void *data_expression, size_t size_expression) {
 }
 
 void GatherInfo(mindspore::kernel::KernelTensor *);
-void GatherInfo(const string &);
-void GatherInfo();
+void GatherInfo(const std::pair<mindspore::kernel::KernelTensor *, bool> &);
 
-template <std::size_t N>
-void GatherInfo(const std::array<bool, N> &value) {
-  MemcpyToBuf(value.data(), static_cast<int64_t>(value.size() * sizeof(bool)));
-}
+void GatherInfo(const mindspore::tensor::TensorPtr &);
+void GatherInfo(const std::optional<TensorPtr> &);
+void GatherInfo(const std::vector<TensorPtr> &);
 
 template <typename T>
 void GatherInfo(const T &value) {
   MemcpyToBuf(&value, sizeof(T));
 }
+
+template <typename T>
+void GatherInfo(std::optional<T> value) {
+  if (value.has_value()) {
+    GatherInfo(value.value());
+  }
+}
+
+void GatherInfo(const string &);
+void GatherInfo(const std::optional<string> &);
+
+void GatherInfo(const ScalarPtr &);
+void GatherInfo(const std::optional<ScalarPtr> &);
+
+void GatherInfo(const TypePtr &);
+void GatherInfo(const std::optional<TypePtr> &);
+
+template <typename T>
+void GatherInfo(const std::vector<T> &values) {
+  MemcpyToBuf(values.data(), values.size() * sizeof(T));
+}
+
+inline void GatherInfo(TypeId type_id) { MemcpyToBuf(&type_id, sizeof(int)); }
+
+void GatherInfo();
 
 template <typename T, typename... Args>
 void GatherInfo(const T &arg, const Args &... args) {
@@ -82,7 +107,7 @@ bool HitCache(const char *aclnn_api, aclOpExecutor **executor, uint64_t *workspa
   }
   init_cache_thread_local_func();
   g_hash_offset = 0;
-  GatherInfo(std::string_view(aclnn_api), args...);
+  GatherInfo(std::string(aclnn_api), args...);
   uint64_t hash_id = calc_hash_id();
   set_hash_key_func(hash_id);
   *executor = get_exec_cache_func(hash_id, workspace_size);

@@ -3,7 +3,7 @@ mindspore.nn.HShrink
 
 .. py:class:: mindspore.nn.HShrink(lambd=0.5)
 
-    Hard Shrink激活函数。按输入元素计算输出。公式定义如下：
+    逐元素计算Hard Shrink激活函数。公式定义如下：
 
     .. math::
         \text{HardShrink}(x) =
@@ -15,7 +15,7 @@ mindspore.nn.HShrink
 
     HShrink函数图：
 
-    .. image:: images/HShrink.png
+    .. image:: ../images/HShrink.png
         :align: center
 
     参数：

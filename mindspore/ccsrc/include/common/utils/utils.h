@@ -35,7 +35,6 @@
 
 namespace mindspore {
 // attr key name
-constexpr auto kAttrNoneList = "none_list";
 constexpr auto kAttrSegment = "segment";
 constexpr auto kAttrAlignCorners = "align_corners";
 constexpr auto kAttrHalfPixelCenters = "half_pixel_centers";
@@ -103,8 +102,11 @@ constexpr auto kAttrNodeInfo = "node_info";
 constexpr auto kAttrNodeName = "node_name";
 constexpr auto kAttrDynInput = "dynamic";
 constexpr auto kAttrDynInputSizes = "dyn_input_sizes";
+constexpr auto kAttrChannelName = "channel_name";
 constexpr auto kAttrTupleInputStructural = "tuple_input_structural";
 constexpr auto kAttrListStartIndex = "list_start_index";
+constexpr auto kAttrPyExecuteNeedUpdateShape = "pyexecute_need_update_shape";
+constexpr auto kAttrPyExecuteOutput = "pyexecute_output";
 constexpr auto kAttrSrcFormat = "src_format";
 constexpr auto kAttrDstFormat = "dst_format";
 constexpr auto kAttrMultiples = "multiples";
@@ -306,7 +308,6 @@ constexpr auto kAttrIouThreshold = "iou_threshold";
 constexpr auto kAttrEnableEmbeddingStorage = "enable_embedding_storage";
 constexpr auto kAttrParameterKey = "parameter_key";
 constexpr auto kAttrJitCallNode = "jit_call_node";
-constexpr auto kAttrFuncGraphCellId = "func_graph_cell_id";
 constexpr auto kAttrInsertDefaultValue = "insert_default_value";
 constexpr auto kAttrIsSparse = "IsSparse";
 constexpr auto kAttrKernelBackoffWithFailureInfo = "kernel_backoff_with_failure_info";
@@ -360,6 +361,8 @@ constexpr auto kFlagIsPynativeBpropGraph = "is_pynative_bprop_graph";
 constexpr auto kFlagPyNativeRunInGraph = "pynative_run_in_graph";
 constexpr auto kFlagNeedRenormalize = "need_renormalize";
 constexpr auto kFlagEnableZeroCopyInGraph = "enable_zero_copy_in_graph";
+constexpr auto kFlagPyNativeBpropGraphWithBpropCut = "pynative_bprop_graph_with_bprop_cut";
+constexpr auto kFlagPyNativeBpropGraphIsDynamic = "pynative_bprop_graph_is_dynamic";
 constexpr auto kFlagEnableRunGraphBySingleOp = "enable_run_graph_by_single_op";
 constexpr auto kFlagIsPyNativeBpropKernelGraph = "is_pynative_bprop_kernel_graph";
 constexpr auto kFlagPyNativeWithJitCallGraph = "pynative_with_jit_call_graph";
@@ -393,6 +396,7 @@ constexpr auto kTensorValueIsEmpty = "tensor_value_is_empty";
 constexpr auto kTensorUserDataIsSensTensor = "is_sens_tensor";
 constexpr auto kFakeTensorPos = "fake_tensor_pos";
 constexpr auto kFakeTensorListPos = "fake_tensor_list_pos";
+constexpr auto kChannelNameNpuLog = "_npu_log";
 
 // env key
 constexpr auto kGraphOpRun = "GRAPH_OP_RUN";
@@ -613,6 +617,9 @@ constexpr auto kGeGraphCompilerCacheDir = "ge.graph_compiler_cache_dir";
 constexpr auto kRecomputeInsert = "recompute_insert";
 constexpr auto kAddedRecomputeDependAttr = "added_recompute_depend";
 constexpr auto kCondidateOverlapBlockId = "condidate_overlap_block_id";
+
+// User data key for pyexecute.
+constexpr auto kSyncUserDataHandler = "sync_user_data_handler";
 
 COMMON_EXPORT bool IsOneOfCustomAkgType(const std::string &name);
 COMMON_EXPORT bool IsOneOfOperator(const std::string &name);

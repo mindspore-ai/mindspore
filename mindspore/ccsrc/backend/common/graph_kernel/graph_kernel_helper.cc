@@ -44,29 +44,6 @@
 namespace mindspore::graphkernel {
 namespace {
 constexpr auto kPatternOpaque = "Opaque";
-bool IsMakeTupleOut(const AnfNodePtr &out, AnfNodePtrList *real_outs) {
-  MS_EXCEPTION_IF_NULL(real_outs);
-  if (IsPrimitiveCNode(out, prim::kPrimMakeTuple)) {
-    auto &inputs = out->cast<CNodePtr>()->inputs();
-    for (size_t i = 1; i < inputs.size(); ++i) {
-      real_outs->push_back(inputs[i]);
-    }
-    return true;
-  }
-
-  if (auto fg = common::AnfAlgo::GetCNodeFuncGraphPtr(out); fg != nullptr) {
-    auto fg_out = fg->output();
-    if (IsPrimitiveCNode(fg_out, prim::kPrimMakeTuple)) {
-      auto inputs = fg_out->cast<CNodePtr>()->inputs();
-      for (size_t i = 1; i < inputs.size(); ++i) {
-        real_outs->push_back(inputs[i]);
-      }
-      return true;
-    }
-  }
-  return false;
-}
-
 bool GenJson(const AnfNodePtrList &op_nodes, const std::pair<AnfNodePtrList, AnfNodePtrList> &in_and_out,
              const DumpOption &dump_option, nlohmann::json *op_desc,
              std::map<std::string, AnfNodePtr> *address_node_map = nullptr) {
@@ -123,62 +100,6 @@ kernel::KernelBuildInfoPtr BuildSelectKernelBuildInfo(const std::vector<std::str
   return graph_info_builder.Build();
 }
 
-// Deprecated. use Callback->SetGraphKernelNodeKernelInfo.
-void SetNewKernelInfo(const AnfNodePtr &new_node, const FuncGraphPtr &fg, const AnfNodePtrList &inputs,
-                      const AnfNodePtrList &outputs) {
-  std::vector<std::string> graph_input_format;
-  std::vector<TypeId> graph_input_type;
-  std::vector<std::string> graph_output_format;
-  std::vector<TypeId> graph_output_type;
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    auto kernel_with_index = common::AnfAlgo::VisitKernel(inputs[i], 0);
-    if (kernel_with_index.first->isa<ValueNode>()) {
-      auto tensor = GetValueNode<tensor::TensorPtr>(kernel_with_index.first);
-      MS_EXCEPTION_IF_NULL(tensor);
-      (void)graph_input_type.emplace_back(tensor->data_type());
-      (void)graph_input_format.emplace_back(kOpFormat_DEFAULT);
-    } else {
-      auto input_type = AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second);
-      (void)graph_input_type.emplace_back(input_type);
-      auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
-      (void)graph_input_format.emplace_back(std::move(input_format));
-    }
-    auto input_abs = GetOutputAbstract(kernel_with_index.first, kernel_with_index.second);
-    fg->parameters()[i]->set_abstract(input_abs);
-    fg->parameters()[i]->set_kernel_info(std::make_shared<device::KernelInfo>());
-    kernel::KernelBuildInfo::KernelBuildInfoBuilder para_info_builder;
-    para_info_builder.SetOutputsFormat({graph_input_format.back()});
-    para_info_builder.SetOutputsDeviceType({graph_input_type.back()});
-    para_info_builder.SetKernelType(KernelType::AKG_KERNEL);
-    para_info_builder.SetProcessor(kernel::GetProcessorFromContext());
-    AnfAlgo::SetSelectKernelBuildInfo(para_info_builder.Build(), fg->parameters()[i].get());
-  }
-  auto new_outputs = outputs;
-  if (outputs.size() == 1 && common::AnfAlgo::IsGraphKernel(outputs[0])) {
-    std::vector<AnfNodePtr> real_outs;
-    if (IsMakeTupleOut(outputs[0], &real_outs)) {
-      new_outputs = real_outs;
-    }
-  }
-  for (size_t i = 0; i < new_outputs.size(); ++i) {
-    auto kernel_with_index = common::AnfAlgo::VisitKernel(new_outputs[i], 0);
-    auto output_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
-    auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second);
-    graph_output_format.push_back(output_format);
-    graph_output_type.push_back(output_type);
-  }
-  kernel::KernelBuildInfo::KernelBuildInfoBuilder graph_info_builder;
-  graph_info_builder.SetInputsFormat(graph_input_format);
-  graph_info_builder.SetInputsDeviceType(graph_input_type);
-  graph_info_builder.SetOutputsFormat(graph_output_format);
-  graph_info_builder.SetOutputsDeviceType(graph_output_type);
-  graph_info_builder.SetProcessor(kernel::GetProcessorFromContext());
-  graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  graph_info_builder.SetFusionType(kPatternOpaque);
-  auto graph_selected_info = graph_info_builder.Build();
-  AnfAlgo::SetSelectKernelBuildInfo(graph_selected_info, new_node.get());
-}
-
 bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, nlohmann::json *op_desc,
                    std::map<std::string, AnfNodePtr> *address_node_map) {
   MS_EXCEPTION_IF_NULL(op_desc);
@@ -190,7 +111,9 @@ bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, n
   bool is_single_graph_kernel = has_graph_kernel && nodes.size() == 1;
 
   FuncGraphPtr fg;
-  AnfNodePtrList op_nodes, inputs, outputs;
+  AnfNodePtrList op_nodes;
+  AnfNodePtrList inputs;
+  AnfNodePtrList outputs;
   if (is_single_graph_kernel) {
     fg = common::AnfAlgo::GetCNodeFuncGraphPtr(nodes[0]);
     kernel::GetValidKernelNodes(fg, &op_nodes, &inputs, &outputs);
@@ -222,7 +145,9 @@ bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, n
     std::tie(fg, std::ignore, std::ignore) = BuildSingleGraphFromNodes(nodes);
   }
 
-  AnfNodePtrList op_nodes, inputs, outputs;
+  AnfNodePtrList op_nodes;
+  AnfNodePtrList inputs;
+  AnfNodePtrList outputs;
   kernel::GetValidKernelNodes(fg, &op_nodes, &inputs, &outputs);
 
   auto mng = fg->manager();

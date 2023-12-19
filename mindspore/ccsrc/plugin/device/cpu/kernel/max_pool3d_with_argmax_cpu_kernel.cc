@@ -38,10 +38,15 @@ bool MaxPool3DWithArgmaxCpuKernelMod::Init(const std::vector<KernelTensor *> &in
   x_dtype_ = inputs[kZero]->dtype_id();
   argmax_dtype_ = outputs[kOne]->dtype_id();
 
-  ksize_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("ksize"));
+  MS_EXCEPTION_IF_CHECK_FAIL(primitive_->HasAttr(ops::kKSize), "no attribute ksize");
+  ksize_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kKSize));
+  MS_EXCEPTION_IF_CHECK_FAIL(primitive_->HasAttr(ops::kStrides), "no attribute strides");
   strides_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStrides));
+  MS_EXCEPTION_IF_CHECK_FAIL(primitive_->HasAttr(ops::kPads), "no attribute pads");
   pads_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kPads));
+  MS_EXCEPTION_IF_CHECK_FAIL(primitive_->HasAttr(ops::kDilation), "no attribute dilation");
   dilation_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kDilation));
+
   if (ksize_list_.size() != DIM_SIZE_1 && ksize_list_.size() != DIM_SIZE_3) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the ksize size must be 1 or 3, but got " << ksize_list_;
   }

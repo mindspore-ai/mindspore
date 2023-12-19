@@ -18,7 +18,6 @@
 #include "src/common/log_adapter.h"
 #include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "acl/acl.h"
-#include "runtime/mem.h"
 
 namespace mindspore {
 size_t ALIGN_OFFSET(void *addr) {
@@ -39,7 +38,7 @@ uint8_t *GeMemoryManager::MallocDeviceMemory(const std::string &purpose, size_t 
   GeMemoryInfo info;
   info.malloc_size = ALIGN_UP(size);
   info.purpose = purpose;
-  auto ret = rtMalloc(&info.malloc_addr, size, RT_MEMORY_HBM, 0);
+  auto ret = aclrtMalloc(&info.malloc_addr, size, ACL_MEM_TYPE_HIGH_BAND_WIDTH);
   if (ret != ACL_RT_SUCCESS || info.malloc_addr == nullptr) {
     MS_LOG(ERROR) << "Malloc device memory failed, malloc size " << info.malloc_size << ", real size " << size
                   << ", memory purpose " << purpose;

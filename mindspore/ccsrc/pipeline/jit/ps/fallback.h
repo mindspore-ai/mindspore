@@ -36,6 +36,8 @@ constexpr auto kUnderLine = "_";
 constexpr auto kHexPrefix = "0x";
 constexpr auto kObjectAttrChange = "object_attr_change";
 constexpr auto kCheckListDictInplace = "check_list_dict_inplace";
+constexpr auto kLocalDictCheck = "local_dict_check";
+constexpr auto kAdapterTag = "is_adapter";
 
 // Create a PyExecute CNode by old node or debug_info.
 CNodePtr CreatePyExecuteCNode(const FuncGraphPtr &fg, const AnfNodePtr &script, const AnfNodePtr &keys,
@@ -49,10 +51,10 @@ CNodePtr CreatePyExecuteCNodeInOrder(const AnfNodePtr &orig_node, const AnfNodeP
 // Create a PyInterpret CNode by old node or debug_info.
 CNodePtr CreatePyInterpretCNode(const FuncGraphPtr &fg, const std::string &script_text,
                                 const py::object &global_dict_obj, const AnfNodePtr &local_dict_node,
-                                const NodeDebugInfoPtr &debug_info);
+                                const NodeDebugInfoPtr &debug_info = nullptr);
 CNodePtr CreatePyInterpretCNodeInOrder(const FuncGraphPtr &fg, const std::string &script_text,
                                        const py::object &global_dict_obj, const AnfNodePtr &local_dict_node,
-                                       const NodeDebugInfoPtr &debug_info);
+                                       const NodeDebugInfoPtr &debug_info = nullptr);
 
 // Create primitive cnode to PyInterpret/PyExecute node with specific function name.
 AnfNodePtr ConvertCNodeToPyInterpretForPrim(const CNodePtr &cnode, const string &name);
@@ -77,6 +79,9 @@ AnfNodePtr ConvertMsClassObjectToPyExecute(const FuncGraphPtr &fg, const ValuePt
 // Convert GetAttr node to PyInterpret/PyExecute.
 AnfNodePtr ConvertGetAttrNodeToPyInterpret(const FuncGraphPtr &fg, const CNodePtr &cnode, const std::string &name);
 
+// Get Python object from abstract function.
+py::object GetPyObjForFuncGraphAbstractClosure(const AbstractBasePtr &abs);
+
 // Function about jit annotation.
 using FormatedVariableTypeFunc = std::function<TypePtr(const std::string &)>;
 TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node,
@@ -85,6 +90,9 @@ bool GetJitAnnotationSideEffectFromComment(const AnfNodePtr &node);
 bool ContainsSequenceAnyType(const AbstractBasePtr &abs);
 std::string ConvertRealStrToUnicodeStr(const std::string &target, size_t index);
 std::string GetPyObjectPtrStr(const py::object &obj);
+
+// Check whether the node contains PyInterpret input.
+bool CheckInterpretInput(const AnfNodePtr &node);
 
 // Function about list/dict inplace operation.
 bool EnableFallbackListDictInplace();

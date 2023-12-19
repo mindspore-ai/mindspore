@@ -412,12 +412,7 @@ bool BuildFakeGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderM
     MS_LOG(ERROR) << "Add fake graph failed";
     return false;
   }
-  GeDeviceResManager::CreateSessionAndGraphRunner();
-  auto graph_runner = transform::GetGraphRunner();
-  if (graph_runner == nullptr) {
-    MS_LOG(ERROR) << "Can not found GraphRunner";
-    return false;
-  }
+
   return true;
 }
 
@@ -730,7 +725,7 @@ void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph) cons
   for (const auto &output : outputs) {
     const auto &output_with_index = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
     auto &output_node = output_with_index.first;
-    if (output_node->isa<Parameter>()) {
+    if (output_node->isa<Parameter>() || output_node->isa<ValueNode>()) {
       continue;
     }
     need_alloc_output_cnt++;
@@ -927,6 +922,54 @@ void SetOutputs(const std::vector<KernelWithIndex> &graph_outputs,
   }
 }
 
+void SetOutput(GeDeviceResManager *res_manager, GeTensor *ge_output, const AnfNodePtr &output_node, size_t idx) {
+  if (output_node->isa<ValueNode>()) {
+    auto &&ge_data_uni = ge_output->ResetData();
+    auto deleter = ge_data_uni.get_deleter();
+    auto ge_data = ge_data_uni.release();
+    deleter(ge_data);
+    return;
+  }
+  auto actual_shapes = ge_output->GetTensorDesc().GetShape().GetDims();
+  for (size_t i = 0; i < actual_shapes.size(); ++i) {
+    if (actual_shapes[i] < 0) {
+      MS_LOG(EXCEPTION) << "Output shape must be greater than 0, but got " << actual_shapes;
+    }
+  }
+  auto output_addr = AnfAlgo::GetMutableOutputAddr(output_node, idx, false);
+  output_addr->SetSize(ge_output->GetSize());
+  auto &&ge_data_uni = ge_output->ResetData();
+  auto deleter = ge_data_uni.get_deleter();
+  auto ge_data = ge_data_uni.release();
+  MS_EXCEPTION_IF_NULL(ge_data);
+  output_addr->set_is_ptr_persisted(false);
+  output_addr->set_from_mem_pool(false);
+  output_addr->set_deleter(deleter);
+  output_addr->set_ptr(ge_data);
+  auto placement = ge_output->GetTensorDesc().GetPlacement();
+  if (placement == ::ge::kPlacementHost) {
+    MS_LOG(DEBUG) << output_node->DebugString() << "'s output data's placement is host";
+    size_t size = ge_output->GetSize();
+    void *mem = res_manager->AllocateMemory(size);
+    if (mem == nullptr) {
+      MS_LOG(EXCEPTION) << "Allocate memory failed, memory size:" << size
+                        << ", output_node: " << output_node->ToString();
+    }
+    output_addr->set_from_mem_pool(true);
+    output_addr->set_ptr(mem);
+    auto *ascend_addr = dynamic_cast<AscendDeviceAddress *>(output_addr.get());
+    MS_EXCEPTION_IF_NULL(ascend_addr);
+    ascend_addr->SyncHostToDevice(size, ge_data);
+  }
+  // Update shape in kernel tensor.
+  const auto &kernel_tensor = AnfAlgo::GetOutputKernelTensor(output_node, idx);
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  kernel_tensor->SetShapeVector(actual_shapes);
+  MS_LOG(DEBUG) << "[ZeroCopy] Update output " << output_node->DebugString() << " address to "
+                << output_addr->GetMutablePtr() << ", shape:" << actual_shapes
+                << ", type: " << TypeIdToString(output_addr->type_id()) << ", format: " << output_addr->format();
+}
+
 size_t GeGraphExecutor::GetGraphFeatureMemory(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_name = GetGraphName(graph);
@@ -964,15 +1007,6 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
   std::vector<GeTensor> ge_inputs = GenerateInputGeTensor(kg);
   std::vector<GeTensor> ge_outputs = GenerateOutputGeTensor(kg);
 
-  bool is_dynamic_shape = kg->is_dynamic_shape();
-  if (is_dynamic_shape) {
-    transform::Status ret =
-      transform::RegisterExternalAllocator(graph_runner, ResManager()->GetStream(), ResManager()->GetAllocator());
-    if (ret != transform::Status::SUCCESS) {
-      MS_LOG(EXCEPTION) << "Exec graph failed";
-    }
-  }
-
   if (AscendMemAdapter::GetInstance().IsMemoryPoolRecycle()) {
     auto max_static_memory_size = ResManager()->GetMaxUsedMemorySize();
     auto iter = feature_memorys.find(graph_name);
@@ -1001,18 +1035,14 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
       MS_LOG(EXCEPTION) << "Exec graph failed";
     }
   }
-
+  bool is_dynamic_shape = kg->is_dynamic_shape();
   if (is_dynamic_shape) {
     auto sync_ret = ResManager()->SyncStream();
     if (!sync_ret) {
       MS_LOG(EXCEPTION) << "Sync stream failed";
     }
-    transform::Status ret = transform::UnregisterExternalAllocator(graph_runner, ResManager()->GetStream());
-    if (ret != transform::Status::SUCCESS) {
-      MS_LOG(EXCEPTION) << "Exec graph failed";
-    }
-    MS_LOG(INFO) << "Run unregister external allocator finish, graph name: " << graph_name;
   }
+
   // copy output from host to device
   auto graph_outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
   size_t real_output_size = 0;
@@ -1027,24 +1057,8 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
     }
     real_output_size++;
     if (is_dynamic_shape) {
-      auto real_index = output_node->isa<ValueNode>() ? 0 : idx;
-      auto output_addr = AnfAlgo::GetMutableOutputAddr(output_node, real_index, false);
-      output_addr->SetSize(ge_outputs[i].GetSize());
-      auto actual_shapes = ge_outputs[i].GetTensorDesc().GetShape().GetDims();
-      auto &&ge_data_uni = ge_outputs[i].ResetData();
-      auto deleter = ge_data_uni.get_deleter();
-      auto ge_data = ge_data_uni.release();
-      MS_EXCEPTION_IF_NULL(ge_data);
-      output_addr->set_is_ptr_persisted(false);
-      output_addr->set_from_mem_pool(false);
-      output_addr->set_deleter(deleter);
-      output_addr->set_ptr(ge_data);
-
-      // Update shape in kernel tensor.
-      const auto &kernel_tensor = AnfAlgo::GetOutputKernelTensor(output_node, real_index);
-      MS_EXCEPTION_IF_NULL(kernel_tensor);
-      kernel_tensor->SetShapeVector(actual_shapes);
-      MS_LOG(DEBUG) << "Update output[ " << i << "] shape: " << actual_shapes << " size: " << ge_outputs[i].GetSize();
+      MS_EXCEPTION_IF_NULL(ResManager());
+      SetOutput(ResManager(), &ge_outputs[i], output_node, idx);
     }
   }
   if (real_output_size != ge_outputs.size()) {
@@ -1161,13 +1175,6 @@ FuncGraphPtr GeGraphExecutor::BuildDFGraph(const FuncGraphPtr &anf_graph,
   if (export_air) {
     // export air can't use session->AddGraph, it will cause atc error.
     return anf_graph;
-  }
-
-  GeDeviceResManager::CreateSessionAndGraphRunner();
-  auto graph_runner = transform::GetGraphRunner();
-  if (graph_runner == nullptr) {
-    MS_LOG(ERROR) << "Can not found GraphRunner";
-    return nullptr;
   }
 
   return anf_graph;

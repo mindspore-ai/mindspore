@@ -57,6 +57,8 @@ AICORE = "AiCore"
 CPU = "CPU"
 GPU = "GPU"
 ASCEND = "Ascend"
+HYBRID_TYPE = "hybrid"
+OP_NAME = "op_name"
 
 
 def _get_cache_path():
@@ -468,7 +470,7 @@ class Custom(ops.PrimitiveWithInfer):
     op_path_in_cache = []  # Save paths for op functions created in the cached.
     custom_aot_warning = True  # Flag to enable warnings about custom aot path white list
 
-    def __init__(self, func, out_shape=None, out_dtype=None, func_type="hybrid", bprop=None, reg_info=None):
+    def __init__(self, func, out_shape=None, out_dtype=None, func_type=HYBRID_TYPE, bprop=None, reg_info=None):
         super().__init__("Custom")
 
         self.supported_targets = [ASCEND, GPU, CPU]
@@ -488,7 +490,7 @@ class Custom(ops.PrimitiveWithInfer):
         self._update_func_info(reg_info)
         self.add_prim_attr("func_name", self.func_name)
         self.add_prim_attr("uniq_name", self.uniq_name)
-        if self.func_type == "hybrid":
+        if self.func_type == HYBRID_TYPE:
             self.add_prim_attr("func_compile_attrs", self._func_compile_attrs)
 
         self.add_prim_attr("imply_path", self.imply_path)
@@ -517,7 +519,7 @@ class Custom(ops.PrimitiveWithInfer):
         if func_type == "akg":
             self._set_akg_kernel_type()
 
-        if not self.bprop and self.func_type == "hybrid":
+        if not self.bprop and self.func_type == HYBRID_TYPE:
             self._hybrid_autodiff(func_type)
 
         self.add_prim_attr("func_type", self.func_type)
@@ -592,7 +594,7 @@ class Custom(ops.PrimitiveWithInfer):
         elif "compute" in self.func_source_str:
             self.func_type = "tvm_compute"
         else:
-            self.func_type = "hybrid"
+            self.func_type = HYBRID_TYPE
             self._hybrid_func_analyser()
 
     def _check_julia_func(self):
@@ -648,7 +650,7 @@ class Custom(ops.PrimitiveWithInfer):
 
         elif self.func_type == "julia":
             self._check_julia_func()
-        elif self.func_type == "hybrid":
+        elif self.func_type == HYBRID_TYPE:
             if not hasattr(self.func, MS_KERNEL_FLAG):
                 raise TypeError("{}, 'func' must be a function decorated by kernel".format(self.log_prefix))
             self._is_ms_kernel = True
@@ -773,7 +775,7 @@ class Custom(ops.PrimitiveWithInfer):
                     continue
                 if isinstance(reg_info_item, str):
                     reg_info_item = json.loads(reg_info_item)
-                prefix = "_".join([prefix, reg_info_item.get("op_name", "")])
+                prefix = "_".join([prefix, reg_info_item.get(OP_NAME, "")])
             self.uniq_name = prefix + "_" + self.func_name
         else:
             raise TypeError("For '{}', 'func' must be of type function or str, but got {}"
@@ -788,11 +790,11 @@ class Custom(ops.PrimitiveWithInfer):
         if output_name_list:
             self.add_prim_attr("output_names", output_name_list)
 
-        if isinstance(reg_info.get("op_name"), str):
-            self.add_prim_attr("reg_op_name", reg_info.get("op_name"))
+        if isinstance(reg_info.get(OP_NAME), str):
+            self.add_prim_attr("reg_op_name", reg_info.get(OP_NAME))
 
         if self.func_type == "aicpu":
-            self.uniq_name = reg_info["op_name"]
+            self.uniq_name = reg_info[OP_NAME]
             self.add_prim_attr("uniq_name", self.uniq_name)
 
         if self.func_type in ["aot", "aicpu"]:
@@ -889,7 +891,7 @@ class Custom(ops.PrimitiveWithInfer):
                             "'CustomRegOp' to generate the registration information, then pass it to 'reg_info' or "
                             "use 'custom_info_register' to bind it to 'func' if 'func' is a function."
                             .format(self.log_prefix, reg_info, type(reg_info)))
-        reg_info["op_name"] = self.uniq_name
+        reg_info[OP_NAME] = self.uniq_name
         reg_info[IMPLY_TYPE] = self._get_imply_type(reg_info, target)
         if not isinstance(reg_info.get(FUSION_TYPE), str) or not reg_info[FUSION_TYPE].strip():
             reg_info[FUSION_TYPE] = "OPAQUE"

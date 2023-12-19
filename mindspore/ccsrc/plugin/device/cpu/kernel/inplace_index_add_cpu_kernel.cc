@@ -46,8 +46,7 @@ int InplaceIndexAddCpuKernelMod::Resize(const std::vector<KernelTensor *> &input
   var_shape = inputs[kIndex0]->GetShapeVector();
   updates_shape = inputs[kIndex2]->GetShapeVector();
   indices_shape = inputs[kIndex1]->GetShapeVector();
-  MS_EXCEPTION_IF_NULL(op_);
-  axis_ = GetValue<int64_t>(op_->GetAttr(AXIS));
+  axis_ = GetValue<int64_t>(primitive_->GetAttr(kAttrAxis));
   return KRET_OK;
 }
 

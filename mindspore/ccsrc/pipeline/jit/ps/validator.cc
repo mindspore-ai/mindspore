@@ -57,6 +57,9 @@ void ValidateOperation(const AnfNodePtr &node) {
   // Primitive must in whitelist
   auto prim = GetValueNode<PrimitivePtr>(node);
   MS_EXCEPTION_IF_NULL(prim);
+  if (prim->isa<prim::DoSignaturePrimitive>()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Illegal DoSignaturePrimitive '" << prim->name() << "' in the graph.";
+  }
   if (abstract::IsInWhiteList(prim)) {
     return;
   }
@@ -90,9 +93,15 @@ bool CheckAbstractScalar(const AnfNodePtr &node) {
     if (type->isa<EnvType>() || type->isa<MsClassType>()) {
       MS_LOG(EXCEPTION) << "Illegal type in the graph: " << abstract->ToString() << ", node: " << node->DebugString();
     }
-    // Only allow string type from external.
-    if (type->isa<External>() && !IsValueNode<StringImm>(node)) {
-      MS_LOG(EXCEPTION) << "Illegal type in the graph: " << abstract->ToString() << ", node: " << node->DebugString();
+    auto real_node = node;
+    if (IsPrimitiveCNode(node, prim::kPrimReturn) || IsPrimitiveCNode(node, prim::kPrimDepend)) {
+      real_node = real_node->cast<CNodePtr>()->input(1);
+    }
+    // Only allow string/number type from external.
+    if (type->isa<External>() && !IsValueNode<StringImm>(real_node) && !IsValueNode<FP32Imm>(real_node) &&
+        !IsValueNode<FP64Imm>(real_node)) {
+      MS_LOG(EXCEPTION) << "Illegal type in the graph: " << abstract->ToString()
+                        << ", node: " << real_node->DebugString();
     }
     // When a DeadNode is renormalized before, its abstract may be changed to
     // AbstractScalar(std:: make_shared<Int32Imm>(0), std:: make_shared<Problem>()).

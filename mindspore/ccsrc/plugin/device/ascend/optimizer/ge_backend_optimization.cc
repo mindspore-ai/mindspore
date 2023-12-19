@@ -40,8 +40,8 @@
 #include "plugin/device/ascend/optimizer/ge/trans_depend_value_to_int32.h"
 #include "plugin/device/ascend/optimizer/ge/insert_identity.h"
 #include "plugin/device/ascend/optimizer/ge/dropout_gen_mask_depend.h"
-#include "plugin/device/ascend/optimizer/ge/print_to_stringformat_print.h"
-#include "plugin/device/ascend/optimizer/ge/unfold_nested_tuple.h"
+#include "plugin/device/ascend/optimizer/ge/unfold_maketuple.h"
+#include "plugin/device/ascend/optimizer/ge/unfold_nested_output.h"
 #include "plugin/device/ascend/optimizer/ge/resize_bilinear_add_attr.h"
 #include "plugin/device/ascend/optimizer/format_type/deal_ref_output.h"
 #include "plugin/device/ascend/optimizer/ge/avg_pool_grad_for_ge.h"
@@ -57,8 +57,12 @@
 #include "plugin/device/ascend/optimizer/ir_fission/bn_split.h"
 #include "plugin/device/ascend/optimizer/ir_fission/bn_grad_split.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/adaptive_max_pool2d_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/flash_attention_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fission/ascend_convert_tuple_input_to_dynamic_input.h"
 #include "plugin/device/ascend/optimizer/backend_common_unify_mindir.h"
+#include "plugin/device/ascend/optimizer/ge/remove_tensor_to_scalar_or_tuple_ops.h"
+#include "plugin/device/ascend/optimizer/ge/scalar_ops_output_unify_mindir.h"
+#include "backend/common/pass/insert_type_transform_op.h"
 
 namespace mindspore {
 namespace opt {
@@ -76,11 +80,10 @@ void GEBackendOptimization(const KernelGraphPtr &kernel_graph) {
 #endif
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto opt_ge_pm = std::make_shared<PassManager>("opt_ge_pm");
+  opt_ge_pm->AddPass(std::make_shared<opt::RemoveTensorToScalarOrTupleOps>());
   opt_ge_pm->AddPass(std::make_shared<opt::AllToAllvForGE>());
   opt_ge_pm->AddPass(std::make_shared<opt::AddDependForAllGather>());
   opt_ge_pm->AddPass(std::make_shared<opt::ConvertCondInputToScalar>());
-  opt_ge_pm->AddPass(std::make_shared<opt::AdjustPrintForGe>());
-  opt_ge_pm->AddPass(std::make_shared<opt::PrintToStringFormatPrint>());
   opt_ge_pm->AddPass(std::make_shared<opt::ConvertDataDependToControlDepend>());
   opt_ge_pm->AddPass(std::make_shared<opt::MakeTupleDependRemover>());
   opt_ge_pm->AddPass(std::make_shared<opt::AddParallelGroupForHcom>());
@@ -88,7 +91,8 @@ void GEBackendOptimization(const KernelGraphPtr &kernel_graph) {
   opt_ge_pm->AddPass(std::make_shared<opt::DropoutGenMaskDepend>());
   opt_ge_pm->AddPass(std::make_shared<opt::ResizeBilinearAddAttr>());
   opt_ge_pm->AddPass(std::make_shared<opt::AscendConvertTupleInputToDynamicInput>(true, true));
-  opt_ge_pm->AddPass(std::make_shared<opt::UnfoldNestedTuple>());
+  opt_ge_pm->AddPass(std::make_shared<opt::UnfoldNestedOutput>("unfold_nested_output"));
+  opt_ge_pm->AddPass(std::make_shared<opt::UnfoldMaketuple>());
   optimizer->AddPassManager(opt_ge_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -117,11 +121,11 @@ void GEBackendOptimizeACL(const KernelGraphPtr &kernel_graph) {
 #endif
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto opt_acl_pm = std::make_shared<PassManager>("opt_acl_pm");
+  opt_acl_pm->AddPass(std::make_shared<opt::AdjustPrintForGe>());
   opt_acl_pm->AddPass(std::make_shared<opt::LambFissionGe>());
   opt_acl_pm->AddPass(std::make_shared<opt::SqueezeAxisGe>());
   opt_acl_pm->AddPass(std::make_shared<SeedAdapter>());
   opt_acl_pm->AddPass(std::make_shared<opt::AICpuLibSelectPass>());
-  opt_acl_pm->AddPass(std::make_shared<opt::TransDependValueToInt32>());
   opt_acl_pm->AddPass(std::make_shared<opt::GetNextForGE>());
   opt_acl_pm->AddPass(std::make_shared<opt::SyncBnSplit>());
   opt_acl_pm->AddPass(std::make_shared<opt::SyncBnGradSplit>());
@@ -129,6 +133,8 @@ void GEBackendOptimizeACL(const KernelGraphPtr &kernel_graph) {
   opt_acl_pm->AddPass(std::make_shared<opt::UniformRealDtypeGe>());
   opt_acl_pm->AddPass(std::make_shared<opt::AdaptiveMaxPool2DGeFusion>());
   opt_acl_pm->AddPass(std::make_shared<opt::AvgPoolGradForGE>());
+  opt_acl_pm->AddPass(std::make_shared<opt::FlashAttentionFusionV1>());
+  opt_acl_pm->AddPass(std::make_shared<opt::FlashAttentionFusionV2>());
   optimizer->AddPassManager(opt_acl_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -167,6 +173,9 @@ void GEBackendOptimizeACLAfterKernelSelect(const KernelGraphPtr &kernel_graph) {
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<InsertCast>());
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<EraseVisitAttr>());
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<DealRefOutput>());
+  if (!kernel_graph->is_from_single_op()) {
+    opt_acl_after_kernel_select_pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>());
+  }
   optimizer->AddPassManager(opt_acl_after_kernel_select_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -221,6 +230,7 @@ void GEDynamicUnifyMindIR(const FuncGraphPtr &func_graph) {
   }
 #endif
   auto dynamic_unify_mindir_pm = std::make_shared<opt::PassManager>("ge_dynamic_unify_mindir_pm");
+  dynamic_unify_mindir_pm->AddPass(std::make_shared<opt::ScalarOpsOutputUnifyMindIR>());
   dynamic_unify_mindir_pm->AddPass(std::make_shared<opt::ShapeUnifyMindIR>());
   dynamic_unify_mindir_pm->AddPass(std::make_shared<opt::MakeTupleUnifyMindIR>());
   dynamic_unify_mindir_pm->AddPass(std::make_shared<opt::InputsUnifyMindIR>());

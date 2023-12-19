@@ -92,7 +92,7 @@ bool SequenceSliceCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &
   const auto step_addr = GetDeviceAddress<D2>(inputs, 3);
   auto output_addr = GetDeviceAddress<T>(outputs, 0);
   int64_t data_len = static_cast<int64_t>(inputs[0]->size() / sizeof(T));
-  auto len = SizeToLong(inputs[0]->GetType()->cast<TuplePtr>()->size());
+  auto len = SizeToLong(inputs[0]->GetShape()->cast<abstract::SequenceShapePtr>()->size());
 
   int64_t orig_start = start_addr[0];
   int64_t orig_stop = stop_addr[0];

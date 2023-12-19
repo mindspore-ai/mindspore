@@ -52,6 +52,19 @@ class BaseModel:
             outputs_metadata.append(output_meta)
         return tuple(outputs_metadata)
 
+    def get_model_info(self, key):
+        """
+        Obtains model info of the model.
+
+        Args:
+            key (str): The key to obtain model info.
+        Raises:
+            TypeError: If the key is not a str.
+        """
+        if not isinstance(key, str):
+            raise TypeError("key must be str, but got {}.".format(type(key)))
+        return self._model.get_model_info(key)
+
     def predict(self, inputs, outputs=None):
         """
         Inference model.

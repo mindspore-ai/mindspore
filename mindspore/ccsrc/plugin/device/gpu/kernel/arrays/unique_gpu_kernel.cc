@@ -69,7 +69,6 @@ bool UniqueGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const s
     MS_LOG(ERROR) << "Invalid inputs is empty.";
     return false;
   }
-  is_need_retrieve_output_shape_ = true;
   return true;
 }
 

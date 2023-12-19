@@ -34,6 +34,7 @@
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 
 namespace mindspore::graphkernel {
+constexpr const size_t num2 = 2;
 struct Edge {
   size_t from;
   size_t to;
@@ -161,8 +162,8 @@ class MinCut {
   MinCut(const std::vector<NodeIdWithFormat> &original_nodes, const std::vector<Edge> &original_edges)
       : origin_nodes_num_(original_nodes.size()),
         source_id_(0),
-        sink_id_(2 * original_nodes.size() + 1),
-        nodes_(2 * original_nodes.size() + 2),  // double nodes, and source_node/sink_node
+        sink_id_(num2 * original_nodes.size() + 1),
+        nodes_(num2 * original_nodes.size() + num2),  // double nodes, and source_node/sink_node
         original_edges_(original_edges) {
     BuildGraph(original_nodes);
   }

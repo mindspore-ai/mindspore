@@ -85,22 +85,22 @@ NodePtrList IgammaBpropExpander(BpropIRBuilder *ib) {
 
 NodePtrList MinimumMaximumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dout,
                                bool is_minimum) {
-  auto zeros = ib->Emit("FillV2", {ib->Shape(dout), ib->Tensor(0, ib->GetDtype(dout))});
-  NodePtr x_mask;
-  if (is_minimum) {
-    x_mask = ib->LessEqual(x, y);
-  } else {
-    x_mask = ib->GreaterEqual(x, y);
-  }
-
-  auto grad_x = ib->Select(x_mask, dout, zeros);
-  auto grad_y = ib->Select(x_mask, zeros, dout);
-
   auto half_ratio = ib->Emit("FillV2", {ib->Shape(dout), ib->Tensor(2, ib->GetDtype(dout))});
   auto half_dout = ib->Div(dout, half_ratio);
   NodePtr equal_mask = ib->Equal(x, y);
-  grad_x = ib->Select(equal_mask, half_dout, grad_x);
-  grad_y = ib->Select(equal_mask, half_dout, grad_y);
+  auto grad_x = ib->Select(equal_mask, half_dout, dout);
+  auto grad_y = ib->Select(equal_mask, half_dout, dout);
+
+  auto zeros = ib->Emit("FillV2", {ib->Shape(dout), ib->Tensor(0, ib->GetDtype(dout))});
+  NodePtr is_less = ib->Less(x, y);
+  NodePtr is_greater = ib->Greater(x, y);
+  if (is_minimum) {
+    grad_x = ib->Select(is_greater, zeros, grad_x);
+    grad_y = ib->Select(is_less, zeros, grad_y);
+  } else {
+    grad_x = ib->Select(is_less, zeros, grad_x);
+    grad_y = ib->Select(is_greater, zeros, grad_y);
+  }
 
   return BinopGradCommon(ib, x, y, grad_x, grad_y);
 }
@@ -278,8 +278,8 @@ NodePtrList FminFmaxGrad(BpropIRBuilder *ib, bool if_fmin) {
   return {brrx1, brrx2};
 }
 
-inline NodePtrList GradDiagonal(Emitter *ib, const NodePtr &dout, const NodePtr &dx_trans_shape,
-                                std::tuple<int64_t, int64_t, int64_t, size_t> int_tuple, const TypePtr &x_dtype) {
+inline NodePtr GradDiagonal(Emitter *ib, const NodePtr &dout, const NodePtr &dx_trans_shape,
+                            std::tuple<int64_t, int64_t, int64_t, size_t> int_tuple, const TypePtr &x_dtype) {
   auto [offset, dim1, dim2, x_dim] = int_tuple;
   auto value = ib->Tensor(0, x_dtype);
   auto dx = ib->Emit("FillV2", {dx_trans_shape, value});
@@ -300,7 +300,7 @@ inline NodePtrList GradDiagonal(Emitter *ib, const NodePtr &dout, const NodePtr 
     }
   }
   dx = ib->Transpose(dx, perm);
-  return {dx};
+  return dx;
 }
 
 class DiagonalShapeCalc : public ShapeCalcFunctor {
@@ -1257,15 +1257,16 @@ DEF_PURE_SHAPE_CALC(g_reduce_prod)
     auto input_shape = inputs.at(0);
     auto axis = inputs.at(1);
     auto output_shape_kept_dims = ReduceShape(input_shape, axis);
+    auto tile_scaling = TupleDiv(input_shape, output_shape_kept_dims);
     auto [pack_shape, perm] = SplitShapeIndex(input_shape, axis);
-    return {output_shape_kept_dims, pack_shape, perm, InvertPermutation(perm)};
+    return {output_shape_kept_dims, tile_scaling, pack_shape, perm, InvertPermutation(perm)};
   })
   .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &unknown_inputs) -> std::vector<int64_t> {
     if (!unknown_inputs.empty()) {
-      return {-1, 2, -1, -1};
+      return {-1, -1, 2, -1, -1};
     }
     auto size = SizeToLong(inputs.at(0).size());
-    return {size, 2, size, size};
+    return {size, size, 2, size, size};
   });
 
 REG_BPROP_BUILDER("ReduceProd").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
@@ -1283,15 +1284,15 @@ REG_BPROP_BUILDER("ReduceProd").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto res = ib->ShapeCalc(g_reduce_prod, {x, axis}, {1});
   auto keep_dims_value = GetValue<bool>(keep_dims->BuildValue());
   auto grad = keep_dims_value ? dout : ib->Reshape(dout, res[0]);
-  grad = ib->BroadcastTo(grad, x);
+  grad = ib->Tile(grad, res[1]);
 
-  auto permuted = ib->Transpose(x, res[2]);
+  auto permuted = ib->Transpose(x, res[3]);
   auto permuted_shape = ib->Shape(permuted);
-  auto reshaped = ib->Reshape(permuted, res[1]);
+  auto reshaped = ib->Reshape(permuted, res[2]);
   auto left = ib->CumProd(reshaped, ib->Value<int64_t>(0), true, false);
   auto right = ib->CumProd(reshaped, ib->Value<int64_t>(0), true, true);
   auto y = ib->Reshape(ib->Mul(left, right), permuted_shape);
-  auto out = ib->Mul(ib->Transpose(y, res[3]), grad);
+  auto out = ib->Mul(ib->Transpose(y, res[4]), grad);
   auto dx = ib->Reshape(out, ib->Shape(x));
   return {dx, ib->OutZeros(axis), ib->OutZeros(keep_dims)};
 });
@@ -1416,7 +1417,7 @@ REG_BPROP_BUILDER("LogMatrixDeterminant").SetUnusedInputs({i1}).SetBody(BODYFUNC
   auto dout = ib->GetInput(kIndex2);
   auto x_adj_inv = ib->Emit("MatrixInverse", {x}, {{"adjoint", MakeValue(true)}});
   auto res = ib->ShapeCalc(g_matrix_determinant, {ib->TupleGetItem(out, 1)})[0];
-  auto multipliers = ib->Reshape(ib->TupleGetItem(dout, 1), res);
+  auto multipliers = ib->Reshape(ib->TupleGetItem(dout, 1), ib->TensorToTuple(res));
   auto dx = ib->Mul(multipliers, x_adj_inv);
   return {dx};
 });
@@ -1427,7 +1428,7 @@ REG_BPROP_BUILDER("MatrixDeterminant").SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   auto x_adj_inv = ib->Emit("MatrixInverse", {x}, {{"adjoint", MakeValue(true)}});
   auto res = ib->ShapeCalc(g_matrix_determinant, {out})[0];
-  auto multipliers = ib->Reshape(ib->Mul(dout, out), res);
+  auto multipliers = ib->Reshape(ib->Mul(dout, out), ib->TensorToTuple(res));
   auto dx = ib->Mul(multipliers, x_adj_inv);
   return {dx};
 });
@@ -1958,6 +1959,7 @@ REG_BPROP_BUILDER("ReduceStd").SetBody(BODYFUNC(ib) {
   auto res = ib->ShapeCalc(g_reduce_std, {x, axis}, {1});
   res[1] = ib->SequenceToTensor(res[1]);
   res[2] = ib->SequenceToTensor(res[2]);
+  res[0] = ib->TensorToTuple(res[0]);
   auto true_branch = [&ib, &res, &std_d, &std, &mean_d, &mean](const Emitter *e) -> NodePtrList {
     auto std_d_r = ib->Reshape(std_d, res[0]);
     auto std_r = ib->Reshape(std, res[0]);
@@ -2238,12 +2240,15 @@ REG_BPROP_BUILDER("Baddbmm").SetUnusedInputs({}).SetBody(BODYFUNC(ib) {
 });
 
 REG_BPROP_BUILDER("Diagonal").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
-  auto offset = GetValue<int64_t>(ib->GetAttr("offset"));
-  auto dim1 = GetValue<int64_t>(ib->GetAttr("dim1"));
-  auto dim2 = GetValue<int64_t>(ib->GetAttr("dim2"));
   auto x = ib->GetInput(kIndex0);
-  auto out = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex2);
+  auto offset_node = ib->GetInput(kIndex1);
+  auto dim1_node = ib->GetInput(kIndex2);
+  auto dim2_node = ib->GetInput(kIndex3);
+  auto offset = GetValue<int64_t>(offset_node->BuildValue());
+  auto dim1 = GetValue<int64_t>(dim1_node->BuildValue());
+  auto dim2 = GetValue<int64_t>(dim2_node->BuildValue());
+  auto out = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex5);
   auto x_shape = ib->GetShape(x);
   if (IsDynamicRank(x_shape)) {
     MS_LOG_EXCEPTION << "Diagonal doesn't support dynamic rank now, because it need rank of x to do transpose";
@@ -2256,22 +2261,72 @@ REG_BPROP_BUILDER("Diagonal").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   if (dim2 < 0) {
     dim2 += x_dim;
   }
-  auto true_case = [offset, dim1, dim2, &x, &out, &dout, &x_shape, &x_dtype, x_dim](Emitter *ib) -> NodePtrList {
+  auto true_case = [offset, dim1, dim2, &x, &out, &dout, &x_shape, &x_dtype, &offset_node, &dim1_node, &dim2_node,
+                    x_dim](Emitter *ib) -> NodePtrList {
     auto dx_trans_shape = ib->ShapeCalc(std::make_shared<DiagonalShapeCalc>(dim1, dim2), {x, out})[0];
-    return GradDiagonal(ib, dout, dx_trans_shape, {offset, dim1, dim2, x_dim}, x_dtype);
+    auto grad_diagonal = GradDiagonal(ib, dout, dx_trans_shape, {offset, dim1, dim2, x_dim}, x_dtype);
+    return {grad_diagonal, ib->ZerosLike(offset_node), ib->ZerosLike(dim1_node), ib->ZerosLike(dim2_node)};
   };
-  auto false_case = [&x](Emitter *ib) -> NodePtrList { return {ib->ZerosLike(x)}; };
+  auto false_case = [&x, &x_dtype, &offset_node, &dim1_node, &dim2_node](Emitter *ib) -> NodePtrList {
+    return {ib->ZerosLike(x), ib->ZerosLike(offset_node), ib->ZerosLike(dim1_node), ib->ZerosLike(dim2_node)};
+  };
   if (IsDynamic(ib->GetShape(out))) {
     auto out_size = ib->Emit("Size", {out});
     auto cond = ib->Emit("scalar_eq", {out_size, ib->Value<int64_t>(0)});
     auto dx = ib->Conditional(cond, false_case, true_case);
-    return {dx};
+    return {dx, ib->OutZeros(offset_node), ib->OutZeros(dim1_node), ib->OutZeros(dim2_node)};
   }
   if (ib->GetSize(out) > 0) {
     return true_case(ib);
   } else {
     return false_case(ib);
   }
+});
+
+REG_BPROP_BUILDER("Polar").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
+  auto input1 = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto grad_conj = ib->Emit("Conj", {dout});
+  auto zeros = ib->ZerosLike(dout);
+  zeros = ib->Cast(zeros, ib->GetDtype(input1));
+  auto ones = ib->OnesLike(dout);
+  ones = ib->Cast(ones, ib->GetDtype(input1));
+  auto i = ib->Complex(zeros, ones);
+  auto grad_abs = ib->Real(ib->Mul(grad_conj, ib->Sign(out)));
+  auto result_mul_1_j = ib->Mul(out, i);
+  auto grad_angle = ib->Real(ib->Mul(grad_conj, result_mul_1_j));
+  return {grad_abs, grad_angle};
+});
+
+REG_BPROP_BUILDER("TridiagonalSolve").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+  auto diagonals = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  constexpr int64_t kLast2 = -2;
+  constexpr int64_t k2 = 2;
+  auto diag1 = ib->StridedSlice(diagonals, {{kLast2, {1}}});
+  auto diag_shape = ib->GetShape(diagonals);
+  ShapeVector zeros1_shape(diag_shape.begin(), diag_shape.end() - i2);
+  zeros1_shape.push_back(1);
+  auto zeros1 = ib->Emit("Zeros", {ib->Value<ShapeVector>(zeros1_shape), ib->EmitValue(ib->GetDtype(diagonals))});
+  auto superdiag1 = ib->Concat({ib->StridedSlice(diagonals, {{kLast2, {k2}}, {-1, {1, LLONG_MAX}}}), zeros1}, -1);
+  auto subdiag1 = ib->Concat({zeros1, ib->StridedSlice(diagonals, {{kLast2, {0}}, {-1, {0, -1}}})}, -1);
+  auto diags_transposed = ib->Stack({superdiag1, diag1, subdiag1}, kLast2);
+  auto grad_rhs = ib->Emit("TridiagonalSolve", {diags_transposed, dout}, {{"partial_pivoting", MakeValue<bool>(true)}});
+  auto diag2 = ib->ReduceSum(ib->Mul(grad_rhs, out), {-1});
+  ShapeVector zeros2_shape = ib->GetShape(grad_rhs);
+  if (zeros2_shape.size() > i1) {
+    zeros2_shape[zeros2_shape.size() - i2] = 1;
+  }
+  auto zeros2 = ib->Emit("Zeros", {ib->Value<ShapeVector>(zeros2_shape), ib->EmitValue(ib->GetDtype(grad_rhs))});
+  auto superdiag2 = ib->ReduceSum(
+    ib->Mul(grad_rhs, ib->Concat({ib->StridedSlice(out, {{kLast2, {1, LLONG_MAX}}}), zeros2}, -k2)), {-1});
+  auto subdiag2 =
+    ib->ReduceSum(ib->Mul(grad_rhs, ib->Concat({zeros2, ib->StridedSlice(out, {{kLast2, {0, -1}}})}, -k2)), {-1});
+  auto a = ib->Stack({superdiag2, diag2, subdiag2}, kLast2);
+  auto grad_diags = ib->Sub(ib->Tensor(0, ib->GetDtype(a)), a);
+  return {grad_diags, grad_rhs};
 });
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

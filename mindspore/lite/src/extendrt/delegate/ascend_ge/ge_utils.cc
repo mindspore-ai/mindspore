@@ -24,6 +24,7 @@
 #include "mindspore/core/ops/op_name.h"
 #include "src/common/common.h"
 #include "runtime/dev.h"
+#include "acl/acl_base.h"
 
 namespace mindspore {
 static std::string AdjustCnodeName(const PrimitivePtr &prim) {
@@ -100,7 +101,7 @@ Status GeUtils::AdaptGraph(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Run mapper primitive failed.";
     return kCoreFailed;
   }
-  if (lite::AdapteSpatialNode(func_graph, manager) != lite::RET_OK) {
+  if (lite::AdapteMuitiOutputNode(func_graph, manager) != lite::RET_OK) {
     MS_LOG(ERROR) << "Adapter spatial node failed.";
     return kCoreFailed;
   }
@@ -133,14 +134,11 @@ std::string GetSocVersion() {
   // Get default soc version.
   static std::string version;
   if (version.empty()) {
-    const int kSocVersionLen = 50;
-    char soc_version[kSocVersionLen] = {0};
-    auto ret = rtGetSocVersion(soc_version, kSocVersionLen);
-    if (ret != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "GetSocVersion failed.";
-      return "";
+    const char *soc_name_c = aclrtGetSocName();
+    if (soc_name_c == nullptr) {
+      return version;
     }
-    version = soc_version;
+    version = soc_name_c;
   }
   return version;
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,13 @@
 #include "framework/common/helper/model_helper.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
-#include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.h"
 #include "cxx_api/graph/acl/acl_env_guard.h"
 #include "graph/utils/graph_utils_ex.h"
 #include "mindspore/core/utils/singleton.h"
 #include "utils/ms_context.h"
 #include "plugin/device/ascend/hal/device/tensorsummary_utils.h"
+#include "plugin/device/ascend/hal/device/tensordump_utils.h"
+#include "plugin/device/ascend/hal/device/mbuf_receive_manager.h"
 
 using mindspore::abstract::AbstractScalar;
 using mindspore::abstract::AbstractTensor;
@@ -178,40 +179,6 @@ void AscendDeprecatedInterface::DoExecNonInputGraph(const std::string &phase) {
   }
 }
 
-bool AscendDeprecatedInterface::InitExecDataset(const std::string &queue_name, int64_t size, int64_t batch_size,
-                                                const std::vector<TypePtr> &types,
-                                                const std::vector<std::vector<int64_t>> &shapes,
-                                                const std::vector<int64_t> &input_indexes, const std::string &phase) {
-  ge_device_context_->Initialize();
-  std::vector<int64_t> ge_types;
-  (void)std::transform(types.begin(), types.end(), std::back_inserter(ge_types), [](const TypePtr &i) -> int64_t {
-    return static_cast<int64_t>(transform::ConvertDataType(i->type_id()));
-  });
-
-  ConfigManager::GetInstance().set_dataset_mode(DatasetMode::DS_SINK_MODE);
-  ConfigManager::GetInstance().set_iter_num(queue_name, size);
-  ConfigManager::GetInstance().set_dataset_phase(phase);
-
-  DatasetGraphParam param(queue_name, size, batch_size, ge_types, shapes, input_indexes);
-  ConfigManager::GetInstance().set_dataset_param(param);
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-
-  if (!ms_context->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
-    if (transform::CompileDatasetGraph(param, phase) != transform::SUCCESS) {
-      MS_LOG(ERROR) << "Build dateset graph failed.";
-      return false;
-    }
-
-    GeDeviceResManager::CreateSessionAndGraphRunner();
-
-    MS_LOG(INFO) << "DoExecNonInputGraph:" << phase;
-    DoExecNonInputGraph(phase);
-  }
-
-  return true;
-}
-
 void AscendDeprecatedInterface::ExportDFGraph(const std::string &file_name, const std::string &phase,
                                               const py::object &encrypt, char *key) {
   MS_LOG(DEBUG) << "Export graph begin.";
@@ -323,7 +290,7 @@ bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_con
   (void)ErrorManagerAdapter::Init();
   MS_LOG(INFO) << "Device id = " << device_id << ", rank size = " << rank_size << ".";
   auto ret = aclrtSetDevice(static_cast<int32_t>(device_id));
-  if (ret != RT_ERROR_NONE) {
+  if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Device " << device_id << " call aclrtSetDevice failed, ret[" << static_cast<int>(ret)
                       << "]. The details refer to 'Ascend Error Message'.";
   }
@@ -332,7 +299,12 @@ bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_con
     return std::thread(TensorPrint(path, acl_handle));
   };
   CreateTensorPrintThread(thread_crt);
-  TensorSummaryUtils::GetInstance().CreateTDTSummaryThread();
+  if (ms_context_ptr->backend_policy() == "ge") {
+    TensorSummaryUtils::GetInstance().CreateTDTSummaryThread();
+    MbufDataHandlerManager::GetInstance().AddHandler(std::make_unique<MbufDataHandler>(
+      std::bind(&TensorDumpUtils::AsyncSaveDatasetToNpyFile, &TensorDumpUtils::GetInstance(), std::placeholders::_1),
+      device_id, "ms_tensor_dump"));
+  }
   return true;
 }
 
@@ -348,7 +320,10 @@ bool AscendDeprecatedInterface::CloseTsd(const std::shared_ptr<MsContext> &ms_co
     ms_context_ptr->set_param<uint32_t>(MS_CTX_TSD_REF, 0);
     pybind11::gil_scoped_release gil_release;
     DestroyTensorPrintThread();
-    TensorSummaryUtils::GetInstance().DestroyTDTSummaryThread();
+    if (ms_context_ptr->backend_policy() == "ge") {
+      TensorSummaryUtils::GetInstance().DestroyTDTSummaryThread();
+      MbufDataHandlerManager::GetInstance().DestoryHandler();
+    }
     (void)ErrorManagerAdapter::Init();
     uint32_t device_id = ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     auto ret = aclrtResetDevice(static_cast<int32_t>(device_id));
@@ -372,15 +347,6 @@ bool AscendDeprecatedInterface::IsTsdOpened(const std::shared_ptr<MsContext> &ms
     MS_LOG(EXCEPTION) << "nullptr";
   }
   return ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) > 0;
-}
-
-void AscendDeprecatedInterface::AclOptimizer(const FuncGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  auto optimizer = std::make_shared<opt::GraphOptimizer>();
-  auto pm = std::make_shared<opt::PassManager>("310_multi_graph_pm");
-  pm->AddPass(std::make_shared<opt::InsertPlaceholderForDynamicRNN>());
-  optimizer->AddPassManager(pm);
-  (void)optimizer->Optimize(graph);
 }
 
 bool AscendDeprecatedInterface::CheckIsAscend910Soc() {
@@ -408,46 +374,23 @@ void AscendDeprecatedInterface::AclLoadModel(Buffer *om_data) {
   }
 }
 
-#ifdef WITH_BACKEND
-namespace {
-void SetContextSocVersion(MsContext *ctx) {
-  constexpr auto k910AAscendVersion = "ascend910";
-  constexpr auto k910BAscendVersion = "ascend910b";
-  const std::map<std::string, std::string> kAscendSocVersions = {
-    {"Ascend910A", "ascend910"},    {"Ascend910B", "ascend910"},    {"Ascend910PremiumA", "ascend910"},
-    {"Ascend910ProA", "ascend910"}, {"Ascend910ProB", "ascend910"}, {"Ascend910B1", "ascend910b"},
-    {"Ascend910B2", "ascend910b"},  {"Ascend910B2C", "ascend910b"}, {"Ascend910B3", "ascend910b"},
-    {"Ascend910B4", "ascend910b"}};
-  auto soc_version = GetSocVersion();
-  auto iter = kAscendSocVersions.find(soc_version);
-  if (iter == kAscendSocVersions.end()) {
-    MS_LOG(INFO) << "The soc version is not Ascend910 or ascend910b.";
+void AscendDeprecatedInterface::UnregisterExternalAllocator() {
+  if (!IsEnableRefMode()) {
     return;
   }
-  ctx->set_ascend_detail_soc_version(soc_version);
-  if (iter->second == k910BAscendVersion) {
-    ctx->set_ascend_soc_version(k910BAscendVersion);
-  } else if (iter->second == k910AAscendVersion) {
-    ctx->set_ascend_soc_version(k910AAscendVersion);
+  auto graph_runner = transform::GetGraphRunner();
+  if (graph_runner == nullptr) {
+    MS_LOG(INFO) << "The graph_runner is not exist";
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(ge_device_context_);
+  MS_EXCEPTION_IF_NULL(ge_device_context_->device_res_manager_);
+  auto ret = transform::UnregisterExternalAllocator(
+    graph_runner, dynamic_cast<GeDeviceResManager *>(ge_device_context_->device_res_manager_.get())->GetStream());
+  if (ret != transform::Status::SUCCESS) {
+    MS_LOG(EXCEPTION) << "UnregisterExternalAllocator failed";
   }
 }
-}  // namespace
-
-MSCONTEXT_REGISTER_INIT_FUNC(kAscendDevice, [](MsContext *ctx) -> void {
-  MS_EXCEPTION_IF_NULL(ctx);
-  auto enable_ge = mindspore::common::GetEnv("MS_ENABLE_GE");
-  if (enable_ge == "1") {
-    if (ctx->backend_policy() != "ge") {
-      (void)ctx->set_backend_policy("ge");
-    }
-  } else {
-    if (ctx->backend_policy() != "ms") {
-      (void)ctx->set_backend_policy("ms");
-    }
-  }
-  SetContextSocVersion(ctx);
-});
-#endif
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

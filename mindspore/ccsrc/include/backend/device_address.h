@@ -231,6 +231,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   uint32_t device_id() const { return kernel_tensor_->device_id(); }
 
   void set_stream_id(uint32_t stream_id) { kernel_tensor_->set_stream_id(stream_id); }
+  uint32_t stream_id() { return kernel_tensor_->stream_id(); }
 
   void AddHeldByNode(const std::weak_ptr<ValueNode> &value_node) { (void)held_by_nodes_.emplace_back(value_node); }
   std::vector<std::weak_ptr<ValueNode>> held_by_nodes() const { return held_by_nodes_; }
@@ -279,20 +280,24 @@ class DeviceAddress : public mindspore::DeviceSync {
     return GetDevicePtr() != nullptr;
   }
 
+  using SyncUserDataHandler = void (*)(DeviceAddress *const device_address);
   // Return the valid device ptr.
   virtual void *GetValidPtr(size_t) {
     auto device_ptr = GetDevicePtr();
-    if (user_data() == nullptr || sync_user_data_handler_ == nullptr) {
+    if (user_data() == nullptr || (!need_sync_user_data_)) {
       return GetDevicePtr();
     }
     std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
-    if (sync_user_data_handler_ == nullptr) {
+    if (!need_sync_user_data_) {
       return device_ptr;
     }
-    if (sync_user_data_handler_ != nullptr) {
-      sync_user_data_handler_(this);
+    auto sync_handler = user_data()->get<SyncUserDataHandler>(kSyncUserDataHandler);
+    if (sync_handler == nullptr) {
+      MS_LOG(WARNING) << "For device address:" << this << ", the sync user data handler is null.";
+      return device_ptr;
     }
-    sync_user_data_handler_ = nullptr;
+    (*sync_handler)(this);
+    need_sync_user_data_ = false;
     return device_ptr;
   }
 
@@ -326,7 +331,7 @@ class DeviceAddress : public mindspore::DeviceSync {
 
     other->from_mem_pool_ = from_mem_pool_;
     other->set_deleter(deleter());
-    other->set_sync_user_data_handler(sync_user_data_handler_);
+    other->set_need_sync_user_data(need_sync_user_data_);
     SetDevicePtr(nullptr);
     from_mem_pool_ = false;
     deleter_ = nullptr;
@@ -354,11 +359,10 @@ class DeviceAddress : public mindspore::DeviceSync {
   void set_deleter(const std::function<void(uint8_t *)> &deleter) { deleter_ = deleter; }
   std::function<void(uint8_t *)> deleter() const { return deleter_; }
 
-  using SyncUserDataHandler = void (*)(DeviceAddress *const device_address);
   // For output of pyexecute kernel, the input data is stored in user data and the handler is used to sync data from
   // user data to device ptr.
-  SyncUserDataHandler sync_user_data_handler() { return sync_user_data_handler_; }
-  void set_sync_user_data_handler(SyncUserDataHandler handler) { sync_user_data_handler_ = handler; }
+  bool need_sync_user_data() { return need_sync_user_data_; }
+  void set_need_sync_user_data(bool need_sync_user_data) { need_sync_user_data_ = need_sync_user_data; }
 
  protected:
   KernelTensorPtr kernel_tensor_;
@@ -396,7 +400,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   // The flag identify where data is stored
   mutable DeviceAddressStatus status_{DeviceAddressStatus::kInDevice};
   // Handler for sync data from user data.
-  SyncUserDataHandler sync_user_data_handler_{nullptr};
+  bool need_sync_user_data_{false};
   // The specified deleter to release memory
   std::function<void(uint8_t *)> deleter_;
   friend class KernelRuntime;

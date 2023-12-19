@@ -76,11 +76,6 @@ void UpdateDynamicSequenceType(const AnfNodePtr &output_node, const kernel::Kern
     return;
   }
 
-  const auto &abs = output_node->abstract();
-  MS_EXCEPTION_IF_NULL(abs);
-  const auto &seq_abs = abs->cast<abstract::AbstractSequencePtr>();
-  MS_EXCEPTION_IF_NULL(seq_abs);
-
   // Update abstract.
   std::vector<ShapeVector> shapes = BaseShapeToShapeVector(output_kernel_tensor->GetShape());
   std::vector<TypeId> types = std::vector(shapes.size(), output_kernel_tensor->dtype_id());

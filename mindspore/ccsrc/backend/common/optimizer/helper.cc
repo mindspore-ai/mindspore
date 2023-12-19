@@ -220,7 +220,6 @@ void CreateMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNod
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(outputs);
   auto type_ptr = node->Type();
-  auto shape_ptr = node->Shape();
   for (size_t i = 0; i < output_num; i++) {
     int64_t temp = SizeToLong(i);
     auto idx = NewValueNode(temp);
@@ -231,8 +230,7 @@ void CreateMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNod
     auto tuple_getitem = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
     MS_EXCEPTION_IF_NULL(tuple_getitem);
     common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(type_ptr, i)},
-                                                {common::AnfAlgo::GetOutputInferShape(node, shape_ptr, i)},
-                                                tuple_getitem.get());
+                                                {common::AnfAlgo::GetOutputInferShape(node, i)}, tuple_getitem.get());
     (*outputs).push_back(tuple_getitem);
   }
 }
@@ -1497,8 +1495,13 @@ AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const C
 
 void InferOp(const CNodePtr &node, void *args) { dynamic_shape::InferOp(node, args); }
 
-void SetCppInferPyHanbdler(const InfPyHandler &infer_handler) {
-  dynamic_shape::set_cpp_infer_py_handler(infer_handler);
+LaunchHandler launch_py_handler{nullptr};
+void set_launch_handler(const LaunchHandler &handler) { launch_py_handler = handler; }
+
+abstract::AbstractBasePtr LaunchPy(const PrimitivePtr &primitive,
+                                   const std::vector<abstract::AbstractBase *> &args_abs_list) {
+  MS_EXCEPTION_IF_NULL(launch_py_handler);
+  return launch_py_handler(primitive, args_abs_list);
 }
 
 AbstractBasePtr InferAbstract(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &input_list) {

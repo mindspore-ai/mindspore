@@ -34,6 +34,7 @@ namespace parallel {
 
 // maybe the input value is dynamic for these ops
 static const std::set<std::string> CANDIDATE_DYNAMIC_VALUE_OPS = {RESHAPE, STRIDED_SLICE, PAD_V3};
+bool IsDynamicShapeInput(const CNodePtr &node, const AnfNodePtr &input);
 // split tensor only for first input
 static const std::set<std::string> SPLIT_TENSOR_ONLY_FOR_FIRST_INPUT_OPS = {PAD_V3};
 // the input is tuple or list
@@ -141,6 +142,7 @@ Shape mirror_group_list(const TensorLayoutPtr &layout);
 // Transfer number to serial number string
 std::string GetSerialNumberString(size_t number);
 bool IsIgnoreSplitTensor(const CNodePtr &node, int64_t index);
+bool MergeConcatSlice(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphManagerPtr &manager);
 void UpdateMicroBatchInterleavedStatus(const std::vector<AnfNodePtr> &all_nodes);
 inline bool IsMakeSequence(const AnfNodePtr &node) {
   return AnfNodeIsPrimitive(node, MAKE_TUPLE) || AnfNodeIsPrimitive(node, MAKE_LIST);
@@ -148,6 +150,9 @@ inline bool IsMakeSequence(const AnfNodePtr &node) {
 inline bool IsValueSequence(const AnfNodePtr &node) {
   return IsValueNode<ValueList>(node) || IsValueNode<ValueTuple>(node);
 }
+bool IsCellReuseForwardGraph(const FuncGraphPtr &graph);
+FuncGraphPtr GetCellReuseBackwardGraph(const FuncGraphPtr &forward_graph);
+bool IsCommunicationOp(const PrimitivePtr &prim);
 }  // namespace parallel
 }  // namespace mindspore
 

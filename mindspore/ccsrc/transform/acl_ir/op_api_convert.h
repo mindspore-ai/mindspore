@@ -20,8 +20,10 @@
 #include <dlfcn.h>
 #include <vector>
 #include <string>
+#include <memory>
 #include <algorithm>
 #include <functional>
+#include <utility>
 #include <tuple>
 #include "acl/acl_base.h"
 #include "ir/tensor.h"
@@ -122,40 +124,28 @@ auto ConvertToOpApiFunc(const Tuple &params, void *opApiAddr) {
 }
 
 // Convert Value
-class OpApiAttrConverter : public AttrHelper<OpApiAttrConverter> {
+class OpApiTensorConverter : public AttrHelper<OpApiTensorConverter> {
  public:
-  OpApiAttrConverter() = default;
-  ~OpApiAttrConverter() = default;
+  OpApiTensorConverter() = default;
+  ~OpApiTensorConverter() = default;
 
   template <typename T>
   void ConvertValue(const ValuePtr &value, const AttrDeclType<T> &, aclScalar **scalar) {
     auto real_val = GetValue<T>(value);
     MS_EXCEPTION_IF_NULL(scalar);
-    static const auto aclCreateScalar = GET_OP_API_FUNC(aclCreateScalar);
-    if (aclCreateScalar == nullptr) {
-      *scalar = nullptr;
-    }
-    *scalar = aclCreateScalar(&real_val, GetDataType(value));
+    *scalar = CreateAclScalar(&real_val, GetDataType(value));
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<int32_t> &, aclScalar **scalar) {
     auto real_val = static_cast<int64_t>(GetValue<int32_t>(value));
     MS_EXCEPTION_IF_NULL(scalar);
-    static const auto aclCreateScalar = GET_OP_API_FUNC(aclCreateScalar);
-    if (aclCreateScalar == nullptr) {
-      *scalar = nullptr;
-    }
-    *scalar = aclCreateScalar(&real_val, ACL_INT64);
+    *scalar = CreateAclScalar(&real_val, ACL_INT64);
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<int64_t>> &, aclIntArray *array) {
     std::vector<int64_t> array_list;
     ConvertValueSequenceToList(value, &array_list);
-    static const auto aclCreateIntArray = GET_OP_API_FUNC(aclCreateIntArray);
-    if (aclCreateIntArray == nullptr) {
-      array = nullptr;
-    }
-    array = aclCreateIntArray(array_list.data(), array_list.size());
+    array = CreateIntArray(array_list);
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<int32_t>> &, aclIntArray *array) {
@@ -164,31 +154,52 @@ class OpApiAttrConverter : public AttrHelper<OpApiAttrConverter> {
     std::vector<int64_t> array_list_int64;
     (void)std::transform(array_list.begin(), array_list.end(), std::back_inserter(array_list_int64),
                          [](const int val) { return IntToLong(val); });
-    static const auto aclCreateIntArray = GET_OP_API_FUNC(aclCreateIntArray);
-    if (aclCreateIntArray == nullptr) {
-      array = nullptr;
-    }
-    array = aclCreateIntArray(array_list_int64.data(), array_list_int64.size());
+    array = CreateIntArray(array_list_int64);
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<uint8_t>> &, aclBoolArray *array) {
     std::vector<uint8_t> array_list;
     ConvertValueSequenceToList(value, &array_list);
-    static const auto aclCreateBoolArray = GET_OP_API_FUNC(aclCreateBoolArray);
-    if (aclCreateBoolArray == nullptr) {
-      array = nullptr;
-    }
-    array = aclCreateBoolArray(reinterpret_cast<const bool *>(array_list.data()), array_list.size());
+    array = CreateBoolArray(array_list);
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<float>> &, aclFloatArray *array) {
     std::vector<float> array_list;
     ConvertValueSequenceToList(value, &array_list);
+    array = CreateFloatArray(array_list);
+  }
+
+  template <typename T>
+  aclScalar *CreateAclScalar(T *val, aclDataType dtype) {
+    static const auto aclCreateScalar = GET_OP_API_FUNC(aclCreateScalar);
+    if (aclCreateScalar == nullptr) {
+      MS_LOG(EXCEPTION) << "Failed to get `aclCreateScalar` func.";
+    }
+    return aclCreateScalar(val, dtype);
+  }
+
+  aclIntArray *CreateIntArray(const std::vector<int64_t> &val) {
+    static const auto aclCreateIntArray = GET_OP_API_FUNC(aclCreateIntArray);
+    if (aclCreateIntArray == nullptr) {
+      MS_LOG(EXCEPTION) << "Failed to get `aclCreateIntArray` func.";
+    }
+    return aclCreateIntArray(val.data(), val.size());
+  }
+
+  aclBoolArray *CreateBoolArray(const std::vector<uint8_t> &val) {
+    static const auto aclCreateBoolArray = GET_OP_API_FUNC(aclCreateBoolArray);
+    if (aclCreateBoolArray == nullptr) {
+      MS_LOG(EXCEPTION) << "Failed to get `aclCreateBoolArray` func.";
+    }
+    return aclCreateBoolArray(reinterpret_cast<const bool *>(val.data()), val.size());
+  }
+
+  aclFloatArray *CreateFloatArray(const std::vector<float> &val) {
     static const auto aclCreateFloatArray = GET_OP_API_FUNC(aclCreateFloatArray);
     if (aclCreateFloatArray == nullptr) {
-      array = nullptr;
+      MS_LOG(EXCEPTION) << "Failed to get `aclCreateFloatArray` func.";
     }
-    array = aclCreateFloatArray(array_list.data(), array_list.size());
+    return aclCreateFloatArray(val.data(), val.size());
   }
 
  private:
@@ -233,9 +244,48 @@ inline aclTensor *ConvertType(mindspore::kernel::KernelTensor *tensor) {
   return acl_tensor;
 }
 
-inline auto ConvertType(const std::vector<mindspore::kernel::KernelTensor *> &tensor_list) {
-  MS_LOG(EXCEPTION) << "Current not support tensor list!";
-  return tensor_list;
+inline aclTensor *ConvertType(std::pair<mindspore::kernel::KernelTensor *, bool> tensor_and_trans) {
+  static const auto aclCreateTensor = GET_OP_API_FUNC(aclCreateTensor);
+  if (aclCreateTensor == nullptr) {
+    return nullptr;
+  }
+  auto tensor = tensor_and_trans.first;
+  auto trans = tensor_and_trans.second;
+  auto acl_data_type = AclConverter::ConvertType(tensor->dtype_id());
+  auto shape = tensor->GetShapeVector();
+  const auto shape_size = shape.size();
+  aclFormat format = ACL_FORMAT_ND;
+  switch (shape_size) {
+    case 3:
+      format = ACL_FORMAT_NCL;
+      break;
+    case 4:
+      format = ACL_FORMAT_NCHW;
+      break;
+    case 5:
+      format = ACL_FORMAT_NCDHW;
+      break;
+    default:
+      format = ACL_FORMAT_ND;
+  }
+
+  // Create strides.
+  auto strides = shape;
+  if (!strides.empty()) {
+    strides.erase(strides.begin());
+  }
+  strides.push_back(1);
+  for (int i = static_cast<int>(strides.size()) - 2; i >= 0; i--) {
+    strides[i] = strides[i] * strides[i + 1];
+  }
+  // Check if shape need transpose.
+  if (trans) {
+    std::swap(shape[shape.size() - 1], shape[shape.size() - 2]);
+    std::swap(strides[strides.size() - 1], strides[strides.size() - 2]);
+  }
+  auto acl_tensor = aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), 0, format, shape.data(),
+                                    shape_size, tensor->device_ptr());
+  return acl_tensor;
 }
 
 inline std::tuple<std::vector<int64_t>, std::vector<int64_t>, int64_t, std::vector<int64_t>> GetViewShapeAndStride(
@@ -316,8 +366,24 @@ inline aclIntArray *ConvertType(const std::vector<int64_t> &int_array) {
   if (int_array.empty()) {
     MS_LOG(ERROR) << "int array is empty!";
   }
-  static const auto aclCreateIntArray = GET_OP_API_FUNC(aclCreateIntArray);
-  return aclCreateIntArray(int_array.data(), int_array.size());
+  static OpApiTensorConverter converter;
+  return converter.CreateIntArray(int_array);
+}
+
+inline aclFloatArray *ConvertType(const std::vector<float> &float_array) {
+  if (float_array.empty()) {
+    MS_LOG(ERROR) << "float array is empty!";
+  }
+  static OpApiTensorConverter converter;
+  return converter.CreateFloatArray(float_array);
+}
+
+inline aclBoolArray *ConvertType(const std::vector<uint8_t> &bool_array) {
+  if (bool_array.empty()) {
+    MS_LOG(ERROR) << "bool array is empty!";
+  }
+  static OpApiTensorConverter converter;
+  return converter.CreateBoolArray(bool_array);
 }
 
 inline aclTensorList *ConvertType(const std::vector<tensor::TensorPtr> &tensor_list) {
@@ -331,14 +397,27 @@ inline aclTensorList *ConvertType(const std::vector<tensor::TensorPtr> &tensor_l
   return aclCreateTensorList(tmp.data(), tmp.size());
 }
 
+inline aclTensorList *ConvertType(const std::vector<mindspore::kernel::KernelTensor *> &tensor_list) {
+  if (tensor_list.empty()) {
+    MS_LOG(ERROR) << "tensor list is empty!";
+  }
+  static const auto aclCreateTensorList = GET_OP_API_FUNC(aclCreateTensorList);
+  std::vector<aclTensor *> tmp;
+  std::transform(tensor_list.begin(), tensor_list.end(), std::back_inserter(tmp),
+                 [](mindspore::kernel::KernelTensor *tensor) { return ConvertType(tensor); });
+  return aclCreateTensorList(tmp.data(), tmp.size());
+}
+
 inline aclScalar *ConvertType(const ScalarPtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   aclScalar *acl_scalar;
-  OpApiAttrConverter converter;
+  static OpApiTensorConverter converter;
   if (value->isa<BoolImm>()) {
     converter.ConvertValue(value, AttrDeclType<bool>(), &acl_scalar);
   } else if (value->isa<Int64Imm>()) {
     converter.ConvertValue(value, AttrDeclType<int64_t>(), &acl_scalar);
+  } else if (value->isa<FP64Imm>()) {
+    converter.ConvertValue(value, AttrDeclType<double>(), &acl_scalar);
   } else if (value->isa<FP32Imm>()) {
     converter.ConvertValue(value, AttrDeclType<float>(), &acl_scalar);
   } else if (value->isa<Int32Imm>()) {
@@ -354,6 +433,8 @@ inline aclDataType ConvertType(const TypePtr &type) {
   return AclConverter::ConvertType(type->type_id());
 }
 
+inline aclDataType ConvertType(TypeId type_id) { return AclConverter::ConvertType(type_id); }
+
 inline const char *ConvertType(const std::string &value) { return value.c_str(); }
 
 template <typename T>
@@ -364,6 +445,48 @@ T ConvertType(T value) {
 template <typename... Ts>
 constexpr auto ConvertTypes(const Ts &... args) {
   return std::make_tuple(ConvertType(args)...);
+}
+
+template <typename T>
+T ConvertKernelTensor(mindspore::kernel::KernelTensor *tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  return tensor->GetValueWithCheck<T>();
+}
+
+template <>
+inline ScalarPtr ConvertKernelTensor<ScalarPtr>(mindspore::kernel::KernelTensor *tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  auto value_ptr = tensor->GetValueTrack();
+  if (!value_ptr || !value_ptr->isa<Scalar>()) {
+    MS_LOG(EXCEPTION) << "Current tensor's must be a scalar, please check!";
+  }
+  auto scalar_ptr = value_ptr->cast<ScalarPtr>();
+  MS_EXCEPTION_IF_NULL(scalar_ptr);
+  return scalar_ptr;
+}
+
+template <>
+inline std::vector<int64_t> ConvertKernelTensor<std::vector<int64_t>>(mindspore::kernel::KernelTensor *tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  return tensor->GetValueWithCheck<std::vector<int64_t>>();
+}
+
+template <>
+inline std::vector<float> ConvertKernelTensor<std::vector<float>>(mindspore::kernel::KernelTensor *tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  return tensor->GetValueWithCheck<std::vector<float>>();
+}
+
+template <>
+inline std::vector<uint8_t> ConvertKernelTensor<std::vector<uint8_t>>(mindspore::kernel::KernelTensor *tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  return tensor->GetValueWithCheck<std::vector<uint8_t>>();
+}
+
+template <>
+inline TypeId ConvertKernelTensor<TypeId>(mindspore::kernel::KernelTensor *tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  return tensor->dtype_id();
 }
 
 inline void Release(aclTensor *p) {
@@ -424,5 +547,46 @@ void ReleaseConvertTypes(const Tuple &t) {
   static constexpr auto size = std::tuple_size<Tuple>::value;
   CallRelease(t, std::make_index_sequence<size>{});
 }
+
+// return a Scalar with the input type
+#define MAKE_SCALAR(num, typeid, out)                                       \
+  switch (typeid) {                                                         \
+    case kNumberTypeFloat32: {                                              \
+      out = std::make_shared<FP32Imm>(static_cast<float>(num));             \
+      break;                                                                \
+    }                                                                       \
+    case kNumberTypeFloat16: {                                              \
+      out = std::make_shared<FP32Imm>(static_cast<float>(num));             \
+      break;                                                                \
+    }                                                                       \
+    case kNumberTypeFloat64: {                                              \
+      out = std::make_shared<FP64Imm>(static_cast<double>(num));            \
+      break;                                                                \
+    }                                                                       \
+    case kNumberTypeInt8: {                                                 \
+      out = std::make_shared<Int8Imm>(static_cast<int8_t>(num));            \
+      break;                                                                \
+    }                                                                       \
+    case kNumberTypeInt16: {                                                \
+      out = std::make_shared<Int16Imm>(static_cast<int16_t>(num));          \
+      break;                                                                \
+    }                                                                       \
+    case kNumberTypeInt32: {                                                \
+      out = std::make_shared<Int32Imm>(static_cast<int>(num));              \
+      break;                                                                \
+    }                                                                       \
+    case kNumberTypeInt64: {                                                \
+      out = std::make_shared<Int64Imm>(static_cast<int64_t>(num));          \
+      break;                                                                \
+    }                                                                       \
+    case kNumberTypeBool: {                                                 \
+      out = std::make_shared<BoolImm>(static_cast<bool>(num));              \
+      break;                                                                \
+    }                                                                       \
+    default: {                                                              \
+      MS_LOG(EXCEPTION) << "Not support typeid " << TypeIdToString(typeid); \
+    }                                                                       \
+  }
+
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_ACL_IR_OP_API_CONVERT_H_

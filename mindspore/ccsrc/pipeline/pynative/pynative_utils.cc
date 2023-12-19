@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -390,7 +390,7 @@ tensor::TensorPtr Common::GetTensorFromParam(const AnfNodePtr &param_node) {
   return tensor_value;
 }
 
-std::shared_ptr<PyNativeExecutor> Common::GetPyNativeExecutor() {
+const std::shared_ptr<PyNativeExecutor> &Common::GetPyNativeExecutor() {
   const auto &executor = PyNativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(executor);
   return executor;
@@ -733,6 +733,20 @@ void Common::ProcessTupleParam(const FuncGraphPtr &bprop_graph, size_t position)
   tr.Commit();
 }
 
+void Common::FreeFuncGraphForwardNodes(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  if (func_graph->used_forward_nodes().empty()) {
+    return;
+  }
+  for (const auto &node : func_graph->used_forward_nodes()) {
+    MS_EXCEPTION_IF_NULL(node);
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    cnode->set_forward(nullptr, "");
+  }
+  func_graph->ClearUsedForwardNodes();
+}
+
 std::string PyParser::GetIdByPyObj(const py::object &obj) {
   if (py::isinstance<tensor::Tensor>(obj)) {
     return obj.cast<tensor::TensorPtr>()->id();
@@ -905,39 +919,29 @@ inline void PrintTypeError(const ops::OpDefPtr &op_def, const py::list &op_input
 }
 
 void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs, bool stub,
-                         std::vector<ValuePtr> *input_values, const FrontendOpRunInfoPtr &op_run_info) {
-  if (op_inputs.size() != op_def->args_.size()) {
+                         const FrontendOpRunInfoPtr &op_run_info) {
+  size_t input_size = op_inputs.size();
+  if (input_size != op_def->args_.size()) {
     MS_LOG(EXCEPTION) << "For Operator[" << op_def->name_ << "], the inputs number should be " << op_def->args_.size()
                       << " but got " << op_inputs.size() << ".";
   }
-
+  (void)op_run_info->op_grad_info->input_value.resize(input_size);
   parse::OpDefConvertFunc convert_func;
-  size_t hit_signature_cast_num = 0;
   for (size_t i = 0; i < op_def->args_.size(); i++) {
     auto const &op_arg = op_def->args_[i];
     op_run_info->none_init_inputs_num += static_cast<size_t>(!op_arg.as_init_arg_);
+
+    if (py::isinstance<py::none>(op_inputs[i])) {
+      op_run_info->op_grad_info->input_value[i] = kNone;
+      continue;
+    }
     ValuePtr value = nullptr;
     convert_func = parse::GetConverterByType(static_cast<int32_t>(op_arg.arg_dtype_));
     MS_EXCEPTION_IF_NULL(convert_func);
     value = convert_func(op_inputs[i]);
     if (value != nullptr) {
-      input_values->emplace_back(value);
+      op_run_info->op_grad_info->input_value[i] = value;
       continue;
-    }
-
-    // for ops those have signature cast, the Number value must be convert to Tensor with the other arg's dtype
-    // e.g: for Add(Tensor(1.0, dtype=ms.float16), 4.1), 4.1 is casted into a Tensor whose dtype is ms.float16
-    // init arg has no signature
-    if (!op_arg.as_init_arg_) {
-      value = ConvertBySignature(op_inputs[i], op_run_info, i);
-      if (value != nullptr) {
-        // 'value' is a Scalar and will be convert to Tensor in the following step(SetImplicitCast)
-        MS_LOG(DEBUG) << "Convert arg " << i << " with type " << op_inputs[i].get_type()
-                      << " to Number by signature cast, its value is: " << value->ToString();
-        input_values->emplace_back(value);
-        hit_signature_cast_num++;
-        continue;
-      }
     }
 
     // type cast has lower priority then signature cast
@@ -947,6 +951,8 @@ void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs,
         MS_EXCEPTION_IF_NULL(convert_func);
         value = convert_func(op_inputs[i]);
         if (value != nullptr) {
+          op_run_info->op_grad_info->input_value[i] = value;
+          op_run_info->source_type[i] = cast_dtype;
           break;
         }
       }
@@ -955,11 +961,6 @@ void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs,
     if (value == nullptr) {
       PrintTypeError(op_def, op_inputs);
     }
-    input_values->emplace_back(value);
-  }
-
-  if (hit_signature_cast_num == op_run_info->none_init_inputs_num) {
-    PrintTypeError(op_def, op_inputs);
   }
 }
 
@@ -967,7 +968,7 @@ void PyParser::ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, 
   MS_EXCEPTION_IF_NULL(op_run_info);
   op_run_info->input_size = op_inputs.size();
   op_run_info->op_grad_info->input_abs.resize(op_run_info->input_size);
-
+  op_run_info->source_type.resize(op_run_info->input_size);
   auto op_def = mindspore::ops::GetOpDef(op_run_info->base_op_run_info.op_name);
   if (op_def == nullptr) {
     op_run_info->op_grad_info->input_value.resize(op_run_info->input_size);
@@ -977,7 +978,7 @@ void PyParser::ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, 
     }
   } else {
     op_run_info->none_init_inputs_num = 0;
-    ParseOpInputByOpDef(op_def, op_inputs, stub, &op_run_info->op_grad_info->input_value, op_run_info);
+    ParseOpInputByOpDef(op_def, op_inputs, stub, op_run_info);
   }
   PrepareOpGradInfo(op_run_info);
 }
@@ -1123,7 +1124,7 @@ bool DataConvert::RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_ru
 }
 
 FrontendOpRunInfoPtr PyBoost::Init(const py::args &args) {
-  if (args.size() != kIndex2) {
+  if (MS_UNLIKELY(args.size() != kIndex2)) {
     MS_LOG(EXCEPTION) << "Two args are needed by RunOp"
                       << ", but got " << args.size();
   }
@@ -1137,21 +1138,25 @@ FrontendOpRunInfoPtr PyBoost::Init(const py::args &args) {
 }
 
 void PyBoost::MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const std::vector<TensorPtr> &outputs) {
-  std::vector<ValuePtr> output_values;
-  for (auto &output_tensor : outputs) {
-    MS_EXCEPTION_IF_NULL(output_tensor);
-    if (op_run_info->requires_grad) {
-      output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
-      output_tensor->auto_grad_meta_data()->set_grad_type(TensorGradType::kOpOutput);
-    }
-    (void)output_values.emplace_back(output_tensor);
+  size_t size = outputs.size();
+  if (size == kSizeOne) {
+    op_run_info->real_out = outputs[0];
+    return;
   }
-  auto result_value = std::make_shared<ValueTuple>(output_values);
-  if (result_value->size() == 1 && op_run_info->base_op_run_info.abstract != nullptr &&
-      !op_run_info->base_op_run_info.abstract->isa<abstract::AbstractSequence>()) {
-    op_run_info->real_out = result_value->value().front();
-  } else {
-    op_run_info->real_out = result_value;
+  std::vector<ValuePtr> output_values(size);
+  for (size_t i = 0; i < size; ++i) {
+    const auto &output_tensor = outputs[i];
+    MS_EXCEPTION_IF_NULL(output_tensor);
+    output_values[i] = output_tensor;
+  }
+  op_run_info->real_out = std::make_shared<ValueTuple>(output_values);
+}
+
+void PyBoost::UpdateOutputTensorGradInfo(const std::vector<TensorPtr> &outputs) {
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    const auto &output_tensor = outputs[i];
+    output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
+    output_tensor->auto_grad_meta_data()->set_grad_type(TensorGradType::kOpOutput);
   }
 }
 
@@ -1178,17 +1183,35 @@ void PyBoost::UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<Val
   MS_EXCEPTION_IF_NULL(op);
   MS_EXCEPTION_IF_NULL(op_run_info);
   // Set result to python
-  op_run_info->base_op_run_info.abstract = op->output_abs();
   MakeOutputValue(op_run_info, op->outputs());
   UpdateStubOutput(op_run_info, op->output_abs());
 
   // Update op run info for auto grad
   if (op_run_info->requires_grad) {
+    op_run_info->base_op_run_info.abstract = op->output_abs();
     op_run_info->op_grad_info->input_abs = op->input_abs();
     op_run_info->op_grad_info->out_value = op_run_info->real_out;
     op_run_info->op_grad_info->out_abs = op->output_abs();
+    UpdateOutputTensorGradInfo(op->outputs());
     op->set_grad_func([op_run_info]() { DoGrad(op_run_info); });
   }
+}
+
+py::object PyBoost::RunPyFunction(const py::args &args) {
+  const auto &adapter = args[kIndex0].cast<PrimitivePyAdapterPtr>();
+  MS_EXCEPTION_IF_NULL(adapter);
+  auto prim = adapter->attached_primitive();
+  if (prim == nullptr) {
+    prim = std::make_shared<PrimitivePy>(args[kIndex0]);
+    adapter->set_attached_primitive(prim);
+  }
+  py::str prim_name = prim->name();
+  py::tuple wrap_args(kIndex3);
+  wrap_args[kIndex0] = args[kIndex0];
+  wrap_args[kIndex1] = prim_name;
+  wrap_args[kIndex2] = args[kIndex1];
+  const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
+  return pynative_executor->RunOpStub(wrap_args);
 }
 
 void PyBoost::DoGrad(const FrontendOpRunInfoPtr &op_run_info) {
@@ -1343,7 +1366,7 @@ void DataConvert::MarkInputs(const FrontendOpRunInfoPtr &op_run_info, const Valu
     if (op_run_info->requires_grad) {
       op_run_info->op_grad_info->input_value_grad_type[index] = Common::SetTensorGradInfo(tensor_ptr, top_cell);
     }
-  } else if (v->isa<BoolImm>() || v->isa<FloatImm>() || v->isa<Type>() || v->isa<StringImm>()) {
+  } else if (v->isa<BoolImm>() || v->isa<FloatImm>() || v->isa<Type>() || v->isa<StringImm>() || v->isa<None>()) {
     (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(v);
     (void)op_run_info->base_op_run_info.input_masks.emplace_back(kValueNodeMask);
     return;
@@ -1362,7 +1385,7 @@ void DataConvert::MarkInputs(const FrontendOpRunInfoPtr &op_run_info, const Valu
   } else if (v->isa<tensor::CSRTensor>()) {
     ConvertCSRTensorToTensorList(op_run_info, v->cast<tensor::CSRTensorPtr>(), top_cell, index);
     return;
-  } else if (v->isa<None>() || v->isa<Monad>()) {
+  } else if (v->isa<Monad>()) {
     return;
   } else if (v->isa<parse::InterpretedObject>()) {
     MS_EXCEPTION(TypeError) << "Not support for " << v->ToString();
@@ -1487,9 +1510,17 @@ void GradCommon::GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const mindspore
 
 void DispatchOp(const std::shared_ptr<FrontendTask> &task) {
   auto forward_executor = PyNativeExecutor::GetInstance()->forward_executor();
-  forward_executor->frontend_queue()->Push(task);
-  if (!forward_executor->enable_async()) {
-    forward_executor->frontend_queue()->Wait();
+  // TODO(caifubi): enable cpu/gpu async.
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  auto device = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  auto sync = context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
+  auto mode = context->get_param<int>(MS_CTX_EXECUTION_MODE);
+  if (sync || device == kGPUDevice || device == kCPUDevice || mode == mindspore::kGraphMode) {
+    runtime::OpExecutor::GetInstance().WaitAll();
+    task->Run();
+  } else {
+    forward_executor->frontend_queue()->Push(task);
   }
 }
 }  // namespace pynative

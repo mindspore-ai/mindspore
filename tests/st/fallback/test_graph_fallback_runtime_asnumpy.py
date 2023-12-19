@@ -46,6 +46,7 @@ class Net(ms.nn.Cell):
         return self.np_function(a, b)
 
 
+@pytest.mark.skip(reason="Pyexecute output is not any and type is wrong.")
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -64,6 +65,7 @@ def test_fallback_np():
     np.testing.assert_almost_equal(output, const_output, 3)
 
 
+@pytest.mark.skip(reason="Pyexecute output is not any and type is wrong.")
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

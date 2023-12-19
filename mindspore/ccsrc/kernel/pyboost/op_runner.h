@@ -51,11 +51,14 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   void set_primitive(const PrimitivePtr &primitive) { primitive_ = primitive; }
   const PrimitivePtr &primitive() const { return primitive_; }
   const std::vector<AbstractBasePtr> &input_abs() const { return input_abs_; }
+  void set_input_abs(const std::vector<AbstractBasePtr> &input_abs) { input_abs_ = input_abs; }
   const AbstractBasePtr &output_abs() const { return output_abs_; }
+  void set_output_abs(const AbstractBasePtr &output_abs) { output_abs_ = output_abs; }
   void set_device_context(DeviceContext *device_context) { device_context_ = device_context; }
   DeviceContext *device_context() const { return device_context_; }
   const std::vector<pynative::DeviceAddressPromisePtr> &device_sync_promises() const { return device_sync_promises_; }
   const std::vector<tensor::TensorPtr> &outputs() const { return outputs_; }
+  void set_outputs(const std::vector<tensor::TensorPtr> &outputs) { outputs_ = outputs; }
 
   const tensor::TensorPtr &output(const size_t &idx) {
     if (idx >= outputs_.size()) {
@@ -85,23 +88,29 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   // Member function for Infer and creating output tensors.
   template <typename... T>
   void InferOutput(T &... args) {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostInferOutput,
+                                       primitive_->name(), false);
     (input_abs_.emplace_back(ConvertAbstract(args)), ...);
     output_abs_ = PyBoostUtils::InferByOpDef(primitive_, input_abs_);
     MS_EXCEPTION_IF_NULL(output_abs_);
     MS_LOG(DEBUG) << "PyBoost infer output " << output_abs_->ToString();
-    PyBoostUtils::CreateOutputTensor(output_abs_, &outputs_, &device_sync_promises_);
+    PyBoostUtils::CreateOutputTensor(output_abs_, &outputs_);
   }
 
   // A static function used for the "customize" operator to generate the operator's output Tensor.
   template <typename... T>
   static void InferOpOutput(const std::shared_ptr<OpRunner> &op, T &... args) {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostInferOutput,
+                                       op->primitive()->name(), false);
     (op->input_abs_.emplace_back(ConvertAbstract(args)), ...);
     op->output_abs_ = PyBoostUtils::InferByOpDef(op->primitive(), op->input_abs_);
-    PyBoostUtils::CreateOutputTensor(op->output_abs_, &op->outputs_, &op->device_sync_promises_);
+    PyBoostUtils::CreateOutputTensor(op->output_abs_, &op->outputs_);
   }
 
   // Some operators do not support non-continuous tensors as inputs.
-  tensor::TensorPtr Contiguous(const tensor::TensorPtr &input_tensor) { return ContiguousTensor(input_tensor); }
+  tensor::TensorPtr Contiguous(const tensor::TensorPtr &input_tensor) {
+    return PyBoostUtils::ContiguousTensor(input_tensor);
+  }
 
  protected:
   // Op primitive, may delete latter.

@@ -19,7 +19,6 @@
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 #include "plugin/device/ascend/hal/device/ascend_gmem_adapter.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
-#include "runtime/mem.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"
 #include "acl/acl_rt.h"
@@ -63,6 +62,16 @@ void AscendMemoryPool::SetMemPoolBlockSize(size_t available_device_mem_size) {
   }
 }
 
+namespace {
+bool NoAdditionalMemory() {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  const auto is_cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
+  const auto is_multi_graph_sink = context->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK);
+  return is_cell_reuse || is_multi_graph_sink;
+}
+}  // namespace
+
 size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size, bool from_persistent_mem, bool need_recycle) {
   auto device_free_mem_size = free_mem_size();
   if (device_free_mem_size < size && common::IsNeedProfileMemory()) {
@@ -105,10 +114,7 @@ size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size, bool from_persistent_
   }
 
   alloc_mem_size = std::min(alloc_mem_size, device_free_mem_size);
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  const auto is_cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
-  if (is_cell_reuse && !need_recycle) {
+  if (NoAdditionalMemory() && !need_recycle) {
     alloc_mem_size = std::min(alloc_mem_size, size);
   }
   return alloc_mem_size;

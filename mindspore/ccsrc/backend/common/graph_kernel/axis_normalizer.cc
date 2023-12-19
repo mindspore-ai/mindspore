@@ -15,7 +15,6 @@
  */
 #include "backend/common/graph_kernel/axis_normalizer.h"
 
-#include <algorithm>
 #include <memory>
 #include <unordered_map>
 #include <vector>

@@ -40,13 +40,17 @@
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_auto_parallel.h"
+#include "frontend/parallel/pass/merge_comm.h"
 #include "frontend/parallel/cache_embedding/cache_embedding.h"
 #include "frontend/parallel/cache_embedding/ps_embedding_cache_inserter.h"
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
 #include "frontend/parallel/pynative_shard/pynative_shard.h"
 #include "frontend/parallel/pass/label_micro_interleaved_index.h"
+#include "frontend/parallel/pass/label_fine_grained_interleaved_index.h"
 #include "frontend/parallel/pass/reorder_send_recv_between_fp_bp.h"
 #include "frontend/parallel/pass/micro_interleaved_order_control.h"
+#include "frontend/parallel/pass/full_micro_interleaved_order_control.h"
+#include "frontend/parallel/pass/assign_add_opt.h"
 #include "frontend/parallel/pass/comp_comm_scheduling.h"
 #include "frontend/parallel/pass/overlap_opt_shard_in_pipeline.h"
 #include "frontend/parallel/pass/slice_activation_in_cell_share_recompute.h"
@@ -132,8 +136,8 @@ bool TransformTopGraphPass(const ResourcePtr &resource) {
     MS_LOG(INTERNAL_EXCEPTION) << "Transform top graph error.";
   }
   FuncGraphPtr func_graph = resource->func_graph();
-  if (opt::FuncGraphHasTupleInput(func_graph)) {
-    opt::GraphTupleParamTransform graph_trans;
+  if (opt::FuncGraphHasSequenceInput(func_graph)) {
+    opt::GraphSequenceParamTransform graph_trans;
     func_graph = graph_trans(func_graph, resource->manager());
     resource->set_func_graph(func_graph);
     AbstractBasePtrList abs_spec_list;
@@ -460,6 +464,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"pynative_shard", opt::OptPassConfig(parallel::PynativeShard)},
                          {"auto_parallel", opt::OptPassConfig(parallel::StepAutoParallel)},
                          {"parallel", opt::OptPassConfig(parallel::StepParallel)},
+                         {"merge_comm", opt::OptPassConfig(parallel::MergeComm)},
                          {"allreduce_fusion", opt::OptPassConfig(parallel::StepAllreduceFusion)},
                          {"virtual_dataset", virtual_dataset},
                          {"get_grad_eliminate_", get_grad},
@@ -734,6 +739,18 @@ bool LabelMicroInterleavedIndexPass(const ResourcePtr &resource) {
   return true;
 }
 
+bool LabelFineGrainedInterleavedIndexPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::LabelFineGrainedInterleavedIndex(resource->func_graph());
+  return true;
+}
+
+bool AssignAddOpt(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::AssignAddOpt(resource->func_graph());
+  return true;
+}
+
 bool ReorderSendRecvBetweenFpBpPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::ReorderSendRecvBetweenFpBp(resource->func_graph());
@@ -749,6 +766,12 @@ bool CompCommSchedulingPass(const ResourcePtr &resource) {
 bool MicroInterLeavedOrderControlPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::MicroInterleavedOrderControl(resource->func_graph());
+  return true;
+}
+
+bool FullMicroInterLeavedOrderControlPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::FullMicroInterleavedOrderControl(resource->func_graph());
   return true;
 }
 
@@ -1060,8 +1083,11 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    {"cse_after_recomputation", OptAfterRecomputeGroup},
                                    {"environ_conv", EnvironConversionPass},
                                    {"label_micro_interleaved_index", LabelMicroInterleavedIndexPass},
+                                   {"label_fine_grained_interleaved_index", LabelFineGrainedInterleavedIndexPass},
+                                   {"assign_add_opt", AssignAddOpt},
                                    {"slice_recompute_activation", SliceRecomputeActivationPass},
                                    {"micro_interleaved_order_control", MicroInterLeavedOrderControlPass},
+                                   {"full_micro_interleaved_order_control", FullMicroInterLeavedOrderControlPass},
                                    {"comp_comm_scheduling", CompCommSchedulingPass},
                                    {"reorder_send_recv_between_fp_bp", ReorderSendRecvBetweenFpBpPass},
                                    {"comm_op_add_attrs", CommOpAddAttrs},

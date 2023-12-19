@@ -434,6 +434,11 @@ def test_model_predict_inputs_element_type_error():
         outputs = model.predict(["input"])
     assert "inputs element must be Tensor" in str(raise_info.value)
 
+def test_model_get_model_info_type_error():
+    with pytest.raises(TypeError) as raise_info:
+        model = get_model()
+        inputs = model.get_model_info()
+    assert "key must be str" in str(raise_info.value)
 
 def test_model_predict_runtime_error():
     with pytest.raises(RuntimeError) as raise_info:

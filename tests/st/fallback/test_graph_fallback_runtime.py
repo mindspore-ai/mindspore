@@ -443,6 +443,8 @@ def test_make_tensor_with_dynamic_shape_dtype():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gelu():
@@ -764,7 +766,6 @@ def test_fallback_tensor_with_variable_input():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@pytest.mark.skip(reason="Function graph cannot convert to object, fix later")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

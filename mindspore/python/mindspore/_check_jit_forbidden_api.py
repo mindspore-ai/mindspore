@@ -94,8 +94,6 @@ def is_jit_forbidden_module(obj_module):
 def is_invalid_or_jit_forbidden_method(obj, obj_type, attr):
     """Check obj has attribute or method."""
     if not hasattr(obj, attr):
-        if attr == "__ms_iter__":
-            raise TypeError(f"'{obj_type}' object is not iterable")
         raise AttributeError(f"'{obj_type}' object has no attribute '{attr}'")
     method = getattr(obj, attr)
     if not hasattr(method, "__module__") or method.__module__ is None:

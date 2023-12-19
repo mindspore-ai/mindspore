@@ -40,14 +40,14 @@ bool SendKernel::Init(const AnfNodePtr &anf_node) {
   event_id_ = GetValue<uint32_t>(primitive->GetAttr(kAttrEventId));
 
   if (common::AnfAlgo::HasNodeAttr(kAttrRecordEvent, anf_node->cast<CNodePtr>())) {
-    event_ = reinterpret_cast<rtEvent_t>(GetValue<uintptr_t>(primitive->GetAttr(kAttrRecordEvent)));
+    event_ = reinterpret_cast<aclrtEvent>(GetValue<uintptr_t>(primitive->GetAttr(kAttrRecordEvent)));
   }
   MS_LOG(INFO) << "send op event id:" << event_id_;
   return true;
 }
 
-bool SendKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                        const std::vector<AddressPtr> &, void *stream_ptr) {
+bool SendKernel::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                        const std::vector<KernelTensor *> &, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(event_);
   MS_EXCEPTION_IF_NULL(stream_ptr);
   auto status = aclrtRecordEvent(event_, stream_ptr);

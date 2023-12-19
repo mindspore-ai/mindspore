@@ -317,9 +317,6 @@ class TFRecordToMR:
         Note:
             Please refer to the Examples of :class:`mindspore.mindrecord.TFRecordToMR` .
 
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
-
         Raises:
             ParamTypeError: If index field is invalid.
             MRMOpenError: If failed to open MindRecord file.
@@ -334,7 +331,6 @@ class TFRecordToMR:
         t.join()
         if t.exitcode != 0:
             raise t.exception
-        return t.res
 
     def _cast_type(self, value):
         """

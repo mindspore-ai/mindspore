@@ -15,12 +15,6 @@
  */
 #include "backend/common/graph_kernel/core/graph_kernel_cluster.h"
 
-#include <algorithm>
-#include <set>
-#include <utility>
-#include <fstream>
-#include <string>
-
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "mindspore/core/ops/nn_ops.h"

@@ -264,11 +264,6 @@ void UpdateStubTensor(const FrontendOpRunInfoPtr &op_run_info) {
   }
 }
 
-bool EnableBackendAsync(const FrontendOpRunInfoPtr &op_run_info) {
-  return !OpCompiler::GetInstance().IsInvalidInferResultOp(op_run_info->base_op_run_info.op_name) &&
-         !op_run_info->base_op_run_info.has_dynamic_output;
-}
-
 KernelTaskType GetViewOpTaskType(const std::string &op_name) {
   if (op_name == kCopyWithScileOpName) {
     return KernelTaskType::kCOPY_TASK;
@@ -350,20 +345,12 @@ void ForwardExecutor::ClearForwardTask() {
     GilReleaseWithCheck gil_release;
     frontend_queue_->Clear();
   }
-  if (backend_queue_ != nullptr) {
-    GilReleaseWithCheck gil_release;
-    backend_queue_->Clear();
-  }
 }
 
 void ForwardExecutor::WaitForwardTask() {
   if (frontend_queue_ != nullptr) {
     GilReleaseWithCheck gil_release;
     frontend_queue_->Wait();
-  }
-  if (backend_queue_ != nullptr) {
-    GilReleaseWithCheck gil_release;
-    backend_queue_->Wait();
   }
 }
 
@@ -395,9 +382,6 @@ void ForwardExecutor::InitOpRunInfo(const FrontendOpRunInfoPtr &op_run_info) {
     op_run_info->base_op_run_info.use_dynamic_shape_process =
       grad()->forward_use_dynamic_shape_process() || grad()->use_dynamic_shape_process();
   }
-  auto new_prim = std::make_shared<Primitive>(*op_run_info->op_grad_info->op_prim);
-  new_prim->EnableSharedMutex();
-  op_run_info->op_grad_info->op_prim = new_prim;
   op_run_info->base_op_run_info.device_target = GetCurrentDeviceTarget(op_run_info->op_grad_info->op_prim);
   op_run_info->cell_obj_id = GetCurrentCellObjId();
 }
@@ -420,17 +404,13 @@ void ForwardExecutor::Init() {
   MS_LOG(DEBUG) << "Init ForwardExecutor";
   compile::SetMindRTEnable();
   python_adapter::set_python_env_flag(true);
-  runtime::OpExecutor::GetInstance().RegisterForwardCallback([this]() {
-    frontend_queue_->Wait();
-    backend_queue_->Wait();
-  });
+  runtime::OpExecutor::GetInstance().RegisterForwardCallback([this]() { frontend_queue_->Wait(); });
 }
 
 void ForwardExecutor::RefreshForwardCallback() {
 #if defined(_WIN32) || defined(_WIN64)
   runtime::OpExecutor::GetInstance().RegisterForwardCallback([this]() {
     frontend_queue_->Wait();
-    backend_queue_->Wait();
     grad()->WaitBpropTask();
   });
 #endif
@@ -481,29 +461,6 @@ void ForwardExecutor::ForwardRunViewKernelTask(const FrontendOpRunInfoPtr &op_ru
   cur_mind_rt_backend->RunViewKernelTask(op_run_info->base_op_run_info, task_type, enable_async);
 
   MS_LOG(DEBUG) << "End";
-}
-
-void ForwardExecutor::DispatchViewKernelTask(const FrontendOpRunInfoPtr &op_run_info, const KernelTaskType &task_type) {
-  static auto run_backend_with_grad = [this](const FrontendOpRunInfoPtr &op_run_info, const KernelTaskType &task_type) {
-    ForwardRunViewKernelTask(op_run_info, task_type, true);
-    ForwardOpGradImpl(op_run_info);
-  };
-
-  auto backend_task = std::make_shared<ViewKernelBackendTask>(run_backend_with_grad, op_run_info, task_type);
-  backend_queue_->Push(backend_task);
-}  // namespace pynative
-
-void ForwardExecutor::DispatchBackendTask(const FrontendOpRunInfoPtr &op_run_info,
-                                          const session::BackendOpRunInfoPtr &backend_op_run_info) {
-  static auto run_backend_with_grad = [this](const FrontendOpRunInfoPtr &op_run_info,
-                                             const session::BackendOpRunInfoPtr &backend_op_run_info) {
-    // Update tensor device address in backend.
-    RunOpBackendInner(op_run_info, backend_op_run_info);
-    ForwardOpGradImpl(op_run_info);
-  };
-
-  auto backend_task = std::make_shared<BackendTask>(run_backend_with_grad, op_run_info, backend_op_run_info);
-  backend_queue_->Push(backend_task);
 }
 
 void ForwardExecutor::CreateDeviceAddressForViewInput(const FrontendOpRunInfoPtr &op_run_info,
@@ -667,19 +624,10 @@ bool ForwardExecutor::ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info,
     }
   }
 
-  if (EnablePipeline(op_run_info->base_op_run_info.op_name)) {
-    if (task_type == KernelTaskType::kNORMAL_VIEW_TASK && !op_run_info->requires_grad) {
-      MS_LOG(DEBUG) << "End";
-      return true;
-    }
-    DispatchViewKernelTask(op_run_info, task_type);
-  } else {
-    // Gil might be release  by ACL, so release here to reduce conflict
-    GilReleaseWithCheck release_gil;
-    backend_queue_->Wait();
-    ForwardRunViewKernelTask(op_run_info, task_type, false);
-    ForwardOpGradImpl(op_run_info);
-  }
+  // Gil might be release  by ACL, so release here to reduce conflict
+  GilReleaseWithCheck release_gil;
+  ForwardRunViewKernelTask(op_run_info, task_type, false);
+  ForwardOpGradImpl(op_run_info);
   MS_LOG(DEBUG) << "End";
   return true;
 }
@@ -784,20 +732,10 @@ void ForwardExecutor::RunOpFrontend(const FrontendOpRunInfoPtr &op_run_info) {
 
   PrepareOpInputs(op_run_info);
 
-  if (EnableBackendAsync(op_run_info) && EnablePipeline(op_run_info->base_op_run_info.op_name)) {
-    PrepareOpOutputs(op_run_info);
-    const auto &backend_op_run_info = CreateBackendOpRunInfo(op_run_info);
-    DispatchBackendTask(op_run_info, backend_op_run_info);
-  } else {
-    RunOpBackendSync(op_run_info);
-  }
+  RunOpBackendSync(op_run_info);
 }
 
 void ForwardExecutor::RunOpBackendSync(const FrontendOpRunInfoPtr &op_run_info) {
-  {
-    GilReleaseWithCheck gil_release;
-    backend_queue_->Wait();
-  }
   const auto &backend_op_run_info = CreateBackendOpRunInfo(op_run_info);
   RunOpBackend(op_run_info, backend_op_run_info);
   if (!op_run_info->requires_grad) {
@@ -1115,7 +1053,6 @@ void ForwardExecutor::ProcessBeforeEndGraph(const py::object &obj, bool is_cell)
       runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kWaitPipeline);
       GilReleaseWithCheck gil_release;
       frontend_queue_->Wait();
-      backend_queue_->Wait();
     }
     // Finish lazy task
     ExecuteLazyTask();
@@ -1202,35 +1139,8 @@ void ForwardExecutor::CreateInputAddressForViewOp(const tensor::TensorPtr &input
 
   MS_LOG(DEBUG) << "Input_tensor address is nullptr, need create address.";
 
-  if (EnablePipeline(op_run_info->base_op_run_info.op_name)) {
-    if (input_tensor->address_future() != nullptr) {
-      DispatchAllocateMemTask(op_run_info, input_tensor, input_idx, true);
-    } else {
-      DeviceAddressPromisePtr promise =
-        std::make_shared<DeviceAddressPromise>(std::promise<DeviceAddressFutureDataPtr>());
-      auto future = promise->GetFuture();
-      auto device_address_future = std::make_shared<DeviceAddressFuture>(std::move(future));
-      input_tensor->set_address_future(device_address_future);
-      (void)op_run_info->device_sync_promises.emplace_back(std::move(promise));
-      DispatchAllocateMemTask(op_run_info, input_tensor, input_idx, false);
-    }
-  } else {
-    // Sync address_future is nullptr
-    CreateDeviceAddressForViewInput(op_run_info, input_tensor, input_idx, false);
-  }
-}
-
-void ForwardExecutor::DispatchAllocateMemTask(const FrontendOpRunInfoPtr &op_run_info,
-                                              const tensor::TensorPtr &input_tensor, const size_t &input_idx,
-                                              bool need_wait) {
-  static auto alloc_mem_func = [this](const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
-                                      const size_t &input_idx, bool need_wait) {
-    CreateDeviceAddressForViewInput(op_run_info, input_tensor, input_idx, true, need_wait);
-  };
-
-  auto view_task =
-    std::make_shared<AllocViewMemBackendTask>(alloc_mem_func, op_run_info, input_tensor, input_idx, need_wait);
-  backend_queue_->Push(view_task);
+  // Sync address_future is nullptr
+  CreateDeviceAddressForViewInput(op_run_info, input_tensor, input_idx, false);
 }
 
 void ForwardExecutor::RefreshTensorContiguous(const tensor::TensorPtr &tensor) {
@@ -1242,15 +1152,7 @@ void ForwardExecutor::RefreshTensorContiguous(const tensor::TensorPtr &tensor) {
   // Gil might be release  by ACL, so release here to reduce conflict
   GilReleaseWithCheck release_gil;
 
-  if (!ScopedFallbackRunning::on() && enable_async()) {
-    static auto contiguous_func = [this](const tensor::TensorPtr &tensor) { RunContiguousTask(tensor, true); };
-
-    auto contiguous_task = std::make_shared<ContiguousBackendTask>(contiguous_func, tensor);
-    backend_queue_->Push(contiguous_task);
-  } else {
-    backend_queue_->Wait();
-    RunContiguousTask(tensor, false);
-  }
+  RunContiguousTask(tensor, false);
 }
 
 void ForwardExecutor::RunContiguousTaskForTensor(const tensor::TensorPtr &tensor) {
@@ -1309,7 +1211,6 @@ void ForwardExecutor::CreateViewOutputTensor(
     if (tensor != nullptr) {
       GilReleaseWithCheck gil_release;
       frontend_queue_->Wait();
-      backend_queue_->Wait();
 
       auto new_addr = TensorContiguousCallback(tensor->device_address(), tensor->storage_info());
       tensor->set_device_address(new_addr);
@@ -1365,7 +1266,6 @@ void ForwardExecutor::ClearRes() {
   {
     GilReleaseWithCheck gil_release;
     frontend_queue_->Clear();
-    backend_queue_->Clear();
   }
   for (const auto &item : mindrt_backends_) {
     MS_EXCEPTION_IF_NULL(item.second);
@@ -1387,10 +1287,6 @@ void ForwardExecutor::ChildAfterFork() {
   if (frontend_queue_ != nullptr) {
     MS_LOG(DEBUG) << "Reinitialize frontend_queue_.";
     frontend_queue_->ChildAfterFork();
-  }
-  if (backend_queue_ != nullptr) {
-    MS_LOG(DEBUG) << "Reinitialize backend_queue_.";
-    backend_queue_->ChildAfterFork();
   }
   MS_LOG(DEBUG) << "ForwardExecutor reinitialize after fork done.";
 }

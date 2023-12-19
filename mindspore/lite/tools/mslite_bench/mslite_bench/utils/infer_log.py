@@ -39,28 +39,20 @@ class InferLogger:
     """
     def __init__(self, file_path: str = None):
         self.file_path = file_path
-        self.logger = self._create_logger()
+        self.logger_ = self._create_logger()
 
-    def info(self, msg: str):
-        """info level log"""
-        return self.logger.info(msg)
+    @property
+    def logger(self):
+        return self.logger_
 
-    def debug(self, msg: str):
-        """debug level log"""
-        return self.logger.debug(msg)
-
-    def warning(self, msg: str):
-        """warning level log"""
-        return self.logger.warning(msg)
-
-    def error(self, msg: str):
-        """error level log"""
-        return self.logger.error(msg)
+    def set_level(self, level=logging.info):
+        self.logger_.setLevel(level)
 
     def _create_logger(self):
         """create logger for mslite bench"""
-        logger = logging.getLogger('[EASY_INFER]')
-        log_format = '%(asctime)s | %(message)s'
+        logger = logging.getLogger('MSLITE_BENCH')
+        log_format = '%(asctime)s - [%(name)s-%(levelname)s' \
+                     '(%(filename)s:%(lineno)d)]: %(message)s'
         formatter = logging.Formatter(log_format,
                                       datefmt='%m/%d %I:%M:%S %p')
         if self.file_path is not None:

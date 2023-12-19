@@ -15,7 +15,7 @@
 
 import numpy as np
 from mindspore.nn import Cell
-from mindspore.common import Tensor, Parameter
+from mindspore.common import Tensor
 import mindspore.ops.operations as P
 from mindspore import context, ops, lazy_inline, nn
 from mindspore.common.api import _cell_graph_executor
@@ -29,15 +29,14 @@ class Grad(Cell):
         self.grad = ops.GradOperation()
         self.net = net
 
-    def construct(self, x):
+    def construct(self, x, y):
         grad_net = self.grad(self.net)
-        return grad_net(x)
+        return grad_net(x, y)
 
 
 class Block(Cell):
     def __init__(self):
         super(Block, self).__init__()
-        self.y = Parameter(Tensor(np.ones((8, 128, 128)).astype(np.float32)))
         self.transpose1 = P.Transpose()
         self.transpose2 = P.Transpose()
         self.transpose3 = P.Transpose()
@@ -53,13 +52,13 @@ class Block(Cell):
         self.sub = P.Sub()
         self.mul = P.Mul()
 
-    def construct(self, x):
+    def construct(self, x, y):
         transpose1 = self.transpose1(x, (0, 2, 1, 3))
         real_div1 = self.real_div1(transpose1, Tensor(2.37891))
         transpose2 = self.transpose2(x, (0, 2, 3, 1))
         real_div2 = self.real_div2(transpose2, Tensor(2.37891))
         batch_matmul1 = self.batch_matmul1(real_div1, real_div2)
-        expand_dims = self.expand_dims(self.y, 1)
+        expand_dims = self.expand_dims(y, 1)
         sub = self.sub(Tensor([1.0]), expand_dims)
         mul = self.mul(sub, Tensor([-0.0001]))
         add = self.add(mul, batch_matmul1)
@@ -84,8 +83,8 @@ def test_recompute_block_recompute():
             super(OuterBlock, self).__init__()
             self.block = Block()
 
-        def construct(self, x):
-            return self.block(x)
+        def construct(self, x, y):
+            return self.block(x, y)
 
     class Net(Cell):
         def __init__(self):
@@ -96,16 +95,17 @@ def test_recompute_block_recompute():
                 b.recompute()
                 self.blocks.append(b)
 
-        def construct(self, x):
+        def construct(self, x, y):
             out = x
             for i in range(3):
-                out = self.blocks[i](out)
+                out = self.blocks[i](out, y)
             return out
 
     x = Tensor(np.ones((8, 128, 16, 32)).astype(np.float32))
+    y = Tensor(np.ones((8, 128, 128)).astype(np.float32))
     net = Net()
     grad_net = Grad(net)
-    _cell_graph_executor.compile(grad_net, x)
+    _cell_graph_executor.compile(grad_net, x, y)
 
 
 def test_recompute_op_recompute1():
@@ -125,8 +125,8 @@ def test_recompute_op_recompute1():
             self.block.add.recompute()
             self.block.softmax.recompute()
 
-        def construct(self, x):
-            return self.block(x)
+        def construct(self, x, y):
+            return self.block(x, y)
 
     class Net(Cell):
         def __init__(self):
@@ -136,16 +136,17 @@ def test_recompute_op_recompute1():
                 b = OuterBlock()
                 self.blocks.append(b)
 
-        def construct(self, x):
+        def construct(self, x, y):
             out = x
             for i in range(3):
-                out = self.blocks[i](out)
+                out = self.blocks[i](out, y)
             return out
 
     x = Tensor(np.ones((8, 128, 16, 32)).astype(np.float32))
+    y = Tensor(np.ones((8, 128, 128)).astype(np.float32))
     net = Net()
     grad_net = Grad(net)
-    _cell_graph_executor.compile(grad_net, x)
+    _cell_graph_executor.compile(grad_net, x, y)
 
 
 def test_recompute_op_recompute2():
@@ -169,8 +170,8 @@ def test_recompute_op_recompute2():
             self.block.softmax.recompute()
             self.block.dropout.recompute()
 
-        def construct(self, x):
-            return self.block(x)
+        def construct(self, x, y):
+            return self.block(x, y)
 
     class Net(Cell):
         def __init__(self):
@@ -180,16 +181,17 @@ def test_recompute_op_recompute2():
                 b = OuterBlock()
                 self.blocks.append(b)
 
-        def construct(self, x):
+        def construct(self, x, y):
             out = x
             for i in range(3):
-                out = self.blocks[i](out)
+                out = self.blocks[i](out, y)
             return out
 
     x = Tensor(np.ones((8, 128, 16, 32)).astype(np.float32))
+    y = Tensor(np.ones((8, 128, 128)).astype(np.float32))
     net = Net()
     grad_net = Grad(net)
-    _cell_graph_executor.compile(grad_net, x)
+    _cell_graph_executor.compile(grad_net, x, y)
 
 
 def test_recompute_cell_and_op_recompute1():
@@ -213,7 +215,6 @@ def test_recompute_cell_and_op_recompute1():
     class Block1(Cell):
         def __init__(self):
             super(Block1, self).__init__()
-            self.y = Parameter(Tensor(np.ones((8, 128, 128)).astype(np.float32)))
             self.transpose1 = P.Transpose()
             self.transpose2 = P.Transpose()
             self.transpose3 = P.Transpose()
@@ -235,12 +236,12 @@ def test_recompute_cell_and_op_recompute1():
             self.net1 = Net1()
             self.net1.recompute()
 
-        def construct(self, x):
+        def construct(self, x, y):
             transpose1 = self.transpose1(x, (0, 2, 1, 3))
             real_div1 = self.real_div1(transpose1, Tensor(2.37891))
             real_div2 = self.net1(x)
             batch_matmul1 = self.batch_matmul1(real_div1, real_div2)
-            expand_dims = self.expand_dims(self.y, 1)
+            expand_dims = self.expand_dims(y, 1)
             sub = self.sub(Tensor([1.0]), expand_dims)
             mul = self.mul(sub, Tensor([-0.0001]))
             add = self.add(mul, batch_matmul1)
@@ -257,8 +258,8 @@ def test_recompute_cell_and_op_recompute1():
             super(OuterBlock, self).__init__()
             self.block = Block1()
 
-        def construct(self, x):
-            return self.block(x)
+        def construct(self, x, y):
+            return self.block(x, y)
 
     class Net(Cell):
         def __init__(self):
@@ -268,16 +269,17 @@ def test_recompute_cell_and_op_recompute1():
                 b = OuterBlock()
                 self.blocks.append(b)
 
-        def construct(self, x):
+        def construct(self, x, y):
             out = x
             for i in range(3):
-                out = self.blocks[i](out)
+                out = self.blocks[i](out, y)
             return out
 
     x = Tensor(np.ones((8, 128, 16, 32)).astype(np.float32))
+    y = Tensor(np.ones((8, 128, 128)).astype(np.float32))
     net = Net()
     grad_net = Grad(net)
-    _cell_graph_executor.compile(grad_net, x)
+    _cell_graph_executor.compile(grad_net, x, y)
 
 
 def test_recompute_cell_and_op_recompute2():
@@ -301,7 +303,6 @@ def test_recompute_cell_and_op_recompute2():
     class Block1(Cell):
         def __init__(self):
             super(Block1, self).__init__()
-            self.y = Parameter(Tensor(np.ones((8, 128, 128)).astype(np.float32)))
             self.transpose1 = P.Transpose()
             self.transpose2 = P.Transpose()
             self.transpose3 = P.Transpose()
@@ -324,13 +325,13 @@ def test_recompute_cell_and_op_recompute2():
             self.net1 = Net1()
             self.net1.recompute()
 
-        def construct(self, x):
+        def construct(self, x, y):
             real_div2 = self.net1(x)
             depend = self.depend(x, real_div2)
             transpose1 = self.transpose1(depend, (0, 2, 1, 3))
             real_div1 = self.real_div1(transpose1, Tensor(2.37891))
             batch_matmul1 = self.batch_matmul1(real_div1, real_div2)
-            expand_dims = self.expand_dims(self.y, 1)
+            expand_dims = self.expand_dims(y, 1)
             sub = self.sub(Tensor([1.0]), expand_dims)
             mul = self.mul(sub, Tensor([-0.0001]))
             add = self.add(mul, batch_matmul1)
@@ -347,8 +348,8 @@ def test_recompute_cell_and_op_recompute2():
             super(OuterBlock, self).__init__()
             self.block = Block1()
 
-        def construct(self, x):
-            return self.block(x)
+        def construct(self, x, y):
+            return self.block(x, y)
 
     class Net(Cell):
         def __init__(self):
@@ -358,13 +359,14 @@ def test_recompute_cell_and_op_recompute2():
                 b = OuterBlock()
                 self.blocks.append(b)
 
-        def construct(self, x):
+        def construct(self, x, y):
             out = x
             for i in range(3):
-                out = self.blocks[i](out)
+                out = self.blocks[i](out, y)
             return out
 
     x = Tensor(np.ones((8, 128, 16, 32)).astype(np.float32))
+    y = Tensor(np.ones((8, 128, 128)).astype(np.float32))
     net = Net()
     grad_net = Grad(net)
-    _cell_graph_executor.compile(grad_net, x)
+    _cell_graph_executor.compile(grad_net, x, y)

@@ -22,8 +22,6 @@
 #include <memory>
 #include <string>
 #include <functional>
-#include "runtime/dev.h"
-#include "runtime/mem.h"
 #include "include/backend/kernel_graph.h"
 #include "mindspore/ccsrc/kernel/kernel.h"
 #include "aicpu/common/aicpu_task_struct.h"
@@ -64,14 +62,14 @@ class KernelDumper : public debug::OverflowDumper {
   ~KernelDumper();
 
   void OpLoadDumpInfo(const CNodePtr &kernel) override;
-  void DumpHcclOutput(const std::shared_ptr<HcclTaskInfo> &task_info, const rtStream_t &stream);
+  void DumpHcclOutput(const std::shared_ptr<HcclTaskInfo> &task_info, const aclrtStream &stream);
   void Init() override;
-  void ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_info, const rtStream_t &stream);
+  void ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_info, const aclrtStream &stream);
 #ifndef ENABLE_SECURITY
   void OpDebugRegisterForStream(const CNodePtr &kernel) override;
   void OpDebugUnregisterForStream() override;
 #endif
-  static std::map<rtStream_t, std::unique_ptr<OpDebugTask>> op_debug_tasks;
+  static std::map<aclrtStream, std::unique_ptr<OpDebugTask>> op_debug_tasks;
   static std::map<uint32_t, bool> is_data_map;
   static std::map<std::string, std::string> stream_task_graphs;
   static std::mutex dumper_mutex_;

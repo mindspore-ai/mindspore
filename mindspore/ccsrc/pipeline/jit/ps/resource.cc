@@ -127,16 +127,16 @@ BuiltInTypeMap &GetMethodMap() {
     {kObjectTypeTuple,
      {
        {"__len__", prim::kPrimSequenceLen},       // P.sequence_len,
-       {"__getitem__", prim::kPrimTupleGetItem},  // P.tuple_getitem,
-       {"__setitem__", prim::kPrimTupleSetItem},  // P.tuple_setitem,
+       {"__getitem__", std::string("_getitem")},  // C.getitem,
+       {"__setitem__", std::string("_setitem")},  // C.setitem,
        {"count", prim::kPrimSequenceCount},       // P.sequence_count
        {"index", std::string("sequence_index")},  // C.sequence_index
      }},
     {kObjectTypeList,
      {
        {"__len__", prim::kPrimSequenceLen},       // P.sequence_len,
-       {"__getitem__", prim::kPrimListGetItem},   // P.list_getitem,
-       {"__setitem__", prim::kPrimListSetItem},   // P.list_setitem,
+       {"__getitem__", std::string("_getitem")},  // C.getitem,
+       {"__setitem__", std::string("_setitem")},  // C.setitem,
        {"append", std::string("list_append")},    // C.list_append
        {"insert", std::string("list_insert")},    // C.list_insert
        {"pop", std::string("list_pop")},          // C.list_pop
@@ -148,17 +148,17 @@ BuiltInTypeMap &GetMethodMap() {
      }},
     {kObjectTypeDictionary,
      {
-       {"__len__", prim::kPrimDictLen},               // P.dict_len
-       {"__getitem__", prim::kPrimDictGetItem},       // P.dict_getitem
-       {"__setitem__", std::string("dict_setitem")},  // C.dict_setitem,
-       {"keys", prim::kPrimDictGetKeys},              // P.dict_getkeys,
-       {"values", prim::kPrimDictGetValues},          // P.dict_getvalues,
-       {"items", prim::kPrimDictItems},               // P.dict_items
-       {"get", std::string("dict_get")},              // C.dict_get
-       {"has_key", std::string("dict_haskey")},       // C.dict_haskey
-       {"clear", std::string("dict_clear")},          // C.dict_clear
-       {"update", std::string("dict_update")},        // C.dict_update
-       {"fromkeys", std::string("dict_fromkeys")}     // C.dict_fromkeys
+       {"__len__", prim::kPrimDictLen},            // P.dict_len
+       {"__getitem__", std::string("_getitem")},   // C.getitem,
+       {"__setitem__", std::string("_setitem")},   // C.setitem,
+       {"keys", prim::kPrimDictGetKeys},           // P.dict_getkeys,
+       {"values", prim::kPrimDictGetValues},       // P.dict_getvalues,
+       {"items", prim::kPrimDictItems},            // P.dict_items
+       {"get", std::string("dict_get")},           // C.dict_get
+       {"has_key", std::string("dict_haskey")},    // C.dict_haskey
+       {"clear", std::string("dict_clear")},       // C.dict_clear
+       {"update", std::string("dict_update")},     // C.dict_update
+       {"fromkeys", std::string("dict_fromkeys")}  // C.dict_fromkeys
      }},
     {kObjectTypeTensorType,
      {
@@ -203,8 +203,8 @@ BuiltInTypeMap &GetMethodMap() {
        {"view", std::string("view")},                                      // C.view
        {"view_as", std::string("view_as")},                                // view_as()
        {"__len__", prim::kPrimArrayLen},                                   // P.array_len,
-       {"__getitem__", prim::kPrimArrayGetItem},                           // P.array_getitem,
-       {"__setitem__", prim::kPrimArraySetItem},                           // P.array_setitem,
+       {"__getitem__", std::string("_getitem")},                           // C.getitem,
+       {"__setitem__", std::string("_setitem")},                           // C.setitem,
        {"__ms_to_array__", prim::kPrimidentity},                           // P.identity,
        {"gather_elements", std::string("gather_elements")},                // P.GatherD
        {"item", std::string("item")},                                      // P.item,
@@ -547,46 +547,19 @@ BuiltInTypeMap &GetMethodMap() {
 
 BuiltInTypeMap &GetAttrMap() {
   static BuiltInTypeMap attr_map = {
-    {kObjectTypeString,
-     {
-       {"__ms_iter__", prim::kPrimidentity},            // P.Identity
-       {"__ms_next__", std::string("str_next")},        // C.str_next
-       {"__ms_hasnext__", std::string("str_hasnext")},  // C.array_hasnext
-     }},
-    {kObjectTypeTuple,
-     {
-       {"__ms_iter__", prim::kPrimidentity},              // P.Identity
-       {"__ms_next__", std::string("tuple_next")},        // C.tuple_next,
-       {"__ms_hasnext__", std::string("tuple_hasnext")},  // C.tuple_hasnext
-     }},
-    {kObjectTypeList,
-     {
-       {"__ms_iter__", prim::kPrimidentity},             // P.Identity
-       {"__ms_next__", std::string("list_next")},        // C.list_next
-       {"__ms_hasnext__", std::string("list_hasnext")},  // C.list_hasnext
-     }},
-    {kObjectTypeDictionary,
-     {
-       {"__ms_iter__", prim::kPrimDictGetKeys},          // P.DictGetKeys
-       {"__ms_next__", std::string("dict_next")},        // C.dict_next
-       {"__ms_hasnext__", std::string("dict_hasnext")},  // C.dict_hasnext
-     }},
     {kObjectTypeTensorType,
      {
-       {"shape", prim::kPrimShape},                       // C.shape_
-       {"dtype", prim::kPrimDType},                       // C.dtype_
-       {"size", std::string("size_")},                    // C.size_
-       {"ndim", std::string("ndim_")},                    // C.ndim_
-       {"H", std::string("H")},                           // C.H
-       {"T", std::string("T_")},                          // C.T_
-       {"itemsize", std::string("itemsize_")},            // C.itemsize_
-       {"nbytes", std::string("nbytes_")},                // C.nbytes_
-       {"strides", std::string("strides_")},              // C.strides_
-       {"mH", std::string("adjoint")},                    // C.adjoint
-       {"mT", std::string("mT")},                         // C.mT_
-       {"__ms_iter__", prim::kPrimidentity},              // C.array_iter
-       {"__ms_next__", std::string("array_next")},        // C.array_next
-       {"__ms_hasnext__", std::string("array_hasnext")},  // C.array_hasnext
+       {"shape", prim::kPrimShape},             // C.shape_
+       {"dtype", prim::kPrimDType},             // C.dtype_
+       {"size", std::string("size_")},          // C.size_
+       {"ndim", std::string("ndim_")},          // C.ndim_
+       {"H", std::string("H")},                 // C.H
+       {"T", std::string("T_")},                // C.T_
+       {"itemsize", std::string("itemsize_")},  // C.itemsize_
+       {"nbytes", std::string("nbytes_")},      // C.nbytes_
+       {"strides", std::string("strides_")},    // C.strides_
+       {"mH", std::string("adjoint")},          // C.adjoint
+       {"mT", std::string("mT")},               // C.mT_
      }},
     {kObjectTypeRowTensorType,
      {
@@ -703,16 +676,23 @@ void Resource::GetCompileCacheResource(const py::list &compile_cache_dep_files, 
                                        bool *compile_cache_consistent) {
   compile_cache_manager_ = std::make_shared<CompileCacheManager>(compile_cache_id);
   compile_cache_manager_->InitParallelGroupCkptSaveFile();
-  MS_EXCEPTION_IF_NULL(compile_cache_consistent);
-  if (!*compile_cache_consistent) {
-    MS_LOG(WARNING) << "Check the consistency of dependency files hash failed. Execute all the compilation actions.";
-    return;
-  }
-  compile_cache_manager_->InitCompileCacheHash(compile_cache_dep_files);
-  *compile_cache_consistent = compile_cache_manager_->CheckDepFilesHashConsistency();
-  if (!*compile_cache_consistent) {
-    MS_LOG(WARNING) << "Check the consistency of dependency files hash failed. Execute all the compilation actions.";
-    return;
+  static const bool force_use_compile_cache = (common::GetEnv("MS_DEV_FORCE_USE_COMPILE_CACHE") == "1");
+  if (force_use_compile_cache) {
+    MS_LOG(WARNING)
+      << "The env MS_DEV_FORCE_USE_COMPILE_CACHE has been set. It will force to use the compile cache without "
+         "checking whether the network has been changed. Please note the correctness.";
+  } else {
+    MS_EXCEPTION_IF_NULL(compile_cache_consistent);
+    if (!*compile_cache_consistent) {
+      MS_LOG(WARNING) << "Check the consistency of dependency files hash failed. Execute all the compilation actions.";
+      return;
+    }
+    compile_cache_manager_->InitCompileCacheHash(compile_cache_dep_files);
+    *compile_cache_consistent = compile_cache_manager_->CheckDepFilesHashConsistency();
+    if (!*compile_cache_consistent) {
+      MS_LOG(WARNING) << "Check the consistency of dependency files hash failed. Execute all the compilation actions.";
+      return;
+    }
   }
   func_graph_ = compile_cache_manager_->GetCachedFuncGraph(manager_, weights, queue_name);
   layout_map_ = compile_cache_manager_->layout_map();

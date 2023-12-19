@@ -169,13 +169,12 @@ CNodePtr CreateConcatNode(const FuncGraphPtr &graph, const AnfNodePtrList &input
     concat_size += input_shape.at(kIndex0);
   }
   ShapeVector shape = {concat_size};
-
+  auto axis_node = opt::CreateValueNodeWithKernelInfo(graph, MakeValue(static_cast<int64_t>(0)));
   auto maketuple_node = CreateMakeTupleNode(graph, input_nodes);
-  AnfNodePtrList concat_inputs = {NewValueNode(std::make_shared<Primitive>(kConcatDOpName)), maketuple_node};
+  AnfNodePtrList concat_inputs = {NewValueNode(std::make_shared<Primitive>(kConcatDOpName)), maketuple_node, axis_node};
   auto concat = NewCNode(concat_inputs, graph);
   MS_EXCEPTION_IF_NULL(concat);
 
-  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(0), concat);
   auto data_type = common::AnfAlgo::GetOutputInferDataType(input_nodes[kIndex0], kIndex0);
   common::AnfAlgo::SetOutputInferTypeAndShape({data_type}, {shape}, concat.get());
   return concat;

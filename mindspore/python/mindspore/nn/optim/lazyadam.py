@@ -321,7 +321,7 @@ class LazyAdam(Optimizer):
               If `order_params` in the keys, other keys will be ignored and the element of 'order_params' must be in
               one group of `params`.
 
-        learning_rate (Union[float, int, Tensor, Iterable, :class:`~.train.LearningRateScheduler`]): Default: ``1e-3`` .
+        learning_rate (Union[float, int, Tensor, Iterable, LearningRateSchedule]): Default: ``1e-3`` .
 
             - float: The fixed learning rate value. Must be equal to or greater than 0.
 
@@ -333,7 +333,9 @@ class LazyAdam(Optimizer):
             - Iterable: Learning rate is dynamic. The i-th step will take the i-th value as the learning rate.
 
             - LearningRateSchedule: Learning rate is dynamic. During training, the optimizer calls the instance of
-              LearningRateSchedule with step as the input to get the learning rate of current step.
+              `LearningRateSchedule
+              <https://www.mindspore.cn/docs/en/r2.3/api_python/mindspore.nn.html#learningrateschedule-class>`_
+              with step as the input to get the learning rate of current step.
 
         beta1 (float): The exponential decay rate for the 1st moment estimations. Should be in range (0.0, 1.0).
                        Default: ``0.9`` .
@@ -371,7 +373,7 @@ class LazyAdam(Optimizer):
 
     Raises:
         TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable,
-            :class:`~.train.LearningRateScheduler`.
+            LearningRateSchedule.
         TypeError: If element of `parameters` is neither Parameter nor dict.
         TypeError: If `beta1`, `beta2`, `eps` or `loss_scale` is not a float.
         TypeError: If `weight_decay` is neither float nor int.

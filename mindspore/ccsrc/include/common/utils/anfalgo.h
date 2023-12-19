@@ -128,8 +128,6 @@ class COMMON_EXPORT AnfAlgo {
   // get output shapes inferred by ME from input nodes.
   static ShapeVector GetOutputInferShape(const AnfNodePtr &node, size_t output_idx,
                                          bool is_real_squence_output = false);
-  static ShapeVector GetOutputInferShape(const AnfNodePtr &node, const abstract::BaseShapePtr &base_shape,
-                                         size_t output_idx, bool is_real_squence_output = false);
   // get input shapes inferred by ME from input nodes.
   static ShapeVector GetPrevNodeOutputInferShape(const AnfNodePtr &node, size_t input_idx);
   // get output data type inferred by ME of anf node
@@ -320,6 +318,7 @@ class COMMON_EXPORT AnfAlgo {
 
   static std::string GetInputName(const CNodePtr &origin_op, size_t input_index);
   static bool IsNoOuputNode(const AnfNodePtr &node);
+  static ValuePtr ValueToScalar(const ValuePtr &value, TypeId type_id);
 };
 
 inline AnfNodePtr CreateShapeVectorNode(const ShapeVector &value) {

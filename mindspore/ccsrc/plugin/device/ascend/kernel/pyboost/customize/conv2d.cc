@@ -74,19 +74,23 @@ tensor::TensorPtr Conv2DAscendCustomize(const std::shared_ptr<OpRunner> &op, con
   // Convert ValuePtr to c++ scalar
   auto groups_imm = GetValue<int64_t>(groups);
 
+  PyBoostUtils::PrepareOpInputs(op->device_context(), input_tensor, weight_tensor, bias_tensor);
+  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
+
   // Async
-  DispatchRun(std::make_shared<pynative::PyBoostDeviceTask>(
+  PyBoostUtils::DispatchRun(std::make_shared<pynative::PyBoostDeviceTask>(
     [op, input_tensor, weight_tensor, bias_tensor, stride_vector, padding_vector, dilation_vector, groups_imm]() {
+      MS_LOG(DEBUG) << "Run device task Conv2d start";
       auto device_context = op->device_context();
       const auto &outputs = op->outputs();
       // Malloc for input tensors
-      runtime::DeviceAddressUtils::CreateInputAddress(device_context, input_tensor, "input_tensor");
-      runtime::DeviceAddressUtils::CreateInputAddress(device_context, weight_tensor, "weight_tensor");
-      runtime::DeviceAddressUtils::CreateInputAddress(device_context, bias_tensor, "bias_tensor");
+      PyBoostUtils::MallocOpInputs(op->device_context(), input_tensor, weight_tensor, bias_tensor);
       // Malloc for output tensors
-      PrepareOpOutputs(device_context, outputs, op->device_sync_promises());
+      PyBoostUtils::MallocOpOutputs(op->device_context(), op->outputs());
+
       Conv2DAscendCall(device_context, input_tensor, weight_tensor, bias_tensor, stride_vector, padding_vector,
                        dilation_vector, groups_imm, outputs);
+      MS_LOG(DEBUG) << "Run device task Conv2d end";
     }));
   return op->output(0);
 }

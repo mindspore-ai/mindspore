@@ -299,8 +299,8 @@ NodePtrList BinopGradCommon(BpropIRBuilder *ib, const NodePtr &x, const NodePtr 
   // Common grad definition for binary operations with shift.
   // The function is usually used in backprop op to reduce additional dimensions
   // created by broadcasting.
-  NodePtr inputs[] = {x, y};
-  ShapeVector shape[] = {ib->GetShape(inputs[0]), ib->GetShape(inputs[1])};
+  NodePtrList inputs{x, y};
+  ShapeArray shape{ib->GetShape(inputs[0]), ib->GetShape(inputs[1])};
   NodePtrList reduce = {dx, dy};
   if (IsDynamicRank(shape[0]) || IsDynamicRank(shape[1])) {
     return DynBinopGradCommon(ib, x, y, dx, dy, shift);
@@ -523,16 +523,22 @@ DEF_PURE_SHAPE_CALC(reduce_shape_shapecalc)
     auto x_shape = inputs.at(0);
     auto axis_value = inputs.at(1);
     auto r_shape = ReduceShape(x_shape, axis_value);
-    return {r_shape};
+    auto scaling = TupleDiv(x_shape, r_shape);
+    return {r_shape, scaling};
   })
   .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
-    return {IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size())};
+    int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size());
+    return {x_rank, x_rank};
   });
 NodePtr SumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout, const bool keep_dims) {
   auto grad = dout;
+  auto calc_res = ib->ShapeCalc(reduce_shape_shapecalc, {x, axis}, {1});
   if (!keep_dims) {
-    auto calc_res = ib->ShapeCalc(reduce_shape_shapecalc, {x, axis}, {1});
-    grad = ib->Reshape(grad, calc_res[0]);
+    grad = ib->Reshape(grad, ib->TensorToTuple(calc_res[0]));
+  }
+  auto tile_scaling = calc_res[1];
+  if (tile_scaling->isa<ValueNode>() || IsDynamic(x->shape())) {
+    return ib->Tile(grad, tile_scaling);
   }
   return ib->BroadcastTo(grad, x);
 }
@@ -544,8 +550,8 @@ NodePtr MinOrMaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, 
   auto keepdims = GetValue<bool>(keep_dims->BuildValue());
   if (!keepdims) {
     auto output_shape_kept_dims = ib->ShapeCalc(reduce_shape_shapecalc, {x, axis}, {1})[0];
-    y = ib->Reshape(out, output_shape_kept_dims);
-    grad = ib->Reshape(dout, output_shape_kept_dims);
+    y = ib->Reshape(out, ib->TensorToTuple(output_shape_kept_dims));
+    grad = ib->Reshape(dout, ib->TensorToTuple(output_shape_kept_dims));
   }
   auto indicators = ib->Cast(ib->Equal(y, x), ib->GetDtype(grad));
   auto num_selected = ib->ReduceSum(indicators, axis, true, false);
@@ -625,7 +631,7 @@ NodePtr ArgminOrArgmaxGrad(BpropIRBuilder *ib, const NodePtr &x, const int64_t &
     auto broad_shape = res[0];
     depth = res[1];
     auto depth_range = ib->Range(ib->TensorToScalar(depth));
-    auto depth_broad = ib->Reshape(depth_range, broad_shape);
+    auto depth_broad = ib->Reshape(depth_range, ib->TensorToTuple(broad_shape));
     auto one_hot_bool = ib->Equal(indices_expand, depth_broad);
     auto one_hot_res = ib->Cast(one_hot_bool, type_x);
     return dout_expand * one_hot_res;
@@ -731,33 +737,19 @@ NodePtr MatrixTranspose(BpropIRBuilder *ib, const NodePtr &x) {
   if (IsDynamicRank(shape)) {
     auto dim = ib->Emit("Rank", {x});
     auto perm = ib->Range(dim);
-    auto stridedslice_helper = [&perm, &ib](const NodePtr &x) {
+    auto stridedslice_helper = [&perm, &ib](int64_t begin, int64_t end, int64_t step, int64_t end_mask = 0) {
       return ib->Emit("StridedSlice",
-                      {perm, ib->TupleGetItem(x, ib->Value(static_cast<int64_t>(0))),
-                       ib->TupleGetItem(x, ib->Value(static_cast<int64_t>(1))),
-                       ib->TupleGetItem(x, ib->Value(static_cast<int64_t>(2)))},
+                      {perm, ib->Value<ShapeVector>(ShapeVector{begin}), ib->Value<ShapeVector>(ShapeVector{end}),
+                       ib->Value<ShapeVector>(ShapeVector{step})},
                       {{"begin_mask", MakeValue<int64_t>(0LL)},
-                       {"end_mask", MakeValue<int64_t>(0LL)},
+                       {"end_mask", MakeValue<int64_t>(end_mask)},
                        {"ellipsis_mask", MakeValue<int64_t>(0LL)},
                        {"new_axis_mask", MakeValue<int64_t>(0LL)},
                        {"shrink_axis_mask", MakeValue<int64_t>(0LL)}});
     };
-    auto normalize_slice_helper = [&perm, &ib](int64_t x, int64_t y, int64_t z,
-                                               const std::vector<int64_t> &init_by_none) {
-      return ib->Emit("NormalizeSlice",
-                      {perm, ib->Value(static_cast<int64_t>(x)), ib->Value(static_cast<int64_t>(y)),
-                       ib->Value(static_cast<int64_t>(z))},
-                      {{kAttrTupleIndexAxis, MakeValue(static_cast<int64_t>(0))},
-                       {kAttrTupleIndexTypes, MakeValue({})},
-                       {kAttrExpandDimsMask, MakeValue(static_cast<int64_t>(0))},
-                       {kAttrInitByNone, MakeValue(init_by_none)}});
-    };
-    auto range_1 = normalize_slice_helper(0, -2, 0, {1, 0, 1});
-    auto range_2 = normalize_slice_helper(-1, 0, 0, {0, 1, 1});
-    auto range_3 = normalize_slice_helper(-2, -1, 0, {0, 0, 1});
-    auto part_1 = stridedslice_helper(range_1);
-    auto part_2 = stridedslice_helper(range_2);
-    auto part_3 = stridedslice_helper(range_3);
+    auto part_1 = stridedslice_helper(0, -2, 1);
+    auto part_2 = stridedslice_helper(-1, 0, 1, 1);
+    auto part_3 = stridedslice_helper(-2, -1, 1);
     perm = ib->Concat({part_1, part_2, part_3}, -1);
     return ib->Transpose(x, ib->TensorToTuple(perm));
   }

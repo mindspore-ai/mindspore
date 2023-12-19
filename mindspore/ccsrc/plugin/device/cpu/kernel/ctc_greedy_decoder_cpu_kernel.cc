@@ -71,7 +71,6 @@ bool CTCGreedyDecoderCpuKernelMod::Init(const std::vector<KernelTensor *> &input
   }
   (void)types_.emplace_back(inputs[0]->dtype_id());
 
-  is_need_retrieve_output_shape_ = true;
   return true;
 }
 

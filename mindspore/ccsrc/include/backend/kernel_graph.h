@@ -33,6 +33,7 @@
 #include "include/common/utils/contract.h"
 #include "include/backend/device_type.h"
 #include "include/backend/kernel_info.h"
+#include "include/backend/device_address.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
@@ -61,6 +62,22 @@ struct SomasInfo {
   void *base_address_{nullptr};
   // Block offset -> address.
   std::map<size_t, void *> merged_base_addresses_;
+
+  // Used to keep the graph output address when somas block memory free.
+  void InsertGraphOutputInfo(device::DeviceAddress *graph_output_device_address, size_t graph_output_address_size) {
+    // Not insert the repeat size.
+    if (graph_output_address_sizes_set_.count(graph_output_address_size) > 0) {
+      MS_LOG(INFO) << "The graph:" << graph_id_
+                   << " output somas device is same for size: " << graph_output_address_size;
+      return;
+    }
+    (void)graph_output_device_addresses_.emplace_back(graph_output_device_address);
+    (void)graph_output_address_sizes_.emplace_back(graph_output_address_size);
+    (void)graph_output_address_sizes_set_.insert(graph_output_address_size);
+  }
+  std::vector<device::DeviceAddress *> graph_output_device_addresses_;
+  std::vector<size_t> graph_output_address_sizes_;
+  std::set<size_t> graph_output_address_sizes_set_;
 
   // The owner graph id.
   uint32_t graph_id_{0};
@@ -154,8 +171,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   void ResetAssignInputFeatureMapFlag(const CNodePtr &cnode) const;
   ParameterPtr NewParameter(const ParameterPtr &parameter = nullptr);
   ParameterPtr NewParameter(const abstract::AbstractBasePtr &abstract);
-  ValueNodePtr NewValueNode(const AbstractBasePtr &abstract, const ValuePtr &value) const;
   ValueNodePtr NewValueNode(const ValueNodePtr &value_node = nullptr) const;
+  ValueNodePtr NewValueNode(const AbstractBasePtr &abstract, const ValuePtr &value);
   ValueNodePtr NewValueNode(const tensor::TensorPtr &input_tensor);
   ValueNodePtr NewValueNode(const ValuePtr &input_value);
   // trans tuple output to maketuple + no_tuple out

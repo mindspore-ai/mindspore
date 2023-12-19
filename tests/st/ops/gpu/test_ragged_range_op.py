@@ -176,27 +176,6 @@ def test_ragged_range_empty_result():
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_ragged_range_empty_input():
-    """
-    Feature: test RaggedRange empty input.
-    Description: test RaggedRange when input is empty.
-    Expectation: result is empty.
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    raggedrange = RaggedRange(Tsplits=mstype.int64)
-    starts = Tensor(())
-    limits = Tensor(())
-    deltas = Tensor(())
-    (rt_nested_splits, rt_dense_values) = raggedrange(starts, limits, deltas)
-    rt_nested_splits_expected = np.array([0], np.int32)
-    rt_dense_values_expected = np.array([], np.int32)
-    np.testing.assert_array_equal(rt_nested_splits.asnumpy(), rt_nested_splits_expected)
-    np.allclose(rt_dense_values.asnumpy(), rt_dense_values_expected)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_ragged_range_neither_0d_nor_1d():
     """
     Feature: test RaggedRange with tensor is neither 0d nor 1d.

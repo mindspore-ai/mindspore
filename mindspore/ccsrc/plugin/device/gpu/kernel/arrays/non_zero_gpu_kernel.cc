@@ -39,7 +39,6 @@ bool NonZeroGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const 
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  is_need_retrieve_output_shape_ = true;  // NonZero is a dynamic shape operator.
   kernel_func_ = func_list_[index].second;
   data_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   index_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).dtype);

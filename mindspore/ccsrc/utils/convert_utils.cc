@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -570,9 +570,7 @@ size_t CountValueNum(const ValueSequencePtr &value_sequence) {
   size_t cnt = 0;
   const auto &value_list = value_sequence->value();
   for (const auto &value : value_list) {
-    if (value->isa<None>()) {
-      continue;
-    } else if (value->isa<ValueSequence>()) {
+    if (value->isa<ValueSequence>()) {
       cnt += CountValueNum(value->cast<ValueSequencePtr>());
     } else {
       cnt++;

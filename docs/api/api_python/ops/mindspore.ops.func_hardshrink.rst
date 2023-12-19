@@ -13,6 +13,11 @@ mindspore.ops.hardshrink
         0, & \text{ otherwise }
         \end{cases}
 
+    HShrink函数图：
+
+    .. image:: ../images/HShrink.png
+        :align: center
+
     参数：
         - **x** (Tensor) - Hard Shrink的输入，数据类型为float16或float32。
         - **lambd** (float，可选) - Hard Shrink公式定义的阈值 :math:`\lambda` 。默认值： ``0.5`` 。

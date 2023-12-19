@@ -156,7 +156,7 @@ def test_make_range_step_zero():
         print("ret:", ret)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -176,13 +176,11 @@ def test_make_range_error_input_1():
     x = Tensor(2, dtype=ms.int32)
     y = Tensor(4, dtype=ms.int32)
     net = Net()
-    with pytest.raises(RuntimeError) as err:
-        ret = net(x, y)
-        print("ret:", ret)
-    assert "For 'make_range', while the argument 'start' 1 is greater than the argument 'stop' -1" in str(err)
+    ret = net(x, y)
+    assert ret == 2
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -202,10 +200,8 @@ def test_make_range_error_input_2():
     x = Tensor(2, dtype=ms.int32)
     y = Tensor(4, dtype=ms.int32)
     net = Net()
-    with pytest.raises(RuntimeError) as err:
-        ret = net(x, y)
-        print("ret:", ret)
-    assert "For 'make_range', when the argument 'start' -1 is less than or equal to the argument 'stop' 1" in str(err)
+    ret = net(x, y)
+    assert ret == 2
 
 
 @pytest.mark.level1

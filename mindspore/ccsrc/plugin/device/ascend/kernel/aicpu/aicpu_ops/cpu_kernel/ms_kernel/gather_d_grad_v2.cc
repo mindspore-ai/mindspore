@@ -82,6 +82,24 @@ static uint32_t GatherGrad(const T *index, const S *grad, S *output, int64_t dim
 }
 }  // namespace
 
+template <typename S>
+uint32_t InitOutput(const int init_value, S *output, int64_t output_size) {
+  char *data = reinterpret_cast<char *>(output);
+  while (output_size > static_cast<int64_t>(SECUREC_MEM_MAX_LEN)) {
+    if (memset_s(data, SECUREC_MEM_MAX_LEN, init_value, SECUREC_MEM_MAX_LEN) != EOK) {
+      AICPU_LOGE("For '%s', failed to memset_s, the size of memset_s is [%d].", kGatherDGradV2, SECUREC_MEM_MAX_LEN);
+      return KERNEL_STATUS_INNER_ERROR;
+    }
+    data += SECUREC_MEM_MAX_LEN;
+    output_size -= SECUREC_MEM_MAX_LEN;
+  }
+  if (memset_s(data, output_size, init_value, output_size) != EOK) {
+    AICPU_LOGE("For '%s', failed to memset_s, the size of memset_s is [%d].", kGatherDGradV2, output_size);
+    return KERNEL_STATUS_INNER_ERROR;
+  }
+  return KERNEL_STATUS_OK;
+}
+
 template <typename T, typename S>
 uint32_t GatherDGradV2Kernel::GatherDGradV2Task(CpuKernelContext &ctx) {
   T *index = reinterpret_cast<T *>(ctx.Input(kDim1)->GetData());
@@ -109,8 +127,8 @@ uint32_t GatherDGradV2Kernel::GatherDGradV2Task(CpuKernelContext &ctx) {
   int64_t dim_after_axis =
     std::accumulate(output_shape_.begin() + dim_ + 1, output_shape_.end(), 1, std::multiplies<int64_t>());
   int64_t output_size = dim_before_axis * dim_at_axis_output * dim_after_axis * sizeof(S);
-  if (memset_s(output, output_size, 0x0, output_size) != EOK) {
-    AICPU_LOGE("memset_s failed!");
+  if (InitOutput(0x0, output, output_size) != KERNEL_STATUS_OK) {
+    AICPU_LOGE("For '%s', failed to init output.", kGatherDGradV2);
     return KERNEL_STATUS_INNER_ERROR;
   }
   return GatherGrad(index, grad, output, dim_before_axis, dim_at_axis_grad, dim_at_axis_output, dim_after_axis, ctx);

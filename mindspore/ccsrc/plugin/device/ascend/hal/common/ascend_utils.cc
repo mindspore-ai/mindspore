@@ -19,19 +19,9 @@
 #include <string>
 #include <map>
 #include "common/util/error_manager/error_manager.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "runtime/device/ms_device_shape_transfer.h"
-#include "utils/ms_context.h"
 #include "utils/dlopen_macro.h"
-#include "runtime/dev.h"
-#include "runtime/config.h"
 #include "acl/error_codes/rt_error_codes.h"
-#ifdef ASCEND_910
-#define EXPECT_ASCEND_VERSION "ascend910"
-#elif defined(ASCEND_910B)
-#define EXPECT_ASCEND_VERSION "ascend910b"
-#endif
+#include "acl/acl_base.h"
 
 namespace mindspore {
 namespace device {
@@ -176,37 +166,9 @@ void ErrorManagerAdapter::MessageHandler(std::ostringstream *oss) {
   }
 }
 
-bool IsGraphMode() {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  return context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode;
-}
-
-bool IsDynamicShapeGraph(const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
-  return std::any_of(node_list.begin(), node_list.end(),
-                     [](const AnfNodePtr &node) { return common::AnfAlgo::IsDynamicShape(node); });
-}
-
-std::string GetSocVersion() {
-  // Get default soc version.
-  static std::string version;
-  if (version.empty()) {
-    const int kSocVersionLen = 50;
-    char soc_version[kSocVersionLen] = {0};
-    auto ret = rtGetSocVersion(soc_version, kSocVersionLen);
-    if (ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "GetSocVersion failed.";
-    }
-    version = soc_version;
-  }
-  return version;
-}
-
 std::string GetAscendPath() {
   Dl_info info;
-  if (dladdr(reinterpret_cast<void *>(rtGetSocVersion), &info) == 0) {
+  if (dladdr(reinterpret_cast<void *>(aclrtGetSocName), &info) == 0) {
     MS_LOG(INFO) << "Get dladdr failed, skip.";
     return "";
   }
@@ -226,61 +188,6 @@ std::string GetErrorMsg(uint32_t rt_error_code) {
   }
   return find_iter->second;
 }
-
-#if defined(ASCEND_910) || defined(ASCEND_910B)
-constexpr auto k910AscendVersion = "Ascend910";
-constexpr auto k910BAscendVersion = "ascend910b";
-const std::map<std::string, std::string> kAscendSocVersions = {
-  {"Ascend910A", "ascend910"},    {"Ascend910B", "ascend910"},    {"Ascend910PremiumA", "ascend910"},
-  {"Ascend910ProA", "ascend910"}, {"Ascend910ProB", "ascend910"}, {"Ascend910B1", "ascend910b"},
-  {"Ascend910B2", "ascend910b"},  {"Ascend910B2C", "ascend910b"}, {"Ascend910B3", "ascend910b"},
-  {"Ascend910B4", "ascend910b"}};
-
-// for unify 1980 and 1980b, when the function throw exception, it means the 910b soc version is not available.
-const bool SelectAscendPlugin = []() -> bool {
-  // for 1951, if is_heterogenous, return true
-  int32_t is_heterogenous = 0;
-  (void)rtGetIsHeterogenous(&is_heterogenous);
-  if (is_heterogenous == 1) {
-    if (std::string(EXPECT_ASCEND_VERSION) == k910BAscendVersion) {
-      exit(0);
-    } else {
-      return true;
-    }
-  }
-  std::string soc_version = GetSocVersion();
-  // if soc_version belongs to 310 or 710, return true
-  if (soc_version.find(k910AscendVersion) == std::string::npos) {
-    return true;
-  }
-  auto iter = kAscendSocVersions.find(soc_version);
-  if (iter == kAscendSocVersions.end()) {
-    exit(0);
-  }
-  if (iter->second != std::string(EXPECT_ASCEND_VERSION)) {
-    exit(0);
-  }
-
-  auto enable_ge = common::GetEnv("MS_ENABLE_GE");
-  if (enable_ge.empty()) {
-    common::SetEnv("MS_ENABLE_GE", "1");
-  }
-
-  auto format_mode = common::GetEnv("MS_ENABLE_FORMAT_MODE");
-  if (format_mode.empty()) {
-    common::SetEnv("MS_ENABLE_FORMAT_MODE", "1");
-  }
-
-  auto force_acl = common::GetEnv("MS_DEV_FORCE_ACL");
-  auto disable_ref = common::GetEnv("MS_DISABLE_REF_MODE");
-  // MS_DEV_FORCE_ACL 1: ACL with special format, 2: ACL with default format.
-  if (force_acl.empty() && disable_ref != "1") {
-    common::SetEnv("MS_DEV_FORCE_ACL", "1");
-  }
-
-  return true;
-}();
-#endif
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

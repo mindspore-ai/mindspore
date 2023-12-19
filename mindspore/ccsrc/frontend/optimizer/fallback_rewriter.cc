@@ -354,7 +354,7 @@ class BeforeOptARewriter : public BaseRewriter {
 
   AnfNodePtr ConvertDictGetItem(const CNodePtr &node) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
-    if (!allow_fallback_runtime || ConvertDictToTuple(node, node->func_graph())) {
+    if (!allow_fallback_runtime || (!is_dict_output_ && !has_dict_inplace_)) {
       return ConvertDictGetItemToTupleGetItem(node);
     }
     return nullptr;
@@ -925,7 +925,7 @@ class AfterOptARewriter : public BaseRewriter {
         const auto &tensor_val = dyn_cast<abstract::AbstractTensor>(val);
         if (tensor_val != nullptr) {
           const auto &tensor_type = tensor_val->element()->BuildType();
-          fallback::SetRealType<AnfNode, Type>(dict_getitem_node, tensor_type);
+          fallback::SetRealType<AnfNode, Type>(dict_getitem_node, tensor_val->BuildType());
           const auto &tensor_shape = dyn_cast<abstract::Shape>(tensor_val->BuildShape());
           MS_EXCEPTION_IF_NULL(tensor_shape);
           fallback::SetRealShape<AnfNode, abstract::BaseShape>(dict_getitem_node, tensor_shape);
@@ -2507,8 +2507,7 @@ bool CheckNeedConvertList(const AbstractBasePtr &abs) {
 AnfNodePtr ConvertToPyExecuteListInner(const AnfNodePtr &node, const FuncGraphPtr &fg) {
   MS_EXCEPTION_IF_NULL(node);
   auto abs = node->abstract();
-  MS_EXCEPTION_IF_NULL(abs);
-  if (!CheckNeedConvertList(abs)) {
+  if (abs == nullptr || !CheckNeedConvertList(abs)) {
     return nullptr;
   }
   auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();

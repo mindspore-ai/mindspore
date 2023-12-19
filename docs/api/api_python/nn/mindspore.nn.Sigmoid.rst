@@ -3,9 +3,7 @@ mindspore.nn.Sigmoid
 
 .. py:class:: mindspore.nn.Sigmoid
 
-    Sigmoid激活函数。
-
-    按元素计算Sigmoid激活函数。
+    逐元素计算Sigmoid激活函数。
 
     Sigmoid函数定义为：
 
@@ -17,7 +15,7 @@ mindspore.nn.Sigmoid
 
     Sigmoid函数图：
 
-    .. image:: images/Sigmoid.png
+    .. image:: ../images/Sigmoid.png
         :align: center
 
     输入：

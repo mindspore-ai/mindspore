@@ -17,13 +17,11 @@
 #include <cxxabi.h>
 #include <set>
 #include <string>
-#if defined(ASCEND_910) || defined(ASCEND_910B)
-#include "plugin/device/ascend/hal/common/ascend_utils.h"
-#endif
 #include "include/common/debug/common.h"
 #include "transform/graph_ir/aoe_util.h"
 #include "utils/file_utils.h"
 #include "utils/ms_context.h"
+#include "acl/acl_base.h"
 
 namespace mindspore {
 namespace transform {
@@ -34,6 +32,12 @@ const ::ge::AscendString LOG_LEVEL = ::ge::AscendString("log");
 const ::ge::AscendString PRECISION_MODE = ::ge::AscendString("precision_mode");
 }  // namespace AoeOptions
 
+bool IsAscendServer() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  return ms_context->ascend_soc_version().find("ascend910") != std::string::npos;
+}
+
 AoeUtil::AoeUtil() : initialize_(false) {}
 
 AoeUtil::~AoeUtil() { MS_LOG(INFO) << "release aoeutil success."; }
@@ -43,40 +47,51 @@ void AoeUtil::Initialize() {
     MS_LOG(INFO) << "Aoe already initialized.";
     return;
   }
-#if defined(ASCEND_910) || defined(ASCEND_910B)
-  auto ascend_path = device::ascend::GetAscendPath();
-  std::string aoe_plugin_path = "lib64/libaoe_tuning.so";
-  auto plugin_path = ascend_path + aoe_plugin_path;
-  auto ret = access(plugin_path.c_str(), F_OK);
-  if (ret != 0) {
-    MS_LOG(WARNING) << "plugin " << plugin_path << " not exist";
-    return;
+  if (IsAscendServer()) {
+    Dl_info info;
+    if (dladdr(reinterpret_cast<void *>(aclrtGetSocName), &info) == 0) {
+      MS_LOG(WARNING) << "Get dladdr failed, skip.";
+      return;
+    }
+    auto path_tmp = std::string(info.dli_fname);
+    const std::string kLib64 = "lib64";
+    auto pos = path_tmp.find(kLib64);
+    if (pos == std::string::npos) {
+      MS_LOG(WARNING) << "Get ascend path failed, please check the run package.";
+      return;
+    }
+    std::string aoe_plugin_path = "lib64/libaoe_tuning.so";
+    auto plugin_path = path_tmp.substr(0, pos) + aoe_plugin_path;
+    auto ret = access(plugin_path.c_str(), F_OK);
+    if (ret != 0) {
+      MS_LOG(WARNING) << "plugin " << plugin_path << " not exist";
+      return;
+    }
+    plugin_handle_ = dlopen(plugin_path.c_str(), RTLD_LAZY | RTLD_LOCAL);
+    if (plugin_handle_ == nullptr) {
+      MS_LOG(INFO) << "Cannot dlopen " << plugin_path << ", result = " << GetDlErrorMsg()
+                   << ", it can be ignored if not use aoe.";
+      return;
+    }
+    MS_LOG(INFO) << "load " << aoe_plugin_path << " success";
+    aoe_initialize_ = DlsymFuncObj(AoeInitialize, plugin_handle_);
+    aoe_finalize_ = DlsymFuncObj(AoeFinalize, plugin_handle_);
+    aoe_create_session_ = DlsymFuncObj(AoeCreateSession, plugin_handle_);
+    aoe_set_ge_gession_ = DlsymFuncObj(AoeSetGeSession, plugin_handle_);
+    aoe_set_tuning_graph_ = DlsymFuncObj(AoeSetTuningGraph, plugin_handle_);
+    aoe_tuning_graph_ = DlsymFuncObj(AoeTuningGraph, plugin_handle_);
+    aoe_destroy_session_ = DlsymFuncObj(AoeDestroySession, plugin_handle_);
+    auto ms_context = MsContext::GetInstance();
+    std::string aoe_job_type = ms_context->get_param<std::string>(MS_CTX_AOE_JOB_TYPE);
+    std::map<::ge::AscendString, ::ge::AscendString> globalOptions = {
+      {AoeOptions::JOB_TYPE, ::ge::AscendString(aoe_job_type.c_str())}};
+    const Aoe::AoeStatus status = aoe_initialize_(globalOptions);
+    if (status != Aoe::AOE_SUCCESS) {
+      MS_LOG(ERROR) << "AoeInitialize failed.";
+    }
+    MS_LOG(INFO) << "AoeInitialize success.";
+    initialize_ = true;
   }
-  plugin_handle_ = dlopen(plugin_path.c_str(), RTLD_LAZY | RTLD_LOCAL);
-  if (plugin_handle_ == nullptr) {
-    MS_LOG(INFO) << "Cannot dlopen " << plugin_path << ", result = " << GetDlErrorMsg()
-                 << ", it can be ignored if not use aoe.";
-    return;
-  }
-  MS_LOG(INFO) << "load " << aoe_plugin_path << " success";
-  aoe_initialize_ = DlsymFuncObj(AoeInitialize, plugin_handle_);
-  aoe_finalize_ = DlsymFuncObj(AoeFinalize, plugin_handle_);
-  aoe_create_session_ = DlsymFuncObj(AoeCreateSession, plugin_handle_);
-  aoe_set_ge_gession_ = DlsymFuncObj(AoeSetGeSession, plugin_handle_);
-  aoe_set_tuning_graph_ = DlsymFuncObj(AoeSetTuningGraph, plugin_handle_);
-  aoe_tuning_graph_ = DlsymFuncObj(AoeTuningGraph, plugin_handle_);
-  aoe_destroy_session_ = DlsymFuncObj(AoeDestroySession, plugin_handle_);
-  auto ms_context = MsContext::GetInstance();
-  std::string aoe_job_type = ms_context->get_param<std::string>(MS_CTX_AOE_JOB_TYPE);
-  std::map<::ge::AscendString, ::ge::AscendString> globalOptions = {
-    {AoeOptions::JOB_TYPE, ::ge::AscendString(aoe_job_type.c_str())}};
-  const Aoe::AoeStatus status = aoe_initialize_(globalOptions);
-  if (status != Aoe::AOE_SUCCESS) {
-    MS_LOG(ERROR) << "AoeInitialize failed.";
-  }
-  MS_LOG(INFO) << "AoeInitialize success.";
-  initialize_ = true;
-#endif
 }
 
 void AoeUtil::Destroy() {
@@ -84,19 +99,19 @@ void AoeUtil::Destroy() {
     MS_LOG(WARNING) << "AOE not initialize, stop destroy";
     return;
   }
-#if defined(ASCEND_910) || defined(ASCEND_910B)
-  try {
-    const Aoe::AoeStatus status = aoe_finalize_();
-    if (status != Aoe::AOE_SUCCESS) {
-      MS_LOG(ERROR) << "AoeFinalize failed. status is " << status;
+  if (IsAscendServer()) {
+    try {
+      const Aoe::AoeStatus status = aoe_finalize_();
+      if (status != Aoe::AOE_SUCCESS) {
+        MS_LOG(ERROR) << "AoeFinalize failed. status is " << status;
+      }
+    } catch (const std::exception &e) {
+      MS_LOG(ERROR) << "Error occurred when exec aoe finalize. Error:" << e.what();
+    } catch (...) {
+      std::string exName(abi::__cxa_current_exception_type()->name());
+      MS_LOG(ERROR) << "Error occurred when  exec aoe finalize. Exception name: " << exName;
     }
-  } catch (const std::exception &e) {
-    MS_LOG(ERROR) << "Error occurred when exec aoe finalize. Error:" << e.what();
-  } catch (...) {
-    std::string exName(abi::__cxa_current_exception_type()->name());
-    MS_LOG(ERROR) << "Error occurred when  exec aoe finalize. Exception name: " << exName;
   }
-#endif
   if (plugin_handle_ == nullptr) {
     return;
   }
@@ -169,14 +184,15 @@ Status AoeUtil::AoeOnlineGeGraph(const std::shared_ptr<::ge::Session> &ge_sessio
     MS_LOG(ERROR) << "sess is null";
     return FAILED;
   }
-
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  // set overflow mode in ascend910b
+  const auto &soc_version = ms_context->ascend_soc_version();
+  ::ge::AscendString precision_mode =
+    soc_version.find("ascend910b") == std::string::npos ? "allow_fp32_to_fp16" : "must_keep_origin_dtype";
   std::map<::ge::AscendString, ::ge::AscendString> tuneOptions = {
     {AoeOptions::FRAMEWORK, ::ge::AscendString("1")},
-#ifdef ASCEND_910
-    {AoeOptions::PRECISION_MODE, ::ge::AscendString("allow_fp32_to_fp16")},
-#else
-    {AoeOptions::PRECISION_MODE, ::ge::AscendString("must_keep_origin_dtype")},
-#endif
+    {AoeOptions::PRECISION_MODE, precision_mode},
     {AoeOptions::LOG_LEVEL, ::ge::AscendString("error")},
   };
 

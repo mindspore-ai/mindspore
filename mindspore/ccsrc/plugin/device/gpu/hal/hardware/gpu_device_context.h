@@ -48,10 +48,6 @@ class GPUDeviceResManager : public DeviceResManager {
 
   size_t GetAvailableMemSize() const override { return mem_manager_->GetAvailableMemSize(); }
 
-  DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,
-                                       const ShapeVector &shape = ShapeVector(),
-                                       const UserDataPtr &user_data = nullptr) const override;
-
   DeviceAddressPtr CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const override;
 
   bool CreateStream(size_t *stream_id) const override;
@@ -65,6 +61,8 @@ class GPUDeviceResManager : public DeviceResManager {
   // Relevant function to allocate and free device memory of raw ptr.
   void *AllocateMemory(size_t size) const override;
   void FreeMemory(void *ptr) const override;
+  void FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
+                       const std::vector<size_t> &keep_addr_sizes) const override;
 
   bool AllocateMemory(DeviceAddress *const &address) const override;
 
@@ -86,6 +84,7 @@ class GPUKernelExecutor : public KernelExecutor {
   void OptimizeGraph(const FuncGraphPtr &graph) const override;
 
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
+  kernel::KernelModPtr CreateKernelMod(const std::string &op_name) const override;
 
   void PreprocessBeforeRun(const FuncGraphPtr &graph) const override;
 

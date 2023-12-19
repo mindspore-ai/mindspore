@@ -128,7 +128,7 @@ void PatternMap::Clear() {
 
 bool PatternMap::Check(const std::string &name, const AnfNodePtr &node) const { return opt::AnfEqual(node, Get(name)); }
 
-SrcPattern &SrcPattern::AddVar(const std::string &name, const ConditionFunc &f) {
+SrcPattern &SrcPattern::AddVar(const std::string &name, const PatternConditionFunc &f) {
   if (ref_map_.find(name) != ref_map_.end()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Var: " << name << " is already in SrcPattern.";
   }
@@ -138,7 +138,7 @@ SrcPattern &SrcPattern::AddVar(const std::string &name, const ConditionFunc &f) 
   return *this;
 }
 
-SrcPattern &SrcPattern::AddSeqVar(const std::string &name, const ConditionFunc &f) {
+SrcPattern &SrcPattern::AddSeqVar(const std::string &name, const PatternConditionFunc &f) {
   if (ref_map_.find(name) != ref_map_.end()) {
     MS_LOG(INTERNAL_EXCEPTION) << "SeqVar: " << name << " is already in SrcPattern.";
   }

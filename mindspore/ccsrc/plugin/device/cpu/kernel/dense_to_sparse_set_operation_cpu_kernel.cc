@@ -410,7 +410,6 @@ bool DenseToSparseSetOperationCpuKernelMod::Init(const std::vector<KernelTensor 
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "," << set_operation_str << " is an invalid 'set_operation'.";
   }
   data_type_ = inputs[kInputX1]->dtype_id();
-  is_need_retrieve_output_shape_ = true;
   return true;
 }
 

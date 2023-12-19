@@ -348,6 +348,10 @@ bool ParseAction(const ResourcePtr &resource) {
   }
 
   py::object input = resource->source_input();
+  // CellList need convert to FuncGraph in Parse, add flag for input from top graph.
+  if (py::hasattr(input, PYTHON_CELL_AS_LIST)) {
+    py::setattr(input, PYTHON_CELL_LIST_FROM_TOP, py::bool_(true));
+  }
   parse::Parser::InitParserEnvironment(input);
   parse::Parser::EnableDeferResolve(false);
   py::module path = py::module::import("os.path");
@@ -611,10 +615,15 @@ bool GraphReusingAction(const ResourcePtr &resource) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   const bool enable_ge = context->backend_policy() == "ge";
+  const bool graph_op_run = common::GetEnv("GRAPH_OP_RUN") == "1";
+  const bool force_no_inline = common::GetEnv("MS_FORCE_NO_INLINE") == "1";
   context->SetCellReuseLevel(CellReuseLevel::kNoCellReuse);
   if (cell_reused) {
     MS_LOG(INFO) << "Cell reuse(@lazy_inline) actually takes effect.";
-    const auto cell_reuse_level = enable_ge ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
+    auto cell_reuse_level = (enable_ge && !graph_op_run) ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
+    if (force_no_inline) {
+      cell_reuse_level = CellReuseLevel::kNoInline;
+    }
     context->SetCellReuseLevel(cell_reuse_level);
   }
   return true;
@@ -1627,7 +1636,9 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
   is_cluster_initialized = distributed::cluster::ClusterContext::instance()->initialized();
   std::vector<ActionItem> actions;
   // If enable compilation cache and the cache is read successfully, only do the backend actions.
-  if (!resource->EnableCompileCache() || resource->func_graph() == nullptr) {
+  if (IsPhaseLoadFromMindIR(PhaseManager::GetInstance().phase())) {
+    actions = MindIRPipeline();
+  } else if (!resource->EnableCompileCache() || resource->func_graph() == nullptr) {
     actions = CommonPipeline();
 
     // Optimize
@@ -1685,10 +1696,6 @@ std::vector<ActionItem> MindIRPipeline() {
   // Set funcGraph loaded from MindIR to resource.
   (void)actions.emplace_back(std::make_pair(kLoadMindir, SetMindIRGraphAction));
   (void)actions.emplace_back(std::make_pair(kValidate, ValidateAction));
-  // Compile the ANF graph
-  (void)actions.emplace_back(std::make_pair(kTaskEmit, TaskEmitAction));
-  // Execute the graph
-  (void)actions.emplace_back(std::make_pair(kExecute, ExecuteAction));
   return actions;
 }
 }  // namespace pipeline

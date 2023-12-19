@@ -870,14 +870,7 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
                    << " debug string:" << origin_output_with_index.first->DebugString()
                    << " with index:" << origin_output_with_index.second;
 
-      // Check the memory allocator validity of graph output.
-      if ((output_actor != nullptr) && (output_actor->type() == KernelTransformType::kKernelActor)) {
-        auto kernel_info = dynamic_cast<KernelInfo *>(output_kernel->kernel_info());
-        MS_EXCEPTION_IF_NULL(kernel_info);
-        auto is_somas = kernel_info->IsTensorEnableSomas(kernel_info->somas_output_result(), output_index);
-        MS_EXCEPTION_IF_CHECK_FAIL((!is_somas),
-                                   (output_kernel->fullname_with_scope() + " can't use somas for graph output."));
-      }
+      SchedulerHelper::AddSomasInfoForGraphOutput(output_actor, output_kernel, output_index, graph_id);
     }
   }
 }
@@ -1012,6 +1005,7 @@ void GraphScheduler::Optimize(const ActorSetPtr &actor_set) const {
   }
   optimizer->AddPass(std::make_shared<BatchDataArrowFusion>());
   optimizer->Optimize(actor_set);
+  any_type_graph_scheduler_.Optimize(actor_set, graph_output_to_actor_);
 }
 
 std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const GraphCompilerInfo &graph_compiler_info,
@@ -1497,7 +1491,9 @@ void GraphScheduler::LinkDataArrowInSinkMode(const KernelGraphPtr &graph, const 
     // The gather of linking data arrows of kernel by the different from kernel type.
     LinkDataArrow(to_actor, graph_compiler_info, graph, from_kernel_with_output_idx, to_kernel_with_input_idx);
   }
-
+  if (graph->is_any_type_input()) {
+    return;
+  }
   // Foreach the execution order to add the auto monad device tensor stores.
   auto &execution_order = graph->execution_order();
   (void)std::for_each(execution_order.begin(), execution_order.end(), [&](const CNodePtr &kernel) {
@@ -2004,36 +2000,6 @@ void GraphScheduler::LinkControlArrowBySkippedNode(AbstractActor *to_actor, cons
 
 void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
-  for (auto &from_iter : graph->send_recv_pairs_for_parallel_op_inputs()) {
-    auto parallel_node = from_iter.first;
-    for (auto pair : from_iter.second) {
-      auto send_node = pair.first;
-      auto recv_node = pair.second;
-      MS_EXCEPTION_IF_NULL(parallel_node);
-      MS_EXCEPTION_IF_NULL(send_node);
-      MS_EXCEPTION_IF_NULL(recv_node);
-      MS_LOG(INFO) << "Link control arrow for parallel node input: " << parallel_node->fullname_with_scope();
-      auto parallel_actor = FetchActor(parallel_node->fullname_with_scope());
-      auto send_actor = FetchActor(send_node->fullname_with_scope());
-      auto recv_actor = FetchActor(recv_node->fullname_with_scope());
-      MS_EXCEPTION_IF_NULL(parallel_actor);
-      MS_EXCEPTION_IF_NULL(send_actor);
-      MS_EXCEPTION_IF_NULL(recv_actor);
-
-      // inputs of to_allreduce_actor  --> from_send_actor
-      for (auto &input_aid : parallel_actor->input_data_arrow_aids_) {
-        auto input_actor = dynamic_cast<KernelActor *>(FetchActor(input_aid.first.Name()));
-        if (input_actor != nullptr) {
-          SchedulerHelper::AddControlArrow(input_actor, send_actor);
-        }
-      }
-      // from_send_actor --> from_recv_actor
-      SchedulerHelper::AddControlArrow(send_actor, recv_actor);
-      // from_recv_actor --> to_allreduce_actor
-      SchedulerHelper::AddControlArrow(recv_actor, parallel_actor);
-    }
-  }
-
   for (auto &to_iter : graph->send_recv_pairs_for_parallel_op_outputs()) {
     auto parallel_node = to_iter.first;
     for (auto pair : to_iter.second) {
@@ -2049,19 +2015,6 @@ void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph
       MS_EXCEPTION_IF_NULL(parallel_actor);
       MS_EXCEPTION_IF_NULL(send_actor);
       MS_EXCEPTION_IF_NULL(recv_actor);
-
-      // from_allreduce_actor  --> to_send_actor
-      SchedulerHelper::AddControlArrow(parallel_actor, send_actor);
-      // to_send_actor --> to_recv_actor
-      SchedulerHelper::AddControlArrow(send_actor, recv_actor);
-      // to_recv_actor --> outputs of from_allreduce_actor
-      for (auto &output_data_arrow : parallel_actor->output_data_arrows_) {
-        MS_EXCEPTION_IF_NULL(output_data_arrow);
-        auto output_actor = FetchActor(output_data_arrow->to_op_id_.Name());
-        if (output_actor != nullptr) {
-          SchedulerHelper::AddControlArrow(recv_actor, output_actor);
-        }
-      }
 
       // In the scene of allreduce op and computing op parallel multi stream, the input memory of allreduce can be
       // reused only when the recv node runs finished, which is expressed by the reference count increased.
@@ -2339,8 +2292,8 @@ void GraphScheduler::LinkControlArrowByExecutionOrder(const KernelGraphPtr &grap
     if ((last_actor != nullptr) && (to_actor != nullptr)) {
       SchedulerHelper::AddControlArrow(last_actor, to_actor);
     } else {
-      MS_LOG(INFO) << "Skip add control arrow, from kernel: " << execution_order[i - 1]->fullname_with_scope()
-                   << ", to kernel: " << to_kernel->fullname_with_scope();
+      MS_LOG(WARNING) << "Skip add control arrow, from kernel: " << execution_order[i - 1]->fullname_with_scope()
+                      << ", to kernel: " << to_kernel->fullname_with_scope();
     }
     if (to_actor != nullptr) {
       last_actor = to_actor;
@@ -2351,8 +2304,7 @@ void GraphScheduler::LinkControlArrowByExecutionOrder(const KernelGraphPtr &grap
 void GraphScheduler::LinkControlArrowByCommunicationNode(const std::vector<CNodePtr> &communication_nodes,
                                                          const std::vector<KernelGraphPtr> &graphs,
                                                          const GraphCompilerInfo &graph_compiler_info) const {
-  const size_t kCommunicationNodesMinNum = 2;
-  if (communication_nodes.size() < kCommunicationNodesMinNum) {
+  if (communication_nodes.empty()) {
     return;
   }
 
@@ -2730,6 +2682,13 @@ void GraphScheduler::PersistDeviceTensorForParameter(const AnfNodePtr &parameter
       device_tensor->host_shape(), device_context->device_context_key().device_name_,
       device_context->device_context_key().device_id_);
     auto other_type_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+    if (front_node->isa<ValueNode>()) {
+      const auto &value_node = front_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      if (value_node->value() != nullptr && value_node->value()) {
+        kernel_tensor->set_value(value_node->value());
+      }
+    }
     other_type_device_tensor->SetNodeIndex(parameter, 0);
     other_type_device_tensor->set_from_persistent_mem(true);
     MS_LOG(DEBUG) << "Create device tensor:" << other_type_device_tensor

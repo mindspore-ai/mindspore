@@ -59,7 +59,7 @@ from .comm_ops import (AllGather, AllReduce, NeighborExchange, NeighborExchangeV
 from .control_ops import GeSwitch, Merge
 from .custom_ops import (Custom)
 from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSummary,
-                        TensorSummary, HistogramSummary, Print, Assert)
+                        TensorSummary, HistogramSummary, TensorDump, Print, Assert)
 from .image_ops import (CropAndResize, NonMaxSuppressionV3, HSVToRGB, AdjustHue, AdjustSaturation,
                         NonMaxSuppressionWithOverlaps, ResizeArea, ResizeBilinearV2, ExtractGlimpse,
                         CombinedNonMaxSuppression, RGBToHSV, ScaleAndTranslate, ResizeLinear1D, ResizeBicubic)
@@ -297,6 +297,7 @@ __all__ = [
     'ImageSummary',
     'TensorSummary',
     'HistogramSummary',
+    'TensorDump',
     "Print",
     "Assert",
     'InsertGradientOf',

@@ -78,8 +78,8 @@ void SparseMatrixSparseMatMulCheckInteger(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("rank of x2_values", SizeToLong(x2_values.size()), kEqual, kOne, prim_name);
 }
 
-abstract::TupleShapePtr SparseMatrixSparseMatMulInferShape(const PrimitivePtr &primitive,
-                                                           const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr FrontendSparseMatrixSparseMatMulInferShape(const PrimitivePtr &primitive,
+                                                                   const std::vector<AbstractBasePtr> &input_args) {
   std::vector<int64_t> x1_dense_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   const int64_t rank_x1 = x1_dense_shape[0];
@@ -170,6 +170,85 @@ abstract::TupleShapePtr SparseMatrixSparseMatMulInferShape(const PrimitivePtr &p
   }
 }
 
+abstract::TupleShapePtr SparseMatrixSparseMatMulInferShape(const PrimitivePtr &primitive,
+                                                           const std::vector<AbstractBasePtr> &input_args) {
+  std::vector<int64_t> x1_dense_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  const int64_t rank_x1 = x1_dense_shape[0];
+  std::vector<int64_t> x2_dense_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
+  const int64_t rank_x2 = x2_dense_shape[0];
+  if (rank_x1 != rank_x2) {
+    MS_EXCEPTION(ValueError)
+      << "For SparseMatrixSparseMatMul, x1_dense_shape.shape[0] and rank of x2_dense must be the "
+         "same, but got x1_dense_shape.shape[0] = "
+      << rank_x1 << ", and rank of x2_dense = " << rank_x2 << ".";
+  }
+
+  SparseMatrixSparseMatMulCheckInteger(primitive, input_args);
+
+  const int kInputNoBatch = 2;
+  const int kInputWithBatch = 3;
+  if (rank_x1 != kInputNoBatch && rank_x1 != kInputWithBatch) {
+    MS_EXCEPTION(ValueError) << "For SparseMatrixSparseMatMul, rank of x1_dense_shape must be (2,) or (3,), but got "
+                             << rank_x1 << ".";
+  }
+
+  std::vector<int64_t> x1_batch_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  std::vector<int64_t> x2_batch_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->GetShape())[kShape];
+
+  if (x1_batch_shape[0] != x2_batch_shape[0]) {
+    MS_EXCEPTION(ValueError) << "For SparseMatrixSparseMatMul, x1_batch_shape[0] and x2_batch_shape[0] must be the "
+                                "same, but got x1_batch_shape[0] = "
+                             << x1_batch_shape[0] << ", and x2_batch_shape[0] = " << x2_batch_shape[0] << ".";
+  }
+
+  ShapeVector dense_shape = {x1_dense_shape[0]};
+  ShapeVector batch_shape = {x1_batch_shape[0]};
+  abstract::ShapePtr y_dense_shape = std::make_shared<abstract::Shape>(dense_shape);
+  abstract::ShapePtr y_batch_shape = std::make_shared<abstract::Shape>(batch_shape);
+
+  int64_t max_length = MAX_LENGTH;
+  ShapeVector infer_shape_max = {max_length};
+  abstract::ShapePtr y_col_shape = std::make_shared<abstract::Shape>(infer_shape_max);
+  abstract::ShapePtr y_values_shape = std::make_shared<abstract::Shape>(infer_shape_max);
+
+  auto dense_shape_type_ptr = input_args[0]->GetType();
+  MS_EXCEPTION_IF_NULL(dense_shape_type_ptr);
+  auto dense_shape_value_ptr = input_args[0]->GetValue();
+  MS_EXCEPTION_IF_NULL(dense_shape_value_ptr);
+  auto dense_shape_value_ptr_tensor = CheckAndConvertUtils::CheckTensorIntValue(
+    "dense_shape", dense_shape_value_ptr, primitive->name(), dense_shape_type_ptr);
+  auto row_value = static_cast<int64_t>(*(dense_shape_value_ptr_tensor.end() - 2));
+  auto col_value = static_cast<int64_t>(*(dense_shape_value_ptr_tensor.end() - 1));
+
+  auto transpose_a = GetValue<bool>(primitive->GetAttr(kTransposeA));
+  auto transpose_b = GetValue<bool>(primitive->GetAttr(kTransposeB));
+  auto adjoint_a = GetValue<bool>(primitive->GetAttr("adjoint_a"));
+  auto adjoint_b = GetValue<bool>(primitive->GetAttr("adjoint_b"));
+
+  if (adjoint_a && transpose_a) {
+    MS_EXCEPTION(ValueError)
+      << "For SparseMatrixSparseMatMul, only one of adjoint_a and transpose_a may be true, but got adjoint_a="
+      << adjoint_a << " and transpose_a=" << transpose_a << ".";
+  }
+  if (adjoint_b && transpose_b) {
+    MS_EXCEPTION(ValueError)
+      << "For SparseMatrixSparseMatMul, only one of adjoint_b and transpose_b  may be true, but got adjoint_b="
+      << adjoint_b << " and transpose_b=" << transpose_b << ".";
+  }
+  if (adjoint_a || transpose_a) {
+    row_value = col_value;
+  }
+
+  ShapeVector row_shape = {(x1_batch_shape[0] - 1) * (row_value + 1)};
+  abstract::ShapePtr y_row_shape = std::make_shared<abstract::Shape>(row_shape);
+  return std::make_shared<abstract::TupleShape>(
+    std::vector<abstract::BaseShapePtr>{y_dense_shape, y_batch_shape, y_row_shape, y_col_shape, y_values_shape});
+}
+
 TuplePtr SparseMatrixSparseMatMulInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> index_valid_types = {kInt32, kInt64};
   const std::set<TypePtr> values_valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
@@ -212,7 +291,7 @@ AbstractBasePtr SparseMatrixSparseMatMulInfer(const abstract::AnalysisEnginePtr 
   const int64_t input_num = 10;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
   auto infer_type = SparseMatrixSparseMatMulInferType(primitive, input_args);
-  auto infer_shape = SparseMatrixSparseMatMulInferShape(primitive, input_args);
+  auto infer_shape = FrontendSparseMatrixSparseMatMulInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 // AG means auto generated

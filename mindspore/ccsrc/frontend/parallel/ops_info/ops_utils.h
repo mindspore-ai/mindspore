@@ -586,6 +586,7 @@ constexpr char FILLV2[] = "FillV2";
 constexpr char WKV[] = "WKV";
 constexpr char FFN[] = "FFN";
 constexpr char FLASH_ATTENTION_SCORE[] = "FlashAttentionScore";
+constexpr char KV_CACHE_MGR[] = "KVCacheMgr";
 
 // pipeline
 constexpr size_t PIPELINE_FUSTION_OFFSET = 100;
@@ -618,6 +619,8 @@ constexpr char FUNC_GRAPH_FLAG_STRIDED_SLICE[] = "strided_slice_flag";
 constexpr char INTERLEAVED_NUM[] = "interleave_num";
 constexpr char MICRO_INTERLEAVED_INDEX[] = "micro_interleaved_index";
 constexpr char MICRO_INTERLEAVED_FORWARD_COMM_ORDER[] = "micro_interleaved_forward_comm_order";
+constexpr char FINE_GRAINED_INTERLEAVED_TAG[] = "fine_grained_interleaved_tag";
+constexpr char FINE_GRAINED_INTERLEAVED_BLOCK[] = "fine_grained_interleaved_block";
 constexpr char SEND_REC_DEPEND[] = "send_receive_depend";
 constexpr char USER_NODE_STAGE[] = "user_node_stage";
 constexpr char NODE_STAGE[] = "node_stage";
@@ -660,6 +663,7 @@ constexpr char SCALARSUMMARY[] = "ScalarSummary";
 constexpr char IMAGESUMMARY[] = "ImageSummary";
 constexpr char TENSORSUMMARY[] = "TensorSummary";
 constexpr char HISTOGRAMSUMMARY[] = "HistogramSummary";
+constexpr char TENSORDUMP[] = "TensorDump";
 constexpr char DEBUG[] = "Debug";
 constexpr char BROADCASTGRADIENTARGS[] = "BroadcastGradientArgs";
 constexpr char INVERTPERMUTATION[] = "InvertPermutation";

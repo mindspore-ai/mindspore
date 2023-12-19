@@ -33,7 +33,7 @@ class PaddleSession(AbcInferSession, ABC):
                  model_file,
                  cfg,
                  params_file=None):
-        super(PaddleSession, self).__init__(model_file, cfg)
+        super().__init__(model_file, cfg)
         self.place = None
         self.param_file = params_file
         self.model_session = self._create_infer_session()
@@ -72,12 +72,9 @@ class PaddleSession(AbcInferSession, ABC):
                                      self.param_file)
         if self.cfg.device == DeviceType.CPU.value:
             config.set_cpu_math_library_num_threads(self.cfg.thread_num)
-            self.logger.info(f'Paddle infer on CPU device, thread num is '
-                             f'{self.cfg.thread_num}')
         elif self.cfg.device == DeviceType.GPU.value:
             config.enable_use_gpu(self.cfg.gpu_memory_size,
                                   self.cfg.device_id)
-            self.logger.info(f'Paddle infer on GPU device: {self.cfg.device_id}')
             if self.cfg.is_enable_tensorrt:
                 precision_type = paddle_infer.PrecisionType.Float32
                 if self.cfg.is_fp16:
@@ -95,7 +92,6 @@ class PaddleSession(AbcInferSession, ABC):
                                               precision_mode=precision_type,
                                               use_static=False,
                                               use_calib_mode=True)
-                self.logger.info(f'Enable TensorRT is {config.tensorrt_engine_enabled()}')
 
         else:
             raise ValueError(f'paddle do not work on device type {self.cfg.device}')

@@ -14,7 +14,7 @@ function Run_Converter() {
 
     rm -rf ${ms_models_path}
     mkdir -p ${ms_models_path}
-    echo ${models_server_inference_cfg_file_list[*]}
+    echo "tensorrt cloud config file list: ${models_server_inference_cfg_file_list[*]}"
 
     # Convert models:
     # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile;
@@ -245,7 +245,9 @@ fi
 Print_Benchmark_Result ${run_benchmark_result_file}
 
 # run python ST
-if [[ $backend == "all" || $backend == "server_inference_x86_cloud_gpu" ]]; then
+if [[ ${level} == "level1" ]]; then
+  echo "running tensorrt cloud st level1, skipping repetitive level0 python testcases"
+elif [[ $backend == "all" || $backend == "server_inference_x86_cloud_gpu" ]]; then
   models_python_config=${basepath}/../config_level0/models_python_gpu.cfg
   models_python_cfg_file_list=("$models_python_config")
   Run_python_ST ${basepath} ${x86_path} ${ms_models_path} ${models_path} "${models_python_cfg_file_list[*]}" "GPU"

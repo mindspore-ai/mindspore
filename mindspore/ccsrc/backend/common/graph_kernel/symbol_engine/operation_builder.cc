@@ -379,13 +379,6 @@ SymbolPtr StridedSliceValue(OperationBuilder *b) {
 
 SymbolPtr ShapeCalcValue(OperationBuilder *b) {
   auto functor = common::AnfAlgo::GetNodeAttr<ShapeCalcBaseFunctorPtr>(b->cnode(), kAttrFunctor);
-  if (functor->name() == "ShapeCalc_reduce_shape_shapecalc") {
-    auto input = b->GetInputShape(kIndex1);
-    auto axis = b->GetInputValue(kIndex2);
-    auto keep_dims = BoolSymbol::Make(true);
-    auto skip_mode = BoolSymbol::Make(false);
-    return b->Emit(std::make_shared<infershape::Reduce>(input, axis, keep_dims, skip_mode));
-  }
   if (functor->name() == "ShapeCalc_BroadcastGradientArgs") {
     auto inp1 = b->GetInputShape(kIndex1);
     auto inp2 = b->GetInputShape(kIndex2);

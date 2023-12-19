@@ -31,7 +31,7 @@ class Emitter {
   inline NodePtr Emit(MetaOp op, const NodePtrList &args, const NodePtrDict &kargs) { return EmitOp(op, args, kargs); }
   /// \brief emit an operator node
   inline NodePtr Emit(MetaOp op, const NodePtrList &args) {
-    static NodePtrDict kargs{};
+    static const NodePtrDict kargs{};
     return EmitOp(op, args, kargs);
   }
   /// \brief emit a value node

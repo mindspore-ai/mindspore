@@ -35,8 +35,6 @@ namespace {
 std::map<std::string, MsBackendPolicy> kPolicyMap = {{"ge", kMsBackendGePrior},     {"bisheng", kMsBackendBishengPrior},
                                                      {"vm", kMsBackendVmOnly},      {"ms", kMsBackendMsPrior},
                                                      {"ge_only", kMsBackendGeOnly}, {"vm_prior", kMsBackendVmPrior}};
-std::map<std::string, AscendSocVersion> kAscendSocVersion = {{"ascend910", k910AAscendVersion},
-                                                             {"ascend910b", k910BAscendVersion}};
 
 constexpr auto kDeviceTargetSize2 = 2;
 }  // namespace
@@ -154,7 +152,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<uint32_t>(MS_CTX_INTER_OP_PARALLEL_NUM, inter_op_parallel_num_default);
 
   backend_policy_ = kPolicyMap[policy];
-  ascend_soc_version_ = kNotAscend;
+  ascend_soc_version_ = "";
 
   params_read_status_ = std::vector<bool>(
     static_cast<size_t>(MsCtxParam::NUM_BOOL_PARAMS + MsCtxParam::NUM_UINT32_PARAMS + MsCtxParam::NUM_INT_PARAMS +
@@ -244,24 +242,11 @@ void MsContext::set_ascend_detail_soc_version(const std::string &soc_version) {
 std::string MsContext::ascend_detail_soc_version() const { return ascend_detail_soc_version_; }
 
 bool MsContext::set_ascend_soc_version(const std::string &soc_version) {
-  auto iter = kAscendSocVersion.find(soc_version);
-  if (iter == kAscendSocVersion.end()) {
-    MS_LOG(ERROR) << "invalid ascend soc version: " << soc_version;
-    return false;
-  }
-  ascend_soc_version_ = iter->second;
+  ascend_soc_version_ = soc_version;
   return true;
 }
 
-std::string MsContext::ascend_soc_version() const {
-  auto res = std::find_if(
-    kAscendSocVersion.begin(), kAscendSocVersion.end(),
-    [&, this](const std::pair<std::string, AscendSocVersion> &item) { return item.second == ascend_soc_version_; });
-  if (res != kAscendSocVersion.end()) {
-    return res->first;
-  }
-  return "unknown";
-}
+std::string MsContext::ascend_soc_version() const { return ascend_soc_version_; }
 
 bool MsContext::enable_dump_ir() const {
 #ifdef ENABLE_DUMP_IR

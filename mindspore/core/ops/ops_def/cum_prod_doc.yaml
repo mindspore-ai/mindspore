@@ -1,0 +1,54 @@
+cum_prod:
+    description: |
+        Computes the cumulative product of the tensor x along axis.
+        For example, if input is a vector of size N, the result will also be a vector of size N, with elements.
+
+        .. math::
+            y_i = x_1 * x_2 * x_3 * ... * x_i
+
+        Args:
+            x (Tensor[Number]): The input tensor.
+            axis (int): The dimensions to compute the cumulative product.
+                Only constant value is allowed.
+            exclusive (bool): If ``True`` , perform exclusive cumulative product. Default: ``False`` .
+            reverse (bool): If ``True`` , reverse the result along axis. Default: ``False`` .
+
+        Returns:
+            Tensor, has the same shape and dtype as the `x`.
+
+        Raises:
+            TypeError: If `exclusive` or `reverse` is not a bool.
+            TypeError: If `axis` is not an int.
+            ValueError: If `axis` is None.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> a, b, c, = 1, 2, 3
+            >>> x = Tensor(np.array([a, b, c]).astype(np.float32))
+            >>> output0 = ops.cum_prod(x, 0, False, False) # output=[a, a * b, a * b * c]
+            >>> output1 = ops.cum_prod(x, 0, True, False) # output=[1, a, a * b]
+            >>> output2 = ops.cum_prod(x, 0, False, True) # output=[a * b * c, b * c, c]
+            >>> output3 = ops.cum_prod(x, 0, True, True) # output=[b * c, c, 1]
+            >>> print(output0)
+            [1. 2. 6.]
+            >>> print(output1)
+            [1. 1. 2.]
+            >>> print(output2)
+            [6. 6. 3.]
+            >>> print(output3)
+            [6. 3. 1.]
+            >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [5, 3, 5]]).astype(np.float32))
+            >>> output4 = ops.cum_prod(x, 0, False, False)
+            >>> output5 = ops.cum_prod(x, 1, False, False)
+            >>> print(output4)
+            [[ 1.  2.  3.]
+             [ 4. 10. 18.]
+             [20. 30. 90.]]
+            >>> print(output5)
+            [[  1.   2.   6.]
+             [  4.  20. 120.]
+             [  5.  15.  75.]]

@@ -104,7 +104,7 @@ size_t AscendGmemAdapter::EagerFreeDeviceMem(const DeviceMemPtr addr, const size
   return ret != 0 ? 0 : real_size;
 }
 
-bool AscendGmemAdapter::AddCallbackThread(rtStream_t stream) {
+bool AscendGmemAdapter::AddCallbackThread(aclrtStream stream) {
   MS_LOG(DEBUG) << "Enter add callback thread, stream : " << stream << ".";
   if (!is_eager_free_enabled()) {
     return false;
@@ -129,7 +129,7 @@ bool AscendGmemAdapter::AddCallbackThread(rtStream_t stream) {
   return false;
 }
 
-bool AscendGmemAdapter::RemoveCallbackThread(rtStream_t stream) {
+bool AscendGmemAdapter::RemoveCallbackThread(aclrtStream stream) {
   MS_LOG(DEBUG) << "Enter remove callback thread, stream : " << stream << ".";
   if (!is_eager_free_enabled()) {
     return false;

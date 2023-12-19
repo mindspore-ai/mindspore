@@ -1255,9 +1255,6 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
   auto skip_nop_node = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel);
   for (size_t i = 0; i < input_num; ++i) {
-    if (common::AnfAlgo::IsNoneInput(kernel, i)) {
-      continue;
-    }
     auto real_input = AnfAlgo::GetInputGraphIdxByKernelIdx(kernel, i);
     auto device_address = AnfAlgo::GetPrevNodeOutputAddr(kernel, real_input, skip_nop_node);
     MS_EXCEPTION_IF_NULL(device_address);
@@ -1721,9 +1718,9 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
       auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
       MS_EXCEPTION_IF_NULL(kernel_mod);
       opt::InferOp(kernel);
-      auto args = kernel::GetArgsFromCNode(kernel);
-      if (kernel_mod->Resize(args->inputs, args->outputs, args->depend_tensor_map) ==
-          static_cast<int>(kernel::KRET_RESIZE_FAILED)) {
+      auto inputs = AnfAlgo::GetOrCreateAllInputKernelTensors(kernel);
+      auto outputs = AnfAlgo::GetOrCreateAllOutputKernelTensors(kernel);
+      if (kernel_mod->Resize(inputs, outputs) == static_cast<int>(kernel::KRET_RESIZE_FAILED)) {
         MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize  failed.";
       }
       KernelLaunchInfo kernel_launch_info;

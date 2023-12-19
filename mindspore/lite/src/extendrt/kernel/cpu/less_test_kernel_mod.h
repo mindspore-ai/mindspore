@@ -20,22 +20,21 @@
 #include <vector>
 #include <string>
 
-#include "plugin/device/cpu/kernel/cpu_kernel_mod.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore::kernel {
-class LessTestKernelMod : public CpuKernelMod {
+class LessTestKernelMod : public NativeCpuKernelMod {
  public:
   LessTestKernelMod() = default;
   ~LessTestKernelMod() override = default;
 
   explicit LessTestKernelMod(const std::string name) { kernel_name_ = name; }
 
-  virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                      const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
-  virtual bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                    const std::vector<KernelTensorPtr> &outputs);
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   std::vector<KernelAttr> GetOpSupport() override { return {}; }
 };
 }  // namespace mindspore::kernel

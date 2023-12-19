@@ -22,6 +22,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <climits>
 #include <unordered_map>
 #include "ir/anf.h"
 #include "ir/tensor.h"
@@ -62,8 +63,9 @@ struct GeTensorInfo {
 
   // Input/Output
   enum ParamMappingFlag : unsigned int {
-    kDynamicParam = 1 << 0,  // has dynamic input/output
-    kEmptyParam = 1 << 1     // empty input/output
+    kDynamicParam = 1 << 0,  // has only one dynamic input/output
+    kEmptyParam = 1 << 1,    // empty input/output
+    kMultiDynParam = 1 << 2  // has more than one dynamic inputs/outputs
   };
 
   // map input/output indices of operator from MindSpore frontend to GraphEngine backend
@@ -102,6 +104,8 @@ class GeAdapterInfo {
     return info_.input_idx_ms2ge.size();
   }
 
+  const mindspore::HashMap<int, Ms2GeParamInfo> &GetMs2GeInputMap() const { return info_.input_idx_ms2ge; }
+
   const Ms2GeParamInfo &GetGeInputByMsInputIndex(size_t ms_input_idx) const {
     auto iter = info_.input_idx_ms2ge.find(ms_input_idx);
     if (iter == info_.input_idx_ms2ge.end()) {
@@ -124,6 +128,15 @@ class GeAdapterInfo {
     // Note: number of ms operator outputs(not real outputs) is equal to size of info_.output_idx_ms2ge
     return info_.output_idx_ms2ge.size();
   }
+
+  size_t GetNumStaticOutputsOfMsOpProto() const {
+    // Note: number of ms operator static outputs(not real outputs)
+    return adapter_->getOutputMap().size();
+  }
+
+  int64_t GetDynInputMsProtoIndex() { return dyn_input_ms_proto_idx_; }
+
+  int GetMaxMsProtoIndexOfInputMap() { return max_input_ms_proto_idx_; }
 
   const Ms2GeParamInfo GetGeOutputByMsOutputIndex(size_t ms_output_idx) const {
     auto iter = info_.output_idx_ms2ge.find(ms_output_idx);
@@ -175,6 +188,9 @@ class GeAdapterInfo {
 
   OpAdapterPtr adapter_{nullptr};
   GeTensorInfo info_;
+  // max MindSpore input index in op prototype of INPUT_MAP and DYN_INPUT_MAP
+  int max_input_ms_proto_idx_ = INT_MIN;
+  int64_t dyn_input_ms_proto_idx_ = INT_MAX;
   std::unordered_map<std::pair<std::string, ValuePtr>, ValuePtr, ValuePairHasher> get_attr_cache_;
   std::unordered_map<std::pair<uint32_t, ValuePtr>, ValuePtr, ValuePairHasher> get_input_attr_cache_;
 };

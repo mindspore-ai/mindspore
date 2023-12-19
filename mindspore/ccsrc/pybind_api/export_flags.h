@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ extern const char PYTHON_MS_CLASS[];
 extern const char PYTHON_JIT_FORBIDDEN[];
 extern const char PYTHON_CLASS_MEMBER_NAMESPACE[];
 extern const char PYTHON_FUNCTION_FORBID_REUSE[];
+extern const char PYTHON_CELL_LIST_FROM_TOP[];
 }  // namespace mindspore
 
 #endif  // PYBIND_API_EXPORT_FLAGS_H_

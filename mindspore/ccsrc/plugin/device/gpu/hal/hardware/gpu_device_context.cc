@@ -260,6 +260,11 @@ void GPUDeviceResManager::FreeMemory(void *ptr) const {
   mem_manager_->FreeMemFromMemPool(ptr);
 }
 
+void GPUDeviceResManager::FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
+                                          const std::vector<size_t> &keep_addr_sizes) const {
+  GPUMemoryAllocator::GetInstance().FreePartTensorMems(free_addrs, keep_addrs, keep_addr_sizes);
+}
+
 bool GPUDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   MS_EXCEPTION_IF_NULL(address);
   auto device_name_in_address = GetDeviceNameByType(static_cast<const DeviceType>(address->GetDeviceType()));
@@ -340,22 +345,6 @@ void SetUserData(DeviceAddress *device_address, const UserDataPtr &user_data) {
   }
 }
 }  // namespace
-
-DeviceAddressPtr GPUDeviceResManager::CreateDeviceAddress(void *const device_ptr, size_t device_size,
-                                                          const string &format, TypeId type_id,
-                                                          const ShapeVector &shape,
-                                                          const UserDataPtr &user_data) const {
-  auto device_address = std::make_shared<GPUDeviceAddress>(device_ptr, device_size, format, type_id,
-                                                           device_context_->device_context_key().device_name_,
-                                                           device_context_->device_context_key().device_id_);
-  device_address->set_host_shape(shape);
-  if (user_data != nullptr) {
-    SetUserData(device_address.get(), user_data);
-  }
-
-  device_address->set_device_synchronizer(std::make_shared<GPUDeviceSynchronizer>());
-  return device_address;
-}
 
 DeviceAddressPtr GPUDeviceResManager::CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
   MS_EXCEPTION_IF_NULL(kernel_tensor);
@@ -562,15 +551,15 @@ void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node
 
 bool TryExpandFallback(const KernelGraphPtr &graph, const CNodePtr &node,
                        const std::pair<std::string, ExceptionType> &failure_info) {
-  auto f = [ori_node = node, &failure_info, &graph](const CNodePtr &n) mutable {
-    auto res = SetKernelInfoWithMsg(n);
+  auto f = [ori_node = node, &failure_info, &graph](const CNodePtr &basic_op) mutable {
+    auto res = SetKernelInfoWithMsg(basic_op);
     if (res.first.empty()) {
       // select gpu kernel success.
       return true;
     }
     // select gpu kernel failed, first try to use CPU kernel for original op.
     if (ori_node != nullptr) {
-      MS_LOG(DEBUG) << "The basic op " << n->fullname_with_scope()
+      MS_LOG(DEBUG) << "The basic op " << basic_op->fullname_with_scope()
                     << " select kernel failed. Try to backoff on CPU for original op "
                     << ori_node->fullname_with_scope();
       if (CheckSupportBackoff(graph, ori_node, failure_info)) {
@@ -579,17 +568,18 @@ bool TryExpandFallback(const KernelGraphPtr &graph, const CNodePtr &node,
         return false;
       } else {
         MS_LOG(DEBUG) << "Failed to backoff on CPU for original op " << ori_node->fullname_with_scope()
-                      << ", try to backoff on CPU for basic op " << n->fullname_with_scope();
+                      << ", try to backoff on CPU for basic op " << basic_op->fullname_with_scope();
       }
       // only try once for original node.
       ori_node = nullptr;
     } else {
-      MS_LOG(DEBUG) << "The basic op " << n->fullname_with_scope() << " select kernel failed, try to backoff on CPU";
+      MS_LOG(DEBUG) << "The basic op " << basic_op->fullname_with_scope()
+                    << " select kernel failed, try to backoff on CPU";
     }
     // Original op cannot backoff on CPU, try to use CPU kernel for current op.
-    if (CheckSupportBackoff(graph, n, res)) {
-      AnfAlgo::SetKernelSelectBackoffInfo(n, res);
-      MS_LOG(DEBUG) << "The basic op " << n->fullname_with_scope() << " use CPU kernel.";
+    if (CheckSupportBackoff(graph, basic_op, res)) {
+      AnfAlgo::SetKernelSelectBackoffInfo(basic_op, res);
+      MS_LOG(DEBUG) << "The basic op " << basic_op->fullname_with_scope() << " use CPU kernel.";
       return true;
     }
     return false;
@@ -802,6 +792,10 @@ void GPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
     graph->SetExecOrderByDefault();
   }
   (void)profiler::CollectHostInfo(kModelNameGPU, kEventOptimizeGraph, kStageSetKernelInfo, 1, 0, 1);
+}
+
+kernel::KernelModPtr GPUKernelExecutor::CreateKernelMod(const std::string &op_name) const {
+  return kernel::Factory<kernel::NativeGpuKernelMod>::Instance().Create(op_name);
 }
 
 void GPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {

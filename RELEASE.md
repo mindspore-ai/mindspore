@@ -2,6 +2,82 @@
 
 [查看中文](./RELEASE_CN.md)
 
+## MindSpore 2.2.10 Release Notes
+
+### Major Features and Improvements
+
+#### Operators
+
+- [STABLE] FastGelu, BatchMatMul, AllReduce, AllGather, Broadcast, ReduceScatter support bfloat16 data type
+- [STABLE] AllGather/ReduceScatter support unit8 data type
+
+### Bug Fixes
+
+- [#I8ALW3] Fixed networks including Faster R-CNN, DeepText, MaskRCNN-ResNet50, which had errors while training RandomChoiceWithMask operator in Ascend 910 8P scenario.
+- [#I8LKG7] Fixed graph compilation error of UNet-2D in Ascend 910 1P/8P scenario.
+- [#I8KU3X] Fixed CRNN-ResNet34 network, which stuck in training phase in Ascend 910 1P/8P PyNative mode.
+- [#I8KTHH] Fixed BERT network error when training without allreduce grouped fusion with enable_parallel_optimizer=True, in Ascend 910 8P scenario.
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+李林杰, TuDouNi, chengxb7532, Henry Shi, rms-infer-type, 朱家兴, zhouyaqiang0, tanghuikang, gaoyong10, gengdongjie, yao_yf, hujiahui8, hanhuifeng, shenyaxin, KevinYi, 冯一航, chengfeng27, JuiceZ, zhangyanhui, jijiarong, xiaoxiongzhu, 没有窗户的小巷, ling, liyan2022, haozhang, zangqx, xiaoyao, liujunzhu, 胡彬, panzhihui, wangshaocong, linqingke, jianghui58, qiuzhongya, yangruoqi713, zhangminli, moran, 王禹程, shaojunsong, wangtongyu6, zhupuxu, luoyang, 徐安越, qinzheng, caifubi, 徐永飞, chenkang, youshu, XinDu, liubuyu, jxl, yeyunpeng2020, huoxinyou, yefeng, jiaorui, wangpingan, cao1zhg, zjun, zyli2020, yanjiaming, Cynthia叶, 胡安东, 李良灿, liruyu, liuluobin, lihao, huangbingjian, YijieChen, jjfeing, looop5, 刘力力, xiaoxin_zhang, yangluhang, chenweifeng, jiangshanfeng, zichun_ye, 陈宇, NaCN, ligan, YingLai Lin, huangziling, chenjianping, DeshiChen, chengbin, kairui_kou, ccsszz, yanghaoran, zhangdanyang, Yanzhi_YI, zhengzuohe, hangq, TronZhang, wanghenchang, HighCloud, 吕浩宇, VectorSL, ZPaC, mengyuanli, maning202007, 刘勇琪, r1chardf1d0, fary86, 刘崇鸣, yuchaojie, douzhixing, fengyixing
+
+Contributions of any kind are welcome!
+
+## MindSpore Lite 2.2.10 Release Notes
+
+### Bug Fixes
+
+- [#I8K7CC] Optimize error message when non-string segments are passed to get_model_info.
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+gengdongjie, zhangyanhui, xiaoxiongzhu, wangshaocong, jianghui58, moran, wangtongyu6, 徐安越, qinzheng, 徐永飞, youshu, XinDu, yeyunpeng2020, yefeng, wangpingan, zjun, 胡安东, 刘力力, 陈宇, chenjianping, kairui_kou, zhangdanyang, hangq, mengyuanli, 刘崇鸣
+
+Contributions of any kind are welcome!
+
+## MindSpore 2.2.1 Release Notes
+
+### Bug Fixes
+
+- [#I7R3R5] Fixed the problem that the network precision of the ResNet-50 on the Ascend platform deteriorates.
+- [#I8A9RH] Fixed an issue where the DBNet(ResNet-50) network precision on the Ascend platform deteriorates.
+- [#I8B8IW] Fixed the segment error caused by out-of-bounds multi-dimensional tensor assignment.
+- [#I8J0F4] Fixed an issue where the multidimensional Tensor extension dimension fails to be executed in the dynamic graph.
+- [#I87P3P] Fixed an issue where the compilation cache fails to be loaded during secondary training on the Ascend platform.
+- [#I86GP9] Fixed an issue where the UNet3D network inference precision deteriorates on the Ascend platform.
+- [#I89B4K] Fixed an issue where the dynamic rank execution of dynamic graphs on the Windows platform is suspended.
+- [#I8CX0C] Fixed an issue where dynamic images occasionally fail in mixed precision mode on the Ascend platform.
+- [#I8BGCF] Fixed an issue where a segment error occurs when the command is executed in dynamic diagram mode of the AirNet network on the Ascend platform.
+- [#I8L5DS] Fixed an issue where the ResNet-50 image segmentation network dynamic image is executed slowly on the Ascend platform.
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+yufan, dingcheng, lvzhangcheng, zhunaipan, fangwenyi, weiyang, changzherui, chujinjin, zangqingxiang, yuchaojie, wuweikang, tanghuikang, xiaoyao, huangbinjian, zhoupeichen, chenfei_mindspore, hedongdong, wangnan, zhengzuohe, yanghaoran, zouliqin, luoyang, liuchongmin, lujiale, machenggui, wangcong, lixiangyi, wangting, huangyong
+
+Contributions of any kind are welcome!
+
+## MindSpore Lite 2.2.1 Release Notes
+
+### Bug Fixes
+
+- [#I88055] Fixed a function issue caused by incorrect format setting of the gridsample operator in MindSpore Lite inference.
+- [#I8D80Y] The MindSpore Lite inference single-operator invoking process resources are not released and exits abnormally.
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+zhanghaibo, wangsiyuan, wangshaocong, chenjianping
+
+Contributions of any kind are welcome!
+
 ## MindSpore 2.2.0 Release Notes
 
 ### Major Features and Improvements

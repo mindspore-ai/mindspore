@@ -276,14 +276,28 @@ std::vector<KernelAttr> StridedSliceCpuKernelMod::GetOpSupport() {
 #define STRIDEDSLICE_CPU_REG(TYPEID, TYPE) \
   KernelAttr().AddInputAttr(TYPEID).AddOutputAttr(TYPEID), &StridedSliceCpuKernelMod::LaunchKernel<TYPE>
 
-#define STRIDEDSLICE_DYNAMIC_CPU_REG(TYPEID_1, TYPEID_2, TYPE_1, TYPE_2) \
-  KernelAttr()                                                           \
-    .AddInputAttr(TYPEID_1)                                              \
-    .AddInputAttr(TYPEID_2)                                              \
-    .AddInputAttr(TYPEID_2)                                              \
-    .AddInputAttr(TYPEID_2)                                              \
-    .AddOutputAttr(TYPEID_1),                                            \
+#define STRIDEDSLICE_TENSOR_DYNAMIC_CPU_REG(TYPEID_1, TYPEID_2, TYPE_1, TYPE_2) \
+  KernelAttr()                                                                  \
+    .AddInputAttr(TYPEID_1)                                                     \
+    .AddInputAttr(TYPEID_2)                                                     \
+    .AddInputAttr(TYPEID_2)                                                     \
+    .AddInputAttr(TYPEID_2)                                                     \
+    .AddOutputAttr(TYPEID_1),                                                   \
     &StridedSliceCpuKernelMod::LaunchKernel<TYPE_1, TYPE_2>
+
+#define STRIDEDSLICE_TUPLE_DYNAMIC_CPU_REG(TYPEID_1, TYPEID_2, TYPE_1, TYPE_2) \
+  KernelAttr()                                                                 \
+    .AddInputAttr(TYPEID_1)                                                    \
+    .AddInputAttr(kObjectTypeTuple, TYPEID_2)                                  \
+    .AddInputAttr(kObjectTypeTuple, TYPEID_2)                                  \
+    .AddInputAttr(kObjectTypeTuple, TYPEID_2)                                  \
+    .AddOutputAttr(TYPEID_1),                                                  \
+    &StridedSliceCpuKernelMod::LaunchKernel<TYPE_1, TYPE_2>
+
+#define STRIDEDSLICE_DYNAMIC_CPU_REG(TYPEID_1, TYPEID_2, TYPE_1, TYPE_2)       \
+  {STRIDEDSLICE_TENSOR_DYNAMIC_CPU_REG(TYPEID_1, TYPEID_2, TYPE_1, TYPE_2)}, { \
+    STRIDEDSLICE_TUPLE_DYNAMIC_CPU_REG(TYPEID_1, TYPEID_2, TYPE_1, TYPE_2)     \
+  }
 
 std::vector<std::pair<KernelAttr, StridedSliceCpuKernelMod::StridedSliceFunc>> StridedSliceCpuKernelMod::func_list_ = {
   {STRIDEDSLICE_CPU_REG(kNumberTypeFloat64, double)},
@@ -300,33 +314,33 @@ std::vector<std::pair<KernelAttr, StridedSliceCpuKernelMod::StridedSliceFunc>> S
   {STRIDEDSLICE_CPU_REG(kNumberTypeComplex64, complex64)},
   {STRIDEDSLICE_CPU_REG(kNumberTypeComplex128, complex128)},
 
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double, int64_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float, int64_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeInt32, kNumberTypeInt64, int32_t, int64_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeInt16, kNumberTypeInt64, int16_t, int64_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeInt8, kNumberTypeInt64, int8_t, int64_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeUInt64, kNumberTypeInt64, uint64_t, int64_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeUInt32, kNumberTypeInt64, uint32_t, int64_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeUInt16, kNumberTypeInt64, uint16_t, int64_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeUInt8, kNumberTypeInt64, uint8_t, int64_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeBool, kNumberTypeInt64, bool, int64_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeComplex64, kNumberTypeInt64, complex64, int64_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeComplex128, kNumberTypeInt64, complex128, int64_t)},
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double, int64_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float, int64_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeInt32, kNumberTypeInt64, int32_t, int64_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeInt16, kNumberTypeInt64, int16_t, int64_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeInt8, kNumberTypeInt64, int8_t, int64_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeUInt64, kNumberTypeInt64, uint64_t, int64_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeUInt32, kNumberTypeInt64, uint32_t, int64_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeUInt16, kNumberTypeInt64, uint16_t, int64_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeUInt8, kNumberTypeInt64, uint8_t, int64_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeBool, kNumberTypeInt64, bool, int64_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeComplex64, kNumberTypeInt64, complex64, int64_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeComplex128, kNumberTypeInt64, complex128, int64_t),
 
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32, double, int32_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32, float, int32_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeInt64, kNumberTypeInt32, int64_t, int32_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeInt16, kNumberTypeInt32, int16_t, int32_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeInt8, kNumberTypeInt32, int8_t, int32_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeUInt64, kNumberTypeInt32, uint64_t, int32_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeUInt32, kNumberTypeInt32, uint32_t, int32_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeUInt16, kNumberTypeInt32, uint16_t, int32_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeUInt8, kNumberTypeInt32, uint8_t, int32_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeBool, kNumberTypeInt32, bool, int32_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeComplex64, kNumberTypeInt32, complex64, int32_t)},
-  {STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeComplex128, kNumberTypeInt32, complex128, int32_t)},
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32, double, int32_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32, float, int32_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeInt64, kNumberTypeInt32, int64_t, int32_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeInt16, kNumberTypeInt32, int16_t, int32_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeInt8, kNumberTypeInt32, int8_t, int32_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeUInt64, kNumberTypeInt32, uint64_t, int32_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeUInt32, kNumberTypeInt32, uint32_t, int32_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeUInt16, kNumberTypeInt32, uint16_t, int32_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeUInt8, kNumberTypeInt32, uint8_t, int32_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeBool, kNumberTypeInt32, bool, int32_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeComplex64, kNumberTypeInt32, complex64, int32_t),
+  STRIDEDSLICE_DYNAMIC_CPU_REG(kNumberTypeComplex128, kNumberTypeInt32, complex128, int32_t),
 };
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, StridedSlice, StridedSliceCpuKernelMod);

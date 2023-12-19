@@ -113,6 +113,7 @@ def test_float_tensor_and_str_add():
         ret = x + y
     assert "Failed calling Add with" in str(er.value)
     assert "Add()(x=Tensor, y=string)" in str(er.value)
+    assert "Add()(x=<Number, Tensor>, y=<Number, Tensor>)" in str(er.value)
 
 
 def test_float_tensor_and_tuple_add():

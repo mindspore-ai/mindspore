@@ -24,6 +24,7 @@
 #include "ir/primitive.h"
 #include "ops/structure_op_name.h"
 #include "utils/hash_map.h"
+#include "ops/image_op_name.h"
 
 namespace mindspore {
 static constexpr char kDoSignaturePrimitivePrefix[] = "S_Prim_";
@@ -94,6 +95,7 @@ GVAR_DEF(PrimitivePtr, kPrimImageSummary, std::make_shared<Primitive>("ImageSumm
 GVAR_DEF(PrimitivePtr, kPrimTensorSummary, std::make_shared<Primitive>("TensorSummary"));
 GVAR_DEF(PrimitivePtr, kPrimHistogramSummary, std::make_shared<Primitive>("HistogramSummary"));
 GVAR_DEF(PrimitivePtr, kPrimHistogramFixedWidth, std::make_shared<Primitive>("HistogramFixedWidth"));
+GVAR_DEF(PrimitivePtr, kPrimTensorDump, std::make_shared<Primitive>(kTensorDump));
 #endif
 GVAR_DEF(PrimitivePtr, kPrimDebug, std::make_shared<Primitive>("Debug"));
 
@@ -139,8 +141,19 @@ class DoTransPrimitiveFunction : public Primitive {
 
   const PrimitivePtr function() const { return prim_; }
 
+  bool has_given_init_size() const { return has_given_init_size_; }
+
+  void set_given_init_size(size_t args_size) {
+    has_given_init_size_ = true;
+    given_init_size_ = args_size;
+  }
+
+  size_t given_init_size() const { return given_init_size_; }
+
  private:
   PrimitivePtr prim_;
+  size_t given_init_size_;
+  bool has_given_init_size_{false};
 };
 using DoTransPrimitiveFunctionPtr = std::shared_ptr<DoTransPrimitiveFunction>;
 }  // namespace prim

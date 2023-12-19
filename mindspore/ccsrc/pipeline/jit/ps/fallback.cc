@@ -211,7 +211,10 @@ CNodePtr CreatePyInterpretCNode(const FuncGraphPtr &fg, const std::string &scrip
   parse::PyObjectWrapperPtr global_dict_wrapper = std::make_shared<parse::InterpretedObject>(global_dict_obj);
   auto global_dict_node = NewValueNode(global_dict_wrapper);
   auto node = fg->NewCNode({NewValueNode(prim::kPrimPyInterpret), script_node, global_dict_node, local_dict_node});
-  node->set_debug_info(debug_info);
+  if (debug_info != nullptr) {
+    node->set_debug_info(debug_info);
+  }
+  InterpretNodeRecorder::GetInstance().PushPyInterpretNode(node);
   return node;
 }
 
@@ -224,7 +227,9 @@ CNodePtr CreatePyInterpretCNodeInOrder(const FuncGraphPtr &fg, const std::string
   auto global_dict_node = NewValueNode(global_dict_wrapper);
   auto node =
     fg->NewCNodeInOrder({NewValueNode(prim::kPrimPyInterpret), script_node, global_dict_node, local_dict_node});
-  node->set_debug_info(debug_info);
+  if (debug_info != nullptr) {
+    node->set_debug_info(debug_info);
+  }
   InterpretNodeRecorder::GetInstance().PushPyInterpretNode(node);
   return node;
 }
@@ -561,9 +566,7 @@ void AttachPyObjToAbs(const AbstractBasePtr &abs, const py::object &obj, bool cr
   if (!abs->isa<abstract::AbstractSequence>() && !abs->isa<abstract::AbstractDictionary>()) {
     return;
   }
-  constexpr auto cell_list_attr = "__cell_as_list__";
-  constexpr auto cell_dict_attr = "__cell_as_dict__";
-  if (py::hasattr(obj, cell_list_attr) || py::hasattr(obj, cell_dict_attr)) {
+  if (py::hasattr(obj, PYTHON_CELL_AS_LIST) || py::hasattr(obj, PYTHON_CELL_AS_DICT)) {
     // CellList and CellDict do not support inplace operations, do not need to attach python object.
     return;
   }
@@ -615,6 +618,20 @@ std::string GetPyObjectPtrStr(const py::object &obj) {
   std::stringstream ss;
   ss << obj.ptr();
   return ss.str();
+}
+
+bool CheckInterpretInput(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (IsPrimitiveCNode(node, prim::kPrimPyInterpret)) {
+    return true;
+  }
+  if (node->isa<CNode>()) {
+    auto cnode = node->cast<CNodePtr>();
+    const auto &inputs = cnode->inputs();
+    return std::any_of(inputs.begin(), inputs.end(),
+                       [](const AnfNodePtr &input) { return CheckInterpretInput(input); });
+  }
+  return false;
 }
 
 void SetPyObjectToNode(const AnfNodePtr &node, const py::object &obj) {
@@ -739,9 +756,7 @@ AnfNodePtr ConvertGetAttrNodeToPyInterpret(const FuncGraphPtr &fg, const CNodePt
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(fg);
   const std::unordered_map<std::string, std::string> internal_attr_map = {
-    {"__ms_iter__", "tuple"},
-    {"__ms_next__", "__import__('mindspore').common._utils._jit_fallback_next_func"},
-    {"__ms_hasnext__", "__import__('mindspore').common._utils._jit_fallback_has_next_func"}};
+    {"__ms_next__", "__import__('mindspore').common._utils._jit_fallback_next_func"}};
   auto iter = internal_attr_map.find(name);
   if (iter == internal_attr_map.end()) {
     return ConvertCNodeToPyInterpretForPrim(cnode, "getattr");
@@ -767,6 +782,35 @@ AnfNodePtr ConvertGetAttrNodeToPyInterpret(const FuncGraphPtr &fg, const CNodePt
   return ret;
 }
 
+py::object GetPyObjForFuncGraphAbstractClosure(const AbstractBasePtr &abs) {
+  if (!abs->isa<abstract::FuncGraphAbstractClosure>()) {
+    return py::none();
+  }
+  auto abs_func = abs->cast<abstract::FuncGraphAbstractClosurePtr>();
+  auto fg = abs_func->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  auto wrapper_obj = fg->python_obj();
+  if (wrapper_obj != nullptr && wrapper_obj->isa<parse::PyObjectWrapper>()) {
+    auto obj = wrapper_obj->cast_ptr<parse::PyObjectWrapper>()->obj();
+    return obj;
+  }
+  // Handle lambda expression scene. Graph generated from lambda function does not have attached python object.
+  auto fg_debug_info = fg->debug_info();
+  MS_EXCEPTION_IF_NULL(fg_debug_info);
+  const auto &fg_name = fg_debug_info->name();
+  const std::string lambda_suffix = "_lambda_";
+  bool end_with_lambda_suffix =
+    (fg_name.size() >= lambda_suffix.size() && fg_name.substr(fg_name.size() - lambda_suffix.size()) == lambda_suffix);
+  if (end_with_lambda_suffix) {
+    auto location = fg_debug_info->location();
+    MS_EXCEPTION_IF_NULL(location);
+    const auto &lambda_script = location->expr_src();
+    py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+    return python_adapter::CallPyModFn(mod, "generate_lambda_object", lambda_script);
+  }
+  return py::none();
+}
+
 AnfNodePtr GeneratePyInterpretNodeFromMetaFuncGraph(const FuncGraphPtr &func_graph, const AnfNodePtrList &node_inputs,
                                                     const py::object &meta_obj, const TypePtrList &types,
                                                     const std::string &name) {
@@ -784,11 +828,27 @@ AnfNodePtr GeneratePyInterpretNodeFromMetaFuncGraph(const FuncGraphPtr &func_gra
     script_buffer << "__import__('mindspore').ops.composite.multitype_ops." << name << "(";
   }
   for (size_t i = 0; i < node_inputs_size; i++) {
-    std::stringstream input_key;
-    input_key << "__input_key_" << i << "__";
-    (void)key_value_names_list.push_back(NewValueNode(input_key.str()));
-    (void)key_value_list.emplace_back(node_inputs[i]);
-    script_buffer << input_key.str();
+    if (types[i]->isa<Slice>()) {
+      (void)key_value_names_list.emplace_back(NewValueNode("__start__"));
+      (void)key_value_names_list.emplace_back(NewValueNode("__stop__"));
+      (void)key_value_names_list.emplace_back(NewValueNode("__step__"));
+      auto start_node =
+        func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), node_inputs[i], NewValueNode("start")});
+      auto end_node =
+        func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), node_inputs[i], NewValueNode("stop")});
+      auto step_node =
+        func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), node_inputs[i], NewValueNode("step")});
+      (void)key_value_list.emplace_back(start_node);
+      (void)key_value_list.emplace_back(end_node);
+      (void)key_value_list.emplace_back(step_node);
+      script_buffer << "slice(__start__,__stop__,__step__)";
+    } else {
+      std::stringstream input_key;
+      input_key << "__input_key_" << i << "__";
+      (void)key_value_names_list.push_back(NewValueNode(input_key.str()));
+      (void)key_value_list.emplace_back(node_inputs[i]);
+      script_buffer << input_key.str();
+    }
     if (i != node_inputs_size) {
       script_buffer << ",";
     }

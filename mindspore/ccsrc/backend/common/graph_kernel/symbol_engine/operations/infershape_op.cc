@@ -354,7 +354,6 @@ SymbolPtr Reshape::Eval() {
     return GenList(std::move(result));
   }
   // Reshape (const1, s1) to (const2, s2), the `s2 = const1 * s1 / const2`
-  // if (const1 % const2 == 0), then simplify to `s2 = (const1/const2) * s1`
   if (input_const_dims % shape_size_ == 0) {
     // s2 = s1 * (const1 / const2)
     auto c = GenInt(input_const_dims / shape_size_);

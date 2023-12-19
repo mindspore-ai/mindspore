@@ -25,6 +25,7 @@ import mindspore.common._monad as monad
 from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.ops.composite.base import _append, _insert, _pop, _list_clear, _reverse, \
     _extend, _dict_setitem, _dict_clear, _haskey, _update, _fromkeys
+from mindspore.ops.composite import multitype_ops
 
 from ... import _checkparam as validator
 from ..._checkparam import check_is_number, check_reshape_shp, check_axis_in_range, \
@@ -549,8 +550,17 @@ def transpose(x, *axis):
     return F.transpose(x, perm)
 
 
+def T(x):
+    """
+    Return the transposed tensor.
+    """
+    if x.ndim <= 1:
+        return x
+    return transpose(x)
+
+
 # `tensor.T` is used as a property in graph mode
-T_ = transpose
+T_ = T
 
 
 def reshape(x, *shape):
@@ -2298,21 +2308,6 @@ def itemset(data, *args):
     return compile_utils.tensor_itemset(data, *args)
 
 
-def ms_iter(xs):
-    """Implementation of `iter`."""
-    return xs.__ms_iter__
-
-
-def ms_next(it):
-    """Implementation of `next`."""
-    return it.__ms_next__
-
-
-def hasnext(it):
-    """Implementation of `hasnext`."""
-    return it.__ms_hasnext__
-
-
 @constexpr
 def cast_to_str(data):
     return str(data)
@@ -2426,10 +2421,6 @@ def list_func(*data):
     if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
         const_utils.raise_type_error(
             "list() does not support single sparse tensor input.")
-    if not isinstance(data, Tensor) and not hasattr(data, "__ms_iter__"):
-        data_type = F.typeof(data)
-        const_utils.raise_type_error(
-            str(data_type) + " object is not iterable.")
     if isinstance(data, dict):
         data = data.keys()
     if isinstance(data, (tuple, list)) and F.is_sequence_shape_unknown(data):
@@ -2438,8 +2429,8 @@ def list_func(*data):
             return ret
     else:
         ret = F.make_list()
-    for i in range(len(data)):
-        ret = ret + F.make_list(data[i])
+    for i in data:
+        ret = ret + F.make_list(i)
     return ret
 
 
@@ -2453,9 +2444,6 @@ def tuple_func(*data):
     data = data[0]
     if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
         raise TypeError("tuple() does not support single sparse tensor input.")
-    if not isinstance(data, Tensor) and not hasattr(data, "__ms_iter__"):
-        data_type = F.typeof(data)
-        raise TypeError(str(data_type) + " object is not iterable.")
     if isinstance(data, dict):
         data = data.keys()
     if isinstance(data, (tuple, list)) and F.is_sequence_shape_unknown(data):
@@ -2464,9 +2452,21 @@ def tuple_func(*data):
             return ret
     else:
         ret = F.make_tuple()
-    for i in range(len(data)):
-        ret = ret + F.make_tuple(data[i])
+    for i in data:
+        ret = ret + F.make_tuple(i)
     return ret
+
+
+def ms_zip(*data):
+    """Implementation of `tuple`."""
+    x = ()
+    for i in data:
+        if isinstance(i, Tensor):
+            if len(F.shape(i)) == 0:
+                raise TypeError("Cannot iterate over a scalar tensor.")
+            i = tuple(i)
+        x = x + (i,)
+    return composite.zip_operation(*x)
 
 
 def max_tensor(*data):
@@ -2552,7 +2552,7 @@ def ms_max_one_element(x):
         if len(x) == 0:
             raise ValueError("max() arg is an empty sequence.")
         tensor_num = get_tensor_num(x)
-        if tensor_num == len(x):
+        if F.isconstant(tensor_num) and F.isconstant(len(x)) and tensor_num == len(x):
             return max_tensor(x)
         if tensor_num != 0:
             return F._py_interpret("max(x)", {}, {"x": x})
@@ -2574,7 +2574,7 @@ def ms_max(*data):
     elif len_data >= 2:
         tensor_num = get_tensor_num(data)
         # All inputs is Tensor
-        if tensor_num == len_data:
+        if F.isconstant(tensor_num) and F.isconstant(len_data) and tensor_num == len_data:
             return max_tensor(*data)
         if tensor_num != 0:
             return F._py_interpret("max(data)", {}, {"data": data})
@@ -2628,7 +2628,7 @@ def ms_min_one_element(x):
         if len(x) == 0:
             raise ValueError("min() arg is an empty sequence.")
         tensor_num = get_tensor_num(x)
-        if tensor_num == len(x):
+        if F.isconstant(tensor_num) and F.isconstant(len(x)) and tensor_num == len(x):
             return min_tensor(x)
         if tensor_num != 0:
             return F._py_interpret("min(x)", {}, {"x": x})
@@ -2650,7 +2650,7 @@ def ms_min(*data):
     elif len_data >= 2:
         tensor_num = get_tensor_num(data)
         # All inputs is Tensor
-        if tensor_num == len_data:
+        if F.isconstant(tensor_num) and F.isconstant(len_data) and tensor_num == len_data:
             return min_tensor(*data)
         if tensor_num != 0:
             return F._py_interpret("min(data)", {}, {"data": data})
@@ -3163,7 +3163,7 @@ def random_categorical(x, num_sample, seed=0, dtype=mstype.int64):
 @constexpr
 def empty_tensor(dtype):
     """Return empty tensor"""
-    return Tensor([], dtype)
+    return Tensor_([], dtype)
 
 
 @constexpr
@@ -3437,24 +3437,14 @@ def triu(input, diagonal=0):
 #############
 
 
-def tuple_next(xs):
-    """Next tuple."""
-    return xs[0], xs[1:]
-
-
-def tuple_hasnext(xs):
-    """Whether the tuple is empty or not."""
+def ms_hasnext(xs):
+    """Whether the input has next element"""
     return len(xs) > 0
 
 
-def list_next(xs):
-    """Next list."""
+def ms_next(xs):
+    """Get next element and res elements"""
     return xs[0], xs[1:]
-
-
-def list_hasnext(xs):
-    """Whether the list is empty or not."""
-    return len(xs) > 0
 
 
 def dict_next(xs):
@@ -3465,33 +3455,7 @@ def dict_next(xs):
     for i in range(1, len(keys)):
         new_keys.append(keys[i])
         new_values.append(xs[keys[i]])
-    new_dict = {}
-    return keys[0], new_dict.fromkeys(new_keys, new_values)
-
-
-def dict_hasnext(xs):
-    """Whether the dict is empty or not."""
-    return len(xs) > 0
-
-
-def array_next(xs):
-    """Next array."""
-    return xs[0], xs[1:]
-
-
-def array_hasnext(xs):
-    """Whether the array is empty or not."""
-    return len(xs) > 0
-
-
-def str_next(xs):
-    """Next string."""
-    return xs[0], xs[1:]
-
-
-def str_hasnext(xs):
-    """Whether the string is empty or not."""
-    return len(xs) > 0
+    return keys[0], F.make_dict(new_keys, new_values)
 
 
 def list_append(self_, list_item):
@@ -4457,3 +4421,9 @@ def outer(input, vec2):
     For details, please refer to :func:`mindspore.ops.vec2`.
     """
     return F.outer(input, vec2)
+
+def _getitem(data, index):
+    return multitype_ops.getitem(data, index)
+
+def _setitem(data, index, value):
+    return multitype_ops.setitem(data, index, value)

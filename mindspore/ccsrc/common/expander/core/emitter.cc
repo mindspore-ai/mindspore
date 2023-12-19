@@ -232,7 +232,8 @@ NodePtr Emitter::Transpose(const NodePtr &node, const NodePtr &perm) {
 NodePtr Emitter::Tile(const NodePtr &node, const NodePtr &multiples) {
   auto [success, multiples_list] = GetIntList(multiples);
   if (!success) {
-    return Emit(kTileOpName, {node, multiples});
+    auto tuple_multiples = TensorToTuple(multiples);
+    return Emit(kTileOpName, {node, tuple_multiples});
   }
   bool is_all_one = std::all_of(multiples_list.begin(), multiples_list.end(), [](int64_t shp) { return shp == 1; });
   if (is_all_one && node->shape().size() >= multiples_list.size()) {

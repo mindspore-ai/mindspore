@@ -21,7 +21,7 @@
 #include <set>
 #include <string>
 #include "ops/base_operator.h"
-#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
+#include "kernel/kernel.h"
 #include "runtime/pynative/op_runtime_info.h"
 #include "transform/acl_ir/acl_convert.h"
 #include "include/common/utils/anfalgo.h"
@@ -88,7 +88,6 @@ class AclKernelMod : public KernelMod {
   transform::AclConverterPtr converter_;
 
   bool need_convert_host_tensor_{false};
-  transform::AclInputToHost input_to_host_array_;
 };
 
 using AclKernelModPtr = std::shared_ptr<AclKernelMod>;

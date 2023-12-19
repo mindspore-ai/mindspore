@@ -147,7 +147,8 @@ static const char *const kConverterParams = "converter_params";
 static const char *const kConverterOutputFile = "output_file";
 // om converter options
 static const char *const kOMConverterOptionsSection = "om_converter";
+
+static const char *const KModelUserInfo = "user_info";
 }  // namespace lite
 }  // namespace mindspore
-
 #endif  // MINDSPORE_LITE_SRC_COMMON_COMMON_H_

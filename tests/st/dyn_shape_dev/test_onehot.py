@@ -67,6 +67,29 @@ def test_onehot_op_forward(context_mode, data_type):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
+def test_onehot_op_forward_depth_tensor(context_mode):
+    """
+    Feature: Ops.
+    Description: test op onehot forward.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=context_mode)
+    indices = ms.Tensor(np.array([0, 1, 2]).astype(np.int32))
+    depth = ms.Tensor(3.0, ms.int32)
+    on_value = ms.Tensor(1.0, ms.float32)
+    off_value = ms.Tensor(0.0, ms.float32)
+    out = onehot_forward_func(indices, depth, on_value, off_value, -1)
+    expect_out = np.array([[1., 0., 0.], [0., 1., 0.], [0., 0., 1.]]).astype(np.float32)
+    np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.int32])
 @test_utils.run_test_func
 def test_onehot_op_backward(context_mode, data_type):

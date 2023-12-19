@@ -55,6 +55,10 @@ class GruGradWeightGpuKernelMod : public NativeGpuKernelMod {
         cudnn_data_type_(CUDNN_DATA_FLOAT) {}
   ~GruGradWeightGpuKernelMod() override { DestroyResource(); }
 
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
+
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
     if (is_null_input_) {

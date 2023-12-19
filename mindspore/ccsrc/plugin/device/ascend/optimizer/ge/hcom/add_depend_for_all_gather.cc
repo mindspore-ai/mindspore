@@ -26,6 +26,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/parallel_context.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {

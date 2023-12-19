@@ -14,30 +14,23 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/hal/device/ascend_kernel_runtime.h"
-#include <locale>
+
 #include <string>
 #include <vector>
 #include <memory>
-#include <utility>
-#include <algorithm>
 #include <set>
 #include "ops/ascend_op_name.h"
 #include "ops/other_ops.h"
 #include "include/common/utils/signal_util.h"
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #include "utils/ms_context.h"
-#include "runtime/rt.h"
 #include "acl/acl_rt.h"
-#include "acl/acl.h"
-#include "plugin/device/ascend/hal/device/ascend_runtime_manager.h"
+#include "runtime/mem.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
-#include "plugin/device/ascend/hal/device/ascend_stream_assign.h"
-#include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/session/kernel_build_client.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "kernel/oplib/op_info_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
@@ -67,7 +60,6 @@
 #endif
 
 #include "kernel/framework_utils.h"
-#include "plugin/device/ascend/hal/common/platform_info_util.h"
 using std::vector;
 constexpr uint32_t kProfilingMaxTaskIdInStream = 65531;
 constexpr uint32_t kDefaultHcclExecTimeout = 1800;
@@ -76,7 +68,6 @@ namespace mindspore::device::ascend {
 static thread_local rtContext_t thread_local_rt_context{nullptr};
 namespace {
 void IntHandler(int, siginfo_t *, void *) {
-  mindspore::kernel::AscendKernelBuildClient::Instance().Close();
   int this_pid = getpid();
   MS_LOG(WARNING) << "Process " << this_pid << " receive KeyboardInterrupt signal.";
   (void)kill(this_pid, SIGTERM);
@@ -162,9 +153,6 @@ void AscendKernelRuntime::SetContextForce() {
 void AscendKernelRuntime::ClearGraphModelMap() {
   SetContextForce();
   graph_kernel_events_map_.clear();
-  if (runtime_core_ != nullptr) {
-    runtime_core_->UnloadModelCore();
-  }
 }
 
 void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
@@ -176,9 +164,6 @@ void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
   const auto events_iter = graph_kernel_events_map_.find(graph_id);
   if (events_iter != graph_kernel_events_map_.end()) {
     (void)graph_kernel_events_map_.erase(events_iter);
-  }
-  if (runtime_core_ != nullptr) {
-    runtime_core_->UnloadModelCore(graph_id);
   }
 }
 
@@ -193,13 +178,6 @@ void AscendKernelRuntime::ResetStreamAndCtx() {
     MS_LOG(EXCEPTION) << "Call aclrtCreateContext failed, ret: " << ret;
   }
   CreateDefaultStream();
-}
-
-void *AscendKernelRuntime::GetModelStream(uint32_t graph_id) const {
-  if (runtime_core_ != nullptr) {
-    return runtime_core_->GetModelStreamCore(graph_id);
-  }
-  return nullptr;
 }
 
 void *AscendKernelRuntime::GetKernelStream(const AnfNodePtr &kernel) const {
@@ -247,15 +225,6 @@ void AsyncDataDumpUninit() {
 }
 #endif
 
-void AscendKernelRuntime::RegTaskFailCallback(bool is_release) {
-  // Set callback func when exception error
-  auto func = runtime_core_ == nullptr ? TaskExceptionCallback : runtime_core_->GetCallBackFunc();
-  auto rt_ret = is_release ? aclrtSetExceptionInfoCallback(nullptr) : aclrtSetExceptionInfoCallback(func);
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Reg SetTaskFailCallback failed, error: " << rt_ret;
-  }
-}
-
 void AscendKernelRuntime::TaskExceptionCallback(aclrtExceptionInfo *task_fail_info) {
   if (task_fail_info == nullptr) {
     MS_LOG(ERROR) << "Execute TaskFailCallback failed. task_fail_info is nullptr";
@@ -269,7 +238,6 @@ void AscendKernelRuntime::TaskExceptionCallback(aclrtExceptionInfo *task_fail_in
   MS_LOG(ERROR) << "Run Task failed, task_id: " << task_id << ", stream_id: " << stream_id << ", tid: " << tid
                 << ", device_id: " << device_id << ", retcode: " << error_code << " (" << GetErrorMsg(error_code)
                 << ")";
-  return;
 }
 
 void AscendKernelRuntime::ReleaseDeviceRes() {
@@ -291,10 +259,6 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
 #ifndef ENABLE_SECURITY
   AsyncDataDumpUninit();
 #endif
-
-  PlatformInfoUtil::GetInstance().Finalize();
-
-  mindspore::kernel::AicpuOpKernelLoad::GetInstance().FreeDeviceMemory();
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
@@ -305,7 +269,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
     mem_manager_->Finalize();
   }
 
-  RegTaskFailCallback(true);
+  (void)aclrtSetExceptionInfoCallback(nullptr);
 
   (void)ResetDevice(device_id);
   current_graph_ = nullptr;
@@ -338,7 +302,7 @@ bool AscendKernelRuntime::Init() {
     return true;
   }
 
-  auto soc_version = device::ascend::GetSocVersion();
+  auto soc_version = ms_context->ascend_soc_version();
   auto ascend_path = device::ascend::GetAscendPath();
   if (!mindspore::kernel::OpInfoUtils::GenerateOpInfos(soc_version, ascend_path)) {
     MS_LOG(EXCEPTION) << "Load op info form json config failed, version: " << soc_version;
@@ -360,13 +324,9 @@ bool AscendKernelRuntime::Init() {
     mem_manager_ = std::make_shared<AscendMemoryManager>();
     MS_EXCEPTION_IF_NULL(mem_manager_);
     mem_manager_->Initialize();
-    runtime_core_ = AscendRuntimeManager::Instance().GetAscendRuntime(kAscendVM, device_id_);
-    if (runtime_core_ != nullptr) {
-      runtime_core_->InitCore();
-    }
-    RegTaskFailCallback();
-    if (!PlatformInfoUtil::GetInstance().Init(soc_version)) {
-      MS_LOG(EXCEPTION) << "PlatformInfo Initialization failed.";
+    auto rt_ret = aclrtSetExceptionInfoCallback(TaskExceptionCallback);
+    if (rt_ret != ACL_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "Reg SetTaskFailCallback failed, error: " << rt_ret;
     }
     uint32_t op_execute_timeout = ms_context->get_param<uint32_t>(MS_CTX_OP_TIMEOUT);
     std::string hccl_exec_timeout = common::GetEnv("HCCL_EXEC_TIMEOUT");
@@ -389,7 +349,7 @@ bool AscendKernelRuntime::Init() {
                       << "2. You can set NotifyWaitTimeout via environment variable HCCL_EXEC_TIMEOUT. ";
     }
     const uint32_t reserve_time = 180;
-    uint32_t op_wait_timeout = kDefaultHcclExecTimeout + reserve_time;
+    uint32_t op_wait_timeout = notify_wait_timeout + reserve_time;
     auto acl_ret = aclrtSetOpWaitTimeout(op_wait_timeout);
     if (acl_ret != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "Set op wait timeout failed, error: " << acl_ret;
@@ -407,13 +367,6 @@ bool AscendKernelRuntime::Init() {
   }
 
   initialized_ = true;
-  return true;
-}
-
-bool AscendKernelRuntime::LoadData(const session::KernelGraph & /* graph */) {
-  if (runtime_core_ != nullptr) {
-    return runtime_core_->LoadDataCore();
-  }
   return true;
 }
 
@@ -460,13 +413,6 @@ DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size
   ascend_device_address_ptr->set_device_synchronizer(std::make_shared<AscendDeviceSynchronizer>());
 
   return ascend_device_address_ptr;
-}
-
-bool AscendKernelRuntime::Load(const session::KernelGraph &graph, bool is_task_sink) {
-  if (runtime_core_ != nullptr) {
-    return runtime_core_->LoadCore(graph, is_task_sink);
-  }
-  return true;
 }
 
 bool AscendKernelRuntime::Run(const session::KernelGraph &graph, bool is_task_sink) {
@@ -528,7 +474,7 @@ DeviceAddressPtr AscendKernelRuntime::GetInternalDeviceAddress(const session::Ke
     return nullptr;
   }
   auto pre_graphs = graph.get_pre_graphs();
-  for (auto pre_graph_item : pre_graphs) {
+  for (const auto &pre_graph_item : pre_graphs) {
     auto pre_graph = pre_graph_item.second.lock();
     MS_EXCEPTION_IF_NULL(pre_graph);
     auto graph_output = pre_graph->GetGraphOutputByFrontNode(front_node);
@@ -547,19 +493,12 @@ DeviceAddressPtr AscendKernelRuntime::GetInternalDeviceAddress(const session::Ke
   return nullptr;
 }
 
-void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
-  if (runtime_core_ != nullptr) {
-    runtime_core_->GenKernelEventsCore(graph);
-  }
-}
-
 bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph &graph) {
   MS_LOG(INFO) << "RunExecutorAsync start. GraphId:" << graph.graph_id();
   AscendEnableDynamicRuntimeCache(&graph);
 
   const auto &kernels = graph.execution_order();
-  for (size_t i = 0; i < kernels.size(); ++i) {
-    auto &kernel = kernels[i];
+  for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
     if (common::AnfAlgo::GetCNodeName(kernel) == kMemSetOpName) {
       continue;
@@ -577,9 +516,9 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph &grap
 
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
       opt::InferOp(kernel);
-      auto args = kernel->user_data<kernel::KernelArgs>();
-      MS_EXCEPTION_IF_NULL(args);
-      (void)kernel_mod->Resize(args->inputs, args->outputs, args->depend_tensor_map);
+      auto inputs = AnfAlgo::GetOrCreateAllInputKernelTensors(kernel);
+      auto outputs = AnfAlgo::GetOrCreateAllOutputKernelTensors(kernel);
+      (void)kernel_mod->Resize(inputs, outputs);
     }
     KernelLaunchInfo kernel_launch_info;
     device::KernelRuntime::GenLaunchArgs(*kernel_mod, kernel, &kernel_launch_info);
@@ -635,9 +574,6 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
     MS_LOG(INFO) << "Dynamic Shape Graph Run Task Async";
     return RunDynamicKernelAsync(graph);
   }
-  if (runtime_core_ != nullptr) {
-    return runtime_core_->RunTaskCore(graph);
-  }
   return true;
 }
 
@@ -687,7 +623,7 @@ bool AscendKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size,
   }
   // cppcheck-suppress unreadVariable
   auto lock = device::KernelRuntime::LockRuntime(stream_);
-  if (RT_ERROR_NONE != rtMemcpyAsync(dst, size, src, size, static_cast<rtMemcpyKind_t>(kind), stream_)) {
+  if (ACL_ERROR_NONE != rtMemcpyAsync(dst, size, src, size, static_cast<rtMemcpyKind_t>(kind), stream_)) {
     MS_LOG(ERROR) << "Call runtime rtMemcpyAsync error.";
     return false;
   }
@@ -716,7 +652,7 @@ void AscendKernelRuntime::SetRtDevice(uint32_t device_id) {
 
 void AscendKernelRuntime::CreateDefaultStream() {
   size_t compute_stream_id;
-  AscendStreamMng::GetInstance().CreateStreamWithFlags(&compute_stream_id, RT_STREAM_HUGE);
+  AscendStreamMng::GetInstance().CreateStream(&compute_stream_id);
   MS_LOG(INFO) << "Create ascend default stream, stream id: " << compute_stream_id;
   stream_ = AscendStreamMng::GetInstance().GetStream(compute_stream_id);
   MS_EXCEPTION_IF_NULL(stream_);
@@ -788,12 +724,6 @@ bool AscendKernelRuntime::DestroyHccl() {
   return true;
 }
 
-void AscendKernelRuntime::KernelLaunchProfiling(const std::string &kernel_name) {
-  if (runtime_core_ != nullptr) {
-    runtime_core_->KernelLaunchProfilingCore(kernel_name);
-  }
-}
-
 std::shared_ptr<DeviceEvent> AscendKernelRuntime::CreateDeviceEvent() {
   auto ascend_event = std::make_shared<AscendEvent>();
   MS_EXCEPTION_IF_NULL(ascend_event);
@@ -810,18 +740,5 @@ uint64_t AscendKernelRuntime::GetMsUsedHbmSize() const {
   auto ascend_mem_manager = std::dynamic_pointer_cast<AscendMemoryManager>(mem_manager_);
   MS_EXCEPTION_IF_NULL(ascend_mem_manager);
   return ascend_mem_manager->GetMsUsedHbmSize();
-}
-
-void AscendKernelRuntime::SetReuseCommunicationAddress(const session::KernelGraph &graph) {
-  auto cnode_list = graph.execution_order();
-  for (const auto &cnode : cnode_list) {
-    MS_EXCEPTION_IF_NULL(cnode);
-    if (common::AnfAlgo::HasNodeAttr(kAttrReuseCommunication, cnode)) {
-      auto reuse_index = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrReuseCommunication);
-      if (reuse_communication_address_.find(reuse_index) == reuse_communication_address_.end()) {
-        (void)reuse_communication_address_.emplace(reuse_index, std::make_pair(nullptr, nullptr));
-      }
-    }
-  }
 }
 }  // namespace mindspore::device::ascend

@@ -51,14 +51,10 @@ REGISTER_ACL_OP(Conv2D)
 
 REGISTER_ACL_OP(Conv3D).Input(0, {"NCHW"}).Input(1, {"NCHW"}).Input(2, {"NCHW"});
 
-REGISTER_ACL_OP(Conv2DBackpropInput)
-  .Input(0, {"NCHW"})
-  .Input(1, {"NCHW"})
-  .Input(2, {"NCHW"})
-  .OutputSelector(&CheckConvNdSupported);
+REGISTER_ACL_OP(Conv2DBackpropInput).Input(0, {"NCHW"}).Input(1, {"NCHW"}).OutputSelector(&CheckConvNdSupported);
 
-REGISTER_ACL_OP(Conv3DBackpropInput).Input(0, {"NCHW"}).Input(1, {"NCHW"}).Input(2, {"NCHW"});
+REGISTER_ACL_OP(Conv3DBackpropInput).Input(0, {"NCHW"}).Input(1, {"NCHW"});
 
-REGISTER_ACL_OP(Conv2DBackpropFilter).Input(0, {"NCHW"}).Input(1, {"NCHW"}).Input(2, {"NCHW"});
+REGISTER_ACL_OP(Conv2DBackpropFilter).Input(0, {"NCHW"}).Input(1, {"NCHW"});
 }  // namespace transform
 }  // namespace mindspore

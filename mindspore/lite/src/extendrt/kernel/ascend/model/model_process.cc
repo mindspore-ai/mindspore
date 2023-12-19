@@ -873,7 +873,7 @@ bool ModelProcess::ResizeDynamicBatchAndImageSize(const std::vector<ShapeVector>
   return true;
 }
 
-bool ModelProcess::CheckInputTensors(const std::vector<KernelTensorPtr> &input_tensors) {
+bool ModelProcess::CheckInputTensors(const std::vector<KernelTensor *> &input_tensors) {
   if (data_input_num_ != input_tensors.size()) {
     MS_LOG(ERROR) << "Expect input size to be " << data_input_num_ << ", but got " << input_tensors.size();
     return false;
@@ -914,7 +914,7 @@ bool ModelProcess::CheckInputTensors(const std::vector<KernelTensorPtr> &input_t
   return true;
 }
 
-bool ModelProcess::CheckOutputTensors(const std::vector<KernelTensorPtr> &outputs) {
+bool ModelProcess::CheckOutputTensors(const std::vector<KernelTensor *> &outputs) {
   if (outputs.size() != output_infos_.size()) {
     MS_LOG(ERROR) << "Actual tensor count not match, required count " << output_infos_.size() << ", given count "
                   << outputs.size();
@@ -960,7 +960,7 @@ bool ModelProcess::CheckOutputTensors(const std::vector<KernelTensorPtr> &output
   return true;
 }
 
-bool ModelProcess::CheckAndInitInput(const std::vector<KernelTensorPtr> &inputs) {
+bool ModelProcess::CheckAndInitInput(const std::vector<KernelTensor *> &inputs) {
   // check inputs
   if (!CheckInputTensors(inputs)) {
     MS_LOG(ERROR) << "Check input tensor failed.";
@@ -1019,7 +1019,7 @@ bool ModelProcess::CheckAndInitInput(const std::vector<KernelTensorPtr> &inputs)
   return true;
 }
 
-void ModelProcess::CheckAndInitDynOutputDeviceBuf(const KernelTensorPtr &output, const AclTensorInfo &output_info,
+void ModelProcess::CheckAndInitDynOutputDeviceBuf(const KernelTensor *output, const AclTensorInfo &output_info,
                                                   void **output_device_buffer, size_t *output_buf_size,
                                                   size_t output_idx) {
   auto device_data = output->GetData();
@@ -1039,7 +1039,7 @@ void ModelProcess::CheckAndInitDynOutputDeviceBuf(const KernelTensorPtr &output,
   }
 }
 
-bool ModelProcess::CheckAndInitOutput(const std::vector<KernelTensorPtr> &outputs) {
+bool ModelProcess::CheckAndInitOutput(const std::vector<KernelTensor *> &outputs) {
   // check outputs
   if (!CheckOutputTensors(outputs)) {
     MS_LOG(ERROR) << "Check output tensor failed.";
@@ -1088,7 +1088,7 @@ bool ModelProcess::CheckAndInitOutput(const std::vector<KernelTensorPtr> &output
   return true;
 }
 
-bool ModelProcess::ResetDynamicOutputTensor(const std::vector<KernelTensorPtr> &outputs) {
+bool ModelProcess::ResetDynamicOutputTensor(const std::vector<KernelTensor *> &outputs) {
   for (size_t i = 0; i < output_infos_.size(); ++i) {
     auto &output = outputs[i];
     auto &output_info = output_infos_[i];
@@ -1152,8 +1152,8 @@ bool ModelProcess::ResetDynamicOutputTensor(const std::vector<KernelTensorPtr> &
   return true;
 }
 
-bool ModelProcess::PredictFromHost(const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
+bool ModelProcess::PredictFromHost(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   if (!loaded_) {
     MS_LOG(ERROR) << "Model has not been loaded";
     return false;
@@ -1248,7 +1248,7 @@ void ModelProcess::FreeResourceInput(std::vector<AclTensorInfo> acl_tensor_info)
 }
 
 void ModelProcess::FreeResourceOutput(std::vector<AclTensorInfo> *acl_tensor_info,
-                                      const std::vector<KernelTensorPtr> &outputs) {
+                                      const std::vector<KernelTensor *> &outputs) {
   for (size_t i = 0; i < acl_tensor_info->size(); i++) {
     auto &item = (*acl_tensor_info)[i];
     auto &output = outputs[i];
@@ -1275,7 +1275,7 @@ void ModelProcess::FreeResourceOutput(std::vector<AclTensorInfo> *acl_tensor_inf
   }
 }
 
-bool ModelProcess::GetOutputs(const std::vector<KernelTensorPtr> &outputs) {
+bool ModelProcess::GetOutputs(const std::vector<KernelTensor *> &outputs) {
   aclrtMemcpyKind kind = is_run_on_device_ ? ACL_MEMCPY_HOST_TO_HOST : ACL_MEMCPY_DEVICE_TO_HOST;
   for (size_t i = 0; i < output_infos_.size(); ++i) {
     auto &output = outputs[i];

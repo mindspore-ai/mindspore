@@ -115,7 +115,6 @@ bool UniqueConsecutiveGpuKernelMod::Init(const std::vector<KernelTensor *> &inpu
     MS_LOG(ERROR) << "Invalid inputs is empty.";
     return false;
   }
-  is_need_retrieve_output_shape_ = true;
   return true;
 }
 

@@ -25,7 +25,6 @@
 #include <cstdarg>
 #include <securec.h>
 
-#include "mmpa/mmpa_api.h"
 #include "toolchain/slog.h"
 
 #define GE_MODULE_NAME static_cast<int32_t>(GE)

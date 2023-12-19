@@ -22,6 +22,11 @@ mindspore.ops.gelu
 
     GELU相关图参见 `GELU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Activation_gelu.png>`_ 。
 
+    GELU函数图：
+
+    .. image:: ../images/GELU.png
+        :align: center
+
     参数：
         - **input_x** (Tensor) - 用于计算GELU的Tensor。数据类型为float16、float32、float64。
         - **approximate** (str) - gelu近似算法。有两种：``'none'`` 和 ``'tanh'`` 。默认值： ``'none'`` 。

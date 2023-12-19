@@ -57,14 +57,14 @@ class FileWriter:
         >>>
         >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1, overwrite=True)
         >>> schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"}}
-        >>> schema_id = writer.add_schema(schema_json, "test_schema")
+        >>> writer.add_schema(schema_json, "test_schema")
         >>> indexes = ["file_name", "label"]
-        >>> status = writer.add_index(indexes)
+        >>> writer.add_index(indexes)
         >>> for i in range(10):
         ...     data = [{"file_name": str(i) + ".jpg", "label": i,
         ...              "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff"}]
-        ...     status = writer.write_raw_data(data)
-        >>> status = writer.commit()
+        ...     writer.write_raw_data(data)
+        >>> writer.commit()
     """
 
     def __init__(self, file_name, shard_num=1, overwrite=False):
@@ -135,16 +135,16 @@ class FileWriter:
             ...          "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff"}]
             >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1, overwrite=True)
             >>> schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"}}
-            >>> schema_id = writer.add_schema(schema_json, "test_schema")
-            >>> status = writer.write_raw_data(data)
-            >>> status = writer.commit()
+            >>> writer.add_schema(schema_json, "test_schema")
+            >>> writer.write_raw_data(data)
+            >>> writer.commit()
             >>>
             >>> write_append = FileWriter.open_for_append("test.mindrecord")
             >>> for i in range(9):
             ...     data = [{"file_name": str(i+1) + ".jpg", "label": i,
             ...              "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff"}]
-            ...     status = write_append.write_raw_data(data)
-            >>> status = write_append.commit()
+            ...     write_append.write_raw_data(data)
+            >>> write_append.commit()
         """
         if platform.system().lower() == "windows":
             file_name = file_name.replace("\\", "/")
@@ -220,9 +220,6 @@ class FileWriter:
             content (dict): Dictionary of schema content.
             desc (str, optional): String of schema description, Default: ``None`` .
 
-        Returns:
-            int, schema id.
-
         Raises:
             MRMInvalidSchemaError: If schema is invalid.
             MRMBuildSchemaError: If failed to build schema.
@@ -238,7 +235,7 @@ class FileWriter:
         if ret is False:
             raise MRMInvalidSchemaError(error_msg)
         schema = self._header.build_schema(content, desc)
-        return self._header.add_schema(schema)
+        self._header.add_schema(schema)
 
     def add_index(self, index_fields):
         """
@@ -255,9 +252,6 @@ class FileWriter:
         Args:
             index_fields (list[str]): fields from schema.
 
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
-
         Raises:
             ParamTypeError: If index field is invalid.
             MRMDefineIndexError: If index field is not primitive type.
@@ -272,7 +266,7 @@ class FileWriter:
                 raise MRMDefineIndexError("Failed to set field {} since it's not primitive type.".format(field))
             if not isinstance(field, str):
                 raise ParamTypeError('index field', 'str')
-        return self._header.add_index_fields(index_fields)
+        self._header.add_index_fields(index_fields)
 
     def open_and_set_header(self):
         logger.warning("This interface will be deleted or invisible in the future.")
@@ -294,9 +288,6 @@ class FileWriter:
         Args:
            raw_data (list[dict]): List of raw data.
            parallel_writer (bool, optional): Write raw data in parallel if it equals to True. Default: ``False`` .
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
 
         Raises:
             ParamTypeError: If index field is invalid.
@@ -329,7 +320,8 @@ class FileWriter:
                 if not isinstance(each_raw, dict):
                     raise ParamTypeError('raw_data item', 'dict')
             self._verify_based_on_schema(raw_data)
-            return self._writer.write_raw_data(raw_data, True, parallel_writer)
+            self._writer.write_raw_data(raw_data, True, parallel_writer)
+            return
 
         ## parallel write mode
         # init the _writers and launch the workers
@@ -369,7 +361,7 @@ class FileWriter:
                         raise RuntimeError("Worker process(pid:{}) has stopped abnormally. Please check " \
                                            "the above log".format(self._workers[i].pid))
                 continue
-            return SUCCESS
+            return
 
     def set_header_size(self, header_size):
         """
@@ -379,11 +371,8 @@ class FileWriter:
         the default size (16MB), users need to call the API to set a proper size.
 
         Args:
-            header_size (int): Size of header, between 16*1024(16KB) and
+            header_size (int): Size of header, in bytes, which between 16*1024(16KB) and
                 128*1024*1024(128MB).
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
 
         Raises:
             MRMInvalidHeaderSizeError: If failed to set header size.
@@ -391,9 +380,9 @@ class FileWriter:
         Examples:
             >>> from mindspore.mindrecord import FileWriter
             >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1)
-            >>> status = writer.set_header_size(1 << 25) # 32MB
+            >>> writer.set_header_size(1 << 25) # 32MB
         """
-        return self._writer.set_header_size(header_size)
+        self._writer.set_header_size(header_size)
 
     def set_page_size(self, page_size):
         """
@@ -404,11 +393,8 @@ class FileWriter:
         to set a proper size.
 
         Args:
-           page_size (int): Size of page, between 32*1024(32KB) and
+           page_size (int): Size of page, in bytes, which between 32*1024(32KB) and
                256*1024*1024(256MB).
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
 
         Raises:
             MRMInvalidPageSizeError: If failed to set page size.
@@ -416,9 +402,9 @@ class FileWriter:
         Examples:
             >>> from mindspore.mindrecord import FileWriter
             >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1)
-            >>> status = writer.set_page_size(1 << 26)  # 64MB
+            >>> writer.set_page_size(1 << 26)  # 64MB
         """
-        return self._writer.set_page_size(page_size)
+        self._writer.set_page_size(page_size)
 
     def commit(self):  # pylint: disable=W0212
         """
@@ -426,9 +412,6 @@ class FileWriter:
 
         Note:
             Please refer to the Examples of :class:`mindspore.mindrecord.FileWriter` .
-
-        Returns:
-            MSRStatus, SUCCESS or FAILED.
 
         Raises:
             MRMOpenError: If failed to open MindRecord file.
@@ -478,8 +461,6 @@ class FileWriter:
 
         logger.info("The list of mindrecord files created are: {}, and the list of index files are: {}".format(
             mindrecord_files, index_files))
-
-        return SUCCESS
 
     def _index_worker(self, i):
         """The worker do the index generator"""

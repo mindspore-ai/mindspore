@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_MM_ACLNN_KERNEL_MOD_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_MM_ACLNN_KERNEL_MOD_H_
 #include <vector>
+#include <utility>
 #include "ops/base_operator.h"
 #include "plugin/device/ascend/kernel/opapi/aclnn_kernel_mod.h"
 #include "transform/acl_ir/acl_convert.h"
@@ -32,6 +33,10 @@ class MMAclnnKernelMod : public AclnnKernelMod {
   void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+
+ private:
+  std::pair<KernelTensor *, bool> input_a_;
+  std::pair<KernelTensor *, bool> input_b_;
 };
 }  // namespace kernel
 }  // namespace mindspore

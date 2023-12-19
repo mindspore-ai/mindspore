@@ -49,7 +49,6 @@ bool SparseSplitGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
   kernel_func_ = kernel_list[input_dtype_];
-  is_need_retrieve_output_shape_ = true;
   return true;
 }
 

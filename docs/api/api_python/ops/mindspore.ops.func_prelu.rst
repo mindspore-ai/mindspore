@@ -15,6 +15,11 @@ mindspore.ops.prelu
     .. note::
         Ascend不支持标量和一维Tensor的输入。
 
+    PReLU函数图：
+
+    .. image:: ../images/PReLU.png
+        :align: center
+
     参数：
         - **x** (Tensor) - 激活函数的输入Tensor。数据类型为float16或float32。shape为 :math:`(N, *)` ，其中 :math:`*` 表示任意的附加维度。
         - **weight** (Tensor) - 权重Tensor。数据类型为float16或float32。 `weight` 只可以是Tensor，长度与输入x的通道数C相同。在GPU设备上，当输入为标量时，shape为 :math:`(1,)` 。

@@ -131,7 +131,7 @@ class AbstractActor : public OpActor<DeviceTensor> {
   // Send recorder info to recorder actor.
   virtual void SendRecorderInfo(OpContext<DeviceTensor> *const context) const {}
   void SendOutputData(OpContext<DeviceTensor> *const context, const std::vector<AnfNodePtr> &output_data_nodes,
-                      const std::vector<DataArrowPtr> output_data_arrows,
+                      const std::vector<DataArrowPtr> &output_data_arrows,
                       const std::vector<std::pair<OpDataUniquePtr<DeviceTensor>, size_t>> &output_data_list,
                       const mindspore::HashMap<DataArrow *, size_t> &data_arrow_to_fusion_actor_indexs,
                       mindspore::HashMap<std::string, std::vector<OpData<DeviceTensor> *>> *batch_output_data);

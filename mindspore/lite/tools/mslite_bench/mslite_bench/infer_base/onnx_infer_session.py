@@ -30,7 +30,7 @@ class OnnxSession(AbcInferSession, ABC):
     def __init__(self,
                  model_file,
                  cfg=None):
-        super(OnnxSession, self).__init__(model_file, cfg)
+        super().__init__(model_file, cfg)
         self.model = onnx.load(model_file)
         self.output_nodes = self._get_all_output_nodes()
         self.output_tensor_names = self._get_output_tensor_names()
@@ -49,7 +49,7 @@ class OnnxSession(AbcInferSession, ABC):
         """create infer session"""
         model_session = onnxruntime.InferenceSession(self.model_file,
                                                      providers=['CPUExecutionProvider'])
-        self.logger.info('[ONNX SESSION] onnx Session create successfully')
+        self.logger.debug('onnx Session create successfully')
         return model_session
 
     def _get_all_input_nodes(self):

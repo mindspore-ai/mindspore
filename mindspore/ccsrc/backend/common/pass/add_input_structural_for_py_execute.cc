@@ -53,6 +53,13 @@ const AnfNodePtr AddInputStructuralForPyExecute::Process(const FuncGraphPtr &, c
   if (!common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPyExecute)) {
     return nullptr;
   }
+
+  if (node->abstract() != nullptr && (!node->abstract()->isa<abstract::AbstractAny>())) {
+    common::AnfAlgo::SetNodeAttr(kAttrPyExecuteNeedUpdateShape, MakeValue(true), node);
+    MS_LOG(INFO) << "Add attr for pyexecute:" << node->DebugString()
+                 << " primitive:" << reinterpret_cast<void *>(GetCNodePrimitive(node).get());
+  }
+
   auto cnode = node->cast<CNodePtr>();
   if (common::AnfAlgo::HasNodeAttr(kAttrTupleInputStructural, cnode)) {
     return nullptr;

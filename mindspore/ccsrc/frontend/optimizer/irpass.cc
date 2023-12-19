@@ -253,7 +253,7 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
 
   // tuple parameter graph transform
   call_graph_tuple_transform_ =
-    MakeSubstitution(std::make_shared<CallGraphTupleTransform>(), "graph_param_transform", IsNode);
+    MakeSubstitution(std::make_shared<CallGraphSequenceTransform>(), "graph_param_transform", IsNode);
 
   // Eliminate the unused input of partial
   partial_unused_args_eliminate_ =

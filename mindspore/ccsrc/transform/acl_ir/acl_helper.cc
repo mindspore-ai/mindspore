@@ -270,11 +270,8 @@ void GetOutputBuildInfo(const AnfNodePtr &node, const size_t output_num, const A
 }
 
 void SetOutputIdentityFlag(const AnfNodePtr &node, const std::vector<std::string> &output_formats) {
-  if (common::GetEnv("MS_DEV_FORCE_ACL") != "1") {
-    if (std::any_of(output_formats.begin(), output_formats.end(),
-                    [](const auto &format) { return !AclHelper::CheckDefaultSupportFormat(format); })) {
-      common::AnfAlgo::SetNodeAttr(kAttrAclSpecialFormat, MakeValue(true), node);
-    }
+  if (common::GetEnv("MS_DEV_FORCE_ACL") != "1" && AclHelper::NeedIdentityFlag(output_formats)) {
+    common::AnfAlgo::SetNodeAttr(kAttrAclSpecialFormat, MakeValue(true), node);
   }
 }
 
@@ -335,6 +332,11 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
   size_t ms_real_idx = 0;  // index of actual input argument
   auto value_depend_indices = ops::GetInputDependValueList(common::AnfAlgo::GetCNodePrimitive(cnode));
 
+  std::vector<int64_t> dyn_input_sizes = {};
+  if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
+    dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
+  }
+
   for (size_t ms_proto_idx = 0; ms_proto_idx < info->GetNumInputsOfMsOpProto(); ++ms_proto_idx) {
     // skip attribute converted input
     if (NeedCheckAttrToInput(cnode, info->attr_input_map(), ms_proto_idx)) {
@@ -380,15 +382,12 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
     }
 
     if (ge_input_info.type == Ms2GeParamInfo::DYNAMIC) {
-      std::vector<int64_t> dyn_input_sizes = {};
-      if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
-        dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
+      // process op which has only one dynamic input
+      if (ms_proto_idx >= dyn_input_sizes.size()) {
+        MS_LOG(EXCEPTION) << "Attribute " << kAttrDynInputSizes << " of " << cnode->fullname_with_scope() << " is "
+                          << dyn_input_sizes << ", of which size is less than " << ms_proto_idx;
       }
-      if (dyn_input_sizes.empty()) {
-        MS_LOG(EXCEPTION) << "Attribute of " << cnode->fullname_with_scope() << " is " << dyn_input_sizes
-                          << ", of which size is empty";
-      }
-      ms_real_idx += LongToSize(dyn_input_sizes[0]);
+      ms_real_idx += dyn_input_sizes[ms_proto_idx];
     } else {
       ms_real_idx += 1;
     }
@@ -442,11 +441,10 @@ KernelType AclHelper::GetKernelInfoFromGe(const AnfNodePtr &node, ErrorAclType *
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
-  static const std::set<std::string> excuded_nodes = {kCTCLossOpName, kGetNextOpName, kPadV3OpName, kPadV3GradOpName};
   std::string name = GetCNodeFuncName(cnode);
-  if (excuded_nodes.count(name) != 0) {
-    *err_type = kSpecialOp;
-    return KernelType::UNKNOWN_KERNEL_TYPE;
+  if (common::AnfAlgo::IsCommunicationOp(node)) {
+    *err_type = kNormalOp;
+    return HCCL_KERNEL;
   }
 
   auto info = GeAdapterManager::GetInstance().GetInfo(name, true);
@@ -463,20 +461,12 @@ KernelType AclHelper::GetKernelInfoFromGe(const AnfNodePtr &node, ErrorAclType *
   }
 
   *err_type = kNormalOp;
-  const auto &op_type = info->op_type();
-  if (kHcomOps.find(op_type) != kHcomOps.end()) {
-    return HCCL_KERNEL;
-  }
-
   return ACL_KERNEL;
 }
 
 bool AclHelper::IsInputDtypeSupport(const std::string &kernel_name, TypeId base_type, size_t idx) {
   auto info = GeAdapterManager::GetInstance().GetInfo(kernel_name, true);
   MS_EXCEPTION_IF_NULL(info);
-  if (idx >= info->GetNumInputsOfMsOpProto()) {
-    return true;
-  }
   auto input_supported_dtypes = info->input_supported_dtypes();
   if (idx >= info->GetNumInputsOfMsOpProto()) {
     // this branch represent input_attr_map, didn't need check
@@ -697,6 +687,11 @@ bool AclHelper::IsNopNode(const CNodePtr &node) {
                                                       prim::kPrimFlattenGrad->name()};
   auto op_name = common::AnfAlgo::GetCNodeName(node);
   return (nop_nodes.find(op_name) != nop_nodes.end());
+}
+
+bool AclHelper::NeedIdentityFlag(const std::vector<std::string> &formats) {
+  return std::any_of(formats.begin(), formats.end(),
+                     [](const auto &format) { return !AclHelper::CheckDefaultSupportFormat(format); });
 }
 }  // namespace transform
 }  // namespace mindspore

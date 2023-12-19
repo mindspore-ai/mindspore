@@ -318,6 +318,7 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
   if (need_map) {
     std::string origin_name_str = origin_name.value();
     std::string mapped_name_str = mapped_name.value();
+    std::lock_guard<std::mutex> guard(lock_);
     auto mapping_file = Common::CreatePrefixPath(prefix_path.value() + "/mapping.csv");
     if (!mapping_file.has_value()) {
       MS_LOG(ERROR) << "CreatePrefixPath for mapping.csv failed.";

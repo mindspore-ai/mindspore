@@ -5,6 +5,7 @@ expand_dims:
       dtype: tensor
     axis:
       dtype: int
+      type_cast: tensor
   returns:
     output:
       dtype: tensor

@@ -45,6 +45,9 @@ class GeKernelExecutor : public KernelExecutor {
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
+  kernel::KernelModPtr CreateKernelMod(const std::string &op_name) const override {
+    MS_LOG(EXCEPTION) << "Ascend Unsupported";
+  };
 
   // Adjust kernel graph before run graph, used in Graph Mode.
   void PreprocessBeforeRun(const FuncGraphPtr &graph) const override;
@@ -66,9 +69,6 @@ class GeKernelExecutor : public KernelExecutor {
                          const device::DeviceAddressPtrList &output_addr_list) const override;
 
  private:
-  // Launch device aicpu library
-  static void LaunchDeviceLibrary();
-
   // launch
   bool PySyncRuning() const;
   bool MemoryCopyAsync(const CNodePtr &node, const vector<KernelTensor *> &inputs,

@@ -63,7 +63,6 @@ bool CTCGreedyDecoderGpuKernelMod::Init(const std::vector<KernelTensor *> &input
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
 
   merge_repeated_ = GetValue<bool>(primitive_->GetAttr("merge_repeated"));
-  is_need_retrieve_output_shape_ = true;
 
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {

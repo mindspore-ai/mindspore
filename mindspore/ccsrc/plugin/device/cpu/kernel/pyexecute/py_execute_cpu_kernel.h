@@ -29,25 +29,18 @@
 namespace py = pybind11;
 namespace mindspore {
 namespace kernel {
-struct PyExecuteInputInfo {
-  py::object py_obj_output;
-  abstract::AbstractBasePtr abstract;
-  TypeId type;
-  std::vector<int64_t> shape;
-};
-
 struct PyExecuteOutputUserData {
   py::object obj;
   constexpr static char key[] = "PyExecuteOutputUserData";
 };
 using PyExecuteOutputUserDataPtr = std::shared_ptr<PyExecuteOutputUserData>;
 
-class PyExecuteCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class PyExecuteCpuKernelMod : public NativeCpuKernelMod {
  public:
-  PyExecuteCpuKernelMod() : kernel_node_(nullptr) {}
+  PyExecuteCpuKernelMod() {}
   ~PyExecuteCpuKernelMod() = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
               const std::vector<KernelTensor *> &outputs) override;
   bool need_user_data() const override { return true; }
@@ -60,10 +53,7 @@ class PyExecuteCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   }
 
  private:
-  void AttachPyOutputData(const py::object &py_res);
-  CNodePtr kernel_node_{nullptr};
   bool is_output_any_{true};
-  std::vector<PyExecuteInputInfo> inputs_info_;
   std::map<size_t, UserData *> input_user_data_;
   std::map<size_t, UserData *> output_user_data_;
 };

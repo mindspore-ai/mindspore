@@ -39,7 +39,6 @@ bool NonZeroCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const 
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  is_need_retrieve_output_shape_ = true;  // NonZero is a dynamic shape operator.
   data_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
   index_size_ = abstract::TypeIdSize(outputs[kIndex0]->dtype_id());
   return true;

@@ -15,6 +15,8 @@
  */
 
 #include "transform/acl_ir/ge_adapter_info.h"
+#include <algorithm>
+#include <limits>
 #include "include/transform/graph_ir/utils.h"
 #include "transform/graph_ir/transform_util.h"
 #include "graph/operator_factory.h"
@@ -54,13 +56,14 @@ void GeAdapterInfo::InitParametersMap(const ParamMap &params, const DynParamMap 
   // calculate index of dynamic input/output
   size_t ge_dynmaic_idx = std::numeric_limits<size_t>::max();
   if (!dyn_params.empty()) {
-    // NOTE: Now only support one dynamic input or output
     if (dyn_params.size() > 1) {
-      MS_LOG(EXCEPTION) << "Now only support op with one dynamic input/output, but op " << adapter_->getOpType()
-                        << " has " << dyn_params.size() << " dynamic " << (is_input ? "inputs" : "outputs");
+      MS_LOG(DEBUG) << "Op " << adapter_->getOpType() << " has " << dyn_params.size() << " dynamic "
+                    << (is_input ? "inputs" : "outputs");
+      mapping_flags |= GeTensorInfo::kMultiDynParam;
+    } else {
+      mapping_flags |= GeTensorInfo::kDynamicParam;
+      ge_dynmaic_idx = dyn_params.cbegin()->second.index;
     }
-    mapping_flags |= GeTensorInfo::kDynamicParam;
-    ge_dynmaic_idx = dyn_params.cbegin()->second.index;
   }
 
   auto get_ms_idx = [is_input](int index) {
@@ -83,6 +86,9 @@ void GeAdapterInfo::InitParametersMap(const ParamMap &params, const DynParamMap 
 
     // input/output: GE(GraphEngine) Index --> MindSpore Index
     idx_ge2ms[ge_idx] = ms_idx;
+    if (is_input) {
+      max_input_ms_proto_idx_ = std::max(max_input_ms_proto_idx_, ms_idx);
+    }
   }
 
   // process dynamic inputs/outputs
@@ -93,6 +99,10 @@ void GeAdapterInfo::InitParametersMap(const ParamMap &params, const DynParamMap 
     idx_ms2ge[ms_idx] = Ms2GeParamInfo{ge_idx, v.name, Ms2GeParamInfo::DYNAMIC, ge_idx > ge_dynmaic_idx};
     // input/output: GE(GraphEngine) Index --> MindSpore Index
     idx_ge2ms[ge_idx] = ms_idx;
+    if (is_input) {
+      dyn_input_ms_proto_idx_ = ms_idx;
+      max_input_ms_proto_idx_ = std::max(max_input_ms_proto_idx_, ms_idx);
+    }
   }
 }
 

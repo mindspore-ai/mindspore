@@ -70,7 +70,7 @@ bool GeDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   MS_EXCEPTION_IF_NULL(address);
   MS_EXCEPTION_IF_NULL(mem_manager_);
   auto device_name_in_address = GetDeviceNameByType(static_cast<const DeviceType>(address->GetDeviceType()));
-  if (device_name_in_address != device_context_->device_context_key().device_name_) {
+  if (IsEnableRefMode() && device_name_in_address != device_context_->device_context_key().device_name_) {
     MS_LOG(EXCEPTION) << "The device address type is wrong: type name in address:" << device_name_in_address
                       << ", type name in context:" << device_context_->device_context_key().device_name_;
   }
@@ -83,8 +83,9 @@ bool GeDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   if (runtime_instance_ != nullptr) {
     runtime_instance_->SetContext();
   }
-  void *device_ptr =
-    mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem(), address->need_recycle());
+  auto size =
+    address->type_id() == kObjectTypeString ? address->GetSize() + sizeof(ge::StringHead) : address->GetSize();
+  void *device_ptr = mem_manager_->MallocMemFromMemPool(size, address->from_persistent_mem(), address->need_recycle());
   if (!device_ptr) {
     return false;
   }
@@ -110,6 +111,11 @@ void GeDeviceResManager::FreeMemory(void *ptr) const {
   mem_manager_->FreeMemFromMemPool(ptr);
 }
 
+void GeDeviceResManager::FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
+                                         const std::vector<size_t> &keep_addr_sizes) const {
+  AscendMemoryPool::GetInstance().FreePartTensorMems(free_addrs, keep_addrs, keep_addr_sizes);
+}
+
 void GeDeviceResManager::SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) {
   (void)mem_manager_->SwapIn(host_ptr, device_ptr, mem_size, stream);
 }
@@ -120,26 +126,6 @@ void GeDeviceResManager::SwapOut(const void *device_ptr, void *host_ptr, size_t 
 
 std::vector<void *> GeDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
   return mem_manager_->MallocContinuousMemFromMemPool(size_list);
-}
-
-DeviceAddressPtr GeDeviceResManager::CreateDeviceAddress(void *const device_ptr, size_t device_size,
-                                                         const string &format, TypeId type_id, const ShapeVector &shape,
-                                                         const UserDataPtr &user_data) const {
-  if (IsEnableRefMode()) {
-    auto device_address = std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id,
-                                                                device_context_->device_context_key_.device_name_,
-                                                                device_context_->device_context_key_.device_id_);
-    device_address->set_host_shape(shape);
-    device_address->set_device_synchronizer(std::make_shared<AscendDeviceSynchronizer>());
-    return device_address;
-  } else {
-    auto device_address = std::make_shared<cpu::CPUDeviceAddress>(device_ptr, device_size, format, type_id,
-                                                                  device_context_->device_context_key_.device_name_,
-                                                                  device_context_->device_context_key_.device_id_);
-    device_address->set_host_shape(shape);
-    device_address->set_device_synchronizer(std::make_shared<cpu::CPUDeviceSynchronizer>());
-    return device_address;
-  }
 }
 
 DeviceAddressPtr GeDeviceResManager::CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {

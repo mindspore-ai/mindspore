@@ -27,7 +27,6 @@
 
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
 #include "backend/common/somas/somas_node.h"
 #include "backend/common/somas/somas_solver_pre.h"
 #include "backend/common/somas/somas_stream.h"

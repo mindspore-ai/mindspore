@@ -960,8 +960,7 @@ void ControlNodeScheduler::LinkArrowbyFormalParameter(ControlActor *const to_act
                          graph_compiler_info.control_node_parser_);
   } else if (common::AnfAlgo::IsCallNode(from_node) && !IsNotCut(from_node)) {
     // Link arrow by call node.
-    LinkArrowByCallNode(from_node, to_actor, real_from_node_with_index, to_node_with_index,
-                        graph_compiler_info.control_node_parser_);
+    LinkArrowByCallNode(from_node, to_actor, real_from_node_with_index, to_node_with_index, graph_compiler_info);
   } else if (common::AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimSwitch) ||
              common::AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimSwitchLayer)) {
     // Link arrow from switch actor.
@@ -1085,12 +1084,13 @@ void ControlNodeScheduler::LinkArrowByParameter(const AnfNodePtr &parameter, Con
 void ControlNodeScheduler::LinkArrowByCallNode(const AnfNodePtr &call_node, ControlActor *const to_actor,
                                                const KernelWithIndex &from_node_with_index,
                                                const KernelWithIndex &to_node_with_index,
-                                               const ControlNodeParserPtr &parser) const {
-  MS_EXCEPTION_IF_NULL(parser);
+                                               const GraphCompilerInfo &graph_compiler_info) const {
   MS_EXCEPTION_IF_NULL(call_node);
   MS_EXCEPTION_IF_NULL(to_actor);
   const auto &from_node = from_node_with_index.first;
   MS_EXCEPTION_IF_NULL(from_node);
+  auto parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
 
   if (to_actor->type_ != KernelTransformType::kEntranceActor) {
     // Link arrow from exit actor to control actor.
@@ -1099,7 +1099,14 @@ void ControlNodeScheduler::LinkArrowByCallNode(const AnfNodePtr &call_node, Cont
     const auto &real_abstract = common::AnfAlgo::FetchAbstractByIndex(abstract, from_node_with_index.second);
     MS_EXCEPTION_IF_NULL(real_abstract);
 
-    const auto &func_graphs = parser->FetchFuncGraphbyCallNode(from_node);
+    std::set<FuncGraphPtr> func_graphs;
+    try {
+      func_graphs = parser->FetchFuncGraphbyCallNode(from_node);
+    } catch (std::exception &e) {
+      LinkArrowByKernel(call_node, to_actor, from_node_with_index, to_node_with_index, graph_compiler_info);
+      func_graphs.clear();
+    }
+
     for (const auto &func_graph : func_graphs) {
       MS_EXCEPTION_IF_NULL(func_graph);
       const auto &actor_name = func_graph->ToString() + kExitActorNameSuffix;

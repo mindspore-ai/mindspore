@@ -251,22 +251,12 @@ void AclAttrMaker::SetAttr(const string &attr_name, const std::vector<::ge::Data
 AclRunner::~AclRunner() { Reset(); }
 
 void AclRunner::Reset() {
-  (void)std::for_each(acl_param_.input_desc.begin(), acl_param_.input_desc.end(), aclDestroyTensorDesc);
   (void)std::for_each(acl_param_.output_desc.begin(), acl_param_.output_desc.end(), aclDestroyTensorDesc);
-  (void)std::for_each(acl_param_.input_buffer.begin(), acl_param_.input_buffer.end(), aclDestroyDataBuffer);
   (void)std::for_each(acl_param_.output_buffer.begin(), acl_param_.output_buffer.end(), aclDestroyDataBuffer);
-  if (acl_param_.attr != nullptr) {
-    aclopDestroyAttr(acl_param_.attr);
-    acl_param_.attr = nullptr;
-  }
-
-  acl_param_.input_desc.clear();
-  acl_param_.input_buffer.clear();
 
   acl_param_.output_desc.clear();
   acl_param_.output_buffer.clear();
 
-  op_type_ = "";
   is_dynamic_ = true;
 }
 
@@ -296,14 +286,11 @@ void AclRunner::SetPrecisionMode(const AclPrecisionMode mode) {
     MS_EXCEPTION_IF_NULL(ms_context);
     precision_mode = ms_context->get_param<std::string>(MS_CTX_PRECISION_MODE);
   }
+  auto iter = acl_precision_map.find(mode);
   if (!precision_mode.empty()) {
     ret = SetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, precision_mode.c_str());
-  } else if (mode == ALLOW_FP32_TO_FP16) {
-    static const std::string allow_fp32_to_fp16 = "allow_fp32_to_fp16";
-    ret = SetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, allow_fp32_to_fp16.c_str());
-  } else if (mode == FORCE_FP32) {
-    static const std::string force_fp32 = "force_fp32";
-    ret = SetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, force_fp32.c_str());
+  } else if (iter != acl_precision_map.end()) {
+    ret = SetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, iter->second.c_str());
   } else {
     MS_LOG(EXCEPTION) << "Acl set run mode failed! op_name is " << op_type_ << " and error mode is " << mode;
   }
@@ -355,6 +342,36 @@ void AclRunner::AoeDump() {
       SetDynamicMode();
     } else {
       SetStaticMode();
+    }
+  }
+}
+
+void AclRunner::FillOptInputWithPlaceHolder() {
+  if (acl_param_.input_desc.empty()) {
+    return;
+  }
+  MS_EXCEPTION_IF_CHECK_FAIL(acl_param_.input_desc.size() == acl_param_.input_buffer.size(),
+                             "Acl param input_desc size is not equal to acl param input_buffer size");
+  bool effective_flag = false;
+  for (int i = static_cast<int>(acl_param_.input_desc.size()) - 1; i >= 0; --i) {
+    if (acl_param_.input_desc[i] != nullptr && acl_param_.input_buffer[i] != nullptr) {
+      if (!effective_flag) {
+        effective_flag = true;
+      }
+      continue;
+    }
+    if (!effective_flag) {
+      continue;
+    }
+
+    // create placeholder for input_desc
+    if (acl_param_.input_desc[i] == nullptr) {
+      acl_param_.input_desc[i] = aclCreateTensorDesc(ACL_DT_UNDEFINED, 0, nullptr, ACL_FORMAT_UNDEFINED);
+    }
+
+    // create placeholder for input_buffer
+    if (acl_param_.input_buffer[i] == nullptr) {
+      acl_param_.input_buffer[i] = aclCreateDataBuffer(nullptr, 0);
     }
   }
 }

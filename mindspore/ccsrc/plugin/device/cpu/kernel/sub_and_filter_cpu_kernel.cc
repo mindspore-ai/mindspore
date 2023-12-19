@@ -29,7 +29,6 @@ bool SubAndFilterCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &outputs) {
   x_dtype_ = inputs.at(kIndex0)->dtype_id();
   x_dtype_size_ = abstract::TypeIdSize(x_dtype_);
-  is_need_retrieve_output_shape_ = true;
   return true;
 }
 

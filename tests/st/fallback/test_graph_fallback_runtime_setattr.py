@@ -77,7 +77,8 @@ def test_setattr_self_non_param_in_strict():
         ret = test_net()
         assert ret == 2
         assert test_net.data == 2
-    assert "In JIT strict mode, if need to modify a member attribute of a class with" in str(error_info.value)
+    assert "In JIT strict mode, if need to modify a member attribute of a class with" in str(
+        error_info.value)
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
@@ -228,7 +229,7 @@ def test_setattr_self_non_param_used_in_operator_2():
 
         def construct(self, x):
             self.data = Tensor([1, 2, 3, 4])
-            return ops.add(self.data, x)  # @jit.typing: () -> tensor_type[int64]
+            return ops.add(self.data, x)
 
     test_net = TestNet(1)
     ret = test_net(Tensor([1, 1, 1, 1]))
@@ -747,7 +748,7 @@ def test_global_setattr_in_control_flow():
     @jit
     def foo():
         while obj.x > 0:
-            obj.x = obj.x -2
+            obj.x = obj.x - 2
         return obj.x
 
     obj = SetattrNet()
@@ -949,3 +950,35 @@ def test_setattr_in_loop():
     obj = Inner()
     res = foo()
     assert res == 6
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_type_of_getattr_after_setattr():
+    """
+    Feature: Feature setattr. Make sure setattr getting correct attr.
+    Description: convert getattrs after setattr into interpret node and infer as the as abstract as setattr's value
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+
+        def __init__(self):
+            super(Net, self).__init__()
+            self.proxy_combination = Tensor(np.ones([2, 2]), dtype=ms.float32)
+
+        def construct(self):
+            self.proxy_combination = Tensor(
+                np.array([[1, 2, 3, 4, 5]]), ms.float32)
+            src = Tensor(np.array([[8, 8]]), dtype=ms.float32)
+            index = Tensor(np.array([[2, 4]]), dtype=ms.int64)
+            self.proxy_combination = self.proxy_combination.scatter(
+                axis=1, index=index, src=src)
+            out = self.proxy_combination
+            return out
+
+    net = Net()
+    res = net()
+    assert np.all(res.asnumpy() == np.array([[1, 2, 8, 4, 8]]))

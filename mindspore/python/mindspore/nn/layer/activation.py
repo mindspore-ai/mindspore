@@ -64,8 +64,6 @@ __all__ = ['Softmin',
 
 class CELU(Cell):
     r"""
-    Continuously differentiable exponential linear units activation function.
-
     Applies the continuously differentiable exponential linear units function element-wise.
 
     .. math::
@@ -74,7 +72,7 @@ class CELU(Cell):
 
     CELU Activation Function Graph:
 
-    .. image:: images/CELU.png
+    .. image:: ../images/CELU.png
         :align: center
 
     Args:
@@ -280,7 +278,7 @@ class Softmax(Cell):
 
 class LogSoftmax(Cell):
     r"""
-    Applies the LogSoftmax function to n-dimensional input tensor.
+    Applies the LogSoftmax function to n-dimensional input tensor element-wise.
 
     The input is transformed by the Softmax function and then by the log function to lie in range[-inf,0).
 
@@ -330,9 +328,8 @@ class LogSoftmax(Cell):
 
 class ELU(Cell):
     r"""
-    Exponential Linear Unit activation function.
-
     Applies the exponential linear unit function element-wise.
+
     The activation function is defined as:
 
     .. math::
@@ -346,7 +343,7 @@ class ELU(Cell):
 
     ELU Activation Function Graph:
 
-    .. image:: images/ELU.png
+    .. image:: ../images/ELU.png
         :align: center
 
     Args:
@@ -388,7 +385,7 @@ class ELU(Cell):
 
 class ReLU(Cell):
     r"""
-    Rectified Linear Unit activation function.
+    Applies ReLU (Rectified Linear Unit activation function) element-wise.
 
     .. math::
 
@@ -402,7 +399,7 @@ class ReLU(Cell):
 
     ReLU Activation Function Graph:
 
-    .. image:: images/ReLU.png
+    .. image:: ../images/ReLU.png
         :align: center
 
     Inputs:
@@ -440,7 +437,7 @@ class ReLU(Cell):
 
 class ReLU6(Cell):
     r"""
-    Compute ReLU6 activation function.
+    Compute ReLU6 activation function element-wise.
 
     ReLU6 is similar to ReLU with a upper limit of 6, which if the inputs are greater than 6, the outputs
     will be suppressed to 6.
@@ -452,7 +449,7 @@ class ReLU6(Cell):
 
     ReLU6 Activation Function Graph:
 
-    .. image:: images/ReLU6.png
+    .. image:: ../images/ReLU6.png
         :align: center
 
     Inputs:
@@ -505,7 +502,7 @@ class LeakyReLU(Cell):
 
     LeakyReLU Activation Function Graph:
 
-    .. image:: images/LeakyReLU.png
+    .. image:: ../images/LeakyReLU.png
         :align: center
 
     Args:
@@ -547,8 +544,7 @@ class LeakyReLU(Cell):
 
 class RReLU(Cell):
     r"""
-
-    Randomized Leaky ReLU activation function.
+    Applies RReLU (Randomized Leaky ReLU activation function) element-wise.
 
     The activation function is defined as:
 
@@ -621,11 +617,11 @@ class RReLU(Cell):
 
 class SeLU(Cell):
     r"""
-    Activation function SeLU (Scaled exponential Linear Unit).
+    Applies activation function SeLU (Scaled exponential Linear Unit) element-wise.
 
     SeLU Activation Function Graph:
 
-    .. image:: images/SeLU.png
+    .. image:: ../images/SeLU.png
         :align: center
 
     Refer to :func:`mindspore.ops.selu` for more details.
@@ -670,7 +666,7 @@ class SiLU(Cell):
 
     SiLU Activation Function Graph:
 
-    .. image:: images/SiLU.png
+    .. image:: ../images/SiLU.png
         :align: center
 
     Inputs:
@@ -718,7 +714,7 @@ class Tanh(Cell):
 
     Tanh Activation Function Graph:
 
-    .. image:: images/Tanh.png
+    .. image:: ../images/Tanh.png
         :align: center
 
     Inputs:
@@ -755,9 +751,7 @@ class Tanh(Cell):
 
 class Tanhshrink(Cell):
     r"""
-    Tanhshrink activation function.
-
-    The tanhshrink function is evaluated by element and returns a new tensor.
+    Applies Tanhshrink activation function element-wise and returns a new tensor.
 
     Tanh function is defined as:
 
@@ -813,7 +807,7 @@ class Hardtanh(Cell):
 
     Hardtanh Activation Function Graph:
 
-    .. image:: images/Hardtanh.png
+    .. image:: ../images/Hardtanh.png
         :align: center
 
     Note:
@@ -866,8 +860,6 @@ class Hardtanh(Cell):
 
 class GELU(Cell):
     r"""
-    Gaussian error linear unit activation function.
-
     Applies GELU function to each element of the input. The input is a Tensor with any valid shape.
 
     GELU is defined as:
@@ -881,7 +873,7 @@ class GELU(Cell):
 
     GELU Activation Function Graph:
 
-    .. image:: images/GELU.png
+    .. image:: ../images/GELU.png
         :align: center
 
     Args:
@@ -942,8 +934,6 @@ class GELU(Cell):
 
 class FastGelu(Cell):
     r"""
-    Fast Gaussian error linear unit activation function.
-
     Applies FastGelu function to each element of the input. The input is a Tensor with any valid shape.
 
     FastGelu is defined as:
@@ -956,7 +946,7 @@ class FastGelu(Cell):
 
     FastGelu Activation Function Graph:
 
-    .. image:: images/FastGelu.png
+    .. image:: ../images/FastGelu.png
         :align: center
 
     Inputs:
@@ -995,9 +985,7 @@ class FastGelu(Cell):
 
 class Sigmoid(Cell):
     r"""
-    Sigmoid activation function.
-
-    Applies sigmoid-type activation element-wise.
+    Applies sigmoid activation function element-wise.
 
     Sigmoid function is defined as:
 
@@ -1009,7 +997,7 @@ class Sigmoid(Cell):
 
     Sigmoid Activation Function Graph:
 
-    .. image:: images/Sigmoid.png
+    .. image:: ../images/Sigmoid.png
         :align: center
 
     Inputs:
@@ -1048,11 +1036,11 @@ class Sigmoid(Cell):
 
 class Softsign(Cell):
     r"""
-    Softsign activation function.
+    Applies softsign activation function element-wise.
 
     Softsign Activation Function Graph:
 
-    .. image:: images/Softsign.png
+    .. image:: ../images/Softsign.png
         :align: center
 
     Refer to :func:`mindspore.ops.softsign` for more details.
@@ -1082,9 +1070,7 @@ class Softsign(Cell):
 
 class PReLU(Cell):
     r"""
-    PReLU activation function.
-
-    Applies the PReLU function element-wise.
+    Applies PReLU activation function element-wise.
 
     PReLU is defined as:
 
@@ -1100,7 +1086,7 @@ class PReLU(Cell):
 
     PReLU Activation Function Graph:
 
-    .. image:: images/PReLU.png
+    .. image:: ../images/PReLU.png
         :align: center
 
     Args:
@@ -1178,7 +1164,7 @@ class PReLU(Cell):
 
 class HSwish(Cell):
     r"""
-    Applies hswish-type activation element-wise. The input is a Tensor with any valid shape.
+    Applies hswish-type activation element-wise.
 
     Hard swish is defined as:
 
@@ -1187,7 +1173,7 @@ class HSwish(Cell):
 
     HSwish Activation Function Graph:
 
-    .. image:: images/HSwish.png
+    .. image:: ../images/HSwish.png
         :align: center
 
     Inputs:
@@ -1225,7 +1211,7 @@ class HSwish(Cell):
 
 class HSigmoid(Cell):
     r"""
-    Hard sigmoid activation function. Calculates the output according to the input elements.
+    Applies Hard sigmoid activation function element-wise.
 
     Hard sigmoid is defined as:
 
@@ -1234,7 +1220,7 @@ class HSigmoid(Cell):
 
     HSigmoid Activation Function Graph:
 
-    .. image:: images/HSigmoid.png
+    .. image:: ../images/HSigmoid.png
         :align: center
 
     Inputs:
@@ -1282,7 +1268,7 @@ class LogSigmoid(Cell):
 
     LogSigmoid Activation Function Graph:
 
-    .. image:: images/LogSigmoid.png
+    .. image:: ../images/LogSigmoid.png
         :align: center
 
     Inputs:
@@ -1378,7 +1364,7 @@ class SoftShrink(Cell):
 
     SoftShrink Activation Function Graph:
 
-    .. image:: images/Softshrink.png
+    .. image:: ../images/Softshrink.png
         :align: center
 
     Args:
@@ -1424,7 +1410,7 @@ class SoftShrink(Cell):
 
 class HShrink(Cell):
     r"""
-    Hard Shrink activation function. Calculates the output according to the input elements.
+    Applies Hard Shrink activation function element-wise.
 
     The formula is defined as follows:
 
@@ -1438,7 +1424,7 @@ class HShrink(Cell):
 
     HShrink Activation Function Graph:
 
-    .. image:: images/HShrink.png
+    .. image:: ../images/HShrink.png
         :align: center
 
     Args:
@@ -1478,7 +1464,8 @@ class HShrink(Cell):
 
 
 class Threshold(Cell):
-    r"""Thresholds each element of the input Tensor.
+    r"""
+    Thresholds each element of the input Tensor.
 
     The formula is defined as follows:
 
@@ -1528,13 +1515,14 @@ class Threshold(Cell):
 
 class Mish(Cell):
     r"""
-    Computes MISH(A Self Regularized Non-Monotonic Neural Activation Function) of input tensors element-wise.
+    Computes MISH (A Self Regularized Non-Monotonic Neural Activation Function)
+    of input tensors element-wise.
 
     Refer to :func:`mindspore.ops.mish` for more details.
 
     Mish Activation Function Graph:
 
-    .. image:: images/Mish.png
+    .. image:: ../images/Mish.png
         :align: center
 
     Supported Platforms:

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,10 +172,6 @@ void CacheForGraphExecuteList(const OpCompilerInfoPtr &op_compiler_info,
     // Save inputs
     auto input_num = common::AnfAlgo::GetInputTensorNum(node);
     for (size_t i = 0; i < input_num; ++i) {
-      if (common::AnfAlgo::IsNoneInput(node, i)) {
-        (void)exe_kernel_info.inputs_device_address_.emplace_back(nullptr);
-        continue;
-      }
       session::KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i, false);
       auto node_address = AnfAlgo::GetMutableOutputAddr(kernel_with_index.first, kernel_with_index.second, false);
       auto cached_address = GetGraphMapToCacheAddress(*graph_map_cache, kernel_with_index);
@@ -271,12 +267,8 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
   const auto &graph_info = GetSingleOpGraphInfo(op_run_info->base_op_run_info, op_run_info->op_prim);
   const auto &iter = op_compiler_infos_.find(graph_info);
   // Check if the graph cache exists.
-  auto &op_executor = runtime::OpExecutor::GetInstance();
   if (iter != op_compiler_infos_.end()) {
     MS_EXCEPTION_IF_NULL(iter->second);
-    if (op_executor.BuildInQueue(iter->second->graph_id_)) {
-      op_executor.Wait();
-    }
     const auto &op_compiler_info = iter->second;
     MS_EXCEPTION_IF_NULL(op_compiler_info);
     *single_op_cache_hit = true;
@@ -523,7 +515,7 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
         graph_info += p_address->padding_type();
       }
 
-      if (depend_list.find(index) != depend_list.end()) {
+      if (op_info.input_masks[index] == kValueNodeMask || depend_list.find(index) != depend_list.end()) {
         graph_info += common::AnfAlgo::GetTensorValueString(input_tensor);
       }
     } else {

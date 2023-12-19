@@ -46,7 +46,6 @@ bool SparseSparseGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  is_need_retrieve_output_shape_ = true;
   indices_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kSparseSparseIndex0).dtype);
   values_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kSparseSparseIndex1).dtype);
   return true;

@@ -89,6 +89,8 @@ class Net(nn.Cell):
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sit_auto_mix_precision_train_o3():
     input_data = np.random.randn(32, 3, 224, 224).astype(np.float64)
@@ -152,6 +154,8 @@ def test_sit_auto_mix_precision_model_o0():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_sit_auto_mix_precision_model_o2():
@@ -193,6 +197,8 @@ def test_sit_auto_mix_precision_model_o2():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_sit_auto_mix_precision_model_o1():
@@ -236,6 +242,8 @@ def test_sit_auto_mix_precision_model_o1():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_custom_mix_precision():

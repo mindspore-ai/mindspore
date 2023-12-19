@@ -100,3 +100,23 @@ def test_fallback_runtime_max_min_scalar_tensor():
 
     out = foo()
     assert out == (2, 3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_fallback_runtime_max_scalar_asnumpy():
+    """
+    Feature: JIT Fallback
+    Description: Test max(scalar, tensor.asnumpy()) in fallback runtime
+    Expectation: No exception
+    """
+
+    @jit
+    def foo(x):
+        return max(1, x.asnumpy())
+
+    with pytest.raises(TypeError) as info:
+        x = Tensor([2])
+        foo(x)
+    assert "Cannot join the return values of different branches" in str(info.value)

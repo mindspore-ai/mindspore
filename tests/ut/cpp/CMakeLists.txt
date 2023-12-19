@@ -56,8 +56,9 @@ file(GLOB_RECURSE UT_API_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./cxx_api/*.c
 file(GLOB_RECURSE UT_FRONTEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./operator/*.cc ./optimizer/*.cc
         ./parallel/*.cc ./pipeline/*.cc ./pynative/*.cc)
 file(GLOB_RECURSE UT_OLD_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./device/*.cc ./kernel/*.cc
-        ./pre_activate/*.cc ./session/*.cc ./transform/*.cc ./vm/*.cc ./runtime/graph_scheduler/*.cc
-        ./runtime/device/gsm/*.cc ./tbe/*.cc)
+        ./pre_activate/common/*.cc  ./session/*.cc
+        ./transform/*.cc ./vm/*.cc ./runtime/graph_scheduler/*.cc
+        ./runtime/device/gsm/*.cc)
 file(GLOB_RECURSE UT_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./backend/*.cc)
 # plugin/device/cpu/hal/test_ms_collective_topo.cc will also open 127.0.0.1:8090
 file(GLOB_RECURSE UT_PS_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./ps/*.cc ./plugin/device/cpu/hal/*.cc)
@@ -151,7 +152,6 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_kernel_executor.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_graph_executor.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/common/ascend_utils.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/hal/common/platform_info_util.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_somas.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_graph_optimization.cc"
         "../../../mindspore/ccsrc/plugin/device/cpu/hal/hardware/ms_collective_topo.cc"
@@ -169,25 +169,34 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/plugin/device/cpu/kernel/adam_delta_cpu_kernel.cc"
         "../../../mindspore/ccsrc/plugin/device/cpu/kernel/fused_ada_factor_cpu_kernel.cc"
         "../../../mindspore/ccsrc/plugin/device/cpu/optimizer/*.cc"
-        "../../../mindspore/ccsrc/kernel/akg/*.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/akg/*.cc"
         "../../../mindspore/ccsrc/plugin/device/gpu/kernel/akg/*.cc"
         "../../../mindspore/ccsrc/plugin/device/cpu/kernel/akg/*.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/rts/*.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/hccl/*.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/bisheng/bisheng_kernel_build.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/bisheng/bisheng_kernel_mod.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/bisheng/custom_bisheng_kernel.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/bisheng/bisheng_kernel_factory.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/bisheng/bisheng_kernel_metadata.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/kernel_query.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_attr_and_input_convert_regist.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_attr_to_input_registry.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_input_to_attr_registry.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_kernel_metadata.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/rts/rt_kernel_info.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/tbe/*.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/*.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/mindir/*.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/ge/*.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/ge_backend_optimization.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/ge_optimization.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/get_value_helper.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/backend_common_unify_mindir.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/format_type/insert_cast.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/format_type/set_fracz_group_attr.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/format_type/utils.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/format_type/deal_ref_output.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/ir_fission/cdist_fission.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/ir_fission/bn_split.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/ir_fission/bn_grad_split.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/ir_fission/seed_adapter.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/ir_fission/tensor_scatter_fission.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/ir_fission/adam_weight_decay_fission.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/ir_fission/batch_norm_grad_infer_fission.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/ir_fusion/batchnorm_to_bninfer.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/ir_fission/
+        ascend_convert_tuple_input_to_dynamic_input.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/ir_fusion/batchnormgrad_to_bninfergrad.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/ir_fusion/histogram_fixed_width_fusion.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/ir_fusion/adaptive_max_pool2d_fusion.cc"
         "../../../mindspore/ccsrc/backend/common/graph_kernel/*.cc"
         "../../../mindspore/ccsrc/backend/common/expander/*.cc"
         "../../../mindspore/ccsrc/common/expander/*.cc"
@@ -216,16 +225,19 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/debug/profiler/profiling.cc"
         "../../../mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.c"
         "../../../mindspore/ccsrc/kernel/kernel.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/akg/akg_kernel_metadata.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/ascend_kernel_mod.cc"
         "../../../mindspore/ccsrc/backend/common/optimizer/helper.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ext_info_handle.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_util.cc"
         )
 
 list(REMOVE_ITEM MINDSPORE_SRC_LIST
         "../../../mindspore/ccsrc/distributed/rpc/rdma/rdma_client.cc"
-        "../../../mindspore/ccsrc/distributed/rpc/rdma/rdma_server.cc")
+        "../../../mindspore/ccsrc/distributed/rpc/rdma/rdma_server.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/mindir/ascend_vm_op_adapter.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/mindir/conv2d_unify_mindir.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/ge/dropout_for_ge.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/ge/convert_attr_to_input.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/ge/convert_resize_nearest_neighbor_x_dtype.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/ge/batchnorm_transform.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/ps/util.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/create_node_helper.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/ps/scheduler.cc")

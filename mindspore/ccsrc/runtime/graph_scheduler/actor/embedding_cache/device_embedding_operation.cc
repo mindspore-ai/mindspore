@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
+#include "runtime/graph_scheduler/actor/embedding_cache/device_embedding_operation.h"
+#include <string>
 #include "kernel/framework_utils.h"
 #include "include/backend/optimizer/helper.h"
+#include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "runtime/graph_scheduler/actor/embedding_cache/embedding_cache_prefetch_actor.h"
-#include "runtime/graph_scheduler/actor/embedding_cache/device_embedding_operation.h"
 
 namespace mindspore {
 namespace runtime {
@@ -178,8 +180,10 @@ bool DeviceEmbeddingOperation::MemcpyHostToDeviceAsync(void *dst, const void *sr
   void *device_ptr = dst;
   const void *host_ptr = src;
 
-  auto device_address = device_context->device_res_manager_->CreateDeviceAddress(device_ptr, size, kOpFormat_DEFAULT,
-                                                                                 kTypeUnknown, ShapeVector());
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    device_ptr, size, kOpFormat_DEFAULT, kTypeUnknown, ShapeVector(), device_context->device_context_key().device_name_,
+    device_context->device_context_key().device_id_);
+  auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   MS_ERROR_IF_NULL(device_address);
   RETURN_IF_FALSE_WITH_LOG(device_address->AsyncHostToDevice({}, size, kTypeUnknown, host_ptr, stream_id),
                            "Async memcpy host to device failed.");
@@ -197,8 +201,10 @@ bool DeviceEmbeddingOperation::MemcpyDeviceToHostAsync(void *dst, const void *sr
   void *device_ptr = const_cast<void *>(src);
   void *host_ptr = dst;
 
-  auto device_address = device_context->device_res_manager_->CreateDeviceAddress(device_ptr, size, kOpFormat_DEFAULT,
-                                                                                 kTypeUnknown, ShapeVector());
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    device_ptr, size, kOpFormat_DEFAULT, kTypeUnknown, ShapeVector(), device_context->device_context_key().device_name_,
+    device_context->device_context_key().device_id_);
+  auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   MS_ERROR_IF_NULL(device_address);
   RETURN_IF_FALSE_WITH_LOG(device_address->AsyncDeviceToHost({}, size, kTypeUnknown, host_ptr, stream_id),
                            "Async memcpy device to host failed.");
@@ -259,8 +265,13 @@ ValueNodePtr DeviceEmbeddingOperation::NewValueNode(int64_t value, const DeviceC
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   auto value_addr = device_context->device_res_manager_->AllocateMemory(tensor_size);
   MS_EXCEPTION_IF_NULL(value_addr);
-  auto address = device_context->device_res_manager_->CreateDeviceAddress(
-    value_addr, tensor_size, output_format, output_type_id, trans::GetRuntimePaddingShape(value_node, output_idx));
+
+  const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+    {value_node, output_idx}, value_addr, tensor_size, output_format, output_type_id,
+    trans::GetRuntimePaddingShape(value_node, output_idx), device_context->device_context_key().device_name_,
+    device_context->device_context_key().device_id_);
+
+  auto address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   MS_EXCEPTION_IF_NULL(address);
 
   // Sync tensor value.
@@ -274,16 +285,29 @@ ValueNodePtr DeviceEmbeddingOperation::NewValueNode(int64_t value, const DeviceC
   return value_node;
 }
 
-bool DeviceEmbeddingOperation::InferOpShape(const CNodePtr &kernel) {
-  MS_EXCEPTION_IF_NULL(kernel);
-  opt::InferOp(kernel);
-  auto args = kernel::GetArgsFromCNode(kernel);
-  MS_EXCEPTION_IF_NULL(args);
-
+bool DeviceEmbeddingOperation::InferOpShape(
+  const CNodePtr &kernel, const std::vector<kernel::KernelTensor *> &input_kernel_tensors,
+  const std::vector<kernel::KernelTensor *> &output_kernel_tensors,
+  const std::vector<abstract::AbstractBasePtr> &input_kernel_tensors_for_infer) {
+  MS_ERROR_IF_NULL(kernel);
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  if (kernel::KRET_OK != kernel_mod->Resize(args->inputs, args->outputs, args->depend_tensor_map)) {
-    MS_LOG(ERROR) << "Kernel " << kernel->fullname_with_scope() << " resize failed.";
+  MS_ERROR_IF_NULL(kernel_mod);
+  // 1. Infer operator's output's Shape.
+  auto base_shape = opt::dynamic_shape::InferShape(kernel_mod->primitive(), input_kernel_tensors_for_infer);
+  MS_LOG(DEBUG) << "End InferShape for kernel: " << kernel->fullname_with_scope()
+                << ", shape: " << base_shape->ToString();
+  MS_ERROR_IF_NULL(base_shape);
+
+  // 2. Update shape of output kernel tensor.
+  opt::dynamic_shape::UpdateKernelTensorShape(base_shape, output_kernel_tensors);
+
+  // 3. Resize kernel mod.
+  MS_LOG(DEBUG) << "Begin Resize kernel mod for kernel: " << kernel->fullname_with_scope();
+  int ret = kernel_mod->Resize(input_kernel_tensors, output_kernel_tensors);
+  MS_LOG(DEBUG) << "End Resize kernel mod for kernel: " << kernel->fullname_with_scope()
+                << ", the output size list: " << kernel_mod->GetOutputSizeList();
+  if (ret != kernel::KRET_OK) {
+    MS_LOG(ERROR) << "Resize failed for kernel: " << kernel->fullname_with_scope();
     return false;
   }
   return true;

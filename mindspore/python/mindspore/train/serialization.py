@@ -722,7 +722,7 @@ def load(file_name, **kwargs):
     return graph
 
 
-def export_split_mindir(file_name, device_num=8, rank_id=0, dynamic=True, sapp=False):
+def export_split_mindir(file_name, device_num=8, rank_id=0, dynamic=True, sapp=True):
     """
     Auto Split MindIR.
 
@@ -1551,6 +1551,12 @@ def export(net, *inputs, file_name, file_format, **kwargs):
 
             - incremental (bool): export MindIR incrementally.
 
+            - custom_func (function): Functions for custom defined export policies. This function will be used to
+              customize the model during network export. Currently only support for files with mindir format. The
+              function only accepts one input representing the proto object of the mindir file. When modifying a model,
+              it is necessary to ensure the correctness of the `custom_func` , otherwise it may lead to model loading
+              failure or functional errors. Default: ``None`` .
+
     Examples:
         >>> import mindspore as ms
         >>> import numpy as np
@@ -1561,6 +1567,16 @@ def export(net, *inputs, file_name, file_format, **kwargs):
         >>> net = LeNet5()
         >>> input_tensor = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
         >>> ms.export(net, input_tensor, file_name='lenet', file_format='MINDIR')
+        >>>
+        >>> # Export model in MindIR format and modified the model info using custom_func
+        >>> # The custom_func only support one input representing the Proto object of the model
+        >>> # And custom_func does not support return value
+        >>> def _custom_func(mindir_model):
+        ...     mindir_model.producer_name = "test11111"
+        ...     mindir_model.producer_version = "11.0"
+        ...     mindir_model.user_info["version"] = "11.0"
+        >>> ms.export(net, input_tensor, file_name="lenet", file_format='MINDIR', custom_func=_custom_func)
+
 
     Tutorial Examples:
         - `Saving and Loading the Model - Saving and Loading MindIR
@@ -1646,6 +1662,8 @@ def _export(net, file_name, file_format, *inputs, **kwargs):
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
     if "obf_config" in kwargs and file_format != "MINDIR":
         raise ValueError(f"Dynamic obfuscation only support for MindIR format, but got {file_format} format.")
+    if "custom_func" in kwargs and file_format != "MINDIR":
+        raise ValueError(f"Currently only support custom_func for MindIR format, but got {file_format} format.")
     if file_format == 'AIR':
         _save_air(net, file_name, *inputs, **kwargs)
     elif file_format == 'ONNX':
@@ -1922,6 +1940,10 @@ def _save_mindir(net, file_name, *inputs, **kwargs):
         check_input_data(kwargs.get('dataset'), data_class=mindspore.dataset.Dataset)
         dataset = kwargs.get('dataset')
         _save_dataset_to_mindir(model, dataset)
+
+    custom_func = kwargs.get('custom_func', None)
+    if custom_func is not None:
+        custom_func(model)
 
     save_together = _save_together(net_dict, model)
     is_encrypt = lambda: 'enc_key' in kwargs.keys() and 'enc_mode' in kwargs.keys()

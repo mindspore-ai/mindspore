@@ -64,9 +64,6 @@ class GeDeviceResManager : public DeviceResManager {
 
   std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list) const override;
 
-  DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,
-                                       const ShapeVector &shape, const UserDataPtr &user_data = nullptr) const override;
-
   DeviceAddressPtr CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const override;
 
   static void CreateSessionAndGraphRunner();
@@ -87,6 +84,9 @@ class GeDeviceResManager : public DeviceResManager {
   bool AllocateMemory(DeviceAddress *const &address) const override;
   void *AllocateMemory(size_t size) const override;
   void FreeMemory(void *ptr) const override;
+  void FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
+                       const std::vector<size_t> &keep_addr_sizes) const override;
+
   size_t GetMaxUsedMemorySize() const override;
 
   transform::GeAllocatorPtr GetAllocator() { return std::make_shared<GeAllocator>(this); }

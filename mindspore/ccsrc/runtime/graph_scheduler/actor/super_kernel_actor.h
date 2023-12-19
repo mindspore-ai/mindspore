@@ -78,7 +78,7 @@ class SuperKernelActor : public DebugAwareActor {
   std::queue<std::vector<DeviceTensor *>> memory_free_lists_;
 
  private:
-  bool CopyInputDataPersistedHandle(const DeviceContext *device_context, const DeviceTensor *input_device_tensor,
+  bool CopyInputDataPersistedHandle(const DeviceContext *device_context, DeviceTensor *input_device_tensor,
                                     const DeviceTensorPtr &node_device_tensor, size_t i);
   friend class GraphScheduler;
   KernelGraphPtr graph_;

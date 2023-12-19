@@ -19,18 +19,16 @@
 #include <unordered_map>
 #include <utility>
 #include <set>
-#include <algorithm>
-#include "runtime/mem.h"
 #include "acl/acl_rt.h"
+#include "graph/def_types.h"
+#include "runtime/mem.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/device/memory_manager.h"
 #include "runtime/device/convert_tensor_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_event.h"
-#include "runtime/hardware/device_context_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
-#include "plugin/device/ascend/hal/device/ascend_dma_handle.h"
 #include "ir/dtype/type.h"
 #include "ir/tensor.h"
 #include "abstract/utils.h"
@@ -107,7 +105,7 @@ void SyncMemory(void *dst, const void *src, uint64_t size, aclrtMemcpyKind kind)
       MS_LOG(EXCEPTION) << "Sync stream error!";
     }
     auto ret_rt_memcpy = aclrtMemcpy(dst, size, src, size, kind);
-    if (ret_rt_memcpy != RT_ERROR_NONE) {
+    if (ret_rt_memcpy != ACL_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "aclrtMemcpy failed";
     }
   } else {
@@ -280,7 +278,7 @@ void AscendDeviceAddress::DeviceToDevice(void *dst, void *src, size_t size, size
   MS_EXCEPTION_IF_NULL(stream);
   BindDevice();
   auto ret = aclrtMemcpyAsync(dst, size, src, size, ACL_MEMCPY_DEVICE_TO_DEVICE, stream);
-  if (ret != RT_ERROR_NONE) {
+  if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call aclrtMemcpyAsync device to device failed, the error num[" << ret << "].";
   }
   if (!AscendStreamMng::GetInstance().SyncStream(stream_id)) {
@@ -687,7 +685,7 @@ bool AscendDeviceAddress::AsyncHostToDevice(const ShapeVector & /* shape */, siz
   MS_ERROR_IF_NULL(stream);
 
   auto ret = aclrtMemcpyAsync(GetDevicePtr(), size, host_ptr, size, ACL_MEMCPY_HOST_TO_DEVICE, stream);
-  if (ret != RT_ERROR_NONE) {
+  if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call aclrtMemcpyAsync host to device failed, the error num[" << ret << "]";
     return false;
   }
@@ -706,7 +704,7 @@ bool AscendDeviceAddress::AsyncDeviceToHost(const ShapeVector & /* shape */, siz
   const auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
   MS_ERROR_IF_NULL(stream);
   auto ret = aclrtMemcpyAsync(host_ptr, size, GetDevicePtr(), size, ACL_MEMCPY_DEVICE_TO_HOST, stream);
-  if (ret != RT_ERROR_NONE) {
+  if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call aclrtMemcpyAsync device to host failed, the error num[" << ret << "]";
     return false;
   }
@@ -803,7 +801,16 @@ void AscendDeviceAddress::CopyHostToDevice(const void *src, uint64_t size) const
     SyncMemory(offload_ptr_, src, size, ACL_MEMCPY_HOST_TO_HOST);
   } else {
     MS_EXCEPTION_IF_NULL(GetDevicePtr());
-    SyncMemory(GetDevicePtr(), src, size, ACL_MEMCPY_HOST_TO_DEVICE);
+    if (type_id() == kObjectTypeString) {
+      ge::StringHead head{.addr = sizeof(ge::StringHead), static_cast<int64_t>(size)};
+      // sync string head info from device to host
+      SyncMemory(GetDevicePtr(), &head, sizeof(ge::StringHead), ACL_MEMCPY_HOST_TO_DEVICE);
+      // sync string body (real contents) from device to host
+      SyncMemory(static_cast<void *>(static_cast<char *>(GetDevicePtr()) + sizeof(ge::StringHead)), src, size,
+                 ACL_MEMCPY_HOST_TO_DEVICE);
+    } else {
+      SyncMemory(GetDevicePtr(), src, size, ACL_MEMCPY_HOST_TO_DEVICE);
+    }
   }
 }
 
@@ -816,7 +823,7 @@ bool AscendDeviceAddress::CopyBetweenHostDevice(void *dst, const void *src, size
   MS_EXCEPTION_IF_NULL(stream);
   BindDevice();
   auto ret = aclrtMemcpyAsync(dst, size, src, size, copy_kind, stream);
-  if (ret != RT_ERROR_NONE) {
+  if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call aclrtMemcpyAsync device to host failed, the error num[" << ret << "]";
     return false;
   }
@@ -885,7 +892,7 @@ bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::
     BindDevice();
     SyncStream();
     auto ret_rt_memcpy = aclrtMemcpy(host_tmp.data(), GetSize(), GetDevicePtr(), GetSize(), ACL_MEMCPY_DEVICE_TO_HOST);
-    if (ret_rt_memcpy != RT_ERROR_NONE) {
+    if (ret_rt_memcpy != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "SyncDeviceToHost: aclrtMemcpy mem size[" << GetSize() << "] fail, ret[" << ret_rt_memcpy << "]";
       return false;
     }

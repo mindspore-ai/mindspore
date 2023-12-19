@@ -81,7 +81,7 @@ size_t SwitchActor::GetIndex(const OpContext<DeviceTensor> *const context) const
   int64_t index = 0;
   char buf[kMaxSwitchCondSize] = {0};
   ShapeVector host_shape;
-  if (device_tensor->user_data() != nullptr && device_tensor->sync_user_data_handler() != nullptr &&
+  if (device_tensor->user_data() != nullptr && device_tensor->need_sync_user_data() &&
       device_tensor->user_data()->has(kernel::PyExecuteOutputUserData::key)) {
     const auto &user_data_obj =
       device_tensor->user_data()->get<kernel::PyExecuteOutputUserData>(kernel::PyExecuteOutputUserData::key);

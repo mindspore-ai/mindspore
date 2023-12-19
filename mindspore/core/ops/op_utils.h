@@ -279,6 +279,7 @@ inline bool IsValueKnown(const AbstractBasePtr &abs) {
 }
 
 MS_CORE_API size_t GetInputIndexByName(const std::string &op_name, const std::string &input_name);
+MS_CORE_API std::string GetInputNameByIndex(const std::string &op_name, size_t index);
 MS_CORE_API size_t GetOpInputsNum(const std::string &op_name);
 MS_CORE_API std::set<int64_t> GetInputDependValueList(const PrimitivePtr &op_prim);
 
@@ -304,6 +305,8 @@ inline int64_t PadModeStringToInt(const std::string &pad) {
   } else if (pad_mode == "SAME") {
     return static_cast<int64_t>(1);
   } else if (pad_mode == "PAD") {
+    return static_cast<int64_t>(0);
+  } else if (pad_mode == "CALCULATED") {
     return static_cast<int64_t>(0);
   } else {
     MS_LOG(EXCEPTION) << "Got an invalid pad_mode string: " << pad_mode << ".";

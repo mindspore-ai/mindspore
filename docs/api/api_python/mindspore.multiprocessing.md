@@ -142,7 +142,7 @@ if __name__ == '__main__':
     p.start()
     print("child process:ops.log(Tensor(2.0))=", q.get())
     p.join()
-    # Child process may not be able to acquire resources when this compute task is executed before the child-process is created.
+    # Child process may not be able to acquire resources when this compute task is executed before the child process is created.
     print("parent process:ops.log(Tensor(2.0))=", ops.log(Tensor(2.0)))
 ```
 

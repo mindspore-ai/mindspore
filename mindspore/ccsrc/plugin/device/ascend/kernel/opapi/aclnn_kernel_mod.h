@@ -23,9 +23,8 @@
 #include <utility>
 #include "ops/base_operator.h"
 #include "ops/op_def.h"
-#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
-#include "plugin/factory/ms_factory.h"
 #include "kernel/kernel.h"
+#include "plugin/factory/ms_factory.h"
 #include "include/common/utils/utils.h"
 #include "runtime/pynative/op_runtime_info.h"
 #include "transform/acl_ir/acl_convert.h"
@@ -41,7 +40,12 @@ using OpApiUtil = transform::OpApiUtil;
 
 class EmptyKernelTensor {
  public:
-  EmptyKernelTensor() { tensor_ = new KernelTensor(); }
+  EmptyKernelTensor() {
+    tensor_ = new KernelTensor();
+    auto tensor_shape = std::make_shared<abstract::TensorShape>();
+    tensor_shape->SetShapeVector({0});
+    tensor_->SetShape(tensor_shape);
+  }
   ~EmptyKernelTensor() { delete tensor_; }
   void set_dtype_id(TypeId dtype_id) { tensor_->set_dtype_id(dtype_id); }
   KernelTensor *get() const { return tensor_; }
@@ -67,15 +71,13 @@ class AclnnKernelMod : public KernelMod {
 
   void ParseGenExecutor(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args);
 
-  bool IsNeedRetrieveOutputShape() override { return false; }
+  bool IsNeedUpdateOutputShapeAndSize() override { return false; }
   std::vector<KernelAttr> GetOpSupport() override { MS_LOG(EXCEPTION) << "This interface is not support in aclnn."; }
 
   void UpdateWorkspace(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args);
 
   void RunOp(void *stream_ptr, const std::vector<KernelTensor *> &workspace);
   void RunOpSync(void *stream_ptr, const std::vector<KernelTensor *> &workspace);
-
-  void SetDTypes(const std::string &op_name);
 
  protected:
   template <size_t N, std::size_t... Is>
@@ -107,7 +109,7 @@ class AclnnKernelMod : public KernelMod {
   auto GetKernelTuple(const std::vector<Ts> &... vecs) {
     const auto &new_vec = ConcatVecs(vecs...);
     if (new_vec.size() != N) {
-      MS_LOG(EXCEPTION) << "Config op input and output's size must be same, but get " << N << " with "
+      MS_LOG(EXCEPTION) << op_type_ << "'s config op input and output's size must be same, but get " << N << " with "
                         << new_vec.size();
     }
     const auto &result = GetTupleFront<N>(new_vec);
@@ -116,8 +118,6 @@ class AclnnKernelMod : public KernelMod {
 
   aclOpExecutor *executor_{nullptr};
   CallBackFunc release_func_{nullptr};
-  std::vector<mindspore::ops::OP_DTYPE> inputs_dtypes_;
-  std::vector<mindspore::ops::OP_DTYPE> outputs_dtypes_;
   std::string op_type_;
 };
 

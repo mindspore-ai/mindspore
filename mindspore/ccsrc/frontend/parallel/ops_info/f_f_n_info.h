@@ -44,9 +44,13 @@ class FFNInfo : public OperatorInfo {
   Status InferForwardCommunication() override;
   Status InferTensorMap() override;
   Status InferDevMatrixShape() override;
+  void InitInputsExist();
+  bool IsInputExist(size_t index);
+  size_t GetStrategyRealIndex(size_t index);
 
  private:
   Shape origin_dev_matrix_shape_;
+  std::vector<bool> inputs_exist_;
 };
 }  // namespace parallel
 }  // namespace mindspore

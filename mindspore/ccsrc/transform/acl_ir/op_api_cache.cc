@@ -59,7 +59,117 @@ void GatherInfo(mindspore::kernel::KernelTensor *tensor) {
   add_tensor_addr_to_cached_list_func(tensor->device_ptr());
 }
 
+void GatherInfo(const std::pair<mindspore::kernel::KernelTensor *, bool> &tensor_and_trans) {
+  auto tensor = tensor_and_trans.first;
+  auto trans = tensor_and_trans.second;
+  GatherInfo(tensor);
+  // trans
+  MemcpyToBuf(&trans, 1);
+}
+
+void GatherInfo(const mindspore::tensor::TensorPtr &tensor) {
+  if (tensor == nullptr) {
+    return;
+  }
+
+  // "t" for tensor
+  MemcpyToBuf("t", 1);
+
+  // Normal tensor
+  static const auto add_tensor_addr_to_cached_list = transform::GetOpApiFunc("AddTensorAddrToCachedList");
+  if (add_tensor_addr_to_cached_list == nullptr) {
+    MS_LOG(EXCEPTION) << "AddTensorAddrToCachedList not in " << transform::GetOpApiLibName() << ", please check!";
+  }
+  AddTensorAddrToCachedList add_tensor_addr_to_cached_list_func =
+    reinterpret_cast<AddTensorAddrToCachedList>(add_tensor_addr_to_cached_list);
+  MS_EXCEPTION_IF_NULL(add_tensor_addr_to_cached_list_func);
+
+  const auto &shape = tensor->shape();
+  const auto shape_size = shape.size();
+  // view shape
+  if (!shape.empty()) {
+    MemcpyToBuf(shape.data(), static_cast<int64_t>(shape_size * sizeof(int64_t)));
+  }
+  // data type
+  auto dtype = tensor->data_type();
+  MemcpyToBuf(&dtype, sizeof(int));
+
+  auto storage_info = tensor->storage_info();
+  if (storage_info != nullptr) {
+    // strides
+    MemcpyToBuf(storage_info->strides.data(), static_cast<int64_t>(storage_info->strides.size() * sizeof(int64_t)));
+
+    // offset
+    MemcpyToBuf(&storage_info->storage_offset, sizeof(int64_t));
+
+    // origin shape
+    MemcpyToBuf(storage_info->ori_shape.data(), static_cast<int64_t>(storage_info->ori_shape.size()) * sizeof(int64_t));
+  }
+
+  // storage shape(current hasn't special format)
+
+  add_tensor_addr_to_cached_list_func(tensor->device_address()->GetMutablePtr());
+}
+
+void GatherInfo(const std::optional<TensorPtr> &tensor) {
+  // "ot" for optional tensor
+  MemcpyToBuf("ot", 2);
+  if (tensor.has_value()) {
+    GatherInfo(tensor.value());
+  }
+}
+
+void GatherInfo(const std::vector<TensorPtr> &tensors) {
+  for (const auto &tensor : tensors) {
+    GatherInfo(tensor);
+  }
+}
+
+void GatherInfo(const ScalarPtr &scalar) {
+  MS_EXCEPTION_IF_NULL(scalar);
+  // "s" for scalar
+  MemcpyToBuf("s", 1);
+  if (scalar->isa<BoolImm>()) {
+    auto value = GetValue<bool>(scalar);
+    MemcpyToBuf(&value, sizeof(bool));
+  } else if (scalar->isa<Int64Imm>()) {
+    auto value = GetValue<int64_t>(scalar);
+    MemcpyToBuf(&value, sizeof(int64_t));
+  } else if (scalar->isa<FP32Imm>()) {
+    auto value = GetValue<float>(scalar);
+    MemcpyToBuf(&value, sizeof(float));
+  } else if (scalar->isa<Int32Imm>()) {
+    auto value = GetValue<int32_t>(scalar);
+    MemcpyToBuf(&value, sizeof(int32_t));
+  } else {
+    MS_LOG(EXCEPTION) << "Currently not support value: " << scalar->ToString();
+  }
+}
+
+void GatherInfo(const std::optional<ScalarPtr> &scalar) {
+  if (scalar.has_value()) {
+    GatherInfo(scalar.value());
+  }
+}
+
+void GatherInfo(const TypePtr &type) {
+  const auto type_id = type->type_id();
+  MemcpyToBuf(&type_id, sizeof(int));
+}
+
+void GatherInfo(const std::optional<TypePtr> &type) {
+  if (type.has_value()) {
+    GatherInfo(type.value());
+  }
+}
+
 void GatherInfo(const string &s) { MemcpyToBuf(s.c_str(), static_cast<int64_t>(s.size())); }
+
+void GatherInfo(const std::optional<string> &s) {
+  if (s.has_value()) {
+    GatherInfo(s.value());
+  }
+}
 
 void GatherInfo() {}
 

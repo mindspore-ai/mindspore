@@ -70,9 +70,7 @@ parse_object_map = {
 
     # operation symbol type
     'getitem':      (composite_ns, 'getitem', ''),
-    'ms_iter':      (composite_ns, 'ms_iter', ''),
     'ms_next':      (composite_ns, 'ms_next', ''),
-    'hasnext':      (composite_ns, 'hasnext', ''),
 
     # undefined type
     SYMBOL_UNDEFINE: (None, 'undefine', ''),
@@ -139,7 +137,7 @@ convert_object_map = {
     T.map:          C.Map(),
     T.filter:       M.filter_,
     T.partial:      F.partial,
-    T.zip:          C.zip_operation,
+    T.zip:          M.ms_zip,
     T.enumerate:    M.enumerate_,
     T.isinstance:   Primitive('isinstance'),
     T.max:          M.ms_max,
@@ -149,9 +147,9 @@ convert_object_map = {
     T.hasattr:      M.hasattr,
 
     # custom define operation
-    T.iter:         M.ms_iter,
-    T.next:         M.ms_next,
-    T.hasnext:      M.hasnext,
+    T.iter:         C.iter_converter,
+    T.next:         C.ms_next,
+    T.hasnext:      C.ms_hasnext,
     T.MakeTuple:    F.make_tuple,
     T.make_dict:    F.make_dict,
     T.make_list:    F.make_list,

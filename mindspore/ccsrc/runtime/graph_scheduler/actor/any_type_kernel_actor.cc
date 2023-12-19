@@ -113,7 +113,6 @@ void AnyTypeKernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const c
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
     input_device_tensors_[index] = input_data->data_;
-    input_device_tensors_[index]->set_sync_user_data_handler(pyexecute::UserDataToRawMemory);
     if (input_data->data_->ref_count() != SIZE_MAX) {
       (void)memory_free_list.emplace_back(input_data->data_);
     }
@@ -126,7 +125,8 @@ void AnyTypeKernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const c
                            .get();
     if (device_tensor == nullptr) {
       MS_LOG(EXCEPTION) << "Failed get device tensor for node:" << device_tensor_store_key.second->DebugString()
-                        << " index:" << device_tensor_store_key.first;
+                        << " index:" << device_tensor_store_key.first
+                        << " device type:" << device_contexts_[0]->GetDeviceType();
       continue;
     }
     if (device_tensor_store_key.first >= input_device_tensors_.size()) {
@@ -342,6 +342,25 @@ void AnyTypeKernelActor::UpdataDynamicShapeParameterForGraphInput(OpContext<Devi
   }
 }
 
+namespace {
+void ClearAttrForGraph(const KernelGraphPtr &graph, const std::string &attr_name) {
+  MS_EXCEPTION_IF_NULL(graph);
+  for (const auto &node_pair : graph->front_backend_anf_map()) {
+    MS_EXCEPTION_IF_NULL(node_pair.second);
+    if (!node_pair.second->isa<CNode>()) {
+      continue;
+    }
+    MS_LOG(DEBUG) << "Check for node:" << node_pair.second->DebugString() << " attr name:" << attr_name;
+    const auto &cnode = node_pair.second->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (common::AnfAlgo::HasNodeAttr(attr_name, cnode)) {
+      MS_LOG(DEBUG) << "Erase flag for node:" << node_pair.second->DebugString() << " attr name:" << attr_name;
+      common::AnfAlgo::EraseNodeAttr(attr_name, cnode);
+    }
+  }
+}
+}  // namespace
+
 void AnyTypeKernelActor::RunForGraphInput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   actor_state_ = AnyTypeKernelActorState::kAnyTypeKernelActorSendInput;
@@ -354,6 +373,8 @@ void AnyTypeKernelActor::RunForGraphInput(OpContext<DeviceTensor> *const context
     try {
       std::lock_guard<std::mutex> lock(instance_lock_);
       InferParameterAbstractForModelGraph(graph(), input_device_tensors_, any_type_parameter_indexes_);
+      ClearAttrForGraph(graph(), kAttrInputIsDynamicShape);
+      ClearAttrForGraph(graph(), kAttrOutputIsDynamicShape);
       graph()->InferType();
       const auto &return_node = graph()->get_return();
       MS_EXCEPTION_IF_NULL(return_node);
@@ -641,8 +662,7 @@ void AnyTypeKernelActor::FetchGraphOutput(OpContext<DeviceTensor> *const context
         FreeMemory(graph_ouput_device_tensors_[index]);
       }
       graph_ouput_device_tensors_[index]->set_ptr(graph_output_data->data_->GetMutablePtr());
-      graph_ouput_device_tensors_[index]->set_sync_user_data_handler(
-        graph_output_data->data_->sync_user_data_handler());
+      graph_ouput_device_tensors_[index]->set_need_sync_user_data(graph_output_data->data_->need_sync_user_data());
       clear_device_tensors.emplace(graph_output_data->data_);
       graph_ouput_device_tensors_[index]->SetSize(graph_output_data->data_->GetSize());
 

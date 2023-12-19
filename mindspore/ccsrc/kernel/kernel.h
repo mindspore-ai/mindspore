@@ -15,6 +15,7 @@
  */
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNEL_H_
+#include <cstddef>
 #include <map>
 #include <memory>
 #include <optional>
@@ -260,7 +261,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
 
     // Sync value data from device.
     if (!SyncDataFromDeviceToHost()) {
-      MS_LOG(EXCEPTION) << "Sync data form device to host side failed";
+      MS_LOG(EXCEPTION) << "Sync data from device to host side failed";
     }
     return kernel_tensor_value_->GetDataPtr();
   }
@@ -270,7 +271,9 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     std::lock_guard<std::mutex> lock(value_mutex_);
 
     // There is a origin value in KernelTensor(maybe come from a ValueNode).
-    if (value_ && !value_->isa<ValueAny>()) {
+    if (type_id_ == kMetaTypeNone) {
+      return std::make_shared<None>();
+    } else if (value_ && !value_->isa<ValueAny>()) {
       if (kernel_tensor_value_ == nullptr) {
         kernel_tensor_value_ = ConvertValueToKernelTensorValue(value_);
         return kernel_tensor_value_ ? kernel_tensor_value_ : value_;
@@ -280,7 +283,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
 
     // Sync value data from device.
     if (!SyncDataFromDeviceToHost()) {
-      MS_LOG(EXCEPTION) << "Sync data form device to host side failed";
+      MS_LOG(EXCEPTION) << "Sync data from device to host side failed";
     }
     return kernel_tensor_value_;
   }
@@ -292,14 +295,17 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     std::lock_guard<std::mutex> lock(value_mutex_);
 
     // There is a origin value in KernelTensor(maybe come from a ValueNode).
-    if (value_ && !value_->isa<ValueAny>()) {
+    if (type_id_ == kMetaTypeNone) {
+      MS_LOG(DEBUG) << "None type has no valid scalar value.";
+      return std::nullopt;
+    } else if (value_ && !value_->isa<ValueAny>()) {
       if (kernel_tensor_value_ == nullptr) {
         kernel_tensor_value_ = ConvertValueToKernelTensorValue(value_);
       }
     } else {
       // Sync value data from device.
       if (!SyncDataFromDeviceToHost()) {
-        MS_LOG(ERROR) << "Sync data form device to host side failed";
+        MS_LOG(ERROR) << "Sync data from device to host side failed";
         return std::nullopt;
       }
     }
@@ -325,14 +331,17 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     std::lock_guard<std::mutex> lock(value_mutex_);
 
     // There is a origin value in KernelTensor(maybe come from a ValueNode).
-    if (value_ && !value_->isa<ValueAny>()) {
+    if (type_id_ == kMetaTypeNone) {
+      MS_LOG(DEBUG) << "None type has no valid value for vector or string.";
+      return std::nullopt;
+    } else if (value_ && !value_->isa<ValueAny>()) {
       if (kernel_tensor_value_ == nullptr) {
         kernel_tensor_value_ = ConvertValueToKernelTensorValue(value_);
       }
     } else {
       // Sync value data from device.
       if (!SyncDataFromDeviceToHost()) {
-        MS_LOG(ERROR) << "Sync data form device to host side failed";
+        MS_LOG(ERROR) << "Sync data from device to host side failed";
         return std::nullopt;
       }
     }
@@ -354,6 +363,10 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   template <typename T, typename std::enable_if<!IsValidContainer<T>::value && !std::is_pointer_v<T> &&
                                                 !std::is_scalar<std::decay_t<T>>::value>::type * = nullptr>
   std::optional<T> GetValue() {
+    if (type_id_ == kMetaTypeNone) {
+      MS_LOG(DEBUG) << "None type has no valid value.";
+      return std::nullopt;
+    }
     if (value_ && !value_->isa<ValueAny>()) {
       return mindspore::GetValue<T>(value_);
     }
@@ -375,6 +388,15 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
            "file to see if the input for the current operator value is from an operator.";
     }
     return value_opt.value();
+  }
+
+  // Get the value in KernelTensor, return it if there is specific value, otherwise throw an exception.
+  template <typename T>
+  std::optional<T> GetOptionalValueWithCheck() {
+    if (value_ && value_->isa<None>()) {
+      return std::nullopt;
+    }
+    return GetValueWithCheck<T>();
   }
 
   // Get the data format.
@@ -418,6 +440,9 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
 
   // Set device id.
   void set_device_id(uint32_t device_id) { device_id_ = device_id; }
+
+  // Get logical stream id.
+  size_t stream_id() { return stream_id_; }
 
   // Set logical stream id.
   void set_stream_id(size_t stream_id) { stream_id_ = stream_id; }
@@ -567,13 +592,13 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // The memory size in byte of the KernelTensor.
   size_t size_{0};
 
-  // The device target name, such "GPU","Ascend".
+  // The device target name, such as "GPU","Ascend".
   std::string device_name_;
 
   // Represents the device card id associated with the KernelTensor.
   uint32_t device_id_;
 
-  // The stream index in all stream array managed by Framework, starting form 0.
+  // The stream index in all stream array managed by Framework, starting from 0.
   size_t stream_id_{0};
 
   // User data is the extra data required by the kernel or framework.
@@ -601,10 +626,8 @@ enum class KernelModType {
   KernelMod,
   GpuKernelMod,
   NativeGpuKernelMod,
-  DeprecatedNativeGpuKernelMod,
   CpuKernelMod,
   NativeCpuKernelMod,
-  DeprecatedNativeCpuKernelMod,
   HostKernelMod,
   DynamicAkgCpuKernelMod,
 };
@@ -670,37 +693,12 @@ class BACKEND_EXPORT KernelMod {
   const std::string &kernel_name() const { return kernel_name_; }
 
   // =======================Old interface, will deleted after all kernel modified used new interface=================
-  explicit KernelMod(const BaseOperatorPtr &op) : op_(op) {}
-  // Initialization for the kernel mod.
-  inline bool Init_(const BaseOperatorPtr &op, const std::vector<KernelTensorPtr> &inputs,
-                    const std::vector<KernelTensorPtr> &outputs) {
-    this->op_ = op;
-    inputs_ = inputs;
-    outputs_ = outputs;
-    return Init(op, inputs, outputs);
-  }
-  inline std::vector<KernelTensorPtr> &GetInputs() { return inputs_; }
-  inline std::vector<KernelTensorPtr> &GetOutputs() { return outputs_; }
-
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
     return true;
   }
   virtual std::vector<size_t> GenParameters() { return {}; }
   virtual void GenAtomicInitInfo(AtomicInitInfo *info) {}
-  // Resize() is for validating input/output shape and calculating the workspace size, framework will invoke this
-  // routine after infer shape.
-  virtual int Resize(
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>());
-  virtual int Resize(
-    const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>());
-  // Some kernels, e.g., Unique, can only get its output shape after its computing finished.
-  virtual bool IsNeedRetrieveOutputShape() { return is_need_retrieve_output_shape_; }
-  std::vector<KernelTensorPtr> RetrieveOutputShape() {
-    SyncOutputShape();
-    return outputs_;
-  }
 
   virtual void set_unique_name(const std::string &unique_name) {
     MS_LOG(EXCEPTION) << "Call the method which doesn't implement";
@@ -728,22 +726,12 @@ class BACKEND_EXPORT KernelMod {
   virtual bool Finalize() { return true; }
 
  protected:
-  virtual bool Init(const BaseOperatorPtr &op, const std::vector<KernelTensorPtr> &inputs,
-                    const std::vector<KernelTensorPtr> &outputs) {
-    return true;
-  }
-  virtual int Resize(
-    const BaseOperatorPtr &op, const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>());
   bool IsValidShape(const ShapeVector &shape) const {
     if (std::any_of(shape.begin(), shape.end(), [](int64_t dim) { return dim < 0; })) {
       return false;
     }
     return true;
   }
-  // some kernels' output shape can only get from its computing result, this routine is for getting output shape and
-  // setting into outputs_.
-  virtual void SyncOutputShape() {}
 
  protected:
   // ===========================New member==========================================================
@@ -758,11 +746,7 @@ class BACKEND_EXPORT KernelMod {
   std::vector<AddressPtr> outputs_addr_;
 
   // =======================Old member, will deleted after all kernel modified used new interface=================
-  bool is_need_retrieve_output_shape_ = false;
   int32_t task_id_ = -1;
-  BaseOperatorPtr op_;
-  std::vector<KernelTensorPtr> inputs_;
-  std::vector<KernelTensorPtr> outputs_;
   bool use_kernel_tensor_{false};
 };
 using KernelModPtr = std::shared_ptr<KernelMod>;

@@ -80,11 +80,6 @@ struct AnfDumpHandlerRegister {
 } callback_register;
 }  // namespace
 
-PyObjectWrapper::~PyObjectWrapper() {
-  py::gil_scoped_acquire acquire_gil;
-  obj_ = nullptr;
-}
-
 InterpretedObject::InterpretedObject(const py::object &obj) : PyObjectWrapper(obj) {
   std::stringstream buf;
   auto type_str = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_GET_TYPE, obj);
@@ -626,7 +621,9 @@ AnfNodePtr ResolveSymbolWithAttr(const FuncGraphManagerPtr &manager, const AnfNo
   const auto &module_name = name_space->module();
   auto symbol_obj = GetSymbolObject(name_space, symbol, get_attr_node);
   if (module_name == RESOLVE_NAMESPACE_NAME_CLASS_MEMBER || data_converter::IsCellInstance(symbol_obj)) {
-    return ResolveCellWithAttr(manager, symbol_obj, object_node, attr_node, get_attr_node);
+    auto res = ResolveCellWithAttr(manager, symbol_obj, object_node, attr_node, get_attr_node);
+    res->set_user_data<py::object>("__getattr__", std::make_shared<py::object>(symbol_obj));
+    return res;
   }
   return nullptr;
 }
@@ -639,8 +636,8 @@ py::object GetObjectFromSequence(const NameSpacePtr &name_space, const SymbolPtr
   py::object obj = GetSymbolObject(name_space, symbol, node);
   // If obj is nn.CellList, convert it to sequence.
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
-  bool is_celllist = py::cast<bool>(python_adapter::CallPyModFn(mod, PYTHON_MOD_IS_CELL_LIST, obj));
-  if (is_celllist) {
+  bool is_cell_list = py::hasattr(obj, PYTHON_CELL_AS_LIST);
+  if (is_cell_list) {
     obj = python_adapter::CallPyModFn(mod, PYTHON_MOD_CONVERT_CELL_LIST_TO_SEQUENCE, obj);
   }
   if (!py::isinstance<py::list>(obj) && !py::isinstance<py::tuple>(obj)) {

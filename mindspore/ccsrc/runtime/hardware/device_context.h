@@ -76,7 +76,7 @@ class DeviceContext {
   // mark the unsupported node as "NotSupport" through SetCNodeNotSupported()
   // For further usage, each device can add a attribute kAttrGraphSplitGroup to the node, and give different
   // group_name (the type must be a std::string, default is 'DefaultGroup') to the attribute, which means the
-  // continuous nodes with the same group_name will be splited into one subgraph.
+  // continuous nodes with the same group_name will be split into one subgraph.
   virtual bool PartitionGraph(const FuncGraphPtr &func_graph) const { return false; }
 
   // Analysis the function graph and select the appropriate run mode for the graph
@@ -146,6 +146,8 @@ class BACKEND_EXPORT DeviceResManager {
   // Relevant function to allocate and free device memory of raw ptr.
   virtual void *AllocateMemory(size_t size) const = 0;
   virtual void FreeMemory(void *ptr) const = 0;
+  virtual void FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
+                               const std::vector<size_t> &keep_addr_sizes) const = 0;
 
   virtual void SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) {
     MS_LOG(EXCEPTION) << "Unimplemented interface.";
@@ -179,11 +181,6 @@ class BACKEND_EXPORT DeviceResManager {
   virtual std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
     MS_LOG(EXCEPTION) << "Unimplemented interface.";
   }
-
-  // Create concrete device address according different device type.
-  virtual DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
-                                               TypeId type_id, const ShapeVector &shape,
-                                               const UserDataPtr &user_data = nullptr) const = 0;
 
   // Create concrete device address according different device type using KernelTensor.
   virtual DeviceAddressPtr CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
@@ -277,16 +274,10 @@ class BACKEND_EXPORT KernelExecutor {
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.
   virtual void CreateKernel(const std::vector<CNodePtr> &nodes) const {}
+  virtual kernel::KernelModPtr CreateKernelMod(const std::string &op_name) const { MS_LOG(EXCEPTION) << "Unrealized"; };
 
   // Adjust kernel graph before run graph.
   virtual void PreprocessBeforeRun(const FuncGraphPtr &graph) const {}
-
-  // Launch a kernel via 'KernelMod' of the kernel.
-  virtual bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                            const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
-                            size_t stream_id) const {
-    MS_LOG(EXCEPTION) << "Unimplemented interface.";
-  }
 
   // Launch a kernel via 'KernelMod' of the kernel, use KernelTensor input type.
   virtual bool LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,

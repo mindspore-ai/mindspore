@@ -44,14 +44,6 @@ int RealMakeTupleCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (ret != 0) {
     return ret;
   }
-
-  auto input_size = inputs[0]->GetShapeVector();
-  for (size_t i = 1; i < inputs.size(); ++i) {
-    if (!IsSameShape(input_size, inputs[i]->GetShapeVector())) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << " the input size must be equal";
-      return KRET_RESIZE_FAILED;
-    }
-  }
   return KRET_OK;
 }
 

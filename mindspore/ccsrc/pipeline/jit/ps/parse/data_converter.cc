@@ -136,23 +136,30 @@ class ByTypeDataConvertFunc : public DataConvertFunc {
 // Convert the data according to object attribute.
 class ByAttrDataConvertFunc : public DataConvertFunc {
  public:
-  ByAttrDataConvertFunc(const std::string &attr_name, const ArgsObjConvertFunc &convert_func)
+  ByAttrDataConvertFunc(const ArgsObjConvertFunc &convert_func, const std::string &attr_name,
+                        const std::string &cell_list_from_top = "")
       : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &, const ValuePtrList &) -> ValuePtr {
           return convert_func(obj);
         }),
-        attr_name_(attr_name) {}
+        attr_name_(attr_name),
+        cell_list_from_top_(cell_list_from_top) {}
 
-  ByAttrDataConvertFunc(const std::string &attr_name, const ArgsObjSigConvertFunc &convert_func)
+  ByAttrDataConvertFunc(const ArgsObjSigConvertFunc &convert_func, const std::string &attr_name,
+                        const std::string &cell_list_from_top = "")
       : DataConvertFunc([convert_func](const py::object &obj, bool use_sig, const TypePtr &,
                                        const ValuePtrList &) -> ValuePtr { return convert_func(obj, use_sig); }),
-        attr_name_(attr_name) {}
+        attr_name_(attr_name),
+        cell_list_from_top_(cell_list_from_top) {}
 
   ~ByAttrDataConvertFunc() override = default;
 
-  bool Matched(const py::object &obj) override { return py::hasattr(obj, attr_name_.c_str()); }
+  bool Matched(const py::object &obj) override {
+    return py::hasattr(obj, attr_name_.c_str()) && !py::hasattr(obj, cell_list_from_top_.c_str());
+  }
 
  private:
   std::string attr_name_;
+  std::string cell_list_from_top_;
 };
 
 // Convert the data according to match function.
@@ -305,22 +312,23 @@ ValuePtr ConvertCellList(const py::object &obj, bool use_signature) {
   py::sequence list = obj;
   std::vector<ValuePtr> value_list;
 
-  // If obj is nn.CellList, convert it to sequence.
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   bool is_celllist = py::cast<bool>(python_adapter::CallPyModFn(mod, PYTHON_MOD_IS_CELL_LIST, obj));
-  if (is_celllist) {
-    for (size_t it = 0; it < list.size(); ++it) {
-      ValuePtr out = nullptr;
-      bool success = ConvertData(list[it], &out, use_signature);
-      if (!success) {
-        return nullptr;
-      }
-      value_list.push_back(out);
+  for (const auto &element : list) {
+    // An element will directly convert to InterpretedObject if:
+    //   1. The container is not a cell list object.
+    //   2. The element should be single cell (cell with no __cell_as_list__ attr).
+    bool to_interpret = !is_celllist && py::isinstance<Cell>(element);
+    if (to_interpret) {
+      value_list.push_back(std::make_shared<parse::InterpretedObject>(element));
+      continue;
     }
-  } else {
-    for (size_t it = 0; it < list.size(); ++it) {
-      value_list.push_back(std::make_shared<parse::InterpretedObject>(list[it]));
+    ValuePtr out = nullptr;
+    bool success = ConvertData(element, &out, use_signature);
+    if (!success) {
+      return nullptr;
     }
+    value_list.push_back(out);
   }
   return std::make_shared<ValueTuple>(value_list);
 }
@@ -371,15 +379,23 @@ ValuePtr ConvertMsClass(const py::object &obj) {
   return std::make_shared<MsClassObject>(obj, cls_name);
 }
 
-ValuePtr ConvertPrimitive(const py::object &obj, bool use_signature = false) {
-  MS_LOG(DEBUG) << "Converting primitive object" << use_signature;
-
+ValuePtr ConvertPrimitiveClassType(const py::object &obj) {
   // need check the primitive is class type or instance
   auto obj_type = data_converter::GetObjType(obj);
   if (obj_type == RESOLVE_TYPE_CLASS_TYPE) {
     auto desc = py::cast<std::string>(python_adapter::CallPyObjMethod(obj, PYTHON_GET_OBJ_DESC, obj));
     // desc has format "<class xxxx>", strip the '<' and '>' by offset 1.
     return std::make_shared<ClassType>(obj, std::string(desc.begin() + 1, desc.end() - 1));
+  }
+  return nullptr;
+}
+
+ValuePtr ConvertPrimitive(const py::object &obj, bool use_signature = false) {
+  MS_LOG(DEBUG) << "Converting primitive object " << use_signature;
+
+  auto class_type = ConvertPrimitiveClassType(obj);
+  if (class_type != nullptr) {
+    return class_type;
   }
   py::object adapter_obj = obj;
   if (py::hasattr(obj, "__setattr_flag__")) {
@@ -403,12 +419,17 @@ ValuePtr ConvertPrimitive(const py::object &obj, bool use_signature = false) {
 }
 
 ValuePtr ConvertPrimitiveFunction(const py::object &obj) {
+  MS_LOG(DEBUG) << "Converting primitive function";
+  auto class_type = ConvertPrimitiveClassType(obj);
+  if (class_type != nullptr) {
+    return class_type;
+  }
   auto prim_func_adapter = obj.cast<PrimitiveFunctionAdapterPtr>();
   MS_EXCEPTION_IF_NULL(prim_func_adapter);
   auto cpp_primitive_func = prim_func_adapter->attached_primitive_function();
   if (cpp_primitive_func == nullptr) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Cannot get cpp primitive function object from primitive function adapter:"
-                               << prim_func_adapter->name();
+    auto prim_name = py::getattr(obj, "name").cast<std::string>();
+    return std::make_shared<prim::DoTransPrimitiveFunction>(std::make_shared<Primitive>(prim_name));
   }
   return cpp_primitive_func;
 }
@@ -542,19 +563,13 @@ ValuePtr ConvertOtherObj(const py::object &obj, bool forbid_reuse = false) {
     if (obj_type == RESOLVE_TYPE_FUNCTION || obj_type == RESOLVE_TYPE_METHOD) {
       // Check JIT forbidden API
       CheckJITForbiddenAPI(obj);
-      const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
       // Check if the function is from a third-party library.
       py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
       bool is_third_party_function =
         python_adapter::CallPyModFn(mod, PYTHON_MOD_IS_FROM_THIRD_PARTY_LIBRARY, obj).cast<bool>();
       if (is_third_party_function) {
-        if (allow_fallback_runtime) {
-          MS_LOG(DEBUG) << "Converting the function from third-party library: " << py::str(obj);
-          return std::make_shared<InterpretedObject>(obj);
-        } else {
-          MS_EXCEPTION(ValueError) << "Converting the function from third-party library:" << py::str(obj)
-                                   << " need set jit_syntax_level to LAX.";
-        }
+        MS_LOG(DEBUG) << "Converting the function from third-party library: " << py::str(obj);
+        return std::make_shared<InterpretedObject>(obj);
       }
     }
     MS_LOG(DEBUG) << "Convert the obj to func graph, type is " << obj_type;
@@ -660,6 +675,13 @@ ValuePtr ConvertFloatWithType(const py::object &obj, const TypePtr &dtype = null
   return ConvertNumberWithType<pyfloat>(obj_float32, dtype);
 }
 
+ValuePtr ConvertNameSpace(const py::object &obj, bool use_signature) {
+  MS_LOG(DEBUG) << "Converting python NameSpace";
+  auto res = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, obj);
+  MS_LOG(DEBUG) << "name_space: " << res->ToString();
+  return res;
+}
+
 template <typename T, typename U>
 ValuePtr PyCast(const py::object &obj) {
   return std::make_shared<T>(py::cast<U>(obj));
@@ -690,24 +712,18 @@ static const std::vector<DataConvertFuncPtr> &GetDataConvertFuncs() {
     std::make_shared<ByTypeDataConvertFunc<MapTensor>>(ObjCast<MapTensorPtr>),
     std::make_shared<ByTypeDataConvertFunc<py::ellipsis>>(kEllipsis),
     std::make_shared<ByTypeDataConvertFunc<py::module>>(ConvertModuleNameSpace),
-    std::make_shared<ByAttrDataConvertFunc>(PYTHON_MS_CLASS, ConvertMsClass),
+    std::make_shared<ByAttrDataConvertFunc>(ConvertMsClass, PYTHON_MS_CLASS),
     std::make_shared<ByTypeDataConvertFunc<Type>>(ObjCast<TypePtr>),
     std::make_shared<ByTypeDataConvertFunc<UMonad>>(ObjCast<UMonadPtr>),
     std::make_shared<ByTypeDataConvertFunc<IOMonad>>(ObjCast<IOMonadPtr>),
-    std::make_shared<ByAttrDataConvertFunc>(PYTHON_CLASS_MEMBER_NAMESPACE,
-                                            [](const py::object &obj) -> ValuePtr {
-                                              auto res =
-                                                std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, obj);
-                                              MS_LOG(DEBUG) << "name_space: " << res->ToString();
-                                              return res;
-                                            }),
+    std::make_shared<ByAttrDataConvertFunc>(ConvertNameSpace, PYTHON_CLASS_MEMBER_NAMESPACE),
     std::make_shared<ByTypeDataConvertFunc<py::dict>>(ConvertDict),
-    std::make_shared<ByAttrDataConvertFunc>(PYTHON_CELL_AS_DICT, ConvertDict),
+    std::make_shared<ByAttrDataConvertFunc>(ConvertDict, PYTHON_CELL_AS_DICT),
     std::make_shared<ByTypeDataConvertFunc<py::slice>>(ConvertSlice),
-    std::make_shared<ByAttrDataConvertFunc>(PYTHON_CELL_AS_LIST, ConvertCellList),
+    std::make_shared<ByAttrDataConvertFunc>(ConvertCellList, PYTHON_CELL_AS_LIST, PYTHON_CELL_LIST_FROM_TOP),
     std::make_shared<ByTypeDataConvertFunc<Cell>>(ConvertCellObjToFuncGraph),
-    std::make_shared<ByAttrDataConvertFunc>(PYTHON_PRIMITIVE_FLAG, ConvertPrimitive),
-    std::make_shared<ByAttrDataConvertFunc>(PYTHON_PRIMITIVE_FUNCTION_FLAG, ConvertPrimitiveFunction),
+    std::make_shared<ByAttrDataConvertFunc>(ConvertPrimitive, PYTHON_PRIMITIVE_FLAG),
+    std::make_shared<ByAttrDataConvertFunc>(ConvertPrimitiveFunction, PYTHON_PRIMITIVE_FUNCTION_FLAG),
     std::make_shared<ByTypeDataConvertFunc<MetaFuncGraph>>(ConvertMetaFuncGraph),
     std::make_shared<ByTypeDataConvertFunc<FuncGraph>>(ConvertFuncGraph),
   };
@@ -1313,11 +1329,14 @@ ValuePtr ConvertTensorToInt(const py::object &obj) {
     MS_LOG(INFO) << "Can only convert tensor with one element to int, but got " << tensor->ToString();
     return nullptr;
   }
-  if (tensor->data_type() != kNumberTypeInt64) {
+  if (tensor->data_type() == kNumberTypeInt64) {
+    return std::make_shared<Int64Imm>(static_cast<int64_t *>(GetTensorDataPtr(tensor))[0]);
+  } else if (tensor->data_type() == kNumberTypeInt32) {
+    return std::make_shared<Int64Imm>(static_cast<int32_t *>(GetTensorDataPtr(tensor))[0]);
+  } else {
     MS_LOG(INFO) << "Can't convert " << tensor->ToString() << " to int";
     return nullptr;
   }
-  return std::make_shared<Int64Imm>(static_cast<int64_t *>(GetTensorDataPtr(tensor))[0]);
 }
 
 ValuePtr ConvertTensorToFloat(const py::object &obj) {

@@ -649,8 +649,7 @@ std::pair<bool, std::pair<std::string, ExceptionType>> GetSelectKernelObjectType
   }
 
   std::vector<kernel::KernelAttr> object_selected_kernel_attrs;
-  if (!kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs, true) &&
-      !kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs, false)) {
+  if (!kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs)) {
     return {false, kernel::KernelObjectTypeNotSupportWarning(kernel_node)};
   }
 

@@ -7,7 +7,7 @@ masked_fill:
             dtype: tensor
         value:
             dtype: tensor
-            #type_cast: number
+            type_cast: number
     args_signature:
         dtype_group: (input, value)
     returns:

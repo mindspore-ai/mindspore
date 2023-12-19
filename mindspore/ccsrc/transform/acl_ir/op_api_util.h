@@ -17,8 +17,10 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_ACL_IR_OP_API_UTIL_H_
 #define MINDSPORE_CCSRC_TRANSFORM_ACL_IR_OP_API_UTIL_H_
 
+#include <vector>
 #include <string>
 #include "utils/ms_context.h"
+#include "ir/anf.h"
 
 namespace mindspore::transform {
 typedef enum : int8_t {
@@ -31,6 +33,11 @@ typedef enum : int8_t {
 class OpApiUtil {
  public:
   static aclCubeMathType GetCubeMathType(bool use_hf32 = false);
+
+  static void GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std::string> *input_formats,
+                                      std::vector<std::string> *output_formats,
+                                      std::vector<std::string> *input_reshape_types,
+                                      std::vector<std::string> *output_reshape_types);
 };
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_ACL_IR_OP_API_UTIL_H_

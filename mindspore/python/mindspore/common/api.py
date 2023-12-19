@@ -83,7 +83,7 @@ def _convert_python_data(data):
         return PythonCOOTensor(coo_tensor=data)
     if isinstance(data, RowTensor) and not isinstance(data, PythonRowTensor):
         return PythonRowTensor(row_tensor=data)
-    if isinstance(data, tuple):
+    if data.__class__ is tuple:
         # Handle namedtuple since its type is tuple.
         if hasattr(data, "_fields"):
             type_name = data.__class__.__name__
@@ -91,12 +91,12 @@ def _convert_python_data(data):
             fields = data_dict.keys()
             return namedtuple(type_name, fields)(**_convert_python_data(data_dict))
         return tuple(_convert_python_data(x) for x in data)
-    if isinstance(data, list):
+    if data.__class__ is list:
         # Keep list object not change for inplace operation.
         for i in range(len(data)):
             data[i] = _convert_python_data(data[i])
         return data
-    if isinstance(data, dict):
+    if data.__class__ is dict:
         # Keep the dict object not change.
         keys = tuple(data.keys())
         for key in keys:

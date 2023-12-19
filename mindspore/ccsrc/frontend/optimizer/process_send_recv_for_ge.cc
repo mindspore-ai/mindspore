@@ -320,6 +320,10 @@ void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
   if (!is_enable_ge || no_cell_reuse) {
     return;
   }
+  const bool graph_op_run = common::GetEnv("GRAPH_OP_RUN") == "1";
+  if (graph_op_run) {
+    return;
+  }
   auto parallel_context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context);
   auto stages = parallel_context->pipeline_stage_split_num();

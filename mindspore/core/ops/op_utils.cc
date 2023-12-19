@@ -837,6 +837,19 @@ size_t GetInputIndexByName(const std::string &op_name, const std::string &input_
   return SIZE_MAX;
 }
 
+std::string GetInputNameByIndex(const std::string &op_name, size_t index) {
+  mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_name);
+  if (op_def == nullptr) {
+    return "";
+  }
+  if (index >= op_def->args_.size()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Get input name by index out of range, index: " << index
+                               << ", size: " << op_def->args_.size() << ", op name: " << op_name;
+  }
+  auto input = op_def->args_[index];
+  return input.arg_name_;
+}
+
 size_t GetOpInputsNum(const std::string &op_name) {
   mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_name);
   if (op_def == nullptr) {
@@ -915,6 +928,11 @@ std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value) {
   if (value->isa<KernelTensorValue>()) {
     auto kernel_tensor_value = value->cast<KernelTensorValuePtr>();
     MS_EXCEPTION_IF_NULL(kernel_tensor_value);
+
+    if (kernel_tensor_value->GetDataSize() % sizeof(T) != 0) {
+      MS_LOG(EXCEPTION) << "The size is incompatible, kernel tensor value size: " << kernel_tensor_value->GetDataSize()
+                        << ", expected element size: " << sizeof(T);
+    }
 
     size_t element_size = kernel_tensor_value->GetDataSize() / sizeof(T);
     if (element_size != 0) {

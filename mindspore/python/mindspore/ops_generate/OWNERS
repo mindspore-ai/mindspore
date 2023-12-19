@@ -1,3 +1,7 @@
 approvers:
-- zhaizhiqiang
+- zhaizhiqiang #
 - chenfei52
+- chujinjin
+
+options:
+    no_parent_owners: true

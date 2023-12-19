@@ -44,6 +44,7 @@ static const std::map<AllocatorType, std::string> kAllocatorTypeString = {
   {AllocatorType::kWeight, "weight"},
   {AllocatorType::kConstantValue, "constant value"},
   {AllocatorType::kKernelOutput, "kernel output"},
+  {AllocatorType::kGraphOutput, "graph output"},
   {AllocatorType::kOther, "other"},
 };
 
@@ -182,6 +183,18 @@ DeviceMemPtr DynamicMemPoolBestFit::FindMemBufInSpecifiedMng(size_t size, bool f
     (target_status == DynamicMemBufStatus::kMemBufIdle) ? mem_mng->idle_mem_buf_map_ : mem_mng->eager_free_mem_buf_map_;
   auto iter = mem_buf_map.lower_bound(size);
   if (iter != mem_buf_map.end()) {
+    if (IsMemoryPoolRecycle()) {
+      // Ensure that the addresses corresponding to the same Tensor for each step are consistent, making the memory pool
+      // recycling function more stable.
+      auto find_size = iter->first;
+      // Can be optimized in the future.
+      auto [lb, ub] = mem_buf_map.equal_range(find_size);
+      for (auto i = lb; i != ub; ++i) {
+        if (i->second->device_addr_ > iter->second->device_addr_) {
+          iter = i;
+        }
+      }
+    }
     auto mem_buf = iter->second;
     MS_EXCEPTION_IF_NULL(mem_buf);
     if (mem_buf->status_ != target_status) {
@@ -266,6 +279,9 @@ DeviceMemPtr DynamicMemPoolBestFit::AddMemBlockAndMemBuf(size_t size, bool from_
   size_t alloc_mem_size = CalMemBlockAllocSize(size, from_persistent_mem, need_recycle);
   MS_LOG(DEBUG) << "CalMemBlockAllocSize return : " << size << ", alloc_mem_size : " << alloc_mem_size;
   if (alloc_mem_size == 0) {
+    if (auto device_addr = FindAvailableMemBuf(size, !from_persistent_mem)) {
+      return device_addr;
+    }
     if (IsEnableEagerFree()) {
       is_trigger_eager_free_ = true;
       return AddMemBlockAndMemBufByEagerFree(size, from_persistent_mem);
@@ -383,10 +399,7 @@ const size_t DynamicMemPoolBestFit::FreeIdleMemsByEagerFree() {
     for (auto &[size, mem_buf] : mem_mng->idle_mem_buf_map_) {
       free_size += size;
       real_free_size += FreeDeviceMemByEagerFree(mem_buf->device_addr_, size);
-      auto mem_block = FindMemBlock(mem_buf->device_addr_, mem_mng);
-      MS_EXCEPTION_IF_NULL(mem_block);
-      CombineMemBuf(mem_block, mem_buf->device_addr_, mem_mng, DynamicMemBufStatus::kMemBufIdle,
-                    DynamicMemBufStatus::kMemBufEagerFree);
+      CombineMemBuf(mem_buf->device_addr_, DynamicMemBufStatus::kMemBufIdle, DynamicMemBufStatus::kMemBufEagerFree);
     }
     mem_mng->idle_mem_buf_map_.clear();
     return std::make_pair(free_size, real_free_size);
@@ -448,36 +461,16 @@ DynamicMemBlockPtr DynamicMemPoolBestFit::FindMemBlock(const DeviceMemPtr &devic
 }
 
 void DynamicMemPoolBestFit::FreeTensorMem(const DeviceMemPtr &device_addr) {
-  MS_EXCEPTION_IF_NULL(device_addr);
 #ifdef __APPLE__
   std::lock_guard<SpinLock> spin_lock(spin_lock_);
 #else
   std::lock_guard<std::mutex> locker(mutex_);
 #endif
-  auto fn = [this](const MemStatusManagerPtr &mem_mng, const DeviceMemPtr &device_addr) -> DynamicMemBlockPtr {
-    auto mem_block = FindMemBlock(device_addr, mem_mng);
-    if (mem_block != nullptr) {
-      const auto &iter = mem_block->block_all_mem_buf_map_.find(device_addr);
-      if (iter != mem_block->block_all_mem_buf_map_.end()) {
-        return mem_block;
-      }
-    }
-    return nullptr;
-  };
-  auto mem_block = fn(common_mem_, device_addr);
-  if (mem_block == nullptr) {
-    mem_block = fn(persistent_mem_, device_addr);
-    if (mem_block == nullptr) {
-      // Maybe destroy the memory pool first, then destroy the address, so this is normal case.
-      MS_LOG(DEBUG) << "Can't find the mem_block of the device address[" << device_addr << "].";
-      return;
-    }
-    CombineMemBuf(mem_block, device_addr, persistent_mem_, DynamicMemBufStatus::kMemBufUsed,
-                  DynamicMemBufStatus::kMemBufIdle);
-  } else {
-    CombineMemBuf(mem_block, device_addr, common_mem_, DynamicMemBufStatus::kMemBufUsed,
-                  DynamicMemBufStatus::kMemBufIdle);
-  }
+  FreeTensorMemInner(device_addr);
+}
+
+void DynamicMemPoolBestFit::FreeTensorMemInner(const DeviceMemPtr &device_addr) {
+  CombineMemBuf(device_addr, DynamicMemBufStatus::kMemBufUsed, DynamicMemBufStatus::kMemBufIdle);
 
   if (IsMemoryPoolRecycle()) {
     (void)mem_bufs_.erase(device_addr);
@@ -488,24 +481,23 @@ void DynamicMemPoolBestFit::FreeTensorMem(const DeviceMemPtr &device_addr) {
                 << "B, total idle mem:" << (TotalMemStatistics() - TotalUsedMemStatistics()) << "B.";
 }
 
-void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block, const DeviceMemPtr &device_addr,
-                                          const MemStatusManagerPtr &mem_mng, DynamicMemBufStatus origin_status,
+void DynamicMemPoolBestFit::CombineMemBuf(const DeviceMemPtr &device_addr, DynamicMemBufStatus origin_status,
                                           DynamicMemBufStatus target_status) {
-  MS_EXCEPTION_IF_NULL(mem_block);
   MS_EXCEPTION_IF_NULL(device_addr);
-  MS_EXCEPTION_IF_NULL(mem_mng);
-  const auto &iter = mem_block->block_all_mem_buf_map_.find(device_addr);
-  if (iter == mem_block->block_all_mem_buf_map_.end()) {
-    DumpDynamicMemPoolDebugInfo();
-    MS_LOG(INTERNAL_EXCEPTION) << "Can't find the device address[" << device_addr << "].";
+  auto [mem_block, iter, mem_mng] = FindByStrictAddr(device_addr);
+  if (mem_block == nullptr) {
+    // Maybe destroy the memory pool first, then destroy the address, so this is normal case.
+    MS_LOG(DEBUG) << "Can't find the mem_block of the device address[" << device_addr << "].";
+    return;
   }
-  auto mem_buf = iter->second;
+  MS_EXCEPTION_IF_NULL(mem_mng);
+  auto &mem_buf = iter->second;
   MS_EXCEPTION_IF_NULL(mem_buf);
 
   if (common::IsNeedProfileMemory()) {
     MS_LOG(WARNING) << "Need Profile Memory, Memory pool free, total mem: " << TotalMemStatistics()
                     << ", peak mem: " << UsedMemPeakStatistics() << ", in use mem: " << TotalUsedMemStatistics()
-                    << ", device address addr: " << device_addr << ", size: " << mem_buf->size_;
+                    << ", device address addr: " << mem_buf->device_addr_ << ", size: " << mem_buf->size_;
   }
 
   if (mem_buf->status_ != origin_status) {
@@ -559,7 +551,8 @@ void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block, c
   }
 
   // Put back mem buf into specific map.
-  auto put_back_mem_buf_func = [&](DynamicMemBufStatus status, const DynamicMemBufPtr &mem_buf) {
+  auto put_back_mem_buf_func = [](DynamicMemBufStatus status, const DynamicMemBufPtr &mem_buf,
+                                  const MemStatusManagerPtr &mem_mng) {
     if (status == DynamicMemBufStatus::kMemBufIdle) {
       (void)mem_mng->idle_mem_buf_map_.emplace(mem_buf->size_, mem_buf);
       mem_mng->mps_.total_idle_mem_size_ += mem_buf->size_;
@@ -569,10 +562,35 @@ void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block, c
     }
   };
   if (forward_combine) {
-    put_back_mem_buf_func(target_status, prev_mem_buf);
+    put_back_mem_buf_func(target_status, prev_mem_buf, mem_mng);
   } else {
-    put_back_mem_buf_func(target_status, mem_buf);
+    put_back_mem_buf_func(target_status, mem_buf, mem_mng);
   }
+}
+
+std::tuple<DynamicMemBlockPtr, DeviceAddrMapMemBuf::iterator, MemStatusManagerPtr>
+DynamicMemPoolBestFit::FindByStrictAddr(const DeviceMemPtr &device_addr) const {
+  MS_EXCEPTION_IF_NULL(device_addr);
+  // Find in the common pool.
+  auto mem_block = FindMemBlock(device_addr, common_mem_);
+  if (mem_block != nullptr) {
+    const auto &iter = mem_block->block_all_mem_buf_map_.find(device_addr);
+    if (iter != mem_block->block_all_mem_buf_map_.end()) {
+      return std::make_tuple(mem_block, iter, common_mem_);
+    }
+  }
+
+  // Find in the persistent pool.
+  mem_block = FindMemBlock(device_addr, persistent_mem_);
+  if (mem_block != nullptr) {
+    const auto &iter = mem_block->block_all_mem_buf_map_.find(device_addr);
+    if (iter != mem_block->block_all_mem_buf_map_.end()) {
+      return std::make_tuple(mem_block, iter, persistent_mem_);
+    }
+  }
+
+  DeviceAddrMapMemBuf empty_map;
+  return std::make_tuple(nullptr, empty_map.end(), common_mem_);
 }
 
 void DynamicMemPoolBestFit::EraseMemBufByStatus(size_t size, const DeviceMemPtr &device_addr,
@@ -593,6 +611,121 @@ void DynamicMemPoolBestFit::EraseMemBufByStatus(size_t size, const DeviceMemPtr 
     (void)iter.first++;
   }
   MS_LOG(ERROR) << "Can't find the size[" << size << "] and device address[" << device_addr << "] in the idle mem_buf.";
+}
+
+void DynamicMemPoolBestFit::FreePartTensorMems(const std::vector<DeviceMemPtr> &free_addrs,
+                                               const std::vector<DeviceMemPtr> &keep_addrs,
+                                               const std::vector<size_t> &keep_addr_sizes) {
+#ifdef __APPLE__
+  std::lock_guard<SpinLock> spin_lock(spin_lock_);
+#else
+  std::lock_guard<std::mutex> locker(mutex_);
+#endif
+
+  for (auto &free_addr : free_addrs) {
+    FreeTensorMemInner(free_addr);
+  }
+
+  MS_EXCEPTION_IF_CHECK_FAIL((keep_addrs.size() == keep_addr_sizes.size()), "The keep addrs size is wrong.");
+  for (size_t i = 0; i < keep_addrs.size(); ++i) {
+    KeepTensorMemByAddr(keep_addrs[i], keep_addr_sizes[i]);
+  }
+}
+
+void DynamicMemPoolBestFit::KeepTensorMemByAddr(const DeviceMemPtr &device_addr, size_t size) {
+  MS_EXCEPTION_IF_NULL(device_addr);
+  // Fetch the memblock and membuf by the device address.
+  auto [mem_block, mem_buf, mem_mng] = FindByKeepAddr(device_addr);
+  MS_EXCEPTION_IF_NULL(mem_block);
+  MS_EXCEPTION_IF_NULL(mem_buf);
+  MS_EXCEPTION_IF_NULL(mem_mng);
+  if (mem_buf->status_ != DynamicMemBufStatus::kMemBufIdle) {
+    DumpDynamicMemPoolDebugInfo();
+    MS_LOG(EXCEPTION) << "The membuf status isn't idle for addr:" << device_addr << ", size:" << size
+                      << ", find the mem buf addr:" << mem_buf->device_addr_ << ", size:" << mem_buf->size_;
+  }
+
+  // Calculate the size of left and right split membuf.
+  size_t split_left_size = CalAddressOffset(device_addr, mem_buf->device_addr_);
+  MS_EXCEPTION_IF_CHECK_FAIL((mem_buf->size_ >= (split_left_size + size)), "The split size is wrong.");
+  size_t split_right_szie = mem_buf->size_ - split_left_size - size;
+
+  // Split the left membuf.
+  EraseMemBufByStatus(mem_buf->size_, mem_buf->device_addr_, mem_mng, mem_buf->status_);
+  if (split_left_size == 0) {
+    mem_buf->status_ = DynamicMemBufStatus::kMemBufUsed;
+    mem_buf->size_ = size;
+    mem_buf->allocator_name_ = DynamicMemAllocatorDebugInfo::GetDebugInfo().name_;
+    mem_buf->allocator_type_ = DynamicMemAllocatorDebugInfo::GetDebugInfo().type_;
+  } else {
+    mem_buf->size_ = split_left_size;
+    (void)mem_mng->idle_mem_buf_map_.emplace(mem_buf->size_, mem_buf);
+
+    auto used_mem_buf = std::make_shared<DynamicMemBuf>(device_addr, DynamicMemBufStatus::kMemBufUsed, size,
+                                                        DynamicMemAllocatorDebugInfo::GetDebugInfo().name_,
+                                                        DynamicMemAllocatorDebugInfo::GetDebugInfo().type_);
+    (void)mem_block->block_all_mem_buf_map_.emplace(device_addr, used_mem_buf);
+  }
+
+  // Split the right membuf.
+  if (split_right_szie > 0) {
+    DeviceMemPtr right_buf_addr = AddressOffset(device_addr, size);
+    auto right_mem_buf =
+      std::make_shared<DynamicMemBuf>(right_buf_addr, DynamicMemBufStatus::kMemBufIdle, split_right_szie);
+    (void)mem_block->block_all_mem_buf_map_.emplace(right_buf_addr, right_mem_buf);
+    (void)mem_mng->idle_mem_buf_map_.emplace(right_mem_buf->size_, right_mem_buf);
+  }
+
+  // Memory statistics.
+  mem_mng->mps_.total_used_mem_size_ += size;
+  if (mem_mng->mps_.total_used_mem_size_ > mem_mng->mps_.used_mem_peak_size_) {
+    mem_mng->mps_.used_mem_peak_size_ = mem_mng->mps_.total_used_mem_size_;
+  }
+  mem_mng->mps_.total_idle_mem_size_ -= size;
+  MS_LOG(DEBUG) << "Keep memory details, name:" << DynamicMemAllocatorDebugInfo::GetDebugInfo().name_
+                << ", address:" << device_addr << ", size:" << size << "B, total allocated mem:" << TotalMemStatistics()
+                << "B, peak used mem:" << UsedMemPeakStatistics() << "B, in used mem:" << TotalUsedMemStatistics()
+                << "B, total idle mem:" << (TotalMemStatistics() - TotalUsedMemStatistics()) << "B.";
+}
+
+DynamicMemBufPtr DynamicMemPoolBestFit::FindMemBufByKeepAddr(const DeviceMemPtr &device_addr,
+                                                             const DynamicMemBlockPtr &mem_block) const {
+  MS_EXCEPTION_IF_NULL(device_addr);
+  MS_EXCEPTION_IF_NULL(mem_block);
+  auto &&iter = mem_block->block_all_mem_buf_map_.upper_bound(device_addr);
+  if (iter != mem_block->block_all_mem_buf_map_.begin()) {
+    return (--iter)->second;
+  }
+  return nullptr;
+}
+
+std::tuple<DynamicMemBlockPtr, DynamicMemBufPtr, MemStatusManagerPtr> DynamicMemPoolBestFit::FindByKeepAddr(
+  const DeviceMemPtr &device_addr) const {
+  MS_EXCEPTION_IF_NULL(device_addr);
+  auto is_addr_in_membuf = [](const DeviceMemPtr &device_addr, const DynamicMemBufPtr &mem_buf) {
+    return (mem_buf != nullptr) && (device_addr >= mem_buf->device_addr_) &&
+           (mem_buf->size_ >= CalAddressOffset(device_addr, mem_buf->device_addr_));
+  };
+
+  // Find in the common pool.
+  auto mem_block = FindMemBlock(device_addr, common_mem_);
+  if (mem_block != nullptr) {
+    auto mem_buf = FindMemBufByKeepAddr(device_addr, mem_block);
+    if (is_addr_in_membuf(device_addr, mem_buf)) {
+      return std::make_tuple(mem_block, mem_buf, common_mem_);
+    }
+  }
+
+  // Find in the persistent pool.
+  mem_block = FindMemBlock(device_addr, persistent_mem_);
+  if (mem_block != nullptr) {
+    auto mem_buf = FindMemBufByKeepAddr(device_addr, mem_block);
+    if (is_addr_in_membuf(device_addr, mem_buf)) {
+      return std::make_tuple(mem_block, mem_buf, persistent_mem_);
+    }
+  }
+
+  return std::make_tuple(nullptr, nullptr, common_mem_);
 }
 
 void DynamicMemPoolBestFit::ReleaseDeviceRes() {

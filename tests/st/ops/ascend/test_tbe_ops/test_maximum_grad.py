@@ -139,3 +139,25 @@ def test_max_tensor_grad_with_bf16():
     expect1 = np.array([0.5, -0.5, 0.])
     assert np.allclose(output[0].float().asnumpy(), expect0, rtol=1e-6, atol=1e-4)
     assert np.allclose(output[1].float().asnumpy(), expect1, rtol=1e-6, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_max_tensor_grad_with_input_nan():
+    """
+    Feature: test maximumgrad on Ascend(910B)
+    Description: test maximumgrad with input nan.
+    Expectation: result match to expected result.
+    """
+    x_np = np.full((3,), np.nan).astype(np.float32)
+    y_np = np.array([1.7, 2.3, 5.8]).astype(np.float32)
+    dout = np.array([1.0, -1.0, 0]).astype(np.float32)
+    net = GradWrap(MaxNetMe())
+    output = net(Tensor(x_np, ms.bfloat16), Tensor(y_np, ms.bfloat16), Tensor(dout, ms.bfloat16))
+    print(output[0].float().asnumpy())
+    print(output[1].float().asnumpy())
+    expect0 = np.array([1.0, -1.0, 0])
+    expect1 = np.array([1.0, -1.0, 0])
+    assert np.allclose(output[0].float().asnumpy(), expect0, rtol=1e-6, atol=1e-4)
+    assert np.allclose(output[1].float().asnumpy(), expect1, rtol=1e-6, atol=1e-4)

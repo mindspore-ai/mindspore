@@ -3,7 +3,7 @@ mindspore.nn.SiLU
 
 .. py:class:: mindspore.nn.SiLU
 
-    逐元素计算SiLU激活函数。
+    逐元素计算SiLU激活函数。有时也被称作Swish函数。
 
     SiLU函数定义为：
 
@@ -19,7 +19,7 @@ mindspore.nn.SiLU
 
     SiLU函数图：
 
-    .. image:: images/SiLU.png
+    .. image:: ../images/SiLU.png
         :align: center
 
     输入：
