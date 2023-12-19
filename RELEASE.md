@@ -9,7 +9,7 @@
 #### Operators
 
 - [STABLE] FastGelu, BatchMatMul, AllReduce, AllGather, Broadcast, ReduceScatter support bfloat16 data type
-- [STABLE] AllGather/ReduceScatter support unit8 data type
+- [STABLE] AllGather support uint8 data type
 
 ### Bug Fixes
 
