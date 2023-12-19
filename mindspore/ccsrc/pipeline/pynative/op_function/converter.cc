@@ -353,16 +353,22 @@ std::optional<StringImmPtr> Converter::ToStringOptional(size_t i) {
   return std::make_optional(ToString(i));
 }
 
-TypePtr Converter::ToDtype(size_t i) {
+Int64ImmPtr Converter::ToDtype(size_t i) {
   const py::object &obj = (*python_args_)[i];
   source_type_[i] = OP_DTYPE::DT_BEGIN;
-  if (!py::isinstance<mindspore::Type>(obj)) {
-    MS_LOG(EXCEPTION) << "Get arg is not mindspore type: " << py::str(obj);
+  auto convert = ConvertInt(obj);
+  if (convert != nullptr) {
+    return convert;
   }
-  return obj.cast<TypePtr>();
+  if (py::isinstance<mindspore::Type>(obj)) {
+    TypePtr type = py::cast<mindspore::TypePtr>(obj);
+    return std::make_shared<Int64Imm>(static_cast<int>(type->type_id()));
+  }
+  ThrowException(i);
+  return nullptr;
 }
 
-std::optional<TypePtr> Converter::ToDtypeOptional(size_t i) {
+std::optional<Int64ImmPtr> Converter::ToDtypeOptional(size_t i) {
   const py::object &obj = (*python_args_)[i];
   if (py::isinstance<py::none>(obj)) {
     return std::nullopt;

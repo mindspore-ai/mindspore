@@ -22,6 +22,7 @@ import pathlib
 import gen_utils
 from gen_utils import py_licence_str, cc_license_str, check_change_and_replace_file, merge_files, safe_load_yaml
 from pyboost_utils import get_pyboost_name, is_pyboost_enable, AclnnUtils, get_dtypes
+import template
 from template import CppTemplate
 from gen_pyboost_func import gen_pyboost_code
 from gen_aclnn_implement import gen_aclnn_kernel
@@ -100,6 +101,43 @@ def signature_get_rw_label(rw_op_name, write_list, read_list, ref_list):
     return ''
 
 
+def signature_get_rw_label_cc(rw_op_name, write_list, read_list, ref_list):
+    """
+    Generate cc signature rw code
+    """
+    rw_label = 'kRWDefault'
+    for op in write_list:
+        if op == rw_op_name:
+            rw_label = 'kRWWrite'
+    for op in read_list:
+        if op == rw_op_name:
+            rw_label = 'kRWRead'
+    for op in ref_list:
+        if op == rw_op_name:
+            rw_label = 'kRWRef'
+    return 'SignatureEnumRW::' + rw_label
+
+
+def signature_get_enum_dtype_cc(index):
+    """
+    Generate cc enum dtype code
+    """
+    enum_type = 'SignatureEnumDType::'
+    type_map = {0: 'kDType',
+                1: 'kDType1',
+                2: 'kDType2',
+                3: 'kDType3',
+                4: 'kDType4',
+                5: 'kDType5',
+                6: 'kDType6',
+                7: 'kDType7',
+                8: 'kDType8',
+                9: 'kDType9'}
+    if index in type_map:
+        return enum_type + type_map[index]
+    return enum_type + 'kDTypeEmptyDefaultValue'
+
+
 def signature_get_dtype_label(index):
     """
     Generate signature dtype code
@@ -166,7 +204,6 @@ def generate_py_op_signature(args_signature, args_name, args_default):
             ref_list = rw_ref.replace(' ', '').split(",")
     # Init dtype group.
     same_dtype_groups, dtype_conut = get_same_dtype_groups(args_signature, args_name)
-
     # Only one dtype_group is set.
     if dtype_conut == 1 and not any([write_list, read_list, ref_list, args_default]):
         signature_code += '('
@@ -186,6 +223,40 @@ def generate_py_op_signature(args_signature, args_name, args_default):
             signature_code += f""", default=""" + str(args_default[arg_name])
         signature_code += f"""),\n"""
     signature_code += f"""    )\n\n"""
+    return signature_code
+
+
+def generate_cc_op_signature(args_signature, args_name):
+    """
+    generate signatures on in cc file
+    :param args_signature:
+    :param args_name:
+    :return:
+    """
+    if args_signature is None:
+        return ''
+    signature_code = ''
+    # Init rw.
+    write_list = []
+    read_list = []
+    ref_list = []
+    if args_signature is not None:
+        rw_write = args_signature.get('rw_write')
+        rw_read = args_signature.get('rw_read')
+        rw_ref = args_signature.get('rw_ref')
+        if rw_write is not None:
+            write_list = rw_write.replace(' ', '').split(",")
+        if rw_read is not None:
+            read_list = rw_read.replace(' ', '').split(",")
+        if rw_ref is not None:
+            ref_list = rw_ref.replace(' ', '').split(",")
+    # Init dtype group.
+    same_dtype_groups, _ = get_same_dtype_groups(args_signature, args_name)
+    for arg_name in args_name:
+        enum_rw = signature_get_rw_label_cc(arg_name, write_list, read_list, ref_list)
+        enum_dtype = signature_get_enum_dtype_cc(same_dtype_groups[arg_name])
+        signature = f"""Signature("{arg_name}", {enum_rw}, SignatureEnumKind::kKindPositionalKeyword, nullptr, {enum_dtype}),\n"""
+        signature_code += signature
     return signature_code
 
 
@@ -582,22 +653,24 @@ namespace mindspore::ops {{"""
 std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
     gen_include = f"""\n
 #include \"ops/auto_generate/gen_ops_def.h\""""
+    gen_include += f"""
+#include \"mindspore/core/ir/signature.h\""""
 
     for operator_name, operator_data in yaml_data.items():
+        args = operator_data.get('args')
+        inputs_args, _, _, _, _, _ = process_args(args)
+        signature_code = generate_cc_op_signature(operator_data.get('args_signature'), inputs_args)
         args = operator_data.get('args')
         returns = operator_data.get('returns')
         class_name = _get_op_name(operator_name, operator_data)
         gen_include += f"""\n#include "ops/ops_func_impl/{operator_name}.h\""""
-        opdef_cc = f"""\n{class_name}FuncImpl g{class_name}FuncImpl;""" + \
-                   f"""\nOpDef g{class_name} = {{\n  /*.name_=*/"{class_name}",""" + \
-                   f"""\n  /*.args_=*/ {{"""
-        cc_index_str = f"""\n  /*.indexes_ =*/ {{"""
+        cc_index_str = ''
         gen_opdef_map += f"""\n  {{"{class_name}", &g{class_name}}},"""
-
+        input_args_str = ''
         args_dict = {}
         for i, (arg_name, arg_info) in enumerate(args.items()):
             args_dict[arg_name] = i
-            cc_index_str += f"""\n    {{"{arg_name}", {i}}},"""
+            cc_index_str += f"""{{"{arg_name}", {i}}},\n"""
             dtype = arg_info.get('dtype')
             cc_dtype_str = 'DT_' + dtype.replace('[', '_').replace(']', '').upper()
 
@@ -615,30 +688,24 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
             if 'default' in arg_info.keys() and arg_info.get('default') == "None":
                 is_optional_str = "true"
 
-            opdef_cc += f"""\n    {{/*.arg_name_=*/"{arg_name}", /*.arg_dtype_=*/{cc_dtype_str}, """ + \
+            input_args_str += f"""\n    {{/*.arg_name_=*/"{arg_name}", /*.arg_dtype_=*/{cc_dtype_str}, """ + \
                         f"""/*.as_init_arg_=*/{is_prim_init}, /*.arg_handler_=*/"{arg_handler_str}", """ + \
                         f"""/*.cast_dtype_ =*/{{{type_cast_str}}}, /*.is_optional_=*/{is_optional_str}}},"""
-        opdef_cc += f"""\n  }},"""
-        opdef_cc += f"""\n  /* .returns_ = */ {{"""
 
         # Process outputs.
+        return_args_str = ''
         for return_name, return_info in returns.items():
             return_dtype = return_info.get('dtype')
             ref_name = return_info.get('inplace')
             ref_index_str = -1 if ref_name is None else args_dict.get(ref_name)
             cc_return_type_str = 'DT_' + return_dtype.replace('[', '_').replace(']', '').upper()
-            opdef_cc += f"""\n    {{/*.arg_name_=*/"{return_name}", /*.arg_dtype_=*/{cc_return_type_str}, """ + \
-                        f"""/*.inplace_input_index_=*/{ref_index_str}}}, """
-        opdef_cc += f"""\n  }},"""
+            return_args_str += f"""{{/*.arg_name_=*/"{return_name}", /*.arg_dtype_=*/{cc_return_type_str},
+            /*.inplace_input_index_=*/{ref_index_str}}},\n"""
 
-        cc_index_str += f"""\n  }},"""
-        opdef_cc += cc_index_str
-
-        cc_func_impl_str = f"""\n  /*.func_impl_=*/g{class_name}FuncImpl,"""
-        opdef_cc += cc_func_impl_str
-        opdef_cc += f"""\n}};\n"""
-        gen_cc_code += opdef_cc
-
+        op_def_cc = template.OP_PROTO_TEMPLATE.replace(class_name=class_name, input_args=input_args_str,
+                                                       return_args=return_args_str, signatures=signature_code,
+                                                       indexes=cc_index_str)
+        gen_cc_code += op_def_cc
     gen_opdef_map += f"""\n}};"""
     gen_cc_code += gen_opdef_map
 

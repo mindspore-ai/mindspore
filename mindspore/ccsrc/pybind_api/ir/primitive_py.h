@@ -19,10 +19,9 @@
 
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 #include <memory>
-#include <utility>
-
 #include "utils/hash_map.h"
 #include "abstract/abstract_value.h"
 #include "ir/primitive.h"
@@ -206,6 +205,7 @@ class PrimitiveFunctionAdapter {
   const bool parse_info_ = true;
 
  private:
+  std::string name_;
   std::weak_ptr<Primitive> attached_primitive_function_;
 };
 using PrimitiveFunctionAdapterPtr = std::shared_ptr<PrimitiveFunctionAdapter>;

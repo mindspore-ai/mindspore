@@ -22,7 +22,7 @@ from dataclasses import dataclass
 import pyboost_utils
 from pyboost_utils import get_convert_type_str, get_input_dtype, get_return_type, tuple_input_to_cpp_type, \
     number_input_to_cpp_type, get_const_number_convert, get_tuple_input_convert, get_pyboost_name, is_cube, \
-    AclnnUtils, get_disable_flag, get_op_name, is_optional_param
+    AclnnUtils, get_disable_flag, is_optional_param
 import template
 from template import CppTemplate
 from op_proto import OpProto
@@ -103,6 +103,7 @@ def generate_malloc_input(need_malloc_tensors):
         malloc_inputs += f'PyBoostUtils::MallocOpInputs(device_context, {args_list});\n'
     return malloc_inputs
 
+
 def generate_get_inputs_kernel_tensors(call_args):
     """
     generate get inputs kernel tensors
@@ -119,6 +120,7 @@ def generate_get_inputs_kernel_tensors(call_args):
                                  f'PyBoostUtils::GetAddressInfo(device_context, op->input_abs(), {args_list});\n'
     return inputs_kernel_tensors
 
+
 def generate_create_input_address(need_malloc_tensors):
     """create input address"""
     create_input_address = ''
@@ -129,6 +131,7 @@ def generate_create_input_address(need_malloc_tensors):
     if args_list:
         create_input_address = f'PyBoostUtils::PrepareOpInputs(device_context_, {args_list});\n'
     return create_input_address
+
 
 def generate_pyboost_op_source_code(work_path, op_proto, template_paths, converter):
     """ generate_pyboost_op_source_code """
@@ -344,6 +347,8 @@ def generate_parser_func(op_proto: OpProto) -> str:
     parser_func_str = ''
     for index, arg in enumerate(op_proto.op_args):
         is_optional = is_optional_param(arg)
+        if arg.is_type_id:
+            arg.arg_dtype = 'type'
         convert_type_str = get_convert_type_str(arg.arg_dtype, is_optional)
         parser_func_str += convert_template.replace(arg_name=arg.arg_name, convert_func=convert_type_str,
                                                     arg_index=pyboost_utils.get_index(index))
@@ -438,14 +443,14 @@ def generate_pyboost_functions(work_path, yaml_data):
                                                                        convert_stub=convert_stub_str,
                                                                        optional_to_value=optional_to_value_str,
                                                                        call_args=call_args_str, grad_args=grad_args_str,
-                                                                       cast_args=cast_args_str, op_args=op_args_str)
+                                                                       cast_args=cast_args_str, op_args=op_args_str,
+                                                                       class_name=op_proto.class_name)
         pyboost_func_str = pyboost_func_str + template.NEW_LINE + template.NEW_LINE
         pyboost_func_pybind_def += template.REGISTER_DEFINE_TEMPLATE.replace(
             pyboost_op_name=get_pyboost_name(op_proto.operator_name),
-            pyboost_cfunc_name=op_proto.pyboost_function_name)
+            pyboost_cfunc_name=op_proto.pyboost_function_name, class_name=op_proto.class_name)
         pyboost_func_include_headers_str += pyboost_func_include_header_template.replace(operator_name=operator_name)
     register_func_str = template.REGISTER_TEMPLATE.replace(register_func=pyboost_func_pybind_def)
-
     pyboost_func_file = template.PYBOOST_HEADER_TEMPLATE.replace(include_op_header=pyboost_func_include_headers_str,
                                                                  function_body=pyboost_func_str,
                                                                  register_function_body=register_func_str)
@@ -658,15 +663,59 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data):
     generate_pyboost_op_register_source_code(work_path, all_op_names, all_functional_names)
 
 
+def gen_pyboost_inner_prim(work_path, op_yaml_data):
+    """
+    gen pyboost inner prim
+    :param work_path:
+    :param op_yaml_data:
+    :return:
+    """
+    gen_py = ''
+    gen_header = py_licence_str + template.IMPORT_PYBOOST_PRIM_HEADER
+    for operator_name, operator_data in op_yaml_data.items():
+        op_proto = OpProto.load_from_yaml(operator_name, operator_data)
+        if not op_proto.is_pyboost:
+            continue
+        func_def = operator_data.get('function')
+        func_name = operator_name
+        if func_def is not None:
+            func_disable = get_disable_flag(func_def)
+            if func_disable:
+                continue
+        if func_name.endswith("_ext"):
+            func_name = func_name[:-4]
+        gen_header += template.PYBOOST_PY_FUNC_IMPORT_HEADEAR.replace(class_name=op_proto.class_name)
+        args = operator_data.get('args')
+        input_args = []
+        process_func = ''
+        for arg_name, arg_info in args.items():
+            arg_handler = arg_info.get('arg_handler')
+            input_arg = arg_name
+            if arg_handler is not None and arg_handler != 'dtype_to_enum':
+                process_func += f"""converted_{arg_name} = {arg_handler}({arg_name})\n"""
+                input_arg = 'converted_' + arg_name
+            input_args.append(input_arg)
+
+        gen_py += template.PYTHON_PRIM_TEMPLATE.replace(class_name=op_proto.class_name, input_args=input_args,
+                                                        process_func=process_func, func_name=func_name)
+        dir_path = os.path.join(work_path, "mindspore/python/mindspore/ops/auto_generate")
+        pathlib.Path(dir_path).mkdir(parents=True, exist_ok=True)
+        dst_file_path = os.path.join(dir_path, "pyboost_inner_prim.py")
+        tmp_file_path = os.path.join(dir_path, "tmp_pyboost_inner_prim.py")
+        with open(tmp_file_path, "w") as f:
+            f.write(gen_header + gen_py)
+        check_change_and_replace_file(dst_file_path, tmp_file_path)
+
+
 def gen_pyboost_py_func(work_path, op_yaml_data, doc_data):
     """ gen_pyboost_py_func """
     gen_py = ''
-    gen_py += py_licence_str
     op_desc_dict = {}
+
+    py_header = py_licence_str + template.IMPORT_PYBOOST_FUNC_HEADER
     for operator_name, operator_desc in doc_data.items():
         desc = operator_desc.get("description")
         op_desc_dict[operator_name] = desc
-    gen_py += template.PYBOOST_PY_FUNC_HEADEAR
     func_def = None
     for operator_name, operator_data in op_yaml_data.items():
         op_proto = OpProto.load_from_yaml(operator_name, operator_data)
@@ -686,42 +735,42 @@ def gen_pyboost_py_func(work_path, op_yaml_data, doc_data):
 
         description = op_desc_dict.get(operator_name)
         args = operator_data.get('args')
-        class_name = get_op_name(operator_name, operator_data.get('class'))
         func_args = []
-        init_args = []
         input_args = []
         for arg_name, arg_info in args.items():
             init_value = arg_info.get('init')
-
+            arg_handler = arg_info.get('arg_handler')
+            input_arg = arg_name
+            if arg_handler is not None and arg_handler != 'dtype_to_enum':
+                input_arg = 'converted_' + arg_name
             if init_value is None:
                 default_key = 'default'
                 default_value = arg_info.get(default_key)
                 default_value = '=' + str(default_value) if default_key in arg_info else ''
                 func_args.append(arg_name + default_value)
-                input_args.append(arg_name)
+                input_args.append(input_arg)
             else:
                 if init_value == 'NO_VALUE':
                     func_args.append(f"""{arg_name}""")
-                    init_args.append(arg_name)
                 else:
                     func_args.append(f"""{arg_name}={init_value}""")
-                    init_args.append(arg_name)
         gen_py += template.PYBOOST_PY_FUNC_TEMPLATE.replace(func_name=func_name, description=description,
                                                             func_args=func_args,
-                                                            init_args=init_args,
-                                                            operator_name=operator_name,
-                                                            class_name=class_name, input_args=input_args)
+                                                            prim_func=func_name,
+                                                            input_args=input_args)
     dir_path = os.path.join(work_path, "mindspore/python/mindspore/ops/auto_generate")
     pathlib.Path(dir_path).mkdir(parents=True, exist_ok=True)
     dst_file_path = os.path.join(dir_path, "gen_pyboost_func.py")
     tmp_file_path = os.path.join(dir_path, "tmp_gen_pyboost_func.py")
     with open(tmp_file_path, "w") as f:
-        f.write(gen_py)
+        f.write(py_header + gen_py)
     check_change_and_replace_file(dst_file_path, tmp_file_path)
 
 
 def gen_pyboost_code(work_path, ops_yaml_data, doc_yaml_data):
     """ gen_pyboost_code """
+    # generate pyboost inner prim
+    gen_pyboost_inner_prim(work_path, ops_yaml_data)
     # generate pyboost py func
     gen_pyboost_py_func(work_path, ops_yaml_data, doc_yaml_data)
     # generate ops header file
