@@ -63,6 +63,20 @@ def compile_net(net, input_x=_x):
     _cell_graph_executor.compile(train_net, input_x, _b)
     context.reset_auto_parallel_context()
 
+def test_conv2d_pad_1_semi_parallel():
+    """
+    Feature: test conv2d pad 1 in semi parallel
+    Description: shard h dimension
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((1, 1, 8, 1), (1, 1, 1, 1))
+    strategy2 = ((1, 1, 1, 1),)
+    w = Tensor(np.ones([32, 16, 3, 3]), dtype=ms.float32)
+    net = Net(w, out_channel=32, kernel_size=3, pad_mode='pad', pad=1, stride=1, strategy1=strategy1,
+              strategy2=strategy2)
+    compile_net(net, _x3)
+
 
 def test_conv2d_data_parallel():
     """
@@ -533,4 +547,4 @@ def test_conv2d_kernel_size_smaller_than_stride_and_split_hw():
     strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search("ReLU", k) is not None:
-            assert v == [[1, 1, 4, 4], ]
+            assert v == [[1, 1, 4, 4],]
