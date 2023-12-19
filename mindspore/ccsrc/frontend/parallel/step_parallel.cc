@@ -1217,6 +1217,9 @@ static std::pair<AnfNodePtr, int64_t> FindParallelCareNode(const AnfNodePtr &nod
         IsPrimitiveCNode(cnode, prim::kPrimSend)) {
       continue;
     }
+    if (node_prim->name() == UPDATESTATE && node_pair.second > 0) {
+      continue;
+    }
     if (IsParallelCareNode(cnode) && cnode->has_user_data<OperatorInfo>()) {
       size_t input_index = IntToSize(node_pair.second);
       size_t real_input_index = input_index;
