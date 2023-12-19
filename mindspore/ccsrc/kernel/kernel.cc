@@ -208,9 +208,7 @@ void KernelTensor::SetShapeVector(const ShapeVector &shape_vector) {
     shape_vector_ = shape_vector;
     shape_->SetShapeVector(shape_vector_);
 
-    if (NeedTransposeToDeviceShape()) {
-      MS_LOG(EXCEPTION) << "Can not update host shape for format: " << GetFormatFromEnumToStr(format_);
-    }
+    MS_LOG(DEBUG) << "Set shape vector: " << shape_vector << ", the format: " << GetFormatFromEnumToStr(format_);
     return;
   }
 
@@ -231,9 +229,7 @@ void KernelTensor::SetShapeVector(ShapeVector &&shape_vector) {
     shape_vector_ = std::move(shape_vector);
     shape_->SetShapeVector(shape_vector_);
 
-    if (NeedTransposeToDeviceShape()) {
-      MS_LOG(EXCEPTION) << "Can not update host shape for format: " << GetFormatFromEnumToStr(format_);
-    }
+    MS_LOG(DEBUG) << "Set shape vector: " << shape_vector << ", the format: " << GetFormatFromEnumToStr(format_);
     return;
   }
 
