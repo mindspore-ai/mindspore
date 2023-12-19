@@ -41,7 +41,7 @@ tensor::TensorPtr CastCPU::Call(const TensorPtr &input_tensor, const TypePtr &ty
     const auto &input_address_info = PyBoostUtils::GetAddressInfo(device_context, op->input_abs(), input_tensor);
     const auto &output_address_info = PyBoostUtils::GetAddressInfo(device_context, {op->output_abs()}, outputs);
 
-    PyBoostUtils::PyboostRunOp(primitive(), op->device_context(), input_address_info, output_address_info, nullptr);
+    PyBoostUtils::LaunchKernel(primitive(), op->device_context(), input_address_info, output_address_info);
   }));
   MS_LOG(DEBUG) << "Call end";
   return outputs_[0];

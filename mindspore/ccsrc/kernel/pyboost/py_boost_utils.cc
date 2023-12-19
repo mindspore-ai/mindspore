@@ -25,6 +25,9 @@
 #include "ops/op_def.h"
 #include "runtime/pynative/op_executor.h"
 #include "pybind_api/gil_scoped_long_running.h"
+#include "mindspore/ccsrc/plugin/device/cpu/kernel/cpu_kernel.h"
+#include "kernel/pyboost/ops/cast.h"
+#include "mindspore/core/ops/array_ops.h"
 
 namespace mindspore {
 namespace kernel {
@@ -308,17 +311,17 @@ PyboostKernelExtraFuncFactory &PyboostKernelExtraFuncFactory::GetInstance() {
   return instance;
 }
 
-void PyBoostUtils::PyboostRunOp(const PrimitivePtr &primitive, device::DeviceContext *device_context,
+void PyBoostUtils::LaunchKernel(const PrimitivePtr &primitive, device::DeviceContext *device_context,
                                 const AddressInfoPair &input_address_info, const AddressInfoPair &output_address_info,
                                 void *stream_ptr) {
-  const auto &prim_name = primitive->name();
+  const auto &real_name = primitive->name();
   // KernelMod init
-  auto kernel_mod = PyBoostUtils::CreateKernelMod(primitive, prim_name, device_context, input_address_info.first,
+  auto kernel_mod = PyBoostUtils::CreateKernelMod(primitive, real_name, device_context, input_address_info.first,
                                                   output_address_info.first);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   // KernelMod resize
   if (kernel_mod->Resize(input_address_info.first, output_address_info.first) == kernel::KRET_RESIZE_FAILED) {
-    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#CPU kernel op [" << prim_name << "] resize failed.";
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#CPU kernel op [" << real_name << "] resize failed.";
   }
   // Get workspace address
   const auto &workspace_device_address =
@@ -326,9 +329,144 @@ void PyBoostUtils::PyboostRunOp(const PrimitivePtr &primitive, device::DeviceCon
   const auto &workspace_kernel_tensors = PyBoostUtils::GetKernelTensorFromAddress(workspace_device_address);
   // Do kernel launch
   if (!kernel_mod->Launch(input_address_info.first, workspace_kernel_tensors, output_address_info.first, stream_ptr)) {
-    MS_LOG(EXCEPTION) << "Launch kernel failed, name: " << prim_name;
+    MS_LOG(EXCEPTION) << "Launch kernel failed, name: " << real_name;
   }
-  MS_LOG(DEBUG) << prim_name << " Launch end";
+  MS_LOG(DEBUG) << real_name << " Launch end";
+}
+
+TypeId GetTypeIdFromAbstractTensor(const AbstractBasePtr &abs_base) {
+  if (abs_base->isa<abstract::AbstractTensor>()) {
+    auto abs_tensor = std::dynamic_pointer_cast<abstract::AbstractTensor>(abs_base);
+    return abs_tensor->element()->BuildType()->type_id();
+  }
+  return abs_base->BuildType()->type_id();
+}
+
+std::vector<TypeId> GetTypeFromAbstractBase(const AbstractBasePtr &abs_base) {
+  if (abs_base->isa<abstract::AbstractTuple>()) {
+    auto abs_tuple = std::dynamic_pointer_cast<abstract::AbstractTuple>(abs_base);
+    std::vector<TypeId> input_type;
+    for (auto &abs : abs_tuple->elements()) {
+      (void)input_type.emplace_back(GetTypeIdFromAbstractTensor(abs));
+    }
+    return input_type;
+  } else {
+    const auto &type_id = GetTypeIdFromAbstractTensor(abs_base);
+    return {type_id};
+  }
+}
+
+std::vector<TypeId> GetTypeFromAbstractBase(const std::vector<AbstractBasePtr> &abs_vec) {
+  std::vector<TypeId> input_type;
+  for (auto &abs : abs_vec) {
+    if (abs->isa<abstract::AbstractTuple>()) {
+      // a tuple tensors have same type
+      auto abs_tuple = std::dynamic_pointer_cast<abstract::AbstractTuple>(abs);
+      input_type.emplace_back(abs_tuple->elements()[0]->BuildType()->type_id());
+    } else {
+      input_type.emplace_back(GetTypeIdFromAbstractTensor(abs));
+    }
+  }
+  return input_type;
+}
+
+bool InputDtypeMatch(TypeId input_attr, TypeId input_type) {
+  if (input_attr == input_type || kTypeUnknown == input_type) {
+    return true;
+  }
+  if (input_attr == kNumberTypeInt32 && (input_type == kNumberTypeInt16 || input_type == kNumberTypeInt64)) {
+    return true;
+  }
+  if (input_attr == kNumberTypeFloat32 && (input_type == kNumberTypeFloat16 || input_type == kNumberTypeFloat64)) {
+    return true;
+  }
+  return false;
+}
+
+bool IsObjectTypeWeaklyMatched(const std::vector<TypeId> &object_dtypes,
+                               const std::vector<DataType> &kernel_data_types) {
+  // only support CPU
+  for (size_t i = 0; i < object_dtypes.size(); i++) {
+    // For optional input, the real input object type can be a None.
+    if (!InputDtypeMatch(kernel_data_types[i].dtype, object_dtypes[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool IsObjectTypeStrictlyMatched(const std::vector<TypeId> &object_dtypes,
+                                 const std::vector<DataType> &kernel_data_types) {
+  if (object_dtypes.size() != kernel_data_types.size()) {
+    return false;
+  }
+
+  for (size_t i = 0; i < object_dtypes.size(); i++) {
+    // For optional input, the real input object type can be a None.
+    if (object_dtypes[i] != kernel_data_types[i].dtype) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+std::pair<bool, KernelAttr> PyBoostUtils::SelectKernel(const std::vector<AbstractBasePtr> &inputs_abs,
+                                                       const AbstractBasePtr &outputs_abs,
+                                                       DeviceContext *device_context, const std::string &op_name) {
+  // only support CPU
+  const auto &kernel_mod = device_context->GetKernelExecutor(false)->CreateKernelMod(op_name);
+  const auto &support_list = kernel_mod->GetOpSupport();
+  const auto &inputs_object_dtypes = GetTypeFromAbstractBase(inputs_abs);
+  const auto &output_object_dtypes = GetTypeFromAbstractBase(outputs_abs);
+  for (auto &cur_kernel_attr : support_list) {
+    auto data_pair = kernel::GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
+    const auto &[input_data_types, output_data_types] = kernel::GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
+    if (IsObjectTypeStrictlyMatched(inputs_object_dtypes, input_data_types) &&
+        IsObjectTypeStrictlyMatched(output_object_dtypes, output_data_types)) {
+      return std::make_pair(true, cur_kernel_attr);
+    }
+
+    if (IsObjectTypeWeaklyMatched(inputs_object_dtypes, input_data_types) &&
+        IsObjectTypeWeaklyMatched(output_object_dtypes, output_data_types)) {
+      return std::make_pair(false, cur_kernel_attr);
+    }
+  }
+  std::vector<std::string> inputs;
+  std::vector<std::string> outputs;
+  for (auto &input_type : inputs_object_dtypes) {
+    (void)inputs.emplace_back(TypeIdToString(input_type));
+  }
+  for (auto &output_type : output_object_dtypes) {
+    (void)outputs.emplace_back(TypeIdToString(output_type));
+  }
+  MS_LOG(EXCEPTION) << "Unsupported op [" << op_name << "] on CPU, input_type:" << inputs << " ,output_type:" << outputs
+                    << ". Please confirm whether the device target setting is correct, "
+                    << "or refer to 'mindspore.ops' at https://www.mindspore.cn to query the operator support list.";
+}
+
+tensor::TensorPtr PyBoostUtils::CastTensor(const tensor::TensorPtr &tensor, const TypeId &type_id,
+                                           const std::string &device_target) {
+  if (tensor->Dtype()->type_id() == type_id) {
+    return tensor;
+  }
+  const auto &cast_op = CREATE_PYBOOST_OP(Cast, device_target);
+  cast_op->set_primitive(prim::kPrimCast);
+  return cast_op->Call(tensor, TypeIdToType(type_id));
+}
+
+std::vector<tensor::TensorPtr> PyBoostUtils::CastTensor(const std::vector<tensor::TensorPtr> &tensors,
+                                                        const std::vector<TypeId> &type_id_list,
+                                                        const std::string &device_target) {
+  if (tensors.size() != type_id_list.size()) {
+    MS_LOG(EXCEPTION) << "before cast tensor output size is not equal after cast";
+  }
+  std::vector<tensor::TensorPtr> output_tensors;
+  for (size_t i = 0; i < tensors.size(); ++i) {
+    const auto &output = CastTensor(tensors[i], type_id_list[i], device_target);
+    (void)output_tensors.emplace_back(output);
+  }
+  return output_tensors;
 }
 }  // namespace pyboost
 }  // namespace kernel

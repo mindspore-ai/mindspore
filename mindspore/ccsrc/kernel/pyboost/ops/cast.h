@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_PYBOOST_OP_CAST_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_PYBOOST_OP_CAST_H_
 
-#include <string>
 #include "kernel/pyboost/op_runner.h"
 #include "kernel/pyboost/op_register.h"
 
