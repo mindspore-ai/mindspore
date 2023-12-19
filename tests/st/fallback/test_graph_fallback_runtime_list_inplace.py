@@ -538,6 +538,34 @@ def test_list_inplace_pop_2():
     assert id(out[1]) == id(global_list_for_pop_2)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_pop_3():
+    """
+    Feature: list pop.
+    Description: support list reverse.
+    Expectation: No exception.
+    """
+    class ListNet(nn.Cell):
+        def __init__(self, obj):
+            super().__init__()
+            self.obj = obj
+
+        def construct(self):
+            y = self.obj.pop()
+            self.obj.pop(1)
+            z = self.obj.pop(-1)
+            return self.obj, y, z
+
+    obj = [1, 2, Tensor([3]), "x", (3, 4, 5)]
+    x, y, z = ListNet(obj)()
+    assert id(obj) == id(x)
+    assert y == (3, 4, 5)
+    assert z == 'x'
+
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training

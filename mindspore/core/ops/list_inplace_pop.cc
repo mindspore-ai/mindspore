@@ -68,7 +68,6 @@ AbstractBasePtr ListInplacePopInfer(const abstract::AnalysisEnginePtr &, const P
   }
   int64_t pop_pos = index_value < 0 ? index_value + seq_len : index_value;
 
-  abstract::AbstractListPtr ret;
   const auto &elements = data_abs->elements();
   abstract::AbstractBasePtrList new_elements;
   for (auto i = 0; i < pop_pos; ++i) {
@@ -79,12 +78,11 @@ AbstractBasePtr ListInplacePopInfer(const abstract::AnalysisEnginePtr &, const P
     const auto &element = elements[i];
     (void)new_elements.emplace_back(element);
   }
-  ret = std::make_shared<abstract::AbstractList>(new_elements);
-
-  ret = AbstractBroaden(ret)->cast<abstract::AbstractListPtr>();
-  ret->set_extra_info(data_abs->extra_info());
-
-  return ret;
+  auto ret_list = std::make_shared<abstract::AbstractList>(new_elements);
+  ret_list = AbstractBroaden(ret_list)->cast<abstract::AbstractListPtr>();
+  ret_list->set_extra_info(data_abs->extra_info());
+  abstract::AbstractBasePtrList ret = {ret_list, AbstractBroaden(elements[pop_pos])};
+  return std::make_shared<abstract::AbstractTuple>(ret);
 }
 MIND_API_OPERATOR_IMPL(ListInplacePop, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(ListInplacePop, prim::kPrimListInplacePop, ListInplacePopInfer, nullptr, true);
