@@ -20,6 +20,8 @@
 #include <functional>
 #include <iterator>
 #include <numeric>
+#include <set>
+
 #include "kernel/format_utils.h"
 #include "kernel/common_utils.h"
 #include "utils/ms_context.h"
@@ -265,6 +267,12 @@ void KernelTensor::TransposeToDeviceShape() const {
   }
 
   iter->second(&shape_vector_, &device_shape_vector_);
+}
+
+bool KernelTensor::NeedTransposeToDeviceShape() const noexcept {
+  static std::set<mindspore::Format> black_list{Format::DEFAULT_FORMAT, Format::NCHW, Format::ND, Format::NCDHW};
+  auto it = black_list.find(format_);
+  return it == black_list.end();
 }
 
 const ShapeVector &KernelTensor::GetDeviceShapeVector() const {
