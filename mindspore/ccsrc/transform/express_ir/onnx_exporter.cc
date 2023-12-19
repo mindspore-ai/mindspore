@@ -1880,8 +1880,9 @@ void OnnxExporter::ExportPrimStridedSlice(const FuncGraphPtr &, const CNodePtr &
     }
   }
 
+  size_t axes_size = end_value.size();
   std::vector<int64_t> axes_value;
-  for (size_t i = 0; i < x_shape.size(); ++i) {
+  for (size_t i = 0; i < axes_size; ++i) {
     axes_value.push_back(static_cast<int64_t>(i));
   }
 
