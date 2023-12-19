@@ -38,7 +38,7 @@ IMPLEMT_INFERFUNC(BroadcastTo, BroadcastToInferShape) {
     OP_LOGI(TbeGetName(op).c_str(), "Get constValue failed of [shape]");
     auto shape_desc = op_info->MutableInputDesc("shape");
     vector<int64_t> shapedims = shape_desc->MutableShape().GetDims();
-    int64_t dim_num = shapedims.size();
+    size_t dim_num = shapedims.size();
 
     DataType input_dtype = op.GetInputDescByName("x").GetDataType();
 
@@ -50,7 +50,7 @@ IMPLEMT_INFERFUNC(BroadcastTo, BroadcastToInferShape) {
 
     std::vector<int64_t> shape_vector;
     std::vector<std::pair<int64_t, int64_t>> range_vector;
-    for (int64_t item = 0; item < dim_num; ++item) {
+    for (size_t item = 0; item < dim_num; ++item) {
       shape_vector.push_back(-1);
       range_vector.push_back(std::make_pair(1, -1));
     }
