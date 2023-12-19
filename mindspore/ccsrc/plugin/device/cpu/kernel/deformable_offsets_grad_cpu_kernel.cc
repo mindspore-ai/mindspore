@@ -505,8 +505,7 @@ void DeformableOffsetsGradCpuKernelMod::SetDims(const std::vector<KernelTensor *
   }
   dims_.dilation_h = LongToSize(dilation[kDilationHIndex]);
   dims_.dilation_w = LongToSize(dilation[kDilationWIndex]);
-
-  std::vector<int64_t> ksize = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kKernelSize));
+  std::vector<int64_t> ksize = GetValue<std::vector<int64_t>>(primitive_->GetAttr("ksize"));
   if (ksize.size() != kKernelSizeNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'ksize' must be " << kKernelSizeNum
                       << ", but got " << ksize.size();
