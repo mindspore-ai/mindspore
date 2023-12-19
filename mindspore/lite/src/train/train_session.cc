@@ -300,7 +300,7 @@ int TrainSession::CompileTrainGraph(std::shared_ptr<Model> model) {
   CompileEvalOutputs();       // prepare outputs in eval mode
   // Prepare a list of eval kernels
   if (CompileInferenceKernels() != RET_OK) {
-    MS_LOG(ERROR) << "CompileInferenceKernels failed.";
+    MS_LOG(WARNING) << "CompileInferenceKernels failed.";
     return RET_ERROR;
   }
   ret = AllocWorkSpace();
@@ -743,6 +743,12 @@ int TrainSession::CompileInferenceKernels() {
     }
     BuildInferenceKernelsRecursive(kernel, &inference_kernels_);
   }
+
+  if (train_kernels_.size() == inference_kernels_.size()) {
+    MS_LOG(WARNING) << "This is inference model, return err in TrainSession.";
+    return RET_ERROR;
+  }
+
   if (inference_kernels_.size() == 0) {
     inference_kernels_ = this->train_kernels_;
   }
