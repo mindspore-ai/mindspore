@@ -59,6 +59,7 @@
 #include "include/common/debug/rdr/recorder_manager.h"
 #endif
 
+#include "transform/acl_ir/op_api_exec.h"
 #include "kernel/framework_utils.h"
 using std::vector;
 constexpr uint32_t kProfilingMaxTaskIdInStream = 65531;
@@ -271,6 +272,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
 
   (void)aclrtSetExceptionInfoCallback(nullptr);
 
+  transform::AclnnFinalize();
   (void)ResetDevice(device_id);
   current_graph_ = nullptr;
   initialized_ = false;
@@ -324,6 +326,7 @@ bool AscendKernelRuntime::Init() {
     mem_manager_ = std::make_shared<AscendMemoryManager>();
     MS_EXCEPTION_IF_NULL(mem_manager_);
     mem_manager_->Initialize();
+    transform::AclnnInit();
     auto rt_ret = aclrtSetExceptionInfoCallback(TaskExceptionCallback);
     if (rt_ret != ACL_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Reg SetTaskFailCallback failed, error: " << rt_ret;

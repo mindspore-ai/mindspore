@@ -109,6 +109,8 @@ auto call(Function f, Tuple t) {
 
 // Get output shape from acl tensor.
 ShapeVector UpdateOutputShape(const aclTensor *tensor);
+void AclnnInit();
+void AclnnFinalize();
 
 template <typename T>
 class ReleaseCall {
