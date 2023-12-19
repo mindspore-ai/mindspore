@@ -106,7 +106,7 @@ class BACKEND_EXPORT DeviceAddressUtils {
     }
     MS_LOG(DEBUG) << "Create input " << abs->ToString() << " device address for " << index
                   << "th input, Shape: " << shape->ToString() << ", Type: " << type->ToString()
-                  << ", Value: " << (value ? value->ToString() : "nullptr");
+                  << ", Value: " << (value ? value->ToString() : "nullptr") << " device address:" << device_address;
     return device_address;
   }
 

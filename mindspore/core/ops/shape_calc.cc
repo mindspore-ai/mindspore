@@ -20,7 +20,10 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
+#include "abstract/abstract_value.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "ir/anf.h"
+#include "ir/dtype/number.h"
 #include "ir/kernel_tensor_value.h"
 #include "ir/value.h"
 #include "mindapi/src/helper.h"
@@ -76,6 +79,21 @@ bool TryGetValueArg(const AbstractBasePtr &abs, ShapeArray *args, std::vector<st
   }
 
   return false;
+}
+
+AbstractBasePtr CreateAbstractInt64TupleByNum(int64_t num) {
+  AbstractBasePtrList abs_list;
+  if (num == -1) {
+    const auto &abstract = std::make_shared<abstract::AbstractTuple>(abs_list);
+    abstract->set_dynamic_len(true);
+    abstract->set_dynamic_len_element_abs(std::make_shared<abstract::AbstractScalar>(kInt64));
+    return abstract;
+  }
+  abs_list.reserve(LongToSize(num));
+  for (size_t i = 0; i < LongToSize(num); ++i) {
+    abs_list.push_back(std::make_shared<abstract::AbstractScalar>(kInt64));
+  }
+  return std::make_shared<abstract::AbstractTuple>(abs_list);
 }
 }  // namespace
 
@@ -174,7 +192,8 @@ class MIND_API ShapeCalcInfer : public abstract::OpInferBase {
     }
     if (!is_dynamic_sequence && out.size() == 1) {
       // single output does not use AbstractTuple to avoid TupleGetItem
-      return std::make_shared<abstract::AbstractTensor>(kInt64, out);
+      (void)primitive->AddAttr(kOutputRealTuple, MakeValue(true));
+      return CreateAbstractInt64TupleByNum(out[0]);
     }
 
     // multiple outputs
@@ -188,7 +207,7 @@ class MIND_API ShapeCalcInfer : public abstract::OpInferBase {
     AbstractBasePtrList abs_list;
     abs_list.reserve(out.size());
     (void)std::transform(out.begin(), out.end(), std::back_inserter(abs_list),
-                         [](int64_t s) { return std::make_shared<abstract::AbstractTensor>(kInt64, ShapeVector{s}); });
+                         [](int64_t s) { return CreateAbstractInt64TupleByNum(s); });
     auto output_abstract = std::make_shared<abstract::AbstractTuple>(abs_list);
     if (is_dynamic_sequence) {
       (void)primitive->AddAttr(kOutputRealTuple, MakeValue(true));

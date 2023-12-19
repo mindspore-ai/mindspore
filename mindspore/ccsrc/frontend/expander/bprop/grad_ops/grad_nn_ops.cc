@@ -397,10 +397,11 @@ REG_BPROP_BUILDER("TopK").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto in_shape = ib->GetShape(input_x);
   if (IsDynamic(in_shape)) {
     auto re0 = ib->ShapeCalc(g_topk_1, {indices})[0];
-    NodePtr ind_2d = ib->Reshape(indices, ib->TensorToTuple(re0));
+    NodePtr ind_2d = ib->Reshape(indices, re0);
     auto res = ib->ShapeCalc(g_topk_2, {input_x, ind_2d});
-    auto in_shape_1d = ib->TensorToTuple(res[0]);
-    auto range_flatten_index = ib->Range(ib->Value<int64_t>(0), ib->TensorToScalar(res[1]), ib->TensorToScalar(res[2]));
+    auto in_shape_1d = res[0];
+    auto range_flatten_index =
+      ib->Range(ib->Value<int64_t>(0), ib->TupleGetItem(res[1], 0), ib->TupleGetItem(res[2], 0));
     auto ind = ib->Reshape(ind_2d + ib->Reshape(range_flatten_index, {-1, 1}), {-1, 1});
     auto out_grad = ib->ScatterNd(ind, ib->Reshape(dout0, {-1}), in_shape_1d);
     out_grad = ib->Reshape(out_grad, ib->Shape(input_x));
@@ -947,11 +948,11 @@ REG_BPROP_BUILDER("MaxPoolGrad").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) 
     if (IsDynamic(x2_shape)) {
       auto shape = ib->Emit("Shape", {x2});
       auto res = ib->ShapeCalc(g_max_pool_grad, {x2});
-      auto batch = ib->Cast(ib->Range(ib->TensorToScalar(res[0])), kInt32);
-      batch = ib->Tile(ib->Reshape(batch, {-1, 1}), ib->TensorToTuple(res[2]));
+      auto batch = ib->Cast(ib->Range(ib->TupleGetItem(res[0], 0)), kInt32);
+      batch = ib->Tile(ib->Reshape(batch, {-1, 1}), res[2]);
       int64_t axis = -1;
-      auto gather_ind = ib->Stack({batch, ib->Reshape(ind, ib->TensorToTuple(res[1]))}, axis);
-      dgrad = ib->Reshape(ib->GatherNd(ib->Reshape(dout, ib->TensorToTuple(res[1])), gather_ind), shape);
+      auto gather_ind = ib->Stack({batch, ib->Reshape(ind, res[1])}, axis);
+      dgrad = ib->Reshape(ib->GatherNd(ib->Reshape(dout, res[1]), gather_ind), shape);
     } else {
       auto b = x2_shape.at(0);
       auto c = x2_shape.at(1);
@@ -1114,7 +1115,7 @@ REG_BPROP_BUILDER("BiasAddGrad").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) 
   NodePtr expanded_shape = res[0];
   NodePtr tile_mults = res[1];
 
-  auto expanded_grad = ib->Reshape(dout, ib->TensorToTuple(expanded_shape));
+  auto expanded_grad = ib->Reshape(dout, expanded_shape);
   auto tiled_grad = ib->Tile(expanded_grad, tile_mults);
   return {tiled_grad, ib->OutZeros(format)};
 });
@@ -1144,25 +1145,25 @@ REG_BPROP_BUILDER("ExtractImagePatches").SetUnusedInputs({i0, i5}).SetBody(BODYF
   if (IsDynamic(x_shape) || IsDynamic(out_shape)) {
     auto res = ib->ShapeCalc(std::make_shared<ExtractImagePatchesShapeCalc>(ksizes_row, ksizes_col), {x, out});
     auto x_idx =
-      ib->Cast(ib->Range(ib->Value<int64_t>(1), ib->TensorToScalar(res[0]), ib->Value<int64_t>(1)), kFloat32);
-    x_idx = ib->Reshape(x_idx, ib->TensorToTuple(res[1]));
+      ib->Cast(ib->Range(ib->Value<int64_t>(1), ib->TupleGetItem(res[0], 0), ib->Value<int64_t>(1)), kFloat32);
+    x_idx = ib->Reshape(x_idx, res[1]);
 
     auto x_idx_patch = ib->Cast(ib->Emit("ExtractImagePatches", {x_idx, ksizes, strides, rates, padding}), kInt32);
     x_idx_patch = ib->Transpose(x_idx_patch, {0, 2, 3, 1});
-    auto out_idx = ib->Cast(ib->Range(ib->TensorToScalar(res[2])), kInt32);
-    out_idx = ib->Reshape(out_idx, ib->TensorToTuple(res[3]));
+    auto out_idx = ib->Cast(ib->Range(ib->TupleGetItem(res[2], 0)), kInt32);
+    out_idx = ib->Reshape(out_idx, res[3]);
     auto idx_tensor = ib->Emit("Concat", {ib->MakeTuple({ib->ExpandDims(x_idx_patch, -1), ib->ExpandDims(out_idx, -1)}),
                                           ib->Value<int64_t>(-1)});
     idx_tensor = ib->Reshape(idx_tensor, {-1, 2});
     auto ones = ib->Fill(1.0, res[2], ib->GetDtype(dout)->type_id());
-    auto sp_tensor = ib->ScatterNd(idx_tensor, ones, ib->TensorToTuple(res[4]));
+    auto sp_tensor = ib->ScatterNd(idx_tensor, ones, res[4]);
     sp_tensor = ib->Slice(sp_tensor, ib->Value<ShapeVector>({1, 0}), res[5]);
     auto grad = ib->Transpose(dout, {0, 2, 3, 1});
-    grad = ib->Reshape(grad, ib->TensorToTuple(res[6]));
+    grad = ib->Reshape(grad, res[6]);
     grad = ib->Transpose(grad, {1, 2, 3, 4, 0, 5});
-    grad = ib->Reshape(grad, ib->TensorToTuple(res[7]));
+    grad = ib->Reshape(grad, res[7]);
     auto jac = ib->MatMul(sp_tensor, grad, false, false);
-    auto dx = ib->Reshape(jac, ib->TensorToTuple(res[8]));
+    auto dx = ib->Reshape(jac, res[8]);
     dx = ib->Transpose(dx, {2, 3, 0, 1});
     return {dx, ib->OutZeros(ksizes), ib->OutZeros(strides), ib->OutZeros(rates), ib->OutZeros(padding)};
   } else {

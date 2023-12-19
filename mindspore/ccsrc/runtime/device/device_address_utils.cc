@@ -250,9 +250,10 @@ void DeviceAddressUtils::CreateParameterDeviceAddress(const DeviceContext *devic
         {item, index}, nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id,
         trans::GetRuntimePaddingShape(item, index), real_device_context->device_context_key().device_name_,
         real_device_context->device_context_key().device_id_);
+      MS_EXCEPTION_IF_NULL(kernel_tensor);
       auto device_address = real_device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
       MS_EXCEPTION_IF_NULL(device_address);
-
+      MS_LOG(DEBUG) << "Create device address:" << device_address << " for item:" << item->DebugString();
       // Set the flag of no user parameter.
       if (item->isa<Parameter>()) {
         auto input_param = item->cast<ParameterPtr>();
@@ -427,7 +428,7 @@ void DeviceAddressUtils::CreateKernelOutputDeviceAddress(const DeviceContext *de
   if (graph->memory_managed_by_ge()) {
     return;
   }
-
+  MS_LOG(DEBUG) << "Start create kernel output device address for graph:" << graph->ToString();
   bool is_pynative_bprop_graph = graph->has_flag(kFlagIsPynativeBpropGraph);
   auto outputs = common::AnfAlgo::GetAllOutput(graph->output());
 
@@ -488,6 +489,7 @@ void DeviceAddressUtils::CreateKernelOutputDeviceAddress(const DeviceContext *de
       AnfAlgo::SetOutputAddr(device_address, i, kernel.get());
     }
   }
+  MS_LOG(DEBUG) << "End create kernel output device address for graph:" << graph->ToString();
 }
 
 void DeviceAddressUtils::CreateGraphOutputDeviceAddress(const DeviceContext *device_context,
@@ -1093,7 +1095,7 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateWorkspaceAddress(const Device
       !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
     MS_LOG(EXCEPTION) << "Allocate dynamic workspace memory failed";
   }
-
+  MS_LOG(DEBUG) << "Create workspace device address:" << device_address;
   return device_address;
 }
 

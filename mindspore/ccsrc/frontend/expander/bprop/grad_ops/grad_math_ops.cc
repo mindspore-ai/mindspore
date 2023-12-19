@@ -1417,7 +1417,7 @@ REG_BPROP_BUILDER("LogMatrixDeterminant").SetUnusedInputs({i1}).SetBody(BODYFUNC
   auto dout = ib->GetInput(kIndex2);
   auto x_adj_inv = ib->Emit("MatrixInverse", {x}, {{"adjoint", MakeValue(true)}});
   auto res = ib->ShapeCalc(g_matrix_determinant, {ib->TupleGetItem(out, 1)})[0];
-  auto multipliers = ib->Reshape(ib->TupleGetItem(dout, 1), ib->TensorToTuple(res));
+  auto multipliers = ib->Reshape(ib->TupleGetItem(dout, 1), res);
   auto dx = ib->Mul(multipliers, x_adj_inv);
   return {dx};
 });
@@ -1428,7 +1428,7 @@ REG_BPROP_BUILDER("MatrixDeterminant").SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   auto x_adj_inv = ib->Emit("MatrixInverse", {x}, {{"adjoint", MakeValue(true)}});
   auto res = ib->ShapeCalc(g_matrix_determinant, {out})[0];
-  auto multipliers = ib->Reshape(ib->Mul(dout, out), ib->TensorToTuple(res));
+  auto multipliers = ib->Reshape(ib->Mul(dout, out), res);
   auto dx = ib->Mul(multipliers, x_adj_inv);
   return {dx};
 });
@@ -1959,7 +1959,6 @@ REG_BPROP_BUILDER("ReduceStd").SetBody(BODYFUNC(ib) {
   auto res = ib->ShapeCalc(g_reduce_std, {x, axis}, {1});
   res[1] = ib->SequenceToTensor(res[1]);
   res[2] = ib->SequenceToTensor(res[2]);
-  res[0] = ib->TensorToTuple(res[0]);
   auto true_branch = [&ib, &res, &std_d, &std, &mean_d, &mean](const Emitter *e) -> NodePtrList {
     auto std_d_r = ib->Reshape(std_d, res[0]);
     auto std_r = ib->Reshape(std, res[0]);

@@ -131,10 +131,12 @@ class COMMON_EXPORT AnfAlgo {
   // get input shapes inferred by ME from input nodes.
   static ShapeVector GetPrevNodeOutputInferShape(const AnfNodePtr &node, size_t input_idx);
   // get output data type inferred by ME of anf node
+  static TypePtr GetOutputInferType(const AnfNodePtr &node, size_t output_idx, bool is_real_tuple = false);
   static TypeId GetOutputInferDataType(const AnfNodePtr &node, size_t output_idx);
   static TypeId GetOutputInferDataType(const TypePtr &type, size_t output_idx);
   // get output original data type from prev node,input_index is the input index of current node related to prev node
   static TypeId GetPrevNodeOutputInferDataType(const AnfNodePtr &node, size_t input_idx);
+  static TypePtr GetPrevNodeOutputInferType(const AnfNodePtr &node, size_t input_idx);
   // for tuple condition
   static std::vector<TypeId> GetRealPrevNodesOutputInferDataType(const AnfNodePtr &node, size_t input_idx);
   // set infer shapes and types of anf node

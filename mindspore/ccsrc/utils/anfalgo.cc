@@ -101,6 +101,22 @@ void GetRealOutputRecursively(const AnfNodePtr &node, size_t output_index, std::
   return inputs->push_back(std::make_pair(node, output_index));
 }
 
+bool IsMultiLayerTuple(const abstract::AbstractBasePtr &abstract) {
+  MS_EXCEPTION_IF_NULL(abstract);
+  if (!abstract->isa<abstract::AbstractSequence>()) {
+    return false;
+  }
+  const auto &sequence_abstract = abstract->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(sequence_abstract);
+  if (sequence_abstract->dynamic_len()) {
+    return false;
+  }
+  return std::any_of(sequence_abstract->elements().begin(), sequence_abstract->elements().end(),
+                     [](const abstract::AbstractBasePtr &sub_abstract) {
+                       return sub_abstract != nullptr && sub_abstract->isa<abstract::AbstractSequence>();
+                     });
+}
+
 std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(DEBUG) << "Output node: " << node->fullname_with_scope();
@@ -146,11 +162,13 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
   // Output num must be exactly equal to the number of outputs of the node.
   size_t outputs_num = 1;
   if (AnfUtils::IsRealCNodeKernel(node)) {
-    if (node->abstract() != nullptr && common::AnfAlgo::IsDynamicSequence(node)) {
+    if (node->abstract() != nullptr &&
+        (common::AnfAlgo::IsDynamicSequence(node) || IsMultiLayerTuple(node->abstract()))) {
       outputs_num = common::AnfAlgo::GetOutputNumByAbstract(node->abstract());
     } else {
       outputs_num = AnfUtils::GetOutputTensorNum(node);
     }
+    MS_LOG(DEBUG) << "Output num:" << outputs_num << " for node:" << node->DebugString();
   }
   // Call node maybe a real cnode and the unreal node cannot get output num exactly, so we should get
   // output num from abstract again. For example the TupleGetItem/Makeple multi-level nesting:
@@ -747,6 +765,51 @@ ShapeVector AnfAlgo::GetPrevNodeOutputInferShape(const AnfNodePtr &node, size_t 
   return AnfAlgo::GetOutputInferShape(kernel_with_index.first, kernel_with_index.second);
 }
 
+TypePtr AnfAlgo::GetOutputInferType(const AnfNodePtr &node, size_t output_idx, bool is_real_tuple) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(node->abstract());
+  const auto &type = node->abstract()->BuildType();
+  MS_EXCEPTION_IF_NULL(type);
+  if (!type->isa<Tuple>() && !type->isa<List>()) {
+    if (output_idx != 0) {
+      MS_LOG(EXCEPTION) << "Invalid index:" << output_idx << " for node:" << node->DebugString()
+                        << " abstract:" << node->abstract()->ToString() << " type:" << type->ToString();
+    }
+    return type;
+  }
+  if (is_real_tuple) {
+    return type;
+  }
+  if (type->isa<Tuple>()) {
+    const auto &tuple_type = type->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_type);
+    if (tuple_type->dynamic_len()) {
+      if (output_idx != 0) {
+        MS_LOG(EXCEPTION) << "Failed to get type by index:" << output_idx << " type:" << type->ToString();
+      }
+      return tuple_type;
+    }
+    if (output_idx >= tuple_type->size()) {
+      MS_LOG(EXCEPTION) << "Invalid index:" << output_idx << " for node:" << node->DebugString()
+                        << " abstract:" << node->abstract()->ToString() << " type:" << type->ToString();
+    }
+    return tuple_type->elements()[output_idx];
+  }
+  const auto &list_type = type->cast<ListPtr>();
+  MS_EXCEPTION_IF_NULL(list_type);
+  if (list_type->dynamic_len()) {
+    if (output_idx != 0) {
+      MS_LOG(EXCEPTION) << "Failed to get type by index:" << output_idx << " type:" << type->ToString();
+    }
+    return list_type;
+  }
+  if (output_idx >= list_type->size()) {
+    MS_LOG(EXCEPTION) << "Invalid index:" << output_idx << " for node:" << node->DebugString()
+                      << " abstract:" << node->abstract()->ToString() << " type:" << type->ToString();
+  }
+  return list_type->elements()[output_idx];
+}
+
 TypeId AnfAlgo::GetOutputInferDataType(const TypePtr &type, size_t output_idx) {
   auto type_ptr = type;
   MS_EXCEPTION_IF_NULL(type_ptr);
@@ -861,6 +924,11 @@ TypeId AnfAlgo::GetOutputInferDataType(const AnfNodePtr &node, size_t output_idx
 TypeId AnfAlgo::GetPrevNodeOutputInferDataType(const AnfNodePtr &node, size_t input_idx) {
   KernelWithIndex kernel_with_index = AnfAlgo::GetPrevNodeOutput(node, input_idx);
   return AnfAlgo::GetOutputInferDataType(kernel_with_index.first, kernel_with_index.second);
+}
+
+TypePtr AnfAlgo::GetPrevNodeOutputInferType(const AnfNodePtr &node, size_t input_idx) {
+  KernelWithIndex kernel_with_index = AnfAlgo::GetPrevNodeOutput(node, input_idx);
+  return AnfAlgo::GetOutputInferType(kernel_with_index.first, kernel_with_index.second);
 }
 
 // set infer shapes and types of anf node

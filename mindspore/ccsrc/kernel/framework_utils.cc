@@ -929,7 +929,7 @@ void UnfoldKernelBuildInfo(const CNodePtr &kernel_node) {
   for (size_t i = 0; i < input_kernel_object_types.size(); ++i) {
     if (input_kernel_object_types[i] == kernel::KernelObjectType::TUPLE_UNFOLD) {
       auto input_node = common::AnfAlgo::GetInputNode(kernel_node, i);
-      auto unfold_num = AnfAlgo::GetOutputElementNum(input_node);
+      auto unfold_num = GetOutputNum(input_node);
       MS_LOG(DEBUG) << kernel_node->fullname_with_scope() << " input idnex:" << i << " unfold num:" << unfold_num;
       RepeatAppend(true, i, unfold_num);
     } else {
@@ -939,7 +939,7 @@ void UnfoldKernelBuildInfo(const CNodePtr &kernel_node) {
 
   for (size_t i = 0; i < output_kernel_object_types.size(); ++i) {
     if (output_kernel_object_types[i] == kernel::KernelObjectType::TUPLE_UNFOLD) {
-      auto unfold_num = AnfAlgo::GetOutputElementNum(kernel_node);
+      auto unfold_num = GetOutputNum(kernel_node);
       MS_LOG(DEBUG) << kernel_node->fullname_with_scope() << " output idnex:" << i << " unfold num:" << unfold_num;
       // Multiple outputs are expanded in the kernel attr(For example BatchNorm op).
       if (output_num == unfold_num) {

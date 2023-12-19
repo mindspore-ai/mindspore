@@ -653,14 +653,6 @@ std::pair<bool, std::pair<std::string, ExceptionType>> GetSelectKernelObjectType
     return {false, kernel::KernelObjectTypeNotSupportWarning(kernel_node)};
   }
 
-  if (IsTupleNestedOutputKernelAttr(object_selected_kernel_attrs[0])) {
-    return {false,
-            {kernel::KernelObjectTypeNotSupportWarning(kernel_node).first +
-               " Multiple tuple outputs is not supported for registered kernel attr: " +
-               kernel::FetchPrintInfoByKernelAttr(object_selected_kernel_attrs[0]),
-             TypeError}};
-  }
-
   kernel::SetKernelObjectTypeWithSelectedAttr(kernel_node, object_selected_kernel_attrs[0]);
   return {true, {}};
 }
@@ -694,7 +686,7 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
     outputs_type = {common::AnfAlgo::GetOutputInferDataType(kernel_node, 0)};
     outputs_format = {kOpFormat_DEFAULT};
   } else {
-    size_t output_num = AnfAlgo::GetOutputElementNum(kernel_node);
+    size_t output_num = kernel::GetOutputNum(kernel_node);
     for (size_t output_index = 0; output_index < output_num; ++output_index) {
       (void)outputs_format.emplace_back(kOpFormat_DEFAULT);
       outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index));

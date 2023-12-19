@@ -580,6 +580,10 @@ AnfNodePtr KernelGraph::TransCNodeTuple(const CNodePtr &node) {
   std::vector<AbstractBasePtr> abstract_list;
   for (size_t tuple_out_index = 0; tuple_out_index < output_num; ++tuple_out_index) {
     auto out = CreatTupleGetItemNode(node, tuple_out_index);
+    MS_EXCEPTION_IF_NULL(out);
+    if (common::AnfAlgo::IsTupleOutput(out)) {
+      out = TransCNodeTuple(out->cast<CNodePtr>());
+    }
     make_tuple_inputs_list.emplace_back(out);
     MS_EXCEPTION_IF_NULL(out->abstract());
     abstract_list.emplace_back(out->abstract()->Clone());
