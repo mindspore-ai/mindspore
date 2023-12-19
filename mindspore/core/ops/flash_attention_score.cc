@@ -59,8 +59,8 @@ void CheckInputShape(const AbstractBasePtr &input, const std::vector<ShapeVector
     return;
   }
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input->BuildShape())[kShape];
-  if (!std::any_of(expect_shape_list.begin(), expect_shape_list.end(),
-                   [&input_shape](const ShapeVector &expect_shape) { return input_shape != expect_shape; })) {
+  if (std::all_of(expect_shape_list.begin(), expect_shape_list.end(),
+                  [&input_shape](const ShapeVector &expect_shape) { return input_shape != expect_shape; })) {
     MS_LOG(EXCEPTION) << op_name << ": The shape of input `" << input_name << "' must be one of " << expect_shape_list
                       << ", but got shape is " << input_shape;
   }
