@@ -271,6 +271,97 @@ EvalResultPtr ConvertToPyExecuteCall(const CNodePtr &cnode, const AnfNodeConfigP
   return eng->ForwardConfig(conf, fn_conf);
 }
 
+EvalResultPtr ConvertToPyInterpretCall(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
+  auto fg = cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  auto out_node = conf->node();
+  MS_EXCEPTION_IF_NULL(out_node);
+  std::stringstream script_buffer;
+  const auto &cnode_inputs = cnode->inputs();
+  AnfNodePtrList local_key_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+  AnfNodePtrList local_value_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+
+  // Handle call function
+  const std::string call_func_str = "__call_func_str__";
+  constexpr size_t call_func_index = 0;
+  script_buffer << call_func_str << "(";
+  (void)local_key_inputs.emplace_back(NewValueNode(call_func_str));
+  (void)local_value_inputs.emplace_back(cnode_inputs[call_func_index]);
+
+  // Handle inputs.
+  const std::string call_prefix = "__input_";
+  for (size_t i = 1; i < cnode_inputs.size(); ++i) {
+    auto cur_node = cnode_inputs[i];
+    if (IsPrimitiveCNode(cur_node, prim::kPrimMakeKeywordArg)) {
+      const std::string value_cur_str = call_prefix + "_value_" + std::to_string(i - 1) + "__";
+      constexpr size_t key_inputs_index = 1;
+      constexpr size_t value_inputs_index = 2;
+      constexpr size_t expect_inputs_size = 3;
+      if (cur_node->cast<CNodePtr>()->size() != expect_inputs_size) {
+        MS_LOG(INTERNAL_EXCEPTION) << "The make_keyword_arg node should have " << expect_inputs_size
+                                   << " inputs, but got " << cnode->size();
+      }
+      auto key_node = cur_node->cast<CNodePtr>()->input(key_inputs_index);
+      if (!IsValueNode<StringImm>(key_node)) {
+        MS_LOG(INTERNAL_EXCEPTION) << "The key in make_keyword args must be string, but got "
+                                   << key_node->DebugString();
+      }
+      auto key_string = GetValue<std::string>(GetValueNode(key_node));
+      std::string key_value_str = key_string + "=" + value_cur_str;
+      (void)local_key_inputs.emplace_back(NewValueNode(value_cur_str));
+      script_buffer << key_value_str << ",";
+      auto value_node = cur_node->cast<CNodePtr>()->input(value_inputs_index);
+      (void)local_value_inputs.emplace_back(value_node);
+    } else {
+      const std::string cur_str = call_prefix + std::to_string(i - 1) + "__";
+      script_buffer << cur_str << ",";
+      (void)local_key_inputs.emplace_back(NewValueNode(cur_str));
+      (void)local_value_inputs.emplace_back(cur_node);
+    }
+  }
+  script_buffer << ")";
+  const auto &script = script_buffer.str();
+  auto local_key_node = fg->NewCNode(local_key_inputs);
+  auto local_value_node = fg->NewCNode(local_value_inputs);
+  auto local_dict_node = fg->NewCNode({NewValueNode(prim::kPrimMakeDict), local_key_node, local_value_node});
+  auto obj_call_node =
+    fallback::CreatePyInterpretCNode(fg, script, py::dict(), local_dict_node, out_node->debug_info());
+  MS_LOG(DEBUG) << "Created obj_call_node: " << obj_call_node->DebugString();
+  AnalysisEnginePtr eng = conf->engine();
+  MS_EXCEPTION_IF_NULL(eng);
+  AnfNodeConfigPtr fn_conf = eng->MakeConfig(obj_call_node, conf->context(), conf->func_graph());
+  return eng->ForwardConfig(conf, fn_conf);
+}
+
+EvalResultPtr ParsePyObjToFunc(const py::object &py_fn, const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
+  FuncGraphPtr list_func_fg = nullptr;
+  {
+    MS_LOG_TRY_CATCH_SCOPE;
+    list_func_fg = parse::ParsePythonCode(py_fn);
+  }
+  if (list_func_fg != nullptr) {
+    auto fg = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    list_func_fg->set_manager(fg->manager());
+
+    auto &inputs = cnode->inputs();
+    std::vector<AnfNodePtr> new_cnode_inputs;
+    (void)new_cnode_inputs.emplace_back(NewValueNode(list_func_fg));
+    for (std::size_t i = 1; i < inputs.size(); ++i) {
+      (void)new_cnode_inputs.emplace_back(inputs[i]);
+    }
+    auto new_cnode = fg->NewCNodeInOrder(new_cnode_inputs);
+    new_cnode->set_debug_info(cnode->debug_info());
+
+    AnalysisEnginePtr eng = conf->engine();
+    MS_EXCEPTION_IF_NULL(eng);
+    AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_cnode, conf->context(), conf->func_graph());
+    return eng->ForwardConfig(conf, fn_conf);
+  } else {
+    return ConvertToPyInterpretCall(cnode, conf);
+  }
+}
+
 EvalResultPtr ConvertClassTypeToFunc(const CNodePtr &cnode, const AbstractBasePtr &abs, const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(abs);
@@ -293,25 +384,40 @@ EvalResultPtr ConvertClassTypeToFunc(const CNodePtr &cnode, const AbstractBasePt
     MS_EXCEPTION(ValueError) << "Can not call " << class_name << " to create python object in graph mode. "
                              << "Try using 'jit_class' to decorate the class?";
   }
-  auto list_func_fg = parse::ParsePythonCode(py_fn);
-  MS_EXCEPTION_IF_NULL(list_func_fg);
-  auto fg = cnode->func_graph();
-  MS_EXCEPTION_IF_NULL(fg);
-  list_func_fg->set_manager(fg->manager());
+  return ParsePyObjToFunc(py_fn, cnode, conf);
+}
 
-  auto &inputs = cnode->inputs();
-  std::vector<AnfNodePtr> new_cnode_inputs;
-  (void)new_cnode_inputs.emplace_back(NewValueNode(list_func_fg));
-  for (std::size_t i = 1; i < inputs.size(); ++i) {
-    (void)new_cnode_inputs.emplace_back(inputs[i]);
+std::string GetClassName(const py::object &cls_obj) {
+  if (py::hasattr(cls_obj, "__class__")) {
+    return py::getattr(py::getattr(cls_obj, "__class__"), "__name__").cast<py::str>();
   }
-  auto new_cnode = fg->NewCNodeInOrder(new_cnode_inputs);
-  new_cnode->set_debug_info(cnode->debug_info());
+  return py::getattr(cls_obj, "__name__").cast<py::str>();
+}
 
-  AnalysisEnginePtr eng = conf->engine();
-  MS_EXCEPTION_IF_NULL(eng);
-  AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_cnode, conf->context(), conf->func_graph());
-  return eng->ForwardConfig(conf, fn_conf);
+EvalResultPtr ConvertCallPyObjCallFunc(const CNodePtr &cnode, const AbstractBasePtr &abs,
+                                       const AnfNodeConfigPtr &conf) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(abs);
+  auto val = abs->BuildValue();
+  MS_EXCEPTION_IF_NULL(val);
+  auto warp_obj = dyn_cast_ptr<parse::PyObjectWrapper>(val);
+  MS_EXCEPTION_IF_NULL(warp_obj);
+  py::object cls_obj = warp_obj->obj();
+  auto class_name = GetClassName(cls_obj);
+  py::object call_obj = py::none();
+  const std::string construct_func_name = "construct";
+  if (py::hasattr(cls_obj, common::SafeCStr(construct_func_name))) {
+    call_obj = py::getattr(cls_obj, common::SafeCStr(construct_func_name));
+  } else {
+    const std::string call_func_name = "__call__";
+    if (py::hasattr(cls_obj, common::SafeCStr(call_func_name))) {
+      call_obj = py::getattr(cls_obj, common::SafeCStr(call_func_name));
+    }
+  }
+  if (py::isinstance<py::none>(call_obj)) {
+    MS_EXCEPTION(ValueError) << class_name << "is not a callable object";
+  }
+  return ParsePyObjToFunc(call_obj, cnode, conf);
 }
 
 EvalResultPtr ConvertMsClassObjToFunc(const CNodePtr &cnode, const AbstractBasePtr &abs, const AnfNodeConfigPtr &conf) {
@@ -639,11 +745,6 @@ AnfNodeConfigPtr AnalysisEngine::GetForwardConfig(const AnfNodeConfigPtr &conf) 
 }
 
 EvalResultPtr AnalysisEngine::InterpretedNodeCall(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
-  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
-  if (!allow_fallback_runtime) {
-    return nullptr;
-  }
-
   MS_EXCEPTION_IF_NULL(cnode);
   auto &inputs = cnode->inputs();
   if (inputs.empty()) {
@@ -670,8 +771,8 @@ EvalResultPtr AnalysisEngine::InterpretedNodeCall(const CNodePtr &cnode, const A
     return nullptr;
   }
 
-  // Forward getattr CNode call to py_execute CNode.
-  return ConvertToPyExecuteCall(cnode, conf);
+  // Forward getattr CNode call to PyInterpreted CNode.
+  return ConvertToPyInterpretCall(cnode, conf);
 }
 
 AbstractBasePtr AnalysisEngine::GetCNodeOperatorAbstract(const CNodePtr &cnode, const AnalysisContextPtr &context,
@@ -724,9 +825,13 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
       return ConvertClassTypeToFunc(cnode, possible_func, conf);
     }
     if (val->isa<parse::InterpretedObject>()) {
-      MS_LOG(ERROR) << "Do not support " << val->ToString() << " as a function.\n"
-                    << "If it is a function from a module outside the project root directory and it needs to be run as "
-                    << "a static computation graph, try setting: 'export MS_JIT_MODULES=module1_name,module2_name,...'";
+      return ConvertCallPyObjCallFunc(cnode, possible_func, conf);
+    }
+  }
+  if (possible_func->isa<AbstractAny>()) {
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
+    if (allow_fallback_runtime) {
+      return ConvertToPyExecuteCall(cnode, conf);
     }
   }
 

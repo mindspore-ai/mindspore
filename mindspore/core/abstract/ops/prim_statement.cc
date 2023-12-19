@@ -116,14 +116,6 @@ AbstractBasePtr InferImplSwitchLayer(const AnalysisEnginePtr &, const PrimitiveP
                              << branches.size() << " branches.";
   }
 
-  for (size_t i = 0; i < branches.size(); i++) {
-    MS_EXCEPTION_IF_NULL(branches[i]);
-    if (!branches[i]->isa<FuncGraphAbstractClosure>() && !branches[i]->isa<PartialAbstractClosure>()) {
-      MS_EXCEPTION(ValueError) << op_name << " requires that the 2th arg be tuple of functions, but got "
-                               << branches[i]->ToString() << " as the " << i << "th element.";
-    }
-  }
-
   auto b = branches[0];
   SetVariableFlag(b);
   // Return AbstractFuncUnion, otherwise the switch_layer will be replaced by branches[0]

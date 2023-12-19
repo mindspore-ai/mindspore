@@ -1532,68 +1532,29 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
     MS_LOG(WARNING) << "Location's expr is empty, node: " << out_node->DebugString(debug_recursive_level);
     return nullptr;
   }
-  // Check "x.xxx"
-  auto point_pos = expr.rfind('.');
-  // Check "getattr(x, name[, default])". The input x may be obj.attr, name may be string or other node.
-  constexpr auto get_attr_expr = "getattr";
-  auto getattr_pos = expr.find(get_attr_expr);
-  // Only has point
-  if (point_pos != std::string::npos && getattr_pos == std::string::npos) {
-    constexpr auto internal_getattr_owner_str = "__internal_getattr_owner__";
-    std::stringstream script_buffer;
-    if (expr.substr(point_pos) == ".__ms_iter__") {
-      // Convert iterable object to tuple.
-      script_buffer << "tuple(" << internal_getattr_owner_str << ")";
-    } else {
-      script_buffer << internal_getattr_owner_str;
-      script_buffer << expr.substr(point_pos);
-    }
-    const auto script_getattr_str = std::make_shared<StringImm>(script_buffer.str());
-    std::vector<ValuePtr> key_list;
-    const auto owner_str = std::make_shared<StringImm>(internal_getattr_owner_str);
-    (void)key_list.emplace_back(owner_str);
-    const auto key_tuple = std::make_shared<ValueTuple>(key_list);
-    auto owner_abs = args_abs_list[0];
-    MS_EXCEPTION_IF_NULL(owner_abs);
-    auto owner_value = owner_abs->BuildValue();
-    MS_EXCEPTION_IF_NULL(owner_value);
-    auto owner_node = cnode->input(1);
-    MS_LOG(DEBUG) << "expr: " << expr << ", for node: " << out_node->DebugString(debug_recursive_level)
-                  << ", owner_value: " << owner_value->ToString();
-    if (owner_value->isa<parse::InterpretedObject>()) {
-      const auto &interpreted_value = dyn_cast<parse::InterpretedObject>(owner_value);
-      const auto &key = interpreted_value->name();
-      owner_node = fallback::ConvertPyObjectToPyExecute(fg, key, interpreted_value->obj(), owner_node, true);
-    }
-    std::vector<AnfNodePtr> value_list{NewValueNode(prim::kPrimMakeTuple)};
-    (void)value_list.emplace_back(owner_node);
-    const auto value_tuple_node = fg->NewCNode(value_list);
-    AnfNodePtr getattr_node = nullptr;
+  constexpr auto item_index = 1;
+  auto item_arg = args_abs_list.at(item_index);
+  MS_EXCEPTION_IF_NULL(item_arg);
+  auto attr_name = GetValue<string>(item_arg->BuildValue());
+  AnfNodePtr getattr_node;
+  auto obj_change = cnode->user_data<bool>(kObjectAttrChange);
+  if (obj_change != nullptr && *obj_change) {
+    // The object is changed by setattr node, directly convert it to PyExecute node.
+    getattr_node = fallback::ConvertCNodeToPyExecuteForPrim(cnode, "getattr");
     constexpr auto args_size = 3;
     if (args_abs_list.size() == args_size) {  // Has setattr node as input.
-      const auto &getattr_cnode = fallback::CreatePyExecuteCNode(cnode, NewValueNode(script_getattr_str),
-                                                                 NewValueNode(key_tuple), value_tuple_node);
+      auto getattr_cnode = getattr_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(getattr_cnode);
       getattr_cnode->add_input(cnode->input(args_size));
-      getattr_node = getattr_cnode;
-    } else {
-      getattr_node = fallback::CreatePyExecuteCNode(cnode, NewValueNode(script_getattr_str), NewValueNode(key_tuple),
-                                                    value_tuple_node);
     }
-    auto eng = out_conf->engine();
-    MS_EXCEPTION_IF_NULL(eng);
-    auto fn_conf = eng->MakeConfig(getattr_node, out_conf->context(), out_conf->func_graph());
-    return eng->ForwardConfig(out_conf, fn_conf);
-  } else if (getattr_pos != std::string::npos ||
-             (point_pos != std::string::npos && getattr_pos != std::string::npos && getattr_pos < point_pos)) {
-    // Convert getattr(x, 'xxx', default) to PyExecute("getattr(x, 'xxx', default)", local_keys, local_values).
-    auto pyexecute_node = fallback::ConvertCNodeToPyExecuteForPrim(cnode, get_attr_expr);
-    MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << pyexecute_node->DebugString();
-    auto eng = out_conf->engine();
-    MS_EXCEPTION_IF_NULL(eng);
-    auto fn_conf = eng->MakeConfig(pyexecute_node, out_conf->context(), out_conf->func_graph());
-    return eng->ForwardConfig(out_conf, fn_conf);
+  } else {
+    getattr_node = fallback::ConvertGetAttrNodeToPyInterpret(fg, cnode, attr_name);
   }
-  MS_LOG(INTERNAL_EXCEPTION) << "The getattr expression is wrong: " << expr;
+  MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << getattr_node->DebugString();
+  auto eng = out_conf->engine();
+  MS_EXCEPTION_IF_NULL(eng);
+  auto fn_conf = eng->MakeConfig(getattr_node, out_conf->context(), out_conf->func_graph());
+  return eng->ForwardConfig(out_conf, fn_conf);
 }
 
 EvalResultPtr InterpretSetAttrNode(const AbstractBasePtrList &args_abs_list, const AnfNodeConfigPtr &out_conf) {
@@ -1794,12 +1755,6 @@ EvalResultPtr GetEvaluatedValueForNameSpace(const AbstractBasePtrList &args_abs_
     data_id_str = class_val->name();
   }
   if (!data_value->isa<parse::NameSpace>()) {
-    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
-    if (!allow_fallback_runtime) {
-      MS_EXCEPTION(TypeError) << "Do not support to get attribute from " << data_value->ToString()
-                              << "\nThe first argument should be a NameSpace, but got " << data->ToString();
-    }
-
     auto item_value = item->BuildValue();
     MS_EXCEPTION_IF_NULL(item_value);
     MS_EXCEPTION_IF_NULL(out_conf->node());
@@ -2063,20 +2018,6 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
   }
 
   const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
-  if (!allow_fallback_runtime && data_args->isa<abstract::AbstractScalar>()) {
-    ValuePtr data_value = data_args->BuildValue();
-    MS_EXCEPTION_IF_NULL(data_value);
-    if (data_value->isa<parse::InterpretedObject>()) {
-      auto obj = ValueToPyData(data_value);
-      auto type_str = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_GET_TYPE, obj);
-
-      MS_EXCEPTION(TypeError) << "Do not support to get attribute from " << py::str(type_str) << " object "
-                              << py::str(obj) << ".\nFor more details, please refer to "
-                              << "https://mindspore.cn/docs/zh-CN/master/faq/network_compilation.html?highlight=do"
-                              << "%20support%20get%20attribute%20from";
-    }
-  }
-
   constexpr auto max_args_size = 3;
   if (!allow_fallback_runtime && args_abs_list.size() == max_args_size) {
     constexpr size_t default_index = 2;
@@ -2539,6 +2480,9 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     ValuePtr converted_val = nullptr;
     // converted_val could be a InterpretedObject.
     bool converted = parse::ConvertData(obj, &converted_val, true);
+    if (converted_val->isa<FuncGraph>()) {
+      converted_val = std::make_shared<parse::InterpretedObject>(obj);
+    }
     if (!converted) {
       MS_LOG(INTERNAL_EXCEPTION) << "Convert the python object failed";
     }

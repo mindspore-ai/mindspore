@@ -674,6 +674,7 @@ void Parser::ConvertGetattrNodes() {
           (void)new_getattr_node_inputs.emplace_back(cur_getattr_node);
         }
         auto new_getattr_node = getattr_node_fg->NewCNode(new_getattr_node_inputs);
+        new_getattr_node->set_user_data<bool>(kObjectAttrChange, std::make_shared<bool>(true));
         new_getattr_node->set_debug_info(getattr_node->debug_info());
         MS_LOG(DEBUG) << "Generate new getattr node: " << new_getattr_node->DebugString();
         const auto &manager = Manage(getattr_node_fg, false);
@@ -1939,18 +1940,22 @@ AnfNodePtr Parser::MakeGetAttrWithInterpret(const std::string &obj_name, const s
   AnfNodePtr setattr_node = GetSetAttrFromMap(obj_name, attr_name);
   AnfNodePtr op_node = NewValueNode(prim::kPrimGetAttr);
   AnfNodePtr attr_node = NewValueNode(attr_name);
+  AnfNodePtr ret_node = nullptr;
   if (setattr_node != nullptr) {
     const auto &interpreted_obj = std::make_shared<InterpretedObject>(getattr_obj);
     AnfNodePtr value_node = NewValueNode(interpreted_obj);
     auto prev_setattr_fg = setattr_node->func_graph();
     MS_EXCEPTION_IF_NULL(prev_setattr_fg);
     if (prev_setattr_fg != cur_fg) {
-      return cur_fg->NewCNodeInOrder({op_node, value_node, attr_node});
+      ret_node = cur_fg->NewCNodeInOrder({op_node, value_node, attr_node});
+    } else {
+      // Only add to new setattr node input if two nodes is in the same graph.
+      ret_node = cur_fg->NewCNodeInOrder({op_node, value_node, attr_node, setattr_node});
     }
     // Only add to new setattr node input if two nodes is in the same graph.
-    return cur_fg->NewCNodeInOrder({op_node, value_node, attr_node, setattr_node});
+    ret_node->set_user_data<bool>(kObjectAttrChange, std::make_shared<bool>(true));
   }
-  return nullptr;
+  return ret_node;
 }
 
 // Process call attributes of class type define, eg: x.y()
@@ -2011,6 +2016,12 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
   }
   // Create the apply node
   AnfNodePtr attr_cnode = cur_fg->NewCNodeInOrder({op_node, value_node, attr_node});
+
+  auto value_id_str = GetLocation(value_body)->expr_src();
+  auto iter = setattr_nodes_map_.find(value_id_str);
+  if (iter != setattr_nodes_map_.end() && iter->second.find(attr_str) != iter->second.end()) {
+    attr_cnode->set_user_data<bool>(kObjectAttrChange, std::make_shared<bool>(true));
+  }
 
   // Directly resolve the symbol.
   if (IsValueNode<parse::NameSpace>(value_node)) {

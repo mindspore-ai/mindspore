@@ -180,13 +180,9 @@ def test_call_other_object_method():
     z = np.array([[8, 9, 12], [3, 4, 7]]).astype(np.int32)
 
     net = Net1(y, y1)
-    with pytest.raises(RuntimeError):  # RuntimeErrorError: PyExecute node can not be used in multitype funcgraph.
-        output = net.construct(x)
-        result = output.asnumpy()
-        print(result)
-        assert np.all(result == z)
-
-    log.debug("finished test_call_other_object_method")
+    output = net.construct(x)
+    result = output.asnumpy()
+    assert np.all(result == z)
 
 
 # Test: call global object method(not self) on parse graph code
@@ -226,13 +222,9 @@ def test_call_no_self_other_object_method():
     z = np.array([[6, 9, 12], [3, 4, 7]]).astype(np.int32)
 
     net = Net2(y)
-    with pytest.raises(RuntimeError):  # RuntimeErrorError: PyExecute node can not be used in multitype funcgraph.
-        output = net.construct(x)
-        result = output.asnumpy()
-        print(result)
-        assert np.all(result == z)
-
-    log.debug("finished test_call_other_object_method")
+    output = net.construct(x)
+    result = output.asnumpy()
+    assert np.all(result == z)
 
 
 def test_call_no_self_other_object_attr_value():
