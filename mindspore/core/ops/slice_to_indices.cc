@@ -133,11 +133,9 @@ class SliceToIndicesInfer : public abstract::OpInferBase {
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     ShapeVector data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
-    auto indices_tensor_shape =
-      std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeDimAny, 1}, ShapeVector{data_shape[0], 1});
+    auto indices_tensor_shape = std::make_shared<abstract::Shape>(ShapeVector{data_shape[0], 1});
     const size_t max_dims = 8;
-    auto value_shape =
-      std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeDimAny}, ShapeVector{max_dims});
+    auto value_shape = std::make_shared<abstract::Shape>(ShapeVector{max_dims});
     auto slice_tensor_shape = std::make_shared<abstract::Shape>(ShapeVector{1});
     auto empty_tensor_shape = std::make_shared<abstract::Shape>(ShapeVector{});
     return std::make_shared<abstract::TupleShape>(
