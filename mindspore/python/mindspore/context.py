@@ -1333,8 +1333,10 @@ def set_context(**kwargs):
               - interleaved_layernorm_comm (bool): Enable interleaved optimization of LayerNorm-Comm if True.
                 Default: False.
             - host_scheduling_max_threshold(int): The max threshold to control whether the dynamic shape process is
-              used when run the static graph. When the number of operations in the static graph is less than the max
-              threshold, this graph will be executed in dynamic shape process.
+              used when run the static graph, the default value is 0. When the number of operations in the static graph
+              is less than the max threshold, this graph will be executed in dynamic shape process. In large model
+              scenarios, this approach can save stream resources. If the number of operations in the static graph is
+              greater than the maximum threshold, this graph will be executed in original static process.
 
         jit_syntax_level (int): Set JIT syntax level for graph compiling, triggered by GRAPH_MODE and @jit decorator.
             The value must be ``STRICT`` or ``LAX`` . Default: ``LAX`` . All levels support all backends.
