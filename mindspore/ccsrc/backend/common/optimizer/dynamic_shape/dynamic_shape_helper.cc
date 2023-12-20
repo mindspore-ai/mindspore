@@ -567,7 +567,7 @@ BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<Abstrac
   MS_EXCEPTION_IF_NULL(primitive);
   const auto &op_name = primitive->name();
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelInferInner,
-                                     op_name, false);
+                                     op_name, true);
   auto shape_optional = abstract::InferShapeByFuncImpl(primitive, input_args, false);
   if (shape_optional.has_value()) {
     return shape_optional.value();

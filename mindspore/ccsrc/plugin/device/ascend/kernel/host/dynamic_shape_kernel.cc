@@ -36,8 +36,6 @@ void TensorShapeKernelMod::Execute(const std::vector<KernelTensor *> &inputs,
       MS_LOG(EXCEPTION) << "Execute TensorShapeKernel memcpy_s failed!";
     }
   } else {
-    // cppcheck-suppress unreadVariable
-    auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
     auto status = rtMemcpyAsync(outputs[0]->device_ptr(), outputs[0]->size(), shape.data(), LongToSize(size),
                                 RT_MEMCPY_HOST_TO_DEVICE_EX, stream_ptr);
     if (status != RT_ERROR_NONE) {

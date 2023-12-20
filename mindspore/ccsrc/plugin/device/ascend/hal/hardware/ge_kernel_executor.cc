@@ -18,6 +18,7 @@
 #include <algorithm>
 #include "acl/acl_rt.h"
 #include "acl/acl_op_compiler.h"
+#include "include/common/profiler.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "ops/auto_generate/gen_ops_primitive.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
@@ -289,7 +290,12 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
     register_dumper->OpDebugRegisterForStream(kernel);
   }
 #endif
+
   // launch kernel
+  // cppcheck-suppress unreadVariable
+  auto lock = device::KernelRuntime::LockRuntime(stream);
+  uint64_t start_time = 0;
+  PROFILER_START(start_time);
   if (nop_op_to_memcpy_.find(kernel) != nop_op_to_memcpy_.end()) {
     if (!MemoryCopyAsync(kernel, inputs, outputs)) {
       MS_LOG(ERROR) << "Memory copy failed for kernel " << kernel->fullname_with_scope();
@@ -306,7 +312,11 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
     }
   }
   // for PyNative Sync Run mode
-  return PySyncRuning();
+  auto ret = PySyncRuning();
+  PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelLaunch,
+               kernel->fullname_with_scope(), false);
+
+  return ret;
 }
 
 bool GeKernelExecutor::ExecuteKernelTask(const pynative::KernelTaskType &task_type,
