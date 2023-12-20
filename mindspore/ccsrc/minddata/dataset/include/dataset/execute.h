@@ -152,7 +152,7 @@ class DATASET_API Execute {
 
  protected:
   /// \brief The function to convert TensorTransforms into TensorOperations and then build TensorOps.
-  Status BuildTransforms();
+  Status BuildTransforms(std::vector<std::shared_ptr<TensorOp>> *transforms_rt);
 
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   Status ParseTransforms();
@@ -177,8 +177,6 @@ class DATASET_API Execute {
   device::DeviceContext *device_context_ = nullptr;
   size_t stream_id_;
 #endif
-
-  std::vector<std::shared_ptr<TensorOp>> transforms_rt_;
 };
 
 class PyExecute : public Execute {

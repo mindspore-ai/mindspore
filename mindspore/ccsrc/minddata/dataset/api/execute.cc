@@ -239,10 +239,7 @@ Status Execute::UpdateOperation(const std::shared_ptr<TensorOperation> &op) {
   return Status::OK();
 }
 
-Status Execute::BuildTransforms() {
-  // clear the transforms_rt_ first
-  transforms_rt_.clear();
-
+Status Execute::BuildTransforms(std::vector<std::shared_ptr<TensorOp>> *transforms_rt) {
   // Parse TensorTransform transforms_ into TensorOperation ops_
   if (info_->init_with_shared_ptr_) {
     RETURN_IF_NOT_OK(ParseTransforms());
@@ -262,7 +259,7 @@ Status Execute::BuildTransforms() {
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
     RETURN_IF_NOT_OK(ops_[i]->ValidateParams());
-    (void)transforms_rt_.emplace_back(ops_[i]->Build());
+    (void)transforms_rt->emplace_back(ops_[i]->Build());
   }
   return Status::OK();
 }
@@ -272,7 +269,8 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
   RETURN_UNEXPECTED_IF_NULL(output);
   CHECK_FAIL_RETURN_UNEXPECTED(input.DataSize() > 0, "Input Tensor has no data.");
   CHECK_FAIL_RETURN_UNEXPECTED(ValidateDevice(), "Device Type should be 'Ascend310' or 'CPU'.");
-  CHECK_FAIL_RETURN_UNEXPECTED(BuildTransforms(), "Building Transform ops failed!");
+  std::vector<std::shared_ptr<TensorOp>> transforms_rt;
+  CHECK_FAIL_RETURN_UNEXPECTED(BuildTransforms(&transforms_rt), "Building Transform ops failed!");
 
   if (device_type_ == MapTargetDevice::kCpu) {
     // Convert mindspore::Tensor to dataset::Tensor
@@ -286,7 +284,7 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
     }
 
     // Apply transforms on tensor
-    for (auto &t : transforms_rt_) {
+    for (auto &t : transforms_rt) {
       TensorRow de_tensor_row;
       TensorRow de_output_row;
       de_tensor_row.push_back(de_tensor);
@@ -316,7 +314,7 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
     std::shared_ptr<mindspore::dataset::DeviceTensor> device_input;
     RETURN_IF_NOT_OK(device_resource_->Sink(input, &device_input));
 
-    for (auto &t : transforms_rt_) {
+    for (auto &t : transforms_rt) {
       // Initialize AscendResource for each operations
       std::shared_ptr<DeviceTensor> device_output;
       RETURN_IF_NOT_OK(t->SetAscendResource(device_resource_));
@@ -347,7 +345,8 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
     CHECK_FAIL_RETURN_UNEXPECTED(tensor.DataSize() > 0, "Input Tensor has no data.");
   }
   CHECK_FAIL_RETURN_UNEXPECTED(ValidateDevice(), "Device Type should be 'Ascend310' or 'CPU'.");
-  CHECK_FAIL_RETURN_UNEXPECTED(BuildTransforms(), "Building Transform ops failed!");
+  std::vector<std::shared_ptr<TensorOp>> transforms_rt;
+  CHECK_FAIL_RETURN_UNEXPECTED(BuildTransforms(&transforms_rt), "Building Transform ops failed!");
 
   if (device_type_ == MapTargetDevice::kCpu) {  // Case CPU
     TensorRow de_tensor_list;
@@ -363,7 +362,7 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
       (void)de_tensor_list.emplace_back(std::move(de_tensor));
     }
     // Apply transforms on tensor
-    for (auto &t : transforms_rt_) {
+    for (auto &t : transforms_rt) {
       TensorRow de_output_list;
       RETURN_IF_NOT_OK(t->Compute(de_tensor_list, &de_output_list));
       // For next transform
@@ -390,7 +389,7 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
       std::shared_ptr<dataset::DeviceTensor> device_input;
       RETURN_IF_NOT_OK(device_resource_->Sink(input_tensor, &device_input));
 
-      for (auto &t : transforms_rt_) {
+      for (auto &t : transforms_rt) {
         std::shared_ptr<DeviceTensor> device_output;
         RETURN_IF_NOT_OK(t->SetAscendResource(device_resource_));
 
@@ -429,14 +428,16 @@ Status PyExecute::operator()(const std::vector<std::shared_ptr<Tensor>> &input_t
     CHECK_FAIL_RETURN_UNEXPECTED(tensor->Size() > 0, "Input Tensor has no data.");
   }
   CHECK_FAIL_RETURN_UNEXPECTED(ValidateDevice(), "Device Type should be 'CPU'.");
-  CHECK_FAIL_RETURN_UNEXPECTED(BuildTransforms(), "Building Transform ops failed!");
-  CHECK_FAIL_RETURN_UNEXPECTED(transforms_rt_.size() == 1, "PyExecute: only a single op operation is supported.");
 
-  if (transforms_rt_[0]->IsDvppOp() == false) {
+  std::vector<std::shared_ptr<TensorOp>> transforms_rt;
+  CHECK_FAIL_RETURN_UNEXPECTED(BuildTransforms(&transforms_rt), "Building Transform ops failed!");
+  CHECK_FAIL_RETURN_UNEXPECTED(transforms_rt.size() == 1, "PyExecute: only a single op operation is supported.");
+
+  if (transforms_rt[0]->IsDvppOp() == false) {
     TensorRow de_tensor_list(input_tensor_list);
 
     // Apply transforms on tensor
-    for (auto &t : transforms_rt_) {
+    for (auto &t : transforms_rt) {
       TensorRow de_output_list;
       RETURN_IF_NOT_OK(t->Compute(de_tensor_list, &de_output_list));
       // For next transform
@@ -445,7 +446,7 @@ Status PyExecute::operator()(const std::vector<std::shared_ptr<Tensor>> &input_t
     *out = std::move(de_tensor_list.getRow());
     CHECK_FAIL_RETURN_UNEXPECTED(!out->empty(), "Output Tensor is not valid.");
 #if !defined(BUILD_LITE) && defined(ENABLE_D)
-  } else if (transforms_rt_[0]->IsDvppOp() == true) {
+  } else if (transforms_rt[0]->IsDvppOp() == true) {
     (void)InitResource(MapTargetDevice::kAscend910B);
 
     // construct the device tensor list by host tensor
@@ -454,11 +455,11 @@ Status PyExecute::operator()(const std::vector<std::shared_ptr<Tensor>> &input_t
       std::shared_ptr<DeviceTensorAscend910B> device_tensor = nullptr;
       // here we use the first op's IsHWC() to create device tensor
       RETURN_IF_NOT_OK(DeviceTensorAscend910B::CreateDeviceTensor(item, device_context_, stream_id_, &device_tensor,
-                                                                  transforms_rt_[0]->IsHWC()));
+                                                                  transforms_rt[0]->IsHWC()));
       device_tensor_list.push_back(std::move(device_tensor));
     }
 
-    for (auto &t : transforms_rt_) {
+    for (auto &t : transforms_rt) {
       std::vector<std::shared_ptr<DeviceTensorAscend910B>> device_output_list;
 
       // if the op is Decode, we should get the height and width form JPEG header and create the output tensor first
