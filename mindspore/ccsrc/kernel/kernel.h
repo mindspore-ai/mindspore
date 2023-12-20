@@ -353,7 +353,9 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     std::lock_guard<std::mutex> lock(value_mutex_);
 
     // There is a origin value in KernelTensor(maybe come from a ValueNode).
-    if (value_ && !value_->isa<ValueAny>()) {
+    if (dtype_id_ == kMetaTypeNone) {
+      return nullptr;
+    } else if (value_ && !value_->isa<ValueAny>()) {
       if (kernel_tensor_value_ == nullptr) {
         kernel_tensor_value_ = ConvertValueToKernelTensorValue(value_);
       }
@@ -373,8 +375,8 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     std::lock_guard<std::mutex> lock(value_mutex_);
 
     // There is a origin value in KernelTensor(maybe come from a ValueNode).
-    if (type_id_ == kMetaTypeNone) {
-      return std::make_shared<None>();
+    if (dtype_id_ == kMetaTypeNone) {
+      return kNone;
     } else if (value_ && !value_->isa<ValueAny>()) {
       if (kernel_tensor_value_ == nullptr) {
         kernel_tensor_value_ = ConvertValueToKernelTensorValue(value_);
@@ -397,7 +399,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     std::lock_guard<std::mutex> lock(value_mutex_);
 
     // There is a origin value in KernelTensor(maybe come from a ValueNode).
-    if (type_id_ == kMetaTypeNone) {
+    if (dtype_id_ == kMetaTypeNone) {
       MS_LOG(DEBUG) << "None type has no valid scalar value.";
       return std::nullopt;
     } else if (value_ && !value_->isa<ValueAny>()) {
@@ -433,7 +435,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     std::lock_guard<std::mutex> lock(value_mutex_);
 
     // There is a origin value in KernelTensor(maybe come from a ValueNode).
-    if (type_id_ == kMetaTypeNone) {
+    if (dtype_id_ == kMetaTypeNone) {
       MS_LOG(DEBUG) << "None type has no valid value for vector or string.";
       return std::nullopt;
     } else if (value_ && !value_->isa<ValueAny>()) {
@@ -465,7 +467,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   template <typename T, typename std::enable_if<!IsValidContainer<T>::value && !std::is_pointer_v<T> &&
                                                 !std::is_scalar<std::decay_t<T>>::value>::type * = nullptr>
   std::optional<T> GetValue() {
-    if (type_id_ == kMetaTypeNone) {
+    if (dtype_id_ == kMetaTypeNone) {
       MS_LOG(DEBUG) << "None type has no valid value.";
       return std::nullopt;
     }

@@ -340,17 +340,10 @@ void KernelTensor::SetType(const TypePtr &type) {
       SetSequenceDType(element_type);
     } break;
 
-    case kObjectTypeNumber:
-    case kObjectTypeString:
-    case kObjectTypeMapTensorType:
-    case kObjectTypeUMonad:
-    case kObjectTypeIOMonad: {
+    default:
       dtype_ = type;
       dtype_id_ = dtype_->type_id();
-    } break;
-
-    default:
-      MS_LOG(DEBUG) << "Need not set dtype for: " << type->ToString();
+      MS_LOG(DEBUG) << "Set dtype for: " << type->ToString();
   }
 
   element_size_in_bytes_ = GetTypeByte(dtype_);
