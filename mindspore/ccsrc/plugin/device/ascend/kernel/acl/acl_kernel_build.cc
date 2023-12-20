@@ -15,6 +15,7 @@
  */
 #include "plugin/device/ascend/kernel/acl/acl_kernel_build.h"
 #include "plugin/device/ascend/kernel/acl/acl_kernel_mod.h"
+#include "plugin/device/ascend/kernel/acl/acl_kernel/getnext_kernel_mod.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "transform/acl_ir/acl_helper.h"
@@ -25,6 +26,9 @@ namespace kernel {
 KernelModPtr AclOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   auto kernel_mod_ptr = std::make_shared<AclKernelMod>();
+  if (common::AnfAlgo::IsGetNextNode(anf_node)) {
+    kernel_mod_ptr = std::make_shared<GetNextAclKernelMod>();
+  }
   MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
 
   std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(anf_node);

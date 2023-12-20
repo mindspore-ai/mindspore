@@ -76,16 +76,16 @@ class AclKernelMod : public KernelMod {
   void GetInputInfo(const std::vector<KernelTensor *> &inputs);
   int GetOutputInfo(const std::vector<KernelTensor *> &outputs);
 
+  std::vector<std::string> ms_attr_str_;
+  transform::AclConverterPtr converter_;
+  std::vector<TensorParams> output_params_;
+
  private:
   std::vector<TensorParams> input_params_;
-  std::vector<TensorParams> output_params_;
   // record indices of value depend arguments
   std::set<int64_t> value_depend_args_;
   // inputs of operator
   const std::vector<KernelTensor *> *inputs_ = nullptr;
-
-  std::vector<std::string> ms_attr_str_;
-  transform::AclConverterPtr converter_;
 
   bool need_convert_host_tensor_{false};
 };
