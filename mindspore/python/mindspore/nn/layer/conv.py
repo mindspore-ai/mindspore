@@ -21,7 +21,6 @@ import numpy as np
 from mindspore import context
 from mindspore.ops import operations as P
 import mindspore.common.dtype as mstype
-from mindspore.ops.primitive import _primexpr
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer, HeUniform, Uniform, _calculate_fan_in_and_fan_out
 from mindspore.common.tensor import Tensor
@@ -364,12 +363,6 @@ class Conv2d(_Conv):
         return output
 
 
-@_primexpr
-def _check_input_3d(input_shape, op_name):
-    if len(input_shape) != 3:
-        raise ValueError(f"For '{op_name}', the dimension of input must be 3d, but got {len(input_shape)}.")
-
-
 class Conv1d(_Conv):
     r"""
     1D convolution layer.
@@ -577,8 +570,6 @@ class Conv1d(_Conv):
         self.shape = P.Shape()
 
     def construct(self, x):
-        x_shape = self.shape(x)
-        _check_input_3d(x_shape, self.cls_name)
         x = self.expand_dims(x, 2)
         output = self.conv2d(x, self.weight)
         if self.has_bias:
@@ -586,12 +577,6 @@ class Conv1d(_Conv):
 
         output = self.squeeze(output)
         return output
-
-
-@_primexpr
-def _check_input_5dims(input_shape, op_name):
-    if len(input_shape) != 5:
-        raise ValueError(f"For '{op_name}', the dimension of input must be 5d, but got {len(input_shape)}.")
 
 
 class Conv3d(_Conv):
@@ -829,8 +814,6 @@ class Conv3d(_Conv):
         self.split_1 = P.Split(1, self.group)
 
     def construct(self, x):
-        x_shape = self.shape(x)
-        _check_input_5dims(x_shape, self.cls_name)
         if self.group == 1:
             out = self.conv3d(x, self.weight)
             if self.has_bias:
@@ -1052,8 +1035,6 @@ class Conv3dTranspose(_Conv):
         self.shape = P.Shape()
 
     def construct(self, x):
-        x_shape = self.shape(x)
-        _check_input_5dims(x_shape, self.cls_name)
         output = self.conv3d_transpose(x, self.weight)
         if self.has_bias:
             output = self.bias_add(output, self.bias)
@@ -1478,8 +1459,6 @@ class Conv1dTranspose(_Conv):
         return self
 
     def construct(self, x):
-        x_shape = self.shape(x)
-        _check_input_3d(x_shape, self.cls_name)
         x = self.expand_dims(x, 2)
 
         n, _, h, w = self.shape(x)

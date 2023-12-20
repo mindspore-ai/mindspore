@@ -333,9 +333,6 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     if not isinstance(input_x, (Tensor, Tensor_)):
         raise TypeError("For avg_pool1d, the input input_x must be tensor")
 
-    if len(input_x.shape) != 3:
-        raise ValueError(f"For avg_pool1d, input must have 3 dim, but got {len(input_x.shape)}.")
-
     _check_avgpool_1d_type_and_int(kernel_size, stride, ceil_mode, count_include_pad)
     if isinstance(padding, int):
         check_non_negative_int(padding, 'padding', 'avg_pool1d')
@@ -493,9 +490,6 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     if not isinstance(input_x, (Tensor, Tensor_)):
         raise TypeError("For avg_pool2d, the input input_x must be tensor")
 
-    if len(input_x.shape) != 4:
-        raise ValueError(f"For avg_pool2d, input must have 4 dim, but got {len(input_x.shape)}.")
-
     kernel_size = _check_avgpool_2d_kernel_size(kernel_size)
     stride = _check_avgpool_2d_stride(stride)
     padding = _check_avgpool_2d_padding(padding)
@@ -594,9 +588,6 @@ def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     """
     if not isinstance(input_x, (Tensor, Tensor_)):
         raise TypeError("For avg_pool3d, the input input_x must be tensor")
-
-    if len(input_x.shape) != 5:
-        raise ValueError(f"For avg_pool3d, input must have 5 dim, but got {len(input_x.shape)}.")
 
     _check_avg_pool3d_padding(padding)
 
@@ -6676,13 +6667,6 @@ def channel_shuffle(x, groups):
     return y
 
 
-@_primexpr
-def _shape_check(in_shape, dim_list, prim_name=None):
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if len(in_shape) not in dim_list:
-        raise ValueError(f"{msg_prefix} input must has dim in {dim_list}, but got {len(in_shape)}")
-
-
 def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
     r"""
     Applying 1D LPPooling operation on an input Tensor can be regarded as forming a 1D input plane.
@@ -6744,7 +6728,6 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
           [51. 54.]
           [63. 66.]]]
     """
-    _shape_check(x.shape, [2, 3], "lp_pool1d")
     if isinstance(norm_type, (float, int)):
         norm_type = float(norm_type)
     else:
@@ -6837,7 +6820,6 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
            [ 999. 1008. 1017.]]]]
 
     """
-    _shape_check(x.shape, [4], "lp_pool2d")
     if isinstance(norm_type, (float, int)):
         norm_type = float(norm_type)
     else:
