@@ -33,7 +33,6 @@ std::vector<PrimitivePtr> GraphKernelExpanderCloud::GetExpanderOps() {
   std::vector<OpWithLevel> expand_ops_with_level = {
     {kAllTarget, OpLevel_0, prim::kPrimAddN},
     {kAllTarget, OpLevel_0, prim::kPrimAssignAdd},
-    {kAllTarget, OpLevel_0, prim::kPrimErfc},
     {kAllTarget, OpLevel_1, prim::kPrimExpandDims},
     {kAllTarget, OpLevel_0, prim::kPrimGeLU},
     {kAllTarget, OpLevel_0, prim::kPrimGelu},
@@ -46,6 +45,7 @@ std::vector<PrimitivePtr> GraphKernelExpanderCloud::GetExpanderOps() {
     {kAscendDevice, OpLevel_0, prim::kPrimClipByNormNoDivSum},
     {kAscendDevice, OpLevel_1, prim::kSoftmaxGradExt},
     {kAscendDevice, OpLevel_0, prim::kFusedMulAdd},
+    {kGPUDevice, OpLevel_0, prim::kPrimErfc},
     {kGPUDevice, OpLevel_1, prim::kPrimAdamWeightDecay},
     {kGPUDevice, OpLevel_1, prim::kPrimBatchMatMul},
     {kGPUDevice, OpLevel_0, prim::kPrimBiasAdd},
