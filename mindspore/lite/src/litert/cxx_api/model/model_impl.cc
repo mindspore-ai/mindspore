@@ -272,7 +272,13 @@ Status ModelImpl::Build() {
 
   auto create_callback = CreateTrainSessionCallbackHolder();
   if (create_callback != nullptr) {
-    auto session = create_callback(graph_->graph_data_, cfg_, inner_context);
+    auto train_context = ContextUtils::Convert(context_.get());
+    if (train_context == nullptr) {
+      MS_LOG(ERROR) << "Failed to convert Context to Lite Context for train.";
+      return kLiteNullptr;
+    }
+
+    auto session = create_callback(graph_->graph_data_, cfg_, train_context);
     if (session != nullptr) {
       session_ = session;
       MS_LOG(DEBUG) << "Build model success.";

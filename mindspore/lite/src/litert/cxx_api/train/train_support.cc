@@ -81,7 +81,7 @@ std::shared_ptr<lite::LiteSession> CreateTrainSession(std::shared_ptr<Graph::Gra
 
     ret = session->CompileTrainGraph(model);
     if (ret != mindspore::lite::RET_OK) {
-      MS_LOG(ERROR) << "Compiling Train Graph session failed";
+      MS_LOG(WARNING) << "Compiling Train Graph session failed";
       return nullptr;
     }
     return shared_session;
