@@ -104,6 +104,7 @@ const char PYTHON_MOD_GET_CONST_ABS[] = "get_const_abs";
 const char PYTHON_MOD_GET_CONST_ROUND[] = "get_const_round";
 const char PYTHON_MOD_GET_CONST_LEN[] = "get_const_len";
 const char PYTHON_MOD_CHECK_ATTRS[] = "check_attrs";
+const char PYTHON_MOD_CHECK_IS_SUBCLASS[] = "check_is_subclass";
 
 const char PYTHON_PARSE_GET_ARGS[] = "get_args";
 const char PYTHON_PARSE_GET_ARGS_DEFAULT_VALUES[] = "get_args_default_values";

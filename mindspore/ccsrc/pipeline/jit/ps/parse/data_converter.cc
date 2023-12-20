@@ -228,7 +228,8 @@ ValuePtr ConvertTuple(const py::object &obj, bool use_signature) {
     }
     value_list.push_back(out);
   }
-  return std::make_shared<ValueTuple>(value_list);
+  auto res = std::make_shared<ValueTuple>(value_list);
+  return res;
 }
 
 bool IsNamedTuple(const py::object &obj) { return py::hasattr(obj, "_fields") && py::isinstance<py::tuple>(obj); }
@@ -288,7 +289,8 @@ ValuePtr ConvertList(const py::object &obj, bool use_signature) {
     }
     value_list.push_back(out);
   }
-  return std::make_shared<ValueList>(value_list);
+  auto res = std::make_shared<ValueList>(value_list);
+  return res;
 }
 
 ValuePtr ConvertStubList(const py::object &obj, bool use_signature) {
@@ -347,7 +349,9 @@ ValuePtr ConvertDict(const py::object &obj, bool use_signature) {
     }
     (void)key_values.emplace_back(key, value);
   }
-  return std::make_shared<ValueDictionary>(key_values);
+  auto res = std::make_shared<ValueDictionary>(key_values);
+  res->set_user_data<py::object>("origin_object", std::make_shared<py::object>(obj));
+  return res;
 }
 
 ValuePtr ConvertModuleNameSpace(const py::object &obj) {
