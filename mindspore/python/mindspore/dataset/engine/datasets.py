@@ -1030,20 +1030,28 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
+            >>> # Create a dataset with 10 elements
             >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
+            >>> ori_size = dataset.get_dataset_size()
             >>>
-            >>> # Create a dataset where the dataset is repeated for 50 epochs
+            >>> # Repeat the dataset 50 times.
             >>> dataset = dataset.repeat(50)
+            >>> repeated_size = dataset.get_dataset_size()
+            >>> print("ori_size", ori_size, ", repeated_size", repeated_size)
+            ori_size 10 , repeated_size 500
             >>>
-            >>> # Create a dataset where each epoch is shuffled individually
-            >>> dataset = dataset.shuffle(10)
-            >>> dataset = dataset.repeat(50)
+            >>> # Since the original dataset size is less than batch_size, thus no data is returned
+            >>> dataset1 = ds.GeneratorDataset([i for i in range(10)], "column1")
+            >>> dataset1 = dataset1.batch(batch_size=20, drop_remainder=True)
+            >>> dataset1 = dataset1.repeat(6)
             >>>
-            >>> # Create a dataset where the dataset is first repeated for
-            >>> # 50 epochs before shuffling. The shuffle operation will treat
-            >>> # the entire 50 epochs as one big dataset.
-            >>> dataset = dataset.repeat(50)
-            >>> dataset = dataset.shuffle(10)
+            >>> # Repeat the original dataset to 60 elements, thus 3 batches are returned
+            >>> dataset2 = ds.GeneratorDataset([i for i in range(10)], "column1")
+            >>> dataset2 = dataset2.repeat(6)
+            >>> dataset2 = dataset2.batch(batch_size=20, drop_remainder=True)
+            >>> print("dataset1 size", dataset1.get_dataset_size(), ", dataset2 size", dataset2.get_dataset_size())
+            dataset1 size 0 , dataset2 size 3
         """
         return RepeatDataset(self, count)
 
