@@ -72,7 +72,7 @@ class ForParser(Parser):
             return
         iter_code = astunparse.unparse(node.iter)
         if not iter_code.startswith(EVAL_WHITE_LIST):
-            logger.warning(
+            logger.info(
                 f"For MindSpore Rewrtie, illegal iteration condition for For node, it must start with{EVAL_WHITE_LIST}")
             return
         if "self" in iter_code:
@@ -82,7 +82,7 @@ class ForParser(Parser):
         except (NameError, TypeError) as e:
             _info = f"For MindSpore Rewrtie, when eval '{iter_code}' by using JIT Fallback feature, " \
                          f"an error occurred: {str(e)}"
-            logger.warning(_info)
+            logger.info(_info)
             stree.try_append_python_node(node, node, node_manager)
             return
 
@@ -115,13 +115,13 @@ class ForParser(Parser):
                 stree.on_change(Event.CodeChangeEvent)
             return
         if isinstance(iter_obj, range):
-            logger.warning("For MindSpore Rewrite, range not support.")
+            logger.info("For MindSpore Rewrite, range not support.")
         elif isinstance(iter_obj, zip):
-            logger.warning("For MindSpore Rewrite, zip not support.")
+            logger.info("For MindSpore Rewrite, zip not support.")
         elif isinstance(iter_obj, enumerate):
-            logger.warning("For MindSpore Rewrite, enumerate not support.")
+            logger.info("For MindSpore Rewrite, enumerate not support.")
         else:
-            logger.warning(f"For MindSpore Rewrite, not supported type: {type(iter_obj).__name__}")
+            logger.info(f"For MindSpore Rewrite, not supported type: {type(iter_obj).__name__}")
         stree.try_append_python_node(node, node, node_manager)
         return
 
