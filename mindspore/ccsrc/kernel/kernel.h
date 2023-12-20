@@ -655,7 +655,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   void CalculateMemSize();
 
   // Check whether need to transpose host infer shape to device shape.
-  bool NeedTransposeToDeviceShape() const { return format_ != Format::DEFAULT_FORMAT && format_ != Format::NCHW; }
+  bool NeedTransposeToDeviceShape() const noexcept;
 
   // Transpose host infer shape to device shape according format.
   void TransposeToDeviceShape() const;
