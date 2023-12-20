@@ -54,6 +54,17 @@ Status CropAndResizeInfo::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
+Status CropAndResizeInfo::CheckStrategyForDynamicShape(const StrategyPtr &strategy) {
+  Strategies strategies = strategy->GetInputDim();
+  auto x_strategy = strategies[0];
+  if (x_strategy[0] != 1 && inputs_shape_[0][0] == -1) {
+    MS_LOG(ERROR) << name_ << ": the dim 0 of first input can not be split if it's dynamic shape, the strategy is "
+                  << ShapesToString(strategies) << ", the inputs' shape: " << ShapesToString(inputs_shape_);
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
 Status CropAndResizeInfo::InferDevMatrixShape() {
   dev_matrix_shape_.clear();
 

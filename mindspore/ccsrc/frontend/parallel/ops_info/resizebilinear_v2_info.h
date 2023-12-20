@@ -49,6 +49,7 @@ class ResizeBilinearV2Info : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status InferMirrorOps() override;
+  Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
 
   std::vector<int64_t> size_;
   std::vector<int64_t> slice_size_;

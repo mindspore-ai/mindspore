@@ -20,16 +20,8 @@
 
 namespace mindspore {
 namespace parallel {
-Status FillV2Info::InferAttrs() {
-  if (infer_attrs_completed_) {
-    return SUCCESS;
-  }
-  if (GetAttrs() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": GetAttrs failed.";
-    return FAILED;
-  }
+Status FillV2Info::GetAttrs() {
   ResetInputsShape();
-  infer_attrs_completed_ = true;
   fake_inputs_shape_ = inputs_shape_;
   MS_LOG(INFO) << name_ << ": The origin shape is " << inputs_shape_;
   for (size_t i = 0; i < inputs_shape_[0].size(); ++i) {

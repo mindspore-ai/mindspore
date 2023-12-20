@@ -175,3 +175,20 @@ def test_avgpool3d_valid_mode_output_shape_cannot_div_by_strategy():
                        strategy1=strategy1, strategy2=strategy2)
     with pytest.raises(RuntimeError):
         compile_net(net, _x, _b)
+
+
+def test_avgpool3d_dynamic_shape_constraint():
+    """
+    Feature: test avgpool3d dynamic shape
+    Description: shard d/h, need exchange the overlap
+    Expectation: compile failed
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=7, full_batch=False)
+    strategy1 = ((1, 1, 2, 4, 1),)
+    strategy2 = ((1, 1, 2, 4, 1),)
+    weight = Tensor(np.ones([16, 16, 16]), dtype=ms.float32)
+    net = AvgPool3DNet(weight, kernel_size=3, pad_mode="pad", strides=1, pad=1,
+                       strategy1=strategy1, strategy2=strategy2)
+    input_x = Tensor(shape=[None, 16, 16, 16, 16], dtype=ms.float32)
+    with pytest.raises(RuntimeError):
+        compile_net(net, input_x, _b)

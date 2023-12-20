@@ -343,6 +343,42 @@ Status OperatorInfo::GetLayoutConfig() {
   return CheckLayoutConfigBase();
 }
 
+bool OperatorInfo::IsDynamicShape() {
+  for (auto &input_shape : inputs_shape_) {
+    auto in_it = std::find_if(input_shape.cbegin(), input_shape.cend(), [&](const int64_t ele) { return ele == -1; });
+    if (in_it != input_shape.end()) {
+      return True;
+    }
+  }
+
+  for (auto &output_shape : outputs_shape_) {
+    auto out_it =
+      std::find_if(output_shape.cbegin(), output_shape.cend(), [&](const int64_t ele) { return ele == -1; });
+    if (out_it != output_shape.end()) {
+      return True;
+    }
+  }
+  return False;
+}
+
+bool OperatorInfo::IsDynamicRank() {
+  for (auto &input_shape : inputs_shape_) {
+    auto in_it = std::find_if(input_shape.cbegin(), input_shape.cend(), [&](const int64_t ele) { return ele == -2; });
+    if (in_it != input_shape.end()) {
+      return True;
+    }
+  }
+
+  for (auto &output_shape : outputs_shape_) {
+    auto out_it =
+      std::find_if(output_shape.cbegin(), output_shape.cend(), [&](const int64_t ele) { return ele == -2; });
+    if (out_it != output_shape.end()) {
+      return True;
+    }
+  }
+  return False;
+}
+
 Status OperatorInfo::InferAttrs() {
   if (infer_attrs_completed_) {
     return SUCCESS;
@@ -357,6 +393,16 @@ Status OperatorInfo::InferAttrs() {
   }
 
   if (is_layout_config_ && CheckLayoutConfig() != SUCCESS) {
+    return FAILED;
+  }
+
+  is_dynamic_shape_ = IsDynamicShape();
+  is_dynamic_rank_ = IsDynamicRank();
+
+  if (is_dynamic_rank_) {
+    MS_LOG(ERROR) << name_
+                  << ": it does not support dynamic rank now, the inupts' shape: " << ShapesToString(inputs_shape_)
+                  << ", the outputs' shape: " << ShapesToString(outputs_shape_);
     return FAILED;
   }
 
@@ -1028,6 +1074,11 @@ Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_st
     // must be after InferAttrs()
     if (CheckStrategy(in_strategy) != SUCCESS) {
       FILTER_LOG(is_auto_parallel_) << name_ << ": CheckStrategy failed.";
+      return FAILED;
+    }
+
+    if (is_dynamic_shape_ && CheckStrategyForDynamicShape(in_strategy) != SUCCESS) {
+      MS_LOG(ERROR) << name_ << ": Check strategy for dynamic shape failed";
       return FAILED;
     }
     strategy_ = in_strategy;

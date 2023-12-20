@@ -257,12 +257,13 @@ class OperatorInfo {
 
   virtual void InferReplaceOps() {}
   virtual Status CheckOutputStrategy(const StrategyPtr &out_strategy);
+  virtual Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) { return SUCCESS; }
   Status CheckStrategyByVector(const Shapes &strategy, const Shapes &inputs_shape);
   Status CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape);
   void SetRepeatedCalcDevMatrix();
   void ResetTensorMapIfRepeatedCalc();
   Status CreateGroupByDim(size_t axis, std::vector<Group> *group);
-  virtual Status InferAttrs();
+  Status InferAttrs();
   void ResetQueueMember();
   Status InitWithAutoRepeatCalc(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy);
   Status InitWithTensorLayout(const std::vector<std::shared_ptr<TensorLayout>> &in_tensor_layouts,
@@ -270,6 +271,8 @@ class OperatorInfo {
   Status InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy);
   Status InferRepeatedCalcInfo();
   Status InferVirtualDivOps();
+  bool IsDynamicShape();
+  bool IsDynamicRank();
 
   // Calculate the number of repeated calculations for the output by the number of devices and the output tensor map.
   // The tensor map of Outputs[0] is used by default. If there are multiple outputs, need to identify which output
@@ -319,6 +322,8 @@ class OperatorInfo {
   int64_t stage_device_size_ = 0;
   bool infer_attrs_completed_ = false;
   bool is_layout_config_ = false;
+  bool is_dynamic_shape_ = false;
+  bool is_dynamic_rank_ = false;
   Shapes strategy_from_layout_;
 
   bool is_auto_parallel_ = false;      // false: semi_auto_parallel; true: auto_parallel

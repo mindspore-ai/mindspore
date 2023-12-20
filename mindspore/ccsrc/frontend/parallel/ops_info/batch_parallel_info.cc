@@ -52,6 +52,15 @@ Status BatchParallelInfo::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
+Status BatchParallelInfo::CheckStrategyForDynamicShape(const StrategyPtr &) {
+  if (need_replace_input_) {
+    MS_LOG(ERROR) << name_ << ": it does not support dynamic shape if it need to replace input, the inputs's shape: "
+                  << ShapesToString(inputs_shape_);
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
 Status BatchParallelInfo::InferDevMatrixShape() {
   dev_matrix_shape_.push_back(stage_device_size_);
 

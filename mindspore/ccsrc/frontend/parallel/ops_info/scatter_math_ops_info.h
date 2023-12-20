@@ -48,6 +48,7 @@ class ScatterMathOpsInfo : public ScatterOpsInfo {
   Status InferTensorMap() override;
   virtual Status ComputeReplaceGraph(const CNodePtr &cnode);
   Status InferBias();
+  Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
   bool do_replace_graph_ = false;
   int64_t bias_ = 0;
   int64_t slice_size_ = 0;

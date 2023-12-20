@@ -1141,6 +1141,18 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
+Status GatherInfo::CheckStrategyForDynamicShape(const StrategyPtr &strategy) {
+  Strategies strategies = strategy->GetInputDim();
+  auto param_strategy = strategies[0];
+  if (param_strategy[axis_] != 1 && inputs_shape_[0][axis_] == -1) {
+    MS_LOG(ERROR) << name_ << ": the axis dim of first input can not be split if it's dynamic shape, the strategy is "
+                  << ShapesToString(strategies) << ", the inputs' shape: " << ShapesToString(inputs_shape_)
+                  << ", the axis " << axis_;
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
 Status GatherInfo::CheckOutputStrategy(const StrategyPtr &out_strategy) {
   if (out_strategy == nullptr) {
     MS_LOG(INFO) << name_ << ": The output strategy is null";

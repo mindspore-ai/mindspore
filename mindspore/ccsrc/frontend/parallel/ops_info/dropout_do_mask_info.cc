@@ -56,6 +56,12 @@ Status DropoutDoMaskInfo::CheckStrategy(const StrategyPtr &strategy) {
   return CheckStrategyValue(strategy, input_shape);
 }
 
+Status DropoutDoMaskInfo::CheckStrategyForDynamicShape(const StrategyPtr &strategy) {
+  MS_LOG(ERROR) << name_
+                << ": it does not support dynamic shape now, the inputs's shape: " << ShapesToString(inputs_shape_);
+  return FAILED;
+}
+
 Status DropoutDoMaskInfo::InferDevMatrixShape() {
   if (strategy_ == nullptr) {
     MS_LOG(ERROR) << name_ << ": The strategy is null";

@@ -95,10 +95,22 @@ Status GatherDInfo::CheckStrategy(const StrategyPtr &strategy) {
     }
   }
 
+  axis_shard_ = false;
   if (input_strategy[dim_] != 1) {
     axis_shard_ = true;
   }
 
+  return SUCCESS;
+}
+
+Status GatherDInfo::CheckStrategyForDynamicShape(const StrategyPtr &strategy) {
+  std::vector<Dimensions> stra = strategy->GetInputDim();
+  if (axis_shard_ && (inputs_shape_[0][dim_] == -1)) {
+    MS_LOG(ERROR) << name_ << ": it does not support the dim-axis is split if the dim is dynamic, the strategy: "
+                  << ShapesToString(stra) << ", the inputs' shape: " << ShapesToString(inputs_shape_)
+                  << ", the axis: " << dim_;
+    return FAILED;
+  }
   return SUCCESS;
 }
 

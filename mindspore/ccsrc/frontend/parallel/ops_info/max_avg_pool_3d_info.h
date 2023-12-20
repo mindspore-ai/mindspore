@@ -138,6 +138,7 @@ class MaxPool3DInfo : public OperatorInfo {
   virtual int64_t ComputeOverlapBottomSizeByRankBias(int64_t rank_bias);
   virtual int64_t ComputeOverlapLeftSizeByRankBias(int64_t rank_bias);
   virtual int64_t ComputeOverlapRightSizeByRankBias(int64_t rank_bias);
+  Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
 
  private:
   std::vector<int64_t> CalculatePadListInSameMode();

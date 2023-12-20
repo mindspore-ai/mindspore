@@ -378,6 +378,21 @@ Status FlashAttentionScoreInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
+Status FlashAttentionScoreInfo::CheckStrategyForDynamicShape(const StrategyPtr &) {
+  for (auto &cnode : cnodes_) {
+    // If DropoutGenMask -> Reshape -> FlashAttentionScore
+    auto reshape_node = cnode->input(ops::kFlashAttentionScoreInputDropMaskIndex + 1);
+    MS_EXCEPTION_IF_NULL(reshape_node);
+    if (!IsPrimitiveCNode(reshape_node, prim::kPrimReshape)) {
+      continue;
+    }
+
+    MS_LOG(ERROR)
+      << name_ << ": it does not support dynamic shape if it need to replace dst-shape for reshape, the inputs' shape: "
+      << ShapesToString(inputs_shape_);
+    return FAILED;
+  }
+
   return SUCCESS;
 }
 

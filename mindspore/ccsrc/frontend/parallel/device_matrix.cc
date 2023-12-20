@@ -199,6 +199,17 @@ std::string ShapeToString(const Shape &shape) {
   return str + "]";
 }
 
+std::string ShapesToString(const Shapes &shapes) {
+  std::string str = "[";
+  for (size_t i = 0; i < shapes.size(); ++i) {
+    str += ShapeToString(shapes[i]);
+    if (i < shapes.size() - 1) {
+      str += ", ";
+    }
+  }
+  return str + "]";
+}
+
 std::string ListToString(const RankList &list) {
   std::string str = "[";
   for (auto &element : list) {

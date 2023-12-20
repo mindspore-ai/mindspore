@@ -15,6 +15,7 @@
 """ test scatter update """
 import numpy as np
 import pytest
+import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, Model, Parameter
 from mindspore.ops import operations as P
@@ -107,6 +108,22 @@ class Net3(nn.Cell):
         out = self.scatter_ops(self.inputs1, self.indices, out)
         out = self.add(x, out)
         out = self.relu(out)
+        return out
+
+
+class Net4(nn.Cell):
+    """Net definition"""
+
+    def __init__(self, strategy1=None, ops_type="Add"):
+        super(Net4, self).__init__()
+        self.indices = Tensor(np.ones([4, 3]).astype(np.int32))
+        self.updates = Tensor(np.ones([4]).astype(np.float32))
+        self.scatter_ops = tensor_scatter_ops_map.get(ops_type).shard(strategy1)
+        self.relu = P.ReLU()
+
+    def construct(self, inputs, x):
+        inputs = self.relu(inputs)
+        out = self.scatter_ops(inputs, self.indices, self.updates)
         return out
 
 
@@ -290,3 +307,19 @@ def test_tensor_scatter_mul_auto_parallel():
         'Equal-0': ['Sub-1', 'Minimum-0']
     }
     assert validator.check_graph_structure(sub_graph)
+
+
+def test_scatter_nd_add_dynamic_constraint():
+    """
+    Feature: distribute operator scatter_nd_add dynamic shape
+    Description: need replace graph
+    Expectation: compile failed
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, full_batch=False)
+    input1 = Tensor(shape=[None, 64, 128], dtype=ms.float32)
+    input2 = Tensor(np.ones([32, 64, 128]).astype(np.float32))
+    strategy1 = ((2, 2, 2), (1, 1), (1,))
+    net = Net4(strategy1, ops_type="Add")
+    with pytest.raises(RuntimeError):
+        compile_net(net, input1, input2)

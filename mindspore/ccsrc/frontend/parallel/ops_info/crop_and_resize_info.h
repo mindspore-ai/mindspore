@@ -46,6 +46,7 @@ class CropAndResizeInfo : public OperatorInfo {
   Status InferTensorMap() override;
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferMirrorOps() override;
+  Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
 
  private:
   Status InferBias();
