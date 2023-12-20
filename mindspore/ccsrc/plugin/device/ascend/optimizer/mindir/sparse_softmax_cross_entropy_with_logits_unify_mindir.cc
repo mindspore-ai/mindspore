@@ -219,6 +219,16 @@ AnfNodePtr GetAxisNode(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   return axis_node;
 }
 
+AnfNodePtr GetKeepDimsNode(const FuncGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+
+  auto keep_dims_node = CreateValueNode(MakeValue(false), kNumberTypeBool, true);
+  kernel_graph->AddValueNodeToGraph(keep_dims_node);
+  return keep_dims_node;
+}
+
 CNodePtr CreateReduceMean(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_node,
                           const AnfNodePtr &softmax_output_node, const PatternProcessPass &pass) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -227,16 +237,17 @@ CNodePtr CreateReduceMean(const FuncGraphPtr &graph, const CNodePtr &sparse_soft
   CheckCNodeInputSize(sparse_softmax_node, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
   auto axis_node = GetAxisNode(graph, softmax_output_node);
   MS_EXCEPTION_IF_NULL(axis_node);
+  auto keep_dims_node = GetKeepDimsNode(graph);
+  MS_EXCEPTION_IF_NULL(keep_dims_node);
 
   auto reduce_primitive = std::make_shared<Primitive>(kReduceMeanOpName);
   std::vector<std::string> input_names = {"x", "axis"};
   std::vector<std::string> output_names = {"y"};
   reduce_primitive->set_attr(kAttrInputNames, MakeValue(input_names));
   reduce_primitive->set_attr(kAttrOutputNames, MakeValue(output_names));
-  reduce_primitive->set_attr(kAttrKeepDims, MakeValue(false));
 
   std::vector<AnfNodePtr> inputs;
-  inputs = {NewValueNode(reduce_primitive), softmax_output_node, axis_node};
+  inputs = {NewValueNode(reduce_primitive), softmax_output_node, axis_node, keep_dims_node};
   auto reduce_node = pass.NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(reduce_node);
   reduce_node->set_scope(sparse_softmax_node->scope());
