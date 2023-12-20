@@ -23,6 +23,9 @@ using UnInitHugeMemThreadLocalCast = void (*)(void *, bool);
 using ReleaseHugeMemCast = void (*)(void *, bool);
 }  // namespace
 
+static std::mutex init_mutex;
+static bool aclnn_init = false;
+
 OpApiDefaultResource &OpApiDefaultResource::GetInstance() {
   static OpApiDefaultResource instance;
   return instance;
@@ -82,5 +85,44 @@ ShapeVector UpdateOutputShape(const aclTensor *tensor) {
   delete view_dims;
   view_dims = nullptr;
   return output_shape;
+}
+
+void AclnnInit() {
+  std::lock_guard<std::mutex> lock(init_mutex);
+  if (aclnn_init) {
+    return;
+  }
+  static const auto aclnn_init_func = GetOpApiFunc("aclnnInit");
+  if (aclnn_init_func == nullptr) {
+    MS_LOG(EXCEPTION) << "aclnnInit not in " << GetOpApiLibName() << ", please check!";
+  }
+  using aclnnInitFunc = int (*)(const char *);
+  auto aclnnInit = reinterpret_cast<aclnnInitFunc>(aclnn_init_func);
+
+  auto ret = aclnnInit(nullptr);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "aclnnInit failed!";
+  }
+  aclnn_init = true;
+  MS_LOG(DEBUG) << "aclnn init success!";
+}
+
+void AclnnFinalize() {
+  if (!aclnn_init) {
+    return;
+  }
+  static const auto aclnn_finalize_func = GetOpApiFunc("aclnnFinalize");
+  if (aclnn_finalize_func == nullptr) {
+    MS_LOG(EXCEPTION) << "aclnnFinalize not in " << GetOpApiLibName() << ", please check!";
+  }
+  using aclnnFinalizeFunc = int (*)();
+  auto aclnnFinalize = reinterpret_cast<aclnnFinalizeFunc>(aclnn_finalize_func);
+
+  auto ret = aclnnFinalize();
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "aclnnFinalize failed!";
+  }
+  aclnn_init = false;
+  MS_LOG(DEBUG) << "aclnn finalize success!";
 }
 }  // namespace mindspore::transform

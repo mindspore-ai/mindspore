@@ -104,5 +104,7 @@ bool IsCustomCNode(const mindspore::AnfNodePtr &node) { return true; }
 std::string TransformUtil::NormOpName(const std::string &anf_name) { return ""; }
 GeDataType TransformUtil::ConvertDataType(const MeDataType &type) { return GeDataType::DT_UNDEFINED; }
 bool ConvertCheck(const AnfNodePtr &node) { return true; }
+void AclnnFinalize() {}
+void AclnnInit() {}
 }  // namespace transform
 }  // namespace mindspore
