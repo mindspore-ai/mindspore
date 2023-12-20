@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_OPS_CAST_ASCEND_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_OPS_CAST_ASCEND_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_PYBOOST_OPS_CAST_CPU_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_PYBOOST_OPS_CAST_CPU_H_
 
 #include "kernel/pyboost/ops/cast.h"
 #include "ir/tensor.h"
@@ -24,16 +24,16 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-class CastAscend : public pyboost::Cast {
+class CastCPU : public pyboost::Cast {
  public:
-  CastAscend() = default;
-  ~CastAscend() = default;
+  CastCPU() = default;
+  ~CastCPU() = default;
 
   tensor::TensorPtr Call(const TensorPtr &input_tensor, const TypePtr &type) override;
 };
 
-MS_REG_PYBOOST_OP(Ascend, Cast);
+MS_REG_PYBOOST_OP(CPU, Cast);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_OPS_CAST_ASCEND_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_PYBOOST_OPS_CAST_CPU_H_
