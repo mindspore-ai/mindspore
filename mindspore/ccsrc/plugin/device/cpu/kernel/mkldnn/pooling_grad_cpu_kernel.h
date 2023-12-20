@@ -52,18 +52,9 @@ class PoolingGradCpuKernelMod : public MKLCpuKernelMod {
     static std::unordered_map<std::string, std::vector<KernelAttr>> support_list = {
       {kAvgPoolGrad,
        {{KernelAttr()
-           .AddInputAttr(kNumberTypeFloat16)                   // x
-           .AddInputAttr(kNumberTypeFloat16)                   // out
-           .AddInputAttr(kNumberTypeFloat16)                   // dout
-           .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // kernel_size
-           .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // strides
-           .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // pad_mode
-           .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // data_format
-           .AddOutputAttr(kNumberTypeFloat16)},
-        {KernelAttr()
-           .AddInputAttr(kNumberTypeFloat32)
-           .AddInputAttr(kNumberTypeFloat32)
-           .AddInputAttr(kNumberTypeFloat32)
+           .AddInputAttr(kNumberTypeFloat32)                   // x
+           .AddInputAttr(kNumberTypeFloat32)                   // out
+           .AddInputAttr(kNumberTypeFloat32)                   // dout
            .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // kernel_size
            .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // strides
            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // pad_mode
