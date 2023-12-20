@@ -3077,9 +3077,8 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
       MS_EXCEPTION_IF_NULL(local_abs_val);
       MS_EXCEPTION_IF_NULL(name);
       auto py_data_name = py::str(ValueToPyData(name->BuildValue()));
-      bool from_global = check_list_dict_inplace_ && fallback::HasCreateInGraphInExtraInfoHolder(local_abs) &&
-                         !fallback::GetCreateInGraphFromExtraInfoHolder(local_abs);
-      if (local_abs_val->ContainsValueAny() || from_global) {
+      bool has_python_obj = check_list_dict_inplace_ && fallback::HasObjInExtraInfoHolder(local_abs);
+      if (local_abs_val->ContainsValueAny() || has_python_obj) {
         const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
         if (allow_fallback_runtime) {
           MS_LOG(INFO) << "When using JIT Fallback to handle script '" << script

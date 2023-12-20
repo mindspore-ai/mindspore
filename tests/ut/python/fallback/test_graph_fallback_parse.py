@@ -230,9 +230,11 @@ def test_parse_subscript_2():
             y = x[np.array(0)]
             return y
 
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     net = Network()
     out = net()
     assert out.asnumpy() == 11
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_parse_unary_op():

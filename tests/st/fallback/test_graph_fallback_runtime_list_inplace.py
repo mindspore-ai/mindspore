@@ -1586,3 +1586,34 @@ def test_list_inplace_with_same_value_list():
     ret1, ret2 = list_func(z)
     assert id(ret1) == id(net.y)
     assert id(ret2) == id(z)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_mixed():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(input1, input2):
+        x1 = [[1], [2], [3], [4]]
+        for i in range(1, len(x1)):
+            y = x1[Tensor([i])]
+            y.extend([4])
+            x1.insert(1, [5])
+            x1.reverse()
+            z = x1[input1]
+            z.extend(input2[i])
+            x1.pop()
+        return x1
+
+    input1 = Tensor([2])
+    input2 = [Tensor([1]), Tensor([2]), Tensor([3]), Tensor([4])]
+    out = foo(input1, input2)
+    exp = [[5, 4], [3, Tensor(3)], [2, 4, Tensor(2), 4, Tensor(4)], [5]]
+    for i in list(range(len(out))):
+        assert out[i] == exp[i]

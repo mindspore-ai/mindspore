@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback buildin python function sum"""
+import os
 import pytest
 import numpy as np
 from mindspore import jit, Tensor
@@ -98,8 +99,10 @@ def test_fallback_sum_with_x_numpy_array_n_default_2():
     def foo():
         x = sum(np.array([[1, 1], [2, 2]]))
         return Tensor(x)
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     out = foo()
     assert np.allclose(out.asnumpy(), np.array([3, 3]))
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_fallback_sum_with_x_list_n_not_default():
@@ -184,8 +187,10 @@ def test_fallback_sum_with_x_numpy_array_n_not_default_2():
         x = sum(np.array([[1, 1], [2, 2]]), [3, 4])
         return Tensor(x)
 
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     out = foo()
     assert np.allclose(out.asnumpy(), np.array([6, 7]))
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_fallback_sum_with_x_not_iterable_error():
