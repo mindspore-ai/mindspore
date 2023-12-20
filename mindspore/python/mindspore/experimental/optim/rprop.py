@@ -128,6 +128,7 @@ class Rprop(Optimizer):
         self.step_size = self.parameters.clone(prefix="step_size", init='zeros')
         self.step = Parameter(Tensor(0, mstype.int32), "step")
         self.increase_tensor = Tensor(1, mstype.int32)
+        self.op_cast = P.Cast()
 
     def construct(self, gradients):
         op_assignadd(self.step, self.increase_tensor)
@@ -145,7 +146,7 @@ class Rprop(Optimizer):
             end_id = self.group_start_id[group_id + 1]
 
             params = self.parameters[start_id: end_id]
-            grads = gradients[start_id: end_id] if not maximize else -gradients[start_id: end_id]
+            grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
             prev = self.prev[start_id: end_id]
             step_size = self.step_size[start_id: end_id]
             self.hyper_map(F.partial(_rprop_opt, etaminus, etaplus, step_size_min, step_size_max, self.step, lr),

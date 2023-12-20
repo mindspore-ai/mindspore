@@ -140,7 +140,7 @@ class SGD(Optimizer):
             momentum = self.op_cast(group.get("momentum"), mstype.float32)
             start_id = self.group_start_id[group_id]
             end_id = self.group_start_id[group_id+1]
-            grads = gradients[start_id: end_id] if not maximize else -gradients[start_id: end_id]
+            grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
             self.hyper_map(F.partial(_sgd_opt, opt, momentum, lr), grads,
                            self.parameters[start_id: end_id], self.accum[start_id: end_id],
                            self.stat[start_id: end_id])

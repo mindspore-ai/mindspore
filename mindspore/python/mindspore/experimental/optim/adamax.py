@@ -136,6 +136,7 @@ class Adamax(Optimizer):
         self.exp_inf = self.parameters.clone(prefix="exp_inf", init='zeros')
         self.increase_tensor = Tensor(1, mstype.int32)
         self.assignadd = P.AssignAdd()
+        self.op_cast = P.Cast()
 
     def construct(self, gradients):
         self.assignadd(self.step_t, self.increase_tensor)
@@ -151,7 +152,7 @@ class Adamax(Optimizer):
             start_id = self.group_start_id[group_id]
             end_id = self.group_start_id[group_id + 1]
             params = self.parameters[start_id: end_id]
-            grads = gradients[start_id: end_id] if not maximize else -gradients[start_id: end_id]
+            grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
             grads = self._decay_weight(group["weight_decay"], params, grads)
             exp_avg = self.exp_avg[start_id: end_id]
             exp_inf = self.exp_inf[start_id: end_id]

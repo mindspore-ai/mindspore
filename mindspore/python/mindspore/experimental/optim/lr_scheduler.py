@@ -1277,7 +1277,7 @@ class CosineAnnealingLR(LRScheduler):
     r"""
     Set the learning rate of each parameter group using a cosine annealing lr
     schedule. Where :math:`\eta_{max}` is set to the initial lr, :math:`\eta_{min}` is the minimum value
-    for learning rate, :math:`\eta_{t}` is the current learning rate, :math:`\T_{max}` is iteration number of cosine
+    for learning rate, :math:`\eta_{t}` is the current learning rate, :math:`T_{max}` is iteration number of cosine
     function, and :math:`T_{cur}` is the number of epochs since the last restart in SGDR.
 
     .. math::

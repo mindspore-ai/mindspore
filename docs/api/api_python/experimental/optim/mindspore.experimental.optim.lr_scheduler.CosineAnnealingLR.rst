@@ -3,7 +3,7 @@ mindspore.experimental.optim.lr_scheduler.CosineAnnealingLR
 
 .. py:class:: mindspore.experimental.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max, eta_min=0, last_epoch=-1)
 
-    使用余弦退火对优化器参数组的学习率进行改变。下述公式中， :math:`\eta_{max}` 为初始学习率，:math:`\eta_{min}` 为学习率变化的最小值，:math:`\T_{max}` 为余弦函数的半周期，:math:`\T_{cur}` 为当前周期内的迭代数，:math:`\eta_{t}` 为当前学习率。
+    使用余弦退火对优化器参数组的学习率进行改变。下述公式中， :math:`\eta_{max}` 为初始学习率，:math:`\eta_{min}` 为学习率变化的最小值，:math:`T_{max}` 为余弦函数的半周期，:math:`T_{cur}` 为当前周期内的迭代数，:math:`\eta_{t}` 为当前学习率。
 
     .. math::
         \begin{aligned}
