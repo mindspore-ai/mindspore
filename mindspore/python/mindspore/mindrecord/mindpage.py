@@ -80,7 +80,7 @@ class MindPage:
     @property
     def category_field(self):
         """
-        Getter function for category fields.
+        Setter / Getter function for category fields.
 
         Note:
             Please refer to the Examples of :class:`mindspore.mindrecord.MindPage` .
