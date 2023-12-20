@@ -55,3 +55,4 @@ endif()
 
 #add_subdirectory(bisheng)
 add_subdirectory(aicore)
+add_subdirectory(ascendc)
