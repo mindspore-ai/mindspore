@@ -186,7 +186,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"__floordiv__", std::string("floordiv")},                          // C.floordiv
        {"__mod__", std::string("mod")},                                    // C.mod
        {"__pow__", std::string("pow_")},                                   // C.pow
-       {"__floor__", std::string("array_floor")},                          // C.array_floor
+       {"__floor__", std::string("floor")},                                // P.floor
        {"__trunc__", std::string("array_trunc")},                          // C.array_trunc
        {"__pos__", std::string("array_uadd")},                             // C.array_uadd
        {"__neg__", std::string("array_usub")},                             // C.array_usub

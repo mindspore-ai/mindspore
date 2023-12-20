@@ -2693,7 +2693,7 @@ def ms_len(data):
 
 def floor(x):
     """Rounds a tensor down to the closest integer element-wise."""
-    return x.__floor__()
+    return F.floor(x)
 
 
 def floor_divide(input, other):
