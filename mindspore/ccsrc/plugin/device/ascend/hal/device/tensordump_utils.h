@@ -56,7 +56,6 @@ class TensorDumpUtils {
   void AsyncSaveDatasetToNpyFile(acltdtDataset *acl_dataset);
 
  private:
-  bool CopyDataToTensor(const uint8_t *src, mindspore::tensor::TensorPtr tensor_ptr, const size_t size);
   std::string TensorNameToArrayName(const std::string &tensor_name);
   AsyncFileWriter file_writer{4};
 };

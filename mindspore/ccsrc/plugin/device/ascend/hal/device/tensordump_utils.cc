@@ -26,17 +26,6 @@
 
 namespace mindspore::device::ascend {
 namespace {
-const size_t kMbufCapacitySize = 128;
-const int32_t kMbufDestroyDelayTime = 500;
-
-const std::map<aclDataType, TypeId> kTensorDumpAclDataTypeMap = {
-  {ACL_INT8, TypeId::kNumberTypeInt8},       {ACL_UINT8, TypeId::kNumberTypeUInt8},
-  {ACL_INT16, TypeId::kNumberTypeInt16},     {ACL_UINT16, TypeId::kNumberTypeUInt16},
-  {ACL_INT32, TypeId::kNumberTypeInt32},     {ACL_UINT32, TypeId::kNumberTypeUInt32},
-  {ACL_INT64, TypeId::kNumberTypeInt64},     {ACL_UINT64, TypeId::kNumberTypeUInt64},
-  {ACL_FLOAT16, TypeId::kNumberTypeFloat16}, {ACL_FLOAT, TypeId::kNumberTypeFloat32},
-  {ACL_DOUBLE, TypeId::kNumberTypeFloat64},  {ACL_BOOL, TypeId::kNumberTypeBool},
-};
 
 void SaveTensor2NPY(std::string file_name, mindspore::tensor::TensorPtr tensor_ptr) {
   std::string npy_header = GenerateNpyHeader(tensor_ptr->shape(), tensor_ptr->data_type());
@@ -63,6 +52,9 @@ void SaveTensor2NPY(std::string file_name, mindspore::tensor::TensorPtr tensor_p
 }
 
 bool EndsWith(const std::string &s, const std::string &sub) {
+  if (s.length() < sub.length()) {
+    return false;
+  }
   return s.rfind(sub) == (s.length() - sub.length()) ? true : false;
 }
 
@@ -141,7 +133,7 @@ void TensorDumpUtils::AsyncSaveDatasetToNpyFile(acltdtDataset *acl_dataset) {
   std::string tensor_name = std::string{acltdtGetDatasetName(acl_dataset)};
   MS_LOG(INFO) << "For 'TensorDump' ops, acltdt received Tensor name is " << tensor_name;
   if (tensor_name.empty()) {
-    MS_LOG(ERROR) << "For 'TensorDump' ops, the of args of 'file' is empty, skip this data.";
+    MS_LOG(ERROR) << "For 'TensorDump' ops, the args of 'file' is empty, skip this data.";
     return;
   }
   size_t acl_dataset_size = acltdtGetDatasetSize(acl_dataset);
@@ -153,57 +145,15 @@ void TensorDumpUtils::AsyncSaveDatasetToNpyFile(acltdtDataset *acl_dataset) {
       MS_LOG(INFO) << "end of sequence" << std::endl;
       break;
     }
-
-    size_t dim_num = acltdtGetDimNumFromItem(item);
-    void *acl_addr = acltdtGetDataAddrFromItem(item);
-    size_t acl_data_size = acltdtGetDataSizeFromItem(item);
-    aclDataType acl_data_type = acltdtGetDataTypeFromItem(item);
-
-    auto acl_data = reinterpret_cast<uint8_t *>(acl_addr);
-    if (acl_data_size > 0) {
-      MS_EXCEPTION_IF_NULL(acl_data);
-    }
-
-    ShapeVector tensor_shape;
-    tensor_shape.resize(dim_num);
-
-    if (acltdtGetDimsFromItem(item, tensor_shape.data(), dim_num) != ACL_SUCCESS) {
-      MS_LOG(ERROR) << "ACL failed to get dim-size from acl channel data";
-      continue;
-    }
-
-    auto type_iter = kTensorDumpAclDataTypeMap.find(acl_data_type);
-    if (type_iter == kTensorDumpAclDataTypeMap.end()) {
-      MS_LOG(ERROR) << "For 'TensorDump' ops, the type of tensor not support: " << acl_data_type;
-      continue;
-    }
-    auto type_id = type_iter->second;
-    auto tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(type_id, tensor_shape);
+    auto tensor_ptr = acltdtDataItemToTensorPtr(item);
     auto file_name = TensorNameToArrayName(tensor_name);
-
-    if (acl_data_size == 0) {
-      file_writer.Submit(std::bind(SaveTensor2NPY, file_name, tensor_ptr));
-    } else if (CopyDataToTensor(acl_data, tensor_ptr, acl_data_size)) {
+    if (tensor_ptr != nullptr) {
       file_writer.Submit(std::bind(SaveTensor2NPY, file_name, tensor_ptr));
     } else {
-      // do nothing
+      MS_LOG(ERROR) << "For 'TensorDump' ops, convert acltdtItem to Tensor failed, the Tensor name is" << tensor_name
+                    << ", skip this data.";
     }
   }
-}
-
-bool TensorDumpUtils::CopyDataToTensor(const uint8_t *src, mindspore::tensor::TensorPtr tensor_ptr, const size_t size) {
-  MS_EXCEPTION_IF_NULL(src);
-  MS_EXCEPTION_IF_NULL(tensor_ptr);
-  auto *dest = reinterpret_cast<uint8_t *>(tensor_ptr->data_c());
-  MS_EXCEPTION_IF_NULL(dest);
-
-  size_t dest_size = static_cast<size_t>(tensor_ptr->data().nbytes());
-  auto cp_ret = memcpy_s(dest, dest_size, src, size);
-  if (cp_ret != EOK) {
-    MS_LOG(ERROR) << "TensorDump op failed to copy the memory to py::tensor. Error code is " << cp_ret;
-    return false;
-  }
-  return true;
 }
 
 }  // namespace mindspore::device::ascend
