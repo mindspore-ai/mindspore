@@ -152,9 +152,7 @@ FuncGraphPtr ListPop::GenerateFuncGraph(const abstract::AbstractBasePtrList &arg
     AnfNodePtrList list_inplace_inputs = {NewValueNode(prim::kPrimListInplacePop), arg0_node, pop_index_node};
     auto list_inplace_node = ret->NewCNodeInOrder(list_inplace_inputs);
     list_inplace_node->set_has_side_effect_node(true);
-    auto pop_node = ret->NewCNode({NewValueNode(prim::kPrimListGetItem), arg0_node, NewValueNode(pop_position)});
-    auto out_node = ret->NewCNode({NewValueNode(prim::kPrimMakeTuple), list_inplace_node, pop_node});
-    ret->set_output(out_node);
+    ret->set_output(list_inplace_node);
     ret->set_has_side_effect_node(true);
     return ret;
   }
