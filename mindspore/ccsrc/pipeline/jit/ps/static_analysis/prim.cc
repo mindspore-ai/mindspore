@@ -3562,6 +3562,21 @@ class ResolveEvaluator : public TransitionPrimEvaluator {
   }
 };
 
+bool IsContainUndetermined(const AbstractBasePtr &arg) {
+  MS_EXCEPTION_IF_NULL(arg);
+  if (arg->isa<AbstractSequence>()) {
+    auto seq_arg = arg->cast_ptr<AbstractSequence>();
+    return std::any_of(seq_arg->elements().begin(), seq_arg->elements().end(), IsContainUndetermined);
+  }
+
+  if (arg->isa<AbstractKeywordArg>()) {
+    auto kw_arg = arg->cast_ptr<AbstractKeywordArg>();
+    return IsContainUndetermined(kw_arg->get_arg());
+  }
+
+  return arg->isa<AbstractUndetermined>() && arg->IsBroaden();
+}
+
 class CreateInstanceEvaluator : public TransitionPrimEvaluator {
  public:
   CreateInstanceEvaluator() : TransitionPrimEvaluator("CreateInstanceEvaluator") {}
@@ -3673,6 +3688,8 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
         if (py::hasattr(obj, PYTHON_PRIMITIVE_FLAG) && mindspore::ops::GetOpDef(cls_name) != nullptr) {
           return {params, true};
         }
+      }
+      if (IsContainUndetermined(arg)) {
         MS_EXCEPTION(TypeError) << "The " << i << "th initializing input to create instance for " << py::str(obj)
                                 << " should be a constant, but got: " << arg->ToString();
       }
