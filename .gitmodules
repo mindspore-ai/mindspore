@@ -10,3 +10,6 @@
 [submodule "mindspore/lite/src/litert/kernel/cpu/bolt/bolt"]
 	path = mindspore/lite/src/litert/kernel/cpu/bolt/bolt
 	url = https://gitee.com/mindspore/bolt.git
+[submodule "tests/st/networks/mindcv"]
+	path = tests/st/networks/mindcv
+	url = https://gitee.com/mindspore-lab/mindcv.git
