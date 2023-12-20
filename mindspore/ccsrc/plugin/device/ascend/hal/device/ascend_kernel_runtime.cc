@@ -32,7 +32,6 @@
 #include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
-#include "kernel/oplib/op_info_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_event.h"
 #include "plugin/device/ascend/hal/device/ascend_device_synchronizer.h"
@@ -304,11 +303,6 @@ bool AscendKernelRuntime::Init() {
     return true;
   }
 
-  auto soc_version = ms_context->ascend_soc_version();
-  auto ascend_path = device::ascend::GetAscendPath();
-  if (!mindspore::kernel::OpInfoUtils::GenerateOpInfos(soc_version, ascend_path)) {
-    MS_LOG(EXCEPTION) << "Load op info form json config failed, version: " << soc_version;
-  }
   if (!ErrorManagerAdapter::Init()) {
     MS_LOG(WARNING) << "Init ErrorManager failed.";
   }

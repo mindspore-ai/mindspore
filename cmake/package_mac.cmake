@@ -213,7 +213,7 @@ install(
 
 ## config files
 install(
-    FILES ${CMAKE_SOURCE_DIR}/config/op_info.config
-    DESTINATION ${INSTALL_CFG_DIR}
-    COMPONENT mindspore
+        FILES ${CMAKE_SOURCE_DIR}/config/op_info.config
+        DESTINATION ${INSTALL_CFG_DIR}
+        COMPONENT mindspore
 )
