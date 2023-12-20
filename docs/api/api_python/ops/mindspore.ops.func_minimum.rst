@@ -7,7 +7,6 @@ mindspore.ops.minimum
 
     .. note::
         - 输入 `input` 和 `other` 遵循隐式类型转换规则，使数据类型保持一致。
-        - 输入必须是两个Tensor，或一个Tensor和一个Scalar。
         - 当输入是两个Tensor时，它们的数据类型不能同时是bool。
         - 当输入是一个Tensor和一个Scalar时，Scalar只能是一个常数。
         - 支持广播。
@@ -18,7 +17,7 @@ mindspore.ops.minimum
 
     参数：
         - **input** (Union[Tensor, Number, bool]) - 第一个输入可以是Number或bool，也可以是数据类型为Number或bool的Tensor。
-        - **other** (Union[Tensor, Number, bool]) - 第二个输入可以是数据类型为Number或bool的Tensor，当第一个输入是Tensor时，也可以是bool或Number。
+        - **other** (Union[Tensor, Number, bool]) - 第二个输入可以是Number或bool，也可以是数据类型为Number或bool的Tensor。
 
     返回：
         一个Tensor，其shape与广播后的shape相同，其数据类型为两个输入中精度较高的类型。
