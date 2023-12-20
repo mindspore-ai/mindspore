@@ -63,6 +63,11 @@ int SoftmaxCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
     axis_ += input_dims_;
   }
   auto input_elements = std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
+  if (input_elements == 0) {
+    is_null_input_ = true;
+    MS_LOG(WARNING) << "Input0 shape contain 0, input0 shape: " << input_shape;
+    return KRET_OK;
+  }
   channel_ = input_shape_[axis_];
   output_elements_ = input_elements / static_cast<size_t>(channel_);
   if (axis_ == input_dims_ - 1) {
@@ -101,6 +106,9 @@ void SoftmaxCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs
 bool SoftmaxCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &workspace,
                                  const std::vector<KernelTensor *> &outputs) {
+  if (is_null_input_) {
+    return true;
+  }
   if (dtype_ == kNumberTypeFloat32) {
     if (last_axis_) {
       LaunchKernelLastAxis(inputs, outputs);
