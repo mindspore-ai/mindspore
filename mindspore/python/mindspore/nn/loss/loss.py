@@ -1394,11 +1394,6 @@ class PoissonNLLLoss(LossBase):
     def construct(self, input, target):
         _check_is_tensor('input', input, self.cls_name)
         _check_is_tensor('target', target, self.cls_name)
-        if input.ndim == 0 or target.ndim == 0:
-            raise ValueError(
-                "For 'PoissonNLLLoss', the inputs must be non-scalar, but got shapes: "
-                f"input: {input.shape}, target: {target.shape}"
-            )
         target = self.cast(target, input.dtype)
         if self.log_input:
             loss = input.exp() - target * input
