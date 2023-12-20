@@ -765,6 +765,7 @@ void DeviceAddressUtils::UpdateDeviceAddress(const session::AnfWithOutIndex &cur
     origin_node_output_addr->IncreaseOriginalRefCount();
     origin_node_output_addr->ResetRefCount();
     cur_node_output_addr->set_pointer_ref_count(origin_node_output_addr->pointer_ref_count());
+    cur_node_output_addr->UpdateFlag(device::kDeviceAddressFlagRefNode);
   } else {
     MS_LOG(DEBUG) << "No need update device address: ref origin kernel is " << origin_pair.first->fullname_with_scope()
                   << ", index is " << origin_pair.second << "; cur kernel is " << cur_pair.first->fullname_with_scope()
