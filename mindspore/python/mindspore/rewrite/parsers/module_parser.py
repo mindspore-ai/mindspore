@@ -170,15 +170,15 @@ class ModuleParser(Parser):
                 level_count += 1
                 continue
             except Exception as e: # pylint: disable=W0703
-                logger.warning(f"For MindSpore Rewrite, in module parser, process import code: "
-                               f"{import_code} failed: {e}. Ignore this import code.")
+                logger.info(f"For MindSpore Rewrite, in module parser, process import code: "
+                            f"{import_code} failed: {e}. Ignore this import code.")
                 return None, None
             else:
                 # try test code success
                 return import_node_test.module, file_path_tmp
         # try codes with all level failed
-        logger.warning(f"For MindSpore Rewrite, in module parser, test import code: "
-                       f"{astunparse.unparse(import_node).strip()} failed. Ignore this import code.")
+        logger.info(f"For MindSpore Rewrite, in module parser, test import code: "
+                    f"{astunparse.unparse(import_node).strip()} failed. Ignore this import code.")
         return None, None
 
     @staticmethod
