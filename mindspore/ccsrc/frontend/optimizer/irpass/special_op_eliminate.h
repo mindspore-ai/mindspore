@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@
 #include "pipeline/jit/ps/parse/resolve.h"
 #include "frontend/parallel/step_parallel.h"
 #include "utils/tensor_construct_utils.h"
+#include "utils/ms_utils_secure.h"
 
 namespace mindspore {
 namespace opt {
@@ -333,16 +334,8 @@ class ZeroLikeFillZero : public AnfVisitor {
 
     tensor::TensorPtr new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
     size_t mem_size = GetTypeByte(tensor_type_ptr) * LongToSize(new_tensor_ptr->ElementsNum());
-    char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
-    while (mem_size > SECUREC_MEM_MAX_LEN) {
-      if (memset_s(data, SECUREC_MEM_MAX_LEN, 0, SECUREC_MEM_MAX_LEN) != EOK) {
-        MS_LOG(ERROR) << "For 'ZeroLikeFillZero', failed to init data memory.";
-        return nullptr;
-      }
-      data += SECUREC_MEM_MAX_LEN;
-      mem_size -= SECUREC_MEM_MAX_LEN;
-    }
-    if (memset_s(data, mem_size, 0, mem_size) != EOK) {
+    uint8_t *data = reinterpret_cast<uint8_t *>(new_tensor_ptr->data_c());
+    if (common::huge_memset(data, mem_size, 0x0, mem_size) != EOK) {
       MS_LOG(ERROR) << "For 'ZeroLikeFillZero', failed to init data memory.";
       return nullptr;
     }
