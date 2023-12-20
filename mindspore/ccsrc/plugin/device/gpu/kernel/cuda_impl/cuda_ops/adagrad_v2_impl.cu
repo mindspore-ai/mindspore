@@ -34,7 +34,7 @@ __global__ void ApplyAdagradV2Kernel(const size_t size, const float epsilon, T *
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     grad = gradient[i];
     accumulation[i] += grad * grad;
-    variable[i] -= learning_rate[0] * grad / (SqrtFunc(accumulation[i] + epsilon));
+    variable[i] -= learning_rate[0] * grad / (SqrtFunc(accumulation[i]) + epsilon);
   }
 }
 
@@ -45,7 +45,7 @@ __global__ void ApplyAdagradV2Kernel(const size_t size, const float epsilon, hal
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     grad = gradient[i];
     accumulation[i] += grad * grad;
-    variable[i] -= learning_rate[0] * grad / (SqrtFunc(accumulation[i] + __float2half(epsilon)));
+    variable[i] -= learning_rate[0] * grad / (SqrtFunc(accumulation[i]) + __float2half(epsilon));
   }
 }
 
@@ -56,7 +56,7 @@ __global__ void ApplyAdagradV2Kernel(const size_t size, const float epsilon, hal
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     grad = gradient[i];
     accumulation[i] += grad * grad;
-    variable[i] -= __float2half(learning_rate[0]) * grad / (SqrtFunc(accumulation[i] + __float2half(epsilon)));
+    variable[i] -= __float2half(learning_rate[0]) * grad / (SqrtFunc(accumulation[i]) + __float2half(epsilon));
   }
 }
 
@@ -67,7 +67,7 @@ __global__ void ApplyAdagradV2Kernel(const size_t size, const float epsilon, hal
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     grad = gradient[i];
     accumulation[i] += grad * grad;
-    variable[i] -= __float2half(learning_rate[0]) * grad / (SqrtFunc(accumulation[i] + __float2half(epsilon)));
+    variable[i] -= __float2half(learning_rate[0]) * grad / (SqrtFunc(accumulation[i]) + __float2half(epsilon));
   }
 }
 
@@ -78,7 +78,7 @@ __global__ void ApplyAdagradV2Kernel(const size_t size, const float epsilon, dou
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     grad = gradient[i];
     accumulation[i] += grad * grad;
-    variable[i] -= __half2float(learning_rate[0]) * grad / (SqrtFunc(accumulation[i] + epsilon));
+    variable[i] -= __half2float(learning_rate[0]) * grad / (SqrtFunc(accumulation[i]) + epsilon);
   }
 }
 
@@ -89,7 +89,7 @@ __global__ void ApplyAdagradV2Kernel(const size_t size, const float epsilon, dou
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     grad = gradient[i];
     accumulation[i] += grad * grad;
-    variable[i] -= learning_rate[0] * grad / (SqrtFunc(accumulation[i] + epsilon));
+    variable[i] -= learning_rate[0] * grad / (SqrtFunc(accumulation[i]) + epsilon);
   }
 }
 
@@ -100,7 +100,7 @@ __global__ void ApplyAdagradV2Kernel(const size_t size, const float epsilon, flo
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     grad = gradient[i];
     accumulation[i] += grad * grad;
-    variable[i] -= __half2float(learning_rate[0]) * grad / (SqrtFunc(accumulation[i] + epsilon));
+    variable[i] -= __half2float(learning_rate[0]) * grad / (SqrtFunc(accumulation[i]) + epsilon);
   }
 }
 
@@ -111,7 +111,7 @@ __global__ void ApplyAdagradV2Kernel(const size_t size, const float epsilon, flo
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
     grad = gradient[i];
     accumulation[i] += grad * grad;
-    variable[i] -= learning_rate[0] * grad / (SqrtFunc(accumulation[i] + epsilon));
+    variable[i] -= learning_rate[0] * grad / (SqrtFunc(accumulation[i]) + epsilon);
   }
 }
 
@@ -119,7 +119,7 @@ template <typename T, typename S>
 __global__ void ApplyAdagradV2Kernel_(const size_t size, const float epsilon, T *variable, T *accumulation,
                                       const S *learning_rate, const T *gradient) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
-    variable[i] -= learning_rate[0] * gradient[i] / (SqrtFunc(accumulation[i] + epsilon));
+    variable[i] -= learning_rate[0] * gradient[i] / (SqrtFunc(accumulation[i]) + epsilon);
   }
 }
 
@@ -127,7 +127,7 @@ template <>
 __global__ void ApplyAdagradV2Kernel_(const size_t size, const float epsilon, half *variable, half *accumulation,
                                       const half *learning_rate, const half *gradient) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
-    variable[i] -= learning_rate[0] * gradient[i] / (SqrtFunc(accumulation[i] + __float2half(epsilon)));
+    variable[i] -= learning_rate[0] * gradient[i] / (SqrtFunc(accumulation[i]) + __float2half(epsilon));
   }
 }
 
@@ -135,7 +135,7 @@ template <>
 __global__ void ApplyAdagradV2Kernel_(const size_t size, const float epsilon, half *variable, half *accumulation,
                                       const float *learning_rate, const half *gradient) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
-    variable[i] -= __float2half(learning_rate[0]) * gradient[i] / (SqrtFunc(accumulation[i] + __float2half(epsilon)));
+    variable[i] -= __float2half(learning_rate[0]) * gradient[i] / (SqrtFunc(accumulation[i]) + __float2half(epsilon));
   }
 }
 
@@ -143,7 +143,7 @@ template <>
 __global__ void ApplyAdagradV2Kernel_(const size_t size, const float epsilon, half *variable, half *accumulation,
                                       const double *learning_rate, const half *gradient) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
-    variable[i] -= __float2half(learning_rate[0]) * gradient[i] / (SqrtFunc(accumulation[i] + __float2half(epsilon)));
+    variable[i] -= __float2half(learning_rate[0]) * gradient[i] / (SqrtFunc(accumulation[i]) + __float2half(epsilon));
   }
 }
 
@@ -151,7 +151,7 @@ template <>
 __global__ void ApplyAdagradV2Kernel_(const size_t size, const float epsilon, double *variable, double *accumulation,
                                       const half *learning_rate, const double *gradient) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
-    variable[i] -= __half2float(learning_rate[0]) * gradient[i] / (SqrtFunc(accumulation[i] + epsilon));
+    variable[i] -= __half2float(learning_rate[0]) * gradient[i] / (SqrtFunc(accumulation[i]) + epsilon);
   }
 }
 
@@ -159,7 +159,7 @@ template <>
 __global__ void ApplyAdagradV2Kernel_(const size_t size, const float epsilon, double *variable, double *accumulation,
                                       const float *learning_rate, const double *gradient) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
-    variable[i] -= learning_rate[0] * gradient[i] / (SqrtFunc(accumulation[i] + epsilon));
+    variable[i] -= learning_rate[0] * gradient[i] / (SqrtFunc(accumulation[i]) + epsilon);
   }
 }
 
@@ -167,7 +167,7 @@ template <>
 __global__ void ApplyAdagradV2Kernel_(const size_t size, const float epsilon, float *variable, float *accumulation,
                                       const half *learning_rate, const float *gradient) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
-    variable[i] -= __half2float(learning_rate[0]) * gradient[i] / (SqrtFunc(accumulation[i] + epsilon));
+    variable[i] -= __half2float(learning_rate[0]) * gradient[i] / (SqrtFunc(accumulation[i]) + epsilon);
   }
 }
 
@@ -175,7 +175,7 @@ template <>
 __global__ void ApplyAdagradV2Kernel_(const size_t size, const float epsilon, float *variable, float *accumulation,
                                       const double *learning_rate, const float *gradient) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
-    variable[i] -= learning_rate[0] * gradient[i] / (SqrtFunc(accumulation[i] + epsilon));
+    variable[i] -= learning_rate[0] * gradient[i] / (SqrtFunc(accumulation[i]) + epsilon);
   }
 }
 
