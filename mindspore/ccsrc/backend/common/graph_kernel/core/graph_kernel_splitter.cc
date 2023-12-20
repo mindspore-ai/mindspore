@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -365,20 +365,13 @@ class Splitter {
   ~Splitter() = default;
 
  private:
-  void ResetInlinedNodesKernelInfo() const {
-    for (const auto &node : inlined_nodes_) {
-      Callback::Instance()->ResetKernelInfo(node);
-    }
-  }
-
   // Maintain new subgraphs in main graph.
   void RebuildGraph(const std::vector<size_t> &cnodes_group_id) {
     BindFuncGraph();
     RecoverParameter();
     SetSplitNodeName(cnodes_group_id);
     ConnectToMainGraph(cnodes_group_id);
-    UpdateSubGraphInfo();
-    ResetInlinedNodesKernelInfo();
+    UpdateMainNodesKernelInfo();
   }
 
   // Rebind nodes to its new sub_func_graph
@@ -437,7 +430,7 @@ class Splitter {
           }
         }
         if (AnfUtils::IsRealKernel(node)) {
-          (void)inlined_nodes_.emplace_back(node);
+          (void)maingraph_nodes_.emplace_back(node);
         }
       }
     }
@@ -467,7 +460,6 @@ class Splitter {
     //  to replace old subgraph with new subgraphs, just replace the old CNode with new last CNode.
     // For multiple output kernel, to avoid returning Parameter, the last MakeTuple was distribute to
     //  a new FuncGraph, just inline the last MakeTuple node.
-    std::vector<CNodePtr> tmp_subgraph_cnodes;
     mindspore::HashMap<AnfNodePtr, AnfNodePtr> replace_map;
 
     for (size_t i = 0; i < new_subgraph_cnodes_.size(); ++i) {
@@ -483,10 +475,9 @@ class Splitter {
         if (i + 1 == new_subgraph_cnodes_.size()) {
           replace_map[this->old_subgraph_cnode_] = new_subgraph_cnodes_.back();
         }
-        (void)tmp_subgraph_cnodes.emplace_back(new_subgraph_cnodes_[i]);
+        (void)maingraph_nodes_.emplace_back(new_subgraph_cnodes_[i]);
       }
     }
-    new_subgraph_cnodes_ = std::move(tmp_subgraph_cnodes);
 
     TraverseFuncGraph(main_func_graph_, [&replace_map](const AnfNodePtr &node) {
       auto cnode = node->cast<CNodePtr>();
@@ -503,21 +494,21 @@ class Splitter {
     });
   }
 
-  void UpdateSubGraphInfo() const {
+  void UpdateMainNodesKernelInfo() const {
     auto graph_manager = main_func_graph_->manager();
     MS_EXCEPTION_IF_NULL(graph_manager);
 
-    for (auto cnode : new_subgraph_cnodes_) {
-      auto sub_func_graph = GetCNodeFuncGraph(cnode);
-      // add new sub_func_graph to manager
-      graph_manager->AddFuncGraph(sub_func_graph);
-
-      // set GraphKernel attr
-      auto attr = GkUtils::ExtractGraphKernelName(TopoSort(sub_func_graph->get_return()), "", "split");
-      sub_func_graph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(attr));
-
-      // set kernel info
-      Callback::Instance()->SetGraphKernelNodeKernelInfo(cnode);
+    for (auto node : maingraph_nodes_) {
+      MS_LOG(DEBUG) << "Update kernel_info for " << node->DebugString() << " (" << node->fullname_with_scope() << ")";
+      auto sub_func_graph = GetCNodeFuncGraph(node);
+      if (sub_func_graph != nullptr) {
+        graph_manager->AddFuncGraph(sub_func_graph);
+        auto attr = GkUtils::ExtractGraphKernelName(TopoSort(sub_func_graph->get_return()), "", "split");
+        sub_func_graph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(attr));
+        Callback::Instance()->SetGraphKernelNodeKernelInfo(node);
+      } else {
+        Callback::Instance()->ResetKernelInfo(node);
+      }
     }
   }
 
@@ -571,7 +562,7 @@ class Splitter {
   FuncGraphPtr main_func_graph_;
   CNodePtr old_subgraph_cnode_;                // The cnode that holds the original sub_func_graph
   std::vector<CNodePtr> new_subgraph_cnodes_;  // The cnode list that hold the new sub_func_graph
-  std::vector<AnfNodePtr> inlined_nodes_;
+  std::vector<AnfNodePtr> maingraph_nodes_;    // The nodes in main graph finally, include "call" and inlined node
   SplitSchemerPtr split_schemer_;
   mindspore::HashMap<ParameterPtr, AnfNodePtr> param_to_main_graph_node_map_;
 };
