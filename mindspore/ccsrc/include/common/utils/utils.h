@@ -419,6 +419,7 @@ const int kParameterDataTensorMask = 0;
 const int kParameterWeightTensorMask = 1;
 const int kValueNodeMask = 2;
 constexpr auto kNCHWShapeSize = 4;
+const size_t kMaxTensorIndexDimNums = 8;
 
 // define special index in special node
 constexpr auto kDefaultStreamIndex = 0;

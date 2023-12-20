@@ -34,10 +34,7 @@ namespace kernel {
 namespace {
 constexpr size_t kMatMulInputsNum = 2;
 constexpr size_t kMatMulWithBiasAddInputsNum = 3;
-constexpr size_t kBiasAddInputIndex = kMatMulWithBiasAddInputsNum - 1;
 constexpr size_t kMatMulOutputsNum = 1;
-constexpr size_t kIndexOffset = 2;
-constexpr size_t kRankMin = 2;
 }  // namespace
 
 MatMulCpuKernelFunc::~MatMulCpuKernelFunc() {
@@ -78,6 +75,16 @@ void MatMulCpuKernelFunc::InitFunc(const PrimitivePtr &primitive, const std::vec
   if (primitive->HasAttr(kAttrWithRelu)) {
     with_relu_ = GetValue<bool>(primitive->GetAttr(kAttrWithRelu));
   }
+
+  in_size_ = inputs.size();
+  if (with_bias_add_) {
+    CHECK_KERNEL_INPUTS_NUM(in_size_, kMatMulWithBiasAddInputsNum, kernel_name_);
+  } else {
+    CHECK_KERNEL_INPUTS_NUM(in_size_, kMatMulInputsNum, kernel_name_);
+  }
+  out_size_ = outputs.size();
+  CHECK_KERNEL_OUTPUTS_NUM(out_size_, kMatMulOutputsNum, kernel_name_);
+
   in_ = reinterpret_cast<TensorC **>(malloc(in_size_ * sizeof(TensorC *)));
   if (in_ == nullptr) {
     MS_LOG(EXCEPTION) << "malloc in_ for matmul kernel failed.";
@@ -132,6 +139,7 @@ bool MatMulCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
                                   const std::vector<kernel::AddressPtr> &,
                                   const std::vector<kernel::AddressPtr> &outputs) {
   if (kernel_ == nullptr) {
+    MS_LOG(ERROR) << "kernel_ is nullptr.";
     return false;
   }
   for (size_t i = 0; i < in_size_; i++) {
@@ -143,12 +151,12 @@ bool MatMulCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
   int ret = kernel_->Prepare(kernel_);
   if (ret != 0) {
     MS_LOG(ERROR) << "NNACL matmul/fc prepare failed. ret: " << ret;
-    return ret;
+    return false;
   }
   ret = kernel_->Resize(kernel_);
   if (ret != NNACL_OK) {
     MS_LOG(ERROR) << "NNACL matmul/fc resize failed. ret: " << ret;
-    return ret;
+    return false;
   }
   ret = kernel_->Compute(kernel_);
   if (ret != 0) {
@@ -161,7 +169,8 @@ bool MatMulCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
 int MatMulCpuKernelFunc::Resize(const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs) {
   if (kernel_ == nullptr) {
-    return 0;
+    MS_LOG(ERROR) << "kernel_ is nullptr.";
+    return KRET_RESIZE_FAILED;
   }
 
   MatmulStruct *matmul = reinterpret_cast<MatmulStruct *>(kernel_);

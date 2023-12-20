@@ -110,6 +110,7 @@ int Gptq::CalculateHessianInv(float *hessian_data, float *hessian_inv_data, int 
       mean += *(hessian_data + i * hessian_length + j);
     }
   }
+  MS_CHECK_TRUE_RET(hessian_length > 0, RET_PARAM_INVALID);
   mean = mean / (hessian_length * hessian_length);
   float damp = percdamp * mean;
   for (int32_t i = 0; i < hessian_length; i++) {
@@ -120,14 +121,17 @@ int Gptq::CalculateHessianInv(float *hessian_data, float *hessian_inv_data, int 
   std::vector<int64_t> dims{hessian_length, hessian_length};
   if (quant::CalculateCholesky<float>(hessian_data, hessian_data_tmp, dims) != RET_OK) {
     MS_LOG(ERROR) << "Calculate Hessian matrix cholesky failed";
+    free(hessian_data_tmp);
     return RET_ERROR;
   }
   if (quant::CalculateCholeskyInverse<float>(hessian_data_tmp, hessian_data, hessian_length) != RET_OK) {
     MS_LOG(ERROR) << "Calculate Hessian matrix cholesky inverse failed.";
+    free(hessian_data_tmp);
     return RET_ERROR;
   }
   if (quant::CalculateCholesky<float>(hessian_data, hessian_inv_data, dims, true) != RET_OK) {
     MS_LOG(ERROR) << "Calculate Hessian matrix cholesky failed.";
+    free(hessian_data_tmp);
     return RET_ERROR;
   }
   free(hessian_data_tmp);

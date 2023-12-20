@@ -310,6 +310,7 @@ bool IsValidSequence(const ValueSequencePtr &sequence_value) {
   }
   TypeId base_type = values[0]->type()->type_id();
   for (size_t i = 1; i < values.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(values[i]);
     MS_EXCEPTION_IF_NULL(values[i]->type());
     TypeId type = values[i]->type()->type_id();
     if (type != base_type) {
@@ -346,6 +347,7 @@ GraphId CompileAnyTypeInputGraph(const KernelGraphPtr &graph, const AnfNodePtrLi
                                  const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(graph);
   for (const auto &input : graph->inputs()) {
+    MS_EXCEPTION_IF_NULL(input);
     MS_LOG(DEBUG) << "input node:" << input->DebugString()
                   << " abstract:" << (input->abstract() == nullptr ? "null" : input->abstract()->ToString());
   }
@@ -354,7 +356,9 @@ GraphId CompileAnyTypeInputGraph(const KernelGraphPtr &graph, const AnfNodePtrLi
   opt::OptimizationForAnyTypeKernelGraph(graph);
   graph->SetInputNodes();
   for (const auto &input : graph->input_nodes()) {
-    MS_LOG(DEBUG) << "input node:" << input->DebugString() << " abstract:" << input->abstract()->ToString();
+    MS_EXCEPTION_IF_NULL(input);
+    MS_LOG(DEBUG) << "input node:" << input->DebugString()
+                  << " abstract:" << (input->abstract() == nullptr ? "null" : input->abstract()->ToString());
   }
   auto backend_output = graph->output();
   MS_EXCEPTION_IF_NULL(backend_output);

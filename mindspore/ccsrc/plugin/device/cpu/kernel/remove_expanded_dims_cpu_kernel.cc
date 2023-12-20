@@ -89,13 +89,13 @@ bool RemoveExpandedDimsCpuKernelMod::LaunchKernel(const std::vector<KernelTensor
   size_t valid_tensor_nums = 0;
   for (size_t i = 0; i < tuple_index_types_.size(); i++) {
     if (tuple_index_types_[i] == kMetaTypeEllipsis) {
-      valid_tensor_nums = data_shape.size() + rem_ndim_;
+      valid_tensor_nums = data_shape.size() + LongToSize(rem_ndim_);
       break;
     } else if (tuple_index_types_[i] != kTypeUnknown) {
       valid_tensor_nums += 1;
     }
   }
-  size_t rem_dim = SizeToLong(data_shape.size()) - (valid_tensor_nums - rem_ndim_);
+  size_t rem_dim = data_shape.size() - (valid_tensor_nums - LongToSize(rem_ndim_));
   auto [indices_out, new_value_shape, new_idx_advanced] = ops::RemoveExpandedDims::ConstRemoveExpandedDims(
     has_true_, has_false, has_sequence_, broadcast_shape, rem_dim, value_shape, data_shape, empty_indices_out,
     idx_advanced, tuple_index_types_, rem_ndim_);

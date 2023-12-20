@@ -36,7 +36,6 @@ namespace mindspore {
 // namespace to support composite operators definition
 namespace prim {
 constexpr int64_t kZeroAnfValue = 0;
-constexpr size_t kMaxDimNums = 8;
 
 static inline bool IsAnyValue(const AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(abs);
@@ -51,7 +50,7 @@ IndexHandleLevel TensorIndex::PreHandleIndex(const AbstractBasePtr &data, const 
     MS_LOG(DEBUG) << "The tuple index is constant.";
     return IndexHandleLevel::kHandleByConstFold;
   }
-  if (tuple_abs->size() >= kMaxDimNums) {
+  if (tuple_abs->size() >= kMaxTensorIndexDimNums) {
     MS_EXCEPTION(IndexError) << "The size of tuple index must in the range of [0, 8] if tensor shape is dynamic.";
   }
   MS_LOG(DEBUG) << "The tuple index is dynamic.";
@@ -202,7 +201,7 @@ FuncGraphPtr TensorIndexGetitem::GenerateFuncGraph(const AbstractBasePtrList &ar
   if (args_abs_list[1]->isa<abstract::AbstractTuple>()) {
     (void)res_graph_->add_parameter();
     GetItemByTuple(data_node, index_node, args_abs_list[0], dyn_cast<abstract::AbstractTuple>(args_abs_list[1]),
-                   args_abs_list[2]);
+                   args_abs_list[kIndex2]);
   }
   return res_graph_;
 }
@@ -216,7 +215,7 @@ static bool CheckTypeIsInstance(const T &type, const std::vector<T> &target_type
 static std::vector<int64_t> GetTupleIndexType(const abstract::AbstractTuplePtr &tuple_abs_ptr,
                                               const ShapeVector &data_shape, bool *has_ellipsis,
                                               size_t *ellipsis_position, size_t *not_ellipsis_position_cnt,
-                                              std::bitset<kMaxDimNums> *expand_dims_mask) {
+                                              std::bitset<kMaxTensorIndexDimNums> *expand_dims_mask) {
   std::vector<int64_t> tuple_index_types;
   for (size_t i = 0; i < tuple_abs_ptr->size(); i++) {
     const auto &index_abs = tuple_abs_ptr->elements()[i];
@@ -248,7 +247,7 @@ static std::vector<int64_t> GetTupleIndexType(const abstract::AbstractTuplePtr &
     }
   }
   auto ori_size = tuple_index_types.size();
-  for (size_t i = ori_size; i < 8; i++) {
+  for (size_t i = ori_size; i < kMaxTensorIndexDimNums; i++) {
     (void)tuple_index_types.emplace_back(kTypeUnknown);
   }
   size_t expand_dims_cnt = expand_dims_mask->count();
@@ -343,7 +342,7 @@ static size_t NormalizeDimIndex(const size_t data_dims, size_t dim_index,
   size_t ellipse_position = 0;
   size_t not_ellipse_occupy_dims = 0;
   bool has_ellipsis = false;
-  for (size_t i = 0; i < 8; i++) {
+  for (size_t i = 0; i < kMaxTensorIndexDimNums; i++) {
     if (tuple_index_types[i] == kMetaTypeEllipsis) {
       has_ellipsis = true;
       ellipse_position = i;
@@ -457,7 +456,7 @@ std::vector<AnfNodePtr> TensorIndex::NormalizeTupleIndex(const AnfNodePtr &data_
   }
   // Normalize ellipse index in tuple by transfer_ellipse_slice because the nums of ellipse occupy dims unknown.
   if (has_ellipsis) {
-    size_t index_size = IsDynamicRank(data_shape_) ? kMaxDimNums : data_shape_.size();
+    size_t index_size = IsDynamicRank(data_shape_) ? kMaxTensorIndexDimNums : data_shape_.size();
     index_size = index_size - normalized_tensors.size();
     for (size_t i = 0; i < index_size; i++) {
       auto new_index_item =
@@ -519,9 +518,9 @@ void TensorIndexGetitem::ConstGetStrideInfoFromTuple(const AnfNodePtr &data_node
       auto tensor_abs = index_abs->BuildValue()->cast<mindspore::tensor::TensorPtr>();
       int64_t start = 0;
       if (tensor_abs->data_type() == kNumberTypeInt64) {
-        start = *reinterpret_cast<int64_t *>(tensor_abs->data_c());
+        start = *static_cast<int64_t *>(tensor_abs->data_c());
       } else if (tensor_abs->data_type() == kNumberTypeInt32) {
-        start = *reinterpret_cast<int32_t *>(tensor_abs->data_c());
+        start = *static_cast<int32_t *>(tensor_abs->data_c());
       } else {
         MS_EXCEPTION(IndexError) << "Basic index in tuple must be int64/int32";
       }
@@ -730,7 +729,7 @@ void TensorIndexGetitem::GetItemByTuple(const AnfNodePtr &input_data_node, const
   bool has_ellipsis = false;
   size_t ellipsis_position = 0;
   size_t not_ellipsis_position_cnt = 0;
-  std::bitset<kMaxDimNums> expand_dims_mask;
+  std::bitset<kMaxTensorIndexDimNums> expand_dims_mask;
   auto tuple_index_types = GetTupleIndexType(tuple_abs_ptr, data_shape_, &has_ellipsis, &ellipsis_position,
                                              &not_ellipsis_position_cnt, &expand_dims_mask);
   size_t expand_dims_cnt = expand_dims_mask.count();
@@ -889,7 +888,7 @@ std::vector<CNodePtr> TensorIndex::GetTupleIndexInfo(const AnfNodePtr &data_node
   AnfNodePtrList get_tuple_index_info_inputs{get_tuple_index_info_node, data_node, fancy_position_node};
   (void)get_tuple_index_info_inputs.insert(get_tuple_index_info_inputs.end(), normalized_tensors.begin(),
                                            normalized_tensors.end());
-  for (size_t i = normalized_tensors.size(); i < 8; i++) {
+  for (size_t i = normalized_tensors.size(); i < kMaxTensorIndexDimNums; i++) {
     (void)get_tuple_index_info_inputs.emplace_back(NewValueNode(std::vector<int64_t>{1}));
   }
   auto tuple_index_info_node = NewCNode(get_tuple_index_info_inputs, res_graph_);
@@ -1017,7 +1016,7 @@ void TensorIndexSetitem::SetItemByTuple(const AnfNodePtr &input_data_node, const
   size_t ellipsis_position = 0;
   size_t not_ellipsis_position_cnt = 0;
 
-  std::bitset<kMaxDimNums> expand_dims_mask;
+  std::bitset<kMaxTensorIndexDimNums> expand_dims_mask;
   auto tuple_index_types = GetTupleIndexType(tuple_abs_ptr, data_shape_, &has_ellipsis, &ellipsis_position,
                                              &not_ellipsis_position_cnt, &expand_dims_mask);
 
@@ -1157,7 +1156,6 @@ AnfNodePtr TensorIndex::ExpandDimsByTupleIndex(const AnfNodePtr &input_data_node
 void HandleEmptySlice::HandleEmptySliceByTupleIndex(const AnfNodePtr &input_data_node, const AnfNodePtr &index_node,
                                                     const AbstractBasePtr &data,
                                                     const abstract::AbstractTuplePtr &tuple_abs_ptr) {
-  //  auto data_node = input_data_node;
   if (tuple_abs_ptr->empty()) {
     res_graph_->set_output(input_data_node);
   }
@@ -1167,14 +1165,14 @@ void HandleEmptySlice::HandleEmptySliceByTupleIndex(const AnfNodePtr &input_data
   bool has_ellipsis = false;
   size_t ellipsis_position = 0;
   size_t not_ellipsis_position_cnt = 0;
-  std::bitset<kMaxDimNums> expand_dims_mask;
+  std::bitset<kMaxTensorIndexDimNums> expand_dims_mask;
   auto tuple_index_types = GetTupleIndexType(tuple_abs_ptr, data_shape_, &has_ellipsis, &ellipsis_position,
                                              &not_ellipsis_position_cnt, &expand_dims_mask);
   // Expand dims if there are bool/None index
   size_t expand_dims_cnt = expand_dims_mask.count();
   auto data_node = ExpandDimsByTupleIndex(input_data_node, tuple_abs_ptr, tuple_index_types, expand_dims_cnt);
 
-  if (data_shape_.size() < 1 || data_shape_.size() > kMaxDimNums) {
+  if (data_shape_.size() < 1 || data_shape_.size() > kMaxTensorIndexDimNums) {
     MS_EXCEPTION(ValueError) << "The input data's dim must in the range of [1, 8], but got '" << data_shape_.size()
                              << "'.";
   }
@@ -1227,7 +1225,7 @@ FuncGraphPtr HandleScalarTensorIndex::GenerateFuncGraph(const AbstractBasePtrLis
   bool has_ellipsis = false;
   size_t ellipsis_position = 0;
   size_t not_ellipsis_position_cnt = 0;
-  std::bitset<kMaxDimNums> expand_dims_mask;
+  std::bitset<kMaxTensorIndexDimNums> expand_dims_mask;
 
   auto tuple_index_types = GetTupleIndexType(tuple_abs_ptr, data_shape_, &has_ellipsis, &ellipsis_position,
                                              &not_ellipsis_position_cnt, &expand_dims_mask);
@@ -1329,7 +1327,7 @@ FuncGraphPtr PreSetitemByTuple::GenerateFuncGraph(const AbstractBasePtrList &arg
   bool has_ellipsis = false;
   size_t ellipsis_position = 0;
   size_t not_ellipsis_position_cnt = 0;
-  std::bitset<kMaxDimNums> expand_dims_mask;
+  std::bitset<kMaxTensorIndexDimNums> expand_dims_mask;
   auto tuple_index_types = GetTupleIndexType(tuple_abs_ptr, data_shape_, &has_ellipsis, &ellipsis_position,
                                              &not_ellipsis_position_cnt, &expand_dims_mask);
 

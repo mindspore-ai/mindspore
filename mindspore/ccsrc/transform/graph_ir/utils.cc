@@ -164,6 +164,7 @@ bool IsWhileNode(const AnfNodePtr &node) {
 }
 
 bool IsCallNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return false;
   }
@@ -171,7 +172,9 @@ bool IsCallNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
   bool in_kg = graph->type_name() == kKernelGraphTypeName;
   auto cnode = node->cast<CNodePtr>();
-  if (in_kg && IsPrimitiveCNode(node, prim::kPrimCall) && cnode->input(1)->isa<ValueNode>()) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (in_kg && IsPrimitiveCNode(node, prim::kPrimCall) && cnode->input(1) != nullptr &&
+      cnode->input(1)->isa<ValueNode>()) {
     return true;
   }
   return false;

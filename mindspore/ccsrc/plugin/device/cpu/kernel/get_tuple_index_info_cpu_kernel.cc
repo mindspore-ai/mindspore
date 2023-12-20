@@ -67,7 +67,7 @@ static inline void CheckCopy(void *dest, size_t destMax, const void *src, size_t
 bool GetTupleIndexInfoCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
                                                  const std::vector<KernelTensor *> &workspace,
                                                  const std::vector<KernelTensor *> &outputs) {
-  const auto *input1 = static_cast<int64_t *>(inputs[1]->device_ptr());
+  const auto *input1 = static_cast<int64_t *>(inputs[kIndex1]->device_ptr());
   ShapeVector broadcast_shape;
   ShapeVector final_shape;
   ShapeVector index_tensor_new_shape;
@@ -77,7 +77,7 @@ bool GetTupleIndexInfoCpuKernelMod::LaunchKernel(const std::vector<KernelTensor 
   ShapeVector data_shape = data_shapes_[kIndex0];
   for (size_t i = 0; i < tuple_index_types_.size(); i++) {
     if (tuple_index_types_[i] == kMetaTypeEllipsis) {
-      valid_tensor_nums = data_shape.size() + expand_dims_count_;
+      valid_tensor_nums = data_shape.size() + LongToSize(expand_dims_count_);
       break;
     } else if (tuple_index_types_[i] != kTypeUnknown) {
       valid_tensor_nums += 1;

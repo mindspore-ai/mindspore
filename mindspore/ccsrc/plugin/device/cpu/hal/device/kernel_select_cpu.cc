@@ -435,6 +435,7 @@ void UpdateDynamicKernelBuildInfo(const CNodePtr &kernel_node) {
       MS_EXCEPTION_IF_NULL(input_node);
       const std::vector<PrimitivePtr> need_handled_prims = {prim::kPrimMakeTuple, prim::kPrimTupleGetItem};
       auto real_input_node = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false, need_handled_prims).first;
+      MS_EXCEPTION_IF_NULL(real_input_node);
       if (real_input_node->abstract() != nullptr && real_input_node->abstract()->isa<abstract::AbstractSequence>() &&
           real_input_node->abstract()->cast<abstract::AbstractSequencePtr>()->dynamic_len()) {
         MS_LOG(INFO) << "Change kernel object type from:" << input_object_types[i]

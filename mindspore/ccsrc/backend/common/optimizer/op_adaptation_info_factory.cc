@@ -192,6 +192,9 @@ bool OpAdaptationInfoRegister::ConvertInputToAttr(const CNodePtr &origin_op, siz
                                                   const std::shared_ptr<AnfNode> &input_node,
                                                   const std::string &attr_data_type,
                                                   const std::shared_ptr<Primitive> &target_primitive) {
+  MS_EXCEPTION_IF_NULL(origin_op);
+  MS_EXCEPTION_IF_NULL(input_node);
+  MS_EXCEPTION_IF_NULL(target_primitive);
   auto value_node = input_node->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(value_node);
   MS_LOG(DEBUG) << "start erase input[" << i
@@ -199,6 +202,7 @@ bool OpAdaptationInfoRegister::ConvertInputToAttr(const CNodePtr &origin_op, siz
                 << ", Type:" << value_node->type_name();
 
   auto value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::Tensor>()) {
     auto tensor = value->cast<tensor::TensorPtr>();
     if (tensor->data().const_data() == nullptr && !tensor->has_user_data(kTensorValueIsEmpty)) {

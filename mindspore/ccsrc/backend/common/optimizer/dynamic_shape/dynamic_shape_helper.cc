@@ -396,7 +396,9 @@ bool InferShapeForGraphWithSymbolEngine(const CNodePtr &cnode, const FuncGraphPt
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
   auto output = func_graph->output();
+  MS_EXCEPTION_IF_NULL(output);
   auto symbol_engine = GetValue<SymbolEnginePtr>(func_graph->get_attr(kAttrSymbolEngine));
+  MS_EXCEPTION_IF_NULL(symbol_engine);
   if (!symbol_engine->Infer(args_spec_list)) {
     MS_LOG(INFO) << "Infer failed by symbol engine. node " << cnode->fullname_with_scope();
     return false;
@@ -413,6 +415,7 @@ bool InferShapeForGraphWithSymbolEngine(const CNodePtr &cnode, const FuncGraphPt
     abs_shape = std::make_shared<abstract::TupleShape>(shape_list);
   }
   auto output_abs = output->abstract();
+  MS_EXCEPTION_IF_NULL(output_abs);
   output_abs->set_shape(abs_shape);
   cnode->set_abstract(output_abs);
   return true;
@@ -435,6 +438,8 @@ void InferShapeForGraph(const CNodePtr &cnode, const FuncGraphPtr &func_graph,
       << args_spec_list.size() << " vs func_graph parameters: " << func_graph->parameters().size();
   }
   for (size_t i = 0; i < args_spec_list.size(); i++) {
+    MS_EXCEPTION_IF_NULL(func_graph->parameters()[i]);
+    MS_EXCEPTION_IF_NULL(args_spec_list[i]);
     func_graph->parameters()[i]->set_abstract(args_spec_list[i]->Clone());
   }
   std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return());
@@ -454,12 +459,15 @@ void InferShapeForGraph(const CNodePtr &cnode, const FuncGraphPtr &func_graph,
       for (size_t i = 1; i < prim_cnode->size(); i++) {
         auto input_node = prim_cnode->input(i);
         MS_EXCEPTION_IF_NULL(input_node);
+        MS_EXCEPTION_IF_NULL(input_node->abstract());
         (void)cnode_args_spec_list.emplace_back(input_node->abstract()->Clone());
       }
       opt::CppInferShape(cnode_primitive, cnode_args_spec_list, prim_cnode);
     } else {
       auto return_cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(return_cnode);
+      MS_EXCEPTION_IF_NULL(return_cnode->input(1));
+      MS_EXCEPTION_IF_NULL(return_cnode->input(1)->abstract());
       cnode->set_abstract(return_cnode->input(1)->abstract()->Clone());
     }
   }

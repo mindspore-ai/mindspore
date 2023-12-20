@@ -77,6 +77,7 @@ int GetJitSyntaxLevel() {
 }
 
 TypePtrList GetTypeElements(const TypePtr &type) {
+  MS_EXCEPTION_IF_NULL(type);
   if (type->isa<List>()) {
     auto type_list = type->cast_ptr<List>();
     return type_list->elements();

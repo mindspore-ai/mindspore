@@ -20,7 +20,6 @@
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/ms_utils.h"
 #include "include/common/thread_pool.h"
-#include "ops/op_name.h"
 #include "mindspore/core/ops/normalize_tuple_index.h"
 
 namespace mindspore {
@@ -128,7 +127,7 @@ void NormalizeTupleIndexCpuKernelMod::NormalizeEllipsisIndex(int64_t *output_add
                                                              size_t dim_index) {
   size_t ellipse_position = 0;
   size_t not_ellipse_occupy_dims = 0;
-  for (size_t i = 0; i < 8; i++) {
+  for (size_t i = 0; i < kMaxTensorIndexDimNums; i++) {
     if (tuple_index_types_[i] == kMetaTypeEllipsis) {
       ellipse_position = i;
     } else if (tuple_index_types_[i] != kTypeUnknown) {
@@ -158,8 +157,8 @@ template <typename T>
 bool NormalizeTupleIndexCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
                                                    const std::vector<KernelTensor *> &workspace,
                                                    const std::vector<KernelTensor *> &outputs) {
-  const auto index_val_addr = static_cast<T *>(inputs[1]->device_ptr());
-  auto output_addr = static_cast<int64_t *>(outputs[0]->device_ptr());
+  const auto index_val_addr = static_cast<T *>(inputs[kIndex1]->device_ptr());
+  auto output_addr = static_cast<int64_t *>(outputs[kIndex0]->device_ptr());
   const ShapeVector &data_shape = data_shapes_[0];
   output_sizes_.clear();
   if (index_types_ == kIntIndex) {

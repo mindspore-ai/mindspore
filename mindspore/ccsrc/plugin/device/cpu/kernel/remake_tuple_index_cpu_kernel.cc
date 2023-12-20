@@ -55,7 +55,7 @@ bool RemakeTupleIndexCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *
   auto output_attr = reinterpret_cast<char *>(outputs[kIndex0]->device_ptr());
   size_t ellipse_position = 0;
   size_t not_ellipsis_position_cnt = 0;
-  for (size_t i = 0; i < 8; i++) {
+  for (size_t i = 0; i < kMaxTensorIndexDimNums; i++) {
     if (tuple_index_types_[i] == kMetaTypeEllipsis) {
       ellipse_position = i;
     } else if (tuple_index_types_[i] != kTypeUnknown) {

@@ -242,6 +242,7 @@ OperatorPtr OpAdapterImpl::GenerateCustomOp(const AnfNodePtr anf) {
   MS_EXCEPTION_IF_NULL(prim);
   auto op_type = GetCustomOpType(prim);
   auto op = std::make_shared<::ge::CustomOperator>(node->fullname_with_scope() + op_type, op_type);
+  MS_EXCEPTION_IF_NULL(op);
   if (GenerateCustomOpInputMap(op, prim) != SUCCESS) {
     MS_LOG(WARNING) << "Custom op node has no input_names, op[" << prim->name() << "].";
   }
