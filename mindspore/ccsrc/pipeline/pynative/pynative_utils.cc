@@ -931,10 +931,12 @@ void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs,
     auto const &op_arg = op_def->args_[i];
     op_run_info->none_init_inputs_num += static_cast<size_t>(!op_arg.as_init_arg_);
 
-    if (py::isinstance<py::none>(op_inputs[i])) {
+    // Optional argument is valid for None as input.
+    if (op_arg.is_optional_ && py::isinstance<py::none>(op_inputs[i])) {
       op_run_info->op_grad_info->input_value[i] = kNone;
       continue;
     }
+
     ValuePtr value = nullptr;
     convert_func = parse::GetConverterByType(static_cast<int32_t>(op_arg.arg_dtype_));
     MS_EXCEPTION_IF_NULL(convert_func);
