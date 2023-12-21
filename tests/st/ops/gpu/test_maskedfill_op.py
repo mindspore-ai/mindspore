@@ -176,3 +176,20 @@ def test_maskedfill_tensor_value():
     Expectation: The result match to expect.
     """
     maskedfill_value(Tensor(0.5))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_func_masked_fill_with_8d_broadcast_input():
+    """
+    Feature: Test func masked_fill.
+    Description: Test func masked_fill api with 8-D input broadcast.
+    Expectation: The result match to expect.
+    """
+    inputs = np.random.randn(2, 2, 2, 3, 1, 4, 5, 3).astype(np.float32)
+    mask = np.random.choice([True, False], size=(1, 2, 2, 3, 1, 4, 5, 3))
+    value = 2
+    output = F.masked_fill(Tensor(inputs), Tensor(mask), value)
+    expect = np.where(mask, value, inputs)
+    assert (output.asnumpy() == expect).all()
