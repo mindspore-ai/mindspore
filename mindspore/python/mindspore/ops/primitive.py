@@ -17,11 +17,13 @@
 import functools
 import inspect
 import copy
+import numpy as np
 from mindspore.common.api import _wrap_func
 from mindspore.log import _LogActionOnce
 from mindspore import context, log as logger
 from mindspore.parallel._utils import _is_in_auto_parallel_mode, _is_in_data_parallel_mode, _is_in_hybrid_parallel_mode
 from mindspore.parallel._ps_context import _is_ps_mode, _is_role_sched
+from mindspore.parallel.shard import Layout
 from mindspore.common.api import _pynative_executor
 from mindspore.common._stub_tensor import _convert_stub
 from mindspore._c_expression import Primitive_, PrimitiveFunction_, prim_type, typing
@@ -155,6 +157,63 @@ class Primitive(Primitive_):
             cloned.set_prim_instance_name(self.instance_name)
         return cloned
 
+    def _check_shard_strategy(self, strategy, log_info):
+        """Check shard strategy is validate or not"""
+        is_layout = []
+        if not isinstance(strategy, tuple):
+            raise TypeError(f'{log_info} must be tuple type, but got:{type(strategy)}')
+        for in_ele in strategy:
+            if not isinstance(in_ele, tuple) and not isinstance(in_ele, Layout):
+                raise TypeError(f'The element of strategy must be tuple/Layout type, but got:{type(in_ele)}')
+            if isinstance(in_ele, tuple):
+                for in_value in in_ele:
+                    if not isinstance(in_value, int):
+                        raise TypeError(f'The {log_info}: {strategy} of {self.name} is not valid,'
+                                        f' the value of strategy must be int type, but got:{type(in_value)}')
+                is_layout.append(False)
+                continue
+            is_layout.append(True)
+        if not is_layout:
+            np_is_layout = np.array(is_layout)
+            if not (np_is_layout == np_is_layout[0]).all():
+                raise TypeError(f'{log_info} item must be all tuple type or all Layout type.')
+        return np.array(is_layout)
+
+    def _extract_layout_value(self, layout, log_info):
+        """Extract parallel layout value"""
+        layout_value = None
+        if layout is not None:
+            if not isinstance(layout, tuple):
+                raise TypeError(f'{log_info} must be tuple type, but got:{type(layout)}')
+            layout_value = ()
+            for in_ele in layout:
+                if not isinstance(in_ele, Layout):
+                    raise TypeError(f"The {log_info} item should be a object of class Layout.")
+                layout_value += (in_ele.to_dict(),)
+        return layout_value
+
+    def _check_shard_strategy_in_out_match(self, in_strategy, out_strategy):
+        """Check shard in_strategy and out_strategy"""
+        if in_strategy is None and out_strategy is not None:
+            raise ValueError(f'The out_strategy of {self.name} is {out_strategy}, need to set in_strategy,'
+                             f' but got none')
+        if not _is_in_auto_parallel_mode():
+            mode = context.get_auto_parallel_context("parallel_mode")
+            if in_strategy is not None:
+                logger.warning(f"The in_strategy/in_layout of the operator in your network "
+                               f"will not take effect in {mode} mode. "
+                               f"This means the the shard function called in the network is ignored. \n"
+                               f"If you want to enable it, please use semi auto or auto parallel mode by "
+                               f"context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL "
+                               f"or context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL)")
+            if out_strategy is not None:
+                logger.warning(f"The out_strategy/out_layout of the operator in your network "
+                               f"will not take effect in {mode} mode."
+                               f" This means the the shard function called in the network is ignored. \n"
+                               f"If you want to enable it, please use semi auto or auto parallel mode by "
+                               f"context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL "
+                               f"or context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL)")
+
     def del_prim_attr(self, name):
         """
         Delete primitive attribute.
@@ -213,49 +272,33 @@ class Primitive(Primitive_):
             >>> print(add.shard(((1, 1), (1, 1))))
             Prim[Add]<in_strategy=((1, 1), (1, 1)), out_strategy=None>
         """
-        mode = context.get_auto_parallel_context("parallel_mode")
+        in_is_layout = None
+        out_is_layout = None
         if in_strategy is not None:
-            if not isinstance(in_strategy, tuple):
-                raise TypeError(f'in_strategy must be tuple type, but got:{type(in_strategy)}')
-            for in_ele in in_strategy:
-                if not isinstance(in_ele, tuple):
-                    raise TypeError(f'The element of strategy must be tuple type, but got:{type(in_ele)}')
-                for in_value in in_ele:
-                    if not isinstance(in_value, int):
-                        raise TypeError(f'The in_strategy: {in_strategy} of {self.name} is not valid,'
-                                        f' the value of strategy must be int type, but got:{type(in_value)}')
+            in_is_layout = self._check_shard_strategy(in_strategy, "in_strategy")
 
         if out_strategy is not None:
-            if not isinstance(out_strategy, tuple):
-                raise TypeError(f'out strategy must be tuple type, but got:{type(out_strategy)}')
-            for out_ele in out_strategy:
-                if not isinstance(out_ele, tuple):
-                    raise TypeError(f'The element of strategy must be tuple type, but got:{type(out_ele)}')
-                for out_value in out_ele:
-                    if not isinstance(out_value, int):
-                        raise TypeError(f'The in_strategy: {out_strategy} of {self.name} is not valid,'
-                                        f' the value of strategy must be int type, but got:{type(out_value)}')
+            out_is_layout = self._check_shard_strategy(out_strategy, "out_strategy")
+        self._check_shard_strategy_in_out_match(in_strategy, out_strategy)
+        if in_is_layout is not None and out_is_layout is not None and in_is_layout[0] != out_is_layout[0]:
+            raise ValueError(f'The in_strategy type must equal to the out_strategy type, '
+                             f'one using tuple(tuple) and the other using tuple(Layout) is not allowed.')
+        in_layout_value = None
+        out_layout_value = None
+        if in_is_layout is not None and in_is_layout[0]:
+            in_layout_value = self._extract_layout_value(in_strategy, "in_strategy")
+        if out_is_layout is not None and out_is_layout[0]:
+            out_layout_value = self._extract_layout_value(out_strategy, "out_strategy")
 
-        if in_strategy is None and out_strategy is not None:
-            raise ValueError(f'The out_strategy of {self.name} is {out_strategy}, need to set in_strategy,'
-                             f' but got none')
 
-        if not _is_in_auto_parallel_mode():
-            if in_strategy is not None:
-                logger.warning(f"The in_strategy of the operator in your network will not take effect in {mode} mode. "
-                               f"This means the the shard function called in the network is ignored. \n"
-                               f"If you want to enable it, please use semi auto or auto parallel mode by "
-                               f"context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL "
-                               f"or context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL)")
-            if out_strategy is not None:
-                logger.warning(f"The out_strategy of the operator in your network will not take effect in {mode} mode."
-                               f" This means the the shard function called in the network is ignored. \n"
-                               f"If you want to enable it, please use semi auto or auto parallel mode by "
-                               f"context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL "
-                               f"or context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL)")
-
-        self.add_prim_attr("in_strategy", in_strategy)
-        self.add_prim_attr("out_strategy", out_strategy)
+        if in_is_layout is not None and not in_is_layout[0]:
+            self.add_prim_attr("in_strategy", in_strategy)
+        if out_is_layout is not None and not out_is_layout[0]:
+            self.add_prim_attr("out_strategy", out_strategy)
+        if in_layout_value:
+            self.add_prim_attr("in_layout", in_layout_value)
+        if out_layout_value:
+            self.add_prim_attr("out_layout", out_layout_value)
         return self
 
     def set_prim_instance_name(self, instance_name):

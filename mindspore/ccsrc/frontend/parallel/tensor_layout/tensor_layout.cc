@@ -20,6 +20,7 @@
 #include "utils/ms_utils.h"
 #include "ir/value.h"
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/status.h"
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/tensor_layout/shape_util.h"
@@ -82,6 +83,85 @@ Status TensorLayout::InitFromVector(const Shape &device_arrangement, const Shape
   if (Init(device_arrangement_origin_, tensor_map_origin_, tensor_shape_origin_) != SUCCESS) {
     return FAILED;
   }
+  return SUCCESS;
+}
+
+/*
+ *  example1:
+ *    in_device_arrangement = [8, 2, 4],
+ *    in_tensor_map = [[2], [1, 0]],
+ *    in_tensor_shape = [512, 1024],
+ *  =>
+ *    in_device_arrangement = [8, 2, 4],
+ *    in_tensor_map = [2, 1, 0],
+ *    in_tensor_shape = [512, 2, 512],
+ *  example2:
+ *    in_device_arrangement = [8, 2, 4],
+ *    in_tensor_map = [[1], [0, 2]],
+ *    in_tensor_shape = [512, 1024],
+ *  =>
+ *    in_device_arrangement = [8, 2, 4],
+ *    in_tensor_map = [1, 0, 2],
+ *    in_tensor_shape = [512, 4, 256],
+ */
+Status TensorLayout::InitFromExtendVector(const Shape &device_arrangement, const std::vector<Shape> &tensor_map,
+                                          const Shape &tensor_shape) {
+  if (device_arrangement_origin_.Init(device_arrangement) != SUCCESS) {
+    return FAILED;
+  }
+  CheckGlobalDeviceManager();
+  auto device_num = g_device_manager->stage_device_num();
+  int64_t device_total =
+    std::accumulate(device_arrangement.begin(), device_arrangement.end(), 1, std::multiplies<int64_t>());
+  if (device_num != device_total) {
+    MS_LOG(ERROR) << "The configured device_matrix " << device_arrangement << " accumulate value " << device_total
+                  << " dose not equal to the device number in one stage " << device_num;
+    return FAILED;
+  }
+  Shape extended_tensor_map;
+  Shape reshaped_tensor_shape;
+  if (tensor_shape.size() != tensor_map.size()) {
+    MS_LOG(ERROR) << "The tensor_shape " << tensor_shape << " dose not have the same size with tensor_map "
+                  << tensor_map;
+    return FAILED;
+  }
+
+  for (size_t i = 0; i < tensor_map.size(); ++i) {
+    for (size_t j = 0; j < tensor_map[i].size(); ++j) {
+      extended_tensor_map.push_back(tensor_map[i][j]);
+    }
+  }
+  if (extended_tensor_map.size() > device_arrangement.size()) {
+    MS_LOG(ERROR) << "The device_matrix " << device_arrangement
+                  << " length dose not greater equal than the extended_tensor_map " << extended_tensor_map;
+    return FAILED;
+  }
+  tensor_shape_before_.Init(tensor_shape);
+  for (size_t i = 0; i < tensor_map.size(); ++i) {
+    if (tensor_map[i].size() == 1) {
+      reshaped_tensor_shape.push_back(tensor_shape[i]);
+      continue;
+    }
+    int64_t accu_shp = 1;
+    for (size_t j = 0; j < tensor_map[i].size() - 1; ++j) {
+      size_t tensor_index = device_arrangement.size() - 1 - static_cast<size_t>(tensor_map[i][j]);
+      auto shard_size = device_arrangement[tensor_index];
+      accu_shp *= shard_size;
+      reshaped_tensor_shape.push_back(shard_size);
+    }
+    auto last_shp = tensor_shape[i] / accu_shp;
+    reshaped_tensor_shape.push_back(last_shp);
+  }
+  if (tensor_map_origin_.Init(extended_tensor_map) != SUCCESS) {
+    return FAILED;
+  }
+  if (tensor_shape_origin_.Init(reshaped_tensor_shape) != SUCCESS) {
+    return FAILED;
+  }
+  if (Init(device_arrangement_origin_, tensor_map_origin_, tensor_shape_origin_) != SUCCESS) {
+    return FAILED;
+  }
+  tensor_map_before_ = tensor_map;
   return SUCCESS;
 }
 
@@ -340,6 +420,37 @@ Arrangement TensorLayout::slice_shape() const {
   }
 }
 
+Arrangement TensorLayout::base_slice_shape() const {
+  if (tensor_map_before_.empty()) {
+    return slice_shape();
+  }
+  Shape shape;
+  for (size_t index = 0; index < tensor_map_before_.size(); index++) {
+    auto dim_map = tensor_map_before_[index];
+    int64_t num = tensor_shape_before_.GetDimByIdx(index);
+    int64_t axis_shard = 1;
+    for (const auto &dim : dim_map) {
+      if (dim != -1) {
+        int64_t divisor = device_arrangement_.GetDimByReverseIdx(LongToUlong(dim));
+        axis_shard *= divisor;
+      }
+    }
+    if (num == -1) {
+      shape.push_back(num);  // num == -1 means dynamic shape
+    } else {
+      shape.push_back(num / axis_shard);
+    }
+  }
+
+  Arrangement new_tensor_shape;
+  if (new_tensor_shape.Init(shape) == Status::FAILED) {
+    ValuePtr ptr = MakeValue(shape);
+    MS_LOG(EXCEPTION) << "Can't get slice shape when initialize a new shape " << ptr->ToString();
+  } else {
+    return new_tensor_shape;
+  }
+}
+
 Shape TensorLayout::shard_strategy() const {
   Shape ret;
   for (size_t index = 0; index < tensor_map_.GetDimSize(); index++) {
@@ -445,11 +556,22 @@ TensorLayout TensorLayout::TransferRepeatLayout() const {
   return repeat;
 }
 
+RankList TensorLayout::InferRepeatedGroup() {
+  CheckGlobalDeviceManager();
+  int64_t rank = g_device_manager->global_rank();
+  DeviceMatrix dev_matrix(rank, g_device_manager->GetDeviceListInThisStage(), device_arrangement_origin_.array());
+  RankList group_devices;
+  if (dev_matrix.GetDevicesByTensorMap(tensor_map_origin_.array(), &group_devices) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Tensor layout:" << ToString() << " infer repeated group failed.";
+  }
+  return group_devices;
+}
+
 // Generate a totally shard tensor slice shape for parallel optimizer
 Status TensorLayout::GenerateOptShardSliceShape() {
   MS_LOG(INFO) << "layout for GetOptShardSliceShape is " << StandardToString();
   Shape dev_max = device_arrangement_.array();
-  Shape tensor_map = tensor_map_.array();
+
   Shape repeated_dev;
   for (size_t i = 0; i < dev_max.size(); i++) {
     if (tensor_map_.GetIndexByValue(static_cast<int64_t>(i)) == MAP_NONE) {
@@ -463,22 +585,17 @@ Status TensorLayout::GenerateOptShardSliceShape() {
   }
   int64_t repeated_num =
     std::accumulate(repeated_dev.begin(), repeated_dev.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
-  int64_t split_num;
   int64_t optimizer_weight_shard_size = ParallelContext::GetInstance()->optimizer_weight_shard_size();
   if (optimizer_weight_shard_size != -1 && repeated_num >= optimizer_weight_shard_size) {
     repeated_num = optimizer_weight_shard_size;
   }
-  if (tensor_map[0] == MAP_NONE) {
-    split_num = repeated_num;
-  } else {
-    split_num = dev_max[dev_max.size() - 1 - static_cast<size_t>(tensor_map[0])] * repeated_num;
-  }
-  if (tensor_shape_.array()[0] % split_num != 0) {
+
+  Shape origin_slice_shape = base_slice_shape().array();
+  if (origin_slice_shape[0] % repeated_num != 0) {
     MS_LOG(INFO) << "Tensor could not be shard on the first dimension.";
     return Status::FAILED;
   }
-  Shape origin_slice_shape = slice_shape().array();
-  origin_slice_shape[0] = tensor_shape_.array()[0] / split_num;
+  origin_slice_shape[0] = origin_slice_shape[0] / repeated_num;
   opt_shard_slice_shape_ = origin_slice_shape;
   return Status::SUCCESS;
 }

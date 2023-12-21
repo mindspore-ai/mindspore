@@ -44,7 +44,9 @@ class ReshapeInfo : public OperatorInfo {
         input_layout_set_flag_(false),
         output_layout_set_flag_(false) {}
   ~ReshapeInfo() override = default;
-  Status Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) override;
+  Status Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy,
+              const std::vector<std::shared_ptr<TensorLayout>> &in_tensor_layouts = {},
+              const std::vector<std::shared_ptr<TensorLayout>> &out_tensor_layouts = {}) override;
   void SetInputLayout(const TensorLayout &input_layout) {
     input_layout_ = input_layout;
     input_layout_set_flag_ = true;

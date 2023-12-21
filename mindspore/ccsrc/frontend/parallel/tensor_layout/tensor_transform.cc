@@ -286,9 +286,11 @@ RedistributionOpListPtr TensorTransform::OptimizeTensorRedistributionOperatorLis
     }
     auto axis = transform_op_list[i].second.back();
     if (axis == 0) {
+      current_allgather_pos_in_origin_list += kSize3;
       continue;
     }
     if (i == transform_op_list.size() - 1 || transform_op_list[i + 1].first != RESHAPE) {
+      current_allgather_pos_in_origin_list += kSize3;
       continue;
     }
     auto src_shape = shape_list[i];
@@ -305,6 +307,7 @@ RedistributionOpListPtr TensorTransform::OptimizeTensorRedistributionOperatorLis
     MS_LOG(INFO) << "src_shape:" << src_shape << ", new_src_shape:" << new_src_shape << ", axis:" << axis
                  << ", new_axis:" << new_axis;
     if (new_axis != 0) {
+      current_allgather_pos_in_origin_list += kSize3;
       continue;
     }
     left_reshape_op_list[current_allgather_pos_in_origin_list] = new_src_shape;

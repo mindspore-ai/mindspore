@@ -24,13 +24,13 @@ def test_load_tensor():
     dev_mat = [2, 3]
     tensor_map = [1, -1]
     hccl.rank_id = 5
-    tensor_slice = _load_tensor(tensor, dev_mat, tensor_map)
+    tensor_slice = _load_tensor(tensor, dev_mat, tensor_map, [2, 3])
     expected_tensor = Tensor([[4, 5, 6]])
     if expected_tensor.__str__() != tensor_slice.__str__():
         raise AssertionError
 
     hccl.rank_id = 2
-    tensor_slice = _load_tensor(tensor, dev_mat, tensor_map)
+    tensor_slice = _load_tensor(tensor, dev_mat, tensor_map, [2, 3])
     expected_tensor = Tensor([[1, 2, 3]])
     if expected_tensor.__str__() != tensor_slice.__str__():
         raise AssertionError

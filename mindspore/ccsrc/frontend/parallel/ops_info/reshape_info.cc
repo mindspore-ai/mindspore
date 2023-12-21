@@ -521,7 +521,9 @@ Status ReshapeInfo::InferDefaultLayout(const Shape &shape, TensorLayout *const l
   return Status::SUCCESS;
 }
 
-Status ReshapeInfo::Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) {
+Status ReshapeInfo::Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy,
+                         const std::vector<std::shared_ptr<TensorLayout>> &in_tensor_layouts,
+                         const std::vector<std::shared_ptr<TensorLayout>> &out_tensor_layouts) {
   auto reshape_skip_redis_iter = attrs_.find(SKIP_REDISTRIBUTION);
   if (reshape_skip_redis_iter != attrs_.end()) {
     MS_EXCEPTION_IF_NULL(reshape_skip_redis_iter->second);
