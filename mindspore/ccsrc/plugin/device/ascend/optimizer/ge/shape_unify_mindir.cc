@@ -104,6 +104,7 @@ CNodePtr ShapeUnifyMindIR::CreateTensorShape(const FuncGraphPtr &func_graph, con
   auto prim = std::make_shared<Primitive>(kTensorShapeOpName);
   MS_EXCEPTION_IF_NULL(prim);
   auto shape_cnode = anf_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(shape_cnode);
   AnfNodePtrList inputs = {NewValueNode(prim), shape_cnode->input(kIndex1)};
 
   CNodePtr tensor_shape_node = func_graph->NewCNode(inputs);
@@ -131,29 +132,21 @@ CNodePtr ShapeUnifyMindIR::CreateStridedSlice(const FuncGraphPtr &func_graph, co
   auto strides_node = CreateScalarValueTuple(func_graph, kSizeOne);
   MS_EXCEPTION_IF_NULL(strides_node);
 
-  // set abstract
-  ShapeVector tensor_shape = {};
-  auto tensor_shape_ptr = std::make_shared<abstract::Shape>(tensor_shape);
-  MS_EXCEPTION_IF_NULL(tensor_shape_ptr);
-
-  auto abstract_tensor = shape_node->abstract()->cast<abstract::AbstractTensorPtr>();
-  auto type_ptr = abstract_tensor->element()->GetTypeTrack();
-  TypeId infer_type = type_ptr->type_id();
-
-  auto tmp_abstract = abstract::MakeAbstract(std::make_shared<abstract::Shape>(tensor_shape), TypeIdToType(infer_type));
-  MS_EXCEPTION_IF_NULL(tmp_abstract);
-
   auto prim = NewValueNode(std::make_shared<Primitive>(kStridedSliceOpName));
   MS_EXCEPTION_IF_NULL(prim);
   AnfNodePtrList inputs = {prim, shape_node, begin_node, end_node, strides_node};
   CNodePtr strided_slice = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(strided_slice);
   strided_slice->set_fullname_with_scope(tuple_get_node->fullname_with_scope() + "_strided_slice");
+  auto primitive = GetCNodePrimitive(strided_slice);
+  MS_EXCEPTION_IF_NULL(primitive);
+
+  // set abstract
+  auto tmp_abstract = InferAbstract(primitive, {shape_node, begin_node, end_node, strides_node});
+  MS_EXCEPTION_IF_NULL(tmp_abstract);
   strided_slice->set_abstract(tmp_abstract);
 
   // set attrs, all defaults to zero
-  auto primitive = GetCNodePrimitive(strided_slice);
-  MS_EXCEPTION_IF_NULL(primitive);
   primitive->set_attr("new_axis_mask", MakeValue<int64_t>(0));
   primitive->set_attr("shrink_axis_mask", MakeValue<int64_t>(0));
   primitive->set_attr("end_mask", MakeValue<int64_t>(0));
