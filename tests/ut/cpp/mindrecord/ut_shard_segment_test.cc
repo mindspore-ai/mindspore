@@ -88,11 +88,11 @@ TEST_F(TestShardSegment, TestShardSegment) {
   EXPECT_TRUE(status.IsOk());
   MS_LOG(INFO) << "category id: 1, images count: " << pages_ptr_2->size() << ", image[0] size: " << ((*pages_ptr_2)[0]).size();
 
-  auto pages_ptr_3 = std::make_shared<PAGES>();
+  auto pages_ptr_3 = std::make_shared<PAGES_WITH_BLOBS>();
   status = dataset.ReadAllAtPageByName("822", 0, 10, &pages_ptr_3);
   MS_LOG(INFO) << "category field: 822, images count: " << pages_ptr_3->size();
 
-  auto pages_ptr_4 = std::make_shared<PAGES>();
+  auto pages_ptr_4 = std::make_shared<PAGES_WITH_BLOBS>();
   status = dataset.ReadAllAtPageById(1, 0, 10, &pages_ptr_4);
   MS_LOG(INFO) << "category id: 1, images count: " << pages_ptr_4->size();
 }

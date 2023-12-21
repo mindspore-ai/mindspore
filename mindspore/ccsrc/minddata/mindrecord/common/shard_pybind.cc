@@ -218,14 +218,12 @@ void BindShardReader(const py::module *m) {
     .def("get_next",
          [](ShardReader &s) {
            auto data = s.GetNext();
-           vector<std::tuple<std::vector<std::vector<uint8_t>>, pybind11::object>> res;
+           std::vector<std::tuple<std::map<std::string, std::vector<uint8_t>>, pybind11::object>> res;
            std::transform(data.begin(), data.end(), std::back_inserter(res),
-                          [&s](const std::tuple<std::vector<uint8_t>, json> &item) {
+                          [&s](const std::tuple<std::map<std::string, std::vector<uint8_t>>, json> &item) {
                             auto &j = std::get<1>(item);
                             pybind11::object obj = nlohmann::detail::FromJsonImpl(j);
-                            auto blob_data_ptr = std::make_shared<std::vector<std::vector<uint8_t>>>();
-                            (void)s.UnCompressBlob(std::get<0>(item), &blob_data_ptr);
-                            return std::make_tuple(*blob_data_ptr, std::move(obj));
+                            return std::make_tuple(std::move(std::get<0>(item)), std::move(obj));
                           });
            return res;
          })
@@ -276,11 +274,11 @@ void BindShardSegment(py::module *m) {
          })
     .def("read_at_page_by_id",
          [](ShardSegment &s, int64_t category_id, int64_t page_no, int64_t n_rows_of_page) {
-           auto pages_load_ptr = std::make_shared<PAGES_LOAD>();
-           auto pages_ptr = std::make_shared<PAGES>();
+           auto pages_load_ptr = std::make_shared<PAGES_LOAD_WITH_BLOBS>();
+           auto pages_ptr = std::make_shared<PAGES_WITH_BLOBS>();
            THROW_IF_ERROR(s.ReadAllAtPageById(category_id, page_no, n_rows_of_page, &pages_ptr));
            (void)std::transform(pages_ptr->begin(), pages_ptr->end(), std::back_inserter(*pages_load_ptr),
-                                [](const std::tuple<std::vector<uint8_t>, json> &item) {
+                                [](const std::tuple<std::map<std::string, std::vector<uint8_t>>, json> &item) {
                                   auto &j = std::get<1>(item);
                                   pybind11::object obj = nlohmann::detail::FromJsonImpl(j);
                                   return std::make_tuple(std::get<0>(item), std::move(obj));
@@ -289,11 +287,11 @@ void BindShardSegment(py::module *m) {
          })
     .def("read_at_page_by_name",
          [](ShardSegment &s, std::string category_name, int64_t page_no, int64_t n_rows_of_page) {
-           auto pages_load_ptr = std::make_shared<PAGES_LOAD>();
-           auto pages_ptr = std::make_shared<PAGES>();
+           auto pages_load_ptr = std::make_shared<PAGES_LOAD_WITH_BLOBS>();
+           auto pages_ptr = std::make_shared<PAGES_WITH_BLOBS>();
            THROW_IF_ERROR(s.ReadAllAtPageByName(category_name, page_no, n_rows_of_page, &pages_ptr));
            (void)std::transform(pages_ptr->begin(), pages_ptr->end(), std::back_inserter(*pages_load_ptr),
-                                [](const std::tuple<std::vector<uint8_t>, json> &item) {
+                                [](const std::tuple<std::map<std::string, std::vector<uint8_t>>, json> &item) {
                                   auto &j = std::get<1>(item);
                                   pybind11::object obj = nlohmann::detail::FromJsonImpl(j);
                                   return std::make_tuple(std::get<0>(item), std::move(obj));

@@ -1480,3 +1480,261 @@ def test_file_writer_parallel(file_name=None, remove_file=True):
     with pytest.raises(TypeError) as e:
         writer.write_raw_data([], 18)
     assert "The parameter `parallel_writer` must be bool." in str(e)
+
+
+def test_mindpage_with_single_multi_bytes_fields(file_name=None, remove_file=True):
+    """
+    Feature: MindPage
+    Description: search and check value
+    Expectation: SUCCESS
+    """
+
+    if not file_name:
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+
+    # single bytes field
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+
+    writer = FileWriter(file_name=file_name, shard_num=1, overwrite=True)
+    schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"}}
+    writer.add_schema(schema_json, "test_schema")
+    indexes = ["file_name", "label"]
+    writer.add_index(indexes)
+    for i in range(10):
+        data = [{"file_name": str(i) + ".jpg", "label": i,
+                 "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff" +
+                         int(i).to_bytes(length=4, byteorder='big', signed=True)}]
+        writer.write_raw_data(data)
+    writer.commit()
+
+    mind_page = MindPage(file_name)
+
+    # get all the index fields
+    fields = mind_page.candidate_fields
+    print(fields)
+
+    # set the field to be retrieved
+    mind_page.category_field = "file_name"
+
+    # get all the group info
+    info = mind_page.read_category_info()
+    print(info)
+
+    # get the row by id which is from category info
+    row_by_id = mind_page.read_at_page_by_id(0, 0, 1)
+    assert len(row_by_id) == 1
+    assert row_by_id[0]['file_name'] == '0.jpg'
+    assert row_by_id[0]['label'] == 0
+    assert row_by_id[0]['data'] == b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff" + \
+                                int(0).to_bytes(length=4, byteorder='big', signed=True)
+
+    # get the row by name which is from category info
+    row_by_name = mind_page.read_at_page_by_name("8.jpg", 0, 1)
+    assert len(row_by_name) == 1
+    assert row_by_name[0]['file_name'] == '8.jpg'
+    assert row_by_name[0]['label'] == 8
+    assert row_by_name[0]['data'] == b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff" + \
+                                  int(8).to_bytes(length=4, byteorder='big', signed=True)
+
+    # single bytes field and got >1 result
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+
+    writer = FileWriter(file_name=file_name, shard_num=1, overwrite=True)
+    schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"}}
+    writer.add_schema(schema_json, "test_schema")
+    indexes = ["file_name", "label"]
+    writer.add_index(indexes)
+    for i in range(10):
+        data = [{"file_name": str(i % 4) + ".jpg", "label": i,
+                 "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff" +
+                         int(i).to_bytes(length=4, byteorder='big', signed=True)}]
+        writer.write_raw_data(data)
+    writer.commit()
+
+    mind_page = MindPage(file_name)
+
+    # get all the index fields
+    fields = mind_page.candidate_fields
+
+    # set the field to be retrieved
+    mind_page.category_field = "file_name"
+
+    # get all the group info
+    info = mind_page.read_category_info()
+    print(info)
+
+    # get the row by name which is from category info
+    row_by_name = mind_page.read_at_page_by_name("1.jpg", 0, 5)
+    assert len(row_by_name) == 3
+    assert row_by_name[0]['file_name'] == '1.jpg'
+    assert row_by_name[0]['label'] == 1
+    assert row_by_name[0]['data'] == b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff" + \
+                                  int(1).to_bytes(length=4, byteorder='big', signed=True)
+    assert row_by_name[1]['file_name'] == '1.jpg'
+    assert row_by_name[1]['label'] == 5
+    assert row_by_name[1]['data'] == b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff" + \
+                                  int(5).to_bytes(length=4, byteorder='big', signed=True)
+    assert row_by_name[2]['file_name'] == '1.jpg'
+    assert row_by_name[2]['label'] == 9
+    assert row_by_name[2]['data'] == b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff" + \
+                                  int(9).to_bytes(length=4, byteorder='big', signed=True)
+
+    # multi ndarray and got >1 result
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+
+    writer = FileWriter(file_name=file_name, shard_num=1, overwrite=True)
+    schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"},
+                   "amask": {"type": "int32", "shape": [10, 15]}, "mask": {"type": "int32", "shape": [15, 15]}}
+    writer.add_schema(schema_json, "test_schema")
+    indexes = ["file_name", "label"]
+    writer.add_index(indexes)
+    for i in range(10):
+        mask = np.ones([10, 15], dtype=np.int32)
+        mask[i][i] = i
+        mask2 = np.ones([15, 15], dtype=np.int32)
+        mask2[i][i] = i * 10000000
+        data = [{"file_name": str(i % 4) + ".jpg", "label": i,
+                 "amask": mask, "mask": mask2}]
+        writer.write_raw_data(data)
+    writer.commit()
+
+    mind_page = MindPage(file_name)
+
+    # get all the index fields
+    fields = mind_page.candidate_fields
+
+    # set the field to be retrieved
+    mind_page.category_field = "file_name"
+
+    # get all the group info
+    info = mind_page.read_category_info()
+    print(info)
+
+    # get the row by name which is from category info
+    row_by_name = mind_page.read_at_page_by_name("2.jpg", 0, 5)
+    assert len(row_by_name) == 2
+    assert row_by_name[0]['file_name'] == '2.jpg'
+    assert row_by_name[0]['label'] == 2
+    mask = np.ones([10, 15], dtype=np.int32)
+    mask[2][2] = 2
+    assert (row_by_name[0]['amask'] == mask).all()
+    mask2 = np.ones([15, 15], dtype=np.int32)
+    mask2[2][2] = 2 * 10000000
+    assert (row_by_name[0]['mask'] == mask2).all()
+
+    assert row_by_name[1]['file_name'] == '2.jpg'
+    assert row_by_name[1]['label'] == 6
+    mask = np.ones([10, 15], dtype=np.int32)
+    mask[6][6] = 6
+    assert (row_by_name[1]['amask'] == mask).all()
+    mask2 = np.ones([15, 15], dtype=np.int32)
+    mask2[6][6] = 6 * 10000000
+    assert (row_by_name[1]['mask'] == mask2).all()
+
+    # multi bytes field and ndarray and got >1 result
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+
+    writer = FileWriter(file_name=file_name, shard_num=1, overwrite=True)
+    schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"},
+                   "mask": {"type": "int32", "shape": [10, 15]}, "a_data": {"type": "bytes"}}
+    writer.add_schema(schema_json, "test_schema")
+    indexes = ["file_name", "label"]
+    writer.add_index(indexes)
+    for i in range(10):
+        mask = np.ones([10, 15], dtype=np.int32)
+        mask[i][i] = i * 999999
+        data = [{"file_name": str(i % 4) + ".jpg", "label": i,
+                 "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff" +
+                         int(i).to_bytes(length=4, byteorder='big', signed=True),
+                 "mask": mask, "a_data": b"\x10c\xb3w\xa8" + int(i).to_bytes(length=4, byteorder='big', signed=True)}]
+        writer.write_raw_data(data)
+    writer.commit()
+
+    mind_page = MindPage(file_name)
+
+    # get all the index fields
+    fields = mind_page.candidate_fields
+
+    # set the field to be retrieved
+    mind_page.category_field = "file_name"
+
+    # get all the group info
+    info = mind_page.read_category_info()
+    print(info)
+
+    # get the row by name which is from category info
+    row_by_name = mind_page.read_at_page_by_name("2.jpg", 0, 5)
+    assert len(row_by_name) == 2
+    assert row_by_name[0]['file_name'] == '2.jpg'
+    assert row_by_name[0]['label'] == 2
+    assert row_by_name[0]['data'] == b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff" + \
+                                  int(2).to_bytes(length=4, byteorder='big', signed=True)
+    mask = np.ones([10, 15], dtype=np.int32)
+    mask[2][2] = 2 * 999999
+    assert (row_by_name[0]['mask'] == mask).all()
+    assert row_by_name[0]['a_data'] == b"\x10c\xb3w\xa8" + int(2).to_bytes(length=4, byteorder='big', signed=True)
+
+    assert row_by_name[1]['file_name'] == '2.jpg'
+    assert row_by_name[1]['label'] == 6
+    assert row_by_name[1]['data'] == b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff" + \
+                                  int(6).to_bytes(length=4, byteorder='big', signed=True)
+    mask = np.ones([10, 15], dtype=np.int32)
+    mask[6][6] = 6 * 999999
+    assert (row_by_name[1]['mask'] == mask).all()
+    assert row_by_name[1]['a_data'] == b"\x10c\xb3w\xa8" + int(6).to_bytes(length=4, byteorder='big', signed=True)
+
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+
+
+def test_filereader_and_check_result(file_name=None, remove_file=True):
+    """
+    Feature: FileReader
+    Description: read and check value
+    Expectation: SUCCESS
+    """
+
+    if not file_name:
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+
+    writer = FileWriter(file_name=file_name, shard_num=1, overwrite=True)
+    schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"},
+                   "a_mask": {"type": "int32", "shape": [10, 15]}, "a_data": {"type": "bytes"}}
+    writer.add_schema(schema_json, "test_schema")
+    indexes = ["file_name", "label"]
+    writer.add_index(indexes)
+    for i in range(10):
+        mask = np.ones([10, 15], dtype=np.int32)
+        mask[i][i] = i * 999999
+        data = [{"file_name": str(i) + ".jpg", "label": i,
+                 "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff" +
+                         int(i).to_bytes(length=4, byteorder='big', signed=True),
+                 "a_mask": mask, "a_data": b"\x10c\xb3w\xa8" + int(i).to_bytes(length=4, byteorder='big', signed=True)}]
+        writer.write_raw_data(data)
+    writer.commit()
+
+    reader = FileReader(file_name)
+    count = 0
+    for i, x in enumerate(reader.get_next()):
+        assert len(x) == 5
+        assert x['file_name'] == str(i) + ".jpg"
+        assert x["label"] == i
+        assert x["data"] == b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff" + \
+                            int(i).to_bytes(length=4, byteorder='big', signed=True)
+        mask = np.ones([10, 15], dtype=np.int32)
+        mask[i][i] = i * 999999
+        assert (x["a_mask"] == mask).all()
+        assert x["a_data"] == b"\x10c\xb3w\xa8" + int(i).to_bytes(length=4, byteorder='big', signed=True)
+        count = count + 1
+    assert count == 10
+    reader.close()
+
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
