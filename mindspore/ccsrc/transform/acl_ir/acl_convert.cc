@@ -310,7 +310,8 @@ void AclConverter::ConvertValueDependToHostInput(const std::string &kernel_name,
       ms_proto_idx = idx < dyn_input_ms_proto_idx ? dyn_input_ms_proto_idx : idx;
     }
     AclHostInfoPtr acl_host_input;
-    if (!transform::AclHelper::IsInputDtypeSupport(kernel_name, param.data_type, ms_proto_idx)) {
+    if (!transform::AclHelper::IsInputDtypeSupport(kernel_name, param.data_type, ms_proto_idx) &&
+        param.data_type != kMetaTypeNone) {
       ValueDependToInputConverter value_convert;
       auto cast_map = value_convert.GetValueDependCastMap();
       auto iter = cast_map.find(param.data_type);
