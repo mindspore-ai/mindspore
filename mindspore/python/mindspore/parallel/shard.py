@@ -14,9 +14,30 @@
 # ============================================================================
 """pynative shard"""
 
+import copy
 import mindspore as ms
 from mindspore import log as logger
 from mindspore._c_expression import Shard_
+
+
+class Layout():
+    """Parallel Layout"""
+
+    def __init__(self, *device_shape):
+        self._device_shape = device_shape
+        self._tensor_map = None
+
+    def __call__(self, *tensor_map):
+        self._tensor_map = tensor_map
+        return copy.deepcopy(self)
+
+    def to_dict(self):
+        if self._device_shape is None:
+            raise ValueError("The device_shape of layout is None")
+        if self._tensor_map is None:
+            raise ValueError("The tensor_map of layout is None")
+        return {"device_matrix": self._device_shape, "tensor_map": self._tensor_map}
+
 
 
 class Shard(Shard_):

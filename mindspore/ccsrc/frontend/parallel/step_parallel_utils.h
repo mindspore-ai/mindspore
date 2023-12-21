@@ -145,6 +145,10 @@ std::string GetSerialNumberString(size_t number);
 bool IsIgnoreSplitTensor(const CNodePtr &node, int64_t index);
 bool MergeConcatSlice(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphManagerPtr &manager);
 void UpdateMicroBatchInterleavedStatus(const std::vector<AnfNodePtr> &all_nodes);
+Status ExtractUserConfigLayout(const mindspore::HashMap<std::string, ValuePtr> &prim_attrs, const Shapes &inputs_shape,
+                               const Shapes &outputs_shape,
+                               std::vector<std::shared_ptr<TensorLayout>> *in_tensor_layouts,
+                               std::vector<std::shared_ptr<TensorLayout>> *out_tensor_layouts);
 inline bool IsMakeSequence(const AnfNodePtr &node) {
   return AnfNodeIsPrimitive(node, MAKE_TUPLE) || AnfNodeIsPrimitive(node, MAKE_LIST);
 }

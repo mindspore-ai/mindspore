@@ -404,6 +404,53 @@ Status OperatorInfo::InferMirrorOps() {
   return SUCCESS;
 }
 
+Status OperatorInfo::InferMirrorOpsByLayout() {
+  mirror_ops_.clear();
+  if (inputs_shape_.empty()) {
+    MS_LOG(INFO) << name_ << ": The inputs size is empty";
+    return SUCCESS;
+  }
+
+  bool group_is_empty = true;
+  for (size_t i = 0; i < inputs_tensor_info_.size(); ++i) {
+    auto input_tensor_layout = inputs_tensor_info_[i].tensor_layout();
+    auto repeated_rank_list = input_tensor_layout.InferRepeatedGroup();
+
+    OperatorVector mirror_op;
+    if (repeated_rank_list.size() == 1) {
+      MS_LOG(INFO) << name_ << ": The mirror group is empty, the input index is " << i;
+      mirror_ops_.push_back(mirror_op);
+      continue;
+    }
+    if (is_auto_parallel_) {
+      if (g_device_manager->CheckDeviceList(repeated_rank_list) != SUCCESS) {
+        MS_LOG(INFO) << name_ << ": Try to create communication group : " << repeated_rank_list
+                     << " failed in auto parallel mode, "
+                        "this error can be ignored in parallel strategies searching step";
+        return FAILED;
+      }
+      return SUCCESS;
+    }
+
+    Group mirror_group;
+    if (g_device_manager->CreateGroup(repeated_rank_list, &mirror_group) != SUCCESS) {
+      MS_LOG(ERROR) << name_
+                    << ": Create communication group by tensor_map failed, the rank_list is: " << repeated_rank_list
+                    << ", the full_name of node is: " << cnode_->fullname_with_scope();
+      return FAILED;
+    }
+    group_is_empty = false;
+    mirror_op = CreateMirrorOps(mirror_group.name(), mirror_group.GetDevNum());
+    mirror_ops_.push_back(mirror_op);
+  }
+
+  if (group_is_empty) {
+    mirror_ops_.clear();
+    MS_LOG(INFO) << name_ << ": No need to insert mirror ops";
+  }
+  return SUCCESS;
+}
+
 Status OperatorInfo::InferTensorInfo() {
   if (inputs_shape_.empty() || outputs_shape_.empty() || inputs_tensor_map_.empty() || outputs_tensor_map_.empty()) {
     MS_LOG(ERROR) << name_ << ": Invalid args";
@@ -683,6 +730,8 @@ Operator CreateMicroStepAllGatherOp(const std::string &group) {
 Operator CreateGetTensorSliceOp(const TensorLayout &tensor_layout) {
   Shape tensor_map = tensor_layout.tensor_map().array();
   Shape dev_matrix_shape = tensor_layout.device_arrangement().array();
+  Shape slice_shape = tensor_layout.base_slice_shape().array();
+  Shape full_shape = tensor_layout.tensor_shape().array();
   OperatorName operator_name = GET_TENSOR_SLICE;
 
   OperatorAttrs attrs;
@@ -690,7 +739,11 @@ Operator CreateGetTensorSliceOp(const TensorLayout &tensor_layout) {
   Param dev_mat_param = std::make_pair(std::make_pair(DEV_MAT, dev_mat_value), 2);
   ValuePtr tensor_map_value = MakeValue(tensor_map);
   Param tensor_map_param = std::make_pair(std::make_pair(TENSOR_MAP, tensor_map_value), 3);
-  OperatorParams params = {dev_mat_param, tensor_map_param};
+  ValuePtr slice_shape_value = MakeValue(slice_shape);
+  Param slice_shape_param = std::make_pair(std::make_pair(SLICE_SHAPE, slice_shape_value), 4);
+  ValuePtr full_shape_value = MakeValue(full_shape);
+  Param full_shape_param = std::make_pair(std::make_pair(FULL_SHAPE, full_shape_value), 5);
+  OperatorParams params = {dev_mat_param, tensor_map_param, slice_shape_param, full_shape_param};
   OperatorArgs operator_arg = std::make_pair(attrs, params);
 
   Operator op = std::make_pair(operator_name, operator_arg);
@@ -784,7 +837,7 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *tensor_layout, std::ve
   }
   CheckGlobalDeviceManager();
   int64_t rank = g_device_manager->global_rank();
-  DeviceMatrix dev_matrix(rank, stage_device_list_, dev_matrix_shape_);
+  DeviceMatrix dev_matrix(rank, stage_device_list_, tensor_layout->device_arrangement_origin().array());
   RankList group_devices;
   Shape tensor_map = tensor_layout->origin_tensor_map().array();
   if (dev_matrix.GetDevicesByTensorMap(tensor_map, &group_devices) != SUCCESS) {
@@ -927,7 +980,13 @@ Shape GetSliceShape(const Shape &tensor_shape, const Dimensions &strategy) {
   return slice_shape;
 }
 
-Status OperatorInfo::Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) {
+Status OperatorInfo::Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy,
+                          const std::vector<std::shared_ptr<TensorLayout>> &in_tensor_layouts,
+                          const std::vector<std::shared_ptr<TensorLayout>> &out_tensor_layouts) {
+  if (!in_tensor_layouts.empty()) {
+    return InitWithTensorLayout(in_tensor_layouts, out_tensor_layouts);
+  }
+
   if (InitWithAutoRepeatCalc(in_strategy, out_strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : Init failed.";
     return FAILED;
@@ -1054,6 +1113,61 @@ Status OperatorInfo::InitWithAutoRepeatCalc(const StrategyPtr &in_strategy, cons
   }
 
   InferReplaceOps();
+  return SUCCESS;
+}
+
+Status OperatorInfo::InitWithTensorLayout(const std::vector<std::shared_ptr<TensorLayout>> &in_tensor_layouts,
+                                          const std::vector<std::shared_ptr<TensorLayout>> &out_tensor_layouts) {
+  ResetQueueMember();
+
+  if (InferAttrs() != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": InferAttrs failed.";
+    return FAILED;
+  }
+
+  for (const auto &input_layout : in_tensor_layouts) {
+    TensorInfo input_tensor_info(*input_layout);
+    inputs_tensor_info_.push_back(input_tensor_info);
+  }
+  if (CheckInputLayout() != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": CheckInputLayout failed.";
+    return FAILED;
+  }
+  for (const auto &output_layout : out_tensor_layouts) {
+    TensorInfo output_tensor_info(*output_layout);
+    outputs_tensor_info_.push_back(output_tensor_info);
+  }
+
+  if (outputs_tensor_info_.size() != outputs_shape_.size()) {
+    outputs_tensor_info_.clear();
+    // Need be override
+    if (InferOutputTensorInfo() != SUCCESS) {
+      MS_LOG(ERROR) << name_ << ": InferOutputTensorLayout failed.";
+      return FAILED;
+    }
+  }
+
+  if (outputs_tensor_info_.size() != outputs_shape_.size()) {
+    MS_LOG(ERROR) << name_ << ": the output tensor layout num " << outputs_tensor_info_.size()
+                  << " dose not match the output num " << outputs_shape_.size();
+    return FAILED;
+  }
+
+  if (CheckOutputLayout() != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": CheckLayout failed.";
+    return FAILED;
+  }
+
+  // Need be override
+  if (InferForwardCommunicationByLayout() != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": InferForwardCommunication failed.";
+    return FAILED;
+  }
+
+  if (InferMirrorOpsByLayout() != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": InferMirrorOps failed.";
+    return FAILED;
+  }
   return SUCCESS;
 }
 

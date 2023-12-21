@@ -151,6 +151,9 @@ constexpr char RESHAPEINFO[] = "ReshapeInfo";
 constexpr char GETNEXTINFO[] = "GetNextInfo";
 constexpr char VIRTUALDATASETINFO[] = "VirtualDatasetInfo";
 constexpr char FUNC_PARAM[] = "func_param";
+constexpr char IN_LAYOUT[] = "in_layout";
+constexpr char OUT_LAYOUT[] = "out_layout";
+constexpr char DEVICE_MATRIX[] = "device_matrix";
 
 constexpr char RELU_TYPE[] = "relu";
 constexpr char RELU6_TYPE[] = "relu6";
@@ -638,6 +641,7 @@ constexpr char SEND_REC_DEPEND[] = "send_receive_depend";
 constexpr char USER_NODE_STAGE[] = "user_node_stage";
 constexpr char NODE_STAGE[] = "node_stage";
 constexpr char SLICE_SHAPE[] = "slice_shape";
+constexpr char FULL_SHAPE[] = "full_shape";
 constexpr char SLICE_DTYPE[] = "slice_dtype";
 constexpr char INPUT_PARAM[] = "input_param";
 constexpr char ORIGIN_INPUT_IS_PARAM[] = "origin_input_is_param";

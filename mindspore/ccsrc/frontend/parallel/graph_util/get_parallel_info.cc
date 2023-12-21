@@ -276,7 +276,7 @@ py::dict GetParameterLayoutFromGraph(const FuncGraphPtr &graph) {
     } else {
       const auto &device_arrangement = tensor_layout->device_arrangement().array();
       const auto &tensor_map = tensor_layout->tensor_map().array();
-      const auto &slice_shape = tensor_layout->slice_shape().array();
+      const auto &slice_shape = tensor_layout->base_slice_shape().array();
       int64_t field_size = tensor_layout->get_field_size();
       bool uniform_split = tensor_layout->uniform_split();
       const std::string &opt_shard_group = tensor_layout->opt_shard_group();

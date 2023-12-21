@@ -466,15 +466,16 @@ void SliceParameterObj(const ParameterPtr &parameter, const TensorLayoutPtr &ten
   // create python layout obj
   const auto &device_arrangement = tensor_layout->device_arrangement().array();
   const auto &tensor_map = tensor_layout->tensor_map().array();
-  auto slice_shape = tensor_layout->slice_shape().array();
+  auto slice_shape = tensor_layout->base_slice_shape().array();
   int64_t field_size = tensor_layout->get_field_size();
   bool uniform_split = tensor_layout->uniform_split();
   std::string opt_shard_group = tensor_layout->opt_shard_group();
   if (!opt_shard_group.empty()) {
     slice_shape = tensor_layout->opt_shard_slice_shape();
   }
+  auto full_shape = tensor_layout->tensor_shape().array();
   py::tuple layout =
-    py::make_tuple(device_arrangement, tensor_map, slice_shape, field_size, uniform_split, opt_shard_group);
+    py::make_tuple(device_arrangement, tensor_map, slice_shape, field_size, uniform_split, opt_shard_group, full_shape);
 
   // Call Python _slice_parameter Fn to slice python parameter obj
   (void)python_adapter::CallPyFn(SLICE_PARAMETER_FN_PATH, SLICE_PARAMETER_FN_NAME, py_obj, py::str(phase), layout);

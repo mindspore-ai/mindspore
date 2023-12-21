@@ -67,6 +67,9 @@ if(ENABLE_D)
     list(APPEND MSLIB_INFER_SRC
         "${CMAKE_SOURCE_DIR}/../ccsrc/frontend/parallel/strategy_checkpoint/strategy_checkpoint_info.cc"
         "${CMAKE_SOURCE_DIR}/../ccsrc/frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.cc"
+        "${CMAKE_SOURCE_DIR}/../ccsrc/frontend/parallel/group_manager.cc"
+        "${CMAKE_SOURCE_DIR}/../ccsrc/frontend/parallel/device_manager.cc"
+        "${CMAKE_SOURCE_DIR}/../ccsrc/frontend/parallel/device_matrix.cc"
         "${CMAKE_SOURCE_DIR}/../ccsrc/frontend/parallel/tensor_layout/array.cc"
         "${CMAKE_SOURCE_DIR}/../ccsrc/frontend/parallel/tensor_layout/map.cc"
         "${CMAKE_SOURCE_DIR}/../ccsrc/frontend/parallel/tensor_layout/arrangement.cc"
