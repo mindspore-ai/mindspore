@@ -25,4 +25,4 @@ mindspore.ops.logical_or
         Tensor，形状与广播后的shape相同，数据类型为bool。
  
     异常：
-        - **TypeError** - 如果 `input` 和 `other` 都不是Tensor。
+        - 无。

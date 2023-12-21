@@ -24,4 +24,4 @@ mindspore.ops.le
         Tensor，shape与广播后的shape相同，数据类型为bool。
 
     异常：
-        - **TypeError** - `input` 和 `other` 都不是Tensor。
+        - 无。
