@@ -1684,7 +1684,7 @@ def test_if_cast():
     np.testing.assert_array_equal(r1.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

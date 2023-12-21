@@ -814,7 +814,7 @@ def test_hanning():
         match_all_arrays(mnp.hanning(i), onp.hanning(i), error=3)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -844,7 +844,7 @@ def test_tril_indices():
     match_all_arrays(mnp_res, onp_res)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

@@ -26,6 +26,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import Tensor
+from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops import operations as P, constexpr
 from mindspore.nn import Cell
 from mindspore.nn import Dense
@@ -288,7 +289,7 @@ def test_stat_dump_nulls():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     if sys.platform != 'linux':
         return
-    empty_x = np.array([]).astype(np.float16)
+    empty_x = Tensor_(np.array([]).astype(np.float16))
     with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
         dump_path = os.path.join(tmp_dir, 'test_saved_data')
         dump_config_path = os.path.join(tmp_dir, 'test_saved_data.json')
