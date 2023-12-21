@@ -117,6 +117,15 @@ void RegFrameworkProfiler(py::module *m) {
       "_framework_profiler_step_end", []() { runtime::ProfilerAnalyzer::GetInstance().EndStep(); },
       "Profiler step end");
 }
+
+void RegFrameworkPythonProfileRecorder(py::module *m) {
+  (void)py::class_<runtime::PythonProfilerRecorder, std::shared_ptr<runtime::PythonProfilerRecorder>>(
+    *m, "PythonProfilerRecorder")
+    .def(py::init<const std::string &>())
+    .def("record_start", &runtime::PythonProfilerRecorder::record_start, "record_start")
+    .def("record_end", &runtime::PythonProfilerRecorder::record_end, "record_end");
+}
+
 }  // namespace profiler
 }  // namespace mindspore
 #endif  // ENABLE_SECURITY
@@ -151,6 +160,7 @@ void RegModule(py::module *m) {
   mindspore::profiler::RegProfiler(m);
   mindspore::profiler::RegHostProfile(m);
   mindspore::profiler::RegFrameworkProfiler(m);
+  mindspore::profiler::RegFrameworkPythonProfileRecorder(m);
 #endif
 #ifdef _MSC_VER
   mindspore::abstract::RegPrimitiveFrontEval();
