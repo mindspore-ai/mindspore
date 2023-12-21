@@ -51,4 +51,12 @@ ge::Status LLMEngine::RunDecoder(const std::vector<uint64_t> &, const std::vecto
                                  std::vector<ge::Tensor> &) {
   return ge::GRAPH_SUCCESS;
 }
+
+ge::Status LLMEngine::LinkClusters(const std::vector<ClusterInfo> &, std::vector<ge::Status> &, const int32_t timeout) {
+  return ge::GRAPH_SUCCESS;
+}
+ge::Status LLMEngine::UnlinkClusters(const std::vector<ClusterInfo> &, std::vector<ge::Status> &,
+                                     const int32_t timeout) {
+  return ge::GRAPH_SUCCESS;
+}
 }  // namespace llm
