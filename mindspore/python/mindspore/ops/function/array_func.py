@@ -7148,6 +7148,7 @@ def repeat_elements(x, rep, axis=0):
     axis = _check_is_int(axis, "axis", "repeat_elements")
     x_rank = rank_(x)
     axis = _check_axis_range(axis, x_rank, "axis", "repeat_elements")
+    axis = axis + x.ndim if axis < 0 else axis
     expand_axis = axis + 1
     x_expand = expand_dims_(x, expand_axis)
     rep_dims = _cal_repeat_dims(x_rank, rep, expand_axis)
