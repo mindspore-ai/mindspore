@@ -18,23 +18,58 @@ import json
 import os
 import shutil
 import sys
+import traceback
 from datetime import datetime, timezone
 
+from tbe.common.rl_bank.bank_manager import set_current_op_name
 from tbe.common.repository_manager.interface import cann_kb_finalize, cann_kb_init
 from te.platform.cce_conf import te_set_version
 from te.platform.cce_policy import set_L1_info
 from te_fusion.compile_task_manager import dispatch_prebuild_task, dispatch_single_op_compile_task, \
-    dispatch_fusion_op_compile_task
+    dispatch_fusion_op_compile_task, dispatch_autotune_task, sync_op_tune_params
 from te_fusion.compile_task_manager import sync_syspath
 from te_fusion.fusion_manager import call_op_func, clear_fusion_params, check_op_impl_mode, \
-    save_op_params, op_params_to_json
+    save_op_params, build_single_op_from_c, op_params_to_json
 from te_fusion.fusion_util import dump_fusion_json
-from te_fusion.parallel_compilation import init_multi_process_env, deinit_multi_process_env, \
+from te_fusion.parallel_compilation import init_multi_process_env, start_ga_multi_process, deinit_multi_process_env, \
     get_finished_compilation_task
 
 from .tbe_helper import get_soc_info, assemble_op_args, get_compute_op_list, get_options_info, get_context_param, \
-    get_fuzz_build_info, adjust_custom_op_info, get_module_name, get_real_op_debug_level, LocalLock
-from .tbe_job import TbeJob
+    get_fuzz_build_info, adjust_custom_op_info, pack_op_args, get_module_name, get_real_op_debug_level, LocalLock
+from .tbe_job import TbeJob, JobStatus
+
+
+def _tune_init(job: TbeJob):
+    """
+    Tune Initialize
+    :param job:
+    :return:
+    """
+    auto_tiling_mode = job.content["SocInfo"]["autoTilingMode"]
+    offline_tune = job.content["SocInfo"]["offlineTune"]
+    op_bank_update = job.content["SocInfo"]["op_bank_update"]
+    tune_dump_path = job.content["TuneInfo"]["tune_dump_path"]
+    tune_bank_path = job.content["TuneInfo"]["tune_bank_path"]
+    need_ga = bool("GA" in auto_tiling_mode)
+    need_rl = bool("RL" in auto_tiling_mode)
+    if offline_tune:
+        os.environ["ENABLE_TUNE_DUMP"] = "TRUE"
+    if op_bank_update:
+        sync_op_tune_params("tbe.common.tiling.tiling_api", "reset_repository", False, "")
+
+    if need_ga or need_rl or offline_tune:
+        res = __init_tune_env(job, need_ga)
+        if not res:
+            return False
+    else:
+        return True
+
+    if tune_dump_path:
+        os.environ["TUNE_DUMP_PATH"] = str(tune_dump_path)
+    if tune_bank_path:
+        os.environ["TUNE_BANK_PATH"] = str(tune_bank_path)
+    res = _creating_custom_path(job)
+    return res
 
 
 def _cann_kb_init(job: TbeJob):
@@ -85,6 +120,84 @@ def __directory_creation(path, concat_path):
     return path
 
 
+def __init_tune_env(job, need_ga):
+    """
+    Initialize tune env
+    """
+    try:
+        import auto_tune.auto_tune_main as at_atm
+        from schedule_search.rl_online_tune import rl_tune_init  # pylint: disable=unused-import
+    except ImportError:
+        msg = "TBEException", \
+              "No module named `auto_tune` or `schedule_search`. If you want tune your op's performance," \
+              "please configure `auto_tune` or `schedule_search` related environment variables." \
+              "Try to set the following environment variables:" \
+              "export fwk_path=/usr/local/Ascend/latest" \
+              "export PYTHONPATH=${fwk_path}/python/site-packages:$PYTHONPATH" \
+              "export PYTHONPATH=${fwk_path}/python/site-packages/auto_tune.egg/auto_tune:$PYTHONPATH" \
+              "export PYTHONPATH=${fwk_path}/python/site-packages/schedule_search.egg:$PYTHONPATH"
+        job.error(msg)
+        return False
+    finally:
+        pass
+
+    if need_ga:
+        res = at_atm.ga_tune_init()
+        if not res:
+            job.error("check soc version failed in tune init")
+            job.error("GATune run Failed. Run .o Failed, because soc_version doesn't match the device")
+            return False
+    return True
+
+
+def __creating_default_custom_path(auto_tiling_mode, base_custom_path):
+    """
+    Create default custom path
+    """
+    platform_flag = ["Ascend310", "Ascend910", "Hi3796CV300ES", "Ascend710", "Ascend610", "Hi3796CV300CS", "SD3403"]
+    base_custom_path = __directory_creation(base_custom_path, "data")
+    tune_flag = []
+    if "RL" in auto_tiling_mode:
+        tune_flag.append("rl")
+    if "GA" in auto_tiling_mode:
+        tune_flag.append("tiling")
+
+    for tune_path in tune_flag:
+        real_path = __directory_creation(base_custom_path, tune_path)
+        for soc_version in platform_flag:
+            final_path = __directory_creation(real_path, soc_version)
+            final_path = __directory_creation(final_path, "custom")
+    return True
+
+
+def _creating_custom_path(job):
+    """
+    Create custom path
+    """
+    auto_tiling_mode = job.content["SocInfo"]["autoTilingMode"]
+    if "NO_TUNE" in auto_tiling_mode:
+        return True
+
+    base_custom_path = job.content["TuneInfo"]["tune_bank_path"]
+    tune_bank_flag = True
+    if not base_custom_path:
+        import auto_tune
+        base_custom_path = os.path.dirname(os.path.realpath(auto_tune.__file__))
+        base_custom_path = os.path.realpath(os.path.join(base_custom_path, "../../../"))
+        tune_bank_flag = False
+
+    if not os.path.isdir(base_custom_path):
+        job.error("Check whether the tuning path [{}] exists.".format(base_custom_path))
+        return False
+    if not os.access(base_custom_path, os.R_OK | os.W_OK | os.X_OK):
+        job.error("Check whether the permission on the tuning path [{}] is correct.".format(base_custom_path))
+        return False
+
+    if not tune_bank_flag:
+        return __creating_default_custom_path(auto_tiling_mode, base_custom_path)
+    return True
+
+
 def _parallel_compilation_init(initialize: TbeJob):
     """
     Tbe parallel compilation initialize
@@ -95,6 +208,7 @@ def _parallel_compilation_init(initialize: TbeJob):
     soc_info = get_soc_info(initialize.content)
     real_debug_level = get_real_op_debug_level(initialize.content)
     auto_tiling_mode = initialize.content["SocInfo"]["autoTilingMode"]
+    offline_tune = initialize.content["SocInfo"]["offlineTune"]
     pid_ts = "{}_pid{}".format(datetime.now(tz=timezone.utc).strftime('%Y%m%d_%H%M%S%f')[:-3], os.getpid())
     ret = init_multi_process_env(False, soc_info, auto_tiling_mode, real_debug_level,
                                  None, 1, pid_ts)
@@ -102,6 +216,20 @@ def _parallel_compilation_init(initialize: TbeJob):
         initialize.error("Init multiprocess env failed")
         return False
     initialize.info("Init multiprocess env success with {} process".format(ret[0]))
+    if "RL" in auto_tiling_mode or offline_tune:
+        res_queue = ret[1]
+        live_checker = ret[2]
+        termin_event = ret[3]
+        log_level = int(os.getenv("ASCEND_GLOBAL_LOG_LEVEL", "3"))
+        from schedule_search.rl_online_tune import rl_tune_init
+        ret = rl_tune_init(soc_info, res_queue, live_checker, termin_event, log_level, pid_ts)
+        if not ret:
+            initialize.error("RL env init failed!")
+            return False
+        initialize.info("RL Tune init success.")
+    if "GA" in auto_tiling_mode:
+        start_ga_multi_process(auto_tiling_mode)
+        initialize.info("GA Tune init success.")
     return True
 
 
@@ -120,6 +248,9 @@ def tbe_initialize(job: TbeJob):
     res = te_set_version(*soc_info)
     if not res:
         job.error("Set version failed")
+    res = _tune_init(job)
+    if not res:
+        job.error("Tune init failed")
     lock_file = os.path.join(job.content["SocInfo"]["op_debug_dir"], "kernel_meta", "file.lock")
     local_lock = LocalLock(lock_file)
     try:
@@ -136,6 +267,18 @@ def tbe_initialize(job: TbeJob):
         local_lock.unlock()
     job.result = "Success"
     return res
+
+
+def get_auto_tune_support_op_list(job: TbeJob):
+    """
+    Get GA tune supported op list
+    :param job:
+    :return:
+    """
+    from auto_tune.auto_tune_main import enable_auto_tune_support
+    auto_tune_op_list = enable_auto_tune_support()
+    job.info("auto tune GA support ops list:{}".format(auto_tune_op_list))
+    return [x.lower() for x in auto_tune_op_list]
 
 
 def _normalize_module_name(module_name, py_module_path):
@@ -352,6 +495,9 @@ def before_build_process(job: TbeJob):
     l1_size = job.content["l1_size"]
     set_L1_info("op_L1_space", l1_size)
     _dump_fusion_op_info_to_json_file(job)
+    offline_tune = job.sys_offline_tune
+    if offline_tune:
+        dump_fusion_json(json.dumps(job.content), job.sys_tune_dump_path)
 
 
 def parallel_compile_fusion_op(job: TbeJob):
@@ -369,6 +515,122 @@ def parallel_compile_fusion_op(job: TbeJob):
     dispatch_fusion_op_compile_task(job.source_id, job.id, l1_size, json.dumps(job.content), op_kernel_name, None, None,
                                     options, None, job.pass_list, op_name, relation, fixpipe_ub_cfg, None)
     return True
+
+
+def ga_tune(job: TbeJob):
+    """
+    GA tune
+    :param job:
+    :return:
+    """
+    l1_size = job.content["l1_size"]
+    op_kernel_name = job.content["fusion_op_name"]
+    op_name = job.content["full_name"]
+    dispatch_autotune_task(job.source_id, job.id, l1_size, json.dumps(job.content), {}, op_kernel_name, op_name)
+    job.status = JobStatus.JOB_RUNNING
+    return True
+
+
+def rl_tune_single_op(job: TbeJob):
+    """
+    RL tune single op
+    :param job:
+    :return:
+    """
+    compute_op_info_list = get_compute_op_list(job.content)
+    if len(compute_op_info_list) != 1:
+        job.error("Invalid op compute num ({}) in rl tune single op".format(len(compute_op_info_list)))
+        return False
+    compute_op_info = compute_op_info_list[0]
+    inputs, outputs, attrs = assemble_op_args(compute_op_info)
+    op_type = compute_op_info["type"]
+    l1_size = job.content["l1_size"]
+    op_module_name = get_module_name(compute_op_info)
+    op_kernel_name = compute_op_info["op_name"]
+    full_name = compute_op_info["name"]
+    py_module_path = compute_op_info["py_module_path"]
+    op_func_name = compute_op_info["func_name"]
+    _normalize_module_name(op_module_name, py_module_path)
+    set_current_op_name(op_kernel_name)
+    unknown_shape = compute_op_info["unknown_shape"]
+    int64_mode = compute_op_info["int64mode"]
+    op_pattern = compute_op_info["pattern"]
+    op_impl_mode = compute_op_info["op_impl_mode"]
+    fuzz_build_info = get_fuzz_build_info(job.content)
+    auto_tiling_mode = job.content["SocInfo"]["autoTilingMode"]
+    device_id = job.content["SocInfo"]["deviceId"]
+    options = get_options_info(job.content)
+    try:
+        build_single_op_from_c(op_module_name, op_func_name, op_type, "build", unknown_shape,
+                               (inputs, outputs, attrs), int64_mode, unknown_shape, options,
+                               op_pattern, auto_tiling_mode, device_id, json.dumps(fuzz_build_info),
+                               op_impl_mode=op_impl_mode)
+    # pylint: disable=broad-except
+    except Exception:
+        job.error(
+            "Single op {} build failed, no need to do rl tune, json string:{}".format(op_kernel_name, job.json_string))
+        exc_type, exc_value, _ = sys.exc_info()
+        job.error(
+            "exc_type:{}, exc_value:{}, exc_traceback:{}".format(exc_type, exc_value, traceback.format_exc()))
+        return False
+    finally:
+        pass
+    tune_op_module_name = op_module_name + "@" + py_module_path
+    base_kernel = os.path.join(job.content["SocInfo"]["op_debug_dir"], "kernel_meta", op_kernel_name + ".o")
+    from schedule_search.rl_online_tune import dispatch_single_tune_task
+    pack_args = pack_op_args(inputs, outputs, attrs)
+    res = dispatch_single_tune_task(job.source_id, job.id, l1_size, base_kernel, op_kernel_name, full_name,
+                                    tune_op_module_name, op_func_name, op_type, pack_args)
+    return _process_rl_tune_result(job, op_type, res)
+
+
+def rl_tune_fusion_op(job: TbeJob):
+    """
+    rl tune fusion op
+    :param job:
+    :return:
+    """
+    op_kernel_name = job.content["fusion_op_name"]
+    set_current_op_name(op_kernel_name)
+
+    try:
+        from schedule_search.rl_online_tune import compile_op_by_mp
+        compile_op_by_mp(json.dumps(job.content))
+    # pylint: disable=broad-except
+    except Exception:
+        job.error(
+            "Fusion op {} build failed, no need to do rl tune, json string:{}".format(op_kernel_name, job.json_string))
+        exc_type, exc_value, _ = sys.exc_info()
+        job.error(
+            "exc_type:{}, exc_value:{}, exc_traceback:{}".format(exc_type, exc_value, traceback.format_exc()))
+        return False
+    finally:
+        pass
+    l1_size = job.content["l1_size"]
+    base_kernel = os.path.join(job.content["SocInfo"]["op_debug_dir"], "kernel_meta", op_kernel_name + ".o")
+    compute_op_list = get_compute_op_list(job.content)
+    op_module_names_str = ""
+    op_type_set = set()
+    for op in compute_op_list:
+        op_module_names_str = ','.join([op_module_names_str, get_module_name(op)])
+        op_type_set.add(op["type"])
+    op_module_names_str = op_module_names_str[1:]
+    op_type = "__".join(list(op_type_set))
+    from schedule_search.rl_online_tune import dispatch_fusion_tune_task
+    res = dispatch_fusion_tune_task(job.source_id, job.id, l1_size, base_kernel, op_kernel_name, op_module_names_str,
+                                    json.dumps(job.content))
+    return _process_rl_tune_result(job, op_type, res)
+
+
+def _process_rl_tune_result(job, op_type, res):
+    if not res:
+        from schedule_search.tune_util import filter_black_op_type
+        res = bool(job.sys_offline_tune or os.getenv("REPEAT_TUNE", "False").lower() != "true" or filter_black_op_type(
+            op_type))
+    else:
+        job.status = JobStatus.JOB_RUNNING
+        res = True
+    return res
 
 
 def get_finish_tasks(source_id):
@@ -389,7 +651,8 @@ def tbe_finalize(auto_tiling_mode, offline_tune, job: TbeJob):
     """
     deinit_multi_process_env()
     if "RL" in auto_tiling_mode or offline_tune:
-        pass
+        from schedule_search.rl_online_tune import rl_tune_deinit
+        rl_tune_deinit()
     res = _cann_kb_finalize()
     if res == 1:
         job.error("Cann kb unload failed")
