@@ -21,15 +21,11 @@
 #include "include/common/utils/utils.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/profiler/memory_profiling.h"
-#include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
 #include <nlohmann/json.hpp>
-#include "plugin/device/ascend/hal/device/profiling/profiling_reporter.h"
 #include "acl/acl_rt.h"
 
 using mindspore::device::ascend::ErrorManagerAdapter;
-using mindspore::device::ascend::ProfilingManager;
-using mindspore::device::ascend::ProfilingReporter;
 using mindspore::profiler::ascend::MemoryProfiling;
 
 namespace mindspore {
@@ -82,10 +78,6 @@ void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id,
 
   // Init ErrorManager instance in order to get error msg reported by Ascend.
   (void)ErrorManagerAdapter::Init();
-
-  if (options["op_time"] == "on") {
-    (void)ProfilingManager::GetInstance().InitProfiling(profiling_path, device_id);
-  }
 
   MemoryProfiling::GetInstance().SetMemoryProfilingInitialize(profiling_options_);
 
@@ -161,7 +153,6 @@ void AscendProfiler::Start() {
   if (aclRet != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Failed to call aclprofStart function.";
   }
-  (void)ProfilingManager::GetInstance().SetStepStart(true);
 
   MemoryProfiling::GetInstance().StartMemoryProfiling();
 
@@ -172,7 +163,6 @@ void AscendProfiler::Start() {
 
 void AscendProfiler::Stop() {
   MS_LOG(INFO) << "Begin to stop profiling.";
-  (void)ProfilingManager::GetInstance().SetStepStart(false);
 
   if (acl_config_ == nullptr) {
     MS_LOG(EXCEPTION)

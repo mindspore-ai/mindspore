@@ -19,10 +19,8 @@
 #include "utils/ms_context.h"
 #include "acl/acl_rt.h"
 #ifndef ENABLE_SECURITY
-#include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "plugin/device/ascend/hal/profiler/memory_profiling.h"
 
-using mindspore::device::ascend::ProfilingManager;
 using mindspore::profiler::ascend::MemoryProfiling;
 #endif
 
