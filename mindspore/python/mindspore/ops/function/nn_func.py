@@ -590,9 +590,6 @@ def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     if not isinstance(input_x, (Tensor, Tensor_)):
         raise TypeError("For avg_pool3d, the input input_x must be tensor")
 
-    if len(input_x.shape) != 5:
-        raise ValueError(f"For avg_pool3d, input must have 5 dim, but got {len(input_x.shape)}.")
-
     _check_avg_pool3d_padding(padding)
 
     avg_pool_op = _get_cache_prim(P.AvgPool3D)(kernel_size=kernel_size,
@@ -6629,13 +6626,6 @@ def channel_shuffle(x, groups):
     channel_shuffle_func = ChannelShuffle(group=groups)
     y = channel_shuffle_func(x)
     return y
-
-
-@_primexpr
-def _shape_check(in_shape, dim_list, prim_name=None):
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if len(in_shape) not in dim_list:
-        raise ValueError(f"{msg_prefix} input must has dim in {dim_list}, but got {len(in_shape)}")
 
 
 def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
