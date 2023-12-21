@@ -51,7 +51,7 @@ class OnnxModifier(ABCGraphModifier, ABC):
 
         if output_names is None:
             output_names = self.model_output_names
-        elif len(output_names) == 1 and output_names[0].lower() == 'all':
+        elif len(output_names) == 1 and output_names[0].lower() == 'mslite_bench_all':
             output_names = list(set(self._all_node_names()) - set(self.model_input_names))
         else:
             valid_node_names = set(self._all_node_names())
