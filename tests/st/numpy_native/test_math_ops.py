@@ -2313,7 +2313,7 @@ def onp_matrix_power(x):
     return a, b, c, d
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -2327,7 +2327,7 @@ def test_matrix_power():
         onp_res = onp_matrix_power(x)
         mnp_res = mnp_matrix_power(to_tensor(x))
         for expected, actual in zip(onp_res, mnp_res):
-            match_array(actual.asnumpy(), expected, error=5)
+            match_array(actual.asnumpy(), expected, error=4)
 
 
 def mnp_around(x):
