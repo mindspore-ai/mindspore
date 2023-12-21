@@ -18,18 +18,23 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_MBUF_RECEIVE_MANAGER_H_
 
 #include <atomic>
-#include <string>
-#include <vector>
-#include <queue>
-#include <thread>
-#include <functional>
-#include <mutex>
-#include <memory>
-#include <utility>
-#include <future>
 #include <condition_variable>
+#include <functional>
+#include <future>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <queue>
+#include <string>
+#include <thread>
+#include <utility>
+#include <vector>
 #include "acl/acl_tdt.h"
 #include "ir/tensor.h"
+
+#ifndef SECUREC_MEM_MAX_LEN
+#define SECUREC_MEM_MAX_LEN 0x7fffffffUL
+#endif
 
 namespace mindspore::device::ascend {
 
@@ -40,6 +45,16 @@ enum class MbufReceiveError : int {
   Timeout = 1,
   AclError = 2,
 };
+
+const std::map<aclDataType, TypeId> kAclDataTypeMap = {
+  {ACL_INT8, TypeId::kNumberTypeInt8},       {ACL_UINT8, TypeId::kNumberTypeUInt8},
+  {ACL_INT16, TypeId::kNumberTypeInt16},     {ACL_UINT16, TypeId::kNumberTypeUInt16},
+  {ACL_INT32, TypeId::kNumberTypeInt32},     {ACL_UINT32, TypeId::kNumberTypeUInt32},
+  {ACL_INT64, TypeId::kNumberTypeInt64},     {ACL_UINT64, TypeId::kNumberTypeUInt64},
+  {ACL_FLOAT16, TypeId::kNumberTypeFloat16}, {ACL_FLOAT, TypeId::kNumberTypeFloat32},
+  {ACL_DOUBLE, TypeId::kNumberTypeFloat64},  {ACL_BOOL, TypeId::kNumberTypeBool}};
+
+mindspore::tensor::TensorPtr acltdtDataItemToTensorPtr(acltdtDataItem *item);
 
 class ScopeAclTdtDataset {
  public:

@@ -300,10 +300,13 @@ bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_con
   };
   CreateTensorPrintThread(thread_crt);
   if (ms_context_ptr->backend_policy() == "ge") {
-    TensorSummaryUtils::GetInstance().CreateTDTSummaryThread();
     MbufDataHandlerManager::GetInstance().AddHandler(std::make_unique<MbufDataHandler>(
       std::bind(&TensorDumpUtils::AsyncSaveDatasetToNpyFile, &TensorDumpUtils::GetInstance(), std::placeholders::_1),
       device_id, "ms_tensor_dump"));
+    for (auto &summary_channel_name : summary_channel_names) {
+      MbufDataHandlerManager::GetInstance().AddHandler(std::make_unique<MbufDataHandler>(
+        std::bind(SummaryReceiveData, std::placeholders::_1, summary_channel_name), device_id, summary_channel_name));
+    }
   }
   return true;
 }
@@ -321,7 +324,6 @@ bool AscendDeprecatedInterface::CloseTsd(const std::shared_ptr<MsContext> &ms_co
     pybind11::gil_scoped_release gil_release;
     DestroyTensorPrintThread();
     if (ms_context_ptr->backend_policy() == "ge") {
-      TensorSummaryUtils::GetInstance().DestroyTDTSummaryThread();
       MbufDataHandlerManager::GetInstance().DestoryHandler();
     }
     (void)ErrorManagerAdapter::Init();

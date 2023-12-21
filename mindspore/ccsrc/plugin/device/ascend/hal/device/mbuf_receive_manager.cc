@@ -31,7 +31,71 @@ namespace mindspore::device::ascend {
 namespace {
 // Data may not be received when the process exits; reserve a timeout period.
 constexpr std::chrono::milliseconds stop_time_out{100};
+
+bool CopyDataToTensor(const uint8_t *src_addr, mindspore::tensor::TensorPtr tensor_ptr, const size_t size) {
+  MS_EXCEPTION_IF_NULL(src_addr);
+  MS_EXCEPTION_IF_NULL(tensor_ptr);
+  auto *dst_addr = reinterpret_cast<uint8_t *>(tensor_ptr->data_c());
+  MS_EXCEPTION_IF_NULL(dst_addr);
+  size_t dst_size = static_cast<size_t>(tensor_ptr->data().nbytes());
+  MS_EXCEPTION_IF_CHECK_FAIL(dst_size >= size, "The destination size is smaller than the source size.");
+  size_t remain_size = size;
+  while (remain_size > SECUREC_MEM_MAX_LEN) {
+    auto cp_ret = memcpy_s(dst_addr, SECUREC_MEM_MAX_LEN, src_addr, SECUREC_MEM_MAX_LEN);
+    if (cp_ret != EOK) {
+      MS_LOG(ERROR) << "Failed to copy the memory to py::tensor " << cp_ret;
+      return false;
+    }
+    remain_size -= SECUREC_MEM_MAX_LEN;
+    dst_addr += SECUREC_MEM_MAX_LEN;
+    src_addr += SECUREC_MEM_MAX_LEN;
+  }
+  if (remain_size != 0U) {
+    auto cp_ret = memcpy_s(dst_addr, remain_size, src_addr, remain_size);
+    if (cp_ret != EOK) {
+      MS_LOG(ERROR) << "Failed to copy the memory to py::tensor " << cp_ret;
+      return false;
+    }
+  }
+
+  return true;
+}
 }  // namespace
+
+mindspore::tensor::TensorPtr acltdtDataItemToTensorPtr(acltdtDataItem *item) {
+  size_t dim_num = acltdtGetDimNumFromItem(item);
+  void *acl_addr = acltdtGetDataAddrFromItem(item);
+  size_t acl_data_size = acltdtGetDataSizeFromItem(item);
+  aclDataType acl_data_type = acltdtGetDataTypeFromItem(item);
+
+  auto acl_data = reinterpret_cast<uint8_t *>(acl_addr);
+  if (acl_data_size > 0) {
+    MS_EXCEPTION_IF_NULL(acl_data);
+  }
+
+  ShapeVector tensor_shape;
+  tensor_shape.resize(dim_num);
+
+  if (acltdtGetDimsFromItem(item, tensor_shape.data(), dim_num) != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "ACL failed to get dim-size from acl channel data";
+    return nullptr;
+  }
+
+  auto type_iter = kAclDataTypeMap.find(acl_data_type);
+  if (type_iter == kAclDataTypeMap.end()) {
+    MS_LOG(ERROR) << "The type of aclData not support: " << acl_data_type;
+    return nullptr;
+  }
+  auto type_id = type_iter->second;
+  auto tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(type_id, tensor_shape);
+  if (acl_data_size == 0) {
+    return tensor_ptr;
+  }
+  if (CopyDataToTensor(acl_data, tensor_ptr, acl_data_size)) {
+    return tensor_ptr;
+  }
+  return nullptr;
+}
 
 MbufDataHandler::MbufDataHandler(MbufFuncType func, uint32_t device_id, string channel_name, size_t capacity,
                                  int32_t timeout)
