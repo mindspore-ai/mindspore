@@ -68,7 +68,10 @@ class FunctionDefParser(Parser):
                                                      isinstance(body.value.value, str))):
                 ast_node.body.remove(body)
                 continue
-            # avoid add dead code, so we need to break if return is added.
+            # closure syntax is not currently supported
+            if isinstance(body, (ast.FunctionDef, ast.ClassDef)):
+                stree.append_python_node(ast_node, body, node_manager)
+                continue
             parser: Parser = ParserRegister.instance().get_parser(type(body))
             if parser is None:
                 stree.append_python_node(ast_node, body, node_manager)

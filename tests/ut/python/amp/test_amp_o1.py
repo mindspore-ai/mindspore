@@ -43,10 +43,10 @@ def test_net_with_branch():
     amp._insert_cast_operator_white_list(stree, amp.AMP_WHITE_LIST, ms.float16) # pylint:disable=protected-access
     amp._remove_duplicated_cast(stree, ms.float16) # pylint:disable=protected-access
     codes = stree.get_code()
-    assert codes.count("x = self.outcast_conv(x, mindspore.float32)") == 1
-    assert codes.count("x_1 = self.incast_relu0(x, mindspore.float16)") == 1
-    assert codes.count("y1 = self.relu(x_1)") == 1
-    assert codes.count("y1 = self.outcast_relu(y1, mindspore.float32)") == 1
+    assert codes.count("x = self.outcast_conv(x, mindspore.float32)") == 1, codes
+    assert codes.count("x_var = self.incast_relu0(x, mindspore.float16)") == 1, codes
+    assert codes.count("y1 = self.relu(x_var)") == 1, codes
+    assert codes.count("y1 = self.outcast_relu(y1, mindspore.float32)") == 1, codes
 
 
 class NetWithIf(nn.Cell):
@@ -83,15 +83,15 @@ def test_net_with_if():
     amp._insert_cast_operator_white_list(stree, amp.AMP_WHITE_LIST, ms.float16) # pylint:disable=protected-access
     amp._remove_duplicated_cast(stree, ms.float16) # pylint:disable=protected-access
     codes = stree.get_code()
-    assert codes.count("x = self.outcast_conv1(x, mindspore.float32)") == 1
-    assert codes.count("x_1 = self.incast_relu0(x, mindspore.float16)") == 1
-    assert codes.count("relu_var = self.relu(x_1)") == 1
-    assert codes.count("relu_var = self.outcast_relu(relu_var, mindspore.float32)") == 1
-    assert codes.count("if relu_var:") == 1
-    assert codes.count("x = self.outcast_conv2(x, mindspore.float32)") == 1
-    assert codes.count("x = self.outcast_conv3(x, mindspore.float32)") == 0
-    assert codes.count("x = self.outcast_conv4(x, mindspore.float32)") == 1
-    assert codes.count("x = self.outcast_conv5(x, mindspore.float32)") == 1
+    assert codes.count("x = self.outcast_conv1(x, mindspore.float32)") == 1, codes
+    assert codes.count("x_var = self.incast_relu0(x, mindspore.float16)") == 1, codes
+    assert codes.count("relu_var = self.relu(x_var)") == 1, codes
+    assert codes.count("relu_var = self.outcast_relu(relu_var, mindspore.float32)") == 1, codes
+    assert codes.count("if relu_var:") == 1, codes
+    assert codes.count("x = self.outcast_conv2(x, mindspore.float32)") == 1, codes
+    assert codes.count("x = self.outcast_conv3(x, mindspore.float32)") == 0, codes
+    assert codes.count("x = self.outcast_conv4(x, mindspore.float32)") == 1, codes
+    assert codes.count("x = self.outcast_conv5(x, mindspore.float32)") == 1, codes
 
 
 class NetWithClassFunction(nn.Cell):
@@ -125,6 +125,6 @@ def test_net_with_class_function():
     amp._insert_cast_operator_white_list(stree, amp.AMP_WHITE_LIST, ms.float16) # pylint:disable=protected-access
     amp._remove_duplicated_cast(stree, ms.float16) # pylint:disable=protected-access
     codes = stree.get_code()
-    assert codes.count("x = self.outcast_conv1(x, mindspore.float32)") == 1
-    assert codes.count("x = self.outcast_conv2(x, mindspore.float32)") == 0
-    assert codes.count("x = self.outcast_relu(x, mindspore.float32)") == 1
+    assert codes.count("x = self.outcast_conv1(x, mindspore.float32)") == 1, codes
+    assert codes.count("x = self.outcast_conv2(x, mindspore.float32)") == 0, codes
+    assert codes.count("x = self.outcast_relu(x, mindspore.float32)") == 1, codes

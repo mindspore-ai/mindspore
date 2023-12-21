@@ -404,3 +404,34 @@ def test_local_var_type():
     assert node is not None
     assert isinstance(node.get_instance(), LocalPrim)
     assert issubclass(node.get_instance_type(), ops.Abs)
+
+
+def closure_func(x):
+    def inner_func(x):
+        return x
+    x = inner_func(x)
+    return x
+
+
+class ClosureNet(nn.Cell):
+    def construct(self, x):
+        x = closure_func(x)
+        return x
+
+def test_closure_func():
+    """
+    Feature: Python Rewrite api.
+    Description: Test rewrite process closure function.
+    Expectation: Success.
+    """
+    net = ClosureNet()
+    stree = SymbolTree.create(net)
+    node = stree.get_node("closure_func")
+    assert node is not None
+    assert node.get_node_type() == NodeType.CallFunction
+    assert not node.get_handler().nodes()
+    codes = stree.get_code()
+    assert codes.count("x = closure_func(x)") == 1, codes
+    assert codes.count("import closure_func") == 1, codes
+    assert codes.count("def closure_func(x):") == 0, codes
+    assert codes.count("def inner_func(x):") == 0, codes

@@ -392,6 +392,16 @@ class AssignParser(Parser):
         new_ast = ast.parse(new_code).body[0]
         self.stree.get_init_func_ast().body.append(new_ast)
 
+    def _add_import(self, import_name: str):
+        """ add import to current node manager."""
+        module, _ = AssignParser._get_module_of_node_manager(self.node_manager)
+        if module is None:
+            logger.info(f"Cannot get module where '{import_name}' is located, ignore import info")
+            return
+        node_manager = self.node_manager.get_top_manager()
+        belonging_ast = None if isinstance(node_manager, SymbolTree) else node_manager.get_manager_ast()
+        self.stree.add_import(module, import_name, belonging_ast)
+
     def cell_container_process(self, func_name: str, node_name: str, container_obj: object):
         """ parse cell container object."""
         cell_container = CellContainer(self.ast_assign, self.targets, func_name, self.args, self.kwargs,
@@ -480,13 +490,7 @@ class AssignParser(Parser):
             # when primitive instance is not a local variable, it will be a global object which need to be imported
             if not isinstance(function_object, LocalPrim):
                 import_name = str(func_scope_name).split('.')[0]
-                module, _ = AssignParser._get_module_of_node_manager(self.node_manager)
-                if module is None:
-                    logger.info(f"Cannot get module where '{func_scope_name}' is located, ignore import info")
-                else:
-                    node_manager = self.node_manager.get_top_manager()
-                    belonging_ast = None if isinstance(node_manager, SymbolTree) else node_manager.get_manager_ast()
-                    self.stree.add_import(module, import_name, belonging_ast)
+                self._add_import(import_name)
             # create CallPrimitive node
             self.process_primitive(func_scope_name, func_scope_name.value, function_object)
             return
@@ -498,6 +502,11 @@ class AssignParser(Parser):
             if is_cls_type_obj:
                 # represent a class type object, e.g. abs_ops = _get_cache_prim(P.Abs)
                 node.set_type_cls(function_object)
+                # add import
+                if str(func_scope_name) == '_get_cache_prim':
+                    import_name = astunparse.unparse(self.ast_assign.value.args[0]).strip()
+                    if '.' not in import_name:
+                        self._add_import(import_name)
             else:
                 # represent the initialize of a class type, e.g. abs_inst = P.Abs()
                 node.set_init_cls(function_object)
@@ -522,6 +531,13 @@ class AssignParser(Parser):
         if not isinstance(ast_functiondef, ast.FunctionDef):
             logger.info(error_str(f"Get ast.FunctionDef of function {str(func_scope_name)} failed, the type of "
                                   f"ast node is {type(ast_functiondef)}", child_node=self.ast_assign))
+            self.insert_callfunction_node(func_scope_name, node_name, None, function_object, False)
+            return
+        if [n for n in ast_functiondef.body if isinstance(n, ast.FunctionDef)]:
+            logger.info(error_str(f"closure syntax is not supported now, {str(func_scope_name)} will not be parsed.",
+                                  child_node=ast_functiondef))
+            if not func_scope_name.scope:
+                self._add_import(func_scope_name.value)
             self.insert_callfunction_node(func_scope_name, node_name, None, function_object, False)
             return
         # update func_name, and remove scope
@@ -551,16 +567,16 @@ class AssignParser(Parser):
             node = Node.inner_create_call_function(node_name, self.ast_assign, func_name, func_obj,
                                                    self.targets, self.args, self.kwargs)
             self.stree.append_origin_field(node, self.node_manager)
-        else:
-            # create CallFunction node
-            node = CallFunction(self.targets, func_name, self.args, self.kwargs, node_name, self.ast_assign,
-                                ast_functiondef, self.stree, func_obj, is_method)
-            self.stree.append_origin_field(node, self.node_manager)
-            # expand ast codes
-            ast_functiondef = AstFlattener().transform(ast_functiondef, [func_name.value], self.stree)
-            # parse ast codes into CallFunction Node
-            parser = ParserRegister.instance().get_parser(ast.FunctionDef)
-            parser.process(self.stree, ast_functiondef, node_manager=node)
+            return node
+        # create CallFunction node
+        node = CallFunction(self.targets, func_name, self.args, self.kwargs, node_name, self.ast_assign,
+                            ast_functiondef, self.stree, func_obj, is_method)
+        self.stree.append_origin_field(node, self.node_manager)
+        # expand ast codes
+        ast_functiondef = AstFlattener().transform(ast_functiondef, [func_name.value], self.stree)
+        # parse ast codes into CallFunction Node
+        parser = ParserRegister.instance().get_parser(ast.FunctionDef)
+        parser.process(self.stree, ast_functiondef, node_manager=node)
         return node
 
     def process_ast_call(self, ast_call: ast.Call):

@@ -128,9 +128,11 @@ def _insert_cast_operator_process(node, dtype):
             position = stree.before(node)
             new_node = _amp_cast_op()
             cast_args = ms.rewrite.ScopedValue.create_name_values([arg.value, dtype_str], [arg.scope, "mindspore"])
-            arg_provider = node.get_handler().get_arg_providers()[idx]
-            if arg_provider and len(arg_provider[0].get_target_users(arg_provider[1])) > 1:
-                cast_targets = [stree.unique_name(str(arg))]
+            arg_providers = node.get_handler().get_arg_providers()
+            if not arg_providers or idx not in arg_providers or \
+                len(arg_providers[idx][0].get_target_users(arg_providers[idx][1])) > 1:
+                # create new target names
+                cast_targets = [stree.unique_name(f"{arg.value}_var")]
             else:
                 cast_targets = ms.rewrite.ScopedValue.create_name_values([arg.value], [arg.scope])
             new_cast_node = ms.rewrite.Node.create_call_cell(new_node,

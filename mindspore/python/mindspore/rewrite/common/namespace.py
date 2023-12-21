@@ -50,7 +50,11 @@ def is_ms_function(func_obj):
     """Determine whether 'func_obj' is a mindspore function."""
     if isinstance(func_obj, types.BuiltinFunctionType):
         return False
-    func_file = inspect.getabsfile(func_obj)
+    try:
+        # module, class, method, function, traceback, frame, or code object was expected
+        func_file = inspect.getabsfile(func_obj)
+    except TypeError:
+        return False
     func_file = os.path.normcase(func_file)
     ms_path = sys.modules['mindspore'].__file__
     ms_path = os.path.normcase(ms_path)
