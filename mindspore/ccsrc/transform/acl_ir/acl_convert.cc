@@ -588,15 +588,18 @@ void AclConverter::ConvertAttrToAclInput(const mindspore::HashMap<std::string, V
     AttrToInputConverter attr_coverter;
     TensorParams new_params;
     attr_coverter.ConvertValueToRealType(iter->second, ms_attr_name, &new_params);
-    auto input_tensor = attr_coverter.GetTensor();
+    attr_input_value_.push_back(std::move(attr_coverter.GetData()));
+    auto acl_host_input = std::make_shared<AclHostInfo>(attr_input_value_.back().data(),
+                                                        attr_input_value_.back().size(), new_params.data_type);
     AclDumpString dump_str;
     AclDumpString *dump_str_pointer = transform::AclHelper::IsPrintDebugString() ? &dump_str : nullptr;
-    auto [acl_desc, acl_data] = ConvertTensorToAclDesc(input_tensor, new_params, ge_input_info.name, dump_str_pointer);
+    auto [acl_desc, acl_data] =
+      ConvertTensorToAclDesc(acl_host_input, new_params, ge_input_info.name, dump_str_pointer);
 
     if (AclAdapterManager::GetInstance().CheckAclAdapter(info->op_type())) {
       auto set_const = AclAdapterManager::GetInstance().GetOpInfo(info->op_type()).is_const_input();
-      if (set_const && (input_tensor != nullptr)) {
-        auto const_ret = aclSetTensorConst(acl_desc, input_tensor->data_c(), input_tensor->Size());
+      if (set_const && (acl_host_input != nullptr)) {
+        auto const_ret = aclSetTensorConst(acl_desc, acl_host_input->host_addr, acl_host_input->size);
         if (const_ret != ACL_SUCCESS) {
           MS_LOG(EXCEPTION) << "AclSetTensorConst failed! error op is " << info->op_type()
                             << " with error code:" << const_ret;

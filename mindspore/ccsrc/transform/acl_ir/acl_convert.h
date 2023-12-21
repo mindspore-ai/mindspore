@@ -144,6 +144,7 @@ class AclConverter {
   AclRunner runner_;
   AclInputToHost input_on_host_;
   std::vector<std::vector<uint8_t>> value_depend_cast_;
+  std::vector<std::vector<uint8_t>> attr_input_value_;
 
   std::vector<AclDumpString> input_str_;
   std::vector<AclDumpString> output_str_;
@@ -321,12 +322,17 @@ class ValueDependToInputConverter : public AttrHelper<ValueDependToInputConverte
 
 class AttrToInputConverter : public AttrHelper<AttrToInputConverter> {
  public:
-  const tensor::TensorPtr &GetTensor() const { return tensor_; }
+  const std::vector<uint8_t> GetData() const { return data_; }
 
   template <typename T>
   void ConvertValue(const ValuePtr &value, const AttrDeclType<T> &, TensorParams *) {
-    tensor_ = std::make_shared<tensor::Tensor>(GetValue<T>(value));
-    MS_EXCEPTION_IF_NULL(tensor_);
+    auto tensor = std::make_shared<tensor::Tensor>(GetValue<T>(value));
+    auto tensor_data_ptr = tensor->data_c();
+    auto size = static_cast<size_t>(tensor->data().nbytes());
+    data_.resize(size);
+    if (memcpy_s(data_.data(), size, tensor_data_ptr, size) != EOK) {
+      MS_LOG(EXCEPTION) << "memcpy of listlistint failed in attr convert to acl input.";
+    }
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::string> &, TensorParams *) {
@@ -340,17 +346,23 @@ class AttrToInputConverter : public AttrHelper<AttrToInputConverter> {
   void ConvertValue(const ValuePtr &value, const AttrDeclType<int64_t> &, TensorParams *param) {
     MS_EXCEPTION_IF_NULL(param);
     auto real_val = static_cast<int32_t>(GetValue<int64_t>(value));
-    tensor_ = std::make_shared<tensor::Tensor>(real_val);
+    data_.resize(sizeof(int32_t));
+    int32_t *data_ptr = reinterpret_cast<int32_t *>(data_.data());
+    MS_EXCEPTION_IF_NULL(data_ptr);
+    data_ptr[0] = static_cast<int32_t>(real_val);
     param->data_type = TypeId::kNumberTypeInt32;
-    MS_EXCEPTION_IF_NULL(tensor_);
   }
 
   template <typename T>
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<T>> &, TensorParams *) {
     std::vector<T> array_list;
     ConvertValueSequenceToList(value, &array_list);
-    tensor_ = std::make_shared<tensor::Tensor>(array_list);
-    MS_EXCEPTION_IF_NULL(tensor_);
+    data_.resize(array_list.size() * sizeof(T));
+    T *data_ptr = reinterpret_cast<T *>(data_.data());
+    MS_EXCEPTION_IF_NULL(data_ptr);
+    for (size_t i = 0; i < array_list.size(); ++i) {
+      data_ptr[i] = static_cast<T>(array_list[i]);
+    }
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<::ge::DataType>> &, TensorParams *) {
@@ -369,24 +381,26 @@ class AttrToInputConverter : public AttrHelper<AttrToInputConverter> {
     MS_EXCEPTION_IF_NULL(param);
     std::vector<uint8_t> array_list;
     ConvertValueSequenceToList(value, &array_list);
-    std::vector<int32_t> array_list_int32;
-    (void)std::transform(array_list.begin(), array_list.end(), std::back_inserter(array_list_int32),
-                         [](const uint8_t val) { return static_cast<int32_t>(val); });
-    tensor_ = std::make_shared<tensor::Tensor>(array_list_int32);
+    data_.resize(array_list.size() * sizeof(int32_t));
+    int32_t *data_ptr = reinterpret_cast<int32_t *>(data_.data());
+    MS_EXCEPTION_IF_NULL(data_ptr);
+    for (size_t i = 0; i < array_list.size(); ++i) {
+      data_ptr[i] = static_cast<int32_t>(array_list[i]);
+    }
     param->data_type = TypeId::kNumberTypeInt32;
-    MS_EXCEPTION_IF_NULL(tensor_);
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<int64_t>> &, TensorParams *param) {
     MS_EXCEPTION_IF_NULL(param);
     std::vector<int64_t> array_list;
     ConvertValueSequenceToList(value, &array_list);
-    std::vector<int32_t> array_list_int32;
-    (void)std::transform(array_list.begin(), array_list.end(), std::back_inserter(array_list_int32),
-                         [](const int64_t val) { return LongToInt(val); });
-    tensor_ = std::make_shared<tensor::Tensor>(array_list_int32);
+    data_.resize(array_list.size() * sizeof(int32_t));
+    int32_t *data_ptr = reinterpret_cast<int32_t *>(data_.data());
+    MS_EXCEPTION_IF_NULL(data_ptr);
+    for (size_t i = 0; i < array_list.size(); ++i) {
+      data_ptr[i] = static_cast<int32_t>(array_list[i]);
+    }
     param->data_type = TypeId::kNumberTypeInt32;
-    MS_EXCEPTION_IF_NULL(tensor_);
   }
 
   template <typename T>
@@ -394,17 +408,15 @@ class AttrToInputConverter : public AttrHelper<AttrToInputConverter> {
                     TensorParams *) {
     std::vector<T> array_list;
     ConvertValueSequenceToList(value, &array_list);
-    tensor_ = std::make_shared<tensor::Tensor>(kNumberTypeInt64, shape);
-    MS_EXCEPTION_IF_NULL(tensor_);
-    auto data_ptr = tensor_->data_c();
+    data_.resize(array_list.size() * sizeof(T));
+    T *data_ptr = reinterpret_cast<T *>(data_.data());
     MS_EXCEPTION_IF_NULL(data_ptr);
-    auto size = static_cast<size_t>(tensor_->data().nbytes());
-    if (memcpy_s(data_ptr, size, array_list.data(), size) != EOK) {
-      MS_LOG(EXCEPTION) << "memcpy of listlistint failed in convert acl attr.";
+    for (size_t i = 0; i < array_list.size(); ++i) {
+      data_ptr[i] = static_cast<T>(array_list[i]);
     }
   }
 
-  tensor::TensorPtr tensor_;
+  std::vector<uint8_t> data_;
 };
 }  // namespace transform
 }  // namespace mindspore
