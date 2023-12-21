@@ -60,14 +60,11 @@ class ModuleParser(Parser):
         """Add decorators to class"""
         origin_net_source_code_file = inspect.getfile(type(origin_net))
         if not os.path.exists(origin_net_source_code_file):
-            raise RuntimeError("For MindSpore Rewrite, in module parser, File ", origin_net_source_code_file,
-                               " not exist")
-        try:
-            with open(origin_net_source_code_file, "r", encoding="utf-8") as f:
-                source_code = f.read()
-                decorators = ModuleParser._get_decorator(ast.parse(source_code), origin_net)
-        except RuntimeError:
-            raise RuntimeError("For MindSpore Rewrite, in module parser, get decorators error")
+            raise FileNotFoundError(f"For MindSpore Rewrite, in module parser, File {origin_net_source_code_file} "
+                                    f"not exist")
+        with open(origin_net_source_code_file, "r", encoding="utf-8") as f:
+            source_code = f.read()
+            decorators = ModuleParser._get_decorator(ast.parse(source_code), origin_net)
         if decorators:
             for decorator_index, decorator_node in enumerate(decorators):
                 class_ast.decorator_list.insert(decorator_index, decorator_node)

@@ -276,7 +276,7 @@ class SymbolTree:
             An instance of Node being inserted.
 
         Raises:
-            RuntimeError: If `position` is not belong to current `SymbolTree`.
+            ValueError: If `position` is not belong to current `SymbolTree`.
             TypeError: If `position` is not a `Position`.
             TypeError: If `node` is not a `Node`.
 
@@ -344,7 +344,6 @@ class SymbolTree:
             An instance of Node represents root of node_tree been replaced in.
 
         Raises:
-            RuntimeError: Old node is not isolated.
             TypeError: If `old_node` is not a `Node`.
             TypeError: If `new_nodes` is not a `list` or node in `new_nodes` is not a `Node`.
 

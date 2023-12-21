@@ -33,10 +33,7 @@ class ForParser(Parser):
         # expand codes in ast.for
         ast_for = AstFlattener().transform_control_flow(node, stree)
         # parse ast codes of for branch into ControlFlow Node
-        try:
-            args = [AstConverter.create_scopedvalue(node.iter),]
-        except RuntimeError:
-            args = []
+        args = [AstConverter.create_scopedvalue(node.iter),]
         for_node = ControlFlow("for_node", ast_for, False, args, stree)
         stree.append_origin_field(for_node, node_manager)
         for_node.set_node_manager(node_manager)

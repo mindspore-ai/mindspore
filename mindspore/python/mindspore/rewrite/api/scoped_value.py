@@ -136,9 +136,9 @@ class ScopedValue:
             An list of instance of `ScopedValue`.
 
         Raises:
-            RuntimeError: If the length of names is not equal to the length of scopes when scopes are not None.
             TypeError: If `names` is not `list` or `tuple` and name in `names` is not `str`.
             TypeError: If `scopes` is not `list` or `tuple` and scope in `scopes` is not `str`.
+            ValueError: If the length of names is not equal to the length of scopes when scopes are not None.
 
         Examples:
             >>> from mindspore.rewrite import ScopedValue
@@ -150,7 +150,7 @@ class ScopedValue:
         if scopes is not None:
             Validator.check_element_type_of_iterable("scopes", scopes, [str], "ScopedValue")
             if len(names) != len(scopes):
-                raise RuntimeError("Length of names should be equal to length of scopes")
+                raise ValueError("Length of names should be equal to length of scopes")
         result = []
         for index, name in enumerate(names):
             if scopes is not None:

@@ -37,7 +37,7 @@ class SymbolTreeBuilder:
 
     def __init__(self, network: Cell):
         if not isinstance(network, Cell):
-            raise RuntimeError("Only support network with Cell type now, ", network)
+            raise TypeError("Type of network should be Cell, but got ", network)
         self._origin_net = network
         network_str = inspect.getsource(type(network))
         self._ast_root: ast.Module = ast.parse(dedent(network_str))
@@ -67,7 +67,7 @@ class SymbolTreeBuilder:
 
         self._ast_root = SymbolTreeBuilder.ast_transform(self._ast_root)
         if not isinstance(self._ast_root, ast.Module):
-            raise RuntimeError("ast_root should be a ast.Module")
+            raise TypeError("Type of ast_root should be ast.Module, but got ", self._ast_root)
         self._root_tree: SymbolTree = SymbolTree(self._origin_net, self._ast_root)
         parser: Parser = ParserRegister.instance().get_parser(ast.Module)
         parser.process(self._root_tree, self._ast_root, None)

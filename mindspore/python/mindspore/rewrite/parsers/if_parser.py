@@ -43,10 +43,7 @@ class IfParser(Parser):
         # expand codes in ast.if
         ast_if = AstFlattener().transform_control_flow(node, stree)
         # parse ast codes of if branch into ControlFlow Node
-        try:
-            args = [AstConverter.create_scopedvalue(node.test),]
-        except RuntimeError:
-            args = []
+        args = [AstConverter.create_scopedvalue(node.test),]
         if_node = ControlFlow("if_node", ast_if, False, args, stree)
         stree.append_origin_field(if_node, node_manager)
         for body in ast_if.body:

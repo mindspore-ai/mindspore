@@ -38,15 +38,15 @@ class ArgumentsParser(Parser):
             node_manager (NodeManager): NodeManager those asts belong to.
 
         Raises:
-            RuntimeError: Types of ast_node.args elements are not ast.arg.
+            TypeError: Types of ast_node.args elements are not ast.arg.
         """
         if hasattr(ast_node, "posonlyargs"):
             stree.try_append_python_node(ast_node, ast_node.posonlyargs, node_manager)
 
         for arg in ast_node.args:
             if not isinstance(arg, ast.arg):
-                raise RuntimeError(error_str(f"only support ast.arg in arguments arg, but got '{type(arg).__name__}'",
-                                             arg, ast_node))
+                raise TypeError(error_str(f"only support ast.arg in arguments arg, but got '{type(arg).__name__}'",
+                                          arg, ast_node))
             stree.append_input_node(arg, arg.arg, node_manager=node_manager)
         if hasattr(ast_node, "vararg"):
             stree.try_append_python_node(ast_node, ast_node.vararg, node_manager)

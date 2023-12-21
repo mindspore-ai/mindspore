@@ -679,8 +679,8 @@ class SymbolTree(Observer, Observable, NodeManager):
         if base_node is not None:
             stree = base_node.get_belong_symbol_tree()
             if stree is not None and stree is not self:
-                raise RuntimeError(f"Position is not in current SymbolTree, node:{stree.get_ori_cls_name()}, "
-                                   f"current: {self.get_ori_cls_name()}.")
+                raise ValueError(f"Position is not in current SymbolTree, node:{stree.get_ori_cls_name()}, "
+                                 f"current: {self.get_ori_cls_name()}.")
 
         # Check if node is inserted between Input node
         if base_node is not None and base_node.get_node_type() == NodeType.Input:

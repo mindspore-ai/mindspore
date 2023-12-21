@@ -387,7 +387,7 @@ class Node:
             elif para.kind == inspect.Parameter.VAR_KEYWORD:  # corresponds to a '**kwargs'
                 var_keyword_name = name
             else:
-                raise RuntimeError("invalid para kind", para.kind)
+                raise RuntimeError("invalid parameter kind:", para.kind)
         if "self" in position_only_names:
             position_only_names.remove("self")
         if "self" in positional_or_keyword_names:
@@ -850,7 +850,7 @@ class Node:
         Validator.check_int_range(arg_idx, 0, self._args_num, Validator.INC_LEFT, "arg_idx")
         if out_idx is None:
             if len(node.get_targets()) != 1:
-                raise RuntimeError("node should has one output when out_idx is not provided")
+                raise ValueError("node should has one output when out_idx is not provided")
             out_idx = 0
         Validator.check_int_range(out_idx, 0, len(node.get_targets()), Validator.INC_LEFT, "arg_idx")
         new_arg = node.get_targets()[out_idx]

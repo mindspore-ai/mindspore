@@ -255,7 +255,6 @@ class Node:
                 which means use first output of `src_node` as new input.
 
         Raises:
-            RuntimeError: If `src_node` is not belong to current `SymbolTree`.
             TypeError: If `arg_idx` is not a `int` number.
             ValueError: If `arg_idx` is out of range.
             TypeError: If `src_node` is not a `Node` instance.

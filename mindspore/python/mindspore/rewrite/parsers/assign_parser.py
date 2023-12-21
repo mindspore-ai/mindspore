@@ -72,9 +72,6 @@ class AssignParser(Parser):
 
         Returns:
             Func name.
-
-        Raises:
-            RuntimeError: Func of input ast node is not ast.Name or ast.Attribute.
         """
         func = ast_call.func
         if isinstance(func, ast.Name):
@@ -96,10 +93,6 @@ class AssignParser(Parser):
 
         Returns:
             Func scope.
-
-        Raises:
-            RuntimeError: FuncValue is not an ast.Name when func is an ast.Attribute.
-            RuntimeError: Func of input ast node is not ast.Name or ast.Attribute.
         """
         func = ast_call.func
         if isinstance(func, ast.Name):

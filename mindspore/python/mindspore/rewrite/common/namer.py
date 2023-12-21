@@ -107,9 +107,6 @@ class Namer:
 
         Args:
             name (str): A name should be unique in current namer.
-
-        Raises:
-            RuntimeError: If name is not unique in current namer.
         """
         if self._names.get(name) is None:
             self._names[name] = 1
@@ -170,10 +167,10 @@ class NodeNamer(Namer):
                     origin_name = str(node_or_name.get_node_type())
         elif isinstance(node_or_name, str):
             if not node_or_name:
-                raise RuntimeError("input node_name is empty.")
+                raise ValueError("input node_name is empty.")
             origin_name = node_or_name
         else:
-            raise RuntimeError("unexpected type of node_or_name: ", type(node_or_name))
+            raise ValueError("unexpected type of node_or_name:", type(node_or_name))
         return super(NodeNamer, self).get_name(origin_name)
 
 

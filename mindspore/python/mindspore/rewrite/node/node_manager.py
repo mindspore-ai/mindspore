@@ -274,7 +274,7 @@ class NodeManager:
             node (Node): A Node to be added into `_nodes`.
 
         Raises:
-            RuntimeError: If name of the node is duplicated.
+            ValueError: If name of the node is duplicated.
         """
         node_name = node.get_name()
         if self._nodes.get(node_name) is not None:
