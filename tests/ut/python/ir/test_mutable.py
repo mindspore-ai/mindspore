@@ -327,24 +327,19 @@ def test_mutable_with_bool():
     Description: Set mutable for bool value.
     Expectation: Raise TypeError.
     """
+    mutable([Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32), (True,)])
 
-    try:
-        mutable(True)
-    except TypeError as e:
-        assert "the 'input_data' should be one of (int, float, bool, Tensor, tuple, list, dict)" in str(e)
+    data = mutable(True)
+    assert isinstance(data, bool) and data
 
-
-    try:
-        mutable([Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32), (True,)])
-    except TypeError as e:
-        assert "the 'input_data' should be one of (int, float, bool, Tensor, tuple, list, dict)" in str(e)
+    assert mutable(True) & False is False
+    assert mutable(False) | True is True
+    assert mutable(False) ^ False is False
+    assert str(mutable(True)) == "True"
 
     @jit
     def net():
         x = mutable(False)
         return x
-
-    try:
-        net()
-    except TypeError as e:
-        assert "the input arg should be one of (int, float, Tensor, tuple, list, dict)" in str(e)
+    out = net()
+    assert isinstance(out, bool) and not out
