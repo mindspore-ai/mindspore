@@ -666,15 +666,17 @@ class Dataset:
                 be dropped and not propagated to the child node.
             num_parallel_workers (int, optional): Number of workers(threads) to process the dataset in parallel.
                 Default: ``None``.
-            pad_info (dict, optional): The information about how to batch each column. The key
+            pad_info (dict, optional): The pad information about how to batch each column. The key
                 corresponds to the column name, and the value must be a tuple of 2 elements.
                 The first element corresponds to the shape to pad to, and the second
                 element corresponds to the value to pad with. If a column is not
                 specified, then that column will be padded to the longest in the current
-                batch, and 0 will be used as the padding value. Any None dimensions will
-                be padded to the longest in the current batch, unless if
-                pad_to_bucket_boundary is True. If no padding is wanted, set `pad_info`
-                to ``None``. Default: ``None``.
+                batch, and 0 will be used as the padding value. If ``pad_info={"col1": ([224, 224], 0)}``,
+                expand the data column named ``col1`` to shape (224, 224), and fill in the missing values with 0.
+                If ``pad_info={}``, all samples in the batch will be filled to the shape with the largest sample
+                in the current batch. If ``pad_info={"col1": (None, 100)}``, all samples in the batch will be filled
+                to the shape with the largest sample in the current batch, and fill in the missing values with 100.
+                If no padding is wanted, set `pad_info` to ``None``. Default: ``None``.
 
         Returns:
             Dataset, a new dataset with the above operation applied.

@@ -26,22 +26,13 @@
     .. py:method:: category_field
         :property:
 
-        返回用于数据分组的category字段。
+        设置或者返回用于数据分组的category字段。
 
         .. note::
             请参考 :class:`mindspore.mindrecord.MindPage` 类的样例代码。
 
         返回：
             list[str]，category字段。
-
-    .. py:method:: category_field
-        :setter:
-
-        设置用于数据分组的category字段。
-
-        .. note::
-            请参考 :class:`mindspore.mindrecord.MindPage` 类的样例代码。
-
 
     .. py:method:: read_at_page_by_id(category_id, page, num_row)
 
