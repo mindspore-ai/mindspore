@@ -26,6 +26,11 @@
 #include "utils/ms_context.h"
 #include "nlohmann/json.hpp"
 #include "include/backend/debug/profiler/profiling.h"
+#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
+#ifndef ASCEND_910B
+#include "plugin/device/ascend/hal/device/ge_runtime/model_runner.h"
+using mindspore::ge::model_runner::ModelRunner;
+#endif
 
 namespace mindspore {
 namespace device {
@@ -560,6 +565,69 @@ void ProfilingUtils::InitProfTensorData(const CNodePtr &node, const size_t index
   }
 }
 
+void ProfilingUtils::RecordModelLoad(const rtModel_t rt_model_handle) {
+#ifndef ASCEND_910B
+  uint32_t rt_model_id = 0;
+  rtError_t rt_model_ret = rtModelGetId(rt_model_handle, &rt_model_id);
+  if (rt_model_ret != RT_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call rt api rtModelGetId failed, ret: " << rt_model_ret;
+    return;
+  }
+  MS_LOG(INFO) << "RecordModelLoad model_id: " << rt_model_id;
+
+  const uint64_t prof_time = MsprofSysCycleTime();
+  MsprofEvent model_load_event_{};
+  model_load_event_.type = static_cast<uint32_t>(GeProfInfoType::kModelLoad);
+  model_load_event_.itemId = rt_model_id;
+  model_load_event_.level = MSPROF_REPORT_MODEL_LEVEL;
+  model_load_event_.timeStamp = prof_time;
+  model_load_event_.requestId = 0U;
+  auto tid = syscall(SYS_gettid);
+  model_load_event_.threadId = static_cast<uint32_t>(tid);
+  if (ProfilingManager::GetInstance().IsProfilingStart()) {
+    auto ret = MsprofReportEvent(static_cast<uint32_t>(false), &model_load_event_);
+    if (ret != MSPROF_ERROR_NONE) {
+      MS_LOG(ERROR) << "RecordModelLoad failed.";
+    }
+  } else {
+    report_event_.emplace_back(model_load_event_);
+  }
+#endif
+}
+
+void ProfilingUtils::RecordModelExecute(const KernelGraphPtr kernel_graph) {
+#ifndef ASCEND_910B
+  uint32_t rt_model_id = 0;
+  rtModel_t rt_model_handle = ModelRunner::Instance().GetModelHandle(kernel_graph->graph_id());
+  rtError_t rt_model_ret = rtModelGetId(rt_model_handle, &rt_model_id);
+  if (rt_model_ret != RT_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call rt api rtModelGetId failed, ret: " << rt_model_ret;
+    return;
+  }
+  MS_LOG(INFO) << "RecordModelExecute model_id: " << rt_model_id;
+
+  auto request_id = 0;
+
+  MsprofEvent model_execute{};
+  model_execute.level = MSPROF_REPORT_MODEL_LEVEL;
+  model_execute.itemId = rt_model_id;
+  auto tid = syscall(SYS_gettid);
+  model_execute.threadId = static_cast<uint32_t>(tid);
+  model_execute.type = static_cast<uint32_t>(GeProfInfoType::kModelExecute);
+  const uint64_t prof_time = MsprofSysCycleTime();
+  model_execute.timeStamp = prof_time;
+  model_execute.requestId = static_cast<uint32_t>(request_id);
+  if (ProfilingManager::GetInstance().IsProfilingStart()) {
+    auto ret = MsprofReportEvent(static_cast<uint32_t>(false), &model_execute);
+    if (ret != MSPROF_ERROR_NONE) {
+      MS_LOG(ERROR) << "RecordModelLoad failed.";
+    }
+  } else {
+    report_event_.emplace_back(model_execute);
+  }
+#endif
+}
+
 std::string ProfilingUtils::GetFullScopeName(const std::string &op_name, const bool is_op_name) {
   std::string full_scope_name;
   if (!is_op_name) {
@@ -666,8 +734,10 @@ void ProfilingUtils::InitLaunchApi(const uint64_t name_hash, MsprofApi *api) {
 }
 
 uint32_t ProfilingUtils::GetBlockDim(const CNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  return 1;
+  auto kernel_mod = AnfAlgo::GetKernelMod(node);
+  auto ascend_kernel_mod = dynamic_cast<kernel::AscendKernelMod *>(kernel_mod);
+  MS_EXCEPTION_IF_NULL(ascend_kernel_mod);
+  return ascend_kernel_mod->block_dim();
 }
 
 void ProfilingUtils::InitReportNode(const CNodePtr &cnode, bool init_begin_time) {

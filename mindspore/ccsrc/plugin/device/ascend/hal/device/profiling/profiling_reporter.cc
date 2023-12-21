@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <fstream>
 #include "kernel/kernel.h"
+#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/kernel_graph.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
@@ -93,8 +94,7 @@ void ProfilingReporter::ReportStepPoint(const std::vector<std::shared_ptr<StepPo
     MS_EXCEPTION_IF_NULL(stream);
     // The tag of this function should report all tags, it will be saved to ts_track.data.<device_id>.slice_<index>
     // The first step index set to 1, here keep same with ge
-    // note: this func not used in new process
-    // (void)rtProfilerTraceEx(1, rt_model_id_, point->tag(), stream);
+    (void)rtProfilerTraceEx(1, rt_model_id_, point->tag(), stream);
 
     MS_LOG(INFO) << "Report step point, rt_model_id_: " << rt_model_id_ << ", op name: " << point->op_name()
                  << ", stream id: " << GetStreamId(op_name) << ", task id: " << GetTaskId(op_name)
@@ -236,8 +236,10 @@ void ProfilingReporter::ConstructNodeNameIndexMap() {
 }
 
 uint32_t ProfilingReporter::GetBlockDim(const CNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  return 1;
+  auto kernel_mod = AnfAlgo::GetKernelMod(node);
+  auto ascend_kernel_mod = dynamic_cast<kernel::AscendKernelMod *>(kernel_mod);
+  MS_EXCEPTION_IF_NULL(ascend_kernel_mod);
+  return ascend_kernel_mod->block_dim();
 }
 
 void ProfilingReporter::ReportTask(const CNodePtr &node, const uint32_t stream_id, uint32_t task_id,

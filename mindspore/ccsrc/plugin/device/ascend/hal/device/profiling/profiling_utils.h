@@ -26,6 +26,7 @@
 #include "include/common/utils/contract.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_reporter.h"
 #include "toolchain/prof_api.h"
+#include "runtime/rt_model.h"
 
 namespace mindspore {
 namespace device {
@@ -138,6 +139,8 @@ class ProfilingUtils {
   static uint32_t GetBlockDim(const CNodePtr &node);
   static void RecordLaunchTaskBegin(const std::string &op_name, const bool is_op_name);
   static void InitLaunchApi(const uint64_t name_hash, MsprofApi *api);
+  static void RecordModelLoad(const rtModel_t rt_model_handle);
+  static void RecordModelExecute(const KernelGraphPtr kernel_graph);
   static void RegisterProfType();
   static void InitReportNode(const CNodePtr &cnode, bool init_begin_time = false);
 

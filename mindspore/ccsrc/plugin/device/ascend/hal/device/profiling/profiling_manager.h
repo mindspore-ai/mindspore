@@ -25,6 +25,7 @@
 #include "toolchain/prof_callback.h"
 #include "toolchain/prof_acl_api.h"
 #include "toolchain/slog.h"
+#include "runtime/base.h"
 #include "include/backend/debug/profiler/profiling.h"
 #include "acl/acl_prof.h"
 
@@ -88,7 +89,7 @@ class ProfilingManager {
 };
 
 Status ProfCommandHandle(ProfCommandHandleType type);
-aclError CtrlCallbackHandle(uint32_t rt_type, void *data, uint32_t /*len*/);
+rtError_t CtrlCallbackHandle(uint32_t rt_type, void *data, uint32_t /*len*/);
 Status ProfCtrlSwitchHandle(void *data);
 }  // namespace ascend
 }  // namespace device
