@@ -86,8 +86,7 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
     # First run without compile cache
     cmd_first = f"export GLOG_v=2; python " + file_name + " '" + cache_path + "' > " + log_file_name_first + " 2>&1"
     if use_ge:
-        # TODO export MS_DISABLE_REF_MODE=1;
-        cmd_first = f"export GLOG_v=2; export MS_ENABLE_GE=1; export MS_DISABLE_REF_MODE=1; python " + \
+        cmd_first = f"export GLOG_v=2; export MS_ENABLE_GE=1; python " + \
                     file_name + " '" + cache_path + "' > " + log_file_name_first + " 2>&1"
     subprocess.check_output(cmd_first, shell=True)
     assert os.path.exists(log_file_name_first)
@@ -109,8 +108,7 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
     # Second run with compile cache
     cmd_second = f"export GLOG_v=2; python " + file_name + " '" + cache_path + "' > " + log_file_name_second + " 2>&1"
     if use_ge:
-        # TODO export MS_DISABLE_REF_MODE=1;
-        cmd_second = f"export GLOG_v=2; export MS_ENABLE_GE=1; export MS_DISABLE_REF_MODE=1; python " + \
+        cmd_second = f"export GLOG_v=2; export MS_ENABLE_GE=1; python " + \
                      file_name + " '" + cache_path + "' > " + log_file_name_second + " 2>&1"
     subprocess.check_output(cmd_second, shell=True)
     assert os.path.exists(log_file_name_second)
@@ -136,6 +134,49 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
     os.remove(log_file_name_first)
     os.remove(log_file_name_second)
     shutil.rmtree(cache_path)
+
+
+def run_compile_cache_mp(file_name, cache_path, log_file_name_first, log_file_name_second):
+    # Clear compile cache folder and log files
+    if os.path.exists(cache_path):
+        shutil.rmtree(cache_path)
+    assert not os.path.exists(cache_path)
+
+    # First run without compile cache
+    cmd = "bash run_compile_cache_mp.sh {} {} {} {}".format(file_name, cache_path, log_file_name_first,
+                                                            utils.rank_table_path)
+    os.system(cmd)
+    check_cmd = "ps -ef | grep python | grep run_compile_cache_mp.py | grep -v grep"
+    # wait for net train finish
+    ret = utils.process_check(100, check_cmd)
+    assert ret
+    assert os.path.exists(cache_path)
+    log_fullname = log_file_name_first + "0"
+    assert os.path.exists(log_fullname)
+    with open(log_fullname, "r") as f_first:
+        data_first = f_first.read()
+    assert "Check the consistency of dependency files hash failed. Execute all the compilation actions." in data_first
+    assert "loss is" in data_first
+    for i in range(8):
+        os.remove(log_file_name_first + str(i))
+    cmd = "bash run_compile_cache_mp.sh {} {} {} {}".format(file_name, cache_path, log_file_name_second,
+                                                            utils.rank_table_path)
+    os.system(cmd)
+    ret = utils.process_check(100, check_cmd)
+    assert ret
+
+    log_fullname = log_file_name_second + "0"
+    assert os.path.exists(log_fullname)
+    with open(log_fullname, "r") as f_second:
+        data_second = f_second.read()
+    assert "Use the compilation cache and execute the backend actions only. Be aware of correctness risks." in \
+        data_second
+    assert "loss is" in data_second
+
+    # Clean files
+    shutil.rmtree(cache_path)
+    for i in range(8):
+        os.remove(log_file_name_second + str(i))
 
 
 def run_twice_with_different_networks(file_name_first, file_name_second, cache_path, log_file_name_first,
@@ -389,6 +430,8 @@ def test_compile_cache_run_two_cells_once():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_single
 def test_compile_cache_pipeline_parallel_and_recompute():
     """
@@ -396,40 +439,8 @@ def test_compile_cache_pipeline_parallel_and_recompute():
     Description: Test whether pipeline parallel and recompute can successfullty with compile cache.
     Expectation: success.
     """
-    cur_path = os.path.dirname(os.path.abspath(__file__))
-    model_path = "{}/../../../tests/models/official/cv".format(cur_path)
-    model_name = "resnet"
-    utils.copy_files(model_path, cur_path, model_name)
-    cur_model_path = os.path.join(cur_path, "resnet")
-    old_list = ["total_epochs=config.epoch_size", "config.epoch_size - config.pretrain_epoch_size"]
-    new_list = ["total_epochs=10", "10"]
-    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
-    old_list = ["from mindspore._checkparam import Validator"]
-    new_list = ["from mindspore import _checkparam as Validator"]
-    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "src/momentum.py"))
-    net_path = os.path.join(cur_model_path, "src/resnet.py")
-    cache_path = os.path.join(cur_model_path, "cache")
-
-    exec_insert_command("def _make_layer(self", "i\\        self.conv1.pipeline_stage = 0", net_path)
-    exec_insert_command("def _make_layer(self", "i\\        self.layer1.pipeline_stage = 0", net_path)
-    exec_insert_command("def _make_layer(self", "i\\        self.layer2.pipeline_stage = 0", net_path)
-    exec_insert_command("def _make_layer(self", "i\\        self.layer3.pipeline_stage = 1", net_path)
-    exec_insert_command("def _make_layer(self", "i\\        self.layer4.pipeline_stage = 1", net_path)
-    exec_insert_command("def _make_layer(self", "i\\        self.end_point.pipeline_stage = 1", net_path)
-    exec_insert_command("def _make_layer(self", "i\\        self.relu.recompute()", net_path)
-
-    exec_cp_command("run_resnet.py", "resnet/train.py")
-    dataset_path = os.path.join(utils.data_root, "cifar-10-batches-bin")
-    config_path = os.path.join(cur_model_path, "config", "resnet50_cifar10_config.yaml")
-
-    check_context = "Check the consistency of dependency files hash failed. Execute all the compilation actions."
-    loss_first = exec_model_and_check_result(cur_model_path, dataset_path, config_path,
-                                             cache_path, check_context)
-
-    check_context = "Use the compilation cache and execute the backend actions only. Be aware of correctness risks."
-    loss_second = exec_model_and_check_result(cur_model_path, dataset_path, config_path,
-                                              cache_path, check_context)
-    assert np.allclose(loss_first, loss_second, 0.1, 0.1)
+    run_compile_cache_mp("run_compile_cache_mp.py", "./pp_recompute", "pp_recompute_first",
+                         "pp_recompute_second")
 
 
 @pytest.mark.level0
