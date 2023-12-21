@@ -36,6 +36,7 @@ class CombineOptimizerFusion : public Pass {
   bool CheckFuncGraph(const FuncGraphPtr &graph);
   bool TransformOptimizerList(const std::vector<AnfNodePtr> &node_list,
                               std::vector<std::vector<AnfNodePtr>> *deal_list);
+  AnfNodePtr FindFirstMonadInput(const std::vector<AnfNodePtr> &optimizer_node_list);
 };
 }  // namespace opt
 }  // namespace mindspore
