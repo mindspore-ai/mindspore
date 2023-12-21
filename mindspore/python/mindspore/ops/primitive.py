@@ -160,7 +160,7 @@ class Primitive(Primitive_):
             >>> a = a.add_prim_attr("attr",1)
             >>> a = a.del_prim_attr("attr")
             >>> print(a.attrs)
-            {'input_names': ['x', 'y'], 'output_names' : ['output']}
+            {}
         """
         if name in self.__dict__ and name in self.attrs:
             del self.__dict__[name]
