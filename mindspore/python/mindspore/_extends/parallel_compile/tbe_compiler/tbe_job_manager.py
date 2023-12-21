@@ -19,10 +19,10 @@ import json
 import traceback
 from enum import Enum
 
-from .tbe_adapter import tbe_initialize, tbe_finalize, check_support, select_op_format, \
+from .tbe_adapter import tbe_initialize, get_auto_tune_support_op_list, tbe_finalize, check_support, select_op_format, \
     parallel_pre_compile_op, do_fuzz_build_tbe_op, before_build_process, build_single_pre_op, \
-    parallel_compile_fusion_op, get_finish_tasks, get_prebuild_output
-from .tbe_helper import check_job_json, get_compute_op_list
+    parallel_compile_fusion_op, rl_tune_single_op, rl_tune_fusion_op, ga_tune, get_finish_tasks, get_prebuild_output
+from .tbe_helper import check_job_json, get_compute_op_list, get_func_names
 from .tbe_job import TbeJob, JobStatus, JobType
 
 
@@ -38,6 +38,7 @@ class TbeJobManager:
             JobType.PRECOMPILE_JOB: self.pre_compile_handler,
             JobType.COMPILE_JOB: self.compile_handler,
             JobType.FUSION_COMPILE_JOB: self.compile_handler,
+            JobType.TUNE_JOB: self.tune_handler,
             JobType.QUERY_JOB: self.query_handler
         }
 
@@ -147,7 +148,7 @@ class TbeJobManager:
             job.error("Process Initialize Job failed, job json string:{}".format(job.json_string))
             return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
         if "GA" in self.auto_tiling_mode:
-            pass
+            self.auto_tune_op_list = get_auto_tune_support_op_list(job)
         self.tbe_initialize = True
         self.init_cache = job
         return self.add_to_finished_jobs(job, JobStatus.JOB_SUCCESS)
@@ -218,6 +219,50 @@ class TbeJobManager:
             return self.add_to_finished_jobs(job, JobStatus.JOB_SUCCESS)
         job.error("Process do fuzz build tbe op failed, job json string:{}".format(job.json_string))
         return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
+
+    def tune_handler(self, job: TbeJob):
+        """ Tune job handler """
+        before_build_process(job)
+        tune_mode = self._select_tune_mode(job)
+        if tune_mode == TuneMode.NO_TUNE:
+            return self.compile_handler(job)
+        compute_op_list = get_compute_op_list(job.content)
+        if len(compute_op_list) == 1:
+            return self.single_op_tune(job)
+        return self.fusion_op_tune(job)
+
+    def single_op_tune(self, job: TbeJob):
+        """Single operator tune"""
+        tune_mode = self._select_tune_mode(job)
+        if tune_mode == TuneMode.RL_TUNE:
+            res = rl_tune_single_op(job)
+            if not res:
+                job.error(
+                    "Tune Job failed, tune type {}, job json string:{}".format(tune_mode, job.json_string))
+                return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
+        else:
+            res = ga_tune(job)
+            if not res:
+                job.error("ga tune Job failed, job json string:{}".format(job.json_string))
+                return self.compile_handler(job)
+        if job.status == JobStatus.JOB_RUNNING:
+            return self.add_to_running_jobs(job)
+        return self.add_to_finished_jobs(job, JobStatus.JOB_SUCCESS)
+
+    def fusion_op_tune(self, job: TbeJob):
+        """Fusion operator tune"""
+        tune_mode = self._select_tune_mode(job)
+        if tune_mode == TuneMode.RL_TUNE:
+            res = rl_tune_fusion_op(job)
+        else:
+            res = ga_tune(job)
+        if not res:
+            job.error(
+                "Tune Job failed, tune type {}, job json string:{}".format(tune_mode, job.json_string))
+            return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
+        if job.status == JobStatus.JOB_RUNNING:
+            return self.add_to_running_jobs(job)
+        return self.add_to_finished_jobs(job, JobStatus.JOB_SUCCESS)
 
     def query_handler(self, query_job: TbeJob):
         """ Query job handler """
@@ -361,6 +406,28 @@ class TbeJobManager:
         if initialize_job.content["SocInfo"]["coreNum"].isdigit():
             self.core_num = int(initialize_job.content["SocInfo"]["coreNum"])
         self.op_bank_path = initialize_job.content["SocInfo"]["op_bank_path"]
+
+    def _select_tune_mode(self, job):
+        """
+        Select the corresponding tune mode according to op job content and job manager system info
+        :param job: tbe tune job
+        :return: NO_TUNE RL_TUNE or GA_TUNE
+        """
+        auto_tiling_mode = job.content["SocInfo"]["autoTilingMode"]
+        offline_tune = job.content["SocInfo"]["offlineTune"]
+        full_name = job.content["full_name"]
+        func_names = get_func_names(job.content)
+        if self.tune_op_list and full_name not in self.tune_op_list:
+            return TuneMode.NO_TUNE
+        if offline_tune:
+            return TuneMode.RL_TUNE
+        if TuneMode.GA_TUNE.value in auto_tiling_mode:
+            for func_name in func_names:
+                if func_name.lower() in self.auto_tune_op_list:
+                    return TuneMode.GA_TUNE
+        if TuneMode.RL_TUNE.value in auto_tiling_mode:
+            return TuneMode.RL_TUNE
+        return TuneMode.NO_TUNE
 
 
 class TuneMode(Enum):
