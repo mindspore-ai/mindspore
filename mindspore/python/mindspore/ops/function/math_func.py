@@ -2165,8 +2165,6 @@ def t(input):
          [2. 3.]
          [3. 4.]]
     """
-    if input.ndim > 2:
-        raise ValueError(f"For t(), the dimension of tensor should be less than 3, but got {input.ndim}.")
     if input.ndim == 2:
         return transpose_(input, (1, 0))
     return input
@@ -5880,10 +5878,6 @@ def outer(input, vec2):
         raise TypeError("the input input must be Tensor!")
     if not isinstance(vec2, (Tensor, Tensor_)):
         raise TypeError("the input vec2 must be Tensor!")
-    if len(input.shape) != 1:
-        raise ValueError("the input input must be a 1-D vector!")
-    if len(vec2.shape) != 1:
-        raise ValueError("the input vec2 must be a 1-D vector!")
     input = input.reshape(-1, 1)
     y = tensor_mul(input, vec2)
     return y
@@ -5923,10 +5917,6 @@ def mv(mat, vec):
         raise TypeError("The input mat must be Tensor.")
     if not isinstance(vec, (Tensor, Tensor_)):
         raise TypeError("The input vec must be Tensor.")
-    if len(mat.shape) != 2:
-        raise ValueError("The input mat must be 2-D Tensor.")
-    if len(vec.shape) != 1:
-        raise ValueError("The input vec must be 1-D Tensor.")
 
     length_vec = get_x_shape(vec.shape)
     vec = reshape_(vec, (length_vec[0], 1))
@@ -5981,10 +5971,6 @@ def addbmm(input, batch1, batch2, *, beta=1, alpha=1):
          [1285. 1377. 1469.]
          [1621. 1745. 1869.]]
     """
-    dim1 = batch1.ndim
-    dim2 = batch2.ndim
-    if dim1 != 3 or dim2 != 3:
-        raise ValueError(f"For 'addbmm', 'batch1' and 'batch2' must be 3D, but got {dim1} and {dim2} respectively.")
     if not isinstance(alpha, (int, float)):
         raise TypeError(f"For 'addbmm', parameter 'alpha' must be an int or float, but got {type(alpha)}.")
     if not isinstance(beta, (int, float)):
@@ -6092,8 +6078,6 @@ def addmv(input, mat, vec, *, beta=1, alpha=1):
         raise TypeError("For Addmv, inputs must be all tensors.")
     if dtype_(mat) != dtype_(vec):
         raise TypeError("For Addmv, the mat and vec should be the same dtype.")
-    _check_input_1d(vec.shape, "vec", "Addmv")
-    _check_input_2d(mat.shape, "mat", "Addmv")
     _check_input_dtype("input", input_dtype,
                        [mstype.float16, mstype.float32, mstype.float64,
                         mstype.int16, mstype.int32, mstype.int64], "Addmv")
@@ -6188,8 +6172,6 @@ def addr(x, vec1, vec2, *, beta=1, alpha=1):
         raise TypeError("For Addr, inputs must be all tensors.")
     if dtype_(vec1) != dtype_(vec2):
         raise TypeError("For Addr, the vec1 and vec2 should be the same dtype.")
-    _check_input_1d(vec1.shape, "vec1", "Addr")
-    _check_input_1d(vec2.shape, "vec2", "Addr")
     _check_input_dtype("x", input_dtype,
                        [mstype.float16, mstype.float32, mstype.float64,
                         mstype.int16, mstype.int32, mstype.int64], "Addr")
@@ -9241,18 +9223,6 @@ def _check_need_broadcast(shape1, shape2):
 
 
 @_primexpr
-def _check_input_1d(input_shape, param_name, func_name):
-    if len(input_shape) != 1:
-        raise ValueError(f"{func_name} {param_name} should be 1d, but got shape {input_shape}")
-
-
-@_primexpr
-def _check_input_2d(input_shape, param_name, func_name):
-    if len(input_shape) != 2:
-        raise ValueError(f"{func_name} {param_name} should be 2d, but got shape {input_shape}")
-
-
-@_primexpr
 def _expand(x, ndim):
     """Expand x to ndim from axis, which can be 0 or -1."""
     while rank_(x) < ndim:
@@ -9647,9 +9617,6 @@ def baddbmm(input, batch1, batch2, beta=1, alpha=1):
     bmmop = _get_cache_prim(P.BatchMatMul)(False, False)
     if not (isinstance(input, Tensor) and isinstance(batch1, Tensor) and isinstance(batch2, Tensor)):
         raise TypeError("For Baddbmm, inputs must be all tensors.")
-    if len(batch1.shape) != 3 or len(batch2.shape) != 3:
-        raise ValueError("For batch1 and batch2 must be 3-D tensors each containing the same number of matrices, "
-                         f"but got length of batch1:'{len(batch1.shape)}', length of batch2:'{len(batch2.shape)}'.")
     input_dtype = dtype_(input)
     if not (input_dtype == dtype_(batch1) and input_dtype == dtype_(batch2)):
         raise TypeError("For Baddbmm, the inputs should be the same dtype.")

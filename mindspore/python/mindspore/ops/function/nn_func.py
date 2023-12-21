@@ -4865,11 +4865,6 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
     if not x.shape == var.shape:
         if x.shape[:-1] == var.shape:
             var = var.unsqueeze(dim=-1)
-        # Heterosclerotic case
-        elif x.shape[:-1] == var.shape[:-1] and var.shape[-1] == 1:
-            pass
-        else:
-            raise ValueError(f"For 'gaussian_nll_loss', 'var' must be able to correctly broadcast to 'x' and 'target'.")
 
     maxima = maximum_(var, eps)
     logarithm = log_(maxima)
@@ -4881,12 +4876,6 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
     elif reduction == 'sum':
         loss = loss.sum()
     return loss
-
-
-@_primexpr
-def _check_hinge_embedding_loss(shape, shape2):
-    if shape2 != shape:
-        raise ValueError(f"For 'HingeEmbeddingLoss' the input tensor and the labels must have the same shape.")
 
 
 @_primexpr
@@ -4974,9 +4963,6 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
     inputs_dtype = inputs.dtype
     targets_dtype = targets.dtype
     _check_hinge_embedding_loss_type(inputs_dtype, targets_dtype, inputs, targets, margin, reduction)
-    _shape = inputs.shape
-    _t_shape = targets.shape
-    _check_hinge_embedding_loss(_shape, _t_shape)
 
     min_val = Tensor(0, inputs_dtype)
     pos_index = targets > 0
@@ -6248,9 +6234,6 @@ def glu(x, axis=-1):
         [[0.05744425 0.11973753]
          [0.33409387 0.41398472]]
     """
-    if not isinstance(x, Tensor) or x.size == 0:
-        raise TypeError("glu does not support scalars because halving size must be even")
-
     spilt = _get_cache_prim(P.Split)(axis=axis, output_num=2)
     x, y = spilt(x)
     y = sigmoid_(y)

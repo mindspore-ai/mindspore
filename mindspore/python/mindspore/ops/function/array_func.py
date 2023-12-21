@@ -7159,17 +7159,6 @@ def repeat_elements(x, rep, axis=0):
     return x_rep
 
 
-@_primexpr
-def _check_sequence_mask_input_len(input_shape, prim_name=None):
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if not input_shape:
-        raise ValueError(f"{msg_prefix} input_shape must be greater than 0, but got {input_shape}.")
-    # broadcast only supports 7d shape
-    shape_size = len(input_shape)
-    if shape_size >= 7:
-        raise ValueError(f"{msg_prefix} dimension of input_shape must be less than 7, but got {shape_size}d.")
-
-
 def sequence_mask(lengths, maxlen=None):
     """
     Returns a mask tensor representing the first N positions of each cell.
@@ -7223,7 +7212,6 @@ def sequence_mask(lengths, maxlen=None):
           [ True  True  True  True ]]]
     """
     const_utils.check_type_valid(ops.dtype(lengths), [mstype.int64, mstype.int32], 'lengths')
-    _check_sequence_mask_input_len(shape_(lengths), "sequence_mask")
 
     if maxlen is None:
         flatten_data = reshape_(lengths, (-1,))
