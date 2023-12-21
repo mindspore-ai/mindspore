@@ -22,39 +22,9 @@
 #include "kernel/oplib/opinfo.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
-#include "kernel/oplib/super_bar.h"
 #include "utils/file_utils.h"
 
 namespace mindspore::kernel {
-std::vector<std::string> SplitStrToVec(const std::string &input) {
-  static const std::map<std::string, std::string> kSpecFormat = {{kOpFormat_NCHW, kOpFormat_DEFAULT},
-                                                                 {kOpFormat_ND, kOpFormat_DEFAULT}};
-  if (input.empty()) {
-    MS_LOG(INFO) << "Input string is empty.";
-    return {};
-  }
-  // remove blank elem
-  std::string input_tmp = input;
-  (void)input_tmp.erase(remove(input_tmp.begin(), input_tmp.end(), ' '), input_tmp.end());
-  (void)input_tmp.append(",");
-  // split
-  const char sep = ',';
-  std::vector<std::string> result = {};
-  auto begin = 0U;
-  auto end = input_tmp.find(sep);
-  while (end != std::string::npos) {
-    auto format = input_tmp.substr(begin, end - begin);
-    auto find_iter = kSpecFormat.find(format);
-    if (find_iter != kSpecFormat.end()) {
-      format = find_iter->second;
-    }
-    (void)result.emplace_back(format);
-    begin = end + 1;
-    end = input_tmp.find(sep, begin);
-  }
-  return result;
-}
-
 bool OpLib::RegOp(const std::string &json_string, const std::string &impl_path) {
   try {
     auto op_json = nlohmann::json::parse(json_string);

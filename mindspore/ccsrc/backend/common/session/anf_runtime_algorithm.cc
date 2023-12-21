@@ -44,7 +44,6 @@
 #include "utils/trace_base.h"
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
-#include "kernel/oplib/super_bar.h"
 
 namespace mindspore::session {
 using abstract::AbstractTensor;
@@ -1360,41 +1359,13 @@ bool AnfRuntimeAlgorithm::IsFeatureMapInput(const AnfNodePtr &node, size_t input
 size_t AnfRuntimeAlgorithm::GetInputGraphIdxByKernelIdx(const mindspore::AnfNodePtr &anf_node,
                                                         size_t input_index_in_kernel) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  auto node_name = common::AnfAlgo::GetCNodeName(anf_node);
-  auto kernel_type = AnfAlgo::GetKernelType(anf_node);
-  if (kernel_type != TBE_KERNEL && kernel_type != ACL_KERNEL) {
-    return input_index_in_kernel;
-  }
-  auto orders = kernel::SuperBar::GetKernelIdxToGraphIdx(node_name);
-  if (!orders.has_value()) {
-    return input_index_in_kernel;
-  }
-  auto input_orders = orders.value();
-  auto find_iter = input_orders.find(input_index_in_kernel);
-  if (find_iter == input_orders.end()) {
-    MS_LOG(EXCEPTION) << "Get input order failed. input_idx: " << input_index_in_kernel << ", op_name: " << node_name;
-  }
-  return find_iter->second;
+  return input_index_in_kernel;
 }
 
 size_t AnfRuntimeAlgorithm::GetInputKernelIdxByGraphIdx(const mindspore::AnfNodePtr &anf_node,
                                                         size_t input_index_in_graph) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  auto node_name = common::AnfAlgo::GetCNodeName(anf_node);
-  auto kernel_type = AnfAlgo::GetKernelType(anf_node);
-  if (kernel_type != TBE_KERNEL && kernel_type != ACL_KERNEL) {
-    return input_index_in_graph;
-  }
-  auto orders = kernel::SuperBar::GetGraphIdxToKernelIdx(node_name);
-  if (!orders.has_value()) {
-    return input_index_in_graph;
-  }
-  auto input_orders = orders.value();
-  auto find_iter = input_orders.find(input_index_in_graph);
-  if (find_iter == input_orders.end()) {
-    MS_LOG(EXCEPTION) << "Get input order failed. input_idx: " << input_index_in_graph << ", op_name: " << node_name;
-  }
-  return find_iter->second;
+  return input_index_in_graph;
 }
 
 std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallSwitchKernelGraph(const CNodePtr &cnode) {
