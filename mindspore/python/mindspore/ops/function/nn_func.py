@@ -334,9 +334,6 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     if not isinstance(input_x, (Tensor, Tensor_)):
         raise TypeError("For avg_pool1d, the input input_x must be tensor")
 
-    if len(input_x.shape) != 3:
-        raise ValueError(f"For avg_pool1d, input must have 3 dim, but got {len(input_x.shape)}.")
-
     _check_avgpool_1d_type_and_int(kernel_size, stride, ceil_mode, count_include_pad)
     if isinstance(padding, int):
         check_non_negative_int(padding, 'padding', 'avg_pool1d')
@@ -493,9 +490,6 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     """
     if not isinstance(input_x, (Tensor, Tensor_)):
         raise TypeError("For avg_pool2d, the input input_x must be tensor")
-
-    if len(input_x.shape) != 4:
-        raise ValueError(f"For avg_pool2d, input must have 4 dim, but got {len(input_x.shape)}.")
 
     kernel_size = _check_avgpool_2d_kernel_size(kernel_size)
     stride = _check_avgpool_2d_stride(stride)
@@ -845,18 +839,6 @@ def adaptive_max_pool3d(input, output_size, return_indices=False):
     return output
 
 
-def check_shape(x_shape, indices_shape, func_name):
-    """
-    :param x_shape: the shape of x.
-    :param indices_shape: the shape of indices.
-    :param func_name: the name of function.
-    :return:
-    """
-    if x_shape != indices_shape:
-        raise ValueError(f"For {func_name}, the x shape and indices shape must be equal, but got input "
-                         f"shape {x_shape} and indices shape {indices_shape}.")
-
-
 def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=None):
     r"""
     Computes the inverse of `max_pool1d`.
@@ -917,11 +899,7 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         stride = kernel_size
 
     x_shape = shape_(x)
-    indices_shape = shape_(indices)
     x_dim = len(x_shape)
-    check_shape(x_shape, indices_shape, "max_unpool1d")
-    if x_dim not in (2, 3):
-        raise ValueError(f"For max_unpool1d, the x shape must have 2 or 3 dims, but got {x_dim}.")
 
     if output_size is None:
         output_size = ()
@@ -1040,11 +1018,7 @@ def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         stride = kernel_size
 
     x_shape = shape_(x)
-    indices_shape = shape_(indices)
     x_dim = len(x_shape)
-    check_shape(x_shape, indices_shape, "max_unpool2d")
-    if x_dim not in (3, 4):
-        raise ValueError(f"For max_unpool2d, the x shape must have 3 or 4 dims, but got {x_dim}.")
 
     if output_size is None:
         output_size = ()
@@ -1148,11 +1122,7 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         stride = kernel_size
 
     x_shape = shape_(x)
-    indices_shape = shape_(indices)
     x_dim = len(x_shape)
-    check_shape(x_shape, indices_shape, "max_unpool3d")
-    if x_dim not in (4, 5):
-        raise ValueError(f"For max_unpool3d, the x shape must have 4 or 5 dims, but got {x_dim}.")
 
     if output_size is None:
         output_size = ()
@@ -4400,20 +4370,6 @@ def check_input_dtype(param_name1, input_data1, param_name2, input_data2, cls_na
                         f'but got {param_name1} dtype:{input_data1.dtype}, {param_name2} dtype:{input_data2.dtype}.')
 
 
-def check_input_shape(param_name1, input_data1, param_name2, input_data2, cls_name):
-    """Check the shape of input1 and input2."""
-    if input_data1.shape != input_data2.shape:
-        raise ValueError(f'For {cls_name}, the {param_name1} shape should be equal to {param_name2} shape, '
-                         f'but got {param_name1} shape:{input_data1.shape}, {param_name2} shape:{input_data2.shape}.')
-
-
-def _check_type_and_shape_same(param_name1, input_data1, param_name2, input_data2, cls_name):
-    """check input1 and input2 type and shape same"""
-    check_input_dtype(param_name1, input_data1, param_name2, input_data2, cls_name)
-    check_input_shape(param_name1, input_data1, param_name2, input_data2, cls_name)
-    return 0
-
-
 def margin_ranking_loss(input1, input2, target, margin=0.0, reduction='mean'):
     r"""
     MarginRankingLoss creates a criterion that measures the loss.
@@ -4468,8 +4424,8 @@ def margin_ranking_loss(input1, input2, target, margin=0.0, reduction='mean'):
     _check_is_tensor('input1', input1, "margin_ranking_loss")
     _check_is_tensor('input2', input2, "margin_ranking_loss")
     _check_is_tensor('target', target, "margin_ranking_loss")
-    _check_type_and_shape_same('input1', input1, 'input2', input2, 'margin_ranking_loss')
-    _check_type_and_shape_same('target', target, 'input1', input1, 'margin_ranking_loss')
+    check_input_dtype('input1', input1, 'input2', input2, 'margin_ranking_loss')
+    check_input_dtype('target', target, 'input1', input1, 'margin_ranking_loss')
     x = maximum_(-target * (input1 - input2) + margin, 0)
     return _get_loss(x, reduction, "margin_ranking_loss")
 
@@ -4533,7 +4489,7 @@ def cosine_embedding_loss(input1, input2, target, margin=0.0, reduction="mean"):
     _check_is_tensor('input1', input1, "ops.cosine_embedding_loss")
     _check_is_tensor('input2', input2, "ops.cosine_embedding_loss")
     _check_is_tensor('target', target, "ops.cosine_embedding_loss")
-    _check_type_and_shape_same('input1', input1, 'input2', input2, 'ops.cosine_embedding_loss')
+    check_input_dtype('input1', input1, 'input2', input2, 'ops.cosine_embedding_loss')
     _check_reduced_shape_valid(ops.shape(input1), ops.shape(target), (1,),
                                "ops.cosine_embedding_loss", "input1", "target")
     if input1.dtype in (mstype.int32, mstype.int64):
@@ -6493,11 +6449,6 @@ def multilabel_soft_margin_loss(input, target, weight=None, reduction='mean'):
     cls_name = "multilabel_soft_margin_loss"
     _check_is_tensor('input', input, cls_name)
     _check_is_tensor('target', target, cls_name)
-    if input.ndim != 2 or target.ndim != 2:
-        raise ValueError(
-            "For 'MultiLabelSoftMarginLoss', the inputs must be 2d tensor, but got dims: "
-            f"input: {input.ndim}, target: {target.ndim} "
-        )
 
     input_shape = input.shape
     if ops.is_sequence_value_unknown(input_shape):
@@ -6748,7 +6699,6 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
           [51. 54.]
           [63. 66.]]]
     """
-    _shape_check(x.shape, [2, 3], "lp_pool1d")
     if isinstance(norm_type, (float, int)):
         norm_type = float(norm_type)
     else:
@@ -6841,7 +6791,6 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
            [ 999. 1008. 1017.]]]]
 
     """
-    _shape_check(x.shape, [4], "lp_pool2d")
     if isinstance(norm_type, (float, int)):
         norm_type = float(norm_type)
     else:
