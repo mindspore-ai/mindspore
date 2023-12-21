@@ -244,8 +244,11 @@ def convert_python_func_name_to_c(func_name: str) -> str:
     return ''.join(word.capitalize() for word in func_name.split('_'))
 
 
-def get_const_number_convert(arg_name, arg_type):
-    cpp_type = number_input_to_cpp_type(arg_type)
+def get_const_number_convert(arg_name, op_arg):
+    cpp_type = number_input_to_cpp_type(op_arg.arg_dtype)
+    print(arg_name, op_arg.is_type_id)
+    if op_arg.is_type_id:
+        return f"TypeId {arg_name}_imm = static_cast<TypeId>(GetValue<{cpp_type}>({arg_name}));\n"
     return f"auto {arg_name}_imm = GetValue<{cpp_type}>({arg_name});\n"
 
 

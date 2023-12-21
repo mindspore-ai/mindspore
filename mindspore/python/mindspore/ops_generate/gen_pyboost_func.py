@@ -617,7 +617,7 @@ class OpTemplateConverter:
         for op_arg, call_arg in zip(op_args, call_args):
             if number_input_to_cpp_type(op_arg.arg_dtype):
                 call_args_after_convert.append(call_arg + "_imm")
-                const_number_convert.append(get_const_number_convert(call_arg, op_arg.arg_dtype))
+                const_number_convert.append(get_const_number_convert(call_arg, op_arg))
             elif tuple_input_to_cpp_type(op_arg.arg_dtype):
                 call_args_after_convert.append(call_arg + "_vector")
                 value_tuple_convert.append(get_tuple_input_convert(call_arg, op_arg.arg_dtype))
