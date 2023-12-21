@@ -63,7 +63,7 @@ def check_log_file(infer_ret_path):
     return accuracy_data, fps_data
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend310_inference
 @pytest.mark.platform_arm_ascend310_inference
 @pytest.mark.env_onecard
