@@ -521,6 +521,12 @@ std::vector<AbstractActorPtr> AnyTypeGraphScheduler::Transform(const KernelGraph
                 [&actors](const AbstractActorPtr &actor) { actors.emplace_back(actor); });
   std::for_each(actor_set->copy_actors_.begin(), actor_set->copy_actors_.end(),
                 [&actors](const AbstractActorPtr &actor) { actors.emplace_back(actor); });
+  std::for_each(actor_set->memory_actors_.begin(), actor_set->memory_actors_.end(),
+                [&actors](const AbstractActorPtr &actor) { actors.emplace_back(actor); });
+  for (auto &swap_actors : actor_set->swap_actors_) {
+    std::for_each(swap_actors.begin(), swap_actors.end(),
+                  [&actors](const AbstractActorPtr &actor) { actors.emplace_back(actor); });
+  }
 
   const auto &any_type_kernel_actor_name = model_graph->ToString() + kAnyTypeKernelActorNameSuffix;
   auto base_actor = FetchActor(any_type_kernel_actor_name);
