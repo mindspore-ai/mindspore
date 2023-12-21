@@ -14,15 +14,25 @@
  * limitations under the License.
  */
 
+#include <cstdint>
+#include <functional>
+#include <map>
+#include <utility>
 #include <vector>
 #include <unordered_map>
+#include "base/base.h"
 #include "backend/common/graph_kernel/convert_input_and_attr.h"
+#include "backend/common/graph_kernel/core/graph_kernel_callback.h"
+#include "backend/common/graph_kernel/core/graph_kernel_utils.h"
+#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/optimizer/helper.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
+#include "ops/array_ops.h"
+#include "ops/op_def.h"
+#include "ops/op_utils.h"
+#include "ops/sequence_ops.h"
 #include "utils/anf_utils.h"
 #include "utils/check_convert_utils.h"
-#include "backend/common/graph_kernel/core/graph_kernel_callback.h"
-#include "ops/auto_generate/gen_ops_primitive.h"
-#include "ops/sequence_ops.h"
-#include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 
 namespace mindspore::graphkernel {
 namespace {
@@ -36,6 +46,20 @@ const std::set<std::string> &GetConvertInputAttrOps() {
     prim::kPrimLayerNormGrad->name(), prim::kPrimLogSoftmax->name(),  prim::kPrimLogSoftmaxGrad->name(),
   };
   return convert_input_attr_ops;
+}
+
+const std::map<std::string, std::vector<size_t>> &GetConvertKernelObjOps() {
+  static const std::map<std::string, std::vector<size_t>> convert_kernel_obj_ops = {
+    {prim::kPrimReshape->name(), {2}},
+    {prim::kPrimReduceSum->name(), {2}},           // axis is tuple(int)
+    {prim::kPrimReduceMax->name(), {2}},           // axis is tuple(int)
+    {prim::kPrimReduceMin->name(), {2}},           // axis is tuple(int)
+    {prim::kPrimReduceMean->name(), {2}},          // axis is tuple(int)
+    {prim::kPrimStridedSlice->name(), {2, 3, 4}},  // begin, end, strides
+    {prim::kPrimTile->name(), {2}},
+    {prim::kPrimTranspose->name(), {2}},
+  };
+  return convert_kernel_obj_ops;
 }
 
 ValuePtr EnumToFormat(const ValuePtr &value) {
@@ -106,9 +130,9 @@ ArgHandlerFunc GetOppArgHandlerFunc(const std::string &arg_handler) {
 }
 }  // namespace
 
-void ConvertInputToAttr::AddConstInputToAttr(const CNodePtr &cnode, const size_t input_index,
-                                             const std::string &arg_name, const std::string &arg_handler,
-                                             const PrimitivePtr &primitive) {
+void ConvertFrontEndToGraphKernel::AddConstInputToAttr(const CNodePtr &cnode, const size_t input_index,
+                                                       const std::string &arg_name, const std::string &arg_handler,
+                                                       const PrimitivePtr &primitive) {
   if (input_index >= cnode->size() - 1) {
     MS_LOG(EXCEPTION) << "The index of args in op_def `" << input_index
                       << "` should less than the inputs size minus one `" << cnode->size() - 1 << "`.";
@@ -152,7 +176,8 @@ void ConvertInputToAttr::AddConstInputToAttr(const CNodePtr &cnode, const size_t
   }
 }
 
-bool ConvertInputToAttr::Process(const CNodePtr &cnode, const ops::OpDefPtr &op_def, const PrimitivePtr &primitive) {
+bool ConvertFrontEndToGraphKernel::Process(const CNodePtr &cnode, const ops::OpDefPtr &op_def,
+                                           const PrimitivePtr &primitive) {
   const auto &op_def_args = op_def->args_;
   const auto &op_def_indexes = op_def->indexes_;
   bool changed = false;
@@ -189,21 +214,20 @@ bool ConvertInputToAttr::Process(const CNodePtr &cnode, const ops::OpDefPtr &op_
   return changed;
 }
 
-bool ConvertInputToAttr::Run(const FuncGraphPtr &func_graph) {
+bool ConvertFrontEndToGraphKernel::Run(const FuncGraphPtr &func_graph) {
   bool changed = false;
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(func_graph->get_return());
   auto todos = TopoSort(func_graph->get_return());
-  const auto &input_to_attr_ops = GetConvertInputAttrOps();
   for (auto &node : todos) {
+    if (!OpDefAdapter::NeedConvertInputAndAttr(node)) {
+      continue;
+    }
     auto primitive = GetCNodePrimitive(node);
     if (primitive == nullptr) {
       continue;
     }
     const auto &op_name = primitive->name();
-    if (input_to_attr_ops.count(op_name) == 0) {
-      continue;
-    }
     auto op_def = mindspore::ops::GetOpDef(op_name);
     if (op_def == nullptr) {
       MS_LOG(WARNING) << op_name << " not found in op def.";
@@ -219,8 +243,8 @@ bool ConvertInputToAttr::Run(const FuncGraphPtr &func_graph) {
   return changed;
 }
 
-void ConvertAttrToInput::AddAttrToInput(const CNodePtr &cnode, const std::string &arg_name,
-                                        const std::string &arg_handler, const PrimitivePtr &primitive) {
+void ConvertGraphKernelToFrontEnd::AddAttrToInput(const CNodePtr &cnode, const std::string &arg_name,
+                                                  const std::string &arg_handler, const PrimitivePtr &primitive) {
   auto value = primitive->GetAttr(arg_name);
   ValueNodePtr value_node;
   if (!arg_handler.empty()) {
@@ -242,7 +266,35 @@ void ConvertAttrToInput::AddAttrToInput(const CNodePtr &cnode, const std::string
   primitive->DelAttr(arg_name);
 }
 
-bool ConvertAttrToInput::Process(const AnfNodePtr &node) {
+bool ConvertGraphKernelToFrontEnd::ConvertInputsType(const CNodePtr &cnode, size_t idx, ops::OP_DTYPE fe_arg_type) {
+  // Only convert ValueNode(tensor with dtype int64_t) to ValueNode(Tuple of int64_t) now.
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto input = cnode->input(idx);
+  MS_EXCEPTION_IF_NULL(input);
+  if (!input->isa<ValueNode>()) {
+    return false;
+  }
+
+  auto origin_type = AnfAlgo::GetAbstractObjectType(input->abstract());
+  if (origin_type != kObjectTypeTensorType || fe_arg_type != ops::DT_TUPLE_INT) {
+    return false;
+  }
+
+  auto value_opt = ops::GetArrayValue<int64_t>(input->cast<ValueNodePtr>()->value());
+  if (!value_opt.has_value()) {
+    return false;
+  }
+
+  auto value_vec = value_opt.value().ToVector();
+  auto func_graph = cnode->func_graph();
+  auto new_input = opt::CreateValueNodeWithKernelInfo(func_graph, MakeValue<std::vector<int64_t>>(value_vec));
+  MS_LOG(DEBUG) << "Change [" << idx << "] input from " << input->DebugString() << " to " << new_input->DebugString()
+                << " for " << cnode->fullname_with_scope();
+  cnode->set_input(idx, new_input);
+  return true;
+}
+
+bool ConvertGraphKernelToFrontEnd::Process(const AnfNodePtr &node) {
   auto primitive = GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(primitive);
   const auto &op_name = primitive->name();
@@ -253,6 +305,8 @@ bool ConvertAttrToInput::Process(const AnfNodePtr &node) {
   }
   const auto &op_def_args = op_def->args_;
   bool changed = false;
+
+  // 1. Convert attr to input.
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto ori_input_size = cnode->size() - 1;
@@ -264,9 +318,21 @@ bool ConvertAttrToInput::Process(const AnfNodePtr &node) {
                         << " must have as_init_arg_ when convert attr to input.";
     }
     MS_LOG(DEBUG) << cnode->DebugString() << " convert attr [" << iter->arg_name_ << "] to input.";
-    ConvertAttrToInput::AddAttrToInput(cnode, iter->arg_name_, iter->arg_handler_, primitive);
+    ConvertGraphKernelToFrontEnd::AddAttrToInput(cnode, iter->arg_name_, iter->arg_handler_, primitive);
     changed = true;
   }
+
+  // 2. Convert inputs type.
+  auto obj_map_iter = GetConvertKernelObjOps().find(op_name);
+  if (obj_map_iter != GetConvertKernelObjOps().end()) {
+    auto indices = obj_map_iter->second;
+    for (auto idx : indices) {
+      if (ConvertGraphKernelToFrontEnd::ConvertInputsType(cnode, idx, op_def_args[idx - 1].arg_dtype_)) {
+        changed = true;
+      }
+    }
+  }
+
   if (changed) {
     auto cb = Callback::Instance();
     MS_EXCEPTION_IF_NULL(cb);
@@ -275,14 +341,14 @@ bool ConvertAttrToInput::Process(const AnfNodePtr &node) {
   return changed;
 }
 
-bool ConvertAttrToInput::Run(const FuncGraphPtr &func_graph) {
+bool ConvertGraphKernelToFrontEnd::Run(const FuncGraphPtr &func_graph) {
   bool changed = false;
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(func_graph->get_return());
   auto todos = TopoSort(func_graph->get_return());
   for (auto &node : todos) {
-    if (NeedConvertInputAndAttr(node)) {
-      changed = ConvertAttrToInput::Process(node) || changed;
+    if (OpDefAdapter::NeedConvertGK2FE(node)) {
+      changed = ConvertGraphKernelToFrontEnd::Process(node) || changed;
     }
   }
   if (changed) {
@@ -292,7 +358,30 @@ bool ConvertAttrToInput::Run(const FuncGraphPtr &func_graph) {
   return changed;
 }
 
-bool NeedConvertInputAndAttr(const AnfNodePtr &node) {
+bool OpDefAdapter::NeedConvertInputAndAttr(const AnfNodePtr &node) {
   return node->isa<CNode>() && GetConvertInputAttrOps().count(AnfUtils::GetCNodeName(node)) != 0;
+}
+
+bool OpDefAdapter::NeedConvertGK2FE(const AnfNodePtr &node) {
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    return false;
+  }
+  auto op_name = AnfUtils::GetCNodeName(node);
+  if (GetConvertInputAttrOps().count(op_name) > 0) {
+    return true;
+  }
+  auto obj_map_iter = GetConvertKernelObjOps().find(op_name);
+  if (obj_map_iter == GetConvertKernelObjOps().end()) {
+    return false;
+  }
+  auto &index = obj_map_iter->second;
+  // if the input type is tensor, it need to convert to the type (like tuple) that match OpDef.
+  for (auto idx : index) {
+    if (idx < cnode->size() && cnode->input(idx)->abstract()->GetShape()->isa<abstract::TensorShape>()) {
+      return true;
+    }
+  }
+  return false;
 }
 }  // namespace mindspore::graphkernel
