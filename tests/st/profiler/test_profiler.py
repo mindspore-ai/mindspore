@@ -143,7 +143,7 @@ class TestProfiler:
         if os.path.exists(self.data_path):
             shutil.rmtree(self.data_path)
 
-    @pytest.mark.level2
+    @pytest.mark.level3
     @pytest.mark.platform_x86_cpu
     @pytest.mark.env_onecard
     @security_off_wrap

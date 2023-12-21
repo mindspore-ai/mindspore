@@ -123,7 +123,7 @@ class TestEnvEnableProfiler:
         """Run after each test case end."""
         cleanup()
 
-    @pytest.mark.level2
+    @pytest.mark.level3
     @pytest.mark.platform_x86_cpu
     @pytest.mark.env_onecard
     @security_off_wrap

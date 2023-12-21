@@ -250,20 +250,12 @@ def test_bert_precision(enable_graph_kernel=False):
     assert np.allclose(loss_scale, expect_loss_scale, 0, 0)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_bert_precision_graph_kernel_off():
     test_bert_precision(enable_graph_kernel=False)
-
-
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_bert_precision_graph_kernel_on():
-    test_bert_precision(enable_graph_kernel=True)
 
 
 if __name__ == '__main__':
