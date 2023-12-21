@@ -117,6 +117,23 @@ bool MatrixSetDiagV3CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelT
     MS_LOG(EXCEPTION) << "For MatrixSetDiagV3, k[0] can not be larger than k[1] ,received " << k_lower_
                       << " is larger than " << k_upper_;
   }
+  int64_t inner_cols_ = static_cast<int64_t>(input_columns_);
+  int64_t inner_rows_ = static_cast<int64_t>(input_rows_);
+  int64_t lower_ = static_cast<int64_t>(k_lower_);
+  int64_t upper_ = static_cast<int64_t>(k_upper_);
+  if (lower_ <= -inner_rows_ || lower_ >= inner_cols_) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the dimension of diag_region's lower_diag_index is invalid, which must be between "
+                  << -inner_rows_ << " and " << inner_cols_;
+    return false;
+  }
+  if (upper_ <= -inner_rows_ || upper_ >= inner_cols_) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the dimension of diag_region's upper_diag_index is invalid, which must be between "
+                  << -inner_rows_ << " and " << inner_cols_;
+    return false;
+  }
+
   max_diag_len_ = std::min(static_cast<int64_t>(input_rows_) + std::min(k_upper_, ZERO),
                            static_cast<int64_t>(input_columns_) + std::min(-k_lower_, ZERO));
 
