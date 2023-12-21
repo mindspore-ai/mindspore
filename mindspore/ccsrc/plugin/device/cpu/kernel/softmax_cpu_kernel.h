@@ -52,6 +52,7 @@ class SoftmaxCpuKernelMod : public NativeCpuKernelMod {
   int32_t input_dims_{0};
   int32_t channel_{0};
   bool last_axis_{false};
+  bool is_null_input_{false};
   std::vector<int32_t> input_shape_;
   size_t output_elements_{0};
   TypeId dtype_{kTypeUnknown};
