@@ -23,13 +23,13 @@ floor_div:
         input (Union[Tensor, Number, bool]): The first input is a number or
             a bool or a tensor whose data type is number or bool.
         other (Union[Tensor, Number, bool]): The second input is a number or
-            a bool when the first input is a tensor, or it can be a tensor whose data type is number or bool.
+            a bool or a tensor whose data type is number or bool.
     Returns:
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If neither `input` nor `other` is a Tensor.
+        TypeError: If `input` nor `other` is a Tensor, number.Number or bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

@@ -18,15 +18,14 @@ equal:
     Args:
         input (Union[Tensor, Number]): The first input is a number or
             a tensor whose data type is number.
-        other (Union[Tensor, Number]): The second input is a number when the first input is a tensor.
-            The data type is the same as the first input. If the first input is a number,
-            the second input should be a tensor.
+        other (Union[Tensor, Number]): The second input is a number or
+            a tensor whose data type is number.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
 
     Raises:
-        TypeError: If neither `input` nor `other` is a Tensor.
+        TypeError: If neither `input` nor `other` is a Tensor or number.Number.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
