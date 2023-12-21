@@ -16,6 +16,7 @@
 import os
 import shutil
 import tempfile
+import time
 
 import numpy as np
 import pytest
@@ -107,6 +108,7 @@ class TestSummaryOps:
         model = Model(net, loss_fn=loss, optimizer=optim, metrics={'loss': Loss()})
         model.train(1, ds_train, dataset_sink_mode=False)
 
+        time.sleep(0.5)
         summary_data = _get_summary_tensor_data()
         image_data = summary_data.get('x[:Image]').asnumpy()
         tensor_data = summary_data.get('x[:Tensor]').asnumpy()

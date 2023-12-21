@@ -161,6 +161,14 @@ AbstractBasePtr MindIREngine::InferPrimitiveShape(const PrimitivePtr &prim,
   MS_EXCEPTION_IF_NULL(prim);
   try {
     MS_LOG_TRY_CATCH_SCOPE;
+    // For Lite, the op is with old format, it will fail in new infer function, so skip it.
+#ifndef BUILD_LITE
+    auto abstract_optional = abstract::InferAbstractByFuncImpl(prim, args_abs_list);
+    if (abstract_optional.has_value()) {
+      return abstract_optional.value();
+    }
+#endif
+
     auto found = abstract::GetPrimitiveInferImpl(prim);
     if (found.has_value()) {
       auto infer = found.value();
@@ -168,6 +176,7 @@ AbstractBasePtr MindIREngine::InferPrimitiveShape(const PrimitivePtr &prim,
         return infer.InferShapeAndType(nullptr, prim, args_abs_list);
       }
     }
+
     if (raise_exception_) {
       MS_LOG(INTERNAL_EXCEPTION) << "Get infer shape function failed, primitive name:" << prim->name()
                                  << " primitive type:" << prim->type_name()

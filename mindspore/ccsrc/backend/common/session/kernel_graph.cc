@@ -18,6 +18,7 @@
 #include <exception>
 #include <queue>
 #include <set>
+#include "abstract/ops/primitive_infer_map.h"
 #include "backend/common/session/exec_order_builder.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/backend/kernel_info.h"
@@ -1487,36 +1488,14 @@ void KernelGraph::InferType() {
     std::vector<abstract::AbstractBasePtr> abstracts = FetchInputAbstracts(cnode);
 
     // Fetch infer function.
-    std::optional<abstract::StandardPrimitiveImplReg> eval_impl;
     const auto &primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
     MS_EXCEPTION_IF_NULL(primitive);
-
-    auto op_def = mindspore::ops::GetOpDef(primitive->name());
-    if (op_def) {
-      (void)op_def->func_impl_.CheckValidation(primitive, abstracts);
-      auto shape = op_def->func_impl_.InferShape(primitive, abstracts);
-      auto type = op_def->func_impl_.InferType(primitive, abstracts);
-      auto abstract = mindspore::abstract::MakeAbstract(shape, type);
-      cnode->set_abstract(abstract);
-      MS_LOG(INFO) << "Set abstract:" << abstract->ToString() << " for node:" << cnode->DebugString();
-      continue;
-    }
-
-    auto find = abstract::GetPrimitiveInferImpl(primitive);
-    if (find.has_value()) {
-      eval_impl = find.value();
-    }
-    if (!eval_impl.has_value()) {
-      MS_LOG(EXCEPTION) << "Failed to get eval impl for primitive:" << primitive->ToString()
-                        << " in node:" << cnode->fullname_with_scope();
-    }
-
-    // Infer shape and type for cnode.
-    auto abstract = eval_impl->InferShapeAndType(nullptr, primitive, abstracts);
-    if (abstract == nullptr) {
+    auto abstract_opt = abstract::TryInferAbstract(primitive, abstracts);
+    if (!abstract_opt.has_value()) {
       MS_LOG(EXCEPTION) << "Failed to infer for primitive:" << primitive->ToString()
                         << " in node:" << cnode->fullname_with_scope();
     }
+    auto abstract = abstract_opt.value();
     MS_LOG(INFO) << "Set abstract:" << abstract->ToString() << " for node:" << cnode->DebugString();
     cnode->set_abstract(abstract);
   }
