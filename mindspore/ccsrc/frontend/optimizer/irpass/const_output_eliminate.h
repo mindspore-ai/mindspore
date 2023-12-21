@@ -30,10 +30,6 @@ namespace mindspore::opt::irpass {
 class ConstOutputEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    auto enable = common::GetEnv("MS_DEV_GRAPH_CONSTANT_OPT") == "1";
-    if (!enable) {
-      return nullptr;
-    }
     auto flag = IsEliminate(node);
     if (!flag) {
       return nullptr;
