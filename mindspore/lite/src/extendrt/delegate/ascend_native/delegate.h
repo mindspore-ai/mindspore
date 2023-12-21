@@ -39,7 +39,6 @@ class AscendNativeDelegate : public ExtendDelegate {
 
   bool IsDelegateNode(const std::shared_ptr<AnfNode> &node) override;
 
-  std::shared_ptr<kernel::BaseKernel> CreateKernel(const std::shared_ptr<AnfNode> &node) override;
   std::shared_ptr<kernel::BaseKernel> CreateKernel(const kernel::KernelSpec &spec,
                                                    const std::vector<InferTensor *> &inputs,
                                                    const std::vector<InferTensor *> &outputs,
@@ -48,6 +47,8 @@ class AscendNativeDelegate : public ExtendDelegate {
   void set_ascend_native_ctx(std::shared_ptr<kernel::InferContext> ascend_native_ctx) {
     this->ascend_native_ctx_ = ascend_native_ctx;
   }
+
+  static bool init_delegate_;
 
  private:
   void CreateInputKernelTensors(const CNodePtr &cnode, std::vector<kernel::InferTensor *> *input_tensors,
@@ -59,8 +60,11 @@ class AscendNativeDelegate : public ExtendDelegate {
   std::vector<KernelWithIndexAndTensor> kernel_list_;
   std::shared_ptr<kernel::InferContext> ascend_native_ctx_ = nullptr;
   void DrawGraph(const std::string &file_name, const std::shared_ptr<FuncGraph> &graph);
-  void CopyTensors(InferTensor *t_src, InferTensor *t_dst, const void *stream) const;
+  void CopyTensors(InferTensor *t_src, InferTensor *t_dst, const void *stream, const void *acl_ctx) const;
+  void Init();
   std::shared_ptr<SubGraphHelper> helper_;
+  mutable void *stream_;
+  mutable void *acl_ctx_;
 };
 
 }  // namespace mindspore

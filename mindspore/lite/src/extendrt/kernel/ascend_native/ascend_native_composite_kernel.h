@@ -24,6 +24,7 @@
 #include <vector>
 #include <unordered_map>
 #include "infer/context.h"
+#include "extendrt/delegate/type.h"
 
 namespace mindspore::kernel {
 class AscendNativeCompositeKernel : public AscendNativeBaseKernel {
@@ -31,8 +32,15 @@ class AscendNativeCompositeKernel : public AscendNativeBaseKernel {
   // AscendNativeCompositeKernel = delete;
 
   AscendNativeCompositeKernel(const std::vector<InferTensor *> &inputs, const std::vector<InferTensor *> &outputs,
-                              InferPrimitive prim, const InferContext *ctx, const void *stream, std::string name)
-      : AscendNativeBaseKernel(inputs, outputs, prim, ctx, stream, name) {}
+                              InferPrimitive prim, const InferContext *ctx, const void *stream, std::string name,
+                              const void *acl_ctx)
+      : AscendNativeBaseKernel(inputs, outputs, prim, ctx, stream, name, acl_ctx) {}
+  ~AscendNativeCompositeKernel() {
+    ascend_native::DestroyStream(const_cast<void *>(stream_), const_cast<void *>(acl_ctx_));
+    stream_ = nullptr;
+    ascend_native::DestroyCtx(const_cast<void *>(acl_ctx_));
+    acl_ctx_ = nullptr;
+  }
 
   int Prepare() override;
   int Run() override;

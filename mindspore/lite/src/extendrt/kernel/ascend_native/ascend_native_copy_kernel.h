@@ -21,16 +21,21 @@
 #include <vector>
 #include <memory>
 #include "extendrt/delegate/ascend_native/ascend_native_base_kernel.h"
-#include "extendrt/delegate/ascend_native/ascend_native_impl/utils.h"
 #include "extendrt/delegate/ops/copy.h"
 
 namespace mindspore::kernel {
 class AscendNativeCopyKernel : public AscendNativeBaseKernel {
  public:
   AscendNativeCopyKernel(const std::vector<InferTensor *> &inputs, const std::vector<InferTensor *> &outputs,
-                         InferPrimitive prim, const InferContext *ctx, const void *stream, std::string name)
-      : AscendNativeBaseKernel(inputs, outputs, prim, ctx, stream, name) {}
-
+                         InferPrimitive prim, const InferContext *ctx, const void *stream, std::string name,
+                         const void *acl_ctx_)
+      : AscendNativeBaseKernel(inputs, outputs, prim, ctx, stream, name, acl_ctx_) {}
+  ~AscendNativeCopyKernel() {
+    ascend_native::DestroyStream(const_cast<void *>(stream_), const_cast<void *>(acl_ctx_));
+    stream_ = nullptr;
+    ascend_native::DestroyCtx(const_cast<void *>(acl_ctx_));
+    acl_ctx_ = nullptr;
+  }
   int InferShape() override;
 
   int Prepare() override;

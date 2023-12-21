@@ -17,6 +17,7 @@
 #include "extendrt/kernel/ascend_native/ascend_native_copy_kernel.h"
 #include <algorithm>
 #include "extendrt/delegate/ascend_native/ascend_native_kernel_registry.h"
+#include "extendrt/delegate/ascend_native/ascend_native_impl/vector_core/copy_cast.h"
 #include "extendrt/delegate/ascend_native/ascend_native_impl/utils.h"
 #include "extendrt/delegate/ops/copy.h"
 
@@ -33,11 +34,7 @@ int AscendNativeCopyKernel::InferShape() {
       out_tensors_[0]->set_data_type(data_type);
     }
   } else if (copy_type_ == ops::Copy::CopyFormatType::DEVICE_HOST) {
-    if (is_float) {
-      out_tensors_[0]->set_data_type(kNumberTypeFloat32);
-    } else {
-      out_tensors_[0]->set_data_type(data_type);
-    }
+    out_tensors_[0]->set_data_type(data_type);
   }
   return lite::RET_OK;
 }
@@ -58,7 +55,7 @@ int AscendNativeCopyKernel::PreProcess() {
   switch (copy_type_) {
     case ops::Copy::CopyFormatType::HOST_DEVICE: {
       if (out_tensors_[0]->device_data() == nullptr) {
-        auto device_data = ascend_native::MallocDevice(out_tensors_[0]->Size(), const_cast<void *>(stream_));
+        auto device_data = ascend_native::MallocDevice(out_tensors_[0]->Size(), const_cast<void *>(acl_ctx_));
         if (device_data == nullptr) {
           MS_LOG(ERROR) << "fail to allocate " << out_tensors_[0]->Size() << "Bytes for device";
           return lite::RET_NULL_PTR;
@@ -88,19 +85,19 @@ int AscendNativeCopyKernel::PreProcess() {
   }
   return lite::RET_OK;
 }
-
-void PrintTensor(InferTensor *tensor, int max_len, void *stream) {
+// print device tensor
+void PrintDeviceTensor(InferTensor *tensor, int max_len, void *stream, void *ctx) {
   int elem = std::min(static_cast<int>(tensor->ElementsNum()), max_len);
-  std::cout << "device tensor " << tensor->tensor_name() << " data:";
+  std::cout << "device tensor " << tensor->tensor_name() << "elem " << elem << std::endl;
   switch (tensor->data_type()) {
     case kNumberTypeFloat16:
-      ascend_native::PrintFp16(tensor->device_data(), elem, stream);
+      ascend_native::PrintFp16(tensor->device_data(), elem, stream, ctx);
       break;
     case kNumberTypeFloat32:
-      ascend_native::PrintFp32(tensor->device_data(), elem, stream);
+      ascend_native::PrintFp32(tensor->device_data(), elem, stream, ctx);
       break;
     case kNumberTypeInt32:
-      ascend_native::PrintInt32(tensor->device_data(), elem, stream);
+      ascend_native::PrintInt32(tensor->device_data(), elem, stream, ctx);
       break;
     default:
       std::cout << "not supported type " << tensor->data_type() << std::endl;
@@ -108,10 +105,15 @@ void PrintTensor(InferTensor *tensor, int max_len, void *stream) {
   std::cout << std::endl;
 }
 
-void PrintTensor(InferTensor *tensor, int max_len) {
+// print host tensor
+void PrintHostTensor(InferTensor *tensor, int max_len, void *stream, void *ctx) {
   int elem = std::min(static_cast<int>(tensor->ElementsNum()), max_len);
-  std::cout << "host tensor " << tensor->tensor_name() << " data:";
+  std::cout << "host tensor " << tensor->tensor_name() << "elem" << elem << std::endl;
   switch (tensor->data_type()) {
+    case kNumberTypeFloat16: {
+      ascend_native::PrintFp16Host(tensor->data(), elem, stream, ctx);
+      break;
+    }
     case kNumberTypeFloat32: {
       auto ptr = static_cast<float *>(tensor->data());
       for (int i = 0; i < elem; i++) {
@@ -150,19 +152,22 @@ int AscendNativeCopyKernel::Run() {
       bool t_is_float =
         (in_tensors_[0]->data_type() == kNumberTypeFloat || in_tensors_[0]->data_type() == kNumberTypeFloat32);
       if (t_is_float) {
-        ascend_native::CopyHostFp32ToDeviceFp16(in_tensors_[0]->data(), &dst, elem, const_cast<void *>(stream_));
+        ascend_native::CopyHostFp32ToDeviceFp16(in_tensors_[0]->data(), &dst, elem, const_cast<void *>(stream_),
+                                                const_cast<void *>(acl_ctx_));
       } else {
         int elem_size = mindspore::lite::DataTypeSize(in_tensors_[0]->data_type());
         switch (elem_size) {
           case Num4:
-            ascend_native::CopyHostFp32ToDeviceFp32(in_tensors_[0]->data(), &dst, elem, const_cast<void *>(stream_));
+            ascend_native::CopyHostFp32ToDeviceFp32(in_tensors_[0]->data(), &dst, elem, const_cast<void *>(stream_),
+                                                    const_cast<void *>(acl_ctx_));
             break;
           case Num2:
-            ascend_native::CopyHostFp16ToDeviceFp16(in_tensors_[0]->data(), &dst, elem, const_cast<void *>(stream_));
+            ascend_native::CopyHostFp16ToDeviceFp16(in_tensors_[0]->data(), &dst, elem, const_cast<void *>(stream_),
+                                                    const_cast<void *>(acl_ctx_));
             break;
           case Num1:
-            ascend_native::CopyHostFp16ToDeviceFp16(in_tensors_[0]->data(), &dst, elem / 2,
-                                                    const_cast<void *>(stream_));
+            ascend_native::CopyHostFp16ToDeviceFp16(in_tensors_[0]->data(), &dst, elem / 2, const_cast<void *>(stream_),
+                                                    const_cast<void *>(acl_ctx_));
             break;
           default:
             MS_LOG(ERROR) << "no supported size " << elem_size;
@@ -176,13 +181,17 @@ int AscendNativeCopyKernel::Run() {
         MS_LOG(ERROR) << "no device data to tensor " << in_tensors_[0]->tensor_name();
         return lite::RET_ERROR;
       }
-      out_tensors_[0]->set_data_type(kNumberTypeFloat32);
-      if (elem * sizeof(float) > out_tensors_[0]->Size()) {
-        MS_LOG(ERROR) << "wrong output size";
-        return lite::RET_ERROR;
+      int elem_size = mindspore::lite::DataTypeSize(out_tensors_[0]->data_type());
+      switch (elem_size) {
+        case Num4:
+          ascend_native::CopyDeviceFp16ToHostFp32(in_tensors_[0]->device_data(), out_tensors_[0]->data(), elem,
+                                                  const_cast<void *>(stream_), const_cast<void *>(acl_ctx_));
+          break;
+        case Num2:
+          ascend_native::CopyDeviceFp16ToHostFp16(in_tensors_[0]->device_data(), out_tensors_[0]->data(), elem,
+                                                  const_cast<void *>(stream_), const_cast<void *>(acl_ctx_));
+          break;
       }
-      ascend_native::CopyDeviceFp16ToHostFp32(in_tensors_[0]->device_data(), out_tensors_[0]->data(), elem,
-                                              const_cast<void *>(stream_));
       break;
     }
     case ops::Copy::CopyFormatType::NONE: {
@@ -210,10 +219,6 @@ int AscendNativeCopyKernel::PostProcess() {
         MS_LOG(ERROR) << "less than zero reference count";
         return lite::RET_ERROR;
       }
-      if (ref == 0) {
-        ascend_native::FreeDevice(in_tensors_[0]->device_data(), const_cast<void *>(stream_));
-        in_tensors_[0]->set_device_data(nullptr);
-      }
       break;
     }
     case ops::Copy::CopyFormatType::NONE: {
@@ -229,5 +234,6 @@ int AscendNativeCopyKernel::PostProcess() {
 }
 
 int AscendNativeCopyKernel::ReSize() { return lite::RET_OK; }
+
 REGISTER_ASCEND_NATIVE_CREATOR(ops::kNameCopy, AscendNativeCopyKernel)
 }  // namespace mindspore::kernel

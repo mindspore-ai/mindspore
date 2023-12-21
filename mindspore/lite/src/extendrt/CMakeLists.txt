@@ -93,16 +93,8 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         )
         if(MSLITE_ASCEND_TARGET)
             set(ASCEND_NATIVE_PLUGIN
-                ${CMAKE_CURRENT_SOURCE_DIR}/session/ascend_native_session.cc
                 ${CMAKE_CURRENT_SOURCE_DIR}/kernel/ascend_native/ascend_native_composite_kernel.cc
                 ${CMAKE_CURRENT_SOURCE_DIR}/kernel/ascend_native/ascend_native_copy_kernel.cc
-                ${CMAKE_CURRENT_SOURCE_DIR}/delegate/ascend_native/ascend_native_registration_factory.cc
-                ${CMAKE_CURRENT_SOURCE_DIR}/delegate/ascend_native/ascend_native_add_kernel.cc
-                ${CMAKE_CURRENT_SOURCE_DIR}/delegate/ascend_native/ascend_native_matmul_kernel.cc
-                ${CMAKE_CURRENT_SOURCE_DIR}/delegate/ascend_native/ascend_native_layernorm_kernel.cc
-                ${CMAKE_CURRENT_SOURCE_DIR}/delegate/ascend_native/ascend_native_gather_kernel.cc
-                ${CMAKE_CURRENT_SOURCE_DIR}/delegate/ascend_native/ascend_native_encoder_kernel.cc
-                ${CCSRC_DIR}/plugin/device/ascend/hal/hccl_adapter/hccl_adapter.cc
                 ${CCSRC_DIR}/plugin/device/ascend/hal/hccl_adapter/converter.cc
                 ${CCSRC_DIR}/plugin/device/ascend/hal/hccl_adapter/all_to_all_v_calc_param.cc
                 ${CCSRC_DIR}/utils/config_manager.cc
@@ -111,14 +103,15 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
             )
                 add_library(ascend_native_plugin SHARED ${ASCEND_NATIVE_PLUGIN})
                 find_library(ge_graph libgraph.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-                target_link_libraries(ascend_native_plugin ${ge_graph})
+                target_link_libraries(ascend_native_plugin PRIVATE ${ge_graph} acl_cblas)
                 target_include_directories(ascend_native_plugin PRIVATE ${CMAKE_BINARY_DIR}/proto/ge)
                 add_subdirectory(delegate/ascend_native)
-                if(TARGET ascend_native_kernels_impl)
-                    set(ASCEND_NATIVE_KERNELS_IMPL ascend_native_kernels_impl)
-                endif()
-                target_link_libraries(ascend_native_plugin ${ASCEND_NATIVE_KERNELS_IMPL} ascend_native_mid)
+                target_link_libraries(ascend_native_plugin PRIVATE
+                    ascend_native_mix ascend_native_vector ascend_native_ai
+                )
+                target_link_libraries(ascend_native_plugin PRIVATE ascend_native_mid tiling_mid)
                 set(ASCEND_TOOLKIT_PLUGIN_PATH ${ASCEND_TOOLKIT_RUNTIME_PATH}/plugin/opskernel)
+                set(ASCEND_CANN_PLUGIN_PATH ${ASCEND_CANN_RUNTIME_PATH}/plugin/opskernel)
                 include_directories(${TOP_DIR}/graphengine/910/inc
                 ${TOP_DIR}/graphengine/910/metadef/inc
                 ${TOP_DIR}/graphengine/910/inc/framework

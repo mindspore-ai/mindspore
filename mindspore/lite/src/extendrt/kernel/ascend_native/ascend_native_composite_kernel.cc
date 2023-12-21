@@ -22,6 +22,8 @@
 #include "extendrt/delegate/ascend_native/ops/ascend_native_composite.h"
 #include "ops/primitive_c.h"
 #include "src/train/opt_allocator.h"
+#include "extendrt/delegate/ascend_native/ascend_native_impl/vector_core/copy_cast.h"
+#include "extendrt/delegate/ascend_native/ascend_native_impl/utils.h"
 
 #define DPRN() std::cout
 namespace mindspore::kernel {
@@ -87,8 +89,8 @@ std::shared_ptr<AscendNativeBaseKernel> AscendNativeCompositeKernel::CreateKerne
   // TODO(nizzan) :: remove stub patch
   if (!plugin_factory.HasKey(node_type)) node_type = "AscendNativeStub";
   if (plugin_factory.HasKey(node_type)) {
-    kernel::AscendNativeBaseKernel *ascend_native_op =
-      plugin_factory.GetCreator(node_type)(input_tensors, output_tensors, primitive, context_, stream_, node_type);
+    kernel::AscendNativeBaseKernel *ascend_native_op = plugin_factory.GetCreator(node_type)(
+      input_tensors, output_tensors, primitive, context_, stream_, node_type, acl_ctx_);
     if (ascend_native_op == nullptr) {
       return nullptr;
     }
@@ -97,7 +99,6 @@ std::shared_ptr<AscendNativeBaseKernel> AscendNativeCompositeKernel::CreateKerne
       MS_LOG(ERROR) << "Kernel is nullptr";
       return nullptr;
     }
-
     if (!ker->IsWeightInputHanledInner()) {
       auto in_tensors = ker->in_tensors();
       for (auto &t : in_tensors) {
@@ -111,10 +112,10 @@ std::shared_ptr<AscendNativeBaseKernel> AscendNativeCompositeKernel::CreateKerne
           if (t_is_float) {
             void *device_ptr = nullptr;
             ascend_native::CopyHostFp32ToDeviceFp16(t->data(), &device_ptr, t->ElementsNum(),
-                                                    const_cast<void *>(stream_));
+                                                    const_cast<void *>(stream_), const_cast<void *>(acl_ctx_));
             t->set_device_data(device_ptr);
           } else {
-            t->set_device_data(ascend_native::MallocCopy(t->data(), t->Size(), const_cast<void *>(stream_)));
+            t->set_device_data(ascend_native::MallocCopy(t->data(), t->Size(), const_cast<void *>(acl_ctx_)));
           }
         }
       }
@@ -243,7 +244,7 @@ void AscendNativeCompositeKernel::CreateOutputKernelTensors(const CNodePtr &cnod
             auto tuple_idx = common::AnfAlgo::GetTupleGetItemOutIndex(get_item);
             if ((get_item->input(SECOND_INPUT) == cnode) && (tuple_idx == output_idx)) {
               out_tensors_[i - 1]->set_device_data(
-                ascend_native::MallocDevice(out_tensors_[i - 1]->Size(), const_cast<void *>(stream_)));
+                ascend_native::MallocDevice(out_tensors_[i - 1]->Size(), const_cast<void *>(acl_ctx_)));
               out_tensors_[i - 1]->ResetRefCount();
               allocated_tensors_.insert(out_tensors_[i - 1]);
               output_tensors->push_back(out_tensors_[i - 1]);
@@ -251,7 +252,7 @@ void AscendNativeCompositeKernel::CreateOutputKernelTensors(const CNodePtr &cnod
             }
           } else if (outc->input(i) == cnode) {
             out_tensors_[i - 1]->set_device_data(
-              ascend_native::MallocDevice(out_tensors_[i - 1]->Size(), const_cast<void *>(stream_)));
+              ascend_native::MallocDevice(out_tensors_[i - 1]->Size(), const_cast<void *>(acl_ctx_)));
             out_tensors_[i - 1]->ResetRefCount();
             allocated_tensors_.insert(out_tensors_[i - 1]);
             output_tensors->push_back(out_tensors_[i - 1]);
@@ -261,7 +262,7 @@ void AscendNativeCompositeKernel::CreateOutputKernelTensors(const CNodePtr &cnod
       } else {
         if (graph_output == cnode) {
           out_tensors_[0]->set_device_data(
-            ascend_native::MallocDevice(out_tensors_[0]->Size(), const_cast<void *>(stream_)));
+            ascend_native::MallocDevice(out_tensors_[0]->Size(), const_cast<void *>(acl_ctx_)));
           out_tensors_[0]->ResetRefCount();
           allocated_tensors_.insert(out_tensors_[0]);
           output_tensors->push_back(out_tensors_[0]);
@@ -315,7 +316,7 @@ int AscendNativeCompositeKernel::ReAllocTensors() {
     return lite::RET_OK;
   }
   if (device_mem_size_ > 0) {
-    device_memory_base_addr_ = ascend_native::MallocDevice(device_mem_size_, const_cast<void *>(stream_));
+    device_memory_base_addr_ = ascend_native::MallocDevice(device_mem_size_, const_cast<void *>(acl_ctx_));
     if (device_memory_base_addr_ == nullptr) {
       MS_LOG(EXCEPTION) << "Allocation of " << device_mem_size_ << "B on device failed";
       return kMDOutOfMemory;
@@ -330,7 +331,7 @@ int AscendNativeCompositeKernel::ReAllocTensors() {
 }
 
 void AscendNativeCompositeKernel::FreeDevice() {
-  ascend_native::FreeDevice(device_memory_base_addr_, const_cast<void *>(stream_));
+  ascend_native::FreeDevice(device_memory_base_addr_, const_cast<void *>(acl_ctx_));
   device_memory_base_addr_ = nullptr;
   for (auto &it : offset_map_) {
     auto &tensor = it.first;
@@ -359,24 +360,29 @@ int AscendNativeCompositeKernel::AllocateGraphTensors() {
 }
 
 int AscendNativeCompositeKernel::AllocateGraphWorkspace(size_t ws_size) {
-  if (get_workspace() != nullptr) return lite::RET_OK;
+  if (get_workspace() != nullptr) {
+    return lite::RET_OK;
+  }
   void *ws_ptr = nullptr;
-  if (ws_size > 0) {
-    if (ws_size > max_ws_size_) {
-      MS_LOG(ERROR) << "kernel ws is too big " << ws_size;
-      return kLiteError;
-    }
-    // alloc ws on device space
-    ws_ptr = ascend_native::MallocDevice(ws_size, const_cast<void *>(stream_));
-    if (ws_ptr == nullptr) {
-      MS_LOG(EXCEPTION) << "Allocation of " << ws_size << "B on device failed";
-      return kMDOutOfMemory;
-    }
-    set_workspace(ws_ptr);
-    set_workspace_size(ws_size);
-    for (auto &kernel : kernels_) {
-      kernel->set_workspace(ws_ptr);
-    }
+  void *sys_ws_ptr = nullptr;
+  if (ws_size > max_ws_size_) {
+    MS_LOG(ERROR) << "kernel ws is too big " << ws_size;
+    return kLiteError;
+  }
+  // alloc ws on device space
+  constexpr int sys_ws_size = 16 * 1024 * 1024;
+  ws_ptr = ascend_native::MallocDevice(ws_size + sys_ws_size, const_cast<void *>(acl_ctx_));
+  if (ws_ptr == nullptr) {
+    MS_LOG(EXCEPTION) << "Allocation of " << ws_size + sys_ws_size << "B on device failed";
+    return kMDOutOfMemory;
+  }
+  sys_ws_ptr = reinterpret_cast<uint8_t *>(ws_ptr) + ws_size;
+  set_workspace(ws_ptr);
+  set_workspace_size(ws_size);
+  set_sys_workspace(sys_ws_ptr);
+  for (auto &kernel : kernels_) {
+    kernel->set_workspace(ws_ptr);
+    kernel->set_sys_workspace(sys_ws_ptr);
   }
   return lite::RET_OK;
 }
@@ -435,7 +441,7 @@ int AscendNativeCompositeKernel::Run() {
       return lite::RET_ERROR;
     }
     // synchronize all tasks are finished
-    ascend_native::SyncDevice(const_cast<void *>(stream_));
+    ascend_native::SyncDevice(const_cast<void *>(stream_), const_cast<void *>(acl_ctx_));
     ret = kernel->PostProcess();
     if (ret != lite::RET_OK) {
       MS_LOG(ERROR) << "kernel postprocess failed with " << ret << " for " << kernel->get_name();
@@ -449,14 +455,14 @@ int AscendNativeCompositeKernel::Run() {
 int AscendNativeCompositeKernel::PostProcess() {
   // Free device data
   FreeDevice();
-  ascend_native::FreeDevice(get_workspace(), const_cast<void *>(stream_));
+  ascend_native::FreeDevice(get_workspace(), const_cast<void *>(acl_ctx_));
   set_workspace(nullptr);
   // Decrement inputs ref count
   for (size_t i = 0; i < in_tensors_.size(); i++) {
     auto ref = in_tensors_[i]->ref_count();
     in_tensors_[i]->set_ref_count(--ref);
     if ((ref <= 0) && (in_tensors_[i]->category() == lite::VAR)) {
-      ascend_native::FreeDevice(in_tensors_[i]->device_data(), const_cast<void *>(stream_));
+      ascend_native::FreeDevice(in_tensors_[i]->device_data(), const_cast<void *>(acl_ctx_));
       in_tensors_[i]->set_device_data(nullptr);
     }
   }
@@ -466,7 +472,7 @@ int AscendNativeCompositeKernel::PostProcess() {
 int AscendNativeCompositeKernel::PreProcess() {
   for (auto &tensor : out_tensors()) {
     if (tensor->device_data() == nullptr) {
-      auto data_ptr = ascend_native::MallocDevice(tensor->Size(), const_cast<void *>(stream_));
+      auto data_ptr = ascend_native::MallocDevice(tensor->Size(), const_cast<void *>(acl_ctx_));
       if (data_ptr == nullptr) {
         MS_LOG(ERROR) << "Cannot allocate device memory size:" << tensor->Size();
         return lite::RET_NULL_PTR;
