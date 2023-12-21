@@ -82,8 +82,7 @@ bool MvlgammaGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &input
                             reinterpret_cast<cudaStream_t>(cuda_stream_), &host_valid);
   CHECK_CUDA_STATUS(status, kernel_name_);
   if (host_valid >= 0) {
-    MS_LOG(ERROR) << "For " << kernel_name_ << ", all element must be greater than (p-1)/2";
-    return false;
+    MS_EXCEPTION(ValueError) << "For " << kernel_name_ << ", all elements of 'x' must be greater than (p-1)/2";
   }
   return true;
 }

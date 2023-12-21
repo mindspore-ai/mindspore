@@ -25,7 +25,7 @@ template <typename T>
 __global__ void Mvlgamma(const size_t size, const T *input, const int p, T *output, int *valid) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     T input_val = input[pos];
-    if (input_val <= (0.5 * (p - 1))) {
+    if (isnan(input_val) || input_val <= (0.5 * (p - 1))) {
       *valid = static_cast<int>(pos);
       return;
     }
