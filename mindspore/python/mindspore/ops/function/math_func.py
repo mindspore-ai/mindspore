@@ -1688,7 +1688,7 @@ def logical_or(input, other):
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
 
     Raises:
-        TypeError: If neither `input` nor `other` is a Tensor.
+        NA.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4135,7 +4135,7 @@ def le(input, other):
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
 
     Raises:
-        TypeError: If neither `input` nor `other` is a Tensor.
+        NA.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
