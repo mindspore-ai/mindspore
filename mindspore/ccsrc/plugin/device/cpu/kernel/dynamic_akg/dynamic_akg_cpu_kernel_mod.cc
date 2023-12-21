@@ -36,10 +36,9 @@ constexpr int64_t kDoubleSize = 2;
 class DynamicAkgParallelLaunch {
  public:
   using DynamicAkgParallelLambda = int (*)(int task_id, int num_task, void *cdata, void *extend_data);
-  static int DynamicAkgLaunchFunc(DynamicAkgParallelLambda flambda, void *cdata, void *extend_data, int) {
-    auto nthreads = omp_get_max_threads();
-#pragma omp parallel num_threads(nthreads)
-    { flambda(omp_get_thread_num(), nthreads, cdata, extend_data); }
+  static int DynamicAkgLaunchFunc(DynamicAkgParallelLambda flambda, void *cdata, void *extend_data, int task_nums) {
+#pragma omp parallel num_threads(task_nums)
+    { flambda(omp_get_thread_num(), task_nums, cdata, extend_data); }
     return 0;
   }
 };
@@ -204,8 +203,10 @@ bool DynamicAkgCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, c
   } else {
     MS_LOG(INFO) << "The kernel mod deals with static shape inputs.";
     static DynamicAkgCallBack dyn_akg_callback = DynamicAkgCallBack();
-    using StaticAkgCpuKernelFunction = void (*)(void *, void *);
+    using StaticAkgCpuKernelFunction = void (*)(void *, void *, void *);
+    auto task_nums = omp_get_max_threads();
     reinterpret_cast<StaticAkgCpuKernelFunction>(launch_func_)(reinterpret_cast<void *>(&dyn_akg_callback),
+                                                               reinterpret_cast<void *>(&task_nums),
                                                                reinterpret_cast<void *>(runtimeargs.data()));
   }
 
