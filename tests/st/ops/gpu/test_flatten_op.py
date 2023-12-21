@@ -398,11 +398,10 @@ def test_nn_flatten_single_element():
     Description: test flatten with single element.
     Expectation: success.
     """
-    with pytest.raises(ValueError):
-        nn.Flatten()(Tensor(1))
-
-    with pytest.raises(ValueError):
-        nn.Flatten()(Tensor([1]))
+    out1 = nn.Flatten()(Tensor(1))
+    assert np.all(out1.asnumpy() == np.array([1]))
+    out2 = nn.Flatten()(Tensor([1]))
+    assert np.all(out2.asnumpy() == np.array([1]))
 
 
 @pytest.mark.level1
