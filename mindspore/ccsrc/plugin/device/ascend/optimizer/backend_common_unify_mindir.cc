@@ -46,19 +46,22 @@
 #include "plugin/device/ascend/optimizer/mindir/clip_by_norm_fission.h"
 #include "plugin/device/ascend/optimizer/mindir/specialized_prepare.h"
 #include "plugin/device/ascend/optimizer/mindir/tensor_array.h"
-#include "plugin/device/ascend/optimizer/mindir/tensorshape_for_ge.h"
 #include "plugin/device/ascend/optimizer/mindir/dropout_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/ascend_mindir_op_adapter.h"
 #include "plugin/device/ascend/optimizer/mindir/sparse_softmax_cross_entropy_with_logits_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/adam_weight_decay_unify_mindir.h"
+#include "plugin/device/ascend/optimizer/ge/lamb_fission.h"
+#include "plugin/device/ascend/optimizer/ge/adjust_print_for_ge.h"
+#include "plugin/device/ascend/optimizer/ge/getnext_for_ge.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/adaptive_max_pool2d_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/flash_attention_fusion.h"
+#include "plugin/device/ascend/optimizer/ge/avg_pool_grad_for_ge.h"
 
 namespace mindspore {
 namespace opt {
 void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   MS_EXCEPTION_IF_NULL(unify_mindir_pm);
-  (*unify_mindir_pm)->AddPass(std::make_shared<EraseVisitAttr>());
   (*unify_mindir_pm)->AddPass(std::make_shared<RenormSplit>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<EraseVisitAttr>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::ReduceAxisUpdate>());
   (*unify_mindir_pm)->AddPass(std::make_shared<HistogramFixedWidthFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::ClipByNormFission>());
@@ -68,25 +71,17 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::TensorArrayPrepare>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::SpaceToBatchNDAttrUpdate>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::BatchToSpaceNDAttrUpdate>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<opt::CenteredRMSPropUnifyOutput>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AvgPoolGradUnifyMindIR>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<opt::RMSPropUnifyOutput>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AdamWeightDecayUnifyMindIR>());
   (*unify_mindir_pm)->AddPass(std::make_shared<CdistFission>());
   (*unify_mindir_pm)->AddPass(std::make_shared<CdistGradFission>());
 
+  // Since the SparseSoftmaxCrossEntropyWithLogits operator can only use AICPU and has poor execution performance,
+  // it does not take effect for the time being.
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  bool enable_ge = ms_context->backend_policy() == "ge";
   bool graph_mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode;
-  if (enable_ge && graph_mode) {
-    (*unify_mindir_pm)->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
-    (*unify_mindir_pm)->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2>());
-    (*unify_mindir_pm)->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
-  } else if (graph_mode) {
-    (*unify_mindir_pm)->AddPass(std::make_shared<opt::FtrlUnifyOutput>());
-    (*unify_mindir_pm)->AddPass(std::make_shared<opt::DropoutAndDropoutGradUnifyMindIR>());
-    (*unify_mindir_pm)->AddPass(std::make_shared<opt::DropoutUnifyMindIR0>());
+  if (graph_mode) {
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2>());
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
@@ -99,8 +94,10 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
   }
+
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::DropoutUnifyMindIR1>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::DropoutGradUnifyMindIR>());
+
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::NeighborExchangeUnifyMindIR>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::NeighborExchangeV2UnifyMindIR>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::NeighborExchangeV2GradUnifyMindIR>());
@@ -114,14 +111,19 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   (*unify_mindir_pm)->AddPass(std::make_shared<BatchNorm2BNInfer>());
   (*unify_mindir_pm)->AddPass(std::make_shared<BatchNormGrad2BNInferGrad>());
   (*unify_mindir_pm)->AddPass(std::make_shared<BatchNormGradInferFission>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<TensorScatterAddFission>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<TensorScatterSubFission>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<TensorScatterMaxFission>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<TensorScatterMinFission>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<opt::TensorShapeForGE>());
   // just rename primitive name
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AscendMindIROpAdapter>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::DropoutGenMaskFusion>());
+
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::LambFissionGe>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::AdjustPrintForGe>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::GetNextForGE>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::SyncBnSplit>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::SyncBnGradSplit>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::AdaptiveMaxPool2DGeFusion>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::AvgPoolGradForGE>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::FlashAttentionFusionV1>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::FlashAttentionFusionV2>());
 }
 void AscendUnfoldInputsForSpecialNodes(const KernelGraphPtr &kernel_graph) {
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_UnfoldInputsForSpecialNodes", 0, 0, 0);

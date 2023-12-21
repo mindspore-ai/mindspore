@@ -31,11 +31,7 @@
 #include "plugin/device/ascend/optimizer/ge/convert_condition_input_to_scalar.h"
 #include "plugin/device/ascend/optimizer/ge/hcom/add_parallel_group_for_hcom.h"
 #include "plugin/device/ascend/optimizer/ge/hcom/add_depend_for_all_gather.h"
-#include "plugin/device/ascend/optimizer/ge/adjust_print_for_ge.h"
-#include "plugin/device/ascend/optimizer/ge/uniform_real_dtype_ge.h"
-#include "plugin/device/ascend/optimizer/ge/lamb_fission.h"
-#include "plugin/device/ascend/optimizer/ge/squeeze_axis_ge.h"
-#include "plugin/device/ascend/optimizer/ge/getnext_for_ge.h"
+
 #include "plugin/device/ascend/optimizer/ge/expander_fallback.h"
 #include "plugin/device/ascend/optimizer/ge/trans_depend_value_to_int32.h"
 #include "plugin/device/ascend/optimizer/ge/insert_identity.h"
@@ -44,7 +40,6 @@
 #include "plugin/device/ascend/optimizer/ge/unfold_nested_output.h"
 #include "plugin/device/ascend/optimizer/ge/resize_bilinear_add_attr.h"
 #include "plugin/device/ascend/optimizer/format_type/deal_ref_output.h"
-#include "plugin/device/ascend/optimizer/ge/avg_pool_grad_for_ge.h"
 #include "plugin/device/ascend/optimizer/format_type/set_fracz_group_attr.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_cast.h"
 #include "plugin/device/ascend/optimizer/mindir/aicpu_lib_select.h"
@@ -56,8 +51,6 @@
 #include "plugin/device/ascend/optimizer/ir_fission/seed_adapter.h"
 #include "plugin/device/ascend/optimizer/ir_fission/bn_split.h"
 #include "plugin/device/ascend/optimizer/ir_fission/bn_grad_split.h"
-#include "plugin/device/ascend/optimizer/ir_fusion/adaptive_max_pool2d_fusion.h"
-#include "plugin/device/ascend/optimizer/ir_fusion/flash_attention_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fission/ascend_convert_tuple_input_to_dynamic_input.h"
 #include "plugin/device/ascend/optimizer/backend_common_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/ge/remove_tensor_to_scalar_or_tuple_ops.h"
@@ -121,20 +114,9 @@ void GEBackendOptimizeACL(const KernelGraphPtr &kernel_graph) {
 #endif
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto opt_acl_pm = std::make_shared<PassManager>("opt_acl_pm");
-  opt_acl_pm->AddPass(std::make_shared<opt::AdjustPrintForGe>());
-  opt_acl_pm->AddPass(std::make_shared<opt::LambFissionGe>());
-  opt_acl_pm->AddPass(std::make_shared<opt::SqueezeAxisGe>());
   opt_acl_pm->AddPass(std::make_shared<SeedAdapter>());
   opt_acl_pm->AddPass(std::make_shared<opt::AICpuLibSelectPass>());
-  opt_acl_pm->AddPass(std::make_shared<opt::GetNextForGE>());
-  opt_acl_pm->AddPass(std::make_shared<opt::SyncBnSplit>());
-  opt_acl_pm->AddPass(std::make_shared<opt::SyncBnGradSplit>());
   opt_acl_pm->AddPass(std::make_shared<opt::ExpanderFallback>());
-  opt_acl_pm->AddPass(std::make_shared<opt::UniformRealDtypeGe>());
-  opt_acl_pm->AddPass(std::make_shared<opt::AdaptiveMaxPool2DGeFusion>());
-  opt_acl_pm->AddPass(std::make_shared<opt::AvgPoolGradForGE>());
-  opt_acl_pm->AddPass(std::make_shared<opt::FlashAttentionFusionV1>());
-  opt_acl_pm->AddPass(std::make_shared<opt::FlashAttentionFusionV2>());
   optimizer->AddPassManager(opt_acl_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

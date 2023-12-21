@@ -87,6 +87,19 @@ class PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2 : public Patt
  private:
   std::vector<std::string> MustExistPrimitiveName() const override;
 };
+
+class GeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR : public PatternProcessPass {
+ public:
+  explicit GeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR(
+    const std::string &name = "ge_sparse_softmax_cross_entropy_with_logits_unify_mindir", bool multigraph = true)
+      : PatternProcessPass(name, multigraph) {}
+  ~GeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR() override = default;
+  const BaseRef DefinePattern() const override;
+  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
+
+ private:
+  std::vector<std::string> MustExistPrimitiveName() const override;
+};
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS_UNIFY_MINDIR_H

@@ -27,6 +27,7 @@
 namespace mindspore {
 namespace opt {
 const AnfNodePtr AccumulateNV2FusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
+const AnfNodePtr AddDropoutAttrs(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr AddNFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr ArgMaxMinWithValueFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr BatchMatMulAttrFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
@@ -43,11 +44,14 @@ const AnfNodePtr NanToNumFusionProcess(const FuncGraphPtr &, const AnfNodePtr &)
 const AnfNodePtr ParallelConcatFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr RaggedTensorToSparseFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr ResizeV2FusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
+const AnfNodePtr SqueezeAxis(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr SparseConcatFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr SparseCrossFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr SparseTensorDenseMatMulFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr SplitFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr StandardNormalFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
+const AnfNodePtr UniformRealDtypeGe(const FuncGraphPtr &, const AnfNodePtr &);
+const AnfNodePtr TensorShapeAddDtype(const FuncGraphPtr &, const AnfNodePtr &);
 
 using AddAttrToNodeImpl = const AnfNodePtr (*)(const FuncGraphPtr &, const AnfNodePtr &);
 
