@@ -594,8 +594,8 @@ AbstractBasePtr TensorToSequenceInfer(const PrimitivePtr &primitive, const std::
   auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
   MS_EXCEPTION_IF_NULL(shape_ptr);
   auto x_shape = shape_ptr->shape();
-  if (x_shape.size() != 1) {
-    MS_EXCEPTION(ValueError) << "For Primitive[" << prim_name << "], the input shape size must be 1, but got "
+  if (x_shape.size() > 1) {
+    MS_EXCEPTION(ValueError) << "For Primitive[" << prim_name << "], the input shape size must greaterthan 1, but got "
                              << x_shape << ".";
   }
 
@@ -615,8 +615,12 @@ AbstractBasePtr TensorToSequenceInfer(const PrimitivePtr &primitive, const std::
     abs->CheckAndConvertToDynamicLenSequence();
     return abs;
   }
-  for (int64_t i = 0; i < x_shape[0]; i++) {
+  if (x_shape.empty()) {
     abs_list.push_back(std::make_shared<abstract::AbstractScalar>(kValueAny, element_type));
+  } else {
+    for (int64_t i = 0; i < x_shape[0]; i++) {
+      abs_list.push_back(std::make_shared<abstract::AbstractScalar>(kValueAny, element_type));
+    }
   }
   auto abs = std::make_shared<T>(abs_list);
   return abs;
