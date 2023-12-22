@@ -8,7 +8,7 @@ mindspore.ops.Div
     更多参考详见 :func:`mindspore.ops.div`。
 
     .. note::
-        - 两个输入中至少有一个Tensor，当两个输入具有不同的shape时，它们的shape必须要能广播为一个共同的shape。
+        - 当两个输入具有不同的shape时，它们的shape必须要能广播为一个共同的shape。
         - 两个输入不能同时为bool类型。[True, Tensor(True, bool\_), Tensor(np.array([True]), bool\_)]等都为bool类型。
         - 两个输入遵循隐式类型转换规则，使数据类型保持一致。
 
