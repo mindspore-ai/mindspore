@@ -319,8 +319,10 @@ class CreateDynTensor(nn.Cell):
         return output1 + output2
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_shape_tensor():
     """
@@ -374,8 +376,10 @@ class CreateDynTensorWithInputDtype(nn.Cell):
         return output1 + output2
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_shape_dtype_tensor():
     """
@@ -427,8 +431,10 @@ class MakeTensorWithShapeDtype(nn.Cell):
         return output1 + output2
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_make_tensor_with_dynamic_shape_dtype():
     """
@@ -595,8 +601,10 @@ def test_np_save_with_call_kw2():
     os.remove("data_from_kw_with_if.npy")
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_pyexecute_raise_error_with_dynamic_length_sequence():
     """
@@ -624,8 +632,10 @@ def test_pyexecute_raise_error_with_dynamic_length_sequence():
     assert np.allclose(ret.asnumpy(), np.array([0.0, 3.0, 4.0, 5.0]))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_pyexecute_raise_error_with_dynamic_length_sequence_2():
     """

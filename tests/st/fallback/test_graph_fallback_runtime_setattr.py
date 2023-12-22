@@ -189,8 +189,10 @@ def test_setattr_self_non_param_not_used():
     assert test_net.data == 2
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_setattr_self_non_param_used_in_operator():
     """
@@ -213,7 +215,9 @@ def test_setattr_self_non_param_used_in_operator():
     assert np.all(test_net.data.asnumpy() == np.array([1, 2, 3, 4]))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setattr_self_non_param_used_in_operator_2():
