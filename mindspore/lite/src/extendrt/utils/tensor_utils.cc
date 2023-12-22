@@ -190,12 +190,14 @@ kernel::KernelTensor *CloudTensorUtils::LiteTensorToKernelTensorPtr(const lite::
   }
   kernel_tensor_ptr->SetData(address);
   kernel_tensor_ptr->SetFormat(lite_tensor->format());
+  kernel_tensor_ptr->SetType(TypeIdToType(kObjectTypeTensorType));
 
   auto lite_shape = lite_tensor->shape();
   std::vector<int64_t> shape;
   for (size_t i = 0; i < lite_shape.size(); i++) {
     shape.push_back(lite_shape[i]);
   }
+  kernel_tensor_ptr->SetShape(std::make_shared<abstract::Shape>(shape));
 
   auto kernel_tensor_abstract_ptr = std::make_shared<mindspore::abstract::AbstractTensor>(
     mindspore::TypeIdToType(lite_tensor->data_type()), std::make_shared<abstract::Shape>(shape));

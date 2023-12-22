@@ -343,6 +343,9 @@ int OpsOrNNACLInferShape(const CompileNodePtr &node, OpParameter *op_parameter, 
 
 int NodeFallBackInferShape(const CompileNodePtr &node, Format format, InferContext *context) {
   MSLITE_CHECK_PTR_RETURN(node, RET_PARAM_INVALID);
+  if (node->GetType().TypeName() == "Custom") {
+    return RET_INFER_INVALID;
+  }
   auto base_operator = node->GetBaseOperator();
   MSLITE_CHECK_PTR_RETURN(base_operator, RET_NULL_PTR);
   auto op_parameter = OperatorPopulateRegistry::GetInstance()->CreatePopulateByOp(base_operator);
