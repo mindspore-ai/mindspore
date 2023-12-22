@@ -108,8 +108,8 @@ class PatternTree {
     }
     return attrs_map;
   }
-  // check attributes meet requirements for certain pattern node if needed;
-  virtual bool CheckAttributes(const inner::NodePtr &) const { return true; }
+  // check whether inputs and attributes meet requirements for certain pattern node if needed;
+  virtual bool CheckInputsAndAttrs(const inner::NodePtr &) const { return true; }
 
  private:
   PatternNodePtr lhs_root_ = nullptr;  // left side's root
@@ -323,7 +323,7 @@ inner::NodePtrList PatternTree::MatchGraph(const inner::NodePtr &root, const std
   if (!DfsMatchGraph(root, lhs_root_, para_to_ref, const_to_ref, res)) {
     return {};
   }
-  if (CheckAttributes(root)) {
+  if (CheckInputsAndAttrs(root)) {
     return *res;
   }
   return {};
@@ -386,14 +386,12 @@ class ExtraReduce1PatternTree : public PatternTree {
   std::shared_ptr<ParaMap> UpdateParameters(const inner::NodePtr &origin_root,
                                             const std::shared_ptr<ParaMap> &para_to_ref) const override {
     MS_EXCEPTION_IF_NULL(para_to_ref);
-    auto axes1_tensornode = std::dynamic_pointer_cast<inner::ConstTensorNode>((*para_to_ref)['B']);
+    auto axes1_tensornode = (*para_to_ref)['B']->As<inner::ConstTensorNode>();
     MS_EXCEPTION_IF_NULL(axes1_tensornode);
-    auto axes2_tensornode = std::dynamic_pointer_cast<inner::ConstTensorNode>((*para_to_ref)['C']);
+    auto axes2_tensornode = (*para_to_ref)['C']->As<inner::ConstTensorNode>();
     MS_EXCEPTION_IF_NULL(axes2_tensornode);
-    auto axes1 =
-      CheckAndConvertUtils::CheckTensorIntValue(axes1_tensornode->format, axes1_tensornode->data(), "Reduce");
-    auto axes2 =
-      CheckAndConvertUtils::CheckTensorIntValue(axes2_tensornode->format, axes2_tensornode->data(), "Reduce");
+    auto axes1 = CheckAndConvertUtils::CheckTensorIntValue("axes", axes1_tensornode->data(), "Reduce");
+    auto axes2 = CheckAndConvertUtils::CheckTensorIntValue("axes", axes2_tensornode->data(), "Reduce");
     bool keep_dims = GetValue<bool>(origin_root->attrs().find("keep_dims")->second);
     std::vector<int64_t> axes;
     std::set<int64_t> axis_set;
@@ -429,7 +427,7 @@ class ExtraReduce1PatternTree : public PatternTree {
   }
 
  protected:
-  bool CheckAttributes(const inner::NodePtr &origin_root) const override {
+  bool CheckInputsAndAttrs(const inner::NodePtr &origin_root) const override {
     auto first_reduce_shape = origin_root->input(0)->shape;
     return (GetValue<bool>((origin_root->inputs()[0])->attrs().find("keep_dims")->second) ==
               GetValue<bool>(origin_root->attrs().find("keep_dims")->second) &&
@@ -482,7 +480,7 @@ class LayoutTransform1PatternTree : public PatternTree {
   ~LayoutTransform1PatternTree() = default;
 
  protected:
-  bool CheckAttributes(const inner::NodePtr &origin_root) const override {
+  bool CheckInputsAndAttrs(const inner::NodePtr &origin_root) const override {
     return (GetValue<string>((origin_root->inputs()[0])->attrs().find("src_format")->second) ==
             GetValue<string>(origin_root->attrs().find("dst_format")->second));
   }
@@ -495,7 +493,7 @@ class LayoutTransform2PatternTree : public PatternTree {
   ~LayoutTransform2PatternTree() = default;
 
  protected:
-  bool CheckAttributes(const inner::NodePtr &origin_root) const override {
+  bool CheckInputsAndAttrs(const inner::NodePtr &origin_root) const override {
     return (GetValue<string>((origin_root->inputs()[0])->attrs().find("src_format")->second) !=
             GetValue<string>(origin_root->attrs().find("dst_format")->second));
   }
@@ -507,11 +505,71 @@ class LayoutTransform2PatternTree : public PatternTree {
   }
 };
 
-// Transpose(A,B)=Reshape(A,C)
-class TransposePatternTree : public PatternTree {
+bool IsRedundantTransposePair(const ShapeVector &perm1, const ShapeVector &perm2) {
+  auto dim = perm2.size();
+  for (size_t i = 0; i < dim; i++) {
+    auto index = perm2[i] < 0 ? perm2[i] + static_cast<ShapeValueDType>(dim) : perm2[i];
+    MS_EXCEPTION_IF_CHECK_FAIL(static_cast<size_t>(index) < dim, "perm is out of bound");
+    auto axis = perm1[index] < 0 ? perm1[index] + static_cast<ShapeValueDType>(dim) : perm1[index];
+    if (static_cast<size_t>(axis) != i) {
+      return false;
+    }
+  }
+  return true;
+}
+// Transpose(Transpose(A,B),C)=A
+class Transpose1PatternTree : public PatternTree {
  public:
-  explicit TransposePatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
-  ~TransposePatternTree() = default;
+  explicit Transpose1PatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
+  ~Transpose1PatternTree() = default;
+
+  std::shared_ptr<ParaMap> UpdateParameters(const inner::NodePtr &origin_root,
+                                            const std::shared_ptr<ParaMap> &para_to_ref) const override {
+    MS_EXCEPTION_IF_NULL(para_to_ref);
+    (void)para_to_ref->erase('B');
+    (void)para_to_ref->erase('C');
+    return para_to_ref;
+  }
+
+ protected:
+  bool CheckInputsAndAttrs(const inner::NodePtr &origin_root) const override {
+    auto transpose1_node = origin_root->input(0);
+    MS_EXCEPTION_IF_NULL(transpose1_node);
+    if (transpose1_node->format != origin_root->format) {
+      MS_LOG(DEBUG) << "The input format of the first transpose is different from the output format of the second "
+                       "transpose, can't remove this transpose pair.";
+      return false;
+    }
+    auto input_shape = transpose1_node->input(0)->shape;
+    auto perm2_node = origin_root->input(1);
+    MS_EXCEPTION_IF_NULL(perm2_node);
+    auto perm1_node = transpose1_node->input(1);
+    MS_EXCEPTION_IF_NULL(perm1_node);
+    auto perm2_tensornode = perm2_node->As<inner::ConstTensorNode>();
+    MS_EXCEPTION_IF_NULL(perm2_tensornode);
+    auto perm1_tensornode = perm1_node->As<inner::ConstTensorNode>();
+    MS_EXCEPTION_IF_NULL(perm1_tensornode);
+    auto perm2 = CheckAndConvertUtils::CheckTensorIntValue("permutation", perm2_tensornode->data(), "Transpose");
+    auto perm1 = CheckAndConvertUtils::CheckTensorIntValue("permutation", perm1_tensornode->data(), "Transpose");
+    if (perm1.size() != input_shape.size() || perm2.size() != input_shape.size()) {
+      MS_LOG(DEBUG) << "The length of input shape and perm is not same";
+      return false;
+    }
+    return IsRedundantTransposePair(perm1, perm2);
+  }
+
+  mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
+    auto attrs_map = PatternTree::SetAttributes(origin_root);
+    attrs_map[this->rhs_root()] = {{"format", MakeValue(origin_root->format)}};
+    return attrs_map;
+  }
+};
+
+// Transpose(A,B)=Reshape(A,C)
+class Transpose2PatternTree : public PatternTree {
+ public:
+  explicit Transpose2PatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
+  ~Transpose2PatternTree() = default;
 
   std::shared_ptr<ParaMap> UpdateParameters(const inner::NodePtr &origin_root,
                                             const std::shared_ptr<ParaMap> &para_to_ref) const override {
@@ -525,7 +583,7 @@ class TransposePatternTree : public PatternTree {
   }
 
  protected:
-  bool CheckAttributes(const inner::NodePtr &origin_root) const override {
+  bool CheckInputsAndAttrs(const inner::NodePtr &origin_root) const override {
     auto input_shape = origin_root->input(0)->shape;
     if (IsDynamicRank(input_shape)) {
       MS_LOG(DEBUG) << "Skip dynamic rank case";
@@ -533,8 +591,7 @@ class TransposePatternTree : public PatternTree {
     }
     auto perm_tensornode = origin_root->input(1)->As<inner::ConstTensorNode>();
     MS_EXCEPTION_IF_NULL(perm_tensornode);
-    auto perm =
-      CheckAndConvertUtils::CheckTensorIntValue(perm_tensornode->format, perm_tensornode->data(), "Transpose");
+    auto perm = CheckAndConvertUtils::CheckTensorIntValue("permutation", perm_tensornode->data(), "Transpose");
     if (perm.size() != input_shape.size()) {
       MS_LOG(DEBUG) << "The length of input shape " << input_shape << " and perm " << perm << " is not same";
       return false;
@@ -615,7 +672,7 @@ class RTTPatternTree : public PatternTree {
   }
 
  protected:
-  bool CheckAttributes(const inner::NodePtr &origin_root) const override {
+  bool CheckInputsAndAttrs(const inner::NodePtr &origin_root) const override {
     auto perm2_node = origin_root->input(1);
     MS_EXCEPTION_IF_NULL(perm2_node);
     auto transpose1_node = origin_root->input(0);
@@ -626,21 +683,9 @@ class RTTPatternTree : public PatternTree {
     MS_EXCEPTION_IF_NULL(perm2_tensornode);
     auto perm1_tensornode = perm1_node->As<inner::ConstTensorNode>();
     MS_EXCEPTION_IF_NULL(perm1_tensornode);
-    auto perm2 = CheckAndConvertUtils::CheckTensorIntValue(perm2_node->format, perm2_tensornode->data(), "Transpose");
-    auto perm1 = CheckAndConvertUtils::CheckTensorIntValue(perm1_node->format, perm1_tensornode->data(), "Transpose");
-    auto dim = perm1.size();
-    for (size_t i = 0; i < dim; i++) {
-      MS_EXCEPTION_IF_CHECK_FAIL(i < perm2.size(), "perm is out of bound");
-      auto index = perm2[i] < 0 ? perm2[i] + static_cast<ShapeValueDType>(dim) : perm2[i];
-      MS_EXCEPTION_IF_CHECK_FAIL(static_cast<size_t>(index) < dim, "perm is out of bound");
-      auto axis = perm1[index] < 0 ? perm1[index] + static_cast<ShapeValueDType>(dim) : perm1[index];
-      if (static_cast<size_t>(axis) != i) {
-        return false;
-      }
-    }
-    // If the check reaches here, then it means what the two transposes do is just change the data format, this can be
-    // done in a single reshape op.
-    return true;
+    auto perm2 = CheckAndConvertUtils::CheckTensorIntValue("permutation", perm2_tensornode->data(), "Transpose");
+    auto perm1 = CheckAndConvertUtils::CheckTensorIntValue("permutation", perm1_tensornode->data(), "Transpose");
+    return IsRedundantTransposePair(perm1, perm2);
   }
   mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
     auto attrs_map = PatternTree::SetAttributes(origin_root);
@@ -679,7 +724,7 @@ class StridedSlicePatternTree : public PatternTree {
     return input_vec;
   }
 
-  bool CheckAttributes(const inner::NodePtr &origin_root) const override {
+  bool CheckInputsAndAttrs(const inner::NodePtr &origin_root) const override {
     auto input_node = origin_root->input(0);
     MS_EXCEPTION_IF_NULL(input_node);
     auto input_shape = input_node->shape;
@@ -719,7 +764,7 @@ class FloatCheckPatternTree : public PatternTree {
   ~FloatCheckPatternTree() = default;
 
  protected:
-  bool CheckAttributes(const inner::NodePtr &origin_root) const override {
+  bool CheckInputsAndAttrs(const inner::NodePtr &origin_root) const override {
     auto type_id = origin_root->type;
     return (type_id == kNumberTypeFloat || type_id == kNumberTypeFloat16 || type_id == kNumberTypeFloat32 ||
             type_id == kNumberTypeFloat64);
@@ -837,10 +882,11 @@ static std::vector<Expression> expressions = {
   {63, "LayoutTransform(LayoutTransform(A))=A", EXPR_PATTERN(LayoutTransform1PatternTree)},
   {64, "LayoutTransform(LayoutTransform(A))=LayoutTransform(A)", EXPR_PATTERN(LayoutTransform2PatternTree)},
   // patterns that can be transformed to reshape
-  {65, "Transpose(A,B)=Reshape(A,C)", EXPR_PATTERN(TransposePatternTree)},
-  {66, "Reshape(Reshape(A,B),C)=Reshape(A,C)", EXPR_PATTERN(ReshapePatternTree)},
-  {67, "Transpose(Transpose(Reshape(A,B),C),D)=Reshape(A,E)", EXPR_PATTERN(RTTPatternTree)},
-  {68, "StridedSlice(A,B,C,D)=Reshape(A,E)", EXPR_PATTERN(StridedSlicePatternTree)},
+  {65, "Transpose(Transpose(A,B),C)=A", EXPR_PATTERN(Transpose1PatternTree)},
+  {66, "Transpose(A,B)=Reshape(A,C)", EXPR_PATTERN(Transpose2PatternTree)},
+  {67, "Reshape(Reshape(A,B),C)=Reshape(A,C)", EXPR_PATTERN(ReshapePatternTree)},
+  {68, "Transpose(Transpose(Reshape(A,B),C),D)=Reshape(A,E)", EXPR_PATTERN(RTTPatternTree)},
+  {69, "StridedSlice(A,B,C,D)=Reshape(A,E)", EXPR_PATTERN(StridedSlicePatternTree)},
 };
 
 mindspore::HashMap<std::string, std::vector<PatternTreePtr>> GetExpressions() {
