@@ -20,6 +20,7 @@
 #include "ops/ascend_op_name.h"
 #include "ops/structure_op_name.h"
 #include "ops/framework_ops.h"
+#include "ops/other_ops.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -95,6 +96,9 @@ bool InsertTensorMoveForHcclOpGe::NeedInsertTensorMoveForSpecialCase(const AnfNo
   if (IsPrimitiveCNode(cur_node, prim::kPrimReceive)) {
     return false;
   }
+  if (IsPrimitiveCNode(cur_node, prim::kPrimAllToAllv) || IsPrimitiveCNode(cur_node, prim::kPrimAllToAll)) {
+    return false;
+  }
   // visited skip nop node.
   auto kernel_with_index = common::AnfAlgo::VisitKernelWithReturnType(input, 0, true);
   auto real_input = kernel_with_index.first;
@@ -118,6 +122,9 @@ bool InsertTensorMoveForHcclOpGe::NeedInsertTensorMove(const FuncGraphPtr &graph
   MS_EXCEPTION_IF_NULL(cur_node);
   auto tuple = input->abstract()->cast<abstract::AbstractTuplePtr>();
   if (tuple) {
+    return false;
+  }
+  if (IsPrimitiveCNode(cur_node, prim::kPrimAllToAllv) || IsPrimitiveCNode(cur_node, prim::kPrimAllToAll)) {
     return false;
   }
   if (IsNodeOutPutUsedByOtherRealKernel(graph, input, input_idx, cur_node)) {
