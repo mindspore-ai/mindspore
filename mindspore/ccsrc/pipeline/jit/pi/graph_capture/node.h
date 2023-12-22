@@ -124,13 +124,15 @@ class ValueNode : public InstrNode {
   void SetVobj(AObject *vobj) { vobj_ = vobj; }
   const auto &GetVobj() const { return vobj_; }
 
-  void store_attr(const std::string &nam, ValueNode *v) { attr_ = true; }
-  void del_attr(const std::string &nam) {}
-  AObject *get_attr(const std::string &nam) { return (!attr_ && vobj_) ? vobj_->GetAttr(nam) : nullptr; }
+  std::map<std::string, ValueNode *> &GetAttrs() { return attrs_; }
 
-  void store_subscr(ValueNode *sub, ValueNode *v) { subscr_ = true; }
+  void store_attr(const std::string &nam, ValueNode *v);
+  void del_attr(const std::string &nam) {}
+  AObject *get_attr(const std::string &nam) { return vobj_ ? vobj_->GetAttr(nam) : nullptr; }
+
+  void store_subscr(ValueNode *sub, ValueNode *v);
   void del_subscr(ValueNode *sub) {}
-  AObject *binary_subscr(ValueNode *sub) { return (!subscr_ && vobj_) ? vobj_->GetItem(sub->GetVobj()) : nullptr; }
+  AObject *binary_subscr(ValueNode *sub) { return vobj_ ? vobj_->GetItem(sub->GetVobj()) : nullptr; }
 
   MergeNode *GetOutput(int i) const { return outputs_[i]; }
   void SetOutput(int i, MergeNode *n) { outputs_[i] = n; }
@@ -146,11 +148,12 @@ class ValueNode : public InstrNode {
       : InstrNode(type, opcode, oparg), vobj_(vobj), inputs_(inputs), attr_(false), subscr_(false) {}
 
  private:
-  AObject *vobj_;                     // NOTE: vobj_ is not compute
-  std::vector<ValueNode *> inputs_;   // which nodes are used, ordered parameter
-  std::vector<MergeNode *> outputs_;  // usage merge nodes
-  bool attr_;                         // track store attr not implement, marked as modified
-  bool subscr_;                       // track store subscr not implement, marked as modified
+  AObject *vobj_;                             // NOTE: vobj_ is not compute
+  std::vector<ValueNode *> inputs_;           // which nodes are used, ordered parameter
+  std::vector<MergeNode *> outputs_;          // usage merge nodes
+  std::map<std::string, ValueNode *> attrs_;  // store attrs
+  bool attr_;                                 // track store attr not implement, marked as modified
+  bool subscr_;                               // track store subscr not implement, marked as modified
 };
 
 // simulate PyCellObject, oparg is index
