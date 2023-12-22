@@ -114,13 +114,13 @@ class ASGD(Optimizer):
         self.mu = [Parameter(Tensor(1.), "mu_" + param.name) for param in self.parameters]
         self.eta = [Parameter(Tensor(0.), "eta_" + param.name) for param in self.parameters]
         self.ax = self.parameters.clone(prefix="ax", init='zeros')
-        self.step = Parameter(Tensor(0, mstype.int32), "step")
+        self.step_t = Parameter(Tensor(0, mstype.int32), "step_t")
         self.increase_tensor = Tensor(1, mstype.int32)
         self.assignadd = P.AssignAdd()
         self.op_cast = P.Cast()
 
     def construct(self, gradients):
-        self.assignadd(self.step, self.increase_tensor)
+        self.assignadd(self.step_t, self.increase_tensor)
         for group_id, group in enumerate(self.param_groups):
             lr = self.lrs[group_id]
             if isinstance(group.get("lr"), float):
@@ -137,6 +137,6 @@ class ASGD(Optimizer):
             eta = self.eta[start_id: end_id]
             mu = self.mu[start_id: end_id]
 
-            self.hyper_map(F.partial(_asgd_opt, group["lambd"], group["alpha"], group["t0"], self.step, lr),
+            self.hyper_map(F.partial(_asgd_opt, group["lambd"], group["alpha"], group["t0"], self.step_t, lr),
                            params, grads, eta, mu, ax)
         return True
