@@ -590,6 +590,7 @@ static void AddGradFlagForParam(bool grad_flag, OptGuardPtr guard, bool detach) 
 static std::string CallGraphCompiler(JitCompileResults *jcr, PyFunctionObject *func, const PyFrameObject *frame) {
   std::string phase = GetFuncGraphPhase(*frame, jcr->code);
   MS_LOG(DEBUG) << "Phase is " << phase << "!";
+
   CallableGraph callable = mindspore::jit::graph::Compiler::Compile(*func, *frame, phase);
 
   ReleaseFunc rFunc = nullptr;
@@ -627,12 +628,25 @@ std::string GraphToString(FuncGraphPtr graph) {
 }
 
 static void GraphCompile(JitCompileResults *jcr, const PyFrameObject *frame) {
+  bool enable_dynamicshape = jcr->conf->GetBoolConfig(GraphJitConfig::kEnableDynamicShape);
+  OptStrategy::MakeGCStrategy(jcr->codehub, jcr->conf->getIntConfig(GraphJitConfig::kLimitGraphSize),
+                              jcr->conf->getIntConfig(GraphJitConfig::kLimitGraphCount), enable_dynamicshape,
+                              jcr->code);
   // restore function object from frame
   PyObject *new_func = PyFunction_New(reinterpret_cast<PyObject *>(frame->f_code), frame->f_globals);
   Py_XSETREF(PyFunction_GET_CLOSURE(new_func), GetClosure(frame));
   PyFunctionObject *func = reinterpret_cast<PyFunctionObject *>(new_func);
-
+  PyFrameObject *f = const_cast<PyFrameObject *>(frame);
+  std::vector<PyObject *> backup;
+  if (enable_dynamicshape) {
+    backup = jcr->code->GetGuard()->ApplyDynamicShape(f);
+    PyFrame_FastToLocals(f);
+  }
   std::string phase = CallGraphCompiler(jcr, func, frame);
+  if (enable_dynamicshape) {
+    jcr->code->GetGuard()->RevertDynamicShape(f, backup);
+    PyFrame_FastToLocals(f);
+  }
 
   Py_DECREF(new_func);
 
@@ -666,9 +680,6 @@ static void GraphCompile(JitCompileResults *jcr, const PyFrameObject *frame) {
       OptCodeHub::Register(key, jcr->code);
     }
   }
-
-  OptStrategy::MakeGCStrategy(jcr->codehub, jcr->conf->getIntConfig(GraphJitConfig::kLimitGraphSize),
-                              jcr->conf->getIntConfig(GraphJitConfig::kLimitGraphCount), jcr->code);
 }
 
 extern bool UnsupportedCodeTypeCheck(PyCodeObject *co);
@@ -698,6 +709,11 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
     }
   }
 
+  // If no change to the bytecode in pynative mode, no need to guard parameters in pynative mode
+  if (c->stat == JitCompileResults::GRAPH_CAPTURED || !c->code->GetGuard()->IsEmpty() || code_changed) {
+    GuardForFrame(reinterpret_cast<PyFrameObject *>(frame.ptr()), c->code, *c->conf);
+  }
+
   if (c->stat == JitCompileResults::GRAPH_CAPTURED) {
     TimeRecorder _time_recorder(TimeRecorder::kTimeCompileGraph,
                                 kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
@@ -709,10 +725,6 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
     GraphCompile(c, f);
   }
 
-  // If no change to the bytecode in pynative mode, no need to guard parameters in pynative mode
-  if (c->code->GetNativeFunc() != nullptr || !c->code->GetGuard()->IsEmpty() || code_changed) {
-    GuardForFrame(reinterpret_cast<PyFrameObject *>(frame.ptr()), c->code, *c->conf);
-  }
   CollectTraceBack(c, c->code->GetPythonCode(), c->code->GetNativeFunc() != nullptr);
 
   MS_LOG(DEBUG) << "---compile " << origin_code_name << " successful---";
