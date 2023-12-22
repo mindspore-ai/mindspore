@@ -136,7 +136,7 @@ std::set<int64_t> RectifyDependListFromDynamicInputAttr(const CNodePtr &cnode, c
   return rec_depend_list;
 }
 
-std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode) {
+std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode, bool is_proto) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->inputs().empty()) {
     MS_LOG(EXCEPTION) << "Invalid inputs";
@@ -182,6 +182,9 @@ std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode) {
 
   (void)std::copy_if(ori.begin(), ori.end(), std::inserter(res, res.begin()),
                      [&](int64_t idx) { return idx < SizeToLong(input_num); });
+  if (is_proto) {
+    return res;
+  }
   return RectifyDependListFromDynamicInputAttr(cnode, primitive, res);
 }
 
