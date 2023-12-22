@@ -161,7 +161,7 @@ int ConvertAttrToArgsForNode(const AnfNodePtr &node, const FuncGraphManagerPtr &
                << "new name: " << prim_name;
   for (const auto &attr : attrs_adjust) {
     if (origin_attrs.count(attr) == 0) {
-      MS_LOG(WARNING) << "Origin primitive: " << prim_name << " has no attr : " << attr;
+      MS_LOG(INFO) << "Origin primitive: " << prim_name << " has no attr : " << attr;
     } else {
       // Convert the specific attr to input and erase the specific attr.
       auto attr_value = origin_prim->GetAttr(attr);
