@@ -1598,13 +1598,13 @@ void ShardReader::ConsumerByRow(int consumer_id) {
   }
 }
 
-std::vector<std::tuple<std::vector<uint8_t>, json>> ShardReader::GetNext() {
+std::vector<std::tuple<std::map<std::string, std::vector<uint8_t>>, json>> ShardReader::GetNext() {
   if (interrupt_) {
-    return std::vector<std::tuple<std::vector<uint8_t>, json>>();
+    return std::vector<std::tuple<std::map<std::string, std::vector<uint8_t>>, json>>();
   }
 
   if (deliver_id_ >= static_cast<int>(tasks_.SizeAfterSampling())) {
-    return std::vector<std::tuple<std::vector<uint8_t>, json>>();
+    return std::vector<std::tuple<std::map<std::string, std::vector<uint8_t>>, json>>();
   }
 
   std::shared_ptr<std::vector<std::tuple<std::vector<uint8_t>, json>>> res;
@@ -1612,7 +1612,7 @@ std::vector<std::tuple<std::vector<uint8_t>, json>> ShardReader::GetNext() {
     std::unique_lock<std::mutex> lck(mtx_delivery_);
     cv_iterator_.wait(lck, [this] { return interrupt_ || (delivery_map_.count(deliver_id_) > 0); });
     if (interrupt_) {
-      return std::vector<std::tuple<std::vector<uint8_t>, json>>();
+      return std::vector<std::tuple<std::map<std::string, std::vector<uint8_t>>, json>>();
     }
     res = delivery_map_[deliver_id_];
     delivery_map_.erase(deliver_id_++);
@@ -1620,7 +1620,33 @@ std::vector<std::tuple<std::vector<uint8_t>, json>> ShardReader::GetNext() {
 
   cv_delivery_.notify_all();
 
-  return *res;
+  // extract every blob field from blob data
+  std::vector<std::tuple<std::map<std::string, std::vector<uint8_t>>, json>> res_with_blobs;
+  for (auto iter = res->begin(); iter != res->end(); iter++) {
+    std::map<std::string, std::vector<uint8_t>> key_with_blob_fields;
+    auto shard_column = GetShardColumn();
+    auto schema = shard_header_->GetSchemas();  // current, we only support 1 schema yet
+    auto blob_fields = schema[0]->GetBlobFields();
+    for (auto blob_field : blob_fields) {
+      const unsigned char *data = nullptr;
+      std::unique_ptr<unsigned char[]> data_ptr;
+      uint64_t n_bytes = 0;
+      mindrecord::ColumnDataType column_data_type = mindrecord::ColumnNoDataType;
+      uint64_t column_data_type_size = 1;
+      std::vector<int64_t> column_shape;
+      if (shard_column->GetColumnValueByName(blob_field, std::get<0>(*iter), std::get<1>(*iter), &data, &data_ptr,
+                                             &n_bytes, &column_data_type, &column_data_type_size,
+                                             &column_shape) != Status::OK()) {
+        MS_LOG(ERROR) << "[Internal ERROR] Failed to extract blob fields from blob data";
+        return std::vector<std::tuple<std::map<std::string, std::vector<uint8_t>>, json>>();
+      }
+      key_with_blob_fields[blob_field] = std::vector<uint8_t>(data, data + n_bytes);
+    }
+
+    res_with_blobs.emplace_back(std::move(key_with_blob_fields), std::move(std::get<1>(*iter)));
+  }
+
+  return std::move(res_with_blobs);
 }
 
 Status ShardReader::GetNextById(const int64_t &task_id, const int32_t &consumer_id,

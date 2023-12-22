@@ -179,6 +179,6 @@ def populate_data(raw, blob, columns, blob_fields, schema):
         else:
             raw[field] = blob_data
 
-    for i, blob_field in enumerate(loaded_columns):
-        _render_raw(blob_field, bytes(blob[i]))
+    for blob_field in loaded_columns:
+        _render_raw(blob_field, bytes(blob[blob_field]))
     return raw
