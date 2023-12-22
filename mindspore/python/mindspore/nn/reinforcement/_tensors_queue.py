@@ -69,6 +69,7 @@ class TensorsQueue(Cell):
         self.tensors_q_clear = rl_ops.TensorsQueueClear()
         self.tensors_q_close = rl_ops.TensorsQueueClose()
         self.tensors_q_size = rl_ops.TensorsQueueSize()
+        self.__is_tensors_queue__ = True
 
     def put(self, element):
         """
@@ -102,6 +103,17 @@ class TensorsQueue(Cell):
         """
         element = self.tensors_q_pop(self.handle_)
         return element
+
+    def __graph_pop__(self):
+        """
+        Get one element int the front of the TensorsQueue, and remove it.
+        This is only used in graph mode.
+
+        Returns:
+            tuple(Tensors), the element in TensorsQueue.
+        """
+        element = self.tensors_q_pop(self.handle_)
+        return self.handle_, element
 
     def size(self):
         """
