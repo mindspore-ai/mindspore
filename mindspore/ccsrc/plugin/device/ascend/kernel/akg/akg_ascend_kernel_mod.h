@@ -28,10 +28,11 @@ class AkgKernelMod : public AscendKernelMod {
  public:
   explicit AkgKernelMod(const KernelPackPtr &kernel_pack, const AnfNodePtr &anf_node_ptr);
   ~AkgKernelMod() final {}
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  std::vector<TaskInfoPtr> GenTask(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &workspace,
+                                   const std::vector<KernelTensor *> &outputs, uint32_t stream_id) override;
   std::vector<size_t> GenParameters() override;
 
  private:

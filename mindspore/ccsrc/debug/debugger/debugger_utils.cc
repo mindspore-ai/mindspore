@@ -31,7 +31,7 @@
 constexpr int kFailure = 1;
 
 using mindspore::kernel::AddressPtr;
-using mindspore::kernel::KernelLaunchInfo;
+using mindspore::kernel::KernelLaunchAddr;
 using AddressPtrList = std::vector<mindspore::kernel::AddressPtr>;
 using KernelGraph = mindspore::session::KernelGraph;
 using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
@@ -65,7 +65,7 @@ std::vector<size_t> CheckRealOutput(const std::string &node_name, const size_t &
  * Runtime category: MindRT.
  * Description: Get kernel inputs from launch_info and load the inputs from device to host.
  */
-void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order, uint32_t root_graph_id,
+void LoadInputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint32_t exec_order, uint32_t root_graph_id,
                 const DeviceContext *device_context, const bool trans_flag) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(launch_info);
@@ -123,7 +123,7 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint
  * Runtime category: MindRT.
  * Description: Get kernel outputs from launch_info and load the inputs from device to host.
  */
-void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order,
+void LoadOutputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint32_t exec_order,
                  uint32_t root_graph_id, const DeviceContext *device_context, const bool trans_flag) {
   // get outputs
   auto kernel_outputs = launch_info->outputs_;
@@ -212,7 +212,7 @@ bool GetTransFlag() {
  * Description: Load inputs and outputs of the given node if needed and dump them if dump is enabled, then it performs
  * PostExecuteNode function on the given node for GPU.
  */
-void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order,
+void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint32_t exec_order,
                      const DeviceContext *device_context) {
   auto debugger = Debugger::GetInstance();
   if (!debugger) {

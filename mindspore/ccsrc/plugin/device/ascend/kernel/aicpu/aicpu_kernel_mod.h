@@ -64,13 +64,6 @@ class AicpuOpKernelMod : public KernelMod {
 
   void CloseTdtWingManQueue();
 
-  // =======================Old interface, will deleted after all kernel modified used new interface=================
-
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    MS_LOG(EXCEPTION) << "Deprecated aicpu kernel module launch interface.";
-  }
-
  protected:
   std::string args_;
   std::string ext_info_;

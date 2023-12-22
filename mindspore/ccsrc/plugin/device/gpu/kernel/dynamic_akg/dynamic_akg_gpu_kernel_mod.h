@@ -70,8 +70,8 @@ class DynamicAkgGpuKernelMod : public GpuKernelMod {
 
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
   void InitMappingInfo();
   void UpdateMappingInfo();
@@ -100,8 +100,8 @@ class DynamicAkgGpuKernelModDebug : public DynamicAkgGpuKernelMod {
  public:
   explicit DynamicAkgGpuKernelModDebug(const KernelPackPtr &kernel_pack) : DynamicAkgGpuKernelMod(kernel_pack) {}
   virtual ~DynamicAkgGpuKernelModDebug() {}
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
     auto ptr = reinterpret_cast<CUstream>(stream_ptr);
     CUresult before_launch = cuStreamSynchronize(ptr);
     const char *msg = nullptr;

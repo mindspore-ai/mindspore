@@ -91,10 +91,10 @@ void AscendEnableDynamicRuntimeCache(const session::KernelGraph *graph) {
 struct TbeLaunchKernelModRegister {
   TbeLaunchKernelModRegister() {
     KernelRuntime::tbe_call_setter(
-      [](const AnfNodePtr &kernel, const kernel::KernelMod *kernel_mod, std::vector<AddressPtr> *workspace_addr) {
+      [](const AnfNodePtr &kernel, const kernel::KernelMod *kernel_mod, std::vector<KernelTensor *> *workspaces) {
         MS_EXCEPTION_IF_NULL(kernel);
         MS_EXCEPTION_IF_NULL(kernel_mod);
-        MS_EXCEPTION_IF_NULL(workspace_addr);
+        MS_EXCEPTION_IF_NULL(workspaces);
         auto workspace_size_list = kernel_mod->GetWorkspaceSizeList();
         auto ms_context = MsContext::GetInstance();
         MS_EXCEPTION_IF_NULL(ms_context);
@@ -109,9 +109,8 @@ struct TbeLaunchKernelModRegister {
           if (!ret) {
             MS_LOG(EXCEPTION) << "MallocMem from memory pool failed. Node info :" << kernel->fullname_with_scope();
           }
-          AddressPtr workspace_addr_ptr =
-            std::make_shared<kernel::Address>(device_address_ptr->GetMutablePtr(), device_address_ptr->GetSize());
-          (void)workspace_addr->emplace_back(workspace_addr_ptr);
+          const KernelTensorPtr &workspace = device_address_ptr->kernel_tensor();
+          (void)workspaces->emplace_back(workspace.get());
         }
       });
   }
@@ -520,7 +519,7 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph &grap
     KernelLaunchInfo kernel_launch_info;
     device::KernelRuntime::GenLaunchArgs(*kernel_mod, kernel, &kernel_launch_info);
     // allocate workspace size
-    std::vector<AddressPtr> workspace_addr;
+    std::vector<KernelTensor *> workspaces;
     if (common::AnfAlgo::IsDynamicShape(kernel) && AnfAlgo::GetKernelType(kernel) == KernelType::TBE_KERNEL) {
       auto workspace_size_list = kernel_mod->GetWorkspaceSizeList();
       auto ms_context = MsContext::GetInstance();
@@ -538,15 +537,13 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph &grap
           MS_LOG(EXCEPTION) << "MallocMem from memory pool failed. Node info :" << kernel->fullname_with_scope();
         }
 
-        AddressPtr workspace_addr_ptr =
-          std::make_shared<kernel::Address>(device_address_ptr->GetMutablePtr(), device_address_ptr->GetSize());
-        (void)workspace_addr.emplace_back(workspace_addr_ptr);
+        const auto &workspace = device_address_ptr->kernel_tensor();
+        (void)workspaces.emplace_back(workspace.get());
       }
     } else {
-      workspace_addr = kernel_launch_info.workspaces_;
+      workspaces = kernel_launch_info.workspaces_;
     }
-
-    auto ret = kernel_mod->Launch(kernel_launch_info.inputs_, workspace_addr, kernel_launch_info.outputs_, stream_);
+    auto ret = kernel_mod->Launch(kernel_launch_info.inputs_, workspaces, kernel_launch_info.outputs_, stream_);
     if (!ret) {
       MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
       return false;

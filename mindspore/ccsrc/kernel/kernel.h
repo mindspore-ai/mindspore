@@ -24,6 +24,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <algorithm>
 #include "abstract/dshape.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "include/api/format.h"
@@ -195,7 +196,7 @@ using StreamType = void *;
 using abstract::AbstractBase;
 using device::DeviceSynchronizerPtr;
 // The memory info of kernel launch.
-struct KernelLaunchInfo {
+struct KernelLaunchAddr {
   AddressPtrList inputs_;
   AddressPtrList outputs_;
   AddressPtrList workspaces_;
@@ -749,11 +750,17 @@ enum class KernelModType {
   DynamicAkgCpuKernelMod,
 };
 
+// The info of kernel launch.
+struct KernelLaunchInfo {
+  std::vector<KernelTensor *> inputs_;
+  std::vector<KernelTensor *> outputs_;
+  std::vector<KernelTensor *> workspaces_;
+};
+
 enum KernelErrorCode : int { KRET_OK = 0, KRET_RESIZE_FAILED = 1, KRET_UNKNOWN_SHAPE = 2, KRET_UNKNOWN_OUT_SHAPE = 3 };
 
 class BACKEND_EXPORT KernelMod {
  public:
-  // ===========================New interface==========================================================
   KernelMod() = default;
   virtual ~KernelMod() = default;
 
@@ -799,21 +806,9 @@ class BACKEND_EXPORT KernelMod {
   virtual const std::vector<size_t> &GetOutputSizeList() const { return output_size_list_; }
   virtual const std::vector<size_t> &GetWorkspaceSizeList() const { return workspace_size_list_; }
 
-  const std::vector<AddressPtr> &GetInputsAddr() const { return inputs_addr_; }
-  const std::vector<AddressPtr> &GetWorkSpacesAddr() const { return workspaces_addr_; }
-  const std::vector<AddressPtr> &GetOutputsAddr() const { return outputs_addr_; }
-  void set_inputs_addr(const std::vector<AddressPtr> &addr) { inputs_addr_ = addr; }
-  void set_workspaces_addr(const std::vector<AddressPtr> &addr) { workspaces_addr_ = addr; }
-  void set_outputs_addr(const std::vector<AddressPtr> &addr) { outputs_addr_ = addr; }
-
   const PrimitivePtr &primitive() const { return primitive_; }
   const std::string &kernel_name() const { return kernel_name_; }
 
-  // =======================Old interface, will deleted after all kernel modified used new interface=================
-  virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-    return true;
-  }
   virtual std::vector<size_t> GenParameters() { return {}; }
   virtual void GenAtomicInitInfo(AtomicInitInfo *info) {}
 
@@ -833,10 +828,6 @@ class BACKEND_EXPORT KernelMod {
   // If output of kernel has a user_data, it needs to return true, and the framework will create user_data for it.
   virtual bool need_user_data() const { return false; }
 
-  bool Launch(const KernelLaunchInfo &kernel_launch_address, void *stream_ptr) {
-    return Launch(kernel_launch_address.inputs_, kernel_launch_address.workspaces_, kernel_launch_address.outputs_,
-                  stream_ptr);
-  }
   int32_t task_id() const { return task_id_; }
   bool use_kernel_tensor() const { return use_kernel_tensor_; }
   void set_use_kernel_tensor(bool use_kernel_tensor) { use_kernel_tensor_ = use_kernel_tensor; }
@@ -851,18 +842,13 @@ class BACKEND_EXPORT KernelMod {
   }
 
  protected:
-  // ===========================New member==========================================================
   std::string kernel_name_;
   PrimitivePtr primitive_;
   uint32_t device_id_ = 0;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
-  std::vector<AddressPtr> inputs_addr_;
-  std::vector<AddressPtr> workspaces_addr_;
-  std::vector<AddressPtr> outputs_addr_;
 
-  // =======================Old member, will deleted after all kernel modified used new interface=================
   int32_t task_id_ = -1;
   bool use_kernel_tensor_{false};
 };
@@ -928,6 +914,8 @@ inline T *GetDeviceAddress(const std::vector<KernelTensor *> &addr_list, size_t 
 BACKEND_EXPORT std::vector<std::vector<int64_t>> GetShapes(const std::vector<KernelTensorPtr> &tensors);
 // ===========================Old interface===========================
 BACKEND_EXPORT std::vector<std::vector<int64_t>> GetShapes(const std::vector<KernelTensor *> &tensors);
+
+BACKEND_EXPORT void ConvertLaunchInfoToAddr(const KernelLaunchInfo &launch_info, KernelLaunchAddr *mem_info);
 
 template <typename T>
 inline bool CheckNullInput(const std::vector<T> &input_shape) {

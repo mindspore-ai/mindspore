@@ -740,5 +740,18 @@ std::vector<std::vector<int64_t>> GetShapes(const std::vector<KernelTensor *> &t
   }
   return shapes;
 }
+
+void ConvertLaunchInfoToAddr(const KernelLaunchInfo &launch_info, KernelLaunchAddr *mem_info) {
+  (mem_info->inputs_).clear();
+  (mem_info->outputs_).clear();
+  (mem_info->workspaces_).clear();
+  std::transform((launch_info.inputs_).begin(), (launch_info.inputs_).end(), std::back_inserter(mem_info->inputs_),
+                 [](const auto &input) { return std::make_shared<Address>(input->device_ptr(), input->size()); });
+  std::transform(
+    (launch_info.workspaces_).begin(), (launch_info.workspaces_).end(), std::back_inserter(mem_info->workspaces_),
+    [](const auto &workspace) { return std::make_shared<Address>(workspace->device_ptr(), workspace->size()); });
+  std::transform((launch_info.outputs_).begin(), (launch_info.outputs_).end(), std::back_inserter(mem_info->outputs_),
+                 [](const auto &output) { return std::make_shared<Address>(output->device_ptr(), output->size()); });
+}
 }  // namespace kernel
 }  // namespace mindspore

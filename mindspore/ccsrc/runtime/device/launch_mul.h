@@ -42,7 +42,7 @@ class BACKEND_EXPORT LaunchMul {
   virtual void CopyHostMemToDevice(size_t origin_size, size_t dst_size) = 0;
 
   std::shared_ptr<session::KernelGraph> ObtainMulKernelGraph() const;
-  kernel::KernelMod *ObtainLaunchMulKernelMod();
+  CNodePtr ObtainLaunchMulKernelMod();
   void ObtainMulInputsAddr();
   void FreeInputDeviceMemory();
 
