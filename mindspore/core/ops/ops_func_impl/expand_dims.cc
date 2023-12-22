@@ -40,7 +40,9 @@ BaseShapePtr ExpandDimsFuncImpl::InferShape(const PrimitivePtr &primitive,
   } else {
     auto axis = axis_value_scalar.value();
     axis = axis < 0 ? axis + SizeToLong(output_rank) : axis;
-    MS_CHECK_VALUE(axis >= 0, primitive->name() + "error: axis value invalid.");
+    MS_CHECK_VALUE(axis >= 0 && axis <= SizeToLong(input_x_rank),
+                   primitive->name() + "error: axis value invalid. axis: " + std::to_string(axis) +
+                     ", input dims: " + std::to_string(input_x_rank));
     expand_dims_shape.assign(input_x_shape_vec.begin(), input_x_shape_vec.end());
     (void)expand_dims_shape.insert(expand_dims_shape.begin() + axis, 1);
   }

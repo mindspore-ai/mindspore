@@ -30,6 +30,9 @@ void SliceInputsCheck(const std::vector<int64_t> &tensor_shape, const std::vecto
     MS_EXCEPTION(ValueError) << "For Slice, the shape of input|begin|size must be equal.";
   }
 
+  (void)CheckAndConvertUtils::CheckInteger("rank of input_x", SizeToLong(tensor_shape.size()), kGreaterThan, 0,
+                                           "Slice");
+
   for (size_t idx = 0; idx < tensor_shape.size(); idx++) {
     if (begin[idx] < 0 || begin[idx] >= tensor_shape[idx]) {
       MS_EXCEPTION(ValueError) << "For Slice, the begin is invalid.";
