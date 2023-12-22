@@ -71,13 +71,13 @@ def current_stream():
     """
     Return current stream used on this device.
     """
-    return current_stream_()
+    return Stream(current_stream_())
 
 def default_stream():
     """
     Return default stream on this device.
     """
-    return default_stream_()
+    return Stream(default_stream_())
 
 class StreamCtx():
     """

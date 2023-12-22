@@ -29,6 +29,7 @@ class StreamPy {
   StreamPy(int priority, int stream_id);
   StreamPy(device::DeviceContext *device_ctx, const size_t &stream_id)
       : device_ctx_(device_ctx), stream_id_(stream_id) {}
+  explicit StreamPy(const StreamPy &stream) : device_ctx_(stream.device_ctx()), stream_id_(stream.stream_id()) {}
   ~StreamPy();
 
   // Query if the event has completed

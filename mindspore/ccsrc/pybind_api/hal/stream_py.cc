@@ -116,6 +116,7 @@ void RegStream(py::module *m) {
   (void)py::class_<StreamPy, std::shared_ptr<StreamPy>>(*m, "Stream")
     .def(py::init<int>())
     .def(py::init<int, int>())
+    .def(py::init<const StreamPy &>())
     .def("query", &StreamPy::Query, R"mydelimiter(
                              Query this stream's completion status.
                              )mydelimiter")

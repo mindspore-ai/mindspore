@@ -176,3 +176,35 @@ def test_hal_grad_stream():
     with ms.hal.StreamCtx(s1):
         grad_fn(a)
     s1.synchronize()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_hal_cur_stream():
+    """
+    Feature: Hal stream api.
+    Description: Test hal.cur_stream api.
+    Expectation: hal.cur_stream api performs as expected in grad.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+
+    s1 = ms.hal.current_stream()
+    s1.record_event()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_hal_default_stream():
+    """
+    Feature: Hal stream api.
+    Description: Test hal.cur_stream api.
+    Expectation: hal.cur_stream api performs as expected in grad.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+
+    s1 = ms.hal.default_stream()
+    s1.record_event()
