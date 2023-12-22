@@ -30,7 +30,7 @@ std::make_shared<pynative::PyBoostDeviceTask>([this, op, ${call_args_with_tensor
     PyBoostUtils::GetAddressInfo(device_context, {op->output_abs()}, outputs);
 
   // KernelMod init
-  auto kernel_mod = PyBoostUtils::CreateKernelMod(primitive(), op_name(), op->device_context(),
+  auto kernel_mod = PyBoostUtils::CreateKernelMod(primitive(), primitive()->name(), op->device_context(),
                                                   input_address_info.first, output_address_info.first);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   // KernelMod resize
