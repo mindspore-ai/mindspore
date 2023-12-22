@@ -549,7 +549,7 @@ def _convert_cell_to_param_list(save_obj, integrated_save, append_dict, choice_f
         if phase in save_obj.compile_cache and _executor.has_compiled(phase):
             random_byte = _executor._graph_executor.get_random_status(phase)
             param_list.append({"name": "random_op", "data": random_byte})
-        append_dict.pop("random_op")
+            append_dict.pop("random_op")
     for (key, value) in param_dict.items():
         each_param = {"name": key}
         if isinstance(value, MapParameter):
@@ -1307,10 +1307,6 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
 
     if param_not_load and not strict_load:
         _load_dismatch_prefix_params(net, parameter_dict, param_not_load, strict_load)
-
-    logger.debug("Params not matched(in net but not in parameter_dict):")
-    for param_name in param_not_load:
-        logger.debug("%s", param_name)
 
     logger.info("Loading parameters into net is finished.")
     if param_not_load:

@@ -457,11 +457,13 @@ class TestUpdateMethodNet(nn.Cell):
         return output1, output2, output3
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_celldict_update_method(mode):
     """

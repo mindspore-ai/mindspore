@@ -1072,16 +1072,16 @@ class Cell(Cell_):
             Parameter(name=bias, shape=(3,), dtype=Int64, requires_grad=True)
         """
         if not param_name:
-            raise KeyError("For `insert_param_to_cell`, the argument `param_name` should not be None.")
+            raise KeyError(f"For 'insert_param_to_cell', the argument 'param_name' should not be None.")
         if check_name_contain_dot and '.' in param_name:
-            raise KeyError("For `insert_param_to_cell`, the argument `param_name` should not contain.")
+            raise KeyError(f"For 'insert_param_to_cell', the argument 'param_name' should not contain'.' ")
         if '_params' not in self.__dict__:
-            raise AttributeError("For `insert_param_to_cell`, please call Cell.__init__() firstly.")
+            raise AttributeError(f"For 'insert_param_to_cell', please call Cell.__init__() firstly.")
         if hasattr(self, param_name) and param_name not in self._params:
-            raise KeyError("For `insert_param_to_cell`, the {} parameter already exists in the network. Cannot "
-                           "insert another parameter with the same name.".format(param_name))
+            raise KeyError(f"For 'insert_param_to_cell', the {param_name} parameter already exists in the network."
+                           f"Cannot insert another parameter with the same name.")
         if not isinstance(param, Parameter) and param is not None:
-            raise TypeError(f"For `insert_param_to_cell`, the argument `param` must be `Parameter` if not None, "
+            raise TypeError(f"For 'insert_param_to_cell', the argument 'param' must be 'Parameter' if not None, "
                             f"but got {type(param)}.")
         if isinstance(param, Parameter) and param.name == PARAMETER_NAME_DEFAULT:
             param.name = param_name
@@ -1138,16 +1138,16 @@ class Cell(Cell_):
               >
         """
         if not isinstance(child_name, str):
-            raise TypeError(f"For `insert_child_to_cell`, the type of parameter `child_name` must be str, "
+            raise TypeError(f"For 'insert_child_to_cell', the type of parameter 'child_name' must be str, "
                             f"but got {type(child_name)}.")
         if not child_name or '.' in child_name:
-            raise KeyError("For `insert_child_to_cell`, the parameter `child_name` can not be None and "
-                           "can not contain.")
+            raise KeyError(f"For 'insert_child_to_cell', the parameter 'child_name' can not be None and "
+                           "can not contain '.' ")
         if hasattr(self, child_name) and child_name not in self._cells:
-            raise KeyError("For `insert_child_to_cell`, the {} child cell already exists in the network. Cannot "
-                           "insert another child cell with the same name.".format(child_name))
+            raise KeyError(f"For 'insert_child_to_cell', the {child_name} child cell already exists in the network."
+                           f"Cannot insert another child cell with the same name.")
         if not isinstance(child_cell, Cell) and child_cell is not None:
-            raise TypeError(f"For `insert_child_to_cell`, the argument `child_cell` must be `Cell` if not None, "
+            raise TypeError(f"For 'insert_child_to_cell', the argument 'child_cell' must be 'Cell' if not None, "
                             f"but got type {type(child_cell)}.")
         self._cells[child_name] = child_cell
 
