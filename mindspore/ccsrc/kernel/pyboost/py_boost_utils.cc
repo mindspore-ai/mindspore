@@ -258,20 +258,6 @@ void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, const abstract
   }
 }
 
-void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs,
-                                   size_t index, std::vector<kernel::KernelTensor *> *kernel_tensor_list,
-                                   device::DeviceAddressPtrList *device_address_list,
-                                   const std::optional<tensor::TensorPtr> &tensor) {
-  if (tensor.has_value()) {
-    GetKernelTensor(device_context, input_abs, index, kernel_tensor_list, device_address_list, tensor.value());
-  } else {
-    MS_EXCEPTION_IF_NULL(kernel_tensor_list);
-    MS_EXCEPTION_IF_NULL(device_address_list);
-    (void)device_address_list->emplace_back(nullptr);
-    (void)kernel_tensor_list->emplace_back(nullptr);
-  }
-}
-
 device::DeviceAddressPtrList PyBoostUtils::CreateWorkSpaceDeviceAddress(const KernelModPtr &kernel_mod,
                                                                         const device::DeviceContext *device_context,
                                                                         const std::string &op_name) {

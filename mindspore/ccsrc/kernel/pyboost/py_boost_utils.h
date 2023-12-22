@@ -85,10 +85,26 @@ class BACKEND_EXPORT PyBoostUtils {
                               std::vector<kernel::KernelTensor *> *kernel_tensor_list,
                               device::DeviceAddressPtrList *device_address_list, const TensorPtr &tensor);
 
+  template <typename T>
   static void GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs, size_t index,
                               std::vector<kernel::KernelTensor *> *kernel_tensor_list,
-                              device::DeviceAddressPtrList *device_address_list,
-                              const std::optional<tensor::TensorPtr> &tensor);
+                              device::DeviceAddressPtrList *device_address_list, const std::optional<T> &val) {
+    if (val.has_value()) {
+      GetKernelTensor(device_context, input_abs, index, kernel_tensor_list, device_address_list, val.value());
+    } else {
+      // Construct none kernel tensor
+      MS_EXCEPTION_IF_NULL(kernel_tensor_list);
+      MS_EXCEPTION_IF_NULL(device_address_list);
+
+      const auto &kernel_tensor = std::make_shared<kernel::KernelTensor>(
+        std::make_shared<abstract::TensorShape>(ShapeVector()), kTypeNone, kNone, nullptr, 0, kOpFormat_DEFAULT,
+        kTypeNone->type_id(), ShapeVector(), device_context->device_context_key().device_name_,
+        device_context->device_context_key().device_id_);
+      (void)kernel_tensor_list->emplace_back(kernel_tensor.get());
+      auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+      (void)device_address_list->emplace_back(device_address);
+    }
+  }
 
   static void GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs, size_t index,
                               std::vector<kernel::KernelTensor *> *kernel_tensor_list,
