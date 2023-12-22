@@ -905,7 +905,6 @@ inline T *GetDeviceAddress(const std::vector<KernelTensor *> &addr_list, size_t 
   if (addr_list[index]->size() == 0) {
     MS_LOG(INFO) << "The size of device address is zero, address index: " << index
                  << ", and the length of 'addr_list' is " << addr_list.size();
-    return nullptr;
   }
   return reinterpret_cast<T *>(addr_list[index]->device_ptr());
 }
