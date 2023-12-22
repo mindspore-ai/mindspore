@@ -6,7 +6,8 @@ mindspore.ops.eye
     创建一个主对角线上元素为1，其余元素为0的Tensor。
 
     .. note::
-        结合ReverseV2算子可以得到一个反对角线为1的Tensor，但是目前ReverseV2算子只支持Ascend和GPU平台。
+        - 结合ReverseV2算子可以得到一个反对角线为1的Tensor，但是目前ReverseV2算子只支持Ascend和GPU平台。
+        - Ascend平台支持返回Tensor的数据类型包括float16, float32, int8, int16, int32, int64, uint8和bool。
 
     参数：
         - **n** (int) - 指定返回Tensor的行数。仅支持常量值。
