@@ -77,7 +77,7 @@ const AnfNodePtr TransDependValueToInt32::Process(const FuncGraphPtr &func_graph
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   static const std::set<std::string> kSkipNodeName = {kScatterNdOpName, kAdaptiveAvgPool2DGradOpName,
-                                                      kFlashPromptFlashAttentionOpName};
+                                                      kFlashPromptFlashAttentionOpName, kRangeOpName};
   auto node_name = AnfUtils::GetCNodeName(cnode);
   if (kSkipNodeName.find(node_name) != kSkipNodeName.end()) {
     return nullptr;
