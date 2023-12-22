@@ -21,11 +21,11 @@
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
 #include "include/common/utils/convert_utils.h"
-#include "runtime/base.h"
 #include <nlohmann/json.hpp>
-#include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
-#include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
+#include "toolchain/prof_callback.h"
+#include "toolchain/prof_common.h"
+#include "runtime/base.h"
 
 using mindspore::device::ascend::ProfilingUtils;
 
@@ -132,8 +132,8 @@ bool ProfilingManager::InitProfiling(const std::string &profiling_path, uint32_t
 }
 
 bool ProfilingManager::ProfRegisterCtrlCallback() const {
-  rtError_t rt_ret = MsprofRegisterCallback(GE, CtrlCallbackHandle);
-  if (rt_ret != RT_ERROR_NONE) {
+  aclError rt_ret = MsprofRegisterCallback(GE, CtrlCallbackHandle);
+  if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call rtProfRegisterCtrlCallback failed.";
     return false;
   }
@@ -141,18 +141,18 @@ bool ProfilingManager::ProfRegisterCtrlCallback() const {
   return true;
 }
 
-rtError_t CtrlCallbackHandle(uint32_t rt_type, void *data, uint32_t /* len */) {
-  if (rt_type == RT_PROF_CTRL_REPORTER) {
+aclError CtrlCallbackHandle(uint32_t rt_type, void *data, uint32_t /* len */) {
+  if (rt_type == PROF_CTRL_REPORTER) {
     ProfilingManager::GetInstance().SetMsprofReporterCallback(reinterpret_cast<MsprofReporterCallback>(data));
     MS_LOG(INFO) << "Set MsprofReporterCallback success.";
-  } else if (rt_type == RT_PROF_CTRL_SWITCH) {
+  } else if (rt_type == PROF_CTRL_SWITCH) {
     Status ret = ProfCtrlSwitchHandle(data);
     if (ret != PROF_SUCCESS) {
       MS_LOG(ERROR) << "Start runtime profiler failed.";
     }
   }
 
-  return RT_ERROR_NONE;
+  return ACL_ERROR_NONE;
 }
 
 Status ProfilingManager::CallMsprofReport(const NotNull<ReporterData *> reporter_data) const {

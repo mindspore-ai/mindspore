@@ -217,9 +217,6 @@ void AsyncDataDumpUninit() {
         mindspore::ascend::AscendAsyncDumpManager::GetInstance().WaitForWriteFileFinished();
       }
     }
-    if (AdxDataDumpServerUnInit() != 0) {
-      MS_LOG(ERROR) << "Adx data dump server uninit failed";
-    }
   }
 }
 #endif

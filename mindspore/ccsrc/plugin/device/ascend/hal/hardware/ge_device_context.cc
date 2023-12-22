@@ -547,9 +547,6 @@ void GeDeviceContext::InitDump() const {
   if (dump_parser.FileFormatIsNpy()) {
     (void)Adx::AdxRegDumpProcessCallBack(mindspore::ascend::DumpDataCallBack);
   }
-  if (AdxDataDumpServerInit() != 0) {
-    MS_LOG(EXCEPTION) << "Adx data dump server init failed";
-  }
 }
 
 void GeDeviceContext::FinalizeDump() const {
@@ -561,8 +558,8 @@ void GeDeviceContext::FinalizeDump() const {
   if (dump_parser.FileFormatIsNpy() && dump_parser.IsTensorDump()) {
     mindspore::ascend::AscendAsyncDumpManager::GetInstance().WaitForWriteFileFinished();
   }
-  if (AdxDataDumpServerUnInit() != 0) {
-    MS_LOG(EXCEPTION) << "Adx data dump server init failed";
+  if (dump_parser.FileFormatIsNpy()) {
+    Adx::AdxUnRegDumpProcessCallBack();
   }
 }
 
