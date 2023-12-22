@@ -373,6 +373,7 @@ bool DataTypeTransfer::CastKernel(const TypeIdArgs &args, void *dst, int64_t dat
     {DataTypeTransMode::FROM_INT32_TO_INT64, TransDataSrc2Dst<int32_t, int64_t>},
     {DataTypeTransMode::FROM_INT64_TO_INT16, TransDataSrc2Dst<int64_t, int16_t>},
     {DataTypeTransMode::FROM_INT64_TO_INT32, TransDataSrc2Dst<int64_t, int32_t>},
+    {DataTypeTransMode::FROM_INT64_TO_FLOAT, TransDataSrc2Dst<int64_t, float>},
     {DataTypeTransMode::FROM_FLOAT16_TO_UINT8, TransDataSrc2Dst<float16, uint8_t>},
     {DataTypeTransMode::FROM_FLOAT16_TO_INT32, TransDataSrc2Dst<float16, int32_t>},
     {DataTypeTransMode::FROM_FLOAT_TO_INT32, TransDataSrc2Dst<float, int32_t>},
