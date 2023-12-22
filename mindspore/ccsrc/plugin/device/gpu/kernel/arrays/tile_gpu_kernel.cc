@@ -46,9 +46,11 @@ bool TileGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std
 }
 
 int TileGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+  auto ret = KernelMod::Resize(inputs, outputs);
+  if (ret != KRET_OK) {
     return ret;
   }
+
   auto input_shape = inputs[kIndex0]->GetShapeVector();
   auto output_shape = outputs[kIndex0]->GetShapeVector();
   input_shape_.clear();
@@ -58,7 +60,7 @@ int TileGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
   is_null_input_ =
     CHECK_SHAPE_NULL(input_shape_, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape_, kernel_name_, "output");
   if (is_null_input_) {
-    return true;
+    return KRET_OK;
   }
   if (output_shape_.size() < kTileOutputsNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output cannot be less than 1, but got "
