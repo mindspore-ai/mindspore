@@ -242,7 +242,7 @@ class NegStepSlice(Cell):
         return xshape[::step]
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_set_inputs_shape_neg_step_slice():
@@ -415,7 +415,7 @@ class TupleMulInt(Cell):
         return xshape * t
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_set_inputs_shape_tuple_mul_int():
