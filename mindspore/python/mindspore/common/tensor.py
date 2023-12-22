@@ -1781,20 +1781,20 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
     def reshape(self, *shape):
         r"""
-        Rearranges the input Tensor based on the given shape.
+        Rearranges the input Tensor based on the given `shape` .
 
-        The 'shape' can only have one -1 at most, in which case it's inferred from the remaining dimensions and
+        The `shape` can only have one -1 at most, in which case it's inferred from the remaining dimensions and
         the number of elements in the input.
 
         Args:
-            shape (Union[int, tuple[int], list[int]]): If 'shape' is a tuple or list, its elements should be
+            shape (Union[int, tuple[int], list[int]]): If `shape` is a tuple or list, its elements should be
                 integers, and only constant value is allowed. i.e., :math:`(y_1, y_2, ..., y_S)`.
 
         Returns:
-            Tensor, If the given 'shape' does not contain -1, the the 'shape' of tensor is :math:`(y_1, y_2, ..., y_S)`.
-                If the k-th position in the given 'shape' is -1, the the 'shape' of tensor is :math:`(y_1, ..., y_{k-1},
-                \frac{\prod_{i=1}^{R}x_{i}}{y_1\times ...\times y_{k-1}\times y_{k+1}\times...\times y_S} , y_{k+1},
-                ..., y_S)`.
+            Tensor, If the given `shape` does not contain -1, the `shape` of tensor is :math:`(y_1, y_2, ..., y_S)`.
+            If the k-th position in the given `shape` is -1, the `shape` of tensor is :math:`(y_1, ..., y_{k-1},
+            \frac{\prod_{i=1}^{R}x_{i}}{y_1\times ...\times y_{k-1}\times y_{k+1}\times...\times y_S} , y_{k+1},
+            ..., y_S)`, in where the shape of input tensor is :math:`(x_1, x_2, ..., x_R)`.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
