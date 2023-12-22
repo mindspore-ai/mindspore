@@ -89,7 +89,7 @@ class _Pyboost${class_name}Prim(${class_name}Prim_):
         return _convert_stub(super().__call__(${input_args}))
 
 
-${func_name}_ = _Pyboost${class_name}Prim()
+${func_impl_name}_impl = _Pyboost${class_name}Prim()
 """)
 
 IMPORT_PYBOOST_PRIM_HEADER = f"""
@@ -203,7 +203,7 @@ def ${func_name}(${func_args}):
     r\"\"\"
     ${description}
     \"\"\"
-    return ${prim_func}_(${input_args})\n\n""")
+    return ${func_impl_name}_impl(${input_args})\n\n""")
 
 OP_PROTO_TEMPLATE = CppTemplate("""
 ${class_name}FuncImpl g${class_name}FuncImpl;
