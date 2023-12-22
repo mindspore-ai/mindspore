@@ -170,7 +170,7 @@ class SummaryLandscape:
     It can create landscape in PCA direction or random direction by calculating loss.
 
     Note:
-        1. SummaryLandscape only supports Linux systems.
+        SummaryLandscape only supports Linux systems.
 
     Args:
         summary_dir (str): The path of summary is used to save the model weight,
