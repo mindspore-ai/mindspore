@@ -28,6 +28,7 @@
 #include "ir/dtype.h"
 #include "ops/op_def.h"
 #include "mindspore/core/utils/flags.h"
+#include "mindspore/core/ops/arithmetic_ops.h"
 
 namespace mindspore {
 // namespace to support composite operators definition
@@ -94,7 +95,7 @@ bool GetTensorOrScalarTypeInfo(const TypePtr &arg_type_origin, TypeId *arg_type_
   return false;
 }
 
-TypeId GetMaxTypeIdForNumber(TypeId max_type_id, bool has_int8, bool has_scalar_int64, bool has_scalar_float32) {
+TypeId GetMaxTypeId(TypeId max_type_id, bool has_int8, bool has_scalar_int64, bool has_scalar_float32) {
   if (max_type_id == kNumberTypeUInt8 && has_int8) {
     max_type_id = kNumberTypeInt16;
   }
@@ -116,7 +117,7 @@ TypeId GetMaxTypeIdForNumber(TypeId max_type_id, bool has_int8, bool has_scalar_
   return max_type_id;
 }
 
-TypeId GetMaxTypeId(const std::vector<TypePtr> &input_types, const std::vector<size_t> &indices) {
+TypeId GetMaxTypeIdForTensor(const std::vector<TypePtr> &input_types, const std::vector<size_t> &indices) {
   TypeId max_type_id = kTypeUnknown;
   size_t max_type_number = 0;
   bool has_int8 = false;
@@ -151,11 +152,35 @@ TypeId GetMaxTypeId(const std::vector<TypePtr> &input_types, const std::vector<s
       SetMaxType(&max_type_id, &max_type_number, arg_type_id, it->second);
     }
   }
-  return GetMaxTypeIdForNumber(max_type_id, has_int8, has_scalar_int64, has_scalar_float32);
+  return GetMaxTypeId(max_type_id, has_int8, has_scalar_int64, has_scalar_float32);
+}
+
+TypeId GetMaxTypeIdForNumber(const std::vector<TypePtr> &input_types, const std::vector<size_t> &indices) {
+  TypeId max_type_id = kTypeUnknown;
+  size_t max_type_number = 0;
+  for (const auto &index : indices) {
+    TypeId arg_type_id = kTypeUnknown;
+    TypeId arg_type = kTypeUnknown;
+    if (!GetTensorOrScalarTypeInfo(input_types[index], &arg_type_id, &arg_type)) {
+      continue;
+    }
+    auto it = type_map.find(arg_type_id);
+    if (it == type_map.end()) {
+      continue;
+    }
+    if (max_type_id == kTypeUnknown) {
+      SetMaxType(&max_type_id, &max_type_number, arg_type_id, it->second);
+      continue;
+    }
+    if (it->second > max_type_number) {
+      SetMaxType(&max_type_id, &max_type_number, arg_type_id, it->second);
+    }
+  }
+  return max_type_id;
 }
 
 // Get the largest type of index in the same SignatureEnumDType of arguments.
-using MaxTypeMap = std::map<SignatureEnumDType, TypeId>;
+using MaxTypeMap = std::map<SignatureEnumDType, std::pair<TypeId, bool>>;
 MaxTypeMap GetMaxDtype(const std::vector<SignatureEnumDType> &dtypes, const std::vector<TypePtr> &input_types) {
   // record index for signature.dtypes of the same type
   // eg. [T, T1, T, T2, T, T1, T3] -> {{T:(0,2,4)}, {T1:(1,5)}, {T2:(3)}, {T3:(6)}}
@@ -168,7 +193,7 @@ MaxTypeMap GetMaxDtype(const std::vector<SignatureEnumDType> &dtypes, const std:
       it->second.push_back(i);
     }
   }
-  std::map<SignatureEnumDType, TypeId> dst_type;
+  MaxTypeMap dst_type;
   for (auto it = type_indices.cbegin(); it != type_indices.cend(); (void)++it) {
     auto type = it->first;
     auto indices = it->second;
@@ -176,19 +201,19 @@ MaxTypeMap GetMaxDtype(const std::vector<SignatureEnumDType> &dtypes, const std:
     if (indices.size() < 2) {
       continue;
     }
-    bool has_tensor = false;
-    for (const auto &index : indices) {
-      auto arg_value = input_types[index];
-      if (arg_value->isa<TensorType>()) {
-        has_tensor = true;
-        break;
-      }
-    }
-    if (!has_tensor) {
-      (void)dst_type.insert(std::make_pair(type, kTypeUnknown));
+    bool has_tensor = std::any_of(indices.begin(), indices.end(),
+                                  [&input_types](size_t index) { return input_types[index]->isa<TensorType>(); });
+    if (has_tensor) {
+      (void)dst_type.insert(std::make_pair(type, std::make_pair(GetMaxTypeIdForTensor(input_types, indices), false)));
       continue;
     }
-    (void)dst_type.insert(std::make_pair(type, GetMaxTypeId(input_types, indices)));
+    bool has_all_number = std::all_of(indices.begin(), indices.end(),
+                                      [&input_types](size_t index) { return input_types[index]->isa<Number>(); });
+    if (has_all_number) {
+      (void)dst_type.insert(std::make_pair(type, std::make_pair(GetMaxTypeIdForNumber(input_types, indices), true)));
+      continue;
+    }
+    (void)dst_type.insert(std::make_pair(type, std::make_pair(kTypeUnknown, false)));
   }
   return dst_type;
 }
@@ -198,6 +223,12 @@ AnfNodePtr DoCast(const AnfNodePtr &param, const TypeId &type_id, const FuncGrap
   const auto prim_cast = prim::GetPythonOps("cast", "mindspore.ops.functional");
   auto dtype_node = NewValueNode(TypeIdToType(type_id));
   return graph->NewCNodeAfter(param, {NewValueNode(prim_cast), param, dtype_node});
+}
+
+AnfNodePtr DoScalarCast(const AnfNodePtr &param, const TypeId &type_id, const FuncGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto dtype_node = NewValueNode(TypeIdToType(type_id));
+  return graph->NewCNodeAfter(param, {NewValueNode(prim::kPrimScalarCast), param, dtype_node});
 }
 
 void DoAutoCast(const ValuePtr &func, const std::vector<Signature> &signature, const std::vector<TypePtr> &input_types,
@@ -210,11 +241,16 @@ void DoAutoCast(const ValuePtr &func, const std::vector<Signature> &signature, c
     return;
   }
   // Stat the index of the arguments with the largest type in the same SignatureEnumDType.
-  std::map<SignatureEnumDType, TypeId> dst_type = GetMaxDtype(dtypes, input_types);
+  MaxTypeMap dst_type = GetMaxDtype(dtypes, input_types);
   // Identify which arg requires auto cast
   for (size_t i = 0; i < input_types.size(); ++i) {
     auto it = dst_type.find(dtypes[i]);
-    if (it == dst_type.end() || it->second == kTypeUnknown) {
+    if (it == dst_type.end()) {
+      continue;
+    }
+    TypeId max_type_id = (it->second).first;
+    bool has_all_number = (it->second).second;
+    if (max_type_id == kTypeUnknown) {
       continue;
     }
     auto rw_it = write_indices.find(i);
@@ -228,8 +264,8 @@ void DoAutoCast(const ValuePtr &func, const std::vector<Signature> &signature, c
       continue;
     }
     if (is_write) {
-      if (arg_type_id != it->second) {
-        auto it_name_map = type_name_map().find(it->second);
+      if (arg_type_id != max_type_id) {
+        auto it_name_map = type_name_map().find(max_type_id);
         if (it_name_map == type_name_map().cend()) {
           continue;
         }
@@ -237,12 +273,18 @@ void DoAutoCast(const ValuePtr &func, const std::vector<Signature> &signature, c
       }
       continue;
     }
-    if ((arg_value->isa<TensorType>()) && arg_type_id == it->second) {
+    if (has_all_number) {
+      if (arg_type_id != max_type_id) {
+        (*op_inputs)[i] = DoScalarCast((*op_inputs)[i], max_type_id, graph);
+      }
+      continue;
+    }
+    if (arg_value->isa<TensorType>() && arg_type_id == max_type_id) {
       continue;
     }
     MS_LOG(DEBUG) << "Do cast for inputs [" << i << "]: " << (*op_inputs)[i]->ToString() << " from " << arg_type_id
-                  << " to " << it->second << ".";
-    (*op_inputs)[i] = DoCast((*op_inputs)[i], it->second, graph);
+                  << " to " << max_type_id << ".";
+    (*op_inputs)[i] = DoCast((*op_inputs)[i], max_type_id, graph);
   }
 }
 

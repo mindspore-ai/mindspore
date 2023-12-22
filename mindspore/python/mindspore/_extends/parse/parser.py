@@ -767,17 +767,6 @@ def get_args(node):
     return args
 
 
-def get_primitive_signatures(prim_name):
-    """Get primitive signatures."""
-    if not hasattr(ops, prim_name):
-        raise ValueError(f"Unable to find {prim_name} in mindspore.ops.")
-    prim = getattr(ops, prim_name)
-    if not hasattr(prim, "__mindspore_signature__"):
-        return ()
-    signatures = getattr(prim, "__mindspore_signature__")
-    return ops.Primitive._fill_signature(prim, signatures)
-
-
 def _convert_stub_tensor(data):
     """Convert stub tensor output to tensor"""
     if is_stub_tensor(data):

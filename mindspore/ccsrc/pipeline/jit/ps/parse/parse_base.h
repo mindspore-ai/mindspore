@@ -100,7 +100,6 @@ const char PYTHON_MOD_GET_SCRIPT_ID_ATTRS[] = "get_script_id_attrs";
 const char PYTHON_MOD_PYTHON_ISINSTANCE[] = "python_isinstance";
 const char PYTHON_MOD_MS_ISINSTANCE[] = "ms_isinstance";
 const char PYTHON_MOD_CONVERT_CLASS_TO_FUNCTION[] = "convert_class_to_function";
-const char PYTHON_MOD_GET_PRIMITIVE_SIGNATURES[] = "get_primitive_signatures";
 const char PYTHON_MOD_GET_CONST_ABS[] = "get_const_abs";
 const char PYTHON_MOD_GET_CONST_ROUND[] = "get_const_round";
 const char PYTHON_MOD_GET_CONST_LEN[] = "get_const_len";

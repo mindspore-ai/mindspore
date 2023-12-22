@@ -2411,19 +2411,6 @@ void AddLabelsToPrimitiveFunction(const PrimitivePtr &prim_func) {
   }
 }
 
-void AddSignaturesToPrimitiveFunction(const PrimitivePtr &prim_func) {
-  // Set primitive signatures.
-  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-  py::tuple prim_signatures =
-    python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_PRIMITIVE_SIGNATURES, prim_func->name());
-  std::vector<Signature> signatures;
-  for (const auto &sign : prim_signatures) {
-    (void)signatures.emplace_back(sign.cast<Signature>());
-  }
-  prim_func->set_signatures(signatures);
-  prim_func->set_has_signature(!signatures.empty());
-}
-
 ValueNodePtr GetArgDefaultValue(const std::string &prim_name, const std::string &arg_name) {
   py::module mod = py::module::import(parse::PYTHON_MOD_PRIMITIVE_OP_CREATE_INSTANCE_HELPER_MODULE);
   if (!py::hasattr(mod, parse::PYTHON_MOD_PRIMITIVE_OP_DEFAULT_VALUE_DICT)) {
@@ -2606,7 +2593,9 @@ EvalResultPtr DoTransPrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePt
   // Handle primitive labels.
   AddLabelsToPrimitiveFunction(prim_func);
   // Handle primitive signatures.
-  AddSignaturesToPrimitiveFunction(prim_func);
+  auto arg_signatures = op_def->signatures_;
+  prim_func->set_signatures(arg_signatures);
+  prim_func->set_has_signature(!arg_signatures.empty());
   // Get init args size.
   size_t init_args_size = 0;
   if (do_trans_prim_func->has_given_init_size()) {
