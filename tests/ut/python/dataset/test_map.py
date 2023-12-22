@@ -615,8 +615,6 @@ def test_map_and_generatordataset_with_multiprocessing():
 
 
 def map_with_pyfunc_with_multi_ops(mode):
-    GLOBAL_EXECUTOR_LEN = len(transforms.EXECUTORS_LIST)
-
     data_dir = "../data/dataset/testImageNetData2/train"
     data2 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
 
@@ -643,7 +641,7 @@ def map_with_pyfunc_with_multi_ops(mode):
     time.sleep(1)
 
     # for probably failed
-    assert len(transforms.EXECUTORS_LIST) == GLOBAL_EXECUTOR_LEN or len(transforms.EXECUTORS_LIST) == 1
+    assert len(transforms.EXECUTORS_LIST) in [0, 1]
 
 
 class FakeDataWithTransform:
@@ -660,8 +658,6 @@ class FakeDataWithTransform:
 
 
 def generator_with_multi_transforms(mode):
-    GLOBAL_EXECUTOR_LEN = len(transforms.EXECUTORS_LIST)
-
     # generator with vision.Resize transform
     data2 = ds.GeneratorDataset(source=FakeDataWithTransform(), column_names=["image", "label"], shuffle=False,
                                 python_multiprocessing=mode, num_parallel_workers=2)
@@ -684,7 +680,7 @@ def generator_with_multi_transforms(mode):
     time.sleep(1)
 
     # for probably failed
-    assert len(transforms.EXECUTORS_LIST) == GLOBAL_EXECUTOR_LEN or len(transforms.EXECUTORS_LIST) == 1
+    assert len(transforms.EXECUTORS_LIST) in [0, 1]
 
 @pytest.mark.skip(reason="random failures")
 def test_generator_or_map_with_pyfunc_use_global_executor():
