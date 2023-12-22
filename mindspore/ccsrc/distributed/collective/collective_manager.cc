@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 #include "utils/ms_context.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
 #include "distributed/persistent/storage/json_utils.h"
+#include "runtime/collective/dummy_collective_communication_lib.h"
 
 namespace mindspore {
 namespace distributed {
@@ -43,7 +44,7 @@ CollectiveManager::CollectiveManager()
       comm_lib_instance_(nullptr),
       global_rank_id_(0),
       local_rank_id_(0),
-      global_rank_size_(0),
+      global_rank_size_(1),
       global_group_ranks_({}),
       device_lib_supported_(true),
       need_host_collective_(false) {}
@@ -146,6 +147,11 @@ bool CollectiveManager::Initialize() {
   if (inited_ && !need_reinit_) {
     return true;
   }
+
+  if (!common::GetEnv(kCompileLevel).empty()) {
+    return InitializeDummyCommLib();
+  }
+
   need_host_collective_ = common::UseHostCollective();
   std::string device_type = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   // need_host_collective_ means using rank_table to initialize collective communication, which is only supported by
@@ -180,6 +186,23 @@ bool CollectiveManager::Initialize() {
   }
 
   MS_LOG(INFO) << "End initializing collective communication for backend: " << device_type;
+  inited_ = true;
+  finalized_ = false;
+  need_reinit_ = false;
+  return true;
+}
+
+bool CollectiveManager::InitializeDummyCommLib() {
+  MS_LOG(INFO) << "Initializing dummy collective communication.";
+  dummy_comm_lib_instance_ = std::make_shared<device::DummyCollectiveCommunicationLib>();
+  device_comm_lib_instance_ = dummy_comm_lib_instance_.get();
+  comm_lib_instance_ = device_comm_lib_instance_;
+  MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
+  RETURN_IF_FALSE_WITH_LOG(device_comm_lib_instance_->Initialize(0, 1, local_rank_id_),
+                           "Failed to initialize communication library on device side.");
+
+  global_rank_id_ = device_comm_lib_instance_->global_rank_id();
+  global_rank_size_ = device_comm_lib_instance_->global_rank_size();
   inited_ = true;
   finalized_ = false;
   need_reinit_ = false;
@@ -224,7 +247,7 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
   }
 
   MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
-  if (!need_host_collective_) {
+  if (!need_host_collective_ || !common::GetEnv(kCompileLevel).empty()) {
     RETURN_IF_FALSE_WITH_LOG(device_comm_lib_instance_->CreateDeviceCommunicationGroup(group_name, group_ranks),
                              "Failed to create device communication group " + group_name);
     return true;
@@ -290,7 +313,7 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
 
 bool CollectiveManager::DestroyCommunicationGroup(const std::string &group_name) {
   MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
-  if (!need_host_collective_) {
+  if (!need_host_collective_ || !common::GetEnv(kCompileLevel).empty()) {
     RETURN_IF_FALSE_WITH_LOG(device_comm_lib_instance_->DestroyDeviceCommunicationGroup(group_name),
                              "Failed to destroy device communication group " + group_name);
     return true;

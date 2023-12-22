@@ -407,6 +407,17 @@ constexpr auto kChannelNameNpuLog = "_npu_log";
 // env key
 constexpr auto kCompilerCacheEnable = "MS_COMPILER_CACHE_ENABLE";
 constexpr auto kCompilerCachePath = "MS_COMPILER_CACHE_PATH";
+constexpr auto kCompileLevel = "MS_COMPILE_LEVEL";
+constexpr auto kCompileLevelCompileGraph = "0";
+constexpr auto kCompileLevelCompileKernel = "1";
+
+// comm
+constexpr auto kHCCLWorldGroup = "hccl_world_group";
+constexpr auto kNCCLWorldGroup = "nccl_world_group";
+constexpr auto kEnvRankSize = "RANK_SIZE";
+constexpr auto kEnvRankId = "RANK_ID";
+constexpr auto kEnvLocalRankSize = "LOCAL_RANK_SIZE";
+constexpr auto kEnvLocalRankId = "LOCAL_RANK_ID";
 
 // some size
 const size_t kShape4dDims = 4;

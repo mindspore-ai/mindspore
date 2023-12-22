@@ -1545,6 +1545,10 @@ void GraphExecutorPy::GeFirstInitParams() {
 #endif
 
 py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &phase_obj) {
+  if (common::GetEnv(kCompileLevel) == kCompileLevelCompileGraph) {
+    py::int_ ret = 0;
+    return ret;
+  }
   // Init for dynamic-obfuscated model infer
   (void)mindspore::kernel::CustomizedOpaquePredicate::GetInstance().init_calling_count();
   // Mindspore debugger notify main thread to exit after one step, and will not run next step
