@@ -1021,9 +1021,10 @@ REG_BPROP_BUILDER("Concat").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
     if (!std::any_of(input_shapes.cbegin(), input_shapes.cend(),
                      [](const std::vector<int64_t> &shape) { return IsDynamic(shape); })) {
       auto axis_res = ops::GetScalarValue<int64_t>(axis_node->BuildValue());
-      if (!axis_res.has_value()) {
+      if (axis_res.has_value()) {
         auto axis = axis_res.value();
-        return ConcatBpropStatic(ib, dout, input_shapes, axis);
+        auto res = ConcatBpropStatic(ib, dout, input_shapes, axis);
+        return {res[0], ib->OutZeros(axis_node)};
       }
     }
 
