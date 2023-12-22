@@ -30,6 +30,7 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+using AddressInfoPair = std::pair<std::vector<kernel::KernelTensor *>, device::DeviceAddressPtrList>;
 class BACKEND_EXPORT PyBoostUtils {
  public:
   static DeviceContext *GetDeviceContext(const std::string &device_type);
@@ -67,8 +68,8 @@ class BACKEND_EXPORT PyBoostUtils {
   }
 
   template <typename... T>
-  static std::pair<std::vector<kernel::KernelTensor *>, device::DeviceAddressPtrList> GetAddressInfo(
-    DeviceContext *device_context, const std::vector<AbstractBasePtr> &input_abs, const T &... args) {
+  static AddressInfoPair GetAddressInfo(DeviceContext *device_context, const std::vector<AbstractBasePtr> &input_abs,
+                                        const T &... args) {
     std::vector<kernel::KernelTensor *> kernel_tensor_list;
     // Kernel tensor is a raw ppointer, device address need to be returned.
     device::DeviceAddressPtrList device_address_list;
@@ -80,6 +81,10 @@ class BACKEND_EXPORT PyBoostUtils {
      ...);
     return std::make_pair(kernel_tensor_list, device_address_list);
   }
+
+  static void PyboostRunOp(const PrimitivePtr &primitive, device::DeviceContext *device_context,
+                           const AddressInfoPair &input_address_info, const AddressInfoPair &output_address_info,
+                           void *stream_ptr);
 
   static void GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs, size_t index,
                               std::vector<kernel::KernelTensor *> *kernel_tensor_list,
