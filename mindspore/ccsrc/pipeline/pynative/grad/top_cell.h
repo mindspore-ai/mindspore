@@ -159,6 +159,10 @@ class TopCellInfo {
   }
   void SaveForwardOutputTensorInfoInBpropGraph(const FuncGraphPtr &func_graph);
   void ChangeTopCellInfo(const std::vector<BaseShapePtr> &args_new_shape);
+  const std::vector<std::string> &output_ids() const { return output_ids_; }
+  void set_outputs_ids(std::vector<std::string> output_ids) { output_ids_ = std::move(output_ids); }
+  // Check whether the tensor is top cell output.
+  bool IsOutputTensor(const tensor::TensorPtr &tensor) const;
 
  private:
   void SetMultipleOutputToGraphInfoMap(const string &id, const AnfNodePtr &node) const;
@@ -188,6 +192,7 @@ class TopCellInfo {
   std::string already_run_cell_id_;
   std::string input_args_id_;
   std::string grad_operation_;
+  std::vector<std::string> output_ids_;
   pipeline::ResourcePtr resource_{nullptr};
   FuncGraphPtr fg_{nullptr};
   autograd::AutoGradCellImplPtr auto_grad_cell_ptr_{nullptr};
