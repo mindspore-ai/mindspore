@@ -206,6 +206,8 @@ class GraphBuilder {
   InstrNode *NewInstrNode(int op, int arg);
   Graph *NewGraph(PyCodeObject *co, PyObject *f_globals);
 
+  void ProcessGetItem(const Instr &instr, ValueNode *l, ValueNode *r);
+
   // bytecode operations
   bool DoUnpack(const Instr &instr);
   bool DoForIter(const Instr &instr);
