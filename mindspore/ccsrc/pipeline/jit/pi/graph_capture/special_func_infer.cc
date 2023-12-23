@@ -668,7 +668,7 @@ static bool CheckJitForbidden(const py::object &func) {
   return forbidden;
 }
 
-static bool CheckJitConstexpr(const py::object &func) { return kPIJitConfigDefault.CheckJitConstexpr(func); }
+bool CheckJitConstexpr(const py::object &func) { return kPIJitConfigDefault.CheckJitConstexpr(func); }
 bool CheckMSConstexpr(const py::object &func) {
   std::string tp_name = py::str(reinterpret_cast<PyObject *>(Py_TYPE(func.ptr())));
   constexpr const char name[] = ".<locals>.deco.<locals>.CompileOp'>";
