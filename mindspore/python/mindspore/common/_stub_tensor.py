@@ -29,7 +29,7 @@ def _stub_member(var, init):
         if stub.tensor is not None:
             return getattr(stub.tensor, var)
         if hasattr(stub, "member_cache"):
-            return getattr(stub.member_cache, var, init)
+            return stub.member_cache.get(var, init)
         return init
 
     def setx(stub, value):
