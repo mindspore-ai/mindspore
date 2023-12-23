@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "runtime/pynative/async/async_queue.h"
+#include "runtime/pynative/async/async_rqueue.h"
 
 #include <utility>
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
@@ -25,6 +25,8 @@
 #include "mindrt/include/fork_utils.h"
 #include "include/common/profiler.h"
 
+#include "utils/profile.h"
+
 namespace mindspore {
 namespace pynative {
 constexpr int32_t kTaskQueueSize = 8192;
@@ -32,7 +34,7 @@ constexpr size_t kMaxSpinCount = 300000;
 constexpr size_t kThreadNameThreshold = 15;
 thread_local kThreadWaitLevel current_level_{kThreadWaitLevel::kLevelUnknown};
 
-AsyncQueue::~AsyncQueue() {
+AsyncRQueue::~AsyncRQueue() {
   try {
     WorkerJoin();
   } catch (const std::exception &e) {
@@ -40,19 +42,19 @@ AsyncQueue::~AsyncQueue() {
   }
 }
 
-void AsyncQueue::SetThreadName() const {
+void AsyncRQueue::SetThreadName() const {
 // Set thread name for gdb debug
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
   (void)pthread_setname_np(pthread_self(), name_.substr(0, kThreadNameThreshold).c_str());
 #endif
 }
 
-bool AsyncQueue::TaskInQueue(uint32_t task_id) {
-  std::unique_lock<std::mutex> lock(task_mutex_);
+bool AsyncRQueue::TaskInQueue(uint32_t task_id) {
+  std::unique_lock<std::mutex> lock(set_mutex_);
   return task_in_queue_.find(task_id) != task_in_queue_.end();
 }
 
-void AsyncQueue::WorkerLoop() {
+void AsyncRQueue::WorkerLoop() {
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
   // cppcheck-suppress unreadVariable
   SignalGuard sig([](int, siginfo_t *, void *) {
@@ -72,76 +74,54 @@ void AsyncQueue::WorkerLoop() {
   }
 
   while (true) {
-    std::shared_ptr<AsyncTask> task;
-    {
-      std::unique_lock<std::mutex> lock(task_mutex_);
-      task_cond_var_->wait(lock, [this]() { return !tasks_queque_.empty(); });
-      task = tasks_queque_.front();
-    }
+    std::shared_ptr<AsyncTask> task = tasks_queue_.Head();
 
     MS_LOG(DEBUG) << "Get task";
     MS_EXCEPTION_IF_NULL(task);
     if (task->task_type() == kExitTask) {
-      std::unique_lock<std::mutex> lock(task_mutex_);
-      tasks_queque_.pop();
+      tasks_queue_.Dequeue();
       MS_LOG(DEBUG) << "Thread exit";
       return;
     }
 
     try {
       task->Run();
-      std::unique_lock<std::mutex> lock(task_mutex_);
-      if (!tasks_queque_.empty()) {
-        tasks_queque_.pop();
-        task_in_queue_.erase(task->task_id());
-      }
-
-      if (tasks_queque_.empty()) {
-        MS_LOG(DEBUG) << "Task queue empty";
-        task_cond_var_->notify_all();
-      }
+      tasks_queue_.Dequeue();
+      std::lock_guard<std::mutex> lock(set_mutex_);
+      task_in_queue_.erase(task->task_id());
     } catch (const std::exception &e) {
       MS_LOG(INFO) << "Run task failed, error msg:" << e.what();
       {
-        // cppcheck-suppress unreadVariable
-        std::unique_lock<std::mutex> lock(task_mutex_);
-
+        std::lock_guard<std::mutex> lock(set_mutex_);
         MsException::Instance().SetException();
         // MsException is unreliable because it gets modified everywhere.
         auto e_ptr = std::current_exception();
-        while (!tasks_queque_.empty()) {
-          auto &t = tasks_queque_.front();
+        while (!tasks_queue_.IsEmpty()) {
+          auto &t = tasks_queue_.Head();
           if (t->task_type() == kExitTask) {
             break;
           }
           t->SetException(e_ptr);
-          tasks_queque_.pop();
+          tasks_queue_.Dequeue();
           task_in_queue_.erase(task->task_id());
         }
-
-        task_cond_var_->notify_all();
       }
     }
   }
 }
 
-void AsyncQueue::Push(const std::shared_ptr<AsyncTask> &task) {
-  if (task_cond_var_ == nullptr) {
-    task_cond_var_ = std::make_unique<std::condition_variable>();
-  }
+void AsyncRQueue::Push(const AsyncTaskPtr &task) {
   if (worker_ == nullptr) {
-    worker_ = std::make_unique<std::thread>(&AsyncQueue::WorkerLoop, this);
+    worker_ = std::make_unique<std::thread>(&AsyncRQueue::WorkerLoop, this);
   }
-  // cppcheck-suppress unreadVariable
-  std::lock_guard<std::mutex> lock(task_mutex_);
-  tasks_queque_.push(task);
+  tasks_queue_.Enqueue(task);
+  std::lock_guard<std::mutex> lock(set_mutex_);
   if (task->task_id() != UINT32_MAX) {
     task_in_queue_.insert(task->task_id());
   }
-  task_cond_var_->notify_all();
 }
 
-void AsyncQueue::Wait() {
+void AsyncRQueue::Wait() {
   if (worker_ == nullptr) {
     return;
   }
@@ -158,23 +138,17 @@ void AsyncQueue::Wait() {
   }
 
   MS_LOG(DEBUG) << "Start to wait thread " << name_;
-  std::unique_lock<std::mutex> lock(task_mutex_);
-  task_cond_var_->wait(lock, [this]() { return tasks_queque_.empty(); });
+  while (!tasks_queue_.IsEmpty()) {
+  }
   MsException::Instance().CheckException();
   MS_LOG(DEBUG) << "End to wait thread " << name_;
 }
 
-bool AsyncQueue::Empty() {
-  // cppcheck-suppress unreadVariable
-  std::lock_guard<std::mutex> lock(task_mutex_);
-  return tasks_queque_.empty();
-}
+bool AsyncRQueue::Empty() { return tasks_queue_.IsEmpty(); }
 
-void AsyncQueue::Clear() {
+void AsyncRQueue::Clear() {
   {
-    // cppcheck-suppress unreadVariable
-    std::lock_guard<std::mutex> lock(task_mutex_);
-    if (tasks_queque_.empty()) {
+    if (tasks_queue_.IsEmpty()) {
       return;
     }
 
@@ -183,20 +157,16 @@ void AsyncQueue::Clear() {
     // Avoid to push task after WorkerJoin.
     if (worker_ != nullptr && worker_->joinable()) {
       auto task = std::make_shared<WaitTask>();
-      tasks_queque_.push(task);
+      tasks_queue_.Enqueue(task);
     }
-
-    task_cond_var_->notify_all();
   }
   // There is still one task in progress
   Wait();
 }
 
-void AsyncQueue::Reset() {
+void AsyncRQueue::Reset() {
   {
-    // cppcheck-suppress unreadVariable
-    std::lock_guard<std::mutex> lock(task_mutex_);
-    if (tasks_queque_.empty()) {
+    if (tasks_queue_.IsEmpty()) {
       return;
     }
 
@@ -205,16 +175,16 @@ void AsyncQueue::Reset() {
   }
 }
 
-void AsyncQueue::ClearTaskWithException() {
-  while (!tasks_queque_.empty()) {
-    auto &t = tasks_queque_.front();
+void AsyncRQueue::ClearTaskWithException() {
+  while (!tasks_queue_.IsEmpty()) {
+    auto &t = tasks_queue_.Head();
     t->SetException(std::make_exception_ptr(std::runtime_error("Clean up tasks that are not yet running")));
-    tasks_queque_.pop();
+    tasks_queue_.Dequeue();
     task_in_queue_.erase(t->task_id());
   }
 }
 
-void AsyncQueue::WorkerJoin() {
+void AsyncRQueue::WorkerJoin() {
   try {
     if (worker_ == nullptr) {
       return;
@@ -222,11 +192,8 @@ void AsyncQueue::WorkerJoin() {
     // Avoid worker thread join itself which will cause deadlock
     if (worker_->joinable() && worker_->get_id() != std::this_thread::get_id()) {
       {
-        // cppcheck-suppress unreadVariable
-        std::lock_guard<std::mutex> lock(task_mutex_);
         auto task = std::make_shared<ExitTask>();
-        tasks_queque_.push(task);
-        task_cond_var_->notify_all();
+        tasks_queue_.Enqueue(task);
         MS_LOG(DEBUG) << "Push exit task and notify all";
       }
       worker_->join();
@@ -240,17 +207,12 @@ void AsyncQueue::WorkerJoin() {
   }
 }
 
-void AsyncQueue::ChildAfterFork() {
+void AsyncRQueue::ChildAfterFork() {
   MS_LOG(DEBUG) << "AsyncQueue reinitialize after fork";
-  if (task_cond_var_ != nullptr) {
-    MS_LOG(DEBUG) << "Release and recreate task_cond_var_.";
-    (void)task_cond_var_.release();
-    task_cond_var_ = std::make_unique<std::condition_variable>();
-  }
   if (worker_ != nullptr) {
     MS_LOG(DEBUG) << "Release and recreate worker_.";
     (void)worker_.release();
-    worker_ = std::make_unique<std::thread>(&AsyncQueue::WorkerLoop, this);
+    worker_ = std::make_unique<std::thread>(&AsyncRQueue::WorkerLoop, this);
   }
   MS_LOG(DEBUG) << "AsyncQueue reinitialize after fork done.";
 }
