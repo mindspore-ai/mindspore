@@ -22,6 +22,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "pybind11/pybind11.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "pipeline/jit/pi/external.h"
 #include "pipeline/jit/pi/graph_capture/code_gen.h"
@@ -828,9 +829,38 @@ static py::object CallCompiledCallable(PyThreadState *tstate, PyFrameObject *f, 
   return py::reinterpret_steal<py::object>(res);
 }
 
-static bool PreferCallGraph(const JitCompileResults *c) {
+static bool CheckTensorInContainer(py::object args) {
+  if (py::isinstance<py::tuple>(args)) {
+    py::tuple t = py::cast<py::tuple>(args);
+    for (size_t i = 0; i < t.size(); ++i) {
+      if (CheckTensorInContainer(t[i])) {
+        return true;
+      }
+    }
+  } else if (py::isinstance<py::list>(args)) {
+    py::list l = py::cast<py::list>(args);
+    for (size_t i = 0; i < l.size(); ++i) {
+      if (CheckTensorInContainer(t[i])) {
+        return true;
+      }
+    }
+  }
+  if (IsStubTensor(args) || py::isinstance<mindspore::tensor::Tensor>(args.ptr())) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+static bool PreferCallGraph(const JitCompileResults *c, py::object args) {
   if (c->code->GetNativeFunc() == nullptr) {
     return false;
+  }
+  py::tuple t = py::cast<py::tuple>(args);
+  for (size_t i = 0; i < t.size(); ++i) {
+    if ((py::isinstance<py::list>(t[i]) || py::isinstance<py::tuple>(t[i])) && CheckTensorInContainer(t[i])) {
+      return false;
+    }
   }
   OptStrategy::ExecKind stat = OptStrategy::ExecKind::kExecGraph;
   if (c->conf->GetBoolConfig(GraphJitConfig::kPerfStatistics)) {
@@ -862,9 +892,6 @@ static py::object CallCompiledResults(PyThreadState *tstate, PyFrameObject *f, c
 
   ValidateCompiledResults(c);
 
-  bool graph_preferred = PreferCallGraph(c);
-  SetExecStatus(c, f, graph_preferred);
-
   std::vector<py::object> packed_args = PackArgs(f);
   if (packed_args[1].ptr() != nullptr) {
     PyList_Append(packed_args[0].ptr(), packed_args[1].ptr());
@@ -872,6 +899,8 @@ static py::object CallCompiledResults(PyThreadState *tstate, PyFrameObject *f, c
 
   py::object args = py::reinterpret_steal<py::object>(PyList_AsTuple(packed_args[0].ptr()));
   py::object kwvargs = packed_args[2];
+  bool graph_preferred = PreferCallGraph(c, args);
+  SetExecStatus(c, f, graph_preferred);
   py::object res = graph_preferred ? CallGraph(c, args, kwvargs) : CallCompiledCallable(tstate, f, c);
   c->code->Inc();
 
