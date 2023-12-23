@@ -28,6 +28,8 @@
 #include "ops/array_op_name.h"
 #include "ops/framework_ops.h"
 #include "ops/sequence_ops.h"
+#include "ops/other_ops.h"
+#include "ops/array_ops.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
@@ -36,9 +38,27 @@ namespace {
 constexpr auto kMirrorSubStr = "mirror";
 constexpr auto kParallelGroupId = "_parallel_group_id";
 
-enum class GroupId { FORWARD = 5, BACKWARD = 6, UNKNOWN = 7 };
+enum class GroupId {
+  FORWARD_COMPUTE = 5,
+  FORWARD_ALLGATHER = 6,
+  FORWARD_REDUCE_SCATTER = 7,
+  FORWARD_ALLREDUCE = 8,
+  FORWARD_SEND = 9,
+  FORWARD_RECEIVE = 10,
+  FORWARD_OTHER_COMM_OP = 11,
+  FORWARD_UNKOWN = 12,
+  BACKWARD_COMPUTE = 13,
+  BACKWARD_ALLGATHER = 14,
+  BACKWARD_REDUCE_SCATTER = 15,
+  BACKWARD_ALLREDUCE = 16,
+  BACKWARD_SEND = 17,
+  BACKWARD_RECEIVE = 18,
+  BACKWARD_OTHER_COMM_OP = 19,
+  BACKWARD_UNKOWN = 20,
+  UNKNOWN = 21
+};
 
-enum class Index { DATA_PARALLEL = 0, MODEL_PARALLEL = 1, PIPELINE_PARALLEL = 2, COMPUTE = 3, UNKNOWN = 4 };
+enum class Index { DEFAULT = 0 };
 }  // namespace
 
 bool AddParallelGroupIdAttr::Run(const FuncGraphPtr &func_graph) {
@@ -54,32 +74,52 @@ bool AddParallelGroupIdAttr::Run(const FuncGraphPtr &func_graph) {
     auto prim = GetCNodePrimitive(cnode);
 
     GroupId group_id = GroupId::UNKNOWN;
-    Index index = Index::UNKNOWN;
+    Index index = Index::DEFAULT;
 
     if (cnode->HasPrimalAttr(kPrimalAttrUniqueId)) {
-      group_id = GroupId::FORWARD;
-    } else if (cnode->HasPrimalAttr(kPrimalAttrForwardUniqueId)) {
-      group_id = GroupId::BACKWARD;
-    } else {
-      MS_LOG(WARNING) << "while adding group id, detects cnode is neither forward nor backward!";
-    }
-
-    if (common::AnfAlgo::IsCommunicationOp(cnode)) {
-      if (IsPrimitiveCNode(cnode, prim::kPrimSend) || IsPrimitiveCNode(cnode, prim::kPrimReceive)) {
-        // cnode is for pipeline parallel
-        index = Index::PIPELINE_PARALLEL;
-      } else if (cnode->HasPrimalAttr(kPrimalAttrForwardCommNodeUniqueId)) {
-        // cnode is for model parallel
-        index = Index::MODEL_PARALLEL;
-      } else if (prim && prim->instance_name().find(kMirrorSubStr) != std::string::npos) {
-        // cnode is for data parallel
-        index = Index::DATA_PARALLEL;
+      // is forward op
+      if (common::AnfAlgo::IsCommunicationOp(cnode)) {
+        // is comm op
+        if (IsPrimitiveCNode(cnode, prim::kPrimAllGather)) {
+          group_id = GroupId::FORWARD_ALLGATHER;
+        } else if (IsPrimitiveCNode(cnode, prim::kPrimReduceScatter)) {
+          group_id = GroupId::FORWARD_REDUCE_SCATTER;
+        } else if (IsPrimitiveCNode(cnode, prim::kPrimAllReduce)) {
+          group_id = GroupId::FORWARD_ALLREDUCE;
+        } else if (IsPrimitiveCNode(cnode, prim::kPrimSend)) {
+          group_id = GroupId::FORWARD_SEND;
+        } else if (IsPrimitiveCNode(cnode, prim::kPrimReceive)) {
+          group_id = GroupId::FORWARD_RECEIVE;
+        } else {
+          group_id = GroupId::FORWARD_OTHER_COMM_OP;
+        }
       } else {
-        MS_LOG(WARNING)
-          << "while adding index, detects cnode is communition operator but is not for data, model, pipeline parallel";
+        // is compute op
+        group_id = GroupId::FORWARD_COMPUTE;
+      }
+    } else if (cnode->HasPrimalAttr(kPrimalAttrForwardUniqueId)) {
+      // BACKWARD
+      if (common::AnfAlgo::IsCommunicationOp(cnode)) {
+        // is comm op
+        if (IsPrimitiveCNode(cnode, prim::kPrimAllGather)) {
+          group_id = GroupId::BACKWARD_ALLGATHER;
+        } else if (IsPrimitiveCNode(cnode, prim::kPrimReduceScatter)) {
+          group_id = GroupId::BACKWARD_REDUCE_SCATTER;
+        } else if (IsPrimitiveCNode(cnode, prim::kPrimAllReduce)) {
+          group_id = GroupId::BACKWARD_ALLREDUCE;
+        } else if (IsPrimitiveCNode(cnode, prim::kPrimSend)) {
+          group_id = GroupId::BACKWARD_SEND;
+        } else if (IsPrimitiveCNode(cnode, prim::kPrimReceive)) {
+          group_id = GroupId::BACKWARD_RECEIVE;
+        } else {
+          group_id = GroupId::BACKWARD_OTHER_COMM_OP;
+        }
+      } else {
+        // is compute op
+        group_id = GroupId::BACKWARD_COMPUTE;
       }
     } else {
-      index = Index::COMPUTE;
+      MS_LOG(WARNING) << "while adding group id, detects cnode is neither forward nor backward!";
     }
 
     uint32_t parallel_group_id = static_cast<uint32_t>(group_id) << 16 | static_cast<uint32_t>(index);
