@@ -1212,9 +1212,14 @@ PrimitivePtr PyBoost::ConvertPrimitive(const py::object &obj) {
   return prim;
 }
 
-py::object PyBoost::RunPyFunction(const PrimitivePtr &prim, const py::args &args) {
+py::object PyBoost::RunPyFunction(const PrimitivePtr &prim, const py::list &args) {
   py::tuple wrap_args(kIndex3);
-  wrap_args[kIndex0] = prim;
+  auto prim_py = prim->cast<PrimitivePyPtr>();
+  MS_EXCEPTION_IF_NULL(prim_py);
+  if (!prim_py->HasPyObj()) {
+    MS_LOG(EXCEPTION) << "Prim has not python obj!";
+  }
+  wrap_args[kIndex0] = prim_py->GetPyObj();
   wrap_args[kIndex1] = prim->name();
   wrap_args[kIndex2] = args;
   const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
