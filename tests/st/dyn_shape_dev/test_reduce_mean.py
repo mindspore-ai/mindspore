@@ -22,6 +22,7 @@ import mindspore as ms
 
 ms.context.set_context(ascend_config={"precision_mode": "force_fp32"})
 
+
 @test_utils.run_with_cell
 def reduce_mean_forward_func(x):
     return ops.auto_generate.reduce_mean(x, axis=0, keep_dims=True)
@@ -78,3 +79,22 @@ def test_reduce_mean_vmap(mode):
     out = nest_vmap(x)
     expect_out = reduce_mean_forward_func(x)
     assert np.allclose(out.asnumpy(), expect_out.asnumpy(), rtol=1e-4, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+def test_reduce_mean_with_mutable_axis():
+    """
+    Feature: ops infer.
+    Description: Watch size_t overflow for mutable axis.
+    Expectation: expect correct exception raised.
+    """
+
+    @ms.jit
+    def func(x, axis):
+        return ops.reduce_mean(x, axis)
+
+    input_x = ms.Tensor([1.0])
+    with pytest.raises(ValueError):
+        func(input_x, ms.mutable((0, 1)))

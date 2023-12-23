@@ -71,6 +71,9 @@ BaseShapePtr ReduceInferShape(const PrimitivePtr &primitive, const std::vector<A
 
   // If the axis has unknown value, the reduction position will be any of the input dimensions.
   if (!keep_dims) {
+    MS_CHECK_VALUE(x_shape.size() >= axis_array_opt->size(),
+                   CheckAndConvertUtils::FormatCheckInRangeMsg("axis size", axis_array_opt->size(), kIncludeLeft,
+                                                               {0, x_shape.size()}, primitive));
     return std::make_shared<abstract::Shape>(ShapeVector(x_shape.size() - axis_array_opt->size(), -1));
   }
   auto out_shape = ShapeVector(x_shape.size(), -1);
