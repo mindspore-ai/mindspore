@@ -492,4 +492,74 @@ IMPLEMT_INFERFUNC(CholeskyGrad, CholeskyGradInfer) {
 
 INFER_FUNC_REG(CholeskyGrad, CholeskyGradInfer);
 // -----------------------CholeskyGrad END---------------------------------
+
+// -----------------------LinearSumAssignment---------------------------------
+CUST_IMPLEMT_INFERFUNC(LinearSumAssignment, LinearSumAssignmentInfer) {
+  TensorDesc cost_matrix_tensor = op.get_input_desc_cost_matrix();
+  Shape cost_matrix_shape = cost_matrix_tensor.GetShape();
+
+  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
+  auto row_ind_desc = op_desc->MutableOutputDesc(0);
+  auto col_ind_desc = op_desc->MutableOutputDesc(1);
+  GeShape row_ind_shape, col_ind_shape;
+  if (!RankKnown(cost_matrix_shape)) {
+    row_ind_shape = GeShape(ge::UNKNOWN_SHAPE);
+    col_ind_shape = GeShape(ge::UNKNOWN_SHAPE);
+  } else {
+    constexpr int64_t kNumber2 = 2;
+    if (cost_matrix_shape.GetDimNum() != kNumber2) {
+      OP_LOGE(TbeGetName(op).c_str(), "cost_matrix dim num should be 2. But got [%lu].", cost_matrix_shape.GetDimNum());
+      return GRAPH_FAILED;
+    }
+    int64_t row_num = cost_matrix_shape.GetDim(0);
+    int64_t col_num = cost_matrix_shape.GetDim(1);
+    int64_t out_dim = std::min(row_num, col_num);
+    std::vector<int64_t> shape_vec{out_dim};
+    row_ind_shape = GeShape(shape_vec);
+    col_ind_shape = GeShape(shape_vec);
+  }
+  row_ind_desc->SetShape(row_ind_shape);
+  col_ind_desc->SetShape(col_ind_shape);
+
+  TensorDesc dimension_limit_tensor = op.get_input_desc_dimension_limit();
+  TensorDesc maximize_tensor = op.get_input_desc_maximize();
+
+  DataType cost_matrix_type = cost_matrix_tensor.GetDataType();
+  DataType dimension_limit_type = dimension_limit_tensor.GetDataType();
+  DataType maximize_type = maximize_tensor.GetDataType();
+  std::vector<DataType> valid_dtypes{DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_BOOL,   DT_INT16,  DT_INT32,
+                                     DT_INT64,   DT_INT8,  DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8};
+  auto iter = std::find(valid_dtypes.begin(), valid_dtypes.end(), cost_matrix_type);
+  if (iter == valid_dtypes.end()) {
+    std::string err_msg;
+    err_msg = ConcatString("Op LinearSumAssignment first input cost_matrix's data type should be of the follows: ",
+                           "DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_BOOL, DT_INT16, DT_INT32, DT_INT64, DT_INT8, ",
+                           "DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8, but this type is ", cost_matrix_type, ".");
+    AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  if (dimension_limit_type != DT_INT64) {
+    std::string err_msg;
+    err_msg = ConcatString("Op LinearSumAssignment second input dimension_limit's data type should be of the follows: ",
+                           "DT_INT64,", "but this type is ", dimension_limit_type, ".");
+    AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  if (maximize_type != DT_BOOL) {
+    std::string err_msg;
+    err_msg =
+      ConcatString("Op LinearSumAssignment third input maximize's data type should be of the follows: ", "DT_BOOL,",
+                   "but this type is ", maximize_type, ".");
+    AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+  row_ind_desc->SetDataType(DT_INT64);
+  col_ind_desc->SetDataType(DT_INT64);
+  return GRAPH_SUCCESS;
+}
+
+CUST_INFER_FUNC_REG(LinearSumAssignment, LinearSumAssignmentInfer);
+// -----------------------LinearSumAssignment END---------------------------------
 }  // namespace ge

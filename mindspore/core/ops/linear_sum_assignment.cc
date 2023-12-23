@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,12 +49,17 @@ abstract::TupleShapePtr LinearSumAssignmentInferShape(const PrimitivePtr &primit
   constexpr int64_t kNumber2 = 2;
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   auto matrix_shape = shape_map[kShape];
+
+  if (IsDynamicRank(matrix_shape)) {
+    auto dyn_output = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeDimAny});
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{dyn_output, dyn_output});
+  }
   auto matrix_rank = SizeToLong(matrix_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("cost_matrix rank", matrix_rank, kEqual, kNumber2, op_name);
 
   int64_t out_dim = std::min(matrix_shape[0], matrix_shape[1]);  // -1 or actual value
-  ShapeVector row_ind_shape{1, out_dim};
-  ShapeVector col_ind_shape{1, out_dim};
+  ShapeVector row_ind_shape{out_dim};
+  ShapeVector col_ind_shape{out_dim};
   std::vector<abstract::BaseShapePtr> shapes{std::make_shared<abstract::Shape>(row_ind_shape),
                                              std::make_shared<abstract::Shape>(col_ind_shape)};
   return std::make_shared<abstract::TupleShape>(shapes);
@@ -62,15 +67,16 @@ abstract::TupleShapePtr LinearSumAssignmentInferShape(const PrimitivePtr &primit
 
 TuplePtr LinearSumAssignmentInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  const std::set<TypePtr> valid_cost_matrix_types = {kFloat32, kFloat64};
+  const std::set<TypePtr> valid_cost_matrix_types = {kFloat16, kFloat32, kFloat64, kInt16,  kInt32, kInt64,
+                                                     kInt8,    kUInt16,  kUInt32,  kUInt64, kUInt8, kBool};
   const std::set<TypePtr> valid_dimention_limit_types = {kInt64};
   const std::set<TypePtr> valid_maximize_types = {kBool};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("cost_matrix", input_args[kInputIndex0]->GetType(),
                                                    valid_cost_matrix_types, op_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("dimension_limit", input_args[kInputIndex1]->GetType(),
                                                    valid_dimention_limit_types, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("maximize", input_args[kInputIndex2]->GetType(),
-                                                   valid_maximize_types, op_name);
+  (void)CheckAndConvertUtils::CheckSubClass("maximize", input_args[kInputIndex2]->BuildType(), valid_maximize_types,
+                                            op_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{kInt64, kInt64});
 }
 }  // namespace

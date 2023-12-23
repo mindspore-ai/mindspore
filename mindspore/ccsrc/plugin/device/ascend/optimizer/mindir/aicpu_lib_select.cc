@@ -77,6 +77,7 @@ static const std::unordered_set<std::string> kAICpuOpNames = {kDropoutGenMaskOpN
                                                               kCastOpName,
                                                               kGammaOpName};
 static const std::unordered_set<std::string> kMigrateAicpuKernelOps = {
+  mindspore::kLinearSumAssignmentOpName,
   mindspore::kSliceGradOpName,
   mindspore::kAdaptiveAvgPool2DOpName,
   mindspore::kAdaptiveAvgPool2DGradOpName,
