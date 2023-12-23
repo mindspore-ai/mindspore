@@ -406,8 +406,13 @@ void AclConverter::ConvertInputsMutiDynParams(const PrimitivePtr &prim, const st
   size_t offset = 0;  // offset in real inputs corresponding to input proto index
   while (offset < inputs.size()) {
     size_t num_folded_inputs = (dyn_inputs_map_.count(ms_idx) > 0 ? dyn_inputs_map_[ms_idx] : 1);
-    auto ge_idx = info->GetGeInputByMsInputIndex(ms_idx).index;
-    ge2ms_real_input_map[ge_idx] = MsInputInfo{ms_idx, offset, num_folded_inputs, 0};
+    bool is_input2attr = info->input_attr_map().count(ms_idx) > 0;
+    MS_LOG(DEBUG) << "For primitive " << prim->name() << ", ms_proto_idx=" << ms_idx
+                  << ", offset_in_real_inputs=" << offset << ", is_input2attr=" << std::boolalpha << is_input2attr;
+    if (!is_input2attr) {
+      auto ge_idx = info->GetGeInputByMsInputIndex(ms_idx).index;
+      ge2ms_real_input_map[ge_idx] = MsInputInfo{ms_idx, offset, num_folded_inputs, 0};
+    }
     offset += num_folded_inputs;
     ms_idx += 1;
   }
