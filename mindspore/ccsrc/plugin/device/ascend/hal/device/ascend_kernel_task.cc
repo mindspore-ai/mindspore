@@ -612,6 +612,11 @@ bool AscendContiguousKernelTask::RunWithRet() {
     return ret;
   }
 
+  if (!trans::FormatHelper::GetInstance().IsBaseFormatType(input_addr_info->addr->format())) {
+    input_addr_info->addr =
+      ConvertAddrToBaseFormat(input_addr_info->addr, input_addr_info->storage, device_context, stream_ptr);
+  }
+
   auto ret = LaunchAsyncCopy(input_addr_info, output_addr_info, input_addr_info->GetSize(), device_context, stream_ptr);
   if (!ret) {
     MS_LOG(ERROR) << "LaunchAsyncCopy failed.";
