@@ -42,9 +42,9 @@ const AnfNodePtr AscendConvertTupleInputToDynamicInput::Process(const FuncGraphP
   // pack_fission, addn_fission, and HandleControlFlow
 
   static const PrimitiveSet need_unfold_calculate_node = {
-    prim::kPrimAddN,          prim::kPrimConcatD,       prim::kPrimPack,          prim::kPrimStack,
-    prim::kPrimPrint,         prim::kPrimConcat,        prim::kPrimAccumulateNV2, prim::kPrimMeshgrid,
-    prim::kPrimTensorSummary, prim::kPrimDynamicStitch, prim::kPrimParallelConcat};
+    prim::kPrimAddN,          prim::kPrimConcatD,       prim::kPrimPack,           prim::kPrimStack,
+    prim::kPrimPrint,         prim::kPrimConcat,        prim::kPrimAccumulateNV2,  prim::kPrimMeshgrid,
+    prim::kPrimTensorSummary, prim::kPrimDynamicStitch, prim::kPrimParallelConcat, prim::kPrimIncreFlashAttention};
 
   static const PrimitiveSet need_unfold_control_node = {prim::kPrimSwitchLayer, prim::kPrimCall, prim::kPrimSwitch,
                                                         prim::kPrimCallInline};

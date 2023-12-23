@@ -493,6 +493,7 @@ constexpr const char kNameApplyCamePart2[] = "ApplyCamePart2";
 constexpr const char kNameApplyCamePart3[] = "ApplyCamePart3";
 constexpr const char kNameApplyCamePart4[] = "ApplyCamePart4";
 constexpr const char kNamePromptFlashAttention[] = "PromptFlashAttention";
+constexpr const char kNameIncreFlashAttention[] = "IncreFlashAttention";
 constexpr const char kNameFlashAttentionScore[] = "FlashAttentionScore";
 constexpr const char kNameFlashAttentionScoreGrad[] = "FlashAttentionScoreGrad";
 constexpr const char kNameEnvironCreate[] = "EnvironCreate";

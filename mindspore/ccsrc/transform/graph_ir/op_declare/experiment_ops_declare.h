@@ -27,6 +27,7 @@ DECLARE_OP_USE_OUTPUT(PromptFlashAttention)
 
 // IncreFlashAttention
 DECLARE_OP_ADAPTER(IncreFlashAttention)
+DECLARE_OP_USE_DYN_INPUT(IncreFlashAttention)
 DECLARE_OP_USE_OUTPUT(IncreFlashAttention)
 
 // BlendFaceBgPartOne
