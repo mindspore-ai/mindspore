@@ -45,7 +45,7 @@ std::shared_ptr<::ge::Session> GraphRunner::NewSession(const SessionOptions &ses
   std::shared_ptr<::ge::Session> ret;
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->backend_policy() == "ge") {
+  if (ms_context->backend_policy() == "ge" || ms_context->backend_policy() == "ms") {
     ret = std::make_shared<::ge::Session>(sess_options);
     if (ret == nullptr) {
       MS_LOG(EXCEPTION) << "Create GE session failed!";
@@ -125,7 +125,7 @@ Status GraphRunner::AddGraph(const std::string &name) {
 #if (defined ENABLE_D) || (defined ENABLE_LITE_ACL)
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->backend_policy() != "ge") {
+  if (ms_context->backend_policy() != "ge" && ms_context->backend_policy() != "ms") {
     return Status::SUCCESS;
   }
   std::set<string> saved_graph = graph_manager_.GetSavedGraphs();
@@ -374,7 +374,7 @@ Status GraphRunner::RunGraphWithStreamAsync(const RunOptions &options, void *str
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
 
-  if (ms_context->backend_policy() == "ge") {
+  if (ms_context->backend_policy() == "ge" || ms_context->backend_policy() == "ms") {
     if (sess_ == nullptr) {
       MS_LOG(ERROR) << "The GE session is null, can't run the graph!";
       return Status::FAILED;
