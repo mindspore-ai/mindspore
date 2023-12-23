@@ -17,6 +17,7 @@ Generate pyboost function from pyboost_op.yaml
 """
 
 import os
+import re
 import pathlib
 from dataclasses import dataclass
 import pyboost_utils
@@ -390,9 +391,6 @@ def generate_pyboost_functions(work_path, yaml_data):
         convert_stub_str = ''
         optional_to_value_str = ''
         for op_arg in op_proto.op_args:
-            grad_arg = ''
-            call_arg = ''
-            cast_arg = ''
             cast_str = 'cast_'
             convert_optional_to_value_template = CppTemplate(
                 "auto ${output} = PyNativeAlgo::PyBoost::OptionalToValue(${input});\n")
@@ -437,9 +435,11 @@ def generate_pyboost_functions(work_path, yaml_data):
             grad_args_str.append(grad_arg)
             call_args_str.append(call_arg)
             cast_args_str.append(cast_arg)
+        type_num, same_type = gen_signature_same_type_table(op_proto.indexes, operator_data)
         pyboost_func_str += template.PYBOOST_FUNCTION_TEMPLATE.replace(func_name=op_proto.pyboost_function_name,
-                                                                       op_def_name=op_def_name_str,
-                                                                       parser_body=parser_body_str, op_name=op_name_str,
+                                                                       op_def_name=op_def_name_str, same_type=same_type,
+                                                                       type_num=type_num, parser_body=parser_body_str,
+                                                                       op_name=op_name_str,
                                                                        convert_stub=convert_stub_str,
                                                                        optional_to_value=optional_to_value_str,
                                                                        call_args=call_args_str, grad_args=grad_args_str,
@@ -765,6 +765,33 @@ def gen_pyboost_py_func(work_path, op_yaml_data, doc_data):
     with open(tmp_file_path, "w") as f:
         f.write(py_header + gen_py)
     check_change_and_replace_file(dst_file_path, tmp_file_path)
+
+
+def gen_signature_same_type_table(args_map, operator_data):
+    """
+    gen signature same type table
+    :param operator_name:
+    :param operator_data:
+    :return:
+    """
+    args_signature = operator_data.get('args_signature')
+    signature_table = ''
+    type_num = 0
+    if args_signature is not None:
+        dtype_group = args_signature.get('dtype_group')
+        if dtype_group is not None:
+            match = re.findall(r'\((.*?)\)', dtype_group)
+            for item in match:
+                name_args = item.replace(' ', '').split(",")
+                signature_table += '{'
+                for arg in name_args:
+                    arg_index = args_map[arg]
+                    signature_table += f"""{arg_index}, """
+                signature_table = signature_table[:-2]
+                signature_table += '}, '
+                type_num += 1
+            signature_table = signature_table[:-2]
+    return type_num, signature_table
 
 
 def gen_pyboost_code(work_path, ops_yaml_data, doc_yaml_data):

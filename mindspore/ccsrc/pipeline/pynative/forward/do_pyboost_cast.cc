@@ -26,7 +26,7 @@ tensor::TensorPtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPtr &o
   if (op_run_info->source_type[index] != ops::OP_DTYPE::DT_BEGIN) {
     MS_LOG(DEBUG) << "Try cast Source tensor: " << t->ToString();
     auto dst_tensor = TensorToDstDtypeValue(t, type_id);
-    MS_LOG(DEBUG) << "Cast to dst tensor: " << dst_tensor->ToString() << "without dispatching cast op";
+    MS_LOG(DEBUG) << "Cast to dst tensor: " << dst_tensor->ToString() << " without dispatching cast op";
     return dst_tensor;
   }
   const auto &cast_run_info = std::make_shared<FrontendOpRunInfo>();

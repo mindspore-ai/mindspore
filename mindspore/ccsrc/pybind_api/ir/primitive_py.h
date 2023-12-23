@@ -191,6 +191,7 @@ class OpPrimPyRegister {
 class PrimitiveFunctionAdapter {
  public:
   PrimitiveFunctionAdapter() = default;
+  virtual ~PrimitiveFunctionAdapter() = default;
   void set_attached_primitive_function(const PrimitivePtr &prim_func) { attached_primitive_function_ = prim_func; }
   PrimitivePtr attached_primitive_function() { return attached_primitive_function_.lock(); }
   virtual std::string name() { return py::str(attached_primitive_function_.lock()->name()).cast<std::string>(); }
