@@ -1972,35 +1972,29 @@ bool GraphBuilder::UnpackCallExParams(std::vector<ValueNode *> *params, int extr
     if (!UnpackCallExDict(params, &dict_unpack, call_node)) {
       return false;
     }
-    if (args_node->GetOpcode() != BUILD_TUPLE) {
-      if ((args_node->GetVobj())->GetType() != AObject::kTypeTuple || args_node->GetVobj() == nullptr) {
-        return false;
-      }
-      tuple_unpack = UnpackDynamicLengthTupleByBytecode(params, tuple_unpack, args_node, call_node);
-    }
     *has_kw = params->size();
   } else {
     params->clear();
-    if (args_node->GetOpcode() != BUILD_TUPLE) {
-      if ((args_node->GetVobj())->GetType() != AObject::kTypeTuple || args_node->GetVobj() == nullptr) {
-        return false;
-      }
-      tuple_unpack = UnpackDynamicLengthTupleByBytecode(params, tuple_unpack, args_node, call_node);
-      return UnpackExtraOper(tuple_unpack, extra_local, extra_oper, dict_unpack, has_dict);
+  }
+  if (args_node->GetOpcode() != BUILD_TUPLE) {
+    if ((args_node->GetVobj())->GetType() != AObject::kTypeTuple || args_node->GetVobj() == nullptr) {
+      return false;
     }
+    tuple_unpack = UnpackDynamicLengthTupleByBytecode(params, tuple_unpack, args_node, call_node);
   }
-
-  params->insert(params->begin(), args_node->getInputs().begin(), args_node->getInputs().end());
-  // extra operations of unpack-call tuple args for graph break
-  for (int i = 0; i < args_node->GetOparg(); ++i) {
-    ValueNode *idx_node = this->NewValueNode(AObject::Convert(py::int_(i)), LOAD_CONST, -1, {});
-    tuple_unpack.push_back(this->NewInstrNode(DUP_TOP, 0));
-    tuple_unpack.push_back(idx_node);
-    tuple_unpack.push_back(this->NewValueNode(args_node->input(i)->GetVobj(), BINARY_SUBSCR, 0, {args_node, idx_node}));
-    tuple_unpack.push_back(this->NewInstrNode(ROT_TWO, 0));
+  if (args_node->GetOpcode() == BUILD_TUPLE) {
+    params->insert(params->begin(), args_node->getInputs().begin(), args_node->getInputs().end());
+    // extra operations of unpack-call tuple args for graph break
+    for (int i = 0; i < args_node->GetOparg(); ++i) {
+      ValueNode *idx_node = this->NewValueNode(AObject::Convert(py::int_(i)), LOAD_CONST, -1, {});
+      tuple_unpack.push_back(this->NewInstrNode(DUP_TOP, 0));
+      tuple_unpack.push_back(idx_node);
+      tuple_unpack.push_back(
+        this->NewValueNode(args_node->input(i)->GetVobj(), BINARY_SUBSCR, 0, {args_node, idx_node}));
+      tuple_unpack.push_back(this->NewInstrNode(ROT_TWO, 0));
+    }
+    tuple_unpack.push_back(this->NewInstrNode(POP_TOP, 0));
   }
-  tuple_unpack.push_back(this->NewInstrNode(POP_TOP, 0));
-
   return UnpackExtraOper(tuple_unpack, extra_local, extra_oper, dict_unpack, has_dict);
 }
 
