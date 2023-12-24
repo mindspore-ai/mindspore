@@ -35,9 +35,9 @@ class OnnxModifier(ABCGraphModifier, ABC):
         self.model_output_names = [model_output.name for model_output in self.model.graph.output]
         self.black_node_type_list = {
             'Pad', 'Div', 'Const', 'Shape', 'ConstOfShape', 'Slice', 'Cast', 'Gather',
-            'Reshape', 'Unsqueeze', 'Mul', 'RandomNormalLike', 'Exp', 'InstanceNormalization'
-            'Where', 'Equal', 'Greater', 'Clip', 'Range', 'IsInf', 'IsNaN', 'Less', 'Loop'
-            'Not', 'Or', 'Xor', 'And', 'BitwiseNot', 'BitwiseAnd', 'BitwiseXor', 'BitwiseOr'
+            'Reshape', 'Unsqueeze', 'Mul', 'RandomNormalLike', 'Exp', 'InstanceNormalization',
+            'Where', 'Equal', 'Greater', 'Clip', 'Range', 'IsInf', 'IsNaN', 'Less', 'Loop',
+            'Not', 'Or', 'Xor', 'And', 'BitwiseNot', 'BitwiseAnd', 'BitwiseXor', 'BitwiseOr',
             'BitwiseNot', 'BatchNormalization', 'Constant'
         }
 
