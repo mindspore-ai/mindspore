@@ -19,6 +19,7 @@ import os
 import platform
 import queue
 import re
+import shutil
 import stat
 import time
 import multiprocessing as mp
@@ -31,6 +32,7 @@ from .shardindexgenerator import ShardIndexGenerator
 from .shardutils import MIN_SHARD_COUNT, MAX_SHARD_COUNT, VALID_ATTRIBUTES, VALID_ARRAY_ATTRIBUTES, \
     check_filename, VALUE_TYPE_MAP, SUCCESS
 from .common.exceptions import ParamValueError, ParamTypeError, MRMInvalidSchemaError, MRMDefineIndexError
+from .config import _get_enc_key, _get_enc_mode, _get_dec_mode, _get_hash_mode, encrypt, decrypt, append_hash_to_file, verify_file_hash
 
 __all__ = ['FileWriter']
 
@@ -93,6 +95,9 @@ class FileWriter:
         if self._shard_num == 1:
             self._paths = [self._file_name]
         else:
+            if _get_enc_key() is not None or _get_hash_mode() is not None:
+                raise RuntimeError("When encode mode or hash check is enabled, " +
+                                   "the automatic sharding function is unavailable.")
             self._paths = ["{}{}".format(self._file_name,
                                          str(x).rjust(suffix_shard_size, '0'))
                            for x in range(self._shard_num)]
@@ -150,6 +155,19 @@ class FileWriter:
             file_name = file_name.replace("\\", "/")
         check_filename(file_name)
 
+        # decrypt the data file and index file
+        index_file_name = file_name + ".db"
+        decrypt_filename = decrypt(file_name, _get_enc_key(), _get_dec_mode())
+        decrypt_index_filename = decrypt(index_file_name, _get_enc_key(), _get_dec_mode())
+
+        # verify integrity check
+        verify_file_hash(decrypt_filename)
+        verify_file_hash(decrypt_index_filename)
+
+        # move after decrypt and hash check all success
+        shutil.move(decrypt_filename, file_name)
+        shutil.move(decrypt_index_filename, index_file_name)
+
         # construct ShardHeader
         reader = ShardReader()
         reader.open(file_name, False)
@@ -161,6 +179,7 @@ class FileWriter:
         return instance
 
     def init_append(self, file_name, header):
+        """init open for append"""
         self._append = True
 
         if platform.system().lower() == "windows":
@@ -170,6 +189,7 @@ class FileWriter:
 
         self._header = header
         self._writer.open_for_append(self._file_name)
+        self._paths = [self._file_name]
 
     def add_schema(self, content, desc=None):
         """
@@ -447,7 +467,7 @@ class FileWriter:
 
             self._parallel_commit()
 
-        # change the file mode to 600
+        # change file mode first, because encrypt / hash check may failed
         mindrecord_files = []
         index_files = []
         for item in self._paths:
@@ -458,6 +478,18 @@ class FileWriter:
             if os.path.exists(index_file):
                 os.chmod(index_file, stat.S_IRUSR | stat.S_IWUSR)
                 index_files.append(index_file)
+
+        for item in self._paths:
+            if os.path.exists(item):
+                # add the integrity check string
+                if _get_hash_mode() is not None:
+                    append_hash_to_file(item)
+                    append_hash_to_file(item + ".db")
+
+                # encrypt the mindrecord file
+                if _get_enc_key() is not None:
+                    encrypt(item, _get_enc_key(), _get_enc_mode())
+                    encrypt(item + ".db", _get_enc_key(), _get_enc_mode())
 
         logger.info("The list of mindrecord files created are: {}, and the list of index files are: {}".format(
             mindrecord_files, index_files))

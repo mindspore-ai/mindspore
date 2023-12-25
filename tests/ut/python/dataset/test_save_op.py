@@ -16,6 +16,7 @@
 This is the test module for saveOp.
 """
 import os
+import shutil
 from string import punctuation
 
 import numpy as np
@@ -25,7 +26,7 @@ import mindspore.dataset as ds
 from mindspore import dtype as mstype
 import mindspore.dataset.transforms as transforms
 from mindspore import log as logger
-from mindspore.mindrecord import FileWriter
+from mindspore.mindrecord import FileWriter, set_enc_key, set_enc_mode, set_hash_mode
 
 TFRECORD_FILES = "../data/mindrecord/testTFRecordData/dummy.tfrecord"
 FILES_NUM = 1
@@ -646,3 +647,51 @@ def test_case_all_types():
     assert count == 2
 
     remove_file(mindrecord_filename)
+
+
+def save_with_encode_and_hash_check(file_name, enc_key, enc_mode, hash_mode):
+    """Save with encode and hash check"""
+
+    ## single file
+    if os.path.exists(file_name):
+        os.remove("{}".format(file_name))
+    if os.path.exists(file_name + ".db"):
+        os.remove("{}".format(file_name + ".db"))
+
+    set_enc_key(enc_key)
+    set_enc_mode(enc_mode)
+    set_hash_mode(hash_mode)
+
+    d1 = ds.GeneratorDataset(generator_1d, ["data"], shuffle=False)
+    d1.save(file_name)
+
+    dataset = ds.MindDataset(dataset_files=[file_name])
+    assert dataset.get_dataset_size() == 10
+
+    ## single file
+    if os.path.exists(file_name):
+        os.remove("{}".format(file_name))
+    if os.path.exists(file_name + ".db"):
+        os.remove("{}".format(file_name + ".db"))
+
+    set_enc_key(None)
+    set_hash_mode(None)
+
+    decrypt_dir = os.path.dirname(os.path.realpath(file_name)) + "/.decrypt_mindrecord"
+    if os.path.exists(decrypt_dir):
+        shutil.rmtree(decrypt_dir)
+
+
+def test_case_with_encode_and_hash_check():
+    """
+    Feature: Save op
+    Description: Save with encode and hash check
+    Expectation: Success
+    """
+    file_name = './'
+    file_name += os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+
+    save_with_encode_and_hash_check(file_name, None, "AES-CBC", None)
+    save_with_encode_and_hash_check(file_name, "abcdefghijklmnop01234567", "AES-CBC", None)
+    save_with_encode_and_hash_check(file_name, None, "AES-CBC", "sha3_384")
+    save_with_encode_and_hash_check(file_name, "89012345abcdefgh", "SM4-CBC", "sha512")

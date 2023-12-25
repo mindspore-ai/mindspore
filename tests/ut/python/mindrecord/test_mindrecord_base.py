@@ -16,11 +16,13 @@
 import os
 import uuid
 import pytest
+import shutil
 import numpy as np
 from utils import get_data, get_nlp_data
 
 from mindspore import log as logger
 from mindspore.mindrecord import FileWriter, FileReader, MindPage
+from mindspore.mindrecord import set_enc_key, set_enc_mode, set_dec_mode, set_hash_mode
 
 FILES_NUM = 4
 
@@ -1738,3 +1740,731 @@ def test_filereader_and_check_result(file_name=None, remove_file=True):
 
     remove_one_file(file_name)
     remove_one_file(file_name + ".db")
+
+
+def file_writer_encode_and_integrity_check(file_name=None, remove_file=True, encode=None, enc_mode=None,
+                                           hash_mode=None, dec_mode=None):
+    """
+    Feature: FileWriter
+    Description: writer for encode or integrity check
+    Expectation: SUCCESS
+    """
+    if not file_name:
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+
+    # mindrecord file without encode and hash to be compared with
+    file_name_no_encode_no_hash = file_name + "_no_encode_no_hash"
+    remove_one_file(file_name_no_encode_no_hash)
+    remove_one_file(file_name_no_encode_no_hash + ".db")
+    writer = FileWriter(file_name_no_encode_no_hash)
+    data = get_data("../data/mindrecord/testImageNetData/")
+    cv_schema_json = {"file_name": {"type": "string"},
+                      "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    for _ in range(5):
+        writer.write_raw_data(data, True)
+    writer.commit()
+    reader = FileReader(file_name_no_encode_no_hash)
+    assert reader.len() == 50
+
+    set_enc_key(encode)
+    set_enc_mode(enc_mode)
+    set_hash_mode(hash_mode)
+
+    # single file with encode and hash
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+    writer = FileWriter(file_name)
+    data = get_data("../data/mindrecord/testImageNetData/")
+    cv_schema_json = {"file_name": {"type": "string"},
+                      "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    for _ in range(5):
+        writer.write_raw_data(data, True)
+    writer.commit()
+
+    if encode is not None or hash_mode is not None:
+        origin_size = os.path.getsize(file_name)
+        new_size = os.path.getsize(file_name_no_encode_no_hash)
+        if origin_size == new_size:
+            raise RuntimeError("Encode and hash file is same as origin file.")
+
+    if dec_mode is not None:
+        set_enc_key(encode)
+        set_dec_mode(dec_mode)
+
+    # FileReader open the file
+    reader = FileReader(file_name)
+    assert reader.len() == 50
+
+    # check the .decrypt_mindrecord dir permission
+    if encode is not None:
+        real_path_filename = os.path.realpath(file_name)
+        parent_dir = os.path.dirname(real_path_filename)
+        permission = os.popen("ls -a -l " + parent_dir +
+                              " | grep \".decrypt_mindrecord\" | awk -F \" \" '{print $1;}'").readline()
+        assert permission.startswith("drwx------")
+
+    # MindPage open the file
+    reader = MindPage(file_name)
+    fields = reader.candidate_fields
+    assert fields == ['file_name', 'label'], \
+        'failed on getting candidate category fields.'
+
+    reader.category_field = "label"
+
+    info = reader.read_category_info()
+    logger.info("category info: {}".format(info))
+
+    row = reader.read_at_page_by_id(0, 0, 1)
+    assert len(row) == 1
+    assert len(row[0]) == 3
+    assert row[0]['label'] == 13
+
+    row1 = reader.read_at_page_by_name("822", 0, 1)
+    assert len(row1) == 1
+    assert len(row1[0]) == 3
+    assert row1[0]['label'] == 822
+
+    # open for append
+    write_append = FileWriter.open_for_append(file_name)
+    write_append.write_raw_data(data[5:10])
+    write_append.commit()
+
+    # test read
+    reader = FileReader(file_name)
+    assert reader.len() == 55
+
+    # test mindpage
+    reader = MindPage(file_name)
+    fields = reader.candidate_fields
+    assert fields == ['file_name', 'label'], \
+        'failed on getting candidate category fields.'
+
+    reader.category_field = "label"
+
+    info = reader.read_category_info()
+    logger.info("category info: {}".format(info))
+
+    row = reader.read_at_page_by_id(0, 0, 1)
+    assert len(row) == 1
+    assert len(row[0]) == 3
+    assert row[0]['label'] == 13
+
+    row1 = reader.read_at_page_by_name("822", 0, 1)
+    assert len(row1) == 1
+    assert len(row1[0]) == 3
+    assert row1[0]['label'] == 822
+
+    set_enc_key(None)
+    set_enc_mode()
+    set_dec_mode(None)
+    set_hash_mode(None)
+
+    # remove the enc & hashed file
+    if remove_file:
+        remove_one_file(file_name)
+        remove_one_file(file_name + ".db")
+
+    # remove the origin file
+    if remove_file:
+        remove_one_file(file_name_no_encode_no_hash)
+        remove_one_file(file_name_no_encode_no_hash + ".db")
+
+    decrypt_dir = os.path.dirname(os.path.realpath(file_name)) + "/.decrypt_mindrecord"
+    if os.path.exists(decrypt_dir):
+        shutil.rmtree(decrypt_dir)
+
+
+def test_file_writer_encode_integrity_check(file_name=None, remove_file=True):
+    """
+    Feature: FileWriter
+    Description: writer for encode and integrity check
+    Expectation: SUCCESS
+    """
+    if not file_name:
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+
+    file_writer_encode_and_integrity_check(file_name, True, "0123456789012345", "AES-GCM", "sha3_512")
+    file_writer_encode_and_integrity_check(file_name, True, "0123456789012345", "AES-CBC", None)
+    file_writer_encode_and_integrity_check(file_name, True, None, "SM4-CBC", "sha3_384")
+    file_writer_encode_and_integrity_check(file_name, True, None, "SM4-CBC", None)
+
+    def encrypt(f_in, file_size, f_out, key):
+        offset = 64 * 1024 * 1024    ## read the offset 64M
+        current_offset = 0           ## use this to seek file
+
+        while True:
+            if file_size - current_offset >= offset:
+                read_size = offset
+            elif file_size - current_offset > 0:
+                read_size = file_size - current_offset
+            else:
+                # have read the entire file
+                break
+
+            if f_in.seek(current_offset) == -1:
+                raise RuntimeError("Seek the file failed.")
+
+            data = f_in.read(read_size)
+
+            # encrypt the data
+            data_int = int.from_bytes(data, 'big')
+            key_int = int.from_bytes(key.encode('utf-8'), 'big')
+
+            data_out = (data_int ^ key_int).to_bytes(len(data), 'big')
+
+            # write to the file
+            f_out.write(int(len(data_out)).to_bytes(length=4, byteorder='big', signed=True))
+            f_out.write(data_out)
+
+            current_offset += read_size
+
+    def decrypt(f_in, file_size, f_out, key):
+        current_offset = 0           ## use this to seek file
+        length = int().from_bytes(f_in.read(4), byteorder='big', signed=True)
+        while length != 0:
+            # current_offset is the encrypted data
+            current_offset += 4
+            if f_in.seek(current_offset) == -1:
+                f_in.close()
+                raise RuntimeError("Seek the file: {} to position: {} failed.".format(filename, current_offset))
+
+            data = f_in.read(length)
+            data_int = int.from_bytes(data, 'big')
+            key_int = int.from_bytes(key.encode('utf-8'), 'big')
+            data_out = (data_int ^ key_int).to_bytes(len(data), 'big')
+
+            # write to decrypt file
+            f_out.write(data_out)
+
+            # current_offset is the length of next encrypted data block
+            current_offset += length
+            if f_in.seek(current_offset) == -1:
+                f_in.close()
+                raise RuntimeError("Seek the file: {} to position: {} failed.".format(filename, current_offset))
+
+            length = int().from_bytes(f_in.read(4), byteorder='big', signed=True)
+
+    def udf_hash(data, pre_hash):
+        cur_hash = hash(data + pre_hash)
+        return str(cur_hash).encode('utf-8')
+
+    file_writer_encode_and_integrity_check(file_name, True, "0123456789012345", encrypt, None, decrypt)
+    file_writer_encode_and_integrity_check(file_name, True, None, "AES-CBC", udf_hash, None)
+    file_writer_encode_and_integrity_check(file_name, True, "0123456780abcdef", encrypt, udf_hash, decrypt)
+
+
+def test_file_writer_encode_integrity_check_with_exception(file_name=None, remove_file=True):
+    """
+    Feature: FileWriter
+    Description: writer for encode and integrity check with exception
+    Expectation: SUCCESS
+    """
+    if not file_name:
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+
+    decrypt_dir = os.path.dirname(os.path.realpath(file_name)) + "/.decrypt_mindrecord"
+    if os.path.exists(decrypt_dir):
+        shutil.rmtree(decrypt_dir)
+
+    ## 1. create with encode and hash check
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+
+    set_enc_key("abcdefghijklmnop")
+    set_enc_mode("AES-CBC")
+    set_hash_mode("sha3_384")
+
+    writer = FileWriter(file_name)
+    data = get_data("../data/mindrecord/testImageNetData/")
+    cv_schema_json = {"file_name": {"type": "string"},
+                      "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    for _ in range(5):
+        writer.write_raw_data(data, True)
+    writer.commit()
+
+    ## 1.1 read with only encode
+    set_enc_key("abcdefghijklmnop")
+    set_enc_mode("AES-CBC")
+    set_hash_mode(None)
+
+    with pytest.raises(RuntimeError) as err:
+        # FileReader open the file
+        reader = FileReader(file_name)
+        assert reader.len() == 50
+    assert "The mindrecord file is hashed. You need to configure" in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # MindPage open the file
+        reader = MindPage(file_name)
+        fields = reader.candidate_fields
+        assert fields == ['file_name', 'label'], \
+            'failed on getting candidate category fields.'
+    assert "The mindrecord file is hashed. You need to configure" in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # open for append
+        write_append = FileWriter.open_for_append(file_name)
+        write_append.write_raw_data(data[5:10])
+        write_append.commit()
+    assert "The mindrecord file is hashed. You need to configure" in str(err.value)
+
+    ## 1.2 read with only hash
+    set_enc_key(None)
+    set_enc_mode("AES-CBC")
+    set_hash_mode("sha3_384")
+
+    with pytest.raises(RuntimeError) as err:
+        # FileReader open the file
+        reader = FileReader(file_name)
+        assert reader.len() == 50
+    assert "The mindrecord file is encrypted. You need to configure" in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # MindPage open the file
+        reader = MindPage(file_name)
+        fields = reader.candidate_fields
+        assert fields == ['file_name', 'label'], \
+            'failed on getting candidate category fields.'
+    assert "The mindrecord file is encrypted. You need to configure" in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # open for append
+        write_append = FileWriter.open_for_append(file_name)
+        write_append.write_raw_data(data[5:10])
+        write_append.commit()
+    assert "The mindrecord file is encrypted. You need to configure" in str(err.value)
+
+    ## 1.3 read without encode and hash check
+    set_enc_key(None)
+    set_enc_mode("AES-CBC")
+    set_hash_mode(None)
+
+    with pytest.raises(RuntimeError) as err:
+        # FileReader open the file
+        reader = FileReader(file_name)
+        assert reader.len() == 50
+    assert "The mindrecord file is encrypted. You need to configure" in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # MindPage open the file
+        reader = MindPage(file_name)
+        fields = reader.candidate_fields
+        assert fields == ['file_name', 'label'], \
+            'failed on getting candidate category fields.'
+    assert "The mindrecord file is encrypted. You need to configure" in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # open for append
+        write_append = FileWriter.open_for_append(file_name)
+        write_append.write_raw_data(data[5:10])
+        write_append.commit()
+    assert "The mindrecord file is encrypted. You need to configure" in str(err.value)
+
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+
+    ## 2. create with encode, without hash check
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+
+    set_enc_key("abcdefghijklmnop")
+    set_enc_mode("AES-CBC")
+    set_hash_mode(None)
+
+    writer = FileWriter(file_name)
+    data = get_data("../data/mindrecord/testImageNetData/")
+    cv_schema_json = {"file_name": {"type": "string"},
+                      "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    for _ in range(5):
+        writer.write_raw_data(data, True)
+    writer.commit()
+
+    ## 2.1 read with encode and hash check
+    set_enc_key("abcdefghijklmnop")
+    set_enc_mode("AES-CBC")
+    set_hash_mode("sha3_256")
+
+    with pytest.raises(RuntimeError) as err:
+        # FileReader open the file
+        reader = FileReader(file_name)
+        assert reader.len() == 50
+    assert "The mindrecord file is not hashed." in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # MindPage open the file
+        reader = MindPage(file_name)
+        fields = reader.candidate_fields
+        assert fields == ['file_name', 'label'], \
+            'failed on getting candidate category fields.'
+    assert "The mindrecord file is not hashed." in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # open for append
+        write_append = FileWriter.open_for_append(file_name)
+        write_append.write_raw_data(data[5:10])
+        write_append.commit()
+    assert "The mindrecord file is not hashed." in str(err.value)
+
+    ## 2.2 read without encode, with hash check
+    set_enc_key(None)
+    set_enc_mode("AES-CBC")
+    set_hash_mode("sha3_384")
+
+    with pytest.raises(RuntimeError) as err:
+        # FileReader open the file
+        reader = FileReader(file_name)
+        assert reader.len() == 50
+    assert "The mindrecord file is encrypted. You need to configure" in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # MindPage open the file
+        reader = MindPage(file_name)
+        fields = reader.candidate_fields
+        assert fields == ['file_name', 'label'], \
+            'failed on getting candidate category fields.'
+    assert "The mindrecord file is encrypted. You need to configure" in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # open for append
+        write_append = FileWriter.open_for_append(file_name)
+        write_append.write_raw_data(data[5:10])
+        write_append.commit()
+    assert "The mindrecord file is encrypted. You need to configure" in str(err.value)
+
+    ## 2.3 read without encode, without hash check
+    set_enc_key(None)
+    set_enc_mode("AES-CBC")
+    set_hash_mode(None)
+
+    with pytest.raises(RuntimeError) as err:
+        # FileReader open the file
+        reader = FileReader(file_name)
+        assert reader.len() == 50
+    assert "The mindrecord file is encrypted. You need to configure" in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # MindPage open the file
+        reader = MindPage(file_name)
+        fields = reader.candidate_fields
+        assert fields == ['file_name', 'label'], \
+            'failed on getting candidate category fields.'
+    assert "The mindrecord file is encrypted. You need to configure" in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # open for append
+        write_append = FileWriter.open_for_append(file_name)
+        write_append.write_raw_data(data[5:10])
+        write_append.commit()
+    assert "The mindrecord file is encrypted. You need to configure" in str(err.value)
+
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+
+    ## 3. create without encode, with hash check
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+
+    set_enc_key(None)
+    set_enc_mode("AES-CBC")
+    set_hash_mode("sha3_512")
+
+    writer = FileWriter(file_name)
+    data = get_data("../data/mindrecord/testImageNetData/")
+    cv_schema_json = {"file_name": {"type": "string"},
+                      "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    for _ in range(5):
+        writer.write_raw_data(data, True)
+    writer.commit()
+
+    ## 3.1 read with encode, with hash check
+    set_enc_key("abcdefghijklmnop")
+    set_enc_mode("AES-CBC")
+    set_hash_mode(None)
+
+    with pytest.raises(RuntimeError) as err:
+        # FileReader open the file
+        reader = FileReader(file_name)
+        assert reader.len() == 50
+    assert "The mindrecord file is not encrypted." in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # MindPage open the file
+        reader = MindPage(file_name)
+        fields = reader.candidate_fields
+        assert fields == ['file_name', 'label'], \
+            'failed on getting candidate category fields.'
+    assert "The mindrecord file is not encrypted." in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # open for append
+        write_append = FileWriter.open_for_append(file_name)
+        write_append.write_raw_data(data[5:10])
+        write_append.commit()
+    assert "The mindrecord file is not encrypted." in str(err.value)
+
+    ## 3.2 read with encode, without hash check
+    set_enc_key("abcdefghijklmnop")
+    set_enc_mode("AES-CBC")
+    set_hash_mode(None)
+
+    with pytest.raises(RuntimeError) as err:
+        # FileReader open the file
+        reader = FileReader(file_name)
+        assert reader.len() == 50
+    assert "The mindrecord file is not encrypted. You can set" in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # MindPage open the file
+        reader = MindPage(file_name)
+        fields = reader.candidate_fields
+        assert fields == ['file_name', 'label'], \
+            'failed on getting candidate category fields.'
+    assert "The mindrecord file is not encrypted. You can set" in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # open for append
+        write_append = FileWriter.open_for_append(file_name)
+        write_append.write_raw_data(data[5:10])
+        write_append.commit()
+    assert "The mindrecord file is not encrypted. You can set" in str(err.value)
+
+    ## 3.3 read without encode and hash check
+    set_enc_key(None)
+    set_enc_mode("AES-CBC")
+    set_hash_mode(None)
+
+    with pytest.raises(RuntimeError) as err:
+        # FileReader open the file
+        reader = FileReader(file_name)
+        assert reader.len() == 50
+    assert "The mindrecord file is hashed. You need to configure" in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # MindPage open the file
+        reader = MindPage(file_name)
+        fields = reader.candidate_fields
+        assert fields == ['file_name', 'label'], \
+            'failed on getting candidate category fields.'
+    assert "The mindrecord file is hashed. You need to configure" in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # open for append
+        write_append = FileWriter.open_for_append(file_name)
+        write_append.write_raw_data(data[5:10])
+        write_append.commit()
+    assert "The mindrecord file is hashed. You need to configure" in str(err.value)
+
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+
+    ## 4. create without encode, without hash check
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+
+    set_enc_key(None)
+    set_enc_mode("AES-CBC")
+    set_hash_mode(None)
+
+    writer = FileWriter(file_name)
+    data = get_data("../data/mindrecord/testImageNetData/")
+    cv_schema_json = {"file_name": {"type": "string"},
+                      "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    for _ in range(5):
+        writer.write_raw_data(data, True)
+    writer.commit()
+
+    ## 4.1 read with encode, with hash check
+    set_enc_key("abcdefghijklmnop")
+    set_enc_mode("AES-CBC")
+    set_hash_mode("sha512")
+
+    with pytest.raises(RuntimeError) as err:
+        # FileReader open the file
+        reader = FileReader(file_name)
+        assert reader.len() == 50
+    assert "The mindrecord file is not encrypted. You can set" in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # MindPage open the file
+        reader = MindPage(file_name)
+        fields = reader.candidate_fields
+        assert fields == ['file_name', 'label'], \
+            'failed on getting candidate category fields.'
+    assert "The mindrecord file is not encrypted. You can set" in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # open for append
+        write_append = FileWriter.open_for_append(file_name)
+        write_append.write_raw_data(data[5:10])
+        write_append.commit()
+    assert "The mindrecord file is not encrypted. You can set" in str(err.value)
+
+    ## 4.2 read with encode, without hash check
+    set_enc_key("abcdefghijklmnop")
+    set_enc_mode("AES-CBC")
+    set_hash_mode(None)
+
+    with pytest.raises(RuntimeError) as err:
+        # FileReader open the file
+        reader = FileReader(file_name)
+        assert reader.len() == 50
+    assert "The mindrecord file is not encrypted. You can set" in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # MindPage open the file
+        reader = MindPage(file_name)
+        fields = reader.candidate_fields
+        assert fields == ['file_name', 'label'], \
+            'failed on getting candidate category fields.'
+    assert "The mindrecord file is not encrypted. You can set" in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # open for append
+        write_append = FileWriter.open_for_append(file_name)
+        write_append.write_raw_data(data[5:10])
+        write_append.commit()
+    assert "The mindrecord file is not encrypted. You can set" in str(err.value)
+
+    ## 4.3 read without encode, with hash check
+    set_enc_key(None)
+    set_enc_mode("AES-CBC")
+    set_hash_mode("sha384")
+
+    with pytest.raises(RuntimeError) as err:
+        # FileReader open the file
+        reader = FileReader(file_name)
+        assert reader.len() == 50
+    assert "The mindrecord file is not hashed. You can set" in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # MindPage open the file
+        reader = MindPage(file_name)
+        fields = reader.candidate_fields
+        assert fields == ['file_name', 'label'], \
+            'failed on getting candidate category fields.'
+    assert "The mindrecord file is not hashed. You can set" in str(err.value)
+
+    with pytest.raises(RuntimeError) as err:
+        # open for append
+        write_append = FileWriter.open_for_append(file_name)
+        write_append.write_raw_data(data[5:10])
+        write_append.commit()
+    assert "The mindrecord file is not hashed. You can set" in str(err.value)
+
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+
+    if os.path.exists(decrypt_dir):
+        shutil.rmtree(decrypt_dir)
+
+    set_enc_key(None)
+    set_enc_mode()
+    set_dec_mode(None)
+    set_hash_mode(None)
+
+
+def test_file_writer_encode_integrity_check_with_exception_invalid_key(file_name=None, remove_file=True):
+    """
+    Feature: FileWriter
+    Description: writer for encode and integrity check with exception invalid key
+    Expectation: SUCCESS
+    """
+    if not file_name:
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+
+    decrypt_dir = os.path.dirname(os.path.realpath(file_name)) + "/.decrypt_mindrecord"
+    if os.path.exists(decrypt_dir):
+        shutil.rmtree(decrypt_dir)
+
+    set_enc_key("zxcvasdfqwerbnm,")
+    set_enc_mode("AES-CBC")
+    set_hash_mode("sha256")
+
+    # writer with auto shard
+    with pytest.raises(RuntimeError) as err:
+        writer = FileWriter(file_name, 2)
+    assert "When encode mode or hash check is enabled, the automatic sharding function is unavailable." \
+        in str(err.value)
+
+    set_enc_key("zxcvasdfqwerbnm,")
+    set_enc_mode("AES-CBC")
+    set_hash_mode(None)
+
+    writer = FileWriter(file_name)
+    data = get_data("../data/mindrecord/testImageNetData/")
+    cv_schema_json = {"file_name": {"type": "string"},
+                      "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    for _ in range(5):
+        writer.write_raw_data(data)
+    writer.commit()
+
+    ## read with other encode key
+    set_enc_key("zxcvabdfqwerbnm,")
+    with pytest.raises(RuntimeError) as err:
+        # FileReader open the file
+        reader = FileReader(file_name)
+        assert reader.len() == 50
+    assert "Failed to decrypt data, please check if enc_key and enc_mode / dec_mode is valid." in str(err.value)
+
+    ## read with other encode mode
+    set_enc_key("zxcvasdfqwerbnm,")
+    set_enc_mode("AES-GCM")
+    with pytest.raises(RuntimeError) as err:
+        # FileReader open the file
+        reader = FileReader(file_name)
+        assert reader.len() == 50
+    assert "Failed to decrypt data, please check if enc_key and enc_mode / dec_mode is valid." in str(err.value)
+
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+
+    ## enable hash check
+    set_enc_key(None)
+    set_enc_mode("AES-CBC")
+    set_hash_mode("sha3_256")
+
+    writer = FileWriter(file_name)
+    data = get_data("../data/mindrecord/testImageNetData/")
+    cv_schema_json = {"file_name": {"type": "string"},
+                      "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    for _ in range(5):
+        writer.write_raw_data(data)
+    writer.commit()
+
+    ## read with other hash mode
+    set_hash_mode("sha256")
+    with pytest.raises(RuntimeError) as err:
+        # FileReader open the file
+        reader = FileReader(file_name)
+        assert reader.len() == 50
+    assert " hash check fail. " in str(err.value)
+
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+
+    if os.path.exists(decrypt_dir):
+        shutil.rmtree(decrypt_dir)
+
+    set_enc_key(None)
+    set_enc_mode()
+    set_dec_mode(None)
+    set_hash_mode(None)
