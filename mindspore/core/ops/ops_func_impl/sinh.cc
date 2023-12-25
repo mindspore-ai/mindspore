@@ -24,9 +24,9 @@ BaseShapePtr SinhFuncImpl::InferShape(const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) const {
   auto input_shape = input_args[kIndex0]->GetShape();
   const auto input_dim = input_shape->GetShapeVector().size();
-  const size_t max_dim = 9;
-  MS_CHECK_VALUE(input_dim < max_dim,
-                 CheckAndConvertUtils::FormatCheckIntegerMsg("rank of x", input_dim, kLessThan, max_dim, primitive));
+  const size_t max_dim = 8;
+  MS_CHECK_VALUE(input_dim <= max_dim,
+                 CheckAndConvertUtils::FormatCheckIntegerMsg("rank of x", input_dim, kLessEqual, max_dim, primitive));
   return input_shape->Clone();
 }
 
