@@ -95,7 +95,7 @@ vector<int64_t> TransformUtil::ConvertIntToList(int64_t data, int size) {
     return list;
   }
   for (int i = 0; i < size; ++i) {
-    list.push_back(data);
+    list.emplace_back(data);
   }
   return list;
 }
