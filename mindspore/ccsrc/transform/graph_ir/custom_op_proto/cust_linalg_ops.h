@@ -55,5 +55,14 @@ REG_CUST_OP(LuSolve)
   .INPUT(lu_pivots, TensorType({DT_INT32}))
   .OUTPUT(output, TensorType({DT_FLOAT, DT_FLOAT16}))
   .CUST_OP_END_FACTORY_REG(LuSolve)
+
+REG_CUST_OP(LinearSumAssignment)
+  .INPUT(cost_matrix, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_BOOL, DT_INT16, DT_INT32, DT_INT64, DT_INT8,
+                                  DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8}))
+  .INPUT(dimension_limit, TensorType({DT_INT64}))
+  .INPUT(maximize, TensorType({DT_BOOL}))
+  .OUTPUT(row_ind, TensorType({DT_INT64}))
+  .OUTPUT(col_ind, TensorType({DT_INT64}))
+  .CUST_OP_END_FACTORY_REG(LinearSumAssignment)
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_LINALG_OPS_H_

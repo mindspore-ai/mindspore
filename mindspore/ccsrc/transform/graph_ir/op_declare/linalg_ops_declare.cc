@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@
 
 #include "ops/arithmetic_op_name.h"
 #include "ops/math_ops.h"
+#include "ops/arithmetic_ops.h"
+
 namespace mindspore::transform {
 // Ger
 INPUT_MAP(Ger) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
@@ -106,4 +108,12 @@ INPUT_MAP(Qr) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Qr) = {{"full_matrices", ATTR_DESC(full_matrices, AnyTraits<bool>())}};
 OUTPUT_MAP(Qr) = {{0, OUTPUT_DESC(q)}, {1, OUTPUT_DESC(r)}};
 REG_ADPT_DESC(Qr, prim::kPrimQr->name(), ADPT_DESC(Qr));
+
+// LinearSumAssignment
+CUST_INPUT_MAP(LinearSumAssignment) = {
+  {1, INPUT_DESC(cost_matrix)}, {2, INPUT_DESC(dimension_limit)}, {3, INPUT_DESC(maximize)}};
+CUST_ATTR_MAP(LinearSumAssignment) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(LinearSumAssignment) = {{0, OUTPUT_DESC(row_ind)}, {1, OUTPUT_DESC(col_ind)}};
+REG_ADPT_DESC(LinearSumAssignment, prim::kPrimLinearSumAssignment->name(), CUST_ADPT_DESC(LinearSumAssignment));
+
 }  // namespace mindspore::transform

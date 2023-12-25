@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,11 @@ class LinearSumAssignmentCpuKernelMod : public NativeCpuKernelMod,
   std::vector<int64_t> cost_matrix_shape_;
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool SolveProblem(T *cost, int64_t nr, int64_t dimension_limit, int64_t nc, bool maximize, int64_t *row_ind,
+                    int64_t *col_ind, const std::vector<AddressPtr> &workspace);
+
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
 
   template <typename T>
