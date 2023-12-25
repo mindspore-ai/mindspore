@@ -200,6 +200,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/backend/common/graph_kernel/*.cc"
         "../../../mindspore/ccsrc/backend/common/expander/*.cc"
         "../../../mindspore/ccsrc/common/expander/*.cc"
+        "../../../mindspore/ccsrc/common/symbol_engine/*.cc"
         "../../../mindspore/ccsrc/backend/common/session/anf_runtime_algorithm.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_session.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_auto_monad.cc"

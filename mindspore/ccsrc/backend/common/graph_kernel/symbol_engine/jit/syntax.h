@@ -19,8 +19,7 @@
 #include <memory>
 #include <vector>
 
-namespace mindspore::graphkernel::symbol::ast {
-
+namespace mindspore::graphkernel::symshape::ast {
 /*
  Term ::= SingleTerm | Shape
  Shape ::= List[SingleTerm]
@@ -102,6 +101,6 @@ class Visitor {
 };
 
 using SymbolTable = std::vector<TermPtr>;
-}  // namespace mindspore::graphkernel::symbol::ast
+}  // namespace mindspore::graphkernel::symshape::ast
 
 #endif  // MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_SYMBOL_ENGINE_JIT_SYNTAX_H_

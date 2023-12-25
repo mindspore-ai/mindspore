@@ -158,7 +158,7 @@ class MS_CORE_API Tuple final : public Object {
   /// \brief Get the elements of the Tuple object.
   ///
   /// \return The elements of the Tuple object.
-  TypePtrList elements() const { return elements_; }
+  const TypePtrList &elements() const { return elements_; }
 
   /// \brief Set the elements of Tuple object.
   ///

@@ -19,40 +19,45 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include "mindspore/core/ops/symbol_ops_impl/scalar_add.h"
+#include "mindspore/core/ops/symbol_ops_impl/scalar_sub.h"
+#include "mindspore/core/ops/symbol_ops_impl/scalar_mul.h"
+#include "mindspore/core/ops/symbol_ops_impl/scalar_div.h"
+#include "mindspore/core/ops/symbol_ops_impl/scalar_max.h"
+#include "mindspore/core/ops/symbol_ops_impl/scalar_min.h"
 
-namespace mindspore::graphkernel::symbol {
-
-void TransformVisitor::Init(const std::shared_ptr<SymbolEngineImpl> &symbol_engine) {
-  MS_LOG(DEBUG) << "TransformVisitor Initing...";
-  auto &input_index = symbol_engine->cache().GetInputIndex();
-  for (const auto &[node, idx] : input_index) {
-    auto shape = symbol_engine->QuerySymbolicShape(node);
-    MS_EXCEPTION_IF_NULL(shape);
+namespace mindspore::graphkernel::symshape {
+void TransformVisitor::Init(const FuncGraphPtr &func_graph) {
+  MS_LOG(DEBUG) << "TransformVisitor init with graph " << func_graph->ToString();
+  for (size_t idx = 0; idx < func_graph->parameters().size(); idx++) {
+    auto sym_shape = func_graph->parameters()[idx]->abstract()->GetSymbolicShape();
+    MS_EXCEPTION_IF_NULL(sym_shape);
     // Assume that input are all tensors
-    auto shape_list = shape->as<ListSymbol>();
-    for (size_t j = 0; j < shape_list->symbols().size(); ++j) {
-      auto sym = shape_list->symbols()[j]->as<ScalarSymbol>();
+    for (size_t j = 0; j < sym_shape->size(); ++j) {
+      auto sym = sym_shape->item(j)->as<ScalarSymbol>();
       MS_EXCEPTION_IF_NULL(sym);
       if (!sym->HasData()) {
         auto input_sym = std::make_shared<ast::Input>(idx, j);
-        auto val = NewVal(input_sym, sym->ToExpr());
+        auto val = NewVal(input_sym, sym->ToRawString());
         MS_LOG(DEBUG) << "Init a input symbol: " << idx << ", " << j << " -> " << val->ToString();
-        temp_map_[sym->ToExpr()] = val;
+        temp_map_[sym->ToRawString()] = val;
       }
     }
   }
 }
 
-bool TransformVisitor::Transform(Symbol *symbol) {
+bool TransformVisitor::Transform(const FuncGraphPtr &func_graph) {
   try {
     MS_LOG_TRY_CATCH_SCOPE;
+    auto out_symbol = func_graph->output()->abstract()->GetSymbolicShape();
+    MS_EXCEPTION_IF_NULL(out_symbol);
     // Assume that symbol is either tuple of shapes or just one shape
-    if (symbol->tid() == ListSymbol::kTypeId) {
-      for (auto &ilist_symbol : symbol->as<ListSymbol>()->symbols()) {
-        SymbolVisitor::Visit(ilist_symbol.get());
+    if (func_graph->output()->abstract()->GetShape()->isa<abstract::SequenceShape>()) {
+      for (auto &tensor_symbol : out_symbol->symbols()) {
+        Visit(tensor_symbol.get());
       }
     } else {
-      SymbolVisitor::Visit(symbol);
+      Visit(out_symbol.get());
     }
   } catch (const std::exception &ex) {
     symbols_.clear();
@@ -60,51 +65,48 @@ bool TransformVisitor::Transform(Symbol *symbol) {
   }
   for (auto term : symbols_) {
     auto shape = std::dynamic_pointer_cast<ast::Shape>(term);
+    if (shape == nullptr) {
+      MS_LOG(DEBUG) << "null shape exists.";
+      return false;
+    }
     shapes_.push_back(std::move(shape));
   }
   symbols_.clear();
   return true;
 }
 
-void TransformVisitor::Visit(InputSymbol *symbol) { MS_LOG(EXCEPTION) << "Visit Input symbol: " << symbol->ToString(); }
-
-void TransformVisitor::Visit(ScalarSymbol *symbol) { MS_LOG(EXCEPTION) << "Unexpected ScalarSymbol"; }
-
-void TransformVisitor::Visit(IntSymbol *symbol) {
+void TransformVisitor::VisitImpl(IntSymbol *symbol) {
   if (symbol->HasData()) {
     MS_LOG(DEBUG) << ">>> Visit IntSymbol: " << symbol->ToString();
     symbols_.push_back(std::make_shared<ast::IntImm>(symbol->value()));
     MS_LOG(DEBUG) << "<<< Visit IntSymbol: Push back a Int " << symbol->value();
   } else {
-    auto ite = temp_map_.find(symbol->ToExpr());
+    auto ite = temp_map_.find(symbol->ToRawString());
     if (ite != temp_map_.end()) {
       // Already a var
       symbols_.push_back(ite->second);
       return;
     } else {
-      MS_LOG(DEBUG) << ">>> Visit IntSymbol, a thunk" << symbol->ToExpr() << ":" << symbol->operation()->type_name();
+      MS_LOG(DEBUG) << ">>> Visit IntSymbol, a thunk" << symbol->ToRawString() << ":"
+                    << symbol->operation()->type_name();
       Visit(symbol->operation().get());
       auto smbl_p = symbols_.back();
-      auto val_p = NewVal(smbl_p, symbol->ToExpr());
+      auto val_p = NewVal(smbl_p, symbol->ToRawString());
       symbols_.pop_back();
       MS_LOG_DEBUG << "<<< val symbol " << val_p->ToString() << " point to " << symbol->ToString()
                    << "---: " << smbl_p->ToString();
-      temp_map_[symbol->ToExpr()] = val_p;
+      temp_map_[symbol->ToRawString()] = val_p;
       symbols_.push_back(val_p);
     }
   }
 }
 
-void TransformVisitor::Visit(BoolSymbol *symbol) { MS_LOG(EXCEPTION) << "Unsupported BoolSymbol"; }
-
-void TransformVisitor::Visit(FloatSymbol *symbol) { MS_LOG(EXCEPTION) << "Unsupported FloatSymbol"; }
-
-void TransformVisitor::Visit(ListSymbol *symbol) {
+void TransformVisitor::VisitImpl(ListSymbol *symbol) {
   MS_LOG(DEBUG) << "Visit ListSymbol: " << symbol->ToString();
   auto shape = std::make_shared<ast::Shape>();
   auto sym_list = symbol->symbols();
   for (auto sym_p : sym_list) {
-    SymbolVisitor::Visit(sym_p.get());
+    Visit(sym_p.get());
   }
   if (sym_list.size() > symbols_.size()) {
     MS_LOG(EXCEPTION) << "Unexpected error: shape size:" << sym_list.size() << " > symbols_ size: " << symbols_.size();
@@ -112,47 +114,29 @@ void TransformVisitor::Visit(ListSymbol *symbol) {
   for (size_t i = symbols_.size() - sym_list.size(); i < symbols_.size(); ++i) {
     shape->smbls_.push_back(std::dynamic_pointer_cast<ast::SingleTerm>(symbols_[i]));
   }
-  MS_LOG(DEBUG) << "<<< Visit IListSymbol: Push back a shape: " << shape->ToString();
+  MS_LOG(DEBUG) << "<<< Visit ListSymbol: Push back a shape: " << shape->ToString();
   symbols_.resize(symbols_.size() - sym_list.size());
   symbols_.push_back(shape);
 }
 
-void TransformVisitor::Visit(IListSymbol *symbol) {
-  MS_LOG(DEBUG) << ">>> Visit IListSymbol: " << symbol->ToString();
-  auto shape = std::make_shared<ast::Shape>();
-  auto sym_list = symbol->symbols();
-  for (auto sym_p : sym_list) {
-    SymbolVisitor::Visit(sym_p.get());
-  }
-  if (sym_list.size() > symbols_.size()) {
-    MS_LOG(EXCEPTION) << "Unexpected error: shape size:" << sym_list.size() << " > symbols_ size: " << symbols_.size();
-  }
-  for (size_t i = symbols_.size() - sym_list.size(); i < symbols_.size(); ++i) {
-    shape->smbls_.push_back(std::dynamic_pointer_cast<ast::SingleTerm>(symbols_[i]));
-  }
-  MS_LOG(DEBUG) << "<<< Visit IListSymbol: Push back a shape: " << shape->ToString();
-  symbols_.resize(symbols_.size() - sym_list.size());
-  symbols_.push_back(shape);
-}
-
-void TransformVisitor::Visit(ops::Operation *op) {
+void TransformVisitor::VisitImpl(Operation *op) {
   switch (op->tid()) {
-    case ops::ScalarAdd::kTypeId:
+    case mindspore::symshape::ops::ScalarAdd::kTypeId:
       EmitBinOp(ast::BinOpType::ScalarAdd, op);
       break;
-    case ops::ScalarSub::kTypeId:
+    case mindspore::symshape::ops::ScalarSub::kTypeId:
       EmitBinOp(ast::BinOpType::ScalarSub, op);
       break;
-    case ops::ScalarMul::kTypeId:
+    case mindspore::symshape::ops::ScalarMul::kTypeId:
       EmitBinOp(ast::BinOpType::ScalarMul, op);
       break;
-    case ops::ScalarMin::kTypeId:
+    case mindspore::symshape::ops::ScalarMin::kTypeId:
       EmitBinOp(ast::BinOpType::ScalarMin, op);
       break;
-    case ops::ScalarMax::kTypeId:
+    case mindspore::symshape::ops::ScalarMax::kTypeId:
       EmitBinOp(ast::BinOpType::ScalarMax, op);
       break;
-    case ops::ScalarDiv::kTypeId:
+    case mindspore::symshape::ops::ScalarDiv::kTypeId:
       EmitBinOp(ast::BinOpType::ScalarDiv, op);
       break;
     default:
@@ -184,5 +168,4 @@ ast::VarPtr TransformVisitor::NewVal(ast::TermPtr term, const std::string &name)
   symbols_table_.push_back(term);
   return val_p;
 }
-
-}  // namespace mindspore::graphkernel::symbol
+}  // namespace mindspore::graphkernel::symshape

@@ -38,7 +38,6 @@
 #include "include/common/profiler.h"
 #include "ir/anf.h"
 #include "ir/functor.h"
-#include "backend/common/graph_kernel/symbol_engine/symbol_engine.h"
 #include "backend/operator/ops_backend_infer_function.h"
 
 namespace mindspore {

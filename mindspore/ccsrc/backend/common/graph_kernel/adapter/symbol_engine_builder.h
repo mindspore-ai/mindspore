@@ -19,7 +19,6 @@
 #include "ir/func_graph.h"
 #include "include/backend/visible.h"
 #include "include/backend/optimizer/pass.h"
-#include "backend/common/graph_kernel/symbol_engine/symbol_engine_impl.h"
 
 namespace mindspore::graphkernel {
 class SymbolEngineBuilder : public opt::Pass {
@@ -32,15 +31,5 @@ class SymbolEngineBuilder : public opt::Pass {
  private:
   bool multi_engine_;
 };
-
-/// \brief Build SymbolEngine for FuncGraph, and set it as attr of FuncGraph.
-/// \param fg the funcgraph
-/// \param multi_engine if true, new SymbolEngine will be created for each subgraphs. otherwise, the unique SymbolEngine
-/// will be reused. Default false.
-/// \return shared_ptr of SymbolEngine
-BACKEND_EXPORT SymbolEnginePtr BuildSymbolEngine(const FuncGraphPtr &fg, bool multi_engine = false);
-
-// Build SubSymbolEngine for fused kernels.
-SymbolEnginePtr BuildSubSymbolEngine(const FuncGraphPtr &sub_fg, const AnfNodePtr &node);
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_ADAPTER_SYMBOL_ENGINE_BUILDER_H_

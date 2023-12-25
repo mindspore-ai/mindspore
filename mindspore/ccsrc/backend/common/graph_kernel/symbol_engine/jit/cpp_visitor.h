@@ -23,13 +23,12 @@
 #include <unordered_map>
 #include <vector>
 
-#include "backend/common/graph_kernel/symbol_engine/symbol.h"
-#include "backend/common/graph_kernel/symbol_engine/operations/operation.h"
-#include "backend/common/graph_kernel/symbol_engine/symbol_visitor.h"
+#include "mindspore/core/symbolic_shape/symbol.h"
+#include "mindspore/core/symbolic_shape/operation.h"
+#include "mindspore/core/symbolic_shape/symbol_visitor.h"
 #include "backend/common/graph_kernel/symbol_engine/jit/syntax.h"
 
-namespace mindspore::graphkernel::symbol {
-
+namespace mindspore::graphkernel::symshape {
 class CppVisitor : public ast::Visitor {
  public:
   using DynFuncType = void (*)(const int64_t **, int64_t **);
@@ -77,5 +76,5 @@ class CppVisitor : public ast::Visitor {
   void *dynlib_ = nullptr;
 };
 using CppVisitorPtr = std::shared_ptr<CppVisitor>;
-}  // namespace mindspore::graphkernel::symbol
+}  // namespace mindspore::graphkernel::symshape
 #endif  // MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_SYMBOL_ENGINE_JIT_CPP_VISITOR_H_

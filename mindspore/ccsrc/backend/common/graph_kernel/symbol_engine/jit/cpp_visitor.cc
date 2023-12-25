@@ -27,12 +27,12 @@
 #include <string>
 
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
-#include "backend/common/graph_kernel/symbol_engine/symbol.h"
+#include "mindspore/core/symbolic_shape/symbol.h"
 #include "kernel/framework_utils.h"
 #include "include/common/debug/common.h"
 #include "utils/file_utils.h"
 
-namespace mindspore::graphkernel::symbol {
+namespace mindspore::graphkernel::symshape {
 constexpr const char *kPrefix = "symbol_engine_jit_";
 using ast::Shape, ast::BinOpType;
 
@@ -274,30 +274,21 @@ void CppVisitor::Visit(const ast::Shape &shape) {
   cpp_sentences_.push_back(sentence.str());
   cpp_sentences_.push_back(name);
 }
+}  // namespace mindspore::graphkernel::symshape
 #else
-namespace mindspore::graphkernel::symbol {
+namespace mindspore::graphkernel::symshape {
 using ast::Shape, ast::BinOpType;
 CppVisitor::CppVisitor() {}
-
 CppVisitor::~CppVisitor() {}
-
-std::string CppVisitor::CodeGen(const std::vector<ast::ShapePtr> &shapes, const ast::SymbolTable &symbol_table,
-                                const std::string &func_name) {
+std::string CppVisitor::CodeGen(const std::vector<ast::ShapePtr> &, const ast::SymbolTable &, const std::string &) {
   return "";
 }
-
 void CppVisitor::Compile() {}
-
-CppVisitor::DynFuncType CppVisitor::LoadFunc(const std::string &func_name) { return nullptr; }
-
+CppVisitor::DynFuncType CppVisitor::LoadFunc(const std::string &) { return nullptr; }
 void CppVisitor::Visit(const ast::IntImm &imm) {}
-
 void CppVisitor::Visit(const ast::BinOp &op) {}
-
 void CppVisitor::Visit(const ast::Var &input_smbl) {}
-
 void CppVisitor::Visit(const ast::Input &input_smbl) {}
-
 void CppVisitor::Visit(const ast::Shape &shape) {}
+}  // namespace mindspore::graphkernel::symshape
 #endif
-}  // namespace mindspore::graphkernel::symbol

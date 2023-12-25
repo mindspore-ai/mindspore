@@ -41,6 +41,7 @@
 #include "ir/func_graph_transform.h"
 #include "ir/func_graph_base.h"
 #include "abstract/abstract_value.h"
+#include "mindspore/core/symbolic_shape/symbol_engine.h"
 
 namespace mindspore {
 using BaseRefCounterMap = OrderedMap<BaseRef, int, BaseRefHash>;
@@ -398,6 +399,9 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
 
   const std::string &phase() const { return phase_; }
 
+  void set_symbol_engine(const SymbolEnginePtr &se) { symbol_engine_ = se; }
+  const SymbolEnginePtr &symbol_engine() const { return symbol_engine_; }
+
  private:
   // Only used for func_graph manager to control resource free.
   int attached_mng_cnt() const { return attached_mng_cnt_; }
@@ -492,6 +496,8 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   // Corresponding python obj.
   ValuePtr python_obj_ = nullptr;
   std::string phase_;
+  // the manager of symbolic shape's symbols and operations.
+  SymbolEnginePtr symbol_engine_;
 };
 
 inline CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg) {

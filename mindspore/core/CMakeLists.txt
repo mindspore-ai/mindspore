@@ -42,10 +42,10 @@ file(GLOB_RECURSE CORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
   "abstract/*.cc"
   "base/*.cc"
   "ir/*.cc"
+  "symbolic_shape/*.cc"
   "utils/*.cc"
   "load_mindir/*.cc"
   "mindapi/src/*.cc"
-  "expander/*.cc"
   )
 if(TARGET_AOS_ARM)
     file(GLOB_RECURSE CORE_LOAD_MINDIR_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "load_mindir/*.cc")
