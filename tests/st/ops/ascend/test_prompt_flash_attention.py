@@ -26,10 +26,10 @@ class PromptFlashAttention(nn.Cell):
         super(PromptFlashAttention, self).__init__()
         self.pfa = prompt_flash_attention
 
-    def construct(self, query, key, value, padding_mask, attn_mask, actual_seq_lengths, actual_seq_lengths_kv,
+    def construct(self, query, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, padding_mask,
                   deq_scale1, quant_scale1, deq_scale2, quant_scale2, quant_offset2, num_heads, scale_value=1.0,
                   pre_tokens=2147483547, next_tokens=0, input_layout='BSH', num_key_value_heads=0, sparse_mode=0):
-        return self.pfa(query, key, value, padding_mask, attn_mask, actual_seq_lengths, actual_seq_lengths_kv,
+        return self.pfa(query, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, padding_mask,
                         deq_scale1, quant_scale1, deq_scale2, quant_scale2, quant_offset2, num_heads=num_heads,
                         scale_value=scale_value, pre_tokens=pre_tokens, next_tokens=next_tokens,
                         input_layout=input_layout, num_key_value_heads=num_key_value_heads, sparse_mode=sparse_mode)
@@ -54,10 +54,9 @@ def test_prompt_flash_attention_bsh_fwd():
     query = Tensor(np.ones((B, S, Q_H), dtype=np.float16))
     key = Tensor(np.ones((B, S, KV_H), dtype=np.float16))
     value = Tensor(np.ones((B, S, KV_H), dtype=np.float16))
-    padding_mask = Tensor(0.1)
     attn_mask = Tensor(np.ones((B, 1, S, S), dtype=np.float16))
     net = PromptFlashAttention()
-    attention_out = net(query, key, value, attn_mask, [S], [S], padding_mask, None, None, None, None, None, N,
+    attention_out = net(query, key, value, attn_mask, None, None, None, None, None, None, None, None, N,
                         num_key_value_heads=KV_N)
     assert attention_out[0].shape == (B, S, Q_H)
 
@@ -105,9 +104,8 @@ def test_prompt_flash_attention_bnsd_mod2_fwd():
     query = Tensor(np.ones((B, N, S, D), dtype=np.float16))
     key = Tensor(np.ones((B, N, S, D), dtype=np.float16))
     value = Tensor(np.ones((B, N, S, D), dtype=np.float16))
-    padding_mask = Tensor(0.1)
     attn_mask = Tensor(np.ones((2048, 2048), dtype=np.float16))
     net = PromptFlashAttention()
-    attention_out = net(query, key, value, attn_mask, [S], [S], padding_mask, None, None, None, None, None, N,
+    attention_out = net(query, key, value, attn_mask, None, None, None, None, None, None, None, None, N,
                         input_layout='BNSD', sparse_mode=2)
     assert attention_out[0].shape == (B, N, S, D)

@@ -86,14 +86,22 @@ bool CheckTenSorShape(const ShapeVector &tensor_shape, const std::vector<ShapeVe
 
 void CheckActuaSeqLength(AbstractBasePtr input_arg, int64_t input_s, int64_t dim_b, const std::string &op_name,
                          const std::string &input_name) {
-  if (input_arg->BuildType()->type_id() != kMetaTypeNone && input_s > 0) {
-    auto actual_seq_length_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_arg->BuildShape())[kShape];
-    if (!IsDynamic(actual_seq_length_shape)) {
-      auto x = input_arg->BuildValue();
-      auto seq_length_vec = GetValue<std::vector<int64_t>>(x);
+  if (input_arg->BuildType()->type_id() != kMetaTypeNone) {
+    auto val_ptr = input_arg->BuildValue();
+    if (val_ptr->isa<ValueSequence>()) {
+      auto seq_length_vec = GetValue<std::vector<int64_t>>(val_ptr);
       CheckAndConvertUtils::CheckInteger("size of " + input_name, seq_length_vec.size(), kEqual, dim_b, op_name);
+      if (input_s < 0) {
+        return;
+      }
       for (size_t i = 0; i < seq_length_vec.size(); ++i) {
         CheckAndConvertUtils::CheckInteger(input_name, seq_length_vec[i], kLessEqual, input_s, op_name);
+      }
+    } else {
+      auto actual_seq_length_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_arg->BuildShape())[kShape];
+      CheckAndConvertUtils::CheckInteger("dim of " + input_name, actual_seq_length_shape.size(), kEqual, 1, op_name);
+      if (!IsDynamic(actual_seq_length_shape)) {
+        CheckAndConvertUtils::CheckInteger("size of " + input_name, actual_seq_length_shape[0], kEqual, dim_b, op_name);
       }
     }
   }
@@ -121,6 +129,7 @@ void CheckOptinalInputShape(const PrimitivePtr &primitive, const std::vector<Abs
                         << " dont match any of expect shape: " << expect_mask_shapes;
     }
   }
+
   CheckActuaSeqLength(input_args[kPromptFlashAttentionInputActualSeqLengthsIndex], q_s, b, op_name,
                       "actual_seq_lengths");
   CheckActuaSeqLength(input_args[kPromptFlashAttentionInputActualSeqLengthsKvIndex], kv_s, b, op_name,
