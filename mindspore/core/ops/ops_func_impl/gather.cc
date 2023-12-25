@@ -106,7 +106,7 @@ BaseShapePtr GatherFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
 
   MS_CHECK_VALUE(-params_shape_rank <= batch_dims && batch_dims < params_shape_rank,
-                 CheckAndConvertUtils::FormatCheckInRangeMsg("batch_dims", batch_dims, kIncludeBoth,
+                 CheckAndConvertUtils::FormatCheckInRangeMsg("batch_dims", batch_dims, kIncludeLeft,
                                                              {-params_shape_rank, params_shape_rank}, primitive));
   batch_dims = batch_dims < 0 ? batch_dims + params_shape_rank : batch_dims;
 
