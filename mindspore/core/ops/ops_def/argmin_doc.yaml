@@ -6,7 +6,7 @@ argmin:
         :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
         
         Args:
-            x (Tensor) - Input tensor. The shape is :math:`(N, *)` where :math:`*` means, 
+            x (Tensor): Input tensor. The shape is :math:`(N, *)` where :math:`*` means, 
                 any number of additional dimensions.
             axis (int): Axis where the Argmin operation applies to. Default: ``-1`` .
             output_type (:class:`mindspore.dtype`): Output data type.
