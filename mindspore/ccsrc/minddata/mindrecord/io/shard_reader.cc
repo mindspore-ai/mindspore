@@ -367,35 +367,34 @@ std::vector<std::tuple<int, int, int, uint64_t>> ShardReader::ReadRowGroupSummar
   if (shard_count <= 0) {
     return row_group_summary;
   }
-  if (shard_count <= kMaxFileCount) {
-    uint32_t total_count = 0;
-    for (int shard_id = 0; shard_id < shard_count; ++shard_id) {
-      // return -1 when page's size equals to 0.
-      auto last_page_id = shard_header_->GetLastPageId(shard_id);
-      if (static_cast<int>(last_page_id) == -1) {
-        // Empty mindrecord file which does not contain any samples
-        MS_LOG(WARNING) << "The mindrecord file: " << file_paths_[shard_id]
-                        << " does not contain any samples, pls remove it.";
-        row_group_summary.emplace_back(shard_id, 0, 0, 0);
-        shard_sample_count_.push_back(total_count);
+
+  uint32_t total_count = 0;
+  for (int shard_id = 0; shard_id < shard_count; ++shard_id) {
+    // return -1 when page's size equals to 0.
+    auto last_page_id = shard_header_->GetLastPageId(shard_id);
+    if (static_cast<int>(last_page_id) == -1) {
+      // Empty mindrecord file which does not contain any samples
+      MS_LOG(WARNING) << "The mindrecord file: " << file_paths_[shard_id]
+                      << " does not contain any samples, pls remove it.";
+      row_group_summary.emplace_back(shard_id, 0, 0, 0);
+      shard_sample_count_.push_back(total_count);
+      continue;
+    }
+    for (uint64_t page_id = 0; page_id <= last_page_id; ++page_id) {
+      std::shared_ptr<Page> page_ptr;
+      (void)shard_header_->GetPage(shard_id, page_id, &page_ptr);
+      if (page_ptr->GetPageType() != kPageTypeBlob) {
         continue;
       }
-      for (uint64_t page_id = 0; page_id <= last_page_id; ++page_id) {
-        std::shared_ptr<Page> page_ptr;
-        (void)shard_header_->GetPage(shard_id, page_id, &page_ptr);
-        if (page_ptr->GetPageType() != kPageTypeBlob) {
-          continue;
-        }
-        uint64_t start_row_id = page_ptr->GetStartRowID();
-        if (start_row_id > page_ptr->GetEndRowID()) {
-          return std::vector<std::tuple<int, int, int, uint64_t>>();
-        }
-        uint64_t number_of_rows = page_ptr->GetEndRowID() - start_row_id;
-        total_count += number_of_rows;
-        row_group_summary.emplace_back(shard_id, page_ptr->GetPageTypeID(), start_row_id, number_of_rows);
+      uint64_t start_row_id = page_ptr->GetStartRowID();
+      if (start_row_id > page_ptr->GetEndRowID()) {
+        return std::vector<std::tuple<int, int, int, uint64_t>>();
       }
-      shard_sample_count_.push_back(total_count);
+      uint64_t number_of_rows = page_ptr->GetEndRowID() - start_row_id;
+      total_count += number_of_rows;
+      row_group_summary.emplace_back(shard_id, page_ptr->GetPageTypeID(), start_row_id, number_of_rows);
     }
+    shard_sample_count_.push_back(total_count);
   }
 
   return row_group_summary;
