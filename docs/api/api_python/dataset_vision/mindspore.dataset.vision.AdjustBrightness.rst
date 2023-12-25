@@ -5,6 +5,8 @@ mindspore.dataset.vision.AdjustBrightness
 
     调整输入图像的亮度。
 
+    支持 Ascend 硬件加速，需要通过 `.device("Ascend")` 方式开启。
+
     参数：
         - **brightness_factor** (float) - 亮度调节因子，需为非负数。输入 ``0`` 值将得到全黑图像， ``1`` 值将得到原始图像，
           ``2`` 值将调整图像亮度为原来的2倍。
@@ -23,8 +25,8 @@ mindspore.dataset.vision.AdjustBrightness
         指定该变换执行的设备。
 
         参数：
-            - **device_target** (str, 可选) - 算子将在指定的设备上运行。当前支持 ``CPU`` 。默认值： ``CPU`` 。
+            - **device_target** (str, 可选) - 算子将在指定的设备上运行。当前支持 ``CPU`` 和 ``Ascend`` 。默认值： ``CPU`` 。
 
         异常：
             - **TypeError** - 当 `device_target` 的类型不为str。
-            - **ValueError** - 当 `device_target` 的取值不为 ``CPU`` 。
+            - **ValueError** - 当 `device_target` 的取值不为 ``CPU`` / ``Ascend`` 。

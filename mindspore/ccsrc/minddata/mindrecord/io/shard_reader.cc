@@ -367,35 +367,34 @@ std::vector<std::tuple<int, int, int, uint64_t>> ShardReader::ReadRowGroupSummar
   if (shard_count <= 0) {
     return row_group_summary;
   }
-  if (shard_count <= kMaxFileCount) {
-    uint32_t total_count = 0;
-    for (int shard_id = 0; shard_id < shard_count; ++shard_id) {
-      // return -1 when page's size equals to 0.
-      auto last_page_id = shard_header_->GetLastPageId(shard_id);
-      if (static_cast<int>(last_page_id) == -1) {
-        // Empty mindrecord file which does not contain any samples
-        MS_LOG(WARNING) << "The mindrecord file: " << file_paths_[shard_id]
-                        << " does not contain any samples, pls remove it.";
-        row_group_summary.emplace_back(shard_id, 0, 0, 0);
-        shard_sample_count_.push_back(total_count);
+
+  uint32_t total_count = 0;
+  for (int shard_id = 0; shard_id < shard_count; ++shard_id) {
+    // return -1 when page's size equals to 0.
+    auto last_page_id = shard_header_->GetLastPageId(shard_id);
+    if (static_cast<int>(last_page_id) == -1) {
+      // Empty mindrecord file which does not contain any samples
+      MS_LOG(WARNING) << "The mindrecord file: " << file_paths_[shard_id]
+                      << " does not contain any samples, pls remove it.";
+      row_group_summary.emplace_back(shard_id, 0, 0, 0);
+      shard_sample_count_.push_back(total_count);
+      continue;
+    }
+    for (uint64_t page_id = 0; page_id <= last_page_id; ++page_id) {
+      std::shared_ptr<Page> page_ptr;
+      (void)shard_header_->GetPage(shard_id, page_id, &page_ptr);
+      if (page_ptr->GetPageType() != kPageTypeBlob) {
         continue;
       }
-      for (uint64_t page_id = 0; page_id <= last_page_id; ++page_id) {
-        std::shared_ptr<Page> page_ptr;
-        (void)shard_header_->GetPage(shard_id, page_id, &page_ptr);
-        if (page_ptr->GetPageType() != kPageTypeBlob) {
-          continue;
-        }
-        uint64_t start_row_id = page_ptr->GetStartRowID();
-        if (start_row_id > page_ptr->GetEndRowID()) {
-          return std::vector<std::tuple<int, int, int, uint64_t>>();
-        }
-        uint64_t number_of_rows = page_ptr->GetEndRowID() - start_row_id;
-        total_count += number_of_rows;
-        row_group_summary.emplace_back(shard_id, page_ptr->GetPageTypeID(), start_row_id, number_of_rows);
+      uint64_t start_row_id = page_ptr->GetStartRowID();
+      if (start_row_id > page_ptr->GetEndRowID()) {
+        return std::vector<std::tuple<int, int, int, uint64_t>>();
       }
-      shard_sample_count_.push_back(total_count);
+      uint64_t number_of_rows = page_ptr->GetEndRowID() - start_row_id;
+      total_count += number_of_rows;
+      row_group_summary.emplace_back(shard_id, page_ptr->GetPageTypeID(), start_row_id, number_of_rows);
     }
+    shard_sample_count_.push_back(total_count);
   }
 
   return row_group_summary;
@@ -1304,10 +1303,6 @@ Status ShardReader::CreateTasksByRow(const std::vector<std::tuple<int, int, int,
   RETURN_IF_NOT_OK_MR(ReadAllRowGroup(selected_columns_, &row_group_ptr));
   auto &offsets = std::get<0>(*row_group_ptr);
   auto &local_columns = std::get<1>(*row_group_ptr);
-  CHECK_FAIL_RETURN_UNEXPECTED_MR(shard_count_ <= kMaxFileCount,
-                                  "Invalid data, the number of mindrecord files should be less than or equal to " +
-                                    std::to_string(kMaxFileCount) + " but got: " + std::to_string(shard_count_) +
-                                    ".\nPlease adjust the number of mindrecord files.");
   int sample_count = 0;
   for (int shard_id = 0; shard_id < shard_count_; shard_id++) {
     sample_count += offsets[shard_id].size();
@@ -1344,10 +1339,6 @@ Status ShardReader::CreateTasksByRow(const std::vector<std::tuple<int, int, int,
 Status ShardReader::CreateLazyTasksByRow(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
                                          const std::vector<std::shared_ptr<ShardOperator>> &operators) {
   CheckIfColumnInIndex(selected_columns_);
-  CHECK_FAIL_RETURN_UNEXPECTED_MR(shard_count_ <= kMaxFileCount,
-                                  "Invalid data, the number of mindrecord files should be less than or equal to " +
-                                    std::to_string(kMaxFileCount) + " but got: " + std::to_string(shard_count_) +
-                                    ".\nPlease adjust the number of mindrecord files.");
   uint32_t sample_count = shard_sample_count_[shard_sample_count_.size() - 1];
   MS_LOG(DEBUG) << "Succeed to get " << sample_count << " records from dataset.";
 
@@ -1380,10 +1371,6 @@ Status ShardReader::CreateLazyTasksByRow(const std::vector<std::tuple<int, int, 
 
 Status ShardReader::CreateSlowTasksByRow() {
   CheckIfColumnInIndex(selected_columns_);
-  CHECK_FAIL_RETURN_UNEXPECTED_MR(shard_count_ <= kMaxFileCount,
-                                  "Invalid data, the number of mindrecord files should be less than or equal to " +
-                                    std::to_string(kMaxFileCount) + " but got: " + std::to_string(shard_count_) +
-                                    ".\nPlease adjust the number of mindrecord files.");
   uint32_t sample_count = shard_sample_count_[shard_sample_count_.size() - 1];
   MS_LOG(DEBUG) << "Succeed to get " << sample_count << " records from dataset.";
   tasks_.padded_sample_ = num_padded_;
@@ -1646,7 +1633,7 @@ std::vector<std::tuple<std::map<std::string, std::vector<uint8_t>>, json>> Shard
     res_with_blobs.emplace_back(std::move(key_with_blob_fields), std::move(std::get<1>(*iter)));
   }
 
-  return std::move(res_with_blobs);
+  return res_with_blobs;
 }
 
 Status ShardReader::GetNextById(const int64_t &task_id, const int32_t &consumer_id,

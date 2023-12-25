@@ -7,6 +7,8 @@ mindspore.dataset.vision.Normalize
 
     此处理将使用以下公式对输入图像进行归一化：output[channel] = (input[channel] - mean[channel]) / std[channel]，其中 channel 代表通道索引，channel >= 1。
 
+    支持 Ascend 硬件加速，需要通过 `.device("Ascend")` 方式开启。
+
     .. note:: 此操作默认通过 CPU 执行，也支持异构加速到 GPU 或 Ascend 上执行。
 
     参数：
@@ -34,8 +36,8 @@ mindspore.dataset.vision.Normalize
         - 当执行设备是 Ascend 时，输入数据支持 `uint8` 或者 `float32` 类型，输入数据的通道仅支持 1/3，且输出结果中为1的维度都会被去除。
 
         参数：
-            - **device_target** (str, 可选) - 算子将在指定的设备上运行。当前支持 ``CPU`` 。默认值： ``CPU`` 。
+            - **device_target** (str, 可选) - 算子将在指定的设备上运行。当前支持 ``CPU`` 和 ``Ascend`` 。默认值： ``CPU`` 。
 
         异常：
             - **TypeError** - 当 `device_target` 的类型不为str。
-            - **ValueError** - 当 `device_target` 的取值不为 ``CPU`` 。
+            - **ValueError** - 当 `device_target` 的取值不为 ``CPU`` / ``Ascend`` 。
