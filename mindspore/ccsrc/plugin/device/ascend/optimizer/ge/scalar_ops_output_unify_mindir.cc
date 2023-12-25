@@ -50,14 +50,17 @@ const AnfNodePtr ScalarOpsOutputUnifyMindIR::Process(const FuncGraphPtr &graph, 
                                                      const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
+  auto prim = GetCNodePrimitive(node);
+  MS_EXCEPTION_IF_NULL(prim);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
 
-  // attr dtype
-  auto data_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
   // update abstract
-  auto abs = abstract::MakeAbstract(std::make_shared<abstract::Shape>(ShapeVector{}), TypeIdToType(data_type));
+  auto abs = InferAbstract(prim, {cnode->input(kIndex1)});
   MS_EXCEPTION_IF_NULL(abs);
   MS_LOG(DEBUG) << "Abstract for " << node->fullname_with_scope() << " op is " << abs->ToString();
   node->set_abstract(abs);
+
   return node;
 }
 }  // namespace opt
