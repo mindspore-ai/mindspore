@@ -105,6 +105,38 @@ bool CombineOptimizerFusion::TransformOptimizerList(const std::vector<AnfNodePtr
   return optimizer_node_lists->size() >= 1;
 }
 
+AnfNodePtr CombineOptimizerFusion::FindFirstMonadInput(const std::vector<AnfNodePtr> &optimizer_node_list) {
+  mindspore::HashSet<AnfNodePtr> monad_inputs;
+
+  for (const auto &optimizer_node : optimizer_node_list) {
+    MS_EXCEPTION_IF_NULL(optimizer_node);
+
+    auto optimizer_cnode = optimizer_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(optimizer_cnode);
+    const auto &input_nodes = optimizer_cnode->inputs();
+    if (input_nodes.empty()) {
+      MS_LOG(EXCEPTION) << "The optimizer: " << optimizer_cnode->fullname_with_scope() << " has no input";
+    }
+    if (HasAbstractMonad(input_nodes.back())) {
+      monad_inputs.insert(input_nodes.back());
+    }
+  }
+
+  for (const auto &monad_node : monad_inputs) {
+    if (!monad_node->isa<CNode>()) {
+      return monad_node;
+    }
+
+    auto monad_node_cnode = monad_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(monad_node_cnode);
+    if (monad_inputs.find(common::AnfAlgo::GetInputNode(monad_node_cnode, 0)) == monad_inputs.end()) {
+      return monad_node_cnode;
+    }
+  }
+
+  return nullptr;
+}
+
 bool CombineOptimizerFusion::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto manager = graph->manager();
@@ -148,6 +180,11 @@ bool CombineOptimizerFusion::Run(const FuncGraphPtr &graph) {
         inputs.push_back(common::AnfAlgo::GetInputNode(cnode, i));
       }
     }
+    // Add monad input.
+    const auto first_monad_input_node = FindFirstMonadInput(optimizer_node_list);
+    MS_EXCEPTION_IF_NULL(first_monad_input_node);
+    inputs.push_back(first_monad_input_node);
+
     TraceGuard guard(std::make_shared<TraceOpt>(optimizer_node_list[0]->debug_info()));
     auto combine_optimizer_node = graph->NewCNode(inputs);
     auto kernel_info = std::make_shared<device::KernelInfo>();
