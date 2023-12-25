@@ -20,7 +20,7 @@ import mindspore as ms
 from mindspore import ops
 from mindspore.common.tensor import Tensor
 from mindspore.ops.operations._sequence_ops import TensorToScalar, TensorToTuple
-from mindspore.ops.auto_generate.gen_enum_def import OpDtype
+from mindspore._c_expression import OpDtype
 
 tensor_to_tuple_ = TensorToTuple()
 
@@ -67,54 +67,53 @@ def tuple_to_tensor(data):
 def list_to_tensor(data):
     return ops.tuple_to_array(list_to_tuple(data))
 
+# There will be some problems in using OpDtype.xxx directly in GRAPH_MODE, so convert it to int.
 # type
-PY_DT_TYPE = OpDtype.PY_DT_TYPE.value
-
+DT_TYPE_VAL = int(OpDtype.DT_TYPE)
 # scalar
-PY_DT_INT = OpDtype.PY_DT_INT.value
-PY_DT_FLOAT = OpDtype.PY_DT_FLOAT.value
-PY_DT_BOOL = OpDtype.PY_DT_BOOL.value
-PY_DT_NUMBER = OpDtype.PY_DT_NUMBER.value
+DT_INT_VAL = int(OpDtype.DT_INT)
+DT_FLOAT_VAL = int(OpDtype.DT_FLOAT)
+DT_BOOL_VAL = int(OpDtype.DT_BOOL)
+DT_NUMBER_VAL = int(OpDtype.DT_NUMBER)
 # tuple
-PY_DT_TUPLE_BOOL = OpDtype.PY_DT_TUPLE_BOOL.value
-PY_DT_TUPLE_INT = OpDtype.PY_DT_TUPLE_INT.value
-PY_DT_TUPLE_FLOAT = OpDtype.PY_DT_TUPLE_FLOAT.value
-PY_DT_TUPLE_NUMBER = OpDtype.PY_DT_TUPLE_NUMBER.value
-PY_DT_TUPLE_TENSOR = OpDtype.PY_DT_TUPLE_TENSOR.value
-PY_DT_TUPLE_STR = OpDtype.PY_DT_TUPLE_STR.value
-PY_DT_TUPLE_ANY = OpDtype.PY_DT_TUPLE_ANY.value
+DT_TUPLE_BOOL_VAL = int(OpDtype.DT_TUPLE_BOOL)
+DT_TUPLE_INT_VAL = int(OpDtype.DT_TUPLE_INT)
+DT_TUPLE_FLOAT_VAL = int(OpDtype.DT_TUPLE_FLOAT)
+DT_TUPLE_NUMBER_VAL = int(OpDtype.DT_TUPLE_NUMBER)
+DT_TUPLE_TENSOR_VAL = int(OpDtype.DT_TUPLE_TENSOR)
+DT_TUPLE_STR_VAL = int(OpDtype.DT_TUPLE_STR)
+DT_TUPLE_ANY_VAL = int(OpDtype.DT_TUPLE_ANY)
 # list
-PY_DT_LIST_BOOL = OpDtype.PY_DT_LIST_BOOL.value
-PY_DT_LIST_INT = OpDtype.PY_DT_LIST_INT.value
-PY_DT_LIST_FLOAT = OpDtype.PY_DT_LIST_FLOAT.value
-PY_DT_LIST_NUMBER = OpDtype.PY_DT_LIST_NUMBER.value
-PY_DT_LIST_TENSOR = OpDtype.PY_DT_LIST_TENSOR.value
-PY_DT_LIST_STR = OpDtype.PY_DT_LIST_STR.value
-PY_DT_LIST_ANY = OpDtype.PY_DT_LIST_ANY.value
+DT_LIST_BOOL_VAL = int(OpDtype.DT_LIST_BOOL)
+DT_LIST_INT_VAL = int(OpDtype.DT_LIST_INT)
+DT_LIST_FLOAT_VAL = int(OpDtype.DT_LIST_FLOAT)
+DT_LIST_NUMBER_VAL = int(OpDtype.DT_LIST_NUMBER)
+DT_LIST_TENSOR_VAL = int(OpDtype.DT_LIST_TENSOR)
+DT_LIST_STR_VAL = int(OpDtype.DT_LIST_STR)
+DT_LIST_ANY_VAL = int(OpDtype.DT_LIST_ANY)
 # tensor
-PY_DT_TENSOR = OpDtype.PY_DT_TENSOR.value
-
+DT_TENSOR_VAL = int(OpDtype.DT_TENSOR)
 
 dtype_to_string = {
-    PY_DT_INT: "int",
-    PY_DT_FLOAT: "float",
-    PY_DT_BOOL: "bool",
-    PY_DT_NUMBER: "number",
-    PY_DT_TENSOR: "Tensor",
-    PY_DT_TUPLE_BOOL: "tuple of bool",
-    PY_DT_TUPLE_INT: "tuple of int",
-    PY_DT_TUPLE_FLOAT: "tuple of float",
-    PY_DT_TUPLE_NUMBER: "tuple of number",
-    PY_DT_TUPLE_TENSOR: "tuple of tensor",
-    PY_DT_TUPLE_STR: "tuple of string",
-    PY_DT_TUPLE_ANY: "tuple of Any",
-    PY_DT_LIST_BOOL: "list of bool",
-    PY_DT_LIST_INT: "list of int",
-    PY_DT_LIST_FLOAT: "list of float",
-    PY_DT_LIST_NUMBER: "list of number",
-    PY_DT_LIST_TENSOR: "list of Tensor",
-    PY_DT_LIST_STR: "list of string",
-    PY_DT_LIST_ANY: "list of Any"
+    DT_INT_VAL: "int",
+    DT_FLOAT_VAL: "float",
+    DT_BOOL_VAL: "bool",
+    DT_NUMBER_VAL: "number",
+    DT_TENSOR_VAL: "Tensor",
+    DT_TUPLE_BOOL_VAL: "tuple of bool",
+    DT_TUPLE_INT_VAL: "tuple of int",
+    DT_TUPLE_FLOAT_VAL: "tuple of float",
+    DT_TUPLE_NUMBER_VAL: "tuple of number",
+    DT_TUPLE_TENSOR_VAL: "tuple of tensor",
+    DT_TUPLE_STR_VAL: "tuple of string",
+    DT_TUPLE_ANY_VAL: "tuple of Any",
+    DT_LIST_BOOL_VAL: "list of bool",
+    DT_LIST_INT_VAL: "list of int",
+    DT_LIST_FLOAT_VAL: "list of float",
+    DT_LIST_NUMBER_VAL: "list of number",
+    DT_LIST_TENSOR_VAL: "list of Tensor",
+    DT_LIST_STR_VAL: "list of string",
+    DT_LIST_ANY_VAL: "list of Any"
 }
 
 
@@ -122,34 +121,35 @@ def is_tuple(type_id):
     """
     Check type id is tuple.
     """
-    return type_id in (PY_DT_TUPLE_BOOL, PY_DT_TUPLE_INT, PY_DT_TUPLE_FLOAT, PY_DT_TUPLE_NUMBER,
-                       PY_DT_TUPLE_TENSOR, PY_DT_TUPLE_STR, PY_DT_TUPLE_ANY)
+    return type_id in (DT_TUPLE_BOOL_VAL, DT_TUPLE_INT_VAL, DT_TUPLE_FLOAT_VAL, DT_TUPLE_NUMBER_VAL,
+                       DT_TUPLE_TENSOR_VAL, DT_TUPLE_STR_VAL, DT_TUPLE_ANY_VAL)
 
 
 def is_list(type_id):
     """
     Check type id is list.
     """
-    return type_id in (PY_DT_LIST_BOOL, PY_DT_LIST_INT, PY_DT_LIST_FLOAT, PY_DT_LIST_NUMBER, PY_DT_LIST_TENSOR,
-                       PY_DT_LIST_STR, PY_DT_LIST_ANY)
+    return type_id in (DT_LIST_BOOL_VAL, DT_LIST_INT_VAL, DT_LIST_FLOAT_VAL, DT_LIST_NUMBER_VAL,
+                       DT_LIST_TENSOR_VAL,
+                       DT_LIST_STR_VAL, DT_LIST_ANY_VAL)
 
 
 def is_number(type_id):
     """
     Check type id is number.
     """
-    return type_id in (PY_DT_INT, PY_DT_FLOAT, PY_DT_BOOL, PY_DT_NUMBER)
+    return type_id in (DT_INT_VAL, DT_FLOAT_VAL, DT_BOOL_VAL, DT_NUMBER_VAL)
 
 
 def is_instance_of(data, type_id):
     """
     Instead isinstance(obj, type).
     """
-    if type_id == PY_DT_INT:
+    if type_id == DT_INT_VAL:
         return isinstance(data, int)
-    if type_id == PY_DT_FLOAT:
+    if type_id == DT_FLOAT_VAL:
         return isinstance(data, float)
-    if type_id == PY_DT_BOOL:
+    if type_id == DT_BOOL_VAL:
         return isinstance(data, bool)
     if is_number(type_id):
         return isinstance(data, (int, float, bool))
@@ -157,7 +157,7 @@ def is_instance_of(data, type_id):
         return isinstance(data, tuple)
     if is_list(type_id):
         return isinstance(data, list)
-    if type_id == PY_DT_TENSOR:
+    if type_id == DT_TENSOR_VAL:
         return isinstance(data, Tensor)
     return False
 
@@ -192,7 +192,7 @@ def do_type_cast(data, dst_type):
     """Type conversion."""
     if is_instance_of(data, dst_type):
         return data
-    if dst_type == PY_DT_FLOAT:
+    if dst_type == DT_FLOAT_VAL:
         if isinstance(data, int):
             return int_to_float(data)
     elif is_tuple(dst_type):
@@ -202,7 +202,7 @@ def do_type_cast(data, dst_type):
             return list_to_tuple(data)
         if isinstance(data, Tensor):
             return tensor_to_tuple(data)
-    elif dst_type == PY_DT_TENSOR:
+    elif dst_type == DT_TENSOR_VAL:
         if isinstance(data, (int, float, bool)):
             return scalar_to_tensor(data)
         if isinstance(data, tuple):
@@ -211,7 +211,7 @@ def do_type_cast(data, dst_type):
             return list_to_tensor(data)
     elif is_number(dst_type):
         if isinstance(data, Tensor):
-            if dst_type == PY_DT_INT:
+            if dst_type == DT_INT_VAL:
                 data = ops.cast(data, ms.int64)
             ret = TensorToScalar()(data)
             return ret
@@ -222,6 +222,11 @@ def type_it(data, src_type, dst_type):
     """
     cast operator argument data type.
     """
+    if not isinstance(src_type, tuple):
+        src_type = int(src_type)
+    else:
+        src_type = tuple((int(t) for t in src_type))
+    dst_type = int(dst_type)
     if not is_instance_in(data, src_type) and not is_instance_of(data, dst_type):
         support_list = get_support_dtype_list(src_type, dst_type)
         raise TypeError(f"For type conversion here, only support <{support_list}>, but got {type(data)}.")

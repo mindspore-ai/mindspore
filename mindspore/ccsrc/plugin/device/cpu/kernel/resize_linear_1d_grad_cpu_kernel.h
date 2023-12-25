@@ -24,7 +24,7 @@
 #include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "ops/auto_generate/gen_enum_def.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore::kernel {
 constexpr auto kUnknown = "Unknown";
@@ -66,7 +66,7 @@ class ResizeLinear1DGradCpuKernelMod : public NativeCpuKernelMod,
 
   template <typename T>
   CoordinateTransformationFunc<T> ChooseCoordinateTransformationFunc(
-    MsPyEnum::CoordinateTransformationMode coordinate_transformation_mode);
+    CoordinateTransformMode coordinate_transformation_mode);
 
   std::string kernel_type_{kUnknown};
   bool align_corners_{false};
@@ -76,8 +76,7 @@ class ResizeLinear1DGradCpuKernelMod : public NativeCpuKernelMod,
   size_t channel_{0};
   size_t input_width_{0};
   size_t output_width_{0};
-  MsPyEnum::CoordinateTransformationMode coordinate_transformation_mode_ =
-    MsPyEnum::CoordinateTransformationMode::ALIGN_CORNERS;
+  CoordinateTransformMode coordinate_transformation_mode_ = CoordinateTransformMode::ALIGN_CORNERS;
 };
 }  // namespace mindspore::kernel
 

@@ -26,7 +26,7 @@
 #include <memory>
 #include <algorithm>
 #include <functional>
-#include "ops/auto_generate/gen_enum_def.h"
+#include "ops/op_enum.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/fft_with_size_impl.cuh"
@@ -89,7 +89,7 @@ class FFTWithSizeGpuKernelMod : public NativeGpuKernelMod {
   int64_t rank_{1};
   bool is_inverse_{false};  // 0: forward, 1: inverse
   bool is_real_{false};
-  MsPyEnum::NormMode norm_type_{MsPyEnum::NormMode::BACKWARD};  // forward, backward, ortho
+  ops::NormMode norm_type_{ops::NormMode::BACKWARD};  // forward, backward, ortho
   // is_onesided controls whether frequency is halved when signal is real, which means is_real_ is true.
   // The default value is true. cufft does not support full freq with real signal. We use cast as a temporary solution.
   bool is_onesided_{true};

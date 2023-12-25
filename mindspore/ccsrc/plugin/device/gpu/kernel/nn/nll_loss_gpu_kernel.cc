@@ -42,7 +42,7 @@ int NLLLossGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
     return ret;
   }
   auto reduction = inputs[kReductionIdx]->GetValueWithCheck<int64_t>();
-  reduction_ = static_cast<ReductionMode>(reduction);
+  reduction_ = kEnumReductionModeMap[reduction];
   ignore_index_ = inputs[kIgnoreIndexIdx]->GetValueWithCheck<int64_t>();
   auto logits_shape = inputs[kIndex0]->GetShapeVector();
   label_size_ = logits_shape[0];

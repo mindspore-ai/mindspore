@@ -25,7 +25,7 @@ from mindspore.ops.primitive import _primexpr
 from mindspore.ops.function import _VmapGeneralRule
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error, \
     _bdim_at_front, _vmap_clone_prim, _bdim_at_any, _handle_broadcasting
-from mindspore.ops.auto_generate.gen_enum_def import PyFormat
+from mindspore._c_expression import FormatEnum as Format
 
 
 @vmap_rules_getters.register(G.NLLLossGrad)
@@ -306,7 +306,7 @@ def get_adaptive_avgpool2d_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(G.BatchNormGradGrad)
 def get_batchnorm_grad_grad_vmap_rule(prim, axis_size):
     """VmapRule for `BatchNormGradGrad` operation."""
-    NCHW = PyFormat.NCHW.value
+    NCHW = Format.NCHW
 
     def vmap_rule(x_bdim, dy_bdim, scale_bdim, mean_bdim, variance_bdim, dout_dx_bdim,
                   dout_dscale_bdim, dout_dbias_bdim, is_training_bdim, epsilon_bdim, data_format_bdim):
@@ -384,7 +384,7 @@ def get_batchnorm_grad_vmap_rule(prim, axis_size):
     bn_min_dim = 3
     bn_max_dim = 5
     prim_name = prim.name
-    NHWC = PyFormat.NHWC.value
+    NHWC = Format.NHWC
 
     def vmap_rule(grad_bdim, x_bdim, scale_bdim, rsv_1_bdim, rsv_2_bdim,
                   rsv_3_bdim, training_bdim, epsilon_bdim, format_bdim):

@@ -28,7 +28,7 @@ batch_norm_with_add_and_activation:
             dtype: int
             default: "'NCHW'"
             prim_init: True
-            arg_handler: py_format_to_enum
+            arg_handler: str_to_enum
     returns:
         output_x:
             dtype: tensor

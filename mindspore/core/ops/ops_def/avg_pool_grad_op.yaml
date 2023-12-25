@@ -21,12 +21,12 @@ avg_pool_grad:
             dtype: int
             default: "'VALID'"
             prim_init: True
-            arg_handler: pad_mode_to_enum
+            arg_handler: str_to_enum
         data_format:
             dtype: int
             default: "'NCHW'"
             prim_init: True
-            arg_handler: py_format_to_enum
+            arg_handler: str_to_enum
     returns:
         output:
             dtype: tensor

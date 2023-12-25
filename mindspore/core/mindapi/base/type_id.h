@@ -16,8 +16,6 @@
 
 #ifndef MINDSPORE_CORE_MINDAPI_BASE_TYPE_ID_H_
 #define MINDSPORE_CORE_MINDAPI_BASE_TYPE_ID_H_
-// TODO(chenfei): remove the TypeId by include the auto generated type id.
-// #include "mindspore/core/ops/auto_generate/gen_enum_def.h"
 
 namespace mindspore {
 /// \brief TypeId defines data type identifiers.

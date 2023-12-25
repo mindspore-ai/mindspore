@@ -19,7 +19,7 @@ prompt_k_v_cache:
       dtype: int
       default: "'LEFT'"
       prim_init: True
-      arg_handler: k_v_cache_align_mode_to_enum
+      arg_handler: str_to_enum
   labels:
     side_effect_mem: True
   returns:

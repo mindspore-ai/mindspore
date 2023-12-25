@@ -119,7 +119,6 @@ mindspore/core/ops/auto_generate/gen_lite_ops.h
 mindspore/core/ops/auto_generate/gen_lite_ops.cc
 mindspore/core/ops/auto_generate/gen_ops_name.h
 mindspore/core/ops/auto_generate/gen_ops_primitive.h
-mindspore/core/ops/auto_generate/gen_enum_def.h
 mindspore/core/ops/auto_generate/gen_ops_def.cc
 mindspore/core/ops/auto_generate/gen_ops_def.h
 mindspore/python/mindspore/ops_generate/ops.yaml
@@ -129,7 +128,6 @@ mindspore/python/mindspore/ops_generate/inner_ops_doc.yaml
 mindspore/python/mindspore/ops/auto_generate/cpp_create_prim_instance_helper.py
 mindspore/python/mindspore/ops/auto_generate/gen_arg_handler.py
 mindspore/python/mindspore/ops/auto_generate/gen_arg_dtype_cast.py
-mindspore/python/mindspore/ops/auto_generate/gen_enum_def.py
 mindspore/python/mindspore/ops/auto_generate/gen_inner_ops_def.py
 mindspore/python/mindspore/ops/auto_generate/gen_ops_def.py
 mindspore/python/mindspore/ops/auto_generate/gen_pyboost_func.py

@@ -20,7 +20,8 @@ import re
 import shutil
 import pathlib
 import gen_utils
-from gen_utils import py_licence_str, cc_license_str, check_change_and_replace_file, merge_files, safe_load_yaml
+from gen_utils import (py_licence_str, cc_license_str, check_change_and_replace_file, merge_files,
+                       safe_load_yaml, convert_dtype_str)
 from pyboost_utils import get_pyboost_name, is_pyboost_enable, AclnnUtils, get_dtypes
 import template
 from template import CppTemplate
@@ -353,6 +354,12 @@ def {func_name}({', '.join(arg for arg in func_args)}):
 
     return gen_py
 
+def get_dtype(arg_info):
+    dtype = arg_info.get('dtype')
+    # Currently, TypeId is represented by int
+    if dtype == 'TypeId':
+        dtype = 'int'
+    return dtype
 
 def process_args(args):
     """
@@ -365,7 +372,7 @@ def process_args(args):
     init_args_with_default = []
     args_handlers = {}
     for arg_name, arg_info in args.items():
-        dtype = arg_info.get('dtype')
+        dtype = get_dtype(arg_info)
         default_value = arg_info.get('default')
         has_default = 'default' in arg_info.keys()
         is_optional = arg_info.get('default') == "None" if has_default else False
@@ -621,7 +628,7 @@ namespace mindspore::ops {
             if not is_prim_init:
                 continue
 
-            dtype = arg_info.get('dtype')
+            dtype = get_dtype(arg_info)
             if dtype == "str":
                 dtype = "std::string"
             if dtype == "tuple[int]":
@@ -671,8 +678,8 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
         for i, (arg_name, arg_info) in enumerate(args.items()):
             args_dict[arg_name] = i
             cc_index_str += f"""{{"{arg_name}", {i}}},\n"""
-            dtype = arg_info.get('dtype')
-            cc_dtype_str = 'DT_' + dtype.replace('[', '_').replace(']', '').upper()
+            dtype = get_dtype(arg_info)
+            cc_dtype_str = convert_dtype_str(dtype)
 
             is_prim_init = 1 if arg_info.get('prim_init') else 0
             arg_handler = arg_info.get('arg_handler')
@@ -723,7 +730,7 @@ from mindspore.common._decorator import deprecated
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.auto_generate.gen_arg_dtype_cast import type_it
 from mindspore.ops.auto_generate.gen_arg_handler import *
-from mindspore.ops.auto_generate.gen_enum_def import OpDtype
+from mindspore._c_expression import OpDtype
 from mindspore.common._stub_tensor import _convert_stub
 """
 
@@ -891,67 +898,10 @@ def generate_aclnn_reg_file(work_path, yaml_str):
     check_change_and_replace_file(register_file, tmp_register_file)
 
 
-eum_py_header = f"""
-\"\"\"Operator argument enum definition.\"\"\"
-
-from enum import Enum
-"""
-
-eum_cc_header = f"""
-#ifndef MINDSPORE_CORE_OPS_GEN_ENUM_DEF_
-#define MINDSPORE_CORE_OPS_GEN_ENUM_DEF_
-
-#include <cstdint>
-
-namespace mindspore::MsPyEnum {{
-"""
-
-eum_cc_end = f"""}}  // namespace mindspore::MsPyEnum
-#endif  // MINDSPORE_CORE_OPS_GEN_ENUM_DEF_
-"""
-
-
-def generate_enum_code(yaml_data):
+def generate_arg_handler_files(work_path):
     """
-    Generate python and c++ enum definition
+    Generate arg handler files.
     """
-    gen_eum_py_func = ''
-    gen_eum_py_def = eum_py_header
-    gen_eum_cc_def = eum_cc_header
-    for enum_name, enum_data in yaml_data.items():
-        class_name = ''.join(word.capitalize() for word in enum_name.split('_'))
-        gen_eum_py_func += f"""\n
-def {enum_name}_to_enum({enum_name}_str):
-    \"""
-    convert {enum_name} string to enum.
-    \"""
-    if not isinstance({enum_name}_str, str):
-        raise TypeError(f"The {enum_name} should be string, but got {{{enum_name}_str}}")
-    {enum_name}_str = {enum_name}_str.upper()\n"""
-        gen_eum_py_def += f"""\n\nclass {class_name}(Enum):\n"""
-        gen_eum_cc_def += f"""enum {class_name} : int64_t {{\n"""
-
-        for enum_key, enum_value in enum_data.items():
-            gen_eum_py_func += f"""    if {enum_name}_str == "{enum_key}":
-        return {enum_value}\n"""
-            gen_eum_py_def += f"""    {enum_key} = {enum_value}\n"""
-            gen_eum_cc_def += f"""  {enum_key} = {enum_value},\n"""
-
-        gen_eum_py_func += f"""    raise ValueError(f"Invalid {class_name}: {{{enum_name}_str}}")\n"""
-        gen_eum_cc_def += f"""}};\n\n"""
-    gen_eum_cc_def += eum_cc_end
-
-    return gen_eum_py_func, gen_eum_py_def, gen_eum_cc_def
-
-
-def generate_enum_files(work_path):
-    """
-    Generate python function and c++ definition from enum yaml.
-    """
-    enum_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/enum.yaml')
-    yaml_str = safe_load_yaml(enum_yaml_path)
-    py_enum_func, py_enum_def, cc_enum_def = generate_enum_code(yaml_str)
-
     dst_dir = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate')
     src_arg_handler_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/arg_handler.py')
     dst_arg_handler_path = os.path.join(dst_dir, 'gen_arg_handler.py')
@@ -959,8 +909,6 @@ def generate_enum_files(work_path):
     if not os.path.exists(dst_dir):
         os.makedirs(dst_dir)
     shutil.copy(src_arg_handler_path, tmp_dst_arg_handler_path)
-    with open(tmp_dst_arg_handler_path, 'a') as py_file:
-        py_file.write(py_enum_func)
     check_change_and_replace_file(dst_arg_handler_path, tmp_dst_arg_handler_path)
 
     src_arg_dtype_cast_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/arg_dtype_cast.py')
@@ -968,18 +916,6 @@ def generate_enum_files(work_path):
     tmp_arg_dtype_cast_path = os.path.join(dst_dir, 'tmp_arg_dtype_cast.py')
     shutil.copy(src_arg_dtype_cast_path, tmp_arg_dtype_cast_path)
     check_change_and_replace_file(dst_arg_dtype_cast_path, tmp_arg_dtype_cast_path)
-
-    enum_def_py_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/gen_enum_def.py')
-    tmp_enum_def_py_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/tmp_gen_enum_def.py')
-    with open(tmp_enum_def_py_path, 'w') as cc_file:
-        cc_file.write(py_licence_str + py_enum_def)
-    check_change_and_replace_file(enum_def_py_path, tmp_enum_def_py_path)
-
-    enum_def_cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_enum_def.h')
-    tmp_enum_def_cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/tmp_gen_enum_def.h')
-    with open(tmp_enum_def_cc_path, 'w') as cc_file:
-        cc_file.write(cc_license_str + cc_enum_def)
-    check_change_and_replace_file(enum_def_cc_path, tmp_enum_def_cc_path)
 
 
 def main():
@@ -1005,8 +941,8 @@ def main():
     cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/')
     pathlib.Path(cc_path).mkdir(parents=True, exist_ok=True)
 
-    # generate enum code from enum.yaml
-    generate_enum_files(work_path)
+    # generate arg_handler files
+    generate_arg_handler_files(work_path)
 
     # generate ops python files
     generate_ops_py_files(work_path, safe_load_yaml(ops_yaml_path), safe_load_yaml(doc_yaml_path), "gen")

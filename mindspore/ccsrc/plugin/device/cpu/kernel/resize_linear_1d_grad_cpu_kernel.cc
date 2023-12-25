@@ -116,10 +116,10 @@ const std::vector<std::pair<KernelAttr, ResizeLinear1DGradCpuKernelMod::KernelRu
 template <typename T>
 ResizeLinear1DGradCpuKernelMod::CoordinateTransformationFunc<T>
 ResizeLinear1DGradCpuKernelMod::ChooseCoordinateTransformationFunc(
-  MsPyEnum::CoordinateTransformationMode coordinate_transformation_mode) {
-  const std::unordered_map<MsPyEnum::CoordinateTransformationMode, CoordinateTransformationFunc<T>> coordinate_map{
-    {MsPyEnum::CoordinateTransformationMode::ALIGN_CORNERS, AlignCornersFunc<T>()},
-    {MsPyEnum::CoordinateTransformationMode::HALF_PIXEL, HalfPixelFunc<T>()}};
+  CoordinateTransformMode coordinate_transformation_mode) {
+  const std::unordered_map<CoordinateTransformMode, CoordinateTransformationFunc<T>> coordinate_map{
+    {CoordinateTransformMode::ALIGN_CORNERS, AlignCornersFunc<T>()},
+    {CoordinateTransformMode::HALF_PIXEL, HalfPixelFunc<T>()}};
   return coordinate_map.at(coordinate_transformation_mode);
 }
 
@@ -164,9 +164,9 @@ int ResizeLinear1DGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &in
   input_width_ = LongToSize(shape_[kIndex2]);
 
   coordinate_transformation_mode_ =
-    static_cast<MsPyEnum::CoordinateTransformationMode>(inputs.at(kIndex2)->GetValueWithCheck<int64_t>());
-  if (coordinate_transformation_mode_ != MsPyEnum::CoordinateTransformationMode::ALIGN_CORNERS &&
-      coordinate_transformation_mode_ != MsPyEnum::CoordinateTransformationMode::HALF_PIXEL) {
+    static_cast<CoordinateTransformMode>(inputs.at(kIndex2)->GetValueWithCheck<int64_t>());
+  if (coordinate_transformation_mode_ != CoordinateTransformMode::ALIGN_CORNERS &&
+      coordinate_transformation_mode_ != CoordinateTransformMode::HALF_PIXEL) {
     MS_LOG_EXCEPTION << "For '" << kernel_name_ << "', coordinate_transformation_mode not support now.";
   }
   SetWorkSpaceSize(inputs);

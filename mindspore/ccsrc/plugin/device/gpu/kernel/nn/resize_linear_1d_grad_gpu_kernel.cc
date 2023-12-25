@@ -17,7 +17,7 @@
 #include "plugin/device/gpu/kernel/nn/resize_linear_1d_grad_gpu_kernel.h"
 #include "mindspore/core/abstract/utils.h"
 #include "ops/ops_func_impl/resize_linear_1d_grad.h"
-#include "ops/auto_generate/gen_enum_def.h"
+#include "mindapi/base/types.h"
 
 namespace {
 constexpr const size_t kResizeLinear1DGradInputsNum = 3;
@@ -64,10 +64,9 @@ int ResizeLinear1DGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &in
   workspace_size_list_.push_back(work_space_size * sizeof(float));
 
   auto coordinate_transformation_mode = inputs.at(kIndex2)->GetValueWithCheck<int64_t>();
-  if (coordinate_transformation_mode == static_cast<int64_t>(MsPyEnum::CoordinateTransformationMode::ALIGN_CORNERS)) {
+  if (coordinate_transformation_mode == static_cast<int64_t>(CoordinateTransformMode::ALIGN_CORNERS)) {
     mode_ = ResizeLinearCoordinateTransformationMode::ALIGN_CORNERS;
-  } else if (coordinate_transformation_mode ==
-             static_cast<int64_t>(MsPyEnum::CoordinateTransformationMode::HALF_PIXEL)) {
+  } else if (coordinate_transformation_mode == static_cast<int64_t>(CoordinateTransformMode::HALF_PIXEL)) {
     mode_ = ResizeLinearCoordinateTransformationMode::HALF_PIXEL;
   } else {
     MS_LOG_EXCEPTION << "For '" << kernel_name_ << "', coordinate_transformation_mode not support now.";

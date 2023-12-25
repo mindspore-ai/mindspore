@@ -107,8 +107,8 @@ using ArgHandlerFunc = std::function<ValuePtr(const ValuePtr &)>;
 
 ArgHandlerFunc GetArgHandlerFunc(const std::string &arg_handler) {
   static const std::unordered_map<std::string, ArgHandlerFunc> arg_handler_funcs = {
-    {"py_format_to_enum", EnumToFormat},
-    {"dtype_to_enum", EnumToDtype},
+    {"str_to_enum", EnumToFormat},
+    {"dtype_to_type_id", EnumToDtype},
   };
   if (arg_handler_funcs.find(arg_handler) != arg_handler_funcs.end()) {
     return arg_handler_funcs.at(arg_handler);
@@ -119,8 +119,8 @@ ArgHandlerFunc GetArgHandlerFunc(const std::string &arg_handler) {
 
 ArgHandlerFunc GetOppArgHandlerFunc(const std::string &arg_handler) {
   static const std::unordered_map<std::string, ArgHandlerFunc> opp_arg_handler_funcs = {
-    {"py_format_to_enum", FormatToEnum},
-    {"dtype_to_enum", DtypeToEnum},
+    {"str_to_enum", FormatToEnum},
+    {"dtype_to_type_id", DtypeToEnum},
   };
   if (opp_arg_handler_funcs.find(arg_handler) != opp_arg_handler_funcs.end()) {
     return opp_arg_handler_funcs.at(arg_handler);

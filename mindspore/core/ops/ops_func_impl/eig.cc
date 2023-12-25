@@ -22,7 +22,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t kDefaultRank = 2;
+// As kDefaultRank will have a confilict problem during lite compile, use kDefaultShapeSize.
+constexpr size_t kDefaultShapeSize = 2;
 constexpr size_t kRowIndex = 2;
 constexpr size_t kColIndex = 1;
 }  // namespace
@@ -32,7 +33,7 @@ void EigCheckShapeValid(const ShapeVector &input_shape) {
     return;
   }
 
-  if (input_shape.size() < kDefaultRank) {
+  if (input_shape.size() < kDefaultShapeSize) {
     MS_EXCEPTION(ValueError) << "For Eig, x should be at lease 2"
                              << ", but got a " << input_shape.size() << "-D Tensor.";
   }
@@ -52,7 +53,7 @@ void EigCheckShapeValid(const ShapeVector &input_shape) {
 BaseShapePtr EigFuncImpl::InferShape(const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) const {
   auto input_shape = input_args[kInputIndex0]->GetShape()->GetShapeVector();
-  std::vector<BaseShapePtr> shapes_list(kDefaultRank);
+  std::vector<BaseShapePtr> shapes_list(kDefaultShapeSize);
   EigCheckShapeValid(input_shape);
 
   /* infer eigen_value shape  */

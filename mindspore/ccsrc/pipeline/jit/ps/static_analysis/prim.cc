@@ -137,6 +137,11 @@ AnfNodePtr GetNodeAfterArgHandler(const AnfNodePtr &node, const ops::OpInputArg 
     return node;
   }
   const auto arg_handler_func = prim::GetPythonOps(op_arg.arg_handler_, parse::PYTHON_MOD_PRIMITIVE_ARG_HANDLER_MODULE);
+  if (arg_handler_func->isa<Primitive>()) {
+    auto arg_handler_fg = dyn_cast<Primitive>(arg_handler_func);
+    MS_EXCEPTION_IF_NULL(arg_handler_fg);
+    return fg->NewCNodeInOrder({NewValueNode(arg_handler_fg), node});
+  }
   auto arg_handler_fg = dyn_cast<FuncGraph>(arg_handler_func);
   MS_EXCEPTION_IF_NULL(arg_handler_fg);
   arg_handler_fg->set_manager(fg->manager());
