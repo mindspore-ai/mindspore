@@ -237,7 +237,7 @@ class Softmax(Cell):
     where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
 
     Args:
-        axis (Union[int, tuple[int]]): The axis to apply Softmax operation, if the dimension of input `x` is x.ndim,
+        axis (int, optional): The axis to apply Softmax operation, if the dimension of input `x` is x.ndim,
             the range of axis is `[-x.ndim, x.ndim)`, -1 means the last dimension. Default: ``-1`` .
 
     Inputs:
