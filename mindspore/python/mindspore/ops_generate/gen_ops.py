@@ -662,6 +662,14 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
         signature_code = generate_cc_op_signature(operator_data.get('args_signature'), inputs_args)
         args = operator_data.get('args')
         returns = operator_data.get('returns')
+        dispatch = operator_data.get("dispatch")
+        # dispatch not defined in yaml or dispatch.enable==False
+        if not dispatch or not dispatch.get("enable"):
+            dispatch = "false"
+        else:
+            dispatch = "true"
+        enable_dispatch_str = f"""{dispatch}"""
+
         class_name = _get_op_name(operator_name, operator_data)
         gen_include += f"""\n#include "ops/ops_func_impl/{operator_name}.h\""""
         cc_index_str = ''
@@ -704,7 +712,7 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
 
         op_def_cc = template.OP_PROTO_TEMPLATE.replace(class_name=class_name, input_args=input_args_str,
                                                        return_args=return_args_str, signatures=signature_code,
-                                                       indexes=cc_index_str)
+                                                       indexes=cc_index_str, enable_dispatch=enable_dispatch_str)
         gen_cc_code += op_def_cc
     gen_opdef_map += f"""\n}};"""
     gen_cc_code += gen_opdef_map

@@ -154,11 +154,12 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   }
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "GeOptimizeGraph", 1, 0, 0);
   GEGraphOptimization::GetInstance().OptimizeACLGraph(kernel_graph);
-  bool enable_aclnn = !kernel_graph->is_from_single_op();
+  bool aclnn_can_used = !kernel_graph->is_from_single_op();
   // select kernel
   const auto &kernels = kernel_graph->execution_order();
   for (const auto &kernel : kernels) {
-    auto [select_res, msg, etype] = device::ascend::SelectKernelInfoWithMsg(kernel, enable_aclnn);
+    auto [select_res, msg, etype] =
+      device::ascend::SelectKernelInfoWithMsg(kernel, aclnn_can_used && kernel::IsEnabledAclnn(kernel));
     if (!select_res) {
       MS_LOG(INFO) << "node is " << kernel->fullname_with_scope() << " should backoff";
       std::pair<std::string, ExceptionType> failure_info = std::make_pair(msg, etype);

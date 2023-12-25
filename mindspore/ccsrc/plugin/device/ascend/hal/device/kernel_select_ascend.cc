@@ -18,6 +18,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <memory>
+#include <set>
 #include "mindspore/core/ops/array_ops.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_metadata.h"
 
@@ -485,11 +486,22 @@ void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node
 
 std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const CNodePtr &node, bool enable_aclnn) {
   MS_EXCEPTION_IF_NULL(node);
+  static std::set<std::string> kAclnnOpSelectedSet;
   transform::ErrorAclType acl_err_type = transform::ErrorAclType::kNormalOp;
   std::tuple<bool, std::string, ExceptionType> result = std::make_tuple(true, "", NoExceptionType);
   if (enable_aclnn && kernel::IsRegisteredAclnnOp(node)) {
     GenerateKernelBuildInfo(node, KernelType::OPAPI_KERNEL);
+    std::string op_name = common::AnfAlgo::GetCNodeName(node);
+    if (kAclnnOpSelectedSet.count(op_name) == 0) {
+      (void)kAclnnOpSelectedSet.insert(op_name);
+      MS_LOG(INFO) << op_name << " select aclnn kernel.";
+    }
     return result;
+  }
+  // Check must use the aclnn kernel mod.
+  if (kernel::IsEnabledAclnnDispatch(node)) {
+    MS_LOG(EXCEPTION) << "Kernel " << AnfUtils::GetCNodeName(node)
+                      << " is enabled dispatch in yaml, but not registered an aclnn kernelmod.";
   }
 
   auto kernel_type = transform::AclHelper::GetKernelInfoFromGe(node, &acl_err_type);
@@ -518,16 +530,20 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const CNode
 
 void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
   for (const auto &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
     auto build_info = AnfAlgo::GetSelectKernelBuildInfo(node);
+    if (build_info != nullptr && build_info->valid()) {
+      continue;
+    }
+
     // Kernel selection process.
-    if (build_info == nullptr || !build_info->valid()) {
-      auto [select_res, msg, etype] = SelectKernelInfoWithMsg(node);
-      if (!select_res) {
-        MS_LOG(INFO) << "node is " << node->fullname_with_scope() << " should backoff";
-        const auto &kernel_graph = AnfAlgo::FetchKernelGraph(node.get());
-        std::pair<std::string, ExceptionType> failure_info = std::make_pair(msg, etype);
-        HandleKernelSelectFailure(kernel_graph, node, failure_info);
-      }
+    const auto &kernel_graph = AnfAlgo::FetchKernelGraph(node.get());
+    bool aclnn_can_used = ((kernel_graph != nullptr) && !kernel_graph->is_from_single_op());
+    auto [select_res, msg, etype] = SelectKernelInfoWithMsg(node, aclnn_can_used && kernel::IsEnabledAclnn(node));
+    if (!select_res) {
+      MS_LOG(INFO) << "node is " << node->fullname_with_scope() << " should backoff";
+      std::pair<std::string, ExceptionType> failure_info = std::make_pair(msg, etype);
+      HandleKernelSelectFailure(kernel_graph, node, failure_info);
     }
   }
 }

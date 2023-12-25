@@ -73,6 +73,7 @@ struct OpDef {
   std::vector<Signature> signatures_;
   std::unordered_map<std::string, size_t> indexes_;
   OpFuncImpl &func_impl_;
+  bool enable_dispatch_;
 };
 
 using OpDefPtr = OpDef *;

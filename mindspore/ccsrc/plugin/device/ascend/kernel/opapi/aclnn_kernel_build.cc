@@ -15,16 +15,19 @@
  */
 #include <string>
 #include <utility>
-
+#include <vector>
 #include "plugin/device/ascend/kernel/opapi/aclnn_kernel_build.h"
 #include "plugin/device/ascend/kernel/opapi/aclnn_kernel_mod.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/factory/ms_factory.h"
 #include "kernel/framework_utils.h"
+#include "ops/op_def.h"
 
 namespace mindspore {
 namespace kernel {
+constexpr char kEnableAclnn[] = "MS_ENABLE_ACLNN";
+
 KernelModPtr AclnnOpBuild(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
 
@@ -60,6 +63,33 @@ bool IsRegisteredAclnnOp(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   std::string opname = common::AnfAlgo::GetCNodeName(anf_node);
   return Factory<AclnnKernelMod>::Instance().IsRegistered(opname);
+}
+
+bool IsEnabledAclnnDispatch(const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  std::string op_name = common::AnfAlgo::GetCNodeName(anf_node);
+  mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_name);
+  if (op_def == nullptr) {
+    MS_LOG(INFO) << op_name << " is not defined in opdef.";
+    return false;
+  }
+  return op_def->enable_dispatch_;
+}
+
+bool IsEnabledAclnn(const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  // The op yaml enable aclnn dispatch.
+  if (IsEnabledAclnnDispatch(anf_node)) {
+    return true;
+  }
+
+  static std::string enable_aclnn = common::GetEnv(kEnableAclnn);
+  // Manually set to open aclnn for performance acceleration.
+  if (enable_aclnn == "1") {
+    return true;
+  }
+
+  return false;
 }
 }  // namespace kernel
 }  // namespace mindspore
