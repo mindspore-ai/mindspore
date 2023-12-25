@@ -14,6 +14,8 @@ mindspore.multiprocessing提供了创建多进程的能力，其内部实现继�
 
 由于mindspore.multiprocessing继承自Python原生的multiprocessing模块，其接口用法和原生模块完全兼容，用户可以直接把 `import multiprocessing` 修改为 `import mindspore.multiprocessing` 。因此，此处不对原生接口进行重复描述。接口的详细介绍和使用方式请参考[multiprocessing](https://docs.python.org/3/library/multiprocessing.html)。
 
+> 当前仅支持后端为 `CPU` 的Tensor在进程间共享。
+
 ## 使用说明
 
 一个使用mindspore.multiprocessing创建多进程的样例如下：
