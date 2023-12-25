@@ -1127,7 +1127,7 @@ ValuePtr ConvertNumberToTensor(const py::object &obj) {
   }
 
   if (py::isinstance<py::int_>(obj)) {
-    auto v = py::cast<pyint>(obj);
+    auto v = py::cast<int64_t>(obj);
     return std::make_shared<tensor::Tensor>(v);
   }
 
