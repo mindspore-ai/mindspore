@@ -22,4 +22,4 @@ mindspore.ops.reshape
         - **ValueError** - 给定的 `shape` 中包含小于-1的元素。
         - **ValueError** - 给定的 `shape` 中不包含-1的场景，各元素的乘积不等于输入Tensor的 `shape` 的乘积，
           :math:`\prod_{i=1}^{R}x_{i} \ne \prod_{i=1}^{S}y_{i}`，（即与输入的数组大小不匹配）。
-          或者给定的 `shape` 中包含-1的场景，除-1外元素的乘积无法被输入Tensor的 `shape` 的乘积 :math:`\prod_{i=1}^{R}x_{i}` 整除。
+          或者给定的 `shape` 中包含-1的场景，除-1外元素的乘积无法整除输入Tensor的 `shape` 的乘积 :math:`\prod_{i=1}^{R}x_{i}` 。

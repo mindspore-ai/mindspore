@@ -1440,7 +1440,7 @@ def reshape(input, shape):
     r"""
     Rearranges the input Tensor based on the given `shape` .
 
-    The`shape` can only have one -1 at most, in which case it's inferred from the remaining dimensions and
+    The `shape` can only have one -1 at most, in which case it's inferred from the remaining dimensions and
     the number of elements in the input.
 
     Args:
@@ -1461,7 +1461,7 @@ def reshape(input, shape):
             `shape` is not equal to the product of the input's `shape` ,
             :math:`\prod_{i=1}^{R}x_{i}\ne \prod_{i=1}^{S}y_{i}`, (Namely, it does not match the input's array size).
             And for scenarios where the given `shape` contains -1, the product of elements other than -1 of the given
-            `shape` cannot be divided by the product of the input's `shape` :math:`\prod_{i=1}^{R}x_{i}`.
+            `shape` is an aliquant part of the product of the input's `shape` :math:`\prod_{i=1}^{R}x_{i}`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
