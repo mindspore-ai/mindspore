@@ -14,6 +14,8 @@ The above process is not triggered when creating a multiprocess without using fo
 
 Since mindspore.multiprocessing inherits from Python native multiprocessing module, its interface usage is fully compatible with the native module, so users can directly change `import multiprocessing` to `import mindspore. multiprocessing`. Therefore, the description of the native interfaces is not repeated here. For a detailed description and the usage description of the interface, please refer to [multiprocessing](https://docs.python.org/3/library/multiprocessing.html).
 
+> Only Tensors with `CPU` backend can be shared between processes now.
+
 ## Usage Description
 
 A sample of creating multiple processes using mindspore.multiprocessing is shown below:
