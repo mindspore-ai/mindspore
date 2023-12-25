@@ -340,7 +340,7 @@ def test_cell_mixed_arguments():
     assert net(1, 2, 3, d=Tensor([6])).asnumpy() == [12]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cell_mixed_arguments_with_grad():
@@ -370,7 +370,7 @@ def test_cell_mixed_arguments_with_grad():
     assert grad_net(Tensor([1]), Tensor([2]), Tensor([3]), d=Tensor([4]), e=Tensor([5])).asnumpy() == [1]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cell_mixed_arguments_with_grad1():
@@ -553,7 +553,7 @@ def test_cell_as_input():
     assert np.allclose(x.asnumpy(), out.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tuple_cell_as_input():
@@ -608,7 +608,7 @@ def test_tuple_cell_as_input():
     assert np.allclose(x.asnumpy(), out.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dict_cell_as_input():

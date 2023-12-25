@@ -91,7 +91,7 @@ def test_bprop_wrt_inputs_and_params():
     print(grads)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_network_with_dict_output():

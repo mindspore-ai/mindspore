@@ -67,7 +67,7 @@ def test_gelu_2d():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_gelu_4d():
@@ -81,7 +81,7 @@ def test_gelu_4d():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_gelu_neg():

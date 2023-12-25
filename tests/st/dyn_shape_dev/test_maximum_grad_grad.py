@@ -56,7 +56,7 @@ def test_maximum_grad_grad_op_forward(context_mode, data_type):
     np.testing.assert_allclose(out[2].asnumpy(), expect_out[2], rtol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -83,7 +83,7 @@ def test_maximum_grad_grad_op_vmap(context_mode, data_type):
     np.testing.assert_allclose(out[2].asnumpy(), expect_out[2], rtol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -123,7 +123,7 @@ def test_maximum_grad_grad_op_dynamic_shape(context_mode):
     np.testing.assert_allclose(out1[2].asnumpy(), expect_out1[2], rtol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

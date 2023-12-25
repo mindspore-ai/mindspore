@@ -91,7 +91,7 @@ def test_reciprocal_vmap(mode):
     np.testing.assert_equal(output.asnumpy(), expect_out.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

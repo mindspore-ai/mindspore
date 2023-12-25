@@ -440,7 +440,7 @@ def test_grad_mul_add_with_wrong_output_shape():
         grad_all(mul_add)(1, Tensor(np.ones([2, 2])))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_forward_with_parameter():
@@ -542,7 +542,7 @@ def test_forward_with_parameter_in_sub_cell():
     assert np.allclose(out[1].asnumpy(), expect_dy)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_forward_with_parameter_in_sub_cell_get_by_list():
@@ -601,7 +601,7 @@ def test_forward_with_parameter_in_sub_cell_get_by_list():
     assert np.allclose(out[1][0].asnumpy(), expect_dz)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_pynative_forward_with_parameter():
@@ -707,7 +707,7 @@ def test_pynative_forward_with_parameter_in_sub_cell():
     context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_pynative_forward_with_parameter_in_sub_cell_get_by_list():

@@ -115,7 +115,7 @@ def test_net3():
     assert np.allclose(output1.asnumpy(), output2.asnumpy()) is False
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_op2():

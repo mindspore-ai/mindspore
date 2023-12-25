@@ -100,7 +100,7 @@ def test_bce_with_logits_loss(reduction, data_type):
     np.testing.assert_allclose(benchmark, output.asnumpy(), rtol=loss, atol=loss)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("reduction", ["none", "mean", "sum"])

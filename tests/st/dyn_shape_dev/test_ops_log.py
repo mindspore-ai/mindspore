@@ -61,7 +61,7 @@ def op_log_backward_testcase():
     assert np.allclose(output.asnumpy(), expect, 1e-04, 1e-04)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_op_log_cpu():

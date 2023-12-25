@@ -94,7 +94,7 @@ def test_softplus_2d_fp32():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_softplus_4d_fp32():
@@ -113,7 +113,7 @@ def test_softplus_4d_fp32():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_softplus_neg():
@@ -132,7 +132,7 @@ def test_softplus_neg():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_softplus_4d_fp16():
@@ -151,7 +151,7 @@ def test_softplus_4d_fp16():
     assert np.allclose(y_np, y_ms.asnumpy(), rtol=5e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_softplus_7d_fp32():
@@ -170,7 +170,7 @@ def test_softplus_7d_fp32():
     assert np.allclose(y_np, y_ms.asnumpy(), rtol=5e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_softplus_with_big_input():

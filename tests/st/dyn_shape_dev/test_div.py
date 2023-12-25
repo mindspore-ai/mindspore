@@ -76,7 +76,7 @@ def test_div_infer_value(mode):
     assert np.allclose(out2.asnumpy(), expect2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -156,7 +156,7 @@ def test_div_backward(mode):
     assert np.allclose(out[1].asnumpy(), expect_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -178,7 +178,7 @@ def test_div_vmap(mode):
     assert np.allclose(out.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -211,7 +211,7 @@ def test_div_dynamic(context_mode):
     assert np.allclose(out1_1.asnumpy(), expect_1, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

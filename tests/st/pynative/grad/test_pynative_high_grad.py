@@ -65,7 +65,7 @@ class TwoInputBprop(nn.Cell):
         return x * 5, y * 8
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_highgrad_one_input_sec_grad():
@@ -82,7 +82,7 @@ def test_highgrad_one_input_sec_grad():
     assert (dxdx.asnumpy() == np.array([5, 5]).astype(np.float32)).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_highgrad_one_input_third_grad():
@@ -98,7 +98,7 @@ def test_highgrad_one_input_third_grad():
     assert (third_grad.asnumpy() == np.array([0, 0]).astype(np.float32)).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_highgrad_two_input_sec_grad():
@@ -124,7 +124,7 @@ def test_highgrad_two_input_sec_grad():
     assert (dydy.asnumpy() == np.array([8, 8]).astype(np.float32)).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_pynative_ms_function_highgrad_one_input_sec_grad():

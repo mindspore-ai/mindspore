@@ -33,7 +33,7 @@ class NetElu(nn.Cell):
         return self.elu(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_elu_dshape():
@@ -52,7 +52,7 @@ def test_elu_dshape():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_elu_fp16():
@@ -67,7 +67,7 @@ def test_elu_fp16():
     assert np.all(diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_elu_fp32():

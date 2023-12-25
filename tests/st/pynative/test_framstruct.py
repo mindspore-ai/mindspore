@@ -22,7 +22,7 @@ from tests.mindspore_test_framework.utils.check_gradient import (
     check_jacobian, Tensor, OperationGradChecker, check_gradient, NNGradChecker)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_operation_grad_checker():
@@ -96,7 +96,7 @@ def test_nn_jacobian_checker():
                    output_selector=[0])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_nn_grad_checker():

@@ -94,7 +94,7 @@ def test_lrn(data_type):
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=loss, atol=loss)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_lrn_vmap():

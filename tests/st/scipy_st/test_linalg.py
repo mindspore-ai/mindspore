@@ -353,7 +353,7 @@ def test_lu_factor(n: int, data_type):
     assert onp.allclose(m_pivots.asnumpy(), s_pivots, rtol=rtol, atol=atol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -406,7 +406,7 @@ def test_det(shape, dtype):
     assert onp.allclose(ms_det.asnumpy(), sp_det, rtol=rtol, atol=atol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

@@ -108,7 +108,7 @@ def test_batch_cholesky(shape, lower: bool, data_type):
     assert np.allclose(b_m_l.asnumpy(), b_s_l, rtol=rtol, atol=atol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(6, 6), (10, 10)])
@@ -189,7 +189,7 @@ def test_batch_eig(shape, data_type, rtol, atol):
         assert np.allclose(batch_a @ batch_v - batch_v @ np.diag(batch_w), np.zeros_like(batch_a), rtol, atol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

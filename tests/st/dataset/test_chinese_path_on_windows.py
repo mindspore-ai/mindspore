@@ -77,7 +77,7 @@ def write_read_mindrecord(mindrecord):
         count += 1
     assert count == 100
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_chinese_path_on_windows():

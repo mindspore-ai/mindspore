@@ -123,7 +123,7 @@ def test_lp_norm_op_high_pow():
     output = lp_norm(input_x)
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])

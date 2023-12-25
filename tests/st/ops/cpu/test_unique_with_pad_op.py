@@ -124,7 +124,7 @@ def test_unique_with_pad_dynamic_shape():
     assert (output[1].asnumpy() == expect_idx_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_unique_with_pad_vmap():

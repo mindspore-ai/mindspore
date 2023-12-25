@@ -687,7 +687,7 @@ def test_parse_subscript():
     assert out.asnumpy() == 66
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor_func():

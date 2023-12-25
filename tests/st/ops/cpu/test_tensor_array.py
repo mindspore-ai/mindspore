@@ -33,7 +33,7 @@ class TensorArrayNet(nn.Cell):
         return v, s
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensorarray():

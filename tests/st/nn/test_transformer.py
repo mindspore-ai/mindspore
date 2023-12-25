@@ -22,7 +22,7 @@ from mindspore.nn import MultiheadAttention, TransformerEncoderLayer, \
     TransformerEncoder, TransformerDecoderLayer, TransformerDecoder, Transformer
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
@@ -87,7 +87,7 @@ def test_multihead_attention_pynative_ascend(dtype, jit):
     assert q.shape == out[0].shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
@@ -269,7 +269,7 @@ def test_transformerdecoder_gpu(dtype, training, jit):
     assert result.shape == tgt.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
@@ -337,7 +337,7 @@ def test_transformerdecoder_ascend(dtype, training, jit):
     assert result.shape == tgt.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard

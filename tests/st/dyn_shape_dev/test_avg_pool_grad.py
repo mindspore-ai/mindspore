@@ -43,7 +43,7 @@ class AvgPoolGrad(nn.Cell):
         return self.grad(self.forward)(x, sens)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

@@ -81,7 +81,7 @@ def test_celu_func(data_type):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_celu_vmap():

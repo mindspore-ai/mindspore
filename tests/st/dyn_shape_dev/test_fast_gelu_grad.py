@@ -70,7 +70,7 @@ def test_fastgelugrad_op_forward_ascend(context_mode, data_type):
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -90,7 +90,7 @@ def test_fastgelugrad_op_vmap(context_mode, data_type):
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])

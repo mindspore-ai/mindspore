@@ -216,7 +216,7 @@ def test_cumprod_backward_dynamic_rank(context_mode):
     assert np.allclose(out2.asnumpy(), expect2, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

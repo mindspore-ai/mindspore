@@ -54,7 +54,7 @@ def test_ops_not_equal(mode):
     np.testing.assert_array_equal(output_ms_case_2.asnumpy(), expect_output_case_2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])

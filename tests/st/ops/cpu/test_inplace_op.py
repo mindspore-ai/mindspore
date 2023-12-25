@@ -214,7 +214,7 @@ def test_inplace_update(shape, indice_len, dtype):
     np.allclose(result.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape, indice_len', [((10, 4, 3, 2), 2)])
@@ -239,7 +239,7 @@ def test_vmap_inplace_update(shape, indice_len, dtype):
     np.allclose(result.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape, indice_len', [((10, 4, 3, 2), 2)])
@@ -264,7 +264,7 @@ def test_vmap_inplace_add(shape, indice_len, dtype):
     np.allclose(result.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape, indice_len', [((10, 4, 3, 2), 2)])

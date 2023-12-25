@@ -38,7 +38,7 @@ def compare(a, b):
     return np.allclose(a.asnumpy(), b)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_mutable_tuple_tensor():
@@ -87,7 +87,7 @@ def test_grad_mutable_tuple_tensor():
     assert id(m_t.__ms_origin_object__) == id(t)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_mutable_list_tensor():
@@ -136,7 +136,7 @@ def test_grad_mutable_list_tensor():
     assert id(m_t.__ms_origin_object__) == id(t)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_mutable_dict_tensor():
@@ -538,7 +538,7 @@ def test_grad_mutable_dict_list_tensor():
     assert compare(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_mutable_tuple_tensor_jit_function():

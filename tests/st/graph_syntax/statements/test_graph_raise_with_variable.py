@@ -221,7 +221,7 @@ def test_raise_with_variable_dic():
             raise_info_list.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_raise_with_variable_control_flow1():
@@ -333,7 +333,7 @@ def test_list_in_control_flow():
     assert "The input maybe [" in str(raise_info_list.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_raise_with_none_join():
@@ -358,7 +358,7 @@ def test_raise_with_none_join():
         raise_info_joinedstr_tensor.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_raise_with_raise_join():
@@ -385,7 +385,7 @@ def test_raise_with_raise_join():
         raise_info_joinedstr_tensor.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_raise_parse_with_interpret():

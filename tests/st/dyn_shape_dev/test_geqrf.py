@@ -46,7 +46,7 @@ def test_geqrf_forward(mode):
     assert np.allclose(out[1].asnumpy(), expect_out2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

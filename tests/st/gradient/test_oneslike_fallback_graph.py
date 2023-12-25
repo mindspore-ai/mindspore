@@ -26,7 +26,7 @@ from mindspore import Parameter
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_oneslike_fallback_with_tensor():
@@ -79,7 +79,7 @@ class GradNet1(nn.Cell):
         return self.grad_net(*x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_oneslike_fallback_with_empty_grad():

@@ -46,7 +46,7 @@ def dyn_case():
     assert out.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_conjugate_transpose_dyn():

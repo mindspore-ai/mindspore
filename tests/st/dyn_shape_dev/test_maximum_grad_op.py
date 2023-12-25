@@ -113,7 +113,7 @@ def test_maximum_grad_op_dynamic_shape(context_mode):
     np.testing.assert_allclose(out_2[1].asnumpy(), expect_out_2[1], rtol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

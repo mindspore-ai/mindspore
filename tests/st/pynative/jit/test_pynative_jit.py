@@ -517,7 +517,7 @@ def test_pynative_jit_with_kwargs_inputs():
     assert foo(x, **data).asnumpy() == [4]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ms_vmap_cell_list():
@@ -612,7 +612,7 @@ def test_control_flow_for_in_while_return_in_for_param():
     assert expect_grad == ms_grad
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_jit_pyexecute():
