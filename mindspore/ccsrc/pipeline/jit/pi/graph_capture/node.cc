@@ -122,7 +122,7 @@ bool ValueNode::IsMindsporeSupportedOperation() {
 
 void ValueNode::store_attr(const std::string &nam, ValueNode *v) {
   vobj_->SetAttr(nam, v->vobj_);
-  attrs_.insert({nam, v});
+  attrs_[nam] = v;
 }
 
 void ValueNode::store_subscr(ValueNode *sub, ValueNode *v) {
