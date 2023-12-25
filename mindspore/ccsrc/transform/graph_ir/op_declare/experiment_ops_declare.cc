@@ -77,7 +77,7 @@ INPUT_MAP(ApplyCamePart1) = {{1, INPUT_DESC(grad)}, {2, INPUT_DESC(eps)}};
 ATTR_MAP(ApplyCamePart1) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ApplyCamePart1) = {
   {0, OUTPUT_DESC(sum_grad_r)}, {1, OUTPUT_DESC(sum_grad_c)}, {2, OUTPUT_DESC(sum_grad_rc)}};
-REG_ADPT_DESC(ApplyCamePart1, "ApplyCamePart1", ADPT_DESC(ApplyCamePart1))
+REG_ADPT_DESC(ApplyCamePart1, kNameApplyCamePart1, ADPT_DESC(ApplyCamePart1))
 
 // ApplyCamePart2
 INPUT_MAP(ApplyCamePart2) = {{1, INPUT_DESC(grad)},        {2, INPUT_DESC(sum_grad_r)}, {3, INPUT_DESC(sum_grad_c)},

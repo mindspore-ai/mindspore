@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ops/apply_came_part2.h"
+#include "ops/ops_func_impl/apply_came_part2.h"
 
 #include <memory>
 #include <map>
@@ -34,7 +34,8 @@
 #include "mindapi/base/type_id.h"
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/math_ops.h"
-#include "ops/nn_ops.h"
+#include "ops/auto_generate/gen_ops_name.h"
+#include "ops/op_name.h"
 #include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
@@ -43,9 +44,13 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
+
 const int64_t kInputsNumOfPart2 = 9;
 const int64_t kOutPutNumOfPart2 = 4;
+const int kConstNumberZeroPart2 = 0;
+const int kConstNumberOnePart2 = 1;
+const int kConstNumberTwoPart2 = 2;
+const int kConstNumberThreePart2 = 3;
 
 int64_t CheckInputDimPart2(int64_t dim, int64_t goldValue, string dimStr, string opName) {
   if (dim == abstract::Shape::kShapeDimAny) {
@@ -98,8 +103,8 @@ std::vector<int64_t> CheckInputsShapePart2(const string &op_name, const std::vec
   return out_shape;
 }
 
-abstract::TupleShapePtr ApplyCamePart2InferShape(const PrimitivePtr &primitive,
-                                                 const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr ApplyCamePart2FuncImpl::InferShape(const PrimitivePtr &primitive,
+                                                const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNumOfPart2, op_name);
@@ -112,66 +117,32 @@ abstract::TupleShapePtr ApplyCamePart2InferShape(const PrimitivePtr &primitive,
   ShapeVector u_vec = out_shape;
   ShapeVector sum_square_u_vec = {1};
   abstract::BaseShapePtrList output_shape_ptr_list(kOutPutNumOfPart2);
-  output_shape_ptr_list[0] = std::make_shared<abstract::Shape>(r_vec);
-  output_shape_ptr_list[1] = std::make_shared<abstract::Shape>(c_vec);
-  output_shape_ptr_list[2] = std::make_shared<abstract::Shape>(u_vec);
-  output_shape_ptr_list[3] = std::make_shared<abstract::Shape>(sum_square_u_vec);
+  output_shape_ptr_list[kConstNumberZeroPart2] = std::make_shared<abstract::Shape>(r_vec);
+  output_shape_ptr_list[kConstNumberOnePart2] = std::make_shared<abstract::Shape>(c_vec);
+  output_shape_ptr_list[kConstNumberTwoPart2] = std::make_shared<abstract::Shape>(u_vec);
+  output_shape_ptr_list[kConstNumberThreePart2] = std::make_shared<abstract::Shape>(sum_square_u_vec);
   return std::make_shared<abstract::TupleShape>(output_shape_ptr_list);
 }
 
-TypePtr ApplyCamePart2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr ApplyCamePart2FuncImpl::InferType(const PrimitivePtr &prim,
+                                          const std::vector<AbstractBasePtr> &input_args) const {
   auto op_name = prim->name();
-
   auto grad_type = input_args[kInputIndex0]->BuildType();
   auto r_type = input_args[kInputIndex4]->BuildType();
   auto c_type = input_args[kInputIndex4]->BuildType();
   std::map<std::string, TypePtr> types = {{"grad", grad_type}, {"r", r_type}, {"c", c_type}};
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kBFloat16};
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
-
   auto sum_grad_r_type = input_args[kInputIndex1]->BuildType();
   auto sum_grad_c_type = input_args[kInputIndex2]->BuildType();
   auto sum_grad_rc_type = input_args[kInputIndex3]->BuildType();
-  auto sum_r_type = input_args[kInputIndex7]->BuildType();
-  std::map<std::string, TypePtr> other_types = {{"sum_grad_r", sum_grad_r_type},
-                                                {"sum_grad_c", sum_grad_c_type},
-                                                {"sum_grad_rc", sum_grad_rc_type},
-                                                {"sum_r", sum_r_type}};
+  std::map<std::string, TypePtr> other_types = {
+    {"sum_grad_r", sum_grad_r_type}, {"sum_grad_c", sum_grad_c_type}, {"sum_grad_rc", sum_grad_rc_type}};
   const std::set<TypePtr> other_valid_types = {kFloat32};
   auto other_type = CheckAndConvertUtils::CheckTensorTypeSame(other_types, other_valid_types, op_name);
 
   return std::make_shared<Tuple>(std::vector<TypePtr>{type, type, other_type, other_type});
 }
-}  // namespace
 
-AbstractBasePtr ApplyCamePart2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNumOfPart2, primitive->name());
-  auto infer_type = ApplyCamePart2InferType(primitive, input_args);
-  auto infer_shape = ApplyCamePart2InferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
-}
-
-MIND_API_OPERATOR_IMPL(ApplyCamePart2, BaseOperator);
-
-// AG means auto generated
-class MIND_API AGApplyCamePart2Infer : public abstract::OpInferBase {
- public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) const override {
-    return ApplyCamePart2InferShape(primitive, input_args);
-  }
-
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return ApplyCamePart2InferType(primitive, input_args);
-  }
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args) const override {
-    return ApplyCamePart2Infer(engine, primitive, input_args);
-  }
-};
-
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ApplyCamePart2, prim::kPrimApplyCamePart2, AGApplyCamePart2Infer, false);
 }  // namespace ops
 }  // namespace mindspore
