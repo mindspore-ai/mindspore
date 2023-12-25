@@ -387,12 +387,13 @@ std::pair<std::string, ExceptionType> CollectNotMatchMessage(
   switch (acl_err_type) {
     case transform::kUnknownOp: {
       ss << "The current operator needs to be supplemented with an adapter, please check in `transform` directory."
-         << std::endl;
+         << " node is " << node->fullname_with_scope() << std::endl;
       etype = NotSupportError;
       break;
     }
     case transform::kInValidType: {
-      ss << "The supported input and output data types for the current operator are:" << std::endl;
+      ss << "The supported input and output data types for the current operator are:"
+         << " node is " << node->fullname_with_scope() << std::endl;
       std::string name = GetCNodeFuncName(node);
       const auto &info = transform::GeAdapterManager::GetInstance().GetInfo(name, true);
       const auto &input_supported_dtypes = info->input_supported_dtypes();
@@ -428,7 +429,7 @@ std::pair<std::string, ExceptionType> CollectNotMatchMessage(
     }
     case transform::kSpecialOp: {
       ss << "The current operator is specified not to select ACL. Please contact the relevant engineer for help."
-         << std::endl;
+         << "node is " << node->fullname_with_scope() << std::endl;
       etype = NotSupportError;
       break;
     }
