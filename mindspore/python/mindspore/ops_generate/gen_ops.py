@@ -361,7 +361,7 @@ def get_dtype(arg_info):
         dtype = 'int'
     return dtype
 
-def process_args(args):
+def process_args(class_name, args):
     """
     Process arg for yaml, get arg_name, init value, type cast, arg_handler, etc.
     """
@@ -390,7 +390,7 @@ def process_args(args):
                 init_args_with_default.append(f"""{arg_name}""")
 
             # step1.3: get args set prim arg expression:
-            assign_str = gen_utils.get_assign_str_by_type_it(arg_info, arg_name, dtype)
+            assign_str = gen_utils.get_assign_str_by_type_it(class_name, arg_info, arg_name, dtype)
             if arg_handler:
                 assign_str = f'{arg_handler}({assign_str})'
                 if is_optional:
@@ -459,7 +459,8 @@ def generate_py_primitive(yaml_data):
         func_name = _get_op_func_name(operator_name, operator_data)
         pyboost_func_name = get_pyboost_name(operator_name)
         args = operator_data.get('args')
-        inputs_args, inputs_default, init_args, args_assign, init_args_with_default, args_handlers = process_args(args)
+        inputs_args, inputs_default, init_args, args_assign, init_args_with_default, args_handlers = \
+            process_args(class_name, args)
         init_code = '\n'.join(args_assign)
         signature_code = generate_py_op_signature(operator_data.get('args_signature'), inputs_args,
                                                   inputs_default)
@@ -665,7 +666,8 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
 
     for operator_name, operator_data in yaml_data.items():
         args = operator_data.get('args')
-        inputs_args, _, _, _, _, _ = process_args(args)
+        class_name = _get_op_name(operator_name, operator_data)
+        inputs_args, _, _, _, _, _ = process_args(class_name, args)
         signature_code = generate_cc_op_signature(operator_data.get('args_signature'), inputs_args)
         args = operator_data.get('args')
         returns = operator_data.get('returns')
@@ -677,7 +679,6 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
             dispatch = "true"
         enable_dispatch_str = f"""{dispatch}"""
 
-        class_name = _get_op_name(operator_name, operator_data)
         gen_include += f"""\n#include "ops/ops_func_impl/{operator_name}.h\""""
         cc_index_str = ''
         gen_opdef_map += f"""\n  {{"{class_name}", &g{class_name}}},"""

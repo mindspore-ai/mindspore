@@ -231,7 +231,7 @@ def do_type_cast(data, dst_type):
     raise TypeError("Type conversion failed.")
 
 
-def type_it(data, src_type, dst_type):
+def type_it(op_name, arg_name, data, src_type, dst_type):
     """
     cast operator argument data type.
     """
@@ -242,7 +242,6 @@ def type_it(data, src_type, dst_type):
     dst_type = int(dst_type)
     if not is_instance_in(data, src_type) and not is_instance_of(data, dst_type):
         support_list = get_support_dtype_list(src_type, dst_type)
-        raise TypeError(
-            f"For type conversion here, only support <{support_list}>, but got {type(data)}."
-        )
+        raise TypeError(f"For '{op_name}', the type of '{arg_name}' should be one of '[{support_list}]', " \
+                        f"but got {type(data)}.")
     return do_type_cast(data, dst_type)
