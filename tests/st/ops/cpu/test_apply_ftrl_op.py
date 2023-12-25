@@ -102,7 +102,7 @@ class FtrlNetVmap(nn.Cell):
         return self.vmap_ftrl(self.var, self.accum, self.linear, grad, lr, l1, l2, lr_power)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_apply_ftrl_op_vmap():

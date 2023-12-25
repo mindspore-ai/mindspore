@@ -98,7 +98,7 @@ def test_lrn_grad(mode, data_type):
     assert np.allclose(dx.asnumpy(), dx_exp, atol=loss, rtol=loss, equal_nan=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_lrn_grad_vmap():

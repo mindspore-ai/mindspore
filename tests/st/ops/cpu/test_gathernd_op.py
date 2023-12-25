@@ -177,7 +177,7 @@ def test_case9():
     assert np.allclose(outputs.asnumpy(), np.array(expected))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_gather_nd_vmap():

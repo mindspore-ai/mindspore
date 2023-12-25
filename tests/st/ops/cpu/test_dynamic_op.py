@@ -38,7 +38,7 @@ class TileNet(nn.Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tile_multiple_tensor_cpu():
@@ -77,7 +77,7 @@ class GradTile(nn.Cell):
         return self.grad(self.network)(input_x, multiples)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tile_multiple_tensor_grad_cpu():
@@ -110,7 +110,7 @@ class ConcatOffsetNet(nn.Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_offset_dynamic_cpu():
@@ -162,7 +162,7 @@ class GradConcat(nn.Cell):
         return self.grad(self.network)(x, y, z, shape)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_dynamic_grad_cpu():
@@ -192,7 +192,7 @@ class SliceNet(nn.Cell):
         return self.slice(x, begin, size)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_slice_begin_size_tensor_cpu():
@@ -229,7 +229,7 @@ class GradSlice(nn.Cell):
         return self.grad(self.network)(input_x, begin, size)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_slice_begin_size_tensor_grad():
@@ -284,7 +284,7 @@ class GradReduceMean(nn.Cell):
         return self.grad(self.network)(input_x, shape)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_reducemean_dynamic_cpu():
@@ -303,7 +303,7 @@ def test_reducemean_dynamic_cpu():
     assert (out.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_reducemean_dynamic_grad_cpu():

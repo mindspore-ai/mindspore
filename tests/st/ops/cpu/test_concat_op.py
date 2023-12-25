@@ -40,7 +40,7 @@ class ConcatConstFold(nn.Cell):
         return x
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_constant_folding_float32():
@@ -213,7 +213,7 @@ class GradConcat(nn.Cell):
         return gout
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_list_grad():
@@ -234,7 +234,7 @@ def test_concat_list_grad():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_tuple_grad():
@@ -402,7 +402,7 @@ def concat_3i(nptype):
     assert np.all(diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_3i_float32():
@@ -414,7 +414,7 @@ def test_concat_3i_float32():
     concat_3i(np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_3i_int32():
@@ -426,7 +426,7 @@ def test_concat_3i_int32():
     concat_3i(np.int32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_3i_bool():
@@ -479,7 +479,7 @@ def concat_4i(nptype):
     assert np.all(diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_4i_float32():
@@ -491,7 +491,7 @@ def test_concat_4i_float32():
     concat_4i(np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_4i_int32():
@@ -503,7 +503,7 @@ def test_concat_4i_int32():
     concat_4i(np.int32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_4i_int8():
@@ -515,7 +515,7 @@ def test_concat_4i_int8():
     concat_4i(np.int8)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_4i_uint64():
@@ -527,7 +527,7 @@ def test_concat_4i_uint64():
     concat_4i(np.uint64)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_4i_bool():
@@ -575,7 +575,7 @@ def vmap_basic():
     assert np.allclose(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_vmap():
@@ -599,7 +599,7 @@ class ConcatFunctional(nn.Cell):
         return ops.concat((self.x1, self.x2), self.axis)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_functional():
@@ -617,7 +617,7 @@ def test_concat_functional():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_functional_pynative():

@@ -85,7 +85,7 @@ def test_vjp_multiple_inputs_default_v_graph(mode):
     assert np.allclose(gradient[1].asnumpy(), expect_grad_1.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -138,7 +138,7 @@ def test_vjp_input_function_single_input_single_output_default_v_graph(mode):
     assert np.allclose(gradient[0].asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -205,7 +205,7 @@ def test_vjp_multiple_outputs_with_has_aux_graph(mode):
     assert np.allclose(gradient[1].asnumpy(), expect_grad_1.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -228,7 +228,7 @@ def test_vjp_multiple_outputs_with_weight(mode):
     assert np.allclose(params_gradient_vjp[0].asnumpy(), params_gradient_grad[0].asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])

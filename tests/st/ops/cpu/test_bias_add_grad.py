@@ -104,7 +104,7 @@ def test_bias_add_grad4d_dyn_inputs():
     assert np.all(output.asnumpy() == expect_output), "bias_add_grad execute failed, please check current code commit"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_biasaddgrad_vmap():

@@ -158,7 +158,7 @@ def test_truncatemod_cannot_broadcast():
         _ = TruncateMod()(input_x, input_y).asnumpy()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_vmap_truncate_mod():

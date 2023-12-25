@@ -73,7 +73,7 @@ def test_softmax_float32_tensor_api():
     run_softmax_api(mindspore.float32, np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_softmax_bfloat16_tensor_api():

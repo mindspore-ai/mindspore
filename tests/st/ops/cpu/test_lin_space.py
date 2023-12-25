@@ -78,7 +78,7 @@ def test_lin_space_net(start_np, stop_np, num_np):
     assert np.allclose(result_ms, result_np)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_lin_space_vmap_1d():
@@ -102,7 +102,7 @@ def test_lin_space_vmap_1d():
     assert np.allclose(result_ms, result_np)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_lin_space_vmap_2d():
@@ -128,7 +128,7 @@ def test_lin_space_vmap_2d():
     assert np.allclose(result_ms, result_np)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_lin_space_vmap_dynamic_shape():
@@ -156,7 +156,7 @@ def test_lin_space_vmap_dynamic_shape():
     assert np.allclose(result_ms, result_np)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_lin_space_num():

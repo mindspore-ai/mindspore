@@ -202,7 +202,7 @@ def test_unsorted_segment_arithmetic_one_d(func, data_type, index_type):
     np.testing.assert_array_almost_equal(graph_output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['min', 'max'])

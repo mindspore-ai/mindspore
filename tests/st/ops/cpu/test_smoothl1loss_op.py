@@ -96,7 +96,7 @@ def smoothl1loss_grad(beta):
     return grad(Tensor(prediction), Tensor(target), Tensor(sens))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_smoothl1loss_grad_no_reduce():

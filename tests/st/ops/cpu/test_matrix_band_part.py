@@ -33,7 +33,7 @@ class MatrixBandPartDynamicShapeNet(nn.Cell):
         return F.matrix_band_part(x_unique, lower, upper)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

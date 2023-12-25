@@ -115,7 +115,7 @@ class EmptyLess(Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_rank_shape_lt():
@@ -149,7 +149,7 @@ class ListEQ(Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dynamic_rank_shape_list_eq():
@@ -181,7 +181,7 @@ class ListLt(Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_set_inputs_shape_list_lt():
@@ -214,7 +214,7 @@ class ListInsert(Cell):
         return xshape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_set_inputs_shape_list_insert():
@@ -242,7 +242,7 @@ class NegStepSlice(Cell):
         return xshape[::step]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_set_inputs_shape_neg_step_slice():
@@ -270,7 +270,7 @@ class SliceNegStep(Cell):
         return xshape[1:0:step]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_set_inputs_shape_slice_neg_step():
@@ -303,7 +303,7 @@ class InTuple(Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_set_inputs_shape_in_tuple():
@@ -360,7 +360,7 @@ class SliceNeg(Cell):
         return xshape[a:b]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_set_inputs_shape_slice_neg():
@@ -415,7 +415,7 @@ class TupleMulInt(Cell):
         return xshape * t
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_set_inputs_shape_tuple_mul_int():

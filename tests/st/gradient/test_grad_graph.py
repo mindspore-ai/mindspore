@@ -271,7 +271,7 @@ def test_grad_with_weights_has_aux_graph():
     assert np.allclose(aux[1].asnumpy(), expect_aux2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_jit_function_grad_with_weights_has_aux_graph():
@@ -807,7 +807,7 @@ def test_construct_grad_single_position_with_return_ids():
     assert np.allclose(res[0], expect_grad_input[0])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_construct_grad_multiplt_positions_with_return_ids():
@@ -930,7 +930,7 @@ def test_construct_get_grad_by_position():
     assert np.allclose(grad_out.asnumpy(), expect_grad_input)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_construct_get_grad_by_weight():
@@ -1007,7 +1007,7 @@ def test_construct_get_grad_not_found():
         grad_net(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_construct_get_grad_not_found_from_empty_tuple():
@@ -1136,7 +1136,7 @@ def test_get_grad_outer_list_weight():
     assert np.allclose(out[1].asnumpy(), expect_value1.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_of_pyexecute_with_more_than_three_inputs():
@@ -1171,7 +1171,7 @@ def test_grad_of_pyexecute_with_more_than_three_inputs():
     assert ms_grad == 0
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_value_and_grad_nest_with_weights_graph_return_ids():
@@ -1227,7 +1227,7 @@ def test_value_and_grad_nest_with_weights_graph_return_ids():
     assert gradient[1][1][0] == net.z.name
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_value_and_grad_nest_with_weights_graph_get_grad():

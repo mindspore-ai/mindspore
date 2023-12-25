@@ -137,7 +137,7 @@ def test_sparseapplyadagradv2_dynamic_shape_support():
         sparse_apply_adagrad_v2(var, accum, gradient, indices)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_vmap_sparseapplyadagradopv2():

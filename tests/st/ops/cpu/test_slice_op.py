@@ -91,7 +91,7 @@ class Slice3(nn.Cell):
         return (x[..., -1], x[..., 2:1:-1], x[1:3:1, 0, ...], x[-1, 0, ...])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_slice3():
@@ -114,7 +114,7 @@ class Slice4(nn.Cell):
         return x[:10:1, :, 2:3:1]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_slice4():
@@ -159,7 +159,7 @@ class Slice6(nn.Cell):
         return (x[-10:], x[-5:10:2, :, :], x[-10:10:1, :, -10:10:1])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_slice6():
@@ -242,7 +242,7 @@ def vmap_1_batch():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_slice_vmap():

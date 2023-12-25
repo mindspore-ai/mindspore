@@ -250,7 +250,7 @@ def test_max_tensor_grad_with_input_nan():
     assert np.allclose(output[1].asnumpy(), expect1, rtol=1e-6, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_max_grad_vmap():

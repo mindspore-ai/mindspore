@@ -160,7 +160,7 @@ def test_cpu_float16():
     assert output1.asnumpy() == expect1
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_vmap_square_sum_all():
