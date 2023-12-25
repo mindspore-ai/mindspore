@@ -605,7 +605,7 @@ def test_setattr_for_parameter():
     assert "Do not support to set attribute for a parameter" in str(ex.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -633,7 +633,7 @@ def test_global_getattr_after_setattr_1():
     assert obj.x == 3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
