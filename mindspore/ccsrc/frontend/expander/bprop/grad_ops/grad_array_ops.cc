@@ -20,6 +20,7 @@
 #include <vector>
 #include "ops/op_utils.h"
 #include "ops/array_op_name.h"
+#include "ops/array_ops.h"
 #include "frontend/expander/bprop/bprop_irbuilder.h"
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
 #include "include/common/utils/utils.h"
@@ -1518,6 +1519,16 @@ REG_BPROP_BUILDER("Tile").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
 });
 
 REG_BPROP_BUILDER("Gather").SetUnusedInputs({i0, i4}).SetBody(BinopGather);
+
+REG_BPROP_BUILDER("GatherExt").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto dim = ib->GetInput(kIndex1);
+  auto index = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto init_input = ib->ZerosLike(input);
+  auto out = ib->Emit(prim::kPrimScatter->name(), {init_input, dim, index, dout, ib->Value((int64_t)1)}, {});
+  return {out, ib->OutZeros(dim), ib->OutZeros(index)};
+});
 
 REG_BPROP_BUILDER("Fill").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(ReturnZeros);
 REG_BPROP_BUILDER("SelectView").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {

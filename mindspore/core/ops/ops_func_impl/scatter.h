@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_GATHER_EXT_H_
-#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_GATHER_EXT_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCATTER_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCATTER_H_
 
-#include <memory>
 #include <vector>
-#include "mindapi/base/types.h"
 #include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-class MIND_API GatherExtFuncImpl : public OpFuncImpl {
+class MIND_API ScatterFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-  int32_t CheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_GATHER_EXT_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCATTER_H_

@@ -1,0 +1,3 @@
+scatter:
+    description: |
+        reverse operation of gather
