@@ -934,8 +934,7 @@ def div(input, other, *, rounding_mode=None):
     Divides the first input tensor by the second input tensor in floating-point type element-wise.
 
     Note:
-        - One of the two inputs must be a Tensor, when the two inputs have different shapes,
-          they must be able to broadcast to a common shape.
+        - When the two inputs have different shapes, they must be able to broadcast to a common shape.
         - The two inputs can not be bool type at the same time,
           [True, Tensor(True, bool\_), Tensor(np.array([True]), bool\_)] are all considered bool type.
         - The two inputs comply with the implicit type conversion rules to make the data types
