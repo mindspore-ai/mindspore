@@ -490,7 +490,7 @@ def test_map_multiprocessing_with_fixed_handle():
         return data1, data2
 
     dataset = dataset.map(operations=long_running_op, input_columns=["input_ids", "input_mask"],
-                          python_multiprocessing=True, num_parallel_workers=2, max_rowsize=10)
+                          python_multiprocessing=True, num_parallel_workers=4, max_rowsize=10)
     assert dataset.get_dataset_size() == 791
 
     fds = 0
