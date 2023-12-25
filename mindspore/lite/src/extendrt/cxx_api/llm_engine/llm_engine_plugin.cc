@@ -618,7 +618,7 @@ Status LLMEnginePlugin::LinkClusters(const std::vector<LLMClusterInfo> &clusters
   for (size_t i = 0; i < ge_rets.size(); i++) {
     auto ge_ret = ge_rets[i];
     if (ge_ret != ge::GRAPH_SUCCESS) {
-      rets->push_back(kLiteError);
+      rets->push_back(OnGeStatus(ge_ret, "LinkClusters", "return"));
       auto &cluster = clusters[i];
       MS_LOG(ERROR) << "Cluster " << i << " error occur, ge error code " << ge_ret << ", remote_cluster_id "
                     << cluster.remote_cluster_id << ", remote_role_type " << cluster.remote_role_type
@@ -668,7 +668,7 @@ Status LLMEnginePlugin::UnlinkClusters(const std::vector<LLMClusterInfo> &cluste
   for (size_t i = 0; i < ge_rets.size(); i++) {
     auto ge_ret = ge_rets[i];
     if (ge_ret != ge::GRAPH_SUCCESS) {
-      rets->push_back(kLiteError);
+      rets->push_back(OnGeStatus(ge_ret, "UnlinkClusters", "return"));
       auto &cluster = clusters[i];
       MS_LOG(ERROR) << "Cluster " << i << " error occur, ge error code " << ge_ret << ", remote_cluster_id "
                     << cluster.remote_cluster_id << ", remote_role_type " << cluster.remote_role_type
