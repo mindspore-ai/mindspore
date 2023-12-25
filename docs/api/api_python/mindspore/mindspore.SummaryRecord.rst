@@ -10,11 +10,10 @@ mindspore.SummaryRecord
     它通过执行 `record` 方法将数据写入文件。除了通过 `summary算子 <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/summary_record.html#方式二-结合summary-api和summarycollector自定义收集网络中的数据>`_ 记录网络的数据外，SummaryRecord还支持通过 `自定义回调函数和自定义训练循环 <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/summary_record.html#方式三-自定义callback记录数据>`_ 记录数据。
 
     .. note::
-        - 使用SummaryRecord时，需要将代码放置到 `if __name__ == "__main__"` 中运行。
-        - 确保在最后关闭SummaryRecord，否则进程不会退出。请参阅下面的示例部分，了解如何用两种方式正确关闭SummaryRecord。
-        - 每次训练只允许创建一个SummaryRecord实例，否则会导致数据写入异常。
-        - SummaryRecord仅支持Linux系统。
-        - 编译MindSpore时，设置 `-s on` 关闭维测功能后，SummaryRecord不可用。
+        1. 确保在最后关闭SummaryRecord，否则进程不会退出。请参阅下面的示例部分，了解如何用两种方式正确关闭SummaryRecord。
+        2. 每次训练只允许创建一个SummaryRecord实例，否则会导致数据写入异常。
+        3. SummaryRecord仅支持Linux系统。
+        4. 编译MindSpore时，设置 `-s on` 关闭维测功能后，SummaryRecord不可用。
 
     参数：
         - **log_dir** (str) - `log_dir` 是用来保存summary文件的目录。

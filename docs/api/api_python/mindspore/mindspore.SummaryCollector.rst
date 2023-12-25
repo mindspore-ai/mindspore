@@ -8,12 +8,11 @@ mindspore.SummaryCollector
     SummaryCollector还可以允许通过 `summary算子 <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/summary_record.html#方式二-结合summary-api和summarycollector自定义收集网络中的数据>`_ 将数据收集到summary文件中。
 
     .. note::
-        - 使用SummaryCollector时，需要将代码放置到 `if __name__ == "__main__"` 中运行。
-        - 不允许在回调列表中存在多个SummaryCollector实例。
-        - 并非所有信息都可以在训练阶段或评估阶段收集。
-        - SummaryCollector始终记录summary算子收集的数据。
-        - SummaryCollector仅支持Linux系统。
-        - 编译MindSpore时，设置 `-s on` 关闭维测功能后，SummaryCollector不可用。
+        1. 不允许在回调列表中存在多个SummaryCollector实例。
+        2. 并非所有信息都可以在训练阶段或评估阶段收集。
+        3. SummaryCollector始终记录summary算子收集的数据。
+        4. SummaryCollector仅支持Linux系统。
+        5. 编译MindSpore时，设置 `-s on` 关闭维测功能后，SummaryCollector不可用。
 
     参数：
         - **summary_dir** (str) - 收集的数据将存储到此目录。如果目录不存在，将自动创建。
