@@ -312,10 +312,10 @@ def line_search(f, xk, pk, jac=None, gfk=None, old_fval=None, old_old_fval=None,
     Args:
         f (function): function of the form f(x) where x is a flat Tensor and returns a real
             scalar. The function should be composed of operations with vjp defined.
-        gf (function): the gradient function at x where x is a flat Tensor and returns a Tensor.
-            The function can be None if you want to use automatic credits.
         xk (Tensor): initial guess.
         pk (Tensor): direction to search in. Assumes the direction is a descent direction.
+        jac (function): the gradient function at x where x is a flat Tensor and returns a Tensor.
+            The function can be None if you want to use automatic credits.
         gfk (Tensor): initial value of value_and_gradient as position. Default: ``None`` .
         old_fval (Tensor): The same as `gfk`. Default: ``None`` .
         old_old_fval (Tensor): unused argument, only for scipy API compliance. Default: ``None`` .

@@ -47,7 +47,7 @@ def block_diag(*arrs):
 
     Args:
         arrs (list): up to 2-D Input Tensors.
-            A 1-D Tensor or a 2-D Tensor with shape :math:`(1,n)`.
+            One or more Tensors, the dimension of Tensors should be 0-D, 1-D or 2-D.
 
     Returns:
         Tensor with `A`, `B`, `C`, ... on the diagonal which has the same dtype as `A`.
@@ -102,8 +102,8 @@ def inv(a, overwrite_a=False, check_finite=True):
 
     Note:
         - `inv` is not supported on Windows platform yet.
-        - Only `float32`, `float64`, `int32`, `int64` are supported Tensor dtypes. If Tensor with dtype `int32` or
-          `int64` is passed, it will be cast to :class:`mstype.float64`.
+        - Only float32, float64, int32, int64 are supported Tensor dtypes.
+        - If Tensor with dtype int32 or int64 is passed, it will be cast to mstype.float64.
 
     Args:
         a (Tensor): Square matrix to be inverted.
@@ -152,14 +152,21 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
     """
     Compute the cholesky decomposition of a matrix, to use in :func:`mindspore.scipy.linalg.cho_solve`.
 
-    Returns a matrix containing the cholesky decomposition,
-    :math:`a = l l*` or :math:`a = u* u` of a Hermitian positive-definite matrix `a`.
+    Returns the cholesky decomposition of a Hermitian positive-definite matrix A. Base on the value of `lower`,
+    perform the following decomposition:
+
+    - when `lower` is True: :math:`A = L L^*`
+    - when `lower` is False: :math:`A = U^* U`
+
+    :math:`L^*` is a conjugate transpose matrix of L.
+    :math:`U^*` is a conjugate transpose matrix of U.
+
     The return value can be directly used as the first parameter to :func:`mindspore.scipy.linalg.cho_solve`.
 
     Note:
         - `cho_factor` is not supported on Windows platform yet.
-        - Only `float32`, `float64`, `int32`, `int64` are supported Tensor dtypes. If Tensor with dtype `int32` or
-          `int64` is passed, it will be cast to :class:`mstype.float64`.
+        - Only float32, float64, int32, int64 are supported Tensor dtypes.
+        - If Tensor with dtype int32 or int64 is passed, it will be cast to mstype.float64.
 
     .. warning::
         The returned matrix also contains random data in the entries not
@@ -221,13 +228,19 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
     """
     Compute the cholesky decomposition of a matrix.
 
-    Returns the cholesky decomposition, :math:`a = l l^*` or
-    :math:`a = u^* u` of a Hermitian positive-definite matrix a.
+    Returns the cholesky decomposition of a Hermitian positive-definite matrix A. Base on the value of `lower`,
+    perform the following decomposition:
+
+    - when `lower` is True: :math:`A = L L^*`
+    - when `lower` is False: :math:`A = U^* U`
+
+    :math:`L^*` is a conjugate transpose matrix of L.
+    :math:`U^*` is a conjugate transpose matrix of U.
 
     Note:
         - `cholesky` is not supported on Windows platform yet.
-        - Only `float32`, `float64`, `int32`, `int64` are supported Tensor dtypes. If Tensor with dtype `int32` or
-          `int64` is passed, it will be cast to :class:`mstype.float64`.
+        - Only float32, float64, int32, int64 are supported Tensor dtypes.
+        - If Tensor with dtype int32 or int64 is passed, it will be cast to mstype.float64.
 
     Args:
         a (Tensor): square Matrix of (M, M) to be decomposed.
@@ -281,12 +294,12 @@ def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
     Given the cholesky factorization of a, solve the linear equation
 
     .. math::
-        a x = b
+        A x = B
 
     Note:
         - `cho_solve` is not supported on Windows platform yet.
-        - Only `float32`, `float64`, `int32`, `int64` support Tensor dtypes. If Tensor with dtype `int32` or
-          `int64` is passed, it will be cast to :class:`mstype.float64`.
+        - Only float32, float64, int32, int64 are supported Tensor dtypes.
+        - If Tensor with dtype int32 or int64 is passed, it will be cast to mstype.float64.
 
     Args:
         c_and_lower ((Tensor, bool)): cholesky factorization of :math:`a`,
@@ -299,7 +312,7 @@ def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
             (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: ``True``.
 
     Returns:
-        Tensor, the solution to the system a x = b.
+        Tensor, the solution to the system :math:`A x = b`.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -347,8 +360,9 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
 
     Find eigenvalues Tensor `w` and optionally eigenvectors Tensor `v` of Tensor `a`,
     where `b` is positive definite such that for every eigenvalue `λ` (i-th entry of w) and
-    its eigenvector `vi` (i-th column of `v`) satisfies::
+    its eigenvector `vi` (i-th column of `v`) satisfies:
 
+    .. code-block::
                       a @ vi = λ * b @ vi
         vi.conj().T @ a @ vi = λ
         vi.conj().T @ b @ vi = 1
@@ -357,8 +371,8 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
 
     Note:
         - `eigh` is not supported on Windows platform yet.
-        - Only `float32`, `float64`, `int32`, `int64` are supported Tensor dtypes. If Tensor with dtype `int32` or
-          `int64` is passed, it will be cast to `mstype.float64`.
+        - Only float32, float64, int32, int64 are supported Tensor dtypes.
+        - If Tensor with dtype int32 or int64 is passed, it will be cast to mstype.float64.
 
     Args:
         a (Tensor): A :math:`(M, M)` complex Hermitian or real symmetric matrix whose eigenvalues and
@@ -369,25 +383,26 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
             triangle of `a` and, if applicable, `b`. Default: ``True``.
         eigvals_only (bool, optional): Whether to calculate only eigenvalues and no eigenvectors.
             Default: ``False`` .
-        type (int, optional): For the generalized problems, this keyword specifies the problem type
-            to be solved for `w` and `v` (only takes 1, 2, 3 as possible inputs)::
-
-                1 =>     a @ v = w @ b @ v
-                2 => a @ b @ v = w @ v
-                3 => b @ a @ v = w @ v
-
-            This keyword is ignored for standard problems. Default: ``1`` .
         overwrite_a (bool, optional): Whether to overwrite data in `a` (may improve performance). Default: ``False`` .
         overwrite_b (bool, optional): Whether to overwrite data in `b` (may improve performance). Default: ``False`` .
-        check_finite (bool, optional): Whether to check that the input matrices contain only finite numbers.
-            Disabling may give a performance gain, but may result in problems (crashes, non-termination)
-            if the inputs do contain infinities or NaNs. Default: ``True`` .
         turbo (bool, optional): use divide and conquer algorithm (faster but expensive in memory, only
             for generalized eigenvalue problem and if full set of eigenvalues are requested.).
             Has no significant effect if eigenvectors are not requested. Default: ``True`` .
         eigvals (tuple, optional): Indexes of the smallest and largest (in ascending order) eigenvalues
             and corresponding eigenvectors to be returned: :math:`0 <= lo <= hi <= M-1`. If omitted, all eigenvalues
             and eigenvectors are returned. Default: ``None`` .
+        type (int, optional): For the generalized problems, this keyword specifies the problem type
+            to be solved for `w` and `v` (only takes 1, 2, 3 as possible inputs):
+
+            .. code-block::
+                1 =>     a @ v = w @ b @ v
+                2 => a @ b @ v = w @ v
+                3 => b @ a @ v = w @ v
+
+            This keyword is ignored for standard problems. Default: ``1`` .
+        check_finite (bool, optional): Whether to check that the input matrices contain only finite numbers.
+            Disabling may give a performance gain, but may result in problems (crashes, non-termination)
+            if the inputs do contain infinities or NaNs. Default: ``True`` .
 
     Returns:
         - Tensor with shape :math:`(N,)`, the :math:`N (1<=N<=M)` selected eigenvalues, in ascending order,
@@ -406,7 +421,7 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
         TypeError: If `overwrite_b` is not bool.
         TypeError: If `turbo` is not bool.
         TypeError: If `check_finite` is not bool.
-        ValueError: If `a` is not square matrix.
+        ValueError: If `a` is not 2D square matrix.
         ValueError: If `b` is not None.
         ValueError: If `eigvals` is not None.
 
@@ -473,19 +488,19 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
     The decomposition is:
 
     .. math::
-        a = p l u
+        a = P L U
 
-    where :math:`p` is a permutation matrix, :math:`l` lower triangular with unit diagonal elements,
-    and :math:`u` upper triangular.
+    where :math:`P` is a permutation matrix, :math:`L` lower triangular with unit diagonal elements,
+    and :math:`U` upper triangular.
 
     Note:
         - `lu_factor` is not supported on Windows platform yet.
-        - Only `float32`, `float64`, `int32`, `int64` are supported Tensor dtypes. If Tensor with dtype `int32` or
-          `int64` is passed, it will be cast to :class:`mstype.float64`.
+        - Only float32, float64, int32, int64 are supported Tensor dtypes.
+        - If Tensor with dtype int32 or int64 is passed, it will be cast to mstype.float64.
 
     Args:
-        a (Tensor): square matrix of :math:`(M, M)` to decompose. Note that if the input tensor is not a `float`,
-            then it will be cast to :class:'mstype.float32'.
+        a (Tensor): square matrix of :math:`(M, M)` to decompose. Note that if the input tensor is not a float,
+            then it will be cast to mstype.float32.
         overwrite_a (bool, optional): Whether to overwrite data in :math:`a` (may increase performance).
             Default: ``False`` .
         check_finite (bool, optional): Whether to check that the input matrix contains only finite numbers.
@@ -493,14 +508,14 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
             (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: ``True`` .
 
     Returns:
-        - Tensor, a square matrix of :math:`(N, N)` containing `U` in its upper triangle, and `L` in its lower triangle.
+        - Tensor, a square matrix of :math:`(M, M)` containing `U` in its upper triangle, and `L` in its lower triangle.
           The unit diagonal elements of `L` are not stored.
 
-        - Tensor, :math:`(N,)` pivot indices representing the permutation matrix `P`:
+        - Tensor, :math:`(M,)` pivot indices representing the permutation matrix `P`:
           the i-th element value j in the indices indicates that row i of matrix was interchanged with row j.
 
     Raises:
-        ValueError: If :math:`a` is not square.
+        ValueError: If :math:`a` is not 2D square.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -540,19 +555,19 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
     The decomposition is:
 
     .. math::
-        a = p l u
+        A = P L U
 
     where :math:`P` is a permutation matrix, :math:`L` lower triangular with unit
     diagonal elements, and :math:`U` upper triangular.
 
     Note:
         - `lu` is not supported on Windows platform yet.
-        - Only `float32`, `float64`, `int32`, `int64` are supported Tensor dtypes. If Tensor with dtype `int32` or
-          `int64` is passed, it will be cast to :class:`mstype.float64`.
+        - Only float32, float64, int32, int64 are supported Tensor dtypes.
+        - If Tensor with dtype int32 or int64 is passed, it will be cast to mstype.float64.
 
     Args:
-        a (Tensor): a :math:`(M, N)` matrix to decompose. Note that if the input tensor is not a `float`,
-            then it will be cast to :class:'mstype.float32'.
+        a (Tensor): a :math:`(M, N)` matrix to decompose. Note that if the input tensor is not a float,
+            then it will be cast to mstype.float32.
         permute_l (bool, optional): Perform the multiplication :math:`P L` (Default: do not permute).
             Default: ``False`` .
         overwrite_a (bool, optional): Whether to overwrite data in :math:`a` (may improve performance).
@@ -624,12 +639,12 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
 
 
 def lu_solve(lu_and_piv, b, trans=0, overwrite_b=False, check_finite=True):
-    """Solve an equation system, a x = b, given the LU factorization of a
+    """Solve an equation system, A x = B, given the LU factorization of A
 
     Note:
         - `lu_solve` is not supported on Windows platform yet.
-        - Only `float32`, `float64`, `int32`, `int64` are supported Tensor dtypes. If Tensor with dtype `int32` or
-          `int64` is passed, it will be cast to :class:`mstype.float64`.
+        - Only float32, float64, int32, int64 are supported Tensor dtypes.
+        - If Tensor with dtype int32 or int64 is passed, it will be cast to mstype.float64.
 
     Args:
         lu_and_piv (Tensor, Tensor): Factorization of the coefficient matrix a, as given by lu_factor
@@ -717,7 +732,9 @@ def det(a, overwrite_a=False, check_finite=True):
     The determinant of a square matrix is a value derived arithmetically
     from the coefficients of the matrix.
 
-    The determinant for a 3x3 matrix, for example, is computed as follows::
+    The determinant for a 3x3 matrix, for example, is computed as follows:
+
+    .. code-block::
 
         a    b    c
         d    e    f = A
@@ -727,8 +744,8 @@ def det(a, overwrite_a=False, check_finite=True):
 
     Note:
         - `det` is not supported on Windows platform yet.
-        - Only `float32`, `float64`, `int32`, `int64` are supported Tensor dtypes. If Tensor with dtype `int32` or
-          `int64` is passed, it will be cast to :class:`mstype.float64`.
+        - Only float32, float64, int32, int64 are supported Tensor dtypes.
+        - If Tensor with dtype int32 or int64 is passed, it will be cast to mstype.float64.
 
     Args:
         a (Tensor): A square matrix to compute. Note that if the input tensor is not a `float`,
