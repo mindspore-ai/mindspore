@@ -336,12 +336,14 @@ void SingleOpInferSession::SetBackOutputIfDynamic(std::vector<tensor::Tensor> *o
       kernel::AddressPtr host_addr = kernel_args_.outputs[i]->GetHostData();
       kernel::AddressPtr device_addr = kernel_args_.outputs[i]->GetData();
       if (device_addr != nullptr) {
-        TypeId out_type = kernel_args_.outputs[i]->dtype_id();
+        TypeId out_type = kernel_args_.outputs[i]->GetDtype();
         (*outputs)[i] = tensor::Tensor(out_type, shape, nullptr, device_addr->size);
         (*outputs)[i].set_device_address(std::make_shared<LiteDeviceAddress>(device_addr->addr, device_addr->size));
       } else if (host_addr != nullptr) {
-        TypeId out_type = kernel_args_.outputs[i]->dtype_id();
-        auto elem_num = kernel_args_.outputs[i]->GetSizeInBytes() / abstract::TypeIdSize(out_type);
+        TypeId out_type = kernel_args_.outputs[i]->GetDtype();
+        auto type_size = abstract::TypeIdSize(out_type);
+        MS_CHECK_TRUE_RET_VOID(type_size != 0);
+        auto elem_num = kernel_args_.outputs[i]->GetSizeInBytes() / type_size;
         auto acl_mem_deleter = [](uint8_t *data_buf_ptr) {
           kernel::AscendAllocatorPlugin::GetInstance().FreeHost(static_cast<void *>(data_buf_ptr));
         };
