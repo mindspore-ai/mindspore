@@ -1304,10 +1304,6 @@ Status ShardReader::CreateTasksByRow(const std::vector<std::tuple<int, int, int,
   RETURN_IF_NOT_OK_MR(ReadAllRowGroup(selected_columns_, &row_group_ptr));
   auto &offsets = std::get<0>(*row_group_ptr);
   auto &local_columns = std::get<1>(*row_group_ptr);
-  CHECK_FAIL_RETURN_UNEXPECTED_MR(shard_count_ <= kMaxFileCount,
-                                  "Invalid data, the number of mindrecord files should be less than or equal to " +
-                                    std::to_string(kMaxFileCount) + " but got: " + std::to_string(shard_count_) +
-                                    ".\nPlease adjust the number of mindrecord files.");
   int sample_count = 0;
   for (int shard_id = 0; shard_id < shard_count_; shard_id++) {
     sample_count += offsets[shard_id].size();
@@ -1344,10 +1340,6 @@ Status ShardReader::CreateTasksByRow(const std::vector<std::tuple<int, int, int,
 Status ShardReader::CreateLazyTasksByRow(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
                                          const std::vector<std::shared_ptr<ShardOperator>> &operators) {
   CheckIfColumnInIndex(selected_columns_);
-  CHECK_FAIL_RETURN_UNEXPECTED_MR(shard_count_ <= kMaxFileCount,
-                                  "Invalid data, the number of mindrecord files should be less than or equal to " +
-                                    std::to_string(kMaxFileCount) + " but got: " + std::to_string(shard_count_) +
-                                    ".\nPlease adjust the number of mindrecord files.");
   uint32_t sample_count = shard_sample_count_[shard_sample_count_.size() - 1];
   MS_LOG(DEBUG) << "Succeed to get " << sample_count << " records from dataset.";
 
@@ -1380,10 +1372,6 @@ Status ShardReader::CreateLazyTasksByRow(const std::vector<std::tuple<int, int, 
 
 Status ShardReader::CreateSlowTasksByRow() {
   CheckIfColumnInIndex(selected_columns_);
-  CHECK_FAIL_RETURN_UNEXPECTED_MR(shard_count_ <= kMaxFileCount,
-                                  "Invalid data, the number of mindrecord files should be less than or equal to " +
-                                    std::to_string(kMaxFileCount) + " but got: " + std::to_string(shard_count_) +
-                                    ".\nPlease adjust the number of mindrecord files.");
   uint32_t sample_count = shard_sample_count_[shard_sample_count_.size() - 1];
   MS_LOG(DEBUG) << "Succeed to get " << sample_count << " records from dataset.";
   tasks_.padded_sample_ = num_padded_;
