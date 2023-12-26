@@ -29,19 +29,28 @@
 namespace mindspore::graphkernel::symshape {
 void TransformVisitor::Init(const FuncGraphPtr &func_graph) {
   MS_LOG(DEBUG) << "TransformVisitor init with graph " << func_graph->ToString();
+  auto record_symbol = [this](const SymbolPtr &symbol, size_t i, size_t j) {
+    auto sym = symbol->as<ScalarSymbol>();
+    MS_EXCEPTION_IF_NULL(sym);
+    if (!sym->HasData()) {
+      auto input_sym = std::make_shared<ast::Input>(i, j);
+      auto val = NewVal(input_sym, sym->ToRawString());
+      MS_LOG(DEBUG) << "Init a input symbol: " << i << ", " << j << " -> " << val->ToString();
+      temp_map_[sym->ToRawString()] = val;
+    }
+  };
   for (size_t idx = 0; idx < func_graph->parameters().size(); idx++) {
-    auto sym_shape = func_graph->parameters()[idx]->abstract()->GetSymbolicShape();
+    SymbolPtr sym_shape = func_graph->parameters()[idx]->abstract()->GetSymbolicShape();
+    if (sym_shape == nullptr) {
+      sym_shape = func_graph->parameters()[idx]->abstract()->GetSymbolicValue();
+    }
     MS_EXCEPTION_IF_NULL(sym_shape);
-    // Assume that input are all tensors
-    for (size_t j = 0; j < sym_shape->size(); ++j) {
-      auto sym = sym_shape->item(j)->as<ScalarSymbol>();
-      MS_EXCEPTION_IF_NULL(sym);
-      if (!sym->HasData()) {
-        auto input_sym = std::make_shared<ast::Input>(idx, j);
-        auto val = NewVal(input_sym, sym->ToRawString());
-        MS_LOG(DEBUG) << "Init a input symbol: " << idx << ", " << j << " -> " << val->ToString();
-        temp_map_[sym->ToRawString()] = val;
-      }
+    auto shape_list = sym_shape->as<ListSymbol>();
+    if (shape_list == nullptr) {
+      record_symbol(sym_shape, idx, 0);
+    }
+    for (size_t j = 0; j < shape_list->symbols().size(); ++j) {
+      record_symbol(shape_list->symbols()[j], idx, j);
     }
   }
 }

@@ -33,6 +33,10 @@ class MS_CORE_API SymbolEngine : public Base {
 
   virtual bool Infer(const AbstractBasePtrList &inputs) = 0;
   virtual BaseShapePtr QueryShape(const AnfNodePtr &node) = 0;
+  virtual ValuePtr QueryValue(const AnfNodePtr &node) = 0;
+  virtual bool IsDependValue(const AnfNodePtr &node) = 0;
+  virtual bool IsDependShape(const AnfNodePtr &node) = 0;
+  virtual bool SupportInfer() = 0;
   virtual void QuerySymbolExpr(const AnfNodePtr &node,
                                std::unordered_map<std::string, std::string> *symbol_expr_map) = 0;
   FuncGraphPtr func_graph() const { return func_graph_.lock(); }

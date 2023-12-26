@@ -125,6 +125,9 @@ GVAR_DEF(PrimitivePtr, kPrimSetAttr,
 GVAR_DEF(PrimitivePtr, kPrimExtractKeywordArg, std::make_shared<Primitive>("extract_keyword_arg"));
 GVAR_DEF(PrimitivePtr, kPrimMakeDict, std::make_shared<Primitive>("make_dict"));
 
+// GraphKernel ops
+GVAR_DEF(PrimitivePtr, kPrimKernelPacket, std::make_shared<Primitive>("KernelPacket"));
+
 // Custom
 GVAR_DEF(PrimitivePtr, kPrimCustom, std::make_shared<Primitive>("Custom"));
 

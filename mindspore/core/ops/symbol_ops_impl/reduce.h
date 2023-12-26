@@ -31,6 +31,7 @@ class MS_CORE_API Reduce : public InferShapeOp {
 
  protected:
   SymbolPtr Eval() override;
+  SymbolPtr DynEval(size_t rank, bool keep_dims, SymbolPtr axis);
   bool GetAxisSet(const SymbolPtr &axis, int64_t rank, bool skip_mode, HashSet<int64_t> *axis_set) const;
 };
 }  // namespace ops

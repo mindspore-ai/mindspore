@@ -191,6 +191,8 @@ void KernelInfo::set_kernel_mod(const kernel::KernelModPtr &kernel_mod) { kernel
 
 kernel::KernelMod *KernelInfo::MutableKernelMod() const { return kernel_mod_.get(); }
 
+kernel::KernelModPtr KernelInfo::GetKernelMod() const { return kernel_mod_; }
+
 const kernel::KernelMod *KernelInfo::kernel_mod() const { return kernel_mod_.get(); }
 
 bool KernelInfo::operator==(const KernelInfo &other) const {

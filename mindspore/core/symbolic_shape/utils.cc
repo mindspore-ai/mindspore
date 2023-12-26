@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 #include "mindspore/core/symbolic_shape/utils.h"
 #include <algorithm>
 #include <utility>
+#include <memory>
+#include "ir/kernel_tensor_value.h"
 #include "mindspore/core/utils/check_convert_utils.h"
+#include "mindspore/core/ops/op_utils.h"
 
 namespace mindspore {
 namespace symshape {
@@ -103,6 +106,22 @@ SymbolPtr ConstValueToSymbol(const ValuePtr &v) {
   if (v->isa<StringImm>()) {
     return StrSymbol::Make(GetValue<std::string>(v));
   }
+  if (v->isa<KernelTensorValue>()) {
+    auto type_ptr = v->type();
+    if (type_ptr == nullptr) {
+      MS_LOG(WARNING) << "type of KernelTensorPtr is null! trying getting Tuple Int";
+      auto value = CheckAndConvertUtils::CheckTupleInt(v->ToString(), v, "ConstSymbolicValue");
+      return IntValues2Symbol(value);
+    }
+    if (type_ptr->type_id() == kNumberTypeBool) {
+      return BoolSymbol::Make(ops::GetScalarValue<bool>(v).value());
+    }
+    if (type_ptr->type_id() == kObjectTypeString) {
+      return StrSymbol::Make(ops::GetScalarValue<std::string>(v).value());
+    }
+    auto value = CheckAndConvertUtils::CheckTensorIntValue(v->ToString(), v, "ConstSymbolicValue", type_ptr);
+    return IntValues2Symbol(value);
+  }
   MS_LOG(EXCEPTION)
     << "Value should be one of {ValueSequence, Tensor, IntegerImm, BoolImm, FloatImm, StringImm}, but got "
     << v->ToString();
@@ -133,6 +152,36 @@ ShapeVector ToShape(const Symbol *symbol) {
     return int_smbl->value();
   });
   return shape;
+}
+
+ValuePtr SymbolToValue(const Symbol *symbol) {
+  if (!symbol->HasData()) {
+    return kValueAny;
+  }
+  if (symbol->is<IntSymbol>()) {
+    return MakeValue<int64_t>(symbol->as<IntSymbol>()->value());
+  }
+  if (symbol->is<BoolSymbol>()) {
+    return MakeValue<bool>(symbol->as<BoolSymbol>()->value());
+  }
+  if (symbol->is<FloatSymbol>()) {
+    return MakeValue<double>(symbol->as<FloatSymbol>()->value());
+  }
+  if (symbol->is<StrSymbol>()) {
+    return MakeValue<std::string>(symbol->as<StrSymbol>()->value());
+  }
+  if (symbol->is<ListSymbol>()) {
+    auto list_shape = symbol->as<ListSymbol>();
+    if (!list_shape->AllHaveData()) {
+      return kValueAny;
+    }
+    ValuePtrList res;
+    res.reserve(list_shape->size());
+    (void)std::transform(list_shape->symbols().cbegin(), list_shape->symbols().cend(), std::back_inserter(res),
+                         [](const SymbolPtr &s) { return SymbolToValue(s.get()); });
+    return std::make_shared<ValueTuple>(std::move(res));
+  }
+  return kValueAny;
 }
 
 SymbolPtr ShapeVector2Symbol(const ShapeVector &shape, const OpPtr &op) {
