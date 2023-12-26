@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -265,6 +265,9 @@ class MS_CORE_API MsContext {
 
   std::string GetLoadPluginErrorStr() const { return load_plugin_error_(); }
 
+  void set_not_convert_jit(bool not_convert_jit) { not_convert_jit_ = not_convert_jit; }
+  bool not_convert_jit() { return not_convert_jit_; }
+
  private:
   void RefreshExecutionMode();
   void RefreshMemoryOffload();
@@ -296,6 +299,7 @@ class MS_CORE_API MsContext {
   static std::map<std::string, std::string> &PluginPathMap();
   enum CellReuseLevel cell_reuse_level_ = CellReuseLevel::kNoCellReuse;
   bool cell_recompute_{false};
+  bool not_convert_jit_{false};
 };
 
 // set method implementation for type bool/int/uint32_t/float/std::string

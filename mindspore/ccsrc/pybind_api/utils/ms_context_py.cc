@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,6 +149,7 @@ void RegMsContext(const py::module *m) {
          "Return whether this MindSpore package supports specified device.")
     .def("_enable_cell_recompute", &mindspore::MsContext::EnableCellRecompute, "Set a cell to be recomputed.")
     .def("load_plugin_error", &mindspore::MsContext::GetLoadPluginErrorStr,
-         "Return error message when loading plugins for this MindSpore package.");
+         "Return error message when loading plugins for this MindSpore package.")
+    .def("_set_not_convert_jit", &mindspore::MsContext::set_not_convert_jit, "Set not convert jit.");
 }
 }  // namespace mindspore

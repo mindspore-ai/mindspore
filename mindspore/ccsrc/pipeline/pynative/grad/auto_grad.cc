@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1785,7 +1785,7 @@ AnfNodePtr AutoGradCellImpl::TraceShape(const FunctionNodePtr &fn, const ValuePt
     }
     return new_din;
   } else if (out_value->isa<ValueDictionary>()) {
-    TraceShapeForDict(fn, out_value, out_abs, input_tensor, din);
+    return TraceShapeForDict(fn, out_value, out_abs, input_tensor, din);
   }
   MS_LOG(DEBUG) << "Get non tensor input " << out_value->ToString();
   return BuildSpecialNode(ad_param()->tape_, out_value, out_abs, SpecialType::kZerosLikeType);

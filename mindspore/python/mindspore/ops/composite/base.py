@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020-2023 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ from mindspore._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFu
     ListClear_, ListReverse_, ListExtend_, DictClear_, DictHasKey_, DictUpdate_, DictFromKeys_, \
     ZerosLike_, TensorIndexGetitem_, TensorIndexSetitem_, ListAdd_, DictSetItem_, \
     HandleBoolTensor_, HandleEmptySlice_, PreSetitemByTuple_, HandleScalarTensorIndex_, StarredGetItem_,\
-    StarredUnpack_, StarredUnpackMerge_, IterConverter_, HasNext_, Next_
+    StarredUnpack_, StarredUnpackMerge_, IterConverter_, HasNext_, Next_, MSContext
 from mindspore.common import dtype as mstype
 from mindspore.common.api import jit, _pynative_executor, _wrap_func
 from mindspore.common.api import _add_flags, _core
@@ -380,6 +380,7 @@ class GradOperation(GradOperation_):
                 out = _grads_divided_by_device_num_if_recomputation(out)
                 return out
         else:
+            MSContext.get_instance()._set_not_convert_jit(True)
             grad_.pynative_ = True
             if not _pynative_executor.enable_grad():
                 raise RuntimeError("In no_grad context, you can not calculate gradient")
@@ -610,6 +611,7 @@ class _Grad(GradOperation_):
                     return out, res[1:]
                 return out
         else:
+            MSContext.get_instance()._set_not_convert_jit(True)
             if not _pynative_executor.enable_grad():
                 raise RuntimeError("In no_grad context, you can not calculate gradient")
             grad_.pynative_ = True

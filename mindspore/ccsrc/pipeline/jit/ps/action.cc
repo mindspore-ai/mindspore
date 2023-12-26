@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "include/backend/debug/profiler/profiling.h"
+#include "frontend/optimizer/fallback_rewriter.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/backend/distributed/cluster/cluster_context.h"
 #include "include/backend/distributed/ps/ps_context.h"
@@ -957,6 +958,18 @@ bool GetJitBpropGraph(const ResourcePtr &resource) {
   return pynative::PyNativeExecutor::GetInstance()->grad_executor()->jit()->GetJitGradGraph(resource);
 }
 
+bool RewriterAfterOptAPassAfterJitBprop(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  FuncGraphPtr func_graph = resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  context->set_not_convert_jit(false);
+  (void)mindspore::opt::RewriterAfterOptA(func_graph, resource);
+  UpdateArgsSpec(func_graph, resource);
+  return true;
+}
+
 bool EliminateSpecialOpNode(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   if (resource->manager() == nullptr) {
@@ -1647,6 +1660,9 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
 
     // Eliminate forward cnode for grad graph
     (void)actions.emplace_back(std::make_pair(kGetJitBpropGraph, GetJitBpropGraph));
+
+    // Rewriter(dict convert pyexecute) after jit bprop.
+    (void)actions.emplace_back(std::make_pair(kRewriterAfterJitBprop, RewriterAfterOptAPassAfterJitBprop));
 
     // Eliminate the virtual mirror node
     (void)actions.emplace_back(std::make_pair(kEliminateSpecialOpNode, EliminateSpecialOpNode));
