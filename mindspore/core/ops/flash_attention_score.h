@@ -32,17 +32,18 @@ enum FlashAttentionScoreInputIndex : size_t {
   kFlashAttentionScoreInputQueryIndex = 0,
   kFlashAttentionScoreInputKeyIndex,
   kFlashAttentionScoreInputValueIndex,
-  kFlashAttentionScoreInputAttnMaskIndex,
-  kFlashAttentionScoreInputDropMaskIndex,
   kFlashAttentionScoreInputRealShiftIndex,
+  kFlashAttentionScoreInputDropMaskIndex,
   kFlashAttentionScoreInputPaddingMaskIndex,
-  kFlashAttentionScoreInputPrefix,
+  kFlashAttentionScoreInputAttnMaskIndex,
+  kFlashAttentionScoreInputPrefixIndex,
   kFlashAttentionScoreInputsNum,
 };
 enum FlashAttentionScoreOutputIndex : size_t {
-  kFlashAttentionScoreOutputAttentionOutIndex = 0,
-  kFlashAttentionScoreOutputSoftmaxMaxIndex,
+  kFlashAttentionScoreOutputSoftmaxMaxIndex = 0,
   kFlashAttentionScoreOutputSoftmaxSumIndex,
+  kFlashAttentionScoreOutputSoftmaxOutIndex,
+  kFlashAttentionScoreOutputAttentionOutIndex,
   kFlashAttentionScoreOutputsNum,
 };
 /// \brief FlashAttentionScore.
@@ -52,8 +53,8 @@ class MIND_API FlashAttentionScore : public BaseOperator {
   MIND_API_BASE_MEMBER(FlashAttentionScore);
   /// \brief Constructor.
   FlashAttentionScore() : BaseOperator(kNameFlashAttentionScore) {
-    InitIOName({"query", "key", "value", "attn_mask", "drop_mask", "real_shift", "padding_mask", "prefix"},
-               {"attention_out", "softmax_max", "softmax_sum"});
+    InitIOName({"query", "key", "value", "real_shift", "drop_mask", "padding_mask", "attn_mask", "prefix"},
+               {"softmax_max", "softmax_sum", "softmax_out", "attention_out"});
   }
 };
 AbstractBasePtr FlashAttentionScoreInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

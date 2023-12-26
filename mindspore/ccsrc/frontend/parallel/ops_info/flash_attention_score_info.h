@@ -53,14 +53,28 @@ class FlashAttentionScoreInfo : public OperatorInfo {
 
  private:
   std::vector<Operator> GetDropoutGenMaskReplaceOp(const CNodePtr &cnode);
+  void InitIsInputPassed();
+  void InitInputsTensorMap();
+  void InitSplittableInputs();
+  void InitExpectedStrategies();
+  size_t GetStrategyRealIndex(size_t index);
   int64_t head_num_ = 1;
   float keep_prob_ = 1.0;
-  int64_t dp_ = 1;
-  int64_t mp_ = 1;
+  int64_t batch_split_num_;
+  int64_t n1_split_num_;
+  int64_t n2_split_num_;
+  int64_t s1_split_num_;
+  int64_t dev_matrix_batch_dim_;
+  int64_t dev_matrix_n1_dim_;
+  int64_t dev_matrix_s1_dim_;
   size_t expect_strategies_size_ = 0;
+  bool real_shift_have_s1_dim_ = false;  // true if pass real_shift and have s1 dim.
   bool has_drop_mask_input_ = false;
   std::string input_layout_;
   bool kv_split_ = false;
+  std::vector<bool> is_input_passed_;
+  std::vector<Shape> splittable_inputs_;
+  Strategies expect_strategies_;
 };
 }  // namespace parallel
 }  // namespace mindspore
