@@ -90,12 +90,12 @@ std::vector<Q> ConvertAnyUtil(const ValuePtr &value, AnyTraits<P>, const AnyTrai
   if (!value->isa<ValueTuple>() && !value->isa<ValueList>()) {
     MS_LOG(WARNING) << "error convert Value to vector for value: " << value->ToString()
                     << ", type: " << value->type_name() << ", value should be a tuple or list";
-    data.push_back(ConvertAnyUtil(value, AnyTraits<P>(), AnyTraits<Q>()));
+    data.emplace_back(ConvertAnyUtil(value, AnyTraits<P>(), AnyTraits<Q>()));
     return data;
   }
   auto vec = value->isa<ValueTuple>() ? value->cast<ValueTuplePtr>()->value() : value->cast<ValueListPtr>()->value();
   for (auto &it : vec) {
-    data.push_back(ConvertAnyUtil(it, AnyTraits<P>(), AnyTraits<Q>()));
+    data.emplace_back(ConvertAnyUtil(it, AnyTraits<P>(), AnyTraits<Q>()));
   }
   return data;
 }

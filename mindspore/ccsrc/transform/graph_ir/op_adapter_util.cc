@@ -161,7 +161,7 @@ std::vector<GeDataType> ConvertAnyUtil(const ValuePtr &value, const AnyTraits<st
   if (!value->isa<ValueTuple>() && !value->isa<ValueList>()) {
     MS_LOG(WARNING) << "error convert Value to vector for value: " << value->ToString()
                     << ", type: " << value->type_name() << ", value should be a tuple or list";
-    data.push_back(ConvertAnyUtil(value, AnyTraits<GEType>()));
+    data.emplace_back(ConvertAnyUtil(value, AnyTraits<GEType>()));
     return data;
   }
   auto vec = value->isa<ValueTuple>() ? value->cast<ValueTuplePtr>()->value() : value->cast<ValueListPtr>()->value();
