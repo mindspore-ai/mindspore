@@ -40,7 +40,7 @@ from ..auto_generate import (Add, Addcdiv, Addcmul, ReduceMean, ReduceSum, Reduc
                              LinSpace, MatrixDeterminant, LogMatrixDeterminant, Erfinv, Conj,
                              Real, Complex, Angle, MatrixExp, CholeskyInverse, Trace, Cholesky,
                              FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum, Div, CumProd,
-                             CumSum, Less, LessEqual, Diagonal)
+                             CumSum, Less, LessEqual)
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
     """Common infer for reduce operator"""

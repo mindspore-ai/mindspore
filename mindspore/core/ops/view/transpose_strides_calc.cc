@@ -18,16 +18,20 @@
 #include <vector>
 #include <memory>
 #include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::ops {
 constexpr size_t kTransposeCalcInputsNum = 2;
 
-TensorStorageInfoPtrList StridesCalc(const tensor::TensorPtr &tensor, const std::vector<int64_t> &input_perm) {
+TensorStorageInfoPtrList StridesCalc(const PrimitivePtr &prim, const tensor::TensorPtr &tensor,
+                                     const std::vector<int64_t> &input_perm) {
   MS_EXCEPTION_IF_NULL(tensor);
   const auto &x_shape = tensor->shape();
-  if (x_shape.size() == 0 || x_shape[0] == 0) {
-    MS_EXCEPTION(ValueError) << "For 'Transpose', x_shape is invalid, x_shape:" << x_shape;
-  }
+  auto x_rank = x_shape.size();
+  MS_CHECK_VALUE(
+    input_perm.size() == x_rank,
+    CheckAndConvertUtils::FormatCommMsg("For '", prim->name(), "', size of perm should equal to rank of x, but got ",
+                                        input_perm.size(), " and ", x_rank, "!"));
 
   auto old_tensor_info = GetOldTensorInfo(tensor);
   const auto &old_shape = old_tensor_info->old_shape;
@@ -36,9 +40,6 @@ TensorStorageInfoPtrList StridesCalc(const tensor::TensorPtr &tensor, const std:
 
   auto &dims = input_perm;
   const auto ndim = old_shape.size();
-  if (ndim != dims.size()) {
-    return {};
-  }
 
   ShapeVector new_shape(ndim);
   std::vector<int64_t> new_strides(ndim);
@@ -47,7 +48,8 @@ TensorStorageInfoPtrList StridesCalc(const tensor::TensorPtr &tensor, const std:
   for (size_t i = 0; i < ndim; i++) {
     const auto wrap_dim = DynamicDimWrap(dims[i], ndim);
     if (seen_dims[wrap_dim]) {
-      return {};
+      MS_EXCEPTION(ValueError) << CheckAndConvertUtils::FormatCommMsg(
+        "For '", prim->name(), "', perms should all be unique dim, but", wrap_dim, " is not unique!");
     }
     seen_dims[wrap_dim] = true;
     new_shape[i] = old_shape[wrap_dim];
@@ -68,7 +70,7 @@ TensorStorageInfoPtrList TransposeCalc(const PrimitivePtr &prim, const std::vect
   }
   auto tensor = inputs[0]->cast<tensor::TensorPtr>();
   const auto &dims = GetValue<std::vector<int64_t>>(inputs[1]);
-  return StridesCalc(tensor, dims);
+  return StridesCalc(prim, tensor, dims);
 }
 
 REG_VIEW_STRIDES_CALC_FUN(Transpose, TransposeCalc);

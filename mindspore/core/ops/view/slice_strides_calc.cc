@@ -24,8 +24,10 @@ constexpr size_t kSliceInputsNum = 3;
 }
 
 namespace mindspore::ops {
-void SliceInputsCheck(const std::vector<int64_t> &tensor_shape, const std::vector<int64_t> &begin,
-                      const std::vector<int64_t> &size) {
+void SliceInputsCheck(const PrimitivePtr &prim, const std::vector<int64_t> &tensor_shape,
+                      const std::vector<int64_t> &begin, const std::vector<int64_t> &size) {
+  (void)CheckAndConvertUtils::CheckInteger("rank of input_x", SizeToLong(tensor_shape.size()), kGreaterThan, 0,
+                                           prim->name());
   if (tensor_shape.size() != begin.size() || tensor_shape.size() != size.size()) {
     MS_EXCEPTION(ValueError) << "For Slice, the shape of input|begin|size must be equal.";
   }
@@ -52,9 +54,12 @@ void SliceInputsCheck(const std::vector<int64_t> &tensor_shape, const std::vecto
 }
 
 TensorStorageInfoPtrList SliceCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (CheckInputsNull(inputs, kSliceInputsNum) || !inputs[kInputIndex0]->isa<tensor::Tensor>() ||
-      !inputs[kInputIndex1]->isa<ValueSequence>() || !inputs[kInputIndex2]->isa<ValueSequence>()) {
+  if (CheckInputsNull(inputs, kSliceInputsNum) || !inputs[kInputIndex0]->isa<tensor::Tensor>()) {
     MS_LOG(EXCEPTION) << "inputs num is invalid, num:" << inputs.size();
+  }
+
+  if (!inputs[kInputIndex1]->isa<ValueSequence>() || !inputs[kInputIndex2]->isa<ValueSequence>()) {
+    return {};
   }
 
   auto input_tensor = inputs[kInputIndex0]->cast<tensor::TensorPtr>();
@@ -70,7 +75,7 @@ TensorStorageInfoPtrList SliceCalc(const PrimitivePtr &prim, const std::vector<V
 
   auto begin = GetValue<std::vector<int64_t>>(inputs[kInputIndex1]);
   auto size = GetValue<std::vector<int64_t>>(inputs[kInputIndex2]);
-  SliceInputsCheck(old_shape, begin, size);
+  SliceInputsCheck(prim, old_shape, begin, size);
 
   auto new_shape = size;
   auto new_strides = old_strides;
