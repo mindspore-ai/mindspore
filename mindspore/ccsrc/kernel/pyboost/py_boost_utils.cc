@@ -16,6 +16,7 @@
 
 #include "kernel/pyboost/py_boost_utils.h"
 #include <algorithm>
+#include <utility>
 #include <unordered_map>
 #include "kernel/common_utils.h"
 #include "kernel/kernel_mod_cache.h"
@@ -293,6 +294,29 @@ device::DeviceAddressPtrList PyBoostUtils::CreateWorkSpaceDeviceAddress(const Ke
 PyboostKernelExtraFuncFactory &PyboostKernelExtraFuncFactory::GetInstance() {
   static PyboostKernelExtraFuncFactory instance;
   return instance;
+}
+
+void PyBoostUtils::PyboostRunOp(const PrimitivePtr &primitive, device::DeviceContext *device_context,
+                                const AddressInfoPair &input_address_info, const AddressInfoPair &output_address_info,
+                                void *stream_ptr) {
+  // KernelMod init
+  auto kernel_mod = PyBoostUtils::CreateKernelMod(primitive, primitive->name(), device_context,
+                                                  input_address_info.first, output_address_info.first);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  // KernelMod resize
+  if (kernel_mod->Resize(input_address_info.first, output_address_info.first) == kernel::KRET_RESIZE_FAILED) {
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#CPU kernel op [" << primitive->name()
+                               << "] resize failed.";
+  }
+  // Get workspace address
+  const auto &workspace_device_address =
+    PyBoostUtils::CreateWorkSpaceDeviceAddress(kernel_mod, device_context, primitive->name());
+  const auto &workspace_kernel_tensors = PyBoostUtils::GetKernelTensorFromAddress(workspace_device_address);
+  // Do kernel launch
+  if (!kernel_mod->Launch(input_address_info.first, workspace_kernel_tensors, output_address_info.first, stream_ptr)) {
+    MS_LOG(EXCEPTION) << "Launch kernel failed, name: " << primitive->name();
+  }
+  MS_LOG(DEBUG) << primitive->name() << " Launch end";
 }
 }  // namespace pyboost
 }  // namespace kernel
