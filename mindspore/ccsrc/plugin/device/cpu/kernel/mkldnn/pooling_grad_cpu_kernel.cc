@@ -91,10 +91,6 @@ bool PoolingGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   dtype_ = inputs[grad_index_]->dtype_id();
   // AvgPoolGrad input
   algorithm_ = dnnl::algorithm::pooling_avg;
-  pad_mode_ = static_cast<mindspore::PadMode>(inputs[kPadModeIdx]->GetValueWithCheck<int64_t>());
-  kernel_include_nc_ = inputs[kKernelSizeIdx]->GetValueWithCheck<std::vector<int64_t>>();
-  strides_include_nc_ = inputs[kStridesIdx]->GetValueWithCheck<std::vector<int64_t>>();
-  format_ = static_cast<mindspore::Format>(inputs[kDataFormatIdx]->GetValueWithCheck<int64_t>());
   return true;
 }
 
@@ -102,6 +98,14 @@ int PoolingGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &outputs) {
   if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
+  }
+  if (kernel_name_ == kAvgPoolGradOpName) {
+    pad_mode_ = static_cast<mindspore::PadMode>(inputs[kPadModeIdx]->GetValueWithCheck<int64_t>());
+    kernel_include_nc_ = inputs[kKernelSizeIdx]->GetValueWithCheck<std::vector<int64_t>>();
+    strides_include_nc_ = inputs[kStridesIdx]->GetValueWithCheck<std::vector<int64_t>>();
+    format_ = static_cast<mindspore::Format>(inputs[kDataFormatIdx]->GetValueWithCheck<int64_t>());
+    kernel_include_nc_.insert(kernel_include_nc_.begin(), 2, 1);
+    strides_include_nc_.insert(strides_include_nc_.begin(), 2, 1);
   }
   auto src_shape = outputs[0]->GetShapeVector();
   dst_shape_ = inputs[grad_index_]->GetShapeVector();
@@ -112,14 +116,12 @@ int PoolingGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   src_desc_ = GetDefaultMemDesc(src_shape);
   dst_desc_ = GetDefaultMemDesc(dst_shape_);
   if (src_dim == SHAPE_4D && format_ != mindspore::Format::NCHW) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " only supports 4D input with NCHW format, but got format " << format_;
+    MS_LOG(EXCEPTION) << kernel_name_ << " only supports 4D input with NCHW format, but got format "
+                      << GetFormatFromEnumToStr(format_);
   }
   if (src_dim == SHAPE_5D && format_ != mindspore::Format::NCDHW) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " only supports 5D input with NCDHW format, but got format" << format_;
-  }
-  if (kernel_name_ == kAvgPoolGradOpName) {
-    kernel_include_nc_.insert(kernel_include_nc_.begin(), 2, 1);
-    strides_include_nc_.insert(strides_include_nc_.begin(), 2, 1);
+    MS_LOG(EXCEPTION) << kernel_name_ << " only supports 5D input with NCDHW format, but got format"
+                      << GetFormatFromEnumToStr(format_);
   }
   if (kernel_include_nc_.size() != src_dim) {
     MS_LOG(EXCEPTION) << kernel_name_ << " requires kernel_size must be " << src_dim << "D, but got "
@@ -164,9 +166,7 @@ int PoolingGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     size_t work_space = GetSize(workspace_desc_);
     workspace_size_list_.push_back(work_space);
   }
-  size_t dst_space =
-    std::accumulate(dst_shape_.begin(), dst_shape_.end(), size_t(1), std::multiplies<size_t>()) * sizeof(float);
-  workspace_size_list_.push_back(dst_space);
+  workspace_size_list_.push_back(inputs[grad_index_]->size());
   return KRET_OK;
 }
 
