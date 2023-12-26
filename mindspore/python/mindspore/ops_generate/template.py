@@ -94,11 +94,11 @@ ${func_impl_name}_impl = _Pyboost${class_name}Prim()
 
 IMPORT_PYBOOST_PRIM_HEADER = f"""
 from mindspore.common._stub_tensor import _convert_stub
-from mindspore.common import dtype as mstype
 from mindspore.ops.auto_generate.gen_arg_handler import *
 """
 
 IMPORT_PYBOOST_FUNC_HEADER = f"""
+from mindspore.common import dtype as mstype
 from mindspore.ops.auto_generate.pyboost_inner_prim import *
 
 """
