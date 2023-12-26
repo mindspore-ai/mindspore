@@ -24,7 +24,7 @@ class Net(nn.Cell):
         return x.adjoint()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -36,7 +36,7 @@ def test_tensor_adjoint(mode):
     """
     Feature: tensor.adjoint
     Description: Verify the result of adjoint
-    Expectation: success, however, when running on Ascend, transpose does not support Complex numbers.
+    Expectation: success.
     """
     ms.set_context(mode=mode)
     x = Tensor(np.array([[0., 1.], [2., 3.]]), ms.float32)
@@ -47,7 +47,7 @@ def test_tensor_adjoint(mode):
     assert np.allclose(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

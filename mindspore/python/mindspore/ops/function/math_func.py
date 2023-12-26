@@ -6115,8 +6115,11 @@ def adjoint(x):
         [[0.-0.j 2.-2.j]
          [1.-1.j 3.-3.j]]
     """
-    return x.swapaxes(-1, -2).conj()
-
+    _dtype = x.dtype
+    _t = x.swapaxes(-1, -2)
+    if _dtype in mstype.complex_type:
+        return _t.conj()
+    return _t
 
 def addr(x, vec1, vec2, *, beta=1, alpha=1):
     """
