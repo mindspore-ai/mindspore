@@ -36,6 +36,6 @@ bool SubAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vec
   return true;
 }
 
-// MS_ACLLNN_KERNEL_FACTORY_REG(Sub, SubAscend);
+MS_ACLLNN_KERNEL_FACTORY_REG(Sub, SubAscend);
 }  // namespace kernel
 }  // namespace mindspore

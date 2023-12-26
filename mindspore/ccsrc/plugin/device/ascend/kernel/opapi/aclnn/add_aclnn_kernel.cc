@@ -36,6 +36,6 @@ bool AddAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vec
   return true;
 }
 
-// MS_ACLLNN_KERNEL_FACTORY_REG(Add, AddAscend);
+MS_ACLLNN_KERNEL_FACTORY_REG(Add, AddAscend);
 }  // namespace kernel
 }  // namespace mindspore
