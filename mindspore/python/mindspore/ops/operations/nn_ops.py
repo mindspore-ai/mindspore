@@ -6196,7 +6196,7 @@ class Dropout(PrimitiveWithCheck):
         validator.check_int(len(x_shape), 1, validator.GE, "x_shape", self.name)
 
     def check_dtype(self, x_dtype):
-        valid_dtypes = (mstype.float16, mstype.float32, mstype.float64)
+        valid_dtypes = (mstype.float16, mstype.bfloat16, mstype.float32, mstype.float64)
         validator.check_tensor_dtype_valid("x", x_dtype, valid_dtypes, self.name)
 
 

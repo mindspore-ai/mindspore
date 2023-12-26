@@ -68,7 +68,7 @@ class MIND_API DropoutInfer : public abstract::OpInferBase {
       MS_EXCEPTION_IF_NULL(input);
     }
     auto x_type = input_args[0]->GetType();
-    const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
+    const std::set<TypePtr> valid_types = {kFloat16, kBFloat16, kFloat32, kFloat64};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
     return std::make_shared<Tuple>(std::vector<TypePtr>{x_type, x_type});
   }

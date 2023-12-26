@@ -76,7 +76,7 @@ class MIND_API DropoutGradInfer : public abstract::OpInferBase {
     auto dy_type = input_args[dy_index]->GetType();
     auto mask_type = input_args[mask_index]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("mask", mask_type, {kTensorType}, prim_name);
-    const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
+    const std::set<TypePtr> valid_types = {kFloat16, kBFloat16, kFloat32, kFloat64};
     auto out_type = CheckAndConvertUtils::CheckTensorTypeValid("x", dy_type, valid_types, prim_name);
     return out_type;
   }
