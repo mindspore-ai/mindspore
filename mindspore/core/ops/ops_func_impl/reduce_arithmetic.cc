@@ -24,6 +24,7 @@ namespace mindspore {
 namespace ops {
 int64_t CalRealAixs(const int64_t &axis, const size_t &x_shape_size, const PrimitivePtr &primitive) {
   auto size = SizeToLong(x_shape_size);
+  size = size == 0 ? 1 : size;  // if x_shape_size is 0, the data is scaler.
   MS_CHECK_VALUE(axis >= -1 * size && axis < size, CheckAndConvertUtils::FormatCheckInRangeMsg(
                                                      "axis value", axis, kIncludeLeft, {-1 * size, size}, primitive));
   auto real_axis = axis < 0 ? axis + size : axis;
