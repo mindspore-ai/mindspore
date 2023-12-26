@@ -241,7 +241,7 @@ def arange(start=0, end=None, step=1, *, dtype=None):
         >>> print(output)
         [12. 11. 10.  9.  8.  7.  6.  5.  4.  3.]
         >>> print(output.dtype)
-        Float64
+        Float32
     """
     if end is None:
         start, end = 0, start

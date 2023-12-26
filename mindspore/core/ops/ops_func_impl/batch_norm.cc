@@ -34,8 +34,7 @@ namespace {
 template <typename T>
 void MultiTimesClone(std::vector<T> *const vec, const T &ori, const size_t times) {
   for (size_t i = 0; i < times; ++i) {
-    auto bak = ori->Clone();
-    vec->push_back(std::move(bak));
+    vec->push_back(ori->Clone());
   }
 }
 
@@ -74,9 +73,12 @@ void BatchNormShapeCheck(const PrimitivePtr &primitive, const std::vector<Abstra
   if (MS_LIKELY(format_opt.has_value() && !IsDynamic(x_shape) && !IsDynamic(scale_shape))) {
     mindspore::Format format = static_cast<mindspore::Format>(format_opt.value());
     auto channel = (format == Format::NCHW) ? x_shape[kInputIndex1] : x_shape.back();
-    MS_CHECK_VALUE(
-      scale_shape[kInputIndex0] == channel,
-      CheckAndConvertUtils::FormatCheckIntegerMsg("channel", scale_shape[kInputIndex0], kEqual, channel, primitive));
+    if (MS_UNLIKELY(scale_shape[kInputIndex0] != channel)) {
+      MS_EXCEPTION(ValueError) << "For " << primitive->name()
+                               << ", scale.shape[0] should be equal to input_x's channel "
+                               << "which is " << channel << ", bug got scale.shape[0]: " << scale_shape[kInputIndex0]
+                               << ".";
+    }
   }
 
   if (!MeanAndVarianceValid(input_args)) {
@@ -122,11 +124,24 @@ BaseShapePtr BatchNormFuncImpl::InferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr BatchNormFuncImpl::InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const {
-  auto x_type = input_args[kInputIndex0]->GetType()->Clone();
+  const auto &prim_name = prim->name();
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const auto &x_type = input_args[0]->GetType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim_name);
+
+  std::map<std::string, TypePtr> check_types;
   auto scale_type = input_args[kInputIndex1]->GetType();
-  std::vector<TypePtr> types{std::move(x_type)};
-  MultiTimesClone<TypePtr>(&types, scale_type, 4);
-  return std::make_shared<Tuple>(std::move(types));
+  (void)check_types.emplace("scale", input_args[kInputIndex1]->GetType());
+  (void)check_types.emplace("bias", input_args[kInputIndex2]->GetType());
+  if (MeanAndVarianceValid(input_args)) {
+    (void)check_types.emplace("mean", input_args[kInputIndex3]->GetType());
+    (void)check_types.emplace("variance", input_args[kInputIndex4]->GetType());
+  }
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(check_types, {kFloat32}, prim_name);
+
+  std::vector<TypePtr> out_types{x_type->Clone()};
+  MultiTimesClone<TypePtr>(&out_types, scale_type, 4);
+  return std::make_shared<Tuple>(std::move(out_types));
 }
 
 int32_t BatchNormFuncImpl::CheckValidation(const PrimitivePtr &primitive,

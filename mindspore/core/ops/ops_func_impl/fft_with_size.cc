@@ -99,6 +99,8 @@ BaseShapePtr FFTWithSizeFuncImpl::InferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) const {
   auto input_shape_ptr = input_args[kIndex0]->GetShape();
   auto input_shape = input_shape_ptr->GetShapeVector();
+  MS_CHECK_VALUE(input_shape.size() >= 1, CheckAndConvertUtils::FormatCheckIntegerMsg(
+                                            "rank of x", SizeToLong(input_shape.size()), kGreaterEqual, 1, primitive));
   if (IsDynamicRank(input_shape)) {
     ShapeVector dyn_output{abstract::TensorShape::kShapeRankAny};
     return std::make_shared<abstract::TensorShape>(dyn_output);

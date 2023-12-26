@@ -32,7 +32,9 @@ BaseShapePtr SoftmaxFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr SoftmaxFuncImpl::InferType(const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) const {
-  auto x_type = input_args.at(kInputIndex0)->GetType();
+  const auto &x_type = input_args.at(kInputIndex0)->GetType();
+  const std::set<TypePtr> valid_types{kBFloat16, kFloat16, kFloat32, kFloat64};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, primitive->name());
   return x_type->Clone();
 }
 
