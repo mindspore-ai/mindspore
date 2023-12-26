@@ -1,15 +1,13 @@
-#operator reshape
-reshape:
+#operator view
+view:
   args:
     input:
       dtype: tensor
     shape:
       dtype: tuple[int]
-      type_cast: tensor, list[int]
   returns:
     output:
       dtype: tensor
   view: True
   dispatch:
     enable: False
-    Ascend: ReshapeAscend

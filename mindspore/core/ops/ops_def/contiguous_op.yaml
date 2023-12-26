@@ -1,5 +1,5 @@
-#operator copy
-copy:
+#operator contiguous
+contiguous:
   args:
     input:
       dtype: tensor
@@ -9,6 +9,6 @@ copy:
   view: True
   dispatch:
     enable: True
-    Ascend: CopyAscend
-    GPU: CopyGPU
-    CPU: CopyCPU
+    Ascend: ContiguousAscend
+    GPU: ContiguousGPU
+    CPU: ContiguousCPU

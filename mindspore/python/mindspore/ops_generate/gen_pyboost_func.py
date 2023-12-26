@@ -167,13 +167,7 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
             op_name_str = op_name_str[:-3]
         if operator_name.endswith('ext'):
             operator_name = operator_name[:-4]
-        if op_proto.is_view:
-            call_impl = view_tpl.replace(op_name=op_proto.class_name,
-                                         call_args=converter.call_args,
-                                         call_tensors=call_args_tensor,
-                                         input=converter.call_args[0])
-            customize_include = "#include \"mindspore/core/ops/view/{}_strides_calc.h\"".format(proto_operator_name)
-        elif is_ascend and op_proto.ascend != 'default':
+        if is_ascend and op_proto.ascend != 'default':
             call_impl = cus_tpl.replace(call_args=converter.call_args,
                                         return_values=converter.call_func_outputs,
                                         customize_func=op_proto.ascend + "Customize",
@@ -194,6 +188,12 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
                                         )
             customize_include = "#include \"plugin/device/gpu/kernel/pyboost/customize/{}.h\"".format(
                 operator_name.lower())
+        elif op_proto.is_view:
+            call_impl = view_tpl.replace(op_name=op_proto.class_name,
+                                         call_args=converter.call_args,
+                                         call_tensors=call_args_tensor,
+                                         input=converter.call_args[0])
+            customize_include = "#include \"mindspore/core/ops/view/{}_strides_calc.h\"".format(proto_operator_name)
         else:
             if is_ascend and is_cube(op_proto.class_name):
                 get_cube_math_type = f'// cubeMathType: 0 - KEEP_DTYPE, 1 - ALLOW_FP32_DOWN_PRECISION\n'
@@ -356,6 +356,32 @@ def generate_parser_func(op_proto: OpProto) -> str:
     return parser_func_str
 
 
+def convert_op_name(op_proto):
+    """
+    Convert operator_name and op_name.
+    """
+    operator_name = op_proto.operator_name
+    if operator_name.endswith('ext'):
+        operator_name = operator_name[:-4]
+    op_name_str = op_proto.class_name
+    if op_proto.class_name.endswith('Ext'):
+        op_name_str = op_proto.class_name[:-3]
+    return operator_name, op_name_str
+
+
+def get_convert_tensor_template():
+    """
+    Get convert tensor template
+    """
+    convert_to_tensor_template = CppTemplate(
+        'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToTensor(${input}, ' \
+        'op_run_info->base_op_run_info.device_target, ${need_contiguous});\n')
+    convert_to_tensor_list_template = CppTemplate(
+        'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToValueTuple(${input}, ' \
+        'op_run_info->base_op_run_info.device_target, ${need_contiguous});\n')
+    return convert_to_tensor_template, convert_to_tensor_list_template
+
+
 def generate_pyboost_functions(work_path, yaml_data):
     """
     Generate pyboost functions file from yaml.
@@ -369,27 +395,20 @@ def generate_pyboost_functions(work_path, yaml_data):
         if not op_proto.is_pyboost:
             continue
         op_def_name_str = f"g{op_proto.class_name}"
-        operator_name = op_proto.operator_name
-        if operator_name.endswith('ext'):
-            operator_name = operator_name[:-4]
-        op_name_str = op_proto.class_name
-        if op_proto.class_name.endswith('Ext'):
-            op_name_str = op_proto.class_name[:-3]
+        operator_name, op_name_str = convert_op_name(op_proto)
         op_args_str = [op_arg.arg_name for op_arg in op_proto.op_args]
         parser_body_str = generate_parser_func(op_proto)
-
-        convert_to_tensor_template = CppTemplate(
-            "auto ${output} = PyNativeAlgo::Common::StubNodeToTensor(${input});\n")
-        convert_to_tensor_optional_template = CppTemplate(
-            "auto ${output} = PyNativeAlgo::Common::StubNodeToTensorOptional(${input});\n")
-        convert_to_tensor_list_template = CppTemplate(
-            "auto ${output} = PyNativeAlgo::Common::StubNodeToValueTuple(${input});\n")
+        convert_to_tensor_template, convert_to_tensor_list_template = get_convert_tensor_template()
 
         grad_args_str = []
         call_args_str = []
         cast_args_str = []
         convert_stub_str = ''
         optional_to_value_str = ''
+        need_contiguous = 'true'
+        if op_proto.is_view:
+            # view/aclnn op no need to contiguous tensor.
+            need_contiguous = 'false'
         for op_arg in op_proto.op_args:
             cast_str = 'cast_'
             convert_optional_to_value_template = CppTemplate(
@@ -397,8 +416,9 @@ def generate_pyboost_functions(work_path, yaml_data):
             if pyboost_utils.is_tensor(op_arg):
                 if is_optional_param(op_arg):
                     convert_stub_output_name = op_arg.arg_name + '_optional'
-                    convert_stub_str += convert_to_tensor_optional_template.replace(output=convert_stub_output_name,
-                                                                                    input=op_arg.arg_name)
+                    convert_stub_str += convert_to_tensor_template.replace(output=convert_stub_output_name,
+                                                                           input=op_arg.arg_name,
+                                                                           need_contiguous=need_contiguous)
                     cast_output = cast_str + convert_stub_output_name
 
                     convert_optional_to_value_name = op_arg.arg_name + "_value"
@@ -411,14 +431,16 @@ def generate_pyboost_functions(work_path, yaml_data):
                 else:
                     convert_stub_output_name = op_arg.arg_name + "_tensor"
                     convert_stub_str += convert_to_tensor_template.replace(input=op_arg.arg_name,
-                                                                           output=convert_stub_output_name)
+                                                                           output=convert_stub_output_name,
+                                                                           need_contiguous=need_contiguous)
                     call_arg = convert_stub_output_name
                     grad_arg = cast_str + convert_stub_output_name
                     cast_arg = grad_arg
             elif pyboost_utils.is_tensor_list(op_arg):
                 convert_stub_output_name = op_arg.arg_name + "_tensor_list"
                 convert_stub_str += convert_to_tensor_list_template.replace(input=op_arg.arg_name,
-                                                                            output=convert_stub_output_name)
+                                                                            output=convert_stub_output_name,
+                                                                            need_contiguous=need_contiguous)
                 call_arg = convert_stub_output_name
                 grad_arg = cast_str + convert_stub_output_name
                 cast_arg = grad_arg
