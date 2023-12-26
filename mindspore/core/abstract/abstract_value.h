@@ -922,6 +922,11 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   /// \param[in] sequence_nodes The nodes to intert into sequence nodes.
   void InsertSequenceNodes(const AnfNodeWeakPtrList &sequence_nodes);
 
+  /// \brief Check whether all elements of the tuple are tensors.
+  ///
+  /// \return Whether all elements of the tuple are tensors.
+  bool ContainsAllBroadenTensors() const;
+
   /// \brief Update the sequence nodes.
   ///
   /// \param[in] old_sequence_node The old node in sequence nodes.

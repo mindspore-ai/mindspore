@@ -635,10 +635,14 @@ static bool support_create_primitive(PyObject *obj) {
   }
 }
 
-extern bool check_MSConstexpr(const py::object &func);
+extern bool CheckMSConstexpr(const py::object &func);
+extern bool CheckBuiltinFuncOrMethod(const py::object &func);
 static bool SupportCall(PyObject *func, const std::string &name) {
   py::object handle = py::cast<py::object>(func);
-  if (check_MSConstexpr(handle)) {
+  if (CheckMSConstexpr(handle)) {
+    return true;
+  }
+  if (CheckBuiltinFuncOrMethod(handle)) {
     return true;
   }
   return support_infer_primitive(func) || support_create_primitive(func) || IsMsClass(func) ||

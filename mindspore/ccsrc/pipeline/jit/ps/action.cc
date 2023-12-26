@@ -133,7 +133,7 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph, const std::vector<
 
     AbstractBasePtr param_abs = param_node->abstract();
     MS_EXCEPTION_IF_NULL(param_abs);
-    if ((param_abs->BuildValue()->ContainsValueAny() && !ContainsAbstractFunction(param_abs)) ||
+    if ((param_abs->BuildValue() == kValueAny && !ContainsAbstractFunction(param_abs)) ||
         EnableGradForScalar(param_abs) || EnableSequenceBroaden(param_abs)) {
       new_paras.push_back(param_node);
     } else {
