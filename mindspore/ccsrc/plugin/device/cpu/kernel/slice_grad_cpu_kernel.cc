@@ -78,7 +78,7 @@ std::pair<bool, bool> GetSliceGradParamValue(const std::vector<KernelTensor *> &
                                              const std::string &kernel_name, std::vector<int64_t> *attr_value,
                                              const std::string &param_name, size_t *len) {
   *attr_value = inputs[idx]->GetValueWithCheck<std::vector<int64_t>>();
-  if (!attr_value->empty()) {
+  if (attr_value->empty()) {
     auto shape = inputs[idx]->GetShapeVector();
     if (shape.size() != 1) {
       MS_LOG(ERROR) << kernel_name << "'s `" << param_name << "` shape should be one dim, but got " << shape.size();
