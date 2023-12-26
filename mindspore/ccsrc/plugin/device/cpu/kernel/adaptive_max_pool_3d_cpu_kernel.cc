@@ -80,7 +80,7 @@ void AdaptiveMaxPool3DCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<K
   size_t out_ele =
     LongToSize(std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<int64_t>()));
   outputs[kIndex0]->set_size(out_ele * UnitSizeInBytes(dtype_));
-  outputs[kIndex0]->set_size(out_ele * sizeof(int));
+  outputs[kIndex1]->set_size(out_ele * sizeof(int));
 }
 
 std::vector<KernelAttr> AdaptiveMaxPool3DCpuKernelMod::GetOpSupport() {
