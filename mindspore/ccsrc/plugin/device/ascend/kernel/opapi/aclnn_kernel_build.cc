@@ -52,7 +52,7 @@ KernelModPtr AclnnOpBuild(const AnfNodePtr &anf_node) {
                         << "] Resize failed.";
     }
   }
-
+  transform::AclnnInit();
   return kernel_ptr;
 }
 
