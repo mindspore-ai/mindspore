@@ -928,6 +928,11 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   /// \param[in] new_sequence_node The new node to replace old node in sequence nodes.
   void UpdateSequenceNode(const AnfNodePtr &old_sequence_node, const AnfNodePtr &new_sequence_node);
 
+  /// \brief Check whether all elements of the sequence are tensors.
+  ///
+  /// \return Whether all elements of the sequence are tensors.
+  bool ContainsAllBroadenTensors() const;
+
   std::size_t hash() const override;
 
   std::string ToStringInternal() const;
@@ -1071,16 +1076,6 @@ class MS_CORE_API AbstractTuple : public AbstractSequence, public ExtraInfoHolde
   AbstractBasePtr PartialBroaden() const override;
 
   AbstractBasePtr Join(const AbstractBasePtr &other) override;
-
-  /// \brief Check whether all elements of the tuple are tensors.
-  ///
-  /// \return Whether all elements of the tuple are tensors.
-  bool ContainsAllBroadenTensors() const;
-
-  /// \brief Check whether all elements of the tuple are constants.
-  ///
-  /// \return Whether all elements of the tuple are constants.
-  bool ContainsAllConstants() const;
 
   /// \brief Overwrite the operator '==' to compare other abstract tuple.
   ///
