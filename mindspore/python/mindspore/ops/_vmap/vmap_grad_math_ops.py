@@ -16,13 +16,15 @@
 """The vmap implement of grad operator corresponding to math_ops."""
 from __future__ import absolute_import
 
+import mindspore.numpy as mnp
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import _primexpr
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import auto_generate as gen
 from mindspore.ops.function import _VmapGeneralRule
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim_at_front, \
-    _handle_broadcasting, get_unary_grad_vmap_rule, _get_broadcasting_with_front_axis_additional_axis
+    _handle_broadcasting, get_unary_grad_vmap_rule, _get_broadcasting_with_front_axis_additional_axis, \
+    _broadcast_by_axis
 
 
 @vmap_rules_getters.register('MaximumGrad')
