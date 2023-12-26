@@ -19,29 +19,19 @@
 #include <memory>
 #include <vector>
 
-#include "mindapi/base/types.h"
-#include "ops/base_operator.h"
-#include "abstract/abstract_value.h"
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameApplyCamePart3 = "ApplyCamePart3";
 
 /// \brief . Compute Part 3 of the CAME Optimizer
 /// Refer to Python API @ref mindspore.ops.ApplyCamePart3 for more details.
-class MIND_API ApplyCamePart3 : public BaseOperator {
+class MIND_API ApplyCamePart3FuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(ApplyCamePart3);
-  /// \brief Constructor.
-  ApplyCamePart3() : BaseOperator(kNameApplyCamePart3) {
-    InitIOName({"u", "m", "eps", "beta1", "clip_threshold", "sum_square_u", "global_shape", "use_first_moment"},
-               {"m", "sum_u_r", "sum_u_c", "sum_u_rc"});
-  }
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
 
-MIND_API abstract::AbstractBasePtr ApplyCamePart3Infer(const abstract::AnalysisEnginePtr &,
-                                                       const PrimitivePtr &primitive,
-                                                       const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

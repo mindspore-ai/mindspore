@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ops/apply_came_part4.h"
+#include "ops/ops_func_impl/apply_came_part4.h"
 
 #include <memory>
 #include <map>
@@ -34,18 +34,22 @@
 #include "mindapi/base/type_id.h"
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/math_ops.h"
-#include "ops/nn_ops.h"
+#include "ops/auto_generate/gen_ops_name.h"
 #include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
+#include "mindspore/ccsrc/include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace ops {
-namespace {
+
 const int64_t kInputsNumOfPart4 = 12;
 const int64_t kOutPutNumOfPart4 = 3;
+const int kConstNumberZeroPart4 = 0;
+const int kConstNumberOnePart4 = 1;
+const int kConstNumberTwoPart4 = 2;
 
 int64_t CheckInputDimPart4(int64_t dim, int64_t goldValue, string dimStr, string opName) {
   if (dim == abstract::Shape::kShapeDimAny) {
@@ -102,8 +106,8 @@ std::vector<int64_t> CheckInputsShapePart4(const string &op_name, const std::vec
   return out_shape;
 }
 
-abstract::TupleShapePtr ApplyCamePart4InferShape(const PrimitivePtr &primitive,
-                                                 const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr ApplyCamePart4FuncImpl::InferShape(const PrimitivePtr &primitive,
+                                                const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNumOfPart4, op_name);
@@ -115,13 +119,14 @@ abstract::TupleShapePtr ApplyCamePart4InferShape(const PrimitivePtr &primitive,
   ShapeVector c_shape = out_shape;
   c_shape.erase(c_shape.begin() + expect_rank - 2);
   abstract::BaseShapePtrList output_shape_ptr_list(kOutPutNumOfPart4);
-  output_shape_ptr_list[0] = std::make_shared<abstract::Shape>(param_shape);
-  output_shape_ptr_list[1] = std::make_shared<abstract::Shape>(r_shape);
-  output_shape_ptr_list[2] = std::make_shared<abstract::Shape>(c_shape);
+  output_shape_ptr_list[kConstNumberZeroPart4] = std::make_shared<abstract::Shape>(param_shape);
+  output_shape_ptr_list[kConstNumberOnePart4] = std::make_shared<abstract::Shape>(r_shape);
+  output_shape_ptr_list[kConstNumberTwoPart4] = std::make_shared<abstract::Shape>(c_shape);
   return std::make_shared<abstract::TupleShape>(output_shape_ptr_list);
 }
 
-TypePtr ApplyCamePart4InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr ApplyCamePart4FuncImpl::InferType(const PrimitivePtr &prim,
+                                          const std::vector<AbstractBasePtr> &input_args) const {
   auto op_name = prim->name();
 
   auto param_type = input_args[kInputIndex0]->BuildType();
@@ -140,36 +145,6 @@ TypePtr ApplyCamePart4InferType(const PrimitivePtr &prim, const std::vector<Abst
   CheckAndConvertUtils::CheckTensorTypeSame(other_types, other_valid_types, op_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{type, type, type});
 }
-}  // namespace
 
-AbstractBasePtr ApplyCamePart4Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNumOfPart4, primitive->name());
-  auto infer_type = ApplyCamePart4InferType(primitive, input_args);
-  auto infer_shape = ApplyCamePart4InferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
-}
-
-MIND_API_OPERATOR_IMPL(ApplyCamePart4, BaseOperator);
-
-// AG means auto generated
-class MIND_API AGApplyCamePart4Infer : public abstract::OpInferBase {
- public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) const override {
-    return ApplyCamePart4InferShape(primitive, input_args);
-  }
-
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return ApplyCamePart4InferType(primitive, input_args);
-  }
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args) const override {
-    return ApplyCamePart4Infer(engine, primitive, input_args);
-  }
-};
-
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ApplyCamePart4, prim::kPrimApplyCamePart4, AGApplyCamePart4Infer, false);
 }  // namespace ops
 }  // namespace mindspore

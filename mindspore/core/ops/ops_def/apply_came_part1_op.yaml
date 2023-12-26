@@ -1,0 +1,16 @@
+#operator apply_came_part1
+apply_came_part1:
+    args:
+        grad:
+            dtype: tensor
+        eps:
+            dtype: float
+    returns:
+        sum_grad_r:
+            dtype: tensor
+        sum_grad_c:
+            dtype: tensor
+        sum_grad_rc:
+            dtype: tensor
+    function:
+        disable: True
