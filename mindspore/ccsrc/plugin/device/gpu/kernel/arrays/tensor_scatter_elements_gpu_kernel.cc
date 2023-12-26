@@ -234,6 +234,7 @@ std::vector<std::pair<KernelAttr, TensorScatterElementsGpuKernelMod::TensorScatt
     {SCATTER_ELEMENTS_GPU_REG(kNumberTypeFloat64, kNumberTypeInt32, double, int)},
     {SCATTER_ELEMENTS_GPU_REG(kNumberTypeInt8, kNumberTypeInt32, int8_t, int)},
     {SCATTER_ELEMENTS_GPU_REG(kNumberTypeUInt8, kNumberTypeInt32, uint8_t, int)},
+    {SCATTER_ELEMENTS_GPU_REG(kNumberTypeInt16, kNumberTypeInt32, int16_t, int)},
     {SCATTER_ELEMENTS_GPU_REG(kNumberTypeInt32, kNumberTypeInt32, int, int)},
     {SCATTER_ELEMENTS_GPU_REG(kNumberTypeBool, kNumberTypeInt32, bool, int)},
     {SCATTER_ELEMENTS_GPU_REG(kNumberTypeFloat16, kNumberTypeInt64, half, int64_t)},
@@ -241,6 +242,7 @@ std::vector<std::pair<KernelAttr, TensorScatterElementsGpuKernelMod::TensorScatt
     {SCATTER_ELEMENTS_GPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double, int64_t)},
     {SCATTER_ELEMENTS_GPU_REG(kNumberTypeInt8, kNumberTypeInt64, int8_t, int64_t)},
     {SCATTER_ELEMENTS_GPU_REG(kNumberTypeUInt8, kNumberTypeInt64, uint8_t, int64_t)},
+    {SCATTER_ELEMENTS_GPU_REG(kNumberTypeInt16, kNumberTypeInt64, int16_t, int64_t)},
     {SCATTER_ELEMENTS_GPU_REG(kNumberTypeInt32, kNumberTypeInt64, int, int64_t)},
     {SCATTER_ELEMENTS_GPU_REG(kNumberTypeBool, kNumberTypeInt64, bool, int64_t)},
 };
