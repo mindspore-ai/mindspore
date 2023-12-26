@@ -64,7 +64,7 @@ def check_output(output, patterns):
 
 
 @security_off_wrap
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

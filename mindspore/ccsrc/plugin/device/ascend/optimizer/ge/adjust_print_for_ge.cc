@@ -80,7 +80,7 @@ const AnfNodePtr AdjustPrintForGe::Process(const FuncGraphPtr &func_graph, const
 
   // create a dummy input with string value "print" for input 'tensor_name' of ge operator 'OutfeedEnqueueOpV2'
   const auto tensor_name = "print";
-  auto input_tensor_name = CreateValueNode(std::make_shared<StringImm>(tensor_name), kObjectTypeString, false);
+  auto input_tensor_name = CreateValueNode(std::make_shared<StringImm>(tensor_name), kObjectTypeString, true);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   kernel_graph->AddValueNodeToGraph(input_tensor_name);
