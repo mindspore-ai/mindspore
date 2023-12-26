@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kInputSize = 8;
+constexpr size_t kInputSize = 10;
 constexpr size_t kOutputSize = 3;
 constexpr size_t kIdx0 = 0;
 constexpr size_t kIdx3 = 3;
@@ -251,6 +251,8 @@ std::vector<KernelAttr> LayerNormGradGradCpuKernelMod::GetOpSupport() {
       .AddInputAttr(kNumberTypeFloat32)
       .AddInputAttr(kNumberTypeFloat32)
       .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeFloat32)
       .AddOutputAttr(kNumberTypeFloat32)
       .AddOutputAttr(kNumberTypeFloat32),
@@ -263,6 +265,8 @@ std::vector<KernelAttr> LayerNormGradGradCpuKernelMod::GetOpSupport() {
       .AddInputAttr(kNumberTypeFloat16)
       .AddInputAttr(kNumberTypeFloat16)
       .AddInputAttr(kNumberTypeFloat16)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeFloat16)
       .AddOutputAttr(kNumberTypeFloat16)
       .AddOutputAttr(kNumberTypeFloat16),

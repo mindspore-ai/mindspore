@@ -106,6 +106,23 @@ REG_CUST_OP(MultiMarginLoss)
   .REQUIRED_ATTR(margin, Float)
   .REQUIRED_ATTR(reduction, String)
   .CUST_OP_END_FACTORY_REG(MultiMarginLoss)
+
+REG_CUST_OP(LayerNormGradGrad)
+  .INPUT(x, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .INPUT(dy, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .INPUT(variance, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .INPUT(mean, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .INPUT(gamma, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .INPUT(d_dx, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .INPUT(d_dg, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .INPUT(d_db, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .INPUT(begin_norm_axis, TensorType({DT_INT64}))
+  .INPUT(begin_params_axis, TensorType({DT_INT64}))
+  .OUTPUT(sopd_x, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .OUTPUT(sopd_dy, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .OUTPUT(sopd_gamma, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .CUST_OP_END_FACTORY_REG(LayerNormGradGrad)
+
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_NN_OPS_H_
 

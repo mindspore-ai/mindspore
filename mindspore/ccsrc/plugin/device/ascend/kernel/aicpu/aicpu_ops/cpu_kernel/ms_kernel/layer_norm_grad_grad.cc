@@ -26,7 +26,7 @@
 
 namespace {
 const uint32_t kOutputNum = 3;
-const uint32_t kInputNum = 8;
+const uint32_t kInputNum = 10;
 const char *kLayerNormGradGrad = "LayerNormGradGrad";
 
 #define LAYERNORMGRADGRAD_COMPUTE_CASE(DTYPE, TYPE, CTX, NUM)       \
