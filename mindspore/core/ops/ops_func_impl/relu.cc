@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "ops/ops_func_impl/relu.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -25,9 +27,12 @@ BaseShapePtr ReLUFuncImpl::InferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr ReLUFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+  MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  MS_EXCEPTION_IF_NULL(input_args[0]->GetType());
-  return input_args[0]->GetType()->Clone();
+  auto x_type = input_args[0]->BuildType();
+  MS_EXCEPTION_IF_NULL(x_type);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, common_valid_types, primitive->name());
+  return x_type->Clone();
 }
 }  // namespace ops
 }  // namespace mindspore
