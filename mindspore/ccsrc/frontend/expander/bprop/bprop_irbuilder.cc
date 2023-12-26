@@ -207,7 +207,7 @@ NodePtr BpropIRBuilder::SequenceToTensor(const NodePtr &node, const TypePtr &dty
       return Tensor(GetIntList(node), dtype);
     }
     if (abs->isa<abstract::AbstractTuple>()) {
-      return Emit(kTupleToTensorOpName, {node, Value(dtype)});
+      return Emit(kTupleToTensorOpName, {node, Value(static_cast<int64_t>(dtype->type_id()))});
     } else {
       return Emit(kListToTensorOpName, {node, Value(dtype)});
     }

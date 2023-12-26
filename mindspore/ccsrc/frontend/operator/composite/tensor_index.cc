@@ -26,6 +26,8 @@
 #include "ir/anf.h"
 #include "frontend/optimizer/opt.h"
 #include "ops/op_name.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
+#include "mindapi/base/type_id.h"
 #include "mindspore/core/ops/structure_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
@@ -653,11 +655,14 @@ void TensorIndexGetitem::GetStrideInfoFromTuple(const AnfNodePtr &data_node, con
         NormalizeStrideInfoFromTuple(data_node, new_index_node, index_abs, tuple_index_types, i);
       auto scalar_to_tensor = NewValueNode(kPrimScalarToTensor);
       if (!IsDynamic(data_shape_) && !IsAnyValue(index_abs)) {
-        begin_stride = res_graph_->NewCNode({scalar_to_tensor, begin_stride, NewValueNode(MakeValue(kInt64))});
+        begin_stride = res_graph_->NewCNode(
+          {scalar_to_tensor, begin_stride, NewValueNode(MakeValue(static_cast<int64_t>(TypeId::kNumberTypeInt64)))});
         begin_stride = res_graph_->NewCNode({MakeExpandDimsNode(), begin_stride, NewValueNode(zero)});
-        end_stride = res_graph_->NewCNode({scalar_to_tensor, end_stride, NewValueNode(MakeValue(kInt64))});
+        end_stride = res_graph_->NewCNode(
+          {scalar_to_tensor, end_stride, NewValueNode(MakeValue(static_cast<int64_t>(TypeId::kNumberTypeInt64)))});
         end_stride = res_graph_->NewCNode({MakeExpandDimsNode(), end_stride, NewValueNode(zero)});
-        step_stride = res_graph_->NewCNode({scalar_to_tensor, step_stride, NewValueNode(MakeValue(kInt64))});
+        step_stride = res_graph_->NewCNode(
+          {scalar_to_tensor, step_stride, NewValueNode(MakeValue(static_cast<int64_t>(TypeId::kNumberTypeInt64)))});
         step_stride = res_graph_->NewCNode({MakeExpandDimsNode(), step_stride, NewValueNode(zero)});
       }
       (void)begin_strides.emplace_back(begin_stride);

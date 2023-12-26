@@ -14,37 +14,21 @@
  * limitations under the License.
  */
 
-#include "ops/scalar_to_tensor.h"
+#include "ops/ops_func_impl/scalar_to_tensor.h"
 
+#include <utility>
 #include <memory>
-#include <set>
-#include <string>
-#include <vector>
-#include "abstract/abstract_value.h"
-#include "abstract/dshape.h"
-#include "abstract/ops/op_infer.h"
-#include "abstract/ops/primitive_infer_map.h"
-#include "abstract/param_validator.h"
-#include "base/base.h"
-#include "ops/arithmetic_ops.h"
-#include "ops/math_ops.h"
-#include "ir/anf.h"
-#include "ir/dtype/number.h"
-#include "ir/dtype/type.h"
-#include "ir/primitive.h"
-#include "ir/scalar.h"
-#include "ir/tensor.h"
-#include "ir/value.h"
-#include "mindapi/base/shape_vector.h"
-#include "mindapi/base/type_id.h"
-#include "mindapi/src/helper.h"
-#include "ops/primitive_c.h"
+#include "ops/ops_frontend_func_impl.h"
+#include "ops/auto_generate/gen_ops_name.h"
+#include "ops/op_utils.h"
+#include "ops/op_name.h"
+#include "ir/dtype.h"
 #include "utils/check_convert_utils.h"
-#include "utils/convert_utils_base.h"
-#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace ops {
+namespace {
+constexpr auto kScalarToTensor = "ScalarToTensor";
 tensor::TensorPtr ScalarToTensorByType(const ScalarPtr &scalar, const TypePtr &src_type, const TypePtr &data_type) {
   MS_EXCEPTION_IF_NULL(scalar);
   MS_EXCEPTION_IF_NULL(data_type);
@@ -77,61 +61,13 @@ tensor::TensorPtr ScalarToTensorByType(const ScalarPtr &scalar, const TypePtr &s
       MS_LOG(EXCEPTION) << "When convert scalar to tensor, the scalar type: " << data_type << " is invalid.";
   }
 }
-
-class ScalarToTensorInfer : public abstract::OpInferBase {
+}  // namespace
+class ScalarToTensorFrontendFuncImpl : public OpFrontendFuncImpl {
  public:
-  BaseShapePtr InferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &) const override {
-    ShapeVector out_shape;
-    return std::make_shared<abstract::Shape>(out_shape);
-  }
-
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    MS_EXCEPTION_IF_NULL(primitive);
-    auto prim_name = primitive->name();
-    const int64_t input_len = 1;
-    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_len,
-                                             prim_name);
-    auto elem = input_args[0];
-    if (!CheckAndConvertUtils::IsScalar(elem)) {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input should be scalar but got: " << elem->ToString();
-    }
-
-    auto attr = primitive->GetAttr("dtype");
-    if (attr == nullptr) {
-      // If type not set, use input0's original type.
-      if (input_args.size() == 1) {
-        attr = elem->GetType();
-      } else {
-        auto type_abs = input_args[kIndex1];
-        if (type_abs->GetType()->type_id() != kMetaTypeTypeType) {
-          MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the input[" << kIndex1 << "] should be a "
-                                  << TypeIdToType(kMetaTypeTypeType)->ToString() << ", but got "
-                                  << type_abs->GetType()->ToString() << ".";
-        }
-        attr = type_abs->GetValue();
-        MS_EXCEPTION_IF_NULL(attr);
-      }
-    }
-    if (!attr->isa<Type>()) {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "the second input must be a `Type`, but got "
-                              << attr->type_name();
-    }
-    TypePtr dst_type{nullptr};
-    if (attr->isa<TensorType>()) {
-      dst_type = attr->cast_ptr<TensorType>()->element();
-    } else {
-      dst_type = attr->cast<TypePtr>();
-    }
-
-    const std::set<TypePtr> valid_types = {kBool,   kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,
-                                           kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
-    return std::make_shared<TensorType>(CheckAndConvertUtils::CheckSubClass("dtype", dst_type, valid_types, prim_name));
-  }
-
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto op_name = primitive->name();
-    const int64_t input_len = 1;
+    const int64_t input_len = 2;
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_len,
                                              op_name);
     auto elem = input_args[0];
@@ -146,17 +82,17 @@ class ScalarToTensorInfer : public abstract::OpInferBase {
       MS_EXCEPTION(TypeError) << "For '" << op_name
                               << "', the input should be scalar but got: " << elem_value->ToString();
     }
-    TypePtr res_dtype;
-    if (input_args.size() == 1) {
-      res_dtype = std::make_shared<TensorType>(kFloat32);
+    TypePtr dst_type{nullptr};
+    if (input_args[kInputIndex1]->GetType()->isa<TypeNone>()) {
+      dst_type = std::make_shared<TensorType>(kFloat32);
     } else {
-      res_dtype = InferType(primitive, input_args);
+      ScalarToTensorFuncImpl funcImpl;
+      dst_type = funcImpl.InferType(primitive, input_args);
     }
     return ScalarToTensorByType(elem_value->cast<ScalarPtr>(), elem->GetType(),
-                                res_dtype->cast<TensorTypePtr>()->element());
+                                dst_type->cast<TensorTypePtr>()->element());
   }
 };
-MIND_API_OPERATOR_IMPL(ScalarToTensor, BaseOperator);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarToTensor, prim::kPrimScalarToTensor, ScalarToTensorInfer, true);
+REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL(kScalarToTensor, ScalarToTensorFrontendFuncImpl);
 }  // namespace ops
 }  // namespace mindspore

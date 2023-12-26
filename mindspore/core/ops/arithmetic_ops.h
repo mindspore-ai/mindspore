@@ -26,7 +26,6 @@
 namespace mindspore {
 namespace prim {
 // Arithmetic
-GVAR_DEF(PrimitivePtr, kPrimScalarToTensor, std::make_shared<Primitive>(kScalarToTensorOpName));
 GVAR_DEF(PrimitivePtr, kPrimScalarTrunc, std::make_shared<Primitive>(kScalarTruncOpName));
 GVAR_DEF(PrimitivePtr, kPrimScalarFloor, std::make_shared<Primitive>(kScalarFloorOpName));
 GVAR_DEF(PrimitivePtr, kPrimScalarCast, std::make_shared<Primitive>(kScalarCastOpName));

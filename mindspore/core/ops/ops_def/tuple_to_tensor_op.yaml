@@ -1,0 +1,12 @@
+#operator tuple_to_tensor
+tuple_to_tensor:
+    args:
+        input_tuple:
+            dtype: tuple[number]
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+            default: None
+    returns:
+        output:
+            dtype: tensor

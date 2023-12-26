@@ -17,12 +17,12 @@
 #include <vector>
 #include <string>
 #include "ops/auto_generate/gen_lite_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "ops/array_ops.h"
 #include "ops/lite_ops.h"
 #include "tools/optimizer/graph/scalar_op_pass.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "mindspore/core/ops/arithmetic_ops.h"
-// #include "mindspore/core/ops/mul.h"
 #include "tools/optimizer/graph/lite_tensor_extractor.h"
 #include "mindspore/core/abstract/ops/primitive_infer_map.h"
 #include "mindspore/core/utils/anf_utils.h"

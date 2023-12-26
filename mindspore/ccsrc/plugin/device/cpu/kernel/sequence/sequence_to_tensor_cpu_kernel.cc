@@ -82,16 +82,22 @@ bool SeqToTensorCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &in
   return true;
 }
 
-#define ADD_TUPLE_KERNEL(x_dtype, out_dtype, in_type, out_type)                                              \
-  {                                                                                                          \
-    KernelAttr().AddInputAttr(kObjectTypeTuple, kNumberType##x_dtype).AddOutputAttr(kNumberType##out_dtype), \
-      &SeqToTensorCpuKernelMod::LaunchKernel<in_type, out_type>                                              \
+#define ADD_TUPLE_KERNEL(x_dtype, out_dtype, in_type, out_type)  \
+  {                                                              \
+    KernelAttr()                                                 \
+      .AddInputAttr(kObjectTypeTuple, kNumberType##x_dtype)      \
+      .AddOptionalInputAttr(kObjectTypeNumber, kNumberTypeInt64) \
+      .AddOutputAttr(kNumberType##out_dtype),                    \
+      &SeqToTensorCpuKernelMod::LaunchKernel<in_type, out_type>  \
   }
 
-#define ADD_SCALAR_KERNEL(x_dtype, out_dtype, in_type, out_type)                                              \
-  {                                                                                                           \
-    KernelAttr().AddInputAttr(kObjectTypeNumber, kNumberType##x_dtype).AddOutputAttr(kNumberType##out_dtype), \
-      &SeqToTensorCpuKernelMod::LaunchKernel<in_type, out_type>                                               \
+#define ADD_SCALAR_KERNEL(x_dtype, out_dtype, in_type, out_type) \
+  {                                                              \
+    KernelAttr()                                                 \
+      .AddInputAttr(kObjectTypeNumber, kNumberType##x_dtype)     \
+      .AddOptionalInputAttr(kObjectTypeNumber, kNumberTypeInt64) \
+      .AddOutputAttr(kNumberType##out_dtype),                    \
+      &SeqToTensorCpuKernelMod::LaunchKernel<in_type, out_type>  \
   }
 
 std::vector<std::pair<KernelAttr, SeqToTensorCpuKernelMod::SeqToTensorFunc>> SeqToTensorCpuKernelMod::seq_func_list_ = {
