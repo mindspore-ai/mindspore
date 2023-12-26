@@ -21,6 +21,7 @@
 #include "ir/functor.h"
 #include "ops/math_ops.h"
 #include "utils/ms_context.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::expander::bprop {
 NodePtrList AddnGradFunc(BpropIRBuilder *ib) {
@@ -955,11 +956,27 @@ REG_BPROP_BUILDER("Sinc").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
 
 REG_BPROP_BUILDER("CumProd").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
+  auto x_shape = ib->GetShape(x);
+  auto num_elements =
+    std::accumulate(x_shape.begin(), x_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   auto axis = ib->GetInput(kIndex1);
+  auto axis_value_ptr = axis->BuildValue();
+  auto axis_opt = mindspore::ops::GetScalarValue<int64_t>(axis_value_ptr);
+  int64_t axis_value;
+  if (axis_opt.has_value()) {
+    axis_value = axis_opt.value();
+  } else {
+    MS_LOG_EXCEPTION << "For CumProd, got an invalid 'axis'.";
+  }
   auto exclusive = ib->GetInput(kIndex2);
   auto reverse = ib->GetInput(kIndex3);
   auto out = ib->GetInput(kIndex4);
   auto dout = ib->GetInput(kIndex5);
+  constexpr const int64_t One = 1;
+  // to par with standards when dim is 1 or element num of input is no greater than 1.
+  if (!IsDynamic(x_shape) && (num_elements <= One || x_shape[axis_value] == One)) {
+    return {dout, ib->OutZeros(axis), ib->OutZeros(exclusive), ib->OutZeros(reverse)};
+  }
   auto prod = ib->Emit("CumProd", {x, axis, exclusive, reverse});
   out = ib->CumSum(ib->Mul(prod, dout), axis, GetValue<bool>(exclusive->BuildValue()),
                    !GetValue<bool>(reverse->BuildValue()));
