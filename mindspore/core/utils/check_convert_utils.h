@@ -468,10 +468,10 @@ class MS_CORE_API CheckAndConvertUtils {
   static bool CheckContainNestedOrIrregularSequence(const std::vector<AbstractBasePtr> &abs_list);
   static bool CheckValueSame(const ValuePtr &value_1, const ValuePtr &value_2);
   static abstract::AbstractSequencePtr BroadenAllSequenceElements(const abstract::AbstractSequencePtr &sequence);
+  static TypePtr CheckTypeSame(const std::map<std::string, TypePtr> &args, const std::string &prim_name,
+                               const bool allow_mix = false);
 
  private:
-  static TypePtr _CheckTypeSame(const std::map<std::string, TypePtr> &args, const std::string &prim_name,
-                                const bool allow_mix);
   static TypePtr CheckTensorSubClass(const std::string &type_name, const TypePtr &type,
                                      const std::set<TypePtr> &template_types, const std::string &prim_name,
                                      bool is_mix = false);
