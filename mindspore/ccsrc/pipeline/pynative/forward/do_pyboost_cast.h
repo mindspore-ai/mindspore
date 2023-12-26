@@ -54,18 +54,18 @@ class PyBoostCastOperation : public CastBaseOperation {
   }
 
   template <typename TupleInput>
-  ValuePtr VisitHelp(size_t i, const TupleInput &input_args, std::index_sequence<>) {
+  std::optional<ValuePtr> VisitHelp(size_t i, const TupleInput &input_args, std::index_sequence<>) {
     return std::get<0>(input_args);
   }
 
   template <typename TupleInput, size_t... I>
-  ValuePtr VisitHelp(size_t i, const TupleInput &input_args, std::index_sequence<I...>) {
+  std::optional<ValuePtr> VisitHelp(size_t i, const TupleInput &input_args, std::index_sequence<I...>) {
     constexpr size_t index = std::index_sequence<I...>::size() - 1;
     return i == index ? std::get<index>(input_args) : VisitHelp(i, input_args, std::make_index_sequence<index>{});
   }
 
   template <typename TupleInput>
-  ValuePtr Visit(size_t i, const TupleInput &input_args) {
+  std::optional<ValuePtr> Visit(size_t i, const TupleInput &input_args) {
     return VisitHelp(i, input_args, std::make_index_sequence<std::tuple_size<TupleInput>::value>{});
   }
 
@@ -86,7 +86,11 @@ class PyBoostCastOperation : public CastBaseOperation {
     bool has_tensor_int8 = false;
     // Find the maximum priority of the same dtype
     for (size_t index : same_type_index) {
-      const auto &v = Visit(index, input_args);
+      const auto &optional_v = Visit(index, input_args);
+      if (!optional_v) {
+        continue;
+      }
+      auto v = optional_v.value();
       if (v->template isa<tensor::Tensor>()) {
         auto arg = v->template cast<tensor::TensorPtr>();
         TypeId arg_type_id = arg->data_type();
