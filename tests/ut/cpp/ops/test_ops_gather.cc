@@ -65,7 +65,7 @@ auto test_cases = testing::Values(
   /* input_indices dyn */
   GatherParams{{5, 6, 7}, {10, -1}, kInt32, CreatePyInt(1), CreateScalar(kValueAny), kFloat32, {5, 10, -1, 7}},
   GatherParams{{5, 6, 7}, {-1, 20}, kInt32, CreatePyInt(1), CreateScalar(kValueAny), kFloat32, {-2}},
-  GatherParams{{5, 6, 7}, {-1, 20}, kInt32, CreateScalar(kValueAny), CreatePyInt(-2), kFloat32, {-1, -1, -1}},
+  GatherParams{{5, 6, 7}, {-1, 20}, kInt32, CreateScalar(kValueAny), CreatePyInt(-2), kFloat32, {-1, -1, -1, -1}},
   GatherParams{{5, 6, 7}, {-2}, kInt32, CreatePyInt(2), CreatePyInt(1), kFloat32, {-2}},
   GatherParams{{5, 6, 7}, {-1, -1}, kInt32, CreatePyInt(1), CreateScalar(kValueAny), kFloat32, {-2}},
   /* both dyn */
