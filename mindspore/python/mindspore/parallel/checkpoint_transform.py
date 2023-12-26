@@ -49,7 +49,7 @@ def merge_pipeline_strategys(src_strategy_dirs, dst_strategy_file):
         NotADirectoryError: `src_strategy_dirs` is not a directory.
 
     Examples:
-        >>> import mindspore ms
+        >>> import mindspore as ms
         >>> # src_strategy_dir/stra0.ckpt, src_strategy_dir/stra1.ckpt ... src_strategy_dir/stra127.ckpt
         >>> ms.merge_pipeline_strategys("./src_strategy_dir", "./dst_strategy.ckpt")
 

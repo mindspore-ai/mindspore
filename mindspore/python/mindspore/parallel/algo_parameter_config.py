@@ -284,7 +284,7 @@ def set_algo_parameters(**kwargs):
         >>>
         >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> ms.set_auto_parallel_context(parallel_mode=ms.ParallelMode.AUTO_PARALLEL,
-        >>>                              search_mode="sharding_propagation")
+        ...                              search_mode="sharding_propagation")
         >>> init()
         >>> ms.set_algo_parameters(fully_use_devices=True)
         >>> ms.set_algo_parameters(elementwise_op_strategy_follow=True)
