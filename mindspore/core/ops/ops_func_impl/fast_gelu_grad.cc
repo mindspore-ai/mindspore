@@ -27,6 +27,13 @@ BaseShapePtr FastGeLUGradFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr FastGeLUGradFuncImpl::InferType(const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args) const {
+  std::vector<TypeId> valid_types = {kNumberTypeFloat16, kNumberTypeFloat32};
+  auto tensor_type = input_args[0]->GetType()->cast<TensorTypePtr>();
+  auto real_type = tensor_type->element()->type_id();
+  if (std::find(valid_types.begin(), valid_types.end(), real_type) == valid_types.end()) {
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', input[0] type should be float16 or float32. but got "
+                            << tensor_type->element()->ToString();
+  }
   return input_args[kInputIndex0]->GetType()->Clone();
 }
 }  // namespace ops
