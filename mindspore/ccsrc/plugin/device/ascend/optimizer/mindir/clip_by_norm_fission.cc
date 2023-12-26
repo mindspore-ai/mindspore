@@ -24,6 +24,7 @@
 #include "ir/anf.h"
 #include "ir/tensor.h"
 #include "include/common/utils/anfalgo.h"
+#include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace opt {
@@ -147,10 +148,15 @@ AnfNodePtr ClipByNormFission::CreateReduceSumNode(const FuncGraphPtr &func_graph
                                                   const AnfNodePtr &clip_by_norm, const ShapeVector &shape_vec,
                                                   const TypeId &type_id) const {
   MS_EXCEPTION_IF_NULL(func_graph);
+  auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   auto axis_node = GetAxisNode(func_graph, clip_by_norm);
 
   MS_EXCEPTION_IF_NULL(axis_node);
-  auto reduce_sum = CreateCNodeBase(func_graph, {square, axis_node}, kReduceSumOpName, square);
+  auto keepdims_node = AnfAlgo::ConvertValueToNode(kernel_graph, MakeValue(true));
+  auto skipmode_node = AnfAlgo::ConvertValueToNode(kernel_graph, MakeValue(false));
+  auto reduce_sum =
+    CreateCNodeBase(func_graph, {square, axis_node, keepdims_node, skipmode_node}, kReduceSumOpName, square);
   MS_EXCEPTION_IF_NULL(reduce_sum);
   // Sync the attribute of `ClipByNorm` to `ReduceSum`
   auto clip_by_norm_prim = common::AnfAlgo::GetCNodePrimitive(clip_by_norm);
