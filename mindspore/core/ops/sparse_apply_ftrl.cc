@@ -41,9 +41,9 @@ abstract::TupleShapePtr SparseApplyFtrlInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   // the output is useless, so we don't have to focus on the output shape, cannot return 1
-  auto var_shape_r = input_args[kVarIndex]->Broaden()->GetShape();
-  auto accum_shape_r = input_args[kAccumIndex]->Broaden()->GetShape();
-  auto linear_shape_r = input_args[kLinearIndex]->Broaden()->GetShape();
+  auto var_shape_r = input_args[kVarIndex]->GetShape();
+  auto accum_shape_r = input_args[kAccumIndex]->GetShape();
+  auto linear_shape_r = input_args[kLinearIndex]->GetShape();
   auto outputs = std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>({var_shape_r, accum_shape_r, linear_shape_r}));
   for (auto &input : input_args) {
