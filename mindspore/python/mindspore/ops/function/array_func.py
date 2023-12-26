@@ -93,7 +93,6 @@ reduce_max_ = P.ReduceMax()
 reduce_min_ = P.ReduceMin()
 reshape_ = P.Reshape()
 scalar_cast_ = P.ScalarCast()
-scalar_to_array_ = P.ScalarToArray()
 scalar_to_tensor_ = P.ScalarToTensor()
 scatter_add_ = P.ScatterAdd()
 scatter_div_ = P.ScatterDiv()
@@ -5073,7 +5072,7 @@ def scalar_to_array(input_x):
     """
     The  interface is deprecated. Please use the :func:`mindspore.ops.scalar_to_tensor` instead.
     """
-    return scalar_to_array_(input_x)
+    return P.ScalarToArray()(input_x)
 
 
 def scalar_to_tensor(input_x, dtype=mstype.float32):

@@ -151,8 +151,9 @@ def test_data_sink_dynamic_shape(mode):
     _train_func_sink(network, dataset, loss_fn, opt, input_signature)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_function_data_sink_dynamic_shape(mode):
