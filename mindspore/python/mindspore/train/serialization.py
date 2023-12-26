@@ -885,6 +885,10 @@ def obfuscate_model(obf_config, **kwargs):
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> # Download ori_net.mindir
+        >>> # https://gitee.com/mindspore/mindspore/blob/r2.3/tests/ut/python/mindir/ori_net.mindir
+        >>> input1 = ms.Tensor(np.ones((1, 1, 32, 32)).astype(np.float32))
         >>> obf_config = {'original_model_path': "./net.mindir",
         ...          'save_model_path': "./obf_net",
         ...          'model_inputs': [input1, ],

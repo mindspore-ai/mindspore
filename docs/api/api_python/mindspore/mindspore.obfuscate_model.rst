@@ -30,4 +30,4 @@ mindspore.obfuscate_model
         - **ValueError** - `obf_config` 没有提供 `obf_ratio` 。
         - **ValueError** - `customized_func` 和 `obf_random_seed` 都不在 `obf_config` 里面。
         - **ValueError** - `obf_random_seed` 的取值没有在(0, 9223372036854775807]内。
-        - **ValueError** - `file_path` 不存在或者不以 '.mindir' 结尾。
+        - **ValueError** - `original_model_path` 不存在或者不以 '.mindir' 结尾。
