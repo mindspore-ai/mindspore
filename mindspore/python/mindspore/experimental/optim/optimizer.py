@@ -113,7 +113,6 @@ class Optimizer(Cell):
         for param_group in param_groups:
             self.add_param_group(param_group)
         self.parameters = ParameterTuple(self.parameters)
-        self.lrs = ParameterTuple(self.lrs)
         self.hyper_map = C.HyperMap()
         self.enable_tuple_broaden = True
 

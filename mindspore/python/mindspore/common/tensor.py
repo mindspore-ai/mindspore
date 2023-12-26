@@ -2396,7 +2396,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             reduce_ = tensor_operator_registry.get("reduce")
             reduce_min = tensor_operator_registry.get("reduce_min")
             minimum = tensor_operator_registry.get("minimum")
-            return reduce_(self, reduce_min(keepdims), cmp_fn=minimum(), axis=axis, keepdims=keepdims,
+            return reduce_(self, reduce_min(keepdims), cmp_fn=minimum, axis=axis, keepdims=keepdims,
                            initial=initial, where=where)
         values, indices = tensor_operator_registry.get("min")(self, axis, keepdims, initial=initial, where=where)
         if not return_indices:

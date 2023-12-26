@@ -152,14 +152,14 @@ class RAdam(Optimizer):
             weight_decay=weight_decay,
         )
         super(RAdam, self).__init__(params, defaults)
-        self.step = Parameter(Tensor(0, mstype.int32), "step")
+        self.step_t = Parameter(Tensor(0, mstype.int32), "step_t")
         self.exp_avg = self.parameters.clone(prefix="exp_avg", init='zeros')
         self.exp_avg_sq = self.parameters.clone(prefix="exp_avg_sq", init='zeros')
         self.increase_tensor = Tensor(1, mstype.int32)
         self.assignadd = P.AssignAdd()
 
     def construct(self, gradients):
-        self.assignadd(self.step, self.increase_tensor)
+        self.assignadd(self.step_t, self.increase_tensor)
         for group_id, group in enumerate(self.param_groups):
 
             lr = self.lrs[group_id]
@@ -174,7 +174,7 @@ class RAdam(Optimizer):
             grads = self._decay_weight(group["weight_decay"], params, grads)
             exp_avg = self.exp_avg[start_id: end_id]
             exp_avg_sq = self.exp_avg_sq[start_id: end_id]
-            self.hyper_map(F.partial(_radam_opt, beta1, beta2, group["eps"], self.step.value(), lr),
+            self.hyper_map(F.partial(_radam_opt, beta1, beta2, group["eps"], self.step_t.value(), lr),
                            params, grads, exp_avg, exp_avg_sq)
 
         return True
