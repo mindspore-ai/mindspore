@@ -113,15 +113,25 @@ bool Somas::IsSupportSomas(const session::KernelGraph &graph) const {
   }
 
   if (graph.is_dynamic_shape()) {
-    MS_LOG(WARNING) << "Somas can't allocate graph with dynamic shape now.";
+    MS_LOG(INFO) << "Somas can't allocate graph with dynamic shape now.";
     return false;
   }
 
   auto &execution_order = graph.execution_order();
   for (auto &kernel : execution_order) {
+    MS_EXCEPTION_IF_NULL(kernel);
+    if (common::AnfAlgo::IsDynamicShape(kernel) || common::AnfAlgo::IsDynamicSequence(kernel) ||
+        common::AnfAlgo::IsDynamicValue(kernel)) {
+      MS_LOG(INFO) << "Somas can't allocate graph with dynamic shape or dynamic value now.";
+      return false;
+    }
+    if (AnfAlgo::IsKernelSelectBackoffOp(kernel)) {
+      MS_LOG(INFO) << "Somas can't allocate graph with backoff now.";
+      return false;
+    }
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel);
     if ((kernel_name == kRpcSendOpName) || (kernel_name == kRpcRecvOpName)) {
-      MS_LOG(WARNING) << "Somas can't allocate graph with rpc op now.";
+      MS_LOG(INFO) << "Somas can't allocate graph with rpc op now.";
       return false;
     }
   }
