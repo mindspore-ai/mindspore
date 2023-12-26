@@ -30,8 +30,8 @@ BaseShapePtr CoshFuncImpl::InferShape(const PrimitivePtr &primitive,
   auto base_shape = input_args[kInputIndex0]->GetShape();
   const auto x_shape = base_shape->GetShapeVector();
   const size_t max_dim = 8;
-  MS_CHECK_VALUE(x_shape.size() < max_dim, CheckAndConvertUtils::FormatCheckIntegerMsg("rank of x", x_shape.size(),
-                                                                                       kLessThan, max_dim, primitive));
+  MS_CHECK_VALUE(x_shape.size() <= max_dim, CheckAndConvertUtils::FormatCheckIntegerMsg(
+                                              "rank of x", x_shape.size(), kLessEqual, max_dim, primitive));
   return std::make_shared<abstract::TensorShape>(x_shape);
 }
 
