@@ -1272,9 +1272,8 @@ void PrimitiveFunctionEvaluator::CheckArgsSizeAndType(const AbstractBasePtrList 
   }
 }
 
-AbstractBasePtr PrimitiveFunctionEvaluator::CheckAndInfer(const AbstractBasePtrList &args) {
+AbstractBasePtr PrimitiveFunctionEvaluator::OpsInfer(const AbstractBasePtrList &args) {
   if (op_def_ != nullptr) {
-    (void)op_def_->func_impl_.CheckValidation(prim_func_, args);
     if (frontend_func_impl_ != nullptr) {
       auto infer_result = frontend_func_impl_->InferAbstract(prim_func_, args);
       if (infer_result != nullptr) {
@@ -1303,6 +1302,7 @@ EvalResultPtr PrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePtr &engi
 
   AbstractBasePtr abs_base = nullptr;
   prim_func_->BeginRecordAddAttr();
+  (void)op_def_->func_impl_.CheckValidation(prim_func_, args);
   if (need_infer_value && frontend_func_impl_ != nullptr) {
     auto value = frontend_func_impl_->InferValue(prim_func_, args);
     if (value != nullptr && !value->ContainsValueAny()) {
@@ -1312,7 +1312,7 @@ EvalResultPtr PrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePtr &engi
       return std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
     }
   }
-  abs_base = CheckAndInfer(args);
+  abs_base = OpsInfer(args);
   MS_EXCEPTION_IF_NULL(abs_base);
   prim_func_->EndRecordAddAttr();
   const auto &added_attrs = prim_func_->evaluate_added_attrs();
