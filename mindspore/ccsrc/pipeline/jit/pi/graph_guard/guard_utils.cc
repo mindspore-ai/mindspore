@@ -486,20 +486,12 @@ class FunctionData : public ItemData {
       : ItemData(ItemType::PyFunction, needSpecialize, recurseDepth) {
     if (needSpecialize || recurseDepth > 0) {
       code_ = reinterpret_cast<PyCodeObject *>(PyFunction_GetCode(obj));
-      globals_ = CreateItem(PyFunction_GetGlobals(obj), needSpecialize, recurseDepth);
-      module_ = CreateItem(PyFunction_GetModule(obj), needSpecialize, recurseDepth);
       defaults_ = CreateItem(PyFunction_GetDefaults(obj), needSpecialize, recurseDepth);
       kwdefaults_ = CreateItem(PyFunction_GetKwDefaults(obj), needSpecialize, recurseDepth);
       closure_ = CreateItem(PyFunction_GetClosure(obj), needSpecialize, recurseDepth);
     } else {
       code_ = reinterpret_cast<PyCodeObject *>(PyFunction_GetCode(obj));
-      PyObject *temp = PyFunction_GetGlobals(obj);
-      globals_ =
-        CreateItem((temp == NULL || temp == Py_None) ? Py_None : reinterpret_cast<PyObject *>(Py_TYPE(temp)), false, 0);
-      temp = PyFunction_GetModule(obj);
-      module_ =
-        CreateItem((temp == NULL || temp == Py_None) ? Py_None : reinterpret_cast<PyObject *>(Py_TYPE(temp)), false, 0);
-      temp = PyFunction_GetDefaults(obj);
+      PyObject *temp = PyFunction_GetDefaults(obj);
       defaults_ =
         CreateItem((temp == NULL || temp == Py_None) ? Py_None : reinterpret_cast<PyObject *>(Py_TYPE(temp)), false, 0);
       temp = PyFunction_GetKwDefaults(obj);
@@ -514,22 +506,19 @@ class FunctionData : public ItemData {
   bool operator==(const ItemData &obj) const override {
     if (ItemData::operator==(obj)) {
       const FunctionData &other = (const FunctionData &)obj;
-      return code_ == other.code_ && *globals_ == *(other.globals_) && *module_ == *(other.module_) &&
-             *defaults_ == *(other.defaults_) && *kwdefaults_ == *(other.kwdefaults_) && *closure_ == *(other.closure_);
+      return code_ == other.code_ && *defaults_ == *(other.defaults_) && *kwdefaults_ == *(other.kwdefaults_) &&
+             *closure_ == *(other.closure_);
     }
     return false;
   }
 
   std::string ToString() override {
-    std::string func = DESC_TOSTRING(globals_) + DESC_TOSTRING(module_) + DESC_TOSTRING(defaults_) +
-                       DESC_TOSTRING(kwdefaults_) + DESC_TOSTRING(closure_);
+    std::string func = DESC_TOSTRING(defaults_) + DESC_TOSTRING(kwdefaults_) + DESC_TOSTRING(closure_);
     return DESC(func) + DESC_END;
   }
 
  protected:
   PyCodeObject *code_;
-  ItemDataPtr globals_;
-  ItemDataPtr module_;
   ItemDataPtr defaults_;
   ItemDataPtr kwdefaults_;
   ItemDataPtr closure_;

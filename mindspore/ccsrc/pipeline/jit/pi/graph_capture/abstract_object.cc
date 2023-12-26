@@ -1072,7 +1072,10 @@ AObject *AbstractDict::Binary(AObject *other, int op) {
 }
 
 AObject *AbstractDict::GetAttr(const std::string &name) {
-  PyObject *attr = PyObject_GetAttrString(py::dict().ptr(), name.c_str());
+  if (value_.ptr() == nullptr) {
+    return AObject::MakeAObject(kTypeAnyValue);
+  }
+  PyObject *attr = PyObject_GetAttrString(value_.ptr(), name.c_str());
   CHECK_PYTHON_EXCEPTION(attr);
   AObject *res = Convert(attr);
   Py_XDECREF(attr);
