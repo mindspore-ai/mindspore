@@ -576,6 +576,7 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
   MS_EXCEPTION_IF_NULL(device_context);
   device_context->Initialize();
+  device_context->device_res_manager_->BindDeviceToCurrentThread(false);
 
   // Current only ascend do need do checkout in PartitionGraph
   bool all_support = device_context->PartitionGraph(func_graph);
