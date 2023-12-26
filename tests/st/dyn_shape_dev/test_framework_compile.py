@@ -248,3 +248,21 @@ def test_op_with_default_init_args():
     x = ms.Tensor(np.array([[[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]]), ms.float32)
     size = ms.mutable((2, 2))
     func(x, size)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+def test_add_two_scalar():
+    """
+    Feature: DynamicShape.
+    Description: Test add two scalar.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func(x, y):
+        return ops.add(x, y)
+
+    ms.set_context(precompile_only=False, mode=ms.GRAPH_MODE)
+    assert func(2.5, 1) == 3.5
