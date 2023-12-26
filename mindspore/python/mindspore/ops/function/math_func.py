@@ -6716,6 +6716,7 @@ def cummin(input, axis):
 
     Raises:
         TypeError: If `input` is not a Tensor.
+        TypeError: If `input` is a Tensor, but the type is complex or bool.
         TypeError: If `axis` is not an int.
         ValueError: If `axis` is out the range of `[-input.ndim, input.ndim - 1]`.
 
