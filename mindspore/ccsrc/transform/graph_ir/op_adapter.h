@@ -489,15 +489,15 @@ class OpAdapter : public BaseOpAdapter {
         }
         auto sub_vector = it->cast<ValueListPtr>();
         for (auto &item : sub_vector->value()) {
-          sublist.push_back(ops::GetValueWithCheck<int64_t>(item));
+          sublist.emplace_back(ops::GetValueWithCheck<int64_t>(item));
         }
       } else {
         auto sub_vector = it->cast<ValueTuplePtr>();
         for (auto &item : sub_vector->value()) {
-          sublist.push_back(ops::GetValueWithCheck<int64_t>(item));
+          sublist.emplace_back(ops::GetValueWithCheck<int64_t>(item));
         }
       }
-      list.push_back(sublist);
+      list.emplace_back(sublist);
     }
     return list;
   }
@@ -518,7 +518,7 @@ class OpAdapter : public BaseOpAdapter {
       }
       auto sub_vector = it->cast<ValueSequencePtr>();
       for (auto &item : sub_vector->value()) {
-        list.push_back(ops::GetValueWithCheck<int64_t>(item));
+        list.emplace_back(ops::GetValueWithCheck<int64_t>(item));
       }
     }
     return list;
@@ -534,7 +534,7 @@ class OpAdapter : public BaseOpAdapter {
     auto vec = value->cast<ValueSequencePtr>();
     MS_EXCEPTION_IF_NULL(vec);
     for (auto &it : vec->value()) {
-      list.push_back(GetCastIntegralValue<int64_t>(it));
+      list.emplace_back(GetCastIntegralValue<int64_t>(it));
     }
     if (index >= list.size()) {
       MS_LOG(EXCEPTION) << "reg dyn_input_sizes index error, must less than " << list.size() << "but got " << index;
@@ -551,12 +551,12 @@ class OpAdapter : public BaseOpAdapter {
       auto vec = value->cast<ValueSequencePtr>();
       MS_EXCEPTION_IF_NULL(vec);
       for (auto &it : vec->value()) {
-        list.push_back(GetCastIntegralValue<int64_t>(it));
+        list.emplace_back(GetCastIntegralValue<int64_t>(it));
       }
       return list;
     }
     if (value->isa<Scalar>()) {
-      list.push_back(GetCastIntegralValue<int64_t>(value));
+      list.emplace_back(GetCastIntegralValue<int64_t>(value));
       return list;
     }
     if (value->isa<MeTensor>()) {
