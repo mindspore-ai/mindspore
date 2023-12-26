@@ -102,10 +102,10 @@ def save_mindir(model, file_name):
     try:
         with open(file_name, "wb") as f:
             f.write(model.SerializeToString())
-            os.chmod(file_name, stat.S_IRUSR)
     except BaseException as e:
         logger.critical(f"Failed to save the file: {file_name} ,"
                         f" please check the correct file.")
         raise ValueError(e.__str__()) from e
     finally:
-        pass
+        if os.path.exists(file_name):
+            os.chmod(file_name, stat.S_IRUSR)
