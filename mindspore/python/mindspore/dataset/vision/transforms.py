@@ -1195,8 +1195,8 @@ class Decode(ImageTensorOperation, PyTensorOperation):
               <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         if self.implementation == Implementation.PY and device_target == "Ascend":
-            raise RuntimeError("The operation \"Decode(to_pil=True)\" cannot be run on Ascend device, " +
-                               "please set \"to_pil=False\".")
+            raise ValueError("The transform \"Decode(to_pil=True)\" cannot be performed on Ascend device, " +
+                             "please set \"to_pil=False\".")
 
         self.device_target = device_target
         return self
