@@ -34,7 +34,8 @@ namespace {
 ShapeVector ExpandInHeadIfNeed(const ShapeVector &tag_shape, size_t expect_len) {
   auto tag_rank = tag_shape.size();
   if (expect_len < tag_rank) {
-    MS_LOG(EXCEPTION) << "For 'Tile', the rank of input should be less or equal to multiple's length.";
+    MS_LOG(EXCEPTION) << "For 'Tile', the rank of input: " << expect_len
+                      << " should be greater than or equal to multiple's length: " << tag_rank << ".";
   }
   if (expect_len == tag_rank) {
     return tag_shape;
