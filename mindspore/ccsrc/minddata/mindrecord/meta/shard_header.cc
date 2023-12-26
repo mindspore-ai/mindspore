@@ -242,10 +242,6 @@ Status ShardHeader::ParseIndexFields(const json &index_fields) {
 
 Status ShardHeader::ParsePage(const json &pages, int shard_index, bool load_dataset) {
   // set shard_index when load_dataset is false
-  CHECK_FAIL_RETURN_UNEXPECTED_MR(shard_count_ <= kMaxFileCount,
-                                  "Invalid file, the number of mindrecord files: " + std::to_string(shard_count_) +
-                                    "is not in range (0, " + std::to_string(kMaxFileCount) +
-                                    "].\nPlease use 'FileWriter' to generate fewer mindrecord files.");
   if (pages_.empty()) {
     pages_.resize(shard_count_);
   }
