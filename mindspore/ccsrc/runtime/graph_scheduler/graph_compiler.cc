@@ -359,6 +359,16 @@ GraphId CompileAnyTypeInputGraph(const KernelGraphPtr &graph, const AnfNodePtrLi
     MS_EXCEPTION_IF_NULL(input);
     MS_LOG(DEBUG) << "input node:" << input->DebugString()
                   << " abstract:" << (input->abstract() == nullptr ? "null" : input->abstract()->ToString());
+    if (!input->isa<Parameter>()) {
+      continue;
+    }
+    const auto &parameter = input->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(parameter);
+    const auto &shape = parameter->Shape();
+    if (shape != nullptr &&
+        ((shape->isa<abstract::Shape>() && shape->IsDynamic()) || shape->isa<abstract::DynamicSequenceShape>())) {
+      parameter->set_has_dynamic_shape(true);
+    }
   }
   auto backend_output = graph->output();
   MS_EXCEPTION_IF_NULL(backend_output);
