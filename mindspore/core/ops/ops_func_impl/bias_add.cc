@@ -107,8 +107,14 @@ BaseShapePtr BiasAddFuncImpl::InferShape(const PrimitivePtr &primitive,
 }
 TypePtr BiasAddFuncImpl::InferType(const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) const {
-  auto input_type = input_args[0]->GetType();
-  return input_type->Clone();
+  auto prim_name = primitive->name();
+  const auto &input_x_type = input_args[0]->GetType();
+  const auto &bias_type = input_args[1]->GetType();
+  std::map<std::string, TypePtr> types;
+  (void)types.emplace("input_x", input_x_type);
+  (void)types.emplace("bias", bias_type);
+  (void)CheckAndConvertUtils::CheckTypeSame(types, prim_name);
+  return input_x_type->Clone();
 }
 
 int32_t BiasAddFuncImpl::CheckValidation(const PrimitivePtr &primitive,

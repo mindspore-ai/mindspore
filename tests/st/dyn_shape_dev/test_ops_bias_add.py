@@ -17,6 +17,7 @@ import pytest
 import mindspore as ms
 from mindspore import Tensor
 from mindspore import ops, jit
+from mindspore.common.api import _pynative_executor
 import test_utils
 
 
@@ -216,3 +217,27 @@ def test_bias_add_ncdhw(mode):
         for j in range(x_shape[1]):
             expect_output[i][j] = x[i][j] + b[j]
     assert np.all(output.asnumpy() == expect_output), "bias_add execute failed, please check current code commit"
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
+def test_bias_add_different_input_types(mode):
+    """
+    Feature: BiasAdd different input types.
+    Description: test BiasAdd with different input types.
+    Expectation: the result match with expected result.
+    """
+    @test_utils.run_with_cell
+    def bias_add_forward_func(x, b):
+        return ops.auto_generate.bias_add(x, b, data_format="NCHW")
+
+    ms.context.set_context(mode=mode)
+    x_shape = [2, 3, 4]
+    x = np.ones(x_shape).astype(np.float32)
+    b = np.array([3, 5, 7]).astype(np.float16)
+    with pytest.raises(TypeError):
+        _ = bias_add_forward_func(Tensor(x), Tensor(b))
+        _pynative_executor.sync()
