@@ -7831,8 +7831,8 @@ def amin(input, axis=None, keepdims=False, *, initial=None, where=None):
     Args:
         input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
             :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: ``None`` , reduce all dimensions.
-            Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
+        axis (Union[int, tuple(int), list(int), Tensor]): The dimensions to reduce. Default: ``None`` , reduce all
+            dimensions. Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
         keepdims (bool): If true, keep these reduced dimensions and the length is 1. If false, don't keep
             these dimensions. Default: ``False`` .
 
@@ -7855,7 +7855,7 @@ def amin(input, axis=None, keepdims=False, *, initial=None, where=None):
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        TypeError: If `axis` is not one of the following: int, tuple or list.
+        TypeError: If `axis` is not one of the following: int, tuple, list or Tensor.
         TypeError: If `keepdims` is not a bool.
         ValueError: If `axis` is out of range.
 
@@ -7935,8 +7935,8 @@ def amax(input, axis=None, keepdims=False, *, initial=None, where=None):
     Args:
         input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
             :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: ``None`` , reduce all dimensions.
-            Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
+        axis (Union[int, tuple(int), list(int), Tensor]): The dimensions to reduce. Default: ``None`` , reduce all
+            dimensions. Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
         keepdims (bool): If true, keep these reduced dimensions and the length is 1. If false, don't keep these
             dimensions. Default: ``False`` .
 
@@ -7958,7 +7958,7 @@ def amax(input, axis=None, keepdims=False, *, initial=None, where=None):
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        TypeError: If `axis` is not one of the following: int, tuple or list.
+        TypeError: If `axis` is not one of the following: int, tuple, list or Tensor.
         TypeError: If `keepdims` is not a bool.
         ValueError: If `axis` is out of range.
 
@@ -8023,8 +8023,8 @@ def mean(x, axis=None, keep_dims=False):
     Args:
         x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: ``None`` , reduce all dimensions.
-          Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
+        axis (Union[int, tuple(int), list(int), Tensor]): The dimensions to reduce. Default: ``None`` , reduce all
+            dimensions. Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
                           If false, don't keep these dimensions. Default: ``False`` .
 
@@ -8040,7 +8040,7 @@ def mean(x, axis=None, keep_dims=False):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If `axis` is not one of the following: int, tuple or list.
+        TypeError: If `axis` is not one of the following: int, tuple, list or Tensor.
         TypeError: If `keep_dims` is not a bool.
         ValueError: If `axis` is out of range.
 
@@ -8105,8 +8105,8 @@ def prod(input, axis=None, keep_dims=False):
     Args:
         input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: ``None`` , reduce all dimensions.
-          Only constant value is allowed. Assume the rank of `input` is r, and the value range is [-r,r).
+        axis (Union[int, tuple(int), list(int), Tensor]): The dimensions to reduce. Default: ``None`` , reduce all
+            dimensions. Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
                           If false, don't keep these dimensions. Default: ``False`` .
 
@@ -8122,7 +8122,7 @@ def prod(input, axis=None, keep_dims=False):
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        TypeError: If `axis` is not one of the following: int, tuple or list.
+        TypeError: If `axis` is not one of the following: int, tuple, list or Tensor.
         TypeError: If `keep_dims` is not a bool.
         ValueError: If `axis` is out of range.
 

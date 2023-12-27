@@ -7,7 +7,7 @@ mindspore.ops.mean
 
     参数：
         - **x** (Tensor[Number]) - 输入Tensor，其数据类型为数值型。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
-        - **axis** (Union[int, tuple(int), list(int)]) - 要减少的维度。默认值:  ``None`` ，缩小所有维度。只允许常量值。假设 `x` 的秩为r，取值范围[-r,r)。
+        - **axis** (Union[int, tuple(int), list(int), Tensor]) - 要减少的维度。默认值:  ``None`` ，缩小所有维度。只允许常量值。假设 `x` 的秩为r，取值范围[-r,r)。
         - **keep_dims** (bool) - 如果为 ``True`` ，则保留缩小的维度，大小为1。否则移除维度。默认值： ``False`` 。
 
     返回：
@@ -19,6 +19,6 @@ mindspore.ops.mean
 
     异常：
         - **TypeError** - `x` 不是Tensor。
-        - **TypeError** - `axis` 不是以下数据类型之一：int、tuple或list。
+        - **TypeError** - `axis` 不是以下数据类型之一：int、tuple、list或Tensor。
         - **TypeError** - `keep_dims` 不是bool类型。
         - **ValueError** - `axis` 超出范围。
