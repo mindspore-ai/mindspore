@@ -44,7 +44,7 @@ class PrimitiveFunctionEvaluator final : public TrivialPrimEvaluator {
   bool inplace_prim() const override { return prim_func_->inplace_prim(); }
 
  private:
-  AbstractBasePtr CheckAndInfer(const AbstractBasePtrList &args);
+  AbstractBasePtr OpsInfer(const AbstractBasePtrList &args);
   void CheckArgsSizeAndType(const AbstractBasePtrList &args);
   PrimitivePtr prim_func_;
   mindspore::ops::OpDefPtr op_def_{nullptr};
