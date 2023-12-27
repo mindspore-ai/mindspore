@@ -56,8 +56,8 @@ int32_t GatherDFuncImpl::CheckValidation(const PrimitivePtr &primitive,
     return OP_CHECK_RETRY;
   }
 
-  MS_CHECK_VALUE(dim >= -x_rank && dim < x_rank, CheckAndConvertUtils::FormatCheckInRangeMsg(
-                                                   "dim value", dim, kIncludeBoth, {-x_rank, x_rank}, primitive));
+  MS_CHECK_VALUE(dim >= 0 && dim < x_rank, CheckAndConvertUtils::FormatCheckInRangeMsg("dim value", dim, kIncludeBoth,
+                                                                                       {-x_rank, x_rank}, primitive));
 
   for (int64_t i = 0; i < x_rank; ++i) {
     if (i == dim) {
