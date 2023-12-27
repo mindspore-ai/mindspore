@@ -1721,14 +1721,15 @@ bool AnfRuntimeAlgorithm::NodeValueIsFuncGraph(const AnfNodePtr &node) {
   return value->isa<FuncGraph>();
 }
 
-bool AnfRuntimeAlgorithm::IsEnableKernelSelectBackoff(const KernelGraphPtr &graph) {
+bool AnfRuntimeAlgorithm::IsNodeSupportKernelSelectBackoff(const AnfNodePtr &node, const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(node);
   static std::string disable_kernel_backoff;
   static bool first_get_backoff_env = true;
   if (first_get_backoff_env) {
     disable_kernel_backoff = common::GetEnv(kDisableKernelBackoff);
     first_get_backoff_env = false;
   }
-  if (disable_kernel_backoff == "1") {
+  if (disable_kernel_backoff == "1" && (!common::AnfAlgo::IsTypeTransformOp(common::AnfAlgo::GetCNodeName(node)))) {
     MS_LOG(INFO) << "MS_DISABLE_KERNEL_BACKOFF has been set to turn off the kernel backoff ability.";
     return false;
   }

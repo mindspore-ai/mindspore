@@ -47,8 +47,8 @@ BaseShapePtr Resize2DInferShape(const PrimitivePtr &primitive, const std::vector
                                                              kEqual, SizeToLong(size_ele_num), primitive));
   for (size_t i = 0; i < size_array.size(); ++i) {
     if (!size_array.IsValueUnknown(i)) {
-      MS_CHECK_VALUE(size_array[i] > 0, CheckAndConvertUtils::FormatCheckIntegerMsg(
-                                          "size value", SizeToLong(size_array[i]), kGreaterThan, 0, primitive));
+      MS_CHECK_VALUE(size_array[i] > 0, CheckAndConvertUtils::FormatCheckIntegerMsg("size value", size_array[i],
+                                                                                    kGreaterThan, 0, primitive));
       output_shape[i + kDim2] = size_array[i];
     }
   }

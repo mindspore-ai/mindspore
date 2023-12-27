@@ -525,7 +525,7 @@ bool CheckSupportBackoff(const KernelGraphPtr &graph, const CNodePtr &node,
                          const std::pair<std::string, ExceptionType> &failure_info) {
   MS_EXCEPTION_IF_NULL(node);
   // The single op does not support the backoff ability.
-  if (!AnfAlgo::IsEnableKernelSelectBackoff(graph)) {
+  if (!AnfAlgo::IsNodeSupportKernelSelectBackoff(node, graph)) {
     return false;
   }
   const auto &kernel_name = common::AnfAlgo::GetCNodeName(node);

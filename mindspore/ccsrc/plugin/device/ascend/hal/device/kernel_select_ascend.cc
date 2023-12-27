@@ -349,7 +349,7 @@ void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
 std::string TryBackoffCpu(const KernelGraphPtr &graph, const CNodePtr &node,
                           const std::pair<std::string, ExceptionType> &failure_info) {
   // The Pynative_mode and task_sink does not support the backoff ability.
-  if (!AnfAlgo::IsEnableKernelSelectBackoff(graph)) {
+  if (!AnfAlgo::IsNodeSupportKernelSelectBackoff(node, graph)) {
     return failure_info.first;
   }
 
