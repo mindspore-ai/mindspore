@@ -188,6 +188,22 @@ def get_support_dtype_list(src_type, dst_type):
     return support_list
 
 
+def to_py_number(data, dst_type):
+    """Convert tensor to python number"""
+    if dst_type == DT_INT_VAL:
+        data = ops.cast(data, ms.int64)
+    elif dst_type == DT_FLOAT_VAL:
+        data = ops.cast(data, ms.float32)
+    elif dst_type == DT_NUMBER_VAL:
+        src_type = data.dtype
+        if src_type in (ms.uint8, ms.uint16, ms.uint32, ms.uint64,
+                        ms.int8, ms.int16, ms.int32, ms.int64):
+            data = ops.cast(data, ms.int64)
+        elif src_type in (ms.bfloat16, ms.float16, ms.float32, ms.float64):
+            data = ops.cast(data, ms.float32)
+    return TensorToScalar()(data)
+
+
 def do_type_cast(data, dst_type):
     """Type conversion."""
     if is_instance_of(data, dst_type):
@@ -211,10 +227,7 @@ def do_type_cast(data, dst_type):
             return list_to_tensor(data)
     elif is_number(dst_type):
         if isinstance(data, Tensor):
-            if dst_type == DT_INT_VAL:
-                data = ops.cast(data, ms.int64)
-            ret = TensorToScalar()(data)
-            return ret
+            return to_py_number(data, dst_type)
     raise TypeError("Type conversion failed.")
 
 
@@ -229,5 +242,7 @@ def type_it(data, src_type, dst_type):
     dst_type = int(dst_type)
     if not is_instance_in(data, src_type) and not is_instance_of(data, dst_type):
         support_list = get_support_dtype_list(src_type, dst_type)
-        raise TypeError(f"For type conversion here, only support <{support_list}>, but got {type(data)}.")
+        raise TypeError(
+            f"For type conversion here, only support <{support_list}>, but got {type(data)}."
+        )
     return do_type_cast(data, dst_type)

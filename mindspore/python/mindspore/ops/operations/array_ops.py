@@ -2739,12 +2739,7 @@ class StridedSlice(PrimitiveWithInfer):
     def _compute_slicing_len_for_positive_stride(begin, end, stride, x_dim):
         """Compute slice length for positive stride."""
         if x_dim == -1:
-            if begin >= end:
-                # When slicing forward, if begin >= end, the length of the slicing is 0.
-                slicing_length = 0
-            else:
-                slicing_length = -1
-            return slicing_length
+            return -1
         # When slicing forward, convert begin and end to positive numbers.
         if begin >= x_dim or end < -x_dim:
             # When slicing forward, if begin >= x_dim or end < -x_dim, the length of the slicing is 0.
@@ -2771,11 +2766,7 @@ class StridedSlice(PrimitiveWithInfer):
     def _compute_slicing_len_for_negative_stride(begin, end, stride, x_dim):
         """Compute slice length for negative stride."""
         if x_dim == -1:
-            if begin <= end:
-                slicing_length = 0
-            else:
-                slicing_length = -1
-            return slicing_length
+            return -1
         # When slicing backward, convert begin and end to negative numbers.
         if begin < -x_dim or end >= x_dim:
             # When slicing backward, if begin < -x_dim or end >= x_dim, the length of the slicing is 0.
