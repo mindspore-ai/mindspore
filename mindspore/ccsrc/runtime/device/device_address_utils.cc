@@ -371,6 +371,21 @@ mindspore::HashSet<mindspore::AnfNodePtr> FetchValueNodesNeedDevicePtr(const Ker
   return nodes;
 }
 
+device::DeviceAddressPtr CreateDeviceAddressForTypeValue(const DeviceContext *device_context,
+                                                         const ValueNodePtr &value_node) {
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(value_node);
+  const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+    {value_node, 0}, nullptr, 0, kOpFormat_DEFAULT, kMetaTypeTypeType, {},
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  device::DeviceAddressPtr address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+  MS_LOG(DEBUG) << "Create addr for node:" << value_node->DebugString() << " addr:" << address;
+  MS_EXCEPTION_IF_NULL(address);
+  address->set_from_persistent_mem(true);
+  AnfAlgo::SetOutputAddr(address, 0, value_node.get());
+  return address;
+}
+
 void DeviceAddressUtils::CreateValueNodeDeviceAddress(const DeviceContext *device_context,
                                                       const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(device_context);
@@ -399,6 +414,9 @@ void DeviceAddressUtils::CreateValueNodeDeviceAddress(const DeviceContext *devic
           MS_LOG(DEBUG) << "Find node " << value_node->DebugString() << " has init args";
         }
       }
+      continue;
+    } else if (node_value->isa<Type>()) {
+      CreateDeviceAddressForTypeValue(device_context, value_node);
       continue;
     }
 
