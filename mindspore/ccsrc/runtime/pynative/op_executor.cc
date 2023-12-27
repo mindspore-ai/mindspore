@@ -74,6 +74,13 @@ void OpExecutor::WorkerJoin() {
   async_queue_.WorkerJoin();
 }
 
+bool OpExecutor::NeedSync() {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  return context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) ||
+         context->get_param<int>(MS_CTX_EXECUTION_MODE) == mindspore::kGraphMode;
+}
+
 void OpExecutor::ChildAfterFork() {
   MS_LOG(DEBUG) << "OpExecutor reinitialize after fork";
   MS_LOG(DEBUG) << "Reinitialize async_queue_.";

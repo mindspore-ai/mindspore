@@ -225,11 +225,9 @@ DeviceContext *PyBoostUtils::CreateOrGetDeviceContextAndInit(const std::string &
 }
 
 void PyBoostUtils::DispatchRun(const std::shared_ptr<pynative::PyBoostDeviceTask> &task) {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  auto sync = context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
-  auto mode = context->get_param<int>(MS_CTX_EXECUTION_MODE);
-  if (sync || mode == mindspore::kGraphMode) {
+  auto need_sync = runtime::OpExecutor::NeedSync();
+  if (need_sync) {
+    MS_LOG(INFO) << "PyBoost sync run device task";
     runtime::OpExecutor::GetInstance().WaitAll();
     task->Run();
   } else {

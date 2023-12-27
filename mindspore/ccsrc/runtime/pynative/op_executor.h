@@ -73,6 +73,8 @@ class BACKEND_EXPORT OpExecutor {
   // Child process reinitialize resource after fork.
   void ChildAfterFork();
 
+  static bool NeedSync();
+
  private:
   OpExecutor();
   ~OpExecutor();
