@@ -15,6 +15,9 @@
 """Operator argument handle function."""
 
 from mindspore.ops_generate.gen_ops_inner_prim import DtypeToEnum, StringToEnum
+# Enum Class:
+from mindspore._c_expression import (Format, Reduction)
+
 
 def to_kernel_size(kernel_size):
     """
