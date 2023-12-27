@@ -61,6 +61,7 @@ class MultiMarginLossGradCPUKernelMod : public NativeCpuKernelMod,
   void LaunchKernelFP16(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   void CheckParam(const CNodePtr &kernel_node) const;
+  bool weight_defined_{false};
   size_t batch_size = 2;
   size_t dims = 1;
   string reduction = MEAN;

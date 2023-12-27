@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr int has_weight_inputs_size = 4;
 constexpr int64_t p_num_1 = 1;
 constexpr int64_t p_num_2 = 2;
 constexpr int64_t reduction_num_0 = 0;

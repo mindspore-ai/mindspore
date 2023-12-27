@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <memory>
 #include "include/curand.h"
+#include "ir/dtype/empty.h"
 #include "mindspore/core/ops/grad/multi_margin_loss_grad.h"
 #include "abstract/utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/multi_margin_loss_grad_impl.cuh"
@@ -64,10 +65,8 @@ int MultiMarginLossGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &i
   input_elements_ = 0;
   output_size_list_.clear();
   workspace_size_list_.clear();
-  int inputs_size = 0;
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
-    inputs_size += 1;
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {
       return KRET_UNKNOWN_SHAPE;
@@ -81,11 +80,9 @@ int MultiMarginLossGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &i
   }
   nframe_ = input_shape.at(0);
   dim_ = input_shape.at(1);
-  if (inputs_size == has_weight_inputs_size) {
-    has_weight_ = true;
-  } else {
-    has_weight_ = false;
-  }
+
+  auto type = inputs[kIndex3]->GetType();
+  has_weight_ = !type->isa<TypeNone>();
   size_t input_size = input_elements_ * unit_size_;
   output_size_list_.push_back(input_size);
   return KRET_OK;
@@ -114,39 +111,21 @@ std::vector<std::pair<KernelAttr, MultiMarginLossGradGpuKernelMod::MultiMarginLo
                                                     .AddInputAttr(kNumberTypeFloat16)
                                                     .AddInputAttr(kNumberTypeFloat16)
                                                     .AddInputAttr(kNumberTypeInt64)
-                                                    .AddInputAttr(kNumberTypeFloat16)
+                                                    .AddOptionalInputAttr(kNumberTypeFloat16)
                                                     .AddOutputAttr(kNumberTypeFloat16),
                                                   &MultiMarginLossGradGpuKernelMod::LaunchKernel<half>},
                                                  {KernelAttr()
                                                     .AddInputAttr(kNumberTypeFloat64)
                                                     .AddInputAttr(kNumberTypeFloat64)
                                                     .AddInputAttr(kNumberTypeInt64)
-                                                    .AddInputAttr(kNumberTypeFloat64)
+                                                    .AddOptionalInputAttr(kNumberTypeFloat64)
                                                     .AddOutputAttr(kNumberTypeFloat64),
                                                   &MultiMarginLossGradGpuKernelMod::LaunchKernel<double>},
                                                  {KernelAttr()
                                                     .AddInputAttr(kNumberTypeFloat32)
                                                     .AddInputAttr(kNumberTypeFloat32)
                                                     .AddInputAttr(kNumberTypeInt64)
-                                                    .AddInputAttr(kNumberTypeFloat32)
-                                                    .AddOutputAttr(kNumberTypeFloat32),
-                                                  &MultiMarginLossGradGpuKernelMod::LaunchKernel<float>},
-                                                 {KernelAttr()
-                                                    .AddInputAttr(kNumberTypeFloat16)
-                                                    .AddInputAttr(kNumberTypeFloat16)
-                                                    .AddInputAttr(kNumberTypeInt64)
-                                                    .AddOutputAttr(kNumberTypeFloat16),
-                                                  &MultiMarginLossGradGpuKernelMod::LaunchKernel<half>},
-                                                 {KernelAttr()
-                                                    .AddInputAttr(kNumberTypeFloat64)
-                                                    .AddInputAttr(kNumberTypeFloat64)
-                                                    .AddInputAttr(kNumberTypeInt64)
-                                                    .AddOutputAttr(kNumberTypeFloat64),
-                                                  &MultiMarginLossGradGpuKernelMod::LaunchKernel<double>},
-                                                 {KernelAttr()
-                                                    .AddInputAttr(kNumberTypeFloat32)
-                                                    .AddInputAttr(kNumberTypeFloat32)
-                                                    .AddInputAttr(kNumberTypeInt64)
+                                                    .AddOptionalInputAttr(kNumberTypeFloat32)
                                                     .AddOutputAttr(kNumberTypeFloat32),
                                                   &MultiMarginLossGradGpuKernelMod::LaunchKernel<float>}};
 
