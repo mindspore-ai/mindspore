@@ -68,8 +68,8 @@ int CumProdCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
   shape_ = inputs[kIndex0]->GetShapeVector();
   dst_shape_ = outputs[kIndex0]->GetShapeVector();
   input_dim_length_ = SizeToInt(shape_.size());
-  size_t input_size =
-    std::accumulate(shape_.begin(), shape_.end(), GetTypeByte(inputs[kIndex0]->dtype()), std::multiplies<size_t>());
+  size_t input_size = std::accumulate(shape_.begin(), shape_.end(), UnitSizeInBytes(inputs[kIndex0]->dtype_id()),
+                                      std::multiplies<size_t>());
   workspace_size_list_.push_back(input_size);
   return KRET_OK;
 }
