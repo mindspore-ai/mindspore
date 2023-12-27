@@ -87,6 +87,9 @@ class BACKEND_EXPORT DeviceAddressUtils {
   static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
                                                      const abstract::AbstractBasePtr &abs, size_t index,
                                                      const StringImmPtr &string_imm);
+  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
+                                                     const abstract::AbstractBasePtr &abs, size_t index,
+                                                     const TypePtr &type_ptr);
   template <typename T>
   static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
                                                      const abstract::AbstractBasePtr &abs, size_t index, const T &t) {

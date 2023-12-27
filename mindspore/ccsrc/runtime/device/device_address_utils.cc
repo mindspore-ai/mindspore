@@ -993,6 +993,30 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateInputAddress(const DeviceCont
   return device_address;
 }
 
+device::DeviceAddressPtr DeviceAddressUtils::CreateInputAddress(const DeviceContext *device_context,
+                                                                const abstract::AbstractBasePtr &abs, size_t index,
+                                                                const TypePtr &type_ptr) {
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(abs);
+
+  const auto &shape = abs->GetShape();
+  const auto &type = abs->GetType();
+  const auto &value = abs->GetValue();
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    shape, type, value, nullptr, GetTypeByte(TypeIdToType(type_ptr->type_id())), kOpFormat_DEFAULT, type_ptr->type_id(),
+    ShapeVector(), device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+  device_address->set_from_persistent_mem(true);
+
+  if (device_address->GetPtr() == nullptr) {
+    CopyNonTensorDataToDevice(device_context, device_address);
+  }
+  MS_LOG(DEBUG) << "Create input " << abs->ToString() << " device address for " << index
+                << "th input, Shape: " << shape->ToString() << ", Type: " << type->ToString()
+                << ", Value: " << (value ? value->ToString() : "nullptr") << " device address:" << device_address;
+  return device_address;
+}
+
 void DeviceAddressUtils::CreateOutputTensorAddress(DeviceContext *device_context,
                                                    const std::vector<tensor::TensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(device_context);

@@ -186,8 +186,17 @@ AbstractBasePtr PyBoostUtils::InferByOpDef(const PrimitivePtr &prim, const std::
     output_abs = mindspore::abstract::MakeAbstract(shape, type);
     MS_LOG(DEBUG) << "Pynative Infer by OpDef, got abstract: " << output_abs->ToString();
     return output_abs;
+  } else {
+    const auto &infer_map = abstract::GetPrimitiveInferMapPtr();
+    const auto &iter = infer_map->find(prim);
+    if (iter != infer_map->end()) {
+      output_abs = iter->second.InferShapeAndType(nullptr, prim, input_abs);
+      MS_LOG(DEBUG) << "Pynative Infer by C++ PrimitiveInferMap, got abstract: " << output_abs->ToString();
+      return output_abs;
+    } else {
+      MS_LOG(EXCEPTION) << "Cannot found infer function for Op " << prim->name();
+    }
   }
-  MS_LOG(EXCEPTION) << "Cannot found infer function for Op " << prim->name();
 }
 
 tensor::TensorPtr PyBoostUtils::ContiguousTensor(const tensor::TensorPtr &input_tensor) {
@@ -299,14 +308,14 @@ PyboostKernelExtraFuncFactory &PyboostKernelExtraFuncFactory::GetInstance() {
 void PyBoostUtils::PyboostRunOp(const PrimitivePtr &primitive, device::DeviceContext *device_context,
                                 const AddressInfoPair &input_address_info, const AddressInfoPair &output_address_info,
                                 void *stream_ptr) {
+  const auto &prim_name = primitive->name();
   // KernelMod init
-  auto kernel_mod = PyBoostUtils::CreateKernelMod(primitive, primitive->name(), device_context,
-                                                  input_address_info.first, output_address_info.first);
+  auto kernel_mod = PyBoostUtils::CreateKernelMod(primitive, prim_name, device_context, input_address_info.first,
+                                                  output_address_info.first);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   // KernelMod resize
   if (kernel_mod->Resize(input_address_info.first, output_address_info.first) == kernel::KRET_RESIZE_FAILED) {
-    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#CPU kernel op [" << primitive->name()
-                               << "] resize failed.";
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#CPU kernel op [" << prim_name << "] resize failed.";
   }
   // Get workspace address
   const auto &workspace_device_address =
@@ -314,9 +323,9 @@ void PyBoostUtils::PyboostRunOp(const PrimitivePtr &primitive, device::DeviceCon
   const auto &workspace_kernel_tensors = PyBoostUtils::GetKernelTensorFromAddress(workspace_device_address);
   // Do kernel launch
   if (!kernel_mod->Launch(input_address_info.first, workspace_kernel_tensors, output_address_info.first, stream_ptr)) {
-    MS_LOG(EXCEPTION) << "Launch kernel failed, name: " << primitive->name();
+    MS_LOG(EXCEPTION) << "Launch kernel failed, name: " << prim_name;
   }
-  MS_LOG(DEBUG) << primitive->name() << " Launch end";
+  MS_LOG(DEBUG) << prim_name << " Launch end";
 }
 }  // namespace pyboost
 }  // namespace kernel
