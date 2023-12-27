@@ -71,3 +71,22 @@ def test_f_not_equal_api_bfloat16(mode):
     tensor_output = net(x, y)
     tensor_expected = np.array([True, False, True])
     np.testing.assert_array_equal(tensor_output.asnumpy(), tensor_expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_f_not_equal_bool():
+    """
+    Feature: test ne functional API.
+    Description: testcase for ne functional API.
+    Expectation: the result match with expected result.
+    """
+    ms.set_context(mode=ms.PYNATIVE_MODE, device_target="Ascend")
+    net = Net()
+    x = Tensor(np.full((2, 2), False))
+    y = True
+    tensor_output = net(x, y)
+    tensor_expected = np.array([[True, True], [True, True]])
+    np.testing.assert_array_equal(tensor_output.asnumpy(), tensor_expected)
