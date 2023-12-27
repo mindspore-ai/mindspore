@@ -117,7 +117,7 @@ class AdamW(Optimizer):
         ValueError: If the learning rate is not int, float or Tensor.
         ValueError: If the learning rate is less than 0.
         ValueError: If the `eps` is less than 0.0.
-        ValueError: If the `betas` not in the range of 0-1.
+        ValueError: If the `betas` not in the range of [0, 1).
         ValueError: If the `weight_decay` is less than 0.
 
     Supported Platforms:

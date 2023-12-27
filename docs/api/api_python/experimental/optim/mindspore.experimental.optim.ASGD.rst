@@ -1,7 +1,7 @@
 mindspore.experimental.optim.ASGD
 ===================================
 
-.. py:class:: mindspore.experimental.optim.ASGD(params, lr=1e-2, lambd=1e-4, alpha=0.75, t0=1e6, weight_decay=0., maximize=False)
+.. py:class:: mindspore.experimental.optim.ASGD(params, lr=1e-2, lambd=1e-4, alpha=0.75, t0=1e6, weight_decay=0.0, maximize=False)
 
     Averaged Stochastic Gradient Descent 算法的实现。
 

@@ -1,7 +1,7 @@
 mindspore.experimental.optim.SGD
 =================================
 
-.. py:class:: mindspore.experimental.optim.SGD(params, lr, momentum=0, dampening=0, weight_decay=0., nesterov=False, *, maximize=False)
+.. py:class:: mindspore.experimental.optim.SGD(params, lr, momentum=0, dampening=0, weight_decay=0.0, nesterov=False, *, maximize=False)
 
     随机梯度下降算法。
 

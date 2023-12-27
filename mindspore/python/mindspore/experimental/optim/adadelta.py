@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 from mindspore.ops import functional as F, composite as C, operations as P
 import mindspore.common.dtype as mstype
-from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than
+from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than, check_not_less_than_without_equal
 from mindspore import _checkparam as validator
 
 _adadelta_opt = C.MultitypeFuncGraph("adadelta_opt")
@@ -84,8 +84,8 @@ class Adadelta(Optimizer):
     Raises:
         ValueError: If the learning rate is not int, float or Tensor.
         ValueError: If the learning rate is less than 0.
-        ValueError: If the `eps` is less than 0.0.
-        ValueError: If the `rho` is not in the range of 0-1.
+        ValueError: If the `eps` is less than or equal to 0.0.
+        ValueError: If the `rho` is not in the range of [0, 1].
         ValueError: If the `weight_decay` is less than 0.
 
     Supported Platforms:
@@ -110,9 +110,9 @@ class Adadelta(Optimizer):
         ...     optimizer(grads)
         ...     return loss
     """
-    def __init__(self, params, lr=1., rho=0.9, eps=1e-6, weight_decay=0., *, maximize=False):
-        check_not_less_than(lr, "lr", self.cls_name)
-        check_not_less_than(eps, "eps", self.cls_name)
+    def __init__(self, params, lr=1.0, rho=0.9, eps=1e-6, weight_decay=0.0, *, maximize=False):
+        check_not_less_than_without_equal(lr, "lr", self.cls_name)
+        check_not_less_than_without_equal(eps, "eps", self.cls_name)
         check_not_less_than(weight_decay, "weight_decay", self.cls_name)
         validator.check_float_range(rho, 0., 1., validator.INC_BOTH, "rho", self.cls_name)
 

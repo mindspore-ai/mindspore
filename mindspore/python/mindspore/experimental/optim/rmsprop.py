@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 from mindspore.ops import functional as F, composite as C, operations as P
 import mindspore.common.dtype as mstype
-from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than
+from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than, check_not_less_than_without_equal
 from mindspore import ops
 
 _rmsprop_opt = C.MultitypeFuncGraph("rmsprop_opt")
@@ -100,11 +100,11 @@ class RMSprop(Optimizer):
         ...     return loss
     """
 
-    def __init__(self, params, lr=1e-2, alpha=0.99, eps=1e-8, weight_decay=0., momentum=0.,
+    def __init__(self, params, lr=1e-2, alpha=0.99, eps=1e-8, weight_decay=0.0, momentum=0.0,
                  centered=False, maximize=False):
-        check_not_less_than(lr, "lr", self.cls_name)
+        check_not_less_than_without_equal(lr, "lr", self.cls_name)
         check_not_less_than(alpha, "alpha", self.cls_name)
-        check_not_less_than(eps, "eps", self.cls_name)
+        check_not_less_than_without_equal(eps, "eps", self.cls_name)
         check_not_less_than(momentum, "momentum", self.cls_name)
         check_not_less_than(weight_decay, "weight_decay", self.cls_name)
 

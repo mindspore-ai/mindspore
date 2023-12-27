@@ -19,7 +19,7 @@ from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common import Tensor, Parameter
 import mindspore.common.dtype as mstype
 from mindspore import _checkparam as validator
-from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than
+from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than_without_equal
 from mindspore import ops
 
 _rprop_opt = C.MultitypeFuncGraph("rprop_opt")
@@ -113,8 +113,8 @@ class Rprop(Optimizer):
     """
 
     def __init__(self, params, lr=1e-2, etas=(0.5, 1.2), step_sizes=(1e-6, 50), *, maximize=False):
-        check_not_less_than(lr, "lr", self.cls_name)
-        check_not_less_than(etas[1], "etas[1]", self.cls_name, 1.)
+        check_not_less_than_without_equal(lr, "lr", self.cls_name)
+        check_not_less_than_without_equal(etas[1], "etas[1]", self.cls_name, 1.)
         validator.check_float_range(etas[0], 0., 1., validator.INC_NEITHER, "etas[0]", self.cls_name)
 
         defaults = dict(

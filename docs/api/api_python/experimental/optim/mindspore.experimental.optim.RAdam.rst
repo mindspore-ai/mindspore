@@ -57,4 +57,4 @@ mindspore.experimental.optim.RAdam
         - **ValueError** - 学习率小于0。
         - **ValueError** - `eps` 小于0。
         - **ValueError** - `weight_decay` 小于0。
-        - **ValueError** - `betas` 内元素的取值范围不在0-1之间。
+        - **ValueError** - `betas` 内元素的取值范围不在[0, 1)之间。
