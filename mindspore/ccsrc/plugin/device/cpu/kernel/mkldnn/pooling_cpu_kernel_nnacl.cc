@@ -112,13 +112,7 @@ bool PoolingCpuKernelNnaclMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
   dtype_ = inputs[kIndex0]->dtype_id();
-  if (kernel_name_ == kAvgPoolOpName) {
-    kernel_size_ = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
-    stride_size_ = inputs[kIndex2]->GetValueWithCheck<std::vector<int64_t>>();
-    pad_mode_ = static_cast<mindspore::PadMode>(inputs[kIndex3]->GetValueWithCheck<int64_t>());
-    format_ = static_cast<mindspore::Format>(inputs[kIndex4]->GetValueWithCheck<int64_t>());
-
-  } else {
+  if (kernel_name_ != kAvgPoolOpName) {
     kernel_size_ = GetValue<std::vector<int64_t>>(primitive()->GetAttr(KERNEL_SIZE));
     stride_size_ = GetValue<std::vector<int64_t>>(primitive()->GetAttr(STRIDES));
     pad_mode_ =
@@ -159,6 +153,13 @@ int PoolingCpuKernelNnaclMod::Resize(const std::vector<KernelTensor *> &inputs,
     if (kernel_name_ == kAvgPoolOpName) {
       kernel_size = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
       stride_size = inputs[kIndex2]->GetValueWithCheck<std::vector<int64_t>>();
+      pad_mode_ = static_cast<mindspore::PadMode>(inputs[kIndex3]->GetValueWithCheck<int64_t>());
+      format_ = static_cast<mindspore::Format>(inputs[kIndex4]->GetValueWithCheck<int64_t>());
+      if (format_ != Format::NCHW) {
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', only 'NCHW' format is supported in CPU target, but got '"
+                      << GetFormatFromEnumToStr(format_) << "' format.";
+        return KRET_RESIZE_FAILED;
+      }
     } else {
       kernel_size = GetValue<std::vector<int64_t>>(primitive()->GetAttr(KERNEL_SIZE));
       stride_size = GetValue<std::vector<int64_t>>(primitive()->GetAttr(STRIDES));
