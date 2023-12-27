@@ -15,9 +15,6 @@
  */
 
 #include "mindspore/ccsrc/debug/summary/summary.h"
-#include <set>
-#include <utility>
-#include <memory>
 #include "utils/ms_context.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
