@@ -326,19 +326,8 @@ GraphRunnerPtr NewGraphRunner(const GraphRunnerOptions &options) {
 void SetGraphRunner(const GraphRunnerPtr &runner) { DfGraphManager::GetInstance().SetGraphRunner(runner); }
 void ClearGraph() { DfGraphManager::GetInstance().ClearGraph(); }
 Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options) {
-  auto ret = DfGraphManager::GetInstance().AddGraph(name, graph, options);
-  if (ret != Status::SUCCESS) {
-    return ret;
-  }
-  auto graph_runner = transform::GetGraphRunner();
-  if (graph_runner == nullptr) {
-    // lite may not use graph_runner
-    MS_LOG(INFO) << "There is no GraphRunner.";
-    return ret;
-  }
-  return graph_runner->AddGraph(name);
+  return DfGraphManager::GetInstance().AddGraph(name, graph, options);
 }
-
 void SetAnfGraph(const std::string &name, const AnfGraphPtr &anf_graph_ptr) {
   DfGraphManager::GetInstance().SetAnfGraph(name, anf_graph_ptr);
 }

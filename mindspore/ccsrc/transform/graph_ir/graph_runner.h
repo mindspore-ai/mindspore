@@ -31,7 +31,6 @@ class GraphRunner {
  public:
   explicit GraphRunner(const GraphRunnerOptions &options);
   ~GraphRunner() { sess_ = nullptr; }
-  Status AddGraph(const std::string &name);
   Status RunGraph(const RunOptions &options, const std::vector<MeTensorPtr> &inputs, std::vector<MeTensorPtr> *outputs);
   Status RunGraph(const RunOptions &options, const std::vector<GeTensorPtr> &inputs, std::vector<GeTensorPtr> *outputs);
   Status RunGraphAsync(const RunOptions &options, const std::vector<GeTensorPtr> &inputs,
