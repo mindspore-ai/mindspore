@@ -38,7 +38,7 @@ from ..auto_generate import (AbsGrad, ACosGrad, LogitGrad, AcoshGrad,
                              ResizeLinear1DGrad, ResizeNearestNeighborV2Grad,
                              SigmoidGrad, HSwishGrad, NLLLossGrad, AtanGrad, GridSampler3DGrad,
                              GridSampler2DGrad, ResizeBicubicGrad, HSigmoidGrad, CholeskyGrad,
-                             ResizeNearestNeighborGrad, LayerNormGrad, HShrinkGrad)
+                             ResizeNearestNeighborGrad, LayerNormGrad, HShrinkGrad, LayerNormGradGrad)
 
 
 class SparseFillEmptyRowsGrad(Primitive):
@@ -1235,49 +1235,6 @@ class L2NormalizeGrad(Primitive):
         self.init_attrs['axis'] = axis
         if len(axis) != 1:
             raise TypeError("The length of axis must be 1, later will support multiple axis!")
-
-
-class LayerNormGradGrad(Primitive):
-    """
-    Gets the gradient of LayerNormGrad operation.
-
-    Args:
-        begin_norm_axis (int): The begin axis for the input to apply layernorm. Default: 1.
-        begin_params_axis (int): The begin axis for the parameter input to apply layernorm. Default: 1.
-
-    Inputs:
-        - **x** (Tensor) - The input tensor to be normalized, float32 or float16.
-        - **dy** (Tensor) - The gradient of LayerNorm's output y, float32 or float16.
-        - **variance** (Tensor) - The variance of x, float32 or float16.
-        - **mean** (Tensor) - The mean of x, float32 or float16.
-        - **gamma** (Tensor) - The original value of weight gamma initialized in LayerNorm, float32 or float16.
-          Default: 'ones'.
-        - **d_dx** (Tensor) - The gradient of dx, where dx is the gradient of LayerNorm's input x, float32 or float16.
-        - **d_dg** (Tensor) - The gradient of dg, where dg is the gradient of LayerNorm's weight gamma,
-          float32 or float16.
-        - **d_db** (Tensor) - The gradient of db, where db is the gradient of LayerNorm's weight beta,
-          float32 or float16.
-
-    Returns:
-        Tuple[Tensor], tuple of 3 Tensors (the gradients of layernormgrad x, dy, gamma).
-
-    Raises:
-        TypeError: If the 8 inputs don't have the same dtype.
-        ValueError: If x, dy, d_dx don't have the same shape.
-        ValueError: If variance, mean don't have the same shape.
-        ValueError: If gamma, d_dg, d_db don't have the same shape.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-    """
-
-    @prim_attr_register
-    def __init__(self, begin_norm_axis=1, begin_params_axis=1):
-        """init"""
-        self.begin_norm_axis = validator.check_value_type('begin_norm_axis', begin_norm_axis, [int], self.name)
-        self.begin_params_axis = validator.check_value_type('begin_params_axis', begin_params_axis, [int], self.name)
-        self.init_prim_io_names(inputs=['x', 'dy', 'variance', 'mean', 'gamma', 'd_dx', 'd_dg', 'd_db'],
-                                outputs=['sopd_x', 'sopd_dy', 'sopd_gamma'])
 
 
 class LSTMGradData(Primitive):

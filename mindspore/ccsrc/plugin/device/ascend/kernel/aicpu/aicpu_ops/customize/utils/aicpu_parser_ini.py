@@ -196,7 +196,8 @@ cust_op_lists = [
     "environcreate",
     "environdestroyall",
     "environget",
-    "environset"
+    "environset",
+    "layernormgradgrad"
 ]
 
 

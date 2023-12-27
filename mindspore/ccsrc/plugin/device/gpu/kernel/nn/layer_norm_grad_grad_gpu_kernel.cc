@@ -17,7 +17,7 @@
 #include "plugin/device/gpu/kernel/nn/layer_norm_grad_grad_gpu_kernel.h"
 #include <utility>
 namespace {
-constexpr size_t kLayerNormGradGradInputsNum = 8;
+constexpr size_t kLayerNormGradGradInputsNum = 10;
 constexpr size_t kLayerNormGradGradOutputsNum = 3;
 }  // namespace
 namespace mindspore {
@@ -42,6 +42,8 @@ const std::vector<std::pair<KernelAttr, LayerNormGradGradPtrCreatorFunc>> kernel
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
@@ -56,6 +58,8 @@ const std::vector<std::pair<KernelAttr, LayerNormGradGradPtrCreatorFunc>> kernel
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat16)
      .AddOutputAttr(kNumberTypeFloat16)
      .AddOutputAttr(kNumberTypeFloat16),
@@ -87,8 +91,8 @@ bool LayerNormGradGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inpu
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type.";
     return false;
   }
-  attr_ptr_->begin_norm_axis = GetValue<int64_t>(primitive_->GetAttr(ops::kBeginNormAxis));
-  attr_ptr_->begin_params_axis = GetValue<int64_t>(primitive_->GetAttr(ops::kBeginParamsAxis));
+  attr_ptr_->begin_norm_axis = inputs[kIndex8]->GetValueWithCheck<int64_t>();
+  attr_ptr_->begin_params_axis = inputs[kIndex9]->GetValueWithCheck<int64_t>();
 
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);

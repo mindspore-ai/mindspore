@@ -24,7 +24,6 @@
 #include <algorithm>
 #include <functional>
 
-#include "mindspore/core/ops/grad/layer_norm_grad_grad.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_class/layer_norm_grad_grad_helper.h"
