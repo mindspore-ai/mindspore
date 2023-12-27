@@ -316,7 +316,6 @@ bool AscendKernelRuntime::Init() {
     mem_manager_ = std::make_shared<AscendMemoryManager>();
     MS_EXCEPTION_IF_NULL(mem_manager_);
     mem_manager_->Initialize();
-    transform::AclnnInit();
     auto rt_ret = aclrtSetExceptionInfoCallback(TaskExceptionCallback);
     if (rt_ret != ACL_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Reg SetTaskFailCallback failed, error: " << rt_ret;
