@@ -233,6 +233,8 @@ def test_grad_parameter_as_input_and_fv(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_grad_same_parameter_both_input_and_fv(mode):
     """
@@ -255,6 +257,8 @@ def test_grad_same_parameter_both_input_and_fv(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_same_arg_parameter_assign(mode):
     """
