@@ -1135,10 +1135,10 @@ ValueNodePtr KernelGraphMgr::HandleValueNodeInput(const AnfNodePtr &anf, KernelG
     size_t not_none_input_index = 1;
     auto origin_inputs = use_node->inputs();
     for (size_t idx = 1; idx < origin_inputs.size(); idx++) {
-      auto input_node = origin_inputs[input_idx];
+      auto input_node = origin_inputs[idx];
       MS_EXCEPTION_IF_NULL(input_node);
       if (!IsValueNode<None>(input_node)) {
-        not_none_input_index = input_idx;
+        not_none_input_index = idx;
       }
     }
     if (input_idx > not_none_input_index) {
