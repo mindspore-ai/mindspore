@@ -168,8 +168,8 @@ class SymbolTree:
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> print([node.get_name() for node in stree.nodes()])
-            ['input_x', 'Expr', 'conv1', 'relu', 'max_pool2d', 'conv2', 'relu_1', 'max_pool2d_1',
-             'flatten', 'fc1', 'relu_2', 'fc2', 'relu_3', 'fc3', 'return']
+            ['input_x', 'Expr', 'conv1', 'relu', 'max_pool2d', 'conv2', 'relu_1', 'max_pool2d_1', 'attribute_assign',
+             'unaryop_not', 'if_node', 'flatten', 'fc1', 'relu_2', 'fc2', 'relu_3', 'fc3', 'return_1']
         """
         Validator.check_value_type("all_nodes", all_nodes, [bool], "nodes")
         nodes = self._symbol_tree.all_nodes() if all_nodes else self._symbol_tree.nodes()

@@ -281,7 +281,7 @@ class Node:
             >>> dst_node = stree.get_node("relu_3")
             >>> dst_node.set_arg_by_node(0, src_node, 0)
             >>> print(dst_node.get_args())
-            [fc1]
+            [fc1_var]
         """
         Validator.check_value_type("arg_idx", arg_idx, [int], "Node")
         Validator.check_value_type("src_node", src_node, [Node], "Node")
