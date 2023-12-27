@@ -85,6 +85,11 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
 
   static AbstractBasePtr ConvertAbstract(const ValuePtr &t) { return t->ToAbstract(); }
 
+  template <typename... T>
+  void GenerateAbstract(T &... args) {
+    (input_abs_.emplace_back(ConvertAbstract(args)), ...);
+  }
+
   // Member function for Infer and creating output tensors.
   template <typename... T>
   void InferOutput(T &... args) {

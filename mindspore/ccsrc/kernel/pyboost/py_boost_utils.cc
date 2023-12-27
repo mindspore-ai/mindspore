@@ -225,7 +225,7 @@ DeviceContext *PyBoostUtils::CreateOrGetDeviceContextAndInit(const std::string &
 }
 
 void PyBoostUtils::DispatchRun(const std::shared_ptr<pynative::PyBoostDeviceTask> &task) {
-  auto need_sync = runtime::OpExecutor::NeedSync();
+  static auto need_sync = runtime::OpExecutor::NeedSync();
   if (need_sync) {
     MS_LOG(INFO) << "PyBoost sync run device task";
     runtime::OpExecutor::GetInstance().WaitAll();

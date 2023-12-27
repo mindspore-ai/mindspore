@@ -1212,13 +1212,16 @@ void PyBoost::UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<Val
 
   // Update op run info for auto grad
   if (op_run_info->requires_grad) {
+    if (op_inputs.size() != op->input_abs().size()) {
+      MS_LOG(EXCEPTION) << "Op input size " << op_inputs.size() << " not equal to input abstract num "
+                        << op->input_abs().size() << ". Please call GenerateAbstract in Xxx::Call().";
+    }
     op_run_info->base_op_run_info.abstract = op->output_abs();
     op_run_info->op_grad_info->input_value = op_inputs;
     op_run_info->op_grad_info->input_abs = op->input_abs();
     op_run_info->op_grad_info->out_value = op_run_info->real_out;
     op_run_info->op_grad_info->out_abs = op->output_abs();
     UpdateOutputTensorGradInfo(op->outputs());
-    op->set_grad_func([op_run_info]() { DoGrad(op_run_info); });
   }
 }
 
