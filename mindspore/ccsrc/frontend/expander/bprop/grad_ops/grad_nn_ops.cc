@@ -1097,14 +1097,6 @@ REG_BPROP_BUILDER("ReLU6").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   return {dx};
 });
 
-REG_BPROP_BUILDER("ReLUV2").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
-  auto out = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex2);
-  auto mask = ib->TupleGetItem(out, 1);
-  auto dx = ib->Emit("ReluGradV2", {ib->TupleGetItem(dout, 0), mask});
-  return {dx};
-});
-
 REG_BPROP_BUILDER("BiasAddGrad").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto dy = ib->GetInput(kIndex0);
   auto format = ib->GetInput(kIndex1);

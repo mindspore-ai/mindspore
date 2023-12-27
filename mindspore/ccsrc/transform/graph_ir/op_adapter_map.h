@@ -240,7 +240,6 @@ constexpr const char kNameUnsortedSegmentMax[] = "UnsortedSegmentMax";
 constexpr const char kNameUnsortedSegmentProd[] = "UnsortedSegmentProd";
 constexpr const char kNameWtsARQ[] = "WtsARQ";
 constexpr const char kNameXlogy[] = "Xlogy";
-constexpr const char kNameReLUV2[] = "ReLUV2";
 constexpr const char kNameAccumulateNV2[] = "AccumulateNV2";
 constexpr const char kNameConfusionMulGrad[] = "ConfusionMulGrad";
 constexpr const char kNameActsULQ[] = "ActsULQ";

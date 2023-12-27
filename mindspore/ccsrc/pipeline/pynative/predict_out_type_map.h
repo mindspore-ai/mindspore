@@ -207,7 +207,6 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"RaggedRange", kTupleTensor2},
                                                        {"RaggedTensorToSparse", kTupleTensor3},
                                                        {"RandomChoiceWithMask", kTupleTensor2},
-                                                       {"ReLUV2", kTupleTensor2},
                                                        {"ReduceStd", kTupleTensor2},
                                                        {"ReservoirReplayBufferDestroy", kTupleTensor4},
                                                        {"SampleDistortedBoundingBoxV2", kTupleTensor3},

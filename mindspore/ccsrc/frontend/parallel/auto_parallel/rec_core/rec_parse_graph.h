@@ -80,7 +80,6 @@ const std::map<std::string, OperatorType> DictOpType{
   {ACTIVATION, OperatorType::kRecReLU},
   {RELU, OperatorType::kRecReLU},
   {"ReLU6", OperatorType::kRecReLU},
-  {"ReLUV2", OperatorType::kRecReLU},
   {SIGMOID, OperatorType::kRecReLU},
   {SIGMOID_CROSS_ENTROPY_WITH_LOGITS, OperatorType::kRecReLU},
   {"HSigmoid", OperatorType::kRecReLU},

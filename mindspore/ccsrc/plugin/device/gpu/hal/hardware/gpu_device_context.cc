@@ -423,9 +423,6 @@ void GPUKernelExecutor::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph)
       pm->AddPass(std::make_shared<opt::OptimizeUpdateState>());
       pm->AddPass(std::make_shared<opt::CudnnInplaceAggregate>());
     }
-    pm->AddPass(std::make_shared<opt::ReluV2Pass>());
-    pm->AddPass(std::make_shared<opt::AddReluV2Fusion>());
-    pm->AddPass(std::make_shared<opt::AddReluGradV2Fusion>());
   }
 
   pm->AddPass(std::make_shared<opt::AllReduceFusion>());

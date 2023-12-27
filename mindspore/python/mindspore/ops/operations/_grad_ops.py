@@ -1546,14 +1546,6 @@ class SiLUGrad(Primitive):
         self.init_prim_io_names(inputs=['dout', 'out'], outputs=['output'])
 
 
-class ReluGradV2(Primitive):
-    """Performs grad of ReLUV2 operation."""
-
-    @prim_attr_register
-    def __init__(self):
-        self.init_prim_io_names(inputs=['gradients', 'mask'], outputs=['output'])
-
-
 class UpsampleNearest3DGrad(Primitive):
     """
     Upsample the 3-D gradient data  with the nearest neighbor interpolation algorithm.
