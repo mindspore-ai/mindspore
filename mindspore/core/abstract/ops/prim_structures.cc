@@ -33,7 +33,7 @@ void CheckDictKey(const AbstractBasePtr &key, const std::string &op_name) {
     MS_LOG(EXCEPTION) << op_name << " evaluator key only supports string, number, constant tensor and tuple, but got "
                       << key->BuildValue()->ToString();
   }
-  if (key->isa<abstract::AbstractTuple>() && !key->cast_ptr<abstract::AbstractTuple>()->ContainsAllConstants()) {
+  if (key->isa<AbstractTuple>() && key_value->isa<ValueAny>()) {
     MS_LOG(EXCEPTION) << op_name << " evaluator key should not be tuple that contains variables, but got "
                       << key->BuildValue()->ToString();
   }
