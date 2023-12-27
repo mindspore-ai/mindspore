@@ -949,8 +949,8 @@ void DataPrepareActor::PrepareDataForValueNode(const ValueNodePtr &node, const A
     PrepareDataForSequenceAndScalarValue(node, 0, front_node, device_context, context);
   } else if (node_value->isa<StringImm>()) {
     PrepareDataForStringValue(node, 0, front_node, device_context, context);
-  } else if (node_value->isa<None>()) {
-    MS_LOG(DEBUG) << "No need to prepare data for None value node.";
+  } else if (node_value->isa<None>() || node_value->isa<Type>()) {
+    MS_LOG(DEBUG) << "No need to prepare data for None or type value node:" << node->DebugString();
   } else {
     MS_LOG(WARNING) << "Not support the value type: " << node->fullname_with_scope();
   }

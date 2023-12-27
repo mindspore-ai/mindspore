@@ -444,6 +444,8 @@ KernelTensorValuePtr ConvertValueToKernelTensorValue(const ValuePtr &value) {
     auto string_ptr = value->cast<StringImmPtr>();
     MS_EXCEPTION_IF_NULL(string_ptr);
     return std::make_shared<KernelTensorValue>(string_ptr, string_ptr->type());
+  } else if (value->isa<Type>()) {
+    return nullptr;
   } else {
     MS_LOG(WARNING) << "KernelTensorValue not support the value type: " << value->ToString();
     return nullptr;
