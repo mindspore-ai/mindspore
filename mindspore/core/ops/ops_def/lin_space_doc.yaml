@@ -7,9 +7,9 @@ lin_space:
 
         Inputs:
             - **start** (Tensor) -  Start value of interval, 0-D Tensor with dtype float32 or float64.
-            - **stop** (Tensor) - Last value of interval, 0-D Tensor with dtype  float32 or float64.
-            - **num** (int) - Number of ticks in the interval, inclusive of `start` and `stop`.
-            Supported dtypes: int32, int64.
+            - **stop** (Tensor) - Last value of interval, 0-D Tensor with dtype float32 or float64.
+            - **num** (int) - Number of ticks in the interval, inclusive of `start` and `stop`.Must be a positive integer. 
+            When the input is Tensor, it must be a 0-D Tensor with dtype int32 or int64.
 
         Outputs:
             Tensor, has the same shape and dtype as `start`.
