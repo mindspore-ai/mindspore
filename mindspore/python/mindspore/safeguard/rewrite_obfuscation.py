@@ -112,8 +112,8 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./', ob
     # start obfuscate ckpt
     ckpt_dir_files = os.listdir(ckpt_files)
     for ckpt_name in ckpt_dir_files:
-        if Path(ckpt_files + ckpt_name).is_dir():
-            sub_path = os.path.abspath(ckpt_files) + '/' + ckpt_name
+        sub_path = os.path.abspath(ckpt_files) + '/' + ckpt_name
+        if Path(sub_path).is_dir():
             sub_ckpt_file_list = os.listdir(sub_path)
             new_saved_path = os.path.abspath(saved_path) + '/' + ckpt_name
             if not os.path.exists(new_saved_path):
@@ -148,7 +148,7 @@ def _obfuscate_single_ckpt(ckpt_name, obf_ratios, path_list, target_list, saved_
         if module:
             layer_index = _judge_layer_index(item)
             if layer_index >= OBF_RATIOS_LENGTH:
-                break
+                continue
             if module not in module_has_been_obfuscated:
                 module_has_been_obfuscated.add(module)
                 obf_ratios_index += 1
