@@ -2224,8 +2224,6 @@ void ClearResPart2() {
     MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
     device_context->GetDeprecatedInterface()->ClearGraphWrapper();
     device_context->GetDeprecatedInterface()->ClearOpAdapterMap();
-    // unregister external allocator, before clear stream and graphrunner
-    device_context->GetDeprecatedInterface()->UnregisterExternalAllocator();
     // clear runtime resource after clear graph when ge
     MS_LOG(INFO) << "Start clear kernel runtime...";
     device::KernelRuntimeManager::Instance().ClearRuntimeResource();

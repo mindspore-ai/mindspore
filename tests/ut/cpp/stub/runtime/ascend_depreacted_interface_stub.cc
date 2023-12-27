@@ -20,11 +20,15 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 void AscendDeprecatedInterface::DoExecNonInputGraph(const std::string &) {}
-
+bool AscendDeprecatedInterface::InitExecDataset(const std::string &, int64_t, int64_t, const std::vector<TypePtr> &,
+                                                const std::vector<std::vector<int64_t>> &, const std::vector<int64_t> &,
+                                                const std::string &) {
+  return true;
+}
 void AscendDeprecatedInterface::ExportDFGraph(const std::string &, const std::string &, const pybind11::object &,
                                               char *) {}
 FuncGraphPtr AscendDeprecatedInterface::BuildDFGraph(const FuncGraphPtr &, const pybind11::dict &) { return nullptr; }
-void AscendDeprecatedInterface::RunInitGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params) {}
+void AscendDeprecatedInterface::RunInitGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params)  {}
 void AscendDeprecatedInterface::ClearGraphWrapper() {}
 void AscendDeprecatedInterface::ClearOpAdapterMap() {}
 void AscendDeprecatedInterface::DumpProfileParallelStrategy(const FuncGraphPtr &) {}
@@ -35,7 +39,6 @@ bool AscendDeprecatedInterface::IsTsdOpened(const std::shared_ptr<MsContext> &) 
 void AscendDeprecatedInterface::AclOptimizer(const FuncGraphPtr &graph) {}
 bool AscendDeprecatedInterface::CheckIsAscend910Soc() { return true; }
 void AscendDeprecatedInterface::AclLoadModel(Buffer *om_data) {}
-void AscendDeprecatedInterface::UnregisterExternalAllocator() {}
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

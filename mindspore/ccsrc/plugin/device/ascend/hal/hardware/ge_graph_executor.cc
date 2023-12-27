@@ -411,7 +411,12 @@ bool BuildFakeGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderM
     MS_LOG(ERROR) << "Add fake graph failed";
     return false;
   }
-
+  GeDeviceResManager::CreateSessionAndGraphRunner();
+  auto graph_runner = transform::GetGraphRunner();
+  if (graph_runner == nullptr) {
+    MS_LOG(ERROR) << "Can not found GraphRunner";
+    return false;
+  }
   return true;
 }
 
@@ -955,6 +960,15 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
   std::vector<GeTensor> ge_inputs = GenerateInputGeTensor(kg);
   std::vector<GeTensor> ge_outputs = GenerateOutputGeTensor(kg);
 
+  bool is_dynamic_shape = kg->is_dynamic_shape();
+  if (is_dynamic_shape) {
+    transform::Status ret =
+      transform::RegisterExternalAllocator(graph_runner, ResManager()->GetStream(), ResManager()->GetAllocator());
+    if (ret != transform::Status::SUCCESS) {
+      MS_LOG(EXCEPTION) << "Exec graph failed";
+    }
+  }
+
   if (AscendMemAdapter::GetInstance().IsMemoryPoolRecycle()) {
     auto max_static_memory_size = ResManager()->GetMaxUsedMemorySize();
     auto iter = feature_memorys.find(graph_name);
@@ -983,7 +997,7 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
       MS_LOG(EXCEPTION) << "Exec graph failed";
     }
   }
-  bool is_dynamic_shape = kg->is_dynamic_shape();
+
   if (is_dynamic_shape) {
     auto sync_ret = ResManager()->SyncStream();
     if (!sync_ret) {
@@ -995,7 +1009,6 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
     }
     MS_LOG(INFO) << "Run unregister external allocator finish, graph name: " << graph_name;
   }
-
   // copy output from host to device
   auto graph_outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
   size_t real_output_size = 0;
@@ -1140,6 +1153,13 @@ FuncGraphPtr GeGraphExecutor::BuildDFGraph(const FuncGraphPtr &anf_graph,
   if (export_air) {
     // export air can't use session->AddGraph, it will cause atc error.
     return anf_graph;
+  }
+
+  GeDeviceResManager::CreateSessionAndGraphRunner();
+  auto graph_runner = transform::GetGraphRunner();
+  if (graph_runner == nullptr) {
+    MS_LOG(ERROR) << "Can not found GraphRunner";
+    return nullptr;
   }
 
   return anf_graph;

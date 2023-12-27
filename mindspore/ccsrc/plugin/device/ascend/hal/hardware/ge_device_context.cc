@@ -211,20 +211,6 @@ void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
       MS_LOG(EXCEPTION) << "Initialize GE failed!";
     }
   }
-
-  GeDeviceResManager::CreateSessionAndGraphRunner();
-  auto graph_runner = transform::GetGraphRunner();
-  MS_EXCEPTION_IF_NULL(graph_runner);
-  if (IsEnableRefMode()) {
-    transform::Status ret = transform::RegisterExternalAllocator(
-      graph_runner, dynamic_cast<GeDeviceResManager *>(device_res_manager_.get())->GetStream(),
-      dynamic_cast<GeDeviceResManager *>(device_res_manager_.get())->GetAllocator());
-    if (ret != transform::Status::SUCCESS) {
-      MS_LOG(EXCEPTION) << "RegisterExternalAllocator failed";
-    }
-    MS_LOG(INFO) << "Create session and graphrunner successful.";
-  }
-
   inst_context->increase_param<uint32_t>(MS_CTX_GE_REF);
   MS_LOG(INFO) << "Init ge successful, ge reference = " << inst_context->get_param<uint32_t>(MS_CTX_GE_REF) << ".";
   return;
