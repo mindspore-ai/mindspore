@@ -119,6 +119,7 @@ static bool CheckAttrItemSupport(ValueNode *v, bool repeat_op) {
   return true;
 }
 
+extern bool CheckJitConstexpr(const py::object &func);
 bool GraphAnalyzer::AddToCaptured(ValueNode *v) {
   int op = v->GetOpcode();
   bool repeat_op = Config().GetBoolConfig(GraphJitConfig::kEnableOptimizeForAttrItem);
@@ -132,7 +133,8 @@ bool GraphAnalyzer::AddToCaptured(ValueNode *v) {
       return false;
     }
     // don't pass unknown callable to graph
-    bool is_known_func = f->GetType() == AObject::kTypeCell || f->GetType() == AObject::kTypePrimitive;
+    bool is_known_func = f->GetType() == AObject::kTypeCell || f->GetType() == AObject::kTypePrimitive ||
+                         (f->GetType() == AObject::kTypeFunction && CheckJitConstexpr(f->GetPyObject()));
     bool is_ms_support_func = f->TestMsFlag(kMsFlagSet);
     if (!is_known_func && !is_ms_support_func) {
       return false;

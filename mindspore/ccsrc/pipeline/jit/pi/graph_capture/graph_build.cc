@@ -1844,24 +1844,33 @@ static py::object GetPIJitCopiedFunc(const py::object &func, const std::string &
 // build sub-graph
 StopTraceReason GraphBuilder::BuildSubGraph(CallNode *call_node, int depth, const py::object &func,
                                             GraphBuilder *subgraph) {
+  bool backup = false;
   auto code = subgraph->GetGraph()->GetGuard();
   if (code != nullptr) {
     code->GetGuard()->Backup();
+    backup = true;
   }
   StopTraceReason break_graph = subgraph->BuildGraph(depth + 1);
 
   if (!ApplyInlinePolicy(subgraph->GetGraph())) {
     if (code != nullptr) {
       code->GetGuard()->Rollback();
+      backup = false;
     }
     call_node->SetInlineReason(InlineReason::kInlinePolicyDisabled);
     if (subgraph->GetGraph()->GetRetVal()) {
       call_node->SetVobj(subgraph->GetGraph()->GetRetVal()->GetVobj());
     }
     if (break_graph == StopTraceReason::kNonStopTrace) {
+      if (backup) {
+        code->GetGuard()->Pop();
+      }
       return StopTraceReason::kNonStopTrace;
     }
     if (getJitCompileResults(func.ptr(), false) != nullptr) {
+      if (backup) {
+        code->GetGuard()->Pop();
+      }
       return StopTraceReason::kNonStopTrace;
     }
     // mark sub-routine to compile
@@ -1872,6 +1881,9 @@ StopTraceReason GraphBuilder::BuildSubGraph(CallNode *call_node, int depth, cons
     // replace function call
     // guard this function
     ReplaceCall(call_node, func_copy);
+    if (backup) {
+      code->GetGuard()->Pop();
+    }
     return StopTraceReason::kNonStopTrace;
   }
 
@@ -1879,10 +1891,16 @@ StopTraceReason GraphBuilder::BuildSubGraph(CallNode *call_node, int depth, cons
   if (break_graph != StopTraceReason::kNonStopTrace) {
     call_node->SetInlineReason(InlineReason::kInlinePartial);
     current_block_->SetTrackResult(Block::kTrackBreak);
+    if (backup) {
+      code->GetGuard()->Pop();
+    }
     return break_graph;
   }
   call_node->SetVobj(subgraph->GetGraph()->GetRetVal()->GetVobj());
   call_node->SetInlineReason(InlineReason::kInline);
+  if (backup) {
+    code->GetGuard()->Pop();
+  }
   return StopTraceReason::kNonStopTrace;
 }
 

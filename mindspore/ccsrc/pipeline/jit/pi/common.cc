@@ -22,6 +22,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "pybind11/pybind11.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "pipeline/jit/pi/external.h"
 #include "pipeline/jit/pi/graph_capture/code_gen.h"
@@ -47,6 +48,7 @@ static Py_tss_t *tss = NULL;
 
 void AddConfigToGuard(const GraphJitConfig &c, OptGuardPtr guard);
 void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard, bool detach);
+void AddGuardForGlobals(const PyFrameObject *f, OptGuardPtr guard, bool detach);
 static void AddGradFlagForParam(bool grad_flag, OptGuardPtr guard, bool detach);
 static void CollectTraceBack(JitCompileResults *c, PyCodeObject *code, bool is_graph_mode);
 
@@ -568,6 +570,34 @@ void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard, bool detach) {
   }
 }
 
+void AddGuardForGlobals(const PyFrameObject *f, OptGuardPtr guard, bool detach) {
+  PyCodeObject *co = f->f_code;
+  const _Py_CODEUNIT *bytecodes = reinterpret_cast<_Py_CODEUNIT *>(PyBytes_AsString(co->co_code));
+  int size = (PyBytes_GET_SIZE(co->co_code)) / sizeof(_Py_CODEUNIT);
+  int exarg = 0;
+  for (int bci = 0; bci < size; ++bci) {
+    int opcode = _Py_OPCODE(bytecodes[bci]);
+    int oparg = (exarg << 8) | _Py_OPARG(bytecodes[bci]);
+    exarg = (opcode == EXTENDED_ARG) ? oparg : 0;
+    if (opcode != LOAD_GLOBAL) {
+      continue;
+    }
+    PyObject *k = PyTuple_GET_ITEM(co->co_names, oparg);
+    PyObject *v = PyDict_GetItem(f->f_globals, k);
+    std::string key = PyUnicode_AsUTF8(k);
+    if (v == nullptr) {
+      MS_LOG(WARNING) << "can't pass undefined symbol to graph!! key error [" << key << "] at bci " << bci;
+      PyErr_Clear();
+    } else {
+      RootTracePtr ptr = std::make_shared<RootTrace>(v, TraceType::Global, -1, key);
+      guard->GuardOn(ptr, mindspore::jit::graph::GuardLevel::GId, false);
+      if (detach) {
+        ptr->Detach();
+      }
+    }
+  }
+}
+
 static void AddGradFlagForParam(bool grad_flag, OptGuardPtr guard, bool detach) {
   CustomizedTracePtr ptr = std::make_shared<CustomizedTrace>(
     grad_flag ? Py_True : Py_False,
@@ -637,6 +667,7 @@ static void GraphCompile(JitCompileResults *jcr, const PyFrameObject *frame) {
   Py_XSETREF(PyFunction_GET_CLOSURE(new_func), GetClosure(frame));
   PyFunctionObject *func = reinterpret_cast<PyFunctionObject *>(new_func);
   PyFrameObject *f = const_cast<PyFrameObject *>(frame);
+  AddGuardForGlobals(f, jcr->code->GetGuard(), jcr->conf->GetBoolConfig(GraphJitConfig::kGuardDetachObject));
   std::vector<PyObject *> backup;
   if (enable_dynamicshape) {
     backup = jcr->code->GetGuard()->ApplyDynamicShape(f);
@@ -828,9 +859,38 @@ static py::object CallCompiledCallable(PyThreadState *tstate, PyFrameObject *f, 
   return py::reinterpret_steal<py::object>(res);
 }
 
-static bool PreferCallGraph(const JitCompileResults *c) {
+static bool CheckTensorInContainer(py::object args) {
+  if (py::isinstance<py::tuple>(args)) {
+    py::tuple t = py::cast<py::tuple>(args);
+    for (size_t i = 0; i < t.size(); ++i) {
+      if (CheckTensorInContainer(t[i])) {
+        return true;
+      }
+    }
+  } else if (py::isinstance<py::list>(args)) {
+    py::list l = py::cast<py::list>(args);
+    for (size_t i = 0; i < l.size(); ++i) {
+      if (CheckTensorInContainer(l[i])) {
+        return true;
+      }
+    }
+  }
+  if (IsStubTensor(args) || py::isinstance<mindspore::tensor::Tensor>(args.ptr())) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+static bool PreferCallGraph(const JitCompileResults *c, py::object args) {
   if (c->code->GetNativeFunc() == nullptr) {
     return false;
+  }
+  py::tuple t = py::cast<py::tuple>(args);
+  for (size_t i = 0; i < t.size(); ++i) {
+    if ((py::isinstance<py::list>(t[i]) || py::isinstance<py::tuple>(t[i])) && CheckTensorInContainer(t[i])) {
+      return false;
+    }
   }
   OptStrategy::ExecKind stat = OptStrategy::ExecKind::kExecGraph;
   if (c->conf->GetBoolConfig(GraphJitConfig::kPerfStatistics)) {
@@ -862,9 +922,6 @@ static py::object CallCompiledResults(PyThreadState *tstate, PyFrameObject *f, c
 
   ValidateCompiledResults(c);
 
-  bool graph_preferred = PreferCallGraph(c);
-  SetExecStatus(c, f, graph_preferred);
-
   std::vector<py::object> packed_args = PackArgs(f);
   if (packed_args[1].ptr() != nullptr) {
     PyList_Append(packed_args[0].ptr(), packed_args[1].ptr());
@@ -872,6 +929,8 @@ static py::object CallCompiledResults(PyThreadState *tstate, PyFrameObject *f, c
 
   py::object args = py::reinterpret_steal<py::object>(PyList_AsTuple(packed_args[0].ptr()));
   py::object kwvargs = packed_args[2];
+  bool graph_preferred = PreferCallGraph(c, args);
+  SetExecStatus(c, f, graph_preferred);
   py::object res = graph_preferred ? CallGraph(c, args, kwvargs) : CallCompiledCallable(tstate, f, c);
   c->code->Inc();
 
