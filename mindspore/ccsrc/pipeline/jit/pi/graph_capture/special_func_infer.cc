@@ -49,6 +49,8 @@ static constexpr const char *kBuiltinNameIsinstance = "isinstance";  // call __i
 static constexpr const char *kBuiltinNameIssubclass = "issubclass";  // call __subclasscheck__
 static constexpr const char *kBuiltinNameLen = "len";                // call __len__
 static constexpr const char *kBuiltinNameAbs = "abs";                // call __abs__
+static constexpr const char *kBuiltinNameMax = "max";                // call __max__
+static constexpr const char *kBuiltinNameLog = "log";                // call math.log
 static constexpr const char *kBuiltinNameAll = "all";                // for each value in the iterable. call __bool__
 static constexpr const char *kBuiltinNameAny = "any";                // for each value in the iterable. call __bool__
 static constexpr const char *kBuiltinNameHash = "hash";              // call __hash__
@@ -57,6 +59,8 @@ static constexpr const char *kBuiltinNameOrd = "ord";                // convert 
 static constexpr const char *kBuiltinNameCallable = "callable";      // no side effects
 static constexpr const char *kBuiltinNameGetattr = "getattr";        // call __getattr__, or __getattribute__
 static constexpr const char *kBuiltinNameHasattr = "hasattr";        // call __getattr__, or __getattribute__
+static constexpr const char *kBuiltinNameDictGet = "get";            // call dict.get
+static constexpr const char *kBuiltinNameStrFormat = "format";       // call str.format
 // ------------------------------builtins functions--------------------------------
 
 // ------------------------------builtins method--------------------------------
@@ -724,19 +728,20 @@ static std::set<PyCFunction> kBuiltinFuncOrMethodWhileList;
 #define DECLARE_BUILTIN_CFUNCTION(func_name)                 \
   p = PyDict_GetItemString(PyEval_GetBuiltins(), func_name); \
   MS_ASSERT(p &&PyCFunction_Check(p));                       \
-  cpython_func = PyCFunction_GET_FUNCTION(p);                \
-  kBuiltinFuncOrMethodWhileList.emplace(cpython_func);
+  c_function_obj = PyCFunction_GET_FUNCTION(p);              \
+  kBuiltinFuncOrMethodWhileList.emplace(c_function_obj);
 
 static void GenCFunctionMap() {
   if (!kBuiltinFuncOrMethodWhileList.empty()) {
     return;
   }
-  PyCFunction cpython_func = nullptr;
+  PyCFunction c_function_obj = nullptr;
   PyObject *p = nullptr;
   DECLARE_BUILTIN_CFUNCTION(kBuiltinNameIsinstance);
   DECLARE_BUILTIN_CFUNCTION(kBuiltinNameIssubclass);
   DECLARE_BUILTIN_CFUNCTION(kBuiltinNameLen);
   DECLARE_BUILTIN_CFUNCTION(kBuiltinNameAbs);
+  DECLARE_BUILTIN_CFUNCTION(kBuiltinNameMax);
   DECLARE_BUILTIN_CFUNCTION(kBuiltinNameAll);
   DECLARE_BUILTIN_CFUNCTION(kBuiltinNameAny);
   DECLARE_BUILTIN_CFUNCTION(kBuiltinNameHash);
@@ -747,8 +752,18 @@ static void GenCFunctionMap() {
   DECLARE_BUILTIN_CFUNCTION(kBuiltinNameHasattr);
 
   // dict.get
-  py::object builtin = py::dict().attr("get");
-  PyCFunction c_function_obj = PyCFunction_GET_FUNCTION(builtin.ptr());
+  py::object builtin = py::dict().attr(kBuiltinNameDictGet);
+  c_function_obj = PyCFunction_GET_FUNCTION(builtin.ptr());
+  kBuiltinFuncOrMethodWhileList.emplace(c_function_obj);
+
+  // str.format
+  builtin = py::str().attr(kBuiltinNameStrFormat);
+  c_function_obj = PyCFunction_GET_FUNCTION(builtin.ptr());
+  kBuiltinFuncOrMethodWhileList.emplace(c_function_obj);
+
+  // math.log
+  builtin = Utils::GetModuleAttr("math", kBuiltinNameLog, false, false);
+  c_function_obj = PyCFunction_GET_FUNCTION(builtin.ptr());
   kBuiltinFuncOrMethodWhileList.emplace(c_function_obj);
 }
 
