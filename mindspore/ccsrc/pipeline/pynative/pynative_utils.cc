@@ -141,6 +141,54 @@ void PlantTupleParam(const FuncGraphPtr &bprop_graph, const abstract::AbstractSe
   }
 }
 
+void RefreshGradContiguousTensor(const FrontendOpRunInfoPtr &op_run_info, size_t index) {
+  if (op_run_info->input_unused_in_bprop[index] || op_run_info->base_op_run_info.device_target != kAscendDevice) {
+    // Input is not used in bprop, no need to contiguous.
+    // GPU/CPU contiguous tensor when convert stub node
+    return;
+  }
+
+  auto contiguous_tensor = [&op_run_info](const ValuePtr &v) -> ValuePtr {
+    const auto &tensor = v->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    if (tensor->storage_info() == nullptr) {
+      return nullptr;
+    }
+
+    auto contiguous_op = CREATE_PYBOOST_OP(Contiguous, op_run_info->base_op_run_info.device_target);
+    return contiguous_op->Call(tensor);
+  };
+
+  const auto &v = op_run_info->op_grad_info->input_value[index];
+  if (v->isa<tensor::Tensor>()) {
+    const auto &new_tensor = contiguous_tensor(v);
+    if (new_tensor != nullptr) {
+      op_run_info->op_grad_info->input_value[index] = new_tensor;
+    }
+  } else if (v->isa<ValueSequence>()) {
+    const auto &vec = v->cast<ValueSequencePtr>()->value();
+    if (vec.empty() || !vec[0]->isa<tensor::Tensor>()) {
+      return;
+    }
+    // Tensor tuple need contiguous tensor.
+    bool need_refresh_tuple = false;
+    std::vector<ValuePtr> new_vec(vec.size());
+    for (size_t i = 0; i < vec.size(); i++) {
+      const auto &new_tensor = contiguous_tensor(vec[i]);
+      if (new_tensor == nullptr) {
+        new_vec[i] = vec[i];
+      } else {
+        // Not-contiguous tensor in input_value, need refresh tuple after contiguous tensor.
+        need_refresh_tuple = true;
+        new_vec[i] = new_tensor;
+      }
+    }
+    if (need_refresh_tuple) {
+      op_run_info->op_grad_info->input_value[index] = MakeValue(new_vec);
+    }
+  }
+}
+
 const mindspore::HashSet<std::string> kNotRealOP{
   kMakeTupleOpName,
   kMakeListNewOpName,
@@ -1257,6 +1305,8 @@ void PyBoost::DoGrad(const FrontendOpRunInfoPtr &op_run_info) {
 
   PyParser::PrepareOpGradInfo(op_run_info);
   for (size_t index = 0; index < op_run_info->input_size; ++index) {
+    // Inplace input_value with contiguous tensor.
+    RefreshGradContiguousTensor(op_run_info, index);
     const ValuePtr &input_object = op_run_info->op_grad_info->input_value[index];
     DataConvert::MarkInputs(op_run_info, input_object, index, forward->grad()->top_cell());
   }
