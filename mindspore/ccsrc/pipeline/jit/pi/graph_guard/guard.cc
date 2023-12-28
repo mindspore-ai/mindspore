@@ -190,7 +190,7 @@ static GuardItemPtr GuardOnGDeduce(TracePtr var, PyObject *obj, const std::map<s
     if (CheckOwnerIsCell(var)) {
       item = GuardEqual(var, true, INT_MAX);
     } else {
-      item = GuardType(var);
+      item = GuardRepr(var);
     }
   } else if (py::isinstance<mindspore::Cell>(obj)) {
     item = GuardRepr(var);
