@@ -79,6 +79,14 @@ TypePtr GridSampler2DFuncImpl::InferType(const PrimitivePtr &prim,
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto input_x_type = input_args[kInputIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(input_x_type);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
+  auto input_grid_type = input_args[kInputIndex1]->GetType();
+  MS_EXCEPTION_IF_NULL(input_grid_type);
+  if (input_x_type->ToString() != input_grid_type->ToString()) {
+    MS_EXCEPTION(TypeError) << "Input grid must have the same data type with input x! input[x] data type = "
+                            << input_x_type->ToString()
+                            << " but input[grid] data type = " << input_grid_type->ToString();
+  }
   return input_x_type->Clone();
 }
 
