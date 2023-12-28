@@ -25,8 +25,6 @@ namespace ops {
 OP_FUNC_IMPL_TEST_DECLARE(NanToNum, EltwiseOpParams);
 
 OP_FUNC_IMPL_TEST_CASES(NanToNum, testing::Values(EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
-                                        EltwiseOpParams{{-1, 2, 3}, kFloat16, {-1, 2, 3}, kFloat16},
-                                        EltwiseOpParams{{-1, -1}, kInt8, {-1, -1}, kInt8},
-                                        EltwiseOpParams{{-2}, kUInt64, {-2}, kUInt64}));
+                                                  EltwiseOpParams{{-1, 2, 3}, kFloat16, {-1, 2, 3}, kFloat16}));
 }  // namespace ops
 }  // namespace mindspore

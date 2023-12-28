@@ -91,7 +91,23 @@ BaseShapePtr NLLLossGradFuncImpl::InferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr NLLLossGradFuncImpl::InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const {
-  return input_args[kInputIndex0]->GetType()->Clone();
+  auto x_dtype = input_args[kInputIndex0]->GetType();
+  auto y_grad_dtype = input_args[kInputIndex1]->GetType();
+  auto t_dtype = input_args[kInputIndex2]->GetType();
+  auto w_dtype = input_args[kInputIndex3]->GetType();
+  auto tw_dtype = input_args[kInputIndex4]->GetType();
+  std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("logits", x_dtype, valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("loss's grad", y_grad_dtype, valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("labels", t_dtype, {kInt32, kInt64}, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("weight", w_dtype, valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("total_weight", tw_dtype, valid_types, prim->name());
+
+  std::map<std::string, TypePtr> types;
+  (void)types.emplace("weight", w_dtype);
+  (void)types.emplace("total_weight", tw_dtype);
+  CheckAndConvertUtils::CheckTypeSame(types, prim->name());
+  return x_dtype->Clone();
 }
 }  // namespace ops
 }  // namespace mindspore

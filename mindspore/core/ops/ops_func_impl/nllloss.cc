@@ -114,9 +114,14 @@ BaseShapePtr NLLLossFuncImpl::InferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr NLLLossFuncImpl::InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const {
-  auto logits_data_type = input_args[kInputIndex0]->GetType()->Clone();
-  auto weight_data_type = input_args[kInputIndex2]->GetType()->Clone();
-  return std::make_shared<Tuple>(std::vector<TypePtr>{logits_data_type, weight_data_type});
+  auto logits_data_type = input_args[kInputIndex0]->GetType();
+  auto labels_data_type = input_args[kIndex1]->GetType();
+  auto weight_data_type = input_args[kInputIndex2]->GetType();
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("logits", logits_data_type, valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("labels", labels_data_type, {kInt32, kInt64}, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("weight", weight_data_type, valid_types, prim->name());
+  return std::make_shared<Tuple>(std::vector<TypePtr>{logits_data_type->Clone(), weight_data_type->Clone()});
 }
 }  // namespace ops
 }  // namespace mindspore
