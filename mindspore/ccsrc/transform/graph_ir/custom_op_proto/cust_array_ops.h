@@ -110,5 +110,15 @@ REG_CUST_OP(Expand)
     .INPUT(shape, TensorType({DT_INT16, DT_INT32, DT_INT64}))
     .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT8, DT_BOOL}))
     .CUST_OP_END_FACTORY_REG(Expand)
+
+REG_CUST_OP(Im2col)
+  .INPUT(x, TensorType::RealNumberType())
+  .OUTPUT(y, TensorType::RealNumberType())
+  .REQUIRED_ATTR(ksizes, ListInt)
+  .ATTR(strides, ListInt, {1})
+  .ATTR(dilations, ListInt, {1})
+  .ATTR(padding_mode, String, "CALCULATED")
+  .ATTR(pads, ListInt, {0})
+  .CUST_OP_END_FACTORY_REG(Im2col)
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_ARRAY_OPS_H_
