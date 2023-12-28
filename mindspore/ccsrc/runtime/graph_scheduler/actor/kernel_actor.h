@@ -106,6 +106,9 @@ class KernelActor : public DebugAwareActor {
   // Do kernel launching in this method after 'PreLaunchKernel' and 'PostLaunchKernel'.
   virtual bool LaunchKernel(OpContext<DeviceTensor> *const context);
 
+  // Re-Infer shape, type and resize before kernel launch in dynamic scenarios.
+  void InferShapeTypeAndResize();
+
   // Re-InferShape and resize before kernel launch in dynamic scenarios.
   void InferShapeAndResize();
 
@@ -113,6 +116,7 @@ class KernelActor : public DebugAwareActor {
   CNodePtr kernel_;
   bool is_dynamic_shape_;
   bool is_dynamic_value_;
+  bool is_dynamic_type_;
   KernelInfo *kernel_info_;
   KernelMod *kernel_mod_;
   // The kernel launch info is fetched by the device tensors.
