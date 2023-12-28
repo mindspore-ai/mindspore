@@ -819,13 +819,15 @@ class MetaTensorData : public ItemData {
       const MetaTensorData &other = (const MetaTensorData &)obj;
       bool ret;
       if (is_stubtensor_ || other.is_stubtensor_) {
-        ret = shape_ == other.shape_ && CheckDataType(other);
+        ret = CheckShape(shape_, other.shape_) && CheckDataType(other);
       } else {
         ret = tid_ == other.tid_ && CheckShape(shape_, other.shape_) && format_.compare(other.format_) == 0 &&
               host_format_.compare(other.host_format_) == 0 && is_parameter_ == other.is_parameter_ &&
               CheckDataType(other);
+      }
+      if (ret) {
         if (is_parameter_ == true) {
-          ret = ret && ((param_ == nullptr && other.param_ == nullptr) ||
+          ret = ((param_ == nullptr && other.param_ == nullptr) ||
                         (param_ != nullptr && other.param_ != nullptr && ParamInfoData::Equal(param_, other.param_)));
         }
       }
