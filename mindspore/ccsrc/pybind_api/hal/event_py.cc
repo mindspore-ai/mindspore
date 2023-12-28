@@ -160,17 +160,10 @@ void RegEvent(py::module *m) {
   (void)py::class_<EventPy, std::shared_ptr<EventPy>>(*m, "Event")
     .def(py::init<bool, bool>())
     .def("query", &EventPy::Query)
-    .def("synchronize", &EventPy::Synchronize, R"mydelimiter(
-                             Wait for tasks captured by this event to complete.
-                             )mydelimiter")
-    .def("query", &EventPy::Query, R"mydelimiter(
-                             Query completion status of all tasks captured by this event.
-                             )mydelimiter")
+    .def("synchronize", &EventPy::Synchronize)
     .def("wait", &EventPy::Wait)
     .def("record", &EventPy::Record)
-    .def("elapsed_time", &EventPy::ElapsedTime, R"mydelimiter(
-                             Return the elapsed time between two events.
-                             )mydelimiter")
+    .def("elapsed_time", &EventPy::ElapsedTime)
     .def("__repr__", &EventPy::ToStringRepr);
 }
 }  // namespace hal

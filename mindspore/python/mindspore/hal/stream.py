@@ -22,8 +22,32 @@ from .event import Event
 
 
 class Stream(Stream_):
-    """
-    Python stream class wrapping around hardware stream interfaces.
+    r"""
+    Wrapper around a device stream.
+
+    A device stream is a linear sequence of execution that belongs to a specific device,
+    independent from other streams.
+
+    Args:
+        priority (int, optional) – priority of the stream, lower numbers
+        represent higher priorities. By default, streams have priority 0.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> s1 = ms.hal.Stream()
+        >>> s2 = ms.hal.Stream()
+        >>> a = Tensor(np.ones([1, 2]), ms.float32)
+        >>> b = Tensor(np.ones([2, 2]), ms.float32)
+        >>> with ms.hal.StreamCtx(s1):
+        >>>     c = ops.matmul(a, b)
+        >>> with ms.hal.StreamCtx(s2):
+        >>>     s2.wait_stream(s1)
+        >>>     d = ops.matmul(c, b)
+        >>> ms.hal.synchronize()
+        >>> print(d)
+        [[4. 4.]]
     """
     def __init__(self, priority=0, **kwargs):
         if 'stream_id' in kwargs:
@@ -32,9 +56,34 @@ class Stream(Stream_):
             super().__init__(priority)
 
     def record_event(self, event=None):
-        """
-        Record event in this stream.
-        This event captures tasks on this stream at the time of this call.
+        r"""
+        Records an event.
+
+        Inputs:
+            event (Event, optional): event to record. If not given, a new one
+                will be allocated.
+
+        Returns:
+            Recorded event.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> a = Tensor(np.ones([3, 3]), ms.float32)
+            >>> b = Tensor(np.ones([3, 3]), ms.float32)
+            >>> s1 = ms.hal.Stream()
+            >>> with ms.hal.StreamCtx(s1):
+            >>>     c = a + b
+            >>>     event = s1.record_event()
+            >>>     d = a * b
+            >>> cur_stream = ms.hal.current_stream()
+            >>> cur_stream.wait_event(event)
+            >>> e = c + 3
+            >>> print(e)
+            [[5. 5. 5.]
+            [5. 5. 5.]
+            [5. 5. 5.]]
         """
         if event is None:
             event = Event()
@@ -42,49 +91,118 @@ class Stream(Stream_):
         return event
 
     def wait_event(self, event):
-        """
-        Wait on the specified event.
-        This stream will wait till the tasks captured by this event are completed.
+        r"""
+        Makes all future work submitted to the stream wait for an event.
+
+        Inputs:
+            event (Event): an event to wait for.
         """
         event.wait(self)
 
     def wait_stream(self, stream):
-        """
-        Synchronize with specified stream: wait for tasks on another stream to complete.
+        r"""
+        Synchronizes with another stream.
+
+        All future work submitted to this stream will wait until all kernels
+        submitted to a given stream at the time of call complete.
+
+        Inputs:
+            stream (Stream): a stream to synchronize.
         """
         self.wait_event(stream.record_event())
 
+    def synchronize(self):
+        r"""
+        Wait for all the kernels in this stream to complete.
+        """
+        # pylint: disable=useless-super-delegation
+        super().synchronize()
+
+    def query(self):
+        r"""
+        Checks if all the work submitted has been completed.
+
+        Outputs:
+            A boolean indicating if all kernels in this stream are completed.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> a = Tensor(np.ones([1024, 2048]), ms.float32)
+            >>> b = Tensor(np.ones([2048, 4096]), ms.float32)
+            >>> s1 = ms.hal.Stream()
+            >>> with ms.hal.StreamCtx(s1):
+            >>>     ops.matmul(a, b)
+            >>>     assert not s1.query()
+            >>> s1.synchronize()
+            >>> assert s1.query()
+        """
+        # pylint: disable=useless-super-delegation
+        return super().query()
+
+    def __eq__(self, o):
+        if isinstance(o, Stream):
+            return super().__eq__(o)
+        return False
+
+    def __hash__(self):
+        return hash((self.id, self.device_id))
+
 
 def synchronize():
-    """
+    r"""
     Synchronize all streams on current device.(Each MindSpore process only occupies one device)
     """
     synchronize_()
 
 def set_cur_stream(stream):
+    r"""
+    Sets the current stream.This is a wrapper API to set the stream.
+    Usage of this function is discouraged in favor of the ``stream`` context manager.
+    Inputs:
+        stream (Stream): selected stream. This function is a no-op
+            if this argument is ``None``.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> cur_stream = ms.hal.current_stream()
+        >>> assert cur_stream == ms.hal.default_stream()
+        >>> s1 = ms.hal.Stream()
+        >>> ms.hal.set_cur_stream(s1)
+        >>> assert ms.hal.current_stream() == s1
     """
-    Set current stream to specified stream.
-    """
+    if stream is None:
+        return
     set_cur_stream_(stream)
 
 def current_stream():
-    """
+    r"""
     Return current stream used on this device.
+
+    Outputs:
+        stream (Stream): current stream.
     """
     return Stream(current_stream_())
 
 def default_stream():
-    """
+    r"""
     Return default stream on this device.
+
+    Outputs:
+        stream (Stream): default stream.
     """
     return Stream(default_stream_())
 
 class StreamCtx():
-    """
-    All MindSpore operators within this context will be executed in the given stream.
+    r"""
+    Context-manager that selects a given stream.
+
+    All kernels queued within its context will be enqueued on a selected
+    stream.
 
     Args:
-        ctx_stream (Stream): Stream this context wraps.
+        ctx_stream (Stream): selected stream. This manager is a no-op if it's ``None``.
     """
     def __init__(self, ctx_stream):
         self.stream = ctx_stream

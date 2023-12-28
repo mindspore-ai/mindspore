@@ -117,14 +117,13 @@ void RegStream(py::module *m) {
     .def(py::init<int>())
     .def(py::init<int, int>())
     .def(py::init<const StreamPy &>())
-    .def("query", &StreamPy::Query, R"mydelimiter(
-                             Query this stream's completion status.
-                             )mydelimiter")
-    .def("synchronize", &StreamPy::Synchronize, R"mydelimiter(
-                             Wait for tasks on this stream to complete.
-                             )mydelimiter")
+    .def("query", &StreamPy::Query)
+    .def("synchronize", &StreamPy::Synchronize)
     .def("__repr__", &StreamPy::ToStringRepr)
-    .def("__eq__", &StreamPy::StreamEqual);
+    .def("__eq__", &StreamPy::StreamEqual)
+    .def_property_readonly("id", &StreamPy::stream_id)
+    .def_property_readonly("device_name", &StreamPy::device_name)
+    .def_property_readonly("device_id", &StreamPy::device_id);
 
   (void)m->def("set_cur_stream", &mindspore::hal::SetCurStream, "Set current stream");
   (void)m->def("synchronize", &mindspore::hal::Synchronize, "Synchronize all stream");

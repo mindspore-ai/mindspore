@@ -50,6 +50,16 @@ class StreamPy {
 
   bool StreamEqual(const std::shared_ptr<StreamPy> other_stream);
 
+  std::string device_name() const {
+    MS_EXCEPTION_IF_NULL(device_ctx_);
+    return device_ctx_->device_context_key().device_name_;
+  }
+
+  uint32_t device_id() const {
+    MS_EXCEPTION_IF_NULL(device_ctx_);
+    return device_ctx_->device_context_key().device_id_;
+  }
+
  private:
   device::DeviceContext *device_ctx_;
   size_t stream_id_{0};
