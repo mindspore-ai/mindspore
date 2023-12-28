@@ -84,15 +84,17 @@ REG_ADPT_DESC(SigmoidCrossEntropyWithLogitsV2, kSigmoidCrossEntropyWithLogitsV2O
 
 // LogSoftmaxGrad
 INPUT_MAP(LogSoftmaxGrad) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(grad)}};
-ATTR_MAP(LogSoftmaxGrad) = {
-  {"axis", ATTR_DESC(axis, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
+INPUT_ATTR_MAP(LogSoftmaxGrad) = {
+  {3, ATTR_DESC(axis, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(LogSoftmaxGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(LogSoftmaxGrad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(LogSoftmaxGrad, prim::kPrimLogSoftmaxGrad->name(), ADPT_DESC(LogSoftmaxGrad))
 
 // LogSoftmaxV2
 INPUT_MAP(LogSoftmaxV2) = {{1, INPUT_DESC(logits)}};
-ATTR_MAP(LogSoftmaxV2) = {
-  {"axis", ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
+INPUT_ATTR_MAP(LogSoftmaxV2) = {
+  {2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(LogSoftmaxV2) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(LogSoftmaxV2) = {{0, OUTPUT_DESC(logsoftmax)}};
 REG_ADPT_DESC(LogSoftmax, prim::kPrimLogSoftmax->name(), ADPT_DESC(LogSoftmaxV2))
 REG_ADPT_DESC(LogSoftmaxV2, kLogSoftmaxV2OpName, ADPT_DESC(LogSoftmaxV2))
