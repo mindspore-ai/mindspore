@@ -975,6 +975,7 @@ class ResizeBilinear(Cell):
         (1, 1, 5, 5)
     """
 
+    @deprecated("2.3", "ops.interpolate", False)
     def __init__(self, half_pixel_centers=False):
         """Initialize ResizeBilinear."""
         super(ResizeBilinear, self).__init__()

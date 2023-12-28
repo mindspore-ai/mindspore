@@ -137,7 +137,7 @@ TypePtr BatchNormFuncImpl::InferType(const PrimitivePtr &prim, const std::vector
     (void)check_types.emplace("mean", input_args[kInputIndex3]->GetType());
     (void)check_types.emplace("variance", input_args[kInputIndex4]->GetType());
   }
-  (void)CheckAndConvertUtils::CheckTensorTypeSame(check_types, {kFloat32}, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(check_types, valid_types, prim_name);
 
   std::vector<TypePtr> out_types{x_type->Clone()};
   MultiTimesClone<TypePtr>(&out_types, scale_type, 4);
