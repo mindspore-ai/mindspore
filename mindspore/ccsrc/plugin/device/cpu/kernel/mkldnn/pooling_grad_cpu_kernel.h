@@ -59,16 +59,7 @@ class PoolingGradCpuKernelMod : public MKLCpuKernelMod {
            .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // strides
            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // pad_mode
            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // data_format
-           .AddOutputAttr(kNumberTypeFloat32)},
-        {KernelAttr()
-           .AddInputAttr(kNumberTypeFloat64)
-           .AddInputAttr(kNumberTypeFloat64)
-           .AddInputAttr(kNumberTypeFloat64)
-           .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // kernel_size
-           .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // strides
-           .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // pad_mode
-           .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // data_format
-           .AddOutputAttr(kNumberTypeFloat64)}}},
+           .AddOutputAttr(kNumberTypeFloat32)}}},
       {kAvgPool3DGrad,
        {{KernelAttr()
            .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
