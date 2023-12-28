@@ -27,7 +27,7 @@ const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 2;
 const uint32_t kDim1 = 1;
 const uint32_t kMinDim = 2;
-const uint32_t kMaxDim = 7;
+const uint32_t kMaxDim = 8;
 const uint32_t kIndex0 = 0;
 const uint32_t kIndex1 = 1;
 const uint32_t kIndex2 = 2;
@@ -35,6 +35,7 @@ const uint32_t kIndex3 = 3;
 const uint32_t kIndex4 = 4;
 const uint32_t kIndex5 = 5;
 const uint32_t kIndex6 = 6;
+const uint32_t kIndex7 = 7;
 const char *kTranspose = "Transpose";
 
 #define TRANSPOSE_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
@@ -162,10 +163,10 @@ uint32_t TransposeCpuKernel::TransposeCompute(CpuKernelContext &ctx) {
   using Eigen_Tensor = Eigen::TensorMap<Eigen::Tensor<T, kMaxDim, Eigen::RowMajor>, Eigen::Aligned>;
   Eigen_Tensor input(input_data, bcast_shape_x.at(kIndex0), bcast_shape_x.at(kIndex1), bcast_shape_x.at(kIndex2),
                      bcast_shape_x.at(kIndex3), bcast_shape_x.at(kIndex4), bcast_shape_x.at(kIndex5),
-                     bcast_shape_x.at(kIndex6));
+                     bcast_shape_x.at(kIndex6), bcast_shape_x.at(kIndex7));
   Eigen_Tensor output(output_data, bcast_shape_y.at(kIndex0), bcast_shape_y.at(kIndex1), bcast_shape_y.at(kIndex2),
                       bcast_shape_y.at(kIndex3), bcast_shape_y.at(kIndex4), bcast_shape_y.at(kIndex5),
-                      bcast_shape_y.at(kIndex6));
+                      bcast_shape_y.at(kIndex6), bcast_shape_y.at(kIndex7));
   Eigen::array<Eigen::DenseIndex, kMaxDim> perm_compute;
   for (size_t j = 0; j < kMaxDim; ++j) {
     if (j < offset) {
