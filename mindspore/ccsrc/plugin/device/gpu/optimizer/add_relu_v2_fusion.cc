@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace opt {
 namespace {
-kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
+kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node, std::vector<AnfNodePtr> targets) {
   std::vector<std::string> inputs_format;
   std::vector<std::string> outputs_format;
   std::vector<TypeId> inputs_type;
@@ -38,13 +38,25 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
 
   size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
+    auto input_format = AnfAlgo::GetPrevNodeOutputFormat(node, input_index);
+    if (input_format.empty()) {
+      input_format = kOpFormat_DEFAULT;
+    }
     inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(node, input_index));
-    inputs_format.push_back(kOpFormat_DEFAULT);
+    inputs_format.push_back(input_format);
   }
   size_t output_num = AnfAlgo::GetOutputElementNum(node);
+  if (output_num != targets.size()) {
+    MS_EXCEPTION(IndexError) << "FusedAddReluV2 output nums should be equal to fused node nums[" << targets.size()
+                             << "], but got " << output_num;
+  }
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
+    auto output_format = AnfAlgo::GetOutputFormat(targets[output_index], kIndex0);
+    if (output_format.empty()) {
+      output_format = kOpFormat_DEFAULT;
+    }
     outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(node, output_index));
-    outputs_format.push_back(kOpFormat_DEFAULT);
+    outputs_format.push_back(output_format);
   }
   builder.SetInputsDeviceType(inputs_type);
   builder.SetInputsFormat(inputs_format);
@@ -99,7 +111,7 @@ const AnfNodePtr AddReluV2Fusion::Process(const FuncGraphPtr &graph, const AnfNo
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, add_relu.get());
   add_relu->set_scope(node->scope());
 
-  auto build_info = GenerateKernelBuildInfo(add_relu);
+  auto build_info = GenerateKernelBuildInfo(add_relu, {x1, x2});
   AnfAlgo::SetSelectKernelBuildInfo(build_info, add_relu.get());
   return add_relu;
 }
