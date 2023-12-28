@@ -18,6 +18,12 @@ mindspore.nn.EmbeddingLookup
         - **param_init** (Union[Tensor, str, Initializer, numbers.Number]) - embedding_table的初始化方法。当指定为字符串，字符串取值请参见类 `Initializer` 。默认值： ``'normal'`` 。
         - **target** (str) - 指定执行操作的'target'。取值范围为[ ``'DEVICE'`` , ``'CPU'`` ]。默认值： ``'CPU'`` 。
         - **slice_mode** (str) - semi_auto_parallel或auto_parallel模式下的切片方式。默认值： ``'batch_slice'`` 。
+
+          - **batch_slice** (str) - EmbeddingLookup算子会将输入的索引张量按批次(batch)进行划分，然后查找对应的嵌入向量。适用于每个样本都有相同数量索引的情况。
+          - **field_slice** (str) - EmbeddingLookup算子会将输入的索引张量按特征(field)进行划分，然后查找对应的嵌入向量。适用于每个样本索引数量可能不同但是特征维度相同的情况。
+          - **table_row_slice** (str) - EmbeddingLookup算子会将输入的索引张量看作一个二维表，并按行进行划分，然后查找对应的嵌入向量。
+          - **table_column_slice** (str) - EmbeddingLookup算子会将输入的索引张量看作一个二维表，并按列进行划分，然后查找对应的嵌入向量。
+
         - **manual_shapes** (tuple) - 字段切片模式下的伴随数组（accompaniment array），默认值： ``None`` 。
         - **max_norm** (Union[float, None]) - 最大剪切值。数据类型必须为float16、float32或None。默认值： ``None`` 。
         - **sparse** (bool) - 使用稀疏模式。当'target'设置为'CPU'时，'sparse'必须为True。默认值： ``True`` 。
