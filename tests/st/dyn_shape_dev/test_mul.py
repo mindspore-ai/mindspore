@@ -265,3 +265,21 @@ def test_mul_op_dynamic_backward_rank(context_mode):
     expect_out_2 = np.array([[3., 6., 5., 7.], [2., 3., 8., 11.]]).astype(np.float32)
     np.testing.assert_allclose(grads_2[0].asnumpy(), expect_out_2[0], rtol=1e-3)
     np.testing.assert_allclose(grads_2[1].asnumpy(), expect_out_2[1], rtol=1e-3)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize("data_type", [np.bool])
+@test_utils.run_test_func
+def test_mul_op_check_dtype(context_mode, data_type):
+    """
+    Feature: Ops.
+    Description: test op mul forward.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=context_mode)
+    x = ms.Tensor(np.array([1, 2, 4]).astype(data_type))
+    y = ms.Tensor(np.array([2, 4, 3]).astype(data_type))
+    with pytest.raises(TypeError):
+        _ = mul_forward_func(x, y)
