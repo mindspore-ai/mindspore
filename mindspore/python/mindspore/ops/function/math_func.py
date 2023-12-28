@@ -6913,6 +6913,8 @@ def block_diag(*inputs):
             f"{ary.ndim}"
         )
 
+    if not inputs:
+        raise RuntimeError("For 'block_diag', the input is empty.")
     arys = [to_2d(ary) for ary in inputs]
     matrix = [ops.concat(to_col_block(arys, idx, ary)) for idx, ary in enumerate(arys)]
     return ops.concat(matrix, 1)
