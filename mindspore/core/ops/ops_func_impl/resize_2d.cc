@@ -21,6 +21,7 @@
 namespace mindspore {
 namespace ops {
 BaseShapePtr Resize2DInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto image_shape = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(image_shape);
@@ -34,6 +35,20 @@ BaseShapePtr Resize2DInferShape(const PrimitivePtr &primitive, const std::vector
                                                                SizeToLong(image_rank), primitive));
     output_shape[kDim0] = image_shape_vec[kDim0];
     output_shape[kDim1] = image_shape_vec[kDim1];
+  }
+
+  constexpr size_t real_input_num = 4;
+  constexpr size_t align_corners_index = 2;
+  constexpr size_t half_pixel_centers_index = 3;
+  if (input_args.size() == real_input_num && input_args[align_corners_index] != nullptr &&
+      input_args[half_pixel_centers_index] != nullptr) {
+    auto align_corners_opt = GetScalarValue<bool>(input_args[align_corners_index]->GetValue());
+    auto half_pixel_centers_opt = GetScalarValue<bool>(input_args[half_pixel_centers_index]->GetValue());
+    if (align_corners_opt.has_value() && half_pixel_centers_opt.has_value()) {
+      (void)CheckAndConvertUtils::CheckValue<bool>("half_pixel_centers and align_corners",
+                                                   align_corners_opt.value() && half_pixel_centers_opt.value(),
+                                                   kNotEqual, true, primitive->name());
+    }
   }
 
   auto size_array_opt = GetArrayValue<int64_t>(input_args[1]);
