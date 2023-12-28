@@ -668,6 +668,8 @@ void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph)
     // Always keep the input node address consistent with the input tensor address.
     (void)need_update_input.emplace_back(node, ge_inputs.size());
     (void)ge_inputs.emplace_back(std::move(ge_tensor));
+    MS_LOG(INFO) << "Input node info: (name " << node->fullname_with_scope() << ", " << node->DebugString()
+                 << " ), input size: " << ge_tensor.GetSize();
   }
   while (cur_inputs_index < cur_inputs.size() && HasAbstractMonad(cur_inputs.at(cur_inputs_index))) {
     cur_inputs_index++;
@@ -706,6 +708,8 @@ void GeGraphExecutor::BuildOutputDataGeTensor(const KernelGraphPtr &kernel_graph
     GeTensor ge_tensor(*ge_tensor_desc);
     (void)ge_outputs.emplace_back(std::move(ge_tensor));
     (void)graph_outputs.emplace_back(output_node, index);
+    MS_LOG(INFO) << "Output node info: (name " << output_node->fullname_with_scope() << ", "
+                 << output_node->DebugString() << " ), output size: " << ge_tensor.GetSize();
   }
   MS_EXCEPTION_IF_CHECK_FAIL(
     ge_outputs.size() == graph_outputs.size(),
