@@ -24,14 +24,18 @@ constexpr size_t kSplitInputsNum = 3;
 }
 
 namespace mindspore::ops {
-void SplitInputsCheck(const int64_t &output_num, const int64_t &axis, const std::vector<int64_t> &tensor_shape) {
+void SplitInputsCheck(const PrimitivePtr &prim, const int64_t &output_num, const int64_t &axis,
+                      const std::vector<int64_t> &tensor_shape) {
+  auto prim_name = prim->name();
   if (output_num <= 0) {
-    MS_EXCEPTION(ValueError) << "For Split, the output_num is invalid.";
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', output_num must be positive, but got " << output_num << ".";
     return;
   }
 
-  if ((size_t)axis < tensor_shape.size() && tensor_shape[axis] % output_num != 0) {
-    MS_EXCEPTION(ValueError) << "For Split, the tensor_shape is invalid.";
+  if ((!IsDynamic(tensor_shape)) && (tensor_shape[axis] % output_num != 0)) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', x_shape[" << axis
+                             << "] must be divisible by output_num = " << output_num << ", but got "
+                             << tensor_shape[axis];
   }
 }
 
@@ -53,9 +57,11 @@ TensorStorageInfoPtrList SplitCalc(const PrimitivePtr &prim, const std::vector<V
   auto old_strides = old_tensor_info->old_strides;
   auto old_storage_offset = old_tensor_info->old_offset;
 
+  auto rank = SizeToLong(old_shape.size());
+  MS_CHECK_VALUE(rank > 0, CheckAndConvertUtils::FormatCheckIntegerMsg("rank", rank, kGreaterEqual, 1, prim));
   const auto ndim = old_shape.size();
   const auto wrap_axis = DynamicDimWrap(axis, ndim);
-  SplitInputsCheck(output_num, wrap_axis, old_shape);
+  SplitInputsCheck(prim, output_num, wrap_axis, old_shape);
 
   size_t splits_section_size = old_shape[wrap_axis] / output_num;
 

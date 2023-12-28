@@ -41,9 +41,6 @@ BaseShapePtr SplitFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
 
   auto rank = SizeToLong(x_shape.size());
-  MS_CHECK_VALUE(rank > 0,
-                 CheckAndConvertUtils::FormatCheckIntegerMsg("input rank", rank, kGreaterEqual, 1, primitive));
-
   auto axis_ptr = input_args[1]->GetValue();
   auto axis_opt = GetScalarValue<int64_t>(axis_ptr);
   if (MS_UNLIKELY(!axis_opt.has_value())) {
@@ -123,6 +120,7 @@ int32_t SplitFuncImpl::CheckValidation(const PrimitivePtr &primitive,
     return check_status;
   }
   auto rank = SizeToLong(x_shape.size());
+  MS_CHECK_VALUE(rank > 0, CheckAndConvertUtils::FormatCheckIntegerMsg("rank", rank, kGreaterEqual, 1, primitive));
   auto axis_ptr = input_args[1]->GetValue();
   auto axis_opt = GetScalarValue<int64_t>(axis_ptr);
 
