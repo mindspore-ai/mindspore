@@ -48,6 +48,7 @@ static Py_tss_t *tss = NULL;
 
 void AddConfigToGuard(const GraphJitConfig &c, OptGuardPtr guard);
 void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard, bool detach);
+void AddGuardForGlobals(const PyFrameObject *f, OptGuardPtr guard, bool detach);
 static void AddGradFlagForParam(bool grad_flag, OptGuardPtr guard, bool detach);
 static void CollectTraceBack(JitCompileResults *c, PyCodeObject *code, bool is_graph_mode);
 
@@ -569,6 +570,34 @@ void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard, bool detach) {
   }
 }
 
+void AddGuardForGlobals(const PyFrameObject *f, OptGuardPtr guard) {
+  PyCodeObject *co = f->f_code;
+  const _Py_CODEUNIT *bytecodes = reinterpret_cast<_Py_CODEUNIT*>(PyBytes_AsString(co->co_code));
+  int size = (PyBytes_GET_SIZE(co->co_code)) / sizeof(_Py_CODEUNIT);
+  int exarg = 0;
+  for (int bci = 0; bci < size; ++bci) {
+    int opcode = _Py_OPCODE(bytecodes[bci]);
+    int oparg = (exarg << 8) | _Py_OPARG(bytecodes[bci]);
+    exarg = (opcode == EXTENDED_ARG) ? oparg : 0;
+    if (opcode != LOAD_GLOBAL) {
+      continue;
+    }
+    PyObject *k = PyTuple_GET_ITEM(co->co_names, oparg);
+    PyObject *v = PyDict_GetItem(f->f_globals, k);
+    std::string key = PyUnicode_AsUTF8(k);
+    if (v == nullptr) {
+      MS_LOG(WARNING) << "can't pass undefined symbol to graph!! key error [" << key << "] at bci " << bci;
+      PyErr_Clear();
+    } else {
+      RootTracePtr ptr = std::make_shared<RootTrace>(v, TraceType::Global, -1, key);
+      guard->GuardOn(ptr, mindspore::jit::graph::GuardLevel::GId, false);
+      if (detach) {
+        ptr->Detach();
+      }
+    }
+  }
+}
+
 static void AddGradFlagForParam(bool grad_flag, OptGuardPtr guard, bool detach) {
   CustomizedTracePtr ptr = std::make_shared<CustomizedTrace>(
     grad_flag ? Py_True : Py_False,
@@ -638,6 +667,7 @@ static void GraphCompile(JitCompileResults *jcr, const PyFrameObject *frame) {
   Py_XSETREF(PyFunction_GET_CLOSURE(new_func), GetClosure(frame));
   PyFunctionObject *func = reinterpret_cast<PyFunctionObject *>(new_func);
   PyFrameObject *f = const_cast<PyFrameObject *>(frame);
+  AddGuardForGlobals(f, jcr->code->GetGuard(), jcr->conf->GetBoolConfig(GraphJitConfig::kGuardDetachObject));
   std::vector<PyObject *> backup;
   if (enable_dynamicshape) {
     backup = jcr->code->GetGuard()->ApplyDynamicShape(f);
