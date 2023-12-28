@@ -137,31 +137,6 @@ void CommonFinalOptimization(const std::shared_ptr<session::KernelGraph> &kernel
     std::string filename = "hwopt_common_final_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(filename, kernel_graph);
   }
-  std::string device_target = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  int execution_mode = context->get_param<int>(MS_CTX_EXECUTION_MODE);
-  if (device_target != kAscendDevice || execution_mode != kPynativeMode) {
-    // Here dump graphs only for Ascend pynative mode.
-    return;
-  }
-  std::string final_graph = "trace_code_graph_" + std::to_string(kernel_graph->graph_id());
-  auto &json_parser = DumpJsonParser::GetInstance();
-  if (json_parser.e2e_dump_enabled() || json_parser.async_dump_enabled()) {
-    uint32_t rank_id = GetRankId();
-    std::string root_dir = json_parser.path() + "/rank_" + std::to_string(rank_id);
-    MS_LOG(INFO) << "Dump graph and exeorder for graph: " << kernel_graph->graph_id()
-                 << "root_graph_id: " << kernel_graph->root_graph_id();
-    std::string target_dir = root_dir + "/graphs";
-    std::string cst_file_dir = GenerateDumpPath(kernel_graph->root_graph_id(), rank_id, true);
-    std::string ir_file_path = target_dir + "/" + "ms_output_" + final_graph + ".ir";
-    DumpIRProtoWithSrcInfo(kernel_graph, final_graph, target_dir, kDebugWholeStack);
-    if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-      // Dump constant data for old runtime ascend.
-      DumpConstantInfo(kernel_graph, cst_file_dir);
-    }
-    DumpIR("trace_code_graph", kernel_graph, true, kWholeStack, ir_file_path);
-    DumpGraphExeOrder("ms_execution_order_graph_" + std::to_string(kernel_graph->graph_id()) + ".csv", root_dir,
-                      kernel_graph->execution_order());
-  }
 #endif
 }
 
