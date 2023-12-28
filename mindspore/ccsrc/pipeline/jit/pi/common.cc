@@ -570,9 +570,9 @@ void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard, bool detach) {
   }
 }
 
-void AddGuardForGlobals(const PyFrameObject *f, OptGuardPtr guard) {
+void AddGuardForGlobals(const PyFrameObject *f, OptGuardPtr guard, bool detach) {
   PyCodeObject *co = f->f_code;
-  const _Py_CODEUNIT *bytecodes = reinterpret_cast<_Py_CODEUNIT*>(PyBytes_AsString(co->co_code));
+  const _Py_CODEUNIT *bytecodes = reinterpret_cast<_Py_CODEUNIT *>(PyBytes_AsString(co->co_code));
   int size = (PyBytes_GET_SIZE(co->co_code)) / sizeof(_Py_CODEUNIT);
   int exarg = 0;
   for (int bci = 0; bci < size; ++bci) {
@@ -870,7 +870,7 @@ static bool CheckTensorInContainer(py::object args) {
   } else if (py::isinstance<py::list>(args)) {
     py::list l = py::cast<py::list>(args);
     for (size_t i = 0; i < l.size(); ++i) {
-      if (CheckTensorInContainer(t[i])) {
+      if (CheckTensorInContainer(l[i])) {
         return true;
       }
     }

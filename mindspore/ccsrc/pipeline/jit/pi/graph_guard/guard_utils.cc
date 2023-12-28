@@ -828,7 +828,7 @@ class MetaTensorData : public ItemData {
       if (ret) {
         if (is_parameter_ == true) {
           ret = ((param_ == nullptr && other.param_ == nullptr) ||
-                        (param_ != nullptr && other.param_ != nullptr && ParamInfoData::Equal(param_, other.param_)));
+                 (param_ != nullptr && other.param_ != nullptr && ParamInfoData::Equal(param_, other.param_)));
         }
       }
       return ret;

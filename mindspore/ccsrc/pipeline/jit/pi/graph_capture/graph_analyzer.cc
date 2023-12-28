@@ -133,7 +133,6 @@ bool GraphAnalyzer::AddToCaptured(ValueNode *v) {
       return false;
     }
     // don't pass unknown callable to graph
-    int limit_cast = Config().getIntConfig(GraphJitConfig::kLimitCastCount);
     bool is_known_func = f->GetType() == AObject::kTypeCell || f->GetType() == AObject::kTypePrimitive ||
                          (f->GetType() == AObject::kTypeFunction && CheckJitConstexpr(f->GetPyObject()));
     bool is_ms_support_func = f->TestMsFlag(kMsFlagSet);
