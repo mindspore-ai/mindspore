@@ -279,6 +279,7 @@ bool CheckAndGetAxisValue(const std::vector<abstract::AbstractBasePtr> &input_ar
     auto value_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]);
     auto value_array = value_opt.value();
     *axis_value = value_array.ToVector();
+    return !value_opt.has_value();
   }
   if (input_args[kInputIndex1]->isa<abstract::AbstractScalar>()) {
     is_dynamic = CheckAndGetAxisValueFromScalar(input_value, op_name, axis_value, axis_shape_v);
