@@ -2346,6 +2346,13 @@ bool AnfAlgo::IsReduceOp(const std::string &op_name) {
   return reduce_op_type.find(op_name) != reduce_op_type.end();
 }
 
+bool AnfAlgo::IsTypeTransformOp(const std::string &op_name) {
+  static const std::set<std::string> type_trans_op_names = {
+    prim::kPrimTupleToTensor->name(), prim::kPrimTensorToTuple->name(), prim::kPrimScalarToTensor->name(),
+    prim::kPrimTensorToScalar->name()};
+  return type_trans_op_names.find(op_name) != type_trans_op_names.end();
+}
+
 abstract::BaseShapePtr AnfAlgo::GetDynamicSequenceShape(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
   abstract::AbstractSequencePtr sequence_abs = nullptr;

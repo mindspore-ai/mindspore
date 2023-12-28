@@ -312,7 +312,7 @@ class COMMON_EXPORT AnfAlgo {
   static bool HasTupleInput(const CNodePtr &node);
   static bool HasDynamicTupleInput(const CNodePtr &node);
   static bool IsReduceOp(const std::string &op_name);
-
+  static bool IsTypeTransformOp(const std::string &op_name);
   // Get the element shape of dynamic sequence shape.
   static abstract::BaseShapePtr GetDynamicSequenceShape(const AnfNodePtr &node, size_t output_idx);
   // Fetch the sub abstract from the top abstract by the index.
