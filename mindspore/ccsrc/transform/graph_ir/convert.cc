@@ -327,19 +327,23 @@ bool IsOverFlowNode(const AnfNodePtr &node, const AnfNodePtr &input) {
 std::string SelectParamOriFormat(const FuncGraphManagerPtr &manager, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(manager);
   MS_EXCEPTION_IF_NULL(node);
-  std::vector<AnfNodePtr> visited;
-  const auto &nodes = manager->node_users()[node];
-  for (const auto &node_pair : nodes) {
-    if (AnfUtils::IsRealKernel(node_pair.first) && node_pair.first->isa<CNode>()) {
-      visited.emplace_back(node_pair.first);
+  std::deque<AnfNodePtr> todo{node};
+  while (!todo.empty()) {
+    auto &curr_node = todo.front();
+    todo.pop_front();
+    const auto &nodes = manager->node_users()[curr_node];
+    for (const auto &node_pair : nodes) {
+      if (IsPrimitiveCNode(node_pair.first, prim::kPrimLoad)) {
+        todo.emplace_back(node_pair.first);
+      } else if (node_pair.first->isa<CNode>()) {
+        auto visited_format = GetOpIOFormat(node_pair.first);
+        if (visited_format != kOpFormat_DEFAULT) {
+          return visited_format;
+        }
+      }
     }
   }
-
-  auto ori_format = std::any_of(visited.begin(), visited.end(),
-                                [](const AnfNodePtr &node) { return GetOpIOFormat(node) == kOpFormat_NCHW; })
-                      ? kOpFormat_NCHW
-                      : kOpFormat_DEFAULT;
-  return ori_format;
+  return kOpFormat_DEFAULT;
 }
 
 std::vector<int> GetGeTensorOrders(const mindspore::HashMap<int, int> &ge_input_to_ms_input,
