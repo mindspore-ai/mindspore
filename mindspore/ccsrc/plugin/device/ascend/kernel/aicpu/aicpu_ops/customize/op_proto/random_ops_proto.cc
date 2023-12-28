@@ -50,17 +50,17 @@ INFER_FUNC_REG(NonDeterministicInts, NonDeterministicIntsInfer);
 // ----------------LogNormalReverse-------------------
 // Obtains the processing function of the output tensor description.
 IMPLEMT_COMMON_INFERFUNC(LogNormalReverseInferShape) {
-  TensorDesc v_output_desc = op.GetOutputDescByName("y");
+  TensorDesc v_output_desc = op.GetOutputDescByName("output");
 
-  DataType input_dtype = op.GetInputDescByName("x").GetDataType();
-  Format input_format = op.GetInputDescByName("x").GetFormat();
-  ge::Shape shape_input = op.GetInputDescByName("x").GetShape();
+  DataType input_dtype = op.GetInputDescByName("input").GetDataType();
+  Format input_format = op.GetInputDescByName("input").GetFormat();
+  ge::Shape shape_input = op.GetInputDescByName("input").GetShape();
 
   v_output_desc.SetShape(shape_input);
   v_output_desc.SetDataType(input_dtype);
   v_output_desc.SetFormat(input_format);
 
-  if (op.UpdateOutputDesc("y", v_output_desc) != GRAPH_SUCCESS) {
+  if (op.UpdateOutputDesc("output", v_output_desc) != GRAPH_SUCCESS) {
     return GRAPH_FAILED;
   }
   return GRAPH_SUCCESS;
