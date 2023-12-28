@@ -2330,14 +2330,13 @@ bool MSANFModelParser::BuildPrimitiveNode(const mind_ir::PrimitiveProto &primiti
     if (prim_type.compare(0, strlen(kDoSignaturePrimitivePrefix), kDoSignaturePrimitivePrefix) == 0) {
       auto op_name = prim_type.substr(strlen(kDoSignaturePrimitivePrefix));
       prim = std::make_shared<prim::DoSignaturePrimitive>(op_name, std::make_shared<Primitive>(op_name));
-    } else if (type == mind_ir::PrimitiveProto_PrimType_PRIMITIVE_FUNCTION) {
-      MS_LOG(DEBUG) << "PrimitiveFunction special node_type: " << prim_type;
-      prim = std::make_shared<Primitive>(prim_type);
-      prim->AddAttr("primitive_function", MakeValue(true));
     } else {
-      MS_LOG(DEBUG) << "Special node_type: " << prim_type;
       prim = std::make_shared<Primitive>(prim_type);
     }
+  }
+  if (type == mind_ir::PrimitiveProto_PrimType_PRIMITIVE_FUNCTION) {
+    MS_LOG(DEBUG) << "PrimitiveFunction special node_type: " << prim_type;
+    prim->AddAttr("primitive_function", MakeValue(true));
   }
 
   if (primitive_proto.has_instance_name()) {

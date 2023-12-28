@@ -158,7 +158,11 @@ bool IrExportBuilder::BuildPrimitives() {
 
     prim_proto->set_name(it->second);
     prim_proto->set_op_type(prim->name());
-    if (mindspore::ops::IsPrimitiveFunction(prim->name())) {
+    // function IsPrimitiveFunction: dynamic shape new primitive
+    // attr is_primitive_function: default true, Lite MindIr false
+    bool is_primitive_function =
+      prim->GetAttr("primitive_function") == nullptr || GetValue<bool>(prim->GetAttr("primitive_function"));
+    if (mindspore::ops::IsPrimitiveFunction(prim->name()) && is_primitive_function) {
       prim_proto->set_prim_type(mind_ir::PrimitiveProto_PrimType_PRIMITIVE_FUNCTION);
     } else {
       prim_proto->set_prim_type(mind_ir::PrimitiveProto_PrimType_PRIMITIVE);
