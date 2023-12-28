@@ -191,6 +191,7 @@ bool GuardConstCallNodeParam(CallNode *call_node, Graph *sub_graph, int max_guar
       return false;
     }
   }
+  guard->Pop();
   return true;
 }
 

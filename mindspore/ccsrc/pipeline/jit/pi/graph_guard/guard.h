@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 #include <map>
+#include <stack>
 #include <string>
 #include <utility>
 #include <tuple>
@@ -38,6 +39,10 @@ typedef enum _GuardLevel {
   GAttr,
   GEqual,
 } GuardLevel;
+
+using GuardItemVector = std::vector<GuardItemPtr>;
+using GuardItemMap = std::map<std::string, GuardItemPtr>;
+using GuardCheckPoint = std::pair<GuardItemVector, GuardItemMap>;
 
 class OptGuard {
  public:
@@ -67,6 +72,7 @@ class OptGuard {
   virtual void UpdateConfig(const std::map<std::string, bool> &config);
   virtual void Backup();
   virtual void Rollback();
+  virtual void Pop();
   virtual bool IsEmpty() { return guardList_.size() == 0; }
   virtual bool MatchShape(std::shared_ptr<OptGuard> other);
   virtual std::vector<PyObject *> ApplyDynamicShape(PyFrameObject *frame);
@@ -74,10 +80,9 @@ class OptGuard {
 
  protected:
   std::vector<GuardItemPtr> guardList_;
-  std::vector<GuardItemPtr> backupList_;
-  std::map<std::string, bool> config_;
   std::map<std::string, GuardItemPtr> guardMap_;
-  std::map<std::string, GuardItemPtr> backupMap_;
+  std::stack<GuardCheckPoint> guardStack_;
+  std::map<std::string, bool> config_;
 };
 using OptGuardPtr = std::shared_ptr<OptGuard>;
 

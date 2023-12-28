@@ -352,17 +352,18 @@ void OptGuard::UpdateConfig(const std::map<std::string, bool> &config) {
 }
 
 void OptGuard::Backup() {
-  backupList_.clear();
-  backupList_.insert(backupList_.begin(), guardList_.begin(), guardList_.end());
-  backupMap_.clear();
-  backupMap_.insert(guardMap_.begin(), guardMap_.end());
+  guardStack_.push(std::make_pair(guardList_, guardMap_));
 }
 
 void OptGuard::Rollback() {
-  backupList_.swap(guardList_);
-  backupList_.clear();
-  backupMap_.swap(guardMap_);
-  backupMap_.clear();
+  GuardCheckPoint point = guardStack_.top();
+  guardList_.swap(point.first);
+  guardMap_.swap(point.second);
+  guardStack_.pop();
+}
+
+void OptGuard::Pop() {
+  guardStack_.pop();
 }
 
 static bool MatchDynamicShape(GuardItemPtr item, const std::vector<GuardItemPtr> &list) {
