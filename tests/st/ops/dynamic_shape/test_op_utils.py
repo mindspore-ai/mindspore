@@ -26,8 +26,9 @@ from mindspore.common import mutable
 IR_LEVEL = 2
 INT = 0
 FLOAT = 1
-TUPLE = 2
-LIST = 3
+BOOL = 2
+TUPLE = 3
+LIST = 4
 
 
 class HelpNet(nn.Cell):
@@ -41,17 +42,18 @@ class HelpNet(nn.Cell):
         index = args[-2]
         types = args[-1]
 
-        help_tensor_num = len(index)
         new_args = list(args[:-2])
         for i, idx in enumerate(index):
             if types[i] == INT:
-                new_args[idx] = int(args[i - (help_tensor_num + 2)])
+                new_args[idx] = int(args[idx])
             elif types[i] == FLOAT:
-                new_args[idx] = float(args[i - (help_tensor_num + 2)])
+                new_args[idx] = float(args[idx])
+            elif types[i] == BOOL:
+                new_args[idx] = bool(args[idx])
             elif types[i] == TUPLE:
-                new_args[idx] = tuple(args[i - (help_tensor_num + 2)])
+                new_args[idx] = ops.TensorToTuple()(args[idx])
             elif types[i] == LIST:
-                new_args[idx] = list(args[i - (help_tensor_num + 2)])
+                new_args[idx] = ops.TensorToTuple()(args[idx])
 
         return self.op(*new_args)
 
@@ -120,11 +122,34 @@ def compare(expect, actual, grad):
 
 
 def compare_result(expect, actual, stage='', index=None):
+    if not isinstance(actual, type(expect)):
+        print("Compare Failed because the types of static-shape out(as expect) and dynamic-shape out(as actual) "
+              "are not matched(exepct is a sequence).")
+        print(f"  static-shape out(as expect): {expect}")
+        print(f"  dynamic-shape out(as actual): {actual}")
+        assert False
+
     if isinstance(expect, (list, tuple)):
+        if len(expect) != len(actual):
+            print(f"Compare Failed because of the length of static-shape out(as expect) "
+                  f"is not equal to dynamic-shape out(as actual). "
+                  f"static-shape out(as expect) length: {len(expect)}, "
+                  f"dynamic-shape out(as actual) length: {len(actual)}")
+            assert False
+        if is_numerical_sequence(expect) and is_numerical_sequence(actual):
+            result = np.allclose(expect, actual, rtol=1e-03, atol=1e-03)
+            print(f"Compare {['Success'] if result else ['Failed']} for " \
+                  f"{0 if index is None else index}'th output of {stage}.")
+            assert result
+            return
+
         for i, (exp, act) in enumerate(zip(expect, actual)):
             compare_result(exp, act, stage, i)
     else:
-        result = np.allclose(expect.asnumpy(), actual.asnumpy(), rtol=1e-03, atol=1e-03)
+        if isinstance(expect, Tensor):
+            result = np.allclose(expect.asnumpy(), actual.asnumpy(), rtol=1e-03, atol=1e-03)
+        else:
+            result = np.allclose(expect, actual, rtol=1e-03, atol=1e-03)
         print(f"Compare {['Success'] if result else ['Failed']} for " \
               f"{0 if index is None else index}'th output of {stage}.")
         assert result
@@ -212,6 +237,10 @@ def replace_nontensor_with_help_tensor(inputs):
             nontensor_input_type += [LIST]
             nontensor_input_index += [i]
             new_inputs[i] = Tensor(x)
+        elif isinstance(x, bool):
+            nontensor_input_type += [BOOL]
+            nontensor_input_index += [i]
+            new_inputs[i] = Tensor(x)
         elif isinstance(x, int):
             nontensor_input_type += [INT]
             nontensor_input_index += [i]
@@ -220,6 +249,8 @@ def replace_nontensor_with_help_tensor(inputs):
             nontensor_input_type += [FLOAT]
             nontensor_input_index += [i]
             new_inputs[i] = Tensor(x)
+        elif not isinstance(x, (Tensor, tuple, list, str)):
+            raise TypeError(f"Unsupported type: {type(x)}")
 
     new_inputs += [nontensor_input_index, nontensor_input_type]
     return new_inputs
@@ -313,6 +344,13 @@ def is_has_scalar_only(inputs):
     return has_scalar and is_scalar_only
 
 
+def has_tensor(inputs):
+    for item in inputs:
+        if isinstance(item, Tensor):
+            return True
+    return False
+
+
 def run_with_dynamic(prim, inputs_seq, tensor_dynamic_type, nontensor_dynamic_type, grad,
                      dump_ir, prefix_name, expect, expect_second):
     """run_with_dynamic"""
@@ -322,14 +360,16 @@ def run_with_dynamic(prim, inputs_seq, tensor_dynamic_type, nontensor_dynamic_ty
     else:
         types = [tensor_dynamic_type,]
 
-    # Test dynamic Tensor
-    for item in types:
-        run_and_compare(prim, inputs_seq[0], dump_ir, prefix_name, 'None', item, expect, grad)
+    if has_tensor(inputs_seq[0]) and (nontensor_dynamic_type == 'None' or nontensor_dynamic_type == 'BOTH'):
+        # Test dynamic Tensor
+        for item in types:
+            run_and_compare(prim, inputs_seq[0], dump_ir, prefix_name, 'None', item, expect, grad)
 
     # Test Resize of the KernelMod
-    ir_path = f"{prefix_name}/Resize"
-    expect_resize = expect_second[0] if grad else expect_second
-    run_with_dynamic_resize(prim, inputs_seq, dump_ir, ir_path, expect_resize)
+    if expect_second is not None:
+        ir_path = f"{prefix_name}/Resize"
+        expect_resize = expect_second[0] if grad else expect_second
+        run_with_dynamic_resize(prim, inputs_seq, dump_ir, ir_path, expect_resize)
 
     # Test dynamic nontensor
     seq_dynamic_list = get_nontensor_dynamic_type_list(nontensor_dynamic_type)
@@ -352,12 +392,25 @@ def run_with_dynamic(prim, inputs_seq, tensor_dynamic_type, nontensor_dynamic_ty
                             item, expect, grad)
 
 
-def get_name_by_prim(prim):
+def get_name_by_op(prim):
     name = str(prim)
-    name = name.replace('Prim[', '')
-    name = name.replace(']', '')
-    name = name.replace('=', '-')
-    name = name.replace(',', '_')
+    if "Prim" in name:
+        name = name.replace('Prim[', '')
+        name = name.replace(']', '')
+        name = name.replace('=', '-')
+        name = name.replace(',', '_')
+        name = name.replace('<', '_')
+        name = name.replace('>', '')
+        name = name.replace(" ", '')
+        return "ir_" + name
+
+    if '0x' in name:
+        name = name.replace('<', '')
+        name = name.replace('>', '')
+        name = name.replace(" ", '_')
+        pos = name.find('_at')
+        return "ir_" + name[:pos]
+
     name = name.replace('<', '_')
     name = name.replace('>', '')
     name = name.replace(" ", '')
@@ -376,20 +429,21 @@ def create_net(prim, grad):
     return net_class(prim)
 
 
-def TEST_OP(prim, inputs_seq, tensor_dynamic_type='BOTH', nontensor_dynamic_type='BOTH',
-            mode=context.GRAPH_MODE, target=None, grad=True, dump_ir=False, custom_flag=''):
+def TEST_OP(op, inputs_seq, tensor_dynamic_type='BOTH', nontensor_dynamic_type='BOTH',
+            mode=context.GRAPH_MODE, target=None, grad=True, dump_ir=False, custom_flag='', test_resize=True):
     """
     This function creates several dynamic cases by converting Tensor/tuple/list/scalar inputs to dynamic shape to test the correctness of the op's InferShape
-    and Resize.
+    and Resize. Both Primitive and Functional API are supported.
     For Tensor, including tuple/list of tensor, the dynamic cases include 'DYNAMIC_RANK' and 'DYNAMIC_SHAPE'.
     For tuple/list, the dynamic cases include 'NONE', 'STATIC_LEN' and 'MUTABLE_LEN'.
     For scalar, the dynamic cases include 'NONE' and 'STATIC_LEN'.
-    so the all testcases should be: ['DYNAMIC_RANK', 'DYNAMIC_SHAPE'] * ['NONE', 'STATIC_LEN', 'MUTABLE_LEN']
+    So the all testcases should be: ['DYNAMIC_RANK', 'DYNAMIC_SHAPE'] * ['NONE', 'STATIC_LEN', 'MUTABLE_LEN'].
+    The dynamic of string and other types of data is not supported yet.
     Furthermore, two groups of inputs are used to run twice with the same Cell to test the correctness of Resize.
     The expected data is generated by running with static shape.
 
     Inputs:
-        - **prim** (Primitive) - The operator instance to be test.
+        - **op** (Union[Primitive, Function]) - The operator instance to be test.
         - **inputs_seq** (list[list, list]) - The inputs(attribute is not needed) of the operator.
           `inputs_seq` contains two groups of data: the first group will be used to running in the all dynamic cases, and the second will only be used to test `Resize`.
           The two groups of data should have the same type accordingly: if data is a Tensor, data with same dtype and different rank of shape should be given;
@@ -409,6 +463,7 @@ def TEST_OP(prim, inputs_seq, tensor_dynamic_type='BOTH', nontensor_dynamic_type
         - **dump_ir** (bool) - If True, 'save_graphs' will be set and save_graphs_path is generated by Primitive's name and dynamic type. Default False.
         - **custom_flag** (str) - Some log and ir path is distinguished by Primitive's name. Default ''.
           `custom_flag` can be used to distinguish the calling of TEST_OP with the same Primitive
+        - **test_resize** (bool) - whether to test the Resize function. Default True.
 
     Outputs:
         None
@@ -417,43 +472,26 @@ def TEST_OP(prim, inputs_seq, tensor_dynamic_type='BOTH', nontensor_dynamic_type
         >>> from mindspore import Tensor, ops
         >>> import numpy as np
         >>> from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
-        >>> import pytest
         >>> np_data1 = np.random.rand(2, 3, 4).astype(np.float32)
         >>> in1 = Tensor(np_data1)
         >>> np_data2 = np.random.rand(2, 3, 4).astype(np.float32)
-        >>> tuple_in1 = (0)
-        >>> tuple_in2 = (1)
+        >>> tuple_in1 = (0,)
+        >>> tuple_in2 = (1,)
+        >>> # Testing Primitive
         >>> reducesum = ops.ReduceSum(keep_dims=True)
-        >>> TEST_OP(reducesum, [[in1, tuple_in1], [in2, tuple_in2]], dump_ir=True, custom_flag='2')
-        ******************************Begin test for Prim[ReduceSum]<keep_dims=True, skip_mode=False> custom_flag:[2]******************************
-        Start running with static shape with first inputs...
-        End
-        Start running with static shape with second inputs...
-        End
-        Start testing with [DYNAMIC_SHAPE] [None]...
-        Compare ['Success']  for 0'th output.
-        End
-        Start testing with [DYNAMIC_RANK] [None]...
-        [WARNING] ME(54031:139980549281600,MainProcess):2023-07-13-15:12:12.723.900 [mindspore/common/tensor.py:213] For 'Tensor', if 'dtype' is not None, 'input_data', 'shape' or 'init' must not be None.
-        Compare ['Success']  for 0'th output.
-        End
-        Start testing with [Resize]...
-        Compare ['Success']  for 0'th output.
-        End
-        Start testing with [DYNAMIC_SHAPE] [VARIABLE_NONTENSOR_STATIC_LEN]...
-        Compare ['Success']  for 0'th output.
-        End
-        Start testing with [DYNAMIC_RANK] [VARIABLE_NONTENSOR_STATIC_LEN]...
-        [WARNING] ME(54031:139980549281600,MainProcess):2023-07-13-15:12:16.581.980 [mindspore/common/tensor.py:213] For 'Tensor', if 'dtype' is not None, 'input_data', 'shape' or 'init' must not be None.
-        Compare ['Success']  for 0'th output.
-        End
-        ******************************End test for Prim[ReduceSum]<keep_dims=True, skip_mode=False> custom_flag:[2]******************************
+        >>> TEST_OP(reducesum, [[in1, tuple_in1], [in2, tuple_in2]])
+        ...
+        >>> # Testing functional API
+        >>> def reducesum_func(x, axis, keep_dims):
+        >>>     return ops.auto_generate.gen_ops_def.reduce_sum(x, axis, keep_dims)
+        >>> TEST_OP(reducesum_func, [[in1, tuple_in1], [in2, tuple_in2]])
+        ...
     """
-    prefix_name = get_name_by_prim(prim)
+    prefix_name = get_name_by_op(op)
     if custom_flag != '':
         prefix_name += '_' + custom_flag
 
-    test_cast_name = f"{str(prim)} custom_flag:[{custom_flag}]"
+    test_cast_name = f"{str(op)} custom_flag:[{custom_flag}]"
     print("******************************Begin test for " + test_cast_name + "******************************")
 
     check_args(inputs_seq, tensor_dynamic_type, nontensor_dynamic_type, target)
@@ -470,22 +508,23 @@ def TEST_OP(prim, inputs_seq, tensor_dynamic_type='BOTH', nontensor_dynamic_type
         ir_path = f"{prefix_name}/static_first_inputs"
         context.set_context(save_graphs=IR_LEVEL, save_graphs_path=ir_path)
 
-    static_net = create_net(prim, grad)
+    static_net = create_net(op, grad)
     out_expect = static_net(*inputs_seq[0])
     print("End")
 
-    print("Start running with static shape with second inputs...")
-    if dump_ir:
-        ir_path = f"{prefix_name}/static_second_inputs"
-        context.set_context(save_graphs=IR_LEVEL, save_graphs_path=ir_path)
+    out_expect_second = None
+    if test_resize:
+        print("Start running with static shape with second inputs...")
+        if dump_ir:
+            ir_path = f"{prefix_name}/static_second_inputs"
+            context.set_context(save_graphs=IR_LEVEL, save_graphs_path=ir_path)
 
-    static_net_second = create_net(prim, grad)
-    out_expect_second = static_net_second(*inputs_seq[1])
-    print("End")
-
+        static_net_second = create_net(op, grad)
+        out_expect_second = static_net_second(*inputs_seq[1])
+        print("End")
 
     # step 2: run in dynamic mode and compare results
-    run_with_dynamic(prim, inputs_seq, tensor_dynamic_type, nontensor_dynamic_type, grad,
+    run_with_dynamic(op, inputs_seq, tensor_dynamic_type, nontensor_dynamic_type, grad,
                      dump_ir, prefix_name, out_expect, out_expect_second)
 
     print("******************************End test for " + test_cast_name + "******************************")
