@@ -25,12 +25,13 @@
 #include "ops/other_op_name.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
+#include "ir/dtype/type.h"
 
 namespace mindspore {
 ::HcclDataType HcomUtil::ConvertHcclType(TypeId type_id) {
   auto iter = kConstOpHcomDataTypeMap.find(type_id);
   if (iter == kConstOpHcomDataTypeMap.end()) {
-    MS_LOG(EXCEPTION) << "HcomDataType can't support Current Ascend Data Type : " << type_id;
+    MS_LOG(EXCEPTION) << "HcomDataType can't support Current Ascend Data Type : " << TypeIdLabel(type_id);
   }
   return iter->second;
 }
