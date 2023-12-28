@@ -39,6 +39,11 @@ _partial = ops.Partial()
 
 
 @constexpr
+def _ascend_target():
+    return context.get_context("device_target") == "Ascend"
+
+
+@constexpr
 def _ascend_910A_target():
     return MSContext.get_instance().get_ascend_soc_version() == "ascend910"
 
@@ -81,16 +86,17 @@ def _overflow(inputs):
 @jit
 def _all_finite(inputs, check_overflow_mode):
     """all finite check"""
-    if (_ascend_910A_target()) or \
-       (_ascend_910B_target() and check_overflow_mode == "SATURATION_MODE"):
-        status = Tensor([0] * 8, mstype.int32)
-        status = ops.depend(status, inputs)
-        get_status = _get_cache_prim(NPUGetFloatStatusV2)()(status)
-        status = ops.depend(status, get_status)
-        clear_status = _get_cache_prim(NPUClearFloatStatusV2)()(status)
-        get_status = ops.depend(get_status, clear_status)
-        status_finite = get_status.equal(Tensor(0, mstype.int32)).all()
-        return status_finite
+    if _ascend_target():
+        if (_ascend_910A_target()) or \
+           (_ascend_910B_target() and check_overflow_mode == "SATURATION_MODE"):
+            status = Tensor([0] * 8, mstype.int32)
+            status = ops.depend(status, inputs)
+            get_status = _get_cache_prim(NPUGetFloatStatusV2)()(status)
+            status = ops.depend(status, get_status)
+            clear_status = _get_cache_prim(NPUClearFloatStatusV2)()(status)
+            get_status = ops.depend(get_status, clear_status)
+            status_finite = get_status.equal(Tensor(0, mstype.int32)).all()
+            return status_finite
 
     outputs = _hypermap(_partial(_overflow), inputs)
     flag_sum = ops.addn(outputs).reshape(())
