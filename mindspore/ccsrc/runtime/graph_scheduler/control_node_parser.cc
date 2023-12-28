@@ -676,6 +676,23 @@ bool IsTopoDependNode(const AnfNodePtr &src_node, const AnfNodePtr &dst_node, st
   }
   return false;
 }
+
+bool IsValidBackendParameter(const AnfNodePtr &node) {
+  if (node == nullptr) {
+    return false;
+  }
+  if (node->abstract() == nullptr) {
+    return true;
+  }
+  if (node->abstract()->isa<abstract::AbstractAny>()) {
+    return false;
+  }
+  const auto &shape = node->abstract()->BuildShape();
+  if (shape == nullptr || shape->IsDynamic()) {
+    return false;
+  }
+  return true;
+}
 }  // namespace
 void CreateBuildInfoForFrontNode(const KernelWithIndex &front_node_with_index, const AnfNodePtr &backend_node) {
   MS_EXCEPTION_IF_NULL(front_node_with_index.first);
@@ -1942,8 +1959,7 @@ void ControlNodeParser::CreateDeviceTensors(const std::vector<AnfNodePtr> &contr
                       << " index:" << i << " in control node:" << control_node->DebugString();
         const auto &node_with_index_with_context = FetchBackendParameterWithContextByFrontParameter(input_with_index);
         const auto &backend_node = node_with_index_with_context.first.first;
-        if (backend_node != nullptr &&
-            (backend_node->abstract() == nullptr || (!backend_node->abstract()->isa<abstract::AbstractAny>()))) {
+        if (IsValidBackendParameter(backend_node)) {
           CreateDeviceTensorForValueNode(input_with_index, backend_node, node_with_index_with_context.second);
           (void)front_value_nodes_.emplace(input_with_index, node_with_index_with_context.second);
         } else {
@@ -1968,8 +1984,7 @@ void ControlNodeParser::FetchFrontValueNode(const std::vector<AnfNodePtr> &contr
       const auto &node_with_index_to_context =
         FetchBackendParameterWithContextByFrontParameter(real_parameter_with_index);
       const auto &backend_node = node_with_index_to_context.first.first;
-      if (backend_node != nullptr &&
-          (backend_node->abstract() == nullptr || (!backend_node->abstract()->isa<abstract::AbstractAny>()))) {
+      if (IsValidBackendParameter(backend_node)) {
         (void)front_value_nodes_.emplace(real_parameter_with_index, node_with_index_to_context.second);
         CreateDeviceTensorForValueNode(real_parameter_with_index, backend_node, node_with_index_to_context.second);
       } else {
