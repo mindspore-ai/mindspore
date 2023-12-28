@@ -39,6 +39,7 @@ constexpr size_t kInputQueryNDimBNSD = 1;
 constexpr size_t kInputQuerySeqDimBNSD = 2;
 constexpr size_t kInputQueryHiddenDimBNSD = 3;
 constexpr char kAttrHeadNum[] = "num_heads";
+constexpr char kAttrKVHeadNum[] = "num_key_value_heads";
 constexpr char kAttrInputLayout[] = "input_layout";
 constexpr size_t rank_2 = 2;
 constexpr size_t rank_3 = 3;
@@ -109,6 +110,7 @@ void PromptFlashAttentionInfo::GenerateExpectStrategies() {
 
 Status PromptFlashAttentionInfo::GetAttrs() {
   head_num_ = GetIntAttr(kAttrHeadNum);
+  kv_head_num = GetIntAttr(kAttrKVHeadNum);
   input_layout_ = GetStringAttr(kAttrInputLayout);
   SetOptinalInputs();
   return SUCCESS;
@@ -277,7 +279,11 @@ Status PromptFlashAttentionInfo::InferMirrorOps() {
 void PromptFlashAttentionInfo::ReplaceNodeInputOrAttrs() {
   for (auto &cnode : cnodes_) {
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    prim->set_attr(kAttrHeadNum, MakeValue(head_num_ / mp_));
+    MS_EXCEPTION_IF_NULL(prim);
+    auto clone_prim = prim->Clone();
+    clone_prim->set_attr(kAttrHeadNum, MakeValue(head_num_ / mp_));
+    clone_prim->set_attr(kAttrKVHeadNum, MakeValue(kv_head_num / mp_));
+    cnode->set_input(0, NewValueNode(clone_prim)->cast<AnfNodePtr>());
   }
 }
 
