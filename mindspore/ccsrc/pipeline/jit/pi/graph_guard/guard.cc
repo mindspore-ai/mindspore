@@ -351,9 +351,7 @@ void OptGuard::UpdateConfig(const std::map<std::string, bool> &config) {
   }
 }
 
-void OptGuard::Backup() {
-  guardStack_.push(std::make_pair(guardList_, guardMap_));
-}
+void OptGuard::Backup() { guardStack_.push(std::make_pair(guardList_, guardMap_)); }
 
 void OptGuard::Rollback() {
   GuardCheckPoint point = guardStack_.top();
@@ -362,9 +360,7 @@ void OptGuard::Rollback() {
   guardStack_.pop();
 }
 
-void OptGuard::Pop() {
-  guardStack_.pop();
-}
+void OptGuard::Pop() { guardStack_.pop(); }
 
 static bool MatchDynamicShape(GuardItemPtr item, const std::vector<GuardItemPtr> &list) {
   auto trace_type = item->GetTrace()->GetTraceType();
