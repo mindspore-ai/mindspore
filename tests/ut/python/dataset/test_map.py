@@ -682,7 +682,7 @@ def generator_with_multi_transforms(mode):
     # for probably failed
     assert len(transforms.EXECUTORS_LIST) in [0, 1]
 
-@pytest.mark.skip(reason="random failures")
+
 def test_generator_or_map_with_pyfunc_use_global_executor():
     """
     Feature: Generator op or Map op with pyfunc contains multi ops which use global executor
