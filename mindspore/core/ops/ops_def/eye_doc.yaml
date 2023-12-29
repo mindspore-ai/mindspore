@@ -3,8 +3,10 @@ eye:
       Creates a tensor with ones on the diagonal and zeros in the rest.
 
       Note:
-        An anti-diagonal Tensor can be produced by Eye and ReverseV2 operators,
+        - An anti-diagonal Tensor can be produced by Eye and ReverseV2 operators,
         but ReverseV2 only supports Ascend and GPU platforms currently.
+        - The data type of returned tensor can be float16, float32, int8, int16, int32, int64, uint8 or bool on Ascend platforms.
+
 
       Args:
         n (int): The number of rows of returned tensor. Constant value only.
@@ -32,8 +34,8 @@ eye:
          [0 1]]
         >>> print(output.dtype)
         Int32
-        >>> output = ops.eye(1, 2, mindspore.float64)
+        >>> output = ops.eye(1, 2, mindspore.float32)
         >>> print(output)
         [[1. 0.]]
         >>> print(output.dtype)
-        Float64
+        Float32
