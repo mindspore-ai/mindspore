@@ -718,7 +718,7 @@ def gen_pyboost_inner_prim(work_path, op_yaml_data):
         for arg_name, arg_info in args.items():
             arg_handler = arg_info.get('arg_handler')
             input_arg = arg_name
-            if arg_handler is not None and arg_handler != 'dtype_to_enum':
+            if arg_handler is not None and arg_handler != 'dtype_to_type_id':
                 process_func += f"""converted_{arg_name} = {arg_handler}({arg_name})\n"""
                 input_arg = 'converted_' + arg_name
             input_args.append(input_arg)
@@ -770,7 +770,7 @@ def gen_pyboost_py_func(work_path, op_yaml_data, doc_data):
             init_value = arg_info.get('init')
             arg_handler = arg_info.get('arg_handler')
             input_arg = arg_name
-            if arg_handler is not None and arg_handler != 'dtype_to_enum':
+            if arg_handler is not None and arg_handler != 'dtype_to_type_id':
                 input_arg = 'converted_' + arg_name
             if init_value is None:
                 default_key = 'default'

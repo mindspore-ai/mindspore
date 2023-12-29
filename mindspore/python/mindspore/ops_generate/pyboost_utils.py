@@ -154,6 +154,8 @@ def get_input_dtype(dtype: str, optional):
         'float': 'FP32ImmPtr',
         'bool': 'BoolImmPtr',
         'number': 'ScalarPtr',
+        'str': 'StringImmPtr',
+        'tensor': 'TensorPtr',
         'tuple[int]': kValueTuplePtr,
         'tuple[float]': kValueTuplePtr,
         'tuple[bool]': kValueTuplePtr,
@@ -162,9 +164,6 @@ def get_input_dtype(dtype: str, optional):
         'list[float]': kValueTuplePtr,
         'list[bool]': kValueTuplePtr,
         'list[tensor]': kValueTuplePtr,
-        'tensor': 'TensorPtr',
-        'str': 'StringImmPtr',
-        'type': 'TypePtr',
     }
     kValueTuplePtrOptional = 'std::optional<ValueTuplePtr>'
     optional_type_convert = {
@@ -172,9 +171,8 @@ def get_input_dtype(dtype: str, optional):
         'float': 'std::optional<FP32ImmPtr>',
         'bool': 'std::optional<BoolImmPtr>',
         'number': 'std::optional<ScalarPtr>',
-        'tensor': 'std::optional<TensorPtr>',
         'str': 'std::optional<StringImmPtr>',
-        'type': 'std::optional<TypePtr>',
+        'tensor': 'std::optional<TensorPtr>',
         'tuple[int]': kValueTuplePtrOptional,
         'tuple[float]': kValueTuplePtrOptional,
         'tuple[bool]': kValueTuplePtrOptional,
