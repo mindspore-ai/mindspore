@@ -1493,8 +1493,7 @@ void SessionBasic::DumpGraphs(const std::vector<KernelGraphPtr> &graphs) const {
       }
     }
     std::string final_graph = "trace_code_graph_" + std::to_string(graph->graph_id());
-    if ((json_parser.e2e_dump_enabled() || json_parser.async_dump_enabled()) &&
-        context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
+    if (json_parser.e2e_dump_enabled() && context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
       std::string root_dir = json_parser.path() + "/rank_" + std::to_string(rank_id);
       MS_LOG(INFO) << "Dump graph and exeorder for graph: " << graph->graph_id()
                    << "root_graph_id: " << graph->root_graph_id();
