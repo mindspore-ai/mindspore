@@ -319,6 +319,9 @@ KernelWithIndex AnfAlgo::VisitKernelWithReturnType(const AnfNodePtr &anf_node, s
       if (abs->isa<abstract::AbstractSequence>()) {
         auto tuple_abstract = abs->cast<abstract::AbstractSequencePtr>();
         MS_EXCEPTION_IF_NULL(tuple_abstract);
+        if (tuple_abstract->dynamic_len()) {
+          return item_with_index_tmp;
+        }
         auto sub_abstracts = tuple_abstract->elements();
         if (sub_abstracts.size() <= GetTupleGetItemOutIndex(cnode)) {
           MS_LOG(INTERNAL_EXCEPTION) << "Invalid index:" << GetTupleGetItemOutIndex(cnode)
