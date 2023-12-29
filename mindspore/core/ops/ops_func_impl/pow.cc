@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
+#include <string>
+#include <map>
+#include <utility>
 #include <memory>
 #include "ops/ops_func_impl/pow.h"
 #include "ops/op_utils.h"
 #include "utils/log_adapter.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -35,9 +39,15 @@ BaseShapePtr PowFuncImpl::InferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr PowFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-  auto x_type = input_args[kInputIndex0]->GetType();
-  MS_EXCEPTION_IF_NULL(x_type);
-  return x_type->Clone();
+  auto x1_type = input_args[kInputIndex0]->GetType();
+  auto x2_type = input_args[kInputIndex1]->GetType();
+  MS_EXCEPTION_IF_NULL(x1_type);
+  MS_EXCEPTION_IF_NULL(x2_type);
+  std::map<std::string, TypePtr> types;
+  (void)types.emplace("x1", x1_type);
+  (void)types.emplace("x2", x2_type);
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex, primitive->name());
+  return x1_type->Clone();
 }
 }  // namespace ops
 }  // namespace mindspore

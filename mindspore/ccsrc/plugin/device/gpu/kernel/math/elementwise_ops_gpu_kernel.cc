@@ -38,13 +38,16 @@ using Complex = mindspore::utils::Complex<T>;
     ADD_UNARY_SAME_TYPE(Op, kNumberTypeFloat64, double)                                                        \
   }
 
-#define REGISTER_UNARY_ALL_INT_TYPE(Op)                                                                               \
-  {ADD_UNARY_SAME_TYPE(Op, kNumberTypeBool, bool)}, {ADD_UNARY_SAME_TYPE(Op, kNumberTypeInt8, int8_t)},               \
-    {ADD_UNARY_SAME_TYPE(Op, kNumberTypeInt16, int16_t)}, {ADD_UNARY_SAME_TYPE(Op, kNumberTypeInt32, int32_t)},       \
-    {ADD_UNARY_SAME_TYPE(Op, kNumberTypeInt64, int64_t)}, {ADD_UNARY_SAME_TYPE(Op, kNumberTypeUInt8, uint8_t)},       \
-    {ADD_UNARY_SAME_TYPE(Op, kNumberTypeUInt16, uint16_t)}, {ADD_UNARY_SAME_TYPE(Op, kNumberTypeUInt32, uint32_t)}, { \
-    ADD_UNARY_SAME_TYPE(Op, kNumberTypeUInt64, uint64_t)                                                              \
+#define REGISTER_UNARY_ALL_INT_TYPE(Op)                                                                           \
+  {ADD_UNARY_SAME_TYPE(Op, kNumberTypeInt8, int8_t)}, {ADD_UNARY_SAME_TYPE(Op, kNumberTypeInt16, int16_t)},       \
+    {ADD_UNARY_SAME_TYPE(Op, kNumberTypeInt32, int32_t)}, {ADD_UNARY_SAME_TYPE(Op, kNumberTypeInt64, int64_t)},   \
+    {ADD_UNARY_SAME_TYPE(Op, kNumberTypeUInt8, uint8_t)}, {ADD_UNARY_SAME_TYPE(Op, kNumberTypeUInt16, uint16_t)}, \
+    {ADD_UNARY_SAME_TYPE(Op, kNumberTypeUInt32, uint32_t)}, {                                                     \
+    ADD_UNARY_SAME_TYPE(Op, kNumberTypeUInt64, uint64_t)                                                          \
   }
+
+#define REGISTER_UNARY_BOOL_TYPE(Op) \
+  { ADD_UNARY_SAME_TYPE(Op, kNumberTypeBool, bool) }
 
 #define REGISTER_UNARY_COMPLEX_TYPE(Op)                              \
   {ADD_UNARY_SAME_TYPE(Op, kNumberTypeComplex64, Complex<float>)}, { \
@@ -85,11 +88,11 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ElementwiseOpsGpuKernel:
     {"Erfc", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kErfc)}},
     {"Abs",
      {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kAbs), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kAbs),
-      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kAbs)}},
+      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kAbs), REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kAbs)}},
     {"Sqrt",
      {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kSqrt), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kSqrt),
-      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kSqrt)}},
-    {"Invert", {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kInvert)}},
+      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kSqrt), REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kSqrt)}},
+    {"Invert", {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kInvert), REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kInvert)}},
     {"Rsqrt", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kRsqrt), REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kRsqrt)}},
     {"Sign",
      {{ADD_UNARY_SAME_TYPE(ElwiseOpType::kSign, kNumberTypeInt32, int32_t)},
@@ -98,13 +101,15 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ElementwiseOpsGpuKernel:
       REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kSign)}},
     {"Square",
      {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kSquare), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kSquare),
-      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kSquare)}},
+      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kSquare), REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kSquare)}},
     {"Exp",
      {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kExp), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kExp),
-      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kExp)}},
+      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kExp), REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kExp)}},
     {"Sigmoid",
      {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kSigmoid), REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kSigmoid)}},
-    {"ReLU", {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kReLU), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kReLU)}},
+    {"ReLU",
+     {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kReLU), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kReLU),
+      REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kReLU)}},
     {"Log", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kLog), REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kLog)}},
     {"Log1p", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kLog1p), REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kLog1p)}},
     {"Neg",
@@ -112,14 +117,16 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ElementwiseOpsGpuKernel:
       REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kNeg)}},
     {"Reciprocal",
      {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kReciprocal), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kReciprocal),
-      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kReciprocal)}},
+      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kReciprocal), REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kReciprocal)}},
     {"Inv",
      {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kReciprocal), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kReciprocal),
-      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kReciprocal)}},
+      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kReciprocal), REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kReciprocal)}},
     {"Expm1", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kExpm1), REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kExpm1)}},
     {"Mish", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kMish)}},
     {"Softsign", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kSoftsign)}},
-    {"Trunc", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kTrunc), REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kTrunc)}},
+    {"Trunc",
+     {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kTrunc), REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kTrunc),
+      REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kTrunc)}},
     {"Floor", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kFloor)}},
     {"Ceil", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kCeil)}},
     {"Round",
@@ -128,18 +135,20 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ElementwiseOpsGpuKernel:
       {ADD_UNARY_SAME_TYPE(ElwiseOpType::kRound, kNumberTypeInt64, int64_t)}}},
     {"OnesLike",
      {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kOnesLike), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kOnesLike),
-      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kOnesLike)}},
+      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kOnesLike), REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kOnesLike)}},
     {"Rint", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kRint)}},
     {"LogicalNot", {{ADD_UNARY_SAME_TYPE(ElwiseOpType::kLogicalNot, kNumberTypeBool, bool)}}},
     {"Conj",
      {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kConj), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kConj),
-      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kConj)}},
+      REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kConj), REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kConj)}},
     {"Imag",
      {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kImag), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kImag),
+      REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kImag),
       ADD_UNARY_DIFF_TYPE(ElwiseOpType::kImag, kNumberTypeComplex64, kNumberTypeFloat32, Complex<float>, float),
       ADD_UNARY_DIFF_TYPE(ElwiseOpType::kImag, kNumberTypeComplex128, kNumberTypeFloat64, Complex<double>, double)}},
     {"Real",
      {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kReal), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kReal),
+      REGISTER_UNARY_BOOL_TYPE(ElwiseOpType::kReal),
       ADD_UNARY_DIFF_TYPE(ElwiseOpType::kReal, kNumberTypeComplex64, kNumberTypeFloat32, Complex<float>, float),
       ADD_UNARY_DIFF_TYPE(ElwiseOpType::kReal, kNumberTypeComplex128, kNumberTypeFloat64, Complex<double>, double)}},
     {"ComplexAbs",
