@@ -463,12 +463,14 @@ AObject *AbstractSequence::GetItem(AObject *k) {
   if (iter != write_cache_.end()) {
     return iter->second == nullptr ? MakeAObject(kTypeAnyValue) : iter->second;
   }
+  return this->AbstractObject::GetItem(k);
+}
 
+AObject *AbstractObject::GetItem(AObject *k) {
   PyObject *s = this->GetPyObject().ptr();
   PyObject *i = k ? k->GetPyObject().ptr() : nullptr;
   PyObject *t = nullptr;
-  if (s != nullptr && i != nullptr && k->GetType() != kTypeAnyValue && k->GetType() != kTypeTensor) {
-    // avoid Tensor as index and Tensor data sync
+  if (s != nullptr && i != nullptr && k->GetType() != kTypeAnyValue) {
     t = PyObject_GetItem(s, i);
     CHECK_PYTHON_EXCEPTION(t);
   }
@@ -910,9 +912,6 @@ AbstractDict::AbstractDict(Type type, py::object seq, RecMap *rec)
   return true;
 
 bool AbstractTuple::IsMindSporeSupportedType() {
-  if (this->GetType() == kTypeList || this->write_cache_.size() > 0) {
-    return false;
-  }
   if (kMsSupportedType.find(element_type_) != kMsSupportedType.end()) {
     return true;
   }
@@ -1290,8 +1289,8 @@ py::object AbstractDict::GetPyObject() {
   return value_;
 }
 
-py::object AbstractTensor::GetPyObject() {
-  if (!is_stub_) {
+py::object AbstractTensor::GetTensor(bool sync) {
+  if (!is_stub_ || !sync) {
     return value_;
   }
   std::string attr_key = "tensor";

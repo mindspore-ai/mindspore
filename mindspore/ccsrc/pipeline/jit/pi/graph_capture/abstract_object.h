@@ -122,6 +122,7 @@ class AbstractObject : public AbstractObjectBase {
   AObject *UnaryValue(int op) const;
   AObject *GetIter() const override;
   AObject *GetAttr(const std::string &name) override;
+  AObject *GetItem(AObject *key);
   bool SetAttr(const std::string &n, AObject *v) override;
 
  protected:
@@ -291,9 +292,8 @@ class AbstractTensor : public AbstractObject {
   AObject *GetAttr(const std::string &name) override;
   std::string ToString() const override;
 
-  AObject *GetItem(AObject *key) override { return MakeAObject(kTypeTensor); }
   bool SetItem(AObject *key, AObject *value) override { return true; }
-  py::object GetPyObject() override;
+  py::object GetTensor(bool sync);
 
   bool IsMindSporeSupportedType() override { return true; }
   bool IsStubTensor() const { return is_stub_; }

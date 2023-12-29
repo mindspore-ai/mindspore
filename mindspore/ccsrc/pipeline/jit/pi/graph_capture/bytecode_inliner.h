@@ -16,8 +16,9 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PI_GRAPH_CAPTURE_BYTECODE_INLINER_H
 #define MINDSPORE_CCSRC_PIPELINE_JIT_PI_GRAPH_CAPTURE_BYTECODE_INLINER_H
 
-#define _GLIBCXX_ASSERTIONS 1
-
+#include <vector>
+#include <map>
+#include <memory>
 #include "pipeline/jit/pi/graph_capture/cfg.h"
 #include "pipeline/jit/pi/graph_capture/code_generator.h"
 

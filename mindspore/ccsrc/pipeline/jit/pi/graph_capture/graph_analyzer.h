@@ -16,8 +16,6 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_GRAPH_ANALYZER_H
 #define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_GRAPH_ANALYZER_H
 
-#define _GLIBCXX_ASSERTIONS 1
-
 #include <set>
 #include <vector>
 #include "pipeline/jit/pi/graph_capture/cfg.h"
@@ -50,10 +48,10 @@ class GraphAnalyzer {
   const auto &GetCaptureInfo() const { return info_; }
   void Analyze();
   bool HasTensorOperation() const;
+  bool NeedInterpret() const { return need_interpret_; };
 
  private:
   bool AnalyzeRecursive(Graph *g);
-  bool AnalyzeBlock(Block *g);
   bool AnalyzeCall(CallNode *);
   bool TryToCapture(AbstractNode *value);
   bool AddToCaptured(ValueNode *value);
@@ -64,7 +62,11 @@ class GraphAnalyzer {
 
   Graph *graph_;
   CapturedInfo info_;
+  bool need_interpret_;
 };
+
+bool ValidateGraphParameters(ValueNode *i);
+
 }  // namespace graph
 }  // namespace jit
 }  // namespace mindspore

@@ -16,8 +16,6 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_GRAPH_BUILD_H
 #define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_GRAPH_BUILD_H
 
-#define _GLIBCXX_ASSERTIONS 1
-
 #include <vector>
 #include <unordered_map>
 #include <utility>

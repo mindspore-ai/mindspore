@@ -16,8 +16,6 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_NODE_H
 #define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_NODE_H
 
-#define _GLIBCXX_ASSERTIONS 1
-
 #include <string>
 #include <vector>
 #include "utils/log_adapter.h"
@@ -129,11 +127,11 @@ class ValueNode : public InstrNode {
 
   void store_attr(const std::string &nam, ValueNode *v);
   void del_attr(const std::string &nam) {}
-  AObject *get_attr(const std::string &nam) { return vobj_ ? vobj_->GetAttr(nam) : nullptr; }
+  AObject *get_attr(const std::string &nam);
 
   void store_subscr(ValueNode *sub, ValueNode *v);
   void del_subscr(ValueNode *sub) {}
-  AObject *binary_subscr(ValueNode *sub) { return vobj_ ? vobj_->GetItem(sub->GetVobj()) : nullptr; }
+  AObject *binary_subscr(ValueNode *sub);
 
   std::string ToString() const override;
 

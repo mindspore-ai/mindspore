@@ -104,16 +104,12 @@ bool GraphAnalyzer::ProduceInterpretValue(ValueNode *v) {
 // can't reorder attr access op, must be interpret all attr, item access operation
 static bool CheckAttrItemSupport(ValueNode *v, bool repeat_op) {
   int op = v->GetOpcode();
-  bool can_access = repeat_op && v->GetBlock() && !v->GetBlock()->HasAttrSideEffect();
   AObject::Type type = v->input(0)->GetVobj() ? v->input(0)->GetVobj()->GetType() : AObject::kTypeAnyValue;
   // item access
   if (op == BINARY_SUBSCR) {
-    return type != AObject::kTypeAnyValue && can_access;
+    return type != AObject::kTypeAnyValue;
   }
   // attr access
-  if (!can_access) {
-    return false;
-  }
   if (type == AObject::kTypeAnyValue || type == AObject::kTypeBoundMethod) {
     return false;
   }
@@ -233,17 +229,13 @@ bool GraphAnalyzer::AnalyzeCall(CallNode *call_node) {
   if (call_node->GetSubGraph() == nullptr) {
     return false;
   }
-  if (call_node->GetInlineReason() != InlineReason::kInline &&
-      call_node->GetInlineReason() != InlineReason::kInlinePartial) {
+  if (call_node->GetInlineReason() != InlineReason::kInline) {
     return false;
   }
 
   Graph *g = call_node->GetGraph();
 
-  CapturedInfo back_up;
-  if (!kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kFeatureBreakAtInlinedFunction)) {
-    back_up = info_;
-  }
+  CapturedInfo back_up = info_;
   const auto &p = call_node->GetParams();
   // capture parameter handle operations
   auto iter = std::find_if(p.begin(), p.end(), [this](ValueNode *i) { return !this->TryToCapture(i); });
@@ -251,9 +243,7 @@ bool GraphAnalyzer::AnalyzeCall(CallNode *call_node) {
   if (iter == p.end() && AnalyzeRecursive(call_node->GetSubGraph())) {
     return true;
   }
-  if (!kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kFeatureBreakAtInlinedFunction)) {
-    info_ = back_up;
-  }
+  info_ = back_up;
   g->StopTraceAt(call_node->bci(), StopTraceReason::kStopTraceDataDependsOnGraphOut);
   return false;
 }
@@ -298,6 +288,24 @@ void GraphAnalyzer::Analyze() {
     CleanCapturedValue();
   }
   CollectInputs();
+
+  need_interpret_ = true;
+  if (graph_->GetStopTraceBci() != -1 || !GetCaptureInfo().ordered_escaped_locals.empty()) {
+    return;
+  }
+  bool support_ret = graph_->GetRetVal()->GetVobj() && graph_->GetRetVal()->GetVobj()->IsMindSporeSupportedType();
+  if (!support_ret) {
+    return;
+  }
+  PyCodeObject *co = graph_->GetCodeObj();
+  const auto &args = enter_frame.GetLocals();
+  int argc = co->co_argcount + co->co_kwonlyargcount;
+  // check all parameters is graph supported, but here not check variable arguments
+  auto end = args.begin() + argc;
+  auto iter = std::find_if(args.begin(), end, [](ValueNode *i) { return !ValidateGraphParameters(i); });
+  if (iter == end) {
+    need_interpret_ = false;
+  }
 }
 
 bool GraphAnalyzer::HasTensorOperation() const {
@@ -327,6 +335,21 @@ void GraphAnalyzer::CleanCapturedValue() {
   info_.captured_locals.values.clear();
   info_.captured_locals.order.clear();
 }
+
+/**
+ * mindspore func_graph assume these unsupported value is constant, so it same as global.
+ * avoid parameter unsupported error by global
+ */
+bool ValidateGraphParameters(ValueNode *node) {
+  static const std::set<AObject::Type> unsupported_parameter = {
+    AObject::kTypeAnyValue,  AObject::kTypeFunction,      AObject::kTypeBoundMethod,
+    AObject::kTypePrimitive, AObject::kTypeMetaFuncGraph, AObject::kTypeCell,
+  };
+  AObject *info = node->GetVobj();
+  MS_EXCEPTION_IF_CHECK_FAIL(info != nullptr, "got an unknown object from graph parameter " + node->ToString());
+  return unsupported_parameter.find(info->GetType()) == unsupported_parameter.end();
+}
+
 }  // namespace graph
 }  // namespace jit
 }  // namespace mindspore

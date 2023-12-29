@@ -16,8 +16,6 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_GRAPH_H
 #define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_GRAPH_H
 
-#define _GLIBCXX_ASSERTIONS 1
-
 #include <map>
 #include <memory>
 #include <string>
@@ -150,7 +148,7 @@ class Graph {
   const std::shared_ptr<OptCode> &GetGuard() const { return guard_; }
   void SetGuard(const std::shared_ptr<OptCode> &guard) { guard_ = guard; }
 
-  // TODO: restore graph status at loop begin, clear trace values and operations and guards
+  // TODO(chaiyouheng): restore graph status at loop begin, clear trace values and operations and guards
   bool RestoreLoopStatus() { return false; }
   bool IsBreakAtLoop() const;
   const std::vector<ValueNode *> &GetTracedNodes() const { return traced_nodes_; }

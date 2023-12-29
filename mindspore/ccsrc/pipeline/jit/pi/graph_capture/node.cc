@@ -30,14 +30,33 @@ bool IsNonLocalValue(ValueNode *i) {
 }
 
 void ValueNode::store_attr(const std::string &nam, ValueNode *v) {
-  vobj_->SetAttr(nam, v->vobj_);
-  attrs_[nam] = v;
+  // TODO(chaiyouheng): track variable modify, replace all node that represent the same object
+  if (vobj_) {
+    vobj_->SetAttr(nam, v->vobj_);
+  }
+  attr_ = true;
 }
 
 void ValueNode::store_subscr(ValueNode *sub, ValueNode *v) {
+  // TODO(chaiyouheng): track variable modify, replace all node that represent the same object
   if (vobj_) {
     vobj_->SetItem(sub->vobj_, v->vobj_);
   }
+  subscr_ = true;
+}
+
+AObject *ValueNode::get_attr(const std::string &nam) {
+  if (!attr_ && vobj_) {
+    return vobj_->GetAttr(nam);
+  }
+  return AObject::MakeAObject(AObject::kTypeAnyValue);
+}
+
+AObject *ValueNode::binary_subscr(ValueNode *sub) {
+  if (!subscr_ && vobj_) {
+    return vobj_->GetItem(sub->GetVobj());
+  }
+  return AObject::MakeAObject(AObject::kTypeAnyValue);
 }
 
 std::string ParamNode::ToString() const {
@@ -62,6 +81,9 @@ std::string CallNode::ToString() const {
 }
 
 std::string ValueNode::ToString() const {
+  if (this == &ValueNode::UnboundLocal) {
+    return "(UnboundLocal)";
+  }
   std::stringstream s;
   s << this->InstrNode::ToString();
   s << " vobj:{" << vobj_ << ":" << (vobj_ ? vobj_->ToString() : "(nil)") << "}";

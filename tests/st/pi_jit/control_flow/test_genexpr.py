@@ -38,4 +38,4 @@ def test_listcomp():
     x = func(*x)
     assert len(x) == 2
     assert x[0] is None
-    assert type(x[1]) is types.GeneratorType
+    assert isinstance(x[1], types.GeneratorType)

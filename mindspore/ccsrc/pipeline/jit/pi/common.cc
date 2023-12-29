@@ -391,7 +391,7 @@ static PyFrameObject *PrepareCallCompiledCallable(PyThreadState *tstate, const P
   return RebuildFrame(tstate, c->code->GetPythonCode(), f);
 }
 
-static void GuardForFrame(PyFrameObject *frame, const OptCodePtr &oc, const GraphJitConfig &conf) {
+static void GuardForFrame(const PyFrameObject *frame, const OptCodePtr &oc, const GraphJitConfig &conf) {
   const char *code_name = PyUnicode_AsUTF8(frame->f_code->co_name);
   AddConfigToGuard(conf, oc->GetGuard());
   AddGuardForParam(frame, oc->GetGuard(), conf.GetBoolConfig(GraphJitConfig::kGuardDetachObject));
@@ -427,9 +427,6 @@ static bool GraphCapture(JitCompileResults *jcr) {
   GraphBuilder g(jcr->origin_frame_);
   (void)g.TraceRun();
 
-  PY_PRINT_F("after trace");
-  g.GetGraph()->print(0);
-
   if (kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kFeatureBreakAtInlinedFunction)) {
     BytecodeInliner inliner(g.GetGraph(), py::cast<py::dict>(jcr->origin_frame_->f_globals));
     inliner.Run();
@@ -437,9 +434,6 @@ static bool GraphCapture(JitCompileResults *jcr) {
 
   GraphAnalyzer analyzer(g.GetGraph());
   analyzer.Analyze();
-
-  PY_PRINT_F("after analyzer");
-  g.GetGraph()->print(0);
 
   if (g.GetGraph()->IsBreakAtLoop() && !g.GetGraph()->RestoreLoopStatus()) {
     jcr->stat = JitCompileResults::NEVER_COMPILE;
@@ -456,8 +450,6 @@ static bool GraphCapture(JitCompileResults *jcr) {
   jcr->code->SetPythonCode(new_code);
   jcr->stat = JitCompileResults::GRAPH_CALLABLE;
 
-  Utils::DisFuncObject(new_code.ptr());
-
   if (conf.GetBoolConfig(GraphJitConfig::kPrintAfterAll)) {
     Utils::DisFuncObject(new_code.ptr());
     GRAPH_JIT_LOG_F("\n\n");
@@ -467,16 +459,14 @@ static bool GraphCapture(JitCompileResults *jcr) {
   jcr->tbs->PushStopTraceRes(g.GetGraph()->GetCodeName(), g.GetGraph()->GetStopTraceReason());
   AObject::aobject_mem_pool_.Clear(__FILE__, __LINE__);
 
-  if (new_code.ptr() != reinterpret_cast<PyObject *>(jcr->origin_frame_->f_code)) {
-    // break graph interpret
-    return true;
+  if (analyzer.NeedInterpret()) {
+    // break graph or need interpret
   } else if (conf.GetBoolConfig(GraphJitConfig::kInterpretCapturedCode)) {
     // config interpret
-    return false;
   } else {
     jcr->stat = JitCompileResults::GRAPH_CAPTURED;
-    return false;
   }
+  return new_code.ptr() != reinterpret_cast<PyObject *>(jcr->origin_frame_->f_code);
 }
 
 static void CollectTraceBack(JitCompileResults *c, PyCodeObject *code, bool is_graph_mode) {
@@ -587,12 +577,26 @@ void AddGuardForGlobals(const PyFrameObject *f, OptGuardPtr guard, bool detach) 
     if (v == nullptr) {
       MS_LOG(WARNING) << "can't pass undefined symbol to graph!! key error [" << key << "] at bci " << bci;
       PyErr_Clear();
-    } else {
-      RootTracePtr ptr = std::make_shared<RootTrace>(v, TraceType::Global, -1, key);
-      guard->GuardOn(ptr, mindspore::jit::graph::GuardLevel::GId, false);
-      if (detach) {
-        ptr->Detach();
-      }
+      continue;
+    }
+
+    TracePtr ptr = std::make_shared<RootTrace>(v, TraceType::Global, -1, key);
+
+    AObject::Type t = AObject::GetPyType(v);
+    GuardLevel level = GuardLevel::GType;
+    if (t == AObject::kTypeCell || t == AObject::kTypePrimitive || t == AObject::kTypeMSDType) {
+      level = GuardLevel::GDeduce;
+    } else if (t == AObject::kTypeFunction) {
+      ptr = std::make_shared<OpTrace>(PyFunction_GET_CODE(v), LOAD_ATTR, -1, std::vector<TracePtr>({ptr}), "__code__");
+      level = GuardLevel::GId;
+    } else if (t == AObject::kTypeTuple || t == AObject::kTypeList || t == AObject::kTypeDict) {
+      // level = GuardLevel::GId;
+      continue;
+    }
+
+    guard->GuardOn(ptr, level, false);
+    if (detach) {
+      ptr->Detach();
     }
   }
 }
@@ -657,6 +661,9 @@ std::string GraphToString(FuncGraphPtr graph) {
 }
 
 static void GraphCompile(JitCompileResults *jcr, const PyFrameObject *frame) {
+  GuardForFrame(frame, jcr->code, *jcr->conf);
+  AddGuardForGlobals(frame, jcr->code->GetGuard(), jcr->conf->GetBoolConfig(GraphJitConfig::kGuardDetachObject));
+
   bool enable_dynamicshape = jcr->conf->GetBoolConfig(GraphJitConfig::kEnableDynamicShape);
   OptStrategy::MakeGCStrategy(jcr->codehub, jcr->conf->getIntConfig(GraphJitConfig::kLimitGraphSize),
                               jcr->conf->getIntConfig(GraphJitConfig::kLimitGraphCount), enable_dynamicshape,
@@ -666,7 +673,6 @@ static void GraphCompile(JitCompileResults *jcr, const PyFrameObject *frame) {
   Py_XSETREF(PyFunction_GET_CLOSURE(new_func), GetClosure(frame));
   PyFunctionObject *func = reinterpret_cast<PyFunctionObject *>(new_func);
   PyFrameObject *f = const_cast<PyFrameObject *>(frame);
-  AddGuardForGlobals(f, jcr->code->GetGuard(), jcr->conf->GetBoolConfig(GraphJitConfig::kGuardDetachObject));
   std::vector<PyObject *> backup;
   if (enable_dynamicshape) {
     backup = jcr->code->GetGuard()->ApplyDynamicShape(f);
@@ -718,8 +724,8 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
     return false;
   }
 
-  const char *origin_code_name = PyUnicode_AsUTF8(c->origin_frame_->f_code->co_name);
-  MS_LOG(DEBUG) << "---start compile " << origin_code_name << "---";
+  std::string code_str = py::str(reinterpret_cast<PyObject *>(c->origin_frame_->f_code));
+  MS_LOG(DEBUG) << "---start compile " << code_str << "---";
 
   // new guard code
   c->code = c->codehub->AddOptTarget(OptOption::CreateOptionByPoint(c));
@@ -739,11 +745,6 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
     }
   }
 
-  // If no change to the bytecode in pynative mode, no need to guard parameters in pynative mode
-  if (c->stat == JitCompileResults::GRAPH_CAPTURED || !c->code->GetGuard()->IsEmpty() || code_changed) {
-    GuardForFrame(reinterpret_cast<PyFrameObject *>(frame.ptr()), c->code, *c->conf);
-  }
-
   if (c->stat == JitCompileResults::GRAPH_CAPTURED) {
     TimeRecorder _time_recorder(TimeRecorder::kTimeCompileGraph,
                                 kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
@@ -757,12 +758,16 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
 
   CollectTraceBack(c, c->code->GetPythonCode(), c->code->GetNativeFunc() != nullptr);
 
-  MS_LOG(DEBUG) << "---compile " << origin_code_name << " successful---";
   if (c->conf->GetBoolConfig(GraphJitConfig::kPrintAfterAll)) {
     GRAPH_JIT_LOG_F("%s\n", c->tbs->Dump().c_str());
+
+    GRAPH_JIT_LOG_F("code changed %d\n", code_changed);
+    GRAPH_JIT_LOG_F("generated guard at %s\n", code_str.c_str());
+    GRAPH_JIT_LOG_F("%s\n", c->code->GetGuard()->ToString().c_str());
   }
   if (c->stat != JitCompileResults::GRAPH_CALLABLE) {
     c->stat = JitCompileResults::NEVER_COMPILE;
+    return false;
   }
   return true;
 }

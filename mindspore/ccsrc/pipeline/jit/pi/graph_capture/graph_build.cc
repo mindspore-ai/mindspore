@@ -21,6 +21,7 @@
 #include <vector>
 #include <utility>
 #include <unordered_map>
+#include <map>
 #include "pipeline/jit/pi/common.h"
 #include "pipeline/jit/pi/graph_capture/loop_unrolling.h"
 #include "pipeline/jit/pi/graph_capture/special_func_infer.h"
@@ -363,6 +364,11 @@ bool GraphBuilder::DoUnpack(const Instr &instr) {
     case AObject::kTypeList:
     case AObject::kTypeNNCellList:
     case AObject::kTypeTensor: {
+      auto tr = this->graph_->TraceValueNode(iterable);
+      if (tr == nullptr) {
+        return false;
+      }
+      this->graph_->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GDeduce, false);
       auto gen_item = [this, iterable](int i, int j) { this->GenIndexItemGeneral(iterable, i, j); };
       GenUnpackValue(gen_item, cnt, cnt_after, size);
       return true;
@@ -523,6 +529,9 @@ PyObject *SetLocalPyObject(ValueNode *node) {
 }
 
 std::pair<PyObject *, ValueNode *> GraphBuilder::SearchSelfPyObject(PyCodeObject *co) {
+  if (co->co_argcount < 1) {
+    return {nullptr, nullptr};
+  }
   std::pair<PyObject *, ValueNode *> obj_value;
   ValueNode *value = frame_.Local(0);
   // get self or son class, eg.super(Son, self)
@@ -533,10 +542,8 @@ std::pair<PyObject *, ValueNode *> GraphBuilder::SearchSelfPyObject(PyCodeObject
     n = PyTuple_GET_SIZE(co->co_cellvars);
     for (i = 0; i < n; i++) {
       if (co->co_cell2arg[i] == 0) {
-        value = frame_.Closure(i);
-        PyObject *cell = SetLocalPyObject(frame_.Closure(i));
-        assert(PyCell_Check(cell));
-        obj = PyCell_GET(cell);
+        value = frame_.Closure(i)->GetValue();
+        obj = SetLocalPyObject(frame_.Closure(i));
         break;
       }
     }
@@ -552,8 +559,8 @@ bool GraphBuilder::DoAttrAccess(const Instr &instr) {
     case LOAD_ATTR: {
       auto o = pop();
       AObject *super = o->GetVobj();
-      ValueNode *self_super = SearchSelfPyObject(graph_->GetCodeObj()).second;
       if (super->GetTypeObject() == &PySuper_Type) {
+        ValueNode *self_super = SearchSelfPyObject(graph_->GetCodeObj()).second;
         auto &nodes = this->graph_->GetTracedNodes();
         auto mtype_obj = reinterpret_cast<PyObject *>(&PyMethod_Type);
         py::object method = super->GetPyObject().attr(instr.name().c_str());
@@ -582,8 +589,13 @@ bool GraphBuilder::DoAttrAccess(const Instr &instr) {
           tuple_obj[0] = method;
           tuple_obj[1] = self_super->GetVobj()->GetPyObject();
           PyObject *ret = PyObject_Call(mtype_obj, tuple_obj.ptr(), nullptr);
-          ValueNode *func_node =
-            NewValueNode(AObject::Convert(ret), CALL_FUNCTION, 2, {global_node, method_node, self_super});
+          py::object mh = py::reinterpret_steal<py::object>(ret);
+          PyErr_Clear();
+
+          AObject *mh_info = AObject::Convert(mh);
+          ValueNode *func_node = NewValueNode(nullptr, CALL_FUNCTION, 2, {global_node, method_node, self_super});
+          func_node->SetVobj(mh_info);
+
           nodes.push_back(func_node);
           push(func_node);
         }
@@ -666,16 +678,15 @@ void GraphBuilder::ProcessGetItem(const Instr &instr, ValueNode *l, ValueNode *r
         if (po && PyFunction_Check(PyMethod_GET_FUNCTION(po))) {
           ValueNode *v1 = NewValueNode(vo_l->GetAttr("__getitem__"), LOAD_ATTR, 0, {l});
           v1->SetName("__getitem__");
-          current_block_->AddNode(v1);
+          graph_->GetTracedNodes().push_back(v1);
           v = NewValueNode(nullptr, CALL_FUNCTION, 2, {v1, r});
           CallNode *n = static_cast<CallNode *>(v);
           v->SetName(instr.name().c_str());
           v->SetLineNo(instr.line());
           v->set_bci(instr.bci());
-          current_block_->AddNode(v);
+          graph_->GetTracedNodes().push_back(v);
           push(v);
           StopTraceReason ret = HandleCall(0);
-          this->graph_->SetInstr(instr.bci(), nullptr);
           if (StopTraceReason::kNonStopTrace == ret) {
             seek(0) = n->GetSubGraph() ? n->GetSubGraph()->GetRetVal() : n;
           }
@@ -1091,11 +1102,12 @@ void GraphBuilder::HandleLoop() {
     return;
   }
   /**
-   * TODO: before trace start, unrolling loop. avoid graph status is changed while trace loop
-   *       just unrolling a small loop. avoid break at loop which call nn.CellList.
+   * TODO(chaiyouheng): before trace start, unrolling loop. avoid graph status is changed while trace loop
+   *       just unrolling a small loop that call nn.CellList.
+   *
+   * LoopUnrolling loopUnrollingExe = LoopUnrolling(*graph_);
+   * (void)loopUnrollingExe.ExecuteLoopUnroll(loop_head);
    */
-  LoopUnrolling loopUnrollingExe = LoopUnrolling(*graph_);
-  // (void)loopUnrollingExe.ExecuteLoopUnroll(loop_head);
 }
 
 py::object GraphBuilder::FindPyFunc(AObject *vobj) {
@@ -1225,9 +1237,11 @@ static bool ApplyInlinePolicy(Graph *g) {
   PyCodeObject *co = g->GetCodeObj();
   int ncells = PyTuple_GET_SIZE(co->co_cellvars);
   int nfrees = PyTuple_GET_SIZE(co->co_freevars);
-  if (ncells + nfrees > 0) {
-    // not implement free variable merge
+  if (ncells > 0) {
     return false;
+  }
+  if (nfrees > 0) {
+    return nfrees == 1 && std::string("__class__") == PyUnicode_AsUTF8(PyTuple_GET_ITEM(co->co_freevars, 0));
   }
 
   for (auto &i : g->GetCFG()->bb_pool()) {
@@ -1247,8 +1261,8 @@ bool CheckSupportCreateInstance(CallNode *call_node) {
    * list, tuple, set, dict, will reduce generator, not support create
    */
   static const std::set<PyTypeObject *> support_create_instance_type = {
-    &PyComplex_Type, &PyMap_Type,  &PyBaseObject_Type, &PyRange_Type, &PyZip_Type,
-    &PySlice_Type,   &PyBool_Type, &PyFloat_Type,      &PyLong_Type,  &PyType_Type,
+    &PyComplex_Type, &PyMap_Type,   &PyBaseObject_Type, &PyRange_Type, &PyZip_Type,    &PySlice_Type,
+    &PyBool_Type,    &PyFloat_Type, &PyLong_Type,       &PyType_Type,  &PyMethod_Type,
   };
 
   AObject *cls_info = call_node->input(0)->GetVobj();
@@ -1389,11 +1403,11 @@ bool GraphBuilder::HandleCallClass(CallNode *call_node) {
 }
 
 // NOTE: must be copy __code__, copy.deepcopy do nothing for code object
-static py::object CopyPyFunc(const py::object &o, const std::string &parent) {
+static py::object CopyPyFunc(const py::object &o) {
   MS_EXCEPTION_IF_CHECK_FAIL(PyFunction_Check(o.ptr()), "must be function");
   PyFunctionObject *func = reinterpret_cast<PyFunctionObject *>(o.ptr());
   PyCodeObject *code = reinterpret_cast<PyCodeObject *>(func->func_code);
-  PyObject *new_name = PyUnicode_FromFormat("%s%s%U", parent.c_str(), kPIJitCopyFuncKey, func->func_qualname);
+  PyObject *new_name = PyUnicode_FromFormat("%s%U", kPIJitCopyFuncKey, code->co_name);
   PyCodeObject *new_code =
     PyCode_New(code->co_argcount, code->co_kwonlyargcount, code->co_nlocals, code->co_stacksize, code->co_flags,
                code->co_code, code->co_consts, code->co_names, code->co_varnames, code->co_freevars, code->co_cellvars,
@@ -1413,13 +1427,13 @@ static py::object CopyPyFunc(const py::object &o, const std::string &parent) {
   return py::reinterpret_steal<py::object>(new_func);
 }
 
-py::object GetPIJitCopiedFunc(const py::object &func, const std::string &parent) {
+py::object GetPIJitCopiedFunc(const py::object &func) {
   PyObject *res = PyObject_GetAttrString(func.ptr(), kPIJitCopyFuncKey);
   if (res != nullptr) {
     return py::reinterpret_steal<py::object>(res);
   }
   PyErr_Clear();
-  py::object copy = CopyPyFunc(func, parent);
+  py::object copy = CopyPyFunc(func);
   PyObject_SetAttrString(func.ptr(), kPIJitCopyFuncKey, copy.ptr());
   (void)pi_jit_should_compile(copy, py::dict());
   return copy;
@@ -1431,7 +1445,7 @@ ValueNode *GetSelfFromMethod(ValueNode *method) {
   }
   ValueNode *self = method->input(0);
   /**
-   * TODO:
+   * TODO(chaiyouheng):
    * Check method is a generic attribute
    * descr = _PyType_Lookup(self->GetVobj()->GetTypeObject(), py::str(method->GetName()).ptr());
    * Check descr == nullptr || !PyFunction_Check(descr)
@@ -1447,13 +1461,17 @@ bool GuardInlinedFunc(CallNode *call_node) {
   if (tr == nullptr) {
     return false;
   }
+  PyObject *callable = call_node->input(0)->GetVobj()->GetPyObject().ptr();
+  bool strict = call_node->GetGraph()->Config().GetBoolConfig(GraphJitConfig::kStrictTrace);
   if (func_type == AObject::kTypeBoundMethod) {
-    PyObject *func = PyMethod_GET_FUNCTION(call_node->input(0)->GetVobj()->GetPyObject().ptr());
-    tr = CreateOpTrace(func, LOAD_ATTR, 0, {tr}, "", "__func__");
+    PyObject *func = PyMethod_GET_FUNCTION(callable);
+    tr = CreateOpTrace(func, LOAD_ATTR, 0, {tr}, "", "__func__", strict);
+    tr = CreateOpTrace(PyFunction_GET_CODE(func), LOAD_ATTR, 0, {tr}, "", "__code__", strict);
     call_node->GetGraph()->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GId);
   } else if (func_type == AObject::kTypeCell || AObject::kTypeAnyValue) {
-    call_node->GetGraph()->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GDeduce, false);
+    call_node->GetGraph()->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GType, false);
   } else if (func_type == AObject::kTypeFunction) {
+    tr = CreateOpTrace(PyFunction_GET_CODE(callable), LOAD_ATTR, 0, {tr}, "", "__code__", strict);
     call_node->GetGraph()->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GId);
   } else {
     return false;
@@ -1469,8 +1487,12 @@ bool GraphBuilder::ReplaceCall(CallNode *call_node, const py::object &old_func) 
   if (!GuardInlinedFunc(call_node)) {
     return false;
   }
+  auto jcr = getJitCompileResults(old_func.ptr(), false);
+  if (jcr != nullptr && jcr->stat != JitCompileResults::NEVER_COMPILE) {
+    return true;
+  }
 
-  py::object new_func = GetPIJitCopiedFunc(old_func, PyUnicode_AsUTF8(graph_->GetCodeObj()->co_name));
+  py::object new_func = GetPIJitCopiedFunc(old_func);
 
   auto &nodes = graph_->GetTracedNodes();
   MS_EXCEPTION_IF_CHECK_FAIL(nodes.back() == call_node, "CallNode must be last when build sub graph");
@@ -1479,12 +1501,17 @@ bool GraphBuilder::ReplaceCall(CallNode *call_node, const py::object &old_func) 
   AObject::Type func_type = call_node->input(0)->GetVobj()->GetType();
   if (func_type == AObject::kTypeBoundMethod) {
     MS_EXCEPTION_IF_NULL(call_node->GetSubGraph());
-    self = call_node->GetSubGraph()->GetFrame(0).Local(0);
+    const auto &f = call_node->GetSubGraph()->GetFrame(0);
+    self = f.Local(0);
+    if (self == &ValueNode::UnboundLocal && f.GetClosures().size() > 0) {
+      self = f.Closure(0)->GetValue();
+    }
   } else if (func_type == AObject::kTypeCell || AObject::kTypeAnyValue) {
     self = call_node->input(0);
   } else if (func_type != AObject::kTypeFunction) {
     return false;
   }
+
   std::stringstream key;
   PyObject *func_name = reinterpret_cast<PyFunctionObject *>(new_func.ptr())->func_qualname;
   key << std::string(py::str(func_name)) << "." << new_func.ptr();
@@ -1494,20 +1521,6 @@ bool GraphBuilder::ReplaceCall(CallNode *call_node, const py::object &old_func) 
   func_node->SetName(key.str().c_str());
   this->graph_->InstallToGlobal(func_node->GetName(), new_func);
   nodes.insert(nodes.end() - 1, func_node);
-
-  ValueNode *self = nullptr;
-  AObject::Type func_type = call_node->input(0)->GetVobj()->GetType();
-  if (func_type == AObject::kTypeBoundMethod) {
-    // new self node
-    AObject *self_info = call_node->input(0)->GetVobj()->GetAttr(ID___self__);
-    self = this->NewValueNode(self_info, LOAD_ATTR, -1, {call_node->input(0)});
-    self->SetName(GraphBuilder::ID___self__);
-    self->set_bci(call_node->bci());
-    self->SetLineNo(call_node->GetLineNo());
-    nodes.insert(nodes.end() - 1, self);
-  } else if (func_type == AObject::kTypeCell || func_type == AObject::kTypeAnyValue) {
-    self = call_node->input(0);
-  }
 
   // replace node
   call_node->getInputs()[0] = func_node;
@@ -1535,20 +1548,6 @@ bool GraphBuilder::ReplaceCall(CallNode *call_node, const py::object &old_func) 
   return true;
 }
 
-static py::object GetPIJitCopiedFunc(const py::object &func, const std::string &parent) {
-  if (!kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kCopyFuncOnlyOnceIfTraceBreak)) {
-    return CopyPyFunc(func, parent);
-  }
-  PyObject *res = PyObject_GetAttrString(func.ptr(), kPIJitCopyFuncKey);
-  if (res != nullptr) {
-    return py::reinterpret_steal<py::object>(res);
-  }
-  PyErr_Clear();
-  py::object copy = CopyPyFunc(func, parent);
-  PyObject_SetAttrString(func.ptr(), kPIJitCopyFuncKey, copy.ptr());
-  return copy;
-}
-
 // build sub-graph
 StopTraceReason GraphBuilder::BuildSubGraph(CallNode *call_node, int depth, const py::object &func,
                                             GraphBuilder *subgraph) {
@@ -1564,8 +1563,9 @@ StopTraceReason GraphBuilder::BuildSubGraph(CallNode *call_node, int depth, cons
   MS_EXCEPTION_IF_NULL(code);
   code->GetGuard()->Backup();
 
-  StopTraceReason stop_reason = subgraph->TraceRun();
+  subgraph->TraceRun();
 
+  call_node->SetSubGraph(subgraph->GetGraph());
   if (subgraph->GetGraph()->GetRetVal() != nullptr) {
     call_node->SetVobj(subgraph->GetGraph()->GetRetVal()->GetVobj());
     stat = is_make_func || ApplyInlinePolicy(subgraph->GetGraph()) ? stat : InlineReason::kInlinePolicyDisabled;
@@ -1591,7 +1591,7 @@ StopTraceReason GraphBuilder::BuildSubGraph(CallNode *call_node, int depth, cons
 
   // if stat == InlineReason::kInline, guard free variable
   call_node->SetInlineReason(stat);
-  return stop_reason;
+  return StopTraceReason::kNonStopTrace;
 }
 
 bool GraphBuilder::UnpackDynamicLengthDictByBytecode(std::vector<ValueNode *> *params, CallNode *call_node,
@@ -1920,7 +1920,10 @@ bool GraphBuilder::HandleCallParameters(const py::object &func_info, CallNode *c
       Py_ssize_t arg_index = c2a_arr[i];
       CellVarNode *cell_node = frame->Closure(i);
       ValueNode *arg_node = frame->Local(arg_index);
-      frame->SetLocal(arg_index, &ValueNode::UnboundLocal);
+      /**
+       * here not delete the local, continue with local same as closure
+       * frame->SetLocal(arg_index, &ValueNode::UnboundLocal);
+       */
 
       PyObject *cell = cell_node->GetVobj()->GetPyObject().ptr();
       PyObject *cell_contents = arg_node->GetVobj() ? arg_node->GetVobj()->GetPyObject().inc_ref().ptr() : nullptr;
@@ -1966,6 +1969,9 @@ py::object GraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReason *s
   if (callable_type == AObject::kTypeType) {
     call_node->SetInlineReason(InlineReason::kInlineFunc_ArgType_IsClass);
     HandleCallClass(call_node);
+    if (static_cast<AbstractType *>(callable)->GetTypeType() == AObject::kTypeCell) {
+      *stop_reason = StopTraceReason::kStopTraceInfer_Fail;
+    }
     return py::object();
   }
 
@@ -1976,6 +1982,7 @@ py::object GraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReason *s
   // find code object
   callable_info = GetFuncInfo(call_node->input(0));
   if (callable_info.ptr() == nullptr) {
+    *stop_reason = StopTraceReason::kStopTraceFunc_Type_Unsupported;
     call_node->SetInlineReason(InlineReason::kInlineCFunction_Unsupported);
   }
   return callable_info;
@@ -2113,9 +2120,25 @@ bool GraphBuilder::TraceRunForIter(const Instr &instr) {
   return true;
 }
 
-bool IsSatisfyPruneLimit(int ret, Graph *graph_, ValueNode *cond) {
+bool IsSatisfyPruneLimit(int cond, Graph *graph_, ValueNode *cond_node) {
+  if (cond == -1) {
+    return false;
+  }
   int limit_prune = graph_->Config().getIntConfig(GraphJitConfig::kMaxPruneCase);
-  return (limit_prune < 0 || limit_prune > graph_->GetPruneBranchCount()) && ret != -1 && graph_->GuardValueNode(cond);
+  if (limit_prune >= 0 && limit_prune < graph_->GetPruneBranchCount()) {
+    return false;
+  }
+  auto tr = graph_->TraceValueNode(cond_node);
+  if (tr == nullptr) {
+    return false;
+  }
+  PyObject *bool_value = cond_node->GetVobj()->GetPyObject().ptr();
+  if (bool_value != Py_True && bool_value != Py_False) {
+    bool strict = graph_->Config().GetBoolConfig(GraphJitConfig::kStrictTrace);
+    auto bool_type = CreateOpTrace(reinterpret_cast<PyObject *>(&PyBool_Type), LOAD_CONST, -1, {}, "", "", strict);
+    tr = CreateOpTrace(cond ? Py_True : Py_False, CALL_FUNCTION, 1, {bool_type, tr}, "", "", strict);
+  }
+  return graph_->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GId);
 }
 
 extern TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth);
@@ -2147,7 +2170,7 @@ bool GraphBuilder::TraceRunControl(const Instr &instr) {
       if (!TraceRunForIter(instr)) {
         graph_->StopTraceAt(cur_bci_, StopTraceReason::kStopTraceLoop_Unsupported);
         return false;
-      };
+      }
       return true;
     case JUMP_IF_NOT_EXC_MATCH:
     case SETUP_WITH:

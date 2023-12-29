@@ -16,8 +16,6 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_CFG_H
 #define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_CFG_H
 
-#define _GLIBCXX_ASSERTIONS 1
-
 #include <memory>
 #include <set>
 #include <string>
@@ -160,14 +158,14 @@ class Block {
   bool is_loop_head_ = false;
   bool is_dead_ = true;
 
-  // TODO: remove
+  // TODO(chaiyouheng): remove
   Instrs instrs_;
   int track_result_ = (1 << kNotTrack);
 };
 
 class CFG {
  public:
-  CFG(PyCodeObject *co) : pycode_(co), nlocals_(0) {}
+  explicit CFG(PyCodeObject *co) : pycode_(co), nlocals_(0) {}
 
   // BFS Iterator
   class BBIterator {

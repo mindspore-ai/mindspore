@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "pipeline/jit/pi/graph_capture/local_liveness.h"
+#include <algorithm>
+#include <memory>
 #include "pipeline/jit/pi/graph_capture/cfg.h"
 #include "utils/log_adapter.h"
 

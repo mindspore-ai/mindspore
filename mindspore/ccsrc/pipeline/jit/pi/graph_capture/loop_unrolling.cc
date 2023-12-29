@@ -135,7 +135,8 @@ void LoopUnrolling::AddLoopUnrollingInstr(Block *bb, int count) {
   bb->set_is_loop_head(false);
   const Instr &first_instr = bb->instrs().front();
   bb->RemoveInstrs();
-  if (loop_op_ == NOP && count == 0) {            // remove GET_ITER and adding [count - 1] DUP_TOP
+  // remove GET_ITER and adding [count - 1] DUP_TOP
+  if (loop_op_ == NOP && count == 0) {
     // GET_ITER --> DUP_TOP
     if (iter_instr_ != nullptr) {
       iter_instr_->set_op(DUP_TOP);

@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <set>
 #include "pipeline/jit/pi/graph_capture/bytecode_inliner.h"
+#include <set>
+#include <utility>
+#include <algorithm>
+#include <string>
 #include "pipeline/jit/pi/graph_capture/graph.h"
 #include "pipeline/jit/pi/graph_guard/cache.h"
+#include "pipeline/jit/pi/pi_jit_config.h"
 
 namespace mindspore {
 namespace jit {
@@ -51,7 +55,9 @@ void BytecodeInliner::Run() {
 
   Rebuild();
 
-  PY_PRINT_F("%s\n%s", __PRETTY_FUNCTION__, PrintInstr(cfg_->instr_pool()).c_str());
+  if (graph_->Config().GetBoolConfig(GraphJitConfig::kPrintBB)) {
+    GRAPH_JIT_LOG_F("%s\n\n", cfg_->DumpBBs().c_str());
+  }
 
   ResetGraphStat();
 }
@@ -197,8 +203,18 @@ static bool EliminateSideEffect(Graph *top_graph, Graph *sub_graph) {
    * 3. eliminate closure access operations if function has cell or free variable
    */
   if (top_graph != sub_graph && sub_graph->GetFrame(0).GetClosures().size() != 0) {
+    PyObject *frees = sub_graph->GetCodeObj()->co_freevars;
+    if (PyTuple_GET_SIZE(frees) == 1 && std::string("__class__") == PyUnicode_AsUTF8(PyTuple_GET_ITEM(frees, 0))) {
+      /**
+       * BUGS: not check super call or free variable access after the break point
+       **/
+      return true;
+    }
     return false;
   }
+  /**
+   * BUGS: not check MAKE_FUNCTION which has global access after the break point
+   **/
   return true;
 }
 
@@ -254,7 +270,7 @@ void BytecodeInliner::FixInstr(Graph *graph, int local_off, std::vector<std::uni
       i->set_arg(i->arg() + local_off);
       continue;
     }
-    if (i->op() == RETURN_VALUE) {
+    if (this->graph_ != graph && i->op() == RETURN_VALUE) {
       i->set_op(JUMP_FORWARD);
       i->set_extra_jump(list->back().get());
       continue;
@@ -282,6 +298,7 @@ void BytecodeInliner::FixInstr(Graph *graph, int local_off, std::vector<std::uni
     list->back()->set_op(NOP);
   } else {
     list->back()->set_op(RETURN_VALUE);
+    list->back()->set_extra_jump(nullptr);
   }
 }
 
