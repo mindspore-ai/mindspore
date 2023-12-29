@@ -16,6 +16,8 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_CFG_H
 #define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_CFG_H
 
+#define _GLIBCXX_ASSERTIONS 1
+
 #include <memory>
 #include <set>
 #include <string>
@@ -140,9 +142,6 @@ class Block {
   bool HasClosureSideEffect() const { return track_result_ & (1 << kHasClosureSideEffect); }
   void SetTrackResult(TrackResult r) { track_result_ = (track_result_ & ~(1 << kNotTrack)) | (1 << r); }
 
-  void AddNode(AbstractNode *n);
-  void ClearTrackInfo();
-
   void AddSuccBB(Block *bb);
   bool RemoveEdge(Block *bb);
   void ClearOutEdges();
@@ -199,11 +198,11 @@ class CFG {
 
   const std::vector<std::unique_ptr<Block>> &bb_pool() const { return bb_pool_; }
   const std::vector<std::unique_ptr<Instr>> &instr_pool() const { return instrs_; }
-  const auto &liveness() const { return liveness_; }
+  const std::unique_ptr<Liveness> &liveness() const { return liveness_; }
   std::vector<std::unique_ptr<Instr>> &instr_pool() { return instrs_; }
   std::vector<std::unique_ptr<Block>> &bb_pool() { return bb_pool_; }
+  std::unique_ptr<Liveness> &liveness() { return liveness_; }
   PyCodeObject *GetCodeObject() const { return pycode_; }
-  auto &liveness() { return liveness_; }
   int GetLocalCount() const { return nlocals_; }
   void SetLocalCount(int n) { nlocals_ = n; }
 

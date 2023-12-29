@@ -1431,6 +1431,7 @@ ValueNode *GetSelfFromMethod(ValueNode *method) {
   }
   ValueNode *self = method->input(0);
   /**
+   * TODO:
    * Check method is a generic attribute
    * descr = _PyType_Lookup(self->GetVobj()->GetTypeObject(), py::str(method->GetName()).ptr());
    * Check descr == nullptr || !PyFunction_Check(descr)
@@ -1477,16 +1478,8 @@ bool GraphBuilder::ReplaceCall(CallNode *call_node, const py::object &old_func) 
   ValueNode *self = nullptr;
   AObject::Type func_type = call_node->input(0)->GetVobj()->GetType();
   if (func_type == AObject::kTypeBoundMethod) {
-    self = GetSelfFromMethod(call_node->input(0));
-    if (self == nullptr) {
-      // new self node
-      AObject *self_info = call_node->input(0)->GetVobj()->GetAttr(ID___self__);
-      self = this->NewValueNode(self_info, LOAD_ATTR, -1, {call_node->input(0)});
-      self->SetName(GraphBuilder::ID___self__);
-      self->set_bci(call_node->bci());
-      self->SetLineNo(call_node->GetLineNo());
-      nodes.insert(nodes.end() - 1, self);
-    }
+    MS_EXCEPTION_IF_NULL(call_node->GetSubGraph());
+    self = call_node->GetSubGraph()->GetFrame(0).Local(0);
   } else if (func_type == AObject::kTypeCell || AObject::kTypeAnyValue) {
     self = call_node->input(0);
   } else if (func_type != AObject::kTypeFunction) {
@@ -1571,7 +1564,7 @@ StopTraceReason GraphBuilder::BuildSubGraph(CallNode *call_node, int depth, cons
   MS_EXCEPTION_IF_NULL(code);
   code->GetGuard()->Backup();
 
-  subgraph->TraceRun();
+  StopTraceReason stop_reason = subgraph->TraceRun();
 
   if (subgraph->GetGraph()->GetRetVal() != nullptr) {
     call_node->SetVobj(subgraph->GetGraph()->GetRetVal()->GetVobj());
@@ -1598,7 +1591,7 @@ StopTraceReason GraphBuilder::BuildSubGraph(CallNode *call_node, int depth, cons
 
   // if stat == InlineReason::kInline, guard free variable
   call_node->SetInlineReason(stat);
-  return StopTraceReason::kNonStopTrace;
+  return stop_reason;
 }
 
 bool GraphBuilder::UnpackDynamicLengthDictByBytecode(std::vector<ValueNode *> *params, CallNode *call_node,
@@ -1826,6 +1819,7 @@ static ValueNode *GetBoundSelf(CallNode *call_node) {
       node->SetGraph(call_node->GetGraph());
       if (self == nullptr) {
         call_node->AddParam(node);
+        self = node;
       }
       break;
     }
@@ -1843,13 +1837,10 @@ static ValueNode *GetBoundSelf(CallNode *call_node) {
 }
 
 bool GraphBuilder::HandlePositionParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame) {
-  MS_ASSERT(seek(0)->GetType() == AbstractNode::Call);
   CallNode *call_node = reinterpret_cast<CallNode *>(seek(0));
   PyCodeObject *co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(func.ptr()));
   AObject::Type callable_type = call_node->input(0)->GetVobj()->GetType();
 
-  // here save callable object to debug
-  frame->SetLocal(co->co_nlocals, call_node->input(0));
   ValueNode *self = GetBoundSelf(call_node);
   if (self != nullptr) {
     params->insert(params->begin(), self);
@@ -1903,7 +1894,7 @@ bool GraphBuilder::HandlePositionParams(const py::object &func, std::vector<Valu
 
 bool GraphBuilder::HandleCallParameters(const py::object &func_info, CallNode *call_node, FrameStates *frame) {
   PyCodeObject *co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(func_info.ptr()));
-  frame->ResizeLocal(co->co_nlocals + 1);
+  frame->ResizeLocal(co->co_nlocals);
 
   std::vector<ValueNode *> params(call_node->getInputs().begin() + 1, call_node->getInputs().end());
   int op = call_node->GetOpcode();

@@ -111,7 +111,7 @@ GraphJitConfig::GraphJitConfig() {
    */
   bool_conf[kEnableOptimizeForAttrItem - kBoolConf] = true;
   bool_conf[kEnableEliminateUnusedOperation - kBoolConf] = false;
-  bool_conf[kFeatureBreakAtInlinedFunction - kBoolConf] = false;
+  bool_conf[kFeatureBreakAtInlinedFunction - kBoolConf] = true;
 
   int_conf[kMaxInlineDepth - kIntConf] = 8;
   int_conf[kMaxTraceDepth - kIntConf] = kDefaultMaxTraceDepth;

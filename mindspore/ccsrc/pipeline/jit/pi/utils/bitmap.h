@@ -16,6 +16,8 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PI_UTILS_BITMAP_H
 #define MINDSPORE_CCSRC_PIPELINE_JIT_PI_UTILS_BITMAP_H
 
+#define _GLIBCXX_ASSERTIONS 1
+
 #include <vector>
 #include <numeric>
 

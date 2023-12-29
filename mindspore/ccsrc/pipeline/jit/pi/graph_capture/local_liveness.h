@@ -16,6 +16,8 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PI_GRAPH_CAPTURE_LOCAL_LIVENESS_H
 #define MINDSPORE_CCSRC_PIPELINE_JIT_PI_GRAPH_CAPTURE_LOCAL_LIVENESS_H
 
+#define _GLIBCXX_ASSERTIONS 1
+
 #include <vector>
 #include "pipeline/jit/pi/utils/bitmap.h"
 

@@ -16,6 +16,8 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_LOOP_H
 #define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_LOOP_H
 
+#define _GLIBCXX_ASSERTIONS 1
+
 #include <memory>
 #include <queue>
 #include <set>

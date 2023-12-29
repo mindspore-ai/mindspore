@@ -16,6 +16,8 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_GRAPH_ANALYZER_H
 #define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_GRAPH_ANALYZER_H
 
+#define _GLIBCXX_ASSERTIONS 1
+
 #include <set>
 #include <vector>
 #include "pipeline/jit/pi/graph_capture/cfg.h"

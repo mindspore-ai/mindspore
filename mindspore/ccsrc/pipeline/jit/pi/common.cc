@@ -26,6 +26,7 @@
 #include "include/common/utils/convert_utils_py.h"
 #include "pipeline/jit/pi/external.h"
 #include "pipeline/jit/pi/graph_capture/code_generator.h"
+#include "pipeline/jit/pi/graph_capture/bytecode_inliner.h"
 #include "pipeline/jit/pi/graph_capture/graph_build.h"
 #include "pipeline/jit/pi/graph_capture/graph_analyzer.h"
 #include "pipeline/jit/pi/graph_compiler/abstract_type_deducer.h"
@@ -426,8 +427,19 @@ static bool GraphCapture(JitCompileResults *jcr) {
   GraphBuilder g(jcr->origin_frame_);
   (void)g.TraceRun();
 
+  PY_PRINT_F("after trace");
+  g.GetGraph()->print(0);
+
+  if (kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kFeatureBreakAtInlinedFunction)) {
+    BytecodeInliner inliner(g.GetGraph(), py::cast<py::dict>(jcr->origin_frame_->f_globals));
+    inliner.Run();
+  }
+
   GraphAnalyzer analyzer(g.GetGraph());
   analyzer.Analyze();
+
+  PY_PRINT_F("after analyzer");
+  g.GetGraph()->print(0);
 
   if (g.GetGraph()->IsBreakAtLoop() && !g.GetGraph()->RestoreLoopStatus()) {
     jcr->stat = JitCompileResults::NEVER_COMPILE;
@@ -443,6 +455,8 @@ static bool GraphCapture(JitCompileResults *jcr) {
   py::object new_code = MakeCodeFromCodeGen(g.GetGraph(), analyzer, jcr->origin_frame_->f_globals);
   jcr->code->SetPythonCode(new_code);
   jcr->stat = JitCompileResults::GRAPH_CALLABLE;
+
+  Utils::DisFuncObject(new_code.ptr());
 
   if (conf.GetBoolConfig(GraphJitConfig::kPrintAfterAll)) {
     Utils::DisFuncObject(new_code.ptr());

@@ -264,7 +264,7 @@ static py::object ConvertVector(const std::vector<std::string> &names, bool to_t
 }
 
 static py::tuple FillVariableName(const std::vector<std::string> &varnames, int nlocals) {
-  MS_EXCEPTION_IF_CHECK_FAIL(varnames.size() <= static_cast<size_t>(nlocals), "too small varnames !!");
+  MS_EXCEPTION_IF_CHECK_FAIL(varnames.size() <= static_cast<size_t>(nlocals), "too small local count !!");
   std::set<std::string> vars;
   py::tuple co_varnames(nlocals);
   int size = varnames.size();
@@ -311,6 +311,10 @@ py::object CodeGenerator::Transform(const Code &ccode) {
   py::object co_cellvars = ConvertVector(ccode.co_cellvars);
   py::str co_name("[" + std::to_string(id) + "]" + ccode.co_name);
   id++;
+
+  PY_PRINT_F("var %S, free %S, cell %S", co_varnames.ptr(), co_freevars.ptr(), co_cellvars.ptr());
+  PY_PRINT_F("names %S, consts %S", co_names.ptr(), co_consts.ptr());
+  PY_PRINT_F("%s", PrintInstr(ccode.co_code).c_str());
 
   PyCodeObject *new_code = PyCode_New(ccode.co_argcount,        // co_argcount
                                       ccode.co_kwonlyargcount,  // co_kwonlyargcount
@@ -517,7 +521,7 @@ void CodeGenerator::LoadValue(ValueNode *node) {
     NewInstr(LOAD_FAST, iter->second);
     return;
   }
-  MS_EXCEPTION_IF_CHECK_FAIL(IsNonLocalValue(node), "check value nodes order, [" + node->ToString() + "]");
+  MS_EXCEPTION_IF_CHECK_FAIL(IsNonLocalValue(node), "missing value, [" + node->ToString() + "]");
   code_.co_code.emplace_back(LoadNonLocalValue(node, GetGlobals()));
 }
 
@@ -535,7 +539,6 @@ void CodeGenerator::BuildOper(ValueNode *node, int index) {
   }
 
   for (auto param : node->getInputs()) {
-    MS_EXCEPTION_IF_CHECK_FAIL(param->GetType() != ValueNode::Unbound, "used before define, here " + param->ToString());
     LoadValue(param);
   }
   int op = node->GetOpcode();
@@ -558,12 +561,11 @@ void CodeGenerator::BuildOper(ValueNode *node, int index) {
 }
 
 void CodeGenerator::Init() {
-  code_.co_nlocals = 0;
   const int size = nodes_->inputs.size();
+  code_.co_nlocals = size;
   for (int i = 0; i < size; ++i) {
     ValueNode *param = nodes_->inputs[i];
     locals_map_[param] = i;
-    code_.co_nlocals = std::max(i, code_.co_nlocals);
     MS_EXCEPTION_IF_CHECK_FAIL(!IsNonLocalValue(param), "got nonlocal parameter node: " + param->ToString());
   }
 }
@@ -579,13 +581,7 @@ void CodeGenerator::Build() {
 
 void CodeGenerator::GenReturn() {
   for (const auto &i : nodes_->outputs) {
-    if (IsNonLocalValue(i)) {
-      code_.co_code.emplace_back(LoadNonLocalValue(i, GetGlobals()));
-      continue;
-    }
-    auto iter = locals_map_.find(i);
-    MS_EXCEPTION_IF_CHECK_FAIL(iter != locals_map_.end(), "check local map build");
-    NewInstr(LOAD_FAST, iter->second);
+    LoadValue(i);
   }
   if (nodes_->outputs.size() > 1) {
     NewInstr(BUILD_TUPLE, nodes_->outputs.size());
@@ -681,7 +677,7 @@ void CodeBreakGenerator::CallCapturedCode(CodeGenerator *code_gen) {
   } else {
     code_gen->NewInstr(CALL_FUNCTION, param_info.args_.size());
   }
-  extra_local_ = code_gen->AllocLocal(&ValueNode::UnboundLocal);
+  extra_local_ = code_gen->AllocLocal(nullptr);
   code_gen->NewInstr(STORE_FAST, extra_local_);
   code_gen->AddInstrs(std::move(param_info.dele_));
 }
@@ -902,8 +898,12 @@ py::object CodeBreakGenerator::MakeCode() {
     co_name = std::to_string(jcr->IncCodeCount()) + "." + PyUnicode_AsUTF8(co_->co_name);
   }
 
+  int nlocals = code_gen.GetLocalsMap().size();
+  nlocals = std::max(nlocals, co_->co_nlocals);
+  nlocals = std::max(nlocals, cfg_->GetLocalCount());
+
   code_gen.SetArgsInfo(co_->co_argcount, co_->co_kwonlyargcount);
-  code_gen.SetLocalsCount(std::max(co_->co_nlocals, static_cast<int>(code_gen.GetLocalsMap().size())));
+  code_gen.SetLocalsCount(nlocals);
   code_gen.SetCodeFlags(co_->co_flags);
   code_gen.SetFirstLineNumber(co_->co_firstlineno);
   code_gen.SetVariableNames(py::cast<std::vector<std::string>>(co_->co_varnames));
@@ -1038,15 +1038,15 @@ std::unique_ptr<Instr> LoadNonLocalValue(ValueNode *node, const py::dict &map) {
       break;
     }
     default:
-      MS_EXCEPTION_IF_CHECK_FAIL(false, "is not non local value, [" + node->ToString() + "]");
+      MS_LOG(INTERNAL_EXCEPTION) << "is not non local value, [" << node->ToString() << "]";
       break;
   }
   return i;
 }
 
 // collect untracked bytecodes inputs
-static std::vector<ValueNode *> CollectInterpretOutputs(const FrameStates &last_frame, const BitMap &alive,
-                                                        std::vector<int> *alive_locals) {
+std::vector<ValueNode *> CollectInterpretOutputs(const FrameStates &last_frame, const BitMap &alive,
+                                                 std::vector<int> *alive_locals) {
   // stack values must be the first of outputs
   std::vector<ValueNode *> outputs = last_frame.GetStacks();
 

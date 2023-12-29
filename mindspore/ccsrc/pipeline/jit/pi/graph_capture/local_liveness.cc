@@ -23,7 +23,6 @@ namespace graph {
 
 BitMap Liveness::CollectAlive(int start_bci) const {
   Block *cur = cfg_->GetBlockByBci(start_bci);
-  MS_EXCEPTION_IF_CHECK_FAIL(cur != nullptr, "can't find the block of bci " + std::to_string(start_bci));
   if (start_bci == cur->begin_ci()) {
     return alive_[cur->id()];
   }
@@ -70,8 +69,7 @@ void Liveness::Init() {
   }
 
   std::vector<Block *> list;
-  auto out = std::back_inserter(list);
-  std::transform(bb.begin(), bb.end(), out, [](const std::unique_ptr<Block> &i) { return i.get(); });
+  std::transform(bb.begin(), bb.end(), std::back_inserter(list), [](const auto &i) { return i.get(); });
   while (!list.empty()) {
     Block *cur = list.back();
     list.pop_back();
