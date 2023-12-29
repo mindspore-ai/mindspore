@@ -653,6 +653,7 @@ def get_linspace_rule(prim, axis_size):
     else:
         batch_rank = 1
 
+    prim = prim.clone()
     prim.set_label('batch_rank', batch_rank)
 
     def vmap_rule(start_bdim, stop_bdim, num_bdim):
