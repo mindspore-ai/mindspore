@@ -92,6 +92,7 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
   }
 #ifndef ENABLE_LITE_ACL
   // register the callback function
+  MS_EXCEPTION_IF_NULL(sess_);
   if (sess_->RegisterCallBackFunc(callbacks::kCheckPoint, callbacks::CheckpointSaveCallback) != ::ge::GRAPH_SUCCESS) {
     MS_LOG(EXCEPTION) << "Register callback failed!";
   }
@@ -108,6 +109,7 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
     graph_manager_.AddSavedGraphs(std::to_string(it->id_));
     if (!it->is_added_to_ge_session_) {
       MS_LOG(INFO) << "Add the graph " << (*it).name_ << " to GE, it's id is: " << (*it).id_;
+      MS_EXCEPTION_IF_NULL(sess_);
       auto ret = sess_->AddGraph(static_cast<uint32_t>(it->id_), *(it->graph_ptr_), it->options_);
       if (ret != ::ge::GRAPH_SUCCESS) {
         MS_LOG(EXCEPTION) << "Call GE AddGraph Failed, ret is: " << ret;
@@ -141,6 +143,7 @@ Status GraphRunner::AddGraph(const std::string &name) {
   graph_manager_.AddSavedGraphs(std::to_string(wrap_ptr->id_));
   if (!wrap_ptr->is_added_to_ge_session_) {
     MS_LOG(INFO) << "Add the graph " << (*wrap_ptr).name_ << " to GE, it's id is: " << (*wrap_ptr).id_;
+    MS_EXCEPTION_IF_NULL(sess_);
     auto ret = sess_->AddGraph(static_cast<uint32_t>(wrap_ptr->id_), *(wrap_ptr->graph_ptr_), wrap_ptr->options_);
     if (ret != ge::GRAPH_SUCCESS) {
       MS_LOG(ERROR) << "AddGraph to Ge Session failed, ret: " << ret;
@@ -401,6 +404,10 @@ Status GraphRunner::RunGraphWithStreamAsync(const RunOptions &options, void *str
 }
 
 Status GraphRunner::RegisterExternalAllocator(const void *const stream, GeAllocatorPtr allocator) {
+  if (sess_ == nullptr) {
+    MS_LOG(ERROR) << "The GE session is null, can't call GE RegisterExternalAllocator!";
+    return Status::FAILED;
+  }
   ge::Status ret = sess_->RegisterExternalAllocator(stream, allocator);
   if (ret != ge::GRAPH_SUCCESS) {
     MS_LOG(ERROR) << "Call GE RegisterExternalAllocator Failed, ret is: " << ret;
@@ -410,6 +417,10 @@ Status GraphRunner::RegisterExternalAllocator(const void *const stream, GeAlloca
 }
 
 Status GraphRunner::UnregisterExternalAllocator(const void *const stream) {
+  if (sess_ == nullptr) {
+    MS_LOG(ERROR) << "The GE session is null, can't call GE UnregisterExternalAllocator!";
+    return Status::FAILED;
+  }
   ge::Status ret = sess_->UnregisterExternalAllocator(stream);
   if (ret != ge::GRAPH_SUCCESS) {
     MS_LOG(ERROR) << "Call GE UnregisterExternalAllocator Failed, ret is: " << ret;
