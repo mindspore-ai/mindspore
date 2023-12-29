@@ -77,8 +77,8 @@ class AbstractObjectBase {
 
   void SetMsFlag(MindsporeFlag flag) { ms_flag_ |= flag; }
   void ClearMsFlag(int flag) { ms_flag_ &= ~flag; }
-  bool HasMsFlag(MindsporeFlag flag) { return ms_flag_ &= flag; }
-  bool TestMsFlag(int flag) { return ms_flag_ &= flag; }
+  bool HasMsFlag(MindsporeFlag flag) { return ms_flag_ & flag; }
+  bool TestMsFlag(int flag) { return ms_flag_ & flag; }
 
   static Type GetPyType(PyObject *op);
   static Type GetPyType(PyTypeObject *tp);

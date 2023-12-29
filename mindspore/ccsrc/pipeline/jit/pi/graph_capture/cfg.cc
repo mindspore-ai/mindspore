@@ -26,27 +26,28 @@
 namespace mindspore {
 namespace jit {
 namespace graph {
+
+constexpr const int PY_BCSIZE = sizeof(_Py_CODEUNIT);
+
+std::string Instr::ToString() const {
+  std::stringstream s;
+  s << bci_ << ' ' << Utils::GetOpName(op_) << ' ' << arg_;
+  if (!name().empty()) {
+    s << "  " << name();
+  }
+  if (cnst().ptr()) {
+    s << "  " << std::string(py::str(cnst().ptr()));
+  }
+  if (extra_jump()) {
+    s << " -> " << extra_jump()->bci();
+  }
+  return s.str();
+}
+
 std::string Instr::Dump(const std::string &prefix) const {
   std::stringstream os;
   os << prefix << " " << bci_ << ' ' << Utils::GetOpName(op_) << ' ' << arg_;
   return os.str();
-}
-
-std::string LoadConstInstr::Dump(const std::string &prefix) const {
-  return this->Instr::Dump(prefix) + " " + std::string(py::str(cnst()));
-}
-
-std::string NameRelatedInstr::Dump(const std::string &prefix) const { return this->Instr::Dump(prefix) + " " + name(); }
-
-void Block::AddNode(AbstractNode *n) {
-  nodes_.push_back(n);
-  n->SetGraph(this->GetGraph());
-  n->SetBlock(this);
-}
-
-void Block::ClearTrackInfo() {
-  nodes_.clear();  // tracked instructions. transform to use-def node
-  track_result_ = (1 << kNotTrack);
 }
 
 void Block::AddSuccBB(Block *bb) {
@@ -161,14 +162,12 @@ Block *Block::Clone(CFG *cfg) {
   Block *new_bb = cfg->NewBBAppend();
   new_bb->set_is_dead(is_dead_);
   new_bb->set_is_loop_head(is_loop_head_);
+  new_bb->begin_ = this->begin_;
+  new_bb->end_ = this->end_;
   // clone instr list
   for (const auto &instr : instrs_) {
     Instr *new_instr = cfg->NewInstrNode(instr);
     new_bb->AddInstr(new_instr);
-  }
-  // move node list to new bb
-  for (AbstractNode *node : nodes_) {
-    new_bb->AddNode(node);
   }
   return new_bb;
 }
@@ -186,56 +185,47 @@ Block *CFG::NewBBAppend() {
 }
 
 Instr *CFG::NewInstrNode(int bci, int op, int arg, int line) {
-  Instr *i;
+  instrs_.emplace_back(std::make_unique<Instr>(bci, op, arg, line));
+  Instr *i = instrs_.back().get();
   if (op == LOAD_CONST) {
-    PyObject *cnst = PyTuple_GET_ITEM(pycode_->co_consts, arg);
-    i = NewLoadInstrNode(bci, arg, line, cnst);
-  } else if (Utils::IsNameRelated(op)) {
-    NameRelatedInstr *t = alloc_.NewInstr<NameRelatedInstr>(bci, op, arg, line);
-    t->set_name(PyUnicode_AsUTF8(PyTuple_GET_ITEM(pycode_->co_names, arg)));
-    i = t;
-  } else {
-    i = alloc_.NewInstr<Instr>(bci, op, arg, line);
+    i->set_cnst(PyTuple_GET_ITEM(pycode_->co_consts, arg));
+  }
+  if (Utils::IsNameRelated(op)) {
+    i->set_name(PyUnicode_AsUTF8(PyTuple_GET_ITEM(pycode_->co_names, arg)));
   }
   return i;
 }
 
-LoadConstInstr *CFG::NewLoadInstrNode(int bci, int arg, int line, PyObject *cnst) {
-  LoadConstInstr *l = alloc_.NewInstr<LoadConstInstr>(bci, LOAD_CONST, arg, line);
-  l->set_cnst(cnst);
-  return l;
+Instr *CFG::NewLoadInstrNode(int bci, int arg, int line, PyObject *cnst) {
+  Instr *i = NewInstrNode(bci, 0, -1, line);
+  i->set_cnst(cnst);
+  i->set_op(LOAD_CONST);
+  return i;
 }
 
 Instr *CFG::NewInstrNode(const Instr &instr) {
-  if (instr.op() == LOAD_CONST) {
-    return alloc_.NewInstr<LoadConstInstr>(static_cast<const LoadConstInstr &>(instr));
-  }
-  if (Utils::IsNameRelated(instr.op())) {
-    return alloc_.NewInstr<NameRelatedInstr>(static_cast<const NameRelatedInstr &>(instr));
-  }
-  return alloc_.NewInstr<Instr>(instr);
+  instrs_.emplace_back(std::make_unique<Instr>(instr.bci(), instr.op(), instr.arg(), instr.line()));
+  Instr *i = instrs_.back().get();
+  i->set_cnst(instr.cnst());
+  i->set_name(instr.name());
+  return i;
 }
 
 void CFG::GenerateCFG() {
   MS_EXCEPTION_IF_CHECK_FAIL(pycode_, "shouldn't use this function to generate empty cfg");
-  bytecode_ = reinterpret_cast<_Py_CODEUNIT *>(PyBytes_AS_STRING(pycode_->co_code));
   if (!is_generated_) {
+    nlocals_ = pycode_->co_nlocals;
     is_generated_ = true;
     BuildInst();
     BuildBB();
     BuildCFG();
     MarkDeadBB();
   }
-  if (conf_.GetBoolConfig(GraphJitConfig::kPrintBB)) {
-    GRAPH_JIT_LOG_F("%s\n\n", DumpBBs().c_str());
-  }
-  if (conf_.GetBoolConfig(GraphJitConfig::kPrintCFG)) {
-    DumpCFGGraph();
-  }
 }
 
 void CFG::BuildInst() {
-  int size = GetBytecodeSize();
+  const _Py_CODEUNIT *bytecode_ = reinterpret_cast<_Py_CODEUNIT *>(PyBytes_AsString(pycode_->co_code));
+  int size = (PyBytes_GET_SIZE(pycode_->co_code)) / PY_BCSIZE;
   int exarg = 0;
   std::map<int, std::vector<Instr *>> succ_jump;
   for (int bci = 0; bci < size; ++bci) {
@@ -243,13 +233,18 @@ void CFG::BuildInst() {
     int oparg = (exarg << 8) | _Py_OPARG(bytecode_[bci]);
     exarg = (opcode == EXTENDED_ARG) ? oparg : 0;
     int line = PyCode_Addr2Line(pycode_, PY_BCSIZE * bci);
+    if (opcode == LOAD_METHOD) {
+      opcode = LOAD_ATTR;
+    } else if (opcode == CALL_METHOD) {
+      opcode = CALL_FUNCTION;
+    }
     Instr *instr = NewInstrNode(bci, opcode, oparg, line);
     instr->set_is_fall(!Utils::IsNonFall(opcode));
     // link instr jump relation
     if (Utils::IsRelativeJump(opcode) || Utils::IsAbsoluteJump(opcode)) {
       int dest = Utils::GetBranchDestIndex(opcode, oparg, bci);
       if (dest < bci) {
-        Instr *succ = alloc_.instr_pool()[dest];
+        Instr *succ = instr_pool()[dest].get();
         succ->AddExtraPred(instr);
         instr->set_extra_jump(succ);
       } else {
@@ -270,7 +265,7 @@ void CFG::BuildInst() {
 
 void CFG::BuildBB() {
   Block *curr_bb = nullptr;
-  for (auto *instr : alloc_.instr_pool()) {
+  for (const auto &instr : instr_pool()) {
     if (instr == nullptr) {
       continue;
     }
@@ -278,11 +273,15 @@ void CFG::BuildBB() {
     if (curr_bb == nullptr || !instr->extra_preds().empty()) {
       curr_bb = NewBBAppend();
     }
-    curr_bb->AddInstr(instr);
+    curr_bb->AddInstr(instr.get());
     // check end of BB
     if (!instr->is_fall() || instr->extra_jump() != nullptr) {
       curr_bb = nullptr;
     }
+  }
+  for (const auto &i : bb_pool()) {
+    i->set_begin_ci(i->instrs().front().bci());
+    i->set_end_ci(i->instrs().back().bci() + 1);
   }
 }
 
@@ -324,18 +323,27 @@ bool CFG::BuildCFG() {
   return true;
 }
 
+void VisitBB(Block *blk, std::vector<bool> *reach, std::vector<bool> *mark) {
+  if (reach->operator[](blk->id())) {
+    return;
+  }
+  blk->set_is_dead(false);
+  blk->set_is_loop_head(mark->operator[](blk->id()));
+  reach->operator[](blk->id()) = true;
+  mark->operator[](blk->id()) = true;
+  for (auto i : blk->succ_bbs()) {
+    VisitBB(i, reach, mark);
+  }
+  mark->operator[](blk->id()) = false;
+}
+
 void CFG::MarkDeadBB() {
   if (bb_pool_.empty()) {
     return;
   }
-  auto iter = this->begin();
-  auto end = this->end();
-  for (; iter != end; ++iter) {
-  }
-  std::vector<bool> map = iter.GetVisitMap();
-  for (size_t id = 0; id < map.size(); ++id) {
-    bb_pool_[id]->set_is_dead(!map[id]);
-  }
+  std::vector<bool> reach(bb_pool_.size());
+  std::vector<bool> mark(bb_pool_.size());
+  VisitBB(bb_pool_[0].get(), &reach, &mark);
 }
 
 // Simplified cfg
@@ -348,8 +356,18 @@ void CFG::ClearDeadBBEdges() {
   }
 }
 
-std::unique_ptr<CFG> CFG::Clone(Allocator *new_alloc) {
-  std::unique_ptr<CFG> new_cfg = std::make_unique<CFG>(pycode_, new_alloc, conf_);
+Block *CFG::GetBlockByBci(int bci) const {
+  for (const auto &i : bb_pool_) {
+    if (i->begin_ci() <= bci && bci < i->end_ci()) {
+      return i.get();
+    }
+  }
+  MS_LOG(INTERNAL_EXCEPTION) << "can't find block at " << bci;
+  return nullptr;
+}
+
+std::unique_ptr<CFG> CFG::Clone() {
+  std::unique_ptr<CFG> new_cfg = std::make_unique<CFG>(pycode_);
   if (bb_pool_.empty()) {
     return new_cfg;
   }
@@ -447,6 +465,15 @@ CFG::BBIterator &CFG::BBIterator::operator++() {
   }
   return *this;
 }
+
+const Liveness *CFG::GetLiveness() {
+  if (liveness_ == nullptr) {
+    liveness_ = std::make_unique<Liveness>(this);
+    liveness_->Init();
+  }
+  return liveness_.get();
+}
+
 }  // namespace graph
 }  // namespace jit
 }  // namespace mindspore

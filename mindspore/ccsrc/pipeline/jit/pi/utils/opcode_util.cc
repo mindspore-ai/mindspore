@@ -23,7 +23,7 @@ namespace code {
 const Opcode &GetOpcodeInfo(int op) {
   static Opcode kOpcodes[NO_IMPL_OPCODE] = {{"", 0, 0}};
   if (!kOpcodes[0].name_.empty()) {
-    return op < NO_IMPL_OPCODE ? kOpcodes[op] : kOpcodes[NO_IMPL_OPCODE - 1];
+    return op > 0 && op < NO_IMPL_OPCODE ? kOpcodes[op] : kOpcodes[NO_IMPL_OPCODE - 1];
   }
   kOpcodes[0] = Opcode();
 #define DEF_OPCODE_ATTR(code, flag)                                 \

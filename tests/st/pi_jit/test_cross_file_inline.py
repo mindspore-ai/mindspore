@@ -6,7 +6,7 @@ from mindspore import jit, context
 conf = {
     "print_after_all": False,
     "interpret_captured_code": True,
-    "allowed_inline_modules": ["mindspore", "run_cross_file_inline_func"],
+    "allowed_inline_modules": ["mindspore", "test_cross_file_inline_func"],
     "MAX_INLINE_DEPTH": 10,
 }
 
