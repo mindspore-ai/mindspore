@@ -21,8 +21,6 @@ apply_came_part2:
         global_shape:
             dtype: tuple[int]
             default: None
-    args_signature:
-        dtype_group: (sum_grad_r, sum_grad_c, sum_grad_rc), (grad, r, c)
     returns:
         r:
             dtype: tensor

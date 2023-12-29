@@ -19,8 +19,6 @@ apply_came_part3:
         use_first_moment:
             dtype: bool
             default: False
-    args_signature:
-        dtype_group: (u, m)
     returns:
         m:
             dtype: tensor

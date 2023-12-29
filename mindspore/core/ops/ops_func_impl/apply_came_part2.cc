@@ -86,7 +86,11 @@ std::vector<int64_t> CheckInputsShapePart2(const string &op_name, const std::vec
     CheckAndConvertUtils::CheckInteger("rank of sum_grad_c", sum_grad_c_shape.size(), kEqual, 1, op_name);
     m = CheckInputDimPart2(sum_grad_c_shape[sum_grad_c_shape.size() - 1], m, "last dim of sum_grad_c", op_name);
   }
-
+  auto sum_grad_rc_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  if (!IsDynamicRank(sum_grad_rc_shape)) {
+    CheckAndConvertUtils::CheckInteger("rank of sum_grad_rc", sum_grad_rc_shape.size(), kEqual, 1, op_name);
+  }
   auto r_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
   if (!IsDynamicRank(r_shape)) {
     CheckAndConvertUtils::CheckInteger("rank of r", r_shape.size(), kEqual, 1, op_name);
@@ -96,6 +100,19 @@ std::vector<int64_t> CheckInputsShapePart2(const string &op_name, const std::vec
   if (!IsDynamicRank(c_shape)) {
     CheckAndConvertUtils::CheckInteger("rank of c", c_shape.size(), kEqual, 1, op_name);
     m = CheckInputDimPart2(c_shape[c_shape.size() - 1], m, "last dim of c", op_name);
+  }
+  if (input_args[kInputIndex7]->GetType()->type_id() != kMetaTypeNone) {
+    auto sum_r_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->BuildShape())[kShape];
+    if (!IsDynamicRank(c_shape)) {
+      CheckAndConvertUtils::CheckInteger("rank of sum_r", sum_r_shape.size(), kEqual, 1, op_name);
+    }
+  }
+  if (input_args[kInputIndex8]->GetType()->type_id() != kMetaTypeNone) {
+    auto val_ptr = input_args[kInputIndex8]->GetValue();
+    if (val_ptr->isa<ValueSequence>()) {
+      auto global_shape_length_vec = GetValue<std::vector<int64_t>>(val_ptr);
+      CheckAndConvertUtils::CheckInteger("size of global_shape", global_shape_length_vec.size(), kEqual, 2, op_name);
+    }
   }
   std::vector<int64_t> out_shape;
   out_shape.push_back(n);
@@ -129,7 +146,7 @@ TypePtr ApplyCamePart2FuncImpl::InferType(const PrimitivePtr &prim,
   auto op_name = prim->name();
   auto grad_type = input_args[kInputIndex0]->BuildType();
   auto r_type = input_args[kInputIndex4]->BuildType();
-  auto c_type = input_args[kInputIndex4]->BuildType();
+  auto c_type = input_args[kInputIndex5]->BuildType();
   std::map<std::string, TypePtr> types = {{"grad", grad_type}, {"r", r_type}, {"c", c_type}};
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kBFloat16};
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
@@ -140,6 +157,10 @@ TypePtr ApplyCamePart2FuncImpl::InferType(const PrimitivePtr &prim,
     {"sum_grad_r", sum_grad_r_type}, {"sum_grad_c", sum_grad_c_type}, {"sum_grad_rc", sum_grad_rc_type}};
   const std::set<TypePtr> other_valid_types = {kFloat32};
   auto other_type = CheckAndConvertUtils::CheckTensorTypeSame(other_types, other_valid_types, op_name);
+  if (input_args[kInputIndex7]->GetType()->type_id() != kMetaTypeNone) {
+    auto sum_r_type = input_args[kInputIndex7]->BuildType();
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("sum_r", sum_r_type, other_valid_types, op_name);
+  }
 
   return std::make_shared<Tuple>(std::vector<TypePtr>{type, type, other_type, other_type});
 }

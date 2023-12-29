@@ -90,6 +90,23 @@ std::vector<int64_t> CheckInputsShapePart4(const string &op_name, const std::vec
     CheckAndConvertUtils::CheckInteger("rank of c", c_shape.size(), kEqual, 1, op_name);
     m = CheckInputDimPart4(c_shape[c_shape.size() - 1], m, "last dim of c", op_name);
   }
+  auto weight_decay_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+  if (!IsDynamicRank(weight_decay_shape)) {
+    CheckAndConvertUtils::CheckInteger("rank of weight_decay", weight_decay_shape.size(), kEqual, 1, op_name);
+  }
+  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
+  if (!IsDynamicRank(lr_shape)) {
+    CheckAndConvertUtils::CheckInteger("rank of lr_shape", lr_shape.size(), kEqual, 1, op_name);
+  }
+
+  if (input_args[kInputIndex7]->GetType()->type_id() != kMetaTypeNone) {
+    auto sum_r_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->BuildShape())[kShape];
+    if (!IsDynamicRank(sum_r_shape)) {
+      CheckAndConvertUtils::CheckInteger("rank of sum_r", sum_r_shape.size(), kEqual, 1, op_name);
+    }
+  }
+
   auto sum_u_r_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex8]->BuildShape())[kShape];
   if (!IsDynamicRank(sum_u_r_shape)) {
     CheckAndConvertUtils::CheckInteger("rank of sum_u_r", sum_u_r_shape.size(), kEqual, 1, op_name);
@@ -99,6 +116,18 @@ std::vector<int64_t> CheckInputsShapePart4(const string &op_name, const std::vec
   if (!IsDynamicRank(sum_u_c_shape)) {
     CheckAndConvertUtils::CheckInteger("rank of sum_u_c", sum_u_c_shape.size(), kEqual, 1, op_name);
     m = CheckInputDimPart4(sum_u_c_shape[sum_u_c_shape.size() - 1], m, "last dim of sum_u_c_shape", op_name);
+  }
+  auto sum_u_rc_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex10]->BuildShape())[kShape];
+  if (!IsDynamicRank(sum_u_rc_shape)) {
+    CheckAndConvertUtils::CheckInteger("rank of sum_u_rc", sum_u_rc_shape.size(), kEqual, 1, op_name);
+  }
+  if (input_args[kInputIndex11]->GetType()->type_id() != kMetaTypeNone) {
+    auto val_ptr = input_args[kInputIndex11]->GetValue();
+    if (val_ptr->isa<ValueSequence>()) {
+      auto global_shape_length_vec = GetValue<std::vector<int64_t>>(val_ptr);
+      CheckAndConvertUtils::CheckInteger("size of global_shape", global_shape_length_vec.size(), kEqual, 2, op_name);
+    }
   }
   std::vector<int64_t> out_shape;
   out_shape.push_back(n);
@@ -128,21 +157,31 @@ BaseShapePtr ApplyCamePart4FuncImpl::InferShape(const PrimitivePtr &primitive,
 TypePtr ApplyCamePart4FuncImpl::InferType(const PrimitivePtr &prim,
                                           const std::vector<AbstractBasePtr> &input_args) const {
   auto op_name = prim->name();
-
   auto param_type = input_args[kInputIndex0]->BuildType();
   auto m_type = input_args[kInputIndex1]->BuildType();
   auto r_type = input_args[kInputIndex2]->BuildType();
   auto c_type = input_args[kInputIndex3]->BuildType();
+  auto weight_decay_type = input_args[kInputIndex4]->BuildType();
+  auto lr_type = input_args[kInputIndex5]->BuildType();
+  std::map<std::string, TypePtr> other_param_types{{"weight_decay", weight_decay_type}, {"lr", lr_type}};
+
   std::map<std::string, TypePtr> types{{"param", param_type}, {"m", m_type}, {"r", r_type}, {"c", c_type}};
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kBFloat16};
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
   auto sum_u_r_type = input_args[kInputIndex8]->BuildType();
   auto sum_u_c_type = input_args[kInputIndex9]->BuildType();
   auto sum_u_rc_type = input_args[kInputIndex10]->BuildType();
+
   std::map<std::string, TypePtr> other_types{
     {"sum_u_r", sum_u_r_type}, {"sum_u_c", sum_u_c_type}, {"sum_u_rc", sum_u_rc_type}};
   const std::set<TypePtr> other_valid_types = {kFloat32};
   CheckAndConvertUtils::CheckTensorTypeSame(other_types, other_valid_types, op_name);
+  CheckAndConvertUtils::CheckTensorTypeSame(other_param_types, other_valid_types, op_name);
+  if (input_args[kInputIndex7]->GetType()->type_id() != kMetaTypeNone) {
+    auto sum_r_type = input_args[kInputIndex7]->BuildType();
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("sum_r", sum_r_type, other_valid_types, op_name);
+  }
+
   return std::make_shared<Tuple>(std::vector<TypePtr>{type, type, type});
 }
 

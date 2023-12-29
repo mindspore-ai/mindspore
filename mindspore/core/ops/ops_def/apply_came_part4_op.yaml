@@ -26,8 +26,6 @@ apply_came_part4:
         global_shape:
             dtype: tuple[int]
             default: None
-    args_signature:
-        dtype_group: (param, m, r, c),(sum_u_r, sum_u_c, sum_u_rc)
     returns:
         param:
             dtype: tensor

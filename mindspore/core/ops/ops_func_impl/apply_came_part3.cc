@@ -86,6 +86,13 @@ std::vector<int64_t> CheckInputsShapePart3(const string &op_name, const std::vec
   if (!IsDynamicRank(sum_square_u_shape)) {
     CheckAndConvertUtils::CheckInteger("rank of sum_square_u", sum_square_u_shape.size(), kEqual, 1, op_name);
   }
+  if (input_args[kInputIndex6]->GetType()->type_id() != kMetaTypeNone) {
+    auto val_ptr = input_args[kInputIndex6]->GetValue();
+    if (val_ptr->isa<ValueSequence>()) {
+      auto global_shape_length_vec = GetValue<std::vector<int64_t>>(val_ptr);
+      CheckAndConvertUtils::CheckInteger("size of global_shape", global_shape_length_vec.size(), kEqual, 2, op_name);
+    }
+  }
   std::vector<int64_t> out_shape;
   out_shape.push_back(n);
   out_shape.push_back(m);
