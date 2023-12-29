@@ -74,136 +74,12 @@ void AddDependCtrl(AnfNodePtr first_node, AnfNodePtr second_node, const FuncGrap
   auto first_cnode = first_node->cast<CNodePtr>();
   std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
                                     common::AnfAlgo::GetInputNode(first_cnode, 0), second_node};
-  MS_LOG(DEBUG) << "Add Depend between node: " << second_node->fullname_with_scope()
-                << " and node: " << first_node->fullname_with_scope();
   auto new_input = graph->NewCNode(inputs);
   new_input->set_abstract(common::AnfAlgo::GetInputNode(first_cnode, 0)->abstract());
   common::AnfAlgo::SetNodeInput(first_cnode, new_input, 0);
-}
-
-bool InsertDependForAllGatherParallelNoFusion(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &all_gather_node,
-                                              const std::vector<AnfNodePtr> &allgather_succ_nodes,
-                                              const std::vector<AnfNodePtr> &allgather_second_succ_nodes) {
-  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
-    MS_LOG(DEBUG) << "AllGather parallel optimization is not required in pipeline parallel mode.";
-    return false;
-  }
-  bool changed = false;
-  for (size_t i = 1; i < all_gather_node.size(); i++) {
-    MS_EXCEPTION_IF_NULL(all_gather_node[i]);
-    if (allgather_second_succ_nodes[i] == nullptr || allgather_succ_nodes[i] == nullptr) {
-      MS_LOG(DEBUG) << "AllGather has no successor node or second successor node, AllGather name: "
-                    << all_gather_node[i]->fullname_with_scope();
-      continue;
-    }
-    if (!IsPrimitiveCNode(allgather_succ_nodes[i], prim::kPrimLoad)) {
-      MS_LOG(DEBUG) << "AllGather successor node it not Load, but is: "
-                    << allgather_succ_nodes[i]->fullname_with_scope()
-                    << ", AllGather node:" << all_gather_node[i]->fullname_with_scope();
-      continue;
-    }
-    AnfNodePtr another_input = nullptr;
-    auto second_succ_cnode = allgather_second_succ_nodes[i]->cast<CNodePtr>();
-    auto succ_cnode = allgather_succ_nodes[i]->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(second_succ_cnode);
-    MS_EXCEPTION_IF_NULL(succ_cnode);
-    for (size_t j = 1; j < second_succ_cnode->inputs().size(); j++) {
-      auto succ_input = second_succ_cnode->input(j);
-      if (succ_input != allgather_succ_nodes[i]) {
-        another_input = succ_input;
-        break;
-      }
-    }
-    if (another_input == nullptr) {
-      MS_LOG(DEBUG) << "AllGather second successor node has no other input, AllGather name: "
-                    << all_gather_node[i]->fullname_with_scope()
-                    << ", second successor node: " << second_succ_cnode->fullname_with_scope();
-      continue;
-    }
-    AddDependCtrl(succ_cnode, another_input, graph);
-    changed = true;
-  }
-  return changed;
-}
-
-bool InsertDependForAllGatherParallel(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &node_list,
-                                      const std::map<int64_t, std::vector<AnfNodePtr>> &fusion_allgather_nodes,
-                                      const std::vector<AnfNodePtr> &no_fusion_allgather_nodes,
-                                      const std::vector<AnfNodePtr> &no_fusion_allgather_succ_nodes,
-                                      const std::map<AnfNodePtr, size_t> &node_index_map, const bool is_need_fusion) {
-  MS_EXCEPTION_IF_NULL(graph);
-  bool changed = false;
-  if (!is_need_fusion) {
-    std::vector<AnfNodePtr> no_fusion_allgather_second_succ_nodes;
-    for (auto &succ_node : no_fusion_allgather_succ_nodes) {
-      if (succ_node == nullptr) {
-        continue;
-      }
-      auto allgather_second_succ = GetFirstNextUsers(graph, succ_node, node_index_map, node_list);
-      no_fusion_allgather_second_succ_nodes.push_back(allgather_second_succ);
-    }
-    changed = InsertDependForAllGatherParallelNoFusion(graph, no_fusion_allgather_nodes, no_fusion_allgather_succ_nodes,
-                                                       no_fusion_allgather_second_succ_nodes);
-    return changed;
-  }
-  std::map<int64_t, std::vector<AnfNodePtr>> fusion_allgather_outputs;
-  auto iter = fusion_allgather_nodes.begin();
-  for (size_t i = 1; i < fusion_allgather_nodes.size(); i++) {
-    auto pre_fusion_id = (iter)->first;
-    auto nodes = (iter++)->second;
-    for (size_t j = 0; j < nodes.size(); ++j) {
-      auto node = j < nodes.size() - 1 ? nodes[j + 1] : (iter->second).at(0);
-      MS_EXCEPTION_IF_NULL(node);
-      auto allgather_first_succ = GetFirstNextUsers(graph, node, node_index_map, node_list);
-      auto allgather_second_succ = GetFirstNextUsers(graph, allgather_first_succ, node_index_map, node_list);
-      if (allgather_first_succ == nullptr || allgather_second_succ == nullptr) {
-        MS_LOG(DEBUG) << "AllGather has no successor node or second successor node, AllGather name: "
-                      << node->fullname_with_scope();
-        continue;
-      }
-      if (!IsPrimitiveCNode(allgather_first_succ, prim::kPrimLoad)) {
-        MS_LOG(DEBUG) << "AllGather successor node is not Load, but is: " << node->fullname_with_scope()
-                      << ", AllGather node:" << node->fullname_with_scope();
-        continue;
-      }
-      AnfNodePtr another_input = nullptr;
-      auto second_succ_cnode = allgather_second_succ->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(second_succ_cnode);
-      for (size_t k = 1; k < second_succ_cnode->inputs().size(); k++) {
-        auto succ_input = second_succ_cnode->input(k);
-        if (succ_input != nullptr && succ_input != allgather_first_succ) {
-          another_input = succ_input;
-          break;
-        }
-      }
-      if (another_input != nullptr) {
-        fusion_allgather_outputs[pre_fusion_id].push_back(another_input);
-      }
-    }
-  }
-  auto node_iter = fusion_allgather_nodes.begin();
-  for (size_t i = 1; i < fusion_allgather_nodes.size(); i++) {
-    auto pre_fusion_id = node_iter->first;
-    auto nodes = (++node_iter)->second;
-    auto node = nodes.at(0);
-    MS_EXCEPTION_IF_NULL(node);
-    auto allgather_first_succ = GetFirstNextUsers(graph, node, node_index_map, node_list);
-    if (allgather_first_succ == nullptr) {
-      MS_LOG(DEBUG) << "AllGather has no successor node or second successor node, AllGather name: "
-                    << node->fullname_with_scope();
-      continue;
-    }
-    if (!IsPrimitiveCNode(allgather_first_succ, prim::kPrimLoad)) {
-      MS_LOG(DEBUG) << "AllGather successor node it not Load, but is: " << node->fullname_with_scope()
-                    << ", AllGather node:" << node->fullname_with_scope();
-      continue;
-    }
-    auto &pre_fusion_outputs = fusion_allgather_outputs[pre_fusion_id];
-    auto &pre_fusion_last_output = pre_fusion_outputs.back();
-    AddDependCtrl(allgather_first_succ, pre_fusion_last_output, graph);
-    changed = true;
-  }
-  return changed;
+  MS_LOG(DEBUG) << "Add Depend between node: " << second_node->fullname_with_scope()
+                << " and node: " << first_node->fullname_with_scope()
+                << ", depend node: " << new_input->fullname_with_scope();
 }
 
 bool AddDependCtrlForMemReuse(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &node_list,
@@ -236,7 +112,15 @@ bool AddDependCtrlForMemReuse(const FuncGraphPtr &graph, const std::vector<AnfNo
     changed = true;
   } else {
     for (int64_t i = 0; i < SizeToInt(no_fusion_allgather_nodes.size()) - 1; ++i) {
-      if (no_fusion_allgather_succ_nodes[i] == nullptr) {
+      auto succ_node = no_fusion_allgather_succ_nodes[i];
+      auto cur_allgather = no_fusion_allgather_nodes[i];
+      if (succ_node == nullptr) {
+        MS_LOG(DEBUG) << "Successor node is null, AllGather: " << cur_allgather->fullname_with_scope();
+        continue;
+      }
+      if (!IsPrimitiveCNode(succ_node, prim::kPrimLoad)) {
+        MS_LOG(DEBUG) << "Successor node is not Load, but is: " << succ_node->fullname_with_scope()
+                      << ", AllGather: " << cur_allgather->fullname_with_scope();
         continue;
       }
       auto next_node = no_fusion_allgather_nodes[i + 1];
@@ -295,10 +179,7 @@ bool AddDependForAllGather::Run(const FuncGraphPtr &graph) {
   // Fusion of Hcom Nodes may cause OOM, so now adapt no-fusion as well.
   changed = AddDependCtrlForMemReuse(graph, node_list, fusion_allgather_nodes, all_gather_node,
                                      no_fusion_allgather_nodes, no_fusion_allgather_succ_nodes, node_index_map, false);
-
-  return InsertDependForAllGatherParallel(graph, node_list, fusion_allgather_nodes, no_fusion_allgather_nodes,
-                                          no_fusion_allgather_succ_nodes, node_index_map, false) ||
-         changed;
+  return changed;
 }
 }  // namespace opt
 }  // namespace mindspore
