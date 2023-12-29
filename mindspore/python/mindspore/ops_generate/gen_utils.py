@@ -154,7 +154,7 @@ def safe_load_yaml(yaml_file_path):
     return yaml_str
 
 
-def get_assign_str_by_type_it(arg_info, arg_name, dtype):
+def get_assign_str_by_type_it(class_name, arg_info, arg_name, dtype):
     """
     Make type_it(arg, src_types, dst_type) python sentences.
     """
@@ -162,7 +162,7 @@ def get_assign_str_by_type_it(arg_info, arg_name, dtype):
     type_cast = arg_info.get('type_cast')
     if type_cast is not None:
         type_cast_tuple = tuple(ct.strip() for ct in type_cast.split(","))
-        assign_str += f'type_it({arg_name}, '
+        assign_str += f"type_it('{class_name}', '{arg_name}', {arg_name}, "
         if len(type_cast_tuple) == 1:
             assign_str += get_type_str(type_cast_tuple[0]) + ', '
         else:
