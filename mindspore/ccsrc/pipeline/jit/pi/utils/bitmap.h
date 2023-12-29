@@ -16,10 +16,9 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PI_UTILS_BITMAP_H
 #define MINDSPORE_CCSRC_PIPELINE_JIT_PI_UTILS_BITMAP_H
 
-#define _GLIBCXX_ASSERTIONS 1
-
 #include <vector>
 #include <numeric>
+#include <algorithm>
 
 namespace mindspore {
 namespace jit {
@@ -30,8 +29,9 @@ constexpr int popcount(unsigned x) {
   return __builtin_popcount(x);
 #else
   int c = 0;
-  for (int n = x; n > 0; n >>= 1) {
+  while (x) {
     c += (x & 1);
+    x >>= 1;
   }
   return c;
 #endif
@@ -39,8 +39,8 @@ constexpr int popcount(unsigned x) {
 
 class BitMap {
  public:
-  BitMap() : size_(0), bits_(){};
-  BitMap(size_t size) : size_(size), bits_(count(), 0) {}
+  BitMap() : size_(0), bits_() {}
+  explicit BitMap(size_t size) : size_(size), bits_(count(), 0) {}
   size_t size() const { return size_; }
   bool Get(size_t i) const { return data()[i >> shf] & (size_t(1) << (i & mod)); }
   void Set(size_t i) { data()[i >> shf] |= (size_t(1) << (i & mod)); }

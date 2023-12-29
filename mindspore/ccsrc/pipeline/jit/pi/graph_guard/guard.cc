@@ -494,6 +494,14 @@ void OptGuard::RevertDynamicShape(PyFrameObject *f, const std::vector<PyObject *
   }
 }
 
+std::string OptGuard::ToString() const {
+  std::stringstream s;
+  for (const auto &i : guardMap_) {
+    s << "  guard [ " << i.first << " ] at [" << i.second.get() << "]\n";
+  }
+  return s.str();
+}
+
 }  // namespace graph
 }  // namespace jit
 }  // namespace mindspore

@@ -113,8 +113,8 @@ bool JustCallAndSetRes(CallNode *call_node) {
 
   PyObject *value = PyObject_Call(func.ptr(), pair.first.ptr(), pair.second.ptr());
   if (PyErr_Occurred()) {
-    MS_LOG(ERROR) << "got an error while call the <pijit.constexpr> " << std::string(py::str(func.ptr())) << " "
-                  << py::error_already_set().what();
+    MS_LOG(ERROR) << "got an error " << py::error_already_set().what() << " at call the "
+                  << std::string(py::str(func.ptr()));
     PyErr_Clear();
   }
   call_node->SetVobj(AObject::Convert(value));
@@ -123,16 +123,40 @@ bool JustCallAndSetRes(CallNode *call_node) {
   return false;
 }
 
+bool CheckConstPyObject(PyObject *cnst) {
+  static bool cnst_types[AObject::kTypeCount] = {0, 0};
+  if (!cnst_types[AObject::kTypeNone]) {
+    // initialize
+    cnst_types[AObject::kTypeEllipsis] = true;
+    cnst_types[AObject::kTypeCodeObject] = true;
+    cnst_types[AObject::kTypeBool] = true;
+    cnst_types[AObject::kTypeFloat] = true;
+    cnst_types[AObject::kTypeInt] = true;
+    cnst_types[AObject::kTypeString] = true;
+    cnst_types[AObject::kTypeNone] = true;
+  }
+
+  if (PyComplex_CheckExact(cnst)) {
+    return true;
+  } else if (PyBytes_CheckExact(cnst)) {
+    return true;
+  } else if (PyTuple_CheckExact(cnst)) {
+    // tuple can't reference self
+    PyObject **begin = &PyTuple_GET_ITEM(cnst, 0);
+    PyObject **end = begin + PyTuple_GET_SIZE(cnst);
+    return end == std::find_if_not(begin, end, CheckConstPyObject);
+  }
+  return cnst_types[AObject::GetPyType(cnst)];
+}
+
 bool CallNodeReturnConst(CallNode *call_node, Graph *sub_graph, AObject *value, const std::string &global_key = "") {
-  static const std::set<AObject::Type> cnst_types = {
-    AObject::kTypeBool,  AObject::kTypeInt,  AObject::kTypeString,   AObject::kTypeTuple,
-    AObject::kTypeFloat, AObject::kTypeNone, AObject::kTypeEllipsis,
-  };
+  PyObject *cnst = value->GetPyObject().ptr();
+  MS_EXCEPTION_IF_NULL(cnst);
+
   auto &alloc = sub_graph->allocator();
   ValueNode *ret_node;
   if (global_key.empty()) {
-    if (cnst_types.find(value->GetType()) == cnst_types.end()) {
-      // NOTE: python gc can't check code object reference, const object shouldn't reference other none const object
+    if (!CheckConstPyObject(cnst)) {
       MS_LOG(DEBUG) << value->ToString() + " as const is unsupported";
       return false;
     }
@@ -177,10 +201,10 @@ bool GuardConstCallNodeParam(CallNode *call_node, Graph *sub_graph, int max_guar
 
   const auto &guard = sub_graph->GetGuard()->GetGuard();
   std::pair<std::vector<GuardItemPtr>, std::map<std::string, GuardItemPtr>> guard_backup;
-  guard->Backup(&guard_backup);
+  guard->Backup();
   for (const auto &i : traces) {
     if (!guard->GuardOn(i.first, i.second)) {
-      guard->Rollback(&guard_backup);
+      guard->Rollback();
       return false;
     }
   }
@@ -288,8 +312,14 @@ static bool InferRegistryGet(CallNode *call_node) {
   py::object func = call_node->GetVobj()->GetPyObject();
   if (call_node->getInputs().back()->GetOpcode() == LOAD_CONST && func.ptr() != nullptr) {
     // constant function call
-    std::string key = py::str(func.ptr());
-    return CallNodeReturnConst(call_node, g, call_node->GetVobj(), key);
+    std::stringstream s;
+    if (PyFunction_Check(func.ptr())) {
+      PyObject *name = reinterpret_cast<PyFunctionObject *>(func.ptr())->func_qualname;
+      s << PyUnicode_AsUTF8(name) << "<" << func.ptr() << ">";
+    } else {
+      s << "mindspore.Registry.get<" << func.ptr() << ">";
+    }
+    return CallNodeReturnConst(call_node, g, call_node->GetVobj(), s.str());
   }
   return false;
 }
@@ -339,7 +369,16 @@ bool InferPrimitive(CallNode *call_node) {
   bool infer_fail = false;
   for (size_t i = 1; !infer_fail && i < call_node->getInputs().size(); i++) {
     AObject *p = call_node->input(i)->GetVobj();
-    PyObject *o = p ? p->GetPyObject().ptr() : nullptr;
+    if (p == nullptr) {
+      infer_fail = true;
+      break;
+    }
+    PyObject *o;
+    if (p->GetType() == AObject::kTypeTensor) {
+      o = static_cast<AbstractTensor *>(p)->GetTensor(true).ptr();
+    } else {
+      o = p->GetPyObject().ptr();
+    }
     list.push_back(o);
     infer_fail = o == nullptr;
   }
@@ -638,6 +677,9 @@ static bool InferCell(CallNode *call_node) {
 }
 
 static bool CheckJitForbidden(const py::object &func) {
+  if (func.ptr() == nullptr || PyCFunction_Check(func.ptr())) {
+    return false;
+  }
   std::string m = GetTopModule(func);
   const auto &l = *kPIJitConfigDefault.getSetConfig(GraphJitConfig::kAllowedInlineModules);
   bool allow_inline = l.find(m) != l.end();
@@ -737,7 +779,7 @@ static bool InferBuiltinFuncOrMethod(CallNode *call_node) {
   if (func.ptr() == nullptr) {
     return false;
   }
-  return CallNodeReturnConst(call_node, sub_graph, call_node->GetVobj(), std::to_string((size_t)func.ptr()));
+  return CallNodeReturnConst(call_node, sub_graph, call_node->GetVobj());
 }
 
 // special function list

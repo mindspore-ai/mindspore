@@ -39,6 +39,13 @@ Graph::Graph(PyCodeObject *co, PyObject *globals, const GraphJitConfig &conf)
   cfg_ = std::make_unique<CFG>(co);
   cfg_->GenerateCFG();
 
+  if (conf_.GetBoolConfig(GraphJitConfig::kPrintBB)) {
+    GRAPH_JIT_LOG_F("%s\n\n", cfg_->DumpBBs().c_str());
+  }
+  if (conf_.GetBoolConfig(GraphJitConfig::kPrintCFG)) {
+    cfg_->DumpCFGGraph();
+  }
+
   auto pyname = PyDict_GetItemString(globals, "__name__");
   if (pyname) {
     module_name_ = PyUnicode_AsUTF8(pyname);

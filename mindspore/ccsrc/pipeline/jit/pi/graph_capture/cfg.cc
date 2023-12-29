@@ -325,10 +325,10 @@ bool CFG::BuildCFG() {
 
 void VisitBB(Block *blk, std::vector<bool> *reach, std::vector<bool> *mark) {
   if (reach->operator[](blk->id())) {
+    blk->set_is_loop_head(mark->operator[](blk->id()));
     return;
   }
   blk->set_is_dead(false);
-  blk->set_is_loop_head(mark->operator[](blk->id()));
   reach->operator[](blk->id()) = true;
   mark->operator[](blk->id()) = true;
   for (auto i : blk->succ_bbs()) {
@@ -344,6 +344,9 @@ void CFG::MarkDeadBB() {
   std::vector<bool> reach(bb_pool_.size());
   std::vector<bool> mark(bb_pool_.size());
   VisitBB(bb_pool_[0].get(), &reach, &mark);
+  for (const auto &i : bb_pool_) {
+    i->set_is_dead(!reach[i->id()]);
+  }
 }
 
 // Simplified cfg
@@ -357,13 +360,13 @@ void CFG::ClearDeadBBEdges() {
 }
 
 Block *CFG::GetBlockByBci(int bci) const {
-  for (const auto &i : bb_pool_) {
-    if (i->begin_ci() <= bci && bci < i->end_ci()) {
-      return i.get();
-    }
+  auto iter = std::find_if(bb_pool().begin(), bb_pool().end(), [bci](const std::unique_ptr<Block> &i) {
+    return i->begin_ci() <= bci && bci < i->end_ci();
+  });
+  if (iter == bb_pool().end()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "can't find block at " << bci;
   }
-  MS_LOG(INTERNAL_EXCEPTION) << "can't find block at " << bci;
-  return nullptr;
+  return iter->get();
 }
 
 std::unique_ptr<CFG> CFG::Clone() {

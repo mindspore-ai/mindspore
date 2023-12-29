@@ -16,11 +16,12 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PI_GRAPH_CAPTURE_CODE_GENERATOR_H
 #define MINDSPORE_CCSRC_PIPELINE_JIT_PI_GRAPH_CAPTURE_CODE_GENERATOR_H
 
-#define _GLIBCXX_ASSERTIONS 1
-
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <algorithm>
+#include <utility>
+#include <memory>
 #include "pipeline/jit/pi/graph_capture/graph_analyzer.h"
 
 namespace mindspore {
@@ -56,10 +57,10 @@ class CodeGenerator {
     py::object co_filename;
   };
 
-  CodeGenerator(const NodeSet *nodes) : nodes_(nodes), globals_(), code_(), nodes_alive_(), locals_map_(){};
+  explicit CodeGenerator(const NodeSet *nodes) : nodes_(nodes), globals_(), code_(), nodes_alive_(), locals_map_() {}
 
   void SetGlobals(const py::dict &dict) { globals_ = dict; }
-  std::vector<std::unique_ptr<Instr>> MoveCode() { return std::move(code_.co_code); };
+  std::vector<std::unique_ptr<Instr>> MoveCode() { return std::move(code_.co_code); }
   const py::dict &GetGlobals() const { return globals_; }
   const std::unordered_map<ValueNode *, int> &GetLocalsMap() const { return locals_map_; }
   const Code &GetCode() const { return code_; }
@@ -154,21 +155,16 @@ class CodeGenerator {
 
 class CodeBreakGenerator {
  public:
-  CodeBreakGenerator(PyCodeObject *co) : co_(co), cfg_(nullptr), break_bci_(-1), extra_local_(-1){};
+  explicit CodeBreakGenerator(PyCodeObject *co) : co_(co), cfg_(nullptr), break_bci_(-1), extra_local_(-1) {}
 
   void SetGlobals(const py::dict &dict) { globals_ = dict; }
   const py::dict &GetGlobals() const { return globals_; }
 
-  // TODO: collect nodes inputs and outputs at graph analyze
+  // TODO(chaiyouheng): collect nodes inputs and outputs at graph analyze
   void Init(const Graph *, const GraphAnalyzer::CapturedInfo *);
 
-  py::object MakeCode();
+  py::object MakeCode(bool make_graph);
   const CFG *GetCFG() const;
-
-  /**
-   * increase compiled id
-   */
-  static int IncCompileId();
 
  private:
   void BuildGraphParameters(const std::unordered_map<ValueNode *, int> &locals, GraphParameterBuilder *);
@@ -182,11 +178,11 @@ class CodeBreakGenerator {
 
   void ReconstructStack(CodeGenerator *code_gen, int untracked_bci, int untracked_stack_effect) const;
 
-  void CallUntrackedCode(CodeGenerator *code_gen) const;
+  void CallUntrackedCode(CodeGenerator *code_gen);
 
   void MakeReturn(CodeGenerator *code_gen) const;
 
-  void BreakAtBlock(CodeGenerator *code_gen, int untracked_bci, int untracked_stack_effect) const;
+  void BreakAtBlock(CodeGenerator *code_gen, int untracked_bci, int untracked_stack_effect);
   void BreakAtIf(CodeGenerator *code_gen) const;
 
   std::vector<std::unique_ptr<Instr>> RestoreStack(const std::unordered_map<ValueNode *, int> &map) const;
