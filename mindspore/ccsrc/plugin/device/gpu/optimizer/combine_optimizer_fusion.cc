@@ -105,36 +105,37 @@ bool CombineOptimizerFusion::TransformOptimizerList(const std::vector<AnfNodePtr
   return optimizer_node_lists->size() >= 1;
 }
 
-AnfNodePtr CombineOptimizerFusion::FindFirstMonadInput(const std::vector<AnfNodePtr> &optimizer_node_list) {
-  mindspore::HashSet<AnfNodePtr> monad_inputs;
+AnfNodePtr CombineOptimizerFusion::FindFirstMonadInput(
+  const std::vector<AnfNodePtr> &optimizer_node_list,
+  const mindspore::HashMap<AnfNodePtr, size_t> &nodes_to_topo_orders) {
+  if (optimizer_node_list.empty()) {
+    MS_LOG(EXCEPTION) << "The size of optimizer node list is zero.";
+  }
 
+  size_t first_topo_order = SIZE_MAX;
+  AnfNodePtr first_topo_order_node = nullptr;
   for (const auto &optimizer_node : optimizer_node_list) {
-    MS_EXCEPTION_IF_NULL(optimizer_node);
-
-    auto optimizer_cnode = optimizer_node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(optimizer_cnode);
-    const auto &input_nodes = optimizer_cnode->inputs();
-    if (input_nodes.empty()) {
-      MS_LOG(EXCEPTION) << "The optimizer: " << optimizer_cnode->fullname_with_scope() << " has no input";
+    const auto &iter = nodes_to_topo_orders.find(optimizer_node);
+    if (iter == nodes_to_topo_orders.end()) {
+      MS_LOG(EXCEPTION) << "Can not find topo order of node: " << optimizer_node->fullname_with_scope();
     }
-    if (HasAbstractMonad(input_nodes.back())) {
-      monad_inputs.insert(input_nodes.back());
+    if (iter->second < first_topo_order) {
+      first_topo_order = iter->second;
+      first_topo_order_node = optimizer_node;
     }
   }
 
-  for (const auto &monad_node : monad_inputs) {
-    if (!monad_node->isa<CNode>()) {
-      return monad_node;
-    }
-
-    auto monad_node_cnode = monad_node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(monad_node_cnode);
-    if (monad_inputs.find(common::AnfAlgo::GetInputNode(monad_node_cnode, 0)) == monad_inputs.end()) {
-      return monad_node_cnode;
-    }
+  MS_EXCEPTION_IF_NULL(first_topo_order_node);
+  auto first_optimizer_cnode = first_topo_order_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(first_optimizer_cnode);
+  const auto &input_nodes = first_optimizer_cnode->inputs();
+  if (input_nodes.empty()) {
+    MS_LOG(EXCEPTION) << "The optimizer: " << first_optimizer_cnode->fullname_with_scope() << " has no input";
   }
-
-  return nullptr;
+  if (!HasAbstractMonad(input_nodes.back())) {
+    MS_LOG(EXCEPTION) << "The last input of " << first_optimizer_cnode->fullname_with_scope() << " is not Monad node.";
+  }
+  return input_nodes.back();
 }
 
 bool CombineOptimizerFusion::Run(const FuncGraphPtr &graph) {
@@ -154,6 +155,14 @@ bool CombineOptimizerFusion::Run(const FuncGraphPtr &graph) {
   std::vector<std::vector<AnfNodePtr>> optimizer_node_lists;
   if (!TransformOptimizerList(node_list, &optimizer_node_lists)) {
     return false;
+  }
+
+  // Record all optimizer nodes topo order.
+  mindspore::HashMap<AnfNodePtr, size_t> nodes_to_topo_orders;
+  for (const std::vector<AnfNodePtr> &optimizer_nodes : optimizer_node_lists) {
+    for (size_t i = 0; i < optimizer_nodes.size(); i++) {
+      nodes_to_topo_orders[optimizer_nodes[i]] = i;
+    }
   }
 
   for (auto optimizer_node_list : optimizer_node_lists) {
@@ -181,7 +190,7 @@ bool CombineOptimizerFusion::Run(const FuncGraphPtr &graph) {
       }
     }
     // Add monad input.
-    const auto first_monad_input_node = FindFirstMonadInput(optimizer_node_list);
+    const auto first_monad_input_node = FindFirstMonadInput(optimizer_node_list, nodes_to_topo_orders);
     MS_EXCEPTION_IF_NULL(first_monad_input_node);
     inputs.push_back(first_monad_input_node);
 
