@@ -171,8 +171,12 @@ std::vector<KernelAttr> RandomCpuKernelMod::GetOpSupport() {
         .AddInputAttr(kNumberTypeInt32)
         .AddOutputAttr(kNumberTypeInt32)}},
     {kUniformReal,
-     {KernelAttr().AddInputAttr(kObjectTypeTuple, kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-      KernelAttr().AddInputAttr(kObjectTypeTuple, kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32)}}};
+     {
+       KernelAttr().AddInputAttr(kObjectTypeTuple, kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+       KernelAttr().AddInputAttr(kObjectTypeTuple, kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+       KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+       KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+     }}};
   auto iter = support_list_map.find(kernel_type_);
   if (iter == support_list_map.end()) {
     MS_LOG(EXCEPTION) << "Does not support " << kernel_type_ << "!";

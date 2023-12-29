@@ -52,7 +52,8 @@ abstract::TupleShapePtr TopKInferShape(const PrimitivePtr &primitive, const std:
 
   // 2rd input is a Tensor when TopK is a dynamic shape operator
   if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex1])) {
-    auto k_val = GetArrayValue<int64_t>(input_args[kInputIndex1]).value();
+    auto k_val = CheckAndConvertUtils::CheckTensorIntValue("k", input_args[kInputIndex1]->GetValue(), prim_name,
+                                                           input_args[kInputIndex1]->GetType());
     k_v = k_val[0];
   } else if (CheckAndConvertUtils::IsScalar(input_args[kInputIndex1])) {
     k_v = GetScalarValue<int64_t>(input_args[kInputIndex1]->GetValue()).value();
