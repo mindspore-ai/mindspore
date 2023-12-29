@@ -102,6 +102,10 @@ class ASGD(Optimizer):
     def __init__(self, params, lr=1e-2, lambd=1e-4, alpha=0.75, t0=1e6, weight_decay=0., maximize=False):
         check_not_less_than(lr, "lr", self.cls_name)
         check_not_less_than(weight_decay, "weight_decay", self.cls_name)
+        if not isinstance(lambd, float):
+            raise TypeError(f"For 'ASGD', the type of lambd must be float, but got {type(lambd)}.")
+        if not isinstance(t0, float):
+            raise TypeError(f"For 'ASGD', the type of t0 must be float, but got {type(t0)}.")
         defaults = dict(
             lr=lr,
             lambd=lambd,
