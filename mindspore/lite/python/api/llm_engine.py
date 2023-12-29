@@ -22,6 +22,7 @@ from typing import Union, List, Tuple, Dict
 from mindspore_lite._checkparam import check_isinstance
 from mindspore_lite.tensor import Tensor
 from mindspore_lite.lib._c_lite_wrapper import LLMEngine_, LLMReq_, LLMRole_, StatusCode, LLMClusterInfo_
+from mindspore_lite.model import set_env
 
 __all__ = ['LLMReq', 'LLMEngineStatus', 'LLMRole', 'LLMEngine']
 
@@ -178,8 +179,8 @@ class LLMClusterInfo:
         remote_cluster_id (int): Cluster id of remote LLMEngine object.
 
     Raises:
-        TypeError: `role` is not a LLMRole.
-        TypeError: `cluster_id` is not an int.
+        TypeError: `remote_role` is not a LLMRole.
+        TypeError: `remote_cluster_id` is not an int.
 
     Examples:
         >>> import mindspore_lite as mslite
@@ -357,6 +358,7 @@ class LLMEngine:
         """Get batch mode of this LLMEngine object"""
         return self.batch_mode_
 
+    @set_env
     def init(self, model_paths: Union[Tuple[str], List[str]], options: Dict[str, str],
              postprocess_model_path=None):
         """
