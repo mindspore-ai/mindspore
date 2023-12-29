@@ -120,7 +120,6 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kPReLUGradOpName).set_backend_op_name(kPReluGra
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kReLUOpName).set_backend_op_name(kReluOpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kReLU6OpName).set_backend_op_name(kRelu6OpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kReLU6GradOpName).set_backend_op_name(kRelu6GradOpName);
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kReLUV2OpName).set_backend_op_name(kReluV2OpName);
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kResizeBilinearOpName)
   .set_target_op_name(kResizeBilinearV2DOpName)
   .set_need_tbe_check_supported(true);

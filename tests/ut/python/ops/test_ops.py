@@ -2784,10 +2784,6 @@ test_case_nn_ops = [
         'block': P.ReLU6(),
         'desc_inputs': [[1, 3, 4, 4]],
         'desc_bprop': [[1, 3, 4, 4]]}),
-    ('ReLUV2', {
-        'block': P.ReLUV2(),
-        'desc_inputs': [[1, 3, 4, 4]],
-        'desc_bprop': [[1, 3, 4, 4], ([1, 1, 4, 4, 2], {'dtype': np.uint8})]}),
     ('ReLUV3', {
         'block': ReLUV3(),
         'desc_inputs': [[1, 3, 4, 7, 9]],

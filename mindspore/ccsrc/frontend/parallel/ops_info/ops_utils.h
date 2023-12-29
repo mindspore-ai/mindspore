@@ -482,7 +482,6 @@ constexpr char LOGICALAND[] = "LogicalAnd";
 constexpr char LOGICALOR[] = "LogicalOr";
 constexpr char ELU[] = "Elu";
 constexpr char RELU6[] = "ReLU6";
-constexpr char RELUV2[] = "ReLUV2";
 constexpr char SOFTPLUS[] = "Softplus";
 constexpr char SOFTSIGN[] = "Softsign";
 constexpr char GREATEREQUAL[] = "GreaterEqual";

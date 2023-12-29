@@ -10,9 +10,6 @@ mindspore.ops.csr_relu
     .. math::
         ReLU(x) = (x)^+ = \max(0, x)
 
-    .. note::
-        一般来说，与 `ReLUV2` 相比，此算子更常用。且 `ReLUV2` 会多输出一个掩码。
-
     参数：
         - **x** (CSRTensor) - csr_relu的输入。
 

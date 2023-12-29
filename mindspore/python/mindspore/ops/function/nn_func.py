@@ -3476,10 +3476,6 @@ def relu(input):
 
         ReLU(input) = (input)^+ = \max(0, input)
 
-    Note:
-        In general, this operator is more commonly used. The difference from `ReLuV2` is that the `ReLuV2` will
-        output one more Mask.
-
     ReLU Activation Function Graph:
 
     .. image:: ../images/ReLU.png

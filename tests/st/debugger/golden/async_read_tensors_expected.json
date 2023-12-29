@@ -204,50 +204,5 @@
                 ]
             }
         }
-    },
-    {
-        "tensor_4": {
-            "tensor_info": {
-                "node_name": "Default/network-WithLossCell/_backbone-AlexNet/ReLUV2-op381",
-                "slot": 1,
-                "iteration": 0,
-                "rank_id": 0,
-                "root_graph_id": 0,
-                "is_output": true
-            },
-            "tensor_data": {
-                "data": [
-                    104,
-                    60,
-                    33,
-                    79,
-                    53,
-                    6,
-                    131,
-                    78,
-                    78,
-                    232,
-                    126,
-                    79,
-                    154,
-                    198,
-                    85,
-                    79,
-                    245,
-                    52,
-                    84,
-                    78,
-                    70,
-                    207,
-                    222,
-                    78
-                ],
-                "size_in_bytes": 24,
-                "debugger_dtype": 11,
-                "shape": [
-                    6
-                ]
-            }
-        }
     }
 ]

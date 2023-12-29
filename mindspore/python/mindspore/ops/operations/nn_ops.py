@@ -564,50 +564,6 @@ class SeLU(Primitive):
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
 
-class ReLUV2(Primitive):
-    r"""
-    The ReLUV2 interface is deprecated, please use the :class:`mindspore.ops.ReLU` instead.
-
-    Rectified Linear Unit activation function.
-
-    It returns element-wise :math:`\max(0, x)`, specially, the neurons with the negative output
-    will be suppressed and the active neurons will stay the same.
-
-    .. math::
-
-        \text{ReLU}(x) = (x)^+ = \max(0, x)
-
-    Inputs:
-        - **input_x** (Tensor) - The input tensor must be a 4-D tensor.
-
-    Outputs:
-        - **output** (Tensor) - Has the same type and shape as the `input_x`.
-        - **mask** (Tensor) - A tensor, but it is meaningless.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
-        ValueError: If shape of `input_x` is not 4-D.
-
-    Supported Platforms:
-        deprecated
-
-    Examples:
-        >>> input_x = Tensor(np.array([[[[1, -2], [-3, 4]], [[-5, 6], [7, -8]]]]), mindspore.float32)
-        >>> relu_v2 = ops.ReLUV2()
-        >>> output, _= relu_v2(input_x)
-        >>> print(output)
-        [[[[1. 0.]
-           [0. 4.]]
-          [[0. 6.]
-           [7. 0.]]]]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize ReLUV2"""
-        self.init_prim_io_names(inputs=['x'], outputs=['output', 'mask'])
-
-
 class Tanh(Primitive):
     r"""
     Computes hyperbolic tangent of input element-wise.
