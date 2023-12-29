@@ -1149,6 +1149,8 @@ def check_dynamic_shape(dyn_elem, actual_input, i):
     if dyn_elem.dtype != actual_input.dtype:
         raise TypeError(f"The data type of '{i}'th args in actual input tensors should be '{dyn_elem.dtype}', " \
                         f"but got '{actual_input.dtype}'.")
+    if -2 in dyn_elem.shape:
+        return
     if dyn_elem.ndim != actual_input.ndim:
         raise ValueError(f"The dimension of '{i}'th args in actual input tensors should be '{dyn_elem.ndim}', " \
                          f"but got '{actual_input.ndim}'.")
