@@ -24,6 +24,13 @@
 
 namespace mindspore {
 namespace runtime {
+namespace {
+bool IsValidActorType(KernelTransformType type) {
+  return !(type == KernelTransformType::kDataPrepareActor || type == KernelTransformType::kDeviceDataSourceActor ||
+           type == KernelTransformType::kHostDataSourceActor || type == KernelTransformType::kLoopCountActor ||
+           type == KernelTransformType::kOutputActor || type == KernelTransformType::kDeviceTensorStore);
+}
+}  // namespace
 std::vector<AnyTypeKernelActorPtr> AnyTypeGraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info,
                                                                 const AID &memory_manager_aid, const AID *debug_id) {
   std::vector<AnyTypeKernelActorPtr> any_type_kernel_actors;
@@ -165,8 +172,7 @@ void AnyTypeGraphScheduler::TransArrowInDataPrepareActorToAnyTypeKernelActor(
       MS_LOG(EXCEPTION) << "Failed to get actor:" << actor_name
                         << " from data prepare actor:" << data_prepare_actor->GetAID();
     }
-    if (actor->type() != KernelTransformType::kKernelActor && actor->type() != KernelTransformType::kCustomActor &&
-        actor->type() != KernelTransformType::kSuperKernelActor && actor->type() != KernelTransformType::kFusionActor) {
+    if (!IsValidActorType(actor->type())) {
       continue;
     }
     MS_LOG(DEBUG) << "Add control arrow:" << actor_name << " for actor:" << any_type_kernel_actor->GetAID()
@@ -181,9 +187,7 @@ void AnyTypeGraphScheduler::TransArrowInDataPrepareActorToAnyTypeKernelActor(
     if (iter != fusion_actor->real_input_controls_.end()) {
       std::vector<AbstractActor *> real_inputs;
       for_each(iter->second.begin(), iter->second.end(), [&real_inputs](const auto &actor) {
-        if (actor->type() == KernelTransformType::kKernelActor || actor->type() == KernelTransformType::kCustomActor ||
-            actor->type() == KernelTransformType::kSuperKernelActor ||
-            actor->type() == KernelTransformType::kFusionActor) {
+        if (IsValidActorType(actor->type())) {
           real_inputs.emplace_back(actor);
         }
       });
@@ -501,7 +505,6 @@ std::vector<AbstractActorPtr> AnyTypeGraphScheduler::Transform(const KernelGraph
   MS_EXCEPTION_IF_NULL(model_graph);
   MS_EXCEPTION_IF_NULL(real_graph);
   auto graph_compiler_info = ConstructGraphCompilerInfo(model_graph, real_graph, device_context);
-  std::vector<AbstractActorPtr> actors;
   MS_LOG(INFO) << "Start transform for model graph:" << model_graph->ToString()
                << " and real graph:" << real_graph->ToString();
   auto actor_set = GraphScheduler::GetInstance().Transform(*graph_compiler_info);
@@ -511,22 +514,13 @@ std::vector<AbstractActorPtr> AnyTypeGraphScheduler::Transform(const KernelGraph
 
   TransArrowInActorSetToAnyTypeKernelActor(actor_set, model_graph, real_graph);
   // Collect actors.
-  std::for_each(actor_set->custom_actors_.begin(), actor_set->custom_actors_.end(),
-                [&actors](const AbstractActorPtr &actor) { actors.emplace_back(actor); });
-  std::for_each(actor_set->kernel_actors_.begin(), actor_set->kernel_actors_.end(),
-                [&actors](const AbstractActorPtr &actor) { actors.emplace_back(actor); });
-  std::for_each(actor_set->super_kernel_actors_.begin(), actor_set->super_kernel_actors_.end(),
-                [&actors](const AbstractActorPtr &actor) { actors.emplace_back(actor); });
-  std::for_each(actor_set->fusion_actors_.begin(), actor_set->fusion_actors_.end(),
-                [&actors](const AbstractActorPtr &actor) { actors.emplace_back(actor); });
-  std::for_each(actor_set->copy_actors_.begin(), actor_set->copy_actors_.end(),
-                [&actors](const AbstractActorPtr &actor) { actors.emplace_back(actor); });
-  std::for_each(actor_set->memory_actors_.begin(), actor_set->memory_actors_.end(),
-                [&actors](const AbstractActorPtr &actor) { actors.emplace_back(actor); });
-  for (auto &swap_actors : actor_set->swap_actors_) {
-    std::for_each(swap_actors.begin(), swap_actors.end(),
-                  [&actors](const AbstractActorPtr &actor) { actors.emplace_back(actor); });
-  }
+  auto base_actors = SchedulerHelper::CollectActors(actor_set);
+  std::vector<AbstractActorPtr> actors;
+  std::for_each(base_actors.begin(), base_actors.end(), [&actors](const AbstractActorPtr &actor) {
+    if (IsValidActorType(actor->type())) {
+      actors.emplace_back(actor);
+    }
+  });
 
   const auto &any_type_kernel_actor_name = model_graph->ToString() + kAnyTypeKernelActorNameSuffix;
   auto base_actor = FetchActor(any_type_kernel_actor_name);
