@@ -1032,6 +1032,17 @@ void DataConvert::ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_ru
   }
 }
 
+void DataConvert::ConvertValueTensorId(const ValuePtr &value, std::vector<std::string> *converted_tensor_id) {
+  if (value->isa<tensor::Tensor>()) {
+    (void)converted_tensor_id->emplace_back(value->cast<tensor::TensorPtr>()->id());
+  } else if (value->isa<ValueSequence>()) {
+    const auto &seq = value->cast<ValueSequencePtr>();
+    for (const auto &val : seq->value()) {
+      ConvertValueTensorId(val, converted_tensor_id);
+    }
+  }
+}
+
 void DataConvert::ConvertTupleValueToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq,
                                             size_t index, const TopCellInfoPtr &top_cell) {
   MS_EXCEPTION_IF_NULL(op_run_info);
