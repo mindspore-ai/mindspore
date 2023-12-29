@@ -88,9 +88,30 @@ const AnfNodePtr AdjustPrintForGe::Process(const FuncGraphPtr &func_graph, const
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   // NOTE: input(0) of cnode is value node of Primitive, the last input of Print is a Monad node
-  int64_t num_inputs = static_cast<int64_t>(cnode->size()) - 2;
-  std::vector<AnfNodePtr> new_inputs = cnode->inputs();
-  new_inputs.insert(new_inputs.begin() + 1, input_tensor_name);
+  int64_t num_inputs = 0;
+  std::vector<AnfNodePtr> new_inputs;
+  new_inputs.push_back(cnode->input(0));
+  new_inputs.push_back(input_tensor_name);
+  // unfold tuple inputs
+  std::vector<AnfNodePtr> node_inputs = cnode->inputs();
+  for (size_t node_inputs_index = 1; node_inputs_index < node_inputs.size() - 1; ++node_inputs_index) {
+    auto &input = node_inputs[node_inputs_index];
+    MS_EXCEPTION_IF_NULL(input);
+    auto input_cnode = input->cast<CNodePtr>();
+    if (IsPrimitiveCNode(input_cnode, prim::kPrimMakeTuple)) {
+      std::vector<AnfNodePtr> tuple_inputs = input_cnode->inputs();
+      for (size_t tuple_inputs_index = 1; tuple_inputs_index < tuple_inputs.size(); ++tuple_inputs_index) {
+        auto &tuple_input_node = tuple_inputs[tuple_inputs_index];
+        MS_EXCEPTION_IF_NULL(tuple_input_node);
+        new_inputs.push_back(tuple_input_node);
+        num_inputs++;
+      }
+    } else {
+      new_inputs.push_back(input);
+      num_inputs++;
+    }
+  }
+  new_inputs.push_back(node_inputs.back());
   cnode->set_inputs(new_inputs);
 
   // set attribute channel_name and dynamic_input_sizes of print node
