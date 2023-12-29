@@ -121,6 +121,8 @@ TypeId GetMaxTypeIdForTensor(const std::vector<TypePtr> &input_types, const std:
   TypeId max_type_id = kTypeUnknown;
   size_t max_type_number = 0;
   bool has_int8 = false;
+  bool has_float16 = false;
+  bool has_bfloat16 = false;
   bool has_scalar_int64 = false;
   bool has_scalar_float32 = false;
   for (const auto &index : indices) {
@@ -137,12 +139,17 @@ TypeId GetMaxTypeIdForTensor(const std::vector<TypePtr> &input_types, const std:
       }
       continue;
     }
+
+    if (arg_type_id == kNumberTypeInt8) {
+      has_int8 = true;
+    } else if (arg_type_id == kNumberTypeBFloat16) {
+      has_bfloat16 = true;
+    } else if (arg_type_id == kNumberTypeFloat16) {
+      has_float16 = true;
+    }
     auto it = type_map.find(arg_type_id);
     if (it == type_map.end()) {
       continue;
-    }
-    if (arg_type_id == kNumberTypeInt8) {
-      has_int8 = true;
     }
     if (max_type_id == kTypeUnknown) {
       SetMaxType(&max_type_id, &max_type_number, arg_type_id, it->second);
@@ -151,6 +158,10 @@ TypeId GetMaxTypeIdForTensor(const std::vector<TypePtr> &input_types, const std:
     if (it->second > max_type_number) {
       SetMaxType(&max_type_id, &max_type_number, arg_type_id, it->second);
     }
+  }
+  // If both BFloat16 and Float16 exist, do not cast.
+  if (has_bfloat16 && has_float16) {
+    return kTypeUnknown;
   }
   return GetMaxTypeId(max_type_id, has_int8, has_scalar_int64, has_scalar_float32);
 }
