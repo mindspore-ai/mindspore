@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 #include "ops/ops_func_impl/celu.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
 BaseShapePtr CeLUFuncImpl::InferShape(const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) const {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, 2, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
   auto x_shape = input_args[kIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape);
@@ -26,9 +30,14 @@ BaseShapePtr CeLUFuncImpl::InferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr CeLUFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  (void)CheckAndConvertUtils::CheckInteger("CeLU input numbers", SizeToLong(input_args.size()), kEqual, 2, prim_name);
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
   auto x_type = input_args[kIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim_name);
   return x_type;
 }
 }  // namespace ops
