@@ -44,13 +44,6 @@ class Optimizer(Cell):
         defaults (dict): a dict containing default values of optimization
             options (used when a parameter group doesn't specify them).
 
-    Raises:
-        TypeError: If `learning_rate` is not one of int, float, Tensor.
-        TypeError: If element of `parameters` is neither Parameter nor dict.
-        TypeError: If `weight_decay` is neither float nor int.
-        ValueError: If `weight_decay` is less than 0.
-        ValueError: If `learning_rate` is a Tensor, but the dimension of tensor is greater than 1.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 

@@ -455,7 +455,8 @@ void MsContext::CheckReadStatus(MsCtxParam param, const T &value) const {
   params_read_status_ = origin_status;
   if (params_read_status_[static_cast<size_t>(param)] && value != origin_value) {
     MS_EXCEPTION(TypeError) << "For 'set_context', the parameter " << iter->second
-                            << " can not be set repeatedly, origin value [" << origin_value << "] has been in effect.";
+                            << " can not be set repeatedly, origin value [" << origin_value << "] has been in effect."
+                            << " Maybe 'init()' has been called before 'set_context()'.";
   }
 #endif
 }
