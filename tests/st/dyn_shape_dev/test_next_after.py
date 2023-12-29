@@ -92,3 +92,18 @@ def test_next_after_op_backward(context_mode, data_type):
     grads = next_after_backward_func(x, other)
     expect_out = np.array([1.]).astype(np.float32)
     np.testing.assert_allclose(grads.asnumpy(), expect_out, rtol=1e-3)
+
+
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.platform_x86_cpu
+def test_nextafter_dtype_diff(context_mode):
+    """
+    Feature: type valid.
+    Description: test different input type op next_after.
+    Expectation: expect raise exception.
+    """
+    ms.context.set_context(mode=context_mode)
+    x = ms.Tensor(np.random.randn(), ms.float32)
+    other = ms.Tensor(np.random.randint(0, 100000, ()), ms.float64)
+    with pytest.raises((RuntimeError, TypeError)):
+        next_after_forward_func(x, other)

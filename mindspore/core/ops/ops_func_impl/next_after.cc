@@ -15,6 +15,7 @@
  */
 
 #include "ops/ops_func_impl/next_after.h"
+#include <map>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
@@ -27,6 +28,13 @@ BaseShapePtr NextAfterFuncImpl::InferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr NextAfterFuncImpl::InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const {
+  auto x1_infer_type = input_args[0]->GetType();
+  auto x2_infer_type = input_args[1]->GetType();
+  std::map<std::string, TypePtr> types;
+  (void)types.emplace("x1", x1_infer_type);
+  (void)types.emplace("x2", x2_infer_type);
+  const std::set<TypePtr> input_valid_types = {kFloat32, kFloat64};
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, input_valid_types, prim->name());
   return input_args[0]->GetType()->Clone();
 }
 }  // namespace ops

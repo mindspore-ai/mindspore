@@ -17,12 +17,17 @@
 #ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_NAN_TO_NUM_H_
 #define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_NAN_TO_NUM_H_
 
+#include <vector>
 #include "mindapi/base/macros.h"
 #include "ops/ops_func_impl/eltwise_op.h"
 
 namespace mindspore {
 namespace ops {
-class MIND_API NanToNumFuncImpl : public EltwiseOpFuncImpl {};
+class MIND_API NanToNumFuncImpl : public OpFuncImpl {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+};
 }  // namespace ops
 }  // namespace mindspore
 
