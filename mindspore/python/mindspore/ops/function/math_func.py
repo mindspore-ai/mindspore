@@ -481,8 +481,6 @@ def bincount(input, weights=None, minlength=0):
         raise TypeError(f"For math function 'bincount', 'minlength' must be int but got {type(minlength)}.")
     if rank_(input) != 1:
         raise ValueError(f"For math function 'bincount', 'input' should be one-dimensional tensor.")
-    if not (input >= 0).all():
-        raise ValueError(f"For 'bincount', elements of 'input' should be non-negative.")
     if input.shape[0] == 0:
         return Tensor_([])
     if minlength < 0:
