@@ -7353,6 +7353,82 @@ def max_pool2d(x, kernel_size, stride=None, padding=0, dilation=1, return_indice
     return out
 
 
+def prompt_flash_attention(query, key, value, padding_mask, attn_mask, actual_seq_lengths, actual_seq_lengths_kv,
+                           deq_scale1, quant_scale1, deq_scale2, quant_scale2, quant_offset2, num_heads,
+                           scale_value=1.0, pre_tokens=2147483547, next_tokens=0, input_layout='BSH',
+                           num_key_value_heads=0, sparse_mode=0, inner_precise=1):
+    r"""
+    The interface for fully inference.
+    B -- Batch size
+    S -- Sequence length
+    H -- Hidden size
+
+    Note:
+    experiment ops
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Inputs:
+        query (Tensor) - The query tensor with data type of float16 or float32.
+          Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
+        key (Tensor) - The key tensor with data type of float16 or float32.
+          Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
+        value (Tensor) - The value tensor with data type of float16 or float32.
+          Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
+        padding_mask (Tensor) - The padding mask tensor with data type of float16 or float32
+        attn_mask (Tensor) - The attention mask tensor with data type of float16 or float32.
+          For each element, 0 indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, 1, S, S)`.
+        actual_seq_lengths (Tensor): Describe actual sequence length of each input with data type of int64.
+        actual_seq_lengths_kv (Tensor): Describe actual sequence length of each input with data type of int64.
+        dep_scale1 (Tensor)
+        quant_scale1 (Tensor)
+        deq_scale2 (Tensor)
+        quant_scale2 (Tensor)
+        quant_offset2 (Tensor)
+        num_heads (int): The number of heads.
+        scale_value (float): The scale value indicating the scale coefficient, which is used as the scalar of
+          Muls in the calculation. Default: 1.0.
+        pre_tokens (int): Previous tokens. Default: 2147483547.
+        next_tokens (int): next tokens.  Default: 0.
+          indicate the upper triangle, Indicate the number of data blocks involved in the calculation. The value 0
+          indicates that the data blocks in the upper triangle are not involved in the calculation
+        input_layout (str): the data layout of the input qkv, support `(BSH)` and `(BNSD)`, Default `BSH`.
+        num_key_value_heads (int): head numbers of key/value which are used in GQA algorithm.
+          The value o indicates if the key and value have the same head nums, use numHeads.  Default: 0.
+        sparse_mode (int): Default: 0
+        inner_precise (int): 0, float16 high precision. 1, high performance. default 1
+
+
+    Outputs:
+        attention_out (Tensor) - Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
+
+        Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> from mindspore.ops.function.nn_func import prompt_flash_attention
+        >>> from mindspore import Tensor
+        >>> import numpy as np
+        >>> B = 1
+        >>> N = 16
+        >>> S = 256
+        >>> D = 16
+        >>> query = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+        >>> key = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+        >>> value = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+        >>> out = ops.prompt_flash_attention(query, key, value, None, None, None, None, None, None, None, None,
+                                             None, N, input_layout='BNSD')
+        >>> print(out[0].shape)
+        (1, 16, 256, 16)
+    """
+
+    pfa = _get_cache_prim(NN_OPS.PromptFlashAttention)(num_heads, scale_value, pre_tokens, next_tokens, input_layout,
+                                                       num_key_value_heads, sparse_mode, inner_precise)
+    return pfa(query, key, value, padding_mask, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, deq_scale1,
+               quant_scale1, deq_scale2, quant_scale2, quant_offset2)
+
+
 def incre_flash_attention(query, key, value, attn_mask, actual_seq_lengths, padding_mask, dequant_scale1, quant_scale1,
                           dequant_scale2, quant_scale2, quant_offset2, antiquant_scale, antiquant_offset, block_table,
                           num_heads, input_layout="BSH", scale_value=1.0, num_key_value_heads=0, block_size=0,
