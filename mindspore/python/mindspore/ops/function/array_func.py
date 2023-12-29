@@ -69,7 +69,6 @@ batch_to_space_nd_v2_ = P.BatchToSpaceNDV2()
 cast_ = P.Cast()
 diag_ = P.Diag()
 dynamic_broadcast_to_ = DynamicBroadcastTo()
-expand_ = Expand()
 expand_dims_ = P.ExpandDims()
 eye_ = P.Eye()
 fills_ = Fills()
@@ -6315,7 +6314,8 @@ def expand(input_x, size):
     :func:`mindspore.ops.expand` will be deprecated in the future.
     Please use :func:`mindspore.ops.broadcast_to` instead.
     """
-    return expand_(input_x, size)
+    expand_op = _get_cache_prim(Expand)()
+    return expand_op(input_x, size)
 
 
 @_primexpr
