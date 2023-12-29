@@ -20,7 +20,7 @@ The optimizer is used to calculate and update the gradients.
 """
 from __future__ import absolute_import
 
-from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than
+from mindspore.experimental.optim.optimizer import Optimizer
 from mindspore.experimental.optim.adamw import AdamW
 from mindspore.experimental.optim.sgd import SGD
 from mindspore.experimental.optim.adam import Adam

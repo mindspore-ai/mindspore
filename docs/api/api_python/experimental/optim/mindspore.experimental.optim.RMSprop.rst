@@ -1,7 +1,7 @@
 mindspore.experimental.optim.RMSprop
 ======================================
 
-.. py:class:: mindspore.experimental.optim.RMSprop(params, lr=1e-2, alpha=0.99, eps=1e-8, weight_decay=0., momentum=0., centered=False, maximize=False)
+.. py:class:: mindspore.experimental.optim.RMSprop(params, lr=1e-2, alpha=0.99, eps=1e-8, weight_decay=0.0, momentum=0.0, centered=False, maximize=False)
 
     RMSprop 算法的实现。
 

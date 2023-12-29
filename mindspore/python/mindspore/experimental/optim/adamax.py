@@ -19,7 +19,7 @@ from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common import Tensor, Parameter
 import mindspore.common.dtype as mstype
 from mindspore import _checkparam as validator
-from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than
+from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than, check_not_less_than_without_equal
 from mindspore import ops
 
 _adamax_opt = C.MultitypeFuncGraph("adamax_opt")
@@ -90,7 +90,7 @@ class Adamax(Optimizer):
         ValueError: If the learning rate is less than 0.
         ValueError: If the `eps` is less than 0.0.
         ValueError: If the `weight_decay` is less than 0.
-        ValueError: If elements of the `betas` not in the range of 0-1.
+        ValueError: If elements of the `betas` not in the range of [0,1).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -115,10 +115,10 @@ class Adamax(Optimizer):
         ...     return loss
     """
 
-    def __init__(self, params, lr=2e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0., *, maximize=False):
-        check_not_less_than(lr, "lr", self.cls_name)
+    def __init__(self, params, lr=2e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0.0, *, maximize=False):
+        check_not_less_than_without_equal(lr, "lr", self.cls_name)
         check_not_less_than(weight_decay, "weight_decay", self.cls_name)
-        check_not_less_than(eps, "eps", self.cls_name)
+        check_not_less_than_without_equal(eps, "eps", self.cls_name)
         validator.check_float_range(betas[0], 0., 1., validator.INC_LEFT, "betas[0]", self.cls_name)
         validator.check_float_range(betas[1], 0., 1., validator.INC_LEFT, "betas[1]", self.cls_name)
 

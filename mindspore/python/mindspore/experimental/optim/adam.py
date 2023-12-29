@@ -104,7 +104,7 @@ class Adam(Optimizer):
         ValueError: If the `lr` is not int, float or Tensor.
         ValueError: If the `lr` is less than 0.
         ValueError: If the `eps` is less than 0.0.
-        ValueError: If the `betas` not in the range of 0-1.
+        ValueError: If the `betas` not in the range of [0, 1).
         ValueError: If the `weight_decay` is less than 0.
 
     Supported Platforms:
@@ -130,7 +130,7 @@ class Adam(Optimizer):
         ...     return loss
     """
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8,
-                 weight_decay=0., amsgrad=False, *, maximize=False):
+                 weight_decay=0.0, amsgrad=False, *, maximize=False):
         if lr < 0.0:
             raise ValueError("Invalid learning rate: {}".format(lr))
         if eps < 0.0:

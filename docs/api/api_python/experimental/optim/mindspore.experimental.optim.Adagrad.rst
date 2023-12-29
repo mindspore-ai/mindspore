@@ -1,7 +1,7 @@
 mindspore.experimental.optim.Adagrad
 ==========================================
 
-.. py:class:: mindspore.experimental.optim.Adagrad(params, lr=1e-2, lr_decay=0., weight_decay=0., initial_accumulator_value=0., eps=1e-10, *, maximize=False)
+.. py:class:: mindspore.experimental.optim.Adagrad(params, lr=1e-2, lr_decay=0.0, weight_decay=0.0, initial_accumulator_value=0.0, eps=1e-10, *, maximize=False)
 
     Adagrad算法的实现。
 
