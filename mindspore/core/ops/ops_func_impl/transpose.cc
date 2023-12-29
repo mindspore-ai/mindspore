@@ -38,9 +38,10 @@ size_t NormalizeDimIdx(int64_t idx, size_t rank) {
 }  // namespace
 BaseShapePtr TransposeFuncImpl::InferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) const {
-  auto perm_res = GetArrayValue<int64_t>(input_args[kInputIndex1]);
-
   auto x_shape = input_args[kInputIndex0]->GetShape()->GetShapeVector();
+  MS_CHECK_VALUE(x_shape.size() > 0,
+                 CheckAndConvertUtils::FormatCheckIntegerMsg("x size", x_shape.size(), kGreaterThan, 0, primitive));
+  auto perm_res = GetArrayValue<int64_t>(input_args[kInputIndex1]);
   if (MS_UNLIKELY(IsDynamicRank(x_shape))) {
     if (MS_UNLIKELY(!perm_res.has_value())) {
       return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
