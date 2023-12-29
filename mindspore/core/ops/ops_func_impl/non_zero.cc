@@ -41,6 +41,17 @@ BaseShapePtr NonZeroFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr NonZeroFuncImpl::InferType(const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) const {
+  std::vector<TypeId> valid_types = {kNumberTypeBool,   kNumberTypeInt8,    kNumberTypeInt16,   kNumberTypeInt32,
+                                     kNumberTypeInt64,  kNumberTypeUInt8,   kNumberTypeUInt16,  kNumberTypeUInt32,
+                                     kNumberTypeUInt64, kNumberTypeFloat16, kNumberTypeFloat64, kNumberTypeFloat};
+  auto tensor_type = input_args[kInputIndex0]->GetType()->cast<TensorTypePtr>();
+  auto real_type = tensor_type->element()->type_id();
+  if (std::find(valid_types.begin(), valid_types.end(), real_type) == valid_types.end()) {
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name()
+                            << "', input[0] type should be bool, int8, int16, int32, int64, uint8, uint16, uint32, "
+                               "uint64, float16, float or float64. but got "
+                            << tensor_type->element()->ToString();
+  }
   return std::make_shared<TensorType>(kInt64);
 }
 
