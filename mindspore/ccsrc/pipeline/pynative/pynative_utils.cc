@@ -813,7 +813,11 @@ std::pair<std::vector<std::string>, std::vector<ValuePtr>> PyParser::GetArgsIdAn
   input_arg_id_vec.reserve(arg_size);
   input_arg_value_vec.reserve(arg_size);
   for (size_t i = 0; i < arg_size; ++i) {
-    (void)input_arg_value_vec.emplace_back(DataConvert::PyObjToValue(args[i]));
+    if (py::isinstance<py::list>(args[i])) {
+      (void)input_arg_value_vec.emplace_back(DataConvert::PyObjToValue(py::cast<py::tuple>(args[i])));
+    } else {
+      (void)input_arg_value_vec.emplace_back(DataConvert::PyObjToValue(args[i]));
+    }
     (void)input_arg_id_vec.emplace_back(Common::GetIdByValue(input_arg_value_vec.back()));
   }
   return {input_arg_id_vec, input_arg_value_vec};
