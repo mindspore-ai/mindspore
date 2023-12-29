@@ -56,9 +56,8 @@ class CodeGenerator {
     py::object co_filename;
   };
 
-  CodeGenerator(const NodeSet *nodes) : code_(), globals_(), nodes_(nodes), nodes_alive_(), locals_map_(){};
+  CodeGenerator(const NodeSet *nodes) : nodes_(nodes), globals_(), code_(), nodes_alive_(), locals_map_(){};
 
-  const NodeSet *GetNodes() const { return nodes_; }
   void SetGlobals(const py::dict &dict) { globals_ = dict; }
   std::vector<std::unique_ptr<Instr>> MoveCode() { return std::move(code_.co_code); };
   const py::dict &GetGlobals() const { return globals_; }
@@ -146,9 +145,9 @@ class CodeGenerator {
   static std::vector<std::unique_ptr<Instr>> RotStack(int stack);
 
  private:
-  Code code_;
-  py::dict globals_;
   const NodeSet *nodes_;
+  py::dict globals_;
+  Code code_;
   std::unordered_map<ValueNode *, int> nodes_alive_;
   std::unordered_map<ValueNode *, int> locals_map_;
 };
