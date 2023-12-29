@@ -201,8 +201,11 @@ def arange(start=0, end=None, step=1, *, dtype=None):
 
     Keyword Args:
         dtype (mindspore.dtype, optional): The required data type of returned Tensor. Default: ``None`` .
-            If the value is not specified or is ``None`` , the type with the highest precision in the
-            `start`, `end`, and `step` parameters is inferred.
+            When `dtype` is not specified or ``None``:
+
+            If `start`, `end`, and `step` are all integers, the dtype of output is int64,
+
+            If `start`, `end`, and `step` contain at least one floating-point number, the dtype of output is float32.
 
     Returns:
         A 1-D Tensor, with the same type as the inputs.
