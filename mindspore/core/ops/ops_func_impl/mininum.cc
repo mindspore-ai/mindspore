@@ -16,6 +16,7 @@
 
 #include "ops/ops_func_impl/minimum.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -26,7 +27,11 @@ BaseShapePtr MinimumFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr MinimumFuncImpl::InferType(const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) const {
-  return input_args[kInputIndex0]->GetType()->Clone();
+  std::map<std::string, TypePtr> types;
+  (void)types.emplace("x", input_args[kInputIndex0]->GetType());
+  (void)types.emplace("y", input_args[kInputIndex1]->GetType());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_bool, primitive->name());
+  return types["x"]->Clone();
 }
 
 }  // namespace ops
