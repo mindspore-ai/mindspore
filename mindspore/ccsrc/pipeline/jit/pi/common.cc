@@ -25,7 +25,7 @@
 #include "pybind11/pybind11.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "pipeline/jit/pi/external.h"
-#include "pipeline/jit/pi/graph_capture/code_gen.h"
+#include "pipeline/jit/pi/graph_capture/code_generator.h"
 #include "pipeline/jit/pi/graph_capture/graph_build.h"
 #include "pipeline/jit/pi/graph_capture/graph_analyzer.h"
 #include "pipeline/jit/pi/graph_compiler/abstract_type_deducer.h"
@@ -416,21 +416,6 @@ static void ValidateCompiledResults(const JitCompileResults *c) {
   MS_EXCEPTION_IF_CHECK_FAIL(valid_res, "check compiled result");
 }
 
-static py::object MakeCodeFromCodeGen(CodeGenerator *cg, PyObject *default_globals) {
-  PyObject *new_code = reinterpret_cast<PyObject *>(cg->MakeCodeObj());
-  PyObject *used_globals = cg->GetGlobals().ptr();
-  PyObject *key, *value;
-  Py_ssize_t pos = 0;
-  while (PyDict_Next(used_globals, &pos, &key, &value)) {
-    PyObject *old = PyDict_GetItem(default_globals, key);
-    MS_EXCEPTION_IF_CHECK_FAIL(old == nullptr || old == value, "duplicate global value " + std::string(py::str(key)) +
-                                                                 ":" + std::string(py::str(old)) + "->" +
-                                                                 std::string(py::str(value)));
-    PyDict_SetItem(default_globals, key, value);
-  }
-  return py::reinterpret_steal<py::object>(new_code);
-}
-
 // preprocess before compile, split bytecode to sub-function
 // return whether the code should be modified
 static bool GraphCapture(JitCompileResults *jcr) {
@@ -439,23 +424,23 @@ static bool GraphCapture(JitCompileResults *jcr) {
   GraphJitConfig &conf = *jcr->conf;
 
   GraphBuilder g(jcr->origin_frame_);
-  (void)g.BuildGraph();
-
-  // check graph has primitive call
+  (void)g.TraceRun();
 
   GraphAnalyzer analyzer(g.GetGraph());
   analyzer.Analyze();
+
+  if (g.GetGraph()->IsBreakAtLoop() && !g.GetGraph()->RestoreLoopStatus()) {
+    jcr->stat = JitCompileResults::NEVER_COMPILE;
+    AObject::aobject_mem_pool_.Clear(__FILE__, __LINE__);
+    return false;
+  }
 
   // dump DFG
   if (conf.GetBoolConfig(GraphJitConfig::kPrintAfterAll)) {
     g.DumpDFG();
   }
 
-  CodeGenerator cg(g.GetGraph(), analyzer.GetCaptureInfo());
-  bool is_graph_break = cg.TryToBreakGraphIfParameterUnsupported();
-  cg.CutoffBytecodesIfGraphBreak();
-
-  py::object new_code = MakeCodeFromCodeGen(&cg, jcr->origin_frame_->f_globals);
+  py::object new_code = MakeCodeFromCodeGen(g.GetGraph(), analyzer, jcr->origin_frame_->f_globals);
   jcr->code->SetPythonCode(new_code);
   jcr->stat = JitCompileResults::GRAPH_CALLABLE;
 
@@ -468,7 +453,7 @@ static bool GraphCapture(JitCompileResults *jcr) {
   jcr->tbs->PushStopTraceRes(g.GetGraph()->GetCodeName(), g.GetGraph()->GetStopTraceReason());
   AObject::aobject_mem_pool_.Clear(__FILE__, __LINE__);
 
-  if (is_graph_break || (cg.IsCodeChanged() && g.GetGraph()->GetStopTraceAt())) {
+  if (new_code.ptr() != reinterpret_cast<PyObject *>(jcr->origin_frame_->f_code)) {
     // break graph interpret
     return true;
   } else if (conf.GetBoolConfig(GraphJitConfig::kInterpretCapturedCode)) {
@@ -762,7 +747,9 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
   if (c->conf->GetBoolConfig(GraphJitConfig::kPrintAfterAll)) {
     GRAPH_JIT_LOG_F("%s\n", c->tbs->Dump().c_str());
   }
-  MS_EXCEPTION_IF_CHECK_FAIL(c->stat == JitCompileResults::GRAPH_CALLABLE, "unknown compile state");
+  if (c->stat != JitCompileResults::GRAPH_CALLABLE) {
+    c->stat = JitCompileResults::NEVER_COMPILE;
+  }
   return true;
 }
 
@@ -1140,7 +1127,7 @@ PyObject *EvalFrame(PyThreadState *tstate, PyFrameObject *f, int exc) {
   try {
     res = CodeHook(tstate, c, f);
   } catch (py::error_already_set &e) {
-    MS_LOG(ERROR) << "execute failed with" << e.what() << " at "
+    MS_LOG(ERROR) << "execute failed with " << e.what() << " at "
                   << std::string(py::str(reinterpret_cast<PyObject *>(f->f_code)));
 
     e.restore();

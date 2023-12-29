@@ -16,6 +16,8 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_GRAPH_H
 #define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_GRAPH_H
 
+#define _GLIBCXX_ASSERTIONS 1
+
 #include <map>
 #include <memory>
 #include <string>
@@ -30,7 +32,9 @@
 namespace mindspore {
 namespace jit {
 namespace graph {
+
 class OptCode;
+class GraphJitConfig;
 
 class FrameStates {
  public:
@@ -93,7 +97,11 @@ class FrameStates {
   const auto &GetStacks() const { return stack; }
   const auto &GetClosures() const { return cell_free; }
 
-  void print();
+  auto &GetLocals() { return locals; }
+  auto &GetStacks() { return stack; }
+  auto &GetClosures() { return cell_free; }
+
+  void print() const;
 
  private:
   std::vector<ValueNode *> stack;
@@ -107,38 +115,24 @@ class Graph {
   Graph(PyCodeObject *co, PyObject *globals, const GraphJitConfig &conf);
   virtual ~Graph() {}
 
-  void Init();
-  const std::map<int, Instr *> &instr_map() const { return instrs_; }
-  const std::vector<InstrNode *> &GetInstrs() const { return instr_nodes_; }
-  void SetInstr(int bci, InstrNode *n) { instr_nodes_[bci] = (n); }
-  void AddInstr(InstrNode *n) { instr_nodes_.push_back(n); }
-  Block *GetBlockByBci(int bci) const;
-
   void SetRetVal(ValueNode *v) { ret_val_ = v; }
   ValueNode *GetRetVal() const { return ret_val_; }
   PyCodeObject *GetCodeObj() const { return reinterpret_cast<PyCodeObject *>(co_.ptr()); }
   const py::object &GetGlobals() const { return f_globals_; }
 
-  void StopTraceAt(int bci, StopTraceReason reason) {
-    MS_EXCEPTION_IF_CHECK_FAIL(bci >= 0 && bci < static_cast<int>(instr_nodes_.size()), "bci out of range !");
-    stop_trace_info_ = {bci, reason};
-  }
-  auto GetStopTraceAt() const { return stop_trace_info_.bci == -1 ? nullptr : instr_nodes_[stop_trace_info_.bci]; }
-  bool GetLoopInfo() const { return stop_trace_info_.reason == StopTraceReason::kStopTraceLoop_Unsupported; }
+  void StopTraceAt(int bci, StopTraceReason reason) { stop_trace_info_ = {bci, reason}; }
+  int GetStopTraceBci() const { return stop_trace_info_.bci; }
   StopTraceReason GetStopTraceReason() const { return stop_trace_info_.reason; }
-  const FrameStates &GetLastFrame() const { return GetFrame(stop_trace_info_.bci); }
   const char *GetModuleName() const { return module_name_; }
 
-  int GetNlocals() const { return co_.ptr() ? reinterpret_cast<PyCodeObject *>(co_.ptr())->co_nlocals + 1 : 0; }
-  int GetExtraLocalIndex() const { return co_.ptr() ? reinterpret_cast<PyCodeObject *>(co_.ptr())->co_nlocals : 0; }
-
-  int GetStackSize() const;
   auto &GetCFG() { return cfg_; }
+  const auto &GetCFG() const { return cfg_; }
   const GraphJitConfig &Config() const { return conf_; }
 
   const FrameStates &GetFrame(int bci) const;
   void SetFrame(int bci, const FrameStates &f);
-  bool FindFrame(int bci) const { return frame_states_[bci].get(); }
+  auto &GetFrames() { return frame_states_; }
+  const auto &GetFrames() const { return frame_states_; }
   Allocator &allocator() { return alloc_; }
   const std::vector<LoopInfo *> &loops() const { return loops_; }
   void AddLoop(LoopInfo *loop) { loops_.emplace_back(loop); }
@@ -149,18 +143,21 @@ class Graph {
     return Utils::GetPyName(c->co_name);
   }
 
-  std::string getCodeInfoName() const { return py::str(co_.ptr()).cast<std::string>(); }
-
   bool GuardValueNode(ValueNode *);
   TracePtr TraceValueNode(ValueNode *, int max_trace_depth = -1);
   int GetPruneBranchCount() const { return prune_branch_count_; }
   void SetPruneBranchCount(int count) { prune_branch_count_ = count; }
-  const std::shared_ptr<OptCode> &GetGuard() { return guard_; }
+  const std::shared_ptr<OptCode> &GetGuard() const { return guard_; }
   void SetGuard(const std::shared_ptr<OptCode> &guard) { guard_ = guard; }
+
+  // TODO: restore graph status at loop begin, clear trace values and operations and guards
+  bool RestoreLoopStatus() { return false; }
+  bool IsBreakAtLoop() const;
+  const std::vector<ValueNode *> &GetTracedNodes() const { return traced_nodes_; }
+  std::vector<ValueNode *> &GetTracedNodes() { return traced_nodes_; }
 
   void print(int depth = 0) const;
   std::string DumpLoops() const;
-  void Reset();
 
   void InstallToGlobal(const std::string &key, const py::object &value) {
     PyDict_SetItemString(f_globals_.ptr(), key.c_str(), value.ptr());
@@ -170,13 +167,9 @@ class Graph {
   std::unique_ptr<CFG> cfg_;
   std::vector<LoopInfo *> loops_;
 
-  std::map<int, Instr *> instrs_;
-  std::map<int, Block *> bb_cache_;
-  // bytecode copy, maybe changed to fit in trace
-  std::vector<InstrNode *> instr_nodes_;
-
   // frame status
-  std::vector<std::unique_ptr<FrameStates>> frame_states_;
+  std::map<int, std::unique_ptr<FrameStates>> frame_states_;
+  std::vector<ValueNode *> traced_nodes_;
 
   // return value
   ValueNode *ret_val_;

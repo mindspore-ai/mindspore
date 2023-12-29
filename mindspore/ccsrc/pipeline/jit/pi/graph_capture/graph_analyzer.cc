@@ -19,6 +19,7 @@
 #include <vector>
 #include "pipeline/jit/pi/pi_jit_config.h"
 #include "pipeline/jit/pi/graph_guard/infer.h"
+#include "pipeline/jit/pi/graph_capture/graph.h"
 
 namespace mindspore {
 namespace jit {
@@ -62,6 +63,13 @@ static bool IsRepeatWithoutSideEffect(ValueNode *v, bool repeat_attr_item_access
     case BINARY_SUBSCR:
     case LOAD_ATTR:
       return type == AObject::kTypeAnyValue ? false : repeat_attr_item_access;
+    case BUILD_CONST_KEY_MAP:
+      return true;
+    case BUILD_MAP:
+      if (type == AObject::kTypeDict) {
+        AbstractDict *d = static_cast<AbstractDict *>(v->GetVobj());
+        return d->size() == 0 || d->KeyType() != AObject::kTypeAnyValue;
+      }
     default:
       break;
   }
@@ -69,20 +77,16 @@ static bool IsRepeatWithoutSideEffect(ValueNode *v, bool repeat_attr_item_access
 }
 
 bool GraphAnalyzer::ProduceInterpretValue(ValueNode *v) {
-  bool repeat_op = Config().GetBoolConfig(GraphJitConfig::kEnableOptimizeForAttrItem);
+  bool repeat_op = graph_->Config().GetBoolConfig(GraphJitConfig::kEnableOptimizeForAttrItem);
   auto &locals = GetCaptureInfo().escaped_locals;
   auto &values = GetCaptureInfo().captured_locals.values;
   for (auto i : v->getInputs()) {
     if (IsNonLocalValue(i) || locals.find(i) != locals.end()) {
       continue;
     }
-    bool captured = values.find(i) != values.end();
-    if (i->bci() == -1 && !captured) {
-      // inlined function's parameters, graph break at function parameters build
-      MS_EXCEPTION_IF_CHECK_FAIL(false, "not implement graph break at inlined function parameters build");
-      return false;
+    if (values.find(i) == values.end()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "capture info can't find the value [" << i->ToString() << "]";
     }
-    MS_EXCEPTION_IF_CHECK_FAIL(captured, "check ProduceInterpretValue and TryToCapture");
     if (!IsRepeatWithoutSideEffect(i, repeat_op)) {
       return false;
     }
@@ -121,8 +125,11 @@ static bool CheckAttrItemSupport(ValueNode *v, bool repeat_op) {
 
 extern bool CheckJitConstexpr(const py::object &func);
 bool GraphAnalyzer::AddToCaptured(ValueNode *v) {
+  if (IsNonLocalValue(v)) {
+    return true;
+  }
   int op = v->GetOpcode();
-  bool repeat_op = Config().GetBoolConfig(GraphJitConfig::kEnableOptimizeForAttrItem);
+  bool repeat_op = graph_->Config().GetBoolConfig(GraphJitConfig::kEnableOptimizeForAttrItem);
   if ((op == LOAD_ATTR || op == BINARY_SUBSCR) && !CheckAttrItemSupport(v, repeat_op)) {
     return false;
   }
@@ -134,6 +141,7 @@ bool GraphAnalyzer::AddToCaptured(ValueNode *v) {
     }
     // don't pass unknown callable to graph
     bool is_known_func = f->GetType() == AObject::kTypeCell || f->GetType() == AObject::kTypePrimitive ||
+                         f->GetType() == AObject::kTypeMetaFuncGraph ||
                          (f->GetType() == AObject::kTypeFunction && CheckJitConstexpr(f->GetPyObject()));
     bool is_ms_support_func = f->TestMsFlag(kMsFlagSet);
     if (!is_known_func && !is_ms_support_func) {
@@ -147,7 +155,7 @@ bool GraphAnalyzer::AddToCaptured(ValueNode *v) {
   for (auto i : v->getInputs()) {
     bool produced_in_graph = values.find(i) != values.end() || IsNonLocalValue(i);
     MS_EXCEPTION_IF_CHECK_FAIL(produced_in_graph || locals.find(i) != locals.end(),
-                               "check values order, all input must be generate before this value " + i->to_str());
+                               "check values order, all input must be generate before this value " + i->ToString());
     AObject::Type type = i->GetVobj() ? i->GetVobj()->GetType() : AObject::kTypeAnyValue;
     if (type == AObject::kTypeAnyValue) {
       // don't pass unknown object to graph
@@ -179,7 +187,10 @@ bool GraphAnalyzer::TryToCapture(AbstractNode *n) {
   if (IsNonLocalValue(v)) {
     return true;
   }
-  if (Utils::IsMsUnsupported(v->GetOpcode()) || !v->IsMindsporeSupportedOperation()) {
+
+  bool supported_oper = !Utils::IsMsUnsupported(v->GetOpcode());
+  bool supported_type = o && o->IsMindSporeSupportedType();
+  if (!supported_oper || !supported_type) {
     // if mindspore unsupported, must be interpret
   } else if (AddToCaptured(v)) {
     return true;
@@ -206,7 +217,7 @@ bool GraphAnalyzer::TryToCapture(AbstractNode *n) {
   if (v->GetGraph() != nullptr && this->graph_->Config().GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
     auto tr = GetTrace(v, false, true, 0, -1);
     GRAPH_JIT_LOG_F("trace %s", tr ? tr->ToString().c_str() : "trace failed");
-    GRAPH_JIT_LOG_F("capture failed, operations is unsupported [%s] at [%U: %d]", v->to_str().c_str(),
+    GRAPH_JIT_LOG_F("capture failed, operations is unsupported [%s] at [%U: %d]", v->ToString().c_str(),
                     v->GetGraph()->GetCodeObj()->co_filename, v->GetLineNo());
     GRAPH_JIT_LOG_F("parameters");
     for (auto &i : v->getInputs()) {
@@ -228,74 +239,38 @@ bool GraphAnalyzer::AnalyzeCall(CallNode *call_node) {
   }
 
   Graph *g = call_node->GetGraph();
-  for (ValueNode *i : call_node->GetParams()) {
-    if (!TryToCapture(i)) {
-      call_node->SetSubGraph(nullptr);
-      call_node->SetInlineReason(InlineReason::kInlineFunc_ArgHandle_Unsupported);
-      g->StopTraceAt(call_node->bci(), StopTraceReason::kStopTraceFunc_ArgHandle_Unsupported);
-      return false;
-    }
+
+  CapturedInfo back_up;
+  if (!kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kFeatureBreakAtInlinedFunction)) {
+    back_up = info_;
   }
-  if (!AnalyzeRecursive(call_node->GetSubGraph())) {
-    g->StopTraceAt(call_node->bci(), call_node->GetSubGraph()->GetStopTraceReason());
-    return false;
+  const auto &p = call_node->GetParams();
+  // capture parameter handle operations
+  auto iter = std::find_if(p.begin(), p.end(), [this](ValueNode *i) { return !this->TryToCapture(i); });
+  // capture sub-graph
+  if (iter == p.end() && AnalyzeRecursive(call_node->GetSubGraph())) {
+    return true;
   }
-  return true;
+  if (!kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kFeatureBreakAtInlinedFunction)) {
+    info_ = back_up;
+  }
+  g->StopTraceAt(call_node->bci(), StopTraceReason::kStopTraceDataDependsOnGraphOut);
+  return false;
 }
 
-bool GraphAnalyzer::AnalyzeBlock(Block *b) {
-  Graph *g = b->GetGraph();
-  for (auto n : b->GetNodes()) {
+bool GraphAnalyzer::AnalyzeRecursive(Graph *g) {
+  for (auto n : g->GetTracedNodes()) {
     int bci = static_cast<ValueNode *>(n)->bci();
     if (n->GetType() == AbstractNode::Call && AnalyzeCall(static_cast<CallNode *>(n))) {
       continue;
     }
-    if (g->GetStopTraceAt() && g->GetStopTraceAt()->bci() == bci) {
+    if (bci != -1 && g->GetStopTraceBci() == bci) {
       return false;
     }
     if (!TryToCapture(n)) {
       g->StopTraceAt(bci, StopTraceReason::kStopTraceDataDependsOnGraphOut);
       return false;
     }
-  }
-  return true;
-}
-
-bool GraphAnalyzer::AnalyzeRecursive(Graph *g) {
-  if (!g->GetCFG().get()) {
-    return true;  // empty graph
-  }
-  g->GetCFG()->ClearDeadBBEdges();
-  Block *b = g->GetCFG()->GetFirstBB();
-  auto stop_trace = g->GetStopTraceAt();
-  do {
-    if (!AnalyzeBlock(b)) {
-      return false;  // graph break;
-    }
-    if (b->succ_bbs().size() == 1) {
-      Block *next = *b->succ_bbs().begin();
-      if (next->pred_bbs().size() != 1) {
-        MS_ASSERT(next->is_loop_head());
-        return false;
-      }
-      MS_ASSERT(b == *next->pred_bbs().begin());
-      b = next;
-      continue;
-    }
-    break;  // return block or branch Block
-  } while (true);
-  // break at unsupported bytecode
-  if (stop_trace && stop_trace->bci() <= b->instrs().back().bci()) {
-    if (Utils::IsIfJump(stop_trace->GetOpcode()) &&
-        g->GetStopTraceReason() != StopTraceReason::kStopTraceLoop_Unsupported) {
-      g->StopTraceAt(stop_trace->bci(), StopTraceReason::kStopTraceIf_Unsupported);
-    }
-    return false;
-  }
-  // break at branch
-  if (b && (b->GetJumpBB() || b->GetFallBB()) && !b->is_loop_head()) {
-    g->StopTraceAt(b->instrs().back().bci(), StopTraceReason::kStopTraceIf_Unsupported);
-    return false;
   }
   return true;
 }

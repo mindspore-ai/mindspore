@@ -145,16 +145,8 @@ bool CallNodeReturnConst(CallNode *call_node, Graph *sub_graph, AObject *value, 
   call_node->SetSubGraph(sub_graph);
   ret_node->SetGraph(call_node->GetGraph());
 
-  sub_graph->AddInstr(ret_node);
-  sub_graph->AddInstr(alloc.NewInstrNode(RETURN_VALUE, 0));
   sub_graph->SetRetVal(ret_node);
   call_node->SetInlineReason(InlineReason::kInline);
-
-  AbstractNodeList b;
-  for (auto i = call_node->getInputs().size(); i > 0; --i) {
-    b.push_back(call_node->GetGraph()->allocator().NewInstrNode(POP_TOP, 0));
-  }
-  call_node->SetExtraOper(reinterpret_cast<InstrNode *>(b.head()));
   return true;
 }
 
@@ -184,10 +176,11 @@ bool GuardConstCallNodeParam(CallNode *call_node, Graph *sub_graph, int max_guar
   }
 
   const auto &guard = sub_graph->GetGuard()->GetGuard();
-  guard->Backup();
+  std::pair<std::vector<GuardItemPtr>, std::map<std::string, GuardItemPtr>> guard_backup;
+  guard->Backup(&guard_backup);
   for (const auto &i : traces) {
     if (!guard->GuardOn(i.first, i.second)) {
-      guard->Rollback();
+      guard->Rollback(&guard_backup);
       return false;
     }
   }
@@ -272,13 +265,6 @@ bool InferGetCachePrim_(CallNode *n) {
   Graph *g = n->GetSubGraph();
   n->SetVobj(n->input(1)->GetVobj());
   g->SetRetVal(n->input(1));
-
-  // extra operation
-  auto &alloc = g->allocator();
-  AbstractNodeList b = {nullptr, nullptr};
-  b.push_back(alloc.NewInstrNode(ROT_TWO, 0));
-  b.push_back(alloc.NewInstrNode(POP_TOP, 0));
-  n->SetExtraOper(reinterpret_cast<InstrNode *>(b.head()));
   return true;
 }
 

@@ -29,7 +29,6 @@ class GraphJitConfig {
  public:
   enum Options {
     kBoolConf = 0,
-    kCopyFuncOnlyOnceIfTraceBreak,
     kAutoJit,
     kReplaceNNCellByConstruct,
     kPrintAfterAll,
@@ -57,6 +56,7 @@ class GraphJitConfig {
     kTestGraphIR,
     kEnableOptimizeForAttrItem,
     kEnableEliminateUnusedOperation,
+    kFeatureBreakAtInlinedFunction,
     kEnableDynamicShape,
     /* ------------------------------ */
     kIntConf,
