@@ -85,9 +85,10 @@ bool EnableGradForScalar(const abstract::AbstractBasePtr &abs) {
          abs->BuildType()->isa<Number>();
 }
 
-bool EnableTupleBroaden(const abstract::AbstractBasePtr &abs) {
+bool EnableSequenceBroaden(const abstract::AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(abs);
-  return abs->isa<abstract::AbstractTuple>() && abs->cast<abstract::AbstractTuplePtr>()->ContainsAllBroadenTensors();
+  return abs->isa<abstract::AbstractSequence>() &&
+         abs->cast<abstract::AbstractSequencePtr>()->ContainsAllBroadenTensors();
 }
 
 bool ContainsAbstractFunction(const abstract::AbstractBasePtr &abs) {
@@ -131,7 +132,7 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph, const std::vector<
     AbstractBasePtr param_abs = param_node->abstract();
     MS_EXCEPTION_IF_NULL(param_abs);
     if ((param_abs->BuildValue() == kValueAny && !ContainsAbstractFunction(param_abs)) ||
-        EnableGradForScalar(param_abs) || EnableTupleBroaden(param_abs)) {
+        EnableGradForScalar(param_abs) || EnableSequenceBroaden(param_abs)) {
       new_paras.push_back(param_node);
     } else {
       MS_LOG(INFO) << "Remove the " << i << "th parameter, since it's passed a constant argument.";

@@ -932,6 +932,11 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   /// \param[in] sequence_nodes The nodes to intert into sequence nodes.
   void InsertSequenceNodes(const AnfNodeWeakPtrList &sequence_nodes);
 
+  /// \brief Check whether all elements of the tuple are tensors.
+  ///
+  /// \return Whether all elements of the tuple are tensors.
+  bool ContainsAllBroadenTensors() const;
+
   /// \brief Update the sequence nodes.
   ///
   /// \param[in] old_sequence_node The old node in sequence nodes.
@@ -1036,16 +1041,6 @@ class MS_CORE_API AbstractTuple : public AbstractSequence {
   AbstractBasePtr PartialBroaden() const override;
 
   AbstractBasePtr Join(const AbstractBasePtr &other) override;
-
-  /// \brief Check whether all elements of the tuple are tensors.
-  ///
-  /// \return Whether all elements of the tuple are tensors.
-  bool ContainsAllBroadenTensors() const;
-
-  /// \brief Check whether all elements of the tuple are constants.
-  ///
-  /// \return Whether all elements of the tuple are constants.
-  bool ContainsAllConstants() const;
 
   /// \brief Overwrite the operator '==' to compare other abstract tuple.
   ///
