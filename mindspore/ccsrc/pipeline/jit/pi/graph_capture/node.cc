@@ -29,21 +29,9 @@ bool IsNonLocalValue(ValueNode *i) {
          i->GetType() == ValueNode::FreeVar;
 }
 
-void ValueNode::store_attr(const std::string &nam, ValueNode *v) {
-  // TODO(chaiyouheng): track variable modify, replace all node that represent the same object
-  if (vobj_) {
-    vobj_->SetAttr(nam, v->vobj_);
-  }
-  attr_ = true;
-}
+void ValueNode::store_attr(const std::string &nam, ValueNode *v) { attr_ = true; }
 
-void ValueNode::store_subscr(ValueNode *sub, ValueNode *v) {
-  // TODO(chaiyouheng): track variable modify, replace all node that represent the same object
-  if (vobj_) {
-    vobj_->SetItem(sub->vobj_, v->vobj_);
-  }
-  subscr_ = true;
-}
+void ValueNode::store_subscr(ValueNode *sub, ValueNode *v) { subscr_ = true; }
 
 AObject *ValueNode::get_attr(const std::string &nam) {
   if (!attr_ && vobj_) {

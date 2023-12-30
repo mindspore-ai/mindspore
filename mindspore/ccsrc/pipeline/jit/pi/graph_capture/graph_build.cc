@@ -2226,6 +2226,11 @@ StopTraceReason GraphBuilder::TraceRun() {
       graph_->SetRetVal(pop());
       break;
     }
+    Block *loop_head = graph_->GetCFG()->GetBlockByBci(cur_bci_);
+    if (loop_head->is_loop_head()) {
+      graph_->StopTraceAt(cur_bci_, StopTraceReason::kStopTraceLoop_Unsupported);
+      return StopTraceReason::kStopTraceLoop_Unsupported;
+    }
     if (!DoByteCode(*instrs[cur_bci_])) {
       break;
     }
