@@ -475,7 +475,13 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::LoadFieldNodePtr &node) {
     auto name = instance->cast<ParameterPtr>()->name();
     auto iter = param_name_to_index_.find(name);
     MS_EXCEPTION_IF_CHECK_FAIL(iter != param_name_to_index_.end(), name + " is not a parameter.");
-    instance = args_[param_name_to_index_.at(name)];
+    auto index = param_name_to_index_.at(name);
+    MS_EXCEPTION_IF_CHECK_FAIL(index < args_.size() + 1, name + " does not have a default value.");
+    if (index < args_.size()) {
+      instance = args_[index];
+    } else {
+      instance = kwargs_;
+    }
   }
   auto field = GetAnfNode(node->GetArg(1));
   MS_EXCEPTION_IF_CHECK_FAIL(IsValueNode<StringImm>(field), "Excepted attr/name.");
