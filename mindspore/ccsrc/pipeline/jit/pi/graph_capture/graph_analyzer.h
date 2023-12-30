@@ -19,7 +19,7 @@
 #include <set>
 #include <vector>
 #include "pipeline/jit/pi/graph_capture/cfg.h"
-
+#include "pipeline/jit/pi/graph_capture/abstract_object.h"
 namespace mindspore {
 namespace jit {
 namespace graph {
@@ -48,13 +48,14 @@ class GraphAnalyzer {
   const auto &GetCaptureInfo() const { return info_; }
   void Analyze();
   bool HasTensorOperation() const;
-  bool NeedInterpret() const { return need_interpret_; };
+  bool NeedInterpret() const { return need_interpret_; }
 
  private:
   bool AnalyzeRecursive(Graph *g);
   bool AnalyzeCall(CallNode *);
   bool TryToCapture(AbstractNode *value);
   bool AddToCaptured(ValueNode *value);
+  bool HandleCallableToGraph(AObject *f);
   void AddToEscaped(ValueNode *value);
   bool ProduceInterpretValue(ValueNode *v);
   void CollectInputs();

@@ -301,7 +301,7 @@ static std::string MakeBrkName(const std::string &co_name, int bci) {
   constexpr const char *mark = "B.";
   constexpr const char *reg_mark = "\\d+B.";
   return std::to_string(bci) + mark + std::regex_replace(co_name, std::regex(reg_mark), "");
-};
+}
 
 py::object CodeGenerator::Transform(const Code &ccode) {
   std::unordered_map<std::string, int> names;
@@ -1297,7 +1297,7 @@ static bool FindBlock(int start_bci, const CFG *cfg, int *end_bci, int *stack_ef
   }
   if (list[start_bci]->op() == FOR_ITER && block_end == start_bci - 1) {
     // break at FOR_ITER and it is not a loop
-    block_end = list[block_end]->extra_jump()->bci();
+    block_end = list[start_bci]->extra_jump()->bci() - 1;
   }
   *end_bci = block_end;
   return block_end != start_bci - 1;
@@ -1372,7 +1372,7 @@ static bool FindBlock(int start_bci, const CFG *cfg, int *end_bci, int *stack_ef
   }
   if (list[start_bci]->op() == FOR_ITER && *end_bci == start_bci - 1) {
     // break at FOR_ITER and it is not a loop
-    *end_bci = list[*end_bci]->extra_jump()->bci();
+    *end_bci = list[start_bci]->extra_jump()->bci() - 1;
   }
   return *end_bci != start_bci - 1;
 }

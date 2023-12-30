@@ -200,7 +200,6 @@ bool GuardConstCallNodeParam(CallNode *call_node, Graph *sub_graph, int max_guar
   }
 
   const auto &guard = sub_graph->GetGuard()->GetGuard();
-  std::pair<std::vector<GuardItemPtr>, std::map<std::string, GuardItemPtr>> guard_backup;
   guard->Backup();
   for (const auto &i : traces) {
     if (!guard->GuardOn(i.first, i.second)) {

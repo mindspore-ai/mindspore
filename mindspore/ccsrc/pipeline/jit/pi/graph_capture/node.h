@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_NODE_H
 
 #include <string>
+#include <map>
 #include <vector>
 #include "utils/log_adapter.h"
 #include "pipeline/jit/pi/graph_capture/abstract_object.h"

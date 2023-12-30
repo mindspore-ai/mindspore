@@ -120,6 +120,21 @@ static bool CheckAttrItemSupport(ValueNode *v, bool repeat_op) {
 }
 
 extern bool CheckJitConstexpr(const py::object &func);
+bool GraphAnalyzer::HandleCallableToGraph(AObject *f) {
+  if (f == nullptr) {
+    return false;
+  }
+  // don't pass unknown callable to graph
+  bool is_known_func = f->GetType() == AObject::kTypeCell || f->GetType() == AObject::kTypePrimitive ||
+                       f->GetType() == AObject::kTypeMetaFuncGraph ||
+                       (f->GetType() == AObject::kTypeFunction && CheckJitConstexpr(f->GetPyObject()));
+  bool is_ms_support_func = f->TestMsFlag(kMsFlagSet);
+  if (!is_known_func && !is_ms_support_func) {
+    return false;
+  }
+  return true;
+}
+
 bool GraphAnalyzer::AddToCaptured(ValueNode *v) {
   if (IsNonLocalValue(v)) {
     return true;
@@ -132,15 +147,8 @@ bool GraphAnalyzer::AddToCaptured(ValueNode *v) {
 
   if (Utils::IsCallOp(v->GetOpcode())) {
     AObject *f = v->input(0)->GetVobj();
-    if (f == nullptr) {
-      return false;
-    }
-    // don't pass unknown callable to graph
-    bool is_known_func = f->GetType() == AObject::kTypeCell || f->GetType() == AObject::kTypePrimitive ||
-                         f->GetType() == AObject::kTypeMetaFuncGraph ||
-                         (f->GetType() == AObject::kTypeFunction && CheckJitConstexpr(f->GetPyObject()));
-    bool is_ms_support_func = f->TestMsFlag(kMsFlagSet);
-    if (!is_known_func && !is_ms_support_func) {
+    bool can_pass = HandleCallableToGraph(f);
+    if (!can_pass) {
       return false;
     }
     GetCaptureInfo().has_grad_ |= f->TestMsFlag(AObject::kMsFlagGradFunc);
