@@ -594,7 +594,7 @@ static PyObject *RichCompare(PyObject *left, PyObject *right, int oparg) {
       return left != right ? Py_True : Py_False;
     case PyCmp_IN:
     case PyCmp_NOT_IN:
-      stat = PySequence_Contains(left, right);
+      stat = PySequence_Contains(right, left);
       if (stat < 0) {
         return nullptr;
       }
@@ -1112,16 +1112,22 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
                                                                    }}},
   {LOAD_ATTR, {ByteCodeSupported, nullptr}},
   {COMPARE_OP,
-   {ByteCodeTest(COMPARE_OP),
-    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
-                                                                   * {
-                                                                     if (ByteCodeCheck(COMPARE_OP, opargs, objs)) {
-                                                                       return RichCompare(objs[0], objs[1], opargs);
-                                                                     } else {
-                                                                       Py_INCREF(Py_True);
-                                                                       return Py_True;
-                                                                     }
-                                                                   }}},
+   {[](int opargs, const PyObjectArray &objs) {
+#if (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 9)
+      if (opargs == PyCmp_EXC_MATCH) {
+        return false;
+      }
+#endif
+      return OptStrategy::MakeCalcStrategyByInputs(COMPARE_OP, opargs, objs) != OptStrategy::CalcKind::kCalcUnsupported;
+    },
+    [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
+      if (ByteCodeCheck(COMPARE_OP, opargs, objs)) {
+        return RichCompare(objs[0], objs[1], opargs);
+      } else {
+        Py_INCREF(Py_True);
+        return Py_True;
+      }
+    }}},
   {IMPORT_NAME, {ByteCodeUnsupported, nullptr}},
   {IMPORT_FROM, {ByteCodeUnsupported, nullptr}},
   {JUMP_FORWARD, {ByteCodeUnsupported, nullptr}},
@@ -1253,8 +1259,12 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
                                                                    * {
                                                                      PyObject *name =
                                                                        PyTuple_GetItem(ctx->f_code->co_names, opargs);
+#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 7)
+                                                                     PyObject *meth = PyObject_GetAttr(objs[0], name);
+#else
                                                                      PyObject *meth = nullptr;
                                                                      (void)_PyObject_GetMethod(objs[0], name, &meth);
+#endif
                                                                      return meth;
                                                                    }}},
   {CALL_METHOD, {ByteCodeUnsupported, nullptr}},
