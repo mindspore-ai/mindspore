@@ -161,6 +161,9 @@ class Graph {
     PyDict_SetItemString(f_globals_.ptr(), key.c_str(), value.ptr());
   }
 
+  void SetParent(Graph *parent) { parent_ = parent; }
+  Graph *GetParent() const { return parent_; }
+
  private:
   std::unique_ptr<CFG> cfg_;
   std::vector<LoopInfo *> loops_;
@@ -191,6 +194,7 @@ class Graph {
 
   std::shared_ptr<OptCode> guard_;
   int prune_branch_count_;
+  Graph *parent_{nullptr};
 };
 }  // namespace graph
 }  // namespace jit

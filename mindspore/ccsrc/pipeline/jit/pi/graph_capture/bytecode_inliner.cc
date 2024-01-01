@@ -63,6 +63,9 @@ void BytecodeInliner::Run() {
 }
 
 void BytecodeInliner::ResetGraphStat() {
+  for (auto it : traced_nodes_) {
+    it->SetGraph(graph_);
+  }
   graph_->GetFrames().swap(new_frames_);
   graph_->GetCFG().swap(cfg_);
   graph_->GetTracedNodes().swap(traced_nodes_);

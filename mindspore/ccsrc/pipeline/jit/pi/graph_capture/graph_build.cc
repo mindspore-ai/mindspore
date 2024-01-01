@@ -574,6 +574,8 @@ bool GraphBuilder::DoAttrAccess(const Instr &instr) {
           // new method type
           ValueNode *global_node = NewValueNode(m_tp, LOAD_GLOBAL, -1, {});
           global_node->SetName(node_name.str());
+          global_node->set_bci(instr.bci());
+          global_node->SetLineNo(instr.line());
           graph_->InstallToGlobal(global_node->GetName(), py::reinterpret_borrow<py::object>(mtype_obj));
           nodes.push_back(global_node);
 
@@ -581,6 +583,8 @@ bool GraphBuilder::DoAttrAccess(const Instr &instr) {
           ValueNode *method_node = NewValueNode(AObject::Convert(m), LOAD_GLOBAL, -1, {});
           node_name << (instr.name().c_str()) << "<" << m << ">";
           method_node->SetName(node_name.str());
+          method_node->set_bci(instr.bci());
+          method_node->SetLineNo(instr.line());
           graph_->InstallToGlobal(method_node->GetName(), py::reinterpret_borrow<py::object>(m));
           nodes.push_back(method_node);
 
@@ -595,7 +599,8 @@ bool GraphBuilder::DoAttrAccess(const Instr &instr) {
           AObject *mh_info = AObject::Convert(mh);
           ValueNode *func_node = NewValueNode(nullptr, CALL_FUNCTION, 2, {global_node, method_node, self_super});
           func_node->SetVobj(mh_info);
-
+          func_node->set_bci(instr.bci());
+          func_node->SetLineNo(instr.line());
           nodes.push_back(func_node);
           push(func_node);
         }

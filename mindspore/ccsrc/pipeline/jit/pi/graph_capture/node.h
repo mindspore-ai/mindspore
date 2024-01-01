@@ -135,6 +135,8 @@ class ValueNode : public InstrNode {
   AObject *binary_subscr(ValueNode *sub);
 
   std::string ToString() const override;
+  ValueNode *GetParent() { return parent_.value_or(nullptr); }
+  void SetParent(ValueNode *parent);
 
  protected:
   ValueNode(Type type, AObject *vobj, int opcode, int oparg, const std::vector<ValueNode *> &inputs = {})
@@ -146,6 +148,7 @@ class ValueNode : public InstrNode {
   std::map<std::string, ValueNode *> attrs_;  // store attrs
   bool attr_;                                 // track store attr not implement, marked as modified
   bool subscr_;                               // track store subscr not implement, marked as modified
+  std::optional<ValueNode *> parent_;         // recode relationship between local and CallNode
 };
 
 // simulate PyCellObject, oparg is index
@@ -182,12 +185,18 @@ class CallNode : public ValueNode {
   virtual ~CallNode() {}
 
   Graph *GetSubGraph() const { return sub_graph_; }
-  void SetSubGraph(Graph *n) { sub_graph_ = n; }
+  void SetSubGraph(Graph *n);
   std::string ToString() const override;
   void SetInlineReason(InlineReason r) { reason_ = r; }
   InlineReason GetInlineReason() { return reason_; }
 
-  void AddParam(ValueNode *p) { params_.push_back(p); }
+  void AddParam(ValueNode *p) {
+    params_.push_back(p);
+    if (p) {
+      p->SetParent(this);
+    }
+  }
+
   const auto &GetParams() const { return params_; }
 
  private:

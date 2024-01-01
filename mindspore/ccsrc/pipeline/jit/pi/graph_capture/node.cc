@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "pipeline/jit/pi/graph_capture/node.h"
 #include <string>
+#include "pipeline/jit/pi/graph_capture/node.h"
 #include "pipeline/jit/pi/graph_capture/cfg.h"
+#include "pipeline/jit/pi/graph_capture/graph.h"
 
 namespace mindspore {
 namespace jit {
@@ -98,6 +99,15 @@ std::string AbstractNode::ToString() const {
     s << " jump " << jump_;
   }
   return s.str();
+}
+
+void ValueNode::SetParent(ValueNode *parent) { parent_ = std::make_optional<ValueNode *>(parent); }
+
+void CallNode::SetSubGraph(Graph *n) {
+  sub_graph_ = n;
+  if (n) {
+    n->SetParent(GetGraph());
+  }
 }
 }  // namespace graph
 }  // namespace jit

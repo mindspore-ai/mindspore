@@ -60,6 +60,11 @@ class GraphAnalyzer {
   bool ProduceInterpretValue(ValueNode *v);
   void CollectInputs();
   void CleanCapturedValue();
+  // UD analyze
+  void UseDefAnalyze();
+  std::vector<ValueNode *> GetAliveLocals(Graph *g);
+  bool AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes);
+  void ClearCapturedInfo();
 
   Graph *graph_;
   CapturedInfo info_;
