@@ -32,18 +32,14 @@ void BinaryCrossEntropyGradCpuKernelMod::LaunchKernel(const std::vector<KernelTe
   const auto *input_x = reinterpret_cast<T *>(inputs[0]->device_ptr());
   const auto *input_y = reinterpret_cast<T *>(inputs[1]->device_ptr());
   const auto *dloss = reinterpret_cast<T *>(inputs[2]->device_ptr());
-  const T *weight = weight_defined_ ? reinterpret_cast<T *>(inputs[3]->device_ptr()) : nullptr;
+  const T *weight = reinterpret_cast<T *>(inputs[3]->device_ptr());
   auto *dx = reinterpret_cast<T *>(outputs[0]->device_ptr());
   auto epsilon = static_cast<T>(1e-12);
   auto one = static_cast<T>(1);
 
-  if (weight == nullptr) {
-    weight_defined_ = false;
-  }
-
   std::function<void(size_t, size_t)> func;
   if (reduction_ == kNone) {
-    if (weight_defined_) {
+    if (weight != nullptr) {
       func = [&](size_t start, size_t end) -> void {
         for (size_t i = start; i < end; i++) {
           T denominator = ((input_x[i] * (one - input_x[i])) > epsilon) ? (input_x[i] * (one - input_x[i])) : epsilon;
@@ -65,7 +61,7 @@ void BinaryCrossEntropyGradCpuKernelMod::LaunchKernel(const std::vector<KernelTe
     if (reduction_ == kMean) {
       dloss1 = dloss[0] / static_cast<T>(input_size_);
     }
-    if (weight_defined_) {
+    if (weight != nullptr) {
       func = [&](size_t start, size_t end) -> void {
         for (size_t i = start; i < end; i++) {
           T denominator = ((input_x[i] * (one - input_x[i])) > epsilon) ? (input_x[i] * (one - input_x[i])) : epsilon;
@@ -89,7 +85,7 @@ void BinaryCrossEntropyGradCpuKernelMod::LaunchKernel(const std::vector<KernelTe
 bool BinaryCrossEntropyGradCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
                                                 const std::vector<KernelTensor *> &,
                                                 const std::vector<KernelTensor *> &outputs) {
-  const size_t expect_inputs_num = weight_defined_ ? kBceGradInputsNumWithWeight : kBceGradInputsNumWithWeight - 1;
+  const size_t expect_inputs_num = kBceGradInputsNumWithWeight;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), expect_inputs_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBceGradOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat32) {
@@ -105,8 +101,6 @@ bool BinaryCrossEntropyGradCpuKernelMod::Launch(const std::vector<KernelTensor *
 
 bool BinaryCrossEntropyGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                               const std::vector<KernelTensor *> &outputs) {
-  size_t input_num = inputs.size();
-  weight_defined_ = (input_num == kBceGradInputsNumWithWeight);
   dtype_ = inputs[kIndex0]->dtype_id();
 
   const auto reduction = ops::BinaryCrossEntropy::get_reduction(primitive_->GetAttr(ops::kReduction));
