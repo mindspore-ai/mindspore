@@ -17,16 +17,27 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SPLIT_UMONAD_H_
 
 #include <memory>
+#include <string>
 #include "include/backend/optimizer/optimizer.h"
 #include "backend/common/graph_kernel/core/graph_kernel_expander.h"
 
 namespace mindspore::graphkernel {
-class SplitAssign : public opt::PatternProcessPass {
+
+class SplitNode : public opt::PatternProcessPass {
  public:
-  explicit SplitAssign(bool multigraph = true) : PatternProcessPass("split_assign", multigraph) {}
+  explicit SplitNode(std::string pass_name, bool multigraph = true) : PatternProcessPass(pass_name, multigraph) {}
+  ~SplitNode() override = default;
+  virtual const BaseRef DefinePattern() const = 0;
+  virtual const bool CanSplit(const AnfNodePtr &node) const = 0;
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const override;
+};
+
+class SplitAssign : public SplitNode {
+ public:
+  explicit SplitAssign(bool multigraph = true) : SplitNode("split_assign", multigraph) {}
   ~SplitAssign() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const override;
+  const bool CanSplit(const AnfNodePtr &node) const override;
 };
 
 class OpUMonadExpanderDeco : public ExpanderDecorator {

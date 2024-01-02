@@ -70,10 +70,11 @@ class GraphKernelJsonGenerator {
 
   bool CollectJson(const AnfNodePtr &anf_node, nlohmann::json *kernel_json);
   bool CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes, const std::vector<AnfNodePtr> &input_list,
-                        const std::vector<AnfNodePtr> &output_list, nlohmann::json *kernel_json);
+                        const std::vector<AnfNodePtr> &output_list, nlohmann::json *kernel_json,
+                        const bool is_akg_cc = false);
   bool CollectJson(const AnfNodePtr &anf_node);
   bool CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes, const std::vector<AnfNodePtr> &input_list,
-                        const std::vector<AnfNodePtr> &output_list);
+                        const std::vector<AnfNodePtr> &output_list, const bool is_akg_cc = false);
   bool CollectFusedJsonWithSingleKernel(const CNodePtr &c_node);
 
   std::string kernel_name() const { return kernel_name_; }

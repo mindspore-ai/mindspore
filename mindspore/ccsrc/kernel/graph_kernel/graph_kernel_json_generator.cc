@@ -887,8 +887,8 @@ void GraphKernelJsonGenerator::GenKernelName(const FuncGraphPtr &fg, size_t hash
 
 bool GraphKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes,
                                                 const std::vector<AnfNodePtr> &input_list,
-                                                const std::vector<AnfNodePtr> &output_list,
-                                                nlohmann::json *kernel_json) {
+                                                const std::vector<AnfNodePtr> &output_list, nlohmann::json *kernel_json,
+                                                const bool is_akg_cce) {
   if (anf_nodes.empty()) {
     MS_LOG(ERROR) << "anf_nodes list is empty";
     return false;
@@ -953,6 +953,9 @@ bool GraphKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &a
     (*kernel_json)[kJsonKeyPrecisionMode] = GetValue<std::string>(fg->get_attr(kJsonKeyPrecisionMode));
   }
 
+  if (is_akg_cce) {
+    (kernel_json_)["enable_cce_lib"] = true;
+  }
   GetIOSize(*kernel_json, &input_size_list_, &output_size_list_);
 
   return true;
@@ -1144,9 +1147,10 @@ bool GraphKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node) {
 
 bool GraphKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes,
                                                 const std::vector<AnfNodePtr> &input_list,
-                                                const std::vector<AnfNodePtr> &output_list) {
+                                                const std::vector<AnfNodePtr> &output_list,
+                                                const bool use_akg_cce_lib) {
   kernel_json_ = nlohmann::json();
-  return CollectFusedJson(anf_nodes, input_list, output_list, &kernel_json_);
+  return CollectFusedJson(anf_nodes, input_list, output_list, &kernel_json_, use_akg_cce_lib);
 }
 
 bool GraphKernelJsonGenerator::CollectFusedJsonWithSingleKernel(const CNodePtr &c_node) {
@@ -1209,6 +1213,11 @@ bool GraphKernelJsonGenerator::CollectFusedJsonWithSingleKernel(const CNodePtr &
   } else {
     output_list.push_back(out_cnode);
   }
+
+  if (c_node->HasAttr("use_akg_cce")) {
+    (kernel_json_)["enable_cce_lib"] = true;
+  }
+
   return CollectFusedJson(node_list, input_list, output_list, &kernel_json_);
 }
 

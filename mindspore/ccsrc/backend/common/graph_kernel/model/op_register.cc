@@ -129,4 +129,7 @@ OP_REGISTER("Pool2D", Pool2DOp);
 // virtual ops
 OP_REGISTER("Assign", VirtualOp);
 OP_REGISTER("TupleGetItem", TupleGetItemOp);
+OP_REGISTER("PagedAttention", OpaqueOp);
+OP_REGISTER("PagedAttentionMask", OpaqueOp);
+OP_REGISTER("ReshapeAndCache", OpaqueOp);
 }  // namespace mindspore::graphkernel::inner
