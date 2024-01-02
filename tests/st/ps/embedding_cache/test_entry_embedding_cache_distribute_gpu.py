@@ -17,7 +17,7 @@ import os
 import pytest
 
 
-@pytest.mark.level2
+@pytest.mark.level3
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
 def test_embedding_cache_distribute_gpu():

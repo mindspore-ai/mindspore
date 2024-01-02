@@ -129,7 +129,7 @@ def julia_multiout_test(func_name, bench):
     assert np.allclose(expect2, output2.asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level2
+@pytest.mark.level3
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_julia_single_output_cpu_add():
@@ -146,7 +146,7 @@ def test_julia_single_output_cpu_add():
         julia_elemwise_test("add.jl:Add:foo!", add)
 
 
-@pytest.mark.level2
+@pytest.mark.level3
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_julia_single_output_cpu_sub():
@@ -163,7 +163,7 @@ def test_julia_single_output_cpu_sub():
         julia_elemwise_test("sub.jl:Sub:foo!", sub)
 
 
-@pytest.mark.level2
+@pytest.mark.level3
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_julia_single_output_cpu_matmul():
@@ -180,7 +180,7 @@ def test_julia_single_output_cpu_matmul():
         julia_matmul_test("matmul.jl:Matmul:foo!", matmul)
 
 
-@pytest.mark.level2
+@pytest.mark.level3
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_julia_single_output_cpu_reducesum():
@@ -197,7 +197,7 @@ def test_julia_single_output_cpu_reducesum():
         julia_reducesum_test("reducesum.jl:ReduceSum:foo!", reducesum)
 
 
-@pytest.mark.level2
+@pytest.mark.level3
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_julia_multi_output_cpu():
