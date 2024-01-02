@@ -68,7 +68,7 @@ constexpr auto kUnkonwnSessionId = -1;
 constexpr auto kRefModeNone = "none";
 constexpr auto kRefModeVariable = "variable";
 constexpr auto kRefModeAll = "all";
-
+constexpr float kNumMicrosecondToMillisecond = 1000.0;
 constexpr size_t kAlignRefData = 32;
 
 size_t ALIGN_UP_REF_DATA(size_t size) {
@@ -143,6 +143,9 @@ transform::DfGraphPtr GetDataFlowGraph(const FuncGraphPtr &anf_graph,
 
 GeGraphExecutor::~GeGraphExecutor() {
   if (ge_session_) {
+    for (auto graph_id : init_graph_id_list_) {
+      ge_session_->RemoveGraph(graph_id);
+    }
     for (auto graph_id : compute_graph_id_list_) {
       ge_session_->RemoveGraph(graph_id);
       auto session_context = GeSessionManager::GetGeSessionContext(session_id_);
@@ -152,6 +155,8 @@ GeGraphExecutor::~GeGraphExecutor() {
     }
     ge_session_ = nullptr;
     GeSessionManager::TryReleaseGeSessionContext(session_id_);
+    enable_update_weight_ = false;
+    update_weight_ptr_ = nullptr;
   }
 }
 
@@ -223,6 +228,21 @@ bool GeGraphExecutor::Init() {
   if (!model_cache_mode.empty()) {
     cache_mode_ = model_cache_mode;
     MS_LOG(INFO) << "Set set model cache mode " << model_cache_mode;
+  }
+  std::string variable_weights_list;
+  (void)GetConfigOption(lite::kAscendContextSection, "variable_weights_list", &variable_weights_list);
+  if (!variable_weights_list.empty()) {
+    update_weight_ptr_ = std::make_shared<UpdateWeight>();
+    if (update_weight_ptr_ == nullptr) {
+      MS_LOG(ERROR) << "init update weight ptr failed.";
+      return false;
+    }
+    if (!update_weight_ptr_->ParseUpdateWeightConfig(variable_weights_list)) {
+      MS_LOG(ERROR) << "ParseUpdateWeightConfig failed.";
+      update_weight_ptr_ = nullptr;
+      return false;
+    }
+    enable_update_weight_ = true;
   }
   return true;
 }
@@ -900,12 +920,69 @@ transform::DfGraphPtr GeGraphExecutor::CreateFakeGraph(std::map<std::string, std
   }
 }
 
+bool GeGraphExecutor::UpdateWeights(const std::vector<std::vector<std::shared_ptr<tensor::Tensor>>> &weights) {
+  auto time1 = lite::GetTimeUs();
+  uint32_t init_graph_id = init_graph_id_list_[0];
+  MS_LOG(INFO) << "init_graph_id: " << init_graph_id;
+  if (update_weight_ptr_ == nullptr) {
+    MS_LOG(ERROR) << "please init update weight class by build model.";
+    return false;
+  }
+  std::vector<std::vector<std::shared_ptr<tensor::Tensor>>> new_weight_tensors;
+  auto ret = update_weight_ptr_->UpdateConstantTensorData(weights, &new_weight_tensors);
+  if (!ret) {
+    MS_LOG(ERROR) << "update weight failed.";
+    return false;
+  }
+  MS_LOG(DEBUG) << "ExecInitGraph start.";
+  auto time2 = lite::GetTimeUs();
+  MS_LOG(INFO) << "update weight prepare time: " << (time2 - time1) / kNumMicrosecondToMillisecond << " ms";
+
+  // cppcheck-suppress cppcheckError
+  for (size_t i = 0; i < new_weight_tensors.size(); i++) {
+    std::vector<::ge::Tensor> ge_inputs;
+    // cppcheck-suppress cppcheckError
+    for (size_t j = 0; j < new_weight_tensors[i].size(); j++) {
+      auto &input = new_weight_tensors[i][j];
+      auto ge_tensor = transform::TransformUtil::ConvertTensor(input, kOpFormat_NCHW, false);
+      if (ge_tensor == nullptr) {
+        MS_LOG(ERROR) << "Failed to converter input " << i << " ME Tensor to GE Tensor";
+        return false;
+      }
+      ge_inputs.emplace_back(*ge_tensor);
+    }
+    std::vector<::ge::Tensor> ge_outputs;
+    auto ge_status = ge_session_->RunGraph(init_graph_id, ge_inputs, ge_outputs);
+    if (ge_status != ge::GRAPH_SUCCESS) {
+      MS_LOG(ERROR) << "Exec init graph failed, graph id " << init_graph_id;
+      return false;
+    }
+  }
+  auto time3 = lite::GetTimeUs();
+  MS_LOG(INFO) << "update weight run init graph time: " << (time3 - time2) / kNumMicrosecondToMillisecond << " ms";
+  return true;
+}
+
 transform::DfGraphPtr GeGraphExecutor::CreateGeGraphOnline(const FuncGraphPtr &anf_graph,
                                                            std::map<std::string, std::string> *ge_options_ptr) {
+  std::vector<std::string> extra_variables_names = {};
+  if (enable_update_weight_ && update_weight_ptr_ != nullptr) {
+    auto ret = update_weight_ptr_->CreateAddOpNodeForGraph(anf_graph);
+    if (!ret) {
+      MS_LOG(ERROR) << "CreateAddOpNodeForGraph failed.";
+      return nullptr;
+    }
+    extra_variables_names = update_weight_ptr_->GetVariableParamsName(anf_graph);
+    if (extra_variables_names.empty()) {
+      MS_LOG(WARNING) << "GetVariableParamsName failed.";
+      return nullptr;
+    }
+  }
   transform::TensorOrderMap params_vals;
   GetParams(anf_graph, &params_vals);
 
-  auto converter = std::make_shared<transform::DfGraphConvertor>(anf_graph, "", ref_mode_flag_);
+  MS_LOG(INFO) << "extra_variables_names size: " << extra_variables_names.size();
+  auto converter = std::make_shared<transform::DfGraphConvertor>(anf_graph, "", ref_mode_flag_, extra_variables_names);
   transform::BuildGraph(graph_name_, converter, params_vals);
   auto err_code = transform::ErrCode(converter);
   if (err_code != 0) {
@@ -920,13 +997,24 @@ transform::DfGraphPtr GeGraphExecutor::CreateGeGraphOnline(const FuncGraphPtr &a
       MS_LOG(ERROR) << "Failed to add init graph, graph name " << anf_graph->ToString();
       return nullptr;
     }
+    if (enable_update_weight_ && update_weight_ptr_ != nullptr) {
+      init_graph_id_list_.push_back(init_graph_id);
+    }
     auto init_data_names = converter->GetInitDataNames();
+    if (enable_update_weight_ && update_weight_ptr_ != nullptr) {
+      if (!update_weight_ptr_->SetInitDataNames(init_data_names)) {
+        MS_LOG(ERROR) << "set init data name failed.";
+        return nullptr;
+      }
+    }
     // copy init weight to device
     if (!RunGeInitGraph(init_graph_id, init_data_names, params_vals)) {
       MS_LOG(ERROR) << "Failed to run init graph for " << anf_graph->ToString();
       return nullptr;
     }
-    ge_session_->RemoveGraph(init_graph_id);
+    if (!enable_update_weight_) {
+      ge_session_->RemoveGraph(init_graph_id);
+    }
   } else {
     MS_LOG(INFO) << "There is no init graph for graph " << anf_graph->ToString();
   }

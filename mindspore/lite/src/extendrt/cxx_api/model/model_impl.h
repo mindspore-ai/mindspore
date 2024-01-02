@@ -132,6 +132,13 @@ class ModelImpl {
   /// \return Status.
   Status Predict();
 
+  /// \brief Change the size and or content of weight tensors
+  ///
+  /// \param[in] weights A vector where model constant are arranged in sequence
+  ///
+  /// \return Status.
+  Status UpdateWeights(const std::vector<std::vector<MSTensor>> &weights);
+
   /// \brief Inference model witsh pre-process.
   ///
   /// \param[in] inputs A vector where model inputs are arranged in sequence.
