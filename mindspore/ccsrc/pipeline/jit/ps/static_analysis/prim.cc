@@ -1843,12 +1843,12 @@ EvalResultPtr GenerateFuncGraphForOverriddenMethod(AnfNodePtr node, const ValueP
   FuncGraphPtr func_graph = node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   const auto &inputs = cnode->inputs();
+  const auto &interpreted_obj = std::make_shared<parse::InterpretedObject>(value_obj);
+  const auto &value_node = NewValueNode(interpreted_obj);
   if (inner_fg == nullptr) {
     std::vector<AnfNodePtr> new_inputs;
     for (size_t i = 0; i < inputs.size(); i++) {
       if (i == 1) {
-        const auto &interpreted_obj = std::make_shared<parse::InterpretedObject>(value_obj);
-        const auto &value_node = NewValueNode(interpreted_obj);
         new_inputs.push_back(value_node);
       } else {
         new_inputs.push_back(inputs[i]);
@@ -1872,7 +1872,7 @@ EvalResultPtr GenerateFuncGraphForOverriddenMethod(AnfNodePtr node, const ValueP
   }
   std::vector<AnfNodePtr> input = {NewValueNode(prim::kPrimPartial)};
   input.push_back(NewValueNode(inner_fg));
-  input.push_back(cnode->input(1));
+  input.push_back(value_node);
   CNodePtr new_cnode = func_graph->NewCNode(input);
   auto fn_conf = eng->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
   return eng->ForwardConfig(out_conf, fn_conf);
@@ -2002,6 +2002,68 @@ EvalResultPtr GetEvaluatedValueForAdapterTensorAttrOrMethod(const AnalysisEngine
   return StaticGetterInferred(converted_value, data_conf, out_conf, require_type);
 }
 
+EvalResultPtr GetEvaluatedValueForAttrOrMethodNotInMap(const AnalysisEnginePtr &engine,
+                                                       const AbstractBasePtrList &args_abs_list,
+                                                       const AnfNodeConfigPtr &out_conf, const std::string &item_name,
+                                                       const TypePtr &data_type) {
+  constexpr auto max_args_len = 3;
+  bool has_default = (args_abs_list.size() == max_args_len);
+  auto out_node = out_conf->node();
+  auto out_cnode = out_node->cast_ptr<CNode>();
+  MS_EXCEPTION_IF_NULL(out_cnode);
+  auto eng = out_conf->engine();
+  MS_EXCEPTION_IF_NULL(eng);
+  if (has_default) {
+    constexpr auto default_index = 3;
+    auto default_node = out_cnode->inputs()[default_index];
+    auto fn_conf = eng->MakeConfig(default_node, out_conf->context(), out_conf->func_graph());
+    return eng->ForwardConfig(out_conf, fn_conf);
+  }
+  const auto &inputs = out_cnode->inputs();
+  auto vnode = inputs[1]->cast<ValueNodePtr>();
+  if (vnode != nullptr && vnode->value()->has_user_data("origin_object")) {
+    std::vector<AnfNodePtr> new_inputs;
+    py::object value_obj = *vnode->value()->user_data<py::object>("origin_object");
+    std::string data_type_str = TypeIdLabel(NormalizeTypeId(data_type->type_id()));
+    py::module mod1 = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+    py::object obj_define = python_adapter::CallPyModFn(mod1, parse::PYTHON_MOD_GET_OBJ_DEFINED, data_type_str);
+    py::object check_res =
+      python_adapter::CallPyModFn(mod1, parse::PYTHON_MOD_CHECK_IS_SUBCLASS, value_obj, obj_define);
+    if (py::cast<bool>(check_res)) {
+      for (size_t i = 0; i < inputs.size(); i++) {
+        if (i == 1) {
+          const auto &interpreted_obj = std::make_shared<parse::InterpretedObject>(value_obj);
+          const auto &value_node = NewValueNode(interpreted_obj);
+          new_inputs.push_back(value_node);
+        } else {
+          new_inputs.push_back(inputs[i]);
+        }
+      }
+      CNodePtr new_cnode = out_conf->func_graph()->NewCNode(new_inputs);
+      auto fn_conf = eng->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
+      return eng->ForwardConfig(out_conf, fn_conf);
+    }
+  }
+  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
+  if (!allow_fallback_runtime) {
+    MS_EXCEPTION(AttributeError) << "In JIT strict mode, cannot get attributes " << item_name << " or the "
+                                 << data_type->ToString() << " object has no attribute: " << item_name
+                                 << "'. You can use os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2' "
+                                 << "to enable the JIT lax mode to support the current syntax.\n\n"
+                                 << trace::GetDebugInfoStr(out_conf->node()->debug_info());
+  }
+
+  constexpr auto recursive_level = 3;
+  MS_LOG(DEBUG) << "Evaluate " << data_type->ToString() << " attribute: " << item_name
+                << ".\nnode: " << out_conf->node()->DebugString(recursive_level) << "\n"
+                << trace::GetDebugInfoStr(out_conf->node()->debug_info());
+  auto res = InterpretGetAttrNode(args_abs_list, out_conf);
+  if (res == nullptr) {
+    MS_EXCEPTION(AttributeError) << data_type->ToString() << " object has no attribute: " << item_name;
+  }
+  return res;
+}
+
 EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePtr &engine,
                                                           const AbstractBasePtrList &args_abs_list,
                                                           const ConfigPtr &data_conf,
@@ -2046,37 +2108,7 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
   if (require.empty()) {
     require = pipeline::Resource::GetAttrPtr(data_type->type_id(), item_name);
     if (require.empty()) {
-      constexpr auto max_args_len = 3;
-      bool has_default = (args_abs_list.size() == max_args_len);
-      if (!has_default) {
-        const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
-        if (!allow_fallback_runtime) {
-          MS_EXCEPTION(AttributeError) << "In JIT strict mode, cannot get attributes " << item_name << " or the "
-                                       << data_type->ToString() << " object has no attribute: " << item_name
-                                       << "'. You can use os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2' "
-                                       << "to enable the JIT lax mode to support the current syntax.\n\n"
-                                       << trace::GetDebugInfoStr(out_conf->node()->debug_info());
-        }
-
-        constexpr auto recursive_level = 3;
-        MS_LOG(DEBUG) << "Evaluate " << data_type->ToString() << " attribute: " << item_name
-                      << ".\nnode: " << out_conf->node()->DebugString(recursive_level) << "\n"
-                      << trace::GetDebugInfoStr(out_conf->node()->debug_info());
-        auto res = InterpretGetAttrNode(args_abs_list, out_conf);
-        if (res == nullptr) {
-          MS_EXCEPTION(AttributeError) << data_type->ToString() << " object has no attribute: " << item_name;
-        }
-        return res;
-      }
-      auto out_node = out_conf->node();
-      auto out_cnode = out_node->cast_ptr<CNode>();
-      MS_EXCEPTION_IF_NULL(out_cnode);
-      constexpr auto default_index = 3;
-      auto default_node = out_cnode->inputs()[default_index];
-      auto eng = out_conf->engine();
-      MS_EXCEPTION_IF_NULL(eng);
-      auto fn_conf = eng->MakeConfig(default_node, out_conf->context(), out_conf->func_graph());
-      return eng->ForwardConfig(out_conf, fn_conf);
+      return GetEvaluatedValueForAttrOrMethodNotInMap(engine, args_abs_list, out_conf, item_name, data_type);
     }
     require_type = REQUIRE_TYPE::ATTR;
   }

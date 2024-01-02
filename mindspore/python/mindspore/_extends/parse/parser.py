@@ -227,6 +227,8 @@ def resolve_symbol(namespace, symbol):
         # The list and dict is not hashable, it can not be key for the map, just return the result
         if isinstance(resolve_, (tuple, list, dict)):
             return resolve_
+        if hasattr(resolve_, "__self__") and isinstance(resolve_.__self__, (tuple, list, dict)):
+            return resolve_
         if getattr(resolve_, "__hash__") is None:
             return resolve_
 
@@ -288,7 +290,10 @@ def get_object_key(obj):
     if isinstance(obj, types.MethodType):
         method_instance = obj.__self__
         instance_id = "%s_ID%d" % (str(method_instance.__class__.__name__), id(method_instance))
-        obj_id = instance_id + obj_id + str(obj.__hash__())
+        if isinstance(method_instance, (tuple, list, dict)):
+            obj_id = instance_id + obj_id
+        else:
+            obj_id = instance_id + obj_id + str(obj.__hash__())
     return obj_id, obj_key
 
 
@@ -859,6 +864,14 @@ def check_attrs(target_object, func_name: str):
                 return False
             return True
         if getattr(target_object.__class__, func_name) is not getattr(target_object.__class__.__base__, func_name):
+            return True
+    return False
+
+
+def check_is_subclass(target_object, parent):
+    """Check if target_object is a subclass."""
+    if issubclass(target_object.__class__, parent):
+        if target_object.__class__ is not parent:
             return True
     return False
 

@@ -1132,3 +1132,31 @@ def test_dict_inner_method_overrrided_2():
         return obj.aaa
     ms_out = foo()
     assert ms_out == 100
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dict_inner_method_overrrided_3():
+    """
+    Feature: Support getattr from overridden dict.
+    Description: Support getattr from overridden dict in graph mode
+    Expectation: Return the correct value.
+    """
+    class Tmp(dict):
+        def __getitem__(self, k):
+            inner_dict = dict(self.items())
+            return inner_dict[k]
+
+        def to_tuple(self):
+            return tuple(self[k] for k in self.keys())
+
+    obj = Tmp({"a": 1, "b": 2})
+
+    @jit
+    def foo():
+        return obj.to_tuple()
+    ms_out = foo()
+    assert ms_out == (1, 2)
