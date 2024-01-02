@@ -165,8 +165,9 @@ class FileWriter:
         verify_file_hash(decrypt_index_filename)
 
         # move after decrypt and hash check all success
-        shutil.move(decrypt_filename, file_name)
-        shutil.move(decrypt_index_filename, index_file_name)
+        if decrypt_filename != file_name:
+            shutil.move(decrypt_filename, file_name)
+            shutil.move(decrypt_index_filename, index_file_name)
 
         # construct ShardHeader
         reader = ShardReader()
