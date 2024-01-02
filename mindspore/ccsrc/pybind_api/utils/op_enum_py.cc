@@ -17,6 +17,7 @@
 #include "mindspore/core/ops/op_def.h"
 #include "mindspore/core/mindapi/base/format.h"
 #include "include/common/pybind_api/api_register.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore::ops {
 void RegOpEnum(py::module *m) {
@@ -48,7 +49,7 @@ void RegOpEnum(py::module *m) {
     .value("DT_TYPE", OP_DTYPE::DT_TYPE)
     .value("DT_END", OP_DTYPE::DT_END);
   // There are currently some deficiencies in format, which will be filled in later.
-  (void)py::enum_<Format>(*m, "FormatEnum", py::arithmetic())
+  (void)py::enum_<Format>(*m, "Format", py::arithmetic())
     .value("DEFAULT_FORMAT", Format::DEFAULT_FORMAT)
     .value("NCHW", Format::NCHW)
     .value("NHWC", Format::NHWC)
@@ -69,5 +70,9 @@ void RegOpEnum(py::module *m) {
     .value("NCW", Format::NCW)
     .value("NDHWC", Format::NDHWC)
     .value("NC8HW8", Format::NC8HW8);
+  (void)py::enum_<Reduction>(*m, "Reduction", py::arithmetic())
+    .value("SUM", Reduction::REDUCTION_SUM)
+    .value("MEAN", Reduction::MEAN)
+    .value("NONE", Reduction::NONE);
 }
 }  // namespace mindspore::ops

@@ -109,6 +109,7 @@
 "mindspore/mindspore/python/mindspore/ops/composite/multitype_ops/bitwise_and_impl.py"                                   "too-many-function-args"
 "mindspore/mindspore/python/mindspore/ops/composite/multitype_ops/bitwise_or_impl.py"                                    "too-many-function-args"
 "mindspore/mindspore/python/mindspore/ops_generate/gen_ops_inner_prim.py"                                                "super-init-not-called"
+"mindspore/mindspore/python/mindspore/ops_generate/arg_handler.py"                                                       "unused-import"
 
 # MindData
 "mindspore/mindspore/python/mindspore/dataset/__init__.py"                                                               "redefined-builtin"

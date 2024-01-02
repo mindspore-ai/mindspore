@@ -29,7 +29,7 @@ from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_prepr
     _bdim_at_any, _bdim_at_front, _bdim_at_back, _handle_broadcasting, get_unary_grad_vmap_rule, _raise_value_error, \
     _vmap_clone_prim, _get_reduce_batch_axis
 from mindspore.ops.primitive import Primitive
-from mindspore._c_expression import FormatEnum as Format
+from mindspore.ops.auto_generate.gen_arg_handler import Format
 
 
 @vmap_rules_getters.register(P.ApplyAdaMax)
