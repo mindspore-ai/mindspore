@@ -33,7 +33,6 @@
 #include "framework/common/helper/model_helper.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
-#include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.h"
 #include "cxx_api/graph/acl/acl_env_guard.h"
 #include "graph/utils/graph_utils_ex.h"
 #include "mindspore/core/utils/singleton.h"
@@ -344,7 +343,6 @@ void AscendDeprecatedInterface::AclOptimizer(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>("310_multi_graph_pm");
-  pm->AddPass(std::make_shared<opt::InsertPlaceholderForDynamicRNN>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(graph);
 }

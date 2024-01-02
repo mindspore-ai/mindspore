@@ -37,8 +37,6 @@ file(GLOB_RECURSE MS_OPTIMIZER_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "./ir_fusion/batchnormgrad_to_bninfergrad.cc"
         "./ir_fusion/histogram_fixed_width_fusion.cc"
         "./ir_fusion/adaptive_max_pool2d_fusion.cc"
-        "./enhancer/add_placeholder_for_dynamic_rnn.cc"
-        "./enhancer/add_placeholder_for_dynamic_gru.cc"
         )
 list(REMOVE_ITEM MS_OPTIMIZER_910B
         "mindir/ascend_vm_op_adapter.cc"
