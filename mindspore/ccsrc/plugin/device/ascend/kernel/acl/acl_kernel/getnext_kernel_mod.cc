@@ -19,6 +19,7 @@
 #include "include/backend/data_queue/data_queue_mgr.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "ops/structure_op_name.h"
+#include "pybind_api/gil_scoped_long_running.h"
 
 namespace mindspore {
 namespace kernel {
@@ -42,6 +43,7 @@ bool GetNextAclKernelMod::Init(const std::vector<KernelTensor *> &inputs, const 
 }
 
 int GetNextAclKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  GilReleaseWithCheck gil_release;
   GetInputInfo(inputs);
 
   auto wingman_queue = device::GetTdtWingManQueue(primitive_);
