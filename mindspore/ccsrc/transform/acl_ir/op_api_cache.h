@@ -34,6 +34,9 @@ extern thread_local char g_hash_buf[g_hash_buf_size];
 extern thread_local int g_hash_offset;
 
 inline void MemcpyToBuf(const void *data_expression, size_t size_expression) {
+  if (size_expression == 0) {
+    return;
+  }
   if (g_hash_offset + size_expression >= g_hash_buf_size) {
     g_hash_offset = g_hash_buf_max_size;
     return;
