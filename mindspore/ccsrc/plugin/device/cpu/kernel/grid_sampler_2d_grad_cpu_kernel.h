@@ -141,7 +141,8 @@ struct Vec256 {
   Vec256<T> trunc() const { return map(std::trunc); }
   static Vec256<T> LoadU(const void *ptr) {
     Vec256 vec;
-    auto cp_ret = memcpy_s(static_cast<void *>(vec.values), 32, ptr, 32);
+    size_t count = 32;
+    auto cp_ret = memcpy_s(static_cast<void *>(vec.values), count, ptr, count);
     if (cp_ret != EOK) {
       MS_LOG(ERROR) << "memcpy_s failed. errorno is: " << cp_ret;
     }
