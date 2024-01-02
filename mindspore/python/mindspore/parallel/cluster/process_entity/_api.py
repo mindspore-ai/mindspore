@@ -215,7 +215,8 @@ class _ProcessManager:
         if has_exception:
             logger.warning("Analyzing exception log...")
             self._analyze_log()
-            raise RuntimeError("Distributed job exited with exception. Please check logs and outputs.")
+            raise RuntimeError("Distributed job exited with exception. Please check logs in "
+                               f"directory: {self.log_dir}.")
 
     def stop_processes(self):
         """
@@ -262,7 +263,7 @@ class _ProcessManager:
         Analyze exception logs.
         """
         scheduler_log_path = os.path.join(self.log_dir, "scheduler.log")
-        os.system(f"cat {scheduler_log_path}|grep -E 'ERROR|CRITICAL|Traceback' -C 10")
+        os.system(f"cat {scheduler_log_path}|grep -E 'ERROR|CRITICAL|Traceback|RuntimeError' -C 10")
         time_out_node_ids = []
         with open(scheduler_log_path, "r") as log:
             scheduler_log = log.read()
@@ -282,8 +283,9 @@ class _ProcessManager:
                                                       "|awk -F: '{print $1}'")
             log_names = list(grepper(id) for id in time_out_node_ids)
             for log in log_names:
-                logger.error(f"Cat log {log} error info and tail log:")
-                os.system(f"cat {os.path.join(self.log_dir, log)}|grep -E 'ERROR|CRITICAL|Traceback' -C 10")
+                logger.warning(f"cat log {log} error info and tail log:")
+                os.system(f"cat {os.path.join(self.log_dir, log)}"
+                          "|grep -E 'ERROR|CRITICAL|Traceback|RuntimeError' -C 10")
                 os.system(f"tail {os.path.join(self.log_dir, log)}")
         else:
-            os.system(f"grep -rn -E 'ERROR|CRITICAL|Traceback' -C 10 {self.log_dir}")
+            os.system(f"grep -rn -E 'ERROR|CRITICAL|Traceback|RuntimeError' -C 10 {self.log_dir}")

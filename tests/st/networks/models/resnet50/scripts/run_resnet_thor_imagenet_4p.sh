@@ -16,29 +16,34 @@
 
 BASE_PATH=$(cd "$(dirname $0)"; pwd)
 
-export RANK_SIZE=4
-export RANK_TABLE_FILE="/home/workspace/mindspore_config/hccl/rank_tabel_4p/rank_table_4p_2.json"
+export ASCEND_RT_VISIBLE_DEVICES=4,5,6,7
+export MS_WORKER_NUM=4
+export MS_SCHED_HOST=127.0.0.1
+export MS_SCHED_PORT=8119
+export GLOG_v=1
+export MS_ROLE=MS_SCHED
+python $BASE_PATH/../train_resnet50_thor.py >scheduler_thor.log 2>&1 &
 
 cpus=`cat /proc/cpuinfo| grep "processor"| wc -l`
 avg=`expr $cpus \/ 8`
 gap=`expr $avg \- 1`
 rank_start=4
-for((i=0; i<$RANK_SIZE; i++))
+for((i=0; i<$MS_WORKER_NUM; i++))
 do
     j=$((rank_start + i))
     start=`expr $j \* $avg`
     end=`expr $start \+ $gap`
     cmdopt=$start"-"$end
-    export DEVICE_ID=$((rank_start + i))
-    export RANK_ID=${i}
-    rm -rf $BASE_PATH/../train_parallel$j
-    mkdir $BASE_PATH/../train_parallel$j
-    cd $BASE_PATH/../train_parallel$j || exit
+    export MS_ROLE=MS_WORKER
+    export MS_NODE_ID=${i}
+    rm -rf $BASE_PATH/../train_parallel_thor$j
+    mkdir $BASE_PATH/../train_parallel_thor$j
+    cd $BASE_PATH/../train_parallel_thor$j || exit
     echo "start resnet thor training for rank $RANK_ID, device $DEVICE_ID"
     (taskset -c $cmdopt python $BASE_PATH/../train_resnet50_thor.py &> log; grep "#-#" log > thor_$i.txt) &
     cd ..
 done
 wait
 echo "result:"
-cat $BASE_PATH/../train_parallel5/log
-cat $BASE_PATH/../train_parallel*/thor_*.txt
+cat $BASE_PATH/../train_parallel_thor5/log
+cat $BASE_PATH/../train_parallel_thor*/thor_*.txt

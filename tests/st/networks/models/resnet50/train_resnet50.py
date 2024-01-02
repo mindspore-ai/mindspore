@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """resnet train & eval case."""
-import os
 import time
 import mindspore as ms
 from mindspore import nn
@@ -86,14 +85,9 @@ def train_and_eval(device_id, epoch_size, model, dataset, loss_cb, eval_dataset)
 
 def run_train():
     ms.context.set_context(mode=ms.GRAPH_MODE, device_target="Ascend")
-    rank_id = int(os.getenv('RANK_ID', '0'))
-    device_num = int(os.getenv('RANK_SIZE', '1'))
-    device_id = int(os.getenv('DEVICE_ID', '0'))
-    print(f"run resnet50 device_num:{device_num}, device_id:{device_id}, rank_id:{rank_id}")
-    if device_num > 1:
-        ms.communication.init()
-        ms.context.set_auto_parallel_context(parallel_mode=ms.ParallelMode.DATA_PARALLEL,
-                                             gradients_mean=True, all_reduce_fusion_config=[107, 160])
+    ms.communication.init()
+    ms.context.set_auto_parallel_context(parallel_mode=ms.ParallelMode.DATA_PARALLEL,
+                                         gradients_mean=True, all_reduce_fusion_config=[107, 160])
     net = resnet50(class_num=config.class_num)
     dist_eval_network = ClassifyCorrectCell(net)
 
@@ -113,9 +107,11 @@ def run_train():
 
     model = ms.Model(net, loss_fn=loss, optimizer=opt,
                      loss_scale_manager=loss_scale, amp_level="O2", keep_batchnorm_fp32=False,
-                     metrics={'acc': DistAccuracy(batch_size=config.eval_batch_size, device_num=device_num)},
+                     metrics={'acc': DistAccuracy(batch_size=config.eval_batch_size,
+                                                  device_num=ms.communication.get_group_size())},
                      eval_network=dist_eval_network)
     loss_cb = LossGet(1, step_size)
+    device_id = ms.communication.get_local_rank()
     train_and_eval(device_id, 2, model, dataset, loss_cb, eval_dataset)
 
 if __name__ == '__main__':

@@ -17,13 +17,17 @@ import pytest
 
 from tests.st.model_zoo_tests import utils
 
-
-@pytest.mark.level1
+@pytest.mark.skip(reason="老版本网络用例，已与负责人沟通下线，后续版本使用最新modelzoo脚本测试。")
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_single
 def test_DeeplabV3_voc2007():
+    '''
+    Feature: deeplabv3 network.
+    Description: Test deeplabv3.
+    Expectation: Run success.
+    '''
     cur_path = os.path.dirname(os.path.abspath(__file__))
     model_path = "{}/../../../../tests/models/official/cv".format(cur_path)
     model_name = "deeplabv3"

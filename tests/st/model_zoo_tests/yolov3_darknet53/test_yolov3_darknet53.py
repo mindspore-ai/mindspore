@@ -214,7 +214,7 @@ def test_yolov3_darknet53():
     print('==========test case passed===========')
 
 
-@pytest.mark.level1
+@pytest.mark.skip(reason="老版本网络用例，已与负责人沟通下线，后续版本使用最新modelzoo脚本测试。")
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
