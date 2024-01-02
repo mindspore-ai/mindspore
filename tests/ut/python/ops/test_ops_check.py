@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
 """test checking for some ops"""
 import functools
 import logging
+import pytest
 import numpy as np
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore import nn
-from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import operations as P
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
@@ -61,7 +61,8 @@ def test_net_without_construct():
     """ test_net_without_construct """
     net = NetMissConstruct()
     inp = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
-    _cell_graph_executor.compile(net, inp)
+    with pytest.raises(AttributeError):
+        net(inp)
 
 
 class NetAddN(nn.Cell):

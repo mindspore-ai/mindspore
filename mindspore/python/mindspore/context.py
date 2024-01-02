@@ -161,6 +161,7 @@ class _Context:
         self._context_switches = _ContextSwitchInfo(False)
         self._context_handle = MSContext.get_instance()
         self._support_binary = False
+        self._mode = PYNATIVE_MODE
 
     def __getattribute__(self, attr):
         value = object.__getattribute__(self, attr)
@@ -176,7 +177,7 @@ class _Context:
 
     def get_mode(self):
         """Get current mode."""
-        return self.get_param(ms_ctx_param.mode)
+        return self._mode
 
     def set_mode(self, mode):
         """
@@ -204,6 +205,7 @@ class _Context:
             raise ValueError(f"For 'context.set_context', the argument 'mode' should be context.GRAPH_MODE (0) "
                              f"or context.PYNATIVE_MODE (1), but got {mode}.")
         self.set_param(ms_ctx_param.mode, mode)
+        self._mode = mode
 
     def set_jit_syntax_level(self, level):
         """"Set the JIT syntax level for graph compiling"""
