@@ -788,39 +788,6 @@ int InsertQuantNodeManager::SetParallelStrategy(const CNodePtr &cnode,
   return RET_OK;
 }
 
-std::vector<std::vector<int64_t>> InsertQuantNodeManager::ExtractStrategy(const ValuePtr &stra) {
-  if (stra == nullptr) {
-    return {};
-  }
-
-  auto var = stra->cast<ValueTuplePtr>();
-  if (var == nullptr) {
-    return {};
-  }
-  std::vector<std::vector<int64_t>> strategy;
-  MS_LOG(INFO) << "Extract information: strategy " << stra->ToString();
-  if (var->size() > 0) {
-    std::vector<ValuePtr> elements = var->value();
-    for (uint64_t index = 0; index < elements.size(); ++index) {
-      std::vector<int64_t> dim;
-      if (elements[index]->isa<ValueSequence>()) {
-        auto value_tuple = elements[index]->cast<ValueTuplePtr>();
-        std::vector<ValuePtr> value_vector = value_tuple->value();
-        (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(dim),
-                             [](const ValuePtr &value) { return static_cast<int64_t>(GetValue<int64_t>(value)); });
-        strategy.push_back(dim);
-      } else {
-        MS_LOG(EXCEPTION) << "Failure: Strategy's format is wrong! Need ValueSequence";
-      }
-    }
-    if (strategy.empty()) {
-      MS_LOG(EXCEPTION) << "ExtractStrategy: failed to extract strategy";
-    }
-  }
-
-  return strategy;
-}
-
 std::vector<std::vector<int64_t>> InsertQuantNodeManager::GetAddMulNodeParallelStrategy(
   ShapeVector weight_shape, std::vector<int64_t> weight_strategy, int axis, bool per_channel) {
   std::vector<std::vector<int64_t>> add_mul_in_strategy;
