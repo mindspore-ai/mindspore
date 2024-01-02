@@ -81,11 +81,6 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
 #endif
   }
 
-  std::vector<DfGraphWrapperPtr> wrappers = graph_manager_.GetAllGraphs();
-  if (wrappers.empty()) {
-    MS_LOG(INFO) << "The GraphManager is empty!!";
-    return;
-  }
 #if (defined ENABLE_D) || (defined ENABLE_LITE_ACL)
   if (ms_context->backend_policy() != "ge") {
     return;
@@ -99,6 +94,11 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
     MS_LOG(EXCEPTION) << "Register summary callback failed!";
   }
 #endif
+  std::vector<DfGraphWrapperPtr> wrappers = graph_manager_.GetAllGraphs();
+  if (wrappers.empty()) {
+    MS_LOG(INFO) << "The GraphManager is empty!!";
+    return;
+  }
   for (auto &it : wrappers) {
     std::set<string> saved_graph = graph_manager_.GetSavedGraphs();
     auto iter_find = saved_graph.find(std::to_string(it->id_));
