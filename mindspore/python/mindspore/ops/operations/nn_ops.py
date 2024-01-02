@@ -11523,3 +11523,57 @@ class RmsNorm(Primitive):
         """Initialize Dense."""
         validator.check_value_type("epsilon", epsilon, [float], self.name)
         self.init_prim_io_names(inputs=['x', 'gamma'], outputs=["y", "rstd"])
+
+
+class PagedAttention(Primitive):
+    r"""
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+    """
+    @prim_attr_register
+    def __init__(self, head_num, scale_value=1.0, kv_head_num=0):
+        """Initialize PagedAttention"""
+        validator.check_value_type('head_num', head_num, [int], self.name)
+        validator.check_value_type('scale_value', scale_value, [float], self.name) # scale after qkbmm
+        validator.check_value_type('kv_head_num', kv_head_num, [int], self.name) # for MQA
+        self.init_prim_io_names(
+            inputs=['query', 'key_cache', 'value_cache', 'block_tables', 'context_lens'],
+            outputs=['attention_out'])
+
+
+class PagedAttentionMask(Primitive):
+    r"""
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+    """
+    @prim_attr_register
+    def __init__(self, head_num, scale_value=1.0, kv_head_num=0):
+        """Initialize PagedAttentionMask"""
+        validator.check_value_type('head_num', head_num, [int], self.name)
+        validator.check_value_type('scale_value', scale_value, [float], self.name) # scale after qkbmm
+        validator.check_value_type('kv_head_num', kv_head_num, [int], self.name) # for MQA
+        self.init_prim_io_names(
+            inputs=['query', 'key_cache', 'value_cache', 'block_tables', 'context_lens', 'alibi_mask'],
+            outputs=['attention_out'])
+
+
+class ReshapeAndCache(Primitive):
+    r"""
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+    """
+    __mindspore_signature__ = (
+        sig.make_sig('key', dtype=sig.sig_dtype.T),
+        sig.make_sig('value', dtype=sig.sig_dtype.T),
+        sig.make_sig('key_cache', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('value_cache', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('slot_mapping', dtype=sig.sig_dtype.T1),
+    )
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ReshapeAndCache"""
+        self.init_prim_io_names(
+            inputs=['key', 'value', 'key_cache', 'value_cache', 'slot_mapping'],
+            outputs=['key_out'])
+        self.add_prim_attr('side_effect_mem', True)
