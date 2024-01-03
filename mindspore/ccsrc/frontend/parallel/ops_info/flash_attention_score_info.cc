@@ -32,11 +32,15 @@
 namespace mindspore {
 namespace parallel {
 namespace {
-constexpr size_t kInputQueryBatchDim = 0;
-constexpr size_t kInputQuerySeqDim = 1;
-constexpr size_t kInputQueryHiddenDim = 2;
-constexpr char kAttrHeadNum[] = "head_num";
-constexpr char kAttrKeepProb[] = "keep_prob";
+constexpr size_t kInputQueryBatchDimBSH = 0;
+constexpr size_t kInputQuerySeqDimBSH = 1;
+constexpr size_t kInputQueryHiddenDimBSH = 2;
+constexpr size_t kInputQueryBatchDimBNSD = 0;
+constexpr size_t kInputQueryHeadNumDimBNSD = 1;
+constexpr size_t kInputQuerySeqDimBNSD = 2;
+constexpr size_t kInputQueryHeadSizeDimBNSD = 3;
+constexpr char kInputLayoutBSH[] = "BSH";
+constexpr char kInputLayoutBNSD[] = "BNSD";
 int64_t SEED_NUM = 1;
 
 size_t GetNonMonadInputSize(const CNodePtr &cnode) {
@@ -194,6 +198,20 @@ Status FlashAttentionScoreInfo::GetAttrs() {
   head_num_ = GetIntAttr(kAttrHeadNum);
   keep_prob_ = GetFloatAttr(kAttrKeepProb);
   has_drop_mask_input_ = !common::IsFloatEqual(keep_prob_, 1.0);
+  input_layout_ = GetStringAttr(kAttrInputLayout);
+  if (input_layout_ == kInputLayoutBSH) {
+    auto q_hidden_size = inputs_shape_[ops::kFlashAttentionScoreInputQueryIndex][kInputQueryHiddenDimBSH];
+    auto k_hidden_size = inputs_shape_[ops::kFlashAttentionScoreInputKeyIndex][kInputQueryHiddenDimBSH];
+    kv_split_ = q_hidden_size != k_hidden_size * head_num_;
+  } else if (input_layout_ == kInputLayoutBNSD) {
+    auto k_head_num = inputs_shape_[ops::kFlashAttentionScoreInputKeyIndex][kInputQueryHeadNumDimBNSD];
+    kv_split_ = k_head_num != 1;
+  } else {
+    MS_LOG(ERROR) << name_ << ": The attribute 'input_layout' must be either " << kInputLayoutBSH << " or "
+                  << kInputLayoutBNSD << ", but got " << input_layout_;
+    return FAILED;
+  }
+
   return SUCCESS;
 }
 
@@ -205,24 +223,49 @@ Status FlashAttentionScoreInfo::CheckStrategy(const StrategyPtr &strategy) {
   auto query_strategy = strategies[ops::kFlashAttentionScoreInputQueryIndex];
   auto key_strategy = strategies[ops::kFlashAttentionScoreInputKeyIndex];
   auto value_strategy = strategies[ops::kFlashAttentionScoreInputValueIndex];
-
-  if (query_strategy != key_strategy || query_strategy != value_strategy) {
-    MS_LOG(ERROR) << name_ << ": The in_strategy among of 'query'(" << query_strategy << "), 'key'( " << key_strategy
-                  << ") and 'value'" << value_strategy << ") must be same.";
+  if (key_strategy != value_strategy) {
+    MS_LOG(ERROR) << name_ << ": The in_strategy both of 'key'( " << key_strategy << ") and 'value'" << value_strategy
+                  << ") must be same.";
     return FAILED;
   }
-  if (query_strategy[kInputQuerySeqDim] != 1) {
-    MS_LOG(ERROR) << name_
-                  << ": The S-Dimention of input 'query' cannot be split, but got strategy: " << query_strategy;
+  if (kv_split_ && query_strategy != key_strategy) {
+    MS_LOG(ERROR) << name_ << ": The in_strategy both of 'query'( " << query_strategy << ") and 'key'" << key_strategy
+                  << ") must be same.";
     return FAILED;
   }
-  if (head_num_ % query_strategy[kInputQueryHiddenDim] != 0) {
-    MS_LOG(ERROR) << name_ << ": head_num % query_strategy[2] must be 0, but got " << head_num_ << "(head_num) and "
-                  << query_strategy[kInputQueryHiddenDim] << "(query_strategy[2])";
-    return FAILED;
+  if (input_layout_ == kInputLayoutBSH) {
+    if (query_strategy[kInputQuerySeqDimBSH] != 1) {
+      MS_LOG(ERROR) << name_
+                    << ": The S-Dimention of input 'query' cannot be split, but got strategy: " << query_strategy;
+      return FAILED;
+    }
+    if (head_num_ % query_strategy[kInputQueryHiddenDimBSH] != 0) {
+      MS_LOG(ERROR) << name_ << ": head_num % query_strategy[" << kInputQueryHiddenDimBSH << "] must be 0, but got "
+                    << head_num_ << "(head_num) and " << query_strategy[kInputQueryHiddenDimBSH] << "(query_strategy["
+                    << kInputQueryHiddenDimBSH << "])";
+      return FAILED;
+    }
+    if (!kv_split_ && key_strategy[kInputQueryHiddenDimBSH] != 1) {
+      MS_LOG(ERROR) << name_ << ": Under the MHA，the hidden-dim of input 'key' cannot be split.";
+      return FAILED;
+    }
+    dp_ = query_strategy[kInputQueryBatchDimBSH];
+    mp_ = query_strategy[kInputQueryHiddenDimBSH];
+  } else {
+    if (query_strategy[kInputQuerySeqDimBNSD] != 1) {
+      MS_LOG(ERROR) << name_
+                    << ": The S-Dimention of input 'query' cannot be split, but got strategy: " << query_strategy;
+      return FAILED;
+    }
+    if (head_num_ % query_strategy[kInputQueryHeadNumDimBNSD] != 0) {
+      MS_LOG(ERROR) << name_ << ": head_num % query_strategy[" << kInputQueryHeadNumDimBNSD << "] must be 0, but got "
+                    << head_num_ << "(head_num) and " << query_strategy[kInputQueryHeadNumDimBNSD] << "(query_strategy["
+                    << kInputQueryHeadNumDimBNSD << "])";
+      return FAILED;
+    }
+    dp_ = query_strategy[kInputQueryBatchDimBNSD];
+    mp_ = query_strategy[kInputQueryHeadNumDimBNSD];
   }
-  dp_ = query_strategy[kInputQueryBatchDim];
-  mp_ = query_strategy[kInputQueryHiddenDim];
   if (has_drop_mask_input_) {
     Shape expect_drop_mask_strategy{dp_, mp_, 1, 1};
     auto drop_mask_strategy = strategies[ops::kFlashAttentionScoreInputDropMaskIndex];
@@ -241,18 +284,25 @@ Status FlashAttentionScoreInfo::InferDevMatrixShape() {
 }
 
 Status FlashAttentionScoreInfo::InferTensorMap() {
-  (void)inputs_tensor_map_.emplace_back(Shape{1, -1, 0});       // query
-  (void)inputs_tensor_map_.emplace_back(Shape{1, -1, 0});       // key
-  (void)inputs_tensor_map_.emplace_back(Shape{1, -1, 0});       // value
+  int64_t head_num_map = kv_split_ ? 0 : -1;
+  if (input_layout_ == kInputLayoutBSH) {
+    (void)inputs_tensor_map_.emplace_back(Shape{1, -1, head_num_map});  // query
+    (void)inputs_tensor_map_.emplace_back(Shape{1, -1, head_num_map});  // key
+    (void)inputs_tensor_map_.emplace_back(Shape{1, -1, head_num_map});  // value
+  } else {
+    (void)inputs_tensor_map_.emplace_back(Shape{1, head_num_map, -1, -1});  // query
+    (void)inputs_tensor_map_.emplace_back(Shape{1, head_num_map, -1, -1});  // key
+    (void)inputs_tensor_map_.emplace_back(Shape{1, head_num_map, -1, -1});  // value
+  }
   (void)inputs_tensor_map_.emplace_back(Shape{1, -1, -1, -1});  // attn_mask
   // drop_mask
   if (has_drop_mask_input_) {
     (void)inputs_tensor_map_.emplace_back(Shape{1, 0, -1, -1});
   }
 
-  outputs_tensor_map_.push_back({1, -1, 0});      // attention_out
-  outputs_tensor_map_.push_back({1, 0, -1, -1});  // softmax_max
-  outputs_tensor_map_.push_back({1, 0, -1, -1});  // softmax_sum
+  outputs_tensor_map_.push_back(inputs_tensor_map_[0]);  // attention_out
+  outputs_tensor_map_.push_back({1, 0, -1, -1});         // softmax_max
+  outputs_tensor_map_.push_back({1, 0, -1, -1});         // softmax_sum
   return SUCCESS;
 }
 
@@ -299,12 +349,20 @@ Status FlashAttentionScoreInfo::InferAsLossDivisor() {
 }
 
 std::vector<StrategyPtr> FlashAttentionScoreInfo::GenerateOpStrategies(int64_t stage_id) {
-  Shape splitable_query{1, 0, 2};
-  Shape splitable_key{1, 0, 2};
-  Shape splitable_value{1, 0, 2};
+  Shape splitable_query;
+  Shape splitable_key;
+  Shape splitable_value;
+  int64_t head_num_splitable = kv_split_ ? 2 : 0;
+  if (input_layout_ == kInputLayoutBSH) {
+    splitable_query = {1, 0, head_num_splitable};
+    splitable_key = {1, 0, head_num_splitable};
+    splitable_value = {1, 0, head_num_splitable};
+  } else {
+    splitable_query = {1, head_num_splitable, 0, head_num_splitable};
+    splitable_key = {1, head_num_splitable, 0, head_num_splitable};
+    splitable_value = {1, head_num_splitable, 0, head_num_splitable};
+  }
   Shape splitable_attn_mask{1, 0, 0, 0};
-  Shape splitable_real_shift{};
-  Shape splitable_padding_mask{};
   Shapes splitable_inputs = {splitable_query, splitable_key, splitable_value, splitable_attn_mask};
   if (has_drop_mask_input_) {
     (void)splitable_inputs.emplace_back(Shape{1, 2, 0, 0});

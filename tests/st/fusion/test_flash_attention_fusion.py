@@ -35,9 +35,6 @@ def attention_compuation(query, key, value, attention_mask, nums_heads_per_parti
     attn_weights = ops.softmax(attn_weights, axis=-1)
     attn_output = ops.matmul(attn_weights, value)
 
-    attn_output = attn_output.permute(0, 2, 1, 3).contiguous()
-    new_shape = (attn_output.shape)[:-2] + (nums_heads_per_partition * head_dim,)
-    attn_output = attn_output.view(new_shape)
     return attn_output
 
 
@@ -52,7 +49,7 @@ class PFA_FusionV1_Net(nn.Cell):
         attn_output = self.attention_compuation(query, key, value, attention_mask, nums_heads_per_partition, head_dim)
         return attn_output
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
@@ -72,7 +69,7 @@ def test_prompt_flash_attention_fusion_v1(mode):
 
     net = PFA_FusionV1_Net()
     atten_output_pass = net(query, key, value, atten_mask, nums_heads_per_partition, head_dim)
-    assert atten_output_pass.shape == (4, 32, 768)
+    assert atten_output_pass.shape == (4, 12, 32, 64)
 
 
 @jit
