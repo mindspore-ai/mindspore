@@ -102,7 +102,7 @@ Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph
     MS_LOG(INFO) << "Set precision_mode " << ms_context_ptr->get_param<std::string>(MS_CTX_PRECISION_MODE)
                  << " by user.";
   } else if (is_cloud) {
-    if (soc_version == "ascend910b") {
+    if (soc_version == "ascend910b" || soc_version == "ascend910c") {
       (new_options)["ge.exec.precision_mode"] = "must_keep_origin_dtype";
       MS_LOG(INFO) << "Set precision_mode must_keep_origin_dtype, soc_version is " << soc_version << ".";
     } else {

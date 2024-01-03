@@ -147,11 +147,13 @@ void GeDeviceContext::Initialize() {
   }
 
   MS_LOG(DEBUG) << "Start initialize...";
+
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  // set overflow mode in ascend910b
+
+  // set overflow mode
   const auto &soc_version = ms_context->ascend_soc_version();
-  if (soc_version == "ascend910b") {
+  if (soc_version == "ascend910b" || soc_version == "ascend910c") {
     bool is_sat = (common::GetEnv("MS_ASCEND_CHECK_OVERFLOW_MODE") == "SATURATION_MODE");
     auto mode = (is_sat) ? aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_SATURATION
                          : aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_INFNAN;
@@ -162,6 +164,7 @@ void GeDeviceContext::Initialize() {
       MS_LOG(EXCEPTION) << "Set " << overflow_mode << " mode failed.";
     }
   }
+
   MS_EXCEPTION_IF_NULL(device_res_manager_);
   device_res_manager_->Initialize();
 
@@ -541,7 +544,8 @@ void SetContextSocVersion(MsContext *ctx) {
     {"Ascend910A", "ascend910"},    {"Ascend910B", "ascend910"},    {"Ascend910PremiumA", "ascend910"},
     {"Ascend910ProA", "ascend910"}, {"Ascend910ProB", "ascend910"}, {"Ascend910B1", "ascend910b"},
     {"Ascend910B2", "ascend910b"},  {"Ascend910B2C", "ascend910b"}, {"Ascend910B3", "ascend910b"},
-    {"Ascend910B4", "ascend910b"}};
+    {"Ascend910B4", "ascend910b"},  {"Ascend910C1", "ascend910c"},  {"Ascend910C2", "ascend910c"},
+    {"Ascend910C3", "ascend910c"}};
   const char *soc_name_c = aclrtGetSocName();
   if (soc_name_c == nullptr) {
     MS_LOG(ERROR) << "Get soc name failed.";

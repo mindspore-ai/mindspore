@@ -55,7 +55,7 @@ class FlashAttention(Cell):
             Default True
         alibi(bool): This parameter indicates whether the flashattention supports the Alibi.
             Default: False
-        use_mqa(bool): Using MHA if True, only take effect under 910B. Default: False.
+        use_mqa(bool): Using MHA if True, only take effect under 910B or 910C. Default: False.
 
 
     Inputs:
@@ -105,7 +105,7 @@ class FlashAttention(Cell):
                  ):
         super(FlashAttention, self).__init__()
         device = MSContext.get_instance().get_ascend_soc_version()
-        valid_device = ["ascend910b"]
+        valid_device = ["ascend910b", "ascend910c"]
         if device not in valid_device:
             raise ValueError(f"nn.FlashAttention only support {valid_device}, but current device is {device}")
         if alibi:
@@ -155,7 +155,7 @@ class FlashAttention(Cell):
         :return: output          [bsz, head_num, seq_len, head_dim]
         """
         bsz, head_num, seq_len, _ = query.shape
-        # 910B -- FlashAttentionScore
+        # 910B/910C -- FlashAttentionScore
         if self.dropout_rate > 1e-5:
             drop_mask_bits = self.reshape(self.drop_gen_mask((bsz, head_num, seq_len, seq_len), self.keep_prob),
                                           (bsz, head_num, seq_len, seq_len // 8))

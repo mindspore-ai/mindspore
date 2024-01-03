@@ -186,10 +186,12 @@ Status AoeUtil::AoeOnlineGeGraph(const std::shared_ptr<::ge::Session> &ge_sessio
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  // set overflow mode in ascend910b
   const auto &soc_version = ms_context->ascend_soc_version();
-  ::ge::AscendString precision_mode =
-    soc_version.find("ascend910b") == std::string::npos ? "allow_fp32_to_fp16" : "must_keep_origin_dtype";
+  ::ge::AscendString precision_mode = "allow_fp32_to_fp16";
+  if (soc_version == "ascend910b" || soc_version == "ascend910c") {
+    precision_mode = "must_keep_origin_dtype";
+  }
+
   std::map<::ge::AscendString, ::ge::AscendString> tuneOptions = {
     {AoeOptions::FRAMEWORK, ::ge::AscendString("1")},
     {AoeOptions::PRECISION_MODE, precision_mode},
