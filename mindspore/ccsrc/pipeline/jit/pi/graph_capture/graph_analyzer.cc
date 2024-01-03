@@ -192,9 +192,7 @@ bool GraphAnalyzer::TryToCapture(AbstractNode *n) {
     return true;
   }
 
-  bool supported_oper = !Utils::IsMsUnsupported(v->GetOpcode());
-  bool supported_type = o && o->IsMindSporeSupportedType();
-  if (!supported_oper || !supported_type) {
+  if (Utils::IsMsUnsupported(v->GetOpcode())) {
     // if mindspore unsupported, must be interpret
   } else if (AddToCaptured(v)) {
     return true;
@@ -288,6 +286,21 @@ void GraphAnalyzer::CollectInputs() {
   }
 }
 
+void GraphAnalyzer::UseDefAnalyze() {
+  // UD analyze: alive nodes analysis
+  std::vector<ValueNode *> aliveLocals = GetAliveLocals(graph_);
+  if (!aliveLocals.empty()) {
+    bool isStopAnalyze = false;
+    while (!isStopAnalyze) {
+      isStopAnalyze = AnalyzeAliveLocals(aliveLocals);
+      if (isStopAnalyze) {
+        break;
+      }
+      aliveLocals = GetAliveLocals(graph_);
+    }
+  }
+}
+
 void GraphAnalyzer::Analyze() {
   const FrameStates &enter_frame = graph_->GetFrame(0);
   GetCaptureInfo().escaped_locals.insert(enter_frame.GetLocals().begin(), enter_frame.GetLocals().end());
@@ -295,6 +308,7 @@ void GraphAnalyzer::Analyze() {
   if (!HasTensorOperation()) {
     CleanCapturedValue();
   }
+  UseDefAnalyze();
   CollectInputs();
 
   need_interpret_ = true;
@@ -316,6 +330,103 @@ void GraphAnalyzer::Analyze() {
   }
 }
 
+FrameStates buildLastFrame(Graph *g) { return g->GetFrame(g->GetStopTraceBci()); }
+
+std::vector<ValueNode *> GraphAnalyzer::GetAliveLocals(Graph *g) {
+  std::vector<ValueNode *> liveLocals;
+  int bci = g->GetStopTraceBci();
+  if (bci == -1) {
+    if (g->GetRetVal()) {
+      liveLocals.push_back(g->GetRetVal());
+    }
+    return liveLocals;
+  }
+  const Liveness *liveness = g->GetCFG()->GetLiveness();
+  if (this->graph_->Config().GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
+    GRAPH_JIT_LOG_F("UD analyze: enter GetAliveLocals bci %d", bci);
+  }
+  BitMap lives = liveness->CollectAlive(bci);
+  FrameStates f = buildLastFrame(graph_);
+  std::vector<ValueNode *> locals = f.GetLocals();
+  for (size_t i = 0; i < locals.size(); i++) {
+    if (lives.Get(i)) {
+      liveLocals.push_back(locals[i]);
+    }
+  }
+  std::vector<ValueNode *> stacks = f.GetStacks();
+  std::copy(stacks.begin(), stacks.end(), std::back_inserter(liveLocals));
+  return liveLocals;
+}
+
+void PrintAliveNodes(std::vector<ValueNode *> aliveNodes) {
+  GRAPH_JIT_LOG_F("UD analyze: alive node size : %ld", aliveNodes.size());
+  for (auto node : aliveNodes) {
+    if (node) {
+      GRAPH_JIT_LOG_F("UD analyze: alive node: %s", node->ToString().c_str());
+    }
+  }
+}
+
+bool GraphAnalyzer::AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) {
+  if (this->graph_->Config().GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
+    PrintAliveNodes(aliveNodes);
+  }
+  bool isAllNodesSupportOutput = true;
+  for (auto node : aliveNodes) {
+    AObject *o = node->GetVobj();
+    bool supported_type = o && o->IsMindSporeSupportedType();
+    if (supported_type) {
+      continue;
+    }
+    auto capturedLocals = info_.captured_locals.order;
+    if (std::find(capturedLocals.begin(), capturedLocals.end(), node) == capturedLocals.end()) {
+      continue;
+    }
+
+    if (!HasTensorOperation()) {
+      CleanCapturedValue();
+      break;
+    }
+
+    //  reset break graph point
+    isAllNodesSupportOutput = false;
+    int new_break_point = node->bci();
+    auto curNode = node;
+    if (new_break_point == -1) {  // temporary variable owned by CallNode
+      auto *parentNode = curNode->GetParent();
+      MS_EXCEPTION_IF_CHECK_FAIL(parentNode != nullptr && parentNode->GetType() == InstrNode::Call,
+                                 "temp variable cannot find corresponding CallNode");
+      auto *parentCallNode = static_cast<CallNode *>(parentNode);
+      new_break_point = parentCallNode->bci();
+      curNode = parentCallNode;
+    }
+    MS_EXCEPTION_IF_CHECK_FAIL(new_break_point != -1, "break point cannot be -1");
+    if (this->graph_->Config().GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
+      GRAPH_JIT_LOG_F("reset break point: %d", new_break_point);
+    }
+    curNode->GetGraph()->StopTraceAt(new_break_point, StopTraceReason::kStopTraceDataDependsOnGraphOut);
+    Graph *curGraph = curNode->GetGraph();
+    while (curGraph && curGraph->GetParent()) {
+      auto parentGraph = curGraph->GetParent();
+      for (auto instr : parentGraph->GetTracedNodes()) {
+        if (instr && instr->GetType() == InstrNode::Call && static_cast<CallNode *>(instr)->GetSubGraph() == curGraph) {
+          GRAPH_JIT_LOG_F("parent graph reset break point :%d", instr->bci());
+          parentGraph->StopTraceAt(instr->bci(), StopTraceReason::kStopTraceDataDependsOnGraphOut);
+          curGraph = parentGraph;
+          break;
+        }
+      }
+    }
+    // re-collect captured info
+    ClearCapturedInfo();
+    const FrameStates &enter_frame = graph_->GetFrame(0);
+    GetCaptureInfo().escaped_locals.insert(enter_frame.GetLocals().begin(), enter_frame.GetLocals().end());
+    (void)AnalyzeRecursive(graph_);
+    break;
+  }
+  return isAllNodesSupportOutput;
+}
+
 bool GraphAnalyzer::HasTensorOperation() const {
   bool has_tensor_cal = false;
   for (auto i : info_.captured_locals.values) {
@@ -330,6 +441,14 @@ bool GraphAnalyzer::HasTensorOperation() const {
     }
   }
   return has_tensor_cal;
+}
+
+void GraphAnalyzer::ClearCapturedInfo() {
+  info_.escaped_locals.clear();
+  info_.ordered_escaped_locals.clear();
+  info_.captured_locals.inputs.clear();
+  info_.captured_locals.values.clear();
+  info_.captured_locals.order.clear();
 }
 
 void GraphAnalyzer::CleanCapturedValue() {
