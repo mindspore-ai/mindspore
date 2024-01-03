@@ -84,7 +84,8 @@ std::vector<int64_t> CalBroadCastShape(const std::vector<int64_t> &x_shape, cons
                                << std::to_string(x_length + i) << "] or " << y_shape_name << "["
                                << std::to_string(y_length + i)
                                << "] must be 1 or -1 when they are not the same, but got " << x_shape_name << " = "
-                               << x_shape << " and " << y_shape_name << " = " << y_shape;
+                               << tensor::ShapeToString(x_shape) << " and " << y_shape_name << " = "
+                               << tensor::ShapeToString(y_shape);
     }
   }
   return broadcast_shape;
