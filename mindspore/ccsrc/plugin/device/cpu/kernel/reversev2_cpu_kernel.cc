@@ -74,7 +74,8 @@ int ReverseV2CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   input_shape_ = inputs[kIndex0]->GetShapeVector();
   input_dims_ = SizeToLong(input_shape_.size());
   auto axis_vec = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
-  axis_ = std::unordered_set<int64_t>(axis_vec.begin(), axis_vec.end());
+  (void)std::transform(axis_vec.begin(), axis_vec.end(), std::inserter(axis_, axis_.begin()),
+                       [input_dims = input_dims_](int64_t x) { return x >= 0 ? x : input_dims + x; });
   axis_dims_ = SizeToLong(axis_.size());
   if (input_dims_ >= kInputDim) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should less than " << kInputDim
