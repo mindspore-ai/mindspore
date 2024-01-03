@@ -896,27 +896,20 @@ AbstractDict::AbstractDict(Type type, py::object seq, RecMap *rec)
 
 #undef RECURSION_CONVERT
 
-#define MS_SUPPORT_CHECK()                                     \
-  for (auto i : *this) {                                       \
-    if (!i) {                                                  \
-      return false;                                            \
-    }                                                          \
-    Type t = i->GetType();                                     \
-    if (t == kTypeList || t == kTypeTuple || t == kTypeDict) { \
-      return false;                                            \
-    }                                                          \
-    if (!i->IsMindSporeSupportedType()) {                      \
-      return false;                                            \
-    }                                                          \
-  }                                                            \
-  return true;
-
 bool AbstractTuple::IsMindSporeSupportedType() {
   if (kMsSupportedType.find(element_type_) != kMsSupportedType.end()) {
     return true;
   }
   if (this->IsElementValid()) {
-    MS_SUPPORT_CHECK();
+    for (auto i : *this) {
+      if (!i) {
+        return false;
+      }
+      if (!i->IsMindSporeSupportedType()) {
+        return false;
+      }
+    }
+    return true;
   }
   return false;
 }
@@ -927,12 +920,22 @@ bool AbstractDict::IsMindSporeSupportedType() {
     return true;
   }
   if (this->IsElementValid()) {
-    MS_SUPPORT_CHECK();
+    for (auto i : *this) {
+      if (!i) {
+        return false;
+      }
+      Type t = i->GetType();
+      if (t == kTypeList || t == kTypeTuple || t == kTypeDict) {
+        return false;
+      }
+      if (!i->IsMindSporeSupportedType()) {
+        return false;
+      }
+    }
+    return true;
   }
   return false;
 }
-
-#undef MS_SUPPORT_CHECK
 
 std::string AbstractTuple::ToString() const {
   std::stringstream s;
