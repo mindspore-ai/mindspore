@@ -117,6 +117,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         If 'init' interface is used to initialize Tensor, the `Tensor.init_data` API needs to be called to load the
         actual data to `Tensor`.
 
+    Warning:
+          To convert dtype of a Tensor, it is recommended to use `Tensor.astype()` rather than
+          Tensor(sourceTensor, dtype=newDtype)
+
     Args:
         input_data (Union[Tensor, float, int, bool, tuple, list, numpy.ndarray]): The data to be stored. It can be
             another Tensor, Python number or NumPy ndarray. Default: ``None`` .
@@ -200,6 +204,11 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
     def __init__(self, input_data=None, dtype=None, shape=None, init=None, internal=False, const_arg=False):
         self.init_finished = False
+        if isinstance(input_data, (Tensor, Tensor_)) and dtype is not None:
+            logger.warning("It is suggested to use 'Tensor.astype()' to convert the dtype of a Tensor.")
+            _cast = tensor_operator_registry.get("cast")
+            input_data = _cast(input_data, dtype)
+
         if is_stub_tensor(input_data):
             input_data = input_data.stub_sync()
 
