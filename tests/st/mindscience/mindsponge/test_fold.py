@@ -64,7 +64,7 @@ def fold_infer(mixed_precision, crop_size):
     return confidence, time_list
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_910B_Ascend_fold():
