@@ -127,7 +127,7 @@ class AttnNet(nn.Cell):
         return attention_probs
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [mstype.float16])
