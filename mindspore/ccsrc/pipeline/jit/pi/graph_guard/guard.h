@@ -78,6 +78,8 @@ class OptGuard {
   virtual std::vector<PyObject *> ApplyDynamicShape(PyFrameObject *frame);
   virtual void RevertDynamicShape(PyFrameObject *frame, const std::vector<PyObject *> &backup);
 
+  std::string ToString() const;
+
  protected:
   std::vector<GuardItemPtr> guardList_;
   std::map<std::string, GuardItemPtr> guardMap_;

@@ -532,7 +532,7 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::BuildNodePtr &node) {
     } else {
       auto key_list = GetConstKeys(array.back());
       keys.insert(keys.begin(), key_list.begin(), key_list.end());
-      values.insert(values.begin(), array.begin(), array.end());
+      values.insert(values.begin(), array.begin(), array.end() - 1);
       MS_EXCEPTION_IF_CHECK_FAIL((keys.size() == values.size()), "The keys and values of Dict are not match.");
     }
     CNodePtr cnode_keys = func_graph_->NewCNodeInOrder(prim::kPrimMakeTuple, keys);

@@ -649,6 +649,9 @@ static bool SupportCall(PyObject *func, const std::string &name) {
   if (CheckBuiltinFuncOrMethod(handle)) {
     return true;
   }
+  if (func == reinterpret_cast<PyObject *>(&PyBool_Type)) {
+    return true;
+  }
   return support_infer_primitive(func) || support_create_primitive(func) || IsMsClass(func) ||
          (name.size() != 0 && PyDict_GetItemString(PyEval_GetBuiltins(), name.c_str()) == func);
 }
@@ -724,7 +727,7 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
    {ByteCodeTest(UNARY_NOT),
     [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
       if (ByteCodeCheck(UNARY_NOT, opargs, objs)) {
-        auto ret = PyObject_IsTrue(objs[0]) ? Py_True : Py_False;
+        auto ret = PyObject_IsTrue(objs[0]) ? Py_False : Py_True;
         Py_INCREF(ret);
         return ret;
       } else {

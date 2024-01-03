@@ -88,26 +88,9 @@ void LoopUnrolling::Run() {
 }
 
 LoopUnrollingReason LoopUnrolling::AnalyzeForItem() {
-  ValueNode *iter_node = nullptr;
   // find GET_ITER opcode
-  for (Block *bb : loop_->header()->pred_bbs()) {
-    Instr &instr = bb->instrs().back();
-    if (instr.op() != GET_ITER) {
-      continue;
-    }
-    iter_instr_ = &instr;
-    for (AbstractNode *node : bb->GetNodes()) {
-      if (static_cast<InstrNode *>(node)->bci() == instr.bci()) {
-        iter_node = reinterpret_cast<ValueNode *>(node);
-        break;
-      }
-    }
-  }
-  if (iter_node == nullptr || iter_node->getInputs().empty()) {
-    return kCanNotUnroll;
-  }
-  loop_value_ = iter_node->getInputs()[0];
-  AObject *loop_vobj = iter_node->getInputs()[0]->GetVobj();
+  MS_EXCEPTION_IF_NULL(loop_value_);
+  AObject *loop_vobj = loop_value_->GetVobj();
   if (!loop_vobj) {
     return kCanNotUnroll;
   }
@@ -143,27 +126,8 @@ LoopUnrollingReason LoopUnrolling::CheckLoopUnrollingSideeffect() {
   if (loop_value_ == nullptr && loop_value_->GetVobj()) {
     return res_;
   }
-  PyObject *loop_ao = loop_value_->GetVobj()->GetPyObject().ptr();
   // Check if loop_value is called by CFunction, e.g. list.append()
-  for (Block *bb : *graph_.GetCFG()) {
-    for (AbstractNode *node : bb->GetNodes()) {
-      ValueNode *value = static_cast<ValueNode *>(node);
-      if (!value->GetVobj() || value->GetVobj()->GetType() != AObject::kTypeCFunction) {
-        continue;
-      }
-      if (value->getInputs().empty()) {
-        continue;
-      }
-      AObject *o = value->input(0)->GetVobj();
-      if (!o || o->GetPyObject().ptr() == loop_ao) {
-        return kCanNotSideeffect;
-      }
-    }
-    // exit loop header
-    if (bb == loop_->header()) {
-      break;
-    }
-  }
+  // Check side effects
   return res_;
 }
 
@@ -171,8 +135,8 @@ void LoopUnrolling::AddLoopUnrollingInstr(Block *bb, int count) {
   bb->set_is_loop_head(false);
   const Instr &first_instr = bb->instrs().front();
   bb->RemoveInstrs();
-  bb->EraseNodesRange(0, bb->GetNodes().size());  // clear nodes
-  if (loop_op_ == NOP && count == 0) {            // remove GET_ITER and adding [count - 1] DUP_TOP
+  // remove GET_ITER and adding [count - 1] DUP_TOP
+  if (loop_op_ == NOP && count == 0) {
     // GET_ITER --> DUP_TOP
     if (iter_instr_ != nullptr) {
       iter_instr_->set_op(DUP_TOP);
@@ -251,9 +215,6 @@ std::map<int, Block *> LoopUnrolling::CopyBB() {
   std::map<int, Block *> bb_map;
   for (Block *memb : loop_->loop_members()) {
     Block *new_bb = memb->Clone(graph_.GetCFG().get());
-    if (!new_bb->GetNodes().empty()) {
-      new_bb->EraseNodesRange(0, new_bb->GetNodes().size());  // clear nodes
-    }
     bb_map.insert(std::make_pair(memb->id(), new_bb));
   }
   // link active bb and instr

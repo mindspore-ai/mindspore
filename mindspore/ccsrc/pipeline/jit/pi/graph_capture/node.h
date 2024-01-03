@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_NODE_H
 
 #include <string>
+#include <map>
 #include <vector>
 #include "utils/log_adapter.h"
 #include "pipeline/jit/pi/graph_capture/abstract_object.h"
@@ -26,8 +27,8 @@ namespace mindspore {
 namespace jit {
 namespace graph {
 class Graph;
-class MergeNode;
 class Block;
+
 class AbstractNode {
  public:
   enum Type {
@@ -35,7 +36,6 @@ class AbstractNode {
     kInstr,
     Value,
     Call,     // call node, it is also a value produced operation
-    Merged,   // merged value node
     Param,    // parameter value node
     CellVar,  // cell value node
     FreeVar,  // free value node
@@ -63,7 +63,7 @@ class AbstractNode {
   void SetJump(AbstractNode *v) { jump_ = v; }
   Graph *GetGraph() const { return owner_; }
   void SetGraph(Graph *g) { owner_ = g; }
-  virtual std::string to_str() const;
+  virtual std::string ToString() const;
 
   Block *GetBlock() { return block_; }
   void SetBlock(Block *b) { block_ = b; }
@@ -91,7 +91,7 @@ class InstrNode : public AbstractNode {
   void SetLineNo(int l) { this->line_ = l; }
   void SetName(const std::string &n) { name_ = n; }
   const std::string &GetName() const { return name_; }
-  std::string to_str() const override;
+  std::string ToString() const override;
 
   int bci() const { return bci_; }
   void set_bci(int i) { bci_ = i; }
@@ -128,20 +128,13 @@ class ValueNode : public InstrNode {
 
   void store_attr(const std::string &nam, ValueNode *v);
   void del_attr(const std::string &nam) {}
-  AObject *get_attr(const std::string &nam) { return vobj_ ? vobj_->GetAttr(nam) : nullptr; }
+  AObject *get_attr(const std::string &nam);
 
   void store_subscr(ValueNode *sub, ValueNode *v);
   void del_subscr(ValueNode *sub) {}
-  AObject *binary_subscr(ValueNode *sub) { return vobj_ ? vobj_->GetItem(sub->GetVobj()) : nullptr; }
+  AObject *binary_subscr(ValueNode *sub);
 
-  MergeNode *GetOutput(int i) const { return outputs_[i]; }
-  void SetOutput(int i, MergeNode *n) { outputs_[i] = n; }
-  void AddOutput(MergeNode *n) { outputs_.push_back(n); }
-  const auto &GetOutputs() const { return outputs_; }
-
-  bool IsMindsporeSupportedOperation();
-
-  std::string to_str() const override;
+  std::string ToString() const override;
 
  protected:
   ValueNode(Type type, AObject *vobj, int opcode, int oparg, const std::vector<ValueNode *> &inputs = {})
@@ -150,7 +143,6 @@ class ValueNode : public InstrNode {
  private:
   AObject *vobj_;                             // NOTE: vobj_ is not compute
   std::vector<ValueNode *> inputs_;           // which nodes are used, ordered parameter
-  std::vector<MergeNode *> outputs_;          // usage merge nodes
   std::map<std::string, ValueNode *> attrs_;  // store attrs
   bool attr_;                                 // track store attr not implement, marked as modified
   bool subscr_;                               // track store subscr not implement, marked as modified
@@ -169,7 +161,7 @@ class CellVarNode : public ValueNode {
   const auto &GetCellOper() const { return cell_oper_; }
   void AddCellOper(InstrNode *i) { cell_oper_.push_back(i); }
   virtual ~CellVarNode() {}
-  std::string to_str() const override;
+  std::string ToString() const override;
 
  private:
   ValueNode *val_;
@@ -179,21 +171,19 @@ class CellVarNode : public ValueNode {
 class ParamNode : public ValueNode {
  public:
   ParamNode(AObject *o, int index) : ValueNode(Param, o, 0, index, {}) {}
-  std::string to_str() const override;
+  std::string ToString() const override;
   virtual ~ParamNode() {}
 };
 
 class CallNode : public ValueNode {
  public:
   CallNode(int opcode, int oparg, const std::vector<ValueNode *> &inputs)
-      : ValueNode(Call, nullptr, opcode, oparg, inputs), sub_graph_(nullptr), extra_oper_(nullptr) {}
+      : ValueNode(Call, nullptr, opcode, oparg, inputs), sub_graph_(nullptr) {}
   virtual ~CallNode() {}
 
   Graph *GetSubGraph() const { return sub_graph_; }
   void SetSubGraph(Graph *n) { sub_graph_ = n; }
-  InstrNode *GetExtraOper() const { return extra_oper_; }
-  void SetExtraOper(InstrNode *root) { extra_oper_ = root; }
-  std::string to_str() const override;
+  std::string ToString() const override;
   void SetInlineReason(InlineReason r) { reason_ = r; }
   InlineReason GetInlineReason() { return reason_; }
 
@@ -204,45 +194,9 @@ class CallNode : public ValueNode {
   // sub-graph if traced function
   Graph *sub_graph_;
 
-  /**
-   * this is unused if not need execute inlined bytecode
-   * this is unused if parameter processed by graph executor
-   */
-  InstrNode *extra_oper_;  // handle parameters by bytecode
-
   InlineReason reason_ = InlineReason::kInlineUnknown;
 
-  std::vector<ValueNode *> params_;  // handle parameters by bytecode
-};
-
-class MergeNode : public ValueNode {
- public:
-  MergeNode() : ValueNode(AbstractNode::Merged, nullptr, 0, 0) {}
-  virtual ~MergeNode() {}
-  void AddInput(ValueNode *);
-  void Merge(MergeNode *);
-  std::string to_str() const override;
-
- private:
-  std::vector<int> predecessor_index_;
-};
-
-// NOTE: not check whether node is in list
-class AbstractNodeList {
- public:
-  AbstractNodeList() : head_(nullptr), back_(nullptr) {}
-  AbstractNodeList(AbstractNode *a, AbstractNode *b) : head_(a), back_(b) {}
-  void push_back(AbstractNode *n);
-  void push_front(AbstractNode *n);
-  bool insert(AbstractNode *pos, AbstractNodeList *l);
-  void cutList(AbstractNode *pos, AbstractNodeList *second_half);
-  void erase(AbstractNode *n);
-  const auto &head() const { return head_; }
-  const auto &back() const { return back_; }
-
- private:
-  AbstractNode *head_;
-  AbstractNode *back_;
+  std::vector<ValueNode *> params_;  // extra values for inline function
 };
 
 bool IsNonLocalValue(ValueNode *i);

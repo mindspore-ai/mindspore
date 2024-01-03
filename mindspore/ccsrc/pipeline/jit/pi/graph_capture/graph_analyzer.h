@@ -18,11 +18,17 @@
 
 #include <set>
 #include <vector>
-#include "pipeline/jit/pi/graph_capture/graph.h"
-
+#include "pipeline/jit/pi/graph_capture/cfg.h"
+#include "pipeline/jit/pi/graph_capture/abstract_object.h"
 namespace mindspore {
 namespace jit {
 namespace graph {
+
+class Graph;
+class AbstractNode;
+class ValueNode;
+class CallNode;
+
 class GraphAnalyzer {
  public:
   // escaped_locals and captured.values do not intersect
@@ -39,16 +45,17 @@ class GraphAnalyzer {
 
   explicit GraphAnalyzer(Graph *g) : graph_(g) {}
   auto &GetCaptureInfo() { return info_; }
-  const auto &Config() { return graph_->Config(); }
+  const auto &GetCaptureInfo() const { return info_; }
   void Analyze();
   bool HasTensorOperation() const;
+  bool NeedInterpret() const { return need_interpret_; }
 
  private:
   bool AnalyzeRecursive(Graph *g);
-  bool AnalyzeBlock(Block *g);
   bool AnalyzeCall(CallNode *);
   bool TryToCapture(AbstractNode *value);
   bool AddToCaptured(ValueNode *value);
+  bool HandleCallableToGraph(AObject *f);
   void AddToEscaped(ValueNode *value);
   bool ProduceInterpretValue(ValueNode *v);
   void CollectInputs();
@@ -56,7 +63,11 @@ class GraphAnalyzer {
 
   Graph *graph_;
   CapturedInfo info_;
+  bool need_interpret_;
 };
+
+bool ValidateGraphParameters(ValueNode *i);
+
 }  // namespace graph
 }  // namespace jit
 }  // namespace mindspore

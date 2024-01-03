@@ -41,11 +41,7 @@ class GraphBuilder {
     graph_pool_.clear();
   }
 
-  /**
-   * return false if should break graph
-   */
-  StopTraceReason BuildGraph(int depth = 0);
-  void Reset();
+  StopTraceReason TraceRun();
 
   void CollectInlineInfo(CallNode *node, int depth);
   Graph *GetGraph() const { return graph_; }
@@ -65,11 +61,8 @@ class GraphBuilder {
   Block *current_block_;
   int cur_bci_;
 
-  // return true if switch to next block
-  void HandleBlockSwitch();
-
   // loop analyze
-  StopTraceReason HandleLoop();
+  void HandleLoop();
 
   /**
    * Handle call node. Infer call result. Inline call node bytecode
@@ -98,6 +91,7 @@ class GraphBuilder {
 
   std::pair<PyObject *, ValueNode *> SearchSelfPyObject(PyCodeObject *co);
   AObject *BuildSuperObject(PyCodeObject *co);
+
   /**
    * Collect parameters of call stack and set it to frame
    * \param func_info The function of call target
@@ -107,11 +101,8 @@ class GraphBuilder {
    */
   bool HandleCallParameters(const py::object &func_info, CallNode *call_node, FrameStates *frame);
 
-  AbstractNodeList UnpackDynamicLengthTupleByBytecode(std::vector<ValueNode *> *params, AbstractNodeList tuple_unpack,
-                                                      ValueNode *args_node, CallNode *call_node);
+  bool UnpackDynamicLengthTupleByBytecode(std::vector<ValueNode *> *params, ValueNode *args_node, CallNode *call_node);
 
-  bool UnpackExtraOper(AbstractNodeList tuple_unpack, int extra_local, AbstractNodeList *etra_oper,
-                       AbstractNodeList dict_unpack, bool has_dict);
   /**
    * Unpack CALL_FUNCTION_EX parameters to stack
    * \param[in] params the call stack
@@ -120,12 +111,11 @@ class GraphBuilder {
    * \param[out] has_kw this call has key-word arguments
    * \return false if can't generate unpack operations
    */
-  bool UnpackCallExParams(std::vector<ValueNode *> *params, int extra_local, AbstractNodeList *extra_oper, bool *has_kw,
-                          CallNode *call_node);
+  bool UnpackCallExParams(std::vector<ValueNode *> *params, int extra_local, bool *has_kw, CallNode *call_node);
 
-  bool UnpackCallExDict(std::vector<ValueNode *> *params, AbstractNodeList *extra_oper, CallNode *call_node);
-  bool UnpackDynamicLengthDictByBytecode(std::vector<ValueNode *> *params, AbstractNodeList *extra_oper,
-                                         CallNode *call_node, ValueNode *dict_node);
+  bool UnpackCallExDict(std::vector<ValueNode *> *params, CallNode *call_node);
+
+  bool UnpackDynamicLengthDictByBytecode(std::vector<ValueNode *> *params, CallNode *call_node, ValueNode *dict_node);
   // generate the general unpack operations of dict, return operations
   std::vector<AbstractNode *> GenerateDictUnpack(ValueNode *kwargs_node);
 
@@ -137,8 +127,7 @@ class GraphBuilder {
    * \param[out] extra_oper the move operations to move parameters to locals
    * \return false if parameters is illegal
    */
-  bool HandleKWParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame,
-                      AbstractNodeList *extra_oper);
+  bool HandleKWParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame);
 
   /**
    * Pack key-word parameters to dict, unpack the position arguments by key from the dict.
@@ -151,15 +140,14 @@ class GraphBuilder {
    * \return false if parameters is illegal
    */
   bool PackKwParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame,
-                    AbstractNodeList *dict_gen, std::vector<ValueNode *> *kwvargs);
+                    std::vector<ValueNode *> *kwvargs);
 
-  bool CheckAndSetDefaultParams(const py::object &func, AbstractNodeList *extra_oper, FrameStates *frame, int pargc);
+  bool CheckAndSetDefaultParams(const py::object &func, FrameStates *frame, int pargc);
 
   /**
    * Use the call stack without key-word arguments to fill the frame locals
    */
-  bool HandlePositionParams(const py::object &func, std::vector<ValueNode *> *params, AbstractNodeList *extra_oper,
-                            FrameStates *frame);
+  bool HandlePositionParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame);
 
   // build subgraph, return stop trace reason
   StopTraceReason BuildSubGraph(CallNode *call_node, int depth, const py::object &func, GraphBuilder *subgraph);
@@ -172,24 +160,11 @@ class GraphBuilder {
   // return false if has unsupported bytecode
   bool DoByteCode(const Instr &instr);
 
-  void ResetBci(int i) { cur_bci_ = i; }
-  bool PruneBranch(const Instr &);
-
   // general value node for UNPACK_SEQUENCE, UNPACK_EX
   void GenIndexItemGeneral(ValueNode *iterable, int i, int j);
 
-  // create and update condition node
-  void CreateAndSetConditionNode(ValueNode *cond);
-
   // return true if not inline
   bool WhiteListFuncCheckAndInfer(CallNode *, const py::object &f);
-
-  // return true if function is recursion call
-  bool RecursionCheck(PyCodeObject *);
-
-  // create merge node
-  ValueNode *merge(ValueNode *a, ValueNode *b, Block *tar_block);
-  void MergeFrameState(Block *tar_block);
 
   // frame operation
   ValueNode *&seek(int p) { return frame_.Peek(p); }
@@ -209,10 +184,9 @@ class GraphBuilder {
   void ProcessGetItem(const Instr &instr, ValueNode *l, ValueNode *r);
 
   // bytecode operations
+  bool TraceRunControl(const Instr &instr);
+  bool TraceRunForIter(const Instr &instr);
   bool DoUnpack(const Instr &instr);
-  bool DoForIter(const Instr &instr);
-  bool DoJumpIf(const Instr &instr);
-  bool DoJumpDirect(const Instr &instr);
   bool DoCall(const Instr &instr);
   bool DoNop(const Instr &instr);
   bool DoReturn(const Instr &instr);

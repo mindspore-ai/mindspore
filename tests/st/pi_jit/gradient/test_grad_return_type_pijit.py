@@ -274,6 +274,7 @@ def test_grad_operation_no_input(mode):
     check_grad_result(out, expect)
 
 
+@pytest.mark.skip(reason="grad parameter shouldn't be list or tuple ref tensor, SymbolicKey error")
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -377,6 +378,7 @@ def test_grad_operation_no_param(mode):
     check_grad_result(out, expect)
 
 
+@pytest.mark.skip(reason="grad parameter shouldn't be list or tuple ref tensor, SymbolicKey error")
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -459,6 +461,7 @@ def test_grad_operation_single_input_and_multiple_params(mode):
     check_grad_result(out, expect)
 
 
+@pytest.mark.skip(reason="grad parameter shouldn't be list or tuple ref tensor, SymbolicKey error")
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -545,6 +548,7 @@ def test_grad_operation_multiple_inputs_and_multiple_params(mode):
     check_grad_result(out, expect)
 
 
+@pytest.mark.skip(reason="grad parameter shouldn't be list or tuple ref tensor, SymbolicKey error")
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

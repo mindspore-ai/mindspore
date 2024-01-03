@@ -32,16 +32,20 @@ Graph::Graph(PyCodeObject *co, PyObject *globals, const GraphJitConfig &conf)
       prune_branch_count_(0) {
   stop_trace_info_ = {-1, StopTraceReason::kNonStopTrace};
   if (!co) {
-    frame_states_.emplace_back(std::make_unique<FrameStates>());  // emplace empty frame
+    frame_states_[0] = std::make_unique<FrameStates>();  // emplace empty frame
     module_name_ = "";
     return;
   }
-  cfg_ = std::make_unique<CFG>(co, &alloc_, conf);
+  cfg_ = std::make_unique<CFG>(co);
   cfg_->GenerateCFG();
-  for (auto &i : cfg_->bb_pool()) {
-    i->SetGraph(this);
+
+  if (conf_.GetBoolConfig(GraphJitConfig::kPrintBB)) {
+    GRAPH_JIT_LOG_F("%s\n\n", cfg_->DumpBBs().c_str());
   }
-  Init();
+  if (conf_.GetBoolConfig(GraphJitConfig::kPrintCFG)) {
+    cfg_->DumpCFGGraph();
+  }
+
   auto pyname = PyDict_GetItemString(globals, "__name__");
   if (pyname) {
     module_name_ = PyUnicode_AsUTF8(pyname);
@@ -59,65 +63,40 @@ Graph::Graph(PyCodeObject *co, PyObject *globals, const GraphJitConfig &conf)
   }
 }
 
-Block *Graph::GetBlockByBci(int bci) const {
-  if (bci < 0 || bci >= static_cast<int>(bb_cache_.size())) {
-    return nullptr;
+/**
+ * TODO: FindLoopEnd, FindLoopBegin, reset break bci
+ * restore graph status. clean the variable that loop produced
+ * restore frame status of break bci that override by loop analyze
+ */
+bool Graph::IsBreakAtLoop() const {
+  int break_bci = this->GetStopTraceBci();
+  if (break_bci == -1) {
+    return false;
   }
-  MS_EXCEPTION_IF_CHECK_FAIL(bb_cache_.find(bci) != bb_cache_.end(), "not found)");
-  Block *r = bb_cache_.find(bci)->second;
-  MS_EXCEPTION_IF_CHECK_FAIL(bci >= r->begin_ci() && bci < r->end_ci(),
-                             "check block id: " + std::to_string(r->id()) + " curr_bci: " + std::to_string(bci));
-  return r;
-}
-
-void Graph::Init() {
-  // all bb
-  for (const auto &bb : cfg_->bb_pool()) {
-    for (auto &instr : bb->instrs()) {
-      bb->GetNodes().clear();
-      instrs_.insert(std::make_pair(instr.bci(), &instr));
-      bb_cache_.insert(std::make_pair(instr.bci(), bb.get()));
+  const auto &instr = this->cfg_->instr_pool();
+  // find the last backward edge is overlap this break point
+  int res = break_bci;
+  for (int i = break_bci; i < static_cast<int>(instr.size()); ++i) {
+    MS_EXCEPTION_IF_CHECK_FAIL(i == instr[i]->bci(), "!!!");
+    if (instr[i]->extra_jump() != nullptr) {
+      res = std::min(instr[i]->extra_jump()->bci(), res);
     }
   }
-  frame_states_.clear();
-  frame_states_.resize(instrs_.size());
-  instr_nodes_.clear();
-  instr_nodes_.resize(instrs_.size());
-  for (size_t i = 0; i < instr_nodes_.size(); ++i) {
-    instr_nodes_[i] = nullptr;
-  }
-}
-
-// for loop_unrolling
-void Graph::Reset() {
-  loops_.clear();
-  stop_trace_info_ = {-1, StopTraceReason::kNonStopTrace};
-  instrs_.clear();
-  bb_cache_.clear();
-  Init();
-  for (auto &i : cfg_->bb_pool()) {
-    i->SetGraph(this);
-  }
+  return res != break_bci;
 }
 
 void Graph::SetFrame(int bci, const FrameStates &f) {
-  MS_ASSERT(bci >= 0 && bci < (int)frame_states_.size());
-  if (!frame_states_[bci].get()) {
-    auto i = std::make_unique<FrameStates>();
-    frame_states_[bci].swap(i);
+  // just set once, used to restore the first status if has a loop
+  auto &ptr = frame_states_[bci];
+  if (ptr == nullptr) {
+    ptr = std::make_unique<FrameStates>(f);
   }
-  *frame_states_[bci] = f;
 }
 
 const FrameStates &Graph::GetFrame(int bci) const {
-  MS_ASSERT(bci >= 0 && bci < (int)frame_states_.size() && frame_states_[bci].get());
-  return *frame_states_[bci];
-}
-
-// if sub graph, extra stack size for handle parameters operation
-int Graph::GetStackSize() const {
-  PyCodeObject *c = reinterpret_cast<PyCodeObject *>(co_.ptr());
-  return c ? (c->co_stacksize + 2 + ((c->co_flags & CO_VARKEYWORDS) ? 1 : 0)) : 0;
+  auto iter = frame_states_.find(bci);
+  MS_EXCEPTION_IF_CHECK_FAIL(iter != frame_states_.end(), "can't find frame status");
+  return *(iter->second);
 }
 
 TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth);
@@ -189,7 +168,6 @@ TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_d
       return std::make_shared<RootTrace>(p->GetVobj()->GetPyObject().ptr(), mindspore::jit::graph::TraceType::Param,
                                          p->GetOparg(), p->GetName());
     }
-    case AbstractNode::Type::Merged:
     case AbstractNode::Type::Unbound:
       break;
     default:
@@ -233,64 +211,49 @@ TracePtr Graph::TraceValueNode(ValueNode *node, int max_trace_depth) {
 
 void Graph::print(int depth) const {
   std::string prefix(depth << 1, ' ');
-  if (!cfg_.get()) {
-    GRAPH_JIT_LOG_F("%s empty graph\n", prefix.c_str());
-    return;
-  }
+  std::string code_name = co_.ptr() != nullptr ? std::string(py::str(co_.ptr())) : "<no code>";
+  GRAPH_JIT_LOG_F("%s*** Trace Nodes [%s] ***\n", prefix.c_str(), code_name.c_str());
+
   if (depth == 0) {
-    GRAPH_JIT_LOG_F("%s params:\n", prefix.c_str());
+    GRAPH_JIT_LOG_F("%s Frame:\n", prefix.c_str());
     const FrameStates &f = GetFrame(0);
-    int param_cnt = 0;
-    for (auto i : f.GetLocals()) {
-      if (i != &ValueNode::UnboundLocal) {
-        GRAPH_JIT_LOG_F("%s%d:%s\n", prefix.c_str(), param_cnt++, i->to_str().c_str());
-      }
-    }
+    f.print();
   }
-  for (Block *b : *cfg_) {
-    if (b->GetNodes().empty()) {
+
+  GRAPH_JIT_LOG_F("%sNodes:\n", prefix.c_str());
+  for (auto i : GetTracedNodes()) {
+    GRAPH_JIT_LOG_F("%s%s\n", prefix.c_str(), i->ToString().c_str());
+    if (i->GetType() != AbstractNode::Call) {
       continue;
     }
-    GRAPH_JIT_LOG_F("\n%s--- %s ---\n", prefix.c_str(), b->Dump(false).c_str());
-    for (auto i : b->GetNodes()) {
-      GRAPH_JIT_LOG_F("%s%s\n", prefix.c_str(), i->to_str().c_str());
-      if (i->GetType() != AbstractNode::Call) {
-        continue;
-      }
-      CallNode *node = reinterpret_cast<CallNode *>(i);
-      bool has_sub_graph = node->GetSubGraph();
-      PyCodeObject *co = has_sub_graph ? node->GetSubGraph()->GetCodeObj() : nullptr;
-      std::string code_name = co ? py::str(reinterpret_cast<PyObject *>(co)) : "";
-      GRAPH_JIT_LOG_F("%s{--inline %s stat %s --\n", prefix.c_str(), code_name.c_str(),
-                      GetInlineReasonDesc(node->GetInlineReason()).c_str());
-      if (!has_sub_graph) {
-        GRAPH_JIT_LOG_F("%s}\n", prefix.c_str());
-        continue;
-      }
+    CallNode *node = static_cast<CallNode *>(i);
+    GRAPH_JIT_LOG_F("%s{--inline stat %s --\n", prefix.c_str(), GetInlineReasonDesc(node->GetInlineReason()).c_str());
+    if (node->GetSubGraph() != nullptr) {
       node->GetSubGraph()->print(depth + 1);
-      GRAPH_JIT_LOG_F("%s}--inlined--\n", prefix.c_str());
     }
+    GRAPH_JIT_LOG_F("%s}\n", prefix.c_str());
   }
+
   GRAPH_JIT_LOG_F("\n%s return: %s\n", prefix.c_str(),
-                  GetRetVal() ? GetRetVal()->to_str().c_str() : "track break or no return");
+                  GetRetVal() ? GetRetVal()->ToString().c_str() : "track break or no return");
   GRAPH_JIT_LOG_F("%s%s\n", prefix.c_str(), GetStopTraceReasonDesc(stop_trace_info_.reason).c_str());
   GRAPH_JIT_LOG_F("%sbreak bci: %d\n", prefix.c_str(), stop_trace_info_.bci);
-  GRAPH_JIT_LOG_F("\n\n");
+  GRAPH_JIT_LOG_F("\n");
 }
 
-void FrameStates::print() {
+void FrameStates::print() const {
   GRAPH_JIT_LOG_F("locals:\n");
   int c = 0;
   for (auto i : locals) {
-    GRAPH_JIT_LOG_F("%d:%s\n", c++, i == &ValueNode::UnboundLocal ? "(UnboundLocal)" : i->to_str().c_str());
+    GRAPH_JIT_LOG_F("%d:%s\n", c++, i == &ValueNode::UnboundLocal ? "(UnboundLocal)" : i->ToString().c_str());
   }
   GRAPH_JIT_LOG_F("\nstacks:\n");
   for (auto i : stack) {
-    GRAPH_JIT_LOG_F("%d:%s\n", c++, i == &ValueNode::UnboundLocal ? "(UnboundLocal)" : i->to_str().c_str());
+    GRAPH_JIT_LOG_F("%d:%s\n", c++, i == &ValueNode::UnboundLocal ? "(UnboundLocal)" : i->ToString().c_str());
   }
   GRAPH_JIT_LOG_F("\ncell_free:\n");
   for (auto i : cell_free) {
-    GRAPH_JIT_LOG_F("%s\n", i == &ValueNode::UnboundLocal ? "(UnboundLocal)" : i->to_str().c_str());
+    GRAPH_JIT_LOG_F("%s\n", i == &ValueNode::UnboundLocal ? "(UnboundLocal)" : i->ToString().c_str());
   }
   GRAPH_JIT_LOG_F("\n");
 }

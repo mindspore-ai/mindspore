@@ -31,7 +31,6 @@ constexpr int kDefaultMaxTraceDepth = 16;
 
 static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *)> key_map = {
   // debug option, until fix the error of copied function reuse, if compiled results recursive call self
-  {"copy_once_if_trace_break", &GraphJitConfig::SetBool<GraphJitConfig::kCopyFuncOnlyOnceIfTraceBreak>},
   {"auto_jit_func_filter", &GraphJitConfig::SetAutoJitFilter},
   // remove this config if 'strict_mode_cells' works well, and default inline all construct
   {"replace_nncell_by_construct", &GraphJitConfig::SetBool<GraphJitConfig::kReplaceNNCellByConstruct>},
@@ -59,6 +58,7 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
   {"LOG_PERF", &GraphJitConfig::SetBool<GraphJitConfig::kLogPerf>},
   {"enable_dynamic_shape", &GraphJitConfig::SetBool<GraphJitConfig::kEnableDynamicShape>},
   {"test_graph_ir", &GraphJitConfig::SetBool<GraphJitConfig::kTestGraphIR>},
+  {"kFeatureBreakAtInlinedFunction", &GraphJitConfig::SetBool<GraphJitConfig::kFeatureBreakAtInlinedFunction>},
   // kEnableOptimizeForAttrItem
   // kEnableEliminateUnusedOperation
   {"MAX_INLINE_DEPTH", &GraphJitConfig::SetInt<GraphJitConfig::kMaxInlineDepth>},
@@ -79,7 +79,6 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
 };
 
 GraphJitConfig::GraphJitConfig() {
-  bool_conf[kCopyFuncOnlyOnceIfTraceBreak - kBoolConf] = false;
   bool_conf[kAutoJit - kBoolConf] = false;
   bool_conf[kReplaceNNCellByConstruct - kBoolConf] = false;
   bool_conf[kPrintAfterAll - kBoolConf] = false;
@@ -112,6 +111,7 @@ GraphJitConfig::GraphJitConfig() {
    */
   bool_conf[kEnableOptimizeForAttrItem - kBoolConf] = true;
   bool_conf[kEnableEliminateUnusedOperation - kBoolConf] = false;
+  bool_conf[kFeatureBreakAtInlinedFunction - kBoolConf] = true;
 
   int_conf[kMaxInlineDepth - kIntConf] = 8;
   int_conf[kMaxTraceDepth - kIntConf] = kDefaultMaxTraceDepth;

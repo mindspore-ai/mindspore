@@ -31,7 +31,6 @@
 #include "pipeline/jit/pi/graph_guard/cache.h"
 #include "pipeline/jit/pi/pi_jit_config.h"
 #include "pipeline/jit/pi/utils/utils.h"
-#include "include/common/profiler.h"
 
 namespace mindspore {
 namespace jit {
@@ -130,6 +129,9 @@ typedef struct CodeExtra {
   std::shared_ptr<Tracebackes> tbs;
 
   std::shared_ptr<GraphJitConfig> conf;
+
+  int IncCodeCount() { return compile_count_++; }
+  int compile_count_;
 } JitCompileResults;
 
 JitCompileResults *getJitCompileResults(PyObject *code, bool alloc = true);
