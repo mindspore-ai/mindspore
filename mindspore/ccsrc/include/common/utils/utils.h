@@ -402,7 +402,6 @@ constexpr auto kFakeTensorListPos = "fake_tensor_list_pos";
 constexpr auto kChannelNameNpuLog = "_npu_log";
 
 // env key
-constexpr auto kGraphOpRun = "GRAPH_OP_RUN";
 constexpr auto kCompilerCacheEnable = "MS_COMPILER_CACHE_ENABLE";
 constexpr auto kCompilerCachePath = "MS_COMPILER_CACHE_PATH";
 

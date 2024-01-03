@@ -126,16 +126,12 @@ bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
 RunMode GeDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  // PyNative is only support ACL now on 910B.
-  if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    auto enable_ge = common::GetEnv("MS_PYNATIVE_GE");
-    return enable_ge == "1" ? RunMode::kGraphMode : RunMode::kKernelMode;
-  }
   if (IsDynamicShapeFuncGraph(func_graph)) {
     MS_LOG(INFO) << "dynamic shape default RunMode::kKernelMode";
     return RunMode::kKernelMode;
   }
-  if (common::GetEnv("GRAPH_OP_RUN") == "1") {
+
+  if (context->IsKByKExecutorMode()) {
     MS_LOG(INFO) << "RunMode::kKernelMode";
     return RunMode::kKernelMode;
   } else {

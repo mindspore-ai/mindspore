@@ -257,6 +257,8 @@ class MS_CORE_API MsContext {
   void SetCellReuseLevel(const CellReuseLevel &level) { cell_reuse_level_ = level; }
   enum CellReuseLevel CellReuseLevel() const { return cell_reuse_level_; }
 
+  bool IsKByKExecutorMode() const;
+
  private:
   void RefreshExecutionMode();
   void RefreshMemoryOffload();

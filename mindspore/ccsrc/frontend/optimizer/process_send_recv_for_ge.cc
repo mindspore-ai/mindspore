@@ -320,8 +320,7 @@ void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
   if (!is_enable_ge || no_cell_reuse) {
     return;
   }
-  const bool graph_op_run = common::GetEnv("GRAPH_OP_RUN") == "1";
-  if (graph_op_run) {
+  if (context->IsKByKExecutorMode()) {
     return;
   }
   auto parallel_context = parallel::ParallelContext::GetInstance();

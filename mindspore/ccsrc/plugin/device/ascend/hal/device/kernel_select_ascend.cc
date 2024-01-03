@@ -355,8 +355,8 @@ std::string TryBackoffCpu(const KernelGraphPtr &graph, const CNodePtr &node,
 
   if (graph->is_graph_run_mode()) {
     return failure_info.first +
-           "\nThe operator is not supported in task sink mode. You can try to export "
-           "environment variable GRAPH_OP_RUN to 1 to execute this operator.";
+           "\nThe operator is not supported in task sink mode. You can try to set JitLevel to O0 to execute this "
+           "operator.";
   }
 
   MS_LOG(INFO) << "Try to use backoff CPU kernel, node:" << node->fullname_with_scope();
