@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,10 @@ class RedistributionLayoutTransfer : public LayoutTransfer {
   RedistributionLayoutTransfer() = default;
   ~RedistributionLayoutTransfer() override = default;
   std::shared_ptr<ReshapeLayoutTransfer> UnifyDeviceArrangementAndTensorShape() const;
-  bool IsDynamicShape() const { return is_dynamic_shape_; }
 
  private:
   Status CheckValidTransfer() override;
   std::shared_ptr<ReshapeLayoutTransfer> UnifyDeviceArrangement() const;
-  bool is_dynamic_shape_ = false;
 };
 }  // namespace parallel
 }  // namespace mindspore

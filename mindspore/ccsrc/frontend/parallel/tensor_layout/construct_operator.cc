@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,10 +47,12 @@ OperatorVector ConstructOperator::SkipRedisReshapeOP(const Shape &shape) const {
 Status ConstructOperator::ReshapeOP(const Shape &shape) {
   int64_t prod = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
   int64_t prod_expect = std::accumulate(tensor_shape_.begin(), tensor_shape_.end(), 1, std::multiplies<int64_t>());
-  if (prod != prod_expect) {
+  if (prod > 0 && prod_expect > 0 && prod != prod_expect) {
     ValuePtr ptr = MakeValue(shape);
     MS_EXCEPTION_IF_NULL(ptr);
-    MS_LOG(ERROR) << "Invalid tensor shape " << ptr->ToString() << "when construct Reshape operator!";
+    MS_LOG(ERROR) << "Invalid tensor shape " << ptr->ToString()
+                  << " when construct Reshape operator! Expect production is " << prod_expect << " which shape is "
+                  << tensor_shape_;
     return Status::INVALID_ARGUMENT;
   }
   OperatorAttrs attrs;
@@ -131,8 +133,8 @@ Status ConstructOperator::StridedSliceOP(const Args &args) {
       end[index] = num;
     } else {
       if (num % split_count != 0) {
-        MS_LOG(ERROR) << "Tensor can not be split into " << split_count << " slices in the dimension " << split_dim
-                      << "! when construct StridedSlice operator";
+        MS_LOG(ERROR) << "Tensor with shape " << this->tensor_shape_ << " can not be split into " << split_count
+                      << " slices in the dimension " << split_dim << " when construct StridedSlice operator";
         return Status::INVALID_ARGUMENT;
       }
       int64_t count = num / split_count;

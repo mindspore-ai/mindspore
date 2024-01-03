@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,7 @@
  */
 
 #include "frontend/parallel/tensor_layout/redistribution_operator_infer.h"
-
 #include <utility>
-
 #include "frontend/parallel/device_manager.h"
 #include "include/common/utils/parallel_context.h"
 
@@ -58,6 +56,7 @@ Status RedistributionOperatorInfer::Init(const TensorLayout &tensor_layout, cons
 }
 
 Status RedistributionOperatorInfer::InferRedistributionOperator() {
+  this->constructor_.UpdateTensorShape(cur_tensor_layout_.slice_shape().array());
   while (!map_.empty()) {
     size_t len_global = operator_list_.size();
 
@@ -269,20 +268,20 @@ Status RedistributionOperatorInfer::TransferConcatByAxis(const Args &args) {
     return Status::FAILED;
   } else {
     operator_vector_.push_back(constructor_.GetOperator());
-    output_info_vector_.push_back(std::make_pair(false, 0));
+    (void)output_info_vector_.emplace_back(false, 0);
   }
   if (tensor_dim != 0) {
     if (constructor_.SplitOP(split_count) != Status::SUCCESS) {
       return Status::FAILED;
     } else {
       operator_vector_.push_back(constructor_.GetOperator());
-      output_info_vector_.push_back(std::make_pair(true, split_count));
+      (void)output_info_vector_.emplace_back(true, split_count);
     }
     if (constructor_.ConcatOP(tensor_dim) != Status::SUCCESS) {
       return Status::FAILED;
     } else {
       operator_vector_.push_back(constructor_.GetOperator());
-      output_info_vector_.push_back(std::make_pair(false, 0));
+      (void)output_info_vector_.emplace_back(false, 0);
     }
   }
   if (cur_tensor_layout_.UpdateTensorMap(LongToSize(tensor_dim), NONE) == Status::FAILED) {

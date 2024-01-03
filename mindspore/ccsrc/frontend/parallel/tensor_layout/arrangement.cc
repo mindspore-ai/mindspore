@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,14 @@ Status Arrangement::Init(const Shape &array) {
     return Status::FAILED;
   }
   ComputeSize();
+  return Status::SUCCESS;
+}
+
+Status Arrangement::UpdateTensorShape(size_t index, int64_t update_value) {
+  if (index >= this->array_.size()) {
+    return Status::FAILED;
+  }
+  this->array_[index] = update_value;
   return Status::SUCCESS;
 }
 

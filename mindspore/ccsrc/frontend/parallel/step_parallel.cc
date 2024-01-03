@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
 #include <set>
 #include <string>
 #include <queue>
-
+#include <unordered_map>
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/array_ops.h"
@@ -41,6 +41,7 @@
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/graph_util/graph_info.h"
 #include "frontend/parallel/graph_util/node_info.h"
+#include "frontend/parallel/tensor_layout/prime_generator.h"
 #include "frontend/parallel/graph_util/pipeline_split_utils.h"
 #include "frontend/parallel/graph_util/fold_pipeline_split_utils.h"
 #include "frontend/parallel/graph_util/grad_accumulation_utils.h"
@@ -92,19 +93,53 @@ static void SetAllReduceRecomputeFlag(const std::vector<AnfNodePtr> &new_node_in
   }
 }
 
-std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &node, const std::string &instance_name) {
+std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &node, const std::string &instance_name,
+                                    const TensorRedistribution &tensor_redistribution) {
   MS_EXCEPTION_IF_NULL(node);
   OperatorArgs arg_forward = op.second;
   OperatorParams params = arg_forward.second;
 
   std::vector<AnfNodePtr> new_node_input = {node};
   if (!params.empty()) {
-    for (auto &param : params) {
-      AnfNodePtr val = NewValueNode(param.first.second);
-      MS_EXCEPTION_IF_NULL(val);
-      val->set_abstract(param.first.second->ToAbstract());
-      int64_t position = param.second;
-      (void)new_node_input.insert(new_node_input.cbegin() + position - 1, val);
+    if (tensor_redistribution.IsInited() && tensor_redistribution.IsAssembledStaticShape() && (op.first == RESHAPE)) {
+      // TODO(liuchongming74): liuchongming74, Add input mapping to arg_forward.
+      //  Should call `CreateInputsAccordingToAttrAndDynamicDimsMapping` here.
+      // TODO(liuchongming74): liuchongming74, Traverse the second input of the reshape,
+      //  and insert TupleGetItem to replace fake constant value.
+      AssembledDynamicDimsMapping dyn_dims_mapping = tensor_redistribution.GetDynamicDimsMapping();
+      MS_LOG(DEBUG) << "Insert TupleGetItem to replace fake constant value.";
+      // 1. replace constant value by TupleGetItem.
+      // 2. create MakeTuple to assemble TupleGetItem and constant value.
+      // 3. push MakeTuple to new_node_input.
+      std::vector<int64_t> prime_set(dyn_dims_mapping.size());
+      size_t cnt = 0;
+      for (auto &iter : dyn_dims_mapping) {
+        prime_set[cnt++] = iter.first;
+      }
+      for (auto &param : params) {
+        if (param.first.first != SHAPE) {
+          continue;
+        }
+        AnfNodePtr val = NewValueNode(param.first.second);
+        val->set_abstract(param.first.second->ToAbstract());
+        Shape shape_vec = GetValue<Shape>(param.first.second);
+        for (const auto v : shape_vec) {
+          DecomposeDim decompose = DecomposeDim::Decompose(v, prime_set);
+          // TODO(liuchongming74): liuchongming74, Add TupleGetItem to shape_inputs.
+        }
+        int64_t position = param.second;
+        (void)new_node_input.insert(new_node_input.cbegin() + position - 1, val);
+        // TODO(liuchongming74): liuchongming74, Insert MakeTuple to construct target shape of reshape.
+        // InsertMakeTuple() can be used here.
+      }
+    } else {
+      for (auto &param : params) {
+        AnfNodePtr val = NewValueNode(param.first.second);
+        MS_EXCEPTION_IF_NULL(val);
+        val->set_abstract(param.first.second->ToAbstract());
+        int64_t position = param.second;
+        (void)new_node_input.insert(new_node_input.cbegin() + position - 1, val);
+      }
     }
   }
 
@@ -182,7 +217,8 @@ static std::vector<AnfNodePtr> CreateMirrorInput(const FuncGraphPtr &root, const
 
 static void InsertNode(const Operator &op, const CNodePtr &node, size_t index, const AnfNodePtr &pre_node,
                        const FuncGraphPtr &func_graph, const std::string &instance_name,
-                       const std::string &param_name = "", const FuncGraphPtr &root = nullptr) {
+                       const std::string &param_name = "", const FuncGraphPtr &root = nullptr,
+                       const TensorRedistribution &tensor_redistribution = TensorRedistribution()) {
   // insert new node before the node
   FuncGraphManagerPtr manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
@@ -192,7 +228,7 @@ static void InsertNode(const Operator &op, const CNodePtr &node, size_t index, c
   if (root && !param_name.empty()) {
     node_input = CreateMirrorInput(root, op, pre_node, instance_name, param_name);
   } else {
-    node_input = CreateInput(op, pre_node, instance_name);
+    node_input = CreateInput(op, pre_node, instance_name, tensor_redistribution);
   }
 
   CNodePtr new_node = func_graph->NewCNode(node_input);
@@ -336,7 +372,8 @@ static CNodePtr InsertMakeTuple(const AnfNodePtr &prev, uint64_t num, const Func
 }
 
 static void InsertRedistribution(const RedistributionOpListPtr &redistribution_oplist_ptr, const CNodePtr &node,
-                                 const FuncGraphPtr &func_graph, int64_t pos, const CNodePtr &pre_node) {
+                                 const FuncGraphPtr &func_graph, int64_t pos, const CNodePtr &pre_node,
+                                 const TensorRedistribution &tensor_redistribution) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(pre_node);
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -371,7 +408,7 @@ static void InsertRedistribution(const RedistributionOpListPtr &redistribution_o
       }
       instance_name = instance_name + "_" + recompute_str;
     }
-    InsertNode(op, node, LongToSize(pos), target_node, func_graph, instance_name);
+    InsertNode(op, node, LongToSize(pos), target_node, func_graph, instance_name, "", nullptr, tensor_redistribution);
     if ((redistribution_oplist_ptr->second)[index].first) {
       target_node = node->input(LongToSize(pos));
       MS_EXCEPTION_IF_NULL(target_node);
@@ -422,6 +459,7 @@ TensorLayout GetTensorInLayout(const AnfNodePtr &pre_node, int get_item_index) {
 
 static void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, const AnfNodePtr &pre_node,
                            TensorRedistribution tensor_redistribution, int get_item_index) {
+  MS_LOG(DEBUG) << "Do Redistribution for " << node_pair.first->fullname_with_scope();
   auto next_cnode = node_pair.first->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(next_cnode);
   auto func_graph = next_cnode->func_graph();
@@ -448,9 +486,9 @@ static void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, cons
     next_distribute_operator = GetDistributeOperator(next_cnode);
   }
   MS_EXCEPTION_IF_NULL(next_distribute_operator);
-
   MS_LOG(DEBUG) << "Redistribution for pre_node: " << pre_cnode->DebugString()
                 << " next_node: " << next_cnode->DebugString();
+
   // extract tensor layout in and out
   if (distribute_operator->outputs_tensor_info().empty()) {
     MS_LOG(WARNING) << "pre_node's tensorinfo_in is empty, operator name is " << distribute_operator->name();
@@ -488,13 +526,16 @@ static void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, cons
   }
   MS_LOG(DEBUG) << "Redistribution size " << redistribution_oplist_ptr->first.size();
   if (!redistribution_oplist_ptr->first.empty()) {
+    tensor_redistribution.CreateAssembledDynamicMapping(&redistribution_oplist_ptr, func_graph, pre_cnode);
     // insert node before next node
-    InsertRedistribution(redistribution_oplist_ptr, next_cnode, func_graph, node_pair.second, pre_cnode);
+    InsertRedistribution(redistribution_oplist_ptr, next_cnode, func_graph, node_pair.second, pre_cnode,
+                         tensor_redistribution);
   }
 }
 
 static void StepRedistribution(const CNodePtr &cnode, const TensorRedistribution &tensor_redistribution,
                                const NodeUsersMap &node_users_map) {
+  MS_LOG(DEBUG) << "Do StepRedistribution for " << cnode->fullname_with_scope();
   MS_EXCEPTION_IF_NULL(cnode->func_graph());
   FuncGraphManagerPtr manager = cnode->func_graph()->manager();
   MS_EXCEPTION_IF_NULL(manager);
@@ -520,7 +561,11 @@ static void StepRedistribution(const CNodePtr &cnode, const TensorRedistribution
   // Insert Redistribution nodes between pre_nodes and next_nodes
   for (auto &pre_node : pre_nodes) {
     for (auto &next_node : next_nodes) {
+      MS_LOG(DEBUG) << "===========Do Redistribution start============" << std::endl
+                    << pre_node->fullname_with_scope() << "->" << next_node.first.first->fullname_with_scope() << "("
+                    << next_node.first.second << ")";
       Redistribution(next_node.first, pre_node, tensor_redistribution, next_node.second);
+      MS_LOG(DEBUG) << "===========Do Redistribution end  ============" << std::endl;
     }
     for (const auto &next_node : next_nodes) {
       if (!next_node.first.first->has_user_data(FUNC_PARAM)) {
@@ -1951,6 +1996,7 @@ static std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node, bool
 }
 
 static void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes) {
+  MS_LOG(DEBUG) << "=============Do ReshapeInit start=============";
   for (auto &node : all_nodes) {
     auto cnode = node->cast<CNodePtr>();
     if ((cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0))) {
@@ -2003,6 +2049,7 @@ static void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes) {
       MS_LOG(EXCEPTION) << "Failure:operator " << prim->ToString() << " init failed";
     }
   }
+  MS_LOG(DEBUG) << "=============Do ReshapeInit end=============";
 }
 
 static CNodePtr HandleDependLoss(const CNodePtr &cnode, size_t curr_depth) {
@@ -2159,7 +2206,8 @@ static void SplitSens(const CNodePtr &grad_sens_node, const TensorLayout &loss_g
       auto sens_tensor_cnode = sens_tensor_node->cast<CNodePtr>();
       auto func_graph = grad_sens_node->func_graph();
       MS_EXCEPTION_IF_NULL(func_graph);
-      InsertRedistribution(op_list_ptr, grad_sens_node, func_graph, 1, sens_tensor_cnode);
+      TensorRedistribution tensor_redistribution;
+      InsertRedistribution(op_list_ptr, grad_sens_node, func_graph, 1, sens_tensor_cnode, tensor_redistribution);
       return;
     }
     MS_LOG(EXCEPTION) << "The type of sens node is not Tensor or Parameter or CNode, it is unsupported now.";

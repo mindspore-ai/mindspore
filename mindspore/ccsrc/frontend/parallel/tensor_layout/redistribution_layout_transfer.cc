@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,7 @@
 namespace mindspore {
 namespace parallel {
 Status RedistributionLayoutTransfer::CheckValidTransfer() {
-  Shape from_shape = from_in_.tensor_shape().array();
-  if (std::find(from_shape.begin(), from_shape.end(), -1) != from_shape.end()) {
-    is_dynamic_shape_ = true;
+  if (this->IsDynamicShape() && !this->IsAssembledStaticShape()) {
     Shape from_map = from_in_.tensor_map().array();
     Shape to_map = to_in_.tensor_map().array();
     bool not_all_repeat = std::any_of(from_map.begin(), from_map.end(), [](int64_t i) { return i != -1; }) ||

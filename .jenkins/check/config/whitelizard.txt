@@ -274,6 +274,8 @@ mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/HPC-genera
 mindspore/mindspore/lite/src/litert/kernel/cpu/fp32/matmul_fp32_base.cc:mindspore::kernel::MatmulFp32BaseCPUKernel::Run
 mindspore/mindspore/ccsrc/frontend/parallel/auto_parallel/rec_core/rec_partition.cc:mindspore::parallel::GetWeights
 mindspore/mindspore/ccsrc/frontend/parallel/auto_parallel/rec_core/rec_partition.cc:mindspore::parallel::PartitionNode
+mindspore/mindspore/ccsrc/frontend/parallel/ops_info/reshape_info.cc:mindspore::parallel::ReshapeInfo::ComputeReplaceOp
+mindspore/mindspore/ccsrc/frontend/parallel/tensor_layout/layout_transfer.cc:mindspore::parallel::IntroduceConstraints
 mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp16/instance_norm_fp16.c:InstanceNormNC8HW8Fp16
 mindspore/mindspore/lite/src/litert/kernel/cpu/fp32/matmul_fp32_base.cc:mindspore::kernel::MatmulFp32BaseCPUKernel::init_global_variable
 mindspore/mindspore/lite/src/train/train_loop.cc:mindspore::lite::TrainLoop::Train

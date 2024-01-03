@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,9 @@ struct LossNodeInfo {
   CNodePtr loss_node = nullptr;
 };
 
-std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &node, const std::string &instance_name);
+std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &node, const std::string &instance_name,
+                                    const TensorRedistribution &tensor_redistribution = TensorRedistribution());
+
 void ForwardCommunication(OperatorVector forward_op, const CNodePtr &node);
 
 TensorLayout GetTensorInLayout(const AnfNodePtr &pre_node, int get_item_index);

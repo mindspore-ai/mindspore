@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@
 
 namespace mindspore {
 namespace parallel {
+constexpr int64_t DYNAMIC_DIM_VAL = -1;
 Status ReshapeInfo::CheckStrategy(const StrategyPtr &strategy) { return CheckStrategyValue(strategy, inputs_shape_); }
 
 /*
@@ -118,7 +119,9 @@ std::vector<int64_t> ReshapeInfo::GetInputShape(const AnfNodePtr &shape_input_no
   return origin_dst_shape;
 }
 
-bool OnlyOneDimDynamicShape(const Shape &shape) { return (std::count(shape.cbegin(), shape.cend(), -1) == 1); }
+bool OnlyOneDimDynamicShape(const Shape &shape) {
+  return (std::count(shape.cbegin(), shape.cend(), DYNAMIC_DIM_VAL) == 1);
+}
 
 int64_t AccumulateShape(const Shape &shape) {
   return std::accumulate(shape.cbegin(), shape.cend(), 1, std::multiplies<int64_t>());
@@ -130,7 +133,7 @@ size_t DynamicShapeIndex(const Shape &shape) {
   }
 
   for (size_t i = 0; i < shape.size(); ++i) {
-    if (shape[i] == -1) {
+    if (shape[i] == LongToInt(DYNAMIC_DIM_VAL)) {
       return i;
     }
   }
@@ -152,12 +155,14 @@ Status ReshapeInfo::ComputeReplaceOpForDynamicShape() {
   auto accumulate_shape_out = AccumulateShape(replace_shape_out);
   if (accumulate_shape_in < accumulate_shape_out) {
     replace_value = accumulate_shape_in / accumulate_shape_out;
-    (void)std::replace(replace_shape_in.begin(), replace_shape_in.end(), -1, 1);
-    (void)std::replace(replace_shape_out.begin(), replace_shape_out.end(), -1, LongToInt(replace_value));
+    (void)std::replace(replace_shape_in.begin(), replace_shape_in.end(), LongToInt(DYNAMIC_DIM_VAL), 1);
+    (void)std::replace(replace_shape_out.begin(), replace_shape_out.end(), LongToInt(DYNAMIC_DIM_VAL),
+                       LongToInt(replace_value));
   } else {
     replace_value = accumulate_shape_out / accumulate_shape_in;
-    (void)std::replace(replace_shape_in.begin(), replace_shape_in.end(), -1, LongToInt(replace_value));
-    (void)std::replace(replace_shape_out.begin(), replace_shape_out.end(), -1, 1);
+    (void)std::replace(replace_shape_in.begin(), replace_shape_in.end(), LongToInt(DYNAMIC_DIM_VAL),
+                       LongToInt(replace_value));
+    (void)std::replace(replace_shape_out.begin(), replace_shape_out.end(), LongToInt(DYNAMIC_DIM_VAL), 1);
   }
 
   if (fake_in.InitFromVector(input_layout_.device_arrangement_origin().array(),
@@ -196,7 +201,7 @@ Status ReshapeInfo::ComputeReplaceOpForDynamicShape() {
       return FAILED;
     }
     size_t index = DynamicShapeIndex(output_layout_.tensor_shape_origin().array());  // find the dynamic dimension
-    dst_shape[index] = -1;                                                           // reset the dynamic dimension
+    dst_shape[index] = DYNAMIC_DIM_VAL;                                              // reset the dynamic dimension
     replace_op_.front().second.second.front().first.second = MakeValue(dst_shape);
     return SUCCESS;
   }
@@ -315,7 +320,11 @@ void ReshapeInfo::ChangeDynamicDstShapeForSkipRedistribution(const AnfNodePtr &s
 }
 
 Status ReshapeInfo::ComputeReplaceOp() {
+  MS_LOG(DEBUG) << "Infer reshape redistribution for " << this->cnode_->fullname_with_scope() << "." << std::endl
+                << "input_layout_: " << this->input_layout_.ToString() << std::endl
+                << "output_layout_: " << this->output_layout_.ToString();
   if (is_skip_) {
+    MS_LOG(DEBUG) << "Skip reshape redistribution for " << cnode_->fullname_with_scope() << std::endl;
     if (DstShapeIsConstant(cnode_->input(2))) {
       ConstructOperator constructor;
       replace_op_ = constructor.SkipRedisReshapeOP(output_layout_.slice_shape().array());
@@ -326,7 +335,6 @@ Status ReshapeInfo::ComputeReplaceOp() {
       replace_op_.clear();
       replace_op_info_.clear();
       MS_LOG(WARNING) << name_ << ": dst shape is dynamic, and skip redistribution";
-
       // need to modify the dst shape
       ChangeDynamicDstShapeForSkipRedistribution(cnode_->input(2));
     }
@@ -337,14 +345,17 @@ Status ReshapeInfo::ComputeReplaceOp() {
       replace_op_info_.clear();
       return SUCCESS;
     }
-    // handle dynamic shape, now the dynamic dimension can not be split
-    auto input_shape = input_layout_.tensor_shape_origin().array();
     auto output_shape = output_layout_.tensor_shape_origin().array();
-    if (OnlyOneDimDynamicShape(input_shape) && OnlyOneDimDynamicShape(output_shape)) {
-      return ComputeReplaceOpForDynamicShape();
+    if (output_shape.size() == 1 && output_shape.front() == DYNAMIC_DIM_VAL) {
+      return SUCCESS;
     }
-
-    // handle static shape
+    if (std::count(output_shape.cbegin(), output_shape.cend(), DYNAMIC_DIM_VAL) > 1) {
+      replace_op_.clear();
+      replace_op_info_.clear();
+      // handle dynamic shape, now the dynamic dimension can not be split, only static shape will be split.
+      ChangeDynamicDstShapeForSkipRedistribution(cnode_->input(2));
+      return SUCCESS;
+    }
     RankList dev_list = stage_device_list();
     TensorRedistribution tensor_redistribution(!is_generating_costs_, true);
     if (tensor_redistribution.Init(input_layout_, output_layout_, dev_list) == FAILED) {
@@ -358,7 +369,6 @@ Status ReshapeInfo::ComputeReplaceOp() {
     MS_LOG(DEBUG) << name_ << ": input " << input_layout_.ToString();
     MS_LOG(DEBUG) << name_ << ": output " << output_layout_.ToString();
     MS_LOG(DEBUG) << name_ << ": dev_list " << dev_list.size();
-
     RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution.InferTensorRedistributionOperatorList();
     if (!is_generating_costs_) {
       redistribution_oplist_ptr = TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(
@@ -383,9 +393,14 @@ Status ReshapeInfo::ComputeReplaceOp() {
     Shape origin_dst_shape = GetInputShape(cnode_->input(LongToSize(shape_dim)));
     if (dst_shape.size() == origin_dst_shape.size()) {
       for (size_t i = 0; i < dst_shape.size(); ++i) {
-        if (origin_dst_shape[i] != dst_shape[i] && origin_dst_shape[i] != -1) {
+        if (origin_dst_shape[i] != dst_shape[i] && origin_dst_shape[i] != DYNAMIC_DIM_VAL) {
           return SUCCESS;
         }
+      }
+      int64_t dyn_dim_cnt = std::count(origin_dst_shape.cbegin(), origin_dst_shape.cend(), DYNAMIC_DIM_VAL);
+      if (dyn_dim_cnt > 1) {
+        MS_LOG(DEBUG) << "Don't need to replace reshape's target shape.";
+        return SUCCESS;
       }
       MS_LOG(INFO) << "The reshape would not change the target shape.";
       replace_op_.front().second.second.front().first.second = MakeValue(origin_dst_shape);
@@ -524,6 +539,7 @@ Status ReshapeInfo::InferDefaultLayout(const Shape &shape, TensorLayout *const l
 Status ReshapeInfo::Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy,
                          const std::vector<std::shared_ptr<TensorLayout>> &in_tensor_layouts,
                          const std::vector<std::shared_ptr<TensorLayout>> &out_tensor_layouts) {
+  MS_LOG(DEBUG) << "Init for " << this->cnode()->fullname_with_scope();
   auto reshape_skip_redis_iter = attrs_.find(SKIP_REDISTRIBUTION);
   if (reshape_skip_redis_iter != attrs_.end()) {
     MS_EXCEPTION_IF_NULL(reshape_skip_redis_iter->second);

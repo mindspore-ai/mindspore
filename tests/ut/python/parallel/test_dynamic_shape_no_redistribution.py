@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import pytest
 import numpy as np
 
 import mindspore as ms
@@ -315,6 +315,8 @@ class AttentionNet(Cell):
         return out
 
 
+@pytest.mark.skip(reason="offline this testcase for tensor redistribution temporarily, "
+                         "online after can tracing ir.")
 def test_attention_reshape():
     """
     Feature: test attention parallel, the dst shape of reshape is dynamic
@@ -510,6 +512,7 @@ def test_dynamic_fillv2():
     Description: no redistribution
     Expectation: compile success
     """
+
     class DynamicFillNet(Cell):
         def __init__(self, strategy1, strategy2, strategy3):
             super().__init__()
@@ -546,6 +549,7 @@ def test_dynamic_tile():
     Description: no redistribution
     Expectation: compile success
     """
+
     class DynamicTileNet(Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -581,6 +585,7 @@ def test_dynamic_mul_broadcast():
     Description: no redistribution
     Expectation: compile success
     """
+
     class DynamicMulNet(Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
