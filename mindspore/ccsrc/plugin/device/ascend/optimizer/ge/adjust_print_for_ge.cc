@@ -112,10 +112,13 @@ const AnfNodePtr AdjustPrintForGe::Process(const FuncGraphPtr &func_graph, const
     }
   }
   new_inputs.push_back(node_inputs.back());
-  cnode->set_inputs(new_inputs);
+  auto new_print_node = func_graph->NewCNode(new_inputs);
+  MS_EXCEPTION_IF_NULL(new_print_node);
+  new_print_node->set_abstract(node->abstract());
+  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), new_print_node);
 
   // set attribute channel_name and dynamic_input_sizes of print node
-  auto primitive = GetCNodePrimitive(cnode);
+  auto primitive = GetCNodePrimitive(new_print_node);
   MS_EXCEPTION_IF_NULL(primitive);
   (void)primitive->AddAttr(kAttrChannelName, MakeValue(kChannelNameNpuLog));
   (void)primitive->AddAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{-1, num_inputs, -1}));
@@ -124,7 +127,8 @@ const AnfNodePtr AdjustPrintForGe::Process(const FuncGraphPtr &func_graph, const
   auto tensor = std::make_shared<tensor::Tensor>(0.0);
   ValueNodePtr value_node = kernel_graph->NewValueNode(tensor->ToAbstract(), tensor);
   kernel_graph->AddValueNodeToGraph(value_node);
-  std::vector<AnfNodePtr> depend_input = {NewValueNode(std::make_shared<Primitive>(kDependOpName)), value_node, cnode};
+  std::vector<AnfNodePtr> depend_input = {NewValueNode(std::make_shared<Primitive>(kDependOpName)), value_node,
+                                          new_print_node};
   auto new_depend_node = func_graph->NewCNode(depend_input);
   MS_EXCEPTION_IF_NULL(new_depend_node);
   new_depend_node->set_abstract(value_node->abstract());
