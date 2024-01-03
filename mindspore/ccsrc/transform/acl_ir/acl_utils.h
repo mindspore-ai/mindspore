@@ -198,8 +198,6 @@ class AclRunner {
 
   void SetPrecisionMode(const AclPrecisionMode mode);
 
-  void SetOpPrecisionMode();
-
   void ResizeOpInputs(size_t size) {
     (void)std::for_each(acl_param_.input_desc.begin(), acl_param_.input_desc.end(), [](const aclTensorDesc *desc) {
       if (desc != nullptr) {
