@@ -47,7 +47,6 @@ class BinaryCrossEntropyGradCpuKernelMod : public NativeCpuKernelMod {
   TypeId dtype_{kTypeUnknown};
   size_t input_size_{1};
   ReductionType reduction_{kNone};
-  bool weight_defined_{false};  // true: there are 4 inputs, false: there are 3 inputs(no [weight])
 };
 }  // namespace kernel
 }  // namespace mindspore
