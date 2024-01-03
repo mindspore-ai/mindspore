@@ -83,7 +83,7 @@ constexpr size_t kSwitchAfterIndex = 3;
 constexpr size_t kAfterIndexInCache = 2;
 constexpr size_t kCnodeInputSizeOne = 1;
 constexpr size_t kDataInputIndex = 1;
-constexpr size_t kReturnInputSize = 2;
+constexpr size_t kInputSize2 = 2;
 constexpr size_t kMergeInputSize = 2;
 constexpr size_t kNoOpOptThreshold = 3;
 constexpr auto kHcclFusionByFusionID = 2;
@@ -3804,11 +3804,10 @@ void DfGraphConvertor::SetNodeAbstract(const CNodePtr &node) const {
     node->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
     return;
   }
-  if (IsPrimitiveCNode(node, prim::kPrimReturn)) {
+  if (IsPrimitiveCNode(node, prim::kPrimReturn) || IsPrimitiveCNode(node, prim::kPrimDepend)) {
     auto inputs = node->inputs();
-    if (inputs.size() < kReturnInputSize) {
-      MS_LOG(EXCEPTION) << "Return node input size " << inputs.size()
-                        << " less than 2, node: " << node->fullname_with_scope();
+    if (inputs.size() < kInputSize2) {
+      MS_LOG(EXCEPTION) << "node input size " << inputs.size() << " less than 2, node: " << node->fullname_with_scope();
     }
     auto input = inputs[1];
     MS_EXCEPTION_IF_NULL(input);
