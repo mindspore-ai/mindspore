@@ -26,7 +26,6 @@ import mindspore as ms
 import mindspore.dataset as ds
 from mindspore.dataset.transforms import transforms
 import mindspore.dataset.vision as vision
-from utils import ascend910b
 
 # pylint: disable=W0212
 # W0212: protected-access
@@ -37,9 +36,8 @@ result_data_dir = "/home/workspace/mindspore_dataset/910B_dvpp/testAscend910BDvp
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_map_with_pyfunc_with_multi_op_process_mode():
     """
     Feature: Map op with pyfunc contains dvpp ops & cpu ops
@@ -84,9 +82,8 @@ def test_map_with_pyfunc_with_multi_op_process_mode():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_map_with_pyfunc_with_multi_op_thread_mode():
     """
     Feature: Map op with pyfunc contains dvpp ops & cpu ops
@@ -307,9 +304,8 @@ def map_with_dvpp_resize(num_workers=1, python_multiprocess=False):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_map_with_dvpp_resize():
     """
     Feature: Map op
@@ -332,9 +328,8 @@ def test_map_with_dvpp_resize():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_map_with_dvpp_resize_mixed_op():
     """
     Feature: Map op
@@ -428,9 +423,8 @@ def test_map_with_dvpp_resize_mixed_op():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_map_with_dvpp_resize_with_exception():
     """
     Feature: Map op
@@ -668,9 +662,8 @@ def map_with_dvpp_decode(num_workers=1, python_multiprocess=False):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_map_with_dvpp_decode():
     """
     Feature: Map op
@@ -693,9 +686,8 @@ def test_map_with_dvpp_decode():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_map_with_dvpp_decode_with_pre_pyfun():
     """
     Feature: Map op
@@ -731,9 +723,8 @@ def test_map_with_dvpp_decode_with_pre_pyfun():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_map_with_dvpp_decode_mixed_op():
     """
     Feature: Map op
@@ -828,9 +819,8 @@ def test_map_with_dvpp_decode_mixed_op():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_map_with_dvpp_decode_with_exception():
     """
     Feature: Map op
@@ -1198,9 +1188,8 @@ def map_with_dvpp_normalize(num_workers=1, python_multiprocess=False):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_map_with_dvpp_normalize():
     """
     Feature: Map op
@@ -1223,9 +1212,8 @@ def test_map_with_dvpp_normalize():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_map_with_dvpp_normalize_mixed_op():
     """
     Feature: Map op
@@ -1320,9 +1308,8 @@ def test_map_with_dvpp_normalize_mixed_op():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_map_with_dvpp_normalize_exception():
     """
     Feature: Map op
