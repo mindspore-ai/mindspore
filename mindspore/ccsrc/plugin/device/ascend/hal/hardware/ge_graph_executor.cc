@@ -786,13 +786,13 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
   auto use_compile_cache = compile_cache_context.UseCompileCache();
   std::map<std::string, ShapeVector> origin_shape;
   const auto &tensor_order_map = GetParams(graph, &origin_shape);
+  GEGraphOptimization::GetInstance().OptimizeGEGraph(graph);
   if (use_compile_cache) {
     MS_LOG(INFO) << "Use ge compile cache, and skip specific optimization and ge_adapter execution";
     if (!BuildFakeGraph(graph)) {
       return false;
     }
   } else {
-    GEGraphOptimization::GetInstance().OptimizeGEGraph(graph);
     (void)BuildDFGraph(graph, tensor_order_map, false);
   }
   SetDynamicShapeAttr(graph);
@@ -849,13 +849,13 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
     const auto &tensor_order_map = GetParams(graph, &origin_shape);
     auto &compile_cache_context = CompileCacheContext::GetInstance();
     auto use_compile_cache = compile_cache_context.UseCompileCache();
+    GEGraphOptimization::GetInstance().OptimizeGEGraph(kg);
     if (use_compile_cache) {
       MS_LOG(INFO) << "Use ge compile cache, and skip specific optimization and ge_adapter execution";
       if (!BuildFakeGraph(kg)) {
         return false;
       }
     } else {
-      GEGraphOptimization::GetInstance().OptimizeGEGraph(kg);
       (void)BuildDFGraph(kg, tensor_order_map, false);
     }
     SetDynamicShapeAttr(kg);

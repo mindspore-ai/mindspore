@@ -379,8 +379,6 @@ void CompileCacheManager::CacheFuncGraph(const FuncGraphPtr &fg, const FuncGraph
 
 void CompileCacheManager::InitCompileCacheHash(const py::list &compile_cache_dep_files) {
   compile_cache_dep_files_hash_ = GetCompileDepFilesHash(compile_cache_dep_files);
-  auto &context = CompileCacheContext::GetInstance();
-  context.SetCompileCacheDepFilesHash(compile_cache_dep_files_hash_);
 }
 
 bool CompileCacheManager::CheckDepFilesHashConsistency() {

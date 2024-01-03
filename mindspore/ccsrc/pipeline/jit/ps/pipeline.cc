@@ -911,6 +911,8 @@ void GraphExecutorPy::InitCompileCacheInfo(const ResourcePtr &resource, const st
 #endif
   static size_t idx = 0;
   MS_EXCEPTION_IF_NULL(resource);
+  auto &context = CompileCacheContext::GetInstance();
+  context.set_init_compile_cache(true);
   resource->GetCompileCacheResource(compile_cache_dep_files_, weights_, queue_name_, idx++, &compile_cache_consistent_);
 #ifdef ENABLE_PROFILE
   double t2 = GetTime();

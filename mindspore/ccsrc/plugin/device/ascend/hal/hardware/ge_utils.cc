@@ -140,12 +140,10 @@ bool AddFakeGraph(const FuncGraphPtr &anf_graph) {
   auto graph_name = GetGraphName(anf_graph);
   std::string init_graph = "init_subgraph." + graph_name;
   std::string checkpoint_name = "save." + graph_name;
-  ShapeArray shape_array;
-  bool dynamic_shape_inputs = false;
-  auto options = GetComputeGraphOptions(shape_array, dynamic_shape_inputs);
+  auto options = GetComputeGraphOptions(converter->input_shapes(), converter->dynamic_shape_inputs());
   GetComputeGraphReuseOptions(anf_graph, &options);
   MS_LOG(INFO) << "Set options of compute graph: " << graph_name << " to " << MapToString(options);
-  (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter));
+  (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter), options);
   (void)transform::AddGraph(init_graph, transform::GetInitGraph(converter));
   (void)transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GenFakeGraph("broadcast"));
 

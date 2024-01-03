@@ -92,10 +92,8 @@ class COMMON_EXPORT CompileCacheContext {
   void SetRestrictedScenarios(bool restricted_scenarios) { restricted_scenarios_ = restricted_scenarios; }
   void Clear();
 
-  void SetCompileCacheDepFilesHash(const std::string &compile_cache_dep_files_hash) {
-    compile_cache_dep_files_hash_ = compile_cache_dep_files_hash;
-  }
-  std::string CompileCacheDepFilesHash() { return compile_cache_dep_files_hash_; }
+  void set_init_compile_cache(const bool &init) { init_compile_cache_ = init; }
+  bool init_compile_cache() { return init_compile_cache_; }
 
   void set_has_cached_queue_name(bool cached) { has_cached_queue_name_ = cached; }
   bool has_cached_queue_name() const { return has_cached_queue_name_; }
@@ -119,7 +117,7 @@ class COMMON_EXPORT CompileCacheContext {
   // param is a backend node but we can find its correspond frontend param.
   mindspore::HashSet<AnfNodePtr> backend_param_gen_from_frontend_param_;
   bool restricted_scenarios_{false};
-  std::string compile_cache_dep_files_hash_ = "";
+  bool init_compile_cache_{false};
   bool has_cached_queue_name_{false};
 };
 }  // namespace mindspore
