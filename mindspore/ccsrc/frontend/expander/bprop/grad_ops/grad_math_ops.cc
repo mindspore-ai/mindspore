@@ -2221,7 +2221,14 @@ REG_BPROP_BUILDER("Polygamma").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex3);
   auto one = ib->Tensor(1);
   a = ib->Add(a, one);
-  auto dx = ib->Mul(dout, ib->Emit(kPolygammaOpName, {a, x}));
+  NodePtr dx;
+  if (ib->GetDtypeId(x) == kNumberTypeFloat16) {
+    x = ib->Cast(x, kNumberTypeFloat64);
+    dx = ib->Mul(dout, ib->Emit(kPolygammaOpName, {a, x}));
+    dx = ib->Cast(dx, kNumberTypeFloat16);
+  } else {
+    dx = ib->Mul(dout, ib->Emit(kPolygammaOpName, {a, x}));
+  }
   return {ib->OutZeros(a), dx};
 });
 
