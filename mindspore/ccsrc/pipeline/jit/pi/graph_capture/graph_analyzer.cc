@@ -25,6 +25,9 @@ namespace mindspore {
 namespace jit {
 namespace graph {
 
+extern bool CheckMSConstexpr(const py::object &func);
+extern bool CheckJitConstexpr(const py::object &func);
+
 const int kMsFlagSet = AObject::kMsFlagGradFunc | AObject::kMsFlagStandardFunc | AObject::kMsFlagShardFunc |
                        AObject::kMsFlagVmapFunc | AObject::kMsFlagJitFunc;
 static bool IsRepeatWithoutSideEffect(ValueNode *v, bool repeat_attr_item_access);
@@ -433,11 +436,20 @@ bool GraphAnalyzer::HasTensorOperation() const {
     AObject *value = i->GetVobj();
     int op = i->GetOpcode();
     if (Utils::IsCallOp(op)) {
+      py::object callable = i->input(0)->GetVobj()->GetPyObject();
+      if (callable.ptr() == nullptr) {
+        return true;
+      }
+      if (CheckJitConstexpr(callable) || CheckMSConstexpr(callable)) {
+        continue;
+      }
+      if (value->GetType() == AObject::kTypeCFunction) {
+        continue;
+      }
       return true;
     }
     if (Utils::IsBinaryMathOp(op) && value->GetType() == AObject::kTypeTensor) {
-      has_tensor_cal = true;
-      break;
+      return true;
     }
   }
   return has_tensor_cal;
@@ -473,7 +485,9 @@ bool ValidateGraphParameters(ValueNode *node) {
     AObject::kTypePrimitive, AObject::kTypeMetaFuncGraph, AObject::kTypeCell,
   };
   AObject *info = node->GetVobj();
-  MS_EXCEPTION_IF_CHECK_FAIL(info != nullptr, "got an unknown object from graph parameter " + node->ToString());
+  if (info == nullptr) {
+    return false;
+  }
   return unsupported_parameter.find(info->GetType()) == unsupported_parameter.end();
 }
 

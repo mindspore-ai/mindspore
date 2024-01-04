@@ -427,10 +427,8 @@ static bool GraphCapture(JitCompileResults *jcr) {
   GraphBuilder g(jcr->origin_frame_);
   (void)g.TraceRun();
 
-  if (kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kFeatureBreakAtInlinedFunction)) {
-    BytecodeInliner inliner(g.GetGraph(), py::cast<py::dict>(jcr->origin_frame_->f_globals));
-    inliner.Run();
-  }
+  BytecodeInliner inliner(g.GetGraph(), py::cast<py::dict>(jcr->origin_frame_->f_globals));
+  inliner.Run();
 
   GraphAnalyzer analyzer(g.GetGraph());
   analyzer.Analyze();

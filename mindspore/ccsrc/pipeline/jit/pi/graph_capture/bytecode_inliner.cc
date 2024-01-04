@@ -29,12 +29,15 @@ namespace graph {
 extern std::string PrintInstr(const std::vector<std::unique_ptr<Instr>> &list);
 extern std::vector<ValueNode *> CollectInterpretOutputs(const FrameStates &last_frame, const BitMap &alive,
                                                         std::vector<int> *alive_locals);
+extern bool CheckMSConstexpr(const py::object &func);
+extern bool CheckJitConstexpr(const py::object &func);
 
 void BytecodeInliner::Run() {
   if (graph_->IsBreakAtLoop() && !graph_->RestoreLoopStatus()) {
     return;
   }
 
+  inline_partial_ = graph_->Config().GetBoolConfig(GraphJitConfig::kFeatureBreakAtInlinedFunction);
   cfg_ = std::make_unique<CFG>(nullptr);
 
   // collect traced nodes, inline second half bytecode
@@ -49,7 +52,7 @@ void BytecodeInliner::Run() {
     return;
   }
 
-  if (graph_->GetStopTraceBci() != -1) {
+  if (inline_partial_ && graph_->GetStopTraceBci() != -1) {
     InitCFG();
   }
 
@@ -128,9 +131,15 @@ void BytecodeInliner::Rebuild() {
 
   std::vector<int> alive_locals;
   if (last_frame_ != nullptr) {
-    ns.outputs = CollectInterpretOutputs(*last_frame_, cfg_->GetLiveness()->CollectAlive(0), &alive_locals);
+    BitMap alive = inline_partial_ ? cfg_->GetLiveness()->CollectAlive(0)
+                                   : graph_->GetCFG()->GetLiveness()->CollectAlive(graph_->GetStopTraceBci());
+    ns.outputs = CollectInterpretOutputs(*last_frame_, alive, &alive_locals);
   } else {
     ns.outputs.push_back(graph_->GetRetVal());
+  }
+  if (graph_->Config().GetBoolConfig(GraphJitConfig::kEnableEliminateUnusedOperation)) {
+    // erase dead local between inline and code rebuild
+    EraseDeadLocal(ns.outputs);
   }
   Rebuild(&cg);
   if (last_frame_ != nullptr) {
@@ -177,6 +186,7 @@ void BytecodeInliner::ProcessGraph(Graph *graph, int local_off) {
   const FrameStates &f = graph->GetFrame(break_bci);
   last_frame_->GetLocals().insert(last_frame_->GetLocals().end(), f.GetLocals().begin(), f.GetLocals().end());
   last_frame_->GetStacks().insert(last_frame_->GetStacks().end(), f.GetStacks().begin(), f.GetStacks().end());
+
   CollectTracedNodes(graph);
 
   const auto &nodes = graph->GetTracedNodes();
@@ -191,7 +201,9 @@ void BytecodeInliner::ProcessGraph(Graph *graph, int local_off) {
   }
 
   std::vector<std::unique_ptr<Instr>> list = CodeGenerator::CopyInstr(graph->GetCFG()->instr_pool(), break_bci);
-  FixInstr(graph, local_off, &list);
+  if (inline_partial_) {
+    FixInstr(graph, local_off, &list);
+  }
   std::move(list.begin(), list.end(), std::back_inserter(cfg_->instr_pool()));
   cfg_->SetLocalCount(std::max(static_cast<size_t>(cfg_->GetLocalCount()), local_off + f.GetLocals().size()));
 }
@@ -250,7 +262,7 @@ void BytecodeInliner::Reconstruct(ValueNode *node, int local_off) {
                              "check break bci, too many value produced");
   last_frame_->Popn(-stack_effect + is_value);
 
-  if (node->GetType() == AbstractNode::Call) {
+  if (inline_partial_ && node->GetType() == AbstractNode::Call) {
     CallNode *call_node = static_cast<CallNode *>(node);
     if (CanInine(this->graph_, call_node->GetSubGraph())) {
       std::copy(call_node->GetParams().begin(), call_node->GetParams().end(), std::back_inserter(traced_nodes_));
@@ -266,8 +278,9 @@ void BytecodeInliner::Reconstruct(ValueNode *node, int local_off) {
 }
 
 void BytecodeInliner::FixInstr(Graph *graph, int local_off, std::vector<std::unique_ptr<Instr>> *list) {
-  MS_EXCEPTION_IF_CHECK_FAIL(list->size() > 0 && list->back()->op() == RETURN_VALUE,
-                             "check instruction list, not end with RETURN_VALUE");
+  if (list->empty()) {
+    return;
+  }
   for (const auto &i : *list) {
     if (Utils::IsLocalAccessOp(i->op())) {
       i->set_arg(i->arg() + local_off);
@@ -297,11 +310,14 @@ void BytecodeInliner::FixInstr(Graph *graph, int local_off, std::vector<std::uni
     }
   }
 
+  if (list->back()->op() != JUMP_FORWARD || list->back()->extra_jump() != list->back().get()) {
+    return;
+  }
+  list->back()->set_extra_jump(nullptr);
   if (graph != this->graph_) {
     list->back()->set_op(NOP);
   } else {
     list->back()->set_op(RETURN_VALUE);
-    list->back()->set_extra_jump(nullptr);
   }
 }
 
@@ -353,6 +369,62 @@ void BytecodeInliner::InitCFG() {
   }
   cfg_->MarkDeadBB();
   cfg_->GetLiveness();
+}
+
+static bool IsEliminate(ValueNode *v) {
+  int op = v->GetOpcode();
+  if (Utils::IsNoSideEffectOp(op)) {
+    return true;
+  }
+  if (Utils::IsGeneralNoSideEffectOp(op)) {
+    if (Utils::IsBinaryMathOp(op) || op == COMPARE_OP) {
+      return v->input(0)->GetVobj()->GetType() != AObject::kTypeAnyValue;
+    }
+    return true;
+  }
+  if (Utils::IsBinaryMathOp(op)) {
+    // inplace binary
+    AObject::Type t = v->input(0)->GetVobj()->GetType();
+    return t != AObject::kTypeAnyValue && t != AObject::kTypeList && t != AObject::kTypeCell &&
+           t != AObject::kTypeNNCellList;
+  }
+  if (Utils::IsCallOp(op)) {
+    py::object callable = v->GetVobj()->GetPyObject();
+    if (callable.ptr() == nullptr) {
+      return false;
+    }
+    return CheckJitConstexpr(callable) || CheckMSConstexpr(callable);
+  }
+  if (op == GET_ITER) {
+    return v->input(0)->GetVobj()->GetType() != AObject::kTypeAnyValue;
+  }
+  return false;
+}
+
+void BytecodeInliner::EraseDeadLocal(const std::vector<ValueNode *> &alive_nodes) {
+  std::set<ValueNode *> alive;
+  for (auto i : alive_nodes) {
+    alive.insert(i);
+  }
+
+  // erase dead locals
+  std::set<ValueNode *> used;
+  do {
+    used = alive;
+    for (auto i : traced_nodes_) {
+      for (auto j : i->getInputs()) {
+        used.insert(j);
+      }
+    }
+    auto iter = std::remove_if(traced_nodes_.begin(), traced_nodes_.end(), [&used](ValueNode *i) {
+      // check it
+      return used.find(i) == used.end() && IsEliminate(i);
+    });
+    if (iter == traced_nodes_.end()) {
+      break;
+    }
+    traced_nodes_.erase(iter, traced_nodes_.end());
+  } while (true);
 }
 
 }  // namespace graph
