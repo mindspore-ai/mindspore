@@ -14,11 +14,13 @@
 # ============================================================================
 
 import pytest
-
+import numpy as np
 import mindspore as ms
 from mindspore import nn, context, Tensor
 from mindspore.ops.operations import array_ops as P
 from .test_grad_of_dynamic import TestDynamicGrad
+from mindspore.nn import Cell
+from mindspore import ops as op
 
 context.set_context(mode=context.PYNATIVE_MODE)
 
@@ -66,3 +68,39 @@ def test_strided_slice_dyn_rank():
     Expectation: success.
     """
     strided_slice_test(True)
+
+
+class StridedSliceNet(Cell):
+    def __init__(self,
+                 begin_mask,
+                 end_mask,
+                 ellipsis_mask,
+                 new_axis_mask,
+                 shrink_axis_mask):
+        super().__init__()
+        self.strided_slice = op.StridedSlice(begin_mask, end_mask, ellipsis_mask, new_axis_mask,
+                                             shrink_axis_mask)
+
+    def construct(self, input_x, begin, end, strides):
+        out = self.strided_slice(input_x, begin, end, strides)
+        return op.add(out, out)
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+def test_strided_slice_insert_cast_for_tuple_input():
+    """
+    Feature: StridedSlice Grad DynamicShape in pynative mode.
+    Description: The input is a tuple of bprop of strided slice, should be converted to tensor in pynative mode.
+    Expectation: No exception raised.
+    """
+    ms.context.set_context(mode=ms.context.GRAPH_MODE)
+    net = StridedSliceNet(0, 0, 0, 0, 0)
+    grad_net = op.grad(net)
+    x = ms.Tensor(np.ones([5, 6, 7]).astype(np.float32))
+    x_dyn = ms.Tensor(shape=[None, None, None], dtype=ms.float32)
+    begin = ms.Tensor(np.array([0, 1, 2]).astype(np.int32))
+    end = ms.Tensor(np.array([4, 5, 6]).astype(np.int32))
+    strides = ms.Tensor(np.array([1, 1, 2]).astype(np.int32))
+    net.set_inputs(x_dyn, begin, end, strides)
+    grad_net(x, begin, end, strides)
