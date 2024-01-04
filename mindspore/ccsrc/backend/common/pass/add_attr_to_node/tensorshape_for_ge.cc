@@ -13,26 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "plugin/device/ascend/optimizer/ge/uniform_real_dtype_ge.h"
-#include "include/backend/optimizer/helper.h"
+
+#include "backend/common/pass/add_attr_to_node/add_attr_to_node_register.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/common/utils/anfalgo.h"
-#include "mindspore/core/ops/nn_ops.h"
-#include "utils/anf_utils.h"
 
 namespace mindspore {
 namespace opt {
-const BaseRef UniformRealDtypeGe::DefinePattern() const {
-  VarPtr Xs = std::make_shared<SeqVar>();
-  return VectorRef({prim::kPrimUniformReal, Xs});
-}
+namespace {
+constexpr char kDtypeAttrName[] = "dtype";
+}  // namespace
 
-const AnfNodePtr UniformRealDtypeGe::Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const {
+const AnfNodePtr TensorShapeAddDtype(const FuncGraphPtr &, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto uniform_real_cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(uniform_real_cnode);
-  auto prim = common::AnfAlgo::GetCNodePrimitive(uniform_real_cnode);
-  MS_EXCEPTION_IF_NULL(prim);
-  prim->set_attr(kAttrDType, MakeValue(kFloat32));
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+
+  if (common::AnfAlgo::HasNodeAttr(kDtypeAttrName, cnode)) {
+    return nullptr;
+  }
+
+  // get output dtype (ms_dtype)
+  TypeId output_dtype = common::AnfAlgo::GetOutputInferDataType(cnode, 0);
+  // update/set attr
+  common::AnfAlgo::SetNodeAttr(kDtypeAttrName, MakeValue(static_cast<int64_t>(output_dtype)), cnode);
+
   return node;
 }
 }  // namespace opt

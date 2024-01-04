@@ -283,6 +283,13 @@ ATTR_MAP(MVNV2) = {{"eps", ATTR_DESC(eps, AnyTraits<float>())},
 OUTPUT_MAP(MVNV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MVNV2, kNameMVNV2, ADPT_DESC(MVNV2))
 
+// SparseSoftmaxCrossEntropyWithLogits
+INPUT_MAP(SparseSoftmaxCrossEntropyWithLogits) = {{1, INPUT_DESC(features)}, {2, INPUT_DESC(labels)}};
+ATTR_MAP(SparseSoftmaxCrossEntropyWithLogits) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(SparseSoftmaxCrossEntropyWithLogits) = {{0, OUTPUT_DESC(loss)}, {1, OUTPUT_DESC(backprop)}};
+REG_ADPT_DESC(SparseSoftmaxCrossEntropyWithLogits, prim::kPrimSparseSoftmaxCrossEntropyWithLogits->name(),
+              ADPT_DESC(SparseSoftmaxCrossEntropyWithLogits))
+
 // MultiMarginLossGrad
 CUST_INPUT_MAP(MultiMarginLossGrad) = {
   {1, INPUT_DESC(y_grad)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(target)}, {4, INPUT_DESC(weight)}};

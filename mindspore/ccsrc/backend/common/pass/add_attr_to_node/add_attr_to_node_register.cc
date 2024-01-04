@@ -21,6 +21,7 @@
 #include "ops/math_ops.h"
 #include "ops/random_ops.h"
 #include "ops/sparse_ops.h"
+#include "ops/nn_ops.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -34,6 +35,7 @@ AddAttrToNodeImplRegistry::AddAttrToNodeImplRegistry() {
   Register(prim::kPrimConcatOffsetV1->name(), ConcatOffsetV1FusionProcess);
   Register(prim::kPrimConv3DBackpropInput->name(), Conv3DBackpropInputPadListFusionProcess);
   Register(prim::kPrimConv3DBackpropFilter->name(), Conv3DBackpropFilterPadListFusionProcess);
+  Register(prim::kPrimDropout->name(), AddDropoutAttrs);
   Register(prim::kPrimDynamicRNN->name(), DynamicRNNFusionProcess);
   Register(prim::kPrimGather->name(), GatherFusionProcess);
   Register(prim::kPrimIm2Col->name(), Im2ColFusionProcess);
@@ -44,11 +46,16 @@ AddAttrToNodeImplRegistry::AddAttrToNodeImplRegistry() {
   Register(prim::kPrimParallelConcat->name(), ParallelConcatFusionProcess);
   Register(prim::kPrimRaggedTensorToSparse->name(), RaggedTensorToSparseFusionProcess);
   Register(prim::kPrimResizeV2->name(), ResizeV2FusionProcess);
+  Register(prim::kPrimSqueeze->name(), SqueezeAxis);
   Register(prim::kPrimSparseConcat->name(), SparseConcatFusionProcess);
   Register(prim::kPrimSparseCross->name(), SparseCrossFusionProcess);
   Register(prim::kPrimSparseTensorDenseMatmul->name(), SparseTensorDenseMatMulFusionProcess);
   Register(prim::kPrimSplit->name(), SplitFusionProcess);
   Register(prim::kPrimStandardNormal->name(), StandardNormalFusionProcess);
+  Register(prim::kPrimUniformReal->name(), UniformRealDtypeGe);
+  Register(prim::kPrimShape->name(), TensorShapeAddDtype);
+  Register(prim::kPrimTensorShape->name(), TensorShapeAddDtype);
+  Register(prim::kPrimDynamicShape->name(), TensorShapeAddDtype);
 }
 
 AddAttrToNodeImplRegistry &AddAttrToNodeImplRegistry::GetInstance() {

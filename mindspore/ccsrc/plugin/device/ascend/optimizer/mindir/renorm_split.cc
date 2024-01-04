@@ -21,6 +21,8 @@
 #include "include/common/utils/anfalgo.h"
 #include "ops/nn_op_name.h"
 #include "ops/array_ops.h"
+#include "ops/nn_ops.h"
+
 namespace mindspore {
 namespace opt {
 namespace {
@@ -52,9 +54,8 @@ void FreshRenormInferShape(const CNodePtr &node, ShapeVector in_shape, const Typ
 }  // namespace
 
 const BaseRef RenormSplit::DefinePattern() const {
-  std::shared_ptr V = std::make_shared<CondVar>(UnVisited);
   std::shared_ptr Xs = std::make_shared<SeqVar>();
-  return VectorRef({V, Xs});
+  return VectorRef({prim::kPrimRenorm, Xs});
 }
 
 /**
@@ -71,13 +72,14 @@ const BaseRef RenormSplit::DefinePattern() const {
 const AnfNodePtr RenormSplit::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
   auto op_name = common::AnfAlgo::GetCNodeName(node);
-  if (op_name != kRenormOpName) {
+  if (op_name != kRenormOpName || common::AnfAlgo::HasNodeAttr(kAttrVisited, cnode)) {
     return nullptr;
   }
   common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
+
   CheckCNodeInputSize(cnode, 1);
   auto renorm_input = cnode->input(1);
   auto in_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
