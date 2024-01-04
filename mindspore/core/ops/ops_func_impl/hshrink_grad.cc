@@ -39,7 +39,12 @@ TypePtr HShrinkGradFuncImpl::InferType(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   auto x_type = input_args[kInputIndex1]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
-  return x_type;
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  std::map<std::string, TypePtr> types;
+  (void)types.emplace("gradients", input_args[kInputIndex0]->GetType());
+  (void)types.emplace("features", input_args[kInputIndex1]->GetType());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
+  return x_type->Clone();
 }
 }  // namespace ops
 }  // namespace mindspore
