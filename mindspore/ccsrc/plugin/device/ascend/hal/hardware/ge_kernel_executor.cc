@@ -116,6 +116,11 @@ void GeKernelExecutor::Initialize() {
   if (initialized_) {
     return;
   }
+  auto ret = aclInit(nullptr);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(WARNING) << "Call aclInit failed. Error flag is " << ret;
+  }
+  MS_LOG(INFO) << "Call aclInit successfully.";
   MS_EXCEPTION_IF_NULL(device_context_);
   res_manager_ = device_context_->device_res_manager_.get();
   MS_EXCEPTION_IF_NULL(res_manager_);
