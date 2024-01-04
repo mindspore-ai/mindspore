@@ -266,3 +266,45 @@ def test_add_two_scalar():
 
     ms.set_context(precompile_only=False, mode=ms.GRAPH_MODE)
     assert func(2.5, 1) == 3.5
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_acos_unsupported_input_type(mode):
+    """
+    Feature: DynamicShape.
+    Description: Test unsupported input type.
+    Expectation: Raise TypeError.
+    """
+    class ACos(nn.Cell):
+        def construct(self, x):
+            return ops.acos(x)
+
+    ms.set_context(precompile_only=False, mode=mode)
+    with pytest.raises(TypeError) as info:
+        ACos()("str")
+    assert "Failed calling ACos with \"ACos()(x=string)\"" in str(info.value)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_diagonal_unsupported_input_type(mode):
+    """
+    Feature: DynamicShape.
+    Description: Test unsupported input type.
+    Expectation: Raise TypeError.
+    """
+    class Diagonal(nn.Cell):
+        def construct(self, x, offset, dim1, dim2):
+            return ops.diagonal(x, offset, dim1, dim2)
+
+    ms.set_context(precompile_only=False, mode=mode)
+    with pytest.raises(TypeError) as info:
+        Diagonal()(1.0, 1, 1, -3)
+    assert "Failed calling Diagonal with \"Diagonal(offset=int, dim1=int, dim2=int)(x=float)\"" in str(info.value)

@@ -317,14 +317,21 @@ py::object PackExpander::ConvertAbstractToParameter(const AbstractBasePtr &abs) 
 
 py::object PackExpander::Emit(const py::object &prim, const py::args &inputs) const {
   MS_EXCEPTION_IF_NULL(graphs_.top());
+  PrimitivePtr new_prim = nullptr;
   auto prim_py = std::make_shared<PrimitivePy>(prim);
+  if (mindspore::ops::IsPrimitiveFunction(prim_py->name())) {
+    // If it is a PrimFunc, there is no need to generate PrimitivePy to avoid performing atts conversion to inputs.
+    new_prim = std::make_shared<Primitive>(*prim_py);
+  } else {
+    new_prim = prim_py;
+  }
   AnfNodePtrList cnode_inputs;
   for (size_t i = 0; i < inputs.size(); ++i) {
     auto node = ConvertInput(inputs[i]);
     MS_EXCEPTION_IF_NULL(node);
     (void)cnode_inputs.emplace_back(node);
   }
-  auto cnode = EmitCNode(prim_py, cnode_inputs);
+  auto cnode = EmitCNode(new_prim, cnode_inputs);
   return ConvertCNodeToPython(cnode);
 }
 
