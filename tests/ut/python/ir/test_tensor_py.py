@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """test tensor py"""
+import pytest
 import numpy as np
 
 import mindspore as ms
@@ -126,6 +127,22 @@ def test_bfloat():
     a = ms.Tensor(np.ones((2, 3)), ms.bfloat16)
     assert a.shape == (2, 3)
     assert a.dtype == ms.bfloat16
+
+
+def test_bfloat_implicit_cast():
+    """
+    Feature: Test operator for bfloat16.
+    Description: Tensor tensor with type of bfloat16.
+    Expectation: Raise TypeError.
+    """
+    @ms.jit
+    def func(x, y):
+        return x - y
+
+    x = ms.Tensor(2.0, ms.bfloat16)
+    y = ms.Tensor(1.5, ms.float32)
+    with pytest.raises(TypeError):
+        func(x, y)
 
 
 def test_tensor_method_sub():
