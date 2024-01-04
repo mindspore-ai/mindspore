@@ -596,8 +596,8 @@ AbstractBasePtr TensorToSequenceInfer(const PrimitivePtr &primitive, const std::
   MS_EXCEPTION_IF_NULL(shape_ptr);
   auto x_shape = shape_ptr->shape();
   if (x_shape.size() > 1) {
-    MS_EXCEPTION(ValueError) << "For Primitive[" << prim_name << "], the input shape size must greaterthan 1, but got "
-                             << x_shape << ".";
+    MS_EXCEPTION(ValueError) << "For Primitive[" << prim_name << "], the input must be a 1-D Tensor, but got Tensor "
+                             << "with shape: " << x_shape << ".";
   }
 
   auto x_type = input_args[input_0_index]->GetType();
