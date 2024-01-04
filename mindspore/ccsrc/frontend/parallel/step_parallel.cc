@@ -1008,7 +1008,7 @@ bool InsertMirrorBeforeCast(const CNodePtr &node, size_t index) {
   return true;
 }
 
-static bool CheckInsertMirrorOps(const MirrorOps &mirror_ops, const CNodePtr &node, size_t node_size) {
+static bool CheckInsertMirrorOps(const MirrorOps &mirror_ops, const CNodePtr &node) {
   if (IsPrimitiveCNode(node, prim::kPrimSend)) {
     return true;
   }
@@ -1023,16 +1023,6 @@ static bool CheckInsertMirrorOps(const MirrorOps &mirror_ops, const CNodePtr &no
       (AnfNodeIsPrimitive(node->input(1), MAKE_TUPLE) || AnfNodeIsPrimitive(node->input(1), MAKE_LIST))) {
     MS_LOG(INFO) << "The mirror for " << GetPrimName(node) << " has handle by make_tuple node";
     return false;
-  }
-  auto valid_mirror_ops_num = mirror_ops.size();
-  if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
-    valid_mirror_ops_num =
-      std::count_if(mirror_ops.begin(), mirror_ops.end(), [](OperatorVector op) -> bool { return !op.empty(); });
-  }
-
-  if (valid_mirror_ops_num != node_size - 1) {
-    MS_LOG(EXCEPTION) << "For " << node->fullname_with_scope() << ", the Mirrorops's size is wrong! mirror_ops size is "
-                      << mirror_ops.size() << ", node_size is " << (node_size - 1);
   }
   return true;
 }
@@ -1056,14 +1046,17 @@ static CNodePtr SkipTrivialNodesMoveUp(CNodePtr node) {
   }
 }
 
-static void DoInsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_ops, const CNodePtr &node,
-                              size_t node_size) {
+static void DoInsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_ops, const CNodePtr &node) {
   FuncGraphPtr func_graph = node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   FuncGraphManagerPtr manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
+  auto mirror_size = mirror_ops.size();
+  if (IsPrimitiveCNode(node, prim::kPrimSend)) {
+    mirror_size = 1;
+  }
 
-  for (size_t index = 1; index < node_size; ++index) {
+  for (size_t index = 1; index <= mirror_size; ++index) {
     OperatorVector backward_op = mirror_ops[index - 1];
     if (IsPrimitiveCNode(node, prim::kPrimSend)) {
       auto param_index = GetValue<int>(node->GetPrimalAttr(PARAM_INDEX));
@@ -1155,18 +1148,11 @@ static void DoInsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_
 
 static void InsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_ops, const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  size_t node_size = node->inputs().size();
-  for (auto input : node->inputs()) {
-    if (HasAbstractMonad(input)) {
-      node_size--;
-    }
-  }
-
-  if (!CheckInsertMirrorOps(mirror_ops, node, node_size)) {
+  if (!CheckInsertMirrorOps(mirror_ops, node)) {
     return;
   }
 
-  DoInsertMirrorOps(root, mirror_ops, node, node_size);
+  DoInsertMirrorOps(root, mirror_ops, node);
 }
 
 static void BackwardCommunication(const FuncGraphPtr &root, const OperatorInfoPtr &distribute_operator,
