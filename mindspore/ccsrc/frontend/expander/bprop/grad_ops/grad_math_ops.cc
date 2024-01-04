@@ -1987,11 +1987,11 @@ REG_BPROP_BUILDER("ReduceStd").SetBody(BODYFUNC(ib) {
       mean = ib->Reshape(mean, res[0]);
     }
   } else {
-    auto true_branch = [&ib, &res, &std_d, &std, &mean_d, &mean](const Emitter *e) -> NodePtrList {
-      auto std_d_r = ib->Reshape(std_d, res[0]);
-      auto std_r = ib->Reshape(std, res[0]);
-      auto mean_d_r = ib->Reshape(mean_d, res[0]);
-      auto mean_r = ib->Reshape(mean, res[0]);
+    auto true_branch = [&res, &std_d, &std, &mean_d, &mean](Emitter *e) -> NodePtrList {
+      auto std_d_r = e->Reshape(std_d, res[0]);
+      auto std_r = e->Reshape(std, res[0]);
+      auto mean_d_r = e->Reshape(mean_d, res[0]);
+      auto mean_r = e->Reshape(mean, res[0]);
       return {std_d_r, std_r, mean_d_r, mean_r};
     };
     auto false_branch = [&std_d, &std, &mean_d, &mean](const Emitter *e) -> NodePtrList {
@@ -2019,11 +2019,11 @@ REG_BPROP_BUILDER("ReduceStd").SetBody(BODYFUNC(ib) {
       dx = ib->Div(dx, ib->Cast(res[2], ib->GetDtype(dx)));
     }
   } else {
-    auto unbiased_true_branch = [&ib, &dx, &res](const Emitter *e) -> NodePtrList {
-      return {ib->Div(dx, ib->Cast(res[1], ib->GetDtype(dx)))};
+    auto unbiased_true_branch = [&dx, &res](Emitter *e) -> NodePtrList {
+      return {e->Div(dx, e->Cast(res[1], dx->dtype()))};
     };
-    auto unbiased_false_branch = [&ib, &dx, &res](const Emitter *e) -> NodePtrList {
-      return {ib->Div(dx, ib->Cast(res[2], ib->GetDtype(dx)))};
+    auto unbiased_false_branch = [&dx, &res](Emitter *e) -> NodePtrList {
+      return {e->Div(dx, e->Cast(res[2], dx->dtype()))};
     };
     auto unbiased_cond = ib->Equal(unbiased, ib->Value<bool>(true));
     dx = ib->Conditional(unbiased_cond, unbiased_true_branch, unbiased_false_branch);
