@@ -60,12 +60,7 @@ bool HcomAllToAllKernel::Init(const std::vector<KernelTensor *> &inputs, const s
   } else {
     data_type_ = hccl_data_type_list_[0];
   }
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
-    workspace_size_list_ = {
-      LongToSize(hccl::HcclAdapter::GetInstance().CalcWorkspaceSize(primitive_, inputs, outputs, data_type_))};
-  }
+
   uint32_t rank_size = 0;
   if (!CommManager::GetInstance().GetRankSize(group_, &rank_size)) {
     MS_LOG(EXCEPTION) << "Get hccl rank size for group " << group_ << " failed.";
