@@ -41,6 +41,11 @@ BaseShapePtr NonZeroFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr NonZeroFuncImpl::InferType(const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) const {
+  return std::make_shared<TensorType>(kInt64);
+}
+
+int32_t NonZeroFuncImpl::CheckValidation(const PrimitivePtr &primitive,
+                                         const std::vector<AbstractBasePtr> &input_args) const {
   std::vector<TypeId> valid_types = {kNumberTypeBool,   kNumberTypeInt8,    kNumberTypeInt16,   kNumberTypeInt32,
                                      kNumberTypeInt64,  kNumberTypeUInt8,   kNumberTypeUInt16,  kNumberTypeUInt32,
                                      kNumberTypeUInt64, kNumberTypeFloat16, kNumberTypeFloat64, kNumberTypeFloat};
@@ -52,7 +57,7 @@ TypePtr NonZeroFuncImpl::InferType(const PrimitivePtr &primitive,
                                "uint64, float16, float or float64. but got "
                             << tensor_type->element()->ToString();
   }
-  return std::make_shared<TensorType>(kInt64);
+  return OP_CHECK_SUCCESS;
 }
 
 class NonZeroFrontendFuncImpl : public OpFrontendFuncImpl {
