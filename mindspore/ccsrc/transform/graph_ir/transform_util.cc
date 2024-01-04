@@ -179,7 +179,7 @@ std::shared_ptr<GeTensorDesc> TransformUtil::GetGeTensorDesc(const ShapeVector &
   // convert me datatype to ge datatype
   GeDataType data_type = ConvertDataType(me_type);
   if (data_type == GeDataType::DT_UNDEFINED) {
-    MS_LOG(ERROR) << "undefined data type :" << me_type;
+    MS_LOG(INFO) << "undefined data type :" << me_type;
     return nullptr;
   }
   auto desc = std::make_shared<GeTensorDesc>();
