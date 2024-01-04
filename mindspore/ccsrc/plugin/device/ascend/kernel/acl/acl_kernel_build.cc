@@ -25,6 +25,10 @@ namespace mindspore {
 namespace kernel {
 KernelModPtr AclOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(anf_node);
+  MS_EXCEPTION_IF_NULL(primitive);
+  MS_LOG(INFO) << "Begin to create acl kernel module for primitive " << primitive->name();
+
   auto kernel_mod_ptr = std::make_shared<AclKernelMod>();
   if (common::AnfAlgo::IsGetNextNode(anf_node)) {
     kernel_mod_ptr = std::make_shared<GetNextAclKernelMod>();
@@ -35,7 +39,7 @@ KernelModPtr AclOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
   std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(anf_node);
 
   if (!std::static_pointer_cast<KernelMod>(kernel_mod_ptr)
-         ->Init(common::AnfAlgo::GetCNodePrimitive(anf_node), input_kernel_tensors, output_kernel_tensors)) {
+         ->Init(primitive, input_kernel_tensors, output_kernel_tensors)) {
     MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize acl kernel op[" << anf_node->fullname_with_scope()
                       << "] failed.";
   }
@@ -72,6 +76,8 @@ KernelModPtr AclOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
   if (kernel::CheckResizeCondition(cnode)) {
     kernel_mod_ptr->Resize(input_kernel_tensors, output_kernel_tensors);
   }
+
+  MS_LOG(INFO) << "Finished creating acl kernel module for primitive " << primitive->name();
   return kernel_mod_ptr;
 }
 }  // namespace kernel

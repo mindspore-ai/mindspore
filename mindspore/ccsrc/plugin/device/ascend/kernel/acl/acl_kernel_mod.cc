@@ -139,12 +139,7 @@ int AclKernelMod::GetOutputInfo(const std::vector<KernelTensor *> &outputs) {
     MS_EXCEPTION_IF_NULL(output);
     auto shape = output->GetShapeVector();
     if (!IsValidShape(shape)) {
-      shape = output->GetMaxShape();
-      if (shape.empty()) {
-        MS_LOG(EXCEPTION) << "For " << kernel_name_
-                          << ", the max_shape should not be empty when input shape is unknown.";
-      }
-      ret = KRET_UNKNOWN_OUT_SHAPE;
+      MS_LOG(EXCEPTION) << "Shape of output " << i << " is invalid, of which value is " << shape;
     }
     PackageOutput(i, shape);
   }

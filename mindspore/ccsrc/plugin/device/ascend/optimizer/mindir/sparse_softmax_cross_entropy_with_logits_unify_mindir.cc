@@ -254,7 +254,9 @@ CNodePtr CreateReduceMean(const FuncGraphPtr &graph, const CNodePtr &sparse_soft
   MS_EXCEPTION_IF_NULL(reduce_node);
   reduce_node->set_scope(sparse_softmax_node->scope());
   auto reduce_abstract = softmax_output_node->abstract();
-  reduce_abstract->set_shape(std::make_shared<abstract::Shape>());
+  if (!softmax_output_node->Shape()->IsDynamic()) {
+    reduce_abstract->set_shape(std::make_shared<abstract::Shape>());
+  }
   reduce_node->set_abstract(reduce_abstract);
   return reduce_node;
 }
@@ -343,7 +345,7 @@ CNodePtr CreateTile(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_no
     tile_inputs = {NewValueNode(tile_primitive), mul_node->input(kIndex2)};
   } else {
     if (std::any_of(labels_shape.begin(), labels_shape.end(), [](int64_t value) { return value < 0; })) {
-      std::vector<AnfNodePtr> dynamic_shape_inputs = {NewValueNode(std::make_shared<Primitive>("DynamicShape")),
+      std::vector<AnfNodePtr> dynamic_shape_inputs = {NewValueNode(std::make_shared<Primitive>("TensorShape")),
                                                       sparse_softmax_node->input(kIndex2)};
       auto shape_node = pass.NewCNode(dynamic_shape_inputs, graph);
       MS_EXCEPTION_IF_NULL(shape_node);
