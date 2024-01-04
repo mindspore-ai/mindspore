@@ -422,42 +422,89 @@ class SliceData : public ItemData {
   std::vector<Py_ssize_t> sliceVar_;
 };
 
+typedef enum _DictType {
+  DtDict = 0,
+  DtKeys,
+  DtValues,
+  DtItems,
+} DictType;
+
 class DictData : public ItemData {
  public:
   DictData(PyObject *obj, bool needSpecialize, int recurseDepth)
       : ItemData(ItemType::PyDict, needSpecialize, recurseDepth) {
+    if (PyDictKeys_Check(obj)) {
+      dt_ = DictType::DtKeys;
+      obj = PyObject_CallOneArg(reinterpret_cast<PyObject *>(&PyList_Type), obj);
+    } else if (PyDictValues_Check(obj)) {
+      dt_ = DictType::DtValues;
+      obj = PyObject_CallOneArg(reinterpret_cast<PyObject *>(&PyList_Type), obj);
+    } else if (PyDictItems_Check(obj)) {
+      dt_ = DictType::DtItems;
+      obj = PyObject_CallOneArg(reinterpret_cast<PyObject *>(&PyDict_Type), obj);
+    } else {
+      dt_ = DictType::DtDict;
+    }
     Py_ssize_t pos = 0;
     PyObject *key, *val;
-    while (PyDict_Next(obj, &pos, &key, &val)) {
-      ItemDataPtr k, v;
-      if (recurseDepth > 0 || needSpecialize) {
-        k = CreateItem(key, needSpecialize, recurseDepth);
-        v = CreateItem(val, needSpecialize, recurseDepth);
-      } else {
-        k = CreateItem(reinterpret_cast<PyObject *>(Py_TYPE(key)), false, false);
-        v = CreateItem(reinterpret_cast<PyObject *>(Py_TYPE(val)), false, false);
+    if (dt_ == DictType::DtItems || dt_ == DictType::DtDict) {
+      while (PyDict_Next(obj, &pos, &key, &val)) {
+        ItemDataPtr k, v;
+        if (recurseDepth > 0 || needSpecialize) {
+          k = CreateItem(key, needSpecialize, recurseDepth);
+          v = CreateItem(val, needSpecialize, recurseDepth);
+        } else {
+          k = CreateItem(reinterpret_cast<PyObject *>(Py_TYPE(key)), false, false);
+          v = CreateItem(reinterpret_cast<PyObject *>(Py_TYPE(val)), false, false);
+        }
+        listK_.push_back(k);
+        listV_.push_back(v);
       }
-      listK_.push_back(k);
-      listV_.push_back(v);
+    } else {
+      std::vector<ItemDataPtr> &list = dt_ == DictType::DtKeys ? listK_ : listV_;
+      for (Py_ssize_t i = 0; i < PyList_Size(obj); ++i) {
+        PyObject *item = PyList_GetItem(obj, i);
+        if (recurseDepth > 0 || needSpecialize) {
+          list.push_back(CreateItem(item, needSpecialize, recurseDepth));
+        } else {
+          list.push_back(CreateItem(reinterpret_cast<PyObject *>(Py_TYPE(item)), false, false));
+        }
+      }
+    }
+    if (dt_ != DictType::DtDict) {
+      Py_DECREF(obj);
     }
   }
 
   bool operator==(const ItemData &obj) const override {
     if (ItemData::operator==(obj)) {
       const DictData &other = (const DictData &)obj;
-      if (other.listK_.size() == listK_.size() && other.listV_.size() == listV_.size()) {
+      if (dt_ != other.dt_) {
+        return false;
+      }
+      if ((dt_ == DictType::DtValues || other.listK_.size() == listK_.size()) &&
+          (dt_ == DictType::DtKeys || other.listV_.size() == listV_.size())) {
         std::vector<ItemDataPtr> listCpK = other.listK_;
         std::vector<ItemDataPtr> listCpV = other.listV_;
-        for (size_t i = 0, j = 0; i < listK_.size(); ++i) {
-          size_t lenList = listCpK.size();
-          for (; j < lenList; ++j) {
-            if (*(listK_[i]) == *(listCpK[j]) && *(listV_[i]) == *(listCpV[j])) {
-              listCpK.erase(listCpK.begin() + j);
-              listCpV.erase(listCpV.begin() + j);
+        size_t listSize = listK_.size();
+        if (listSize < listV_.size()) {
+          listSize = listV_.size();
+        }
+        for (size_t i = 0, j = 0; i < listSize; ++i) {
+          size_t cpListSize = dt_ == DictType::DtValues ? listCpV.size() : listCpK.size();
+          for (; j < cpListSize; ++j) {
+            if ((dt_ == DictType::DtValues || *(listK_[i]) == *(listCpK[j])) &&
+                (dt_ == DictType::DtKeys || *(listV_[i]) == *(listCpV[j]))) {
+              if (dt_ != DictType::DtValues) {
+                listCpK.erase(listCpK.begin() + j);
+              }
+              if (dt_ != DictType::DtKeys) {
+                listCpV.erase(listCpV.begin() + j);
+              }
               break;
             }
           }
-          if (j == lenList) {
+          if (j == cpListSize) {
             return false;
           }
         }
@@ -468,14 +515,29 @@ class DictData : public ItemData {
   }
 
   std::string ToString() override {
-    std::string dict;
-    for (size_t i = 0; i < listK_.size(); ++i) {
-      dict += DESC_ITEM(listK_[i], listV_[i]);
+    std::string dict = DESC_STRING(dt_);
+    size_t listSize = 0;
+    if (dt_ == DictType::DtItems || dt_ == DictType::DtDict) {
+      listSize = listK_.size();
+      for (size_t i = 0; i < listSize; ++i) {
+        dict += DESC_ITEM(listK_[i], listV_[i]);
+      }
+    } else if (dt_ == DictType::DtKeys) {
+      listSize = listK_.size();
+      for (size_t i = 0; i < listSize; ++i) {
+        dict += DESC_ITEM_T(listK_[i]);
+      }
+    } else if (dt_ == DictType::DtValues) {
+      listSize = listV_.size();
+      for (size_t i = 0; i < listSize; ++i) {
+        dict += DESC_ITEM_T(listV_[i]);
+      }
     }
-    return DESC_STRING_S(dict, listK_.size()) + DESC_END;
+    return DESC_STRING_S(dict, listSize) + DESC_END;
   }
 
  protected:
+  DictType dt_;
   std::vector<ItemDataPtr> listK_;
   std::vector<ItemDataPtr> listV_;
 };
@@ -1520,6 +1582,9 @@ ItemDataPtr CreateMutablePyData(PyObject *obj, bool need_specialize, int recurse
 static bool CheckTensorObject(PyObject *obj) {
   return py::isinstance<mindspore::tensor::Tensor>(obj) || IsStubTensor(py::cast<py::object>(obj));
 }
+static bool CheckDictKeyValueItemObject(PyObject *obj) {
+  return !!PyDict_Check(obj) || !!PyDictKeys_Check(obj) || !!PyDictValues_Check(obj) || !!PyDictItems_Check(obj);
+}
 static const std::vector<std::pair<CheckPyObjectFunc, CreatePyObjectFunc>> kFuncPyObjectConverter = {
   {[](PyObject *obj) -> bool { return PyLong_Check(obj) && !PyBool_Check(obj); }, CreatePyData<IntData>},
   {[](PyObject *obj) -> bool { return !!PyFloat_Check(obj); }, CreatePyData<FloatData>},
@@ -1530,7 +1595,7 @@ static const std::vector<std::pair<CheckPyObjectFunc, CreatePyObjectFunc>> kFunc
   {[](PyObject *obj) -> bool { return !!PyTuple_Check(obj); }, CreatePyData<ListData>},
   {[](PyObject *obj) -> bool { return !!PySet_Check(obj); }, CreatePyData<ListData>},
   {[](PyObject *obj) -> bool { return !!PyFrozenSet_Check(obj); }, CreatePyData<ListData>},
-  {[](PyObject *obj) -> bool { return !!PyDict_Check(obj); }, CreatePyData<DictData>},
+  {[](PyObject *obj) -> bool { return CheckDictKeyValueItemObject(obj); }, CreatePyData<DictData>},
   {[](PyObject *obj) -> bool { return !!PyComplex_Check(obj); }, CreatePyData<ComplexData>},
   {[](PyObject *obj) -> bool { return !!PySlice_Check(obj); }, CreatePyData<SliceData>},
   {[](PyObject *obj) -> bool { return !!PyFunction_Check(obj); }, CreatePyData<FunctionData>},
