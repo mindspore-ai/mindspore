@@ -19,7 +19,6 @@
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/tile_fusion.h"
 #include "ops/fusion/exp_fusion.h"
-#include "ops/round.h"
 #include "ops/tan.h"
 #include "ops/eltwise.h"
 #include "nnacl/op_base.h"
