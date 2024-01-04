@@ -1476,6 +1476,10 @@ bool GuardInlinedFunc(CallNode *call_node) {
   } else if (func_type == AObject::kTypeCell || AObject::kTypeAnyValue) {
     call_node->GetGraph()->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GType, false);
   } else if (func_type == AObject::kTypeFunction) {
+    PyObject *name = reinterpret_cast<PyFunctionObject *>(callable)->func_qualname;
+    if (std::string(PyUnicode_AsUTF8(name)).find(kPIJitCopyFuncKey) != std::string::npos) {
+      return true;
+    }
     tr = CreateOpTrace(PyFunction_GET_CODE(callable), LOAD_ATTR, 0, {tr}, "", "__code__", strict);
     call_node->GetGraph()->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GId);
   } else {
@@ -1578,7 +1582,6 @@ StopTraceReason GraphBuilder::BuildSubGraph(CallNode *call_node, int depth, cons
     stat = InlineReason::kInlineInfer_Fail;
   }
   if (stat != InlineReason::kInline) {
-    code->GetGuard()->Rollback();
     if (!is_make_func) {
       /**
        * replace function call, inline or resume capture after break graph
@@ -1587,11 +1590,16 @@ StopTraceReason GraphBuilder::BuildSubGraph(CallNode *call_node, int depth, cons
       stat = ReplaceCall(call_node, func) ? stat : InlineReason::kInlinePolicyDisabled;
     }
   } else {
-    code->GetGuard()->Pop();
     if (!is_make_func) {
       // exclude make function, because of function always a new function but code is constant
       stat = GuardInlinedFunc(call_node) ? stat : InlineReason::kInlinePolicyDisabled;
     }
+  }
+
+  if (stat != InlineReason::kInline) {
+    code->GetGuard()->Rollback();
+  } else {
+    code->GetGuard()->Pop();
   }
 
   // if stat == InlineReason::kInline, guard free variable

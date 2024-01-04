@@ -203,6 +203,7 @@ class CFG {
   PyCodeObject *GetCodeObject() const { return pycode_; }
   int GetLocalCount() const { return nlocals_; }
   void SetLocalCount(int n) { nlocals_ = n; }
+  std::string ToString() const { return DumpBBs(); }
 
   const Liveness *GetLiveness();
 

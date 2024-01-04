@@ -44,6 +44,7 @@ class BytecodeInliner {
   void ResetGraphStat();
 
   void ProcessGraph(Graph *, int local_off = 0);
+  void EraseDeadLocal(const std::vector<ValueNode *> &alive_nodes);
   void Reconstruct(ValueNode *node, int local_off);
   void InitCFG();
 
@@ -58,6 +59,7 @@ class BytecodeInliner {
   std::unique_ptr<FrameStates> last_frame_;
   std::map<int, std::unique_ptr<FrameStates>> new_frames_;
   int new_break_bci_;
+  bool inline_partial_;
 };
 
 }  // namespace graph
