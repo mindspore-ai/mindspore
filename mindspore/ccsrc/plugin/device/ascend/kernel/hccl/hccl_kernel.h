@@ -53,7 +53,6 @@ class HcclKernel : public KernelMod {
  protected:
   virtual HcclDataType GetHcclDataType() const;
   virtual void CalLoopSize();
-  void CalcWorkspaceSize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   bool CalcTypeShapeAndCount(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   std::vector<std::vector<int64_t>> hccl_kernel_input_shape_list_;
   std::vector<std::vector<int64_t>> hccl_kernel_output_shape_list_;
