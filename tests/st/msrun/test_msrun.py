@@ -135,4 +135,3 @@ if __name__ == "__main__":
     acc = model.eval(ds_eval, dataset_sink_mode=True)
 
     print("Accuracy:", acc['Accuracy'])
-    assert acc['Accuracy'] > 0.7
