@@ -262,7 +262,7 @@ static bool InferConvertMap(CallNode *call_node) {
       return false;
     }
     AObject::Type type = AObject::GetPyType(ret);
-    res = is_abstract ? AObject::MakeAObject(type) : AObject::Convert(ret);
+    res = is_abstract && type != AObject::kTypeTensor ? AObject::MakeAObject(type) : AObject::Convert(ret);
     Py_DECREF(ret);
   } else {
     return false;
@@ -399,7 +399,7 @@ bool InferPrimitive(CallNode *call_node) {
     return false;
   }
   AObject::Type type = AObject::GetPyType(ret);
-  AObject *type_info = is_abstract ? AObject::MakeAObject(type) : AObject::Convert(ret);
+  AObject *type_info = is_abstract && type != AObject::kTypeTensor ? AObject::MakeAObject(type) : AObject::Convert(ret);
   call_node->SetVobj(type_info);
   Py_DECREF(ret);
   return false;

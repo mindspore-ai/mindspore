@@ -485,6 +485,37 @@ static PyObject *InferRank(PyObject *arg) {
   return PyLong_FromSize_t(shape.size());
 }
 
+static PyObject *InferSize(PyObject *arg) {
+  ShapeVector shape;
+  if (IsStubTensor(arg)) {
+    shape = GetShapeForStubTensor(arg);
+  } else {
+    auto pyObj = py::cast<py::object>(arg);
+    auto tensor_ptr = pyObj.cast<mindspore::tensor::MetaTensorPtr>();
+    shape = tensor_ptr->shape();
+  }
+  size_t elements = 1;
+  for (size_t i = 0; i < shape.size(); i++) {
+    elements *= shape[i];
+  }
+  return PyLong_FromSize_t(elements);
+}
+
+static PyObject *InferValue(PyObject *primitive, const std::vector<PyObject *> &arglist, const PrimitivePyPtr &prim) {
+  static const std::unordered_set<std::string> specialize = {
+    "ListToTensor",
+    "TupleToTensor",
+    "ScalarToTensor",
+    "make_range",
+  };
+  if (specialize.find(prim->name()) == specialize.end()) {
+    return nullptr;
+  }
+  PyObject *res = PyObject_Vectorcall(primitive, arglist.data(), arglist.size(), nullptr);
+  PyErr_Clear();
+  return res;
+}
+
 PyObject *InferEngine::InferSpecialPrimitive(PyObject *primitive, const std::vector<PyObject *> &arglist,
                                              const PrimitivePyPtr &prim) {
   if (prim->name() == "Shape" && arglist.size() == 1) {
@@ -506,8 +537,10 @@ PyObject *InferEngine::InferSpecialPrimitive(PyObject *primitive, const std::vec
       PyErr_Clear();
     }
     return t;
+  } else if (prim->name() == "Size" && arglist.size() == 1) {
+    return InferSize(arglist[0]);
   } else {
-    return nullptr;
+    return InferValue(primitive, arglist, prim);
   }
 }
 
