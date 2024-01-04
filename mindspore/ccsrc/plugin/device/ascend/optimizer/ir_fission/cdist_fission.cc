@@ -70,7 +70,7 @@ AnfNodePtr AddBroadCastToNode(const FuncGraphPtr &func_graph, const AnfNodePtr &
   auto expand_shape = common::AnfAlgo::GetOutputInferShape(input_node, 0);
   (void)expand_shape.insert(expand_shape.cend() + dim, 1);
   common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {expand_shape}, expand_dims.get());
-  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(dim), expand_dims);
+  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(dim - 1), expand_dims);
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), expand_dims);
   // Add BroadCastTo Node
   std::vector<AnfNodePtr> broadcast_to_inputs = {
