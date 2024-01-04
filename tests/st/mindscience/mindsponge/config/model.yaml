@@ -313,6 +313,28 @@ slice:
       triangle_attention_starting_node: 8
       triangle_attention_ending_node: 8
       pair_transition: 0
+  seq_1536:
+    template_embedding: 8 # seq len * seq len
+    template_pair_stack:
+      triangle_attention_starting_node: 32 # seq len
+      triangle_attention_ending_node: 32 # seq len
+      pair_transition: 8 # seq len
+    extra_msa_stack:
+      msa_transition: 0 # 5120
+      msa_row_attention_with_pair_bias: 128 # 5120
+      msa_column_global_attention: 8 # seq len
+      outer_product_mean: 0 # seq len
+      triangle_attention_starting_node: 8 # seq len
+      triangle_attention_ending_node: 8 # seq len
+      pair_transition: 0 # seq len
+    msa_stack:
+      msa_transition: 0
+      msa_row_attention_with_pair_bias: 8
+      msa_column_attention: 8
+      outer_product_mean: 0
+      triangle_attention_starting_node: 8
+      triangle_attention_ending_node: 8
+      pair_transition: 0
   seq_2048:
     template_embedding: 64 # seq len * seq len
     template_pair_stack:
