@@ -1318,8 +1318,7 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
                        "{} parameters in the 'net' are not loaded, because they are not in the "
                        "'parameter_dict', please check whether the network structure is consistent "
                        "when training and loading checkpoint.".format(len(param_not_load)))
-        for param_name in param_not_load:
-            logger.warning("{} is not loaded.".format(param_name))
+        logger.warning("{} are not loaded.".format(param_not_load))
     return param_not_load, ckpt_not_load
 
 
