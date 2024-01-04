@@ -138,6 +138,12 @@ RUN_TESTCASES="off"
 
 checkopts "$@"
 
+if echo "$LITE_PKG_PATH" | grep -q -E '\.tar.gz$'; then
+  tar -zxf $LITE_PKG_PATH -C ${BASEPATH}
+  LITE_PKG_NAME=$(basename $LITE_PKG_PATH '.tar.gz')
+  LITE_PKG_PATH=${BASEPATH}/$LITE_PKG_NAME
+fi
+
 if [[ "${RUN_TESTCASES}" == "on" ]] ; then
   test_prepare
 fi
