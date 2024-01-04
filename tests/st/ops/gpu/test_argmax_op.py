@@ -60,7 +60,7 @@ def test_argmax_1d():
         assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_argmax_2d():
@@ -106,7 +106,7 @@ class ArgmaxFuncNet(nn.Cell):
         return F.argmax(x, dim=-1)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -156,7 +156,7 @@ def test_argmax_dynamic_shape():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_argmax_support_types():
@@ -226,7 +226,7 @@ def test_argmax_support_types():
     assert out2_uint64 == 1 and out2_uint64.dtype == mstype.int64
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_argmax_functional():

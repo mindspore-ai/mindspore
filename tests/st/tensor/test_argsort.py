@@ -23,7 +23,7 @@ class Argsort(nn.Cell):
         return input_x.argsort(axis, descending)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

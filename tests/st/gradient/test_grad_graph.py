@@ -394,7 +394,7 @@ def test_grad_if_with_weights_has_aux_graph():
     assert np.allclose(aux[1].asnumpy(), expect_aux2)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

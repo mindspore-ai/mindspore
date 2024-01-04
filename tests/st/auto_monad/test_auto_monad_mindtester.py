@@ -198,7 +198,7 @@ class ControlBprop(Cell):
         return x * 2, y * 3, z, input_data * 5.1
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -255,7 +255,7 @@ class InlineBpropTwoInput1(Cell):
         return grads[0] * 2, grads[1] * 2
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -346,7 +346,7 @@ class SideEffectMemoryCellAddnNet(Cell):
         return grad_out
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -435,7 +435,7 @@ class SideEffectReturnParameterNet(Cell):
         return grad_out
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -488,7 +488,7 @@ class SideEffectPrintInHighOrdeAddnNet(Cell):
 
 
 @security_off_wrap
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -587,7 +587,7 @@ class SideEffectTwoAddnSwitchNet(Cell):
         return grad_out
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -633,7 +633,7 @@ class SideEffectGradIfNet(Cell):
         return grad_out
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -682,7 +682,7 @@ class HighGrad(Cell):
         return self.final_grad(*inputs)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -745,7 +745,7 @@ class SideEffectControlFlowAssignDependWhileNet(Cell):
         return grad_out
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -794,7 +794,7 @@ class AssignInZipLoop(Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

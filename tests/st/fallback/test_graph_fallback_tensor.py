@@ -39,7 +39,7 @@ class ControlNet(nn.Cell):
         return self.inner_function_2(a, b)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -94,7 +94,7 @@ def np_fallback_func_tensor_index(x):
     return me_x[x]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -111,7 +111,7 @@ def test_np_fallback_func_tensor_index():
     assert output == output_expect
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

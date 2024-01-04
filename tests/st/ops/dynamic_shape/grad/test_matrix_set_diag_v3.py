@@ -45,7 +45,7 @@ def grad_dyn_case(is_dynamic_rank):
     test_dynamic.test_dynamic_grad_net([input_x, diagonal, k], is_dynamic_rank)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -59,7 +59,7 @@ def test_dynamic_shape():
     grad_dyn_case(False)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

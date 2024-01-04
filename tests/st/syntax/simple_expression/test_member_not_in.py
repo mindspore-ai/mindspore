@@ -62,7 +62,7 @@ def test_ms_syntax_operator_int_not_in_int():
         print(ret)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -94,7 +94,7 @@ def test_ms_syntax_operator_int_not_in_list_str():
     assert ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -159,7 +159,7 @@ def test_ms_syntax_operator_int_not_in_dict_int():
     assert not ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -176,7 +176,7 @@ def test_ms_syntax_operator_int_not_in_dict_str():
     assert ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -228,7 +228,7 @@ def test_ms_syntax_operator_tensor_not_in_list_tensor():
     assert not ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -246,7 +246,7 @@ def test_ms_syntax_operator_tensor_not_in_list_combine():
     assert ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -264,7 +264,7 @@ def test_ms_syntax_operator_tensor_not_in_tuple_tensor():
     assert not ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

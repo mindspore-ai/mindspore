@@ -286,7 +286,7 @@ def test_eigh_error_dims(n: int, dtype):
         msp.linalg.eigh(Tensor(a))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

@@ -64,7 +64,7 @@ def test_net_normal():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_single():
@@ -80,7 +80,7 @@ def test_net_single():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_none():
@@ -96,7 +96,7 @@ def test_net_none():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_value():
@@ -132,7 +132,7 @@ def test_net_value():
     assert (dx.asnumpy() == expect_dx).all
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_graph_mode():
@@ -169,7 +169,7 @@ def test_net_graph_mode():
     assert (dx.asnumpy() == expect_dx).all
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_graph_mode_fp64():
@@ -206,7 +206,7 @@ def test_net_graph_mode_fp64():
     assert (dx.asnumpy() == expect_dx).all
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_adaptive_avgpool_vmap():

@@ -21,7 +21,7 @@ from mindspore import dtype as mstype
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -42,7 +42,7 @@ def test_fallback_sum_tensor_n_default_1():
     assert out == 12
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -63,7 +63,7 @@ def test_fallback_sum_tensor_n_default_2():
     assert np.allclose(out.asnumpy(), np.array([4, 6]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -168,7 +168,7 @@ def test_fallback_sum_with_x_unsupported_operand_type_error_1():
     assert "unsupported operand type" in str(ex.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

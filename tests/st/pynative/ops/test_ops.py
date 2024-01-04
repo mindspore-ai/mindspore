@@ -66,7 +66,7 @@ def test_tile_eliminate():
     assert out.shape == (1, 1, 448, 448)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

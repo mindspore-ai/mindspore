@@ -46,7 +46,7 @@ def create_csr_tensor():
     return logits
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -79,7 +79,7 @@ def test_ops_sparse_matrix_softmax_vs_nn_softmax_int32():
     assert np.all(weights - c[4] < eps)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -142,7 +142,7 @@ def test_ops_sparse_matrix_softmax_vs_nn_softmax_fp32():
     assert np.all(weights - c[4] < eps)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

@@ -25,7 +25,7 @@ import mindspore as ms
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -78,7 +78,7 @@ def test_inner_scalar_mod():
         print("ret:", ret)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -105,7 +105,7 @@ def test_inner_scalar_mod_args_length():
         print("ret:", ret)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -131,7 +131,7 @@ def test_make_range_input_is_empty():
     assert "For 'make_range', the input size should within [1, 3] but got0" in str(err)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -204,7 +204,7 @@ def test_make_range_error_input_2():
     assert ret == 2
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -230,7 +230,7 @@ def test_make_range_input_type():
     assert "For 'make_range', the 1th input should be a int scalar but got AbstractScalar" in str(err)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -256,7 +256,7 @@ def test_make_range_input_type_2():
     assert "For 'make_range', the 2th input should be a int scalar but got AbstractScalar" in str(err)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -308,7 +308,7 @@ def test_make_range_input_size():
     assert "For 'make_range', the input size should within [1, 3] but got4" in str(err)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -334,7 +334,7 @@ def test_make_range_overflow():
         print("ret:", ret)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -360,7 +360,7 @@ def test_make_range_overflow_2():
         print("ret:", ret)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -383,7 +383,7 @@ def test_typeof():
         print("ret:", ret)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -406,7 +406,7 @@ def test_tuple_div():
         print("ret:", ret)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -429,7 +429,7 @@ def test_tuple_div_type():
         print("ret:", ret)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -452,7 +452,7 @@ def test_tuple_div_zero():
         print("ret:", ret)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

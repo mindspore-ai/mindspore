@@ -30,7 +30,7 @@ class Net(nn.Cell):
         return int(x), float(y)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scalar_cast():
@@ -49,7 +49,7 @@ def test_scalar_cast():
     assert res[1] == expecty
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scalar_cast1():
@@ -88,7 +88,7 @@ def test_cast_grad():
     print("grad out = ", grad_func(input_x, dout))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast_grad1():
