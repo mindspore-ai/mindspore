@@ -63,7 +63,6 @@ class DeviceSync {
  protected:
   bool is_view_{false};
   // User data is the extra data required by the kernel launch in addition to device ptr.
-  UserDataPtr user_data_{nullptr};
 };
 using DeviceSyncPtr = std::shared_ptr<DeviceSync>;
 }  // namespace mindspore
