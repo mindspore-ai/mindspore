@@ -23,6 +23,7 @@
 #include "utils/ms_utils.h"
 #include "include/common/utils/utils.h"
 #include "utils/convert_utils_base.h"
+#include "utils/phase.h"
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
@@ -183,7 +184,7 @@ void MsContext::RefreshExecutionMode() {
   if (target == kAscendDevice) {
     if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
       set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
-    } else if (common::GetEnv(kGraphOpRun) == "1") {
+    } else if (IsKByKExecutorMode()) {
       set_param<bool>(MS_CTX_ENABLE_TASK_SINK, false);
     }
   }
@@ -200,8 +201,7 @@ void MsContext::RefreshMemoryOffload() {
     set_param(MS_CTX_ENABLE_MEM_OFFLOAD, false);
     return;
   }
-  if (target == kAscendDevice && get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode &&
-      common::GetEnv(kGraphOpRun) != "1") {
+  if (target == kAscendDevice && get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode && !IsKByKExecutorMode()) {
     MS_LOG(WARNING) << "Run graph mode with kernel by kernel because memory offload is ON.";
     set_param<bool>(MS_CTX_ENABLE_TASK_SINK, false);
     return;
@@ -485,6 +485,44 @@ bool MsContext::EnableAoeOnline() const {
 bool MsContext::EnableAoeOffline() const {
   std::string aoe_tune_mode = MsContext::GetInstance()->get_param<std::string>(MS_CTX_AOE_TUNE_MODE);
   return aoe_tune_mode == "offline";
+}
+
+bool MsContext::IsKByKExecutorMode() const {
+  // Get jit level.
+  const auto &jit_config = PhaseManager::GetInstance().jit_config();
+  std::string jit_level = "O1";
+  auto iter = jit_config.find("jit_level");
+  if (iter != jit_config.end()) {
+    jit_level = iter->second;
+  }
+  MS_LOG(INFO) << "The jit level is: " << jit_level;
+
+  if (get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD)) {
+    MS_LOG(INFO) << "Enable kbyk executor mode by mem offload.";
+    return true;
+  }
+
+  auto mode = get_param<int>(MS_CTX_EXECUTION_MODE);
+  if (mode == kPynativeMode) {
+    if (common::GetEnv("MS_PYNATIVE_GE") == "1" || jit_level == "O2") {
+      MS_LOG(INFO) << "The pynative mode enable ge executor mode by MS_PYNATIVE_GE or JitLevelO2.";
+      return false;
+    }
+    MS_LOG(INFO) << "The pynative mode enable kbyk executor mode.";
+    return true;
+  }
+
+  if (mode == kGraphMode) {
+    if (common::GetEnv("GRAPH_OP_RUN") == "1" || jit_level == "O0") {
+      MS_LOG(INFO) << "The graph mode enable kbyk executor mode by GRAPH_OP_RUN or JitLevelO0.";
+      return true;
+    }
+    MS_LOG(INFO) << "The graph mode enable ge executor mode.";
+    return false;
+  }
+
+  MS_LOG(ERROR) << "No valid executor mode.";
+  return false;
 }
 
 template MS_CORE_API void MsContext::CheckReadStatus<bool>(MsCtxParam, const bool &) const;

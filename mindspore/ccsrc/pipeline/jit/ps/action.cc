@@ -616,12 +616,12 @@ bool GraphReusingAction(const ResourcePtr &resource) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   const bool enable_ge = context->backend_policy() == "ge";
-  const bool graph_op_run = common::GetEnv("GRAPH_OP_RUN") == "1";
   const bool force_no_inline = common::GetEnv("MS_FORCE_NO_INLINE") == "1";
   context->SetCellReuseLevel(CellReuseLevel::kNoCellReuse);
   if (cell_reused) {
     MS_LOG(INFO) << "Cell reuse(@lazy_inline) actually takes effect.";
-    auto cell_reuse_level = (enable_ge && !graph_op_run) ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
+    auto cell_reuse_level =
+      (enable_ge && !context->IsKByKExecutorMode()) ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
     if (force_no_inline) {
       cell_reuse_level = CellReuseLevel::kNoInline;
     }
@@ -1247,11 +1247,9 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
     return;
   }
 
-  const bool enable_memory_offload = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD);
-  const bool pynative_not_sink = pynative_mode && (jit_level != "O2") && (context_ptr->backend_policy() != "ge");
   // GRAPH | Single Op : KernelByKernel path in MindRT.
-  if (common::GetEnv(kGraphOpRun) == "1" || pynative_not_sink || enable_memory_offload) {
-    MS_LOG(INFO) << "Run graph mode with kernel by kernel because env value GRAPH_OP_RUN is set to 1.";
+  if (context_ptr->IsKByKExecutorMode()) {
+    MS_LOG(INFO) << "Run graph mode with kernel by kernel by configuration.";
     set_ctx(false, false, false);
     return;
   }
@@ -1606,7 +1604,7 @@ static std::vector<ActionItem> CommonPipeline() {
   const bool is_parallel_mode =
     parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
   static const auto combine_like_graphs = (common::GetEnv("COMBINE_LIKE_GRAPHS") == "1");
-  if (!is_cluster_initialized && (!is_parallel_mode || combine_like_graphs) && pipeline::GetJitLevel() != "O0") {
+  if (!is_cluster_initialized && (!is_parallel_mode || combine_like_graphs)) {
     (void)actions.emplace_back(std::make_pair(kCombineLikeGraphs, CombineLikeGraphs));
   }
 
