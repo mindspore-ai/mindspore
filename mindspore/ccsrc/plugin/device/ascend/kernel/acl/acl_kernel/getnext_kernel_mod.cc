@@ -32,12 +32,6 @@ bool GetNextAclKernelMod::Init(const std::vector<KernelTensor *> &inputs, const 
   converter_->ResizeAclOpInputs(primitive_);
   converter_->ConvertAttrToAclInput(primitive_->attrs(), kernel_name_);
   converter_->ConvertInputToAclAttr(inputs, kernel_name_);
-  if (transform::AclHelper::IsPrintDebugString()) {
-    ms_attr_str_.clear();
-    converter_->ConvertToAclAttr(primitive_->attrs(), kernel_name_, &ms_attr_str_);
-  } else {
-    converter_->ConvertToAclAttr(primitive_->attrs(), kernel_name_, nullptr);
-  }
   converter_->ProcessRunnerSpecialInfo(kernel_name_, output_params_);
   return true;
 }

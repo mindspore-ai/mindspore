@@ -182,6 +182,9 @@ class AttrHelper {
                                   ShapeVector *shape = nullptr) const {
     MS_EXCEPTION_IF_NULL(array_list);
     const auto &value_sequence = value->cast<ValueSequencePtr>()->value();
+    if (value_sequence.size() == 0) {
+      return;
+    }
     auto val = value_sequence[0];
     if (val->isa<Scalar>()) {
       auto list_value = GetValue<std::vector<T>>(value);
