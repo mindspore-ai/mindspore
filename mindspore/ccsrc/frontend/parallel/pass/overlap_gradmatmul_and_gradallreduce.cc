@@ -23,9 +23,9 @@
 #include <queue>
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
-#include "mindspore/core/ops/other_ops.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/device_manager.h"
+#include "frontend/parallel/pass/pass_utils.h"
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "include/common/utils/utils.h"
@@ -35,45 +35,6 @@ namespace parallel {
 namespace {
 using Pattern = std::vector<std::pair<PrimitivePtr, int64_t>>;
 const size_t count_ten = 10;
-
-bool IsForwardNode(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  return !(cnode->HasPrimalAttr(kPrimalAttrForwardUniqueId) || cnode->HasAttr(kAttrDuplicated));
-}
-
-bool IsDxMatMul(const CNodePtr &matmul_node) {
-  std::queue<AnfNodePtr> cnode_queue;
-  std::vector<AnfNodePtr> visited;
-  for (size_t i = 1; i < matmul_node->size(); ++i) {
-    cnode_queue.push(matmul_node->input(i));
-    visited.push_back(matmul_node->input(i));
-  }
-
-  std::vector<AnfNodePtr> res;
-  while (!cnode_queue.empty()) {
-    auto queue_front = cnode_queue.front();
-    cnode_queue.pop();
-    if (!IsSomePrimitiveList(queue_front->cast<CNodePtr>(), {prim::kPrimLoad->name(), prim::kPrimDepend->name()})) {
-      res.push_back(queue_front);
-      continue;
-    }
-    auto cnode_queue_end = queue_front->cast<CNodePtr>();
-    if (std::find(visited.begin(), visited.end(), cnode_queue_end->input(1)) != visited.end()) {
-      continue;
-    }
-    cnode_queue.push(cnode_queue_end->input(1));
-    visited.push_back(cnode_queue_end->input(1));
-  }
-  for (const auto &node : res) {
-    if (node->isa<Parameter>()) {
-      return true;
-    }
-    if (IsPrimitiveCNode(node, prim::kPrimAllGather)) {
-      return true;
-    }
-  }
-  return false;
-}
 
 void ExtractForwardMatMul(const std::vector<CNodePtr> &origin_nodes_topological,
                           std::vector<std::string> *forward_matmul_unique_id_list) {
@@ -90,37 +51,9 @@ void ExtractForwardMatMul(const std::vector<CNodePtr> &origin_nodes_topological,
   }
 }
 
-void ExtractBackwardMatMul(const std::vector<CNodePtr> &origin_nodes_topological,
-                           std::unordered_map<CNodePtr, CNodePtr> *backward_matmul_dx_dw_map) {
-  std::unordered_map<std::string, std::vector<CNodePtr>> backward_matmul_map;
-  for (const auto &node : origin_nodes_topological) {
-    if (IsForwardNode(node) || !IsPrimitiveCNode(node, prim::kPrimMatMul)) {
-      continue;
-    }
-    auto matmul_cnode = node->cast<CNodePtr>();
-    if (!matmul_cnode->HasPrimalAttr(kPrimalAttrForwardUniqueId)) {
-      continue;
-    }
-    auto matmul_unique_id = GetValue<std::string>(matmul_cnode->GetPrimalAttr(kPrimalAttrForwardUniqueId));
-    backward_matmul_map[matmul_unique_id].push_back(matmul_cnode);
-  }
-
-  for (const auto &matmul_list_pair : backward_matmul_map) {
-    if (matmul_list_pair.second.size() != 2) {
-      continue;
-    }
-    auto matmul_list = matmul_list_pair.second;
-    if (IsDxMatMul(matmul_list[0])) {
-      (*backward_matmul_dx_dw_map)[matmul_list[0]] = matmul_list[1];
-    } else if (IsDxMatMul(matmul_list[1])) {
-      (*backward_matmul_dx_dw_map)[matmul_list[1]] = matmul_list[0];
-    }
-  }
-}
-
 std::vector<CNodePtr> GetCommInputMatMulNode(const AnfNodePtr &node,
                                              const std::unordered_map<CNodePtr, CNodePtr> &backward_matmul_dx_dw_map,
-                                             size_t count_num, size_t loop_max = 100) {
+                                             size_t count_num, size_t loop_max = 150) {
   std::vector<CNodePtr> result;
   std::queue<AnfNodePtr> anf_queue;
   anf_queue.push(node);
@@ -172,6 +105,9 @@ void InsertDepend(const FuncGraphManagerPtr &manager, const CNodePtr &comm_i1, c
   depend_node2->set_abstract(comm_i1->abstract()->Clone());
   depend_node2->AddAttr("matmul_grad_depend2", MakeValue(true));
   MS_EXCEPTION_IF_NULL(depend_node2);
+  auto comm_id = comm_i1->UniqueId();
+  comm_i1->AddAttr(GRAD_OVERLAP_MATMUL, MakeValue(comm_id));
+  matmul_i->AddAttr(GRAD_OVERLAP_MATMUL, MakeValue(comm_id));
   manager->SetEdge(comm_i1_output, manager->node_users()[comm_i1].front().second, depend_node2);
 }
 
@@ -189,9 +125,13 @@ void OverLapGradMatMul(const FuncGraphManagerPtr &manager, const std::vector<CNo
     if (!node->HasPrimalAttr(kPrimalAttrForwardCommNodeUniqueId)) {
       continue;
     }
+    if (node->HasAttr(INTERLEAVED_OVERLAP_MATMUL)) {
+      continue;
+    }
     auto input_matmul_dx_nodes = GetCommInputMatMulNode(node, backward_matmul_dx_dw_map, count_ten);
     if (input_matmul_dx_nodes.empty()) {
-      MS_LOG(WARNING) << "comm node:" << node->fullname_with_scope() << " cannot find input matmuls";
+      MS_LOG(WARNING) << "comm node:" << node->fullname_with_scope() << ", unique_id:" << AnfNodeInfo(node)
+                      << " cannot find input matmuls";
     }
     std::sort(
       input_matmul_dx_nodes.begin(), input_matmul_dx_nodes.end(), [&](const CNodePtr &cnode1, const CNodePtr &cnode2) {
@@ -204,14 +144,16 @@ void OverLapGradMatMul(const FuncGraphManagerPtr &manager, const std::vector<CNo
         return index1 < index2;
       });
     for (const auto &matmul : input_matmul_dx_nodes) {
-      if (matched_matmul_list.count(matmul) > 0) {
+      if (matched_matmul_list.count(backward_matmul_dx_dw_map.at(matmul)) > 0) {
         continue;
       }
       // insert depend
-      MS_LOG(WARNING) << "insert depend for comm node:" << node->fullname_with_scope() << " and "
-                      << backward_matmul_dx_dw_map.at(matmul)->fullname_with_scope();
+      MS_LOG(WARNING) << "insert depend for comm node:" << node->fullname_with_scope()
+                      << ", unique id:" << AnfNodeInfo(node) << " and "
+                      << backward_matmul_dx_dw_map.at(matmul)->fullname_with_scope()
+                      << ", unique id:" << AnfNodeInfo(backward_matmul_dx_dw_map.at(matmul));
       InsertDepend(manager, node, backward_matmul_dx_dw_map.at(matmul));
-      matched_matmul_list.insert(matmul);
+      matched_matmul_list.insert(backward_matmul_dx_dw_map.at(matmul));
       break;
     }
   }
@@ -302,6 +244,29 @@ void ExtractBackwardNodes(const std::vector<CNodePtr> &origin_nodes_topological,
     });
 }
 
+void ExtendDxDwMap(const std::vector<CNodePtr> &origin_nodes_topological,
+                   std::unordered_map<CNodePtr, CNodePtr> *backward_matmul_dx_dw_map) {
+  std::unordered_map<std::string, CNodePtr> unique_id_dw_map;
+  for (const auto &dx_dw : *backward_matmul_dx_dw_map) {
+    if (dx_dw.second->HasPrimalAttr(FORWARD_UNIQUE_ID_LIST)) {
+      auto unique_ids = GetValue<std::vector<std::string>>(dx_dw.second->GetPrimalAttr(FORWARD_UNIQUE_ID_LIST));
+      for (const auto &unique_id : unique_ids) {
+        unique_id_dw_map[unique_id] = dx_dw.second;
+      }
+    }
+  }
+  for (const auto &node : origin_nodes_topological) {
+    if (!node->HasPrimalAttr(kPrimalAttrForwardUniqueId)) {
+      continue;
+    }
+    auto forward_unique_id = GetValue<std::string>(node->GetPrimalAttr(kPrimalAttrForwardUniqueId));
+    if (unique_id_dw_map.count(forward_unique_id) == 0) {
+      continue;
+    }
+    (*backward_matmul_dx_dw_map)[node] = unique_id_dw_map[forward_unique_id];
+  }
+}
+
 void DoOverLapWay2(const FuncGraphManagerPtr &manager, const FuncGraphPtr &forward_graph,
                    const FuncGraphPtr &backward_graph) {
   std::list<CNodePtr> forward_orders = forward_graph->GetOrderedCnodes();
@@ -312,6 +277,7 @@ void DoOverLapWay2(const FuncGraphManagerPtr &manager, const FuncGraphPtr &forwa
   ExtractForwardMatMul(forward_origin_nodes_topological, &forward_matmul_unique_id_list);
   std::unordered_map<CNodePtr, CNodePtr> backward_matmul_dx_dw_map;
   ExtractBackwardMatMul(backward_origin_nodes_topological, &backward_matmul_dx_dw_map);
+  ExtendDxDwMap(backward_origin_nodes_topological, &backward_matmul_dx_dw_map);
   OverLapGradMatMul(manager, backward_origin_nodes_topological, backward_matmul_dx_dw_map,
                     forward_matmul_unique_id_list);
 }
