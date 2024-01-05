@@ -902,7 +902,7 @@ py::object CodeBreakGenerator::MakeCode(bool make_graph) {
   nlocals = std::max(nlocals, co_->co_nlocals);
   nlocals = std::max(nlocals, cfg_->GetLocalCount());
 
-  code_gen.SetArgsInfo(co_->co_argcount, co_->co_kwonlyargcount);
+  code_gen.SetArgsInfo(co_->co_argcount + co_->co_kwonlyargcount, 0);
   code_gen.SetLocalsCount(nlocals);
   code_gen.SetCodeFlags(co_->co_flags);
   code_gen.SetFirstLineNumber(co_->co_firstlineno);
