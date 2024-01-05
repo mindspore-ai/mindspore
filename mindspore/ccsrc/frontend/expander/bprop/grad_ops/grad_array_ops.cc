@@ -1130,7 +1130,7 @@ REG_BPROP_BUILDER("IndexFill").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
   if (ib->GetShape(x).empty()) {
     value_grad = dout;
   } else {
-    auto tmp = ib->Gather(dout, indices, dim);
+    auto tmp = ib->Gather(dout, indices, ib->Cast(dim, kInt64));
     value_grad = ib->ReduceSum(tmp, ShapeVector());
   }
   return {x_grad, ib->OutZeros(dim), ib->OutZeros(indices), value_grad};
