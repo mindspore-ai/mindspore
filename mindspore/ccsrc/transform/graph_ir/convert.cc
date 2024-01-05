@@ -3526,38 +3526,6 @@ void DfGraphConvertor::ConvertParallelGroupToHcom(const CNodePtr &node) {
   op_cache_[node.get()] = op;
 }
 
-void DfGraphConvertor::ConvertLoad(const CNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto nodes = node->inputs();
-  bool need_constant = false;
-  for (size_t i = 1; i < nodes.size(); ++i) {
-    auto care_node = nodes[i];
-    while (IsPrimitiveCNode(care_node, prim::kPrimDepend)) {
-      care_node = care_node->cast<CNodePtr>()->input(kIndex1);
-    }
-    if (IsPrimitiveCNode(care_node, prim::kPrimAllGather) &&
-        common::AnfAlgo::IsFromParallelOptimizer(care_node->cast<CNodePtr>())) {
-      need_constant = true;
-    }
-  }
-  if (!need_constant) {
-    return;
-  }
-  OpAdapterPtr adpt = FindAdapter(node, training_);
-  if (adpt == nullptr) {
-    return;
-  }
-  auto op = adpt->generate(node);
-  MS_EXCEPTION_IF_NULL(op);
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  if (context->CellReuseLevel() == CellReuseLevel::kNoCellReuse) {
-    (void)op->SetAttr("no_need_constant_folding", need_constant);
-    (void)op->SetAttr("_cannot_be_deleted", need_constant);
-  }
-  op_cache_[node.get()] = op;
-}
-
 void DfGraphConvertor::ConvertHcomFusionId(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(INFO) << "Add Hcom fusion_id";
@@ -3594,18 +3562,19 @@ void DfGraphConvertor::ConvertHcomFusionId(const CNodePtr &node) {
   } else if (fusion < 0) {
     fusion = kHcclFusionDefault;
   }
-  // For now, fusion of allgather may cause OOM, so do not fusion them.
-  if (IsPrimitiveCNode(node, prim::kPrimAllGather)) {
-    fusion = 0;
-    fusion_id = 0;
-  }
+
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   if (context->CellReuseLevel() != CellReuseLevel::kNoCellReuse) {
     MS_LOG(INFO) << "cell reuse not support all fusion";
     fusion = 0;
   }
-
+  MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
+  auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
+  if (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel) {
+    fusion_id = 0;
+    fusion = 0;
+  }
   (void)op->SetAttr("fusion_id", fusion_id);
   (void)op->SetAttr("fusion", fusion);
   AddCommAttrForHcclNode(node, op);
@@ -3776,7 +3745,7 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
       // Convert hccl op for comm handle
       {prim::kPrimAllReduce->name(), &DfGraphConvertor::ConvertHcomFusionId},
       {prim::kPrimAllGather->name(), &DfGraphConvertor::ConvertHcomFusionId},
-      {prim::kPrimLoad->name(), &DfGraphConvertor::ConvertLoad},
+      {prim::kPrimReduceScatter->name(), &DfGraphConvertor::ConvertHcomFusionId},
       {prim::kPrimBroadcast->name(), &DfGraphConvertor::ConvertHcclNode},
       {prim::kPrimReduceScatter->name(), &DfGraphConvertor::ConvertHcclNode},
       {prim::kPrimSend->name(), &DfGraphConvertor::ConvertHcclNode},
