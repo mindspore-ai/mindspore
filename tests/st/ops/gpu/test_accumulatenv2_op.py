@@ -53,7 +53,7 @@ def graph_net():
     assert (output.asnumpy() == expect_result).all()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_accumulate_n_v2_pynative_float32():

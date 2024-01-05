@@ -45,7 +45,7 @@ class LogicAndSpec(nn.Cell):
         return and_v
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -61,7 +61,7 @@ def test_ms_syntax_operator_logic_int_and_int():
     assert ret == 2
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -77,7 +77,7 @@ def test_ms_syntax_operator_logic_float_and_float():
     assert ret == 1.99
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -93,7 +93,7 @@ def test_ms_syntax_operator_logic_float_and_int():
     assert ret == 1
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -111,7 +111,7 @@ def test_ms_syntax_operator_logic_tensor_1_int_and_tensor_1_int():
     assert (ret.asnumpy() == [0]).all()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -149,7 +149,7 @@ def test_ms_syntax_operator_logic_tensor_1_int_and_int():
         print(ret)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -169,7 +169,7 @@ def test_ms_syntax_operator_logic_tensor_2x2_int_and_tensor_2x2_int():
     assert "Only tensor which shape is () or (1,) can be converted to bool, but got tensor shape is (2, 2)" in str(err)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -185,7 +185,7 @@ def test_ms_syntax_operator_logic_int_and_str():
     assert ret == "cba"
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -233,7 +233,7 @@ def test_ms_syntax_operator_logic_list_int_and_list_int():
     assert ret == [3, 2, 1]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -249,7 +249,7 @@ def test_ms_syntax_operator_logic_list_int_and_int():
     assert ret == 1
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -265,7 +265,7 @@ def test_ms_syntax_operator_logic_list_int_and_str():
     assert ret == "aaa"
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -281,7 +281,7 @@ def test_ms_syntax_operator_logic_list_int_and_list_str():
     assert ret == ["1", "2", "3"]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

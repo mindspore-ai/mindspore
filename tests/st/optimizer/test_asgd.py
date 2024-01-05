@@ -19,7 +19,7 @@ import mindspore.context as context
 from .optimizer_utils import FakeNet, build_network, loss_not_default_asgd, loss_default_asgd, loss_group_asgd
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -71,7 +71,7 @@ def test_no_default_asgd(mode):
     assert np.allclose(loss_not_default_asgd, loss, atol=1.e-5, rtol=1e-3)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

@@ -53,7 +53,7 @@ def test_round_cust_class():
     assert out[0] == 100.91, out[1] == 100.91
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

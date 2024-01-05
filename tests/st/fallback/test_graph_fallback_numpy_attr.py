@@ -20,7 +20,7 @@ from mindspore import jit, context, Tensor
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -76,7 +76,7 @@ def test_np_arange_slice_1():
     assert np.all(e.asnumpy() == np.array([2, 3, 4]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -102,7 +102,7 @@ def test_np_arange_slice_2():
     assert np.all(d.asnumpy() == np.array([[2, 3], [4, 5], [5, 6]]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -132,7 +132,7 @@ def test_np_array_advanced_index():
     assert np.all(e.asnumpy() == np.array([[1, 2], [4, 5], [7, 8], [10, 11]]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -158,7 +158,7 @@ def test_np_array_advanced_index_2():
     print("c:", c)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -177,7 +177,7 @@ def test_np_reshape():
     assert np.all(np_reshape().asnumpy() == np.array([[0, 1, 2, 3], [4, 5, 6, 7]]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -196,7 +196,7 @@ def test_np_ndarray_flatten():
     assert np.all(np_ndarray_flatten().asnumpy() == np.array([0, 1, 2, 3, 4, 5, 6, 7]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -215,7 +215,7 @@ def test_np_ravel():
     assert np.all(np_ravel().asnumpy() == np.array([0, 4, 1, 5, 2, 6, 3, 7]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -254,7 +254,7 @@ def test_np_broadcast():
     assert np.all(np_broadcast().asnumpy() == np.array([3, 3]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -273,7 +273,7 @@ def test_np_broadcast_to():
     assert np.all(np_broadcast_to().asnumpy() == np.array([[0, 1, 2, 3], [0, 1, 2, 3]]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -292,7 +292,7 @@ def test_np_expand_dims():
     assert np.all(np_expand_dims().asnumpy() == np.array([[[1, 2], [3, 4]]]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -339,7 +339,7 @@ def test_np_concat():
     assert np.all(out_vstack.asnumpy() == np.array([[1, 2], [3, 4], [5, 6], [7, 8]]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -364,7 +364,7 @@ def test_np_split():
     assert np.all(out_vsplit.asnumpy() == np.array([[[0, 1]], [[2, 3]]]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -517,7 +517,7 @@ def test_np_degree():
     assert np.isclose(out_arctan.asnumpy(), 45)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -550,7 +550,7 @@ def test_np_math_1():
     assert np.all(out_remainder.asnumpy() == np.array([0, 2]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -579,7 +579,7 @@ def test_np_math_2():
     assert np.allclose(out_power.asnumpy(), np.array([1, 4, 9]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -649,7 +649,7 @@ def test_np_sort():
     assert np.all(out_where.asnumpy() == np.array([4]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

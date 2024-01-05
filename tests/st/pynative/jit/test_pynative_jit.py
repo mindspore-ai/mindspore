@@ -234,7 +234,7 @@ def test_call_same_func():
     assert np.allclose(grad_second[1][3].asnumpy(), -84.6, 0.1, 0.1)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -323,7 +323,7 @@ def test_pynative_jit_mix_execute():
     assert output == 8
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -398,7 +398,7 @@ def test_pynative_jit_control_flow_if_break():
     assert (output.asnumpy() == z.asnumpy() * 4).all()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -420,7 +420,7 @@ def test_pynative_jit_with_dynamic_shape():
     assert (output[0].asnumpy() == np.array([1, 2, 3, 5])).all()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -452,7 +452,7 @@ def test_pynative_jit_with_tuple_inputs():
     assert (out[0].asnumpy() == np.ones([2, 2]) + 1).all()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -476,7 +476,7 @@ def test_pynative_jit_with_optional_inputs():
     assert foo(x=a, y=4).asnumpy() == 7
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -497,7 +497,7 @@ def test_pynative_jit_with_args_inputs():
     assert foo(x, 1, 2).asnumpy() == 6
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
