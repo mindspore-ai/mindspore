@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace opt {
-class ConvertConstInputToTensorInput : public PatternProcessPass {
+class BACKEND_EXPORT ConvertConstInputToTensorInput : public PatternProcessPass {
  public:
   explicit ConvertConstInputToTensorInput(bool multigraph = true)
       : PatternProcessPass("convert_const_input_to_tensor_input", multigraph) {}
