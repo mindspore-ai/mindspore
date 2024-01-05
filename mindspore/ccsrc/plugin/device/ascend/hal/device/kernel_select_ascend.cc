@@ -31,6 +31,7 @@
 #include "plugin/device/ascend/kernel/acl/acl_kernel_build.h"
 #include "plugin/device/ascend/kernel/host/host_kernel_build.h"
 #include "plugin/device/ascend/kernel/host/host_kernel_metadata.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_build.h"
 #include "kernel/kernel_build_info.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "transform/acl_ir/op_api_util.h"
@@ -459,7 +460,7 @@ void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_ty
     } else if (cnode_output_object_type == kernel::KernelObjectType::SCALAR) {
       output_object_type = cnode_output_object_type;
     }
-  } else if (kernel_type == OPAPI_KERNEL) {
+  } else if (kernel_type == OPAPI_KERNEL || kernel_type == INTERNAL_KERNEL) {
     transform::OpApiUtil::GetValidKernelBuildInfo(kernel, &input_formats, &output_formats, &input_reshape_types,
                                                   &output_reshape_types);
   } else {
@@ -536,20 +537,56 @@ void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node
   }
 }
 
+std::vector<std::string> SplitString(const std::string &str, char delim) {
+  std::stringstream ss(str);
+  std::string item;
+  std::vector<std::string> elems;
+  while (std::getline(ss, item, delim)) {
+    if (!item.empty()) {
+      elems.push_back(item);
+    }
+  }
+  return elems;
+}
+
 std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const KernelGraphPtr &graph,
                                                                      const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
+  static std::vector<std::set<std::string>> op_selected_type(4);
+  static std::set<std::string> kInternalKernelSelectedSet;
+  transform::ErrorAclType acl_err_type = transform::ErrorAclType::kNormalOp;
+  std::tuple<bool, std::string, ExceptionType> result = std::make_tuple(true, "", NoExceptionType);
+  auto enable_internal = true;
+  if (common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") == "off") {
+    enable_internal = false;
+  }
+  std::string op_name = common::AnfAlgo::GetCNodeName(node);
+
+  if (enable_internal && kernel::IsRegisteredInternalKernel(node)) {
+    GenerateKernelBuildInfo(node, KernelType::INTERNAL_KERNEL);
+    if (kInternalKernelSelectedSet.count(op_name) == 0) {
+      (void)kInternalKernelSelectedSet.insert(op_name);
+      MS_LOG(INFO) << op_name << " select internal kernel.";
+    }
+    return result;
+  }
+
   // The shape op use the cpu kernel priorly.
   static const std::set<std::string> select_host_priorly = {kShapeOpName};
-  std::string op_name = common::AnfAlgo::GetCNodeName(node);
   if (select_host_priorly.count(op_name) != 0) {
     return {false, op_name + " select host kernel priorly.", NotSupportError};
   }
 
-  static std::vector<std::set<std::string>> op_selected_type(4);
-  transform::ErrorAclType acl_err_type = transform::ErrorAclType::kNormalOp;
-  std::tuple<bool, std::string, ExceptionType> result = std::make_tuple(true, "", NoExceptionType);
+  std::string disable_name_list = common::GetEnv("MS_DISABLE_INTERNAL_KERNELS_LIST");
+  std::vector<std::string> op_name_vec = SplitString(disable_name_list, ',');
+  for (auto name : op_name_vec) {
+    if (name == op_name) {
+      enable_internal = false;
+      break;
+    }
+  }
+
   if (IsEnableAclnn(graph, node)) {
     GenerateKernelBuildInfo(node, KernelType::OPAPI_KERNEL);
     if (op_selected_type[kAclnnOpSelect].count(op_name) == 0) {
@@ -625,6 +662,8 @@ bool IsEnableAclnn(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node) {
 }
 
 void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
+  std::string disable_name_list = common::GetEnv("MS_DISABLE_INTERNAL_KERNELS_LIST");
+  MS_LOG(WARNING) << "ms disable internal kernels list:" << disable_name_list;
   for (const auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
     auto build_info = AnfAlgo::GetSelectKernelBuildInfo(node);

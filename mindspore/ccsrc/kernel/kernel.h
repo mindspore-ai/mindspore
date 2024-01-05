@@ -75,6 +75,7 @@ enum KernelType : int {
   BISHENG_KERNEL,
   ACL_KERNEL,
   OPAPI_KERNEL,
+  INTERNAL_KERNEL,
 };
 
 // PointerRefCount encapsulates pointer and reference count-related operations, and supports custom deleter to free
