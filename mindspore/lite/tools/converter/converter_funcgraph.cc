@@ -68,6 +68,8 @@
 #include "src/extendrt/delegate/plugin/ascend_ge_executor_plugin.h"
 #include "tools/optimizer/graph/input_and_output_variable_pass.h"
 #include "tools/optimizer/graph/output_variable_pass.h"
+#include "tools/optimizer/fusion/ffn_antiquant_fusion.h"
+#include "tools/optimizer/common/pass_manager_extends.h"
 
 namespace mindspore {
 namespace lite {
@@ -341,6 +343,39 @@ void SetInputParameterAbstractName(const FuncGraphPtr &func_graph) {
   }
 }
 
+STATUS ConverterFuncGraph::QuantizationOptimizeForGE(const std::shared_ptr<ConverterPara> &param,
+                                                     FuncGraphPtr func_graph) {
+  CHECK_NULL_RETURN(param);
+  CHECK_NULL_RETURN(func_graph);
+  MS_LOG(INFO) << "It will run quant optimize";
+  auto acl_pass_ptr = opt::AclPassPlugin::CreateAclPass(param);
+  if (acl_pass_ptr == nullptr) {
+    MS_LOG(ERROR) << "Failed to create acl pass";
+    return RET_ERROR;
+  }
+  if (!acl_pass_ptr->Run(func_graph)) {
+    MS_LOG(ERROR) << "Acl pass failed.";
+    return RET_ERROR;
+  }
+
+  std::vector<opt::PassPtr> quant_fusions{std::make_shared<opt::FFNAntiquantFusion>()};
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  CHECK_NULL_RETURN(optimizer);
+  auto fusion_pm = std::make_shared<opt::LitePassManager>("anf fusion pass manager", false);
+  CHECK_NULL_RETURN(fusion_pm);
+  for (size_t index = 0; index < quant_fusions.size(); index++) {
+    auto pass_ptr = quant_fusions.at(index);
+    MS_CHECK_TRUE_RET(pass_ptr != nullptr, RET_ERROR);
+    fusion_pm->AddPass(pass_ptr);
+  }
+  optimizer->AddPassManager(fusion_pm);
+  if (optimizer->Optimize(func_graph) == nullptr) {
+    MS_LOG(ERROR) << "run op fusion failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 STATUS ConverterFuncGraph::OptimizeForGE(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
   AnfTransformForGe transform;
   auto status = transform.Transform(func_graph, param);
@@ -349,15 +384,10 @@ STATUS ConverterFuncGraph::OptimizeForGE(const std::shared_ptr<ConverterPara> &p
     return status;
   }
   if (CheckNeedQuant(param, func_graph)) {
-    MS_LOG(INFO) << "It will run quant optimize";
-    auto acl_pass_ptr = opt::AclPassPlugin::CreateAclPass(param);
-    if (acl_pass_ptr == nullptr) {
-      MS_LOG(ERROR) << "Failed to create acl pass";
-      return RET_ERROR;
-    }
-    if (!acl_pass_ptr->Run(func_graph)) {
-      MS_LOG(ERROR) << "Acl pass failed.";
-      return RET_ERROR;
+    status = QuantizationOptimizeForGE(param, func_graph);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Failed to quantization optimize for GE";
+      return status;
     }
   }
   auto ret = RunGeOfflineConvert(param, func_graph);
