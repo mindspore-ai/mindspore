@@ -16,7 +16,7 @@ apply_came_part2:
             - **c** (Tensor) - The shape = 1D :math:`(..., m)`.
               The Tensor has the same data type as `grad`.
             - **beta2** (float) - data type must be float.
-            - **sum_r** (Tensor) - The shape = 1D :math:`(...)`.
+            - **sum_r** (Tensor) - The shape = 1D :math:`(..., 1)`.
               'None' is currently supported. A Tensor of types: float32.
             - **global_shape** (Tensor) - the shape = 1D :math:`(2)`.
               'None' is currently supported. A Tensor of types: int64.
@@ -24,8 +24,8 @@ apply_came_part2:
         Returns:
             - **r** (Tensor) - A Tensor of shape :math:`(..., n)`
             - **c** (Tensor) - A Tensor of shape :math:`(..., m)`
-            - **u** (Tensor) - A Tensor of of shape:math:`(...)`
-            - **sum_square_u** (Tensor) - A Tensor of of shape:math:`(...)`
+            - **u** (Tensor) - A Tensor of of shape:math:`(..., n, m)`
+            - **sum_square_u** (Tensor) - A Tensor of of shape:math:`(1)`
 
         Raises:
             TypeError: If `grad` is not a Tensor.

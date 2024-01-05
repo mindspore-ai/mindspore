@@ -26,7 +26,6 @@ apply_came_part4:
               A Tensor of types: float32.
             - **global_shape** (Tensor) - the shape = 1D :math:`(2)`.
               'None' is currently supported. A Tensor of types: int64.
-            - **use_first_moment** (bool).
 
         Returns:
             - **param** (Tensor) - A Tensor of shape :math:`(..., n, m)`
@@ -49,8 +48,8 @@ apply_came_part4:
             >>> m = Tensor(np.ones([1024, 64]), dtype=ms.float32)
             >>> r = Tensor(np.ones([1024]), dtype=ms.float32)
             >>> c = Tensor(np.ones([64]), dtype=ms.float32)
-            >>> weight_decay = 0.8
-            >>> lr = 0.5
+            >>> weight_decay = Tensor([0.8])
+            >>> lr = Tensor([0.5])
             >>> beta3 = 0.5
             >>> sum_r = Tensor(np.array([128.]), dtype=ms.float32)
             >>> sum_u_r = Tensor(np.ones([1024]), dtype=ms.float32)
