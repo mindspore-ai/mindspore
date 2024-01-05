@@ -29,7 +29,7 @@ class Net(nn.Cell):
         return ops.interpolate(x, size, scale_factor, self.mode, align_corners, recompute_scale_factor)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -68,7 +68,7 @@ def test_interpolate_area_3d(mode):
     assert np.allclose(output_3d_2.asnumpy(), except_3d_2, atol=1e-3, rtol=1e-3)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -118,7 +118,7 @@ def test_interpolate_area_4d(mode):
     assert np.allclose(output_4d_2.asnumpy(), except_4d_2, atol=1e-5, rtol=1e-5)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -165,7 +165,7 @@ def test_interpolate_area_5d(mode):
     assert np.allclose(output_5d_2.asnumpy(), except_5d_2, atol=1e-5, rtol=1e-5)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -274,7 +274,7 @@ def test_interpolate_linear(mode):
     assert np.allclose(output_3d_3.asnumpy(), except_3d_3, atol=1e-5, rtol=1e-5)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -342,7 +342,7 @@ def test_interpolate_bilinear(mode):
     assert np.allclose(output_4d_3.asnumpy(), except_4d_3, atol=1e-5, rtol=1e-5)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_arm_ascend_training
@@ -432,7 +432,7 @@ def test_interpolate_nearest_exact_4d(mode):
     assert np.allclose(output_4d_2.asnumpy(), except_4d_2, atol=1e-5, rtol=1e-5)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -474,7 +474,7 @@ def test_interpolate_nearest_3d(mode):
     assert np.allclose(output_3d_2.asnumpy(), except_3d_2, atol=1e-5, rtol=1e-5)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

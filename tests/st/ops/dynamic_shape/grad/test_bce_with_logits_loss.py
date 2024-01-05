@@ -38,7 +38,7 @@ def dyn_grad_func(dtype=np.float16, is_dynamic_rank=False):
     test_dynamic.test_dynamic_grad_net(inputs, is_dynamic_rank=is_dynamic_rank)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
@@ -54,7 +54,7 @@ def test_bcewithlogitsloss_dynamic_shape():
     dyn_grad_func(is_dynamic_rank=False)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

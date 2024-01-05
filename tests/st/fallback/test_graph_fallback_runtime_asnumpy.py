@@ -46,7 +46,7 @@ class Net(ms.nn.Cell):
         return self.np_function(a, b)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -64,7 +64,7 @@ def test_fallback_np():
     np.testing.assert_almost_equal(output, const_output, 3)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -91,7 +91,7 @@ class Net1(ms.nn.Cell):
         return self.np_function(a, b)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -109,7 +109,7 @@ def test_fallback_np_asnumpy():
     np.testing.assert_almost_equal(output, const_output, 3)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -147,7 +147,7 @@ def test_jit_tensor_asnumpy():
     print(res)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

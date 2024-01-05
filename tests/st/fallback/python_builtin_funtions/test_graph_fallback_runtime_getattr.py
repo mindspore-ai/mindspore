@@ -79,7 +79,7 @@ def test_fallback_getattr_asnumpy_custom_class():
     assert out[0] == out[1] == 4
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -138,7 +138,7 @@ def test_get_attr_form_param():
     assert "Failed to compile in GRAPH_MODE" in str(ex.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

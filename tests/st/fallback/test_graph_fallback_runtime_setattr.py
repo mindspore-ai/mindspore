@@ -25,7 +25,7 @@ from mindspore import Tensor, Parameter, jit, jit_class
 ms.set_context(mode=ms.GRAPH_MODE)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -51,7 +51,7 @@ def test_setattr_self_non_param():
     assert test_net.data == 2
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -81,7 +81,7 @@ def test_setattr_self_non_param_in_strict():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -107,7 +107,7 @@ def test_setattr_self_non_param_2():
     assert test_net.data == [1, 2, 3, 4]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -133,7 +133,7 @@ def test_setattr_self_non_param_3():
     assert np.all(test_net.data == np.array([1, 2, 3, 4]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -162,7 +162,7 @@ def test_setattr_self_repeat():
     assert test_net.data == 3
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -245,7 +245,7 @@ class AssignTarget:
         self.x = 1
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -460,7 +460,7 @@ def test_setattr_run_multiple_times_2():
     assert np.all(ret3.asnumpy() == np.array([4, 5, 6]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -549,7 +549,7 @@ def test_setattr_in_control_flow():
     assert ret == -2
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -578,7 +578,7 @@ def test_setattr_in_control_flow_2():
     assert ret == 4
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

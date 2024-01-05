@@ -123,7 +123,7 @@ def test_data_sink_fixed_shape(mode):
     _train_func_sink(network, dataset, loss_fn, opt)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

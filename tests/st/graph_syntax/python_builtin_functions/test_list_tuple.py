@@ -20,7 +20,7 @@ from mindspore import Tensor, context, jit
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -49,7 +49,7 @@ def test_fallback_list_with_input_constant_tensor():
     assert out[3].asnumpy() == 4
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -97,7 +97,7 @@ def test_builtin_function_list_with_non_constant_tensor():
     assert np.all(ret[1].asnumpy() == np.array([4, 5, 6]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -123,7 +123,7 @@ def test_fallback_tuple_with_input_constant_tensor():
     assert out[2].asnumpy() == 3
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -147,7 +147,7 @@ def test_fallback_tuple_with_input_constant_tensor_2():
     assert np.allclose(out[1].asnumpy(), np.array([3, 4]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

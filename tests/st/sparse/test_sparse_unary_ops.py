@@ -20,7 +20,7 @@ from mindspore import dtype as mstype
 from .sparse_utils import get_platform
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -45,7 +45,7 @@ def test_csr_cos():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -69,7 +69,7 @@ def test_coo_cos():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -118,7 +118,7 @@ def test_coo_tan():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -143,7 +143,7 @@ def test_csr_exp():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -167,7 +167,7 @@ def test_coo_exp():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -192,7 +192,7 @@ def test_csr_inv():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -216,7 +216,7 @@ def test_coo_inv():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -241,7 +241,7 @@ def test_csr_relu():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -265,7 +265,7 @@ def test_coo_relu():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -290,7 +290,7 @@ def test_csr_expm1():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -314,7 +314,7 @@ def test_coo_expm1():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -339,7 +339,7 @@ def test_csr_isfinite():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -363,7 +363,7 @@ def test_coo_isfinite():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -388,7 +388,7 @@ def test_csr_asin():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -412,7 +412,7 @@ def test_coo_asin():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -437,7 +437,7 @@ def test_csr_sqrt():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -461,7 +461,7 @@ def test_coo_sqrt():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -486,7 +486,7 @@ def test_csr_log():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -510,7 +510,7 @@ def test_coo_log():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -535,7 +535,7 @@ def test_csr_isnan():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -559,7 +559,7 @@ def test_coo_isnan():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -584,7 +584,7 @@ def test_csr_acos():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -608,7 +608,7 @@ def test_coo_acos():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -633,7 +633,7 @@ def test_csr_floor():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -657,7 +657,7 @@ def test_coo_floor():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -682,7 +682,7 @@ def test_csr_atan():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -706,7 +706,7 @@ def test_coo_atan():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -731,7 +731,7 @@ def test_csr_square():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -755,7 +755,7 @@ def test_coo_square():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -780,7 +780,7 @@ def test_csr_relu6():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -804,7 +804,7 @@ def test_coo_relu6():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -829,7 +829,7 @@ def test_csr_sinh():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -878,7 +878,7 @@ def test_csr_ceil():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -902,7 +902,7 @@ def test_coo_ceil():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -927,7 +927,7 @@ def test_csr_cosh():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -951,7 +951,7 @@ def test_coo_cosh():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -976,7 +976,7 @@ def test_csr_softsign():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1000,7 +1000,7 @@ def test_coo_softsign():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1025,7 +1025,7 @@ def test_csr_log1p():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1049,7 +1049,7 @@ def test_coo_log1p():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1074,7 +1074,7 @@ def test_csr_round():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1098,7 +1098,7 @@ def test_coo_round():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1123,7 +1123,7 @@ def test_csr_tanh():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1147,7 +1147,7 @@ def test_coo_tanh():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1172,7 +1172,7 @@ def test_csr_asinh():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1196,7 +1196,7 @@ def test_coo_asinh():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1221,7 +1221,7 @@ def test_csr_neg():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1245,7 +1245,7 @@ def test_coo_neg():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1270,7 +1270,7 @@ def test_csr_acosh():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1294,7 +1294,7 @@ def test_coo_acosh():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -1317,7 +1317,7 @@ def test_csr_isinf():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -1339,7 +1339,7 @@ def test_coo_isinf():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1364,7 +1364,7 @@ def test_csr_atanh():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1388,7 +1388,7 @@ def test_coo_atanh():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1437,7 +1437,7 @@ def test_coo_sigmoid():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1462,7 +1462,7 @@ def test_csr_abs():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1486,7 +1486,7 @@ def test_coo_abs():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1511,7 +1511,7 @@ def test_csr_sin():
     assert np.allclose(output, expect, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

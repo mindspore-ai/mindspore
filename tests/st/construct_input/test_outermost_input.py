@@ -68,7 +68,7 @@ list_arg = [[tensor_x, tensor_x], [[tensor_x, tensor_y], {"x": tensor_x, "y": te
 dict_arg = {"x": tensor_x, "y": tensor_y, "u": tensor_u}
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -108,7 +108,7 @@ class GradNet1(nn.Cell):
 
 # PyNative run error.
 # Support context.PYNATIVE_MODE later.
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -175,7 +175,7 @@ class GradCell(nn.Cell):
         return self.grad_all(self.net)(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -228,7 +228,7 @@ def test_grad_parameter_as_input_and_fv(mode):
 
 # PyNative run error.
 # Support context.PYNATIVE_MODE later.
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -252,7 +252,7 @@ def test_grad_same_parameter_both_input_and_fv(mode):
     assert np.array_equal(a[1].asnumpy(), b[1].asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -296,7 +296,7 @@ class GradCellWithParameterTuple(nn.Cell):
         return self.grad(self.net, self.params)(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

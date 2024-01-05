@@ -25,7 +25,7 @@ context.set_context(mode=context.GRAPH_MODE)
 context_prepare()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -56,7 +56,7 @@ def test_seq_slice():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -85,7 +85,7 @@ def test_seq_slice_grad():
     print("grad out1 = ", grad_func(seq, start, stop, step, dout))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_seq_slice_mutable():
@@ -108,7 +108,7 @@ def test_seq_slice_mutable():
     assert np.allclose(out, ex)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_seq_slice_mutable_typeerror():
@@ -129,7 +129,7 @@ def test_seq_slice_mutable_typeerror():
         net(x, a, b)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_seq_slice_neg_step():

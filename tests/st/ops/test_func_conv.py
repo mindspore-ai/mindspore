@@ -53,7 +53,7 @@ class Net3d(nn.Cell):
         return ops.conv3d(x, weight, bias, self.stride, self.pad_mode, self.padding, dilation, groups)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -84,7 +84,7 @@ def test_ops_conv1d(mode):
     assert np.allclose(output.asnumpy(), expected, atol=1e-5, rtol=1e-5)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -166,7 +166,7 @@ def test_ops_conv2d(mode, pad_mode):
         assert np.allclose(output.asnumpy(), expected, atol=1e-5, rtol=1e-5)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

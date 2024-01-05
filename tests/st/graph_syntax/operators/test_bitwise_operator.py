@@ -22,7 +22,7 @@ from mindspore import context
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -44,7 +44,7 @@ def test_bitwise_and_1():
     assert np.allclose(result.asnumpy(), np.array([1, 0, -8]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -66,7 +66,7 @@ def test_bitwise_and_2():
     assert np.allclose(result.asnumpy(), np.array([1, 0, 0]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -88,7 +88,7 @@ def test_bitwise_and_3():
     assert np.allclose(result.asnumpy(), np.array([1, 0, 0]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -110,7 +110,7 @@ def test_bitwise_or_1():
     assert np.allclose(result.asnumpy(), np.array([3, 6, -1]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -132,7 +132,7 @@ def test_bitwise_or_2():
     assert np.allclose(result.asnumpy(), np.array([1, 3, -3]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -176,7 +176,7 @@ def test_bitwise_xor_1():
     assert np.allclose(result.asnumpy(), np.array([2, 6, 7]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -198,7 +198,7 @@ def test_bitwise_xor_2():
     assert np.allclose(result.asnumpy(), np.array([0, 3, -3]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -220,7 +220,7 @@ def test_bitwise_xor_3():
     assert np.allclose(result.asnumpy(), np.array([0, 3, -3]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

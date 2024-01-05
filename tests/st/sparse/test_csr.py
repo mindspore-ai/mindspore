@@ -507,7 +507,7 @@ def test_csrops_export_and_import_mindir():
     assert out[4].shape == outputs_after_load[4].shape
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -547,7 +547,7 @@ def test_isinstance_csr_tensor():
     assert out2 == (False, False, False, True, True, False, True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -668,7 +668,7 @@ def test_bprop():
     assert np.allclose(csr_div_output_2[3].asnumpy(), csr_div_expect_2_2)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -706,7 +706,7 @@ def test_csr_method():
     assert np.allclose(to_dense_output.asnumpy(), to_dense_expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
