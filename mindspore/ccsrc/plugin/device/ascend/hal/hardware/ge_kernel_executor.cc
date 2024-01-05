@@ -171,7 +171,7 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
       device::ascend::HandleKernelSelectFailure(kernel_graph, kernel, failure_info);
     }
   }
-  if (!kernel_graph->is_from_single_op()) {
+  if (!kernel_graph->is_from_single_op() && !kernel_graph->has_flag(kFlagIsPyNativeBpropKernelGraph)) {
     kernel_graph->SetKernelObjectTypesForUnrealNodes();
   }
 
