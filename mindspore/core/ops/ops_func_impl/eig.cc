@@ -88,6 +88,12 @@ BaseShapePtr EigFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr EigFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
   auto x_type = input_args[kInputIndex0]->GetType();
+
+  std::map<std::string, TypePtr> types;
+  (void)types.emplace("x", x_type);
+  const std::set<TypePtr> eig_support_dtype = {kComplex64, kComplex128, kFloat32, kFloat64};
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, eig_support_dtype, primitive->name());
+
   std::vector<TypePtr> types_list;
   if (*(x_type->cast<TensorTypePtr>()->element()) == *(kFloat32)) {
     types_list = {std::make_shared<TensorType>(kComplex64), std::make_shared<TensorType>(kComplex64)};
