@@ -176,6 +176,38 @@ void LabelMicroInterleavedIndexForBackwardCommNodes(const std::vector<CNodePtr> 
                                forward_node->GetPrimalAttr(parallel::FINE_GRAINED_INTERLEAVED_BLOCK));
   }
 }
+
+void LabelMicroInterleavedBranchTagForBackwardCommNodes(const std::vector<CNodePtr> &all_nodes) {
+  mindspore::HashMap<std::string, CNodePtr> forward_nodes_map;
+  mindspore::HashMap<std::string, CNodePtr> grad_forward_nodes_map;
+  for (auto &cnode : all_nodes) {
+    if (!IsPrimitiveCNode(cnode)) {
+      continue;
+    }
+    if (cnode->HasAttr(kAttrDuplicated)) {
+      continue;
+    }
+    if (cnode->HasPrimalAttr(kPrimalAttrForwardUniqueId)) {
+      auto forward_node_unique_id = GetValue<std::string>(cnode->GetPrimalAttr(kPrimalAttrForwardUniqueId));
+      grad_forward_nodes_map[forward_node_unique_id] = cnode;
+    }
+    if (cnode->HasPrimalAttr(kPrimalAttrUniqueId)) {
+      auto node_unique_id = GetValue<std::string>(cnode->GetPrimalAttr(kPrimalAttrUniqueId));
+      forward_nodes_map[node_unique_id] = cnode;
+    }
+  }
+  for (auto &pair : grad_forward_nodes_map) {
+    if (forward_nodes_map.find(pair.first) == forward_nodes_map.end()) {
+      continue;
+    }
+    auto forward_node = forward_nodes_map[pair.first];
+    if (!forward_node->HasAttr(parallel::FINE_GRAINED_INTERLEAVED_TAG)) {
+      continue;
+    }
+    pair.second->AddAttr(parallel::FINE_GRAINED_INTERLEAVED_TAG,
+                         forward_node->GetAttr(parallel::FINE_GRAINED_INTERLEAVED_TAG));
+  }
+}
 }  // namespace
 void LabelFineGrainedInterleavedIndex(const FuncGraphPtr &graph) {
   if (parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kSemiAutoParallel &&
@@ -265,6 +297,7 @@ void LabelFineGrainedInterleavedIndex(const FuncGraphPtr &graph) {
   all_cnode_list.insert(all_cnode_list.end(), backward_order_cnode_list.begin(), backward_order_cnode_list.end());
   LabelFineGrainedInterleavedBackWardBeginEnd(all_cnode_list);
   LabelMicroInterleavedIndexForBackwardCommNodes(all_cnode_list);
+  LabelMicroInterleavedBranchTagForBackwardCommNodes(all_cnode_list);
 }
 }  // namespace parallel
 }  // namespace mindspore
