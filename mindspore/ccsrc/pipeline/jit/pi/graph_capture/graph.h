@@ -151,6 +151,7 @@ class Graph {
   // TODO(chaiyouheng): restore graph status at loop begin, clear trace values and operations and guards
   bool RestoreLoopStatus() { return false; }
   bool IsBreakAtLoop() const;
+  bool IsBreakAtLoopAfterUnrolling() const;
   const std::vector<ValueNode *> &GetTracedNodes() const { return traced_nodes_; }
   std::vector<ValueNode *> &GetTracedNodes() { return traced_nodes_; }
 

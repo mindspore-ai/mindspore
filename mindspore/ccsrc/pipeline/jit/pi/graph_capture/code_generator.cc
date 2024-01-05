@@ -806,6 +806,19 @@ void CodeBreakGenerator::BreakAtBlock(CodeGenerator *code_gen, int untracked_bci
       alive_locals_.push_back(i);
     }
   }
+  /**
+   * TODO:
+   * # check this bug for break at block
+   * def func(x):
+   *     try:
+   *         if x == 1:
+   *             y = 1
+   *     except Exception:
+   *         pass
+   *     if x == 2:
+   *         y = 2
+   *     return y
+   */
   interpret_.outputs.resize(alive_locals_.size(), &ValueNode::UnboundLocal);
   untracked_stack_effect = 0;
 
@@ -902,7 +915,7 @@ py::object CodeBreakGenerator::MakeCode(bool make_graph) {
   nlocals = std::max(nlocals, co_->co_nlocals);
   nlocals = std::max(nlocals, cfg_->GetLocalCount());
 
-  code_gen.SetArgsInfo(co_->co_argcount, co_->co_kwonlyargcount);
+  code_gen.SetArgsInfo(co_->co_argcount + co_->co_kwonlyargcount, 0);
   code_gen.SetLocalsCount(nlocals);
   code_gen.SetCodeFlags(co_->co_flags);
   code_gen.SetFirstLineNumber(co_->co_firstlineno);

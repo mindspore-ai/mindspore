@@ -41,42 +41,25 @@ class AbstractNode {
     FreeVar,  // free value node
     Unbound,  // unbound value node
   };
-  explicit AbstractNode(Type t)
-      : marker_(0), next_(nullptr), jump_(nullptr), owner_(nullptr), block_(nullptr), type_(t) {}
+  explicit AbstractNode(Type t) : type_(t), graph_(nullptr), block_(nullptr), marker_(0) {}
   virtual ~AbstractNode() {}
 
-  bool insertBack(AbstractNode *n) {
-    if (!n || n->pre_.size() || this->next_) {
-      return false;
-    }
-    n->pre_.push_back(this);
-    this->next_ = n;
-    return true;
-  }
-
   Type GetType() const { return type_; }
-  std::vector<AbstractNode *> &GetPres() { return pre_; }
-  void AddPre(AbstractNode *n) { pre_.push_back(n); }
-  AbstractNode *GetNext() const { return next_; }
-  void SetNext(AbstractNode *v) { next_ = v; }
-  AbstractNode *GetJump() const { return jump_; }
-  void SetJump(AbstractNode *v) { jump_ = v; }
-  Graph *GetGraph() const { return owner_; }
-  void SetGraph(Graph *g) { owner_ = g; }
-  virtual std::string ToString() const;
-
+  Graph *GetGraph() const { return graph_; }
+  void SetGraph(Graph *g) { graph_ = g; }
   Block *GetBlock() { return block_; }
   void SetBlock(Block *b) { block_ = b; }
 
-  int marker_;  // for visit
+  virtual std::string ToString() const;
 
  private:
-  std::vector<AbstractNode *> pre_;  // pre nodes, in edge
-  AbstractNode *next_;               // next nodes, out edge
-  AbstractNode *jump_;               // branch target node, out edge
-  Graph *owner_;
-  Block *block_;
   const Type type_;
+  Graph *graph_;
+  Block *block_;
+
+ public:
+  // remove it
+  int marker_;  // for visit
 };
 
 class InstrNode : public AbstractNode {

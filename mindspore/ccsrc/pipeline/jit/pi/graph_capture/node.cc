@@ -94,10 +94,7 @@ std::string InstrNode::ToString() const {
 
 std::string AbstractNode::ToString() const {
   std::stringstream s;
-  s << this << " type " << type_ << " graph " << owner_;
-  if (jump_) {
-    s << " jump " << jump_;
-  }
+  s << this << " type " << type_ << " graph " << graph_;
   return s.str();
 }
 
