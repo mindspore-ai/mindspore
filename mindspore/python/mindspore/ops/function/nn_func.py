@@ -6553,7 +6553,7 @@ def gelu(input_x, approximate='none'):
         raise ValueError("For ops.gelu, approximate value should be either 'none' or 'tanh'.")
 
     x_dtype = dtype_(input_x)
-    if x_dtype not in [mstype.float16, mstype.float32, mstype.float64]:
+    if x_dtype not in [mstype.float16, mstype.float32, mstype.float64, mstype.bfloat16]:
         raise TypeError(f"For gelu, the input dtype must be float16, float32 or float64, "
                         f"but got {x_dtype}.")
     if approximate == 'tanh':
