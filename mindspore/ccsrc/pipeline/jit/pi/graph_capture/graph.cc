@@ -57,7 +57,7 @@ Graph::Graph(PyCodeObject *co, PyObject *globals, const GraphJitConfig &conf)
   if (conf_.GetBoolConfig(GraphJitConfig::kLoopUnrolling)) {
     LoopFinder loop_finder(this);
     loop_finder.FormSimpleLoopInfo();
-    if (conf_.GetBoolConfig(GraphJitConfig::kPrintAfterAll)) {
+    if (conf_.GetBoolConfig(GraphJitConfig::kPrintAfterAll) && !loops().empty()) {
       GRAPH_JIT_LOG_F("%s", DumpLoops().c_str());
     }
   }
@@ -83,6 +83,28 @@ bool Graph::IsBreakAtLoop() const {
     }
   }
   return res != break_bci;
+}
+
+bool Graph::IsBreakAtLoopAfterUnrolling() const {
+  if (!Config().GetBoolConfig(GraphJitConfig::kLoopUnrolling)) {
+    return false;
+  }
+  if (GetStopTraceBci() == -1) {
+    return false;
+  }
+  if (traced_nodes_.empty()) {
+    return false;
+  }
+  if (GetStopTraceBci() > traced_nodes_.back()->bci()) {
+    return false;
+  }
+  bool break_with_loop_unroll = false;
+  for (auto node : traced_nodes_) {
+    if (node->bci() >= GetStopTraceBci()) {
+      break_with_loop_unroll |= node->GetBlock() != nullptr && node->GetBlock()->is_loop_body();
+    }
+  }
+  return break_with_loop_unroll;
 }
 
 void Graph::SetFrame(int bci, const FrameStates &f) {

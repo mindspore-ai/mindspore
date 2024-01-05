@@ -181,6 +181,12 @@ class GraphBuilder {
   InstrNode *NewInstrNode(int op, int arg);
   Graph *NewGraph(PyCodeObject *co, PyObject *f_globals);
 
+  void ProcessGetItem(const Instr &instr, ValueNode *l, ValueNode *r);
+
+  bool TraceRunForIterSequence(int jump_bci);
+  bool TraceRunForIterEnumerate(int jump_bci);
+  bool TraceRunForIterZip(int jump_bci);
+
   // bytecode operations
   bool TraceRunControl(const Instr &instr);
   bool TraceRunForIter(const Instr &instr);

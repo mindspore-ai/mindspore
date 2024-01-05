@@ -337,7 +337,7 @@ static AbstractBasePtrList ChangeAbstractArgList(const std::vector<PyObject *> &
 
 // return new reference
 PyObject *InferEngine::InferPrimitive(PyObject *primitive, const std::vector<PyObject *> &args, bool *is_abstract) {
-  if (!Init()) {
+  if (!SupportInfer(primitive)) {
     return nullptr;
   }
   int monad_count = 0;

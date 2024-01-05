@@ -116,6 +116,8 @@ class Block {
   std::set<Block *, BBIdCmp> &succ_bbs() { return succ_bbs_; }
   void set_is_loop_head(bool flag) { is_loop_head_ = flag; }
   bool is_loop_head() const { return is_loop_head_; }
+  void set_is_loop_body(bool flag) { is_loop_body_ = flag; }
+  bool is_loop_body() const { return is_loop_body_; }
   bool is_dead() const { return is_dead_; }
   void set_is_dead(bool flag) { is_dead_ = flag; }
 
@@ -155,6 +157,7 @@ class Block {
   Block *fall_bb_ = nullptr;
   Block *jump_bb_ = nullptr;
 
+  bool is_loop_body_ = false;
   bool is_loop_head_ = false;
   bool is_dead_ = true;
 

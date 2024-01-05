@@ -121,7 +121,8 @@ void Block::ClearOutEdges() {
 std::string Block::Dump(bool dump_instr) const {
   std::stringstream os;
   os << "Block [" << (begin_ci() * PY_BCSIZE) << ',' << (end_ci() * PY_BCSIZE) << "), (id=" << id_
-     << ", is_dead=" << is_dead_ << ", is_loop_head=" << is_loop_head_ << ", preds={";
+     << ", is_dead=" << is_dead_ << ", is_loop_head=" << is_loop_head_ << ", is_loop_body_=" << is_loop_body_
+     << ", preds={";
   for (Block *bb : pred_bbs_) {
     os << bb->id() << " ";
   }
@@ -314,27 +315,35 @@ bool CFG::BuildCFG() {
       MS_EXCEPTION_IF_CHECK_FAIL(it_bb != target_instr_bb_map.cend(), "Target BB is not found");
       Block *bb_next = it_bb->second;
       bb->SetJumpBB(bb_next);
-      // If jumping to the previous bb, this previous bb is loop head
-      if (instr_tail->extra_jump()->bci() < instr_tail->bci()) {
-        bb_next->set_is_loop_head(true);
-      }
     }
   }
   return true;
 }
 
-static void VisitBlock(Block *blk, std::vector<bool> *reach, std::vector<bool> *mark) {
+static bool VisitBlock(Block *blk, std::vector<bool> *reach, std::vector<bool> *mark, int *loop_count) {
   if (reach->operator[](blk->id())) {
-    blk->set_is_loop_head(mark->operator[](blk->id()));
-    return;
+    if (mark->operator[](blk->id()) && !blk->is_loop_head()) {
+      blk->set_is_loop_head(true);
+      blk->set_is_loop_body(true);
+      (*loop_count)++;
+    }
+    return blk->is_loop_body();
   }
+  bool loop_body = false;
+
   blk->set_is_dead(false);
   reach->operator[](blk->id()) = true;
   mark->operator[](blk->id()) = true;
   for (auto i : blk->succ_bbs()) {
-    VisitBlock(i, reach, mark);
+    loop_body |= VisitBlock(i, reach, mark, loop_count);
   }
   mark->operator[](blk->id()) = false;
+  if (blk->is_loop_head()) {
+    (*loop_count)--;
+    return (*loop_count) != 0;
+  }
+  blk->set_is_loop_body(loop_body);
+  return loop_body;
 }
 
 void CFG::MarkDeadBB() {
@@ -343,7 +352,8 @@ void CFG::MarkDeadBB() {
   }
   std::vector<bool> reach(bb_pool_.size());
   std::vector<bool> mark(bb_pool_.size());
-  VisitBlock(bb_pool_[0].get(), &reach, &mark);
+  int loop_count = 0;
+  VisitBlock(bb_pool_[0].get(), &reach, &mark, &loop_count);
   for (const auto &i : bb_pool_) {
     if (reach[i->id()]) {
       continue;

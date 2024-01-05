@@ -639,6 +639,19 @@ extern bool CheckJitConstexpr(const py::object &func);
 extern bool CheckMSConstexpr(const py::object &func);
 extern bool CheckBuiltinFuncOrMethod(const py::object &func);
 static bool SupportCall(PyObject *func, const std::string &name) {
+  /**
+   * NOTE: exclude method type, it shouldn't be guard
+   */
+  static const std::set<PyTypeObject *> support_create_instance_type = {
+    &PyComplex_Type, &PyMap_Type,       &PyBaseObject_Type, &PyRange_Type,   &PyZip_Type,  &PySlice_Type,
+    &PyBool_Type,    &PyFloat_Type,     &PyLong_Type,       &PyType_Type,    &PyList_Type, &PyTuple_Type,
+    &PySet_Type,     &PyFrozenSet_Type, &PyDict_Type,       &PyUnicode_Type, &PyEnum_Type,
+  };
+  if (PyType_CheckExact(func)) {
+    return support_create_instance_type.find(reinterpret_cast<PyTypeObject *>(func)) !=
+           support_create_instance_type.end();
+  }
+
   py::object handle = py::cast<py::object>(func);
   if (CheckJitConstexpr(handle)) {
     return true;
@@ -647,9 +660,6 @@ static bool SupportCall(PyObject *func, const std::string &name) {
     return true;
   }
   if (CheckBuiltinFuncOrMethod(handle)) {
-    return true;
-  }
-  if (func == reinterpret_cast<PyObject *>(&PyBool_Type)) {
     return true;
   }
   return support_infer_primitive(func) || support_create_primitive(func) || IsMsClass(func) ||

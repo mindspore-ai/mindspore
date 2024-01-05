@@ -438,6 +438,17 @@ static bool GraphCapture(JitCompileResults *jcr) {
     AObject::aobject_mem_pool_.Clear(__FILE__, __LINE__);
     return false;
   }
+  if (g.GetGraph()->IsBreakAtLoopAfterUnrolling()) {
+    // reset guard
+    jcr->code->SetGuard(std::make_shared<OptGuard>());
+    // disable loop unroll
+    jcr->conf->SetBool<GraphJitConfig::kLoopUnrolling>(Py_False);
+    // restart captured
+    bool code_change = GraphCapture(jcr);
+    // reset config
+    jcr->conf->SetBool<GraphJitConfig::kLoopUnrolling>(Py_True);
+    return code_change;
+  }
 
   // dump DFG
   if (conf.GetBoolConfig(GraphJitConfig::kPrintAfterAll)) {
