@@ -92,6 +92,7 @@ OpDefConvertFunc GetConverterByType(int32_t dtype);
 ValuePtr ConvertTensor(const py::object &obj);
 template <typename TS, typename TD, OpDefConvertFunc func>
 ValuePtr ConvertSequence(const py::object &obj);
+tensor::TensorPtr ConvertTensorValue(const py::object &obj);
 }  // namespace parse
 }  // namespace mindspore
 

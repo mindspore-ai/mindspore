@@ -17,6 +17,7 @@
 #include <unordered_map>
 #include "include/common/utils/convert_utils_py.h"
 #include "pipeline/jit/ps/parse/data_converter.h"
+#include "pipeline/pynative/pynative_utils.h"
 
 namespace mindspore {
 namespace pynative {
@@ -115,7 +116,7 @@ ValuePtr Converter::ToTensor(size_t i) {
     }
   }
 
-  ThrowException(i);
+  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, *python_args_, i);
   return nullptr;
 }
 
@@ -143,7 +144,7 @@ ValueTuplePtr Converter::ToTensorList(size_t i) {
       return convert_value->cast<ValueTuplePtr>();
     }
   }
-  ThrowException(i);
+  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, *python_args_, i);
   return nullptr;
 }
 
@@ -161,7 +162,7 @@ Int64ImmPtr Converter::ToInt(size_t i) {
       return convert_value->cast<Int64ImmPtr>();
     }
   }
-  ThrowException(i);
+  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, *python_args_, i);
   return nullptr;
 }
 
@@ -187,7 +188,7 @@ ValueTuplePtr Converter::ToIntList(size_t i) {
       return convert_value->cast<ValueTuplePtr>();
     }
   }
-  ThrowException(i);
+  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, *python_args_, i);
   return nullptr;
 }
 
@@ -214,7 +215,7 @@ BoolImmPtr Converter::ToBool(size_t i) {
       return convert_value->cast<BoolImmPtr>();
     }
   }
-  ThrowException(i);
+  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, *python_args_, i);
   return nullptr;
 }
 
@@ -241,7 +242,7 @@ ValueTuplePtr Converter::ToBoolList(size_t i) {
       return convert_value->cast<ValueTuplePtr>();
     }
   }
-  ThrowException(i);
+  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, *python_args_, i);
   return nullptr;
 }
 
@@ -269,7 +270,7 @@ FP32ImmPtr Converter::ToFloat(size_t i) {
       return convert_value->cast<FP32ImmPtr>();
     }
   }
-  ThrowException(i);
+  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, *python_args_, i);
   return nullptr;
 }
 
@@ -288,7 +289,7 @@ ValueTuplePtr Converter::ToFloatList(size_t i) {
       return convert_value->cast<ValueTuplePtr>();
     }
   }
-  ThrowException(i);
+  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, *python_args_, i);
   return nullptr;
 }
 
@@ -315,7 +316,7 @@ ScalarPtr Converter::ToScalar(size_t i) {
       return convert_value->cast<ScalarPtr>();
     }
   }
-  ThrowException(i);
+  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, *python_args_, i);
   return nullptr;
 }
 
@@ -341,7 +342,7 @@ StringImmPtr Converter::ToString(size_t i) {
       return convert_value->cast<StringImmPtr>();
     }
   }
-  ThrowException(i);
+  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, *python_args_, i);
   return nullptr;
 }
 
@@ -364,7 +365,7 @@ Int64ImmPtr Converter::ToDtype(size_t i) {
     TypePtr type = py::cast<mindspore::TypePtr>(obj);
     return std::make_shared<Int64Imm>(static_cast<int>(type->type_id()));
   }
-  ThrowException(i);
+  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, *python_args_, i);
   return nullptr;
 }
 
@@ -390,12 +391,6 @@ ValuePtr Converter::ConvertByCastDtype(const py::object &input, const ops::OpInp
     }
   }
   return nullptr;
-}
-
-void Converter::ThrowException(size_t i) {
-  MS_EXCEPTION(TypeError) << "For op " << op_def_->name_ << ", the " << i + 1 << "th arg dtype is not right!"
-                          << " Expect dtype: " << ops::EnumToString(op_def_->args_[i].arg_dtype_)
-                          << ", but got dtype: " << py::str((*python_args_)[i]);
 }
 
 // Declare template to compile corresponding method.

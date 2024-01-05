@@ -41,6 +41,7 @@ std::string EnumToString(OP_DTYPE dtype) {
     {OP_DTYPE::DT_LIST_TENSOR, "list of tensor"},
     {OP_DTYPE::DT_LIST_STR, "list of string"},
     {OP_DTYPE::DT_LIST_ANY, "list of Any"},
+    {OP_DTYPE::DT_TYPE, "mstype"},
   };
 
   auto it = kEnumToStringMap.find(dtype);
