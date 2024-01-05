@@ -123,10 +123,8 @@ abstract::TupleShapePtr FrontendSparseMatrixSparseMatMulInferShape(const Primiti
 
   ShapeVector col_shape = {abstract::Shape::kShapeDimAny};
   ShapeVector values_shape = {abstract::Shape::kShapeDimAny};
-  int64_t max_length = MAX_LENGTH;
-  ShapeVector infer_shape_max = {max_length};
-  y_col_shape = std::make_shared<abstract::Shape>(col_shape, infer_shape_max);
-  y_values_shape = std::make_shared<abstract::Shape>(values_shape, infer_shape_max);
+  y_col_shape = std::make_shared<abstract::Shape>(col_shape);
+  y_values_shape = std::make_shared<abstract::Shape>(values_shape);
 
   if (CheckAndConvertUtils::IsTensor(input_args[0]) && !input_args[0]->GetValue()->isa<ValueAny>() &&
       !input_args[0]->GetValue()->isa<None>()) {

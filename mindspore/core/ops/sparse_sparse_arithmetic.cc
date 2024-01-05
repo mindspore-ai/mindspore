@@ -121,6 +121,30 @@ abstract::TupleShapePtr SparseSparseArithmeticInferShape(const PrimitivePtr &pri
   CheckSparseSparseArithmeticInputs(input_args, op_name);
   auto x1_indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   auto x2_indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->GetShape())[kShape];
+  ShapeVector max_out_indice_shape = {};
+  ShapeVector max_out_value_shape = {};
+  abstract::ShapePtr y_indices_shape;
+  abstract::ShapePtr y_values_shape;
+  if (IsDynamic(x1_indice_shape) || IsDynamic(x2_indice_shape)) {
+    max_out_indice_shape.push_back(-1);
+    max_out_indice_shape.push_back(-1);
+    max_out_value_shape.push_back(-1);
+  } else {
+    max_out_indice_shape.push_back(x1_indice_shape[0] + x2_indice_shape[0]);
+    max_out_indice_shape.push_back(x1_indice_shape[1]);
+    max_out_value_shape.push_back(x1_indice_shape[0] + x2_indice_shape[0]);
+  }
+  y_indices_shape = std::make_shared<abstract::Shape>(max_out_indice_shape);
+  y_values_shape = std::make_shared<abstract::Shape>(max_out_value_shape);
+  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{y_indices_shape, y_values_shape});
+}
+
+abstract::TupleShapePtr SparseSparseArithmeticFrontendInferShape(const PrimitivePtr &primitive,
+                                                                 const std::vector<AbstractBasePtr> &input_args) {
+  auto op_name = primitive->name();
+  CheckSparseSparseArithmeticInputs(input_args, op_name);
+  auto x1_indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto x2_indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->GetShape())[kShape];
   ShapeVector out_indice_shape = {-1, -1};
   ShapeVector out_value_shape = {-1};
   ShapeVector max_out_indice_shape = {};
@@ -137,8 +161,8 @@ abstract::TupleShapePtr SparseSparseArithmeticInferShape(const PrimitivePtr &pri
     out_indice_shape[1] = x1_indice_shape[1];
     max_out_value_shape.push_back(x1_indice_shape[0] + x2_indice_shape[0]);
   }
-  y_indices_shape = std::make_shared<abstract::Shape>(out_indice_shape, max_out_indice_shape);
-  y_values_shape = std::make_shared<abstract::Shape>(out_value_shape, max_out_value_shape);
+  y_indices_shape = std::make_shared<abstract::Shape>(out_indice_shape);
+  y_values_shape = std::make_shared<abstract::Shape>(out_value_shape);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{y_indices_shape, y_values_shape});
 }
 
@@ -165,7 +189,7 @@ AbstractBasePtr SparseSparseArithmeticInfer(const abstract::AnalysisEnginePtr &,
   const int64_t input_num = 6;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto types = SparseSparseArithmeticInferType(primitive, input_args);
-  auto shapes = SparseSparseArithmeticInferShape(primitive, input_args);
+  auto shapes = SparseSparseArithmeticFrontendInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
 

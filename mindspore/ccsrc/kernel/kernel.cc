@@ -698,8 +698,10 @@ int KernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vect
     if (type_size == 0) {
       MS_LOG(WARNING) << "The type size is 0, type: " << output->dtype()->ToString();
     }
+
     const auto &shape = output->GetShapeVector();
     if (!IsValidShape(shape)) {
+      MS_LOG(ERROR) << "Invalid shape:" << mindspore::ToString(shape) << ", kernel name:" << kernel_name();
       // Note:
       // If output shape is unknown, the op is a compute-depended op, and the output_size_list_ can be set by default
       // size: type_size.

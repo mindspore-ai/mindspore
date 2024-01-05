@@ -65,16 +65,7 @@ int SparseAddCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                   const std::vector<KernelTensor *> &outputs) {
   auto ret = KernelMod::Resize(inputs, outputs);
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
-    if (inputs.size() != kInputNum) {
-      MS_LOG(ERROR) << "The size of inputs should be " << kInputNum << ", but got " << inputs.size();
-      return KRET_RESIZE_FAILED;
-    }
-    auto max_indices_out_size = inputs[kAIndicesIdx]->size() + inputs[kBIndicesIdx]->size();
-    auto max_value_out_size = inputs[kAValuesIdx]->size() + inputs[kBValuesIdx]->size();
-    output_size_list_[kSumIndicesIdx] = max_indices_out_size;
-    output_size_list_[kSumValuesIdx] = max_value_out_size;
-    output_size_list_[kSumShapeIdx] = inputs[kAShapeIdx]->size();
-    ret = KRET_OK;
+    MS_LOG(EXCEPTION) << "Resize failed for op: " << kernel_name();
   }
   auto dims = inputs.at(0)->GetShapeVector()[1];
   if (dims >= 0) {

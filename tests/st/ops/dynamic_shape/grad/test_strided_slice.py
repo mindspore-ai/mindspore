@@ -94,7 +94,7 @@ def test_strided_slice_insert_cast_for_tuple_input():
     Description: The input is a tuple of bprop of strided slice, should be converted to tensor in pynative mode.
     Expectation: No exception raised.
     """
-    ms.context.set_context(mode=ms.context.GRAPH_MODE)
+    ms.context.set_context(mode=ms.context.PYNATIVE_MODE)
     net = StridedSliceNet(0, 0, 0, 0, 0)
     grad_net = op.grad(net)
     x = ms.Tensor(np.ones([5, 6, 7]).astype(np.float32))
