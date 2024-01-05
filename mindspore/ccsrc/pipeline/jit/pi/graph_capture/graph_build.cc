@@ -1586,6 +1586,7 @@ StopTraceReason GraphBuilder::BuildSubGraph(CallNode *call_node, int depth, cons
     stat = InlineReason::kInlineInfer_Fail;
   }
   if (stat != InlineReason::kInline) {
+    code->GetGuard()->Rollback();
     if (!is_make_func) {
       /**
        * replace function call, inline or resume capture after break graph
@@ -1598,12 +1599,11 @@ StopTraceReason GraphBuilder::BuildSubGraph(CallNode *call_node, int depth, cons
       // exclude make function, because of function always a new function but code is constant
       stat = GuardInlinedFunc(call_node) ? stat : InlineReason::kInlinePolicyDisabled;
     }
-  }
-
-  if (stat != InlineReason::kInline) {
-    code->GetGuard()->Rollback();
-  } else {
-    code->GetGuard()->Pop();
+    if (stat != InlineReason::kInline) {
+      code->GetGuard()->Rollback();
+    } else {
+      code->GetGuard()->Pop();
+    }
   }
 
   // if stat == InlineReason::kInline, guard free variable
