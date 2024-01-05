@@ -2371,7 +2371,7 @@ static void SetGradFuncInfo(CallNode *call_node) {
   }
 }
 
-void GraphBuilder::DumpDFG() { graph_->print(); }
+void GraphBuilder::DumpDFG() { GRAPH_JIT_LOG_F("%s", graph_->ToString().c_str()); }
 
 }  // namespace graph
 }  // namespace jit

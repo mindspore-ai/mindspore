@@ -126,8 +126,8 @@ LoopUnrollingReason LoopUnrolling::CheckLoopUnrollingSideeffect() {
   if (loop_value_ == nullptr && loop_value_->GetVobj()) {
     return res_;
   }
-  // Check if loop_value is called by CFunction, e.g. list.append()
-  // Check side effects
+  // check if loop_value is called by CFunction, e.g. list.append()
+  // check side effects
   return res_;
 }
 

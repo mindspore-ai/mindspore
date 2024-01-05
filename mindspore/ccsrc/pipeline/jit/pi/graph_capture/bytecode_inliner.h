@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,35 +30,74 @@ class CallNode;
 
 /**
  * used by kFeatureBreakAtInlinedFunction
+ * collect trace nodes for each sub-graph, rebuild bytecode by nodes.
+ * if allowed inline the break graph, inline the second half bytecode.
+ * guard the global variable if the globals of inlined function is different
+ * from top function, eliminate the sideeffect or do not inline a function
+ * with sideeffect
  */
 class BytecodeInliner {
  public:
-  BytecodeInliner(Graph *graph, const py::dict &global) : graph_(graph), extra_globals_(global), new_break_bci_(-1) {}
+  BytecodeInliner(Graph *graph, const py::dict &global)
+      : graph_(graph),
+        traced_nodes_(),
+        extra_globals_(global),
+        cfg_(),
+        last_frame_(),
+        new_frames_(),
+        new_break_bci_(-1),
+        reconstructed_value_(nullptr) {}
 
   void Run();
 
  private:
+  // prepare and call rebuild bytecodes by nodes
   void Rebuild();
+
+  // rebuild bytecodes and frame statue
   void Rebuild(CodeGenerator *cg);
+
+  void EraseDeadLocal(const std::vector<ValueNode *> &alive_nodes);
+
   void ResetCFG(CodeGenerator *cg);
+
   void ResetGraphStat();
 
+  // collect traced nodes, collect bytecodes after break
   void ProcessGraph(Graph *, int local_off = 0);
-  void EraseDeadLocal(const std::vector<ValueNode *> &alive_nodes);
+
+  // reconstruct node by bytecode
   void Reconstruct(ValueNode *node, int local_off);
+
+  // initialize cfg by instruction list
   void InitCFG();
 
+  // reset instruction oparg, guard globals which merge to top func. eliminate sideeffect of inline
   void FixInstr(Graph *, int local_off, std::vector<std::unique_ptr<Instr>> *);
+
   void CollectTracedNodes(Graph *);
 
+  // top graph
   Graph *const graph_;
+
+  // all traced nodes
   std::vector<ValueNode *> traced_nodes_;
+
+  // used globals of function and inlined function
   py::dict extra_globals_;
 
+  // new cfg
   std::unique_ptr<CFG> cfg_;
+
+  // new last frame
   std::unique_ptr<FrameStates> last_frame_;
+
   std::map<int, std::unique_ptr<FrameStates>> new_frames_;
+
+  ValueNode *reconstructed_value_;
+
   int new_break_bci_;
+
   bool inline_partial_;
 };
 

@@ -99,7 +99,7 @@ class FrameStates {
   auto &GetStacks() { return stack; }
   auto &GetClosures() { return cell_free; }
 
-  void print() const;
+  std::string ToString() const;
 
  private:
   std::vector<ValueNode *> stack;
@@ -154,7 +154,8 @@ class Graph {
   const std::vector<ValueNode *> &GetTracedNodes() const { return traced_nodes_; }
   std::vector<ValueNode *> &GetTracedNodes() { return traced_nodes_; }
 
-  void print(int depth = 0) const;
+  std::string ToString(int depth = 0) const;
+
   std::string DumpLoops() const;
 
   void InstallToGlobal(const std::string &key, const py::object &value) {

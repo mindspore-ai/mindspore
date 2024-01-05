@@ -323,7 +323,7 @@ bool CFG::BuildCFG() {
   return true;
 }
 
-void VisitBB(Block *blk, std::vector<bool> *reach, std::vector<bool> *mark) {
+static void VisitBlock(Block *blk, std::vector<bool> *reach, std::vector<bool> *mark) {
   if (reach->operator[](blk->id())) {
     blk->set_is_loop_head(mark->operator[](blk->id()));
     return;
@@ -332,7 +332,7 @@ void VisitBB(Block *blk, std::vector<bool> *reach, std::vector<bool> *mark) {
   reach->operator[](blk->id()) = true;
   mark->operator[](blk->id()) = true;
   for (auto i : blk->succ_bbs()) {
-    VisitBB(i, reach, mark);
+    VisitBlock(i, reach, mark);
   }
   mark->operator[](blk->id()) = false;
 }
@@ -343,7 +343,7 @@ void CFG::MarkDeadBB() {
   }
   std::vector<bool> reach(bb_pool_.size());
   std::vector<bool> mark(bb_pool_.size());
-  VisitBB(bb_pool_[0].get(), &reach, &mark);
+  VisitBlock(bb_pool_[0].get(), &reach, &mark);
   for (const auto &i : bb_pool_) {
     if (reach[i->id()]) {
       continue;

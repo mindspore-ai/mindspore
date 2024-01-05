@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,8 @@ class BitMap {
   bool Get(size_t i) const { return data()[i >> shf] & (size_t(1) << (i & mod)); }
   void Set(size_t i) { data()[i >> shf] |= (size_t(1) << (i & mod)); }
   void Clear(size_t i) { data()[i >> shf] &= ~(size_t(1) << (i & mod)); }
+
+  // logic and, operator &=()
   void And(const BitMap &o) {
     const size_t siz = std::min(count(), o.count());
     for (size_t i = 0; i < siz; ++i) {
@@ -52,6 +54,7 @@ class BitMap {
     }
   }
 
+  // logic or, operator |=()
   void Or(const BitMap &o) {
     const size_t siz = std::min(count(), o.count());
     for (size_t i = 0; i < siz; ++i) {

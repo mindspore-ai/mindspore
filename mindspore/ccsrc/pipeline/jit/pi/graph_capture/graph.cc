@@ -74,7 +74,7 @@ bool Graph::IsBreakAtLoop() const {
     return false;
   }
   const auto &instr = this->cfg_->instr_pool();
-  // find the last backward edge is overlap this break point
+  // find the last backward edge overlapping this break point
   int res = break_bci;
   for (int i = break_bci; i < static_cast<int>(instr.size()); ++i) {
     MS_EXCEPTION_IF_CHECK_FAIL(i == instr[i]->bci(), "!!!");
@@ -209,53 +209,49 @@ TracePtr Graph::TraceValueNode(ValueNode *node, int max_trace_depth) {
                   Config().GetBoolConfig(GraphJitConfig::kPrintGuard), 0, max_trace_depth);
 }
 
-void Graph::print(int depth) const {
+std::string Graph::ToString(int depth) const {
+  std::stringstream s;
   std::string prefix(depth << 1, ' ');
   std::string code_name = co_.ptr() != nullptr ? std::string(py::str(co_.ptr())) : "<no code>";
-  GRAPH_JIT_LOG_F("%s*** Trace Nodes [%s] ***\n", prefix.c_str(), code_name.c_str());
 
+  s << prefix << "*** Trace Nodes [" << code_name << "] ***\n";
   if (depth == 0) {
-    GRAPH_JIT_LOG_F("%s Frame:\n", prefix.c_str());
-    const FrameStates &f = GetFrame(0);
-    f.print();
+    s << prefix << "Frame:\n" << GetFrame(0).ToString();
   }
 
-  GRAPH_JIT_LOG_F("%sNodes:\n", prefix.c_str());
+  s << prefix << "Nodes:\n";
   for (auto i : GetTracedNodes()) {
-    GRAPH_JIT_LOG_F("%s%s\n", prefix.c_str(), i->ToString().c_str());
+    s << prefix << i->ToString() << "\n";
     if (i->GetType() != AbstractNode::Call) {
       continue;
     }
     CallNode *node = static_cast<CallNode *>(i);
-    GRAPH_JIT_LOG_F("%s{--inline stat %s --\n", prefix.c_str(), GetInlineReasonDesc(node->GetInlineReason()).c_str());
+    s << prefix << "{ inline stat " << GetInlineReasonDesc(node->GetInlineReason()) << "\n";
     if (node->GetSubGraph() != nullptr) {
-      node->GetSubGraph()->print(depth + 1);
+      s << node->GetSubGraph()->ToString(depth + 1);
     }
-    GRAPH_JIT_LOG_F("%s}\n", prefix.c_str());
+    s << prefix << "}\n";
   }
-
-  GRAPH_JIT_LOG_F("\n%s return: %s\n", prefix.c_str(),
-                  GetRetVal() ? GetRetVal()->ToString().c_str() : "track break or no return");
-  GRAPH_JIT_LOG_F("%s%s\n", prefix.c_str(), GetStopTraceReasonDesc(stop_trace_info_.reason).c_str());
-  GRAPH_JIT_LOG_F("%sbreak bci: %d\n", prefix.c_str(), stop_trace_info_.bci);
-  GRAPH_JIT_LOG_F("\n");
+  s << prefix << "return: " << (GetRetVal() ? GetRetVal()->ToString() : "trace break") << "\n";
+  s << prefix << GetStopTraceReasonDesc(GetStopTraceReason()) << "\n";
+  s << prefix << "break bci: " << GetStopTraceBci() << "\n\n";
+  return s.str();
 }
 
-void FrameStates::print() const {
-  GRAPH_JIT_LOG_F("locals:\n");
-  int c = 0;
-  for (auto i : locals) {
-    GRAPH_JIT_LOG_F("%d:%s\n", c++, i == &ValueNode::UnboundLocal ? "(UnboundLocal)" : i->ToString().c_str());
+std::string FrameStates::ToString() const {
+  std::stringstream s;
+  s << "locals:\n";
+  for (size_t i = 0; i < locals.size(); ++i) {
+    if (locals[i] != &ValueNode::UnboundLocal) {
+      s << i << ": " << locals[i]->ToString() << "\n";
+    }
   }
-  GRAPH_JIT_LOG_F("\nstacks:\n");
-  for (auto i : stack) {
-    GRAPH_JIT_LOG_F("%d:%s\n", c++, i == &ValueNode::UnboundLocal ? "(UnboundLocal)" : i->ToString().c_str());
-  }
-  GRAPH_JIT_LOG_F("\ncell_free:\n");
-  for (auto i : cell_free) {
-    GRAPH_JIT_LOG_F("%s\n", i == &ValueNode::UnboundLocal ? "(UnboundLocal)" : i->ToString().c_str());
-  }
-  GRAPH_JIT_LOG_F("\n");
+  s << "\nstacks:\n";
+  std::for_each(stack.rbegin(), stack.rend(), [&s](ValueNode *i) { s << i->ToString() << "\n"; });
+  s << "\ncell free:\n";
+  std::for_each(cell_free.begin(), cell_free.end(), [&s](ValueNode *i) { s << i->ToString() << "\n"; });
+  s << "\n";
+  return s.str();
 }
 
 std::string Graph::DumpLoops() const {

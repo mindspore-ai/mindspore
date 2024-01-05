@@ -25,8 +25,6 @@
 #include "pybind11/pybind11.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "pipeline/jit/pi/external.h"
-#include "pipeline/jit/pi/graph_capture/code_generator.h"
-#include "pipeline/jit/pi/graph_capture/bytecode_inliner.h"
 #include "pipeline/jit/pi/graph_capture/graph_build.h"
 #include "pipeline/jit/pi/graph_capture/graph_analyzer.h"
 #include "pipeline/jit/pi/graph_compiler/abstract_type_deducer.h"
@@ -41,6 +39,8 @@
 #include "pipeline/pynative/pynative_utils.h"
 #include "runtime/pynative/op_executor.h"
 #include "include/common/debug/anf_ir_dump.h"
+#include "pipeline/jit/pi/graph_capture/code_generator.h"
+#include "pipeline/jit/pi/graph_capture/bytecode_inliner.h"
 
 namespace mindspore {
 namespace jit {
@@ -457,11 +457,8 @@ static bool GraphCapture(JitCompileResults *jcr) {
   jcr->tbs->PushStopTraceRes(g.GetGraph()->GetCodeName(), g.GetGraph()->GetStopTraceReason());
   AObject::aobject_mem_pool_.Clear(__FILE__, __LINE__);
 
-  if (analyzer.NeedInterpret()) {
-    // break graph or need interpret
-  } else if (conf.GetBoolConfig(GraphJitConfig::kInterpretCapturedCode)) {
-    // config interpret
-  } else {
+  bool captured = !analyzer.NeedInterpret() && !conf.GetBoolConfig(GraphJitConfig::kInterpretCapturedCode);
+  if (captured) {
     jcr->stat = JitCompileResults::GRAPH_CAPTURED;
   }
   return new_code.ptr() != reinterpret_cast<PyObject *>(jcr->origin_frame_->f_code);
@@ -588,7 +585,11 @@ void AddGuardForGlobals(const PyFrameObject *f, OptGuardPtr guard, bool detach) 
       ptr = std::make_shared<OpTrace>(PyFunction_GET_CODE(v), LOAD_ATTR, -1, std::vector<TracePtr>({ptr}), "__code__");
       level = GuardLevel::GId;
     } else if (t == AObject::kTypeTuple || t == AObject::kTypeList || t == AObject::kTypeDict) {
-      // level = GuardLevel::GId;
+      /**
+       * TODO:
+       * graph treat tuple, list, dict as constant variable.
+       * add container guard and check it, check contains Tensor
+       */
       continue;
     }
 
