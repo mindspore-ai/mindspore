@@ -1350,12 +1350,8 @@ void TargetInfoSetter::GetTargetInfo() {
     GetCpuInfo(&target_info_);
     return;
   }
-#ifdef MSLITE_ENABLE_GRAPH_KERNEL
   // ascend
   target_info_[kJsonKeyArch] = target;
-#else
-  has_info_ = false;
-#endif
 }
 
 void TargetInfoSetter::SetTargetInfo(nlohmann::json *kernel_info) const {

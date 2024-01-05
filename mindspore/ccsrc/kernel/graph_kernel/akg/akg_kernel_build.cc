@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -66,7 +67,7 @@ bool AkgKernelBuilder::ParallelBuild(const std::vector<JsonNodePair> &build_args
 
     auto client = GetClient();
     MS_EXCEPTION_IF_NULL(client);
-    if (!client->CompilerStart(PROCESS_NUM, TIME_OUT)) {
+    if (!client->CompilerStart(PROCESS_NUM, TIME_OUT, GetPlatform())) {
       MS_LOG(ERROR) << "Akg start failed.";
       return false;
     }

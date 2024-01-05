@@ -37,7 +37,7 @@ TypePtr GeLUFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector
   MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto x_type = input_args[kInputIndex0]->GetType();
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kBFloat16};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, primitive->name());
   MS_EXCEPTION_IF_NULL(x_type);
   return x_type->Clone();

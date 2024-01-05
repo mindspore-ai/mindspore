@@ -49,7 +49,11 @@ ShapeVector CalLayerNormMeanAndVarShape(int64_t begin_norm_axis, const ShapeVect
   auto mean_var_shape_value = input_shape;
   const size_t input_rank = input_shape.size();
   if (begin_norm_axis == -1) {
-    mean_var_shape_value[input_rank - 1] = 1;
+    if (common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") != "off") {
+      mean_var_shape_value = {input_shape[input_rank - 1]};
+    } else {
+      mean_var_shape_value[input_rank - 1] = 1;
+    }
   } else {
     for (size_t i = LongToSize(begin_norm_axis); i < input_rank; i++) {
       mean_var_shape_value[i] = 1;
@@ -113,8 +117,8 @@ BaseShapePtr LayerNormFuncImpl::InferShape(const PrimitivePtr &primitive,
 
   std::vector<BaseShapePtr> shapes_list = {x_shape_ptr};
   auto mean_var_shape = CalLayerNormMeanAndVarShape(begin_norm_axis, x_shape);
-  (void)shapes_list.emplace_back(std::make_shared<abstract::TensorShape>(mean_var_shape));
-  (void)shapes_list.emplace_back(std::make_shared<abstract::TensorShape>(mean_var_shape));
+  (void)shapes_list.emplace_back(gamma_shape_ptr);
+  (void)shapes_list.emplace_back(beta_shape_ptr);
 
   ValuePtr bpa_ptr = input_args[kInputIndex4]->GetValue();
   std::optional<int64_t> bpa_opt = GetScalarValue<int64_t>(bpa_ptr);

@@ -18,18 +18,24 @@
 #include <memory>
 #include "ir/func_graph.h"
 #include "kernel/framework_utils.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
+#include "plugin/device/ascend/kernel/akg/akg_utils.h"
 #include "plugin/device/ascend/kernel/akg/akg_ascend_kernel_mod.h"
 #include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace kernel {
 KernelPackPtr AkgAscendKernelBuilder::SearchKernelCache(const std::string &kernel_name) {
-  return tbe::TbeUtils::SearchCache(kernel_name, true);
+  std::string cce_json = GetCompilerCachePath() + kAkgKernelMeta + kernel_name + kJsonSuffix;
+  KernelPackPtr ret = std::make_shared<KernelPack>();
+  if (!ret->LoadKernelMeta(cce_json)) {
+    MS_LOG(INFO) << "Read cache json and bin file failed[" << cce_json << "]";
+    return nullptr;
+  }
+  return ret;
 }
 
 KernelPackPtr AkgAscendKernelBuilder::InsertKernelCache(const std::string &kernel_name) {
-  return tbe::TbeUtils::InsertCache(kernel_name, kProcessorAiCore, true);
+  return SearchKernelCache(kernel_name);
 }
 
 void AkgAscendKernelBuilder::SetKernelMod(const KernelPackPtr &kernel_pack,

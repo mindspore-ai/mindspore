@@ -21,7 +21,7 @@ from multiprocessing import Pool, cpu_count
 from mindspore import log as logger
 from mindspore._extends.parallel_compile.akg_compiler.get_file_path import get_akg_path
 from mindspore._extends.parallel_compile.akg_compiler.util import get_ascend_compile_dirs, create_compile_dirs, \
-    get_log_level, update_attr, select_best, print_compile_log, check_tbe_support, get_kernel_meta_parent_dir
+    get_log_level, update_attr, select_best, print_compile_log, get_kernel_meta_parent_dir
 
 
 def _compile_akg_task_default(json_strs, attrs, func):
@@ -66,7 +66,6 @@ def _compile_akg_task_ascend(json_strs, attrs):
     compile_dirs = get_ascend_compile_dirs(attrs)
     kernel_meta_dir = compile_dirs.get("kernel_meta_dir")
     akg_compile_dir = compile_dirs.get("akg_compile_dir")
-    tbe_compile_dir = compile_dirs.get("tbe_compile_dir")
     composite_graph_dir = compile_dirs.get("composite_graph_dir")
     attrs = update_attr(attrs, {"dump_composite_graph": composite_graph_dir, "optimize_for_tbe": True})
     for json_str in json_strs:
@@ -79,24 +78,12 @@ def _compile_akg_task_ascend(json_strs, attrs):
         info_path = os.path.join(kernel_meta_dir, op_name + ".info")
         if not os.path.isfile(info_path):
             raise FileNotFoundError("Can not compile non-existing file \"{}\"".format(info_path))
-
         # Compile json str with AKG
         _compile_subprocess(compiler, akg_compile_dir, info_path, "AKG", attrs, compile_log, log_level)
 
-        # Load composite optimized json str and compile it with TBE
-        composite_graph_path = os.path.join(composite_graph_dir, op_name + ".info")
-        if not os.path.isfile(composite_graph_path):
-            composite_graph_path = info_path
-        with open(composite_graph_path, 'r') as f:
-            composite_graph = f.read()
-        if "buffer_stitch" not in json_desc and "parallel_fusion" not in json_desc and \
-                check_tbe_support(json.loads(composite_graph)):
-            _compile_subprocess(compiler, tbe_compile_dir, composite_graph_path, "TBE", attrs, compile_log, log_level)
-
         print_compile_log(compile_log)
         # Select best compile result
-        res = select_best([os.path.join(akg_compile_dir, "akg_kernel_meta"), os.path.join(
-            tbe_compile_dir, "kernel_meta")], kernel_meta_dir, op_name)
+        res = select_best([os.path.join(akg_compile_dir, "kernel_meta")], kernel_meta_dir, op_name)
         if not res:
             if log_level == "ERROR":
                 raise ValueError("Compile error, json str: {}! build attrs: {}".format(json_str, attrs))

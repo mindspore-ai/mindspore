@@ -17,6 +17,7 @@
 #include <utility>
 #include <algorithm>
 #include "include/common/utils/parallel_context.h"
+#include "include/backend/debug/profiler/profiling.h"
 #include "acl/acl_rt.h"
 #include "acl/acl_op_compiler.h"
 #include "include/common/profiler.h"
@@ -33,6 +34,7 @@
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_metadata.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_build.h"
 #include "plugin/device/ascend/kernel/pyboost/customize/customize_copy.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_build.h"
 
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
@@ -50,11 +52,28 @@
 #include "include/backend/debug/data_dump/overflow_dumper.h"
 #include "include/backend/debug/profiler/profiling.h"
 #include "plugin/device/ascend/hal/profiler/profiling_framework_data.h"
+#include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
 #include "utils/anf_utils.h"
 #endif
 
 namespace mindspore::device::ascend {
 namespace {
+std::string GetKernelTypeStr(const KernelType &kernel_type) {
+  std::string type = "";
+  if (kernel_type == KernelType::ACL_KERNEL) {
+    type = "acl_kernel";
+  } else if (kernel_type == KernelType::HOST_KERNEL) {
+    type = "host_kernel";
+  } else if (kernel_type == KernelType::HCCL_KERNEL) {
+    type = "hccl_kernel";
+  } else if (kernel_type == KernelType::OPAPI_KERNEL) {
+    type = "opapi_kernel";
+  } else if (kernel_type == KernelType::INTERNAL_KERNEL) {
+    type = "internal_kernel";
+  }
+  return type;
+}
+
 bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
@@ -64,19 +83,29 @@ bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
     if (AnfAlgo::IsKernelSelectBackoffOp(kernel)) {
       continue;
     }
+    std::string opname = common::AnfAlgo::GetCNodeName(kernel);
+    auto kernel_type = KernelType::ACL_KERNEL;
     kernel::KernelModPtr kernel_mod_ptr = nullptr;
     if (AnfAlgo::GetKernelType(kernel) == KernelType::ACL_KERNEL) {
       kernel_mod_ptr = kernel::AclOpBuild(kernel);
+      kernel_type = KernelType::ACL_KERNEL;
     } else if (AnfAlgo::GetKernelType(kernel) == KernelType::HOST_KERNEL) {
       kernel_mod_ptr = kernel::HostOpBuild(kernel);
+      kernel_type = KernelType::HOST_KERNEL;
     } else if (AnfAlgo::GetKernelType(kernel) == KernelType::HCCL_KERNEL) {
       kernel_mod_ptr = kernel::HcclOpBuild(kernel);
+      kernel_type = KernelType::HCCL_KERNEL;
     } else if (AnfAlgo::GetKernelType(kernel) == KernelType::OPAPI_KERNEL) {
       kernel_mod_ptr = kernel::AclnnOpBuild(kernel);
+      kernel_type = KernelType::OPAPI_KERNEL;
+    } else if (AnfAlgo::GetKernelType(kernel) == KernelType::INTERNAL_KERNEL) {
+      kernel_mod_ptr = kernel::InternalKernelBuild(kernel);
+      kernel_type = KernelType::INTERNAL_KERNEL;
     } else {
       MS_LOG(EXCEPTION) << "The kernel: " << kernel->fullname_with_scope() << " kernel build failed, kernel type: "
                         << kernel::KernelTypeLabel(AnfAlgo::GetKernelType(kernel));
     }
+    MS_LOG(WARNING) << "kernel opname:" << opname << ", kernel type:" << GetKernelTypeStr(kernel_type);
     MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
     AnfAlgo::SetKernelMod(kernel_mod_ptr, kernel.get());
   }
@@ -453,11 +482,21 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
       return false;
     }
   } else {
+    auto ascend_profiler = profiler::Profiler::GetInstance(kAscendDevice);
+    MS_EXCEPTION_IF_NULL(ascend_profiler);
+    auto enable_profiler_flag = ascend_profiler->GetEnableFlag();
+    if (enable_profiler_flag) {
+      ProfilingUtils::InitReportNode(kernel, true);
+      ProfilingUtils::RecordLaunchTaskBegin(kernel->fullname_with_scope(), true);
+    }
     MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
     MS_EXCEPTION_IF_NULL(kernel_mod);
     MS_EXCEPTION_IF_NULL(stream);
     bool ret = kernel_mod->Launch(inputs, workspace, outputs, stream);
     MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
+    if (enable_profiler_flag) {
+      ProfilingUtils::ReportTask(kernel->fullname_with_scope(), true);
+    }
     if (!ret) {
       MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
       res_manager_->ResetStreamAndCtx();
