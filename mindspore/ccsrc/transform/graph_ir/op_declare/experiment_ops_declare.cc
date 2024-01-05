@@ -75,8 +75,7 @@ REG_ADPT_DESC(BlendFaceBgPartOne, kNameBlendFaceBgPartOne, ADPT_DESC(BlendFaceBg
 // FlashAttentionScore
 INPUT_MAP(FlashAttentionScore) = {
   {1, INPUT_DESC(query)},     {2, INPUT_DESC(key)},        {3, INPUT_DESC(value)},        {4, INPUT_DESC(atten_mask)},
-  {5, INPUT_DESC(drop_mask)}, {6, INPUT_DESC(real_shift)}, {7, INPUT_DESC(padding_mask)}, {8, INPUT_DESC(prefix)},
-};
+  {5, INPUT_DESC(drop_mask)}, {6, INPUT_DESC(real_shift)}, {7, INPUT_DESC(padding_mask)}, {8, INPUT_DESC(prefix)}};
 ATTR_MAP(FlashAttentionScore) = {
   {"scale_value", ATTR_DESC(scale_value, AnyTraits<float>())},
   {"keep_prob", ATTR_DESC(keep_prob, AnyTraits<float>())},

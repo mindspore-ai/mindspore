@@ -127,7 +127,7 @@ class AttnNet(nn.Cell):
         return attention_probs
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [mstype.float16])
@@ -140,7 +140,7 @@ def test_nn_flash_attention_fwd(dtype):
     context.set_context(mode=context.GRAPH_MODE)
     B = 1
     S = 8192
-    H = 128
+    H = 1280
     N = 10
     D = H // N
 
