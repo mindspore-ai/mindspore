@@ -45,6 +45,7 @@
 #include "tools/optimizer/graph/scalar_op_pass.h"
 #include "tools/optimizer/graph/make_list_pass.h"
 #include "tools/optimizer/graph/kvcache_quant_pass.h"
+#include "tools/optimizer/fusion/flash_attention_antiquant_fusion.h"
 
 namespace mindspore::lite {
 AnfTransformForGe::AnfTransformForGe() = default;
@@ -64,6 +65,7 @@ int AnfTransformForGe::RunGeFusionPass(const FuncGraphPtr &old_graph, const std:
       find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "FlashAttention") != plugin_custom_ops.end()) {
     MS_LOG(INFO) << "using FlashAttention";
     fusions.push_back(std::make_shared<opt::FlashAttentionFusion>());
+    fusions.push_back(std::make_shared<opt::FlashAttentionAntiquantFusion>());
   }
   if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end() ||
       find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "KVCache") != plugin_custom_ops.end()) {
