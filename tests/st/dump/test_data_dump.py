@@ -234,7 +234,7 @@ def run_saved_data_dump_test(scenario, saved_data):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @security_off_wrap

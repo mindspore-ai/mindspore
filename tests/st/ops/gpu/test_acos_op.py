@@ -36,7 +36,7 @@ def test_acos_fp32():
     assert np.allclose(output_ms.asnumpy(), output_np)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_acos_fp16():
@@ -51,7 +51,7 @@ def test_acos_fp16():
     assert np.allclose(output_ms.asnumpy(), output_np)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_acos_fp64():
@@ -82,7 +82,7 @@ def test_acos_complex64():
     assert np.allclose(output_ms.asnumpy(), output_np)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_acos_complex128():

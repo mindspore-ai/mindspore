@@ -32,7 +32,7 @@ class IndexFillNet(nn.Cell):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

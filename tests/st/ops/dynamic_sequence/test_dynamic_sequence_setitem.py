@@ -31,7 +31,7 @@ class NetSetItem(nn.Cell):
         return F.tuple_setitem(seq, idx, value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -51,7 +51,7 @@ def test_seq_setitem():
     assert res == expect
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -72,7 +72,7 @@ def test_seq_tensor_setitem():
         assert np.all(res[i].asnumpy() == expect[i].asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -93,7 +93,7 @@ def test_seq_tensor_setitem1():
         assert np.all(res[i].asnumpy() == expect[i].asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_seq_setitem_grad_0():
@@ -111,7 +111,7 @@ def test_seq_setitem_grad_0():
     print("grad out0 = ", grad_func(input_x, idx, value, dout))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -131,7 +131,7 @@ def test_seq_setitem_grad_1():
     print("grad out1 = ", grad_func(input_x, idx, value, dout))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_seq_setitem_grad_2():

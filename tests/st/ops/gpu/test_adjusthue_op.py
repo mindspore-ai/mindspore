@@ -34,7 +34,7 @@ class AdHue(nn.Cell):
         return self.adjusthue(input_images, hue_delta)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_adjusthue_float32():
@@ -52,7 +52,7 @@ def test_adjusthue_float32():
     np.allclose(out.asnumpy(), expect_out, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_adjusthue_float64():
@@ -70,7 +70,7 @@ def test_adjusthue_float64():
     np.allclose(out.asnumpy(), expect_out, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_adjusthue_float16():

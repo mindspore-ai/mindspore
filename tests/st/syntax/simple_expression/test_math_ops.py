@@ -73,7 +73,7 @@ def test_tensor_add_tensor_int8():
     assert np.all(result2.asnumpy() == expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -94,7 +94,7 @@ def test_tensor_add_tensor_int16():
     assert np.all(result2.asnumpy() == expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -136,7 +136,7 @@ def test_tensor_add_tensor_int64():
     assert np.all(result2.asnumpy() == expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -214,7 +214,7 @@ def test_tensor_add_tensor_uint64():
     assert np.all(result2.asnumpy() == expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -235,7 +235,7 @@ def test_tensor_add_tensor_float16():
     assert np.all(result2.asnumpy() == expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -256,7 +256,7 @@ def test_tensor_add_tensor_float32():
     assert np.all(result2.asnumpy() == expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -277,7 +277,7 @@ def test_tensor_add_tensor_float64():
     assert np.all(result2.asnumpy() == expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -342,7 +342,7 @@ def test_tuple_add_tuple_shape():
         assert np.all(result2.asnumpy() == expect.astype(np.float32))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -360,7 +360,7 @@ def test_string_add_string():
     assert result == expect
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -388,7 +388,7 @@ class Sub(nn.Cell):
         return z
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -431,7 +431,7 @@ def test_tensor_sub_tensor():
     assert np.all(result2.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -502,7 +502,7 @@ def test_number_mul_number():
     assert np.allclose(result1, result2.asnumpy(), 0.0001, 0.0001)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -523,7 +523,7 @@ def test_tensor_mul_tensor():
     assert np.all(result2.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -544,7 +544,7 @@ def test_tensor_mul_number():
     assert np.all(result2.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -616,7 +616,7 @@ def test_tensor_div_tensor():
     assert np.all(result2.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -668,7 +668,7 @@ class Mod(nn.Cell):
         return z
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -690,7 +690,7 @@ def test_number_mod_number():
         assert np.all(result2 == expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -711,7 +711,7 @@ def test_tensor_mod_tensor():
     assert np.all(result2.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -732,7 +732,7 @@ def test_tensor_mod_number():
     assert np.all(result2.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -763,7 +763,7 @@ class Pow(nn.Cell):
         return z
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -784,7 +784,7 @@ def test_tensor_pow_tensor():
     assert np.all(result2.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -853,7 +853,7 @@ def test_number_floordiv_number():
     assert result2.asnumpy() == result1
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -874,7 +874,7 @@ def test_tensor_floordiv_tensor():
     assert np.all(result2.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -895,7 +895,7 @@ def test_tensor_floordiv_number():
     assert np.all(result2.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -966,7 +966,7 @@ def test_tensor_floormod_tensor():
     assert np.all(result2.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -987,7 +987,7 @@ def test_tensor_floormod_number():
     assert np.all(result2.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

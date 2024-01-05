@@ -412,7 +412,7 @@ def test_grad_const_list_and_tuple_tensor_to_mutable():
     assert compare(output, expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -478,7 +478,7 @@ def test_grad_const_dict_tensor_to_mutable():
     assert compare(output['b'], expect[1])
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

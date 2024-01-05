@@ -26,7 +26,7 @@ class Net(nn.Cell):
         return x.contiguous()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -49,7 +49,7 @@ def test_contiguous(mode):
     assert np.allclose(x.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

@@ -94,7 +94,7 @@ def test_joinedstr_basic_variable_2():
     assert str(out) == "[1 2 3 4 5]"
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

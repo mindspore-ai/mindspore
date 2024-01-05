@@ -49,7 +49,7 @@ def test_global_list_used_in_graph():
 global_float_list_1 = [1.0, 2.0, 3.0, 4.0]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -71,7 +71,7 @@ def test_global_list_used_in_graph_2():
 global_numpy_list = [np.array([1, 2, 3]), np.array([4, 5, 6])]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -93,7 +93,7 @@ def test_global_numpy_list_used_in_graph():
 global_list_2 = [1, 2, 3, 4, [3, 4], None]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -112,7 +112,7 @@ def test_global_nested_list_getitem_in_graph():
     assert id(res) == id(global_list_2[4])
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -131,7 +131,7 @@ def test_global_nested_list_return_in_graph():
     assert id(res) == id(global_list_2)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -155,7 +155,7 @@ def test_global_nested_list_return_in_graph_2():
 global_list_3 = [1, 2, 3, (4, [3, 4])]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -174,7 +174,7 @@ def test_global_nested_list_getitem_in_graph_2():
     assert id(res) == id(global_list_3[3][1])
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -195,7 +195,7 @@ def test_global_nested_list_return_in_graph_3():
     assert id(res[1]) == id(global_list_3[3][1])
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -218,7 +218,7 @@ def test_return_local_list():
     assert ret == [1, 2, 3, Tensor([1]), 2]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -244,7 +244,7 @@ def test_return_local_list_2():
 global_list_4 = [1, 2]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -267,7 +267,7 @@ def test_return_local_list_3():
     assert id(ret[4]) == id(global_list_4)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

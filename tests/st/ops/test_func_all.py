@@ -23,7 +23,7 @@ class Net(nn.Cell):
         return ops.all(x, axis=1, keep_dims=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

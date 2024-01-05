@@ -103,7 +103,7 @@ def test_net_4d():
     assert output[0].asnumpy().shape == expect_shape
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_5d():
@@ -138,7 +138,7 @@ def test_net_dynamic_shape():
     assert output[0].asnumpy().shape == expect_shape
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_vmap():

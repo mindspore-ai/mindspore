@@ -50,7 +50,7 @@ class GradNet(nn.Cell):
         return self.adaptive_avg_pool3d_grad(x, dy)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
