@@ -54,6 +54,7 @@ from mindspore.profiler.parser.ascend_op_generator import AscendOPGenerator
 from mindspore.profiler.parser.ascend_steptrace_generator import AscendStepTraceGenerator
 from mindspore.profiler.parser.ascend_flops_generator import AscendFlopsGenerator
 from mindspore.profiler.parser.ascend_cluster_generator import AscendClusterGenerator
+from mindspore.profiler.parser.ascend_communicate_generator import AscendCommunicationGenerator
 from mindspore.profiler.parser.ascend_hccl_generator import AscendHCCLGenerator
 
 INIT_OP_NAME = 'Default/InitDataSetQueue'
@@ -1193,6 +1194,35 @@ class Profiler:
         finally:
             pass
 
+    def _ascend_graph_communicate_analyse(self, source_path):
+        """Analyse communicate info"""
+        if not self._profile_communication:
+            return
+        if self._profile_communication and context.get_context("mode") == context.PYNATIVE_MODE:
+            logger.warning("[Profiler]The parameter profile_communication is not supported on Ascend "
+                           "PyNative mode currently.")
+            return
+
+        try:
+            logger.info("Profiling: analyzing the communicate and communicate_matrix profiler info.")
+            dev_id = self._rank_id if self._device_target == DeviceTarget.ASCEND.value else self._dev_id
+
+            communication_file_path = os.path.join(self._output_path, f'output_communication_{dev_id}.json')
+            communication_file_path = validate_and_normalize_path(communication_file_path)
+
+            communication_matrix_file_path = os.path.join(self._output_path,
+                                                          f"output_communication_matrix_{dev_id}.json")
+            communication_matrix_file_path = validate_and_normalize_path(communication_matrix_file_path)
+
+            analyze_path = os.path.join(os.path.dirname(source_path), 'analyze')
+            communicate_analyser = AscendCommunicationGenerator(analyze_path)
+            communicate_analyser.parse()
+            communicate_analyser.write(communication_file_path, communication_matrix_file_path)
+        except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
+            logger.warning(err.message)
+        finally:
+            pass
+
     def _ascend_graph_hccl_analyse(self, source_path, steptrace):
         """Analyse hccl profiler info."""
         if not self._profile_communication:
@@ -1263,6 +1293,7 @@ class Profiler:
             self._ascend_flops_analyse(op_summary)
             self._ascend_graph_memory_analyse(points)
             self._ascend_graph_cluster_analyse(source_path)
+            self._ascend_graph_communicate_analyse(source_path)
             self._ascend_graph_hccl_analyse(source_path, steptrace)
             self._ascend_graph_msadvisor_analyse(job_id)
             ProfilerInfo.set_graph_ids(graph_ids)
