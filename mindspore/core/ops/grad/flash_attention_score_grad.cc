@@ -170,6 +170,15 @@ abstract::TupleShapePtr FlashAttentionScoreGradInferShape(const PrimitivePtr &pr
   CheckInputShape(input_args[kFlashAttentionScoreGradInputSoftmaxOutIndex], ShapeVector{1}, op_name, "softmax_out",
                   true);
 
+  // Infer placeholder index
+  std::vector<int64_t> placeholder_index;
+  for (size_t i = 0; i < input_args.size(); ++i) {
+    if (IsOptionalInputNotPass(input_args[i])) {
+      placeholder_index.push_back(SizeToLong(i));
+    }
+  }
+  primitive->AddAttr(kAttrPlaceHolderIndex, MakeValue<std::vector<int64_t>>(placeholder_index));
+
   abstract::BaseShapePtrList output_shape_ptr_list(kFlashAttentionScoreGradOutputsNum);
   output_shape_ptr_list[kFlashAttentionScoreGradOutputDqIndex] = std::make_shared<abstract::Shape>(query_shape);
   output_shape_ptr_list[kFlashAttentionScoreGradOutputDkIndex] = std::make_shared<abstract::Shape>(key_shape);

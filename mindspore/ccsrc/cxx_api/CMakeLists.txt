@@ -69,6 +69,9 @@ endif()
 
 if((MODE_ASCEND_ACL) AND NOT BUILD_LITE)
     list(APPEND MSLIB_SRC
+        "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.cc"
+        "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/ascend/optimizer/enhancer/\
+            add_placeholder_for_op_with_optional_inputs.cc"
         "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/pattern_engine.cc"
         "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/helper.cc"
         "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/node_pass.cc"

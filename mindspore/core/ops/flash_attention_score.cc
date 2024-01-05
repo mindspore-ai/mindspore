@@ -131,6 +131,15 @@ abstract::TupleShapePtr FlashAttentionScoreInferShape(const PrimitivePtr &primit
     op_name, "attn_mask", true);
   CheckInputShape(input_args[kFlashAttentionScoreInputPrefixIndex], ShapeVector{batch_size}, op_name, "prefix", true);
 
+  // Infer placeholder index
+  std::vector<int64_t> placeholder_index;
+  for (size_t i = 0; i < input_args.size(); ++i) {
+    if (IsOptionalInputNotPass(input_args[i])) {
+      placeholder_index.push_back(SizeToLong(i));
+    }
+  }
+  primitive->AddAttr(kAttrPlaceHolderIndex, MakeValue<std::vector<int64_t>>(placeholder_index));
+
   abstract::BaseShapePtrList output_shape_ptr_list(kFlashAttentionScoreOutputsNum);
   output_shape_ptr_list[kFlashAttentionScoreOutputSoftmaxMaxIndex] =
     std::make_shared<abstract::Shape>(ShapeVector{batch_size, q_head_num, q_seq_len, kSoftmaxLastDim});

@@ -863,6 +863,9 @@ ValueNodePtr KernelGraphMgr::CreateNewValueNode(const AnfNodePtr &anf, KernelGra
   MS_EXCEPTION_IF_NULL(value_node);
   auto value = value_node->value();
   MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<None>()) {
+    return nullptr;
+  }
   // Copy data from device if the tensor is an output of Op or Graph.
   if (value->isa<tensor::Tensor>()) {
     auto tensor = value->cast<TensorPtr>();
@@ -1129,25 +1132,6 @@ ValueNodePtr KernelGraphMgr::GetChildGraph(KernelGraph *graph, const AnfNodePtr 
   return new_value_node;
 }
 
-ValueNodePtr KernelGraphMgr::HandleValueNodeInput(const AnfNodePtr &anf, KernelGraph *graph, const CNodePtr &use_node,
-                                                  size_t input_idx) {
-  if (IsValueNode<None>(anf)) {
-    size_t not_none_input_index = 1;
-    auto origin_inputs = use_node->inputs();
-    for (size_t idx = 1; idx < origin_inputs.size(); idx++) {
-      auto input_node = origin_inputs[idx];
-      MS_EXCEPTION_IF_NULL(input_node);
-      if (!IsValueNode<None>(input_node)) {
-        not_none_input_index = idx;
-      }
-    }
-    if (input_idx > not_none_input_index) {
-      return nullptr;
-    }
-  }
-  return CreateNewValueNode(anf, graph);
-}
-
 void KernelGraphMgr::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, std::vector<AnfNodePtr> *cnode_inputs,
                                        mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -1177,7 +1161,7 @@ void KernelGraphMgr::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph
       continue;
     } else if (anf->isa<ValueNode>() && !IsValueNode<FuncGraph>(anf)) {
       // if input is a value node,
-      auto new_value_node = HandleValueNodeInput(anf, graph, cnode, input_idx);
+      auto new_value_node = CreateNewValueNode(anf, graph);
       if (new_value_node != nullptr) {
         (void)params.emplace_back(new_value_node);
       }
