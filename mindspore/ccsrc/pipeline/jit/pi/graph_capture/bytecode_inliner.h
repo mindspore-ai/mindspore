@@ -45,8 +45,9 @@ class BytecodeInliner {
         cfg_(),
         last_frame_(),
         new_frames_(),
+        reconstructed_value_(nullptr),
         new_break_bci_(-1),
-        reconstructed_value_(nullptr) {}
+        inline_partial_(false) {}
 
   void Run();
 
