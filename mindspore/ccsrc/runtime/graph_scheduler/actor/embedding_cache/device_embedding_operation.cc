@@ -181,8 +181,8 @@ bool DeviceEmbeddingOperation::MemcpyHostToDeviceAsync(void *dst, const void *sr
   const void *host_ptr = src;
 
   auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-    device_ptr, size, kOpFormat_DEFAULT, kTypeUnknown, ShapeVector(), device_context->device_context_key().device_name_,
-    device_context->device_context_key().device_id_);
+    device_ptr, size, Format::DEFAULT_FORMAT, kTypeUnknown, ShapeVector(),
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
   auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   MS_ERROR_IF_NULL(device_address);
   RETURN_IF_FALSE_WITH_LOG(device_address->AsyncHostToDevice({}, size, kTypeUnknown, host_ptr, stream_id),
@@ -202,8 +202,8 @@ bool DeviceEmbeddingOperation::MemcpyDeviceToHostAsync(void *dst, const void *sr
   void *host_ptr = dst;
 
   auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-    device_ptr, size, kOpFormat_DEFAULT, kTypeUnknown, ShapeVector(), device_context->device_context_key().device_name_,
-    device_context->device_context_key().device_id_);
+    device_ptr, size, Format::DEFAULT_FORMAT, kTypeUnknown, ShapeVector(),
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
   auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   MS_ERROR_IF_NULL(device_address);
   RETURN_IF_FALSE_WITH_LOG(device_address->AsyncDeviceToHost({}, size, kTypeUnknown, host_ptr, stream_id),

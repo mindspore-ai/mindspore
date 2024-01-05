@@ -40,6 +40,7 @@
 #include "nlohmann/json.hpp"
 #include "utils/log_adapter.h"
 #include "ops/op_name.h"
+#include "kernel/format_utils.h"
 
 #ifdef _MSC_VER
 #undef OPAQUE
@@ -236,7 +237,7 @@ class KernelAttr;
 // Used to encapsulate device-side related data structures in KernelTensor.
 struct KernelDeviceInfo {
   KernelDeviceInfo();
-  KernelDeviceInfo(void *device_ptr, size_t size, const std::string &format, TypeId dtype_id, const string &device_name,
+  KernelDeviceInfo(void *device_ptr, size_t size, Format format, TypeId dtype_id, const string &device_name,
                    uint32_t device_id);
 
   KernelDeviceInfo(const KernelDeviceInfo &other);
@@ -332,7 +333,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value);
 
   // Constructor of KernelTensor by device info.
-  KernelTensor(void *device_ptr, size_t size, const std::string &format, TypeId dtype_id, const ShapeVector &host_shape,
+  KernelTensor(void *device_ptr, size_t size, Format format, TypeId dtype_id, const ShapeVector &host_shape,
                const string &device_name, uint32_t device_id, const UserDataPtr &user_data = nullptr);
 
   // Constructor of KernelTensor by shape, type, value and device info.
@@ -376,6 +377,12 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
 
   // Set the type for the KernelTensor.
   void SetType(const TypePtr &type);
+
+  // Check whether the host info exists.
+  bool host_info_exist() const { return host_info_ != nullptr; }
+
+  // Set host info after construct
+  void SetHostInfo(const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value);
 
   // Get the object enum type id of the KernelTensor.
   TypeId type_id() const {

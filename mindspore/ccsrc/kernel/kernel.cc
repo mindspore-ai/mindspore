@@ -67,11 +67,11 @@ void TransposeNHWCShape(const ShapeVector *host_shape_vector, ShapeVector *devic
 }  // namespace
 
 KernelDeviceInfo::KernelDeviceInfo() { ptr_ref_cnt_ = std::make_shared<PointerRefCount>(); }
-KernelDeviceInfo::KernelDeviceInfo(void *device_ptr, size_t size, const std::string &format, TypeId dtype_id,
+KernelDeviceInfo::KernelDeviceInfo(void *device_ptr, size_t size, Format format, TypeId dtype_id,
                                    const string &device_name, uint32_t device_id)
     : ptr_ref_cnt_(std::make_shared<PointerRefCount>(device_ptr)),
       size_(size),
-      format_(GetFormatFromStrToEnum(format)),
+      format_(format),
       dtype_id_(dtype_id),
       device_name_(device_name),
       device_id_(device_id) {}
@@ -120,9 +120,8 @@ KernelTensor::KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &t
   CalculateMemSize();
 }
 
-KernelTensor::KernelTensor(void *device_ptr, size_t size, const std::string &format, TypeId dtype_id,
-                           const ShapeVector &host_shape, const string &device_name, uint32_t device_id,
-                           const UserDataPtr &user_data)
+KernelTensor::KernelTensor(void *device_ptr, size_t size, Format format, TypeId dtype_id, const ShapeVector &host_shape,
+                           const string &device_name, uint32_t device_id, const UserDataPtr &user_data)
     : device_info_(std::make_unique<KernelDeviceInfo>(device_ptr, size, format, dtype_id, device_name, device_id)),
       host_shape_(host_shape),
       user_data_(user_data) {}
@@ -192,6 +191,19 @@ ShapeVector GetShapeVectorByBaseShape(const abstract::BaseShapePtr &base_shape) 
   MS_LOG(EXCEPTION) << "Invalid shape:" << base_shape->ToString();
 }
 }  // namespace
+
+void KernelTensor::SetHostInfo(const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value) {
+  host_info_ = std::make_unique<KernelHostInfo>();
+  if (type) {
+    SetType(type);
+  }
+  if (shape) {
+    SetShape(shape);
+  }
+  if (value) {
+    SetValue(value);
+  }
+}
 
 void KernelTensor::SetShape(const abstract::BaseShapePtr &shape) {
   MS_EXCEPTION_IF_NULL(shape);

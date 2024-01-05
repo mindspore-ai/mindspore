@@ -101,7 +101,7 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint
       E2eDump::IsDeviceTargetGPU() ? kOpFormat_DEFAULT : AnfAlgo::GetOutputFormat(input_kernel, kParameterOutputIndex);
 
     auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-      addr->addr, addr->size, device_format, device_type, ShapeVector(),
+      addr->addr, addr->size, kernel::GetFormatFromStrToEnum(device_format), device_type, ShapeVector(),
       device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
     auto device_addr = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     string input_tensor_name = input_kernel_name + ':' + "0";
@@ -146,7 +146,7 @@ void LoadOutputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uin
     auto device_format = E2eDump::IsDeviceTargetGPU() ? kOpFormat_DEFAULT : AnfAlgo::GetOutputFormat(cnode, j);
 
     auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-      addr->addr, addr->size, device_format, device_type, ShapeVector(),
+      addr->addr, addr->size, kernel::GetFormatFromStrToEnum(device_format), device_type, ShapeVector(),
       device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
     auto device_addr = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     string tensor_name = kernel_name + ':' + std::to_string(j);

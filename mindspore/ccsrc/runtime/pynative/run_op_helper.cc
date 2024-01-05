@@ -444,7 +444,7 @@ std::vector<kernel::KernelTensor *> GetWorkspaceKernelTensors(const std::shared_
     if (workspace_size < workspace_sizes.size()) {
       for (size_t i = workspace_size; i < workspace_sizes.size(); ++i) {
         auto kernel_tensor = std::make_shared<KernelTensor>(
-          nullptr, workspace_sizes[i], "", kTypeUnknown, ShapeVector(),
+          nullptr, workspace_sizes[i], Format::DEFAULT_FORMAT, kTypeUnknown, ShapeVector(),
           device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
         auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
         MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(kernel)
@@ -491,9 +491,9 @@ std::vector<kernel::KernelTensor *> GetWorkspaceKernelTensorsDynamic(
   std::vector<kernel::KernelTensor *> workspaces;
   workspaces.reserve(workspace_sizes.size());
   for (size_t i = 0; i < workspace_sizes.size(); ++i) {
-    auto kernel_tensor = std::make_shared<KernelTensor>(nullptr, workspace_sizes[i], "", kTypeUnknown, ShapeVector(),
-                                                        device_context->device_context_key().device_name_,
-                                                        device_context->device_context_key().device_id_);
+    auto kernel_tensor = std::make_shared<KernelTensor>(
+      nullptr, workspace_sizes[i], Format::DEFAULT_FORMAT, kTypeUnknown, ShapeVector(),
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
     auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     MS_EXCEPTION_IF_NULL(device_address);
     if (device_address->GetPtr() == nullptr &&

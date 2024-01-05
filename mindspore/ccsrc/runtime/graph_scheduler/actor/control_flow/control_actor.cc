@@ -609,8 +609,9 @@ void ControlActor::MergeDeviceAddress(OpContext<DeviceTensor> *const context,
 
   // Merge device address list into a single device address.
   auto tmp_kernel_tensor = std::make_shared<kernel::KernelTensor>(
-    new_device_tensor->GetMutablePtr(), addr_list[0]->GetSize(), addr_list[0]->format(), addr_list[0]->type_id(), shape,
-    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+    new_device_tensor->GetMutablePtr(), addr_list[0]->GetSize(), kernel::GetFormatFromStrToEnum(addr_list[0]->format()),
+    addr_list[0]->type_id(), shape, device_context->device_context_key().device_name_,
+    device_context->device_context_key().device_id_);
   const auto &tmp_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(tmp_kernel_tensor);
   MS_EXCEPTION_IF_NULL(tmp_device_tensor);
   MS_LOG(DEBUG) << "Create device tensor:" << tmp_device_tensor << " type:" << tmp_device_tensor->type_id();

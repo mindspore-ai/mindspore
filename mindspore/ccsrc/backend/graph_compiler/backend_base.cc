@@ -1209,8 +1209,9 @@ void MindRTBackendBase::ConstructOutputByTupleTensor(tensor::TensorPtr output_te
     auto split_tensor = std::make_shared<tensor::Tensor>(tensor_type_id, split_tensor_shape);
 
     auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-      nullptr, split_tensor_size, device_tensor->format(), device_tensor->type_id(), split_tensor_shape,
-      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+      nullptr, split_tensor_size, kernel::GetFormatFromStrToEnum(device_tensor->format()), device_tensor->type_id(),
+      split_tensor_shape, device_context->device_context_key().device_name_,
+      device_context->device_context_key().device_id_);
     kernel_tensor->SetType(element_types[i]);
     kernel_tensor->SetShape((*tensor_shape)[i]);
 

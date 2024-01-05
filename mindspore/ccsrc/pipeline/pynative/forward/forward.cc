@@ -480,7 +480,7 @@ void ForwardExecutor::CreateDeviceAddressForViewInput(const FrontendOpRunInfoPtr
   auto address_size = GetTypeByte(TypeIdToType(input_tensor->data_type())) * SizeOf(input_tensor->shape());
 
   auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-    nullptr, address_size, kOpFormat_DEFAULT, input_tensor->data_type(), input_tensor->shape(),
+    nullptr, address_size, Format::DEFAULT_FORMAT, input_tensor->data_type(), input_tensor->shape(),
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
   kernel_tensor->SetType(std::make_shared<TensorType>(input_tensor->Dtype()));
   kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(input_tensor->shape()));
