@@ -101,8 +101,12 @@ AnfNodePtr GetNodeAfterTypeConversion(const AnfNodePtr &node, const ops::OpInput
   return fg->NewCNodeInOrder({NewValueNode(convert_fg), node, NewValueNode(OpDtypeToInt(op_arg.arg_dtype_))});
 }
 
-AnfNodePtr GetNodeAfterArgHandler(const AnfNodePtr &node, const ops::OpInputArg &op_arg, const FuncGraphPtr &fg) {
+AnfNodePtr GetNodeAfterArgHandler(const AnfNodePtr &node, const ops::OpInputArg &op_arg, const AbstractBasePtr &abs,
+                                  const FuncGraphPtr &fg) {
   if (op_arg.arg_handler_.empty()) {
+    return node;
+  }
+  if (op_arg.is_optional_ && abs->isa<AbstractNone>()) {
     return node;
   }
   const auto arg_handler_func = prim::GetPythonOps(op_arg.arg_handler_, parse::PYTHON_MOD_PRIMITIVE_ARG_HANDLER_MODULE);
@@ -2439,7 +2443,7 @@ ValueNodePtr GetArgDefaultValue(const std::string &prim_name, const std::string 
     MS_EXCEPTION(ValueError) << "For Operator[" << prim_name << "], '" << py::str(default_value)
                              << "' is not supported as the default value for '" << arg_name << "'.";
   }
-  return NewValueNode(converted);
+  return NewValueNode(converted_ret);
 }
 
 std::vector<AnfNodePtr> GeneratePrimitiveDefaultArgs(const std::string &op_name,
@@ -2572,11 +2576,13 @@ AnfNodePtr CheckAndConvertPrimitiveArgs(const PrimitivePtr &prim,
     call_nodes = prim::GetNewInputsBySignatures(fg, prim->name(), prim, call_abs_list, call_nodes);
     // Process arg_handler.
     for (size_t i = 0; i < op_init_args.size(); i++) {
-      init_nodes[i] = GetNodeAfterArgHandler(init_nodes[i], op_init_args[i], fg);
+      auto abs_node = eval_func(init_nodes[i]);
+      init_nodes[i] = GetNodeAfterArgHandler(init_nodes[i], op_init_args[i], abs_node, fg);
     }
   }
   for (size_t i = 0; i < op_call_args.size(); i++) {
-    call_nodes[i] = GetNodeAfterArgHandler(call_nodes[i], op_call_args[i], fg);
+    auto abs_node = eval_func(call_nodes[i]);
+    call_nodes[i] = GetNodeAfterArgHandler(call_nodes[i], op_call_args[i], abs_node, fg);
   }
 
   // Check args type and do type conversion.
