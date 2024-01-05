@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,17 @@ void BytecodeInliner::Run() {
   }
 
   ResetGraphStat();
+
+  if (graph_->Config().GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
+    std::stringstream s;
+    s << "graph new break bci is " << new_break_bci_ << " after inline";
+    if (reconstructed_value_ != nullptr) {
+      const auto &instr = graph_->GetCFG()->instr_pool()[new_break_bci_];
+      s << ", node is reconstructed by inliner [" << reconstructed_value_->ToString() << "] -> [" << instr->ToString()
+        << "]";
+    }
+    GRAPH_JIT_LOG_F("%s", s.str().c_str());
+  }
 }
 
 void BytecodeInliner::ResetGraphStat() {
@@ -275,6 +286,11 @@ void BytecodeInliner::Reconstruct(ValueNode *node, int local_off) {
   }
   MS_EXCEPTION_IF_CHECK_FAIL(cfg_->instr_pool().empty(), "just call once if graph break at traced value");
   cfg_->NewInstrNode(*instr);
+  reconstructed_value_ = node;
+
+  /**
+   * TODO: if the node not match the instruction opcode, check it's sideeffect
+   */
 }
 
 void BytecodeInliner::FixInstr(Graph *graph, int local_off, std::vector<std::unique_ptr<Instr>> *list) {
@@ -321,6 +337,10 @@ void BytecodeInliner::FixInstr(Graph *graph, int local_off, std::vector<std::uni
   }
 }
 
+/**
+ * TODO:
+ * unify the implementations of cfg initialization
+ */
 void BytecodeInliner::InitCFG() {
   const auto &list = cfg_->instr_pool();
 

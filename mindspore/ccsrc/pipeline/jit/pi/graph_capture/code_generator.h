@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,17 +79,28 @@ class CodeGenerator {
 
   void MarkAlive(ValueNode *node) { nodes_alive_[node] = INT_MAX; }
   void MarkAlive();
-
-  void Init();
-  void Build();
-  void GenReturn();
   void NewInstr(int op, int arg = 0, int line = -1);
   void AddInstrs(std::vector<std::unique_ptr<Instr>> &&list);
   void EraseUnusedInstr();
 
+  // initialize local map of parameters
+  void Init();
+
+  // build bytecode by nodes
+  void Build();
+
+  // generate return operations of outputs
+  void GenReturn();
+
+  // build single node
   void BuildOper(ValueNode *node, int index);
+
+  // generator local operations of node
   void LoadValue(ValueNode *node);
+
+  // add node to locals map
   int AllocLocal(ValueNode *node, int index = INT_MAX);
+
   std::string PrintAlive() const;
 
   /**
@@ -167,22 +178,29 @@ class CodeBreakGenerator {
   const CFG *GetCFG() const;
 
  private:
+  // rebuild parameters of graph, identify parameters that graph only support as constant
   void BuildGraphParameters(const std::unordered_map<ValueNode *, int> &locals, GraphParameterBuilder *);
 
-  py::object MakeCapturedCode(std::vector<std::unique_ptr<Instr>> &&sort,  // prepare parameters
-                              int argc, int flag) const;
+  // rebuild captured nodes to bytecode, build parameters load operations
+  py::object MakeCapturedCode(std::vector<std::unique_ptr<Instr>> &&sort, int argc, int flag) const;
 
+  // make call operations of graph, build parameters load operations
   void CallCapturedCode(CodeGenerator *code_gen);
 
+  // make function of untracked bytecode, build restore frame operations of untracked bytecode
   py::object MakeUntrackedCode(int untracked_bci, int untracked_stack_effect) const;
 
   void ReconstructStack(CodeGenerator *code_gen, int untracked_bci, int untracked_stack_effect) const;
 
+  // make call operations of untracked bytecode
   void CallUntrackedCode(CodeGenerator *code_gen);
 
   void MakeReturn(CodeGenerator *code_gen) const;
 
+  // build operations of block, build restore frame operations of block
   void BreakAtBlock(CodeGenerator *code_gen, int untracked_bci, int untracked_stack_effect);
+
+  // make call operations of untracked bytecode for each branch
   void BreakAtIf(CodeGenerator *code_gen) const;
 
   std::vector<std::unique_ptr<Instr>> RestoreStack(const std::unordered_map<ValueNode *, int> &map) const;
@@ -221,7 +239,10 @@ class CodeBreakGenerator {
   int extra_local_;
 };
 
+// add a key and value to py::dict, check key conflict or rename the key
 void MapAdd(const py::dict &dict, const std::string &key, const py::object &value, std::string *rename = nullptr);
+
+// make new code by graph and captured information
 py::object MakeCodeFromCodeGen(Graph *graph, const GraphAnalyzer &analyzer, PyObject *globals);
 
 }  // namespace graph

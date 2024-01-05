@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,7 @@ void Liveness::Init() {
   alive_.resize(block_count, BitMap(cfg_->GetLocalCount()));
   alive_effect_.resize(block_count, BitMap(cfg_->GetLocalCount()));
 
+  // generate read write for each block
   for (const auto &block : cfg_->bb_pool()) {
     int id = block->id();
     for (int bci = block->begin_ci(); bci != block->end_ci(); ++bci) {
@@ -70,6 +71,7 @@ void Liveness::Init() {
     }
   }
 
+  // reverse traversal each block, generate alive effect of previous block, and propagate alive to previous
   std::vector<Block *> list;
   std::transform(bb.begin(), bb.end(), std::back_inserter(list), [](const auto &i) { return i.get(); });
   while (!list.empty()) {
@@ -79,6 +81,12 @@ void Liveness::Init() {
   }
 }
 
+/**
+ * liveness propagate for each block.
+ * merge alive to each previous block, it is previous block end alive effect.
+ * merge alive effect to alive, difference block write(kill), merge block read(generate),
+ * it is current block start alive.
+ */
 void Liveness::Propagate(Block *cur, std::vector<Block *> *list) {
   int index = cur->id();
   alive_[index].Or(alive_effect_[index]);
