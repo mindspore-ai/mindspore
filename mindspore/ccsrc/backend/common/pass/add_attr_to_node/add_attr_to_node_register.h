@@ -52,6 +52,7 @@ const AnfNodePtr SplitFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr StandardNormalFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr UniformRealDtypeGe(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr TensorShapeAddDtype(const FuncGraphPtr &, const AnfNodePtr &);
+const AnfNodePtr HShrinkModifyLambd(const FuncGraphPtr &, const AnfNodePtr &);
 
 using AddAttrToNodeImpl = const AnfNodePtr (*)(const FuncGraphPtr &, const AnfNodePtr &);
 
