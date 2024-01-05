@@ -1964,7 +1964,9 @@ void DfGraphConvertor::FillEmptyInputsWithNoInputOp(std::vector<Operator> *input
       continue;
     }
     auto adpt = FindAdapter(it, training_);
-    MS_EXCEPTION_IF_NULL(adpt);
+    if (adpt == nullptr) {
+      continue;
+    }
     if (adpt->getInputMap().empty() && adpt->getAttrInputMap().empty()) {
       auto cnode_op = op_cache_.find(it.get());
       if (cnode_op != op_cache_.end()) {
@@ -2085,9 +2087,7 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
   (void)std::transform(graph_const_inputs_.begin(), graph_const_inputs_.end(), std::back_inserter(inputs),
                        [](const OperatorPtr &x) { return *x; });
 
-  if (inputs.empty()) {
-    FillEmptyInputsWithNoInputOp(&inputs);
-  }
+  FillEmptyInputsWithNoInputOp(&inputs);
 
   MS_LOG(INFO) << "Set graph input num: " << inputs.size();
   (void)df_graph_->SetInputs(inputs);
