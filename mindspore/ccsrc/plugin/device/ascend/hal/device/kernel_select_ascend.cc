@@ -500,7 +500,7 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const CNode
     return result;
   }
   // Check must use the aclnn kernel mod.
-  if (kernel::IsEnabledAclnnDispatch(node)) {
+  if (enable_aclnn && kernel::IsEnabledAclnnDispatch(node)) {
     MS_LOG(EXCEPTION) << "Kernel " << AnfUtils::GetCNodeName(node)
                       << " is enabled dispatch in yaml, but not registered an aclnn kernelmod.";
   }
