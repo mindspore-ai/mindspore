@@ -59,8 +59,6 @@ static constexpr const char *kBuiltinNameOrd = "ord";                // convert 
 static constexpr const char *kBuiltinNameCallable = "callable";      // no side effects
 static constexpr const char *kBuiltinNameGetattr = "getattr";        // call __getattr__, or __getattribute__
 static constexpr const char *kBuiltinNameHasattr = "hasattr";        // call __getattr__, or __getattribute__
-static constexpr const char *kBuiltinNameDictGet = "get";            // call dict.get
-static constexpr const char *kBuiltinNameStrFormat = "format";       // call str.format
 // ------------------------------builtins functions--------------------------------
 
 // ------------------------------builtins method--------------------------------
@@ -751,20 +749,33 @@ static void GenCFunctionMap() {
   DECLARE_BUILTIN_CFUNCTION(kBuiltinNameGetattr);
   DECLARE_BUILTIN_CFUNCTION(kBuiltinNameHasattr);
 
-  // dict.get
-  py::object builtin = py::dict().attr(kBuiltinNameDictGet);
-  c_function_obj = PyCFunction_GET_FUNCTION(builtin.ptr());
-  kBuiltinFuncOrMethodWhileList.emplace(c_function_obj);
-
-  // str.format
-  builtin = py::str().attr(kBuiltinNameStrFormat);
-  c_function_obj = PyCFunction_GET_FUNCTION(builtin.ptr());
-  kBuiltinFuncOrMethodWhileList.emplace(c_function_obj);
-
   // math.log
-  builtin = Utils::GetModuleAttr("math", kBuiltinNameLog, false, false);
-  c_function_obj = PyCFunction_GET_FUNCTION(builtin.ptr());
+  py::object math_builtin = Utils::GetModuleAttr("math", kBuiltinNameLog, false, false);
+  c_function_obj = PyCFunction_GET_FUNCTION(math_builtin.ptr());
   kBuiltinFuncOrMethodWhileList.emplace(c_function_obj);
+
+  // python object cfunction without sideeffect
+  std::map<PyObject *, std::vector<std::string>> obj_cfunc_name = {
+    {py::dict().inc_ref().ptr(),
+     {"__contains__", "__getitem__", "__sizeof__", "get", "keys", "items", "values", "fromkeys", "copy"}},
+    {py::list().inc_ref().ptr(), {"__getitem__", "__sizeof__", "copy", "index", "count"}},
+    {py::tuple().inc_ref().ptr(), {"index", "count"}},
+    {py::set().inc_ref().ptr(), {"__contains__", "copy", "issubset", "__sizeof__"}},
+    {py::str().inc_ref().ptr(),
+     {"find",    "count",        "index",       "rfind",   "rindex",     "startswith", "endswith",  "isascii",
+      "islower", "isupper",      "istitle",     "isspace", "isdecimal",  "isdigit",    "isnumeric", "isalpha",
+      "isalnum", "isidentifier", "isprintable", "format",  "format_map", "__format__", "__sizeof__"}},
+  };
+  for (auto item : obj_cfunc_name) {
+    for (auto meth : item.second) {
+      py::object builtin = py::cast<py::object>(item.first).attr(meth.c_str());
+      c_function_obj = PyCFunction_GET_FUNCTION(builtin.ptr());
+      kBuiltinFuncOrMethodWhileList.emplace(c_function_obj);
+    }
+  }
+  for (auto item : obj_cfunc_name) {
+    Py_XDECREF(item.first);
+  }
 }
 
 bool CheckBuiltinFuncOrMethod(const py::object &f) {
