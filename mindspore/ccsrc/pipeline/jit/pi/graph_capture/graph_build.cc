@@ -918,6 +918,21 @@ static bool ReplaceMergeOp(ValueNode *container) {
       container->SetOparg(inputs.size());
       break;
     case LIST_EXTEND:
+      if (arg->GetOpcode() == LOAD_CONST) {
+        if (arg->GetVobj() != nullptr && arg->GetVobj()->GetType() == AObject::kTypeTuple) {
+          for (auto item : arg->GetVobj()->GetPyObject()) {
+            ValueNode *v;
+            v = container->GetGraph()->allocator.NewNode<ValueNode>(
+              AObject::Convert(item::ptr()), LOAD_CONST, -1, std::vector<ValueNode *>());
+            v->SetGraph(container->GetGraph());
+            inputs.push_back(v);
+          }
+          container->getInputs() = inputs;
+          container->SetOpcode(BUILD_LIST);
+          container->SetOparg(inputs.size());
+          break;
+        }
+      }
       if (arg->GetOpcode() != BUILD_LIST && arg->GetOpcode() != BUILD_TUPLE) {
         return false;
       }
