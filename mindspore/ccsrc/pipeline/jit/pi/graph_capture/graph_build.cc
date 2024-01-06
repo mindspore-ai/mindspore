@@ -922,8 +922,8 @@ static bool ReplaceMergeOp(ValueNode *container) {
         if (arg->GetVobj() != nullptr && arg->GetVobj()->GetType() == AObject::kTypeTuple) {
           for (auto item : arg->GetVobj()->GetPyObject()) {
             ValueNode *v;
-            v = container->GetGraph()->allocator.NewNode<ValueNode>(
-              AObject::Convert(item::ptr()), LOAD_CONST, -1, std::vector<ValueNode *>());
+            v = container->GetGraph()->allocator().NewNode<ValueNode>(AObject::Convert(item.ptr()), LOAD_CONST, -1,
+                                                                      std::vector<ValueNode *>());
             v->SetGraph(container->GetGraph());
             inputs.push_back(v);
           }
