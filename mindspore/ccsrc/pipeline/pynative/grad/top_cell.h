@@ -103,6 +103,8 @@ class TopCellInfo {
   inline void set_has_call_graph(bool has_call_graph) { has_call_graph_ = has_call_graph; }
   inline const bool has_control_flow() const { return has_control_flow_; }
   inline void set_has_control_flow(bool has_control_flow) { has_control_flow_ = has_control_flow; }
+  inline const bool jit_out_has_dict() const { return jit_out_has_dict_; }
+  inline void set_jit_out_has_dict(bool jit_out_has_dict) { jit_out_has_dict_ = jit_out_has_dict; }
   inline const bool is_unknown_shape() const { return is_unknown_shape_; }
   inline void set_is_unknown_shape(bool is_unknown_shape) { is_unknown_shape_ = is_unknown_shape; }
   inline void set_fg(const FuncGraphPtr &fg) { fg_ = fg; }
@@ -182,6 +184,7 @@ class TopCellInfo {
   bool is_need_save_dynamic_detect_nodes_{false};
   bool has_call_graph_{false};
   bool has_control_flow_{false};
+  bool jit_out_has_dict_{false};
   bool is_unknown_shape_{false};
   size_t grad_order_{0};
   size_t op_index_{0};

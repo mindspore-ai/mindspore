@@ -37,6 +37,7 @@ namespace mindspore {
 namespace pynative {
 namespace py = pybind11;
 const size_t kDefaultContainerSize = 5000;
+enum class SensType { kNormal = 0, kTuple = 1, kDict = 2 };
 
 struct BaseOpRunInfo {
   uint64_t py_prim_id_{0};
@@ -161,7 +162,7 @@ struct InputArgsInfo {
   size_t obj_order;
 
   bool has_custom_bprop{false};
-  bool has_sens{false};
+  SensType sens_type{SensType::kNormal};
   PrimitivePyPtr custom_bprop_prim{nullptr};
   ValuePtr out_value{nullptr};
   std::string obj_id;

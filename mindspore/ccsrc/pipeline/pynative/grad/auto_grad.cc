@@ -69,6 +69,8 @@ static constexpr int kInputNum2 = 1;
 static constexpr int kInputNum3 = 2;
 mindspore::HashMap<std::string, FuncGraphPtr> pass_grad_graph_;
 mindspore::HashMap<std::string, pipeline::ResourcePtr> jit_call_graph_compile_cache_;
+AnfNodePtr BuildSpecialNode(const KernelGraphPtr &tape, const ValuePtr &value, const abstract::AbstractBasePtr &abs,
+                            const SpecialType &type);
 
 inline bool IsPrimNeedGrad(const PrimitivePtr &prim) {
   MS_EXCEPTION_IF_NULL(prim);
@@ -144,6 +146,33 @@ AnfNodePtr BuildSparseTensorNode(const KernelGraphPtr &tape, const ValuePtr &spa
   MS_LOG(EXCEPTION) << "Get invalid sparse tensor";
 }
 
+AnfNodePtr CreateMakeDictNode(const KernelGraphPtr &tape, const ValueDictionaryPtr &v_dict,
+                              const abstract::AbstractDictionaryPtr &abs_dict, const SpecialType &type) {
+  MS_EXCEPTION_IF_NULL(tape);
+  MS_EXCEPTION_IF_NULL(v_dict);
+  MS_EXCEPTION_IF_NULL(abs_dict);
+  AnfNodePtrList key_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+  AnfNodePtrList value_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+  abstract::AbstractBasePtrList local_key_abs_inputs;
+  abstract::AbstractBasePtrList local_value_abs_inputs;
+  for (size_t i = 0; i < v_dict->size(); ++i) {
+    (void)key_inputs.emplace_back(
+      PyNativeAlgo::Common::CreateValueNodeByValue(v_dict->value()[i].first, abs_dict->elements()[i].first));
+    (void)local_key_abs_inputs.emplace_back(abs_dict->elements()[i].first);
+    AnfNodePtr special_like_value =
+      BuildSpecialNode(tape, v_dict->value()[i].second, abs_dict->elements()[i].second, type);
+    (void)value_inputs.emplace_back(special_like_value);
+    (void)local_value_abs_inputs.emplace_back(abs_dict->elements()[i].second);
+  }
+  auto local_key_node = tape->NewCNode(key_inputs);
+  local_key_node->set_abstract(std::make_shared<abstract::AbstractTuple>(local_key_abs_inputs));
+  auto local_value_node = tape->NewCNode(value_inputs);
+  local_value_node->set_abstract(std::make_shared<abstract::AbstractTuple>(local_value_abs_inputs));
+  auto dict_node = tape->NewCNode({NewValueNode(prim::kPrimMakeDict), local_key_node, local_value_node});
+  dict_node->set_abstract(abs_dict);
+  return dict_node;
+}
+
 AnfNodePtr BuildSpecialNode(const KernelGraphPtr &tape, const ValuePtr &value, const abstract::AbstractBasePtr &abs,
                             const SpecialType &type) {
   MS_EXCEPTION_IF_NULL(value);
@@ -185,6 +214,16 @@ AnfNodePtr BuildSpecialNode(const KernelGraphPtr &tape, const ValuePtr &value, c
     MS_EXCEPTION_IF_NULL(coo_tensor);
     auto data = coo_tensor->GetValues();
     return BuildSpecialNode(tape, data, nullptr, type);
+  } else if (value->isa<ValueDictionary>()) {
+    auto v_dict = value->cast<ValueDictionaryPtr>();
+    abstract::AbstractDictionaryPtr abs_dict;
+    if (abs == nullptr) {
+      abs_dict =
+        PyNativeAlgo::Common::SetAbstractValueToAnyValue(value->ToAbstract())->cast<abstract::AbstractDictionaryPtr>();
+    } else {
+      abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
+    }
+    return CreateMakeDictNode(tape, v_dict, abs_dict, type);
   } else {
     MS_LOG(INFO) << "For value " << value->ToString() << ", the type is not tensor or scalar";
     return BuildSpecialNode(tape, GetFakeZeroTensor(), nullptr, type);
@@ -210,6 +249,8 @@ bool IsZerosLikeNode(const AnfNodePtr &node) {
   } else if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) || IsPrimitiveCNode(cnode, prim::kPrimMakeList)) {
     return std::all_of(cnode->inputs().begin() + 1, cnode->inputs().end(),
                        [](const auto &node) { return IsZerosLikeNode(node) == true; });
+  } else if (IsPrimitiveCNode(cnode, prim::kPrimMakeDict)) {
+    return IsZerosLikeNode(cnode->input(kIndex2));
   } else {
     return false;
   }
@@ -460,6 +501,11 @@ void SetGradMetaData(const ValuePtr &value, const VariableAdjointPtr &variable, 
     for (const auto &val : value_sequence->value()) {
       SetGradMetaData(val, variable);
     }
+  } else if (value->isa<ValueDictionary>()) {
+    auto value_dict = value->cast<ValueDictionaryPtr>();
+    for (const auto &val : value_dict->value()) {
+      SetGradMetaData(val.second, variable);
+    }
   }
 }
 
@@ -551,8 +597,8 @@ AnfNodePtr VariableAdjoint::RealDout() {
 
 std::string VariableAdjoint::ToString() const {
   std::ostringstream buf;
-  buf << "Variable id: " << PyNativeAlgo::Common::GetIdByValue(out_value_) << " is_need_grad: " << is_need_grad_
-      << ", is_need_propagate: " << is_need_propagate_ << " is_leaf: " << is_leaf_;
+  buf << "Variable id: " << PyNativeAlgo::Common::GetIdByValue(out_value_) << ", is_need_grad: " << is_need_grad_
+      << ", is_need_propagate: " << is_need_propagate_ << ", is_leaf: " << is_leaf_;
   for (size_t i = 0; i < fn()->next_edges().size(); ++i) {
     auto last_variable = fn()->next_edges()[i].first;
     auto din = fn()->next_edges()[i].second;
@@ -863,6 +909,15 @@ FuncGraphPtr AutoGradCellImpl::GradFuncGraph(const GradParamPtr &grad_param) {
     // Just have a return node
     auto ad_graph_dout = ad_param()->tape_->add_parameter();
     ad_graph_dout->set_abstract(grad_param->fg->output()->abstract());
+    ad_graph_dout->debug_info()->set_name("sens");
+    ad_param()->sens_value_ = grad_param->op_grad_info->out_value;
+    (void)BuildForwardLastNode();
+    // Update dout
+    MS_EXCEPTION_IF_NULL(ad_param()->last_variable_);
+    if (ad_param()->last_variable_->is_need_grad()) {
+      ad_param()->last_variable_->fn()->UpdateAccumulativeDout(ad_graph_dout);
+    }
+    (void)BackPropagate();
   }
 
   AnfNodePtrList outputs{NewValueNode(prim::kPrimMakeTuple)};
@@ -1512,9 +1567,34 @@ void AutoGradCellImpl::UpdateNextEdge(const FunctionNodePtr &fn, const AnfNodePt
   } else if (input_arg->isa<tensor::CSRTensor>()) {
     auto input_tensor = input_arg->cast<tensor::CSRTensorPtr>()->GetIndices();
     UpdateNextEdge(fn, din, input_tensor, PyNativeAlgo::Common::SetAbstractValueToAnyValue(input_tensor->ToAbstract()));
+  } else if (input_arg->isa<ValueDictionary>()) {
+    UpdateNextEdgeForDict(fn, din, input_arg, abs);
   } else {
     MS_LOG(DEBUG) << "It is not tensor, not need derivation " << input_arg->ToString();
     return;
+  }
+}
+
+void AutoGradCellImpl::UpdateNextEdgeForDict(const FunctionNodePtr &fn, const AnfNodePtr &din,
+                                             const ValuePtr &input_arg, const AbstractBasePtr &abs) {
+  auto value_dict = input_arg->cast<ValueDictionaryPtr>()->value();
+  const auto &abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
+  MS_EXCEPTION_IF_NULL(abs_dict);
+  if (value_dict.size() != abs_dict->size()) {
+    MS_LOG(EXCEPTION) << "Get value dict size " << value_dict.size() << " not equal to abstract size "
+                      << abs_dict->size();
+  }
+  for (size_t i = 0; i < value_dict.size(); ++i) {
+    auto sub_value = value_dict[i];
+    auto key_item = PyNativeAlgo::Common::CreateValueNodeByValue(sub_value.first, abs_dict->elements()[i].first);
+    CNodePtr new_din = ad_param()->tape_->FuncGraph::NewCNode({NewValueNode(prim::kPrimDictGetItem), din, key_item});
+    new_din->set_abstract(PyNativeAlgo::Common::SetAbstractValueToAnyValue(abs_dict->elements()[i].second));
+    if (din == fn->fake_dout()) {
+      // The new_din's index input is fn->fake_dout()
+      LazyAddUser(fn->fake_dout(), new_din, 1);
+    }
+    // Add next edge to fn
+    UpdateNextEdge(fn, new_din, sub_value.second, abs_dict->elements()[i].second);
   }
 }
 
@@ -1598,6 +1678,11 @@ void AutoGradCellImpl::UpdateSensParameter(const ValuePtr &value) {
     for (const auto &v : value_seq) {
       UpdateSensParameter(v);
     }
+  } else if (value->isa<ValueDictionary>()) {
+    auto dic_v = value->cast<ValueDictionaryPtr>();
+    for (const auto &v : dic_v->value()) {
+      UpdateSensParameter(v.second);
+    }
   }
 }
 
@@ -1660,6 +1745,7 @@ AnfNodePtr AutoGradCellImpl::TraceShape(const FunctionNodePtr &fn, const ValuePt
                                         const abstract::AbstractBasePtr &out_abs, const TensorPtr &input_tensor,
                                         const AnfNodePtr &din) {
   MS_EXCEPTION_IF_NULL(out_value);
+  MS_EXCEPTION_IF_NULL(out_abs);
   MS_EXCEPTION_IF_NULL(input_tensor);
   MS_EXCEPTION_IF_NULL(din);
 
@@ -1677,7 +1763,9 @@ AnfNodePtr AutoGradCellImpl::TraceShape(const FunctionNodePtr &fn, const ValuePt
     (void)inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
     auto value_seq = out_value->cast<ValueSequencePtr>();
     auto abs_seq = out_abs->cast<abstract::AbstractSequencePtr>();
-    MS_EXCEPTION_IF_NULL(abs_seq);
+    if (abs_seq == nullptr) {
+      MS_LOG(EXCEPTION) << "Get output abstract " << out_abs->ToString() << ", not abstract sequence";
+    }
     int index = -1;
     for (size_t i = 0; i < value_seq->size(); ++i) {
       // Find the value's din, if value equal to sub_value, means value be used, is it will get din; Otherwise value's
@@ -1696,9 +1784,50 @@ AnfNodePtr AutoGradCellImpl::TraceShape(const FunctionNodePtr &fn, const ValuePt
       LazyAddUser(fn->fake_dout(), new_din, index);
     }
     return new_din;
+  } else if (out_value->isa<ValueDictionary>()) {
+    TraceShapeForDict(fn, out_value, out_abs, input_tensor, din);
   }
   MS_LOG(DEBUG) << "Get non tensor input " << out_value->ToString();
   return BuildSpecialNode(ad_param()->tape_, out_value, out_abs, SpecialType::kZerosLikeType);
+}
+
+AnfNodePtr AutoGradCellImpl::TraceShapeForDict(const FunctionNodePtr &fn, const ValuePtr &out_value,
+                                               const abstract::AbstractBasePtr &out_abs,
+                                               const tensor::TensorPtr &input_tensor, const AnfNodePtr &din) {
+  // The corresponding output of node is ValueDictionary, but used one of it
+  AnfNodePtrList key_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+  AnfNodePtrList value_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+  abstract::AbstractBasePtrList local_key_abs_inputs;
+  abstract::AbstractBasePtrList local_value_abs_inputs;
+  auto value_dict = out_value->cast<ValueDictionaryPtr>();
+  auto abs_dict = out_abs->cast<abstract::AbstractDictionaryPtr>();
+  MS_EXCEPTION_IF_NULL(abs_dict);
+  int index = -1;
+  for (size_t i = 0; i < value_dict->size(); ++i) {
+    // Find the value's din, if value equal to sub_value, means value be used, is it will get din; Otherwise value's
+    // din is zero, which set by second branch condition above
+    (void)key_inputs.emplace_back(
+      PyNativeAlgo::Common::CreateValueNodeByValue(value_dict->value()[i].first, abs_dict->elements()[i].first));
+    (void)local_key_abs_inputs.emplace_back(abs_dict->elements()[i].first);
+    auto new_din = TraceShape(fn, value_dict->value()[i].second, abs_dict->elements()[i].second, input_tensor, din);
+    (void)value_inputs.emplace_back(new_din);
+    (void)local_value_abs_inputs.emplace_back(abs_dict->elements()[i].second);
+
+    // if exist din == fake_dout, we record it in user vector
+    if (din == fn->fake_dout() && new_din == din) {
+      index = static_cast<int>(value_inputs.size()) - 1;
+    }
+  }
+  auto local_key_node = ad_param()->tape_->NewCNode(key_inputs);
+  local_key_node->set_abstract(std::make_shared<abstract::AbstractTuple>(local_key_abs_inputs));
+  auto local_value_node = ad_param()->tape_->NewCNode(value_inputs);
+  local_value_node->set_abstract(std::make_shared<abstract::AbstractTuple>(local_value_abs_inputs));
+  auto new_din = ad_param()->tape_->NewCNode({NewValueNode(prim::kPrimMakeDict), local_key_node, local_value_node});
+  new_din->set_abstract(abs_dict);
+  if (index != -1) {
+    LazyAddUser(fn->fake_dout(), new_din, index);
+  }
+  return new_din;
 }
 
 void AutoGradCellImpl::BuildBPropCutCNode(const CNodePtr &cnode, const PrimitivePtr &prim,

@@ -38,6 +38,7 @@
 #include "frontend/expander/bprop/bprop.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "frontend/expander/pack/packfunc_grad.h"
+#include "frontend/optimizer/fallback_rewriter.h"
 namespace mindspore {
 namespace pynative {
 namespace {
@@ -103,7 +104,7 @@ AnfNodePtr GetNonTensorInput(const ValuePtr &v, const std::string &obj_id) {
   return nullptr;
 }
 
-ValuePtr ConvertOutputValueToTensor(const ValuePtr &v) {
+ValuePtr ConvertOutputValueToTensor(const ValuePtr &v, bool dict_convert_to_tuple) {
   MS_EXCEPTION_IF_NULL(v);
   if (PyNativeAlgo::Common::IsTensor(v, true)) {
     return v;
@@ -119,7 +120,7 @@ ValuePtr ConvertOutputValueToTensor(const ValuePtr &v) {
       return v;
     }
     MS_LOG(DEBUG) << "Output is value sequence, but have tensor and other type mixed. Its value is " << v->ToString();
-    return PyNativeAlgo::Common::FilterSensValues(v);
+    return PyNativeAlgo::Common::FilterSensValues(v, dict_convert_to_tuple);
   } else if (v->isa<FloatImm>()) {
     double input_value = v->cast<FP32ImmPtr>()->value();
     return std::make_shared<tensor::Tensor>(input_value, kFloat32);
@@ -128,7 +129,7 @@ ValuePtr ConvertOutputValueToTensor(const ValuePtr &v) {
   } else if (v->isa<IntegerImm>()) {
     int64_t input = v->cast<Int64ImmPtr>()->value();
     return std::make_shared<tensor::Tensor>(input, kInt64);
-  } else if (v->isa<ValueDictionary>()) {
+  } else if (v->isa<ValueDictionary>() && dict_convert_to_tuple) {
     return PyNativeAlgo::DataConvert::ConvertValueDictToValueTuple(v);
   } else {
     MS_LOG(DEBUG) << "Output is " << v->ToString() << ", abstract "
@@ -152,7 +153,7 @@ FuncGraphPtr BpropGraphFinalOpt(const FuncGraphPtr &bprop_graph, bool has_contro
 }
 
 void SetGraphInputArgs(const std::vector<ValuePtr> &input_vec, const pipeline::ResourcePtr &res,
-                       size_t graph_param_size, bool is_tuple_sens, VectorRef *const arg_list) {
+                       size_t graph_param_size, SensType sens_type, VectorRef *const arg_list) {
   MS_EXCEPTION_IF_NULL(arg_list);
   MS_EXCEPTION_IF_NULL(res);
   auto graph = res->func_graph();
@@ -162,10 +163,29 @@ void SetGraphInputArgs(const std::vector<ValuePtr> &input_vec, const pipeline::R
     MS_LOG(EXCEPTION) << "Get initial bprop graph param size " << graph_param_size << " less than current param size "
                       << graph_params.size();
   }
-  auto input_arg_list = input_vec;
-  if (is_tuple_sens) {
-    input_arg_list.clear();
+  std::vector<ValuePtr> input_arg_list;
+  if (sens_type == SensType::kNormal) {
+    input_arg_list = input_vec;
+  } else if (sens_type == SensType::kTuple) {
     PyNativeAlgo::DataConvert::FlattenArgs(input_vec, &input_arg_list, true);
+  } else {
+    input_arg_list.assign(input_vec.begin(), input_vec.end() - kIndex1);
+    const auto &v_sens = input_vec.back();
+    MS_EXCEPTION_IF_NULL(v_sens);
+    if (!v_sens->isa<ValueDictionary>()) {
+      MS_LOG(EXCEPTION) << "Get sens not dict " << v_sens->ToString();
+    }
+    const auto &v_dict = v_sens->cast<ValueDictionaryPtr>();
+    ValuePtrList key_inputs;
+    ValuePtrList value_inputs;
+    for (const auto &elem : v_dict->value()) {
+      (void)key_inputs.emplace_back(elem.first);
+      (void)value_inputs.emplace_back(elem.second);
+    }
+    auto key = std::make_shared<ValueTuple>(key_inputs);
+    auto value = std::make_shared<ValueTuple>(value_inputs);
+    (void)input_arg_list.emplace_back(key);
+    (void)input_arg_list.emplace_back(value);
   }
   (void)std::transform(input_arg_list.begin(), input_arg_list.end(), std::back_inserter(*arg_list),
                        [](const ValuePtr &v) { return v; });
@@ -198,7 +218,8 @@ void RestoreBpropGraphParameter(const FuncGraphPtr &graph, size_t graph_param_si
   }
 }
 
-void SetSensValue(const prim::GradOperationPtr &grad, const InputArgsInfoPtr &input_args_info, const py::args &args) {
+void SetSensValue(const prim::GradOperationPtr &grad, const InputArgsInfoPtr &input_args_info, const py::args &args,
+                  bool dict_convert_to_tuple) {
   MS_EXCEPTION_IF_NULL(grad);
   if (!grad->sens_param()) {
     return;
@@ -206,7 +227,7 @@ void SetSensValue(const prim::GradOperationPtr &grad, const InputArgsInfoPtr &in
   MS_LOG(DEBUG) << "Get sens param";
   size_t forward_args_size = args.size() - 1;
   auto sens_v = PyNativeAlgo::DataConvert::PyObjToValue(args[forward_args_size]);
-  const auto &sens_tensor = ConvertOutputValueToTensor(sens_v);
+  const auto &sens_tensor = ConvertOutputValueToTensor(sens_v, dict_convert_to_tuple);
   if (sens_tensor == nullptr) {
     MS_LOG(EXCEPTION) << "sens convert tensor is nullptr";
   }
@@ -216,7 +237,11 @@ void SetSensValue(const prim::GradOperationPtr &grad, const InputArgsInfoPtr &in
     input_args_info->input_arg_value_vec.pop_back();
   }
   (void)input_args_info->input_arg_value_vec.emplace_back(sens_tensor);
-  input_args_info->has_sens = true;
+  if (sens_tensor->isa<ValueSequence>()) {
+    input_args_info->sens_type = SensType::kTuple;
+  } else if (!dict_convert_to_tuple) {
+    input_args_info->sens_type = SensType::kDict;
+  }
 }
 
 std::string GetWeightsObjIdsByWeights(const py::object &weights) {
@@ -720,7 +745,7 @@ void GradExecutor::EndGraphImpl(const InputArgsInfoPtr &input_args_info) {
   MS_EXCEPTION_IF_NULL(input_args_info);
   bool is_top_cell_end = (input_args_info->cell_id == top_cell()->cell_id());
   if (is_top_cell_end) {
-    auto out_tensor = ConvertOutputValueToTensor(input_args_info->out_value);
+    auto out_tensor = ConvertOutputValueToTensor(input_args_info->out_value, !top_cell()->jit_out_has_dict());
     std::vector<std::string> output_tensors_id;
     PyNativeAlgo::DataConvert::ConvertValueTensorId(out_tensor, &output_tensors_id);
     top_cell()->set_outputs_ids(std::move(output_tensors_id));
@@ -937,7 +962,7 @@ TopCellInfoPtr GradExecutor::GetAlreadyRunTopCell(const std::string &already_run
 void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
                                 const py::object &grad_position, const py::args &args) {
   GetPreRunTopCell(grad, obj, args);
-  SetSensValue(grad, top_input_args_info_, args);
+  SetSensValue(grad, top_input_args_info_, args, !top_cell()->jit_out_has_dict());
   MS_EXCEPTION_IF_NULL(top_input_args_info_);
   MS_LOG(DEBUG) << "GradNetInner start " << args.size() << ", cell_id " << top_input_args_info_->cell_id
                 << ", input args info ptr " << top_input_args_info_.get();
@@ -1040,8 +1065,14 @@ void GradExecutor::GetGradGraph(const autograd::GradAttr &grad_attr, const std::
   if (top_cell()->has_control_flow()) {
     (void)opt::EnvironConversion(resource);
   }
-  if (grad_attr.has_sens && top_input_args_info_->input_arg_value_vec.back()->isa<ValueSequence>()) {
+  if (top_input_args_info_->sens_type == SensType::kDict) {
+    PyNativeAlgo::Common::ProcessDictParam(bprop_graph, top_input_args_info_->input_size);
+  } else if (top_input_args_info_->sens_type == SensType::kTuple) {
     PyNativeAlgo::Common::ProcessTupleParam(bprop_graph, top_input_args_info_->input_size);
+  }
+  if (top_cell()->jit_out_has_dict()) {
+    MS_LOG(DEBUG) << "Jit out is dict, need convert make dict to pyexecute";
+    (void)mindspore::opt::RewriterAfterOptA(resource->func_graph(), resource);
   }
   top_cell()->SaveForwardOutputTensorInfoInBpropGraph(resource->func_graph());
   PyNativeAlgo::Common::DumpGraphIR("launch_bprop_graph.ir", bprop_graph);
@@ -1290,10 +1321,8 @@ py::object GradExecutor::RunGradGraph() {
   MS_EXCEPTION_IF_NULL(resource);
   MS_LOG(DEBUG) << "Run cell id " << top_input_args_info_->cell_id << ", resource ptr " << resource.get();
   VectorRef arg_list;
-  SetGraphInputArgs(
-    top_input_args_info_->input_arg_value_vec, resource, top_cell()->initial_graph_param_size(),
-    top_input_args_info_->has_sens && top_input_args_info_->input_arg_value_vec.back()->isa<ValueSequence>(),
-    &arg_list);
+  SetGraphInputArgs(top_input_args_info_->input_arg_value_vec, resource, top_cell()->initial_graph_param_size(),
+                    top_input_args_info_->sens_type, &arg_list);
   MS_LOG(DEBUG) << "Convert args size " << top_input_args_info_->input_arg_value_vec.size() << ", graph param size "
                 << arg_list.size();
   compile::VmEvalFuncPtr run = resource->GetResult(pipeline::kOutput).cast<compile::VmEvalFuncPtr>();
