@@ -187,7 +187,7 @@ def test_range_invalid_max_output_length():
         _ = P.Range('5')
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_range_invalid_input():

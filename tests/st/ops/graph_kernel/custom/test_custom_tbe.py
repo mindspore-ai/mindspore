@@ -177,7 +177,7 @@ def multi_input_multi_output_with_attr():
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -191,7 +191,7 @@ def test_net1_graph_mode():
     multi_input_multi_output_with_attr()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -238,7 +238,7 @@ def grad_case(bprop_func):
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -253,7 +253,7 @@ def test_net2_graph_mode():
     grad_case(bprop)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -325,7 +325,7 @@ def test_net2_bprop1_graph_mode():
     grad_case(bprop1())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

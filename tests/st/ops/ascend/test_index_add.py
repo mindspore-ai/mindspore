@@ -46,7 +46,7 @@ def index_add_forward(nptype):
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -62,7 +62,7 @@ def test_index_add_float32():
     index_add_forward(np.float32)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -78,7 +78,7 @@ def test_index_add_float16():
     index_add_forward(np.float16)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -110,7 +110,7 @@ def test_index_add_int8():
     index_add_forward(np.int8)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -166,7 +166,7 @@ def index_add_grad_with_type(nptype):
     np.testing.assert_array_equal(ygrad.asnumpy(), expect_ygrad)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -182,7 +182,7 @@ def test_index_add_grad_float32():
     index_add_grad_with_type(np.float32)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -198,7 +198,7 @@ def test_index_add_grad_float16():
     index_add_grad_with_type(np.float16)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -214,7 +214,7 @@ def test_index_add_grad_int32():
     index_add_grad_with_type(np.int32)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -246,7 +246,7 @@ def test_index_add_grad_uint8():
     index_add_grad_with_type(np.uint8)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -270,7 +270,7 @@ def test_index_add_dynamic_y():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -294,7 +294,7 @@ def test_index_add_dynamic_indices():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

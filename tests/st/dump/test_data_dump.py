@@ -123,7 +123,7 @@ def run_e2e_dump():
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -133,7 +133,7 @@ def test_e2e_dump():
     run_e2e_dump()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -250,7 +250,7 @@ def test_async_dump_net_multi_layer_mode1():
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -387,7 +387,7 @@ def run_not_overflow_dump():
         assert not os.path.exists(exe_graph_path)
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -402,7 +402,7 @@ def test_ascend_overflow_dump():
     run_overflow_dump()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -536,7 +536,7 @@ def test_stat_dump_nulls():
             assert output['Avg Value'] == 'null'
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -551,7 +551,7 @@ def test_ascend_statistic_dump():
     run_saved_data_dump_test('test_async_dump', 'statistic')
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -584,7 +584,7 @@ def test_ascend_tensor_dump():
     run_saved_data_dump_test('test_async_dump', 'tensor')
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -599,7 +599,7 @@ def test_ascend_full_dump():
     run_saved_data_dump_test('test_async_dump', 'full')
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -704,7 +704,7 @@ def test_constant_gpu_e2e_dump():
     run_constant_e2e_dump()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -719,7 +719,7 @@ def test_constant_ascend_e2e_dump():
     run_constant_e2e_dump()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -740,7 +740,7 @@ def test_save_cce_graph():
     del os.environ["MS_COMPILER_OP_LEVEL"]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

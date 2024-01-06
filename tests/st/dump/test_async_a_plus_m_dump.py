@@ -70,7 +70,7 @@ def run_async_dump(test_name):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -84,7 +84,7 @@ def test_async_dump_npy():
     run_async_dump("test_async_dump_npy")
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -135,7 +135,7 @@ def run_overflow_dump(test_name):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

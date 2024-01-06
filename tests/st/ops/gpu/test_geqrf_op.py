@@ -96,7 +96,7 @@ def test_geqrf_rank3_float_fp():
     assert np.allclose(expect_y, y.asnumpy(), rtol=RTOL, atol=ATOL)
     assert np.allclose(expect_tau, tau.asnumpy(), rtol=RTOL, atol=ATOL)
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

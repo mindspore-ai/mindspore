@@ -402,7 +402,7 @@ def pynative_hook_child_cell_record_grad():
         assert False
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -419,7 +419,7 @@ def test_pynative_hook_diff_hook_gpu():
     pynative_hook_diff_hook()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -436,7 +436,7 @@ def test_pynative_hook_outermost_cell_not_change_grad_gpu():
     pynative_hook_outermost_cell_not_change_grad()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -453,7 +453,7 @@ def test_pynative_hook_all_cell_record_grad_gpu():
     pynative_hook_all_cell_record_grad()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -470,7 +470,7 @@ def test_pynative_hook_mul_change_input_grad_gpu():
     pynative_hook_mul_change_input_grad()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -487,7 +487,7 @@ def test_pynative_hook_mul2_change_input_grad_gpu():
     pynative_hook_mul2_change_input_grad()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -504,7 +504,7 @@ def test_pynative_hook_outermost_cell_change_grad_gpu():
     pynative_hook_outermost_cell_change_grad()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -521,7 +521,7 @@ def test_pynative_hook_outermost_cell_record_grad_gpu():
     pynative_hook_outermost_cell_record_grad()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

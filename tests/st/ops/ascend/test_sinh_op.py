@@ -19,7 +19,7 @@ from mindspore import context
 from mindspore.common import dtype as mstype
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

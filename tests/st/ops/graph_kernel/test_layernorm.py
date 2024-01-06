@@ -147,7 +147,7 @@ def test_layernorm_grad_gpu():
     test_layernorm_grad([4, 32, 32], np.float32, -1, -1)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

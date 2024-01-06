@@ -164,7 +164,7 @@ def flatten_net_dynamic_float32():
     flatten_net_dynamic(np.float32, mindspore.float32)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -188,7 +188,7 @@ def test_ops_flatten(mode):
     assert net(x, start_dim=2, end_dim=-2).shape == (1, 2, 3, 4)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -227,7 +227,7 @@ def test_tensor_flatten(mode):
     assert out2.shape == (1, 2, 12)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -249,7 +249,7 @@ def test_ops_flatten_order(mode):
     assert np.all(out_f.asnumpy() == [1, 3, 2, 4])
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -276,7 +276,7 @@ def test_ops_flatten_single_element(mode):
         FlattenFuncNet()(y, start_dim=2)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -293,7 +293,7 @@ def test_nn_flatten_single_element():
         nn.Flatten()(Tensor([1]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

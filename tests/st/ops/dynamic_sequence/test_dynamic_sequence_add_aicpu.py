@@ -48,7 +48,7 @@ class NetAddOffset(nn.Cell):
         return self.seq_add_offset(x, y)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -84,7 +84,7 @@ def test_seq_add_offset_aicpu():
     assert res == expect
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -106,7 +106,7 @@ def test_seq_add_grad_aicpu():
     print("grad out = ", grad_func(input_x, input_y, dout))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

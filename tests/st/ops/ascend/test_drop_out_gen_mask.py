@@ -42,7 +42,7 @@ x = np.ones([2, 4, 2, 2]).astype(np.int32)
 y = np.array([1.0]).astype(np.float32)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -73,7 +73,7 @@ def train(net, data):
     return res_list
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -144,7 +144,7 @@ px = np.ones([2, 4, 2, 2]).astype(np.int32)
 py = np.array([0.5]).astype(np.float32)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

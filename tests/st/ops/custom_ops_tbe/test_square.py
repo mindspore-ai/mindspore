@@ -37,7 +37,7 @@ class Net(nn.Cell):
         return self.square(data)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -48,7 +48,7 @@ def test_net():
     expect = np.array([1.0, 16.0, 81.0]).astype(np.float32)
     assert (output.asnumpy() == expect).all()
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard

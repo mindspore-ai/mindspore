@@ -16,7 +16,7 @@ import pytest
 import tests.st.ge.ge_test_utils as utils
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -55,7 +55,7 @@ def test_convert_load():
     utils.run_testcase('ge_convert', 'test_convert_load')
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -68,7 +68,7 @@ def test_convert_make_tuple():
     utils.run_testcase('ge_convert', 'test_convert_make_tuple')
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

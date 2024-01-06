@@ -58,7 +58,7 @@ def train_allreduce_8p(q, device_id, device_num):
     output = net(Tensor(input_x, mstype.float32))
     q.put(np.allclose(output.asnumpy(), except_output))
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
@@ -88,7 +88,7 @@ def test_pynative_hccl_8p():
 
     print("End training...")
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single

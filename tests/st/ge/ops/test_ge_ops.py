@@ -29,7 +29,7 @@ def test_broadcast_gradient_args():
     utils.run_testcase('broadcast_gradient_args')
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -68,7 +68,7 @@ def test_conv2d_transpose():
     utils.run_testcase('conv2d_transpose')
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

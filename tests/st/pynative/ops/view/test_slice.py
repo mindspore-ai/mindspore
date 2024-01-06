@@ -23,7 +23,7 @@ from mindspore.ops.operations import _inner_ops
 ms.set_context(mode=ms.PYNATIVE_MODE)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -184,7 +184,7 @@ def test_expand_dim_single_op():
     assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

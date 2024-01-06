@@ -41,7 +41,7 @@ class NetLeftShift(nn.Cell):
         return self.leftshift(x, y)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -65,7 +65,7 @@ def test_rightshift_2d(mode):
     assert np.allclose(z_np, z_ms.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -91,7 +91,7 @@ def test_rightshift_dyn(mode):
     assert out.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -115,7 +115,7 @@ def test_leftshift_2d(mode):
     assert np.allclose(z_np, z_ms.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

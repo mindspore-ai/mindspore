@@ -48,7 +48,7 @@ def run_case(run_mode):
         assert np.allclose(expect, output)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

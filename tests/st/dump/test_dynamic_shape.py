@@ -82,7 +82,7 @@ def run_async_dump(test_name):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -129,7 +129,7 @@ def run_e2e_dump():
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -144,7 +144,7 @@ def test_e2e_dump():
     run_e2e_dump()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -178,7 +178,7 @@ class ReluReduceMeanDenseRelu(Cell):
         return x_
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -279,7 +279,7 @@ def run_e2e_dump_execution_graph():
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

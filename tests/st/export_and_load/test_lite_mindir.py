@@ -29,7 +29,7 @@ from tests.models.official.cv.mobilenetv2.src.mobilenetV2 import MobileNetV2Back
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 ckpt_path = '/home/workspace/mindspore_dataset/checkpoint/mobilenetv2/mobilenetv2_gpu.ckpt'
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_export_mobilenetv2_gpu_mindir():

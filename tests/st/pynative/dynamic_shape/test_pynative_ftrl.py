@@ -34,7 +34,7 @@ class NetWithSparseGatherV2(nn.Cell):
     def construct(self, indices, label):
         return self.gather(self.weight1, indices, self.axis) + self.weight2
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

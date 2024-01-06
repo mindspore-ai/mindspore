@@ -36,7 +36,7 @@ class CauchyMean(nn.Cell):
 
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_probability_cauchy_mean_loc_scale_rand_2_ndarray():
