@@ -215,5 +215,8 @@ void Data2Vector(std::vector<float> *dst, const void *src) {
     dst->at(i) = static_cast<float>(src_ptr[i]);
   }
 }
+
+void ParseValueFromShapeTensor(TensorRTContext *ctx, const TensorInfo &shape_value_tensor,
+                               std::vector<float> *out_shape);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_UTILS_H_

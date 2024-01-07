@@ -177,7 +177,7 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
   }
   sub_inputs_map_ = {};
   if (!JudgeAllOpsCanInfer(func_graph)) {
-    MS_LOG(WARNING) << "exist op cannot support infer shape.";
+    MS_LOG(INFO) << "exist op cannot support infer shape.";
     return false;
   }
   manager_ = Manage(func_graph, true);
