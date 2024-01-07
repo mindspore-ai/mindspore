@@ -82,8 +82,8 @@ class InferHostAndDevice : public CppInfer {
 };
 
 FallbackIRBuilder::FallbackIRBuilder(const std::string &name, const FuncGraphPtr &fg, const SelectKernelFunc &func)
-    : Emitter(fg, std::make_shared<InferHostAndDevice>(func, &success_),
-              std::make_shared<Scope>(std::string("Expand/_") + name)),
+    : IrEmitter(fg, std::make_shared<InferHostAndDevice>(func, &success_),
+                std::make_shared<Scope>(std::string("Expand/_") + name)),
       name_(name) {}
 AnfNodePtr FallbackIRBuilder::Run(const CNodePtr &cnode, const IRBuilderHandle &handle) {
   inputs_.resize(cnode->size() - 1);

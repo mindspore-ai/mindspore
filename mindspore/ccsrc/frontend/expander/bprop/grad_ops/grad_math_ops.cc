@@ -24,7 +24,7 @@
 #include "ops/op_utils.h"
 
 namespace mindspore::expander::bprop {
-NodePtrList AddnGradFunc(BpropIRBuilder *ib) {
+NodePtrList AddnGradFunc(BpropBuilder *ib) {
   auto dout = ib->GetInput(kIndex2);
   auto x_abs = ib->GetInput(kIndex0)->abstract();
   auto x_len = x_abs->cast<abstract::AbstractSequencePtr>()->elements().size();
@@ -35,7 +35,7 @@ NodePtrList AddnGradFunc(BpropIRBuilder *ib) {
   return {ib->MakeTuple(result)};
 }
 
-NodePtrList IgammaBpropExpanderDyn(BpropIRBuilder *ib) {
+NodePtrList IgammaBpropExpanderDyn(BpropBuilder *ib) {
   auto a = ib->GetInput(kIndex0);
   auto x = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -53,7 +53,7 @@ NodePtrList IgammaBpropExpanderDyn(BpropIRBuilder *ib) {
   return {r1, r2};
 }
 
-NodePtrList IgammaBpropExpander(BpropIRBuilder *ib) {
+NodePtrList IgammaBpropExpander(BpropBuilder *ib) {
   auto a = ib->GetInput(kIndex0);
   auto x = ib->GetInput(kIndex1);
   auto sa = ib->GetShape(a);
@@ -84,7 +84,7 @@ NodePtrList IgammaBpropExpander(BpropIRBuilder *ib) {
   return {r1, r2};
 }
 
-NodePtrList MinimumMaximumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dout,
+NodePtrList MinimumMaximumGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dout,
                                bool is_minimum) {
   auto half_ratio = ib->Emit("FillV2", {ib->Shape(dout), ib->Tensor(2, ib->GetDtype(dout))});
   auto half_dout = ib->Div(dout, half_ratio);
@@ -118,7 +118,7 @@ ShapeVector MatrixDeterminantInferFunc(const ShapeArray &inputs, const HashSet<s
   return {IsDynamicRank(new_shape) ? -1 : SizeToLong(new_shape.size()) + 2};
 }
 
-NodePtrList BpropAddcCommon(BpropIRBuilder *ib, const std::string &op_name,
+NodePtrList BpropAddcCommon(BpropBuilder *ib, const std::string &op_name,
                             const std::unordered_set<TypeId> &type_list) {
   auto input_data = ib->GetInput(kIndex0);
   auto x1 = ib->GetInput(kIndex1);
@@ -223,7 +223,7 @@ class ReduceStdShapeCalc : public ShapeCalcFunctor {
 };
 REG_FUNCTOR("ShapeCalc_ReduceStd", ReduceStdShapeCalc);
 
-NodePtrList FminFmaxGrad(BpropIRBuilder *ib, bool if_fmin) {
+NodePtrList FminFmaxGrad(BpropBuilder *ib, bool if_fmin) {
   auto x1 = ib->GetInput(kIndex0);
   auto x2 = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -1794,15 +1794,13 @@ REG_BPROP_BUILDER("Lerp").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   dout = ib->Cast(dout, kFloat32);
   auto dout_type = ib->GetDtype(dout);
   NodePtr sub_w, mul_w;
-  if (weight->isa<ValueNode>()) {
-    auto val_weight = weight->get<ValueNodePtr>();
-    MS_EXCEPTION_IF_NULL(val_weight);
-    auto v = val_weight->value();
+  if (weight->node_type() == NodeType::kConstant) {
+    auto v = weight->BuildValue();
     MS_EXCEPTION_IF_NULL(v);
     auto val = GetValue<float>(v);
     sub_w = ib->Tensor(1.0 - val, dout_type);
     mul_w = ib->Tensor(val, dout_type);
-  } else if (weight->isa<Parameter>()) {
+  } else if (weight->node_type() == NodeType::kParameter) {
     auto v = weight->BuildValue();
     MS_EXCEPTION_IF_NULL(v);
     if (v->isa<Scalar>()) {
@@ -1823,7 +1821,7 @@ REG_BPROP_BUILDER("Lerp").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto tmp = BinopGradCommon(ib, start, end, dstart, dend);
   dstart = tmp[0];
   dend = tmp[1];
-  if (weight->isa<ValueNode>()) {
+  if (weight->node_type() == NodeType::kConstant) {
     dweight = ib->OutZeros(weight);
   } else {
     auto tmp2 = BinopGradCommon(ib, start, weight, dstart, dweight);
@@ -1838,7 +1836,7 @@ REG_BPROP_BUILDER("Lerp").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
 });
 
 REG_BPROP_BUILDER("TridiagonalMatMul").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
-  auto LeftShift = [](BpropIRBuilder *ib, NodePtr x) {
+  auto LeftShift = [](BpropBuilder *ib, NodePtr x) {
     auto x_shape = ib->GetShape(x);
     std::vector<std::vector<int64_t>> paddings;
     auto rank = x_shape.size();
@@ -1859,7 +1857,7 @@ REG_BPROP_BUILDER("TridiagonalMatMul").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib
                                       ib->Value<ShapeVector>(strides))},
                     {{"paddings", MakeValue(paddings)}});
   };
-  auto RightShift = [](BpropIRBuilder *ib, NodePtr x) {
+  auto RightShift = [](BpropBuilder *ib, NodePtr x) {
     auto x_shape = ib->GetShape(x);
     std::vector<std::vector<int64_t>> paddings;
     auto rank = x_shape.size();
@@ -1880,7 +1878,7 @@ REG_BPROP_BUILDER("TridiagonalMatMul").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib
                                       ib->Value<ShapeVector>(strides))},
                     {{"paddings", MakeValue(paddings)}});
   };
-  auto MatrixTranspose = [](BpropIRBuilder *ib, const NodePtr &x) {
+  auto MatrixTranspose = [](BpropBuilder *ib, const NodePtr &x) {
     auto x_shape = ib->GetShape(x);
     auto rank = x_shape.size();
     ShapeVector perm;

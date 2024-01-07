@@ -23,7 +23,7 @@
 
 namespace mindspore::expander::bprop {
 namespace {
-std::tuple<NodePtr, NodePtr> PromoteTensor(BpropIRBuilder *ib, const NodePtr &t1, const NodePtr &t2) {
+std::tuple<NodePtr, NodePtr> PromoteTensor(BpropBuilder *ib, const NodePtr &t1, const NodePtr &t2) {
   MS_EXCEPTION_IF_NULL(ib);
   MS_EXCEPTION_IF_NULL(t1);
   MS_EXCEPTION_IF_NULL(t2);
@@ -45,14 +45,12 @@ std::tuple<NodePtr, NodePtr> PromoteTensor(BpropIRBuilder *ib, const NodePtr &t1
   return std::make_tuple(t1_new, t2_new);
 }
 
-NodePtr CsrMulDiv(BpropIRBuilder *ib, const NodePtr &indptr, const NodePtr &indices, const NodePtr &values,
+NodePtr CsrMulDiv(BpropBuilder *ib, const NodePtr &indptr, const NodePtr &indices, const NodePtr &values,
                   const NodePtr &shape, const NodePtr &y, const std::string &op_name) {
   MS_EXCEPTION_IF_NULL(y);
   NodePtr new_y = y;
-  if (y->isa<ValueNode>()) {
-    auto value_node = y->get<ValueNodePtr>();
-    MS_EXCEPTION_IF_NULL(value_node);
-    auto v = value_node->value();
+  if (y->node_type() == NodeType::kConstant) {
+    auto v = y->BuildValue();
     MS_EXCEPTION_IF_NULL(v);
     // isinstance(y, (int, float, bool))
     if (v->isa<Int64Imm>()) {
@@ -112,7 +110,7 @@ ShapeVector InferOutShape(const ShapeVector &sh1, const ShapeVector &sh2) {
   return res;
 }
 
-NodePtrList CommonSparseSegmentBprop(BpropIRBuilder *ib, const std::string &grad_op, bool with_segments) {
+NodePtrList CommonSparseSegmentBprop(BpropBuilder *ib, const std::string &grad_op, bool with_segments) {
   auto x = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
   auto segment_ids = ib->GetInput(kIndex2);
@@ -131,7 +129,7 @@ NodePtrList CommonSparseSegmentBprop(BpropIRBuilder *ib, const std::string &grad
   return result;
 }
 
-NodePtrList CommonSparseSegmentBpropDefault(BpropIRBuilder *ib, bool with_segments) {
+NodePtrList CommonSparseSegmentBpropDefault(BpropBuilder *ib, bool with_segments) {
   auto x = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
   auto segment_ids = ib->GetInput(kIndex2);
@@ -150,7 +148,7 @@ NodePtrList CommonSparseSegmentBpropDefault(BpropIRBuilder *ib, bool with_segmen
   return result;
 }
 
-NodePtrList BpropSparseDenseCwiseCommon(BpropIRBuilder *ib, const std::string &op_name) {
+NodePtrList BpropSparseDenseCwiseCommon(BpropBuilder *ib, const std::string &op_name) {
   auto x1_indices = ib->GetInput(kIndex0);
   auto x1_values = ib->GetInput(kIndex1);
   auto x1_shape = ib->GetInput(kIndex2);
@@ -179,7 +177,7 @@ NodePtrList BpropSparseDenseCwiseCommon(BpropIRBuilder *ib, const std::string &o
   return d_all;
 }
 
-NodePtr BpropCSRMulDivCommon(BpropIRBuilder *ib, const NodePtr &indices, const NodePtr &indptr, const NodePtr &dense,
+NodePtr BpropCSRMulDivCommon(BpropBuilder *ib, const NodePtr &indices, const NodePtr &indptr, const NodePtr &dense,
                              const NodePtr &dense_grad_value) {
   auto indices_shape = ib->GetShape(indices);
   auto row = ib->CSR2COO(indptr, ib->Value(indices_shape.at(0)));

@@ -36,10 +36,7 @@ REG_BPROP_BUILDER("AllReduce").SetBody(BODYFUNC(ib) {
                       {"index", ib->GetAttr("index")},
                       {"fusion", ib->GetAttr("fusion")},
                       {"no_eliminate", ib->GetAttr("no_eliminate")}});
-  auto primitive = GetCNodePrimitive(dx->get());
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto ins_name = primitive->instance_name();
-  primitive->set_instance_name("grad" + ins_name);
+  dx->set_debug_info("grad" + dx->debug_info());
   if (op == "prod") {
     return {ib->RealDiv(dx, x)};
   } else if (op == "sum") {
@@ -60,8 +57,7 @@ REG_BPROP_BUILDER("AllGather").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
                       {"fusion", ib->GetAttr("fusion")},
                       {"no_eliminate", MakeValue(true)}});
   auto ins_name = ib->GetInstanceName();
-  auto primitive = GetCNodePrimitive(dx->get());
-  primitive->set_instance_name("grad" + ins_name);
+  dx->set_debug_info("grad" + ins_name);
   auto rank_size = GetValue<int64_t>(ib->GetAttr("rank_size"));
   if (rank_size == 0) {
     MS_LOG(EXCEPTION) << "The 'rank_size' can not be zero, but got" << rank_size;
@@ -91,8 +87,7 @@ REG_BPROP_BUILDER("_MirrorOperator").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(
 
   auto dx = ib->Emit(kAllReduceOpName, {dout}, attrs);
   auto ins_name = ib->GetInstanceName();
-  auto primitive = GetCNodePrimitive(dx->get());
-  primitive->set_instance_name("grad_mirror" + ins_name);
+  dx->set_debug_info("grad_mirror" + ins_name);
   if (mean_flag) {
     dx = ib->Mul(dx, ib->Tensor(1.0 / dev_num, ib->GetDtype(dx)));
   }

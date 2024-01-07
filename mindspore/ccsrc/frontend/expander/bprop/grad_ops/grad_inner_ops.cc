@@ -23,7 +23,7 @@
 
 namespace mindspore::expander::bprop {
 
-NodePtr GetMatrixDiagPartAssit(BpropIRBuilder *ib, const ShapeVector &x_shape, TypePtr x_dtype) {
+NodePtr GetMatrixDiagPartAssit(BpropBuilder *ib, const ShapeVector &x_shape, TypePtr x_dtype) {
   auto base_eye = ib->Emit(
     "Eye", {ib->Value(x_shape[x_shape.size() - i2]), ib->Value(x_shape[x_shape.size() - 1]), ib->EmitValue(x_dtype)});
   base_eye = ib->Reshape(base_eye, {-1});
@@ -33,7 +33,7 @@ NodePtr GetMatrixDiagPartAssit(BpropIRBuilder *ib, const ShapeVector &x_shape, T
   return assist;
 }
 
-NodePtr GetMatrixDiagAssit(BpropIRBuilder *ib, const ShapeVector &x_shape, TypePtr x_dtype) {
+NodePtr GetMatrixDiagAssit(BpropBuilder *ib, const ShapeVector &x_shape, TypePtr x_dtype) {
   auto base_eye = ib->Emit(
     "Eye", {ib->Value(x_shape[x_shape.size() - 1]), ib->Value(x_shape[x_shape.size() - 1]), ib->EmitValue(x_dtype)});
   base_eye = ib->Reshape(base_eye, {-1});

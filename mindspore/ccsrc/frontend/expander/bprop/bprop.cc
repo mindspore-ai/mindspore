@@ -73,11 +73,11 @@ class ShapeCalcException : public std::runtime_error {
   using runtime_error::runtime_error;
 };
 
-class PynativeIRBuilder : public BpropIRBuilder {
+class PynativeIRBuilder : public IrBuilder {
  public:
   PynativeIRBuilder(const PrimitivePtr &prim, const FuncGraphPtr &fg, const ExpanderInferPtr &infer, UserMap *users,
                     const AnfNodePtr &dout)
-      : BpropIRBuilder(prim->name(), fg, infer), users_(users), dout_(dout), prim_(prim) {
+      : IrBuilder(prim->name(), fg, infer), users_(users), dout_(dout), prim_(prim) {
     MS_EXCEPTION_IF_NULL(users);
   }
   ~PynativeIRBuilder() = default;
@@ -100,8 +100,8 @@ class PynativeIRBuilder : public BpropIRBuilder {
     for (size_t i = 0; i < output_nodes.size(); i++) {
       auto &node = output_nodes[i];
       // A Value node gradient will loss the trace context in pynative, so emit a node. A example is Eye.
-      if (node->isa<ValueNode>() || IsPrimitiveCNode(node->get(), prim::kPrimZerosLike)) {
-        if (node->isa<ValueNode>()) {
+      if (node->node_type() == NodeType::kConstant || IsPrimitiveCNode(node->get(), prim::kPrimZerosLike)) {
+        if (node->node_type() == NodeType::kConstant) {
           auto abs = node->abstract();
           MS_EXCEPTION_IF_NULL(abs);
           if (abs->isa<abstract::AbstractScalar>()) {
@@ -118,15 +118,17 @@ class PynativeIRBuilder : public BpropIRBuilder {
 
  protected:
   NodePtr EmitGetItemValue(const NodePtrList &inputs) {
-    auto real_input = inputs[0]->get<ValueNodePtr>();
-    if (real_input != nullptr) {
-      auto real_input_value = real_input->value()->cast<ValueSequeuePtr>();
-      if (real_input_value != nullptr) {
-        auto item_idx = GetValue<int64_t>(inputs[1]->get<ValueNodePtr>()->value());
-        auto valuenode = NewValueNode((*real_input_value)[item_idx]);
-        valuenode->set_abstract(valuenode->value()->ToAbstract());
-        return NewNode(valuenode);
-      }
+    if (inputs[0]->node_type() != NodeType::kConstant) {
+      return nullptr;
+    }
+    auto real_input = inputs[0]->get()->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(real_input);
+    auto real_input_value = real_input->value()->cast<ValueSequeuePtr>();
+    if (real_input_value != nullptr) {
+      auto item_idx = GetValue<int64_t>(inputs[1]->get()->cast<ValueNodePtr>()->value());
+      auto valuenode = NewValueNode((*real_input_value)[item_idx]);
+      valuenode->set_abstract(valuenode->value()->ToAbstract());
+      return NewTraceNode(valuenode);
     }
     return nullptr;
   }
@@ -155,7 +157,7 @@ class PynativeIRBuilder : public BpropIRBuilder {
       cnode->set_scope(scope_);
     }
 
-    auto node = NewNode(cnode->cast<AnfNodePtr>());
+    auto node = NewTraceNode(cnode->cast<AnfNodePtr>());
     if (need_infer_) {
       auto value_depend = abstract::GetValueDependArgIndices(cnode);
       if (!value_depend.empty()) {
@@ -287,7 +289,7 @@ class PynativeIRBuilderWithCache : public PynativeIRBuilder {
       for (auto &no : inputs) {
         auto it = node_map.find(no);
         if (it == node_map.end()) {
-          auto value = no->get<ValueNodePtr>()->value();
+          auto value = no->BuildValue();
           node_map[node] = graph->nodes.size();
           (void)input_indexs.emplace_back(graph->nodes.size());
           (void)graph->nodes.emplace_back(std::make_shared<SimpleNode>(value, value->ToAbstract()));
@@ -295,7 +297,8 @@ class PynativeIRBuilderWithCache : public PynativeIRBuilder {
           (void)input_indexs.emplace_back(it->second);
         }
       }
-      PrimitivePtr primitive = node->isa<ValueNode>() ? prim::kPrimTupleGetItem : GetCNodePrimitive(node->get());
+      PrimitivePtr primitive =
+        node->node_type() == NodeType::kConstant ? prim::kPrimTupleGetItem : GetCNodePrimitive(node->get());
       node_map[node] = graph->nodes.size();
       (void)graph->nodes.emplace_back(std::make_shared<SimpleNode>(primitive, node->abstract(), input_indexs));
     }
@@ -398,7 +401,7 @@ void BpropExpander::PostProcess(const CNodePtr &cnode) const {
                       << output_nodes_.size() << " vs " << (input_nodes_.size() - num_out_and_dout);
   }
   for (size_t i = 0; i < output_nodes_.size(); i++) {
-    (void)outputs_->emplace_back(output_nodes_[i]->get<CNodePtr>());
+    (void)outputs_->emplace_back(output_nodes_[i]->get()->cast<CNodePtr>());
   }
 }
 
@@ -501,10 +504,10 @@ class LazyInfer : public CppInfer {
   }
 };
 
-class GraphModeBuilder : public BpropIRBuilder {
+class GraphModeBuilder : public IrBuilder {
  public:
   GraphModeBuilder(const std::string &name, const FuncGraphPtr &func_graph, const ExpanderInferPtr &infer)
-      : BpropIRBuilder(name, func_graph, infer) {}
+      : IrBuilder(name, func_graph, infer) {}
 
   NodePtrList Build(const NodePtrList &inputs, const mindspore::HashMap<std::string, ValuePtr> &attrs,
                     const BpropHandle &handle, const std::string &instance_name) {
@@ -545,7 +548,7 @@ class GraphModeBuilder : public BpropIRBuilder {
     if (scope_ != nullptr) {
       cnode->set_scope(scope_);
     }
-    auto node = NewNode(cnode->cast<AnfNodePtr>());
+    auto node = NewTraceNode(cnode->cast<AnfNodePtr>());
     infer_->Infer(node);
     return node;
   }
@@ -572,7 +575,7 @@ bool ExpandBpropInGraphMode(const BpropHandle *handle, const PrimitivePtr &prim,
   NodePtrList inputs;
   inputs.reserve(parameters.size());
   (void)std::transform(parameters.cbegin(), parameters.cend(), std::back_inserter(inputs),
-                       [&ir_builder](const AnfNodePtr &no) { return std::make_shared<Node>(no, &ir_builder); });
+                       [&ir_builder](const AnfNodePtr &no) { return std::make_shared<IrNode>(no, &ir_builder); });
   auto outputs = ir_builder.Build(inputs, prim->attrs(), *handle, prim->instance_name());
   if (outputs.empty()) {
     MS_LOG(DEBUG) << "The output nodes of bprop function [" << name << "] is empty.";

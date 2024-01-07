@@ -99,7 +99,7 @@ DEF_PURE_SHAPE_CALC(g_gather_drop_negative)
     auto is_pos_rank = is_pos.size();
     return {SizeToLong(std::max(gather_rank, is_pos_rank))};
   });
-NodePtrList GatherDropNegatives(BpropIRBuilder *ib, const NodePtr &params, const NodePtr &ids,
+NodePtrList GatherDropNegatives(BpropBuilder *ib, const NodePtr &params, const NodePtr &ids,
                                 const NodePtr &zero_clipped_indices_param = nullptr,
                                 const NodePtr &is_positive_param = nullptr) {
   NodePtr zero_clipped_indices = zero_clipped_indices_param;
@@ -132,7 +132,7 @@ NodePtrList GatherDropNegatives(BpropIRBuilder *ib, const NodePtr &params, const
   return {ib->Select(is_positive, gathered, zero_slice), zero_clipped_indices, is_positive};
 }
 
-NodePtrList UnsortedSegmentMinOrMaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &segment_ids,
+NodePtrList UnsortedSegmentMinOrMaxGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &segment_ids,
                                         const NodePtr &num_segments, const NodePtr &out, const NodePtr &dout) {
   auto temp_outs = GatherDropNegatives(ib, out, segment_ids, nullptr, nullptr);
   constexpr size_t out_size = 3;
@@ -152,7 +152,7 @@ NodePtrList UnsortedSegmentMinOrMaxGrad(BpropIRBuilder *ib, const NodePtr &x, co
   return {ib->Select(is_selected, gathered_grads, zeros), ib->OutZeros(segment_ids), ib->OutZeros(num_segments)};
 }
 
-NodePtrList SegmentMinOrMaxGrad(BpropIRBuilder *ib) {
+NodePtrList SegmentMinOrMaxGrad(BpropBuilder *ib) {
   auto input_x = ib->GetInput(kIndex0);
   auto segment_ids = ib->GetInput(kIndex1);
   auto output = ib->GetInput(kIndex2);
@@ -178,7 +178,7 @@ NodePtrList SegmentMinOrMaxGrad(BpropIRBuilder *ib) {
   return {dx, ib->OutZeros(segment_ids)};
 }
 
-NodePtrList TensorScatterPossibleReplacement(BpropIRBuilder *ib) {
+NodePtrList TensorScatterPossibleReplacement(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
   auto updates = ib->GetInput(kIndex2);
@@ -271,12 +271,12 @@ DEF_PURE_SHAPE_CALC(g_calc_num_segment)
     return {{x_shp[LongToSize(axis_v)]}};
   })
   .SetInfer([](const ShapeArray &, const HashSet<size_t> &) -> std::vector<int64_t> { return {1}; });
-NodePtr CalcNumSegment(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis) {
+NodePtr CalcNumSegment(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis) {
   MS_EXCEPTION_IF_NULL(ib);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(axis);
   auto num_segment = ib->ShapeCalc(g_calc_num_segment, {x, axis}, {1})[0];
-  if (num_segment->isa<ValueNode>()) {
+  if (num_segment->node_type() == NodeType::kConstant) {
     auto num_segment_value = GetIntList(num_segment);
     MS_EXCEPTION_IF_CHECK_FAIL(num_segment_value.size() == 1,
                                "The num_segment should be a int for gradient of Gather.");
@@ -422,7 +422,7 @@ class ResizeNearestNeighborV2ShapeCalc : public ShapeCalcFunctor {
 };
 REG_FUNCTOR("ShapeCalc_ResizeNearestNeighborV2", ResizeNearestNeighborV2ShapeCalc);
 
-NodePtr CalBatchGather(BpropIRBuilder *ib, const NodePtr &values, const NodePtr &indices, const NodePtr &x,
+NodePtr CalBatchGather(BpropBuilder *ib, const NodePtr &values, const NodePtr &indices, const NodePtr &x,
                        int64_t axis, int64_t batch_dims) {
   auto reshape_shape =
     ib->ShapeCalc(g_gather_reshape, {values, indices, x, ib->Tensor(axis), ib->Tensor(batch_dims)}, {3, 4});
@@ -448,7 +448,6 @@ NodePtr CalBatchGather(BpropIRBuilder *ib, const NodePtr &values, const NodePtr 
 
 bool IsMutable(const NodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(node->get());
   ValuePtr value_ptr = node->BuildValue();
   if (value_ptr != nullptr &&
       (value_ptr->isa<ValueSequence>() || value_ptr->isa<Scalar>() || value_ptr->isa<tensor::Tensor>())) {
@@ -459,7 +458,7 @@ bool IsMutable(const NodePtr &node) {
 
 DEF_PURE_SHAPE_CALC(g_regenerate_output).SetCalc(RegenerateOutputShapeFunc).SetInfer(RegenerateOutputInferFunc);
 DEF_PURE_SHAPE_CALC(g_perms).SetCalc(PermsShapeFunc).SetInfer(PermsInferFunc);
-NodePtrList BinopGather(BpropIRBuilder *ib) {
+NodePtrList BinopGather(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
   auto ori_indices = indices;  // indices may be changed latter.
@@ -543,7 +542,7 @@ ShapeArray ConcatOffsetCal(const ShapeArray &input_shapes, size_t axis_s) {
   return res;
 }
 
-NodePtrList ConcatBpropStatic(BpropIRBuilder *ib, const NodePtr &dout, const ShapeArray &input_shapes, int64_t axis) {
+NodePtrList ConcatBpropStatic(BpropBuilder *ib, const NodePtr &dout, const ShapeArray &input_shapes, int64_t axis) {
   auto rank = input_shapes[0].size();
   auto axis_s = LongToSize(NormalizeAxis(axis, rank));
 
@@ -577,7 +576,7 @@ NodePtrList ConcatBpropStatic(BpropIRBuilder *ib, const NodePtr &dout, const Sha
   return {ib->MakeTuple(res)};
 }
 
-NodePtrList StackBpropFunc(BpropIRBuilder *ib) {
+NodePtrList StackBpropFunc(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto num = ib->GetAttr("num");
@@ -597,7 +596,7 @@ NodePtrList StackBpropFunc(BpropIRBuilder *ib) {
   return {ret};
 }
 
-NodePtrList BinopGatherDGradCommon(BpropIRBuilder *ib, const std::string &op_name) {
+NodePtrList BinopGatherDGradCommon(BpropBuilder *ib, const std::string &op_name) {
   auto dim = LongToSize(GetValue<int64_t>(ib->GetAttr("dim")));
   auto index = ib->GetInput(kIndex0);
   auto x = ib->GetInput(kIndex1);
@@ -762,7 +761,7 @@ REG_BPROP_BUILDER("Sort").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto res1 = ib->ShapeCalc(std::make_shared<SortShapeCalc1>(axis), {input_x});
   auto k = res1[0];
   if (k->abstract()->isa<abstract::AbstractSequence>()) {
-    if (k->isa<ValueNode>()) {
+    if (k->node_type() == NodeType::kConstant) {
       auto value = GetIntList(k);
       k = ib->Tensor(value.at(0), kInt64);
     } else {
@@ -1073,7 +1072,7 @@ REG_BPROP_BUILDER("Concat").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
 
   auto axis_node = ib->GetInput(kIndex1);
 
-  auto x_abs = x->get()->abstract();
+  auto x_abs = x->abstract();
   MS_EXCEPTION_IF_NULL(x_abs);
   auto base_shape = x_abs->GetShape();
   MS_EXCEPTION_IF_NULL(base_shape);
@@ -1726,7 +1725,7 @@ REG_BPROP_BUILDER("MaskedFill").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
   }
 
   dinput = ib->Cast(bout[0], ib->GetDtype(input_data));
-  if (value->isa<ValueNode>()) {
+  if (value->node_type() == NodeType::kConstant) {
     dvalue = ib->OutZeros(value);
   } else {
     dvalue = ib->Cast(dvalue, ib->GetDtype(value));
@@ -1777,7 +1776,7 @@ REG_BPROP_BUILDER("ResizeNearestNeighborV2").SetUnusedInputs({i1, i4}).SetBody(B
   auto half_pixel_centers = ib->GetInput(kIndex3);
   auto dout = ib->GetInput(kIndex5);
   auto grad_in_size = ib->ShapeCalc(std::make_shared<ResizeNearestNeighborV2ShapeCalc>(true), {x})[0];
-  if (grad_in_size->isa<ValueNode>()) {
+  if (grad_in_size->node_type() == NodeType::kConstant) {
     grad_in_size = ib->Value<ShapeVector>(GetIntList(grad_in_size));
   }
   auto dx = ib->Emit("ResizeNearestNeighborV2Grad", {dout, grad_in_size, align_corners, half_pixel_centers});

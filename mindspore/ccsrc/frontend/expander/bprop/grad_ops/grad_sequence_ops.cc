@@ -18,7 +18,7 @@
 #include "include/common/utils/utils.h"
 
 namespace mindspore::expander::bprop {
-NodePtrList SequenceToTensorGrad(BpropIRBuilder *ib) {
+NodePtrList SequenceToTensorGrad(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex3);
   dout = ib->Cast(dout, ib->GetDtype(x));
@@ -26,14 +26,14 @@ NodePtrList SequenceToTensorGrad(BpropIRBuilder *ib) {
   return {dx, ib->OutZeros(ib->GetInput(kIndex1))};
 }
 
-NodePtrList TensorToSequenceGrad(BpropIRBuilder *ib) {
+NodePtrList TensorToSequenceGrad(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->SequenceToTensor(dout, ib->GetDtype(x));
   return {dx};
 }
 
-NodePtrList SequenceSetItemGrad(BpropIRBuilder *ib) {
+NodePtrList SequenceSetItemGrad(BpropBuilder *ib) {
   auto idx = ib->GetInput(kIndex1);
   auto value = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
@@ -42,7 +42,7 @@ NodePtrList SequenceSetItemGrad(BpropIRBuilder *ib) {
   return {dx, ib->OutZeros(idx), dvalue};
 }
 
-NodePtrList SequenceMaxMinGrad(BpropIRBuilder *ib) {
+NodePtrList SequenceMaxMinGrad(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);

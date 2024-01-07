@@ -29,7 +29,7 @@ namespace {
 const int kConstNumberTwo = 2;
 }  // namespace
 
-NodePtrList Dropout2DBpropExpander(BpropIRBuilder *ib) {
+NodePtrList Dropout2DBpropExpander(BpropBuilder *ib) {
   auto keep_prob = GetValue<float>(ib->GetAttr("keep_prob"));
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
@@ -45,7 +45,7 @@ NodePtrList Dropout2DBpropExpander(BpropIRBuilder *ib) {
   return {dy};
 }
 
-NodePtrList GeLUBpropExpander(BpropIRBuilder *ib) {
+NodePtrList GeLUBpropExpander(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
@@ -53,14 +53,14 @@ NodePtrList GeLUBpropExpander(BpropIRBuilder *ib) {
   return {dx};
 }
 
-NodePtrList FastGeLUBpropExpander(BpropIRBuilder *ib) {
+NodePtrList FastGeLUBpropExpander(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("FastGeLUGrad", {dout, x});
   return {dx};
 }
 
-NodePtrList Conv2DTransposeBpropExpander(BpropIRBuilder *ib) {
+NodePtrList Conv2DTransposeBpropExpander(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
   auto f_sizes = ib->GetInput(kIndex2);

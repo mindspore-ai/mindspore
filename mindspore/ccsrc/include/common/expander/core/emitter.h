@@ -43,19 +43,17 @@ using ShapeValidFunc = std::function<bool(size_t, const ShapeVector &)>;
 
 class COMMON_EXPORT Emitter {
  public:
-  Emitter(const FuncGraphPtr &func_graph, const ExpanderInferPtr &infer, const ScopePtr &scope = nullptr)
-      : func_graph_(func_graph), infer_(infer), scope_(scope) {
-    MS_EXCEPTION_IF_NULL(func_graph);
-    MS_EXCEPTION_IF_NULL(infer);
-  }
+  Emitter(const ExpanderInferPtr &infer, const ScopePtr &scope = nullptr) : infer_(infer), scope_(scope) {}
   virtual ~Emitter() = default;
 
   /// \brief Emit a primitive CNode
   NodePtr Emit(const std::string &op_name, const NodePtrList &inputs, const DAttr &attrs = {});
 
   /// \brief Emit a ValueNode
-  NodePtr EmitValue(const ValuePtr &value);
+  virtual NodePtr EmitValue(const ValuePtr &value);
 
+  NodePtr NewTraceNode(const AnfNodePtr &anfnode) { return std::make_shared<IrNode>(anfnode, this); }
+  NodePtr NewExecNode(const ValuePtr &value) { return std::make_shared<FuncNode>(value, this); }
   NodePtr MakeTuple(const NodePtrList &inputs) { return EmitOp(prim::kPrimMakeTuple, inputs); }
   NodePtr MakeList(const NodePtrList &inputs) { return EmitOp(prim::kPrimMakeList, inputs); }
   NodePtr TupleGetItem(const NodePtr &input, size_t i) {
@@ -215,10 +213,8 @@ class COMMON_EXPORT Emitter {
   template <typename T>
   NodePtr Fill(const T &value, const NodePtr &shape, TypeId data_type) {
     MS_EXCEPTION_IF_NULL(shape);
-    if (shape->isa<ValueNode>()) {
-      auto value_node = shape->get<ValueNodePtr>();
-      MS_EXCEPTION_IF_NULL(value_node);
-      auto v = value_node->value();
+    if (shape->node_type() == NodeType::kConstant) {
+      auto v = shape->BuildValue();
       MS_EXCEPTION_IF_NULL(v);
       return Fill(value, GetValue<ShapeVector>(v), data_type);
     }
@@ -289,7 +285,7 @@ class COMMON_EXPORT Emitter {
   /// \note The overloaded operators (like a+b) should not be used for captured variables in the true_case/false_case
   /// functions, use the function argument `Emitter` instead, like `emitter->Add(a, b)`. The output list of two branches
   /// should match the join rules of control flow.
-  NodePtr Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case);
+  virtual NodePtr Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case);
 
   /// \brief Generate a while-loop block.
   ///
@@ -300,11 +296,10 @@ class COMMON_EXPORT Emitter {
   /// \note The overloaded operators (like `a+b`) should not be used for captured variables in the body function, use
   /// the function argument `Emitter` instead, like `emitter->Add(a, b)`. The length and node order of the output list
   /// of the body function should match init_list.
-  NodePtr While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list);
+  virtual NodePtr While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list);
 
  protected:
   virtual NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs);
-  NodePtr NewNode(const AnfNodePtr &anfnode) { return std::make_shared<Node>(anfnode, this); }
   NodePtr CmpOpWithCast(const std::string &op, const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type) {
     auto node = UnifyDtypeAndEmit(op, lhs, rhs);
     return dst_type == nullptr ? node : Cast(node, dst_type);
@@ -315,9 +310,6 @@ class COMMON_EXPORT Emitter {
     return Emit(op, {lhs, rhs}, attrs);
   }
 
-  class CtrlFlowBlock;
-
-  FuncGraphPtr func_graph_;
   ExpanderInferPtr infer_{nullptr};
   ScopePtr scope_{nullptr};
   inline static const std::vector<size_t> type_vector_ = [] {
@@ -345,6 +337,52 @@ COMMON_EXPORT NodePtr operator-(const NodePtr &lhs, const NodePtr &rhs);
 COMMON_EXPORT NodePtr operator*(const NodePtr &lhs, const NodePtr &rhs);
 COMMON_EXPORT NodePtr operator/(const NodePtr &lhs, const NodePtr &rhs);
 COMMON_EXPORT NodePtr operator-(const NodePtr &node);
+
+class COMMON_EXPORT CtrlFlowBlock {
+ public:
+  using BlockFunc = std::function<NodePtrList(Emitter *)>;
+  explicit CtrlFlowBlock(Emitter *emitter, const FuncGraphPtr &func_graph)
+      : emitter_(emitter), func_graph_(func_graph) {
+    MS_EXCEPTION_IF_NULL(emitter);
+    MS_EXCEPTION_IF_NULL(func_graph);
+  }
+  ~CtrlFlowBlock() = default;
+  NodePtr IfThenElse(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case);
+
+  NodePtr While(const NodePtr &cond, const BlockFunc &while_body_func, const NodePtrList &init_list);
+
+ protected:
+  NodePtr BuildSubgraph(const BlockFunc &func);
+
+  NodePtrList BuildSubgraphOfPartial(const BlockFunc &func);
+
+  size_t output_num_{0};
+  Emitter *emitter_;
+  FuncGraphPtr func_graph_;
+  abstract::AbstractBasePtr out_abstract_{nullptr};
+
+  class CppInferWithPartial : public CppInfer {
+   public:
+    void Infer(const NodePtr &node) override;
+  };
+};
+
+class COMMON_EXPORT IrEmitter : public Emitter {
+ public:
+  IrEmitter(const FuncGraphPtr &func_graph, const ExpanderInferPtr &infer, const ScopePtr &scope = nullptr)
+      : Emitter(infer, scope), func_graph_(func_graph) {
+    MS_EXCEPTION_IF_NULL(func_graph);
+    MS_EXCEPTION_IF_NULL(infer);
+  }
+  NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) override;
+  NodePtr EmitValue(const ValuePtr &value) override;
+  using BlockFunc = std::function<NodePtrList(Emitter *)>;
+  NodePtr Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) override;
+  NodePtr While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list) override;
+
+ private:
+  FuncGraphPtr func_graph_;
+};
 
 class PureShapeCalc : public ShapeCalcBaseFunctor {
  public:

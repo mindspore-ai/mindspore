@@ -42,7 +42,7 @@ REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
 
   // helper functions
-  auto Adjoint = [](BpropIRBuilder *ib, const NodePtr &x) -> NodePtr {
+  auto Adjoint = [](BpropBuilder *ib, const NodePtr &x) -> NodePtr {
     auto conj = ib->Conj(x);
     auto shape = ib->GetShape(conj);
     ShapeVector perm;
@@ -52,7 +52,7 @@ REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {
     return ib->Transpose(conj, perm);
   };
 
-  auto EyeTensor = [](BpropIRBuilder *ib, int m, int n) -> NodePtr {
+  auto EyeTensor = [](BpropBuilder *ib, int m, int n) -> NodePtr {
     ShapeVector eye_shape{m, n};
     std::vector<int32_t> eyes_value;
     for (auto i = 0; i < m; ++i) {
