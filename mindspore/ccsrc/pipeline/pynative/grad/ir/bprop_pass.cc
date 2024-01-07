@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "pipeline/pynative/grad/bprop_pass.h"
+#include "pipeline/pynative/grad/ir/bprop_pass.h"
 #include <memory>
 #include <vector>
 #include <functional>

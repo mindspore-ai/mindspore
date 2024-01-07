@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_AUTO_GRAD_H_
-#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_AUTO_GRAD_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_IR_AUTO_GRAD_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_IR_AUTO_GRAD_H_
 
 #include <memory>
 #include <utility>
@@ -275,4 +275,4 @@ void ClearPyNativeAutoGradStaticRes();
 }  // namespace pynative
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_AUTO_GRAD_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_IR_AUTO_GRAD_H_

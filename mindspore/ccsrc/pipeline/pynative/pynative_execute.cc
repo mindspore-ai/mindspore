@@ -49,7 +49,7 @@ std::mutex PyNativeExecutor::instance_lock_;
 namespace {
 enum class AsyncRunOpArgsEnum : size_t { PY_PRIM = 0, PY_INPUTS, PY_ARGS_NUM };
 template <typename T, typename... Args>
-T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Args &... args) {
+T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Args &...args) {
   const auto &inst = PyNativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(inst);
   MS_EXCEPTION_IF_NULL(method);
@@ -271,16 +271,11 @@ void PyNativeExecutor::EndGraph(const py::object &obj, const py::object &out, co
   forward_executor()->ProcessAfterEndGraph(obj, is_cell);
 }
 
-py::object PyNativeExecutor::Run() const {
-  runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunGradGraph);
-  const auto &ret = PyNativeExecutorTry(grad_executor()->RunGraph);
-  return ret;
-}
-
-void PyNativeExecutor::GradNet(const prim::GradOperationPtr &grad, const py::object &cell, const py::object &weights,
-                               const py::object &grad_position, const py::args &args) const {
-  runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kCompileGradGraph);
-  PyNativeExecutorTry(grad_executor()->GradGraph, grad, cell, weights, grad_position, args);
+py::object PyNativeExecutor::RunGrad(const prim::GradOperationPtr &grad, const py::object &cell,
+                                     const py::object &weights, const py::object &grad_position,
+                                     const py::args &args) const {
+  runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunGrad);
+  return PyNativeExecutorTry(grad_executor()->Run, grad, cell, weights, grad_position, args);
 }
 
 py::object PyNativeExecutor::GradJit(const py::object &out, const py::args &args) const {
@@ -357,10 +352,9 @@ void RegPyNativeExecutor(const py::module *m) {
     .def("end_graph", &PyNativeExecutor::EndGraph, "pynative end a graph.")
     .def("check_run", &PyNativeExecutor::CheckAlreadyRun, "pynative check graph run before.")
     .def("grad_jit", &PyNativeExecutor::GradJit, "pynative grad for jit.")
-    .def("grad_net", &PyNativeExecutor::GradNet, "pynative grad graph.")
     .def("clear_res", &PyNativeExecutor::ClearRes, "pynative clear exception res.")
     .def("sync", &PyNativeExecutor::Sync, "pynative sync stream.")
-    .def("__call__", &PyNativeExecutor::Run, "pynative executor run grad graph.")
+    .def("grad", &PyNativeExecutor::RunGrad, "pynative executor run grad.")
     .def("grad_flag", &PyNativeExecutor::grad_flag, "pynative grad flag")
     .def("enable_grad", &PyNativeExecutor::enable_grad, "pynative enable grad, used for with no_grad")
     .def("set_hook_changed", &PyNativeExecutor::SetHookChanged, "set pynative hook changed")

@@ -24,7 +24,7 @@
 #include "ir/tensor.h"
 #include "pipeline/pynative/base.h"
 #include "pipeline/pynative/grad/top_cell.h"
-#include "pipeline/pynative/grad/bprop_tensor_replace.h"
+#include "pipeline/pynative/grad/ir/bprop_tensor_replace.h"
 #include "pipeline/jit/ps/pipeline.h"
 #include "pipeline/jit/ps/resource.h"
 
@@ -66,7 +66,7 @@ class Jit {
   void MakeAdjointForJit(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
                          const FuncGraphPtr &jit_forward_graph, const FuncGraphPtr &jit_grad_graph,
                          bool has_added_v) const;
-  void KPynativeWithFProp(const GradExecutor *grad_executor, const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr,
+  void KPynativeWithFProp(const GradExecutor *grad_executor, const autograd::AutoGradCellPtr &auto_grad_cell_ptr,
                           const GradParamPtr &grad_param) const;
   void RecordForwardGraphForJit(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
                                 const FuncGraphPtr &ms_func_graph) const;

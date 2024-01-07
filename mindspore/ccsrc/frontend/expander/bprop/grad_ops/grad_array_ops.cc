@@ -422,8 +422,8 @@ class ResizeNearestNeighborV2ShapeCalc : public ShapeCalcFunctor {
 };
 REG_FUNCTOR("ShapeCalc_ResizeNearestNeighborV2", ResizeNearestNeighborV2ShapeCalc);
 
-NodePtr CalBatchGather(BpropBuilder *ib, const NodePtr &values, const NodePtr &indices, const NodePtr &x,
-                       int64_t axis, int64_t batch_dims) {
+NodePtr CalBatchGather(BpropBuilder *ib, const NodePtr &values, const NodePtr &indices, const NodePtr &x, int64_t axis,
+                       int64_t batch_dims) {
   auto reshape_shape =
     ib->ShapeCalc(g_gather_reshape, {values, indices, x, ib->Tensor(axis), ib->Tensor(batch_dims)}, {3, 4});
   constexpr size_t reshape_size = 4;
@@ -582,7 +582,7 @@ NodePtrList StackBpropFunc(BpropBuilder *ib) {
   auto num = ib->GetAttr("num");
   auto ret = ib->Emit("Unstack", {dout}, {{"num", num}, {"axis", ib->GetAttr("axis")}});
 
-  auto x_abs = x->get()->abstract();
+  auto x_abs = x->abstract();
   MS_EXCEPTION_IF_NULL(x_abs);
   bool is_list = x_abs->isa<abstract::AbstractList>();
   if (is_list) {
@@ -1478,7 +1478,7 @@ REG_BPROP_BUILDER("Split").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   auto axis_ptr = axis->BuildValue();
   MS_EXCEPTION_IF_NULL(axis_ptr);
   auto axis_value = GetValue<int64_t>(axis_ptr);
-  auto dx = ib->Emit("Concat", {dout, ib->Value(axis_value)});
+  auto dx = ib->Concat(dout, axis_value);
   return {dx, ib->OutZeros(axis), ib->OutZeros(output_num)};
 });
 
@@ -1842,7 +1842,7 @@ REG_BPROP_BUILDER("MaskedSelect").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("SplitV").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto split_dim = GetValue<int64_t>(ib->GetAttr("split_dim"));
   auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("Concat", {dout, ib->Value(split_dim)});
+  auto dx = ib->Concat(dout, split_dim);
   return {dx};
 });
 
@@ -1892,8 +1892,7 @@ REG_BPROP_BUILDER("ExtractVolumePatches").SetUnusedInputs({i0, i1}).SetBody(BODY
   auto out_indices_num = ((((out_d * out_h) * out_w) * ksize_d) * ksize_h) * ksize_w;
   auto out_idx = ib->Tensor(Range(0, out_indices_num), kInt32);
   out_idx = ib->Reshape(out_idx, {1, out_d, out_h, out_w, (ksize_d * ksize_h) * ksize_w});
-  auto idx_tensor = ib->Emit("Concat", {ib->MakeTuple({ib->ExpandDims(x_idx_patched, -1), ib->ExpandDims(out_idx, -1)}),
-                                        ib->Value<int64_t>(-1)});
+  auto idx_tensor = ib->Concat({ib->ExpandDims(x_idx_patched, -1), ib->ExpandDims(out_idx, -1)}, -1);
   auto idx_map = ib->Reshape(idx_tensor, {-1, 2});
   std::vector<int64_t> sp_shape = {x_indices_num, out_indices_num};
   std::vector<int64_t> ones(out_indices_num, 1);

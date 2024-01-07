@@ -69,7 +69,7 @@ class COMMON_EXPORT Emitter {
   NodePtr ScalarDiv(const NodePtr &lhs, const NodePtr &rhs) { return Emit(ops::kNameScalarDiv, {lhs, rhs}); }
   NodePtr ScalarFloorDiv(const NodePtr &lhs, const NodePtr &rhs) { return Emit(ops::kNameScalarFloorDiv, {lhs, rhs}); }
   NodePtr ScalarNeg(const NodePtr &node) { return Emit(ops::kNameScalarUsub, {node}); }
-  NodePtr Cast(const NodePtr &node, const TypePtr &type);
+  virtual NodePtr Cast(const NodePtr &node, const TypePtr &type);
   NodePtr Cast(const NodePtr &node, TypeId type_id) { return Cast(node, TypeIdToType(type_id)); }
 
   NodePtr Reshape(const NodePtr &node, const NodePtr &shape);
@@ -86,10 +86,10 @@ class COMMON_EXPORT Emitter {
   NodePtr Transpose(const NodePtr &node, const ShapeVector &perm) { return Transpose(node, Value(perm)); }
   NodePtr Tile(const NodePtr &node, const NodePtr &dims);
   NodePtr Tile(const NodePtr &node, const ShapeVector &dims) { return Tile(node, Value(dims)); }
-  NodePtr Concat(const NodePtrList &inputs, int64_t axis) {
+  virtual NodePtr Concat(const NodePtr &input, int64_t axis) { return Emit(kConcatOpName, {input, Value(axis)}); }
+  virtual NodePtr Concat(const NodePtrList &inputs, int64_t axis) {
     return Emit(kConcatOpName, {MakeTuple(inputs), Value(axis)});
   }
-
   NodePtr Add(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit(mindspore::kAddOpName, lhs, rhs); }
   NodePtr Sub(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit(mindspore::kSubOpName, lhs, rhs); }
   NodePtr Mul(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit(mindspore::kMulOpName, lhs, rhs); }
@@ -151,8 +151,8 @@ class COMMON_EXPORT Emitter {
   NodePtr ScatterNd(const NodePtr &indices, const NodePtr &update, const NodePtr &shape) {
     return Emit("ScatterNd", {indices, update, shape});
   }
-  NodePtr Stack(const NodePtr &x, const ValuePtr &axis) { return Emit("Stack", {x}, {{"axis", axis}}); }
-  NodePtr Stack(const NodePtrList &x, int64_t axis) { return Stack(MakeTuple(x), MakeValue(axis)); }
+  virtual NodePtr Stack(const NodePtr &x, const ValuePtr &axis) { return Emit("Stack", {x}, {{"axis", axis}}); }
+  virtual NodePtr Stack(const NodePtrList &x, int64_t axis) { return Stack(MakeTuple(x), MakeValue(axis)); }
   NodePtr TensorScatterUpdate(const NodePtr &input_x, const NodePtr &indices, const NodePtr &updates) {
     return Emit("TensorScatterUpdate", {input_x, indices, updates});
   }
@@ -302,6 +302,7 @@ class COMMON_EXPORT Emitter {
 
  protected:
   virtual NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs);
+  PrimitivePtr NewPrimitive(const std::string &name, const DAttr &attrs = {});
   NodePtr CmpOpWithCast(const std::string &op, const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type) {
     auto node = UnifyDtypeAndEmit(op, lhs, rhs);
     return dst_type == nullptr ? node : Cast(node, dst_type);

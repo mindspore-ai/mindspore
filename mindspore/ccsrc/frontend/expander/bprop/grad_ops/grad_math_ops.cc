@@ -1664,9 +1664,9 @@ REG_BPROP_BUILDER("MatrixExp").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x_transpose = ib->Transpose(x, input_perm);
   auto zero_matrix = ib->ZerosLike(x);
   zero_matrix = ib->Cast(zero_matrix, ib->GetDtype(dout));
-  auto meta_grad_up = ib->Emit("Concat", {ib->MakeTuple({x_transpose, dout}), ib->Value<int64_t>(-1)});
-  auto meta_grad_down = ib->Emit("Concat", {ib->MakeTuple({zero_matrix, x_transpose}), ib->Value<int64_t>(-1)});
-  auto meta_grad = ib->Emit("Concat", {ib->MakeTuple({meta_grad_up, meta_grad_down}), ib->Value<int64_t>(-2)});
+  auto meta_grad_up = ib->Concat({x_transpose, dout}, -1);
+  auto meta_grad_down = ib->Concat({zero_matrix, x_transpose}, -1);
+  auto meta_grad = ib->Concat({meta_grad_up, meta_grad_down}, -2);
   meta_grad = ib->Emit("MatrixExp", {meta_grad});
   return {ib->Slice(meta_grad, begins, sizes)};
 });

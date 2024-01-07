@@ -94,6 +94,15 @@ ShapeVector CalReshapeRealDstShape(const ShapeVector &x_shape, const ShapeVector
 }  // namespace
 
 NodePtr Emitter::Emit(const std::string &op_name, const NodePtrList &inputs, const DAttr &attrs) {
+  auto prim = NewPrimitive(op_name, attrs);
+  return EmitOp(prim, inputs);
+}
+
+NodePtr Emitter::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) {
+  MS_EXCEPTION(NotImplementedError) << "Base Emitter not implemented EmitOp() method";
+}
+
+PrimitivePtr Emitter::NewPrimitive(const std::string &op_name, const DAttr &attrs) {
   PrimitivePtr prim = nullptr;
   if (mindspore::ops::IsPrimitiveFunction(op_name)) {
     prim = std::make_shared<Primitive>(op_name);
@@ -114,11 +123,7 @@ NodePtr Emitter::Emit(const std::string &op_name, const NodePtrList &inputs, con
   if (!attrs.empty()) {
     (void)prim->SetAttrs(attrs);
   }
-  return EmitOp(prim, inputs);
-}
-
-NodePtr Emitter::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) {
-  MS_EXCEPTION(NotImplementedError) << "Base Emitter not implemented EmitOp() method";
+  return prim;
 }
 
 NodePtr Emitter::EmitValue(const ValuePtr &value) {

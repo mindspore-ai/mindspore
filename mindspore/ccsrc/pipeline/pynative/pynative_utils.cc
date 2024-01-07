@@ -425,6 +425,23 @@ bool Common::IsTensor(const ValuePtr &v, bool include_sequence) {
   return v->isa<tensor::Tensor>() || v->isa<tensor::MetaSparseTensor>();
 }
 
+bool Common::ExistTensor(const ValuePtr &value) {
+  if (value->isa<tensor::Tensor>()) {
+    return true;
+  } else if (value->isa<ValueSequence>()) {
+    bool is_exist = false;
+    auto seq = value->cast<ValueSequencePtr>();
+    for (const auto &val : seq->value()) {
+      is_exist = is_exist || ExistTensor(val);
+      if (is_exist) {
+        return true;
+      }
+    }
+    return is_exist;
+  }
+  return false;
+}
+
 bool Common::IsControlFlowGraph(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   return !func_graph->func_graphs_used_total().empty();
@@ -734,6 +751,14 @@ tensor::TensorPtr Common::CreateFakeTensorWithoutDeviceAddress(const tensor::Ten
   }
   t->set_device_address(nullptr);
   return t;
+}
+
+void Common::ClearDeviceAddress(const ValuePtr &value) {
+  std::vector<tensor::TensorPtr> tensors;
+  TensorValueToTensor(value, &tensors);
+  for (const auto &tensor : tensors) {
+    tensor->set_device_address(nullptr);
+  }
 }
 
 ValuePtr Common::CreateFakeValueWithoutDeviceAddress(const ValuePtr &value) {
@@ -1309,6 +1334,41 @@ bool DataConvert::RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_ru
   return true;
 }
 
+void ConvertPyObjectToTensor(const py::object &input_object, std::vector<ValuePtr> *tensors) {
+  MS_EXCEPTION_IF_NULL(tensors);
+  ValuePtr tensor_ptr = nullptr;
+  if (py::isinstance<tensor::Tensor>(input_object)) {
+    tensor_ptr = py::cast<tensor::TensorPtr>(input_object);
+  } else if (IsStubTensor(input_object)) {
+    tensor_ptr = ConvertStubTensor(input_object);
+  } else if (py::isinstance<py::float_>(input_object)) {
+    double input_value = py::cast<py::float_>(input_object);
+    tensor_ptr = std::make_shared<tensor::Tensor>(input_value, kFloat32);
+  } else if (py::isinstance<py::int_>(input_object)) {
+    tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<int64_t>(input_object), kInt64);
+  } else if (py::isinstance<py::list>(input_object)) {
+    auto list_inputs = py::cast<py::list>(input_object);
+    for (size_t i = 0; i < list_inputs.size(); ++i) {
+      ConvertPyObjectToTensor(list_inputs[i], tensors);
+    }
+    return;
+  } else if (py::isinstance<py::tuple>(input_object)) {
+    auto tuple_inputs = py::cast<py::tuple>(input_object);
+    for (size_t i = 0; i < tuple_inputs.size(); ++i) {
+      ConvertPyObjectToTensor(tuple_inputs[i], tensors);
+    }
+    return;
+  } else if (py::isinstance<tensor::CSRTensor>(input_object)) {
+    tensor_ptr = py::cast<tensor::CSRTensorPtr>(input_object);
+  } else if (py::isinstance<tensor::COOTensor>(input_object)) {
+    tensor_ptr = py::cast<tensor::COOTensorPtr>(input_object);
+  } else {
+    MS_EXCEPTION(TypeError) << "Unreasonable data type: " << input_object.get_type() << ".";
+  }
+  MS_EXCEPTION_IF_NULL(tensor_ptr);
+  (void)tensors->emplace_back(tensor_ptr);
+}
+
 FrontendOpRunInfoPtr PyBoost::Init(const PrimitivePtr &prim, const py::list &args) {
   const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
   const auto &forward_executor = pynative_executor->forward_executor();
@@ -1381,6 +1441,7 @@ void PyBoost::UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<Val
     op_run_info->op_grad_info->input_abs = op->input_abs();
     op_run_info->op_grad_info->out_value = op_run_info->real_out;
     op_run_info->op_grad_info->out_abs = op->output_abs();
+    op_run_info->op_grad_info->output_size = op->outputs().size();
     UpdateOutputTensorGradInfo(op->outputs());
   }
 }

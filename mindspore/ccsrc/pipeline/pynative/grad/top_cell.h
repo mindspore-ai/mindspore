@@ -33,11 +33,11 @@
 #include "pybind11/pytypes.h"
 #include "pybind_api/ir/base_ref_py.h"
 #include "ir/anf.h"
-#include "pipeline/pynative/grad/auto_grad.h"
+#include "pipeline/pynative/grad/function/meta_grad.h"
 #include "frontend/operator/composite/composite.h"
 #include "pipeline/jit/ps/resource.h"
 #include "pipeline/pynative/base.h"
-#include "pipeline/pynative/grad/bprop_tensor_replace.h"
+#include "pipeline/pynative/grad/ir/bprop_tensor_replace.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
@@ -120,11 +120,11 @@ class TopCellInfo {
     graph_info_map_[fg] = graph_info;
   }
   inline const OrderedMap<FuncGraphPtr, GraphInfoPtr> &graph_info_map() const { return graph_info_map_; }
-  inline autograd::AutoGradCellImplPtr auto_grad_cell_ptr() const {
+  inline autograd::AutoGradCellPtr auto_grad_cell_ptr() const {
     MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr_);
     return auto_grad_cell_ptr_;
   }
-  void set_auto_grad_cell_ptr(autograd::AutoGradCellImplPtr &&auto_grad_cell_ptr) {
+  void set_auto_grad_cell_ptr(autograd::AutoGradCellPtr &&auto_grad_cell_ptr) {
     runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
                                        runtime::ProfilerEvent::kPyNativeGradClearAutoGradCell,
                                        runtime::ProfilerRecorder::kNoName, true);
@@ -199,7 +199,7 @@ class TopCellInfo {
   std::vector<std::string> output_ids_;
   pipeline::ResourcePtr resource_{nullptr};
   FuncGraphPtr fg_{nullptr};
-  autograd::AutoGradCellImplPtr auto_grad_cell_ptr_{nullptr};
+  autograd::AutoGradCellPtr auto_grad_cell_ptr_{nullptr};
   OrderedMap<FuncGraphPtr, GraphInfoPtr> graph_info_map_;
   // Record `register hook` or `remove hook` function has been called by sub cell
   // The record range between the begin and end of top cell.

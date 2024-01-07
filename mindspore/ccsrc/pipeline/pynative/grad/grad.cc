@@ -413,7 +413,7 @@ void RunReplace(const expander::GraphGradInfoPtr &graph_grad_info, const ValuePt
   MS_LOG_DEBUG << "end RunReplace";
 }
 
-void KPynativeGraph(const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr, const GradParamPtr &grad_param,
+void KPynativeGraph(const autograd::AutoGradCellPtr &auto_grad_cell_ptr, const GradParamPtr &grad_param,
                     const expander::GraphGradInfoPtr &graph_grad_info, const ValuePtrList &forward_vnodes_values) {
   // Replace vnode in ad_graph by current output value
   RunReplace(graph_grad_info, forward_vnodes_values);
@@ -562,9 +562,11 @@ void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_
     (void)abs_list.emplace_back(param_i_abs);
     RecordForwardGraphForInput(v, input_args_info->input_arg_id_vec[i], param_i_abs);
   }
-  top_cell()->set_auto_grad_cell_ptr(
-    std::make_shared<autograd::AutoGradCellImpl>(input_param_values, abs_list, op_num_in_bprop_graph_ * kContainerRatio,
-                                                 assist_queue_, !top_cell()->is_high_order_top_cell()));
+  //  top_cell()->set_auto_grad_cell_ptr(std::make_shared<autograd::AutoGradCellImpl>(
+  //    input_param_values, abs_list, op_num_in_bprop_graph_ * kContainerRatio, assist_queue_,
+  //    forward()->enable_async(), !top_cell()->is_high_order_top_cell()));
+  top_cell()->set_auto_grad_cell_ptr(std::make_shared<autograd::AutoGradCell>(
+    input_param_values, op_num_in_bprop_graph_ * kContainerRatio, !top_cell()->is_high_order_top_cell()));
 }
 
 void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_info) {
@@ -681,7 +683,7 @@ void GradExecutor::MakeNewTopGraph(const InputArgsInfoPtr &input_args_info) {
                                             op_num_in_bprop_graph_ * kContainerRatio);
   top_cell_->set_forward_already_run(true);
   top_cell_->set_input_args_id(input_args_info->input_args_id);
-  auto use_dynamic_shape_process = GetTopCellDynamicFlag(input_args_info, obj_id_with_grad_order);
+  auto use_dynamic_shape_process = true || GetTopCellDynamicFlag(input_args_info, obj_id_with_grad_order);
   top_cell_->set_use_dynamic_shape_process(use_dynamic_shape_process);
   top_cell_->set_need_save_dynamic_detect_nodes(
     dynamic_shape()->IsNeedSaveDynamicDetectNodes(top_cell_, use_dynamic_shape_process));
@@ -959,12 +961,12 @@ TopCellInfoPtr GradExecutor::GetAlreadyRunTopCell(const std::string &already_run
   return nullptr;
 }
 
-void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
-                                const py::object &grad_position, const py::args &args) {
+py::object GradExecutor::RunGrad(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
+                                 const py::object &grad_position, const py::args &args) {
   GetPreRunTopCell(grad, obj, args);
   SetSensValue(grad, top_input_args_info_, args, !top_cell()->jit_out_has_dict());
   MS_EXCEPTION_IF_NULL(top_input_args_info_);
-  MS_LOG(DEBUG) << "GradNetInner start " << args.size() << ", cell_id " << top_input_args_info_->cell_id
+  MS_LOG(DEBUG) << "RunGrad start " << args.size() << ", cell_id " << top_input_args_info_->cell_id
                 << ", input args info ptr " << top_input_args_info_.get();
 
   // For async, top can not be change when run SetForwardLastNodeInfo; Change top cell after sync
@@ -978,7 +980,7 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
     AsyncClearTopCell();
     set_top_cell(already_run_top_cell);
     top_cell()->UpdateTopCellInfo(false, false, false);
-    return;
+    return RunGradGraph();
   }
   MS_LOG(DEBUG) << "Need compile graph";
   WaitBpropTask();
@@ -994,8 +996,16 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
   auto p_args = GetGradPositionArgs(grad_position, grad->get_by_position_);
   autograd::GradAttr grad_attr(grad->get_all_, grad->get_by_list_, grad->sens_param_, grad->get_by_position_,
                                weight_param_is_tuple);
-  GetGradGraph(grad_attr, w_args, p_args);
-  top_cell()->ClearParamGradInfo();
+  if (!top_cell()->is_high_order_top_cell()) {
+    auto grads = RunBackward(grad_attr, w_args, p_args);
+    top_cell()->ClearParamGradInfo();
+    ClearGradRes();
+    return grads;
+  } else {
+    GetGradGraph(grad_attr, w_args, p_args);
+    top_cell()->ClearParamGradInfo();
+    return RunGradGraph();
+  }
 }
 
 std::string GradExecutor::GetAlreadyRunCellId(const std::string &obj_id) const {
@@ -1204,11 +1214,9 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr,
                                          const std::vector<tensor::TensorPtr> &w_args,
                                          const std::vector<size_t> &p_args) {
   MS_EXCEPTION_IF_NULL(top_input_args_info_);
-  // Update bprop_graph_run_by_single_op for bprop graph, if it is true, pass like ConvertMakeTupleInputToDynamicInput
-  // will not take effect
-  top_cell()->auto_grad_cell_ptr()->set_bprop_graph_run_by_single_op(top_cell()->use_dynamic_shape_process());
-  FuncGraphPtr bprop_graph = top_cell()->auto_grad_cell_ptr()->Finish(w_args, p_args, grad_attr);
-
+  auto grads = top_cell()->auto_grad_cell_ptr()->Finish(w_args, p_args, grad_attr,
+                                                        top_input_args_info_->input_arg_value_vec.back());
+  FuncGraphPtr bprop_graph = nullptr;
   MS_LOG(DEBUG) << "Top graph input params size " << top_input_args_info_->input_arg_value_vec.size();
   UpdateParamAbsByArgs(top_input_args_info_->input_arg_value_vec, bprop_graph);
   if (top_cell()->need_do_final_opt()) {
@@ -1320,6 +1328,25 @@ py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, con
   }
   MS_LOG(DEBUG) << "Graph have already ran " << forward_run << " top cell id " << obj_id;
   return BaseRefToPyData(forward_run);
+}
+
+py::object GradExecutor::RunBackward(const autograd::GradAttr &grad_attr, const std::vector<tensor::TensorPtr> &w_args,
+                                     const std::vector<size_t> &p_args) {
+  MS_EXCEPTION_IF_NULL(top_input_args_info_);
+
+  ValuePtr sens = nullptr;
+  if (grad_attr.has_sens) {
+    sens = top_input_args_info_->input_arg_value_vec.back();
+  }
+  grad_is_running_ = true;
+  auto top_input_args_info = top_input_args_info_;
+  auto pre_top_cell = top_cell_;
+  auto grads = top_cell()->auto_grad_cell_ptr()->Finish(w_args, p_args, grad_attr, sens);
+  grad_is_running_ = false;
+  top_input_args_info_ = top_input_args_info;
+  top_cell_ = pre_top_cell;
+  MS_EXCEPTION_IF_NULL(grads);
+  return BaseRefToPyData(grads);
 }
 
 py::object GradExecutor::RunGradGraph() {

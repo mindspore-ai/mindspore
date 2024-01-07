@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-#include "pipeline/pynative/grad/auto_grad.h"
+#include "pipeline/pynative/grad/ir/auto_grad.h"
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -227,14 +227,6 @@ AnfNodePtr BuildSpecialNode(const KernelGraphPtr &tape, const ValuePtr &value, c
   } else {
     MS_LOG(INFO) << "For value " << value->ToString() << ", the type is not tensor or scalar";
     return BuildSpecialNode(tape, GetFakeZeroTensor(), nullptr, type);
-  }
-}
-
-void ClearDeviceAddress(const ValuePtr &value) {
-  std::vector<tensor::TensorPtr> tensors;
-  TensorValueToTensor(value, &tensors);
-  for (const auto &tensor : tensors) {
-    tensor->set_device_address(nullptr);
   }
 }
 
@@ -664,7 +656,7 @@ bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
   auto cloned_value = grad_param->op_grad_info->out_value;
   if (grad_param->op_grad_info->out_value->isa<ValueSequence>()) {
     cloned_value = ShallowCopyTensorValue(grad_param->op_grad_info->out_value);
-    ClearDeviceAddress(cloned_value);
+    PyNativeAlgo::Common::ClearDeviceAddress(cloned_value);
   }
 
   // construct zeroslike placeholder, if need use in bprop, we replace it in backprogate.

@@ -641,6 +641,7 @@ void ForwardExecutor::RunOpBackendSync(const FrontendOpRunInfoPtr &op_run_info) 
     UpdateStubTensor(op_run_info);
     return;
   }
+  op_run_info->op_grad_info->output_size = backend_op_run_info->base_op_run_info.output_tensors.size();
   // 4. Do op grad and record op info
   ForwardOpGradImpl(op_run_info);
   // output is dynamic shape. Need to update abstract and value.

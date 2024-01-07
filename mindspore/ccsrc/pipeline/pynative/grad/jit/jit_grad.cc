@@ -348,13 +348,13 @@ void Jit::MakeAdjointForJit(const FrontendOpRunInfoPtr &op_run_info, const GradE
   top_cell->set_jit_out_has_dict(JitOutputHasDict(op_grad_info->out_abs));
 }
 
-void Jit::KPynativeWithFProp(const GradExecutor *grad_executor, const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr,
+void Jit::KPynativeWithFProp(const GradExecutor *grad_executor, const autograd::AutoGradCellPtr &auto_grad_cell_ptr,
                              const GradParamPtr &grad_param) const {
   grad_executor->WaitBpropTask();
-  MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
-  if (!auto_grad_cell_ptr->KPynativeWithFProp(grad_param)) {
-    MS_LOG(EXCEPTION) << "Failed to make adjoint for jit cnode";
-  }
+  //  MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
+  //  if (!auto_grad_cell_ptr->KPynativeWithFProp(grad_param)) {
+  //    MS_LOG(EXCEPTION) << "Failed to make adjoint for jit cnode";
+  //  }
 }
 
 void Jit::RecordForwardGraphForJit(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_BPROP_TENSOR_REPLACE_H_
-#define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_BPROP_TENSOR_REPLACE_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_IR_BPROP_TENSOR_REPLACE_H_
+#define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_IR_BPROP_TENSOR_REPLACE_H_
 
 #include <string>
 #include <map>
@@ -45,4 +45,4 @@ void SaveForwardOutputTensorInfo(const FuncGraphPtr &func_graph, bool need_save_
                                  TensorReplaceInfo *replace_info);
 }  // namespace pynative
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_BPROP_TENSOR_REPLACE_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_IR_BPROP_TENSOR_REPLACE_H_

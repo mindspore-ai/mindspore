@@ -52,6 +52,7 @@ struct Common {
   static void SplitString(const std::string &str, std::vector<std::string> *id_vec);
   static bool ValueHasDynamicShape(const ValuePtr &value);
   static bool IsTensor(const ValuePtr &v, bool include_sequence = false);
+  static bool ExistTensor(const ValuePtr &seq);
   static bool IsControlFlowGraph(const FuncGraphPtr &func_graph);
   static ValuePtr FilterSensValues(const ValuePtr &value, bool dict_convert_to_tuple);
   static tensor::TensorPtr GetTensorFromParam(const AnfNodePtr &param_node);
@@ -76,6 +77,7 @@ struct Common {
   static inline bool IsParam(InputType grad_type) {
     return grad_type == InputType::kParameter || grad_type == InputType::kInput;
   }
+  static void ClearDeviceAddress(const ValuePtr &value);
   static inline bool IsConstant(InputType grad_type) { return grad_type == InputType::kConstant; }
   static InputType SetValueGradInfo(const ValuePtr &value, const TopCellInfoPtr &top_cell, InputType grad_type);
   static InputType SetTensorGradInfo(const tensor::TensorPtr &tensor, const TopCellInfoPtr &top_cell);
@@ -142,6 +144,7 @@ struct PyParser {
 // Data convert
 struct DataConvert {
   static py::object ValueToPyObj(const ValuePtr &v);
+  static ValuePtr TensorToValue(const std::vector<TensorPtr> tensors);
   static ValuePtr PyObjToValue(const py::object &obj, bool stub = false);
   static ValuePtr BaseRefToValue(const BaseRef &value, bool requires_grad, bool is_out_sequence);
   static ValuePtr VectorRefToValue(const VectorRef &vec_ref, bool requires_grad, bool is_out_sequence);

@@ -1189,15 +1189,6 @@ class _PyNativeExecutor:
         self._executor.set_py_exe_path(sys.executable)
         self._executor.set_kernel_build_server_dir(os.path.split(kernel_build_server.__file__)[0] + os.sep)
 
-    def __call__(self):
-        """
-        PyNative executor run grad graph.
-
-        Return:
-            The return object after running grad graph.
-        """
-        return self._executor()
-
     @staticmethod
     def parameter_broadcast(obj, phase):
         """
@@ -1298,7 +1289,7 @@ class _PyNativeExecutor:
         Return:
             None.
         """
-        self._executor.grad_net(grad, obj, weights, grad_position, *args, *(kwargs.values()))
+        return self._executor.grad(grad, obj, weights, grad_position, *args, *(kwargs.values()))
 
     def clear_res(self):
         """

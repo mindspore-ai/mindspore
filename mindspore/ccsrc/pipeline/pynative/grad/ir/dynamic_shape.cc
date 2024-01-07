@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "pipeline/pynative/grad/dynamic_shape.h"
+#include "pipeline/pynative/grad/ir/dynamic_shape.h"
 #include "pipeline/pynative/pynative_utils.h"
 
 namespace mindspore {

@@ -80,6 +80,7 @@ struct OpGradInfo {
   // the grad_graph_id cannot be placed in the prim attr during the async run,
   // and the grad_graph_id will be able to the prim attr later.
   int64_t grad_graph_id{-1};
+  size_t output_size;
 };
 using OpGradInfoPtr = std::shared_ptr<OpGradInfo>;
 

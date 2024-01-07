@@ -1140,8 +1140,7 @@ REG_BPROP_BUILDER("ExtractImagePatches").SetUnusedInputs({i0, i5}).SetBody(BODYF
     x_idx_patch = ib->Transpose(x_idx_patch, {0, 2, 3, 1});
     auto out_idx = ib->Cast(ib->Range(ib->TupleGetItem(res[2], 0)), kInt32);
     out_idx = ib->Reshape(out_idx, res[3]);
-    auto idx_tensor = ib->Emit("Concat", {ib->MakeTuple({ib->ExpandDims(x_idx_patch, -1), ib->ExpandDims(out_idx, -1)}),
-                                          ib->Value<int64_t>(-1)});
+    auto idx_tensor = ib->Concat({ib->ExpandDims(x_idx_patch, -1), ib->ExpandDims(out_idx, -1)}, -1);
     idx_tensor = ib->Reshape(idx_tensor, {-1, 2});
     auto ones = ib->Fill(1.0, res[2], ib->GetDtype(dout)->type_id());
     auto sp_tensor = ib->ScatterNd(idx_tensor, ones, res[4]);
@@ -1169,8 +1168,7 @@ REG_BPROP_BUILDER("ExtractImagePatches").SetUnusedInputs({i0, i5}).SetBody(BODYF
     auto out_indices_num = ((out_row * out_col) * ksizes_row) * ksizes_col;
     auto out_idx = ib->Tensor(Range(out_indices_num), kInt32);
     out_idx = ib->Reshape(out_idx, {1, out_row, out_col, ksizes_row * ksizes_col});
-    auto idx_tensor = ib->Emit("Concat", {ib->MakeTuple({ib->ExpandDims(x_idx_patch, -1), ib->ExpandDims(out_idx, -1)}),
-                                          ib->Value<int64_t>(-1)});
+    auto idx_tensor = ib->Concat({ib->ExpandDims(x_idx_patch, -1), ib->ExpandDims(out_idx, -1)}, -1);
     idx_tensor = ib->Reshape(idx_tensor, {-1, 2});
     std::vector<int64_t> sp_shape = {x_indices_num, out_indices_num};
     std::vector<int64_t> ones(out_indices_num, 1);
