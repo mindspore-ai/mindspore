@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <vector>
 #include <tuple>
+#include <cmath>
 
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
@@ -97,12 +98,12 @@ AnfNodePtrList TensorIndex::ParseSlice(const AnfNodePtr &index_node, const abstr
   return AnfNodePtrList{slice_nodes[kStart], slice_nodes[kStop], slice_nodes[kStep]};
 }
 
-static ValueNodePtr MakeStridedSliceNode(int64_t shrink_axis) {
+static ValueNodePtr MakeStridedSliceNode(int64_t shrink_axis, int64_t begin_mask = 0, int64_t end_mask = 0) {
   auto prim = std::make_shared<Primitive>(kPrimStridedSlice->name());
   const std::vector<std::string> &input_names = {"x", "begin", "end", "strides"};
   const std::vector<std::string> &output_names = {"output"};
-  prim->SetAttrs({{ops::kBeginMask, MakeValue(kZeroAnfValue)},
-                  {ops::kEndMask, MakeValue(kZeroAnfValue)},
+  prim->SetAttrs({{ops::kBeginMask, MakeValue(begin_mask)},
+                  {ops::kEndMask, MakeValue(end_mask)},
                   {ops::kEllipsisMask, MakeValue(kZeroAnfValue)},
                   {ops::kNewAxisMask, MakeValue(kZeroAnfValue)},
                   {ops::kShrinkAxisMask, MakeValue(shrink_axis)},
@@ -173,12 +174,14 @@ void TensorIndexGetitem::GetItemBySlice(const AnfNodePtr &data_node, const AnfNo
   auto normalize_slice_node = res_graph_->NewCNode(normalize_slice_inputs);
 
   AnfNodePtrList slice_nodes;
+
   // slice_info:{start, stop, step}
   const size_t slice_info_size = 3;
   for (size_t i = 0; i < slice_info_size; i++) {
     (void)slice_nodes.emplace_back(
       res_graph_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), normalize_slice_node, NewValueNode(SizeToLong(i))}));
   }
+
   auto strided_slice_vnode = MakeStridedSliceNode(0);
   (void)slice_nodes.insert(slice_nodes.begin(), {strided_slice_vnode, data_node});
   res_graph_->set_output(res_graph_->NewCNode(slice_nodes));
@@ -502,6 +505,8 @@ void TensorIndexGetitem::ConstGetStrideInfoFromTuple(const AnfNodePtr &data_node
   AnfNodePtrList end_strides{NewValueNode(kPrimMakeTuple)};
   AnfNodePtrList step_strides{NewValueNode(kPrimMakeTuple)};
   int64_t shrink_axis = 0;
+  int64_t begin_mask = 0;
+  int64_t end_mask = 0;
   size_t index_count = 0;
   size_t ellipsis_count = 0;
   for (size_t i = 0; i < tuple_abs_ptr->size(); i++) {
@@ -537,6 +542,9 @@ void TensorIndexGetitem::ConstGetStrideInfoFromTuple(const AnfNodePtr &data_node
       shrink_axis += 1 << index_count;
       index_count += 1;
     } else if (index_type_id == kObjectTypeSlice) {
+      auto abs_slice_ptr = dyn_cast<abstract::AbstractSlice>(index_abs);
+      begin_mask += (abs_slice_ptr->start()->isa<abstract::AbstractNone>()) ? pow(2, i) : 0;
+      end_mask += (abs_slice_ptr->stop()->isa<abstract::AbstractNone>()) ? pow(2, i) : 0;
       auto [begin_stride, end_stride, step_stride] =
         NormalizeStrideInfoFromTuple(data_node, new_index_node, index_abs, tuple_index_types, i);
       (void)begin_strides.emplace_back(begin_stride);
@@ -564,7 +572,7 @@ void TensorIndexGetitem::ConstGetStrideInfoFromTuple(const AnfNodePtr &data_node
   AnfNodePtr begin_stride = res_graph_->NewCNode(begin_strides);
   AnfNodePtr end_stride = res_graph_->NewCNode(end_strides);
   AnfNodePtr step_stride = res_graph_->NewCNode(step_strides);
-  auto strided_slice_vnode = MakeStridedSliceNode(shrink_axis);
+  auto strided_slice_vnode = MakeStridedSliceNode(shrink_axis, begin_mask, end_mask);
 
   auto slice_node = res_graph_->NewCNode({strided_slice_vnode, data_node, begin_stride, end_stride, step_stride});
   res_graph_->set_output(slice_node);
@@ -640,6 +648,7 @@ void TensorIndexGetitem::GetStrideInfoFromTuple(const AnfNodePtr &data_node, con
       index_count += 1;
       has_int = true;
     } else if (index_type_id == kObjectTypeSlice) {
+      auto abs_slice_ptr = dyn_cast<abstract::AbstractSlice>(index_abs);
       auto [begin_stride, end_stride, step_stride] =
         NormalizeStrideInfoFromTuple(data_node, new_index_node, index_abs, tuple_index_types, i);
       auto scalar_to_tensor = NewValueNode(kPrimScalarToTensor);
