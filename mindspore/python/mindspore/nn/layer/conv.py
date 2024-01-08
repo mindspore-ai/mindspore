@@ -244,7 +244,7 @@ class Conv2d(_Conv):
             `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , bias will be initialized using ``'Uniform'`` .
         data_format (str, optional): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
-            Default: ``'NCHW'`` .
+            Default: ``'NCHW'`` . (NHWC is only supported in GPU now.)
         dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
