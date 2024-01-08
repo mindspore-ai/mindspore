@@ -1276,4 +1276,52 @@ py::bool_ pi_jit_should_compile(const py::object &func, const py::object &tag) {
 
 #endif
 
+static py::object ConvertCodeExtra(mindspore::jit::graph::CodeExtra *c) {
+  if (c->code == nullptr) {
+    return py::object();
+  }
+  PyCodeObject *compiled_code = c->code->GetPythonCode();
+  auto compiled_func = c->code->GetNativeFunc();
+  auto guard = c->code->GetGuard();
+  if (compiled_func == nullptr && compiled_code == nullptr) {
+    return py::object();
+  }
+  py::dict code;
+  if (compiled_code != nullptr) {
+    PyDict_SetItemString(code.ptr(), "compiled_code_", reinterpret_cast<PyObject *>(compiled_code));
+  }
+  if (compiled_func != nullptr) {
+    PyDict_SetItemString(code.ptr(), "phase_", py::str(c->code->GetPhase()).ptr());
+  }
+  if (guard != nullptr && !guard->IsEmpty()) {
+    PyDict_SetItemString(code.ptr(), "guard_", py::str(guard->ToString()).ptr());
+  }
+  PyDict_SetItemString(code.ptr(), "call_count_", py::int_(c->code->Count()).ptr());
+  return code;
+}
+
+py::object get_code_extra(const py::object &func) {
+  py::object code = mindspore::jit::graph::GetPyCodeObject(func);
+  if (code.ptr() == nullptr) {
+    return py::none();
+  }
+  auto c = mindspore::jit::graph::getJitCompileResults(code.ptr(), false);
+  if (c == nullptr) {
+    return py::none();
+  }
+
+  constexpr const char *stat_str[] = {
+    "NEVER_COMPILE", "GRAPH_CANDIDATE", "GRAPH_CAPTURED", "GRAPH_BUILDING", "GRAPH_CALLABLE",
+  };
+
+  py::dict result;
+  py::object compiled_code = ConvertCodeExtra(c);
+  if (compiled_code.ptr() != nullptr) {
+    PyDict_SetItemString(result.ptr(), "code", compiled_code.ptr());
+  }
+  PyDict_SetItemString(result.ptr(), "stat", py::str(stat_str[c->stat]).ptr());
+  PyDict_SetItemString(result.ptr(), "compile_count_", py::int_(c->compile_count_).ptr());
+  return result;
+}
+
 }  // namespace mindspore
