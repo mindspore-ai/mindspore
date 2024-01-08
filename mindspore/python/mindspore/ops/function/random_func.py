@@ -27,6 +27,7 @@ from mindspore.common.seed import _get_graph_seed
 from mindspore.common.tensor import Tensor
 from mindspore.ops.operations.random_ops import RandomShuffle, RandomChoiceWithMask
 from mindspore.common.api import _function_forbid_reuse
+from mindspore.ops.auto_generate import randperm
 
 
 cast_ = P.Cast()
@@ -1331,6 +1332,6 @@ __all__ = [
     'standard_laplace', 'random_categorical', 'uniform', 'standard_normal', 'random_gamma',
     'uniform_candidate_sampler', 'random_poisson', 'log_uniform_candidate_sampler', 'shuffle', 'choice_with_mask',
     'normal', 'laplace', 'gamma', 'poisson', 'multinomial', 'rand', 'rand_like', 'randn', 'randn_like', 'randint',
-    'randint_like', 'multinomial_with_replacement'
+    'randint_like', 'multinomial_with_replacement', 'randperm'
 ]
 __all__.sort()

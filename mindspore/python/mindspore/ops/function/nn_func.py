@@ -41,7 +41,7 @@ from mindspore.ops.operations.nn_ops import TripletMarginLoss
 from mindspore.ops.operations._inner_ops import SiLU
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
-from mindspore.ops.auto_generate import log_softmax
+from mindspore.ops.auto_generate import log_softmax, prelu
 
 abs_ = P.Abs()
 add_ = P.Add()
@@ -7244,7 +7244,7 @@ def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_head
 
     if attn_mask is not None and attn_mask.dtype == mstype.bool_:
         new_attn_mask = ops.zeros_like(attn_mask, dtype=q.dtype)
-        attn_mask = new_attn_mask.masked_fill(attn_mask, float("-inf"))
+        attn_mask = new_attn_mask.masked_fill(attn_mask, ops.cast(float("-inf"), new_attn_mask.dtype))
 
     if attn_mask is not None:
         if attn_mask.shape[0] == 1:
@@ -7541,6 +7541,7 @@ __all__ = [
     'softmin',
     'pdist',
     'pad',
+    'prelu',
     'mirror_pad',
     'cross_entropy',
     'grid_sample',

@@ -28,6 +28,6 @@ assign:
             >>> from mindspore import Tensor, ops
             >>> value = Tensor([2.0], mindspore.float32)
             >>> variable = mindspore.Parameter(Tensor([1.0], mindspore.float32), name="variable")
-            >>> ops.Assign(variable, value)
+            >>> ops.assign(variable, value)
             >>> print(variable.asnumpy())
             [2.]

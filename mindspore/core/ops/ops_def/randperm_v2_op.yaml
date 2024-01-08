@@ -6,10 +6,12 @@ randperm_v2:
             type_cast: tensor
         seed:
             dtype: int
+            type_cast: tensor
             default: 0
             prim_init: True
         offset:
             dtype: int
+            type_cast: tensor
             default: 0
             prim_init: True
         dtype:

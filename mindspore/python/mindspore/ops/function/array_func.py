@@ -61,8 +61,8 @@ from mindspore import _checkparam as validator
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
 
-from mindspore.ops.auto_generate import concat_, range, scatter_nd, deepcopy
-from mindspore.ops.operations.manually_defined import tile
+from mindspore.ops.auto_generate import concat_, range, scatter_nd, deepcopy, masked_fill, diagonal
+from mindspore.ops.operations.manually_defined import tile, rank
 
 arg_max_with_value_ = P.ArgMaxWithValue()
 batch_to_space_nd_v2_ = P.BatchToSpaceNDV2()
@@ -7262,6 +7262,7 @@ __all__ = [
     'full',
     'full_like',
     'dyn_shape',
+    'rank',
     'arange',
     'range',
     'reshape',
@@ -7311,6 +7312,7 @@ __all__ = [
     'gather_elements',
     'gather_nd',
     'one_hot',
+    'masked_fill',
     'masked_select',
     'where',
     'narrow',
@@ -7352,6 +7354,7 @@ __all__ = [
     'expand',
     'fold',
     'unfold',
+    'diagonal',
     'diagonal_scatter',
     'lstsq',
     'mvlgamma',

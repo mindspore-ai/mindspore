@@ -35,8 +35,9 @@ def assign_backward_func(x, y):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_assign_forward_cpu_gpu(mode):
+def test_assign_forward(mode):
     """
     Feature: assign ops.
     Description: test ops assign.
@@ -51,22 +52,6 @@ def test_assign_forward_cpu_gpu(mode):
 
 
 @pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_assign_forward_ascend(mode):
-    """
-    Feature: assign ops.
-    Description: test ops assign.
-    Expectation: output the right result.
-    """
-    context.set_context(mode=mode)
-    variable = ms.Parameter(Tensor(np.array([1.0]).astype(np.float32)))
-    value = Tensor(np.array([2.0]).astype(np.float32))
-    output = assign_forward_func(variable, value)
-
-
-@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

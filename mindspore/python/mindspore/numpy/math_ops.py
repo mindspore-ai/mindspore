@@ -5370,9 +5370,9 @@ def unwrap(p, discont=3.141592653589793, axis=-1):
     axis = _check_axis_in_range(axis, ndim)
     dd = diff(p, axis=axis)
     ddmod = remainder(add(dd, pi), 2*pi) - pi
-    ddmod = F.masked_fill(ddmod, F.logical_and(ddmod == -pi, dd > 0), pi)
+    ddmod = F.masked_fill(ddmod, F.logical_and(ddmod == -pi, dd > 0), F.cast(pi, ddmod.dtype))
     ph_correct = ddmod - dd
-    ph_correct = F.masked_fill(ph_correct, absolute(dd) < discont, 0)
+    ph_correct = F.masked_fill(ph_correct, absolute(dd) < discont, F.cast(0, ph_correct.dtype))
     slice_all = _list_comprehensions(F.rank(p), F.make_slice(None, None, None), True)
     slice0 = _tuple_setitem(slice_all, axis, F.make_slice(0, 1, None))
     slice1 = _tuple_setitem(slice_all, axis, F.make_slice(1, None, None))
