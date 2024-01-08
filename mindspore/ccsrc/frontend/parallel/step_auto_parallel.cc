@@ -110,6 +110,7 @@ bool IsSkipAutoParallel(const FuncGraphPtr &root, const std::string &strategy_se
 
 bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   // Mode 'dynamic programming' will run after pipeline_split, others don't.
+  MS_EXCEPTION_IF_NULL(root);
   bool is_pre_action = !root->has_flag(AUTO_PARALLEL_FINISH_PRE_ACTION);
   bool changes;
   if (is_pre_action) {
@@ -123,7 +124,6 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
     return changes;
   }
 #endif
-  MS_EXCEPTION_IF_NULL(root);
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   // control whether use model_parallel mode
   std::string strategy_search_mode = ParallelContext::GetInstance()->strategy_search_mode();
