@@ -6577,6 +6577,7 @@ class DynamicRNN(Primitive):
         self.forget_bias = validator.check_value_type("forget_bias", forget_bias, [float], self.name)
         self.cell_depth = validator.check_value_type("cell_depth", cell_depth, [int], self.name)
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
+        validator.check_number_range(keep_prob, 0.0, 1.0, validator.INC_BOTH, float, "keep_prob")
         self.cell_clip = validator.check_value_type("cell_clip", cell_clip, [float], self.name)
         self.num_proj = validator.check_non_negative_int(num_proj, "num_proj", self.name)
         self.forget_bias = validator.check_value_type("forget_bias", forget_bias, [float], self.name)
