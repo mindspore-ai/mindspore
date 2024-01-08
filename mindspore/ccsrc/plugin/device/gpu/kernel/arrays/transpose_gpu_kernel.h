@@ -62,6 +62,7 @@ class TransposeGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelpe
 
   size_t shape_size_{0};
   bool is_copy_{false};
+  bool is_empty_tensor_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
