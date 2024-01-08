@@ -334,8 +334,9 @@ static bool VisitBlock(Block *blk, std::vector<bool> *reach, std::vector<bool> *
   blk->set_is_dead(false);
   reach->operator[](blk->id()) = true;
   mark->operator[](blk->id()) = true;
-  for (auto i : blk->succ_bbs()) {
-    loop_body |= VisitBlock(i, reach, mark, loop_count);
+  auto iter = blk->succ_bbs().begin();
+  for (; iter != blk->succ_bbs().end(); ++iter) {
+    loop_body |= VisitBlock(*iter, reach, mark, loop_count);
   }
   mark->operator[](blk->id()) = false;
   if (blk->is_loop_head()) {
