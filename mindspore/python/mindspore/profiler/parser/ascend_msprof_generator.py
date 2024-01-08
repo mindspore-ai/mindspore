@@ -47,9 +47,13 @@ class AscendMsprofDataGeneratorOld:
             'Output Data Types': {'index': self.invalid_index, 'dtype': ('Output Data Types', object)},
             'Output Formats': {'index': self.invalid_index, 'dtype': ('Output Formats', object)},
         }
-        self.op_summary_extend_name = {
+        self.op_summary_A_extend_name = {
             'vector_fops': {'index': self.invalid_index, 'dtype': ('vector_fops', float)},
             'cube_fops': {'index': self.invalid_index, 'dtype': ('cube_fops', float)},
+        }
+        self.op_summary_B_extend_name = {
+            'aiv_vector_fops': {'index': self.invalid_index, 'dtype': ('vector_fops', float)},
+            'aic_cube_fops': {'index': self.invalid_index, 'dtype': ('cube_fops', float)},
         }
         self.op_summary_name = None
 
@@ -113,9 +117,12 @@ class AscendMsprofDataGeneratorOld:
                 flag = self.link_index_with_name(header, self.op_summary_basis_name)
                 if not flag:
                     raise RuntimeError("Read op summary failed. The file is missing basic fields.")
-                extend_flag = self.link_index_with_name(header, self.op_summary_extend_name)
-                if extend_flag:
-                    self.op_summary_name = {**self.op_summary_basis_name, **self.op_summary_extend_name}
+                extend_flag_A = self.link_index_with_name(header, self.op_summary_A_extend_name)
+                extend_flag_B = self.link_index_with_name(header, self.op_summary_B_extend_name)
+                if extend_flag_A:
+                    self.op_summary_name = {**self.op_summary_basis_name, **self.op_summary_A_extend_name}
+                elif extend_flag_B:
+                    self.op_summary_name = {**self.op_summary_basis_name, **self.op_summary_B_extend_name}
                 else:
                     self.op_summary_name = self.op_summary_basis_name
                 self.op_summary_name['Iteration ID'] = {'index': -1, 'dtype': ('Iteration ID', object)}
@@ -229,9 +236,7 @@ class AscendMsprofDataGenerator:
             ('Input Formats', object),
             ('Output Shapes', object),
             ('Output Data Types', object),
-            ('Output Formats', object),
-            ('vector_fops', float),
-            ('cube_fops', float),
+            ('Output Formats', object)
         ]
 
         self.op_statistic_type = [
@@ -280,7 +285,12 @@ class AscendMsprofDataGenerator:
             with open(file, newline='') as csvfile:
                 reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
                 for row in reader:
-                    new_row = (
+                    vector_fops = row.get('vector_fops', None)
+                    cube_fops = row.get('cube_fops', None)
+                    aiv_vector_fops = row.get('aiv_vector_fops', None)
+                    aic_cube_fops = row.get('aic_cube_fops', None)
+
+                    new_row = [
                         row.get('Model ID'),
                         row.get('Task ID'),
                         row.get('Stream ID'),
@@ -295,14 +305,24 @@ class AscendMsprofDataGenerator:
                         row.get('Input Formats'),
                         row.get('Output Shapes'),
                         row.get('Output Data Types'),
-                        row.get('Output Formats'),
-                        row.get('vector_fops', '0'),
-                        row.get('cube_fops', '0')
-                    )
+                        row.get('Output Formats')
+                    ]
+                    if vector_fops is not None and cube_fops is not None:
+                        new_row.append(vector_fops)
+                        new_row.append(cube_fops)
+                    elif aiv_vector_fops is not None and aic_cube_fops is not None:
+                        new_row.append(aiv_vector_fops)
+                        new_row.append(aic_cube_fops)
+
                     new_row = tuple(['0' if d == 'N/A' else d for d in new_row])
                     op_summary.append(new_row)
             break
 
+        if op_summary and len(op_summary[0]) > len(self.op_summary_type):
+            self.op_summary_type.extend([
+                ('vector_fops', float),
+                ('cube_fops', float)
+            ])
         op_summary_dt = np.dtype(self.op_summary_type)
 
         self.op_summary = np.array(op_summary, dtype=op_summary_dt)
