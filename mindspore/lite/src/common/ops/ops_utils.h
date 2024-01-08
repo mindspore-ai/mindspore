@@ -47,7 +47,7 @@ class MSOpsRegistry {
     if (primitive_creators.find(lower_name) != primitive_creators.end()) {
       return primitive_creators[lower_name];
     } else {
-      MS_LOG(WARNING) << "Unsupported primitive type in Create: " << name;
+      MS_LOG(INFO) << "Unsupported primitive type in Create: " << name;
       return nullptr;
     }
   }

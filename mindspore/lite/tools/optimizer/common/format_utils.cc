@@ -382,7 +382,7 @@ int ConvertAbstractFormatShape(const AbstractBasePtr &abstract, FormatTransNodeT
   }
   auto shape_value = abstract->BuildValue();
   if (!shape_value->isa<tensor::Tensor>()) {
-    MS_LOG(WARNING) << "abstract must be a tensor, but got: " << shape_value->ToString() << ".";
+    MS_LOG(INFO) << "abstract must be a tensor, but got: " << shape_value->ToString() << ".";
     return RET_ERROR;
   }
   auto input_tensor = shape_value->cast<tensor::TensorPtr>();

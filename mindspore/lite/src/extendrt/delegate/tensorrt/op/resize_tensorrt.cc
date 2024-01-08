@@ -19,7 +19,6 @@
 #include <algorithm>
 #include <memory>
 #include <unordered_map>
-#include "nnacl/nnacl_common.h"
 #include "ops/resize.h"
 
 namespace mindspore::lite {
@@ -168,52 +167,6 @@ int ResizeTensorRT::SetOutputDims(TensorRTContext *ctx, nvinfer1::ITensor *resiz
     }
   }
   return RET_OK;
-}
-
-void ResizeTensorRT::ParseValueFromShapeTensor(TensorRTContext *ctx, const TensorInfo &shape_value_tensor,
-                                               std::vector<float> *out_shape) {
-  switch (shape_value_tensor.DataType()) {
-    case DataType::kNumberTypeFloat32: {
-      const float *shape_data_fp32 = static_cast<const float *>(shape_value_tensor.Data());
-      for (int64_t i = 0; i < shape_value_tensor.ElementNum(); i++) {
-        out_shape->push_back(*(shape_data_fp32 + i));
-      }
-      if (out_shape->size() == INPUT_SIZE2) {
-        out_shape->insert(out_shape->begin(), 1.f);
-        out_shape->insert(out_shape->end(), 1.f);
-      }
-      break;
-    }
-    case DataType::kNumberTypeFloat16: {
-      const uint16_t *shape_data_fp16 = static_cast<const uint16_t *>(shape_value_tensor.Data());
-      for (int64_t i = 0; i < shape_value_tensor.ElementNum(); i++) {
-        out_shape->push_back(ShortToFloat32(*(shape_data_fp16 + i)));
-      }
-      if (out_shape->size() == INPUT_SIZE2) {
-        out_shape->insert(out_shape->begin(), 1.f);
-        out_shape->insert(out_shape->end(), 1.f);
-      }
-      break;
-    }
-    case DataType::kNumberTypeInt32: {
-      const int *shape_data_int32 = static_cast<const int *>(shape_value_tensor.Data());
-      for (int64_t i = 0; i < shape_value_tensor.ElementNum(); i++) {
-        out_shape->push_back(*(shape_data_int32 + i));
-      }
-      break;
-    }
-    case DataType::kNumberTypeInt64: {
-      auto shape_data_int = static_cast<const int64_t *>(shape_value_tensor.Data());
-      for (int64_t i = 0; i < shape_value_tensor.ElementNum(); i++) {
-        out_shape->push_back(LongToFloat(shape_data_int[i]));
-      }
-      break;
-    }
-    default:
-      MS_LOG(WARNING) << op_name_
-                      << " more datatype need to check: " << static_cast<int>(shape_value_tensor.DataType());
-      break;
-  }
 }
 
 int ResizeTensorRT::SetParams(nvinfer1::IResizeLayer *resize_layer) {

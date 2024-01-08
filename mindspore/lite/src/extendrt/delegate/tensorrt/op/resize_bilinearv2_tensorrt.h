@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,20 +21,20 @@
 #include <map>
 #include <memory>
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_op.h"
-#include "ops/resize.h"
+#include "ops/resize_bilinear_v2.h"
 
 namespace mindspore::lite {
-class ResizeTensorRT : public TensorRTOp {
+class ResizeBilinearV2TensorRT : public TensorRTOp {
  public:
-  ResizeTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
-                 const std::vector<TensorInfo> &out_tensors, std::string name)
+  ResizeBilinearV2TensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                           const std::vector<TensorInfo> &out_tensors, std::string name)
       : TensorRTOp(base_operator, in_tensors, out_tensors, name) {}
 
-  ~ResizeTensorRT() override = default;
+  ~ResizeBilinearV2TensorRT() override = default;
 
   int AddInnerOp(TensorRTContext *ctx) override;
 
-  bool IsWeightInputHanledInner() const override { return true; }
+  // bool IsWeightInputHanledInner() const override { return true; }
 
   int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
                 const std::vector<TensorInfo> &out_tensors) override;
@@ -46,9 +46,7 @@ class ResizeTensorRT : public TensorRTOp {
 
   int SetParams(nvinfer1::IResizeLayer *resize_layer);
 
-  std::shared_ptr<ops::Resize> resize_op_{nullptr};
-  int mask1_[4]{1, 1, 0, 0};
-  int mask2_[4]{0, 0, 0, 0};
+  std::shared_ptr<ops::ResizeBilinearV2> resize_op_{nullptr};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_RESIZE_TENSORRT_H_

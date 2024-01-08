@@ -22,6 +22,7 @@
 #include <functional>
 #include <iomanip>
 #include <algorithm>
+#include "nnacl/nnacl_common.h"
 #include "src/extendrt/delegate/tensorrt/op/cast_plugin.h"
 #include "src/extendrt/delegate/tensorrt/distribution/distribution_collective.h"
 
@@ -927,6 +928,51 @@ nvinfer1::DataType GetNvinferDataType<int>() {
 
 template nvinfer1::DataType GetNvinferDataType<float>();
 template nvinfer1::DataType GetNvinferDataType<int>();
+
+void ParseValueFromShapeTensor(TensorRTContext *ctx, const TensorInfo &shape_value_tensor,
+                               std::vector<float> *out_shape) {
+  switch (shape_value_tensor.DataType()) {
+    case DataType::kNumberTypeFloat32: {
+      const float *shape_data_fp32 = static_cast<const float *>(shape_value_tensor.Data());
+      for (int64_t i = 0; i < shape_value_tensor.ElementNum(); i++) {
+        out_shape->push_back(*(shape_data_fp32 + i));
+      }
+      if (out_shape->size() == DIMENSION_2D) {
+        out_shape->insert(out_shape->begin(), 1.f);
+        out_shape->insert(out_shape->end(), 1.f);
+      }
+      break;
+    }
+    case DataType::kNumberTypeFloat16: {
+      const uint16_t *shape_data_fp16 = static_cast<const uint16_t *>(shape_value_tensor.Data());
+      for (int64_t i = 0; i < shape_value_tensor.ElementNum(); i++) {
+        out_shape->push_back(ShortToFloat32(*(shape_data_fp16 + i)));
+      }
+      if (out_shape->size() == DIMENSION_2D) {
+        out_shape->insert(out_shape->begin(), 1.f);
+        out_shape->insert(out_shape->end(), 1.f);
+      }
+      break;
+    }
+    case DataType::kNumberTypeInt32: {
+      const int *shape_data_int32 = static_cast<const int *>(shape_value_tensor.Data());
+      for (int64_t i = 0; i < shape_value_tensor.ElementNum(); i++) {
+        out_shape->push_back(*(shape_data_int32 + i));
+      }
+      break;
+    }
+    case DataType::kNumberTypeInt64: {
+      auto shape_data_int = static_cast<const int64_t *>(shape_value_tensor.Data());
+      for (int64_t i = 0; i < shape_value_tensor.ElementNum(); i++) {
+        out_shape->push_back(LongToFloat(shape_data_int[i]));
+      }
+      break;
+    }
+    default:
+      MS_LOG(WARNING) << "datatype need to check: " << static_cast<int>(shape_value_tensor.DataType());
+      break;
+  }
+}
 
 #ifdef PROFILER_
 void SimpleProfiler::reportLayerTime(const char *layerName, float ms) noexcept {
