@@ -868,8 +868,15 @@ void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_co
 
   auto addr = tensor->device_address();
   if (addr != nullptr) {
-    MS_LOG(DEBUG) << "Already have device address of tensor " << tensor->id();
-    return;
+    auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(addr);
+    if (device_address->GetDeviceType() == device_context->GetDeviceType()) {
+      MS_LOG(DEBUG) << "Already have device address of tensor " << tensor->id();
+      return;
+    }
+    MS_LOG(DEBUG) << "Input tensor device type is " << device_address->GetDeviceType()
+                  << " but current device context is " << device_context->GetDeviceType();
+    tensor->data_sync();
+    tensor->set_device_address(nullptr);
   }
 
   const auto &format = GetFormatByTensorShape(device_context, tensor->shape());
