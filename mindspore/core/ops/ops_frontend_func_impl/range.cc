@@ -119,7 +119,7 @@ class RangeFrontendFuncImpl final : public OpFrontendFuncImpl {
     auto limit_type = input_args[kIndex1]->GetType()->type_id();
     auto delta_type = input_args[kIndex2]->GetType()->type_id();
     if (start_type != limit_type || start_type != delta_type) {
-      MS_EXCEPTION(TypeError) << "For Rank, "
+      MS_EXCEPTION(TypeError) << "For Range, "
                               << "the dtype of input should all be same, but got: start's type "
                               << TypeIdToString(start_type) << ", limit's type " << TypeIdToString(limit_type)
                               << ", delta's type " << TypeIdToString(delta_type) << ".";

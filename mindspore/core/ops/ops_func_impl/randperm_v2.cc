@@ -105,7 +105,15 @@ BaseShapePtr RandpermV2FuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr RandpermV2FuncImpl::InferType(const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) const {
+  auto prim_name = primitive->name();
+  auto n_type = input_args[kInputIndex0]->GetType();
+  std::set<TypePtr> n_valid_types{kInt64};
+  (void)CheckAndConvertUtils::CheckTypeValid("n", n_type, n_valid_types, prim_name);
+
   auto dtype = GetValue<int64_t>(input_args[kInputIndex3]->GetValue());
-  return mindspore::TypeIdToType(static_cast<TypeId>(dtype));
+  auto output_type = mindspore::TypeIdToType(static_cast<TypeId>(dtype));
+  const std::set<TypePtr> output_valid_types = {kInt32, kInt64, kInt16, kInt8, kUInt8, kFloat16, kFloat32, kFloat64};
+  (void)CheckAndConvertUtils::CheckSubClass("dtype", output_type, output_valid_types, prim_name);
+  return output_type;
 }
 }  // namespace mindspore::ops

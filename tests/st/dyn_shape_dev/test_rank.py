@@ -68,3 +68,33 @@ def test_rank_backward(mode):
     output = rank_backward_func(x)
     expect_output = np.array([[0, 0], [0, 0]]).astype(np.float32)
     np.testing.assert_allclose(output.asnumpy(), expect_output)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_rank_dynamic(mode):
+    """
+    Feature: rank ops.
+    Description: test dynamic tensor rank.
+    Expectation: output the right rank of a tensor.
+    """
+    context.set_context(mode=mode)
+    x_dyn = Tensor(shape=None, dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(ops.operations.manually_defined.rank)
+    test_cell.set_inputs(x_dyn)
+    x1 = Tensor(np.array([[2, 2],
+                          [2, 2]]).astype(np.float32))
+    output1 = test_cell(x1)
+    expect_output1 = 2
+    np.testing.assert_equal(output1, expect_output1)
+    x2 = Tensor(np.array([[[1, 2],
+                           [3, 4]],
+                          [[5, 6],
+                           [7, 8]]]).astype(np.float32))
+    output2 = test_cell(x2)
+    expect_output2 = 3
+    np.testing.assert_equal(output2, expect_output2)

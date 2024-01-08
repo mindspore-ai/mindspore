@@ -74,3 +74,38 @@ def test_prelu_backward(mode):
     x = Tensor(np.arange(-6, 6).reshape((2, 3, 2)).astype(np.float32))
     weight = Tensor(np.array([0.1, 0.6, -0.3]).astype(np.float32))
     output = prelu_backward_func(x, weight)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_prelu_dynamic(mode):
+    """
+    Feature: prelu ops.
+    Description: test ops prelu dynamic tensor input.
+    Expectation: output right results.
+    """
+    context.set_context(mode=mode)
+    x_dyn = Tensor(shape=None, dtype=ms.float32)
+    weight_dyn = Tensor(shape=None, dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(ops.auto_generate.prelu)
+    test_cell.set_inputs(x_dyn, weight_dyn)
+    x1 = Tensor(np.arange(-6, 6).reshape((2, 3, 2)).astype(np.float32))
+    weight1 = Tensor(np.array([0.1, 0.6, -0.3]).astype(np.float32))
+    output1 = test_cell(x1, weight1)
+    expect_output1 = np.array([[[-0.6, -0.5],
+                                [-2.4, -1.8],
+                                [0.6, 0.3]],
+                               [[0., 1.],
+                                [2., 3.],
+                                [4., 5.]]]).astype(np.float32)
+    np.testing.assert_array_almost_equal(output1.asnumpy(), expect_output1, decimal=4)
+    x2 = Tensor(np.arange(-4, 0).reshape((2, 2)).astype(np.float32))
+    weight2 = Tensor(np.array([0.4, -0.5]).astype(np.float32))
+    output2 = test_cell(x2, weight2)
+    expect_output2 = np.array([[-1.6, 1.5],
+                               [-0.8, 0.5]]).astype(np.float32)
+    np.testing.assert_array_almost_equal(output2.asnumpy(), expect_output2, decimal=4)

@@ -12,7 +12,7 @@ reciprocal:
 
         Returns:
             Tensor, has the same shape as the `x`.
-        
+
         Raises:
             TypeError: If `x` is not a Tensor.
 
@@ -24,7 +24,6 @@ reciprocal:
             >>> import mindspore.ops as ops
             >>> import numpy as np
             >>> input = ms.Tensor(np.array([1.0, 2.0, 4.0]), ms.float32)
-            >>> reciprocal = ops.Reciprocal()
-            >>> output = reciprocal(input)
+            >>> output = ops.reciprocal_(input)
             >>> print(output)
             [1.   0.5  0.25]

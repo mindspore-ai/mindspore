@@ -35,7 +35,7 @@ def real_backward_func(x):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_func
 def test_real_forward(mode):
     """
@@ -54,8 +54,8 @@ def test_real_forward(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-# @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_func
 def test_real_backward(mode):
     """
@@ -68,3 +68,31 @@ def test_real_backward(mode):
     output = real_backward_func(x)
     expect_output = np.asarray(np.complex(1. + 0j)).astype(np.complex64)
     np.testing.assert_equal(output.asnumpy(), expect_output)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_real_dynamic(mode):
+    """
+    Feature: real ops.
+    Description: test ops real dynamic tensor input.
+    Expectation: output the real part of the input.
+    """
+    context.set_context(mode=mode)
+    x_dyn = Tensor(shape=None, dtype=ms.complex64)
+    test_cell = test_utils.to_cell_obj(ops.auto_generate.real)
+    test_cell.set_inputs(x_dyn)
+    x1 = Tensor(np.asarray(np.complex(1.3 + 0.4j)).astype(np.complex64))
+    output1 = test_cell(x1)
+    expect_output1 = np.asarray(1.3).astype(np.float32)
+    np.testing.assert_equal(output1.asnumpy(), expect_output1)
+    x2 = Tensor(np.asarray([[np.complex(1.4 + 0.4j), np.complex(2.5 + 0.6j)],
+                            [np.complex(3.6 + 0.7j), np.complex(4.7 + 0.8j)]]).astype(np.complex64))
+    output2 = test_cell(x2)
+    expect_output2 = np.asarray([[1.4, 2.5],
+                                 [3.6, 4.7]]).astype(np.float32)
+    np.testing.assert_equal(output2.asnumpy(), expect_output2)
