@@ -40,6 +40,7 @@
 #include "plugin/device/ascend/optimizer/ge/unfold_nested_output.h"
 #include "plugin/device/ascend/optimizer/ge/resize_bilinear_add_attr.h"
 #include "plugin/device/ascend/optimizer/format_type/deal_ref_output.h"
+#include "plugin/device/ascend/optimizer/ge/hcom/insert_load_for_allgather.h"
 #include "plugin/device/ascend/optimizer/format_type/set_fracz_group_attr.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_cast.h"
 #include "plugin/device/ascend/optimizer/mindir/aicpu_lib_select.h"
@@ -77,6 +78,7 @@ void GEBackendOptimization(const KernelGraphPtr &kernel_graph) {
   opt_ge_pm->AddPass(std::make_shared<opt::ConvertConstInputToTensorInput>());
   opt_ge_pm->AddPass(std::make_shared<opt::RemoveTensorToScalarOrTupleOps>());
   opt_ge_pm->AddPass(std::make_shared<opt::AllToAllvForGE>());
+  opt_ge_pm->AddPass(std::make_shared<opt::InsertLoadForAllGather>());
   opt_ge_pm->AddPass(std::make_shared<opt::AddDependForAllGather>());
   opt_ge_pm->AddPass(std::make_shared<opt::ConvertCondInputToScalar>());
   opt_ge_pm->AddPass(std::make_shared<opt::ConvertDataDependToControlDepend>());
