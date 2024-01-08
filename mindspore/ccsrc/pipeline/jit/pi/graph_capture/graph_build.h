@@ -181,8 +181,6 @@ class GraphBuilder {
   InstrNode *NewInstrNode(int op, int arg);
   Graph *NewGraph(PyCodeObject *co, PyObject *f_globals);
 
-  void ProcessGetItem(const Instr &instr, ValueNode *l, ValueNode *r);
-
   bool TraceRunForIterSequence(int jump_bci);
   bool TraceRunForIterEnumerate(int jump_bci);
   bool TraceRunForIterZip(int jump_bci);
@@ -198,6 +196,7 @@ class GraphBuilder {
   bool DoCellAccess(const Instr &instr);
   bool DoGlobalAccess(const Instr &instr);
   bool DoAttrAccess(const Instr &instr);
+  bool DoGetItem(const Instr &instr);
   bool DoItemAccess(const Instr &instr);
   bool DoStackOp(const Instr &instr);
   bool DoLoadConst(const Instr &instr);

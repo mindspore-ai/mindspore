@@ -664,60 +664,55 @@ static ValueNode *TupleDictItemAccess(ValueNode *container, ValueNode *index) {
   return nullptr;
 }
 
-void GraphBuilder::ProcessGetItem(const Instr &instr, ValueNode *l, ValueNode *r) {
+bool GraphBuilder::DoGetItem(const Instr &instr) {
+  auto r = pop();
+  auto l = pop();
   ValueNode *v = TupleDictItemAccess(l, r);
-  if (v == nullptr) {
-    AObject *vo_l = l->GetVobj();
-    if (vo_l && (vo_l->GetType() == AObject::kTypeAnyValue || vo_l->GetType() == AObject::kTypeCell) &&
-        vo_l->GetAttr("__getitem__")->GetType() == AObject::kTypeBoundMethod) {
-      PyObject *po = vo_l->GetAttr("__getitem__")->GetPyObject().ptr();
-      if (vo_l->GetType() == AObject::kTypeCell) {
-        PyObject *res = PyObject_CallOneArg(po, r->GetVobj()->GetPyObject().ptr());
-        AObject *vo = AObject::Convert(res);
-        v = NewValueNode(vo, instr, {l, r});
-        push(v);
-        if (res) {
-          Py_DECREF(res);
-        }
-      } else {
-        if (po && PyFunction_Check(PyMethod_GET_FUNCTION(po))) {
-          ValueNode *v1 = NewValueNode(vo_l->GetAttr("__getitem__"), LOAD_ATTR, 0, {l});
-          v1->SetName("__getitem__");
-          graph_->GetTracedNodes().push_back(v1);
-          v = NewValueNode(nullptr, CALL_FUNCTION, 2, {v1, r});
-          CallNode *n = static_cast<CallNode *>(v);
-          v->SetName(instr.name().c_str());
-          v->SetLineNo(instr.line());
-          v->set_bci(instr.bci());
-          graph_->GetTracedNodes().push_back(v);
-          push(v);
-          StopTraceReason ret = HandleCall(0);
-          if (StopTraceReason::kNonStopTrace == ret) {
-            seek(0) = n->GetSubGraph() ? n->GetSubGraph()->GetRetVal() : n;
-          }
-        } else {
-          AObject *vo = l->binary_subscr(r);
-          v = NewValueNode(vo, instr, {l, r});
-          push(v);
-        }
-      }
-    } else {
-      AObject *vo = l->binary_subscr(r);
-      v = NewValueNode(vo, instr, {l, r});
-      push(v);
-    }
-  } else {
+  if (v != nullptr) {
     push(v);
+    return true;
   }
+
+  AObject *container = l->GetVobj();
+  PyObject *op = container ? container->GetPyObject().ptr() : nullptr;
+  AObject *meth = nullptr;
+
+  bool call_getitem = op == nullptr || container->GetType() != AObject::kTypeAnyValue;
+  if (!call_getitem) {
+    call_getitem = PyDict_Check(op) || PyTuple_Check(op) || PyList_Check(op);
+  }
+  if (!call_getitem) {
+    meth = container->GetAttr("__getitem__");
+    PyObject *m = meth ? meth->GetPyObject().ptr() : nullptr;
+    call_getitem = m == nullptr || !PyMethod_Check(m) || !PyFunction_Check(PyMethod_GET_FUNCTION(m));
+  }
+  if (call_getitem) {
+    /**
+     * TODO:
+     * check safe callable of __getitem__ if user defined.
+     */
+    AObject *vo = l->binary_subscr(r);
+    v = NewValueNode(vo, instr, {l, r});
+    push(v);
+    return true;
+  }
+
+  ValueNode *meth_node = NewValueNode(meth, LOAD_ATTR, 0, {l});
+  meth_node->SetName("__getitem__");
+  ValueNode *call_node = NewValueNode(AObject::MakeAObject(AObject::kTypeAnyValue), CALL_FUNCTION, 1, {meth_node, r});
+  this->graph_->GetTracedNodes().push_back(meth_node);
+  this->graph_->GetTracedNodes().push_back(call_node);
+  push(call_node);
+
+  (void)HandleCall(0);
+  return true;
 }
 
 bool GraphBuilder::DoItemAccess(const Instr &instr) {
   int opcode = instr.op();
   switch (opcode) {
     case BINARY_SUBSCR: {
-      auto r = pop();
-      auto l = pop();
-      ProcessGetItem(instr, l, r);
+      DoGetItem(instr);
       break;
     }
     case STORE_SUBSCR: {
