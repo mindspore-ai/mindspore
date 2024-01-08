@@ -172,6 +172,10 @@ bool IrExportBuilder::BuildPrimitives() {
       if (iter != g_export_attr_blacklist.end()) {
         continue;
       }
+      if (attr.second == nullptr) {
+        MS_LOG(ERROR) << "attr: " << attr.first << " has no value.";
+        continue;
+      }
       mind_ir::AttributeProto *attr_proto = prim_proto->add_attribute();
       attr_proto->set_name(attr.first);
       auto attr_value = attr.second;
@@ -395,6 +399,10 @@ bool IrExportBuilder::BuildFuncGraphAttrs(const FuncGraphPtr &func_graph, mind_i
     if (iter != g_export_attr_blacklist.end()) {
       continue;
     }
+    if (attr.second == nullptr) {
+      MS_LOG(ERROR) << "attr: " << attr.first << " has no value.";
+      continue;
+    }
     mind_ir::AttributeProto *attr_proto = graph_proto->add_attribute();
     attr_proto->set_name(attr.first);
     if (!SetValueToAttributeProto(attr.second, attr_proto)) {
@@ -485,6 +493,10 @@ bool IrExportBuilder::SetQuantizationParamToAttrProto(const std::shared_ptr<Quan
   quant_param_proto->set_quant_algo_name(quantization_param->quant_algo_name());
   auto quant_param_attrs = quantization_param->attrs();
   for (auto &quant_param_attr : quant_param_attrs) {
+    if (quant_param_attr.second == nullptr) {
+      MS_LOG(ERROR) << "attr: " << quant_param_attr.first << " has no value.";
+      continue;
+    }
     auto attr_proto = quant_param_proto->add_attribute();
     attr_proto->set_name(quant_param_attr.first);
     auto value_ptr = quant_param_attr.second;
@@ -785,6 +797,7 @@ bool IrExportBuilder::ConvertAbstractMapTensorToAttrProto(const AbstractBasePtr 
   auto key_tensor_abs = std::make_shared<abstract::AbstractTensor>(key_dtype, key_shape);
   auto *key_tensor_proto = attr_proto->add_tensors();
   MS_EXCEPTION_IF_NULL(key_tensor_proto);
+  MS_EXCEPTION_IF_NULL(key_tensor_abs);
   if (!SetTensorProto(key_tensor_abs, key_tensor_proto)) {
     MS_LOG(ERROR) << "Export key tensor abstract of AbstractMapTensor failed, abstract_map_tensor: "
                   << abstract->ToString();
@@ -796,6 +809,7 @@ bool IrExportBuilder::ConvertAbstractMapTensorToAttrProto(const AbstractBasePtr 
   auto value_tensor_abs = std::make_shared<abstract::AbstractTensor>(value_dtype, value_shape);
   auto *value_tensor_proto = attr_proto->add_tensors();
   MS_EXCEPTION_IF_NULL(value_tensor_proto);
+  MS_EXCEPTION_IF_NULL(value_tensor_abs);
   if (!SetTensorProto(value_tensor_abs, value_tensor_proto)) {
     MS_LOG(ERROR) << "Export value tensor abstract of AbstractMapTensor failed, abstract_map_tensor: "
                   << abstract->ToString();
@@ -803,11 +817,14 @@ bool IrExportBuilder::ConvertAbstractMapTensorToAttrProto(const AbstractBasePtr 
   }
   // default_value
   auto default_value = map_tensor_abs->default_value();
-  auto *default_value_proto = attr_proto->add_values();
-  MS_EXCEPTION_IF_NULL(default_value_proto);
-  if (!SetValueToAttributeProto(default_value, default_value_proto)) {
-    MS_LOG(ERROR) << "Export default value of AbstractMapTensor failed, abstract_map_tensor: " << abstract->ToString();
-    return false;
+  if (default_value != nullptr) {
+    auto *default_value_proto = attr_proto->add_values();
+    MS_EXCEPTION_IF_NULL(default_value_proto);
+    if (!SetValueToAttributeProto(default_value, default_value_proto)) {
+      MS_LOG(ERROR) << "Export default value of AbstractMapTensor failed, abstract_map_tensor: "
+                    << abstract->ToString();
+      return false;
+    }
   }
   return true;
 }
@@ -1257,6 +1274,7 @@ bool IrExportBuilder::SetAttributeProto(const AnfNodePtr &node, mind_ir::NodePro
   auto value_node = node->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(value_node);
   auto value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
   node_proto->set_op_type("Constant");
   mind_ir::AttributeProto *attr_proto = node_proto->add_attribute();
   attr_proto->set_name("value");
@@ -1366,7 +1384,10 @@ bool IrExportBuilder::SetNamedValueToAttributeProto(const ValuePtr &value,
 }
 
 bool IrExportBuilder::SetValueToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) {
-  MS_EXCEPTION_IF_NULL(value);
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "Value is null.";
+    return false;
+  }
   MS_EXCEPTION_IF_NULL(attr_proto);
   if (value->isa<StringImm>() || value->isa<Scalar>()) {
     return SetScalarToAttributeProto_ir(value, attr_proto);
@@ -1688,6 +1709,10 @@ bool IrExportBuilder::SetDictToAttributeProto(const ValueDictionaryPtr &value_di
 
 bool IrExportBuilder::BuildCNodeAttr(const CNodePtr &node, mind_ir::NodeProto *const node_proto) {
   for (const auto &attr : node->attrs()) {
+    if (attr.second == nullptr) {
+      MS_LOG(ERROR) << "attr: " << attr.first << " has no value.";
+      continue;
+    }
     mind_ir::AttributeProto *attr_proto = node_proto->add_node_attr();
     attr_proto->set_name(attr.first);
     if (!SetValueToAttributeProto(attr.second, attr_proto)) {
@@ -1698,6 +1723,10 @@ bool IrExportBuilder::BuildCNodeAttr(const CNodePtr &node, mind_ir::NodeProto *c
   }
 
   for (const auto &attr : node->primal_attrs()) {
+    if (attr.second == nullptr) {
+      MS_LOG(ERROR) << "attr: " << attr.first << " has no value.";
+      continue;
+    }
     mind_ir::AttributeProto *attr_proto = node_proto->add_primal_attr();
     attr_proto->set_name(attr.first);
     if (!SetValueToAttributeProto(attr.second, attr_proto)) {
