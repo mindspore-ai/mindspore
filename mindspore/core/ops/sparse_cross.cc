@@ -170,10 +170,47 @@ abstract::TupleShapePtr SparseCrossInferShape(const PrimitivePtr &primitive,
     indices_row = indices_row + nnz[r];
   }
 
-  auto out_indices_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny, rank}),
-                                                             ShapeVector({indices_row, rank}));
-  auto out_value_shape =
-    std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}), ShapeVector({indices_row}));
+  auto out_indices_shape = std::make_shared<abstract::Shape>(ShapeVector({indices_row, rank}));
+  auto out_value_shape = std::make_shared<abstract::Shape>(ShapeVector({indices_row}));
+  auto out_shape_shape = std::make_shared<abstract::Shape>(ShapeVector({rank}));
+  return std::make_shared<abstract::TupleShape>(
+    std::vector<abstract::BaseShapePtr>{out_indices_shape, out_value_shape, out_shape_shape});
+}
+
+abstract::TupleShapePtr SparseCrossFrontendInferShape(const PrimitivePtr &primitive,
+                                                      const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  if (!SparseCrossCheckShape(primitive, input_args)) {
+    auto out_indices_shape =
+      std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny}));
+    auto out_value_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}));
+    auto out_shape_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}));
+
+    return std::make_shared<abstract::TupleShape>(
+      std::vector<abstract::BaseShapePtr>{out_indices_shape, out_value_shape, out_shape_shape});
+  }
+  auto inputs_indices_shapes1 = GetCrossSequenceShapes(primitive, input_args[kSparseCrossInputIndicesStart]);
+  auto indices_element0_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices_shapes1[0])[kShape];
+  auto inputs_dense_shapes1 = GetCrossSequenceShapes(primitive, input_args[kSparseCrossInputDenseStart]);
+  auto inputs_shape_shapes1 = GetCrossSequenceShapes(primitive, input_args[kSparseCrossInputShapeStart]);
+  auto shape_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_shape_shapes1[0])[kShape];
+  int64_t rank = indices_element0_shape1[1];
+  int64_t indices_row = 0;
+  std::vector<int64_t> nnz(shape_shape1[0], 1);
+  for (uint32_t r = 0; r < shape_shape1[0]; r++) {
+    for (unsigned int i = 0; i < inputs_indices_shapes1.size(); i++) {
+      auto indices_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices_shapes1[i])[kShape];
+      nnz[r] = nnz[r] * indices_shape2[0];
+    }
+    for (uint32_t i = 0; i < inputs_dense_shapes1.size(); i++) {
+      auto denses_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_dense_shapes1[i])[kShape];
+      nnz[r] = nnz[r] * denses_shape2[1];
+    }
+    indices_row = indices_row + nnz[r];
+  }
+
+  auto out_indices_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny, rank}));
+  auto out_value_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}));
   auto out_shape_shape = std::make_shared<abstract::Shape>(ShapeVector({rank}));
   return std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>{out_indices_shape, out_value_shape, out_shape_shape});
@@ -200,7 +237,7 @@ AbstractBasePtr SparseCrossInfer(const abstract::AnalysisEnginePtr &, const Prim
   const int64_t kInputsNum = 4;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputsNum, primitive->name());
   auto infer_type = SparseCrossInferType(primitive, input_args);
-  auto infer_shape = SparseCrossInferShape(primitive, input_args);
+  auto infer_shape = SparseCrossFrontendInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 MIND_API_OPERATOR_IMPL(SparseCross, BaseOperator);
