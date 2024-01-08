@@ -46,3 +46,30 @@ def test_cond(mode):
     output = net(x)
     expect_output = np.array(1.4142)
     assert np.allclose(output.asnumpy(), expect_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_cond_4d(mode):
+    """
+    Feature: cond
+    Description: Verify the result of cond
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+    net = Net()
+    x = Tensor([[[[0.59469778, 0.22015922],
+                  [0.69863667, 0.70537429]],
+                 [[0.16839681, 0.72470992],
+                  [0.29759212, 0.14389902]]],
+                [[[0.47768186, 0.07188184],
+                  [0.9755139, 0.36467102]],
+                 [[0.01699958, 0.30675664],
+                  [0.70047389, 0.55853604]]]])
+    output = net(x)
+    expect_output = np.array([[5.024622, 3.144386], [12.584087, 4.1251683]])
+    assert np.allclose(output.asnumpy(), expect_output)
