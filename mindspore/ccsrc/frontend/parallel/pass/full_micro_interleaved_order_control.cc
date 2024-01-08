@@ -266,8 +266,18 @@ void MicroInterleavedOrderControl(const FuncGraphManagerPtr &manager,
     CreateExtraGroupForModelParallelCommNode(origin_nodes_topological, micro_interleaved_forward_node_list);
     CreateExtraGroupForModelParallelCommNode(origin_nodes_topological, micro_interleaved_backward_node_list);
   }
-  InsertInterleavedNodesDepend(manager, micro_interleaved_forward_node_list);
-  InsertInterleavedNodesDepend(manager, micro_interleaved_backward_node_list);
+  auto interleaved_level = 3;
+  auto interleaved_level_str = common::GetEnv("MS_DEV_INTERLEAVED_LEVEL");
+  if (!interleaved_level_str.empty()) {
+    interleaved_level = std::stoi(interleaved_level_str);
+    MS_LOG(INFO) << "MS_DEV_INTERLEAVED_LEVEL: " << interleaved_level;
+  }
+  if (interleaved_level == 1 || interleaved_level == 3) {
+    InsertInterleavedNodesDepend(manager, micro_interleaved_forward_node_list);
+  }
+  if (interleaved_level == 2 || interleaved_level == 3) {
+    InsertInterleavedNodesDepend(manager, micro_interleaved_backward_node_list);
+  }
 }
 
 void MicroInterleavedOrderControlPipeline(const FuncGraphManagerPtr &manager,

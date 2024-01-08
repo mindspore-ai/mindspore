@@ -492,6 +492,8 @@ constexpr const char kNameEnvironCreate[] = "EnvironCreate";
 constexpr const char kNameEnvironDestroyAll[] = "EnvironDestroyAll";
 constexpr const char kNameEnvironGet[] = "EnvironGet";
 constexpr const char kNameEnvironSet[] = "EnvironSet";
+constexpr const char kNameMatmulReduceScatter[] = "MatmulReduceScatter";
+constexpr const char kNameAllGatherMatmul[] = "AllGatherMatmul";
 
 class OpAdapterDesc;
 
