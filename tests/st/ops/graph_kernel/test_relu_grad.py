@@ -57,7 +57,7 @@ def test_relu_grad_gpu():
     test_relu_grad((12, 1), (12, 1), np.float16)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

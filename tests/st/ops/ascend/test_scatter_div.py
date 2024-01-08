@@ -95,7 +95,7 @@ def test_scattre_div_forward_float16():
     scattre_div_forward(np.float16, expected)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

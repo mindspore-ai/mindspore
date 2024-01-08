@@ -265,7 +265,7 @@ def error_case_wrong_intput():
     assert value == 1
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_coo_concat_error_case():

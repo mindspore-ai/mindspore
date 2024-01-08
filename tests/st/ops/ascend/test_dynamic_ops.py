@@ -283,7 +283,7 @@ def test_dynamic_dropout():
     assert gradients[0][0].shape == (batch_size, 49, 256)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -306,7 +306,7 @@ def test_dynamic_reducesum1():
     assert gradients[0][0].shape == (batch_size, 49, 51)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -331,7 +331,7 @@ def test_dynamic_reducesum2():
     assert compare(gradients, gradients_cmp)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -409,7 +409,7 @@ def test_tensor_shape_value_infer():
     assert res == ((64, 16, -1), (32, 32, -1))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -473,7 +473,7 @@ def test_dynamic_square_sum_all():
     assert compare(out, out_expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.parametrize('dtype', [np.float32])
@@ -491,7 +491,7 @@ def test_dynamic_hswish(dtype):
     common_func(dynamic_range, input_shape, dtype, net)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

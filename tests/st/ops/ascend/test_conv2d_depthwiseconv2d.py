@@ -25,7 +25,7 @@ from mindspore import Tensor
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -36,7 +36,7 @@ def test_conv2d_depthwiseconv2d_str():
     assert output.shape == (3, 128, 32, 28)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -47,7 +47,7 @@ def test_conv2d_depthwiseconv2d_initializer():
     assert output.shape == (3, 128, 32, 28)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard

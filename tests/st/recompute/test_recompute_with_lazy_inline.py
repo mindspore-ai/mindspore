@@ -62,7 +62,7 @@ def test_recompute_cell_recompute():
     run_testcase("test_recompute_block_recompute", 34)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard

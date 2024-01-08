@@ -126,7 +126,7 @@ def op_network_with_step_num(dataset, step_num):
     return op_network_with_epoch(net_with_dataset, step_num)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

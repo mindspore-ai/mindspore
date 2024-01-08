@@ -483,7 +483,7 @@ def test_pynative_resnet50_with_env(queue, device_id, device_num):
     queue.put(good_steps)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_single
 def test_pynative_resnet50_8p():

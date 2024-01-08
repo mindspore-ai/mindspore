@@ -81,7 +81,7 @@ def compute_func(ms_net, np_net, is_dyn=False):
     assert np.all(out2.asnumpy() == np2)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -96,7 +96,7 @@ def test_adam_apply_one_dyn():
     compute_func(ms_net, np_net, True)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

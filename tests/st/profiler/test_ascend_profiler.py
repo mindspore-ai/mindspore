@@ -135,7 +135,7 @@ def test_ascend_pynative_profiling():
         assert len(glob.glob(f"{tmpdir}/profiler*/ascend_timeline_display_*.json")) == 1
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

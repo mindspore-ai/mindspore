@@ -31,7 +31,7 @@ def test_level0_ascend_cases():
     case_register.check_and_run("Ascend", 0)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_level0_gpu_cases():

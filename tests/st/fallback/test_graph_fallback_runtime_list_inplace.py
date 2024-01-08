@@ -904,7 +904,7 @@ def test_list_inplace_with_all_str_2():
     assert global_tuple_with_list_all_str == (['a', 'b', 'c', 'd', 'e'], 1, 2)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -928,7 +928,7 @@ def test_list_in_joined_str():
     assert "The input is [1, 2, 3]" in str(raise_info.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -949,7 +949,7 @@ def test_list_in_joined_str_2():
            in str(raise_info.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -970,7 +970,7 @@ def test_list_in_joined_str_3():
            " Tensor(shape=[1], dtype=Int64, value= [2])])" in str(raise_info.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -1267,7 +1267,7 @@ def test_list_inplace_with_attribute_of_jit_class():
     assert id(x) == id(ret)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -1297,7 +1297,7 @@ def test_list_inplace_with_attribute_of_jit_class_2():
     assert x == [4, 3, 2, 1]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

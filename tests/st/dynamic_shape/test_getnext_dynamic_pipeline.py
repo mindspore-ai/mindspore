@@ -74,7 +74,7 @@ class Net(nn.Cell):
         return x1, x2, x3, x4, x5
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -124,7 +124,7 @@ def test_getnext_sink_size_dynamic_pipeline():
         for output, (_, last_input) in zip(outputs, last_inputs):
             assert output.shape == last_input.shape
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

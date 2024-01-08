@@ -329,7 +329,7 @@ def encrypt_func(model_stream, key):
     return plain_data.getvalue()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -343,7 +343,7 @@ def test_export_resnet_air():
     os.remove(file_name)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard

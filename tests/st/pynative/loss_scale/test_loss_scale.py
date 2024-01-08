@@ -168,7 +168,7 @@ def test_loss_scale_fp16_lr_overflow():
     assert output_1[0].asnumpy() == output_2[0].asnumpy()
     assert output_1[1].asnumpy() == output_2[1].asnumpy() == True
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

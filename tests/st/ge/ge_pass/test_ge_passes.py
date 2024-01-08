@@ -16,7 +16,7 @@ import pytest
 import tests.st.ge.ge_test_utils as utils
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -28,7 +28,7 @@ def test_avg_pool_grad():
     utils.run_testcase('pass_avg_pool_grad')
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -87,7 +87,7 @@ def test_convert_resize_nearest_neighbor_x_dtype():
     """
     utils.run_testcase('pass_convert_resize_nearest_neighbor_x_dtype')
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

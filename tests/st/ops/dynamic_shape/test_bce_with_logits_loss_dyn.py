@@ -61,7 +61,7 @@ def test_bce_mean_dyn_ascend():
     net_run()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

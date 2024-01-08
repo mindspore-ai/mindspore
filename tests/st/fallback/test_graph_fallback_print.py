@@ -67,7 +67,7 @@ def check_output(output, patterns):
 
 
 @security_off_wrap
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -95,7 +95,7 @@ def test_np_print_1():
 
 
 @security_off_wrap
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -152,7 +152,7 @@ def test_tensor_print_1():
 
 
 @security_off_wrap
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -182,7 +182,7 @@ def test_print_cnode_1():
 
 
 @security_off_wrap
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -212,7 +212,7 @@ def test_print_cnode_2():
 
 
 @security_off_wrap
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -242,7 +242,7 @@ def test_print_cnode_3():
 
 
 @security_off_wrap
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -269,7 +269,7 @@ def test_print_validate_tuple():
 
 
 @security_off_wrap
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

@@ -595,7 +595,7 @@ class FusedSparseFtrlNet(nn.Cell):
         return self.var, self.accum, self.linear
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -631,7 +631,7 @@ class FusedSparseLazyAdamNet(nn.Cell):
         return self.var, self.m, self.v
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -673,7 +673,7 @@ class FusedSparseProximalAdagradNet(nn.Cell):
         return self.var, self.accum
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

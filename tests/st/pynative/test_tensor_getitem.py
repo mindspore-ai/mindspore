@@ -731,7 +731,7 @@ class TensorSetItemByTensorsWithTupleOfTensor(Cell):
         return ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 # GPU op has bug, and has not been fixed.

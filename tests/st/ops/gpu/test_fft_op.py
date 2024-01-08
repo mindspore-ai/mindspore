@@ -273,7 +273,7 @@ def test_fft_ifft_circle_call(dynamic, rank, norm, dtype_r, dtype_c):
     assert np.allclose(ms_x.asnumpy(), ms_y.asnumpy(), atol=atol)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("dynamic", [False, True])

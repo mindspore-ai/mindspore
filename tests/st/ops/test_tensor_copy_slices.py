@@ -96,7 +96,7 @@ def test_tensor_copy_slices_bprop():
     assert np.allclose(grad_output[0].asnumpy(), np.array([2.0]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -105,7 +105,7 @@ def test_tensor_copy_slices_ascend_graph():
     test_tensor_copy_slices()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

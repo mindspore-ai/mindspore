@@ -55,7 +55,7 @@ def test_softmax_gpu():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     test_softmax([4, 32, 48], np.float32)
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
