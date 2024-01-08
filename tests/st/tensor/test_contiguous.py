@@ -49,18 +49,19 @@ def test_contiguous(mode):
     assert np.allclose(x.asnumpy(), expect_output)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_contiguous_pynative():
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_contiguous_pynative_and_graph(mode):
     """
     Feature: countiguous
     Description: Verify the result of x
     Expectation: success
     """
-    ms.set_context(mode=ms.PYNATIVE_MODE)
+    ms.set_context(mode=mode)
     x = ms.Tensor([[1, 2, 3], [4, 5, 6]], dtype=ms.float32)
     y = ops.transpose(x, (1, 0))
     y.contiguous()
