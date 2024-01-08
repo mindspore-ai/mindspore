@@ -119,13 +119,38 @@ void CoalesceGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTens
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "Coalesce cudaStreamSynchronized failed");
   auto dyn_out = helper_ptr_->GetOutputTensorInfo();
   size_t output_num = outputs.size();
-  for (size_t i = 0; i < output_num; ++i) {
-    std::vector<int64_t> shape = outputs[i]->GetShapeVector();
-    std::replace(std::begin(shape), std::end(shape), -1, dyn_out.shapes[0][0]);
-    outputs[i]->SetShapeVector(std::vector<int64_t>(shape.begin(), shape.end()));
-    outputs[i]->set_size(LongToSize(std::accumulate(shape.begin(), shape.end(), UnitSizeInBytes(outputs[i]->dtype_id()),
-                                                    std::multiplies<int64_t>())));
+  constexpr auto expect_out_num = 3;
+  if (output_num != expect_out_num) {
+    MS_LOG(EXCEPTION) << "Unexpected output num: " << output_num;
   }
+
+  // update output0
+  auto out0_shape = outputs[0]->GetShapeVector();
+  constexpr auto kOut0Rank = 2;
+  if (out0_shape.size() < kOut0Rank) {
+    MS_LOG(EXCEPTION) << "Unexpected output0 shape size: " << out0_shape.size()
+                      << ", shape: " << mindspore::ToString(out0_shape);
+  }
+  outputs[0]->set_size(LongToSize(std::accumulate(
+    out0_shape.begin(), out0_shape.end(), UnitSizeInBytes(outputs[0]->dtype_id()), std::multiplies<int64_t>())));
+  out0_shape[1] = dyn_out.shapes[0][0];
+  outputs[0]->SetShapeVector(out0_shape);
+
+  // update output1
+  auto out1_shape = outputs[1]->GetShapeVector();
+  if (out1_shape.empty()) {
+    MS_LOG(EXCEPTION) << "Unexpected output1 shape size: " << out1_shape.size()
+                      << ", shape: " << mindspore::ToString(out1_shape);
+  }
+  out1_shape[0] = dyn_out.shapes[0][0];
+  outputs[1]->set_size(LongToSize(std::accumulate(
+    out1_shape.begin(), out1_shape.end(), UnitSizeInBytes(outputs[1]->dtype_id()), std::multiplies<int64_t>())));
+  outputs[1]->SetShapeVector(out1_shape);
+
+  // cal output3 size
+  auto out2_shape = outputs[2]->GetShapeVector();
+  outputs[2]->set_size(LongToSize(std::accumulate(
+    out2_shape.begin(), out2_shape.end(), UnitSizeInBytes(outputs[2]->dtype_id()), std::multiplies<int64_t>())));
 }
 
 std::vector<KernelAttr> CoalesceGpuKernelMod::GetOpSupport() {
