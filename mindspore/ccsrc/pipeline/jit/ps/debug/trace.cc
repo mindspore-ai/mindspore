@@ -528,23 +528,34 @@ void PrintMessage(std::ostringstream &oss, const std::string &content, bool add_
 }
 
 void GetTraceStackInfo(std::ostringstream &oss, bool add_title) {
-  TraceGraphEval();
-  std::ostringstream trace_info;
-  StaticAnalysisException::Instance().AppendMsg(oss.str());
-  GetEvalStackInfo(trace_info);
-  if (trace_info.str().empty()) {
-    const DebugInfoPtr &debug_info = TraceManager::parser_debug_info();
-    if (debug_info != nullptr && TraceManager::parser_debug_info_flag() == true) {
-      auto debug_str = trace::GetTracedDebugInfoStr(debug_info);
-      if (!debug_str.empty()) {
-        std::ostringstream content;
-        content << "\n\n" << debug_str;
-        PrintMessage(oss, content.str(), add_title);
-      }
-    }
-  } else {
-    PrintMessage(oss, trace_info.str(), add_title);
+  static bool running = false;
+  // Avoid to trace recursively
+  if (running) {
+    return;
   }
+  running = true;
+  try {
+    TraceGraphEval();
+    std::ostringstream trace_info;
+    StaticAnalysisException::Instance().AppendMsg(oss.str());
+    GetEvalStackInfo(trace_info);
+    if (trace_info.str().empty()) {
+      const DebugInfoPtr &debug_info = TraceManager::parser_debug_info();
+      if (debug_info != nullptr && TraceManager::parser_debug_info_flag() == true) {
+        auto debug_str = trace::GetTracedDebugInfoStr(debug_info);
+        if (!debug_str.empty()) {
+          std::ostringstream content;
+          content << "\n\n" << debug_str;
+          PrintMessage(oss, content.str(), add_title);
+        }
+      }
+    } else {
+      PrintMessage(oss, trace_info.str(), add_title);
+    }
+  } catch (...) {
+    MS_LOG(INFO) << " Print trace information exception.";
+  }
+  running = false;
 }
 
 // Register trace provider to LogWriter.
