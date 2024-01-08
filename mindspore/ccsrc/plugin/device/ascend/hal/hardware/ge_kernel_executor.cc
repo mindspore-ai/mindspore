@@ -127,6 +127,7 @@ void GeKernelExecutor::Initialize() {
   graph_executor_ = dynamic_cast<GeGraphExecutor *>(device_context_->graph_executor_.get());
   // not check graph executor, may use in ascend device context
   SetAclOpPrecisionMode();
+  transform::AclUtil::SetDeterministic();
   initialized_ = true;
 }
 
