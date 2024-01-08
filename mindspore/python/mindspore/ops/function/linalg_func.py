@@ -84,6 +84,18 @@ def cond(A, p=None):
     matrix_inverse = _get_cache_prim(P.MatrixInverse)(adjoint=False)
     if p is None:
         p = 2
+    if A.dim() >= 3:
+        shape_ori = A.shape[0:-2]
+        A_flatten = ops.flatten(A, start_dim=0, end_dim=-3)
+        out = []
+        for i in range(A_flatten.shape[0]):
+            norm_a = F.norm(A_flatten[i], p)
+            norm_inv_a = F.norm(matrix_inverse(A_flatten[i]), p)
+            cond_i = ops.fill(mstype.float32, (1, 1), norm_a * norm_inv_a)
+            out.append(cond_i)
+        out_stacked = ops.hstack(out)
+        output = ops.reshape(out_stacked, shape_ori)
+        return output
     norm_a = F.norm(A, p)
     norm_inv_a = F.norm(matrix_inverse(A), p)
     return norm_a * norm_inv_a
