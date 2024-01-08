@@ -590,7 +590,7 @@ bool GraphBuilder::DoAttrAccess(const Instr &instr) {
 
           // new func node
           py::tuple tuple_obj(2);
-          tuple_obj[0] = method;
+          tuple_obj[0] = m;
           tuple_obj[1] = self_super->GetVobj()->GetPyObject();
           PyObject *ret = PyObject_Call(mtype_obj, tuple_obj.ptr(), nullptr);
           py::object mh = py::reinterpret_steal<py::object>(ret);
