@@ -24,6 +24,7 @@
 #include "include/backend/device_address.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "ops/auto_generate/gen_ops_primitive.h"
+#include "transform/acl_ir/op_api_util.h"
 
 namespace mindspore::transform {
 namespace {
@@ -308,6 +309,7 @@ void AclConverter::ConvertValueDependToHostInput(const std::string &kernel_name,
     MS_EXCEPTION_IF_NULL(value_ptr);
     auto type_id = input->dtype_id();
     AclHostInfoPtr acl_host_input;
+    bool is_const = input->IsConstTensor();
     if (!transform::AclHelper::IsInputDtypeSupport(kernel_name, param.data_type, ms_proto_idx) &&
         param.data_type != kMetaTypeNone) {
       ValueDependToInputConverter value_convert;
@@ -323,9 +325,10 @@ void AclConverter::ConvertValueDependToHostInput(const std::string &kernel_name,
       value_convert.ConvertValueToDstType(value_ptr, param.data_type);
       value_depend_cast_[ms_real_idx] = std::move(value_convert.GetData());
       acl_host_input = std::make_shared<AclHostInfo>(value_depend_cast_[ms_real_idx].data(),
-                                                     value_depend_cast_[ms_real_idx].size(), iter->second);
+                                                     value_depend_cast_[ms_real_idx].size(), iter->second, is_const);
     } else {
-      acl_host_input = std::make_shared<AclHostInfo>(const_cast<void *>(input->GetValuePtr()), input->size(), type_id);
+      acl_host_input =
+        std::make_shared<AclHostInfo>(const_cast<void *>(input->GetValuePtr()), input->size(), type_id, is_const);
     }
     input_on_host_.emplace(ms_real_idx, acl_host_input);
   }
@@ -484,7 +487,7 @@ void AclConverter::ConvertToAclInput(const PrimitivePtr &prim, const std::vector
         (host_input != nullptr)
           ? ConvertTensorToAclDesc(host_input, input_params[ms_real_idx], arg_name, dump_str_pointer)
           : ConvertTensorToAclDesc(dev_address, input_params[ms_real_idx], arg_name, dump_str_pointer);
-      if (set_const && (host_input != nullptr)) {
+      if (set_const && host_input != nullptr && host_input->is_const) {
         (void)aclSetTensorConst(acl_desc, host_input->host_addr, host_input->size);
       }
       runner_.SetInput(ge_real_idx, acl_desc, acl_data);
@@ -592,7 +595,7 @@ void AclConverter::ConvertAttrToAclInput(const mindspore::HashMap<std::string, V
     attr_coverter.ConvertValueToRealType(iter->second, ms_attr_name, &new_params);
     attr_input_value_.push_back(std::move(attr_coverter.GetData()));
     auto acl_host_input = std::make_shared<AclHostInfo>(attr_input_value_.back().data(),
-                                                        attr_input_value_.back().size(), new_params.data_type);
+                                                        attr_input_value_.back().size(), new_params.data_type, true);
     AclDumpString dump_str;
     AclDumpString *dump_str_pointer = transform::AclHelper::IsPrintDebugString() ? &dump_str : nullptr;
     auto [acl_desc, acl_data] =
@@ -946,8 +949,7 @@ void AclConverter::ProcessRunnerSpecialInfo(const std::string &prim_name,
   if (!AclAdapterManager::GetInstance().CheckAclAdapter(op_type)) {
     // Default fuzz compile.
     is_dynamic_ = true;
-    // 910 default fp16 mode.
-    precision_mode_ = ALLOW_FP32_TO_FP16;
+    precision_mode_ = (AclUtil::KeepOriginDType() == 1) ? MUST_KEEP_ORIGIN_DTYPE : ALLOW_FP32_TO_FP16;
     return;
   }
   auto info = AclAdapterManager::GetInstance().GetOpInfo(op_type);

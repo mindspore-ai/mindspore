@@ -582,6 +582,8 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // The following member methods are required by the old KernelTensor.
 
   bool IsDynamicShape() const;
+  inline bool IsConstTensor() const { return (value_ != nullptr) && !(value_->isa<ValueAny>()); }
+
   size_t GetSizeInBytes() const;
   AddressPtr GetData() const { return data_; }
   AddressPtr GetHostData() const { return host_data_; }

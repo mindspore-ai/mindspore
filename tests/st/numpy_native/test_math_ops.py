@@ -2326,7 +2326,7 @@ def test_matrix_power():
         onp_res = onp_matrix_power(x)
         mnp_res = mnp_matrix_power(to_tensor(x))
         for expected, actual in zip(onp_res, mnp_res):
-            match_array(actual.asnumpy(), expected, error=3)
+            match_array(actual.asnumpy(), expected, error=2)
 
 
 def mnp_around(x):

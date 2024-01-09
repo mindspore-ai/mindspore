@@ -37,11 +37,13 @@ struct AclExecParam {
 };
 
 struct AclHostInfo {
-  AclHostInfo() : host_addr(nullptr), size(0), dtype_id(kTypeUnknown) {}
-  AclHostInfo(void *addr, size_t addr_size, TypeId type_id) : host_addr(addr), size(addr_size), dtype_id(type_id) {}
+  AclHostInfo() : host_addr(nullptr), size(0), dtype_id(kTypeUnknown), is_const(true) {}
+  AclHostInfo(void *addr, size_t addr_size, TypeId type_id, bool is_const)
+      : host_addr(addr), size(addr_size), dtype_id(type_id), is_const(is_const) {}
   void *host_addr;
   size_t size;
   TypeId dtype_id;
+  bool is_const;
 };
 using AclHostInfoPtr = std::shared_ptr<AclHostInfo>;
 

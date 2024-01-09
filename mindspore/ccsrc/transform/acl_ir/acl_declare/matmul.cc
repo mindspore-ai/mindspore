@@ -39,8 +39,8 @@ std::string CheckNdSupported(TypeId data_type, const std::vector<ShapeVector> &s
   return kOpFormat_FRAC_NZ;
 }
 
-REGISTER_ACL_OP(MatMulV2).OutputSelector(&CheckNdSupported).set_precision_mode(FORCE_FP32);
-REGISTER_ACL_OP(MatMul).OutputSelector(&CheckNdSupported).set_precision_mode(FORCE_FP32);
+REGISTER_ACL_OP(MatMulV2).OutputSelector(&CheckNdSupported);
+REGISTER_ACL_OP(MatMul).OutputSelector(&CheckNdSupported);
 
 std::string CheckBMMNdSupported(TypeId data_type, const std::vector<ShapeVector> &shapes) {
   constexpr size_t special_bmm_size = 2;
@@ -67,6 +67,6 @@ std::string CheckBMMNdSupported(TypeId data_type, const std::vector<ShapeVector>
   return kOpFormat_FRAC_NZ;
 }
 
-REGISTER_ACL_OP(BatchMatMul).OutputSelector(&CheckBMMNdSupported).set_precision_mode(MUST_KEEP_ORIGIN_DTYPE);
+REGISTER_ACL_OP(BatchMatMul).OutputSelector(&CheckBMMNdSupported);
 }  // namespace transform
 }  // namespace mindspore
