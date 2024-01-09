@@ -29,6 +29,8 @@
 namespace mindspore {
 class FuncGraphIndex {
  public:
+  using SearchFunc = std::function<AnfNodePtrList(const AnfNodePtr &, const IncludeFunc &)>;
+
   explicit FuncGraphIndex(const FuncGraphPtr &fg, const SearchFunc &search = DeepScopedGraphSearch,
                           const IncludeFunc &include = AlwaysInclude);
   FuncGraphIndex(const FuncGraphIndex &) = delete;

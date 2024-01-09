@@ -75,7 +75,7 @@ static ValuePtr GetReceiveMicro(const CNodePtr &cnode) {
     auto front = que.front();
     que.pop();
     (void)(visited.insert(front));
-    for (size_t i = 1; i < front->inputs().size(); ++i) {
+    for (size_t i = 1; i < front->size(); ++i) {
       auto input = front->input(i);
       if (!input->isa<CNode>()) {
         continue;
@@ -101,7 +101,7 @@ static ValuePtr GetReceiveSegment(const CNodePtr &cnode) {
     auto front = que.front();
     que.pop();
     (void)(visited.insert(front));
-    for (size_t i = 1; i < front->inputs().size(); ++i) {
+    for (size_t i = 1; i < front->size(); ++i) {
       auto input = front->input(i);
       if (!input->isa<CNode>()) {
         continue;
@@ -369,7 +369,7 @@ CNodePtr FindNodeWithMircoSize(const AnfNodePtr &node_user, const NodeUsersMap &
 }
 
 bool IsSourceUsedByMirror(const CNodePtr &node, const NodeUsersMap &node_user_map) {
-  if (node->inputs().size() < 2) {
+  if (node->size() < 2) {
     return false;
   }
   auto parameter_node = node->input(1);
@@ -906,7 +906,7 @@ void LastStageEndNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphM
     }
     auto prim = GetCNodePrimitive(node);
     if (prim && prim->HasAttr(PIPELINE_END)) {
-      for (size_t i = 0; i < cnode->inputs().size(); ++i) {
+      for (size_t i = 0; i < cnode->size(); ++i) {
         auto temp_node = GetRealKernelNode(cnode->input(i), -1, nullptr).first;
         if (!temp_node->isa<CNode>()) {
           continue;

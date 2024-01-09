@@ -17,8 +17,11 @@
  */
 
 #include "ir/graph_utils.h"
-#include <utility>
+
+#include <algorithm>
 #include <deque>
+#include <utility>
+
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "utils/hash_map.h"
@@ -42,10 +45,10 @@ static size_t DumpSortingCircleList(const std::deque<AnfNodePtr> &todo, const An
   return pos;
 }
 
-std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, const IncludeFunc &include) {
+AnfNodePtrList TopoSort(const AnfNodePtr &root, const SuccFunc &succ, const IncludeFunc &include) {
   constexpr auto kVecReserve = 64;
   constexpr auto kRecursiveLevel = 2;
-  std::vector<AnfNodePtr> res;
+  AnfNodePtrList res;
   if (root == nullptr) {
     return res;
   }
@@ -70,7 +73,8 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, c
     }
     node->seen_ = seen;
     if (incl == FOLLOW) {
-      for (auto &next : succ(node)) {
+      for (auto &weak_next : succ(node)) {
+        auto next = weak_next.lock();
         if (next == nullptr || next->extra_seen_ == seen) {
           continue;
         }
@@ -95,6 +99,20 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, c
   return res;
 }
 
+// @deprecated
+// To use 'AnfNodePtrList TopoSort(const AnfNodePtr &, const SuccFunc &, const IncludeFunc &)' instead.
+AnfNodePtrList TopoSort(const AnfNodePtr &root, const DeprecatedSuccFunc &deprecated_succ, const IncludeFunc &include) {
+  SuccFunc compatible_adapter_succ = [&deprecated_succ](const AnfNodePtr &node) -> AnfNodeWeakPtrList {
+    auto nodes = deprecated_succ(node);
+    AnfNodeWeakPtrList weak_nodes;
+    weak_nodes.reserve(nodes.size());
+    std::transform(nodes.cbegin(), nodes.cend(), std::back_inserter(weak_nodes),
+                   [](const AnfNodePtr &node) -> AnfNodeWeakPtr { return AnfNodeWeakPtr(node); });
+    return weak_nodes;
+  };
+  return TopoSort(root, compatible_adapter_succ, include);
+}
+
 // Search all CNode in root's graph only.
 std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const CNodePtr &root) {
   constexpr size_t kVecReserve = 64;
@@ -106,8 +124,11 @@ std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const CNodePtr &root) {
   (void)cnodes.emplace_back(root);
   for (size_t i = 0; i < cnodes.size(); ++i) {
     CNodePtr &node = cnodes[i];
-    auto &inputs = node->inputs();
-    for (auto &input : inputs) {
+    for (auto &weak_input : node->weak_inputs()) {
+      auto input = weak_input.lock();
+      if (input == nullptr) {
+        MS_LOG(INTERNAL_EXCEPTION) << "The input is null, node: " << node << "/" << node->DebugString();
+      }
       if (input->seen_ == seen) {
         continue;
       }
@@ -132,16 +153,17 @@ CNodePtr BroadFirstSearchFirstOf(const std::vector<CNodePtr> &roots, const Match
     if (match_predicate(top)) {
       return top;
     }
-    auto inputs = top->inputs();
-    for (auto &item : inputs) {
-      if (item->seen_ == seen) {
+    for (auto &weak_input : top->weak_inputs()) {
+      auto input = weak_input.lock();
+      MS_EXCEPTION_IF_NULL(input);
+      if (input->seen_ == seen) {
         continue;
       }
 
-      if (item->isa<CNode>()) {
-        todo.push_back(item->cast<CNodePtr>());
+      if (input->isa<CNode>()) {
+        todo.push_back(input->cast<CNodePtr>());
       }
-      item->seen_ = seen;
+      input->seen_ = seen;
     }
   }
   return nullptr;
@@ -171,8 +193,8 @@ std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(const FuncGraphPtr &root, co
 }
 
 // To get CNode inputs to a vector as successors for TopoSort().
-static void FetchCNodeSuccessors(const CNodePtr &cnode, std::vector<AnfNodePtr> *vecs) {
-  auto &inputs = cnode->inputs();
+static void FetchCNodeSuccessors(const CNodePtr &cnode, AnfNodeWeakPtrList *vecs) {
+  auto &inputs = cnode->weak_inputs();
   vecs->reserve(vecs->size() + inputs.size());
 
   // To keep sort order from left to right in default, if kAttrTopoSortRhsFirst not set.
@@ -186,31 +208,8 @@ static void FetchCNodeSuccessors(const CNodePtr &cnode, std::vector<AnfNodePtr> 
   }
 }
 
-std::vector<AnfNodePtr> SuccDeeper(const AnfNodePtr &node) {
-  std::vector<AnfNodePtr> vecs;
-  if (node == nullptr) {
-    return vecs;
-  }
-
-  auto graph = GetValuePtr<FuncGraph>(node);
-  if (graph != nullptr) {
-    auto &res = graph->return_node();
-    if (res != nullptr) {
-      vecs.push_back(res);
-    }
-    return vecs;
-  } else if (node->func_graph() != nullptr) {
-    if (node->isa<CNode>()) {
-      FetchCNodeSuccessors(node->cast<CNodePtr>(), &vecs);
-    }
-    return vecs;
-  }
-
-  return vecs;
-}
-
-std::vector<AnfNodePtr> SuccDeeperSimple(const AnfNodePtr &node) {
-  std::vector<AnfNodePtr> vecs;
+AnfNodeWeakPtrList SuccDeeperSimple(const AnfNodePtr &node) {
+  AnfNodeWeakPtrList vecs;
   if (node == nullptr) {
     return vecs;
   }
@@ -227,8 +226,8 @@ std::vector<AnfNodePtr> SuccDeeperSimple(const AnfNodePtr &node) {
   return vecs;
 }
 
-std::vector<AnfNodePtr> SuccIncoming(const AnfNodePtr &node) {
-  std::vector<AnfNodePtr> vecs;
+AnfNodeWeakPtrList SuccIncoming(const AnfNodePtr &node) {
+  AnfNodeWeakPtrList vecs;
   auto cnode = dyn_cast<CNode>(node);
   if (cnode != nullptr) {
     FetchCNodeSuccessors(cnode, &vecs);
@@ -236,12 +235,12 @@ std::vector<AnfNodePtr> SuccIncoming(const AnfNodePtr &node) {
   return vecs;
 }
 
-std::vector<AnfNodePtr> SuccIncludeFV(const FuncGraphPtr &fg, const AnfNodePtr &node) {
+AnfNodeWeakPtrList SuccIncludeFV(const FuncGraphPtr &fg, const AnfNodePtr &node) {
   auto cnode = dyn_cast<CNode>(node);
   if (cnode == nullptr) {
     return {};
   }
-  std::vector<AnfNodePtr> vecs;
+  AnfNodeWeakPtrList vecs;
   const auto &inputs = cnode->inputs();
   // Check if free variables used.
   for (const auto &input : inputs) {
@@ -259,8 +258,8 @@ std::vector<AnfNodePtr> SuccIncludeFV(const FuncGraphPtr &fg, const AnfNodePtr &
   return vecs;
 }
 
-std::vector<AnfNodePtr> SuccWithFilter(const GraphFilterFunc &graph_filter, const AnfNodePtr &node) {
-  std::vector<AnfNodePtr> vecs;
+AnfNodeWeakPtrList SuccWithFilter(const GraphFilterFunc &graph_filter, const AnfNodePtr &node) {
+  AnfNodeWeakPtrList vecs;
   if (node == nullptr) {
     return vecs;
   }
@@ -280,11 +279,20 @@ std::vector<AnfNodePtr> SuccWithFilter(const GraphFilterFunc &graph_filter, cons
   return vecs;
 }
 
-const std::vector<AnfNodePtr> &GetInputs(const AnfNodePtr &node) {
-  static std::vector<AnfNodePtr> empty_inputs;
+const AnfNodePtrList GetInputs(const AnfNodePtr &node) {
+  static AnfNodePtrList empty_inputs;
   auto cnode = dyn_cast_ptr<CNode>(node);
   if (cnode != nullptr) {
     return cnode->inputs();
+  }
+  return empty_inputs;
+}
+
+const AnfNodeWeakPtrList &GetWeakInputs(const AnfNodePtr &node) {
+  static AnfNodeWeakPtrList empty_inputs;
+  auto cnode = dyn_cast_ptr<CNode>(node);
+  if (cnode != nullptr) {
+    return cnode->weak_inputs();
   }
   return empty_inputs;
 }

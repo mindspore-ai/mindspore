@@ -37,7 +37,7 @@ bool TransposeChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Fo
   }
   DataInfo data_info;
   std::vector<int32_t> perm_val;
-  if (op->inputs().size() > kInputIndex2 && FetchDataFromParameterNode(op, kInputIndex2, &data_info) == lite::RET_OK) {
+  if (op->size() > kInputIndex2 && FetchDataFromParameterNode(op, kInputIndex2, &data_info) == lite::RET_OK) {
     auto data = reinterpret_cast<int32_t *>(data_info.data_.data());
     if (data == nullptr) {
       MS_LOG(ERROR) << "data is nullptr. " << op->fullname_with_scope();

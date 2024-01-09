@@ -311,19 +311,19 @@ CNodePtr FlashAttentionFusionForCustom::CreateFlashAttentionNodePart2(const std:
   auto fa_prim_c = flash_attention_prim->GetPrim();
   auto matmul_2 = node->cast<CNodePtr>();
   node_names.push_back(matmul_2->fullname_with_scope());
-  MS_CHECK_TRUE_RET(matmul_2->inputs().size() >= kNumInputSize3, nullptr);
+  MS_CHECK_TRUE_RET(matmul_2->size() >= kNumInputSize3, nullptr);
   auto cast_2 = matmul_2->input(1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(cast_2 != nullptr, nullptr);
   node_names.push_back(cast_2->fullname_with_scope());
 
-  MS_CHECK_TRUE_RET(cast_2->inputs().size() >= kNumInputSize2, nullptr);
+  MS_CHECK_TRUE_RET(cast_2->size() >= kNumInputSize2, nullptr);
   auto softmax = cast_2->input(1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(softmax != nullptr, nullptr);
   node_names.push_back(softmax->fullname_with_scope());
 
   CNodePtr cnode = nullptr;
   if (pattern_name == "FlashAttentionPatten2") {
-    MS_CHECK_TRUE_RET(softmax->inputs().size() >= kNumInputSize2, nullptr);
+    MS_CHECK_TRUE_RET(softmax->size() >= kNumInputSize2, nullptr);
     cnode = softmax->input(1)->cast<CNodePtr>();
   } else if (pattern_name == "FlashAttentionPatten3") {
     cnode = softmax;
@@ -333,15 +333,15 @@ CNodePtr FlashAttentionFusionForCustom::CreateFlashAttentionNodePart2(const std:
   }
   MS_CHECK_TRUE_RET(cnode != nullptr, nullptr);
   node_names.push_back(cnode->fullname_with_scope());
-  MS_CHECK_TRUE_RET(cnode->inputs().size() >= kNumInputSize2, nullptr);
+  MS_CHECK_TRUE_RET(cnode->size() >= kNumInputSize2, nullptr);
   auto mul = cnode->input(1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(mul != nullptr, nullptr);
   node_names.push_back(mul->fullname_with_scope());
-  MS_CHECK_TRUE_RET(mul->inputs().size() >= kNumInputSize2, nullptr);
+  MS_CHECK_TRUE_RET(mul->size() >= kNumInputSize2, nullptr);
   auto matmul_1 = mul->input(1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(matmul_1 != nullptr, nullptr);
   node_names.push_back(matmul_1->fullname_with_scope());
-  MS_CHECK_TRUE_RET(matmul_1->inputs().size() >= kNumInputSize3, nullptr);
+  MS_CHECK_TRUE_RET(matmul_1->size() >= kNumInputSize3, nullptr);
   auto transpose = matmul_1->input(kNumInputSize2)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(transpose != nullptr, nullptr);
   node_names.push_back(transpose->fullname_with_scope());
@@ -350,7 +350,7 @@ CNodePtr FlashAttentionFusionForCustom::CreateFlashAttentionNodePart2(const std:
     return nullptr;
   }
   auto q = matmul_1->input(1);
-  MS_CHECK_TRUE_RET(transpose->inputs().size() >= kNumInputSize2, nullptr);
+  MS_CHECK_TRUE_RET(transpose->size() >= kNumInputSize2, nullptr);
   auto k = transpose->input(1);
   auto v = matmul_2->input(kNumInputSize2);
   MS_LOG(INFO) << "q name: " << q->fullname_with_scope() << " , k name: " << k->fullname_with_scope()

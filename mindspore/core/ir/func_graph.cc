@@ -18,6 +18,7 @@
 
 #include "ir/func_graph.h"
 #include <algorithm>
+#include "mindspore/core/ops/framework_ops.h"
 #include "utils/trace_base.h"
 #include "ir/manager.h"
 #include "utils/ordered_set.h"
@@ -44,7 +45,6 @@ FuncGraph::FuncGraph(GraphDebugInfoPtr &&debug_info)
       kw_only_args_count_(0),
       fv_param_count_(0),
       is_generated_(false),
-      return_(nullptr),
       manager_(),
       debug_info_(std::move(debug_info)),
       stub_(false),
@@ -65,7 +65,6 @@ void FuncGraph::DoBreakLoop() {
   func_graph_cache_.clear();
   parameters_.clear();
   parameter_obj_nodes_.clear();
-  return_ = nullptr;
   set_dropped(true);
 }
 
@@ -77,16 +76,16 @@ abstract::AbstractBasePtr FuncGraph::ToAbstract() {
 AnfNodePtr FuncGraph::output() const {
   constexpr size_t return_input_num = 2;
   // If return value is set, return should have two inputs.
-  if (return_ != nullptr && return_->inputs().size() == return_input_num) {
-    return return_->input(1);
+  if (return_node() != nullptr && return_node()->size() == return_input_num) {
+    return return_node()->input(1);
   } else {
     // If not set yet, return nullptr.
     return nullptr;
   }
 }
 
-const std::vector<AnfNodePtr> FuncGraph::get_inputs() const {
-  std::vector<AnfNodePtr> input_params;
+const AnfNodePtrList FuncGraph::get_inputs() const {
+  AnfNodePtrList input_params;
   for (auto const &node : parameters_) {
     MS_EXCEPTION_IF_NULL(node);
     auto parameter = dyn_cast<Parameter>(node);
@@ -176,56 +175,125 @@ ValuePtr FuncGraph::get_attr(const std::string &key) const {
   return iter == attrs_.cend() ? nullptr : iter->second;
 }
 
-CNodePtr FuncGraph::NewCNode(std::vector<AnfNodePtr> &&inputs) {
-  return std::make_shared<CNode>(std::move(inputs), shared_from_base<FuncGraph>());
+CNodePtr FuncGraph::NewCNodeWeak(AnfNodeWeakPtrList &&weak_inputs) {
+  return std::make_shared<CNode>(std::move(weak_inputs), shared_from_base<FuncGraph>());
 }
 
-CNodePtr FuncGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
-  return std::make_shared<CNode>(inputs, shared_from_base<FuncGraph>());
+CNodePtr FuncGraph::NewCNodeWeak(const AnfNodeWeakPtrList &weak_inputs) {
+  return std::make_shared<CNode>(weak_inputs, shared_from_base<FuncGraph>());
 }
 
-CNodePtr FuncGraph::NewCNodeInOrder(std::vector<AnfNodePtr> &&inputs) {
-  CNodePtr cnode = NewCNode(std::move(inputs));
-  order_.push_back(cnode);
+CNodePtr FuncGraph::NewCNode(AnfNodePtrList &&inputs) {
+  std::vector<AnfNodeWeakPtr> weak_inputs;
+  weak_inputs.reserve(inputs.size());
+  std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(weak_inputs),
+                 [](const AnfNodePtr &node) { return AnfNodeWeakPtr(node); });
+  return std::make_shared<CNode>(std::move(weak_inputs), shared_from_base<FuncGraph>());
+}
+
+CNodePtr FuncGraph::NewCNode(const AnfNodePtrList &inputs) {
+  std::vector<AnfNodeWeakPtr> weak_inputs;
+  weak_inputs.reserve(inputs.size());
+  std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(weak_inputs),
+                 [](const AnfNodePtr &node) { return AnfNodeWeakPtr(node); });
+  return std::make_shared<CNode>(std::move(weak_inputs), shared_from_base<FuncGraph>());
+}
+
+CNodePtr FuncGraph::NewCNodeInOrderWeak(AnfNodeWeakPtrList &&weak_inputs) {
+  CNodePtr cnode = NewCNodeWeak(std::move(weak_inputs));
+  (void)order_.emplace_back(CNodeWeakPtr(cnode));
   return cnode;
 }
 
-CNodePtr FuncGraph::NewCNodeInOrder(const std::vector<AnfNodePtr> &inputs) {
-  CNodePtr cnode = NewCNode(inputs);
-  order_.push_back(cnode);
+CNodePtr FuncGraph::NewCNodeInOrderWeak(const AnfNodeWeakPtrList &weak_inputs) {
+  CNodePtr cnode = NewCNodeWeak(weak_inputs);
+  (void)order_.emplace_back(CNodeWeakPtr(cnode));
   return cnode;
 }
 
-CNodePtr FuncGraph::NewCNodeInFront(const std::vector<AnfNodePtr> &inputs) {
-  CNodePtr cnode = NewCNode(inputs);
-  order_.push_front(cnode);
+CNodePtr FuncGraph::NewCNodeInOrder(AnfNodePtrList &&inputs) { return NewCNodeInOrder(inputs); }
+
+CNodePtr FuncGraph::NewCNodeInOrder(const AnfNodePtrList &inputs) {
+  std::vector<AnfNodeWeakPtr> weak_inputs;
+  weak_inputs.reserve(inputs.size());
+  std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(weak_inputs),
+                 [](const AnfNodePtr &node) { return AnfNodeWeakPtr(node); });
+  CNodePtr cnode = NewCNodeWeak(std::move(weak_inputs));
+  (void)order_.emplace_back(CNodeWeakPtr(cnode));
   return cnode;
 }
 
-CNodePtr FuncGraph::NewCNodeBefore(const AnfNodePtr &position, const std::vector<AnfNodePtr> &inputs) {
-  CNodePtr cnode = NewCNode(inputs);
+CNodePtr FuncGraph::NewCNodeInFront(const AnfNodePtrList &inputs) {
+  std::vector<AnfNodeWeakPtr> weak_inputs;
+  weak_inputs.reserve(inputs.size());
+  std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(weak_inputs),
+                 [](const AnfNodePtr &node) { return AnfNodeWeakPtr(node); });
+  CNodePtr cnode = NewCNodeWeak(std::move(weak_inputs));
+  (void)order_.emplace_front(CNodeWeakPtr(cnode));
+  return cnode;
+}
+
+CNodePtr FuncGraph::NewCNodeBefore(const AnfNodePtr &position, const AnfNodePtrList &inputs) {
+  std::vector<AnfNodeWeakPtr> weak_inputs;
+  weak_inputs.reserve(inputs.size());
+  std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(weak_inputs),
+                 [](const AnfNodePtr &node) { return AnfNodeWeakPtr(node); });
+  CNodePtr cnode = NewCNodeWeak(std::move(weak_inputs));
   CNodePtr pos_cnode = dyn_cast<CNode>(position);
-  auto iter = order_.find(pos_cnode);
-  (void)order_.insert(iter, cnode);
+  auto iter = std::find_if(order_.cbegin(), order_.cend(), [&pos_cnode](const CNodeWeakPtr &node) {
+    return node.lock() != nullptr && node.lock() == pos_cnode;
+  });
+  (void)order_.insert(iter, CNodeWeakPtr(cnode));
   return cnode;
 }
 
-CNodePtr FuncGraph::NewCNodeAfter(const AnfNodePtr &position, const std::vector<AnfNodePtr> &inputs) {
-  CNodePtr cnode = NewCNode(inputs);
+CNodePtr FuncGraph::NewCNodeAfter(const AnfNodePtr &position, const AnfNodePtrList &inputs) {
+  std::vector<AnfNodeWeakPtr> weak_inputs;
+  weak_inputs.reserve(inputs.size());
+  std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(weak_inputs),
+                 [](const AnfNodePtr &node) { return AnfNodeWeakPtr(node); });
+  CNodePtr cnode = NewCNodeWeak(std::move(weak_inputs));
   CNodePtr pos_cnode = dyn_cast<CNode>(position);
-  auto iter = order_.find(pos_cnode);
-  if (iter == order_.end()) {
-    order_.push_front(cnode);
+  auto iter = std::find_if(order_.cbegin(), order_.cend(), [&pos_cnode](const CNodeWeakPtr &node) {
+    return node.lock() != nullptr && node.lock() == pos_cnode;
+  });
+  if (iter == order_.cend()) {
+    order_.push_front(CNodeWeakPtr(cnode));
   } else {
-    (void)order_.insert(std::next(iter), cnode);
+    (void)order_.insert(std::next(iter), CNodeWeakPtr(cnode));
   }
   return cnode;
 }
 
+const std::list<AnfNodePtr> &FuncGraph::own_nodes() const { return own_nodes_; }
+
+void FuncGraph::AddOwnNode(const AnfNodePtr &node) { (void)own_nodes_.emplace_back(node); }
+
+void FuncGraph::AddOwnNode(const AnfNodePtrList &nodes) {
+  (void)own_nodes_.insert(own_nodes_.end(), nodes.cbegin(), nodes.cend());
+}
+
+void FuncGraph::AddOwnNode(const AnfNodeWeakPtrList &weak_nodes) {
+  std::transform(weak_nodes.cbegin(), weak_nodes.cend(), std::back_inserter(own_nodes_),
+                 [](const AnfNodeWeakPtr &weak_node) -> AnfNodePtr { return weak_node.lock(); });
+}
+
+void FuncGraph::RemoveOwnNode(const AnfNodePtr &node) {
+  auto iter = std::find(own_nodes_.cbegin(), own_nodes_.cend(), node);
+  if (iter != own_nodes_.cend()) {
+    own_nodes_.erase(iter);
+  }
+}
+
+void FuncGraph::ResetOwnNodes() { own_nodes_.clear(); }
+
 void FuncGraph::DumpCNodeList() {
   MS_LOG(INFO) << "FuncGraph " << ToString() << " has following CNode in code order:";
-  for (const auto &cnode : order_) {
-    MS_EXCEPTION_IF_NULL(cnode);
+  for (const auto &weak_cnode : order_) {
+    const auto &cnode = weak_cnode.lock();
+    if (cnode == nullptr) {
+      continue;
+    }
     MS_LOG(INFO) << cnode->DebugString();
   }
 }
@@ -248,11 +316,24 @@ GraphDebugInfoPtr FuncGraph::debug_info() {
 
 const AnfNodeSet &FuncGraph::nodes() const { return nodes_; }
 
-void FuncGraph::CopyNodes(const FuncGraphPtr &source) { nodes_.update(source->nodes()); }
+const AnfNodeSet &FuncGraph::switch_nodes() const { return switch_nodes_; }
 
-void FuncGraph::ClearNodes() { nodes_.clear(); }
+void FuncGraph::CopyNodes(const FuncGraphPtr &source) {
+  nodes_.update(source->nodes());
+  switch_nodes_.update(source->switch_nodes());
+}
 
-void FuncGraph::AddNode(const AnfNodePtr &node) { nodes_.add(node); }
+void FuncGraph::ClearNodes() {
+  nodes_.clear();
+  switch_nodes_.clear();
+}
+
+void FuncGraph::AddNode(const AnfNodePtr &node) {
+  nodes_.add(node);
+  if (IsPrimitiveCNode(node, prim::kPrimSwitch)) {
+    switch_nodes_.add(node);
+  }
+}
 
 void FuncGraph::DropNode(const AnfNodePtr &node) {
   if (node == nullptr) {
@@ -260,6 +341,9 @@ void FuncGraph::DropNode(const AnfNodePtr &node) {
     return;
   }
   (void)nodes_.erase(node);
+  if (IsPrimitiveCNode(node, prim::kPrimSwitch)) {
+    switch_nodes_.erase(node);
+  }
   auto graph = node->func_graph();
   if (node->isa<Parameter>()) {
     (void)parameters_.erase(std::remove(parameters_.begin(), parameters_.end(), node), parameters_.end());
@@ -353,8 +437,8 @@ const BaseRefCounterMap &FuncGraph::free_variables_total() {
   return fv_total[shared_from_base<FuncGraph>()];
 }
 
-std::vector<AnfNodePtr> FuncGraph::free_variables_nodes() {
-  std::vector<AnfNodePtr> nodes;
+AnfNodePtrList FuncGraph::free_variables_nodes() {
+  AnfNodePtrList nodes;
   const auto &fv_total = this->free_variables_total();
   for (auto &p : fv_total) {
     auto key = p.first;
@@ -560,7 +644,7 @@ AnfNodePtr FuncGraph::GetDefaultValueByName(const std::string &name) {
 }
 
 // set the default values
-void FuncGraph::SetDefaultValues(const std::vector<std::string> &name_list, const std::vector<AnfNodePtr> &value_list) {
+void FuncGraph::SetDefaultValues(const std::vector<std::string> &name_list, const AnfNodePtrList &value_list) {
   auto all_is_null =
     std::all_of(value_list.begin(), value_list.end(), [](const AnfNodePtr &node) { return IsValueNode<Null>(node); });
   if (value_list.empty()) {
@@ -707,14 +791,19 @@ void FuncGraph::EraseUnusedNodeInOrder() {
   if (mng != nullptr) {
     auto &all_nodes = nodes();
     // Erase unused cnode.
-    for (auto it = order_.begin(); it != order_.end();) {
-      if (!all_nodes.contains(*it)) {
-        MS_EXCEPTION_IF_NULL(*it);
-        MS_LOG(DEBUG) << "Remove node: " << (*it)->DebugString() << " in graph " << ToString() << " order.";
+    for (auto it = order_.begin(); it != order_.cend();) {
+      const auto &cnode = it->lock();
+      if (cnode == nullptr) {
         it = order_.erase(it);
         continue;
       }
-      (void)it++;
+      if (!all_nodes.contains(cnode)) {
+        MS_EXCEPTION_IF_NULL(cnode);
+        MS_LOG(DEBUG) << "Remove node: " << cnode->DebugString() << " in graph " << ToString() << " order.";
+        it = order_.erase(it);
+        continue;
+      }
+      (void)++it;
     }
   }
 }
@@ -725,8 +814,13 @@ void FuncGraph::EraseUnusedNodeInOrder(const AnfNodePtr &node) {
   }
   auto cnode = node->cast<CNodePtr>();
   if (cnode != nullptr) {
-    (void)order_.erase(cnode);
-    MS_LOG(DEBUG) << "Remove node: " << node->DebugString() << " from order list.";
+    auto iter = std::find_if(order_.cbegin(), order_.cend(), [&cnode](const CNodeWeakPtr &node) {
+      return node.lock() != nullptr && node.lock() == cnode;
+    });
+    if (iter != order_.cend()) {
+      (void)order_.erase(iter);
+      MS_LOG(DEBUG) << "Remove node: " << node->DebugString() << " from order list.";
+    }
   }
 }
 
@@ -744,35 +838,37 @@ void FuncGraph::ReplaceInOrder(const AnfNodePtr &old_node, const AnfNodePtr &new
     return;
   }
   // Search old node in order list.
-  auto iter = order_.find(old_cnode);
-  if (iter == order_.end()) {
+  auto iter = std::find_if(order_.cbegin(), order_.cend(), [&old_cnode](const CNodeWeakPtr &node) {
+    return node.lock() != nullptr && node.lock() == old_cnode;
+  });
+  if (iter == order_.cend()) {
     // Skip if old node not found in order list.
     return;
   }
   auto new_cnode = new_node->cast<CNodePtr>();
   if (new_cnode != nullptr) {
     // Insert new node just before the old node.
-    (void)order_.insert(iter, new_cnode);
+    (void)order_.insert(iter, CNodeWeakPtr(new_cnode));
   }
   // Remove old node from order list.
   // Unused children nodes can be cleared by EraseUnusedNodeInOrder().
   (void)order_.erase(iter);
 }
 
-static std::vector<AnfNodePtr> MakeInputNodes(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &inputs) {
-  std::vector<AnfNodePtr> input_node_list;
+static AnfNodePtrList MakeInputNodes(const PrimitivePtr &primitive, const AnfNodePtrList &inputs) {
+  AnfNodePtrList input_node_list;
   input_node_list.reserve(inputs.size() + 1);
   input_node_list.emplace_back(std::make_shared<ValueNode>(primitive));
   input_node_list.insert(input_node_list.end(), inputs.begin(), inputs.end());
   return input_node_list;
 }
 
-CNodePtr FuncGraph::NewCNode(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &inputs) {
+CNodePtr FuncGraph::NewCNode(const PrimitivePtr &primitive, const AnfNodePtrList &inputs) {
   auto input_node_list = MakeInputNodes(primitive, inputs);
   return NewCNode(std::move(input_node_list));
 }
 
-CNodePtr FuncGraph::NewCNodeInOrder(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &inputs) {
+CNodePtr FuncGraph::NewCNodeInOrder(const PrimitivePtr &primitive, const AnfNodePtrList &inputs) {
   auto input_node_list = MakeInputNodes(primitive, inputs);
   return NewCNodeInOrder(std::move(input_node_list));
 }
@@ -781,7 +877,7 @@ void FuncGraph::SetMultiTarget() const {
   auto graph_manager = manager();
   MS_EXCEPTION_IF_NULL(graph_manager);
   FuncGraphSet graphs = graph_manager->func_graphs();
-  std::vector<AnfNodePtr> all_nodes;
+  AnfNodePtrList all_nodes;
   for (auto &g : graphs) {
     auto nodes = mindspore::TopoSort(g->get_return());
     (void)std::copy(nodes.begin(), nodes.end(), std::back_inserter(all_nodes));
@@ -798,14 +894,14 @@ void FuncGraph::SetMultiTarget() const {
   }
 }
 
-void FuncGraph::set_used_forward_nodes(const std::vector<AnfNodePtr> &used_forward_nodes) {
+void FuncGraph::set_used_forward_nodes(const AnfNodePtrList &used_forward_nodes) {
   (void)std::for_each(used_forward_nodes.begin(), used_forward_nodes.end(), [this](const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(node);
     (void)used_forward_nodes_.insert(node);
   });
 }
 
-std::vector<AnfNodePtr> FuncGraph::TopoSort(const AnfNodePtr &node) { return mindspore::TopoSort(node); }
+AnfNodePtrList FuncGraph::TopoSort(const AnfNodePtr &node) { return mindspore::TopoSort(node); }
 
 SeenNum NewFgSeenGeneration() {
   static SeenNum fg_seen_generation = 0;

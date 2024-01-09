@@ -398,7 +398,7 @@ ValuePtr GetInputofBpropCut(const std::shared_ptr<GraphCompiler> &graph_compiler
   MS_EXCEPTION_IF_NULL(cnode);
 
   std::vector<ValuePtr> args_tuple;
-  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+  for (size_t i = 1; i < cnode->size(); ++i) {
     auto input = cnode->inputs()[i];
     auto value =
       GetInputofBpropCut(graph_compiler, cnode, input, op_output, parameter_index, graph_inputs, input_info, i - 1);
@@ -434,8 +434,8 @@ void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler,
   MS_EXCEPTION_IF_NULL(backend_cnode);
   MS_EXCEPTION_IF_NULL(graph_compiler);
   MS_EXCEPTION_IF_NULL(args);
-  auto front_size = front_cnode->inputs().size();
-  auto back_size = backend_cnode->inputs().size();
+  auto front_size = front_cnode->size();
+  auto back_size = backend_cnode->size();
   if (front_size != back_size) {
     MS_LOG(EXCEPTION) << "Bpropcut op front cnode size: " << front_size << ", back cnode size:" << back_size
                       << ", bpropcut op should not flatten";

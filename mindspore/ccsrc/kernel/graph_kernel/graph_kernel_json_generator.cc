@@ -318,7 +318,7 @@ bool GraphKernelJsonGenerator::GetInputTensorValue(const AnfNodePtr &anf_node, s
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (input_idx + 1 >= cnode->size()) {
-    MS_EXCEPTION(ArgumentError) << "Input index " << input_idx << " is out of range [0, " << cnode->inputs().size()
+    MS_EXCEPTION(ArgumentError) << "Input index " << input_idx << " is out of range [0, " << cnode->size()
                                 << ") in node [" << cnode->DebugString() << "]";
   }
 
@@ -573,8 +573,8 @@ size_t GraphKernelJsonGenerator::GetInputTensorIdxInc(const AnfNodePtr &anf_node
   MS_EXCEPTION_IF_NULL(anf_node);
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (input_idx + 1 >= cnode->inputs().size()) {
-    MS_EXCEPTION(ArgumentError) << "Input index " << input_idx << " is out of range [0, " << cnode->inputs().size()
+  if (input_idx + 1 >= cnode->size()) {
+    MS_EXCEPTION(ArgumentError) << "Input index " << input_idx << " is out of range [0, " << cnode->size()
                                 << ") in node [" << cnode->DebugString() << "]";
   }
 
@@ -1195,7 +1195,8 @@ bool GraphKernelJsonGenerator::CollectFusedJsonWithSingleKernel(const CNodePtr &
   }
 
   node_list.push_back(out_cnode);
-  (void)input_list.insert(input_list.cbegin(), out_cnode->inputs().cbegin() + 1, out_cnode->inputs().cend());
+  auto out_cnode_inputs = out_cnode->inputs();
+  (void)input_list.insert(input_list.cbegin(), out_cnode_inputs.cbegin() + 1, out_cnode_inputs.cend());
   auto output_num = static_cast<int64_t>(AnfUtils::GetOutputTensorNum(out_cnode));
   if (output_num > 1) {
     for (int64_t idx = 0; idx < output_num; idx++) {

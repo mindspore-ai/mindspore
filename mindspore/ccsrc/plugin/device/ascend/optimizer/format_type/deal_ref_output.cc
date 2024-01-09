@@ -40,8 +40,8 @@ AnfNodePtr GetRefInfo(const std::string &op_name, const CNodePtr &cnode, const s
   if (!ref_infos.empty()) {
     if (ref_infos.count(cur_out_index) != 0) {
       auto in_index = ref_infos.at(cur_out_index);
-      if (in_index > cnode->inputs().size()) {
-        MS_LOG(EXCEPTION) << "Ref op has wrong inputs: op inputs num is " << cnode->inputs().size() << ", ref info is "
+      if (in_index > cnode->size()) {
+        MS_LOG(EXCEPTION) << "Ref op has wrong inputs: op inputs num is " << cnode->size() << ", ref info is "
                           << cur_out_index;
       }
       return cnode->input(in_index + 1);
@@ -185,9 +185,9 @@ AnfNodePtr DealRefOutput::DealRefSingleOutput(const FuncGraphPtr &func_graph, co
                                               const std::unordered_map<size_t, size_t> &ref_infos) const {
   MS_EXCEPTION_IF_NULL(cnode);
   auto ref_info = *(ref_infos.begin());
-  if (ref_info.second > cnode->inputs().size()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Ref op has wrong inputs: op inputs num is " << cnode->inputs().size()
-                               << ", ref info is " << ref_info.second;
+  if (ref_info.second > cnode->size()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Ref op has wrong inputs: op inputs num is " << cnode->size() << ", ref info is "
+                               << ref_info.second;
   }
   return AddAdditionalToRefOutput(func_graph, cnode, ref_info.first, ref_info.second, nullptr);
 }

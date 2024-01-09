@@ -142,7 +142,7 @@ bool OnnxQuantizeLinearAdjust::DoWeightQuantDeQuant(const FuncGraphPtr &func_gra
       continue;
     }
     // weight constant folding
-    for (size_t i = 1; i < cnode->inputs().size(); i++) {
+    for (size_t i = 1; i < cnode->size(); i++) {
       auto input_node = cnode->input(i);
       CHECK_NULL_RETURN(input_node);
       if (IsGraphInput(input_node) || input_node->isa<mindspore::CNode>()) {

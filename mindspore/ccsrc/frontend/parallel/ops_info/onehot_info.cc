@@ -141,11 +141,11 @@ Status OneHotInfo::ExtractInputInfo() {
     MS_LOG(ERROR) << "Failure:OneHot cnode_ is nullptr";
     return FAILED;
   }
-  if (cnode_->inputs().size() != ONE_HOT_CNODE_INPUT_SIZE) {
+  if (cnode_->size() != ONE_HOT_CNODE_INPUT_SIZE) {
     MS_LOG(ERROR) << "Failure:There is " << ONE_HOT_CNODE_INPUT_SIZE
                   << " inputs for the CNode corresponding to "
                      "OneHot Primitive, real input size is "
-                  << cnode_->inputs().size();
+                  << cnode_->size();
     return FAILED;
   }
   if (input_value_.size() != ONE_HOT_CNODE_INPUT_SIZE - 1) {

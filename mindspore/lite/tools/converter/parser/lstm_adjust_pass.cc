@@ -265,7 +265,7 @@ bool LstmAdjustPass::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
-    if (cnode == nullptr || cnode->inputs().size() != kTupleGetItemInputSize || cnode->input(1) == nullptr) {
+    if (cnode == nullptr || cnode->size() != kTupleGetItemInputSize || cnode->input(1) == nullptr) {
       return false;
     }
     if (!CheckPrimitiveType(cnode->input(1)->cast<CNodePtr>(), prim::kPrimLstm)) {

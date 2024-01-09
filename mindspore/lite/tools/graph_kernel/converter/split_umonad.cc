@@ -43,7 +43,7 @@ bool SplitAssign::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
     constexpr size_t umonad_idx = 3;
-    if (cnode->inputs().size() != umonad_idx + 1) {
+    if (cnode->size() != umonad_idx + 1) {
       continue;
     }
     auto umonad = cnode->input(umonad_idx);

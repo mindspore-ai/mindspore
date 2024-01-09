@@ -818,7 +818,7 @@ void DumpCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph, const Ordere
     gsub->buffer << "  ";
   }
 
-  if (node->inputs().empty()) {
+  if (node->weak_inputs().empty()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Input of CNode is empty";
   }
 
@@ -873,9 +873,11 @@ void OutputOrderList(const FuncGraphPtr &sub_graph, std::ostringstream &oss) {
   constexpr int width = 4;
   oss << "# Order:\n";
   int i = 1;
-  for (auto &node : order_list) {
-    MS_EXCEPTION_IF_NULL(node);
-    oss << '#' << std::setw(width) << i << ": " << node->DebugString() << '\n';
+  for (auto &weak_node : order_list) {
+    const auto &node = weak_node.lock();
+    if (node != nullptr) {
+      oss << '#' << std::setw(width) << i << ": " << node->DebugString() << '\n';
+    }
     ++i;
   }
 }

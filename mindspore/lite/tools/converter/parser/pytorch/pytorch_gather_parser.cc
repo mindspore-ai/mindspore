@@ -30,7 +30,7 @@ PrimitiveCPtr PytorchGatherParser::Parse(const torch::jit::Node *torch_node, std
   input_indices->resize(kInputSize1);
   std::iota(input_indices->begin(), input_indices->end(), 0);
 
-  if (torch_node->inputs().size() > THIRD_INPUT) {
+  if (torch_node->size() > THIRD_INPUT) {
     auto axis = PytorchNodeParser::GetValueFromConstNode<int32_t>(torch_node->input(THIRD_INPUT));
     prim_c->AddAttr("dims", MakeValue(axis));
   }

@@ -51,8 +51,7 @@ STATUS GatherMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr
 
   gather_operator->SetOpType(mapper::OpType::GATHER);
   DataInfo data_info;
-  if (cnode->inputs().size() > kInputIndex3 &&
-      FetchDataFromParameterNode(cnode, kInputIndex3, &data_info) == lite::RET_OK) {
+  if (cnode->size() > kInputIndex3 && FetchDataFromParameterNode(cnode, kInputIndex3, &data_info) == lite::RET_OK) {
     if (data_info.data_type_ != static_cast<int>(kNumberTypeInt32)) {
       MS_LOG(ERROR) << "data_type not correct";
       return RET_ERROR;

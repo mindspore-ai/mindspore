@@ -88,7 +88,9 @@ TEST_F(TestSwapStrategyBuilder, test_swap_strategy_with_offload_param) {
   context->cpu_mem_size_ = 10000;
   context->hbm_mem_size_ = 10000;
   for (const auto &kernel : kernel_graph->execution_order()) {
-    for (const auto &input : kernel->inputs()) {
+    for (auto &weak_input : kernel->weak_inputs()) {
+      auto input = weak_input.lock();
+      MS_EXCEPTION_IF_NULL(input);
       if (!input->isa<Parameter>()) {
         continue;
       }

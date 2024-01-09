@@ -29,7 +29,7 @@ bool SaveOutputShape::Run(const FuncGraphPtr &func_graph) {
 
   auto last_maketuple = func_graph->output()->cast<CNodePtr>();
   const auto kMultiInputsNum = 3;
-  if (last_maketuple->inputs().size() >= kMultiInputsNum) {
+  if (last_maketuple->size() >= kMultiInputsNum) {
     // MakeTuple of multi inputs
     return false;
   }

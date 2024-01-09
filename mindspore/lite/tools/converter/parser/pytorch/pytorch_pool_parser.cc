@@ -42,10 +42,10 @@ int SetAttrsForPool(const torch::jit::Node *torch_node, PrimitiveCPtr prim_c) {
 
   std::vector<int64_t> strides;
   std::vector<int64_t> pads;
-  if (torch_node->inputs().size() > THIRD_INPUT) {
+  if (torch_node->size() > THIRD_INPUT) {
     strides = PytorchNodeParser::GetValueFromConstNode<std::vector<int64_t>>(torch_node->input(THIRD_INPUT));
   }
-  if (torch_node->inputs().size() > FOURTH_INPUT) {
+  if (torch_node->size() > FOURTH_INPUT) {
     pads = PytorchNodeParser::GetValueFromConstNode<std::vector<int64_t>>(torch_node->input(FOURTH_INPUT));
     if (pads.size() == DIMENSION_2D) {
       pads.push_back(pads.at(1));
@@ -62,7 +62,7 @@ int SetAttrsForPool(const torch::jit::Node *torch_node, PrimitiveCPtr prim_c) {
   prim_c->AddAttr(ops::kPad, MakeValue(pads));
 
   mindspore::RoundMode round_mode = mindspore::RoundMode::FLOOR;
-  if (torch_node->inputs().size() > SIXTH_INPUT) {
+  if (torch_node->size() > SIXTH_INPUT) {
     round_mode = PytorchNodeParser::GetValueFromConstNode<bool>(torch_node->input(SIXTH_INPUT))
                    ? mindspore::RoundMode::CEIL
                    : round_mode;

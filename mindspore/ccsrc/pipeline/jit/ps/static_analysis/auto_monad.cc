@@ -261,7 +261,7 @@ class SccFinder {
  public:
   explicit SccFinder(const FuncGraphPtr &root) : root_(root) {}
   ~SccFinder() = default;
-  void Run() { (void)Search(root_); }
+  void Run() { SearchEssentialGraphs(root_); }
   SccMap scc_map() { return std::move(scc_map_); }
 
  private:
@@ -274,13 +274,51 @@ class SccFinder {
     ~State() = default;
   };
 
-  // Search SCCs from the given graph.
+  bool HasBranchs(const FuncGraphPtr &graph) {
+    if (graph->switch_nodes().empty()) {
+      return false;
+    }
+    for (const auto &node : graph->switch_nodes()) {
+      const auto &cnode = dyn_cast<CNode>(node);
+      MS_EXCEPTION_IF_NULL(cnode);
+      constexpr auto true_branch_index = 2;
+      constexpr auto false_branch_index = 3;
+      if (!IsDeadNode(cnode->input(true_branch_index)) && !IsDeadNode(cnode->input(false_branch_index))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Not search all func graphs, to search recursive func graph only.
+  void SearchEssentialGraphs(const FuncGraphPtr &graph) {
+    // Add top func graph.
+    MS_LOG(DEBUG) << "Total func graph: " << graph->func_graphs_used_total().size();
+    auto top_scc = std::make_shared<SccVector>();
+    top_scc->insert(graph);
+    (void)scc_map_.emplace(graph, top_scc);
+    // Add all used func graphs.
+    for (const auto &used : graph->func_graphs_used_total()) {
+      if (HasBranchs(used)) {
+        MS_LOG(DEBUG) << "To search recursive func graph: " << used->ToString();
+        (void)Search(used);
+      } else {
+        auto scc = std::make_shared<SccVector>();
+        scc->insert(used);
+        (void)scc_map_.emplace(used, scc);
+      }
+    }
+    MS_LOG(DEBUG) << "Finished for " << graph->ToString();
+  }
+
+  // Tarjan algorithm. Search SCCs from the given graph.
   State &Search(const FuncGraphPtr &graph) {
     // Create graph state, set it as visited.
     MS_EXCEPTION_IF_NULL(graph);
     auto [inserted, ok] = visited_.emplace(graph, std::make_unique<State>(index_++));
     if (!ok) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Already visited: " << graph->ToString();
+      MS_LOG(INFO) << "Already visited: " << graph->ToString();
+      return *(inserted->second);
     }
     auto &state = *(inserted->second);
     // Push visited graph to stack.
@@ -406,27 +444,37 @@ class SideEffectFinder {
 
   static void UpdateOrderList(const FuncGraphPtr &func_graph) {
     MS_EXCEPTION_IF_NULL(func_graph);
-    OrderedSet<CNodePtr> new_order_list;
+    std::list<CNodeWeakPtr> new_order_list;
     const auto &order_list = func_graph->order_list();
-    for (auto &cnode : order_list) {
-      PushToOrderList(func_graph, cnode, &new_order_list);
+    for (auto &weak_cnode : order_list) {
+      const auto &cnode = weak_cnode.lock();
+      if (cnode != nullptr) {
+        PushToOrderList(func_graph, cnode, &new_order_list);
+      }
     }
     func_graph->set_order_list(std::move(new_order_list));
   }
 
-  static void PushToOrderList(const FuncGraphPtr &fg, const CNodePtr &cnode, OrderedSet<CNodePtr> *new_order_list) {
+  static void PushToOrderList(const FuncGraphPtr &fg, const CNodePtr &cnode, std::list<CNodeWeakPtr> *new_order_list) {
     MS_EXCEPTION_IF_NULL(cnode);
     MS_EXCEPTION_IF_NULL(new_order_list);
-    if (new_order_list->contains(cnode)) {
+    // If contains.
+    auto iter = std::find_if(new_order_list->cbegin(), new_order_list->cend(), [&cnode](const CNodeWeakPtr &node) {
+      return node.lock() != nullptr && node.lock() == cnode;
+    });
+    if (iter != new_order_list->cend()) {
       return;
     }
-    for (auto &input : cnode->inputs()) {
+
+    for (auto &weak_input : cnode->weak_inputs()) {
+      auto input = weak_input.lock();
+      MS_EXCEPTION_IF_NULL(input);
       auto input_cnode = dyn_cast<CNode>(input);
       if (input_cnode != nullptr && input_cnode->func_graph() != fg) {
         PushToOrderList(fg, input_cnode, new_order_list);
       }
     }
-    new_order_list->push_back(cnode);
+    new_order_list->emplace_back(CNodeWeakPtr(cnode));
   }
 
   // Generate SCC map by SccFinder.
@@ -590,7 +638,7 @@ class SideEffectFinder {
 
   void CheckAndFixSwitchCall(const CNodePtr &caller, const FuncGraphVector &branches) const {
     MS_EXCEPTION_IF_NULL(caller);
-    const auto caller_input_size = caller->inputs().size() - 1;
+    const auto caller_input_size = caller->size() - 1;
     for (size_t i = 0; i < branches.size(); ++i) {
       const auto &branch = branches[i];
       MS_EXCEPTION_IF_NULL(branch);
@@ -607,7 +655,7 @@ class SideEffectFinder {
       if (IsPrimitiveCNode(branch_node, prim::kPrimPartial)) {
         const auto &branch_cnode = branch_node->cast_ptr<CNode>();
         constexpr auto ignore_partial_and_fg_count = 2;
-        extra_input_size = branch_cnode->inputs().size() - ignore_partial_and_fg_count;
+        extra_input_size = branch_cnode->size() - ignore_partial_and_fg_count;
       }
 
       // Check inputs size.
@@ -1412,7 +1460,7 @@ class SideEffectFinder {
   SccPtr GetScc(const FuncGraphPtr &func_graph) const {
     auto found = scc_map_.find(func_graph);
     if (found == scc_map_.end()) {
-      MS_LOG(INTERNAL_EXCEPTION) << "SCC not found for " << (func_graph ? func_graph->ToString() : "FG(null)");
+      return nullptr;
     }
     return found->second;
   }
@@ -1436,17 +1484,23 @@ class SideEffectFinder {
     }
     // Get SCC that this graph belongs to.
     auto scc = GetScc(func_graph);
-    MS_EXCEPTION_IF_NULL(scc);
+    if (scc == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Scc should not be null, func_graph: " << func_graph->ToString();
+    }
     // To prevent SCC members be visited again, we set effect info
     // to 'kDetecting' state before start to check cnodes.
     EffectInfo info{EffectInfo::kDetecting, false, false, false, false};
     SetSccEffectInfo(scc, info);
+
     // Check side effects for all cnodes in the SCC.
     std::vector<CNodePtr> undetected;
     for (auto &g : *scc) {
       MS_EXCEPTION_IF_NULL(g);
-      for (auto &cnode : g->order_list()) {
-        MS_EXCEPTION_IF_NULL(cnode);
+      for (auto &weak_cnode : g->order_list()) {
+        const auto &cnode = weak_cnode.lock();
+        if (cnode == nullptr) {
+          continue;
+        }
         auto cnode_effect = ObtainEffectInfoForCNode(cnode);
         if (cnode_effect.state != EffectInfo::kDetected) {
           // For side effect undetected node, it could be a call to the SCC member graph,
@@ -1465,6 +1519,7 @@ class SideEffectFinder {
     // Update effect into for all members of the SCC.
     info.state = EffectInfo::kDetected;
     SetSccEffectInfo(scc, info);
+
     // Check undetected cnodes again after side effect of the SCC is detected.
     for (auto &cnode : undetected) {
       MS_EXCEPTION_IF_NULL(cnode);
@@ -1643,8 +1698,11 @@ class AutoMonadConverter {
     bool update_state = NeedUpdateState();
 
     // Check all cnodes in order list.
-    for (auto &cnode : func_graph_->order_list()) {
-      MS_EXCEPTION_IF_NULL(cnode);
+    for (auto &weak_cnode : func_graph_->order_list()) {
+      const auto &cnode = weak_cnode.lock();
+      if (cnode == nullptr) {
+        continue;
+      }
       // Process param.value()  Load(param, U) ---> Load(param, GetUniverse())
       if (IsPrimitiveCNode(cnode, prim::kPrimLoad)) {
         const size_t param_index = 1;
@@ -2076,7 +2134,11 @@ class AutoMonadConverter {
   bool NeedUpdateState() const {
     // Search for the only one side effect cnode.
     CNodePtr side_effect_cnode = nullptr;
-    for (auto &cnode : func_graph_->order_list()) {
+    for (auto &weak_cnode : func_graph_->order_list()) {
+      const auto &cnode = weak_cnode.lock();
+      if (cnode == nullptr) {
+        continue;
+      }
       if (HasSideEffect(cnode)) {
         if (side_effect_cnode != nullptr) {
           // There are multiple side effect cnodes, update state is required.

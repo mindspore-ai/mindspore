@@ -1724,7 +1724,7 @@ void AutoGradCellImpl::BuildBPropCutCNode(const CNodePtr &cnode, const Primitive
   // Create gradient outputs cnode
   AnfNodePtrList inputs{NewValueNode(bprop_cut)};
   // Get input, get output, get dout
-  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+  for (size_t i = 1; i < cnode->size(); ++i) {
     (void)inputs.emplace_back(cnode->input(i));
   }
   auto bprop_cut_cnode = ad_param()->tape_->FuncGraph::NewCNode(inputs);

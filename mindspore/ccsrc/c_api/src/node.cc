@@ -581,7 +581,7 @@ size_t MSOpGetInputsNum(ResMgrHandle res_mgr, ConstNodeHandle op, STATUS *error)
   try {
     auto src_cnode = GetSrcPtr<CNodePtr>(res_mgr, op);
     MS_EXCEPTION_IF_NULL(src_cnode);
-    input_num = src_cnode->inputs().size() - 1;
+    input_num = src_cnode->size() - 1;
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "FuncGraph get input number failed. Error info: " << e.what();
     *error = RET_ERROR;

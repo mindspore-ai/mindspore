@@ -110,7 +110,7 @@ FuncGraphPtr GetBpropMetaFuncGraph(const PrimitivePtr &primal, const CNodePtr &c
   size_t forward_inputs_size = 0;
   if (cnode) {
     std::vector<AnfNodePtr> node_lists = cnode->inputs();
-    forward_inputs_size = cnode->inputs().size() - 1;
+    forward_inputs_size = cnode->size() - 1;
     for (size_t i = 1; i < node_lists.size(); i++) {
       auto input_i = node_lists[i];
       if (HasAbstractMonad(input_i)) {

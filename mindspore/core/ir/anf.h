@@ -289,6 +289,7 @@ class MS_CORE_API AnfNode : public Base {
 // CNode represents the complex node with a set of arguments.
 // Fields:
 // inputs_: represents all of the inputs for this CNode.
+// weak_inputs_: represents all of the weak inputs for this CNode.
 // Using input(i) to get the index i input.
 // Using inputs() to get all the inputs as a vector.
 // Using add_input(input) to append a new input for a CNode.
@@ -304,26 +305,32 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   ///
   /// \param[in] inputs Input nodes of this Cnode.
   /// \param[in] func_graph The FuncGraph to which this CNode belongs.
-  CNode(std::vector<AnfNodePtr> &&inputs, const FuncGraphPtr &func_graph);
-
-  /// \brief Constructor.
-  ///
-  /// \param[in] inputs Input nodes of this Cnode.
-  /// \param[in] func_graph The FuncGraph to which this CNode belongs.
-  CNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph);
+  CNode(const AnfNodePtrList &inputs, const FuncGraphPtr &func_graph);
 
   /// \brief Constructor.
   ///
   /// \param[in] inputs Input nodes of this Cnode.
   /// \param[in] func_graph_as_var The FuncGraph of type VarPtr to which this CNode belongs,
-  CNode(const std::vector<AnfNodePtr> &inputs, const VarPtr &func_graph_as_var);
+  CNode(const AnfNodePtrList &inputs, const VarPtr &func_graph_as_var);
 
   /// \brief Constructor.
   ///
-  /// \param[in] inputs Input nodes of this Cnode.
+  /// \param[in] weak_inputs Input nodes of this Cnode.
+  /// \param[in] func_graph The FuncGraph to which this CNode belongs.
+  CNode(AnfNodeWeakPtrList &&weak_inputs, const FuncGraphPtr &func_graph);
+
+  /// \brief Constructor.
+  ///
+  /// \param[in] weak_inputs Input nodes of this Cnode.
+  /// \param[in] func_graph The FuncGraph to which this CNode belongs.
+  CNode(const AnfNodeWeakPtrList &weak_inputs, const FuncGraphPtr &func_graph);
+
+  /// \brief Constructor.
+  ///
+  /// \param[in] weak_inputs Input nodes of this Cnode.
   /// \param[in] func_graph The FuncGraph to which this CNode belongs.
   /// \param[in] debug_info The debug info to be used for this CNode.
-  CNode(std::vector<AnfNodePtr> &&inputs, const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info);
+  CNode(AnfNodeWeakPtrList &&weak_inputs, const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info);
 
   /// \brief Destructor.
   ~CNode() override = default;
@@ -341,16 +348,34 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   /// \return Size of input nodes.
   const size_t size() const;
 
+  /// \brief Check if this CNode has no input node.
+  ///
+  /// \return if input nodes is empty.
+  const bool empty() const;
+
+  /// \brief Get the input node of the given index.
+  /// The weak_input() is recommended.
+  ///
+  /// \param[in] i The given index.
+  /// \return The input node of the given index.
+  const AnfNodePtr input(size_t i) const;
+
   /// \brief Get the input node of the given index.
   ///
   /// \param[in] i The given index.
   /// \return The input node of the given index.
-  const AnfNodePtr &input(size_t i) const;
+  const AnfNodeWeakPtr &weak_input(size_t i) const;
+
+  /// \brief Get the input nodes.
+  /// The weak_inputs() is recommended.
+  ///
+  /// \return The input nodes of this CNode.
+  const AnfNodePtrList &inputs();
 
   /// \brief Get the input nodes.
   ///
   /// \return The input nodes of this CNode.
-  const std::vector<AnfNodePtr> &inputs() const;
+  const AnfNodeWeakPtrList &weak_inputs() const;
 
   /// \brief Add the input node to this CNode.
   ///
@@ -366,7 +391,12 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   /// \brief Set the input nodes for this CNode.
   ///
   /// \param[in] inputs Input nodes.
-  void set_inputs(const std::vector<AnfNodePtr> &inputs);
+  void set_inputs(const AnfNodePtrList &inputs);
+
+  /// \brief Set the input nodes for this CNode.
+  ///
+  /// \param[in] weak_inputs Input nodes.
+  void set_weak_inputs(const AnfNodeWeakPtrList &weak_inputs);
 
   // output_value store cnode value and id in pynative mode.
   using OutputValue = std::pair<ValueNodePtr, std::string>;
@@ -542,7 +572,7 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   /// \brief Add a vector of nodes' debug info or fused debug info.
   ///
   /// \param nodes A vector of anf nodes.
-  void AddFusedDebugInfoList(const std::vector<AnfNodePtr> &nodes);
+  void AddFusedDebugInfoList(const AnfNodePtrList &nodes);
 
   /// \brief Add a node debug info.
   ///
@@ -565,6 +595,8 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   void set_has_side_effect_node(bool has_side_effect_node);
 
  private:
+  void CheckCNodeWeakInput();
+
   static constexpr size_t kStopGradient = 0;
   static constexpr size_t kInForwardFlag = 1;
   static constexpr size_t kEffectHandled = 2;
@@ -573,7 +605,12 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   static constexpr auto kFuncGraphVarKey = "fg_var";
   static constexpr auto kOutputValueKey = "out_value";
 
-  std::vector<AnfNodePtr> inputs_;
+  AnfNodeWeakPtrList weak_inputs_;
+  // Most of the time it's empty.
+  // It's set after call CNode::inputs() for compatibility with earlier version.
+  AnfNodePtrList inputs_;
+  bool inputs_bound_{false};
+
   ssize_t input_tensor_num_ = -1;
   std::bitset<kNumFlags> flags_;
 
@@ -1059,11 +1096,11 @@ using TaggedNodeMap = mindspore::HashMap<AnfNodePtr, size_t>;
 using TaggedGraph = std::pair<FuncGraphPtr, TaggedNodeMap>;
 MS_CORE_API std::string GetCNodeTarget(const AnfNodePtr &node);
 std::string GetOriginNodeTarget(const AnfNodePtr &node);
-MS_CORE_API bool ContainMultiTarget(const std::vector<AnfNodePtr> &nodes);
+MS_CORE_API bool ContainMultiTarget(const AnfNodePtrList &nodes);
 struct GraphSegment {
-  GraphSegment(const std::vector<AnfNodePtr> &nodes, bool is_cut) : nodes_(nodes), is_cut_(is_cut) {}
+  GraphSegment(const AnfNodePtrList &nodes, bool is_cut) : nodes_(nodes), is_cut_(is_cut) {}
   void AddPreSegment(const std::shared_ptr<GraphSegment> &segment) { (void)pre_segments_.insert(segment); }
-  std::vector<AnfNodePtr> nodes_;
+  AnfNodePtrList nodes_;
   std::set<std::shared_ptr<GraphSegment>> pre_segments_;
   bool is_cut_{false};
   uint32_t graph_id_{0};

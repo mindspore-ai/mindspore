@@ -57,7 +57,7 @@ STATUS MapperGruInputs(const CNodePtr &cnode) {
   }
 
   // Optional input parameters have been set.
-  if (cnode->inputs().size() > kKeyInitial_hIndex) {
+  if (cnode->size() > kKeyInitial_hIndex) {
     return lite::RET_OK;
   }
 
@@ -76,7 +76,7 @@ STATUS MapperGruInputs(const CNodePtr &cnode) {
   bool is_add_input = false;
 
   // Check the input parameter kKeyBIndex. If the parameter is not input, construct one.
-  if ((cnode->inputs().size() > kKeyBIndex) && (cnode->inputs().size() <= kKeyInitial_hIndex)) {
+  if ((cnode->size() > kKeyBIndex) && (cnode->size() <= kKeyInitial_hIndex)) {
     ShapeVector input_shape;
     auto abstract = opt::GetCNodeInputAbstract(cnode, kKeyBIndex);
     if (opt::FetchShapeFromAbstract(abstract, &input_shape) != RET_OK) {
@@ -95,7 +95,7 @@ STATUS MapperGruInputs(const CNodePtr &cnode) {
   }
 
   // Check the input parameter kKeySequence_lensIndex. If the parameter is not input, construct one.
-  if ((cnode->inputs().size() > kKeySequence_lensIndex) && (cnode->inputs().size() <= kKeyInitial_hIndex)) {
+  if ((cnode->size() > kKeySequence_lensIndex) && (cnode->size() <= kKeyInitial_hIndex)) {
     ShapeVector input_shape;
     auto abstract = opt::GetCNodeInputAbstract(cnode, kKeySequence_lensIndex);
     if (opt::FetchShapeFromAbstract(abstract, &input_shape) != RET_OK) {
@@ -218,8 +218,8 @@ STATUS GRUMapper::Mapper(const CNodePtr &cnode) {
 
   // fmk type onnx proc
   if (fmk_type == converter::kFmkTypeOnnx) {
-    if (cnode->inputs().size() < kNumOnnxInputSize + 1) {
-      MS_LOG(ERROR) << "onnx gru op input size is: " << cnode->inputs().size() << ", but export size is: > "
+    if (cnode->size() < kNumOnnxInputSize + 1) {
+      MS_LOG(ERROR) << "onnx gru op input size is: " << cnode->size() << ", but export size is: > "
                     << kNumOnnxInputSize + 1;
       return lite::RET_ERROR;
     }

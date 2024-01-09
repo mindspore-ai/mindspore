@@ -343,7 +343,7 @@ static void InsertRedistribution(const RedistributionOpListPtr &redistribution_o
     MS_LOG(EXCEPTION) << "size of OperatorVector and OutPutInfoVector must be the same!";
   }
   for (size_t index = 0; index < (redistribution_oplist_ptr->first).size(); ++index) {
-    if (pos >= SizeToLong(node->inputs().size())) {
+    if (pos >= SizeToLong(node->size())) {
       MS_LOG(EXCEPTION) << "InsertRedistribution:pos can't be larger than node's inputs'size";
     }
     // Create new node
@@ -385,7 +385,7 @@ static void InsertGetTensorSliceOp(const Operator &op, const CNodePtr &node, con
 
   FuncGraphManagerPtr manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  if (pos >= SizeToLong(node->inputs().size())) {
+  if (pos >= SizeToLong(node->size())) {
     MS_LOG(EXCEPTION) << "InsertGetTensorSliceOp: pos can't be larger than node's inputs'size, the instance name is "
                       << instance_name;
   }
@@ -598,9 +598,9 @@ static void SplitTensor(const AnfNodePtr &node, const CNodePtr &next_node, int64
 static void SplitTensorList(const AnfNodePtr &node, const CNodePtr &next_node, int index) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(next_node);
-  if (next_node->inputs().size() != 2 || index != 1) {
+  if (next_node->size() != 2 || index != 1) {
     MS_LOG(INFO) << next_node->fullname_with_scope() << " Inputs must have only one input, get "
-                 << (next_node->inputs().size() - 1) << " index should be 1, get " << index;
+                 << (next_node->size() - 1) << " index should be 1, get " << index;
     return;
   }
   OperatorInfoPtr op_info = next_node->user_data<OperatorInfo>();
@@ -777,7 +777,7 @@ static void StepReplaceGraph(const ReplaceGraphPtr &replace_graph, const CNodePt
       appear_count = 1;
     }
     auto replace_input_cnode = replace_input.first->cast<CNodePtr>();
-    size_t inputs_size = replace_input_cnode->inputs().size();
+    size_t inputs_size = replace_input_cnode->size();
     while (IntToSize(appear_count) < inputs_size && replace_input_cnode->input(appear_count)->func_graph() != nullptr) {
       ++appear_count;
     }
@@ -798,7 +798,7 @@ static void StepReplaceGraph(const ReplaceGraphPtr &replace_graph, const CNodePt
 
 static void InsertVirtualDivOp(const VirtualDivOp &virtual_div_op, const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  size_t node_size = node->inputs().size();
+  size_t node_size = node->size();
   FuncGraphPtr func_graph = node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   FuncGraphManagerPtr manager = func_graph->manager();
@@ -831,7 +831,7 @@ static void InsertRealDivOpToNodeInput(const CNodePtr &node, int64_t scale, cons
   if (scale == 0) {
     MS_LOG(EXCEPTION) << "Find the scale value is 0, you should check the mirror operators's group size.";
   }
-  size_t node_size = node->inputs().size();
+  size_t node_size = node->size();
   FuncGraphPtr func_graph = node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   // instance the real div operator
@@ -852,7 +852,7 @@ static void InsertRealDivOpToNodeInput(const CNodePtr &node, int64_t scale, cons
 static void InsertAllReduceToNodeInput(const CNodePtr &node, const std::string &group,
                                        const std::string &instance_name) {
   MS_EXCEPTION_IF_NULL(node);
-  size_t node_size = node->inputs().size();
+  size_t node_size = node->size();
   FuncGraphPtr func_graph = node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   // instance the real div operator
@@ -908,7 +908,7 @@ static bool FindPreNodes(const AnfNodePtr &node, std::vector<std::string> *uniqu
     return false;
   }
   bool find = false;
-  for (size_t index = 1; index < pre_cnode->inputs().size(); ++index) {
+  for (size_t index = 1; index < pre_cnode->size(); ++index) {
     if (IsPrimitiveCNode(pre_cnode, prim::kPrimDepend) && index > 1) {
       // For Depend, only the first input will be output.
       break;
@@ -947,7 +947,7 @@ void InsertVirtualOutput(const FuncGraphPtr &root, const std::vector<AnfNodePtr>
   if (IsPrimitiveCNode(out_node, prim::kPrimMakeTuple)) {
     auto tuple = out_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(tuple);
-    for (size_t i = 1; i < tuple->inputs().size(); ++i) {
+    for (size_t i = 1; i < tuple->size(); ++i) {
       auto cur_input = tuple->input(i);
       Shapes shape_outputs = GetNodeShape(cur_input);
       if (shape_outputs[0].empty()) {
@@ -1013,13 +1013,13 @@ static bool CheckInsertMirrorOps(const MirrorOps &mirror_ops, const CNodePtr &no
     return true;
   }
   constexpr size_t kSingleArgCNodeSize = 2;
-  if ((node->inputs().size() == kSingleArgCNodeSize || IsSomePrimitiveList(node, INPUT_IS_TUPLE_OR_LIST_OPS)) &&
+  if ((node->size() == kSingleArgCNodeSize || IsSomePrimitiveList(node, INPUT_IS_TUPLE_OR_LIST_OPS)) &&
       (IsValueNode<ValueSequence>(node->input(1)))) {
     MS_LOG(INFO) << "Input is ValueList, skip it.";
     return false;
   }
 
-  if ((node->inputs().size() == kSingleArgCNodeSize || IsSomePrimitiveList(node, INPUT_IS_TUPLE_OR_LIST_OPS)) &&
+  if ((node->size() == kSingleArgCNodeSize || IsSomePrimitiveList(node, INPUT_IS_TUPLE_OR_LIST_OPS)) &&
       (AnfNodeIsPrimitive(node->input(1), MAKE_TUPLE) || AnfNodeIsPrimitive(node->input(1), MAKE_LIST))) {
     MS_LOG(INFO) << "The mirror for " << GetPrimName(node) << " has handle by make_tuple node";
     return false;
@@ -1921,7 +1921,7 @@ static std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node, bool
     }
     return layout_ptr;
   }
-  for (size_t index = 0; index < cnode->inputs().size(); ++index) {
+  for (size_t index = 0; index < cnode->size(); ++index) {
     if (prim->name() == DEPEND && index != 1) {
       continue;
     }
@@ -1967,7 +1967,7 @@ static void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes) {
     if (StrategyFound(attrs) && !is_input_param) {
       MS_LOG(EXCEPTION) << "Setting strategy for Reshape goes for nothing!";
     }
-    MS_ASSERT(cnode->inputs().size() == RESHAPE_INPUT_SIZE);
+    MS_ASSERT(cnode->size() == RESHAPE_INPUT_SIZE);
 
     bool is_next_reshape = false;
     mindspore::HashSet<AnfNodePtr> visit;
@@ -2766,7 +2766,7 @@ static void InsertAllReduceForNormValue(const AnfNodePtr &res_node) {
     return;
   }
   auto anf_node = find_node->cast<CNodePtr>();
-  if (anf_node->inputs().size() > 1 && IsSomePrimitive(anf_node->input(1)->cast<CNodePtr>(), ALL_REDUCE)) {
+  if (anf_node->size() > 1 && IsSomePrimitive(anf_node->input(1)->cast<CNodePtr>(), ALL_REDUCE)) {
     return;
   }
   auto sqrt_node = find_node;

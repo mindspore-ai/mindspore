@@ -66,7 +66,7 @@ void OutputsUnpack(Graph *graph) {
         break;
       }
       case prim::ListConstruct: {
-        for (size_t j = 0; i < node->inputs().size(); j++) {
+        for (size_t j = 0; i < node->size(); j++) {
           graph->registerOutput(node->input(j));
         }
         graph->eraseOutput(i);
@@ -126,7 +126,7 @@ void FuseListUnpack(Block *block) {
  */
 void RemoveListConstructOps(Block *block) {
   for (auto it = block->nodes().begin(), end = block->nodes().end(); it != end; ++it) {
-    if (it->kind() == prim::ListConstruct && it->inputs().size() == 1) {
+    if (it->kind() == prim::ListConstruct && it->size() == 1) {
       bool remove = true;
       for (auto use : it->output()->uses()) {
         if (use.user->kind() == aten::cat) {
@@ -145,7 +145,7 @@ void RemoveListConstructOps(Block *block) {
 
 // flatten tuple input and remove tuple unpack
 bool FlattenInputsTuple(Graph *graph) {
-  for (size_t i = 0; i < graph->inputs().size(); i++) {
+  for (size_t i = 0; i < graph->size(); i++) {
     auto input_value = graph->inputs()[i];
     auto tuple = input_value->type()->cast<at::TupleType>();
     if (!tuple) {

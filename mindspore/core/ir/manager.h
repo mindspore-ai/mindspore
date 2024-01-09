@@ -19,6 +19,7 @@
 #ifndef MINDSPORE_CORE_IR_MANAGER_H_
 #define MINDSPORE_CORE_IR_MANAGER_H_
 
+#include <deque>
 #include <set>
 #include <map>
 #include <list>
@@ -154,7 +155,7 @@ class FuncGraphParentsTotalComputer final : public DepComputer {
   void RealRecompute(FuncGraphPtr fg) override;
 
  private:
-  FuncGraphSetPtr SeekParents(const FuncGraphPtr &fg, mindspore::HashMap<FuncGraphPtr, FuncGraphSetPtr> *seen_fgs);
+  FuncGraphSetPtr SeekParents(const FuncGraphPtr &fg);
 };
 
 using FuncGraphToFuncGraphMap = OrderedMap<FuncGraphPtr, FuncGraphPtr>;
@@ -298,17 +299,13 @@ class FuncGraphMetaFgPrimTotalComputer final : public DepComputer {
 class MS_CORE_API FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {
  public:
   explicit FuncGraphManager(const std::vector<FuncGraphPtr> &roots, bool manage = true);
-  virtual ~FuncGraphManager() {
-    if (is_manage_) {
-      RemoveRoots();
-    }
-    Clear();
-  }
+  virtual ~FuncGraphManager();
 
   void Reset();
   void Init();
   void Clear() noexcept;
   void AddFuncGraph(const FuncGraphPtr &func_graph, bool is_root = false);
+  void AddFuncGraphs(const FuncGraphPtr &source_func_graph);
   void KeepRoots(const std::vector<FuncGraphPtr> &roots = {});
   void RemoveRoots();
   void SetParameters(const FuncGraphPtr &fg, const std::vector<AnfNodePtr> &parameters);
@@ -320,12 +317,10 @@ class MS_CORE_API FuncGraphManager : public std::enable_shared_from_this<FuncGra
   void SetEdge(const AnfNodePtr &node, int index, const AnfNodePtr &value);
   void AddEdge(const AnfNodePtr &node, const AnfNodePtr &value);
   void MoveAllCNodeDropGraph(const FuncGraphPtr &source, const FuncGraphPtr &target, const AnfNodePtr &call_node,
-                             const ScopePtr &scope);
+                             const ScopePtr &scope, bool update_debug_info = false);
 
   FuncGraphTransaction Transact();
   void CommitChanges(std::vector<change::ChangePtr> &&changes);
-
-  bool IsManaged() const { return is_manage_; }
 
   const FuncGraphSet &roots() const { return roots_; }
 
@@ -374,12 +369,13 @@ class MS_CORE_API FuncGraphManager : public std::enable_shared_from_this<FuncGra
   void ProcessEdgeAdd(const AnfNodePtr &node, int index, const AnfNodePtr &input);
   void ProcessInputsEdgeAdd(const CNodePtr &cnode);
   void ProcessInputsEdgeRemove(const CNodePtr &cnode);
-  void AcquireNodes(std::vector<AnfNodePtr> &&nodes);
+  void AcquireNodes(std::vector<AnfNodePtr> &&nodes, bool recursive = true);
   FuncGraphSet MaybeDropNodes(std::vector<AnfNodePtr> &&nodes);
   void OnEdgeAdded(const AnfNodePtr &node, int index, const AnfNodePtr &input);
   void OnEdgeRemoved(const AnfNodePtr &node, int index, const AnfNodePtr &input);
   void MoveAllNodes(const FuncGraphPtr &source, const FuncGraphPtr &target);
 
+  std::deque<FuncGraphPtr> todo_;
   FuncGraphSet roots_;                   // Managed roots.
   FuncGraphSet func_graphs_;             // Managed func graphs.
   FuncGraphIndexMap func_graphs_index_;  // For Fast Pass

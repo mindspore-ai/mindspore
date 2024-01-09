@@ -28,7 +28,7 @@ PrimitiveCPtr PytorchUnbindParser::Parse(const torch::jit::Node *torch_node, std
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   input_indices->push_back(0);
   prim->set_axis(0);
-  if (torch_node->inputs().size() > SECOND_INPUT) {
+  if (torch_node->size() > SECOND_INPUT) {
     auto dim = PytorchNodeParser::GetValueFromConstNode<int64_t>(torch_node->input(SECOND_INPUT));
     prim->set_axis(dim);
   }

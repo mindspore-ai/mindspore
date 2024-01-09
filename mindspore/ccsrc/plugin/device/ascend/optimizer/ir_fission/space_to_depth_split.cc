@@ -124,7 +124,8 @@ const AnfNodePtr SpaceToDepthSplit::Process(const FuncGraphPtr &graph, const Anf
 
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kSpaceToDepthOpName))};
   auto last_input_value = CreateValueNode(cnode);
-  (void)new_inputs.insert(new_inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
+  auto cnode_inputs = cnode->inputs();
+  (void)new_inputs.insert(new_inputs.cend(), cnode_inputs.cbegin() + 1, cnode_inputs.cend());
   (void)new_inputs.emplace_back(last_input_value);
   CNodePtr new_cnode = NewCNode(new_inputs, graph);
   MS_EXCEPTION_IF_NULL(new_cnode);

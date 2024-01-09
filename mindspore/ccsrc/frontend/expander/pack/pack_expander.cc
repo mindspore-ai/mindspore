@@ -56,14 +56,15 @@ void UpdateRecomputeScope(const FuncGraphPtr &fg, const py::object &obj) {
 void GraphDropout(const FuncGraphPtr &fg) {
   auto nodes = fg->TopoSort(fg->get_return());
   std::unordered_map<AnfNodePtr, bool> node_map;
-  auto order_list = fg->order_list();
   for (auto &node : nodes) {
     if (node->isa<CNode>()) {
       node_map[node] = true;
     }
   }
-  for (auto &node : order_list) {
-    if (node->isa<CNode>() && node != fg->get_return() && node_map.find(node) == node_map.end()) {
+  const auto &order_list = fg->order_list();
+  for (auto &weak_node : order_list) {
+    const auto &node = weak_node.lock();
+    if (node != nullptr && node->isa<CNode>() && node != fg->get_return() && node_map.find(node) == node_map.end()) {
       fg->DropNode(node);
     }
   }

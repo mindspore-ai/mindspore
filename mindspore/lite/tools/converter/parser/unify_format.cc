@@ -330,7 +330,7 @@ STATUS UnifyFormatToNHWC::ConvertOnnxResizeForVariableShape(const FuncGraphPtr &
 
 STATUS UnifyFormatToNHWC::ResizeNodeProcess(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
-  if (fmk_type_ != converter::kFmkTypeOnnx || cnode->inputs().size() <= kNumInputSize) {
+  if (fmk_type_ != converter::kFmkTypeOnnx || cnode->size() <= kNumInputSize) {
     return RET_OK;
   }
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));

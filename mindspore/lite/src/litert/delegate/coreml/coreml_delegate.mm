@@ -185,7 +185,7 @@ CoreMLOp *CoreMLDelegateImpl::GetOP(kernel::Kernel *kernel, const schema::Primit
     return nullptr;
   }
 
-  for (int i = 0; i < kernel->inputs().size(); i++) {
+  for (int i = 0; i < kernel->size(); i++) {
     mindspore::MSTensor tensor = kernel->inputs()[i];
     if (tensor.DataType() == DataType::kNumberTypeFloat16 && tensor.Data() == nullptr) {
       tensor.SetDataType(DataType::kNumberTypeFloat32);

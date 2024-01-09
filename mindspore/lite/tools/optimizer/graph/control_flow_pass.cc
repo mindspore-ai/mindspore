@@ -175,7 +175,7 @@ int ControlFlowPass::SplitGraph(const FuncGraphPtr &fg, AnfNodePtr *control_flow
     visited_nodes->insert(node);
     auto cnode = utils::cast<CNodePtr>(node);
     MS_CHECK_TRUE_MSG(cnode != nullptr, RET_ERROR, "cast ptr failed");
-    for (size_t i = 0; i < cnode->inputs().size(); i++) {
+    for (size_t i = 0; i < cnode->size(); i++) {
       auto input = cnode->input(i);
       if (visited_nodes->find(input) == visited_nodes->end()) {
         q.push_back(input);
@@ -340,7 +340,7 @@ int ControlFlowPass::CreateWhileBodyPartialNode(const FuncGraphPtr &cond_fg, con
   auto body_output = body_fg->output()->cast<CNodePtr>();
   MS_ASSERT(body_output != nullptr);
   if (CheckPrimitiveType(body_output, prim::kPrimMakeTuple)) {
-    for (size_t i = 1; i < body_output->inputs().size(); ++i) {
+    for (size_t i = 1; i < body_output->size(); ++i) {
       cond_partial_inputs.push_back(body_output->input(i));
     }
     body_fg->DropNode(body_output);
@@ -397,7 +397,7 @@ int ControlFlowPass::CreateWhileAfterPartialNode(
     }
     auto get_tuple_item_cnode = node->cast<CNodePtr>();
     MS_ASSERT(get_tuple_item_cnode != nullptr);
-    MS_ASSERT(get_tuple_item_cnode->inputs().size() == kGetItemInputSize);
+    MS_ASSERT(get_tuple_item_cnode->size() == kGetItemInputSize);
     if (get_tuple_item_cnode->input(kCNodeFirstInputIndex) != *while_cnode) {
       continue;
     }
@@ -449,7 +449,7 @@ int ControlFlowPass::ProcessWhileOp(const FuncGraphPtr &fg, const std::set<AnfNo
 
   auto while_cnode = while_node->cast<CNodePtr>();
   MS_ASSERT(while_cnode != nullptr);
-  if (while_cnode->inputs().size() < kWhileMinInputSize) {
+  if (while_cnode->size() < kWhileMinInputSize) {
     MS_LOG(ERROR) << "while input is not right.";
     return RET_FAILED;
   }
@@ -629,7 +629,7 @@ int ControlFlowPass::CreateIfPartialNode(const FuncGraphPtr &fg, const size_t &i
   } else {
     auto then_fg_output = then_fg->output()->cast<CNodePtr>();
     MS_CHECK_TRUE_MSG(then_fg_output != nullptr, RET_ERROR, "cast ptr failed");
-    for (size_t i = kCNodeFirstInputIndex; i < then_fg_output->inputs().size(); ++i) {
+    for (size_t i = kCNodeFirstInputIndex; i < then_fg_output->size(); ++i) {
       after_partial_cnode_inputs.push_back(then_fg_output->input(i));
     }
     then_fg->DropNode(then_fg_output);
@@ -704,7 +704,7 @@ int ControlFlowPass::ProcessIfOp(const FuncGraphPtr &fg, const std::set<AnfNodeP
 
   auto if_cnode = if_node->cast<CNodePtr>();
   MS_ASSERT(if_cnode != nullptr);
-  if (if_cnode->inputs().size() < kIfMinInputSize) {
+  if (if_cnode->size() < kIfMinInputSize) {
     MS_LOG(ERROR) << "if input is not right.";
     return RET_FAILED;
   }

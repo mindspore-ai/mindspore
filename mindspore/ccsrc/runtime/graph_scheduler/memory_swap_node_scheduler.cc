@@ -212,7 +212,7 @@ void MemorySwapNodeScheduler::CollectKernelInputMemStatistic(size_t kernel_index
   auto kernel_mod = AnfAlgo::GetKernelMod(node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   const bool is_communication_node = common::AnfAlgo::IsCommunicationOp(node);
-  auto input_num = std::min(kernel_mod->GetInputSizeList().size(), node->inputs().size() - 1);
+  auto input_num = std::min(kernel_mod->GetInputSizeList().size(), node->size() - 1);
   const bool continuous_input_mem = is_communication_node && input_num > 1;
   size_t total_size = 0;
   std::vector<size_t> size_list;

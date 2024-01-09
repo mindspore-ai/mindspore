@@ -36,33 +36,36 @@ enum IncludeType { FOLLOW, NOFOLLOW, EXCLUDE };
 using IncludeFunc = std::function<IncludeType(const AnfNodePtr &)>;
 using FilterFunc = std::function<bool(const AnfNodePtr &)>;
 using GraphFilterFunc = std::function<bool(const FuncGraphPtr &)>;
-using SuccFunc = std::function<std::vector<AnfNodePtr>(AnfNodePtr)>;
-using SearchFunc = std::function<std::vector<AnfNodePtr>(const AnfNodePtr &, const IncludeFunc &)>;
+using SuccFunc = std::function<AnfNodeWeakPtrList(AnfNodePtr)>;
+using DeprecatedSuccFunc = std::function<AnfNodePtrList(AnfNodePtr)>;
 using MatchFunc = std::function<bool(const CNodePtr &)>;
 using NodeVisitFunc = std::function<void(const AnfNodePtr &)>;
 
-std::vector<AnfNodePtr> SuccDeeper(const AnfNodePtr &node);
-MS_CORE_API std::vector<AnfNodePtr> SuccDeeperSimple(const AnfNodePtr &node);
-MS_CORE_API std::vector<AnfNodePtr> SuccIncoming(const AnfNodePtr &node);
-std::vector<AnfNodePtr> SuccIncludeFV(const FuncGraphPtr &fg, const AnfNodePtr &node);
-MS_CORE_API std::vector<AnfNodePtr> SuccWithFilter(const GraphFilterFunc &graph_filter, const AnfNodePtr &node);
+MS_CORE_API AnfNodeWeakPtrList SuccDeeperSimple(const AnfNodePtr &node);
+MS_CORE_API AnfNodeWeakPtrList SuccIncoming(const AnfNodePtr &node);
+AnfNodeWeakPtrList SuccIncludeFV(const FuncGraphPtr &fg, const AnfNodePtr &node);
+MS_CORE_API AnfNodeWeakPtrList SuccWithFilter(const GraphFilterFunc &graph_filter, const AnfNodePtr &node);
 
-MS_CORE_API const std::vector<AnfNodePtr> &GetInputs(const AnfNodePtr &node);
+MS_CORE_API const AnfNodePtrList GetInputs(const AnfNodePtr &node);
+MS_CORE_API const AnfNodeWeakPtrList &GetWeakInputs(const AnfNodePtr &node);
 
 inline IncludeType AlwaysInclude(const AnfNodePtr &) { return FOLLOW; }
 MS_CORE_API IncludeType IncludeBelongGraph(const FuncGraphPtr &fg, const AnfNodePtr &node);
 
-MS_CORE_API std::vector<AnfNodePtr> DeepScopedGraphSearch(const AnfNodePtr &root,
-                                                          const IncludeFunc &include = AlwaysInclude);
+MS_CORE_API AnfNodePtrList DeepScopedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include = AlwaysInclude);
 
-MS_CORE_API std::vector<AnfNodePtr> DeepLinkedGraphSearch(const AnfNodePtr &root,
-                                                          const IncludeFunc &include = AlwaysInclude);
+MS_CORE_API AnfNodePtrList DeepLinkedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include = AlwaysInclude);
 
-MS_CORE_API std::vector<AnfNodePtr> DeepScopedGraphSearchWithFilter(const AnfNodePtr &root, const IncludeFunc &include,
-                                                                    const FilterFunc &filter);
+MS_CORE_API AnfNodePtrList DeepScopedGraphSearchWithFilter(const AnfNodePtr &root, const IncludeFunc &include,
+                                                           const FilterFunc &filter);
 
-MS_CORE_API std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ = SuccIncoming,
-                                             const IncludeFunc &include = AlwaysInclude);
+MS_CORE_API AnfNodePtrList TopoSort(const AnfNodePtr &root, const SuccFunc &succ = SuccIncoming,
+                                    const IncludeFunc &include = AlwaysInclude);
+
+// @deprecated
+// To use 'AnfNodePtrList TopoSort(const AnfNodePtr &, const SuccFunc &, const IncludeFunc &)' instead.
+MS_CORE_API AnfNodePtrList TopoSort(const AnfNodePtr &root, const DeprecatedSuccFunc &deprecated_succ,
+                                    const IncludeFunc &include = AlwaysInclude);
 
 MS_CORE_API std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const CNodePtr &root);
 std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(const FuncGraphPtr &root,

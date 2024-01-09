@@ -267,7 +267,7 @@ size_t AnfUtils::GetInputTensorNum(const AnfNodePtr &node) {
     }
   }
 
-  size_t input_num = cnode->inputs().size();
+  size_t input_num = cnode->size();
   if (input_num == 0) {
     MS_LOG(INTERNAL_EXCEPTION) << "Cnode inputs size can't be zero" << trace::DumpSourceLines(node);
   }
@@ -417,7 +417,7 @@ std::pair<AnfNodePtr, size_t> AnfUtils::VisitKernel(const AnfNodePtr &anf_node, 
       MS_EXCEPTION_IF_NULL(node);
       return VisitKernel(node, 0);
     } else if (IsPrimitive(input0, prim::kPrimTupleGetItem)) {
-      if (cnode->inputs().size() != kTupleGetItemInputSize) {
+      if (cnode->size() != kTupleGetItemInputSize) {
         MS_LOG(INTERNAL_EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
       }
       auto input2 = cnode->input(kInputNodeOutputIndexInTupleGetItem);

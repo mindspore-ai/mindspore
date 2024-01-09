@@ -431,7 +431,7 @@ static void DrawParallelInfo(Graphviz *const graph_obj, const CNodePtr &node) {
   auto in_value = AnfDumpHandler::InStrategyValue(node);
   auto in_stage_value = AnfDumpHandler::InStrategyStageValue(node);
   if (in_value != nullptr && in_stage_value != nullptr) {
-    auto num = node->inputs().size();
+    auto num = node->size();
     graph_obj->buffer() << "<tr><td colspan='" << num << "' ";
     graph_obj->buffer() << "bgcolor='" << graph_obj->Color(node) << "'>";
     ValueTuplePtr strategy_tuple = std::make_shared<ValueTuple>(std::vector<ValuePtr>{in_stage_value, in_value});
@@ -551,7 +551,7 @@ void Digraph::Edge(const AnfNodePtr &start, const AnfNodePtr &end, int idx, int 
   if (end->isa<CNode>()) {
     auto cnode = end->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    auto num = cnode->inputs().size();
+    auto num = cnode->size();
     if (idx == 0 && num > 1) {
       buffer_ << "style=dashed";
     }

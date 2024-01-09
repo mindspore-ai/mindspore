@@ -197,7 +197,7 @@ void InsertVirtualDataset(const FuncGraphPtr &root, const std::vector<AnfNodePtr
       auto node_users = node_user_map[graph_inputs[index]];
       for (const auto &node_user : node_users) {
         auto cnode = node_user.first->cast<CNodePtr>();
-        for (size_t input_index = 1; input_index < cnode->inputs().size(); input_index++) {
+        for (size_t input_index = 1; input_index < cnode->size(); input_index++) {
           if (!IsValueNode<Primitive>(cnode->inputs()[0]) && !IsValueNode<FuncGraph>(cnode->inputs()[0]) &&
               !IsPrimitiveCNode(cnode->input(0), prim::kPrimVmap)) {
             continue;

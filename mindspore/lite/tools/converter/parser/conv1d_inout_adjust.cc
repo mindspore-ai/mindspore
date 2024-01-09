@@ -177,7 +177,7 @@ bool Conv1DInOutAdjust::Run(const FuncGraphPtr &func_graph) {
     squeeze->set_abstract(squeeze_node->abstract()->Clone());
     (void)manager->Replace(squeeze_node, squeeze);
 
-    MS_ASSERT(cnode->inputs().size() > kConvWeightIndex);
+    MS_ASSERT(cnode->size() > kConvWeightIndex);
     auto weight_node = cnode->input(kConvWeightIndex);
     MS_ASSERT(weight_node != nullptr);
     // expand weight tensor to 4 dimensions.

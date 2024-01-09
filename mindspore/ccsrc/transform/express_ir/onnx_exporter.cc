@@ -622,7 +622,7 @@ CNodePtr FindLoopSwitchNode(const FuncGraphPtr &control_subgraph) {
     MS_LOG(EXCEPTION) << "Expected a loop control structure";
   }
   auto lazy_call_node = GetNodeInput<CNode>(control_subgraph->get_return(), kOneNum);
-  if (lazy_call_node->inputs().size() != kOneNum || !lazy_call_node->input(kZeroNum)->isa<CNode>()) {
+  if (lazy_call_node->size() != kOneNum || !lazy_call_node->input(kZeroNum)->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Expected a lazy call node";
   }
   auto switch_node = GetNodeInput<CNode>(lazy_call_node, kZeroNum);
@@ -704,7 +704,7 @@ std::vector<size_t> TraceLoopToControlMap(const FuncGraphPtr &control_subgraph) 
   auto loop_partial_node = GetNodeInput<CNode>(switch_node, kTwoNum);
   const auto &control_params = control_subgraph->parameters();
   int64_t auxiliary_inputs_num = 2;
-  for (size_t i = static_cast<size_t>(auxiliary_inputs_num); i < loop_partial_node->inputs().size(); ++i) {
+  for (size_t i = static_cast<size_t>(auxiliary_inputs_num); i < loop_partial_node->size(); ++i) {
     auto loop_param = GetNodeInput<Parameter>(loop_partial_node, i);
     auto control_param_pos =
       std::find(control_params.begin(), control_params.end(), loop_param) - control_params.begin();
@@ -722,7 +722,7 @@ std::vector<size_t> TraceAfterToLoopMap(const FuncGraphPtr &control_subgraph) {
   auto after_partial_node = GetNodeInput<CNode>(switch_node, kThreeNum);
   const auto &loop_params = loop_partial_node->inputs();
   int64_t auxiliary_inputs_num = 2;
-  for (size_t i = static_cast<size_t>(auxiliary_inputs_num); i < after_partial_node->inputs().size(); ++i) {
+  for (size_t i = static_cast<size_t>(auxiliary_inputs_num); i < after_partial_node->size(); ++i) {
     auto after_param = GetNodeInput<Parameter>(after_partial_node, i);
     auto after_param_pos = std::find(loop_params.begin(), loop_params.end(), after_param) - loop_params.begin();
     result.push_back(after_param_pos - auxiliary_inputs_num);
@@ -732,7 +732,7 @@ std::vector<size_t> TraceAfterToLoopMap(const FuncGraphPtr &control_subgraph) {
 }
 
 std::vector<bool> TraceIgnoredLoopParams(const CNodePtr &start_node, const std::vector<size_t> &loop_to_control_map) {
-  auto inputs_num = start_node->inputs().size() - 1;
+  auto inputs_num = start_node->size() - 1;
   std::vector<bool> result(inputs_num);
   for (size_t loop_i = 0; loop_i < inputs_num; ++loop_i) {
     auto control_i = loop_to_control_map.at(loop_i);
@@ -788,7 +788,7 @@ LoopParts MatchGraph(const CNodePtr &start_node) {
 
   auto loop_to_control_order_map = TraceLoopToControlMap(control_subgraph);
   auto ignored_loop_params_mask = TraceIgnoredLoopParams(start_node, loop_to_control_order_map);
-  auto loop_inputs_num = start_node->inputs().size() - 1;
+  auto loop_inputs_num = start_node->size() - 1;
   for (size_t i = 0; i < loop_inputs_num; ++i) {
     if (ignored_loop_params_mask.at(i)) {
       result.ignored_loop_param_indices.push_back(i);
@@ -1503,7 +1503,9 @@ void OnnxExporter::MatchAndMark(const FuncGraphPtr &func_graph, const std::vecto
       // if the key `input` does not exist, just create a new one
       op_merged_infos[cnode].referred_count += 1;
     }
-    for (auto &orig_input : cnode->inputs()) {
+    for (auto &weak_input : cnode->weak_inputs()) {
+      auto orig_input = weak_input.lock();
+      MS_EXCEPTION_IF_NULL(orig_input);
       auto input = GetRealInput(orig_input);
       if (!input->isa<CNode>() || IsZeroRefcountNode(input)) {
         continue;
@@ -1591,7 +1593,7 @@ void OnnxExporter::IgnoreMakeTuple(const AnfNodePtr &node,
     ignore(node);
     auto cnode = dyn_cast<CNode>(node);
     if (cnode != nullptr) {
-      for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+      for (size_t i = 1; i < cnode->size(); ++i) {
         auto real_input = GetRealInput(cnode->input(i));
         IgnoreMakeTuple(real_input, op_merged_infos_ptr);
       }
@@ -2247,13 +2249,13 @@ void OnnxExporter::ExportPrimAddN(const FuncGraphPtr &, const CNodePtr &node,
 
   auto input_node = node->input(kOneNum)->cast<CNodePtr>();
   auto last_input_name = GetNodeInputName(input_node->input(kOneNum), node_map_ptr, graph_proto);
-  for (size_t i = kTwoNum; i < input_node->inputs().size() - 1; ++i) {
+  for (size_t i = kTwoNum; i < input_node->size() - 1; ++i) {
     auto input_name = GetNodeInputName(input_node->input(i), node_map_ptr, graph_proto);
     auto tmp_end_name = node_name + "ADD_" + std::to_string(i);
     AddOp("Add", {last_input_name, input_name}, {tmp_end_name}, graph_proto);
     last_input_name = tmp_end_name;
   }
-  auto input_end_name = GetNodeInputName(input_node->input(input_node->inputs().size() - 1), node_map_ptr, graph_proto);
+  auto input_end_name = GetNodeInputName(input_node->input(input_node->size() - 1), node_map_ptr, graph_proto);
   AddOp("Add", {last_input_name, input_end_name}, {node_name}, graph_proto);
 }
 
@@ -2316,7 +2318,7 @@ void OnnxExporter::ExportPrimConcat(const FuncGraphPtr &, const CNodePtr &node,
   auto input_node = node->input(kOneNum)->cast<CNodePtr>();
   std::vector<std::string> input_names;
   if (input_node->IsApply(prim::kPrimMakeTuple)) {
-    for (size_t i = 1; i < input_node->inputs().size(); ++i) {
+    for (size_t i = 1; i < input_node->size(); ++i) {
       auto input_name = GetNodeInputName(input_node->input(i), node_map_ptr, graph_proto);
       input_names.push_back(input_name);
     }
@@ -4042,7 +4044,7 @@ void OnnxExporter::ExportWhileLoop(const CNodePtr &start_node, std::map<AnfNodeP
   auto after_loop_retval = GetRealInput(loop_parts.after_loop_subgraph->get_return()->input(1));
   if (after_loop_retval->isa<CNode>() && after_loop_retval->cast<CNodePtr>()->IsApply(prim::kPrimMakeTuple)) {
     auto tuple_retval = dyn_cast<CNode>(after_loop_retval);
-    for (size_t i = 1; i < tuple_retval->inputs().size(); ++i) {
+    for (size_t i = 1; i < tuple_retval->size(); ++i) {
       auto output_name = GetNodeInputName(tuple_retval->input(i), node_map_ptr, graph_proto);
       AddOp("Identity", {output_name}, {MakeOutputName(node_name, i - 1)}, graph_proto);
     }
@@ -4253,7 +4255,7 @@ void OnnxExporter::ExportMergeBatchNorm(const FuncGraphPtr &func_graph, const CN
   } else {
     PrimitivePtr prim_batch_norm = GetPrimitive(batch_norm_node);
     std::vector<AnfNodePtr> inputs;
-    for (size_t i = 1; i < batch_norm_node->inputs().size(); i++) {
+    for (size_t i = 1; i < batch_norm_node->size(); i++) {
       inputs.push_back(batch_norm_node->input(i));
     }
     (*node_map_ptr)[node] = ExportPrimitive(func_graph, node_map_ptr, prim_batch_norm, inputs, graph_proto);
@@ -4268,7 +4270,7 @@ void OnnxExporter::ExportMergeMaxPoolWithArgmax(const FuncGraphPtr &func_graph, 
   PrimitivePtr prim_maxpool_with_argmax =
     dyn_cast<Primitive>((dyn_cast<ValueNode>(maxpool_with_argmax_node->input(kZeroNum)))->value());
   std::vector<AnfNodePtr> inputs;
-  for (size_t i = 1; i < maxpool_with_argmax_node->inputs().size(); i++) {
+  for (size_t i = 1; i < maxpool_with_argmax_node->size(); i++) {
     inputs.push_back(maxpool_with_argmax_node->input(i));
   }
   (*node_map_ptr)[node] = ExportPrimitive(func_graph, node_map_ptr, prim_maxpool_with_argmax, inputs, graph_proto);
@@ -4551,7 +4553,7 @@ void OnnxExporter::ExportOutput(const FuncGraphPtr &func_graph, const AnfNodePtr
   AnfNodePtr arg = GetRealInput(return_arg);
   if (IsPrimitiveCNode(arg, prim::kPrimMakeTuple)) {
     auto arg_cnode = dyn_cast<CNode>(arg);
-    for (size_t i = 1; i < arg_cnode->inputs().size(); ++i) {
+    for (size_t i = 1; i < arg_cnode->size(); ++i) {
       const auto &output = arg_cnode->input(i);
       ExportOutput(func_graph, output, node_map_ptr, graph_proto);
     }

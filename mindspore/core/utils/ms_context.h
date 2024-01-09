@@ -201,6 +201,7 @@ class MS_CORE_API MsContext {
 
   bool enable_dump_ir() const;
   std::string GetSaveGraphsPath() const;
+  int GetSaveGraphsLevel() const;
   bool CanDump(const DumpLevel &level) const;
   std::string backend_policy() const;
   bool set_backend_policy(const std::string &policy);

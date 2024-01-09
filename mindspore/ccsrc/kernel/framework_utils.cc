@@ -704,7 +704,7 @@ void GetFuncGraphOutputNodes(const FuncGraphPtr &func_graph, std::vector<AnfNode
     auto input0 = cnode->input(kAnfPrimitiveIndex);
     MS_EXCEPTION_IF_NULL(input0);
     if (IsPrimitive(input0, prim::kPrimMakeTuple)) {
-      for (size_t input_idx = 1; input_idx < cnode->inputs().size(); ++input_idx) {
+      for (size_t input_idx = 1; input_idx < cnode->size(); ++input_idx) {
         auto input_node = cnode->input(input_idx);
         MS_EXCEPTION_IF_NULL(input_node);
         if (input_node->isa<CNode>() && common::AnfAlgo::GetInputTensorNum(input_node) == 0) {

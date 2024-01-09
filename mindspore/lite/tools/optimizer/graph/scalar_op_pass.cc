@@ -370,7 +370,7 @@ STATUS ScalarOpPass::ReplaceMakeTuple(const FuncGraphPtr &func_graph, const AnfN
                                    anf_node->cast<CNodePtr>()->fullname_with_scope() + "_concat_make_tuple");
   auto primitive = GetCNodePrimitive(concat_node);
   MS_CHECK_TRUE_RET(primitive != nullptr, lite::RET_ERROR);
-  int64_t num_of_inputs = anf_node->cast<CNodePtr>()->inputs().size() - kSizeOne;
+  int64_t num_of_inputs = anf_node->cast<CNodePtr>()->size() - kSizeOne;
   primitive->set_attr("N", MakeValue<int64_t>(num_of_inputs));
   primitive->set_attr("inputNums", MakeValue<int64_t>(num_of_inputs));
 

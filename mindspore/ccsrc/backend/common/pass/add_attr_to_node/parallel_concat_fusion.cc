@@ -27,7 +27,7 @@ const AnfNodePtr ParallelConcatFusionProcess(const FuncGraphPtr &graph, const An
 
   int64_t n = 0;
 
-  for (size_t idx = kIndex1; idx < cnode->inputs().size(); ++idx) {
+  for (size_t idx = kIndex1; idx < cnode->size(); ++idx) {
     auto input_node = cnode->input(idx);
     MS_EXCEPTION_IF_NULL(input_node);
     if (input_node->isa<Parameter>() || input_node->isa<ValueNode>()) {

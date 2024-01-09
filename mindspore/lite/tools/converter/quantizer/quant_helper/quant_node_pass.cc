@@ -221,7 +221,7 @@ int QuantNodePass::DoFullQuant(const CNodePtr &cnode) {
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " set data_type failed.";
     return RET_ERROR;
   }
-  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+  for (size_t i = 1; i < cnode->size(); i++) {
     auto input_node = cnode->input(i);
     MS_ASSERT(input_node != nullptr);
     // activation quant

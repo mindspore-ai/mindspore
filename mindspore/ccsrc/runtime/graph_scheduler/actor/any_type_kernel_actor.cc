@@ -387,7 +387,7 @@ void AnyTypeKernelActor::RunForGraphInput(OpContext<DeviceTensor> *const context
       graph()->InferType();
       const auto &return_node = graph()->get_return();
       MS_EXCEPTION_IF_NULL(return_node);
-      if (!return_node->isa<CNode>() || return_node->cast<CNodePtr>()->inputs().size() <= 1) {
+      if (!return_node->isa<CNode>() || return_node->cast<CNodePtr>()->size() <= 1) {
         MS_LOG(EXCEPTION) << "Invalid return node:" << return_node->DebugString()
                           << " for graph:" << graph()->ToString();
       }

@@ -47,6 +47,7 @@ bool ValidatePass(const ResourcePtr &resource);
 bool ConvertPrepareAdapt(const ResourcePtr &resource);
 bool AddCacheEmbeddingPass(const ResourcePtr &resource);
 bool MetaUnpackPreparePass(const ResourcePtr &resource);
+bool PreSimplifyInlinePass(const ResourcePtr &resource);
 bool GradPartialTransformPass(const ResourcePtr &resource);
 bool PackExpandPass(const ResourcePtr &resource);
 void ReclaimOptimizer();

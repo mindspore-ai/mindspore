@@ -1410,7 +1410,8 @@ void GetAllUInputByCNode(const CNodePtr &cnode,
     return;
   }
   (*cnode_to_monad_inputs)[cnode] = {};
-  for (const auto &input : cnode->inputs()) {
+  for (auto &weak_input : cnode->weak_inputs()) {
+    auto input = weak_input.lock();
     MS_EXCEPTION_IF_NULL(input);
     if (!input->isa<CNode>()) {
       continue;
@@ -1441,12 +1442,12 @@ void GetAllCNodeUInputByGraph(const KernelGraphPtr &graph,
 bool IsNeedLinkForFirstInput(const CNodePtr &cnode,
                              const mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> &cnode_to_monad_inputs) {
   MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->inputs().size() <= kUpdateStateStateInput) {
+  if (cnode->size() <= kUpdateStateStateInput) {
     MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid update state node:" << cnode->DebugString();
   }
   const auto &u_input = cnode->input(kUpdateStateStateInput);
   MS_EXCEPTION_IF_NULL(u_input);
-  for (size_t i = kUpdateStateRealInput; i < cnode->inputs().size(); ++i) {
+  for (size_t i = kUpdateStateRealInput; i < cnode->size(); ++i) {
     MS_EXCEPTION_IF_NULL(cnode->input(i));
     const auto &iter = cnode_to_monad_inputs.find(cnode->input(i));
     if (iter != cnode_to_monad_inputs.end() && iter->second.find(u_input) != iter->second.end()) {
@@ -1848,12 +1849,12 @@ std::vector<AnfNodePtr> FetchRealDependInput(
     real_depend_inputs.push_back(cnode->input(kDependAttachNodeIndex));
   } else if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimUpdateState)) {
     MS_EXCEPTION_IF_NULL(cnode);
-    if (IsNeedLinkForFirstInput(cnode, cnode_to_monad_inputs) && cnode->inputs().size() > kUpdateStateStateInput) {
+    if (IsNeedLinkForFirstInput(cnode, cnode_to_monad_inputs) && cnode->size() > kUpdateStateStateInput) {
       // If all other inputs of the update state do not depend on the first input, we need to link control arrow
       // for the first input.
       real_depend_inputs.push_back(cnode->input(kUpdateStateStateInput));
     }
-    for (size_t i = kUpdateStateRealInput; i < cnode->inputs().size(); ++i) {
+    for (size_t i = kUpdateStateRealInput; i < cnode->size(); ++i) {
       MS_EXCEPTION_IF_NULL(cnode);
       real_depend_inputs.push_back(cnode->input(i));
     }
@@ -1894,7 +1895,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(
   // Make tuple node needs to be expanded.
   if (common::AnfAlgo::CheckPrimitiveType(input_anfnode, prim::kPrimMakeTuple)) {
     MS_EXCEPTION_IF_NULL(input_cnode);
-    for (size_t i = 1; i < input_cnode->inputs().size(); ++i) {
+    for (size_t i = 1; i < input_cnode->size(); ++i) {
       LinkControlArrowByAutoMonad(to_actor, input_cnode->input(i), graph, parser, cnode_to_monad_inputs, checked_nodes);
     }
     return;

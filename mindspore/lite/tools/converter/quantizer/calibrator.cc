@@ -118,7 +118,7 @@ int Calibrator::AddQuantizedOp(const CNodePtr &cnode) {
     return RET_ERROR;
   }
   auto node_name = cnode->fullname_with_scope();
-  auto input_size = cnode->inputs().size();
+  auto input_size = cnode->size();
   int index = 0;
   for (size_t i = 1; i < input_size; i++) {
     if (opt::CheckPrimitiveType(cnode->input(i), prim::kPrimMakeTuple)) {

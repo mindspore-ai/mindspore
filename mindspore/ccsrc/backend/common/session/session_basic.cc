@@ -323,7 +323,7 @@ BaseRef CreateNodeOutputPlaceholder(const AnfNodePtr &anf, const KernelGraphPtr 
     auto cnode = item_with_index.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     VectorRef ret;
-    for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+    for (size_t i = 1; i < cnode->size(); ++i) {
       std::vector<size_t> cur_index = indexes;
       cur_index.emplace_back(i - 1);
       auto out = CreateNodeOutputPlaceholder(cnode->input(i), graph, input_tensors, cur_index, output_indexes);
@@ -419,7 +419,7 @@ BaseRef SessionBasic::CreateNodeOutputTensors(const AnfNodePtr &anf, const Kerne
     auto cnode = item_with_index.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     VectorRef ret;
-    for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+    for (size_t i = 1; i < cnode->size(); ++i) {
       auto out = CreateNodeOutputTensors(cnode->input(i), graph, input_tensors, tensor_to_node, node_to_tensor);
       (void)ret.emplace_back(out);
     }
@@ -559,7 +559,7 @@ void SessionBasic::CreateOutputPlaceholder(
 void SessionBasic::GetRefCount(const KernelGraph *graph, std::map<KernelWithIndex, size_t> *ref_count) const {
   MS_EXCEPTION_IF_NULL(graph);
   for (const auto &kernel : graph->execution_order()) {
-    for (size_t i = 1; i < kernel->inputs().size(); i += 1) {
+    for (size_t i = 1; i < kernel->size(); i += 1) {
       auto input = kernel->inputs()[i];
       CalculateRefCount(input, ref_count);
     }
@@ -576,7 +576,7 @@ void SessionBasic::CalculateRefCount(const AnfNodePtr &node, std::map<KernelWith
     return;
   }
   auto cnode = node->cast<CNodePtr>();
-  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+  for (size_t i = 1; i < cnode->size(); ++i) {
     auto input = cnode->input(i);
     CalculateRefCount(input, ref_count);
   }
@@ -927,8 +927,8 @@ tensor::TensorPtr SessionBasic::GetOpInputTensorByIndex(const CNodePtr &cnode,
                                                         InputInfo *input_info, size_t input_index) const {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(input_info);
-  if (input_index >= cnode->inputs().size() - 1) {
-    MS_LOG(EXCEPTION) << "Input index is out of range:" << cnode->inputs().size() << ",cnode:" << cnode->DebugString();
+  if (input_index >= cnode->size() - 1) {
+    MS_LOG(EXCEPTION) << "Input index is out of range:" << cnode->size() << ",cnode:" << cnode->DebugString();
   }
 
   const auto &input = cnode->input(input_index + 1);

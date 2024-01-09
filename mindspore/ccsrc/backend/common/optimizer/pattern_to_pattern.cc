@@ -358,11 +358,10 @@ DstPattern &DstPattern::AddCNode(const string &name, const std::initializer_list
   } else {
     auto cnode = new_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    if (anf_inputs.size() != cnode->inputs().size()) {
+    if (anf_inputs.size() != cnode->size()) {
       MS_LOG(INTERNAL_EXCEPTION)
         << "The actual input size does not correspond to the input size of the pattern, actual input size: "
-        << anf_inputs.size() << ", pattern input size: " << new_node->cast<CNodePtr>()->inputs().size()
-        << ", CNode: " << name;
+        << anf_inputs.size() << ", pattern input size: " << new_node->cast<CNodePtr>()->size() << ", CNode: " << name;
     }
     for (size_t i = 0; i < anf_inputs.size(); i++) {
       MS_EXCEPTION_IF_NULL(anf_inputs[i]);

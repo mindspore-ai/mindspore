@@ -39,14 +39,14 @@ bool EltwiseChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Form
     }
   }
 
-  if (op->inputs().size() - 1 > kMaxBottomNum) {
-    MS_LOG(WARNING) << "op inputs size:" << op->inputs().size() << " is greater than max_bottom num:" << kMaxBottomNum
-                    << " " << op->fullname_with_scope();
+  if (op->size() - 1 > kMaxBottomNum) {
+    MS_LOG(WARNING) << "op inputs size:" << op->size() << " is greater than max_bottom num:" << kMaxBottomNum << " "
+                    << op->fullname_with_scope();
     return false;
   }
 
   std::vector<int64_t> input_shape;
-  for (size_t i = 1; i < op->inputs().size(); i++) {
+  for (size_t i = 1; i < op->size(); i++) {
     if (!CheckInputW(op, i, format, kMaxInputWOf4Dims)) {
       MS_LOG(WARNING) << "input_w is not supported. " << op->fullname_with_scope();
       return false;

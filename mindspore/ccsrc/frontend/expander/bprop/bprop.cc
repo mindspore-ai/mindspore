@@ -366,8 +366,9 @@ bool BpropExpander::RunBprop(const CNodePtr &cnode, const std::vector<ValuePtr> 
                                                      cnode->inputs().back());
   }
   input_nodes_.reserve(cnode->size());
-  (void)std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(input_nodes_),
-                       [&ir_builder](const AnfNodePtr &no) { return std::make_shared<Node>(no, ir_builder.get()); });
+  (void)std::transform(
+    cnode->weak_inputs().cbegin() + 1, cnode->weak_inputs().cend(), std::back_inserter(input_nodes_),
+    [&ir_builder](const AnfNodeWeakPtr &no) { return std::make_shared<Node>(no.lock(), ir_builder.get()); });
   mindspore::HashMap<std::string, ValuePtr> attrs;
   {
     PrimitiveReadLock read_lock(prim->shared_mutex());

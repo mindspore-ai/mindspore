@@ -879,7 +879,7 @@ const AnfNodePtr DynamicRnnGradFissionV2::Process(const FuncGraphPtr &func_graph
   MS_EXCEPTION_IF_NULL(node);
   auto dynamic_rnn_grad_cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(dynamic_rnn_grad_cnode);
-  if (dynamic_rnn_grad_cnode->inputs().size() < kDynamicRNNGradInputNum + 1) {
+  if (dynamic_rnn_grad_cnode->size() < kDynamicRNNGradInputNum + 1) {
     MS_LOG(INFO) << "The node " << dynamic_rnn_grad_cnode->DebugString() << " has less than "
                  << (kDynamicRNNGradInputNum + 1) << " inputs";
     return nullptr;

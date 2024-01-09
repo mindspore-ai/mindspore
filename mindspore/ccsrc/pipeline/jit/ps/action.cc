@@ -728,6 +728,16 @@ bool SetMixedPrecisionAction(const ResourcePtr &resource) {
   return true;
 }
 
+bool PreSimplifyInlineAction(const ResourcePtr &resource) {
+#ifndef ENABLE_PRE_SIMPLIFY  // Open pre-simplify in default later.
+  return true;
+#else
+  MS_EXCEPTION_IF_NULL(resource);
+  MS_EXCEPTION_IF_NULL(resource->func_graph());
+  return PreSimplifyInlinePass(resource);
+#endif
+}
+
 bool AutoMonadAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   if (resource->manager() == nullptr) {
@@ -1619,6 +1629,8 @@ static std::vector<ActionItem> CommonPipeline() {
   if (common::GetEnv("MS_DEV_DISABLE_TRACE") != "on") {
     (void)actions.emplace_back(std::make_pair(kPackExpand, PackExpandAction));
   }
+  // Pre switch simplify and inline.
+  (void)actions.emplace_back(std::make_pair(kPreSimplifyInline, PreSimplifyInlineAction));
   // Auto-monad for side-effects handling.
   (void)actions.emplace_back(std::make_pair(kAutoMonad, AutoMonadAction));
   // Do data structure simplifications and inline.

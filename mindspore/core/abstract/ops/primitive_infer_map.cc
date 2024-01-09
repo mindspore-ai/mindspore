@@ -177,7 +177,7 @@ std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode, bool is_proto)
   if (ori.empty()) {
     return ori;
   }
-  size_t input_num = cnode->inputs().size() - 1;
+  size_t input_num = cnode->size() - 1;
   std::set<int64_t> res = {};
 
   (void)std::copy_if(ori.begin(), ori.end(), std::inserter(res, res.begin()),

@@ -972,7 +972,8 @@ std::vector<AnfNodePtr> FetchAllMonadNodeByNode(const AnfNodePtr &node) {
   if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
     const auto &cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    for (const auto &input : cnode->inputs()) {
+    for (auto &weak_input : cnode->weak_inputs()) {
+      auto input = weak_input.lock();
       MS_EXCEPTION_IF_NULL(input);
       const auto &result = FetchAllMonadNodeByNode(input);
       (void)results.insert(results.end(), result.begin(), result.end());
@@ -1131,7 +1132,7 @@ void ControlNodeParser::ParseDynamicLenFormalParameterByCallNode(const AnfNodePt
     if (cnode->inputs().empty()) {
       MS_LOG(EXCEPTION) << "Invalid cnode:" << cnode->DebugString();
     }
-    size_t args_num = cnode->inputs().size() - 1;
+    size_t args_num = cnode->size() - 1;
     size_t para_num = func_graph->parameters().size();
     MS_LOG(DEBUG) << "for call node:" << cnode->DebugString() << " arg size:" << args_num << " para size:" << para_num;
     if (args_num > para_num) {
@@ -1164,7 +1165,7 @@ void ControlNodeParser::ParseDynamicLenFormalParameterByPartial(const AnfNodePtr
   MS_EXCEPTION_IF_NULL(node);
   const auto &cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  size_t input_num = cnode->inputs().size();
+  size_t input_num = cnode->size();
   if (input_num <= kPartialFuncGraphPos || cnode->input(kPartialFuncGraphPos) == nullptr ||
       (!cnode->input(kPartialFuncGraphPos)->isa<ValueNode>())) {
     MS_LOG(EXCEPTION) << "Invalid partial node:" << node->DebugString();
@@ -1657,7 +1658,7 @@ void CollectDeviceContextByDynamicLen(const CNodePtr &cnode, const FuncGraphPtr 
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(arg_context);
   size_t para_num = func_graph->parameters().size();
-  size_t arg_num = cnode->inputs().size() - 1;
+  size_t arg_num = cnode->size() - 1;
   if (arg_num > para_num) {
     MS_LOG(EXCEPTION) << "Invalid arg size:" << arg_num << " parameter size:" << para_num
                       << "for call node:" << cnode->DebugString() << " funcgraph:" << func_graph->ToString();

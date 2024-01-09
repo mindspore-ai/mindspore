@@ -38,12 +38,13 @@ AnfNodePtr BCEWithLogitsLossFission::AddReduceNode(const FuncGraphPtr &func_grap
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   // Copy a new sigmoid node, shape of output is the same as input
-  std::vector<AnfNodePtr> new_simoid_inputs = {
+  AnfNodePtrList new_simoid_inputs = {
     NewValueNode(std::make_shared<Primitive>(prim::kPrimSigmoidCrossEntropyWithLogitsV2->name()))};
-  (void)new_simoid_inputs.insert(new_simoid_inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
+  auto cnode_inputs = cnode->inputs();
+  (void)new_simoid_inputs.insert(new_simoid_inputs.cend(), cnode_inputs.cbegin() + 1, cnode_inputs.cend());
   CNodePtr new_cnode = NewCNode(new_simoid_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_cnode);
-  auto predict_input = cnode->inputs()[kIndex1];
+  auto predict_input = cnode->input(kIndex1);
   auto new_node_dtype = {common::AnfAlgo::GetOutputInferDataType(predict_input, 0)};
   auto new_node_shape = {AnfAlgo::GetOutputDetailShape(predict_input, 0)};
   // The kAttrReduction is necessary for InferShape of BCEWithLogitsLoss op
@@ -114,7 +115,7 @@ const AnfNodePtr BCEWithLogitsLossFission::Process(const FuncGraphPtr &func_grap
     return nullptr;
   }
   common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
-  if (cnode->inputs().size() == 0) {
+  if (cnode->size() == 0) {
     return nullptr;
   }
   if (!common::AnfAlgo::HasNodeAttr("reduction", cnode)) {

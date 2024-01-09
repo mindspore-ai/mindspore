@@ -34,7 +34,7 @@ STATUS SetBiasDataInfo(const api::CNodePtr &cnode, mapper::BiasOperator *bias_op
     MS_LOG(ERROR) << "bias_operator is nullptr.";
     return RET_ERROR;
   }
-  if (cnode->inputs().size() == kInputIndex3) {
+  if (cnode->size() == kInputIndex3) {
     auto input_anode = cnode->input(kInputIndex2);
     MS_ASSERT(input_anode != nullptr);
     auto param_node = input_anode->cast<api::ParameterPtr>();

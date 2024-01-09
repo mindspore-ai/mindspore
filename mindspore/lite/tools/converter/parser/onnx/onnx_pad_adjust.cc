@@ -129,7 +129,7 @@ bool OnnxPadAdjust::Adjust(const FuncGraphPtr &func_graph) {
   auto cnodes = func_graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
     if (!opt::CheckPrimitiveType(cnode, prim::kPrimPadFusion) ||
-        (cnode->inputs().size() != kTripleNum && cnode->inputs().size() != kQuadraNum)) {
+        (cnode->size() != kTripleNum && cnode->size() != kQuadraNum)) {
       continue;
     }
     // get the second input node whose output is the padding parameter of pad.

@@ -144,7 +144,7 @@ std::vector<AnfNodePtr> DefaultGraphCompiler::SkipMakeTuple(const AnfNodePtr &or
   }
 
   std::vector<AnfNodePtr> results;
-  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+  for (size_t i = 1; i < cnode->size(); i++) {
     auto real_nodes = SkipMakeTuple(cnode->input(i));
     results.insert(results.end(), real_nodes.begin(), real_nodes.end());
   }

@@ -30,7 +30,7 @@ STATUS SetNormalizeDataInfo(const api::CNodePtr &cnode, mapper::NormalizeOperato
     MS_LOG(ERROR) << "normalize_operator is nullptr.";
     return RET_ERROR;
   }
-  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+  for (size_t i = 1; i < cnode->size(); i++) {
     api::AnfNodePtr input_node = cnode->input(i);
     if (api::utils::isa<api::CNode>(input_node)) {
       MS_LOG(INFO) << "cnode don't have blobs";

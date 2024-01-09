@@ -1286,7 +1286,7 @@ CNodePtr KernelGraphMgr::CreateNewCNode(const CNodePtr &cnode, KernelGraph *grap
   auto new_cnode = graph->NewCNodeWithInfos(cnode_inputs, cnode);
   MS_EXCEPTION_IF_NULL(new_cnode);
   // if the cnode is call switch, remove call
-  if (new_cnode->inputs().size() > 1) {
+  if (new_cnode->size() > 1) {
     auto first_input = new_cnode->input(kFirstDataInputIndex);
     MS_EXCEPTION_IF_NULL(first_input);
     if (common::AnfAlgo::CheckPrimitiveType(new_cnode, prim::kPrimCall) &&
@@ -1402,13 +1402,13 @@ std::vector<AnfNodePtr> KernelGraphMgr::CreateCallSwitchInputs(const CNodePtr &c
   MS_EXCEPTION_IF_NULL(cnode_input);
   auto switch_cnode = cnode_input->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(switch_cnode);
-  if (cnode->inputs().size() <= 1) {
+  if (cnode->size() <= 1) {
     cnode_inputs = switch_cnode->inputs();
     return cnode_inputs;
   }
   std::vector<AnfNodePtr> switch_inputs = {switch_cnode->input(kAnfPrimitiveIndex),
                                            switch_cnode->input(kFirstDataInputIndex)};
-  for (size_t index = kSwitchTrueBranchIndex; index < switch_cnode->inputs().size(); index++) {
+  for (size_t index = kSwitchTrueBranchIndex; index < switch_cnode->size(); index++) {
     auto node = switch_cnode->input(index);
     MS_EXCEPTION_IF_NULL(node);
     // there is real input in call, should put it to true and false branch in switch
@@ -1513,7 +1513,7 @@ std::vector<AnfNodePtr> KernelGraphMgr::CreateCallSwitchLayerInputs(const CNodeP
   auto make_tuple_inputs = node->inputs();
   // there are real inputs in call, should put it to make_tuple in switch_layer
   std::vector<AnfNodePtr> real_inputs;
-  for (size_t idx = kFirstDataInputIndex; idx < cnode->inputs().size(); ++idx) {
+  for (size_t idx = kFirstDataInputIndex; idx < cnode->size(); ++idx) {
     (void)(real_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(cnode->input(idx))));
   }
   std::vector<AnfNodePtr> new_make_tuple_inputs = {
@@ -1680,13 +1680,13 @@ void KernelGraphMgr::CreateCNodeInputs(const CNodePtr &cnode, KernelGraph *graph
   MS_EXCEPTION_IF_NULL(cnode_inputs);
   if (common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitch)) {
     (void)cnode_inputs->emplace_back(graph->GetBackendAnfByFrontAnf(cnode->input(kFirstDataInputIndex)));
-    for (size_t index = kSwitchTrueBranchIndex; index < cnode->inputs().size(); index++) {
+    for (size_t index = kSwitchTrueBranchIndex; index < cnode->size(); index++) {
       auto node_input = cnode->input(index);
       auto switch_input = CreateSwitchInput(cnode, node_input, graph);
       (void)cnode_inputs->emplace_back(switch_input);
     }
   } else {
-    for (size_t input_idx = kFirstDataInputIndex; input_idx < cnode->inputs().size(); input_idx++) {
+    for (size_t input_idx = kFirstDataInputIndex; input_idx < cnode->size(); input_idx++) {
       auto anf = cnode->input(input_idx);
       MS_EXCEPTION_IF_NULL(anf);
       // anf has been created before
@@ -1970,7 +1970,7 @@ KernelGraphPtr KernelGraphMgr::ConstructKernelGraph(const AnfNodePtrList &lst, c
   // add a make_tuple at the end of graph as output
   graph->set_child_graph_order(child_graph_order);
   graph->set_output(ConstructOutput(outputs, graph));
-  FuncGraphManagerPtr manager = MakeManager({graph});
+  FuncGraphManagerPtr manager = MakeManager({graph}, false);
   if (manager) {
     manager->AddFuncGraph(graph);
     graph->set_manager(manager);

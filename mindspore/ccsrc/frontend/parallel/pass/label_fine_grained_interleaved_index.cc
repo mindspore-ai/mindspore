@@ -62,7 +62,7 @@ void SpreadFineGrainedInterleavedIndexForForwardCommNodes(const CNodePtr &cnode,
   while (!bfs_cnode_queue.empty()) {
     auto cur_cnode = bfs_cnode_queue.front();
     bfs_cnode_queue.pop();
-    auto spread_size = cur_cnode->inputs().size();
+    auto spread_size = cur_cnode->size();
     if (IsPrimitiveCNode(cnode, prim::kPrimDepend) || IsPrimitiveCNode(cnode, prim::kPrimLoad)) {
       spread_size = node_size_two;
     }
@@ -225,7 +225,7 @@ void LabelFineGrainedInterleavedIndex(const FuncGraphPtr &graph) {
       continue;
     }
     auto concat_input_cnode = concat_input->cast<CNodePtr>();
-    size_t interleaved_num = concat_input->cast<CNodePtr>()->inputs().size() - 1;
+    size_t interleaved_num = concat_input->cast<CNodePtr>()->size() - 1;
     if (interleaved_num != kExpectInterleavedNum) {
       MS_LOG(WARNING) << "For interleaved end node '" << forward_interleaved_end_cnode->ToString()
                       << "', its interleaved num: " << interleaved_num << " is not equal to " << kExpectInterleavedNum

@@ -63,6 +63,7 @@ const char kMetaUnpackPrepare[] = "meta_unpack_prepare";
 const char kPreCConv[] = "pre_cconv";
 const char kAbstractSpecialize[] = "abstract_specialize";
 const char kPackExpand[] = "pack_expand";
+const char kPreSimplifyInline[] = "pre_simplify_inline";
 const char kAutoMonad[] = "auto_monad";
 const char kInline[] = "inline";
 const char kPreAutoParallel[] = "pre_auto_parallel";

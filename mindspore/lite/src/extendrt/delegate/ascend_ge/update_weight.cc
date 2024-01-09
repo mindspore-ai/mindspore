@@ -118,7 +118,7 @@ bool UpdateWeight::CreateAddOpNodeForGraph(const FuncGraphPtr &anf_graph) {
         constant_cnode_name_.end()) {
       continue;
     }
-    if (cnode->inputs().size() < kInputSize3) {
+    if (cnode->size() < kInputSize3) {
       MS_LOG(ERROR) << "cnode input size less " << kInputSize3;
       return false;
     }

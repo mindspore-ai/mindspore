@@ -57,12 +57,14 @@ class GradPartialTransform : public AnfVisitor {
     }
     auto partial_cnode = dyn_cast<CNode>(partial_node);
     MS_EXCEPTION_IF_NULL(partial_cnode);
-    AnfNodePtrList inputs = {NewValueNode(prim::kPrimPartial), node};
+    const auto partial_value_node = NewValueNode(prim::kPrimPartial);
+    AnfNodeWeakPtrList inputs = {partial_value_node, node};
     constexpr auto ignored_partial_input_count = 2;
-    (void)std::transform(partial_cnode->inputs().cbegin() + ignored_partial_input_count, partial_cnode->inputs().cend(),
-                         std::back_inserter(inputs), [](const AnfNodePtr &inp) { return inp; });
+    (void)std::transform(partial_cnode->weak_inputs().cbegin() + ignored_partial_input_count,
+                         partial_cnode->weak_inputs().cend(), std::back_inserter(inputs),
+                         [](const AnfNodeWeakPtr &inp) { return inp; });
 
-    auto new_node = grad_cnode->func_graph()->NewCNodeInOrder(inputs);
+    auto new_node = grad_cnode->func_graph()->NewCNodeInOrderWeak(inputs);
     (void)transformed_nodes_.emplace(node);
     return new_node;
   }

@@ -69,7 +69,7 @@ std::vector<int> GetSliceBeginAndSize(const CNodePtr &cnode, const int index) {
 std::vector<int64_t> GetCNodeInputShape(const CNodePtr &cnode, size_t index = 1) {
   MS_ASSERT(cnode != nullptr);
   std::vector<int64_t> empty_shape;
-  if (index < 1 || cnode->inputs().size() <= index) {
+  if (index < 1 || cnode->size() <= index) {
     MS_LOG(ERROR) << "out of index";
     return empty_shape;
   }
@@ -155,7 +155,7 @@ std::vector<int> GetTransposePerm(const CNodePtr &node) {
   if (!CheckPrimitiveType(node, prim::kPrimTranspose)) {
     return perm;
   }
-  if (node->inputs().size() != 3) {
+  if (node->size() != 3) {
     return perm;
   }
   auto perm_node = node->input(2);
@@ -812,7 +812,7 @@ bool SlicePreposePass::GetArithmeticInputInfo(const CNodePtr &arithmetic_cnode, 
   MS_ASSERT(shapes != nullptr);
   MS_ASSERT(is_default_params != nullptr);
   MS_ASSERT(arithmetic_cnode != nullptr);
-  for (size_t i = 1; i < arithmetic_cnode->inputs().size(); ++i) {
+  for (size_t i = 1; i < arithmetic_cnode->size(); ++i) {
     auto input = arithmetic_cnode->input(i);
     MS_ASSERT(input != nullptr);
     std::vector<int64_t> shape;
@@ -927,7 +927,7 @@ bool SlicePreposePass::PreposeWithReshape(const FuncGraphPtr &graph, const CNode
     MS_LOG(DEBUG) << "Reshape can't be preposed if either input or output shape is unknown";
     return false;
   }
-  if (reshape_cnode->inputs().size() == 3 && utils::isa<ParameterPtr>(reshape_cnode->input(2))) {
+  if (reshape_cnode->size() == 3 && utils::isa<ParameterPtr>(reshape_cnode->input(2))) {
     auto reshape_input_shape = utils::cast<ParameterPtr>(reshape_cnode->input(2));
     MS_ASSERT(reshape_input_shape != nullptr);
     if (!reshape_input_shape->has_default()) {
@@ -1177,7 +1177,7 @@ bool SlicePreposePass::PreposeWithTranspose(const FuncGraphPtr &graph, const CNo
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(slice_cnode != nullptr);
   MS_ASSERT(transpose_cnode != nullptr);
-  if (transpose_cnode->inputs().size() != 3) {
+  if (transpose_cnode->size() != 3) {
     MS_LOG(ERROR) << "transpose inputs size should be 3.";
     return false;
   }
@@ -1252,7 +1252,7 @@ bool SlicePreposePass::PreposeWithArithmetic(const FuncGraphPtr &graph, const CN
     return false;
   }
 
-  for (size_t i = 1; i < arithmetic_cnode->inputs().size(); ++i) {
+  for (size_t i = 1; i < arithmetic_cnode->size(); ++i) {
     auto &input = inputs[i - 1];
     if (IsScalarNode(input)) {  // scalar not need prepose
       continue;
@@ -1339,7 +1339,7 @@ bool SlicePreposePass::PreposeWithArithmetic(const FuncGraphPtr &graph, const CN
  */
 bool SlicePreposePass::MergeSequentialSlice(const FuncGraphPtr &graph, const CNodePtr &slice1_cnode,
                                             const CNodePtr &slice2_cnode) {
-  if (slice2_cnode->inputs().size() != kArithmeticInputNum) {
+  if (slice2_cnode->size() != kArithmeticInputNum) {
     MS_LOG(INFO) << "Slice read attrs from input is not supported now";
     return false;
   }

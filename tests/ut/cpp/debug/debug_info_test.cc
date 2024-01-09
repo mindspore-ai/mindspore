@@ -75,7 +75,7 @@ TEST_F(TestDebugInfo, test_location_dedup) {
 // Expectation: success
 TEST_F(TestDebugInfo, test_fused_debug_info) {
   FuncGraphPtr fg = std::make_shared<FuncGraph>();
-  std::vector<AnfNodePtr> inputs;
+  std::vector<AnfNodeWeakPtr> inputs;
   CNodePtr cnode = std::make_shared<CNode>(inputs, fg);
 
   ASSERT_TRUE(cnode->fused_debug_infos().size() == 0);

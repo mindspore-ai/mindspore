@@ -401,7 +401,7 @@ void MemReuseChecker::CheckNormalIR(const session::KernelGraph *graph) {
     std::vector<const void *> curr_ins;
     size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
     for (size_t i = 0; i < input_num; ++i) {
-      if (i + 1 >= node->inputs().size()) {
+      if (i + 1 >= node->size()) {
         MS_LOG(EXCEPTION) << "Input index: " << i
                           << " is larger than input number: " << common::AnfAlgo::GetInputTensorNum(node)
                           << trace::DumpSourceLines(node);

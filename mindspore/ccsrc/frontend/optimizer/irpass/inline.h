@@ -33,6 +33,7 @@
 #include "frontend/operator/ops.h"
 #include "abstract/abstract_value.h"
 #include "include/common/utils/utils.h"
+#include "pipeline/jit/ps/pipeline.h"
 
 namespace mindspore {
 namespace opt {
@@ -158,9 +159,9 @@ class InlinerBase : public AnfVisitor {
     if (IsUniqueUse(nullptr, fg, nullptr)) {
       // For the single used fg, including non-after and after not matched above,
       // we move the whole fg nodes.
-      auto ret_node = InlineForUniqueUse(node, fg, args, inputs);
-      if (ret_node != nullptr) {
-        return ret_node;
+      auto res_node = InlineForUniqueUse(node, fg, args, inputs);
+      if (res_node != nullptr) {
+        return res_node;
       }
     } else {
       // We don't expand the middle multiple used after block, except the last one.
@@ -176,8 +177,8 @@ class InlinerBase : public AnfVisitor {
       }
     }
     // Or, just make a clone for not single used fg.
-    MS_LOG(DEBUG) << "Run InlineClone in inline pass, subgraph number may increase.";
-    return InlineClone(fg, node->func_graph(), args, inputs[0]->scope(), cnode->debug_info());
+    auto res = InlineClone(fg, node->func_graph(), args, inputs[0]->scope(), cnode->debug_info());
+    return res;
   }
 
   bool CheckFlag(const FuncGraphPtr &fg) const {
@@ -212,7 +213,7 @@ class InlinerBase : public AnfVisitor {
 
     if (!is_checked_) {
       is_checked_ = true;
-      is_recursive_ = fg->recursive();
+      is_recursive_ = (fg->has_flag(FUNC_GRAPH_FLAG_NO_RECURSIVE) ? false : fg->recursive());
     }
     return is_recursive_;
   }
@@ -226,7 +227,9 @@ class InlinerBase : public AnfVisitor {
     MS_EXCEPTION_IF_NULL(mng);
     ReplaceParams(mng, args, fg);
     auto out_node = fg->output();
-    mng->MoveAllCNodeDropGraph(fg, node->func_graph(), node, inputs[0]->scope());
+    const auto update_debug_info =
+      pipeline::GetJitLevel() == "O0" || MsContext::GetInstance()->GetSaveGraphsLevel() > 0;
+    mng->MoveAllCNodeDropGraph(fg, node->func_graph(), node, inputs[0]->scope(), update_debug_info);
     return out_node;
   }
 
@@ -426,10 +429,9 @@ bool IsInside(InlinerBase *, const FuncGraphPtr &, const AnfNodePtr &node) {
 bool IsCore(InlinerBase *, const FuncGraphPtr &fg, const AnfNodePtr &) { return fg->has_flag("core"); }
 
 bool IsDirectParentCall(InlinerBase *inliner, const FuncGraphPtr &fg, const AnfNodePtr &node) {
-  bool unique_use = IsUniqueUse(nullptr, fg, nullptr);
   bool is_recursive = (inliner->no_recursive() ? false : fg->recursive());
   if (fg->parent() != nullptr && is_recursive) {
-    if (fg->parent() == node->func_graph() && unique_use) {
+    if (fg->parent() == node->func_graph() && IsUniqueUse(nullptr, fg, nullptr)) {
       return true;
     }
   }

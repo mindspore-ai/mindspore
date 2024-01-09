@@ -256,7 +256,7 @@ bool BatchNormTransform::NeedBNTransform(const BaseRef &ref) {
     if (IsPrimitiveCNode(node, prim::kPrimBatchNorm)) {
       auto c_node = node->cast<CNodePtr>();
       auto bn_inputs = c_node->inputs();
-      if (c_node->inputs().size() != kBNDefaultInputNum) {
+      if (c_node->size() != kBNDefaultInputNum) {
         return false;
       }
       auto input_4 = bn_inputs[kIndex4];

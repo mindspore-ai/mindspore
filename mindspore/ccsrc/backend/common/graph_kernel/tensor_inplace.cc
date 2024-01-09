@@ -187,7 +187,7 @@ mindspore::HashMap<size_t, std::vector<std::pair<AnfNodePtr, size_t>>> FindInput
   if (IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
     auto output_cnode = output->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(output_cnode);
-    for (size_t i = 1; i < output_cnode->inputs().size(); i++) {
+    for (size_t i = 1; i < output_cnode->size(); i++) {
       if (isElemwise(output_cnode->input(i))) {
         (void)outs.emplace_back(std::make_pair(output_cnode->input(i), i - 1));
       }
@@ -262,7 +262,7 @@ bool TensorInplace::Run(const FuncGraphPtr &func_graph) {
       }
       auto in_out_pairs = FindInputOutputPairs(sub_func_graph);
       auto cnode = node->cast<CNodePtr>();
-      for (size_t i = 1; i < cnode->inputs().size(); i++) {
+      for (size_t i = 1; i < cnode->size(); i++) {
         if (in_out_pairs.count(i - 1) == 0) {
           continue;
         }

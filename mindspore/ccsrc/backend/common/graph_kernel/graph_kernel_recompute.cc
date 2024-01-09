@@ -253,7 +253,7 @@ AnfNodePtrList AutoRecompute::Filter(const AnfNodePtr &source_node, const AnfNod
       }
       auto cur_cnode = cur->cast<CNodePtr>();
       if (cur_cnode) {
-        for (size_t i = 1; i < cur_cnode->inputs().size(); ++i) {
+        for (size_t i = 1; i < cur_cnode->size(); ++i) {
           node_q.push(cur_cnode->input(i));
         }
       }
@@ -739,7 +739,8 @@ void GraphKernelRecompute::Process(const Candidate &candidate) const {
     new_funcgraph = BasicClone(gs);
     auto source_cnode = candidate.source_graph->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(source_cnode);
-    (void)inputs.insert(inputs.cend(), source_cnode->inputs().cbegin() + 1, source_cnode->inputs().cend());
+    auto source_inputs = source_cnode->inputs();
+    (void)inputs.insert(inputs.cend(), source_inputs.cbegin() + 1, source_inputs.cend());
     edge_match_func = [](const Candidate &match_candidate, const AnfNodePtr &to_match) -> std::pair<bool, size_t> {
       if (match_candidate.source_graph == to_match) {
         return std::make_pair(true, 0);

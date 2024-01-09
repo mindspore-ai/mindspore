@@ -34,7 +34,7 @@ namespace mindspore {
 namespace opt {
 namespace irpass {
 static inline void CheckSwitchCallValid(const CNodePtr &switch_call) {
-  if (switch_call->inputs().size() > 1) {
+  if (switch_call->size() > 1) {
     // Means call switch(arg1, ...) has args.
     constexpr auto recursive_count = 2;
     MS_LOG(INTERNAL_EXCEPTION) << "After switch_call_monad_eliminater pass, the call switch node should not has args."

@@ -119,15 +119,15 @@ FuncGraphVector LiftFvMulti(const pipeline::ResourceBasePtr &resource, const Fun
   return PartialEliminateMulti(resource, new_fgs);
 }
 
-bool ForwardInputsEqual(const std::vector<AnfNodePtr> &first_inputs, const std::vector<AnfNodePtr> &second_inputs) {
+bool ForwardInputsEqual(const AnfNodeWeakPtrList &first_inputs, const AnfNodeWeakPtrList &second_inputs) {
   if (first_inputs.size() != second_inputs.size()) {
     return false;
   }
   for (size_t i = 1; i < first_inputs.size(); ++i) {
-    if (HasAbstractMonad(first_inputs[i]) && HasAbstractMonad(second_inputs[i])) {
+    if (HasAbstractMonad(first_inputs[i].lock()) && HasAbstractMonad(second_inputs[i].lock())) {
       continue;
     }
-    if (first_inputs[i] != second_inputs[i]) {
+    if (first_inputs[i].lock() != second_inputs[i].lock()) {
       return false;
     }
   }
@@ -153,12 +153,10 @@ FuncGraphPtr GradOneFuncGraph(const FuncGraphPtr &func_graph, const opt::Optimiz
   if (gradkv != func_graph->transforms().end()) {
     return gradkv->second.func_graph();
   }
-
   const auto &resources = optimizer->resource();
   auto manager_ptr = resources->manager();
   MS_EXCEPTION_IF_NULL(manager_ptr);
   manager_ptr->AddFuncGraph(func_graph);
-
   auto multi_graph_sink = [&func_graph](const FuncGraphPtr &f) {
     if (MsContext::GetInstance()->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK)) {
       if (func_graph->has_flag(FUNC_GRAPH_FLAG_IGNORE_VALUE)) {
@@ -228,7 +226,6 @@ FuncGraphVector GradMultiFuncGraph(const FuncGraphVector &func_graphs, const opt
   for (const auto &func_graph : func_graphs) {
     manager_ptr->AddFuncGraph(func_graph);
   }
-
   FuncGraphVector before_grad_fgs;
   if (optimizer->is_first_order_j()) {
     lift_fv_before_grad = true;
@@ -237,7 +234,6 @@ FuncGraphVector GradMultiFuncGraph(const FuncGraphVector &func_graphs, const opt
     before_grad_fgs = func_graphs;
     lift_fv_before_grad = false;
   }
-
   for (const auto &func_graph : before_grad_fgs) {
     auto grad_fg = GradOneFuncGraph(func_graph, optimizer, is_top);
     grad_fgs.push_back(grad_fg);
@@ -291,10 +287,10 @@ bool MergeForward(const FuncGraphPtr &root, const opt::OptimizerPtr &opt) {
     if (first_j_user == nullptr) {
       continue;
     }
-    const auto &first_forward_inputs = first_j_user->cast<CNodePtr>()->inputs();
+    const auto &first_forward_inputs = first_j_user->cast<CNodePtr>()->weak_inputs();
     for (size_t i = 1; i < j_nodes.size(); ++i) {
       auto j_user = GetJUser(manager, j_nodes[i]);
-      const auto &forward_inputs = j_user->cast<CNodePtr>()->inputs();
+      const auto &forward_inputs = j_user->cast<CNodePtr>()->weak_inputs();
       if (!ForwardInputsEqual(first_forward_inputs, forward_inputs)) {
         continue;
       }

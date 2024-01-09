@@ -428,7 +428,7 @@ AnfNodePtr LessBatchNormalization::operator()(const OptimizerPtr &optimizer, con
       return nullptr;
     }
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    std::vector<PredicateFuncType> funcs(cnode->inputs().size() - 1, IsCNode);
+    std::vector<PredicateFuncType> funcs(cnode->size() - 1, IsCNode);
     AnfVisitor::Match(prim, funcs)(node);
     if (is_match_) {
       break;
