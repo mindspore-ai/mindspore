@@ -223,9 +223,17 @@ std::pair<Status, RankList> CameCommHandler::GetOptShardRankList(const int64_t r
   if (temp_dev_matrix.GetDevicesByTensorMap(orig_tensor_map, &group_devices) != SUCCESS) {
     return {FAILED, {}};
   }
+  if (group_devices.size() < 2) {
+    MS_LOG(ERROR) << "get opt shard rank list with less than two group devices!";
+    return {FAILED, {}};
+  }
 
   int64_t optimizer_weight_shard_size = ParallelContext::GetInstance()->optimizer_weight_shard_size();
   MS_EXCEPTION_IF_ZERO("optimizer_weight_shard_size", optimizer_weight_shard_size);
+  if (optimizer_weight_shard_size == -1) {
+    MS_LOG(INFO) << "[CAME] detect optimizer_weight_shard_size = -1, use group devices size: " << group_devices.size();
+    optimizer_weight_shard_size = SizeToLong(group_devices.size());
+  }
 
   int64_t index = std::find(group_devices.begin(), group_devices.end(), rank) - group_devices.begin();
 
@@ -465,7 +473,9 @@ void CameCommHandler::Process() {
       MS_LOG(ERROR) << "[CAME] shape size = 1, getting rank list along 0 failed";
     }
     comm_rank_list = ExpandRankListWithOptShard(comm_rank_list);
-    InsertAllReduceAndRealDivToReduceMeanInput(reduce_mean_4, comm_rank_list);
+    if (comm_rank_list.size() > 1) {
+      InsertAllReduceAndRealDivToReduceMeanInput(reduce_mean_4, comm_rank_list);
+    }
   } else {
     Status ret_status;
     RankList comm_rank_list_along_neg_1;
@@ -485,13 +495,19 @@ void CameCommHandler::Process() {
       comm_rank_list_along_neg_2 = ExpandRankListWithOptShard(comm_rank_list_along_neg_2);
     }
     comm_rank_list_along_neg_12 = ExpandRankListWithDim(comm_rank_list_along_neg_2, actual_dim_of_neg_1);
-    InsertAllReduceAndRealDivToReduceMeanInput(reduce_mean_1, comm_rank_list_along_neg_1);
-    InsertAllReduceAndRealDivToReduceMeanInput(reduce_mean_2, comm_rank_list_along_neg_2);
-    InsertAllReduceAndRealDivToReduceMeanInput(reduce_mean_3, comm_rank_list_along_neg_2);
-    InsertAllReduceAndRealDivToReduceMeanInput(reduce_mean_4, comm_rank_list_along_neg_12);
-    InsertAllReduceAndRealDivToReduceMeanInput(reduce_mean_5, comm_rank_list_along_neg_1);
-    InsertAllReduceAndRealDivToReduceMeanInput(reduce_mean_6, comm_rank_list_along_neg_2);
-    InsertAllReduceAndRealDivToReduceMeanInput(reduce_mean_7, comm_rank_list_along_neg_2);
+    if (comm_rank_list_along_neg_1.size() > 1) {
+      InsertAllReduceAndRealDivToReduceMeanInput(reduce_mean_1, comm_rank_list_along_neg_1);
+      InsertAllReduceAndRealDivToReduceMeanInput(reduce_mean_5, comm_rank_list_along_neg_1);
+    }
+    if (comm_rank_list_along_neg_2.size() > 1) {
+      InsertAllReduceAndRealDivToReduceMeanInput(reduce_mean_2, comm_rank_list_along_neg_2);
+      InsertAllReduceAndRealDivToReduceMeanInput(reduce_mean_3, comm_rank_list_along_neg_2);
+      InsertAllReduceAndRealDivToReduceMeanInput(reduce_mean_6, comm_rank_list_along_neg_2);
+      InsertAllReduceAndRealDivToReduceMeanInput(reduce_mean_7, comm_rank_list_along_neg_2);
+    }
+    if (comm_rank_list_along_neg_12.size() > 1) {
+      InsertAllReduceAndRealDivToReduceMeanInput(reduce_mean_4, comm_rank_list_along_neg_12);
+    }
   }
 }
 
