@@ -1253,7 +1253,7 @@ bool UnsupportedCodeTypeCheck(PyCodeObject *co) {
   return false;
 }
 
-static bool ApplyInlinePolicy(Graph *g) {
+bool ApplyInlinePolicy(Graph *g) {
   PyCodeObject *co = g->GetCodeObj();
   int ncells = PyTuple_GET_SIZE(co->co_cellvars);
   int nfrees = PyTuple_GET_SIZE(co->co_freevars);
@@ -1264,11 +1264,13 @@ static bool ApplyInlinePolicy(Graph *g) {
     return nfrees == 1 && std::string("__class__") == PyUnicode_AsUTF8(PyTuple_GET_ITEM(co->co_freevars, 0));
   }
 
+  auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(co), false);
+  if (jcr != nullptr && jcr->break_count_ > 0) {
+    return false;
+  }
+
   for (auto &i : g->GetCFG()->bb_pool()) {
     if (i->HasUnresolvedSideEffect()) {
-      return false;
-    }
-    if (i->IsTrackBreak()) {
       return false;
     }
   }
@@ -1524,11 +1526,14 @@ bool GraphBuilder::ReplaceCall(CallNode *call_node, const py::object &old_func) 
   ValueNode *self = nullptr;
   AObject::Type func_type = call_node->input(0)->GetVobj()->GetType();
   if (func_type == AObject::kTypeBoundMethod) {
-    MS_EXCEPTION_IF_NULL(call_node->GetSubGraph());
-    const auto &f = call_node->GetSubGraph()->GetFrame(0);
-    self = f.Local(0);
-    if (self == &ValueNode::UnboundLocal && f.GetClosures().size() > 0) {
-      self = f.Closure(0)->GetValue();
+    ValueNode *func_val = call_node->input(0);
+    self = GetSelfFromMethod(func_val);
+    if (self == nullptr) {
+      ValueNode *node = NewValueNode(func_val->get_attr(GraphBuilder::ID___self__), LOAD_ATTR, -1, {func_val});
+      node->SetName(GraphBuilder::ID___self__);
+      node->SetGraph(call_node->GetGraph());
+      nodes.insert(nodes.end() - 1, node);
+      self = node;
     }
   } else if (func_type == AObject::kTypeCell || AObject::kTypeAnyValue) {
     self = call_node->input(0);
