@@ -582,8 +582,8 @@ Status OpAdapterImpl::UpdateMultiOutputDesc(const OperatorPtr &op, const abstrac
 
     auto desc = CreateOutputDesc(dyn_cast<abstract::Shape>(tuple_shp->shape()[i]), type_elem, format);
     if (desc == nullptr) {
-      MS_LOG(ERROR) << "Create output descriptor failed!";
-      return FAILED;
+      MS_LOG(INFO) << "The node " << op->GetName() << " create output descriptor with index:" << i << " failed!";
+      continue;
     }
 
     if (is_custom_op) {
