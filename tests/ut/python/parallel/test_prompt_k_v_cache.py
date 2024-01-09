@@ -83,3 +83,28 @@ def test_prompt_k_v_cache_net_dim3():
     assert validator.check_parameter_shape('cache', [1, 1024, 5120])
     assert validator.check_parameter_shape('update', [1, 1, 5120])
     assert validator.check_parameter_shape('valid_seq_len', [1])
+
+
+def test_prompt_k_v_cache_net_dim3_seq_len():
+    """
+    Feature: test prompt_k_v_cache auto parallel 4 dims
+    Description: auto parallel
+    Expectation: shape is as expected.
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy = ((1, 1, 4,), (1, 1, 4,), (1,), (1,), (1,), (1,), (1,))
+    padding_mode = "right"
+    net = PromptKVCacheNet(padding_mode, strategy)
+    cache = Parameter(Tensor(np.ones([4, 1024, 5120]), dtype=ms.float16), "cache")
+    update = Parameter(Tensor(np.ones([4, 1, 5120]), dtype=ms.float16), "update")
+    valid_seq_len = Parameter(Tensor(np.ones([4]), dtype=ms.int64), "valid_seq_len")
+    batch_index = Parameter(Tensor(np.ones([1]), dtype=ms.int64), "batch_index")
+    seq_len_axis = Parameter(Tensor(np.ones([1]), dtype=ms.int64), "seq_len_axis")
+    new_max_seq_len = Parameter(Tensor(np.ones([1]), dtype=ms.int64), "new_max_seq_len")
+    cur_max_seq_len = Parameter(Tensor(np.ones([1]), dtype=ms.int64), "cur_max_seq_len")
+    net.set_inputs(cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len)
+
+    phase = compile_net(net, cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_parameter_shape('cache', [4, 1024, 1280])
+    assert validator.check_parameter_shape('update', [4, 1, 1280])
