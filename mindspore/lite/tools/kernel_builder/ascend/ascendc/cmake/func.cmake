@@ -23,14 +23,10 @@ function(opbuild)
       -I ${OPBUILD_INC_DIR} -I ${OPBUILD_SEC_INC}
       -I ${TOP_DIR}/graphengine/910/metadef/inc
       -I ${TOP_DIR}/graphengine/910/inc
+      -I ${TOP_DIR}/graphengine/910/inc/run/ascendc/op_host
       -I ${TOP_DIR}/graphengine/910/inc/external
       -I ${TOP_DIR}/graphengine/910/third_party/fwkacllib
       -I ${TOP_DIR}/graphengine/910/third_party/fwkacllib/inc
-      -I ${TOP_DIR}/graphengine/910b/metadef/inc
-      -I ${TOP_DIR}/graphengine/910b/inc
-      -I ${TOP_DIR}/graphengine/910b/inc/external
-      -I ${TOP_DIR}/graphengine/910b/third_party/fwkacllib
-      -I ${TOP_DIR}/graphengine/910b/third_party/fwkacllib/inc
       -L ${ASCEND_CANN_PACKAGE_PATH}/lib64 -lexe_graph -lregister -ltiling_api -o
       ${OPBUILD_OUT_DIR}/libascend_all_ops.so
     RESULT_VARIABLE EXEC_RESULT

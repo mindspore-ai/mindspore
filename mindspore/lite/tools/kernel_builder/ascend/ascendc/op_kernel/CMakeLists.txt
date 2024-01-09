@@ -1,5 +1,4 @@
 include_directories(${TOP_DIR}/graphengine/910/inc/external)
-include_directories(${TOP_DIR}/graphengine/910b/inc/external)
 
 foreach(compute_unit ${ASCEND_COMPUTE_UNIT})
 
