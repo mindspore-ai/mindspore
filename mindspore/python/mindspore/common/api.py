@@ -1570,7 +1570,7 @@ class _CellGraphExecutor:
         self.enable_tuple_broaden = False
         if hasattr(obj, "enable_tuple_broaden"):
             self.enable_tuple_broaden = obj.enable_tuple_broaden
-        logger.debug("Convert the network.", do_convert)
+        logger.debug(f"Convert the network: {do_convert}.")
         self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
         key = self._graph_executor.generate_arguments_key(obj, args, kwargs, self.enable_tuple_broaden)
         obj.arguments_key = str(key)
