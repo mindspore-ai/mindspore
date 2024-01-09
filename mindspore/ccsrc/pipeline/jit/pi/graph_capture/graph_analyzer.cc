@@ -395,31 +395,13 @@ bool GraphAnalyzer::AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) {
     isAllNodesSupportOutput = false;
     int new_break_point = node->bci();
     auto curNode = node;
-    if (new_break_point == -1) {  // temporary variable owned by CallNode
-      auto *parentNode = curNode->GetParent();
-      MS_EXCEPTION_IF_CHECK_FAIL(parentNode != nullptr && parentNode->GetType() == InstrNode::Call,
-                                 "temp variable cannot find corresponding CallNode");
-      auto *parentCallNode = static_cast<CallNode *>(parentNode);
-      new_break_point = parentCallNode->bci();
-      curNode = parentCallNode;
-    }
     MS_EXCEPTION_IF_CHECK_FAIL(new_break_point != -1, "break point cannot be -1");
+    MS_EXCEPTION_IF_NULL(curNode->GetGraph());
     if (this->graph_->Config().GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
       GRAPH_JIT_LOG_F("reset break point: %d", new_break_point);
     }
-    curNode->GetGraph()->StopTraceAt(new_break_point, StopTraceReason::kStopTraceDataDependsOnGraphOut);
-    Graph *curGraph = curNode->GetGraph();
-    while (curGraph && curGraph->GetParent()) {
-      auto parentGraph = curGraph->GetParent();
-      for (auto instr : parentGraph->GetTracedNodes()) {
-        if (instr && instr->GetType() == InstrNode::Call && static_cast<CallNode *>(instr)->GetSubGraph() == curGraph) {
-          GRAPH_JIT_LOG_F("parent graph reset break point :%d", instr->bci());
-          parentGraph->StopTraceAt(instr->bci(), StopTraceReason::kStopTraceDataDependsOnGraphOut);
-          curGraph = parentGraph;
-          break;
-        }
-      }
-    }
+    this->graph_->StopTraceAt(new_break_point, StopTraceReason::kStopTraceDataDependsOnGraphOut);
+
     // re-collect captured info
     ClearCapturedInfo();
     const FrameStates &enter_frame = graph_->GetFrame(0);
