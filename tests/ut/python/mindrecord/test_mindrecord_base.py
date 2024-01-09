@@ -1059,23 +1059,9 @@ def test_write_read_process_without_ndarray_type():
               "segments": {"type": "float32", "shape": [2, 2]},
               "data": {"type": "bytes"}}
     writer.add_schema(schema, "data is so cool")
-    writer.write_raw_data(data)
-    writer.commit()
-
-    reader = FileReader(mindrecord_file_name)
-    count = 0
-    for index, x in enumerate(reader.get_next()):
-        assert len(x) == 6
-        for field in x:
-            if isinstance(x[field], np.ndarray):
-                print("output: {}, input: {}".format(x[field], data[count][field]))
-                assert (x[field] == data[count][field]).all()
-            else:
-                assert x[field] == data[count][field]
-        count = count + 1
-        logger.info("#item{}: {}".format(index, x))
-    assert count == 1
-    reader.close()
+    with pytest.raises(RuntimeError) as err:
+        writer.write_raw_data(data)
+    assert "There is no valid data which can be written by 'write_raw_data' to mindrecord file." in str(err.value)
 
     remove_one_file(mindrecord_file_name)
     remove_one_file(mindrecord_file_name + ".db")
