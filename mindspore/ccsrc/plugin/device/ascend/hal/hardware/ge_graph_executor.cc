@@ -1018,6 +1018,12 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
     size_t total_memory_size = max_static_memory_size + feature_memory_size;
     size_t max_hbm_memory_size = static_cast<size_t>(AscendMemAdapter::GetInstance().GetMsUsedHbmSize());
     AscendMemAdapter::GetInstance().UpdateActualPeakMemory(total_memory_size);
+    if (common::IsNeedMemoryStatistic()) {
+      MS_LOG(WARNING) << "Now Memory Status, graph: " << graph_name
+                      << ", max_static_memory_size: " << max_static_memory_size
+                      << ", feature_memory_size: " << feature_memory_size
+                      << ", max_hbm_memory_size: " << max_hbm_memory_size;
+    }
     if (total_memory_size > max_hbm_memory_size) {
       MS_LOG(EXCEPTION) << "Memory pool not enough, graph: " << graph_name
                         << ", max_static_memory_size: " << max_static_memory_size
