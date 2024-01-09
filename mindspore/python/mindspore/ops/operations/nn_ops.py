@@ -897,7 +897,7 @@ class Conv2D(Primitive):
         group (int, optional): Specifies the number of groups dividing `x`'s input channel when applying
             group convolution. Default: ``1`` .
         data_format (str, optional): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
-            Default: ``"NCHW"`` .
+            Default: ``"NCHW"``. (NHWC is only supported in GPU now.)
 
     Inputs:
         - **x** (Tensor) - Input tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` or
