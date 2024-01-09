@@ -2145,9 +2145,6 @@ def t(input):
     Returns:
         Tensor, the transpose of `input` .
 
-    Raises:
-        ValueError: If the dimension of `input` is larger than 2.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
