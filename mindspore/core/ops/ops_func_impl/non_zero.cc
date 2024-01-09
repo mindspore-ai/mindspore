@@ -46,17 +46,10 @@ TypePtr NonZeroFuncImpl::InferType(const PrimitivePtr &primitive,
 
 int32_t NonZeroFuncImpl::CheckValidation(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) const {
-  std::vector<TypeId> valid_types = {kNumberTypeBool,   kNumberTypeInt8,    kNumberTypeInt16,   kNumberTypeInt32,
-                                     kNumberTypeInt64,  kNumberTypeUInt8,   kNumberTypeUInt16,  kNumberTypeUInt32,
-                                     kNumberTypeUInt64, kNumberTypeFloat16, kNumberTypeFloat64, kNumberTypeFloat};
-  auto tensor_type = input_args[kInputIndex0]->GetType()->cast<TensorTypePtr>();
-  auto real_type = tensor_type->element()->type_id();
-  if (std::find(valid_types.begin(), valid_types.end(), real_type) == valid_types.end()) {
-    MS_EXCEPTION(TypeError) << "For '" << primitive->name()
-                            << "', input[0] type should be bool, int8, int16, int32, int64, uint8, uint16, uint32, "
-                               "uint64, float16, float or float64. but got "
-                            << tensor_type->element()->ToString();
-  }
+  std::set valid_types = {kBool,   kInt8,   kInt16,   kInt32,   kInt64,   kUInt8, kUInt16,
+                          kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kFloat};
+  auto tensor_type = input_args[kInputIndex0]->GetType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", tensor_type, valid_types, primitive->name());
   return OP_CHECK_SUCCESS;
 }
 
