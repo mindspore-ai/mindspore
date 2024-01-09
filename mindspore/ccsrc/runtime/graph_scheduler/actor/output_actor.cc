@@ -76,12 +76,43 @@ void UpdateDynamicSequenceType(const AnfNodePtr &output_node, const kernel::Kern
     return;
   }
 
-  // Update abstract.
-  std::vector<ShapeVector> shapes = BaseShapeToShapeVector(output_kernel_tensor->GetShape());
-  std::vector<TypeId> types = std::vector(shapes.size(), output_kernel_tensor->dtype_id());
-  common::AnfAlgo::SetScalarTupleOutputInferType(types, shapes, output_node);
+  if (output_node->abstract() == nullptr || (!output_node->abstract()->isa<abstract::AbstractSequence>())) {
+    MS_LOG(WARNING) << "Skip update type for output node:" << output_node->DebugString();
+    return;
+  }
 
-  output_kernel_tensor->SetType(output_node->abstract()->GetType());
+  if (output_kernel_tensor->GetShape() == nullptr ||
+      (!output_kernel_tensor->GetShape()->isa<abstract::SequenceShape>())) {
+    MS_LOG(WARNING) << "Skip update type for output node:" << output_node->DebugString() << " as invalid shape:"
+                    << (output_kernel_tensor->GetShape() == nullptr ? "nullptr"
+                                                                    : output_kernel_tensor->GetShape()->ToString());
+    return;
+  }
+
+  abstract::AbstractBasePtr element_abstract = nullptr;
+  const auto &sequence_abstract = output_node->abstract()->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(sequence_abstract);
+  if (sequence_abstract->dynamic_len()) {
+    if (sequence_abstract->dynamic_len_element_abs() != nullptr) {
+      element_abstract = sequence_abstract->dynamic_len_element_abs();
+    }
+  } else if (sequence_abstract->size() != 0) {
+    element_abstract = sequence_abstract->elements()[0];
+  }
+
+  TypePtr element_type = TypeIdToType(output_kernel_tensor->dtype_id());
+  if (element_abstract != nullptr && element_abstract->isa<abstract::AbstractTensor>()) {
+    element_type = std::make_shared<TensorType>(element_type);
+  }
+
+  const auto &sequence_shape = output_kernel_tensor->GetShape()->cast<abstract::SequenceShapePtr>();
+  MS_EXCEPTION_IF_NULL(sequence_shape);
+  TypePtrList types(sequence_shape->size(), element_type);
+  if (sequence_abstract->isa<abstract::AbstractTuple>()) {
+    output_kernel_tensor->SetType(std::make_shared<Tuple>(types));
+    return;
+  }
+  output_kernel_tensor->SetType(std::make_shared<List>(types));
 }
 
 void OutputActor::Init() {
@@ -263,15 +294,14 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   UpdateDynamicSequenceType(output_node, output_kernel_tensor);
 
   // If output is an empty sequence return an empty tensor directly.
-  if (output_node->abstract() != nullptr && output_node->abstract()->isa<abstract::AbstractSequence>() &&
-      output_node->abstract()->cast<abstract::AbstractSequencePtr>()->size() == 0) {
-    const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
-    MS_EXCEPTION_IF_NULL(device_tensor);
+  const auto &output_shape = output_kernel_tensor->GetShape();
+  if (output_shape != nullptr && output_shape->isa<abstract::SequenceShape>() &&
+      output_shape->cast<abstract::SequenceShapePtr>()->size() == 0) {
     ShapeVector shape = {0};
-    TypeId type_id =
-      (device_tensor->type_id() == TypeId::kTypeUnknown ? TypeId::kNumberTypeInt64 : device_tensor->type_id());
+    TypeId type_id = (output_kernel_tensor->dtype_id() == TypeId::kTypeUnknown ? TypeId::kNumberTypeInt64
+                                                                               : output_kernel_tensor->dtype_id());
     const auto &tensor = std::make_shared<tensor::Tensor>(type_id, shape);
-    tensor->set_base_shape(output_kernel_tensor->GetShape());
+    tensor->set_base_shape(output_shape);
     return tensor;
   }
 

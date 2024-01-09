@@ -375,32 +375,15 @@ void DataPrepareActor::UpdateDynamicShape(const AnfNodePtr &input_node, const Te
   if (!input_param->has_dynamic_shape()) {
     return;
   }
-  std::vector<TypeId> types = {common::AnfAlgo::GetOutputInferDataType(input_node, 0)};
-  std::vector<ShapeVector> shapes = {input_tensor->shape()};
 
-  // Updata shape to input nodes could be deleted and replaced by update KernelTensor's shape after adapt dynamic
-  // sequence case.
-  // If the shape of the tensor exists and is a tuple shape, it means that the tensor is a tuple type,
-  // and it needs to be restored the shape to tuple type when infer shape.
-  if (input_tensor->base_shape_ptr() != nullptr && input_tensor->base_shape_ptr()->isa<abstract::SequenceShape>()) {
-    MS_LOG(DEBUG) << "trans to scalar abs for node:" << input_node->fullname_with_scope()
-                  << " shape:" << input_tensor->base_shape_ptr()->ToString()
-                  << " abs:" << (input_node->abstract() == nullptr ? "nullptr" : input_node->abstract()->ToString());
-    shapes = BaseShapeToShapeVector(input_tensor->base_shape_ptr());
-    types = std::vector(shapes.size(), input_tensor->data_type());
-    common::AnfAlgo::SetScalarTupleOutputInferType(types, shapes, input_node);
-  } else {
-    // In runtime, the dynamic len tag should be removed.
-    common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, input_node.get(), true);
-  }
-
-  // Update kernel tensor shape and type by abstract.
-  const auto &abstract = input_node->abstract();
-  MS_EXCEPTION_IF_NULL(abstract);
+  MS_LOG(DEBUG) << "Update dynamic shape for parameter:" << input_param->DebugString();
   const auto &output_kernel_tensor = AnfAlgo::GetOutputKernelTensor(input_node, 0);
   MS_EXCEPTION_IF_NULL(output_kernel_tensor);
-  output_kernel_tensor->SetType(abstract->GetType());
-  output_kernel_tensor->SetShape(abstract->GetShape());
+  if (input_tensor->base_shape_ptr() == nullptr || (!input_tensor->base_shape_ptr()->isa<abstract::SequenceShape>())) {
+    output_kernel_tensor->SetShape(input_tensor->ToAbstract()->GetShape());
+    return;
+  }
+  output_kernel_tensor->SetShape(input_tensor->base_shape_ptr());
 }
 
 namespace {

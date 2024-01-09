@@ -395,9 +395,9 @@ void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<Kern
     output_obj_type->push_back(KernelObjectType::TENSOR);
   }
 
-  MS_LOG(INFO) << "Generate input and output object types for new node " << cnode->fullname_with_scope() << " "
-               << cnode->DebugString() << ". Input object types: " << *input_obj_type
-               << ". Output object types: " << *output_obj_type;
+  MS_LOG(DEBUG) << "Generate input and output object types for new node " << cnode->fullname_with_scope() << " "
+                << cnode->DebugString() << ". Input object types: " << *input_obj_type
+                << ". Output object types: " << *output_obj_type;
 }
 
 AnfNodePtr ConstructInputByValueNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input) {

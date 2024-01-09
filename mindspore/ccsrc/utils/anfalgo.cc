@@ -993,46 +993,6 @@ void DeleteDynamicLen(AnfNode *node) {
 }
 }  // namespace
 
-void AnfAlgo::SetScalarTupleOutputInferType(const std::vector<TypeId> &types, const std::vector<ShapeVector> &shapes,
-                                            const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  DeleteDynamicLen(node.get());
-  std::vector<abstract::AbstractBasePtr> abstract_list;
-  MS_LOG(DEBUG) << "Set scalar tuple output infer type for node:" << node->fullname_with_scope()
-                << " debug string:" << node->DebugString();
-  if (node->abstract() != nullptr && node->abstract()->isa<abstract::AbstractSequence>()) {
-    const auto &sequence_abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
-    MS_EXCEPTION_IF_NULL(sequence_abs);
-    MS_LOG(DEBUG) << "Check abs:" << sequence_abs->ToString();
-    // Fetch element type by dynamic len element abs in dynamic sequence and fetch element type by first element in
-    // static tuple.
-    if ((sequence_abs->dynamic_len_element_abs() != nullptr &&
-         sequence_abs->dynamic_len_element_abs()->isa<AbstractTensor>()) ||
-        ((!sequence_abs->dynamic_len()) && sequence_abs->size() > 0 && sequence_abs->elements()[0] != nullptr &&
-         sequence_abs->elements()[0]->isa<AbstractTensor>())) {
-      if (shapes.empty()) {
-        MS_LOG(INTERNAL_EXCEPTION) << "Invalid shape for node:" << node->fullname_with_scope();
-      }
-      for (size_t i = 0; i < types.size(); ++i) {
-        ShapeVector shape = shapes[0];
-        auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(types[i]), shape);
-        (void)abstract_list.emplace_back(abstract);
-      }
-      auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
-      node->set_abstract(abstract_tuple);
-      return;
-    }
-  }
-  MS_LOG(DEBUG) << "Check abs for scalar, type size:" << types.size();
-  for (size_t i = 0; i < types.size(); ++i) {
-    abstract::AbstractScalarPtr abstract = std::make_shared<abstract::AbstractScalar>(TypeIdToType(types[i]));
-    (void)abstract_list.emplace_back(abstract);
-  }
-  auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
-  MS_LOG(DEBUG) << "set abs:" << abstract_tuple->ToString() << " to node:" << node->DebugString();
-  node->set_abstract(abstract_tuple);
-}
-
 // set infer shapes and types of anf node
 void AnfAlgo::SetOutputInferTypeAndShape(const std::vector<TypeId> &types, const std::vector<ShapeVector> &shapes,
                                          AnfNode *node, bool disable_dynamic_len) {
