@@ -127,8 +127,9 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
         }
 
         auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-          dev_ptr_list[index], old_size, old_dev_addr->format(), old_dev_addr->type_id(), old_dev_addr->host_shape(),
-          device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+          dev_ptr_list[index], old_size, kernel::GetFormatFromStrToEnum(old_dev_addr->format()),
+          old_dev_addr->type_id(), old_dev_addr->host_shape(), device_context->device_context_key().device_name_,
+          device_context->device_context_key().device_id_);
         auto new_dev_addr = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
         MS_LOG(DEBUG) << "Create device tensor:" << new_dev_addr << " type:" << new_dev_addr->type_id();
         (void)new_dev_addr->SyncDeviceToDevice(old_dev_addr.get());

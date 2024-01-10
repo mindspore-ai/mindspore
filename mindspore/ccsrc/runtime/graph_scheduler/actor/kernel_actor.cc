@@ -272,7 +272,7 @@ void KernelActor::FetchWorkspaceDeviceTensor() {
     }
     for (size_t i = launch_info_.workspaces_.size(); i < workspace_sizes.size(); ++i) {
       auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-        nullptr, workspace_sizes[i], "", kTypeUnknown, ShapeVector(),
+        nullptr, workspace_sizes[i], Format::DEFAULT_FORMAT, kTypeUnknown, ShapeVector(),
         device_contexts_[0]->device_context_key().device_name_, device_contexts_[0]->device_context_key().device_id_);
       auto device_address = device_contexts_[0]->device_res_manager_->CreateDeviceAddress(kernel_tensor);
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(kernel_)

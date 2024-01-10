@@ -312,8 +312,9 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
     tensor->set_device_address(output_node_to_tensor_device_address_[{output_node, output_index}]);
   } else {
     auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-      nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(), device_tensor->host_shape(),
-      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+      nullptr, device_tensor->GetSize(), kernel::GetFormatFromStrToEnum(device_tensor->format()),
+      device_tensor->type_id(), device_tensor->host_shape(), device_context->device_context_key().device_name_,
+      device_context->device_context_key().device_id_);
     kernel_tensor->SetType(output_kernel_tensor->GetType());
     kernel_tensor->SetShape(output_kernel_tensor->GetShape());
     auto tensor_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);

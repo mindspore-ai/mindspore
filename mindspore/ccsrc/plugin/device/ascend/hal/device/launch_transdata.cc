@@ -109,8 +109,8 @@ void LaunchTransData::CreateOutputAddr(const std::vector<size_t> &outputs_list,
   for (size_t i = 0; i < outputs_list.size(); ++i) {
     auto size = MemoryManager::GetCommonAlignSize(outputs_list[i]);
     outputs_addr_[i] = AllocDeviceMem(size);
-    auto kernel_tensor =
-      std::make_shared<kernel::KernelTensor>(outputs_addr_[i], size, dst_format_, dtype_, shape_, kAscendDevice, 0);
+    auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+      outputs_addr_[i], size, kernel::GetFormatFromStrToEnum(dst_format_), dtype_, shape_, kAscendDevice, 0);
     kernel_tensors->emplace_back(kernel_tensor);
   }
 }
@@ -132,8 +132,8 @@ void LaunchTransData::LaunchOpKernel() {
 
   // inputs
   std::vector<kernel::KernelTensor *> kernel_inputs;
-  auto input =
-    std::make_shared<kernel::KernelTensor>(input_addr_, total_size_, src_format_, dtype_, shape_, kAscendDevice, 0);
+  auto input = std::make_shared<kernel::KernelTensor>(
+    input_addr_, total_size_, kernel::GetFormatFromStrToEnum(src_format_), dtype_, shape_, kAscendDevice, 0);
   kernel_inputs.push_back(input.get());
 
   // outputs

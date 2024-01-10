@@ -116,16 +116,6 @@ class BACKEND_EXPORT DeviceAddressUtils {
 
   static void MallocForOutputs(DeviceContext *device_context, const std::vector<tensor::TensorPtr> &outputs);
 
-  static device::DeviceAddressPtr CreateOutputAddress(const DeviceContext *device_context,
-                                                      const abstract::AbstractBasePtr &abs, size_t index,
-                                                      const tensor::TensorPtr &tensor, const string &format = "");
-
-  static device::DeviceAddressPtr CreateOutputAddress(const DeviceContext *device_context,
-                                                      const abstract::AbstractBasePtr &abs, size_t index,
-                                                      const tensor::TensorPtr &tensor,
-                                                      const pynative::DeviceAddressPromisePtr &promise,
-                                                      const string &format = "");
-
   static device::DeviceAddressPtr CreateWorkspaceAddress(const DeviceContext *device_context,
                                                          const size_t &workspace_size);
 };

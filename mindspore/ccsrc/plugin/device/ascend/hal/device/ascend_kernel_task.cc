@@ -380,7 +380,7 @@ bool ContiguousViewCopySrcAddr(const AddressAndStorageInfoPtr &src_addr_info,
   auto tensor_size = SizeOf(dst_shape) * GetTypeByte(TypeIdToType(src_addr_info->addr->type_id()));
 
   auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-    nullptr, tensor_size, kOpFormat_DEFAULT, src_addr_info->addr->type_id(), dst_shape,
+    nullptr, tensor_size, Format::DEFAULT_FORMAT, src_addr_info->addr->type_id(), dst_shape,
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
   kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(src_addr_info->addr->type_id())));
   kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(dst_shape));
@@ -490,7 +490,7 @@ DeviceAddressPtr ConvertAddrToBaseFormat(const DeviceAddressPtr &input_address,
     auto tensor_size = SizeOf(input_storage_info->ori_shape) * GetTypeByte(TypeIdToType(input_address->type_id()));
 
     auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-      nullptr, tensor_size, kOpFormat_NCHW, input_address->type_id(), input_storage_info->ori_shape,
+      nullptr, tensor_size, Format::NCHW, input_address->type_id(), input_storage_info->ori_shape,
       device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
     kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(input_address->type_id())));
     kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(input_storage_info->ori_shape));
@@ -509,7 +509,7 @@ DeviceAddressPtr ConvertAddrToBaseFormat(const DeviceAddressPtr &input_address,
     auto tensor_size = SizeOf(device_shape) * GetTypeByte(TypeIdToType(input_address->type_id()));
 
     auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-      nullptr, tensor_size, base_format, input_address->type_id(), device_shape,
+      nullptr, tensor_size, kernel::GetFormatFromStrToEnum(base_format), input_address->type_id(), device_shape,
       device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
     kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(input_address->type_id())));
     kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(device_shape));
