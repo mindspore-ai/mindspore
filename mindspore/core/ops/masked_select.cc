@@ -28,6 +28,7 @@
 #include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
@@ -44,14 +45,22 @@ abstract::ShapePtr MaskedSelectFrontendInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr MaskedSelectFrontendInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kInt8,   kInt16,   kInt32, kInt64,   kUInt8, kUInt16,    kUInt32,
-                                         kUInt64, kFloat16, kFloat, kFloat64, kBool,  kComplex64, kComplex128};
   MS_EXCEPTION_IF_NULL(prim);
   auto op_name = prim->name();
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kMaskedSelectInputNum, op_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("mask", input_args[1]->GetType(), {kBool}, op_name);
   std::map<std::string, TypePtr> types;
   (void)types.emplace("input", input_args[kInputIndex0]->GetType());
+  bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+  if (is_ascend) {
+    const std::set<TypePtr> ascend_valid_types = {kInt8,   kInt16,  kInt32,   kInt64, kUInt8,   kUInt16,
+                                                  kUInt32, kUInt64, kFloat16, kFloat, kFloat64, kBool};
+    return CheckAndConvertUtils::CheckTensorTypeSame(types, ascend_valid_types, op_name);
+  }
+  const std::set<TypePtr> valid_types = {kInt8,   kInt16,   kInt32, kInt64,   kUInt8, kUInt16,    kUInt32,
+                                         kUInt64, kFloat16, kFloat, kFloat64, kBool,  kComplex64, kComplex128};
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
 }
 }  // namespace
