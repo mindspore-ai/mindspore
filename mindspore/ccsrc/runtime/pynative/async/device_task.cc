@@ -26,7 +26,7 @@ constexpr auto kProfilerNamePyboost = "pyboost";
 
 void DeviceOpRunTask::Run() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
-                                     runtime::ProfilerRecorder::kNoName, false);
+                                     context_->op_run_info()->base_op_run_info.op_name, false);
   MS_EXCEPTION_IF_NULL(run_func_);
   run_func_(context_);
 }

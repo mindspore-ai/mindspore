@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <utility>
 #include "kernel/kernel_get_value.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "mindspore/core/ops/array_ops.h"
@@ -71,6 +72,9 @@ class SliceGradCpuKernelMod : public NativeCpuKernelMod {
 
   void FormatArgs(bool stride);
 
+  std::pair<bool, bool> GetSliceGradParamValue(const std::vector<KernelTensor *> &inputs, const size_t idx,
+                                               const std::string &kernel_name, std::vector<int64_t> *attr_value,
+                                               const std::string &param_name, size_t *len);
   template <typename T>
   bool SliceGrad8D(const std::vector<kernel::KernelTensor *> &inputs,
                    const std::vector<kernel::KernelTensor *> &outputs, T *input_addr, T *output_addr);

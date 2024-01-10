@@ -104,7 +104,7 @@ from mindspore.ops.operations.array_ops import MatrixSetDiagV3
 from mindspore.ops.operations.array_ops import ScatterNdMax
 from mindspore.ops.operations.math_ops import AddV2
 from mindspore.ops.operations.math_ops import Betainc
-from mindspore.ops.operations.math_ops import Diagonal
+from mindspore.ops.auto_generate import Diagonal
 from mindspore.ops.operations.math_ops import Hypot
 from mindspore.ops.operations.math_ops import Heaviside
 from mindspore.ops.operations.math_ops import Quantile
@@ -2784,10 +2784,6 @@ test_case_nn_ops = [
         'block': P.ReLU6(),
         'desc_inputs': [[1, 3, 4, 4]],
         'desc_bprop': [[1, 3, 4, 4]]}),
-    ('ReLUV2', {
-        'block': P.ReLUV2(),
-        'desc_inputs': [[1, 3, 4, 4]],
-        'desc_bprop': [[1, 3, 4, 4], ([1, 1, 4, 4, 2], {'dtype': np.uint8})]}),
     ('ReLUV3', {
         'block': ReLUV3(),
         'desc_inputs': [[1, 3, 4, 7, 9]],

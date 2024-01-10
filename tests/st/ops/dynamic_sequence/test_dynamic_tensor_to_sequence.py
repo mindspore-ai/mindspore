@@ -46,7 +46,7 @@ def dyn_case():
     assert expect_y == res_y
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_seq_to_tensor():

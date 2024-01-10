@@ -153,7 +153,7 @@ AnfNodePtr CreateLayerNormNode(const FuncGraphPtr &graph, const AnfNodePtr &inpu
 
   auto type_id = (input_node->isa<CNode>()) ? common::AnfAlgo::GetPrevNodeOutputInferDataType(input_node, 0)
                                             : common::AnfAlgo::GetOutputInferDataType(input_node, 0);
-  const auto dim = shape_vec.size();
+  const auto &dim = shape_vec.size();
   int64_t ddim = SizeToLong(dim);
   std::vector<int64_t> axis{0};
   for (int64_t i = 1; i < ddim; ++i) {
@@ -184,8 +184,18 @@ AnfNodePtr CreateLayerNormNode(const FuncGraphPtr &graph, const AnfNodePtr &inpu
   auto axis_node = CreateValueNode(graph, MakeValue(axis));
   MS_EXCEPTION_IF_NULL(axis_node);
   // Calc the sum of reducesum
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto keep_dim_tensor = std::make_shared<tensor::Tensor>(false);
+  MS_EXCEPTION_IF_NULL(keep_dim_tensor);
+  auto keep_dim_node = kernel_graph->NewValueNode(keep_dim_tensor->ToAbstract(), keep_dim_tensor);
+  MS_EXCEPTION_IF_NULL(keep_dim_node);
+  auto skip_tensor = std::make_shared<tensor::Tensor>(false);
+  MS_EXCEPTION_IF_NULL(skip_tensor);
+  auto skip_node = kernel_graph->NewValueNode(skip_tensor->ToAbstract(), skip_tensor);
+  MS_EXCEPTION_IF_NULL(skip_node);
   const std::vector<AnfNodePtr> square_sum_node_inputs = {NewValueNode(std::make_shared<Primitive>(kReduceSumOpName)),
-                                                          square_node, axis_node};
+                                                          square_node, axis_node, keep_dim_node, skip_node};
   auto square_sum_node = NewCNode(square_sum_node_inputs, graph);
   MS_EXCEPTION_IF_NULL(square_sum_node);
 

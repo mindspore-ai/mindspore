@@ -22,7 +22,7 @@ from mindspore.nn import MultiheadAttention, TransformerEncoderLayer, \
     TransformerEncoder, TransformerDecoderLayer, TransformerDecoder, Transformer
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
@@ -87,7 +87,7 @@ def test_multihead_attention_pynative_ascend(dtype, jit):
     assert q.shape == out[0].shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
@@ -187,7 +187,7 @@ def test_transformerencoder_square_input_ascend(dtype, training, jit):
     np.allclose(result.asnumpy(), ref_output.asnumpy(), rtol=1e-7, atol=1e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [ms.float16, ms.float32])
@@ -236,7 +236,7 @@ def test_transformerencoder_square_input_gpu(dtype, training, jit):
     np.allclose(result.asnumpy(), ref_output.asnumpy(), rtol=1e-7, atol=1e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [ms.float16, ms.float32])
@@ -269,7 +269,7 @@ def test_transformerdecoder_gpu(dtype, training, jit):
     assert result.shape == tgt.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
@@ -337,7 +337,7 @@ def test_transformerdecoder_ascend(dtype, training, jit):
     assert result.shape == tgt.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
@@ -370,7 +370,7 @@ def test_transformer_cpu(dtype, training, jit):
     assert result.shape == tgt.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [ms.float16, ms.float32])

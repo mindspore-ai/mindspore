@@ -46,7 +46,7 @@ def index_add_forward(nptype):
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_index_add_float64():
@@ -61,7 +61,7 @@ def test_index_add_float64():
     index_add_forward(np.float64)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_index_add_float16():
@@ -76,7 +76,7 @@ def test_index_add_float16():
     index_add_forward(np.float16)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_index_add_int32():
@@ -91,7 +91,7 @@ def test_index_add_int32():
     index_add_forward(np.int32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_index_add_int16():
@@ -176,7 +176,7 @@ def index_add_grad_with_type(nptype):
     np.testing.assert_array_equal(ygrad.asnumpy(), expect_ygrad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_index_add_grad_float64():
@@ -191,7 +191,7 @@ def test_index_add_grad_float64():
     index_add_grad_with_type(np.float64)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_index_add_grad_float32():
@@ -236,7 +236,7 @@ def test_index_add_grad_int32():
     index_add_grad_with_type(np.int32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_index_add_grad_int16():
@@ -281,7 +281,7 @@ def test_index_add_grad_uint8():
     index_add_grad_with_type(np.uint8)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_index_add_function():
@@ -299,7 +299,7 @@ def test_index_add_function():
     np.testing.assert_array_equal(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_index_add_dynamic():
@@ -387,7 +387,7 @@ def vmap_case():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_index_add_vmap_cpu():

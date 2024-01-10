@@ -1523,6 +1523,7 @@ def get_masked_fill_vmap_rule(prim, axis_size):
     else:
         batch_rank = 1
 
+    prim = prim.clone()
     prim.set_label('batch_rank', batch_rank)
 
     def vmap_rule(input_bdim, mask_bdim, value_bdim):
@@ -1805,6 +1806,7 @@ def get_diag_vmap_rule(prim, axis_size):
     else:
         batch_rank = 1
 
+    prim = prim.clone()
     prim.set_label('batch_rank', batch_rank)
 
     def vmap_rule(x_bdim):

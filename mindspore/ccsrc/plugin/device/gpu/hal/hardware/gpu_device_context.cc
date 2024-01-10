@@ -348,6 +348,10 @@ void SetUserData(DeviceAddress *device_address, const UserDataPtr &user_data) {
 
 DeviceAddressPtr GPUDeviceResManager::CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
   MS_EXCEPTION_IF_NULL(kernel_tensor);
+  if (kernel_tensor->device_name().empty()) {
+    kernel_tensor->set_device_name(device_context_->device_context_key().device_name_);
+    kernel_tensor->set_device_id(device_context_->device_context_key().device_id_);
+  }
   auto device_address = std::make_shared<GPUDeviceAddress>(kernel_tensor);
 
   const auto &user_data = kernel_tensor->user_data();
@@ -419,9 +423,6 @@ void GPUKernelExecutor::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph)
       pm->AddPass(std::make_shared<opt::OptimizeUpdateState>());
       pm->AddPass(std::make_shared<opt::CudnnInplaceAggregate>());
     }
-    pm->AddPass(std::make_shared<opt::ReluV2Pass>());
-    pm->AddPass(std::make_shared<opt::AddReluV2Fusion>());
-    pm->AddPass(std::make_shared<opt::AddReluGradV2Fusion>());
   }
 
   pm->AddPass(std::make_shared<opt::AllReduceFusion>());
@@ -521,7 +522,7 @@ bool CheckSupportBackoff(const KernelGraphPtr &graph, const CNodePtr &node,
                          const std::pair<std::string, ExceptionType> &failure_info) {
   MS_EXCEPTION_IF_NULL(node);
   // The single op does not support the backoff ability.
-  if (!AnfAlgo::IsEnableKernelSelectBackoff(graph)) {
+  if (!AnfAlgo::IsNodeSupportKernelSelectBackoff(node, graph)) {
     return false;
   }
   const auto &kernel_name = common::AnfAlgo::GetCNodeName(node);
@@ -552,6 +553,7 @@ void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node
 bool TryExpandFallback(const KernelGraphPtr &graph, const CNodePtr &node,
                        const std::pair<std::string, ExceptionType> &failure_info) {
   auto f = [ori_node = node, &failure_info, &graph](const CNodePtr &basic_op) mutable {
+    MS_EXCEPTION_IF_NULL(basic_op);
     auto res = SetKernelInfoWithMsg(basic_op);
     if (res.first.empty()) {
       // select gpu kernel success.

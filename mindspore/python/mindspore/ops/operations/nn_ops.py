@@ -564,50 +564,6 @@ class SeLU(Primitive):
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
 
-class ReLUV2(Primitive):
-    r"""
-    The ReLUV2 interface is deprecated, please use the :class:`mindspore.ops.ReLU` instead.
-
-    Rectified Linear Unit activation function.
-
-    It returns element-wise :math:`\max(0, x)`, specially, the neurons with the negative output
-    will be suppressed and the active neurons will stay the same.
-
-    .. math::
-
-        \text{ReLU}(x) = (x)^+ = \max(0, x)
-
-    Inputs:
-        - **input_x** (Tensor) - The input tensor must be a 4-D tensor.
-
-    Outputs:
-        - **output** (Tensor) - Has the same type and shape as the `input_x`.
-        - **mask** (Tensor) - A tensor, but it is meaningless.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
-        ValueError: If shape of `input_x` is not 4-D.
-
-    Supported Platforms:
-        deprecated
-
-    Examples:
-        >>> input_x = Tensor(np.array([[[[1, -2], [-3, 4]], [[-5, 6], [7, -8]]]]), mindspore.float32)
-        >>> relu_v2 = ops.ReLUV2()
-        >>> output, _= relu_v2(input_x)
-        >>> print(output)
-        [[[[1. 0.]
-           [0. 4.]]
-          [[0. 6.]
-           [7. 0.]]]]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize ReLUV2"""
-        self.init_prim_io_names(inputs=['x'], outputs=['output', 'mask'])
-
-
 class Tanh(Primitive):
     r"""
     Computes hyperbolic tangent of input element-wise.
@@ -941,7 +897,7 @@ class Conv2D(Primitive):
         group (int, optional): Specifies the number of groups dividing `x`'s input channel when applying
             group convolution. Default: ``1`` .
         data_format (str, optional): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
-            Default: ``"NCHW"`` .
+            Default: ``"NCHW"``. (NHWC is only supported in GPU now.)
 
     Inputs:
         - **x** (Tensor) - Input tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` or
@@ -3079,6 +3035,7 @@ class ResizeBilinear(PrimitiveWithInfer):
         Deprecated
     """
 
+    @deprecated("2.3", "ops.interpolate", False)
     @prim_attr_register
     def __init__(self, size, align_corners=False, half_pixel_centers=False):
         """Initialize ResizeBilinear."""
@@ -6196,7 +6153,7 @@ class Dropout(PrimitiveWithCheck):
         validator.check_int(len(x_shape), 1, validator.GE, "x_shape", self.name)
 
     def check_dtype(self, x_dtype):
-        valid_dtypes = (mstype.float16, mstype.float32, mstype.float64)
+        valid_dtypes = (mstype.float16, mstype.bfloat16, mstype.float32, mstype.float64)
         validator.check_tensor_dtype_valid("x", x_dtype, valid_dtypes, self.name)
 
 
@@ -6620,6 +6577,7 @@ class DynamicRNN(Primitive):
         self.forget_bias = validator.check_value_type("forget_bias", forget_bias, [float], self.name)
         self.cell_depth = validator.check_value_type("cell_depth", cell_depth, [int], self.name)
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
+        validator.check_number_range(keep_prob, 0.0, 1.0, validator.INC_BOTH, float, "keep_prob")
         self.cell_clip = validator.check_value_type("cell_clip", cell_clip, [float], self.name)
         self.num_proj = validator.check_non_negative_int(num_proj, "num_proj", self.name)
         self.forget_bias = validator.check_value_type("forget_bias", forget_bias, [float], self.name)
@@ -10144,8 +10102,25 @@ class PromptFlashAttention(Primitive):
     S -- Sequence length
     H -- Hidden size
 
+    Note:
+    experiment ops
+
     .. warning::
         This is an experimental API that is subject to change or deletion.
+
+    Args:
+        num_heads (int): The number of heads.
+        scale_value (float): The scale value indicating the scale coefficient, which is used as the scalar of
+          Muls in the calculation. Default: 1.0.
+        pre_tokens (int): Previous tokens. Default: 2147483547.
+        next_tokens (int): next tokens.  Default: 0.
+          indicate the upper triangle, Indicate the number of data blocks involved in the calculation. The value 0
+          indicates that the data blocks in the upper triangle are not involved in the calculation
+        input_layout (str): the data layout of the input qkv, support `(BSH)` and `(BNSD)`, Default `BSH`.
+        num_key_value_heads (int): head numbers of key/value which are used in GQA algorithm.
+          The value o indicates if the key and value have the same head nums, use numHeads.  Default: 0.
+        sparse_mode (int): Default: 0
+        inner_precise (int): 0, float16 high precision. 1, high performance. default 1
 
     Inputs:
         - **query** (Tensor) - The query tensor with data type of float16 or float32.
@@ -10157,25 +10132,41 @@ class PromptFlashAttention(Primitive):
         - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or float32.
           For each element, 0 indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, 1, S, S)`.
         - **padding_mask** (Tensor) - The padding mask tensor with data type of float16 or float32
-        - **actual_seq_lengths** (Tensor): Describe actual sequence length of each input with data type of int.
-        - **num_heads**  (int): The number of heads.
-        - **scale_value** (float): The scale value indicating the scale coefficient, which is used as the scalar of
-          Muls in the calculation. Default: 1.0.
-        - **pre_tokens** (int): Previous tokens. Default: 2147483547.
-        - **next_tokens** (int): next tokens.  Default: 0.
-          indicate the upper triangle, Indicate the number of data blocks involved in the calculation. The value 0
-          indicates that the data blocks in the upper triangle are not involved in the calculation
-        - **input_layout** (str): the data layout of the input qkv, support `(BSH)` and `(BNSD)`, Default `BSH`.
-        - **num_key_value_heads** (int): head numbers of key/value which are used in GQA algorithm.
-          The value o indicates if the key and value have the same head nums, use numHeads.  Default: 0.
+        - **actual_seq_lengths** (Tensor): Describe actual sequence length of each input with data type of int64.
+        - **actual_seq_lengths_kv** (Tensor): Describe actual sequence length of each input with data type of int64.
+        - **dep_scale1** (Tensor)
+        - **quant_scale1** (Tensor)
+        - **deq_scale2** (Tensor)
+        - **quant_scale2** (Tensor)
+        - **quant_offset2** (Tensor)
 
     Outputs:
         - **attention_out** (Tensor) - Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
 
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore.ops.operations.nn_ops as P
+        >>> from mindspore import Tensor
+        >>> import numpy as np
+        >>> B = 1
+        >>> N = 16
+        >>> S = 256
+        >>> D = 16
+        >>> query = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+        >>> key = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+        >>> value = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+        >>> attn_mask = Tensor(np.ones((B, 1, S, S), dtype=np.float16))
+        >>> pfa = P.PromptFlashAttention(N, input_layout='BNSD')
+        >>> out = pfa(query, key, value, attn_mask, None, None, None, None, None, None, None, None)
+        >>> print(out[0].shape)
+        (1, 16, 256, 16)
     """
+
     @prim_attr_register
-    def __init__(self, num_heads, scale_value=1.0, pre_tokens=2147483547, next_tokens=0, input_layout='BSH',
-                 num_key_value_heads=0):
+    def __init__(self, num_heads, scale_value=1.0, pre_tokens=214748647, next_tokens=0, input_layout='BSH',
+                 num_key_value_heads=1, sparse_mode=0, inner_precise=1):
         """Initialize PromptFlashAttention."""
         validator.check_value_type('num_heads', num_heads, [int], self.name)
         validator.check_value_type('scale_value', scale_value, [float], self.name)
@@ -10183,7 +10174,75 @@ class PromptFlashAttention(Primitive):
         validator.check_value_type('next_tokens', next_tokens, [int], self.name)
         validator.check_value_type('input_layout', input_layout, [str], self.name)
         validator.check_value_type('num_key_value_heads', num_key_value_heads, [int], self.name)
-        self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "padding_mask", "actual_seq_lengths"],
+        validator.check_value_type('sparse_mode', sparse_mode, [int], self.name)
+        validator.check_value_type('inner_precise', inner_precise, [int], self.name)
+        self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "padding_mask", "actual_seq_lengths",
+                                        "actual_seq_lengths_kv", "deq_scale1", "quant_scale1", "deq_scale2",
+                                        "quant_scale2", "quant_offset2"],
+                                outputs=["attention_out"])
+
+class IncreFlashAttention(Primitive):
+    r"""
+    The interface for fully inference.
+
+    B -- Batch size
+
+    S -- Sequence length
+
+    H -- Hidden size
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Inputs:
+        - **query** (Tensor) - The query tensor with data type of float16 or bfloat16.
+          Input tensor of shape :math:`(B, 1, H)` / :math:`(B, N, 1, D)`.
+        - **key** (TensorList) - The key tensor with data type of float16 or bfloat16.
+          Input tensor of shape :math:`(B, S, H)` / :math:`(B, N, S, D)`.
+        - **value** (TensorList) - The value tensor with data type of float16 or bfloat16.
+          Input tensor of shape :math:`(B, S, H)` / :math:`(B, N, S, D)`.
+        - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or bool.
+          Input tensor of shape :math:`(B, S)` / :math:`(B, 1, S)` / :math:`(B, 1, 1, S)`.
+        - **actual_seq_lengths** (Tensor) - Describe actual sequence length of each input with data type of int.
+        - **padding_mask** (Tensor) - The padding mask tensor with data type of float16.
+        - **dequant_scale1** (Tensor) - Quantitative parametor, the tensor with data type of uint64.
+        - **quant_scale1** (Tensor) - Quantitative parametor, the tensor with data type of float.
+        - **dequant_scale2** (Tensor) - Quantitative parametor, the tensor with data type of uint64.
+        - **quant_scale2** (Tensor) - Quantitative parametor, the tensor with data type of float.
+        - **quant_offset2** (Tensor) - Quantitative parametor, the tensor with data type of float.
+        - **antiquant_scale** (Tensor) - Quantitative parametor, the tensor with data type of float.
+        - **antiquant_offset** (Tensor) - Quantitative parametor, the tensor with data type of float.
+        - **block_table** (Tensor) - The tensor with data type of float.
+        - **num_heads**  (int) - The number of heads.
+        - **input_layout** (str) - the data layout of the input qkv, support `(BSH)` and `(BNSD)`. Default `BSH`.
+        - **scale_value** (double) - The scale value indicating the scale coefficient, which is used as the scalar of
+          Muls in the calculation. Default: 1.0.
+        - **num_key_value_heads** (int) - head numbers of key/value which are used in GQA algorithm.
+          The value o indicates if the key and value have the same head nums, use numHeads.  Default: 0.
+        - **block_size** (int) - Default: 0.
+        - **inner_precise** (int) - Default: 1.
+
+    Outputs:
+        - **attention_out** (Tensor) - Input tensor of shape :math:`(B, 1, H)` / :math:`(B, N, 1, D)`.
+
+    Supported Platforms:
+        ``Ascend``
+    """
+
+    @prim_attr_register
+    def __init__(self, num_heads, input_layout="BSH", scale_value=1.0, num_key_value_heads=0, block_size=0,
+                 inner_precise=1):
+        """Initialize IncreFlashAttention."""
+        super().__init__("IncreFlashAttention")
+        validator.check_value_type('num_heads', num_heads, [int], self.name)
+        validator.check_value_type('input_layout', input_layout, [str], self.name)
+        validator.check_value_type('scale_value', scale_value, [float], self.name)
+        validator.check_value_type('num_key_value_heads', num_key_value_heads, [int], self.name)
+        validator.check_value_type('block_size', block_size, [int], self.name)
+        validator.check_value_type('inner_precise', inner_precise, [int], self.name)
+        self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "actual_seq_lengths", "padding_mask",
+                                        "dequant_scale1", "quant_scale1", "dequant_scale2", "quant_scale2",
+                                        "quant_offset2", "antiquant_scale", "antiquant_offset", "block_table"],
                                 outputs=["attention_out"])
 
 
@@ -10207,6 +10266,7 @@ class FlashAttentionScore(Primitive):
         performance mode. Default: 0.
         input_layout (str, optional): Specifies the layout of `query`, the value must be one of ["BSH", "SBH"].
         Currently, only BSH is supported. Default: "BSH".
+        sparse_mode (int): Default 0.
 
     Inputs:
         - **query** (Tensor) - The query tensor with data type must be in [float16, float32, bfloat16].
@@ -10215,12 +10275,13 @@ class FlashAttentionScore(Primitive):
           Input tensor of shape :math:`(B, S, H)`.
         - **value** (Tensor) - The value tensor with data must be in [float16, float32, bfloat16].
           Input tensor of shape :math:`(B, S, H)`.
-        - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or uint8.
+        - **attn_mask** (Tensor) - The attention mask tensor with data type of uint8 or float16.
           For each element, 0 indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, 1, S, S)`.
         - **drop_mask** (Tensor) - The dropout mask tensor with data type of UInt8.
           Input tensor of shape :math:`(B, N, S, S // 8) or ()`.
         - **real_shift** (None) - The position embedding code of float16 or float32, not implemented yet.
         - **padding_mask** (None) - The padding mask of float16 or float32, not implemented yet.
+        - **prefix** (None) - Not implemented yet.
 
     Outputs:
         - **attention_out** (Tensor) - (B, S, H)
@@ -10232,7 +10293,7 @@ class FlashAttentionScore(Primitive):
 
     @prim_attr_register
     def __init__(self, head_num, keep_prob=1.0, scale_value=1.0, pre_tokens=65536, next_tokens=65536, inner_precise=0,
-                 input_layout="BSH"):
+                 input_layout="BSH", sparse_mode=0):
         """Initialize FlashAttentionScore"""
         validator.check_value_type('head_num', head_num, [int], self.name)
         validator.check_value_type('keep_prob', keep_prob, [int, float], self.name)
@@ -10242,11 +10303,12 @@ class FlashAttentionScore(Primitive):
         validator.check_value_type('pre_tokens', pre_tokens, [int], self.name)
         validator.check_value_type('next_tokens', next_tokens, [int], self.name)
         validator.check_value_type('inner_precise', inner_precise, [int], self.name)
+        validator.check_value_type('sparse_mode', sparse_mode, [int], self.name)
         if inner_precise not in [0, 1]:
             raise ValueError(f"Attribute 'inner_precise' must be either 0 or 1, but got {inner_precise}")
         validator.check_value_type('input_layout', input_layout, [str], self.name)
-        if input_layout not in ["BSH"]:
-            raise ValueError(f"Attribute 'input_layout' must be either 'bsh' or 'sbh', but got {input_layout}")
+        if input_layout not in ["BSH", "BNSD"]:
+            raise ValueError(f"Attribute 'input_layout' must be either 'BSH' or 'BNSD', but got {input_layout}")
         self.init_prim_io_names(
-            inputs=['query', 'key', 'value', 'attn_mask', 'drop_mask', 'real_shift', 'padding_mask'],
+            inputs=['query', 'key', 'value', 'attn_mask', 'drop_mask', 'real_shift', 'padding_mask', 'prefix'],
             outputs=['attention_out', 'softmax_max', 'softmax_sum'])

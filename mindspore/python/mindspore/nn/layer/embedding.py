@@ -40,7 +40,8 @@ __all__ = ['Embedding', 'EmbeddingLookup', 'MultiFieldEmbeddingLookup']
 @_primexpr
 def _check_input_2d(input_shape, param_name, func_name):
     if len(input_shape) != 2:
-        raise ValueError(f"For '{func_name}', the dimension of '{param_name}' must be 2d, but got {len(input_shape)}")
+        raise ValueError(
+            f"For '{func_name}', the dimension of '{param_name}' must be 2d, but got {len(input_shape)}")
 
 
 @constexpr
@@ -104,13 +105,18 @@ class Embedding(Cell):
                  dtype=mstype.float32, padding_idx=None):
         """Initialize Embedding."""
         super(Embedding, self).__init__()
-        self.vocab_size = Validator.check_value_type('vocab_size', vocab_size, [int], self.cls_name)
-        self.embedding_size = Validator.check_value_type('embedding_size', embedding_size, [int], self.cls_name)
-        Validator.check_value_type('use_one_hot', use_one_hot, [bool], self.cls_name)
-        Validator.check_subclass("dtype", dtype, mstype.number_type, self.cls_name)
+        self.vocab_size = Validator.check_value_type(
+            'vocab_size', vocab_size, [int], self.cls_name)
+        self.embedding_size = Validator.check_value_type(
+            'embedding_size', embedding_size, [int], self.cls_name)
+        Validator.check_value_type(
+            'use_one_hot', use_one_hot, [bool], self.cls_name)
+        Validator.check_subclass(
+            "dtype", dtype, mstype.number_type, self.cls_name)
         self.use_one_hot = use_one_hot
         self.dtype = dtype
-        self.init_tensor = initializer(embedding_table, [vocab_size, embedding_size])
+        self.init_tensor = initializer(
+            embedding_table, [vocab_size, embedding_size])
         self.padding_idx = padding_idx
         if padding_idx is not None:
             self.padding_idx = Validator.check_int_range(padding_idx, 0, vocab_size, Validator.INC_LEFT,
@@ -120,7 +126,8 @@ class Embedding(Cell):
             self.init_tensor = self.init_tensor.asnumpy()
             self.init_tensor[self.padding_idx] = 0
             self.init_tensor = Tensor(self.init_tensor)
-        self.embedding_table = Parameter(self.init_tensor, name='embedding_table')
+        self.embedding_table = Parameter(
+            self.init_tensor, name='embedding_table')
         self.expand = P.ExpandDims()
         self.reshape_flat = P.Reshape()
         self.shp_flat = (-1,)
@@ -138,8 +145,10 @@ class Embedding(Cell):
         flat_ids = self.reshape_flat(ids, self.shp_flat)
 
         if self.use_one_hot:
-            one_hot_ids = self.one_hot(flat_ids, self.vocab_size, self.on_value, self.off_value)
-            output_for_reshape = self.array_mul(one_hot_ids, self.embedding_table)
+            one_hot_ids = self.one_hot(
+                flat_ids, self.vocab_size, self.on_value, self.off_value)
+            output_for_reshape = self.array_mul(
+                one_hot_ids, self.embedding_table)
         else:
             output_for_reshape = self.gather(self.embedding_table, flat_ids, 0)
 
@@ -182,6 +191,17 @@ class EmbeddingLookup(Cell):
         target (str): Specifies the target where the op is executed. The value must in
             [ ``'DEVICE'`` , ``'CPU'`` ]. Default: ``'CPU'`` .
         slice_mode (str): The slicing way in semi_auto_parallel/auto_parallel. Default: ``'batch_slice'`` .
+
+          - batch_slice (str): Divides the input index tensor into batches and retrieves
+            the corresponding embedding vectors. This is applicable when each sample has the same number of indices.
+          - field_slice (str): Divides the input index tensor into fields and retrieves the corresponding embedding
+            vectors. This is applicable when each sample may have a different number of indices, but have the same
+            feature dimensions.
+          - table_row_slice (str): Treats the input index tensor as a 2D table, divides it by rows, and retrieves
+            the corresponding embedding vectors.
+          - table_column_slice (str): Treats the input index tensor as a 2D table, divides it by columns, and retrieves
+            the corresponding embedding vectors.
+
         manual_shapes (tuple): The accompaniment array in field slice mode. Default: ``None`` .
         max_norm (Union[float, None]): A maximum clipping value. The data type must be float16, float32
                                        or None. Default: ``None`` .
@@ -236,13 +256,16 @@ class EmbeddingLookup(Cell):
         """Initialize EmbeddingLookup."""
         super(EmbeddingLookup, self).__init__()
         Validator.check_value_type('sparse', sparse, [bool], self.cls_name)
-        self.vocab_size = Validator.check_positive_int(vocab_size, 'vocab_size')
-        self.vocab_cache_size = Validator.check_non_negative_int(vocab_cache_size, 'vocab_cache_size')
+        self.vocab_size = Validator.check_positive_int(
+            vocab_size, 'vocab_size')
+        self.vocab_cache_size = Validator.check_non_negative_int(
+            vocab_cache_size, 'vocab_cache_size')
         self.target = target
         self.sparse = sparse
         self.cache_enable = self.vocab_cache_size > 0
         self.forward_unique = False
-        Validator.check_string(target, ['CPU', 'DEVICE'], 'target', self.cls_name)
+        Validator.check_string(
+            target, ['CPU', 'DEVICE'], 'target', self.cls_name)
         if not sparse and target == 'CPU':
             raise ValueError(f"For '{self.cls_name}', 'sparse' must be True when 'target' is \"CPU\", "
                              f"but got 'sparse': {sparse} and 'target': {target}")
@@ -255,11 +278,13 @@ class EmbeddingLookup(Cell):
         enable_ps = _get_ps_context("enable_ps")
         if enable_ps:
             self._process_vocab_cache(slice_mode)
-        self.embedding_size = Validator.check_positive_int(embedding_size, 'embedding_size', self.cls_name)
+        self.embedding_size = Validator.check_positive_int(
+            embedding_size, 'embedding_size', self.cls_name)
         self.embedding_table = Parameter(initializer(param_init, [self.vocab_size, self.embedding_size],
                                                      dtype=dtype), name='embedding_table')
         parallel_mode = _get_parallel_mode()
-        is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
+        is_auto_parallel = parallel_mode in (
+            ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
         self.gather_revert = P.Gather()
         self.reshape_first = P.Reshape()
         self.reshape = P.Reshape()
@@ -268,7 +293,8 @@ class EmbeddingLookup(Cell):
         if is_auto_parallel:
             self.unique = P.Unique().shard(((1,),))
         if self.cache_enable and enable_ps:
-            self._set_voacb_cache_enable_for_ps(vocab_cache_size, embedding_size, vocab_size, param_init, dtype=dtype)
+            self._set_voacb_cache_enable_for_ps(
+                vocab_cache_size, embedding_size, vocab_size, param_init, dtype=dtype)
             if is_auto_parallel:
                 self.unique.add_prim_attr('cache_enable', True)
         indices_shape_size = 2
@@ -280,11 +306,13 @@ class EmbeddingLookup(Cell):
                 raise TypeError(f"For '{self.cls_name}', the type of 'manual_shapes' must be tuple(int), "
                                 f"but got {type(manual_shapes).__name__}!")
             for dim in manual_shapes:
-                Validator.check_positive_int(dim, 'manual shape dim', self.cls_name)
+                Validator.check_positive_int(
+                    dim, 'manual shape dim', self.cls_name)
             self.gatherv2.add_prim_attr("manual_split", manual_shapes)
             self.embeddinglookup.add_prim_attr("manual_split", manual_shapes)
             self.gatherv2.shard(((get_group_size(), 1), (1, get_group_size())))
-            self.embeddinglookup.shard(((get_group_size(), 1), (1, get_group_size())))
+            self.embeddinglookup.shard(
+                ((get_group_size(), 1), (1, get_group_size())))
         elif slice_mode == "table_row_slice" and is_auto_parallel:
             full_batch = _get_full_batch()
             if (target == 'DEVICE' and not full_batch) or (self.cache_enable and enable_ps and sparse):
@@ -293,7 +321,8 @@ class EmbeddingLookup(Cell):
                 self.forward_unique = True
             indices_strategy = (1,)*indices_shape_size
             self.gatherv2.shard(((get_group_size(), 1), indices_strategy))
-            self.embeddinglookup.shard(((get_group_size(), 1), indices_strategy))
+            self.embeddinglookup.shard(
+                ((get_group_size(), 1), indices_strategy))
         elif slice_mode == "table_column_slice" and is_auto_parallel:
             if target == 'DEVICE':
                 indices_shape_size = 1
@@ -301,7 +330,8 @@ class EmbeddingLookup(Cell):
                 self.forward_unique = True
             indices_strategy = (1,)*indices_shape_size
             self.gatherv2.shard(((1, get_group_size()), indices_strategy))
-            self.embeddinglookup.shard(((1, get_group_size()), indices_strategy))
+            self.embeddinglookup.shard(
+                ((1, get_group_size()), indices_strategy))
         elif slice_mode == "batch_slice" and is_auto_parallel:
             indices_strategy = [get_group_size()]
             indices_strategy.extend([1] * (indices_shape_size - 1))
@@ -310,15 +340,18 @@ class EmbeddingLookup(Cell):
             self.embeddinglookup.shard(((1, 1), indices_strategy))
         else:
             if is_auto_parallel:
-                support_mode = ["field_slice", "table_row_slice", "table_column_slice", "batch_slice"]
+                support_mode = ["field_slice", "table_row_slice",
+                                "table_column_slice", "batch_slice"]
                 raise ValueError(f"For '{self.cls_name}', the 'slice_mode' must be in {support_mode}, "
                                  f"but got \"{slice_mode}\".")
         if self.cache_enable and not enable_ps:
-            raise ValueError(f"For '{self.cls_name}', haven't supported cache enable for not ps mode.")
+            raise ValueError(
+                f"For '{self.cls_name}', haven't supported cache enable for not ps mode.")
         self.embedding_table.unique = self.forward_unique
         self.max_norm = max_norm
         if self.max_norm is not None:
-            self.max_norm = Validator.check_positive_float(self.max_norm, 'max_norm', self.cls_name)
+            self.max_norm = Validator.check_positive_float(
+                self.max_norm, 'max_norm', self.cls_name)
             self.max_norm = Tensor(self.max_norm, dtype=mstype.float32)
 
     def _process_vocab_cache(self, slice_mode):
@@ -336,7 +369,8 @@ class EmbeddingLookup(Cell):
                 return
             self.is_ps_server = _is_role_pserver() and _enable_distributed_mindrt()
             parallel_mode = _get_parallel_mode()
-            is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
+            is_auto_parallel = parallel_mode in (
+                ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
             if is_auto_parallel:
                 rank_size = get_group_size()
                 rank_id = get_rank()
@@ -365,7 +399,8 @@ class EmbeddingLookup(Cell):
             self.embedding_table.is_param_ps = True
             self.embedding_table.cache_enable = True
             self.embedding_table.key = param_key
-            _insert_hash_table_size(self.embedding_table.name, vocab_cache_size, embedding_size, vocab_size, param_key)
+            _insert_hash_table_size(
+                self.embedding_table.name, vocab_cache_size, embedding_size, vocab_size, param_key)
 
         if _enable_distributed_mindrt():
             self.rank_id = get_rank()
@@ -391,7 +426,8 @@ class EmbeddingLookup(Cell):
             raise ValueError("The Parameter Server number is zero.")
         # Assign the embedding table dimensions.
         for _ in range(server_num):
-            self.embedding_table_vocab_dim_list.append(self.vocab_size // server_num)
+            self.embedding_table_vocab_dim_list.append(
+                self.vocab_size // server_num)
         rest_vocab_size = self.vocab_size % server_num
         if rest_vocab_size != 0:
             for i in range(rest_vocab_size):
@@ -415,7 +451,8 @@ class EmbeddingLookup(Cell):
                     embedding_lookup = P.SparseGatherV2()
                 else:
                     embedding_lookup = P.Gather()
-                embedding_lookup.add_prim_attr('offset', self.embedding_offset[i])
+                embedding_lookup.add_prim_attr(
+                    'offset', self.embedding_offset[i])
             embedding_lookup.add_prim_attr('rank_id', i)
             embedding_lookup.add_prim_attr('ms_role', 'MS_PSERVER')
             self.embedding_lookup_list.append(embedding_lookup)
@@ -465,8 +502,10 @@ class EmbeddingLookup(Cell):
                 shp = self.shape(indices) + (self.embedding_size,)
                 indices_flatten = self.reshape_first(indices, (-1,))
                 unique_id, unique_idx = self.unique(indices_flatten)
-                weight_unique = self.gatherv2(self.embedding_table, unique_id, 0)
-                weight_flatten = self.gather_revert(weight_unique, unique_idx, 0)
+                weight_unique = self.gatherv2(
+                    self.embedding_table, unique_id, 0)
+                weight_flatten = self.gather_revert(
+                    weight_unique, unique_idx, 0)
                 out = self.reshape(weight_flatten, shp)
             else:
                 out = self.gatherv2(self.embedding_table, indices, 0)
@@ -504,6 +543,17 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         target (str): Specifies the target where the op is executed. The value must in
             [ ``'DEVICE'`` , ``'CPU'`` ]. Default: ``'CPU'`` .
         slice_mode (str): The slicing way in semi_auto_parallel/auto_parallel. Default: ``'batch_slice'``.
+
+          - batch_slice (str): Divides the input index tensor into batches and retrieves
+            the corresponding embedding vectors. This is applicable when each sample has the same number of indices.
+          - field_slice (str): Divides the input index tensor into fields and retrieves the corresponding embedding
+            vectors. This is applicable when each sample may have a different number of indices, but have the same
+            feature dimensions.
+          - table_row_slice (str): Treats the input index tensor as a 2D table, divides it by rows, and retrieves
+            the corresponding embedding vectors.
+          - table_column_slice (str): Treats the input index tensor as a 2D table, divides it by columns, and retrieves
+            the corresponding embedding vectors.
+
         feature_num_list (tuple): The accompaniment array in field slice mode. This is unused currently.
             Default:  ``None`` .
         max_norm (Union[float, None]): A maximum clipping value. The data type must be float16, float32.
@@ -562,7 +612,8 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         """Initialize MultiFieldEmbeddingLookup."""
         super(MultiFieldEmbeddingLookup, self).__init__(vocab_size, embedding_size, param_init, target,
                                                         slice_mode, feature_num_list, max_norm, sparse, dtype=dtype)
-        self.field_size = Validator.check_positive_int(field_size, 'field_size', self.cls_name)
+        self.field_size = Validator.check_positive_int(
+            field_size, 'field_size', self.cls_name)
         self.operator = operator
 
         self.mul = P.Mul()
@@ -580,7 +631,8 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         self.max_mask_mul = P.Mul()
         self.max_no_equal = P.NotEqual()
 
-        Validator.check_string(operator, ['SUM', 'MAX', 'MEAN'], 'operator', self.cls_name)
+        Validator.check_string(
+            operator, ['SUM', 'MAX', 'MEAN'], 'operator', self.cls_name)
         if operator == MultiFieldEmbeddingLookup.OPERATOR_SUM:
             self.merge_op = P.UnsortedSegmentSum()
         elif operator == MultiFieldEmbeddingLookup.OPERATOR_MAX:
@@ -663,13 +715,16 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
             clip_by_norm = ClipByNorm(axis)
             out = clip_by_norm(out, self.max_norm)
 
-        weights = self.reshape(input_values, (batch_size, self.shape(input_indices)[1], 1))
+        weights = self.reshape(
+            input_values, (batch_size, self.shape(input_indices)[1], 1))
         embedding = self.mul(weights, out)
 
         if self.operator == 'MAX':
             # Fill the padding value to -inf, so the padded value will not influence the results
-            negative_inf_mask = self.cast(self.equal(weights, 0), mstype.float32)
-            inf_mask = self.inf_mask_mul(negative_inf_mask, self.negative_inf_value)
+            negative_inf_mask = self.cast(
+                self.equal(weights, 0), mstype.float32)
+            inf_mask = self.inf_mask_mul(
+                negative_inf_mask, self.negative_inf_value)
             embedding = self.inf_add(embedding, inf_mask)
             embedding = self.reshape(embedding, (-1, self.embedding_size))
             field_ids = self.reshape(field_ids, (-1,))
@@ -677,15 +732,19 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         merged_vectors = self.merge_op(embedding, field_ids, num_segments)
 
         if self.operator == 'MAX':
-            value_count = self.count_op(self.abs(self.reshape(input_values, (-1,))), field_ids, num_segments)
-            value_zeros = self.cast(self.max_no_equal(value_count, 0.0), mstype.float32)
+            value_count = self.count_op(self.abs(self.reshape(
+                input_values, (-1,))), field_ids, num_segments)
+            value_zeros = self.cast(self.max_no_equal(
+                value_count, 0.0), mstype.float32)
             count = self.expand(value_zeros, -1)
             merged_vectors = self.max_mask_mul(merged_vectors, count)
 
         if self.operator == 'MEAN':
-            value_count = self.count_op(self.abs(input_values), field_ids, num_segments)
+            value_count = self.count_op(
+                self.abs(input_values), field_ids, num_segments)
             value_count = self.expand(value_count, -1)
             merged_vectors = self.div_no_nan(merged_vectors, value_count)
 
-        merged_vectors = self.reshape(merged_vectors, (batch_size, self.field_size, -1))
+        merged_vectors = self.reshape(
+            merged_vectors, (batch_size, self.field_size, -1))
         return merged_vectors

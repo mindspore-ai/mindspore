@@ -28,8 +28,9 @@
 #include "pipeline/pynative/forward/do_infer.h"
 #include "backend/graph_compiler/backend.h"
 #include "ir/cell.h"
-#include "runtime/pynative/async/async_queue.h"
+#include "runtime/pynative/async/async_hqueue.h"
 #include "ops/view/view_strides_calculator.h"
+#include "runtime/pynative/async/async_rqueue.h"
 
 namespace mindspore {
 namespace pynative {
@@ -45,7 +46,7 @@ class ForwardExecutor {
       : cast_operation_(std::make_shared<CastOperation>()),
         pyboost_cast_operation_(std::make_shared<PyBoostCastOperation>()),
         infer_operation_(std::make_shared<InferOperation>()),
-        frontend_queue_(std::make_shared<AsyncQueue>("frontend_queue", kThreadWaitLevel::kLevelFrontend)) {}
+        frontend_queue_(std::make_shared<AsyncRQueue>("frontend_queue", kThreadWaitLevel::kLevelFrontend)) {}
   ~ForwardExecutor() = default;
 
   void Init();
@@ -95,7 +96,7 @@ class ForwardExecutor {
   inline void set_is_jit_compiling(bool is_jit_compiling) { is_jit_compiling_ = is_jit_compiling; }
   bool is_jit_compiling() const { return is_jit_compiling_; }
 
-  const AsyncQueuePtr &frontend_queue() const { return frontend_queue_; }
+  const AsyncRQueuePtr &frontend_queue() const { return frontend_queue_; }
   void WorkerJoin() { frontend_queue_->WorkerJoin(); }
   void ClearForwardTask();
   void WaitForwardTask();
@@ -179,7 +180,7 @@ class ForwardExecutor {
   PyBoostCastOperationPtr pyboost_cast_operation_;
   InferOperationPtr infer_operation_;
   MindrtBackendMap mindrt_backends_;
-  AsyncQueuePtr frontend_queue_;
+  AsyncRQueuePtr frontend_queue_;
   mindspore::HashMap<std::string, PrimitivePtr> slice_prim_cache_;
 };
 }  // namespace pynative

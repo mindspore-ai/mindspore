@@ -18,7 +18,7 @@ import pytest
 
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, ops
 
 
 class Net(nn.Cell):
@@ -31,7 +31,7 @@ class Net(nn.Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_arm_ascend_training
@@ -50,3 +50,58 @@ def test_conv3d_para_customed_dtype(mode):
     output = net(x)
     expect_output_shape = (16, 32, 10, 32, 32)
     assert np.allclose(expect_output_shape, output.shape)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_conv3d_input_5d():
+    """
+    Feature: Conv3d 5d input
+    Description: Verify the result of Conv3d 5d input.
+    Expectation: success
+    """
+    ms.set_context(mode=ms.GRAPH_MODE, ascend_config={"precision_mode": "force_fp16"})
+    class Network(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.relu = ops.ReLU()
+            self.conv1 = nn.Conv3d(1, 1, kernel_size=5, pad_mode="same", padding=0, has_bias=False, weight_init="One")
+            self.reducemin = ops.ReduceMin(keep_dims=True)
+            self.reducesum = ops.ReduceSum(keep_dims=True)
+            self.add = ops.Add()
+            self.square = ops.Square()
+            self.abs = ops.Abs()
+            self.concat = ops.Concat()
+            self.batchnorm = nn.BatchNorm3d(5)
+
+        def construct(self, data1, data2):
+            batchnorm3d_01 = self.batchnorm(data1)
+            batchnorm3d_02 = self.batchnorm(data1)
+            reducesum_01 = self.reducesum(batchnorm3d_02, 1)
+            add_01 = self.add(reducesum_01, data2)
+            reducemin_01 = self.reducemin(add_01, 1)
+            relu_01 = self.relu(batchnorm3d_01)
+            abs_01 = self.abs(relu_01)
+            square_01 = self.square(abs_01)
+            reducemin_02 = self.reducemin(square_01, 1)
+            concat_01 = self.concat((reducemin_02, reducemin_01))
+            conv_01 = self.conv1(concat_01)
+            relu_03 = self.relu(conv_01)
+            output = relu_03
+            return  output
+
+    data1 = Tensor(np.ones([1, 5, 5, 5, 4]).astype(np.float32))
+    data2 = Tensor(np.ones([1, 5, 5, 4]).astype(np.float32))
+
+    ms.set_context(device_target="CPU")
+    cpu_mode = Network()
+    cpu_out = cpu_mode(data1, data2).asnumpy()
+
+    ms.set_context(device_target="Ascend")
+    npu_mode = Network()
+    npu_out = npu_mode(data1, data2).asnumpy()
+
+    assert np.allclose(cpu_out, npu_out, 0.001, 0.001)

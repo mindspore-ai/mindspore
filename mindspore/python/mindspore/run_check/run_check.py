@@ -39,7 +39,7 @@ def _check_mul():
     input_x = ms.Tensor(np.array([1.0, 2.0, 3.0]), ms.float32)
     input_y = ms.Tensor(np.array([4.0, 5.0, 6.0]), ms.float32)
     mul = ms.ops.Mul()
-    mul(input_x, input_y)
+    mul(input_x, input_y).asnumpy()
     print("The result of multiplication calculation is correct, MindSpore has been installed on platform "
           f"[{ms.get_context('device_target')}] successfully!")
 

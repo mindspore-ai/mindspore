@@ -35,12 +35,12 @@ namespace mindspore {
 namespace runtime {
 /*
  * Feature group: Dump, Online debugger.
- * Target device group: Ascend, GPU.
+ * Target device group: GPU.
  * Runtime category: MindRT.
  * Description: Load and read data for the given node if needed. Dump the node if dump is enabled and free the loaded
  * memory after the dump (for GPU and ascend kernel-by-kernel).
  */
-void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_info_,
+void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_info_,
                        const DeviceContext *device_context, OpContext<DeviceTensor> *const op_context, const AID *) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(device_context);
@@ -53,7 +53,10 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
   const auto &cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(DEBUG) << "kernel by kernel debug for node: " << cnode->fullname_with_scope() << ".";
-  if (device_context->GetDeviceType() == device::DeviceType::kCPU) {
+  if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
+    MS_LOG(DEBUG) << "On ascend, this funct is not need now.";
+    return;
+  } else if (device_context->GetDeviceType() == device::DeviceType::kCPU) {
 #ifndef ENABLE_SECURITY
     if (DumpJsonParser::GetInstance().GetIterDumpFlag()) {
       auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
@@ -72,20 +75,6 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
       debugger->SetCurNode(kernel_name);
       bool read_data = CheckReadData(cnode);
       if (read_data) {
-        ReadDataAndDump(cnode, launch_info_, exec_order_, device_context);
-      }
-    }
-    exec_order_ += 1;
-#endif
-  } else if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
-#ifdef ENABLE_DEBUGGER
-    auto debugger = Debugger::GetInstance();
-    if (debugger != nullptr) {
-      auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
-      debugger->InsertExecutedGraph(kernel_graph);
-      debugger->SetAscendKernelByKernelFlag(true);
-      bool read_data = CheckReadData(cnode);
-      if (read_data && !DumpJsonParser::GetInstance().async_dump_enabled()) {
         ReadDataAndDump(cnode, launch_info_, exec_order_, device_context);
       }
     }
@@ -167,44 +156,7 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
     }
   }
   if (DumpJsonParser::GetInstance().async_dump_enabled()) {
-    bool is_data_map_ = false;
-    if (graphs.size() == 1) {
-      const auto &graph_ = graphs[0];
-      KernelGraphPtr kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(graph_);
-      MS_EXCEPTION_IF_NULL(kernel_graph);
-      const auto kernels = kernel_graph->execution_order();
-      is_data_map_ = std::any_of(kernels.cbegin(), kernels.cend(), [](const auto &kernel) {
-        MS_EXCEPTION_IF_NULL(kernel);
-        return kernel->fullname_with_scope().find("InitDataSetQueue") != std::string::npos;
-      });
-    }
-    if (!is_data_map_) {
-      auto kCurLoopCountName = "current_loop_count";
-      for (size_t i = 0; i < graphs.size(); i++) {
-        const auto &graph_ = graphs[i];
-        if (device_contexts[i]->GetDeviceType() != device::DeviceType::kAscend) {
-          continue;
-        }
-        auto device_loop_control_tensors = graph_->device_loop_control_tensors();
-        if (device_loop_control_tensors.count(kCurLoopCountName) == 0) {
-          MS_LOG(WARNING) << "Can't find Device Loop Control Tensor " << kCurLoopCountName;
-          return;
-        }
-        auto tensor = device_loop_control_tensors.at(kCurLoopCountName);
-        MS_EXCEPTION_IF_NULL(tensor);
-        auto *cur_val = static_cast<int64_t *>(tensor->data_c());
-        MS_EXCEPTION_IF_NULL(cur_val);
-        *cur_val = current_step;
-        tensor->set_sync_status(kNeedSyncHostToDevice);
-        auto device_address = tensor->device_address();
-        MS_EXCEPTION_IF_NULL(device_address);
-        if (!device_address->SyncHostToDevice(tensor->shape(), LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                              tensor->data_c(), tensor->device_info().host_format_)) {
-          MS_LOG(EXCEPTION) << "SyncHostToDevice failed for device loop control parameter " << kCurLoopCountName;
-        }
-      }
-      current_step++;
-    }
+    MS_LOG(DEBUG) << "Async dump is not need this function currently.";
   }
 #endif
 }

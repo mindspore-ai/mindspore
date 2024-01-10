@@ -87,6 +87,9 @@ class BACKEND_EXPORT DeviceAddressUtils {
   static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
                                                      const abstract::AbstractBasePtr &abs, size_t index,
                                                      const StringImmPtr &string_imm);
+  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
+                                                     const abstract::AbstractBasePtr &abs, size_t index,
+                                                     const TypePtr &type_ptr);
   template <typename T>
   static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
                                                      const abstract::AbstractBasePtr &abs, size_t index, const T &t) {
@@ -97,7 +100,6 @@ class BACKEND_EXPORT DeviceAddressUtils {
     const auto &type = abs->GetType();
     const auto &value = abs->GetValue();
     auto kernel_tensor = std::make_shared<kernel::KernelTensor>(shape, type, value);
-    kernel_tensor->set_device_name(device_context->device_context_key().device_name_);
     auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     device_address->set_from_persistent_mem(true);
 
@@ -106,23 +108,13 @@ class BACKEND_EXPORT DeviceAddressUtils {
     }
     MS_LOG(DEBUG) << "Create input " << abs->ToString() << " device address for " << index
                   << "th input, Shape: " << shape->ToString() << ", Type: " << type->ToString()
-                  << ", Value: " << (value ? value->ToString() : "nullptr");
+                  << ", Value: " << (value ? value->ToString() : "nullptr") << " device address:" << device_address;
     return device_address;
   }
 
   static void CreateOutputTensorAddress(DeviceContext *device_context, const std::vector<tensor::TensorPtr> &outputs);
 
   static void MallocForOutputs(DeviceContext *device_context, const std::vector<tensor::TensorPtr> &outputs);
-
-  static device::DeviceAddressPtr CreateOutputAddress(const DeviceContext *device_context,
-                                                      const abstract::AbstractBasePtr &abs, size_t index,
-                                                      const tensor::TensorPtr &tensor, const string &format = "");
-
-  static device::DeviceAddressPtr CreateOutputAddress(const DeviceContext *device_context,
-                                                      const abstract::AbstractBasePtr &abs, size_t index,
-                                                      const tensor::TensorPtr &tensor,
-                                                      const pynative::DeviceAddressPromisePtr &promise,
-                                                      const string &format = "");
 
   static device::DeviceAddressPtr CreateWorkspaceAddress(const DeviceContext *device_context,
                                                          const size_t &workspace_size);

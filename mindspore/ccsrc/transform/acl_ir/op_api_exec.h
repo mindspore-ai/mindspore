@@ -26,6 +26,7 @@
 #include "acl/acl.h"
 #include "transform/acl_ir/op_api_convert.h"
 #include "transform/acl_ir/op_api_cache.h"
+#include "transform/acl_ir/op_api_util.h"
 #include "transform/acl_ir/acl_allocator.h"
 
 namespace mindspore {
@@ -109,6 +110,8 @@ auto call(Function f, Tuple t) {
 
 // Get output shape from acl tensor.
 ShapeVector UpdateOutputShape(const aclTensor *tensor);
+void AclnnInit();
+void AclnnFinalize();
 
 template <typename T>
 class ReleaseCall {

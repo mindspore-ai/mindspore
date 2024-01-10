@@ -105,6 +105,8 @@ class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
     """
     Adjust the brightness of the input image.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Args:
         brightness_factor (float): How much to adjust the brightness, must be non negative.
             ``0`` gives a black image, ``1`` gives the original image,
@@ -144,14 +146,14 @@ class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
-                ``CPU`` . Default: ``CPU`` .
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
 
         Raises:
             TypeError: If `device_target` is not of type str.
-            ValueError: If `device_target` is not ``CPU`` .
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
 
         Supported Platforms:
-            ``CPU``
+            ``CPU`` ``Ascend``
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -187,6 +189,8 @@ class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
 class AdjustContrast(ImageTensorOperation, PyTensorOperation):
     """
     Adjust the contrast of the input image.
+
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
     Args:
         contrast_factor (float): How much to adjust the contrast, must be non negative.
@@ -227,14 +231,14 @@ class AdjustContrast(ImageTensorOperation, PyTensorOperation):
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
-                ``CPU`` . Default: ``CPU`` .
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
 
         Raises:
             TypeError: If `device_target` is not of type str.
-            ValueError: If `device_target` is not ``CPU`` .
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
 
         Supported Platforms:
-            ``CPU``
+            ``CPU`` ``Ascend``
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -335,6 +339,8 @@ class AdjustHue(ImageTensorOperation, PyTensorOperation):
     """
     Adjust the hue of the input image.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Args:
         hue_factor (float): How much to add to the hue channel,
             must be in range of [-0.5, 0.5].
@@ -373,14 +379,14 @@ class AdjustHue(ImageTensorOperation, PyTensorOperation):
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
-                ``CPU`` . Default: ``CPU`` .
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
 
         Raises:
             TypeError: If `device_target` is not of type str.
-            ValueError: If `device_target` is not ``CPU`` .
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
 
         Supported Platforms:
-            ``CPU``
+            ``CPU`` ``Ascend``
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -416,6 +422,8 @@ class AdjustHue(ImageTensorOperation, PyTensorOperation):
 class AdjustSaturation(ImageTensorOperation, PyTensorOperation):
     """
     Adjust the saturation of the input image.
+
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
     Args:
         saturation_factor (float): How much to adjust the saturation, must be non negative.
@@ -457,14 +465,14 @@ class AdjustSaturation(ImageTensorOperation, PyTensorOperation):
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
-                ``CPU`` . Default: ``CPU`` .
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
 
         Raises:
             TypeError: If `device_target` is not of type str.
-            ValueError: If `device_target` is not ``CPU`` .
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
 
         Supported Platforms:
-            ``CPU``
+            ``CPU`` ``Ascend``
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -1095,6 +1103,8 @@ class Decode(ImageTensorOperation, PyTensorOperation):
     Decode the input image in RGB mode.
     Supported image formats: JPEG, BMP, PNG, TIFF, GIF(need `to_pil=True` ), WEBP(need `to_pil=True` ).
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Args:
         to_pil (bool, optional): Whether to decode the image to the PIL data type. If ``True``,
             the image will be decoded to the PIL data type, otherwise it will be decoded to the
@@ -1159,14 +1169,14 @@ class Decode(ImageTensorOperation, PyTensorOperation):
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
-                ``CPU`` . Default: ``CPU`` .
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
 
         Raises:
             TypeError: If `device_target` is not of type str.
-            ValueError: If `device_target` is not ``CPU`` .
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
 
         Supported Platforms:
-            ``CPU``
+            ``CPU`` ``Ascend``
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -1184,6 +1194,10 @@ class Decode(ImageTensorOperation, PyTensorOperation):
             - `Illustration of vision transforms
               <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
+        if self.implementation == Implementation.PY and device_target == "Ascend":
+            raise ValueError("The transform \"Decode(to_pil=True)\" cannot be performed on Ascend device, " +
+                             "please set \"to_pil=False\".")
+
         self.device_target = device_target
         return self
 
@@ -1853,6 +1867,8 @@ class Normalize(ImageTensorOperation):
     Normalize the input image with respect to mean and standard deviation. This operation will normalize
     the input image with: output[channel] = (input[channel] - mean[channel]) / std[channel], where channel >= 1.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Note:
         This operation is executed on the CPU by default, but it is also supported
         to be executed on the GPU or Ascend via heterogeneous acceleration.
@@ -1908,14 +1924,14 @@ class Normalize(ImageTensorOperation):
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
-                ``CPU`` . Default: ``CPU`` .
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
 
         Raises:
             TypeError: If `device_target` is not of type str.
-            ValueError: If `device_target` is not ``CPU`` .
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
 
         Supported Platforms:
-            ``CPU``
+            ``CPU`` ``Ascend``
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -3954,7 +3970,7 @@ class RandomSolarize(ImageTensorOperation):
         threshold (tuple, optional): Range of random solarize threshold. Default: ``(0, 255)``.
             Threshold values should always be in (min, max) format,
             where min and max are integers in the range [0, 255], and min <= max. The pixel values
-            belonging to the [min, max] range will be reversed.
+            belonging to the [min, max] range will be inverted.
             If min=max, then invert all pixel values greater than or equal min(max).
 
     Raises:
@@ -4128,6 +4144,8 @@ class Resize(ImageTensorOperation, PyTensorOperation):
     """
     Resize the input image to the given size with a given interpolation mode :class:`~.vision.Inter` .
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Args:
         size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
             If size is an integer, the smaller edge of the image will be resized to this value with
@@ -4183,14 +4201,14 @@ class Resize(ImageTensorOperation, PyTensorOperation):
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
-                ``CPU`` . Default: ``CPU`` .
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
 
         Raises:
             TypeError: If `device_target` is not of type str.
-            ValueError: If `device_target` is not ``CPU`` .
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
 
         Supported Platforms:
-            ``CPU``
+            ``CPU`` ``Ascend``
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -4549,7 +4567,7 @@ class Solarize(ImageTensorOperation):
     Args:
         threshold (Union[float, Sequence[float, float]]): Range of solarize threshold, should always
             be in (min, max) format, where min and max are integers in range of [0, 255], and min <= max.
-            The pixel values belonging to the [min, max] range will be reversed.
+            The pixel values belonging to the [min, max] range will be inverted.
             If a single value is provided or min=max, then invert all pixel values greater than or equal min(max).
 
     Raises:

@@ -775,16 +775,22 @@ AnfNodePtr ConvertSequenceGetItemInner(const CNodePtr &node) {
 
   auto output_abs = node->abstract();
   MS_EXCEPTION_IF_NULL(output_abs);
-  if (!CheckAndConvertUtils::CheckContainNestedOrIrregularSequence(inputs_abs) &&
-      !output_abs->isa<abstract::AbstractAny>()) {
-    return nullptr;
-  }
 
-  if (!IsPrimitiveCNode(node, prim::kPrimDictGetItem)) {
-    auto target_node = node_inputs[target_index];
-    auto target_abs = target_node->abstract();
-    if (target_abs == nullptr || !target_abs->BuildValue()->ContainsValueAny()) {
+  auto sequence_node = node_inputs[sequence_index];
+  MS_EXCEPTION_IF_NULL(sequence_node);
+  auto sequence_abs = sequence_node->abstract();
+  // If the sequence is any, then the sequence getitem should be converted to PyExecute node.
+  if (sequence_abs == nullptr || !sequence_abs->isa<abstract::AbstractAny>()) {
+    if (!CheckAndConvertUtils::CheckContainNestedOrIrregularSequence(inputs_abs) &&
+        !output_abs->isa<abstract::AbstractAny>()) {
       return nullptr;
+    }
+    if (!IsPrimitiveCNode(node, prim::kPrimDictGetItem)) {
+      auto target_node = node_inputs[target_index];
+      auto target_abs = target_node->abstract();
+      if (target_abs == nullptr || !target_abs->BuildValue()->ContainsValueAny()) {
+        return nullptr;
+      }
     }
   }
 

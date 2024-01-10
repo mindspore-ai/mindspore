@@ -44,7 +44,7 @@ def expand_tensor(a, b):
     return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -66,7 +66,7 @@ def test_tile_eliminate():
     assert out.shape == (1, 1, 448, 448)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -116,7 +116,7 @@ class Abs(nn.Cell):
         return self.abs(inputs)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_primitive_abs():
@@ -160,7 +160,7 @@ class Net2(nn.Cell):
         return int_type, none_type
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_primitive_avgpool():
@@ -280,7 +280,7 @@ def test_cumprod_with_acl():
     del os.environ['MS_DEV_FORCE_ACL']
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_jit_graph_has_no_parameter():

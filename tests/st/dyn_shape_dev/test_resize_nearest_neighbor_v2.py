@@ -35,7 +35,7 @@ def resize_nearest_neighbor_v2_dyn_shape_func(x, size, align_corners, half_pixel
     return ops.auto_generate.resize_nearest_neighbor_v2(x, size, align_corners, half_pixel_centers)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -81,7 +81,7 @@ def test_resize_nearest_neighbor_v2_op_backward(context_mode, data_type):
     np.testing.assert_allclose(grads.asnumpy(), expect_out, rtol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

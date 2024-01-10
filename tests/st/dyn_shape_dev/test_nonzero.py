@@ -31,7 +31,7 @@ def nonzero_backward_func(x):
     return ops.grad(nonzero_forward_func, 0)(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -52,7 +52,7 @@ def test_nonzero_op_forward(context_mode, data_type):
     np.testing.assert_array_equal(out.asnumpy(), expect_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

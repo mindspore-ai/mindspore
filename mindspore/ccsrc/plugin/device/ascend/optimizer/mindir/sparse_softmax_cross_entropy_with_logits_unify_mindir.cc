@@ -41,6 +41,8 @@ constexpr auto kAttrDepth = "depth";
 constexpr auto kAttrMultiples = "multiples";
 constexpr auto kIsFeatureMapInputList = "IsFeatureMapInputList";
 constexpr auto kShapeFromTensor = "shape_from_tensor";
+constexpr size_t kSparseSoftmaxCrossEntropyWithLogitsInputNum = 3;
+constexpr size_t kSparseSoftmaxCrossEntropyWithLogitsOutputNum = 2;
 
 bool CheckMulInputShapeEqual(const CNodePtr &mul_node) {
   MS_EXCEPTION_IF_NULL(mul_node);
@@ -219,6 +221,16 @@ AnfNodePtr GetAxisNode(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   return axis_node;
 }
 
+AnfNodePtr GetKeepDimsNode(const FuncGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+
+  auto keep_dims_node = CreateValueNode(MakeValue(false), kNumberTypeBool, true);
+  kernel_graph->AddValueNodeToGraph(keep_dims_node);
+  return keep_dims_node;
+}
+
 CNodePtr CreateReduceMean(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_node,
                           const AnfNodePtr &softmax_output_node, const PatternProcessPass &pass) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -227,21 +239,24 @@ CNodePtr CreateReduceMean(const FuncGraphPtr &graph, const CNodePtr &sparse_soft
   CheckCNodeInputSize(sparse_softmax_node, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
   auto axis_node = GetAxisNode(graph, softmax_output_node);
   MS_EXCEPTION_IF_NULL(axis_node);
+  auto keep_dims_node = GetKeepDimsNode(graph);
+  MS_EXCEPTION_IF_NULL(keep_dims_node);
 
   auto reduce_primitive = std::make_shared<Primitive>(kReduceMeanOpName);
   std::vector<std::string> input_names = {"x", "axis"};
   std::vector<std::string> output_names = {"y"};
   reduce_primitive->set_attr(kAttrInputNames, MakeValue(input_names));
   reduce_primitive->set_attr(kAttrOutputNames, MakeValue(output_names));
-  reduce_primitive->set_attr(kAttrKeepDims, MakeValue(false));
 
   std::vector<AnfNodePtr> inputs;
-  inputs = {NewValueNode(reduce_primitive), softmax_output_node, axis_node};
+  inputs = {NewValueNode(reduce_primitive), softmax_output_node, axis_node, keep_dims_node};
   auto reduce_node = pass.NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(reduce_node);
   reduce_node->set_scope(sparse_softmax_node->scope());
   auto reduce_abstract = softmax_output_node->abstract();
-  reduce_abstract->set_shape(std::make_shared<abstract::Shape>());
+  if (!softmax_output_node->Shape()->IsDynamic()) {
+    reduce_abstract->set_shape(std::make_shared<abstract::Shape>());
+  }
   reduce_node->set_abstract(reduce_abstract);
   return reduce_node;
 }
@@ -330,7 +345,7 @@ CNodePtr CreateTile(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_no
     tile_inputs = {NewValueNode(tile_primitive), mul_node->input(kIndex2)};
   } else {
     if (std::any_of(labels_shape.begin(), labels_shape.end(), [](int64_t value) { return value < 0; })) {
-      std::vector<AnfNodePtr> dynamic_shape_inputs = {NewValueNode(std::make_shared<Primitive>("DynamicShape")),
+      std::vector<AnfNodePtr> dynamic_shape_inputs = {NewValueNode(std::make_shared<Primitive>("TensorShape")),
                                                       sparse_softmax_node->input(kIndex2)};
       auto shape_node = pass.NewCNode(dynamic_shape_inputs, graph);
       MS_EXCEPTION_IF_NULL(shape_node);
@@ -807,6 +822,58 @@ const AnfNodePtr PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2::P
   auto logits_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 0UL);
   auto reshape_node = CreateReshape(graph, new_mul_node, logits_shape, *this);
   return reshape_node;
+}
+
+const BaseRef GeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::DefinePattern() const {
+  VarPtr Xs = std::make_shared<SeqVar>();
+  return VectorRef({prim::kPrimSparseSoftmaxCrossEntropyWithLogits, Xs});
+}
+
+const AnfNodePtr GeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process(const FuncGraphPtr &graph,
+                                                                           const AnfNodePtr &node,
+                                                                           const EquivPtr &) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
+
+  auto sparse_softmax_node = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(sparse_softmax_node);
+  if (common::AnfAlgo::HasNodeAttr(kAttrVisited, sparse_softmax_node)) {
+    return nullptr;
+  }
+  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
+  const auto &input_list = sparse_softmax_node->inputs();
+  if (input_list.size() != kSparseSoftmaxCrossEntropyWithLogitsInputNum) {
+    MS_LOG(EXCEPTION) << "SparseSoftmaxCrossEntropyWithLogits's input size must be "
+                      << kSparseSoftmaxCrossEntropyWithLogitsInputNum << ", but got " << input_list.size();
+  }
+
+  bool is_grad = false;
+  if (common::AnfAlgo::HasNodeAttr(kAttrIsGrad, sparse_softmax_node)) {
+    is_grad = common::AnfAlgo::GetNodeAttr<bool>(sparse_softmax_node, kAttrIsGrad);
+  }
+
+  auto features = input_list[kIndex1];
+  MS_EXCEPTION_IF_NULL(features);
+  auto dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(sparse_softmax_node, kIndex0);
+  ShapeVector output_shape = {};
+  auto loss_abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(dtype), output_shape);
+  AbstractBasePtrList new_node_abstract_list{loss_abstract, features->abstract()};
+  auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(new_node_abstract_list);
+  sparse_softmax_node->set_abstract(abstract_tuple);
+  std::vector<AnfNodePtr> new_cnode_outputs;
+  CreateMultipleOutputsOfAnfNode(graph, sparse_softmax_node, kSparseSoftmaxCrossEntropyWithLogitsOutputNum,
+                                 &new_cnode_outputs);
+  if (new_cnode_outputs.size() != kSparseSoftmaxCrossEntropyWithLogitsOutputNum) {
+    MS_LOG(INTERNAL_EXCEPTION) << "The output size of node " << sparse_softmax_node->DebugString() << " should be "
+                               << kAdamApplyOneOutputNum << trace::DumpSourceLines(node);
+  }
+
+  return is_grad ? new_cnode_outputs[kIndex1] : new_cnode_outputs[kIndex0];
+}
+
+std::vector<std::string> GeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::MustExistPrimitiveName() const {
+  static std::vector<std::string> ret{prim::kPrimSparseSoftmaxCrossEntropyWithLogits->name()};
+  return ret;
 }
 }  // namespace opt
 }  // namespace mindspore

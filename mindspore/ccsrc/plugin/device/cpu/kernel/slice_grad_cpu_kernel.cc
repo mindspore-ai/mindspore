@@ -74,11 +74,17 @@ bool SliceGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   return true;
 }
 
-std::pair<bool, bool> GetSliceGradParamValue(const std::vector<KernelTensor *> &inputs, const size_t idx,
-                                             const std::string &kernel_name, std::vector<int64_t> *attr_value,
-                                             const std::string &param_name, size_t *len) {
-  *attr_value = inputs[idx]->GetValueWithCheck<std::vector<int64_t>>();
-  if (!attr_value->empty()) {
+std::pair<bool, bool> SliceGradCpuKernelMod::GetSliceGradParamValue(const std::vector<KernelTensor *> &inputs,
+                                                                    const size_t idx, const std::string &kernel_name,
+                                                                    std::vector<int64_t> *attr_value,
+                                                                    const std::string &param_name, size_t *len) {
+  if (begin_dtype_ == kNumberTypeInt32) {
+    auto tmp_value = inputs[idx]->GetValueWithCheck<std::vector<int32_t>>();
+    attr_value->assign(tmp_value.begin(), tmp_value.end());
+  } else {
+    *attr_value = inputs[idx]->GetValueWithCheck<std::vector<int64_t>>();
+  }
+  if (attr_value->empty()) {
     auto shape = inputs[idx]->GetShapeVector();
     if (shape.size() != 1) {
       MS_LOG(ERROR) << kernel_name << "'s `" << param_name << "` shape should be one dim, but got " << shape.size();

@@ -193,6 +193,10 @@ class StepLR(LRScheduler):
         ...     current_lr = scheduler.get_last_lr()
     """
     def __init__(self, optimizer, step_size, gamma=0.1, last_epoch=-1):
+        if not isinstance(step_size, int) and not isinstance(step_size, bool):
+            raise TypeError(f"For 'StepLR', the 'step_size' must be int, but got {type(step_size)}.")
+        if not isinstance(gamma, float):
+            raise TypeError(f"For 'StepLR', the 'gamma' must be float, but got {type(gamma)}.")
         self.step_size = step_size
         self.gamma = gamma
         super(StepLR, self).__init__(optimizer, last_epoch)
@@ -344,6 +348,8 @@ class ExponentialLR(LRScheduler):
     """
 
     def __init__(self, optimizer, gamma, last_epoch=-1):
+        if not isinstance(gamma, float):
+            raise TypeError(f"For 'ExponentialLR', the 'gamma' must be float, but got {type(gamma)}.")
         self.gamma = gamma
         super(ExponentialLR, self).__init__(optimizer, last_epoch)
 
@@ -413,6 +419,10 @@ class PolynomialLR(LRScheduler):
         [Tensor(shape=[], dtype=Float32, value= 0)]
     """
     def __init__(self, optimizer, total_iters=5, power=1.0, last_epoch=-1):
+        if not isinstance(power, float):
+            raise TypeError(f"For 'PolynomialLR', the 'power' must be float, but got {type(power)}.")
+        if power < 0:
+            raise ValueError(f"For 'PolynomialLR', the 'power' must be >= 0, but got {power}.")
         self.total_iters = total_iters
         self.power = power
         self.min = P.Minimum()
@@ -586,11 +596,10 @@ class MultiStepLR(LRScheduler):
         [Tensor(shape=[], dtype=Float32, value= 0.0005)]
         [Tensor(shape=[], dtype=Float32, value= 0.0005)]
     """
-
     def __init__(self, optimizer, milestones, gamma=0.1, last_epoch=-1):
         Validator.check_value_type('milestones', milestones, [list])
         for milestone in milestones:
-            if not isinstance(milestone, int):
+            if not isinstance(milestone, int) and not isinstance(milestone, bool):
                 raise TypeError(f"For 'MultiStepLR', elements of the 'milestones' must be type of int, "
                                 f"but got one element of 'milestones' type: {type(milestone)}.")
         Validator.check_value_type('gamma', gamma, [float, int])
@@ -743,7 +752,7 @@ class SequentialLR:
         self._schedulers = schedulers
         self.milestones = milestones
         self.milestones_len = len(milestones)
-        self.last_epoch = Parameter(Tensor(last_epoch+1, dtype=mstype.float32),
+        self.last_epoch = Parameter(Tensor(last_epoch + 1, dtype=mstype.float32),
                                     name='last_epoch_' + self.__class__.__name__)
         self.increase_tensor = Tensor(1, mstype.int32)
 
@@ -756,7 +765,6 @@ class SequentialLR:
 
         self._schedulers[0].step()
         self._last_lr = schedulers[0]._last_lr  # pylint: disable=W0212
-
 
     def step(self):
         """
@@ -1277,7 +1285,7 @@ class CosineAnnealingLR(LRScheduler):
     r"""
     Set the learning rate of each parameter group using a cosine annealing lr
     schedule. Where :math:`\eta_{max}` is set to the initial lr, :math:`\eta_{min}` is the minimum value
-    for learning rate, :math:`\eta_{t}` is the current learning rate, :math:`\T_{max}` is iteration number of cosine
+    for learning rate, :math:`\eta_{t}` is the current learning rate, :math:`T_{max}` is iteration number of cosine
     function, and :math:`T_{cur}` is the number of epochs since the last restart in SGDR.
 
     .. math::
@@ -1325,7 +1333,11 @@ class CosineAnnealingLR(LRScheduler):
         [Tensor(shape=[], dtype=Float32, value= 0.05)]
         [Tensor(shape=[], dtype=Float32, value= 0)]
     """
-    def __init__(self, optimizer, T_max, eta_min=0, last_epoch=-1):
+    def __init__(self, optimizer, T_max, eta_min=0.0, last_epoch=-1):
+        if not isinstance(eta_min, float):
+            raise TypeError(f"For 'CosineAnnealingLR', the 'eta_min' must be float, but got {type(eta_min)}.")
+        if not isinstance(T_max, int) and not isinstance(T_max, bool):
+            raise TypeError(f"For 'CosineAnnealingLR', the 'T_max' must be int, but got {type(eta_min)}.")
         self.T_max = T_max
         self.eta_min = eta_min
         self.math_pi = math.pi

@@ -21,7 +21,6 @@ import numpy as np
 from mindspore import context
 from mindspore.ops import operations as P
 import mindspore.common.dtype as mstype
-from mindspore.ops.primitive import _primexpr
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer, HeUniform, Uniform, _calculate_fan_in_and_fan_out
 from mindspore.common.tensor import Tensor
@@ -29,6 +28,7 @@ from mindspore import _checkparam as Validator
 from mindspore._checkparam import twice, _check_3d_int_or_tuple
 from mindspore._extends import cell_attr_register
 from mindspore.nn.cell import Cell
+from mindspore.ops.primitive import _primexpr
 
 __all__ = ['Conv2d', 'Conv2dTranspose', 'Conv1d', 'Conv1dTranspose', 'Conv3d', 'Conv3dTranspose']
 
@@ -245,7 +245,7 @@ class Conv2d(_Conv):
             `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , bias will be initialized using ``'Uniform'`` .
         data_format (str, optional): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
-            Default: ``'NCHW'`` .
+            Default: ``'NCHW'`` . (NHWC is only supported in GPU now.)
         dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
@@ -362,12 +362,6 @@ class Conv2d(_Conv):
         if self.has_bias:
             output = self.bias_add(output, self.bias)
         return output
-
-
-@_primexpr
-def _check_input_3d(input_shape, op_name):
-    if len(input_shape) != 3:
-        raise ValueError(f"For '{op_name}', the dimension of input must be 3d, but got {len(input_shape)}.")
 
 
 class Conv1d(_Conv):
@@ -577,8 +571,6 @@ class Conv1d(_Conv):
         self.shape = P.Shape()
 
     def construct(self, x):
-        x_shape = self.shape(x)
-        _check_input_3d(x_shape, self.cls_name)
         x = self.expand_dims(x, 2)
         output = self.conv2d(x, self.weight)
         if self.has_bias:
@@ -586,12 +578,6 @@ class Conv1d(_Conv):
 
         output = self.squeeze(output)
         return output
-
-
-@_primexpr
-def _check_input_5dims(input_shape, op_name):
-    if len(input_shape) != 5:
-        raise ValueError(f"For '{op_name}', the dimension of input must be 5d, but got {len(input_shape)}.")
 
 
 class Conv3d(_Conv):
@@ -829,8 +815,6 @@ class Conv3d(_Conv):
         self.split_1 = P.Split(1, self.group)
 
     def construct(self, x):
-        x_shape = self.shape(x)
-        _check_input_5dims(x_shape, self.cls_name)
         if self.group == 1:
             out = self.conv3d(x, self.weight)
             if self.has_bias:
@@ -1052,8 +1036,6 @@ class Conv3dTranspose(_Conv):
         self.shape = P.Shape()
 
     def construct(self, x):
-        x_shape = self.shape(x)
-        _check_input_5dims(x_shape, self.cls_name)
         output = self.conv3d_transpose(x, self.weight)
         if self.has_bias:
             output = self.bias_add(output, self.bias)
@@ -1311,6 +1293,12 @@ class Conv2dTranspose(_Conv):
         return pad(conv2d_trans_ret)
 
 
+@_primexpr
+def _check_input_3d(input_shape, op_name):
+    if len(input_shape) != 3:
+        raise ValueError(f"For '{op_name}', the dimension of input must be 3d, but got {len(input_shape)}.")
+
+
 class Conv1dTranspose(_Conv):
     r"""
     Calculates a 1D transposed convolution, which can be regarded as Conv1d for the gradient of the input,
@@ -1481,9 +1469,7 @@ class Conv1dTranspose(_Conv):
         x_shape = self.shape(x)
         _check_input_3d(x_shape, self.cls_name)
         x = self.expand_dims(x, 2)
-
         n, _, h, w = self.shape(x)
-
         h_out = _deconv_output_length(self.is_valid, self.is_same, self.is_pad, h, self.kernel_size[0],
                                       self.stride[0], self.dilation[0], self.padding[0] + self.padding[1])
         w_out = _deconv_output_length(self.is_valid, self.is_same, self.is_pad, w, self.kernel_size[1],

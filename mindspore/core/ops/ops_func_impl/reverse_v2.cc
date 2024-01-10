@@ -48,7 +48,7 @@ int32_t ReverseV2FuncImpl::CheckValidation(const PrimitivePtr &primitive,
   const auto &axis = axis_array.ToVector();
   for (size_t i = 0; i < axis.size(); ++i) {
     auto real_dim = axis[i] < 0 ? axis[i] + x_rank : axis[i];
-    if (real_dim < 0 || real_dim > x_rank) {
+    if (real_dim < 0 || real_dim >= x_rank) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the 'axis[" << i << "]' must be in range of [-"
                                << x_rank << ", " << x_rank << "), but got " << axis[i] << " with type 'int'.";
     } else if ((axis_bitmap >> real_dim) & kBitOne) {

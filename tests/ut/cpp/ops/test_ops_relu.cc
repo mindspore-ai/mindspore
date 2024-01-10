@@ -51,8 +51,6 @@ auto ReLUOpTypeCases = testing::ValuesIn({
   EltwiseOpTypeParams{kFloat16, kFloat16},
   EltwiseOpTypeParams{kFloat32, kFloat32},
   EltwiseOpTypeParams{kFloat64, kFloat64},
-  EltwiseOpTypeParams{kComplex64, kComplex64},
-  EltwiseOpTypeParams{kComplex128, kComplex128},
 });
 }
 

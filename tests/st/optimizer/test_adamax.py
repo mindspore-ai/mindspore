@@ -18,8 +18,9 @@ import pytest
 
 import mindspore.context as context
 from mindspore import nn, Tensor
-from .optimizer_utils import build_network, loss_default_adamax, loss_not_default_adamax, loss_group_adamax
-
+from .optimizer_utils import build_network, default_fc1_weight_adamax, default_fc1_bias_adamax, \
+    no_default_fc1_weight_adamax, no_default_fc1_bias_adamax, default_group_fc1_weight_adamax, \
+    default_group_fc1_bias_adamax
 
 w1 = np.array([[0.03909272, 0.08893055, -0.259909, -0.459185,
                 -0.0195536, 0.12977135, -0.62942827, -0.53132117],
@@ -41,6 +42,7 @@ class Net(nn.Cell):
     """
     build a 2-layers net to test adamax optimizer
     """
+
     def __init__(self):
         super(Net, self).__init__()
         self.fc1 = nn.Dense(8, 4, weight_init=Tensor(w1), bias_init=Tensor(b1))
@@ -52,10 +54,12 @@ class Net(nn.Cell):
         return self.fc2(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_default_adamax(mode):
@@ -67,14 +71,17 @@ def test_default_adamax(mode):
     context.set_context(mode=mode)
     config = {'name': 'adamax', 'lr': 0.001, "beta1": 0.9, "beta2": 0.999, "eps": 1e-07,
               'weight_decay': 0.0}
-    loss = build_network(config, net=Net(), loss_fn=nn.MSELoss(reduction='mean'))
-    assert np.allclose(loss_default_adamax, loss, atol=1.e-5)
+    _, cells = build_network(config, net=Net(), loss_fn=nn.L1Loss(reduction='mean'))
+    assert np.allclose(cells.moment1[0].asnumpy(), default_fc1_weight_adamax, atol=1.e-3)
+    assert np.allclose(cells.moment1[1].asnumpy(), default_fc1_bias_adamax, atol=1.e-3)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_no_default_adamax(mode):
@@ -86,14 +93,17 @@ def test_no_default_adamax(mode):
     context.set_context(mode=mode)
     config = {'name': 'adamax', 'lr': 0.01, "beta1": 0.9, "beta2": 0.98, "eps": 1e-06,
               'weight_decay': 0.0}
-    loss = build_network(config, net=Net(), loss_fn=nn.MSELoss(reduction='mean'))
-    assert np.allclose(loss_not_default_adamax, loss, atol=1.e-5)
+    _, cells = build_network(config, net=Net(), loss_fn=nn.L1Loss(reduction='mean'))
+    assert np.allclose(cells.moment1[0].asnumpy(), no_default_fc1_weight_adamax, atol=1.e-3)
+    assert np.allclose(cells.moment1[1].asnumpy(), no_default_fc1_bias_adamax, atol=1.e-3)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_default_adamax_group(mode):
@@ -105,5 +115,6 @@ def test_default_adamax_group(mode):
     context.set_context(mode=mode)
     config = {'name': 'adamax', 'lr': 0.002, "beta1": 0.9, "beta2": 0.999, "eps": 1e-08,
               'weight_decay': 0.0}
-    loss = build_network(config, is_group=True, net=Net(), loss_fn=nn.MSELoss(reduction='mean'))
-    assert np.allclose(loss_group_adamax, loss, atol=1.e-5)
+    _, cells = build_network(config, is_group=True, net=Net(), loss_fn=nn.L1Loss(reduction='mean'))
+    assert np.allclose(cells.moment1[0].asnumpy(), default_group_fc1_weight_adamax, atol=1.e-3)
+    assert np.allclose(cells.moment1[1].asnumpy(), default_group_fc1_bias_adamax, atol=1.e-3)

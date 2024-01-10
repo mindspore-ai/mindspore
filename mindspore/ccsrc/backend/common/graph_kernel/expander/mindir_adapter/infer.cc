@@ -98,11 +98,11 @@ void InferByHostInfo::InferOp(const NodePtr &node, const PrimitivePtr &prim, con
     }
     return abs;
   });
-  auto found = abstract::GetPrimitiveInferImpl(prim);
-  if (found.has_value() && found.value().IsImplInferShapeAndType()) {
-    cnode->set_abstract(found.value().InferShapeAndType(nullptr, prim, abs_list));
-  } else {
+
+  auto infered_abs_opt = abstract::TryInferAbstract(prim, abs_list);
+  if (!infered_abs_opt.has_value()) {
     MS_LOG(EXCEPTION) << "The infer function of [" << prim->name() << "] is not defined.";
   }
+  cnode->set_abstract(infered_abs_opt.value());
 }
 }  // namespace mindspore::graphkernel::expander

@@ -123,7 +123,7 @@ void DeformableOffsetsGradGpuKernelMod::SetDims(const std::vector<KernelTensor *
   dims_.dilation_h = LongToUint(dilation[kDilationHIndex]);
   dims_.dilation_w = LongToUint(dilation[kDilationWIndex]);
 
-  std::vector<int64_t> ksize = GetValue<std::vector<int64_t>>(primitive_->GetAttr("kernel_size"));
+  std::vector<int64_t> ksize = GetValue<std::vector<int64_t>>(primitive_->GetAttr("ksize"));
   CheckSize(kernel_name_, kKernelSizeStr, kKernelSizeNum, ksize.size());
   dims_.kernel_h = LongToUint(ksize[kKernelHIndex]);
   dims_.kernel_w = LongToUint(ksize[kKernelWIndex]);

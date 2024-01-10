@@ -48,6 +48,14 @@ abstract::ShapePtr TensorScatterElementsInferShape(const PrimitivePtr &primitive
                              << ", indices_shape:" << indices_shape << ", updates_shape: " << updates_shape << ".";
   }
 
+  if (input_x_shape.size() != indices_shape.size()) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', the dimension of 'input_x', 'indice' and 'update' should be same, but got "
+                             << "input_x dims: " << input_x_shape.size() << "; "
+                             << "indice dims: " << indices_shape.size() << "; "
+                             << "update dims: " << updates_shape.size() << ".";
+  }
+
   if (updates_shape != indices_shape) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", "
                              << "'updates_shape' must be as same as 'indices_shape' but got indices_shape: "

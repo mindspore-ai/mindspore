@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import os
+import time
 import tempfile
 import pytest
 import scipy
@@ -40,7 +41,7 @@ class AssignAddNet(nn.Cell):
         return self.para
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -100,7 +101,7 @@ class ScatterAddNet(nn.Cell):
         return self.input_x
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -131,7 +132,7 @@ class ScatterSubNet(nn.Cell):
         return self.input_x
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -193,7 +194,7 @@ class ScatterDivNet(nn.Cell):
         return self.input_x
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -224,7 +225,7 @@ class ScatterMaxNet(nn.Cell):
         return self.input_x
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -255,7 +256,7 @@ class ScatterMinNet(nn.Cell):
         return self.input_x
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -317,7 +318,7 @@ class ScatterNdAddNet(nn.Cell):
         return self.input_x
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -379,7 +380,7 @@ class ScatterNdUpdateNet(nn.Cell):
         return self.input_x
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -454,13 +455,16 @@ def train_summary_record(test_writer, steps):
     for i in range(0, steps):
         image_tensor = Tensor(np.array([[[[i]]]]).astype(np.float32))
         out_put = net(image_tensor)
+        time.sleep(0.5)
         test_writer.record(i)
         out_me_dict[i] = out_put.asnumpy()
     return out_me_dict
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_summary():
@@ -482,7 +486,7 @@ def test_summary():
                 assert tags == {'tensor', 'histogram', 'scalar', 'image'}
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

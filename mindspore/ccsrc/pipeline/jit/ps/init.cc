@@ -156,6 +156,7 @@ void RegModule(py::module *m) {
   mindspore::abstract::RegPrimitiveFrontEval();
 #endif
   mindspore::expander::RegPackExpanderPy(m);
+  mindspore::ops::RegOpEnum(m);
 }
 
 void RegModuleHelper(py::module *m) {
@@ -626,6 +627,7 @@ PYBIND11_MODULE(_c_expression, m) {
          "Store warm up host cache by tensor list");
   (void)m.def("_encrypt", &mindspore::pipeline::PyEncrypt, "Encrypt the data.");
   (void)m.def("_decrypt", &mindspore::pipeline::PyDecrypt, "Decrypt the data.");
+  (void)m.def("_decrypt_data", &mindspore::pipeline::PyDecryptData, "Decrypt the bytes data.");
   (void)m.def("_is_cipher_file", &mindspore::pipeline::PyIsCipherFile, "Determine whether the file is encrypted");
 
   (void)py::class_<RecoveryContext, std::shared_ptr<RecoveryContext>>(m, "RecoveryContext")

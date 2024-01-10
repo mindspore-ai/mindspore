@@ -18,6 +18,7 @@
 #include <memory>
 #include <set>
 #include <vector>
+#include <queue>
 
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/backend/kernel_info.h"
@@ -36,6 +37,7 @@ namespace opt {
 namespace {
 constexpr auto kAttrDefaultGroup = "default_group";
 constexpr auto kAttrDefaultOp = "default_op";
+constexpr auto kAttrCommZone = "comm_fusion_zone";
 constexpr size_t kAlignSize = 2 << 9;
 constexpr int64_t kDefaultThresholdMb2Byte = 262144;
 
@@ -84,6 +86,7 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const CommunicationOpInfo &co
 }
 
 std::string GetFusionGroupKey(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   auto primitive = common::AnfAlgo::GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(primitive);
   ValuePtr attr_fusion = primitive->GetAttr(kAttrFusion);
@@ -97,8 +100,10 @@ std::string GetFusionGroupKey(const AnfNodePtr &node) {
   auto parallel_context = parallel::ParallelContext::GetInstance();
   if (parallel_context->enable_fold_pipeline()) {
     auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
     auto cnode_name = common::AnfAlgo::GetCNodeName(cnode);
     auto prim = GetCNodePrimitive(node);
+    MS_EXCEPTION_IF_NULL(prim);
     if (cnode_name == kAllReduceOpName) {
       if (prim->HasAttr(kAttrSegment)) {
         auto segment_info = GetValue<int64_t>(prim->GetAttr(kAttrSegment));
@@ -160,6 +165,80 @@ bool CheckSegments(size_t communication_op_node_size, const std::vector<size_t> 
     }
   }
   return true;
+}
+
+uint32_t GetNodeCommZoneId(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (cnode->HasAttr(kAttrCommZone)) {
+    return GetValue<uint32_t>(cnode->GetAttr(kAttrCommZone));
+  }
+  return 0;
+}
+
+void MarkCommunicationZone(const FuncGraphPtr &func_graph, const string &comm_op_name) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  std::queue<AnfNodePtr> to_visit;
+  to_visit.emplace(func_graph->get_return());
+  auto seen = NewSeenGeneration();
+  while (!to_visit.empty()) {
+    auto node = to_visit.front();
+    to_visit.pop();
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto zone_id = GetNodeCommZoneId(cnode);
+    for (auto &input : cnode->inputs()) {
+      MS_EXCEPTION_IF_NULL(input);
+      if (!input->isa<CNode>()) {
+        continue;
+      }
+      auto input_cnode = input->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(input_cnode);
+      auto input_zone_id = GetNodeCommZoneId(input_cnode);
+      auto update_zone_id = zone_id;
+      if (common::AnfAlgo::GetCNodeName(input_cnode) == comm_op_name && common::AnfAlgo::IsFusion(input_cnode)) {
+        update_zone_id += 1;
+      }
+      if (input_zone_id >= update_zone_id && input->seen_ == seen) {
+        continue;
+      }
+      input_cnode->AddAttr(kAttrCommZone, MakeValue(update_zone_id));
+      to_visit.emplace(input);
+      input->seen_ = seen;
+    }
+  }
+}
+
+void RemoveCommunicationZone(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto seen = NewSeenGeneration();
+  std::queue<AnfNodePtr> to_visit;
+  to_visit.emplace(func_graph->get_return());
+  while (!to_visit.empty()) {
+    auto node = to_visit.front();
+    to_visit.pop();
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    cnode->EraseAttr(kAttrCommZone);
+    for (auto &input : cnode->inputs()) {
+      MS_EXCEPTION_IF_NULL(input);
+      if (!input->isa<CNode>()) {
+        continue;
+      }
+      if (input->seen_ == seen) {
+        continue;
+      }
+      to_visit.emplace(input);
+      input->seen_ = seen;
+    }
+  }
 }
 }  // namespace
 
@@ -502,6 +581,7 @@ bool CommunicationOpFusion::DoFusion(const FuncGraphPtr &func_graph, const Commu
         auto &users = manager->node_users()[communication_op_node_item];
         for (auto &node : users) {
           auto cnode = node.first->cast<CNodePtr>();
+          MS_EXCEPTION_IF_NULL(cnode);
           if (cnode->HasAttr("comp_comm_scheduling_depend")) {
             MS_LOG(INFO) << "Start EdgeRemove: AllReduce to comp_comm_scheduling_depend";
             if (cnode->size() <= 1 || !common::AnfAlgo::IsCommunicationOp(cnode->input(1))) {
@@ -541,22 +621,27 @@ bool CommunicationOpFusion::Run(const FuncGraphPtr &func_graph) {
   const float input_grad_time_num = 0.0;
   // divide candidate fusion groups with same (group,op,fusion,dtype) attrs, fusion==0 means not fusion
   mindspore::HashMap<std::string, CommunicationOpInfo> candidate_groups;
+  // avoid fuse communication nodes with dependencies like comm_node1->depend->comm_node2
+  MarkCommunicationZone(func_graph, op_name_);
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
     if (node != nullptr && node->isa<CNode>() && common::AnfAlgo::GetCNodeName(node) == op_name_) {
-      std::string key = GetFusionGroupKey(node);
-      if (key.empty()) {
+      std::string group_name = GetFusionGroupKey(node);
+      if (group_name.empty()) {
         continue;
       }
+      std::string key = group_name + std::to_string(GetNodeCommZoneId(node->cast<CNodePtr>()));
       if (candidate_groups.find(key) == candidate_groups.end()) {
         CommunicationOpInfo communication_op_info;
         candidate_groups[key] = communication_op_info;
+        communication_op_info.group_name = group_name;
       }
       candidate_groups[key].communication_op_nodes.push_back(node->cast<CNodePtr>());
       candidate_groups[key].input_grad_size.push_back(input_grad_size_num);
       candidate_groups[key].input_grad_time.push_back(input_grad_time_num);
     }
   }
+  RemoveCommunicationZone(func_graph);
   // split candidate group to segments according to _group class member
   bool changed = false;
   for (auto &it : candidate_groups) {
@@ -574,7 +659,7 @@ bool CommunicationOpFusion::Run(const FuncGraphPtr &func_graph) {
                        });
     }
     std::vector<size_t> segment_index;
-    if (GetSplitSegments(it.second, &segment_index, it.first)) {
+    if (GetSplitSegments(it.second, &segment_index, it.second.group_name)) {
       if (DoFusion(func_graph, it.second, segment_index)) {
         changed = true;
       }

@@ -5,6 +5,7 @@ gather_d:
       dtype: tensor
     dim:
       dtype: int
+      type_cast: tensor
     index:
       dtype: tensor
   returns:

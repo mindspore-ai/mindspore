@@ -65,27 +65,21 @@ class AclKernelMod : public KernelMod {
   const std::set<int64_t> &GetValueDependArgs() const { return value_depend_args_; }
   std::vector<KernelAttr> GetOpSupport() override { MS_LOG(EXCEPTION) << "This interface is not support in ACL."; }
 
-  // =======================Old interface, will deleted after all kernel modified used new interface=================
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    MS_LOG(EXCEPTION) << "This interface is discarded.";
-  }
-
  protected:
   std::string DebugString() const;
   void GetInputInfo(const std::vector<KernelTensor *> &inputs);
   int GetOutputInfo(const std::vector<KernelTensor *> &outputs);
 
+  std::vector<std::string> ms_attr_str_;
+  transform::AclConverterPtr converter_;
+  std::vector<TensorParams> output_params_;
+
  private:
   std::vector<TensorParams> input_params_;
-  std::vector<TensorParams> output_params_;
   // record indices of value depend arguments
   std::set<int64_t> value_depend_args_;
   // inputs of operator
   const std::vector<KernelTensor *> *inputs_ = nullptr;
-
-  std::vector<std::string> ms_attr_str_;
-  transform::AclConverterPtr converter_;
 
   bool need_convert_host_tensor_{false};
 };

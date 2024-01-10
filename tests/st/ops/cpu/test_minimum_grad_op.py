@@ -102,7 +102,7 @@ def test_min_tensor_grad_with_same_input():
     assert np.allclose(output[1].asnumpy(), expect1, rtol=1e-6, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_min_tensor_grad_result():
@@ -203,7 +203,7 @@ def test_min_tensor_grad_result():
     assert np.all(np.abs(output[1].asnumpy() - expect1) < error1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_min_grad_vmap():
@@ -230,7 +230,7 @@ def test_min_grad_vmap():
     assert np.allclose(dy.asnumpy(), expect1, rtol=1e-6, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_min_grad_vmap_none():
@@ -258,7 +258,7 @@ def test_min_grad_vmap_none():
     assert np.allclose(dy.asnumpy(), expect1, rtol=1e-6, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_min_grad_vmap_scalar():
@@ -282,7 +282,7 @@ def test_min_grad_vmap_scalar():
     assert np.allclose(dy.asnumpy(), expect1, rtol=1e-6, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_min_grad_vmap_special():

@@ -32,7 +32,7 @@ class BoolTensorIndexSetItem(nn.Cell):
         return x
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -60,7 +60,7 @@ def test_bool_tensor_index_get_item_x_5_index_5(mode):
     assert np.allclose(result_ms.asnumpy(), result_np)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -88,7 +88,7 @@ def test_bool_tensor_index_get_item_x_2x1x448x448_index_2x1x448x448(mode):
     assert np.allclose(result_ms.asnumpy(), result_np)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -118,7 +118,7 @@ def test_bool_tensor_index_get_item_x_2x1x448x448_index_2x1x448(mode):
     assert np.allclose(result_ms.asnumpy(), result_np)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -149,7 +149,7 @@ def test_bool_tensor_index_set_item_x_5_index_5_value_1(mode):
     assert np.allclose(x_ms.asnumpy(), x_np)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -180,7 +180,7 @@ def test_bool_tensor_index_set_item_x_3x3_index_3_value_1(mode):
     assert np.allclose(x_ms.asnumpy(), x_np)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -208,7 +208,7 @@ def test_bool_tensor_index_get_item_x_2x3_index_bool2_int1(mode):
     assert np.allclose(y_ms.asnumpy(), y_np)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -235,7 +235,7 @@ def test_bool_tensor_index_set_item_x_2x3_index_bool2_int1_value_1(mode):
     assert np.allclose(x_ms.asnumpy(), x_np)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

@@ -265,7 +265,7 @@ def error_case_wrong_intput():
     assert value == 1
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_coo_concat_error_case():
@@ -312,7 +312,7 @@ def test_coo_concat_default_value():
     judge_result_correct(forward_output, expect_forward_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_coo_concat_int():
@@ -328,7 +328,7 @@ def test_coo_concat_int():
         coo_concat_int(mstype.int64, v_type)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_coo_concat_float():

@@ -160,7 +160,7 @@ class Primitive(Primitive_):
             >>> a = a.add_prim_attr("attr",1)
             >>> a = a.del_prim_attr("attr")
             >>> print(a.attrs)
-            {'input_names': ['x', 'y'], 'output_names' : ['output']}
+            {}
         """
         if name in self.__dict__ and name in self.attrs:
             del self.__dict__[name]
@@ -825,17 +825,17 @@ def constexpr(fn=None, get_instance=True, name=None, reuse_result=True, check=Tr
         >>> (21428, )
     """
 
-    def deco(fn):
-        """Decorator for CompileOp."""
+    def decorator(fn):
+        """Decorator for ProxyOp."""
 
-        class CompileOp(PrimitiveWithInfer):
+        class ProxyOp(PrimitiveWithInfer):
             """
-            CompileOp is a temporary operator used to execute the constexpr function.
+            ProxyOp is a temporary operator used to execute the constexpr function.
             """
 
             def __init__(self):
                 op_name = name if name else fn.__name__
-                super(CompileOp, self).__init__(op_name)
+                super(ProxyOp, self).__init__(op_name)
                 self.set_const_prim(True)
                 self.fn = fn
                 self.add_prim_attr('constexpr_prim', True)
@@ -845,22 +845,23 @@ def constexpr(fn=None, get_instance=True, name=None, reuse_result=True, check=Tr
             def __infer__(self, *args):
                 value_args = []
                 for item in args:
-                    if _check_contains_variable(item["dtype"], item["value"]) and check:
+                    item_value = item["value"]
+                    if _check_contains_variable(item["dtype"], item_value) and check:
                         logger.warning("The \"" + self.name + "\" is a constexpr function." \
                                                               " The input arguments must be all constant value.")
-                    value_args.append(item["value"])
+                    value_args.append(item_value)
                 return {'dtype': None, 'shape': None, 'value': fn(*value_args)}
 
             def __call__(self, *args, **kwargs):
                 return fn(*args, **kwargs)
 
         if get_instance:
-            return CompileOp()
-        return CompileOp
+            return ProxyOp()
+        return ProxyOp
 
     if fn is not None:
-        return deco(fn)
-    return deco
+        return decorator(fn)
+    return decorator
 
 
 def _primexpr(fn=None, get_instance=True, name=None, reuse_result=True):

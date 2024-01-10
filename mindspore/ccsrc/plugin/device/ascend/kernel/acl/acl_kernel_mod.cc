@@ -47,6 +47,7 @@ bool AclKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::ve
   converter_ = std::make_shared<transform::AclConverter>();
   converter_->ConvertToAclOpType(kernel_name_);
   converter_->ResizeAclOpInputs(primitive_);
+  converter_->ConvertInputMsIndexToAclIndex(primitive_, inputs);
   converter_->ConvertAttrToAclInput(primitive_->attrs(), kernel_name_);
   converter_->ConvertInputToAclAttr(inputs, kernel_name_);
   if (transform::AclHelper::IsPrintDebugString()) {
@@ -138,12 +139,7 @@ int AclKernelMod::GetOutputInfo(const std::vector<KernelTensor *> &outputs) {
     MS_EXCEPTION_IF_NULL(output);
     auto shape = output->GetShapeVector();
     if (!IsValidShape(shape)) {
-      shape = output->GetMaxShape();
-      if (shape.empty()) {
-        MS_LOG(EXCEPTION) << "For " << kernel_name_
-                          << ", the max_shape should not be empty when input shape is unknown.";
-      }
-      ret = KRET_UNKNOWN_OUT_SHAPE;
+      MS_LOG(EXCEPTION) << "Shape of output " << i << " is invalid, of which value is " << shape;
     }
     PackageOutput(i, shape);
   }
@@ -194,18 +190,9 @@ void AclKernelMod::SetValueDependArgs(const std::set<int64_t> &indices) {
   MS_EXCEPTION_IF_NULL(info);
 
   value_depend_args_.clear();
-  for (auto ms_real_idx : indices) {
-    auto dyn_input_ms_proto_idx = info->GetDynInputMsProtoIndex();
-    bool is_ms_idx_after_dynamic = ms_real_idx > dyn_input_ms_proto_idx;
-    auto ms_proto_idx = ms_real_idx;
-    if (is_ms_idx_after_dynamic) {
-      auto dyn_input_size = converter_->GetDynInputSize();
-      int64_t idx = ms_real_idx - dyn_input_size + 1;
-      ms_proto_idx = idx < dyn_input_ms_proto_idx ? dyn_input_ms_proto_idx : idx;
-    }
-
+  for (auto ms_proto_idx : indices) {
     if (info->input_attr_map().count(ms_proto_idx) == 0) {
-      value_depend_args_.emplace(ms_real_idx);
+      value_depend_args_.emplace(ms_proto_idx);
     }
   }
 }
@@ -231,8 +218,6 @@ bool AclKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::
   converter_->ConvertToAclInput(primitive_, inputs, input_params_);
   converter_->ConvertToAclOutput(kernel_name_, outputs, output_params_);
   converter_->SetRunnerSpecialInfo();
-  // cppcheck-suppress unreadVariable
-  auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
   MS_LOG(DEBUG) << this->DebugString();
   MS_LOG(DEBUG) << converter_->DebugString();
   // release gil before run

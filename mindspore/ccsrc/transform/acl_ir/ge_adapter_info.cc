@@ -100,7 +100,6 @@ void GeAdapterInfo::InitParametersMap(const ParamMap &params, const DynParamMap 
     // input/output: GE(GraphEngine) Index --> MindSpore Index
     idx_ge2ms[ge_idx] = ms_idx;
     if (is_input) {
-      dyn_input_ms_proto_idx_ = ms_idx;
       max_input_ms_proto_idx_ = std::max(max_input_ms_proto_idx_, ms_idx);
     }
   }

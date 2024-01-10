@@ -6,7 +6,7 @@ softmax:
             logits (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means,
                 any number of additional dimensions, with float16, float32 or
                 float64(CPU, GPU) data type.
-            axis (Union[int, tuple]): The axis to perform the Softmax operation.
+            axis (int, optional): The axis to perform the Softmax operation.
                 Default: ``-1`` .
 
         Returns:

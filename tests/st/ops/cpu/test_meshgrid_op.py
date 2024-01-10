@@ -37,7 +37,7 @@ class NetMeshgrid(nn.Cell):
         return self.meshgrid(inputs)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_meshgrid_dshape():
@@ -59,7 +59,7 @@ def test_meshgrid_dshape():
     assert output[1].asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype',
@@ -99,7 +99,7 @@ def test_meshgrid(dtype, indexing):
     assert np.array_equal(output[2].asnumpy(), np_output[2])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('axis', [2])
@@ -134,7 +134,7 @@ def test_meshgrid_vmap_cpu(axis):
     assert np.array_equal(output_vmap1.asnumpy(), output_manually1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('axis0', [2])

@@ -491,7 +491,7 @@ BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<Abstrac
   MS_EXCEPTION_IF_NULL(primitive);
   const auto &op_name = primitive->name();
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelInferInner,
-                                     op_name, false);
+                                     op_name, true);
   auto shape_optional = abstract::InferShapeByFuncImpl(primitive, input_args, false);
   if (shape_optional.has_value()) {
     return shape_optional.value();
@@ -544,6 +544,31 @@ void UpdateKernelTensorShape(const BaseShapePtr &base_shape,
       kernel_tensor->SetShape(base_shape);
     }
   }
+}
+
+abstract::AbstractBasePtr InferShapeAndType(const PrimitivePtr &primitive,
+                                            const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const auto &op_name = primitive->name();
+  auto infer_impl = abstract::GetBackendPrimitiveInferImpl(primitive);
+  if (infer_impl.has_value()) {
+    auto infer = infer_impl.value();
+    if (infer.IsImplInferShapeAndType()) {
+      return infer.InferShapeAndType(nullptr, primitive, input_args);
+    }
+  }
+  MS_LOG(EXCEPTION) << "The InferShape function of [" << op_name << "] is not defined.";
+}
+
+void UpdateKernelTensorType(const TypePtr &type, const std::vector<kernel::KernelTensor *> &output_kernel_tensors) {
+  MS_EXCEPTION_IF_NULL(type);
+  if (output_kernel_tensors.size() != 1) {
+    MS_LOG(EXCEPTION) << "Invalid output size:" << output_kernel_tensors.size();
+  }
+
+  const auto &kernel_tensor = output_kernel_tensors[0];
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  kernel_tensor->SetType(type);
 }
 
 bool IsRealCNode(const BaseRef &n) {

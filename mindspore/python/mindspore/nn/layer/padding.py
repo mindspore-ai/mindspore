@@ -667,17 +667,11 @@ class _ReplicationPadNd(Cell):
         self.padv3 = nn_ops.PadV3(mode="edge")
 
     @staticmethod
-    @_primexpr
-    def _check_input_dim(shape, cls_name):
-        raise NotImplementedError
-
-    @staticmethod
     @constexpr
     def _need_expend_dim(x):
         raise NotImplementedError
 
     def construct(self, x):
-        self._check_input_dim(x.shape, self.name)
         need_expend_dims = self._need_expend_dim(x)
         if need_expend_dims:
             x = x.expand_dims(0)
@@ -737,12 +731,6 @@ class ReplicationPad1d(_ReplicationPadNd):
         if isinstance(padding, int):
             padding = (padding, padding)
         super(ReplicationPad1d, self).__init__(padding, name="ReplicationPad1d")
-
-    @staticmethod
-    @_primexpr
-    def _check_input_dim(shape, cls_name):
-        dim = len(shape)
-        _check_dim(dim, 2, 3, cls_name)
 
     def _need_expend_dim(self, x):
         input_shape = x.shape
@@ -808,12 +796,6 @@ class ReplicationPad2d(_ReplicationPadNd):
             padding = (padding, padding, padding, padding)
         super(ReplicationPad2d, self).__init__(padding, name="ReplicationPad2d")
 
-    @staticmethod
-    @_primexpr
-    def _check_input_dim(shape, cls_name):
-        dim = len(shape)
-        _check_dim(dim, 3, 4, cls_name)
-
     def _need_expend_dim(self, x):
         input_shape = x.shape
         return 1 if len(input_shape) == 3 else 0
@@ -878,12 +860,6 @@ class ReplicationPad3d(_ReplicationPadNd):
         if isinstance(padding, int):
             padding = (padding, padding, padding, padding, padding, padding)
         super(ReplicationPad3d, self).__init__(padding, name="ReplicationPad3d")
-
-    @staticmethod
-    @_primexpr
-    def _check_input_dim(shape, cls_name):
-        dim = len(shape)
-        _check_dim(dim, 4, 5, cls_name)
 
     def _need_expend_dim(self, x):
         input_shape = x.shape

@@ -114,7 +114,7 @@ int SingleGraphScheduler::SelectKernel(const CompileResultPtr &node_list) {
     }
     auto kernel_exec =
       kernel_selector_->CreateKernel({node->GetType(), node->GetKernelAttr(), compile_option_->graph_format,
-                                      kernel::kBackendCPU, node->GetBaseOperator(), node->GetCNode()},
+                                      compile_option_->backend, node->GetBaseOperator(), node->GetCNode()},
                                      node->GetInputs(), node->GetOutputs(), context_.get());
     if (kernel_exec == nullptr) {
       MS_LOG(ERROR) << "Create kernel exec for node: " << node->GetName() << " failed.";

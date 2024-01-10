@@ -64,7 +64,7 @@ def test_nextafter_float64_pynative():
     assert out_msp.asnumpy() == out_tf
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_nextafter_cpu_dynamic_shape():

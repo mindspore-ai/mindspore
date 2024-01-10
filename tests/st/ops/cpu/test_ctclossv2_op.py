@@ -145,7 +145,7 @@ def test_ctc_loss_v2_un_padded(batch, data_type):
     compare_to_numpy(method, input_matrix, target, input_lengths, target_lengths)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_ctc_loss_v2_un_padded_grad():

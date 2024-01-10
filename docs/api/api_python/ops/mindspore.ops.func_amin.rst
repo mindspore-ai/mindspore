@@ -7,7 +7,7 @@ mindspore.ops.amin
 
     参数：
         - **input** (Tensor[Number]) - 输入Tensor，其数据类型为数值型。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
-        - **axis** (Union[int, tuple(int), list(int)]) - 要减少的维度。默认值： ``None`` ，缩小所有维度。只允许常量值。假设 `input` 的秩为r，取值范围[-r,r)。
+        - **axis** (Union[int, tuple(int), list(int), Tensor]) - 要减少的维度。默认值： ``None`` ，缩小所有维度。只允许常量值。假设 `input` 的秩为r，取值范围[-r,r)。
         - **keepdims** (bool) - 如果为True，则保留缩小的维度，大小为1。否则移除维度。默认值： ``False`` 。
 
     关键字参数：
@@ -23,6 +23,6 @@ mindspore.ops.amin
 
     异常：
         - **TypeError** - `input` 不是Tensor。
-        - **TypeError** - `axis` 不是以下数据类型之一：int、tuple或list。
+        - **TypeError** - `axis` 不是以下数据类型之一：int、tuple、list或Tensor。
         - **TypeError** - `keepdims` 不是bool类型。
         - **ValueError** - `axis` 超出范围。

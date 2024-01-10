@@ -147,62 +147,9 @@ AnfNodePtr FetchRealNodeByNopNode(const AnfNodePtr &node) {
   return FetchRealNodeByNopNode(inputs[1]);
 }
 
-// Recursively delete the nodes in the eliminate nodes list in the graph, check node records
-// the nodes that have been checked during the recursive process.
-void EliminateNodesFromGraph(CNode *cnode, const std::set<AnfNodePtr> &eliminate_nodes,
-                             std::set<CNode *> *checked_nodes) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(checked_nodes);
-
-  std::list<CNode *> todo_list = {cnode};
-  while (!todo_list.empty()) {
-    auto cur_node = todo_list.back();
-    MS_EXCEPTION_IF_NULL(cur_node);
-    todo_list.pop_back();
-    if (checked_nodes->find(cur_node) != checked_nodes->end()) {
-      continue;
-    }
-    (void)checked_nodes->emplace(cur_node);
-    const auto &inputs = cur_node->inputs();
-    std::vector<AnfNodePtr> new_inputs;
-    for (auto &input : inputs) {
-      MS_EXCEPTION_IF_NULL(input);
-      if (!input->isa<CNode>()) {
-        (void)new_inputs.emplace_back(input);
-        continue;
-      }
-      if (eliminate_nodes.find(input) == eliminate_nodes.end()) {
-        (void)new_inputs.emplace_back(input);
-      } else {
-        // If input is an eliminate node, replace it by its real input.
-        const auto &real_input = FetchRealNodeByNopNode(input);
-        MS_EXCEPTION_IF_NULL(real_input);
-
-        // Since the output of previous node will be cached, the cache needs to be updated after eliminating the
-        // nopnode.
-        auto kernel_info = cur_node->kernel_info();
-        if (kernel_info) {
-          auto runtime_cache = kernel_info->runtime_cache();
-          if (runtime_cache.runtime_cache().is_valid()) {
-            runtime_cache.runtime_cache().update_prev_node_output(
-              new_inputs.size() - 1, common::AnfAlgo::VisitKernelWithReturnType(real_input, 0));
-          }
-        }
-        (void)new_inputs.emplace_back(real_input);
-      }
-      const auto &cnode_input = input->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(cnode_input);
-      todo_list.push_back(cnode_input.get());
-    }
-    cur_node->set_inputs(new_inputs);
-  }
-}
-
 void OptimizeNopNode(KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  std::vector<CNodePtr> new_execution_order;
   std::vector<CNodePtr> nop_nodes_need_set_ref;
-  std::set<AnfNodePtr> nop_nodes_need_eliminated;
 
   // Skip the graph mode.
   if (graph->is_graph_run_mode()) {
@@ -221,25 +168,12 @@ void OptimizeNopNode(KernelGraph *graph) {
            const auto &real_output = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
            return real_output == KernelWithIndex(cnode, 0);
          }) != graph_outputs.end())) {
-      (void)new_execution_order.emplace_back(cnode);
       continue;
     }
-    // The nopnode which satisfies the following conditions cannot be eliminated and set to ref node:
-    // 1.dynamic shape 2.side effect 3. must not be eliminated.
-    if (graph->is_dynamic_shape() || common::AnfAlgo::HasMonadInput(cnode)) {
-      (void)new_execution_order.emplace_back(cnode);
-      (void)nop_nodes_need_set_ref.emplace_back(cnode);
-    } else {
-      MS_LOG(DEBUG) << "Eliminate node:" << cnode->DebugString();
-      (void)nop_nodes_need_eliminated.emplace(cnode);
-    }
+    // NopNode that does not meet the above conditions is set to Ref Node and is not deleted from the graph to avoid
+    // incorrect shape information of KernelTensor obtained in KernelMod::Launch.
+    (void)nop_nodes_need_set_ref.emplace_back(cnode);
   }
-
-  // Eliminate the nop nodes.
-  std::set<CNode *> checked_nodes;
-  MS_EXCEPTION_IF_NULL(graph->return_node());
-  EliminateNodesFromGraph(graph->return_node().get(), nop_nodes_need_eliminated, &checked_nodes);
-  graph->set_execution_order(new_execution_order);
 
   // Add the ref node pairs, which must be after elimination to avoid using elimination nodes.
   for (auto &ref_node : nop_nodes_need_set_ref) {
@@ -376,6 +310,7 @@ bool IsValidSequence(const ValueSequencePtr &sequence_value) {
   }
   TypeId base_type = values[0]->type()->type_id();
   for (size_t i = 1; i < values.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(values[i]);
     MS_EXCEPTION_IF_NULL(values[i]->type());
     TypeId type = values[i]->type()->type_id();
     if (type != base_type) {
@@ -412,6 +347,7 @@ GraphId CompileAnyTypeInputGraph(const KernelGraphPtr &graph, const AnfNodePtrLi
                                  const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(graph);
   for (const auto &input : graph->inputs()) {
+    MS_EXCEPTION_IF_NULL(input);
     MS_LOG(DEBUG) << "input node:" << input->DebugString()
                   << " abstract:" << (input->abstract() == nullptr ? "null" : input->abstract()->ToString());
   }
@@ -420,7 +356,19 @@ GraphId CompileAnyTypeInputGraph(const KernelGraphPtr &graph, const AnfNodePtrLi
   opt::OptimizationForAnyTypeKernelGraph(graph);
   graph->SetInputNodes();
   for (const auto &input : graph->input_nodes()) {
-    MS_LOG(DEBUG) << "input node:" << input->DebugString() << " abstract:" << input->abstract()->ToString();
+    MS_EXCEPTION_IF_NULL(input);
+    MS_LOG(DEBUG) << "input node:" << input->DebugString()
+                  << " abstract:" << (input->abstract() == nullptr ? "null" : input->abstract()->ToString());
+    if (!input->isa<Parameter>()) {
+      continue;
+    }
+    const auto &parameter = input->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(parameter);
+    const auto &shape = parameter->Shape();
+    if (shape != nullptr &&
+        ((shape->isa<abstract::Shape>() && shape->IsDynamic()) || shape->isa<abstract::DynamicSequenceShape>())) {
+      parameter->set_has_dynamic_shape(true);
+    }
   }
   auto backend_output = graph->output();
   MS_EXCEPTION_IF_NULL(backend_output);

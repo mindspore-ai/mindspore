@@ -69,7 +69,7 @@ def test_stridedslice_input_3d():
     stride = (1, 1, 1)
     me_stridedslice(input_, begin, end, stride)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_stridedslice_input_3d_bf16():

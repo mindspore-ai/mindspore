@@ -64,7 +64,7 @@ def check_output(output, patterns):
 
 
 @security_off_wrap
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -100,6 +100,46 @@ def test_print(mode):
 
     patterns = ['input_x:', 'Tensor(shape=[], dtype=Int32, value=3)',
                 'input_y:', 'Tensor(shape=[], dtype=Int32, value=4)']
+    check_output(cap.output, patterns)
+
+
+@security_off_wrap
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
+def test_print_addn(mode):
+    """
+    Feature: Print string type ixed with addn output.
+    Description: Print string mixed with addn output and verify print result.
+    Expectation: No exception and result is correct.
+    """
+    ms.set_context(mode=mode)
+    class Print(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.print = P.Print()
+            self.addn = P.AddN()
+
+        def construct(self, x, y):
+            t = self.addn([x, y])
+            self.print("addn output:", t)
+            return t
+
+    cap = Capture()
+    with capture(cap):
+        input_x = Tensor(3, dtype=ms.int32)
+        input_y = Tensor(4, dtype=ms.int32)
+        net = Print()
+        out = net(input_x, input_y)
+        np.testing.assert_array_equal(out.asnumpy(), np.array([7], dtype=np.int32))
+        sys.stdout.flush()
+        time.sleep(0.1)
+
+    patterns = ['addn output:', 'Tensor(shape=[], dtype=Int32, value=']
     check_output(cap.output, patterns)
 
 

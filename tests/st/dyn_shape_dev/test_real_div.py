@@ -31,7 +31,7 @@ def real_div_backward_func(x, y):
     return ops.grad(real_div_forward_func, (0, 1))(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -52,7 +52,7 @@ def test_real_div_forward(mode):
     np.testing.assert_allclose(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -75,7 +75,7 @@ def test_real_div_backward(mode):
     np.testing.assert_array_almost_equal(dy.asnumpy(), except_dy, decimal=4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -95,3 +95,34 @@ def test_real_div_vmap(mode):
     output = nest_vmap(x, y)
     expect_out = real_div_forward_func(x, y)
     np.testing.assert_equal(output.asnumpy(), expect_out.asnumpy())
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_real_div_dynamic(mode):
+    """
+    Feature: real_div ops.
+    Description: test ops real_div dynamic tensor input.
+    Expectation: output the right result.
+    """
+    context.set_context(mode=mode)
+    x_dyn = Tensor(shape=None, dtype=ms.float32)
+    y_dyn = Tensor(shape=None, dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(ops.auto_generate.real_div)
+    test_cell.set_inputs(x_dyn, y_dyn)
+    x1 = Tensor(np.array([1.0, 2.0, 3.0]).astype(np.float32))
+    y1 = Tensor(np.array([4.0, 5.0, 6.0]).astype(np.float32))
+    output1 = test_cell(x1, y1)
+    expect_output1 = np.asarray([0.25, 0.4, 0.5]).astype(np.float32)
+    np.testing.assert_allclose(output1.asnumpy(), expect_output1)
+    x2 = Tensor(np.array([[1.0, 2.0],
+                          [3.0, 4.0]]).astype(np.float32))
+    y2 = Tensor(np.array(2.0).astype(np.float32))
+    output2 = test_cell(x2, y2)
+    expect_output2 = np.asarray([[0.5, 1.0],
+                                 [1.5, 2.0]]).astype(np.float32)
+    np.testing.assert_allclose(output2.asnumpy(), expect_output2)

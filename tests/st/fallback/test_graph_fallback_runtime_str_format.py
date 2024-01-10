@@ -44,7 +44,7 @@ def test_str_format_single_input():
     assert foo(x) == "string is {}".format(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -65,7 +65,7 @@ def test_str_format_mutiple_input():
     assert foo(x) == "{} is {}".format("string", x + x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -89,7 +89,7 @@ def test_fallback_str_format_input():
     assert ms_str2 == "[1] "
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -113,7 +113,7 @@ def test_format_with_number_placeholder_input():
     assert ms_str == "{1} {0} {1}".format(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -139,7 +139,7 @@ def test_format_with_key_input():
         assert result_st == "hello {name2},It's me, {name1}".format(name2=x, name1=y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -164,7 +164,7 @@ def test_format_with_list_index():
     assert result_st == "hello {0[1]},It's me {0[0]}".format([x, y])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -190,7 +190,7 @@ def test_format_with_tuple_index():
 
 
 @pytest.mark.skip("need make dict do not eliminate before opt A.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -220,7 +220,7 @@ def test_format_with_map():
     assert "tuple indices must be integers or slices, not str." in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -246,7 +246,7 @@ def test_format_as_function():
     assert result_st == func([x, y])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -283,7 +283,7 @@ def test_format_number():
     assert result_str == correct_str
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -315,7 +315,7 @@ def test_format_padding():
     assert result_str == correct_str
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -346,7 +346,7 @@ def test_str_format_using_cell():
     assert "Unsupported parameter type for python primitive, the parameter value is DeadNode" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

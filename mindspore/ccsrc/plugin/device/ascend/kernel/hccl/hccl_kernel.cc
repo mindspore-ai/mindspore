@@ -149,25 +149,6 @@ void HcclKernel::CalLoopSize() {
   }
 }
 
-void HcclKernel::CalcWorkspaceSize(const std::vector<KernelTensor *> &inputs,
-                                   const std::vector<KernelTensor *> &outputs) {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-
-  bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
-  auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
-  // Not task sink mode.
-  if (!workspace_size_list_.empty() || hccl_data_type_list_.empty() || (!is_task_sink && mode == kGraphMode) ||
-      (mode == kPynativeMode && !is_graph_mode_)) {
-    return;
-  }
-
-  // Task sink mode.
-  workspace_size_list_.emplace_back(
-    hccl::HcclAdapter::GetInstance().CalcWorkspaceSize(primitive_, inputs, outputs, hccl_data_type_list_[0]));
-  return;
-}
-
 bool HcclKernel::CalcTypeShapeAndCount(const std::vector<KernelTensor *> &inputs,
                                        const std::vector<KernelTensor *> &outputs) {
   hccl_kernel_input_shape_list_.clear();
@@ -255,8 +236,6 @@ int HcclKernel::Resize(const std::vector<KernelTensor *> &inputs, const std::vec
     }
     output_size_list_.push_back(size);
   }
-
-  CalcWorkspaceSize(inputs, outputs);
 
   return KRET_OK;
 }

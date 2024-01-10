@@ -81,9 +81,36 @@ class CppTemplate:
 NEW_LINE = "\n"
 WORK_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../../")
 
+PYTHON_PRIM_TEMPLATE = CppTemplate("""
+
+class _Pyboost${class_name}Prim(${class_name}Prim_):
+    def __call__(self, ${input_args}):
+        ${process_func}
+        return _convert_stub(super().__call__(${input_args}))
+
+
+${func_impl_name}_impl = _Pyboost${class_name}Prim()
+""")
+
+IMPORT_PYBOOST_PRIM_HEADER = f"""
+from mindspore.common._stub_tensor import _convert_stub
+from mindspore.ops.auto_generate.gen_arg_handler import *
+"""
+
+IMPORT_PYBOOST_FUNC_HEADER = f"""
+from mindspore.common import dtype as mstype
+from mindspore.ops.auto_generate.pyboost_inner_prim import *
+
+"""
+
 REGISTER_DEFINE_TEMPLATE = CppTemplate(
-    "  m->def(\"${pyboost_op_name}\", &mindspore::pynative::${pyboost_cfunc_name}, \"Encrypt the data.\");\n")
-REGISTER_TEMPLATE = CppTemplate("void RegisterPyBoostFunction(py::module *m) {\n${register_func}\n}\n")
+    """
+    (void)py::class_<${class_name}PrimAdapter, PrimitiveFunctionAdapter, std::shared_ptr<${class_name}PrimAdapter>>(
+      *m, "${class_name}Prim_")
+      .def(py::init<>())
+      .def("__call__", &${class_name}PrimAdapter::Call, "Call ${class_name} op.");
+    m->def(\"${pyboost_op_name}\", &mindspore::pynative::${pyboost_cfunc_name}, \"Encrypt the data.\");""")
+REGISTER_TEMPLATE = CppTemplate("void RegisterPyBoostFunction(py::module *m) {${register_func}\n}")
 
 PYBOOST_FUNCTION_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH, './mindspore/ccsrc/pipeline/pynative/op_function/template/pyboost_function.tpl'))
@@ -95,10 +122,10 @@ GEN_OPS_DEF_HEADER_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH, './mindspore/python/mindspore/ops_generate/gen_ops_def_header.tpl'))
 
 PYBOOST_BASE_OP_DEFINE_TEMPLATE = CppTemplate.load_from_file(
-    os.path.join(WORK_PATH, './mindspore/ccsrc/kernel/pyboost/pyboost_op_header.tpl'))
+    os.path.join(WORK_PATH, './mindspore/ccsrc/kernel/pyboost/template/pyboost_op_header.tpl'))
 
 PYBOOST_OP_REGISTER_TEMPLATE = CppTemplate.load_from_file(
-    os.path.join(WORK_PATH, './mindspore/ccsrc/kernel/pyboost/pyboost_op_register.tpl'))
+    os.path.join(WORK_PATH, './mindspore/ccsrc/kernel/pyboost/template/pyboost_op_register.tpl'))
 
 # Ascend op generate
 PYBOOST_ASCEND_OP_HEADER_TEMPLATE = CppTemplate.load_from_file(
@@ -115,8 +142,8 @@ PYBOOST_ASCEND_CALL_TEMPLATE = CppTemplate.load_from_file(
 
 PYBOOST_ASCEND_VIEW_CALL_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH,
-                 './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/template/'
-                 'pyboost_ascend_view_call_template.tpl'))
+                 './mindspore/ccsrc/kernel/pyboost/template/'
+                 'pyboost_view_template.tpl'))
 
 PYBOOST_ASCEND_CUSTOMIZE_CALL_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH,
@@ -138,7 +165,7 @@ PYBOOST_GPU_CALL_TEMPLATE = CppTemplate.load_from_file(
 
 PYBOOST_GPU_VIEW_CALL_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH,
-                 './mindspore/ccsrc/plugin/device/gpu/kernel/pyboost/template/pyboost_gpu_view_call_template.tpl'))
+                 './mindspore/ccsrc/kernel/pyboost/template/pyboost_view_template.tpl'))
 
 PYBOOST_GPU_CUSTOMIZE_CALL_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH,
@@ -160,22 +187,41 @@ PYBOOST_CPU_CALL_TEMPLATE = CppTemplate.load_from_file(
 
 PYBOOST_CPU_VIEW_CALL_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH,
-                 './mindspore/ccsrc/plugin/device/cpu/kernel/pyboost/template/pyboost_cpu_view_call_template.tpl'))
+                 './mindspore/ccsrc/kernel/pyboost/template/pyboost_view_template.tpl'))
 
 PYBOOST_CPU_CUSTOMIZE_CALL_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH,
                  './mindspore/ccsrc/plugin/device/cpu/kernel/pyboost/template'
                  '/pyboost_cpu_customize_call_template.tpl'))
 
-PYBOOST_PY_FUNC_HEADEAR = ("""
-from mindspore.ops._primitive_cache import _get_cache_prim
-from mindspore.ops.auto_generate.gen_ops_def import *
-""")
+PYBOOST_PY_FUNC_IMPORT_HEADEAR = CppTemplate(
+    """from mindspore._c_expression import ${class_name}Prim_\n"""
+)
 
 PYBOOST_PY_FUNC_TEMPLATE = CppTemplate("""
 def ${func_name}(${func_args}):
     r\"\"\"
     ${description}
     \"\"\"
-    ${operator_name}_op = _get_cache_prim(${class_name})(${init_args})
-    return ${operator_name}_op(${input_args})\n\n""")
+    return ${func_impl_name}_impl(${input_args})\n\n""")
+
+OP_PROTO_TEMPLATE = CppTemplate("""
+${class_name}FuncImpl g${class_name}FuncImpl;
+OpDef g${class_name} = {
+  /*.name_=*/"${class_name}",
+  /*.args_=*/ {
+    ${input_args}
+  },
+  /* .returns_ = */ {
+    ${return_args} 
+  },
+  /*.signatures_ =*/ {
+    ${signatures}
+  },
+  /*.indexes_ =*/ {
+    ${indexes}
+  },
+  /*.func_impl_=*/g${class_name}FuncImpl,
+  /*.enable_dispatch_ =*/${enable_dispatch},
+};
+""")

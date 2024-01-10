@@ -53,5 +53,5 @@ if(ENABLE_D)
     add_library(_mindspore_plugin_device_ascend_kernel_910b_obj OBJECT ${SRC_IN_910B})
 endif()
 
-#add_subdirectory(bisheng)
 add_subdirectory(aicore)
+add_subdirectory(ascendc)

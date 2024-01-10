@@ -251,14 +251,13 @@ REG_ADPT_DESC(AdaptiveMaxPool2D, kNameAdaptiveMaxPool2D, ADPT_DESC(AdaptiveMaxPo
 
 // AvgPool3DGrad
 INPUT_MAP(AvgPool3DGrad) = {{kIndex1, INPUT_DESC(orig_input_shape)}, {kIndex2, INPUT_DESC(grads)}};
-ATTR_MAP(AvgPool3DGrad) = EMPTY_ATTR_MAP;
-INPUT_ATTR_MAP(AvgPool3DGrad) = {{kIndex3, ATTR_DESC(ksize, AnyTraits<std::vector<int64_t>>(), 5L, 1L)},
-                                 {kIndex4, ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), 5L, 1L)},
-                                 {kIndex5, ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), 6L, 0L)},
-                                 {kIndex6, ATTR_DESC(ceil_mode, AnyTraits<bool>())},
-                                 {kIndex7, ATTR_DESC(count_include_pad, AnyTraits<bool>())},
-                                 {kIndex8, ATTR_DESC(divisor_override, AnyTraits<int64_t>())},
-                                 {kIndex9, ATTR_DESC(data_format, AnyTraits<GEDataFormat>())}};
+ATTR_MAP(AvgPool3DGrad) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                           {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                           {"pad_list", ATTR_DESC(pads, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                           {"ceil_mode", ATTR_DESC(ceil_mode, AnyTraits<bool>())},
+                           {"count_include_pad", ATTR_DESC(count_include_pad, AnyTraits<bool>())},
+                           {"divisor_override", ATTR_DESC(divisor_override, AnyTraits<int64_t>())},
+                           {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
 ATTR_INPUT_MAP(AvgPool3DGrad) = {{"origin_input_shape", "orig_input_shape"}};
 OUTPUT_MAP(AvgPool3DGrad) = {{kIndex0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(AvgPool3DGrad, kAvgPool3DGradOpName, ADPT_DESC(AvgPool3DGrad))

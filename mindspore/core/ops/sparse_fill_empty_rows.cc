@@ -106,10 +106,42 @@ abstract::TupleShapePtr SparseFillEmptyRowsInferShape(const PrimitivePtr &primit
 
     auto dense_row = CheckAndConvertUtils::CheckTensorIntValue("x_dense_shape", input_shape_value, op_name,
                                                                input_args[kInputIndex2]->GetType())[0];
-    output_indices_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny, rank}),
-                                                             ShapeVector({input_nnz + dense_row, rank}));
-    output_values_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}),
-                                                            ShapeVector({input_nnz + dense_row}));
+    output_indices_shape = std::make_shared<abstract::Shape>(ShapeVector({input_nnz + dense_row, rank}));
+    output_values_shape = std::make_shared<abstract::Shape>(ShapeVector({input_nnz + dense_row}));
+    output_empty_row_indicator_shape = std::make_shared<abstract::Shape>(ShapeVector({dense_row}));
+    output_reverse_index_map_shape = std::make_shared<abstract::Shape>(ShapeVector({input_nnz}));
+  } else {
+    output_indices_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny, rank}));
+    output_values_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}));
+    output_empty_row_indicator_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}));
+    output_reverse_index_map_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}));
+  }
+
+  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
+    output_indices_shape, output_values_shape, output_empty_row_indicator_shape, output_reverse_index_map_shape});
+}
+
+abstract::TupleShapePtr SparseFillEmptyRowsFrontendInferShape(const PrimitivePtr &primitive,
+                                                              const std::vector<AbstractBasePtr> &input_args) {
+  auto op_name = primitive->name();
+  abstract::ShapePtr output_indices_shape;
+  abstract::ShapePtr output_values_shape;
+  abstract::ShapePtr output_empty_row_indicator_shape;
+  abstract::ShapePtr output_reverse_index_map_shape;
+
+  const int64_t rank = 2;
+  auto input_shape_value = input_args[kInputIndex2]->GetValue();
+  MS_EXCEPTION_IF_NULL(input_shape_value);
+
+  if (CheckSparseFillEmptyRowsInputs(input_args, op_name) && !input_shape_value->isa<ValueAny>() &&
+      !input_shape_value->isa<None>()) {
+    auto indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+    const int64_t input_nnz = indice_shape[0];
+
+    auto dense_row = CheckAndConvertUtils::CheckTensorIntValue("x_dense_shape", input_shape_value, op_name,
+                                                               input_args[kInputIndex2]->GetType())[0];
+    output_indices_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny, rank}));
+    output_values_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}));
     output_empty_row_indicator_shape = std::make_shared<abstract::Shape>(ShapeVector({dense_row}));
     output_reverse_index_map_shape = std::make_shared<abstract::Shape>(ShapeVector({input_nnz}));
   } else {
@@ -151,7 +183,7 @@ AbstractBasePtr SparseFillEmptyRowsInfer(const abstract::AnalysisEnginePtr &, co
   const int64_t kInputNum = 4;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
   auto infer_type = SparseFillEmptyRowsInferType(primitive, input_args);
-  auto infer_shape = SparseFillEmptyRowsInferShape(primitive, input_args);
+  auto infer_shape = SparseFillEmptyRowsFrontendInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 

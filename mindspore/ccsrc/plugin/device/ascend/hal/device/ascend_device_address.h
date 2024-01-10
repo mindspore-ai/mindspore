@@ -37,18 +37,28 @@ class LaunchKernel;
 namespace ascend {
 class AscendDeviceAddress : public LoadableDeviceAddress {
  public:
-  explicit AscendDeviceAddress(const KernelTensorPtr &kernel_tensor) : LoadableDeviceAddress(kernel_tensor) {}
-  explicit AscendDeviceAddress(void *ptr, size_t size) : LoadableDeviceAddress(ptr, size) {}
+  explicit AscendDeviceAddress(const KernelTensorPtr &kernel_tensor) : LoadableDeviceAddress(kernel_tensor) {
+    SetDevicePtrDeleter();
+  }
+  explicit AscendDeviceAddress(void *ptr, size_t size) : LoadableDeviceAddress(ptr, size) { SetDevicePtrDeleter(); }
   explicit AscendDeviceAddress(void *ptr, size_t size, const std::string &device_name, uint32_t device_id)
-      : LoadableDeviceAddress(ptr, size, device_name, device_id) {}
+      : LoadableDeviceAddress(ptr, size, device_name, device_id) {
+    SetDevicePtrDeleter();
+  }
   explicit AscendDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
                                const std::string &device_name, uint32_t device_id)
-      : LoadableDeviceAddress(ptr, size, format, type_id, device_name, device_id) {}
+      : LoadableDeviceAddress(ptr, size, format, type_id, device_name, device_id) {
+    SetDevicePtrDeleter();
+  }
   explicit AscendDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
                                const KernelWithIndex &node_index, const std::string &device_name, uint32_t device_id)
-      : LoadableDeviceAddress(ptr, size, format, type_id, node_index, device_name, device_id) {}
+      : LoadableDeviceAddress(ptr, size, format, type_id, node_index, device_name, device_id) {
+    SetDevicePtrDeleter();
+  }
   explicit AscendDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id)
-      : LoadableDeviceAddress(ptr, size, format, type_id) {}
+      : LoadableDeviceAddress(ptr, size, format, type_id) {
+    SetDevicePtrDeleter();
+  }
   ~AscendDeviceAddress() override;
   bool SyncDeviceToHost(size_t size, void *const host_ptr) const override;
   bool SyncHostToDevice(size_t size, const void *host_ptr) const override;
@@ -78,6 +88,13 @@ class AscendDeviceAddress : public LoadableDeviceAddress {
 
   // Asynchronously copy device memory to host side.
   bool AsyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr, size_t stream_id) const;
+
+  void set_communication_ptr(uint8_t *communication_ptr) override {
+    communication_ptr_ = communication_ptr;
+    // The communication_ptr_ should free to memory pool instead of GetDevicePtr(), so must update device pointer
+    // deleter.
+    SetDevicePtrDeleter();
+  }
 
  protected:
   bool CopyDeviceToHost(void *dst, const void *src, size_t size, bool async, size_t stream_id) const override;
@@ -111,7 +128,18 @@ class AscendDeviceAddress : public LoadableDeviceAddress {
 
   // The 'const' for this class is irrational, but I abide by it
   int64_t GetGroupsWithCache() const;
+
+  // Set a device pointer destructor to kernel tensor, used to release resource reclaiming of the device pointer
+  // automatically when DeviceAddress destructed.
+  void SetDevicePtrDeleter();
+
   mutable int64_t groups_ = 1;
+
+  // When the device address is used by communication node, create protect area [kMemAlignSize -- data -- kMemAlignSize]
+  // memory buffer, communication_ptr_(allocated from ascend memory pool) + kMemAlignSize = device pointer (could get by
+  // GetDevicePtr()), device pointer is to really used by communication node, and communication_ptr_ is used to free
+  // memory to Ascend memory pool.
+  uint8_t *communication_ptr_{nullptr};
 };
 using AscendDeviceAddressPtr = std::shared_ptr<AscendDeviceAddress>;
 }  // namespace ascend

@@ -18,8 +18,8 @@ Generate aclnn kernelmod or call func by input name in ops.yaml
 """
 import argparse
 import os
+import re
 import pathlib
-import subprocess
 import logging
 import gen_utils
 from pyboost_utils import AclnnUtils, get_dtypes
@@ -204,14 +204,16 @@ def get_registed_ops():
     search_path = os.path.join(work_path, 'mindspore/ccsrc/plugin/device/ascend/kernel/opapi/')
     ret = []
     try:
-        result = subprocess.run(["grep", "-rn", "KERNEL_FACTORY_REG", search_path],
-                                timeout=5, text=True, capture_output=True, check=False)
+        for root_path, _, files in os.walk(search_path):
+            for file_name in files:
+                with open(os.path.join(root_path, file_name), "r") as f:
+                    file_context = f.read()
+                    search_re = re.search(r"(?<=KERNEL_FACTORY_REG\()\w+(?=,)", file_context)
+                    if search_re:
+                        ret.append(search_re.group())
     except OSError:
         logging.warning("Something wrong in check op registered.")
         return ret
-    res = result.stdout.split('KERNEL_FACTORY_REG(')
-    for line in res:
-        ret.append(line.split(',')[0])
     return ret
 
 registed_ops = get_registed_ops()

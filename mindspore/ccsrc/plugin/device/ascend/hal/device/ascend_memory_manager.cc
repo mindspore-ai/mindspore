@@ -19,10 +19,8 @@
 #include "utils/ms_context.h"
 #include "acl/acl_rt.h"
 #ifndef ENABLE_SECURITY
-#include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "plugin/device/ascend/hal/profiler/memory_profiling.h"
 
-using mindspore::device::ascend::ProfilingManager;
 using mindspore::profiler::ascend::MemoryProfiling;
 #endif
 
@@ -133,7 +131,7 @@ bool AscendMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrL
     MS_EXCEPTION_IF_NULL(device_ptr_list[i]);
     MS_EXCEPTION_IF_NULL(addr_list[i]);
     addr_list[i]->SetDevicePtr(device_ptr_list[i]);
-    addr_list[i]->from_mem_pool_ = true;
+    addr_list[i]->set_from_mem_pool(true);
   }
   return true;
 }

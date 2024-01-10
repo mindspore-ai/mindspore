@@ -63,7 +63,7 @@ void BinaryCrossEntropyCpuKernelMod::LaunchKernel(const std::vector<KernelTensor
                                                   const std::vector<KernelTensor *> &outputs) {
   const auto *input_x = reinterpret_cast<T *>(inputs[0]->device_ptr());
   const auto *input_y = reinterpret_cast<T *>(inputs[1]->device_ptr());
-  const T *weight = weight_defined_ ? reinterpret_cast<T *>(inputs[2]->device_ptr()) : nullptr;
+  const T *weight = reinterpret_cast<T *>(inputs[2]->device_ptr());
   auto *loss = reinterpret_cast<T *>(outputs[0]->device_ptr());
   std::vector<T> tmp_loss(input_size_);
   auto epsilon = static_cast<T>(1e-12);
@@ -71,7 +71,7 @@ void BinaryCrossEntropyCpuKernelMod::LaunchKernel(const std::vector<KernelTensor
 
   std::function<void(size_t, size_t)> func;
   if (reduction_ == kNone) {
-    if (weight_defined_) {
+    if (weight != nullptr) {
       func = [&](size_t start, size_t end) -> void {
         for (size_t i = start; i < end; i++) {
           CheckInput(input_x[i]);
@@ -91,7 +91,7 @@ void BinaryCrossEntropyCpuKernelMod::LaunchKernel(const std::vector<KernelTensor
       };
     }
   } else {
-    if (weight_defined_) {
+    if (weight != nullptr) {
       func = [&](size_t start, size_t end) -> void {
         for (size_t i = start; i < end; i++) {
           CheckInput(input_x[i]);
@@ -121,7 +121,7 @@ void BinaryCrossEntropyCpuKernelMod::LaunchKernel(const std::vector<KernelTensor
 bool BinaryCrossEntropyCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
                                             const std::vector<KernelTensor *> &,
                                             const std::vector<KernelTensor *> &outputs) {
-  const size_t expect_inputs_num = weight_defined_ ? kBceInputsNumWithWeight : kBceInputsNumWithWeight - 1;
+  const size_t expect_inputs_num = kBceInputsNumWithWeight;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), expect_inputs_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBceOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat32) {
@@ -137,8 +137,6 @@ bool BinaryCrossEntropyCpuKernelMod::Launch(const std::vector<KernelTensor *> &i
 
 bool BinaryCrossEntropyCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                           const std::vector<KernelTensor *> &outputs) {
-  size_t input_num = inputs.size();
-  weight_defined_ = (input_num == kBceInputsNumWithWeight);
   dtype_ = inputs[kIndex0]->dtype_id();
   const auto reduction = ops::BinaryCrossEntropy::get_reduction(primitive_->GetAttr(ops::kReduction));
   if (reduction == Reduction::NONE) {
@@ -166,19 +164,16 @@ int BinaryCrossEntropyCpuKernelMod::Resize(const std::vector<KernelTensor *> &in
 }
 
 std::vector<KernelAttr> BinaryCrossEntropyCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> kernel_attr_list = {
-    KernelAttr()
-      .AddInputAttr(kNumberTypeFloat16)
-      .AddInputAttr(kNumberTypeFloat16)
-      .AddInputAttr(kNumberTypeFloat16)
-      .AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr()
-      .AddInputAttr(kNumberTypeFloat32)
-      .AddInputAttr(kNumberTypeFloat32)
-      .AddInputAttr(kNumberTypeFloat32)
-      .AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
+  static std::vector<KernelAttr> kernel_attr_list = {KernelAttr()
+                                                       .AddInputAttr(kNumberTypeFloat16)
+                                                       .AddInputAttr(kNumberTypeFloat16)
+                                                       .AddOptionalInputAttr(kNumberTypeFloat16)
+                                                       .AddOutputAttr(kNumberTypeFloat16),
+                                                     KernelAttr()
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeFloat32)
+                                                       .AddOptionalInputAttr(kNumberTypeFloat32)
+                                                       .AddOutputAttr(kNumberTypeFloat32)};
 
   return kernel_attr_list;
 }

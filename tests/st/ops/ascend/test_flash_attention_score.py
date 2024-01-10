@@ -41,7 +41,7 @@ class Grad(nn.Cell):
         return gout
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_flash_attention_score_fwd():
@@ -62,16 +62,17 @@ def test_flash_attention_score_fwd():
     drop_mask = None
     real_shift = None
     padding_mask = None
+    prefix = None
 
     net = FlashAttentionScoreCell(N)
     attention_out, softmax_max, softmax_sum = net(
-        query, key, value, attn_mask, drop_mask, real_shift, padding_mask)
+        query, key, value, attn_mask, drop_mask, real_shift, padding_mask, prefix)
     assert attention_out.shape == (B, S, H)
     assert softmax_max.shape == (B, N, S, 8)
     assert softmax_sum.shape == (B, N, S, 8)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_flash_attention_score_fwd_bwd():
@@ -92,9 +93,10 @@ def test_flash_attention_score_fwd_bwd():
     drop_mask = None
     real_shift = None
     padding_mask = None
+    prefix = None
     net_with_grad = Grad(FlashAttentionScoreCell(N))
 
-    dq, dk, dv, _ = net_with_grad(query, key, value, attn_mask, drop_mask, real_shift, padding_mask)
+    dq, dk, dv, _ = net_with_grad(query, key, value, attn_mask, drop_mask, real_shift, padding_mask, prefix)
     assert dq.shape == (B, S, H)
     assert dk.shape == (B, S, H)
     assert dv.shape == (B, S, H)

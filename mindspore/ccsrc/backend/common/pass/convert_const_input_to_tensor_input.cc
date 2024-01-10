@@ -26,6 +26,7 @@
 #include "ops/array_op_name.h"
 #include "ops/framework_ops.h"
 #include "ops/sequence_ops.h"
+#include "ops/op_def.h"
 
 namespace mindspore {
 namespace opt {
@@ -36,6 +37,10 @@ AnfNodePtr ConstInputToTensorInput(const FuncGraphPtr &func_graph, const CNodePt
   const std::set<std::string> no_need_to_convert_nodes = {kStackOpName};
   auto node_type = common::AnfAlgo::GetCNodeName(cnode);
   if (no_need_to_convert_nodes.find(node_type) != no_need_to_convert_nodes.end()) {
+    return nullptr;
+  }
+  auto op_def = mindspore::ops::GetOpDef(node_type);
+  if (op_def != nullptr) {
     return nullptr;
   }
   std::vector<AnfNodePtr> new_inputs;

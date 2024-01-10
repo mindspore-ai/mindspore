@@ -128,12 +128,10 @@ class _BatchNorm(Cell):
         self.assign_sub_mean = P.AssignSub().shard(data_parallel_strategy)
         self.assign_sub_var = P.AssignSub().shard(data_parallel_strategy)
 
-
     @staticmethod
     @_primexpr
     def _check_input_dim(shape, cls_name):
         raise NotImplementedError
-
 
     def construct(self, x):
         self._check_input_dim(self.shape(x), self.cls_name)
@@ -460,7 +458,6 @@ class BatchNorm3d(Cell):
         dim = len(shape)
         _check_dim(dim, 5, cls_name)
 
-
     def construct(self, x):
         x_shape = self.shape(x)
         self._check_input_dim(x_shape, self.cls_name)
@@ -649,16 +646,6 @@ class SyncBatchNorm(_BatchNorm):
                     self.group_name = group_dict[rank_list_name]
                     logger.info("the group for {} already exists, no need to create".format(rank_list_name))
 
-    @staticmethod
-    @_primexpr
-    def _check_input_dim(shape, cls_name):
-        def _check(dim):
-            if dim not in (2, 4):
-                raise ValueError(f"For '{cls_name}', the must have 2 dims or 4 dims, but got {dim}.")
-        dim = len(shape)
-        _check(dim)
-
-
     def _check_rank_ids(self, process_groups, rank_size):
         seen = set()
         for rid in itertools.chain(*process_groups):
@@ -667,6 +654,15 @@ class SyncBatchNorm(_BatchNorm):
                 raise ValueError(f"For '{self.cls_name}', rank id in 'process_groups' must not be duplicated, "
                                  f"but got {process_groups}.")
             seen.add(rid)
+
+    @staticmethod
+    @_primexpr
+    def _check_input_dim(shape, cls_name):
+        def _check(dim):
+            if dim not in (2, 4):
+                raise ValueError(f"For '{cls_name}', the must have 2 dims or 4 dims, but got {dim}.")
+        dim = len(shape)
+        _check(dim)
 
 
 class LayerNorm(Cell):

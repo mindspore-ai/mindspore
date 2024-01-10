@@ -1,7 +1,7 @@
 mindspore.experimental.optim.Adamax
 ===================================
 
-.. py:class:: mindspore.experimental.optim.Adamax(params, lr=2e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0., *, maximize=False)
+.. py:class:: mindspore.experimental.optim.Adamax(params, lr=2e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0.0, *, maximize=False)
 
     Adamax算法的实现(基于无穷范数的Adam算法)。
 
@@ -49,5 +49,5 @@ mindspore.experimental.optim.Adamax
         - **ValueError** - 学习率不是int、float或Tensor。
         - **ValueError** - 学习率小于0。
         - **ValueError** - `eps` 小于0。
-        - **ValueError** - `betas` 范围不在0-1之间。
+        - **ValueError** - `betas` 范围不在[0,1)之间。
         - **ValueError** - `weight_decay` 小于0。

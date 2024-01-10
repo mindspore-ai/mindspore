@@ -79,6 +79,7 @@ from ..core.validator_helpers import replace_none
 from ..core.py_util_helpers import ExceptionHandler
 from ..transforms.py_transforms_util import FuncWrapper, Implementation
 from ..vision.transforms import ToNumpy
+from ...mindrecord.config import _get_enc_key, _get_enc_mode, _get_hash_mode, encrypt, append_hash_to_file
 
 try:
     context = import_module("mindspore.context")
@@ -666,15 +667,17 @@ class Dataset:
                 be dropped and not propagated to the child node.
             num_parallel_workers (int, optional): Number of workers(threads) to process the dataset in parallel.
                 Default: ``None``.
-            pad_info (dict, optional): The information about how to batch each column. The key
+            pad_info (dict, optional): The pad information about how to batch each column. The key
                 corresponds to the column name, and the value must be a tuple of 2 elements.
                 The first element corresponds to the shape to pad to, and the second
                 element corresponds to the value to pad with. If a column is not
                 specified, then that column will be padded to the longest in the current
-                batch, and 0 will be used as the padding value. Any None dimensions will
-                be padded to the longest in the current batch, unless if
-                pad_to_bucket_boundary is True. If no padding is wanted, set `pad_info`
-                to ``None``. Default: ``None``.
+                batch, and 0 will be used as the padding value. If ``pad_info={"col1": ([224, 224], 0)}``,
+                expand the data column named ``col1`` to shape (224, 224), and fill in the missing values with 0.
+                If ``pad_info={}``, all samples in the batch will be filled to the shape with the largest sample
+                in the current batch. If ``pad_info={"col1": (None, 100)}``, all samples in the batch will be filled
+                to the shape with the largest sample in the current batch, and fill in the missing values with 100.
+                If no padding is wanted, set `pad_info` to ``None``. Default: ``None``.
 
         Returns:
             Dataset, a new dataset with the above operation applied.
@@ -1030,20 +1033,28 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>>
+            >>> # Create a dataset with 10 elements
             >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
+            >>> ori_size = dataset.get_dataset_size()
             >>>
-            >>> # Create a dataset where the dataset is repeated for 50 epochs
+            >>> # Repeat the dataset 50 times.
             >>> dataset = dataset.repeat(50)
+            >>> repeated_size = dataset.get_dataset_size()
+            >>> print("ori_size", ori_size, ", repeated_size", repeated_size)
+            ori_size 10 , repeated_size 500
             >>>
-            >>> # Create a dataset where each epoch is shuffled individually
-            >>> dataset = dataset.shuffle(10)
-            >>> dataset = dataset.repeat(50)
+            >>> # Since the original dataset size is less than batch_size, thus no data is returned
+            >>> dataset1 = ds.GeneratorDataset([i for i in range(10)], "column1")
+            >>> dataset1 = dataset1.batch(batch_size=20, drop_remainder=True)
+            >>> dataset1 = dataset1.repeat(6)
             >>>
-            >>> # Create a dataset where the dataset is first repeated for
-            >>> # 50 epochs before shuffling. The shuffle operation will treat
-            >>> # the entire 50 epochs as one big dataset.
-            >>> dataset = dataset.repeat(50)
-            >>> dataset = dataset.shuffle(10)
+            >>> # Repeat the original dataset to 60 elements, thus 3 batches are returned
+            >>> dataset2 = ds.GeneratorDataset([i for i in range(10)], "column1")
+            >>> dataset2 = dataset2.repeat(6)
+            >>> dataset2 = dataset2.batch(batch_size=20, drop_remainder=True)
+            >>> print("dataset1 size", dataset1.get_dataset_size(), ", dataset2 size", dataset2.get_dataset_size())
+            dataset1 size 0 , dataset2 size 3
         """
         return RepeatDataset(self, count)
 
@@ -1529,6 +1540,10 @@ class Dataset:
             >>> d1 = ds.GeneratorDataset(generator_1d, ["data"], shuffle=False)
             >>> d1.save('/path/to/save_file')
         """
+        if (_get_enc_key() is not None or _get_hash_mode() is not None) and num_files > 1:
+            raise RuntimeError("When encode mode or hash check is enabled, " +
+                               "the automatic sharding function is unavailable.")
+
         ir_tree, api_tree = self.create_ir_tree()
 
         runtime_context = cde.PythonRuntimeContext()
@@ -1538,6 +1553,15 @@ class Dataset:
         runtime_context.AssignConsumer(consumer)
 
         consumer.Save()
+
+        if _get_hash_mode() is not None:
+            append_hash_to_file(file_name)
+            append_hash_to_file(file_name + ".db")
+
+        if _get_enc_key() is not None:
+            encrypt(file_name, _get_enc_key(), _get_enc_mode())
+            encrypt(file_name + ".db", _get_enc_key(), _get_enc_mode())
+
         _set_dataset_permissions(file_name, num_files)
         del api_tree
 

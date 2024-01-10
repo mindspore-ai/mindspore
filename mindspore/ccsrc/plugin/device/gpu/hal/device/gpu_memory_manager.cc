@@ -68,7 +68,7 @@ bool GPUMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList
     }
     addr_list[i]->SetDevicePtr(new_addr);
     addr_list[i]->SetSize(size_list[i]);
-    addr_list[i]->from_mem_pool_ = true;
+    addr_list[i]->set_from_mem_pool(true);
   }
   if (need_sync_stream) {
     return GPUDeviceManager::GetInstance().SyncStream(stream);

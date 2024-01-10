@@ -54,7 +54,7 @@ def judge_result_correct(result, expect):
     assert np.allclose(result, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_4d_no_transpose_vec():
@@ -281,7 +281,7 @@ class BatchMatMulTestNet(Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_batchmatmul_type_float16():
@@ -306,7 +306,7 @@ def test_batchmatmul_type_float16():
     assert str(float16_out.dtype) == "Float16"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_batchmatmul_type_float32():
@@ -331,7 +331,7 @@ def test_batchmatmul_type_float32():
     assert str(float32_out.dtype) == "Float32"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_batchmatmul_type_float64():
@@ -356,7 +356,7 @@ def test_batchmatmul_type_float64():
     assert str(float64_out.dtype) == "Float64"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_batchmatmul_type_int8():
@@ -381,7 +381,7 @@ def test_batchmatmul_type_int8():
     assert str(out.dtype) == "Int32"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_batchmatmul_type_int16():
@@ -406,7 +406,7 @@ def test_batchmatmul_type_int16():
     assert str(int16_out.dtype) == "Int16"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_batchmatmul_type_int32():
@@ -431,7 +431,7 @@ def test_batchmatmul_type_int32():
     assert str(int32_out.dtype) == "Int32"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_batchmatmul_type_int64():
@@ -456,7 +456,7 @@ def test_batchmatmul_type_int64():
     assert str(int64_out.dtype) == "Int64"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_batchmatmul_type_uint8():
@@ -481,7 +481,7 @@ def test_batchmatmul_type_uint8():
     assert str(uint8_out.dtype) == "UInt8"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_batchmatmul_type_uint16():
@@ -506,7 +506,7 @@ def test_batchmatmul_type_uint16():
     assert str(uint16_out.dtype) == "UInt16"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_batchmatmul_type_uint32():
@@ -531,7 +531,7 @@ def test_batchmatmul_type_uint32():
     assert str(uint32_out.dtype) == "UInt32"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_batchmatmul_type_uint64():
@@ -556,7 +556,7 @@ def test_batchmatmul_type_uint64():
     assert str(uint64_out.dtype) == "UInt64"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_batchmatmul_type_complex64():
@@ -599,7 +599,7 @@ def test_batchmatmul_type_complex64():
     assert str(out.dtype) == "Complex64"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_batchmatmul_type_complex128():

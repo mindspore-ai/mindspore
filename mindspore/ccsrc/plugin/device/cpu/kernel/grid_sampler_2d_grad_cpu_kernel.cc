@@ -15,7 +15,7 @@
  */
 #include "plugin/device/cpu/kernel/grid_sampler_2d_grad_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/core/ops/auto_generate/gen_enum_def.h"
+#include "mindspore/core/ops/op_enum.h"
 
 namespace {
 const size_t kDataSizeThreshold = 64 * 1024;
@@ -93,14 +93,14 @@ void GridSampler2DGradCpuKernelMod::ComputeTask(const std::vector<KernelTensor *
   auto grid_data_addr = static_cast<T *>(inputs[kTwo]->device_ptr());
   auto dx_data_addr = static_cast<T *>(outputs[kZero]->device_ptr());
   auto dgrid_data_addr = static_cast<T *>(outputs[kOne]->device_ptr());
-  if (interpolation_mode_ == static_cast<int64_t>(MsPyEnum::InterpolationMode::BILINEAR)) {
+  if (interpolation_mode_ == static_cast<int64_t>(ops::InterpolationMode::BILINEAR)) {
     interp = GridSamplerInterpolation::Bilinear;
-  } else if (interpolation_mode_ == static_cast<int64_t>(MsPyEnum::InterpolationMode::NEAREST)) {
+  } else if (interpolation_mode_ == static_cast<int64_t>(ops::InterpolationMode::NEAREST)) {
     interp = GridSamplerInterpolation::Nearest;
   }
-  if (padding_mode_ == static_cast<int64_t>(MsPyEnum::GridSamplerPaddingMode::ZEROS)) {
+  if (padding_mode_ == static_cast<int64_t>(ops::GridSamplerPaddingMode::ZEROS)) {
     padding = GridSamplerPadding::Zeros;
-  } else if (padding_mode_ == static_cast<int64_t>(MsPyEnum::GridSamplerPaddingMode::BORDER)) {
+  } else if (padding_mode_ == static_cast<int64_t>(ops::GridSamplerPaddingMode::BORDER)) {
     padding = GridSamplerPadding::Border;
   } else {
     padding = GridSamplerPadding::Reflection;

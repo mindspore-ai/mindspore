@@ -35,7 +35,7 @@ class Net(nn.Cell):
         return self.mul(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_mul():
@@ -86,7 +86,7 @@ def test_mul():
     assert out.shape == exp.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_mul_int32():
@@ -137,7 +137,7 @@ def test_mul_int32():
     assert out.shape == exp.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

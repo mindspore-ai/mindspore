@@ -77,7 +77,7 @@ def test_bn_forward(is_training, mode):
     assert np.allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -114,7 +114,7 @@ def test_bn_backward(is_training, mode):
     assert np.allclose(grad.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

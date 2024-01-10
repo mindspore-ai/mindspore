@@ -56,17 +56,16 @@ std::pair<int64_t, bool> GetAxis(const PrimitivePtr &primitive, const AbstractBa
   const std::string &op_name = primitive->name();
   // 3rd input is a Tensor when Gather is a dynamic shape operator
   if (CheckAndConvertUtils::IsTensor(input)) {
-    auto axis_value_ptr = input->GetValue();
-    MS_EXCEPTION_IF_NULL(axis_value_ptr);
-    auto axis_type_ptr = input->GetType();
-    if (axis_value_ptr->isa<tensor::Tensor>()) {
-      auto axis_vec = CheckAndConvertUtils::CheckTensorIntValue("axis", axis_value_ptr, op_name, axis_type_ptr);
-      if (axis_vec.size() != 1) {
-        MS_EXCEPTION(ValueError) << " The input size of Gather axis must be 1, but got " << axis_vec.size();
-      }
-      axis_val = axis_vec[0];
-    } else {
+    auto axis_value_opt = GetArrayValue<int64_t>(input);
+    if (!axis_value_opt.has_value() || axis_value_opt.value().HasUnknownValue()) {
       is_axis_dyn = true;
+    } else {
+      auto axis_value = axis_value_opt.value().ToVector();
+      (void)CheckAndConvertUtils::CheckTensorIntValue("axis", input->GetValue(), op_name, input->GetType());
+      if (axis_value.size() != 1) {
+        MS_EXCEPTION(ValueError) << " The input size of Gather axis must be 1, but got " << axis_value.size();
+      }
+      axis_val = axis_value[0];
     }
   } else if (CheckAndConvertUtils::IsScalar(input)) {
     auto axis_value = input->GetValue();

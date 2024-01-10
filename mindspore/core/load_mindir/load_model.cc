@@ -2030,11 +2030,11 @@ bool MSANFModelParser::BuildFuncGraph(const FuncGraphPtr &output_graph, const mi
   }
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  const bool graph_op_run = common::GetEnv("GRAPH_OP_RUN") == "1";
   const bool force_no_inline = common::GetEnv("MS_FORCE_NO_INLINE") == "1";
   if (output_graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
     const bool enable_ge = context->backend_policy() == "ge";
-    auto cell_reuse_level = (enable_ge && !graph_op_run) ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
+    auto cell_reuse_level =
+      (enable_ge && !context->IsKByKExecutorMode()) ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
     if (force_no_inline) {
       cell_reuse_level = CellReuseLevel::kNoInline;
     }
@@ -2330,14 +2330,13 @@ bool MSANFModelParser::BuildPrimitiveNode(const mind_ir::PrimitiveProto &primiti
     if (prim_type.compare(0, strlen(kDoSignaturePrimitivePrefix), kDoSignaturePrimitivePrefix) == 0) {
       auto op_name = prim_type.substr(strlen(kDoSignaturePrimitivePrefix));
       prim = std::make_shared<prim::DoSignaturePrimitive>(op_name, std::make_shared<Primitive>(op_name));
-    } else if (type == mind_ir::PrimitiveProto_PrimType_PRIMITIVE_FUNCTION) {
-      MS_LOG(DEBUG) << "PrimitiveFunction special node_type: " << prim_type;
-      prim = std::make_shared<Primitive>(prim_type);
-      prim->AddAttr("primitive_function", MakeValue(true));
     } else {
-      MS_LOG(DEBUG) << "Special node_type: " << prim_type;
       prim = std::make_shared<Primitive>(prim_type);
     }
+  }
+  if (type == mind_ir::PrimitiveProto_PrimType_PRIMITIVE_FUNCTION) {
+    MS_LOG(DEBUG) << "PrimitiveFunction special node_type: " << prim_type;
+    prim->AddAttr("primitive_function", MakeValue(true));
   }
 
   if (primitive_proto.has_instance_name()) {

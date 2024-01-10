@@ -30,7 +30,7 @@ def greater_backward_func(x, y):
     return ops.grad(greater_forward_func, (0,))(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -48,7 +48,7 @@ def test_greater_forward():
     assert np.allclose(out.asnumpy(), expect_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -66,7 +66,7 @@ def test_greater_backward():
     assert np.allclose(grads.asnumpy(), expect_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

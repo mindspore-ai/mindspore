@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "cpu_kernel/ms_kernel/sign.h"
-
+#include <type_traits>
 #include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
@@ -85,10 +85,10 @@ uint32_t SignCpuKernel::SignCompute(const CpuKernelContext &ctx) {
     for (int64_t i = 0; i < data_num; i++) {
       if (*(input_x + i) > static_cast<T>(0)) {
         *(output_y + i) = static_cast<T>(1);
-      } else if (*(input_x + i) == static_cast<T>(0)) {
-        *(output_y + i) = static_cast<T>(0);
-      } else {
+      } else if (*(input_x + i) < static_cast<T>(0)) {
         *(output_y + i) = static_cast<T>(-1);
+      } else {
+        *(output_y + i) = static_cast<T>(0);
       }
     }
   } else {
@@ -101,10 +101,10 @@ uint32_t SignCpuKernel::SignCompute(const CpuKernelContext &ctx) {
       for (size_t i = start; i < end; i++) {
         if (*(input_x + i) > static_cast<T>(0)) {
           *(output_y + i) = static_cast<T>(1);
-        } else if (*(input_x + i) == static_cast<T>(0)) {
-          *(output_y + i) = static_cast<T>(0);
-        } else {
+        } else if (*(input_x + i) < static_cast<T>(0)) {
           *(output_y + i) = static_cast<T>(-1);
+        } else {
+          *(output_y + i) = static_cast<T>(0);
         }
       }
     };

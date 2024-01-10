@@ -22,7 +22,7 @@ from mindspore import Tensor
 from mindspore.common.api import _pynative_executor
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize("dtype", [ms.float64, ms.float32, ms.float16, ms.int64, ms.int32])
@@ -50,7 +50,7 @@ def test_poisson_function(dtype, shape_dtype, rate_dtype):
     assert output.dtype == dtype
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_poisson_function_shape_type_error():
@@ -70,7 +70,7 @@ def test_poisson_function_shape_type_error():
     assert False
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_poisson_function_shape_dim_error():
@@ -90,7 +90,7 @@ def test_poisson_function_shape_dim_error():
     assert False
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_poisson_function_shape_dtype_error():
@@ -110,7 +110,7 @@ def test_poisson_function_shape_dtype_error():
     assert False
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_poisson_function_shape_value_error():
@@ -130,7 +130,7 @@ def test_poisson_function_shape_value_error():
     assert False
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_poisson_function_rate_type_error():
@@ -150,7 +150,7 @@ def test_poisson_function_rate_type_error():
     assert False
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_poisson_function_rate_dtype_error():
@@ -170,7 +170,7 @@ def test_poisson_function_rate_dtype_error():
     assert False
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_poisson_function_seed_type_error():
@@ -190,7 +190,7 @@ def test_poisson_function_seed_type_error():
     assert False
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_poisson_function_out_dtype_error():
@@ -262,7 +262,7 @@ class PoissonDSFactory:
         return output.shape, output.dtype
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize("max_dims", [2, 3, 4, 5, 6])

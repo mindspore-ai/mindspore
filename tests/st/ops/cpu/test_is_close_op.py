@@ -52,7 +52,7 @@ def compare_with_numpy(a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
     return np.array_equal(ms_result_graph, np_result) and np.array_equal(ms_result_pynative, np_result)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('equal_nan', [True, False])
@@ -92,7 +92,7 @@ class VmapNet(nn.Cell):
         return self.ops(a, b)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_vmap_net():

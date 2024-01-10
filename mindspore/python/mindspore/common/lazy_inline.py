@@ -153,35 +153,35 @@ def lazy_inline(fn=None, attrs=None):
         >>> test_compile()
     """
 
-    def wrap_cell(fn):
+    def lazy_inline_wrap(fn):
         @wraps(fn)
-        def deco(self, *args, **kwargs):
-            arguments = []
+        def lazy_inline_deco(self, *args, **kwargs):
+            new_args = []
             if attrs is None:
                 bound_args = inspect.signature(fn).bind(self, *args, **kwargs)
-                arguments = bound_args.arguments
-                del arguments['self']
-                arguments = arguments.values()
+                new_args = bound_args.arguments
+                del new_args['self']
+                new_args = new_args.values()
             fn(self, *args, **kwargs)
             if attrs is None:
-                self.cell_init_args = "lazy_inline_" + type(self).__name__ + str(arguments)
+                self.cell_init_args = "lazy_inline_" + type(self).__name__ + str(new_args)
                 return
 
             if isinstance(attrs, list):
-                for item in attrs:
-                    if not isinstance(item, str):
+                for attr in attrs:
+                    if not isinstance(attr, str):
                         raise ValueError(f"attr must be a string")
-                    if hasattr(self, item):
-                        arguments.append(getattr(self, item))
+                    if hasattr(self, attr):
+                        new_args.append(getattr(self, attr))
             elif isinstance(attrs, str):
                 if hasattr(self, attrs):
-                    arguments = getattr(self, attrs)
+                    new_args = getattr(self, attrs)
             else:
                 raise ValueError(f"attrs must be list or string")
-            self.cell_init_args = "lazy_inline_" + type(self).__name__ + str(arguments)
+            self.cell_init_args = "lazy_inline_" + type(self).__name__ + str(new_args)
 
-        return deco
+        return lazy_inline_deco
 
     if fn is not None:
-        return wrap_cell(fn)
-    return wrap_cell
+        return lazy_inline_wrap(fn)
+    return lazy_inline_wrap

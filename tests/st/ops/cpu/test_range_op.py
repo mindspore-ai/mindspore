@@ -32,7 +32,7 @@ class OpNetWrapper(nn.Cell):
         return self.op(*inputs)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_int():
@@ -45,7 +45,7 @@ def test_int():
     assert np.allclose(outputs.asnumpy(), range(0, 100, 10))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_float():
@@ -58,7 +58,7 @@ def test_float():
     assert np.allclose(outputs.asnumpy(), [10., 30., 50., 70., 90.])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_range_op_int():
@@ -73,7 +73,7 @@ def test_range_op_int():
     assert np.array_equal(result.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_range_op_float():
@@ -88,7 +88,7 @@ def test_range_op_float():
     assert np.array_equal(result.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_range_op_int64():
@@ -103,7 +103,7 @@ def test_range_op_int64():
     assert np.array_equal(result.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_range_op_float64():
@@ -118,7 +118,7 @@ def test_range_op_float64():
     assert np.array_equal(result.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_range_op_int_reserve():
@@ -133,7 +133,7 @@ def test_range_op_int_reserve():
     assert np.array_equal(result.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_range_op_float_reserve():

@@ -173,6 +173,19 @@ void OutputActor::RunOpControl(AID *const, OpContext<DeviceTensor> *const contex
       if (device_tensor_store_key.first >= outputs_.size()) {
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input index is of range.");
       }
+      if (device_tensor_store_key.second != nullptr && device_tensor_store_key.second->isa<ValueNode>()) {
+        const auto &value = device_tensor_store_key.second->cast<ValueNodePtr>()->value();
+        MS_EXCEPTION_IF_NULL(value);
+        if (value->isa<tensor::Tensor>()) {
+          outputs_[device_tensor_store_key.first] = value->cast<tensor::TensorPtr>();
+          continue;
+        } else if (value->isa<Scalar>()) {
+          outputs_[device_tensor_store_key.first] = ScalarToTensor(value->cast<ScalarPtr>());
+          continue;
+        } else {
+          MS_LOG(DEBUG) << "Output value node:" << device_tensor_store_key.second->DebugString();
+        }
+      }
       outputs_[device_tensor_store_key.first] =
         CreateOutputTensor(device_tensor_store_key.second, 0, device_tensor_store_key.first);
       if (outputs_[device_tensor_store_key.first] == nullptr) {
@@ -241,7 +254,8 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   const auto &output_kernel_tensor = AnfAlgo::GetOutputKernelTensor(output_node, output_index);
   MS_EXCEPTION_IF_NULL(output_kernel_tensor);
   MS_LOG(DEBUG) << "Create output tensor, output node: " << output_node->fullname_with_scope()
-                << ", output index: " << output_index << ", output position: " << output_position
+                << " debug string:" << output_node->DebugString() << ", output index: " << output_index
+                << ", output position: " << output_position
                 << ", output kernel tensor: " << output_kernel_tensor->ToString();
 
   // For dynamice sequence output, the Type(Tuple) hasn't been re-inferred, only Shape has been re-inferred, need update
@@ -298,8 +312,9 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
     tensor->set_device_address(output_node_to_tensor_device_address_[{output_node, output_index}]);
   } else {
     auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-      nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(), device_tensor->host_shape(),
-      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+      nullptr, device_tensor->GetSize(), kernel::GetFormatFromStrToEnum(device_tensor->format()),
+      device_tensor->type_id(), device_tensor->host_shape(), device_context->device_context_key().device_name_,
+      device_context->device_context_key().device_id_);
     kernel_tensor->SetType(output_kernel_tensor->GetType());
     kernel_tensor->SetShape(output_kernel_tensor->GetShape());
     auto tensor_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
@@ -325,7 +340,7 @@ void OutputActor::UpdateOutputDeviceAddress() {
     }
     auto device_tensor = output_device_tensors_[i];
     if (output_node == nullptr || device_tensor == nullptr) {
-      MS_LOG(WARNING) << "The output node or device tensor is nullptr, need check whether affect the result.";
+      MS_LOG(INFO) << "The output node or device tensor is nullptr, need check whether affect the result.";
       continue;
     }
 

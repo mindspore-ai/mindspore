@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,12 +20,23 @@ import numpy as onp
 import scipy as osp
 from scipy.optimize.linesearch import line_search_wolfe2 as osp_line_search
 
+import mindspore as ms
 import mindspore.numpy as mnp
 import mindspore.scipy as msp
-from mindspore import context
+from mindspore import context, nn
 from mindspore.common import Tensor
 from mindspore.scipy.optimize.line_search import line_search as msp_line_search
+from mindspore.scipy.optimize import linear_sum_assignment
 from tests.st.scipy_st.utils import match_array
+
+
+class LinearSumAssignmentNet(nn.Cell):
+    def __init__(self):
+        super(LinearSumAssignmentNet, self).__init__()
+        self.solve = linear_sum_assignment
+
+    def construct(self, cost_matrix, maximize, dimension_limit):
+        return self.solve(cost_matrix, maximize, dimension_limit)
 
 
 def rosenbrock(np):
@@ -199,7 +210,7 @@ def test_bfgs_fixes4594(dtype):
     onp.testing.assert_allclose(results.asnumpy(), onp.zeros(n, dtype=dtype), rtol=1e-6, atol=1e-6)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -339,7 +350,7 @@ def test_line_search(maxiter, func, x, p):
     match_array(msp_res.f_k, osp_res[3], error=5)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -541,7 +552,7 @@ def test_lbfgs_fixes4594(dtype):
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -564,3 +575,30 @@ def test_lbfgs_graph(dtype, func_x0):
                                    options=dict(maxiter=None, gtol=1e-6))
     match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('cost_matrix_type', [ms.float16, ms.float32, ms.float64, ms.bool_, ms.int16, ms.int32,
+                                              ms.int64, ms.int8, ms.uint16, ms.uint32, ms.uint64, ms.uint8])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_linear_sum_assignment(cost_matrix_type, mode):
+    """
+    Feature: mindspore.scipy.optimize.linear_sum_assignment
+    Description: Verify the result of linear_sum_assignment
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+    cost_matrix = ms.Tensor([[2, 3, 3], [3, 2, 3], [3, 3, 2]]).astype(cost_matrix_type)
+    dimension_limit = ms.Tensor(2)
+    maximize = False
+    net = LinearSumAssignmentNet()
+    row_idx, col_idx = net(cost_matrix, maximize, dimension_limit)
+    expect_row_idx = ms.Tensor([0, 1, -1], ms.int64)
+    expect_col_idx = ms.Tensor([0, 1, -1], ms.int64)
+    assert onp.allclose(row_idx.asnumpy(), expect_row_idx.asnumpy())
+    assert onp.allclose(col_idx.asnumpy(), expect_col_idx.asnumpy())

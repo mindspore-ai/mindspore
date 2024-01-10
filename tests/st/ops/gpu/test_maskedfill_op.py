@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -143,7 +144,7 @@ def test_func_masked_fill_float():
     """
     inputs = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]).astype(np.float16))
     mask = Tensor(np.array([[True, True, False, True], [False, False, True, False]]).astype(np.bool))
-    value = 22
+    value = F.cast(22, inputs.dtype)
     expect = np.array([[22, 22, 3, 22], [5, 6, 22, 8]]).astype(np.float16)
     output = F.masked_fill(inputs, mask, value)
     assert (output.asnumpy() == expect).all()
@@ -160,7 +161,7 @@ def test_tensor_masked_fill_float():
     """
     inputs = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]).astype(np.float16))
     mask = Tensor(np.array([[True, True, False, True], [False, False, True, False]]).astype(np.bool))
-    value = 22
+    value = F.cast(22, inputs.dtype)
     output = inputs.masked_fill(mask, value)
     expect = np.array([[22, 22, 3, 22], [5, 6, 22, 8]]).astype(np.float16)
     assert (output.asnumpy() == expect).all()
@@ -176,3 +177,20 @@ def test_maskedfill_tensor_value():
     Expectation: The result match to expect.
     """
     maskedfill_value(Tensor(0.5))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_func_masked_fill_with_8d_broadcast_input():
+    """
+    Feature: Test func masked_fill.
+    Description: Test func masked_fill api with 8-D input broadcast.
+    Expectation: The result match to expect.
+    """
+    inputs = np.random.randn(2, 2, 2, 3, 1, 4, 5, 3).astype(np.float32)
+    mask = np.random.choice([True, False], size=(1, 2, 2, 3, 1, 4, 5, 3))
+    value = F.cast(2, ms.float32)
+    output = F.masked_fill(Tensor(inputs), Tensor(mask), value)
+    expect = np.where(mask, value, inputs)
+    assert (output.asnumpy() == expect).all()

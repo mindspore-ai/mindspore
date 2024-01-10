@@ -55,10 +55,10 @@ abstract::TupleShapePtr DenseToSparseSetOperationInferShape(const PrimitivePtr &
   auto x2_indices_shape_ptr = input_args[1]->GetShape();
   auto x2_values_shape_ptr = input_args[2]->GetShape();
   auto x2_shape_shape_ptr = input_args[3]->GetShape();
-  auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x1_shape_ptr)[kShape];
-  auto x2_indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_indices_shape_ptr)[kShape];
-  auto x2_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_values_shape_ptr)[kShape];
-  auto x2_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_shape_shape_ptr)[kShape];
+  auto x1_shape = x1_shape_ptr->GetShapeVector();
+  auto x2_indice_shape = x2_indices_shape_ptr->GetShapeVector();
+  auto x2_values_shape = x2_values_shape_ptr->GetShapeVector();
+  auto x2_shape_shape = x2_shape_shape_ptr->GetShapeVector();
 
   // Args x2_indice must be 2D tensor, x2_values and x2_shape must be 1D tensor
   const int64_t tensor2d_num = 2;
@@ -97,14 +97,66 @@ abstract::TupleShapePtr DenseToSparseSetOperationInferShape(const PrimitivePtr &
   }
 
   // y_indices shape infer
-  ShapeVector y_indices_shape = {-1, SizeToLong(x1_shape.size())};
   ShapeVector y_indices_max_shape = {y_size_max, SizeToLong(x1_shape.size())};
-  auto y_indices_shape_ptr = std::make_shared<abstract::Shape>(y_indices_shape, y_indices_max_shape);
+  auto y_indices_shape_ptr = std::make_shared<abstract::Shape>(y_indices_max_shape);
+
+  // y_values shape infer
+  ShapeVector y_values_max_shape = {y_size_max};
+  auto y_values_shape_ptr = std::make_shared<abstract::Shape>(y_values_max_shape);
+
+  // y_shape shape infer
+  ShapeVector y_shape_shape = {SizeToLong(x1_shape.size())};
+  auto y_shape_shape_ptr = std::make_shared<abstract::Shape>(y_shape_shape);
+
+  return std::make_shared<abstract::TupleShape>(
+    std::vector<abstract::BaseShapePtr>{y_indices_shape_ptr, y_values_shape_ptr, y_shape_shape_ptr});
+}
+
+abstract::TupleShapePtr DenseToSparseSetOperationFrontendInferShape(const PrimitivePtr &primitive,
+                                                                    const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  auto x1_shape_ptr = input_args[0]->GetShape();
+  auto x2_indices_shape_ptr = input_args[1]->GetShape();
+  auto x2_values_shape_ptr = input_args[2]->GetShape();
+  auto x2_shape_shape_ptr = input_args[3]->GetShape();
+  auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x1_shape_ptr)[kShape];
+  auto x2_indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_indices_shape_ptr)[kShape];
+  auto x2_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_values_shape_ptr)[kShape];
+  auto x2_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_shape_shape_ptr)[kShape];
+
+  // Args x2_indice must be 2D tensor, x2_values and x2_shape must be 1D tensor
+  const int64_t tensor2d_num = 2;
+  const int64_t tensor1d_num = 1;
+  (void)CheckAndConvertUtils::CheckInteger("dimension of 'x2_indices'", SizeToLong(x2_indice_shape.size()), kEqual,
+                                           tensor2d_num, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("dimension of 'x2_values'", SizeToLong(x2_values_shape.size()), kEqual,
+                                           tensor1d_num, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("dimension of 'x2_shape'", SizeToLong(x2_shape_shape.size()), kEqual,
+                                           tensor1d_num, prim_name);
+
+  // Dimension of x1 must be equal or greater than 2
+  (void)CheckAndConvertUtils::CheckInteger("dimension of 'x1'", SizeToLong(x1_shape.size()), kGreaterEqual,
+                                           tensor2d_num, prim_name);
+  // x2_value shape must be equal to the first dimension of x2_indices
+  CheckAndConvertUtils::Check("'x2_values' shape", x2_values_shape[0], kEqual, x2_indice_shape[0], prim_name);
+
+  std::string set_operation_str = GetValue<std::string>(primitive->GetAttr("set_operation"));
+  (void)std::transform(set_operation_str.begin(), set_operation_str.end(), set_operation_str.begin(), ::tolower);
+
+  if (!(set_operation_str == "a-b" || set_operation_str == "b-a" || set_operation_str == "intersection" ||
+        set_operation_str == "union")) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the attr 'set_operation' must be one of 'a-b', 'b-a', "
+                             << "'intersection', 'union', but get" << set_operation_str << ".";
+  }
+
+  // y_indices shape infer
+  ShapeVector y_indices_shape = {-1, SizeToLong(x1_shape.size())};
+  auto y_indices_shape_ptr = std::make_shared<abstract::Shape>(y_indices_shape);
 
   // y_values shape infer
   ShapeVector y_values_shape = {-1};
-  ShapeVector y_values_max_shape = {y_size_max};
-  auto y_values_shape_ptr = std::make_shared<abstract::Shape>(y_values_shape, y_values_max_shape);
+  auto y_values_shape_ptr = std::make_shared<abstract::Shape>(y_values_shape);
 
   // y_shape shape infer
   ShapeVector y_shape_shape = {SizeToLong(x1_shape.size())};
@@ -147,7 +199,7 @@ AbstractBasePtr DenseToSparseSetOperationInfer(const abstract::AnalysisEnginePtr
   const int64_t kInputsNum = 4;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
   auto infer_type = DenseToSparseSetOperationInferType(primitive, input_args);
-  auto infer_shape = DenseToSparseSetOperationInferShape(primitive, input_args);
+  auto infer_shape = DenseToSparseSetOperationFrontendInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 

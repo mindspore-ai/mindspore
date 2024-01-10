@@ -1,0 +1,32 @@
+#operator apply_came_part3
+apply_came_part3:
+    args:
+        u:
+            dtype: tensor
+        m:
+            dtype: tensor
+        eps:
+            dtype: float
+        beta1:
+            dtype: float
+        clip_threshold:
+            dtype: float
+        sum_square_u:
+            dtype: tensor
+        global_shape:
+            dtype: tuple[int]
+            default: None
+        use_first_moment:
+            dtype: bool
+            default: False
+    returns:
+        m:
+            dtype: tensor
+        sum_u_r:
+            dtype: tensor
+        sum_u_c:
+            dtype: tensor
+        sum_u_rc:
+            dtype: tensor
+    function:
+        disable: True

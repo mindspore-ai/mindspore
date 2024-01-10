@@ -68,7 +68,7 @@ def sqrt_backward_test(ms_type, np_type):
         np.testing.assert_array_almost_equal(output_np, expected, decimal=6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -82,7 +82,7 @@ def test_sqrt_forward_fp32(mode):
     sqrt_forward_test(mindspore.float32, np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -96,7 +96,7 @@ def test_sqrt_forward_bf16(mode):
     sqrt_forward_test(mindspore.bfloat16, np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -110,7 +110,7 @@ def test_sqrt_backward_fp32(mode):
     sqrt_backward_test(mindspore.float32, np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

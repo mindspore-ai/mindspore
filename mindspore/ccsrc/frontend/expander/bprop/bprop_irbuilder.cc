@@ -184,11 +184,20 @@ NodePtr BpropIRBuilder::StridedSlice(const NodePtr &x, const std::map<int64_t, s
 DEF_PURE_SHAPE_CALC(g_dyn_size)
   .SetCalc([](const ShapeArray &inputs) -> ShapeArray { return {{abstract::ShapeSize(inputs.at(0))}}; })
   .SetInfer([](const ShapeArray &, const HashSet<size_t> &) -> ShapeVector { return {1}; });
+
 NodePtr BpropIRBuilder::DynSize(const NodePtr &node) {
   if (!IsDynamic(GetShape(node))) {
     return Value(GetSize(node));
   }
   return ShapeCalc(g_dyn_size, {node})[0];
+}
+
+NodePtr BpropIRBuilder::DynSize(const NodePtr &node, const TypePtr &type) {
+  return Cast(SequenceToTensor(DynSize(node)), type);
+}
+
+NodePtr BpropIRBuilder::DynSize(const NodePtr &node, TypeId type_id) {
+  return Cast(SequenceToTensor(DynSize(node)), type_id);
 }
 
 NodePtr BpropIRBuilder::SequenceToTensor(const NodePtr &node, const TypePtr &dtype) {

@@ -24,7 +24,7 @@
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "ops/auto_generate/gen_enum_def.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore::kernel {
 constexpr auto kUnknown = "Unknown";
@@ -60,7 +60,7 @@ class ResizeLinear1DCpuKernelMod : public NativeCpuKernelMod, public MatchKernel
 
   template <typename T>
   CoordinateTransformationFunc<T> ChooseCoordinateTransformationFunc(
-    MsPyEnum::CoordinateTransformationMode coordinate_transformation_mode) const;
+    CoordinateTransformMode coordinate_transformation_mode) const;
 
   template <typename T>
   void ComputeInterpolationCaches(const size_t out_size, const size_t in_size,
@@ -73,8 +73,7 @@ class ResizeLinear1DCpuKernelMod : public NativeCpuKernelMod, public MatchKernel
   size_t channel_{0};
   size_t in_width_{0};
   size_t out_width_{0};
-  MsPyEnum::CoordinateTransformationMode coordinate_transformation_mode_ =
-    MsPyEnum::CoordinateTransformationMode::ALIGN_CORNERS;
+  CoordinateTransformMode coordinate_transformation_mode_ = CoordinateTransformMode::ALIGN_CORNERS;
 };
 }  // namespace mindspore::kernel
 

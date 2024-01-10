@@ -51,7 +51,9 @@ bool ArgsToAttrPass::Run(const FuncGraphPtr &func_graph) {
     std::vector<AnfNodePtr> new_node_inputs;
 
     // change PrimtiveFunction into Primitive
-    if (prim->GetAttr("primitive_function") == nullptr) {
+    bool is_primitive_function =
+      prim->GetAttr("primitive_function") != nullptr && GetValue<bool>(prim->GetAttr("primitive_function"));
+    if (!is_primitive_function) {
       continue;
     }
     auto op_type = prim->name();

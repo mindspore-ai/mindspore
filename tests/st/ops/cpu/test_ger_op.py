@@ -75,7 +75,7 @@ def test_ger_float16(dtype, mode, xshape, yshape):
     assert np.allclose(output_tensor.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float32, np.float16, np.float64])
@@ -116,7 +116,7 @@ def test_ger_vmap(dtype):
     assert np_all_close_with_loss(output_vmap.asnumpy(), output_manually.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float32, np.float16, np.float64])

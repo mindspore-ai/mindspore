@@ -428,11 +428,6 @@ inline aclScalar *ConvertType(const ScalarPtr &value) {
   return acl_scalar;
 }
 
-inline aclDataType ConvertType(const TypePtr &type) {
-  MS_EXCEPTION_IF_NULL(type);
-  return AclConverter::ConvertType(type->type_id());
-}
-
 inline aclDataType ConvertType(TypeId type_id) { return AclConverter::ConvertType(type_id); }
 
 inline const char *ConvertType(const std::string &value) { return value.c_str(); }

@@ -136,7 +136,7 @@ std::set<int64_t> RectifyDependListFromDynamicInputAttr(const CNodePtr &cnode, c
   return rec_depend_list;
 }
 
-std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode) {
+std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode, bool is_proto) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->inputs().empty()) {
     MS_LOG(EXCEPTION) << "Invalid inputs";
@@ -182,6 +182,9 @@ std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode) {
 
   (void)std::copy_if(ori.begin(), ori.end(), std::inserter(res, res.begin()),
                      [&](int64_t idx) { return idx < SizeToLong(input_num); });
+  if (is_proto) {
+    return res;
+  }
   return RectifyDependListFromDynamicInputAttr(cnode, primitive, res);
 }
 
@@ -387,6 +390,21 @@ std::optional<ValuePtr> InferValueByFuncImpl(const PrimitivePtr &primitive, cons
     return std::nullopt;
   }
   return frontend_func_impl->InferValue(primitive, input_args);
+}
+
+std::optional<AbstractBasePtr> TryInferAbstract(const PrimitivePtr &primitive, const AbstractBasePtrList &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto abstract_optional = abstract::InferAbstractByFuncImpl(primitive, input_args);
+  if (abstract_optional.has_value()) {
+    return abstract_optional.value();
+  }
+
+  auto found = abstract::GetPrimitiveInferImpl(primitive);
+  if (!found.has_value() || !found.value().IsImplInferShapeAndType()) {
+    MS_LOG(DEBUG) << "The infer function of [" << primitive->name() << "] is not defined.";
+    return std::nullopt;
+  }
+  return found.value().InferShapeAndType(nullptr, primitive, input_args);
 }
 }  // namespace abstract
 }  // namespace mindspore

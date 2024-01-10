@@ -265,7 +265,7 @@ void ParallelContext::ParallelParameterContextRestoreShape(const FuncGraphPtr &f
   }
   auto shape = param_info->parameter_shape();
   if (shape.empty()) {
-    MS_LOG(WARNING) << "The parameter " << param_node->name() << "'s parameter_shape in param_info is empty";
+    MS_LOG(INFO) << "The parameter " << param_node->name() << "'s parameter_shape in param_info is empty";
     return;
   }
   std::shared_ptr<abstract::BaseShape> base_shape = std::make_shared<abstract::Shape>(shape);

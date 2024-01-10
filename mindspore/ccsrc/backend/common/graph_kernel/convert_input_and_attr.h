@@ -24,10 +24,10 @@
 #include "ops/op_def.h"
 
 namespace mindspore::graphkernel {
-class ConvertInputToAttr : public opt::Pass {
+class ConvertFrontEndToGraphKernel : public opt::Pass {
  public:
-  ConvertInputToAttr() : Pass("convert_input_to_attr") {}
-  ~ConvertInputToAttr() override = default;
+  ConvertFrontEndToGraphKernel() : Pass("convert_input_to_attr") {}
+  ~ConvertFrontEndToGraphKernel() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
@@ -35,18 +35,25 @@ class ConvertInputToAttr : public opt::Pass {
   void AddConstInputToAttr(const CNodePtr &cnode, const size_t input_index, const std::string &arg_name,
                            const std::string &arg_handler, const PrimitivePtr &primitive);
 };
-class ConvertAttrToInput : public opt::Pass {
+class ConvertGraphKernelToFrontEnd : public opt::Pass {
  public:
-  ConvertAttrToInput() : Pass("convert_attr_to_input") {}
-  ~ConvertAttrToInput() override = default;
+  ConvertGraphKernelToFrontEnd() : Pass("convert_attr_to_input") {}
+  ~ConvertGraphKernelToFrontEnd() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
   static bool Process(const AnfNodePtr &node);
 
  private:
   static void AddAttrToInput(const CNodePtr &cnode, const std::string &arg_name, const std::string &arg_handler,
                              const PrimitivePtr &primitive);
+  static bool ConvertInputsType(const CNodePtr &cnode, size_t idx, ops::OP_DTYPE fe_arg_type);
 };
 
-bool NeedConvertInputAndAttr(const AnfNodePtr &node);
+class OpDefAdapter {
+ public:
+  /// \brief Check whether need to convert the node from GraphKernel format to frontend format,
+  /// includes input/attr and kernel object.
+  static bool NeedConvertGK2FE(const AnfNodePtr &node);
+  static bool NeedConvertInputAndAttr(const AnfNodePtr &node);
+};
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CONVERT_INPUT_AND_ATTR_H_

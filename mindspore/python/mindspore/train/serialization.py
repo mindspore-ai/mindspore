@@ -549,7 +549,7 @@ def _convert_cell_to_param_list(save_obj, integrated_save, append_dict, choice_f
         if phase in save_obj.compile_cache and _executor.has_compiled(phase):
             random_byte = _executor._graph_executor.get_random_status(phase)
             param_list.append({"name": "random_op", "data": random_byte})
-        append_dict.pop("random_op")
+            append_dict.pop("random_op")
     for (key, value) in param_dict.items():
         each_param = {"name": key}
         if isinstance(value, MapParameter):
@@ -885,6 +885,10 @@ def obfuscate_model(obf_config, **kwargs):
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> # Download ori_net.mindir
+        >>> # https://gitee.com/mindspore/mindspore/blob/r2.3/tests/ut/python/mindir/ori_net.mindir
+        >>> input1 = ms.Tensor(np.ones((1, 1, 32, 32)).astype(np.float32))
         >>> obf_config = {'original_model_path': "./net.mindir",
         ...          'save_model_path': "./obf_net",
         ...          'model_inputs': [input1, ],
@@ -1308,18 +1312,13 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
     if param_not_load and not strict_load:
         _load_dismatch_prefix_params(net, parameter_dict, param_not_load, strict_load)
 
-    logger.debug("Params not matched(in net but not in parameter_dict):")
-    for param_name in param_not_load:
-        logger.debug("%s", param_name)
-
     logger.info("Loading parameters into net is finished.")
     if param_not_load:
         logger.warning("For 'load_param_into_net', "
                        "{} parameters in the 'net' are not loaded, because they are not in the "
                        "'parameter_dict', please check whether the network structure is consistent "
                        "when training and loading checkpoint.".format(len(param_not_load)))
-        for param_name in param_not_load:
-            logger.warning("{} is not loaded.".format(param_name))
+        logger.warning("{} are not loaded.".format(param_not_load))
     return param_not_load, ckpt_not_load
 
 

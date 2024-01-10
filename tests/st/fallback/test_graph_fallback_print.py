@@ -124,7 +124,9 @@ def test_np_print_2():
 
 
 @security_off_wrap
-@pytest.mark.level1
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_tensor_print_1():
     """
@@ -150,7 +152,9 @@ def test_tensor_print_1():
 
 
 @security_off_wrap
-@pytest.mark.level1
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_print_cnode_1():
     """
@@ -178,7 +182,9 @@ def test_print_cnode_1():
 
 
 @security_off_wrap
-@pytest.mark.level1
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_print_cnode_2():
     """
@@ -403,7 +409,9 @@ def test_print_string_add_string():
 
 
 @security_off_wrap
-@pytest.mark.level1
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_print_list():
     """
@@ -427,6 +435,28 @@ def test_print_list():
     patterns = {"list_x:\nTensor(shape=[5], dtype=Int64, value=[1 2 3 4 5])\n"}
     check_output(cap.output, patterns)
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_print_list_2():
+    """
+    Feature: Graph print.
+    Description: Support print(list).
+    Expectation: No exception.
+    """
+    class PrintNet(nn.Cell):
+        def construct(self, x):
+            for i in range(4):
+                x = list(x)
+                print('list======', x)
+                print(i)
+            return 0
+
+    net = PrintNet()
+    x = Tensor(np.ones(4).astype(np.int32))
+    result = net(x)
+    assert result == 0
 
 @security_off_wrap
 @pytest.mark.level1
@@ -544,7 +574,9 @@ def test_print_joinedstr():
 
 
 @security_off_wrap
-@pytest.mark.level1
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_print_param_value():
     """

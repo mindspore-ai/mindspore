@@ -271,6 +271,7 @@ class _Context:
                 - op_precision_mode (str): config file path.
                 - parallel_speed_up_json_path(Union[str, None]): The path to the parallel speed up json file.
                   If its value is None or '', it does not take effect. Default None.
+                - host_scheduling_max_threshold(int): The host scheduling max threshold.
         """
         ascend_cfg_modes = {
             'precision_mode': ["force_fp16", "allow_fp32_to_fp16", "allow_mix_precision", "must_keep_origin_dtype",
@@ -281,7 +282,8 @@ class _Context:
             'matmul_allow_hf32': [True, False],
             'conv_allow_hf32': [True, False],
             'op_precision_mode': (str,),
-            'parallel_speed_up_json_path': (str, None)
+            'parallel_speed_up_json_path': (str, None),
+            'host_scheduling_max_threshold': (int,)
         }
         ascend_cfg_setters = {
             'precision_mode': self._get_ascend_config_setter('precision_mode'),
@@ -290,7 +292,8 @@ class _Context:
             'matmul_allow_hf32': self._get_ascend_config_setter('matmul_allow_hf32', lambda v: "1" if v else "0"),
             'conv_allow_hf32': self._get_ascend_config_setter('conv_allow_hf32', lambda v: "1" if v else "0"),
             'op_precision_mode': self._set_op_precision_mode,
-            'parallel_speed_up_json_path': self._set_speedup_config_path
+            'parallel_speed_up_json_path': self._set_speedup_config_path,
+            'host_scheduling_max_threshold': self._get_ascend_config_setter('host_scheduling_max_threshold', str)
         }
         ascend_cfg_set = tuple(ascend_cfg_modes.keys())
         for ascend_key, ascend_value in ascend_config.items():
@@ -1329,6 +1332,11 @@ def set_context(**kwargs):
               - interleaved_matmul_comm (bool): Enable interleaved optimization of Matmul-Comm if True. Default: False.
               - interleaved_layernorm_comm (bool): Enable interleaved optimization of LayerNorm-Comm if True.
                 Default: False.
+            - host_scheduling_max_threshold(int): The max threshold to control whether the dynamic shape process is
+              used when run the static graph, the default value is 0. When the number of operations in the static graph
+              is less than the max threshold, this graph will be executed in dynamic shape process. In large model
+              scenarios, this approach can save stream resources. If the number of operations in the static graph is
+              greater than the maximum threshold, this graph will be executed in original static process.
 
         jit_syntax_level (int): Set JIT syntax level for graph compiling, triggered by GRAPH_MODE and @jit decorator.
             The value must be ``STRICT`` or ``LAX`` . Default: ``LAX`` . All levels support all backends.
@@ -1463,7 +1471,7 @@ def set_context(**kwargs):
                            "For details, please see the interface parameter API comments")
             continue
         if key in ('precision_mode', 'jit_compile', 'atomic_clean_policy', 'matmul_allow_hf32', 'conv_allow_hf32',
-                   'op_precision_mode'):
+                   'op_precision_mode', 'host_scheduling_max_threshold'):
             raise ValueError(f"Please set '{key}' through parameter ascend_config")
         if key == 'save_graphs':
             if value is True:

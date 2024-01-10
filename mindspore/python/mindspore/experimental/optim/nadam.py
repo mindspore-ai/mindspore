@@ -19,7 +19,7 @@ from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common import Parameter, Tensor
 import mindspore.common.dtype as mstype
 from mindspore import _checkparam as validator
-from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than
+from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than, check_not_less_than_without_equal
 
 _nadam_opt = C.MultitypeFuncGraph("nadam_opt")
 
@@ -77,7 +77,7 @@ class NAdam(Optimizer):
         ValueError: If the `eps` is less than 0.0.
         ValueError: If the `weight_decay` is less than 0.
         ValueError: If the `momentum_decay` is less than 0.
-        ValueError: If elements of `betas` not in the range of 0-1.
+        ValueError: If elements of `betas` not in the range of [0, 1).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -101,9 +101,9 @@ class NAdam(Optimizer):
         ...     optimizer(grads)
         ...     return loss
     """
-    def __init__(self, params, lr=2e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0., momentum_decay=4e-3):
-        check_not_less_than(lr, "lr", self.cls_name)
-        check_not_less_than(eps, "eps", self.cls_name)
+    def __init__(self, params, lr=2e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0.0, momentum_decay=4e-3):
+        check_not_less_than_without_equal(lr, "lr", self.cls_name)
+        check_not_less_than_without_equal(eps, "eps", self.cls_name)
         check_not_less_than(weight_decay, "weight_decay", self.cls_name)
         check_not_less_than(momentum_decay, "momentum_decay", self.cls_name)
 
@@ -120,6 +120,7 @@ class NAdam(Optimizer):
 
         self.increase_tensor = Tensor(1, mstype.int32)
         self.assignadd = P.AssignAdd()
+        self.op_cast = P.Cast()
 
     def construct(self, gradients):
         self.assignadd(self.step_t, self.increase_tensor)

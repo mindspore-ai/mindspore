@@ -31,7 +31,7 @@ def conj_backward_func(x):
     return ops.grad(conj_forward_func, (0,))(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -72,7 +72,7 @@ def test_conj_backward(mode):
     assert np.allclose(grads.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

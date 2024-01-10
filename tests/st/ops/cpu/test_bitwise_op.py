@@ -42,7 +42,7 @@ suport_type_list = [np.bool_, np.int8, np.int16, np.int32, np.int64, np.uint8, n
 mode_list = [context.PYNATIVE_MODE, context.GRAPH_MODE]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6), (3, 4, 5, 6, 2)])
@@ -69,7 +69,7 @@ def test_bitwise_and(shape, dtype, mode_cpu):
     assert np.allclose(outputs_functional.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6), (3, 4, 5, 6, 2)])
@@ -96,7 +96,7 @@ def test_bitwise_or(shape, dtype, mode_cpu):
     assert np.allclose(outputs_functional.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6), (3, 4, 5, 6, 2)])
@@ -123,7 +123,7 @@ def test_bitwise_xor(shape, dtype, mode_cpu):
     assert np.allclose(outputs_functional.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('op', [P.BitwiseAnd(), P.BitwiseOr(), P.BitwiseXor()])
@@ -156,7 +156,7 @@ def test_bitwise_vmap(op, dtype):
     assert np.allclose(outputs.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', suport_type_list)
@@ -178,7 +178,7 @@ def test_bitwise_and_tensor_interface_operator(dtype, mode, shape):
     assert np.allclose(outputs.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', suport_type_list)
@@ -200,7 +200,7 @@ def test_bitwise_or_tensor_interface_operator(dtype, mode, shape):
     assert np.allclose(outputs.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', suport_type_list)
@@ -222,7 +222,7 @@ def test_bitwise_xor_tensor_interface_operator(dtype, mode, shape):
     assert np.allclose(outputs.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', suport_type_list)
@@ -244,7 +244,7 @@ def test_bitwise_and_tensor_interface(dtype, mode, shape):
     assert np.allclose(outputs.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', suport_type_list)
@@ -266,7 +266,7 @@ def test_bitwise_or_tensor_interface(dtype, mode, shape):
     assert np.allclose(outputs.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', suport_type_list)
@@ -288,7 +288,7 @@ def test_bitwise_xor_tensor_interface(dtype, mode, shape):
     assert np.allclose(outputs.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('xshape', [(2, 3)])
@@ -315,7 +315,7 @@ def test_bitwise_and_broadcast(xshape, yshape, dtype):
     assert np.allclose(outputs_functional.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('xshape', [(2, 3)])
@@ -342,7 +342,7 @@ def test_bitwise_or_broadcast(xshape, yshape, dtype):
     assert np.allclose(outputs_functional.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('xshape', [(2, 3)])

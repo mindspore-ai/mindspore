@@ -29,8 +29,10 @@
 #include "ops/nn_optimizer_op_name.h"
 #include "ops/sparse_ops.h"
 #include "ops/auto_generate/gen_ops_primitive.h"
+#include "ops/op_utils.h"
 #include "utils/anf_utils.h"
 #include "utils/log_adapter.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -148,15 +150,15 @@ CNodePtr ConstInputToAttr(const CNodePtr &cnode, const mindspore::HashSet<size_t
   auto primitive = GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
   primitive = primitive->Clone();
-  auto input_names = primitive->GetAttr(kAttrInputNames);
-  if (input_names == nullptr) {
-    MS_LOG(DEBUG) << "input_names are nullptr in cnode[" + cnode->DebugString() + "]";
-    return cnode;
-  }
-  auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
   auto inputs = cnode->inputs();
   new_inputs.push_back(inputs[0]);
   bool need_update = false;
+  auto input_names = primitive->GetAttr(kAttrInputNames);
+  std::vector<std::string> input_names_vec;
+  if (input_names != nullptr) {
+    input_names_vec = GetValue<std::vector<std::string>>(input_names);
+  }
+  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   for (size_t i = 0; i < inputs.size() - 1; ++i) {
     auto input_node = inputs[i + 1];
     MS_EXCEPTION_IF_NULL(input_node);
@@ -164,12 +166,21 @@ CNodePtr ConstInputToAttr(const CNodePtr &cnode, const mindspore::HashSet<size_t
       input_node = AnfUtils::VisitKernel(input_node, 0).first;
     }
     if (input_attrs.find(i) != input_attrs.end() && input_node->isa<ValueNode>() && !HasAbstractMonad(input_node)) {
+      auto input_name = ops::GetInputNameByIndex(op_name, i);
+      if (input_name == "") {
+        // operators that are not developed by yaml
+        if (input_names_vec.empty()) {
+          MS_LOG(DEBUG) << "input_names are nullptr in cnode[" + cnode->DebugString() + "]";
+          return cnode;
+        }
+        if (i >= input_names_vec.size()) {
+          MS_LOG(EXCEPTION) << "Index " << i << " is larger than input names size [" << input_names_vec.size() << "]";
+        }
+        input_name = input_names_vec[i];
+      }
       auto value_node = input_node->cast<ValueNodePtr>();
       MS_EXCEPTION_IF_NULL(value_node);
       MS_LOG(DEBUG) << "start erase input[" << i << "] of cnode[" + cnode->DebugString() + "]";
-      if (i >= input_names_vec.size()) {
-        MS_LOG(EXCEPTION) << "Index " << i << " is larger than input names size [" << input_names_vec.size() << "]";
-      }
       auto value = value_node->value();
       if (value->isa<tensor::Tensor>()) {
         auto tensor = value->cast<tensor::TensorPtr>();
@@ -178,7 +189,7 @@ CNodePtr ConstInputToAttr(const CNodePtr &cnode, const mindspore::HashSet<size_t
           break;
         }
       }
-      primitive->set_attr(input_names_vec[i], value);
+      primitive->set_attr(input_name, value);
       need_update = true;
     } else {
       new_inputs.push_back(inputs[i + 1]);

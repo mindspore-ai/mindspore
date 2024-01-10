@@ -38,7 +38,7 @@ def add_infervalue_func2():
     y = ms.Tensor(np.array([3, 5, 1]).astype(np.float32))
     return ops.auto_generate.add(x, y)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -64,7 +64,7 @@ def test_add(mode):
     compare(output_grads, expect_grads)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -88,7 +88,7 @@ def test_add_vmap(mode):
     assert np.allclose(output_vmap.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -121,7 +121,7 @@ def test_add_dyn(mode):
         compare(output_grads, expect_grads)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

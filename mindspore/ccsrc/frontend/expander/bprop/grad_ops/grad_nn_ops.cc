@@ -27,19 +27,6 @@
 namespace mindspore::expander::bprop {
 namespace {
 const int kConstNumberTwo = 2;
-bool IsLastAxis(const ShapeVector &shape, int64_t axis) {
-  if (axis == -1) {
-    return true;
-  }
-  if (IsDynamicRank(shape)) {
-    return false;
-  }
-  auto rank = SizeToLong(shape.size());
-  if (axis < 0) {
-    axis += rank;
-  }
-  return (axis == (rank - 1));
-}
 }  // namespace
 
 NodePtrList Dropout2DBpropExpander(BpropIRBuilder *ib) {
@@ -196,23 +183,6 @@ class ExtractImagePatchesShapeCalc : public ShapeCalcFunctor {
   int64_t ksizes_col_{0};
 };
 REG_FUNCTOR("ShapeCalc_ExtractImagePatches", ExtractImagePatchesShapeCalc);
-
-class SoftmaxShapeCalc : public ShapeCalcFunctor {
- public:
-  DECLARE_SHAPE_CALC("ShapeCalc_Softmax", SoftmaxShapeCalc)
-  ValuePtr ToValue() const override { return nullptr; }
-  void FromValue(const ValuePtr &value) override {}
-  ShapeArray Calc(const ShapeArray &inputs) const override {
-    // inputs: {x_shape, axis}
-    auto axis = inputs.at(1)[0];
-    return {GetTransposeAxis(inputs.at(0), axis)};
-  }
-  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &) const override {
-    int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : SizeToLong(inputs.at(0).size());
-    return {x_rank};
-  }
-};
-REG_FUNCTOR("ShapeCalc_Softmax", SoftmaxShapeCalc);
 
 REG_BPROP_BUILDERS_BEGIN(GradNnOps)
 REG_BPROP_BUILDER("Conv2D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
@@ -397,10 +367,11 @@ REG_BPROP_BUILDER("TopK").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto in_shape = ib->GetShape(input_x);
   if (IsDynamic(in_shape)) {
     auto re0 = ib->ShapeCalc(g_topk_1, {indices})[0];
-    NodePtr ind_2d = ib->Reshape(indices, ib->TensorToTuple(re0));
+    NodePtr ind_2d = ib->Reshape(indices, re0);
     auto res = ib->ShapeCalc(g_topk_2, {input_x, ind_2d});
-    auto in_shape_1d = ib->TensorToTuple(res[0]);
-    auto range_flatten_index = ib->Range(ib->Value<int64_t>(0), ib->TensorToScalar(res[1]), ib->TensorToScalar(res[2]));
+    auto in_shape_1d = res[0];
+    auto range_flatten_index =
+      ib->Range(ib->Value<int64_t>(0), ib->TupleGetItem(res[1], 0), ib->TupleGetItem(res[2], 0));
     auto ind = ib->Reshape(ind_2d + ib->Reshape(range_flatten_index, {-1, 1}), {-1, 1});
     auto out_grad = ib->ScatterNd(ind, ib->Reshape(dout0, {-1}), in_shape_1d);
     out_grad = ib->Reshape(out_grad, ib->Shape(input_x));
@@ -947,11 +918,11 @@ REG_BPROP_BUILDER("MaxPoolGrad").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) 
     if (IsDynamic(x2_shape)) {
       auto shape = ib->Emit("Shape", {x2});
       auto res = ib->ShapeCalc(g_max_pool_grad, {x2});
-      auto batch = ib->Cast(ib->Range(ib->TensorToScalar(res[0])), kInt32);
-      batch = ib->Tile(ib->Reshape(batch, {-1, 1}), ib->TensorToTuple(res[2]));
+      auto batch = ib->Cast(ib->Range(ib->TupleGetItem(res[0], 0)), kInt32);
+      batch = ib->Tile(ib->Reshape(batch, {-1, 1}), res[2]);
       int64_t axis = -1;
-      auto gather_ind = ib->Stack({batch, ib->Reshape(ind, ib->TensorToTuple(res[1]))}, axis);
-      dgrad = ib->Reshape(ib->GatherNd(ib->Reshape(dout, ib->TensorToTuple(res[1])), gather_ind), shape);
+      auto gather_ind = ib->Stack({batch, ib->Reshape(ind, res[1])}, axis);
+      dgrad = ib->Reshape(ib->GatherNd(ib->Reshape(dout, res[1]), gather_ind), shape);
     } else {
       auto b = x2_shape.at(0);
       auto c = x2_shape.at(1);
@@ -1096,14 +1067,6 @@ REG_BPROP_BUILDER("ReLU6").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   return {dx};
 });
 
-REG_BPROP_BUILDER("ReLUV2").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
-  auto out = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex2);
-  auto mask = ib->TupleGetItem(out, 1);
-  auto dx = ib->Emit("ReluGradV2", {ib->TupleGetItem(dout, 0), mask});
-  return {dx};
-});
-
 REG_BPROP_BUILDER("BiasAddGrad").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto dy = ib->GetInput(kIndex0);
   auto format = ib->GetInput(kIndex1);
@@ -1114,7 +1077,7 @@ REG_BPROP_BUILDER("BiasAddGrad").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) 
   NodePtr expanded_shape = res[0];
   NodePtr tile_mults = res[1];
 
-  auto expanded_grad = ib->Reshape(dout, ib->TensorToTuple(expanded_shape));
+  auto expanded_grad = ib->Reshape(dout, expanded_shape);
   auto tiled_grad = ib->Tile(expanded_grad, tile_mults);
   return {tiled_grad, ib->OutZeros(format)};
 });
@@ -1144,25 +1107,25 @@ REG_BPROP_BUILDER("ExtractImagePatches").SetUnusedInputs({i0, i5}).SetBody(BODYF
   if (IsDynamic(x_shape) || IsDynamic(out_shape)) {
     auto res = ib->ShapeCalc(std::make_shared<ExtractImagePatchesShapeCalc>(ksizes_row, ksizes_col), {x, out});
     auto x_idx =
-      ib->Cast(ib->Range(ib->Value<int64_t>(1), ib->TensorToScalar(res[0]), ib->Value<int64_t>(1)), kFloat32);
-    x_idx = ib->Reshape(x_idx, ib->TensorToTuple(res[1]));
+      ib->Cast(ib->Range(ib->Value<int64_t>(1), ib->TupleGetItem(res[0], 0), ib->Value<int64_t>(1)), kFloat32);
+    x_idx = ib->Reshape(x_idx, res[1]);
 
     auto x_idx_patch = ib->Cast(ib->Emit("ExtractImagePatches", {x_idx, ksizes, strides, rates, padding}), kInt32);
     x_idx_patch = ib->Transpose(x_idx_patch, {0, 2, 3, 1});
-    auto out_idx = ib->Cast(ib->Range(ib->TensorToScalar(res[2])), kInt32);
-    out_idx = ib->Reshape(out_idx, ib->TensorToTuple(res[3]));
+    auto out_idx = ib->Cast(ib->Range(ib->TupleGetItem(res[2], 0)), kInt32);
+    out_idx = ib->Reshape(out_idx, res[3]);
     auto idx_tensor = ib->Emit("Concat", {ib->MakeTuple({ib->ExpandDims(x_idx_patch, -1), ib->ExpandDims(out_idx, -1)}),
                                           ib->Value<int64_t>(-1)});
     idx_tensor = ib->Reshape(idx_tensor, {-1, 2});
     auto ones = ib->Fill(1.0, res[2], ib->GetDtype(dout)->type_id());
-    auto sp_tensor = ib->ScatterNd(idx_tensor, ones, ib->TensorToTuple(res[4]));
+    auto sp_tensor = ib->ScatterNd(idx_tensor, ones, res[4]);
     sp_tensor = ib->Slice(sp_tensor, ib->Value<ShapeVector>({1, 0}), res[5]);
     auto grad = ib->Transpose(dout, {0, 2, 3, 1});
-    grad = ib->Reshape(grad, ib->TensorToTuple(res[6]));
+    grad = ib->Reshape(grad, res[6]);
     grad = ib->Transpose(grad, {1, 2, 3, 4, 0, 5});
-    grad = ib->Reshape(grad, ib->TensorToTuple(res[7]));
+    grad = ib->Reshape(grad, res[7]);
     auto jac = ib->MatMul(sp_tensor, grad, false, false);
-    auto dx = ib->Reshape(jac, ib->TensorToTuple(res[8]));
+    auto dx = ib->Reshape(jac, res[8]);
     dx = ib->Transpose(dx, {2, 3, 0, 1});
     return {dx, ib->OutZeros(ksizes), ib->OutZeros(strides), ib->OutZeros(rates), ib->OutZeros(padding)};
   } else {
@@ -1404,29 +1367,11 @@ REG_BPROP_BUILDER("BatchNormGrad").SetUnusedInputs({i5, i9}).SetBody(BODYFUNC(ib
 });
 
 REG_BPROP_BUILDER("Softmax").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
-  auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto shp = ib->GetShape(x);
-  std::vector<int64_t> axis_vec{};
-  auto axis_value = axis->BuildValue();
-  bool success = false;
-  if (!(axis_value->isa<ValueAny>() || axis_value->isa<None>())) {
-    axis_vec = GetIntList(axis_value);
-    success = true;
-  }
-  if (success && IsLastAxis(shp, axis_vec[0])) {
-    auto dx = ib->Mul(out, ib->Sub(dout, ib->ReduceSum(ib->Mul(out, dout), ShapeVector{-1}, true)));
-    return {dx, ib->OutZeros(axis)};
-  }
-  auto reverse_axis = (IsDynamicRank(shp) || !success)
-                        ? ib->ShapeCalc(std::make_shared<SoftmaxShapeCalc>(), {x, axis}, {1})[0]
-                        : ib->Value(GetTransposeAxis(shp, axis_vec[0]));
-  out = ib->Transpose(out, reverse_axis);
-  dout = ib->Transpose(dout, reverse_axis);
-  auto dx = ib->Mul(out, ib->Sub(dout, ib->ReduceSum(ib->Mul(out, dout), ShapeVector{-1}, true)));
-  dx = ib->Transpose(dx, reverse_axis);
+  auto dim = ib->TupleGetItem(axis, 0);
+  auto dx = ib->Emit("SoftmaxBackward", {dout, out, dim});
   return {dx, ib->OutZeros(axis)};
 });
 
@@ -2089,16 +2034,17 @@ REG_BPROP_BUILDER("FlashAttentionScore").SetBody((BODYFUNC(ib) {
   auto drop_mask = ib->GetInput(kIndex4);
   auto pse_shift = ib->GetInput(kIndex5);
   auto padding_mask = ib->GetInput(kIndex6);
-  auto out = ib->GetInput(kIndex7);
+  auto prefix = ib->GetInput(kIndex7);
+  auto out = ib->GetInput(kIndex8);
   auto attention_out = ib->TupleGetItem(out, kIndex0);
   auto softmax_max = ib->TupleGetItem(out, kIndex1);
   auto softmax_sum = ib->TupleGetItem(out, kIndex2);
   auto softmax_out = ib->EmitValue(kNone);
-  auto dout = ib->GetInput(kIndex8);
+  auto dout = ib->GetInput(kIndex9);
   auto d_attention_out = ib->TupleGetItem(dout, kIndex0);
   auto grad = ib->Emit("FlashAttentionScoreGrad",
                        {query, key, value, attn_mask, attention_out, softmax_max, softmax_sum, d_attention_out,
-                        drop_mask, pse_shift, padding_mask, softmax_out},
+                        drop_mask, pse_shift, padding_mask, softmax_out, prefix},
                        {
                          {"head_num", ib->GetAttr("head_num")},
                          {"keep_prob", ib->GetAttr("keep_prob")},
@@ -2107,6 +2053,7 @@ REG_BPROP_BUILDER("FlashAttentionScore").SetBody((BODYFUNC(ib) {
                          {"next_tokens", ib->GetAttr("next_tokens")},
                          {"inner_precise", ib->GetAttr("inner_precise")},
                          {"input_layout", ib->GetAttr("input_layout")},
+                         {"sparse_mode", ib->GetAttr("sparse_mode")},
                        });
   auto g_query = ib->TupleGetItem(grad, kIndex0);
   auto g_key = ib->TupleGetItem(grad, kIndex1);
@@ -2115,7 +2062,8 @@ REG_BPROP_BUILDER("FlashAttentionScore").SetBody((BODYFUNC(ib) {
   auto g_drop_mask = ib->ZerosLike(drop_mask);
   auto g_pse_shift = ib->ZerosLike(pse_shift);
   auto g_padding_mask = ib->ZerosLike(padding_mask);
-  return {g_query, g_key, g_value, g_attn_mask, g_drop_mask, g_pse_shift, g_padding_mask};
+  auto g_prefix = ib->ZerosLike(prefix);
+  return {g_query, g_key, g_value, g_attn_mask, g_drop_mask, g_pse_shift, g_padding_mask, g_prefix};
 }));
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

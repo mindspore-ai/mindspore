@@ -1323,6 +1323,25 @@ void AbstractSequence::set_dyn_len_arg() { dyn_len_arg_ = true; }
 
 bool AbstractSequence::dyn_len_arg() const { return dyn_len_arg_; }
 
+bool AbstractSequence::ContainsAllBroadenTensors() const {
+  if (dynamic_len_) {
+    if (dynamic_len_element_abs_ != nullptr && dynamic_len_element_abs_->isa<AbstractTensor>()) {
+      return true;
+    }
+    return false;
+  }
+  if (elements_.empty()) {
+    return false;
+  }
+  auto exist_not_broadened_tensor = [](const AbstractBasePtr &abs) {
+    bool is_broaden_tensor = abs->isa<abstract::AbstractUndetermined>() && abs->IsBroaden();
+    bool is_broaden_sequence = abs->isa<abstract::AbstractSequence>() &&
+                               abs->cast_ptr<abstract::AbstractSequence>()->ContainsAllBroadenTensors();
+    return !is_broaden_tensor && !is_broaden_sequence;
+  };
+  return !std::any_of(elements_.cbegin(), elements_.cend(), exist_not_broadened_tensor);
+}
+
 AbstractTuple::AbstractTuple(AbstractBasePtrList &&elements, const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes)
     : AbstractSequence(std::move(elements), tuple_nodes) {}
 
@@ -1391,42 +1410,6 @@ void AbstractTuple::set_shape(const BaseShapePtr &shape) {
     MS_EXCEPTION_IF_NULL(elements_[i]);
     elements_[i]->set_shape(tuple_shape->shape()[i]);
   }
-}
-
-bool AbstractTuple::ContainsAllBroadenTensors() const {
-  if (dynamic_len_) {
-    if (dynamic_len_element_abs_ != nullptr && dynamic_len_element_abs_->isa<AbstractTensor>()) {
-      return true;
-    }
-    return false;
-  }
-  for (size_t i = 0; i < elements_.size(); ++i) {
-    if (!(elements_[i]->isa<abstract::AbstractUndetermined>() && elements_[i]->IsBroaden()) &&
-        !(elements_[i]->isa<abstract::AbstractTuple>() &&
-          elements_[i]->cast_ptr<abstract::AbstractTuple>()->ContainsAllBroadenTensors())) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool AbstractTuple::ContainsAllConstants() const {
-  for (const auto &element : elements_) {
-    auto element_value = element->BuildValue();
-    MS_EXCEPTION_IF_NULL(element_value);
-    // Check if tuple contains only constants, i.e. string, number, constant tensor and tuple.
-    if (!(element_value->isa<StringImm>() || element_value->isa<Scalar>() ||
-          (element->isa<abstract::AbstractTensor>() && !element_value->ContainsValueAny()) ||
-          element->isa<abstract::AbstractTuple>())) {
-      return false;
-    }
-    // Check if inner tuple contains only constants recursively.
-    if (element->isa<abstract::AbstractTuple>() &&
-        !element->cast_ptr<abstract::AbstractTuple>()->ContainsAllConstants()) {
-      return false;
-    }
-  }
-  return true;
 }
 
 bool AbstractTuple::operator==(const AbstractBase &other) const {

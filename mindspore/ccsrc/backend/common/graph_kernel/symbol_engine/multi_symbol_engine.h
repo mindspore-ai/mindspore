@@ -44,8 +44,8 @@ class MultiSymbolEngine : public SymbolEngineImpl {
                                          size_t begin_input_index) override;
   void BuildSubgraphImpl(const CNodePtr &cnode, const FuncGraphPtr &sub_fg, size_t begin_input_index) override;
   void SaveInputParaMap(std::map<SymbolPtr, SymbolPtr> *input_para_map, const SymbolPtr &inp, const SymbolPtr &para);
-  ListSymbolPtr BuildShapeWithInputHint(const AbstractBasePtr &abs, const std::vector<ListSymbolPtr> &inputs,
-                                        const std::map<SymbolPtr, SymbolPtr> &input_para_map);
+  ListSymbolPtr BuildShapeWithInputHint(const AbstractBasePtr &para_abs, const std::vector<ListSymbolPtr> &inputs,
+                                        std::map<SymbolPtr, SymbolPtr> *input_para_map);
   void GenInputSymbols(const CNodePtr &cnode, const FuncGraphPtr &sub_fg, size_t begin_input_index);
 };
 }  // namespace symshape

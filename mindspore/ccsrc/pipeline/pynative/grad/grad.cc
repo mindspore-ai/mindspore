@@ -721,6 +721,9 @@ void GradExecutor::EndGraphImpl(const InputArgsInfoPtr &input_args_info) {
   bool is_top_cell_end = (input_args_info->cell_id == top_cell()->cell_id());
   if (is_top_cell_end) {
     auto out_tensor = ConvertOutputValueToTensor(input_args_info->out_value);
+    std::vector<std::string> output_tensors_id;
+    PyNativeAlgo::DataConvert::ConvertValueTensorId(out_tensor, &output_tensors_id);
+    top_cell()->set_outputs_ids(std::move(output_tensors_id));
     if (out_tensor != nullptr) {
       input_args_info->out_value = out_tensor;
     }

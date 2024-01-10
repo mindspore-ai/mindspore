@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -270,11 +270,11 @@ void CallbackImpl::ResetKernelInfo(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto ori_cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(ori_cnode);
-  auto cnode = ori_cnode;
-  bool need_convert = NeedConvertInputAndAttr(cnode);
+  CNodePtr cnode = ori_cnode;
+  bool need_convert = OpDefAdapter::NeedConvertGK2FE(cnode);
   if (need_convert) {
     // convert attr to input for selecting kernel, but not changed the original node.
-    // the original cnode will be modified in the pass ConvertAttrToInput of postprocess.
+    // the original cnode will be modified in the pass ConvertGraphKernelToFrontEnd of postprocess.
     cnode = node->func_graph()->NewCNode(ori_cnode->inputs());
     cnode->CloneCNodeInfo(ori_cnode);
     auto p = GetCNodePrimitive(ori_cnode);
@@ -282,7 +282,10 @@ void CallbackImpl::ResetKernelInfo(const AnfNodePtr &node) {
     cnode->set_input(0, NewValueNode(p->Clone()));
     cnode->input(0)->set_abstract(ori_cnode->input(0)->abstract());
     cnode->input(0)->set_kernel_info(ori_cnode->input(0)->kernel_info_ptr());
-    need_convert = ConvertAttrToInput::Process(cnode);
+    need_convert = ConvertGraphKernelToFrontEnd::Process(cnode);
+    if (!need_convert) {
+      cnode = ori_cnode;
+    }
   }
 
   if (GetTargetFromContext() == kAscendDevice) {

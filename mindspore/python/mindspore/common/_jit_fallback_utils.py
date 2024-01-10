@@ -80,8 +80,8 @@ def list_inplace_pop(list_obj, index):
     # This will be removed after empty list problem is solved.
     if isinstance(list_obj, tuple) and not list_obj == 0:
         list_obj = []
-    list_obj.pop(index)
-    return list_obj
+    ret = list_obj.pop(index)
+    return list_obj, ret
 
 
 def list_inplace_reverse(list_obj):

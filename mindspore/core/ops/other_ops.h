@@ -103,6 +103,9 @@ GVAR_DEF(PrimitivePtr, kPrimNPUAntiQuant, std::make_shared<Primitive>("AscendAnt
 
 // Fusion Inference OP
 GVAR_DEF(PrimitivePtr, kPrimFFN, std::make_shared<Primitive>("FFN"));
+
+// ToEnum OP
+GVAR_DEF(PrimitivePtr, kPrimStringToEnum, std::make_shared<Primitive>("StringToEnum"));
 }  // namespace prim
 }  // namespace mindspore
 

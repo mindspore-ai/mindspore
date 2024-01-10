@@ -61,7 +61,7 @@ def test_equal_tensor_modes():
     test_equal_tensor_api()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_f_equal_api_modes():

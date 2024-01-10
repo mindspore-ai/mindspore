@@ -115,7 +115,7 @@ def run_multi_actor_fusion(net_name, net, input1, input2, input3, input4, expect
     print(net_name + " avg_time:", total_time/total_count)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -133,7 +133,7 @@ def test_non_concurrent():
     run_multi_actor_fusion("non_concurrent", net, input_x, input_x, input_x, input_x, expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -151,7 +151,7 @@ def test_non_concurrent_with_while():
     run_multi_actor_fusion("non_concurrent_with_while", net, input_x, input_loop, input_x, input_loop, expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -172,7 +172,7 @@ def test_concurrent():
     run_multi_actor_fusion("concurrent", net, input1, input2, input3, input4, expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

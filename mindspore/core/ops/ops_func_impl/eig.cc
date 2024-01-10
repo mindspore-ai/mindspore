@@ -22,7 +22,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t kDefaultRank = 2;
+// As kDefaultRank will have a confilict problem during lite compile, use kDefaultShapeSize.
+constexpr size_t kDefaultShapeSize = 2;
 constexpr size_t kRowIndex = 2;
 constexpr size_t kColIndex = 1;
 }  // namespace
@@ -32,7 +33,7 @@ void EigCheckShapeValid(const ShapeVector &input_shape) {
     return;
   }
 
-  if (input_shape.size() < kDefaultRank) {
+  if (input_shape.size() < kDefaultShapeSize) {
     MS_EXCEPTION(ValueError) << "For Eig, x should be at lease 2"
                              << ", but got a " << input_shape.size() << "-D Tensor.";
   }
@@ -52,7 +53,7 @@ void EigCheckShapeValid(const ShapeVector &input_shape) {
 BaseShapePtr EigFuncImpl::InferShape(const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) const {
   auto input_shape = input_args[kInputIndex0]->GetShape()->GetShapeVector();
-  std::vector<BaseShapePtr> shapes_list(kDefaultRank);
+  std::vector<BaseShapePtr> shapes_list(kDefaultShapeSize);
   EigCheckShapeValid(input_shape);
 
   /* infer eigen_value shape  */
@@ -87,6 +88,12 @@ BaseShapePtr EigFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr EigFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
   auto x_type = input_args[kInputIndex0]->GetType();
+
+  std::map<std::string, TypePtr> types;
+  (void)types.emplace("x", x_type);
+  const std::set<TypePtr> eig_support_dtype = {kComplex64, kComplex128, kFloat32, kFloat64};
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, eig_support_dtype, primitive->name());
+
   std::vector<TypePtr> types_list;
   if (*(x_type->cast<TensorTypePtr>()->element()) == *(kFloat32)) {
     types_list = {std::make_shared<TensorType>(kComplex64), std::make_shared<TensorType>(kComplex64)};

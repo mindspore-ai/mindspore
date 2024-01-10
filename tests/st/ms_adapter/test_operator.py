@@ -204,7 +204,7 @@ def test_logical_operator():
     assert type(logical_not_fn(adapter_x)) is adapter.Tensor
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_contain_operator():

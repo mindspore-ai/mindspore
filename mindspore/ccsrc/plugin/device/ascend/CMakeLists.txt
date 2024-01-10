@@ -154,7 +154,7 @@ if(MODE_ASCEND_ALL)
     target_link_libraries(mindspore_ascend PRIVATE ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} ${ERROR_MANAGER}
             -Wl,--no-as-needed ${OPTILING} ${OPMASTER_RT2} ${PLATFORM} ${ACL} ${ACL_TDT_CHANNEL} ${OPT_FEATURE}
             ${PROFILING} ${ACL_OP_COMPILER} ${CANN_KB} ${COMPRESS} ${OPSKERNEL} ${AICPU_ASCEND_ENGINE}
-            ${HOST_CPU_ENGINE} ${AICPU_TF_ENGINE} ${SLICE} ${AOE_EXECUTOR})
+            ${HOST_CPU_ENGINE} ${AICPU_TF_ENGINE} ${SLICE} ${AOE_EXECUTOR} ${ACL_DVPP_OP} ${ACL_DVPP_MPI})
     target_link_libraries(mindspore_ascend PRIVATE ${adump_server})
 endif()
 

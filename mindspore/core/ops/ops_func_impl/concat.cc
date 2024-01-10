@@ -17,6 +17,7 @@
 #include "ops/ops_func_impl/concat.h"
 
 #include <limits>
+#include <string>
 #include <utility>
 #include <vector>
 #include <memory>
@@ -44,7 +45,8 @@ inline std::pair<ShapeVector, int64_t> CheckShapesValid(const ShapeArray &shapes
   int64_t diff_idx = kUnknownDiffIdx;
   ShapeVector output_shape = {abstract::TensorShape::kShapeRankAny};
   bool seen_rank_valid = false;
-  for (const auto &shape : shapes) {
+  for (size_t i = 0; i < shapes.size(); ++i) {
+    const auto &shape = shapes[i];
     if (IsDynamicRank(shape)) {
       continue;
     }
@@ -55,6 +57,10 @@ inline std::pair<ShapeVector, int64_t> CheckShapesValid(const ShapeArray &shapes
       continue;
     }
 
+    MS_CHECK_VALUE(shape.size() > 0,
+                   CheckAndConvertUtils::FormatCommMsg(
+                     "For primitive[", primitive->name(),
+                     "], all elements should not be zero rank, but got zero rank in position ", i, "!"));
     MS_CHECK_VALUE(
       output_shape.size() == shape.size(),
       CheckAndConvertUtils::FormatCommMsg("For primitive[", primitive->name(), "], element size must be same(",
@@ -68,8 +74,8 @@ inline std::pair<ShapeVector, int64_t> CheckShapesValid(const ShapeArray &shapes
           diff_idx = new_diff_idx;
         } else if (diff_idx != new_diff_idx) {
           MS_EXCEPTION(ValueError) << "For primitive[" << primitive->name()
-                                   << "] only support one dim different, bug got more than one shapes is " << shapes
-                                   << "!";
+                                   << "] only support one dim different, bug got more than one(shapes is " << shapes
+                                   << ")!";
         }
       }
     }
@@ -178,12 +184,20 @@ TypePtr ConcatFuncImpl::InferType(const PrimitivePtr &primitive, const std::vect
   if (MS_UNLIKELY(tuple_type->dynamic_len())) {
     auto element_type = tuple_type->dynamic_element_type();
     MS_EXCEPTION_IF_NULL(element_type);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("dynamic-length element", element_type,
+                                                     common_valid_types_with_complex_and_bool, primitive->name());
     return element_type->Clone();
   }
 
   auto elements = tuple_type->elements();
   MS_CHECK_VALUE(elements.size() > 0, CheckAndConvertUtils::FormatCheckIntegerMsg("elements size", elements.size(),
                                                                                   kGreaterThan, 0, primitive));
+  std::map<std::string, TypePtr> types;
+  for (size_t i = 0; i < elements.size(); ++i) {
+    std::string element = "element" + std::to_string(i);
+    (void)types.emplace(element, elements[i]);
+  }
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex_and_bool, primitive->name());
   return elements[0]->Clone();
 }
 }  // namespace mindspore::ops

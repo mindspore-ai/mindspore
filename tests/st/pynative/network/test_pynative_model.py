@@ -44,7 +44,7 @@ class GradWrap(nn.Cell):
         return grad_by_list(self.network, weights)(x, label)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_softmaxloss_grad():
@@ -86,7 +86,7 @@ def test_softmaxloss_grad():
     print(out[0], (out[0]).asnumpy(), ":result")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_lenet_grad():

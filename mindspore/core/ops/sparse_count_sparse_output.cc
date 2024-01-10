@@ -45,10 +45,58 @@ using mindspore::abstract::AbstractTuple;
 namespace {
 abstract::TupleShapePtr SparseCountSparseOutputInferShape(const PrimitivePtr &,
                                                           const std::vector<AbstractBasePtr> &input_args) {
+  auto indices_shape = input_args[kInputIndex0]->GetShape()->GetShapeVector();
+  auto values_shape = input_args[kInputIndex1]->GetShape()->GetShapeVector();
+  auto dense_shape_shape = input_args[kInputIndex2]->GetShape()->GetShapeVector();
+  const int maxIndexRank = 2;
+  if (indices_shape.size() != maxIndexRank) {
+    MS_EXCEPTION(ValueError) << "For SparseCountSparseOutput, indices must be a 2-D tensor"
+                             << ", but got " << indices_shape.size() << ".";
+  }
+  if (values_shape.size() != 1) {
+    MS_EXCEPTION(ValueError) << "For SparseCountSparseOutput, values must be a 1-D tensor"
+                             << ", but got " << values_shape.size() << ".";
+  }
+  if (dense_shape_shape.size() != 1) {
+    MS_EXCEPTION(ValueError) << "For SparseCountSparseOutput"
+                             << ", dense_shape must be a 1-D tensor, while dense_shape dim num is "
+                             << dense_shape_shape.size() << ".";
+  }
+  if (indices_shape[0] != values_shape[0]) {
+    MS_EXCEPTION(ValueError) << "For SparseCountSparseOutput"
+                             << ", number of values must be same as dim0 of indices"
+                             << " but indices dim0 size is " << indices_shape[0] << ", values_shape dim0 size is "
+                             << values_shape[0] << ".";
+  }
+
+  if (dense_shape_shape[0] != indices_shape[1]) {
+    MS_EXCEPTION(ValueError) << "For SparseCountSparseOutput"
+                             << ", dense_shape dimensions must be equal to second dimension of indices "
+                             << " dense_shape dimensions is " << dense_shape_shape[0]
+                             << ", second dimension of indices is " << indices_shape[1] << ".";
+  }
+
+  if (dense_shape_shape[0] <= 0) {
+    MS_EXCEPTION(ValueError) << "For SparseCountSparseOutput, dense_shape needs at least 1 element "
+                             << ", but got " << dense_shape_shape[0] << ".";
+  }
+
+  ShapeVector indices_max_shape = {indices_shape[0] * indices_shape[1], maxIndexRank};
+  ShapeVector values_max_shape = {indices_shape[0] * indices_shape[1]};
+  ShapeVector dense_shape_max_shape = {maxIndexRank};
+
+  auto out_indices_shape = std::make_shared<mindspore::abstract::Shape>(indices_max_shape);
+  auto out_values_shape = std::make_shared<mindspore::abstract::Shape>(values_max_shape);
+  auto out_dense_shape_shape = std::make_shared<mindspore::abstract::Shape>(dense_shape_max_shape);
+  return std::make_shared<abstract::TupleShape>(
+    std::vector<abstract::BaseShapePtr>{out_indices_shape, out_values_shape, out_dense_shape_shape});
+}
+
+abstract::TupleShapePtr SparseCountSparseOutputFrontendInferShape(const PrimitivePtr &,
+                                                                  const std::vector<AbstractBasePtr> &input_args) {
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
-  auto dense_shape_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto dense_shape_shape = input_args[kInputIndex2]->GetShape()->GetShapeVector();
   const int maxIndexRank = 2;
   if (IsDynamic(indices_shape) || IsDynamic(values_shape) || IsDynamic(dense_shape_shape)) {
     auto out_indices_shape = std::make_shared<mindspore::abstract::Shape>(
@@ -92,15 +140,11 @@ abstract::TupleShapePtr SparseCountSparseOutputInferShape(const PrimitivePtr &,
   }
 
   ShapeVector indices_shape_ = {-1, -1};
-  ShapeVector indices_max_shape = {indices_shape[0] * indices_shape[1], maxIndexRank};
   ShapeVector values_shape_ = {-1};
-  ShapeVector values_max_shape = {indices_shape[0] * indices_shape[1]};
   ShapeVector dense_shape_shape_ = {-1};
-  ShapeVector dense_shape_max_shape = {maxIndexRank};
-
-  auto out_indices_shape = std::make_shared<mindspore::abstract::Shape>(indices_shape_, indices_max_shape);
-  auto out_values_shape = std::make_shared<mindspore::abstract::Shape>(values_shape_, values_max_shape);
-  auto out_dense_shape_shape = std::make_shared<mindspore::abstract::Shape>(dense_shape_shape_, dense_shape_max_shape);
+  auto out_indices_shape = std::make_shared<mindspore::abstract::Shape>(indices_shape_);
+  auto out_values_shape = std::make_shared<mindspore::abstract::Shape>(values_shape_);
+  auto out_dense_shape_shape = std::make_shared<mindspore::abstract::Shape>(dense_shape_shape_);
   return std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>{out_indices_shape, out_values_shape, out_dense_shape_shape});
 }
@@ -138,7 +182,7 @@ TuplePtr SparseCountSparseOutputInferType(const PrimitivePtr &primitive,
 AbstractBasePtr SparseCountSparseOutputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                              const std::vector<abstract::AbstractBasePtr> &input_args) {
   auto infer_type = SparseCountSparseOutputInferType(primitive, input_args);
-  auto infer_shape = SparseCountSparseOutputInferShape(primitive, input_args);
+  auto infer_shape = SparseCountSparseOutputFrontendInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 }  // namespace

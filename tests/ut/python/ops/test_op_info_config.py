@@ -35,28 +35,28 @@ def test_op_info_config():
     Expectation: Success.
     """
     file_path, _ = os.path.split(ms.__file__)
-    tbe_register_info_path = os.path.join(file_path, "ops/_op_impl/aicpu")
-    aicpu_register_info_path = os.path.join(file_path, "ops/_op_impl/tbe")
+    aicpu_register_info_path = os.path.join(file_path, "ops/_op_impl/aicpu")
+    cpu_register_info_path = os.path.join(file_path, "ops/_op_impl/cpu")
     hash_list = ""
 
-    for file in sorted(os.listdir(tbe_register_info_path)):
-        file_path = os.path.join(tbe_register_info_path, file)
+    for file in sorted(os.listdir(cpu_register_info_path)):
+        file_path = os.path.join(cpu_register_info_path, file)
         if os.path.isdir(file_path):
             continue
         hash_list = hash_list + get_file_hash(file_path)
 
     for file in sorted(os.listdir(aicpu_register_info_path)):
-        file_path = os.path.join(aicpu_register_info_path)
+        file_path = os.path.join(aicpu_register_info_path, file)
         if os.path.isdir(file_path):
             continue
         hash_list = hash_list + get_file_hash(file_path)
 
     hash_object = hashlib.md5(hash_list.encode('utf-8'))
     hash_value = hash_object.hexdigest()
-    expect_value = "f3e4a8306e403e4735cc32ff9d46bfce"
+    expect_value = "bc12f3b9171d5c44a87725dda078ada0"
     if hash_value != expect_value:
         log.error(
-            "Hash value check failed! You have modified the registration file of TEB and AICPU, please check whether "
+            "Hash value check failed! You have modified the registration file of AICPU and CPU, please check whether "
             "the file [op_info.config] is modified accordingly. After this, you can modify the test case by replacing "
             "the current expected hash value [{}] with the new hash value [{}].".format(expect_value, hash_value))
     assert hash_value == expect_value

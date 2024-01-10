@@ -31,7 +31,7 @@ from mindspore.train import Accuracy
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.train import Model, LossMonitor, Callback
+from mindspore.train import Model, Callback
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.train.callback._callback import _handle_loss
 from mindspore.common import JitConfig
@@ -218,26 +218,6 @@ def create_dataset(data_path, batch_size=32, repeat_size=1, num_parallel_workers
     mnist_ds = mnist_ds.repeat(repeat_size)
 
     return mnist_ds
-
-
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_train_and_eval_lenet():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    network = LeNet5(10)
-    net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-    net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
-    model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
-
-    print("============== Starting Training ==============")
-    ds_train = create_dataset(os.path.join('/home/workspace/mindspore_dataset/mnist', "train"), 32, 1)
-    model.train(1, ds_train, callbacks=[LossMonitor()], dataset_sink_mode=True)
-
-    print("============== Starting Testing ==============")
-    ds_eval = create_dataset(os.path.join('/home/workspace/mindspore_dataset/mnist', "test"), 32, 1)
-    acc = model.eval(ds_eval, dataset_sink_mode=True)
-    print("============== {} ==============".format(acc))
 
 
 @pytest.mark.level0

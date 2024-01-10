@@ -120,7 +120,9 @@ class BaseKernel : public IKernel<ops::BaseOperator> {
   virtual int PostProcess() {
     for (auto &in_tensor : this->in_tensors()) {
       MS_ASSERT(in_tensor != nullptr);
-      in_tensor->DecRefCount();
+      if (in_tensor->category() == lite::VAR) {
+        in_tensor->DecRefCount();
+      }
     }
     return lite::RET_OK;
   }

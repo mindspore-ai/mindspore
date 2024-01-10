@@ -146,13 +146,10 @@ CNodePtr MakeTupleUnifyMindIR::CreateScalarToTensor(const FuncGraphPtr &func_gra
   primitive->set_attr("dtype", TypeIdToType(type_id));
 
   // set abstract
-  ShapeVector tensor_shape = {1};
-  auto tensor_shape_ptr = std::make_shared<abstract::Shape>(tensor_shape);
-  MS_EXCEPTION_IF_NULL(tensor_shape_ptr);
-
-  auto tmp_abstract = abstract::MakeAbstract(std::make_shared<abstract::Shape>(tensor_shape), TypeIdToType(type_id));
+  auto tmp_abstract = InferAbstract(primitive, {node});
   MS_EXCEPTION_IF_NULL(tmp_abstract);
   scalar_to_tensor->set_abstract(tmp_abstract);
+
   return scalar_to_tensor;
 }
 

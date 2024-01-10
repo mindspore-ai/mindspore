@@ -30,6 +30,7 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+using AddressInfoPair = std::pair<std::vector<kernel::KernelTensor *>, device::DeviceAddressPtrList>;
 class BACKEND_EXPORT PyBoostUtils {
  public:
   static DeviceContext *GetDeviceContext(const std::string &device_type);
@@ -67,8 +68,8 @@ class BACKEND_EXPORT PyBoostUtils {
   }
 
   template <typename... T>
-  static std::pair<std::vector<kernel::KernelTensor *>, device::DeviceAddressPtrList> GetAddressInfo(
-    DeviceContext *device_context, const std::vector<AbstractBasePtr> &input_abs, const T &... args) {
+  static AddressInfoPair GetAddressInfo(DeviceContext *device_context, const std::vector<AbstractBasePtr> &input_abs,
+                                        const T &... args) {
     std::vector<kernel::KernelTensor *> kernel_tensor_list;
     // Kernel tensor is a raw ppointer, device address need to be returned.
     device::DeviceAddressPtrList device_address_list;
@@ -81,14 +82,34 @@ class BACKEND_EXPORT PyBoostUtils {
     return std::make_pair(kernel_tensor_list, device_address_list);
   }
 
+  static void LaunchKernel(const PrimitivePtr &primitive, device::DeviceContext *device_context,
+                           const AddressInfoPair &input_address_info, const AddressInfoPair &output_address_info,
+                           void *stream_ptr = nullptr);
+
   static void GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs, size_t index,
                               std::vector<kernel::KernelTensor *> *kernel_tensor_list,
                               device::DeviceAddressPtrList *device_address_list, const TensorPtr &tensor);
 
+  template <typename T>
   static void GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs, size_t index,
                               std::vector<kernel::KernelTensor *> *kernel_tensor_list,
-                              device::DeviceAddressPtrList *device_address_list,
-                              const std::optional<tensor::TensorPtr> &tensor);
+                              device::DeviceAddressPtrList *device_address_list, const std::optional<T> &val) {
+    if (val.has_value()) {
+      GetKernelTensor(device_context, input_abs, index, kernel_tensor_list, device_address_list, val.value());
+    } else {
+      // Construct none kernel tensor
+      MS_EXCEPTION_IF_NULL(kernel_tensor_list);
+      MS_EXCEPTION_IF_NULL(device_address_list);
+
+      const auto &kernel_tensor = std::make_shared<kernel::KernelTensor>(
+        std::make_shared<abstract::TensorShape>(ShapeVector()), kTypeNone, kNone, nullptr, 0, kOpFormat_DEFAULT,
+        kTypeNone->type_id(), ShapeVector(), device_context->device_context_key().device_name_,
+        device_context->device_context_key().device_id_);
+      (void)kernel_tensor_list->emplace_back(kernel_tensor.get());
+      auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+      (void)device_address_list->emplace_back(device_address);
+    }
+  }
 
   static void GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs, size_t index,
                               std::vector<kernel::KernelTensor *> *kernel_tensor_list,
@@ -126,6 +147,15 @@ class BACKEND_EXPORT PyBoostUtils {
   static kernel::KernelModPtr CreateKernelMod(const PrimitivePtr &prim, const std::string &op_name,
                                               DeviceContext *device_context, const std::vector<KernelTensor *> &inputs,
                                               const std::vector<KernelTensor *> &outputs);
+  // return IsStrictlyMatched and KernelAttr
+  static std::pair<bool, KernelAttr> SelectKernel(const std::vector<AbstractBasePtr> &inputs_abs,
+                                                  const AbstractBasePtr &outputs_abs, DeviceContext *device_context,
+                                                  const std::string &op_name);
+  static tensor::TensorPtr CastTensor(const tensor::TensorPtr &tensor, const TypeId &type_id,
+                                      const std::string &device_target);
+  static std::vector<tensor::TensorPtr> CastTensor(const std::vector<tensor::TensorPtr> &tensors,
+                                                   const std::vector<TypeId> &type_id_list,
+                                                   const std::string &device_target);
 };
 
 template <typename T>

@@ -33,6 +33,7 @@ constexpr auto kStringGetItemOpName = "string_getitem";
 constexpr auto kGetNextOpName = "GetNext";
 constexpr auto kGetNextFromQueueOpName = "GetNextFromQueue";
 constexpr auto kDynamicGetNextV2OpName = "DynamicGetNextV2";
+constexpr auto kDynamicGetNextAscendOpName = "DynamicGetNextAscend";
 
 // Statements
 constexpr auto kVmapStackAssignOpName = "VmapStackAssign";

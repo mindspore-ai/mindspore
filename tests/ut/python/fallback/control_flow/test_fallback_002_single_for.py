@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback control flow."""
+import os
 import pytest
 import itertools
 import numpy as np
@@ -105,8 +106,10 @@ def test_single_for_builtin_function_list():
         for _ in range(3):
             x = x + list(x)
         return Tensor(x)
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     res = control_flow_for()
     assert (res.asnumpy() == [8.8, 17.6]).all()
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_single_for_x_in_xs():

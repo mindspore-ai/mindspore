@@ -331,10 +331,6 @@ def csr_relu(x: CSRTensor) -> CSRTensor:
 
         ReLU(x) = (x)^+ = \max(0, x)
 
-    Note:
-        In general, this operator is more commonly used. The difference from `ReLuV2` is that the `ReLuV2` will
-        output one more Mask.
-
     Args:
         x (CSRTensor): Input CSRTensor.
 
@@ -375,10 +371,6 @@ def coo_relu(x: COOTensor) -> COOTensor:
     .. math::
 
         ReLU(x) = (x)^+ = \max(0, x)
-
-    Note:
-        In general, this operator is more commonly used. The difference from `ReLuV2` is that the `ReLuV2` will
-        output one more Mask.
 
     Args:
         x (COOTensor): Input COOTensor with shape :math:`(N, *)`, where :math:`*`

@@ -49,7 +49,7 @@ def test_global_list_used_in_graph():
 global_float_list_1 = [1.0, 2.0, 3.0, 4.0]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -71,7 +71,7 @@ def test_global_list_used_in_graph_2():
 global_numpy_list = [np.array([1, 2, 3]), np.array([4, 5, 6])]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -93,7 +93,7 @@ def test_global_numpy_list_used_in_graph():
 global_list_2 = [1, 2, 3, 4, [3, 4], None]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -112,7 +112,7 @@ def test_global_nested_list_getitem_in_graph():
     assert id(res) == id(global_list_2[4])
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -131,7 +131,7 @@ def test_global_nested_list_return_in_graph():
     assert id(res) == id(global_list_2)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -155,7 +155,7 @@ def test_global_nested_list_return_in_graph_2():
 global_list_3 = [1, 2, 3, (4, [3, 4])]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -174,7 +174,7 @@ def test_global_nested_list_getitem_in_graph_2():
     assert id(res) == id(global_list_3[3][1])
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -195,7 +195,7 @@ def test_global_nested_list_return_in_graph_3():
     assert id(res[1]) == id(global_list_3[3][1])
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -218,7 +218,7 @@ def test_return_local_list():
     assert ret == [1, 2, 3, Tensor([1]), 2]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -244,7 +244,7 @@ def test_return_local_list_2():
 global_list_4 = [1, 2]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -267,7 +267,7 @@ def test_return_local_list_3():
     assert id(ret[4]) == id(global_list_4)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -290,7 +290,7 @@ def test_return_local_list_4():
     assert ret == [1.0, 2, 3.0, Tensor([1]), 2]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -316,7 +316,7 @@ def test_return_local_list_5():
 
 
 @pytest.mark.skip(reason="No need to convert to PyExecute node. SequenceMul execute fail in Ascend.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -536,6 +536,34 @@ def test_list_inplace_pop_2():
     assert out[0] == "4"
     assert out[1] == [1, [2, 3]]
     assert id(out[1]) == id(global_list_for_pop_2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_pop_3():
+    """
+    Feature: list pop.
+    Description: support list reverse.
+    Expectation: No exception.
+    """
+    class ListNet(nn.Cell):
+        def __init__(self, obj):
+            super().__init__()
+            self.obj = obj
+
+        def construct(self):
+            y = self.obj.pop()
+            self.obj.pop(1)
+            z = self.obj.pop(-1)
+            return self.obj, y, z
+
+    obj = [1, 2, Tensor([3]), "x", (3, 4, 5)]
+    x, y, z = ListNet(obj)()
+    assert id(obj) == id(x)
+    assert y == (3, 4, 5)
+    assert z == 'x'
 
 
 @pytest.mark.level1
@@ -1558,3 +1586,34 @@ def test_list_inplace_with_same_value_list():
     ret1, ret2 = list_func(z)
     assert id(ret1) == id(net.y)
     assert id(ret2) == id(z)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_mixed():
+    """
+    Feature: Enable list used as graph input do inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(input1, input2):
+        x1 = [[1], [2], [3], [4]]
+        for i in range(1, len(x1)):
+            y = x1[Tensor([i])]
+            y.extend([4])
+            x1.insert(1, [5])
+            x1.reverse()
+            z = x1[input1]
+            z.extend(input2[i])
+            x1.pop()
+        return x1
+
+    input1 = Tensor([2])
+    input2 = [Tensor([1]), Tensor([2]), Tensor([3]), Tensor([4])]
+    out = foo(input1, input2)
+    exp = [[5, 4], [3, Tensor(3)], [2, 4, Tensor(2), 4, Tensor(4)], [5]]
+    for i in list(range(len(out))):
+        assert out[i] == exp[i]

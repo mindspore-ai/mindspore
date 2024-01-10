@@ -20,8 +20,10 @@ import re
 import shutil
 import pathlib
 import gen_utils
-from gen_utils import py_licence_str, cc_license_str, check_change_and_replace_file, merge_files, safe_load_yaml
+from gen_utils import (py_licence_str, cc_license_str, check_change_and_replace_file, merge_files,
+                       safe_load_yaml, convert_dtype_str)
 from pyboost_utils import get_pyboost_name, is_pyboost_enable, AclnnUtils, get_dtypes
+import template
 from template import CppTemplate
 from gen_pyboost_func import gen_pyboost_code
 from gen_aclnn_implement import gen_aclnn_kernel
@@ -100,6 +102,43 @@ def signature_get_rw_label(rw_op_name, write_list, read_list, ref_list):
     return ''
 
 
+def signature_get_rw_label_cc(rw_op_name, write_list, read_list, ref_list):
+    """
+    Generate cc signature rw code
+    """
+    rw_label = 'kRWDefault'
+    for op in write_list:
+        if op == rw_op_name:
+            rw_label = 'kRWWrite'
+    for op in read_list:
+        if op == rw_op_name:
+            rw_label = 'kRWRead'
+    for op in ref_list:
+        if op == rw_op_name:
+            rw_label = 'kRWRef'
+    return 'SignatureEnumRW::' + rw_label
+
+
+def signature_get_enum_dtype_cc(index):
+    """
+    Generate cc enum dtype code
+    """
+    enum_type = 'SignatureEnumDType::'
+    type_map = {0: 'kDType',
+                1: 'kDType1',
+                2: 'kDType2',
+                3: 'kDType3',
+                4: 'kDType4',
+                5: 'kDType5',
+                6: 'kDType6',
+                7: 'kDType7',
+                8: 'kDType8',
+                9: 'kDType9'}
+    if index in type_map:
+        return enum_type + type_map[index]
+    return enum_type + 'kDTypeEmptyDefaultValue'
+
+
 def signature_get_dtype_label(index):
     """
     Generate signature dtype code
@@ -166,7 +205,6 @@ def generate_py_op_signature(args_signature, args_name, args_default):
             ref_list = rw_ref.replace(' ', '').split(",")
     # Init dtype group.
     same_dtype_groups, dtype_conut = get_same_dtype_groups(args_signature, args_name)
-
     # Only one dtype_group is set.
     if dtype_conut == 1 and not any([write_list, read_list, ref_list, args_default]):
         signature_code += '('
@@ -186,6 +224,40 @@ def generate_py_op_signature(args_signature, args_name, args_default):
             signature_code += f""", default=""" + str(args_default[arg_name])
         signature_code += f"""),\n"""
     signature_code += f"""    )\n\n"""
+    return signature_code
+
+
+def generate_cc_op_signature(args_signature, args_name):
+    """
+    generate signatures on in cc file
+    :param args_signature:
+    :param args_name:
+    :return:
+    """
+    if args_signature is None:
+        return ''
+    signature_code = ''
+    # Init rw.
+    write_list = []
+    read_list = []
+    ref_list = []
+    if args_signature is not None:
+        rw_write = args_signature.get('rw_write')
+        rw_read = args_signature.get('rw_read')
+        rw_ref = args_signature.get('rw_ref')
+        if rw_write is not None:
+            write_list = rw_write.replace(' ', '').split(",")
+        if rw_read is not None:
+            read_list = rw_read.replace(' ', '').split(",")
+        if rw_ref is not None:
+            ref_list = rw_ref.replace(' ', '').split(",")
+    # Init dtype group.
+    same_dtype_groups, _ = get_same_dtype_groups(args_signature, args_name)
+    for arg_name in args_name:
+        enum_rw = signature_get_rw_label_cc(arg_name, write_list, read_list, ref_list)
+        enum_dtype = signature_get_enum_dtype_cc(same_dtype_groups[arg_name])
+        signature = f"""Signature("{arg_name}", {enum_rw}, SignatureEnumKind::kKindPositionalKeyword, nullptr, {enum_dtype}),\n"""
+        signature_code += signature
     return signature_code
 
 
@@ -282,8 +354,14 @@ def {func_name}({', '.join(arg for arg in func_args)}):
 
     return gen_py
 
+def get_dtype(arg_info):
+    dtype = arg_info.get('dtype')
+    # Currently, TypeId is represented by int
+    if dtype == 'TypeId':
+        dtype = 'int'
+    return dtype
 
-def process_args(args):
+def process_args(class_name, args):
     """
     Process arg for yaml, get arg_name, init value, type cast, arg_handler, etc.
     """
@@ -294,7 +372,7 @@ def process_args(args):
     init_args_with_default = []
     args_handlers = {}
     for arg_name, arg_info in args.items():
-        dtype = arg_info.get('dtype')
+        dtype = get_dtype(arg_info)
         default_value = arg_info.get('default')
         has_default = 'default' in arg_info.keys()
         is_optional = arg_info.get('default') == "None" if has_default else False
@@ -312,7 +390,7 @@ def process_args(args):
                 init_args_with_default.append(f"""{arg_name}""")
 
             # step1.3: get args set prim arg expression:
-            assign_str = gen_utils.get_assign_str_by_type_it(arg_info, arg_name, dtype)
+            assign_str = gen_utils.get_assign_str_by_type_it(class_name, arg_info, arg_name, dtype)
             if arg_handler:
                 assign_str = f'{arg_handler}({assign_str})'
                 if is_optional:
@@ -381,7 +459,8 @@ def generate_py_primitive(yaml_data):
         func_name = _get_op_func_name(operator_name, operator_data)
         pyboost_func_name = get_pyboost_name(operator_name)
         args = operator_data.get('args')
-        inputs_args, inputs_default, init_args, args_assign, init_args_with_default, args_handlers = process_args(args)
+        inputs_args, inputs_default, init_args, args_assign, init_args_with_default, args_handlers = \
+            process_args(class_name, args)
         init_code = '\n'.join(args_assign)
         signature_code = generate_py_op_signature(operator_data.get('args_signature'), inputs_args,
                                                   inputs_default)
@@ -550,7 +629,7 @@ namespace mindspore::ops {
             if not is_prim_init:
                 continue
 
-            dtype = arg_info.get('dtype')
+            dtype = get_dtype(arg_info)
             if dtype == "str":
                 dtype = "std::string"
             if dtype == "tuple[int]":
@@ -582,24 +661,34 @@ namespace mindspore::ops {{"""
 std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
     gen_include = f"""\n
 #include \"ops/auto_generate/gen_ops_def.h\""""
+    gen_include += f"""
+#include \"mindspore/core/ir/signature.h\""""
 
     for operator_name, operator_data in yaml_data.items():
         args = operator_data.get('args')
-        returns = operator_data.get('returns')
         class_name = _get_op_name(operator_name, operator_data)
-        gen_include += f"""\n#include "ops/ops_func_impl/{operator_name}.h\""""
-        opdef_cc = f"""\n{class_name}FuncImpl g{class_name}FuncImpl;""" + \
-                   f"""\nOpDef g{class_name} = {{\n  /*.name_=*/"{class_name}",""" + \
-                   f"""\n  /*.args_=*/ {{"""
-        cc_index_str = f"""\n  /*.indexes_ =*/ {{"""
-        gen_opdef_map += f"""\n  {{"{class_name}", &g{class_name}}},"""
+        inputs_args, _, _, _, _, _ = process_args(class_name, args)
+        signature_code = generate_cc_op_signature(operator_data.get('args_signature'), inputs_args)
+        args = operator_data.get('args')
+        returns = operator_data.get('returns')
+        dispatch = operator_data.get("dispatch")
+        # dispatch not defined in yaml or dispatch.enable==False
+        if not dispatch or not dispatch.get("enable"):
+            dispatch = "false"
+        else:
+            dispatch = "true"
+        enable_dispatch_str = f"""{dispatch}"""
 
+        gen_include += f"""\n#include "ops/ops_func_impl/{operator_name}.h\""""
+        cc_index_str = ''
+        gen_opdef_map += f"""\n  {{"{class_name}", &g{class_name}}},"""
+        input_args_str = ''
         args_dict = {}
         for i, (arg_name, arg_info) in enumerate(args.items()):
             args_dict[arg_name] = i
-            cc_index_str += f"""\n    {{"{arg_name}", {i}}},"""
-            dtype = arg_info.get('dtype')
-            cc_dtype_str = 'DT_' + dtype.replace('[', '_').replace(']', '').upper()
+            cc_index_str += f"""{{"{arg_name}", {i}}},\n"""
+            dtype = get_dtype(arg_info)
+            cc_dtype_str = convert_dtype_str(dtype)
 
             is_prim_init = 1 if arg_info.get('prim_init') else 0
             arg_handler = arg_info.get('arg_handler')
@@ -615,30 +704,24 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
             if 'default' in arg_info.keys() and arg_info.get('default') == "None":
                 is_optional_str = "true"
 
-            opdef_cc += f"""\n    {{/*.arg_name_=*/"{arg_name}", /*.arg_dtype_=*/{cc_dtype_str}, """ + \
+            input_args_str += f"""\n    {{/*.arg_name_=*/"{arg_name}", /*.arg_dtype_=*/{cc_dtype_str}, """ + \
                         f"""/*.as_init_arg_=*/{is_prim_init}, /*.arg_handler_=*/"{arg_handler_str}", """ + \
                         f"""/*.cast_dtype_ =*/{{{type_cast_str}}}, /*.is_optional_=*/{is_optional_str}}},"""
-        opdef_cc += f"""\n  }},"""
-        opdef_cc += f"""\n  /* .returns_ = */ {{"""
 
         # Process outputs.
+        return_args_str = ''
         for return_name, return_info in returns.items():
             return_dtype = return_info.get('dtype')
             ref_name = return_info.get('inplace')
             ref_index_str = -1 if ref_name is None else args_dict.get(ref_name)
             cc_return_type_str = 'DT_' + return_dtype.replace('[', '_').replace(']', '').upper()
-            opdef_cc += f"""\n    {{/*.arg_name_=*/"{return_name}", /*.arg_dtype_=*/{cc_return_type_str}, """ + \
-                        f"""/*.inplace_input_index_=*/{ref_index_str}}}, """
-        opdef_cc += f"""\n  }},"""
+            return_args_str += f"""{{/*.arg_name_=*/"{return_name}", /*.arg_dtype_=*/{cc_return_type_str},
+            /*.inplace_input_index_=*/{ref_index_str}}},\n"""
 
-        cc_index_str += f"""\n  }},"""
-        opdef_cc += cc_index_str
-
-        cc_func_impl_str = f"""\n  /*.func_impl_=*/g{class_name}FuncImpl,"""
-        opdef_cc += cc_func_impl_str
-        opdef_cc += f"""\n}};\n"""
-        gen_cc_code += opdef_cc
-
+        op_def_cc = template.OP_PROTO_TEMPLATE.replace(class_name=class_name, input_args=input_args_str,
+                                                       return_args=return_args_str, signatures=signature_code,
+                                                       indexes=cc_index_str, enable_dispatch=enable_dispatch_str)
+        gen_cc_code += op_def_cc
     gen_opdef_map += f"""\n}};"""
     gen_cc_code += gen_opdef_map
 
@@ -656,7 +739,7 @@ from mindspore.common._decorator import deprecated
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.auto_generate.gen_arg_dtype_cast import type_it
 from mindspore.ops.auto_generate.gen_arg_handler import *
-from mindspore.ops.auto_generate.gen_enum_def import OpDtype
+from mindspore._c_expression import OpDtype
 from mindspore.common._stub_tensor import _convert_stub
 """
 
@@ -824,67 +907,10 @@ def generate_aclnn_reg_file(work_path, yaml_str):
     check_change_and_replace_file(register_file, tmp_register_file)
 
 
-eum_py_header = f"""
-\"\"\"Operator argument enum definition.\"\"\"
-
-from enum import Enum
-"""
-
-eum_cc_header = f"""
-#ifndef MINDSPORE_CORE_OPS_GEN_ENUM_DEF_
-#define MINDSPORE_CORE_OPS_GEN_ENUM_DEF_
-
-#include <cstdint>
-
-namespace mindspore::MsPyEnum {{
-"""
-
-eum_cc_end = f"""}}  // namespace mindspore::MsPyEnum
-#endif  // MINDSPORE_CORE_OPS_GEN_ENUM_DEF_
-"""
-
-
-def generate_enum_code(yaml_data):
+def generate_arg_handler_files(work_path):
     """
-    Generate python and c++ enum definition
+    Generate arg handler files.
     """
-    gen_eum_py_func = ''
-    gen_eum_py_def = eum_py_header
-    gen_eum_cc_def = eum_cc_header
-    for enum_name, enum_data in yaml_data.items():
-        class_name = ''.join(word.capitalize() for word in enum_name.split('_'))
-        gen_eum_py_func += f"""\n
-def {enum_name}_to_enum({enum_name}_str):
-    \"""
-    convert {enum_name} string to enum.
-    \"""
-    if not isinstance({enum_name}_str, str):
-        raise TypeError(f"The {enum_name} should be string, but got {{{enum_name}_str}}")
-    {enum_name}_str = {enum_name}_str.upper()\n"""
-        gen_eum_py_def += f"""\n\nclass {class_name}(Enum):\n"""
-        gen_eum_cc_def += f"""enum {class_name} : int64_t {{\n"""
-
-        for enum_key, enum_value in enum_data.items():
-            gen_eum_py_func += f"""    if {enum_name}_str == "{enum_key}":
-        return {enum_value}\n"""
-            gen_eum_py_def += f"""    {enum_key} = {enum_value}\n"""
-            gen_eum_cc_def += f"""  {enum_key} = {enum_value},\n"""
-
-        gen_eum_py_func += f"""    raise ValueError(f"Invalid {class_name}: {{{enum_name}_str}}")\n"""
-        gen_eum_cc_def += f"""}};\n\n"""
-    gen_eum_cc_def += eum_cc_end
-
-    return gen_eum_py_func, gen_eum_py_def, gen_eum_cc_def
-
-
-def generate_enum_files(work_path):
-    """
-    Generate python function and c++ definition from enum yaml.
-    """
-    enum_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/enum.yaml')
-    yaml_str = safe_load_yaml(enum_yaml_path)
-    py_enum_func, py_enum_def, cc_enum_def = generate_enum_code(yaml_str)
-
     dst_dir = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate')
     src_arg_handler_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/arg_handler.py')
     dst_arg_handler_path = os.path.join(dst_dir, 'gen_arg_handler.py')
@@ -892,8 +918,6 @@ def generate_enum_files(work_path):
     if not os.path.exists(dst_dir):
         os.makedirs(dst_dir)
     shutil.copy(src_arg_handler_path, tmp_dst_arg_handler_path)
-    with open(tmp_dst_arg_handler_path, 'a') as py_file:
-        py_file.write(py_enum_func)
     check_change_and_replace_file(dst_arg_handler_path, tmp_dst_arg_handler_path)
 
     src_arg_dtype_cast_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/arg_dtype_cast.py')
@@ -901,18 +925,6 @@ def generate_enum_files(work_path):
     tmp_arg_dtype_cast_path = os.path.join(dst_dir, 'tmp_arg_dtype_cast.py')
     shutil.copy(src_arg_dtype_cast_path, tmp_arg_dtype_cast_path)
     check_change_and_replace_file(dst_arg_dtype_cast_path, tmp_arg_dtype_cast_path)
-
-    enum_def_py_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/gen_enum_def.py')
-    tmp_enum_def_py_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/tmp_gen_enum_def.py')
-    with open(tmp_enum_def_py_path, 'w') as cc_file:
-        cc_file.write(py_licence_str + py_enum_def)
-    check_change_and_replace_file(enum_def_py_path, tmp_enum_def_py_path)
-
-    enum_def_cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_enum_def.h')
-    tmp_enum_def_cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/tmp_gen_enum_def.h')
-    with open(tmp_enum_def_cc_path, 'w') as cc_file:
-        cc_file.write(cc_license_str + cc_enum_def)
-    check_change_and_replace_file(enum_def_cc_path, tmp_enum_def_cc_path)
 
 
 def main():
@@ -938,8 +950,8 @@ def main():
     cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/')
     pathlib.Path(cc_path).mkdir(parents=True, exist_ok=True)
 
-    # generate enum code from enum.yaml
-    generate_enum_files(work_path)
+    # generate arg_handler files
+    generate_arg_handler_files(work_path)
 
     # generate ops python files
     generate_ops_py_files(work_path, safe_load_yaml(ops_yaml_path), safe_load_yaml(doc_yaml_path), "gen")

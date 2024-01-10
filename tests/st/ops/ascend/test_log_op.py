@@ -35,7 +35,7 @@ class NetLog(nn.Cell):
         return self.log(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type", [np.float32])
@@ -62,7 +62,7 @@ def test_log(data_type, mode):
     np.allclose(output1.asnumpy(), expect1, 0.001, 0.001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type", [mindspore.bfloat16])

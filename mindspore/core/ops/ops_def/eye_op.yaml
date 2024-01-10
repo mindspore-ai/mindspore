@@ -6,8 +6,8 @@ eye:
     m:
       dtype: int
     dtype:
-      dtype: int
-      arg_handler: dtype_to_enum
+      dtype: TypeId
+      arg_handler: dtype_to_type_id
   returns:
     output:
       dtype: tensor

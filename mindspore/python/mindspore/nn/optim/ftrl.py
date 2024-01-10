@@ -112,7 +112,7 @@ def _tensor_run_opt_dist(opt, spars_opt, l1, l2, lr_power, learning_rate, linear
 
 
 @_ftrl_opt.register("Function", "Function", "Number", "Number", "Number", "Tensor", "Tensor",
-                    "RowTensor", "Tensor", "Tensor", "Bool", "Bool")
+                    "RowTensor", "Tensor", "Tensor", "Bool")
 def _tensor_run_opt_with_sparse(opt, spars_opt, l1, l2, lr_power, learning_rate, linear,
                                 gradient, weight, moment, cache_enable):
     """Apply sparse ftrl optimizer to the weight parameter when the gradient is sparse."""

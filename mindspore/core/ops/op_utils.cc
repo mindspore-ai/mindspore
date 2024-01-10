@@ -84,7 +84,8 @@ std::vector<int64_t> CalBroadCastShape(const std::vector<int64_t> &x_shape, cons
                                << std::to_string(x_length + i) << "] or " << y_shape_name << "["
                                << std::to_string(y_length + i)
                                << "] must be 1 or -1 when they are not the same, but got " << x_shape_name << " = "
-                               << x_shape << " and " << y_shape_name << " = " << y_shape;
+                               << tensor::ShapeToString(x_shape) << " and " << y_shape_name << " = "
+                               << tensor::ShapeToString(y_shape);
     }
   }
   return broadcast_shape;
@@ -279,6 +280,7 @@ bool CheckAndGetAxisValue(const std::vector<abstract::AbstractBasePtr> &input_ar
     auto value_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]);
     auto value_array = value_opt.value();
     *axis_value = value_array.ToVector();
+    return !value_opt.has_value();
   }
   if (input_args[kInputIndex1]->isa<abstract::AbstractScalar>()) {
     is_dynamic = CheckAndGetAxisValueFromScalar(input_value, op_name, axis_value, axis_shape_v);
@@ -594,9 +596,9 @@ AbstractBasePtr TensorToSequenceInfer(const PrimitivePtr &primitive, const std::
   auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
   MS_EXCEPTION_IF_NULL(shape_ptr);
   auto x_shape = shape_ptr->shape();
-  if (x_shape.size() != 1) {
-    MS_EXCEPTION(ValueError) << "For Primitive[" << prim_name << "], the input shape size must be 1, but got "
-                             << x_shape << ".";
+  if (x_shape.size() > 1) {
+    MS_EXCEPTION(ValueError) << "For Primitive[" << prim_name << "], the input must be a 1-D Tensor, but got Tensor "
+                             << "with shape: " << x_shape << ".";
   }
 
   auto x_type = input_args[input_0_index]->GetType();
@@ -615,8 +617,12 @@ AbstractBasePtr TensorToSequenceInfer(const PrimitivePtr &primitive, const std::
     abs->CheckAndConvertToDynamicLenSequence();
     return abs;
   }
-  for (int64_t i = 0; i < x_shape[0]; i++) {
+  if (x_shape.empty()) {
     abs_list.push_back(std::make_shared<abstract::AbstractScalar>(kValueAny, element_type));
+  } else {
+    for (int64_t i = 0; i < x_shape[0]; i++) {
+      abs_list.push_back(std::make_shared<abstract::AbstractScalar>(kValueAny, element_type));
+    }
   }
   auto abs = std::make_shared<T>(abs_list);
   return abs;

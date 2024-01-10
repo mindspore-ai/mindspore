@@ -71,6 +71,7 @@ bool CpuCopyWithSliceKernelTask::RunWithRet() {
   auto src_addr = MallocMemoryForDeviceAddress(src_device_address, device_context);
 
   kernel::CopyWithSliceCpuKernel copy_kernel;
+  MS_EXCEPTION_IF_NULL(dst_device_address);
   auto ret = copy_kernel.LaunchCopyWithSlice(dst_device_address->type_id(), src_storage_info, src_addr,
                                              dst_storage_info, dst_addr);
   if (!ret) {

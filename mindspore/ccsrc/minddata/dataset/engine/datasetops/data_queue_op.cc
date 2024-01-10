@@ -1151,7 +1151,8 @@ Status DataQueueOp::DetectFirstBatch() {
       break;
     } else if (temp_end_time - temp_start_time > kTimeOutMilliSeconds) {
       count_num++;
-      MS_LOG(WARNING) << "Bad performance attention, it waits more than " + std::to_string(kTimeOutMilliSeconds) +
+      MS_LOG(WARNING) << "Bad performance attention, it waits more than " +
+                           std::to_string(kTimeOutMilliSeconds / 1000) +
                            " seconds and unable to fetch first Batch of "
                            "data from dataset pipeline, which might result `GetNext` timeout problem. You may test "
                            "dataset processing performance (with creating dataset iterator) and optimize it. Notes: "
@@ -1168,7 +1169,7 @@ void DataQueueOp::DetectPerBatchTime(const uint64_t *start_time, uint64_t *end_t
   constexpr auto kTimeMilliSeconds = 1000.;
   send_summary_.back().record_data(interval / kTimeMilliSeconds);
   if (interval > kTimeOutMilliSeconds) {
-    MS_LOG(WARNING) << "Bad performance attention, it takes more than " + std::to_string(kTimeOutMilliSeconds) +
+    MS_LOG(WARNING) << "Bad performance attention, it takes more than " + std::to_string(kTimeOutMilliSeconds / 1000) +
                          " seconds to fetch a batch of data from dataset "
                          "pipeline, which might result `GetNext` timeout problem. You may test dataset processing"
                          " performance(with creating dataset iterator) and optimize it.";

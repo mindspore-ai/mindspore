@@ -73,7 +73,7 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
     - Gradients of ``func`` are calculated automatically using MindSpore's autodiff
       support when the value of jac is None.
     - The ``method`` argument is required. A exception will be thrown if you don't specify a solver.
-    - Various optional arguments `"hess"` `"hessp"` `"bounds"` `"constraints"` `"tol"` `"callback"`
+    - Various optional arguments `"hess"`, `"hessp"`, `"bounds"`, `"constraints"`, `"tol"`, `"callback"`
       in the SciPy interface have not yet been implemented.
     - Optimization results may differ from SciPy due to differences in the line
       search implementation.

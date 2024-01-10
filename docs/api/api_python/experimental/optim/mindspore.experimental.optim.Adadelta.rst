@@ -1,7 +1,7 @@
 mindspore.experimental.optim.Adadelta
 =======================================
 
-.. py:class:: mindspore.experimental.optim.Adadelta(params, lr=1., rho=0.9, eps=1e-6, weight_decay=0., *, maximize=False)
+.. py:class:: mindspore.experimental.optim.Adadelta(params, lr=1.0, rho=0.9, eps=1e-6, weight_decay=0.0, *, maximize=False)
 
     Adadelta算法的实现。
 
@@ -50,6 +50,6 @@ mindspore.experimental.optim.Adadelta
     异常：
         - **ValueError** - 学习率不是int、float或Tensor。
         - **ValueError** - 学习率小于0。
-        - **ValueError** - `eps` 小于0。
-        - **ValueError** - `rho` 范围不在0-1之间。
+        - **ValueError** - `eps` 小于等于0。
+        - **ValueError** - `rho` 范围不在[0, 1]之间。
         - **ValueError** - `weight_decay` 小于0。

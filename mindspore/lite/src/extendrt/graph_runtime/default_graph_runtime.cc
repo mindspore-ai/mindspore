@@ -215,9 +215,20 @@ std::vector<infer::abstract::Tensor *> DefaultGraphRuntime::GetOutputs() {
 
 std::shared_ptr<infer::abstract::Executor> DefaultGraphRuntime::SelectExecutor() {
   if (executor_ == nullptr) {
-    executor_ = GraphExecutorRegistry::GetInstance().GetExecutor(kMindRTExecutor, "mindrt-executor", execution_plan_);
+    if (execution_plan_->GetKernels().size() == 1) {
+      auto sub_graph = dynamic_cast<kernel::SubGraphKernel *>(execution_plan_->GetKernels()[0]);
+      if (sub_graph != nullptr) {
+        if (sub_graph->nodes().size() == 1) {
+          executor_ =
+            GraphExecutorRegistry::GetInstance().GetExecutor(kDefaultExecutor, "default-executor", execution_plan_);
+          return executor_;
+        }
+      }
+      executor_ = GraphExecutorRegistry::GetInstance().GetExecutor(kMindRTExecutor, "mindrt-executor", execution_plan_);
+    } else {
+      executor_ = GraphExecutorRegistry::GetInstance().GetExecutor(kMindRTExecutor, "mindrt-executor", execution_plan_);
+    }
   }
-
   return executor_;
 }
 

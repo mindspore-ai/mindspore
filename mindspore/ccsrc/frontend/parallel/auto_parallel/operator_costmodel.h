@@ -241,7 +241,6 @@ using InvCost = SqrtCost;
 using RsqrtCost = SqrtCost;
 using AsinhCost = SqrtCost;
 using AcoshCost = SqrtCost;
-using ReLUV2Cost = SqrtCost;
 using TopKCost = SqrtCost;
 using HShrinkCost = SqrtCost;
 using HSigmoidCost = SqrtCost;

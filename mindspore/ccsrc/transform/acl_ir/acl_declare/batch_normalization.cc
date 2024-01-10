@@ -18,16 +18,23 @@
 
 namespace mindspore {
 namespace transform {
-REGISTER_ACL_OP(BNTrainingReduce).Input(0, {"NCHW"}, "NCH");
+REGISTER_ACL_OP(BNTrainingReduce).Input(0, {"NCHW"}, "NCH").set_extra_supported_datatype({ge::DT_FLOAT16});
 
-REGISTER_ACL_OP(BNTrainingUpdate).Input(0, {"NCHW"}, "NCH").Output(0, 0);
+REGISTER_ACL_OP(BNTrainingUpdate).Input(0, {"NCHW"}, "NCH").Output(0, 0).set_extra_supported_datatype({ge::DT_FLOAT16});
 
-REGISTER_ACL_OP(BNTrainingUpdateGrad).Input(0, {"NCHW"}, "NCH").Input(1, {"NCHW"}, "NCH");
+REGISTER_ACL_OP(BNTrainingUpdateGrad)
+  .Input(0, {"NCHW"}, "NCH")
+  .Input(1, {"NCHW"}, "NCH")
+  .set_extra_supported_datatype({ge::DT_FLOAT16});
 
-REGISTER_ACL_OP(BNTrainingReduceGrad).Input(0, {"NCHW"}, "NCH").Input(1, {"NCHW"}, "NCH").Output(0, 0);
+REGISTER_ACL_OP(BNTrainingReduceGrad)
+  .Input(0, {"NCHW"}, "NCH")
+  .Input(1, {"NCHW"}, "NCH")
+  .Output(0, 0)
+  .set_extra_supported_datatype({ge::DT_FLOAT16});
 
-REGISTER_ACL_OP(BNInfer).Input(0, {"NCHW"}, "NCH").Output(0, 0);
+REGISTER_ACL_OP(BNInfer).Input(0, {"NCHW"}, "NCH").Output(0, 0).set_extra_supported_datatype({ge::DT_FLOAT16});
 
-REGISTER_ACL_OP(BNInferGrad).Input(0, {"NCHW"}, "NCH").Output(0, 0);
+REGISTER_ACL_OP(BNInferGrad).Input(0, {"NCHW"}, "NCH").Output(0, 0).set_extra_supported_datatype({ge::DT_FLOAT16});
 }  // namespace transform
 }  // namespace mindspore

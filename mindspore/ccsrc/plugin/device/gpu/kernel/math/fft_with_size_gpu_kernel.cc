@@ -55,21 +55,21 @@ enum class FFTNormMode {
   by_root_n,  // same as above, but sqrt the product
 };
 
-FFTNormMode GetNormModeFromString(const MsPyEnum::NormMode &norm_type, const bool is_inverse) {
-  if (norm_type == MsPyEnum::NormMode::FORWARD) {
+FFTNormMode GetNormModeFromString(const ops::NormMode &norm_type, const bool is_inverse) {
+  if (norm_type == ops::NormMode::FORWARD) {
     return is_inverse ? FFTNormMode::none : FFTNormMode::by_n;
   }
-  if (norm_type == MsPyEnum::NormMode::BACKWARD) {
+  if (norm_type == ops::NormMode::BACKWARD) {
     return is_inverse ? FFTNormMode::by_n : FFTNormMode::none;
   }
-  if (norm_type == MsPyEnum::NormMode::ORTHO) {
+  if (norm_type == ops::NormMode::ORTHO) {
     return FFTNormMode::by_root_n;
   }
   MS_LOG(ERROR) << "For 'FFTWithSize', the fft norm type " << norm_type << " is unsupported!";
   return FFTNormMode::none;
 }
 
-double GetNormScale(const MsPyEnum::NormMode &norm_type, const bool is_inverse, const int n) {
+double GetNormScale(const ops::NormMode &norm_type, const bool is_inverse, const int n) {
   FFTNormMode norm_mode = GetNormModeFromString(norm_type, is_inverse);
   if (norm_mode == FFTNormMode::none) {
     return 1.0;
@@ -115,7 +115,7 @@ bool FFTWithSizeGpuKernelMod::FFTVarietyInResize(const std::vector<KernelTensor 
   rank_ = inputs[kIndex1]->GetValueWithCheck<int64_t>();
   is_inverse_ = inputs[kIndex2]->GetValueWithCheck<bool>();
   is_real_ = inputs[kIndex3]->GetValueWithCheck<bool>();
-  norm_type_ = static_cast<MsPyEnum::NormMode>(inputs[kIndex4]->GetValueWithCheck<int64_t>());
+  norm_type_ = static_cast<ops::NormMode>(inputs[kIndex4]->GetValueWithCheck<int64_t>());
   is_onesided_ = inputs[kIndex5]->GetValueWithCheck<bool>();
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);

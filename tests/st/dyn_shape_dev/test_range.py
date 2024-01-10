@@ -16,7 +16,8 @@
 import pytest
 import numpy as np
 import mindspore as ms
-from mindspore import context
+from mindspore import context, Tensor
+from mindspore.common import dtype as mstype
 from mindspore import ops
 import test_utils
 
@@ -31,7 +32,7 @@ def range_backward_func(start, limit, delta):
     return ops.grad(range_forward_func, (0, 1, 2))(start, limit, delta)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -52,7 +53,7 @@ def test_range_forward_tensor_input(mode):
     np.testing.assert_array_equal(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -75,7 +76,7 @@ def test_range_forward(mode):
     np.testing.assert_array_equal(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -93,3 +94,29 @@ def test_range_backward(mode):
     limit = 10
     delta = 2
     output = range_backward_func(start, limit, delta)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
+def test_range_dynamic(mode):
+    """
+    Feature: range ops.
+    Description: test ops range dynamic tensor input.
+    Expectation: output the right result.
+    """
+    ms.context.set_context(mode=mode)
+    dyn_start = Tensor(shape=[None], dtype=mstype.int64)
+    dyn_limit = Tensor(shape=[None], dtype=mstype.int64)
+    dyn_delta = Tensor(shape=[None], dtype=mstype.int64)
+    test_cell = test_utils.to_cell_obj(range_forward_func)
+    test_cell.set_inputs(dyn_start, dyn_limit, dyn_delta)
+    output1 = test_cell(Tensor([0], mstype.int64), Tensor([10], mstype.int64), Tensor([2], mstype.int64))
+    expect_output1 = np.array([0, 2, 4, 6, 8]).astype(np.int64)
+    np.testing.assert_array_equal(output1.asnumpy(), expect_output1)
+    output2 = test_cell(Tensor([0], mstype.int64), Tensor([8], mstype.int64), Tensor([3], mstype.int64))
+    expect_output2 = np.array([0, 3, 6]).astype(np.int64)
+    np.testing.assert_array_equal(output2.asnumpy(), expect_output2)

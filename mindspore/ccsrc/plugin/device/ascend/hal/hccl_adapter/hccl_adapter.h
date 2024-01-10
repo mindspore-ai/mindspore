@@ -69,12 +69,6 @@ class HcclAdapter {
   HcclResult HcclGetLocalRankSize(const std::string &group, uint32_t *local_rank_size) const;
   HcclResult HcclGetWorldRankFromGroupRank(const std::string &group, uint32_t local_rank, uint32_t *world_rank) const;
   HcclResult HcclGetGroupRankFromWorldRank(uint32_t world_rank, const std::string &group, uint32_t *local_rank) const;
-
-  // for ge node
-  int64_t CalcWorkspaceSize(const PrimitivePtr &prim, const std::vector<KernelTensor *> &inputs,
-                            const std::vector<KernelTensor *> &outputs, HcclDataType datatype) const;
-  void *GetHcclOpsKernelInfoStore() const;
-
   // for single op
   HcclResult HcclBroadcast(void *buf, uint64_t count, HcclDataType dataType, uint32_t root, aclrtStream stream,
                            HcclComm comm) const;

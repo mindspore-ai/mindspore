@@ -114,6 +114,7 @@ GVAR_DEF(PrimitivePtr, kPrimIsTensorBoolCond, std::make_shared<Primitive>("IsTen
 GVAR_DEF(PrimitivePtr, kPrimGetNext, std::make_shared<Primitive>(kGetNextOpName));
 GVAR_DEF(PrimitivePtr, kPrimGetNextFromQueue, std::make_shared<Primitive>(kGetNextFromQueueOpName));
 GVAR_DEF(PrimitivePtr, kPrimDynamicGetNextV2, std::make_shared<Primitive>(kDynamicGetNextV2OpName));
+GVAR_DEF(PrimitivePtr, kPrimDynamicGetNextAscend, std::make_shared<Primitive>(kDynamicGetNextAscendOpName));
 
 class DoSignaturePrimitive : public Primitive {
  public:

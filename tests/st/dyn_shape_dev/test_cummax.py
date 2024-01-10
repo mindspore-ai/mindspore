@@ -58,7 +58,7 @@ def test_cummax_forward(context_mode, dtype):
     assert (indices.asnumpy() == expect_indices).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -84,7 +84,7 @@ def test_cummax_vmap(context_mode, dtype):
     assert (indices.asnumpy() == expect_indices).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -118,7 +118,7 @@ def test_cummax_dynamic(context_mode):
     assert np.allclose(indices2.asnumpy(), expect_indices2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

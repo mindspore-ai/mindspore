@@ -26,6 +26,15 @@ BaseShapePtr SinFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr SinFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
   auto input_type = input_args[kIndex0]->GetType();
-  return input_type->Clone();
+  auto input_type_id = input_type->cast<TensorTypePtr>()->element()->type_id();
+  static const std::vector<TypeId> int_or_bool = {kNumberTypeUInt8, kNumberTypeInt8,  kNumberTypeInt16,
+                                                  kNumberTypeInt32, kNumberTypeInt64, kNumberTypeBool};
+  bool is_int_or_bool = std::any_of(int_or_bool.begin(), int_or_bool.end(),
+                                    [&input_type_id](const TypeId &type_id) { return input_type_id == type_id; });
+  if (is_int_or_bool) {
+    return std::make_shared<TensorType>(kFloat32);
+  } else {
+    return input_type->Clone();
+  }
 }
 }  // namespace mindspore::ops

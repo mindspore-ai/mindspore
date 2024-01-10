@@ -44,6 +44,15 @@ TypePtr NonZeroFuncImpl::InferType(const PrimitivePtr &primitive,
   return std::make_shared<TensorType>(kInt64);
 }
 
+int32_t NonZeroFuncImpl::CheckValidation(const PrimitivePtr &primitive,
+                                         const std::vector<AbstractBasePtr> &input_args) const {
+  std::set valid_types = {kBool,   kInt8,   kInt16,   kInt32,   kInt64,   kUInt8, kUInt16,
+                          kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kFloat};
+  auto tensor_type = input_args[kInputIndex0]->GetType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", tensor_type, valid_types, primitive->name());
+  return OP_CHECK_SUCCESS;
+}
+
 class NonZeroFrontendFuncImpl : public OpFrontendFuncImpl {
  public:
   // Do not override this interface if the op has no InferValue

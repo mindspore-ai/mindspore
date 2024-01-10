@@ -53,7 +53,7 @@ std::vector<int64_t> InferImplSliceFuncCalInputValue(const PrimitivePtr &primiti
                                                      const AbstractBasePtr &input_value) {
   MS_EXCEPTION_IF_NULL(input_value);
   if (auto value_ptr = input_value->GetValue(); value_ptr == nullptr || !IsValueKnown(value_ptr)) {
-    MS_EXCEPTION(TypeError) << "For Slice, the 'begin' and 'size' must be Tuple or List. And currently, it is not "
+    MS_EXCEPTION(TypeError) << "For Slice, currently, it is not "
                                "supported when 'begin' and/or 'size' has unknown value(s).";
   }
   std::vector<int64_t> tmp_input;
@@ -65,6 +65,8 @@ std::vector<int64_t> InferImplSliceFuncCalInputValue(const PrimitivePtr &primiti
     tmp_input = CheckAndConvertUtils::CheckTupleInt("slice args value", input_value->GetValue(), primitive->name());
   } else if (CheckAndConvertUtils::IsList(input_value)) {
     tmp_input = CheckAndConvertUtils::CheckListInt("slice args value", input_value->GetValue(), primitive->name());
+  } else {
+    MS_EXCEPTION(TypeError) << "For Slice, the 'begin' and 'size' must be Tuple or List.";
   }
 
   return tmp_input;

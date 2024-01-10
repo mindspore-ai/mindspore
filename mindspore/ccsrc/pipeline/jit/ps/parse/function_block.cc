@@ -228,6 +228,16 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
     // need resolve to determine whether it needs to be marked with interpret.
     auto resolve_node = MakeResolveSymbol(var_name);
     MS_EXCEPTION_IF_NULL(resolve_node);
+    // Avoid to build phi node if current block is not matured and resolve_node is an undefined symbol.
+    if (!matured_ && resolve_node->isa<ValueNode>()) {
+      auto value = GetValuePtr<ValueProblem>(resolve_node->cast<ValueNodePtr>());
+      if (!is_dead_block() && value != nullptr && value->IsUndefined()) {
+        MS_LOG(DEBUG) << "Avoid to build phi node and return undefined node, var_name: " << var_name
+                      << ", block: " << ToString() << ", matured_: " << matured_
+                      << ", prev_blocks_.size: " << prev_blocks_.size();
+        return resolve_node;
+      }
+    }
     phi_param->set_interpret(resolve_node->interpret());
     phi_param->set_interpret_internal_type(resolve_node->interpret_internal_type());
     if (resolve_node->isa<Parameter>()) {
@@ -545,7 +555,7 @@ std::string GetVariableDefinedLocation(const FunctionBlock *block, const std::st
     (void)visited.insert(cur_block);
     (void)std::copy(cur_block->prev_blocks().cbegin(), cur_block->prev_blocks().cend(), std::back_inserter(todo_list));
     auto node = cur_block->ReadLocalVariable(var);
-    if (node != nullptr && !node->isa<Parameter>()) {
+    if (node != nullptr) {
       const auto &debug_info = trace::GetSourceCodeDebugInfo(node->debug_info());
       const auto &location = debug_info->location();
       return location->ToString(kSourceSectionTipNextLineHere, start_line);

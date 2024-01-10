@@ -46,9 +46,6 @@
 #include "plugin/device/gpu/optimizer/remove_redundant_format_transform.h"
 #include "plugin/device/gpu/optimizer/reduce_precision_fusion.h"
 #include "plugin/device/gpu/optimizer/insert_cast_gpu.h"
-#include "plugin/device/gpu/optimizer/relu_v2_pass.h"
-#include "plugin/device/gpu/optimizer/add_relu_v2_fusion.h"
-#include "plugin/device/gpu/optimizer/add_relu_grad_v2_fusion.h"
 #include "plugin/device/gpu/optimizer/matmul_biasadd_fusion.h"
 #include "plugin/device/gpu/optimizer/neighbor_exchange_v2_fusion.h"
 #include "plugin/device/gpu/optimizer/clip_by_norm_fission.h"
@@ -193,9 +190,6 @@ void GPUSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_gra
   // Remove node only used by UpdateState, in order to ensure the correct execution sequence in CudnnInplaceAggregate.
   pm->AddPass(std::make_shared<opt::OptimizeUpdateState>());
   pm->AddPass(std::make_shared<opt::CudnnInplaceAggregate>());
-  pm->AddPass(std::make_shared<opt::ReluV2Pass>());
-  pm->AddPass(std::make_shared<opt::AddReluV2Fusion>());
-  pm->AddPass(std::make_shared<opt::AddReluGradV2Fusion>());
   pm->AddPass(std::make_shared<opt::AllReduceFusion>());
   pm->AddPass(std::make_shared<opt::AdjustDependForParallelOptimizerRecomputeAllGather>());
   pm->AddPass(std::make_shared<opt::AllGatherFusion>());

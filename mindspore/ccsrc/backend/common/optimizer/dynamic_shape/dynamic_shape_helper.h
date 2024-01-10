@@ -33,6 +33,11 @@ BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<Abstrac
 void UpdateKernelTensorShape(const BaseShapePtr &base_shape,
                              const std::vector<kernel::KernelTensor *> &output_kernel_tensors);
 
+abstract::AbstractBasePtr InferShapeAndType(const PrimitivePtr &primitive,
+                                            const std::vector<AbstractBasePtr> &input_args);
+
+void UpdateKernelTensorType(const TypePtr &type, const std::vector<kernel::KernelTensor *> &output_kernel_tensors);
+
 bool IsRealCNode(const BaseRef &n);
 void InferOp(const CNodePtr &node, void *args = nullptr);
 AnfNodePtr GenInferNode(const AnfNodePtr &node);

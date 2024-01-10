@@ -158,7 +158,11 @@ bool IrExportBuilder::BuildPrimitives() {
 
     prim_proto->set_name(it->second);
     prim_proto->set_op_type(prim->name());
-    if (mindspore::ops::IsPrimitiveFunction(prim->name())) {
+    // function IsPrimitiveFunction: dynamic shape new primitive
+    // attr is_primitive_function: default true, Lite MindIr false
+    bool is_primitive_function =
+      prim->GetAttr("primitive_function") == nullptr || GetValue<bool>(prim->GetAttr("primitive_function"));
+    if (mindspore::ops::IsPrimitiveFunction(prim->name()) && is_primitive_function) {
       prim_proto->set_prim_type(mind_ir::PrimitiveProto_PrimType_PRIMITIVE_FUNCTION);
     } else {
       prim_proto->set_prim_type(mind_ir::PrimitiveProto_PrimType_PRIMITIVE);
@@ -1327,6 +1331,7 @@ bool IrExportBuilder::SetTypeToAttributeProto(const ValuePtr &value, mind_ir::At
   } else if (value->isa<BFloat>()) {
     tensor_proto->set_name("value0");
     auto bfloat_value = value->cast<BFloatPtr>();
+    MS_EXCEPTION_IF_NULL(bfloat_value);
     auto data_type = GetMindirDataBitsBFloatType(bfloat_value->nbits());
     if (data_type == mind_ir::TensorProto_DataType_UNDEFINED) {
       return false;

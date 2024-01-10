@@ -68,41 +68,49 @@ bool FillV2GpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
   return true;
 }
 
-#define FILL_V2_GPU_REG(MS_T, MS_S, T) \
-  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_S).AddOutputAttr(MS_S), &FillV2GpuKernelMod::LaunchKernel<T>
+#define FILL_V2_GPU_REG_1(MS_T, MS_S, T) \
+  { KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_S).AddOutputAttr(MS_S), &FillV2GpuKernelMod::LaunchKernel<T> }
+
+#define FILL_V2_GPU_REG_2(MS_T, MS_S, T)                                                      \
+  {                                                                                           \
+    KernelAttr().AddInputAttr(kObjectTypeTuple, MS_T).AddInputAttr(MS_S).AddOutputAttr(MS_S), \
+      &FillV2GpuKernelMod::LaunchKernel<T>                                                    \
+  }
+
+#define FILL_V2_GPU_REG(MS_T, MS_S, T) FILL_V2_GPU_REG_1(MS_T, MS_S, T), FILL_V2_GPU_REG_2(MS_T, MS_S, T)
 
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
 std::vector<std::pair<KernelAttr, FillV2GpuKernelMod::FillV2LaunchFunc>> FillV2GpuKernelMod::func_list_ = {
-  {FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeBool, bool)},
-  {FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeInt8, int8_t)},
-  {FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeInt16, int16_t)},
-  {FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeInt32, int32_t)},
-  {FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeInt64, int64_t)},
-  {FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeUInt8, uint8_t)},
-  {FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeUInt16, uint16_t)},
-  {FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeUInt32, uint32_t)},
-  {FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeUInt64, uint64_t)},
-  {FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeFloat16, half)},
-  {FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeFloat32, float)},
-  {FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeFloat64, double)},
-  {FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeComplex64, Complex<float>)},
-  {FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeComplex128, Complex<double>)},
-  {FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeBool, bool)},
-  {FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeInt8, int8_t)},
-  {FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeInt16, int16_t)},
-  {FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeInt32, int32_t)},
-  {FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t)},
-  {FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeUInt8, uint8_t)},
-  {FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeUInt16, uint16_t)},
-  {FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeUInt32, uint32_t)},
-  {FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeUInt64, uint64_t)},
-  {FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeFloat16, half)},
-  {FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeFloat32, float)},
-  {FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeFloat64, double)},
-  {FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeComplex64, Complex<float>)},
-  {FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeComplex128, Complex<double>)}};
+  FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeBool, bool),
+  FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeInt8, int8_t),
+  FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeInt16, int16_t),
+  FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeInt32, int32_t),
+  FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeInt64, int64_t),
+  FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeUInt8, uint8_t),
+  FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeUInt16, uint16_t),
+  FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeUInt32, uint32_t),
+  FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeUInt64, uint64_t),
+  FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeFloat16, half),
+  FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeFloat32, float),
+  FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeFloat64, double),
+  FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeComplex64, Complex<float>),
+  FILL_V2_GPU_REG(kNumberTypeInt32, kNumberTypeComplex128, Complex<double>),
+  FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeBool, bool),
+  FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeInt8, int8_t),
+  FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeInt16, int16_t),
+  FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeInt32, int32_t),
+  FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t),
+  FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeUInt8, uint8_t),
+  FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeUInt16, uint16_t),
+  FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeUInt32, uint32_t),
+  FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeUInt64, uint64_t),
+  FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeFloat16, half),
+  FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeFloat32, float),
+  FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeFloat64, double),
+  FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeComplex64, Complex<float>),
+  FILL_V2_GPU_REG(kNumberTypeInt64, kNumberTypeComplex128, Complex<double>)};
 
 std::vector<KernelAttr> FillV2GpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

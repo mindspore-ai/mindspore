@@ -3,50 +3,51 @@ MS_LOG(DEBUG) << op_name() << " call start";
 InferOutput(${call_args});
 
 ${tensor_list_convert}
+MS_EXCEPTION_IF_NULL(primitive());
+auto kernel_attr_pair =
+  PyBoostUtils::SelectKernel(input_abs(), output_abs(), device_context(), primitive()->name());
+if (kernel_attr_pair.first) {
+  // Create device address for input tensors
+  ${create_input_address}
+  ${inplace_process}
+  // Create device address for output tensors
+  PyBoostUtils::PrepareOpOutputs(device_context_, outputs_);
 
-// Create device address for input tensors
-${create_input_address}
-${inplace_process}
-// Create device address for output tensors
-PyBoostUtils::PrepareOpOutputs(device_context_, outputs_);
+  // Async
+  auto op = get_op();
+  PyBoostUtils::DispatchRun(
+  std::make_shared<pynative::PyBoostDeviceTask>([this, op, ${call_args_with_tensor}]() {
+    auto device_context = op->device_context();
+    const auto &outputs = op->outputs();
 
-// Async
-auto op = get_op();
-PyBoostUtils::DispatchRun(
-std::make_shared<pynative::PyBoostDeviceTask>([this, op, ${call_args_with_tensor}]() {
-  auto device_context = op->device_context();
-  const auto &outputs = op->outputs();
+    // Malloc for input tensors
+    ${malloc_inputs}
+    // Malloc for output tensors
+    PyBoostUtils::MallocOpOutputs(device_context, outputs);
 
-  // Malloc for input tensors
-  ${malloc_inputs}
-  // Malloc for output tensors
-  PyBoostUtils::MallocOpOutputs(device_context, outputs);
+    // Get inputs kernel tensors, the not-tensor value will malloc here
+    ${get_inputs_kernel_tensors}
 
-  // Get inputs kernel tensors, the not-tensor value will malloc here
-  ${get_inputs_kernel_tensors}
+    // Get outputs kernel tensors
+    const auto &output_address_info =
+      PyBoostUtils::GetAddressInfo(device_context, {op->output_abs()}, outputs);
 
-  // Get outputs kernel tensors
-  const auto &output_address_info =
-    PyBoostUtils::GetAddressInfo(device_context, {op->output_abs()}, outputs);
-
-  // KernelMod init
-  auto kernel_mod = PyBoostUtils::CreateKernelMod(primitive(), op_name(), op->device_context(),
-                                                  input_address_info.first, output_address_info.first);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  // KernelMod resize
-  if (kernel_mod->Resize(input_address_info.first, output_address_info.first) == kernel::KRET_RESIZE_FAILED) {
-    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#CPU kernel op [" << op_name() << "] resize failed.";
+    PyBoostUtils::LaunchKernel(primitive(), op->device_context(),
+                               input_address_info, output_address_info);
+  }));
+  MS_LOG(DEBUG) << op_name() << " call end";
+  return ${return_values};
+} else {
+  auto &select_kernel = kernel_attr_pair.second;
+  ${cast_input_code}
+  const auto &op = CREATE_PYBOOST_OP(${class_name}, "CPU");
+  op->set_primitive(prim::kPrim${class_name});
+  (void)op->Call(${real_call_args_tensor});
+  std::vector<TypeId> output_types;
+  for (auto &tensor : outputs()) {
+    (void)output_types.emplace_back(tensor->data_type());
   }
-  // Get workspace address
-  const auto &workspace_device_address = PyBoostUtils::CreateWorkSpaceDeviceAddress(kernel_mod, device_context, op_name());
-  const auto &workspace_kernel_tensors = PyBoostUtils::GetKernelTensorFromAddress(workspace_device_address);
-  // Do kernel launch
-  if (!kernel_mod->Launch(input_address_info.first, workspace_kernel_tensors, output_address_info.first, nullptr)) {
-    MS_LOG(EXCEPTION) << "Launch kernel failed, name: " << op_name();
-  }
-  MS_LOG(DEBUG) << "Launch end";
+  const auto &real_output = PyBoostUtils::CastTensor(op->outputs(), output_types, "CPU");
+  set_outputs(real_output);
+  return ${return_values};
 }
-)
-);
-MS_LOG(DEBUG) << op_name() << " call end";
-return ${return_values};

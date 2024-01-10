@@ -39,7 +39,7 @@ class Net(nn.Cell):
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_select_float32():
@@ -56,7 +56,7 @@ def test_select_float32():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_select_float16():
@@ -73,7 +73,7 @@ def test_select_float16():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_select_int32():
@@ -90,7 +90,7 @@ def test_select_int32():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_functional_select_scalar():
@@ -111,7 +111,7 @@ def test_functional_select_scalar():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_functional_select_broadcast():
@@ -130,7 +130,7 @@ def test_functional_select_broadcast():
     assert ret.shape == (5, 5, 65, 54, 12, 5, 2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_functional_select_type_error():

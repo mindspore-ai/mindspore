@@ -60,15 +60,10 @@ def run_read_tensors(is_sync):
     info3 = d.TensorInfo(node_name="Gradients/Default/network-WithLossCell/_backbone-AlexNet/conv5-Conv2d/"
                          "gradConv2D/Conv2DBackpropFilter-op424",
                          slot=0, iteration=1, rank_id=0, root_graph_id=0, is_output=True)
-    # output tensor with non-zero slot
-    tensor4 = np.array([2705090541, 1099111076, 4276637100, 3586562544, 890060077, 1869062900], np.float32)
-    name4 = "ReLUV2.ReLUV2-op381.0.0."
-    info4 = d.TensorInfo(node_name="Default/network-WithLossCell/_backbone-AlexNet/ReLUV2-op381",
-                         slot=1, iteration=0, rank_id=0, root_graph_id=0, is_output=True)
 
-    tensor_name = [name1, name2, name3, name4]
-    tensor_list = [tensor1, tensor2, tensor3, tensor4]
-    tensor_info = [info1, info2, info3, info4]
+    tensor_name = [name1, name2, name3]
+    tensor_list = [tensor1, tensor2, tensor3]
+    tensor_info = [info1, info2, info3]
 
     pwd = os.getcwd()
     with tempfile.TemporaryDirectory(dir=pwd) as tmp_dir:

@@ -80,7 +80,6 @@ GVAR_DEF(PrimitivePtr, kPrimRenorm, std::make_shared<Primitive>(kRenormOpName));
 GVAR_DEF(PrimitivePtr, kPrimNuclearNorm, std::make_shared<Primitive>(kNuclearNormOpName));
 GVAR_DEF(PrimitivePtr, kPrimL2Normalize, std::make_shared<Primitive>("L2Normalize"));
 GVAR_DEF(PrimitivePtr, kPrimL2NormalizeGrad, std::make_shared<Primitive>("L2NormalizeGrad"));
-GVAR_DEF(PrimitivePtr, kPrimLayerNormGradGrad, std::make_shared<Primitive>("LayerNormGradGrad"));
 GVAR_DEF(PrimitivePtr, kPrimLayerNormXBackprop, std::make_shared<Primitive>("LayerNormXBackprop"));
 GVAR_DEF(PrimitivePtr, kPrimLayerNormXBackpropV2, std::make_shared<Primitive>("LayerNormXBackpropV2"));
 GVAR_DEF(PrimitivePtr, kPrimLayerNormBetaGammaBackprop, std::make_shared<Primitive>("LayerNormBetaGammaBackprop"));
@@ -177,12 +176,9 @@ GVAR_DEF(PrimitivePtr, kPrimNthElement, std::make_shared<Primitive>("NthElement"
 GVAR_DEF(PrimitivePtr, kPrimIFMR, std::make_shared<Primitive>(kIFMROpName));
 GVAR_DEF(PrimitivePtr, kPrimChannelShuffle, std::make_shared<Primitive>(kChannelShuffleOpName));
 GVAR_DEF(PrimitivePtr, kPrimPromptFlashAttention, std::make_shared<Primitive>(kFlashPromptFlashAttentionOpName));
+GVAR_DEF(PrimitivePtr, kPrimIncreFlashAttention, std::make_shared<Primitive>(kFlashIncreFlashAttentionOpName));
 GVAR_DEF(PrimitivePtr, kPrimFlashAttentionScore, std::make_shared<Primitive>(kFlashAttentionScoreOpName));
 GVAR_DEF(PrimitivePtr, kPrimFlashAttentionScoreGrad, std::make_shared<Primitive>(kFlashAttentionScoreGradOpName));
-GVAR_DEF(PrimitivePtr, kPrimApplyCamePart1, std::make_shared<Primitive>(kApplyCamePart1OpName));
-GVAR_DEF(PrimitivePtr, kPrimApplyCamePart2, std::make_shared<Primitive>(kApplyCamePart2OpName));
-GVAR_DEF(PrimitivePtr, kPrimApplyCamePart3, std::make_shared<Primitive>(kApplyCamePart3OpName));
-GVAR_DEF(PrimitivePtr, kPrimApplyCamePart4, std::make_shared<Primitive>(kApplyCamePart4OpName));
 }  // namespace prim
 }  // namespace mindspore
 

@@ -19,6 +19,7 @@ This module is to support reading page from MindRecord.
 from .shardsegment import ShardSegment
 from .shardutils import check_parameter
 from .common.exceptions import ParamValueError, ParamTypeError, MRMDefineCategoryError
+from .config import _get_enc_key, _get_dec_mode, decrypt, verify_file_hash
 
 __all__ = ['MindPage']
 
@@ -60,6 +61,31 @@ class MindPage:
     @check_parameter
     def __init__(self, file_name, num_consumer=4):
         self._segment = ShardSegment()
+
+        if isinstance(file_name, str):
+            # decrypt the data file and index file
+            index_file_name = file_name + ".db"
+            decrypt_filename = decrypt(file_name, _get_enc_key(), _get_dec_mode())
+            file_name = decrypt_filename
+            decrypt(index_file_name, _get_enc_key(), _get_dec_mode())
+
+            # verify integrity check
+            verify_file_hash(file_name)
+            verify_file_hash(file_name + ".db")
+        else:
+            file_names_decrypted = []
+            for item in file_name:
+                # decrypt the data file and index file
+                index_file_name = item + ".db"
+                decrypt_filename = decrypt(item, _get_enc_key(), _get_dec_mode())
+                file_names_decrypted.append(decrypt_filename)
+                decrypt(index_file_name, _get_enc_key(), _get_dec_mode())
+
+                # verify integrity check
+                verify_file_hash(decrypt_filename)
+                verify_file_hash(decrypt_filename + ".db")
+            file_name = file_names_decrypted
+
         self._segment.open(file_name, num_consumer)
         self._category_field = None
         self._candidate_fields = [field[:field.rfind('_')] for field in self._segment.get_category_fields()]
@@ -80,7 +106,7 @@ class MindPage:
     @property
     def category_field(self):
         """
-        Getter function for category fields.
+        Setter / Getter function for category fields.
 
         Note:
             Please refer to the Examples of :class:`mindspore.mindrecord.MindPage` .

@@ -31,7 +31,7 @@
 #include "runtime/graph_scheduler/graph_scheduler.h"
 #include "include/backend/visible.h"
 #include "runtime/pynative/async/device_task.h"
-#include "runtime/pynative/async/async_queue.h"
+#include "runtime/pynative/async/async_rqueue.h"
 
 namespace mindspore::runtime {
 class BACKEND_EXPORT OpExecutor {
@@ -73,6 +73,8 @@ class BACKEND_EXPORT OpExecutor {
   // Child process reinitialize resource after fork.
   void ChildAfterFork();
 
+  static bool NeedSync();
+
  private:
   OpExecutor();
   ~OpExecutor();
@@ -80,7 +82,7 @@ class BACKEND_EXPORT OpExecutor {
 
   void WaitForRun();
 
-  pynative::AsyncQueue async_queue_{"runop_device", pynative::kThreadWaitLevel::kLevelDevice};
+  pynative::AsyncRQueue async_queue_{"runop_device", pynative::kThreadWaitLevel::kLevelDevice};
   inline static size_t kMaxQueueSize = 20;
   bool executing_{false};
   std::function<void()> forward_callback_{nullptr};

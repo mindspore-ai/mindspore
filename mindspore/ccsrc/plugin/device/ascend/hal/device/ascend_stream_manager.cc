@@ -28,21 +28,6 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-namespace {
-bool HasOverflowCheck() {
-  // Check if overflow check is on. If overflow check is on, cannot use "stop when error" function
-  // (aclrtSetStreamFailureMode(stream, ACL_STOP_ON_FAILURE)). Because device take overflow as an error while host not,
-  // it will cause stuck. Can be deleted after driver solve above problem.
-  bool ret = false;
-#ifndef ENABLE_SECURITY
-  auto &dump_json_parser = DumpJsonParser::GetInstance();
-  dump_json_parser.Parse();
-  ret = dump_json_parser.async_dump_enabled() && dump_json_parser.op_debug_mode() > 0;
-#endif
-  return ret;
-}
-}  // namespace
-
 AscendStreamMng &AscendStreamMng::GetInstance() {
   static AscendStreamMng instance{};
   return instance;
@@ -89,11 +74,9 @@ void AscendStreamMng::CreateStream(aclrtStream *stream, int32_t priority) {
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
-  if (!HasOverflowCheck()) {
-    ret = aclrtSetStreamFailureMode(*stream, ACL_STOP_ON_FAILURE);
-    if (ret != ACL_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "aclrtSetStreamFailureMode failed, ret:" << ret;
-    }
+  ret = aclrtSetStreamFailureMode(*stream, ACL_STOP_ON_FAILURE);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclrtSetStreamFailureMode failed, ret:" << ret;
   }
   (void)streams_.emplace_back(*stream);
   AscendGmemAdapter::GetInstance().AddCallbackThread(*stream);
@@ -106,11 +89,9 @@ void AscendStreamMng::CreateStream(size_t *stream_id, int32_t priority) {
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
-  if (!HasOverflowCheck()) {
-    ret = aclrtSetStreamFailureMode(stream, ACL_STOP_ON_FAILURE);
-    if (ret != ACL_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "aclrtSetStreamFailureMode failed, ret:" << ret;
-    }
+  ret = aclrtSetStreamFailureMode(stream, ACL_STOP_ON_FAILURE);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclrtSetStreamFailureMode failed, ret:" << ret;
   }
   *stream_id = streams_.size();
   (void)streams_.emplace_back(stream);
@@ -123,11 +104,9 @@ void AscendStreamMng::CreateStreamWithFlags(aclrtStream *stream, uint32_t flags,
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
-  if (!HasOverflowCheck()) {
-    ret = aclrtSetStreamFailureMode(*stream, ACL_STOP_ON_FAILURE);
-    if (ret != ACL_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "aclrtSetStreamFailureMode failed, ret:" << ret;
-    }
+  ret = aclrtSetStreamFailureMode(*stream, ACL_STOP_ON_FAILURE);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclrtSetStreamFailureMode failed, ret:" << ret;
   }
   (void)streams_.emplace_back(*stream);
   AscendGmemAdapter::GetInstance().AddCallbackThread(*stream);
@@ -140,11 +119,9 @@ void AscendStreamMng::CreateStreamWithFlags(size_t *stream_id, uint32_t flags, i
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
-  if (!HasOverflowCheck()) {
-    ret = aclrtSetStreamFailureMode(stream, ACL_STOP_ON_FAILURE);
-    if (ret != ACL_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "aclrtSetStreamFailureMode failed, ret:" << ret;
-    }
+  ret = aclrtSetStreamFailureMode(stream, ACL_STOP_ON_FAILURE);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclrtSetStreamFailureMode failed, ret:" << ret;
   }
   *stream_id = streams_.size();
   (void)streams_.emplace_back(stream);

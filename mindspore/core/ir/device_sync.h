@@ -47,22 +47,11 @@ class DeviceSync {
   virtual void ClearDeviceMemory() = 0;
 
   // The related interface of reference count operation.
-  void set_original_ref_count(size_t original_ref_count) { original_ref_count_ = original_ref_count; }
-  size_t original_ref_count() const { return original_ref_count_; }
-  void set_ref_count(size_t ref_count) { ref_count_ = ref_count; }
-  size_t ref_count() const { return ref_count_; }
-  void IncreaseOriginalRefCount() {
-    if (original_ref_count_ < SIZE_MAX) {
-      original_ref_count_++;
-    }
-  }
-  void DecreaseOriginalRefCount() {
-    if ((original_ref_count_ < SIZE_MAX) && (original_ref_count_ > 0)) {
-      original_ref_count_--;
-    }
-  }
-  void DecreaseRefCount() { ref_count_--; }
-  void ResetRefCount() { ref_count_ = original_ref_count_; }
+  virtual void set_original_ref_count(size_t original_ref_count) const = 0;
+  virtual size_t original_ref_count() const = 0;
+  virtual void set_ref_count(size_t ref_count) const = 0;
+  virtual size_t ref_count() const = 0;
+  virtual void ResetRefCount() = 0;
 
   virtual ~DeviceSync() {}
 
@@ -72,12 +61,8 @@ class DeviceSync {
   virtual void set_user_data(const UserDataPtr &user_data) { MS_LOG(EXCEPTION) << "Not implement exception"; }
 
  protected:
-  mutable size_t original_ref_count_{1};
-  // It will be decreased in the running, and reset by original_ref_count_ when it is zero.
-  mutable size_t ref_count_{1};
   bool is_view_{false};
   // User data is the extra data required by the kernel launch in addition to device ptr.
-  UserDataPtr user_data_{nullptr};
 };
 using DeviceSyncPtr = std::shared_ptr<DeviceSync>;
 }  // namespace mindspore

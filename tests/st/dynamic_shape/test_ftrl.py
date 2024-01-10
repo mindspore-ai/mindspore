@@ -57,6 +57,8 @@ def test_ftrl_net():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_lazy_adam_net():
     indices = Tensor(np.array([0, 0, 1]).astype(np.int32))

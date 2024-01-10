@@ -18,6 +18,7 @@
 #include <algorithm>
 #include "acl/acl_rt.h"
 #include "acl/acl_op_compiler.h"
+#include "include/common/profiler.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "ops/auto_generate/gen_ops_primitive.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
@@ -115,12 +116,18 @@ void GeKernelExecutor::Initialize() {
   if (initialized_) {
     return;
   }
+  auto ret = aclInit(nullptr);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(WARNING) << "Call aclInit failed. Error flag is " << ret;
+  }
+  MS_LOG(INFO) << "Call aclInit successfully.";
   MS_EXCEPTION_IF_NULL(device_context_);
   res_manager_ = device_context_->device_res_manager_.get();
   MS_EXCEPTION_IF_NULL(res_manager_);
   graph_executor_ = dynamic_cast<GeGraphExecutor *>(device_context_->graph_executor_.get());
   // not check graph executor, may use in ascend device context
   SetAclOpPrecisionMode();
+  transform::AclUtil::SetDeterministic();
   initialized_ = true;
 }
 
@@ -153,18 +160,19 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   }
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "GeOptimizeGraph", 1, 0, 0);
   GEGraphOptimization::GetInstance().OptimizeACLGraph(kernel_graph);
-  bool enable_aclnn = !kernel_graph->is_from_single_op();
+  bool aclnn_can_used = !kernel_graph->is_from_single_op();
   // select kernel
   const auto &kernels = kernel_graph->execution_order();
   for (const auto &kernel : kernels) {
-    auto [select_res, msg, etype] = device::ascend::SelectKernelInfoWithMsg(kernel, enable_aclnn);
+    auto [select_res, msg, etype] =
+      device::ascend::SelectKernelInfoWithMsg(kernel, aclnn_can_used && kernel::IsEnabledAclnn(kernel));
     if (!select_res) {
       MS_LOG(INFO) << "node is " << kernel->fullname_with_scope() << " should backoff";
       std::pair<std::string, ExceptionType> failure_info = std::make_pair(msg, etype);
       device::ascend::HandleKernelSelectFailure(kernel_graph, kernel, failure_info);
     }
   }
-  if (!kernel_graph->is_from_single_op()) {
+  if (!kernel_graph->is_from_single_op() && !kernel_graph->has_flag(kFlagIsPyNativeBpropKernelGraph)) {
     kernel_graph->SetKernelObjectTypesForUnrealNodes();
   }
 
@@ -284,12 +292,16 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
   MS_EXCEPTION_IF_NULL(stream);
 #ifdef ENABLE_DEBUGGER
   if (DumpJsonParser::GetInstance().async_dump_enabled()) {
-    auto register_dumper = debug::OverflowDumper::GetInstance(kAscendDevice);
-    register_dumper->Init();
-    register_dumper->OpDebugRegisterForStream(kernel);
+    MS_LOG(WARNING) << "Dump is currently not support for pynative mode or kernelbykernel mode, skip dump kernel: "
+                    << kernel->fullname_with_scope();
   }
 #endif
+
   // launch kernel
+  // cppcheck-suppress unreadVariable
+  auto lock = device::KernelRuntime::LockRuntime(stream);
+  uint64_t start_time = 0;
+  PROFILER_START(start_time);
   if (nop_op_to_memcpy_.find(kernel) != nop_op_to_memcpy_.end()) {
     if (!MemoryCopyAsync(kernel, inputs, outputs)) {
       MS_LOG(ERROR) << "Memory copy failed for kernel " << kernel->fullname_with_scope();
@@ -306,7 +318,11 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
     }
   }
   // for PyNative Sync Run mode
-  return PySyncRuning();
+  auto ret = PySyncRuning();
+  PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelLaunch,
+               kernel->fullname_with_scope(), false);
+
+  return ret;
 }
 
 bool GeKernelExecutor::ExecuteKernelTask(const pynative::KernelTaskType &task_type,

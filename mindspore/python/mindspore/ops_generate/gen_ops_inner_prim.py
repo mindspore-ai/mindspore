@@ -16,6 +16,7 @@
 
 from mindspore.ops.primitive import Primitive, prim_attr_register
 from mindspore._c_expression import typing
+from mindspore._c_expression import op_enum
 
 
 class DtypeToEnum(Primitive):
@@ -41,3 +42,28 @@ class DtypeToEnum(Primitive):
         if not isinstance(dtype, typing.Type):
             raise TypeError(f"For dtype_to_enum function, the input should be mindpsore dtype, but got {dtype}.")
         return typing.type_to_type_id(dtype)
+
+
+class StringToEnum(Primitive):
+    r"""
+    Convert string to enum.
+
+    Inputs:
+        - **enum_str** (str) - The str data.
+
+    Outputs:
+        An integer.
+
+    Supported Platforms:
+        ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize"""
+
+    def __call__(self, enum_str):
+        """Run in PyNative mode"""
+        if not isinstance(enum_str, str):
+            raise TypeError(f"For StringToEnum op, the input should be a str, but got {type(enum_str)}.")
+        return op_enum.str_to_enum(enum_str)

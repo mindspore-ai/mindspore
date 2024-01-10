@@ -10,7 +10,7 @@ mindspore.scipy.linalg.lu
     .. math::
         A = P L U
 
-    其中 :math:`P` 是一个置换矩阵， :math:`L` 是对角线元素全为1的下三角矩阵， :math:`U` 是上三角矩阵。
+    其中， :math:`P` 是一个置换矩阵， :math:`L` 是对角线元素全为1的下三角矩阵， :math:`U` 是上三角矩阵。
 
     .. note::
         - Windows平台上还不支持 `LU`。

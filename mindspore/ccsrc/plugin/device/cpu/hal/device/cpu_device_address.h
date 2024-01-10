@@ -27,21 +27,29 @@ namespace device {
 namespace cpu {
 class BACKEND_EXPORT CPUDeviceAddress : public DeviceAddress {
  public:
-  explicit CPUDeviceAddress(const KernelTensorPtr &kernel_tensor) : DeviceAddress(kernel_tensor) {}
+  explicit CPUDeviceAddress(const KernelTensorPtr &kernel_tensor) : DeviceAddress(kernel_tensor) {
+    SetDevicePtrDeleter();
+  }
 
-  CPUDeviceAddress(void *ptr, size_t size) : DeviceAddress(ptr, size) {}
+  CPUDeviceAddress(void *ptr, size_t size) : DeviceAddress(ptr, size) { SetDevicePtrDeleter(); }
 
   CPUDeviceAddress(void *ptr, size_t size, const string &format, TypeId type_id)
-      : DeviceAddress(ptr, size, format, type_id) {}
+      : DeviceAddress(ptr, size, format, type_id) {
+    SetDevicePtrDeleter();
+  }
 
   CPUDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id, const KernelWithIndex &node_index)
-      : DeviceAddress(ptr, size, format, type_id, node_index) {}
+      : DeviceAddress(ptr, size, format, type_id, node_index) {
+    SetDevicePtrDeleter();
+  }
 
   CPUDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id, const std::string &device_name,
                    uint32_t device_id)
-      : DeviceAddress(ptr, size, format, type_id, device_name, device_id) {}
+      : DeviceAddress(ptr, size, format, type_id, device_name, device_id) {
+    SetDevicePtrDeleter();
+  }
 
-  ~CPUDeviceAddress() override;
+  ~CPUDeviceAddress() override = default;
 
   bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const override;
   bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr,
@@ -54,6 +62,10 @@ class BACKEND_EXPORT CPUDeviceAddress : public DeviceAddress {
                      TypeId host_type, bool trans_flag) const override;
   void ClearDeviceMemory() override;
   void ClearUserData() override;
+
+  // Set a device pointer destructor to kernel tensor, used to release resource reclaiming of the device pointer
+  // automatically when DeviceAddress destructed.
+  void SetDevicePtrDeleter();
 
   DeviceType GetDeviceType() const override { return DeviceType::kCPU; }
 };

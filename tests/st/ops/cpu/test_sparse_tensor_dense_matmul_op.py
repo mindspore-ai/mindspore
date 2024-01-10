@@ -79,7 +79,7 @@ def test_sparse_tensor_dense_mul_dyn():
     assert out.asnumpy().shape == expect_out_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparse_tensor_dense_matmul_no_transpose():
@@ -109,7 +109,7 @@ def test_sparse_tensor_dense_matmul_no_transpose():
     judge_result_correct(grad_ms[2].asnumpy(), expect_dense_grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparse_tensor_dense_matmul_transpose_a():
@@ -142,7 +142,7 @@ def test_sparse_tensor_dense_matmul_transpose_a():
     judge_result_correct(grad_ms[2].asnumpy(), expect_dense_grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparse_tensor_dense_matmul_transpose_b():
@@ -174,7 +174,7 @@ def test_sparse_tensor_dense_matmul_transpose_b():
     judge_result_correct(grad_ms[2].asnumpy(), expect_dense_grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sparse_tensor_dense_matmul_transpose_all():

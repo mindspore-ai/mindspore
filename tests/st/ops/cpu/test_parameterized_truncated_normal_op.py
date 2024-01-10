@@ -31,7 +31,7 @@ class ParameterizedTruncatedNormalTEST(nn.Cell):
         return self.parameterized_truncated_normal(shape, mean, stdevs, minvals, maxvals)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_parameterized_truncated_normal_op_case1():
@@ -62,7 +62,7 @@ def test_parameterized_truncated_normal_op_case1():
         assert not (output0.asnumpy() == output1.asnumpy()).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_parameterized_truncated_normal_op_case2():

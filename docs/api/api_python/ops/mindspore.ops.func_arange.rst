@@ -11,7 +11,12 @@ mindspore.ops.arange
         - **step** (Union[float, int, Tensor], 可选) - 表述序列中数值的步长。如果为Tensor，则shape必须为 :math:`()` 。默认值： ``1`` 。
 
     关键字参数：
-        - **dtype** (mindspore.dtype, 可选) - 返回Tensor的所需数据类型。默认值： ``None`` 。如果未指定或者为 ``None`` ，则使用 `start` 、 `end` 和 `step` 参数中精度最高的类型。
+        - **dtype** (mindspore.dtype, 可选) - 返回Tensor的所需数据类型。默认值： ``None`` 。
+          当 `dtype` 未指定或者为 ``None`` 时：
+
+          若 `start` 、 `end` 和 `step` 全为整数，则输出为int64类型；
+
+          若 `start` 、 `end` 和 `step` 含至少一个浮点数，则输出为float32类型。
 
     返回：
         一维Tensor，数据类型由 `dtype` 决定。

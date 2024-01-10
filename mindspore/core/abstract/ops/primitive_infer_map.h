@@ -83,7 +83,7 @@ MS_CORE_API PrimitiveEvalImplMap *GetDeprecatedPrimitiveInferMapPtr();
 // get prim infer from infer map or deprecated infer map
 MS_CORE_API std::optional<StandardPrimitiveImplReg> GetPrimitiveInferImpl(const PrimitivePtr &primitive);
 
-MS_CORE_API std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode);
+MS_CORE_API std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode, bool is_proto = false);
 
 class RegisterStandardPrimitiveEvalHelper {
  public:
@@ -130,6 +130,9 @@ MS_CORE_API std::optional<AbstractBasePtr> InferAbstractByFuncImpl(const Primiti
                                                                    const AbstractBasePtrList &input_args);
 MS_CORE_API std::optional<ValuePtr> InferValueByFuncImpl(const PrimitivePtr &primitive,
                                                          const AbstractBasePtrList &input_args);
+
+MS_CORE_API std::optional<AbstractBasePtr> TryInferAbstract(const PrimitivePtr &primitive,
+                                                            const AbstractBasePtrList &input_args);
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_ABSTRACT_PRIMITIVE_INFER_MAP_H_

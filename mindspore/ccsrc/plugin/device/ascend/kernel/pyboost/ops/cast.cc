@@ -26,7 +26,6 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 tensor::TensorPtr CastAscend::Call(const TensorPtr &input_tensor, const TypePtr &type) {
-  runtime::OpExecutor::GetInstance().WaitAll();
   MS_LOG(DEBUG) << "Call start";
   InferOutput(input_tensor, type);
   // ValueTuple to std::vector

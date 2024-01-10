@@ -52,32 +52,14 @@ class PoolingGradCpuKernelMod : public MKLCpuKernelMod {
     static std::unordered_map<std::string, std::vector<KernelAttr>> support_list = {
       {kAvgPoolGrad,
        {{KernelAttr()
-           .AddInputAttr(kNumberTypeFloat16)                   // x
-           .AddInputAttr(kNumberTypeFloat16)                   // out
-           .AddInputAttr(kNumberTypeFloat16)                   // dout
+           .AddInputAttr(kNumberTypeFloat32)                   // x
+           .AddInputAttr(kNumberTypeFloat32)                   // out
+           .AddInputAttr(kNumberTypeFloat32)                   // dout
            .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // kernel_size
            .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // strides
            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // pad_mode
            .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // data_format
-           .AddOutputAttr(kNumberTypeFloat16)},
-        {KernelAttr()
-           .AddInputAttr(kNumberTypeFloat32)
-           .AddInputAttr(kNumberTypeFloat32)
-           .AddInputAttr(kNumberTypeFloat32)
-           .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // kernel_size
-           .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // strides
-           .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // pad_mode
-           .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // data_format
-           .AddOutputAttr(kNumberTypeFloat32)},
-        {KernelAttr()
-           .AddInputAttr(kNumberTypeFloat64)
-           .AddInputAttr(kNumberTypeFloat64)
-           .AddInputAttr(kNumberTypeFloat64)
-           .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // kernel_size
-           .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // strides
-           .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // pad_mode
-           .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // data_format
-           .AddOutputAttr(kNumberTypeFloat64)}}},
+           .AddOutputAttr(kNumberTypeFloat32)}}},
       {kAvgPool3DGrad,
        {{KernelAttr()
            .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)

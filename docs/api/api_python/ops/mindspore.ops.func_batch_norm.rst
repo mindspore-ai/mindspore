@@ -13,7 +13,7 @@ mindspore.ops.batch_norm
     其中， :math:`\gamma` 为 `weight`， :math:`\beta` 为 `bias`， :math:`\epsilon` 为 `eps`， :math:`mean` 为 :math:`x` 的均值， :math:`variance` 为 :math:`x` 的方差。
 
     .. warning::
-        - 对于Ascend 310，由于平方根指令，结果精度未能达到1‰。
+        - 对于Atlas 200/300/500推理产品，由于平方根指令，结果精度未能达到1‰。
 
     .. note::
         - 如果 `training` 为False，则 `running_mean` 、 `running_var` 、 `weight` 和 `bias` 是Tensor。

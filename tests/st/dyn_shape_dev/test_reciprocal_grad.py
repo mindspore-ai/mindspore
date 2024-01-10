@@ -25,7 +25,7 @@ def reciprocal_grad_func(y, dy):
     return ops.auto_generate.reciprocal_grad(y, dy)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -46,7 +46,7 @@ def test_reciprocal_grad(mode):
     np.testing.assert_array_almost_equal(output.asnumpy(), expect_output, decimal=4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -68,11 +68,11 @@ def test_reciprocal_grad_vmap(mode):
     np.testing.assert_equal(output.asnumpy(), expect_out.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-# @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_func
 def test_reciprocal_grad_dynamic(mode):

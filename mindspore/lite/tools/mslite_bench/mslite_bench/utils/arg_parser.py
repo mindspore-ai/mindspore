@@ -275,7 +275,7 @@ class ArgParser:
         """parse auto cmp related arguments"""
         parser.add_argument('--peak_node_names',
                             type=str,
-                            default='all',
+                            default='mslite_bench_all',
                             help='network node name to compare accuracy between'
                                  'third party framework with mslite framework,'
                                  'if all is set, every node in network would run accuracy compare')

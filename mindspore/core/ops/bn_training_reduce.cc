@@ -56,6 +56,7 @@ void BNTrainingReduceCheckFormat(const PrimitivePtr &primitive, const mindspore:
 abstract::TupleShapePtr BNTrainingReduceInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
+  MS_EXCEPTION_IF_NULL(input_args.at(0));
   auto shape = input_args[0]->GetShape()->GetShapeVector();
   constexpr auto kMinInputDim = 1;
   (void)CheckAndConvertUtils::CheckInteger("x_dim", SizeToLong(shape.size()), kGreaterThan, kMinInputDim, prim_name);
@@ -64,7 +65,10 @@ abstract::TupleShapePtr BNTrainingReduceInferShape(const PrimitivePtr &primitive
   ShapeVector square_sum_shape{abstract::TensorShape::kShapeDimAny};
   if (!IsDynamicRank(shape)) {
     // get format
-    auto format_opt = GetScalarValue<int64_t>(input_args[kInputIndex1]->GetValue());
+    MS_EXCEPTION_IF_NULL(input_args.at(kInputIndex1));
+    auto format_ptr = input_args[kInputIndex1]->GetValue();
+    MS_EXCEPTION_IF_NULL(format_ptr);
+    auto format_opt = GetScalarValue<int64_t>(format_ptr);
     if (MS_UNLIKELY(!format_opt.has_value())) {
       MS_LOG(EXCEPTION) << "For " << prim_name << ", failed to get format's value.";
     }
@@ -99,7 +103,7 @@ MIND_API_OPERATOR_IMPL(BNTrainingReduce, BaseOperator);
 AbstractBasePtr BNTrainingReduceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  constexpr int64_t kInputNum = 1;
+  constexpr int64_t kInputNum = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
   auto infer_type = BNTrainingReduceInferType(primitive, input_args);
   auto infer_shape = BNTrainingReduceInferShape(primitive, input_args);

@@ -25,12 +25,13 @@
 #include "ops/other_op_name.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
+#include "ir/dtype/type.h"
 
 namespace mindspore {
 ::HcclDataType HcomUtil::ConvertHcclType(TypeId type_id) {
   auto iter = kConstOpHcomDataTypeMap.find(type_id);
   if (iter == kConstOpHcomDataTypeMap.end()) {
-    MS_LOG(EXCEPTION) << "HcomDataType can't support Current Ascend Data Type : " << type_id;
+    MS_LOG(EXCEPTION) << "HcomDataType can't support Current Ascend Data Type : " << TypeIdLabel(type_id);
   }
   return iter->second;
 }
@@ -92,7 +93,6 @@ bool HcomUtil::GetHcomCount(const PrimitivePtr &primitive, const vector<HcclData
   const uint32_t align_size = 512;
   const uint32_t filled_size = 32;
   uint64_t total_size = 0;
-  uint64_t block_size;
   size_t input_size;
   uint32_t type_size = 4;
 
@@ -109,37 +109,26 @@ bool HcomUtil::GetHcomCount(const PrimitivePtr &primitive, const vector<HcclData
       return false;
     }
 
+    if (primitive->HasAttr(kAttrFusion) && GetValue<int64_t>(primitive->GetAttr(kAttrFusion)) != 0 &&
+        input_tensor_num > 1) {
+      // use in task sink, there may be problems
+      input_size = (input_size + align_size - 1 + filled_size) / align_size * align_size;
+      MS_LOG(EXCEPTION) << "Maybe wrong hccl count in fusion op: " << primitive->name();
+    }
     if (primitive->name() == kReduceScatterOpName) {
       int64_t rank_size;
       if (!HcomUtil::GetHcomAttr<int64_t>(primitive, kAttrRankSize, &rank_size)) {
         return false;
       }
-      size_t actual_input_size = input_size;
-      if (primitive->HasAttr(kAttrFusion) && GetValue<int64_t>(primitive->GetAttr(kAttrFusion)) != 0) {
-        actual_input_size = (input_size + align_size - 1 + filled_size) / align_size * align_size;
-      }
-      block_size = static_cast<uint64_t>(actual_input_size / LongToSize(rank_size));
-      total_size = total_size + block_size;
-    } else {
-      if (primitive->name() == kAllGatherOpName) {
-        if (primitive->HasAttr(kAttrFusion) && GetValue<int64_t>(primitive->GetAttr(kAttrFusion)) != 0 &&
-            input_tensor_num > 1) {
-          block_size = (input_size + align_size - 1 + filled_size) / align_size * align_size;
-        } else {
-          block_size = input_size;
-        }
-      } else {
-        block_size = (input_size + align_size - 1 + filled_size) / align_size * align_size;
-      }
-      total_size = total_size + block_size;
+      input_size = static_cast<uint64_t>(input_size / LongToSize(rank_size));
     }
+    if (type_size == 0 || input_size % type_size != 0) {
+      MS_LOG(ERROR) << "Input_size[" << input_size << "],Type_size[" << type_size << "] != 0, fail!";
+      return false;
+    }
+    total_size += input_size / type_size;
   }
-
-  if (type_size == 0 || total_size % type_size != 0) {
-    MS_LOG(ERROR) << "Total_size[" << total_size << "],Type_size[" << type_size << "] != 0, fail!";
-    return false;
-  }
-  *total_count = total_size / type_size;
+  *total_count = total_size;
   return true;
 }
 

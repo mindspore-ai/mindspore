@@ -20,7 +20,6 @@
 #include "test/ut/tools/optimizer/fusion/fusion_inout_test/conv_fusion_inout_test.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "ops/auto_generate/gen_lite_ops.h"
-#include "ops/auto_generate/gen_enum_def.h"
 
 namespace mindspore {
 class ConvBiasFusionInoutTest : public ConvFusionInoutTest {

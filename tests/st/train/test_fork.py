@@ -124,7 +124,7 @@ def childprocess(mode, i, q):
     assert np.allclose(fgrad[0].asnumpy(), np.array([1.]), 1e-3)
     assert np.allclose(fgrad[1].asnumpy(), np.array([0.]), 1e-3)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

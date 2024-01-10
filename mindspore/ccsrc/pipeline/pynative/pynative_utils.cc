@@ -26,10 +26,8 @@
 #include "ir/cell.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/convert_utils_py.h"
-#include "include/common/utils/primfunc_utils.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "pipeline/jit/ps/parse/resolve.h"
-#include "pipeline/jit/ps/parse/data_converter.h"
 #include "include/common/utils/stub_tensor.h"
 #include "frontend/expander/bprop/bprop.h"
 #include "pipeline/pynative/grad/jit/jit_grad.h"
@@ -37,6 +35,7 @@
 #include "ops/structure_ops.h"
 #include "ops/other_ops.h"
 #include "pipeline/pynative/predict_out_type_map.h"
+#include "kernel/pyboost/auto_generate/contiguous.h"
 
 namespace mindspore {
 namespace pynative {
@@ -136,6 +135,54 @@ void PlantTupleParam(const FuncGraphPtr &bprop_graph, const abstract::AbstractSe
       plant_param->set_abstract(abs_seq->elements()[i]);
       (void)make_tuple->emplace_back(plant_param);
       (void)new_param->emplace_back(plant_param);
+    }
+  }
+}
+
+void RefreshGradContiguousTensor(const FrontendOpRunInfoPtr &op_run_info, size_t index) {
+  if (op_run_info->input_unused_in_bprop[index] || op_run_info->base_op_run_info.device_target != kAscendDevice) {
+    // Input is not used in bprop, no need to contiguous.
+    // GPU/CPU contiguous tensor when convert stub node
+    return;
+  }
+
+  auto contiguous_tensor = [&op_run_info](const ValuePtr &v) -> ValuePtr {
+    const auto &tensor = v->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    if (tensor->storage_info() == nullptr) {
+      return nullptr;
+    }
+
+    auto contiguous_op = CREATE_PYBOOST_OP(Contiguous, op_run_info->base_op_run_info.device_target);
+    return contiguous_op->Call(tensor);
+  };
+
+  const auto &v = op_run_info->op_grad_info->input_value[index];
+  if (v->isa<tensor::Tensor>()) {
+    const auto &new_tensor = contiguous_tensor(v);
+    if (new_tensor != nullptr) {
+      op_run_info->op_grad_info->input_value[index] = new_tensor;
+    }
+  } else if (v->isa<ValueSequence>()) {
+    const auto &vec = v->cast<ValueSequencePtr>()->value();
+    if (vec.empty() || !vec[0]->isa<tensor::Tensor>()) {
+      return;
+    }
+    // Tensor tuple need contiguous tensor.
+    bool need_refresh_tuple = false;
+    std::vector<ValuePtr> new_vec(vec.size());
+    for (size_t i = 0; i < vec.size(); i++) {
+      const auto &new_tensor = contiguous_tensor(vec[i]);
+      if (new_tensor == nullptr) {
+        new_vec[i] = vec[i];
+      } else {
+        // Not-contiguous tensor in input_value, need refresh tuple after contiguous tensor.
+        need_refresh_tuple = true;
+        new_vec[i] = new_tensor;
+      }
+    }
+    if (need_refresh_tuple) {
+      op_run_info->op_grad_info->input_value[index] = MakeValue(new_vec);
     }
   }
 }
@@ -519,20 +566,43 @@ TensorPtr Common::StubNodeToTensor(const ValuePtr &v) {
   MS_LOG(EXCEPTION) << "It should be stub tensor, but got " << v->ToString();
 }
 
-std::optional<tensor::TensorPtr> Common::StubNodeToTensorOptional(const std::optional<ValuePtr> &value) {
-  if (!value.has_value()) {
-    return std::nullopt;
+tensor::TensorPtr Common::ConvertToContiguousTensor(const tensor::TensorPtr &tensor, const std::string &device_target) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  if (tensor->storage_info() == nullptr) {
+    return tensor;
   }
-  return std::make_optional(StubNodeToTensor(value.value()));
+
+  auto contiguous_op = CREATE_PYBOOST_OP(Contiguous, device_target);
+  return contiguous_op->Call(tensor);
 }
 
-ValueTuplePtr Common::StubNodeToValueTuple(const ValuePtr &v) {
+TensorPtr Common::ConvertStubNodeToTensor(const ValuePtr &v, const std::string &device_target, bool need_contiguous) {
+  const auto &tensor = StubNodeToTensor(v);
+  if (!need_contiguous || device_target == kAscendDevice) {
+    return tensor;
+  }
+  return ConvertToContiguousTensor(tensor, device_target);
+}
+
+std::optional<tensor::TensorPtr> Common::ConvertStubNodeToTensor(const std::optional<ValuePtr> &v,
+                                                                 const std::string &device_target,
+                                                                 bool need_contiguous) {
+  if (!v.has_value()) {
+    return std::nullopt;
+  }
+  return std::make_optional(ConvertStubNodeToTensor(v.value(), device_target, need_contiguous));
+}
+
+ValueTuplePtr Common::ConvertStubNodeToValueTuple(const ValuePtr &v, const std::string &device_target,
+                                                  bool need_contiguous) {
   if (utils::isa<ValueSequence>(v)) {
     const auto &value_seq = utils::cast<ValueSequencePtr>(v);
     const auto &values = value_seq->value();
     std::vector<ValuePtr> tensor_list;
     (void)std::transform(values.begin(), values.end(), std::back_inserter(tensor_list),
-                         [](const ValuePtr &value) { return StubNodeToTensor(value); });
+                         [&device_target, need_contiguous](const ValuePtr &value) {
+                           return ConvertStubNodeToTensor(value, device_target, need_contiguous);
+                         });
     return std::make_shared<ValueTuple>(tensor_list);
   }
   MS_LOG(EXCEPTION) << "It should be stub tensor sequence, but got " << v->ToString();
@@ -789,7 +859,11 @@ std::pair<std::vector<std::string>, std::vector<ValuePtr>> PyParser::GetArgsIdAn
   input_arg_id_vec.reserve(arg_size);
   input_arg_value_vec.reserve(arg_size);
   for (size_t i = 0; i < arg_size; ++i) {
-    (void)input_arg_value_vec.emplace_back(DataConvert::PyObjToValue(args[i]));
+    if (py::isinstance<py::list>(args[i])) {
+      (void)input_arg_value_vec.emplace_back(DataConvert::PyObjToValue(py::cast<py::tuple>(args[i])));
+    } else {
+      (void)input_arg_value_vec.emplace_back(DataConvert::PyObjToValue(args[i]));
+    }
     (void)input_arg_id_vec.emplace_back(Common::GetIdByValue(input_arg_value_vec.back()));
   }
   return {input_arg_id_vec, input_arg_value_vec};
@@ -814,7 +888,7 @@ void PyParser::SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object
   op_run_info->base_op_run_info.py_prim_id_ = adapter->id();
 }
 
-static std::string BuilidPyInputTypeString(const py::object &obj) {
+std::string PyParser::BuilidPyInputTypeString(const py::object &obj) {
   if (py::isinstance<py::bool_>(obj)) {
     return "bool";
   }
@@ -910,14 +984,6 @@ inline ValuePtr ConvertBySignature(const py::object &obj, const FrontendOpRunInf
   return nullptr;
 }
 
-inline void PrintTypeError(const ops::OpDefPtr &op_def, const py::list &op_inputs) {
-  std::vector<std::string> op_type_list;
-  for (size_t index = 0; index < op_inputs.size(); ++index) {
-    (void)op_type_list.emplace_back(BuilidPyInputTypeString(op_inputs[index]));
-  }
-  MS_EXCEPTION(TypeError) << ops::BuildOpErrorMsg(op_def, op_type_list);
-}
-
 void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs, bool stub,
                          const FrontendOpRunInfoPtr &op_run_info) {
   size_t input_size = op_inputs.size();
@@ -931,10 +997,12 @@ void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs,
     auto const &op_arg = op_def->args_[i];
     op_run_info->none_init_inputs_num += static_cast<size_t>(!op_arg.as_init_arg_);
 
-    if (py::isinstance<py::none>(op_inputs[i])) {
+    // Optional argument is valid for None as input.
+    if (op_arg.is_optional_ && py::isinstance<py::none>(op_inputs[i])) {
       op_run_info->op_grad_info->input_value[i] = kNone;
       continue;
     }
+
     ValuePtr value = nullptr;
     convert_func = parse::GetConverterByType(static_cast<int32_t>(op_arg.arg_dtype_));
     MS_EXCEPTION_IF_NULL(convert_func);
@@ -959,7 +1027,7 @@ void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs,
     }
 
     if (value == nullptr) {
-      PrintTypeError(op_def, op_inputs);
+      PyParser::PrintTypeCastError(op_def, op_inputs, i);
     }
   }
 }
@@ -1123,15 +1191,13 @@ bool DataConvert::RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_ru
   return true;
 }
 
-FrontendOpRunInfoPtr PyBoost::Init(const py::args &args) {
-  if (MS_UNLIKELY(args.size() != kIndex2)) {
-    MS_LOG(EXCEPTION) << "Two args are needed by RunOp"
-                      << ", but got " << args.size();
-  }
+FrontendOpRunInfoPtr PyBoost::Init(const PrimitivePtr &prim, const py::list &args) {
   const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
   const auto &forward_executor = pynative_executor->forward_executor();
   const auto &op_run_info = std::make_shared<FrontendOpRunInfo>();
-  PyParser::SetPrim(op_run_info, args[kIndex0]);
+  prim->EnableSharedMutex();
+  op_run_info->op_grad_info->op_prim = prim;
+  op_run_info->base_op_run_info.op_name = prim->name();
   pynative_executor->StoreAsyncStatus(op_run_info);
   forward_executor->InitOpRunInfo(op_run_info);
   return op_run_info;
@@ -1188,28 +1254,44 @@ void PyBoost::UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<Val
 
   // Update op run info for auto grad
   if (op_run_info->requires_grad) {
+    if (op_inputs.size() != op->input_abs().size()) {
+      MS_LOG(EXCEPTION) << "Op input size " << op_inputs.size() << " not equal to input abstract num "
+                        << op->input_abs().size() << ". Please call GenerateAbstract in Xxx::Call().";
+    }
     op_run_info->base_op_run_info.abstract = op->output_abs();
+    op_run_info->op_grad_info->input_value = op_inputs;
     op_run_info->op_grad_info->input_abs = op->input_abs();
     op_run_info->op_grad_info->out_value = op_run_info->real_out;
     op_run_info->op_grad_info->out_abs = op->output_abs();
     UpdateOutputTensorGradInfo(op->outputs());
-    op->set_grad_func([op_run_info]() { DoGrad(op_run_info); });
   }
 }
 
-py::object PyBoost::RunPyFunction(const py::args &args) {
-  const auto &adapter = args[kIndex0].cast<PrimitivePyAdapterPtr>();
+PrimitivePtr PyBoost::ConvertPrimitive(const py::object &obj) {
+  const auto &adapter = obj.cast<PrimitivePyAdapterPtr>();
   MS_EXCEPTION_IF_NULL(adapter);
   auto prim = adapter->attached_primitive();
   if (prim == nullptr) {
-    prim = std::make_shared<PrimitivePy>(args[kIndex0]);
+    prim = std::make_shared<PrimitivePy>(obj);
     adapter->set_attached_primitive(prim);
   }
-  py::str prim_name = prim->name();
+  if (!prim->HasPyObj()) {
+    MS_LOG(EXCEPTION) << "Pyobj is empty";
+  }
+  prim->EnableSharedMutex();
+  return prim;
+}
+
+py::object PyBoost::RunPyFunction(const PrimitivePtr &prim, const py::list &args) {
   py::tuple wrap_args(kIndex3);
-  wrap_args[kIndex0] = args[kIndex0];
-  wrap_args[kIndex1] = prim_name;
-  wrap_args[kIndex2] = args[kIndex1];
+  auto prim_py = prim->cast<PrimitivePyPtr>();
+  MS_EXCEPTION_IF_NULL(prim_py);
+  if (!prim_py->HasPyObj()) {
+    MS_LOG(EXCEPTION) << "Prim has not python obj!";
+  }
+  wrap_args[kIndex0] = prim_py->GetPyObj();
+  wrap_args[kIndex1] = prim->name();
+  wrap_args[kIndex2] = args;
   const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
   return pynative_executor->RunOpStub(wrap_args);
 }
@@ -1220,6 +1302,8 @@ void PyBoost::DoGrad(const FrontendOpRunInfoPtr &op_run_info) {
 
   PyParser::PrepareOpGradInfo(op_run_info);
   for (size_t index = 0; index < op_run_info->input_size; ++index) {
+    // Inplace input_value with contiguous tensor.
+    RefreshGradContiguousTensor(op_run_info, index);
     const ValuePtr &input_object = op_run_info->op_grad_info->input_value[index];
     DataConvert::MarkInputs(op_run_info, input_object, index, forward->grad()->top_cell());
   }
@@ -1330,6 +1414,17 @@ void DataConvert::ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_ru
   }
 }
 
+void DataConvert::ConvertValueTensorId(const ValuePtr &value, std::vector<std::string> *converted_tensor_id) {
+  if (value->isa<tensor::Tensor>()) {
+    (void)converted_tensor_id->emplace_back(value->cast<tensor::TensorPtr>()->id());
+  } else if (value->isa<ValueSequence>()) {
+    const auto &seq = value->cast<ValueSequencePtr>();
+    for (const auto &val : seq->value()) {
+      ConvertValueTensorId(val, converted_tensor_id);
+    }
+  }
+}
+
 void DataConvert::ConvertTupleValueToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq,
                                             size_t index, const TopCellInfoPtr &top_cell) {
   MS_EXCEPTION_IF_NULL(op_run_info);
@@ -1371,7 +1466,7 @@ void DataConvert::MarkInputs(const FrontendOpRunInfoPtr &op_run_info, const Valu
     (void)op_run_info->base_op_run_info.input_masks.emplace_back(kValueNodeMask);
     return;
   } else if (v->isa<IntegerImm>()) {
-    if (op_run_info->op_grad_info->op_prim->name() == prim::kPrimCSRReduceSum->name()) {
+    if (op_run_info->base_op_run_info.op_name == prim::kPrimCSRReduceSum->name()) {
       int64_t input = v->cast<Int64ImmPtr>()->value();
       op_run_info->op_grad_info->op_prim->set_attr("axis", MakeValue(input));
       return;
@@ -1510,13 +1605,9 @@ void GradCommon::GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const mindspore
 
 void DispatchOp(const std::shared_ptr<FrontendTask> &task) {
   auto forward_executor = PyNativeExecutor::GetInstance()->forward_executor();
-  // TODO(caifubi): enable cpu/gpu async.
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  auto device = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  auto sync = context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
-  auto mode = context->get_param<int>(MS_CTX_EXECUTION_MODE);
-  if (sync || device == kGPUDevice || device == kCPUDevice || mode == mindspore::kGraphMode) {
+  static bool need_sync = runtime::OpExecutor::NeedSync();
+  if (need_sync) {
+    MS_LOG(INFO) << "PyBoost sync run frontend task";
     runtime::OpExecutor::GetInstance().WaitAll();
     task->Run();
   } else {

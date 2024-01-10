@@ -30,6 +30,7 @@
 #include "kernel/kernel_build_info.h"
 #include "include/backend/device_address.h"
 #include "ops/base_operator.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -123,6 +124,8 @@ BACKEND_EXPORT void SetDynamicInputSizeAttr(const CNodePtr &cnode);
 BACKEND_EXPORT bool IsDynamicParamKernel(const std::string &op_name);
 BACKEND_EXPORT std::pair<std::string, ExceptionType> KernelObjectTypeNotSupportWarning(const CNodePtr &kernel_node);
 BACKEND_EXPORT bool IsKernelObjectTypeNotSupportedError(const std::string &error_str);
+BACKEND_EXPORT std::pair<std::vector<DataType>, std::vector<DataType>> GetInOutDataTypesFromKernelAttr(
+  const KernelAttr &kernel_attr);
 }  // namespace kernel
 }  // namespace mindspore
 

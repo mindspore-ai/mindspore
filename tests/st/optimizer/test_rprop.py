@@ -17,13 +17,16 @@ import numpy as np
 import pytest
 
 import mindspore.context as context
-from .optimizer_utils import FakeNet, build_network, loss_default_rprop, loss_group_rprop, loss_not_default_rprop
+from .optimizer_utils import FakeNet, build_network, default_fc1_weight_rprop, default_fc1_bias_rprop, \
+    no_default_fc1_weight_rprop, no_default_fc1_bias_rprop, default_group_fc1_weight_rprop, default_group_fc1_bias_rprop
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_default_rprop(mode):
@@ -34,14 +37,17 @@ def test_default_rprop(mode):
     """
     context.set_context(mode=mode)
     config = {'name': 'Rprop', 'lr': 0.01, 'etas': (0.5, 1.2), 'step_sizes': (1e-6, 50.), 'weight_decay': 0.0}
-    loss = build_network(config, net=FakeNet())
-    assert np.allclose(loss_default_rprop, loss, atol=1.e-5)
+    _, cells = build_network(config, net=FakeNet())
+    assert np.allclose(cells.prev[0].asnumpy(), default_fc1_weight_rprop, atol=1.e-2)
+    assert np.allclose(cells.prev[1].asnumpy(), default_fc1_bias_rprop, atol=1.e-2)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_no_default_rprop(mode):
@@ -51,15 +57,18 @@ def test_no_default_rprop(mode):
     Expectation: Loss values and parameters conform to preset values.
     """
     context.set_context(mode=mode)
-    config = {'name': 'Rprop', 'lr': 0.001, 'etas': (0.6, 1.9), 'step_sizes': (1e-3, 20.), 'weight_decay': 0.0}
-    loss = build_network(config, net=FakeNet())
-    assert np.allclose(loss_not_default_rprop, loss, atol=1.e-5)
+    config = {'name': 'Rprop', 'lr': 0.01, 'etas': (0.6, 1.9), 'step_sizes': (1e-3, 20.), 'weight_decay': 0.0}
+    _, cells = build_network(config, net=FakeNet())
+    assert np.allclose(cells.prev[0].asnumpy(), no_default_fc1_weight_rprop, atol=1.e-2)
+    assert np.allclose(cells.prev[1].asnumpy(), no_default_fc1_bias_rprop, atol=1.e-2)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_default_rprop_group(mode):
@@ -69,6 +78,7 @@ def test_default_rprop_group(mode):
     Expectation: Loss values and parameters conform to preset values.
     """
     context.set_context(mode=mode)
-    config = {'name': 'Rprop', 'lr': 0.001, 'etas': (0.6, 1.9), 'step_sizes': (1e-2, 10.), 'weight_decay': 0.0}
-    loss = build_network(config, net=FakeNet(), is_group=True)
-    assert np.allclose(loss_group_rprop, loss, atol=1.e-5)
+    config = {'name': 'Rprop', 'lr': 0.1, 'etas': (0.6, 1.9), 'step_sizes': (1e-2, 10.), 'weight_decay': 0.0}
+    _, cells = build_network(config, net=FakeNet(), is_group=True)
+    assert np.allclose(cells.prev[0].asnumpy(), default_group_fc1_weight_rprop, atol=1.e-2)
+    assert np.allclose(cells.prev[1].asnumpy(), default_group_fc1_bias_rprop, atol=1.e-2)

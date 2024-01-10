@@ -18,7 +18,7 @@ from __future__ import absolute_import
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common import Tensor, Parameter
 import mindspore.common.dtype as mstype
-from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than
+from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than, check_not_less_than_without_equal
 
 _asgd_opt = C.MultitypeFuncGraph("asgd_opt")
 
@@ -99,9 +99,13 @@ class ASGD(Optimizer):
         ...     return loss
     """
 
-    def __init__(self, params, lr=1e-2, lambd=1e-4, alpha=0.75, t0=1e6, weight_decay=0., maximize=False):
-        check_not_less_than(lr, "lr", self.cls_name)
+    def __init__(self, params, lr=1e-2, lambd=1e-4, alpha=0.75, t0=1e6, weight_decay=0.0, maximize=False):
+        check_not_less_than_without_equal(lr, "lr", self.cls_name)
         check_not_less_than(weight_decay, "weight_decay", self.cls_name)
+        if not isinstance(lambd, float):
+            raise TypeError(f"For 'ASGD', the type of lambd must be float, but got {type(lambd)}.")
+        if not isinstance(t0, float):
+            raise TypeError(f"For 'ASGD', the type of t0 must be float, but got {type(t0)}.")
         defaults = dict(
             lr=lr,
             lambd=lambd,
@@ -114,12 +118,13 @@ class ASGD(Optimizer):
         self.mu = [Parameter(Tensor(1.), "mu_" + param.name) for param in self.parameters]
         self.eta = [Parameter(Tensor(0.), "eta_" + param.name) for param in self.parameters]
         self.ax = self.parameters.clone(prefix="ax", init='zeros')
-        self.step = Parameter(Tensor(0, mstype.int32), "step")
+        self.step_t = Parameter(Tensor(0, mstype.int32), "step_t")
         self.increase_tensor = Tensor(1, mstype.int32)
         self.assignadd = P.AssignAdd()
+        self.op_cast = P.Cast()
 
     def construct(self, gradients):
-        self.assignadd(self.step, self.increase_tensor)
+        self.assignadd(self.step_t, self.increase_tensor)
         for group_id, group in enumerate(self.param_groups):
             lr = self.lrs[group_id]
             if isinstance(group.get("lr"), float):
@@ -129,13 +134,13 @@ class ASGD(Optimizer):
             start_id = self.group_start_id[group_id]
             end_id = self.group_start_id[group_id + 1]
             params = self.parameters[start_id: end_id]
-            grads = gradients[start_id: end_id] if not maximize else -gradients[start_id: end_id]
+            grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
             grads = self._decay_weight(group["weight_decay"], params, grads)
 
             ax = self.ax[start_id: end_id]
             eta = self.eta[start_id: end_id]
             mu = self.mu[start_id: end_id]
 
-            self.hyper_map(F.partial(_asgd_opt, group["lambd"], group["alpha"], group["t0"], self.step, lr),
+            self.hyper_map(F.partial(_asgd_opt, group["lambd"], group["alpha"], group["t0"], self.step_t, lr),
                            params, grads, eta, mu, ax)
         return True

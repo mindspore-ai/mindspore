@@ -41,7 +41,7 @@ class AvgPoolCreateInstanceNet(nn.Cell):
         return op(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -59,7 +59,7 @@ def test_avg_pool():
     out = net(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -77,7 +77,7 @@ def test_avg_pool_create_instance_const_args():
     out = net(x, 1, 1, "VALID", "NCHW")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -248,3 +248,63 @@ def test_op_with_default_init_args():
     x = ms.Tensor(np.array([[[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]]), ms.float32)
     size = ms.mutable((2, 2))
     func(x, size)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+def test_add_two_scalar():
+    """
+    Feature: DynamicShape.
+    Description: Test add two scalar.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func(x, y):
+        return ops.add(x, y)
+
+    ms.set_context(precompile_only=False, mode=ms.GRAPH_MODE)
+    assert func(2.5, 1) == 3.5
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_acos_unsupported_input_type(mode):
+    """
+    Feature: DynamicShape.
+    Description: Test unsupported input type.
+    Expectation: Raise TypeError.
+    """
+    class ACos(nn.Cell):
+        def construct(self, x):
+            return ops.acos(x)
+
+    ms.set_context(precompile_only=False, mode=mode)
+    with pytest.raises(TypeError) as info:
+        ACos()("str")
+    assert "Failed calling ACos with \"ACos()(x=string)\"" in str(info.value)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_diagonal_unsupported_input_type(mode):
+    """
+    Feature: DynamicShape.
+    Description: Test unsupported input type.
+    Expectation: Raise TypeError.
+    """
+    class Diagonal(nn.Cell):
+        def construct(self, x, offset, dim1, dim2):
+            return ops.diagonal(x, offset, dim1, dim2)
+
+    ms.set_context(precompile_only=False, mode=mode)
+    with pytest.raises(TypeError) as info:
+        Diagonal()(1.0, 1, 1, -3)
+    assert "Failed calling Diagonal with \"Diagonal(offset=int, dim1=int, dim2=int)(x=float)\"" in str(info.value)

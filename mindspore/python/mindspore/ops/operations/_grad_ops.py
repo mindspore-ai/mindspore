@@ -38,7 +38,7 @@ from ..auto_generate import (AbsGrad, ACosGrad, LogitGrad, AcoshGrad,
                              ResizeLinear1DGrad, ResizeNearestNeighborV2Grad,
                              SigmoidGrad, HSwishGrad, NLLLossGrad, AtanGrad, GridSampler3DGrad,
                              GridSampler2DGrad, ResizeBicubicGrad, HSigmoidGrad, CholeskyGrad,
-                             ResizeNearestNeighborGrad, LayerNormGrad, HShrinkGrad)
+                             ResizeNearestNeighborGrad, LayerNormGrad, HShrinkGrad, LayerNormGradGrad)
 
 
 class SparseFillEmptyRowsGrad(Primitive):
@@ -1237,49 +1237,6 @@ class L2NormalizeGrad(Primitive):
             raise TypeError("The length of axis must be 1, later will support multiple axis!")
 
 
-class LayerNormGradGrad(Primitive):
-    """
-    Gets the gradient of LayerNormGrad operation.
-
-    Args:
-        begin_norm_axis (int): The begin axis for the input to apply layernorm. Default: 1.
-        begin_params_axis (int): The begin axis for the parameter input to apply layernorm. Default: 1.
-
-    Inputs:
-        - **x** (Tensor) - The input tensor to be normalized, float32 or float16.
-        - **dy** (Tensor) - The gradient of LayerNorm's output y, float32 or float16.
-        - **variance** (Tensor) - The variance of x, float32 or float16.
-        - **mean** (Tensor) - The mean of x, float32 or float16.
-        - **gamma** (Tensor) - The original value of weight gamma initialized in LayerNorm, float32 or float16.
-          Default: 'ones'.
-        - **d_dx** (Tensor) - The gradient of dx, where dx is the gradient of LayerNorm's input x, float32 or float16.
-        - **d_dg** (Tensor) - The gradient of dg, where dg is the gradient of LayerNorm's weight gamma,
-          float32 or float16.
-        - **d_db** (Tensor) - The gradient of db, where db is the gradient of LayerNorm's weight beta,
-          float32 or float16.
-
-    Returns:
-        Tuple[Tensor], tuple of 3 Tensors (the gradients of layernormgrad x, dy, gamma).
-
-    Raises:
-        TypeError: If the 8 inputs don't have the same dtype.
-        ValueError: If x, dy, d_dx don't have the same shape.
-        ValueError: If variance, mean don't have the same shape.
-        ValueError: If gamma, d_dg, d_db don't have the same shape.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-    """
-
-    @prim_attr_register
-    def __init__(self, begin_norm_axis=1, begin_params_axis=1):
-        """init"""
-        self.begin_norm_axis = validator.check_value_type('begin_norm_axis', begin_norm_axis, [int], self.name)
-        self.begin_params_axis = validator.check_value_type('begin_params_axis', begin_params_axis, [int], self.name)
-        self.init_prim_io_names(inputs=['x', 'dy', 'variance', 'mean', 'gamma', 'd_dx', 'd_dg', 'd_db'],
-                                outputs=['sopd_x', 'sopd_dy', 'sopd_gamma'])
-
-
 class LSTMGradData(Primitive):
     """Computes the data gradients of LSTM."""
 
@@ -1587,14 +1544,6 @@ class SiLUGrad(Primitive):
     def __init__(self):
         """Initialize SiLUGrad"""
         self.init_prim_io_names(inputs=['dout', 'out'], outputs=['output'])
-
-
-class ReluGradV2(Primitive):
-    """Performs grad of ReLUV2 operation."""
-
-    @prim_attr_register
-    def __init__(self):
-        self.init_prim_io_names(inputs=['gradients', 'mask'], outputs=['output'])
 
 
 class UpsampleNearest3DGrad(Primitive):
@@ -3196,7 +3145,7 @@ class FlashAttentionScoreGrad(Primitive):
     """
     @prim_attr_register
     def __init__(self, head_num, keep_prob=1.0, scale_value=1.0, pre_tokens=65536, next_tokens=65536, inner_precise=1,
-                 input_layout='BSH'):
+                 input_layout='BSH', sparse_mode=0):
         """Initialize FlashAttentionScoreGrad."""
         validator.check_value_type('head_num', head_num, [int], self.name)
         validator.check_value_type('keep_prob', keep_prob, [int, float], self.name)
@@ -3206,11 +3155,13 @@ class FlashAttentionScoreGrad(Primitive):
         validator.check_value_type('pre_tokens', pre_tokens, [int], self.name)
         validator.check_value_type('next_tokens', next_tokens, [int], self.name)
         validator.check_value_type('inner_precise', inner_precise, [int], self.name)
+        validator.check_value_type('sparse_mode', sparse_mode, [int], self.name)
         if inner_precise not in [0, 1]:
             raise ValueError(f"Attribute 'inner_precise' must be either 0 or 1, but got {inner_precise}")
         validator.check_value_type('input_layout', input_layout, [str], self.name)
-        if input_layout not in ["BSH"]:
-            raise ValueError(f"Attribute 'input_layout' must be either 'bsh' or 'sbh', but got {input_layout}")
+        if input_layout not in ["BSH", "BNSD"]:
+            raise ValueError(f"Attribute 'input_layout' must be either 'BSH' or 'BNSD', but got {input_layout}")
         self.init_prim_io_names(inputs=['query', 'key', 'value', 'attn_mask', 'attention_in', 'softmax_max',
-                                        'softmax_sum', 'dy', 'drop_mask', 'real_shift', "padding_mask", 'softmax_out'],
+                                        'softmax_sum', 'dy', 'drop_mask', 'real_shift', "padding_mask", 'softmax_out',
+                                        'prefix'],
                                 outputs=['dq', 'dk', 'dv'])

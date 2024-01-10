@@ -25,8 +25,8 @@ namespace mindspore {
 namespace ops {
 ShapeVector CalcuateGatherWithBatchDims(const PrimitivePtr &primitive, int64_t batch_dims, int64_t axis_val,
                                         const ShapeVector &ind_vec, const ShapeVector &params_vec) {
-  MS_CHECK_VALUE(axis_val >= batch_dims, CheckAndConvertUtils::FormatCheckIntegerMsg(
-                                           "batch_dims", axis_val, kGreaterEqual, batch_dims, primitive));
+  MS_CHECK_VALUE(axis_val >= batch_dims,
+                 CheckAndConvertUtils::FormatCheckIntegerMsg("axis", axis_val, kGreaterEqual, batch_dims, primitive));
   MS_CHECK_VALUE(ind_vec.size() >= LongToSize(batch_dims),
                  CheckAndConvertUtils::FormatCheckIntegerMsg("indices shape size", ind_vec.size(), kGreaterEqual,
                                                              LongToSize(batch_dims), primitive));
@@ -35,7 +35,7 @@ ShapeVector CalcuateGatherWithBatchDims(const PrimitivePtr &primitive, int64_t b
                                                              LongToSize(batch_dims), primitive));
 
   for (size_t i = 0; i < LongToSize(batch_dims); i++) {
-    if (ind_vec[i] == abstract::TensorShape::kShapeDimAny || params_vec[i] != abstract::TensorShape::kShapeDimAny) {
+    if (ind_vec[i] == abstract::TensorShape::kShapeDimAny || params_vec[i] == abstract::TensorShape::kShapeDimAny) {
       continue;
     }
     if (ind_vec[i] != params_vec[i]) {
@@ -106,9 +106,9 @@ BaseShapePtr GatherFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
 
   MS_CHECK_VALUE(-params_shape_rank <= batch_dims && batch_dims < params_shape_rank,
-                 CheckAndConvertUtils::FormatCheckInRangeMsg("batch_dims", batch_dims, kIncludeBoth,
+                 CheckAndConvertUtils::FormatCheckInRangeMsg("batch_dims", batch_dims, kIncludeLeft,
                                                              {-params_shape_rank, params_shape_rank}, primitive));
-  batch_dims = batch_dims < 0 ? batch_dims + params_shape_rank : batch_dims;
+  batch_dims = batch_dims < 0 ? batch_dims + indices_shape_rank : batch_dims;
 
   int64_t axis;
   bool is_axis_known = false;

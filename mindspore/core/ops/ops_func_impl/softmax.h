@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_SOFTMAX_H_
-#define MINDSPORE_CORE_OPS_SOFTMAX_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SOFTMAX_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SOFTMAX_H_
 
 #include <vector>
 #include <set>
@@ -29,11 +29,9 @@ class MIND_API SoftmaxFuncImpl : public OpFuncImpl {
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 
-  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
-
   int32_t CheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_SOFTMAX_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SOFTMAX_H_

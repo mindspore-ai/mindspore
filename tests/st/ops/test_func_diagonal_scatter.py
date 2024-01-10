@@ -32,7 +32,7 @@ class Net(nn.Cell):
         return ops.diagonal_scatter(x, src, offset=self.offset, dim1=self.dim1, dim2=self.dim2)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -67,7 +67,7 @@ def test_ops_diagonal_scatter(mode):
     assert np.allclose(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

@@ -843,7 +843,6 @@ class DiceLoss(LossBase):
     def construct(self, logits, label):
         _check_is_tensor('logits', logits, self.cls_name)
         _check_is_tensor('labels', label, self.cls_name)
-        _check_shape(logits.shape, label.shape, self.cls_name)
         if logits.dtype == mstype.uint8:
             raise TypeError(f"For '{self.cls_name}', the dtype of 'logits' can not be uint8.")
         if label.dtype == mstype.uint8:
@@ -856,12 +855,6 @@ class DiceLoss(LossBase):
         dice_loss = 1 - single_dice_coeff
 
         return dice_loss
-
-
-@_primexpr
-def _check_shape(logits_shape, label_shape, prim_name=None):
-    """Internal function, used to check whether the shape of logits and labels meets the requirements."""
-    validator.check('logits_shape', logits_shape, 'label_shape', label_shape, prim_name=prim_name)
 
 
 @_primexpr
@@ -957,7 +950,6 @@ class MultiClassDiceLoss(LossBase):
     def construct(self, logits, label):
         _check_is_tensor('logits', logits, self.cls_name)
         _check_is_tensor('labels', label, self.cls_name)
-        _check_shape(logits.shape, label.shape, self.cls_name)
         _check_ndim_multi(logits.ndim, label.ndim, self.cls_name)
         total_loss = 0
 
@@ -1394,11 +1386,6 @@ class PoissonNLLLoss(LossBase):
     def construct(self, input, target):
         _check_is_tensor('input', input, self.cls_name)
         _check_is_tensor('target', target, self.cls_name)
-        if input.ndim == 0 or target.ndim == 0:
-            raise ValueError(
-                "For 'PoissonNLLLoss', the inputs must be non-scalar, but got shapes: "
-                f"input: {input.shape}, target: {target.shape}"
-            )
         target = self.cast(target, input.dtype)
         if self.log_input:
             loss = input.exp() - target * input
@@ -1407,7 +1394,7 @@ class PoissonNLLLoss(LossBase):
         if self.full:
             target = self.maximum(target, self.eps)
             stirling_term = (target > 1) * ((target + 0.5) * target.log() - target + get_half_ln_2_pi())
-            loss += F.masked_fill(stirling_term, target <= 1, 0)
+            loss += F.masked_fill(stirling_term, target <= 1, F.cast(0, stirling_term.dtype))
         out = self.get_loss(loss)
         return out
 
@@ -1727,7 +1714,6 @@ class CosineEmbeddingLoss(LossBase):
         _check_is_tensor('logits_x2', logits_x2, self.cls_name)
         _check_is_tensor('labels', labels, self.cls_name)
         inner.same_type_shape_(logits_x1, logits_x2)
-        _check_reduced_shape_valid(F.shape(logits_x1), F.shape(labels), (1,), self.cls_name, "logits_x1", "labels")
         # if labels > 0, 1-cosine(logits_x1, logits_x2)
         # else, max(0, cosine(logits_x1, logits_x2)-margin)
         prod_sum = self.reduce_sum(logits_x1 * logits_x2, (1,))
@@ -1924,17 +1910,6 @@ def _check_ndim(logits_nidm, labels_ndim, prime_name=None):
                          f"dimension of 'logits' {logits_nidm} and dimension of 'labels' {labels_ndim}.")
 
 
-@_primexpr
-def _check_channel_and_shape(logits, labels, prime_name=None):
-    '''Internal function, used to check whether the channels or shape of logits and labels meets the requirements.'''
-    msg_prefix = f'For \'{prime_name}\', the' if prime_name else "The"
-    if logits == 1:
-        raise ValueError(f"{msg_prefix} 'logits'.shape[1] cannot be one, but got {logits}.")
-    if labels not in (1, logits):
-        raise ValueError(f"{msg_prefix} 'labels'.shape[1] must be one or equal to 'logits'.shape[1]: {logits}, "
-                         f"but got {labels}.")
-
-
 @constexpr
 def _check_input_dtype(labels_dtype, cls_name):
     """Internal function, used to check whether the data type of labels meets the requirements."""
@@ -2025,7 +2000,6 @@ class FocalLoss(LossBase):
         _check_is_tensor('labels', labels, self.cls_name)
         labelss = labels
         _check_ndim(logits.ndim, labelss.ndim, self.cls_name)
-        _check_channel_and_shape(logits.shape[1], labelss.shape[1], self.cls_name)
         _check_input_dtype(self.dtype(labelss), self.cls_name)
 
         if logits.ndim > 2:

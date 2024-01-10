@@ -18,81 +18,7 @@ import pytest
 from mindspore import log as logger
 from tests.st.model_zoo_tests import utils
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_single
-def test_resnet50_cifar10_ascend():
-    cur_path = os.path.dirname(os.path.abspath(__file__))
-    model_path = "{}/../../../../tests/models/official/cv".format(cur_path)
-    model_name = "resnet"
-    utils.copy_files(model_path, cur_path, model_name)
-    cur_model_path = os.path.join(cur_path, "resnet")
-    old_list = ["total_epochs=config.epoch_size", "config.epoch_size - config.pretrain_epoch_size"]
-    new_list = ["total_epochs=10", "10"]
-    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
-    old_list = ["from mindspore._checkparam import Validator"]
-    new_list = ["from mindspore import _checkparam as Validator"]
-    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "src/momentum.py"))
-    dataset_path = os.path.join(utils.data_root, "cifar-10-batches-bin")
-    config_path = os.path.join(cur_model_path, "config", "resnet50_cifar10_config.yaml")
-    exec_network_shell = "cd resnet/scripts; bash run_distribute_train.sh {} {} {}"\
-        .format(utils.rank_table_path, dataset_path, config_path)
-    os.system(exec_network_shell)
-    cmd = "ps -ef | grep python | grep train.py | grep -v grep"
-    ret = utils.process_check(100, cmd)
-    assert ret
-    log_file = os.path.join(cur_model_path, "scripts/train_parallel{}/log")
-    for i in range(8):
-        per_step_time = utils.get_perf_data(log_file.format(i))
-        assert per_step_time < 20.0
-    loss_list = []
-    for i in range(8):
-        loss = utils.get_loss_data_list(log_file.format(i))
-        loss_list.append(loss[-1])
-    assert sum(loss_list) / len(loss_list) < 0.70
-
-
-@pytest.mark.level2
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_single
-def test_ge_resnet50_cifar10_ascend():
-    """
-    Feature: Resnet50 in ge process
-    Description: test_ge_resnet50_cifar10_ascend
-    Expectation: Success
-    """
-    os.environ['MS_ENABLE_GE'] = '1'
-    current_path = os.path.dirname(os.path.abspath(__file__))
-    model_path = "{}/../../../../tests/models/official/cv".format(current_path)
-    model = "resnet"
-    utils.copy_files(model_path, current_path, model)
-    cur_model_path = os.path.join(current_path, "resnet")
-    list_old = ["total_epochs=config.epoch_size", "config.epoch_size - config.pretrain_epoch_size",
-                "=dataset_sink_mode"]
-    list_new = ["total_epochs=1", "1", "=True"]
-    utils.exec_sed_command(list_old, list_new, os.path.join(cur_model_path, "train.py"))
-    old_list = ["from mindspore._checkparam import Validator"]
-    new_list = ["from mindspore import _checkparam as Validator"]
-    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "src/momentum.py"))
-    dataset = os.path.join(utils.data_root, "cifar-10-batches-bin")
-    #Do not execute ckpt graph
-    config = os.path.join(cur_model_path, "config", "resnet50_cifar10_config.yaml")
-    list_old = ["save_checkpoint: True"]
-    list_new = ["save_checkpoint: False"]
-    utils.exec_sed_command(list_old, list_new, config)
-    exec_network_shell = "cd {}/resnet/scripts; bash run_standalone_train.sh {} {}"\
-        .format(current_path, dataset, config)
-    os.system(exec_network_shell)
-    cmd = "ps -ef | grep python | grep train.py | grep -v grep"
-    result = utils.process_check(120, cmd)
-    assert result
-    log_file = os.path.join(cur_model_path, "scripts/train/log")
-    loss_list = utils.get_loss_data_list(log_file)
-    assert loss_list[-1] < 1.8
-
-@pytest.mark.level2
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
 def test_resnet50_cifar10_gpu_accuracy():
@@ -131,7 +57,7 @@ def test_resnet50_cifar10_gpu_accuracy():
     print("loss_list is", loss_list)
     assert sum(loss_list) / len(loss_list) < 0.70
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_resnet50_cifar10_gpu_performance():

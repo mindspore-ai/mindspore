@@ -77,7 +77,7 @@ def test_less_equal_functional_tensor_modes():
     test_less_equal_tensor_api()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_less_equal_functional_tensor_modes_910b():

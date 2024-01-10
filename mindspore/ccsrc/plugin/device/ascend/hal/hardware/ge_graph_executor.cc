@@ -770,7 +770,8 @@ void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph) cons
       output_device_addr->set_need_recycle(true);
     }
     AnfAlgo::SetOutputAddr(output_device_addr, index, output_node.get());
-
+    MS_LOG(INFO) << "Output node info: (name " << output_node->fullname_with_scope() << ", "
+                 << output_node->DebugString() << " ), output size: " << output_device_addr->GetSize();
     // When both the input and output of NopNode are used as outputs, different memory needs to be allocated for them.
   }
   MS_LOG(INFO) << "AllocOutputMemory finish.";
@@ -1017,6 +1018,12 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
     size_t total_memory_size = max_static_memory_size + feature_memory_size;
     size_t max_hbm_memory_size = static_cast<size_t>(AscendMemAdapter::GetInstance().GetMsUsedHbmSize());
     AscendMemAdapter::GetInstance().UpdateActualPeakMemory(total_memory_size);
+    if (common::IsNeedMemoryStatistic()) {
+      MS_LOG(WARNING) << "Now Memory Status, graph: " << graph_name
+                      << ", max_static_memory_size: " << max_static_memory_size
+                      << ", feature_memory_size: " << feature_memory_size
+                      << ", max_hbm_memory_size: " << max_hbm_memory_size;
+    }
     if (total_memory_size > max_hbm_memory_size) {
       MS_LOG(EXCEPTION) << "Memory pool not enough, graph: " << graph_name
                         << ", max_static_memory_size: " << max_static_memory_size

@@ -117,6 +117,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         If 'init' interface is used to initialize Tensor, the `Tensor.init_data` API needs to be called to load the
         actual data to `Tensor`.
 
+    Warning:
+          To convert dtype of a Tensor, it is recommended to use `Tensor.astype()` rather than
+          Tensor(sourceTensor, dtype=newDtype)
+
     Args:
         input_data (Union[Tensor, float, int, bool, tuple, list, numpy.ndarray]): The data to be stored. It can be
             another Tensor, Python number or NumPy ndarray. Default: ``None`` .
@@ -200,6 +204,11 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
     def __init__(self, input_data=None, dtype=None, shape=None, init=None, internal=False, const_arg=False):
         self.init_finished = False
+        if isinstance(input_data, (Tensor, Tensor_)) and dtype is not None:
+            logger.warning("It is suggested to use 'Tensor.astype()' to convert the dtype of a Tensor.")
+            _cast = tensor_operator_registry.get("cast")
+            input_data = _cast(input_data, dtype)
+
         if is_stub_tensor(input_data):
             input_data = input_data.stub_sync()
 
@@ -844,15 +853,11 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         Get the item at the specified index of the tensor.
 
-        Note:
-            Tensor.item returns a Tensor scalar instead of a Python scalar. And if the tensor is a Tensor scalar,
-            Tensor.item will return the numpy.ndarray.
-
         Args:
             index (Union[None, int, tuple(int)]): The index in Tensor. Default: ``None``.
 
         Returns:
-            A Tensor scalar, dtype is the same with the original Tensor.
+            A scalar, type is defined by the dtype of the Tensor.
 
         Raises:
             ValueError: If the length of the `index` is not equal to self.ndim.
@@ -1122,6 +1127,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             >>> import mindspore as ms
             >>> x = ms.Tensor([1, 2, 3, 4, 5], dtype=ms.float32)
             >>> ret = x.storage_offset()
+            >>> print(ret)
             0
         """
         return Tensor_.storage_offset(self)
@@ -1784,8 +1790,35 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         return tensor_operator_registry.get('col2im')(self, output_size, kernel_size, dilation, padding_value, stride)
 
     def reshape(self, *shape):
-        """
-        For details, please refer to :func:`mindspore.ops.reshape`.
+        r"""
+        Rearranges the input Tensor based on the given `shape` .
+
+        The `shape` can only have one -1 at most, in which case it's inferred from the remaining dimensions and
+        the number of elements in the input.
+
+        Args:
+            shape (Union[int, tuple[int], list[int]]): If `shape` is a tuple or list, its elements should be
+                integers, and only constant value is allowed. i.e., :math:`(y_1, y_2, ..., y_S)`.
+
+        Returns:
+            Tensor, If the given `shape` does not contain -1, the `shape` of tensor is :math:`(y_1, y_2, ..., y_S)`.
+            If the k-th position in the given `shape` is -1, the `shape` of tensor is :math:`(y_1, ..., y_{k-1},
+            \frac{\prod_{i=1}^{R}x_{i}}{y_1\times ...\times y_{k-1}\times y_{k+1}\times...\times y_S} , y_{k+1},
+            ..., y_S)`, in where the shape of input tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
+            >>> output = input.reshape(3, 2)
+            >>> print(output)
+            [[-0.1  0.3]
+             [ 3.6  0.4]
+             [ 0.5 -3.2]]
         """
         new_shape = validator.check_reshape_shp(shape)
         return tensor_operator_registry.get('reshape')(self, new_shape)
@@ -2372,7 +2405,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             reduce_ = tensor_operator_registry.get("reduce")
             reduce_min = tensor_operator_registry.get("reduce_min")
             minimum = tensor_operator_registry.get("minimum")
-            return reduce_(self, reduce_min(keepdims), cmp_fn=minimum(), axis=axis, keepdims=keepdims,
+            return reduce_(self, reduce_min(keepdims), cmp_fn=minimum, axis=axis, keepdims=keepdims,
                            initial=initial, where=where)
         values, indices = tensor_operator_registry.get("min")(self, axis, keepdims, initial=initial, where=where)
         if not return_indices:
@@ -2443,6 +2476,12 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.scatter_max`.
         """
         return tensor_operator_registry.get('tensor_scatter_max')(self, indices, updates)
+
+    def softmax(self, axis):
+        """
+        For details, please refer to :func:`mindspore.ops.softmax`.
+        """
+        return tensor_operator_registry.get('softmax')(self, axis)
 
     def fill(self, value):
         """

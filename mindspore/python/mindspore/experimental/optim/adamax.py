@@ -19,7 +19,7 @@ from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common import Tensor, Parameter
 import mindspore.common.dtype as mstype
 from mindspore import _checkparam as validator
-from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than
+from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than, check_not_less_than_without_equal
 from mindspore import ops
 
 _adamax_opt = C.MultitypeFuncGraph("adamax_opt")
@@ -90,7 +90,7 @@ class Adamax(Optimizer):
         ValueError: If the learning rate is less than 0.
         ValueError: If the `eps` is less than 0.0.
         ValueError: If the `weight_decay` is less than 0.
-        ValueError: If elements of the `betas` not in the range of 0-1.
+        ValueError: If elements of the `betas` not in the range of [0,1).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -115,10 +115,10 @@ class Adamax(Optimizer):
         ...     return loss
     """
 
-    def __init__(self, params, lr=2e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0., *, maximize=False):
-        check_not_less_than(lr, "lr", self.cls_name)
+    def __init__(self, params, lr=2e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0.0, *, maximize=False):
+        check_not_less_than_without_equal(lr, "lr", self.cls_name)
         check_not_less_than(weight_decay, "weight_decay", self.cls_name)
-        check_not_less_than(eps, "eps", self.cls_name)
+        check_not_less_than_without_equal(eps, "eps", self.cls_name)
         validator.check_float_range(betas[0], 0., 1., validator.INC_LEFT, "betas[0]", self.cls_name)
         validator.check_float_range(betas[1], 0., 1., validator.INC_LEFT, "betas[1]", self.cls_name)
 
@@ -136,6 +136,7 @@ class Adamax(Optimizer):
         self.exp_inf = self.parameters.clone(prefix="exp_inf", init='zeros')
         self.increase_tensor = Tensor(1, mstype.int32)
         self.assignadd = P.AssignAdd()
+        self.op_cast = P.Cast()
 
     def construct(self, gradients):
         self.assignadd(self.step_t, self.increase_tensor)
@@ -151,7 +152,7 @@ class Adamax(Optimizer):
             start_id = self.group_start_id[group_id]
             end_id = self.group_start_id[group_id + 1]
             params = self.parameters[start_id: end_id]
-            grads = gradients[start_id: end_id] if not maximize else -gradients[start_id: end_id]
+            grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
             grads = self._decay_weight(group["weight_decay"], params, grads)
             exp_avg = self.exp_avg[start_id: end_id]
             exp_inf = self.exp_inf[start_id: end_id]

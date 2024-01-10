@@ -195,7 +195,7 @@ class MS_CORE_API TensorShape final : public BaseShape {
 
   bool operator==(const BaseShape &other) const override;
 
-  BaseShapePtr Clone() const override { return std::make_shared<TensorShape>(shape_, max_shape_); }
+  BaseShapePtr Clone() const override { return std::make_shared<TensorShape>(shape_); }
 
   void Broaden() override;
 

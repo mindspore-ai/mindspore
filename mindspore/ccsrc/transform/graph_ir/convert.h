@@ -23,6 +23,7 @@
 #include <memory>
 #include <map>
 #include <set>
+#include <unordered_set>
 #include <vector>
 #include <string>
 #include <utility>
@@ -262,6 +263,9 @@ class DfGraphConvertor {
   void SetGraphInputs(std::vector<Operator> *inputs);
   void SetGraphInputs(std::vector<Operator> *inputs, std::vector<OperatorPtr> *input_datas);
   void TransformConstOp(const CNodePtr &node, const AnfNodePtr &pred);
+  void ProcessInputData(vector<Operator> *init_input,
+                        std::unordered_set<std::string> *infer_need_update_parameter_names, const OperatorPtr &param_op,
+                        const string &name, const std::shared_ptr<GeTensorDesc> &desc);
   AnfNodePtr GetRealInputNode(const CNodePtr &node, const AnfNodePtr &input);
 
   void ConvertWhileNode(const CNodePtr &node);

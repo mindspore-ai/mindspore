@@ -227,6 +227,8 @@ def resolve_symbol(namespace, symbol):
         # The list and dict is not hashable, it can not be key for the map, just return the result
         if isinstance(resolve_, (tuple, list, dict)):
             return resolve_
+        if hasattr(resolve_, "__self__") and isinstance(resolve_.__self__, (tuple, list, dict)):
+            return resolve_
         if getattr(resolve_, "__hash__") is None:
             return resolve_
 
@@ -288,7 +290,10 @@ def get_object_key(obj):
     if isinstance(obj, types.MethodType):
         method_instance = obj.__self__
         instance_id = "%s_ID%d" % (str(method_instance.__class__.__name__), id(method_instance))
-        obj_id = instance_id + obj_id + str(obj.__hash__())
+        if isinstance(method_instance, (tuple, list, dict)):
+            obj_id = instance_id + obj_id
+        else:
+            obj_id = instance_id + obj_id + str(obj.__hash__())
     return obj_id, obj_key
 
 
@@ -767,17 +772,6 @@ def get_args(node):
     return args
 
 
-def get_primitive_signatures(prim_name):
-    """Get primitive signatures."""
-    if not hasattr(ops, prim_name):
-        raise ValueError(f"Unable to find {prim_name} in mindspore.ops.")
-    prim = getattr(ops, prim_name)
-    if not hasattr(prim, "__mindspore_signature__"):
-        return ()
-    signatures = getattr(prim, "__mindspore_signature__")
-    return ops.Primitive._fill_signature(prim, signatures)
-
-
 def _convert_stub_tensor(data):
     """Convert stub tensor output to tensor"""
     if is_stub_tensor(data):
@@ -861,12 +855,23 @@ def get_dtype(name: str):
 
 
 def check_attrs(target_object, func_name: str):
+    """Check if attr is overridden."""
     if isinstance(target_object, Tensor):
         return False
     if hasattr(target_object, func_name):
         if not hasattr(target_object.__class__.__base__, func_name):
+            if target_object.__class__.__base__ is object:
+                return False
             return True
         if getattr(target_object.__class__, func_name) is not getattr(target_object.__class__.__base__, func_name):
+            return True
+    return False
+
+
+def check_is_subclass(target_object, parent):
+    """Check if target_object is a subclass."""
+    if issubclass(target_object.__class__, parent):
+        if target_object.__class__ is not parent:
             return True
     return False
 

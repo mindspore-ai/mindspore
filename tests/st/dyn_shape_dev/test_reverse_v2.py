@@ -30,7 +30,7 @@ def reverse_v2_backward_func(x):
     return ops.grad(reverse_v2_forward_func, (0,))(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -55,7 +55,7 @@ def test_reverse_v2(mode):
     assert (grad.asnumpy() == expect_grad).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -87,3 +87,18 @@ def test_reverse_v2_vmap(mode):
                             [4, 5, 6, 7],
                             [8, 9, 10, 11]]]).astype(np.float32)
     assert (out.asnumpy() == expect_out).all()
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+def test_reverse_v2_axis_incorrect():
+    """
+    Feature: test reverse_v2.
+    Description: test reverse_v2 op when axis is incorrect.
+    Expectation: raise exception.
+    """
+    axis = 0.1
+    with pytest.raises(TypeError) as err:
+        ops.ReverseV2(axis)
+    assert "For 'ReverseV2', the type of 'axis' should be one of '[list of int, tuple of int]'" in str(err.value)

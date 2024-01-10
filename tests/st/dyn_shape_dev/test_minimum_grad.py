@@ -31,7 +31,7 @@ def minimum_grad_vmap_func(x1, x2, grads):
     return ops.vmap(minimum_grad_forward_func, in_axes=0, out_axes=0)(x1, x2, grads)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -56,7 +56,7 @@ def test_minimum_grad_op_forward(context_mode, data_type):
 
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -80,7 +80,7 @@ def test_minimum_grad_op_vmap(context_mode, data_type):
     np.testing.assert_allclose(out[1].asnumpy(), expect_out[1], rtol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -150,3 +150,22 @@ def test_minimum_grad_op_dynamic_rank(context_mode):
     expect_out_2 = np.array([[3., 0., 2., 0.], [0., 5., 0., 2.]]).astype(np.float32)
     np.testing.assert_allclose(out_2[0].asnumpy(), expect_out_2[0], rtol=1e-3)
     np.testing.assert_allclose(out_2[1].asnumpy(), expect_out_2[1], rtol=1e-3)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize("data_type", [np.complex64])
+@test_utils.run_test_func
+def test_minimum_grad_op_dtype_check(context_mode, data_type):
+    """
+    Feature: Ops.
+    Description: test op minimum_grad forward.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=context_mode)
+    x1 = ms.Tensor(np.array([1, 2, 4]).astype(data_type))
+    x2 = ms.Tensor(np.array([2, 4, 3]).astype(data_type))
+    grads = ms.Tensor(np.array([1., 2., 3.]).astype(data_type))
+    with pytest.raises(TypeError):
+        _ = minimum_grad_forward_func(x1, x2, grads)

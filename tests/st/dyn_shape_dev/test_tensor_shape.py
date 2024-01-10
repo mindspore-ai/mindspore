@@ -30,7 +30,7 @@ def tensor_shape_backward_func(x):
     return ops.grad(tensor_shape_forward_func, (0,))(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -50,7 +50,7 @@ def test_tensor_shape_forward(mode):
     assert (out.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -70,7 +70,7 @@ def test_tensor_shape_backward(mode):
     assert (grad.asnumpy() == expect_grad).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

@@ -480,7 +480,7 @@ void ForwardExecutor::CreateDeviceAddressForViewInput(const FrontendOpRunInfoPtr
   auto address_size = GetTypeByte(TypeIdToType(input_tensor->data_type())) * SizeOf(input_tensor->shape());
 
   auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-    nullptr, address_size, kOpFormat_DEFAULT, input_tensor->data_type(), input_tensor->shape(),
+    nullptr, address_size, Format::DEFAULT_FORMAT, input_tensor->data_type(), input_tensor->shape(),
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
   kernel_tensor->SetType(std::make_shared<TensorType>(input_tensor->Dtype()));
   kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(input_tensor->shape()));
@@ -587,7 +587,8 @@ bool ForwardExecutor::ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info,
   auto view_value = op_run_info->op_grad_info->input_value[0];
   MS_EXCEPTION_IF_NULL(view_value);
   if (!view_value->isa<tensor::Tensor>()) {
-    MS_EXCEPTION(TypeError) << "input value is not Tensor";
+    MS_EXCEPTION(TypeError) << "For primitive[" << op_run_info->base_op_run_info.op_name
+                            << "],  the input[0] should be Tensor, but got:" << view_value->ToString();
   }
   auto view_input_tensor = view_value->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(view_input_tensor);

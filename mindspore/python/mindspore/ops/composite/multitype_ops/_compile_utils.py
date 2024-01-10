@@ -335,7 +335,8 @@ def tensor_item(data, *args):
         return _tensor_getitem_by_tuple_slice(data, args)
     if len(args) > 1:
         const_utils.raise_value_error("Incorrect number of indices for array")
-    return _tensor_index_by_integer(F.reshape(data, (-1,)), args[0])
+    output = _tensor_index_by_integer(F.reshape(data, (-1,)), args[0])
+    return TensorToScalar()(output)
 
 
 def tensor_itemset(data, *args):
@@ -678,7 +679,8 @@ def tensor_index_by_list(data, list_index):
     """Tensor getitem by list of int and bool"""
     min_data_dim, max_data_dim = 1, 8
     const_utils.judge_data_dim(data.ndim, min_data_dim, max_data_dim)
-
+    if isinstance(list_index, list) and F.is_sequence_value_unknown(list_index):
+        raise TypeError(f"For tensor index, the type of index does not support mindspore.mutable.")
     data_shape = F.shape(data)
     indexes_types = hyper_map(toptypeof, list_index)
     if const_utils.check_type_isinstance(indexes_types, (mstype.Bool, mstype.Int)) \

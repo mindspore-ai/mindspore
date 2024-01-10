@@ -154,6 +154,8 @@ def get_input_dtype(dtype: str, optional):
         'float': 'FP32ImmPtr',
         'bool': 'BoolImmPtr',
         'number': 'ScalarPtr',
+        'str': 'StringImmPtr',
+        'tensor': 'TensorPtr',
         'tuple[int]': kValueTuplePtr,
         'tuple[float]': kValueTuplePtr,
         'tuple[bool]': kValueTuplePtr,
@@ -162,9 +164,6 @@ def get_input_dtype(dtype: str, optional):
         'list[float]': kValueTuplePtr,
         'list[bool]': kValueTuplePtr,
         'list[tensor]': kValueTuplePtr,
-        'tensor': 'TensorPtr',
-        'str': 'StringImmPtr',
-        'type': 'TypePtr',
     }
     kValueTuplePtrOptional = 'std::optional<ValueTuplePtr>'
     optional_type_convert = {
@@ -172,9 +171,8 @@ def get_input_dtype(dtype: str, optional):
         'float': 'std::optional<FP32ImmPtr>',
         'bool': 'std::optional<BoolImmPtr>',
         'number': 'std::optional<ScalarPtr>',
-        'tensor': 'std::optional<TensorPtr>',
         'str': 'std::optional<StringImmPtr>',
-        'type': 'std::optional<TypePtr>',
+        'tensor': 'std::optional<TensorPtr>',
         'tuple[int]': kValueTuplePtrOptional,
         'tuple[float]': kValueTuplePtrOptional,
         'tuple[bool]': kValueTuplePtrOptional,
@@ -244,8 +242,11 @@ def convert_python_func_name_to_c(func_name: str) -> str:
     return ''.join(word.capitalize() for word in func_name.split('_'))
 
 
-def get_const_number_convert(arg_name, arg_type):
-    cpp_type = number_input_to_cpp_type(arg_type)
+def get_const_number_convert(arg_name, op_arg):
+    cpp_type = number_input_to_cpp_type(op_arg.arg_dtype)
+    print(arg_name, op_arg.is_type_id)
+    if op_arg.is_type_id:
+        return f"TypeId {arg_name}_imm = static_cast<TypeId>(GetValue<{cpp_type}>({arg_name}));\n"
     return f"auto {arg_name}_imm = GetValue<{cpp_type}>({arg_name});\n"
 
 

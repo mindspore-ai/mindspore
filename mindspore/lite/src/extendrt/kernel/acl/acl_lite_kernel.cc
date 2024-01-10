@@ -35,7 +35,7 @@ AclLiteKernel::AclLiteKernel(std::shared_ptr<mindspore::kernel::KernelMod> kerne
 }
 
 int AclLiteKernel::Prepare() {
-  bool ret = kernel_mod_->Init(inputs_, outputs_);
+  bool ret = kernel_mod_->Init(base_operator_->GetPrim(), inputs_, outputs_);
   return ret ? ReSize() : RET_ERROR;
 }
 

@@ -44,7 +44,6 @@
 #include "utils/trace_base.h"
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
-#include "kernel/oplib/super_bar.h"
 
 namespace mindspore::session {
 using abstract::AbstractTensor;
@@ -975,7 +974,12 @@ const KernelTensorPtr &AnfRuntimeAlgorithm::GetOrCreateOutputKernelTensor(const 
 
   // Get output kernel tensor in device address if exists.
   if (kernel_info->OutputAddrExist(output_idx)) {
-    return kernel_info->GetOutputAddr(output_idx)->kernel_tensor();
+    const auto &kt = kernel_info->GetOutputAddr(output_idx)->kernel_tensor();
+    if (!kt->host_info_exist()) {
+      auto [shape, type, value] = GetAbstractInfo(node, output_idx);
+      kt->SetHostInfo(shape, type, value);
+    }
+    return kt;
   }
 
   // Get output kernel tensor if exists.
@@ -1360,41 +1364,13 @@ bool AnfRuntimeAlgorithm::IsFeatureMapInput(const AnfNodePtr &node, size_t input
 size_t AnfRuntimeAlgorithm::GetInputGraphIdxByKernelIdx(const mindspore::AnfNodePtr &anf_node,
                                                         size_t input_index_in_kernel) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  auto node_name = common::AnfAlgo::GetCNodeName(anf_node);
-  auto kernel_type = AnfAlgo::GetKernelType(anf_node);
-  if (kernel_type != TBE_KERNEL && kernel_type != ACL_KERNEL) {
-    return input_index_in_kernel;
-  }
-  auto orders = kernel::SuperBar::GetKernelIdxToGraphIdx(node_name);
-  if (!orders.has_value()) {
-    return input_index_in_kernel;
-  }
-  auto input_orders = orders.value();
-  auto find_iter = input_orders.find(input_index_in_kernel);
-  if (find_iter == input_orders.end()) {
-    MS_LOG(EXCEPTION) << "Get input order failed. input_idx: " << input_index_in_kernel << ", op_name: " << node_name;
-  }
-  return find_iter->second;
+  return input_index_in_kernel;
 }
 
 size_t AnfRuntimeAlgorithm::GetInputKernelIdxByGraphIdx(const mindspore::AnfNodePtr &anf_node,
                                                         size_t input_index_in_graph) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  auto node_name = common::AnfAlgo::GetCNodeName(anf_node);
-  auto kernel_type = AnfAlgo::GetKernelType(anf_node);
-  if (kernel_type != TBE_KERNEL && kernel_type != ACL_KERNEL) {
-    return input_index_in_graph;
-  }
-  auto orders = kernel::SuperBar::GetGraphIdxToKernelIdx(node_name);
-  if (!orders.has_value()) {
-    return input_index_in_graph;
-  }
-  auto input_orders = orders.value();
-  auto find_iter = input_orders.find(input_index_in_graph);
-  if (find_iter == input_orders.end()) {
-    MS_LOG(EXCEPTION) << "Get input order failed. input_idx: " << input_index_in_graph << ", op_name: " << node_name;
-  }
-  return find_iter->second;
+  return input_index_in_graph;
 }
 
 std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallSwitchKernelGraph(const CNodePtr &cnode) {
@@ -1599,125 +1575,6 @@ void AnfRuntimeAlgorithm::InsertMakeTupleForOutput(const NotNull<KernelGraphPtr>
   root_graph->set_output(make_tuple);
 }
 
-void AnfRuntimeAlgorithm::CacheAddrForGraph(const KernelGraphPtr &kernel_graph) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode &&
-      ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
-    return;
-  }
-  auto nodes = kernel_graph->execution_order();
-  for (auto &kernel : nodes) {
-    // Skip transpose kernel with "nop_op" attr which is not hidden or removed in PyNative infer scenario. Transpose
-    // kernel, which is not supposed to be executed, is generated in TransDataSplit to support specific Transdata.
-    // And hard code here should be removed after new Transdata programme is implemented in the foreseeable future.
-    if (common::AnfAlgo::HasNodeAttr(kAttrNopOp, kernel)) {
-      for (size_t idx = 0; idx < AnfAlgo::GetOutputTensorNum(kernel); idx += 1) {
-        auto real_input = GetInputGraphIdxByKernelIdx(kernel, idx);
-        auto device_address = GetPrevNodeMutableOutputAddr(kernel, real_input);
-        SetOutputAddr(device_address, idx, kernel.get());
-      }
-      continue;
-    }
-    auto kernel_mod = GetKernelMod(kernel);
-    MS_EXCEPTION_IF_NULL(kernel_mod);
-    if (common::AnfAlgo::GetCNodeName(kernel) == kMemSetOpName) {
-      CacheAddrForAtomicClean(kernel, kernel_mod);
-      continue;
-    }
-    CacheAddrForKernel(kernel, kernel_mod);
-  }
-}
-
-void AnfRuntimeAlgorithm::CacheAddrForKernel(const AnfNodePtr &node, kernel::KernelMod *kernel_mod) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  std::vector<AddressPtr> kernel_inputs;
-  std::vector<AddressPtr> kernel_workspaces;
-  std::vector<AddressPtr> kernel_outputs;
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto skip_nop_node = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
-  for (size_t i = 0; i < input_num; ++i) {
-    auto real_input = GetInputGraphIdxByKernelIdx(node, i);
-    auto device_address = GetPrevNodeOutputAddr(node, real_input, skip_nop_node);
-    MS_EXCEPTION_IF_NULL(device_address);
-    kernel::AddressPtr input = std::make_shared<kernel::Address>();
-    MS_EXCEPTION_IF_NULL(input);
-    input->addr = const_cast<void *>(device_address->GetPtr());
-    MS_EXCEPTION_IF_NULL(input->addr);
-    input->size = device_address->GetSize();
-    kernel_inputs.emplace_back(input);
-  }
-  for (size_t i = 0; i < kernel_mod->GetOutputSizeList().size(); ++i) {
-    auto device_address = GetOutputAddr(node, i, skip_nop_node);
-    kernel::AddressPtr output = std::make_shared<kernel::Address>();
-    MS_EXCEPTION_IF_NULL(output);
-    output->addr = const_cast<void *>(device_address->GetPtr());
-    MS_EXCEPTION_IF_NULL(output->addr);
-    output->size = device_address->GetSize();
-    kernel_outputs.emplace_back(output);
-  }
-  for (size_t i = 0; i < kernel_mod->GetWorkspaceSizeList().size(); ++i) {
-    auto device_address = GetWorkspaceAddr(node, i);
-    kernel::AddressPtr workspace = std::make_shared<kernel::Address>();
-    MS_EXCEPTION_IF_NULL(workspace);
-    workspace->addr = const_cast<void *>(device_address->GetPtr());
-    MS_EXCEPTION_IF_NULL(workspace->addr);
-    workspace->size = device_address->GetSize();
-    kernel_workspaces.emplace_back(workspace);
-  }
-  kernel_mod->set_inputs_addr(kernel_inputs);
-  kernel_mod->set_workspaces_addr(kernel_workspaces);
-  kernel_mod->set_outputs_addr(kernel_outputs);
-}
-
-void AnfRuntimeAlgorithm::CacheAddrForAtomicClean(const AnfNodePtr &node, kernel::KernelMod *kernel_mod) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  std::vector<AddressPtr> kernel_inputs;
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->inputs().size() != kIndex2) {
-    MS_LOG(EXCEPTION) << "Atomic Addr clean Node Input nodes not equal 2.";
-  }
-  MS_EXCEPTION_IF_NULL(cnode->inputs()[1]);
-  auto pre_node = (cnode->inputs()[1])->cast<CNodePtr>();
-  // set clean output address
-  if (common::AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, pre_node)) {
-    auto clean_output_indexes = common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicOutputIndexs);
-    for (auto index : clean_output_indexes) {
-      auto device_address = GetOutputAddr(pre_node, index);
-      kernel::AddressPtr input = std::make_shared<kernel::Address>();
-      MS_EXCEPTION_IF_NULL(input);
-      input->addr = const_cast<void *>(device_address->GetPtr());
-      MS_EXCEPTION_IF_NULL(input->addr);
-      input->size = device_address->GetSize();
-      kernel_inputs.emplace_back(input);
-    }
-    MS_LOG(DEBUG) << "AtomicAddClean clean output size:" << clean_output_indexes.size();
-  }
-  // set clean workspace address
-  if (common::AnfAlgo::HasNodeAttr(kAttrAtomicWorkspaceIndexs, pre_node)) {
-    auto clean_workspaces_indexes =
-      common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicWorkspaceIndexs);
-    for (const auto &index : clean_workspaces_indexes) {
-      auto device_address = GetWorkspaceAddr(pre_node, index);
-      kernel::AddressPtr workspace = std::make_shared<kernel::Address>();
-      MS_EXCEPTION_IF_NULL(workspace);
-      workspace->addr = const_cast<void *>(device_address->GetPtr());
-      MS_EXCEPTION_IF_NULL(workspace->addr);
-      workspace->size = device_address->GetSize();
-      kernel_inputs.emplace_back(workspace);
-    }
-  }
-  kernel_mod->set_inputs_addr(kernel_inputs);
-}
-
 void AnfRuntimeAlgorithm::UpdateGraphValidRefPair(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
 
@@ -1869,14 +1726,15 @@ bool AnfRuntimeAlgorithm::NodeValueIsFuncGraph(const AnfNodePtr &node) {
   return value->isa<FuncGraph>();
 }
 
-bool AnfRuntimeAlgorithm::IsEnableKernelSelectBackoff(const KernelGraphPtr &graph) {
+bool AnfRuntimeAlgorithm::IsNodeSupportKernelSelectBackoff(const AnfNodePtr &node, const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(node);
   static std::string disable_kernel_backoff;
   static bool first_get_backoff_env = true;
   if (first_get_backoff_env) {
     disable_kernel_backoff = common::GetEnv(kDisableKernelBackoff);
     first_get_backoff_env = false;
   }
-  if (disable_kernel_backoff == "1") {
+  if (disable_kernel_backoff == "1" && (!common::AnfAlgo::IsTypeTransformOp(common::AnfAlgo::GetCNodeName(node)))) {
     MS_LOG(INFO) << "MS_DISABLE_KERNEL_BACKOFF has been set to turn off the kernel backoff ability.";
     return false;
   }
@@ -1884,7 +1742,7 @@ bool AnfRuntimeAlgorithm::IsEnableKernelSelectBackoff(const KernelGraphPtr &grap
   if (graph == nullptr) {
     return false;
   }
-  if (graph->is_from_single_op()) {
+  if (graph->is_from_single_op() || graph->has_flag(kFlagIsPyNativeBpropKernelGraph)) {
     MS_LOG(INFO) << "The pynative single op does not support the kernel backoff ability for graph:"
                  << graph->graph_id();
     return false;

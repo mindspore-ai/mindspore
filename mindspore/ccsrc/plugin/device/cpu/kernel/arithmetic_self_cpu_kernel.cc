@@ -809,6 +809,10 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<KernelTensor *>
   const auto *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
   auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   const size_t lens = outputs[0]->size() / sizeof(T);
+  if (inputs[0]->size() != outputs[0]->size()) {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the input size and output size should be equal, but got "
+                      << inputs[0]->size() << " vs " << outputs[0]->size();
+  }
   static const std::unordered_map<std::string,
                                   std::function<void(ArithmeticSelfCpuKernelFunc *, const T *, T *, size_t)>>
     arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T>},

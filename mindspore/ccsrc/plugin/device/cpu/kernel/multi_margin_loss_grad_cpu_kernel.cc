@@ -51,6 +51,8 @@ int MultiMarginLossGradCPUKernelMod::Resize(const std::vector<KernelTensor *> &i
   auto x_shape = inputs[kOne]->GetShapeVector();
   batch_size = LongToSize(x_shape[kZero]);
   dims = LongToSize(x_shape[kOne]);
+  auto type = inputs[kThree]->GetType();
+  weight_defined_ = !type->isa<TypeNone>();
   return KRET_OK;
 }
 
@@ -76,42 +78,23 @@ const std::vector<std::pair<KernelAttr, MultiMarginLossGradCPUKernelMod::KernelR
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeFloat16)
+       .AddOptionalInputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16),
      &MultiMarginLossGradCPUKernelMod::LaunchKernel},
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeFloat32)
+       .AddOptionalInputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &MultiMarginLossGradCPUKernelMod::LaunchKernel},
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat64)
        .AddInputAttr(kNumberTypeFloat64)
        .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeFloat64)
+       .AddOptionalInputAttr(kNumberTypeFloat64)
        .AddOutputAttr(kNumberTypeFloat64),
-     &MultiMarginLossGradCPUKernelMod::LaunchKernel},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat16),
-     &MultiMarginLossGradCPUKernelMod::LaunchKernel},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat32)
-       .AddInputAttr(kNumberTypeFloat32)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat32),
-     &MultiMarginLossGradCPUKernelMod::LaunchKernel},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat64)
-       .AddInputAttr(kNumberTypeFloat64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat64),
-     &MultiMarginLossGradCPUKernelMod::LaunchKernel},
-  };
+     &MultiMarginLossGradCPUKernelMod::LaunchKernel}};
   return func_list;
 }
 
@@ -144,7 +127,6 @@ void MultiMarginLossGradCPUKernelMod::LaunchKernelFP32AndFP64(const std::vector<
     }
   }
   T *weight_addr = nullptr;
-  bool weight_defined_ = (input_num == 4);
   if (weight_defined_) {
     weight_addr = static_cast<T *>(inputs[kThree]->device_ptr());
   }

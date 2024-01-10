@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 import mindspore.nn as nn
 from mindspore.nn import Cell
 from mindspore import Tensor, Parameter, ParameterTuple, jit
@@ -68,7 +69,7 @@ list_arg = [[tensor_x, tensor_x], [[tensor_x, tensor_y], {"x": tensor_x, "y": te
 dict_arg = {"x": tensor_x, "y": tensor_y, "u": tensor_u}
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -108,7 +109,7 @@ class GradNet1(nn.Cell):
 
 # PyNative run error.
 # Support context.PYNATIVE_MODE later.
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -175,7 +176,7 @@ class GradCell(nn.Cell):
         return self.grad_all(self.net)(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -228,10 +229,12 @@ def test_grad_parameter_as_input_and_fv(mode):
 
 # PyNative run error.
 # Support context.PYNATIVE_MODE later.
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_grad_same_parameter_both_input_and_fv(mode):
     """
@@ -250,10 +253,12 @@ def test_grad_same_parameter_both_input_and_fv(mode):
     assert np.array_equal(a[1].asnumpy(), b[1].asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_same_arg_parameter_assign(mode):
     """
@@ -292,7 +297,7 @@ class GradCellWithParameterTuple(nn.Cell):
         return self.grad(self.net, self.params)(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -340,7 +345,7 @@ def test_cell_mixed_arguments():
     assert net(1, 2, 3, d=Tensor([6])).asnumpy() == [12]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cell_mixed_arguments_with_grad():
@@ -370,7 +375,7 @@ def test_cell_mixed_arguments_with_grad():
     assert grad_net(Tensor([1]), Tensor([2]), Tensor([3]), d=Tensor([4]), e=Tensor([5])).asnumpy() == [1]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_cell_mixed_arguments_with_grad1():
@@ -553,7 +558,7 @@ def test_cell_as_input():
     assert np.allclose(x.asnumpy(), out.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tuple_cell_as_input():
@@ -608,7 +613,7 @@ def test_tuple_cell_as_input():
     assert np.allclose(x.asnumpy(), out.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dict_cell_as_input():
@@ -661,3 +666,23 @@ def test_dict_cell_as_input():
     net = TestNet(4, 0.5)
     out = net(x, block)
     assert np.allclose(x.asnumpy(), out.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_empty_tuple_input():
+    """
+    Feature: Graph mode compiling args.
+    Description:  Support empty tuple input for the top cell.
+    Expectation: No exception.
+    """
+
+    @ms.jit
+    def test_net(x, shape):
+        shape = shape + (1,)
+        return ops.reshape(x, shape)
+
+    x = ms.Tensor([1])
+    out = test_net(x, ())
+    assert out.shape == (1,)

@@ -87,7 +87,7 @@ static size_t GetFancyPosition(const std::vector<int64_t> &tuple_index_types, si
     }
   }
   MS_LOG(DEBUG) << "final_tuple_index_types" << final_tuple_index_types;
-  std::bitset<8> tensor_position_mask = 0;
+  std::bitset<kMaxTensorIndexDimNums> tensor_position_mask = 0;
   for (size_t i = 0; i < final_tuple_index_types.size(); i++) {
     if (final_tuple_index_types[i] == kObjectTypeTensorType) {
       tensor_position_mask[i] = 1;
@@ -98,8 +98,7 @@ static size_t GetFancyPosition(const std::vector<int64_t> &tuple_index_types, si
     if (tensor_position_mask == 0) {
       return 0;
     }
-    const size_t max_tuple_nums = 8;
-    for (size_t i = 0; i < max_tuple_nums; i++) {
+    for (size_t i = 0; i < kMaxTensorIndexDimNums; i++) {
       if (tensor_position_mask[i] == 0) {
         continue;
       }
@@ -108,7 +107,7 @@ static size_t GetFancyPosition(const std::vector<int64_t> &tuple_index_types, si
         return 0;
       }
       if (!first_tensor_found) {
-        new_fancy_position = i;
+        new_fancy_position = static_cast<int64_t>(i);
       }
     }
     return LongToSize(new_fancy_position);
@@ -171,7 +170,8 @@ std::vector<ShapeVector> GetTupleIndexInfo::ConstGetTupleIndexInfo(
   slice_shapes = GetSliceShape(tuple_index_types, tensor_shapes, &has_zero_tensor, &slice_nums, &tensor_indices_shapes);
   MS_LOG(DEBUG) << "slice_shapes: " << slice_shapes;
   *broadcast_shape = BroadCastShape(tensor_indices_shapes);
-  if (tuple_index_info_type == kSetitemByTupleWithTensor && broadcast_shape->size() < 2) {
+  constexpr size_t min_broadcast_shape_size = 2;
+  if (tuple_index_info_type == kSetitemByTupleWithTensor && broadcast_shape->size() < min_broadcast_shape_size) {
     (void)broadcast_shape->insert(broadcast_shape->begin(), 1);
   }
   MS_LOG(DEBUG) << "broadcast_shape:" << *broadcast_shape;
@@ -269,16 +269,17 @@ AbstractBasePtr GetTupleIndexInfoInferInner(const PrimitivePtr &primitive,
   if (primitive->HasAttr(kAttrTupleIndexInfoType)) {
     tuple_index_info_type = GetValue<string>(primitive->GetAttr(kAttrTupleIndexInfoType));
   }
-  const size_t max_tensor_dims = 8;
   const size_t output_size = 13;
-  if (fancy_position_abs->GetType()->type_id() == kObjectTypeTensorType ||
+  if (fancy_position_abs->GetValue()->isa<ValueAny>() ||
       std::any_of(input_args.begin() + kIndex0, input_args.end(),
                   [](const AbstractBasePtr &shape_abs) { return shape_abs->GetShape()->IsDynamic(); })) {
     auto abs = std::make_shared<abstract::AbstractTensor>(kInt64, ShapeVector({abstract::Shape::kShapeRankAny}));
-    AbstractBasePtrList output_abs_list(output_size, abs);
+    AbstractBasePtrList output_abs_list(output_size - 1, abs);
+    auto scalar_abs_any = std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64);
+    output_abs_list.insert(output_abs_list.begin() + kIndex3, scalar_abs_any);
     return std::make_shared<abstract::AbstractTuple>(output_abs_list);
   }
-  if (data_shape.size() < 1 || data_shape.size() > max_tensor_dims) {
+  if (data_shape.size() < 1 || data_shape.size() > kMaxTensorIndexDimNums) {
     MS_EXCEPTION(ValueError) << "The input data's dim must in the range of [1, 8], but got " << data_shape.size();
   }
   std::vector<ShapeVector> tensor_indices_shapes;
@@ -287,7 +288,7 @@ AbstractBasePtr GetTupleIndexInfoInferInner(const PrimitivePtr &primitive,
   int64_t expand_dims = GetValue<int64_t>(primitive->GetAttr(kAttrExpandDimsCnt));
   for (size_t i = 0; i < tuple_index_types.size(); i++) {
     if (tuple_index_types[i] == kMetaTypeEllipsis) {
-      valid_tensor_nums = data_shape.size() + expand_dims;
+      valid_tensor_nums = data_shape.size() + LongToSize(expand_dims);
       break;
     } else if (tuple_index_types[i] != kTypeUnknown) {
       valid_tensor_nums += 1;
@@ -322,7 +323,7 @@ AbstractBasePtr GetTupleIndexInfoInferInner(const PrimitivePtr &primitive,
     (void)abs_list.emplace_back(VectorToAbstract(new_slice_shape, to_tuple));
   }
   const size_t indices_size = final_shape.size();
-  for (size_t i = 0; i < max_tensor_dims - new_slice_shapes.size(); i++) {
+  for (size_t i = 0; i < kMaxTensorIndexDimNums - new_slice_shapes.size(); i++) {
     ShapeVector shape(indices_size, 1);
     (void)abs_list.emplace_back(VectorToAbstract(shape, to_tuple));
   }

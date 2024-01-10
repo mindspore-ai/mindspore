@@ -35,7 +35,7 @@ def avg_pool_dyn_shape_func(x):
     return ops.auto_generate.avg_pool(x, kernel_size=2, strides=2, pad_mode="VALID", data_format="NCHW")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -56,7 +56,7 @@ def test_avg_pool_forward(mode):
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -75,7 +75,7 @@ def test_avg_pool_backward(mode):
     grads = avg_pool_backward_func(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -100,7 +100,7 @@ def test_avg_pool_vmap(mode):
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

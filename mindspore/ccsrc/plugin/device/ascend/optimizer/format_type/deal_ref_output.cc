@@ -222,6 +222,10 @@ const AnfNodePtr DealRefOutput::Process(const FuncGraphPtr &graph, const AnfNode
     return nullptr;
   }
 
+  if (AnfAlgo::IsKernelSelectBackoffOp(cnode)) {
+    return nullptr;
+  }
+
   DealBroadCastAsRef(graph, cnode);
 
   auto op_name = common::AnfAlgo::GetCNodeName(cnode);

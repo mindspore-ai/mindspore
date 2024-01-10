@@ -26,7 +26,7 @@ class Net(nn.Cell):
         return ops.not_equal(x, other)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -54,7 +54,7 @@ def test_ops_not_equal(mode):
     np.testing.assert_array_equal(output_ms_case_2.asnumpy(), expect_output_case_2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -70,4 +70,23 @@ def test_f_not_equal_api_bfloat16(mode):
     y = Tensor(np.array([0.8, 2.5, 4.0]), mstype.bfloat16)
     tensor_output = net(x, y)
     tensor_expected = np.array([True, False, True])
+    np.testing.assert_array_equal(tensor_output.asnumpy(), tensor_expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_f_not_equal_bool():
+    """
+    Feature: test ne functional API.
+    Description: testcase for ne functional API.
+    Expectation: the result match with expected result.
+    """
+    ms.set_context(mode=ms.PYNATIVE_MODE, device_target="Ascend")
+    net = Net()
+    x = Tensor(np.full((2, 2), False))
+    y = True
+    tensor_output = net(x, y)
+    tensor_expected = np.array([[True, True], [True, True]])
     np.testing.assert_array_equal(tensor_output.asnumpy(), tensor_expected)

@@ -50,7 +50,14 @@ def test_net():
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-def test_net_bf16():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_net_bf16(mode):
+    """
+    Feature: Test matmul bfloat16.
+    Description: Test matmul tensor api for Graph and PyNative modes.
+    Expectation: The result match to the expect value.
+    """
+    context.set_context(mode=mode, device_target="Ascend")
     x = Tensor(np.arange(1 * 3).reshape(1, 3), mstype.bfloat16)
     y = Tensor(np.arange(3 * 4).reshape(3, 4), mstype.bfloat16)
     matmul = Net()

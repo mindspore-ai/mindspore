@@ -29,68 +29,46 @@ void MultiSymbolEngine::SaveInputParaMap(std::map<SymbolPtr, SymbolPtr> *input_p
     return;
   }
   (*input_para_map)[inp] = para;
-  if (inp->is<ListSymbol>()) {
-    auto inp_list = inp->as<ListSymbol>();
-    auto para_list = para->as<ListSymbol>();
-    if (inp_list->size() != para_list->size()) {
-      MS_LOG(WARNING) << "The size of input and para are not match, " << inp_list->size() << " vs "
-                      << para_list->size();
-      return;
-    }
-    for (size_t i = 0; i < inp_list->size(); i++) {
-      SaveInputParaMap(input_para_map, inp_list->item(i), para_list->item(i));
-    }
-  }
 }
 
-ListSymbolPtr MultiSymbolEngine::BuildShapeWithInputHint(const AbstractBasePtr &abs,
+ListSymbolPtr MultiSymbolEngine::BuildShapeWithInputHint(const AbstractBasePtr &para_abs,
                                                          const std::vector<ListSymbolPtr> &inputs,
-                                                         const std::map<SymbolPtr, SymbolPtr> &input_para_map) {
+                                                         std::map<SymbolPtr, SymbolPtr> *input_para_map) {
   // only support TensorShape, that input is int-list symbol.
-  if (!abs->GetShape()->isa<abstract::TensorShape>()) {
+  if (!para_abs->GetShape()->isa<abstract::TensorShape>()) {
     return nullptr;
   }
   auto cur_shape = inputs.back();
-  for (size_t i = 0; i + 1 < inputs.size(); i++) {
-    if (inputs[i] == nullptr) {
-      continue;
-    }
-    if (cur_shape->EqualsTo(inputs[i])) {
-      auto iter = input_para_map.find(inputs[i]);
-      if (iter == input_para_map.end()) {
-        continue;
-      }
-      return iter->second->as_sptr<ListSymbol>();
+  for (auto &inp_para : *input_para_map) {
+    if (cur_shape->EqualsTo(inp_para.first)) {
+      return inp_para.second->as_sptr<ListSymbol>();
     }
   }
   if (cur_shape->is_dyn_len()) {
     return ListSymbol::Make();
   }
-  SymbolPtrList ret_shape;
-  ret_shape.reserve(cur_shape->size());
+  SymbolPtrList para_shape;
+  para_shape.reserve(cur_shape->size());
   for (auto &cur_item : cur_shape->symbols()) {
-    SymbolPtr new_item = nullptr;
-    for (size_t i = 0; i + 1 < inputs.size() && new_item == nullptr; i++) {
-      if (inputs[i] == nullptr) {
-        continue;
-      }
-      for (auto &prev_item : inputs[i]->symbols()) {
-        if (cur_item->EqualsTo(prev_item)) {
-          auto iter = input_para_map.find(prev_item);
-          if (iter != input_para_map.end()) {
-            new_item = iter->second;
-            break;
-          }
-        }
+    if (cur_item->is<IntSymbol>() && cur_item->HasData()) {
+      (void)para_shape.emplace_back(cur_item);
+      continue;
+    }
+    SymbolPtr para_item = nullptr;
+    for (auto &inp_para : *input_para_map) {
+      if (cur_item->EqualsTo(inp_para.first)) {
+        para_item = inp_para.second;
+        break;
       }
     }
-    if (new_item == nullptr) {
-      (void)ret_shape.emplace_back(IntSymbol::Make());
+    if (para_item == nullptr) {
+      (void)para_shape.emplace_back(IntSymbol::Make());
+      SaveInputParaMap(input_para_map, cur_item, para_shape.back());
     } else {
-      (void)ret_shape.emplace_back(std::move(new_item));
+      (void)para_shape.emplace_back(std::move(para_item));
     }
   }
-  return ListSymbol::Make(std::move(ret_shape));
+  return ListSymbol::Make(std::move(para_shape));
 }
 
 // set symbol info for subgraph's parameters, according to the outer cnode's input symbol info.
@@ -106,7 +84,7 @@ void MultiSymbolEngine::GenInputSymbols(const CNodePtr &cnode, const FuncGraphPt
     MS_EXCEPTION_IF_NULL(para_abs);
     (void)input_symbolic_shapes.emplace_back(inp_abs->GetSymbolicShape());
     if (input_symbolic_shapes.back() != nullptr) {
-      auto s = BuildShapeWithInputHint(para_abs, input_symbolic_shapes, input_para_map);
+      auto s = BuildShapeWithInputHint(para_abs, input_symbolic_shapes, &input_para_map);
       if (s == nullptr || !s->is<ListSymbol>()) {
         s = para_abs->GetShape()->BuildSymbolicShape();
       }

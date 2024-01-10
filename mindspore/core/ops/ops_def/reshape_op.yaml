@@ -9,3 +9,7 @@ reshape:
   returns:
     output:
       dtype: tensor
+  view: True
+  dispatch:
+    enable: False
+    Ascend: ReshapeAscend

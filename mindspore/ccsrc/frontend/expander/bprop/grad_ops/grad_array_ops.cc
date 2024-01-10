@@ -69,7 +69,7 @@ NodePtrList GatherDropNegatives(BpropIRBuilder *ib, const NodePtr &params, const
     auto gathered_shape = ib->GetShape(gathered);
     if (IsDynamic(broadcastable_shape) || IsDynamic(gathered_shape)) {
       auto is_positive_shape = ib->ShapeCalc(g_gather_drop_negative, {gathered, is_positive})[0];
-      is_positive = ib->Reshape(is_positive, ib->TensorToTuple(is_positive_shape));
+      is_positive = ib->Reshape(is_positive, is_positive_shape);
       auto shape_gather = ib->Shape(gathered, true);
       is_positive = ib->LogicalAnd(is_positive, ib->Fill(1.0, shape_gather, TypeId::kNumberTypeBool));
     } else {
@@ -236,7 +236,7 @@ NodePtr CalcNumSegment(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis
                                "The num_segment should be a int for gradient of Gather.");
     num_segment = ib->Value(num_segment_value[0]);
   } else {
-    num_segment = ib->Reshape(num_segment, ShapeVector{});
+    num_segment = ib->Reshape(ib->SequenceToTensor(num_segment), ShapeVector{});
   }
   return num_segment;
 }
@@ -387,16 +387,16 @@ NodePtr CalBatchGather(BpropIRBuilder *ib, const NodePtr &values, const NodePtr 
   auto delta_reshape = reshape_shape[2];
   auto params_grad_reshape = reshape_shape[3];
 
-  auto values_rshp = ib->Reshape(values, ib->TensorToTuple(values_reshape));
-  auto indices_rshp = ib->Reshape(indices, ib->TensorToTuple(indices_reshape));
+  auto values_rshp = ib->Reshape(values, values_reshape);
+  auto indices_rshp = ib->Reshape(indices, indices_reshape);
   auto res = ib->ShapeCalc(std::make_shared<CalBatchGatherShapeCalc>(axis, batch_dims), {x});
-  auto axis_dim = ib->SequenceToTensor(res[0]);
-  auto limit = ib->SequenceToTensor(res[1]);
-  auto delta = ib->Range(ib->Value<int64_t>(0), ib->TensorToScalar(limit), ib->TensorToScalar(axis_dim));
-  delta = ib->Reshape(delta, ib->TensorToTuple(delta_reshape));
+  auto axis_dim = res[0];
+  auto limit = res[1];
+  auto delta = ib->Range(ib->Value<int64_t>(0), ib->TupleGetItem(limit, 0), ib->TupleGetItem(axis_dim, 0));
+  delta = ib->Reshape(delta, delta_reshape);
   indices_rshp = ib->Add(indices_rshp, delta);
-  auto params_grad = ib->UnsortedSegmentSum(values_rshp, indices_rshp, limit);
-  params_grad = ib->Reshape(params_grad, ib->TensorToTuple(params_grad_reshape));
+  auto params_grad = ib->UnsortedSegmentSum(values_rshp, indices_rshp, ib->TupleGetItem(limit, 0));
+  params_grad = ib->Reshape(params_grad, params_grad_reshape);
   return params_grad;
 }
 
@@ -441,7 +441,7 @@ NodePtrList BinopGather(BpropIRBuilder *ib) {
     if (ind_shp.empty()) {
       indices = ib->ExpandDims(indices, -1);
       auto out_shp1 = ib->ShapeCalc(g_regenerate_output, {x, indices, axis, batch_dims_tensor}, {kIndex2, kIndex3})[0];
-      dout = ib->Reshape(dout, ib->TensorToTuple(out_shp1));
+      dout = ib->Reshape(dout, out_shp1);
     }
     // Calculate perm.
     auto perms = ib->ShapeCalc(g_perms, {x, dout, indices, axis, batch_dims_tensor}, {kIndex3, kIndex4});
@@ -723,8 +723,8 @@ REG_BPROP_BUILDER("Sort").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
       k = ib->TupleGetItem(k, 0);
     }
   }
-  auto transposition = ib->SequenceToTensor(res1[1]);
-  auto invert_perm = ib->SequenceToTensor(res1[2]);
+  auto transposition = res1[1];
+  auto invert_perm = res1[2];
   auto dvalue = ib->TupleGetItem(dout, 0);
   if (!descending) {
     input_x = ib->Neg(input_x);
@@ -737,15 +737,15 @@ REG_BPROP_BUILDER("Sort").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto res = ib->ShapeCalc(g_sort_2, {indices, top_k_input});
   auto indices_dtype = ib->GetDtype(indices);
   auto range_flatten_index =
-    ib->Cast(ib->Range(ib->Value<int64_t>(0), ib->TensorToScalar(res[4]), ib->TensorToScalar(res[2])), indices_dtype);
+    ib->Cast(ib->Range(ib->Value<int64_t>(0), ib->TupleGetItem(res[4], 0), ib->TupleGetItem(res[2], 0)), indices_dtype);
   range_flatten_index = ib->ExpandDims(range_flatten_index, -1);
-  auto ind_2d = ib->Reshape(indices, ib->TensorToTuple(res[1]));
+  auto ind_2d = ib->Reshape(indices, res[1]);
   auto ind = ib->Reshape(ib->Add(ind_2d, range_flatten_index), {-1});
 
   dvalue = ib->Transpose(dvalue, invert_perm);
   auto ind_expand = ib->ExpandDims(ind, -1);
-  auto scatter = ib->ScatterNd(ind_expand, ib->Reshape(dvalue, {-1}), ib->TensorToTuple(res[3]));
-  auto out_grad = ib->Reshape(scatter, ib->TensorToTuple(res[0]));
+  auto scatter = ib->ScatterNd(ind_expand, ib->Reshape(dvalue, {-1}), res[3]);
+  auto out_grad = ib->Reshape(scatter, res[0]);
   auto dx = ib->Transpose(out_grad, invert_perm);
 
   if (!descending) {
@@ -869,10 +869,8 @@ REG_BPROP_BUILDER("ResizeNearestNeighbor").SetUnusedInputs({i0, i4}).SetBody(BOD
     shape = ib->EmitValue(MakeValue(new_shape));
   } else {
     shape = ib->ShapeCalc(g_resize_nearest_neighbor, {x})[0];
-    shape = ib->TensorToTuple(shape);
   }
-  auto dx =
-    ib->Emit("ResizeNearestNeighborGrad", {dout, ib->TensorToTuple(shape), align_corners, half_pixel_centers}, {});
+  auto dx = ib->Emit("ResizeNearestNeighborGrad", {dout, shape, align_corners, half_pixel_centers}, {});
   return {dx, ib->OutZeros(ib->GetInput(kIndex1)), ib->OutZeros(align_corners), ib->OutZeros(half_pixel_centers)};
 });
 
@@ -1023,9 +1021,10 @@ REG_BPROP_BUILDER("Concat").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
     if (!std::any_of(input_shapes.cbegin(), input_shapes.cend(),
                      [](const std::vector<int64_t> &shape) { return IsDynamic(shape); })) {
       auto axis_res = ops::GetScalarValue<int64_t>(axis_node->BuildValue());
-      if (!axis_res.has_value()) {
+      if (axis_res.has_value()) {
         auto axis = axis_res.value();
-        return ConcatBpropStatic(ib, dout, input_shapes, axis);
+        auto res = ConcatBpropStatic(ib, dout, input_shapes, axis);
+        return {res[0], ib->OutZeros(axis_node)};
       }
     }
 
@@ -1131,7 +1130,7 @@ REG_BPROP_BUILDER("IndexFill").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
   if (ib->GetShape(x).empty()) {
     value_grad = dout;
   } else {
-    auto tmp = ib->Gather(dout, indices, dim);
+    auto tmp = ib->Gather(dout, indices, ib->Cast(dim, kInt64));
     value_grad = ib->ReduceSum(tmp, ShapeVector());
   }
   return {x_grad, ib->OutZeros(dim), ib->OutZeros(indices), value_grad};
@@ -1456,7 +1455,7 @@ REG_BPROP_BUILDER("Tile").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto calc_res = ib->ShapeCalc(g_tile, {x, input_multiples}, {1});
   auto r_shape = calc_res[0];
   auto axis = calc_res[1];
-  auto dout_reshaped = ib->Reshape(dout, ib->TensorToTuple(r_shape));
+  auto dout_reshaped = ib->Reshape(dout, r_shape);
   NodePtr dx;
   auto need_reduce = ib->NeedReduce(r_shape, axis, false);
   if (need_reduce.first) {
@@ -1503,7 +1502,7 @@ REG_BPROP_BUILDER("SelectView").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
     if (ind_shp.empty()) {
       indices = ib->ExpandDims(indices, -1);
       auto out_shp1 = ib->ShapeCalc(g_regenerate_output, {x, indices, axis, batch_dims_tensor}, {kIndex2, kIndex3})[0];
-      dout = ib->Reshape(dout, ib->TensorToTuple(out_shp1));
+      dout = ib->Reshape(dout, out_shp1);
     }
 
     // Calculate perm.
@@ -1722,8 +1721,6 @@ REG_BPROP_BUILDER("ResizeNearestNeighborV2").SetUnusedInputs({i1, i4}).SetBody(B
   auto grad_in_size = ib->ShapeCalc(std::make_shared<ResizeNearestNeighborV2ShapeCalc>(true), {x})[0];
   if (grad_in_size->isa<ValueNode>()) {
     grad_in_size = ib->Value<ShapeVector>(GetIntList(grad_in_size));
-  } else {
-    grad_in_size = ib->Emit("TensorToTuple", {grad_in_size});
   }
   auto dx = ib->Emit("ResizeNearestNeighborV2Grad", {dout, grad_in_size, align_corners, half_pixel_centers});
   return {dx, ib->OutZeros(grad_in_size), ib->OutZeros(align_corners), ib->OutZeros(half_pixel_centers)};

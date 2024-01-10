@@ -17,46 +17,16 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_TENSORSUMMARY_UTILS_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_TENSORSUMMARY_UTILS_H_
 
-#include <map>
+#include <vector>
 #include <string>
-#include <thread>
 #include <functional>
 #include "acl/acl_tdt.h"
 #include "ir/tensor.h"
-#include "plugin/device/ascend/hal/device/tensorprint_utils.h"
 
 namespace mindspore::device::ascend {
+const std::vector<string> summary_channel_names{"ms_tensor_summary", "ms_image_summary", "ms_scalar_summary",
+                                                "ms_histogram_summary"};
+void SummaryReceiveData(acltdtDataset *acl_dataset, const string &channel_name);
+};  // namespace mindspore::device::ascend
 
-struct TDTInfo {
-  std::string channel_name;
-  acltdtChannelHandle *acl_handle;
-  ChannelType channel_type;
-  std::thread *dtd_thread;
-};
-
-class TensorSummaryUtils {
- public:
-  static TensorSummaryUtils &GetInstance();
-  void CreateTDTSummaryThread();
-  void DestroyTDTSummaryThread();
-
- private:
-  static void GetSummaryData(string channel_name, acltdtChannelHandle *acl_handle);
-};
-
-class TDTTensorUtils {
- public:
-  static TDTTensorUtils &GetInstance();
-  acltdtChannelHandle *CreateChannel(std::string name, ChannelType *channel_type);
-  void ReceiveData(std::string channel_name, const acltdtChannelHandle *acl_handle);
-
-  std::map<std::string, TDTInfo> tdt_infos;
-
- private:
-  bool ConvertDataset2Tensor(acltdtDataset *acl_dataset, ChannelType channel_type, const char *summary_name);
-  bool PrintTensorToString(const char *str_data_ptr, mindspore::tensor::Tensor *print_tensor,
-                           const size_t &memory_size);
-  std::string TensorNameToSummaryName(std::string channel_name, std::string tensor_name);
-};
-}  // namespace mindspore::device::ascend
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_TENSORSUMMARY_UTILS_H_

@@ -87,7 +87,7 @@ class AdadeltaNetVmap(nn.Cell):
         return self.vmap_adagrad(self.var, self.accum, self.accum_update, lr, rho, epsilon, grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_apply_adadelta_vmap():
@@ -149,7 +149,7 @@ class AdadeltaNetVmap2(nn.Cell):
         return self.vmap_adagrad(self.var, self.accum, self.accum_update, lr, rho, epsilon, grad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_apply_adadelta_vmap2():

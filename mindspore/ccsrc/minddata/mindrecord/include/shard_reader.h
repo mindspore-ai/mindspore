@@ -177,7 +177,7 @@ class MINDRECORD_API ShardReader {
 
   /// \brief return a batch, given that one is ready
   /// \return a batch of images and image data
-  std::vector<std::tuple<std::vector<uint8_t>, json>> GetNext();
+  std::vector<std::tuple<std::map<std::string, std::vector<uint8_t>>, json>> GetNext();
 
   /// \brief return a row by id
   /// \return a batch of images and image data

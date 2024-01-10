@@ -147,13 +147,15 @@ CNodePtr InputsUnifyMindIR::CreateScalarToTensor(const FuncGraphPtr &func_graph,
   AnfNodePtrList inputs = {prim, node};
   CNodePtr scalar_to_tensor = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(scalar_to_tensor);
+  auto primitive = GetCNodePrimitive(scalar_to_tensor);
+  MS_EXCEPTION_IF_NULL(primitive);
 
   // attr dtype
   auto data_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
   common::AnfAlgo::SetNodeAttr(kAttrDType, TypeIdToType(data_type), scalar_to_tensor);
 
   // set abstract
-  auto abs = abstract::MakeAbstract(std::make_shared<abstract::Shape>(ShapeVector{}), TypeIdToType(data_type));
+  auto abs = InferAbstract(primitive, {node});
   MS_EXCEPTION_IF_NULL(abs);
   MS_LOG(DEBUG) << "Abstract for ScalarToTensor op is " << abs->ToString();
   scalar_to_tensor->set_abstract(abs);

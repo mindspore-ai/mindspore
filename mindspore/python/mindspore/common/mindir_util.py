@@ -100,12 +100,12 @@ def save_mindir(model, file_name):
         raise TypeError("For 'save_mindir', the argument 'model' must be ModelProto, "
                         "but got {}.".format(type(model)))
     try:
-        with open(file_name, "wb") as f:
+        with os.fdopen(os.open(file_name, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), "wb") as f:
             f.write(model.SerializeToString())
-            os.chmod(file_name, stat.S_IRUSR)
     except BaseException as e:
         logger.critical(f"Failed to save the file: {file_name} ,"
                         f" please check the correct file.")
         raise ValueError(e.__str__()) from e
     finally:
-        pass
+        if os.path.exists(file_name):
+            os.chmod(file_name, stat.S_IRUSR)

@@ -67,7 +67,7 @@ bool EllipsisToSliceCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *>
   auto output_addr2 = reinterpret_cast<int64_t *>(outputs[kIndex2]->device_ptr());
   ShapeVector data_shape = data_shapes_[0];
   size_t dim_size = data_shape.size();
-  size_t slice_nums = data_shapes_[1][1];
+  size_t slice_nums = static_cast<size_t>(data_shapes_[1][1]);
   const size_t max_indices_num = 8;
   std::vector<size_t> ini_index;
   size_t ellipse_position = 0;

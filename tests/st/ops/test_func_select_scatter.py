@@ -30,7 +30,7 @@ class Net(nn.Cell):
         return ops.select_scatter(input_x, src, self.axis, self.index)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -74,7 +74,7 @@ def test_ops_select_scatter(mode):
     assert np.allclose(output.asnumpy(), expect_output1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

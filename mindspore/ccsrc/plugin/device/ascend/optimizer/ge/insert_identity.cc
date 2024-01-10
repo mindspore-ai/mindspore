@@ -71,9 +71,10 @@ CNodePtr InsertIdentityForInput(const FuncGraphPtr &func_graph, const CNodePtr &
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   for (auto index : input_index) {
-    auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, index, false);
+    auto input_kernel = common::AnfAlgo::GetInputNode(cnode, index);
     auto identity_node =
-      kernel_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kIdentityOpName)), kernel_with_index.first});
+      kernel_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kIdentityOpName)), input_kernel});
+    auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, index, false);
     SetBuildInfo(kernel_with_index.first, identity_node, kernel_with_index.second);
     common::AnfAlgo::SetNodeInput(cnode, identity_node, index);
   }

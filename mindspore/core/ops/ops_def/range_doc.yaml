@@ -3,22 +3,22 @@ range:
         Creates a sequence of numbers that begins at `start` and extends by increments of
         `delta` up to but not including `limit`.
 
-        The types of all 3 inputs must be the same. The type of the resulting tensor is
-        the same as the type of the inputs.
+        The types of all 3 inputs must be all integers or floating-point numbers.
 
         Args:
-            start (number): A scalar Tensor. The first number in the sequence. Must have
-              type: int32 ,int64, float32 or float64.
-            limit (number): A scalar Tensor. Upper limit of the sequence, exclusive. Must
-              have type: int32 ,int64, float32 or float64.
-            delta (number): A scalar Tensor. Number that increments `start`. Must have
-              type: int32 ,int64, float32 or float64.
+            start (number): The first number in the sequence. Must have
+                type: int32 ,int64, float32 or float64.
+            limit (number): Upper limit of the sequence, exclusive. Must
+                have type: int32 ,int64, float32 or float64.
+            delta (number): Number that increments `start`. Must have
+                type: int32 ,int64, float32 or float64.
             maxlen (int, optional): Memory that can fit `maxlen` many elements
-              will be allocated for the output. Optional, must be positive. Default: 1000000.
-              If the output has more than `maxlen` elements, a runtime error will occur.
+                will be allocated for the output. Optional, must be positive. Default: 1000000.
+                If the output has more than `maxlen` elements, a runtime error will occur.
 
         Returns:
-            A 1-D Tensor, with the same type as the inputs.
+            A 1-D Tensor. If `start`, `limit` and `delta` are all integers, the type of output is int64.
+            If `start`, `limit` and `delta` are all floating-point numbers, the type of output is float32.
 
         Raises:
             TypeError: If datatype of `start`, `limit` or `delta` is not same.
@@ -31,8 +31,7 @@ range:
             ``GPU`` ``CPU``
 
         Examples:
-            >>> from mindspore import Tensor, ops
-            >>> from mindspore import dtype as mstype
+            >>> from mindspore import ops
             >>> start = 0
             >>> end = 10
             >>> step = 4

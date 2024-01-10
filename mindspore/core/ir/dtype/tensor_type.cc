@@ -20,8 +20,7 @@
 
 namespace mindspore {
 TypePtr UndeterminedType::DeepCopy() const {
-  MS_EXCEPTION_IF_NULL(element_type_);
-  if (IsGeneric()) {
+  if (IsGeneric() || element_type_ == nullptr) {
     return std::make_shared<UndeterminedType>();
   }
   return std::make_shared<UndeterminedType>(element_type_->DeepCopy());

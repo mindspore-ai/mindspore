@@ -922,7 +922,13 @@ CNodePtr ParameterServerMode::CreateNodeWithInterProcessEdgeOnPServer(const std:
   auto new_node_prim = NewValueNode(std::make_shared<Primitive>(many_to_one_node_name));
   (void)new_node_inputs.insert(new_node_inputs.cbegin(), new_node_prim);
   if (many_to_one_node_name == kConcatOpName) {
-    (void)new_node_inputs.insert(new_node_inputs.cend(), NewValueNode(MakeValue(0L)));
+    // Create axis input for concat.
+    auto axis_value = MakeValue(0L);
+    MS_EXCEPTION_IF_NULL(axis_value);
+    auto axis_value_node = NewValueNode(axis_value);
+    MS_EXCEPTION_IF_NULL(axis_value_node);
+    axis_value_node->set_abstract(axis_value->ToAbstract());
+    (void)new_node_inputs.insert(new_node_inputs.cend(), axis_value_node);
   }
 
   auto new_node = func_graph_->NewCNode(new_node_inputs);

@@ -30,6 +30,7 @@ def test_tensor_slice_1():
     Description: Tensor getitem by a single bool value.
     Expectation: No exception.
     """
+
     class Net(nn.Cell):
         def construct(self, input_x):
             return input_x[True] + 1.0
@@ -56,6 +57,7 @@ def test_tensor_slice_2():
     Expectation: No exception.
     """
     data = Tensor(np.array([[2, 3.2], [3, 4.1]]).astype(np.float32))
+
     @jit(input_signature=(Tensor(shape=None, dtype=ms.int64), data))
     def my_index(x):
         out = x[3:2:1]
@@ -63,3 +65,28 @@ def test_tensor_slice_2():
 
     out = my_index(data)
     assert out.shape == (0, 2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_tensor_slice_in_tuple():
+    """
+    Feature: Test tensor slice graph mode.
+    Description: Tensor getitem by slice in tuple.
+    Expectation: No exception.
+    """
+    ms.set_context(mode=ms.GRAPH_MODE)
+
+    class Net(nn.Cell):
+        def construct(self, x):
+            output = x[1:2:1, ...]
+            return output
+
+    data = Tensor(np.arange(27).reshape((3, 3, 3)), ms.float32)
+    net = Net()
+    result = net(data)
+    expected = np.array([[[9, 10, 11], [12, 13, 14], [15, 16, 17]]]).astype(np.float32)
+    assert np.array_equal(result.asnumpy(), expected)

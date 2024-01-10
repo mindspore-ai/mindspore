@@ -221,7 +221,7 @@ def test_raise_with_variable_dic():
             raise_info_list.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_raise_with_variable_control_flow1():
@@ -333,7 +333,7 @@ def test_list_in_control_flow():
     assert "The input maybe [" in str(raise_info_list.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_raise_with_none_join():
@@ -358,7 +358,7 @@ def test_raise_with_none_join():
         raise_info_joinedstr_tensor.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_raise_with_raise_join():
@@ -385,7 +385,7 @@ def test_raise_with_raise_join():
         raise_info_joinedstr_tensor.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_raise_parse_with_interpret():
@@ -476,7 +476,7 @@ def test_raise_with_input_error_type_2():
     assert "The input can not be 11." in str(raise_info.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -499,7 +499,7 @@ def test_raise_join_in_control_flow():
     assert res == 3
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -547,7 +547,7 @@ class CellInList(nn.Cell):
         return self.cell_list[index](x)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -568,7 +568,7 @@ def test_cell_in_list():
     assert ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -592,7 +592,7 @@ def test_raise_constant_folding():
     assert "The input can not be 11." in str(raise_info_constant.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

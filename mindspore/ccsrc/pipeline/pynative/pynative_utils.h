@@ -26,6 +26,8 @@
 #include "kernel/pyboost/op_runner.h"
 #include "kernel/pyboost/op_register.h"
 #include "pipeline/pynative/forward/forward_task.h"
+#include "pipeline/jit/ps/parse/data_converter.h"
+#include "include/common/utils/primfunc_utils.h"
 
 #ifndef MS_UNLIKELY
 #ifdef _MSC_VER
@@ -61,8 +63,12 @@ struct Common {
   static const std::shared_ptr<PyNativeExecutor> &GetPyNativeExecutor();
   static void StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info);
   static TensorPtr StubNodeToTensor(const ValuePtr &value);
-  static std::optional<tensor::TensorPtr> StubNodeToTensorOptional(const std::optional<ValuePtr> &value);
-  static ValueTuplePtr StubNodeToValueTuple(const ValuePtr &v);
+  static TensorPtr ConvertStubNodeToTensor(const ValuePtr &v, const std::string &device_target, bool need_contiguous);
+  static std::optional<tensor::TensorPtr> ConvertStubNodeToTensor(const std::optional<ValuePtr> &v,
+                                                                  const std::string &device_target,
+                                                                  bool need_contiguous);
+  static ValueTuplePtr ConvertStubNodeToValueTuple(const ValuePtr &v, const std::string &device_target,
+                                                   bool need_contiguous);
   static void GetConstInputToAttr(const PrimitivePtr &op_prim, const std::string &op_name,
                                   const std::string &device_target, bool is_dynamic_shape,
                                   mindspore::HashSet<size_t> *input_to_attr_index);
@@ -80,6 +86,7 @@ struct Common {
                                           const TopCellInfoPtr &top_cell);
   static void ProcessTupleParam(const FuncGraphPtr &bprop_graph, size_t position);
   static void FreeFuncGraphForwardNodes(const FuncGraphPtr &func_graph);
+  static tensor::TensorPtr ConvertToContiguousTensor(const tensor::TensorPtr &tensor, const std::string &device_target);
 };
 
 // Parser python
@@ -90,6 +97,47 @@ struct PyParser {
   static void ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, const py::list &op_inputs,
                                       bool stub = false);
   static void PrepareOpGradInfo(const FrontendOpRunInfoPtr &op_run_info);
+  static std::string BuilidPyInputTypeString(const py::object &obj);
+
+  static inline bool IsSupportTensorCast(const std::vector<ops::OP_DTYPE> &cast_types) {
+    for (const auto &type : cast_types) {
+      if (type == ops::DT_TENSOR) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static inline void PrintTypeCastError(const ops::OpDefPtr &op_def, const py::list &op_inputs, size_t idx) {
+    auto const &op_arg = op_def->args_[idx];
+    if (IsSupportTensorCast(op_arg.cast_dtype_)) {
+      auto tensor = parse::ConvertTensorValue(op_inputs[idx]);
+      auto PrintVectorFunc = [](const ShapeVector &shape) -> std::string {
+        std::stringstream ss;
+        ss << "[";
+        for (size_t i = 0; i < shape.size(); i++) {
+          if (i != 0) {
+            ss << ", " << shape[i];
+          } else {
+            ss << shape[i];
+          }
+        }
+        ss << "]";
+        return ss.str();
+      };
+      if (tensor != nullptr) {
+        MS_EXCEPTION(ValueError) << "For " << op_def->name_ << ", the " << idx
+                                 << "'th input is a Tensor whose shape is " << PrintVectorFunc(tensor->shape())
+                                 << " and dtype is [" << TypeIdToString(tensor->data_type())
+                                 << "], which can not be converted to " << ops::EnumToString(op_arg.arg_dtype_) << ".";
+      }
+    }
+    std::vector<std::string> op_type_list;
+    for (size_t index = 0; index < op_inputs.size(); ++index) {
+      (void)op_type_list.emplace_back(PyParser::BuilidPyInputTypeString(op_inputs[index]));
+    }
+    MS_EXCEPTION(TypeError) << ops::BuildOpErrorMsg(op_def, op_type_list);
+  }
 };
 
 // Data convert
@@ -109,6 +157,7 @@ struct DataConvert {
   static ValuePtr ConvertValueDictToValueTuple(const ValuePtr &v);
   static void PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq,
                                        size_t index, const TopCellInfoPtr &top_cell);
+  static void ConvertValueTensorId(const ValuePtr &value, std::vector<std::string> *converted_tensor_id);
   static void ConvertTupleValueToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq,
                                         size_t index, const TopCellInfoPtr &top_cell);
   static void MarkInputs(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, size_t index,
@@ -118,14 +167,15 @@ struct DataConvert {
 };
 
 struct PyBoost {
-  static FrontendOpRunInfoPtr Init(const py::args &args);
+  static FrontendOpRunInfoPtr Init(const PrimitivePtr &prim, const py::list &args);
   static void DoGrad(const FrontendOpRunInfoPtr &op_run_info);
   static void MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const std::vector<TensorPtr> &outputs);
   static void UpdateOutputTensorGradInfo(const std::vector<TensorPtr> &outputs);
   static void UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &abstract);
   static void UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<ValuePtr> &op_inputs,
                               const FrontendOpRunInfoPtr &op_run_info);
-  static py::object RunPyFunction(const py::args &args);
+  static PrimitivePtr ConvertPrimitive(const py::object &obj);
+  static py::object RunPyFunction(const PrimitivePtr &prim, const py::list &args);
   template <typename T>
   static ValuePtr OptionalToValue(const std::optional<T> &val) {
     if (!val.has_value()) {
@@ -146,19 +196,20 @@ struct PyBoost {
     return val;
   }
 
-  template <typename... T>
-  static auto SetPyBoostCastForInputs(const FrontendOpRunInfoPtr &op_run_info, T... t) {
+  template <size_t N, typename... T>
+  static auto SetPyBoostCastForInputs(const FrontendOpRunInfoPtr &op_run_info,
+                                      const std::vector<std::vector<size_t>> &same_type_table, T... t) {
     MS_EXCEPTION_IF_NULL(op_run_info);
-    // For auto grad use
-
-    if (op_run_info->base_op_run_info.op_name == kCast) {
+    if (op_run_info->op_grad_info->op_prim->name() == kCast) {
       return std::make_tuple(t...);
     }
     const auto &pyboost_cast_operation = Common::GetPyNativeExecutor()->forward_executor()->pyboost_cast_operation();
     const auto &ret = pyboost_cast_operation->DoMixPrecisionCast(op_run_info, t...);
-    op_run_info->op_grad_info->input_value = TupleToVector(ret, std::make_index_sequence<sizeof...(t)>());
     op_run_info->input_size = sizeof...(t);
-    return pyboost_cast_operation->DoImplicitCast(op_run_info, ret);
+    if constexpr (N != 0) {
+      return pyboost_cast_operation->DoImplicitCast<N>(op_run_info, same_type_table, ret);
+    }
+    return ret;
   }
 };
 

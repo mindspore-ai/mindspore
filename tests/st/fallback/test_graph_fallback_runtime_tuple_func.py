@@ -24,7 +24,7 @@ from mindspore.ops.composite import GradOperation
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -44,7 +44,7 @@ def test_sequence_in_with_irregular_sequence():
     assert foo()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -64,8 +64,10 @@ def test_sequence_in_with_irregular_sequence_2():
     assert not foo()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sequence_in_with_irregular_sequence_3():
     """
@@ -82,7 +84,7 @@ def test_sequence_in_with_irregular_sequence_3():
     assert not foo(Tensor([1, 1, 1]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -102,7 +104,7 @@ def test_sequence_in_with_nested_sequence():
     assert foo()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -121,7 +123,7 @@ def test_sequence_in_with_nested_sequence_2():
     assert not foo(Tensor([1, 2, 3]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -140,7 +142,7 @@ def test_sequence_in_with_nested_sequence_3():
     assert foo(Tensor([1, 2, 3]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -161,7 +163,7 @@ def test_sequence_mul_with_irregular_sequence():
     assert ret == ((1, 1), 1, ["m", "n"], (1, 1), 1, ["m", "n"])
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -182,7 +184,7 @@ def test_sequence_mul_with_irregular_sequence_2():
     assert ret == [(1, 1), 1, ["m", "n"], (1, 1), 1, ["m", "n"]]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -209,7 +211,7 @@ def test_sequence_mul_with_irregular_sequence_3():
 
 
 @pytest.mark.skip(reason="dynamic length sequence output format failed")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -231,7 +233,7 @@ def test_sequence_mul_with_nested_sequence():
 
 
 @pytest.mark.skip(reason="dynamic length sequence output format failed")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -253,7 +255,7 @@ def test_sequence_mul_with_nested_sequence_2():
 
 
 @pytest.mark.skip(reason="Tuple output with AbstractSequence can not be used in operator")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -275,7 +277,7 @@ def test_sequence_mul_used_in_operator():
     assert ret == Tensor([5])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
@@ -301,7 +303,7 @@ def test_ops_with_sequence_of_any_input():
     assert ret == Tensor([1])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
@@ -351,7 +353,7 @@ def test_sequence_compare_with_operation():
     assert not a4
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -375,8 +377,10 @@ def test_sequence_compare_with_operation_2():
     assert not a4
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sequence_compare_with_operation_3():
     """
@@ -397,7 +401,7 @@ def test_sequence_compare_with_operation_3():
     assert not a4
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -423,7 +427,7 @@ def test_sequence_compare_with_operation_4():
     assert not a4
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -448,7 +452,7 @@ def test_sequence_compare_with_operation_5():
 
 
 @pytest.mark.skip(reason="dynamic length sequence output format failed")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -468,7 +472,7 @@ def test_sequence_len_with_operation():
     assert ret == 2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -489,7 +493,7 @@ def test_sequence_count_with_operation():
     assert ret == 2
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -510,8 +514,10 @@ def test_sequence_count_with_operation_2():
     assert ret == 2
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sequence_count_with_operation_3():
     """
@@ -529,8 +535,10 @@ def test_sequence_count_with_operation_3():
     assert ret == 1
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sequence_count_with_operation_4():
     """
@@ -548,7 +556,7 @@ def test_sequence_count_with_operation_4():
     assert ret == 1
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -568,7 +576,7 @@ def test_sequence_count_with_operation_5():
     assert ret == 2
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -588,7 +596,7 @@ def test_sequence_count_with_operation_6():
     assert ret == 2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -608,7 +616,7 @@ def test_sequence_index_with_operation():
     assert ret == 0
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -628,8 +636,10 @@ def test_sequence_index_with_operation_2():
     assert ret == 1
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sequence_index_with_operation_3():
     """
@@ -647,7 +657,7 @@ def test_sequence_index_with_operation_3():
     assert ret == 1
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -669,7 +679,7 @@ def test_sequence_index_with_operation_4():
     assert ret == 0
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -690,7 +700,7 @@ def test_sequence_index_with_operation_5():
     assert ret == 0
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -713,7 +723,7 @@ def test_sequence_index_with_operation_6():
     assert ret == 0
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -734,7 +744,7 @@ def test_sequence_getitem_with_tensor_index():
     assert ret2 == 3
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -755,7 +765,7 @@ def test_sequence_getitem_with_tensor_index_2():
     assert np.all(ret2 == np.array([1, 2, 3, 4]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -776,7 +786,7 @@ def test_sequence_getitem_with_tensor_index_3():
     assert ret2 == Tensor([2])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -806,7 +816,7 @@ def test_sequence_getitem_with_index():
     assert ret[3] == np.array([0])
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -836,7 +846,7 @@ def test_sequence_getitem_with_index_2():
     assert np.all(ret[3] == np.array([1, 2, 3, 4]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -861,8 +871,10 @@ def test_sequence_getitem_with_slice():
     assert np.all(ret[1].asnumpy() == np.array([5, 4, 3, 2]))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sequence_getitem_with_slice_2():
     """
@@ -887,7 +899,7 @@ def test_sequence_getitem_with_slice_2():
     assert np.all(ret[1][1].asnumpy() == np.array([5, 4, 3, 2]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -908,7 +920,7 @@ def test_sequence_ops_with_grad():
     assert grad == Tensor([0])
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -929,8 +941,10 @@ def test_sequence_ops_with_grad_2():
     assert grad == Tensor([0])
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sequence_ops_with_grad_3():
     """
@@ -949,7 +963,7 @@ def test_sequence_ops_with_grad_3():
 
 
 @pytest.mark.skip(reason="PyExecuteGradient with AbstractAny extra input")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -973,7 +987,7 @@ def test_sequence_ops_with_grad_4():
     assert grad1 == grad2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

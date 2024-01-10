@@ -31,7 +31,7 @@ def gcd_backward_func(x1, x2):
     return ops.grad(gcd_forward_func, (0,))(x1, x2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -52,7 +52,7 @@ def test_gcd_forward(mode):
     assert np.allclose(out.asnumpy(), expect_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -72,7 +72,7 @@ def test_gcd_backward(mode):
         gcd_backward_func(x1, x2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

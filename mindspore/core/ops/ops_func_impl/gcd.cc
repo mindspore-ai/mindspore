@@ -37,6 +37,8 @@ TypePtr GcdFuncImpl::InferType(const PrimitivePtr &prim, const std::vector<Abstr
   MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
   TypePtr x1_type = input_args[kIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(x1_type);
+  const std::set<TypePtr> gcd_valid_types = {kInt32, kInt64};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1", x1_type, gcd_valid_types, prim->name());
   return x1_type->Clone();
 }
 

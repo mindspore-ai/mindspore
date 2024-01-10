@@ -93,7 +93,7 @@ def test_fast_gelu_grad_float32(shape, dtype):
     assert np_all_close_with_loss(output[0].asnumpy(), expect_cpu)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float32, np.float16])

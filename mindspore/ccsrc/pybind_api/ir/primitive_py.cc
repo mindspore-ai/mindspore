@@ -806,7 +806,16 @@ void PrimitiveFunctionAdapter::set_label(const std::string &label, const py::obj
   if (!parse::ConvertData(value, &converted_value)) {
     MS_LOG(INTERNAL_EXCEPTION) << "For '" << PrimitiveFunctionAdapter::name() << "', Convert data failed.";
   }
-  attached_primitive_function_.lock()->AddAttr(label, converted_value);
+  attached_primitive_function_->AddAttr(label, converted_value);
+}
+
+py::object PrimitiveFunctionAdapter::clone() {
+  const auto op_path = "mindspore.ops.primitive";
+  const auto func = "_create_primitive_function_obj";
+  py::object prim_func_adapter_obj = python_adapter::CallPyFn(op_path, func);
+  prim_func_adapter_obj.cast<PrimitiveFunctionAdapterPtr>()->set_attached_primitive_function(
+    attached_primitive_function_->Clone());
+  return prim_func_adapter_obj;
 }
 
 void RegPrimitive(const py::module *m) {
@@ -842,6 +851,7 @@ void RegPrimitiveFunction(const py::module *m) {
     .def_property_readonly("name", &PrimitiveFunctionAdapter::name, "Get function name.")
     .def("has_label", &PrimitiveFunctionAdapter::has_label, "Has function attr.")
     .def("set_label", &PrimitiveFunctionAdapter::set_label, "Set function attr.")
-    .def("get_label", &PrimitiveFunctionAdapter::get_label, "Get function attr.");
+    .def("get_label", &PrimitiveFunctionAdapter::get_label, "Get function attr.")
+    .def("clone", &PrimitiveFunctionAdapter::clone, "Clone a Primitive and create a PrimitiveFunctionAdapter.");
 }
 }  // namespace mindspore

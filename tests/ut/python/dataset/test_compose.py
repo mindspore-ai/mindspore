@@ -355,6 +355,43 @@ def test_compose_mix_ctrans_pytrans():
     assert isinstance(img, Image.Image)
 
 
+def test_compose_embed_compose():
+    """
+    Feature: Compose op
+    Description: Test Python Compose op embed compose when reuse the object in EXECUTORS_LIST
+    Expectation: No error occurred
+    """
+    class ComposeB():
+        def __init__(self):
+            self.transforms = ds.transforms.Compose([vision.HorizontalFlip()])
+
+        def __call__(self, img):
+            return Image.fromarray(self.transforms(img))
+
+    class ComposeC():
+        def __init__(self):
+            self.transforms = ds.transforms.Compose([vision.Resize((30, 30)), vision.CenterCrop((20, 20))])
+
+        def __call__(self, img):
+            return Image.fromarray(self.transforms(img))
+
+    class ComposeA():
+        def __init__(self):
+            self.transforms = ds.transforms.Compose([
+                ComposeB(),
+                ComposeC(),
+            ])
+
+        def __call__(self, data):
+            img = data["image"]
+            img = self.transforms(img)
+            data["image"] = img
+            return data
+
+    img = {"image": np.ones((31, 102, 3), dtype=np.uint8)}
+    img = ComposeA()(img)
+
+
 if __name__ == "__main__":
     test_compose()
     test_lambdas()
@@ -362,3 +399,4 @@ if __name__ == "__main__":
     test_c_py_compose_vision_module(plot=True)
     test_vision_with_transforms()
     test_compose_with_custom_function()
+    test_compose_embed_compose()

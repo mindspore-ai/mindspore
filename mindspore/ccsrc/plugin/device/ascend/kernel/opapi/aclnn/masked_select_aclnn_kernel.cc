@@ -48,5 +48,6 @@ void MaskedSelectAclnnKernelMod::UpdateOutputShapeAndSize(const std::vector<Kern
                                                           const std::vector<KernelTensor *> &outputs) {
   outputs[kIndex0]->SetShapeVector(outputs_shape_[kIndex0]);
 }
+MS_ACLLNN_KERNEL_FACTORY_REG(MaskedSelect, MaskedSelectAclnnKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

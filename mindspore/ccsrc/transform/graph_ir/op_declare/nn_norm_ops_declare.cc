@@ -84,15 +84,17 @@ REG_ADPT_DESC(SigmoidCrossEntropyWithLogitsV2, kSigmoidCrossEntropyWithLogitsV2O
 
 // LogSoftmaxGrad
 INPUT_MAP(LogSoftmaxGrad) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(grad)}};
-ATTR_MAP(LogSoftmaxGrad) = {
-  {"axis", ATTR_DESC(axis, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
+INPUT_ATTR_MAP(LogSoftmaxGrad) = {
+  {3, ATTR_DESC(axis, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(LogSoftmaxGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(LogSoftmaxGrad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(LogSoftmaxGrad, prim::kPrimLogSoftmaxGrad->name(), ADPT_DESC(LogSoftmaxGrad))
 
 // LogSoftmaxV2
 INPUT_MAP(LogSoftmaxV2) = {{1, INPUT_DESC(logits)}};
-ATTR_MAP(LogSoftmaxV2) = {
-  {"axis", ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
+INPUT_ATTR_MAP(LogSoftmaxV2) = {
+  {2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(LogSoftmaxV2) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(LogSoftmaxV2) = {{0, OUTPUT_DESC(logsoftmax)}};
 REG_ADPT_DESC(LogSoftmax, prim::kPrimLogSoftmax->name(), ADPT_DESC(LogSoftmaxV2))
 REG_ADPT_DESC(LogSoftmaxV2, kLogSoftmaxV2OpName, ADPT_DESC(LogSoftmaxV2))
@@ -113,6 +115,22 @@ INPUT_MAP(LayerNormGrad) = {
 ATTR_MAP(LayerNormGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(LayerNormGrad) = {{0, OUTPUT_DESC(pd_x)}, {1, OUTPUT_DESC(pd_gamma)}, {2, OUTPUT_DESC(pd_beta)}};
 REG_ADPT_DESC(LayerNormGrad, prim::kPrimLayerNormGrad->name(), ADPT_DESC(LayerNormGrad))
+
+// LayerNormGradGrad
+CUST_INPUT_MAP(LayerNormGradGrad) = {{1, INPUT_DESC(x)},
+                                     {2, INPUT_DESC(dy)},
+                                     {3, INPUT_DESC(variance)},
+                                     {4, INPUT_DESC(mean)},
+                                     {5, INPUT_DESC(gamma)},
+                                     {6, INPUT_DESC(d_dx)},
+                                     {7, INPUT_DESC(d_dg)},
+                                     {8, INPUT_DESC(d_db)},
+                                     {9, INPUT_DESC(begin_norm_axis)},
+                                     {10, INPUT_DESC(begin_params_axis)}};
+CUST_ATTR_MAP(LayerNormGradGrad) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(LayerNormGradGrad) = {
+  {0, OUTPUT_DESC(sopd_x)}, {1, OUTPUT_DESC(sopd_dy)}, {2, OUTPUT_DESC(sopd_gamma)}};
+REG_ADPT_DESC(LayerNormGradGrad, prim::kPrimLayerNormGradGrad->name(), CUST_ADPT_DESC(LayerNormGradGrad))
 
 // LayerNormBetaGammaBackpropV2
 INPUT_MAP(LayerNormBetaGammaBackpropV2) = {{1, INPUT_DESC(dy)}, {2, INPUT_DESC(res_for_gamma)}};
@@ -264,6 +282,13 @@ ATTR_MAP(MVNV2) = {{"eps", ATTR_DESC(eps, AnyTraits<float>())},
                    {"axes", ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(MVNV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MVNV2, kNameMVNV2, ADPT_DESC(MVNV2))
+
+// SparseSoftmaxCrossEntropyWithLogits
+INPUT_MAP(SparseSoftmaxCrossEntropyWithLogits) = {{1, INPUT_DESC(features)}, {2, INPUT_DESC(labels)}};
+ATTR_MAP(SparseSoftmaxCrossEntropyWithLogits) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(SparseSoftmaxCrossEntropyWithLogits) = {{0, OUTPUT_DESC(loss)}, {1, OUTPUT_DESC(backprop)}};
+REG_ADPT_DESC(SparseSoftmaxCrossEntropyWithLogits, prim::kPrimSparseSoftmaxCrossEntropyWithLogits->name(),
+              ADPT_DESC(SparseSoftmaxCrossEntropyWithLogits))
 
 // MultiMarginLossGrad
 CUST_INPUT_MAP(MultiMarginLossGrad) = {

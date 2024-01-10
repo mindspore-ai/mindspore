@@ -58,5 +58,5 @@ mindspore.experimental.optim.AdamW
         - **ValueError** - 学习率不是int、float或Tensor。
         - **ValueError** - 学习率小于0。
         - **ValueError** - `eps` 小于0。
-        - **ValueError** - `betas` 范围不在0-1之间。
+        - **ValueError** - `betas` 范围不在[0, 1)之间。
         - **ValueError** - `weight_decay` 小于0。

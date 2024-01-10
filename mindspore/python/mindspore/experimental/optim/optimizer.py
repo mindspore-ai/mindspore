@@ -44,13 +44,6 @@ class Optimizer(Cell):
         defaults (dict): a dict containing default values of optimization
             options (used when a parameter group doesn't specify them).
 
-    Raises:
-        TypeError: If `learning_rate` is not one of int, float, Tensor.
-        TypeError: If element of `parameters` is neither Parameter nor dict.
-        TypeError: If `weight_decay` is neither float nor int.
-        ValueError: If `weight_decay` is less than 0.
-        ValueError: If `learning_rate` is a Tensor, but the dimension of tensor is greater than 1.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -113,7 +106,6 @@ class Optimizer(Cell):
         for param_group in param_groups:
             self.add_param_group(param_group)
         self.parameters = ParameterTuple(self.parameters)
-        self.lrs = ParameterTuple(self.lrs)
         self.hyper_map = C.HyperMap()
         self.enable_tuple_broaden = True
 
@@ -254,7 +246,14 @@ def _tensor_apply_decay(weight_decay, weight, gradient):
     """Get grad with weight_decay."""
     return op_add((op_mul(weight, F.cast(weight_decay, F.dtype(weight))), gradient))
 
-def check_not_less_than(arg_value, arg_name, prim, value=0.):
+
+def check_not_less_than(arg_value, arg_name, prim, value=0.0):
     if arg_value < value:
         raise ValueError("For {}, the {} must be greater than or equal to {}, "
+                         "but got {}.".format(prim, arg_name, value, arg_value))
+
+
+def check_not_less_than_without_equal(arg_value, arg_name, prim, value=0.0):
+    if arg_value <= value:
+        raise ValueError("For {}, the {} must be greater than {}, "
                          "but got {}.".format(prim, arg_name, value, arg_value))

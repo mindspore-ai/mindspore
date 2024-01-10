@@ -33,7 +33,7 @@ void CheckDictKey(const AbstractBasePtr &key, const std::string &op_name) {
     MS_LOG(EXCEPTION) << op_name << " evaluator key only supports string, number, constant tensor and tuple, but got "
                       << key->BuildValue()->ToString();
   }
-  if (key->isa<AbstractTuple>() && !key->cast_ptr<AbstractTuple>()->ContainsAllConstants()) {
+  if (key->isa<AbstractTuple>() && key_value->isa<ValueAny>()) {
     MS_LOG(EXCEPTION) << op_name << " evaluator key should not be tuple that contains variables, but got "
                       << key->BuildValue()->ToString();
   }
@@ -379,15 +379,11 @@ void CheckMutableArgAbstract(const AbstractBasePtr &abs) {
     return;
   }
   if (abs->isa<AbstractScalar>()) {
-    auto abs_type = abs->BuildType();
-    if (abs_type->type_id() != kBool->type_id()) {
-      return;
-    }
+    return;
   }
   MS_EXCEPTION(TypeError)
-    << "For mutable api in graph, the input arg should be one of (int, float, Tensor, tuple, list, dict) or their"
-       " nested structures, but got "
-    << abs->ToString();
+    << "For mutable api in graph, the input arg should be one of (int, float, bool, Tensor, tuple, list, dict) "
+    << "or their nested structures, but got " << abs->ToString();
 }
 }  // namespace
 

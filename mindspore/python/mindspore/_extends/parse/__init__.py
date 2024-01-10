@@ -28,8 +28,8 @@ from .parser import (Parser, create_instance, is_supported_create_instance_type,
                      convert_to_ms_cootensor, convert_class_to_function, convert_cell_list_to_sequence, is_cell_list,
                      get_obj_from_sequence, get_type, is_class_member_recursive, get_global_params,
                      get_adapter_tensor_attr, get_obj_defined_from_obj_type, is_from_third_party_library,
-                     get_const_abs, get_const_round, get_primitive_signatures, get_const_len, is_adapter_tensor_class,
-                     is_adapter_parameter_class, convert_to_namedtuple, check_attrs, generate_lambda_object)
+                     get_const_abs, get_const_round, get_const_len, is_adapter_tensor_class,
+                     is_adapter_parameter_class, convert_to_namedtuple, check_attrs, generate_lambda_object, check_is_subclass)
 
 __all__ = ['Parser', 'create_instance', 'is_supported_create_instance_type', 'generate_scope', 'get_attr_from_object',
            'get_bprop_method_of_class', 'get_class_instance_type', 'get_class_member_namespace_symbol',
@@ -43,5 +43,5 @@ __all__ = ['Parser', 'create_instance', 'is_supported_create_instance_type', 'ge
            'convert_cell_list_to_sequence', 'is_cell_list', 'get_obj_from_sequence', 'get_type',
            'is_class_member_recursive', 'get_adapter_tensor_attr', 'get_obj_defined_from_obj_type',
            'is_from_third_party_library', 'get_const_abs', 'get_const_round', 'get_const_len',
-           'is_adapter_tensor_class', 'get_primitive_signatures', 'is_adapter_parameter_class',
-           'convert_to_namedtuple', 'check_attrs', 'generate_lambda_object']
+           'is_adapter_tensor_class', 'is_adapter_parameter_class',
+           'convert_to_namedtuple', 'check_attrs', 'generate_lambda_object', 'check_is_subclass']

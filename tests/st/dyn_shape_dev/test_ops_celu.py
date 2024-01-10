@@ -35,7 +35,7 @@ def celu_dyn_shape_func(x, alpha=1.0):
     return ops.auto_generate.celu_(x, alpha)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -57,7 +57,7 @@ def test_celu_forward(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -79,7 +79,7 @@ def test_celu_backward(mode):
     np.testing.assert_allclose(grads.asnumpy(), expect, rtol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -102,7 +102,7 @@ def test_celu_vmap(mode):
     np.testing.assert_allclose(vmap_out.asnumpy(), expect, rtol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -131,7 +131,7 @@ def test_celu_dynamic(mode):
     np.testing.assert_allclose(output1.asnumpy(), expect1, rtol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

@@ -24,7 +24,7 @@ from mindspore.nn import Cell
 ms.set_context(mode=ms.GRAPH_MODE)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -47,7 +47,7 @@ def test_dict_return_1():
     assert out == {'y': 'a'}
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -67,7 +67,7 @@ def test_return_empty_dict_pyexecute():
     assert x == {}
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -91,7 +91,7 @@ def test_dict_return_2():
     assert out == {'a': ms.Tensor(np.array(1), ms.int64)}
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -139,7 +139,7 @@ def test_dict_get_3():
     assert out == {'y': ms.Tensor(np.array(1), ms.int64), 'a': 'a', 'b': 'c'}
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -166,7 +166,7 @@ def test_multiple_return_contains_dict():
     assert out[2] == (1, 2)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -191,7 +191,7 @@ def test_multiple_return_contains_dict_2():
     assert out[1][1] == (1, 2)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -214,7 +214,7 @@ def test_multiple_return_contains_dict_3():
     assert out[1] == {'a': 1}
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -253,7 +253,7 @@ def fc_with_initialize(input_channels, out_channels):
 
 
 @pytest.mark.skip(reason="Pyexecute output is not any and type is wrong.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -305,7 +305,7 @@ def test_net_dict_1():
 
 
 @pytest.mark.skip(reason="Pyexecute output is not any and type is wrong.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -405,8 +405,10 @@ def test_net_dict_2():
     assert outputs['fc'].shape == (64, 10)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_net_dict_2_grad():
     """
@@ -484,7 +486,7 @@ def test_net_dict_2_grad():
     assert np.allclose(outputs1.asnumpy(), outputs2.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -584,7 +586,7 @@ def test_return_nested_dict_with_inputs():
     assert out == {'a': [x, y], 'b': (1, 2, {'a': 1})}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -614,7 +616,7 @@ def test_nested_dict_with_parameter():
     assert out2 == 2
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -642,7 +644,7 @@ def test_return_nested_dict_with_parameter1():
 
 
 @pytest.mark.skip('Not support list to PyExecute yet.')
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -669,7 +671,7 @@ def test_return_nested_dict_with_parameter2():
     assert out == [{'params': [net.x, net.y], 'a': 1, 'b': False}, {'params': net.x, 'a': 2}]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -699,7 +701,7 @@ def test_nested_dict_with_parameter_constant1():
     assert out2 == 2
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -810,7 +812,7 @@ def test_return_nested_dict_with_parameter_constant3():
     assert out == {'params': (net.x, net.y), 'a': 1, 'b': {'params': net.x, 'a': 2}}
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -837,7 +839,7 @@ def test_return_nested_dict_with_parameter_constant4():
     assert out == {'params': [net.x, net.y], 'a': 1, 'b': {'params': net.x, 'a': 2}}
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -861,7 +863,7 @@ def test_return_dict_with_dict_values():
     assert out['x'] == x
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -888,7 +890,7 @@ def test_return_dict_with_dict_items():
     assert out == {'a': (x, y)}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -908,7 +910,7 @@ def test_return_dict_with_empty_shape_tensor():
     assert out['a'].shape == ()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -960,7 +962,7 @@ def test_return_different_size_dict_in_if_else():
         assert "Cannot join the return values of different branches, perhaps you need to make them equal." in str(e)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -982,7 +984,7 @@ def test_get_item_with_string_input():
     assert out == x
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -1004,7 +1006,7 @@ def test_get_item_with_string_input_grad():
     assert out == Tensor(1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -1025,7 +1027,7 @@ def test_return_dict_with_string_input():
     assert out == {"a": x}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -1046,7 +1048,7 @@ def test_return_dict_with_string_input_grad():
     assert out == Tensor(1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -1130,3 +1132,31 @@ def test_dict_inner_method_overrrided_2():
         return obj.aaa
     ms_out = foo()
     assert ms_out == 100
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dict_inner_method_overrrided_3():
+    """
+    Feature: Support getattr from overridden dict.
+    Description: Support getattr from overridden dict in graph mode
+    Expectation: Return the correct value.
+    """
+    class Tmp(dict):
+        def __getitem__(self, k):
+            inner_dict = dict(self.items())
+            return inner_dict[k]
+
+        def to_tuple(self):
+            return tuple(self[k] for k in self.keys())
+
+    obj = Tmp({"a": 1, "b": 2})
+
+    @jit
+    def foo():
+        return obj.to_tuple()
+    ms_out = foo()
+    assert ms_out == (1, 2)

@@ -170,6 +170,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"any", std::string("any_")},                                       // C.reduce_any
        {"bincount", std::string("bincount")},                              // bincount
        {"chunk", std::string("chunk")},                                    // chunk
+       {"contiguous", prim::kPrimidentity},                                // contiguous
        {"slogdet", std::string("slogdet")},                                // slogdet
        {"trace", std::string("trace")},                                    // trace
        {"tril", std::string("tril")},                                      // tril
@@ -186,7 +187,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"__floordiv__", std::string("floordiv")},                          // C.floordiv
        {"__mod__", std::string("mod")},                                    // C.mod
        {"__pow__", std::string("pow_")},                                   // C.pow
-       {"__floor__", std::string("array_floor")},                          // C.array_floor
+       {"__floor__", std::string("floor")},                                // P.floor
        {"__trunc__", std::string("array_trunc")},                          // C.array_trunc
        {"__pos__", std::string("array_uadd")},                             // C.array_uadd
        {"__neg__", std::string("array_usub")},                             // C.array_usub
@@ -502,6 +503,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"nanquantile", std::string("nanquantile")},                        // nanquantile()
        {"orgqr", std::string("orgqr")},                                    // orgqr()
        {"outer", std::string("outer")},                                    // outer()
+       {"softmax", std::string("softmax")},                                // softmax()
      }},
     {kObjectTypeRowTensorType,
      {

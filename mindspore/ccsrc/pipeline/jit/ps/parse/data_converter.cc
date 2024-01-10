@@ -27,6 +27,7 @@
 #include "frontend/operator/composite/composite.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/cell.h"
+#include "ir/dtype.h"
 #include "utils/symbolic.h"
 #include "utils/ms_context.h"
 #include "include/common/fallback.h"
@@ -228,7 +229,8 @@ ValuePtr ConvertTuple(const py::object &obj, bool use_signature) {
     }
     value_list.push_back(out);
   }
-  return std::make_shared<ValueTuple>(value_list);
+  auto res = std::make_shared<ValueTuple>(value_list);
+  return res;
 }
 
 bool IsNamedTuple(const py::object &obj) { return py::hasattr(obj, "_fields") && py::isinstance<py::tuple>(obj); }
@@ -288,7 +290,8 @@ ValuePtr ConvertList(const py::object &obj, bool use_signature) {
     }
     value_list.push_back(out);
   }
-  return std::make_shared<ValueList>(value_list);
+  auto res = std::make_shared<ValueList>(value_list);
+  return res;
 }
 
 ValuePtr ConvertStubList(const py::object &obj, bool use_signature) {
@@ -347,7 +350,9 @@ ValuePtr ConvertDict(const py::object &obj, bool use_signature) {
     }
     (void)key_values.emplace_back(key, value);
   }
-  return std::make_shared<ValueDictionary>(key_values);
+  auto res = std::make_shared<ValueDictionary>(key_values);
+  res->set_user_data<py::object>("origin_object", std::make_shared<py::object>(obj));
+  return res;
 }
 
 ValuePtr ConvertModuleNameSpace(const py::object &obj) {
@@ -1039,7 +1044,7 @@ ValuePtr ConvertTensor(const py::object &obj) {
   return ObjCast<TensorPtr>(obj);
 }
 
-static TensorPtr ConvertTensorValue(const py::object &obj) {
+TensorPtr ConvertTensorValue(const py::object &obj) {
   // The difference between the new ConvertTensorValue function and the existing ConvertTensor is:
   // If the obj a StubNode, it must be called the WaitValue to convert to a Tensor.
   if (IsStubTensor(obj)) {
@@ -1127,7 +1132,7 @@ ValuePtr ConvertNumberToTensor(const py::object &obj) {
   }
 
   if (py::isinstance<py::int_>(obj)) {
-    auto v = py::cast<pyint>(obj);
+    auto v = py::cast<int64_t>(obj);
     return std::make_shared<tensor::Tensor>(v);
   }
 
@@ -1197,14 +1202,18 @@ ValuePtr ConvertTensorToSequence(const py::object &obj) {
   }
 
   auto data_type = tensor->data_type();
+  // Since the dst object type is only, once the src object is validated as Tensor, the other converting errors should
+  // be thrown. There is no other paths for this case to run successfully.
   if (data_type != tid) {
+    MS_LOG(ERROR) << "Can not convert Tensor with type " << TypeIdToString(data_type) << "to Sequence with type "
+                  << TypeIdToString(tid) << ".";
     return nullptr;
   }
 
   auto shape = tensor->shape();
   if (shape.size() > 1) {
-    MS_LOG(INFO) << "Only support convrting Tensor, whose rank is less than 1, to sequence. The shape of Tensor is: "
-                 << shape;
+    MS_LOG(ERROR) << "Only support converting 1-D Tensor or scalar Tensor to sequence. But got the shape of Tensor: "
+                  << shape;
     return nullptr;
   }
 
@@ -1227,13 +1236,14 @@ ValuePtr ConvertTensorToSequenceInt(const py::object &obj) {
 
   auto shape = tensor->shape();
   if (shape.size() > 1) {
-    MS_LOG(INFO) << "Only support convrting Tensor, whose rank is less than 1, to sequence. The shape of Tensor is: "
-                 << shape;
+    MS_LOG(ERROR) << "Only support converting 1-D Tensor or scalar Tensor to sequence. But got the shape of Tensor: "
+                  << shape;
     return nullptr;
   }
 
   auto data_type = tensor->data_type();
   if (data_type != kNumberTypeInt64 && data_type != kNumberTypeInt32) {
+    MS_LOG(ERROR) << "Can not convert Tensor with type " << TypeIdToString(data_type) << "to Int Sequence.";
     return nullptr;
   }
   auto size = tensor->DataSize();
@@ -1260,13 +1270,14 @@ ValuePtr ConvertTensorToSequenceFloat(const py::object &obj) {
 
   auto data_type = float_tensor->data_type();
   if (data_type != kNumberTypeFloat64) {
+    MS_LOG(ERROR) << "Can not convert Tensor with type " << TypeIdToString(data_type) << "to Float64 Sequence.";
     return nullptr;
   }
 
   auto shape = float_tensor->shape();
   if (shape.size() > 1) {
-    MS_LOG(INFO) << "Only support convrting Tensor, whose rank is less than 1, to sequence. The shape of Tensor is: "
-                 << shape;
+    MS_LOG(ERROR) << "Only support converting 1-D Tensor or scalar Tensor to sequence. But got the shape of Tensor: "
+                  << shape;
     return nullptr;
   }
 
@@ -1290,8 +1301,8 @@ ValuePtr ConvertTensorToSequenceAny(const py::object &obj) {
 
   auto shape = tensor->shape();
   if (shape.size() > 1) {
-    MS_LOG(INFO) << "Only support convrting Tensor, whose rank is less than 1, to sequence. The shape of Tensor is: "
-                 << shape;
+    MS_LOG(ERROR) << "Only support converting 1-D Tensor or scalar Tensor to sequence. But got the shape of Tensor: "
+                  << shape;
     return nullptr;
   }
 
@@ -1314,6 +1325,7 @@ ValuePtr ConvertTensorToSequenceAny(const py::object &obj) {
       value_list.emplace_back(std::make_shared<BoolImm>(data[i]));
     }
   } else {
+    MS_LOG(ERROR) << "Can not convert Tensor with type " << TypeIdToString(data_type) << " to sequence.";
     return nullptr;
   }
 
@@ -1326,7 +1338,7 @@ ValuePtr ConvertTensorToInt(const py::object &obj) {
     return nullptr;
   }
   if (tensor->DataSize() != 1) {
-    MS_LOG(INFO) << "Can only convert tensor with one element to int, but got " << tensor->ToString();
+    MS_LOG(ERROR) << "Can only convert tensor with one element to int, but got " << tensor->ToString();
     return nullptr;
   }
   if (tensor->data_type() == kNumberTypeInt64) {
@@ -1334,7 +1346,7 @@ ValuePtr ConvertTensorToInt(const py::object &obj) {
   } else if (tensor->data_type() == kNumberTypeInt32) {
     return std::make_shared<Int64Imm>(static_cast<int32_t *>(GetTensorDataPtr(tensor))[0]);
   } else {
-    MS_LOG(INFO) << "Can't convert " << tensor->ToString() << " to int";
+    MS_LOG(ERROR) << "Can not convert " << tensor->ToString() << " to int";
     return nullptr;
   }
 }
@@ -1345,11 +1357,11 @@ ValuePtr ConvertTensorToFloat(const py::object &obj) {
     return nullptr;
   }
   if (tensor->DataSize() != 1) {
-    MS_LOG(INFO) << "Can only convert tensor with one element to float, but got " << tensor->ToString();
+    MS_LOG(ERROR) << "Can only convert tensor with one element to float, but got " << tensor->ToString();
     return nullptr;
   }
   if (tensor->data_type() != kNumberTypeFloat64) {
-    MS_LOG(INFO) << "Can't convert " << tensor->ToString() << " to float";
+    MS_LOG(ERROR) << "Can not convert " << tensor->ToString() << " to float";
     return nullptr;
   }
   return ConvertPythonFloatToScalarValue(static_cast<double *>(GetTensorDataPtr(tensor))[0]);
@@ -1361,7 +1373,7 @@ ValuePtr ConvertTensorToBool(const py::object &obj) {
     return nullptr;
   }
   if (tensor->data_type() != kNumberTypeBool) {
-    MS_LOG(INFO) << "Can't convert " << tensor->ToString() << " to bool";
+    MS_LOG(ERROR) << "Can not convert " << tensor->ToString() << " to bool";
     return nullptr;
   }
   return std::make_shared<BoolImm>(static_cast<bool *>(GetTensorDataPtr(tensor))[0]);
@@ -1373,7 +1385,7 @@ ValuePtr ConvertTensorToNumber(const py::object &obj) {
     return nullptr;
   }
   if (tensor->DataSize() != 1) {
-    MS_LOG(INFO) << "Can only convert tensor with one element to number, but got " << tensor->ToString();
+    MS_LOG(ERROR) << "Can only convert tensor with one element to number, but got " << tensor->ToString();
     return nullptr;
   }
 
@@ -1389,7 +1401,7 @@ ValuePtr ConvertTensorToNumber(const py::object &obj) {
     case kNumberTypeFloat32:
       return ConvertPythonFloatToScalarValue(static_cast<float *>(GetTensorDataPtr(tensor))[0]);
     default:
-      MS_LOG(INFO) << "Can't convert " << tensor->ToString() << " to number";
+      MS_LOG(ERROR) << "Can not convert " << tensor->ToString() << " to number";
       return nullptr;
   }
 }
@@ -1516,10 +1528,10 @@ OpDefConvertFunc GetConverterByType(int32_t dtype) {
   auto it = kConverters.find(dtype);
   if (it == kConverters.end()) {
     if ((dtype >> kTypeShiftBits) == 0) {
-      MS_LOG(EXCEPTION) << "Can't find converter for dtype[" << ops::EnumToString(static_cast<ops::OP_DTYPE>(dtype))
+      MS_LOG(EXCEPTION) << "Can not find converter for dtype[" << ops::EnumToString(static_cast<ops::OP_DTYPE>(dtype))
                         << "].";
     } else {
-      MS_LOG(EXCEPTION) << "Can't find converter for src_type["
+      MS_LOG(EXCEPTION) << "Can not find converter for src_type["
                         << ops::EnumToString(static_cast<ops::OP_DTYPE>(dtype >> kTypeShiftBits)) << "] and dst_type["
                         << ops::EnumToString(static_cast<ops::OP_DTYPE>(dtype & kDstMask)) << "].";
     }

@@ -202,6 +202,8 @@ class BACKEND_EXPORT KernelAttr {
   // The reference for all outputs and inputs of the same index.
   bool all_out_in_ref_{false};
 };
+
+BACKEND_EXPORT size_t GetOutputNum(const AnfNodePtr &node);
 BACKEND_EXPORT std::ostream &operator<<(std::ostream &os, KernelAttr kernel_attr);
 
 BACKEND_EXPORT std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr,
@@ -238,7 +240,6 @@ BACKEND_EXPORT KernelObjectType TypeIdToKernelObjectTypeForTupleUnfold(const Typ
 BACKEND_EXPORT std::vector<KernelObjectType> TypeIdToKernelObjectTypeForTupleUnfold(
   const std::vector<TypeId> &type_ids);
 BACKEND_EXPORT TypeId KernelObjectTypeToTypeId(const KernelObjectType &object_type);
-BACKEND_EXPORT bool IsTupleNestedOutputKernelAttr(const kernel::KernelAttr &kernel_attr);
 
 BACKEND_EXPORT bool CheckAttrForAllSameInput(const size_t input_num, const std::vector<mindspore::TypeId> &input_types,
                                              const KernelAttr &cur_kernel_attr);

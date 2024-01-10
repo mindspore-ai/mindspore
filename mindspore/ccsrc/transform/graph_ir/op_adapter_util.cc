@@ -170,7 +170,7 @@ std::vector<GeDataType> ConvertAnyUtil(const ValuePtr &value, const AnyTraits<st
   if (!value->isa<ValueTuple>() && !value->isa<ValueList>()) {
     MS_LOG(WARNING) << "error convert Value to vector for value: " << value->ToString()
                     << ", type: " << value->type_name() << ", value should be a tuple or list";
-    data.push_back(ConvertAnyUtil(value, AnyTraits<GEType>()));
+    data.emplace_back(ConvertAnyUtil(value, AnyTraits<GEType>()));
     return data;
   }
   auto vec = value->isa<ValueTuple>() ? value->cast<ValueTuplePtr>()->value() : value->cast<ValueListPtr>()->value();
@@ -288,7 +288,7 @@ GeTensor VectorToTensorUtil(const ValuePtr &value) {
   auto vec = value->isa<ValueTuple>() ? value->cast<ValueTuplePtr>()->value() : value->cast<ValueListPtr>()->value();
   if (vec.empty()) {
     MS_LOG(WARNING) << "Convert a none tuple to an empty ge tensor";
-    return GeTensor(GeTensorDesc(::ge::Shape({0})));
+    return GeTensor(GeTensorDesc(::ge::Shape({0}), ::ge::FORMAT_ND, ::ge::DT_INT64));
   }
   MS_EXCEPTION_IF_NULL(vec[0]);
   TypeId type;

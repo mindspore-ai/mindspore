@@ -127,7 +127,7 @@ class AttnNet(nn.Cell):
         return attention_probs
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [mstype.float16])
@@ -150,7 +150,6 @@ def test_nn_flash_attention_fwd(dtype):
     k_tensor = Tensor(np.random.uniform(-3, 3, (B, N, D, S)), dtype=dtype)
     attention_mask = Tensor(np.repeat(np.expand_dims(1 - np.tril(np.ones(shape=(S, S))), 0),
                                       B, axis=0), dtype=mstype.uint8)
-
     sa_net = AttnNet(head_dim=D)
     sa_out = sa_net(qv_tensor, k_tensor, qv_tensor, attention_mask).asnumpy()
     fa_net = FlashAttentionNet(num_heads=N, head_dim=D)

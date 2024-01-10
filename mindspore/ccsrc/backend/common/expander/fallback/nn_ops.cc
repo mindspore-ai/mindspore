@@ -20,6 +20,39 @@
 
 namespace mindspore {
 namespace expander {
+namespace {
+bool IsLastAxis(const ShapeVector &shape, int64_t axis) {
+  if (axis == -1) {
+    return true;
+  }
+  if (IsDynamicRank(shape)) {
+    return false;
+  }
+  auto rank = SizeToLong(shape.size());
+  if (axis < 0) {
+    axis += rank;
+  }
+  return (axis == (rank - 1));
+}
+
+std::vector<int64_t> GetTransposeAxis(const std::vector<int64_t> &x_shape, int64_t axis) {
+  std::vector<int64_t> reverse_axis;
+  if (x_shape.empty()) {
+    return reverse_axis;
+  }
+  auto rk = static_cast<int64_t>(x_shape.size());
+  if (axis < 0) {
+    axis += rk;
+  }
+  reverse_axis.reserve(x_shape.size());
+  for (int64_t i = 0; i < rk; ++i) {
+    (void)reverse_axis.emplace_back(i);
+  }
+  reverse_axis[LongToSize(axis)] = rk - 1;
+  reverse_axis[LongToSize(rk - 1)] = axis;
+  return reverse_axis;
+}
+}  // namespace
 REG_FALLBACK_BUILDER("SiLU").SetBody(BODYFUNC(ib) {
   auto input_x = ib->GetInput(kIndex0);
   auto s = ib->Emit("Sigmoid", {ib->GetInput(kIndex0)});
@@ -101,8 +134,8 @@ REG_FALLBACK_BUILDER("Dense").SetBody(BODYFUNC(ib) {
   bool need_reshape = (is_dynamic_rank || x_shape.size() != kRank2 || w_shape.size() != kRank2);
   if (need_reshape) {
     reshape_shapes = ib->ShapeCalc(g_dense_shapecalc, {x, w});
-    x = ib->Reshape(x, ib->TensorToTuple(reshape_shapes[kIndex0]));
-    w = ib->Reshape(w, ib->TensorToTuple(reshape_shapes[kIndex1]));
+    x = ib->Reshape(x, reshape_shapes[kIndex0]);
+    w = ib->Reshape(w, reshape_shapes[kIndex1]);
   }
   auto ret = ib->MatMul(x, w, false, true);
   if (has_bias) {
@@ -110,9 +143,56 @@ REG_FALLBACK_BUILDER("Dense").SetBody(BODYFUNC(ib) {
     ret = ib->Add(ret, b);
   }
   if (need_reshape) {
-    ret = ib->Reshape(ret, ib->TensorToTuple(reshape_shapes[kIndex2]));
+    ret = ib->Reshape(ret, reshape_shapes[kIndex2]);
   }
   return {ret};
+});
+
+class SoftmaxShapeCalc : public ShapeCalcFunctor {
+ public:
+  SoftmaxShapeCalc() : ShapeCalcFunctor("ShapeCalc_Softmax") {}
+  ~SoftmaxShapeCalc() override = default;
+  MS_DECLARE_PARENT(SoftmaxShapeCalc, ShapeCalcFunctor)
+
+  ValuePtr ToValue() const override { return nullptr; }
+  void FromValue(const ValuePtr &value) override {}
+  ShapeArray Calc(const ShapeArray &inputs) const override {
+    // inputs: {dout_shape, dim}
+    auto dim = inputs.at(1)[0];
+    return {GetTransposeAxis(inputs.at(0), dim)};
+  }
+  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &) const override {
+    int64_t dout_rank = IsDynamicRank(inputs.at(0)) ? -1 : SizeToLong(inputs.at(0).size());
+    return {dout_rank};
+  }
+};
+REG_FUNCTOR("ShapeCalc_Softmax", SoftmaxShapeCalc);
+
+REG_FALLBACK_BUILDER("SoftmaxBackward").SetBody(BODYFUNC(ib) {
+  auto dout = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
+  auto dim = ib->GetInput(kIndex2);
+
+  auto shp = out->shape();
+  auto dim_value_ptr = dim->BuildValue();
+  int64_t dim_value{0};
+  bool success = false;
+  if (!(dim_value_ptr->isa<ValueAny>() || dim_value_ptr->isa<None>())) {
+    dim_value = GetValue<int64_t>(dim_value_ptr);
+    success = true;
+  }
+  if (success && IsLastAxis(shp, dim_value)) {
+    auto dx = ib->Mul(out, ib->Sub(dout, ib->ReduceSum(ib->Mul(out, dout), ShapeVector{-1}, true)));
+    return {dx};
+  }
+  auto reverse_axis = (IsDynamicRank(shp) || !success)
+                        ? ib->ShapeCalc(std::make_shared<SoftmaxShapeCalc>(), {dout, dim}, {1})[0]
+                        : ib->Value(GetTransposeAxis(shp, dim_value));
+  out = ib->Transpose(out, reverse_axis);
+  dout = ib->Transpose(dout, reverse_axis);
+  auto dx = ib->Mul(out, ib->Sub(dout, ib->ReduceSum(ib->Mul(out, dout), ShapeVector{-1}, true)));
+  dx = ib->Transpose(dx, reverse_axis);
+  return {dx};
 });
 }  // namespace expander
 }  // namespace mindspore

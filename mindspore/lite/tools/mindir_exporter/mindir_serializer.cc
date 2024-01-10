@@ -64,7 +64,7 @@ bool DeleteDirRecursively(const std::string &dir_name) {
 }
 }  // namespace
 
-int MindIRSerializer::RemoveQuantParameterHolder(FuncGraphPtr func_graph) {
+int MindIRSerializer::HandlePrimAttr(FuncGraphPtr func_graph) {
   std::set<FuncGraphPtr> all_func_graphs = {};
   GetAllFuncGraph(func_graph, &all_func_graphs);
   for (auto &graph : all_func_graphs) {
@@ -97,7 +97,10 @@ int MindIRSerializer::RemoveQuantParameterHolder(FuncGraphPtr func_graph) {
           return lite::RET_ERROR;
         }
       }
+      // delete unused quant_params attr
       primitive->EraseAttr("quant_params");
+      // set primitive_function for dynamic shape
+      primitive->AddAttr("primitive_function", MakeValue(false));
     }
   }
   return RET_OK;
@@ -145,7 +148,7 @@ int MindIRSerializer::PreProcSaveTogether(const FuncGraphPtr &func_graph) {
     return ret;
   }
 
-  ret = RemoveQuantParameterHolder(func_graph);
+  ret = HandlePrimAttr(func_graph);
   if (ret != RET_OK && ret != RET_NO_CHANGE) {
     MS_LOG(ERROR) << "remove quant parameter holder failed.";
     return ret;

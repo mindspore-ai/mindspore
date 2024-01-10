@@ -41,7 +41,7 @@ class TwoTensorsMinimum(Cell):
         return self.min(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_minimum_constScalar_tensor_int():
@@ -54,7 +54,7 @@ def test_minimum_constScalar_tensor_int():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_minimum_two_tensors_Not_Broadcast_int():
@@ -69,7 +69,7 @@ def test_minimum_two_tensors_Not_Broadcast_int():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_minimum_two_tensors_Broadcast_int():
@@ -84,7 +84,7 @@ def test_minimum_two_tensors_Broadcast_int():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_minimum_two_tensors_Broadcast_oneDimension_int():
@@ -99,7 +99,7 @@ def test_minimum_two_tensors_Broadcast_oneDimension_int():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_minimum_two_tensors_notBroadcast_all_oneDimension_int():
@@ -113,7 +113,7 @@ def test_minimum_two_tensors_notBroadcast_all_oneDimension_int():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_minimum_two_tensors_notBroadcast_float32():
@@ -131,7 +131,7 @@ def test_minimum_two_tensors_notBroadcast_float32():
     assert output.shape == expect.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_minimum_two_tensors_notBroadcast_float16():
@@ -149,7 +149,7 @@ def test_minimum_two_tensors_notBroadcast_float16():
     assert output.shape == expect.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_minimum_two_tensors_Broadcast_float16():
@@ -167,7 +167,7 @@ def test_minimum_two_tensors_Broadcast_float16():
     assert output.shape == expect.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_minimum_two_tensors_notBroadcast_float64():
@@ -185,7 +185,7 @@ def test_minimum_two_tensors_notBroadcast_float64():
     assert output.shape == expect.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_minimum_two_tensors_functional_int8():
@@ -209,7 +209,7 @@ class MinimumTensorNet(Cell):
         return x.minimum(y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_minimum_two_tensors_tensor_graph_uint16():
@@ -229,7 +229,7 @@ def test_minimum_two_tensors_tensor_graph_uint16():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_minimum_two_tensors_tensor_pynative_uint8():

@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <memory>
 #include <vector>
+#include "abstract/ops/primitive_infer_map.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/convert_utils.h"
@@ -316,16 +317,14 @@ void SetKernelInfoForValueNode(const ValueNodePtr &value_node) {
 
 abstract::AbstractBasePtr GenerateAbsByOpInfer(const PrimitivePtr &primitive, const AnfNodePtrList &input_list) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto found = abstract::GetPrimitiveInferImpl(primitive);
-  if (!found.has_value()) {
-    MS_LOG(EXCEPTION) << primitive->name() << " infer is not registered.";
-  }
-
   std::vector<AbstractBasePtr> input_args;
   (void)std::for_each(input_list.begin(), input_list.end(),
                       [&input_args](const auto &input) { (void)input_args.emplace_back(input->abstract()); });
-  auto infer_impl = found.value();
-  auto abs = infer_impl.InferShapeAndType(nullptr, primitive, input_args);
+  auto abs_opt = abstract::TryInferAbstract(primitive, input_args);
+  if (!abs_opt.has_value()) {
+    MS_LOG(EXCEPTION) << primitive->name() << " infer is not registered.";
+  }
+  auto abs = abs_opt.value();
   MS_EXCEPTION_IF_NULL(abs);
   MS_LOG(DEBUG) << "Abstract for " << primitive->name() << " is " << abs->ToString();
   return abs;
@@ -399,6 +398,45 @@ void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<Kern
   MS_LOG(INFO) << "Generate input and output object types for new node " << cnode->fullname_with_scope() << " "
                << cnode->DebugString() << ". Input object types: " << *input_obj_type
                << ". Output object types: " << *output_obj_type;
+}
+
+AnfNodePtr ConstructInputByValueNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input) {
+  auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(func_graph);
+  if (kernel_graph == nullptr || (!input->isa<ValueNode>())) {
+    return nullptr;
+  }
+  const auto &value_node = input->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  const auto &value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<Scalar>()) {
+    return CreateTensorInput(kernel_graph, input);
+  }
+  if (!value->isa<ValueSequence>()) {
+    return nullptr;
+  }
+  const auto &value_sequence = value->cast<ValueSequencePtr>();
+  MS_EXCEPTION_IF_NULL(value_sequence);
+  if (value_sequence->size() == 0) {
+    return nullptr;
+  }
+  const auto &value0 = value_sequence->value()[0];
+  if (value0 == nullptr || (!value0->isa<Scalar>())) {
+    return nullptr;
+  }
+  const auto &scalar0 = value0->cast<ScalarPtr>();
+  MS_EXCEPTION_IF_NULL(scalar0);
+  const auto &type0 = scalar0->type();
+  MS_EXCEPTION_IF_NULL(type0);
+  const auto &type_id0 = type0->type_id();
+  if (std::any_of(value_sequence->value().begin() + 1, value_sequence->value().end(),
+                  [type_id0](const ValuePtr &value) {
+                    return value == nullptr || (!value->isa<Scalar>()) || value->cast<ScalarPtr>()->type() == nullptr ||
+                           value->cast<ScalarPtr>()->type()->type_id() != type_id0;
+                  })) {
+    return nullptr;
+  }
+  return CreateTensorInput(kernel_graph, input);
 }
 
 // A map of kernel object type pairs to processing functions.
@@ -684,6 +722,12 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTensor(const FuncGraphPtr &f
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(node);
+  auto new_input = ConstructInputByValueNode(func_graph, input);
+  if (new_input != nullptr) {
+    MS_LOG(DEBUG) << "Create new value node:" << new_input->DebugString() << " by " << input->DebugString()
+                  << " for cnode:" << node->DebugString() << " in graph:" << func_graph->ToString();
+    return {new_input};
+  }
 
   // Simply insert TupleToTensor op between 'input' and 'node'.
   auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimTupleToTensor->name()));
@@ -727,6 +771,13 @@ AnfNodePtrList InsertTypeTransformOp::ProcessScalarToTensor(const FuncGraphPtr &
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(node);
+
+  auto new_input = ConstructInputByValueNode(func_graph, input);
+  if (new_input != nullptr) {
+    MS_LOG(DEBUG) << "Create new value node:" << new_input->DebugString() << " by " << input->DebugString()
+                  << " for cnode:" << node->DebugString() << " in graph:" << func_graph->ToString();
+    return {new_input};
+  }
 
   // Simply insert ScalarToTensor op between 'input' and 'node'.
   auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimScalarToTensor->name()));

@@ -41,7 +41,7 @@ from mindspore.ops.operations.nn_ops import TripletMarginLoss
 from mindspore.ops.operations._inner_ops import SiLU
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
-from mindspore.ops.auto_generate import log_softmax
+from mindspore.ops.auto_generate import log_softmax, prelu
 
 abs_ = P.Abs()
 add_ = P.Add()
@@ -334,9 +334,6 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     if not isinstance(input_x, (Tensor, Tensor_)):
         raise TypeError("For avg_pool1d, the input input_x must be tensor")
 
-    if len(input_x.shape) != 3:
-        raise ValueError(f"For avg_pool1d, input must have 3 dim, but got {len(input_x.shape)}.")
-
     _check_avgpool_1d_type_and_int(kernel_size, stride, ceil_mode, count_include_pad)
     if isinstance(padding, int):
         check_non_negative_int(padding, 'padding', 'avg_pool1d')
@@ -494,9 +491,6 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     if not isinstance(input_x, (Tensor, Tensor_)):
         raise TypeError("For avg_pool2d, the input input_x must be tensor")
 
-    if len(input_x.shape) != 4:
-        raise ValueError(f"For avg_pool2d, input must have 4 dim, but got {len(input_x.shape)}.")
-
     kernel_size = _check_avgpool_2d_kernel_size(kernel_size)
     stride = _check_avgpool_2d_stride(stride)
     padding = _check_avgpool_2d_padding(padding)
@@ -595,9 +589,6 @@ def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     """
     if not isinstance(input_x, (Tensor, Tensor_)):
         raise TypeError("For avg_pool3d, the input input_x must be tensor")
-
-    if len(input_x.shape) != 5:
-        raise ValueError(f"For avg_pool3d, input must have 5 dim, but got {len(input_x.shape)}.")
 
     _check_avg_pool3d_padding(padding)
 
@@ -845,18 +836,6 @@ def adaptive_max_pool3d(input, output_size, return_indices=False):
     return output
 
 
-def check_shape(x_shape, indices_shape, func_name):
-    """
-    :param x_shape: the shape of x.
-    :param indices_shape: the shape of indices.
-    :param func_name: the name of function.
-    :return:
-    """
-    if x_shape != indices_shape:
-        raise ValueError(f"For {func_name}, the x shape and indices shape must be equal, but got input "
-                         f"shape {x_shape} and indices shape {indices_shape}.")
-
-
 def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=None):
     r"""
     Computes the inverse of `max_pool1d`.
@@ -917,11 +896,7 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         stride = kernel_size
 
     x_shape = shape_(x)
-    indices_shape = shape_(indices)
     x_dim = len(x_shape)
-    check_shape(x_shape, indices_shape, "max_unpool1d")
-    if x_dim not in (2, 3):
-        raise ValueError(f"For max_unpool1d, the x shape must have 2 or 3 dims, but got {x_dim}.")
 
     if output_size is None:
         output_size = ()
@@ -1040,11 +1015,7 @@ def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         stride = kernel_size
 
     x_shape = shape_(x)
-    indices_shape = shape_(indices)
     x_dim = len(x_shape)
-    check_shape(x_shape, indices_shape, "max_unpool2d")
-    if x_dim not in (3, 4):
-        raise ValueError(f"For max_unpool2d, the x shape must have 3 or 4 dims, but got {x_dim}.")
 
     if output_size is None:
         output_size = ()
@@ -1148,11 +1119,7 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         stride = kernel_size
 
     x_shape = shape_(x)
-    indices_shape = shape_(indices)
     x_dim = len(x_shape)
-    check_shape(x_shape, indices_shape, "max_unpool3d")
-    if x_dim not in (4, 5):
-        raise ValueError(f"For max_unpool3d, the x shape must have 4 or 5 dims, but got {x_dim}.")
 
     if output_size is None:
         output_size = ()
@@ -3509,10 +3476,6 @@ def relu(input):
 
         ReLU(input) = (input)^+ = \max(0, input)
 
-    Note:
-        In general, this operator is more commonly used. The difference from `ReLuV2` is that the `ReLuV2` will
-        output one more Mask.
-
     ReLU Activation Function Graph:
 
     .. image:: ../images/ReLU.png
@@ -4400,20 +4363,6 @@ def check_input_dtype(param_name1, input_data1, param_name2, input_data2, cls_na
                         f'but got {param_name1} dtype:{input_data1.dtype}, {param_name2} dtype:{input_data2.dtype}.')
 
 
-def check_input_shape(param_name1, input_data1, param_name2, input_data2, cls_name):
-    """Check the shape of input1 and input2."""
-    if input_data1.shape != input_data2.shape:
-        raise ValueError(f'For {cls_name}, the {param_name1} shape should be equal to {param_name2} shape, '
-                         f'but got {param_name1} shape:{input_data1.shape}, {param_name2} shape:{input_data2.shape}.')
-
-
-def _check_type_and_shape_same(param_name1, input_data1, param_name2, input_data2, cls_name):
-    """check input1 and input2 type and shape same"""
-    check_input_dtype(param_name1, input_data1, param_name2, input_data2, cls_name)
-    check_input_shape(param_name1, input_data1, param_name2, input_data2, cls_name)
-    return 0
-
-
 def margin_ranking_loss(input1, input2, target, margin=0.0, reduction='mean'):
     r"""
     MarginRankingLoss creates a criterion that measures the loss.
@@ -4468,8 +4417,8 @@ def margin_ranking_loss(input1, input2, target, margin=0.0, reduction='mean'):
     _check_is_tensor('input1', input1, "margin_ranking_loss")
     _check_is_tensor('input2', input2, "margin_ranking_loss")
     _check_is_tensor('target', target, "margin_ranking_loss")
-    _check_type_and_shape_same('input1', input1, 'input2', input2, 'margin_ranking_loss')
-    _check_type_and_shape_same('target', target, 'input1', input1, 'margin_ranking_loss')
+    check_input_dtype('input1', input1, 'input2', input2, 'margin_ranking_loss')
+    check_input_dtype('target', target, 'input1', input1, 'margin_ranking_loss')
     x = maximum_(-target * (input1 - input2) + margin, 0)
     return _get_loss(x, reduction, "margin_ranking_loss")
 
@@ -4533,7 +4482,7 @@ def cosine_embedding_loss(input1, input2, target, margin=0.0, reduction="mean"):
     _check_is_tensor('input1', input1, "ops.cosine_embedding_loss")
     _check_is_tensor('input2', input2, "ops.cosine_embedding_loss")
     _check_is_tensor('target', target, "ops.cosine_embedding_loss")
-    _check_type_and_shape_same('input1', input1, 'input2', input2, 'ops.cosine_embedding_loss')
+    check_input_dtype('input1', input1, 'input2', input2, 'ops.cosine_embedding_loss')
     _check_reduced_shape_valid(ops.shape(input1), ops.shape(target), (1,),
                                "ops.cosine_embedding_loss", "input1", "target")
     if input1.dtype in (mstype.int32, mstype.int64):
@@ -4912,11 +4861,6 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
     if not x.shape == var.shape:
         if x.shape[:-1] == var.shape:
             var = var.unsqueeze(dim=-1)
-        # Heterosclerotic case
-        elif x.shape[:-1] == var.shape[:-1] and var.shape[-1] == 1:
-            pass
-        else:
-            raise ValueError(f"For 'gaussian_nll_loss', 'var' must be able to correctly broadcast to 'x' and 'target'.")
 
     maxima = maximum_(var, eps)
     logarithm = log_(maxima)
@@ -4928,12 +4872,6 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
     elif reduction == 'sum':
         loss = loss.sum()
     return loss
-
-
-@_primexpr
-def _check_hinge_embedding_loss(shape, shape2):
-    if shape2 != shape:
-        raise ValueError(f"For 'HingeEmbeddingLoss' the input tensor and the labels must have the same shape.")
 
 
 @_primexpr
@@ -5021,9 +4959,6 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
     inputs_dtype = inputs.dtype
     targets_dtype = targets.dtype
     _check_hinge_embedding_loss_type(inputs_dtype, targets_dtype, inputs, targets, margin, reduction)
-    _shape = inputs.shape
-    _t_shape = targets.shape
-    _check_hinge_embedding_loss(_shape, _t_shape)
 
     min_val = Tensor(0, inputs_dtype)
     pos_index = targets > 0
@@ -5787,7 +5722,8 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
     mean of :math:`x`, :math:`variance` is the variance of :math:`x`.
 
     .. warning::
-        - For Ascend 310, the result accuracy fails to reach 1‰ due to the square root instruction.
+        - For Atlas 200/300/500 inference product,
+          the result accuracy fails to reach 1‰ due to the square root instruction.
 
     Note:
         - If `training` is `False`, `weight`, `bias`, `running_mean` and `running_var` are Tensors.
@@ -6294,9 +6230,6 @@ def glu(x, axis=-1):
         [[0.05744425 0.11973753]
          [0.33409387 0.41398472]]
     """
-    if not isinstance(x, Tensor) or x.size == 0:
-        raise TypeError("glu does not support scalars because halving size must be even")
-
     spilt = _get_cache_prim(P.Split)(axis=axis, output_num=2)
     x, y = spilt(x)
     y = sigmoid_(y)
@@ -6492,11 +6425,6 @@ def multilabel_soft_margin_loss(input, target, weight=None, reduction='mean'):
     cls_name = "multilabel_soft_margin_loss"
     _check_is_tensor('input', input, cls_name)
     _check_is_tensor('target', target, cls_name)
-    if input.ndim != 2 or target.ndim != 2:
-        raise ValueError(
-            "For 'MultiLabelSoftMarginLoss', the inputs must be 2d tensor, but got dims: "
-            f"input: {input.ndim}, target: {target.ndim} "
-        )
 
     input_shape = input.shape
     if ops.is_sequence_value_unknown(input_shape):
@@ -6679,13 +6607,6 @@ def channel_shuffle(x, groups):
     return y
 
 
-@_primexpr
-def _shape_check(in_shape, dim_list, prim_name=None):
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if len(in_shape) not in dim_list:
-        raise ValueError(f"{msg_prefix} input must has dim in {dim_list}, but got {len(in_shape)}")
-
-
 def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
     r"""
     Applying 1D LPPooling operation on an input Tensor can be regarded as forming a 1D input plane.
@@ -6747,7 +6668,6 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
           [51. 54.]
           [63. 66.]]]
     """
-    _shape_check(x.shape, [2, 3], "lp_pool1d")
     if isinstance(norm_type, (float, int)):
         norm_type = float(norm_type)
     else:
@@ -6840,7 +6760,6 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
            [ 999. 1008. 1017.]]]]
 
     """
-    _shape_check(x.shape, [4], "lp_pool2d")
     if isinstance(norm_type, (float, int)):
         norm_type = float(norm_type)
     else:
@@ -7325,7 +7244,7 @@ def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_head
 
     if attn_mask is not None and attn_mask.dtype == mstype.bool_:
         new_attn_mask = ops.zeros_like(attn_mask, dtype=q.dtype)
-        attn_mask = new_attn_mask.masked_fill(attn_mask, float("-inf"))
+        attn_mask = new_attn_mask.masked_fill(attn_mask, ops.cast(float("-inf"), new_attn_mask.dtype))
 
     if attn_mask is not None:
         if attn_mask.shape[0] == 1:
@@ -7434,6 +7353,139 @@ def max_pool2d(x, kernel_size, stride=None, padding=0, dilation=1, return_indice
     return out
 
 
+def prompt_flash_attention(query, key, value, padding_mask, attn_mask, actual_seq_lengths, actual_seq_lengths_kv,
+                           deq_scale1, quant_scale1, deq_scale2, quant_scale2, quant_offset2, num_heads,
+                           scale_value=1.0, pre_tokens=2147483547, next_tokens=0, input_layout='BSH',
+                           num_key_value_heads=0, sparse_mode=0, inner_precise=1):
+    r"""
+    The interface for fully inference.
+    B -- Batch size
+    S -- Sequence length
+    H -- Hidden size
+
+    Note:
+    experiment ops
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Inputs:
+        query (Tensor) - The query tensor with data type of float16 or float32.
+          Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
+        key (Tensor) - The key tensor with data type of float16 or float32.
+          Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
+        value (Tensor) - The value tensor with data type of float16 or float32.
+          Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
+        padding_mask (Tensor) - The padding mask tensor with data type of float16 or float32
+        attn_mask (Tensor) - The attention mask tensor with data type of float16 or float32.
+          For each element, 0 indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, 1, S, S)`.
+        actual_seq_lengths (Tensor): Describe actual sequence length of each input with data type of int64.
+        actual_seq_lengths_kv (Tensor): Describe actual sequence length of each input with data type of int64.
+        dep_scale1 (Tensor)
+        quant_scale1 (Tensor)
+        deq_scale2 (Tensor)
+        quant_scale2 (Tensor)
+        quant_offset2 (Tensor)
+        num_heads (int): The number of heads.
+        scale_value (float): The scale value indicating the scale coefficient, which is used as the scalar of
+          Muls in the calculation. Default: 1.0.
+        pre_tokens (int): Previous tokens. Default: 2147483547.
+        next_tokens (int): next tokens.  Default: 0.
+          indicate the upper triangle, Indicate the number of data blocks involved in the calculation. The value 0
+          indicates that the data blocks in the upper triangle are not involved in the calculation
+        input_layout (str): the data layout of the input qkv, support `(BSH)` and `(BNSD)`, Default `BSH`.
+        num_key_value_heads (int): head numbers of key/value which are used in GQA algorithm.
+          The value o indicates if the key and value have the same head nums, use numHeads.  Default: 0.
+        sparse_mode (int): Default: 0
+        inner_precise (int): 0, float16 high precision. 1, high performance. default 1
+
+
+    Outputs:
+        attention_out (Tensor) - Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
+
+        Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> from mindspore.ops.function.nn_func import prompt_flash_attention
+        >>> from mindspore import Tensor
+        >>> import numpy as np
+        >>> B = 1
+        >>> N = 16
+        >>> S = 256
+        >>> D = 16
+        >>> query = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+        >>> key = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+        >>> value = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+        >>> out = ops.prompt_flash_attention(query, key, value, None, None, None, None, None, None, None, None,
+                                             None, N, input_layout='BNSD')
+        >>> print(out[0].shape)
+        (1, 16, 256, 16)
+    """
+
+    pfa = _get_cache_prim(NN_OPS.PromptFlashAttention)(num_heads, scale_value, pre_tokens, next_tokens, input_layout,
+                                                       num_key_value_heads, sparse_mode, inner_precise)
+    return pfa(query, key, value, padding_mask, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, deq_scale1,
+               quant_scale1, deq_scale2, quant_scale2, quant_offset2)
+
+
+def incre_flash_attention(query, key, value, attn_mask, actual_seq_lengths, padding_mask, dequant_scale1, quant_scale1,
+                          dequant_scale2, quant_scale2, quant_offset2, antiquant_scale, antiquant_offset, block_table,
+                          num_heads, input_layout="BSH", scale_value=1.0, num_key_value_heads=0, block_size=0,
+                          inner_precise=1):
+    r"""
+    The interface for fully inference.
+
+    B -- Batch size
+
+    S -- Sequence length
+
+    H -- Hidden size
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Inputs:
+        - **query** (Tensor) - The query tensor with data type of float16 or bfloat16.
+          Input tensor of shape :math:`(B, 1, H)` / :math:`(B, N, 1, D)`.
+        - **key** (TensorList) - The key tensor with data type of float16 or bfloat16.
+          Input tensor of shape :math:`(B, S, H)` / :math:`(B, N, S, D)`.
+        - **value** (TensorList) - The value tensor with data type of float16 or bfloat16.
+          Input tensor of shape :math:`(B, S, H)` / :math:`(B, N, S, D)`.
+        - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or bool.
+          Input tensor of shape :math:`(B, S)` / :math:`(B, 1, S)` / :math:`(B, 1, 1, S)`.
+        - **actual_seq_lengths** (Tensor) - Describe actual sequence length of each input with data type of int.
+        - **padding_mask** (Tensor) - The padding mask tensor with data type of float16.
+        - **dequant_scale1** (Tensor) - Quantitative parametor, the tensor with data type of uint64.
+        - **quant_scale1** (Tensor) - Quantitative parametor, the tensor with data type of float.
+        - **dequant_scale2** (Tensor) - Quantitative parametor, the tensor with data type of uint64.
+        - **quant_scale2** (Tensor) - Quantitative parametor, the tensor with data type of float.
+        - **quant_offset2** (Tensor) - Quantitative parametor, the tensor with data type of float.
+        - **antiquant_scale** (Tensor) - Quantitative parametor, the tensor with data type of float.
+        - **antiquant_offset** (Tensor) - Quantitative parametor, the tensor with data type of float.
+        - **block_table** (Tensor) - The tensor with data type of float.
+        - **num_heads**  (int) - The number of heads.
+        - **input_layout** (str) - the data layout of the input qkv, support `(BSH)` and `(BNSD)`. Default `BSH`.
+        - **scale_value** (double) - The scale value indicating the scale coefficient, which is used as the scalar of
+          Muls in the calculation. Default: 1.0.
+        - **num_key_value_heads** (int) - head numbers of key/value which are used in GQA algorithm.
+          The value o indicates if the key and value have the same head nums, use numHeads.  Default: 0.
+        - **block_size** (int) - Default: 0.
+        - **inner_precise** (int) - Default: 1.
+
+    Outputs:
+        - **attention_out** (Tensor) - Input tensor of shape :math:`(B, 1, H)` / :math:`(B, N, 1, D)`.
+
+    Supported Platforms:
+        ``Ascend``
+    """
+
+    _ifa = _get_cache_prim(NN_OPS.IncreFlashAttention)(num_heads, input_layout, scale_value, num_key_value_heads,
+                                                       block_size, inner_precise)
+    return _ifa(query, key, value, attn_mask, actual_seq_lengths, padding_mask, dequant_scale1, quant_scale1,
+                dequant_scale2, quant_scale2, quant_offset2, antiquant_scale, antiquant_offset, block_table)
+
+
 __all__ = [
     'adaptive_avg_pool1d',
     'adaptive_avg_pool2d',
@@ -7489,6 +7541,7 @@ __all__ = [
     'softmin',
     'pdist',
     'pad',
+    'prelu',
     'mirror_pad',
     'cross_entropy',
     'grid_sample',

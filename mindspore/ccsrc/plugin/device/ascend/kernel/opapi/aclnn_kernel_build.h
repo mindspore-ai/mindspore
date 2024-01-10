@@ -22,6 +22,8 @@ namespace mindspore {
 namespace kernel {
 KernelModPtr AclnnOpBuild(const AnfNodePtr &anf_node);
 bool IsRegisteredAclnnOp(const AnfNodePtr &anf_node);
+bool IsEnabledAclnnDispatch(const AnfNodePtr &anf_node);
+bool IsEnabledAclnn(const AnfNodePtr &anf_node);
 }  // namespace kernel
 }  // namespace mindspore
 

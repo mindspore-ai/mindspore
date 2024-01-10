@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 from mindspore.ops import functional as F, composite as C, operations as P
 import mindspore.common.dtype as mstype
-from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than
+from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than, check_not_less_than_without_equal
 from mindspore import ops
 
 _rmsprop_opt = C.MultitypeFuncGraph("rmsprop_opt")
@@ -100,11 +100,11 @@ class RMSprop(Optimizer):
         ...     return loss
     """
 
-    def __init__(self, params, lr=1e-2, alpha=0.99, eps=1e-8, weight_decay=0., momentum=0.,
+    def __init__(self, params, lr=1e-2, alpha=0.99, eps=1e-8, weight_decay=0.0, momentum=0.0,
                  centered=False, maximize=False):
-        check_not_less_than(lr, "lr", self.cls_name)
+        check_not_less_than_without_equal(lr, "lr", self.cls_name)
         check_not_less_than(alpha, "alpha", self.cls_name)
-        check_not_less_than(eps, "eps", self.cls_name)
+        check_not_less_than_without_equal(eps, "eps", self.cls_name)
         check_not_less_than(momentum, "momentum", self.cls_name)
         check_not_less_than(weight_decay, "weight_decay", self.cls_name)
 
@@ -134,7 +134,7 @@ class RMSprop(Optimizer):
             start_id = self.group_start_id[group_id]
             end_id = self.group_start_id[group_id+1]
             params = self.parameters[start_id: end_id]
-            grads = gradients[start_id: end_id] if not maximize else -gradients[start_id: end_id]
+            grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
             grads = self._decay_weight(group["weight_decay"], params, grads)
 
             mean_grad = self.mean_grad[start_id: end_id]

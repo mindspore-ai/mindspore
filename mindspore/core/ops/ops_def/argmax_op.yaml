@@ -1,17 +1,17 @@
 #operator argmax
 argmax:
   args:
-    x:
+    input:
       dtype: tensor
     axis:
       dtype: int
       default: -1
       prim_init: True
     output_type:
-      dtype: int
+      dtype: TypeId
       default: mstype.int32
       prim_init: True
-      arg_handler: dtype_to_enum
+      arg_handler: dtype_to_type_id
   returns:
     output:
       dtype: tensor

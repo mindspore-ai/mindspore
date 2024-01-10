@@ -61,15 +61,14 @@ from mindspore import _checkparam as validator
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
 
-from mindspore.ops.auto_generate import concat_, range, scatter_nd, deepcopy
-from mindspore.ops.operations.manually_defined import tile
+from mindspore.ops.auto_generate import concat_, range, scatter_nd, deepcopy, masked_fill, diagonal
+from mindspore.ops.operations.manually_defined import tile, rank
 
 arg_max_with_value_ = P.ArgMaxWithValue()
 batch_to_space_nd_v2_ = P.BatchToSpaceNDV2()
 cast_ = P.Cast()
 diag_ = P.Diag()
 dynamic_broadcast_to_ = DynamicBroadcastTo()
-expand_ = Expand()
 expand_dims_ = P.ExpandDims()
 eye_ = P.Eye()
 fills_ = Fills()
@@ -93,7 +92,6 @@ reduce_max_ = P.ReduceMax()
 reduce_min_ = P.ReduceMin()
 reshape_ = P.Reshape()
 scalar_cast_ = P.ScalarCast()
-scalar_to_array_ = P.ScalarToArray()
 scalar_to_tensor_ = P.ScalarToTensor()
 scatter_add_ = P.ScatterAdd()
 scatter_div_ = P.ScatterDiv()
@@ -203,8 +201,11 @@ def arange(start=0, end=None, step=1, *, dtype=None):
 
     Keyword Args:
         dtype (mindspore.dtype, optional): The required data type of returned Tensor. Default: ``None`` .
-            If the value is not specified or is ``None`` , the type with the highest precision in the
-            `start`, `end`, and `step` parameters is inferred.
+            When `dtype` is not specified or ``None``:
+
+            If `start`, `end`, and `step` are all integers, the dtype of output is int64,
+
+            If `start`, `end`, and `step` contain at least one floating-point number, the dtype of output is float32.
 
     Returns:
         A 1-D Tensor, with the same type as the inputs.
@@ -241,7 +242,7 @@ def arange(start=0, end=None, step=1, *, dtype=None):
         >>> print(output)
         [12. 11. 10.  9.  8.  7.  6.  5.  4.  3.]
         >>> print(output.dtype)
-        Float64
+        Float32
     """
     if end is None:
         start, end = 0, start
@@ -1437,24 +1438,31 @@ def dyn_shape(input_x):
 
 
 def reshape(input, shape):
-    """
-    Rearranges the input Tensor based on the given shape.
+    r"""
+    Rearranges the input Tensor based on the given `shape` .
 
-    The 'shape' can only have one -1 at most, in which case it's inferred from the remaining dimensions and
+    The `shape` can only have one -1 at most, in which case it's inferred from the remaining dimensions and
     the number of elements in the input.
 
     Args:
-        input (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        shape (Union[tuple[int], Tensor[int]]): Constructed by multiple
-            integers, i.e., :math:`(y_1, y_2, ..., y_S)`. Only constant value is allowed.
+        input (Tensor): The `shape` of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        shape (Union[tuple[int], list[int], Tensor[int]]): If `shape` is a tuple or list, its elements should be
+            integers, and only constant value is allowed. i.e., :math:`(y_1, y_2, ..., y_S)`. If `shape` is a Tensor,
+            data type should be int32 or int64, and only one-dimensional tensor is supported.
 
     Returns:
-        Tensor, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
+        Tensor, If the given `shape` does not contain -1, the `shape` of tensor is :math:`(y_1, y_2, ..., y_S)`.
+        If the k-th position in the given `shape` is -1, the `shape` of tensor is :math:`(y_1, ..., y_{k-1},
+        \frac{\prod_{i=1}^{R}x_{i}}{y_1\times ...\times y_{k-1}\times y_{k+1}\times...\times y_S} , y_{k+1}, ..., y_S)`.
 
     Raises:
-        ValueError: Given a shape tuple, if it has several -1; or if the product
-            of its elements is less than or equal to 0 or cannot be divided by the product
-            of the input tensor shape; or if it does not match the input's array size.
+        ValueError: The given `shape` contains more than one -1.
+        ValueError: The given `shape` contains elements less than -1.
+        ValueError: For scenarios where the given `shape` does not contain -1, the product of elements of the given
+            `shape` is not equal to the product of the input's `shape` ,
+            :math:`\prod_{i=1}^{R}x_{i}\ne \prod_{i=1}^{S}y_{i}`, (Namely, it does not match the input's array size).
+            And for scenarios where the given `shape` contains -1, the product of elements other than -1 of the given
+            `shape` is an aliquant part of the product of the input's `shape` :math:`\prod_{i=1}^{R}x_{i}`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1465,6 +1473,12 @@ def reshape(input, shape):
         >>> from mindspore import Tensor, ops
         >>> input = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> output = ops.reshape(input, (3, 2))
+        >>> print(output)
+        [[-0.1  0.3]
+         [ 3.6  0.4]
+         [ 0.5 -3.2]]
+        >>> input = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
+        >>> output = ops.reshape(input, Tensor([3, 2]))
         >>> print(output)
         [[-0.1  0.3]
          [ 3.6  0.4]
@@ -5060,7 +5074,7 @@ def scalar_to_array(input_x):
     """
     The  interface is deprecated. Please use the :func:`mindspore.ops.scalar_to_tensor` instead.
     """
-    return scalar_to_array_(input_x)
+    return P.ScalarToArray()(input_x)
 
 
 def scalar_to_tensor(input_x, dtype=mstype.float32):
@@ -6303,7 +6317,8 @@ def expand(input_x, size):
     :func:`mindspore.ops.expand` will be deprecated in the future.
     Please use :func:`mindspore.ops.broadcast_to` instead.
     """
-    return expand_(input_x, size)
+    expand_op = _get_cache_prim(Expand)()
+    return expand_op(input_x, size)
 
 
 @_primexpr
@@ -7134,6 +7149,7 @@ def repeat_elements(x, rep, axis=0):
     axis = _check_is_int(axis, "axis", "repeat_elements")
     x_rank = rank_(x)
     axis = _check_axis_range(axis, x_rank, "axis", "repeat_elements")
+    axis = axis + x.ndim if axis < 0 else axis
     expand_axis = axis + 1
     x_expand = expand_dims_(x, expand_axis)
     rep_dims = _cal_repeat_dims(x_rank, rep, expand_axis)
@@ -7142,17 +7158,6 @@ def repeat_elements(x, rep, axis=0):
     x_reshape = _cal_reshape(x_shape, rep, axis)
     x_rep = reshape_(x_expand, x_reshape)
     return x_rep
-
-
-@_primexpr
-def _check_sequence_mask_input_len(input_shape, prim_name=None):
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if not input_shape:
-        raise ValueError(f"{msg_prefix} input_shape must be greater than 0, but got {input_shape}.")
-    # broadcast only supports 7d shape
-    shape_size = len(input_shape)
-    if shape_size >= 7:
-        raise ValueError(f"{msg_prefix} dimension of input_shape must be less than 7, but got {shape_size}d.")
 
 
 def sequence_mask(lengths, maxlen=None):
@@ -7208,7 +7213,6 @@ def sequence_mask(lengths, maxlen=None):
           [ True  True  True  True ]]]
     """
     const_utils.check_type_valid(ops.dtype(lengths), [mstype.int64, mstype.int32], 'lengths')
-    _check_sequence_mask_input_len(shape_(lengths), "sequence_mask")
 
     if maxlen is None:
         flatten_data = reshape_(lengths, (-1,))
@@ -7258,6 +7262,7 @@ __all__ = [
     'full',
     'full_like',
     'dyn_shape',
+    'rank',
     'arange',
     'range',
     'reshape',
@@ -7307,6 +7312,7 @@ __all__ = [
     'gather_elements',
     'gather_nd',
     'one_hot',
+    'masked_fill',
     'masked_select',
     'where',
     'narrow',
@@ -7348,6 +7354,7 @@ __all__ = [
     'expand',
     'fold',
     'unfold',
+    'diagonal',
     'diagonal_scatter',
     'lstsq',
     'mvlgamma',

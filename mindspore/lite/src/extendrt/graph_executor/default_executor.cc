@@ -97,6 +97,7 @@ Status DefaultExecutor::Execute() {
     auto sub_graph_input = sub_graph_inputs.at(i);
     auto user_input = user_inputs.at(i);
     sub_graph_input->set_data(user_input->data());
+    sub_graph_input->set_category(lite::GRAPH_INPUT);
   }
 
   // copy data to sub_graph_outputs
@@ -106,11 +107,20 @@ Status DefaultExecutor::Execute() {
     auto sub_graph_output = sub_graph_outputs.at(i);
     auto user_output = user_outputs.at(i);
     sub_graph_output->set_data(user_output->data());
+    sub_graph_output->set_category(lite::GRAPH_OUTPUT);
   }
 
   if (sub_graph_kernel->Execute() != RET_OK) {
     MS_LOG(ERROR) << "Sub graph kernel execute failed";
     return kLiteError;
+  }
+
+  for (auto sub_graph_input : sub_graph_inputs) {
+    sub_graph_input->set_data(nullptr);
+  }
+
+  for (auto sub_graph_output : sub_graph_outputs) {
+    sub_graph_output->set_data(nullptr);
   }
 
   return kSuccess;

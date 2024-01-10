@@ -918,7 +918,8 @@ void GraphScheduler::UpdateDeviceAddressByRefInternalParameter(const GraphCompil
       }
       MS_EXCEPTION_IF_NULL(origin_node_output_addr);
       // The device address can't be updated through heterogeneous address.
-      if ((origin_node_output_addr.get() == cur_node_output_addr.get()) ||
+      if ((origin_node_output_addr->pointer_ref_count() == cur_node_output_addr->pointer_ref_count()) ||
+          (origin_node_output_addr.get() == cur_node_output_addr.get()) ||
           (origin_node_output_addr->GetDeviceType() != cur_node_output_addr->GetDeviceType())) {
         continue;
       }
@@ -928,12 +929,12 @@ void GraphScheduler::UpdateDeviceAddressByRefInternalParameter(const GraphCompil
                    << real_origin_node_pair.second << "; cur kernel is " << cur_node_pair.first->fullname_with_scope()
                    << ", index is " << cur_node_pair.second << "; internal parameter is "
                    << origin_node_pair.first->DebugString();
-      AnfAlgo::SetOutputAddr(origin_node_output_addr, cur_node_pair.second, cur_node_pair.first.get());
       // Update the reference count of device address.
       cur_node_output_addr->DecreaseOriginalRefCount();
       cur_node_output_addr->ResetRefCount();
       origin_node_output_addr->IncreaseOriginalRefCount();
       origin_node_output_addr->ResetRefCount();
+      cur_node_output_addr->set_pointer_ref_count(origin_node_output_addr->pointer_ref_count());
     }
   }
 }
@@ -2189,7 +2190,8 @@ void GraphScheduler::LinkControlArrowForCustomActorByAutoMonad(const ActorSet *a
       auto front_output_with_index = graph->GetOriginFrontNodeByInternalParameter(input_node);
       auto front_output_node = front_output_with_index.first;
       if (front_output_node == nullptr || graph_output_to_actor_.count(front_output_with_index) == 0) {
-        MS_LOG(DEBUG) << "To actor:" << to_actor->GetAID() << " check front node:" << front_output_node->DebugString();
+        MS_LOG(DEBUG) << "To actor:" << to_actor->GetAID() << " check front node:"
+                      << (front_output_node == nullptr ? "null" : front_output_node->DebugString());
         continue;
       }
       const auto &graph_output_pair = graph_output_to_actor_.at(front_output_with_index);
@@ -2265,7 +2267,7 @@ void GraphScheduler::LinkDataArrowForCustomActor(const ActorSet *actor_set,
 void GraphScheduler::LinkControlArrowByExecutionOrder(const KernelGraphPtr &graph,
                                                       const GraphCompilerInfo &graph_compiler_info) const {
   MS_EXCEPTION_IF_NULL(graph);
-  if (graph->is_graph_run_mode()) {
+  if (graph->is_graph_run_mode() || graph->is_any_type_input()) {
     return;
   }
 

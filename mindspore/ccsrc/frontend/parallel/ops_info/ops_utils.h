@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -482,7 +482,6 @@ constexpr char LOGICALAND[] = "LogicalAnd";
 constexpr char LOGICALOR[] = "LogicalOr";
 constexpr char ELU[] = "Elu";
 constexpr char RELU6[] = "ReLU6";
-constexpr char RELUV2[] = "ReLUV2";
 constexpr char SOFTPLUS[] = "Softplus";
 constexpr char SOFTSIGN[] = "Softsign";
 constexpr char GREATEREQUAL[] = "GreaterEqual";

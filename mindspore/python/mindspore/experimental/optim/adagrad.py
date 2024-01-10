@@ -18,7 +18,7 @@ from __future__ import absolute_import
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common import Tensor, Parameter
 import mindspore.common.dtype as mstype
-from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than
+from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than, check_not_less_than_without_equal
 
 _adagrad_opt = C.MultitypeFuncGraph("adagrad_opt")
 
@@ -108,13 +108,13 @@ class Adagrad(Optimizer):
         ...     optimizer(grads)
         ...     return loss
     """
-    def __init__(self, params, lr=1e-2, lr_decay=0., weight_decay=0., initial_accumulator_value=0.,
+    def __init__(self, params, lr=1e-2, lr_decay=0.0, weight_decay=0.0, initial_accumulator_value=0.0,
                  eps=1e-10, *, maximize=False):
-        check_not_less_than(lr, "lr", self.cls_name)
+        check_not_less_than_without_equal(lr, "lr", self.cls_name)
         check_not_less_than(lr_decay, "lr_decay", self.cls_name)
         check_not_less_than(weight_decay, "weight_decay", self.cls_name)
         check_not_less_than(initial_accumulator_value, "initial_accumulator_value", self.cls_name)
-        check_not_less_than(eps, "eps", self.cls_name)
+        check_not_less_than_without_equal(eps, "eps", self.cls_name)
 
         defaults = dict(
             lr=lr,
@@ -147,7 +147,7 @@ class Adagrad(Optimizer):
             start_id = self.group_start_id[group_id]
             end_id = self.group_start_id[group_id+1]
             params = self.parameters[start_id: end_id]
-            grads = gradients[start_id: end_id] if not maximize else -gradients[start_id: end_id]
+            grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
             grads = self._decay_weight(group["weight_decay"], params, grads)
             accum = self.accum[start_id: end_id]
             self.hyper_map(F.partial(_adagrad_opt, opt, decay_lr), params, accum, grads)

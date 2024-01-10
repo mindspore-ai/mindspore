@@ -19,7 +19,9 @@ MindRecord is a module to implement reading, writing, searching and
 converting for MindSpore format dataset. Users could use the FileWriter
 API to generate MindRecord data and use the MindDataset API to load
 MindRecord data. Users could also convert other format datasets to
-mindrecord data through corresponding sub-module.
+mindrecord data through corresponding sub-module. You can also
+configure encryption, decryption, and integrity check to ensure
+the security of MindRecord datasets.
 """
 
 from .filewriter import FileWriter
@@ -33,7 +35,9 @@ from .tools.csv_to_mr import CsvToMR
 from .tools.imagenet_to_mr import ImageNetToMR
 from .tools.mnist_to_mr import MnistToMR
 from .tools.tfrecord_to_mr import TFRecordToMR
+from .config import *
 
 __all__ = ['FileWriter', 'FileReader', 'MindPage',
            'Cifar10ToMR', 'Cifar100ToMR', 'CsvToMR', 'ImageNetToMR', 'MnistToMR', 'TFRecordToMR',
+           'set_enc_key', 'set_enc_mode', 'set_dec_mode', 'set_hash_mode',
            'SUCCESS', 'FAILED']

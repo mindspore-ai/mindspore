@@ -26,6 +26,7 @@ from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.ops.composite.base import _append, _insert, _pop, _list_clear, _reverse, \
     _extend, _dict_setitem, _dict_clear, _haskey, _update, _fromkeys
 from mindspore.ops.composite import multitype_ops
+from mindspore.ops.operations._sequence_ops import TensorToTuple
 
 from ... import _checkparam as validator
 from ..._checkparam import check_is_number, check_reshape_shp, check_axis_in_range, \
@@ -2272,6 +2273,8 @@ def hypot(x, other):
     '''
     return F.hypot(x, other)
 
+def softmax(input, axis):
+    return F.softmax(input, axis)
 
 def soft_shrink(input, lambd=0.5):
     """Apply the soft shrink function for a tensor. Calculates the output according to the input elements."""
@@ -2693,7 +2696,7 @@ def ms_len(data):
 
 def floor(x):
     """Rounds a tensor down to the closest integer element-wise."""
-    return x.__floor__()
+    return F.floor(x)
 
 
 def floor_divide(input, other):
@@ -4040,7 +4043,7 @@ def expand(input, size):
     r"""
     Returns a new view of the self tensor with singleton dimensions expanded to a larger size.
     """
-    size = P.TensorToTuple()(size)
+    size = TensorToTuple()(size)
     return F.broadcast_to(input, size)
 
 

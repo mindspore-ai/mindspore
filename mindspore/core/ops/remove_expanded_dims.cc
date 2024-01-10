@@ -70,7 +70,7 @@ std::tuple<int64_t, ShapeVector, int64_t> RemoveExpandedDims::ConstRemoveExpande
   size_t ellipse_position = 0;
   size_t not_ellipse_occupy_dims = 0;
   bool has_ellipsis = false;
-  for (size_t i = 0; i < 8; i++) {
+  for (size_t i = 0; i < kMaxTensorIndexDimNums; i++) {
     if (new_tuple_index_types[i] == kMetaTypeEllipsis) {
       has_ellipsis = true;
       ellipse_position = i;
@@ -122,16 +122,15 @@ AbstractBasePtr RemoveExpandedDimsInner(const PrimitivePtr &primitive, const std
   ShapeVector data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data_abs->GetShape())[kShape];
   if (IsDynamic(value_shape) || IsDynamic(data_shape) || !IsValueKnown(has_false_abs->GetValue()) ||
       !IsValueKnown(broadcast_shape_abs->GetValue()) || !IsValueKnown(idx_advanced_abs->GetValue())) {
-    auto abs_any = std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64);
+    auto scalar_abs_any = std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64);
     auto new_value_shape = std::vector<int64_t>{SizeToLong(value_shape.size())};
     if (IsDynamicRank(value_shape)) {
       new_value_shape = value_shape;
     }
     auto abs_tensor =
-      std::make_shared<abstract::AbstractTensor>(abs_any, std::make_shared<abstract::Shape>(new_value_shape));
-    auto scalar_abs_tensor = std::make_shared<abstract::AbstractTensor>(abs_any, std::make_shared<abstract::Shape>());
+      std::make_shared<abstract::AbstractTensor>(scalar_abs_any, std::make_shared<abstract::Shape>(new_value_shape));
 
-    AbstractBasePtrList abs_list{scalar_abs_tensor, abs_tensor, scalar_abs_tensor};
+    AbstractBasePtrList abs_list{scalar_abs_any, abs_tensor, scalar_abs_any};
     return std::make_shared<abstract::AbstractTuple>(abs_list);
   }
   auto has_false_value = GetArrayValue<int64_t>(has_false_abs).value().ToVector();
@@ -145,7 +144,7 @@ AbstractBasePtr RemoveExpandedDimsInner(const PrimitivePtr &primitive, const std
   auto expand_dims = GetValue<int64_t>(primitive->GetAttr(kAttrExpandDimsCnt));
   for (size_t i = 0; i < new_tuple_index_types.size(); i++) {
     if (new_tuple_index_types[i] == kMetaTypeEllipsis) {
-      valid_tensor_nums = data_shape.size() + expand_dims;
+      valid_tensor_nums = data_shape.size() + static_cast<size_t>(expand_dims);
       break;
     } else if (new_tuple_index_types[i] != kTypeUnknown) {
       valid_tensor_nums += 1;
@@ -156,13 +155,12 @@ AbstractBasePtr RemoveExpandedDimsInner(const PrimitivePtr &primitive, const std
   auto [indices_out, new_value_shape, new_idx_advanced] = RemoveExpandedDims::ConstRemoveExpandedDims(
     has_true, has_false, has_sequence, broadcast_shape, rem_ndim, value_shape, data_shape, empty_indices_out,
     idx_advanced, new_tuple_index_types, static_cast<size_t>(expand_dims));
-  auto indices_out_tensor = std::make_shared<tensor::Tensor>(indices_out);
+  auto indices_out_tensor = std::make_shared<abstract::AbstractScalar>(indices_out);
   ShapeVector value_shape_len{SizeToLong(new_value_shape.size())};
   auto value_shape_tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, value_shape_len, new_value_shape.data(),
                                                              new_value_shape.size() * sizeof(ShapeValueDType));
-  auto idx_advanced_tensor = std::make_shared<tensor::Tensor>(new_idx_advanced);
-  AbstractBasePtrList abs_list{indices_out_tensor->ToAbstract(), value_shape_tensor->ToAbstract(),
-                               idx_advanced_tensor->ToAbstract()};
+  auto idx_advanced_tensor = std::make_shared<abstract::AbstractScalar>(new_idx_advanced);
+  AbstractBasePtrList abs_list{indices_out_tensor, value_shape_tensor->ToAbstract(), idx_advanced_tensor};
   return std::make_shared<abstract::AbstractTuple>(abs_list);
 }
 MIND_API_OPERATOR_IMPL(RemoveExpandedDims, BaseOperator);

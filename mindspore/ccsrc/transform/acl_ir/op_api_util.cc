@@ -14,16 +14,20 @@
  * limitations under the License.
  */
 #include "transform/acl_ir/op_api_util.h"
+#include <dlfcn.h>
 #include <unordered_map>
 #include "acl/error_codes/rt_error_codes.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
-#include "acl/acl_base.h"
+#include "utils/ms_context.h"
 
 namespace mindspore::transform {
 namespace {
+typedef aclError (*AclrtCtxSetSysParamOpt)(aclSysParamOpt, int64_t);
+typedef HcclResult (*HcclSetConfigFunc)(HcclConfig, HcclConfigValue);
+
 static const char k910BKey[] = "Ascend910B";
 static const char k310BKey[] = "Ascend310B";
 static const char k910CKey[] = "Ascend910C";
@@ -54,6 +58,27 @@ uint8_t KeepOriginDType() {
     }
   }
   return need_keep_dtype;
+}
+
+std::mutex set_opt_mutex;
+
+aclError SetCompileopt(aclCompileOpt opt, const char *value) { return aclSetCompileopt(opt, value); }
+
+void *GetAclFunc(const std::string &lib_path, const std::string &func_name) {
+  static auto ascend_path = device::ascend::GetAscendPath();
+  auto load_path = ascend_path + "/lib64/" + lib_path;
+
+  auto handler = dlopen(load_path.c_str(), RTLD_LAZY);
+  if (handler == nullptr) {
+    MS_LOG(INFO) << "Dlopen " << load_path << " failed!" << dlerror();
+    return nullptr;
+  }
+
+  auto func = dlsym(handler, func_name.c_str());
+  if (func == nullptr) {
+    MS_LOG(INFO) << "Dlsym " << func_name << " from " << load_path << " failed!" << dlerror();
+  }
+  return func;
 }
 }  // namespace
 
@@ -106,6 +131,95 @@ void OpApiUtil::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std:
   }
   if (!special_inputs.empty()) {
     common::AnfAlgo::SetNodeAttr(kAttrAclSpecialInputFormat, MakeValue(special_inputs), node);
+  }
+}
+
+void AclUtil::SetDeterministic() {
+  std::lock_guard<std::mutex> lock(set_opt_mutex);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  bool is_deterministic = ms_context->get_param<std::string>(MS_CTX_DETERMINISTIC) == "ON" ? true : false;
+  // Set acl
+  auto ret = SetCompileopt(aclCompileOpt::ACL_OP_DETERMINISTIC, is_deterministic ? "1" : "0");
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Acl set deterministic mode failed! mode is " << is_deterministic << " and error flag is "
+                      << ret;
+  }
+  // Set acl sys
+  const std::string rt_sys_opt_lib = "libacl_op_compiler.so";
+  const std::string rt_sys_opt_name = "aclrtCtxSetSysParamOpt";
+  auto rt_sys_opt = GetAclFunc(rt_sys_opt_lib, rt_sys_opt_name);
+  if (rt_sys_opt == nullptr) {
+    MS_LOG(EXCEPTION) << "Get 'aclrtCtxSetSysParamOpt' from " << rt_sys_opt_lib << " failed!";
+  }
+  auto rt_sys_opt_func = reinterpret_cast<AclrtCtxSetSysParamOpt>(rt_sys_opt);
+  ret = rt_sys_opt_func(aclSysParamOpt::ACL_OPT_DETERMINISTIC, is_deterministic ? 1 : 0);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Acl sys set deterministic mode failed! mode is " << is_deterministic << " and error flag is "
+                      << ret;
+  }
+  // Set hccl
+  const std::string hccl_lib = "libhccl.so";
+  const std::string hccl_set_config_name = "HcclSetConfig";
+  auto hccl_set_config = GetAclFunc(hccl_lib, hccl_set_config_name);
+  if (hccl_set_config == nullptr) {
+    MS_LOG(EXCEPTION) << "Get 'HcclSetConfig' from " << hccl_lib << " failed!";
+  }
+  auto hccl_set_config_func = reinterpret_cast<HcclSetConfigFunc>(hccl_set_config);
+  HcclConfigValue config = {is_deterministic ? 1 : 0};
+  auto hccl_ret = hccl_set_config_func(HcclConfig::HCCL_DETERMINISTIC, config);
+  if (hccl_ret != HCCL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Hccl set deterministic mode failed! mode is " << is_deterministic << " and error flag is "
+                      << ret;
+  }
+}
+
+aclError AclUtil::SetCompileMode(const int64_t is_dynamic) {
+  std::lock_guard<std::mutex> lock(set_opt_mutex);
+  static int64_t last_mode = -1;
+  if (is_dynamic != last_mode) {
+    std::string mode = is_dynamic ? "disable" : "enable";
+    auto set_compile_flag = SetCompileopt(aclCompileOpt::ACL_OP_JIT_COMPILE, mode.c_str());
+    last_mode = is_dynamic;
+    return set_compile_flag;
+  }
+
+  return ACL_SUCCESS;
+}
+
+aclError AclUtil::SetPrecisionMode(const std::string &mode) {
+  std::lock_guard<std::mutex> lock(set_opt_mutex);
+  static std::string precision_mode = "not_inited";
+  static std::string last_mode = "not_inited";
+  auto cur_mode = mode;
+  if (precision_mode == "not_inited") {
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    precision_mode = ms_context->get_param<std::string>(MS_CTX_PRECISION_MODE);
+    if (!precision_mode.empty()) {
+      cur_mode = precision_mode;
+    }
+  }
+  if (last_mode != cur_mode) {
+    auto ret = SetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, cur_mode.c_str());
+    last_mode = cur_mode;
+    return ret;
+  }
+  return ACL_SUCCESS;
+}
+
+void AclUtil::SetOpPrecisionMode() {
+  std::lock_guard<std::mutex> lock(set_opt_mutex);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto op_precision_mode = ms_context->get_param<std::string>(MS_CTX_OP_PRECISION_MODE);
+  if (op_precision_mode.empty()) {
+    return;
+  }
+  MS_LOG(DEBUG) << "Set ACL_OP_PRECISION_MODE: " << op_precision_mode;
+  auto ret = SetCompileopt(aclCompileOpt::ACL_OP_PRECISION_MODE, op_precision_mode.c_str());
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Acl set op precision mode failed! error flag is " << ret;
   }
 }
 }  // namespace mindspore::transform

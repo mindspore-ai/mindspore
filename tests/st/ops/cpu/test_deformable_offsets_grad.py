@@ -181,7 +181,7 @@ def test_deformable_offsets_grad_nhwc(data_type):
     assert np.allclose(output[1].asnumpy(), expect_grad_offset, rtol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_vmap():

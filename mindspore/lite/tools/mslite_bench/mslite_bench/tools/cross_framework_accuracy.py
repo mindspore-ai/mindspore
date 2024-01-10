@@ -116,6 +116,8 @@ class CrossFrameworkAccSummary:
             csv_path = os.path.join(os.path.dirname(src_file_path), 'accuracy_infos.csv')
         else:
             csv_path = f'{args.cmp_result_file}.csv'
+            csv_dir = os.path.dirname(csv_path)
+            os.makedirs(csv_dir, exist_ok=True)
         logger.info(f'Accuracy compare done, save accuracy info in %s', csv_path)
         cls.write_csv(cmp_result, csv_path)
         return cmp_result

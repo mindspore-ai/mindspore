@@ -51,7 +51,7 @@ int HostKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::
   auto calc_size_list = [](const std::vector<KernelTensor *> &tensors, std::vector<size_t> *list_ptr) -> bool {
     for (KernelTensor *tensor : tensors) {
       int64_t size = 1;
-      if (!GetShapeSize(tensor->GetShapeVector(), tensor->dtype(), &size)) {
+      if (!GetShapeSize(tensor->GetShapeVector(), TypeIdToType(tensor->dtype_id()), &size)) {
         return false;
       }
       list_ptr->push_back(LongToSize(size));

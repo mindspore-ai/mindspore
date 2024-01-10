@@ -237,6 +237,9 @@ bool DynamicShapeCluster::IsClusterableOp(const AnfNodePtr &node) {
   if (GkUtils::IsKeepBasicNode(node)) {
     return false;
   }
+  if (!ValueDependOpUtils::IsConstInput(node)) {
+    return false;
+  }
   return true;
 }
 

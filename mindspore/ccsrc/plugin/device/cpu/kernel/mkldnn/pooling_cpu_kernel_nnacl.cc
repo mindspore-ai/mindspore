@@ -38,8 +38,9 @@ constexpr size_t kPadLen3D = 6;
 enum kAxisIdx : int { kD = 2, kH, kW };
 
 void GetAxisPad(int64_t hw, int64_t kernel, int64_t stride, int64_t *pad_l, int64_t *pad_r) {
+  MS_EXCEPTION_IF_ZERO("stride", stride);
   int64_t tail = hw % stride;
-  auto pad = std::max((tail > 0 ? kernel - tail : kernel - stride), (int64_t)0);
+  auto pad = std::max((tail > 0 ? kernel - tail : kernel - stride), static_cast<int64_t>(0));
   *pad_l = std::floor(pad >> 1);
   *pad_r = pad - *pad_l;
 }
@@ -111,13 +112,7 @@ bool PoolingCpuKernelNnaclMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
   dtype_ = inputs[kIndex0]->dtype_id();
-  if (kernel_name_ == kAvgPoolOpName) {
-    kernel_size_ = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
-    stride_size_ = inputs[kIndex2]->GetValueWithCheck<std::vector<int64_t>>();
-    pad_mode_ = static_cast<mindspore::PadMode>(inputs[kIndex3]->GetValueWithCheck<int64_t>());
-    format_ = static_cast<mindspore::Format>(inputs[kIndex4]->GetValueWithCheck<int64_t>());
-
-  } else {
+  if (kernel_name_ != kAvgPoolOpName) {
     kernel_size_ = GetValue<std::vector<int64_t>>(primitive()->GetAttr(KERNEL_SIZE));
     stride_size_ = GetValue<std::vector<int64_t>>(primitive()->GetAttr(STRIDES));
     pad_mode_ =
@@ -130,6 +125,22 @@ bool PoolingCpuKernelNnaclMod::Init(const std::vector<KernelTensor *> &inputs,
   }
   if (primitive()->HasAttr(DIVISOR_OVERRIDE)) {
     divisor_override_ = GetValue<int64_t>(primitive()->GetAttr(DIVISOR_OVERRIDE));
+  }
+  return true;
+}
+
+static bool inline check_kernel_stride(const std::vector<int64_t> &kernel_size, const std::vector<int64_t> &stride_size,
+                                       const size_t rank) {
+  // length check
+  if (kernel_size.size() != rank) {
+    MS_LOG(ERROR) << "The kernel_size length should be equal to " << rank << " but length of kernel_size is "
+                  << kernel_size.size() << ".";
+    return false;
+  }
+  if (stride_size.size() != rank) {
+    MS_LOG(ERROR) << "The stride_size length should be equal to " << rank << " but length of stride_size is "
+                  << stride_size.size() << ".";
+    return false;
   }
   return true;
 }
@@ -158,6 +169,13 @@ int PoolingCpuKernelNnaclMod::Resize(const std::vector<KernelTensor *> &inputs,
     if (kernel_name_ == kAvgPoolOpName) {
       kernel_size = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
       stride_size = inputs[kIndex2]->GetValueWithCheck<std::vector<int64_t>>();
+      pad_mode_ = static_cast<mindspore::PadMode>(inputs[kIndex3]->GetValueWithCheck<int64_t>());
+      format_ = static_cast<mindspore::Format>(inputs[kIndex4]->GetValueWithCheck<int64_t>());
+      if (format_ != Format::NCHW) {
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', only 'NCHW' format is supported in CPU target, but got '"
+                      << GetFormatFromEnumToStr(format_) << "' format.";
+        return KRET_RESIZE_FAILED;
+      }
     } else {
       kernel_size = GetValue<std::vector<int64_t>>(primitive()->GetAttr(KERNEL_SIZE));
       stride_size = GetValue<std::vector<int64_t>>(primitive()->GetAttr(STRIDES));
@@ -183,6 +201,10 @@ int PoolingCpuKernelNnaclMod::Resize(const std::vector<KernelTensor *> &inputs,
       stride_size_ = stride_size;
     }
     pad_list_.clear();
+  } else {
+    if (!check_kernel_stride(kernel_size_, stride_size_, src_dim)) {
+      return KRET_RESIZE_FAILED;
+    }
   }
 
   size_t padlist_len = src_dim == SHAPE_4D ? kPadLen2D : kPadLen3D;

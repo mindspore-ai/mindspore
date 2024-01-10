@@ -30,7 +30,7 @@ def gather_backward_func(input_params, input_indices, axis, batch_dims=0):
     return ops.grad(gather_forward_func, (0,))(input_params, input_indices, axis, batch_dims)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

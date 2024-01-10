@@ -19,7 +19,7 @@ from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common import Tensor, Parameter
 import mindspore.common.dtype as mstype
 from mindspore import _checkparam as validator
-from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than
+from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than_without_equal
 from mindspore import ops
 
 _rprop_opt = C.MultitypeFuncGraph("rprop_opt")
@@ -113,8 +113,8 @@ class Rprop(Optimizer):
     """
 
     def __init__(self, params, lr=1e-2, etas=(0.5, 1.2), step_sizes=(1e-6, 50), *, maximize=False):
-        check_not_less_than(lr, "lr", self.cls_name)
-        check_not_less_than(etas[1], "etas[1]", self.cls_name, 1.)
+        check_not_less_than_without_equal(lr, "lr", self.cls_name)
+        check_not_less_than_without_equal(etas[1], "etas[1]", self.cls_name, 1.)
         validator.check_float_range(etas[0], 0., 1., validator.INC_NEITHER, "etas[0]", self.cls_name)
 
         defaults = dict(
@@ -126,11 +126,12 @@ class Rprop(Optimizer):
         super(Rprop, self).__init__(params, defaults)
         self.prev = self.parameters.clone(prefix="prev", init='zeros')
         self.step_size = self.parameters.clone(prefix="step_size", init='zeros')
-        self.step = Parameter(Tensor(0, mstype.int32), "step")
+        self.step_t = Parameter(Tensor(0, mstype.int32), "step_t")
         self.increase_tensor = Tensor(1, mstype.int32)
+        self.op_cast = P.Cast()
 
     def construct(self, gradients):
-        op_assignadd(self.step, self.increase_tensor)
+        op_assignadd(self.step_t, self.increase_tensor)
         for group_id, group in enumerate(self.param_groups):
             lr = self.lrs[group_id]
             if isinstance(group.get("lr"), float):
@@ -145,9 +146,9 @@ class Rprop(Optimizer):
             end_id = self.group_start_id[group_id + 1]
 
             params = self.parameters[start_id: end_id]
-            grads = gradients[start_id: end_id] if not maximize else -gradients[start_id: end_id]
+            grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
             prev = self.prev[start_id: end_id]
             step_size = self.step_size[start_id: end_id]
-            self.hyper_map(F.partial(_rprop_opt, etaminus, etaplus, step_size_min, step_size_max, self.step, lr),
+            self.hyper_map(F.partial(_rprop_opt, etaminus, etaplus, step_size_min, step_size_max, self.step_t, lr),
                            params, prev, step_size, grads)
         return True

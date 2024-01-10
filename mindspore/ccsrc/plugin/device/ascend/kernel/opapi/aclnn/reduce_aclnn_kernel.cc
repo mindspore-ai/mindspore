@@ -95,6 +95,5 @@ bool ReduceSumAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
 MS_ACLLNN_KERNEL_FACTORY_REG(ReduceAll, ReduceAllAclnnKernelMod);
 MS_ACLLNN_KERNEL_FACTORY_REG(ReduceAny, ReduceAnyAclnnKernelMod);
 MS_ACLLNN_KERNEL_FACTORY_REG(ReduceSum, ReduceSumAclnnKernelMod);
-MS_ACLLNN_KERNEL_FACTORY_REG(ReduceMean, ReduceMeanAclnnKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

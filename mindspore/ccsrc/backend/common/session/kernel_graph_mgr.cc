@@ -817,9 +817,11 @@ void ConvertValueNodeToParameter(const KernelGraphPtr &graph, const AnfNodePtr &
   auto graph_inputs = graph->MutableInputs();
   MS_EXCEPTION_IF_NULL(graph_inputs);
   auto new_parameter = graph->NewParameter(node->abstract());
+  MS_EXCEPTION_IF_NULL(new_parameter);
   new_parameter->IncreaseUsedGraphCount();
   graph_inputs->push_back(new_parameter);
 
+  MS_EXCEPTION_IF_NULL(node->cast<ValueNodePtr>());
   new_parameter->set_user_data(kForwardOutput, node->cast<ValueNodePtr>()->value());
   graph->FrontBackendMapAdd(node, new_parameter);
   (void)added_parameters->emplace_back(new_parameter);
@@ -1118,6 +1120,7 @@ AnfNodePtr KernelGraphMgr::GetChildGraph(KernelGraph *graph, const AnfNodePtr &c
   MS_EXCEPTION_IF_NULL(child_func_graph);
   std::vector<KernelGraphPtr> all_graphs;
   FuncGraphPtr child_graph = common::AnfAlgo::GetValueNodeFuncGraph(child_func_graph);
+  MS_EXCEPTION_IF_NULL(child_graph);
   if (front_backend_graph_map_.find(child_graph.get()) == front_backend_graph_map_.end()) {
     (void)ConstructKernelGraph(child_graph, &all_graphs, graph->device_target());
   }
@@ -1946,6 +1949,7 @@ KernelGraphPtr KernelGraphMgr::ConstructKernelGraph(const AnfNodePtrList &lst, c
     MS_EXCEPTION_IF_NULL(cnode);
     // create a new cnode object
     auto new_cnode = CreateNewCNode(cnode, graph.get(), &other_graph_cnode);
+    MS_EXCEPTION_IF_NULL(new_cnode);
     if (IsPrimitiveCNode(new_cnode, prim::kPrimCall)) {
       auto fn = new_cnode->input(kIndexOne);
       MS_EXCEPTION_IF_NULL(fn);
@@ -1954,7 +1958,6 @@ KernelGraphPtr KernelGraphMgr::ConstructKernelGraph(const AnfNodePtrList &lst, c
       child_graph_order.push_back(std::weak_ptr<KernelGraph>(child_kernel_graph));
     }
 
-    MS_EXCEPTION_IF_NULL(new_cnode);
     new_cnode->set_abstract(cnode->abstract());
     new_cnode->set_scope(cnode->scope());
     new_cnode->set_attrs(cnode->attrs());

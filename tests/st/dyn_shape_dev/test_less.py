@@ -49,7 +49,7 @@ def less_infervalue_func2():
     return ops.auto_generate.less(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -70,7 +70,7 @@ def test_less_forward(mode):
     assert np.allclose(out.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -93,7 +93,7 @@ def test_less_backward(mode):
     assert np.allclose(grad_y.asnumpy(), expect_grad_y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -116,7 +116,7 @@ def test_less_vmap(mode):
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -150,7 +150,7 @@ def test_less_dynamic_shape(mode):
     assert np.allclose(out_2.asnumpy(), expect_2, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -184,7 +184,7 @@ def test_less_dynamic_rank(mode):
     assert np.allclose(out_2.asnumpy(), expect_2, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

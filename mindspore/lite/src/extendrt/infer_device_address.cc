@@ -92,8 +92,8 @@ bool InferDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, Type
 #endif
 
     SetDevicePtr(const_cast<void *>(host_ptr));
-    original_ref_count_ = SIZE_MAX;
-    ref_count_ = SIZE_MAX;
+    set_original_ref_count(SIZE_MAX);
+    set_ref_count(SIZE_MAX);
   }
   return true;
 }

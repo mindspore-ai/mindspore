@@ -949,8 +949,8 @@ void DataPrepareActor::PrepareDataForValueNode(const ValueNodePtr &node, const A
     PrepareDataForSequenceAndScalarValue(node, 0, front_node, device_context, context);
   } else if (node_value->isa<StringImm>()) {
     PrepareDataForStringValue(node, 0, front_node, device_context, context);
-  } else if (node_value->isa<None>()) {
-    MS_LOG(DEBUG) << "No need to prepare data for None value node.";
+  } else if (node_value->isa<None>() || node_value->isa<Type>()) {
+    MS_LOG(DEBUG) << "No need to prepare data for None or type value node:" << node->DebugString();
   } else {
     MS_LOG(WARNING) << "Not support the value type: " << node->fullname_with_scope();
   }
@@ -990,7 +990,7 @@ void DataPrepareActor::CopyDataFromDeviceTensorStore(const AnfNodePtr &front_nod
                       << output_address << ", device address size: " << another_device_tensor->GetSize()
                       << ", device address addr: " << another_device_tensor->GetPtr()
                       << ", node: " << backend_node->fullname_with_scope() << ", graph: " << graph_str
-                      << ", frontnode: " << front_node->DebugString();
+                      << ", frontnode: " << (front_node == nullptr ? "null" : front_node->DebugString());
     }
 
     MS_LOG(INFO) << "Prepare device data for weight node:" << backend_node->fullname_with_scope()

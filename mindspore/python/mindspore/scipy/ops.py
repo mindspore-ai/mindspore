@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -158,14 +158,46 @@ class LU(PrimitiveWithInfer):
 
 
 class LinearSumAssignment(Primitive):
-    """Solve the linear sum assignment problem."""
+    """
+    Solve the linear sum assignment problem.
+
+    Inputs:
+        cost_matrix (Tensor): 2-D Input Tensor.
+            The cost matrix of the bipartite graph.
+        dimension_limit (Tensor): 0-D Input Tensor.
+            A scalar used to limit the actual size of the 2nd dimension. Optimized for
+            padding scenes. Default means no dimension limit.
+        maximize (bool): bool.
+            Calculates a maximum weight matching if true.
+
+    Returns:
+        1-D Output Tensors with 'row_idx' and 'col_idx'. An array of row indices and
+        one of corresponding column indices giving the optimal assignment. If specified
+        dimension_limit, padding value at the end would be -1.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+     Examples:
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.scipy.ops import LinearSumAssignment
+        >>> lsap = LinearSumAssignment()
+        >>> cost_matrix = Tensor(np.array([[2, 3, 3], [3, 2, 3], [3, 3, 2]])).astype("float64")
+        >>> dimension_limit = Tensor(2)
+        >>> maximize = False
+        >>> a, b = lsap(cost_matrix, dimension_limit, maximize)
+        >>> print(a)
+        [0 1 -1]
+        >>> print(b)
+        [0 1 -1]
+    """
 
     @prim_attr_register
     def __init__(self):
-        super().__init__("LinearSumAssignment")
+        super().__init__(name="LinearSumAssignment")
         self.init_prim_io_names(inputs=['cost_matrix', 'dimension_limit', 'maximize'], outputs=['row_ind', 'col_ind'])
-        self.add_prim_attr("cust_aicpu", "mindspore_aicpu_kernels")
-
 
 # pylint: disable=C0413,W0611
 from .ops_grad import get_bprpo_eigh, get_bprpo_trsm

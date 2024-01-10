@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace runtime {
-void RecorderActor::RecordInfo(const std::string op_name, const KernelLaunchInfo *launch_info_,
+void RecorderActor::RecordInfo(const std::string op_name, const KernelLaunchAddr *launch_info_,
                                const DeviceContext *device_context, OpContext<DeviceTensor> *const op_context) {
   MS_EXCEPTION_IF_NULL(launch_info_);
   MS_EXCEPTION_IF_NULL(device_context);

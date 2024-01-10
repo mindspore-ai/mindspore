@@ -118,6 +118,16 @@ int TransposeGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   std::vector<int32_t> input_perm;
   GetPermValue(perm, &input_perm);
   auto input_shape = inputs[kIndex0]->GetDeviceShapeVector();
+  if (input_shape.empty()) {
+    is_copy_ = true;
+    return KRET_OK;
+  }
+
+  if (std::any_of(input_shape.begin(), input_shape.end(), [](int64_t s) { return s == 0; })) {
+    is_empty_tensor_ = true;
+    return KRET_OK;
+  }
+
   shape_size_ = input_shape.size();
   if (shape_size_ > transpose_max_dimension) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output cannot be greater than "

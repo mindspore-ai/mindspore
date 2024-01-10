@@ -31,7 +31,7 @@ class NetTranspose(nn.Cell):
         return self.transpose(x, perm)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -50,7 +50,7 @@ def test_dynamic_shape_transpose():
     test_dynamic.test_dynamic_grad_net([x, perm], False)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

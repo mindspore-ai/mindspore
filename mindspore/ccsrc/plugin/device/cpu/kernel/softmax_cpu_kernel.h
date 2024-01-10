@@ -17,13 +17,15 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_SOFTMAX_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_SOFTMAX_CPU_KERNEL_H_
 
+#include <functional>
 #include <vector>
+#include <utility>
 #include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-class SoftmaxCpuKernelMod : public NativeCpuKernelMod {
+class SoftmaxCpuKernelMod final : public NativeCpuKernelMod {
  public:
   SoftmaxCpuKernelMod() = default;
   ~SoftmaxCpuKernelMod() override = default;
@@ -33,28 +35,34 @@ class SoftmaxCpuKernelMod : public NativeCpuKernelMod {
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
-              const std::vector<KernelTensor *> &outputs) override;
-
-  std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {KernelAttr()
-                                                     .AddInputAttr(kNumberTypeFloat32)
-                                                     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-                                                     .AddOutputAttr(kNumberTypeFloat32)};
-    return support_list;
+              const std::vector<KernelTensor *> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
- private:
-  void LaunchKernelLastAxis(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
-  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
-                    const std::vector<KernelTensor *> &outputs);
+  std::vector<KernelAttr> GetOpSupport() override;
 
-  int32_t axis_{0};
-  int32_t input_dims_{0};
-  int32_t channel_{0};
+ private:
+  using LaunchFunc =
+    std::function<bool(SoftmaxCpuKernelMod *, const std::vector<KernelTensor *> &inputs,
+                       const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &outputs)>;
+  static std::vector<std::pair<KernelAttr, LaunchFunc>> func_list_;
+  LaunchFunc kernel_func_;
+
+  template <typename T>
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                    const std::vector<KernelTensor *> &outputs) noexcept;
+
+  void CheckAndRectifyAxis(KernelTensor *axis_kernel_tensor) noexcept;
+
+  int64_t axis_{0};
+  int64_t input_dims_{0};
+  int64_t dim_axis_{0};
   bool last_axis_{false};
-  std::vector<int32_t> input_shape_;
+  std::vector<int64_t> input_shape_;
+  size_t inner_size_{0};
+  size_t input_elements_{0};
   size_t output_elements_{0};
-  TypeId dtype_{kTypeUnknown};
+  size_t unit_size_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

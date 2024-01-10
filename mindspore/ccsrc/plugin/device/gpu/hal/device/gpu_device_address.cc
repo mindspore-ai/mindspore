@@ -38,6 +38,19 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
+void GPUDeviceAddress::SetDevicePtrDeleter() {
+  const auto &kernel_tensor = this->kernel_tensor();
+  if (!kernel_tensor) {
+    return;
+  }
+
+  kernel_tensor->set_deleter([](void *ptr, bool from_mem_pool) {
+    if (ptr != nullptr && from_mem_pool) {
+      GPUMemoryAllocator::GetInstance().FreeTensorMem(ptr);
+    }
+  });
+}
+
 bool GPUDeviceAddress::SyncDeviceToHost(size_t size, void *host_ptr) const {
   // The input or output may be empty.
   if ((size == 0) || (GetSize() == 0)) {
@@ -265,7 +278,7 @@ void GPUDeviceAddress::ClearDeviceMemory() {
     device_context->device_res_manager_->FreeOffloadMemory(offload_ptr_);
     offload_ptr_ = nullptr;
   }
-  if (GetDevicePtr() != nullptr && from_mem_pool_) {
+  if (GetDevicePtr() != nullptr && from_mem_pool()) {
     GPUMemoryAllocator::GetInstance().FreeTensorMem(GetDevicePtr());
     SetDevicePtr(nullptr);
   }
@@ -297,7 +310,15 @@ void GPUDeviceAddress::ClearUserData() {
 }
 
 GPUDeviceAddress::~GPUDeviceAddress() {
-  ClearDeviceMemory();
+  // Only release offload memory, release device memory when `kernel_tensor_` in base class destroyed, because maybe
+  // multi GPUDeviceAddress objects use same device pointer in ref case.
+  std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
+  if (offload_ptr_ != nullptr) {
+    auto device_context = GetDeviceContext();
+    MS_EXCEPTION_IF_NULL(device_context);
+    device_context->device_res_manager_->FreeOffloadMemory(offload_ptr_);
+    offload_ptr_ = nullptr;
+  }
   LoadableDeviceAddress::ReleaseResource();
 }
 

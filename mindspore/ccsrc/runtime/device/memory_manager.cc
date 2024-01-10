@@ -63,9 +63,9 @@ uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, Me
     }
     if (type == kStaticMem) {
       ptr = MallocStaticMem(size, communication_mem);
-      address->from_mem_pool_ = true;
+      address->set_from_mem_pool(true);
       if (communication_mem) {
-        address->communication_ptr_ = ptr - kMemAlignSize;
+        address->set_communication_ptr(ptr - kMemAlignSize);
       }
     } else if (type == kSomasReuseDynamicMem) {
       MS_EXCEPTION_IF_NULL(somas_allocator_ptr_);
@@ -79,7 +79,7 @@ uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, Me
 
   if (type == kStaticMem) {
     ptr = MallocStaticMem(size, false);
-    address->from_mem_pool_ = true;
+    address->set_from_mem_pool(true);
   } else if (type == kDynamicMem) {
     ptr = MallocDynamicMem(size, false);
   } else if (type == kSomasReuseDynamicMem) {
@@ -105,7 +105,7 @@ uint8_t *MemoryManager::MallocMem(MemType type, size_t size, const DeviceAddress
   uint8_t *ptr = nullptr;
   if (type == kStaticMem) {
     ptr = MallocStaticMem(size, false, graph_id);
-    address->from_mem_pool_ = true;
+    address->set_from_mem_pool(true);
   } else if (type == kDynamicMem) {
     ptr = MallocDynamicMem(size, false);
   }
@@ -127,7 +127,7 @@ bool MemoryManager::MallocMemFromMemPool(const DeviceAddressPtr &address, size_t
   MS_EXCEPTION_IF_NULL(address);
   address->SetDevicePtr(device_ptr);
   address->SetSize(size);
-  address->from_mem_pool_ = true;
+  address->set_from_mem_pool(true);
   return true;
 }
 
@@ -153,7 +153,7 @@ bool MemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList &a
     MS_EXCEPTION_IF_NULL(addr_list[i]);
     addr_list[i]->SetDevicePtr(device_ptr_list[i]);
     addr_list[i]->SetSize(size_list[i]);
-    addr_list[i]->from_mem_pool_ = true;
+    addr_list[i]->set_from_mem_pool(true);
   }
   return true;
 }

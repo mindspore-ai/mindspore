@@ -117,7 +117,7 @@ class AdamW(Optimizer):
         ValueError: If the learning rate is not int, float or Tensor.
         ValueError: If the learning rate is less than 0.
         ValueError: If the `eps` is less than 0.0.
-        ValueError: If the `betas` not in the range of 0-1.
+        ValueError: If the `betas` not in the range of [0, 1).
         ValueError: If the `weight_decay` is less than 0.
 
     Supported Platforms:
@@ -166,6 +166,7 @@ class AdamW(Optimizer):
         self.state_step = Parameter(Tensor(0, mstype.int32), "state_step")
         self.increase_tensor = Tensor(1, mstype.int32)
         self.assignadd = P.AssignAdd()
+        self.op_cast = P.Cast()
 
     def construct(self, gradients):
         self.assignadd(self.state_step, self.increase_tensor)
@@ -174,7 +175,9 @@ class AdamW(Optimizer):
             start_id = self.group_start_id[group_id]
             end_id = self.group_start_id[group_id + 1]
             lr = self.lrs[group_id]
-            grads = gradients[start_id: end_id] if not group.get("maximize") else -gradients[start_id: end_id]
+            if isinstance(group.get("lr"), float):
+                lr = self.op_cast(group.get("lr"), mstype.float32)
+            grads = tuple([grad if not group.get("maximize") else F.neg(grad) for grad in gradients[start_id: end_id]])
             self.hyper_map(F.partial(_adamw_opt, group.get("weight_decay"), lr, group.get("amsgrad"),
                                      group.get("eps"), self.state_step, beta1, beta2),
                            self.parameters[start_id: end_id], grads, self.exp_avg[start_id: end_id],

@@ -252,7 +252,9 @@ def run_overflow_dump():
         if os.path.isdir(dump_path):
             shutil.rmtree(dump_path)
         add = Net()
-        add(Tensor(overflow_x), Tensor(overflow_x))
+        output = add(Tensor(overflow_x), Tensor(overflow_x))
+        output_np = output.asnumpy()
+        print("output_np: ", output_np)
         check_ge_dump_structure(dump_path, 1, 1, True)
         del os.environ['MINDSPORE_DUMP_CONFIG']
 

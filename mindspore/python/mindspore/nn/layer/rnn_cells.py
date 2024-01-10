@@ -25,7 +25,7 @@ from mindspore import log as logger
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer, Uniform
-from mindspore.ops.primitive import constexpr, _primexpr
+from mindspore.ops.primitive import constexpr
 from mindspore.nn.cell import Cell
 from mindspore import _checkparam as validator
 
@@ -61,13 +61,6 @@ def _check_tuple_length(param_name, input_data, length, cls_name):
                         f"but got '{len(input_data)}'")
 
 
-@_primexpr
-def _check_batch_size_equal(batch_size_x, batch_size_hx, cls_name):
-    if batch_size_x != batch_size_hx:
-        raise ValueError(f"For '{cls_name}' batch size of x and hx must be equal, but got {batch_size_x} of x "
-                         f"and {batch_size_hx} of hx.")
-
-
 def _check_lstmcell_init(func):
     """Internal function, used to check init args."""
     @wraps(func)
@@ -83,7 +76,7 @@ def _check_lstmcell_init(func):
 
 
 def _rnn_tanh_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
-    '''RNN cell function with tanh activation'''
+    """RNN cell function with tanh activation"""
     if b_ih is None:
         igates = P.MatMul(False, True)(inputs, w_ih)
         hgates = P.MatMul(False, True)(hidden, w_hh)
@@ -94,7 +87,7 @@ def _rnn_tanh_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
 
 
 def _rnn_relu_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
-    '''RNN cell function with relu activation'''
+    """RNN cell function with relu activation"""
     if b_ih is None:
         igates = P.MatMul(False, True)(inputs, w_ih)
         hgates = P.MatMul(False, True)(hidden, w_hh)
@@ -105,7 +98,7 @@ def _rnn_relu_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
 
 
 def _lstm_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
-    '''LSTM cell function'''
+    """LSTM cell function"""
     hx, cx = hidden
     if b_ih is None:
         gates = P.MatMul(False, True)(inputs, w_ih) + P.MatMul(False, True)(hx, w_hh)
@@ -125,7 +118,7 @@ def _lstm_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
 
 
 def _gru_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
-    '''GRU cell function'''
+    """GRU cell function"""
     if b_ih is None:
         gi = P.MatMul(False, True)(inputs, w_ih)
         gh = P.MatMul(False, True)(hidden, w_hh)
@@ -144,7 +137,7 @@ def _gru_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
 
 
 class RNNCellBase(Cell):
-    '''Basic class for RNN Cells'''
+    """Basic class for RNN Cells"""
     def __init__(self, input_size: int, hidden_size: int, has_bias: bool, num_chunks: int,
                  dtype=mstype.float32):
         super().__init__()
@@ -232,7 +225,6 @@ class RNNCell(RNNCellBase):
         _check_is_tensor('hx', hx, self.cls_name)
         _check_input_dtype(x.dtype, "x", [mstype.float32, mstype.float16], self.cls_name)
         _check_input_dtype(hx.dtype, "hx", [mstype.float32, mstype.float16], self.cls_name)
-        _check_batch_size_equal(x.shape[0], hx.shape[0], self.cls_name)
 
         if self.nonlinearity == "tanh":
             ret = _rnn_tanh_cell(x, hx, self.weight_ih, self.weight_hh, self.bias_ih, self.bias_hh)
@@ -318,8 +310,6 @@ class LSTMCell(RNNCellBase):
         _check_input_dtype(x.dtype, "x", [mstype.float32, mstype.float16], self.cls_name)
         _check_input_dtype(hx[0].dtype, "hx[0]", [mstype.float32, mstype.float16], self.cls_name)
         _check_input_dtype(hx[1].dtype, "hx[1]", [mstype.float32, mstype.float16], self.cls_name)
-        _check_batch_size_equal(x.shape[0], hx[0].shape[0], self.cls_name)
-        _check_batch_size_equal(x.shape[0], hx[1].shape[0], self.cls_name)
         return _lstm_cell(x, hx, self.weight_ih, self.weight_hh, self.bias_ih, self.bias_hh)
 
     def _check_construct_args(self, *inputs, **kwargs):
@@ -395,5 +385,4 @@ class GRUCell(RNNCellBase):
         _check_is_tensor('hx', hx, self.cls_name)
         _check_input_dtype(x.dtype, "x", [mstype.float32, mstype.float16], self.cls_name)
         _check_input_dtype(hx.dtype, "hx", [mstype.float32, mstype.float16], self.cls_name)
-        _check_batch_size_equal(x.shape[0], hx.shape[0], self.cls_name)
         return _gru_cell(x, hx, self.weight_ih, self.weight_hh, self.bias_ih, self.bias_hh)

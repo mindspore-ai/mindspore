@@ -33,6 +33,7 @@
 #include "external/ge/ge_api.h"
 #include "graph/tensor.h"
 #include "graph/types.h"
+#include "mindapi/base/format.h"
 
 namespace ge {
 class CustomOperator : public Operator {
@@ -214,12 +215,11 @@ struct GEEnumToStr {};
 class GEDataFormat {
  public:
   static std::string ConvertEnumToString(int64_t id) {
-    static const std::vector<std::string> data_formats = {"NCHW", "NHWC"};
-    if (id < 0 || id >= static_cast<int64_t>(data_formats.size())) {
+    const auto &enum_string = FormatEnumToString(static_cast<mindspore::Format>(id));
+    if (enum_string.empty()) {
       MS_LOG(EXCEPTION) << "Invalid data format " << id;
-      return "";
     }
-    return data_formats[id];
+    return enum_string;
   }
 };
 
@@ -238,7 +238,7 @@ class GEPadMod {
 class GEReduction {
  public:
   static std::string ConvertEnumToString(int64_t id) {
-    static const std::vector<std::string> reductions = {"none", "mean", "sum", "add"};
+    static const std::vector<std::string> reductions = {"sum", "mean", "none"};
     if (id < 0 || id >= static_cast<int64_t>(reductions.size())) {
       MS_LOG(EXCEPTION) << "Invalid reduction " << id;
       return "";

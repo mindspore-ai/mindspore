@@ -53,47 +53,132 @@ class PyBoostCastOperation : public CastBaseOperation {
     return t;
   }
 
-  // Implicit transform
-  template <typename... InputArgs>
-  auto DoImplicitCast(const FrontendOpRunInfoPtr &op_run_info, const std::tuple<InputArgs...> &input_args) const {
+  template <typename TupleInput>
+  std::optional<ValuePtr> VisitHelp(size_t i, const TupleInput &input_args, std::index_sequence<>) {
+    return std::get<0>(input_args);
+  }
+
+  template <typename TupleInput, size_t... I>
+  std::optional<ValuePtr> VisitHelp(size_t i, const TupleInput &input_args, std::index_sequence<I...>) {
+    constexpr size_t index = std::index_sequence<I...>::size() - 1;
+    return i == index ? std::get<index>(input_args) : VisitHelp(i, input_args, std::make_index_sequence<index>{});
+  }
+
+  template <typename TupleInput>
+  std::optional<ValuePtr> Visit(size_t i, const TupleInput &input_args) {
+    return VisitHelp(i, input_args, std::make_index_sequence<std::tuple_size<TupleInput>::value>{});
+  }
+
+  template <typename TupleInput>
+  void GetEachTypeMaxType(const FrontendOpRunInfoPtr &op_run_info, const std::vector<size_t> &same_type_index,
+                          const std::vector<SignatureEnumDType> &dtypes, const TupleInput &input_args,
+                          mindspore::HashMap<SignatureEnumDType, TypeId> *dst_type) {
     MS_EXCEPTION_IF_NULL(op_run_info);
-    mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> type_indexes;
+    constexpr size_t index_size = 2;
+    const auto &type = dtypes[same_type_index.front()];
+    if (type == SignatureEnumDType::kDTypeEmptyDefaultValue || same_type_index.size() < index_size) {
+      return;
+    }
+    int64_t priority = INT_MIN;
+    TypeId max_type = TypeId::kTypeUnknown;
+    bool has_scalar_float32 = false;
+    bool has_scalar_int64 = false;
+    bool has_tensor_int8 = false;
+    // Find the maximum priority of the same dtype
+    for (size_t index : same_type_index) {
+      const auto &optional_v = Visit(index, input_args);
+      if (!optional_v) {
+        continue;
+      }
+      auto v = optional_v.value();
+      if (v->template isa<tensor::Tensor>()) {
+        auto arg = v->template cast<tensor::TensorPtr>();
+        TypeId arg_type_id = arg->data_type();
+        auto type_priority = prim::type_map.find(arg_type_id);
+        if (type_priority == prim::type_map.end()) {
+          continue;
+        }
+        if (arg_type_id == kNumberTypeInt8) {
+          has_tensor_int8 = true;
+        }
+        int64_t cur_priority = type_priority->second;
+        if (op_run_info->source_type[index] != ops::OP_DTYPE::DT_BEGIN) {
+          cur_priority = cur_priority - kLowerPriority;
+          if (arg_type_id == kNumberTypeFloat32) {
+            has_scalar_float32 = true;
+          }
+          if (arg_type_id == kNumberTypeInt32 || arg_type_id == kNumberTypeInt64) {
+            has_scalar_int64 = true;
+          }
+        }
+        if (cur_priority > priority) {
+          max_type = type_priority->first;
+          priority = cur_priority;
+        }
+      } else if (v->template isa<FloatImm>()) {
+        has_scalar_float32 = true;
+      } else if ((!v->template isa<BoolImm>() && v->template isa<IntegerImm>())) {
+        has_scalar_int64 = true;
+      }
+    }
+
+    max_type = JudgeMaxType(max_type, has_scalar_float32, has_scalar_int64, has_tensor_int8);
+    MS_EXCEPTION_IF_NULL(dst_type);
+    (void)dst_type->emplace(std::make_pair(type, max_type));
+  }
+
+  template <size_t N, typename TupleInput>
+  std::enable_if_t<N == 1> GetDstTypeForEachType(const FrontendOpRunInfoPtr &op_run_info,
+                                                 const std::vector<std::vector<size_t>> &same_type_table,
+                                                 const std::vector<SignatureEnumDType> &dtypes,
+                                                 const TupleInput &input_args,
+                                                 mindspore::HashMap<SignatureEnumDType, TypeId> *dst_type) {
+    GetEachTypeMaxType(op_run_info, same_type_table[N - 1], dtypes, input_args, dst_type);
+  }
+
+  template <size_t N, typename TupleInput>
+  std::enable_if_t<N != 1> GetDstTypeForEachType(const FrontendOpRunInfoPtr &op_run_info,
+                                                 const std::vector<std::vector<size_t>> &same_type_table,
+                                                 const std::vector<SignatureEnumDType> &dtypes,
+                                                 const TupleInput &input_args,
+                                                 mindspore::HashMap<SignatureEnumDType, TypeId> *dst_type) {
+    GetEachTypeMaxType(op_run_info, same_type_table[N - 1], dtypes, input_args, dst_type);
+    GetDstTypeForEachType<N - 1>(op_run_info, same_type_table, dtypes, input_args, dst_type);
+  }
+
+  // Implicit transform
+  template <size_t N, typename... InputArgs>
+  auto DoImplicitCast(const FrontendOpRunInfoPtr &op_run_info, const std::vector<std::vector<size_t>> &same_type_table,
+                      const std::tuple<InputArgs...> &input_args) {
+    MS_EXCEPTION_IF_NULL(op_run_info);
     std::vector<SignatureEnumDType> dtypes;
+    mindspore::HashMap<SignatureEnumDType, TypeId> dst_type;
     const auto &it = implicit_cast_map_.find(op_run_info->base_op_run_info.op_name);
     if (it == implicit_cast_map_.end()) {
+      // Get current inputs signatures
       bool has_dtype_sig = GetSignatureType(op_run_info->signatures, &dtypes);
       if (!has_dtype_sig) {
         PrimSignature sig_value{has_dtype_sig, {}, {}};
         implicit_cast_map_[op_run_info->base_op_run_info.op_name] = sig_value;
         return input_args;
       }
-      auto sig_size = op_run_info->signatures.size();
-      if (sig_size > 0 && sig_size != sizeof...(InputArgs)) {
-        MS_EXCEPTION(ValueError) << op_run_info->base_op_run_info.op_name << " inputs size " << sizeof...(InputArgs)
-                                 << " does not match the requires "
-                                 << "signature size " << sig_size;
-      }
-      GetTypeIndex(dtypes, &type_indexes);
-      PrimSignature sig_value{has_dtype_sig, dtypes, type_indexes};
+      PrimSignature sig_value{has_dtype_sig, dtypes, {}};
       implicit_cast_map_[op_run_info->base_op_run_info.op_name] = sig_value;
     } else {
-      type_indexes = it->second.type_indexes;
       dtypes = it->second.dtypes;
     }
 
-    return SetImplicitCast(op_run_info, type_indexes, dtypes, input_args,
-                           std::make_index_sequence<sizeof...(InputArgs)>{});
+    GetDstTypeForEachType<N>(op_run_info, same_type_table, dtypes, input_args, &dst_type);
+    return SetImplicitCast(op_run_info, dst_type, dtypes, input_args, std::make_index_sequence<sizeof...(InputArgs)>{});
   }
 
  private:
-  template <typename Tuple, size_t... N>
+  template <typename TupleInput, size_t... N>
   auto SetImplicitCast(const FrontendOpRunInfoPtr &op_run_info,
-                       const mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> &type_indexes,
-                       const std::vector<SignatureEnumDType> &dtypes, const Tuple &input_args,
+                       const mindspore::HashMap<SignatureEnumDType, TypeId> &dst_type,
+                       const std::vector<SignatureEnumDType> &dtypes, const TupleInput &input_args,
                        std::index_sequence<N...>) const {
     MS_EXCEPTION_IF_NULL(op_run_info);
-    mindspore::HashMap<SignatureEnumDType, TypeId> dst_type;
-    GetDstType(op_run_info, type_indexes, &dst_type);
     return std::make_tuple(DoSignatureCast(op_run_info, dst_type, dtypes, N, std::get<N>(input_args))...);
   }
 

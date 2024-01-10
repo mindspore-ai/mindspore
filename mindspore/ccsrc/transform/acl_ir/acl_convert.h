@@ -73,15 +73,16 @@ struct MsInputInfo {
   // for dynamic input, it is the number of real inputs corresponding to `proto_index`; for normal input, it is const
   // value 1
   size_t folded_size;
+  // for dynamic input, it is offset of the first element of dynamic input in ge inputs; for normal input, it is the
+  // offset of the input in ge inputs
+  size_t ge_offset;
 };
-
-using SetInputFunc =
-  std::function<void(const MsInputInfo &ms_input_info, size_t ge_offset, const Ms2GeParamInfo &ge_input_info)>;
 
 class AclConverter {
  public:
   void ConvertToAclOpType(const std::string &prim_name);
   void ResizeAclOpInputs(const PrimitivePtr &prim);
+  void ConvertInputMsIndexToAclIndex(const PrimitivePtr &prim, const std::vector<KernelTensor *> &inputs);
   void ConvertToAclInput(const PrimitivePtr &prim, const std::vector<KernelTensor *> &inputs,
                          const std::vector<TensorParams> &input_params);
   void ConvertToAclOutput(const std::string &kernel_name, const std::vector<KernelTensor *> &outputs,
@@ -101,7 +102,6 @@ class AclConverter {
   void SetRunnerSpecialInfo();
 
   bool is_need_retrieve_output_shape() const { return is_need_retrieve_output_shape_; }
-  size_t GetDynInputSize() { return num_folded_inputs_; }
 
   std::string DebugString() const;
 
@@ -135,21 +135,22 @@ class AclConverter {
 
   // convert acl inputs for operator with at most one dynamic parameter, general case
   void ConvertInputsNormal(const PrimitivePtr &prim, const std::vector<KernelTensor *> &inputs,
-                           const GeAdapterInfoPtr &info, const SetInputFunc &convert_one_input);
+                           const GeAdapterInfoPtr &info);
 
   // convert acl inputs for operator with more than one dynamic parameters, rare case
   void ConvertInputsMutiDynParams(const PrimitivePtr &prim, const std::vector<KernelTensor *> &inputs,
-                                  const GeAdapterInfoPtr &info, const SetInputFunc &convert_one_input);
+                                  const GeAdapterInfoPtr &info);
 
   AclRunner runner_;
   AclInputToHost input_on_host_;
   std::vector<std::vector<uint8_t>> value_depend_cast_;
+  std::vector<std::vector<uint8_t>> attr_input_value_;
 
   std::vector<AclDumpString> input_str_;
   std::vector<AclDumpString> output_str_;
   std::map<std::string, std::string> attr_map_str_;
   // number of folded inputs of dynamic input, only used for op with only one dynamic input
-  size_t num_folded_inputs_ = 0;
+  std::pair<size_t, size_t> num_folded_inputs_{SIZE_MAX, 1};
   bool is_dynamic_ = false;
   AclPrecisionMode precision_mode_ = FORCE_FP32;
   bool is_need_retrieve_output_shape_ = false;
@@ -158,6 +159,7 @@ class AclConverter {
   // Map for recording [MindSpore op input proto index of dynamic input] to [its number of folded inputs]
   // NOTE: here the map MUST be an ordered map to sort the input indices ascendly.
   std::map<size_t, size_t> dyn_inputs_map_;
+  std::map<size_t, MsInputInfo> inputs_idx_convert_map_;
 };
 
 using AclConverterPtr = std::shared_ptr<AclConverter>;
@@ -176,17 +178,24 @@ class AttrHelper {
   void ConvertValueToDstType(const ValuePtr &value, const TypeId src_type);
 
   template <typename T>
-  void ConvertValueSequenceToList(const ValuePtr &value, std::vector<T> *array_list) const {
+  void ConvertValueSequenceToList(const ValuePtr &value, std::vector<T> *array_list,
+                                  ShapeVector *shape = nullptr) const {
     MS_EXCEPTION_IF_NULL(array_list);
     const auto &value_sequence = value->cast<ValueSequencePtr>()->value();
+    if (value_sequence.size() == 0) {
+      return;
+    }
     auto val = value_sequence[0];
     if (val->isa<Scalar>()) {
       auto list_value = GetValue<std::vector<T>>(value);
       array_list->insert(array_list->end(), list_value.begin(), list_value.end());
+      if (shape != nullptr) {
+        (void)shape->emplace_back(list_value.size());
+      }
     }
     if (val->isa<ValueSequence>()) {
       for (size_t i = 0; i < value_sequence.size(); i++) {
-        ConvertValueSequenceToList(value_sequence[i], array_list);
+        ConvertValueSequenceToList(value_sequence[i], array_list, shape);
       }
     }
   }
@@ -244,10 +253,13 @@ class AttrConverter : public AttrHelper<AttrConverter> {
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<std::vector<T>>> &, const ShapeVector &shape,
                     AclConverter *acl_converter) {
     std::vector<T> array_list;
-    ConvertValueSequenceToList(value, &array_list);
-    std::vector<std::vector<int64_t>> array_list_int64(shape[0], std::vector<int64_t>(shape[1], 0));
+    ShapeVector offset_shape;
+    ConvertValueSequenceToList(value, &array_list, &offset_shape);
+    std::vector<std::vector<int64_t>> array_list_int64(shape[0]);
+    size_t offset = 0;
     for (int64_t i = 0; i < shape[0]; ++i) {
-      array_list_int64[i].assign(array_list.begin() + i * shape[1], array_list.begin() + (i + 1) * shape[1]);
+      array_list_int64[i].assign(array_list.begin() + offset, array_list.begin() + offset + offset_shape[i]);
+      offset += offset_shape[i];
     }
     MS_EXCEPTION_IF_NULL(acl_converter);
     acl_converter->AclRunnerAddAttr(attr_name_, array_list_int64);
@@ -314,12 +326,17 @@ class ValueDependToInputConverter : public AttrHelper<ValueDependToInputConverte
 
 class AttrToInputConverter : public AttrHelper<AttrToInputConverter> {
  public:
-  const tensor::TensorPtr &GetTensor() const { return tensor_; }
+  const std::vector<uint8_t> GetData() const { return data_; }
 
   template <typename T>
   void ConvertValue(const ValuePtr &value, const AttrDeclType<T> &, TensorParams *) {
-    tensor_ = std::make_shared<tensor::Tensor>(GetValue<T>(value));
-    MS_EXCEPTION_IF_NULL(tensor_);
+    auto tensor = std::make_shared<tensor::Tensor>(GetValue<T>(value));
+    auto tensor_data_ptr = tensor->data_c();
+    auto size = static_cast<size_t>(tensor->data().nbytes());
+    data_.resize(size);
+    if (memcpy_s(data_.data(), size, tensor_data_ptr, size) != EOK) {
+      MS_LOG(EXCEPTION) << "memcpy of listlistint failed in attr convert to acl input.";
+    }
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::string> &, TensorParams *) {
@@ -333,17 +350,23 @@ class AttrToInputConverter : public AttrHelper<AttrToInputConverter> {
   void ConvertValue(const ValuePtr &value, const AttrDeclType<int64_t> &, TensorParams *param) {
     MS_EXCEPTION_IF_NULL(param);
     auto real_val = static_cast<int32_t>(GetValue<int64_t>(value));
-    tensor_ = std::make_shared<tensor::Tensor>(real_val);
+    data_.resize(sizeof(int32_t));
+    int32_t *data_ptr = reinterpret_cast<int32_t *>(data_.data());
+    MS_EXCEPTION_IF_NULL(data_ptr);
+    data_ptr[0] = static_cast<int32_t>(real_val);
     param->data_type = TypeId::kNumberTypeInt32;
-    MS_EXCEPTION_IF_NULL(tensor_);
   }
 
   template <typename T>
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<T>> &, TensorParams *) {
     std::vector<T> array_list;
     ConvertValueSequenceToList(value, &array_list);
-    tensor_ = std::make_shared<tensor::Tensor>(array_list);
-    MS_EXCEPTION_IF_NULL(tensor_);
+    data_.resize(array_list.size() * sizeof(T));
+    T *data_ptr = reinterpret_cast<T *>(data_.data());
+    MS_EXCEPTION_IF_NULL(data_ptr);
+    for (size_t i = 0; i < array_list.size(); ++i) {
+      data_ptr[i] = static_cast<T>(array_list[i]);
+    }
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<::ge::DataType>> &, TensorParams *) {
@@ -362,24 +385,26 @@ class AttrToInputConverter : public AttrHelper<AttrToInputConverter> {
     MS_EXCEPTION_IF_NULL(param);
     std::vector<uint8_t> array_list;
     ConvertValueSequenceToList(value, &array_list);
-    std::vector<int32_t> array_list_int32;
-    (void)std::transform(array_list.begin(), array_list.end(), std::back_inserter(array_list_int32),
-                         [](const uint8_t val) { return static_cast<int32_t>(val); });
-    tensor_ = std::make_shared<tensor::Tensor>(array_list_int32);
+    data_.resize(array_list.size() * sizeof(int32_t));
+    int32_t *data_ptr = reinterpret_cast<int32_t *>(data_.data());
+    MS_EXCEPTION_IF_NULL(data_ptr);
+    for (size_t i = 0; i < array_list.size(); ++i) {
+      data_ptr[i] = static_cast<int32_t>(array_list[i]);
+    }
     param->data_type = TypeId::kNumberTypeInt32;
-    MS_EXCEPTION_IF_NULL(tensor_);
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<int64_t>> &, TensorParams *param) {
     MS_EXCEPTION_IF_NULL(param);
     std::vector<int64_t> array_list;
     ConvertValueSequenceToList(value, &array_list);
-    std::vector<int32_t> array_list_int32;
-    (void)std::transform(array_list.begin(), array_list.end(), std::back_inserter(array_list_int32),
-                         [](const int64_t val) { return LongToInt(val); });
-    tensor_ = std::make_shared<tensor::Tensor>(array_list_int32);
+    data_.resize(array_list.size() * sizeof(int32_t));
+    int32_t *data_ptr = reinterpret_cast<int32_t *>(data_.data());
+    MS_EXCEPTION_IF_NULL(data_ptr);
+    for (size_t i = 0; i < array_list.size(); ++i) {
+      data_ptr[i] = static_cast<int32_t>(array_list[i]);
+    }
     param->data_type = TypeId::kNumberTypeInt32;
-    MS_EXCEPTION_IF_NULL(tensor_);
   }
 
   template <typename T>
@@ -387,17 +412,15 @@ class AttrToInputConverter : public AttrHelper<AttrToInputConverter> {
                     TensorParams *) {
     std::vector<T> array_list;
     ConvertValueSequenceToList(value, &array_list);
-    tensor_ = std::make_shared<tensor::Tensor>(kNumberTypeInt64, shape);
-    MS_EXCEPTION_IF_NULL(tensor_);
-    auto data_ptr = tensor_->data_c();
+    data_.resize(array_list.size() * sizeof(T));
+    T *data_ptr = reinterpret_cast<T *>(data_.data());
     MS_EXCEPTION_IF_NULL(data_ptr);
-    auto size = static_cast<size_t>(tensor_->data().nbytes());
-    if (memcpy_s(data_ptr, size, array_list.data(), size) != EOK) {
-      MS_LOG(EXCEPTION) << "memcpy of listlistint failed in convert acl attr.";
+    for (size_t i = 0; i < array_list.size(); ++i) {
+      data_ptr[i] = static_cast<T>(array_list[i]);
     }
   }
 
-  tensor::TensorPtr tensor_;
+  std::vector<uint8_t> data_;
 };
 }  // namespace transform
 }  // namespace mindspore

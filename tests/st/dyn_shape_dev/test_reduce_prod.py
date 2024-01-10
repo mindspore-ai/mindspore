@@ -31,7 +31,7 @@ def reduce_prod_backward_func(x):
     return ops.grad(reduce_prod_forward_func, (0,))(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -57,7 +57,7 @@ def test_reduce_prod(mode):
     assert np.allclose(grad.asnumpy(), expect_grad, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

@@ -87,7 +87,7 @@ def test_ctc_greedy_deocder_float64():
     assert np.array_equal(output[2].asnumpy(), out_expect2)
     assert np.array_equal(output[3].asnumpy(), out_expect3)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 def test_ctc_greedy_deocder_float64_with_sequence_length_out_range():

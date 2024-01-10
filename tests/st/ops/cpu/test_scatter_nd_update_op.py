@@ -26,7 +26,7 @@ from mindspore.ops import operations as P
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
@@ -58,7 +58,7 @@ def test_op1(dtype):
                        np.array(expect, dtype=dtype))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float32, np.float64, np.int32, np.int64])
@@ -90,7 +90,7 @@ def test_op2(dtype):
                        np.array(expect, dtype=dtype))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float32, np.float64, np.int32, np.int64])
@@ -126,7 +126,7 @@ def test_op3(dtype):
     assert np.allclose(output.asnumpy(), np.array(expect, dtype=dtype))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
@@ -184,7 +184,7 @@ def test_op5(dtype):
         scatter_nd_update(indices, update)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatter_nd_update_dyn_shape():

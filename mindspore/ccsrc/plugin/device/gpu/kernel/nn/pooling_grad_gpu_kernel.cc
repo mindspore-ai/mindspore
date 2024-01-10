@@ -35,7 +35,6 @@ constexpr auto kMaxPool3DGrad = "MaxPool3DGrad";
 constexpr auto kAvgPoolGrad = "AvgPoolGrad";
 constexpr auto kAvgPool3DGrad = "AvgPool3DGrad";
 constexpr size_t kAvgPool3DGradKernelSizeIdx = 2;
-constexpr size_t NC_DIM_LEN = 2;
 
 // avgpoolgrad and maxpoolgrad input indexes
 constexpr size_t kGradIndex = 2;
@@ -82,11 +81,6 @@ bool PoolingGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
       ceil_mode_ = GetValue<bool>(primitive_->GetAttr(ops::kCeilMode));
       include_ = GetValue<bool>(primitive_->GetAttr(ops::kCountIncludePad));
     }
-  } else {
-    format_attr_ = static_cast<mindspore::Format>(inputs[kDataFormatIdx]->GetValueWithCheck<int64_t>());
-    pad_mode_ = static_cast<mindspore::PadMode>(inputs[kPadModeIdx]->GetValueWithCheck<int64_t>());
-    stride_me_ = inputs[kStridesIdx]->GetValueWithCheck<std::vector<int64_t>>();
-    window_me_ = inputs[kKernelSizeIdx]->GetValueWithCheck<std::vector<int64_t>>();
   }
   SetFirstInputIndex(inputs.size());
   cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[first_input_index_]->dtype_id()));
@@ -107,6 +101,21 @@ int PoolingGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
+  }
+  if (kernel_name_ == kAvgPoolGradOpName) {
+    format_attr_ = static_cast<mindspore::Format>(inputs[kDataFormatIdx]->GetValueWithCheck<int64_t>());
+    pad_mode_ = static_cast<mindspore::PadMode>(inputs[kPadModeIdx]->GetValueWithCheck<int64_t>());
+    stride_me_ = inputs[kStridesIdx]->GetValueWithCheck<std::vector<int64_t>>();
+    window_me_ = inputs[kKernelSizeIdx]->GetValueWithCheck<std::vector<int64_t>>();
+    // stride and kernel_size are unified into 2 dimensions after being processed by the arg_handler in yaml.
+    if (format_attr_ == Format::NCHW) {
+      stride_me_ = {1, 1, stride_me_[0], stride_me_[1]};
+      window_me_ = {1, 1, window_me_[0], window_me_[1]};
+    } else {
+      // NHWC:
+      stride_me_ = {1, stride_me_[0], stride_me_[1], 1};
+      window_me_ = {1, window_me_[0], window_me_[1], 1};
+    }
   }
   input_shape_ = inputs[first_input_index_]->GetShapeVector();
   output_shape_ = outputs[kIndex0]->GetShapeVector();
@@ -315,19 +324,21 @@ void PoolingGradGpuKernelMod::SetPad() {
                        [](const int64_t &value) { return static_cast<int>(value); });
   (void)std::transform(window_me_.begin(), window_me_.end(), std::back_inserter(window),
                        [](const int64_t &value) { return static_cast<int>(value); });
-  // After dyn-shape-dev modification, length of AvgPoolGrad's 'kernel_size' and 'strides' is 2. N, C dimension is not
-  // included.
-  size_t nc_offset = 0;
-  if (kernel_name_ != kAvgPoolGrad) {
-    nc_offset += NC_DIM_LEN;
+  const size_t kSizeLowerLimit = 4;
+  const size_t kIdxH = 2;
+  const size_t kIdxW = 3;
+  if (window.size() < kSizeLowerLimit) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'kernel_size' cannot be less than 4, but got "
+                      << window.size();
   }
-  size_t height_index = nc_offset;
-  size_t width_index = 1 + nc_offset;
-  int window_height = window[height_index];
-  int window_width = window[width_index];
-  int stride_h = stride[height_index];
-  int stride_w = stride[width_index];
-
+  int window_height = window[kIdxH];
+  int window_width = window[kIdxW];
+  if (stride.size() < kSizeLowerLimit) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'strides' cannot be less than 4, but got "
+                      << stride.size();
+  }
+  int stride_h = stride[kIdxH];
+  int stride_w = stride[kIdxW];
   if (format_attr_ == Format::NHWC) {
     const size_t kNHWCIdxH = 1;
     const size_t kNHWCIdxW = 2;

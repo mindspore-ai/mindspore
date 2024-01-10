@@ -753,7 +753,7 @@ TypePtr CheckAndConvertUtils::CheckTensorTypeSame(const std::map<std::string, Ty
       MS_EXCEPTION(TypeError) << buffer.str();
     }
   }
-  (void)_CheckTypeSame(types, prim_name, false);
+  (void)CheckTypeSame(types, prim_name, false);
   return CheckTensorSubClass(types.begin()->first, types.begin()->second, check_list, prim_name);
 }
 
@@ -1057,12 +1057,12 @@ TypePtr CheckAndConvertUtils::CheckSubClassWithMoreInfo(const std::string &type_
 TypePtr CheckAndConvertUtils::CheckScalarOrTensorTypesSame(const std::map<std::string, TypePtr> &args,
                                                            const std::set<TypePtr> &valid_values,
                                                            const std::string &prim_name, bool allow_mix) {
-  (void)_CheckTypeSame(args, prim_name, allow_mix);
+  (void)CheckTypeSame(args, prim_name, allow_mix);
   return CheckTensorSubClass(args.begin()->first, args.begin()->second, valid_values, prim_name, true);
 }
 
-TypePtr CheckAndConvertUtils::_CheckTypeSame(const std::map<std::string, TypePtr> &args, const std::string &prim_name,
-                                             const bool allow_mix) {
+TypePtr CheckAndConvertUtils::CheckTypeSame(const std::map<std::string, TypePtr> &args, const std::string &prim_name,
+                                            const bool allow_mix) {
   if (args.empty()) {
     MS_EXCEPTION(ArgumentError) << "Trying to use the function to check a empty types map!";
   }

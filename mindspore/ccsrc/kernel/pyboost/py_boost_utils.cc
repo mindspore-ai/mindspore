@@ -16,6 +16,7 @@
 
 #include "kernel/pyboost/py_boost_utils.h"
 #include <algorithm>
+#include <utility>
 #include <unordered_map>
 #include "kernel/common_utils.h"
 #include "kernel/kernel_mod_cache.h"
@@ -24,6 +25,9 @@
 #include "ops/op_def.h"
 #include "runtime/pynative/op_executor.h"
 #include "pybind_api/gil_scoped_long_running.h"
+#include "mindspore/ccsrc/plugin/device/cpu/kernel/cpu_kernel.h"
+#include "kernel/pyboost/ops/cast.h"
+#include "mindspore/core/ops/array_ops.h"
 
 namespace mindspore {
 namespace kernel {
@@ -129,7 +133,7 @@ device::DeviceAddressPtr PyBoostUtils::ContiguousByDeviceAddress(const device::D
   }
 
   auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-    nullptr, address_size, kOpFormat_DEFAULT, old_storage_info->data_type, old_storage_info->shape,
+    nullptr, address_size, Format::DEFAULT_FORMAT, old_storage_info->data_type, old_storage_info->shape,
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
   auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   new_device_address->set_device_shape(old_storage_info->shape);
@@ -185,8 +189,17 @@ AbstractBasePtr PyBoostUtils::InferByOpDef(const PrimitivePtr &prim, const std::
     output_abs = mindspore::abstract::MakeAbstract(shape, type);
     MS_LOG(DEBUG) << "Pynative Infer by OpDef, got abstract: " << output_abs->ToString();
     return output_abs;
+  } else {
+    const auto &infer_map = abstract::GetPrimitiveInferMapPtr();
+    const auto &iter = infer_map->find(prim);
+    if (iter != infer_map->end()) {
+      output_abs = iter->second.InferShapeAndType(nullptr, prim, input_abs);
+      MS_LOG(DEBUG) << "Pynative Infer by C++ PrimitiveInferMap, got abstract: " << output_abs->ToString();
+      return output_abs;
+    } else {
+      MS_LOG(EXCEPTION) << "Cannot found infer function for Op " << prim->name();
+    }
   }
-  MS_LOG(EXCEPTION) << "Cannot found infer function for Op " << prim->name();
 }
 
 tensor::TensorPtr PyBoostUtils::ContiguousTensor(const tensor::TensorPtr &input_tensor) {
@@ -215,11 +228,9 @@ DeviceContext *PyBoostUtils::CreateOrGetDeviceContextAndInit(const std::string &
 }
 
 void PyBoostUtils::DispatchRun(const std::shared_ptr<pynative::PyBoostDeviceTask> &task) {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  auto sync = context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
-  auto mode = context->get_param<int>(MS_CTX_EXECUTION_MODE);
-  if (sync || mode == mindspore::kGraphMode) {
+  static auto need_sync = runtime::OpExecutor::NeedSync();
+  if (need_sync) {
+    MS_LOG(INFO) << "PyBoost sync run device task";
     runtime::OpExecutor::GetInstance().WaitAll();
     task->Run();
   } else {
@@ -245,7 +256,12 @@ void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, const abstract
   const auto &device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
   MS_EXCEPTION_IF_NULL(device_address);
   (void)device_address_list->emplace_back(device_address);
-  (void)kernel_tensor_list->emplace_back(device_address->kernel_tensor().get());
+  const auto &kernel_tensor = device_address->kernel_tensor();
+  (void)kernel_tensor_list->emplace_back(kernel_tensor.get());
+  if (!kernel_tensor->host_info_exist()) {
+    kernel_tensor->SetHostInfo(std::make_shared<abstract::TensorShape>(tensor->shape()),
+                               std::make_shared<TensorType>(tensor->Dtype()), nullptr);
+  }
 }
 
 void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs,
@@ -255,20 +271,6 @@ void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, const abstract
   for (const auto &tensor : tensors) {
     // input_abs is not used in GetKernelTensor when value is TensorPtr.
     GetKernelTensor(device_context, input_abs, index, kernel_tensor_list, device_address_list, tensor);
-  }
-}
-
-void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs,
-                                   size_t index, std::vector<kernel::KernelTensor *> *kernel_tensor_list,
-                                   device::DeviceAddressPtrList *device_address_list,
-                                   const std::optional<tensor::TensorPtr> &tensor) {
-  if (tensor.has_value()) {
-    GetKernelTensor(device_context, input_abs, index, kernel_tensor_list, device_address_list, tensor.value());
-  } else {
-    MS_EXCEPTION_IF_NULL(kernel_tensor_list);
-    MS_EXCEPTION_IF_NULL(device_address_list);
-    (void)device_address_list->emplace_back(nullptr);
-    (void)kernel_tensor_list->emplace_back(nullptr);
   }
 }
 
@@ -282,9 +284,9 @@ device::DeviceAddressPtrList PyBoostUtils::CreateWorkSpaceDeviceAddress(const Ke
   const auto &workspace_sizes = kernel_mod->GetWorkspaceSizeList();
   device::DeviceAddressPtrList workspaces_address;
   for (const auto workspace_size : workspace_sizes) {
-    auto kernel_tensor = std::make_shared<KernelTensor>(nullptr, workspace_size, "", kTypeUnknown, ShapeVector(),
-                                                        device_context->device_context_key().device_name_,
-                                                        device_context->device_context_key().device_id_);
+    auto kernel_tensor = std::make_shared<KernelTensor>(
+      nullptr, workspace_size, Format::DEFAULT_FORMAT, kTypeUnknown, ShapeVector(),
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
     auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     MS_LOG(DEBUG) << "Create workspace for op: " << op_name << " addr: " << device_address;
     MS_EXCEPTION_IF_NULL(device_address);
@@ -307,6 +309,158 @@ device::DeviceAddressPtrList PyBoostUtils::CreateWorkSpaceDeviceAddress(const Ke
 PyboostKernelExtraFuncFactory &PyboostKernelExtraFuncFactory::GetInstance() {
   static PyboostKernelExtraFuncFactory instance;
   return instance;
+}
+
+void PyBoostUtils::LaunchKernel(const PrimitivePtr &primitive, device::DeviceContext *device_context,
+                                const AddressInfoPair &input_address_info, const AddressInfoPair &output_address_info,
+                                void *stream_ptr) {
+  const auto &real_name = primitive->name();
+  // KernelMod init
+  auto kernel_mod = PyBoostUtils::CreateKernelMod(primitive, real_name, device_context, input_address_info.first,
+                                                  output_address_info.first);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  // KernelMod resize
+  if (kernel_mod->Resize(input_address_info.first, output_address_info.first) == kernel::KRET_RESIZE_FAILED) {
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#CPU kernel op [" << real_name << "] resize failed.";
+  }
+  // Get workspace address
+  const auto &workspace_device_address =
+    PyBoostUtils::CreateWorkSpaceDeviceAddress(kernel_mod, device_context, primitive->name());
+  const auto &workspace_kernel_tensors = PyBoostUtils::GetKernelTensorFromAddress(workspace_device_address);
+  // Do kernel launch
+  if (!kernel_mod->Launch(input_address_info.first, workspace_kernel_tensors, output_address_info.first, stream_ptr)) {
+    MS_LOG(EXCEPTION) << "Launch kernel failed, name: " << real_name;
+  }
+  MS_LOG(DEBUG) << real_name << " Launch end";
+}
+
+TypeId GetTypeIdFromAbstractTensor(const AbstractBasePtr &abs_base) {
+  if (abs_base->isa<abstract::AbstractTensor>()) {
+    auto abs_tensor = std::dynamic_pointer_cast<abstract::AbstractTensor>(abs_base);
+    return abs_tensor->element()->BuildType()->type_id();
+  }
+  return abs_base->BuildType()->type_id();
+}
+
+std::vector<TypeId> GetTypeFromAbstractBase(const std::vector<AbstractBasePtr> &abs_vec) {
+  std::vector<TypeId> input_type;
+  for (auto &abs : abs_vec) {
+    (void)input_type.emplace_back(GetTypeIdFromAbstractTensor(abs));
+  }
+  return input_type;
+}
+
+std::vector<TypeId> GetTypeFromAbstractBase(const AbstractBasePtr &abs_base) {
+  if (abs_base->isa<abstract::AbstractTuple>()) {
+    auto abs_tuple = std::dynamic_pointer_cast<abstract::AbstractTuple>(abs_base);
+    std::vector<TypeId> input_type;
+    for (auto &abs : abs_tuple->elements()) {
+      (void)input_type.emplace_back(GetTypeIdFromAbstractTensor(abs));
+    }
+    return input_type;
+  } else {
+    const auto &type_id = GetTypeIdFromAbstractTensor(abs_base);
+    return {type_id};
+  }
+}
+
+bool InputDtypeMatch(TypeId input_attr, TypeId input_type) {
+  if (input_attr == input_type || kTypeUnknown == input_type) {
+    return true;
+  }
+  if (input_attr == kNumberTypeInt32 && (input_type == kNumberTypeInt16 || input_type == kNumberTypeInt64)) {
+    return true;
+  }
+  if (input_attr == kNumberTypeFloat32 && (input_type == kNumberTypeFloat16 || input_type == kNumberTypeFloat64)) {
+    return true;
+  }
+  return false;
+}
+
+bool IsObjectTypeWeaklyMatched(const std::vector<TypeId> &object_dtypes,
+                               const std::vector<DataType> &kernel_data_types) {
+  // only support CPU
+  for (size_t i = 0; i < object_dtypes.size(); i++) {
+    // For optional input, the real input object type can be a None.
+    if (!InputDtypeMatch(kernel_data_types[i].dtype, object_dtypes[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool IsObjectTypeStrictlyMatched(const std::vector<TypeId> &object_dtypes,
+                                 const std::vector<DataType> &kernel_data_types) {
+  if (object_dtypes.size() != kernel_data_types.size()) {
+    return false;
+  }
+
+  for (size_t i = 0; i < object_dtypes.size(); i++) {
+    // For optional input, the real input object type can be a None.
+    if (object_dtypes[i] != kernel_data_types[i].dtype) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+std::pair<bool, KernelAttr> PyBoostUtils::SelectKernel(const std::vector<AbstractBasePtr> &inputs_abs,
+                                                       const AbstractBasePtr &outputs_abs,
+                                                       DeviceContext *device_context, const std::string &op_name) {
+  // only support CPU
+  const auto &kernel_mod = device_context->GetKernelExecutor(false)->CreateKernelMod(op_name);
+  const auto &support_list = kernel_mod->GetOpSupport();
+  const auto &inputs_object_dtypes = GetTypeFromAbstractBase(inputs_abs);
+  const auto &output_object_dtypes = GetTypeFromAbstractBase(outputs_abs);
+  for (auto &cur_kernel_attr : support_list) {
+    auto data_pair = kernel::GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
+    const auto &[input_data_types, output_data_types] = kernel::GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
+    if (IsObjectTypeStrictlyMatched(inputs_object_dtypes, input_data_types) &&
+        IsObjectTypeStrictlyMatched(output_object_dtypes, output_data_types)) {
+      return std::make_pair(true, cur_kernel_attr);
+    }
+
+    if (IsObjectTypeWeaklyMatched(inputs_object_dtypes, input_data_types) &&
+        IsObjectTypeWeaklyMatched(output_object_dtypes, output_data_types)) {
+      return std::make_pair(false, cur_kernel_attr);
+    }
+  }
+  std::vector<std::string> inputs;
+  std::vector<std::string> outputs;
+  for (auto &input_type : inputs_object_dtypes) {
+    (void)inputs.emplace_back(TypeIdToString(input_type));
+  }
+  for (auto &output_type : output_object_dtypes) {
+    (void)outputs.emplace_back(TypeIdToString(output_type));
+  }
+  MS_LOG(EXCEPTION) << "Unsupported op [" << op_name << "] on CPU, input_type:" << inputs << " ,output_type:" << outputs
+                    << ". Please confirm whether the device target setting is correct, "
+                    << "or refer to 'mindspore.ops' at https://www.mindspore.cn to query the operator support list.";
+}
+
+tensor::TensorPtr PyBoostUtils::CastTensor(const tensor::TensorPtr &tensor, const TypeId &type_id,
+                                           const std::string &device_target) {
+  if (tensor->Dtype()->type_id() == type_id) {
+    return tensor;
+  }
+  const auto &cast_op = CREATE_PYBOOST_OP(Cast, device_target);
+  cast_op->set_primitive(prim::kPrimCast);
+  return cast_op->Call(tensor, TypeIdToType(type_id));
+}
+
+std::vector<tensor::TensorPtr> PyBoostUtils::CastTensor(const std::vector<tensor::TensorPtr> &tensors,
+                                                        const std::vector<TypeId> &type_id_list,
+                                                        const std::string &device_target) {
+  if (tensors.size() != type_id_list.size()) {
+    MS_LOG(EXCEPTION) << "before cast tensor output size is not equal after cast";
+  }
+  std::vector<tensor::TensorPtr> output_tensors;
+  for (size_t i = 0; i < tensors.size(); ++i) {
+    const auto &output = CastTensor(tensors[i], type_id_list[i], device_target);
+    (void)output_tensors.emplace_back(output);
+  }
+  return output_tensors;
 }
 }  // namespace pyboost
 }  // namespace kernel

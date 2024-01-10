@@ -229,7 +229,7 @@ Status GeneratorOp::operator()() {
         auto end = ProfilingTime::GetCurMilliSecond();
         if ((end - start) / num_parallel_workers_ > kGetItemTimeOutMilliSeconds) {
           MS_LOG(WARNING) << "Bad performance attention, it takes more than " +
-                               std::to_string(kGetItemTimeOutMilliSeconds) +
+                               std::to_string(kGetItemTimeOutMilliSeconds / 1000) +
                                " seconds to generator.__next__ new row, "
                                "which might cause `GetNext` timeout problem when sink_mode=True. You can increase the "
                                "parameter num_parallel_workers in GeneratorDataset / optimize the efficiency of "

@@ -103,8 +103,7 @@ def test_lack_partition_and_db():
     with pytest.raises(RuntimeError) as err:
         reader = FileReader('dummy.mindrecord')
         reader.close()
-    assert "can not be found. Please check whether the mindrecord file exists" \
-           " and do not rename the mindrecord file." in str(err.value)
+    assert "is not exists" in str(err.value)
 
 def test_lack_db():
     """
@@ -118,7 +117,7 @@ def test_lack_db():
     with pytest.raises(RuntimeError) as err:
         reader = FileReader(file_name)
         reader.close()
-    assert ".db exists and do not rename the mindrecord file and meta file." in str(err.value)
+    assert ".db is not exists" in str(err.value)
     remove_file(file_name)
 
 def test_lack_some_partition_and_db():
@@ -154,8 +153,7 @@ def test_lack_some_partition_first():
     with pytest.raises(RuntimeError) as err:
         reader = FileReader(file_name + "0")
         reader.close()
-    assert "can not be found. Please check whether the mindrecord file exists" \
-           " and do not rename the mindrecord file." in str(err.value)
+    assert "is not exists" in str(err.value)
     remove_file(file_name)
 
 def test_lack_some_partition_middle():
@@ -207,8 +205,7 @@ def test_mindpage_lack_some_partition():
     os.remove("{}".format(paths[0]))
     with pytest.raises(RuntimeError) as err:
         MindPage(file_name + "0")
-    assert "can not be found. Please check whether the mindrecord file exists" \
-           " and do not rename the mindrecord file." in str(err.value)
+    assert "is not exists" in str(err.value)
     remove_file(file_name)
 
 def test_lack_some_db():
@@ -238,10 +235,14 @@ def test_invalid_mindrecord():
     with open(file_name, 'w') as f:
         dummy = 's' * 100
         f.write(dummy)
+    with open(file_name + '.db', 'w') as f:
+        dummy = 's' * 100
+        f.write(dummy)
     with pytest.raises(RuntimeError) as err:
         FileReader(file_name)
     assert "Invalid file, the size of mindrecord file header is larger than the upper limit." in str(err.value)
     remove_file(file_name)
+    remove_file(file_name + '.db')
 
 def test_invalid_db():
     """
@@ -250,6 +251,7 @@ def test_invalid_db():
     Expectation: exception occur
     """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_file(file_name)
     create_cv_mindrecord(1, file_name)
     os.remove(file_name + ".db")
     with open(file_name + ".db", 'w') as f:
@@ -295,6 +297,7 @@ def test_read_after_close():
     Expectation: exception occur
     """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_file(file_name)
     create_cv_mindrecord(1, file_name)
     reader = FileReader(file_name)
     reader.close()
@@ -312,6 +315,7 @@ def test_file_read_after_read():
     Expectation: exception occur
     """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_file(file_name)
     create_cv_mindrecord(1, file_name)
     reader = FileReader(file_name)
     count = 0

@@ -21,6 +21,7 @@ import cv2
 from mindspore import log as logger
 from mindspore.mindrecord import FileReader
 from mindspore.mindrecord import MnistToMR
+from mindspore.mindrecord import set_enc_key, set_enc_mode, set_hash_mode
 
 MNIST_DIR = "../data/mindrecord/testMnistData"
 PARTITION_NUM = 4
@@ -91,6 +92,25 @@ def test_mnist_to_mindrecord(fixture_file):
     assert os.path.exists(file_name + "_test.mindrecord")
 
     read(file_name)
+
+def test_mnist_to_mindrecord_with_encrypt_and_hash(fixture_file):
+    """
+    Feature: MnistToMR
+    Description: test encrypt and hash check for MnistToMR
+    Expectation: SUCCESS
+    """
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    set_enc_key("tyuiop[]asdfghjk")
+    set_enc_mode("SM4-CBC")
+    set_hash_mode("sha3_256")
+    mnist_transformer = MnistToMR(MNIST_DIR, file_name)
+    mnist_transformer.transform()
+    assert os.path.exists(file_name + "_train.mindrecord")
+    assert os.path.exists(file_name + "_test.mindrecord")
+
+    read(file_name)
+    set_enc_key(None)
+    set_hash_mode(None)
 
 def test_mnist_to_mindrecord_compare_data(fixture_file):
     """test transform mnist dataset to mindrecord and compare data."""

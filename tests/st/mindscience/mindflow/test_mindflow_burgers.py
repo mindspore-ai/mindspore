@@ -29,14 +29,14 @@ np.random.seed(123456)
 
 
 class Net(nn.Cell):
-    def __init__(self, in_channels=2, hidden_channels=128, out_channels=1, act=nn.Tanh()):
+    def __init__(self, in_channels=2, hidden_channels=128, out_channels=1):
         super().__init__()
-        self.act = act
+        act = nn.Tanh()
         self.layers = nn.SequentialCell(
-            nn.Dense(in_channels, hidden_channels, activation=self.act),
-            nn.Dense(hidden_channels, hidden_channels, activation=self.act),
-            nn.Dense(hidden_channels, hidden_channels, activation=self.act),
-            nn.Dense(hidden_channels, hidden_channels, activation=self.act),
+            nn.Dense(in_channels, hidden_channels, activation=act),
+            nn.Dense(hidden_channels, hidden_channels, activation=act),
+            nn.Dense(hidden_channels, hidden_channels, activation=act),
+            nn.Dense(hidden_channels, hidden_channels, activation=act),
             nn.Dense(hidden_channels, out_channels)
         )
 
@@ -44,7 +44,7 @@ class Net(nn.Cell):
         return self.layers(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

@@ -19,10 +19,9 @@
 
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 #include <memory>
-#include <utility>
-
 #include "utils/hash_map.h"
 #include "abstract/abstract_value.h"
 #include "ir/primitive.h"
@@ -39,6 +38,9 @@ using PrimitivePyWeakPtr = std::weak_ptr<PrimitivePy>;
 
 class PrimitivePyAdapter;
 using PrimitivePyAdapterPtr = std::shared_ptr<PrimitivePyAdapter>;
+
+class PrimitiveFunctionAdapter;
+using PrimitiveFunctionAdapterPtr = std::shared_ptr<PrimitiveFunctionAdapter>;
 
 class PrimitivePy : public Primitive {
  public:
@@ -192,22 +194,20 @@ class OpPrimPyRegister {
 class PrimitiveFunctionAdapter {
  public:
   PrimitiveFunctionAdapter() = default;
+  virtual ~PrimitiveFunctionAdapter() = default;
   void set_attached_primitive_function(const PrimitivePtr &prim_func) { attached_primitive_function_ = prim_func; }
-  PrimitivePtr attached_primitive_function() { return attached_primitive_function_.lock(); }
-  virtual std::string name() { return py::str(attached_primitive_function_.lock()->name()).cast<std::string>(); }
-  py::object has_label(const std::string &label) {
-    return py::bool_(attached_primitive_function_.lock()->HasAttr(label));
-  }
+  PrimitivePtr attached_primitive_function() { return attached_primitive_function_; }
+  virtual std::string name() { return py::str(attached_primitive_function_->name()).cast<std::string>(); }
+  py::object has_label(const std::string &label) { return py::bool_(attached_primitive_function_->HasAttr(label)); }
   void set_label(const std::string &label, const py::object &value);
-  py::object get_label(const std::string &label) {
-    return ValueToPyData(attached_primitive_function_.lock()->GetAttr(label));
-  }
+  py::object get_label(const std::string &label) { return ValueToPyData(attached_primitive_function_->GetAttr(label)); }
+  py::object clone();
 
   const bool parse_info_ = true;
 
  private:
-  std::weak_ptr<Primitive> attached_primitive_function_;
+  std::string name_;
+  PrimitivePtr attached_primitive_function_;
 };
-using PrimitiveFunctionAdapterPtr = std::shared_ptr<PrimitiveFunctionAdapter>;
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_UTILS_PRIMITIVE_PY_H_

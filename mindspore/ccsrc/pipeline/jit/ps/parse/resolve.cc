@@ -554,6 +554,16 @@ AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::obj
     cur_func->ReplaceInOrder(get_attr_node, res_node);
     return res_node;
   }
+  constexpr auto tensors_queue_attr = "__is_tensors_queue__";
+  if (py::hasattr(obj, tensors_queue_attr) && IsValueNode<StringImm>(attr)) {
+    const auto &attr_name = GetValue<std::string>(GetValueNode(attr));
+    constexpr auto pop_attr = "pop";
+    if (attr_name == pop_attr) {
+      constexpr auto graph_pop_attr = "__graph_pop__";
+      MS_LOG(DEBUG) << "Replace " << pop_attr << " to " << graph_pop_attr << " for " << py::str(obj);
+      return CreateResolveNode(obj, NewValueNode(graph_pop_attr), get_attr_node);
+    }
+  }
   return CreateResolveNode(obj, attr, get_attr_node);
 }
 

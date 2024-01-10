@@ -72,9 +72,9 @@ void SymbolEngineImpl::BuildNodesSymbol(const FuncGraphPtr &fg, const AnfNodePtr
   auto node = fg->output();
   if (node->isa<ValueNode>()) {
     auto depend_status = depend_status_map_[node];
+    CloneAbstractIfSymbolExists(node);
     auto node_abs = node->abstract();
     MS_EXCEPTION_IF_NULL(node_abs);
-    CloneAbstractIfSymbolExists(node);
     if (depend_status.shape) {
       auto sym_shape = node_abs->GetShape()->BuildSymbolicShape();
       MS_LOG(DEBUG) << "Set shape for node: " << node->DebugString() << ". symbol: " << sym_shape->ToString();
@@ -303,9 +303,9 @@ void SymbolEngineImpl::BuildSubgraphImpl(const CNodePtr &cnode, const FuncGraphP
   auto param_num = sub_fg->parameters().size();
   MS_EXCEPTION_IF_CHECK_FAIL(param_num + begin_input_index == cnode->size(), "cnode and parameter size mismatch");
   for (size_t i = 0; i < param_num; i++) {
+    CloneAbstractIfSymbolExists(sub_fg->parameters()[i]);
     auto param_abs = sub_fg->parameters()[i]->abstract();
     MS_EXCEPTION_IF_NULL(param_abs);
-    CloneAbstractIfSymbolExists(sub_fg->parameters()[i]);
     auto input_abs = cnode->input(i + begin_input_index)->abstract();
     MS_EXCEPTION_IF_NULL(input_abs);
     param_abs->SetSymbolicShape(input_abs->GetSymbolicShape());

@@ -31,7 +31,7 @@ class Net(nn.Cell):
         return input_x.slice_scatter(src, self.dim, self.start, self.end, self.step)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

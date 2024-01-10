@@ -24,6 +24,7 @@ namespace mindspore {
 namespace ops {
 int64_t CalRealAixs(const int64_t &axis, const size_t &x_shape_size, const PrimitivePtr &primitive) {
   auto size = SizeToLong(x_shape_size);
+  size = size == 0 ? 1 : size;  // if x_shape_size is 0, the data is scaler.
   MS_CHECK_VALUE(axis >= -1 * size && axis < size, CheckAndConvertUtils::FormatCheckInRangeMsg(
                                                      "axis value", axis, kIncludeLeft, {-1 * size, size}, primitive));
   auto real_axis = axis < 0 ? axis + size : axis;
@@ -71,6 +72,9 @@ BaseShapePtr ReduceInferShape(const PrimitivePtr &primitive, const std::vector<A
 
   // If the axis has unknown value, the reduction position will be any of the input dimensions.
   if (!keep_dims) {
+    MS_CHECK_VALUE(x_shape.size() >= axis_array_opt->size(),
+                   CheckAndConvertUtils::FormatCheckInRangeMsg("axis size", axis_array_opt->size(), kIncludeLeft,
+                                                               {0, x_shape.size()}, primitive));
     return std::make_shared<abstract::Shape>(ShapeVector(x_shape.size() - axis_array_opt->size(), -1));
   }
   auto out_shape = ShapeVector(x_shape.size(), -1);

@@ -66,7 +66,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::Resize(const std::vector<Ke
     MS_LOG(EXCEPTION) << "Invalid batch size or class num input!";
   }
 
-  size_t type_size = GetTypeByte(inputs[0]->dtype());
+  size_t type_size = UnitSizeInBytes(inputs[0]->dtype_id());
   size_t tensor_size = std::accumulate(logits_shape.begin(), logits_shape.end(), type_size, std::multiplies<size_t>());
   (void)workspace_size_list_.emplace_back(tensor_size);
   return KRET_OK;

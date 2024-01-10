@@ -84,7 +84,7 @@ static const std::set<std::string> kVmapCPUWhiteList = {kUnsortedSegmentMinOpNam
                                                         kSparseSegmentMeanOpName};
 
 void GetOutputDtypes(const CNodePtr &kernel_node, std::vector<TypeId> *output_types) {
-  size_t output_num = AnfAlgo::GetOutputElementNum(kernel_node);
+  size_t output_num = kernel::GetOutputNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     TypeId dtype = common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index);
     (void)output_types->emplace_back(dtype);
@@ -99,7 +99,7 @@ void GetOutputDtypesForRealTuple(const CNodePtr &kernel_node, std::vector<TypeId
 }
 
 void GetOutputFormat(const CNodePtr &kernel_node, std::vector<std::string> *output_formats) {
-  size_t output_num = AnfAlgo::GetOutputElementNum(kernel_node);
+  size_t output_num = kernel::GetOutputNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     (void)output_formats->emplace_back(kOpFormat_DEFAULT);
   }
@@ -315,6 +315,9 @@ void SetKernelBuildInfoWithSelectedAttr(const CNodePtr &kernel_node, const kerne
     (void)input_types.emplace_back(selected_kernel_attr.GetInputAttr(index).dtype);
     (void)input_formats.emplace_back(selected_kernel_attr.GetInputAttr(index).format);
   }
+  MS_LOG(DEBUG) << "Set kernel build info: input format:" << input_formats << " input type:" << input_types
+                << " output format:" << output_formats << " output type:" << output_types
+                << " for kernel:" << kernel_node->fullname_with_scope();
   SetKernelBuildInfo(input_formats, input_types, output_formats, output_types, kernel_node.get());
   if (selected_kernel_attr.GetSkipCheck()) {
     auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
@@ -432,6 +435,7 @@ void UpdateDynamicKernelBuildInfo(const CNodePtr &kernel_node) {
       MS_EXCEPTION_IF_NULL(input_node);
       const std::vector<PrimitivePtr> need_handled_prims = {prim::kPrimMakeTuple, prim::kPrimTupleGetItem};
       auto real_input_node = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false, need_handled_prims).first;
+      MS_EXCEPTION_IF_NULL(real_input_node);
       if (real_input_node->abstract() != nullptr && real_input_node->abstract()->isa<abstract::AbstractSequence>() &&
           real_input_node->abstract()->cast<abstract::AbstractSequencePtr>()->dynamic_len()) {
         MS_LOG(INFO) << "Change kernel object type from:" << input_object_types[i]
@@ -596,14 +600,20 @@ kernel::KernelAttr FillNoneInKernelAttr(const CNodePtr &kernel_node, const std::
 }
 }  // namespace
 
-kernel::KernelAttr BuildKernelFromInput(const std::vector<TypeId> &inputs, const std::vector<TypeId> &outputs,
-                                        const kernel::KernelAttr &origin_attr) {
+kernel::KernelAttr BuildKernelAttrByKernel(const CNodePtr &cnode, const kernel::KernelAttr &origin_attr) {
+  MS_EXCEPTION_IF_NULL(cnode);
   kernel::KernelAttr attr = origin_attr;
-  for (auto in_dtype : inputs) {
-    (void)attr.AddInputAttr(in_dtype);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
+  for (size_t i = 0; i < input_num; ++i) {
+    auto dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, i);
+    (void)attr.AddInputAttr(dtype);
   }
-  for (auto out_dtype : outputs) {
-    (void)attr.AddOutputAttr(out_dtype);
+  size_t output_num = kernel::GetOutputNum(cnode);
+  for (size_t i = 0; i < output_num; ++i) {
+    TypeId dtype = common::AnfAlgo::GetOutputInferDataType(cnode, i);
+    auto object_type_ptr = common::AnfAlgo::GetOutputInferType(cnode, i);
+    MS_EXCEPTION_IF_NULL(object_type_ptr);
+    attr.AddOutputAttr(object_type_ptr->type_id(), dtype);
   }
   (void)attr.AddSkipCheckAttr(true);
   return attr;
@@ -633,8 +643,9 @@ bool SelectKernel(const CNodePtr &kernel_node, kernel::KernelAttr *selected_kern
     // If GetSkipCheck is true, that means we do not check the build info between input and registered.
     // Take the input attrs to build the kernel.
     if (kernel_attr.GetSkipCheck()) {
-      kernel_attr = BuildKernelFromInput(input_types, output_types, kernel_attr);
-      MS_LOG(DEBUG) << "Build kernel form input for " << common::AnfAlgo::GetCNodeName(kernel_node);
+      kernel_attr = BuildKernelAttrByKernel(kernel_node, kernel_attr);
+      MS_LOG(DEBUG) << "Build kernel form input for " << common::AnfAlgo::GetCNodeName(kernel_node)
+                    << kernel::FetchPrintInfoByKernelAttr(kernel_attr);
     }
 
     ExpandKernelAttrByDynamicSize(kernel_node, &kernel_attr, kernel_attrs[0].GetSkipCheck(), has_tuple_input);
@@ -733,13 +744,6 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
     if (op_name == "Cast" || !SelectKernel(kernel_node, &selected_kernel_attr, object_selected_kernel_attrs, false)) {
       return KernelNotSupportWarning(kernel_node, !kernel_attrs.empty());
     }
-  }
-
-  if (IsTupleNestedOutputKernelAttr(selected_kernel_attr)) {
-    return {kernel::KernelObjectTypeNotSupportWarning(kernel_node).first +
-              " Multiple tuple outputs is not supported for registered kernel attr: " +
-              kernel::FetchPrintInfoByKernelAttr(selected_kernel_attr),
-            TypeError};
   }
 
   // Print the selected attr info.

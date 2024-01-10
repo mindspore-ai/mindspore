@@ -105,6 +105,7 @@ cust_op_lists = [
     "lowerbound",
     "lusolve",
     "luunpackgrad",
+    "linearsumassignment",
     "maskedselectgrad",
     "matrixdeterminant",
     "matrixexp",
@@ -136,7 +137,6 @@ cust_op_lists = [
     "padv3",
     "padv3grad",
     "parameterizedtruncatednormal",
-    "pow",
     "qr",
     "raggedrange",
     "randompoisson",
@@ -196,7 +196,8 @@ cust_op_lists = [
     "environcreate",
     "environdestroyall",
     "environget",
-    "environset"
+    "environset",
+    "layernormgradgrad"
 ]
 
 
