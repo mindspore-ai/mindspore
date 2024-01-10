@@ -82,9 +82,9 @@ class BACKEND_EXPORT PyBoostUtils {
     return std::make_pair(kernel_tensor_list, device_address_list);
   }
 
-  static void PyboostRunOp(const PrimitivePtr &primitive, device::DeviceContext *device_context,
+  static void LaunchKernel(const PrimitivePtr &primitive, device::DeviceContext *device_context,
                            const AddressInfoPair &input_address_info, const AddressInfoPair &output_address_info,
-                           void *stream_ptr);
+                           void *stream_ptr = nullptr);
 
   static void GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs, size_t index,
                               std::vector<kernel::KernelTensor *> *kernel_tensor_list,
@@ -147,6 +147,15 @@ class BACKEND_EXPORT PyBoostUtils {
   static kernel::KernelModPtr CreateKernelMod(const PrimitivePtr &prim, const std::string &op_name,
                                               DeviceContext *device_context, const std::vector<KernelTensor *> &inputs,
                                               const std::vector<KernelTensor *> &outputs);
+  // return IsStrictlyMatched and KernelAttr
+  static std::pair<bool, KernelAttr> SelectKernel(const std::vector<AbstractBasePtr> &inputs_abs,
+                                                  const AbstractBasePtr &outputs_abs, DeviceContext *device_context,
+                                                  const std::string &op_name);
+  static tensor::TensorPtr CastTensor(const tensor::TensorPtr &tensor, const TypeId &type_id,
+                                      const std::string &device_target);
+  static std::vector<tensor::TensorPtr> CastTensor(const std::vector<tensor::TensorPtr> &tensors,
+                                                   const std::vector<TypeId> &type_id_list,
+                                                   const std::string &device_target);
 };
 
 template <typename T>
