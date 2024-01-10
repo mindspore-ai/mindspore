@@ -1190,6 +1190,11 @@ void ForwardExecutor::CreateInputAddressForViewOp(const tensor::TensorPtr &input
       DispatchAllocateMemTask(op_run_info, input_tensor, input_idx, false);
     }
   } else {
+    backend_queue_->Wait();
+    if (input_tensor->device_address() != nullptr) {
+      input_tensor->device_address()->set_is_view(true);
+      return;
+    }
     // Sync address_future is nullptr
     CreateDeviceAddressForViewInput(op_run_info, input_tensor, input_idx, false);
   }
