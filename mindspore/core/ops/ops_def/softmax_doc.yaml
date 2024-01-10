@@ -20,6 +20,7 @@ softmax:
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
             >>> logits = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
-            >>> output = ops.softmax_(logits)
+            >>> op = ops.Softmax()
+            >>> output = op(logits)
             >>> print(output)
             [0.01165623 0.03168492 0.08612854 0.23412167 0.6364086 ]
