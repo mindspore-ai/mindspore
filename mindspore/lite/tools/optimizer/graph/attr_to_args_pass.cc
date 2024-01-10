@@ -145,6 +145,10 @@ static const std::map<std::string, std::vector<string>> kAttrMapNeedAdjust = {
    {
      "axis",
    }},
+  {"Softmax",
+   {
+     "axis",
+   }},
 };
 
 int ConvertAttrToArgsForNode(const AnfNodePtr &node, const FuncGraphManagerPtr &manager) {
