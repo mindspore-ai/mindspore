@@ -32,6 +32,7 @@
 #include "mindapi/src/helper.h"
 #include "ops/op_utils.h"
 #include "ops/array_ops.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
@@ -56,6 +57,23 @@ std::string Broadcast::get_group() const {
   return GetValue<std::string>(value_ptr);
 }
 
+void CheckParallelValidTypes(const AbstractBasePtr x, const std::string &op_name) {
+  // The data type check is only migrated from the previous corresponding python code,
+  // and need further confirmation is required
+  const std::set<TypePtr> default_target_dtypes = {kInt8, kInt32, kFloat16, kFloat32};
+  const std::set<TypePtr> target_dtypes = common_valid_types_with_bool;
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  // This bad code is used for parallel check, it should be removed as soon as possible!!!
+  // The same bad checks are in parallel communication ops, such as AllReduce.
+  auto is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+  if (!is_ascend) {
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x->GetType(), target_dtypes, op_name);
+  } else {
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x->GetType(), default_target_dtypes, op_name);
+  }
+}
+
 class MIND_API BroadcastInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
@@ -73,6 +91,15 @@ class MIND_API BroadcastInfer : public abstract::OpInferBase {
     CheckArgsSize(op_name, input_args, 1);
     auto x = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTuple);
     MS_EXCEPTION_IF_NULL(x);
+    if (!CheckAndConvertUtils::IsTuple(x)) {
+      MS_EXCEPTION(TypeError) << "For Broadcast, the 'input_x' must be a tuple, but got " << x->GetType()->ToString();
+    }
+    if (x->isa<abstract::AbstractTuple>()) {
+      auto tuple_abs = x->cast<abstract::AbstractTuplePtr>();
+      for (const auto &ele : tuple_abs->elements()) {
+        CheckParallelValidTypes(ele, op_name);
+      }
+    }
     return x->GetType()->Clone();
   }
 };
