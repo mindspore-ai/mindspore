@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SOFTMAX_H_
-#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SOFTMAX_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SOFTMAX_BACKWARD_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SOFTMAX_BACKWARD_H_
 
 #include <vector>
 #include <set>
@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-class MIND_API SoftmaxFuncImpl : public OpFuncImpl {
+class MIND_API SoftmaxBackwardFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 
@@ -34,4 +34,4 @@ class MIND_API SoftmaxFuncImpl : public OpFuncImpl {
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SOFTMAX_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SOFTMAX_BACKWARD_H_

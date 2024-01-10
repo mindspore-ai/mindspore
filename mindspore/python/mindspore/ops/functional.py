@@ -115,6 +115,7 @@ shape_mul = _sequence_ops.shape_mul()
 
 tensor_operator_registry.register('tuple_to_tensor', _sequence_ops.TupleToTensor)
 tensor_operator_registry.register('add', add)
+tensor_operator_registry.register('softmax', softmax)
 tensor_operator_registry.register('addr', addr)
 tensor_operator_registry.register('addcdiv', addcdiv)
 tensor_operator_registry.register('addcmul', addcmul)

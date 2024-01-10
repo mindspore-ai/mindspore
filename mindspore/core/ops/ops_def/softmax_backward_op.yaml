@@ -1,13 +1,13 @@
-#operator softmax
-softmax:
+#operator softmax_backward
+softmax_backward:
     args:
-        logits:
+        dout:
             dtype: tensor
-        axis:
-            dtype: tuple[int]
+        out:
+            dtype: tensor
+        dim:
+            dtype: int
             default: -1
-            prim_init: True
-            type_cast: int
     returns:
         output:
             dtype: tensor
@@ -15,4 +15,3 @@ softmax:
         disable: True
     dispatch:
         enable: True
-        Ascend: SoftmaxAscend

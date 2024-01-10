@@ -2273,6 +2273,8 @@ def hypot(x, other):
     '''
     return F.hypot(x, other)
 
+def softmax(input, axis):
+    return F.softmax(input, axis)
 
 def soft_shrink(input, lambd=0.5):
     """Apply the soft shrink function for a tensor. Calculates the output according to the input elements."""

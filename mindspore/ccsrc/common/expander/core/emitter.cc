@@ -220,7 +220,8 @@ NodePtr Emitter::Transpose(const NodePtr &node, const NodePtr &perm) {
   MS_EXCEPTION_IF_NULL(perm);
   auto [success, perm_list] = GetIntList(perm);
   if (!success) {
-    return Emit(kTransposeOpName, {node, perm});
+    auto tuple_perm = TensorToTuple(perm);
+    return Emit(kTransposeOpName, {node, tuple_perm});
   }
   // perm like [0, 1, 2, 3] does not need transpose.
   auto n = SizeToLong(perm_list.size());
