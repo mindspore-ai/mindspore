@@ -101,8 +101,8 @@ AnfNodePtr GetNodeAfterTypeConversion(const AnfNodePtr &node, const ops::OpInput
   return fg->NewCNodeInOrder({NewValueNode(convert_fg), node, NewValueNode(OpDtypeToInt(op_arg.arg_dtype_))});
 }
 
-AnfNodePtr GetNodeAfterArgHandler(const AnfNodePtr &node, const ops::OpInputArg &op_arg, const AbstractBasePtr &abs,
-                                  const FuncGraphPtr &fg) {
+AnfNodePtr GetNodeAfterArgHandler(const AnfNodePtr &node, const std::string &op_name, const ops::OpInputArg &op_arg,
+                                  const AbstractBasePtr &abs, const FuncGraphPtr &fg) {
   if (op_arg.arg_handler_.empty()) {
     return node;
   }
@@ -113,12 +113,14 @@ AnfNodePtr GetNodeAfterArgHandler(const AnfNodePtr &node, const ops::OpInputArg 
   if (arg_handler_func->isa<Primitive>()) {
     auto arg_handler_fg = dyn_cast<Primitive>(arg_handler_func);
     MS_EXCEPTION_IF_NULL(arg_handler_fg);
-    return fg->NewCNodeInOrder({NewValueNode(arg_handler_fg), node});
+    return fg->NewCNodeInOrder(
+      {NewValueNode(arg_handler_fg), NewValueNode(op_name), NewValueNode(op_arg.arg_name_), node});
   }
   auto arg_handler_fg = dyn_cast<FuncGraph>(arg_handler_func);
   MS_EXCEPTION_IF_NULL(arg_handler_fg);
   arg_handler_fg->set_manager(fg->manager());
-  return fg->NewCNodeInOrder({NewValueNode(arg_handler_fg), node});
+  return fg->NewCNodeInOrder(
+    {NewValueNode(arg_handler_fg), NewValueNode(op_name), NewValueNode(op_arg.arg_name_), node});
 }
 
 CNodePtr DoSignatureEvaluator::GenerateNewNodeBySignatures(const ValuePtr &func,
@@ -2577,12 +2579,12 @@ AnfNodePtr CheckAndConvertPrimitiveArgs(const PrimitivePtr &prim,
     // Process arg_handler.
     for (size_t i = 0; i < op_init_args.size(); i++) {
       auto abs_node = eval_func(init_nodes[i]);
-      init_nodes[i] = GetNodeAfterArgHandler(init_nodes[i], op_init_args[i], abs_node, fg);
+      init_nodes[i] = GetNodeAfterArgHandler(init_nodes[i], prim->name(), op_init_args[i], abs_node, fg);
     }
   }
   for (size_t i = 0; i < op_call_args.size(); i++) {
     auto abs_node = eval_func(call_nodes[i]);
-    call_nodes[i] = GetNodeAfterArgHandler(call_nodes[i], op_call_args[i], abs_node, fg);
+    call_nodes[i] = GetNodeAfterArgHandler(call_nodes[i], prim->name(), op_call_args[i], abs_node, fg);
   }
 
   // Check args type and do type conversion.

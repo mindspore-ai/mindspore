@@ -375,7 +375,6 @@ def process_args(class_name, args):
         dtype = get_dtype(arg_info)
         default_value = arg_info.get('default')
         has_default = 'default' in arg_info.keys()
-        is_optional = arg_info.get('default') == "None" if has_default else False
         is_prim_init = arg_info.get('prim_init')
         arg_handler = arg_info.get('arg_handler')
 
@@ -392,10 +391,9 @@ def process_args(class_name, args):
             # step1.3: get args set prim arg expression:
             assign_str = gen_utils.get_assign_str_by_type_it(class_name, arg_info, arg_name, dtype)
             if arg_handler:
-                assign_str = f'{arg_handler}({assign_str})'
-                if is_optional:
-                    assign_str += f' if {assign_str} != None else None'
-            assign_str = f"""        self._set_prim_arg("{arg_name}", {assign_str})"""
+                assign_str = f"""        self._set_prim_arg_with_handler("{arg_name}", {assign_str}, {arg_handler})"""
+            else:
+                assign_str = f"""        self._set_prim_arg("{arg_name}", {assign_str})"""
             args_assign.append(assign_str)
         # step2: get inputs infos:
         else:
@@ -451,6 +449,14 @@ def generate_py_primitive(yaml_data):
     """
     Generate python primitive
     """
+
+    def _generate_arg_handler(class_name, arg, arg_handler, is_optional):
+        """Generate arg_handler"""
+        arg_handler_call = f"""{arg_handler}('{class_name}', '{arg}', {arg})"""
+        if is_optional:
+            arg_handler_call = f"""{arg} if {arg} is None else {arg_handler_call}"""
+        return arg_handler_call
+
     gen_py = ''
     for operator_name, operator_data in yaml_data.items():
         if _auto_generate_class_disabled(operator_data):
@@ -504,7 +510,8 @@ class {class_name}(Primitive):\n"""
             args_with_handler = []
             for arg in inputs_args:
                 if arg in args_handlers:
-                    args_with_handler.append(f"""{args_handlers[arg]}({arg})""")
+                    is_optional = inputs_default.get(arg) == "None"
+                    args_with_handler.append(_generate_arg_handler(class_name, arg, args_handlers[arg], is_optional))
                 else:
                     args_with_handler.append(arg)
             primitive_code += ', '.join(args_with_handler)

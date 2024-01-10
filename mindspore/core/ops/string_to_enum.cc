@@ -28,6 +28,7 @@
 #include "ops/other_ops.h"
 #include "mindapi/src/helper.h"
 #include "ops/op_enum.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -46,16 +47,20 @@ class MIND_API StringToEnumInfer : public abstract::OpInferBase {
 
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
-    const auto &op_name = primitive->name();
-    (void)CheckAndConvertUtils::CheckInteger("StringToEnum infer", int64_t(input_args.size()), kEqual, 1, op_name);
-    MS_EXCEPTION_IF_NULL(input_args[0]);
-    const auto &input_value = input_args[0]->GetValue();
+    constexpr size_t input_num = 3;
+    MS_CHECK_VALUE(input_args.size() == input_num, CheckAndConvertUtils::FormatCheckIntegerMsg(
+                                                     "input num", input_args.size(), kEqual, input_num, primitive));
+    const auto &op_name = GetValue<std::string>(input_args[kInputIndex0]->GetValue());
+    const auto &arg_name = GetValue<std::string>(input_args[kInputIndex1]->GetValue());
+    MS_EXCEPTION_IF_NULL(input_args[kInputIndex2]);
+    const auto &input_value = input_args[kInputIndex2]->GetValue();
     MS_EXCEPTION_IF_NULL(input_value);
     if (!input_value->isa<StringImm>()) {
-      MS_LOG_EXCEPTION << "Currently, for " << op_name << ", input value must a string value";
+      MS_EXCEPTION(TypeError) << "For '" << op_name << "', the value of '" << arg_name
+                              << "' should be a string, but got " << input_value->ToString();
     }
     const auto &enum_str = GetValue<std::string>(input_value);
-    const auto enum_int = StringToEnumImpl(enum_str);
+    const auto enum_int = StringToEnumImpl(op_name, arg_name, enum_str);
     return MakeValue(enum_int);
   }
 };
