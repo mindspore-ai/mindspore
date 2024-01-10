@@ -50,11 +50,12 @@ ActorMgr::~ActorMgr() {
 }
 
 int ActorMgr::Initialize(bool use_inner_pool, size_t actor_thread_num, size_t max_thread_num, size_t actor_queue_size) {
-  bool expected = false;
-  if (!initialized_.compare_exchange_strong(expected, true)) {
+  std::unique_lock lock(actorsMutex);
+  if (initialized_) {
     MS_LOG(DEBUG) << "Actor Manager has been initialized before";
     return MINDRT_OK;
   }
+  initialized_ = true;
   // create inner thread pool only when specified use_inner_pool
   if (use_inner_pool) {
     ActorThreadPool::set_actor_queue_size(actor_queue_size);
