@@ -90,7 +90,9 @@ void CheckActuaSeqLength(AbstractBasePtr input_arg, int64_t input_s, int64_t dim
     auto val_ptr = input_arg->GetValue();
     if (val_ptr->isa<ValueSequence>()) {
       auto seq_length_vec = GetValue<std::vector<int64_t>>(val_ptr);
-      CheckAndConvertUtils::CheckInteger("size of " + input_name, seq_length_vec.size(), kEqual, dim_b, op_name);
+      if (dim_b != abstract::Shape::kShapeDimAny) {
+        CheckAndConvertUtils::CheckInteger("size of " + input_name, seq_length_vec.size(), kEqual, dim_b, op_name);
+      }
       if (input_s < 0) {
         return;
       }
@@ -100,7 +102,7 @@ void CheckActuaSeqLength(AbstractBasePtr input_arg, int64_t input_s, int64_t dim
     } else {
       auto actual_seq_length_shape = input_arg->GetShape()->GetShapeVector();
       CheckAndConvertUtils::CheckInteger("dim of " + input_name, actual_seq_length_shape.size(), kEqual, 1, op_name);
-      if (!IsDynamic(actual_seq_length_shape)) {
+      if (!IsDynamic(actual_seq_length_shape) && dim_b != abstract::Shape::kShapeDimAny) {
         CheckAndConvertUtils::CheckInteger("size of " + input_name, actual_seq_length_shape[0], kEqual, dim_b, op_name);
       }
     }
@@ -275,8 +277,8 @@ ShapeVector InferShapeBNSD(const PrimitivePtr &primitive, const std::vector<Abst
   return ShapeVector{dim_b, q_n, dim_q_s, dim_d};
 }
 
-abstract::TupleShapePtr PromptFlashAttentionInferShape(const PrimitivePtr &primitive,
-                                                       const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr PromptFlashAttentionInferShape(const PrimitivePtr &primitive,
+                                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kPromptFlashAttentionInputsNum, op_name);
@@ -303,13 +305,10 @@ abstract::TupleShapePtr PromptFlashAttentionInferShape(const PrimitivePtr &primi
   } else {
     attention_out_shape = {abstract::Shape::kShapeRankAny};
   }
-  abstract::BaseShapePtrList output_shape_ptr_list(kPromptFlashAttentionOutputsNum);
-  output_shape_ptr_list[kPromptFlashAttentionOutputAttentionOutIndex] =
-    std::make_shared<abstract::Shape>(attention_out_shape);
-  return std::make_shared<abstract::TupleShape>(output_shape_ptr_list);
+  return std::make_shared<abstract::Shape>(attention_out_shape);
 }
 
-TuplePtr PromptFlashAttentionInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr PromptFlashAttentionInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = prim->name();
   std::map<std::string, TypePtr> types;
   (void)types.emplace("query", input_args[kPromptFlashAttentionInputQueryIndex]->GetType());
@@ -317,9 +316,7 @@ TuplePtr PromptFlashAttentionInferType(const PrimitivePtr &prim, const std::vect
   (void)types.emplace("value", input_args[kPromptFlashAttentionInputValueIndex]->GetType());
   const std::set<TypePtr> valid_types = {kFloat16, kBFloat16};
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
-  TypePtrList output_type_ptr_list(kPromptFlashAttentionOutputsNum);
-  output_type_ptr_list[kPromptFlashAttentionOutputAttentionOutIndex] = type;
-  return std::make_shared<Tuple>(output_type_ptr_list);
+  return type;
 }
 }  // namespace
 
