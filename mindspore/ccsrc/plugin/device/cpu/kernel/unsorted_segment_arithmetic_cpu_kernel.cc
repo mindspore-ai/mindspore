@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -184,6 +184,8 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &UnsortedSegmentArithmet
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeInt32, double, int64_t)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt32, float, int)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeInt32, float, int64_t)},
+    {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeInt32, float16, int)},
+    {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeInt32, float16, int64_t)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int, int)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, int, int64_t)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeInt32, uint8_t, int)},
@@ -209,6 +211,8 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &UnsortedSegmentArithmet
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeInt64, double, int64_t)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt64, float, int)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeInt64, float, int64_t)},
+    {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeInt64, float16, int)},
+    {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeInt64, float16, int64_t)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt64, int, int)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int, int64_t)},
     {UNSORTED_SEGMENT_ARITH_CPU_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeInt64, uint8_t, int)},
