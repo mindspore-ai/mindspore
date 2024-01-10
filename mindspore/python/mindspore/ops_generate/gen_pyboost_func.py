@@ -134,18 +134,6 @@ def generate_create_input_address(need_malloc_tensors):
     return create_input_address
 
 
-def generate_tensor_cpu_cast_input_code(call_args_with_tensor, call_tensors):
-    cast_input = ""
-    real_call_args_tensor = call_args_with_tensor.copy()
-    for i, tensor in enumerate(call_args_with_tensor):
-        if real_call_args_tensor[i] in call_tensors:
-            cast_input += f'const auto &real_{tensor} = PyBoostUtils::CastTensor({tensor}, ' \
-                          f'select_kernel.input_type()[{i}].dtype, "CPU");\n'
-            real_call_args_tensor[i] = "real_" + real_call_args_tensor[i]
-
-    return cast_input, real_call_args_tensor
-
-
 def generate_pyboost_op_source_code(work_path, op_proto, template_paths, converter):
     """ generate_pyboost_op_source_code """
     # PyBoost source generate
@@ -207,8 +195,6 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
                                          input=converter.call_args[0])
             customize_include = "#include \"mindspore/core/ops/view/{}_strides_calc.h\"".format(proto_operator_name)
         else:
-            cast_input_code, real_call_args_tensor = generate_tensor_cpu_cast_input_code(
-                converter.call_args_with_tensor, call_args_tensor)
             if is_ascend and is_cube(op_proto.class_name):
                 get_cube_math_type = f'// cubeMathType: 0 - KEEP_DTYPE, 1 - ALLOW_FP32_DOWN_PRECISION\n'
                 get_cube_math_type += "auto cube_math_type = GetCubeMathType();"
@@ -216,7 +202,6 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
             aclnn_name = AclnnUtils.get_aclnn_interface(op_name_str)
             if converter.inplace_process != '':
                 real_output = ''
-            customize_include = '#include "ops/auto_generate/gen_ops_primitive.h"'
 
             call_impl = call_tpl.replace(aclnn_name=aclnn_name,
                                          call_args=converter.call_args,
@@ -233,10 +218,7 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
                                          real_call_args=converter.call_args_after_convert,
                                          return_values=converter.call_func_outputs,
                                          outputs=real_output,
-                                         inplace_process=converter.inplace_process,
-                                         cast_input_code=cast_input_code,
-                                         real_call_args_tensor=real_call_args_tensor,
-                                         class_name=op_proto.class_name)
+                                         inplace_process=converter.inplace_process)
 
         pyboost_op_source_str = src_tpl.replace(op_name=op_name_str,
                                                 operator_name=operator_name,
