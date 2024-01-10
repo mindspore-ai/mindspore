@@ -1657,7 +1657,6 @@ void PipelineTransformer::CutGraph() {
   world_group_ = GetWorldGroup();
   std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> send_recv_shared_param;
   if (is_train_) {
-    MS_LOG(ERROR) << "here";
     send_recv_shared_param = HandleSharedParameter();
   }
   auto graph = enable_share_cell_ ? shared_cell_ : main_graph_;
