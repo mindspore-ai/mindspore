@@ -103,6 +103,18 @@ def is_initialized(device_target):
 
     Return:
         Bool, whether the specified backend is initialized.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> ms.context.set_context(device_target="CPU")
+        >>> assert not ms.hal.is_initialized("CPU")
+        >>> a = Tensor(np.ones([1, 2]), ms.float32)
+        >>> b = Tensor(np.ones([1, 2]), ms.float32)
+        >>> c = ops.add(a, b).asnumpy()
+        >>> print(ms.hal.is_initialized("CPU"))
+        True
     """
     if device_target not in valid_targets:
         raise ValueError(f"For 'hal.is_initialized', the argument 'device_target' must be one of "
@@ -124,6 +136,12 @@ def is_available(device_target):
 
     Return:
         Bool, whether the specified backend is available for this MindSpore package.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> device_target = ms.context.get_context("device_target")
+        >>> print(ms.hal.is_available(device_target))
+        True
     """
     if device_target not in valid_targets:
         raise ValueError(f"For 'hal.is_available', the argument 'device_target' must be one of "
@@ -154,6 +172,11 @@ def device_count(device_target=None):
 
     Return:
         int.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> device_target = ms.context.get_context("device_target")
+        >>> print(ms.hal.device_count(device_target))
     """
     return hal_instances[device_target].device_count()
 
@@ -173,6 +196,11 @@ def get_device_capability(device_id, device_target=None):
     Return:
         tuple(int, int) for GPU.
         None for Ascend and CPU.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> device_target = ms.context.get_context("device_target")
+        >>> print(ms.hal.get_device_capability(0, device_target))
     """
     return hal_instances[device_target].get_device_capability(device_id)
 
@@ -201,6 +229,11 @@ def get_device_properties(device_id, device_target=None):
             size_t free_memory;
         }.
         None for CPU.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> device_target = ms.context.get_context("device_target")
+        >>> print(ms.hal.get_device_properties(0, device_target))
     """
     return hal_instances[device_target].get_device_properties(device_id)
 
@@ -220,6 +253,11 @@ def get_device_name(device_id, device_target=None):
 
     Return:
         str.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> device_target = ms.context.get_context("device_target")
+        >>> print(ms.hal.get_device_name(0, device_target))
     """
     return hal_instances[device_target].get_device_name(device_id)
 
@@ -238,5 +276,10 @@ def get_arch_list(device_target=None):
     Return:
         str for GPU.
         None for Ascend and CPU.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> device_target = ms.context.get_context("device_target")
+        >>> print(ms.hal.get_arch_list(device_target))
     """
     return hal_instances[device_target].get_arch_list()
