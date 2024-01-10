@@ -134,9 +134,9 @@ std::vector<KernelAttr> RemoveExpandedDimsCpuKernelMod::GetOpSupport() {
                              .AddInputAttr(kNumberTypeInt64)
                              .AddInputAttr(kNumberTypeInt64)
                              .AddInputAttr(kNumberTypeInt64)
+                             .AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64)
                              .AddOutputAttr(kNumberTypeInt64)
-                             .AddOutputAttr(kNumberTypeInt64)
-                             .AddOutputAttr(kNumberTypeInt64),
+                             .AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
                            &RemoveExpandedDimsCpuKernelMod::LaunchKernel};
                  });
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),

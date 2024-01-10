@@ -133,7 +133,7 @@ std::vector<KernelAttr> GetTupleIndexInfoCpuKernelMod::GetOpSupport() {
                        [](TypeId data_type_id) -> std::pair<KernelAttr, GetTupleIndexInfoFunc> {
                          auto kernel_attr = KernelAttr();
                          (void)kernel_attr.AddInputAttr(data_type_id);
-                         (void)kernel_attr.AddInputAttr(kNumberTypeInt64);
+                         (void)kernel_attr.AddInputAttr(kObjectTypeNumber, kNumberTypeInt64);
                          for (size_t i = 0; i < max_indices_num; i++) {
                            (void)kernel_attr.AddInputAttr(kNumberTypeInt64);
                          }
