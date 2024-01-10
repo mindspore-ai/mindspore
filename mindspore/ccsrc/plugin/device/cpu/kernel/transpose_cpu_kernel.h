@@ -88,6 +88,8 @@ class TransposeFwdCpuKernelMod : public NativeCpuKernelMod {
                                         const std::vector<KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, TypeKernel>> launch_list_;
   TypeKernel launch_func_;
+  bool is_scalar_tensor_{false};
+  bool is_empty_tensor_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -17,6 +17,7 @@
 #include <complex>
 #include <vector>
 #include <algorithm>
+#include "kernel/kernel.h"
 #include "nnacl/errorcode.h"
 #include "include/common/thread_pool.h"
 #include "plugin/device/cpu/kernel/transpose_cpu_kernel.h"
@@ -85,6 +86,16 @@ int TransposeFwdCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTransposeInputNum, kernel_name_);
 
   input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
+  if (input_shape_.empty()) {
+    is_scalar_tensor_ = true;
+    return KRET_OK;
+  }
+
+  if (std::any_of(input_shape_.begin(), input_shape_.end(), [](int64_t s) { return s == 0; })) {
+    is_empty_tensor_ = true;
+    return KRET_OK;
+  }
+
   output_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
   output_size_ = SizeOf(output_shape_);
   dtype_ = inputs[kIndex0]->dtype_id();
@@ -124,6 +135,20 @@ bool TransposeFwdCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> 
                                       const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTransposeInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTransposeOutputsNum, kernel_name_);
+  if (is_empty_tensor_) {
+    return true;
+  }
+
+  if (is_scalar_tensor_) {
+    const auto *input_addr = static_cast<unsigned char *>(inputs[0]->device_ptr());
+    auto *output_addr = static_cast<unsigned char *>(outputs[0]->device_ptr());
+    auto size = inputs[0]->size();
+    auto ret = memcpy_s(output_addr, size, input_addr, size);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << ret;
+    }
+    return true;
+  }
 
   if (!got_perm_value_) {
     if (perm_type_ == kNumberTypeInt32) {
