@@ -37,20 +37,8 @@ class BACKEND_EXPORT SplitModelFactory {
   mindspore::HashMap<std::string, RegFunc> creators;
 };
 
-class SplitModelRegister {
- public:
-  SplitModelRegister(const std::string &processor, const SplitModelFactory::RegFunc &func) : func_(func) {
-    SplitModelFactory::Instance().Register(processor, func);
-  }
-  ~SplitModelRegister() = default;
-
- protected:
-  // for pclint-plus
-  SplitModelFactory::RegFunc func_;
-};
-
-#define SPLIT_MODEL_REGISTER(processor, cls) \
-  const SplitModelRegister split_model(      \
-    processor, []() noexcept { return std::static_pointer_cast<SplitModel>(std::make_shared<cls>()); })
+#define SPLIT_MODEL_REGISTER(processor, cls)     \
+  inner::SplitModelFactory::Instance().Register( \
+    processor, []() noexcept { return std::static_pointer_cast<inner::SplitModel>(std::make_shared<cls>()); })
 }  // namespace mindspore::graphkernel::inner
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SPLIT_MODEL_SPLIT_MODEL_FACTORY_H_
