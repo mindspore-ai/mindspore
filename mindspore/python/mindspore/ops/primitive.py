@@ -94,6 +94,13 @@ class Primitive(Primitive_):
         self.attrs[name] = value
         return self
 
+    def _set_prim_arg_with_handler(self, name, value, arg_handler):
+        """
+        Set primitive initialization arguments and with arg_handler.
+        """
+        value = value if value is None else arg_handler(self.__class__.__name__, name, value)
+        return self._set_prim_arg(name, value)
+
     def set_device(self, device_target):
         """
         Set primitive been executed device.
