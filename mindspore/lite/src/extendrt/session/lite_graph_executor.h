@@ -41,6 +41,11 @@ class LiteGraphExecutor : public device::GraphExecutor {
     return false;
   }
 
+  virtual bool UpdateWeights(const std::vector<std::vector<std::shared_ptr<tensor::Tensor>>> &weights) {
+    MS_LOG(ERROR) << "UpdateWeights failed.";
+    return false;
+  }
+
   virtual bool RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
                         std::vector<tensor::Tensor> *outputs, const std::map<string, string> &compile_options) {
     (void)graph_id;

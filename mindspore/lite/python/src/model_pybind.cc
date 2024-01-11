@@ -99,6 +99,22 @@ std::string PyModelGetModelInfo(Model *model, const std::string &key) {
   return model->GetModelInfo(key);
 }
 
+Status PyModelUpdateWeights(Model *model, const std::vector<std::vector<MSTensorPtr>> &weights) {
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "Model object cannot be nullptr";
+    return {};
+  }
+  std::vector<std::vector<MSTensor>> new_weights;
+  for (auto &weight : weights) {
+    std::vector<MSTensor> new_weight = MSTensorPtrToMSTensor(weight);
+    new_weights.push_back(new_weight);
+  }
+  if (!model->UpdateWeights(new_weights).IsOk()) {
+    return kLiteError;
+  }
+  return kSuccess;
+}
+
 void ModelPyBind(const py::module &m) {
   (void)py::enum_<ModelType>(m, "ModelType")
     .value("kMindIR", ModelType::kMindIR)
@@ -160,6 +176,7 @@ void ModelPyBind(const py::module &m) {
     .def("update_config", &PyModelUpdateConfig)
     .def("resize", &PyModelResize)
     .def("predict", &PyModelPredict, py::call_guard<py::gil_scoped_release>())
+    .def("update_weights", &PyModelUpdateWeights, py::call_guard<py::gil_scoped_release>())
     .def("get_inputs", &PyModelGetInputs)
     .def("get_outputs", &PyModelGetOutputs)
     .def("get_model_info", &PyModelGetModelInfo)
@@ -189,6 +206,7 @@ std::vector<MSTensorPtr> PyModelParallelRunnerPredict(ModelParallelRunner *runne
   }
   return MSTensorToMSTensorPtr(outputs);
 }
+
 std::vector<MSTensorPtr> PyModelParallelRunnerGetInputs(ModelParallelRunner *runner) {
   if (runner == nullptr) {
     MS_LOG(ERROR) << "ModelParallelRunner object cannot be nullptr";
