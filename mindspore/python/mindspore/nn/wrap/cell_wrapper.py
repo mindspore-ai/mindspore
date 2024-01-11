@@ -673,7 +673,7 @@ class PipelineCell(Cell):
 
 class GradAccumulationCell(Cell):
     """
-    Wrap the network with Micro Batch.
+    Wrap the network with Micro Batch to enable the grad accumulation in semi_auto_parallel/auto_parallel mode.
 
     Args:
         network (Cell): The target network to wrap.
