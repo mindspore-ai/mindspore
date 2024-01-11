@@ -180,3 +180,38 @@ convert_class_to_function_map = {
     "class 'bool'":  M.bool_func,
     "class 'str'":   M.str_func
 }
+
+constant_fold_functions = [
+    abs,
+    all,
+    any,
+    float,
+    int,
+    bool,
+    len,
+    max,
+    min,
+    pow,
+    repr,
+    round,
+    str,
+    sum,
+    type,
+    T.add,
+    T.sub,
+    T.mul,
+    T.truediv,
+    T.floordiv,
+    T.mod,
+    T.pos,
+    T.neg,
+    T.not_,
+    T.and_,
+    T.or_,
+    T.xor,
+    T.lshift,
+    T.rshift,
+    T.matmul,
+    T.getitem,
+    T.invert
+]

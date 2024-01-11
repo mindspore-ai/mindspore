@@ -46,7 +46,7 @@ from mindspore._checkparam import is_stub_tensor
 from mindspore.ops._tracefunc import _PackSourceBuilder
 from .namespace import Namespace, CellNamespace, ClosureNamespace, ClassMemberNamespace
 from .resources import parse_object_map, ops_symbol_map, convert_object_map, convert_class_to_function_map, trope_ns
-from .resources import SYMBOL_UNDEFINE
+from .resources import SYMBOL_UNDEFINE, constant_fold_functions
 from ...common.api import _convert_python_data
 
 # Define resolve type
@@ -991,10 +991,15 @@ def get_const_len(obj):
 
 def get_method_info(obj):
     """Get the class name of the object from its method."""
-    if not inspect.ismethod(obj):
+    if not (inspect.ismethod(obj) or 'built-in method' in repr(obj) or 'method-wrapper' in repr(obj)):
         return None, None
     class_name_and_method_name = obj.__qualname__.split('.')
     return class_name_and_method_name[0], class_name_and_method_name[1]
+
+
+def can_constant_fold(obj):
+    """Check if the obj is the function can be constantly folded."""
+    return obj in constant_fold_functions
 
 
 class Parser:
