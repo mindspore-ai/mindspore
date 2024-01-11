@@ -60,7 +60,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                 names.append(all_reduce_name)
         return names
 
-    def init_timeline(self, op_summary, steptrace):
+    def init_timeline(self, op_summary, steptrace, pretty=False):
         """
         Init timeline metadata, adding all collected info.
 
@@ -70,6 +70,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         """
 
         logger.info('Initiating timeline...')
+        self._pretty = pretty
 
         timeline_list = op_summary[~np.isin(op_summary['Task Type'], ['AI_CPU', 'HCCL'])][
             ['Op Name', 'Stream ID', 'Task Start Time', 'Task Duration']]
