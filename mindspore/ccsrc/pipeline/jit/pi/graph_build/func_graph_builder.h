@@ -28,7 +28,7 @@ namespace mindspore {
 class FuncGraphBuilder {
  public:
   FuncGraphBuilder() : graph_(std::make_shared<FuncGraph>()) {}
-  virtual ~FuncGraphBuilder() { converted_py_obj_.clear(); }
+  virtual ~FuncGraphBuilder() { py_obj_to_node_.clear(); }
 
   /// \brief Add an input parameter to the graph.
   ///
@@ -74,12 +74,24 @@ class FuncGraphBuilder {
   /// \param[in] old_obj The old python object as key.
   void UpdatePyObject(const py::object &new_obj, const py::object &old_obj);
 
+  /// \brief Remove an output node of the graph.
+  ///
+  /// \param[in] output_obj The output python object.
+  void RemoveOutput(const py::object &output_obj);
+
   /// \brief Get the callable python primitive or function.
   ///
   /// \param[in] obj The method of a python object.
   ///
   /// \return Return the corresponding primitive of function of the func.
-  static Any ConvertMethod(const py::object &obj);
+  static py::object ConvertMethod(const py::object &obj);
+
+  /// \brief Get the callable python primitive, meta_func_graph or function.
+  ///
+  /// \param[in] obj The python object of a function.
+  ///
+  /// \return Return the corresponding primitive of function of the func.
+  static py::object ConvertFunction(const py::object &obj);
 
   /// \brief Check if the python object can be converted to a cnode directly.
   ///
@@ -87,6 +99,13 @@ class FuncGraphBuilder {
   ///
   /// \return Return true if the python object can be converted to a cnode directly.
   static bool CheckCallable(const py::object &obj);
+
+  /// \brief Check if the python object is a function which can be constantly folded.
+  ///
+  /// \param[in] obj A python object.
+  ///
+  /// \return Return true if the python object is a function which can be constantly folded.
+  static bool CanConstantFoldFunc(const py::object &obj);
 
   /// \brief Set the final outputs and get the graph.
   ///
@@ -96,8 +115,6 @@ class FuncGraphBuilder {
   static ValuePtr ConvertPyObjToValue(const py::object &obj);
 
   static AbstractBasePtr EvalValue(const ValuePtr &value, const AbstractBasePtrList &inputs_abs_list);
-
-  static py::object GetStandardMethod(const std::string &func_name);
 
  private:
   static py::object ConvertToPyObj(const AbstractBasePtr &abs);
@@ -117,7 +134,7 @@ class FuncGraphBuilder {
 
   FuncGraphPtr graph_{nullptr};
   bool has_set_output_{false};
-  HashMap<PyObject *, AnfNodePtr> converted_py_obj_;
+  HashMap<PyObject *, AnfNodePtr> py_obj_to_node_;
   std::vector<AnfNodePtr> output_nodes_;
 };
 }  // namespace mindspore
