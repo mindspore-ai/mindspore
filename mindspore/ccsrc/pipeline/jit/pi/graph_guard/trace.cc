@@ -16,9 +16,11 @@
 #include "pipeline/jit/pi/graph_guard/trace.h"
 #include <map>
 #include <vector>
+#include <set>
 #include <unordered_map>
 #include <functional>
 #include <utility>
+#include <regex>
 #include "pipeline/jit/pi/graph_guard/guard_utils.h"
 #include "pybind11/pybind11.h"
 #include "pybind_api/ir/primitive_py.h"
@@ -1522,6 +1524,21 @@ std::string OpTrace::ToString() {
   return ret;
 }
 
+std::string OpTrace::FormatString() {
+  std::stringstream s;
+  s << "operation" << Utils::GetOpName(opcode_) << " " << opargs_;
+  if (!name_.empty()) {
+    s << ",name: " << name_;
+  }
+  s << ":\n";
+  for (auto i : params_) {
+    s << "| " << std::regex_replace(i->FormatString(), std::regex("\n"), "\n| ") << "\n";
+  }
+  s.seekp(-1, s.cur);
+  s << " ";
+  return s.str();
+}
+
 bool OpTrace::operator==(const Trace &trace) {
   bool ret = false;
   if (Trace::operator==(trace)) {
@@ -1546,6 +1563,30 @@ static std::map<int, TraceType> kMapBytecodeToTraceType = {
   {LOAD_NAME, TraceType::Name},       {LOAD_CLASSDEREF, TraceType::ClassDeref},
 };
 
+static void DumpUnsupportedTraceInfo(PyObject *param) {
+  GRAPH_JIT_LOG_F("UnsupportedTraceInfo begin");
+  PyObject *f = param;
+  GRAPH_JIT_LOG_F(std::string(py::str(f)).c_str());
+  if (PyMethod_Check(f)) {
+    f = PyMethod_GET_FUNCTION(f);
+    GRAPH_JIT_LOG_F(std::string(py::str(f)).c_str());
+  }
+  if (PyFunction_Check(f)) {
+    _PyObject_Dump(f);
+    f = PyFunction_GET_CODE(f);
+  }
+  fflush(stdout);
+  fflush(stderr);
+  if (PyCode_Check(f)) {
+    Utils::DisFuncObject(reinterpret_cast<PyObject *>(f));
+  } else {
+    _PyObject_Dump(f);
+  }
+  fflush(stdout);
+  fflush(stderr);
+  GRAPH_JIT_LOG_F("UnsupportedTraceInfo end");
+}
+
 TracePtr CreateOpTraceByBytecode(PyObject *obj, int opcode, int opargs, TraceVector params, std::string module_name,
                                  std::string name, bool strict) {
   switch (opcode) {
@@ -1564,6 +1605,7 @@ TracePtr CreateOpTraceByBytecode(PyObject *obj, int opcode, int opargs, TraceVec
         if (strict) {
           return nullptr;
         } else {
+          DumpUnsupportedTraceInfo(params[0]->GetObject());
           return std::make_shared<UnsupportedTrace>(obj, params, opcode, opargs);
         }
       }
@@ -1681,6 +1723,17 @@ std::string UnsupportedTrace::ToString() {
   ret = ret + ")";
   strTrace_ = ret;
   return ret;
+}
+
+std::string UnsupportedTrace::FormatString() {
+  std::stringstream s;
+  s << "unsupported " << Utils::GetOpName(op_) << " " << arg_ << ":\n";
+  for (auto i : params_) {
+    s << "| " << std::regex_replace(i->FormatString(), std::regex("\n"), "\n| ") << "\n";
+  }
+  s.seekp(-1, s.cur);
+  s << " ";
+  return s.str();
 }
 
 TraceVector UnsupportedTrace::GetParams() { return params_; }

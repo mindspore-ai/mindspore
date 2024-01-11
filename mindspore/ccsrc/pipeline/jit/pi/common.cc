@@ -469,6 +469,10 @@ static bool GraphCapture(JitCompileResults *jcr) {
     return false;
   }
   if (g.GetGraph()->IsBreakAtLoopAfterUnrolling()) {
+    if (g.GetGraph()->GetStopTraceBci() != -1) {
+      GRAPH_JIT_LOG_F("break after loop unrolling, restart capture because of:\n%s\n",
+                      g.GetGraph()->DumpBreakInfo().c_str());
+    }
     // reset guard
     jcr->code->SetGuard(std::make_shared<OptGuard>());
     // disable loop unroll
