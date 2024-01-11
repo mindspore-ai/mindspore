@@ -254,7 +254,7 @@ Status BatchImpl::CheckStrategy(const Shape &param_strategy, const Shape &indice
     return FAILED;
   }
 
-  for (size_t i = 0; i < LongToSize(axis_); ++i) {
+  for (size_t i = 0; i < LongToSize(batch_dims_); ++i) {
     if (param_strategy[i] != indices_strategy[i]) {
       MS_LOG(ERROR)
         << name_
