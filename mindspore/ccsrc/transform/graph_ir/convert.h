@@ -90,11 +90,14 @@ class GeOpConvertor {
 
 DfGraphPtr GenExampleGraph(const std::string &name);
 
+using SetDynRefDataFunc = std::function<ShapeVector(const AnfNodePtr &, const ShapeVector &)>;
+
 class DfGraphConvertor {
  public:
   explicit DfGraphConvertor(const AnfGraphPtr &anf_graph, const std::string &phase_prefix,
                             RefModeFlag ref_mode_type = RefModeFlag::kRefModeEnv,
-                            const std::vector<std::string> &extra_variables_names = {})
+                            const std::vector<std::string> &extra_variables_names = {},
+                            SetDynRefDataFunc dyn_ref_data_func = nullptr)
       : anf_graph_(anf_graph), extra_variables_names_(extra_variables_names), phase_prefix_(phase_prefix) {
     MS_EXCEPTION_IF_NULL(anf_graph);
     if (ref_mode_type == RefModeFlag::kRefModeEnv) {
@@ -104,6 +107,7 @@ class DfGraphConvertor {
       ref_mode_ = (ref_mode_type != RefModeFlag::kRefModeNone);
       ref_mode_type_ = ref_mode_type;
     }
+    dyn_ref_data_func_ = dyn_ref_data_func;
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
     bool enable_ge = context->backend_policy() == "ge";
@@ -315,6 +319,7 @@ class DfGraphConvertor {
   std::shared_ptr<std::vector<DfGraph>> BuildBranchGraphs(const CNodePtr &cnode);
   void BuildInitDataGraph(const std::string &name);
   bool IsConstantOp(const OperatorPtr &op) const;
+  void JudgeParamTransType(const bool &node_will_update, bool *as_ref_data, bool *as_constant) const;
 
   std::shared_ptr<AnfGraph> anf_graph_{nullptr};
   FuncGraphManagerPtr graph_manager_{nullptr};
@@ -323,6 +328,7 @@ class DfGraphConvertor {
   std::vector<std::string> extra_variables_names_;
   std::vector<std::string> ref_data_names_;
   std::set<std::string> unsupported_ops_names_;
+  SetDynRefDataFunc dyn_ref_data_func_ = nullptr;
 
   std::shared_ptr<DfGraph> df_graph_{nullptr};
   std::shared_ptr<DfGraph> init_graph_{nullptr};
