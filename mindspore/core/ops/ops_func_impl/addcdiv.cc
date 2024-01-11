@@ -22,6 +22,7 @@
 #include "abstract/dshape.h"
 #include "ir/primitive.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -43,7 +44,22 @@ BaseShapePtr AddcdivFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr AddcdivFuncImpl::InferType(const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) const {
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt64};
+  const std::set<TypePtr> value_types = {kFloat16, kFloat32, kFloat64, kInt64, kInt32};
   auto input_type = input_args[kInputIndex0]->GetType();
+  auto tensor1_type = input_args[kInputIndex1]->GetType();
+  auto tensor2_type = input_args[kInputIndex2]->GetType();
+  auto value_type = input_args[kInputIndex3]->GetType();
+  const auto &op_name = primitive->name();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_type, valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("tensor1", tensor1_type, valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("tensor2", tensor2_type, valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("value", value_type, value_types, op_name);
+  std::map<std::string, TypePtr> types;
+  (void)types.emplace("input", input_type);
+  (void)types.emplace("tensor1", tensor1_type);
+  (void)types.emplace("tensor2", tensor2_type);
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
   return input_type->Clone();
 }
 }  // namespace ops
