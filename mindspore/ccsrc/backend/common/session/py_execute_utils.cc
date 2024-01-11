@@ -258,10 +258,6 @@ abstract::AbstractBasePtr GenerateAbstractFromPyObject(const py::object &obj) {
     return MakeValue(py::cast<float>(obj))->ToAbstract();
   }
 
-  static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
-  if (!allow_inplace_ops) {
-    return nullptr;
-  }
   // obj is tuple will add later.
   if (py::isinstance<py::list>(obj) || py::isinstance<py::tuple>(obj)) {
     ValuePtr converted_res = nullptr;
