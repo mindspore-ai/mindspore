@@ -23,7 +23,6 @@
 #include "mindapi/base/types.h"
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
-#include "mindspore/core/ops/op_name.h"
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePromptFlashAttention = "PromptFlashAttention";
@@ -32,8 +31,14 @@ enum PromptFlashAttentionInputIndex : size_t {
   kPromptFlashAttentionInputKeyIndex,
   kPromptFlashAttentionInputValueIndex,
   kPromptFlashAttentionInputAttnMaskIndex,
-  kPromptFlashAttentionInputPaddingMaskIndex,
   kPromptFlashAttentionInputActualSeqLengthsIndex,
+  kPromptFlashAttentionInputActualSeqLengthsKvIndex,
+  kPromptFlashAttentionInputPaddingMaskIndex,
+  kPromptFlashAttentionInputDeqScale1Index,
+  kPromptFlashAttentionInputQuantScale1Index,
+  kPromptFlashAttentionInputDeqScale2Index,
+  kPromptFlashAttentionInputQuantScale2Index,
+  kPromptFlashAttentionInputQuantOffset2Index,
   kPromptFlashAttentionInputsNum,
 };
 enum PromptFlashAttentionOutputIndex : size_t {
@@ -48,7 +53,9 @@ class MIND_API PromptFlashAttention : public BaseOperator {
   MIND_API_BASE_MEMBER(PromptFlashAttention);
   /// \brief Constructor.
   PromptFlashAttention() : BaseOperator(kNamePromptFlashAttention) {
-    InitIOName({"query", "key", "value", "attn_mask", "padding_mask", "actual_seq_lengths"}, {"attention_out"});
+    InitIOName({"query", "key", "value", "attn_mask", "actual_seq_lengths", "actual_seq_lengths_kv", "padding_mask",
+                "deq_scale1", "quant_scale1", "deq_scale2", "quant_scale2", "quant_offset2"},
+               {"attention_out"});
   }
 };
 AbstractBasePtr PromptFlashAttentionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
