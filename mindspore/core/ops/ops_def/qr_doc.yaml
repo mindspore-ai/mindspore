@@ -27,7 +27,10 @@ qr:
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
-            >>> input = Tensor(np.array([[20., -31, 7], [4, 270, -90], [-8, 17, -32]]), mstype.float32)
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor, ops
+            >>> import numpy as np
+            >>> input = Tensor(np.array([[20., -31, 7], [4, 270, -90], [-8, 17, -32]]), ms.float32)
             >>> Q, R = ops.qr_(input)
             >>> print(Q)
             [[-0.912871    0.16366126  0.37400758]

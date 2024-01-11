@@ -232,8 +232,7 @@ KernelGraphPtr OpCompiler::GenerateKernelGraph(const session::BackendOpRunInfoPt
     graph->set_attr(kAttrPackFunction, MakeValue(True));
   } else {
     graph = session_->ConstructSingleOpGraph(op_run_info, op_run_info->base_op_run_info.expanded_input_values,
-                                             op_run_info->base_op_run_info.input_masks,
-                                             device_context->GetDeviceType() == device::DeviceType::kAscend);
+                                             op_run_info->base_op_run_info.input_masks);
   }
   graph->set_is_from_single_op(true);
   return graph;

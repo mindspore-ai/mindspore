@@ -30,7 +30,7 @@
 
 namespace mindspore {
 namespace kernel {
-class SoftmaxGpuKernelMod : public NativeGpuKernelMod {
+class SoftmaxGpuKernelMod final : public NativeGpuKernelMod {
  public:
   SoftmaxGpuKernelMod() = default;
   ~SoftmaxGpuKernelMod() = default;
@@ -45,46 +45,25 @@ class SoftmaxGpuKernelMod : public NativeGpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override;
 
- protected:
+ private:
   template <typename T>
   bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
-                    const std::vector<KernelTensor *> &outputs, void *stream_ptr);
+                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) noexcept;
 
   using SoftmaxGpuLaunchFunc = std::function<bool(SoftmaxGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
                                                   const std::vector<kernel::KernelTensor *> &,
                                                   const std::vector<kernel::KernelTensor *> &, void *)>;
 
-  void ResetResource() {
-    // add new
-    axis_acc_ = 0;
+  void ResetResource() noexcept {
     outer_size_ = 1;
     inner_size_ = 1;
     shape_.clear();
-    is_log_softmax_ = false;
   }
 
- private:
-  // add new method
-  int64_t maybe_wrap_dim(int64_t dim, int64_t dim_post_expr) {
-    int64_t min = -dim_post_expr;
-    int64_t max = dim_post_expr - 1;
-    if (dim < min || dim > max) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'axis' must be in range [-" << dim_post_expr
-                        << ", " << dim_post_expr << "), but got " << dim;
-    }
-    if (dim < 0) dim += dim_post_expr;
-
-    return dim;
-  }
+  size_t GetAccAxis(KernelTensor *axis_kernel_tensor) const noexcept;
 
   bool is_null_input_{false};
   size_t shape_size_{0};
-  size_t batch_size_{0};
-  size_t height_{0};
-  size_t width_{0};
-  size_t type_id_size_{0};
-
-  // add new
   std::vector<size_t> shape_{};
   size_t axis_acc_{0};
   size_t outer_size_{1};

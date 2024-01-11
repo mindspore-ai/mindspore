@@ -20,7 +20,7 @@ from mindspore import Tensor, context, nn, jit
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -66,7 +66,7 @@ def test_fallback_all_list_hybrid():
     assert x and (not y) and (not z)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -89,7 +89,7 @@ def test_fallback_any_tensor():
     assert (not out1) and out2
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

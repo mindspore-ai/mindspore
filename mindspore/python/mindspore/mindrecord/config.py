@@ -700,12 +700,12 @@ def decrypt(filename, enc_key, dec_mode):
     real_path_filename = os.path.realpath(filename)
     parent_dir = os.path.dirname(real_path_filename)
     only_filename = os.path.basename(real_path_filename)
-    current_decrypt_dir = parent_dir + "/" + DECRYPT_DIRECTORY
+    current_decrypt_dir = os.path.join(parent_dir, DECRYPT_DIRECTORY)
     if not os.path.exists(current_decrypt_dir):
         os.mkdir(current_decrypt_dir)
         os.chmod(current_decrypt_dir, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
         logger.info("Create directory: {} to store decrypt mindrecord files."
-                    .format(parent_dir + "/" + DECRYPT_DIRECTORY))
+                    .format(os.path.join(parent_dir, DECRYPT_DIRECTORY)))
 
     if current_decrypt_dir not in DECRYPT_DIRECTORY_LIST:
         DECRYPT_DIRECTORY_LIST.append(current_decrypt_dir)
@@ -713,7 +713,7 @@ def decrypt(filename, enc_key, dec_mode):
                        "If you don't use it anymore after train / eval, you need to delete it manually.")
 
     # create new decrypt file
-    decrypt_filename = current_decrypt_dir + "/" + only_filename
+    decrypt_filename = os.path.join(current_decrypt_dir, only_filename)
     if os.path.isfile(decrypt_filename):
         # the file which had been decrypted early maybe update by user, so we remove the old decrypted one
         os.remove(decrypt_filename)

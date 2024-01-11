@@ -30,7 +30,7 @@ class NetGetItem(nn.Cell):
         return seq[idx]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_seq_tensor_getitem():
@@ -47,7 +47,7 @@ def test_seq_tensor_getitem():
     assert np.all(res.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_seq_tensor_getitem1():
@@ -64,7 +64,7 @@ def test_seq_tensor_getitem1():
     assert np.all(res.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_seq_getitem():
@@ -81,7 +81,7 @@ def test_seq_getitem():
     assert res == expect
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_seq_getitem_grad():
@@ -98,7 +98,7 @@ def test_seq_getitem_grad():
     print("grad out1 = ", grad_func(seq, index, dout))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -117,7 +117,7 @@ def test_seq_getitem_grad_tensor():
     print("grad out1 = ", grad_func(seq, index, dout))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

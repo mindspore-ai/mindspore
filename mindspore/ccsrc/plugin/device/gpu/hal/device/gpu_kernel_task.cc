@@ -83,11 +83,11 @@ bool GpuContiguousKernelTask::RunWithRet() {
   if (!input_storage_info->is_contiguous) {
     // No need shape_addr and strides_addr, when tensor is contiguous
     auto shape_kernel_tensor = std::make_shared<KernelTensor>(
-      nullptr, kMaxDim * sizeof(int64_t), "", kNumberTypeInt64, ShapeVector(),
+      nullptr, kMaxDim * sizeof(int64_t), Format::DEFAULT_FORMAT, kNumberTypeInt64, ShapeVector(),
       device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
 
     auto strides_kernel_tensor = std::make_shared<KernelTensor>(
-      nullptr, kMaxDim * sizeof(int64_t), "", kNumberTypeInt64, ShapeVector(),
+      nullptr, kMaxDim * sizeof(int64_t), Format::DEFAULT_FORMAT, kNumberTypeInt64, ShapeVector(),
       device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
 
     shape_dev_addr = device_context->device_res_manager_->CreateDeviceAddress(shape_kernel_tensor);

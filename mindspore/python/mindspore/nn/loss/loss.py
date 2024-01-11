@@ -1394,7 +1394,7 @@ class PoissonNLLLoss(LossBase):
         if self.full:
             target = self.maximum(target, self.eps)
             stirling_term = (target > 1) * ((target + 0.5) * target.log() - target + get_half_ln_2_pi())
-            loss += F.masked_fill(stirling_term, target <= 1, 0)
+            loss += F.masked_fill(stirling_term, target <= 1, F.cast(0, stirling_term.dtype))
         out = self.get_loss(loss)
         return out
 

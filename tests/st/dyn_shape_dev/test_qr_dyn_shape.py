@@ -57,3 +57,43 @@ def test_qr_forward(mode):
                                   [0., 0., -25.665514]]).astype(np.float32)
     assert np.allclose(output_q.asnumpy(), expect_output_q)
     assert np.allclose(output_r.asnumpy(), expect_output_r)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_qr_dynamic(mode):
+    """
+    Feature: qr ops.
+    Description: test ops qr dynamic tensor input.
+    Expectation: output right results.
+    """
+    context.set_context(mode=mode)
+    x_dyn = Tensor(shape=None, dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(ops.auto_generate.qr_)
+    test_cell.set_inputs(x_dyn, False)
+    x1 = Tensor(np.array([[1., 2., 3.],
+                          [4., 5., 6.]]).astype(np.float32))
+    output1_q, output1_r = test_cell(x1, False)
+    print("output1_q:\n", output1_q)
+    print("output1_r:\n", output1_r)
+    expect_output1_q = np.asarray([[-0.24253559, -0.97014254],
+                                   [-0.97014254, 0.24253553]]).astype(np.float32)
+    expect_output1_r = np.asarray([[-4.1231055, -5.3357835, -6.548462],
+                                   [0., -0.72760725, -1.455214]]).astype(np.float32)
+    assert np.allclose(output1_q.asnumpy(), expect_output1_q)
+    assert np.allclose(output1_r.asnumpy(), expect_output1_r)
+    x2 = Tensor(np.array([[1., 2.],
+                          [3., 4.]]).astype(np.float32))
+    output2_q, output2_r = test_cell(x2, False)
+    print("output2_q:\n", output2_q)
+    print("output2_r:\n", output2_r)
+    expect_output2_q = np.asarray([[-0.3162278, -0.9486833],
+                                   [-0.9486833, 0.31622773]]).astype(np.float32)
+    expect_output2_r = np.asarray([[-3.1622777, -4.4271884],
+                                   [0., -0.63245535]]).astype(np.float32)
+    assert np.allclose(output2_q.asnumpy(), expect_output2_q)
+    assert np.allclose(output2_r.asnumpy(), expect_output2_r)

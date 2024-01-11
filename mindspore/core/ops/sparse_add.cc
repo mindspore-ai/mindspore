@@ -80,8 +80,8 @@ inline TypePtr GetTensorTypeElement(const AbstractBasePtr &x) {
   return x_type->element();
 }
 
-abstract::TupleShapePtr SparseAddInferShape(const PrimitivePtr &primitive,
-                                            const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr SparseAddFrontendInferShape(const PrimitivePtr &primitive,
+                                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string op_name = primitive->name();
 
@@ -123,6 +123,53 @@ abstract::TupleShapePtr SparseAddInferShape(const PrimitivePtr &primitive,
 
   ShapeVector out_indices_shape{-1, 2};
   ShapeVector out_value_shape{-1};
+  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
+    std::make_shared<abstract::Shape>(out_indices_shape), std::make_shared<abstract::Shape>(out_value_shape),
+    std::make_shared<abstract::Shape>(a_shape_shape)});
+}
+
+abstract::TupleShapePtr SparseAddInferShape(const PrimitivePtr &primitive,
+                                            const std::vector<AbstractBasePtr> &input_args) {
+  MS_LOG(WARNING) << "input args:" << mindspore::ToString(input_args);
+  MS_EXCEPTION_IF_NULL(primitive);
+  const std::string op_name = primitive->name();
+
+  auto a_indices_shape = input_args[kInputIndex0]->GetShape()->GetShapeVector();
+  auto a_values_shape = input_args[kInputIndex1]->GetShape()->GetShapeVector();
+  auto a_shape_shape = input_args[kInputIndex2]->GetShape()->GetShapeVector();
+  auto b_indices_shape = input_args[kInputIndex3]->GetShape()->GetShapeVector();
+  auto b_values_shape = input_args[kInputIndex4]->GetShape()->GetShapeVector();
+  auto b_shape_shape = input_args[kInputIndex5]->GetShape()->GetShapeVector();
+  auto thresh_shape = input_args[kInputIndex6]->GetShape()->GetShapeVector();
+
+  // Check indices of a and b
+  // 2-D indices
+  constexpr size_t kIndicesShape = 2;
+  CheckSparseAddShape(a_indices_shape.size(), kIndicesShape, "x1_indices", op_name, false);
+  CheckSparseAddShape(b_indices_shape.size(), kIndicesShape, "x2_indices", op_name, false);
+  // 1-D values
+  auto a_values_shape_dyn_rank = IsDynamicRank(a_values_shape);
+  auto b_values_shape_dyn_rank = IsDynamicRank(b_values_shape);
+  CheckSparseAddShape(a_values_shape.size(), 1, "x1_values", op_name, a_values_shape_dyn_rank);
+  CheckSparseAddShape(b_values_shape.size(), 1, "x2_values", op_name, b_values_shape_dyn_rank);
+  // 1-D shape
+  auto a_shape_shape_dyn_rank = IsDynamicRank(a_shape_shape);
+  auto b_shape_shape_dyn_rank = IsDynamicRank(b_shape_shape);
+  CheckSparseAddShape(a_shape_shape.size(), 1, "x1_shape", op_name, a_shape_shape_dyn_rank);
+  CheckSparseAddShape(b_shape_shape.size(), 1, "x2_shape", op_name, b_shape_shape_dyn_rank);
+  // 0-D shape
+  auto thresh_shape_dyn_rank = IsDynamicRank(thresh_shape);
+  CheckSparseAddShape(thresh_shape.size(), 0, "thresh", op_name, thresh_shape_dyn_rank);
+  // Check same nnz
+  if (!a_values_shape_dyn_rank && a_indices_shape[0] >= 0 && a_values_shape[0] >= 0) {
+    CheckSparseAddNNZ(a_indices_shape[0], a_values_shape[0], "x1_indices", "x1_values", op_name);
+  }
+  if (!b_values_shape_dyn_rank && b_indices_shape[0] >= 0 && b_values_shape[0] >= 0) {
+    CheckSparseAddNNZ(b_indices_shape[0], b_values_shape[0], "x2_indices", "x2_values", op_name);
+  }
+
+  ShapeVector out_indices_shape{a_indices_shape[0] + b_indices_shape[0], 2};
+  ShapeVector out_value_shape{a_values_shape[0] + b_values_shape[0]};
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
     std::make_shared<abstract::Shape>(out_indices_shape), std::make_shared<abstract::Shape>(out_value_shape),
     std::make_shared<abstract::Shape>(a_shape_shape)});
@@ -183,7 +230,7 @@ TuplePtr SparseAddInferType(const PrimitivePtr &primitive, const std::vector<Abs
 
 AbstractBasePtr SparseAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<abstract::AbstractBasePtr> &input_args) {
-  auto tuple_shapes = SparseAddInferShape(primitive, input_args);
+  auto tuple_shapes = SparseAddFrontendInferShape(primitive, input_args);
   auto tuple_types = SparseAddInferType(primitive, input_args);
   return abstract::MakeAbstract(tuple_shapes, tuple_types);
 }

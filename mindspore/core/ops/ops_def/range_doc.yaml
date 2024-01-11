@@ -31,8 +31,7 @@ range:
             ``GPU`` ``CPU``
 
         Examples:
-            >>> from mindspore import Tensor, ops
-            >>> from mindspore import dtype as mstype
+            >>> from mindspore import ops
             >>> start = 0
             >>> end = 10
             >>> step = 4

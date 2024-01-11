@@ -23,7 +23,7 @@ from PIL import Image
 
 import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
-from mindspore.mindrecord import FileWriter, SUCCESS
+from mindspore.mindrecord import FileWriter
 
 def add_and_remove_cv_file(mindrecord):
     """add/remove cv file"""
@@ -62,7 +62,7 @@ def write_read_mindrecord(mindrecord):
     if data:
         writer.write_raw_data(data)
 
-    assert writer.commit() == SUCCESS
+    writer.commit()
 
     if not os.path.exists(mindrecord):
         raise "generator mindrecord file failed"

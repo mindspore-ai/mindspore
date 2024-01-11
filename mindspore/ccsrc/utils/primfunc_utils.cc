@@ -41,6 +41,7 @@ std::string EnumToString(OP_DTYPE dtype) {
     {OP_DTYPE::DT_LIST_TENSOR, "list of tensor"},
     {OP_DTYPE::DT_LIST_STR, "list of string"},
     {OP_DTYPE::DT_LIST_ANY, "list of Any"},
+    {OP_DTYPE::DT_TYPE, "mstype"},
   };
 
   auto it = kEnumToStringMap.find(dtype);
@@ -158,6 +159,33 @@ bool ValidateArgsType(const AbstractBasePtr &abs_arg, OP_DTYPE type_arg) {
   return false;
 }
 
+static inline std::string GetRealTypeByHandler(const std::string &type, const std::string &handler) {
+  if (handler.empty()) {
+    return type;
+  }
+  static const std::unordered_map<std::string, std::string> handler_to_src_type{{"dtype_to_type_id", "mindspore.dtype"},
+                                                                                {"str_to_enum", "string"}};
+  const auto iter = handler_to_src_type.find(handler);
+  return iter != handler_to_src_type.end() ? iter->second : type;
+}
+
+static inline std::string GetRealInputType(const ops::OpInputArg &op_arg) {
+  return GetRealTypeByHandler(EnumToString(op_arg.arg_dtype_), op_arg.arg_handler_);
+}
+
+static inline std::vector<std::string> GetRealTypes(const std::vector<std::string> &op_type_list,
+                                                    const std::vector<OpInputArg> &input_args) {
+  if (input_args.size() != op_type_list.size()) {
+    MS_LOG_EXCEPTION << "size of input_args and op_type_list should be equal, but got " << input_args.size() << " vs "
+                     << op_type_list.size();
+  }
+  std::vector<std::string> real_types(op_type_list.size());
+  for (size_t i = 0; i < op_type_list.size(); ++i) {
+    real_types[i] = GetRealTypeByHandler(op_type_list[i], input_args[i].arg_handler_);
+  }
+  return real_types;
+}
+
 std::string BuildOpErrorMsg(const OpDefPtr &op_def, const std::vector<std::string> &op_type_list) {
   std::stringstream init_arg_ss;
   std::stringstream input_arg_ss;
@@ -167,13 +195,13 @@ std::string BuildOpErrorMsg(const OpDefPtr &op_def, const std::vector<std::strin
       for (const auto &dtype : op_arg.cast_dtype_) {
         init_arg_ss << EnumToString(dtype) << ", ";
       }
-      init_arg_ss << EnumToString(op_arg.arg_dtype_) << ">, ";
+      init_arg_ss << GetRealInputType(op_arg) << ">, ";
     } else {
       input_arg_ss << op_arg.arg_name_ << "=<";
       for (const auto &dtype : op_arg.cast_dtype_) {
         input_arg_ss << EnumToString(dtype) << ", ";
       }
-      input_arg_ss << EnumToString(op_arg.arg_dtype_) << ">, ";
+      input_arg_ss << GetRealInputType(op_arg) << ">, ";
     }
   }
 
@@ -187,12 +215,13 @@ std::string BuildOpErrorMsg(const OpDefPtr &op_def, const std::vector<std::strin
 
   std::stringstream real_init_arg_ss;
   std::stringstream real_input_arg_ss;
-  for (size_t i = 0; i < op_type_list.size(); i++) {
+  auto real_op_type_list = GetRealTypes(op_type_list, op_def->args_);
+  for (size_t i = 0; i < real_op_type_list.size(); i++) {
     const auto &op_arg = op_def->args_[i];
     if (op_arg.as_init_arg_) {
-      real_init_arg_ss << op_arg.arg_name_ << "=" << op_type_list[i] << ", ";
+      real_init_arg_ss << op_arg.arg_name_ << "=" << real_op_type_list[i] << ", ";
     } else {
-      real_input_arg_ss << op_arg.arg_name_ << "=" << op_type_list[i] << ", ";
+      real_input_arg_ss << op_arg.arg_name_ << "=" << real_op_type_list[i] << ", ";
     }
   }
   auto real_init_arg_str = real_init_arg_ss.str();

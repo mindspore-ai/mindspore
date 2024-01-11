@@ -49,7 +49,7 @@ def test_return_interpret_object():
     assert np.all(output[2] == np.array([1, 2, 3, 4]))
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -91,7 +91,7 @@ def test_str_format_in_variable_scene():
     assert output == "[2], [1]"
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -132,7 +132,7 @@ def test_in_with_none():
     assert foo()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -239,7 +239,7 @@ def test_compress_with_mutable_input():
     assert (foo(Tensor([1])) == [1, 3, 4]).all()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -287,7 +287,7 @@ def test_unpack_interpret_node():
     assert ret == 10
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -338,7 +338,7 @@ def test_np_ix_with_variable():
     assert (ret == [[0], [1], [2], [3], [4]]).all()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

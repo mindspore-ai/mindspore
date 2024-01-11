@@ -173,7 +173,7 @@ def test_dynamic_setitem_int_number():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -213,7 +213,7 @@ def test_dynamic_setitem_int_sequence():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -233,7 +233,7 @@ def test_dynamic_setitem_tensor_number():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -254,7 +254,7 @@ def test_dynamic_setitem_tensor_tensor():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -276,7 +276,7 @@ def test_dynamic_setitem_tensor_sequence():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -297,7 +297,7 @@ def test_dynamic_setitem_none_number():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -319,7 +319,7 @@ def test_dynamic_setitem_none_tensor():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -340,7 +340,7 @@ def test_dynamic_setitem_none_sequence():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -404,7 +404,7 @@ def test_dynamic_setitem_ellipsis_sequence():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -425,7 +425,7 @@ def test_dynamic_setitem_bool_number():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -447,7 +447,7 @@ def test_dynamic_setitem_bool_tensor():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -468,7 +468,7 @@ def test_dynamic_setitem_bool_sequence():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -487,7 +487,7 @@ def test_dynamic_setitem_list_number():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -507,7 +507,7 @@ def test_dynamic_setitem_list_tensor():
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

@@ -226,43 +226,6 @@ AbstractBasePtr InferImplRowTensorAdd(const AnalysisEnginePtr &, const Primitive
   return args_abs_list[0];
 }
 
-AbstractBasePtr InferImplAllSwap(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const AbstractBasePtrList &args_abs_list) {
-  const std::string op_name = primitive->name();
-  constexpr auto all_swap_input_size = 3;
-  CheckArgsSize(op_name, args_abs_list, all_swap_input_size);
-  auto tensor_in = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
-  MS_EXCEPTION_IF_NULL(tensor_in);
-  MS_EXCEPTION_IF_NULL(tensor_in->shape());
-  auto tensor_in_shape = tensor_in->shape()->shape();
-
-  auto send_size = CheckArg<AbstractTensor>(op_name, args_abs_list, 1);
-  MS_EXCEPTION_IF_NULL(send_size);
-  auto recv_size = CheckArg<AbstractTensor>(op_name, args_abs_list, 2);
-  MS_EXCEPTION_IF_NULL(recv_size);
-
-  // Get the content of the recv size
-  auto recv_size_value_ptr = recv_size->BuildValue();
-  MS_EXCEPTION_IF_NULL(recv_size_value_ptr);
-  auto recv_size_tensor = recv_size_value_ptr->cast<tensor::TensorPtr>();
-  MS_EXCEPTION_IF_NULL(recv_size_tensor);
-  auto data_pos = static_cast<int64_t *>(recv_size_tensor->data_c());
-  MS_EXCEPTION_IF_NULL(data_pos);
-  int64_t infer_max_size = 0;
-  for (size_t i = 0; i < recv_size_tensor->DataSize(); ++i) {
-    infer_max_size += *(data_pos + i);
-  }
-
-  ShapeVector tensor_out_shape = {Shape::kShapeDimAny, tensor_in_shape[1]};
-  ShapeVector max_shape = {infer_max_size / tensor_in_shape[1], tensor_in_shape[1]};
-  auto tensor_out =
-    std::make_shared<AbstractTensor>(tensor_in->element(), std::make_shared<Shape>(tensor_out_shape, max_shape));
-
-  AbstractTensorPtr ret =
-    std::make_shared<AbstractTensor>(tensor_out->element(), std::make_shared<Shape>(tensor_out_shape, max_shape));
-  return ret;
-}
-
 AbstractBasePtr InferImplAllReduce(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const AbstractBasePtrList &args_abs_list) {
   const std::string op_name = primitive->name();

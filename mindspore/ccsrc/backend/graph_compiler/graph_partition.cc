@@ -739,10 +739,9 @@ void ProcessCloseFollowing(const FuncGraphPtr &graph, const AnfNodePtr &cut_node
 }
 
 bool IsNeedInline(const CNodePtr &cnode) {
-  const bool graph_op_run = common::GetEnv("GRAPH_OP_RUN") == "1";
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (!graph_op_run || context->CellReuseLevel() != CellReuseLevel::kLazyInline) {
+  if (!context->IsKByKExecutorMode() || context->CellReuseLevel() != CellReuseLevel::kLazyInline) {
     return false;
   }
   const auto &inputs = cnode->inputs();
@@ -863,8 +862,7 @@ std::vector<GraphSegmentPtr> GraphPartition::Partition(const FuncGraphPtr &graph
     } else {
       nodes = SplitSort(graph, default_target);
     }
-    const bool graph_op_run = common::GetEnv("GRAPH_OP_RUN") == "1";
-    if (graph_op_run) {
+    if (context_ptr->IsKByKExecutorMode()) {
       // Keep the cutting position as far back as possible
       nodes = LazySort(nodes, {prim::kPrimPartial});
     }

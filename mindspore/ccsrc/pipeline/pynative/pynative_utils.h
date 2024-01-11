@@ -26,6 +26,8 @@
 #include "kernel/pyboost/op_runner.h"
 #include "kernel/pyboost/op_register.h"
 #include "pipeline/pynative/forward/forward_task.h"
+#include "pipeline/jit/ps/parse/data_converter.h"
+#include "include/common/utils/primfunc_utils.h"
 
 #ifndef MS_UNLIKELY
 #ifdef _MSC_VER
@@ -95,6 +97,47 @@ struct PyParser {
   static void ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, const py::list &op_inputs,
                                       bool stub = false);
   static void PrepareOpGradInfo(const FrontendOpRunInfoPtr &op_run_info);
+  static std::string BuilidPyInputTypeString(const py::object &obj);
+
+  static inline bool IsSupportTensorCast(const std::vector<ops::OP_DTYPE> &cast_types) {
+    for (const auto &type : cast_types) {
+      if (type == ops::DT_TENSOR) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static inline void PrintTypeCastError(const ops::OpDefPtr &op_def, const py::list &op_inputs, size_t idx) {
+    auto const &op_arg = op_def->args_[idx];
+    if (IsSupportTensorCast(op_arg.cast_dtype_)) {
+      auto tensor = parse::ConvertTensorValue(op_inputs[idx]);
+      auto PrintVectorFunc = [](const ShapeVector &shape) -> std::string {
+        std::stringstream ss;
+        ss << "[";
+        for (size_t i = 0; i < shape.size(); i++) {
+          if (i != 0) {
+            ss << ", " << shape[i];
+          } else {
+            ss << shape[i];
+          }
+        }
+        ss << "]";
+        return ss.str();
+      };
+      if (tensor != nullptr) {
+        MS_EXCEPTION(ValueError) << "For " << op_def->name_ << ", the " << idx
+                                 << "'th input is a Tensor whose shape is " << PrintVectorFunc(tensor->shape())
+                                 << " and dtype is [" << TypeIdToString(tensor->data_type())
+                                 << "], which can not be converted to " << ops::EnumToString(op_arg.arg_dtype_) << ".";
+      }
+    }
+    std::vector<std::string> op_type_list;
+    for (size_t index = 0; index < op_inputs.size(); ++index) {
+      (void)op_type_list.emplace_back(PyParser::BuilidPyInputTypeString(op_inputs[index]));
+    }
+    MS_EXCEPTION(TypeError) << ops::BuildOpErrorMsg(op_def, op_type_list);
+  }
 };
 
 // Data convert

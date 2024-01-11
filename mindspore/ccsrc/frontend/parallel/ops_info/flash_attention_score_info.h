@@ -59,6 +59,8 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   int64_t mp_ = 1;
   size_t expect_strategies_size_ = 0;
   bool has_drop_mask_input_ = false;
+  std::string input_layout_;
+  bool kv_split_ = false;
 };
 }  // namespace parallel
 }  // namespace mindspore

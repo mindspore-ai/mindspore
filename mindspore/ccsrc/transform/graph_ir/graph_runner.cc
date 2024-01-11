@@ -81,11 +81,6 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
 #endif
   }
 
-  std::vector<DfGraphWrapperPtr> wrappers = graph_manager_.GetAllGraphs();
-  if (wrappers.empty()) {
-    MS_LOG(INFO) << "The GraphManager is empty!!";
-    return;
-  }
 #if (defined ENABLE_D) || (defined ENABLE_LITE_ACL)
   if (ms_context->backend_policy() != "ge") {
     return;
@@ -100,23 +95,6 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
     MS_LOG(EXCEPTION) << "Register summary callback failed!";
   }
 #endif
-  for (auto &it : wrappers) {
-    std::set<string> saved_graph = graph_manager_.GetSavedGraphs();
-    auto iter_find = saved_graph.find(std::to_string(it->id_));
-    if (iter_find != saved_graph.end()) {
-      continue;
-    }
-    graph_manager_.AddSavedGraphs(std::to_string(it->id_));
-    if (!it->is_added_to_ge_session_) {
-      MS_LOG(INFO) << "Add the graph " << (*it).name_ << " to GE, it's id is: " << (*it).id_;
-      MS_EXCEPTION_IF_NULL(sess_);
-      auto ret = sess_->AddGraph(static_cast<uint32_t>(it->id_), *(it->graph_ptr_), it->options_);
-      if (ret != ::ge::GRAPH_SUCCESS) {
-        MS_LOG(EXCEPTION) << "Call GE AddGraph Failed, ret is: " << ret;
-      }
-      it->is_added_to_ge_session_ = true;
-    }
-  }
 #endif
 }
 

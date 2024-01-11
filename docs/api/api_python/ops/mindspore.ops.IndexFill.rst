@@ -12,7 +12,7 @@ mindspore.ops.IndexFill
 
     输入：
         - **x** (Tensor) - 输入Tensor。
-        - **dim** (Union[int, Tensor]) - 填充输入Tensor的维度，要求是一个int或者数据类型为int32或int64的零维Tensor。
+        - **dim** (Union[int, Tensor]) - 填充输入Tensor的维度，要求是一个int或者数据类型为int32的零维Tensor。
         - **index** (Tensor) - 填充输入Tensor的索引，数据类型为int32。
         - **value** (Union[bool, int, float, Tensor]) - 填充输入Tensor的值。
 

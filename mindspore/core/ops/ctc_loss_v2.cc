@@ -62,7 +62,7 @@ void CheckInputLengthType(const std::string &arg_name, const AbstractBasePtr &in
     MS_EXCEPTION_IF_NULL(types_list_ptr);
     TypePtrList types_list = types_list_ptr->elements();
     for (size_t i = 0; i < types_list.size(); ++i) {
-      (void)CheckAndConvertUtils::CheckSubClass(arg_name, types_list[i]->cast<TensorTypePtr>(), valid_type, prim_name);
+      (void)CheckAndConvertUtils::CheckSubClass(arg_name, types_list[i], valid_type, prim_name);
     }
   } else {
     MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the input " << input_arg->type_name()

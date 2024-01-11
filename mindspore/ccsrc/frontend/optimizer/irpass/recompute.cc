@@ -66,6 +66,7 @@ AnfNodePtr GetBpropCaller(const FuncGraphManagerPtr &manager, const AnfNodePtr &
 namespace {
 constexpr auto kGradientsFlag = "Gradients";
 constexpr auto kAttrReplacedWithPrimal = "replaced_with_primal";
+constexpr auto kAttrRecomputeMakeTuple = "recompute_make_tuple";
 
 bool WithRecomputedScope(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
@@ -132,6 +133,12 @@ bool AddNewPrimalNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg
     }
     // The op like concat will have a make_tuple input.
     if (IsPrimitiveCNode(user, prim::kPrimMakeTuple) && !IsFpropReturn(user) && (!IsGradNode(user) || recompute_cell)) {
+      auto user_cnode = user->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(user_cnode);
+      if (user_cnode->HasAttr(kAttrRecomputeMakeTuple)) {
+        manager->SetEdge(user_cnode, node_and_idx.second, new_primal);
+        continue;
+      }
       auto iter = origin_to_new_primal->find(user);
       if (iter != origin_to_new_primal->end()) {
         // The new make_tuple has been created, just set its inputs.
@@ -139,15 +146,13 @@ bool AddNewPrimalNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg
         continue;
       }
       // Create a new primal make_tuple.
-      auto user_cnode = user->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(user_cnode);
       std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple)};
       for (size_t i = 1; i < user_cnode->size(); ++i) {
-        // Create value_node 0 as a placeholder.
-        (void)make_tuple_inputs.emplace_back(NewValueNode(static_cast<int64_t>(0)));
+        (void)make_tuple_inputs.emplace_back(user_cnode->input(i));
       }
       auto new_primal_make_tuple = fg->NewCNode(make_tuple_inputs);
       new_primal_make_tuple->set_input(node_and_idx.second, new_primal);
+      new_primal_make_tuple->AddAttr(kAttrRecomputeMakeTuple, MakeValue(true));
       (void)origin_to_new_primal->emplace(user, new_primal_make_tuple);
       changed =
         AddNewPrimalNode(manager, fg, user, new_primal_make_tuple, recompute_cell, origin_to_new_primal) || changed;

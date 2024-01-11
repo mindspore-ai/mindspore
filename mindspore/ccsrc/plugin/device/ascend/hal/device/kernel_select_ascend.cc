@@ -117,6 +117,19 @@ TypeId GetInputDeviceType(const AnfNodePtr &kernel_node, size_t input_idx) {
   return type;
 }
 
+bool IsEmptyTupleInput(const CNodePtr &kernel, const size_t i, const TypeId cur_type_id) {
+  auto input_node = common::AnfAlgo::GetPrevNodeOutput(kernel, i).first;
+  if (input_node->isa<ValueNode>()) {
+    auto value_node = input_node->cast<ValueNodePtr>();
+    if (cur_type_id == kTypeUnknown && value_node->value() != nullptr && value_node->value()->isa<ValueTuple>() &&
+        value_node->value()->cast<ValueTuplePtr>()->size() == 0) {
+      MS_LOG(DEBUG) << "Set int64 type for empty value tuple node:" << value_node->DebugString();
+      return true;
+    }
+  }
+  return false;
+}
+
 void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_type) {
   MS_EXCEPTION_IF_NULL(kernel);
   std::vector<std::string> input_formats;
@@ -182,7 +195,11 @@ void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_ty
   auto input_object_types = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllInputObjectType(kernel));
 
   for (size_t i = 0; i < input_num; i++) {
-    (void)input_types.push_back(GetInputDeviceType(kernel, i));
+    auto cur_input_type = GetInputDeviceType(kernel, i);
+    if (IsEmptyTupleInput(kernel, i, cur_input_type)) {
+      cur_input_type = TypeId::kNumberTypeInt64;
+    }
+    (void)input_types.push_back(cur_input_type);
   }
   for (size_t i = 0; i < output_num; i++) {
     (void)output_types.push_back(common::AnfAlgo::GetOutputInferDataType(kernel, i));
@@ -355,8 +372,8 @@ std::string TryBackoffCpu(const KernelGraphPtr &graph, const CNodePtr &node,
 
   if (graph->is_graph_run_mode()) {
     return failure_info.first +
-           "\nThe operator is not supported in task sink mode. You can try to export "
-           "environment variable GRAPH_OP_RUN to 1 to execute this operator.";
+           "\nThe operator is not supported in task sink mode. You can try to set JitLevel to O0 to execute this "
+           "operator.";
   }
 
   MS_LOG(INFO) << "Try to use backoff CPU kernel, node:" << node->fullname_with_scope();
@@ -500,7 +517,7 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const CNode
     return result;
   }
   // Check must use the aclnn kernel mod.
-  if (kernel::IsEnabledAclnnDispatch(node)) {
+  if (enable_aclnn && kernel::IsEnabledAclnnDispatch(node)) {
     MS_LOG(EXCEPTION) << "Kernel " << AnfUtils::GetCNodeName(node)
                       << " is enabled dispatch in yaml, but not registered an aclnn kernelmod.";
   }

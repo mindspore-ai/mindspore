@@ -306,14 +306,14 @@ void GraphKernelCluster::DumpClusterInfo(const AnfNodePtrList &old_nodes, const 
 void GraphKernelCluster::DumpToFile() {
   auto dir_path = FileUtils::CreateNotExistDirs(std::string("./") + kGraphKernelDumpPath);
   if (!dir_path.has_value()) {
-    MS_LOG(ERROR) << "Failed to CreateNotExistDirs: ./" << kGraphKernelDumpPath;
+    MS_LOG(INFO) << "Failed to CreateNotExistDirs: ./" << kGraphKernelDumpPath;
     return;
   }
   std::string filepath = dir_path.value() + "/" + "graph_kernel_cluster.txt";
   ChangeFileMode(filepath, S_IWUSR);
   std::ofstream fout(filepath, std::ios::app);
   if (!fout.is_open()) {
-    MS_LOG(ERROR) << "Open dump file '" << filepath << "' failed!";
+    MS_LOG(INFO) << "Open dump file '" << filepath << "' failed!";
     ChangeFileMode(filepath, S_IRUSR);
     return;
   }
@@ -333,7 +333,7 @@ void GraphKernelCluster::RemoveWildGetitem(std::vector<size_t> *candidates) {
     if (IsPrimitiveCNode(nodes_[cluster_id], prim::kPrimTupleGetItem)) {
       const auto &inputs = graph_->GetInputs(cluster_id);
       if (inputs.size() != 1) {
-        MS_LOG(ERROR) << "Input size of GetItem(" << cluster_id << ") should be 1, but got " << inputs.size();
+        MS_LOG(INFO) << "Input size of GetItem(" << cluster_id << ") should be 1, but got " << inputs.size();
         candidates->clear();
         return;
       }

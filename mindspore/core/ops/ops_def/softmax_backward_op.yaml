@@ -1,0 +1,17 @@
+#operator softmax_backward
+softmax_backward:
+    args:
+        dout:
+            dtype: tensor
+        out:
+            dtype: tensor
+        dim:
+            dtype: int
+            default: -1
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True

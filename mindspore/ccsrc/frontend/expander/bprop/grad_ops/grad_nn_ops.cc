@@ -27,19 +27,6 @@
 namespace mindspore::expander::bprop {
 namespace {
 const int kConstNumberTwo = 2;
-bool IsLastAxis(const ShapeVector &shape, int64_t axis) {
-  if (axis == -1) {
-    return true;
-  }
-  if (IsDynamicRank(shape)) {
-    return false;
-  }
-  auto rank = SizeToLong(shape.size());
-  if (axis < 0) {
-    axis += rank;
-  }
-  return (axis == (rank - 1));
-}
 }  // namespace
 
 NodePtrList Dropout2DBpropExpander(BpropIRBuilder *ib) {
@@ -196,23 +183,6 @@ class ExtractImagePatchesShapeCalc : public ShapeCalcFunctor {
   int64_t ksizes_col_{0};
 };
 REG_FUNCTOR("ShapeCalc_ExtractImagePatches", ExtractImagePatchesShapeCalc);
-
-class SoftmaxShapeCalc : public ShapeCalcFunctor {
- public:
-  DECLARE_SHAPE_CALC("ShapeCalc_Softmax", SoftmaxShapeCalc)
-  ValuePtr ToValue() const override { return nullptr; }
-  void FromValue(const ValuePtr &value) override {}
-  ShapeArray Calc(const ShapeArray &inputs) const override {
-    // inputs: {x_shape, axis}
-    auto axis = inputs.at(1)[0];
-    return {GetTransposeAxis(inputs.at(0), axis)};
-  }
-  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &) const override {
-    int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : SizeToLong(inputs.at(0).size());
-    return {x_rank};
-  }
-};
-REG_FUNCTOR("ShapeCalc_Softmax", SoftmaxShapeCalc);
 
 REG_BPROP_BUILDERS_BEGIN(GradNnOps)
 REG_BPROP_BUILDER("Conv2D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
@@ -1397,29 +1367,11 @@ REG_BPROP_BUILDER("BatchNormGrad").SetUnusedInputs({i5, i9}).SetBody(BODYFUNC(ib
 });
 
 REG_BPROP_BUILDER("Softmax").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
-  auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto shp = ib->GetShape(x);
-  std::vector<int64_t> axis_vec{};
-  auto axis_value = axis->BuildValue();
-  bool success = false;
-  if (!(axis_value->isa<ValueAny>() || axis_value->isa<None>())) {
-    axis_vec = GetIntList(axis_value);
-    success = true;
-  }
-  if (success && IsLastAxis(shp, axis_vec[0])) {
-    auto dx = ib->Mul(out, ib->Sub(dout, ib->ReduceSum(ib->Mul(out, dout), ShapeVector{-1}, true)));
-    return {dx, ib->OutZeros(axis)};
-  }
-  auto reverse_axis = (IsDynamicRank(shp) || !success)
-                        ? ib->ShapeCalc(std::make_shared<SoftmaxShapeCalc>(), {x, axis}, {1})[0]
-                        : ib->Value(GetTransposeAxis(shp, axis_vec[0]));
-  out = ib->Transpose(out, reverse_axis);
-  dout = ib->Transpose(dout, reverse_axis);
-  auto dx = ib->Mul(out, ib->Sub(dout, ib->ReduceSum(ib->Mul(out, dout), ShapeVector{-1}, true)));
-  dx = ib->Transpose(dx, reverse_axis);
+  auto dim = ib->TupleGetItem(axis, 0);
+  auto dx = ib->Emit("SoftmaxBackward", {dout, out, dim});
   return {dx, ib->OutZeros(axis)};
 });
 
@@ -2082,16 +2034,17 @@ REG_BPROP_BUILDER("FlashAttentionScore").SetBody((BODYFUNC(ib) {
   auto drop_mask = ib->GetInput(kIndex4);
   auto pse_shift = ib->GetInput(kIndex5);
   auto padding_mask = ib->GetInput(kIndex6);
-  auto out = ib->GetInput(kIndex7);
+  auto prefix = ib->GetInput(kIndex7);
+  auto out = ib->GetInput(kIndex8);
   auto attention_out = ib->TupleGetItem(out, kIndex0);
   auto softmax_max = ib->TupleGetItem(out, kIndex1);
   auto softmax_sum = ib->TupleGetItem(out, kIndex2);
   auto softmax_out = ib->EmitValue(kNone);
-  auto dout = ib->GetInput(kIndex8);
+  auto dout = ib->GetInput(kIndex9);
   auto d_attention_out = ib->TupleGetItem(dout, kIndex0);
   auto grad = ib->Emit("FlashAttentionScoreGrad",
                        {query, key, value, attn_mask, attention_out, softmax_max, softmax_sum, d_attention_out,
-                        drop_mask, pse_shift, padding_mask, softmax_out},
+                        drop_mask, pse_shift, padding_mask, softmax_out, prefix},
                        {
                          {"head_num", ib->GetAttr("head_num")},
                          {"keep_prob", ib->GetAttr("keep_prob")},
@@ -2100,6 +2053,7 @@ REG_BPROP_BUILDER("FlashAttentionScore").SetBody((BODYFUNC(ib) {
                          {"next_tokens", ib->GetAttr("next_tokens")},
                          {"inner_precise", ib->GetAttr("inner_precise")},
                          {"input_layout", ib->GetAttr("input_layout")},
+                         {"sparse_mode", ib->GetAttr("sparse_mode")},
                        });
   auto g_query = ib->TupleGetItem(grad, kIndex0);
   auto g_key = ib->TupleGetItem(grad, kIndex1);
@@ -2108,7 +2062,8 @@ REG_BPROP_BUILDER("FlashAttentionScore").SetBody((BODYFUNC(ib) {
   auto g_drop_mask = ib->ZerosLike(drop_mask);
   auto g_pse_shift = ib->ZerosLike(pse_shift);
   auto g_padding_mask = ib->ZerosLike(padding_mask);
-  return {g_query, g_key, g_value, g_attn_mask, g_drop_mask, g_pse_shift, g_padding_mask};
+  auto g_prefix = ib->ZerosLike(prefix);
+  return {g_query, g_key, g_value, g_attn_mask, g_drop_mask, g_pse_shift, g_padding_mask, g_prefix};
 }));
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

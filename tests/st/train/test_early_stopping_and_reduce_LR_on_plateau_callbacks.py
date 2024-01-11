@@ -52,7 +52,7 @@ def define_model(metrics):
     return model
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -101,7 +101,7 @@ def test_reduce_lr_on_plateau_patience_and_cooldown(mode):
         assert np.allclose(lrs, lrs_results)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -144,7 +144,7 @@ def test_earlystopping_with_baseline(mode):
             assert cur_epoch == stop_epoch
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

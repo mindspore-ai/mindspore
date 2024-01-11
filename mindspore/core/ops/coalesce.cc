@@ -57,6 +57,22 @@ TuplePtr CoalesceInferType(const PrimitivePtr &prim, const std::vector<AbstractB
 abstract::TupleShapePtr CoalesceInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  auto x_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  ShapeVector y_indices_max_shape = {x_indices_shape[0], x_indices_shape[1]};
+  ShapeVector y_values_max_shape = {x_indices_shape[1]};
+  auto y_shape = input_args[2]->GetShape();
+  MS_EXCEPTION_IF_NULL(y_shape);
+  abstract::ShapePtr y_shape_shape_list = y_shape->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(y_shape_shape_list);
+  abstract::ShapePtr y_indices_shape_list = std::make_shared<abstract::Shape>(y_indices_max_shape);
+  abstract::ShapePtr y_values_shape_list = std::make_shared<abstract::Shape>(y_values_max_shape);
+  return std::make_shared<abstract::TupleShape>(
+    std::vector<abstract::BaseShapePtr>{y_indices_shape_list, y_values_shape_list, y_shape_shape_list});
+}
+
+abstract::TupleShapePtr CoalesceFrontendInferShape(const PrimitivePtr &primitive,
+                                                   const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   constexpr int x_indices_shape_size = 2;
   auto x_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
@@ -98,19 +114,13 @@ abstract::TupleShapePtr CoalesceInferShape(const PrimitivePtr &primitive,
     }
   }
   ShapeVector y_indices_shape = {x_indices_shape[0], -1};
-  ShapeVector y_indices_max_shape = {x_indices_shape[0], x_indices_shape[1]};
   ShapeVector y_values_shape = {-1};
-  ShapeVector y_values_max_shape = {x_indices_shape[1]};
-  if (x_indices_shape_ptr->IsDynamic()) {
-    y_indices_max_shape = {1, 1};
-    y_values_max_shape = {1};
-  }
   auto y_shape = input_args[2]->GetShape();
   MS_EXCEPTION_IF_NULL(y_shape);
   abstract::ShapePtr y_shape_shape_list = y_shape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(y_shape_shape_list);
-  abstract::ShapePtr y_indices_shape_list = std::make_shared<abstract::Shape>(y_indices_shape, y_indices_max_shape);
-  abstract::ShapePtr y_values_shape_list = std::make_shared<abstract::Shape>(y_values_shape, y_values_max_shape);
+  abstract::ShapePtr y_indices_shape_list = std::make_shared<abstract::Shape>(y_indices_shape);
+  abstract::ShapePtr y_values_shape_list = std::make_shared<abstract::Shape>(y_values_shape);
   return std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>{y_indices_shape_list, y_values_shape_list, y_shape_shape_list});
 }
@@ -122,7 +132,7 @@ AbstractBasePtr CoalesceInfer(const abstract::AnalysisEnginePtr &, const Primiti
   const int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = CoalesceInferType(primitive, input_args);
-  auto infer_shape = CoalesceInferShape(primitive, input_args);
+  auto infer_shape = CoalesceFrontendInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 

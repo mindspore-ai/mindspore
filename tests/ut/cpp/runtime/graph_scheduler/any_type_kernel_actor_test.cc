@@ -127,13 +127,13 @@ TEST_F(AnyTypeKernelActorTest, RunOpData) {
   op_context.results_ = &result;
 
   auto kernel_tensor0 = std::make_shared<kernel::KernelTensor>(
-    &input_0, sizeof(DataType), kOpFormat_DEFAULT, TypeId::kNumberTypeFloat32, shape,
+    &input_0, sizeof(DataType), Format::DEFAULT_FORMAT, TypeId::kNumberTypeFloat32, shape,
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
   auto device_address0 = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor0);
   auto op_data0 = std::make_shared<OpData<DeviceTensor>>(any_type_kernel_actor->GetAID(), device_address0.get(), 0);
 
   auto kernel_tensor1 = std::make_shared<kernel::KernelTensor>(
-    &input_1, sizeof(DataType), kOpFormat_DEFAULT, TypeId::kNumberTypeFloat32, shape,
+    &input_1, sizeof(DataType), Format::DEFAULT_FORMAT, TypeId::kNumberTypeFloat32, shape,
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
   auto device_address1 = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor1);
   auto op_data1 = std::make_shared<OpData<DeviceTensor>>(any_type_kernel_actor->GetAID(), device_address1.get(), 1);

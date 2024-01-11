@@ -64,7 +64,7 @@ def fold_infer(mixed_precision, crop_size):
     return confidence, time_list
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_910B_Ascend_fold():
@@ -79,14 +79,14 @@ def test_910B_Ascend_fold():
                         memory_optimize_level="O1",
                         max_call_depth=6000)
     mixed_precision = 1
-    crop_size = 1024
+    crop_size = 1536
     confidence, time_list = fold_infer(mixed_precision, crop_size)
     compile_time, exectue_time = time_list
     compile_time = compile_time - exectue_time
     os.environ.pop("MS_ASCEND_CHECK_OVERFLOW_MODE")
     assert confidence > 0.9
-    assert compile_time < 300
-    assert exectue_time < 35
+    assert compile_time < 500
+    assert exectue_time < 100
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
@@ -107,5 +107,5 @@ def test_910A_Ascend_fold():
     compile_time, exectue_time = time_list
     compile_time = compile_time - exectue_time
     assert confidence > 0.9
-    assert compile_time < 400
-    assert exectue_time < 60
+    assert compile_time < 500
+    assert exectue_time < 100

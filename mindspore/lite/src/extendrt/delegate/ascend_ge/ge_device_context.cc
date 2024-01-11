@@ -26,7 +26,6 @@
 #include "include/transform/graph_ir/utils.h"
 #include "external/ge/ge_api.h"
 #include "acl/acl_rt.h"
-#include "runtime/config.h"
 #include "common/config_infos.h"
 #include "common/common.h"
 #include "extendrt/delegate/comm_group_info.h"
@@ -283,9 +282,7 @@ Status GeDeviceContext::InitHccl(const std::shared_ptr<Context> &context, const 
 Status GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context, const std::shared_ptr<Context> &context,
                                const ConfigInfos &config_info) {
   MS_EXCEPTION_IF_NULL(inst_context);
-  int32_t is_heterogeneous = 0;
-  (void)rtGetIsHeterogenous(&is_heterogeneous);
-  inst_context->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, is_heterogeneous == 1);
+  inst_context->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, false);
   if (inst_context->get_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT)) {
     return kSuccess;
   }

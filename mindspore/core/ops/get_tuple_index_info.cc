@@ -270,11 +270,13 @@ AbstractBasePtr GetTupleIndexInfoInferInner(const PrimitivePtr &primitive,
     tuple_index_info_type = GetValue<string>(primitive->GetAttr(kAttrTupleIndexInfoType));
   }
   const size_t output_size = 13;
-  if (fancy_position_abs->GetType()->type_id() == kObjectTypeTensorType ||
+  if (fancy_position_abs->GetValue()->isa<ValueAny>() ||
       std::any_of(input_args.begin() + kIndex0, input_args.end(),
                   [](const AbstractBasePtr &shape_abs) { return shape_abs->GetShape()->IsDynamic(); })) {
     auto abs = std::make_shared<abstract::AbstractTensor>(kInt64, ShapeVector({abstract::Shape::kShapeRankAny}));
-    AbstractBasePtrList output_abs_list(output_size, abs);
+    AbstractBasePtrList output_abs_list(output_size - 1, abs);
+    auto scalar_abs_any = std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64);
+    output_abs_list.insert(output_abs_list.begin() + kIndex3, scalar_abs_any);
     return std::make_shared<abstract::AbstractTuple>(output_abs_list);
   }
   if (data_shape.size() < 1 || data_shape.size() > kMaxTensorIndexDimNums) {

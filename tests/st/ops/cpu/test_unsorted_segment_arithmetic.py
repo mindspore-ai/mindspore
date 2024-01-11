@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ def init_result(func, shape, dtype):
                 np.uint32, np.uint64
         ]:
             result = result * np.iinfo(dtype).max
-        if dtype in [np.float32, np.float64]:
+        if dtype in [np.float16, np.float32, np.float64]:
             result = result * np.finfo(dtype).max
     if func == 'max':
         if dtype in [
@@ -58,7 +58,7 @@ def init_result(func, shape, dtype):
                 np.uint32, np.uint64
         ]:
             result = result * np.iinfo(dtype).min
-        if dtype in [np.float32, np.float64]:
+        if dtype in [np.float16, np.float32, np.float64]:
             result = result * np.finfo(dtype).min
     return result
 
@@ -401,7 +401,7 @@ def test_vmap2(func):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['sum'])
+@pytest.mark.parametrize('func', ['sum', 'min'])
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('data_type', [
     mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64, mstype.int8,

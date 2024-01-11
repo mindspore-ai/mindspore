@@ -22,7 +22,6 @@ import pytest
 from mindspore import log as logger
 import mindspore as ms
 import mindspore.dataset.vision as vision
-from utils import ascend910b
 
 # pylint: disable=W0212
 # W0212: protected-access
@@ -33,9 +32,8 @@ result_data_dir = "/home/workspace/mindspore_dataset/910B_dvpp/testAscend910BDvp
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_eager_decode_dvpp():
     """
     Feature: Decode op when Ascend910B
@@ -76,9 +74,8 @@ def test_eager_decode_dvpp():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_eager_decode_dvpp_exception():
     """
     Feature: Decode op when Ascend910B with exception
@@ -128,9 +125,8 @@ def test_eager_decode_dvpp_exception():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_eager_resize_dvpp():
     """
     Feature: Resize op when Ascend910B
@@ -222,9 +218,8 @@ def test_eager_resize_dvpp():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_eager_resize_dvpp_exception():
     """
     Feature: Resize op when Ascend910B
@@ -322,9 +317,8 @@ def test_eager_resize_dvpp_exception():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_eager_normalize_dvpp():
     """
     Feature: Normalize op when Ascend910B
@@ -473,9 +467,8 @@ def test_eager_normalize_dvpp():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_eager_normalize_dvpp_exception():
     """
     Feature: Normalize op when Ascend910B with exception
@@ -567,9 +560,8 @@ def test_eager_normalize_dvpp_exception():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_eager_multi_dvpp_op_dvpp_cpu_dvpp():
     """
     Feature: Multi ops when Ascend910B with global executor
@@ -605,9 +597,8 @@ def test_eager_multi_dvpp_op_dvpp_cpu_dvpp():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_eager_multi_dvpp_op_dvpp_dvpp_cpu():
     """
     Feature: Multi ops when Ascend910B with global executor
@@ -643,9 +634,8 @@ def test_eager_multi_dvpp_op_dvpp_dvpp_cpu():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@ascend910b
 def test_eager_multi_dvpp_op_cpu_dvpp_dvpp():
     """
     Feature: Multi ops when Ascend910B with global executor

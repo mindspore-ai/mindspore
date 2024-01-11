@@ -16,7 +16,7 @@ class NetSegmentMean(nn.Cell):
         return self.segmentmean(x, segment_ids)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -33,7 +33,7 @@ def test_dynamic_segment_mean_shape():
     test_dynamic.test_dynamic_grad_net([x, segment_ids])
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

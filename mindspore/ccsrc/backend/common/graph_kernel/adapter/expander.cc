@@ -228,28 +228,37 @@ AnfNodePtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const
     if (!AnfUtils::IsRealCNodeKernel(inner_node)) {
       continue;
     }
-    bool suc = false;
-    auto inner_cnode = inner_node->cast<CNodePtr>();
-    if (need_replace_parameter) {
-      std::vector<std::pair<size_t, AnfNodePtr>> ori_input;
-      for (size_t i = 1; i < inner_cnode->size(); i++) {
-        auto iter = param_map.find(inner_cnode->input(i));
-        if (iter != param_map.end()) {
-          MS_LOG(DEBUG) << "Replace " << inner_cnode->input(i)->DebugString() << " by " << iter->second->DebugString();
-          (void)ori_input.emplace_back(i, inner_cnode->input(i));
-          inner_cnode->set_input(i, iter->second);
+    try {
+      MS_LOG_TRY_CATCH_SCOPE;
+      bool suc = false;
+      auto inner_cnode = inner_node->cast<CNodePtr>();
+      if (need_replace_parameter) {
+        std::vector<std::pair<size_t, AnfNodePtr>> ori_input;
+        for (size_t i = 1; i < inner_cnode->size(); i++) {
+          auto iter = param_map.find(inner_cnode->input(i));
+          if (iter != param_map.end()) {
+            MS_LOG(DEBUG) << "Replace " << inner_cnode->input(i)->DebugString() << " by "
+                          << iter->second->DebugString();
+            (void)ori_input.emplace_back(i, inner_cnode->input(i));
+            inner_cnode->set_input(i, iter->second);
+          }
         }
+        suc = func(inner_cnode);
+        // recover the origin inputs
+        for (auto &ori : ori_input) {
+          inner_cnode->set_input(ori.first, ori.second);
+        }
+      } else {
+        suc = func(inner_cnode);
       }
-      suc = func(inner_cnode);
-      // recover the origin inputs
-      for (auto &ori : ori_input) {
-        inner_cnode->set_input(ori.first, ori.second);
+      if (!suc) {
+        MS_LOG(INFO) << "ExpanderFallback: select kernel [" << inner_node->fullname_with_scope() << "] failed.";
+        res = nullptr;
+        break;
       }
-    } else {
-      suc = func(inner_cnode);
-    }
-    if (!suc) {
-      MS_LOG(DEBUG) << "Expanding core ops [" << inner_node->fullname_with_scope() << "] failed.";
+    } catch (std::exception &e) {
+      MS_LOG(WARNING) << "ExpanderFallback: error in select kernel for [" << inner_node->fullname_with_scope()
+                      << "], msg: " << e.what();
       res = nullptr;
       break;
     }

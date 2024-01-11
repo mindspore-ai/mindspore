@@ -25,7 +25,8 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API int64_t StringToEnumImpl(const std::string &enum_string);
+MIND_API int64_t StringToEnumImpl(const std::string &op_name, const std::string &arg_name,
+                                  const std::string &enum_string);
 
 // Only the current mindspore/core/mindapi/base/types.h and other files do not have
 // corresponding enumerations and then add new enumerations.

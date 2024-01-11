@@ -49,7 +49,7 @@ def test_list_append1():
     assert res == expect
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -73,7 +73,7 @@ def test_list_append2():
         assert np.all(res[i].asnumpy() == expect[i].asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

@@ -49,7 +49,7 @@ def tensor_scatter_max_min_dynamic_shape(is_dyn_rank=False):
     test_dynamic_min.test_dynamic_grad_net(x, is_dyn_rank)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -63,7 +63,7 @@ def test_tensor_scatter_max_min_dynamic_shape():
     tensor_scatter_max_min_dynamic_shape()
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

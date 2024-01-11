@@ -90,3 +90,31 @@ def test_sin_vmap(mode):
     output = nest_vmap(x)
     expect_out = sin_forward_func(x)
     np.testing.assert_equal(output.asnumpy(), expect_out.asnumpy())
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_sin_dynamic(mode):
+    """
+    Feature: sin ops.
+    Description: test ops sin dynamic tensor input.
+    Expectation: output the right result.
+    """
+    context.set_context(mode=mode)
+    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(ops.auto_generate.sin)
+    test_cell.set_inputs(x_dyn)
+    x1 = Tensor(np.array([0.62, 0.28, 0.43, 0.62]).astype(np.float32))
+    output1 = test_cell(x1)
+    expect_output1 = np.asarray([0.5810352, 0.27635565, 0.41687083, 0.5810352]).astype(np.float32)
+    np.testing.assert_array_almost_equal(output1.asnumpy(), expect_output1, decimal=4)
+    x2 = Tensor(np.array([[0.62, 0.28],
+                          [0.43, 0.62]]).astype(np.float32))
+    output2 = test_cell(x2)
+    expect_output2 = np.asarray([[0.5810352, 0.27635565],
+                                 [0.41687083, 0.5810352]]).astype(np.float32)
+    np.testing.assert_array_almost_equal(output2.asnumpy(), expect_output2, decimal=4)

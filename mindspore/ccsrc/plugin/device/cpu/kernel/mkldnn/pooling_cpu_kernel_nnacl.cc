@@ -129,6 +129,22 @@ bool PoolingCpuKernelNnaclMod::Init(const std::vector<KernelTensor *> &inputs,
   return true;
 }
 
+static bool inline check_kernel_stride(const std::vector<int64_t> &kernel_size, const std::vector<int64_t> &stride_size,
+                                       const size_t rank) {
+  // length check
+  if (kernel_size.size() != rank) {
+    MS_LOG(ERROR) << "The kernel_size length should be equal to " << rank << " but length of kernel_size is "
+                  << kernel_size.size() << ".";
+    return false;
+  }
+  if (stride_size.size() != rank) {
+    MS_LOG(ERROR) << "The stride_size length should be equal to " << rank << " but length of stride_size is "
+                  << stride_size.size() << ".";
+    return false;
+  }
+  return true;
+}
+
 int PoolingCpuKernelNnaclMod::Resize(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs) {
   if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
@@ -185,6 +201,10 @@ int PoolingCpuKernelNnaclMod::Resize(const std::vector<KernelTensor *> &inputs,
       stride_size_ = stride_size;
     }
     pad_list_.clear();
+  } else {
+    if (!check_kernel_stride(kernel_size_, stride_size_, src_dim)) {
+      return KRET_RESIZE_FAILED;
+    }
   }
 
   size_t padlist_len = src_dim == SHAPE_4D ? kPadLen2D : kPadLen3D;

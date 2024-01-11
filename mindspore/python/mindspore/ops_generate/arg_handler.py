@@ -15,8 +15,13 @@
 """Operator argument handle function."""
 
 from mindspore.ops_generate.gen_ops_inner_prim import DtypeToEnum, StringToEnum
+# Enum Class:
+from mindspore._c_expression import (Format, Reduction)
 
-def to_kernel_size(kernel_size):
+arg_invalid_info = lambda op_name, arg_name, arg_val: \
+    f"For '{op_name}', the value of '{arg_name}' is invalid: '{arg_val}'."
+
+def to_kernel_size(op_name, arg_name, kernel_size):
     """
     convert kernel_size: int/tuple[int*4] -> tuple[int*2].
     """
@@ -26,10 +31,10 @@ def to_kernel_size(kernel_size):
         if len(kernel_size) == 4:
             return (kernel_size[2], kernel_size[3])
         return kernel_size
-    raise ValueError(f"For arg 'kernel_size', the value is invalid: {kernel_size}.")
+    raise ValueError(arg_invalid_info(op_name, arg_name, kernel_size))
 
 
-def to_strides(stride):
+def to_strides(op_name, arg_name, stride):
     """
     convert strides: int/tuple[int*4] -> tuple[int*2].
     """
@@ -39,10 +44,10 @@ def to_strides(stride):
         if len(stride) == 4:
             return (stride[2], stride[3])
         return stride
-    raise ValueError(f"For arg 'stride', the value is invalid: {stride}.")
+    raise ValueError(arg_invalid_info(op_name, arg_name, stride))
 
 
-def to_rates(rates):
+def to_rates(op_name, arg_name, rates):
     """
     convert rates: int/tuple[int*4] -> tuple[int*2].
     """
@@ -52,10 +57,10 @@ def to_rates(rates):
         if len(rates) == 4:
             return (rates[2], rates[3])
         return rates
-    raise ValueError(f"For arg 'rate', the value is invalid: {rates}.")
+    raise ValueError(arg_invalid_info(op_name, arg_name, rates))
 
 
-def to_dilations(dilation):
+def to_dilations(op_name, arg_name, dilation):
     """
     convert dilations: int/tuple[int*4] -> tuple[int*2].
     """
@@ -65,10 +70,10 @@ def to_dilations(dilation):
         if len(dilation) == 4:
             return (dilation[2], dilation[3])
         return dilation
-    raise ValueError(f"For arg 'dilation', the value is invalid: {dilation}.")
+    raise ValueError(arg_invalid_info(op_name, arg_name, dilation))
 
 
-def to_paddings(pad):
+def to_paddings(op_name, arg_name, pad):
     """
     convert paddings: int -> tuple[int*4].
     """
@@ -76,10 +81,10 @@ def to_paddings(pad):
         return (pad,) * 4
     if isinstance(pad, (tuple, list)):
         return pad
-    raise ValueError(f"For arg 'pad', the value is invalid: {pad}.")
+    raise ValueError(arg_invalid_info(op_name, arg_name, pad))
 
 
-def to_3d_kernel_size(kernel_size):
+def to_3d_kernel_size(op_name, arg_name, kernel_size):
     """
     convert 3d kernel_size: int/tuple[int*6] -> tuple[int*3].
     """
@@ -89,10 +94,10 @@ def to_3d_kernel_size(kernel_size):
         if len(kernel_size) == 5:
             return (kernel_size[2], kernel_size[3], kernel_size[4])
         return kernel_size
-    raise ValueError(f"For arg 'kernel_size', the value is invalid: {kernel_size}.")
+    raise ValueError(arg_invalid_info(op_name, arg_name, kernel_size))
 
 
-def to_3d_strides(stride):
+def to_3d_strides(op_name, arg_name, stride):
     """
     convert 3d stride: int/tuple[int*6] -> tuple[int*3].
     """
@@ -102,10 +107,10 @@ def to_3d_strides(stride):
         if len(stride) == 5:
             return (stride[2], stride[3], stride[4])
         return stride
-    raise ValueError(f"For arg 'stride', the value is invalid: {stride}.")
+    raise ValueError(arg_invalid_info(op_name, arg_name, stride))
 
 
-def to_3d_dilations(dilation):
+def to_3d_dilations(op_name, arg_name, dilation):
     """
     convert 3d dilation: int/tuple[int*6] -> tuple[int*3].
     """
@@ -115,10 +120,10 @@ def to_3d_dilations(dilation):
         if len(dilation) == 5:
             return (dilation[2], dilation[3], dilation[4])
         return dilation
-    raise ValueError(f"For arg 'dilation', the value is invalid: {dilation}.")
+    raise ValueError(arg_invalid_info(op_name, arg_name, dilation))
 
 
-def to_3d_paddings(pad):
+def to_3d_paddings(op_name, arg_name, pad):
     """
     convert 3d paddings: int -> tuple[int*6].
     """
@@ -126,7 +131,7 @@ def to_3d_paddings(pad):
         return (pad,) * 6
     if isinstance(pad, (tuple, list)):
         return pad
-    raise ValueError(f"For arg 'pad', the value is invalid: {pad}.")
+    raise ValueError(arg_invalid_info(op_name, arg_name, pad))
 
 dtype_to_type_id = DtypeToEnum()
 

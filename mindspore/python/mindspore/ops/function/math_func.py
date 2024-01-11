@@ -37,7 +37,7 @@ from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.ops.operations.math_ops import Roll
 from mindspore.ops.operations.math_ops import Ormqr
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3, Transpose
-from mindspore.ops.auto_generate import (minimum, mul, sin, sinh, cummax)
+from mindspore.ops.auto_generate import (minimum, mul, sin, sinc, sinh, cummax, real, roll_)
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from mindspore import _checkparam as validator
@@ -1902,7 +1902,7 @@ def sgn(input):
         return ops.sign(input)
     modulus = ops.ComplexAbs()(input)
     zeros_mask = modulus.equal(0)
-    non_zero_modulus = ops.masked_fill(modulus, zeros_mask, 1)
+    non_zero_modulus = ops.masked_fill(modulus, zeros_mask, ops.cast(1, modulus.dtype))
     zeros_modulus = ops.zeros_like(non_zero_modulus)
     complex_modulus = ops.Complex()(non_zero_modulus, zeros_modulus)
     res = input / complex_modulus
@@ -2144,9 +2144,6 @@ def t(input):
 
     Returns:
         Tensor, the transpose of `input` .
-
-    Raises:
-        ValueError: If the dimension of `input` is larger than 2.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -11476,7 +11473,7 @@ def nansum(input, axis=None, keepdims=False, *, dtype=None):
     if input.dtype == mstype.bool_:
         input = input.astype(mstype.int64)
     is_nan = isnan_(input)
-    input = ops.masked_fill(input, is_nan, 0)
+    input = ops.masked_fill(input, is_nan, ops.cast(0, input.dtype))
     input = _get_cache_prim(P.ReduceSum)(keepdims)(input, axis)
     if dtype is not None and input.dtype != dtype:
         input = input.astype(dtype)
@@ -13224,15 +13221,19 @@ __all__ = [
     'ldexp',
     'rsqrt',
     'reciprocal',
+    'real',
     'sqrt',
     'square',
     't',
+    'sin',
     'cos',
     'tan',
     'asin',
     'acos',
     'arccos',
     'atan',
+    'sinc',
+    'sinh',
     'cosh',
     'tanh',
     'tanhshrink',
@@ -13348,6 +13349,7 @@ __all__ = [
     'logical_xor',
     'imag',
     'roll',
+    'roll_',
     'sum',
     'matrix_exp',
     'matrix_power',

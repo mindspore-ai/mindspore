@@ -112,3 +112,29 @@ def test_recompute_cell_and_op_recompute2():
     Expectation: Run successfully and the memory usage is reduced.
     """
     run_testcase("test_recompute_cell_and_op_recompute2", 51)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_recompute_cell_and_op_recompute_with_tuple_outputs1():
+    """
+    Feature: Recompute with lazy inline.
+    Description: Each block is set recompute by both the primitive and cell recompute api and return a tuple.
+    Expectation: Run successfully and the memory usage is reduced.
+    """
+    run_testcase("test_recompute_cell_and_op_recompute_with_tuple_outputs1", 53)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_recompute_cell_and_op_recompute_with_tuple_outputs2():
+    """
+    Feature: Recompute with lazy inline.
+    Description: Each block is set recompute by both the primitive and cell recompute api and return a tuple.
+    Expectation: Run successfully and the memory usage is reduced.
+    """
+    run_testcase("test_recompute_cell_and_op_recompute_with_tuple_outputs2", 53)

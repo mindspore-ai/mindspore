@@ -56,7 +56,26 @@ BaseShapePtr MaskedFillFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr MaskedFillFuncImpl::InferType(const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) const {
-  auto input_type = input_args[kIndex0]->GetType();
-  return input_type->Clone();
+  auto prim_name = primitive->name();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("mask", input_args[kIndex1]->GetType(), {kBool}, prim_name);
+
+  auto input_tensor_type = input_args[kIndex0]->GetType()->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(input_tensor_type);
+  auto input_type_ptr = input_tensor_type->element();
+  MS_EXCEPTION_IF_NULL(input_type_ptr);
+  auto input_type = input_type_ptr->type_id();
+
+  auto value_tensor_type = input_args[kIndex2]->GetType()->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(value_tensor_type);
+  auto value_type_ptr = value_tensor_type->element();
+  MS_EXCEPTION_IF_NULL(value_type_ptr);
+  auto value_type = value_type_ptr->type_id();
+
+  if (input_type != value_type) {
+    MS_EXCEPTION(TypeError) << "For MaskedFill, "
+                            << "the dtype of input and value should be same, but got: input's type "
+                            << TypeIdToString(input_type) << ", value's type " << TypeIdToString(value_type) << ".";
+  }
+  return input_args[kIndex0]->GetType()->Clone();
 }
 }  // namespace mindspore::ops

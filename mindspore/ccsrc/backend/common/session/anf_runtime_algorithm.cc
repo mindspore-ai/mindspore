@@ -974,7 +974,12 @@ const KernelTensorPtr &AnfRuntimeAlgorithm::GetOrCreateOutputKernelTensor(const 
 
   // Get output kernel tensor in device address if exists.
   if (kernel_info->OutputAddrExist(output_idx)) {
-    return kernel_info->GetOutputAddr(output_idx)->kernel_tensor();
+    const auto &kt = kernel_info->GetOutputAddr(output_idx)->kernel_tensor();
+    if (!kt->host_info_exist()) {
+      auto [shape, type, value] = GetAbstractInfo(node, output_idx);
+      kt->SetHostInfo(shape, type, value);
+    }
+    return kt;
   }
 
   // Get output kernel tensor if exists.
@@ -1737,7 +1742,7 @@ bool AnfRuntimeAlgorithm::IsNodeSupportKernelSelectBackoff(const AnfNodePtr &nod
   if (graph == nullptr) {
     return false;
   }
-  if (graph->is_from_single_op()) {
+  if (graph->is_from_single_op() || graph->has_flag(kFlagIsPyNativeBpropKernelGraph)) {
     MS_LOG(INFO) << "The pynative single op does not support the kernel backoff ability for graph:"
                  << graph->graph_id();
     return false;
@@ -2232,7 +2237,7 @@ tensor::TensorPtr AnfRuntimeAlgorithm::SequenceToTensor(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(tensor);
   SetScalarToTensor(values, tensor);
   // Build the tuple shape and set into tensor.
-  const auto &element_shape = std::make_shared<abstract::Shape>(ShapeVector({1}));
+  const auto &element_shape = std::make_shared<abstract::Shape>(ShapeVector({}));
   const auto &element_shapes = std::vector<abstract::BaseShapePtr>(values.size(), element_shape);
   tensor->set_base_shape(std::make_shared<abstract::TupleShape>(element_shapes));
   return tensor;

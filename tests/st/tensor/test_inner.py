@@ -26,7 +26,7 @@ class Net(nn.Cell):
         return output
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -49,7 +49,7 @@ def test_inner_normal(mode):
     assert np.allclose(out.asnumpy(), expect_out)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

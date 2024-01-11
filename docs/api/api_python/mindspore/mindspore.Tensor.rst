@@ -8,6 +8,9 @@ mindspore.Tensor
     .. note::
         当使用 `init` 参数来初始化 `Tensor` 时，通常需要使用 `Tensor.init_data` 来加载 `Tensor` 的数据。
 
+    .. warning::
+        当转换 `Tensor` 类型时，推荐使用 `Tensor.astype()` 而非 `Tensor(sourceTensor, dtype=newDtype)` 。
+
     参数：
         - **input_data** (Union[Tensor, float, int, bool, tuple, list, numpy.ndarray]) - 被存储的数据，可以是其它Tensor，也可以是Python基本数据（如int，float，bool等），或是一个NumPy对象。默认值： ``None`` 。
         - **dtype** (:class:`mindspore.dtype`) - 用于定义该Tensor的数据类型，必须是 *mindspore.dtype* 中定义的类型。如果该参数为 ``None`` ，则数据类型与 `input_data` 一致，默认值： ``None`` 。
@@ -296,6 +299,7 @@ mindspore.Tensor
     mindspore.Tensor.size
     mindspore.Tensor.slice_scatter
     mindspore.Tensor.slogdet
+    mindspore.Tensor.softmax
     mindspore.Tensor.sort
     mindspore.Tensor.split
     mindspore.Tensor.sqrt

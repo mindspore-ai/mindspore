@@ -5,4 +5,4 @@ echo $JULIA_DIR
 ls $JULIA_DIR/lib
 echo "LD_LIBRARY_PATH"
 echo $LD_LIBRARY_PATH
-pytest -m level2 julia_cases.py
+pytest -m level3 julia_cases.py

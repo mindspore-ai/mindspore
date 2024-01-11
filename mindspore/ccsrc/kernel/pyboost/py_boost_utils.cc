@@ -130,7 +130,7 @@ device::DeviceAddressPtr PyBoostUtils::ContiguousByDeviceAddress(const device::D
   }
 
   auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-    nullptr, address_size, kOpFormat_DEFAULT, old_storage_info->data_type, old_storage_info->shape,
+    nullptr, address_size, Format::DEFAULT_FORMAT, old_storage_info->data_type, old_storage_info->shape,
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
   auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   new_device_address->set_device_shape(old_storage_info->shape);
@@ -225,7 +225,7 @@ DeviceContext *PyBoostUtils::CreateOrGetDeviceContextAndInit(const std::string &
 }
 
 void PyBoostUtils::DispatchRun(const std::shared_ptr<pynative::PyBoostDeviceTask> &task) {
-  auto need_sync = runtime::OpExecutor::NeedSync();
+  static auto need_sync = runtime::OpExecutor::NeedSync();
   if (need_sync) {
     MS_LOG(INFO) << "PyBoost sync run device task";
     runtime::OpExecutor::GetInstance().WaitAll();
@@ -253,7 +253,12 @@ void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, const abstract
   const auto &device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
   MS_EXCEPTION_IF_NULL(device_address);
   (void)device_address_list->emplace_back(device_address);
-  (void)kernel_tensor_list->emplace_back(device_address->kernel_tensor().get());
+  const auto &kernel_tensor = device_address->kernel_tensor();
+  (void)kernel_tensor_list->emplace_back(kernel_tensor.get());
+  if (!kernel_tensor->host_info_exist()) {
+    kernel_tensor->SetHostInfo(std::make_shared<abstract::TensorShape>(tensor->shape()),
+                               std::make_shared<TensorType>(tensor->Dtype()), nullptr);
+  }
 }
 
 void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs,
@@ -276,9 +281,9 @@ device::DeviceAddressPtrList PyBoostUtils::CreateWorkSpaceDeviceAddress(const Ke
   const auto &workspace_sizes = kernel_mod->GetWorkspaceSizeList();
   device::DeviceAddressPtrList workspaces_address;
   for (const auto workspace_size : workspace_sizes) {
-    auto kernel_tensor = std::make_shared<KernelTensor>(nullptr, workspace_size, "", kTypeUnknown, ShapeVector(),
-                                                        device_context->device_context_key().device_name_,
-                                                        device_context->device_context_key().device_id_);
+    auto kernel_tensor = std::make_shared<KernelTensor>(
+      nullptr, workspace_size, Format::DEFAULT_FORMAT, kTypeUnknown, ShapeVector(),
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
     auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     MS_LOG(DEBUG) << "Create workspace for op: " << op_name << " addr: " << device_address;
     MS_EXCEPTION_IF_NULL(device_address);

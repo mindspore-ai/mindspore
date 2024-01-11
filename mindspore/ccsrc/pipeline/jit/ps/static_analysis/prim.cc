@@ -87,65 +87,40 @@ mindspore::HashMap<std::string, std::vector<int>> prims_transparent_pass_sequenc
 
 inline int64_t OpDtypeToInt(ops::OP_DTYPE dtype) { return static_cast<int64_t>(dtype); }
 
-AnfNodePtr GetNodeAfterTypeConversion(const std::string &prim_name, const AnfNodePtr &node,
-                                      const ops::OpInputArg &op_arg, const AbstractBasePtr &abs_arg,
-                                      const FuncGraphPtr &fg) {
+AnfNodePtr GetNodeAfterTypeConversion(const AnfNodePtr &node, const ops::OpInputArg &op_arg, const FuncGraphPtr &fg) {
   MS_EXCEPTION_IF_NULL(fg);
   // If src_cast_dtype is empty, do no need to do type conversion.
-  std::vector<ops::OP_DTYPE> src_cast_dtype_list = op_arg.cast_dtype_;
-  ops::OP_DTYPE dst_cast_dtype = op_arg.arg_dtype_;
-  if (src_cast_dtype_list.empty() || ops::ValidateArgsType(abs_arg, dst_cast_dtype)) {
+  if (op_arg.cast_dtype_.empty()) {
     return node;
   }
-
-  bool mismatch = true;
-  std::stringstream ss;
-  if (op_arg.is_optional_) {
-    auto abs_type = abs_arg->BuildType();
-    MS_EXCEPTION_IF_NULL(abs_type);
-    if (abs_type->isa<TypeNone>()) {
-      return node;
-    }
-    ss << "None, ";
-  }
-
-  for (auto src_cast_dtype : src_cast_dtype_list) {
-    if (ops::ValidateArgsType(abs_arg, src_cast_dtype)) {
-      mismatch = false;
-      break;
-    }
-    ss << ops::EnumToString(src_cast_dtype) << ", ";
-  }
-  ss << ops::EnumToString(dst_cast_dtype);
-
-  if (mismatch) {
-    std::string dtype_list_str = ss.str();
-    MS_EXCEPTION(TypeError) << "For Operator[" << prim_name << "], the supported dtype list of '" << op_arg.arg_name_
-                            << "' is <" << dtype_list_str << ">, but got " << abs_arg->BuildType()->ToString() << ".";
-  }
-
   const auto convert_func =
     prim::GetPythonOps(parse::PYTHON_MOD_PRIMITIVE_OP_TYPE_CAST, parse::PYTHON_MOD_PRIMITIVE_ARG_DTYPE_CAST_MODULE);
   auto convert_fg = dyn_cast<FuncGraph>(convert_func);
   MS_EXCEPTION_IF_NULL(convert_fg);
   convert_fg->set_manager(fg->manager());
-  return fg->NewCNodeInOrder({NewValueNode(convert_fg), node, NewValueNode(OpDtypeToInt(dst_cast_dtype))});
+  return fg->NewCNodeInOrder({NewValueNode(convert_fg), node, NewValueNode(OpDtypeToInt(op_arg.arg_dtype_))});
 }
 
-AnfNodePtr GetNodeAfterArgHandler(const AnfNodePtr &node, const ops::OpInputArg &op_arg, const FuncGraphPtr &fg) {
+AnfNodePtr GetNodeAfterArgHandler(const AnfNodePtr &node, const std::string &op_name, const ops::OpInputArg &op_arg,
+                                  const AbstractBasePtr &abs, const FuncGraphPtr &fg) {
   if (op_arg.arg_handler_.empty()) {
+    return node;
+  }
+  if (op_arg.is_optional_ && abs->isa<AbstractNone>()) {
     return node;
   }
   const auto arg_handler_func = prim::GetPythonOps(op_arg.arg_handler_, parse::PYTHON_MOD_PRIMITIVE_ARG_HANDLER_MODULE);
   if (arg_handler_func->isa<Primitive>()) {
     auto arg_handler_fg = dyn_cast<Primitive>(arg_handler_func);
     MS_EXCEPTION_IF_NULL(arg_handler_fg);
-    return fg->NewCNodeInOrder({NewValueNode(arg_handler_fg), node});
+    return fg->NewCNodeInOrder(
+      {NewValueNode(arg_handler_fg), NewValueNode(op_name), NewValueNode(op_arg.arg_name_), node});
   }
   auto arg_handler_fg = dyn_cast<FuncGraph>(arg_handler_func);
   MS_EXCEPTION_IF_NULL(arg_handler_fg);
   arg_handler_fg->set_manager(fg->manager());
-  return fg->NewCNodeInOrder({NewValueNode(arg_handler_fg), node});
+  return fg->NewCNodeInOrder(
+    {NewValueNode(arg_handler_fg), NewValueNode(op_name), NewValueNode(op_arg.arg_name_), node});
 }
 
 CNodePtr DoSignatureEvaluator::GenerateNewNodeBySignatures(const ValuePtr &func,
@@ -1257,8 +1232,8 @@ void PrimitiveFunctionEvaluator::CheckArgsSizeAndType(const AbstractBasePtrList 
                      });
   // Check inputs number.
   if (op_args.size() != real_abs_args.size()) {
-    MS_LOG(EXCEPTION) << "For Operator[" << op_def_->name_ << "], the inputs number should be " << op_args.size()
-                      << " but got " << real_abs_args.size() << ".";
+    MS_EXCEPTION(TypeError) << "For Operator[" << op_def_->name_ << "], the inputs number should be " << op_args.size()
+                            << " but got " << real_abs_args.size() << ".";
   }
 
   // Check inputs type.
@@ -1269,10 +1244,11 @@ void PrimitiveFunctionEvaluator::CheckArgsSizeAndType(const AbstractBasePtrList 
       for (const auto &op_abs : real_abs_args) {
         (void)op_type_list.emplace_back(op_abs->BuildType()->ToString());
       }
-      MS_EXCEPTION(TypeError) << "For Operator[" << op_def_->name_ << "], " << op_args[i].arg_name_ << "'s type '"
-                              << real_abs_args[i]->BuildType()->ToString() << "' does not match expected type '"
-                              << ops::EnumToString(op_args[i].arg_dtype_) << "'.\n\n"
-                              << ops::BuildOpErrorMsg(op_def_, op_type_list);
+      MS_INTERNAL_EXCEPTION(TypeError)
+        << "For Operator[" << op_def_->name_ << "], " << op_args[i].arg_name_ << "'s type '"
+        << real_abs_args[i]->BuildType()->ToString() << "' does not match expected type '"
+        << ops::EnumToString(op_args[i].arg_dtype_)
+        << "'.\nThe reason may be: lack of definition of type cast, or incorrect type when creating the node.";
     }
   }
 }
@@ -2456,67 +2432,196 @@ ValueNodePtr GetArgDefaultValue(const std::string &prim_name, const std::string 
   }
   py::dict op_default_dict = mod.attr(parse::PYTHON_MOD_PRIMITIVE_OP_DEFAULT_VALUE_DICT);
   if (!op_default_dict.contains(py::str(prim_name))) {
-    MS_LOG(EXCEPTION) << "For Operator[" << prim_name
-                      << "], the number of arguments is incorrect. Please check inputs of the operator.";
+    return nullptr;
   }
   py::dict prim_default_dict = op_default_dict[py::str(prim_name)];
   if (!prim_default_dict.contains(py::str(arg_name))) {
-    MS_LOG(EXCEPTION) << "For Operator[" << prim_name << "], '" << arg_name
-                      << "' has no default value. Please check inputs of the operator.";
+    return nullptr;
   }
   auto default_value = prim_default_dict[py::str(arg_name)];
   ValuePtr converted_ret = nullptr;
   bool converted = parse::ConvertData(default_value, &converted_ret);
   if (!converted) {
-    MS_LOG(EXCEPTION) << "For Operator[" << prim_name << "], '" << py::str(default_value)
-                      << "' is not supported as the default value for '" << arg_name << "'.";
+    MS_EXCEPTION(ValueError) << "For Operator[" << prim_name << "], '" << py::str(default_value)
+                             << "' is not supported as the default value for '" << arg_name << "'.";
   }
-  return NewValueNode(converted);
+  return NewValueNode(converted_ret);
 }
 
-std::vector<AnfNodePtr> GenerateNewPrimitiveArgs(const ops::OpDefPtr &op_def, const std::vector<AnfNodePtr> &args_nodes,
-                                                 const AbstractBasePtrList &args_abs_list, const FuncGraphPtr &fg,
-                                                 bool check_init) {
-  auto prim_name = op_def->name_;
-  std::vector<AnfNodePtr> prim_arg_nodes;
-  size_t arg_index = 0;
-  size_t args_size = op_def->args_.size();
-  for (size_t i = 0; i < args_size; i++) {
-    auto op_arg = op_def->args_[i];
-    if ((check_init && !op_arg.as_init_arg_) || (!check_init && op_arg.as_init_arg_)) {
+std::vector<AnfNodePtr> GeneratePrimitiveDefaultArgs(const std::string &op_name,
+                                                     const std::vector<AnfNodePtr> &args_list,
+                                                     const std::vector<ops::OpInputArg> &op_args, bool check_init) {
+  size_t args_size = args_list.size();
+  std::vector<AnfNodePtr> nodes(args_list);
+  if (args_size < op_args.size()) {
+    for (size_t i = args_size; i < op_args.size(); i++) {
+      auto default_arg = GetArgDefaultValue(op_name, op_args[i].arg_name_);
+      if (default_arg == nullptr) {
+        break;
+      }
+      (void)nodes.emplace_back(default_arg);
+    }
+  }
+  if (nodes.size() != op_args.size()) {
+    std::string args_type_str = check_init ? "init arguments" : "inputs";
+    MS_EXCEPTION(TypeError) << "For Operator[" << op_name << "], the number of " << args_type_str
+                            << " (including default arguments) should be " << op_args.size()
+                            << ", but the actual number of inputs is not satisfied, which is " << args_size << ".";
+  }
+  return nodes;
+}
+
+bool ValidateAndConvertArgsType(const std::vector<ops::OpInputArg> &op_args, const AbstractBasePtrList &abs_list,
+                                const FuncGraphPtr &fg, std::vector<AnfNodePtr> *nodes) {
+  for (size_t i = 0; i < op_args.size(); i++) {
+    auto op_arg = op_args[i];
+    auto abs_arg = abs_list[i];
+    if (ValidateArgOptional(abs_arg, op_arg) || ops::ValidateArgsType(abs_arg, op_arg.arg_dtype_)) {
       continue;
     }
-
-    AnfNodePtr input_node = nullptr;
-    AbstractBasePtr input_abs = nullptr;
-    if (arg_index < args_nodes.size()) {
-      input_node = args_nodes[arg_index];
-      input_abs = args_abs_list[arg_index];
-    } else {
-      input_node = GetArgDefaultValue(prim_name, op_arg.arg_name_);
-      input_abs = input_node->cast<ValueNodePtr>()->value()->ToAbstract();
+    bool match = false;
+    auto cast_dtypes = op_arg.cast_dtype_;
+    for (size_t j = 0; j < cast_dtypes.size(); j++) {
+      if (ops::ValidateArgsType(abs_arg, cast_dtypes[j])) {
+        (*nodes)[i] = GetNodeAfterTypeConversion((*nodes)[i], op_arg, fg);
+        match = true;
+        break;
+      }
     }
-    arg_index++;
-    auto new_input = GetNodeAfterTypeConversion(prim_name, input_node, op_arg, input_abs, fg);
-    new_input = GetNodeAfterArgHandler(new_input, op_arg, fg);
-    (void)prim_arg_nodes.emplace_back(new_input);
+    if (!match) {
+      return false;
+    }
   }
-  return prim_arg_nodes;
+  return true;
 }
 
-std::vector<AnfNodePtr> ConvertArgsToInputs(const PrimitivePtr &prim, const std::vector<AnfNodePtr> &inputs,
-                                            const FuncGraphPtr &fg, const AnalysisEnginePtr &engine,
-                                            const AnfNodeConfigPtr &out_conf) {
-  // Get init args and inputs of primitive.
-  size_t index_input = 1;
-  std::vector<AnfNodePtr> prim_input_nodes;
+std::string BuilidArgsTypeString(const AbstractBasePtr &arg_abs) {
+  auto arg_type = arg_abs->BuildType();
+  MS_EXCEPTION_IF_NULL(arg_type);
+  if (arg_type->isa<Bool>()) {
+    return "bool";
+  }
+  if (arg_type->isa<Int>() || arg_type->isa<UInt>()) {
+    return "int";
+  }
+  if (arg_type->isa<Float>() || arg_type->isa<BFloat>()) {
+    return "float";
+  }
+  if (arg_type->isa<String>()) {
+    return "string";
+  }
+  if (arg_type->isa<TypeNone>()) {
+    return "None";
+  }
+  if (arg_type->isa<TensorType>()) {
+    return "Tensor";
+  }
+  if (arg_type->isa<Tuple>() || arg_type->isa<List>()) {
+    auto seq_abs = arg_abs->cast_ptr<abstract::AbstractSequence>();
+    MS_EXCEPTION_IF_NULL(seq_abs);
+    std::string seq_type = arg_type->isa<Tuple>() ? "tuple" : "list";
+    if (seq_abs->dynamic_len()) {
+      return seq_type;
+    }
+    std::stringstream ss;
+    ss << seq_type << "<";
+    for (size_t i = 0; i < seq_abs->size(); i++) {
+      if (i == 0) {
+        ss << BuilidArgsTypeString(seq_abs->elements()[i]);
+      } else {
+        ss << ", " << BuilidArgsTypeString(seq_abs->elements()[i]);
+      }
+    }
+    ss << ">";
+    return ss.str();
+  }
+  return arg_type->ToString();
+}
+
+AnfNodePtr CheckAndConvertPrimitiveArgs(const PrimitivePtr &prim,
+                                        const std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> &args_pair,
+                                        const AnalysisEnginePtr &engine, const AnfNodeConfigPtr &out_conf,
+                                        bool is_preprocessed) {
+  auto init_args_list = args_pair.first;
+  auto call_args_list = args_pair.second;
+  auto op_def = mindspore::ops::GetOpDef(prim->name());
+  auto fg = out_conf->node()->func_graph();
+  MS_EXCEPTION_IF_NULL(op_def);
+  MS_EXCEPTION_IF_NULL(fg);
+  // Check args size.
+  std::vector<ops::OpInputArg> op_call_args;
+  std::vector<ops::OpInputArg> op_init_args;
+  auto op_args = op_def->args_;
+  for (const auto &op_arg : op_args) {
+    if (op_arg.as_init_arg_) {
+      (void)op_init_args.emplace_back(op_arg);
+    } else {
+      (void)op_call_args.emplace_back(op_arg);
+    }
+  }
+
+  auto eval_func = [&engine, &out_conf](const AnfNodePtr &node) {
+    AnfNodeConfigPtr config = engine->MakeConfig(node, out_conf->context(), out_conf->func_graph());
+    MS_EXCEPTION_IF_NULL(config);
+    const auto &eval_result = config->ObtainEvalResult();
+    MS_EXCEPTION_IF_NULL(eval_result);
+    return eval_result->abstract();
+  };
+  // Generate primitive default args.
+  auto call_nodes = GeneratePrimitiveDefaultArgs(prim->name(), call_args_list, op_call_args, false);
+  auto init_nodes = GeneratePrimitiveDefaultArgs(prim->name(), init_args_list, op_init_args, true);
+  // If it is not preprocessed, signatures and need to be processed.
+  if (!is_preprocessed) {
+    // Process signatures.
+    AbstractBasePtrList call_abs_list;
+    (void)std::transform(call_nodes.cbegin(), call_nodes.cend(), std::back_inserter(call_abs_list), eval_func);
+    call_nodes = prim::GetNewInputsBySignatures(fg, prim->name(), prim, call_abs_list, call_nodes);
+    // Process arg_handler.
+    for (size_t i = 0; i < op_init_args.size(); i++) {
+      auto abs_node = eval_func(init_nodes[i]);
+      init_nodes[i] = GetNodeAfterArgHandler(init_nodes[i], prim->name(), op_init_args[i], abs_node, fg);
+    }
+  }
+  for (size_t i = 0; i < op_call_args.size(); i++) {
+    auto abs_node = eval_func(call_nodes[i]);
+    call_nodes[i] = GetNodeAfterArgHandler(call_nodes[i], prim->name(), op_call_args[i], abs_node, fg);
+  }
+
+  // Check args type and do type conversion.
+  AbstractBasePtrList call_abs_list;
+  AbstractBasePtrList init_abs_list;
+  (void)std::transform(call_nodes.cbegin(), call_nodes.cend(), std::back_inserter(call_abs_list), eval_func);
+  (void)std::transform(init_nodes.cbegin(), init_nodes.cend(), std::back_inserter(init_abs_list), eval_func);
+  if (!ValidateAndConvertArgsType(op_call_args, call_abs_list, fg, &call_nodes) ||
+      !ValidateAndConvertArgsType(op_init_args, init_abs_list, fg, &init_nodes)) {
+    std::vector<std::string> op_type_list;
+    (void)std::transform(call_abs_list.cbegin(), call_abs_list.cend(), std::back_inserter(op_type_list),
+                         [](const AbstractBasePtr &op_abs) { return BuilidArgsTypeString(op_abs); });
+    (void)std::transform(init_abs_list.cbegin(), init_abs_list.cend(), std::back_inserter(op_type_list),
+                         [](const AbstractBasePtr &op_abs) { return BuilidArgsTypeString(op_abs); });
+    MS_EXCEPTION(TypeError) << ops::BuildOpErrorMsg(op_def, op_type_list);
+  }
+
+  // Create New node.
+  AnfNodePtrList input_nodes{NewValueNode(prim)};
+  (void)std::copy(call_nodes.cbegin(), call_nodes.cend(), std::back_inserter(input_nodes));
+  (void)std::copy(init_nodes.cbegin(), init_nodes.cend(), std::back_inserter(input_nodes));
+  auto new_cnode = fg->NewCNodeInOrder(input_nodes);
+  MS_LOG(INFO) << "Convert primitive args: " << prim->name() << ". node: " << out_conf->node()->DebugString()
+               << ", new_node: " << new_cnode->DebugString();
+  return new_cnode;
+}
+
+AnfNodePtr ConvertArgsToInputs(const PrimitivePtr &prim, const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg,
+                               const AnalysisEnginePtr &engine, const AnfNodeConfigPtr &out_conf) {
+  // Append Primitive arguments to the inputs.
   std::vector<AnfNodePtr> prim_init_arg_nodes;
   auto prim_py = prim->cast<PrimitivePyPtr>();
   MS_EXCEPTION_IF_NULL(prim_py);
   auto obj = prim_py->GetPyObj();
-  // Append Primitive arguments to the inputs.
   auto op_def = mindspore::ops::GetOpDef(prim->name());
   MS_EXCEPTION_IF_NULL(op_def);
+  // Get init args.
   for (const auto &op_arg : op_def->args_) {
     if (op_arg.as_init_arg_) {
       auto arg_name = op_arg.arg_name_;
@@ -2528,28 +2633,14 @@ std::vector<AnfNodePtr> ConvertArgsToInputs(const PrimitivePtr &prim, const std:
                                    << " ) in Primitive '" << prim->name() << "'.";
       }
       (void)prim_init_arg_nodes.emplace_back(NewValueNode(converted_ret));
-    } else {
-      if (index_input >= inputs.size()) {
-        MS_LOG(INTERNAL_EXCEPTION) << "The size of non-initial args `" << index_input
-                                   << "` exceeds the size of cnode inputs `" << inputs.size() << "`.";
-      }
-      AnfNodeConfigPtr input_conf =
-        engine->MakeConfig(inputs[index_input], out_conf->context(), out_conf->func_graph());
-      MS_EXCEPTION_IF_NULL(input_conf);
-      const auto &eval_result = input_conf->ObtainEvalResult();
-      MS_EXCEPTION_IF_NULL(eval_result);
-      auto input_abs = eval_result->abstract();
-      MS_EXCEPTION_IF_NULL(input_abs);
-      auto new_input = GetNodeAfterTypeConversion(prim->name(), inputs[index_input], op_arg, input_abs, fg);
-      new_input = GetNodeAfterArgHandler(new_input, op_arg, fg);
-      (void)prim_input_nodes.emplace_back(new_input);
-      index_input++;
     }
   }
-  AnfNodePtrList input_nodes{NewValueNode(std::make_shared<Primitive>(*prim))};
-  (void)std::copy(prim_input_nodes.begin(), prim_input_nodes.end(), std::back_inserter(input_nodes));
-  (void)std::copy(prim_init_arg_nodes.begin(), prim_init_arg_nodes.end(), std::back_inserter(input_nodes));
-  return input_nodes;
+  // Get call args.
+  AnfNodePtrList prim_call_arg_nodes(inputs.begin() + 1, inputs.end());
+  // Create new node.
+  auto new_prim = std::make_shared<Primitive>(*prim);
+  auto args_pair = std::make_pair(prim_init_arg_nodes, prim_call_arg_nodes);
+  return CheckAndConvertPrimitiveArgs(new_prim, args_pair, engine, out_conf, true);
 }
 }  // namespace
 
@@ -2563,20 +2654,18 @@ EvalResultPtr PrimitiveArgsToInputsEvaluator::EvalPrim(const AnalysisEnginePtr &
   auto fg = cnode->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
 
-  std::vector<AnfNodePtr> new_inputs;
   constexpr size_t index_op = 0;
   constexpr size_t index_data = 1;
   auto op_node = cnode->input(index_op);
-  if (IsPrimitive(op_node, prim_)) {
-    new_inputs = ConvertArgsToInputs(prim_, cnode->inputs(), fg, engine, out_conf);
-  } else if (IsPrimitiveCNode(op_node, prim::kPrimPartial)) {
+  AnfNodePtr new_node = nullptr;
+  if (IsPrimitiveCNode(op_node, prim::kPrimPartial)) {
     // The input may be a Partial node, such as {{prim::kPrimPartial, prim::kPrimRank, x}} -> {prim::kPrimRank, x}.
     std::vector<AnfNodePtr> partial_inputs;
     auto op_cnode = op_node->cast<CNodePtr>();
     (void)std::copy(op_cnode->inputs().begin() + index_data, op_cnode->inputs().end(),
                     std::back_inserter(partial_inputs));
     (void)std::copy(cnode->inputs().begin() + index_data, cnode->inputs().end(), std::back_inserter(partial_inputs));
-    new_inputs = ConvertArgsToInputs(prim_, partial_inputs, fg, engine, out_conf);
+    new_node = ConvertArgsToInputs(prim_, partial_inputs, fg, engine, out_conf);
   } else if (IsPrimitiveCNode(op_node, prim::kPrimGetAttr) ||
              IsPrimitiveCNodeWithoutDoSignature(op_node, prim::kPrimGetAttr)) {
     // The input may be a GetAttr node, such as x.abs(): {{prim::kPrimGetAttr, x, abs}} -> {prim::kPrimAbs, x}
@@ -2586,19 +2675,18 @@ EvalResultPtr PrimitiveArgsToInputsEvaluator::EvalPrim(const AnalysisEnginePtr &
     (void)getattr_inputs.emplace_back(NewValueNode(new_prim));
     (void)getattr_inputs.emplace_back(op_cnode->input(index_data));
     (void)std::copy(cnode->inputs().begin() + index_data, cnode->inputs().end(), std::back_inserter(getattr_inputs));
-    new_inputs = ConvertArgsToInputs(prim_, getattr_inputs, fg, engine, out_conf);
+    new_node = ConvertArgsToInputs(prim_, getattr_inputs, fg, engine, out_conf);
   } else {
     constexpr int recursive_level = 2;
-    new_inputs = ConvertArgsToInputs(prim_, cnode->inputs(), fg, engine, out_conf);
-    MS_LOG(DEBUG) << "Expect a cnode with primitive `" << prim_->name() << "`, but got "
-                  << cnode->DebugString(recursive_level);
+    new_node = ConvertArgsToInputs(prim_, cnode->inputs(), fg, engine, out_conf);
+    MS_LOG(DEBUG) << "Convert args to inputs for Operator[" << prim_->name()
+                  << "], node: " << cnode->DebugString(recursive_level);
   }
 
-  auto new_cnode = fg->NewCNodeInOrder(new_inputs);
-  new_cnode->set_debug_info(cnode->debug_info());
-  auto new_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
+  new_node->set_debug_info(cnode->debug_info());
+  auto new_conf = engine->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
   MS_LOG(INFO) << "Convert primitive args to inputs: " << prim_->ToString() << ". node: " << cnode->DebugString()
-               << ", new cnode: " << new_cnode->DebugString();
+               << ", new node: " << new_node->DebugString();
   return engine->ForwardConfig(out_conf, new_conf);
 }
 
@@ -2642,9 +2730,9 @@ EvalResultPtr DoTransPrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePt
     // All call args and init args should have been provided.
     size_t op_args_size = op_def->args_.size();
     if (op_args_size != args_abs_list.size()) {
-      MS_LOG(EXCEPTION) << "For Primitive Function '" << prim_name << "', the number of inputs should be "
-                        << op_args_size << ", but got " << args_abs_list.size()
-                        << ". Please check inputs of the operator.";
+      MS_EXCEPTION(TypeError) << "For Operator['" << prim_name
+                              << "]', the number of inputs and init args (including default arguments) should be "
+                              << op_args_size << ", but got " << args_abs_list.size() << ". ";
     }
     for (size_t i = 0; i < op_args_size; i++) {
       if (op_def->args_[i].as_init_arg_) {
@@ -2652,37 +2740,14 @@ EvalResultPtr DoTransPrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePt
       }
     }
   }
-  // Handle init args.
-  const AnfNodePtrList &cnode_inputs = cnode->inputs();
-  AnfNodePtrList origin_init_arg_nodes(cnode_inputs.begin() + cnode_inputs.size() - init_args_size, cnode_inputs.end());
-  AbstractBasePtrList origin_init_abs_list(args_abs_list.begin() + args_abs_list.size() - init_args_size,
-                                           args_abs_list.end());
-  auto prim_init_arg_nodes = GenerateNewPrimitiveArgs(op_def, origin_init_arg_nodes, origin_init_abs_list, fg, true);
-  // Handle call args.
-  AnfNodePtrList origin_call_arg_nodes(cnode_inputs.begin() + 1, cnode_inputs.end() - init_args_size);
-  AbstractBasePtrList origin_call_abs_list(args_abs_list.begin(), args_abs_list.end() - init_args_size);
-  auto sign_input_nodes =
-    prim::GetNewInputsBySignatures(fg, prim_name, prim_func, origin_call_abs_list, origin_call_arg_nodes);
-  AbstractBasePtrList sign_abs_list;
-  (void)std::transform(sign_input_nodes.begin(), sign_input_nodes.end(), std::back_inserter(sign_abs_list),
-                       [&engine, &out_conf](const AnfNodePtr &node) -> AbstractBasePtr {
-                         AnfNodeConfigPtr config =
-                           engine->MakeConfig(node, out_conf->context(), out_conf->func_graph());
-                         MS_EXCEPTION_IF_NULL(config);
-                         const auto &eval_result = config->ObtainEvalResult();
-                         MS_EXCEPTION_IF_NULL(eval_result);
-                         return eval_result->abstract();
-                       });
-  auto prim_input_nodes = GenerateNewPrimitiveArgs(op_def, sign_input_nodes, sign_abs_list, fg, false);
 
-  // Handle primitive labels.
-  AddLabelsToPrimitiveFunction(prim_func);
-  // Append init args after inputs of node.
-  std::vector<AnfNodePtr> op_inputs{NewValueNode(prim_func)};
-  (void)std::copy(prim_input_nodes.begin(), prim_input_nodes.end(), std::back_inserter(op_inputs));
-  (void)std::copy(prim_init_arg_nodes.begin(), prim_init_arg_nodes.end(), std::back_inserter(op_inputs));
-  // Create new node.
-  auto new_cnode = fg->NewCNodeInOrder(op_inputs);
+  // Get init args and call args.
+  const AnfNodePtrList &cnode_inputs = cnode->inputs();
+  AnfNodePtrList prim_init_arg_nodes(cnode_inputs.begin() + cnode_inputs.size() - init_args_size, cnode_inputs.end());
+  AnfNodePtrList prim_call_arg_nodes(cnode_inputs.begin() + 1, cnode_inputs.end() - init_args_size);
+
+  auto args_pair = std::make_pair(prim_init_arg_nodes, prim_call_arg_nodes);
+  auto new_cnode = CheckAndConvertPrimitiveArgs(prim_func, args_pair, engine, out_conf, false);
   auto new_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
   MS_LOG(INFO) << "Convert DoTransPrimitiveFunction: " << prim_func->name() << ". node: " << cnode->DebugString()
                << ", new_node: " << new_cnode->DebugString();

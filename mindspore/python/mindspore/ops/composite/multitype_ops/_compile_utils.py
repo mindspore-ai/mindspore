@@ -679,7 +679,8 @@ def tensor_index_by_list(data, list_index):
     """Tensor getitem by list of int and bool"""
     min_data_dim, max_data_dim = 1, 8
     const_utils.judge_data_dim(data.ndim, min_data_dim, max_data_dim)
-
+    if isinstance(list_index, list) and F.is_sequence_value_unknown(list_index):
+        raise TypeError(f"For tensor index, the type of index does not support mindspore.mutable.")
     data_shape = F.shape(data)
     indexes_types = hyper_map(toptypeof, list_index)
     if const_utils.check_type_isinstance(indexes_types, (mstype.Bool, mstype.Int)) \

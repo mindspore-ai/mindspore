@@ -897,7 +897,7 @@ class Conv2D(Primitive):
         group (int, optional): Specifies the number of groups dividing `x`'s input channel when applying
             group convolution. Default: ``1`` .
         data_format (str, optional): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
-            Default: ``"NCHW"`` .
+            Default: ``"NCHW"``. (NHWC is only supported in GPU now.)
 
     Inputs:
         - **x** (Tensor) - Input tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` or
@@ -6508,7 +6508,7 @@ class DynamicRNN(Primitive):
         - **w** (Tensor) - Weight. Tensor of shape :math:`(input\_size + hidden\_size, 4 * hidden\_size)`.
           The data type must be float16.
         - **b** (Tensor) - Bias. Tensor of shape :math:`(4 * hidden\_size)`.
-          The data type must be float16 or float32.
+          The data type must be float16.
         - **seq_length** (Tensor) - The length of each batch. Tensor of shape :math:`(batch\_size, )`.
           Only `None` is currently supported.
         - **init_h** (Tensor) - Hidden state of initial time. Tensor of shape :math:`(1, batch\_size, hidden\_size)`.
@@ -6577,6 +6577,7 @@ class DynamicRNN(Primitive):
         self.forget_bias = validator.check_value_type("forget_bias", forget_bias, [float], self.name)
         self.cell_depth = validator.check_value_type("cell_depth", cell_depth, [int], self.name)
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
+        validator.check_number_range(keep_prob, 0.0, 1.0, validator.INC_BOTH, float, "keep_prob")
         self.cell_clip = validator.check_value_type("cell_clip", cell_clip, [float], self.name)
         self.num_proj = validator.check_non_negative_int(num_proj, "num_proj", self.name)
         self.forget_bias = validator.check_value_type("forget_bias", forget_bias, [float], self.name)
@@ -10265,6 +10266,7 @@ class FlashAttentionScore(Primitive):
         performance mode. Default: 0.
         input_layout (str, optional): Specifies the layout of `query`, the value must be one of ["BSH", "SBH"].
         Currently, only BSH is supported. Default: "BSH".
+        sparse_mode (int): Default 0.
 
     Inputs:
         - **query** (Tensor) - The query tensor with data type must be in [float16, float32, bfloat16].
@@ -10273,12 +10275,13 @@ class FlashAttentionScore(Primitive):
           Input tensor of shape :math:`(B, S, H)`.
         - **value** (Tensor) - The value tensor with data must be in [float16, float32, bfloat16].
           Input tensor of shape :math:`(B, S, H)`.
-        - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or uint8.
+        - **attn_mask** (Tensor) - The attention mask tensor with data type of uint8 or float16.
           For each element, 0 indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, 1, S, S)`.
         - **drop_mask** (Tensor) - The dropout mask tensor with data type of UInt8.
           Input tensor of shape :math:`(B, N, S, S // 8) or ()`.
         - **real_shift** (None) - The position embedding code of float16 or float32, not implemented yet.
         - **padding_mask** (None) - The padding mask of float16 or float32, not implemented yet.
+        - **prefix** (None) - Not implemented yet.
 
     Outputs:
         - **attention_out** (Tensor) - (B, S, H)
@@ -10290,7 +10293,7 @@ class FlashAttentionScore(Primitive):
 
     @prim_attr_register
     def __init__(self, head_num, keep_prob=1.0, scale_value=1.0, pre_tokens=65536, next_tokens=65536, inner_precise=0,
-                 input_layout="BSH"):
+                 input_layout="BSH", sparse_mode=0):
         """Initialize FlashAttentionScore"""
         validator.check_value_type('head_num', head_num, [int], self.name)
         validator.check_value_type('keep_prob', keep_prob, [int, float], self.name)
@@ -10300,11 +10303,12 @@ class FlashAttentionScore(Primitive):
         validator.check_value_type('pre_tokens', pre_tokens, [int], self.name)
         validator.check_value_type('next_tokens', next_tokens, [int], self.name)
         validator.check_value_type('inner_precise', inner_precise, [int], self.name)
+        validator.check_value_type('sparse_mode', sparse_mode, [int], self.name)
         if inner_precise not in [0, 1]:
             raise ValueError(f"Attribute 'inner_precise' must be either 0 or 1, but got {inner_precise}")
         validator.check_value_type('input_layout', input_layout, [str], self.name)
-        if input_layout not in ["BSH"]:
-            raise ValueError(f"Attribute 'input_layout' must be either 'bsh' or 'sbh', but got {input_layout}")
+        if input_layout not in ["BSH", "BNSD"]:
+            raise ValueError(f"Attribute 'input_layout' must be either 'BSH' or 'BNSD', but got {input_layout}")
         self.init_prim_io_names(
-            inputs=['query', 'key', 'value', 'attn_mask', 'drop_mask', 'real_shift', 'padding_mask'],
+            inputs=['query', 'key', 'value', 'attn_mask', 'drop_mask', 'real_shift', 'padding_mask', 'prefix'],
             outputs=['attention_out', 'softmax_max', 'softmax_sum'])

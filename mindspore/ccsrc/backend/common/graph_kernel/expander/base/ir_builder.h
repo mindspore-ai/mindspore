@@ -126,7 +126,7 @@ class IrBuilder {
     return e->Emit(MetaOp::ReduceMin, {node, axis, keepdims});
   }
   inline NodePtr ReduceSum(const NodePtr &node, const NodePtr &axis, const NodePtr &keepdims) const {
-    return e->Emit(MetaOp::ReduceSum, {node, axis, keepdims});
+    return e->Emit(MetaOp::ReduceSum, {node, axis, keepdims, Value(false)});
   }
   inline NodePtr Reshape(const NodePtr &node, const NodePtr &shape) const {
     return e->Emit(MetaOp::Reshape, {node, shape});

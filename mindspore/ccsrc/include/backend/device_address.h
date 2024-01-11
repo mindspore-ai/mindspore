@@ -202,8 +202,8 @@ class DeviceAddress : public mindspore::DeviceSync {
 
   std::string format() const { return kernel_tensor_->GetStringFormat(); }
   void set_format(const std::string &format) { kernel_tensor_->SetStringFormat(format); }
-  const std::string &padding_type() const { return kernel_tensor_->padding_type(); }
-  void set_padding_type(const std::string &padding_type) { kernel_tensor_->set_padding_type(padding_type); }
+  const std::string &padding_type() const { return padding_type_; }
+  void set_padding_type(const std::string &padding_type) { padding_type_ = padding_type; }
   TypeId type_id() const { return kernel_tensor_->dtype_id(); }
   void set_type_id(TypeId type_id) { kernel_tensor_->set_dtype_id(type_id); }
   bool from_mem_pool() const { return kernel_tensor_->pointer_ref_count()->from_mem_pool(); }
@@ -411,6 +411,9 @@ class DeviceAddress : public mindspore::DeviceSync {
 
   bool from_persistent_mem_{false};
   bool need_recycle_{false};
+
+  // The padding type corresponds to data format.
+  std::string padding_type_;
 
   // The device address flag.
   size_t flag_{0};

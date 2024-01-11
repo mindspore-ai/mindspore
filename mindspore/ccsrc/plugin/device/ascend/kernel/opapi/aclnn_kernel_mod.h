@@ -37,6 +37,7 @@ using aclTensor = transform::aclTensor;
 using aclOpExecutor = transform::aclOpExecutor;
 using CallBackFunc = std::function<void()>;
 using OpApiUtil = transform::OpApiUtil;
+using AclUtil = transform::AclUtil;
 
 class EmptyKernelTensor {
  public:

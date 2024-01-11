@@ -651,16 +651,6 @@ class Broadcast(PrimitiveWithInfer):
         self.add_prim_attr('group', _get_group(group))
         self.add_prim_attr('no_eliminate', True)
 
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        if not isinstance(x_dtype, tuple):
-            raise TypeError(f"For '{self.name}', the 'input_x' must be a tuple, but got {type(x_dtype).__name__}!")
-        for _ele in x_dtype:
-            check_collective_target_dtype('tuple input_x', _ele, self.name)
-        return x_dtype
-
 
 class _AllSwap(PrimitiveWithCheck):
     """

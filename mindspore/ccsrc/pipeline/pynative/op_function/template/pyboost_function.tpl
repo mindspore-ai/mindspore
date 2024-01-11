@@ -22,6 +22,9 @@ py::object ${func_name}_Base(const PrimitivePtr &prim, const py::list &args) {
           // Create op
           auto op = CREATE_PYBOOST_OP(${op_name}, op_run_info->base_op_run_info.device_target);
           op->set_primitive(op_run_info->op_grad_info->op_prim);
+          if (op_run_info->requires_grad) {
+            op->set_grad_func([op_run_info]() { PyNativeAlgo::PyBoost::DoGrad(op_run_info); });
+          }
 
           // Do mixed precision and implicit cast
           static const std::vector<std::vector<size_t>> same_type_table{${same_type}};

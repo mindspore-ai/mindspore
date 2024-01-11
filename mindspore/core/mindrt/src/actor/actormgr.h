@@ -83,7 +83,7 @@ class MS_CORE_API ActorMgr {
   }
   int EnqueueMessage(const ActorReference actor, std::unique_ptr<MessageBase> msg);
   // in order to avoid being initialized many times
-  std::atomic_bool initialized_{false};
+  bool initialized_{false};
 
   // actor manager support running on inner thread pool,
   // or running on other thread pool created independently externally

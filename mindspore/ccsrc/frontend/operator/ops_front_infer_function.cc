@@ -47,6 +47,7 @@
 #include "ops/grad/strided_slice_v2_grad.h"
 #include "abstract/abstract_function.h"
 #include "utils/ms_context.h"
+#include "ops/op_name.h"
 #ifdef _MSC_VER
 #include "include/common/pybind_api/api_register.h"
 #endif
@@ -1074,12 +1075,14 @@ AbstractBasePtr InferImplConvertToMsTensor(const AnalysisEnginePtr &, const Prim
 
 AbstractBasePtr InferImplDtypeToEnum(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const AbstractBasePtrList &args_abs_list) {
-  constexpr size_t args_num = 1;
-  constexpr size_t input_index = 0;
+  constexpr size_t args_num = 3;
   CheckArgsSize(primitive->name(), args_abs_list, args_num);
-  auto abs_type = args_abs_list[input_index]->cast<AbstractTypePtr>();
+  auto abs_type = args_abs_list[ops::kInputIndex2]->cast<AbstractTypePtr>();
   if (abs_type == nullptr) {
-    MS_EXCEPTION(TypeError) << "Expect a type as input, but got " << args_abs_list[input_index]->ToString();
+    const auto &op_name = GetValue<std::string>(args_abs_list[ops::kInputIndex0]->GetValue());
+    const auto &arg_name = GetValue<std::string>(args_abs_list[ops::kInputIndex1]->GetValue());
+    MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input '" << arg_name << "' expect a type, but got "
+                            << args_abs_list[ops::kInputIndex2]->ToString();
   }
   auto val_type = abs_type->BuildValue();
   MS_EXCEPTION_IF_NULL(val_type);

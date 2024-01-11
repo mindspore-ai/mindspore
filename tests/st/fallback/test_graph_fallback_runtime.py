@@ -27,7 +27,7 @@ from mindspore import mutable, jit
 ms.set_context(mode=ms.GRAPH_MODE)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -71,7 +71,7 @@ def test_getattr_list_with_wrong_attr():
     assert "object has no attribute" in str(err.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -93,7 +93,7 @@ def test_getattr_tuple_with_wrong_attr():
     assert "object has no attribute" in str(err.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -143,7 +143,7 @@ def test_pyexecute_with_scalar_input():
     assert not ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -168,7 +168,7 @@ def test_pyexecute_with_scalar_input_2():
     assert ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -193,7 +193,7 @@ def test_pyexecute_with_scalar_input_3():
     assert not ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -218,7 +218,7 @@ def test_pyexecute_with_scalar_input_4():
     assert ret
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -260,7 +260,7 @@ def reduce_user_mul(x):
     return out
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -403,7 +403,7 @@ class MakeTensorAsConstant(ms.nn.Cell):
         return output1 + output2
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -544,7 +544,7 @@ def test_np_save_with_args():
     os.remove("data_from_args.npy")
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -572,7 +572,7 @@ def test_np_save_with_call_kw1():
     os.remove("data_from_kw.npy")
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -664,7 +664,7 @@ def test_pyexecute_raise_error_with_dynamic_length_sequence_2():
     assert "does not match the shape" in str(err.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

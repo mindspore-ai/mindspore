@@ -93,7 +93,7 @@ AbstractBasePtr SliceToIndicesInferInner(const PrimitivePtr &primitive,
   const size_t inputs_size = 4;
   CheckArgsSize(op_name, input_args, inputs_size);
 
-  ShapeVector data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  ShapeVector data_shape = input_args[0]->GetShape()->GetShapeVector();
   if (!IsDynamic(data_shape) && std::all_of(input_args.begin() + 1, input_args.end(),
                                             [](const AbstractBasePtr &abs) { return IsValueKnown(abs->GetValue()); })) {
     size_t dim_index = LongToSize(GetValue<int64_t>(primitive->GetAttr(kAttrTupleIndexAxis)));
@@ -116,11 +116,10 @@ AbstractBasePtr SliceToIndicesInferInner(const PrimitivePtr &primitive,
 
   if (!data_shape.empty() && data_shape[0] != abstract::Shape::kShapeDimAny) {
     indices_tensor_abs = abstract::MakeAbstractTensor(
-      std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeDimAny, 1}, ShapeVector{data_shape[0], 1}),
-      kInt64);
+      std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeDimAny, 1}), kInt64);
   }
-  auto value_shape_tensor_abs = abstract::MakeAbstractTensor(
-    std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeDimAny}, ShapeVector{8}), kInt64);
+  auto value_shape_tensor_abs =
+    abstract::MakeAbstractTensor(std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeDimAny}), kInt64);
   auto output = std::make_shared<abstract::AbstractTuple>(abstract::AbstractBasePtrList{
     indices_tensor_abs, value_shape_tensor_abs, abs_tensor, abs_tensor, abs_tensor, empty_abs_tensor});
   return output;

@@ -1976,37 +1976,60 @@ REG_BPROP_BUILDER("ReduceStd").SetBody(BODYFUNC(ib) {
   auto res = ib->ShapeCalc(g_reduce_std, {x, axis}, {1});
   res[1] = ib->SequenceToTensor(res[1]);
   res[2] = ib->SequenceToTensor(res[2]);
-  auto true_branch = [&ib, &res, &std_d, &std, &mean_d, &mean](const Emitter *e) -> NodePtrList {
-    auto std_d_r = ib->Reshape(std_d, res[0]);
-    auto std_r = ib->Reshape(std, res[0]);
-    auto mean_d_r = ib->Reshape(mean_d, res[0]);
-    auto mean_r = ib->Reshape(mean, res[0]);
-    return {std_d_r, std_r, mean_d_r, mean_r};
-  };
-  auto false_branch = [&std_d, &std, &mean_d, &mean](const Emitter *e) -> NodePtrList {
-    return {std_d, std, mean_d, mean};
-  };
-  auto keep_dims_t = ib->Emit("ScalarToTensor", {ib->Equal(keep_dims, ib->Value<bool>(false)), ib->Value(kBool)});
-  auto cond = ib->LogicalAnd(keep_dims_t, ib->Tensor(!(ib->GetShape(x).empty()), kBool));
-  auto cond_block = ib->Conditional(cond, true_branch, false_branch);
-  std_d = ib->TupleGetItem(cond_block, 0);
-  std = ib->TupleGetItem(cond_block, 1);
-  mean_d = ib->TupleGetItem(cond_block, 2);
-  mean = ib->TupleGetItem(cond_block, 3);
+
+  auto keep_dims_value = keep_dims->BuildValue();
+  auto keep_dims_opt = ops::GetScalarValue<bool>(keep_dims_value);
+  if (keep_dims_opt.has_value()) {
+    if (!keep_dims_opt.value() && !ib->GetShape(x).empty()) {
+      std_d = ib->Reshape(std_d, res[0]);
+      std = ib->Reshape(std, res[0]);
+      mean_d = ib->Reshape(mean_d, res[0]);
+      mean = ib->Reshape(mean, res[0]);
+    }
+  } else {
+    auto true_branch = [&res, &std_d, &std, &mean_d, &mean](Emitter *e) -> NodePtrList {
+      auto std_d_r = e->Reshape(std_d, res[0]);
+      auto std_r = e->Reshape(std, res[0]);
+      auto mean_d_r = e->Reshape(mean_d, res[0]);
+      auto mean_r = e->Reshape(mean, res[0]);
+      return {std_d_r, std_r, mean_d_r, mean_r};
+    };
+    auto false_branch = [&std_d, &std, &mean_d, &mean](const Emitter *e) -> NodePtrList {
+      return {std_d, std, mean_d, mean};
+    };
+    auto keep_dims_t = ib->Emit("ScalarToTensor", {ib->Equal(keep_dims, ib->Value<bool>(false)), ib->Value(kBool)});
+    auto cond = ib->LogicalAnd(keep_dims_t, ib->Tensor(!(ib->GetShape(x).empty()), kBool));
+    auto cond_block = ib->Conditional(cond, true_branch, false_branch);
+    std_d = ib->TupleGetItem(cond_block, 0);
+    std = ib->TupleGetItem(cond_block, 1);
+    mean_d = ib->TupleGetItem(cond_block, 2);
+    mean = ib->TupleGetItem(cond_block, 3);
+  }
 
   auto dx = ib->Sub(x, mean);
   dx = ib->Mul(dx, std_d);
   dx = ib->Div(dx, std);
-  auto unbiased_true_branch = [&ib, &dx, &res](const Emitter *e) -> NodePtrList {
-    return {ib->Div(dx, ib->Cast(res[1], ib->GetDtype(dx)))};
-  };
-  auto unbiased_false_branch = [&ib, &dx, &res](const Emitter *e) -> NodePtrList {
-    return {ib->Div(dx, ib->Cast(res[2], ib->GetDtype(dx)))};
-  };
-  auto unbiased_cond = ib->Equal(unbiased, ib->Value<bool>(true));
-  auto unbiased_cond_block = ib->Conditional(unbiased_cond, unbiased_true_branch, unbiased_false_branch);
+
+  auto unbiased_value = unbiased->BuildValue();
+  auto unbiased_opt = ops::GetScalarValue<bool>(unbiased_value);
+  if (unbiased_opt.has_value()) {
+    if (unbiased_opt.value()) {
+      dx = ib->Div(dx, ib->Cast(res[1], ib->GetDtype(dx)));
+    } else {
+      dx = ib->Div(dx, ib->Cast(res[2], ib->GetDtype(dx)));
+    }
+  } else {
+    auto unbiased_true_branch = [&dx, &res](Emitter *e) -> NodePtrList {
+      return {e->Div(dx, e->Cast(res[1], dx->dtype()))};
+    };
+    auto unbiased_false_branch = [&dx, &res](Emitter *e) -> NodePtrList {
+      return {e->Div(dx, e->Cast(res[2], dx->dtype()))};
+    };
+    auto unbiased_cond = ib->Equal(unbiased, ib->Value<bool>(true));
+    dx = ib->Conditional(unbiased_cond, unbiased_true_branch, unbiased_false_branch);
+  }
   auto temp = ib->Div(mean_d, ib->Cast(res[2], ib->GetDtype(mean_d)));
-  dx = ib->Add(unbiased_cond_block, temp);
+  dx = ib->Add(dx, temp);
   return {dx, ib->OutZeros(axis), ib->OutZeros(unbiased), ib->OutZeros(keep_dims)};
 });
 
@@ -2198,7 +2221,14 @@ REG_BPROP_BUILDER("Polygamma").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex3);
   auto one = ib->Tensor(1);
   a = ib->Add(a, one);
-  auto dx = ib->Mul(dout, ib->Emit(kPolygammaOpName, {a, x}));
+  NodePtr dx;
+  if (ib->GetDtypeId(x) == kNumberTypeFloat16) {
+    x = ib->Cast(x, kNumberTypeFloat64);
+    dx = ib->Mul(dout, ib->Emit(kPolygammaOpName, {a, x}));
+    dx = ib->Cast(dx, kNumberTypeFloat16);
+  } else {
+    dx = ib->Mul(dout, ib->Emit(kPolygammaOpName, {a, x}));
+  }
   return {ib->OutZeros(a), dx};
 });
 

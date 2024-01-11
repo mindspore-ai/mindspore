@@ -250,7 +250,6 @@ def test_scatter_nd_exception(context_mode):
     indices = ms.Tensor(np.random.uniform(-10, 10, size=()).astype(np.int64))
     updates = ms.Tensor(np.random.uniform(-10, 10, size=[2]).astype(np.float32))
     shape = (-23, 9, 36, -4)
-    try:
+    with pytest.raises(RuntimeError) as info:
         _ = scatter_nd_forward_func(indices, updates, shape)
-    except RuntimeError as e:
-        assert "a scalar" in str(e)
+    assert "a scalar" in str(info)

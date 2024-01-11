@@ -21,6 +21,11 @@
 #include <string>
 #include "utils/ms_context.h"
 #include "ir/anf.h"
+#include "acl/acl_base.h"
+#include "acl/acl_rt.h"
+#include "hccl/hccl.h"
+#include "acl/acl_op_compiler.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 
 namespace mindspore::transform {
 typedef enum : int8_t {
@@ -38,6 +43,17 @@ class OpApiUtil {
                                       std::vector<std::string> *output_formats,
                                       std::vector<std::string> *input_reshape_types,
                                       std::vector<std::string> *output_reshape_types);
+};
+
+class AclUtil {
+ public:
+  static void SetDeterministic();
+
+  static aclError SetCompileMode(const int64_t is_dyncmic);
+
+  static aclError SetPrecisionMode(const std::string &mode);
+
+  static void SetOpPrecisionMode();
 };
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_ACL_IR_OP_API_UTIL_H_

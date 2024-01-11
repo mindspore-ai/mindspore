@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "backend/common/pass/add_dropout_attrs.h"
+#include "backend/common/pass/add_attr_to_node/add_attr_to_node_register.h"
 
 #include <memory>
 
@@ -24,8 +24,7 @@
 
 namespace mindspore {
 namespace opt {
-const AnfNodePtr AddDropoutAttrs::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                          const EquivPtr &) const {
+const AnfNodePtr AddDropoutAttrs(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
   if (!IsPrimitiveCNode(node, prim::kPrimDropout)) {
@@ -66,17 +65,6 @@ const AnfNodePtr AddDropoutAttrs::Process(const FuncGraphPtr &func_graph, const 
     cnode->AddAttr(kAttrOnlyUseSecondOutput, MakeValue(true));
   }
   return cnode;
-}
-
-std::vector<std::string> AddDropoutAttrs::MustExistPrimitiveName() const {
-  std::vector<std::string> ret;
-  (void)ret.emplace_back(prim::kPrimDropout->name());
-  return ret;
-}
-
-const BaseRef AddDropoutAttrs::DefinePattern() const {
-  VarPtr Xs = std::make_shared<SeqVar>();
-  return VectorRef({prim::kPrimDropout, Xs});
 }
 }  // namespace opt
 }  // namespace mindspore

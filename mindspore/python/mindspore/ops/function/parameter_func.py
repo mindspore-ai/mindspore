@@ -17,6 +17,7 @@
 
 from mindspore.ops import operations as P
 from mindspore.ops._primitive_cache import _get_cache_prim
+from mindspore.ops.auto_generate import assign
 
 
 assign_sub_ = P.AssignSub()
@@ -171,6 +172,7 @@ def index_add(x, indices, y, axis, use_lock=True, check_index_bound=True):
 
 
 __all__ = [
+    'assign',
     'assign_sub',
     'assign_add',
     'index_add'

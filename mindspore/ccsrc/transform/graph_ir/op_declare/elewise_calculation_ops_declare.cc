@@ -757,9 +757,10 @@ REG_ADPT_DESC(RightShift, kNameRightShift, ADPT_DESC(RightShift))
 
 // NanToNum
 INPUT_MAP(NanToNum) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(NanToNum) = {{"nan", ATTR_DESC(nan, AnyTraits<float>())},
-                      {"posinf", ATTR_DESC(posinf, AnyTraits<float>())},
-                      {"neginf", ATTR_DESC(neginf, AnyTraits<float>())}};
+INPUT_ATTR_MAP(NanToNum) = {{2, ATTR_DESC(nan, AnyTraits<float>())},
+                            {3, ATTR_DESC(posinf, AnyTraits<float>())},
+                            {4, ATTR_DESC(neginf, AnyTraits<float>())}};
+ATTR_MAP(NanToNum) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(NanToNum) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(NanToNum, kNameNanToNum, ADPT_DESC(NanToNum))
 

@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace kernel {
-const std::map<std::string, Format> format_relation_map = {
+const mindspore::HashMap<std::string, Format> format_relation_map = {
   {"DefaultFormat", Format::DEFAULT_FORMAT},
   {"NCHW", Format::NCHW},
   {"NHWC", Format::NHWC},

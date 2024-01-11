@@ -83,7 +83,7 @@ constexpr size_t kSwitchAfterIndex = 3;
 constexpr size_t kAfterIndexInCache = 2;
 constexpr size_t kCnodeInputSizeOne = 1;
 constexpr size_t kDataInputIndex = 1;
-constexpr size_t kReturnInputSize = 2;
+constexpr size_t kInputSize2 = 2;
 constexpr size_t kMergeInputSize = 2;
 constexpr size_t kNoOpOptThreshold = 3;
 constexpr auto kHcclFusionByFusionID = 2;
@@ -1964,7 +1964,9 @@ void DfGraphConvertor::FillEmptyInputsWithNoInputOp(std::vector<Operator> *input
       continue;
     }
     auto adpt = FindAdapter(it, training_);
-    MS_EXCEPTION_IF_NULL(adpt);
+    if (adpt == nullptr) {
+      continue;
+    }
     if (adpt->getInputMap().empty() && adpt->getAttrInputMap().empty()) {
       auto cnode_op = op_cache_.find(it.get());
       if (cnode_op != op_cache_.end()) {
@@ -2085,9 +2087,7 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
   (void)std::transform(graph_const_inputs_.begin(), graph_const_inputs_.end(), std::back_inserter(inputs),
                        [](const OperatorPtr &x) { return *x; });
 
-  if (inputs.empty()) {
-    FillEmptyInputsWithNoInputOp(&inputs);
-  }
+  FillEmptyInputsWithNoInputOp(&inputs);
 
   MS_LOG(INFO) << "Set graph input num: " << inputs.size();
   (void)df_graph_->SetInputs(inputs);
@@ -3195,13 +3195,6 @@ void DfGraphConvertor::UpdateOpDesc(const AnfNodePtr node) {
   OperatorPtr op = Convert(node);
   MS_EXCEPTION_IF_NULL(op);
   std::string name = op->GetOpType();
-  // When IdentityN's input is Function or IdentityN, it can not find GEType mapping to MSType. There are ERROR logs
-  // that do not affect the result. So it no need to set OutputDesc of IdentityN, It can be inferred by GE. eg:
-  // MakeTuple-->MakeTuple
-  if (name == kTypeIdentityN) {
-    MS_LOG(DEBUG) << "No need set IdentityN and NoOp OpDesc, node: " << node->fullname_with_scope();
-    return;
-  }
   // NoOp has not output, so it no need to set OutputDesc.
   if (name == kTypeNoOp) {
     return;
@@ -3518,7 +3511,12 @@ void DfGraphConvertor::ConvertLoad(const CNodePtr &node) {
   auto nodes = node->inputs();
   bool need_constant = false;
   for (size_t i = 1; i < nodes.size(); ++i) {
-    if (IsPrimitiveCNode(nodes[i], prim::kPrimAllGather) || IsPrimitiveCNode(nodes[i], prim::kPrimDepend)) {
+    auto care_node = nodes[i];
+    while (IsPrimitiveCNode(care_node, prim::kPrimDepend)) {
+      care_node = care_node->cast<CNodePtr>()->input(kIndex1);
+    }
+    if (IsPrimitiveCNode(care_node, prim::kPrimAllGather) &&
+        common::AnfAlgo::IsFromParallelOptimizer(care_node->cast<CNodePtr>())) {
       need_constant = true;
     }
   }
@@ -3531,8 +3529,12 @@ void DfGraphConvertor::ConvertLoad(const CNodePtr &node) {
   }
   auto op = adpt->generate(node);
   MS_EXCEPTION_IF_NULL(op);
-  (void)op->SetAttr("no_need_constant_folding", need_constant);
-  (void)op->SetAttr("_cannot_be_deleted", need_constant);
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CellReuseLevel() == CellReuseLevel::kNoCellReuse) {
+    (void)op->SetAttr("no_need_constant_folding", need_constant);
+    (void)op->SetAttr("_cannot_be_deleted", need_constant);
+  }
   op_cache_[node.get()] = op;
 }
 
@@ -3804,11 +3806,10 @@ void DfGraphConvertor::SetNodeAbstract(const CNodePtr &node) const {
     node->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
     return;
   }
-  if (IsPrimitiveCNode(node, prim::kPrimReturn)) {
+  if (IsPrimitiveCNode(node, prim::kPrimReturn) || IsPrimitiveCNode(node, prim::kPrimDepend)) {
     auto inputs = node->inputs();
-    if (inputs.size() < kReturnInputSize) {
-      MS_LOG(EXCEPTION) << "Return node input size " << inputs.size()
-                        << " less than 2, node: " << node->fullname_with_scope();
+    if (inputs.size() < kInputSize2) {
+      MS_LOG(EXCEPTION) << "node input size " << inputs.size() << " less than 2, node: " << node->fullname_with_scope();
     }
     auto input = inputs[1];
     MS_EXCEPTION_IF_NULL(input);

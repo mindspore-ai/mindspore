@@ -26,10 +26,8 @@
 #include "ir/cell.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/convert_utils_py.h"
-#include "include/common/utils/primfunc_utils.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "pipeline/jit/ps/parse/resolve.h"
-#include "pipeline/jit/ps/parse/data_converter.h"
 #include "include/common/utils/stub_tensor.h"
 #include "frontend/expander/bprop/bprop.h"
 #include "pipeline/pynative/grad/jit/jit_grad.h"
@@ -890,7 +888,7 @@ void PyParser::SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object
   op_run_info->base_op_run_info.py_prim_id_ = adapter->id();
 }
 
-static std::string BuilidPyInputTypeString(const py::object &obj) {
+std::string PyParser::BuilidPyInputTypeString(const py::object &obj) {
   if (py::isinstance<py::bool_>(obj)) {
     return "bool";
   }
@@ -986,14 +984,6 @@ inline ValuePtr ConvertBySignature(const py::object &obj, const FrontendOpRunInf
   return nullptr;
 }
 
-inline void PrintTypeError(const ops::OpDefPtr &op_def, const py::list &op_inputs) {
-  std::vector<std::string> op_type_list;
-  for (size_t index = 0; index < op_inputs.size(); ++index) {
-    (void)op_type_list.emplace_back(BuilidPyInputTypeString(op_inputs[index]));
-  }
-  MS_EXCEPTION(TypeError) << ops::BuildOpErrorMsg(op_def, op_type_list);
-}
-
 void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs, bool stub,
                          const FrontendOpRunInfoPtr &op_run_info) {
   size_t input_size = op_inputs.size();
@@ -1037,7 +1027,7 @@ void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs,
     }
 
     if (value == nullptr) {
-      PrintTypeError(op_def, op_inputs);
+      PyParser::PrintTypeCastError(op_def, op_inputs, i);
     }
   }
 }
@@ -1264,13 +1254,16 @@ void PyBoost::UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<Val
 
   // Update op run info for auto grad
   if (op_run_info->requires_grad) {
+    if (op_inputs.size() != op->input_abs().size()) {
+      MS_LOG(EXCEPTION) << "Op input size " << op_inputs.size() << " not equal to input abstract num "
+                        << op->input_abs().size() << ". Please call GenerateAbstract in Xxx::Call().";
+    }
     op_run_info->base_op_run_info.abstract = op->output_abs();
     op_run_info->op_grad_info->input_value = op_inputs;
     op_run_info->op_grad_info->input_abs = op->input_abs();
     op_run_info->op_grad_info->out_value = op_run_info->real_out;
     op_run_info->op_grad_info->out_abs = op->output_abs();
     UpdateOutputTensorGradInfo(op->outputs());
-    op->set_grad_func([op_run_info]() { DoGrad(op_run_info); });
   }
 }
 

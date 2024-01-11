@@ -93,6 +93,7 @@ class AscendMsprofExporter:
 
         flag = self.get_drv_version()
         if not flag or model_iteration_dict:
+            flag = False
             if not model_iteration_dict:
                 model_iteration_dict = self._generate_step_trace(self.prof_root_dir, self.source_path)
 

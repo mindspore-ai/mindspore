@@ -105,7 +105,7 @@ def test_coo_tensor_with_control_if():
     assert out[2] == shape
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -212,7 +212,7 @@ def test_coo_coalesce():
     assert np.allclose(expect_values, coalesce_output.values.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -296,7 +296,7 @@ def test_coo_attr():
             assert py_tuple[i] == g_tuple[i]
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

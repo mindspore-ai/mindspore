@@ -28,7 +28,7 @@ class Net(nn.Cell):
         return output
 
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_arm_ascend_training
@@ -53,7 +53,7 @@ def test_eig(mode):
     assert np.allclose(expect_value, value.asnumpy())
     assert np.allclose(expect_vector, vector.asnumpy())
 
-@pytest.mark.level1
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_arm_ascend_training

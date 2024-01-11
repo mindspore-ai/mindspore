@@ -116,12 +116,18 @@ void GeKernelExecutor::Initialize() {
   if (initialized_) {
     return;
   }
+  auto ret = aclInit(nullptr);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(WARNING) << "Call aclInit failed. Error flag is " << ret;
+  }
+  MS_LOG(INFO) << "Call aclInit successfully.";
   MS_EXCEPTION_IF_NULL(device_context_);
   res_manager_ = device_context_->device_res_manager_.get();
   MS_EXCEPTION_IF_NULL(res_manager_);
   graph_executor_ = dynamic_cast<GeGraphExecutor *>(device_context_->graph_executor_.get());
   // not check graph executor, may use in ascend device context
   SetAclOpPrecisionMode();
+  transform::AclUtil::SetDeterministic();
   initialized_ = true;
 }
 
@@ -166,7 +172,7 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
       device::ascend::HandleKernelSelectFailure(kernel_graph, kernel, failure_info);
     }
   }
-  if (!kernel_graph->is_from_single_op()) {
+  if (!kernel_graph->is_from_single_op() && !kernel_graph->has_flag(kFlagIsPyNativeBpropKernelGraph)) {
     kernel_graph->SetKernelObjectTypesForUnrealNodes();
   }
 

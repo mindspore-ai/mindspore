@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "plugin/device/ascend/optimizer/ge/squeeze_axis_ge.h"
+#include "backend/common/pass/add_attr_to_node/add_attr_to_node_register.h"
 #include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/array_ops.h"
@@ -21,12 +21,7 @@
 
 namespace mindspore {
 namespace opt {
-const BaseRef SqueezeAxisGe::DefinePattern() const {
-  VarPtr Xs = std::make_shared<SeqVar>();
-  return VectorRef({prim::kPrimSqueeze, Xs});
-}
-
-const AnfNodePtr SqueezeAxisGe::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {
+const AnfNodePtr SqueezeAxis(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   auto squeeze_cnode = node->cast<CNodePtr>();
@@ -39,7 +34,7 @@ const AnfNodePtr SqueezeAxisGe::Process(const FuncGraphPtr &graph, const AnfNode
                              "Squeeze node axis attr error, squeeze node: " + squeeze_cnode->DebugString() +
                                ", axis value: " + axis_value->ToString());
   auto &value_sequence = axis_value->cast<ValueSequencePtr>()->value();
-  auto shape_vec = common::AnfAlgo::GetOutputInferShape(squeeze_cnode->input(1), 0);
+  auto shape_vec = common::AnfAlgo::GetOutputInferShape(squeeze_cnode->input(kIndex1), 0);
   const auto dim = shape_vec.size();
   std::vector<int64_t> axis;
   if (value_sequence.empty()) {

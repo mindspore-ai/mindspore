@@ -34,11 +34,8 @@
 #include "pybind_api/gil_scoped_long_running.h"
 #include "include/common/utils/compile_cache_context.h"
 #include "mindspore/core/utils/file_utils.h"
-#include "toolchain/adx_datadump_server.h"
 #include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
-#include "plugin/device/ascend/optimizer/ge_backend_optimization.h"
 #include "acl/acl_base.h"
-#include "runtime/config.h"
 
 namespace mindspore {
 namespace device {
@@ -126,16 +123,12 @@ bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
 RunMode GeDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  // PyNative is only support ACL now on 910B.
-  if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    auto enable_ge = common::GetEnv("MS_PYNATIVE_GE");
-    return enable_ge == "1" ? RunMode::kGraphMode : RunMode::kKernelMode;
-  }
   if (IsDynamicShapeFuncGraph(func_graph)) {
     MS_LOG(INFO) << "dynamic shape default RunMode::kKernelMode";
     return RunMode::kKernelMode;
   }
-  if (common::GetEnv("GRAPH_OP_RUN") == "1") {
+
+  if (context->IsKByKExecutorMode()) {
     MS_LOG(INFO) << "RunMode::kKernelMode";
     return RunMode::kKernelMode;
   } else {
@@ -171,9 +164,7 @@ void GeDeviceContext::Initialize() {
   device_res_manager_->Initialize();
 
   // set MS_CTX_ENABLE_GE_HETEROGENOUS true according to  heterogeneous mode
-  int32_t is_heterogenous = 0;
-  (void)rtGetIsHeterogenous(&is_heterogenous);
-  ms_context->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, is_heterogenous == 1);
+  ms_context->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, false);
   InitGe(ms_context);
 
   if (IsEnableRefMode()) {

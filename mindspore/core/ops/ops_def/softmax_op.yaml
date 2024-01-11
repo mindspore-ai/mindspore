@@ -12,9 +12,7 @@ softmax:
         output:
             dtype: tensor
     function:
-        name: softmax_
-        disable: False
+        disable: True
     dispatch:
-        enable: False
-
-
+        enable: True
+        Ascend: SoftmaxAscend

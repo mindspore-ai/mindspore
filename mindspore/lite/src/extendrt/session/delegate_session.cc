@@ -349,6 +349,17 @@ std::vector<std::string> GraphSinkSession::GetInputNames(uint32_t graph_id) {
   auto &info = info_it->second;
   return info.input_names;
 }
+
+Status GraphSinkSession::UpdateWeights(const std::vector<std::vector<std::shared_ptr<tensor::Tensor>>> &weights) {
+  MS_LOG(INFO) << "UpdateWeights..";
+  bool ret = graph_executor_->UpdateWeights(weights);
+  if (!ret) {
+    MS_LOG(ERROR) << "UpdateWeights failed.";
+    return kLiteError;
+  }
+  return kSuccess;
+}
+
 MutableTensorImplPtr GraphSinkSession::GetOutputByTensorName(uint32_t graph_id, const std::string &tensorName) {
   auto info_it = graph_infos_.find(graph_id);
   if (info_it == graph_infos_.end()) {

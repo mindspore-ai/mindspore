@@ -172,7 +172,6 @@ def test_single_if():
 
 @case_register.level1
 @case_register.target_gpu
-@case_register.target_ascend
 def test_jit_net():
     """
     Feature: export jit function.

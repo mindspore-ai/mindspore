@@ -14,21 +14,28 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_GE_OPTIMIZER_IRPASS_TENSORSHAPE_FOR_GE_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_GE_OPTIMIZER_IRPASS_TENSORSHAPE_FOR_GE_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_INSERT_LOAD_FOR_ALL_GATHER_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_INSERT_LOAD_FOR_ALL_GATHER_H_
 
+#include <string>
+#include <memory>
+#include "include/backend/optimizer/pass.h"
+#include "ir/func_graph.h"
+#include "ir/anf.h"
+#include "include/backend/optimizer/helper.h"
 #include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {
-class TensorShapeForGE : public PatternProcessPass {
+class InsertLoadForAllGather : public PatternProcessPass {
  public:
-  explicit TensorShapeForGE(bool multigraph = true) : PatternProcessPass("tensorshape_for_ge", multigraph) {}
-  ~TensorShapeForGE() override = default;
-
+  explicit InsertLoadForAllGather(bool multigraph = true)
+      : PatternProcessPass("insert_load_for_allgather", multigraph) {}
+  ~InsertLoadForAllGather() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_GE_OPTIMIZER_IRPASS_TENSORSHAPE_FOR_GE_H_
+
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_INSERT_LOAD_FOR_ALL_GATHER_H_

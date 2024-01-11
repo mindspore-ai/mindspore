@@ -1,0 +1,62 @@
+apply_came_part4:
+    description: |
+        Computes Part 4 of the CAME Optimizer.
+
+        Args:
+            - **param** (Parameter) - The shape = 2D :math:`(..., n, m)`.
+              A Tensor of types: float16, float32, bfloat16.
+            - **m** (Parameter) - The shape = 2D :math:`(..., n, m)`.
+              The Tensor has the same data type as `param`.
+            - **r** (Tensor) - The shape = 1D :math:`(..., n)`.
+              The Tensor has the same data type as `param`.
+            - **c** (Tensor) - The shape = 1D :math:`(..., m)`.
+              The Tensor has the same data type as `param`.
+            - **weight_decay** (Tensor) - The shape = 1D :math:`(1)`.
+              A Tensor of types: float32.
+            - **lr** (Tensor) - The shape = 1D :math:`(1)`.
+              A Tensor of types: float32.
+            - **beta3** (float) - data type must be float.
+            - **sum_r** (Tensor) - The shape = 1D :math:`(..., 1)`.
+              'None' is currently supported. A Tensor of types: float32.
+            - **sum_u_r** (Tensor) - The shape = 1D :math:`(..., n)`.
+              A Tensor of types: float32.
+            - **sum_u_c** (Tensor) - The shape = 1D :math:`(..., m)`.
+              A Tensor of types: float32.
+            - **sum_u_rc** (Tensor) - The shape = 1D :math:`(...)`.
+              A Tensor of types: float32.
+            - **global_shape** (Tensor) - the shape = 1D :math:`(2)`.
+              'None' is currently supported. A Tensor of types: int64.
+
+        Returns:
+            - **param** (Tensor) - A Tensor of shape :math:`(..., n, m)`
+            - **r** (Tensor) - A Tensor of shape :math:`(..., n)`
+            - **c** (Tensor) - A Tensor of of shape:math:`(..., m)`
+
+        Raises:
+            TypeError: If `param` is not a Tensor.
+
+        Supported Platforms:
+            ``Ascend`` 
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> from mindspore.ops.operations import _inner_ops as P
+            >>> apply_came_part4 = P.ApplyCamePart4()
+            >>> param = Tensor(np.ones([1024, 64]), dtype=ms.float32)
+            >>> m = Tensor(np.ones([1024, 64]), dtype=ms.float32)
+            >>> r = Tensor(np.ones([1024]), dtype=ms.float32)
+            >>> c = Tensor(np.ones([64]), dtype=ms.float32)
+            >>> weight_decay = Tensor([0.8])
+            >>> lr = Tensor([0.5])
+            >>> beta3 = 0.5
+            >>> sum_r = Tensor(np.array([128.]), dtype=ms.float32)
+            >>> sum_u_r = Tensor(np.ones([1024]), dtype=ms.float32)
+            >>> sum_u_c = Tensor(np.ones([64]), dtype=ms.float32)
+            >>> sum_u_rc = Tensor(np.array([128.]), dtype=ms.float32)
+            >>> global_shape = (1024, 64)
+            >>> output = apply_came_part4(param, m, r, c, weight_decay, lr, beta3, \
+            ... sum_r, sum_u_r, sum_u_c, sum_u_rc, global_shape)
+            >>> print(output[0].shape)
+            (1024, 64)

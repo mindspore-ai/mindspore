@@ -50,7 +50,7 @@ mindspore.ops.Conv2D
         - **dilation** (Union(int, tuple[int])，可选) - 卷积核膨胀尺寸。可以为单个int，或者由两个/四个int组成的tuple。单个int表示在高度和宽度方向的膨胀尺寸均为该值。两个int组成的tuple分别表示在高度和宽度方向的膨胀尺寸。若为四个int，N、C两维度int默认为1，H、W两维度分别对应高度和宽度上的膨胀尺寸。
           假设 :math:`dilation=(d0, d1)`, 则卷积核在高度方向间隔 `d0-1` 个元素进行采样，在宽度方向间隔 `d1-1` 个元素进行采样。高度和宽度上取值范围分别为[1, H]和[1, W]。默认值： ``1`` 。
         - **group** (int，可选) - 分组卷积时在通道上分割输入 `x` 的组数。默认值： ``1`` 。
-        - **data_format** (str，可选) - 数据格式的可选值有 ``"NHWC"`` ， ``"NCHW"`` 。默认值： ``"NCHW"`` 。
+        - **data_format** (str，可选) - 数据格式的可选值有 ``"NHWC"`` ， ``"NCHW"`` 。默认值： ``"NCHW"`` 。（目前仅GPU支持NHWC。）
 
     输入：
         - **x** (Tensor) - 输入Tensor，shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 或者 :math:`(N, H_{in}, W_{in}, C_{in}, )` ，具体哪种取决于 `data_format` 。

@@ -26,6 +26,7 @@
 #include "acl/acl.h"
 #include "acl/acl_mdl.h"
 #include "include/common/profiler.h"
+#include "transform/acl_ir/op_api_util.h"
 
 namespace {
 /*
@@ -146,12 +147,6 @@ class AclDumper {
  private:
   std::string acl_dump_config_ = "";
 };
-
-std::mutex set_opt_mutex;
-aclError SetCompileopt(aclCompileOpt opt, const char *value) {
-  std::lock_guard<std::mutex> lock(set_opt_mutex);
-  return aclSetCompileopt(opt, value);
-}
 }  // namespace
 
 namespace mindspore {
@@ -262,7 +257,7 @@ void AclRunner::Reset() {
 }
 
 void AclRunner::SetStaticMode() {
-  auto set_compile_flag = SetCompileopt(aclCompileOpt::ACL_OP_JIT_COMPILE, "enable");
+  auto set_compile_flag = AclUtil::SetCompileMode(0);
   if (set_compile_flag != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Acl set static compile mode failed! op_name is " << op_type_ << " and error flag is "
                       << set_compile_flag;
@@ -271,7 +266,7 @@ void AclRunner::SetStaticMode() {
 }
 
 void AclRunner::SetDynamicMode() {
-  auto set_compile_flag = SetCompileopt(aclCompileOpt::ACL_OP_JIT_COMPILE, "disable");
+  auto set_compile_flag = AclUtil::SetCompileMode(1);
   if (set_compile_flag != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Acl set static compile mode failed! op_name is " << op_type_ << " and error flag is "
                       << set_compile_flag;
@@ -280,37 +275,15 @@ void AclRunner::SetDynamicMode() {
 }
 
 void AclRunner::SetPrecisionMode(const AclPrecisionMode mode) {
-  int ret = -1;
-  static std::string precision_mode = "not_inited";
-  if (precision_mode == "not_inited") {
-    auto ms_context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(ms_context);
-    precision_mode = ms_context->get_param<std::string>(MS_CTX_PRECISION_MODE);
-  }
   auto iter = acl_precision_map.find(mode);
-  if (!precision_mode.empty()) {
-    ret = SetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, precision_mode.c_str());
-  } else if (iter != acl_precision_map.end()) {
-    ret = SetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, iter->second.c_str());
-  } else {
+  if (iter == acl_precision_map.end()) {
     MS_LOG(EXCEPTION) << "Acl set run mode failed! op_name is " << op_type_ << " and error mode is " << mode;
   }
-  if (ret != ACL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Acl set precision mode failed! op_name is " << op_type_ << " and error flag is " << ret;
-  }
-}
 
-void AclRunner::SetOpPrecisionMode() {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto op_precision_mode = ms_context->get_param<std::string>(MS_CTX_OP_PRECISION_MODE);
-  if (op_precision_mode.empty()) {
-    return;
-  }
-  MS_LOG(DEBUG) << "Set ACL_OP_PRECISION_MODE: " << op_precision_mode;
-  auto ret = SetCompileopt(aclCompileOpt::ACL_OP_PRECISION_MODE, op_precision_mode.c_str());
+  auto ret = AclUtil::SetPrecisionMode(iter->second);
   if (ret != ACL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Acl set op precision mode failed! op_name is " << op_type_ << " and error flag is " << ret;
+    MS_LOG(EXCEPTION) << "Acl set precision mode failed! mode is " << iter->second << ", op_name is " << op_type_
+                      << " and error flag is " << ret;
   }
 }
 

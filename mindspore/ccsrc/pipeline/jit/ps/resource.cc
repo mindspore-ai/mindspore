@@ -170,6 +170,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"any", std::string("any_")},                                       // C.reduce_any
        {"bincount", std::string("bincount")},                              // bincount
        {"chunk", std::string("chunk")},                                    // chunk
+       {"contiguous", prim::kPrimidentity},                                // contiguous
        {"slogdet", std::string("slogdet")},                                // slogdet
        {"trace", std::string("trace")},                                    // trace
        {"tril", std::string("tril")},                                      // tril
@@ -502,6 +503,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"nanquantile", std::string("nanquantile")},                        // nanquantile()
        {"orgqr", std::string("orgqr")},                                    // orgqr()
        {"outer", std::string("outer")},                                    // outer()
+       {"softmax", std::string("softmax")},                                // softmax()
      }},
     {kObjectTypeRowTensorType,
      {
