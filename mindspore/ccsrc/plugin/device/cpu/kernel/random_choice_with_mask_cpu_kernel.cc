@@ -111,6 +111,7 @@ int RandomChoiceWithMaskCpuKernelMod::Resize(const std::vector<KernelTensor *> &
     return KRET_RESIZE_FAILED;
   }
   dims_.clear();
+  batch_size_ = 1;
   for (size_t i = 0; i < batch_rank_; i++) {
     batch_size_ *= x_shape[i];
   }
