@@ -20,7 +20,7 @@
 #include "cxx_api/akg_kernel_register.h"
 #include "utils/log_adapter.h"
 #include "mindspore/core/base/base_ref_utils.h"
-#include "backend/common/session/session_factory.h"
+#include "backend/common/session/session_basic.h"
 #include "backend/common/session/executor_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "plugin/device/gpu/hal/device/cuda_driver.h"
@@ -28,17 +28,7 @@
 namespace mindspore {
 API_GRAPH_REG(kGPUDevice, GPUGraphImpl);
 
-GPUGraphImpl::GPUGraphImpl()
-    : session_impl_(nullptr),
-      graph_id_(0),
-      device_id_(0),
-      inputs_info_(),
-      outputs_info_(),
-      input_names_(),
-      output_names_(),
-      init_flag_(false),
-      load_flag_(false),
-      set_device_id_flag_(false) {}
+GPUGraphImpl::GPUGraphImpl() : init_flag_(false), set_device_id_flag_(false) {}
 
 Status GPUGraphImpl::InitEnv() {
   if (init_flag_) {
@@ -64,10 +54,12 @@ Status GPUGraphImpl::InitEnv() {
     return kMCDeviceError;
   }
 
+  MS_EXCEPTION_IF_NULL(graph_context_);
   auto &device_infos = graph_context_->MutableDeviceInfo();
   if (device_infos.size() != 1) {
     return kMCDeviceError;
   }
+  MS_EXCEPTION_IF_NULL(device_infos[0]);
   auto gpu_info = device_infos[0]->Cast<GPUDeviceInfo>();
   if (gpu_info == nullptr) {
     return kMCDeviceError;
@@ -75,14 +67,13 @@ Status GPUGraphImpl::InitEnv() {
   ms_context->set_param<bool>(MS_CTX_ENABLE_INFER_OPT, true);
   ms_context->set_param<std::string>(MS_CTX_INFER_PRECISION_MODE, gpu_info->GetPrecisionMode());
 
-  session_impl_ = session::SessionFactory::Get().Create(kGpuInferenceDevice);
-  if (session_impl_ == nullptr) {
-    MS_LOG(ERROR) << "Session create failed!, please make sure target device:" << kGpuInferenceDevice
+  backend_ = std::make_shared<compile::MindRTBackend>(kMsConvert, kGPUDevice, device_id_);
+  if (backend_ == nullptr) {
+    MS_LOG(ERROR) << "DeviceContext create failed!, please make sure target device:" << kGpuInferenceDevice
                   << " is available.";
     return kMCFailed;
   }
 
-  session_impl_->Init(device_id_);
   init_flag_ = true;
   return kSuccess;
 }
@@ -104,6 +95,7 @@ Status GPUGraphImpl::FinalizeEnv() {
 
 Status GPUGraphImpl::Load(uint32_t device_id) {
   // check graph type
+  MS_EXCEPTION_IF_NULL(graph_);
   if (graph_->ModelType() != ModelType::kMindIR) {
     MS_LOG(ERROR) << "Unsupported model type " << graph_->ModelType();
     return kMCInvalidInput;
@@ -112,6 +104,7 @@ Status GPUGraphImpl::Load(uint32_t device_id) {
   const auto &graph_data = GraphImpl::MutableGraphData();
   MS_EXCEPTION_IF_NULL(graph_data);
   auto func_graph = graph_data->GetFuncGraph();
+  func_graph_ = func_graph;
 
   // init
   device_id_ = device_id;
@@ -126,9 +119,11 @@ Status GPUGraphImpl::Load(uint32_t device_id) {
     MS_LOG(ERROR) << "Compile graph model failed";
     return kMCFailed;
   }
-  MS_EXCEPTION_IF_NULL(session_impl_);
-  session_impl_->GetModelInputsInfo(graph_id_, &inputs_info_, &input_names_);
-  session_impl_->GetModelOutputsInfo(graph_id_, &outputs_info_, &output_names_);
+  auto kg = kernel_graph_.lock();
+  MS_EXCEPTION_IF_NULL(backend_);
+  MS_EXCEPTION_IF_NULL(kg);
+  GraphImpl::GetModelInputsInfo(kg, &inputs_info_, &input_names_);
+  GraphImpl::GetModelOutputsInfo(kg, &outputs_info_, &output_names_);
   if (inputs_info_.empty() || inputs_info_.size() != input_names_.size()) {
     MS_LOG_ERROR << "Get model inputs info failed";
     return kMCInvalidInput;
@@ -141,10 +136,17 @@ Status GPUGraphImpl::Load(uint32_t device_id) {
   return kSuccess;
 }
 
-Status GPUGraphImpl::CompileGraph(const std::shared_ptr<FuncGraph> &funcGraphPtr) {
-  MS_ASSERT(session_impl_ != nullptr);
+Status GPUGraphImpl::CompileGraph(const std::shared_ptr<FuncGraph> &func_graph) {
+  MS_ASSERT(backend_ != nullptr);
   try {
-    graph_id_ = session_impl_->CompileGraph(NOT_NULL(funcGraphPtr));
+    MS_EXCEPTION_IF_NULL(func_graph);
+    // prepare func graph
+    auto manager = MakeManager();
+    MS_EXCEPTION_IF_NULL(manager);
+    manager->AddFuncGraph(func_graph);
+    func_graph->set_manager(manager);
+    actor_info_ = backend_->CompileGraphs(func_graph);
+    kernel_graph_ = backend_->GetGraphById(GraphImpl::GetRootGraphIdFromActorInfo(actor_info_));
     return kSuccess;
   } catch (std::exception &e) {
     MS_LOG(ERROR) << "CompileGraph failed: " << e.what();
@@ -155,7 +157,7 @@ Status GPUGraphImpl::CompileGraph(const std::shared_ptr<FuncGraph> &funcGraphPtr
 std::vector<tensor::TensorPtr> GPUGraphImpl::RunGraph(const std::vector<tensor::TensorPtr> &inputs) {
   try {
     VectorRef outputs;
-    session_impl_->RunGraph(graph_id_, inputs, &outputs);
+    backend_->RunGraph(actor_info_, GraphImpl::GenerateInputsRef(inputs, func_graph_.lock()), &outputs);
     return TransformVectorRefToMultiTensor(outputs);
   } catch (std::exception &e) {
     MS_LOG(ERROR) << "RunGraph failed: " << e.what();
@@ -170,6 +172,8 @@ Status GPUGraphImpl::ExecuteModel(const std::vector<MSTensor> &request, std::vec
   for (size_t i = 0; i < request.size(); i++) {
     auto &item = request[i];
     auto input = inputs_info_[i];
+    MS_EXCEPTION_IF_NULL(input);
+    MS_EXCEPTION_IF_NULL(item);
     if (input->Size() != item.DataSize()) {
       MS_LOG(ERROR) << "Input " << i << " data size " << item.DataSize() << " not match model input data size "
                     << input->Size();
@@ -187,6 +191,10 @@ Status GPUGraphImpl::ExecuteModel(const std::vector<MSTensor> &request, std::vec
   if (outputs.empty()) {
     MS_LOG(ERROR) << "Execute Model Failed";
     return kMCFailed;
+  }
+  for (const auto &out : outputs) {
+    MS_EXCEPTION_IF_NULL(out);
+    out->data_sync();
   }
   last_outputs_ = outputs;
   reply->clear();
@@ -253,9 +261,11 @@ std::vector<MSTensor> GPUGraphImpl::GetInputs() {
   std::vector<MSTensor> result(inputs_info_.size());
   for (size_t i = 0; i < inputs_info_.size(); ++i) {
     auto &tensor = inputs_info_[i];
+    MS_EXCEPTION_IF_NULL(tensor);
     void *data = nullptr;
     size_t data_size = tensor->Size();
     if (i < last_inputs_.size()) {
+      MS_EXCEPTION_IF_NULL(last_inputs_[i]);
       data = last_inputs_[i]->data_c();
       data_size = last_inputs_[i]->Size();
     }
@@ -277,9 +287,11 @@ std::vector<MSTensor> GPUGraphImpl::GetOutputs() {
   std::vector<MSTensor> result(outputs_info_.size());
   for (size_t i = 0; i < outputs_info_.size(); ++i) {
     auto &tensor = outputs_info_[i];
+    MS_EXCEPTION_IF_NULL(tensor);
     void *data = nullptr;
     size_t data_size = tensor->Size();
     if (i < last_outputs_.size()) {
+      MS_EXCEPTION_IF_NULL(last_outputs_[i]);
       if (last_outputs_[i]->NeedSyncDeviceToHost()) {
         last_outputs_[i]->data_sync(false);
       }
