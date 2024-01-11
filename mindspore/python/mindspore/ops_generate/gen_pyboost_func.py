@@ -651,7 +651,7 @@ class OpTemplateConverter:
             value_tuple_convert.insert(0, '// ValueTuple to std::vector\n')
         return call_args_after_convert, value_tuple_convert, const_number_convert
 
-def delete_residual_files(all_op_names, code_generate_path_list):
+def delete_residual_files(work_path, all_op_names, code_generate_path_list):
     """
     Delete residual files.
     """
@@ -659,6 +659,7 @@ def delete_residual_files(all_op_names, code_generate_path_list):
     code_generate_path_list.append("mindspore/ccsrc/kernel/pyboost/auto_generate/")
     for code_generate_path in code_generate_path_list:
         all_files_name = []
+        code_generate_path = os.path.join(work_path, code_generate_path)
         if os.path.exists(code_generate_path):
             all_files_name = os.listdir(code_generate_path)
         all_registered_op = set(item.split(".")[0].replace("_", "") for item in all_files_name)
@@ -702,7 +703,7 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data):
                                      functional_name, call_args_with_types, cpp_func_return)
         generate_pyboost_op_header_code(header_data)
         generate_pyboost_op_source_code(work_path, op_proto, template_paths, converter)
-    delete_residual_files(all_op_names, template_paths.code_generate_path)
+    delete_residual_files(work_path, all_op_names, template_paths.code_generate_path)
     generate_pyboost_op_register_source_code(work_path, all_op_names, all_functional_names)
 
 
