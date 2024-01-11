@@ -102,6 +102,7 @@ class AbstractObjectBase {
    **/
   static AObject *MergeOperations(AObject *container, std::vector<AObject *> args, int opcode);
   static const char *GetTypeDesc(AObject::Type type);
+  static std::string ToString(PyObject *);
 
  protected:
   static AObject *MakeAObject(Type type, PyTypeObject *tp, PyObject *op, RecMap *rec = nullptr);

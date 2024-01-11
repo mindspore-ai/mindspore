@@ -75,6 +75,7 @@ class Trace {
   /// \param[out] borrow reference for PyObject
   virtual PyObject *Retrieve(PTraceContext context);
   virtual std::string ToString() = 0;
+  virtual std::string FormatString() = 0;
   virtual void Cache(PTraceContext context, PyObject *obj);
 
  protected:
@@ -95,6 +96,7 @@ class RootTrace : public Trace {
   virtual std::string ToString();
   virtual void GetParam(int *index, std::string *name, std::string *module_name);
   virtual bool operator==(const Trace &trace);
+  std::string FormatString() override { return ToString(); }
 
  protected:
   PyObject *RetrieveGlobal(PTraceContext context);
@@ -122,6 +124,7 @@ class ItemTrace : public Trace {
   virtual std::string ToString();
   virtual bool operator==(const Trace &trace);
   virtual void Detach();
+  std::string FormatString() override { return ToString(); }
 
  protected:
   TracePtr item_;
@@ -136,6 +139,7 @@ class AttrTrace : public Trace {
   virtual PyObject *Retrieve(PTraceContext context);
   virtual std::string ToString();
   virtual bool operator==(const Trace &trace);
+  std::string FormatString() override { return ToString(); }
 
  protected:
   std::string attr_;
@@ -151,6 +155,7 @@ class ConstTrace : public Trace {
   virtual std::string ToString();
   virtual bool operator==(const Trace &trace);
   virtual void Detach();
+  std::string FormatString() override { return ToString(); }
 
  protected:
   int index_;
@@ -165,6 +170,7 @@ class TypeTrace : public Trace {
   virtual PyObject *Retrieve(PTraceContext context);
   virtual std::string ToString();
   virtual bool operator==(const Trace &trace);
+  std::string FormatString() override { return ToString(); }
 
  protected:
   PyTypeObject *pType_;
@@ -180,6 +186,7 @@ class OpTrace : public Trace {
   virtual std::string ToString();
   virtual bool operator==(const Trace &trace);
   virtual void Detach();
+  std::string FormatString() override;
 
  protected:
   int opcode_;
@@ -200,6 +207,7 @@ class CustomizedTrace : public Trace {
   virtual ~CustomizedTrace() = default;
   virtual PyObject *Retrieve(PTraceContext context);
   virtual std::string ToString();
+  std::string FormatString() override { return ToString(); }
 
  protected:
   RetrieveFunc retrieve_;
@@ -215,6 +223,7 @@ class UnsupportedTrace : public Trace {
   virtual std::string ToString();
   virtual TraceVector GetParams();
   virtual void Detach();
+  std::string FormatString() override;
 
  protected:
   TraceVector params_;

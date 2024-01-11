@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <regex>
 #include <utility>
 #include "pipeline/jit/pi/common.h"
 
@@ -231,6 +232,50 @@ TracePtr Graph::TraceValueNode(ValueNode *node, int max_trace_depth) {
                   Config().GetBoolConfig(GraphJitConfig::kPrintGuard), 0, max_trace_depth);
 }
 
+static std::string TraceInferFailed(ValueNode *node) {
+  std::stringstream s;
+  s << node << " ";
+  switch (node->GetType()) {
+    case AbstractNode::Call:
+    case AbstractNode::Value: {
+      s << "bci " << node->bci() << " " << Utils::GetOpName(node->GetOpcode()) << " " << node->GetOparg();
+      if (Utils::IsNameRelated(node->GetOpcode())) {
+        s << " " << node->GetName();
+      }
+      break;
+    }
+    case AbstractNode::Param: {
+      s << "Parameter " << node->GetOparg();
+      break;
+    }
+    case AbstractNode::CellVar:
+    case AbstractNode::FreeVar: {
+      s << "Closure " << node->GetOparg();
+      break;
+    }
+    case AbstractNode::Unbound: {
+      s << "(UnboundLocal)";
+      break;
+    }
+    default: {
+      break;
+    }
+  }
+  s << " object is ";
+  PyObject *op = node->GetVobj() ? node->GetVobj()->GetPyObject().ptr() : nullptr;
+  if (op != nullptr) {
+    s << AObject::ToString(op);
+    return s.str();
+  }
+  s << "<NULL>:\n";
+  for (size_t i = 0; i < node->getInputs().size(); ++i) {
+    s << " " << std::regex_replace(TraceInferFailed(node->input(i)), std::regex("\n"), "\n  ") << "\n";
+  }
+  s.seekp(-1, s.cur);
+  s << " ";
+  return s.str();
+}
+
 std::string Graph::ToString(int depth) const {
   std::stringstream s;
   std::string prefix(depth << 1, ' ');
@@ -257,6 +302,84 @@ std::string Graph::ToString(int depth) const {
   s << prefix << "return: " << (GetRetVal() ? GetRetVal()->ToString() : "trace break") << "\n";
   s << prefix << GetStopTraceReasonDesc(GetStopTraceReason()) << "\n";
   s << prefix << "break bci: " << GetStopTraceBci() << "\n\n";
+
+  if (depth == 0) {
+    std::string break_info;
+    if (GetRetVal()) {
+      PyObject *op = GetRetVal()->GetVobj() ? GetRetVal()->GetVobj()->GetPyObject().ptr() : nullptr;
+      if (op == nullptr) {
+        break_info = TraceInferFailed(GetRetVal());
+      }
+    } else {
+      break_info = this->DumpBreakInfo();
+    }
+    if (!break_info.empty()) {
+      s << prefix << std::regex_replace(break_info, std::regex("\n"), "\n" + prefix) << "\n";
+    }
+  }
+  return s.str();
+}
+
+std::string Graph::DumpBreakInfo() const {
+  if (GetStopTraceBci() == -1) {
+    return std::string();
+  }
+  std::stringstream s;
+  const auto &f = GetFrame(GetStopTraceBci());
+  const auto &nodes = GetTracedNodes();
+  const auto &instrs = cfg_->instr_pool();
+  int break_bci = GetStopTraceBci();
+
+  s << "graph break at: " << break_bci << ":\n";
+  std::vector<ValueNode *> parameters;
+  if (nodes.size() == 0 || nodes.back()->bci() < break_bci) {
+    // break at unsupported bytecode
+    int op = instrs[break_bci]->op();
+    int arg = instrs[break_bci]->arg();
+    s << Utils::GetOpName(op) << " " << arg << " is not support.\n";
+    switch (op) {
+      case POP_JUMP_IF_FALSE:
+      case POP_JUMP_IF_TRUE:
+      case JUMP_IF_FALSE_OR_POP:
+      case JUMP_IF_TRUE_OR_POP:
+      case FOR_ITER:
+      case UNPACK_SEQUENCE:
+      case UNPACK_EX: {
+        parameters.push_back(f.Peek(0));
+        break;
+      }
+      case CALL_FUNCTION_EX: {
+        arg = (arg & 0x01);
+      }
+      case CALL_FUNCTION_KW: {
+        arg++;
+      }
+      case CALL_METHOD:
+      case CALL_FUNCTION: {
+        for (int i = arg; i >= 0; --i) {
+          parameters.push_back(f.Peek(i));
+          AObject *v = f.Peek(i)->GetVobj();
+          // just print the first infer failed value
+          if (v == nullptr || v->GetPyObject().ptr() == nullptr) {
+            parameters = {f.Peek(i)};
+            break;
+          }
+        }
+        break;
+      }
+      default: {
+        return s.str();
+      }
+    }
+  } else {
+    auto iter = std::find_if(nodes.begin(), nodes.end(), [break_bci](ValueNode *n) { return n->bci() == break_bci; });
+    MS_EXCEPTION_IF_CHECK_FAIL(iter != nodes.end(), "can't find break info.");
+    parameters.push_back(*iter);
+  }
+  // print traced value
+  for (auto node : parameters) {
+    s << TraceInferFailed(node) << "\n";
+  }
   return s.str();
 }
 
