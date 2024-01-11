@@ -16,9 +16,10 @@
 import pytest
 import numpy as np
 from scipy.special import log_softmax
-
+import mindspore as ms
 from mindspore import Tensor, context, nn
 from mindspore.ops import operations as P
+from mindspore.ops import function as F
 from mindspore.ops.composite import GradOperation
 
 
@@ -272,3 +273,25 @@ def test_ctc_loss_v2_padded(batch, data_type):
     target_lengths = np.random.randint(low=target_sequences_min, high=target_sequences, size=(batch,), dtype=np.int64)
 
     compare_to_numpy(method, input_matrix, target, input_lengths, target_lengths)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+def test_ctc_loss_v2_exception():
+    """
+    Feature: Test CTCLossV2 Exception Case.
+    Description: The target_lengths is not integer
+    Expectation: Catch the error.
+    """
+    log_probs = Tensor(np.random.uniform(-10, 10, size=[2, 1, 3])).astype(ms.float32)
+    targets = Tensor(np.random.uniform(-10, 10, size=[1, 2])).astype(ms.int32)
+    input_lengths = Tensor(np.random.uniform(-10, 10, size=[1])).astype(ms.int32)
+    target_lengths = (0.17365263328591352,)
+    blank = 0
+    reduction = 'mean'
+    zero_infinity = True
+    with pytest.raises(TypeError) as e:
+        _ = F.ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=blank, reduction=reduction,
+                       zero_infinity=zero_infinity)
+    assert "but got Float32" in str(e.value)
