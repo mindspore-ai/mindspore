@@ -21,7 +21,6 @@ import numbers
 import hashlib
 
 from mindspore.ops import operations as P
-from mindspore.ops import functional as F
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer, Initializer
@@ -36,6 +35,7 @@ from mindspore.common import dtype as mstype
 from mindspore.parallel._utils import _is_in_auto_parallel_mode
 from mindspore.nn.cell import Cell
 from mindspore import log as logger
+from mindspore.ops import group_norm
 
 __all__ = ['BatchNorm1d', 'BatchNorm2d', 'BatchNorm3d', 'LayerNorm', 'GroupNorm',
            'SyncBatchNorm', 'InstanceNorm1d', 'InstanceNorm2d', 'InstanceNorm3d']
@@ -1063,7 +1063,8 @@ class GroupNorm(Cell):
         dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
-        - **x** (Tensor) - The input feature with shape :math:`(N, C, H, W)` .
+        - **x** (Tensor) - The input feature with shape :math:`(N, C, *)`, where :math:`*` means, any number of
+          additional dimensions.
 
     Outputs:
         Tensor, the normalized and scaled offset tensor, has the same shape and data type as the `x`.
@@ -1108,34 +1109,13 @@ class GroupNorm(Cell):
         self.affine = validator.check_bool(affine, arg_name="affine", prim_name=self.cls_name)
 
         self.gamma = Parameter(initializer(
-            gamma_init, num_channels, dtype=dtype), name="gamma", requires_grad=affine)
+            gamma_init, self.num_channels, dtype=dtype), name="gamma", requires_grad=affine)
         self.beta = Parameter(initializer(
-            beta_init, num_channels, dtype=dtype), name="beta", requires_grad=affine)
-        self.reduce_mean = P.ReduceMean(keep_dims=True)
-        self.reduce_sum = P.ReduceSum(keep_dims=True)
-        self.shape = F.shape
-        self.reshape = F.reshape
-        self.square = F.square
-        self.sqrt = P.Sqrt()
+            beta_init, self.num_channels, dtype=dtype), name="beta", requires_grad=affine)
 
     def _cal_output(self, x):
         """calculate groupnorm output"""
-        batch, channel, height, width = F.shape(x)
-        self._channel_check(channel, self.num_channels, self.cls_name)
-        x = F.reshape(x, (batch, self.num_groups, -1))
-        mean = self.reduce_mean(x, 2)
-        var = F.div(self.reduce_sum(F.square(F.sub(x, mean)), 2), (channel * height * width / self.num_groups))
-        std = self.sqrt(var + self.eps)
-        x = F.div(F.sub(x, mean), std)
-        x = F.reshape(x, (batch, channel, height, width))
-        output = F.add(x * F.reshape(self.gamma, (-1, 1, 1)), F.reshape(self.beta, (-1, 1, 1)))
-        return output
-
-    @staticmethod
-    @_primexpr
-    def _check_input_dim(shape, cls_name):
-        dim = len(shape)
-        _check_dim(dim, 4, cls_name)
+        return group_norm(x, self.num_groups, self.gamma, self.beta, self.eps)
 
     @staticmethod
     @_primexpr
@@ -1157,7 +1137,5 @@ class GroupNorm(Cell):
         return 'num_groups={}, num_channels={}'.format(self.num_groups, self.num_channels)
 
     def construct(self, x):
-        self._check_input_dim(F.shape(x), self.cls_name)
-        self._check_dtype(x.dtype, [mstype.float16, mstype.float32], self.cls_name)
         output = self._cal_output(x)
         return output

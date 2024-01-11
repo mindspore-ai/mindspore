@@ -536,6 +536,7 @@ from .nn_func import (
     msort,
     channel_shuffle,
     hardsigmoid,
+    group_norm,
 )
 from .linalg_func import (
     cond,
