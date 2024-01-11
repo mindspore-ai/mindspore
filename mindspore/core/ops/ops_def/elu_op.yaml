@@ -10,3 +10,5 @@ elu:
   returns:
     output:
       dtype: tensor
+  dispatch:
+    enable: False
