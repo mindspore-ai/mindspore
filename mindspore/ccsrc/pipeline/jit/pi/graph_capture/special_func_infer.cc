@@ -325,17 +325,6 @@ static bool InferRegistryGet(CallNode *call_node) {
   return false;
 }
 
-static bool SupportInferPrimitive(PyObject *obj) {
-  if (obj == nullptr) {
-    return false;
-  }
-  if (IsPrimitiveType<true>(Py_TYPE(obj))) {
-    auto inst = mindspore::jit::graph::InferEngine::GetInstance();
-    return inst->SupportInfer(obj);
-  }
-  return false;
-}
-
 static bool CheckPrimitive(const py::object &func) { return AObject::GetPyType(func.ptr()) == AObject::kTypePrimitive; }
 
 bool InferPrimitive(CallNode *call_node) {
@@ -361,9 +350,6 @@ bool InferPrimitive(CallNode *call_node) {
     call_node->SetVobj(AObject::MakeAObject(iter->second));
   } else {
     call_node->SetVobj(AObject::MakeAObject(AObject::kTypeTensor));
-  }
-  if (!SupportInferPrimitive(prim)) {
-    return false;
   }
 
   std::vector<PyObject *> list;

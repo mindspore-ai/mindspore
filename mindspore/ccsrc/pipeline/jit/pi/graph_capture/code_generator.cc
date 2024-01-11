@@ -806,6 +806,19 @@ void CodeBreakGenerator::BreakAtBlock(CodeGenerator *code_gen, int untracked_bci
       alive_locals_.push_back(i);
     }
   }
+  /**
+   * TODO:
+   * # check this bug for break at block
+   * def func(x):
+   *     try:
+   *         if x == 1:
+   *             y = 1
+   *     except Exception:
+   *         pass
+   *     if x == 2:
+   *         y = 2
+   *     return y
+   */
   interpret_.outputs.resize(alive_locals_.size(), &ValueNode::UnboundLocal);
   untracked_stack_effect = 0;
 

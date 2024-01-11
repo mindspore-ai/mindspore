@@ -664,60 +664,55 @@ static ValueNode *TupleDictItemAccess(ValueNode *container, ValueNode *index) {
   return nullptr;
 }
 
-void GraphBuilder::ProcessGetItem(const Instr &instr, ValueNode *l, ValueNode *r) {
+bool GraphBuilder::DoGetItem(const Instr &instr) {
+  auto r = pop();
+  auto l = pop();
   ValueNode *v = TupleDictItemAccess(l, r);
-  if (v == nullptr) {
-    AObject *vo_l = l->GetVobj();
-    if (vo_l && (vo_l->GetType() == AObject::kTypeAnyValue || vo_l->GetType() == AObject::kTypeCell) &&
-        vo_l->GetAttr("__getitem__")->GetType() == AObject::kTypeBoundMethod) {
-      PyObject *po = vo_l->GetAttr("__getitem__")->GetPyObject().ptr();
-      if (vo_l->GetType() == AObject::kTypeCell) {
-        PyObject *res = PyObject_CallOneArg(po, r->GetVobj()->GetPyObject().ptr());
-        AObject *vo = AObject::Convert(res);
-        v = NewValueNode(vo, instr, {l, r});
-        push(v);
-        if (res) {
-          Py_DECREF(res);
-        }
-      } else {
-        if (po && PyFunction_Check(PyMethod_GET_FUNCTION(po))) {
-          ValueNode *v1 = NewValueNode(vo_l->GetAttr("__getitem__"), LOAD_ATTR, 0, {l});
-          v1->SetName("__getitem__");
-          graph_->GetTracedNodes().push_back(v1);
-          v = NewValueNode(nullptr, CALL_FUNCTION, 2, {v1, r});
-          CallNode *n = static_cast<CallNode *>(v);
-          v->SetName(instr.name().c_str());
-          v->SetLineNo(instr.line());
-          v->set_bci(instr.bci());
-          graph_->GetTracedNodes().push_back(v);
-          push(v);
-          StopTraceReason ret = HandleCall(0);
-          if (StopTraceReason::kNonStopTrace == ret) {
-            seek(0) = n->GetSubGraph() ? n->GetSubGraph()->GetRetVal() : n;
-          }
-        } else {
-          AObject *vo = l->binary_subscr(r);
-          v = NewValueNode(vo, instr, {l, r});
-          push(v);
-        }
-      }
-    } else {
-      AObject *vo = l->binary_subscr(r);
-      v = NewValueNode(vo, instr, {l, r});
-      push(v);
-    }
-  } else {
+  if (v != nullptr) {
     push(v);
+    return true;
   }
+
+  AObject *container = l->GetVobj();
+  PyObject *op = container ? container->GetPyObject().ptr() : nullptr;
+  AObject *meth = nullptr;
+
+  bool call_getitem = op == nullptr || container->GetType() != AObject::kTypeAnyValue;
+  if (!call_getitem) {
+    call_getitem = PyDict_Check(op) || PyTuple_Check(op) || PyList_Check(op);
+  }
+  if (!call_getitem) {
+    meth = container->GetAttr("__getitem__");
+    PyObject *m = meth ? meth->GetPyObject().ptr() : nullptr;
+    call_getitem = m == nullptr || !PyMethod_Check(m) || !PyFunction_Check(PyMethod_GET_FUNCTION(m));
+  }
+  if (call_getitem) {
+    /**
+     * TODO:
+     * check safe callable of __getitem__ if user defined.
+     */
+    AObject *vo = l->binary_subscr(r);
+    v = NewValueNode(vo, instr, {l, r});
+    push(v);
+    return true;
+  }
+
+  ValueNode *meth_node = NewValueNode(meth, LOAD_ATTR, 0, {l});
+  meth_node->SetName("__getitem__");
+  ValueNode *call_node = NewValueNode(AObject::MakeAObject(AObject::kTypeAnyValue), CALL_FUNCTION, 1, {meth_node, r});
+  this->graph_->GetTracedNodes().push_back(meth_node);
+  this->graph_->GetTracedNodes().push_back(call_node);
+  push(call_node);
+
+  (void)HandleCall(0);
+  return true;
 }
 
 bool GraphBuilder::DoItemAccess(const Instr &instr) {
   int opcode = instr.op();
   switch (opcode) {
     case BINARY_SUBSCR: {
-      auto r = pop();
-      auto l = pop();
-      ProcessGetItem(instr, l, r);
+      DoGetItem(instr);
       break;
     }
     case STORE_SUBSCR: {
@@ -1029,10 +1024,20 @@ bool GraphBuilder::DoImport(const Instr &instr) {
 }
 
 bool GraphBuilder::DoByteCode(const Instr &instr) {
+  if (current_block_->is_loop_head() && !graph_->Config().GetBoolConfig(GraphJitConfig::kLoopUnrolling)) {
+    graph_->StopTraceAt(cur_bci_, StopTraceReason::kStopTraceLoop_Unsupported);
+    return false;
+  }
+
   MS_EXCEPTION_IF_CHECK_FAIL(bytecode_meth_map_.find(instr.op()) != bytecode_meth_map_.end(),
                              "unknown opcode " + std::to_string(instr.op()));
   const auto func = bytecode_meth_map_.find(instr.op())->second;
   bool support = (this->*func)(instr);
+
+  const auto &nodes = graph_->GetTracedNodes();
+  for (auto i = nodes.rbegin(); i != nodes.rend() && (*i)->GetBlock() == nullptr; ++i) {
+    (*i)->SetBlock(current_block_);
+  }
 
   if (!support) {
     if (graph_->GetStopTraceBci() == -1) {
@@ -1046,6 +1051,9 @@ bool GraphBuilder::DoByteCode(const Instr &instr) {
   } else {
     bool valid = (cur_bci_ == instr.bci() + 1) || cur_bci_ == instr.extra_jump()->bci();
     MS_EXCEPTION_IF_CHECK_FAIL(valid, "error jump target");
+  }
+  if (cur_bci_ < current_block_->begin_ci() || cur_bci_ >= current_block_->end_ci()) {
+    current_block_ = graph_->GetCFG()->GetBlockByBci(cur_bci_);
   }
   return true;
 }
@@ -1278,7 +1286,6 @@ static bool ApplyInlinePolicy(Graph *g) {
 bool CheckSupportCreateInstance(CallNode *call_node) {
   /**
    * only support exactly type, sub-class not create
-   * list, tuple, set, dict, will reduce generator, not support create
    */
   static const std::set<PyTypeObject *> support_create_instance_type = {
     &PyComplex_Type, &PyMap_Type,   &PyBaseObject_Type, &PyRange_Type, &PyZip_Type,    &PySlice_Type,
@@ -1290,13 +1297,41 @@ bool CheckSupportCreateInstance(CallNode *call_node) {
   if (tp == nullptr) {
     return false;
   }
-
-  const auto &params = call_node->getInputs();
-  bool support_create_instance = support_create_instance_type.end() != support_create_instance_type.find(tp);
-  if (tp == &PyUnicode_Type && params.size() == 1 && params[0]->GetVobj() != nullptr) {
-    support_create_instance = params[0]->GetVobj()->GetType() != AObject::kTypeAnyValue;
+  if (support_create_instance_type.find(tp) != support_create_instance_type.end()) {
+    return true;
   }
-  return support_create_instance;
+
+  /**
+   * maybe has sideeffect, limit create
+   */
+  static const std::set<PyTypeObject *> limit_create_instance_type = {
+    &PyList_Type, &PyTuple_Type, &PySet_Type, &PyFrozenSet_Type, &PyDict_Type, &PyUnicode_Type, &PyEnum_Type,
+  };
+  if (call_node->getInputs().size() != 2) {
+    return false;
+  }
+  ValueNode *iterable_node = call_node->input(1);
+  AObject *first_param = iterable_node->GetVobj();
+  if (first_param == nullptr) {
+    return false;
+  }
+
+  if (first_param->GetType() == AObject::kTypeAnyValue) {
+    if (iterable_node->GetOpcode() != CALL_FUNCTION || call_node->bci() - 1 != iterable_node->bci()) {
+      return false;
+    }
+    /**
+     * just process this case:
+     *    z = list(zip(list(x), list(y)))
+     *    z = list(enumerate(x))
+     */
+    PyTypeObject *iterable_type = first_param->GetTypeObject();
+    if (iterable_type != &PyZip_Type && iterable_type != &PyEnum_Type) {
+      return false;
+    }
+    // this case, zip object and enumerate object is dead variable
+  }
+  return limit_create_instance_type.find(tp) != limit_create_instance_type.end();
 }
 
 AObject *GraphBuilder::BuildSuperObject(PyCodeObject *co) {
@@ -1377,7 +1412,7 @@ bool GraphBuilder::HandleCallClass(CallNode *call_node) {
     std::vector<py::object> args;
     std::transform(params.begin() + 1, params.end(), std::back_inserter(args), [](ValueNode *n) {
       AObject *i = n->GetVobj();
-      return i && i->GetType() != AObject::kTypeAnyValue ? i->GetPyObject() : py::object();
+      return i ? i->GetPyObject() : py::object();
     });
     py::object res = t->BuildInstance(args, call_node->GetOpcode());
     instance = res.ptr() ? AObject::Convert(res) : nullptr;
@@ -2096,15 +2131,9 @@ StopTraceReason GraphBuilder::HandleCall(int depth) {
   return stop_reason;
 }
 
-bool GraphBuilder::TraceRunForIter(const Instr &instr) {
-  MS_EXCEPTION_IF_NULL(instr.extra_jump());
-  int jump_bci = instr.extra_jump()->bci();
+bool GraphBuilder::TraceRunForIterSequence(int jump_bci) {
   // check for iter
   ValueNode *iter_node = seek(0);
-  if (iter_node->GetOpcode() != GET_ITER) {
-    MS_LOG(DEBUG) << "FOR_ITER without GET_ITER";
-    return false;
-  }
   ValueNode *seq_node = iter_node->input(0);
   PyObject *seq = seq_node->GetVobj()->GetPyObject().ptr();
   if (seq == nullptr) {
@@ -2146,6 +2175,83 @@ bool GraphBuilder::TraceRunForIter(const Instr &instr) {
   push(item_node);
   cur_bci_ = cur_bci_ + 1;
   return true;
+}
+
+bool GraphBuilder::TraceRunForIterEnumerate(int jump_bci) {
+  ValueNode *iter_node = seek(0);
+  ValueNode *enumerate_node = iter_node->input(0);
+  if (enumerate_node->GetOpcode() != CALL_FUNCTION || iter_node->bci() - 1 != enumerate_node->bci()) {
+    // enumerate object maybe alive, shouldn't reduce it
+    return false;
+  }
+  ValueNode *iterable_node = enumerate_node->input(1);
+  PyObject *iterable = iterable_node->GetVobj()->GetPyObject().ptr();
+  if (iterable == nullptr || !PySequence_Check(iterable)) {
+    // just support sequence iteration
+    return false;
+  }
+
+  PyObject *enumerate = enumerate_node->GetVobj()->GetPyObject().ptr();
+  if (enumerate == nullptr) {
+    return false;
+  }
+
+  // reduce iterable object
+  ValueNode *seq_node = iterable_node;
+  PyObject *tuple = PyIter_Next(enumerate);
+  if (tuple == nullptr) {
+    if (PyErr_Occurred() && !PyErr_ExceptionMatches(PyExc_StopIteration)) {
+      MS_LOG(ERROR) << "trace FOR_ITER got an error " << py::error_already_set().what();
+      PyErr_Clear();
+      return false;
+    }
+    PyErr_Clear();
+    pop();
+    cur_bci_ = jump_bci;
+    return true;
+  }
+  PyObject *index = PyTuple_GET_ITEM(tuple, 0);
+  PyObject *item = PyTuple_GET_ITEM(tuple, 1);
+  ValueNode *index_node = NewValueNode(AObject::Convert(index), LOAD_CONST, -1, {});
+  ValueNode *item_node = NewValueNode(AObject::Convert(item), BINARY_SUBSCR, 0, {seq_node, index_node});
+  ValueNode *value_node = NewValueNode(AObject::Convert(tuple), BUILD_TUPLE, 2, {index_node, item_node});
+  Py_DECREF(tuple);
+  graph_->GetTracedNodes().push_back(item_node);
+  graph_->GetTracedNodes().push_back(value_node);
+
+  push(value_node);
+  cur_bci_ = cur_bci_ + 1;
+  return true;
+}
+
+bool GraphBuilder::TraceRunForIterZip(int jump_bci) {
+  // not implement
+  return false;
+}
+
+bool GraphBuilder::TraceRunForIter(const Instr &instr) {
+  MS_EXCEPTION_IF_NULL(instr.extra_jump());
+
+  // check for iter
+  ValueNode *iter_node = seek(0);
+  AObject *iterable = iter_node->getInputs().size() > 0 ? iter_node->input(0)->GetVobj() : nullptr;
+  bool succ;
+  if (iter_node->GetOpcode() != GET_ITER) {
+    MS_LOG(DEBUG) << "FOR_ITER without GET_ITER";
+    succ = false;
+  } else if (iterable == nullptr) {
+    succ = false;
+  } else if (iterable->GetTypeObject() == &PyEnum_Type) {
+    succ = TraceRunForIterEnumerate(instr.extra_jump()->bci());
+  } else if (iterable->GetTypeObject() == &PyZip_Type) {
+    succ = TraceRunForIterZip(instr.extra_jump()->bci());
+  } else {
+    succ = TraceRunForIterSequence(instr.extra_jump()->bci());
+  }
+  if (!succ) {
+    graph_->StopTraceAt(cur_bci_, StopTraceReason::kStopTraceLoop_Unsupported);
+  }
+  return succ;
 }
 
 bool IsSatisfyPruneLimit(int cond, Graph *graph_, ValueNode *cond_node) {
@@ -2196,7 +2302,6 @@ bool GraphBuilder::TraceRunControl(const Instr &instr) {
       return true;
     case FOR_ITER:
       if (!TraceRunForIter(instr)) {
-        graph_->StopTraceAt(cur_bci_, StopTraceReason::kStopTraceLoop_Unsupported);
         return false;
       }
       return true;
@@ -2253,11 +2358,6 @@ StopTraceReason GraphBuilder::TraceRun() {
     if (instrs[cur_bci_]->op() == RETURN_VALUE) {
       graph_->SetRetVal(pop());
       break;
-    }
-    Block *loop_head = graph_->GetCFG()->GetBlockByBci(cur_bci_);
-    if (loop_head->is_loop_head()) {
-      graph_->StopTraceAt(cur_bci_, StopTraceReason::kStopTraceLoop_Unsupported);
-      return StopTraceReason::kStopTraceLoop_Unsupported;
     }
     if (!DoByteCode(*instrs[cur_bci_])) {
       break;
