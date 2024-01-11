@@ -19,7 +19,8 @@ import mindspore.nn as nn
 from mindspore import ops, context, load_mindir
 from mindspore.common.tensor import Tensor
 from mindspore.common.initializer import TruncatedNormal
-from mindspore.train.serialization import export
+from mindspore.train.serialization import export, load
+from mindspore import save_mindir
 
 def weight_variable():
     return TruncatedNormal(0.02)
@@ -66,6 +67,37 @@ class LeNet5(nn.Cell):
         x = self.fc3(x)
         return x
 
+
+class ObfuscateNet(nn.Cell):
+    def __init__(self):
+        super(ObfuscateNet, self).__init__()
+        self.batch_size = 32
+        self.conv1 = conv(1, 6, 5)
+        self.conv2 = conv(6, 16, 5)
+        self.matmul = ops.MatMul()
+        self.matmul_weight1 = Tensor(np.random.random((16 * 5 * 5, 120)).astype(np.float32))
+        self.matmul_weight2 = Tensor(np.random.random((120, 84)).astype(np.float32))
+        self.matmul_weight3 = Tensor(np.random.random((84, 10)).astype(np.float32))
+        self.relu = nn.ReLU()
+        self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.flatten = nn.Flatten()
+
+    def construct(self, x):
+        x = self.conv1(x)
+        x = self.relu(x)
+        x = self.max_pool2d(x)
+        x = self.conv2(x)
+        x = self.relu(x)
+        x = self.max_pool2d(x)
+        x = self.flatten(x)
+        x = self.matmul(x, self.matmul_weight1)
+        x = self.relu(x)
+        x = self.matmul(x, self.matmul_weight2)
+        x = self.relu(x)
+        x = self.matmul(x, self.matmul_weight3)
+        return x
+
+
 def _custom_func(mindir_model):
     mindir_model.producer_name = "pandu11111"
     mindir_model.producer_version = "1.0"
@@ -97,3 +129,39 @@ def test_load_mindir_with_custom_func():
     assert mindir_model.producer_name == "pandu11111"
     assert mindir_model.producer_version == "1.0"
     assert mindir_model.user_info["version"] == "1.0"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_load_obfuscate_mindir():
+    """
+    Feature: Load obfuscated mindir
+    Description: Test load obfuscated_mindir whose info has been changed
+    Expectation: load successfully and predict successfully
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    network = ObfuscateNet()
+    network.set_train()
+
+    # export obfuscate model
+    inputs = Tensor(np.zeros([1, 1, 32, 32]).astype(np.float32))
+    obf_config = {"obf_ratio": 0.8, "obf_random_seed": 3423}
+    export(network, inputs, file_name="test_lenet_obf_load", file_format='MINDIR', obf_config=obf_config)
+    mindir_name = "test_lenet_obf_load.mindir"
+    assert os.path.exists(mindir_name)
+
+    # change model info
+    mindir_model = load_mindir(mindir_name)
+    mindir_model.producer_name = "new_name"
+    mindir_model.user_info['level'] = "1"
+    save_mindir(mindir_model, mindir_name)
+
+    # load new model and predict again
+    new_model = load(mindir_name)
+    new_graph = nn.GraphCell(new_model, obf_random_seed=3423)
+    new_graph(inputs)
