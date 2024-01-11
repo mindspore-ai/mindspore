@@ -71,10 +71,19 @@ int ExtractGlimpseCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
   return KRET_OK;
 }
 
+void ExtractGlimpseCpuKernelMod::InputsValidCheck(const std::vector<KernelTensor *> &inputs) {
+  int32_t *ss_data = GetDeviceAddress<int32_t>(inputs, kIndex1);
+  if (ss_data[0] <= 0 || ss_data[1] <= 0) {
+    MS_EXCEPTION(ValueError) << "For " << kernel_name_ << ", the value of 'size' must be greater than zero, but got ["
+                             << ss_data[0] << ", " << ss_data[1] << "].";
+  }
+}
+
 bool ExtractGlimpseCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
                                         const std::vector<kernel::KernelTensor *> &workspace,
                                         const std::vector<kernel::KernelTensor *> &outputs) {
   bool ret = true;
+  InputsValidCheck(inputs);
   if (input_dtype_ == kNumberTypeFloat16) {
     ret = LaunchKernel<float16>(inputs, outputs);
   } else if (input_dtype_ == kNumberTypeFloat32) {
