@@ -315,12 +315,11 @@ REG_ADPT_DESC(ApplyAdagradDA, kApplyAdagradDADOpName, ADPT_DESC(ApplyAdagradDA))
 // ApplyRMSProp
 INPUT_MAP(ApplyRMSProp) = {
   {1, INPUT_DESC(var)}, {2, INPUT_DESC(ms)},       {3, INPUT_DESC(mom)},     {4, INPUT_DESC(lr)},
-  {5, INPUT_DESC(rho)}, {6, INPUT_DESC(momentum)}, {7, INPUT_DESC(epsilon)}, {8, INPUT_DESC(grad)},
+  {6, INPUT_DESC(rho)}, {7, INPUT_DESC(momentum)}, {8, INPUT_DESC(epsilon)}, {5, INPUT_DESC(grad)},
 };
-ATTR_INPUT_MAP(ApplyRMSProp) = {{"rho", "rho"}, {"momentum", "momentum"}, {"epsilon", "epsilon"}};
 ATTR_MAP(ApplyRMSProp) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyRMSProp) = {{0, OUTPUT_DESC(var)}};
-REG_ADPT_DESC(ApplyRMSProp, kApplyRMSPropDOpName, ADPT_DESC(ApplyRMSProp))
+REG_ADPT_DESC(ApplyRMSProp, kApplyRMSPropOpName, ADPT_DESC(ApplyRMSProp))
 
 // ApplyProximalAdagrad
 INPUT_MAP(ApplyProximalAdagrad) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)},
