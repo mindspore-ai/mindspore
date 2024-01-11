@@ -271,21 +271,23 @@ class _ProcessManager:
         with open(scheduler_log_path, "r") as log:
             scheduler_log = log.read()
             # Filter out abnormal logs.
-            time_out_node_log = re.findall(r"Node [\s\S]* is timed out", scheduler_log)
+            time_out_node_log = re.findall(r"node: .* is timed out", scheduler_log)
 
             # Filter out node ids of the processes which exit abnormally.
-            node_id_splitter = lambda l: re.split(" is timed out", re.split("Node ", l)[1])[0]
+            node_id_splitter = lambda l: re.split(" is timed out", re.split("node: ", l)[1])[0]
             time_out_node_ids = list(node_id_splitter(l) for l in time_out_node_log)
 
         # If 'time_out_node_ids' is not empty, only analyze logs of these time out nodes.
         # Unless get the error logs of all workers.
-        if not time_out_node_ids:
+        if time_out_node_ids:
             logger.error(f"Time out nodes are {time_out_node_ids}")
             # Get the logs which have these timeout node ids.
-            grepper = lambda id: os.system(f"grep -rn 'node {id}' {self.log_dir}"
-                                           "|awk -F: '{print $1}'")
+            grepper = lambda id: subprocess.getoutput(f"grep -rn 'This node {id}' {self.log_dir}"
+                                                      "|awk -F: '{print $1}'")
             log_names = list(grepper(id) for id in time_out_node_ids)
             for log in log_names:
+                logger.error(f"Cat log {log} error info and tail log:")
                 os.system(f"cat {os.path.join(self.log_dir, log)}|grep -E 'ERROR|CRITICAL|Traceback' -C 10")
+                os.system(f"tail {os.path.join(self.log_dir, log)}")
         else:
             os.system(f"grep -rn -E 'ERROR|CRITICAL|Traceback' -C 10 {self.log_dir}")
