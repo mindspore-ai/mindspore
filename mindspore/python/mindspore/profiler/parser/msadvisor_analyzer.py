@@ -29,10 +29,11 @@ class Msadvisor:
     """
     The interface to call MSAdvisor(CANN) by command line.
     """
-    def __init__(self, job_id, rank_id, output_path):
+    def __init__(self, job_id, rank_id, output_path, pretty=False):
         self._job_id, self._device_id = job_id.split("/")
         self._rank_id = rank_id
         self._output_path = output_path
+        self._pretty = pretty
 
     def call_msadvisor(self):
         """
@@ -75,6 +76,7 @@ class Msadvisor:
         """
         Execute the MSAdvisor parser, generate timeline file and call MSAdvisor by command line.
         """
-        reformater = MsadvisorParser(self._job_id, self._device_id, self._rank_id, self._output_path)
+        reformater = MsadvisorParser(self._job_id, self._device_id,
+                                     self._rank_id, self._output_path, pretty=self._pretty)
         reformater.parse()
         self.call_msadvisor()

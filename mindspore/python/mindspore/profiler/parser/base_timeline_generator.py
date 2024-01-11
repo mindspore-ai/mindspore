@@ -102,6 +102,12 @@ class BaseTimelineGenerator:
         self._model = model
         self._step_start_op_name = ""
         self._step_end_op_name = ""
+        self._pretty = False
+
+    @property
+    def indent(self):
+        indent = 1 if self._pretty else None
+        return indent
 
     @staticmethod
     def get_parallel_context():
@@ -201,7 +207,7 @@ class BaseTimelineGenerator:
             with os.fdopen(os.open(display_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as json_file:
                 json_file.write('[')
                 for _, item in enumerate(self._timeline_meta):
-                    json.dump(item, json_file)
+                    json.dump(item, json_file, indent=self.indent)
                     if "scope_level" in item.keys():
                         self._max_scope_name_num = max(
                             self._max_scope_name_num, item["scope_level"] + 1)
@@ -209,7 +215,7 @@ class BaseTimelineGenerator:
                     json_file.write(',')
                     if file_size > size_limit:
                         break
-                label_name_json = json.dumps(self.get_thread_label_name())
+                label_name_json = json.dumps(self.get_thread_label_name(), indent=self.indent)
                 label_name_json = label_name_json.lstrip('[')
                 json_file.write(label_name_json)
                 os.chmod(display_file_path, stat.S_IREAD | stat.S_IWRITE)
@@ -230,7 +236,7 @@ class BaseTimelineGenerator:
         try:
             with os.fdopen(os.open(timeline_summary_file_path,
                                    os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as json_file:
-                json.dump(self._timeline_summary, json_file)
+                json.dump(self._timeline_summary, json_file, indent=self.indent)
         except (IOError, OSError) as err:
             logger.critical('Error occurred when write timeline summary file: %s', err)
             raise ProfilerIOException() from err
