@@ -192,7 +192,8 @@ CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const AnfNodePtr &split_inpu
     // begins
     std::vector<int64_t> begins(slice_shape.size(), 0);
     begins[slice_node_info.slice_dim] = slice_node_info.slice_begin;
-    auto beigns_node = NewValueNode(MakeValue<std::vector<int64_t>>(begins));
+    auto value = MakeValue<std::vector<int64_t>>(begins);
+    auto beigns_node = NewValueNode(value);
     auto beigns_tensor = ConvertValueToTensor(kernel_graph, beigns_node);
     // slice_shape
     auto slice_shape_node = NewValueNode(MakeValue<std::vector<int64_t>>(slice_shape));
@@ -570,11 +571,14 @@ CNodePtr NeighborExchangeV2Fusion::CreateConcatNode(const FuncGraphPtr &graph,
                                                     int64_t input_nums) const {
   MS_EXCEPTION_IF_NULL(graph);
   std::vector<AnfNodePtr> new_concat_input(concat_input.begin(), concat_input.end());
-  new_concat_input.push_back(NewValueNode(MakeValue<int64_t>(axis)));
+
+  auto axis_value = MakeValue<int64_t>(axis);
+  auto axis_value_node = CreateValueNodeWithKernelInfo(graph, axis_value);
+  new_concat_input.push_back(axis_value_node);
   auto concat = NewCNode(new_concat_input, graph);
   MS_EXCEPTION_IF_NULL(concat);
   common::AnfAlgo::SetOutputInferTypeAndShape(output_dtype, output_shape, concat.get());
-  std::vector<int64_t> dyn_input_size_empty{input_nums};
+  std::vector<int64_t> dyn_input_size_empty{input_nums, -1};
   common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size_empty), concat);
   return concat;
 }
