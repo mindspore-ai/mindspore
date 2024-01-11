@@ -16,8 +16,10 @@
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.context as context
 from mindspore import Tensor
+from mindspore.nn import Cell
 import mindspore.ops as F
 
 
@@ -93,3 +95,28 @@ def test_fftwithsize_fftn_ifftn(dtype, eps):
     output_ifftn = F.ifftn(output)
     diff_ifftn = np.abs(output_ifftn.asnumpy() - x.asnumpy())
     assert np.all(diff_ifftn < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_fftwithsize_exception():
+    """
+    Feature: FFTWithSize op.
+    Description: Test FFTWithSize operator input when last dimension is 1.
+    Expectation: The result match to the expect value.
+    """
+    signal_ndim = 2
+    inverse = True
+    real = True
+    class Net(Cell):
+        def __init__(self):
+            super().__init__()
+            self.layer = F.FFTWithSize(signal_ndim, inverse, real, norm='backward', onesided=True, signal_sizes=())
+
+        def construct(self, x):
+            return self.layer(x)
+    x = Tensor(np.random.uniform(-10, 10, size=[2, 1])).astype(mindspore.complex64)
+    op_net = Net()
+    with pytest.raises(ValueError, match="For 'FFTWithSize', the last dimension of the input cannot be 1"):
+        op_net(x)
