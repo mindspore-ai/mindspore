@@ -24,6 +24,7 @@ class DeviceEvent {
  public:
   virtual ~DeviceEvent() = default;
   virtual void WaitEvent() = 0;
+  virtual void WaitEventWithoutReset() = 0;
   virtual void RecordEvent() = 0;
   virtual bool NeedWait() = 0;
   virtual void SyncEvent() = 0;

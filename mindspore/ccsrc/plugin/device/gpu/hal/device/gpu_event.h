@@ -28,6 +28,7 @@ class GpuEvent : public DeviceEvent {
   ~GpuEvent() override;
 
   void WaitEvent() override;
+  void WaitEventWithoutReset() override;
   void RecordEvent() override;
   bool NeedWait() override;
   void SyncEvent() override;

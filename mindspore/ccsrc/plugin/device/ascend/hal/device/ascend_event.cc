@@ -80,6 +80,17 @@ void AscendEvent::WaitEvent() {
   need_wait_ = false;
 }
 
+void AscendEvent::WaitEventWithoutReset() {
+  MS_EXCEPTION_IF_NULL(event_);
+  MS_EXCEPTION_IF_NULL(wait_stream_);
+  // Query result will be reset after aclrtResetEvent is called.
+  auto ret = aclrtStreamWaitEvent(wait_stream_, event_);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclrtStreamWaitEvent failed, ret:" << ret;
+  }
+  need_wait_ = false;
+}
+
 void AscendEvent::SyncEvent() {
   MS_EXCEPTION_IF_NULL(event_);
   auto ret = aclrtSynchronizeEvent(event_);
