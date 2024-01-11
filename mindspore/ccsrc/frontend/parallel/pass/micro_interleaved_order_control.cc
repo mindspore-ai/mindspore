@@ -213,7 +213,7 @@ void InsertDependBetweenInterleavedNodes(const FuncGraphManagerPtr &manager,
     MS_EXCEPTION_IF_NULL(depend_node1);
     manager->Replace(next_comm_node_a_input_node, depend_node1);
     if (!add_second_depend) {
-      return;
+      continue;
     }
     // comm_node_a -> comm_node_b
     auto comm_node_a = comm_node_list[0];

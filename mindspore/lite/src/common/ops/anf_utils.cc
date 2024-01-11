@@ -35,7 +35,7 @@ std::unique_ptr<schema::PrimitiveT> GetPrimitiveT(const AnfNodePtr &node) {
   if (creator != nullptr) {
     return creator(prim);
   } else {
-    MS_LOG(WARNING) << "can not find MSOpsRegistry for op: " << prim->name();
+    MS_LOG(INFO) << "can not find MSOpsRegistry for op: " << prim->name();
     return nullptr;
   }
 }

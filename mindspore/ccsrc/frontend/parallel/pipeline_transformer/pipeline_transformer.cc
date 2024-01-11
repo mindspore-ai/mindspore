@@ -1137,6 +1137,9 @@ void PipelineTransformer::CutBorderForNode(const FuncGraphPtr &graph, const AnfN
     if (node_stage < user_node_stage) {
       if (node_stage == stage_) {
         if (IsParameterGraph(node)) {
+          if (!is_train_) {
+            continue;
+          }
           auto send_depend = HandleParameterGraph(node, user_node, node_stage, user_node_stage, micro,
                                                   IntToSize(user_pair.second), *send_ops);
           if (!send_depend) {
@@ -1156,6 +1159,9 @@ void PipelineTransformer::CutBorderForNode(const FuncGraphPtr &graph, const AnfN
       } else {
         if (!receive) {
           if (IsParameterGraph(node)) {
+            if (!is_train_) {
+              continue;
+            }
             receive = HandleParameterGraph(node, user_node, node_stage, user_node_stage, micro,
                                            IntToSize(user_pair.second), *receive_ops);
             if (!receive) {
@@ -1649,7 +1655,10 @@ AnfNodePtr PipelineTransformer::CreateTupleZeroTensor(const AnfNodePtr &node, si
 
 void PipelineTransformer::CutGraph() {
   world_group_ = GetWorldGroup();
-  auto send_recv_shared_param = HandleSharedParameter();
+  std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> send_recv_shared_param;
+  if (is_train_) {
+    send_recv_shared_param = HandleSharedParameter();
+  }
   auto graph = enable_share_cell_ ? shared_cell_ : main_graph_;
   MS_EXCEPTION_IF_NULL(graph);
   auto send_recv_cut_border = CutBorder(graph);

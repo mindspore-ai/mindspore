@@ -30,10 +30,6 @@ namespace mindspore::opt::irpass {
 class ConstOutputEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    auto enable = common::GetEnv("MS_DEV_GRAPH_CONSTANT_OPT") == "1";
-    if (!enable) {
-      return nullptr;
-    }
     auto flag = IsEliminate(node);
     if (!flag) {
       return nullptr;
@@ -76,12 +72,14 @@ class ConstOutputEliminater : public AnfVisitor {
       auto new_value_node = NewValueNode(const_data);
       new_value_node->set_abstract(abstract_tensor);
       auto depend = fg->NewCNode({NewValueNode(prim::kPrimDepend), new_value_node, tuple_zero_node});
+      depend->set_abstract(abstract_tensor);
 
       new_out_abstract_ = GetTupleAbstract({new_value_node, grad_input});
       auto new_out = fg->NewCNode({NewValueNode(prim::kPrimMakeTuple), depend, grad_input});
       new_out->set_abstract(new_out_abstract_);
       fg->manager()->Replace(output, new_out);
     }
+    fg->return_node()->set_abstract(new_out_abstract_);
 
     (void)Level1UserMatch(fg, true);
 
@@ -131,6 +129,11 @@ class ConstOutputEliminater : public AnfVisitor {
         if (element_cnt == tuple->elements().size()) {
           grad_mode_ = dim_zero ? false : true;
           grad_index_ = tuple->elements().size() - 1;
+          continue;
+        }
+
+        if (!dim_zero) {
+          return false;
         }
       } else if (element->isa<abstract::AbstractScalar>()) {
         const auto &scalar_abstract = element->cast<abstract::AbstractScalarPtr>();
@@ -285,6 +288,7 @@ class ConstOutputEliminater : public AnfVisitor {
           size_t new_index = index == grad_index_ ? 1 : 0;
           auto new_index_value = NewValueNode(MakeValue(SizeToLong(new_index)));
           auto new_node = func->NewCNode({NewValueNode(prim::kPrimTupleGetItem), real_input, new_index_value});
+          new_node->set_abstract(user.first->abstract());
           mng->Replace(user.first, new_node);
         }
       }

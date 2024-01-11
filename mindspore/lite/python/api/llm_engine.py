@@ -22,6 +22,7 @@ from typing import Union, List, Tuple, Dict
 from mindspore_lite._checkparam import check_isinstance
 from mindspore_lite.tensor import Tensor
 from mindspore_lite.lib._c_lite_wrapper import LLMEngine_, LLMReq_, LLMRole_, StatusCode
+from mindspore_lite.model import set_env
 
 __all__ = ['LLMReq', 'LLMEngineStatus', 'LLMRole', 'LLMEngine']
 
@@ -226,6 +227,7 @@ class LLMEngine:
     def batch_mode(self):
         return self.batch_mode_
 
+    @set_env
     def init(self, model_paths: Union[Tuple[str], List[str]], options: Dict[str, str],
              postprocess_model_path=None):
         """
