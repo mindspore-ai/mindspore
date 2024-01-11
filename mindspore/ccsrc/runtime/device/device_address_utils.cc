@@ -279,6 +279,30 @@ void DeviceAddressUtils::CreateParameterDeviceAddress(const DeviceContext *devic
   }
 }
 
+void DeviceAddressUtils::UpdateDeviceAddressHostInfoByNode(const device::DeviceAddressPtr &addr, const AnfNodePtr &node,
+                                                           size_t output_idx) {
+  MS_EXCEPTION_IF_NULL(addr);
+  MS_EXCEPTION_IF_NULL(node);
+
+  auto kernel_tensor = addr->kernel_tensor();
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  if (!kernel_tensor->host_info_exist()) {
+    if (AnfAlgo::ExistOutputKernelTensor(node, output_idx)) {
+      const auto &kernel_tensor_in_node = AnfAlgo::GetOutputKernelTensor(node, output_idx);
+      MS_EXCEPTION_IF_NULL(kernel_tensor_in_node);
+      if (kernel_tensor_in_node->host_info_exist()) {
+        // Set host info by kernel tensor
+        kernel_tensor->SetHostInfo(kernel_tensor_in_node->GetShape(), kernel_tensor_in_node->GetType(), nullptr);
+        return;
+      }
+    }
+
+    // Set host info by node
+    auto [shape, type, value] = AnfAlgo::GetAbstractInfo(node, output_idx);
+    kernel_tensor->SetHostInfo(shape, type, value);
+  }
+}
+
 device::DeviceAddressPtrList DeviceAddressUtils::CreateDeviceAddressForTensorValue(const DeviceContext *device_context,
                                                                                    const ValuePtr &node_value,
                                                                                    size_t output_idx,
@@ -298,6 +322,7 @@ device::DeviceAddressPtrList DeviceAddressUtils::CreateDeviceAddressForTensorVal
       if (output_address->GetDeviceType() == device_context->GetDeviceType()) {
         // We need to set tensor->device_address to ValueNode even if the tensor is a forward_output tensor
         // in PyNative Bprop graph. ValueNode device_address is necessary for GraphSchedule::Transform.
+        UpdateDeviceAddressHostInfoByNode(output_address, value_node, output_idx);
         AnfAlgo::SetOutputAddr(std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address()), output_idx++,
                                value_node.get());
         (void)address_list.emplace_back(output_address);
@@ -404,6 +429,8 @@ void DeviceAddressUtils::CreateValueNodeDeviceAddress(const DeviceContext *devic
   for (const ValueNodePtr &value_node : graph->graph_value_nodes()) {
     MS_EXCEPTION_IF_NULL(value_node);
     if (NodeDeviceAddressExist(device_context, value_node, 0)) {
+      auto device_address = AnfAlgo::GetMutableOutputAddr(value_node, 0, false);
+      UpdateDeviceAddressHostInfoByNode(device_address, value_node, 0);
       continue;
     }
 

@@ -472,6 +472,8 @@ void ForwardExecutor::CreateDeviceAddressForViewInput(const FrontendOpRunInfoPtr
     device_address->set_is_view(true);
     return;
   }
+
+  MS_LOG(DEBUG) << "Start";
   const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
     {op_run_info->base_op_run_info.device_target, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
   MS_EXCEPTION_IF_NULL(device_context);
