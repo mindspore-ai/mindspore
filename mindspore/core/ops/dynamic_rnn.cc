@@ -175,7 +175,7 @@ TuplePtr DynamicRNNInferType(const PrimitivePtr &primitive, const std::vector<Ab
   (void)types.emplace("h", h_dtype);
   (void)types.emplace("c", c_dtype);
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(types, float16_set, op_name, true);
-  const std::set<TypePtr> valid_b_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_b_types = {kFloat16};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("b", b_dtype, valid_b_types, op_name);
   return std::make_shared<Tuple>(
     std::vector<TypePtr>{b_dtype, x_dtype, b_dtype, b_dtype, b_dtype, b_dtype, b_dtype, b_dtype});

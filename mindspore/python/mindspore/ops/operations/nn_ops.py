@@ -6508,7 +6508,7 @@ class DynamicRNN(Primitive):
         - **w** (Tensor) - Weight. Tensor of shape :math:`(input\_size + hidden\_size, 4 * hidden\_size)`.
           The data type must be float16.
         - **b** (Tensor) - Bias. Tensor of shape :math:`(4 * hidden\_size)`.
-          The data type must be float16 or float32.
+          The data type must be float16.
         - **seq_length** (Tensor) - The length of each batch. Tensor of shape :math:`(batch\_size, )`.
           Only `None` is currently supported.
         - **init_h** (Tensor) - Hidden state of initial time. Tensor of shape :math:`(1, batch\_size, hidden\_size)`.
