@@ -15,6 +15,7 @@
  */
 #include "ops/ops_func_impl/cholesky_grad.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -37,10 +38,14 @@ BaseShapePtr CholeskyGradFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr CholeskyGradFuncImpl::InferType(const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
+  auto prim_name = primitive->name();
   auto x_type = input_args[kIndex0]->GetType();
-  MS_EXCEPTION_IF_NULL(x_type);
-  return x_type;
+  auto grad_type = input_args[kIndex1]->GetType();
+  std::map<std::string, TypePtr> types;
+  (void)types.emplace("x", x_type);
+  (void)types.emplace("grad", grad_type);
+  (void)CheckAndConvertUtils::CheckTypeSame(types, prim_name);
+  return x_type->Clone();
 }
 }  // namespace ops
 }  // namespace mindspore
