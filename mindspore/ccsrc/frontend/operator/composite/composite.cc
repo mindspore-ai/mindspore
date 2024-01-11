@@ -2049,9 +2049,9 @@ FuncGraphPtr IterConverter::GenerateFuncGraph(const AbstractBasePtrList &args_ab
   auto input_type = input_abs->BuildType();
   MS_EXCEPTION_IF_NULL(input_type);
   auto type_id = input_type->type_id();
-  std::vector<int64_t> iterable_valid_types{TypeId::kObjectTypeString,     TypeId::kObjectTypeTuple,
-                                            TypeId::kObjectTypeList,       TypeId::kObjectTypeDictionary,
-                                            TypeId::kObjectTypeTensorType, TypeId::kObjectTypeFunction};
+  std::vector<int64_t> iterable_valid_types{
+    TypeId::kObjectTypeString,     TypeId::kObjectTypeTuple,    TypeId::kObjectTypeList,  TypeId::kObjectTypeDictionary,
+    TypeId::kObjectTypeTensorType, TypeId::kObjectTypeFunction, TypeId::kMetaTypeExternal};
   bool iterable = std::any_of(iterable_valid_types.begin(), iterable_valid_types.end(),
                               [type_id](int64_t valid_type) { return valid_type == type_id; });
   if (!iterable) {

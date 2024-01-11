@@ -366,7 +366,7 @@ class CellList(_CellListBase, Cell):
     def __getitem__(self, index):
         cls_name = self.__class__.__name__
         if isinstance(index, slice):
-            return self.__class__(list(self._cells.values())[index])
+            return CellList(list(self._cells.values())[index])
         if isinstance(index, int):
             index = _valid_index(len(self), index, cls_name)
             return self._cells[str(index)]
