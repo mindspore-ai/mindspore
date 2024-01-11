@@ -149,7 +149,9 @@ std::pair<bool, bool> CheckIfDataIsTarget(const std::string &op_name, const Abst
   const auto &target_type = target_abs->BuildType();
   MS_EXCEPTION_IF_NULL(target_value);
   MS_EXCEPTION_IF_NULL(target_type);
-  if (!SupportedIsTargetValue(target_type)) {
+  const auto &data_value = data_abs->BuildValue();
+  MS_EXCEPTION_IF_NULL(data_value);
+  if (data_value != kValueAny && target_value != kValueAny && !SupportedIsTargetValue(target_type)) {
     MS_LOG(EXCEPTION) << "For syntax like 'a " << op_name << " b', b supports Int, Bool, String, None and Type, "
                       << "but got " << target_value->ToString();
   }
@@ -158,8 +160,7 @@ std::pair<bool, bool> CheckIfDataIsTarget(const std::string &op_name, const Abst
   if (*data_type != *target_type) {
     return {false, false};
   }
-  const auto &data_value = data_abs->BuildValue();
-  MS_EXCEPTION_IF_NULL(data_value);
+
   if (data_value == kValueAny || target_value == kValueAny) {
     return {false, true};
   }
