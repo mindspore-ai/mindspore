@@ -191,7 +191,6 @@
 #include "ops/scatter_elements.h"
 #include "ops/triu.h"
 #include "ops/tril.h"
-#include "ops/adam_weight_decay.h"
 
 namespace mindspore::lite::ops {
 #define FUNC_MSOP2SCHEMAOP_DECLARE(OP) std::unique_ptr<schema::PrimitiveT> MSOp2SchemaOp(const mindspore::ops::OP *op);

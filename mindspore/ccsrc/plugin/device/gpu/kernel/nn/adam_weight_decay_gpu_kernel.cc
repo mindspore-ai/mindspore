@@ -20,7 +20,7 @@ namespace mindspore {
 namespace kernel {
 bool AdamWeightDecayGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                        const std::vector<KernelTensor *> &outputs) {
-  constexpr size_t input_num = 9;
+  constexpr size_t input_num = 10;
   constexpr size_t output_num = 3;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
@@ -56,7 +56,7 @@ int AdamWeightDecayGpuKernelMod::Resize(const std::vector<KernelTensor *> &input
   decay_size_ = sizeof(float);
   gradient_size_ = s_type_id_size_;
 
-  constexpr size_t input_num = 9;
+  constexpr size_t input_num = 10;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
   MS_EXCEPTION_IF_NULL(inputs[kIndex1]);
@@ -115,6 +115,7 @@ const std::vector<std::pair<KernelAttr, AdamWeightDecayGpuKernelMod::KernelRunFu
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
        .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
@@ -129,6 +130,7 @@ const std::vector<std::pair<KernelAttr, AdamWeightDecayGpuKernelMod::KernelRunFu
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
        .AddOutputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16),
@@ -143,6 +145,7 @@ const std::vector<std::pair<KernelAttr, AdamWeightDecayGpuKernelMod::KernelRunFu
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
        .AddOutputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
