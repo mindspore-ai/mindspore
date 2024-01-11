@@ -300,8 +300,8 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
                             << "+into+graph+node&check_keywords=yes&area=default\n";
   }
 
-  if (convert_result->isa<FuncGraph>() && has_recompute_scope) {
-    UpdateRecomputeScope(convert_result->cast<FuncGraphPtr>());
+  if (convert_result->isa<FuncGraph>()) {
+    UpdateRecomputeScope(convert_result->cast<FuncGraphPtr>(), has_recompute_scope);
   }
   ConvertLoadedGraph(func_graph, convert_result);
   AnfNodePtr output = NewValueNode(convert_result);

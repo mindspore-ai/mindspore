@@ -143,6 +143,7 @@ void RegMsContext(const py::module *m) {
     .def("register_set_env_callback", &mindspore::MsContext::RegisterSetEnv,
          "Register callback function for check environment variable.")
     .def("register_check_env_callback", &mindspore::MsContext::RegisterCheckEnv,
-         "Register callback function for check environment variable.");
+         "Register callback function for check environment variable.")
+    .def("_enable_cell_recompute", &mindspore::MsContext::EnableCellRecompute, "Set a cell to be recomputed.");
 }
 }  // namespace mindspore
