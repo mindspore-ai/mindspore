@@ -827,7 +827,7 @@ class DynamicFrameWorkParser:
             for line_info in framework_info:
                 line_info = line_info.strip('\n').split(',')
                 op_name = line_info[3].split('/')[-1]
-                shape_info = ','.join(line_info[7:]).replace('"', '')
+                shape_info = ','.join(line_info[8:]).replace('"', '')
                 self._op_shape_info[op_name].append(shape_info)
 
     def _get_total_step_num(self, op_summary):

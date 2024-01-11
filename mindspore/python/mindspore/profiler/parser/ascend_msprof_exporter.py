@@ -187,7 +187,8 @@ class AscendMsprofExporter:
         outs, _ = self._run_cmd(['which', self._msprof_cmd])
         if not outs:
             return ""
-        sup_path = outs.strip().split('toolkit')[0]
+        msprof_path = os.path.realpath(outs.strip())
+        sup_path = msprof_path.split('tools')[0]
         script_path = os.path.join(sup_path, 'tools/profiler/profiler_tool/analysis/interface/get_msprof_info.py')
         if not os.path.exists(script_path):
             return ""

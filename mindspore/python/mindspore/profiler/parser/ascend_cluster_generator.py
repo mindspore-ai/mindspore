@@ -81,6 +81,8 @@ class AscendClusterGenerator:
         for file in find_files(self.root_path, "msprof_*.json"):
             with open(file) as jsonfile:
                 for row in json.load(jsonfile):
+                    if not row.get('name'):
+                        continue
                     if row.get('name') in ['Computing', 'Communication', 'Communication(Not Overlapped)',
                                            'Free'] or row.get('name').find('/Receive-op'):
                         name = row.get('name', '')

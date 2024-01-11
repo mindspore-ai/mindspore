@@ -37,7 +37,7 @@ class AscendMsprofDataGeneratorOld:
             'Op Name': {'index': self.invalid_index, 'dtype': ('Op Name', object)},
             'OP Type': {'index': self.invalid_index, 'dtype': ('Op Type', object)},
             'Task Type': {'index': self.invalid_index, 'dtype': ('Task Type', object)},
-            'Task Start Time(us)': {'index': self.invalid_index, 'dtype': ('Task Start Time', float)},
+            'Task Start Time(us)': {'index': self.invalid_index, 'dtype': ('Task Start Time', object)},
             'Task Duration(us)': {'index': self.invalid_index, 'dtype': ('Task Duration', float)},
             'Task Wait Time(us)': {'index': self.invalid_index, 'dtype': ('Task Wait Time', float)},
             'Input Shapes': {'index': self.invalid_index, 'dtype': ('Input Shapes', object)},
@@ -130,12 +130,16 @@ class AscendMsprofDataGeneratorOld:
                     row = [row[index.get('index')] for index in self.op_summary_name.values()]
                     row[self.op_summary_name['Iteration ID']['index']] = iteration
                     row = ['0' if i == 'N/A' else i for i in row]
+                    row += ['0.000']  # Add one column for Task Start Time(us)
                     op_summary.append(tuple(row))
 
-        op_summary_dt = np.dtype([value['dtype'] for value in self.op_summary_name.values()])
-
+        type_value = [value['dtype'] for value in self.op_summary_name.values()]
+        type_value += [('Task Start Time(us)', object)]
+        op_summary_dt = np.dtype(type_value)
         self.op_summary = np.array(op_summary, dtype=op_summary_dt)
-        self.op_summary['Task Start Time'] = self.op_summary['Task Start Time'] * 1e-3
+        high_acc_time = self.op_summary['Task Start Time'].copy()
+        self.op_summary['Task Start Time(us)'] = high_acc_time
+        self.op_summary['Task Start Time'] = self.op_summary['Task Start Time'].astype(float) * 1e-3
         self.op_summary['Task Duration'] = self.op_summary['Task Duration'] * 1e-3
         self.op_summary['Task Wait Time'] = self.op_summary['Task Wait Time'] * 1e-3
 
@@ -228,7 +232,7 @@ class AscendMsprofDataGenerator:
             ('Op Name', object),
             ('Op Type', object),
             ('Task Type', object),
-            ('Task Start Time', float),
+            ('Task Start Time', object),
             ('Task Duration', float),
             ('Task Wait Time', float),
             ('Input Shapes', object),
@@ -313,7 +317,7 @@ class AscendMsprofDataGenerator:
                     elif aiv_vector_fops is not None and aic_cube_fops is not None:
                         new_row.append(aiv_vector_fops)
                         new_row.append(aic_cube_fops)
-
+                    new_row.append('0.000')  # Add one column for Task Start Time(us)
                     new_row = tuple(['0' if d == 'N/A' else d for d in new_row])
                     op_summary.append(new_row)
             break
@@ -323,12 +327,15 @@ class AscendMsprofDataGenerator:
                 ('vector_fops', float),
                 ('cube_fops', float)
             ])
+        self.op_summary_type.extend([('Task Start Time(us)', object)])
         op_summary_dt = np.dtype(self.op_summary_type)
 
         self.op_summary = np.array(op_summary, dtype=op_summary_dt)
-        self.op_summary['Task Start Time'] *= 1e-3
-        self.op_summary['Task Duration'] *= 1e-3
-        self.op_summary['Task Wait Time'] *= 1e-3
+        high_acc_time = self.op_summary['Task Start Time'].copy()
+        self.op_summary['Task Start Time(us)'] = high_acc_time
+        self.op_summary['Task Start Time'] = self.op_summary['Task Start Time'].astype(float) * 1e-3
+        self.op_summary['Task Duration'] = self.op_summary['Task Duration'] * 1e-3
+        self.op_summary['Task Wait Time'] = self.op_summary['Task Wait Time'] * 1e-3
 
     def _read_op_statistic(self):
         """read op statistic to memory"""
