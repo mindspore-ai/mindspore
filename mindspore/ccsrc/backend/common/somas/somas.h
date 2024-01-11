@@ -245,7 +245,6 @@ class BACKEND_EXPORT Somas {
   void GraphOutputProcess(const session::KernelGraph &graph);
   void UpdateContiguousTensorList();
   SomasNodePtr GetSomasNode(size_t node_id) const;
-  static std::string GetSplitName(const string &scope_name);
 
   size_t reused_memory_size_{0};
   std::vector<std::pair<size_t, size_t>> dump_merged_blocks_;
