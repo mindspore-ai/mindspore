@@ -13,45 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MS_KERNELS_KERNEL_MOD_H_
-#define MS_KERNELS_KERNEL_MOD_H_
-#include "kernel_tensor.h"
+#ifndef MS_KERNEL_INTERNAL_KERNEL_MOD_H_
+#define MS_KERNEL_INTERNAL_KERNEL_MOD_H_
 #include <memory>
 #include <unordered_map>
 #include <vector>
-#ifdef ENBALE_INTERNAL_KERNEL
-#include "kernel.h"
-#endif
-#include "internal_kernel.h"
+#include "ccsrc/kernel/kernel.h"
+#include "ms_kernels_internal/internal_kernel.h"
+#include "ms_kernel_internals/include/types.h"
+#include "ms_kernel_internals/include/op_param.h"
 namespace mindspore {
-#ifdef ENBALE_INTERNAL_KERNEL
+namespace kernel {
 class InternalKernelMod : public KernelMod {
-#else
-class InternalKernelMod {
-#endif
-public:
+ public:
   InternalKernelMod() = default;
-  virtual ~InternalKernelMod() = default;
+  virtual ~InternalKernelMod();
 
-  virtual bool Init(const std::vector<KernelTensor *> &inputs,
-                    const std::vector<KernelTensor *> &outputs) = 0;
-  virtual int Resize(const std::vector<KernelTensor *> &inputs,
-                     const std::vector<KernelTensor *> &outputs) = 0;
-  virtual bool Launch(const std::vector<KernelTensor *> &inputs,
-                      const std::vector<KernelTensor *> &outputs,
-                      const Address &tilingBuf,
-                      const std::vector<Address> &workspace,
-                      void *stream_ptr) = 0;
-  size_t GetTilingBufSize() { return impl_->GetTilingBufSize(); }
-  int Tiling(Address &tilingBuf) { return impl_->Tiling(tilingBuf); }
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
+              const Address &tilingBuf, const std::vector<Address> &workspace, void *stream_ptr) override;
+  virtual size_t GetTilingBufSize() { return impl_->GetTilingBufSize(); }
+  virtual int Tiling(const Address &tilingBuf) { return impl_->Tiling(tilingBuf); }
 
-protected:
-  virtual int Build(const std::vector<KernelTensor *> &inputs,
-                    const std::vector<KernelTensor *> &outputs) = 0;
+ protected:
+  virtual int Build(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   virtual void SetInOutIdx() = 0;
+  virtual internal::OpParamPtr CreateOpParam(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) = 0;
   std::shared_ptr<internal::InternelKernelImpl> impl_;
-  std::unordered_map<size_t, size_t> inputsIdxMap;
-  std::unordered_map<size_t, size_t> outputsIdxMap;
+  std::unordered_map<size_t, size_t> inputsIdxMap_;
+  std::unordered_map<size_t, size_t> outputsIdxMap_;
+  std::vector<internal::Tensor *> inputs_;
+  std::vector<internal::Tensor *> outputs_;
 };
-} // namespace mindspore
+}  // namespace kernel
+}  // namespace mindspore
 #endif
