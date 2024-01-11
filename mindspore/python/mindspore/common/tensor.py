@@ -205,7 +205,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     def __init__(self, input_data=None, dtype=None, shape=None, init=None, internal=False, const_arg=False):
         self.init_finished = False
         if isinstance(input_data, (Tensor, Tensor_)) and dtype is not None:
-            logger.warning("It is suggested to use 'Tensor.astype()' to convert the dtype of a Tensor.")
+            logger.info("It is suggested to use 'Tensor.astype()' to convert the dtype of a Tensor.")
             _cast = tensor_operator_registry.get("cast")
             input_data = _cast(input_data, dtype)
 
