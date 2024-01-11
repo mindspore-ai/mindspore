@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,23 +27,17 @@
 #include "include/backend/kernel_graph.h"
 #include "backend/common/session/session_basic.h"
 #include "runtime/hardware/device_context.h"
+#include "runtime/pynative/ir_converter.h"
 
 namespace mindspore {
 using device::DeviceContext;
 using session::KernelWithIndex;
 namespace pynative {
-struct ExecuteKernelInfo {
-  std::vector<device::DeviceAddressPtr> inputs_device_address_;
-  std::vector<device::DeviceAddressPtr> outputs_device_address_;
-  CNodePtr kernel_;
-  PrimitivePtr primitive_;
-};
-using ExecuteKernelInfoList = std::vector<ExecuteKernelInfo>;
-
 struct OpCompilerInfo {
   OpCompilerInfo(GraphInfo graph_info, GraphId graph_id, KernelGraphPtr graph, DeviceContext *device_context,
                  bool need_erase, bool need_refresh_abstract, std::vector<KernelWithIndex> graph_output_nodes,
-                 std::vector<size_t> graph_outputs_tensor_num, std::vector<std::string> graph_outputs_padding_type)
+                 std::vector<size_t> graph_outputs_tensor_num, std::vector<std::string> graph_outputs_padding_type,
+                 SimpleGraphPtr simple_graph)
       : graph_info_(std::move(graph_info)),
         graph_id_(graph_id),
         graph_(std::move(graph)),
@@ -52,22 +46,19 @@ struct OpCompilerInfo {
         need_refresh_abstract_(need_refresh_abstract),
         graph_output_nodes_(std::move(graph_output_nodes)),
         graph_outputs_tensor_num_(std::move(graph_outputs_tensor_num)),
-        graph_outputs_padding_type_(std::move(graph_outputs_padding_type)) {}
+        graph_outputs_padding_type_(std::move(graph_outputs_padding_type)),
+        simple_graph_(std::move(simple_graph)) {}
   ~OpCompilerInfo() = default;
-  mindspore::GraphInfo graph_info_;
-  GraphId graph_id_;
-  KernelGraphPtr graph_;
-  DeviceContext *device_context_;
-  bool need_erase_;
-  bool need_refresh_abstract_;
-  std::vector<KernelWithIndex> graph_output_nodes_;
-  std::vector<size_t> graph_outputs_tensor_num_;
-  std::vector<std::string> graph_outputs_padding_type_;
-  std::vector<device::DeviceAddressPtr> inputs_;
-  std::vector<device::DeviceAddressPtr> outputs_;
-  std::map<device::DeviceAddressPtr, tensor::TensorPtr> value_map_to_tensor_;
-  ExecuteKernelInfoList execute_kernel_list_;
-  std::set<device::DeviceAddressPtr> ignore_host_to_device_inputs_;
+  const mindspore::GraphInfo graph_info_;
+  const GraphId graph_id_;
+  const KernelGraphPtr graph_;
+  const DeviceContext *device_context_;
+  const bool need_erase_;
+  const bool need_refresh_abstract_;
+  const std::vector<KernelWithIndex> graph_output_nodes_;
+  const std::vector<size_t> graph_outputs_tensor_num_;
+  const std::vector<std::string> graph_outputs_padding_type_;
+  const SimpleGraphPtr simple_graph_;
 };
 using OpCompilerInfoPtr = std::shared_ptr<OpCompilerInfo>;
 
@@ -90,8 +81,8 @@ class BACKEND_EXPORT OpCompiler {
 
   // Accumulate a certain number of operators,
   // and then compile the operators in parallel to improve compilation efficiency.
-  void BatchBuild(const std::vector<KernelGraphPtr> &graphs, const DeviceContext *device_context,
-                  bool is_dynamic_shape = false) const;
+  void KernelBuild(const OpCompilerInfoPtr &op_compiler_info, const DeviceContext *device_context,
+                   bool is_dynamic_shape = false) const;
 
   std::string GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_info, const PrimitivePtr &op_prim) const;
 
@@ -100,14 +91,14 @@ class BACKEND_EXPORT OpCompiler {
 
   bool IsInvalidInferResultOp(const std::string &op_name) const;
 
+  static void UpdateRefNodeOutputDeviceAddress(const KernelGraphPtr &graph);
+
  private:
   OpCompiler();
   ~OpCompiler() = default;
   DISABLE_COPY_AND_ASSIGN(OpCompiler);
   KernelGraphPtr GenerateKernelGraph(const session::BackendOpRunInfoPtr &op_run_info,
                                      const device::DeviceContext *device_context) const;
-
-  void ConvertGraphToExecuteInfo(const OpCompilerInfoPtr &op_compiler_info) const;
   // All operators shared the same session.
   session::SessionPtr session_;
   mindspore::HashMap<mindspore::GraphInfo, OpCompilerInfoPtr> op_compiler_infos_;

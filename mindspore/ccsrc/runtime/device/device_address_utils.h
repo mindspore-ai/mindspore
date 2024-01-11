@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,10 @@ class BACKEND_EXPORT DeviceAddressUtils {
   static void CreateValueNodeDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph);
   static void CreateKernelOutputDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph,
                                               bool is_gradient_out);
+
   static vector<device::DeviceAddressPtr> CreateGraphOutputDeviceAddress(const OpCompilerInfoPtr &op_compiler_info,
                                                                          const abstract::AbstractBasePtr &out_abstract);
+
   static void CreateKernelWorkspaceDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph);
   static void CreateDeviceAddressByMapTensorNode(const DeviceContext *device_context, const AnfNodePtr &node,
                                                  size_t index);
@@ -50,12 +52,6 @@ class BACKEND_EXPORT DeviceAddressUtils {
   static device::DeviceAddressPtr CloneEmptyDeviceAddress(const device::DeviceAddressPtr &old_device_address,
                                                           const DeviceContext *device_context);
   static void CreateGraphOutputDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph);
-
-  static device::DeviceAddressPtr GetInputAddressForRef(const AnfNodePtr &node,
-                                                        const OpCompilerInfoPtr &op_compiler_info);
-  static device::DeviceAddressPtr GetOutputAddressForRef(const AnfNodePtr &node,
-                                                         const OpCompilerInfoPtr &op_compiler_info,
-                                                         size_t output_index);
   static size_t GetTensorDeviceSize(const DeviceContext *device_context, const AnfNodePtr &node,
                                     const ShapeVector &shape, const string &format, TypeId dtype, size_t output_index);
 

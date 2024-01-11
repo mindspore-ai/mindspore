@@ -299,7 +299,7 @@ def test_index_add_function():
     np.testing.assert_array_equal(output.asnumpy(), expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_index_add_dynamic():
