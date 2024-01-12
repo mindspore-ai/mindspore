@@ -5457,22 +5457,21 @@ class ApplyAddSign(Primitive):
     is the last moment of :math:`m_{t+1}`, :math:`lr` represents scaling factor `lr`, :math:`g` represents `grad`,
     :math:`\alpha` represents `alpha`, :math:`\beta` represents `beta`.
 
-    Inputs of `var`, `accum` and `grad`  comply with the implicit type conversion rules
+    The data type of all inputs must be float16 or float32 on Ascend and float16, float32 or float64 on CPU and GPU.
+
+    Inputs of `var`, `accum` and `grad` , `sign_decay` and `beta` comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
-    The data type of inputs must be float16 or float32 on Ascend and float16, float32 or float64 on CPU and GPU.
 
     Inputs:
-        - **var** (Parameter) - Variable tensor to be updated. With float16, float32 or float64 data type.
+        - **var** (Parameter) - Variable tensor to be updated.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **m** (Parameter) - Variable tensor to be updated, has the same data type as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value, must be a scalar.
-          With float16, float32 or float64 data type.
-        - **alpha** (Union[Number, Tensor]) - Must be a scalar. With float16, float32 or float64 data type.
-        - **sign_decay** (Union[Number, Tensor]) - Must be a scalar. With float16, float32 or float64 data type.
+        - **alpha** (Union[Number, Tensor]) - Must be a scalar.
+        - **sign_decay** (Union[Number, Tensor]) - Must be a scalar.
         - **beta** (Union[Number, Tensor]) - The exponential decay rate, must be a scalar.
-          With float16, float32 or float64 data type.
         - **grad** (Tensor) - A tensor of the same shape as `var`, for the gradient.
 
     Outputs:
@@ -5482,7 +5481,8 @@ class ApplyAddSign(Primitive):
         - **m** (Tensor) - The same shape and data type as `m`.
 
     Raises:
-        TypeError: If dtype of `var`, `lr`, `alpha`, `sign_decay` or `beta` is not float16, float32 or float64.
+        TypeError: If dtype of `var`, `lr` and `alpha` is not float16, float32 or float64.
+        TypeError: If dtype of `sign_decay` and `beta` are both not float16, float32 or float64.
         TypeError: If `lr`, `alpha` or `sign_decay` is neither a Number nor a Tensor.
         TypeError: If `grad` is not a Tensor.
         TypeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
