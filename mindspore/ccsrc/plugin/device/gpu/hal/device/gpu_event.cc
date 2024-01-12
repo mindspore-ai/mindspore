@@ -43,6 +43,11 @@ void GpuEvent::WaitEvent() {
   need_wait_ = false;
 }
 
+void GpuEvent::WaitEventWithoutReset() {
+  // No reset api in cuda, so WaitEventWithoutReset is same with WaitEvent
+  WaitEvent();
+}
+
 void GpuEvent::RecordEvent() {
   MS_EXCEPTION_IF_NULL(event_);
   MS_EXCEPTION_IF_NULL(record_stream_);

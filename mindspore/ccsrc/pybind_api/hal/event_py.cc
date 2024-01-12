@@ -44,14 +44,19 @@ void EventPy::DispatchRecordEventTask(const StreamPyPtr &stream) {
 
   // Record event async.
   pynative::DispatchOp(std::make_shared<pynative::PassthroughFrontendTask>([stream, event = event_]() {
-    runtime::OpExecutor::GetInstance().PushSimpleOpRunTask(
-      std::make_shared<pynative::PassthroughDeviceTask>([stream, event]() {
-        auto stream_ptr = stream->stream();
-        MS_LOG(DEBUG) << "RecordEvent stream_ptr:" << stream_ptr << ", event:" << event;
-        event->set_record_stream(stream_ptr);
-        event->RecordEvent();
-        EventCnt::DecreaseUnrecordedCnt(event);
-      }));
+    auto record_fn = [stream, event]() {
+      auto stream_ptr = stream->stream();
+      MS_LOG(DEBUG) << "RecordEvent stream_ptr:" << stream_ptr << ", event:" << event;
+      event->set_record_stream(stream_ptr);
+      event->RecordEvent();
+      EventCnt::DecreaseUnrecordedCnt(event);
+    };
+    if (runtime::OpExecutor::NeedSync()) {
+      runtime::OpExecutor::GetInstance().PushSimpleOpRunTask(
+        std::make_shared<pynative::PassthroughDeviceTask>(record_fn));
+    } else {
+      record_fn();
+    }
   }));
 }
 
@@ -69,13 +74,18 @@ void EventPy::Record(const StreamPyPtr &stream) {
 void EventPy::DispatchWaitEventTask(const StreamPyPtr &stream) {
   // Wait event async.
   pynative::DispatchOp(std::make_shared<pynative::PassthroughFrontendTask>([stream, event = event_]() {
-    runtime::OpExecutor::GetInstance().PushSimpleOpRunTask(
-      std::make_shared<pynative::PassthroughDeviceTask>([stream, event]() {
-        auto stream_ptr = stream->stream();
-        MS_LOG(DEBUG) << "WaitEvent stream_ptr:" << stream_ptr << ", event:" << event;
-        event->set_wait_stream(stream_ptr);
-        event->WaitEvent();
-      }));
+    auto wait_fn = [stream, event]() {
+      auto stream_ptr = stream->stream();
+      MS_LOG(DEBUG) << "WaitEvent stream_ptr:" << stream_ptr << ", event:" << event;
+      event->set_wait_stream(stream_ptr);
+      event->WaitEventWithoutReset();
+    };
+    if (runtime::OpExecutor::NeedSync()) {
+      runtime::OpExecutor::GetInstance().PushSimpleOpRunTask(
+        std::make_shared<pynative::PassthroughDeviceTask>(wait_fn));
+    } else {
+      wait_fn();
+    }
   }));
 }
 
