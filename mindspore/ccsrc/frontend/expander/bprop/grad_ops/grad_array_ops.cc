@@ -2111,9 +2111,10 @@ REG_BPROP_BUILDER("Im2Col").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
                 {"ellipsis_mask", MakeValue<int64_t>(0)},
                 {"new_axis_mask", MakeValue<int64_t>(0)},
                 {"shrink_axis_mask", MakeValue<int64_t>(0)}});
+    shape = ib->Cast(shape, kInt32);
   } else {
     ShapeVector output_shape(x_shape.begin() + i2, x_shape.end());
-    shape = ib->Tensor(output_shape);
+    shape = ib->Tensor(output_shape, kInt32);
   }
   auto dx = ib->Emit("Col2Im", {dout, shape},
                      {{"kernel_size", MakeValue(kernel_size)},
