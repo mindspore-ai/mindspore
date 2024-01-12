@@ -82,7 +82,6 @@ Batch（批操作）
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.dataset.Dataset.device_que
     mindspore.dataset.Dataset.sync_update
     mindspore.dataset.Dataset.sync_wait
     mindspore.dataset.Dataset.to_json

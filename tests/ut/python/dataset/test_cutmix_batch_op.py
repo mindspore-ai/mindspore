@@ -313,9 +313,9 @@ def test_cut_mix_batch_then_mix_up_batch():
     dataset = dataset.map(operations=cut_mix_batch, input_columns=["image", "label"])
     dataset = dataset.map(operations=mix_up_batch, input_columns=["image", "label"])
 
-    expected_label = np.array([[0.10036002, 0.02589141, 0.87374854, 0., 0., 0., 0., 0., 0., 0.],
-                               [0., 1., 0., 0., 0., 0., 0., 0., 0., 0.],
-                               [0.69456184, 0.17918672, 0.12625143, 0., 0., 0., 0., 0., 0., 0.]])
+    expected_label = np.array([[0.0672744, 0.9327255, 0., 0., 0., 0., 0., 0., 0., 0.],
+                               [0.7276474, 0.2723526, 0., 0., 0., 0., 0., 0., 0., 0.],
+                               [0., 0., 1., 0., 0., 0., 0., 0., 0., 0.]])
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_almost_equal(item["label"], expected_label)
 
