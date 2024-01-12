@@ -41,10 +41,13 @@ void LessImpl(void *x1, void *x2, void *result, size_t size) {
 
 using Handler = std::function<void(void *x1, void *x2, void *result, size_t size)>;
 std::map<TypeId, Handler> less_impl_list = {
-  {kNumberTypeBool, LessImpl<bool>},     {kNumberTypeInt, LessImpl<int>},       {kNumberTypeInt8, LessImpl<int8_t>},
-  {kNumberTypeInt16, LessImpl<int16_t>}, {kNumberTypeInt32, LessImpl<int32_t>}, {kNumberTypeInt64, LessImpl<int64_t>},
-  {kNumberTypeUInt8, LessImpl<uint8_t>}, {kNumberTypeFloat, LessImpl<float>},   {kNumberTypeFloat16, LessImpl<float16>},
-  {kNumberTypeFloat32, LessImpl<float>}, {kNumberTypeFloat64, LessImpl<double>}};
+  {kNumberTypeBool, LessImpl<bool>},        {kNumberTypeInt8, LessImpl<int8_t>},
+  {kNumberTypeInt16, LessImpl<int16_t>},    {kNumberTypeInt32, LessImpl<int32_t>},
+  {kNumberTypeInt64, LessImpl<int64_t>},    {kNumberTypeUInt8, LessImpl<uint8_t>},
+  {kNumberTypeUInt16, LessImpl<uint16_t>},  {kNumberTypeUInt32, LessImpl<uint32_t>},
+  {kNumberTypeUInt64, LessImpl<uint64_t>},  {kNumberTypeFloat16, LessImpl<float16>},
+  {kNumberTypeFloat32, LessImpl<float>},    {kNumberTypeFloat64, LessImpl<double>},
+  {kNumberTypeBFloat16, LessImpl<bfloat16>}};
 
 class LessFrontendFuncImpl : public OpFrontendFuncImpl {
  public:
@@ -69,8 +72,9 @@ class LessFrontendFuncImpl : public OpFrontendFuncImpl {
     auto result_tensor = std::make_shared<tensor::Tensor>(kNumberTypeBool, x1_shape);
     auto iter = less_impl_list.find(type_id);
     if (iter == less_impl_list.end()) {
-      MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
-                              << ", the type is not supported.";
+      MS_LOG(DEBUG) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
+                    << ", the type is not supported.";
+      return nullptr;
     }
     iter->second(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
     return result_tensor;

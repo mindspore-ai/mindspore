@@ -54,13 +54,14 @@ void EqualFloatImpl(void *x1, void *x2, void *result, size_t size) {
 
 using Handler = std::function<void(void *x1, void *x2, void *result, size_t size)>;
 std::map<TypeId, Handler> equal_impl_list = {{kNumberTypeBool, EqualImpl<bool>},
-                                             {kNumberTypeInt, EqualImpl<int>},
                                              {kNumberTypeInt8, EqualImpl<int8_t>},
                                              {kNumberTypeInt16, EqualImpl<int16_t>},
                                              {kNumberTypeInt32, EqualImpl<int32_t>},
                                              {kNumberTypeInt64, EqualImpl<int64_t>},
                                              {kNumberTypeUInt8, EqualImpl<uint8_t>},
-                                             {kNumberTypeFloat, EqualFloatImpl<float>},
+                                             {kNumberTypeUInt16, EqualImpl<uint16_t>},
+                                             {kNumberTypeUInt32, EqualImpl<uint32_t>},
+                                             {kNumberTypeUInt64, EqualImpl<uint64_t>},
                                              {kNumberTypeFloat16, EqualImpl<float16>},
                                              {kNumberTypeBFloat16, EqualImpl<bfloat16>},
                                              {kNumberTypeFloat32, EqualFloatImpl<float>},
@@ -91,8 +92,9 @@ class EqualFrontendFuncImpl : public OpFrontendFuncImpl {
     auto result_tensor = std::make_shared<tensor::Tensor>(kNumberTypeBool, x1_shape);
     auto iter = equal_impl_list.find(type_id);
     if (iter == equal_impl_list.end()) {
-      MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
-                              << ", the type is not supported.";
+      MS_LOG(DEBUG) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
+                    << ", the type is not supported.";
+      return nullptr;
     }
     iter->second(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
     return result_tensor;

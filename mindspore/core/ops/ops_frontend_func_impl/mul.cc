@@ -55,7 +55,6 @@ std::map<TypeId, Handler> mul_impl_list = {{kNumberTypeBool, ImplMulBool<bool>},
                                            {kNumberTypeInt8, ImplMul<int8_t>},
                                            {kNumberTypeInt16, ImplMul<int16_t>},
                                            {kNumberTypeInt32, ImplMul<int32_t>},
-                                           {kNumberTypeInt, ImplMul<int>},
                                            {kNumberTypeInt64, ImplMul<int64_t>},
                                            {kNumberTypeUInt8, ImplMul<uint8_t>},
                                            {kNumberTypeUInt16, ImplMul<uint16_t>},
@@ -64,7 +63,6 @@ std::map<TypeId, Handler> mul_impl_list = {{kNumberTypeBool, ImplMulBool<bool>},
                                            {kNumberTypeFloat16, ImplMul<float16>},
                                            {kNumberTypeBFloat16, ImplMul<bfloat16>},
                                            {kNumberTypeFloat32, ImplMul<float>},
-                                           {kNumberTypeFloat, ImplMul<float>},
                                            {kNumberTypeFloat64, ImplMul<double>},
                                            {kNumberTypeComplex64, ImplMul<std::complex<float>>},
                                            {kNumberTypeComplex128, ImplMul<std::complex<double>>}};
@@ -94,8 +92,9 @@ class MulFrontendFuncImpl : public OpFrontendFuncImpl {
     MS_EXCEPTION_IF_NULL(result_tensor);
     auto iter = mul_impl_list.find(dtype);
     if (iter == mul_impl_list.end()) {
-      MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
-                              << ", the type is not supported.";
+      MS_LOG(DEBUG) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
+                    << ", the type is not supported.";
+      return nullptr;
     }
     iter->second(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
     return result_tensor;

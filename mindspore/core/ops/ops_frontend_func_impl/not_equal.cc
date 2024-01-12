@@ -54,13 +54,14 @@ void NotEqualFloatImpl(void *x1, void *x2, void *result, size_t size) {
 
 using Handler = std::function<void(void *x1, void *x2, void *result, size_t size)>;
 std::map<TypeId, Handler> not_equal_impl_list = {{kNumberTypeBool, NotEqualImpl<bool>},
-                                                 {kNumberTypeInt, NotEqualImpl<int>},
                                                  {kNumberTypeInt8, NotEqualImpl<int8_t>},
                                                  {kNumberTypeInt16, NotEqualImpl<int16_t>},
                                                  {kNumberTypeInt32, NotEqualImpl<int32_t>},
                                                  {kNumberTypeInt64, NotEqualImpl<int64_t>},
                                                  {kNumberTypeUInt8, NotEqualImpl<uint8_t>},
-                                                 {kNumberTypeFloat, NotEqualFloatImpl<float>},
+                                                 {kNumberTypeUInt16, NotEqualImpl<uint16_t>},
+                                                 {kNumberTypeUInt32, NotEqualImpl<uint32_t>},
+                                                 {kNumberTypeUInt64, NotEqualImpl<uint64_t>},
                                                  {kNumberTypeFloat16, NotEqualImpl<float16>},
                                                  {kNumberTypeBFloat16, NotEqualImpl<bfloat16>},
                                                  {kNumberTypeFloat32, NotEqualImpl<float>},
@@ -91,8 +92,9 @@ class NotEqualFrontendFuncImpl : public OpFrontendFuncImpl {
     auto result_tensor = std::make_shared<tensor::Tensor>(kNumberTypeBool, x1_shape);
     auto iter = not_equal_impl_list.find(type_id);
     if (iter == not_equal_impl_list.end()) {
-      MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
-                              << ", the type is not supported.";
+      MS_LOG(DEBUG) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
+                    << ", the type is not supported.";
+      return nullptr;
     }
     iter->second(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
     return result_tensor;

@@ -107,15 +107,15 @@ class DivFrontendFuncImpl : public OpFrontendFuncImpl {
     if (iter != func_map.end()) {
       iter->second(x_tensor->data_c(), y_tensor->data_c(), result_datac, data_size);
     } else {
-      MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'x' is " << x_tensor->ToString()
-                              << ", the type is not supported.";
+      MS_LOG(DEBUG) << "For '" << primitive->name() << "', 'x' is " << x_tensor->ToString()
+                    << ", the type is not supported.";
+      return nullptr;
     }
     return result_tensor;
   }
 
  private:
   std::map<TypeId, std::function<void(void *x, void *y, void *result, size_t size)>> func_map = {
-    {kNumberTypeInt, DivImpl<int>},
     {kNumberTypeInt8, DivImpl<int8_t>},
     {kNumberTypeInt16, DivImpl<int16_t>},
     {kNumberTypeInt32, DivImpl<int32_t>},
@@ -124,11 +124,10 @@ class DivFrontendFuncImpl : public OpFrontendFuncImpl {
     {kNumberTypeUInt16, DivImpl<uint16_t>},
     {kNumberTypeUInt32, DivImpl<uint32_t>},
     {kNumberTypeUInt64, DivImpl<uint64_t>},
+    {kNumberTypeBFloat16, DivImpl<bfloat16>},
     {kNumberTypeFloat16, DivImpl<float16>},
     {kNumberTypeFloat32, DivImpl<float>},
-    {kNumberTypeFloat, DivImpl<float>},
     {kNumberTypeFloat64, DivImpl<double>},
-    {kNumberTypeDouble, DivImpl<double>},
     {kNumberTypeComplex64, ComplexDivImpl<std::complex<float>>},
     {kNumberTypeComplex128, ComplexDivImpl<std::complex<double>>}};
 };
