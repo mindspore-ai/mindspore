@@ -37,27 +37,37 @@
 
 namespace mindspore {
 namespace runtime {
-void DebugActor::ACLDump(uint32_t device_id) {
-  std::string env_enable_str = common::GetEnv("GRAPH_OP_RUN");
-  if (env_enable_str == "1") {
-    auto step_count_num = 0;
-    step_count_num = step_count + 1;
-    if (DumpJsonParser::GetInstance().async_dump_enabled() &&
-        DumpJsonParser::GetInstance().IsDumpIter(step_count_num)) {
-      dump_flag = 1;
+void DebugActor::ACLDump(uint32_t device_id, const std::vector<KernelGraphPtr> &graphs) {
+  std::string env_enable_str = common::GetEnv("MS_ACL_DUMP_CFG_PATH");
+  std::string kbk_enable_str = common::GetEnv("GRAPH_OP_RUN");
+  auto step_count_num = 0;
+  step_count_num = step_count;
+  if (step_count == 1 && is_dataset_sink == 1) {
+    step_count_num = 0;
+  }
+  if (!graphs.empty()) {
+    auto graph = graphs[0];
+    is_dataset_sink = graph->IsDatasetGraph();
+  }
+  if (DumpJsonParser::GetInstance().async_dump_enabled() &&
+      ((DumpJsonParser::GetInstance().IsDumpIter(step_count_num) && kbk_enable_str == "1") || env_enable_str == "1")) {
+    bool is_init = false;
+    if ((env_enable_str == "1") && !(DumpJsonParser::GetInstance().IsDumpIter(step_count_num))) {
+      is_init = true;
+    } else {
       std::string dump_path = DumpJsonParser::GetInstance().path();
       std::string dump_path_step = dump_path + "/" + std::to_string(step_count_num);
       auto real_path = FileUtils::CreateNotExistDirs(dump_path_step, false);
       if (!real_path.has_value()) {
-        MS_LOG(WARNING) << "fail to create aoe dump dir " << real_path.value();
+        MS_LOG(WARNING) << "Fail to create acl dump dir " << real_path.value();
         return;
       }
-      auto registered_dumper =
-        datadump::DataDumperRegister::Instance().GetDumperForBackend(device::DeviceType::kAscend);
-      if (registered_dumper != nullptr) {
-        registered_dumper->Initialize();
-        registered_dumper->EnableDump(device_id, step_count_num);
-      }
+    }
+    dump_flag = true;
+    auto registered_dumper = datadump::DataDumperRegister::Instance().GetDumperForBackend(device::DeviceType::kAscend);
+    if (registered_dumper != nullptr) {
+      registered_dumper->Initialize();
+      registered_dumper->EnableDump(device_id, step_count_num, is_init);
     }
   }
 }
@@ -195,16 +205,17 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   std::string backend = context->backend_policy();
-  auto device_context = device_contexts[0];
+  device_ctx_ = device_contexts[0];
   auto profiler = profiler::Profiler::GetInstance(kAscendDevice);
   if ((profiler == nullptr || !profiler->IsInitialized()) &&
-      device_context->GetDeviceType() == device::DeviceType::kAscend) {
+      device_ctx_->GetDeviceType() == device::DeviceType::kAscend) {
     auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    ACLDump(device_id);
+    if (common::GetEnv("MS_ACL_DUMP_CFG_PATH") == "1" || common::GetEnv("GRAPH_OP_RUN") == "1") {
+      ACLDump(device_id, graphs);
+    }
   }
   if (backend == "ge") {
     AscendStepStart(graphs, device_contexts);
-    MS_LOG(INFO) << "On GE backend, debug_actor is not supported.";
     return;
   }
   MS_EXCEPTION_IF_NULL(op_context);
@@ -255,12 +266,13 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
   MS_EXCEPTION_IF_NULL(context);
   std::string backend = context->backend_policy();
   step_count = total_running_count_;
-  if (dump_flag == 1) {
+  if (dump_flag == true) {
     auto registered_dumper = datadump::DataDumperRegister::Instance().GetDumperForBackend(device::DeviceType::kAscend);
     if (registered_dumper != nullptr) {
+      device_ctx_->device_res_manager_->SyncAllStreams();
       registered_dumper->Finalize();
     }
-    dump_flag = 0;
+    dump_flag = false;
   }
   if (backend == "ge") {
     AscendStepEnd();

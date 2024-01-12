@@ -134,7 +134,7 @@ def run_ge_dump_acl(test_name):
         dump_config_path = os.path.join(tmp_dir, 'ge_dump.json')
         generate_dump_json(dump_path, dump_config_path, test_name)
         os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
-        os.environ['GRAPH_OP_RUN'] = "1"
+        os.environ['MS_ACL_DUMP_CFG_PATH'] = "1"
         if os.path.isdir(dump_path):
             shutil.rmtree(dump_path)
         add = Net()
