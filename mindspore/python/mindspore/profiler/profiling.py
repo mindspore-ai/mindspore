@@ -37,7 +37,7 @@ from mindspore.profiler.common.validator.validate_path import validate_and_norma
 from mindspore.profiler.parser.framework_parser import GpuFrameWorkParser, DynamicFrameWorkParser
 from mindspore.profiler.parser.integrator import Integrator, DeviceTarget
 from mindspore.profiler.parser.cpu_gpu_timeline_generator import GpuTimelineGenerator, CpuTimelineGenerator
-from mindspore.profiler.parser.ascend_timeline_generator import AscendTimelineGenerator
+from mindspore.profiler.parser.ascend_timeline_generator import AscendTimelineGenerator, AscendTimelineGeneratorOld
 from mindspore.profiler.parser.memory_usage_parser import MemoryUsageParser
 from mindspore.profiler.parser.minddata_parser import MinddataParser
 from mindspore.profiler.parser.minddata_analyzer import MinddataProfilingAnalyzer
@@ -1143,15 +1143,23 @@ class Profiler:
         finally:
             pass
 
-    def _ascend_timeline_analyse(self, op_summary, steptrace):
+    def _ascend_timeline_analyse(self, op_summary, steptrace, source_path, flag):
         """Analyse timeline info."""
         try:
             logger.info("Profiling: analyzing the timeline data")
-            timeline_analyser = AscendTimelineGenerator(self._output_path, self._dev_id, self._rank_id, self._rank_size,
-                                                        context.get_context('mode'))
-            timeline_analyser.init_timeline(op_summary, steptrace)
-            timeline_analyser.write_timeline(self._timeline_size_limit_byte)
-            timeline_analyser.write_timeline_summary()
+            if flag:
+                timeline_analyser = AscendTimelineGenerator(self._output_path, source_path, self._rank_id,
+                                                            context.get_context('mode'))
+                timeline_analyser.parse_cluster_data(op_summary, steptrace)
+                timeline_analyser.parse_timeline_data()
+                timeline_analyser.write_timeline_display()
+                timeline_analyser.write_timeline_summary()
+            else:
+                timeline_analyser = AscendTimelineGeneratorOld(self._output_path, self._dev_id, self._rank_id,
+                                                               self._rank_size, context.get_context('mode'))
+                timeline_analyser.init_timeline(op_summary, steptrace)
+                timeline_analyser.write_timeline(self._timeline_size_limit_byte)
+                timeline_analyser.write_timeline_summary()
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
             logger.warning('Fail to write timeline data: %s', err)
         finally:
@@ -1292,7 +1300,7 @@ class Profiler:
             ProfilerInfo.set_export_flag(flag)
             op_summary, op_statistic, steptrace = _ascend_graph_msprof_analyse(source_path, flag)
             self._ascend_op_analyse(op_summary, op_statistic, self._dynamic_status)
-            self._ascend_timeline_analyse(op_summary, steptrace)
+            self._ascend_timeline_analyse(op_summary, steptrace, source_path, flag)
             graph_ids = np.unique(op_summary['Model ID']).tolist()
             points = self._ascend_fpbp_analyse(op_summary, steptrace)
             if len(graph_ids) == 1:
