@@ -77,19 +77,13 @@ bool CTCGreedyDecoderCpuKernelMod::Init(const std::vector<KernelTensor *> &input
 int CTCGreedyDecoderCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {
   auto ret = KernelMod::Resize(inputs, outputs);
-  if (ret == KRET_UNKNOWN_OUT_SHAPE) {
-    output_size_list_.clear();
-    max_time_ = inputs[kIndex0]->GetShapeVector()[kIndex0];
-    batch_size_ = inputs[kIndex0]->GetShapeVector()[kIndex1];
-    num_classes_raw_ = inputs[kIndex0]->GetShapeVector()[kIndex2];
-    auto max_out_size = max_time_ * batch_size_;
-    (void)output_size_list_.emplace_back(max_out_size * kDecodedIndicesRank *
-                                         GetTypeByte(TypeIdToType(types_[kIndex0])));
-    (void)output_size_list_.emplace_back(max_out_size * GetTypeByte(TypeIdToType(types_[kIndex1])));
-    (void)output_size_list_.emplace_back(kDecodedIndicesRank * GetTypeByte(TypeIdToType(types_[kIndex2])));
-    (void)output_size_list_.emplace_back(batch_size_ * GetTypeByte(TypeIdToType(types_[kIndex3])));
+  if (ret != KRET_OK) {
+    return ret;
   }
-  return ret;
+  max_time_ = inputs[kIndex0]->GetShapeVector()[kIndex0];
+  batch_size_ = inputs[kIndex0]->GetShapeVector()[kIndex1];
+  num_classes_raw_ = inputs[kIndex0]->GetShapeVector()[kIndex2];
+  return KRET_OK;
 }
 
 template <typename T>
