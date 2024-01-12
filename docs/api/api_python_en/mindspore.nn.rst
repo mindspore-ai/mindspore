@@ -47,6 +47,7 @@ Wrapper Layer
     mindspore.nn.FixedLossScaleUpdateCell
     mindspore.nn.ForwardValueAndGrad
     mindspore.nn.GetNextSingleOp
+    mindspore.nn.GradAccumulationCell
     mindspore.nn.MicroBatchInterleaved
     mindspore.nn.ParameterUpdate
     mindspore.nn.PipelineCell
