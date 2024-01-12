@@ -39,7 +39,7 @@ def linear_sum_assignment(cost_matrix, maximize, dimension_limit=Tensor(sys.maxs
     Supported Platforms:
         ``Ascend`` ``CPU``
 
-     Examples:
+    Examples:
         >>> import mindspore as ms
         >>> import numpy as np
         >>> from mindspore import Tensor

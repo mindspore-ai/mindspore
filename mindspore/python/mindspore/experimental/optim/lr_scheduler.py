@@ -1299,7 +1299,7 @@ class CosineAnnealingLR(LRScheduler):
         \end{aligned}
 
     For more details, please refer to: `SGDR: Stochastic Gradient Descent with Warm Restarts
-    <https://arxiv.org/abs/1608.03983>`_
+    <https://arxiv.org/abs/1608.03983>`_ .
 
     .. warning::
         This is an experimental lr scheduler module that is subject to change.
@@ -1309,7 +1309,7 @@ class CosineAnnealingLR(LRScheduler):
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
         T_max (int): Maximum number of iterations.
-        eta_min (float, optional): Minimum learning rate. Default: ``0``.
+        eta_min (float, optional): Minimum learning rate. Default: ``0.0``.
         last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
 
     Supported Platforms:

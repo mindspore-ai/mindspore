@@ -5,7 +5,7 @@ mindspore.scipy.linalg.eigh
 
     求解复Hermitian矩阵或实对称矩阵的标准或广义特征值问题。
 
-    求出 `a` 的特征值Tensor `w` 和可选的特征值Tensor `v`，其中 `b` 是正定的，使得对于每个特征值 `λ`（`w` 的第i个条目）及其特征向量 `vi`（`v` 的第i列）满足：
+    求出 `a` 的特征值Tensor `w` 和可选的特征值Tensor `v`，其中 `b` 是正定的，使得对于每个特征值 `λ` （ `w` 的第i个条目）及其特征向量 `vi` （ `v` 的第i列）满足：
 
     .. code-block::
 
@@ -19,7 +19,7 @@ mindspore.scipy.linalg.eigh
         - Windows平台上还不支持 `eigh`。
         - 如果Tensor是int32、int64类型，它将被强制转换为：mstype.float64类型。
 
-    参数:
+    参数：
         - **a** (Tensor) - 一个shape 为 :math:`(M,M)` 的复Hermitian矩阵或实对称矩阵，用于计算其特征值和特征向量。
         - **b** (Tensor, 可选) - 一个shape为 :math:`(M,M)` 的复Hermitian矩阵或实对称正矩阵。
           如果缺省，则假定为传入单位矩阵。
@@ -51,7 +51,7 @@ mindspore.scipy.linalg.eigh
           禁用可能会带来性能增益，但如果输入确实包含INF或NaN，则可能会导致问题（崩溃、程序不终止）。
           默认值：``True``。
 
-    返回:
+    返回：
         - **w** (Tensor) - 返回shape为 :math:`(N,)` 的Tensor，其中特征值 :math:`N(1<=N<=M)`，按升序排列，根据其多样性重复。
 
         - **v** (Tensor) - 如果 `eigvals_only==False`，返回shape为 :math:`(M, N)` 的Tensor。

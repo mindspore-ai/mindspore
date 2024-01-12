@@ -18,7 +18,7 @@ mindspore.scipy.linalg.cholesky
         - 仅支持float32、float64、int32、int64类型的Tensor类型。
         - 如果Tensor是int32、int64类型，它将被强制转换为：mstype.float64类型。
 
-    参数:
+    参数：
         - **a** (Tensor) - 要分解的 :math:`(M,M)` 方阵。
         - **lower** (bool, 可选) - 是计算上三角还是下三角的cholesky分解。
           默认值：``False``。
@@ -30,7 +30,7 @@ mindspore.scipy.linalg.cholesky
           默认值：``True``。
           在MindSpore中，当前这个参数不起作用。
 
-    返回:
+    返回：
         Tensor，`a` 的上三角或下三角cholesky因子。
 
     异常:
