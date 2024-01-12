@@ -390,6 +390,9 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     return host_info_->type_id_;
   }
 
+  // Set the object enum type id of the KernelTensor.
+  void set_type_id(TypeId type_id) { host_info_->type_id_ = type_id; }
+
   // Get the data enum type id of the KernelTensor.
   TypeId dtype_id() const { return device_info_->dtype_id_; }
 
