@@ -18,10 +18,20 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <memory>
 #include "utils/log_adapter.h"
 #include "pipeline/jit/pi/utils/utils.h"
 #include "pipeline/jit/pi/pydef.h"
 #include "pipeline/jit/pi/graph_guard/infer.h"
+#include "pipeline/jit/pi/graph_compiler/utils.h"
+#include "pipeline/jit/pi/graph_compiler/pi_ir/ctrl_flow.h"
+#include "pipeline/jit/pi/graph_compiler/pi_ir/custom_nodes.h"
+#include "pipeline/jit/pi/graph_compiler/pi_ir/operation.h"
+#include "pipeline/jit/pi/graph_compiler/pi_ir/value.h"
+#include "pipeline/jit/ps/action.h"
+#include "pipeline/jit/ps/parse/data_converter.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "include/common/utils/convert_utils_py.h"
 
 namespace mindspore {
 namespace jit {
@@ -1320,24 +1330,173 @@ py::object AbstractTensor::GetTensor(bool sync) {
   return py::reinterpret_steal<py::object>(res);
 }
 
+static bool CheckAdapterTensor(py::object tensor) {
+  bool is_adapter = false;
+  if (IsStubTensor(tensor)) {
+    is_adapter = py::hasattr(tensor, "adapter_flag") && py::cast<bool>(py::getattr(tensor, "adapter_flag"));
+  } else {
+    is_adapter = py::cast<mindspore::tensor::TensorPtr>(tensor.ptr())->is_adapter();
+  }
+  return is_adapter;
+}
+
+AbstractBasePtr PyObjectToAbstract(const py::object &arg) {
+  ValuePtr converted = nullptr;
+  bool success;
+  if (IsStubTensor(arg)) {
+    success = mindspore::parse::ConvertStubData(arg, &converted);
+  } else {
+    success = mindspore::parse::ConvertData(arg, &converted);
+  }
+  if (!success) {
+    MS_LOG(EXCEPTION) << "Fail to convert the object: " << py::str(arg);
+  }
+  auto res = GraphUtils::ArgsToAbstract(arg, converted, false);
+  if (res->isa<mindspore::abstract::AbstractTensor>()) {
+    bool check = CheckAdapterTensor(arg);
+    dyn_cast_ptr<mindspore::abstract::AbstractTensor>(res)->set_is_adapter(check);
+  }
+  return res;
+}
+
+bool TensorInferBinarySupport(int opcode) {
+  static const std::set<int> support_op = {
+    BINARY_POWER,         BINARY_MULTIPLY,     BINARY_MODULO,       BINARY_ADD,
+    BINARY_SUBTRACT,      BINARY_SUBSCR,       BINARY_FLOOR_DIVIDE, BINARY_TRUE_DIVIDE,
+    INPLACE_FLOOR_DIVIDE, INPLACE_TRUE_DIVIDE, INPLACE_ADD,         INPLACE_SUBTRACT,
+    INPLACE_MULTIPLY,     INPLACE_MODULO,      BINARY_LSHIFT,       BINARY_RSHIFT,
+    BINARY_AND,           BINARY_XOR,          BINARY_OR,           INPLACE_POWER,
+    INPLACE_LSHIFT,       INPLACE_RSHIFT,      INPLACE_AND,         INPLACE_XOR,
+    INPLACE_OR,
+  };
+
+  return support_op.find(opcode) != support_op.end();
+}
+
+mindspore::abstract::AbstractTensorPtr InferWithMetaFunc(const AbstractBasePtr &left, const AbstractBasePtr &right,
+                                                         int opcode) {
+  auto func = GraphUtils::GetPrimOrMetaFuncGraph(opcode);
+  auto res = mindspore::pipeline::AbstractAnalyze(GetValueNode(func), {left, right});
+  return dyn_cast<mindspore::abstract::AbstractTensor>(res.eval_result->abstract());
+}
+
+mindspore::abstract::AbstractTensorPtr InferWithPrim(const AbstractBasePtr &left, const AbstractBasePtr &right,
+                                                     int opcode) {
+  static std::unordered_map<int, PrimitivePtr> prim_func = {{BINARY_ADD, prim::kPrimAdd},
+                                                            {BINARY_SUBTRACT, prim::kPrimSub},
+                                                            {BINARY_MULTIPLY, prim::kPrimMul},
+                                                            {BINARY_TRUE_DIVIDE, prim::kPrimDiv},
+                                                            {BINARY_FLOOR_DIVIDE, prim::kPrimFloorDiv}};
+
+  auto left_dtype_ptr = dyn_cast_ptr<mindspore::abstract::AbstractTensor>(left)->element()->BuildType();
+  MS_EXCEPTION_IF_NULL(left_dtype_ptr);
+  auto right_dtype_ptr = dyn_cast_ptr<mindspore::abstract::AbstractTensor>(right)->element()->BuildType();
+  MS_EXCEPTION_IF_NULL(right_dtype_ptr);
+  if (left_dtype_ptr->type_id() != right_dtype_ptr->type_id() || prim_func.find(opcode) == prim_func.end()) {
+    return InferWithMetaFunc(left, right, opcode);
+  }
+
+  auto func = prim_func.find(opcode)->second;
+  auto eval_impl = mindspore::abstract::GetPrimitiveInferImpl(func);
+  auto infer_res = eval_impl->InferShapeAndType(nullptr, func, {left, right});
+  MS_EXCEPTION_IF_NULL(infer_res);
+  return dyn_cast<mindspore::abstract::AbstractTensor>(infer_res);
+}
+
+py::object TensorInferBinary(const AbstractBasePtr &left, const AbstractBasePtr &right, int opcode) {
+  mindspore::abstract::AbstractTensorPtr abs;
+  auto left_tensor = dyn_cast_ptr<mindspore::abstract::AbstractTensor>(left);
+  if (right->isa<mindspore::abstract::AbstractTensor>()) {
+    abs = InferWithPrim(left, right, opcode);
+  } else if (right->isa<mindspore::abstract::AbstractScalar>()) {
+    auto new_right = std::make_shared<mindspore::abstract::AbstractTensor>(right);
+    abs = InferWithPrim(left, new_right, opcode);
+  } else {
+    abs = InferWithMetaFunc(left, right, opcode);
+  }
+  MS_EXCEPTION_IF_NULL(abs);
+  auto dtype_ptr = abs->element()->BuildType();
+  MS_EXCEPTION_IF_NULL(dtype_ptr);
+  auto shape_ptr = abs->BuildShape();
+  MS_EXCEPTION_IF_NULL(shape_ptr);
+  auto shape = shape_ptr->cast<mindspore::abstract::ShapePtr>()->shape();
+  auto dtype = dtype_ptr->type_id();
+  auto tensor = std::make_shared<mindspore::tensor::Tensor>(dtype, shape);
+  auto res = py::cast(tensor);
+  tensor->set_adapter_flag(left_tensor->is_adapter());
+  py::object func = Utils::GetModuleAttr("mindspore.common.api", "_convert_python_data", false, true);
+  return func(res);
+}
+
 AObject *AbstractTensor::Binary(AObject *other, int op) {
   if (op == IS_OP) {
-    PyObject *b = other ? other->GetPyObject().ptr() : nullptr;
-    bool cnst = const_object_type_map.find(b) != const_object_type_map.end();
-    return cnst ? Convert(Py_False) : MakeAObject(kTypeBool);
+    PyTypeObject *b = other ? other->GetTypeObject() : nullptr;
+    PyTypeObject *a = GetTypeObject();
+    return a != b && b != nullptr ? Convert(Py_False) : MakeAObject(kTypeBool);
   }
-  if (other != nullptr && ((other->GetType() == kTypeTuple && other->GetTypeObject() != &PyTuple_Type) ||
-                           (other->GetType() == kTypeList && other->GetTypeObject() != &PyList_Type))) {
-    PyObject *r = other->GetPyObject().ptr();
-    if (r == nullptr) {
-      return MakeAObject(kTypeAnyValue);
-    }
-    constexpr char mutable_attr[] = "__ms_mutable__";
-    if (other->GetAttr(mutable_attr)->GetPyObject().ptr() == Py_True) {
-      return MakeAObject(kTypeAnyValue);
-    }
+
+  if (other == nullptr || GetPyObject().ptr() == nullptr || !TensorInferBinarySupport(op)) {
+    return MakeAObject(kTypeTensor);
   }
-  return MakeAObject(kTypeTensor);
+
+  AbstractBasePtr left = PyObjectToAbstract(this->GetPyObject());
+  AbstractBasePtr right;
+  if (other->GetPyObject().ptr() == nullptr) {
+    // if other is scalar with empty value, then transfer to AbstractScalar
+    // else return any value
+    switch (other->GetType()) {
+      case kTypeBool:
+        right = std::make_shared<mindspore::abstract::AbstractScalar>(kValueAny, kBool);
+        break;
+      case kTypeInt:
+        right = std::make_shared<mindspore::abstract::AbstractScalar>(kValueAny, kInt32);
+        break;
+      case kTypeFloat:
+        right = std::make_shared<mindspore::abstract::AbstractScalar>(kValueAny, kFloat32);
+        break;
+      default:
+        return MakeAObject(kTypeAnyValue);
+    }
+  } else {
+    right = PyObjectToAbstract(other->GetPyObject());
+  }
+  auto res = TensorInferBinary(left, right, op);
+  return Convert(res);
+}
+
+AObject *AbstractTensor::GetItem(AObject *key) {
+  PyObject *s = value_.ptr();
+  PyObject *i = key ? key->GetPyObject().ptr() : nullptr;
+  PyObject *t = nullptr;
+  if (s != nullptr && i != nullptr) {
+    // avoid Tensor as index and Tensor data sync
+    t = PyObject_GetItem(s, i);
+    CHECK_PYTHON_EXCEPTION(t);
+  } else {
+    return MakeAObject(kTypeAnyValue);
+  }
+  py::object py_t = py::reinterpret_steal<py::object>(t);
+  if (CheckAdapterTensor(value_) && !CheckAdapterTensor(py_t)) {
+    if (mindspore::IsStubTensor(py_t)) {
+      mindspore::abstract::AbstractTensorPtr abs =
+        dyn_cast<mindspore::abstract::AbstractTensor>(PyObjectToAbstract(py_t));
+      auto dtype_ptr = abs->element()->BuildType();
+      MS_EXCEPTION_IF_NULL(dtype_ptr);
+      auto shape_ptr = abs->BuildShape();
+      MS_EXCEPTION_IF_NULL(shape_ptr);
+      auto shape = shape_ptr->cast<mindspore::abstract::ShapePtr>()->shape();
+      auto dtype = dtype_ptr->type_id();
+      auto tensor = std::make_shared<mindspore::tensor::Tensor>(dtype, shape);
+      tensor->set_adapter_flag(true);
+      py_t = py::cast(tensor);
+    } else {
+      auto tensor = py::cast<mindspore::tensor::TensorPtr>(t);
+      tensor->set_adapter_flag(true);
+    }
+    py::object func = Utils::GetModuleAttr("mindspore.common.api", "_convert_python_data", false, true);
+    py_t = func(py_t);
+  }
+  return Convert(py_t);
 }
 
 AObject *AbstractTensor::Unary(int op) const {
