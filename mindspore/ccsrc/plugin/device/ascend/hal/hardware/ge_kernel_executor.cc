@@ -100,12 +100,23 @@ pynative::KernelTaskPtr GetTaskByTaskType(const pynative::KernelTaskType &task_t
 void SetAclOpPrecisionMode() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+
+  auto precision_mode = ms_context->get_param<std::string>(MS_CTX_PRECISION_MODE);
+  if (precision_mode.empty()) {
+    precision_mode = (transform::AclUtil::KeepOriginDType() == 1) ? "must_keep_origin_dtype" : "allow_fp32_to_fp16";
+  }
+  MS_LOG(INFO) << "Set aclop PRECISION_MODE: " << precision_mode;
+  auto ret = aclSetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, precision_mode.c_str());
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Acl set precision mode failed! Error flag is " << ret;
+  }
+
   auto op_precision_mode = ms_context->get_param<std::string>(MS_CTX_OP_PRECISION_MODE);
   if (op_precision_mode.empty()) {
     return;
   }
-  MS_LOG(INFO) << "Set ACL_OP_PRECISION_MODE: " << op_precision_mode;
-  auto ret = aclSetCompileopt(aclCompileOpt::ACL_OP_PRECISION_MODE, op_precision_mode.c_str());
+  MS_LOG(INFO) << "Set aclop OP_PRECISION_MODE: " << op_precision_mode;
+  ret = aclSetCompileopt(aclCompileOpt::ACL_OP_PRECISION_MODE, op_precision_mode.c_str());
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Acl set op precision mode failed! Error flag is " << ret;
   }
