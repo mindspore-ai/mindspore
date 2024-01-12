@@ -56,26 +56,20 @@ int ExtractGlimpseGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
   size_shape = inputs[kIndex1]->GetShapeVector();
   offsets_shape = inputs[kIndex2]->GetShapeVector();
   output_shape = outputs[kIndex0]->GetShapeVector();
-  if (!(CHECK_SHAPE_POSITIVE(inputs_shape) && CHECK_SHAPE_POSITIVE(size_shape) &&
-        CHECK_SHAPE_POSITIVE(offsets_shape))) {
-    is_null_input_ = true;
-    return 0;
-  }
   if (offsets_shape[1] != kExtractGlimpseOne) {
-    MS_LOG(ERROR) << "The second dimension of offsets must be 2, "
-                  << "but got " << offsets_shape[1] << ".";
-    return false;
+    MS_LOG(EXCEPTION) << "The second dimension of offsets must be 2, but got " << offsets_shape[1] << ".";
   }
   if (offsets_shape[0] != inputs_shape[0]) {
-    MS_LOG(ERROR) << "The first dimension of offsets must be consistent with "
-                  << "the first dimension of x, "
-                  << "but got " << offsets_shape[0] << ".";
-    return false;
+    MS_LOG(EXCEPTION) << "The first dimension of offsets must be consistent with the first dimension of x, but got "
+                      << offsets_shape[0] << ".";
   }
   batch_cnt_ = inputs_shape[0];
   image_height_ = inputs_shape[1];
   image_width_ = inputs_shape[kExtractGlimpseOne];
   channels_ = inputs_shape[kExtractGlimpseThree];
+  if (channels_ == 0) {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the last dimension of x can not be zero.";
+  }
   inputs_elements_ = batch_cnt_ * image_height_ * image_width_ * channels_;
   size_elements_ = kExtractGlimpseTwo;
   offsets_elements_ = batch_cnt_ * kExtractGlimpseTwo;
@@ -92,7 +86,7 @@ int ExtractGlimpseGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
   size_size_ = abstract::TypeIdSize(inputs[kIndex1]->dtype_id()) * GetNums(size_shape);
   offsets_size_ = abstract::TypeIdSize(inputs[kIndex2]->dtype_id()) * GetNums(offsets_shape);
   output_size_ = abstract::TypeIdSize(outputs[kIndex0]->dtype_id()) * output_elements_;
-  return 0;
+  return KRET_OK;
 }
 
 template <typename T>
@@ -104,10 +98,6 @@ bool ExtractGlimpseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> 
   T *offsets = GetDeviceAddress<T>(inputs, kIndex2);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
   stream_ptr_ = stream_ptr;
-  if (size[0] <= 0 || size[1] <= 0) {
-    MS_EXCEPTION(ValueError) << "For " << kernel_name_ << ", the value of 'size' must be greater than zero, but got ["
-                             << size[0] << ", " << size[1] << "].";
-  }
   cudaError_t ret = CalExtractGlimpse(output_elements_, batch_cnt_, channels_, image_height_, image_width_, noise_,
                                       centered_, normalized_, uniform_noise_, x, size, offsets, output,
                                       reinterpret_cast<cudaStream_t>(stream_ptr_));
