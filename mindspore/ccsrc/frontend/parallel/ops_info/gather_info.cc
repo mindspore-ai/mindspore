@@ -130,6 +130,18 @@ void GatherInfo::GetBatchDims() noexcept {
   }
 }
 
+GatherUtilPtr GatherInfo::MakeManualUtil() {
+  return std::make_shared<GatherManualImpl>(name_, inputs_shape_, outputs_shape_, axis_);
+}
+
+GatherUtilPtr SparseGatherV2Info::MakeManualUtil() {
+  return std::make_shared<ManualImpl>(name_, inputs_shape_, outputs_shape_, axis_);
+}
+
+GatherUtilPtr EmbeddingLookupInfo::MakeManualUtil() {
+  return std::make_shared<ManualImpl>(name_, inputs_shape_, outputs_shape_, axis_);
+}
+
 Status GatherInfo::GetAttrs() {
   if (attrs_.find(TARGET) != attrs_.end()) {
     target_ = GetStringAttr(TARGET);
@@ -541,8 +553,38 @@ Status ManualImpl::InferReplaceGraph(const CNodePtr &cnode) {
     MS_LOG(ERROR) << name_ << ": Infer Bias failed.";
     return FAILED;
   }
+
   auto sub_node = gen_g.PushBack({gen_g.NewOpInst(SUB), gen_g.virtual_input_node(), CreateInt32Tensor(index_offset_)});
-  auto gather_v2_node = gen_g.PushBack(
+  AnfNodePtr gather_v2_node = nullptr;
+  gather_v2_node =
+    gen_g.PushBack({gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), sub_node, CreatInt64Imm(axis_)});
+  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(sub_node, 2),
+                                                             std::make_pair(gather_v2_node, 1)};
+  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
+    std::make_pair(input_nodes, gather_v2_node));
+  return SUCCESS;
+}
+
+Status GatherManualImpl::InferReplaceGraph(const CNodePtr &cnode) {
+  if (target_ == CPU) {  // if target is CPU, no need to replace graph
+    return SUCCESS;
+  }
+
+  GenerateGraph gen_g = GenerateGraph(attrs_);
+  if (gen_g.Init(cnode) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << "GenerateGraph Init failed";
+    return FAILED;
+  }
+
+  if (InferOffset() != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Infer Bias failed.";
+    return FAILED;
+  }
+
+  auto sub_node = gen_g.PushBack({gen_g.NewOpInst(SUB), gen_g.virtual_input_node(), CreateInt32Tensor(index_offset_)});
+  AnfNodePtr gather_v2_node = nullptr;
+  // Gather processing.
+  gather_v2_node = gen_g.PushBack(
     {gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), sub_node, CreatInt64Imm(axis_), CreatInt64Imm(0)});
   std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(sub_node, 2),
                                                              std::make_pair(gather_v2_node, 1)};
@@ -1047,7 +1089,7 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
       gather_util_ = std::make_shared<NormalImpl>(name_, inputs_shape_, outputs_shape_, axis_);
       break;
     case MANUAL: {
-      gather_util_ = std::make_shared<ManualImpl>(name_, inputs_shape_, outputs_shape_, axis_);
+      gather_util_ = MakeManualUtil();
       auto manual_util = std::dynamic_pointer_cast<ManualImpl>(gather_util_);
       manual_util->set_param_split_shapes(param_split_shapes_);
       manual_util->set_index_offsets(index_offsets_);
