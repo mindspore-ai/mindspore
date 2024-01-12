@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,9 +108,10 @@ bool CTCLossV2GpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inpu
   auto neg_log_p = GetDeviceAddress<S>(outputs, kIndex0);
   auto log_alpha_p = GetDeviceAddress<S>(outputs, kIndex1);
 
-  CalCTCLossV2<S, T>(log_probs_p, target_p, input_len_p, target_len_p, batch_sizes_, max_target_length_, time_series_,
-                     blank_, log_probs_shape_, log_alpha_shape_, neg_log_p, log_alpha_p, device_id_, stream_ptr_);
-
+  auto status =
+    CalCTCLossV2<S, T>(log_probs_p, target_p, input_len_p, target_len_p, batch_sizes_, max_target_length_, time_series_,
+                       blank_, log_probs_shape_, log_alpha_shape_, neg_log_p, log_alpha_p, device_id_, stream_ptr_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 
