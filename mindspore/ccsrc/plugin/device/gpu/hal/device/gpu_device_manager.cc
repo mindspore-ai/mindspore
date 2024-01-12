@@ -94,6 +94,8 @@ bool GPUDeviceManager::CreateStream(CudaDeviceStream *stream) {
 }
 
 bool GPUDeviceManager::CreateStream(size_t *stream_id) {
+  MS_EXCEPTION_IF_NULL(stream_id);
+
   std::lock_guard<std::mutex> lock_gpu_streams(stream_mutex_);
   CudaDeviceStream stream;
   CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateStream(&stream), "Failed to create CUDA stream");
@@ -103,6 +105,8 @@ bool GPUDeviceManager::CreateStream(size_t *stream_id) {
 }
 
 bool GPUDeviceManager::CreateStreamWithPriority(size_t *stream_id, int32_t priority) {
+  MS_EXCEPTION_IF_NULL(stream_id);
+
   std::lock_guard<std::mutex> lock_gpu_streams(stream_mutex_);
   CudaDeviceStream stream;
   CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateStreamWithPriority(&stream, priority),

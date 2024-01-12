@@ -958,13 +958,12 @@ void MindRTBackendBase::ConstructOutputs(runtime::ActorSet *actor_set, VectorRef
 }
 
 void MindRTBackendBase::ContiguousArgs(const VectorRef &args, const GraphCompilerInfo &graph_compiler_info) {
-  if (graph_compiler_info.device_contexts_.empty()) {
-    MS_LOG(EXCEPTION) << "Device context is empty.";
+  auto stream_id = kDefaultStreamIndex;
+  if (!graph_compiler_info.device_contexts_.empty()) {
+    auto device_context = graph_compiler_info.device_contexts_[0];
+    MS_EXCEPTION_IF_NULL(device_context);
+    stream_id = device_context->device_res_manager_->GetCurrentStreamId();
   }
-
-  auto device_context = graph_compiler_info.device_contexts_[0];
-  MS_EXCEPTION_IF_NULL(device_context);
-  auto stream_id = device_context->device_res_manager_->GetCurrentStreamId();
 
   auto dispatch_contiguous_task = [stream_id, this](const tensor::TensorPtr &t) {
     MS_EXCEPTION_IF_NULL(t);
@@ -1004,6 +1003,7 @@ void MindRTBackendBase::ContiguousArgs(const VectorRef &args, const GraphCompile
 
 void MindRTBackendBase::WaitMultiStream(const GraphCompilerInfo &graph_compiler_info) {
   for (auto device_context : graph_compiler_info.device_contexts_) {
+    MS_EXCEPTION_IF_NULL(device_context);
     if (device_context->device_res_manager_->single_op_multi_stream_enable()) {
       device_context->device_res_manager_->SyncNotDefaultStreams();
     }
