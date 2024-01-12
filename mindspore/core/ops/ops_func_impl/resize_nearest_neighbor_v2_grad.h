@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,11 @@
 #ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_RESIZE_NEAREST_NEIGHBOR_V2_GRAD_H_
 #define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_RESIZE_NEAREST_NEIGHBOR_V2_GRAD_H_
 
-#include <vector>
-#include "ops/ops_func_impl/op_func_impl.h"
+#include "ops/ops_func_impl/resize_2d.h"
 
 namespace mindspore {
 namespace ops {
-class MIND_API ResizeNearestNeighborV2GradFuncImpl : public OpFuncImpl {
- public:
-  ResizeNearestNeighborV2GradFuncImpl() = default;
-
-  ~ResizeNearestNeighborV2GradFuncImpl() = default;
-
-  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-};
+class MIND_API ResizeNearestNeighborV2GradFuncImpl final : public Resize2DBaseFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_RESIZE_NEAREST_NEIGHBOR_V2_GRAD_H_

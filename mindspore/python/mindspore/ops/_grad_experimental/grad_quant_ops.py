@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 
 """Generate bprop for quantization aware ops"""
 
-from mindspore.ops import operations as P
+from mindspore.ops.deprecated import BNTrainingReduce
 from mindspore.ops.operations import _quant_ops as Q
 from mindspore.ops._grad_experimental.grad_base import bprop_getters
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
@@ -139,7 +139,7 @@ def get_bprop_batchnormfold(self):
     return bprop
 
 
-@bprop_getters.register(P.BNTrainingReduce)
+@bprop_getters.register(BNTrainingReduce)
 def get_bprop_bn_training_reduce(self):
     """Generate bprop for BNTrainingReduce for Ascend"""
 

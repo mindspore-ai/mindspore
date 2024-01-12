@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ namespace kernel {
 namespace {
 constexpr size_t kInputsNum = 1;
 constexpr size_t kResizeBilinearV2InputsNum = 4;
+constexpr size_t kResizeBilinearExpectedRank = 4;
 constexpr size_t kOutputsNum = 1;
 constexpr size_t kZero = 0;
 constexpr size_t kOne = 1;
@@ -59,6 +60,9 @@ int ResizeBilinearGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();
   auto output_shape = outputs[kIndex0]->GetShapeVector();
+  if (input_shape.size() != kResizeBilinearExpectedRank || output_shape.size() != kResizeBilinearExpectedRank) {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", input and output should be 4-D Tensor.";
+  }
   auto input_element_num =
     std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (input_element_num == 0);

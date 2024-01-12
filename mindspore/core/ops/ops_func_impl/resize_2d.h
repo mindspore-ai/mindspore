@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,18 @@
 #define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_REDUCE_RESIZE_2D_H_
 
 #include <vector>
-#include <set>
-#include <memory>
-#include "ir/primitive.h"
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-BaseShapePtr Resize2DInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
+class MIND_API Resize2DBaseFuncImpl : public OpFuncImpl {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+
+  int32_t CheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+};
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_REDUCE_RESIZE_2D_H_
