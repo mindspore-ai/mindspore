@@ -21,7 +21,7 @@ range:
             If `start`, `limit` and `delta` are all floating-point numbers, the type of output is float32.
 
         Raises:
-            TypeError: If datatype of `start`, `limit` or `delta` is not same.
+            TypeError: If 'start', 'limit', 'delta' have both integers and floating-point numbers.
             TypeError: If datatype of `start`, `limit` or `delta` is not supported.
             ValueError: If `delta` = 0.
             ValueError: If `start` >= `limit` when `delta` > 0.
@@ -33,8 +33,8 @@ range:
         Examples:
             >>> from mindspore import ops
             >>> start = 0
-            >>> end = 10
-            >>> step = 4
-            >>> output = ops.range(start, end, step)
+            >>> limit = 10
+            >>> delta = 4
+            >>> output = ops.range(start, limit, delta)
             >>> print(output)
             [0 4 8]
