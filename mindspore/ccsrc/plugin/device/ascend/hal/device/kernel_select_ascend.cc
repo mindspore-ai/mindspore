@@ -537,6 +537,18 @@ void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node
   }
 }
 
+std::vector<std::string> stringSplit(const std::string &str, char delim) {
+  std::stringstream ss(str);
+  std::string item;
+  std::vector<std::string> elems;
+  while (std::getline(ss, item, delim)) {
+    if (!item.empty()) {
+      elems.push_back(item);
+    }
+  }
+  return elems;
+}
+
 std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const KernelGraphPtr &graph,
                                                                      const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -555,6 +567,17 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const Kerne
   if (common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") == "off") {
     enable_internal = false;
   }
+
+  std::string op_name = common::AnfAlgo::GetCNodeName(node);
+  std::string disable_name_list = common::GetEnv("MS_DISABLE_INTERNAL_KERNELS_LIST");
+  std::vector<std::string> op_name_vec = stringSplit(disable_name_list, ',');
+  for (auto name : op_name_vec) {
+    if (name == op_name) {
+      enable_internal = false;
+      break;
+    }
+  }
+
   if (enable_internal && kernel::IsRegisteredInternalKernel(node)) {
     GenerateKernelBuildInfo(node, KernelType::INTERNAL_KERNEL);
     std::string op_name = common::AnfAlgo::GetCNodeName(node);
