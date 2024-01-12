@@ -28,7 +28,6 @@
 #include "ir/anf.h"
 #include "ir/primitive.h"
 #include "ops/op_name.h"
-#include "include/backend/op_evaluator.h"
 #include "kernel/kernel.h"
 #include "utils/ms_context.h"
 #include "abstract/abstract_value.h"

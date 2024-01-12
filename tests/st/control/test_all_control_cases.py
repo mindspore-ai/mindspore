@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import pytest
+import os
 from tests.st.control.cases_register import case_register
 from mindspore import context
 
@@ -27,6 +28,7 @@ def test_level0_ascend_cases():
     Description: Execute all test cases with level0 and with device_target Ascend in one process.
     Expectation: All cases passed.
     """
+    os.environ['ASCEND_GLOBAL_LOG_LEVEL'] = '3'
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     case_register.check_and_run("Ascend", 0)
 
@@ -67,6 +69,7 @@ def test_level1_ascend_cases():
     Description: Execute all test cases with level1 and with device_target Ascend in one process.
     Expectation: All cases passed.
     """
+    os.environ['ASCEND_GLOBAL_LOG_LEVEL'] = '3'
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     case_register.check_and_run("Ascend", 1)
 
