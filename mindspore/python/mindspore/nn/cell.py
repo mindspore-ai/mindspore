@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -2506,13 +2506,6 @@ class Cell(Cell_):
                         f"The {index + 1}th input type of 'set_inputs' or tuple(list) in 'set_inputs' must be tuple or "
                         f"list, but got {type(net_input)}.")
                 self._check_compile_dynamic_shape(set_input, net_input)
-            else:
-                if context._get_mode() == context.PYNATIVE_MODE and set_input is None:
-                    continue
-                if net_input != set_input:
-                    raise ValueError(
-                        f"The {index + 1}th input of 'set_inputs' or tuple(list) in 'set_inputs' must be the same with "
-                        f"network's input, but got set_inputs: {set_input} and network's input: {net_input}.")
 
     def _mixed_precision_cast(self, inputs):
         mixed_type = self.get_mixed_precision_type()

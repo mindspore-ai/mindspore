@@ -1,4 +1,4 @@
-# Copyright 2021-2023 Huawei Technologies Co., Ltd
+# Copyright 2021-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -132,8 +132,7 @@ from .rl_ops import (BufferAppend, BufferGetItem, BufferSample)
 from .sparse_ops import (
     SparseToDense, SparseTensorDenseMatmul, SparseTensorDenseAdd, SparseSlice)
 from .spectral_ops import (BartlettWindow, BlackmanWindow)
-from ..deprecated import (identity, DropoutDoMask, MaxPoolWithArgmax,
-                          BNTrainingReduce, BNTrainingUpdate, DropoutGenMask, Gelu, FastGelu,
+from ..deprecated import (identity, DropoutDoMask, MaxPoolWithArgmax, DropoutGenMask, Gelu, FastGelu,
                           TensorAdd, InplaceUpdate, ScatterNonAliasingAdd,
                           BatchToSpaceND, Unpack, GatherV2, DynamicShape, ScalarToArray, Pack)
 
@@ -186,8 +185,6 @@ __all__ = [
     'Flatten',
     'MaxPoolWithArgmax',
     'MaxPoolWithArgmaxV2',
-    'BNTrainingReduce',
-    'BNTrainingUpdate',
     'BatchNorm',
     'MaxPool',
     'TopK',
