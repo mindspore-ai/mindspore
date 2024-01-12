@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,7 +106,7 @@ TypePtr NLLLossGradFuncImpl::InferType(const PrimitivePtr &prim, const std::vect
   std::map<std::string, TypePtr> types;
   (void)types.emplace("weight", w_dtype);
   (void)types.emplace("total_weight", tw_dtype);
-  CheckAndConvertUtils::CheckTypeSame(types, prim->name());
+  (void)CheckAndConvertUtils::CheckTypeSame(types, prim->name());
   return x_dtype->Clone();
 }
 }  // namespace ops
