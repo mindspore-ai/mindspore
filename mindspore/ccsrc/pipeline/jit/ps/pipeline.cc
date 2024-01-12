@@ -91,6 +91,7 @@
 
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/acl_dump_json_writer.h"
 #include "abstract/abstract_value.h"
 #endif
 #if defined(__linux__) && defined(WITH_BACKEND)
@@ -2313,6 +2314,7 @@ void ClearSingleton() {
   OpPrimPyRegister::GetInstance().Clear();
 #ifndef ENABLE_SECURITY
   DumpJsonParser::Finalize();
+  AclDumpJsonWriter::Finalize();
 #endif
   CommManager::Clear();
   expander::ClearAllCache();

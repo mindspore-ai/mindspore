@@ -416,13 +416,6 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
                                     KernelMod *kernel_mod, void *stream) const {
   (void)res_manager_->BindDeviceToCurrentThread(false);
 
-#ifdef ENABLE_DEBUGGER
-  if (DumpJsonParser::GetInstance().async_dump_enabled()) {
-    MS_LOG(WARNING) << "Dump is currently not support for pynative mode or kernelbykernel mode, skip dump kernel: "
-                    << kernel->fullname_with_scope();
-  }
-#endif
-
   profiler::ascend::ProfilingFrameworkData::RecordLaunchGETaskBegin(kernel);
   // launch kernel
   uint64_t start_time = 0;

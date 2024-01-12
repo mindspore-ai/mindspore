@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <mutex>
+#include <string>
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
 #include "runtime/hardware/device_context.h"
@@ -39,6 +40,8 @@ class DebugActor : public ActorBase {
   DebugActor() : ActorBase("DebugActor") {}
   ~DebugActor() override = default;
 
+  auto ACLDump(uint32_t device_id);
+
   // The debug of each node.
   void Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_info_, const DeviceContext *device_context,
              OpContext<DeviceTensor> *const op_context, const AID *from_aid);
@@ -54,12 +57,14 @@ class DebugActor : public ActorBase {
                         const AID *from_aid);
 
   // The debug on step end.
-  void DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *from_aid);
+  void DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *from_aid, int total_running_count_);
   static inline uint64_t current_step{0};
 
  private:
   // class members
   uint32_t exec_order_ = 0;
+  int step_count = 0;
+  int dump_flag = 0;
 
   // Support multi-thread.
   std::mutex debug_mutex_;

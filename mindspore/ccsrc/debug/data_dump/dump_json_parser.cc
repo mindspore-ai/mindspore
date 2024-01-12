@@ -612,6 +612,7 @@ void DumpJsonParser::ParseKernels(const nlohmann::json &content) {
     MS_LOG(INFO) << "Dump config field <" << kKernels << "> is not used as the dump mode is not 1.";
     return;
   }
+  kernels_json_ = content;
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   std::string backend = context->backend_policy();
@@ -659,9 +660,9 @@ bool DumpJsonParser::ParseEnable(const nlohmann::json &content) const {
 void DumpJsonParser::ParseOpDebugMode(const nlohmann::json &content) {
   CheckJsonUnsignedType(content, kOpDebugMode);
   op_debug_mode_ = content;
-  const size_t max_mode = 3;
+  const size_t max_mode = 5;
   if (op_debug_mode_ > max_mode) {
-    MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3";
+    MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3, 4, 5";
   }
 }
 
@@ -901,5 +902,13 @@ bool DumpJsonParser::IsHCCLKernelInput(const std::string &kernel_name) const {
     return true;
   }
   return false;
+}
+bool DumpJsonParser::IsKernelByKernel() {
+  bool is_kbk = false;
+  auto env_enable_kbk = common::GetEnv("GRAPH_OP_RUN");
+  if (!env_enable_kbk.empty() && env_enable_kbk == "1") {
+    is_kbk = true;
+  }
+  return is_kbk;
 }
 }  // namespace mindspore

@@ -117,6 +117,43 @@ def check_ge_dump_structure(dump_path, num_iteration, device_num=1, check_overfl
         assert overflow_num
 
 
+def check_ge_dump_structure_acl(dump_path, num_iteration, device_num=1, check_overflow=False, saved_data=None):
+    overflow_num = 0
+    for _ in range(3):
+        if not os.path.exists(dump_path):
+            time.sleep(2)
+    sub_paths = os.listdir(dump_path)
+    for sub_path in sub_paths:
+        # on GE, the whole dump directory of one training is saved within a time path, like '20230822120819'
+        if not (sub_path.isdigit() and len(sub_path) == 14):
+            continue
+        time_path = os.path.join(dump_path, sub_path)
+        assert os.path.isdir(time_path)
+        device_paths = os.listdir(time_path)
+        assert len(device_paths) == device_num
+        for device_path in device_paths:
+            assert device_path.isdigit()
+            abs_device_path = os.path.join(time_path, device_path)
+            assert os.path.isdir(abs_device_path)
+            model_names = os.listdir(abs_device_path)
+            for model_name in model_names:
+                model_path = os.path.join(abs_device_path, model_name)
+                assert os.path.isdir(model_path)
+                model_ids = os.listdir(model_path)
+                for model_id in model_ids:
+                    model_id_path = os.path.join(model_path, model_id)
+                    assert os.path.isdir(model_id_path)
+                    iteration_ids = os.listdir(model_id_path)
+                    for iteration_id in iteration_ids:
+                        check_iteration(iteration_id, num_iteration)
+                        iteration_path = os.path.join(model_id_path, iteration_id)
+                        assert os.path.isdir(iteration_path)
+                        check_saved_data(iteration_path, saved_data)
+                        overflow_num = check_overflow_file(iteration_path, overflow_num, check_overflow)
+    if check_overflow:
+        assert overflow_num
+
+
 def run_ge_dump(test_name):
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
@@ -148,6 +185,22 @@ def run_ge_dump(test_name):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
+def run_ge_dump_acl(test_name):
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
+        dump_path = os.path.join(tmp_dir, 'ge_dump')
+        dump_config_path = os.path.join(tmp_dir, 'ge_dump.json')
+        generate_dump_json(dump_path, dump_config_path, test_name)
+        os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        os.environ['GRAPH_OP_RUN'] = "1"
+        if os.path.isdir(dump_path):
+            shutil.rmtree(dump_path)
+        add = Net()
+        add(Tensor(x), Tensor(y))
+        check_ge_dump_structure_acl(dump_path, 1, 1)
+        del os.environ['MINDSPORE_DUMP_CONFIG']
+
+
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -161,6 +214,19 @@ def test_ge_dump():
     """
     run_ge_dump("test_ge_dump")
 
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ge_dump_acl():
+    """
+    Feature: async dump on Ascend on GE backend.
+    Description: test async dump with default file_format value ("bin")
+    Expectation: dump data are generated as protobuf file format (suffix with timestamp)
+    """
+    run_ge_dump_acl("test_acl_dump")
 
 class ReluReduceMeanDenseRelu(Cell):
     def __init__(self, kernel, bias, in_channel, num_class):
