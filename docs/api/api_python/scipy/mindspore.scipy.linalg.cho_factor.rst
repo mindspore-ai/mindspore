@@ -23,7 +23,7 @@ mindspore.scipy.linalg.cho_factor
     .. warning::
         返回的矩阵中还包含cholesky分解不使用的条目中的随机数据。如果需要将这些条目清零，请改用  :func:`mindspore.scipy.linalg.cholesky` 函数。
 
-    参数:
+    参数：
         - **a** (Tensor) - 要分解的 :math:`(M,M)` 方阵。
         - **lower** (bool, 可选) - 是计算上三角还是下三角的cholesky分解。
           默认值：``False``。
@@ -35,7 +35,7 @@ mindspore.scipy.linalg.cho_factor
           默认值：``True``。
           在MindSpore中，当前这个参数不起作用。
 
-    返回:
+    返回：
         - **c** (Tensor) - 在上三角或下三角中包含 `a` 的cholesky因子的矩阵。
           矩阵的其他部分包含随机数据。
         - **lower** (bool) - 表示cholesky因子是在下三角形还是上三角形。
