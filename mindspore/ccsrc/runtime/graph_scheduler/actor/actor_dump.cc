@@ -704,6 +704,20 @@ void DumpKernelActors(const std::vector<KernelActorPtr> &actors, std::ofstream &
   }
 }
 
+void DumpKernelInferActors(const std::vector<KernelInferActorPtr> &actors, std::ofstream &ofs) {
+  ofs << "\n\n[Kernel infer actors:" << actors.size() << "]\n";
+  for (const auto &kernel_infer_actor : actors) {
+    DumpKernelActor(kernel_infer_actor.get(), ofs);
+  }
+}
+
+void DumpKernelResizeActors(const std::vector<KernelResizeActorPtr> &actors, std::ofstream &ofs) {
+  ofs << "\n\n[Kernel resize actors:" << actors.size() << "]\n";
+  for (const auto &kernel_resize_actor : actors) {
+    DumpKernelActor(kernel_resize_actor.get(), ofs);
+  }
+}
+
 void DumpCustomActors(const std::vector<CustomActorPtr> &actors, std::ofstream &ofs) {
   ofs << "\n\n[Custom actors:" << actors.size() << "]\n";
   for (const auto &custom_actor : actors) {

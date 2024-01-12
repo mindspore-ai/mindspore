@@ -33,6 +33,8 @@
 #include "runtime/graph_scheduler/actor/data_source_actor.h"
 #include "runtime/graph_scheduler/actor/loop_count_actor.h"
 #include "runtime/graph_scheduler/actor/kernel_actor.h"
+#include "runtime/graph_scheduler/actor/kernel_infer_actor.h"
+#include "runtime/graph_scheduler/actor/kernel_resize_actor.h"
 #include "runtime/graph_scheduler/actor/custom_actor.h"
 #include "runtime/graph_scheduler/actor/super_kernel_actor.h"
 #include "runtime/graph_scheduler/actor/any_type_kernel_actor.h"
@@ -103,6 +105,8 @@ struct ActorSet {
   DataPrepareActorPtr data_prepare_actor_{nullptr};
   std::vector<DataSourceActorPtr> data_source_actors_;
   std::vector<KernelActorPtr> kernel_actors_;
+  std::vector<KernelInferActorPtr> kernel_infer_actors_;
+  std::vector<KernelResizeActorPtr> kernel_resize_actors_;
   std::vector<CustomActorPtr> custom_actors_;
   std::vector<SuperKernelActorPtr> super_kernel_actors_;
   std::vector<AnyTypeKernelActorPtr> any_type_kernel_actors_;

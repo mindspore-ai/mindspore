@@ -64,8 +64,8 @@ class KernelActor : public DebugAwareActor {
               const KernelTransformType &type = KernelTransformType::kKernelActor)
       : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid),
         kernel_(kernel),
-        is_dynamic_shape_(false),
         is_dynamic_value_(false),
+        enable_async_infer_(false),
         kernel_info_(nullptr),
         real_input_num_(0),
         strategy_(strategy),
@@ -75,6 +75,7 @@ class KernelActor : public DebugAwareActor {
         inputs_continuous_memory_(false),
         somas_info_(nullptr) {
     (void)device_contexts_.emplace_back(device_context);
+    is_dynamic_shape_ = common::AnfAlgo::IsDynamicShape(kernel_) || common::AnfAlgo::IsDynamicSequence(kernel_);
   }
   ~KernelActor() override = default;
 
@@ -98,6 +99,8 @@ class KernelActor : public DebugAwareActor {
   SomasInfo *somas_info() const { return somas_info_; }
   const std::set<size_t> &somas_graph_output_indexes() const { return somas_graph_output_indexes_; }
 
+  void set_enable_async_infer(bool enable_async_infer) { enable_async_infer_ = enable_async_infer; }
+
  protected:
   void Init() override;
   void Run(OpContext<DeviceTensor> *const context) override;
@@ -106,17 +109,27 @@ class KernelActor : public DebugAwareActor {
   // Do kernel launching in this method after 'PreLaunchKernel' and 'PostLaunchKernel'.
   virtual bool LaunchKernel(OpContext<DeviceTensor> *const context);
 
+  // Infer shape(and type) and resize kernel mod.
+  void InferAndResize();
+
   // Re-Infer shape, type and resize before kernel launch in dynamic scenarios.
-  void InferShapeTypeAndResize();
+  void InferShapeAndType();
 
   // Re-InferShape and resize before kernel launch in dynamic scenarios.
-  void InferShapeAndResize();
+  void InferShape();
+
+  void ResizeKernelMod();
+
+  // Update input_device_tensors by input op data.
+  void UpdateInputDeviceTensor(const OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *const context);
 
   // The info of kernel.
   CNodePtr kernel_;
   bool is_dynamic_shape_;
   bool is_dynamic_value_;
   bool is_dynamic_type_;
+  // Whether enable asynchronously infer shape and resize kernel mod by KernelInferActor and KernelResizeActor.
+  bool enable_async_infer_;
   KernelInfo *kernel_info_;
   KernelMod *kernel_mod_;
   // The kernel launch info is fetched by the device tensors.

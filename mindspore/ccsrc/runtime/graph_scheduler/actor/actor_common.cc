@@ -214,6 +214,11 @@ bool IsSkippedLaunch(const CNodePtr &kernel, const KernelGraphPtr &kernel_graph)
   return false;
 }
 
+bool EnableAsyncInfer() {
+  static const char kEnableAsyncInferdEnv[] = "MS_ENABLE_ASYNC_INFER";
+  return common::GetEnv(kEnableAsyncInferdEnv) == "1";
+}
+
 bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor) {
   MS_EXCEPTION_IF_NULL(dst_device_tensor);
   MS_EXCEPTION_IF_NULL(src_device_tensor);
@@ -373,6 +378,14 @@ std::string FetchActorName(KernelTransformType kernel_type, const std::string &a
     case KernelTransformType::kKernelActor:
       MS_EXCEPTION_IF_NULL(real_node);
       actor_name = real_node->fullname_with_scope();
+      break;
+    case KernelTransformType::kKernelInferActor:
+      MS_EXCEPTION_IF_NULL(real_node);
+      actor_name = kKernelInferActorNamePrefix + real_node->fullname_with_scope();
+      break;
+    case KernelTransformType::kKernelResizeActor:
+      MS_EXCEPTION_IF_NULL(real_node);
+      actor_name = kKernelResizeActorNamePrefix + real_node->fullname_with_scope();
       break;
     default:
       break;
