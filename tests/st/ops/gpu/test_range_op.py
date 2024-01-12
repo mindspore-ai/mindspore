@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -97,22 +97,22 @@ def test_range_int():
 def test_range_float():
     range_net = RangeNet()
     ms_out = range_net(Tensor(2.3, mstype.float32), Tensor(5.5, mstype.float32), Tensor(1.2, mstype.float32)).asnumpy()
-    np_expected = np.array([2.3, 3.5, 4.7])
+    np_expected = np.array([2.3, 3.5, 4.7]).astype(np.float32)
     np.testing.assert_array_almost_equal(ms_out, np_expected)
 
     range_net = RangeNet()
     ms_out = range_net(Tensor(-4, mstype.float32), Tensor(-1, mstype.float32), Tensor(1.5, mstype.float32)).asnumpy()
-    np_expected = np.array([-4.0, -2.5])
+    np_expected = np.array([-4.0, -2.5]).astype(np.float32)
     np.testing.assert_array_almost_equal(ms_out, np_expected)
 
     range_net = RangeNet()
     ms_out = range_net(Tensor(8.0, mstype.float32), Tensor(1.0, mstype.float32), Tensor(-1.0, mstype.float32)).asnumpy()
-    np_expected = np.array([8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0])
+    np_expected = np.array([8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0]).astype(np.float32)
     np.testing.assert_array_almost_equal(ms_out, np_expected)
 
     range_net = RangeNet()
     ms_out = range_net(Tensor(1.5, mstype.float32), Tensor(-1, mstype.float32), Tensor(-18.9, mstype.float32)).asnumpy()
-    np_expected = np.array([1.5])
+    np_expected = np.array([1.5]).astype(np.float32)
     np.testing.assert_array_almost_equal(ms_out, np_expected)
 
 
@@ -157,22 +157,22 @@ def test_range_float64():
     """
     range_net = RangeNet()
     ms_out = range_net(Tensor(2.3, mstype.float64), Tensor(5.5, mstype.float64), Tensor(1.2, mstype.float64)).asnumpy()
-    np_expected = np.array([2.3, 3.5, 4.7])
+    np_expected = np.array([2.3, 3.5, 4.7]).astype(np.float32)
     np.testing.assert_array_almost_equal(ms_out, np_expected)
 
     range_net = RangeNet()
     ms_out = range_net(Tensor(-4, mstype.float64), Tensor(-1, mstype.float64), Tensor(1.5, mstype.float64)).asnumpy()
-    np_expected = np.array([-4.0, -2.5])
+    np_expected = np.array([-4.0, -2.5]).astype(np.float32)
     np.testing.assert_array_almost_equal(ms_out, np_expected)
 
     range_net = RangeNet()
     ms_out = range_net(Tensor(8.0, mstype.float64), Tensor(1.0, mstype.float64), Tensor(-1.0, mstype.float64)).asnumpy()
-    np_expected = np.array([8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0])
+    np_expected = np.array([8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0]).astype(np.float32)
     np.testing.assert_array_almost_equal(ms_out, np_expected)
 
     range_net = RangeNet()
     ms_out = range_net(Tensor(1.5, mstype.float64), Tensor(-1, mstype.float64), Tensor(-18.9, mstype.float64)).asnumpy()
-    np_expected = np.array([1.5])
+    np_expected = np.array([1.5]).astype(np.float32)
     np.testing.assert_array_almost_equal(ms_out, np_expected)
 
 

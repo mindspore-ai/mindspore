@@ -2738,7 +2738,7 @@ void ControlNodeParser::ParseNodeLevel(const std::vector<AnfNodePtr> &control_no
       MS_EXCEPTION_IF_NULL(input_node);
       auto iter = node_to_level_.find(input_node);
       if (iter == node_to_level_.end()) {
-        MS_LOG(EXCEPTION) << "Failed to get level by input node:" << input_node->DebugString()
+        MS_LOG(EXCEPTION) << "Failed to get input node:" << input_node->DebugString()
                           << " for kernel graph:" << kernel_graph_group_info->group_name_;
       }
       max_level = (max_level > iter->second ? max_level : iter->second);
@@ -2772,8 +2772,8 @@ bool ControlNodeParser::IsInputInSameLevel(const AnfNodePtr &node) {
     }
     auto iter = node_to_level_.find(input_node);
     if (iter == node_to_level_.end()) {
-      MS_LOG(EXCEPTION) << "Failed to find level by input:" << input_node->DebugString()
-                        << " for node:" << node->DebugString();
+      MS_LOG(EXCEPTION) << "Failed to find input:" << input_node->DebugString() << " for node:" << node->DebugString()
+                        << " in graph output map.";
     }
     if (level == SIZE_MAX) {
       level = iter->second;

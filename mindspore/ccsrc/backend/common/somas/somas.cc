@@ -1797,19 +1797,6 @@ void Somas::UpdateUnionTensorsConflict() {
   }
 }
 
-std::string Somas::GetSplitName(const std::string &scope_name) {
-  auto index = scope_name.rfind('/');
-  if (index == std::string::npos) {
-    return scope_name;
-  } else {
-    if (index < scope_name.size() - 1) {
-      auto split_name = scope_name.substr(index + 1);
-      return split_name;
-    }
-    return scope_name;
-  }
-}
-
 std::string Somas::SomasInfo(bool calc_hash) const {
   std::ostringstream oss;
   if (!calc_hash) {
@@ -1868,8 +1855,7 @@ void Somas::DumpNodes(std::ostringstream &oss) const {
   for (const auto &node : nodes_list_) {
     MS_EXCEPTION_IF_NULL(node);
     auto scope_name = node->scope_full_name_;
-    std::string split_name = GetSplitName(scope_name);
-    oss << "$" << node->GetId() << "\t" << split_name << "\t" << static_cast<int>(node->GetType()) << "\t";
+    oss << "$" << node->GetId() << "\t" << scope_name << "\t" << static_cast<int>(node->GetType()) << "\t";
     auto input_num = node->input_tensors_.size() + node->input_parameters_map_.size();
     oss << "inputs[";
     size_t tensor_index = 0;
@@ -1942,7 +1928,6 @@ void Somas::DumpTensors(std::ostringstream &oss) const {
     auto node = GetSomasNode(tensor->GetSourceNodeId());
     MS_EXCEPTION_IF_NULL(node);
     auto scope_name = node->scope_full_name_;
-    std::string split_name = GetSplitName(scope_name);
     std::string dump_tensor_str = "T";
     if (tensor->GetTypeString() == "Control") {
       dump_tensor_str = "CT";
@@ -1954,7 +1939,7 @@ void Somas::DumpTensors(std::ostringstream &oss) const {
         << "\t"
         << "&" << tensor->GetOffset() << ""
         << "\t" << tensor->GetTypeString() << "\t" << tensor->GetLifelongString() << "\t" << tensor->lifetime_.start_
-        << "\t" << tensor->lifetime_.end_ << "\t" << split_name << "\n";
+        << "\t" << tensor->lifetime_.end_ << "\t" << scope_name << "\n";
   }
 }
 

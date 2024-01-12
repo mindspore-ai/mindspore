@@ -54,6 +54,8 @@ AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr
   builder.SetOutputsFormat({output_format});
   builder.SetInputsDeviceType({input_type});
   builder.SetOutputsDeviceType({output_type});
+  builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+  builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   if (cast->kernel_info() == nullptr) {
     auto kernel_info = std::make_shared<device::KernelInfo>();
     cast->set_kernel_info(kernel_info);

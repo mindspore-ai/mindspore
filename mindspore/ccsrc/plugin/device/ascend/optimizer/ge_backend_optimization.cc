@@ -42,7 +42,6 @@
 #include "plugin/device/ascend/optimizer/format_type/deal_ref_output.h"
 #include "plugin/device/ascend/optimizer/ge/hcom/insert_load_for_allgather.h"
 #include "plugin/device/ascend/optimizer/format_type/set_fracz_group_attr.h"
-#include "plugin/device/ascend/optimizer/format_type/insert_cast.h"
 #include "plugin/device/ascend/optimizer/mindir/aicpu_lib_select.h"
 #include "plugin/device/ascend/optimizer/ge/shape_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/ge/inputs_unify_mindir.h"
@@ -155,8 +154,6 @@ void GEBackendOptimizeACLAfterKernelSelect(const KernelGraphPtr &kernel_graph) {
   auto opt_acl_after_kernel_select_pm = std::make_shared<PassManager>("opt_acl_after_kernel_select_pm");
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<SetFraczGroupAttr>());
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<InsertIdentity>());
-  opt_acl_after_kernel_select_pm->AddPass(std::make_shared<EraseVisitAttr>());
-  opt_acl_after_kernel_select_pm->AddPass(std::make_shared<InsertCast>());
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<EraseVisitAttr>());
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<DealRefOutput>());
   if (!kernel_graph->is_from_single_op() && !kernel_graph->has_flag(kFlagIsPyNativeBpropKernelGraph)) {

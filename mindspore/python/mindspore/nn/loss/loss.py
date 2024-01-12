@@ -858,6 +858,12 @@ class DiceLoss(LossBase):
 
 
 @_primexpr
+def _check_shape(logits_shape, label_shape, prim_name=None):
+    """Internal function, used to check whether the shape of logits and labels meets the requirements."""
+    validator.check('logits_shape', logits_shape, 'label_shape', label_shape, prim_name=prim_name)
+
+
+@_primexpr
 def _check_ndim_multi(logits_dim, label_dim, prim_name=None):
     """Internal function, used to check whether the dimension of logits and label meets the requirements."""
     msg_prefix = f'For \'{prim_name}\', the' if prim_name else "The"
@@ -950,6 +956,7 @@ class MultiClassDiceLoss(LossBase):
     def construct(self, logits, label):
         _check_is_tensor('logits', logits, self.cls_name)
         _check_is_tensor('labels', label, self.cls_name)
+        _check_shape(logits.shape, label.shape, self.cls_name)
         _check_ndim_multi(logits.ndim, label.ndim, self.cls_name)
         total_loss = 0
 
@@ -1289,6 +1296,7 @@ class TripletMarginWithDistanceLoss(LossBase):
                         f"but got {d.ndim}"
                     )
                 return P.LpNorm(axis=1, p=2)(d)
+
             self.distance_function = pairwise_distance
         else:
             self.distance_function = distance_function
@@ -1910,6 +1918,17 @@ def _check_ndim(logits_nidm, labels_ndim, prime_name=None):
                          f"dimension of 'logits' {logits_nidm} and dimension of 'labels' {labels_ndim}.")
 
 
+@_primexpr
+def _check_channel_and_shape(logits, labels, prime_name=None):
+    '''Internal function, used to check whether the channels or shape of logits and labels meets the requirements.'''
+    msg_prefix = f'For \'{prime_name}\', the' if prime_name else "The"
+    if logits == 1:
+        raise ValueError(f"{msg_prefix} 'logits'.shape[1] cannot be one, but got {logits}.")
+    if labels not in (1, logits):
+        raise ValueError(f"{msg_prefix} 'labels'.shape[1] must be one or equal to 'logits'.shape[1]: {logits}, "
+                         f"but got {labels}.")
+
+
 @constexpr
 def _check_input_dtype(labels_dtype, cls_name):
     """Internal function, used to check whether the data type of labels meets the requirements."""
@@ -2000,6 +2019,7 @@ class FocalLoss(LossBase):
         _check_is_tensor('labels', labels, self.cls_name)
         labelss = labels
         _check_ndim(logits.ndim, labelss.ndim, self.cls_name)
+        _check_channel_and_shape(logits.shape[1], labelss.shape[1], self.cls_name)
         _check_input_dtype(self.dtype(labelss), self.cls_name)
 
         if logits.ndim > 2:

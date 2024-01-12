@@ -17,9 +17,9 @@ apply_came_part3:
             - **use_first_moment** (bool).
 
         Returns:
-            - **m** (Tensor) - A Tensor of shape :math:`(..., n)`
-            - **sum_u_r** (Tensor) - A Tensor of shape :math:`(..., m)`
-            - **sum_u_c** (Tensor) - A Tensor of of shape:math:`(...)`
+            - **m** (Tensor) - A Tensor of shape :math:`(..., n, m)`
+            - **sum_u_r** (Tensor) - A Tensor of shape :math:`(..., n)`
+            - **sum_u_c** (Tensor) - A Tensor of of shape:math:`(..., m)`
             - **sum_u_rc** (Tensor) - A Tensor of of shape:math:`(...)`
 
         Raises:

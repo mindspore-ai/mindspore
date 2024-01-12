@@ -30,10 +30,22 @@
 #include "ops/arithmetic_ops.h"
 #include "ops/nn_ops.h"
 #include "ops/sequence_ops.h"
+#include "ops/op_def.h"
 #include "ops/op_utils.h"
 
 namespace mindspore {
 namespace opt {
+namespace {
+bool IsNewKernel(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>() || common::AnfAlgo::IsCallNode(node)) {
+    return false;
+  }
+  const auto &primitive = GetCNodePrimitive(node);
+  MS_EXCEPTION_IF_NULL(primitive);
+  return mindspore::ops::GetOpDef(primitive->name()) != nullptr;
+}
+}  // namespace
 int64_t SplitTupleInputsForInsertType(const FuncGraphPtr &graph, const AnfNodePtr &tuple_input,
                                       std::vector<AnfNodePtr> *plant_inputs) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -395,9 +407,9 @@ void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<Kern
     output_obj_type->push_back(KernelObjectType::TENSOR);
   }
 
-  MS_LOG(INFO) << "Generate input and output object types for new node " << cnode->fullname_with_scope() << " "
-               << cnode->DebugString() << ". Input object types: " << *input_obj_type
-               << ". Output object types: " << *output_obj_type;
+  MS_LOG(DEBUG) << "Generate input and output object types for new node " << cnode->fullname_with_scope() << " "
+                << cnode->DebugString() << ". Input object types: " << *input_obj_type
+                << ". Output object types: " << *output_obj_type;
 }
 
 AnfNodePtr ConstructInputByValueNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input) {
@@ -729,6 +741,11 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTensor(const FuncGraphPtr &f
     return {new_input};
   }
 
+  if (IsNewKernel(node) && IsNewKernel(input)) {
+    MS_LOG(EXCEPTION) << "Insert TupleToTensor op for input:" << input->fullname_with_scope()
+                      << " of node:" << node->fullname_with_scope() << " in graph:" << func_graph->ToString();
+  }
+
   // Simply insert TupleToTensor op between 'input' and 'node'.
   auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimTupleToTensor->name()));
   MS_EXCEPTION_IF_NULL(prim);
@@ -771,6 +788,10 @@ AnfNodePtrList InsertTypeTransformOp::ProcessScalarToTensor(const FuncGraphPtr &
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(node);
+  if (IsNewKernel(node) && IsNewKernel(input)) {
+    MS_LOG(EXCEPTION) << "Insert ScalarToTensor op for input:" << input->fullname_with_scope()
+                      << " of node:" << node->fullname_with_scope() << " in graph:" << func_graph->ToString();
+  }
 
   auto new_input = ConstructInputByValueNode(func_graph, input);
   if (new_input != nullptr) {
@@ -805,7 +826,10 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTensorToTuple(const FuncGraphPtr &f
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(node);
-
+  if (IsNewKernel(node) && IsNewKernel(input)) {
+    MS_LOG(EXCEPTION) << "Insert TensorToTuple op for input:" << input->fullname_with_scope()
+                      << " of node:" << node->fullname_with_scope() << " in graph:" << func_graph->ToString();
+  }
   // Create TensorToTuple op.
   auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimTensorToTuple->name()));
   MS_EXCEPTION_IF_NULL(prim);
@@ -827,7 +851,10 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTensorToScalar(const FuncGraphPtr &
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(node);
-
+  if (IsNewKernel(node) && IsNewKernel(input)) {
+    MS_LOG(EXCEPTION) << "Insert TensorToScalar op for input:" << input->fullname_with_scope()
+                      << " of node:" << node->fullname_with_scope() << " in graph:" << func_graph->ToString();
+  }
   // Create TensorToScalar op.
   auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimTensorToScalar->name()));
   MS_EXCEPTION_IF_NULL(prim);

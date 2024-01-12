@@ -2237,7 +2237,7 @@ tensor::TensorPtr AnfRuntimeAlgorithm::SequenceToTensor(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(tensor);
   SetScalarToTensor(values, tensor);
   // Build the tuple shape and set into tensor.
-  const auto &element_shape = std::make_shared<abstract::Shape>(ShapeVector({1}));
+  const auto &element_shape = std::make_shared<abstract::Shape>(ShapeVector({}));
   const auto &element_shapes = std::vector<abstract::BaseShapePtr>(values.size(), element_shape);
   tensor->set_base_shape(std::make_shared<abstract::TupleShape>(element_shapes));
   return tensor;

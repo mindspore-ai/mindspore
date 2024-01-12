@@ -115,6 +115,14 @@ class Cases():
             ([(1, 2), onp.ones(2)], (onp.ones(2), [3, 4])),
         ]
 
+        # ms.ops.Eye unsupported uint32 on Ascend
+        self.onp_eye_dtypes = [onp.int32, 'int32', int,
+                               onp.float32, 'float32', float,
+                               onp.bool_, 'bool', bool]
+
+        self.mnp_eye_dtypes = [mnp.int32, 'int32', int,
+                               mnp.float32, 'float32', float,
+                               mnp.bool_, 'bool', bool]
 
 @pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
@@ -272,8 +280,6 @@ def test_full():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -292,9 +298,25 @@ def test_eye():
                     match_array(actual, expected)
 
 
-@pytest.mark.level2
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_eye_ascend():
+    """
+    Feature: Test ms.numpy.eye on Ascend
+    Description:  `dtype` of ms.ops.Eye is different on Ascend
+    Expectation: the result of ms.numpy.eye is correct.
+    """
+    test_case = Cases()
+    for i in range(len(test_case.onp_eye_dtypes)):
+        for m in range(1, 5):
+            actual = onp.eye(m, dtype=test_case.onp_eye_dtypes[i])
+            expected = mnp.eye(m, dtype=test_case.mnp_eye_dtypes[i]).asnumpy()
+            match_array(actual, expected)
+
+
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -304,6 +326,24 @@ def test_identity():
         for m in range(1, 5):
             actual = onp.identity(m, dtype=test_case.onp_dtypes[i])
             expected = mnp.identity(m, dtype=test_case.mnp_dtypes[i]).asnumpy()
+            match_array(actual, expected)
+
+
+@pytest.mark.level2
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_identity_ascend():
+    """
+    Feature: Test ms.numpy.identity on Ascend
+    Description:  `dtype` of ms.ops.Eye is different on Ascend
+    Expectation: the result of ms.numpy.identity is correct.
+    """
+    test_case = Cases()
+    for i in range(len(test_case.onp_eye_dtypes)):
+        for m in range(1, 5):
+            actual = onp.identity(m, dtype=test_case.onp_eye_dtypes[i])
+            expected = mnp.identity(m, dtype=test_case.mnp_eye_dtypes[i]).asnumpy()
             match_array(actual, expected)
 
 

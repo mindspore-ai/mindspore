@@ -152,11 +152,12 @@ REG_STRING_TO_ENUM(k_v_cache_align_mode,
 
 }  // namespace
 
-int64_t StringToEnumImpl(const std::string &enum_string) {
+int64_t StringToEnumImpl(const std::string &op_name, const std::string &arg_name, const std::string &enum_string) {
   const auto &string_to_enum_map = reg_string_to_enum_helper.GetValues();
   const auto enum_val_iter = string_to_enum_map.find(StrToUpper(enum_string));
   if (enum_val_iter == string_to_enum_map.end()) {
-    MS_LOG_EXCEPTION << "Can not find '" << enum_string << "', please add it";
+    MS_EXCEPTION(ValueError) << "Failed to convert the value \"" << enum_string << "\" of input '" << arg_name
+                             << "' of '" << op_name << "' to enum.";
   }
   return enum_val_iter->second;
 }

@@ -5,6 +5,7 @@ tile:
             dtype: tensor
         multiples:
             dtype: tuple[int]
+            type_cast: tensor
     returns:
         output:
             dtype: tensor

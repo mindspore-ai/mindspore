@@ -27,6 +27,7 @@ import types
 from collections import namedtuple
 from typing import NamedTuple
 from textwrap import dedent
+import builtins
 import numpy
 
 import asttokens
@@ -505,7 +506,7 @@ def convert_cell_list_to_sequence(obj):
     if not hasattr(obj, "__cell_as_list__"):
         raise TypeError(f"Obj should be nn.CellList, but got {obj}")
     if not hasattr(obj, "_cells"):
-        raise AttributeError(f"nn.CellList or nn.ModuleList is missing _cells property.")
+        raise AttributeError(f"nn.CellList is missing _cells property.")
     cells = getattr(obj, "_cells")
     return list(cells.values())
 
@@ -1180,6 +1181,16 @@ class Parser:
             value_str = str(value)
             logger.debug(f"value: {type(value)}, '{value_str}'.")
         return value_str
+
+
+    def is_builtin_function_name(self, var):
+        """Check if the var is builtin_function name."""
+        logger.debug(f"Check if the var'{var}' is builtin function.")
+        builtin_function_names = vars(builtins).keys()
+        if var in builtin_function_names:
+            return True
+        return False
+
 
     def get_namespace_symbol(self, var: str):
         """Get mindspore builtin namespace and symbol."""

@@ -10,7 +10,7 @@ mindspore.ops.minimum
         - 当输入是两个Tensor时，它们的数据类型不能同时是bool。
         - 当输入是一个Tensor和一个Scalar时，Scalar只能是一个常数。
         - 支持广播。
-        - 如果一个元素和NaN比较，则返回该元素。
+        - 如果一个元素和NaN比较，则返回NaN。
 
     .. math::
         output_i = \min(input_i, other_i)

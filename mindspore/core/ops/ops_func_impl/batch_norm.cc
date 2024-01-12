@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,9 +75,8 @@ void BatchNormShapeCheck(const PrimitivePtr &primitive, const std::vector<Abstra
     auto channel = (format == Format::NCHW) ? x_shape[kInputIndex1] : x_shape.back();
     if (MS_UNLIKELY(scale_shape[kInputIndex0] != channel)) {
       MS_EXCEPTION(ValueError) << "For " << primitive->name()
-                               << ", scale.shape[0] should be equal to input_x's channel "
-                               << "which is " << channel << ", bug got scale.shape[0]: " << scale_shape[kInputIndex0]
-                               << ".";
+                               << ", scale.shape[0] should be equal to input_x's channel dimension(" << channel
+                               << "), bug got scale.shape[0]: " << scale_shape[kInputIndex0] << ".";
     }
   }
 

@@ -44,22 +44,6 @@ static const std::unordered_map<std::string, aclCubeMathType> kCubeMathType = {
 static const std::unordered_map<uint8_t, aclCubeMathType> kSelectMoreMathType = {
   {0b01, KEEP_DTYPE}, {0b00, FORCE_FP16}, {0b11, FORCE_HF32}, {0b10, ALLOW_FP32_DOWN_PRECISION}};
 
-uint8_t KeepOriginDType() {
-  static std::string version = "";
-  static uint8_t need_keep_dtype = 0;
-  if (version.empty()) {
-    const char *soc_name_c = aclrtGetSocName();
-    if (soc_name_c != nullptr) {
-      version = soc_name_c;
-    }
-    if (version.find(k910BKey) != std::string::npos || version.find(k310BKey) != std::string::npos ||
-        version.find(k910CKey) != std::string::npos) {
-      need_keep_dtype = 1;
-    }
-  }
-  return need_keep_dtype;
-}
-
 std::mutex set_opt_mutex;
 
 aclError SetCompileopt(aclCompileOpt opt, const char *value) { return aclSetCompileopt(opt, value); }
@@ -93,11 +77,11 @@ aclCubeMathType OpApiUtil::GetCubeMathType(bool use_hf32) {
   if (!precision_mode.empty() && kCubeMathType.count(precision_mode) != 0) {
     return kCubeMathType.at(precision_mode);
   }
-  uint8_t select_mode = (static_cast<uint8_t>(use_hf32) << 1) + KeepOriginDType();
+  uint8_t select_mode = (static_cast<uint8_t>(use_hf32) << 1) + AclUtil::KeepOriginDType();
   if (kSelectMoreMathType.count(select_mode) != 0) {
     return kSelectMoreMathType.at(select_mode);
   }
-  return KeepOriginDType() ? KEEP_DTYPE : ALLOW_FP32_DOWN_PRECISION;
+  return AclUtil::KeepOriginDType() ? KEEP_DTYPE : ALLOW_FP32_DOWN_PRECISION;
 }
 
 void OpApiUtil::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std::string> *input_formats,
@@ -132,6 +116,22 @@ void OpApiUtil::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std:
   if (!special_inputs.empty()) {
     common::AnfAlgo::SetNodeAttr(kAttrAclSpecialInputFormat, MakeValue(special_inputs), node);
   }
+}
+
+uint8_t AclUtil::KeepOriginDType() {
+  static std::string version = "";
+  static uint8_t need_keep_dtype = 0;
+  if (version.empty()) {
+    const char *soc_name_c = aclrtGetSocName();
+    if (soc_name_c != nullptr) {
+      version = soc_name_c;
+    }
+    if (version.find(k910BKey) != std::string::npos || version.find(k310BKey) != std::string::npos ||
+        version.find(k910CKey) != std::string::npos) {
+      need_keep_dtype = 1;
+    }
+  }
+  return need_keep_dtype;
 }
 
 void AclUtil::SetDeterministic() {
@@ -189,20 +189,26 @@ aclError AclUtil::SetCompileMode(const int64_t is_dynamic) {
 
 aclError AclUtil::SetPrecisionMode(const std::string &mode) {
   std::lock_guard<std::mutex> lock(set_opt_mutex);
-  static std::string precision_mode = "not_inited";
-  static std::string last_mode = "not_inited";
-  auto cur_mode = mode;
-  if (precision_mode == "not_inited") {
+
+  static int8_t is_global_precision = -1;
+  if (is_global_precision == -1) {
     auto ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);
-    precision_mode = ms_context->get_param<std::string>(MS_CTX_PRECISION_MODE);
+    auto precision_mode = ms_context->get_param<std::string>(MS_CTX_PRECISION_MODE);
     if (!precision_mode.empty()) {
-      cur_mode = precision_mode;
+      is_global_precision = 1;
+    } else {
+      is_global_precision = 0;
     }
   }
-  if (last_mode != cur_mode) {
-    auto ret = SetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, cur_mode.c_str());
-    last_mode = cur_mode;
+  if (is_global_precision == 1) {
+    return ACL_SUCCESS;
+  }
+
+  static std::string last_mode = (AclUtil::KeepOriginDType() == 1) ? "must_keep_origin_dtype" : "allow_fp32_to_fp16";
+  if (last_mode != mode) {
+    auto ret = SetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, mode.c_str());
+    last_mode = mode;
     return ret;
   }
   return ACL_SUCCESS;

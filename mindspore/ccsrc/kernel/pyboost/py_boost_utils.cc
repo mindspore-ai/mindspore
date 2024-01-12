@@ -342,14 +342,6 @@ TypeId GetTypeIdFromAbstractTensor(const AbstractBasePtr &abs_base) {
   return abs_base->BuildType()->type_id();
 }
 
-std::vector<TypeId> GetTypeFromAbstractBase(const std::vector<AbstractBasePtr> &abs_vec) {
-  std::vector<TypeId> input_type;
-  for (auto &abs : abs_vec) {
-    (void)input_type.emplace_back(GetTypeIdFromAbstractTensor(abs));
-  }
-  return input_type;
-}
-
 std::vector<TypeId> GetTypeFromAbstractBase(const AbstractBasePtr &abs_base) {
   if (abs_base->isa<abstract::AbstractTuple>()) {
     auto abs_tuple = std::dynamic_pointer_cast<abstract::AbstractTuple>(abs_base);
@@ -362,6 +354,20 @@ std::vector<TypeId> GetTypeFromAbstractBase(const AbstractBasePtr &abs_base) {
     const auto &type_id = GetTypeIdFromAbstractTensor(abs_base);
     return {type_id};
   }
+}
+
+std::vector<TypeId> GetTypeFromAbstractBase(const std::vector<AbstractBasePtr> &abs_vec) {
+  std::vector<TypeId> input_type;
+  for (auto &abs : abs_vec) {
+    if (abs->isa<abstract::AbstractTuple>()) {
+      // a tuple tensors have same type
+      auto abs_tuple = std::dynamic_pointer_cast<abstract::AbstractTuple>(abs);
+      input_type.emplace_back(abs_tuple->elements()[0]->BuildType()->type_id());
+    } else {
+      input_type.emplace_back(GetTypeIdFromAbstractTensor(abs));
+    }
+  }
+  return input_type;
 }
 
 bool InputDtypeMatch(TypeId input_attr, TypeId input_type) {

@@ -219,11 +219,11 @@ OUTPUT_MAP(Size) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Size, kNameSize, ADPT_DESC(Size))
 
 // Meshgrid
-CUST_INPUT_MAP(Meshgrid) = EMPTY_INPUT_MAP;
-CUST_DYN_INPUT_MAP(Meshgrid) = {{1, DYN_INPUT_DESC(x)}};
-CUST_ATTR_MAP(Meshgrid) = {{"indexing", ATTR_DESC(indexing, AnyTraits<std::string>())}};
-CUST_DYN_OUTPUT_MAP(Meshgrid) = {{0, DYN_OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Meshgrid, prim::kPrimMeshgrid->name(), CUST_ADPT_DESC(Meshgrid))
+INPUT_MAP(Meshgrid) = EMPTY_INPUT_MAP;
+DYN_INPUT_MAP(Meshgrid) = {{1, DYN_INPUT_DESC(x)}};
+ATTR_MAP(Meshgrid) = {{"indexing", ATTR_DESC(indexing, AnyTraits<std::string>())}};
+DYN_OUTPUT_MAP(Meshgrid) = {{0, DYN_OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Meshgrid, prim::kPrimMeshgrid->name(), ADPT_DESC(Meshgrid))
 
 // SliceGrad
 CUST_INPUT_MAP(SliceGrad) = {{1, INPUT_DESC(dy)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(begin)}, {4, INPUT_DESC(size)}};

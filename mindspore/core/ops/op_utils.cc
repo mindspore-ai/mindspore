@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,27 @@ abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::ve
 
 BaseShapePtr EltwiseGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  MS_EXCEPTION_IF_NULL(input_args[0]->GetShape());
+  MS_EXCEPTION_IF_NULL(input_args[1]);
+  auto prim_name = primitive->name();
+  auto x = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
+  auto dout = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 1, kObjectTypeTensorType);
+  auto x_shape_ptr = x->GetShape();
+  auto dout_shape_ptr = dout->GetShape();
+  MS_EXCEPTION_IF_NULL(x_shape_ptr);
+  MS_EXCEPTION_IF_NULL(dout_shape_ptr);
+  auto x_shape = x_shape_ptr->GetShapeVector();
+  auto dout_shape = dout_shape_ptr->GetShapeVector();
+  if (!IsDynamicRank(x_shape) && !IsDynamicRank(dout_shape) && x_shape.size() != dout_shape.size()) {
+    MS_EXCEPTION(RuntimeError) << "Rank of x(" << x_shape.size() << ") and dout(" << dout_shape.size()
+                               << ") not equal, primitive name: " << prim_name << ".";
+  }
+  for (size_t i = 0; i < x_shape.size(); i++) {
+    if (x_shape[i] != abstract::Shape::kShapeDimAny && dout_shape[i] != abstract::Shape::kShapeDimAny &&
+        x_shape[i] != dout_shape[i]) {
+      MS_EXCEPTION(RuntimeError) << "The " << i << "th dim of x(" << x_shape[i] << ") and dout(" << dout_shape[i]
+                                 << ") not equal, primitive name: " << prim_name << ".";
+    }
+  }
   return input_args[0]->GetShape()->Clone();
 }
 

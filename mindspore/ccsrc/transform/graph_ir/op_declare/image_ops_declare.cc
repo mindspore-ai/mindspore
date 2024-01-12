@@ -43,6 +43,8 @@ REG_ADPT_DESC(ResizeNearestNeighborGrad, kNameResizeNearestNeighborGrad, ADPT_DE
 
 // ResizeBilinearV2Grad
 INPUT_MAP(ResizeBilinearV2Grad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(original_image)}};
+INPUT_ATTR_MAP(ResizeBilinearV2Grad) = {{kIndex3, ATTR_DESC(align_corners, AnyTraits<bool>())},
+                                        {kIndex4, ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
 ATTR_MAP(ResizeBilinearV2Grad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
                                   {"half_pixel_centers", ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
 OUTPUT_MAP(ResizeBilinearV2Grad) = {{0, OUTPUT_DESC(y)}};
@@ -53,6 +55,7 @@ REG_ADPT_DESC(ResizeBilinearV2Grad, kResizeBilinearV2GradOpName, ADPT_DESC(Resiz
 INPUT_MAP(ResizeBilinearV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(size)}};
 INPUT_ATTR_MAP(ResizeBilinearV2) = {{kIndex3, ATTR_DESC(align_corners, AnyTraits<bool>())},
                                     {kIndex4, ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
+ATTR_INPUT_MAP(ResizeBilinearV2) = {{"size", "size"}};
 ATTR_MAP(ResizeBilinearV2) = {{"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(ResizeBilinearV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ResizeBilinear, kNameResizeBilinear, ADPT_DESC(ResizeBilinearV2))

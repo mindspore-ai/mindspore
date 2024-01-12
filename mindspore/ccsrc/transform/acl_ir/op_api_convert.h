@@ -430,9 +430,11 @@ inline aclScalar *ConvertType(const ScalarPtr &value) {
 
 inline aclDataType ConvertType(TypeId type_id) { return AclConverter::ConvertType(type_id); }
 
+inline aclDataType ConvertType(const TypePtr &type) { return AclConverter::ConvertType(type->type_id()); }
+
 inline const char *ConvertType(const std::string &value) { return value.c_str(); }
 
-template <typename T>
+template <typename T, typename = std::enable_if_t<std::is_scalar_v<T>>>
 T ConvertType(T value) {
   return value;
 }

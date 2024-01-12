@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ def test_range_op_int():
     """
     range_op = ms.ops.Range()
     result = range_op(ms.Tensor(2, ms.int32), ms.Tensor(5, ms.int32), ms.Tensor(2, ms.int32))
-    expect = np.array([2, 4], np.int32)
+    expect = np.array([2, 4], np.int64)
     assert np.array_equal(result.asnumpy(), expect)
 
 
@@ -114,7 +114,7 @@ def test_range_op_float64():
     """
     range_op = ms.ops.Range()
     result = range_op(ms.Tensor(2, ms.float64), ms.Tensor(5, ms.float64), ms.Tensor(1, ms.float64))
-    expect = np.array([2, 3, 4], np.float64)
+    expect = np.array([2, 3, 4], np.float32)
     assert np.array_equal(result.asnumpy(), expect)
 
 
@@ -129,7 +129,7 @@ def test_range_op_int_reserve():
     """
     range_op = ms.ops.Range()
     result = range_op(ms.Tensor(8, ms.int32), ms.Tensor(1, ms.int32), ms.Tensor(-1, ms.int32))
-    expect = np.array([8, 7, 6, 5, 4, 3, 2], np.int32)
+    expect = np.array([8, 7, 6, 5, 4, 3, 2], np.int64)
     assert np.array_equal(result.asnumpy(), expect)
 
 

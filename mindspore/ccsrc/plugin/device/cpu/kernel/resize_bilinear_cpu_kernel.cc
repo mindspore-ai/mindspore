@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ namespace {
 constexpr size_t kResizeBilinearInputsNum = 1;
 constexpr size_t kResizeBilinearV2InputsNum = 4;
 constexpr size_t kResizeBilinearOutputsNum = 1;
+constexpr size_t kResizeBilinearExpectedRank = 4;
 }  // namespace
 
 using FuncVec = const std::vector<std::pair<KernelAttr, ResizeBilinearCpuKernelMod::KernelRunFunc>>;
@@ -53,6 +54,7 @@ int ResizeBilinearCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
   if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
+
   // for ResizeBilinear, the inputs index will be out of range.
   if (kernel_name_ == "ResizeBilinear") {
     auto align_corners_ptr = primitive_->GetAttr(kAttrAlignCorners);
@@ -69,14 +71,20 @@ int ResizeBilinearCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
     MS_LOG(ERROR) << "align_corners and half_pixel_centers cannot be True at the same time.";
     return false;
   }
+
   shape_ = Convert2SizeTClipNeg(inputs.at(kIndex0)->GetShapeVector());
   output_shape_ = Convert2SizeTClipNeg(outputs.at(kIndex0)->GetShapeVector());
+  if (shape_.size() != kResizeBilinearExpectedRank || output_shape_.size() != kResizeBilinearExpectedRank) {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", input and output should be 4-D Tensor.";
+  }
+
   is_null_input_ = (std::accumulate(shape_.begin(), shape_.end(), size_t(1), std::multiplies<size_t>()) == 0);
   is_null_input_ = is_null_input_ || (std::accumulate(output_shape_.begin(), output_shape_.end(), size_t(1),
                                                       std::multiplies<size_t>()) == 0);
   if (is_null_input_) {
     return static_cast<int>(KRET_OK);
   }
+
   size_t in_height = shape_[2];
   size_t in_width = shape_[3];
   size_t out_height = output_shape_[2];

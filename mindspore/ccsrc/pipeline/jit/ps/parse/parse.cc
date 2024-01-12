@@ -2353,10 +2353,20 @@ AnfNodePtr Parser::ParseSubscript(const FunctionBlockPtr &block, const py::objec
   py::object value_obj = py::none();
   auto str_getitem = std::make_shared<StringImm>("__getitem__");
   AnfNodePtr new_node;
-  if (!py::isinstance<py::none>(value_id)) {
+  // value[slice]. The value of subscript must not be built-in functions
+  // if the id of value object has the same name as built-in function, should not get the value_obj.
+  bool value_id_is_builtins =
+    py::cast<bool>(ast_->CallParserObjMethod(PYTHON_PARSE_IS_BUILTIN_FUNCTION_NAME, py::str(value_id)));
+  if (!py::isinstance<py::none>(value_id) && !value_id_is_builtins) {
     value_obj = GetValuePythonObject(value_id);
   }
+  bool is_adapter = false;
   if (!py::isinstance<py::none>(value_obj)) {
+    if (py::hasattr(value_obj, "adapter_flag")) {
+      is_adapter = py::cast<bool>(py::getattr(value_obj, "adapter_flag"));
+    }
+  }
+  if (!py::isinstance<py::none>(value_obj) && !is_adapter) {
     getitem_node =
       block->func_graph()->NewCNodeInOrder({NewValueNode(prim::kPrimGetAttr), value, NewValueNode(str_getitem)});
     new_node = block->func_graph()->NewCNodeInOrder({getitem_node, slice});

@@ -135,7 +135,7 @@ class BACKEND_EXPORT SessionBasic : public KernelGraphMgr, public std::enable_sh
   // create a single run op graph
   std::shared_ptr<KernelGraph> ConstructSingleOpGraph(const BackendOpRunInfoPtr &op_run_info,
                                                       const std::vector<ValuePtr> &input_tensors,
-                                                      const std::vector<int64_t> &tensors_mask, bool is_ascend = false);
+                                                      const std::vector<int64_t> &tensors_mask);
   void EraseValueNodeTensor(const std::vector<int64_t> &tensors_mask,
                             std::vector<tensor::TensorPtr> *input_tensors) const;
   void RunOpRemoveNopNode(const KernelGraphPtr &kernel_graph) const;

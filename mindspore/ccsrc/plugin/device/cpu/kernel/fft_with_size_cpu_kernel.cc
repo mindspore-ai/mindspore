@@ -158,6 +158,10 @@ bool FFTWithSizeCompute(T1 *input_x, T2 *output_y, bool onesided, std::string no
         // compute the full fft tensor shape: full_fft_shape[-1] / 2 + 1
         Eigen::DSizes<Eigen::DenseIndex, signal_ndim + 1> temp_tensor_shape(tensor_shape);
         if (checked_signal_size.empty()) {
+          if (temp_tensor_shape[signal_ndim] == 1) {
+            MS_EXCEPTION(ValueError) << "For 'FFTWithSize', the last dimension of the input cannot be 1, but got: "
+                                     << temp_tensor_shape[signal_ndim];
+          }
           temp_tensor_shape[signal_ndim] = (temp_tensor_shape[signal_ndim] - 1) * kRealFFTSideNum;
         } else {
           if (checked_signal_size.back() / kRealFFTSideNum + 1 == temp_tensor_shape[signal_ndim]) {

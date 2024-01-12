@@ -24,6 +24,8 @@ class DtypeToEnum(Primitive):
     Convert mindspore dtype to enum.
 
     Inputs:
+        - **op_name** (str) - The op name
+        - **arg_name** (str) - The arg name
         - **dtype** (mindspore.dtype) - The data type.
 
     Outputs:
@@ -37,10 +39,10 @@ class DtypeToEnum(Primitive):
     def __init__(self):
         """Initialize"""
 
-    def __call__(self, dtype):
+    def __call__(self, op_name, arg_name, dtype):
         """Run in PyNative mode"""
         if not isinstance(dtype, typing.Type):
-            raise TypeError(f"For dtype_to_enum function, the input should be mindpsore dtype, but got {dtype}.")
+            raise TypeError(f"For '{op_name}', the input '{arg_name}' should be mindpsore dtype, but got {dtype}.")
         return typing.type_to_type_id(dtype)
 
 
@@ -49,6 +51,8 @@ class StringToEnum(Primitive):
     Convert string to enum.
 
     Inputs:
+        - **op_name** (str) - The op name
+        - **arg_name** (str) - The arg name
         - **enum_str** (str) - The str data.
 
     Outputs:
@@ -62,8 +66,8 @@ class StringToEnum(Primitive):
     def __init__(self):
         """Initialize"""
 
-    def __call__(self, enum_str):
+    def __call__(self, op_name, arg_name, enum_str):
         """Run in PyNative mode"""
         if not isinstance(enum_str, str):
-            raise TypeError(f"For StringToEnum op, the input should be a str, but got {type(enum_str)}.")
-        return op_enum.str_to_enum(enum_str)
+            raise TypeError(f"For '{op_name}', the input '{arg_name}' should be a str, but got {type(enum_str)}.")
+        return op_enum.str_to_enum(op_name, arg_name, enum_str)

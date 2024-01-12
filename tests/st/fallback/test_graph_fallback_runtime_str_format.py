@@ -18,7 +18,7 @@ import numpy as np
 from mindspore.common import mutable
 from mindspore.nn import Cell
 import mindspore
-from mindspore import jit, Tensor, context, ops
+from mindspore import jit, Tensor, context, ops, nn
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -516,3 +516,40 @@ def test_str_format_indentation_6():
         return output
     input_x = Tensor(np.array([-4., -3.5, 0, 3.5, 4]), mindspore.float32)
     test_fstring(input_x)
+
+
+class FormatNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.unique = ops.Unique()
+        self.gather = ops.Gather()
+        self.axis = 0
+        self.shape = ops.Shape()
+
+    def construct(self, x, indices, y):
+        unique_indices, _ = self.unique(indices)
+        x = self.gather(x, unique_indices, self.axis)
+        x_shape = self.shape(x)
+        y_shape = y.shape
+        format_str = "x.shape is {}, y.shape is {}".format(x_shape, y_shape)
+        f_str = f"x.shape is {x_shape}, y.shape is {y_shape}"
+        return format_str, f_str
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_input_dynamic_len_tuple():
+    """
+    Feature: JIT Fallback
+    Description: Dynamic len tuple and dynamic type in same graph.
+    Expectation: No exception.
+    """
+    x = Tensor(np.random.randn(5, 4, 3), dtype=mindspore.float32)
+    y = Tensor(np.random.randn(3, 3, 3), dtype=mindspore.float32)
+    indices = Tensor(np.random.randint(0, 3, size=3))
+    net = FormatNet()
+    net.set_inputs(x, indices, Tensor(shape=None, dtype=mindspore.float32))
+    a, b = net(x, indices, y)
+    assert a
+    assert b

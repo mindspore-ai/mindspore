@@ -11,9 +11,9 @@ mindspore.ops.Range
         - **maxlen** (int，可选) - 该算子将会被分配能够存储 `maxlen` 个数据的内存。 该参数是可选的，必须为正数，默认值： ``1000000`` 。 如果输出的数量超过 `maxlen` ，将会引起运行时错误。
 
     输入：
-        - **start** (Tensor) - 标量Tensor，序列中的第一个数字。
-        - **limit** (Tensor) - 标量Tensor，序列中的数值上限，不包括其本身。
-        - **delta** (Tensor) - 标量Tensor，表述序列中数值的步长。
+        - **start** (number) - 序列中的第一个数字。
+        - **limit** (number) - 序列中的数值上限，不包括其本身。
+        - **delta** (number) - 表述序列中数值的步长。
 
     输出：
-        一维Tensor，数据类型与输入数据类型一致。
+        一维Tensor，若输入全为整数，则输出为int64类型，若输入全为浮点数，输出为float32类型。
