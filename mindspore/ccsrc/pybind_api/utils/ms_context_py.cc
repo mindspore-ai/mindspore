@@ -99,6 +99,7 @@ void RegMsContext(const py::module *m) {
     .value("matmul_allow_hf32", MsCtxParam::MS_CTX_MATMUL_ALLOW_HF32)
     .value("conv_allow_hf32", MsCtxParam::MS_CTX_CONV_ALLOW_HF32)
     .value("op_precision_mode", MsCtxParam::MS_CTX_OP_PRECISION_MODE)
+    .value("ge_options", MsCtxParam::MS_CTX_GE_OPTIONS)
     .value("save_graphs_path", MsCtxParam::MS_CTX_SAVE_GRAPHS_PATH)
     .value("enable_compile_cache", MsCtxParam::MS_CTX_ENABLE_COMPILE_CACHE)
     .value("compile_cache_path", MsCtxParam::MS_CTX_COMPILE_CACHE_PATH)
