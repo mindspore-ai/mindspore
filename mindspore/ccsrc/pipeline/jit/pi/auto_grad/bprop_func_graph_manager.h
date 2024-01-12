@@ -31,6 +31,7 @@ class BpropFuncGraphManager {
   BpropFuncGraphManager() {}
   virtual ~BpropFuncGraphManager() = default;
 
+  FuncGraphPtr PrimBpropGraphPass(const FuncGraphPtr &prim_grad_graph);
   FuncGraphPtr GetAccumulateGraph(const ValuePtr &dout, const ValuePtr &factor);
   FuncGraphPtr GetPrimBpropGraph(const PrimitivePtr &prim, const ValuePtrList &inputs, const ValuePtr &out,
                                  const ValuePtr &dout);
@@ -39,7 +40,7 @@ class BpropFuncGraphManager {
                                       const ValuePtr &out, const ValuePtr &dout);
 
  private:
-  std::map<std::pair<PrimitivePtr, abstract::AbstractBasePtrList>, FuncGraphPtr> prim_to_bprop_;
+  std::map<std::string, FuncGraphPtr> prim_to_bprop_;
   std::map<FuncGraphPtr, FuncGraphPtr> func_graph_to_bprop_;
 };
 

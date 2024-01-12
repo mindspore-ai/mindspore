@@ -21,41 +21,38 @@
 #include "include/common/utils/convert_utils_py.h"
 #include "pipeline/jit/pi/auto_grad/edge.h"
 #include "pipeline/jit/pi/auto_grad/function_context.h"
+#include "pipeline/pynative/pynative_utils.h"
 #include "pybind11/stl.h"
 
 namespace mindspore {
 namespace jit {
 namespace grad {
 namespace py = pybind11;
-/// \brief FunctionNode is a class, which represent a function call.
+/// \brief FunctionNode is a class, which represent a way to calculate the gradient.
 class FunctionNode : public FunctionContext {
  public:
   /// \brief The constructor of FunctionNode.
   ///
-  /// \param[in] fn The called function.
+  /// \param[in] tensor The tensor that is asked to calculate the gradient.
   ///
   /// \return The instance of FunctionNode.
-  explicit FunctionNode(const py::object &fn) : FunctionContext(), fn_(fn) {}
+  explicit FunctionNode(const py::object &tensor)
+      : FunctionContext({}, pynative::PyNativeAlgo::DataConvert::PyObjToValue(tensor)), tensor_(tensor) {}
 
   /// \brief Destructor.
   virtual ~FunctionNode() = default;
 
-  static FunctionNodePtr GetInstance(const py::object &fn) { return std::make_shared<FunctionNode>(fn); }
-
-  /// \brief Add a input at the end of the input list.
+  /// \brief The static method to record the executed primitive during forward execution.
   ///
-  /// \param[in] input The input.
-  void AddInput(const py::object &input);
+  /// \param[in] prim The executed primitive.
+  /// \param[in] out The output of the executed primitive.
+  /// \param[in] inputs The inputs of the executed primitive.
+  static void RecordPrimitive(const py::object &prim, const py::object &out, const py::list &inputs);
 
-  /// \brief Set the output of the function node.
+  /// \brief Get the tensor that is asked to calculate the gradient.
   ///
-  /// \param[in] output The output.
-  void SetOutput(const py::object &output);
-
-  /// \brief Get the called function.
-  ///
-  /// \return The called function.
-  const py::object &GetFunction() const { return fn_; }
+  /// \return The tensor that is asked to calculate the gradient.
+  const py::object &GetTensor() const { return tensor_; }
 
   /// \brief Get the bprop function graph.
   ///
@@ -76,7 +73,7 @@ class FunctionNode : public FunctionContext {
   ///
   /// \param[in] node The called function.
   /// \param[in] index The index of the input.
-  void AddNextEdge(const FunctionNodePtr &node, size_t index) { edges_.push_back(std::make_shared<Edge>(node, index)); }
+  void AddNextEdge(const FunctionNodePtr &node) { edges_.push_back(std::make_shared<Edge>(node)); }
 
   /// \brief Get the python object grad.
   ///
@@ -84,14 +81,14 @@ class FunctionNode : public FunctionContext {
   const py::object GetPyObjectGrad() const { return ValueToPyData(GetGrad()); }
 
   /// \brief Generate the bprop function.
-  void GenBropFunction();
+  void GenBropFunction(const py::object &prim, const py::tuple &inputs);
 
   /// \brief Generate the grad value of function.
   void Apply(const py::object &grad = py::none());
 
  private:
   /// \brief The called function.
-  py::object fn_;
+  py::object tensor_;
   /// \brief The bprop function.
   FuncGraphPtr grad_fn_;
   /// \brief The called functions in the previous/next step.
@@ -99,17 +96,6 @@ class FunctionNode : public FunctionContext {
 };
 
 using FunctionNodePtr = std::shared_ptr<FunctionNode>;
-
-inline void RegFunctionNodes(const py::module *m) {
-  (void)py::class_<FunctionNode, FunctionNodePtr>(*m, "FunctionNode_")
-    .def_static("get_instance", &FunctionNode::GetInstance, py::arg("fn"), "Function node instance.")
-    .def("set_inputs", &FunctionNode::SetInputs, py::arg("inputs"), "Set the inputs of function node.")
-    .def("add_input", &FunctionNode::AddInput, py::arg("input"), "Add a input at the end of the input list.")
-    .def("set_output", &FunctionNode::SetOutput, py::arg("output"), "Set the output of the function node.")
-    .def("add_next_edge", &FunctionNode::AddNextEdge, py::arg("node"), py::arg("index"), "Add a edge.")
-    .def("apply", &FunctionNode::Apply, py::arg("grad"), "Calculate the gradient of the function node.")
-    .def("get_grad", &FunctionNode::GetPyObjectGrad, "Get the gradient of the function node.");
-}
 }  // namespace grad
 }  // namespace jit
 }  // namespace mindspore

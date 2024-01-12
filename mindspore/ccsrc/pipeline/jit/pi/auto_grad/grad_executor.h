@@ -40,8 +40,9 @@ class GradExecutor {
   GradExecutor() : manager_(std::make_shared<BpropFuncGraphManager>()) {}
   virtual ~GradExecutor() = default;
 
-  static GradExecutorPtr GetInstance() { return std::make_shared<GradExecutor>(); }
+  static GradExecutorPtr GetInstance() { return grad_executor_; }
 
+  FuncGraphPtr PrimBpropGraphPass(const FuncGraphPtr &prim_grad_graph);
   FuncGraphPtr GetAccumulateGraph(const py::object &tensor);
   FuncGraphPtr GetBpropGraph(const AnfNodePtr &func, const ValuePtrList &inputs, const ValuePtr &out,
                              const ValuePtr &dout);
@@ -52,6 +53,7 @@ class GradExecutor {
   ValuePtr RunGraph(const FuncGraphPtr &func_graph, const VectorRef &inputs);
 
  private:
+  static GradExecutorPtr grad_executor_;
   BpropFuncGraphManagerPtr manager_;
 };
 }  // namespace grad
