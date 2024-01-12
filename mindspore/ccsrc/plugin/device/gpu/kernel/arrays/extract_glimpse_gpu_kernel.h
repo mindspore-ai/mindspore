@@ -61,7 +61,6 @@ class ExtractGlimpseGpuKernelMod : public NativeGpuKernelMod {
   static std::vector<std::pair<KernelAttr, ExtractGlimpseFunc>> func_list_;
   ExtractGlimpseFunc kernel_func_;
   void *stream_ptr_;
-  bool is_null_input_{false};
   size_t inputs_size_{0};
   size_t size_size_{0};
   size_t offsets_size_{0};
