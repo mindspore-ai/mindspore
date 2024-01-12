@@ -104,6 +104,10 @@ bool ExtractGlimpseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> 
   T *offsets = GetDeviceAddress<T>(inputs, kIndex2);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
   stream_ptr_ = stream_ptr;
+  if (size[0] <= 0 || size[1] <= 0) {
+    MS_EXCEPTION(ValueError) << "For " << kernel_name_ << ", the value of 'size' must be greater than zero, but got ["
+                             << size[0] << ", " << size[1] << "].";
+  }
   cudaError_t ret = CalExtractGlimpse(output_elements_, batch_cnt_, channels_, image_height_, image_width_, noise_,
                                       centered_, normalized_, uniform_noise_, x, size, offsets, output,
                                       reinterpret_cast<cudaStream_t>(stream_ptr_));
