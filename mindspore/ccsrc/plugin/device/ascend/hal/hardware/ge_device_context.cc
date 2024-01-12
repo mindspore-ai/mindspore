@@ -126,15 +126,15 @@ RunMode GeDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   if (IsDynamicShapeFuncGraph(func_graph)) {
-    MS_LOG(INFO) << "dynamic shape default RunMode::kKernelMode";
+    MS_LOG(WARNING) << "dynamic shape default RunMode::kKernelMode";
     return RunMode::kKernelMode;
   }
 
   if (context->IsKByKExecutorMode()) {
-    MS_LOG(INFO) << "RunMode::kKernelMode";
+    MS_LOG(WARNING) << "RunMode::kKernelMode";
     return RunMode::kKernelMode;
   } else {
-    MS_LOG(INFO) << "RunMode::kGraphMode";
+    MS_LOG(WARNING) << "RunMode::kGraphMode";
     return RunMode::kGraphMode;
   }
 }
