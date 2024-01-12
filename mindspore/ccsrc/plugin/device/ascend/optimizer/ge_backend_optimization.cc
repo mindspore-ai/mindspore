@@ -119,6 +119,7 @@ void GEBackendOptimizeACL(const KernelGraphPtr &kernel_graph) {
   auto opt_acl_pm = std::make_shared<PassManager>("opt_acl_pm");
   opt_acl_pm->AddPass(std::make_shared<SeedAdapter>());
   opt_acl_pm->AddPass(std::make_shared<opt::AICpuLibSelectPass>());
+  opt_acl_pm->AddPass(std::make_shared<opt::TransDependValueToInt32>());
   opt_acl_pm->AddPass(std::make_shared<opt::ExpanderFallback>());
   optimizer->AddPassManager(opt_acl_pm);
   (void)optimizer->Optimize(kernel_graph);
