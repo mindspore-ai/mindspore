@@ -32,10 +32,9 @@ class Edge {
   /// \brief The constructor of Edge.
   ///
   /// \param[in] fn The called function.
-  /// \param[in] index The index of the input.
   ///
   /// \return The instance of Edge.
-  explicit Edge(const FunctionNodePtr &fn, size_t index) : fn_(fn), index_(index) {}
+  explicit Edge(const FunctionNodePtr &fn) : fn_(fn) {}
 
   /// \brief Destructor.
   virtual ~Edge() = default;
@@ -50,21 +49,9 @@ class Edge {
   /// \param[in] fn The called function.
   void SetFunction(const FunctionNodePtr &fn) { fn_ = fn; }
 
-  /// \brief Get the index of the input.
-  ///
-  /// \return The index of the input.
-  size_t GetIndex() const { return index_; }
-
-  /// \brief Set the index of the input.
-  ///
-  /// \param[in] index The index of the input.
-  void SetIndex(size_t index) { index_ = index; }
-
  private:
   /// \brief The called function.
   FunctionNodePtr fn_;
-  /// \brief The index of the input whose grad function is fn).
-  size_t index_;
 };
 
 using EdgePtr = std::shared_ptr<Edge>;

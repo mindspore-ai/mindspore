@@ -143,6 +143,7 @@ void RegModule(py::module *m) {
   RegMsContext(m);
   RegSecurity(m);
   mindspore::pynative::RegPyNativeExecutor(m);
+  mindspore::pijit::RegPIJitInterface(m);
   mindspore::prim::RegCompositeOpsGroup(m);
 #ifndef ENABLE_SECURITY
   mindspore::profiler::RegProfilerManager(m);
@@ -640,10 +641,4 @@ PYBIND11_MODULE(_c_expression, m) {
 
   (void)m.def("_ms_memory_recycle", &mindspore::pipeline::MemoryRecycle, "Recycle memory used by mindspore.");
   (void)m.def("_bind_device_ctx", &mindspore::pipeline::BindDeviceCtx, "Bind device context to current thread");
-
-  (void)m.def("jit_mode_pi_enable", &mindspore::pi_jit_enable, "enable jit from python byte code");
-  (void)m.def("jit_mode_pi_disable", &mindspore::pi_jit_disable, "disable jit from python byte code");
-  (void)m.def("jit_mode_pi_compile", &mindspore::pi_jit_should_compile, "add function to compile");
-  (void)m.def("update_pijit_default_config", &mindspore::update_pijit_default_config, "update pijit default config");
-  (void)m.def("get_code_extra", &mindspore::get_code_extra, "get copy of code extra which is the pijit compile result");
 }

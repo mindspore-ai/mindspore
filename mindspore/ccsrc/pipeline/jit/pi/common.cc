@@ -1266,41 +1266,6 @@ py::list CollectGradientArguments(const PyFrameObject &frame) {
   return arguments;
 }
 
-void AddFunctionNodeInput(const py::object &prim, const py::tuple &inputs, const py::object &out) {
-  std::vector<bool> require_grad_flags;
-  std::transform(inputs.begin(), inputs.end(), std::back_inserter(require_grad_flags), [](const auto &arg) {
-    auto obj = py::cast<py::object>(arg);
-    if (!IsStubTensor(obj)) {
-      return false;
-    }
-    auto requires_grad = obj.attr("requires_grad");
-    return !py::isinstance<py::none>(requires_grad) && PyObject_IsTrue(requires_grad.ptr());
-  });
-  if (!std::any_of(require_grad_flags.begin(), require_grad_flags.end(), [](bool flag) { return flag; })) {
-    return;
-  }
-  auto func_node = grad::FunctionNode::GetInstance(prim);
-  for (size_t index = 0; index < inputs.size(); index++) {
-    auto input = py::cast<py::object>(inputs[index]);
-    func_node->AddInput(input);
-    if (IsStubTensor(input) && require_grad_flags[index]) {
-      auto grad_fn = input.attr("grad_fn");
-      if (py::isinstance<py::none>(grad_fn)) {
-        auto fn = grad::FunctionNode::GetInstance(input);
-        fn->GenBropFunction();
-        fn->SetOutput(input);
-        func_node->AddNextEdge(fn, index);
-      } else {
-        func_node->AddNextEdge(grad_fn.cast<grad::FunctionNodePtr>(), index);
-      }
-    }
-  }
-  func_node->SetOutput(out);
-  func_node->GenBropFunction();
-  py::setattr(out, "grad_fn", py::cast(func_node));
-  py::setattr(out, "requires_grad", py::bool_(True));
-}
-
 #if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION < 9)
 PyObject *EvalFrame(PyFrameObject *f, int exc) {
   PyThreadState *tstate = PyThreadState_Get();
@@ -1327,7 +1292,7 @@ PyObject *EvalFrame(PyThreadState *tstate, PyFrameObject *f, int exc) {
         f->f_localsplus[0] != nullptr && py::isinstance<PrimitivePyAdapter>(f->f_localsplus[0])) {
       MS_EXCEPTION_IF_CHECK_FAIL(f->f_code->co_kwonlyargcount == 0, "Must not have kw only args.");
       auto inputs = CollectGradientArguments(*f);
-      AddFunctionNodeInput(py::cast<py::object>(f->f_localsplus[0]), inputs, py::cast<py::object>(ret));
+      grad::FunctionNode::RecordPrimitive(py::cast<py::object>(f->f_localsplus[0]), py::cast<py::object>(ret), inputs);
     }
     return ret;
   }
