@@ -114,7 +114,6 @@ cust_op_lists = [
     "matrixtriangularsolve",
     "maxpool3dgradwithargmax",
     "maxpool3dwithargmax",
-    "meshgrid",
     "mul",
     "mulnonan",
     "multimarginloss",
