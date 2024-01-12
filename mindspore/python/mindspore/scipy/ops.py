@@ -170,21 +170,30 @@ class LinearSumAssignment(Primitive):
         maximize (bool): bool.
             Calculates a maximum weight matching if true.
 
-    Returns:
+    Outputs:
         1-D Output Tensors with 'row_idx' and 'col_idx'. An array of row indices and
         one of corresponding column indices giving the optimal assignment. If specified
         dimension_limit, padding value at the end would be -1.
 
+    Raises:
+        TypeError: If the data type of `cost_matrix` is not the type in [float16, float32, float64,
+                   int8, int16, int32, int64, uint8, uint16, uint32, uint64, bool]
+        TypeError: If the type of `maximize` is not bool.
+        TypeError: If the data type of `dimension_limit` is not int64.
+        ValueError: If the rank of `cost_matrix` is not 2.
+        ValueError: If the number of input args is not 3.
+
+
     Supported Platforms:
         ``Ascend`` ``CPU``
 
-     Examples:
+    Examples:
         >>> import mindspore as ms
         >>> import numpy as np
         >>> from mindspore import Tensor
         >>> from mindspore.scipy.ops import LinearSumAssignment
         >>> lsap = LinearSumAssignment()
-        >>> cost_matrix = Tensor(np.array([[2, 3, 3], [3, 2, 3], [3, 3, 2]])).astype("float64")
+        >>> cost_matrix = Tensor(np.array([[2, 3, 3], [3, 2, 3], [3, 3, 2]])).astype(ms.float64)
         >>> dimension_limit = Tensor(2)
         >>> maximize = False
         >>> a, b = lsap(cost_matrix, dimension_limit, maximize)
