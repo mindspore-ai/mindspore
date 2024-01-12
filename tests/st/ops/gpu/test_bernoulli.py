@@ -15,6 +15,7 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 import mindspore.context as context
@@ -116,3 +117,20 @@ def test_bernoulli_dynamic_x_type_error():
         net = BernoulliDynamic()
         output = net(x, p=p)
         print(output)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_bernoulli_run_twice():
+    """
+    Feature: Bernoulli function
+    Description: Test cases for Bernoulli
+    Expectation: No exception.
+    """
+    ms.set_seed(2)
+    x = Tensor(np.random.randn(100, 100), ms.float32)
+    op = ms.ops.bernoulli
+    out1 = op(x).asnumpy()
+    out2 = op(x).asnumpy()
+    assert not np.allclose(out1, out2, rtol=0.0, atol=0.0, equal_nan=False)
