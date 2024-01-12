@@ -989,6 +989,14 @@ def get_const_len(obj):
     return len(obj)
 
 
+def get_method_info(obj):
+    """Get the class name of the object from its method."""
+    if not inspect.ismethod(obj):
+        return None, None
+    class_name_and_method_name = obj.__qualname__.split('.')
+    return class_name_and_method_name[0], class_name_and_method_name[1]
+
+
 class Parser:
     """
     Parser python code to ast tree.

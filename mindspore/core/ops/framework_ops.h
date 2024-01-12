@@ -165,13 +165,13 @@ GVAR_DEF(PrimitivePtr, kPrimSwitch, std::make_shared<Primitive>(kSwitchOpName));
 GVAR_DEF(PrimitivePtr, kPrimSelect, std::make_shared<Primitive>(kSelectOpName));
 GVAR_DEF(PrimitivePtr, kPrimCall, std::make_shared<Primitive>(kCallOpName));
 GVAR_DEF(PrimitivePtr, kPrimRaise,
-         std::make_shared<Primitive>("raise", mindspore::HashMap<std::string, ValuePtr>(
-                                                {{std::string(GRAPH_FLAG_SIDE_EFFECT_IO), MakeValue(true)}})));
+         std::make_shared<Primitive>(kRaiseOpName, mindspore::HashMap<std::string, ValuePtr>(
+                                                     {{std::string(GRAPH_FLAG_SIDE_EFFECT_IO), MakeValue(true)}})));
 GVAR_DEF(PrimitivePtr, kPrimCallInline, std::make_shared<Primitive>("call_inline"));
 GVAR_DEF(PrimitivePtr, kPrimSwitchLayer, std::make_shared<Primitive>("switch_layer"));
 GVAR_DEF(PrimitivePtr, kPrimStringUpper, std::make_shared<Primitive>(kStringUpperOpName));
 GVAR_DEF(PrimitivePtr, kPrimStringLower, std::make_shared<Primitive>(kStringLowerOpName));
-GVAR_DEF(PrimitivePtr, kPrimFormat, std::make_shared<Primitive>("Format"));
+GVAR_DEF(PrimitivePtr, kPrimFormat, std::make_shared<Primitive>(kFormatOpName));
 
 // Pack
 GVAR_DEF(PrimitivePtr, kPrimPackFunc, std::make_shared<Primitive>(kPackFuncOpName));
