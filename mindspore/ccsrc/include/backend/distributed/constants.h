@@ -37,7 +37,7 @@ constexpr char kDetailedFailureReason[] =
   "Maybe you are trying to call 'mindspore.communication.init()' without using 'mpirun', which will make MindSpore "
   "load several environment variables and check their validation. Please use 'mpirun' to launch this process to fix "
   "this issue, or refer to this link if you want to run distributed training without using 'mpirun': "
-  "https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/train_gpu.html";
+  "https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/dynamic_cluster.html";
 
 constexpr char kEnvServerNum[] = "MS_SERVER_NUM";
 constexpr char kEnvWorkerNum[] = "MS_WORKER_NUM";
@@ -54,6 +54,9 @@ const std::set<std::string> kValidRoleName = {kEnvRoleOfServer, kEnvRoleOfPServe
 
 // Denote which ip address is used for cluster building.
 constexpr char kEnvWorkerIp[] = "MS_WORKER_IP";
+
+// Cluster building time out window in second.
+constexpr char kEnvClusterTimeOut[] = "MS_CLUSTER_TIMEOUT";
 
 // Used in parameter server embedding cache scenarios to identify the same Parameter between Worker and Server.
 constexpr char kParameterKey[] = "parameter_key";
