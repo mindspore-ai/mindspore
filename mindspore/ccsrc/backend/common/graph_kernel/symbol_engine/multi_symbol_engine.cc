@@ -16,6 +16,7 @@
 #include "backend/common/graph_kernel/symbol_engine/multi_symbol_engine.h"
 #include <utility>
 #include "mindspore/core/symbolic_shape/utils.h"
+#include "mindspore/core/symbolic_shape/int_symbol.h"
 
 namespace mindspore {
 namespace graphkernel {
@@ -79,8 +80,7 @@ void MultiSymbolEngine::GenInputSymbols(const CNodePtr &cnode, const FuncGraphPt
   for (size_t i = 0; i < sub_fg->parameters().size(); i++) {
     auto inp_abs = cnode->input(i + begin_input_index)->abstract();
     MS_EXCEPTION_IF_NULL(inp_abs);
-    CloneAbstractIfSymbolExists(sub_fg->parameters()[i]);
-    auto para_abs = sub_fg->parameters()[i]->abstract();
+    auto para_abs = CloneAbstractIfSymbolExists(sub_fg->parameters()[i]);
     MS_EXCEPTION_IF_NULL(para_abs);
     (void)input_symbolic_shapes.emplace_back(inp_abs->GetSymbolicShape());
     if (input_symbolic_shapes.back() != nullptr) {
@@ -150,9 +150,10 @@ void MultiSymbolEngine::BuildSubgraphImpl(const CNodePtr &cnode, const FuncGraph
 
   auto out_abs = sub_fg->output()->abstract();
   MS_EXCEPTION_IF_NULL(out_abs);
-  CloneAbstractIfSymbolExists(cnode);
-  cnode->abstract()->SetSymbolicShape(out_abs->GetSymbolicShape());
-  cnode->abstract()->SetSymbolicValue(out_abs->GetSymbolicValue());
+  auto cnode_abs = CloneAbstractIfSymbolExists(cnode);
+  MS_EXCEPTION_IF_NULL(cnode_abs);
+  cnode_abs->SetSymbolicShape(out_abs->GetSymbolicShape());
+  cnode_abs->SetSymbolicValue(out_abs->GetSymbolicValue());
 }
 }  // namespace symshape
 }  // namespace graphkernel

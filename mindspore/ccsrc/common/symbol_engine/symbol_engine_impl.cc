@@ -21,7 +21,9 @@
 #include "ir/graph_utils.h"
 #include "ops/array_ops.h"
 #include "ops/framework_ops.h"
+#include "ops/sequence_ops.h"
 #include "mindspore/core/ops/symbol_ops_impl/switch.h"
+#include "mindspore/core/ops/symbol_ops_impl/j_op.h"
 #include "utils/check_convert_utils.h"
 #include "utils/anf_utils.h"
 #include "mindspore/core/symbolic_shape/utils.h"
@@ -30,8 +32,23 @@
 namespace mindspore {
 namespace symshape {
 AnfNodePtrList GetCNodesOfFuncGraph(const FuncGraphPtr &fg) {
-  return TopoSort(fg->output(), SuccIncoming,
-                  [](const AnfNodePtr &node) { return node->isa<CNode>() ? FOLLOW : EXCLUDE; });
+  bool has_node_in_other_graph = false;
+  auto nodes = TopoSort(fg->output(), SuccIncoming, [&has_node_in_other_graph, &fg](const AnfNodePtr &node) {
+    if (!node->isa<CNode>()) {
+      return EXCLUDE;
+    }
+    if (node->func_graph() != fg) {
+      has_node_in_other_graph = true;
+    }
+    return FOLLOW;
+  });
+  // at frontend, a node may directly links to other node in other graph.
+  if (has_node_in_other_graph) {
+    (void)nodes.erase(
+      std::remove_if(nodes.begin(), nodes.end(), [&fg](const AnfNodePtr &node) { return node->func_graph() != fg; }),
+      nodes.end());
+  }
+  return nodes;
 }
 
 std::pair<FuncGraphPtr, size_t> GetFuncGraphFromCNode(const CNodePtr &cnode) {
@@ -47,7 +64,111 @@ std::pair<FuncGraphPtr, size_t> GetFuncGraphFromCNode(const CNodePtr &cnode) {
   return std::make_pair(sub_fg, index);
 }
 
+class ControlFlowJoinNode : public SpecialCNodeHelper {
+ public:
+  using SpecialCNodeHelper::SpecialCNodeHelper;
+  static bool Match(const CNodePtr &cnode) { return IsPrimitiveCNode(cnode->input(0), prim::kPrimSwitch); }
+  void SetDependStatus(std::map<AnfNodePtr, DependStatus> *depend_status_map) override {
+    auto input0 = input();
+    (*depend_status_map)[input0] = (*depend_status_map)[cnode_];
+    SetFuncGraphDepend(input0->input(kIndex2));
+    SetFuncGraphDepend(input0->input(kIndex3));
+  }
+  std::pair<PrimitivePtr, AbstractBasePtrList> ExtractInputs() override {
+    auto prim = std::make_shared<Primitive>(ops::kControlFlowJoin);
+    AbstractBasePtrList inputs;
+    auto input0 = input();
+    (void)inputs.emplace_back(input0->input(kIndex1)->abstract());
+    (void)inputs.emplace_back(GetFuncGraphOutAbs(input0->input(kIndex2)));
+    (void)inputs.emplace_back(GetFuncGraphOutAbs(input0->input(kIndex3)));
+    return std::make_pair(std::move(prim), std::move(inputs));
+  }
+
+ protected:
+  CNodePtr input() const {
+    auto input0 = cnode_->input(0)->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(input0);
+    return input0;
+  }
+  SymbolEngineImpl *symbol_engine() const {
+    auto symbol_engine = cnode_->func_graph()->symbol_engine();
+    MS_EXCEPTION_IF_NULL(symbol_engine);
+    auto symbol_engine_impl = symbol_engine->cast_ptr<SymbolEngineImpl>();
+    MS_EXCEPTION_IF_NULL(symbol_engine_impl);
+    return symbol_engine_impl;
+  }
+  void SetFuncGraphDepend(const AnfNodePtr &node) const {
+    auto fg = GetValueNode<FuncGraphPtr>(node);
+    if (fg != nullptr) {
+      symbol_engine()->PreBuildQuerySubgraphDependStatus(cnode_, fg, kIndex1);
+    }
+  }
+
+  AbstractBasePtr GetFuncGraphOutAbs(const AnfNodePtr &node) const {
+    if (IsPrimitiveCNode(node, prim::kPrimPartial)) {
+      return GetFuncGraphFromCNode(node->cast<CNodePtr>()).first->output()->abstract();
+    }
+    // the graph with Partial is build symbols ahead, build the pure graph (without Partial) in Switch.
+    auto fg = GetValueNode<FuncGraphPtr>(node);
+    if (fg == nullptr) {
+      MS_EXCEPTION_IF_NULL(node->abstract());
+      return node->abstract();
+    }
+    symbol_engine()->BuildSubgraphImpl(cnode_, fg, kIndex1);
+    return fg->output()->abstract();
+  }
+};
+
+class JFuncCaller : public SpecialCNodeHelper {
+ public:
+  /// \brief The call node of PrimJ:
+  ///
+  ///  %0 = J(@fg) // primitive "J"
+  ///  %1 = %0(inp1, inp2, ...) // the node output a tuple of "(tensor, Func)"
+  ///  %2 = TupleGetItem(%1, 1)  // get the output "Func"
+  ///  %3 = %2(loss_scale)       // call the "Func".
+  ///
+  /// this pattern match the "%3", and the output shape is same as "inp1, inp2, ...".
+  explicit JFuncCaller(const CNodePtr &cnode) : SpecialCNodeHelper(cnode) {
+    auto getitem1 = cnode->input(kIndex0)->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(getitem1);
+    input_ = getitem1->input(kIndex1)->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(input_);
+  }
+  ~JFuncCaller() override = default;
+  static bool Match(const CNodePtr &cnode) {
+    auto getitem1 = cnode->input(kIndex0)->cast<CNodePtr>();
+    if (getitem1 == nullptr || !IsPrimitiveCNode(getitem1, prim::kPrimTupleGetItem)) {
+      return false;
+    }
+    if (GetValue<int64_t>(GetValueNode(getitem1->input(kIndex2))) != 1) {
+      return false;
+    }
+    auto callj = getitem1->input(kIndex1)->cast<CNodePtr>();
+    return callj != nullptr && IsPrimitiveCNode(callj->input(kIndex0), prim::kPrimJ);
+  }
+  void SetDependStatus(std::map<AnfNodePtr, DependStatus> *depend_status_map) override {
+    for (size_t i = 1; i < input_->size(); i++) {
+      (*depend_status_map)[input_->input(i)] = (*depend_status_map)[cnode_];
+    }
+  }
+  std::pair<PrimitivePtr, AbstractBasePtrList> ExtractInputs() override {
+    auto prim = std::make_shared<Primitive>(ops::kJFuncCaller);
+    AbstractBasePtrList inputs;
+    inputs.reserve(input_->size());
+    (void)std::transform(input_->inputs().begin(), input_->inputs().end(), std::back_inserter(inputs),
+                         [](const AnfNodePtr &node) { return node->abstract(); });
+    return std::make_pair(std::move(prim), std::move(inputs));
+  }
+
+ protected:
+  CNodePtr input_{nullptr};
+};
+
 SymbolEngineImplPtr SymbolEngineImpl::Build(const FuncGraphPtr &func_graph) {
+  if (func_graph->symbol_engine() != nullptr) {
+    CleanSymbols(func_graph);
+  }
   auto engine = std::make_shared<SymbolEngineImpl>(func_graph);
   func_graph->set_symbol_engine(engine);
   engine->PreBuild();
@@ -73,8 +194,7 @@ void SymbolEngineImpl::BuildNodesSymbol(const FuncGraphPtr &fg, const AnfNodePtr
   auto node = fg->output();
   if (node->isa<ValueNode>()) {
     auto depend_status = depend_status_map_[node];
-    CloneAbstractIfSymbolExists(node);
-    auto node_abs = node->abstract();
+    auto node_abs = CloneAbstractIfSymbolExists(node);
     MS_EXCEPTION_IF_NULL(node_abs);
     if (depend_status.shape) {
       auto sym_shape = node_abs->GetShape()->BuildSymbolicShape();
@@ -109,6 +229,20 @@ void SymbolEngineImpl::BuildImpl() {
   visited_graph_.clear();
 }
 
+void SymbolEngineImpl::PreBuildSpecialNode(const CNodePtr &cnode) {
+  std::shared_ptr<SpecialCNodeHelper> helper = nullptr;
+  if (ControlFlowJoinNode::Match(cnode)) {
+    helper = std::make_shared<ControlFlowJoinNode>(cnode);
+  } else if (JFuncCaller::Match(cnode)) {
+    helper = std::make_shared<JFuncCaller>(cnode);
+  } else {
+    MS_LOG(DEBUG) << "The special node " << cnode->fullname_with_scope() << " is not supported.";
+    return;
+  }
+  special_cnodes_[cnode] = helper;
+  helper->SetDependStatus(&depend_status_map_);
+}
+
 void SymbolEngineImpl::PreBuildQueryDependStatus(const AnfNodePtrList &cnodes) {
   for (auto iter = cnodes.rbegin(); iter != cnodes.rend(); ++iter) {
     auto cnode = (*iter)->cast<CNodePtr>();
@@ -120,9 +254,8 @@ void SymbolEngineImpl::PreBuildQueryDependStatus(const AnfNodePtrList &cnodes) {
     }
     MS_LOG(DEBUG) << "The depend status of " << cnode->DebugString() << "(" << cnode->fullname_with_scope()
                   << "): shape-depend=" << depend_status.shape << ", value-depend=" << depend_status.value;
-    // the control-flow node.
     if (cnode->input(0)->isa<CNode>()) {
-      depend_status_map_[cnode->input(0)] = depend_status;
+      PreBuildSpecialNode(cnode);
       continue;
     }
     // the "call" node or Partial node.
@@ -335,21 +468,23 @@ void SymbolEngineImpl::BuildSubgraphImpl(const CNodePtr &cnode, const FuncGraphP
   auto param_num = sub_fg->parameters().size();
   MS_EXCEPTION_IF_CHECK_FAIL(param_num + begin_input_index == cnode->size(), "cnode and parameter size mismatch");
   for (size_t i = 0; i < param_num; i++) {
-    CloneAbstractIfSymbolExists(sub_fg->parameters()[i]);
-    auto param_abs = sub_fg->parameters()[i]->abstract();
+    auto param_abs = CloneAbstractIfSymbolExists(sub_fg->parameters()[i]);
     MS_EXCEPTION_IF_NULL(param_abs);
     auto input_abs = cnode->input(i + begin_input_index)->abstract();
     MS_EXCEPTION_IF_NULL(input_abs);
     param_abs->SetSymbolicShape(input_abs->GetSymbolicShape());
     param_abs->SetSymbolicValue(input_abs->GetSymbolicValue());
   }
-  auto nodes = GetCNodesOfFuncGraph(sub_fg);
-  BuildNodesSymbol(sub_fg, nodes);
-  auto out_abs = sub_fg->output()->abstract();
-  MS_EXCEPTION_IF_NULL(out_abs);
-  CloneAbstractIfSymbolExists(cnode);
-  cnode->abstract()->SetSymbolicShape(out_abs->GetSymbolicShape());
-  cnode->abstract()->SetSymbolicValue(out_abs->GetSymbolicValue());
+  BuildNodesSymbol(sub_fg, GetCNodesOfFuncGraph(sub_fg));
+  // only set the abstract for "call" node.
+  if (IsValueNode<FuncGraph>(cnode->input(0))) {
+    auto out_abs = sub_fg->output()->abstract();
+    MS_EXCEPTION_IF_NULL(out_abs);
+    auto cnode_abs = CloneAbstractIfSymbolExists(cnode);
+    MS_EXCEPTION_IF_NULL(cnode_abs);
+    cnode_abs->SetSymbolicShape(out_abs->GetSymbolicShape());
+    cnode_abs->SetSymbolicValue(out_abs->GetSymbolicValue());
+  }
 }
 
 SymbolPtr SymbolEngineImpl::BuildCNodeSymbolicShape(OperationBuilder *builder, const PrimitivePtr &prim,
@@ -408,13 +543,9 @@ SymbolPtr SymbolEngineImpl::BuildCNodeSymbolicValue(OperationBuilder *builder, c
 }
 
 AbstractBasePtrList SymbolEngineImpl::ExtractInputsAbstract(const CNodePtr &cnode) {
-  CNodePtr real_node = cnode;
-  if (cnode->input(0)->isa<CNode>()) {
-    real_node = cnode->input(0)->cast<CNodePtr>();
-  }
   AbstractBasePtrList abs_list;
-  abs_list.reserve(real_node->size());
-  (void)std::transform(real_node->inputs().cbegin() + 1, real_node->inputs().cend(), std::back_inserter(abs_list),
+  abs_list.reserve(cnode->size());
+  (void)std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(abs_list),
                        [](const AnfNodePtr &node) {
                          MS_EXCEPTION_IF_NULL(node);
                          return node->abstract();
@@ -423,15 +554,24 @@ AbstractBasePtrList SymbolEngineImpl::ExtractInputsAbstract(const CNodePtr &cnod
 }
 
 void SymbolEngineImpl::BuildCNodeSymbol(const CNodePtr &cnode) {
-  PrimitivePtr prim = GetCNodePrimitive(cnode);
-  if (prim == nullptr && cnode->input(0)->isa<CNode>()) {
-    prim = std::make_shared<Primitive>(ops::kControlFlowJoin);
+  PrimitivePtr prim;
+  AbstractBasePtrList inputs;
+  if (cnode->input(0)->isa<CNode>()) {
+    if (auto iter = special_cnodes_.find(cnode); iter != special_cnodes_.end()) {
+      auto ret = iter->second->ExtractInputs();
+      prim = std::move(ret.first);
+      inputs = std::move(ret.second);
+    }
+    if (prim == nullptr) {
+      prim = std::make_shared<Primitive>("_SpecialCNode");
+    }
+  } else {
+    prim = GetCNodePrimitive(cnode);
+    MS_EXCEPTION_IF_NULL(prim);
+    inputs = ExtractInputsAbstract(cnode);
   }
-  MS_EXCEPTION_IF_NULL(prim);
-  auto inputs = ExtractInputsAbstract(cnode);
   auto builder = OperationBuilderInfoRegistry::GetBuilder(prim->name(), emitter_.get());
-  CloneAbstractIfSymbolExists(cnode);
-  auto abstract = cnode->abstract();
+  auto abstract = CloneAbstractIfSymbolExists(cnode);
   MS_EXCEPTION_IF_NULL(abstract);
 
   // theoretically, it's possible that both shape and value are required for a same node.
@@ -456,31 +596,55 @@ std::string SymbolEngineImpl::DumpText() const {
   std::ostringstream oss;
   oss << ToString() << " {\n";
   for (auto op : ops_) {
-    oss << "  " << op->DumpText();
+    oss << op->DumpText();
   }
   oss << "}\n";
   return oss.str();
 }
 
-void CloneAbstractIfSymbolExists(const AnfNodePtr &node) {
-  auto old_abs = node->abstract();
-  MS_EXCEPTION_IF_NULL(old_abs);
-  if (old_abs->GetSymbolicShape() == nullptr && old_abs->GetSymbolicValue() == nullptr) {
-    return;
+AbstractBasePtr CloneAbstractIfSymbolExists(const AbstractBasePtr &abs) {
+  if (abs == nullptr) {
+    return nullptr;
+  }
+  if (abs->GetSymbolicShape() == nullptr && abs->GetSymbolicValue() == nullptr) {
+    return abs;
   }
   try {
     MS_LOG_TRY_CATCH_SCOPE;
-    auto new_abs = old_abs->Clone();
+    auto new_abs = abs->Clone();
+    MS_EXCEPTION_IF_NULL(new_abs);
     new_abs->SetSymbolicShape(nullptr);
     new_abs->SetSymbolicValue(nullptr);
-    node->set_abstract(new_abs);
+    return new_abs;
   } catch (std::exception &e) {
-    std::string sym_shape = old_abs->GetSymbolicShape() == nullptr ? "" : old_abs->GetSymbolicShape()->ToString();
-    std::string sym_value = old_abs->GetSymbolicValue() == nullptr ? "" : old_abs->GetSymbolicValue()->ToString();
-    MS_LOG(WARNING) << "For node " << node->DebugString() << ", the abstract has symbol (S:" << sym_shape
-                    << ", V:" << sym_value << ") but cannot be cloned. abstract: " << old_abs->ToString()
-                    << ", failed info:" << e.what();
-    return;
+    std::string sym_shape = abs->GetSymbolicShape() == nullptr ? "" : abs->GetSymbolicShape()->ToString();
+    std::string sym_value = abs->GetSymbolicValue() == nullptr ? "" : abs->GetSymbolicValue()->ToString();
+    MS_LOG(WARNING) << "The abstract has symbol (S:" << sym_shape << ", V:" << sym_value
+                    << ") but cannot be cloned. abstract: " << abs->ToString() << ", failed info:" << e.what();
+  }
+  return abs;
+}
+
+void CleanSymbols(const FuncGraphPtr &func_graph) {
+  std::set<AbstractBasePtr> params_abs;
+  for (auto &param : func_graph->parameters()) {
+    (void)params_abs.insert(param->abstract());
+  }
+  auto nodes = TopoSort(func_graph->get_return(), SuccDeeperSimple, AlwaysInclude);
+  for (auto &node : nodes) {
+    auto abs = node->abstract();
+    if (params_abs.find(abs) != params_abs.end()) {
+      // do not clean the parameters' symbol
+      continue;
+    }
+    if (abs != nullptr) {
+      abs->SetSymbolicShape(nullptr);
+      abs->SetSymbolicValue(nullptr);
+    }
+    auto fg = node->func_graph();
+    if (fg != nullptr) {
+      fg->set_symbol_engine(nullptr);
+    }
   }
 }
 }  // namespace symshape

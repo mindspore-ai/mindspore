@@ -34,6 +34,7 @@ from mindspore._c_expression import Tensor as Tensor_
 from mindspore import _checkparam as validator
 from mindspore._checkparam import check_is_number, is_stub_tensor
 from mindspore._check_jit_forbidden_api import jit_forbidden_register
+from mindspore.common.symbol import Symbol
 
 np_types = (np.int8, np.int16, np.int32, np.int64,
             np.uint8, np.uint16, np.uint32, np.uint64, np.float16,
@@ -227,8 +228,16 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
                 if isinstance(input_data, np_types):
                     input_data = np.array(input_data)
 
-                if isinstance(shape, numbers.Number):
-                    shape = (shape,)
+                if shape is not None:
+                    if isinstance(shape, numbers.Number):
+                        shape = (shape,)
+                    elif isinstance(shape, Symbol):
+                        self.symbolic_shape = [shape]
+                        shape = (None,)
+                    elif isinstance(shape, (list, tuple)) and any(isinstance(s, Symbol) for s in shape):
+                        self.symbolic_shape = [item.to_dict() if isinstance(item, Symbol) else item for item in shape]
+                        shape_without_symbol = (None if isinstance(item, Symbol) else item for item in shape)
+                        shape = list(shape_without_symbol) if isinstance(shape, list) else tuple(shape_without_symbol)
 
                 _check_tensor_input(input_data, dtype, shape, init)
 

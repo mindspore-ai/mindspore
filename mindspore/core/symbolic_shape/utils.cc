@@ -20,6 +20,7 @@
 #include "ir/kernel_tensor_value.h"
 #include "mindspore/core/utils/check_convert_utils.h"
 #include "mindspore/core/ops/op_utils.h"
+#include "mindspore/core/symbolic_shape/int_symbol.h"
 
 namespace mindspore {
 namespace symshape {
@@ -59,7 +60,9 @@ SymbolPtr GenValueByShape(const BaseShapePtr &baseshape, const TypePtr &type_ptr
     return IntSymbol::Make();
   }
   if (baseshape->isa<abstract::TensorShape>()) {
-    return GenValueByTensorShape(baseshape->cast<abstract::TensorShapePtr>(), type_ptr);
+    auto tensor_type = type_ptr->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(tensor_type);
+    return GenValueByTensorShape(baseshape->cast<abstract::TensorShapePtr>(), tensor_type->element());
   }
   if (baseshape->isa<abstract::DynamicSequenceShape>()) {
     return ListSymbol::Make();
@@ -203,6 +206,12 @@ SymbolPtr IntValues2Symbol(const std::vector<int64_t> &shape, const OpPtr &op) {
   SymbolPtrList result(shape.size());
   (void)std::transform(shape.begin(), shape.end(), result.begin(), [op](int64_t s) { return IntSymbol::Make(s, op); });
   return ListSymbol::Make(std::move(result), op);
+}
+
+int64_t AsInt(const Symbol *s) {
+  auto v = s->as<IntSymbol>();
+  MS_EXCEPTION_IF_NULL(v);
+  return v->value();
 }
 
 std::string SymbolListToStr(const SymbolPtrList &slist, const std::string &pre, const std::string &post, bool raw_str) {

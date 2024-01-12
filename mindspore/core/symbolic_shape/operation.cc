@@ -60,7 +60,7 @@ std::string Operation::ToString() const { return name() + SymbolListToStr(inputs
 std::string Operation::DumpText() const {
   std::ostringstream oss;
   MS_EXCEPTION_IF_NULL(output_);
-  oss << output_->ToString() << " = " << this->ToString() << "\n";
+  oss << "  " << output_->ToString() << " = " << this->ToString() << "\n";
   return oss.str();
 }
 

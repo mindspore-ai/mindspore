@@ -15,11 +15,33 @@
  */
 
 #include "mindspore/core/symbolic_shape/math_info.h"
-#include "mindspore/core/symbolic_shape/symbol.h"
+#include "mindspore/core/symbolic_shape/int_symbol.h"
 
 namespace mindspore {
 namespace symshape {
+bool RelationExpr::operator<(const RelationExpr &other) const {
+  // check "a1 * s + b1 < a2 * s + b2", that is to check "(a1 - a2) * s + (b1 - b2) < 0".
+  if (a == other.a) {
+    return b < other.b;
+  }
+  if (b > other.b) {
+    return false;
+  }
+  // the right expr is "(s->is_positive() && a < other.a) || (s->is_negative() && a > other.a)", when s is not null.
+  return a < other.a;
+}
+
 IntSymbolPtr MathInfo::ToIntSymbol() const { return int_symbol_->as_sptr<IntSymbol>(); }
+
+void MathInfo::SetDivisorRemainder(int64_t d, int64_t r) {
+  MS_EXCEPTION_IF_CHECK_FAIL(d != 0, "The divisor cannot be zero.");
+  if (d < 0) {
+    d = -d;
+  }
+  div_rem_.first = d;
+  r = (r % d + d) % d;  // keep remainder in range [0, d)
+  div_rem_.second = r;
+}
 
 void MathInfo::UpdateExprRoot() const {
   if (relation_expr_.s == nullptr) {
@@ -94,12 +116,56 @@ bool MathInfo::MathLessEqual(const MathInfo &other) const {
   return (this->root() == other.root()) && (this->relation_expr_ <= other.relation_expr_);
 }
 
+// let "s2 = this", then:
+// s2 = a2 * s1 + b2
+// s1 = d1 * N + r1
+// ==> s2 = (a2*d1) * N + (a2*r1) + b2
+// the d2 = (a2*d1), and r2 = (a2*r1+b2)
+int64_t MathInfo::divisor() const {
+  if (relation_expr_.s == nullptr) {
+    return div_rem_.first;
+  }
+  // root() interface will update the relation_expr_, so query root() before check the relation_expr.a.
+  auto d1 = root()->divisor();
+  auto a2 = relation_expr_.a;
+  auto d2 = a2 * d1;
+  auto div = (d2.is_int() && d2.x() != 0) ? d2.x() : 1;
+  return div > 0 ? div : -div;
+}
+int64_t MathInfo::remainder() const {
+  if (relation_expr_.s == nullptr) {
+    return div_rem_.second;
+  }
+  // root() interface will update the relation_expr_, so query root() before check the relation_expr.a.
+  auto d = divisor();
+  auto r1 = root()->remainder();
+  auto a2 = relation_expr_.a;
+  auto b2 = relation_expr_.b;
+  auto r2 = a2 * r1 + b2;
+  return r2.is_int() ? (r2.x() % d + d) % d : 0;
+}
+
 void MathInfo::Dump(std::ostringstream &oss) const {
   oss << "<[";
   oss << (range_min() == -kINF ? "-inf" : range_min() == kINF ? "inf" : std::to_string(range_min())) << ",";
   oss << (range_max() == -kINF ? "-inf" : range_max() == kINF ? "inf" : std::to_string(range_max())) << "]";
+  auto div = divisor();
+  auto rem = remainder();
+  if (div != 1 || rem != 0) {
+    oss << "|";
+    if (div != 1) {
+      oss << div;
+    }
+    oss << "N";
+    if (rem != 0) {
+      if (rem > 0) {
+        oss << "+";
+      }
+      oss << rem;
+    }
+  }
   if (relation_expr_.s != nullptr) {
-    oss << "=" << relation_expr_.s->ToRawString();
+    oss << "|=" << relation_expr_.s->ToRawString();
     if (relation_expr_.a != 1) {
       if (relation_expr_.a.x() == 1) {
         oss << "/" << relation_expr_.a.y();

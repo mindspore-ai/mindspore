@@ -88,8 +88,11 @@ SymbolPtr StridedSlice::GetSlicingLengthForPositiveStrides(IntSymbolPtr start, I
   if ((*start) >= (*end)) {
     return GenInt(0);
   }
-  if ((*start) < (*end)) {
+  if ((*start) <= (*end)) {
     // length = (end - 1 - start) / strides + 1.  (to floor)
+    if (strides->is_const() && strides->value() == 1) {
+      return Emit(std::make_shared<ScalarSub>(end, start));
+    }
     auto t1 = Emit(std::make_shared<ScalarSub>(Emit(std::make_shared<ScalarSub>(end, GenInt(1))), start));
     auto t2 = Emit(std::make_shared<ScalarDiv>(t1, strides));
     return Emit(std::make_shared<ScalarAdd>(t2, GenInt(1)));

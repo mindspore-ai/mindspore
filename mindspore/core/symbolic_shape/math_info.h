@@ -81,6 +81,8 @@ class Frac {
   bool operator>(const Frac &b) const { return b < (*this); }
   Frac rec() const { return Frac(y_, x_); }
 
+  bool is_int() const { return y_ == 1; }
+
   friend std::ostream &operator<<(std::ostream &os, const Frac &a) {
     if (a.y_ == 1) return os << a.x_;
     return os << a.x_ << "/" << a.y_;
@@ -119,9 +121,9 @@ struct RelationExpr {
   Frac a{1, 1};
   Frac b{0, 1};
   bool operator==(const RelationExpr &other) const { return a == other.a && b == other.b; }
-  bool operator<(const RelationExpr &other) const { return a == other.a && b < other.b; }
+  bool operator<(const RelationExpr &other) const;
   // note: "a <= b" is false does not means "b < a" is true.
-  bool operator<=(const RelationExpr &other) const { return a == other.a && b <= other.b; }
+  bool operator<=(const RelationExpr &other) const { return (*this == other) || (*this < other); }
 };
 
 class MS_CORE_API MathInfo {
@@ -130,11 +132,15 @@ class MS_CORE_API MathInfo {
   ~MathInfo() = default;
   friend class IntSymbol;
 
-  // range interfaces
-  void SetRangeMin(int64_t m) { range_.first = (m < -kINF ? -kINF : (m > kINF ? kINF : m)); }
-  void SetRangeMax(int64_t m) { range_.second = (m < -kINF ? -kINF : (m > kINF ? kINF : m)); }
   int64_t range_min() const { return range_.first; }
   int64_t range_max() const { return range_.second; }
+  int64_t divisor() const;
+  int64_t remainder() const;
+
+  void SetRangeMin(int64_t m) { range_.first = (m < -kINF ? -kINF : (m > kINF ? kINF : m)); }
+  void SetRangeMax(int64_t m) { range_.second = (m < -kINF ? -kINF : (m > kINF ? kINF : m)); }
+  void SetDivisorRemainder(int64_t d, int64_t r);
+
   bool is_greater_than(int64_t x) const { return range_min() > x; }
   bool is_less_than(int64_t x) const { return range_max() < x; }
   bool is_positive() const { return is_greater_than(0); }
@@ -168,6 +174,7 @@ class MS_CORE_API MathInfo {
 
   std::pair<int64_t, int64_t> range_{-kINF, kINF};  // close range, represent "[first, second]" in IntSymbol.
   mutable RelationExpr relation_expr_;              // if the current symbol is 's2', it represents 's2 = a * s + b'.
+  std::pair<int64_t, int64_t> div_rem_{1, 0};       // divisor and remainder. it represents "d * N + r".
   IntSymbol *int_symbol_;
   const size_t math_info_id_;
 
