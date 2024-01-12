@@ -16,7 +16,7 @@
 import numpy as np
 import pytest
 
-from mindspore import Tensor, context
+from mindspore import Tensor, context, ops
 from mindspore.nn import Cell
 from mindspore import dtype as mstype
 
@@ -55,6 +55,46 @@ class NumpySetItemByList():
         x[([0, 1], [0, 2], [1, 1])] = [10, 5]
         x[[0, 1], ..., [0, 1]] = 4
         return x
+
+
+class SetitemNet(Cell):
+    def construct(self, x, y):
+        z = x * 2
+        z[:, 1:] += y[:, 1:]
+        return z
+
+
+class SetitemGradNet(Cell):
+    def __init__(self, net):
+        super().__init__()
+        self.net = net
+        self.grad_op = ops.GradOperation(get_all=True)
+
+    def construct(self, x, y):
+        gradient_func = self.grad_op(self.net)
+        return gradient_func(x, y)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_setitem_grad():
+    """
+    Feature: Test setitem grad
+    Description: setitem should return correct grad
+    Expectation: success
+    """
+    net = SetitemNet()
+    a = Tensor(np.random.randn(2, 2, 2, 2), mstype.float32)
+    b = Tensor(np.random.randn(2, 2, 2, 2), mstype.float32)
+    b = ops.zeros_like(b)
+    output = SetitemGradNet(net)(a, b)
+    x_grad = np.ones((2, 2, 2, 2), np.float32) * 2
+    y_grad = np.array([[[[0, 0], [0, 0]], [[1, 1], [1, 1]]], [[[0, 0], [0, 0]], [[1, 1], [1, 1]]]], np.float32)
+    assert np.array_equal(output[0].asnumpy(), x_grad)
+    assert np.array_equal(output[1].asnumpy(), y_grad)
 
 
 @pytest.mark.level0

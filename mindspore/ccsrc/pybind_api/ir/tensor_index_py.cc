@@ -1276,7 +1276,7 @@ static inline py::object SetitemCopyView(std::vector<pynative::SliceOpInfoPtr> *
   (void)slice_op_infos->emplace_back(broadcastto_op_info);
 
   auto copy_op_info = std::make_shared<pynative::SliceOpInfo>();
-  copy_op_info->slice_op_name = kCopyWithScileOpName;
+  copy_op_info->slice_op_name = kCopyWithSliceOpName;
   copy_op_info->data_indexs = {0, 1};
   (void)slice_op_infos->emplace_back(copy_op_info);
   ValuePtr rdata_value;
@@ -1830,12 +1830,15 @@ TypeId GetStubAbsTypeId(const AbstractBasePtr &abs) {
   }
 }
 
-bool EnableView(bool is_pack_node, const TypeId &type_id, const py::bool_ &is_ascend) {
+bool EnableView(bool is_pack_node, const TypeId &type_id, const py::bool_ &is_ascend, bool is_setitem = false) {
   if (is_pack_node || pynative::PyNativeExecutor::GetInstance()->grad_executor()->is_high_order_top_cell()) {
     // 1. pack node will slice failed with view.
     // 2. SelectView and CopyWithSlice has no kernel, can not enable view in high order cell.
     return false;
   }
+
+  // For setitem, the grad of CopyWithSlice is erroneous. If we are in setitem and requires grad, disable view.
+  if (is_setitem && pynative::PyNativeExecutor::GetInstance()->grad_executor()->RequiresGrad()) return false;
 
   if (is_ascend && (type_id == kNumberTypeComplex128 || type_id == kNumberTypeFloat64)) {
     // AsStrided and ViewCopy is not support Complex128 and Float64, disable view
@@ -2187,13 +2190,13 @@ py::object TensorIndex::SetItemIndexInfo(const py::object &py_data, const py::ob
     MS_EXCEPTION_IF_NULL(data_type);
 
     const auto &type_id = GetStubAbsTypeId(abs);
-    if (EnableView(value_info.second, type_id, is_ascend)) {
+    if (EnableView(value_info.second, type_id, is_ascend, true)) {
       data_value = value_info.first;
     }
   } else {
     TensorPtr data = py_data.cast<TensorPtr>();
     MS_EXCEPTION_IF_NULL(data);
-    if (EnableView(false, data->data_type(), is_ascend)) {
+    if (EnableView(false, data->data_type(), is_ascend, true)) {
       data_value = data;
     }
     data_shape = data->shape();

@@ -265,7 +265,7 @@ void UpdateStubTensor(const FrontendOpRunInfoPtr &op_run_info) {
 }
 
 KernelTaskType GetViewOpTaskType(const std::string &op_name) {
-  if (op_name == kCopyWithScileOpName) {
+  if (op_name == kCopyWithSliceOpName) {
     return KernelTaskType::kCOPY_TASK;
   }
   return KernelTaskType::kNORMAL_VIEW_TASK;
