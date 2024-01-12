@@ -37,7 +37,9 @@ void *AclAllocator::AllocFunc(void *obj, size_t size) {
   MS_EXCEPTION_IF_NULL(allocator);
   MS_EXCEPTION_IF_NULL(allocator->mem_manager_);
   auto block = allocator->mem_manager_->MallocMemFromMemPool(size, false);
-  MS_EXCEPTION_IF_NULL(block);
+  if (block == nullptr) {
+    MS_LOG(EXCEPTION) << "Malloc Mem From Mem Pool failed, size:" << size;
+  }
   return block;
 }
 
