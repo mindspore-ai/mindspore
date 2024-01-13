@@ -36,8 +36,7 @@ IMPLEMT_COMMON_INFERFUNC(BartlettWindowInferShape) {
     return GRAPH_FAILED;
   }
   std::vector<std::string> input_infer_depends = {"window_length"};
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  op_desc->SetOpInferDepends(input_infer_depends);
+  PREPARE_DYNAMIC_SHAPE(input_infer_depends);
   Tensor tensor;
   Shape output_shape({UNKNOWN_DIM});
   if (op.GetInputConstData("window_length", tensor) == GRAPH_SUCCESS) {
