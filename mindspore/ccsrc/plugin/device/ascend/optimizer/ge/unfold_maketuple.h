@@ -17,16 +17,16 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_UNFOLD_MAKETUPLE_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_UNFOLD_MAKETUPLE_
 
+#include <string>
 #include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {
-class UnfoldMaketuple : public PatternProcessPass {
+class UnfoldMaketuple : public Pass {
  public:
-  explicit UnfoldMaketuple(bool multi_graph = true) : PatternProcessPass("unfold_maketuple", multi_graph) {}
+  explicit UnfoldMaketuple(const std::string & /* name */) : Pass("unfold_nested_maketuple") {}
   ~UnfoldMaketuple() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
+  bool Run(const FuncGraphPtr &graph) override;
 };
 }  // namespace opt
 }  // namespace mindspore

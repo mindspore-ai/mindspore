@@ -23,7 +23,6 @@
 #include <vector>
 #include <utility>
 #include "ops/sequence_ops.h"
-#include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
@@ -89,22 +88,23 @@ size_t GetElementsSize(const CNodePtr &cnode, int64_t origin_index) {
 }
 
 int64_t GetUnfoldIndex(const CNodePtr &cnode, int64_t origin_index) {
+  // cnode: the input node of TupleGetItem, origin_index: the input index of TupleGetItem.
   MS_EXCEPTION_IF_NULL(cnode);
-  auto input = cnode->input(kRealInputNodeIndexInTupleGetItem);
-  auto input_cnode = input->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(input_cnode);
   if (origin_index < 0) {
     MS_LOG(EXCEPTION) << "index: " << origin_index << " cannot be less than 0.";
   }
   int64_t begin_idx = 0;
-  if (!IsPrimitiveCNode(input_cnode, prim::kPrimTupleGetItem) && origin_index == 0) {
+  if (!IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem) && origin_index == 0) {
     return begin_idx;
   } else if (origin_index == 0) {
-    auto idx_node = cnode->input(kInputNodeOutputIndexInTupleGetItem);
-    auto idx = AnfUtils::GetIntValue(idx_node);
-    begin_idx = GetUnfoldIndex(input_cnode, idx);
+    auto input = cnode->input(kRealInputNodeIndexInTupleGetItem);
+    auto input_cnode = input->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(input_cnode);
+    auto input_idx_node = cnode->input(kInputNodeOutputIndexInTupleGetItem);
+    auto input_idx = AnfUtils::GetIntValue(input_idx_node);
+    begin_idx = GetUnfoldIndex(input_cnode, input_idx);
   } else {
-    begin_idx = GetUnfoldIndex(cnode, origin_index - 1) + GetElementsSize(input_cnode, origin_index - 1);
+    begin_idx = GetUnfoldIndex(cnode, origin_index - 1) + GetElementsSize(cnode, origin_index - 1);
   }
   return begin_idx;
 }
@@ -132,24 +132,17 @@ void ProcessSucceedTupleGetItem(const FuncGraphPtr &func_graph, const AnfNodePtr
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(tuplegetitem_node);
-  auto tuple_cnode = tuplegetitem_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(tuple_cnode);
-  auto idx_node = tuple_cnode->input(kInputNodeOutputIndexInTupleGetItem);
-  auto tuplegetitem_idx = AnfUtils::GetIntValue(idx_node);
+  auto tuplegetitem_cnode = tuplegetitem_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(tuplegetitem_cnode);
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
   auto abs = tuplegetitem_node->abstract();
   MS_EXCEPTION_IF_NULL(abs);
 
   if (IsNestedTuple(tuplegetitem_node)) {
     // TupleGetItem node with nested tuple output is not used currently.
     MS_LOG(INFO) << "No need to process nested TupleGetItem node currently.";
-  } else if (!abs->isa<abstract::AbstractTuple>()) {
-    if (tuplegetitem_idx == unfold_idx) {
-      MS_LOG(DEBUG) << "The unfold index of TupleGetItem is same as the origin index.";
-      return;
-    }
-    auto new_axis_node = NewValueNode(unfold_idx);
-    tuple_cnode->set_input(kInputNodeOutputIndexInTupleGetItem, new_axis_node);
-  } else {
+  } else if (abs->isa<abstract::AbstractTuple>()) {
     auto abs_tuple = abs->cast<abstract::AbstractTuplePtr>();
     MS_EXCEPTION_IF_NULL(abs_tuple);
     std::vector<AnfNodePtr> unfold_tuplegetitem_nodes{NewValueNode(std::make_shared<Primitive>(kMakeTupleOpName))};
@@ -165,15 +158,16 @@ void ProcessSucceedTupleGetItem(const FuncGraphPtr &func_graph, const AnfNodePtr
     }
     AnfNodePtr new_maketuple_node = func_graph->NewCNode(unfold_tuplegetitem_nodes);
     new_maketuple_node->set_abstract(abs);
-    auto used_node_list = GetRealNodeUsedList(func_graph, tuplegetitem_node);
-    for (size_t j = 0; j < used_node_list->size(); ++j) {
-      auto used_node = used_node_list->at(j).first;
-      MS_EXCEPTION_IF_NULL(used_node);
-      if (!used_node->isa<CNode>()) {
-        continue;
-      }
-      utils::cast<CNodePtr>(used_node)->set_input(IntToSize(used_node_list->at(j).second), new_maketuple_node);
+    manager->Replace(tuplegetitem_node, new_maketuple_node);
+  } else {
+    if (tuplegetitem_cnode->input(kRealInputNodeIndexInTupleGetItem) != node) {
+      MS_LOG(DEBUG) << "The function only process the tuplegetitem node used by origin maketuple node directly.";
+      return;
     }
+    tuplegetitem_cnode->set_input(kRealInputNodeIndexInTupleGetItem, node);
+    auto new_axis_node = NewValueNode(unfold_idx);
+    tuplegetitem_cnode->set_input(kInputNodeOutputIndexInTupleGetItem, new_axis_node);
+    manager->SetEdge(tuplegetitem_node, kRealInputNodeIndexInTupleGetItem, node);
   }
 }
 
@@ -200,9 +194,12 @@ void ProcessSucceedNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) 
       if (IsPrimitiveCNode(user_node, prim::kPrimTupleGetItem)) {
         auto user_cnode = user_node->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(user_cnode);
+        auto input = user_cnode->input(kRealInputNodeIndexInTupleGetItem);
+        auto input_cnode = input->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(input_cnode);
         auto idx_node = user_cnode->input(kInputNodeOutputIndexInTupleGetItem);
         auto tuplegetitem_idx = AnfUtils::GetIntValue(idx_node);
-        auto unfold_idx = GetUnfoldIndex(user_cnode, tuplegetitem_idx);
+        auto unfold_idx = GetUnfoldIndex(input_cnode, tuplegetitem_idx);
         need_process_tuplegetitem_nodes.push_back({user_node, unfold_idx});
         todo.push_back(user_node);
       }
@@ -212,6 +209,8 @@ void ProcessSucceedNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) 
   for (const auto &nodes_pair : need_process_tuplegetitem_nodes) {
     auto tuplegetitem_node = nodes_pair.first;
     auto unfold_idx = nodes_pair.second;
+    MS_LOG(DEBUG) << "TupleGetUtem_node: " << tuplegetitem_node->fullname_with_scope()
+                  << ", unfold_idx: " << unfold_idx;
     ProcessSucceedTupleGetItem(func_graph, node, tuplegetitem_node, unfold_idx);
   }
 }
