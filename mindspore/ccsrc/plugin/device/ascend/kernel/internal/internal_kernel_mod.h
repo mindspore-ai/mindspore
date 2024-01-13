@@ -13,28 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MS_KERNEL_INTERNAL_KERNEL_MOD_H_
-#define MS_KERNEL_INTERNAL_KERNEL_MOD_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_MOD_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_MOD_H_
 #include <memory>
 #include <unordered_map>
 #include <vector>
-#include "ccsrc/kernel/kernel.h"
-#include "ms_kernels_internal/internal_kernel.h"
-#include "ms_kernel_internals/include/types.h"
-#include "ms_kernel_internals/include/op_param.h"
+#include "kernel/kernel.h"
+#include "internal_kernel.h"
+
+#include "plugin/factory/ms_factory.h"
+
 namespace mindspore {
 namespace kernel {
 class InternalKernelMod : public KernelMod {
  public:
-  InternalKernelMod() = default;
+  explicit InternalKernelMod(std::string &&op_type) : op_type_(std::move(op_type)) {}
   virtual ~InternalKernelMod();
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
-  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
-              const Address &tilingBuf, const std::vector<Address> &workspace, void *stream_ptr) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+
+  std::vector<KernelAttr> GetOpSupport() override {
+    MS_LOG(EXCEPTION) << "This interface is not support in internal kernel.";
+  }
+  
   virtual size_t GetTilingBufSize() { return impl_->GetTilingBufSize(); }
-  virtual int Tiling(const Address &tilingBuf) { return impl_->Tiling(tilingBuf); }
+  virtual int Tiling(internal::HostRawBuf &tilingBuf) { return impl_->Tiling(tilingBuf); }
 
  protected:
   virtual int Build(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
@@ -46,7 +52,14 @@ class InternalKernelMod : public KernelMod {
   std::unordered_map<size_t, size_t> outputsIdxMap_;
   std::vector<internal::Tensor *> inputs_;
   std::vector<internal::Tensor *> outputs_;
+  internal::DeviceRawBuf device_tiling_buf_;
+  std::string op_type_;
 };
+
+using InternalKernelModPtr = std::shared_ptr<InternalKernelMod>;
+using InternalKernelModPtrList = std::vector<InternalKernelModPtr>;
+
+#define MS_INTERNAL_KERNEL_FACTORY_REG(NAME, DERIVE) MS_KERNEL_FACTORY_REG(InternalKernelMod, NAME, DERIVE)
 }  // namespace kernel
 }  // namespace mindspore
-#endif
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_MOD_H_

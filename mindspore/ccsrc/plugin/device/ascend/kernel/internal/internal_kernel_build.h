@@ -1,5 +1,5 @@
 /**
- * Copyright 2023-2024 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_BUILD_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_BUILD_H_
 #include <memory>
-#include "plugin/device/ascend/kernel/internal/matmul.h"
+#include "kernel/kernel.h"
+
 namespace mindspore {
 namespace kernel {
-internal::OpParamPtr MatMul::CreateOpParam(const std::vector<KernelTensor *> &inputs,
-                                           const std::vector<KernelTensor *> &outputs) {
-  internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
-  internal::MatMulParam matmul_param;
-  // setup matmul param from inputs
-  param_ptr->specificParam = matmul_param;
-  return param_ptr;
-}
-void MatMul::SetInOutIdx() {
-  inputsIdxMap_[0] = 0;
-  inputsIdxMap_[1] = 1;
-  outputsIdxMap_[0] = 0;
-}
-
-MS_INTERNAL_KERNEL_FACTORY_REG(MatMul, MatMul);
+KernelModPtr InternalKernelBuild(const AnfNodePtr &anf_node);
+bool IsRegisteredInternalKernel(const AnfNodePtr &anf_node);
 }  // namespace kernel
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_BUILD_H_

@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <memory>
-#include "plugin/device/ascend/kernel/internal/matmul.h"
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_UTILS_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_UTILS_H_
+
+#include "kernel/kernel.h"
+#include "internal_kernel.h"
+
 namespace mindspore {
 namespace kernel {
-internal::OpParamPtr MatMul::CreateOpParam(const std::vector<KernelTensor *> &inputs,
-                                           const std::vector<KernelTensor *> &outputs) {
-  internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
-  internal::MatMulParam matmul_param;
-  // setup matmul param from inputs
-  param_ptr->specificParam = matmul_param;
-  return param_ptr;
-}
-void MatMul::SetInOutIdx() {
-  inputsIdxMap_[0] = 0;
-  inputsIdxMap_[1] = 1;
-  outputsIdxMap_[0] = 0;
-}
+class InternalKernelUtils {
+ public:
+  static internal::TensorFormat ToInternalFormat(Format format);
+  static internal::TensorDType ToInternalDType(TypeId type);
+  static void ToInternalTensor(internal::Tensor *internal_tensor, const KernelTensor *kernel_tensor);
 
-MS_INTERNAL_KERNEL_FACTORY_REG(MatMul, MatMul);
+  static internal::DeviceRawBuf ToDeviceRawBuf(const KernelTensor *kernel_tensor);
+};
 }  // namespace kernel
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_UTILS_H_
