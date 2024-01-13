@@ -156,6 +156,18 @@ class BACKEND_EXPORT PyBoostUtils {
   static std::vector<tensor::TensorPtr> CastTensor(const std::vector<tensor::TensorPtr> &tensors,
                                                    const std::vector<TypeId> &type_id_list,
                                                    const std::string &device_target);
+  // ValueTuple input
+  static std::vector<tensor::TensorPtr> CastTensor(const std::vector<tensor::TensorPtr> &tensors, TypeId type_id,
+                                                   const std::string &device_target);
+  static ValueTuplePtr ConvertTensorVectorToTuple(const std::vector<TensorPtr> &tensor_list) {
+    vector<ValuePtr> value_vector;
+    for (const auto &tensor : tensor_list) {
+      (void)value_vector.emplace_back(tensor);
+    }
+    auto result = std::make_shared<ValueTuple>(value_vector);
+    MS_LOG(DEBUG) << "Convert TensorList to ValueTuple " << result->ToString();
+    return result;
+  }
 };
 
 template <typename T>

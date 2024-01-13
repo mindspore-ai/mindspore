@@ -13,3 +13,5 @@ concat:
             dtype: tensor
     function:
         name: concat_
+    dispatch:
+      enable: False
