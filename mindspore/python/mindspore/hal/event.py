@@ -14,6 +14,7 @@
 # ============================================================================
 """Hal event class"""
 from mindspore._c_expression import Event as Event_
+from mindspore._c_expression import Stream as Stream_
 from mindspore._c_expression import current_stream as current_stream_
 
 
@@ -72,6 +73,9 @@ class Event(Event_):
         """
         if stream is None:
             stream = current_stream_()
+        if not isinstance(stream, Stream_):
+            raise TypeError(f"For 'record', the argument 'stream' should be Stream,"
+                            f" but got {type(stream)}.")
         super().record(stream)
 
     def wait(self, stream=None):
@@ -83,6 +87,9 @@ class Event(Event_):
         """
         if stream is None:
             stream = current_stream_()
+        if not isinstance(stream, Stream_):
+            raise TypeError(f"For 'wait', the argument 'stream' should be Stream,"
+                            f" but got {type(stream)}.")
         super().wait(stream)
 
     def synchronize(self):
@@ -114,4 +121,7 @@ class Event(Event_):
         end_event (Event): end event.
         """
         # pylint: disable=useless-super-delegation
+        if not isinstance(end_event, Event):
+            raise TypeError(f"For 'elapsed_time', the argument 'end_event' should be Event,"
+                            f" but got {type(end_event)}.")
         return super().elapsed_time(end_event)
