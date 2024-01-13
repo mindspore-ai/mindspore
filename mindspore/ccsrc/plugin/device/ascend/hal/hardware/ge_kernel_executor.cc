@@ -32,6 +32,7 @@
 #include "plugin/device/ascend/kernel/rts/rt_kernel_build.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_metadata.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_build.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_build.h"
 
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
@@ -72,6 +73,8 @@ bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
       kernel_mod_ptr = kernel::HcclOpBuild(kernel);
     } else if (AnfAlgo::GetKernelType(kernel) == KernelType::OPAPI_KERNEL) {
       kernel_mod_ptr = kernel::AclnnOpBuild(kernel);
+    } else if (AnfAlgo::GetKernelType(kernel) == KernelType::INTERNAL_KERNEL) {
+      kernel_mod_ptr = kernel::InternalKernelBuild(kernel);
     } else {
       MS_LOG(EXCEPTION) << "The kernel: " << kernel->fullname_with_scope() << " kernel build failed, kernel type: "
                         << kernel::KernelTypeLabel(AnfAlgo::GetKernelType(kernel));

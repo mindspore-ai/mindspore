@@ -13,19 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "plugin/device/ascend/kernel/internal/internal_kernel_mod.h"
-#include "ms_kernels_internal/types.h"
-internal::TensorFormat ToInternalFormat(Format format) { return internal::TensorFormat::TENSOR_FORMAT_ND; }
+#include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
 
-internal::TensorDType ToInternalDType(TypeId type) { return internal::TensorDType::TENSOR_DTYPE_FLOAT16; }
+#include "acl/acl_rt.h"
 
-void ToInternalTensor(internal::Tensor *internal_tensor, const KernelTensor *kernel_tensor) {
-  internal_tensor->desc.format = ToInternalFormat(kernel_tensor->format());
-  internal_tensor->desc.dtype = ToInternalDType(kernel_tensor->dtype_id());
-  internal_tensor->desc.dims = internal::VecToSVec<int64_t>(kernel_tensor->GetShapeVector());
-  internal_tensor->data = kernel_tensor->device_ptr();
-}
-
+namespace mindspore {
+namespace kernel {
 InternalKernelMod::~InternalKernelMod() {
   for (auto t : inputs_) {
     delete t;
@@ -43,42 +38,110 @@ int InternalKernelMod::Build(const std::vector<KernelTensor *> &inputs, const st
 
   // abstract validation info from inputs
   internal::ValidateInfo info;
-  info.input_num_ = inputsIdxMap.size();
-  info.output_num_ = outputsIdxMap.size();
-  info.input_dtype_ = ToInternalDType(inputs[0]->GetDtype());
-  info.output_dtype_ = ToInternalDType(outputs[0]->GetDtype());
-  info.input_format_ = ToInternalFormat(inputs[0]->GetFormat());
-  info.output_format_ = ToInternalFormat(outputs[0]->GetFormat());
+  info.input_num_ = inputsIdxMap_.size();
+  info.output_num_ = outputsIdxMap_.size();
+  for (auto input : inputs) {
+    info.input_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(input->GetDtype()));
+    info.input_format_.emplace_back(InternalKernelUtils::ToInternalFormat(input->GetFormat()));
+  }
+  for (auto output : outputs) {
+    info.output_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(output->GetDtype()));
+    info.output_format_.emplace_back(InternalKernelUtils::ToInternalFormat(output->GetFormat()));
+  }
   impl_->Init(info);
-  for (auto iter = inputsIdxMap.begin(); iter != inputsIdxMap.end(); iter++) {
-    ToInternalTensor(inputs_[iter->second], inputs[iter->first]);
+  for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); iter++) {
+    InternalKernelUtils::ToInternalTensor(inputs_[iter->second], inputs[iter->first]);
   }
   impl_->SetInputs(inputs_);
+
   return 0;
 }
+
 bool InternalKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   SetInOutIdx();
   inputs_.resize(inputsIdxMap_.size());
-  std::fill(inputs_.begin(), inputs_.end(), new internal::Tensor());
+  for (size_t i = 0; i < inputs_.size(); ++i) {
+    inputs_[i] = new internal::Tensor();
+  }
+  // std::fill(inputs_.begin(), inputs_.end(), new internal::Tensor());
   outputs_.resize(outputsIdxMap_.size());
-  std::fill(outputs_.begin(), outputs_.end(), new internal::Tensor());
-  Build(inputs, outputs);
+  for (size_t i = 0; i < outputs_.size(); ++i) {
+    outputs_[i] = new internal::Tensor();
+  }
+  // std::fill(outputs_.begin(), outputs_.end(), new internal::Tensor());
   return true;
 }
+
 int InternalKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  Build(inputs, outputs);
+  auto ret = KernelMod::Resize(inputs, outputs);
+  if (ret != 0) {
+    MS_LOG(ERROR) << "op " << op_type_ << " invoke resize failed";
+    return KRET_RESIZE_FAILED;
+  }
+
+  ret = Build(inputs, outputs);
+  if (ret != 0) {
+    MS_LOG(ERROR) << "op " << op_type_ << " build kernel failed";
+    return KRET_RESIZE_FAILED;
+  }
+
+  // Invoke Tiling
+  std::vector<internal::DIMS> input_shapes(inputs_.size()), output_shapes;
+  for (size_t i = 0; i < inputs_.size(); ++i) {
+    input_shapes[i] = inputs_[i]->desc.dims;
+  }
+  impl_->InferShape(input_shapes, output_shapes);
+
+  auto tiling_size = impl_->GetTilingBufSize();
+  internal::HostRawBuf host_tiling_buf;
+  host_tiling_buf.addr_ = malloc(tiling_size);
+  host_tiling_buf.size_ = tiling_size;
+
+  ret = impl_->Tiling(host_tiling_buf);
+  if (ret != 0) {
+    MS_LOG(ERROR) << "op " << op_type_ << " tiling failed";
+    return KRET_RESIZE_FAILED;
+  }
+
+  // allocate device tiling buf
+  device_tiling_buf_.size_ = tiling_size;
+  ret = aclrtMalloc(&device_tiling_buf_.addr_, tiling_size, ACL_MEM_MALLOC_HUGE_FIRST);
+  if (ret != 0) {
+    MS_LOG(ERROR) << "op " << op_type_ << " alloc device tiling buf failed";
+    return KRET_RESIZE_FAILED;
+  }
+  ret = aclrtMemcpy(device_tiling_buf_.addr_, device_tiling_buf_.size_, host_tiling_buf.addr_, host_tiling_buf.size_,
+                    ACL_MEMCPY_HOST_TO_DEVICE);
+
+  // update workspace_size list
+  auto workspace_size_list = impl_->GetWorkSpaceSize();
+  workspace_size_list_.resize(workspace_size_list.size());
+  for (size_t i = 0; i < workspace_size_list.size(); ++i) {
+    workspace_size_list_[i] = static_cast<size_t>(workspace_size_list[i]);
+  }
+
   return 0;
 }
-bool InternalKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
-                               const DeviceRawBuf &tilingBuf, const std::vector<DeviceRawBuf> &workspace,
-                               void *stream_ptr) {
-  impl_->SetStream(stream_ptr);
-  impl_->SetDeviceTilingBuf(tilingBuf);
-  impl_->SetWorkSpace(workspace);
-  for (auto iter = outputsIdxMap.begin(); iter != outputsIdxMap.end(); iter++) {
-    ToInternalTensor(out[iter->second], [iter->first]);
+
+bool InternalKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+  for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); ++iter) {
+    inputs_[iter->second]->data = inputs[iter->first]->device_ptr();
   }
-  impl_->SetOutputs(out);
+  impl_->SetInputs(inputs_);
+  impl_->SetStream(stream_ptr);
+  impl_->SetDeviceTilingBuf(device_tiling_buf_);
+  std::vector<internal::DeviceRawBuf> ws_raw_bufs(workspace.size());
+  for (size_t i = 0; i < workspace.size(); ++i) {
+    ws_raw_bufs[i] = InternalKernelUtils::ToDeviceRawBuf(workspace[i]);
+  }
+  impl_->SetWorkSpace(ws_raw_bufs);
+  for (auto iter = outputsIdxMap_.begin(); iter != outputsIdxMap_.end(); ++iter) {
+    InternalKernelUtils::ToInternalTensor(outputs_[iter->second], outputs[iter->first]);
+  }
+  impl_->SetOutputs(outputs_);
   impl_->Launch();
   return true;
 }
+}  // namespace kernel
+}  // namespace mindspore

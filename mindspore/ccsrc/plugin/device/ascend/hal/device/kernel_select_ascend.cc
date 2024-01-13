@@ -31,6 +31,7 @@
 #include "plugin/device/ascend/kernel/acl/acl_kernel_build.h"
 #include "plugin/device/ascend/kernel/host/host_kernel_build.h"
 #include "plugin/device/ascend/kernel/host/host_kernel_metadata.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_build.h"
 #include "kernel/kernel_build_info.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "transform/acl_ir/op_api_util.h"
@@ -427,7 +428,7 @@ void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_ty
     } else if (cnode_output_object_type == kernel::KernelObjectType::SCALAR) {
       output_object_type = cnode_output_object_type;
     }
-  } else if (kernel_type == OPAPI_KERNEL) {
+  } else if (kernel_type == OPAPI_KERNEL || kernel_type == INTERNAL_KERNEL) {
     transform::OpApiUtil::GetValidKernelBuildInfo(kernel, &input_formats, &output_formats, &input_reshape_types,
                                                   &output_reshape_types);
   } else {
@@ -508,6 +509,12 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const CNode
   static std::set<std::string> kAclnnOpSelectedSet;
   transform::ErrorAclType acl_err_type = transform::ErrorAclType::kNormalOp;
   std::tuple<bool, std::string, ExceptionType> result = std::make_tuple(true, "", NoExceptionType);
+  auto enable_internal = true;
+  if (enable_internal && kernel::IsRegisteredInternalKernel(node)) {
+    GenerateKernelBuildInfo(node, KernelType::INTERNAL_KERNEL);
+    return result;
+  }
+
   if (enable_aclnn && kernel::IsRegisteredAclnnOp(node)) {
     GenerateKernelBuildInfo(node, KernelType::OPAPI_KERNEL);
     std::string op_name = common::AnfAlgo::GetCNodeName(node);
