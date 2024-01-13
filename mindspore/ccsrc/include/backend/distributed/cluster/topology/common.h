@@ -89,6 +89,7 @@ static const size_t kCgnExecuteRetryNum = 210;
 static const size_t kMsnExecuteRetryNum = 210;
 static const size_t kNoRetry = 1;
 static const uint32_t kExecuteInterval = 3;
+static const size_t kDefaultClusterTimeOut = 600;
 
 #define EXECUTE_WITH_RETRY(func, retry, interval, err_msg)                     \
   do {                                                                         \

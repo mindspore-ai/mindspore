@@ -26,12 +26,13 @@ class _Node:
     Base class for dynamic networking nodes.
 
     """
-    def __init__(self, worker_num, sched_host, sched_port, args_list, output_file):
+    def __init__(self, worker_num, sched_host, sched_port, timeout, args_list, output_file):
         self.worker_num = worker_num
         self.sched_host = sched_host
         self.sched_port = sched_port
         self.args_list = args_list
         self.output_file = output_file
+        self.timeout = timeout
 
     def run(self):
         """
@@ -41,6 +42,7 @@ class _Node:
         os.environ["MS_WORKER_NUM"] = str(self.worker_num)
         os.environ["MS_SCHED_HOST"] = self.sched_host
         os.environ["MS_SCHED_PORT"] = str(self.sched_port)
+        os.environ["MS_CLUSTER_TIMEOUT"] = str(self.timeout)
 
 class _MetaServerNode(_Node):
     """
@@ -62,8 +64,8 @@ class _ComputeGraphNode(_Node):
     """
     Worker node for dynamic networking. Inherits from the Node class.
     """
-    def __init__(self, worker_num, sched_host, sched_port, node_id, args_list, output_file):
-        super().__init__(worker_num, sched_host, sched_port, args_list, output_file)
+    def __init__(self, worker_num, sched_host, sched_port, timeout, node_id, args_list, output_file):
+        super().__init__(worker_num, sched_host, sched_port, timeout, args_list, output_file)
         self.node_id = node_id
 
 
@@ -111,6 +113,7 @@ class _ProcessManager:
 
         self.log_dir = args.log_dir
         self.join = args.join
+        self.cluster_time_out = args.cluster_time_out
 
         self.cmd = args.training_script
         self.cmd_args = args.training_script_args
@@ -118,13 +121,6 @@ class _ProcessManager:
         """`is_scale` flags whether the current task is a scaling task and there is already a
         manager on the current node."""
         self.is_scale = False
-        if args.is_scalein:
-            self.is_scale = True
-            self.scale_num = -args.scale_num
-        elif args.is_scaleout:
-            self.is_scale = True
-            self.scale_num = args.scale_num
-
         self.scheduler_url = _generate_url(self.master_addr, self.master_port)
 
         # Create log directory and set the permission if not exists.
@@ -163,7 +159,7 @@ class _ProcessManager:
         Starts the scheduler node.
 
         """
-        msn = _MetaServerNode(self.worker_num, self.master_addr, self.master_port,
+        msn = _MetaServerNode(self.worker_num, self.master_addr, self.master_port, self.cluster_time_out,
                               _generate_cmd_args_list(self.cmd, self.cmd_args),
                               os.path.join(self.log_dir, "scheduler.log"))
         self.msn_process = msn.run()
@@ -175,7 +171,7 @@ class _ProcessManager:
         """
         for i in range(self.local_worker_num):
             node_id, log_name = self._get_node_id_and_log_path(i)
-            cgn = _ComputeGraphNode(self.worker_num, self.master_addr, self.master_port,
+            cgn = _ComputeGraphNode(self.worker_num, self.master_addr, self.master_port, self.cluster_time_out,
                                     node_id, _generate_cmd_args_list(self.cmd, self.cmd_args), log_name)
             process = cgn.run()
             self.cgn_processes.append(process)

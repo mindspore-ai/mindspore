@@ -77,36 +77,22 @@ def get_args():
              "If set to True, msrun will check process status and parse the log files."
     )
     parser.add_argument(
-        "--is_scalein",
-        default=0,
+        "--cluster_time_out",
+        default=600,
         type=int,
-        help="an integer parameter indicating if the task involves scaling in. It accepts "
-        "values of 0 or 1, where 1 indicates the removal of `scale_num` nodes from "
-        "the local cluster. This is experimental parameter."
-    )
-    parser.add_argument(
-        "--is_scaleout",
-        default=0,
-        type=int,
-        help="an integer parameter indicating if the task involves scaling out. It accepts"
-        " values of 0 or 1, where 1 indicates the addition of `scale_num` nodes to the"
-        " local cluster. This is experimental parameter."
-    )
-    parser.add_argument(
-        "--scale_num",
-        default=0,
-        type=int,
-        help="specifies the number of nodes to be added or removed from the local cluster."
-             "This is experimental parameter."
+        help="specifies time out window of cluster building procedure in second. "
+             "If only scheduler is launched or spawned worker number is not enough, "
+             "other processes will wait for 'cluster_time_out' seconds and then exit."
     )
     parser.add_argument(
         "training_script",
         type=str,
         help="The full path to the training script that will be executed in parallel, followed "
-        "by any additional arguments required by the script."
+             "by any additional arguments required by the script."
     )
     parser.add_argument(
-        "training_script_args", nargs=REMAINDER
+        "training_script_args", nargs=REMAINDER,
+        help="Arguments for user-defined training script."
     )
     return parser.parse_args()
 
