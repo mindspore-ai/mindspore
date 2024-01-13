@@ -8,6 +8,9 @@
 [![Slack](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://join.slack.com/t/mindspore/shared_invite/zt-dgk65rli-3ex4xvS4wHX7UDmsQmfu8w)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://gitee.com/mindspore/mindspore/pulls)
 
+Pull request for Hackathon Community Contribution HexCambridge 2021
+
+
 [查看中文](./README_CN.md)
 
 <!-- TOC -->
