@@ -87,6 +87,9 @@ class Stream(Stream_):
         """
         if event is None:
             event = Event()
+        if not isinstance(event, Event):
+            raise TypeError(f"For 'record_event', the argument 'event' should be Event,"
+                            f" but got {type(event)}.")
         event.record(self)
         return event
 
@@ -97,6 +100,9 @@ class Stream(Stream_):
         Inputs:
             event (Event): an event to wait for.
         """
+        if not isinstance(event, Event):
+            raise TypeError(f"For 'wait_event', the argument 'event' should be Event,"
+                            f" but got {type(event)}.")
         event.wait(self)
 
     def wait_stream(self, stream):
@@ -109,6 +115,9 @@ class Stream(Stream_):
         Inputs:
             stream (Stream): a stream to synchronize.
         """
+        if not isinstance(stream, Stream):
+            raise TypeError(f"For 'wait_stream', the argument 'stream' should be Stream,"
+                            f" but got {type(stream)}.")
         self.wait_event(stream.record_event())
 
     def synchronize(self):
@@ -142,9 +151,10 @@ class Stream(Stream_):
         return super().query()
 
     def __eq__(self, o):
-        if isinstance(o, Stream):
-            return super().__eq__(o)
-        return False
+        if not isinstance(o, Stream):
+            raise TypeError(f"For '__eq__', the argument 'other' should be Stream,"
+                            f" but got {type(o)}.")
+        return super().__eq__(o)
 
     def __hash__(self):
         return hash((self.id, self.device_id))
@@ -174,6 +184,9 @@ def set_cur_stream(stream):
     """
     if stream is None:
         return
+    if not isinstance(stream, Stream):
+        raise TypeError(f"For 'set_cur_stream', the argument 'stream' should be Stream,"
+                        f" but got {type(stream)}.")
     set_cur_stream_(stream)
 
 def current_stream():
@@ -205,6 +218,9 @@ class StreamCtx():
         ctx_stream (Stream): selected stream. This manager is a no-op if it's ``None``.
     """
     def __init__(self, ctx_stream):
+        if ctx_stream is not None and not isinstance(ctx_stream, Stream):
+            raise TypeError(f"For 'StreamCtx', the argument 'ctx_stream' should be Stream,"
+                            f" but got {type(ctx_stream)}.")
         self.stream = ctx_stream
         self.prev_stream = None
 

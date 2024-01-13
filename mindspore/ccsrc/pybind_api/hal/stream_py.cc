@@ -45,6 +45,9 @@ StreamPy::StreamPy(int priority, int stream_id) {
   device_ctx_ = GetDeviceCtx();
   stream_id_ = IntToSize(stream_id);
   MS_LOG(DEBUG) << "stream_id:" << stream_id_;
+  if (device_ctx_->device_res_manager_->GetStream(stream_id) == nullptr) {
+    MS_EXCEPTION(ValueError) << "stream_id:" << stream_id << " is not exist";
+  }
 }
 
 StreamPy::~StreamPy() { device_ctx_ = nullptr; }
