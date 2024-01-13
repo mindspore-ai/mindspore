@@ -29,8 +29,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t kInputQueryBSHRank = 3;
-constexpr size_t kInputQueryBNSDRank = 4;
+constexpr size_t kInputQueryBSHRankPFA = 3;
+constexpr size_t kInputQueryBNSDRankPFA = 4;
 constexpr int64_t SPARSE_LEFTUP_ATTENTION_SIZE = 2048;
 enum SparseMode { SPARSE_MODE_0, SPARSE_MODE_1, SPARSE_MODE_2 };
 constexpr int64_t ALIGN_BFLOAT_16 = 16;
@@ -148,7 +148,7 @@ abstract::TupleShapePtr GetInputsShape(const std::vector<AbstractBasePtr> &input
   bool qeury_rank_is_dyn = IsDynamicRank(query_shape);
   bool key_rank_is_dyn = IsDynamicRank(key_shape);
   bool value_rank_is_dyn = IsDynamicRank(value_shape);
-  size_t temp_rank = input_layout == "BSH" ? kInputQueryBSHRank : kInputQueryBNSDRank;
+  size_t temp_rank = input_layout == "BSH" ? kInputQueryBSHRankPFA : kInputQueryBNSDRankPFA;
   if (qeury_rank_is_dyn) {
     query_shape = std::vector(temp_rank, abstract::Shape::kShapeDimAny);
   }

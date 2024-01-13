@@ -13,40 +13,59 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_CORE_OPS_INCRE_FlashAttentionSH_ATTENTION_H
-#define MINDSPORE_CORE_OPS_INCRE_FlashAttentionSH_ATTENTION_H
+#ifndef MINDSPORE_CORE_OPS_INCRE_FLASH_ATTENTION_H_
+#define MINDSPORE_CORE_OPS_INCRE_FLASH_ATTENTION_H_
 #include <map>
 #include <memory>
-#include <string>
 #include <vector>
-
-#include "mindapi/base/types.h"
 #include "ops/base_operator.h"
+#include "mindapi/base/types.h"
+#include "ops/primitive_c.h"
+#include "abstract/abstract_value.h"
+#include "mindspore/core/ops/op_name.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameIncreFlashAttention = "IncreFlashAttention";
-/// \brief Computes a tensor to the power of the second input.
+enum IncreFlashAttentionInputIndex : size_t {
+  kIncreFlashAttentionInputQueryIndex = 0,
+  kIncreFlashAttentionInputKeyIndex,
+  kIncreFlashAttentionInputValueIndex,
+  kIncreFlashAttentionInputAttnMaskIndex,
+  kIncreFlashAttentionInputActualSeqLengths,
+  kIncreFlashAttentionInputPaddingMaskIndex,
+  kIncreFlashAttentionInputDequantScale1,
+  kIncreFlashAttentionInputQuantScale1,
+  kIncreFlashAttentionInputDequantScale2,
+  kIncreFlashAttentionInputQuantScale2,
+  kIncreFlashAttentionInputQuantOffset2,
+  kIncreFlashAttentionInputAntiquantScale,
+  kIncreFlashAttentionInputAntiquantOffset,
+  kIncreFlashAttentionInputBlockTable,
+  kIncreFlashAttentionInputsNum,
+};
+enum IncreFlashAttentionOutputIndex : size_t {
+  kIncreFlashAttentionOutputAttentionOutIndex = 0,
+  kIncreFlashAttentionOutputsNum,
+};
+
+/// \brief IncreFlashAttention.
 /// Refer to Python API @ref mindspore.ops.IncreFlashAttention for more details.
 class MIND_API IncreFlashAttention : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(IncreFlashAttention);
   /// \brief Constructor.
   IncreFlashAttention() : BaseOperator(kNameIncreFlashAttention) {
-    InitIOName({"query", "key", "value", "atten_mask", "actual_seq_lengths", "padding_mask", "dequant_scale1",
-                "quant_scale1", "dequant_scale2", "quant_scale2", "quant_offset2"},
-               {"attention_out"});
+    InitIOName(
+      {"query", "key", "value", "attn_mask", "actual_seq_lengths", "padding_mask", "dequant_scale1", "quant_scale1",
+       "dequant_scale2", "quant_scale2", "quant_offset2", "antiquant_scale", "antiquant_offset", "block_table"},
+      {"attention_out"});
   }
-  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.IncreFlashAttention for the inputs.
-
-  void Init() const;
 };
-MIND_API abstract::AbstractBasePtr IncreFlashAttentionInfer(const abstract::AnalysisEnginePtr &,
-                                                            const PrimitivePtr &primitive,
-                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
-using kPrimIncreFlashAttentionPtr = std::shared_ptr<IncreFlashAttention>;
+AbstractBasePtr IncreFlashAttentionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<AbstractBasePtr> &input_args);
+using IncreFlashAttentionPtr = std::shared_ptr<IncreFlashAttention>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_INCRE_FlashAttentionSH_ATTENTION_H
+#endif  // MINDSPORE_CORE_OPS_INCRE_FLASH_ATTENTION_H_
