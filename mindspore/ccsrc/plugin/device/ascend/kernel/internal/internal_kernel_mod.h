@@ -38,7 +38,7 @@ class InternalKernelMod : public KernelMod {
   std::vector<KernelAttr> GetOpSupport() override {
     MS_LOG(EXCEPTION) << "This interface is not support in internal kernel.";
   }
-  
+
   virtual size_t GetTilingBufSize() { return impl_->GetTilingBufSize(); }
   virtual int Tiling(internal::HostRawBuf &tilingBuf) { return impl_->Tiling(tilingBuf); }
 
