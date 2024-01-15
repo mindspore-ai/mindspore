@@ -10131,7 +10131,7 @@ class PromptFlashAttention(Primitive):
           Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
         - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or float32.
           For each element, 0 indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, 1, S, S)`.
-        - **padding_mask** (Tensor) - The padding mask tensor with data type of float16 or float32
+        - **pse_shift** (Tensor) - The position encoding tensor with data type of float16 or float32
         - **actual_seq_lengths** (Tensor): Describe actual sequence length of each input with data type of int64.
         - **actual_seq_lengths_kv** (Tensor): Describe actual sequence length of each input with data type of int64.
         - **dep_scale1** (Tensor)
@@ -10176,7 +10176,7 @@ class PromptFlashAttention(Primitive):
         validator.check_value_type('num_key_value_heads', num_key_value_heads, [int], self.name)
         validator.check_value_type('sparse_mode', sparse_mode, [int], self.name)
         validator.check_value_type('inner_precise', inner_precise, [int], self.name)
-        self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "padding_mask", "actual_seq_lengths",
+        self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "pse_shift", "actual_seq_lengths",
                                         "actual_seq_lengths_kv", "deq_scale1", "quant_scale1", "deq_scale2",
                                         "quant_scale2", "quant_offset2"],
                                 outputs=["attention_out"])

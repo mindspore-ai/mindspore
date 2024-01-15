@@ -199,7 +199,6 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"NLLLoss", kTupleTensor2},
                                                        {"NMSWithMask", kTupleTensor3},
                                                        {"PReLUGrad", kTupleTensor2},
-                                                       {"PromptFlashAttention", kTupleTensor1},
                                                        {"PSROIPooling", kTypeAny},
                                                        {"PriorityReplayBufferSample", kTuple},
                                                        {"Qr", kTupleTensor2},
