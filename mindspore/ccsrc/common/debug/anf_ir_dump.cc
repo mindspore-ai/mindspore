@@ -889,10 +889,17 @@ int GetDumpFormatLevel() {
     try {
       format_level = std::stoi(format);
     } catch (const std::invalid_argument &ia) {
-      MS_LOG(ERROR) << "Invalid argument: " << ia.what() << " when parse " << format
-                    << ". Please set this env variable to number 0-2.";
+      MS_LOG(EXCEPTION) << "Invalid argument: " << ia.what() << " when parse " << format
+                        << ". Please set this env variable to number 0-2.";
     }
+  } else if (format.size() > 1) {
+    MS_LOG(EXCEPTION) << "MS_DEV_DUMP_IR_FORMAT should be a single number with one digit.";
   }
+
+  if (format_level < 0 || format_level > 2) {
+    MS_LOG(EXCEPTION) << "Format level can only be from 0 to 2";
+  }
+
   return format_level;
 }
 
@@ -1284,6 +1291,7 @@ void AnfExporter::OuputIrStyleCNodes(const FuncGraphPtr &func_graph, const std::
   ParamIndexMap param_map;
   exported_[func_graph] = param_map;
   gsub->local_var = 0;
+  gsub->format_level = GetDumpFormatLevel();
   for (size_t idx = 0; idx < parameters.size(); idx++) {
     MS_EXCEPTION_IF_NULL(parameters[idx]);
     if ((*para_map).count(parameters[idx]) == 0) {
