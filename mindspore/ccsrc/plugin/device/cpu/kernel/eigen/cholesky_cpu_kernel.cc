@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,9 +68,6 @@ bool CholeskyCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const
   if (primitive_->HasAttr(CLEAN)) {
     clean_ = GetValue<bool>(primitive_->GetAttr(CLEAN));
   }
-  if (primitive_->HasAttr(LOWER)) {
-    lower_ = GetValue<bool>(primitive_->GetAttr(LOWER));
-  }
   return true;
 }
 
@@ -99,29 +96,13 @@ bool CholeskyCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &input
     Map<Matrix<T, RowMajor>> input(input_value, input_row_, input_col_);
     Map<Matrix<T, RowMajor>> output(output_value, output_row_, output_col_);
     (void)llt.compute(input);
-    if (flag_) {
-      if (clean_) {
-        if (lower_) {
-          output = llt.matrixL();
-        } else {
-          output = llt.matrixU();
-        }
-      } else {
-        if (lower_) {
-          output = llt.matrixLLT();
-        } else {
-          output = llt.matrixLLT().transpose();
-        }
-      }
+    if (!input.isApprox(input.transpose()) || llt.info() == Eigen::NumericalIssue) {
+      MS_LOG_EXCEPTION << "Cholesky expects symmetric positive definite matrices as inputs.";
+    }
+    if (!upper_) {
+      output = llt.matrixL();
     } else {
-      if (!input.isApprox(input.transpose()) || llt.info() == Eigen::NumericalIssue) {
-        MS_LOG_EXCEPTION << "Cholesky expects symmetric positive definite matrices as inputs.";
-      }
-      if (!upper_) {
-        output = llt.matrixL();
-      } else {
-        output = llt.matrixU();
-      }
+      output = llt.matrixU();
     }
   }
   return true;
