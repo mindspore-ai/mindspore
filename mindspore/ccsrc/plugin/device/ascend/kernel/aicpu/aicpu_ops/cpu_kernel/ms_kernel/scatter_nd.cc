@@ -82,11 +82,6 @@ uint32_t ScatterNdCpuKernel::Compute(CpuKernelContext &ctx) {
     KERNEL_LOG_ERROR("ScatterNd kernel data type [%s] not support.", DTypeStr(data_type_indices).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  if (data_type_indices != data_type_shape) {
-    KERNEL_LOG_ERROR("Indices and shape must have the same type, but got indices type: [%s] vs shape type: [%s].",
-                     DTypeStr(data_type_indices).c_str(), DTypeStr(data_type_shape).c_str());
-    return KERNEL_STATUS_PARAM_INVALID;
-  }
 
   switch (data_type_x) {
     case DT_INT8:
@@ -126,20 +121,26 @@ uint32_t ScatterNdCpuKernel::Compute(CpuKernelContext &ctx) {
 template <typename data_type_x>
 uint32_t ScatterNdCpuKernel::DTYPE_CHOOSE(const CpuKernelContext &ctx) {
   auto indices_type = static_cast<DataType>(ctx.Input(0)->GetDataType());
-  switch (indices_type) {
-    case DT_INT32:
-      return ScatterNdComputeRealKernel<int32_t, data_type_x>(ctx);
-    case DT_INT64:
-      return ScatterNdComputeRealKernel<int64_t, data_type_x>(ctx);
-    default:
-      KERNEL_LOG_ERROR("[%s] Data type of input is not supported, input data type is [%s].", ctx.GetOpType().c_str(),
-                       DTypeStr(indices_type).c_str());
-      return KERNEL_STATUS_PARAM_INVALID;
+  auto shape_type = static_cast<DataType>(ctx.Input(2)->GetDataType());
+  if (indices_type == DT_INT32) {
+    if (shape_type == DT_INT32) {
+      return ScatterNdComputeRealKernel<int32_t, int32_t, data_type_x>(ctx);
+    } else if (shape_type == DT_INT64) {
+      return ScatterNdComputeRealKernel<int32_t, int64_t, data_type_x>(ctx);
+    }
+  } else if (indices_type == DT_INT64) {
+    if (shape_type == DT_INT32) {
+      return ScatterNdComputeRealKernel<int64_t, int32_t, data_type_x>(ctx);
+    } else if (shape_type == DT_INT64) {
+      return ScatterNdComputeRealKernel<int64_t, int64_t, data_type_x>(ctx);
+    }
   }
-  return KERNEL_STATUS_OK;
+  KERNEL_LOG_ERROR("[%s] Data type of input is not supported, input data type is [%s].", ctx.GetOpType().c_str(),
+                   DTypeStr(indices_type).c_str());
+  return KERNEL_STATUS_PARAM_INVALID;
 }
 
-template <typename indices_type, typename data_type_x>
+template <typename indices_type, typename shape_type, typename data_type_x>
 uint32_t ScatterNdCpuKernel::ScatterNdComputeRealKernel(const CpuKernelContext &ctx) {
   int64_t n_slices = 1;
   int64_t slice_size = 1;
@@ -149,7 +150,7 @@ uint32_t ScatterNdCpuKernel::ScatterNdComputeRealKernel(const CpuKernelContext &
   const int64_t updates_dims = ctx.Input(1)->GetTensorShape()->GetDims();
 
   auto shape_indices = ctx.Input(0)->GetTensorShape();
-  auto data_shape = reinterpret_cast<indices_type *>(ctx.Input(2)->GetData());
+  auto data_shape = reinterpret_cast<shape_type *>(ctx.Input(2)->GetData());
   auto dims_shape = ctx.Input(2)->GetTensorShape()->NumElements();
   auto updates_shape = ctx.Input(1)->GetTensorShape();
   for (int64_t i = 0; i < dims_shape - indices_nd; i++) {

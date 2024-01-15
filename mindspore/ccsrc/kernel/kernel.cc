@@ -193,7 +193,7 @@ ShapeVector GetShapeVectorByBaseShape(const abstract::BaseShapePtr &base_shape) 
 }  // namespace
 
 void KernelTensor::SetHostInfo(const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value) {
-  host_info_ = std::make_unique<KernelHostInfo>();
+  CheckHostInfoValid();
   if (type) {
     SetType(type);
   }

@@ -587,12 +587,18 @@ device::DeviceAddressPtr CreateTensorDeviceAddressWithTensorAndCachedInfo(
 
   // Update shape and size for cached device address.
   cached_device_address->set_host_shape(shape);
-  cached_device_address->kernel_tensor()->SetShapeVector(shape);
-  cached_device_address->SetSize(tensor_size);
 
   // Create new device address from cached device device address.
   const auto &kernel_tensor = cached_device_address->kernel_tensor();
   MS_EXCEPTION_IF_NULL(kernel_tensor);
+  if (!kernel_tensor->host_info_exist()) {
+    // Host info is nullptr, need to set host info.
+    kernel_tensor->SetHostInfo(std::make_shared<abstract::TensorShape>(tensor->shape()),
+                               std::make_shared<TensorType>(tensor->Dtype()), nullptr);
+  }
+  kernel_tensor->SetShapeVector(shape);
+  cached_device_address->SetSize(tensor_size);
+
   auto new_kernel_tensor = kernel_tensor->CloneKernelTensor();
   MS_EXCEPTION_IF_NULL(new_kernel_tensor);
   new_kernel_tensor->set_device_ptr(nullptr);
@@ -629,7 +635,14 @@ void UpdateTensorCache(const DeviceContext *device_context, const device::Device
                                                       cached_device_address->type_id(), 0);
   cached_device_address->SetSize(size);
   cached_device_address->set_host_shape(tensor->shape());
-  cached_device_address->kernel_tensor()->SetShapeVector(tensor->shape());
+  const auto &kernel_tensor = cached_device_address->kernel_tensor();
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  if (!kernel_tensor->host_info_exist()) {
+    // Host info is nullptr, need to set host info.
+    kernel_tensor->SetHostInfo(std::make_shared<abstract::TensorShape>(tensor->shape()),
+                               std::make_shared<TensorType>(tensor->Dtype()), nullptr);
+  }
+  kernel_tensor->SetShapeVector(tensor->shape());
   cached_device_address->set_ptr(input_device_address->GetMutablePtr());
 }
 
@@ -835,6 +848,7 @@ void UpdateOutputAddressForRef(const OpCompilerInfoPtr &op_compiler_info,
     output_address->set_from_mem_pool(input_address->from_mem_pool());
     output_address->set_from_persistent_mem(input_address->from_persistent_mem());
     output_address->set_host_shape(input_address->host_shape());
+    DeviceAddressUtils::UpdateDeviceAddressHostInfoByNode(output_address, ref_node, output_index);
     output_address->kernel_tensor()->SetShapeVector(input_address->host_shape());
 
     for (size_t index = 0; index < op_compiler_info->outputs_.size(); ++index) {

@@ -23,6 +23,7 @@
 #include "runtime/graph_scheduler/actor/debug_actor.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/device/auto_mem_offload.h"
+#include "runtime/device/device_address_utils.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/convert_utils.h"
@@ -450,6 +451,7 @@ void DataPrepareActor::UpdateDeviceAddressForDataNode(const AnfNodePtr &input_no
   // Assign tensor address to input data node and set `ref_count` to `SIZE_MAX` for avoiding clean.
   (void)address_modified_input_nodes_.insert(input_node.get());
   tensor_address->set_flag(device_address->flag());
+  DeviceAddressUtils::UpdateDeviceAddressHostInfoByNode(tensor_address, input_node, 0);
   AnfAlgo::SetOutputAddr(tensor_address, 0, input_node.get());
   MS_LOG(DEBUG) << "Update device address of " << input_node->DebugString() << " to " << tensor_address.get()
                 << ", kernel tensor addr:" << tensor_address->kernel_tensor().get();
@@ -1053,6 +1055,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
       } else {
         (void)address_modified_input_nodes_.insert(backend_node.get());
         host_tensor_address->set_flag(device_tensor->flag());
+        DeviceAddressUtils::UpdateDeviceAddressHostInfoByNode(host_tensor_address, backend_node, 0);
         AnfAlgo::SetOutputAddr(host_tensor_address, 0, backend_node.get());
       }
     }
