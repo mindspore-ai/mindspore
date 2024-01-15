@@ -43,8 +43,7 @@ class FAScoreGradAclnnKernelMod : public AclnnKernelMod {
     auto head_num = GetFAGradAttr<int64_t>("head_num");
     auto input_layout = GetFAGradAttr<std::string>("input_layout");
     auto inner_precise = GetFAGradAttr<int64_t>("inner_precise");
-    EmptyKernelTensor empty_tensor;
-    empty_tensor.set_dtype_id(outputs[0]->dtype_id());
+    EmptyKernelTensor empty_tensor(outputs[0]->type_id(), outputs[0]->dtype_id());
     auto return_value =
       GEN_EXECUTOR(op_type_, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex7], nullptr, nullptr,
                    nullptr, inputs[kIndex3], inputs[kIndex5], inputs[kIndex6], nullptr, inputs[kIndex4], nullptr,

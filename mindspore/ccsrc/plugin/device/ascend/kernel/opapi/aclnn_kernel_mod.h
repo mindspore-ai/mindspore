@@ -41,14 +41,21 @@ using AclUtil = transform::AclUtil;
 
 class EmptyKernelTensor {
  public:
-  EmptyKernelTensor() {
+  EmptyKernelTensor() { tensor_ = new KernelTensor(); }
+  EmptyKernelTensor(TypeId type_id, TypeId dtype_id) {
     tensor_ = new KernelTensor();
+    set_type_id(type_id);
+    set_dtype_id(dtype_id);
+    set_empty_shape();
+  }
+  ~EmptyKernelTensor() { delete tensor_; }
+  void set_dtype_id(TypeId dtype_id) { tensor_->set_dtype_id(dtype_id); }
+  void set_type_id(TypeId type_id) { tensor_->set_type_id(type_id); }
+  void set_empty_shape() {
     auto tensor_shape = std::make_shared<abstract::TensorShape>();
     tensor_shape->SetShapeVector({0});
     tensor_->SetShape(tensor_shape);
   }
-  ~EmptyKernelTensor() { delete tensor_; }
-  void set_dtype_id(TypeId dtype_id) { tensor_->set_dtype_id(dtype_id); }
   KernelTensor *get() const { return tensor_; }
 
  private:
