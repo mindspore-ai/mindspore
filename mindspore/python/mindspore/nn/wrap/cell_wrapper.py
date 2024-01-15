@@ -673,7 +673,7 @@ class PipelineCell(Cell):
 
 class GradAccumulationCell(Cell):
     """
-    Wrap the network with Micro Batch.
+    Wrap the network with Micro Batch to enable the grad accumulation in semi_auto_parallel/auto_parallel mode.
 
     Args:
         network (Cell): The target network to wrap.
@@ -683,8 +683,11 @@ class GradAccumulationCell(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> net = Net()
-        >>> net = GradAccumulationCell(net, 4)
+        >>> import mindspore.nn as nn
+        >>> # Define the network structure of LeNet5. Refer to
+        >>> # https://gitee.com/mindspore/docs/blob/r2.2/docs/mindspore/code/lenet.py
+        >>> net = LeNet5()
+        >>> net = nn.GradAccumulationCell(net, 4)
     """
     def __init__(self, network, micro_size):
         super(GradAccumulationCell, self).__init__(auto_prefix=False)
