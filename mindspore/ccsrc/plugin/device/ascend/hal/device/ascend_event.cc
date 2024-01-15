@@ -29,6 +29,14 @@ AscendEvent::AscendEvent() {
   }
 }
 
+AscendEvent::AscendEvent(uint32_t flag) {
+  auto ret = aclrtCreateEventWithFlag(&event_, flag);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "aclrtCreateEventWithFlag failed, ret:" << ret;
+    event_ = nullptr;
+  }
+}
+
 AscendTimeEvent::AscendTimeEvent() {
   auto ret = aclrtCreateEventWithFlag(&event_, ACL_EVENT_TIME_LINE);
   if (ret != ACL_ERROR_NONE) {
@@ -72,12 +80,33 @@ void AscendEvent::WaitEvent() {
   need_wait_ = false;
 }
 
+void AscendEvent::WaitEventWithoutReset() {
+  MS_EXCEPTION_IF_NULL(event_);
+  MS_EXCEPTION_IF_NULL(wait_stream_);
+  // Query result will be reset after aclrtResetEvent is called.
+  auto ret = aclrtStreamWaitEvent(wait_stream_, event_);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclrtStreamWaitEvent failed, ret:" << ret;
+  }
+  need_wait_ = false;
+}
+
 void AscendEvent::SyncEvent() {
   MS_EXCEPTION_IF_NULL(event_);
   auto ret = aclrtSynchronizeEvent(event_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "aclrtSynchronizeEvent failed, ret:" << ret;
   }
+}
+
+bool AscendEvent::QueryEvent() {
+  MS_EXCEPTION_IF_NULL(event_);
+  aclrtEventRecordedStatus status;
+  auto ret = aclrtQueryEventStatus(event_, &status);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclQueryEventStatus failed, ret:" << ret;
+  }
+  return status == ACL_EVENT_RECORDED_STATUS_COMPLETE;
 }
 
 void AscendEvent::ElapsedTime(float *cost_time, const DeviceEvent *other) {

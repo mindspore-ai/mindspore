@@ -70,7 +70,7 @@ class Jit {
                           const GradParamPtr &grad_param) const;
   void RecordForwardGraphForJit(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
                                 const FuncGraphPtr &ms_func_graph) const;
-  void UpdateJitlForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v);
+  void UpdateJitlForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v, const size_t &stream_id);
   FuncGraphPtr GetJitForwardGraphCNodeInfo(const FuncGraphPtr &jit_forward_graph);
   void Reset();
 

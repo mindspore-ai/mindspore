@@ -964,7 +964,7 @@ void LaunchKernelsDynamic(const pynative::OpCompilerInfoPtr &op_compiler_info,
     AllocateOutputMemory(execute_kernel.outputs_device_address_, device_context, &alloc_output_device_address);
 
     // Launch kernel
-    const size_t stream_id = AnfAlgo::GetStreamId(kernel);
+    const size_t stream_id = op_run_info->base_op_run_info.stream_id;
     MS_EXCEPTION_IF_NULL(device_context);
     MS_EXCEPTION_IF_NULL(device_context->GetKernelExecutor(true));
     if (!device_context->GetKernelExecutor(true)->LaunchKernel(kernel, input_kernel_tensors, workspace_kernel_tensors,
@@ -992,7 +992,8 @@ void LaunchKernelsDynamic(const pynative::OpCompilerInfoPtr &op_compiler_info,
   ReleaseCacheInfo(op_compiler_info, ref_node);
 }
 
-void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *device_context) {
+void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *device_context,
+                   const session::BackendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_LOG(DEBUG) << "Start";
@@ -1031,7 +1032,7 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
       MS_LOG(EXCEPTION) << "Malloc for kernel output failed, Memory isn't enough, node:" << node->fullname_with_scope();
     }
 
-    const size_t stream_id = AnfAlgo::GetStreamId(node);
+    const size_t stream_id = op_run_info->base_op_run_info.stream_id;
     MS_EXCEPTION_IF_NULL(device_context);
     MS_EXCEPTION_IF_NULL(device_context->GetKernelExecutor(true));
     if (!device_context->GetKernelExecutor(false)->LaunchKernel(node, inputs, workspaces, outputs, stream_id)) {
@@ -1076,9 +1077,9 @@ void UpdateDeviceAddress(const KernelGraphPtr &graph, const std::vector<tensor::
 }
 
 void RunSingleOpGraph(const KernelGraphPtr &graph, const std::vector<tensor::TensorPtr> &input_tensors,
-                      const device::DeviceContext *device_context) {
+                      const device::DeviceContext *device_context, const session::BackendOpRunInfoPtr &op_run_info) {
   CopyDataToDevice(graph, input_tensors, device_context);
-  LaunchKernels(graph, device_context);
+  LaunchKernels(graph, device_context, op_run_info);
 }
 
 void RunSingleOpDynamic(const session::BackendOpRunInfoPtr &op_run_info, const OpCompilerInfoPtr &op_compiler_info,
@@ -1089,11 +1090,11 @@ void RunSingleOpDynamic(const session::BackendOpRunInfoPtr &op_run_info, const O
 void LaunchKernelTask(const pynative::KernelTaskType &task_type, DeviceContext *device_context,
                       const device::DeviceAddressPtrList &input_addr_list,
                       const TensorStorageInfoPtrList &input_storage_list,
-                      const device::DeviceAddressPtrList &output_addr_list) {
+                      const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id) {
   MS_EXCEPTION_IF_NULL(device_context);
   MS_LOG(DEBUG) << "Start, task_type:" << task_type;
   if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(task_type, input_addr_list, input_storage_list,
-                                                                   output_addr_list)) {
+                                                                   output_addr_list, stream_id)) {
     MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << task_type;
   }
   MS_LOG(DEBUG) << "End";

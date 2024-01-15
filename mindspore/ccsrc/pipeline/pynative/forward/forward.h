@@ -104,7 +104,7 @@ class ForwardExecutor {
   std::string GetCurrentCellObjId() const;
   std::string GetCurrentDeviceTarget(const PrimitivePtr &op_prim) const;
   void ReInit();
-  void RunContiguousTaskForTensor(const tensor::TensorPtr &tensor);
+  void RunContiguousTaskForTensor(const tensor::TensorPtr &tensor, const size_t &stream_id);
   void ForwardOpGradImpl(const FrontendOpRunInfoPtr &op_run_info);
   GradExecutorPtr grad() const;
   void InitOpRunInfo(const FrontendOpRunInfoPtr &op_run_info);
@@ -146,7 +146,7 @@ class ForwardExecutor {
 
   bool ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info, const ops::StridesCalcFunc &func_info,
                      bool is_tuple_output);
-  void RefreshTensorContiguous(const tensor::TensorPtr &tensor);
+  void RefreshTensorContiguous(const tensor::TensorPtr &tensor, const size_t &stream_id);
   device::DeviceAddressPtr TensorContiguousCallback(const DeviceSyncPtr &device_address,
                                                     const TensorStorageInfoPtr &storage_info);
 
@@ -159,7 +159,7 @@ class ForwardExecutor {
                                const size_t &input_idx, bool need_wait = false);
   void CreateDeviceAddressForViewInput(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
                                        const size_t &input_idx, bool enable_async, bool need_wait = false);
-  void RunContiguousTask(const tensor::TensorPtr &tensor, bool enable_async);
+  void RunContiguousTask(const tensor::TensorPtr &tensor, const size_t &stream_id, bool enable_async);
   PrimitivePtr GetSlicePrimFromCache(const std::string &op_name, bool is_input_to_attr);
   FrontendOpRunInfoPtr GenerateSliceOpRunInfo(const std::string &op_name, bool requires_grad,
                                               const stub::StubNodePtr &stub_output);

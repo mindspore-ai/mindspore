@@ -44,6 +44,7 @@ struct BaseOpRunInfo {
   bool is_mixed_precision_cast = false;
   bool use_dynamic_shape_process = false;
   bool need_earse_cache = false;
+  size_t stream_id{kDefaultStreamIndex};
   std::string op_name;
   std::string next_op_name;
   std::string device_target = "Unknown";

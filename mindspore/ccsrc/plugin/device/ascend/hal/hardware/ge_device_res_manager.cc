@@ -22,6 +22,7 @@
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_device_synchronizer.h"
+#include "plugin/device/ascend/hal/device/ascend_event.h"
 #include "plugin/device/cpu/hal/device/cpu_device_synchronizer.h"
 #include "include/transform/graph_ir/utils.h"
 
@@ -229,12 +230,54 @@ bool GeDeviceResManager::CreateStream(size_t *stream_id) const {
   return true;
 }
 
+bool GeDeviceResManager::CreateStreamWithPriority(size_t *stream_id, int32_t priority) const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return false;
+  }
+  AscendStreamMng::GetInstance().CreateStreamWithFlags(stream_id, ACL_STREAM_FAST_LAUNCH | ACL_STREAM_FAST_SYNC,
+                                                       IntToUint(priority));
+  return true;
+}
+
+bool GeDeviceResManager::single_op_multi_stream_enable() const {
+  return AscendStreamMng::GetInstance().single_op_multi_stream_enable();
+}
+
+void GeDeviceResManager::set_single_op_multi_stream_enable(bool single_op_multi_stream_enable) {
+  return AscendStreamMng::GetInstance().set_single_op_multi_stream_enable(single_op_multi_stream_enable);
+}
+
 void *GeDeviceResManager::GetStream(size_t stream_id) const {
   if (!BindDeviceToCurrentThread(false)) {
     MS_LOG(ERROR) << "Bind context to current thread failed";
     return nullptr;
   }
   return AscendStreamMng::GetInstance().GetStream(stream_id);
+}
+
+void GeDeviceResManager::SetCurrentStreamId(size_t stream_id) {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return;
+  }
+  AscendStreamMng::GetInstance().set_current_stream(stream_id);
+}
+
+size_t GeDeviceResManager::GetCurrentStreamId() const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return SIZE_MAX;
+  }
+  return AscendStreamMng::GetInstance().current_stream();
+}
+
+bool GeDeviceResManager::QueryStream(size_t stream_id) const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return false;
+  }
+  return AscendStreamMng::GetInstance().QueryStream(stream_id);
 }
 
 bool GeDeviceResManager::SyncStream(size_t stream_id) const {
@@ -251,6 +294,29 @@ bool GeDeviceResManager::SyncAllStreams() const {
   }
   runtime_instance_->SetContext();
   return AscendStreamMng::GetInstance().SyncAllStreams();
+}
+
+bool GeDeviceResManager::SyncNotDefaultStreams() const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return false;
+  }
+  return AscendStreamMng::GetInstance().SyncNotDefaultStreams();
+}
+
+size_t GeDeviceResManager::DefaultStream() const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return SIZE_MAX;
+  }
+  return AscendStreamMng::GetInstance().default_stream_id();
+}
+
+DeviceEventPtr GeDeviceResManager::CreateEventWithFlag(bool enable_timing, bool blocking) const {
+  auto flag = enable_timing ? ACL_EVENT_TIME_LINE : ACL_EVENT_DEFAULT;
+  auto event = std::make_shared<AscendEvent>(flag);
+  MS_EXCEPTION_IF_NULL(event);
+  return event;
 }
 }  // namespace ascend
 }  // namespace device

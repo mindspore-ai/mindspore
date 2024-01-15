@@ -338,6 +338,15 @@ bool EnableView(const FrontendOpRunInfoPtr &op_run_info) {
 
   return true;
 }
+
+#ifndef ENABLE_TEST
+size_t GetCurStreamId(const std::string &device_target) {
+  const auto &device_ctx = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+    {device_target, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+  MS_EXCEPTION_IF_NULL(device_ctx);
+  return device_ctx->device_res_manager_->GetCurrentStreamId();
+}
+#endif
 }  // namespace
 
 void ForwardExecutor::ClearForwardTask() {
@@ -502,7 +511,7 @@ void ForwardExecutor::CreateDeviceAddressForViewInput(const FrontendOpRunInfoPtr
   cur_mind_rt_backend->RunAllocMemTask(device_context, input_tensor, enable_async);
 }
 
-void ForwardExecutor::RunContiguousTask(const tensor::TensorPtr &tensor, bool enable_async) {
+void ForwardExecutor::RunContiguousTask(const tensor::TensorPtr &tensor, const size_t &stream_id, bool enable_async) {
   MS_EXCEPTION_IF_NULL(tensor);
   if (tensor->storage_info() == nullptr) {
     return;
@@ -513,7 +522,7 @@ void ForwardExecutor::RunContiguousTask(const tensor::TensorPtr &tensor, bool en
   auto device_addr = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
   const auto &cur_mind_rt_backend = GetMindRtBackend(device_addr->device_name());
   MS_EXCEPTION_IF_NULL(cur_mind_rt_backend);
-  cur_mind_rt_backend->RunContiguousTask(tensor, enable_async);
+  cur_mind_rt_backend->RunContiguousTask(tensor, stream_id, enable_async);
 }
 
 TypePtr InferTypeForViewComplex(const tensor::TensorPtr &tensor) {
@@ -838,6 +847,10 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args, bo
                   << ", input_to_attr is not empty:" << (!op_run_info->input_to_attr.empty());
     ClonePrim(op_run_info);
   }
+#ifndef ENABLE_TEST
+  // Obtaining device context may fail in UT
+  op_run_info->base_op_run_info.stream_id = GetCurStreamId(op_run_info->base_op_run_info.device_target);
+#endif
   op_run_info->cell_obj_id = GetCurrentCellObjId();
   return op_run_info;
 }
@@ -1146,7 +1159,7 @@ void ForwardExecutor::CreateInputAddressForViewOp(const tensor::TensorPtr &input
   CreateDeviceAddressForViewInput(op_run_info, input_tensor, input_idx, false);
 }
 
-void ForwardExecutor::RefreshTensorContiguous(const tensor::TensorPtr &tensor) {
+void ForwardExecutor::RefreshTensorContiguous(const tensor::TensorPtr &tensor, const size_t &stream_id) {
   MS_EXCEPTION_IF_NULL(tensor);
   if (tensor->storage_info() == nullptr) {
     return;
@@ -1155,17 +1168,17 @@ void ForwardExecutor::RefreshTensorContiguous(const tensor::TensorPtr &tensor) {
   // Gil might be release  by ACL, so release here to reduce conflict
   GilReleaseWithCheck release_gil;
 
-  RunContiguousTask(tensor, false);
+  RunContiguousTask(tensor, stream_id, false);
 }
 
-void ForwardExecutor::RunContiguousTaskForTensor(const tensor::TensorPtr &tensor) {
+void ForwardExecutor::RunContiguousTaskForTensor(const tensor::TensorPtr &tensor, const size_t &stream_id) {
   MS_EXCEPTION_IF_NULL(tensor);
   if (tensor->storage_info() == nullptr) {
     return;
   }
 
   GilReleaseWithCheck release_gil;
-  RunContiguousTask(tensor, !ScopedFallbackRunning::on() && enable_async());
+  RunContiguousTask(tensor, stream_id, !ScopedFallbackRunning::on() && enable_async());
 }
 
 device::DeviceAddressPtr ForwardExecutor::TensorContiguousCallback(const DeviceSyncPtr &device_address,
@@ -1181,8 +1194,14 @@ device::DeviceAddressPtr ForwardExecutor::TensorContiguousCallback(const DeviceS
   GilReleaseWithCheck release_gil;
   const auto &cur_mind_rt_backend = GetMindRtBackend(device_addr->device_name());
   MS_EXCEPTION_IF_NULL(cur_mind_rt_backend);
+
+  const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+    {device_addr->device_name(), device_addr->device_id()});
+  MS_EXCEPTION_IF_NULL(device_context);
+  auto stream_id = device_context->device_res_manager_->GetCurrentStreamId();
+
   // as_numpy sync promise contiguous run_sync
-  auto ret = cur_mind_rt_backend->RunContiguousTaskByAddress(device_addr, storage_info, false);
+  auto ret = cur_mind_rt_backend->RunContiguousTaskByAddress(device_addr, storage_info, stream_id, false);
   runtime::OpExecutor::GetInstance().WaitAll();
   return ret;
 }
@@ -1195,7 +1214,7 @@ void ForwardExecutor::PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info) {
     if (!value->isa<tensor::Tensor>()) {
       continue;
     }
-    RefreshTensorContiguous(value->cast<tensor::TensorPtr>());
+    RefreshTensorContiguous(value->cast<tensor::TensorPtr>(), op_run_info->base_op_run_info.stream_id);
   }
 }
 

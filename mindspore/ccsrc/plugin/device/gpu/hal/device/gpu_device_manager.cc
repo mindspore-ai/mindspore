@@ -94,11 +94,26 @@ bool GPUDeviceManager::CreateStream(CudaDeviceStream *stream) {
 }
 
 bool GPUDeviceManager::CreateStream(size_t *stream_id) {
+  MS_EXCEPTION_IF_NULL(stream_id);
+
   std::lock_guard<std::mutex> lock_gpu_streams(stream_mutex_);
   CudaDeviceStream stream;
   CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateStream(&stream), "Failed to create CUDA stream");
   *stream_id = gpu_streams_.size();
   (void)gpu_streams_.emplace_back(stream);
+  return true;
+}
+
+bool GPUDeviceManager::CreateStreamWithPriority(size_t *stream_id, int32_t priority) {
+  MS_EXCEPTION_IF_NULL(stream_id);
+
+  std::lock_guard<std::mutex> lock_gpu_streams(stream_mutex_);
+  CudaDeviceStream stream;
+  CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateStreamWithPriority(&stream, priority),
+                           "Failed to create CUDA stream with priority");
+  *stream_id = gpu_streams_.size();
+  (void)gpu_streams_.emplace_back(stream);
+
   return true;
 }
 
@@ -112,7 +127,7 @@ bool GPUDeviceManager::DestroyStream(size_t stream_id) {
     MS_LOG(WARNING) << "CUDA stream hsa been destroyed for stream id " << stream_id;
     return true;
   }
-  CHECK_OP_RET_WITH_EXCEPT(CudaDriver::DestroyStream(gpu_streams_.at(stream_id)), "Failed to create CUDA stream");
+  CHECK_OP_RET_WITH_EXCEPT(CudaDriver::DestroyStream(gpu_streams_.at(stream_id)), "Failed to destroy CUDA stream");
   gpu_streams_[stream_id] = nullptr;
   return true;
 }
@@ -123,6 +138,23 @@ CudaDeviceStream GPUDeviceManager::GetStream(size_t stream_id) const {
     return nullptr;
   }
   return gpu_streams_[stream_id];
+}
+
+void GPUDeviceManager::set_current_stream(size_t stream_id) { current_stream_id_ = stream_id; }
+
+size_t GPUDeviceManager::current_stream() const { return current_stream_id_; }
+
+bool GPUDeviceManager::QueryStream(size_t stream_id) {
+  if (stream_id >= gpu_streams_.size()) {
+    MS_LOG(ERROR) << "CUDA stream not found for stream id " << stream_id;
+    return false;
+  }
+  if (gpu_streams_.at(stream_id) == nullptr) {
+    MS_LOG(WARNING) << "CUDA stream has been destroyed for stream id " << stream_id;
+    return true;
+  }
+  MS_LOG(DEBUG) << "Query completion status of stream id: " << stream_id;
+  return CudaDriver::QueryStream(gpu_streams_.at(stream_id));
 }
 
 const CudaDeviceStream &GPUDeviceManager::default_stream() const { return default_stream_; }
@@ -179,6 +211,32 @@ bool GPUDeviceManager::SyncAllStreams() const {
     }
   }
   return true;
+}
+
+bool GPUDeviceManager::SyncNotDefaultStreams() const {
+  bool res = true;
+  for (size_t i = 0; i < gpu_streams_.size(); i++) {
+    if (i != default_stream_id_ && !SyncStream(i)) {
+      MS_LOG(ERROR) << "Failed to sync for gpu stream id: " << i;
+      res = false;
+    }
+  }
+  return res;
+}
+
+bool GPUDeviceManager::SyncExceptStreamsInList(const std::set<CudaDeviceStream> &except_streams) const {
+  bool res = true;
+  for (size_t i = 0; i < gpu_streams_.size(); i++) {
+    if (except_streams.count(gpu_streams_[i]) > 0) {
+      MS_LOG(DEBUG) << "Stream id:" << i << " is been synchronized.";
+      continue;
+    }
+    if (!SyncStream(i)) {
+      MS_LOG(ERROR) << "Failed to sync for gpu stream id: " << i;
+      res = false;
+    }
+  }
+  return res;
 }
 
 bool GPUDeviceManager::CopyDeviceMemToHost(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size) const {

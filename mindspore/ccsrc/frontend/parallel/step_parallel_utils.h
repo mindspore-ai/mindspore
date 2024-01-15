@@ -55,8 +55,9 @@ struct CommInfo {
   std::string world_group;
   std::string communication_backend;
 };
-const std::set<std::string> COMMUNICATION_OPS = {ALL_REDUCE, ALL_GATHER,       ALL_TO_ALL,         REDUCE_SCATTER,
-                                                 BROADCAST,  NEIGHBOREXCHANGE, NEIGHBOREXCHANGEV2, SYNC_BATCH_NORM};
+const std::set<std::string> COMMUNICATION_OPS = {
+  ALL_REDUCE,       ALL_GATHER,         ALL_TO_ALL,      REDUCE_SCATTER,     BROADCAST,
+  NEIGHBOREXCHANGE, NEIGHBOREXCHANGEV2, SYNC_BATCH_NORM, COLLECTIVE_SCATTER, COLLECTIVE_GATHER};
 // common method
 CommInfo GetCommInfo();
 ShapeVector ToFullShape(const ShapeVector &input_shape, size_t index);

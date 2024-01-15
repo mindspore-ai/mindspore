@@ -33,6 +33,7 @@
 #include "runtime/device/auto_mem_offload.h"
 #include "include/backend/optimizer/graph_optimizer.h"
 #include "runtime/pynative/async/task.h"
+#include "ir/device_event.h"
 #ifdef __APPLE__
 #include "mindrt/include/async/spinlock.h"
 #endif
@@ -63,7 +64,8 @@ class KernelExecutor;
 // DeviceContext is unified interface of interaction with device.
 class DeviceContext {
  public:
-  explicit DeviceContext(const DeviceContextKey &device_context_key) : device_context_key_(device_context_key) {}
+  explicit DeviceContext(const DeviceContextKey &device_context_key)
+      : device_context_key_(device_context_key), initialized_(false) {}
   virtual ~DeviceContext() = default;
 
   // Initialize the device context.
@@ -106,6 +108,16 @@ class DeviceContext {
   // todo: delete
   virtual DeprecatedInterface *GetDeprecatedInterface() { return nullptr; }
 
+  // Return whether this device context is initialized.
+  bool initialized() const {
+#ifdef __APPLE__
+    std::lock_guard<SpinLock> spin_lock(init_lock_);
+#else
+    std::lock_guard<std::mutex> lock(init_mutex_);
+#endif
+    return initialized_;
+  }
+
   DeviceContextKey device_context_key_;
   std::unique_ptr<DeviceResManager> device_res_manager_;
   std::unique_ptr<GraphExecutor> graph_executor_;
@@ -117,6 +129,7 @@ class DeviceContext {
 #else
   inline static std::mutex init_mutex_;
 #endif
+  bool initialized_;
 
  private:
   std::shared_ptr<KernelExecutor> kernel_executor_;
@@ -189,20 +202,38 @@ class BACKEND_EXPORT DeviceResManager {
 
   // Create a stream with assigning a stream id, the assigned stream id will be written to the parameter '*stream_id'.
   virtual bool CreateStream(size_t *stream_id) const {
-    MS_LOG(EXCEPTION) << "Unimplemented interface.";
+    MS_LOG(WARNING) << "Unimplemented interface: 'CreateStream'.";
+    *stream_id = kSizeZero;
     return false;
   }
 
-  virtual void *GetStream(size_t stream_id) const {
-    MS_LOG(EXCEPTION) << "Unimplemented interface.";
-    return nullptr;
-  };
+  // Create a stream with priority.
+  virtual bool CreateStreamWithPriority(size_t *stream_id, int32_t priority) const {
+    *stream_id = kSizeZero;
+    return false;
+  }
+
+  // If multi-stream used in pynative mode, other streams must be sync before the graph
+  // is executed. Otherwise, out-of-order occurs. Therefore this flag is added.
+  // This solution is a temporary solution, this flag will be removed after multi-stream is
+  // supported in graph mode.
+  virtual bool single_op_multi_stream_enable() const { return false; }
+  virtual void set_single_op_multi_stream_enable(bool single_op_multi_stream_enable) {}
+
+  // Get the stream pointer by stream_id.
+  virtual void *GetStream(size_t stream_id) const { return nullptr; };
+
+  // Set currently using stream id.
+  virtual void SetCurrentStreamId(size_t stream_id) { return; }
+
+  // Get currently using stream id.
+  virtual size_t GetCurrentStreamId() const { return kSizeZero; }
 
   // Destroy a stream bound to the input parameter "stream_id".
-  virtual bool DestroyStream(size_t stream_id) const {
-    MS_LOG(EXCEPTION) << "Unimplemented interface.";
-    return false;
-  }
+  virtual bool DestroyStream(size_t stream_id) const { return false; }
+
+  // Query tasks' completion status of a stream.
+  virtual bool QueryStream(size_t stream_id) const { return true; }
 
   // Synchronize stream, device such as GPU and Ascend need stream to launch kernel asynchronously,
   // Using 'SyncStream' to block thread and wait for completing all tasks on specific stream.
@@ -212,6 +243,13 @@ class BACKEND_EXPORT DeviceResManager {
   // "SyncAllStreams" interfaces are implemented by subclasses.
   virtual bool SyncStream(size_t stream_id) const { return true; }
   virtual bool SyncAllStreams() const { return true; }
+  virtual bool SyncNotDefaultStreams() const { return true; }
+
+  // Return default stream id. Normally it's 0.
+  virtual size_t DefaultStream() const { return 0; }
+
+  // Create device event with flag.
+  virtual DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) const { return nullptr; };
 
   // Dynamically load collective communication library.
   // Currently, four types are supported: OpenMPI and self developed framework for CPU. NCCL for GPU. HCCL for Ascend.
@@ -297,7 +335,7 @@ class BACKEND_EXPORT KernelExecutor {
   virtual bool ExecuteKernelTask(const pynative::KernelTaskType &task_type,
                                  const device::DeviceAddressPtrList &input_addr_list,
                                  const TensorStorageInfoPtrList &input_storage_list,
-                                 const device::DeviceAddressPtrList &output_addr_list) const {
+                                 const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id) const {
     return false;
   };
 

@@ -174,14 +174,23 @@ bool ClusterContext::BuildCluster() {
     node_id_ = ps::core::CommUtil::GenerateUUID();
   }
   // Init the node according to the process role.
-  size_t retry_num;
+  std::string time_out_str = common::GetEnv(kEnvClusterTimeOut);
+  size_t time_out_sec = topology::kDefaultClusterTimeOut;
+  if (!time_out_str.empty()) {
+    try {
+      time_out_sec = IntToSize(std::atoi(time_out_str.c_str()));
+    } catch (const std::exception &e) {
+      MS_LOG(EXCEPTION) << "Environmental variable 'MS_CLUSTER_TIMEOUT' " << time_out_str
+                        << " is invalid. Exception info: " << e.what();
+    }
+  }
+
+  size_t retry_num = time_out_sec / topology::kExecuteInterval;
   if (node_role_ == kEnvRoleOfScheduler) {
     auto node_num = node_num_each_role_[kEnvRoleOfWorker] + node_num_each_role_[kEnvRoleOfServer];
     node_base_ = std::make_shared<topology::MetaServerNode>(node_id_, node_role_, node_num);
-    retry_num = topology::kMsnExecuteRetryNum;
   } else {
     node_base_ = std::make_shared<topology::ComputeGraphNode>(node_id_, node_role_);
-    retry_num = topology::kCgnExecuteRetryNum;
   }
   MS_EXCEPTION_IF_NULL(node_base_);
   RETURN_IF_FALSE_WITH_LOG(node_base_->Initialize(), "Failed to initialize the node.");
@@ -203,12 +212,6 @@ void ClusterContext::InitNodeRole() {
   node_role_ = common::GetEnv(kEnvRole);
   if (kValidRoleName.count(node_role_) == 0) {
     MS_LOG(EXCEPTION) << "Role name '" << node_role_ << "' is invalid. " << kDetailedFailureReason;
-  }
-
-  // If node role is valid, judge the execution mode.
-  // MindSpore cluster does not support PyNative mode.
-  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    MS_LOG(EXCEPTION) << "PyNative mode is not supported in dynamic networking for now.";
   }
 
   if (common::GetEnv(kEnvWorkerNum).empty()) {

@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 from mindspore.run_check import run_check
 from mindspore import common, dataset, mindrecord, train, log, amp
-from mindspore import profiler, communication, numpy, parallel
+from mindspore import profiler, communication, numpy, parallel, hal
 from mindspore.common import *
 from mindspore.mindrecord import *
 from mindspore.ops import _op_impl, grad, value_and_grad, vjp, jvp, jacfwd, jacrev, vmap, get_grad, constexpr

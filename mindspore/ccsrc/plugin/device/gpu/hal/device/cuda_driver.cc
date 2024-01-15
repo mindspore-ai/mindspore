@@ -185,6 +185,15 @@ bool CudaDriver::CreateStream(CudaDeviceStream *stream) {
   return true;
 }
 
+bool CudaDriver::CreateStreamWithPriority(CudaDeviceStream *stream, int priority) {
+  auto ret = cudaStreamCreateWithPriority(reinterpret_cast<CUstream_st **>(stream), cudaStreamNonBlocking, priority);
+  if (ret != cudaSuccess) {
+    MS_LOG(EXCEPTION) << "#umsg#Cuda error:#umsg#The cudaStreamCreateWithPriority failed, ret[" << static_cast<int>(ret)
+                      << "], " << cudaGetErrorString(ret);
+  }
+  return true;
+}
+
 bool CudaDriver::DestroyStream(const CudaDeviceStream &stream) {
   auto ret = cudaStreamDestroy((cudaStream_t)stream);
   if (ret != cudaSuccess) {
@@ -205,6 +214,16 @@ bool CudaDriver::SyncStream(const CudaDeviceStream &stream) {
     }
     return false;
   }
+  return true;
+}
+
+bool CudaDriver::QueryStream(const CudaDeviceStream &stream) {
+  auto ret = cudaStreamQuery((cudaStream_t)stream);
+  if (ret != cudaSuccess) {
+    MS_LOG(DEBUG) << "Tasks on stream " << stream << " are not completed yet.";
+    return false;
+  }
+  MS_LOG(DEBUG) << "Tasks on stream " << stream << " are completed.";
   return true;
 }
 

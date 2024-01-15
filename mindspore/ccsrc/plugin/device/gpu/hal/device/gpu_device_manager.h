@@ -22,6 +22,7 @@
 #include <cusolverDn.h>
 #include <cusparse.h>
 #include <vector>
+#include <set>
 #include <memory>
 #include "plugin/device/gpu/hal/device/cuda_driver.h"
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
@@ -41,11 +42,18 @@ class GPUDeviceManager {
 
   bool CreateStream(CudaDeviceStream *stream);
   bool CreateStream(size_t *stream_id);
+  bool CreateStreamWithPriority(size_t *stream_id, int32_t priority);
   bool DestroyStream(size_t stream_id);
   CudaDeviceStream GetStream(size_t stream_id) const;
+  void set_current_stream(size_t stream_id);
+  size_t current_stream() const;
+  bool QueryStream(size_t stream_id);
   bool SyncStream(size_t stream_id) const;
   bool SyncStream(const CudaDeviceStream &stream) const;
   bool SyncAllStreams() const;
+  bool SyncNotDefaultStreams() const;
+  // Sync all streams except the streams in except_streams.
+  bool SyncExceptStreamsInList(const std::set<CudaDeviceStream> &except_streams) const;
   const CudaDeviceStream &default_stream() const;
   size_t default_stream_id() const;
 
@@ -63,6 +71,10 @@ class GPUDeviceManager {
   bool CopyHostMemToHost(const HostMemPtr &dst, const void *src, size_t size) const;
 
   static GPUDeviceManager &GetInstance();
+  bool single_op_multi_stream_enable() const { return single_op_multi_stream_enable_; }
+  void set_single_op_multi_stream_enable(bool single_op_multi_stream_enable) {
+    single_op_multi_stream_enable_ = single_op_multi_stream_enable;
+  }
 
  private:
   GPUDeviceManager() : dev_id_init_(false), cur_dev_id_(0), dev_alive_(false) {}
@@ -77,6 +89,8 @@ class GPUDeviceManager {
   CudaDeviceStream default_stream_{nullptr};
 
   size_t default_stream_id_{0};
+
+  size_t current_stream_id_{0};
 
   // all gpu CUDA streams including default_stream_.
   std::vector<CudaDeviceStream> gpu_streams_;
@@ -95,6 +109,7 @@ class GPUDeviceManager {
   bool dev_id_init_;
   uint32_t cur_dev_id_;
   bool dev_alive_;
+  bool single_op_multi_stream_enable_{false};
 };
 }  // namespace gpu
 }  // namespace device

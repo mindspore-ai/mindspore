@@ -1603,7 +1603,7 @@ void GradCommon::GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const mindspore
 }
 }  // namespace PyNativeAlgo
 
-void DispatchOp(const std::shared_ptr<FrontendTask> &task) {
+void DispatchOp(const std::shared_ptr<AsyncTask> &task) {
   auto forward_executor = PyNativeExecutor::GetInstance()->forward_executor();
   static bool need_sync = runtime::OpExecutor::NeedSync();
   if (need_sync) {

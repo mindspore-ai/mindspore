@@ -141,8 +141,8 @@ void SetIdWithOpInfo(const ValuePtr &v, const std::string &op_info, size_t out_i
   }
 }
 
-void UpdateForwardOutputTensorInfo(const std::string &op_info, const ValuePtr &v,
-                                   const TensorReplaceInfo &replace_info) {
+void UpdateForwardOutputTensorInfo(const std::string &op_info, const ValuePtr &v, const TensorReplaceInfo &replace_info,
+                                   const size_t &stream_id) {
   const auto it = replace_info.op_info_with_tensor_object.find(op_info);
   if (it == replace_info.op_info_with_tensor_object.end()) {
     return;
@@ -150,7 +150,7 @@ void UpdateForwardOutputTensorInfo(const std::string &op_info, const ValuePtr &v
   for (const auto &elem : it->second) {
     const auto &new_tensor = GetTensorFromOutValue(elem.first, v);
     MS_EXCEPTION_IF_NULL(new_tensor);
-    PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->RunContiguousTaskForTensor(new_tensor);
+    PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->RunContiguousTaskForTensor(new_tensor, stream_id);
     UpdatePreTensorInfo(new_tensor, elem.second);
   }
 }

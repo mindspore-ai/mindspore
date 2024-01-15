@@ -51,7 +51,8 @@ static const std::set<std::string> kDefaultOutputNode = {
 
 static const std::set<std::string> kHcomOps = {kHcomOpTypeAllReduce,     kHcomOpTypeReduce,    kHcomOpTypeAllGather,
                                                kHcomOpTypeBroadcast,     kHcomOpTypeSend,      kHcomOpTypeReceive,
-                                               kHcomOpTypeReduceScatter, kHcomOpTypeAllToAllV, kHcomOpTypeBarrier};
+                                               kHcomOpTypeReduceScatter, kHcomOpTypeAllToAllV, kHcomOpTypeBarrier,
+                                               kHcomOpTypeScatter,       kHcomOpTypeGather};
 
 static const HashMap<GeDataType, TypeId> kGeTypeToMsType = {{GeDataType::DT_BOOL, kNumberTypeBool},
                                                             {GeDataType::DT_INT8, kNumberTypeInt8},

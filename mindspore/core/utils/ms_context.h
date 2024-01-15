@@ -260,6 +260,8 @@ class MS_CORE_API MsContext {
 
   bool IsKByKExecutorMode() const;
 
+  std::string GetLoadPluginErrorStr() const { return load_plugin_error_(); }
+
  private:
   void RefreshExecutionMode();
   void RefreshMemoryOffload();

@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/hal/hardware/ge_device_context.h"
 #include <tuple>
 #include <algorithm>
+#include <sstream>
 #include <map>
 #include <set>
 #include "include/transform/graph_ir/types.h"
@@ -565,6 +566,36 @@ DeprecatedInterface *GeDeviceContext::GetDeprecatedInterface() {
   return deprecated_interface_.get();
 }
 
+uint32_t GeDeviceContext::GetDeviceCount() {
+  uint32_t device_count = 0;
+  auto ret = aclrtGetDeviceCount(&device_count);
+  if (ret != ACL_ERROR_NONE) {
+    MS_EXCEPTION(DeviceProcessError) << "Call rtGetDeviceCount, ret[" << static_cast<int>(ret) << "]";
+  }
+  return device_count;
+}
+
+std::string GeDeviceContext::GetDeviceName(uint32_t) {
+  const char *name = aclrtGetSocName();
+  std::string device_name = (name == nullptr) ? "" : name;
+  return device_name;
+}
+
+AscendDeviceProperties GeDeviceContext::GetDeviceProperties(uint32_t) {
+  AscendDeviceProperties device_properties;
+  const char *name = aclrtGetSocName();
+  device_properties.name = (name == nullptr) ? "" : name;
+
+  size_t free_size{0}, total_size{0};
+  auto ret = aclrtGetMemInfo(ACL_HBM_MEM, &free_size, &total_size);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(WARNING) << "Failed get memory info for current device. Error number: " << ret;
+  }
+  device_properties.total_memory = total_size;
+  device_properties.free_memory = free_size;
+  return device_properties;
+}
+
 MS_REGISTER_DEVICE(kAscendDevice, GeDeviceContext);
 #ifdef WITH_BACKEND
 namespace {
@@ -610,6 +641,27 @@ MSCONTEXT_REGISTER_INIT_FUNC(kAscendDevice, [](MsContext *ctx) -> void {
   SetContextSocVersion(ctx);
 });
 #endif
+
+// Register functions to _c_expression so python hal module could call Ascend device interfaces.
+void PybindAscendStatelessFunc(py::module *m) {
+  MS_EXCEPTION_IF_NULL(m);
+  (void)py::class_<AscendDeviceProperties>(*m, "AscendDeviceProperties")
+    .def_readonly("name", &AscendDeviceProperties::name)
+    .def_readonly("total_memory", &AscendDeviceProperties::total_memory)
+    .def_readonly("free_memory", &AscendDeviceProperties::free_memory)
+    .def("__repr__", [](const AscendDeviceProperties &p) {
+      std::ostringstream s;
+      s << "AscendDeviceProperties(name='" << p.name << "', total_memory=" << p.total_memory / (1024 * 1024)
+        << "MB, free_memory=" << p.free_memory / (1024 * 1024) << "MB)";
+      return s.str();
+    });
+  (void)m->def("ascend_get_device_count", &GeDeviceContext::GetDeviceCount, "Get Ascend device count.");
+  (void)m->def("ascend_get_device_name", &GeDeviceContext::GetDeviceName,
+               "Get Ascend device name of specified device id.");
+  (void)m->def("ascend_get_device_properties", &GeDeviceContext::GetDeviceProperties,
+               "Get Ascend device properties of specified device id.");
+}
+REGISTER_DEV_STATELESS_FUNC_CB(kAscendDevice, PybindAscendStatelessFunc);
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

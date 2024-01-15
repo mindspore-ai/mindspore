@@ -144,6 +144,10 @@ void RegMsContext(const py::module *m) {
     .def("register_set_env_callback", &mindspore::MsContext::RegisterSetEnv,
          "Register callback function for check environment variable.")
     .def("register_check_env_callback", &mindspore::MsContext::RegisterCheckEnv,
-         "Register callback function for check environment variable.");
+         "Register callback function for check environment variable.")
+    .def("is_pkg_support_device", &mindspore::MsContext::IsSupportDevice,
+         "Return whether this MindSpore package supports specified device.")
+    .def("load_plugin_error", &mindspore::MsContext::GetLoadPluginErrorStr,
+         "Return error message when loading plugins for this MindSpore package.");
 }
 }  // namespace mindspore

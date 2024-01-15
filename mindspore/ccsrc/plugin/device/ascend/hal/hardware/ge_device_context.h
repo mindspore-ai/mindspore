@@ -35,11 +35,16 @@ namespace ascend {
 class GeGraphExecutor;
 class GeKernelExecutor;
 class GeDeviceResManager;
+// The Ascend device properties defined by MindSpore because ACL does not have interface to get this info.
+struct AscendDeviceProperties {
+  std::string name;
+  size_t total_memory;
+  size_t free_memory;
+};
 
 class GeDeviceContext : public DeviceInterface<GeGraphExecutor, GeKernelExecutor, GeDeviceResManager> {
  public:
-  explicit GeDeviceContext(const DeviceContextKey &device_context_key)
-      : DeviceInterface(device_context_key), initialized_(false) {}
+  explicit GeDeviceContext(const DeviceContextKey &device_context_key) : DeviceInterface(device_context_key) {}
   ~GeDeviceContext() override = default;
 
   void Initialize() override;
@@ -50,6 +55,10 @@ class GeDeviceContext : public DeviceInterface<GeGraphExecutor, GeKernelExecutor
   RunMode GetRunMode(const FuncGraphPtr &func_graph) const override;
 
   DeprecatedInterface *GetDeprecatedInterface() override;
+
+  static uint32_t GetDeviceCount();
+  static std::string GetDeviceName(uint32_t);
+  static AscendDeviceProperties GetDeviceProperties(uint32_t);
 
  private:
   DISABLE_COPY_AND_ASSIGN(GeDeviceContext);
@@ -66,7 +75,6 @@ class GeDeviceContext : public DeviceInterface<GeGraphExecutor, GeKernelExecutor
   void FinalizeDump() const;
 
   std::unique_ptr<AscendDeprecatedInterface> deprecated_interface_;
-  bool initialized_;
 };
 }  // namespace ascend
 }  // namespace device

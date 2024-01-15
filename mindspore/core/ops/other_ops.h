@@ -53,6 +53,8 @@ GVAR_DEF(PrimitivePtr, kPrimVirtualDataset, std::make_shared<Primitive>("_Virtua
 GVAR_DEF(PrimitivePtr, kPrimVirtualOutput, std::make_shared<Primitive>("_VirtualOutput"));
 GVAR_DEF(PrimitivePtr, kPrimAllReduce, std::make_shared<Primitive>("AllReduce"));
 GVAR_DEF(PrimitivePtr, kPrimReduce, std::make_shared<Primitive>("Reduce"));
+GVAR_DEF(PrimitivePtr, kPrimCollectiveScatter, std::make_shared<Primitive>("CollectiveScatter"));
+GVAR_DEF(PrimitivePtr, kPrimCollectiveGather, std::make_shared<Primitive>("CollectiveGather"));
 GVAR_DEF(PrimitivePtr, kPrimNeighborExchange, std::make_shared<Primitive>("NeighborExchange"));
 GVAR_DEF(PrimitivePtr, kPrimNeighborExchangeV2, std::make_shared<Primitive>("NeighborExchangeV2"));
 GVAR_DEF(PrimitivePtr, kPrimNeighborExchangeV2Grad, std::make_shared<Primitive>("NeighborExchangeV2Grad"));

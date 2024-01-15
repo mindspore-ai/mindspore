@@ -17,17 +17,22 @@
 #ifndef MINDSPORE_CORE_IR_DEVICE_EVENT_H
 #define MINDSPORE_CORE_IR_DEVICE_EVENT_H
 
+#include <memory>
+
 namespace mindspore {
 class DeviceEvent {
  public:
   virtual ~DeviceEvent() = default;
   virtual void WaitEvent() = 0;
+  virtual void WaitEventWithoutReset() = 0;
   virtual void RecordEvent() = 0;
   virtual bool NeedWait() = 0;
   virtual void SyncEvent() = 0;
+  virtual bool QueryEvent() = 0;
   virtual void ElapsedTime(float *cost_time, const DeviceEvent *other) = 0;
   virtual void set_wait_stream(void *stream) = 0;
   virtual void set_record_stream(void *stream) = 0;
 };
+using DeviceEventPtr = std::shared_ptr<DeviceEvent>;
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_DEVICE_EVENT_H

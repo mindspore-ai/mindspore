@@ -85,10 +85,11 @@ enum class MessageName {
 // The retry and interval configuration used for the macro `EXECUTE_WITH_RETRY`.
 static const size_t kExecuteRetryNum = 210;
 // The retry number of cgn and msn for reconnecting.
-static const size_t kCgnExecuteRetryNum = 60;
+static const size_t kCgnExecuteRetryNum = 210;
 static const size_t kMsnExecuteRetryNum = 210;
 static const size_t kNoRetry = 1;
 static const uint32_t kExecuteInterval = 3;
+static const size_t kDefaultClusterTimeOut = 600;
 
 #define EXECUTE_WITH_RETRY(func, retry, interval, err_msg)                     \
   do {                                                                         \
