@@ -131,9 +131,9 @@ TypePtr CrossInferType(const PrimitivePtr &primitive, const std::vector<Abstract
                                          kFloat64, kUInt16, kUInt32, kUInt64, kComplex64, kComplex128};
   auto x1_type = input_args[0]->GetType();
   auto x2_type = input_args[1]->GetType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2", x2_type, valid_types, primitive->name());
   auto tensor_type = x2_type->cast<TensorTypePtr>();
   auto element = tensor_type->element();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2", x2_type, valid_types, primitive->name());
   return CheckAndConvertUtils::CheckTensorTypeValid("x1", x1_type, {element}, primitive->name());
 }
 }  // namespace
