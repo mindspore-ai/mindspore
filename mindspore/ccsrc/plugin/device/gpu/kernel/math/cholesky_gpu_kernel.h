@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,25 +55,6 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
     if (primitive_->HasAttr(kClean)) {
       clean_ = GetValue<bool>(primitive_->GetAttr(kClean));
     }
-    if (primitive_->HasAttr(kLower)) {
-      lower_ = GetValue<bool>(primitive_->GetAttr(kLower));
-    }
-    // if clean attribute exits, we will remain rand triangular data by clean flag, otherwise clean it to zero.
-    // Cholesky input is sys_positive_matrix and saved by col_major in gpu backend.
-    // so we reverse lower to upper, to fake transpose col_major input to row_major.
-    if (!flag_) {
-      if (upper_) {
-        uplo_ = CUBLAS_FILL_MODE_LOWER;
-      } else {
-        uplo_ = CUBLAS_FILL_MODE_UPPER;
-      }
-    } else {
-      if (lower_) {
-        uplo_ = CUBLAS_FILL_MODE_UPPER;
-      } else {
-        uplo_ = CUBLAS_FILL_MODE_LOWER;
-      }
-    }
     // Get CuSolver Dense: matrix handler
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
     return true;
@@ -85,6 +66,14 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
     }
     output_size_list_.clear();
     upper_ = inputs[kIndex1]->GetValueWithCheck<bool>();
+    // if clean attribute exits, we will remain rand triangular data by clean flag, otherwise clean it to zero.
+    // Cholesky input is sys_positive_matrix and saved by col_major in gpu backend.
+    // so we reverse lower to upper, to fake transpose col_major input to row_major.
+    if (upper_) {
+      uplo_ = CUBLAS_FILL_MODE_LOWER;
+    } else {
+      uplo_ = CUBLAS_FILL_MODE_UPPER;
+    }
     auto in_shape = LongVecToSizeVec(inputs[kInputIndex]->GetShapeVector());
     if (!InitNoSplitDim(in_shape)) {
       return KRET_RESIZE_FAILED;
@@ -195,8 +184,6 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
   cublasFillMode_t uplo_ = CUBLAS_FILL_MODE_UPPER;
   std::vector<pointer> h_array_;
   bool upper_{false};
-  bool lower_{true};
-  bool flag_{true};
   bool clean_{true};
 };
 }  // namespace kernel
