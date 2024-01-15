@@ -20,7 +20,6 @@
 #include <iostream>
 #include <string>
 #include <utility>
-#include "kernel/kernel_get_value.h"
 #include "kernel/ops_utils.h"
 #include "mindspore/core/abstract/utils.h"
 #include "mindspore/core/ops/grad/upsample_nearest_3d_grad.h"

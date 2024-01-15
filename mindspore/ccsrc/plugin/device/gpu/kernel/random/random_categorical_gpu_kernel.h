@@ -27,7 +27,6 @@
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/random_categorical.cuh"
 #include "mindspore/core/ops/random_categorical.h"
-#include "kernel/kernel_get_value.h"
 #include "kernel/philox_random.h"
 
 namespace mindspore {

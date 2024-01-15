@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/gpu/kernel/arrays/transpose_gpu_kernel.h"
-#include "kernel/kernel_get_value.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "utils/check_convert_utils.h"
 #include "plugin/factory/ms_factory.h"

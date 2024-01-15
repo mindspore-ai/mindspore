@@ -17,7 +17,6 @@
 #include "plugin/device/gpu/kernel/nn/pad_v3_gpu_kernel.h"
 #include <utility>
 #include "include/common/utils/utils.h"
-#include "kernel/kernel_get_value.h"
 #include "mindapi/base/type_id.h"
 namespace mindspore {
 namespace kernel {

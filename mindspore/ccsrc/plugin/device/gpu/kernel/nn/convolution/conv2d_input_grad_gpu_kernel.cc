@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/gpu/kernel/nn/convolution/conv2d_input_grad_gpu_kernel.h"
-#include "kernel/kernel_get_value.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/pad_impl.cuh"
 
 namespace mindspore {

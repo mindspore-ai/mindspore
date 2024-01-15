@@ -230,7 +230,7 @@ tensor::TensorPtr CPUKernelRuntime::CreateTensorForOutput(session::KernelGraph *
       size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(), type_size, std::multiplies<size_t>());
       address->SetDevicePtr(static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(tensor_size));
       address->SetSize(tensor_size);
-      address->SetTypeId(device_type_id);
+      address->set_type_id(device_type_id);
     } else {
       tensor->set_sync_status(kNoNeedSync);
     }

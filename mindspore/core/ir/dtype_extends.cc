@@ -141,6 +141,59 @@ std::string TypeIdToString(TypeId id, bool to_lower) {
   return type;
 }
 
+size_t UnitSizeInBytes(TypeId id) {
+  size_t bytes = 0;
+  size_t complex_factor = 2;
+  switch (id) {
+    case kNumberTypeBool:
+    case kNumberTypeInt8:
+    case kNumberTypeUInt8:
+      bytes = sizeof(int8_t);
+      break;
+    case kNumberTypeInt16:
+    case kNumberTypeUInt16:
+    case kNumberTypeFloat16:
+    case kNumberTypeBFloat16:
+      bytes = sizeof(int16_t);
+      break;
+    case kNumberTypeInt:
+    case kNumberTypeUInt:
+    case kNumberTypeInt32:
+    case kNumberTypeUInt32:
+    case kNumberTypeFloat:
+    case kNumberTypeFloat32:
+      bytes = sizeof(int32_t);
+      break;
+    case kNumberTypeUInt64:
+    case kNumberTypeInt64:
+    case kNumberTypeFloat64:
+      bytes = sizeof(int64_t);
+      break;
+    case kNumberTypeComplex64:
+      bytes = sizeof(float) * complex_factor;
+      break;
+    case kNumberTypeComplex128:
+      bytes = sizeof(double) * complex_factor;
+      break;
+    case kObjectTypeString:
+      bytes = sizeof(std::string);
+      break;
+    case kMetaTypeNone:
+    case kMetaTypeTypeType:
+    case kTypeUnknown:
+    case kObjectTypeMonad:
+    case kObjectTypeUMonad:
+    case kObjectTypeIOMonad:
+      bytes = 0;
+      break;
+    case kNumberTypeInt4:
+    default:
+      MS_LOG(EXCEPTION) << "Invalid types for UnitSizeInBytes : " << TypeIdToString(id) << ", type id: " << id;
+  }
+
+  return bytes;
+}
+
 namespace {
 template <typename T>
 TypePtr StringToNumberType(const std::string &type_name, const std::string &num_type_name) {

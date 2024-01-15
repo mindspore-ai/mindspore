@@ -80,7 +80,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
             ${CCSRC_DIR}/kernel/philox_random.cc
             ${CCSRC_DIR}/kernel/kernel_factory.cc
             ${CCSRC_DIR}/kernel/kernel.cc
-            ${CCSRC_DIR}/kernel/kernel_get_value.cc
             ${CCSRC_DIR}/kernel/kash/kernel_pack.cc
             ${CCSRC_DIR}/kernel/oplib/oplib.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/mock/anf_ir_dump.cc

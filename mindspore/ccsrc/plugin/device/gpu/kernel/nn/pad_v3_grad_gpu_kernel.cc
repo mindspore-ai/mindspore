@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/gpu/kernel/nn/pad_v3_grad_gpu_kernel.h"
-#include "kernel/kernel_get_value.h"
 namespace mindspore {
 namespace kernel {
 namespace {

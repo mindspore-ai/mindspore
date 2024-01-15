@@ -178,51 +178,6 @@ std::string GetProcessorStr(const AnfNodePtr &anf_node) {
   return processor;
 }
 
-size_t UnitSizeInBytes(const mindspore::TypeId &t) {
-  size_t bytes = 0;
-  size_t complex_factor = 2;
-  switch (t) {
-    case kNumberTypeBool:
-    case kNumberTypeInt8:
-    case kNumberTypeUInt8:
-      bytes = sizeof(int8_t);
-      break;
-    case kNumberTypeInt16:
-    case kNumberTypeUInt16:
-    case kNumberTypeFloat16:
-    case kNumberTypeBFloat16:
-      bytes = sizeof(int16_t);
-      break;
-    case kNumberTypeInt:
-    case kNumberTypeUInt:
-    case kNumberTypeInt32:
-    case kNumberTypeUInt32:
-    case kNumberTypeFloat:
-    case kNumberTypeFloat32:
-      bytes = sizeof(int32_t);
-      break;
-    case kNumberTypeUInt64:
-    case kNumberTypeInt64:
-    case kNumberTypeFloat64:
-      bytes = sizeof(int64_t);
-      break;
-    case kNumberTypeComplex64:
-      bytes = sizeof(float) * complex_factor;
-      break;
-    case kNumberTypeComplex128:
-      bytes = sizeof(double) * complex_factor;
-      break;
-    case kObjectTypeString:
-      bytes = sizeof(std::string);
-      break;
-    case kNumberTypeInt4:
-    default:
-      MS_LOG(EXCEPTION) << "Invalid types for UnitSizeInBytes : " << TypeIdToString(t);
-  }
-
-  return bytes;
-}
-
 std::vector<TypeId> GetOutputObjectTypeListFromKernelAttr(const kernel::KernelAttr &kernel_attr) {
   size_t output_attr_size = kernel_attr.GetOutputSize();
   std::vector<TypeId> res;
@@ -783,19 +738,6 @@ KernelAttr GetKernelAttrFromNode(const AnfNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
   return GetKernelAttrFromBuildInfo(build_info);
-}
-
-// Delete after KernelMod rectified.
-KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  KernelAttr kernel_attr;
-  for (auto tensor : inputs) {
-    (void)kernel_attr.AddInputAttr(tensor->GetDtype(), GetFormatFromEnumToStr(tensor->GetFormat()));
-  }
-  for (auto tensor : outputs) {
-    (void)kernel_attr.AddOutputAttr(tensor->GetDtype(), GetFormatFromEnumToStr(tensor->GetFormat()));
-  }
-  return kernel_attr;
 }
 
 KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensor *> &inputs,

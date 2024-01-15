@@ -407,8 +407,8 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
     }
     node_device_tensor->set_user_data(input_device_tensor->user_data());
     node_device_tensor->set_need_sync_user_data(input_device_tensor->need_sync_user_data());
-    if (type_ != KernelTransformType::kSuperKernelActor && input_kernel_tensor->GetValueTrack() != nullptr) {
-      node_device_kernel_tensor->set_value(input_kernel_tensor->GetValueTrack());
+    if (type_ != KernelTransformType::kSuperKernelActor) {
+      node_device_kernel_tensor->SetValue(input_kernel_tensor->GetValueTrack());
     }
 
     // Copy.

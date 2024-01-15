@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/gpu/kernel/arrays/slice_gpu_kernel.h"
-#include "kernel/kernel_get_value.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 namespace mindspore {
 namespace kernel {
