@@ -47,6 +47,7 @@ const std::unordered_map<std::string, CastInfo> kNeedAddCastMap = {
   {ops::kNameReciprocal, {true, 0, int_type_with_bool, kNumberTypeFloat32}},
   {ops::kNameExp, {true, 0, int_type_with_bool, kNumberTypeFloat32}},
   {ops::kNameSqrt, {true, 0, int_type_with_bool, kNumberTypeFloat32}},
+  {ops::kNameErfinv, {true, 0, int_type_with_bool, kNumberTypeFloat32}},
   {ops::kNameArgMaxWithValue, {false, 0, {}, kNumberTypeInt32}},
   {ops::kNameArgMinWithValue, {false, 0, {}, kNumberTypeInt32}}};
 
