@@ -1109,10 +1109,7 @@ void ForwardExecutor::Sync() {
   ExecuteLazyTask();
 
   runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kSyncStream);
-  for (auto &item : mindrt_backends_) {
-    MS_EXCEPTION_IF_NULL(item.second);
-    item.second->SyncStream();
-  }
+  device::DeviceContextManager::GetInstance().WaitTaskFinishOnDevice();
 }
 
 ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info,
