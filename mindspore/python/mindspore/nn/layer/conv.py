@@ -882,10 +882,16 @@ class Conv3dTranspose(_Conv):
             If `padding` is a tuple of six integers, then the head, tail, top, bottom, left, and right padding
             is equal to `padding[0]`, `padding[1]`, `padding[2]`, `padding[3]`, `padding[4]` and `padding[5]`
             respectively. The value should be greater than or equal to 0. Default: ``0`` .
-        dilation (Union[int, tuple[int]]): Dilation size of 3D convolution kernel.
-            The data type is an integer or a tuple of three integers. If :math:`k > 1`, the kernel is sampled
-            every `k` elements. The value of `k` on the depth, height and width directions is in range of
-            [1, D], [1, H] and [1, W] respectively. Default: ``1`` .
+        dilation (Union[int, tuple[int]]): Specifies the dilation rate to use for dilated convolution. The data type
+            can be a single int or a tuple of 3 integers. A single int means the dilation size is the same in the
+            depth, height and width directions. A tuple of 3 ints represents the dilation size in the depth, height
+            and width directions, respectively.
+            Assuming :math:`dilation=(d0, d1, d2)`, the convolutional kernel samples the input with a
+            spacing of :math:`d0-1` elements in the depth direction, :math:`d1-1` elements in the height direction,
+            :math:`d2-1` elements in the width direction respectively.
+            The values in the depth, height and width dimensions are in
+            the ranges [1, D], [1, H] and [1, W], respectively.
+            Default: ``1`` .
         group (int): Splits filter into groups, `in_channels` and `out_channels` must be
             divisible by `group`. Default: ``1`` .
         output_padding (Union(int, tuple[int])): The number of padding on the depth, height and width directions of
