@@ -138,7 +138,7 @@ PrimitivePtr GraphUtils::GetPrimitive(int op_code) {
   return op_code_2_prim.at(op_code);
 }
 
-AnfNodePtr GraphUtils::GetMetaFuncGraph(int op_code) {
+std::string GraphUtils::OpCodeToGraphName(int op_code) {
   static std::map<int, std::string> op_code_2_graph_name = {{UNARY_NEGATIVE, "negative"},
                                                             {UNARY_NOT, "logical_not"},
                                                             {BINARY_POWER, "pow_"},
@@ -168,10 +168,19 @@ AnfNodePtr GraphUtils::GetMetaFuncGraph(int op_code) {
                                                             {INPLACE_OR, "bitwise_or"},
                                                             {DICT_MERGE, "add"},
                                                             {LIST_EXTEND, "add"}};
+  auto iter = op_code_2_graph_name.find(op_code);
+  if (iter == op_code_2_graph_name.end()) {
+    return "";
+  }
+  return iter->second;
+}
+
+AnfNodePtr GraphUtils::GetMetaFuncGraph(int op_code) {
   // MS_EXCEPTION_IF_CHECK_FAIL(op_code_2_graph_name.find(op_code) != op_code_2_graph_name.end(),
   //                            "Not find the mutitype ops of OpCode " + std::to_string(op_code) + ".");
-  if (op_code_2_graph_name.find(op_code) != op_code_2_graph_name.end()) {
-    return GetMetaFuncGraph(op_code_2_graph_name.at(op_code));
+  const auto &graph_name = OpCodeToGraphName(op_code);
+  if (graph_name != "") {
+    return GetMetaFuncGraph(graph_name);
   }
   return nullptr;
 }

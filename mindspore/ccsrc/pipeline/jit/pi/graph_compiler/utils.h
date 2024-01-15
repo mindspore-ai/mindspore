@@ -54,6 +54,8 @@ class GraphUtils {
 
   static AnfNodePtr GetPrimOrMetaFuncGraph(int op_code);
 
+  static std::string OpCodeToGraphName(int op_code);
+
   static AnfNodePtr GetMetaFuncGraph(int op_code);
 
   static AnfNodePtr GetMetaFuncGraph(const std::string &name);
