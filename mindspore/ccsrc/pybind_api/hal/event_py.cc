@@ -51,7 +51,7 @@ void EventPy::DispatchRecordEventTask(const StreamPyPtr &stream) {
       event->RecordEvent();
       EventCnt::DecreaseUnrecordedCnt(event);
     };
-    if (runtime::OpExecutor::NeedSync()) {
+    if (!runtime::OpExecutor::NeedSync()) {
       runtime::OpExecutor::GetInstance().PushSimpleOpRunTask(
         std::make_shared<pynative::PassthroughDeviceTask>(record_fn));
     } else {
@@ -80,7 +80,7 @@ void EventPy::DispatchWaitEventTask(const StreamPyPtr &stream) {
       event->set_wait_stream(stream_ptr);
       event->WaitEventWithoutReset();
     };
-    if (runtime::OpExecutor::NeedSync()) {
+    if (!runtime::OpExecutor::NeedSync()) {
       runtime::OpExecutor::GetInstance().PushSimpleOpRunTask(
         std::make_shared<pynative::PassthroughDeviceTask>(wait_fn));
     } else {

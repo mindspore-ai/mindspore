@@ -569,7 +569,8 @@ void UpdateOutputShape(const std::vector<EdgePtr> &output_edges) {
     MS_EXCEPTION_IF_NULL(device_address);
     const auto &kernel_tensor = device_address->kernel_tensor();
     MS_EXCEPTION_IF_NULL(kernel_tensor);
-    device_address->set_host_shape(kernel_tensor->GetShapeVector());
+    device_address->set_host_shape(kernel_tensor->host_info_exist() ? kernel_tensor->GetShapeVector()
+                                                                    : kernel_tensor->host_shape());
   }
 }
 
@@ -656,7 +657,8 @@ void UpdateOutputDeviceInfo(const std::vector<EdgePtr> &edges, const CNodePtr &k
     MS_EXCEPTION_IF_NULL(device_address);
     const auto &kernel_tensor = device_address->kernel_tensor();
     MS_EXCEPTION_IF_NULL(kernel_tensor);
-    device_address->set_host_shape(kernel_tensor->GetShapeVector());
+    device_address->set_host_shape(kernel_tensor->host_info_exist() ? kernel_tensor->GetShapeVector()
+                                                                    : kernel_tensor->host_shape());
     device_address->SetSize(output_size_list[i]);
   }
 }

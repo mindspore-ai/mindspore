@@ -64,7 +64,7 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
     stream_id_ = device_context_->device_res_manager_->GetCurrentStreamId();
   }
 
-  size_t stream_id() { return stream_id_; }
+  size_t stream_id() const { return stream_id_; }
 
   const tensor::TensorPtr &output(const size_t &idx) {
     if (idx >= outputs_.size()) {

@@ -69,11 +69,10 @@ def test_hal_stream_query():
     """
     context.set_context(mode=context.PYNATIVE_MODE)
 
-    a = Tensor(np.ones([1024, 2048]), ms.float32)
-    b = Tensor(np.ones([2048, 4096]), ms.float32)
+    a = Tensor(np.ones([5000, 5000]), ms.float32)
     s1 = ms.hal.Stream()
     with ms.hal.StreamCtx(s1):
-        ops.matmul(a, b)
+        ops.matmul(a, a)
         assert not s1.query()
 
     s1.synchronize()
@@ -94,14 +93,46 @@ def test_hal_wait_stream():
     s1 = ms.hal.Stream()
     s2 = ms.hal.Stream()
 
-    a = Tensor(np.ones([1, 2]), ms.float32)
-    b = Tensor(np.ones([2,]), ms.float32)
+    a = Tensor(np.random.randn(20, 20), ms.float32)
     with ms.hal.StreamCtx(s1):
-        ops.matmul(a, b)
+        b = ops.matmul(a, a)
 
     with ms.hal.StreamCtx(s2):
         s2.wait_stream(s1)
-        ops.matmul(a, b)
+        c = ops.matmul(b, b)
+    ms.hal.synchronize()
+    assert np.allclose(ops.mm(a, a).numpy(), b.numpy())
+    assert np.allclose(ops.mm(b, b).numpy(), c.numpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_hal_wait_event():
+    """
+    Feature: Hal stream api.
+    Description: Test hal.Stream.wait_event api.
+    Expectation: hal.Stream.wait_event api performs as expected.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+
+    s1 = ms.hal.Stream()
+    s2 = ms.hal.Stream()
+    ev = ms.hal.Event()
+
+    a = Tensor(np.random.randn(20, 20), ms.float32)
+    with ms.hal.StreamCtx(s1):
+        b = ops.matmul(a, a)
+        ev.record(s1)
+        assert ev.query() is False
+
+    with ms.hal.StreamCtx(s2):
+        s2.wait_event(ev)
+        c = ops.matmul(b, b)
+    ms.hal.synchronize()
+    assert np.allclose(ops.mm(a, a).asnumpy(), b.asnumpy())
+    assert np.allclose(ops.mm(b, b).asnumpy(), c.asnumpy())
 
 
 @pytest.mark.level0
@@ -142,16 +173,22 @@ def test_hal_jit_stream():
     context.set_context(mode=context.PYNATIVE_MODE)
 
     s1 = ms.hal.Stream()
+    event = ms.hal.Event()
 
-    a = Tensor(np.ones([1, 2]), ms.float32)
-    b = Tensor(np.ones([2,]), ms.float32)
+    a = Tensor(np.random.randn(20, 20), ms.float32)
+    b = Tensor(np.random.randn(20, 20), ms.float32)
     a *= 4
+    event.record()
     with ms.hal.StreamCtx(s1):
+        s1.wait_event(event)
         @jit
         def jit_func(a):
             return a + 2
-        jit_func(a)
-        ops.matmul(a, b)
+        c = jit_func(a)
+        d = ops.matmul(c, b)
+    ms.hal.synchronize()
+
+    assert np.allclose(d.asnumpy(), ops.mm((a + 2), b).asnumpy())
 
 
 @pytest.mark.level0
@@ -172,39 +209,81 @@ def test_hal_grad_stream():
 
     a = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), ms.float32)
     s1 = ms.hal.Stream()
-    a *= 4
     with ms.hal.StreamCtx(s1):
-        grad_fn(a)
+        grad_a = grad_fn(a)
     s1.synchronize()
+    assert np.allclose(grad_fn(a).asnumpy(), grad_a.asnumpy())
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
-def test_hal_cur_stream():
+def test_hal_get_stream():
     """
     Feature: Hal stream api.
     Description: Test hal.cur_stream api.
-    Expectation: hal.cur_stream api performs as expected in grad.
+    Expectation: hal.cur_stream api performs as expected.
     """
     context.set_context(mode=context.PYNATIVE_MODE)
 
     s1 = ms.hal.current_stream()
     s1.record_event()
 
+    s1 = ms.hal.default_stream()
+    s1.record_event()
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
-def test_hal_default_stream():
+def test_hal_multi_streams():
     """
     Feature: Hal stream api.
-    Description: Test hal.cur_stream api.
-    Expectation: hal.cur_stream api performs as expected in grad.
+    Description: Test multi streams.
+    Expectation: hal api performs as expected in multi streams.
     """
     context.set_context(mode=context.PYNATIVE_MODE)
+    prev_curr_stream = ms.hal.current_stream()
 
-    s1 = ms.hal.default_stream()
-    s1.record_event()
+    s1 = ms.hal.Stream()
+    s2 = ms.hal.Stream()
+
+    a = Tensor(np.random.randn(20, 20), ms.float32)
+    with ms.hal.StreamCtx(s1):
+        is_stream_stream1 = (ms.hal.current_stream() == s1)
+        b = ops.matmul(a, a)
+    ev = s1.record_event()
+    is_stream_prev_curr_stream_1 = (ms.hal.current_stream() == prev_curr_stream)
+    s2.wait_event(ev)
+
+    with ms.hal.StreamCtx(s2):
+        is_stream_stream2 = (ms.hal.current_stream() == s2)
+        c = ops.matmul(b, b)
+    s2.synchronize()
+    is_stream_prev_curr_stream_2 = (ms.hal.current_stream() == prev_curr_stream)
+
+    assert is_stream_stream1 is True
+    assert is_stream_prev_curr_stream_1 is True
+    assert is_stream_stream2 is True
+    assert is_stream_prev_curr_stream_2 is True
+    assert np.allclose(ops.matmul(a, a).asnumpy(), b.asnumpy())
+    assert np.allclose(ops.matmul(b, b).asnumpy(), c.asnumpy())
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_hal_none_streams():
+    """
+    Feature: Hal stream api.
+    Description: Test none streams.
+    Expectation: hal api performs as expected in none streams.
+    """
+    curr_stream = ms.hal.current_stream()
+    with ms.hal.StreamCtx(None):
+        is_curr_stream_same = (ms.hal.current_stream() == curr_stream)
+
+    assert is_curr_stream_same is True
