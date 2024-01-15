@@ -213,7 +213,8 @@ OpCompiler &OpCompiler::GetInstance() {
 }
 
 bool OpCompiler::IsInvalidInferResultOp(const std::string &op_name) const {
-  static const std::unordered_set<std::string> kInvalidInferResultOp = {kDropoutOpName, kMaxPoolWithArgmaxOpName};
+  static const std::unordered_set<std::string> kInvalidInferResultOp = {kDropoutOpName, kMaxPoolWithArgmaxOpName,
+                                                                        kLSTMOpName};
   return kInvalidInferResultOp.find(op_name) != kInvalidInferResultOp.end();
 }
 
