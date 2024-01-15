@@ -1,4 +1,4 @@
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2021-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 import mindspore as ms
 from mindspore import jit
+from mindspore.nn import TrainOneStepCell, Momentum
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -493,3 +494,62 @@ def test_control_while_for_if_break_parameter():
     net = Net30()
     ms_grad = ops.GradOperation(get_all=True, get_by_list=True, sens_param=False)
     ms_grad(net)(Tensor(2), Tensor(20), Tensor(np.random.rand(4, 4, 4), dtype=ms.float32))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_parameter_shape_in_auto_monad():
+    """
+    Feature: Auto monad feature.
+    Description: reshape is not a real operator and needs to use its user as input to updatestate.
+    Expectation: No exception.
+    """
+    class DoubleConcatNet(Cell):
+        def __init__(self, div_np, concat_np, mul_np, axis=1):
+            super().__init__()
+            self.div_weight = Parameter(Tensor(div_np), name="div_weight")
+            self.concat_weight = Parameter(Tensor(concat_np), name="concat_weight")
+            self.mul_weight = Parameter(Tensor(mul_np), name="mul_weight")
+            self.div = P.Div()
+            self.concat1 = P.Concat(axis=axis)
+            self.concat2 = P.Concat(axis=axis)
+            self.mul = P.Mul()
+            self.reshape = P.Reshape()
+
+        def construct(self, inputs, label):
+            x = self.div(inputs, self.div_weight)
+            x = self.concat1((x, x))
+            x = self.concat2((x, self.concat_weight))
+            x = self.mul(x, self.mul_weight)
+            r = self.reshape(self.mul_weight, (1, 32, 8, 2))
+            x = self.mul(x, r)
+            return x
+
+    _x = Tensor(np.ones([32, 2, 2]), dtype=ms.float32)
+    _b = Tensor(np.ones([32, 100]), dtype=ms.float32)
+
+    def compile_net(net):
+        optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+        train_net = TrainOneStepCell(net, optimizer)
+        train_net.set_train()
+        return train_net(_x, _b)
+
+    div_np_input = np.random.randn(32, 2, 2).astype(np.float32)
+    concat_np_input = np.random.randn(32, 4, 2).astype(np.float32)
+    mul_np_input = np.random.randn(32, 8, 2).astype(np.float32)
+
+    context.set_context(mode=context.GRAPH_MODE)
+    graph_net = DoubleConcatNet(div_np_input, concat_np_input, mul_np_input)
+    graph_out = compile_net(graph_net)
+    graph_div_weight = graph_net.div_weight.value()
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    pynative_net = DoubleConcatNet(div_np_input, concat_np_input, mul_np_input)
+    pyantive_out = compile_net(pynative_net)
+    pyantive_div_weight = pynative_net.div_weight.value()
+
+    assert (graph_div_weight == pyantive_div_weight).all()
+    assert (graph_out == pyantive_out).all()

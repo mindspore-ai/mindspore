@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2023 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -208,7 +208,8 @@ class OrderEnforcer {
   }
 
   bool IsSpecialPrimitive(const AnfNodePtr &node) const {
-    return IsPrimitiveCNode(node, prim::kPrimExpandDims) || IsPrimitiveCNode(node, prim::kPrimBatchNormGrad);
+    return IsPrimitiveCNode(node, prim::kPrimExpandDims) || IsPrimitiveCNode(node, prim::kPrimBatchNormGrad) ||
+           IsPrimitiveCNode(node, prim::kPrimReshape);
   }
 
   bool IsSpecialParallelPrimitive(const AnfNodePtr &node) const {
