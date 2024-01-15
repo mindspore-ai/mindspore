@@ -2239,14 +2239,14 @@ REG_BPROP_BUILDER("Cholesky").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
     MS_EXCEPTION(ValueError) << "Input `upper` does not support variable in GRAPH_MODE currently.";
   }
   auto upper = GetValue<bool>(upper_input_value);
-  auto out = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex2);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
   if (upper) {
     out = MatrixTranspose(ib, out);
     dout = MatrixTranspose(ib, dout);
   }
   auto dx = ib->Emit("CholeskyGrad", {out, dout});
-  return {dx};
+  return {dx, ib->OutZeros(upper_input)};
 });
 
 REG_BPROP_BUILDER("InplaceIndexAdd").SetUnusedInputs({i0, i2, i3}).SetBody(BODYFUNC(ib) {

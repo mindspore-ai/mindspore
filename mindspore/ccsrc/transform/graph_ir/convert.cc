@@ -1963,6 +1963,11 @@ void DfGraphConvertor::FillEmptyInputsWithNoInputOp(std::vector<Operator> *input
     if (!it->isa<CNode>()) {
       continue;
     }
+    std::string name = common::AnfAlgo::GetCNodeName(it);
+    if (name == prim::kPrimSwitch->name() || name == prim::kPrimSwitchLayer->name() ||
+        name == prim::kPrimPartial->name()) {
+      continue;
+    }
     auto adpt = FindAdapter(it, training_);
     if (adpt == nullptr) {
       continue;
