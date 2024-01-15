@@ -2136,6 +2136,12 @@ size_t RecStrategyPropagator::ApplyParamStrategy() {
             ApplyStrategy(user.first, GatherForDynamicShape(ops_[user.first], 2));
             continue;
           }
+          // This Gather uses shared parameter, but it is not treated as using shared parameter.
+          // Temporary workaround until this issue is fixed.
+          if (param.first.find(".embedding.word_embedding.embedding_table") != std::string::npos) {
+            ApplyStrategy(user.first, GatherForDynamicShape(ops_[user.first], 0));
+            continue;
+          }
         }
 
         if (!HasStrategy(ops_[user.first]) ||

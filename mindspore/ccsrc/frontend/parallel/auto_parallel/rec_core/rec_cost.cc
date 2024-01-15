@@ -196,7 +196,7 @@ StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
   if (node.apply.arguments[0].tensor_str.str_h == 0) {
     MS_LOG(EXCEPTION) << "str_h cannot be 0!";
   }
-  if (edge_i < SizeToLong(SIZE_TWO) || edge_i % SizeToLong(SIZE_TWO) != 0 ||
+  if (edge_i < INT64_TWO || edge_i % INT64_TWO != 0 ||
       (1 / node.apply.arguments[0].tensor_str.str_h >= graph.batch_size && graph.batch_size != 0)) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
@@ -205,16 +205,14 @@ StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
   }
 
   // Do not partition the J-axis and K-axis for the same MatMul
-  if (edge_j < SizeToLong(SIZE_TWO) || edge_j % SizeToLong(SIZE_TWO) != 0 ||
-      node.apply.arguments[0].tensor_str.str_w < 1) {
+  if (edge_j < INT64_TWO || edge_j % INT64_TWO != 0 || node.apply.arguments[0].tensor_str.str_w < 1) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 1, 1}, {1, 1, 1, 0.5}, {1, 1, 1, 0.5}};
     cost_op.push_back(cost_if_cut_j + CostRedis(node, node_name_to_strategy, mode, graph));
   }
 
-  if (edge_k < SizeToLong(SIZE_TWO) || edge_k % SizeToLong(SIZE_TWO) != 0 ||
-      node.apply.arguments[1].tensor_str.str_w < 1) {
+  if (edge_k < INT64_TWO || edge_k % INT64_TWO != 0 || node.apply.arguments[1].tensor_str.str_w < 1) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 1, 0.5}, {1, 1, 0.5, 1}, {1, 1, 1, 1}};
@@ -362,7 +360,7 @@ bool SplitOnlyOneDimension(const Graph &graph, float str) {
 }
 
 bool IsEdgeSplittable(const int64_t edge) {
-  if (edge < SizeToLong(SIZE_TWO) || edge % SizeToLong(SIZE_TWO) != 0) {
+  if (edge < INT64_TWO || edge % INT64_TWO != 0) {
     return false;
   }
   return true;

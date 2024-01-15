@@ -75,7 +75,7 @@ bool IsDynamicShapeInput(const CNodePtr &node, const AnfNodePtr &input) {
     }
     auto shape_ptr = dyn_cast<abstract::Shape>(base_shape_ptr);
     MS_EXCEPTION_IF_NULL(shape_ptr);
-    if (shape_ptr->shape().size() == 0) {
+    if (shape_ptr->shape().empty()) {
       return true;
     }
   }
@@ -1708,11 +1708,11 @@ bool IsCarePrevCNode(const CNodePtr &prev_cnode, const PrimitivePtr &prev_prim) 
   return (IsValueNode<FuncGraph>(prev_cnode->input(0))) || (prev_prim->name() == kTupleGetItemOpName) ||
          (prev_prim->name() == kDependOpName) || (prev_prim->name() == kMakeListOpName) ||
          (prev_prim->name() == kLoadOpName) || (prev_prim->name() == kMakeTupleOpName) ||
-         (prev_prim->name() == SHAPE_OP) || IsAutoParallelCareNode(prev_cnode);
+         (prev_prim->name() == kShapeOpName) || IsAutoParallelCareNode(prev_cnode);
 }
 
 bool IsCrossedCNode(std::string prev_prim_name) {
-  const std::set<std::string> crossed_cnode_list = {kDependOpName, kLoadOpName, SHAPE_OP};
+  const std::set<std::string> crossed_cnode_list = {kDependOpName, kLoadOpName, kShapeOpName};
   return crossed_cnode_list.find(prev_prim_name) != crossed_cnode_list.end();
 }
 
@@ -1774,7 +1774,7 @@ std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node, const std
         // In dynamic shape scenarios, the situation op1->Shape->TupleGetItem->op2 will occur.
         // The incoming operator of op2 should be op1 instead of Shape,
         // so the Shape operator is skipped when looking for the incoming operator.
-        if (prev_prim->name() == SHAPE_OP) {
+        if (prev_prim->name() == kShapeOpName) {
           continue;
         }
 
