@@ -327,7 +327,7 @@ def test_map_with_dvpp_resize():
     os.environ['MS_ENABLE_REF_MODE'] = "0"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_map_with_dvpp_resize_mixed_op():
