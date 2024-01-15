@@ -234,13 +234,16 @@ class AclRunner {
     }
     MS_EXCEPTION_IF_CHECK_FAIL(acl_param_.input_desc.size() == acl_param_.input_buffer.size(),
                                "Acl param input_desc size is not equal to acl param input_buffer size");
-    for (size_t i = acl_param_.input_desc.size() - 1; i >= 0; --i) {
+    for (int i = static_cast<int>(acl_param_.input_desc.size()) - 1; i >= 0; --i) {
       if (acl_param_.input_desc[i] != nullptr && acl_param_.input_buffer[i] != nullptr) {
         return i + 1;
       }
     }
     return 0;
   }
+
+  // fill null optional input in the range of inputs with place holder
+  void FillOptInputWithPlaceHolder();
 
   void ResizeOpOutputs(size_t size) {
     (void)std::for_each(acl_param_.output_desc.begin(), acl_param_.output_desc.end(), [](const aclTensorDesc *desc) {
