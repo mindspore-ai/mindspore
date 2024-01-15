@@ -44,6 +44,8 @@ class CTCGreedyDecoderCpuKernelMod : public NativeCpuKernelMod, public MatchKern
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+
  private:
   bool merge_repeated_{true};
   std::vector<TypeId> types_;
