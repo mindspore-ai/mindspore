@@ -2,6 +2,41 @@
 
 [View English](./RELEASE.md)
 
+## MindSpore 2.2.11 Release Notes
+
+### 主要特性及增强
+
+#### scipy
+
+- [Stable] 新增scipy模块API mindspore.scipy.optimize.linear_sum_assignment，用于解决线性和分配问题，它可以基于一个给定的成本矩阵，找到一个成本最低的分配方案。
+
+### 问题修复
+
+- [#I8JVRU] 修复bernoulli随机数算子在GPU上跑两次的结果出现概率性一致的问题。
+- [#I8OC32] 修复MatrixSetDiagV3算子未校验异常输入，导致segmentation fault问题。
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+fary86, wanghenchang, haozhang, mengyuanli, emmmmtang, luoyang, zhupuxu, zhangyongxian, liuluobin, LLLRT, TuDouNi, hujiahui8, wangtongyu6, ligan, zhuguodong, yanghaoran, YingtongHu, liyejun, zjun, 徐永飞, chuht, 张树仁, 徐安越, DeshiChen, shenyaxin, liujunzhu, shunyuanhan, yuchaojie, yao_yf, 没有窗户的小巷, yeyunpeng2020, weiyang, KevinYi, hedongdong, zhouyaqiang0, Margaret_wangrui, zhanghaibo, moran, huangziling, 朱家兴, GuoZhibin, 李良灿, jiaxueyu, gaoyong10, Greatpan, 宦晓玲, melody, 俞涵, jiangshanfeng, XinDu, ling, caifubi, zhangyinxia, gengdongjie, Erpim, XianglongZeng, zhangminli, fengyixing, 冯一航, 黄勇, panzhihui, 胡彬, linqingke, wangshaocong
+
+欢迎以任何形式对项目提供贡献！
+
+## MindSpore Lite 2.2.11 Release Notes
+
+### 问题修复
+
+- [#I8TPLY] 修复 SSD MobileNetV2 FPN 网络在Atlas 推理系列产品（配置 Ascend 310P AI 处理器）平台上的推理失败问题。
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+wangtongyu6, zhuguodong, 徐永飞, 徐安越, yeyunpeng2020, moran, XinDu, gengdongjie.
+
+欢迎以任何形式对项目提供贡献！
+
 ## MindSpore 2.2.10 Release Notes
 
 ### 主要特性及增强
