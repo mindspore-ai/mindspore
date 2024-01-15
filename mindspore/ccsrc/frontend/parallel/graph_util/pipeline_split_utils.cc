@@ -954,6 +954,8 @@ void ParameterStartNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGrap
     if (prim && prim->HasAttr(PARAMETER_START)) {
       auto micro = Micro(cnode, &node_users_map, 0);
       MS_EXCEPTION_IF_NULL(micro);
+      auto new_prim = prim->Clone();
+      manager->SetEdge(cnode, 0, NewValueNode(new_prim));
       cnode->AddPrimalAttr(MICRO, micro);
       cnode->AddPrimalAttr(PARAMETER_START, micro);
       int64_t seg = 0;
