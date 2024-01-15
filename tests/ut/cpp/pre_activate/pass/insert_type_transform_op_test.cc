@@ -26,6 +26,7 @@
 #include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/kernel_build_info.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 
 #define private public
 #define protected public
