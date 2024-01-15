@@ -27,6 +27,7 @@
 #include "pipeline/jit/pi/graph_guard/strategy.h"
 #include "pipeline/jit/pi/utils/utils.h"
 #include "include/common/utils/python_adapter.h"
+#include "pipeline/jit/pi/graph_capture/abstract_object.h"
 
 namespace mindspore {
 namespace jit {
@@ -695,6 +696,15 @@ static PyObject *DoCall(const std::vector<PyObject *> &params, int op, const std
 }
 
 using PyObjectArray = std::vector<PyObject *>;
+
+static PyObject *CheckAndDoBinary(int op, const PyObjectArray &objs, binaryfunc pyfunc) {
+  if (py::isinstance<mindspore::tensor::Tensor>(objs[0])) {
+    return AObject::Convert(objs[0])->Binary(AObject::Convert(objs[1]), op)->GetPyObject().ptr();
+  } else {
+    return pyfunc(objs[0], objs[1]);
+  }
+}
+
 using PythonBytecodeSupportCheckFunc = std::function<bool(int opargs, const PyObjectArray &objs)>;
 using PythonBytecodeExecuteFunc = std::function<PyObject *(int opargs, const PyObjectArray &objs, PTraceContext ctx)>;
 using PythonBytecodeFuncSet = std::pair<PythonBytecodeSupportCheckFunc, PythonBytecodeExecuteFunc>;
@@ -789,7 +799,7 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
    {ByteCodeTest(BINARY_MULTIPLY),
     [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
       if (ByteCodeCheck(BINARY_MULTIPLY, opargs, objs)) {
-        return PyNumber_Multiply(objs[0], objs[1]);
+        return CheckAndDoBinary(BINARY_MULTIPLY, objs, PyNumber_Multiply);
       } else {
         Py_INCREF(objs[0]);
         return objs[0];
@@ -816,7 +826,7 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
     },
     [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
       if (ByteCodeCheck(BINARY_ADD, opargs, objs)) {
-        return PyNumber_Add(objs[0], objs[1]);
+        return CheckAndDoBinary(BINARY_ADD, objs, PyNumber_Add);
       } else {
         Py_INCREF(objs[0]);
         return objs[0];
@@ -826,7 +836,7 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
    {ByteCodeTest(BINARY_SUBTRACT),
     [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
       if (ByteCodeCheck(BINARY_SUBTRACT, opargs, objs)) {
-        return PyNumber_Subtract(objs[0], objs[1]);
+        return CheckAndDoBinary(BINARY_SUBTRACT, objs, PyNumber_Subtract);
       } else {
         Py_INCREF(objs[0]);
         return objs[0];
@@ -841,7 +851,7 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
    {ByteCodeTest(BINARY_FLOOR_DIVIDE),
     [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
       if (ByteCodeCheck(BINARY_FLOOR_DIVIDE, opargs, objs)) {
-        return PyNumber_FloorDivide(objs[0], objs[1]);
+        return CheckAndDoBinary(BINARY_FLOOR_DIVIDE, objs, PyNumber_FloorDivide);
       } else {
         Py_INCREF(objs[0]);
         return objs[0];
@@ -851,7 +861,7 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
    {ByteCodeTest(BINARY_TRUE_DIVIDE),
     [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
       if (ByteCodeCheck(BINARY_TRUE_DIVIDE, opargs, objs)) {
-        return PyNumber_TrueDivide(objs[0], objs[1]);
+        return CheckAndDoBinary(BINARY_TRUE_DIVIDE, objs, PyNumber_TrueDivide);
       } else {
         Py_INCREF(objs[0]);
         return objs[0];

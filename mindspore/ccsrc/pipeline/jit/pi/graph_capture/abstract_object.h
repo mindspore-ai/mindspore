@@ -293,6 +293,7 @@ class AbstractTensor : public AbstractObject {
   std::string ToString() const override;
 
   bool SetItem(AObject *key, AObject *value) override { return true; }
+  AObject *GetItem(AObject *key) override;
   py::object GetTensor(bool sync);
 
   bool IsMindSporeSupportedType() override { return true; }
