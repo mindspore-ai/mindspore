@@ -504,6 +504,7 @@ constexpr const char kNameSwinAttentionFFN[] = "SwinAttentionFFN";
 constexpr const char kNameSwinTransformerLnQKV[] = "SwinTransformerLnQKV";
 constexpr const char kNameSwinAttentionScore[] = "SwinAttentionScore";
 constexpr const char kNameComputeAccidentalHits[] = "ComputeAccidentalHits";
+constexpr const char kNameMatMulAllReduce[] = "MatMulAllReduce";
 
 class OpAdapterDesc;
 
