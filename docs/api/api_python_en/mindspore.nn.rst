@@ -264,6 +264,7 @@ Loss Function
     mindspore.nn.KLDivLoss
     mindspore.nn.L1Loss
     mindspore.nn.MarginRankingLoss
+    mindspore.nn.MAELoss
     mindspore.nn.MSELoss
     mindspore.nn.MultiClassDiceLoss
     mindspore.nn.MultilabelMarginLoss
