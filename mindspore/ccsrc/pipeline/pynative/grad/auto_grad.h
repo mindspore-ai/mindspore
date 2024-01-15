@@ -198,7 +198,8 @@ class AutoGradCellImpl {
                        const string &op_name = "");
   void UpdateNextEdge(const FunctionNodePtr &fn, const AnfNodePtr &din, const ValuePtr &input_arg,
                       const AbstractBasePtr &abs);
-
+  void UpdateNextEdgeForDict(const FunctionNodePtr &fn, const AnfNodePtr &din, const ValuePtr &input_arg,
+                             const AbstractBasePtr &abs);
   AbstractBasePtr BuildForwardLastNode();
   // Add parameter(weights) to anfnode_to_variable_adjoint_
   ParameterPtr CreateTapeParameter(const tensor::TensorPtr &tensor, const abstract::AbstractBasePtr &abs);
@@ -209,6 +210,9 @@ class AutoGradCellImpl {
   void UpdateSensParameter(const ValuePtr &value);
   AnfNodePtr TraceShape(const FunctionNodePtr &fn, const ValuePtr &out_value, const abstract::AbstractBasePtr &out_abs,
                         const tensor::TensorPtr &input_tensor, const AnfNodePtr &din);
+  AnfNodePtr TraceShapeForDict(const FunctionNodePtr &fn, const ValuePtr &out_value,
+                               const abstract::AbstractBasePtr &out_abs, const tensor::TensorPtr &input_tensor,
+                               const AnfNodePtr &din);
   void BuildBPropCutCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs);
   void BuildCustomBpropCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs);
   void BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CNodePtr> *outputs) const;

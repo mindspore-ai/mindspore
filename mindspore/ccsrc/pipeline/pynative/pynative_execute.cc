@@ -305,8 +305,8 @@ void PyNativeExecutor::SetDynamicInput(const py::object &obj, const py::args &ar
 }
 
 py::object PyNativeExecutor::GetDynamicInput(const py::object &actual_input) const {
-  MS_LOG(DEBUG) << "Get dynamic shape for jit";
   if (grad_executor()->dynamic_shape()->enable_unknown_shape()) {
+    MS_LOG(DEBUG) << "Get dynamic shape for jit";
     return grad_executor()->dynamic_shape()->GetDynamicInput(actual_input);
   }
   return actual_input;

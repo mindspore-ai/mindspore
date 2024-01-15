@@ -470,7 +470,7 @@ void PyNativePassForward::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &
   auto cnode = node->cast<CNodePtr>();
   bool need_traverse = !grad_by_value_ && cnode->HasAttr(kIsKNode);
   if (need_traverse || cnode->seen_ == seen || IsPrimitiveCNode(cnode, prim::kPrimBpropCut) ||
-      !IsPrimitiveCNode(cnode)) {
+      !IsPrimitiveCNode(cnode) || IsPrimitiveCNode(cnode, prim::kPrimMakeDict)) {
     return;
   }
   cnode->seen_ = seen;
@@ -483,8 +483,10 @@ void PyNativePassForward::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &
   }
 
   if (!IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) &&
-      std::any_of(cnode->inputs().begin() + 1, cnode->inputs().end(),
-                  [](const AnfNodePtr &node) { return node->abstract()->isa<abstract::AbstractSequence>(); })) {
+      std::any_of(cnode->inputs().begin() + 1, cnode->inputs().end(), [](const AnfNodePtr &node) {
+        MS_EXCEPTION_IF_NULL(node->abstract());
+        return node->abstract()->isa<abstract::AbstractSequence>();
+      })) {
     AnfNodePtrList plant_inputs;
     std::vector<int64_t> dyn_input_sizes;
     (void)plant_inputs.emplace_back(common::AnfAlgo::GetCNodePrimitiveNode(cnode));

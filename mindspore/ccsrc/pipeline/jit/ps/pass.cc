@@ -281,13 +281,13 @@ FuncGraphPtr FinalBpropGraphPass(const ResourcePtr &resource, bool has_control_f
   opt::OptPassConfig inline_opt = opt::OptPassConfig({
     irpass.inline_,
   });
-  map.push_back({"ad_inline", inline_opt});
+  map.emplace_back("ad_inline", inline_opt);
 
   opt::OptPassConfig grad_graph_opt = opt::OptPassConfig({
     irpass.tuple_list_get_item_eliminator_,
     irpass.zero_like_fill_zero_,
   });
-  (void)map.push_back({"grad_graph_opt", grad_graph_opt});
+  (void)map.emplace_back("grad_graph_opt", grad_graph_opt);
 
   if (has_control_flow) {
     opt::OptPassConfig env_eliminate = opt::OptPassConfig({

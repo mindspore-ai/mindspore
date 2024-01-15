@@ -53,7 +53,7 @@ struct Common {
   static bool ValueHasDynamicShape(const ValuePtr &value);
   static bool IsTensor(const ValuePtr &v, bool include_sequence = false);
   static bool IsControlFlowGraph(const FuncGraphPtr &func_graph);
-  static ValuePtr FilterSensValues(const ValuePtr &value);
+  static ValuePtr FilterSensValues(const ValuePtr &value, bool dict_convert_to_tuple);
   static tensor::TensorPtr GetTensorFromParam(const AnfNodePtr &param_node);
   static void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
   static TypeId GetTypeFromAbstract(const abstract::AbstractBasePtr &abs);
@@ -85,6 +85,7 @@ struct Common {
   static void SetGraphInputAndWeightsInfo(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &func_graph,
                                           const TopCellInfoPtr &top_cell);
   static void ProcessTupleParam(const FuncGraphPtr &bprop_graph, size_t position);
+  static void ProcessDictParam(const FuncGraphPtr &bprop_graph, size_t position);
   static void FreeFuncGraphForwardNodes(const FuncGraphPtr &func_graph);
   static tensor::TensorPtr ConvertToContiguousTensor(const tensor::TensorPtr &tensor, const std::string &device_target);
 };

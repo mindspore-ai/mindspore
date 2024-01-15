@@ -401,7 +401,7 @@ bool Common::IsControlFlowGraph(const FuncGraphPtr &func_graph) {
   return !func_graph->func_graphs_used_total().empty();
 }
 
-ValuePtr Common::FilterSensValues(const ValuePtr &value) {
+ValuePtr Common::FilterSensValues(const ValuePtr &value, bool dict_convert_to_tuple) {
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::Tensor>() || value->isa<tensor::COOTensor>() || value->isa<tensor::CSRTensor>()) {
     return value;
@@ -410,13 +410,16 @@ ValuePtr Common::FilterSensValues(const ValuePtr &value) {
     auto value_seq = value->cast<ValueSequencePtr>();
     MS_EXCEPTION_IF_NULL(value_seq);
     for (auto &filter_value : value_seq->value()) {
-      if (auto t = FilterSensValues(filter_value); t != nullptr) {
+      if (auto t = FilterSensValues(filter_value, dict_convert_to_tuple); t != nullptr) {
         (void)value_list.emplace_back(t);
       }
     }
     return std::make_shared<ValueTuple>(value_list);
   } else if (value->isa<ValueDictionary>()) {
-    return FilterSensValues(DataConvert::ConvertValueDictToValueTuple(value));
+    if (dict_convert_to_tuple) {
+      return FilterSensValues(DataConvert::ConvertValueDictToValueTuple(value), dict_convert_to_tuple);
+    }
+    return value;
   } else {
     MS_LOG(DEBUG) << "Value type: " << value->ToString();
     return nullptr;
@@ -678,6 +681,13 @@ ValuePtr Common::CreateFakeValueWithoutDeviceAddress(const ValuePtr &value) {
   } else if (value->isa<stub::StubNode>()) {
     const auto &stub_node = value->cast<stub::StubNodePtr>();
     return CreateFakeValueWithoutDeviceAddress(stub_node->WaitValue());
+  } else if (value->isa<ValueDictionary>()) {
+    auto dic_v = value->cast<ValueDictionaryPtr>();
+    std::vector<std::pair<ValuePtr, ValuePtr>> key_values;
+    for (const auto &v : dic_v->value()) {
+      (void)key_values.emplace_back(v.first, CreateFakeValueWithoutDeviceAddress(v.second));
+    }
+    return std::make_shared<ValueDictionary>(key_values);
   } else {
     return value;
   }
@@ -800,6 +810,41 @@ void Common::ProcessTupleParam(const FuncGraphPtr &bprop_graph, size_t position)
   MS_EXCEPTION_IF_NULL(manager);
   auto tr = manager->Transact();
   (void)tr.Replace(target_param, make_tuple_param);
+  tr.Commit();
+}
+
+void Common::ProcessDictParam(const FuncGraphPtr &bprop_graph, size_t position) {
+  auto bprop_params = bprop_graph->parameters();
+  auto target_param = bprop_params[position];
+  MS_EXCEPTION_IF_NULL(target_param);
+  const auto &target_abstract = target_param->abstract();
+  MS_EXCEPTION_IF_NULL(target_abstract);
+  if (!target_abstract->isa<abstract::AbstractDictionary>()) {
+    MS_LOG(EXCEPTION) << "Get wrong param " << target_abstract->ToString();
+  }
+  MS_LOG(DEBUG) << "Process tuple param " << target_abstract->ToString();
+  auto it = std::find(bprop_params.begin(), bprop_params.end(), target_param);
+  it = bprop_params.erase(it);
+  const auto &abs_dict = target_abstract->cast<abstract::AbstractDictionaryPtr>();
+  abstract::AbstractBasePtrList local_key_abs_inputs;
+  abstract::AbstractBasePtrList local_value_abs_inputs;
+  for (size_t i = 0; i < abs_dict->size(); ++i) {
+    (void)local_key_abs_inputs.emplace_back(abs_dict->elements()[i].first);
+    (void)local_value_abs_inputs.emplace_back(abs_dict->elements()[i].second);
+  }
+  auto key_param = bprop_graph->add_parameter();
+  key_param->set_abstract(std::make_shared<abstract::AbstractTuple>(local_key_abs_inputs));
+  auto value_param = bprop_graph->add_parameter();
+  value_param->set_abstract(std::make_shared<abstract::AbstractTuple>(local_value_abs_inputs));
+  auto key_it = bprop_params.insert(it, value_param);
+  (void)bprop_params.insert(key_it, key_param);
+  bprop_graph->set_parameters(bprop_params);
+  auto dict_node = bprop_graph->NewCNode({NewValueNode(prim::kPrimMakeDict), key_param, value_param});
+  dict_node->set_abstract(abs_dict);
+  auto manager = bprop_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto tr = manager->Transact();
+  (void)tr.Replace(target_param, dict_node);
   tr.Commit();
 }
 
@@ -1422,6 +1467,8 @@ void DataConvert::ConvertValueTensorId(const ValuePtr &value, std::vector<std::s
     for (const auto &val : seq->value()) {
       ConvertValueTensorId(val, converted_tensor_id);
     }
+  } else if (value->isa<ValueDictionary>()) {
+    ConvertValueTensorId(ConvertValueDictToValueTuple(value), converted_tensor_id);
   }
 }
 
