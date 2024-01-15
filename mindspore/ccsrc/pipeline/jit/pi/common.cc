@@ -276,6 +276,7 @@ static JitCompileResults *allocJitCompileResults() {
   c->tbs = std::make_shared<Tracebackes>();
   c->codehub = std::make_shared<OptCodeHub>();
   c->conf = std::make_shared<GraphJitConfig>();
+  c->break_count_ = 0;
   return c;
 }
 
@@ -417,6 +418,33 @@ static void ValidateCompiledResults(const JitCompileResults *c) {
   MS_EXCEPTION_IF_CHECK_FAIL(valid_res, "check compiled result");
 }
 
+static void MarkBreak(Graph *g) {
+  int break_bci = g->GetStopTraceBci();
+  if (break_bci == -1) {
+    return;
+  }
+  PyCodeObject *code;
+  if (g->GetTracedNodes().empty()) {
+    code = g->GetCodeObj();
+  } else {
+    auto iter = g->GetTracedNodes().begin();
+    for (; iter != g->GetTracedNodes().end(); ++iter) {
+      if (break_bci >= (*iter)->bci()) {
+        break;
+      }
+    }
+    if (iter == g->GetTracedNodes().end()) {
+      --iter;
+    }
+    code = (*iter)->GetGraph()->GetCodeObj();
+  }
+  MS_EXCEPTION_IF_NULL(code);
+  auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(code), false);
+  if (jcr != nullptr) {
+    jcr->break_count_++;
+  }
+}
+
 // preprocess before compile, split bytecode to sub-function
 // return whether the code should be modified
 static bool GraphCapture(JitCompileResults *jcr) {
@@ -432,6 +460,8 @@ static bool GraphCapture(JitCompileResults *jcr) {
 
   GraphAnalyzer analyzer(g.GetGraph());
   analyzer.Analyze();
+
+  MarkBreak(g.GetGraph());
 
   if (g.GetGraph()->IsBreakAtLoop() && !g.GetGraph()->RestoreLoopStatus()) {
     jcr->stat = JitCompileResults::NEVER_COMPILE;

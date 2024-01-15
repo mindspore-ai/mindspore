@@ -77,9 +77,6 @@ void BytecodeInliner::Run() {
 }
 
 void BytecodeInliner::ResetGraphStat() {
-  for (auto it : traced_nodes_) {
-    it->SetGraph(graph_);
-  }
   graph_->GetFrames().swap(new_frames_);
   graph_->GetCFG().swap(cfg_);
   graph_->GetTracedNodes().swap(traced_nodes_);
@@ -244,7 +241,8 @@ static bool EliminateSideEffect(Graph *top_graph, Graph *sub_graph) {
   return true;
 }
 
-static bool CanInine(Graph *top_graph, Graph *sub_graph) {
+extern bool ApplyInlinePolicy(Graph *g);
+static bool CanIninePartial(Graph *top_graph, Graph *sub_graph) {
   if (sub_graph == nullptr) {
     return false;
   }
@@ -254,7 +252,7 @@ static bool CanInine(Graph *top_graph, Graph *sub_graph) {
   if (!EliminateSideEffect(top_graph, sub_graph)) {
     return false;
   }
-  return true;
+  return ApplyInlinePolicy(sub_graph);
 }
 
 void BytecodeInliner::Reconstruct(ValueNode *node, int local_off) {
@@ -275,7 +273,7 @@ void BytecodeInliner::Reconstruct(ValueNode *node, int local_off) {
 
   if (inline_partial_ && node->GetType() == AbstractNode::Call) {
     CallNode *call_node = static_cast<CallNode *>(node);
-    if (CanInine(this->graph_, call_node->GetSubGraph())) {
+    if (CanIninePartial(this->graph_, call_node->GetSubGraph())) {
       std::copy(call_node->GetParams().begin(), call_node->GetParams().end(), std::back_inserter(traced_nodes_));
       ProcessGraph(call_node->GetSubGraph(), local_off);
       return;

@@ -132,6 +132,7 @@ typedef struct CodeExtra {
 
   int IncCodeCount() { return compile_count_++; }
   int compile_count_;
+  int break_count_;
 } JitCompileResults;
 
 JitCompileResults *getJitCompileResults(PyObject *code, bool alloc = true);
