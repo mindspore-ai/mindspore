@@ -41,7 +41,7 @@ def test_add_inputs_and_outputs(tag):
 
     @fns
     def graph(x, y):
-        return make_tuple(y)
+        return y
 
     return fns[tag]
 
@@ -57,7 +57,38 @@ def test_add_node(tag):
 
     @fns
     def graph(x, y):
-        return make_tuple(scalar_add(x, y))
+        return scalar_add(x, y)
+
+    return fns[tag]
+
+
+def test_add_node_with_constant(tag):
+    """
+    Feature: Build graph in pi_jit.
+    Description: Use the func_graph_builder api to add cnode.
+    Expectation: The expected graph is constructed.
+    """
+    fns = FnDict()
+    scalar_add = _scalar_ops.ScalarAdd()
+
+    @fns
+    def graph(x):
+        return scalar_add(x, 2)
+
+    return fns[tag]
+
+
+def test_add_binary_node(tag):
+    """
+    Feature: Build graph in pi_jit.
+    Description: Use the func_graph_builder api to add cnode.
+    Expectation: The expected graph is constructed.
+    """
+    fns = FnDict()
+
+    @fns
+    def graph(x, y):
+        return x + y
 
     return fns[tag]
 
@@ -72,10 +103,10 @@ def test_add_fg_call_node(tag):
     scalar_add = _scalar_ops.ScalarAdd()
 
     def graph1(x, y):
-        return make_tuple(scalar_add(x, y))
+        return scalar_add(x, y)
 
     @fns
     def graph(x, y):
-        return make_tuple(graph1(x, y))
+        return graph1(x, y)
 
     return fns[tag]

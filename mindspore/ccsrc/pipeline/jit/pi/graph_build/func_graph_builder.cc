@@ -211,11 +211,23 @@ bool FuncGraphBuilder::GetInputNodesAndAbstracts(const ValuePtr &callable_value,
   for (const auto &input_obj : inputs_obj) {
     auto iter = converted_py_obj_.find(input_obj.ptr());
     if (iter == converted_py_obj_.end()) {
-      MS_LOG(ERROR) << "The input python object " << py::str(input_obj) << " should have been add to the graph inputs.";
-      return false;
+      auto val = ConvertPyObjToValue(input_obj);
+      if (val == nullptr) {
+        MS_LOG(ERROR) << "The input object " << py::str(input_obj) << " convert to value failed.";
+        return false;
+      }
+      // Constant value input scene, the object should be converted to value node.
+      auto node = NewValueNode(val);
+      auto abs = val->ToAbstract();
+      node->set_abstract(abs);
+      (void)converted_py_obj_.emplace(input_obj.ptr(), node);
+      (void)input_node_list->emplace_back(node);
+      (void)input_abs_list->emplace_back(abs);
+      MS_LOG(DEBUG) << "Add constant python input " << py::str(input_obj) << " with node " << node->DebugString();
+    } else {
+      (void)input_node_list->emplace_back(iter->second);
+      (void)input_abs_list->emplace_back(iter->second->abstract());
     }
-    (void)input_node_list->emplace_back(iter->second);
-    (void)input_abs_list->emplace_back(iter->second->abstract());
   }
   return true;
 }
@@ -268,6 +280,17 @@ py::object FuncGraphBuilder::AddNode(const ValuePtr &callable_value, const std::
   return output_py_obj;
 }
 
+py::object FuncGraphBuilder::AddBinaryNode(const std::string &name, const std::vector<py::object> &inputs_obj) {
+  const std::string mod_str = "mindspore.ops.composite.multitype_ops";
+  py::module mod = py::module::import(mod_str.c_str());
+  if (!py::hasattr(mod, name.c_str())) {
+    MS_LOG(ERROR) << "Fail to find multitype function graph for name " << name;
+    return py::object();
+  }
+  py::object fn = mod.attr(name.c_str());
+  return AddNode(fn, inputs_obj);
+}
+
 bool FuncGraphBuilder::AddOutput(const py::object &output_obj) {
   auto iter = converted_py_obj_.find(output_obj.ptr());
   if (iter == converted_py_obj_.end()) {
@@ -286,14 +309,37 @@ bool FuncGraphBuilder::AddOutput(const py::object &output_obj) {
   return true;
 }
 
+void FuncGraphBuilder::UpdatePyObject(const py::object &new_obj, const py::object &old_obj) {
+  if (new_obj.ptr() == old_obj.ptr()) {
+    return;
+  }
+  auto iter = converted_py_obj_.find(old_obj.ptr());
+  if (iter == converted_py_obj_.end()) {
+    return;
+  }
+  auto node = iter->second;
+  converted_py_obj_.erase(iter);
+  (void)converted_py_obj_.emplace(new_obj.ptr(), node);
+  MS_LOG(DEBUG) << "Update python object " << old_obj.ptr() << " to " << new_obj.ptr() << ". Corresponding node is "
+                << node->DebugString();
+}
+
 FuncGraphPtr FuncGraphBuilder::graph() {
   if (has_set_output_) {
     return graph_;
   }
-  if (output_nodes_.size() == 1) {
+  if (output_nodes_.empty()) {
     MS_LOG(ERROR) << "The graph " << graph_->ToString() << " has not been set output.";
     return nullptr;
   }
+  if (output_nodes_.size() == 1) {
+    // Single output case.
+    graph_->set_output(output_nodes_[0]);
+    has_set_output_ = true;
+    return graph_;
+  }
+  // multiple output case.
+  output_nodes_.insert(output_nodes_.begin(), NewValueNode(prim::kPrimMakeTuple));
   AbstractBasePtrList abstract_list;
   (void)std::transform(output_nodes_.begin() + 1, output_nodes_.end(), std::back_inserter(abstract_list),
                        [](const AnfNodePtr &node) -> AbstractBasePtr { return node->abstract(); });
@@ -312,8 +358,18 @@ py::object FuncGraphBuilder::AddFgCallNode(const FuncGraphPtr &fg, const vector<
   for (const auto &input_obj : inputs_obj) {
     auto iter = converted_py_obj_.find(input_obj.ptr());
     if (iter == converted_py_obj_.end()) {
-      MS_LOG(ERROR) << "The input python object " << py::str(input_obj) << " should have been add to the graph inputs.";
-      return py::object();
+      auto val = ConvertPyObjToValue(input_obj);
+      if (val == nullptr) {
+        MS_LOG(ERROR) << "The input object " << py::str(input_obj) << " convert to value failed.";
+        return py::object();
+      }
+      // Constant value input scene, the object should be converted to value node.
+      auto node = NewValueNode(val);
+      auto abs = val->ToAbstract();
+      node->set_abstract(abs);
+      (void)converted_py_obj_.emplace(input_obj.ptr(), node);
+      (void)input_node_list.emplace_back(node);
+      MS_LOG(DEBUG) << "Add constant python input " << py::str(input_obj) << " with node " << node->DebugString();
     }
     (void)input_node_list.emplace_back(iter->second);
   }

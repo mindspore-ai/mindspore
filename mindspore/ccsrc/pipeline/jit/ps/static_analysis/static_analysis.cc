@@ -29,6 +29,7 @@
 #include "mindspore/core/ops/framework_ops.h"
 #include "abstract/abstract_value.h"
 #include "pipeline/jit/ps/fallback.h"
+#include "pipeline/jit/ps/action.h"
 #include "pipeline/jit/ps/parse/resolve.h"
 #include "pipeline/jit/ps/static_analysis/prim.h"
 #include "frontend/operator/ops.h"
@@ -1619,9 +1620,11 @@ EvalResultPtr EvalOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrLi
   }
   // Support MakeTuple/MakeList ops in PyNative mode.
   auto transition_evaluator = dyn_cast_ptr<TransitionPrimEvaluator>(evaluator);
-  if (transition_evaluator != nullptr &&
-      (transition_evaluator->isa<MakeTupleEvaluator>() || transition_evaluator->isa<MakeListEvaluator>())) {
-    return transition_evaluator->EvalPrim(nullptr, arg_specs, nullptr, nullptr);
+  if (transition_evaluator != nullptr) {
+    if (transition_evaluator->isa<MakeTupleEvaluator>() || transition_evaluator->isa<MakeListEvaluator>()) {
+      return transition_evaluator->EvalPrim(nullptr, arg_specs, nullptr, nullptr);
+    }
+    return pipeline::AbstractAnalyze(primitive, arg_specs).eval_result;
   }
   // To add EvalPrim call of TransitionPrimEvaluator such as GetAttr.
   MS_LOG(ERROR) << "The primitive '" << primitive->ToString() << "' should be built as a TrivialPrimEvaluator, but "

@@ -27,9 +27,7 @@
 namespace mindspore {
 class FuncGraphBuilder {
  public:
-  FuncGraphBuilder() : graph_(std::make_shared<FuncGraph>()) {
-    (void)output_nodes_.emplace_back(NewValueNode(prim::kPrimMakeTuple));
-  }
+  FuncGraphBuilder() : graph_(std::make_shared<FuncGraph>()) {}
   virtual ~FuncGraphBuilder() { converted_py_obj_.clear(); }
 
   /// \brief Add an input parameter to the graph.
@@ -55,12 +53,26 @@ class FuncGraphBuilder {
   /// \return The python object of the infer result.
   py::object AddNode(const ValuePtr &callable_value, const std::vector<py::object> &inputs_obj);
 
+  /// \brief Add a binary operation cnode to the graph.
+  ///
+  /// \param[in] opcode The binary operation code.
+  /// \param[in] inputs_obj The input python objects.
+  ///
+  /// \return The python object of the infer result.
+  py::object AddBinaryNode(const std::string &opcode, const std::vector<py::object> &inputs_obj);
+
   /// \brief Add an output node to the graph.
   ///
   /// \param[in] output_obj The output python object.
   ///
   /// \return Return true if the output object can be used as the output of the graph.
   bool AddOutput(const py::object &output_obj);
+
+  /// \brief Update key value for converted_py_obj_ map.
+  ///
+  /// \param[in] new_obj The new python object as key.
+  /// \param[in] old_obj The old python object as key.
+  void UpdatePyObject(const py::object &new_obj, const py::object &old_obj);
 
   /// \brief Get the callable python primitive or function.
   ///
