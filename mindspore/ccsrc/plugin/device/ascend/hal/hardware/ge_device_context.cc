@@ -26,6 +26,7 @@
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/scoped_long_running.h"
 #include "include/backend/debug/data_dump/dump_json_parser.h"
+#include "plugin/device/ascend/hal/hardware/ge_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/hal/device/cpu_memory_manager.h"
 #include "include/backend/debug/profiler/profiling.h"
@@ -405,6 +406,8 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   // enable deterministic
   (*ge_options)[::ge::DETERMINISTIC] = ms_context_ptr->get_param<std::string>(MS_CTX_DETERMINISTIC) == "ON" ? "1" : "0";
   UseOpDebugConfig(ge_options);
+
+  SetPassthroughGeOptions(true, ge_options);
 }
 
 void GeDeviceContext::SetDumpOptions(std::map<std::string, std::string> *ge_options) const {

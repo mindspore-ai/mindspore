@@ -188,6 +188,8 @@ void GeDeviceResManager::CreateSessionAndGraphRunner() {
       options["ge.exec.formatMode"] = "1";
     }
 
+    SetPassthroughGeOptions(false, &options);
+
     sess = transform::NewSession(options);
     transform::SetGeSession(sess);
   }

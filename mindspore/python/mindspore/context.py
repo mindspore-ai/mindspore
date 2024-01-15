@@ -268,7 +268,8 @@ class _Context:
                             "allow_mix_precision_fp16" and "allow_mix_precision_bf16".
                 - jit_compile (bool): ``False`` and ``True``.
                 - atomic_clean_policy (int): ``0`` and ``1``. Default: ``1`` .
-                - op_precision_mode (str): config file path.
+                - op_precision_mode (str): precision mode config file path.
+                - ge_options (dict): Global or session CANN options.
                 - parallel_speed_up_json_path(Union[str, None]): The path to the parallel speed up json file.
                   If its value is None or '', it does not take effect. Default None.
                 - host_scheduling_max_threshold(int): The host scheduling max threshold.
@@ -282,6 +283,7 @@ class _Context:
             'matmul_allow_hf32': [True, False],
             'conv_allow_hf32': [True, False],
             'op_precision_mode': (str,),
+            'ge_options': (dict,),
             'parallel_speed_up_json_path': (str, None),
             'host_scheduling_max_threshold': (int,)
         }
@@ -292,6 +294,7 @@ class _Context:
             'matmul_allow_hf32': self._get_ascend_config_setter('matmul_allow_hf32', lambda v: "1" if v else "0"),
             'conv_allow_hf32': self._get_ascend_config_setter('conv_allow_hf32', lambda v: "1" if v else "0"),
             'op_precision_mode': self._set_op_precision_mode,
+            'ge_options': self._set_ge_options,
             'parallel_speed_up_json_path': self._set_speedup_config_path,
             'host_scheduling_max_threshold': self._get_ascend_config_setter('host_scheduling_max_threshold', str)
         }
@@ -616,6 +619,28 @@ class _Context:
             raise ValueError(f"For 'ascend_config', the 'op_precision_mode' is invalid path, "
                              f"got '{op_precision_path}'.")
         self.set_param(ms_ctx_param.op_precision_mode, ascend_value)
+
+    def _set_ge_options(self, ge_options):
+        """Set ge options."""
+        for level, options in ge_options.items():
+            if level not in ['global', 'session']:
+                raise ValueError(f"For 'ascend_config', the key of ge_options must be one of "
+                                 f"('global', 'session'), but got {level}.")
+
+            if not isinstance(options, dict):
+                raise TypeError(f"For 'ge_options', the type of {level} options must be dict, "
+                                f"but got {type(options)}. The error options: {options}.")
+
+            for key, value in options.items():
+                if not isinstance(key, str):
+                    raise TypeError(f"For 'ge_options', the type of key and value must be str, "
+                                    f"but got {type(key)}. The error key is {key}.")
+                if not isinstance(value, str):
+                    raise TypeError(f"For 'ge_options', the type of key and value must be str, "
+                                    f"but got {type(value)}. The error value is {value}")
+
+        options_str = json.dumps(ge_options)
+        self.set_param(ms_ctx_param.ge_options, options_str)
 
     def _set_speedup_config_path(self, speedup_config_path):
         """"Check and set speedup config for auto parallel."""
@@ -1318,6 +1343,13 @@ def set_context(**kwargs):
               For detailed information, please refer to `Ascend community <https://www.hiascend.com/>`_ .
             - op_precision_mode (str): Path to config file of op precision mode. For detailed information, please refer
               to `Ascend community <https://www.hiascend.com/>`_ .
+            - ge_options (dict): Set options for CANN. The options are divided into two categories: global and session.
+              This is an experimental prototype that is subject to change and/or deletion.
+              For detailed information, please refer to `Ascend community <https://www.hiascend.com/document/detail/zh/canncommercial/70RC1/inferapplicationdev/graphdevg/atlasgeapi_07_0119.html>`_ .
+
+              - global (dict): Set global options.
+              - session (dict): Set session options.
+
             - parallel_speed_up_json_path(Union[str, None]): The path to the parallel speed up json file, configuration
               can refer to `parallel_speed_up.json
               <https://gitee.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ .
@@ -1451,7 +1483,9 @@ def set_context(**kwargs):
         >>> ms.set_context(memory_offload='ON')
         >>> ms.set_context(deterministic='ON')
         >>> ms.set_context(ascend_config={"precision_mode": "force_fp16", "jit_compile": True,
-        ...                "atomic_clean_policy": 1, "op_precision_mode": "./op_precision_config_file"})
+        ...                "atomic_clean_policy": 1, "op_precision_mode": "./op_precision_config_file",
+        ...                "ge_options": {"global": {"ge.opSelectImplmode": "high_precision"},
+        ...                               "session": {"ge.exec.atomicCleanPolicy": "0"}}})
         >>> ms.set_context(jit_syntax_level=ms.STRICT)
         >>> ms.set_context(gpu_config={"conv_fprop_algo": "performance", "conv_allow_tf32": True,
         ...                "matmul_allow_tf32": True})
@@ -1471,7 +1505,7 @@ def set_context(**kwargs):
                            "For details, please see the interface parameter API comments")
             continue
         if key in ('precision_mode', 'jit_compile', 'atomic_clean_policy', 'matmul_allow_hf32', 'conv_allow_hf32',
-                   'op_precision_mode', 'host_scheduling_max_threshold'):
+                   'op_precision_mode', 'host_scheduling_max_threshold', 'ge_options'):
             raise ValueError(f"Please set '{key}' through parameter ascend_config")
         if key == 'save_graphs':
             if value is True:

@@ -170,6 +170,7 @@ enum MsCtxParam : unsigned {
   MS_CTX_MATMUL_ALLOW_HF32,
   MS_CTX_CONV_ALLOW_HF32,
   MS_CTX_OP_PRECISION_MODE,
+  MS_CTX_GE_OPTIONS,
   MS_CTX_CONV_FPROP_ALGO,
   MS_CTX_CONV_DGRAD_ALGO,
   MS_CTX_CONV_WGRAD_ALGO,
@@ -266,6 +267,7 @@ class MS_CORE_API MsContext {
   void MarkReadStatus(MsCtxParam param) const;  // record status to mutable member params_read_status_
   template <typename T>
   void CheckReadStatus(MsCtxParam param, const T &value) const;
+  void SetAscendConfig();
 
   static DeviceSeter seter_;
   static std::shared_ptr<MsContext> inst_context_;
