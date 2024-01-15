@@ -730,10 +730,10 @@ def export_split_mindir(file_name, device_num=8, rank_id=0, dynamic=True, sapp=T
 
     Args:
         file_name (str): MindIR file name.
-        device_num (int): device number.
-        rank_id (int): rank id.
-        dynamic (bool): Indicates whether the model is a dynamic shape mindir model.
-        sapp (bool): Indicates whether to automatically generate split strategy through SAPP.
+        device_num (int): device number. Default: '8'.
+        rank_id (int): rank id. Default: '0'.
+        dynamic (bool): Indicates whether the model is a dynamic shape mindir model. Default: 'True'.
+        sapp (bool): Indicates whether to automatically generate split strategy through SAPP. Default: 'True'.
 
     Raises:
         ValueError: MindIR file does not exist or `file_name` is not a string.

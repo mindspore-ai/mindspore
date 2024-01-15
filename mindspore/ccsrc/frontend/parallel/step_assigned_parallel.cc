@@ -981,6 +981,7 @@ bool StepAssignedParallel(const FuncGraphPtr &root, const FuncGraphManagerPtr &m
   MarkForwardCNode(root);
 
   if (sapp) {
+    CostModelContext::GetInstance()->set_rp_matmul_mem_coef(1);
     if (ParallelStrategyRecSearch(all_nodes, root, rank_id, device_num) != SUCCESS) {
       MS_LOG(EXCEPTION) << "Auto-parallel strategy search failed when using RP searching mode";
     }
