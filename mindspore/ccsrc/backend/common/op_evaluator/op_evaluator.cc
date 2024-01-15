@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "include/backend/op_evaluator.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "kernel/kernel.h"
 #include "utils/ms_context.h"
