@@ -501,7 +501,7 @@ def convert_value_type(op_proto: OpProto) -> str:
     :param op_proto:
     :return: str
     """
-    convert_template = CppTemplate("auto $arg_name = ValueConverter::${convert_func}(inputs, $arg_index);\n")
+    convert_template = CppTemplate("auto $arg_name = ValueConverter::${convert_func}(op_runner_info->inputs, $arg_index);\n")
     parser_func_str = ''
     for index, arg in enumerate(op_proto.op_args):
         is_optional = is_optional_param(arg)

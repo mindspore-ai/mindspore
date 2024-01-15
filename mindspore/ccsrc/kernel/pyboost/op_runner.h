@@ -36,6 +36,16 @@ namespace kernel {
 namespace pyboost {
 using GradFunc = std::function<void()>;
 constexpr size_t kAbstractCacheSize = 8192;
+
+struct OpRunnerInfo {
+  const PrimitivePtr &prim;
+  const std::string &device_target;
+  const vector<ValuePtr> &inputs;
+  const abstract::AbstractBasePtrList &inputs_abs;
+  const std::vector<int64_t> &inputs_mask;
+  abstract::AbstractBasePtr output_abs;
+};
+
 // OpRunner is a base class for operators.
 // OpRunner records the operator's input abstract,
 // output abstract and output Tensors for grad,
@@ -126,6 +136,28 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
     (input_abs_.emplace_back(ConvertAbstract(args)), ...);
     output_abs_ = PyBoostUtils::InferByOpDef(primitive_, input_abs_);
     MS_EXCEPTION_IF_NULL(output_abs_);
+    CreateOutput();
+  }
+
+  void InferOutput(OpRunnerInfo *op_runner_info) {
+    MS_EXCEPTION_IF_NULL(op_runner_info);
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostInferOutput,
+                                       primitive_->name(), false);
+    if (op_runner_info->inputs_abs.empty()) {
+      MS_LOG(EXCEPTION) << "Get empty input abstract";
+    }
+    input_abs_ = op_runner_info->inputs_abs;
+    if (op_runner_info->output_abs == nullptr) {
+      output_abs_ = PyBoostUtils::InferByOpDef(primitive_, input_abs_);
+      MS_EXCEPTION_IF_NULL(output_abs_);
+      op_runner_info->output_abs = output_abs_;
+    } else {
+      output_abs_ = op_runner_info->output_abs;
+    }
+    CreateOutput();
+  }
+
+  void CreateOutput() {
     MS_LOG(DEBUG) << "PyBoost infer output " << output_abs_->ToString();
     PyBoostUtils::CreateOutputTensor(output_abs_, &outputs_);
     abstract_cache_.Push(output_abs_);

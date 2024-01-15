@@ -915,6 +915,7 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
       MS_EXCEPTION_IF_NULL(tensor);
       tensor->set_base_shape(base_shape);
     }
+    (void)input_info->input_abs.emplace_back(real_input->abstract());
     (void)input_info->input_values.emplace_back(input_value);
   }
 }
@@ -971,6 +972,7 @@ void SessionBasic::GetOpInputTensorsFromCNode(const CNodePtr &cnode,
     MS_LOG(DEBUG) << "Get" << i << "th input tensor of " << cnode->fullname_with_scope() << " from "
                   << kernel_with_index.first->fullname_with_scope() << "-" << kernel_with_index.second;
     input_info->input_values[i - 1] = input_value;
+    (void)input_info->input_abs.emplace_back(real_input->abstract());
   }
 }
 

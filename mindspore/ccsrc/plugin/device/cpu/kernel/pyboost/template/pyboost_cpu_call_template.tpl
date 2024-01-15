@@ -1,6 +1,9 @@
 MS_LOG(DEBUG) << op_name() << " call start";
-
-InferOutput(${call_args});
+if (op_runner_info != nullptr) {
+  InferOutput(op_runner_info);
+} else {
+  InferOutput(${call_args});
+}
 
 ${tensor_list_convert}
 MS_EXCEPTION_IF_NULL(primitive());

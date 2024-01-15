@@ -82,6 +82,7 @@ struct InputInfo {
   std::vector<ValuePtr> input_values;
   std::vector<int64_t> input_masks;
   std::set<KernelWithIndex> input_kernel;
+  abstract::AbstractBasePtrList input_abs;
 };
 
 struct OutputTensorInfo {

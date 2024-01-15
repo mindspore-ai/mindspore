@@ -20,6 +20,22 @@
 ${include_op_header}
 
 namespace mindspore::runtime {
+namespace {
+session::BackendOpRunInfoPtr GetBackendOpRunInfo(OpRunnerInfo *op_runner_info) {
+  MS_EXCEPTION_IF_NULL(op_runner_info);
+  MS_EXCEPTION_IF_NULL(op_runner_info->prim);
+  pynative::BaseOpRunInfo base_op_run_info;
+  base_op_run_info.op_name = op_runner_info->prim->name();
+  base_op_run_info.device_target = op_runner_info->device_target;
+  base_op_run_info.expanded_input_values = op_runner_info->inputs;
+  base_op_run_info.input_masks = op_runner_info->inputs_mask;
+  // Do infer and refresh output abstract
+  op_runner_info->output_abs = kernel::pyboost::PyBoostUtils::InferByOpDef(op_runner_info->prim, op_runner_info->inputs_abs);
+  base_op_run_info.abstract = op_runner_info->output_abs ;
+  return std::make_shared<BackendOpRunInfo>(base_op_run_info, op_runner_info->prim, false, false);
+}
+}
+
 PyBoostOpExecute& PyBoostOpExecute::GetInstance() {
   static PyBoostOpExecute instance;
   return instance;
@@ -29,11 +45,45 @@ bool PyBoostOpExecute::IsPyBoostOpRegistered(const std::string &op_name) {
   return grad_op_func_map_.find(op_name) != grad_op_func_map_.end();
 }
 
-void PyBoostOpExecute::RunPyBoostCall(const PrimitivePtr &prim, const std::string &device_target,
-                                      const vector<ValuePtr> &inputs, VectorRef *op_outputs) {
-  const auto &func = FuncCast<Func>(grad_op_func_map_.at(prim->name()));
+void PyBoostOpExecute::Execute(OpRunnerInfo *op_runner_info, VectorRef *op_outputs) {
+  MS_EXCEPTION_IF_NULL(op_runner_info);
+  const auto it = grad_op_func_map_.find(op_runner_info->prim->name());
+  // Run op by single op graph
+  if (it == grad_op_func_map_.end()) {
+    return RunOpDeprecated(op_runner_info, op_outputs);
+  }
+  const auto &func = FuncCast<Func>(it->second);
   MS_EXCEPTION_IF_NULL(func);
-  func(prim, device_target, inputs, op_outputs);
+  func(op_runner_info, op_outputs);
+}
+
+void PyBoostOpExecute::RunPyBoostCall(OpRunnerInfo *op_runner_info, VectorRef *op_outputs) {
+  MS_EXCEPTION_IF_NULL(op_runner_info);
+  const auto &func = FuncCast<Func>(grad_op_func_map_.at(op_runner_info->prim->name()));
+  MS_EXCEPTION_IF_NULL(func);
+  func(op_runner_info, op_outputs);
+}
+
+void PyBoostOpExecute::RunOpDeprecated(OpRunnerInfo *op_runner_info, VectorRef *op_outputs) {
+  // For call runop
+  const auto &backend_op_run_info = GetBackendOpRunInfo(op_runner_info);
+  // Do infer and refresh output abstract
+  op_runner_info->output_abs = kernel::pyboost::PyBoostUtils::InferByOpDef(op_runner_info->prim, op_runner_info->inputs_abs);
+  backend_op_run_info->base_op_run_info.abstract = op_runner_info->output_abs ;
+  // Call single op graph run
+  GetMindRtBackend(op_runner_info->device_target);
+  backend_->RunOp(backend_op_run_info, op_outputs);
+}
+
+void PyBoostOpExecute::GetMindRtBackend(const string &cur_device_target) {
+  if (backend_ != nullptr) {
+    return;
+  }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  auto backend = std::make_shared<compile::MindRTBackend>("ms", cur_device_target, device_id);
+  backend_ = backend;
 }
 
 ${function_body}
