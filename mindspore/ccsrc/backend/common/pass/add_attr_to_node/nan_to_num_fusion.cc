@@ -36,51 +36,60 @@ const AnfNodePtr NanToNumFusionProcess(const FuncGraphPtr &graph, const AnfNodeP
   const auto &prim = common::AnfAlgo::GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(prim);
 
-  auto nan_none = prim->GetAttr("nan_none");
-  if (nan_none != nullptr && GetValue<bool>(nan_none)) {
-    common::AnfAlgo::SetNodeAttr("nan", MakeValue(static_cast<float>(0.0)), cnode);
-    size_t idx = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(cnode), "nan");
-    if (idx != SIZE_MAX) {
-      auto nan_node = common::AnfAlgo::GetInputNode(cnode, idx);
-      if (utils::isa<ValueNodePtr>(nan_node)) {
-        nan_node->cast<ValueNodePtr>()->set_value(MakeValue(static_cast<float>(0.0)));
-      }
+  size_t idx0 = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(cnode), "nan");
+  if (idx0 != SIZE_MAX) {
+    auto nan_node = common::AnfAlgo::GetInputNode(cnode, idx0);
+    if (!utils::isa<ValueNode>(nan_node)) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The expected type is ValueNode, but got " << nan_node->type_name() << ".";
     }
+    auto nan_value_node_ptr = nan_node->cast<ValueNodePtr>();
+    auto nan_value_ptr = utils::cast<ValuePtr>(nan_value_node_ptr->value());
+    if (nan_value_ptr->isa<None>()) {
+      nan_node->cast<ValueNodePtr>()->set_value(MakeValue(static_cast<float>(0.0)));
+    }
+  } else {
+    MS_LOG(ERROR) << "For '" << cnode->fullname_with_scope() << "', can't not find input of nan.";
+    return cnode;
   }
-  auto posinf_none = prim->GetAttr("posinf_none");
-  if (posinf_none != nullptr && GetValue<bool>(posinf_none)) {
-    size_t idx = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(cnode), "posinf");
-    ValuePtr posinf = MakeValue(std::numeric_limits<float>::max());
-    if (dtype_id == kNumberTypeFloat32) {
-      common::AnfAlgo::SetNodeAttr("posinf", MakeValue(std::numeric_limits<float>::max()), cnode);
-    } else if (dtype_id == kNumberTypeFloat16) {
-      common::AnfAlgo::SetNodeAttr("posinf", MakeValue(static_cast<float>(std::numeric_limits<float16>::max())), cnode);
-      posinf = MakeValue(static_cast<float>(std::numeric_limits<float16>::max()));
-    }
-    if (idx != SIZE_MAX) {
-      auto posinf_node = common::AnfAlgo::GetInputNode(cnode, idx);
-      if (utils::isa<ValueNodePtr>(posinf_node)) {
-        posinf_node->cast<ValueNodePtr>()->set_value(posinf);
-      }
-    }
+
+  size_t idx1 = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(cnode), "posinf");
+  ValuePtr posinf = MakeValue(std::numeric_limits<float>::max());
+  if (dtype_id == kNumberTypeFloat16) {
+    posinf = MakeValue(static_cast<float>(std::numeric_limits<float16>::max()));
   }
-  auto neginf_none = prim->GetAttr("neginf_none");
-  if (neginf_none != nullptr && GetValue<bool>(neginf_none)) {
-    size_t idx = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(cnode), "neginf");
-    ValuePtr neginf = MakeValue(std::numeric_limits<float>::lowest());
-    if (dtype_id == kNumberTypeFloat32) {
-      common::AnfAlgo::SetNodeAttr("neginf", MakeValue(std::numeric_limits<float>::lowest()), cnode);
-    } else if (dtype_id == kNumberTypeFloat16) {
-      common::AnfAlgo::SetNodeAttr("neginf", MakeValue(static_cast<float>(std::numeric_limits<float16>::lowest())),
-                                   cnode);
-      neginf = MakeValue(static_cast<float>(std::numeric_limits<float16>::lowest()));
+  if (idx1 != SIZE_MAX) {
+    auto posinf_node = common::AnfAlgo::GetInputNode(cnode, idx1);
+    if (!utils::isa<ValueNode>(posinf_node)) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The expected type is ValueNode, but got " << posinf_node->type_name() << ".";
     }
-    if (idx != SIZE_MAX) {
-      auto neginf_node = common::AnfAlgo::GetInputNode(cnode, idx);
-      if (utils::isa<ValueNodePtr>(neginf_node)) {
-        neginf_node->cast<ValueNodePtr>()->set_value(neginf);
-      }
+    auto posinf_value_node_ptr = posinf_node->cast<ValueNodePtr>();
+    auto posinf_value_ptr = utils::cast<ValuePtr>(posinf_value_node_ptr->value());
+    if (posinf_value_ptr->isa<None>()) {
+      posinf_node->cast<ValueNodePtr>()->set_value(posinf);
     }
+  } else {
+    MS_LOG(ERROR) << "For '" << cnode->fullname_with_scope() << "', can't not find input of posinf.";
+    return cnode;
+  }
+
+  size_t idx2 = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(cnode), "neginf");
+  ValuePtr neginf = MakeValue(std::numeric_limits<float>::lowest());
+  if (dtype_id == kNumberTypeFloat16) {
+    neginf = MakeValue(static_cast<float>(std::numeric_limits<float16>::lowest()));
+  }
+  if (idx2 != SIZE_MAX) {
+    auto neginf_node = common::AnfAlgo::GetInputNode(cnode, idx2);
+    if (!utils::isa<ValueNode>(neginf_node)) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The expected type is ValueNode, but got " << neginf_node->type_name() << ".";
+    }
+    auto neginf_value_node_ptr = neginf_node->cast<ValueNodePtr>();
+    auto neginf_value_ptr = utils::cast<ValuePtr>(neginf_value_node_ptr->value());
+    if (neginf_value_ptr->isa<None>()) {
+      neginf_node->cast<ValueNodePtr>()->set_value(neginf);
+    }
+  } else {
+    MS_LOG(ERROR) << "For '" << cnode->fullname_with_scope() << "', can't not find input of neginf.";
+    return cnode;
   }
 
   return cnode;
