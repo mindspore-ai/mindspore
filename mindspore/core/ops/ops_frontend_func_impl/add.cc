@@ -42,7 +42,6 @@ std::map<TypeId, Handler> add_impl_list = {{kNumberTypeBool, ImplAdd<bool>},
                                            {kNumberTypeInt8, ImplAdd<int8_t>},
                                            {kNumberTypeInt16, ImplAdd<int16_t>},
                                            {kNumberTypeInt32, ImplAdd<int32_t>},
-                                           {kNumberTypeInt, ImplAdd<int>},
                                            {kNumberTypeInt64, ImplAdd<int64_t>},
                                            {kNumberTypeUInt8, ImplAdd<uint8_t>},
                                            {kNumberTypeUInt16, ImplAdd<uint16_t>},
@@ -51,7 +50,6 @@ std::map<TypeId, Handler> add_impl_list = {{kNumberTypeBool, ImplAdd<bool>},
                                            {kNumberTypeFloat16, ImplAdd<float16>},
                                            {kNumberTypeBFloat16, ImplAdd<bfloat16>},
                                            {kNumberTypeFloat32, ImplAdd<float>},
-                                           {kNumberTypeFloat, ImplAdd<float>},
                                            {kNumberTypeFloat64, ImplAdd<double>},
                                            {kNumberTypeComplex64, ImplAdd<std::complex<float>>},
                                            {kNumberTypeComplex128, ImplAdd<std::complex<double>>}};
@@ -81,8 +79,9 @@ class AddFrontendFuncImpl : public OpFrontendFuncImpl {
     MS_EXCEPTION_IF_NULL(result_tensor);
     auto iter = add_impl_list.find(dtype);
     if (iter == add_impl_list.end()) {
-      MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
-                              << ", the type is not supported.";
+      MS_LOG(DEBUG) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
+                    << ", the type is not supported.";
+      return nullptr;
     }
     iter->second(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
     return result_tensor;

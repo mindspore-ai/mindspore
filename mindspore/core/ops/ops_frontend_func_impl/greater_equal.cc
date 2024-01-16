@@ -41,12 +41,13 @@ void GreaterEqualImpl(void *x1, void *x2, void *result, size_t size) {
 
 using Handler = std::function<void(void *x1, void *x2, void *result, size_t size)>;
 std::map<TypeId, Handler> greater_equal_impl_list = {
-  {kNumberTypeBool, GreaterEqualImpl<bool>},       {kNumberTypeInt, GreaterEqualImpl<int>},
-  {kNumberTypeInt8, GreaterEqualImpl<int8_t>},     {kNumberTypeInt16, GreaterEqualImpl<int16_t>},
-  {kNumberTypeInt32, GreaterEqualImpl<int32_t>},   {kNumberTypeInt64, GreaterEqualImpl<int64_t>},
-  {kNumberTypeUInt8, GreaterEqualImpl<uint8_t>},   {kNumberTypeFloat, GreaterEqualImpl<float>},
-  {kNumberTypeFloat16, GreaterEqualImpl<float16>}, {kNumberTypeBFloat16, GreaterEqualImpl<bfloat16>},
-  {kNumberTypeFloat32, GreaterEqualImpl<float>},   {kNumberTypeFloat64, GreaterEqualImpl<double>}};
+  {kNumberTypeBool, GreaterEqualImpl<bool>},         {kNumberTypeInt8, GreaterEqualImpl<int8_t>},
+  {kNumberTypeInt16, GreaterEqualImpl<int16_t>},     {kNumberTypeInt32, GreaterEqualImpl<int32_t>},
+  {kNumberTypeInt64, GreaterEqualImpl<int64_t>},     {kNumberTypeUInt8, GreaterEqualImpl<uint8_t>},
+  {kNumberTypeUInt16, GreaterEqualImpl<uint16_t>},   {kNumberTypeUInt32, GreaterEqualImpl<uint32_t>},
+  {kNumberTypeUInt64, GreaterEqualImpl<uint64_t>},   {kNumberTypeFloat16, GreaterEqualImpl<float16>},
+  {kNumberTypeBFloat16, GreaterEqualImpl<bfloat16>}, {kNumberTypeFloat32, GreaterEqualImpl<float>},
+  {kNumberTypeFloat64, GreaterEqualImpl<double>}};
 
 class GreaterEqualFrontendFuncImpl : public OpFrontendFuncImpl {
  public:
@@ -71,8 +72,9 @@ class GreaterEqualFrontendFuncImpl : public OpFrontendFuncImpl {
     auto result_tensor = std::make_shared<tensor::Tensor>(kNumberTypeBool, x1_shape);
     auto iter = greater_equal_impl_list.find(type_id);
     if (iter == greater_equal_impl_list.end()) {
-      MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
-                              << ", the type is not supported.";
+      MS_LOG(DEBUG) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
+                    << ", the type is not supported.";
+      return nullptr;
     }
     iter->second(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
     return result_tensor;

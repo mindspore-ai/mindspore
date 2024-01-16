@@ -107,15 +107,15 @@ class RealDivFrontendFuncImpl : public OpFrontendFuncImpl {
     if (iter != func_map.end()) {
       iter->second(x_tensor->data_c(), y_tensor->data_c(), result_datac, data_size);
     } else {
-      MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'x' is " << x_tensor->ToString()
-                              << ", the type is not supported.";
+      MS_LOG(DEBUG) << "For '" << primitive->name() << "', 'x' is " << x_tensor->ToString()
+                    << ", the type is not supported.";
+      return nullptr;
     }
     return result_tensor;
   }
 
  private:
   std::map<TypeId, std::function<void(void *x, void *y, void *result, size_t size)>> func_map = {
-    {kNumberTypeInt, RealDivImpl<int>},
     {kNumberTypeInt8, RealDivImpl<int8_t>},
     {kNumberTypeInt16, RealDivImpl<int16_t>},
     {kNumberTypeInt32, RealDivImpl<int32_t>},
@@ -126,9 +126,7 @@ class RealDivFrontendFuncImpl : public OpFrontendFuncImpl {
     {kNumberTypeUInt64, RealDivImpl<uint64_t>},
     {kNumberTypeFloat16, RealDivImpl<float16>},
     {kNumberTypeFloat32, RealDivImpl<float>},
-    {kNumberTypeFloat, RealDivImpl<float>},
     {kNumberTypeFloat64, RealDivImpl<double>},
-    {kNumberTypeDouble, RealDivImpl<double>},
     {kNumberTypeComplex64, ComplexRealDivImpl<std::complex<float>>},
     {kNumberTypeComplex128, ComplexRealDivImpl<std::complex<double>>}};
 };
