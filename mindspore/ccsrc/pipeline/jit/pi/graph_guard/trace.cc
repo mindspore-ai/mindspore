@@ -1166,7 +1166,6 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
   {DELETE_FAST, {ByteCodeUnsupported, nullptr}},
   {RAISE_VARARGS, {ByteCodeUnsupported, nullptr}},
   {CALL_FUNCTION, {ByteCodeSupported, nullptr}},
-  {MAKE_FUNCTION, {ByteCodeUnsupported, nullptr}},
   {MAKE_FUNCTION,
    {ByteCodeSupported,
     [](int opargs, const PyObjectArray &objs,
@@ -1174,33 +1173,33 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
                             * {
                               int cnt =
                                 !!(opargs & 0x08) + !!(opargs & 0x04) + !!(opargs & 0x02) + !!(opargs & 0x01) + 2;
-                              PyObject *qualname = objs[cnt--];
-                              PyObject *codeobj = objs[cnt--];
+                              PyObject *qualname = objs[--cnt];
+                              PyObject *codeobj = objs[--cnt];
                               PyFunctionObject *func = reinterpret_cast<PyFunctionObject *>(
                                 PyFunction_NewWithQualName(codeobj, ctx->f_globals, qualname));
                               if (opargs & 0x08) {
-                                if (!PyTuple_CheckExact(objs[cnt])) {
+                                if (!PyTuple_CheckExact(objs[--cnt])) {
                                   return nullptr;
                                 }
-                                func->func_closure = objs[cnt--];
+                                func->func_closure = objs[cnt];
                               }
                               if (opargs & 0x04) {
-                                if (!PyDict_CheckExact(objs[cnt])) {
+                                if (!PyDict_CheckExact(objs[--cnt])) {
                                   return nullptr;
                                 }
-                                func->func_annotations = objs[cnt--];
+                                func->func_annotations = objs[cnt];
                               }
                               if (opargs & 0x02) {
-                                if (!PyDict_CheckExact(objs[cnt])) {
+                                if (!PyDict_CheckExact(objs[--cnt])) {
                                   return nullptr;
                                 }
-                                func->func_kwdefaults = objs[cnt--];
+                                func->func_kwdefaults = objs[cnt];
                               }
                               if (opargs & 0x01) {
-                                if (!PyTuple_CheckExact(objs[cnt])) {
+                                if (!PyTuple_CheckExact(objs[--cnt])) {
                                   return nullptr;
                                 }
-                                func->func_defaults = objs[cnt--];
+                                func->func_defaults = objs[cnt];
                               }
                               return reinterpret_cast<PyObject *>(func);
                             }}},
