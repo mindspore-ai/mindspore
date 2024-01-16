@@ -38,6 +38,7 @@
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/standard_normal.h"
 #include "ops/tuple_get_item.h"
+#include "ops/resize_bilinear.h"
 #include "cxx_api/model/acl/model_converter.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "src/common/utils.h"
@@ -686,8 +687,9 @@ STATUS AclPassImpl::MapperForOrgMindIR(const FuncGraphPtr &func_graph) {
   std::set<FuncGraphPtr> all_func_graphs = {};
   lite::GetAllFuncGraph(func_graph, &all_func_graphs);
 
-  std::set<std::string> mindir_mapper = {ops::kNameTranspose, ops::kNameStandardNormal, ops::kNameBatchMatMul,
-                                         ops::kNameMatMul,    ops::kNameAvgPool,        ops::kNameBatchNorm};
+  std::set<std::string> mindir_mapper = {ops::kNameTranspose,     ops::kNameStandardNormal, ops::kNameBatchMatMul,
+                                         ops::kNameMatMul,        ops::kNameAvgPool,        ops::kNameBatchNorm,
+                                         ops::kNameResizeBilinear};
   const std::set<PrimitivePtr> support_ptq_mindir_types = {prim::kPrimQuantDTypeCast, prim::kPrimAddFusion,
                                                            prim::kPrimMulFusion};
   for (auto graph : all_func_graphs) {
