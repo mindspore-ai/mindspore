@@ -29,7 +29,6 @@
 
 #include "include/common/debug/draw.h"
 #include "include/common/debug/anf_ir_dump.h"
-#include "pipeline/jit/ps/debug/anf_ir_utils.h"
 #include "pipeline/jit/ps/debug/trace.h"
 #include "frontend/optimizer/opt.h"
 #include "pipeline/jit/ps/resource.h"
