@@ -133,18 +133,29 @@ void RegisterCustomOp(const PrimitivePtr &prim, const std::string &op_type, cons
   }
 }
 
-size_t GetDynInputNum(const CNodePtr &cnode) {
-  std::vector<int64_t> dyn_input_sizes;
-  // onlt support 1 dyn_input
-  size_t dyn_input_num = 0;
-  if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
-    dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
-    (void)std::for_each(dyn_input_sizes.begin(), dyn_input_sizes.end(), [&dyn_input_num](const int64_t &val) {
-      auto v = val == -1 ? 0 : val;
-      dyn_input_num += LongToSize(v);
-    });
+static std::vector<int64_t> GetRealInputIndices(const CNodePtr &cnode) {
+  if (!common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
+    return std::vector<int64_t>{};
   }
-  return dyn_input_num;
+  std::vector<int64_t> real_input_indices =
+    common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
+  int64_t count = 0;
+  // construct real input indices based on attribute kAttrDynInputSizes
+  for (size_t i = 0; i < real_input_indices.size(); ++i) {
+    int64_t num_folded_inputs = (real_input_indices[i] < 0 ? 1 : real_input_indices[i]);
+    real_input_indices[i] = count;
+    count += num_folded_inputs;
+  }
+  return real_input_indices;
+}
+
+static inline size_t GetRealAnfInputIndex(const std::vector<int64_t> &real_input_indices, size_t anf_input_index) {
+  // NOTE: anf_input_index start with 1, index 0 corresponding to primitive value node
+  size_t input_index = anf_input_index - 1;
+  size_t real_index =
+    input_index < real_input_indices.size() ? static_cast<size_t>(real_input_indices[input_index]) : input_index;
+  // at last convert `input_index` to anf node input index
+  return real_index + 1;
 }
 
 bool OpAdapterImpl::IsCustomOp(const OperatorPtr &op) const {
@@ -892,10 +903,10 @@ std::map<std::string, ValuePtr> OpAdapterImpl::GetNormalOpAttrList(const Operato
     }
   }
 
-  size_t dyn_input_num = GetDynInputNum(cnode);
+  auto real_input_indices = GetRealInputIndices(cnode);
   // set attr from const input
   for (auto &it : input_attr_map_) {
-    auto cur_idx = dyn_input_num == 0 ? it.first : it.first + dyn_input_num - 1;
+    size_t cur_idx = GetRealAnfInputIndex(real_input_indices, it.first);
     if (inputs.size() <= cur_idx || !inputs[cur_idx]->isa<ValueNode>()) {
       continue;
     }
@@ -1009,10 +1020,10 @@ int OpAdapterImpl::setAttr(const OperatorPtr &op, const AnfNodePtr &node) {
     }
   }
 
-  size_t dyn_input_num = GetDynInputNum(cnode);
+  auto real_input_indices = GetRealInputIndices(cnode);
   // set attr from const input
   for (auto &it : input_attr_map_) {
-    auto cur_idx = dyn_input_num == 0 ? it.first : it.first + dyn_input_num - 1;
+    size_t cur_idx = GetRealAnfInputIndex(real_input_indices, it.first);
     if (inputs.size() <= cur_idx || !inputs[cur_idx]->isa<ValueNode>()) {
       continue;
     }
