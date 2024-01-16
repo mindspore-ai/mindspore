@@ -160,7 +160,7 @@ function Run_Benchmark_GE() {
             model_info=$(echo ${line_info} | awk -F ' ' '{print $1}')
             model_name=$(echo ${model_info} | awk -F ';' '{print $1}')
             echo "${models_path}/${model_name}.mindir"
-            cp "${models_path}/${model_name}.mindir" $ms_models_path/ || exit 1
+            cp -r ${models_path}/${model_name}* $ms_models_path/ || exit 1
         done <${cfg_file}
     done
     # Empty config file is allowed, but warning message will be shown
