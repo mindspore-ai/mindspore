@@ -2185,11 +2185,13 @@ bool IsCellReuseForwardGraph(const FuncGraphPtr &graph) { return graph->has_flag
 
 FuncGraphPtr GetCellReuseBackwardGraph(const FuncGraphPtr &forward_graph) {
   AnfNodePtr node = forward_graph->get_return();
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    return nullptr;
+  }
   std::vector<std::pair<PrimitivePtr, int64_t>> patterns = {
     {prim::kPrimReturn, kIndex1}, {prim::kPrimMakeTuple, kIndex2}, {prim::kPrimPartial, kIndex1}};
   for (const auto &pattern : patterns) {
-    auto cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
     if (!IsPrimitiveCNode(cnode, pattern.first)) {
       return nullptr;
     }

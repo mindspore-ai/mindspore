@@ -228,12 +228,7 @@ bool IsEnableZeroCopy(bool run_in_pynative) {
   // ops not support addr change.
   // force zero copy when use ge
   bool is_enable_ge = ms_context->backend_policy() == "ge";
-  const std::string &phase = PhaseManager::GetInstance().phase();
-  bool is_train = false;
-  if (phase.length() != 0) {
-    is_train = pipeline::GetPhasePrefix(phase) == "train";
-  }
-  if (is_parallel_mode && (!is_enable_ge || !is_train)) {
+  if (is_parallel_mode && !is_enable_ge) {
     return false;
   }
   return true;
