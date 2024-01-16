@@ -470,6 +470,17 @@ std::vector<tensor::TensorPtr> PyBoostUtils::CastTensor(const std::vector<tensor
   }
   return output_tensors;
 }
+
+std::vector<tensor::TensorPtr> PyBoostUtils::CastTensor(const std::vector<tensor::TensorPtr> &tensors, TypeId type_id,
+                                                        const std::string &device_target) {
+  // tuple input
+  std::vector<tensor::TensorPtr> output_tensors;
+  for (size_t i = 0; i < tensors.size(); ++i) {
+    const auto &output = CastTensor(tensors[i], type_id, device_target);
+    (void)output_tensors.emplace_back(output);
+  }
+  return output_tensors;
+}
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

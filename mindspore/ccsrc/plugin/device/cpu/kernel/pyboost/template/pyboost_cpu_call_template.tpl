@@ -6,7 +6,7 @@ ${tensor_list_convert}
 MS_EXCEPTION_IF_NULL(primitive());
 auto kernel_attr_pair =
   PyBoostUtils::SelectKernel(input_abs(), output_abs(), device_context(), primitive()->name());
-if (kernel_attr_pair.first) {
+if (kernel_attr_pair.first || op_name() == "Cast") {
   // Create device address for input tensors
   ${create_input_address}
   ${inplace_process}
@@ -38,9 +38,8 @@ if (kernel_attr_pair.first) {
   MS_LOG(DEBUG) << op_name() << " call end";
   return ${return_values};
 } else {
-  auto &select_kernel = kernel_attr_pair.second;
   ${cast_input_code}
-  const auto &op = CREATE_PYBOOST_OP(${class_name}, "CPU");
+  const auto &op = CREATE_PYBOOST_OP(${op_name_str}, "CPU");
   op->set_primitive(prim::kPrim${class_name});
   (void)op->Call(${real_call_args_tensor});
   std::vector<TypeId> output_types;
