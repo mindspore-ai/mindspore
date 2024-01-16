@@ -6412,9 +6412,6 @@ def multilabel_soft_margin_loss(input, target, weight=None, reduction='mean'):
         Tensor, the data type is the same as input, if the `reduction` is ``'none'``,
         its shape is :math:`(N)` , otherwise it is zero.
 
-    Raises:
-        ValueError: If the rank of `input` or `target` is not 2.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
