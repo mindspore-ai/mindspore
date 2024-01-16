@@ -32,6 +32,12 @@ BaseShapePtr BatchNormGradGradFuncImpl::InferShape(const PrimitivePtr &primitive
   auto x_shape = input_args[kInputIndex0]->GetShape()->Clone();
   auto dy_shape = input_args[kInputIndex1]->GetShape()->Clone();
   auto scale_shape = input_args[kInputIndex2]->GetShape()->Clone();
+  auto x_shape_vec = x_shape->GetShapeVector();
+  auto rank = x_shape_vec.size();
+  if (!IsDynamicRank(x_shape_vec)) {
+    MS_CHECK_VALUE(rank >= 2 && rank <= 4, CheckAndConvertUtils::FormatCheckInRangeMsg<size_t>(
+                                             "x's rank", rank, kIncludeBoth, {2, 4}, primitive));
+  }
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{x_shape, dy_shape, scale_shape});
 }
 
