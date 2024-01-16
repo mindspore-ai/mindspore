@@ -24,6 +24,7 @@ import mindspore.nn as nn
 import mindspore as ms
 from mindspore import Tensor, jit, ops
 from mindspore.ops import operations as P
+from mindspore.ops.primitive import _run_op
 from tests.security_utils import security_off_wrap
 import test_utils
 
@@ -205,4 +206,40 @@ def test_side_effect_bprop_one_input():
                 '[[ 2.50000000e+01  2.50000000e+01]',
                 ' [ 2.50000000e+01  2.50000000e+01]])',
                 ]
+    check_output(cap.output, patterns)
+
+
+@security_off_wrap
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_run_op_print():
+    """
+    Feature: Test print string by calling _run_op method.
+    Description: Test print string by calling _run_op method.
+    Expectation: No exception and result is correct.
+    """
+    ms.set_context(mode=ms.PYNATIVE_MODE)
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.print = P.Print()
+
+        def construct(self, x):
+            _run_op(self.print, "Print", ("TensorStart", x, "TheEnd"))
+            return x
+
+    cap = Capture()
+    with capture(cap):
+        input_x = Tensor([1, 2, 3])
+        net = Net()
+        out = net(input_x)
+        np.testing.assert_array_equal(out.asnumpy(), np.array([1, 2, 3], dtype=np.int32))
+        sys.stdout.flush()
+        time.sleep(0.1)
+
+    patterns = ['TensorStart',
+                'Tensor(shape=[3], dtype=Int64, value=[1 2 3])',
+                'TheEnd']
     check_output(cap.output, patterns)

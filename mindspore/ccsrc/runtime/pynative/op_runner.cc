@@ -195,6 +195,12 @@ void CopyNodeValueToDevice(const device::DeviceAddressPtr &device_address, const
   const void *node_value = kernel_tensor->GetValuePtr();
   MS_EXCEPTION_IF_NULL(node_value);
   auto data_type_id = kernel_tensor->dtype_id();
+  if (data_type_id == kObjectTypeString) {
+    // NOTE: For string type, ge::StringHead.len does not include '\0', since kernel_tensor allocated size including
+    // '\0', see method `CreateDeviceAddressForScalarAndString` defined in `device_address_utils.cc`, so here
+    // `data_size` needs to decrease `1`
+    data_size -= 1;
+  }
   auto format = kernel_tensor->GetStringFormat();
   MS_LOG(DEBUG) << "Copy to device, node:" << common::AnfAlgo::GetNodeDebugString(node);
   if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0), data_size, data_type_id, node_value,
