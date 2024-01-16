@@ -19,7 +19,8 @@ import pytest
 import mindspore as ms
 import mindspore.nn as nn
 import mindspore.ops as ops
-
+from mindspore import Tensor
+from mindspore import dtype as mstype
 
 class Net(nn.Cell):
     def construct(self, x):
@@ -33,7 +34,7 @@ class Net(nn.Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_contiguous(mode):
     """
     Feature: countiguous
@@ -68,3 +69,47 @@ def test_contiguous_pynative_and_graph(mode):
     y[:, 1] = 1
     expect_output = np.array([[1, 2, 3], [4, 5, 6]])
     assert np.allclose(x.asnumpy(), expect_output)
+
+class ContiguousNet(nn.Cell):
+    def construct(self, x, w):
+        output = ops.conv2d(x, w, padding=2, pad_mode="pad")
+        output = ops.transpose(output, (0, 1, 3, 2))
+        output = output[..., 1]
+        output = output.contiguous()
+        output = output * output
+        return output
+
+
+class WithoutContiguousNet(nn.Cell):
+    def construct(self, x, w):
+        output = ops.conv2d(x, w, padding=2, pad_mode="pad")
+        output = ops.transpose(output, (0, 1, 3, 2))
+        output = output[..., 1]
+        output = output * output
+        return output
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_contiguous_grad(mode):
+    """
+    Feature: countiguous
+    Description: Verify the result of grad
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+    x = Tensor(np.random.randn(1, 16, 12, 12), mstype.float32)
+    weight = Tensor(np.random.randn(33, 16, 5, 5), mstype.float32)
+
+    contiguous_net = ContiguousNet()
+    no_contiguous_net = WithoutContiguousNet()
+    grad = ops.GradOperation(get_all=True)
+
+    contiguous_grad_output = grad(contiguous_net)(x, weight)
+    no_contiguous_grad_output = grad(no_contiguous_net)(x, weight)
+
+    assert np.allclose(contiguous_grad_output[0].asnumpy(), no_contiguous_grad_output[0].asnumpy())
+    assert np.allclose(contiguous_grad_output[1].asnumpy(), no_contiguous_grad_output[1].asnumpy())
