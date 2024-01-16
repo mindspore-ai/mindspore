@@ -361,6 +361,22 @@ std::vector<int> GetGeTensorOrders(const mindspore::HashMap<int, int> &ge_input_
   }
   return ge_tensor_orders;
 }
+
+bool IsNeedToUpdateTensorDesc(const std::string &op_type, const AnfNodePtr &node) {
+  // When IdentityN's input is Function or IdentityN, it can not
+  // find GEType mapping to MSType. There are ERROR logs that do not affect the result. So it no need to set OutputDesc
+  // of IdentityN, it can be inferred by GE. eg: MakeTuple-->MakeTuple. Output node should set OpDesc.
+  if (op_type == kTypeIdentityN && !IsPrimitiveCNode(node, prim::kPrimReturn)) {
+    MS_LOG(DEBUG) << "No need to set the OpDesc of Identity except return, node: " << node->fullname_with_scope();
+    return false;
+  }
+  // NoOp has not output, so it no need to set OutputDesc.
+  if (op_type == kTypeNoOp) {
+    MS_LOG(DEBUG) << "No need to set the OpDesc of NoOp, node: " << node->fullname_with_scope();
+    return false;
+  }
+  return true;
+}
 }  // namespace
 
 DfGraphPtr GenExampleGraph(const std::string &name) {
@@ -3199,15 +3215,15 @@ void DfGraphConvertor::UpdateOpDesc(const AnfNodePtr node) {
   // get Operator from op_cache_
   OperatorPtr op = Convert(node);
   MS_EXCEPTION_IF_NULL(op);
-  std::string name = op->GetOpType();
-  // NoOp has not output, so it no need to set OutputDesc.
-  if (name == kTypeNoOp) {
+  std::string op_type = op->GetOpType();
+  if (!IsNeedToUpdateTensorDesc(op_type, node)) {
+    MS_LOG(INFO) << "No need to set the opDesc of node: " << node->fullname_with_scope() << ", op type is " << op_type;
     return;
   }
 
   adpt->updateOutputDesc(op, node->Shape(), node->Type(), node);
 
-  if (name == prim::kPrimNonZeroWithValueShape->name()) {
+  if (op_type == prim::kPrimNonZeroWithValueShape->name()) {
     MS_EXCEPTION_IF_NULL(op);
     auto op_desc = ::ge::OpDescUtils::GetOpDescFromOperator(*op);
     if (op_desc == nullptr) {
