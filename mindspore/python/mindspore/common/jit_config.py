@@ -19,9 +19,6 @@ class JitConfig:
     """
     Jit config for compile.
 
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
     Args:
         jit_level (str, optional): Used to control the compilation optimization level.
             Supports ["O0", "O1", "O2"]. Default: ``"O1"`` .

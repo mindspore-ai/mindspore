@@ -5,9 +5,6 @@ mindspore.JitConfig
 
     编译时所使用的JitConfig配置项。
 
-    .. warning::
-        这是一个实验性API，后续可能修改或删除。
-
     参数：
         - **jit_level** (str, 可选) - 用于控制编译优化等级，支持["O0", "O1", "O2"]。默认值： ``"O1"`` 。
 
