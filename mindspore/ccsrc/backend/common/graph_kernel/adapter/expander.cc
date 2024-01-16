@@ -22,6 +22,7 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include "backend/common/graph_kernel/convert_input_and_attr.h"
 #include "mindspore/core/ops/structure_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/random_ops.h"
@@ -231,6 +232,9 @@ AnfNodePtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const
     try {
       MS_LOG_TRY_CATCH_SCOPE;
       bool suc = false;
+      if (OpDefAdapter::NeedConvertGK2FE(inner_node)) {
+        (void)ConvertGraphKernelToFrontEnd::Process(inner_node);
+      }
       auto inner_cnode = inner_node->cast<CNodePtr>();
       if (need_replace_parameter) {
         std::vector<std::pair<size_t, AnfNodePtr>> ori_input;

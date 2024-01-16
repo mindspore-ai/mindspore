@@ -241,6 +241,17 @@ void CallbackImpl::SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vec
 
 void CallbackImpl::ResetKernelInfoInputs(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  if (kernel_info == nullptr) {
+    MS_LOG(DEBUG) << "KernelInfo do not exist for " << node->fullname_with_scope() << ", skip reset kernel info";
+    return;
+  }
+  auto build_info = kernel_info->GetMutableSelectKernelBuildInfo();
+  if (build_info == nullptr) {
+    MS_LOG(DEBUG) << "KernelBuildInfo do not exist for " << node->fullname_with_scope() << ", skip reset kernel info";
+    return;
+  }
+
   std::vector<std::string> input_formats;
   std::vector<TypeId> input_types;
   std::vector<kernel::KernelObjectType> input_obj_type;
@@ -253,10 +264,6 @@ void CallbackImpl::ResetKernelInfoInputs(const AnfNodePtr &node) {
     }
     opt::GenerateKernelObjectTypeForNewCNode(cnode, &input_obj_type, &output_obj_type);
   }
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
-  MS_EXCEPTION_IF_NULL(kernel_info);
-  auto build_info = kernel_info->GetMutableSelectKernelBuildInfo();
-  MS_EXCEPTION_IF_NULL(build_info);
   build_info->SetInputsFormat(input_formats);
   build_info->SetInputsDeviceType(input_types);
   build_info->SetInputsKernelObjectType(input_obj_type);
