@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2023 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,30 +84,6 @@ device::DeviceAddressPtr CreateDeviceAddressForScalarAndString(const DeviceConte
   }
 
   return address;
-}
-
-void UpdateOutputAddressForRef(const OpCompilerInfoPtr &op_compiler_info,
-                               vector<device::DeviceAddressPtr> *device_address_list) {
-  const auto &graph = op_compiler_info->graph_;
-  MS_EXCEPTION_IF_NULL(graph);
-  const auto &ref_node_map = graph->GetRefMap();
-  for (const auto &iter : ref_node_map) {
-    auto &output_pair = iter.first;
-    auto &input_pair = iter.second;
-    auto &ref_node = output_pair.first;
-    auto output_index = output_pair.second;
-    auto input_address = DeviceAddressUtils::GetInputAddressForRef(input_pair.first, op_compiler_info);
-    if (input_address == nullptr) {
-      continue;
-    }
-    auto output_address = DeviceAddressUtils::GetOutputAddressForRef(ref_node, op_compiler_info, output_index);
-    MS_EXCEPTION_IF_NULL(output_address);
-    for (size_t index = 0; index < op_compiler_info->outputs_.size(); ++index) {
-      if (output_address == op_compiler_info->outputs_[index]) {
-        (*device_address_list)[index] = input_address;
-      }
-    }
-  }
 }
 
 Format GetFormatByTensorShape(const DeviceContext *device_context, const ShapeVector &tensor_shape) {
@@ -590,31 +566,6 @@ void DeviceAddressUtils::CreateGraphOutputDeviceAddress(const DeviceContext *dev
   }
 }
 
-device::DeviceAddressPtr DeviceAddressUtils::GetInputAddressForRef(const AnfNodePtr &node,
-                                                                   const OpCompilerInfoPtr &op_compiler_info) {
-  auto graph = op_compiler_info->graph_;
-  MS_EXCEPTION_IF_NULL(graph);
-  for (size_t index = 0; index < graph->inputs().size(); ++index) {
-    if (node == graph->inputs()[index]) {
-      return op_compiler_info->inputs_[index];
-    }
-  }
-  return nullptr;
-}
-
-device::DeviceAddressPtr DeviceAddressUtils::GetOutputAddressForRef(const AnfNodePtr &node,
-                                                                    const OpCompilerInfoPtr &op_compiler_info,
-                                                                    size_t output_index) {
-  auto execute_kernel_list = op_compiler_info->execute_kernel_list_;
-  auto execute_kernel_list_size = execute_kernel_list.size();
-  for (size_t i = 0; i < execute_kernel_list_size; ++i) {
-    if (node == execute_kernel_list[i].kernel_) {
-      return execute_kernel_list[i].outputs_device_address_[output_index];
-    }
-  }
-  MS_LOG(EXCEPTION) << "Can't find the node in ExecuteKernelList.";
-}
-
 size_t DeviceAddressUtils::GetTensorDeviceSize(const DeviceContext *device_context, const AnfNodePtr &node,
                                                const ShapeVector &shape, const string &format, TypeId dtype,
                                                size_t output_index) {
@@ -639,56 +590,53 @@ size_t DeviceAddressUtils::GetTensorDeviceSize(const DeviceContext *device_conte
 
 vector<device::DeviceAddressPtr> DeviceAddressUtils::CreateGraphOutputDeviceAddress(
   const OpCompilerInfoPtr &op_compiler_info, const abstract::AbstractBasePtr &out_abstract) {
-  MS_LOG(DEBUG) << "CreateGraphOutputDeviceAddress";
-  MS_EXCEPTION_IF_NULL(out_abstract);
-  MS_EXCEPTION_IF_NULL(op_compiler_info);
-  const auto &graph = op_compiler_info->graph_;
-  MS_EXCEPTION_IF_NULL(graph);
   auto device_context = op_compiler_info->device_context_;
-  MS_EXCEPTION_IF_NULL(device_context);
-  const auto &output_nodes = op_compiler_info->graph_output_nodes_;
-  auto outputs_address = op_compiler_info->outputs_;
-  if (outputs_address.size() != output_nodes.size()) {
-    MS_LOG(EXCEPTION) << "outputs_address size:" << outputs_address.size()
-                      << ",not equal to output_nodes size:" << output_nodes.size();
-  }
-  vector<device::DeviceAddressPtr> real_output_address_list(output_nodes.size(), nullptr);
-  // ref
-  UpdateOutputAddressForRef(op_compiler_info, &real_output_address_list);
-  for (size_t i = 0; i < output_nodes.size(); ++i) {
-    if (real_output_address_list[i] == nullptr) {
-      auto output_node = output_nodes[i].first;
-      auto index = output_nodes[i].second;
-      auto cache_output_address = op_compiler_info->outputs_[i];
+  const auto &output_edges = op_compiler_info->simple_graph_->outputs_;
+  size_t output_num = output_edges.size();
 
-      auto real_abstract = out_abstract;
-      if (out_abstract->isa<abstract::AbstractTuple>()) {
-        auto abstract_tuple = out_abstract->cast<abstract::AbstractTuplePtr>();
-        if (i >= abstract_tuple->elements().size()) {
-          MS_LOG(EXCEPTION) << "abstract_tuple size is " << abstract_tuple->elements().size() << " ,but get index is"
-                            << i;
-        }
-        real_abstract = abstract_tuple->elements()[i];
-      }
-      auto output_shape_ptr = real_abstract->BuildShape();
-      MS_EXCEPTION_IF_NULL(output_shape_ptr);
-      auto shape_vector = output_shape_ptr->cast<abstract::ShapePtr>();
-      MS_EXCEPTION_IF_NULL(shape_vector);
-      auto shape = shape_vector->shape();
-      auto output_type = cache_output_address->type_id();
-      auto output_format = cache_output_address->format();
-      auto address_size = GetTensorDeviceSize(device_context, output_node, shape, output_format, output_type, index);
-      const auto &kernel_tensor = std::make_shared<kernel::KernelTensor>(
-        real_abstract->GetShape()->Clone(), real_abstract->GetType()->Clone(), real_abstract->GetValue(), nullptr,
-        address_size, output_format, output_type, shape, device_context->device_context_key().device_name_,
-        device_context->device_context_key().device_id_, cache_output_address->user_data());
-      auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
-      MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(output_node)
-                    << " addr:" << device_address;
-      real_output_address_list[i] = device_address;
+  std::vector<device::DeviceAddressPtr> output_address_list;
+  output_address_list.reserve(output_num);
+
+  for (size_t i = 0; i < output_num; ++i) {
+    const auto &edge = output_edges[i];
+    const auto &address = edge->address_;
+    if (address != nullptr) {
+      MS_LOG(DEBUG) << "Already have output device address for ref output";
+      output_address_list.push_back(address);
+      continue;
     }
+
+    const auto &[output_node, index] = edge->node_with_index_;
+    const auto &cache_output_address = edge->origin_address_;
+
+    auto real_abstract = out_abstract;
+    if (out_abstract->isa<abstract::AbstractTuple>()) {
+      auto abstract_tuple = out_abstract->cast<abstract::AbstractTuplePtr>();
+      if (i >= abstract_tuple->elements().size()) {
+        MS_LOG(EXCEPTION) << "abstract_tuple size is " << abstract_tuple->elements().size() << " ,but get index is"
+                          << i;
+      }
+      real_abstract = abstract_tuple->elements()[i];
+    }
+    auto output_shape_ptr = real_abstract->BuildShape();
+    MS_EXCEPTION_IF_NULL(output_shape_ptr);
+    auto shape_vector = output_shape_ptr->cast<abstract::ShapePtr>();
+    MS_EXCEPTION_IF_NULL(shape_vector);
+    const auto &shape = shape_vector->shape();
+    auto output_type = cache_output_address->type_id();
+    const auto &output_format = cache_output_address->format();
+    auto address_size = GetTensorDeviceSize(device_context, output_node, shape, output_format, output_type, index);
+    const auto &kernel_tensor = std::make_shared<kernel::KernelTensor>(
+      real_abstract->GetShape()->Clone(), real_abstract->GetType()->Clone(), real_abstract->GetValue(), nullptr,
+      address_size, output_format, output_type, shape, device_context->device_context_key().device_name_,
+      device_context->device_context_key().device_id_, cache_output_address->user_data());
+    auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+    MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(output_node)
+                  << " addr:" << device_address;
+    output_address_list.push_back(device_address);
+    edge->address_ = device_address;
   }
-  return real_output_address_list;
+  return output_address_list;
 }
 
 void DeviceAddressUtils::CreateKernelWorkspaceDeviceAddress(const DeviceContext *device_context,

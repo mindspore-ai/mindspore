@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
 
  private:
   // CreateKernel, Transform and Schedule have not been finished when LazyBuild is enabled in PyNative mode.
-  void CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context,
+  void CompileSingleOpGraph(const OpCompilerInfoPtr &op_compiler_info, const DeviceContext *device_context,
                             bool is_dynamic_shape = false) const;
 
   // In PyNative mode, the size of single op cache list will be increasing, which lead to memory cost increasing,

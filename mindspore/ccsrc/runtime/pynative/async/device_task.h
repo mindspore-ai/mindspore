@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,35 +31,27 @@ namespace pynative {
 class OpTaskContext {
  public:
   OpTaskContext(GraphId graph_id, KernelGraphPtr graph, session::BackendOpRunInfoPtr op_run_info,
-                device::DeviceContext *device_context, bool is_pynative_infer)
+                OpCompilerInfoPtr op_compiler_info, bool is_pynative_infer)
       : graph_id_(graph_id),
         graph_(std::move(graph)),
         op_run_info_(std::move(op_run_info)),
-        device_context_(device_context),
+        op_compiler_info_(std::move(op_compiler_info)),
         is_pyantive_infer_(is_pynative_infer) {}
   ~OpTaskContext() = default;
 
   GraphId graph_id() const { return graph_id_; }
   const KernelGraphPtr &graph() const { return graph_; }
   const session::BackendOpRunInfoPtr &op_run_info() const { return op_run_info_; }
-  device::DeviceContext *device_context() const { return device_context_; }
+  const device::DeviceContext *device_context() const { return op_compiler_info_->device_context_; }
   bool is_pynative_infer() const { return is_pyantive_infer_; }
-  void set_op_compiler_info(const OpCompilerInfoPtr &op_compiler_info) { op_compiler_info_ = op_compiler_info; }
-  OpCompilerInfoPtr op_compiler_info() const { return op_compiler_info_; }
-  void set_device_address_list(const vector<device::DeviceAddressPtr> &device_address_list) {
-    device_address_list_ = device_address_list;
-  }
-  vector<device::DeviceAddressPtr> &device_address_list() { return device_address_list_; }
+  const OpCompilerInfoPtr &op_compiler_info() const { return op_compiler_info_; }
 
  private:
   GraphId graph_id_;
   KernelGraphPtr graph_;
-  std::vector<session::KernelWithIndex> output_nodes_;
   session::BackendOpRunInfoPtr op_run_info_;
-  device::DeviceContext *device_context_;
-  bool is_pyantive_infer_{false};
   OpCompilerInfoPtr op_compiler_info_;
-  vector<device::DeviceAddressPtr> device_address_list_;
+  bool is_pyantive_infer_;
 };
 
 class DeviceOpTask : public AsyncTask {
