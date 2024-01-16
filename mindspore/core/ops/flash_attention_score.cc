@@ -28,8 +28,8 @@ namespace mindspore {
 namespace ops {
 namespace {
 constexpr size_t kSoftmaxLastDim = 8;
-constexpr size_t kInputQueryBSHRank = 3;
-constexpr size_t kInputQueryBNSDRank = 4;
+constexpr size_t kInputQueryBSHRankFAS = 3;
+constexpr size_t kInputQueryBNSDRankFAS = 4;
 constexpr char kInputLayoutBSH[] = "BSH";
 constexpr char kInputLayoutBNSD[] = "BNSD";
 
@@ -80,8 +80,8 @@ abstract::TupleShapePtr FlashAttentionScoreInferShape(const PrimitivePtr &primit
     input_args[kFlashAttentionScoreInputQueryIndex]->BuildShape())[kShape];
   auto input_layout = GetValue<std::string>(primitive->GetAttr("input_layout"));
   if (input_layout == kInputLayoutBSH) {
-    if (query_shape.size() != kInputQueryBSHRank) {
-      MS_LOG(EXCEPTION) << op_name << ": The rank of 'query' must be " << kInputQueryBSHRank << ", but got "
+    if (query_shape.size() != kInputQueryBSHRankFAS) {
+      MS_LOG(EXCEPTION) << op_name << ": The rank of 'query' must be " << kInputQueryBSHRankFAS << ", but got "
                         << query_shape.size();
     }
     batch_size = query_shape[0];
@@ -96,8 +96,8 @@ abstract::TupleShapePtr FlashAttentionScoreInferShape(const PrimitivePtr &primit
     CheckInputShape(input_args[kFlashAttentionScoreInputValueIndex],
                     {{batch_size, seq_len, hidden_size}, {batch_size, seq_len, head_size}}, op_name, "value");
   } else if (input_layout == kInputLayoutBNSD) {
-    if (query_shape.size() != kInputQueryBNSDRank) {
-      MS_LOG(EXCEPTION) << op_name << ": The rank of 'query' must be " << kInputQueryBNSDRank << ", but got "
+    if (query_shape.size() != kInputQueryBNSDRankFAS) {
+      MS_LOG(EXCEPTION) << op_name << ": The rank of 'query' must be " << kInputQueryBNSDRankFAS << ", but got "
                         << query_shape.size();
     }
     batch_size = query_shape[kIndex0];

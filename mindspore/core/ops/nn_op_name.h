@@ -139,6 +139,7 @@ constexpr auto kSoftMarginLossOpName = "SoftMarginLoss";
 constexpr auto kSoftplusOpName = "Softplus";
 constexpr auto kSoftsignOpName = "Softsign";
 constexpr auto kFlashPromptFlashAttentionOpName = "PromptFlashAttention";
+constexpr auto kFlashIncreFlashAttentionOpName = "IncreFlashAttention";
 constexpr auto kFlashAttentionScoreOpName = "FlashAttentionScore";
 constexpr auto kFlashAttentionScoreGradOpName = "FlashAttentionScoreGrad";
 }  // namespace mindspore
