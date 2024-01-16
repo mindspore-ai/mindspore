@@ -17,7 +17,6 @@
 #include "inc/ops/elewise_calculation_ops.h"
 #include "custom_op_proto/cust_math_ops.h"
 
-#include "register/infer_axis_slice_registry.h"
 #include <string>
 #include <vector>
 #include "utils/op_attr.h"
@@ -28,7 +27,6 @@
 #include "utils/reduce_infer_util.h"
 #include "graph/utils/node_utils.h"
 #include "graph/utils/node_utils_ex.h"
-#include "graph/utils/op_desc_utils.h"
 #include "register/infer_data_slice_registry.h"
 #include "graph/debug/ge_attr_define.h"
 #include "graph/axis_type_info.h"
@@ -57,6 +55,7 @@ COMMON_INFER_FUNC_REG(CheckNumerics, OneInOneOutCommonInferShape);
 COMMON_INFER_FUNC_REG(Conj, OneInOneOutCommonInferShape);
 COMMON_INFER_FUNC_REG(Cos, OneInOneOutCommonInferShape);
 COMMON_INFER_FUNC_REG(Expm1, OneInOneOutCommonInferShape);
+CUST_COMMON_INFER_FUNC_REG(Exp, OneInOneOutCommonInferShape);
 COMMON_INFER_FUNC_REG(Log1p, OneInOneOutCommonInferShape);
 COMMON_INFER_FUNC_REG(Log, OneInOneOutCommonInferShape);
 COMMON_INFER_FUNC_REG(Tanh, OneInOneOutCommonInferShape);
@@ -87,7 +86,6 @@ IMPLEMT_VERIFIER(AcosGrad, AcosGradVerify) {
 }
 VERIFY_FUNC_REG(AcosGrad, AcosGradVerify);
 COMMON_INFER_FUNC_REG(AcosGrad, TwoInOneOutCommonInferShape);
-INFER_AXIS_TYPE_INFO_REG(AcosGrad, InferAxisType4ElementwiseOp);
 // ------------AcosGrad END----------------
 
 // ----------------AcoshGrad-------------------
@@ -108,7 +106,6 @@ IMPLEMT_COMMON_INFERFUNC(AcoshGradInferShape) {
 }
 
 COMMON_INFER_FUNC_REG(AcoshGrad, AcoshGradInferShape);
-INFER_AXIS_TYPE_INFO_REG(AcoshGrad, InferAxisType4ElementwiseOp);
 // --------------AcoshGrad END-----------------
 
 // ----------------AsinGrad---------------
@@ -128,7 +125,6 @@ IMPLEMT_COMMON_INFERFUNC(AsinGradInferShape) {
   return GRAPH_SUCCESS;
 }
 COMMON_INFER_FUNC_REG(AsinGrad, AsinGradInferShape);
-INFER_AXIS_TYPE_INFO_REG(AsinGrad, InferAxisType4ElementwiseOp);
 // --------------AsinGrad END-------------
 
 // ----------------AsinhGrad-------------------
@@ -148,7 +144,6 @@ IMPLEMT_COMMON_INFERFUNC(AsinhGradInferShape) {
 }
 
 COMMON_INFER_FUNC_REG(AsinhGrad, AsinhGradInferShape);
-INFER_AXIS_TYPE_INFO_REG(AsinhGrad, InferAxisType4ElementwiseOp);
 // --------------AsinhGrad END-----------------
 
 // ----------------AddN-------------------
@@ -297,7 +292,6 @@ IMPLEMT_COMMON_INFERFUNC(AddNInferShape) {
 }
 
 COMMON_INFER_FUNC_REG(AddN, AddNInferShape);
-INFER_AXIS_TYPE_INFO_REG(AddN, InferAxisType4ElementwiseOp);
 // ----------------AddN END-------------------
 
 // --------------------------------BiasAdd-------------------------------------
@@ -327,7 +321,6 @@ IMPLEMT_COMMON_INFERFUNC(BiasAddInferShape) {
 
 COMMON_INFER_FUNC_REG(BiasAdd, BiasAddInferShape);
 VERIFY_FUNC_REG(BiasAdd, BiasAddVerify);
-INFER_AXIS_TYPE_INFO_REG(BiasAdd, InferAxisType4BroadcastOp);
 // ----------------------------------BiasAdd END-----------------------------
 
 // --------------MulNoNan--------------
@@ -368,15 +361,16 @@ IMPLEMT_COMMON_INFERFUNC(LessEqualInferShape) {
   if (!InferShapeAndTypeTwoInOneOutBroadcast(op, "x1", "x2", "y")) {
     return GRAPH_FAILED;
   }
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  auto vec_y = op_desc->MutableOutputDesc("y")->MutableShape().GetDims();
+  auto y_desc = op.GetOutputDesc("y");
+  auto vec_y = y_desc.GetShape().GetDims();
   if (IsUnknownRankShape(vec_y) || IsUnknownVec(vec_y)) {
     if (!InferShapeRangeTwoInOneOutBroadcast(op, "x1", "x2", "y")) {
       return GRAPH_FAILED;
     }
   }
 
-  op_desc->MutableOutputDesc("y")->SetDataType(DT_BOOL);
+  y_desc.SetDataType(DT_BOOL);
+  op.UpdateOutputDesc("y", y_desc);
   return GRAPH_SUCCESS;
 }
 

@@ -49,21 +49,22 @@ CUST_IMPLEMT_VERIFIER(MaximumGradGrad, MaximumGradGradVerify) {
 CUST_VERIFY_FUNC_REG(MaximumGradGrad, MaximumGradGradVerify);
 
 IMPLEMT_COMMON_INFERFUNC(MaximumGradGradInferShape) {
-  auto op_info = OpDescUtils::GetOpDescFromOperator(op);
   bool is_dynamic_output = true;
   if (!InferShapeAndTypeTwoInOneOutBroadcast(op, "grad_y1", "grad_y2", "spod_grads", is_dynamic_output)) {
     return GRAPH_FAILED;
   }
 
-  auto grad_y1_dtype = op_info->MutableInputDesc("grad_y1")->GetDataType();
+  auto grad_y1_dtype = op.GetInputDesc("grad_y1").GetDataType();
   std::vector<int64_t> x_dims = {1};
-  auto spod_x1_desc = op_info->MutableOutputDesc("spod_x1");
-  spod_x1_desc->SetShape(GeShape(x_dims));
-  spod_x1_desc->SetDataType(grad_y1_dtype);
+  auto spod_x1_desc = op.GetOutputDesc("spod_x1");
+  spod_x1_desc.SetShape(Shape(x_dims));
+  spod_x1_desc.SetDataType(grad_y1_dtype);
+  op.UpdateOutputDesc("spod_x1", spod_x1_desc);
 
-  auto spod_x2_desc = op_info->MutableOutputDesc("spod_x2");
-  spod_x2_desc->SetShape(GeShape(x_dims));
-  spod_x2_desc->SetDataType(grad_y1_dtype);
+  auto spod_x2_desc = op.GetOutputDesc("spod_x2");
+  spod_x2_desc.SetShape(Shape(x_dims));
+  spod_x2_desc.SetDataType(grad_y1_dtype);
+  op.UpdateOutputDesc("spod_x2", spod_x2_desc);
 
   return GRAPH_SUCCESS;
 }

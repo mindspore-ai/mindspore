@@ -22,20 +22,19 @@
 
 namespace ge {
 IMPLEMT_INFERFUNC(Cholesky, CholeskyInfer) {
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  auto x_desc = op_desc->MutableInputDesc(0);
+  auto x_desc = op.GetInputDesc(0);
 
-  GeShape y_shape;
+  Shape y_shape;
   if (MakeBatchSquareMatrix(x_desc, y_shape, op) != GRAPH_SUCCESS) {
     OP_LOGE(TbeGetName(op).c_str(), "Op Cholesky first input x's tensor make batch square matrix failed.");
     return GRAPH_FAILED;
   }
-  DataType type = x_desc->GetDataType();
+  DataType type = x_desc.GetDataType();
 
-  auto y_desc = op_desc->MutableOutputDesc(0);
-  y_desc->SetShape(y_shape);
-  y_desc->SetDataType(type);
-
+  auto y_desc = op.GetOutputDesc(0);
+  y_desc.SetShape(y_shape);
+  y_desc.SetDataType(type);
+  op.UpdateOutputDesc(y_desc.GetName(), y_desc);
   return GRAPH_SUCCESS;
 }
 

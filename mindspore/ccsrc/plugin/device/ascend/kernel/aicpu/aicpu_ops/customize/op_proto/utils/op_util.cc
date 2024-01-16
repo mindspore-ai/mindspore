@@ -40,7 +40,7 @@ std::string ToString(const ge::DataType &type) { return ge::TypeUtils::DataTypeT
  */
 std::string ToString(const ge::Format &format) { return ge::TypeUtils::FormatToSerialString(format); }
 
-std::vector<int64_t> ToVector(const gert::Shape &shape) {
+std::vector<int64_t> ToVector(const ge::Shape &shape) {
   size_t shape_size = shape.GetDimNum();
   std::vector<int64_t> shape_vec(shape_size, 0);
 
@@ -50,15 +50,15 @@ std::vector<int64_t> ToVector(const gert::Shape &shape) {
   return shape_vec;
 }
 
-std::string ToString(const gert::Shape &shape) { return ge::DebugString(ToVector(shape)); }
+std::string ToString(const ge::Shape &shape) { return ge::DebugString(ToVector(shape)); }
 
-std::string ToString(const gert::Shape *shape) { return ge::DebugString(ToVector(*shape)); }
+std::string ToString(const ge::Shape *shape) { return ge::DebugString(ToVector(*shape)); }
 
 std::string ToString(const std::vector<int64_t> &shape) { return ge::DebugString(shape); }
 
-std::string ToString(const std::vector<gert::Shape> &shapes) {
+std::string ToString(const std::vector<ge::Shape> &shapes) {
   std::string str = "[";
-  for (gert::Shape shape : shapes) {
+  for (ge::Shape shape : shapes) {
     str += ToString(shape);
     str += ", ";
   }

@@ -26,11 +26,9 @@ IMPLEMT_INFERFUNC(Bucketize, BucketizeInfer) {
   OP_LOGD(opname, "Enter Bucketize inferfunction!");
 
   // set output shape
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  CHECK(op_desc == nullptr, OP_LOGE(opname, "op desc is null."), return GRAPH_FAILED);
-  std::vector<int64_t> x_shape = op_desc->MutableInputDesc("x")->MutableShape().GetDims();
-  auto output_desc = op_desc->MutableOutputDesc(0);
-  output_desc->SetShape(GeShape(x_shape));
+  std::vector<int64_t> x_shape = op.GetInputDesc("x").GetShape().GetDims();
+  auto output_desc = op.GetOutputDesc(0);
+  output_desc.SetShape(Shape(x_shape));
 
   // set output dtype
   DataType dtype;
@@ -44,8 +42,8 @@ IMPLEMT_INFERFUNC(Bucketize, BucketizeInfer) {
     AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), string("The attr [dtype] must be one of DT_INT32 or DT_INT64"));
     return GRAPH_FAILED;
   }
-  output_desc->SetDataType(dtype);
-
+  output_desc.SetDataType(dtype);
+  op.UpdateOutputDesc(output_desc.GetName(), output_desc);
   return GRAPH_SUCCESS;
 }
 

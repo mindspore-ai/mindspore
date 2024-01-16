@@ -216,7 +216,7 @@ INFER_FUNC_REG(IsInf, IsInfInfer);
 // ----------------IsInf END------------------------
 
 // ----------------ReduceOp-------------------
-static bool InferReduceShapeProcess(const Operator &op, const int64_t input_x_idx, const int64_t output_y_idx,
+static bool InferReduceShapeProcess(Operator op, const int64_t input_x_idx, const int64_t output_y_idx,
                                     const int64_t input_axes_idx) {
   bool keep_dims = false;
   op.GetAttr("keep_dims", keep_dims);

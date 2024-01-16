@@ -21,7 +21,7 @@
 #include "image_ops_shape_fns.h"
 #include <set>
 #include "error_util.h"
-#include "graph/utils/op_desc_utils.h"
+#include "util.h"
 #include "op_log.h"
 
 namespace ge {
@@ -94,9 +94,7 @@ graphStatus SetOutputToSizedImage(Operator &op, const int64_t batch_dim, const s
   }
 
   std::vector<std::string> input_infer_depends = {size_input_name};
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  op_desc->SetOpInferDepends(input_infer_depends);
-
+  PREPARE_DYNAMIC_SHAPE(input_infer_depends);
   DataType data_type = DT_FLOAT;
   auto op_name = op.GetName();
   if (op_name == "ResizeBicubic") {
@@ -105,9 +103,9 @@ graphStatus SetOutputToSizedImage(Operator &op, const int64_t batch_dim, const s
   // Update DataType when Attr "dtype" is set, used for op ResizeBicubic
   if (op.GetAttr("dtype", data_type) == GRAPH_SUCCESS) {
     if ((data_type != DT_FLOAT) && (data_type != DT_UINT8)) {
-      OP_LOGW(op_desc->GetName().c_str(), "Attr dtype should only be DT_FLOAT or DT_UNIT8");
+      OP_LOGW(op.GetName().c_str(), "Attr dtype should only be DT_FLOAT or DT_UNIT8");
     } else {
-      OP_LOGI(op_desc->GetName().c_str(), "Update DataType from attr, which is %d", data_type);
+      OP_LOGI(op.GetName().c_str(), "Update DataType from attr, which is %d", data_type);
     }
   }
 

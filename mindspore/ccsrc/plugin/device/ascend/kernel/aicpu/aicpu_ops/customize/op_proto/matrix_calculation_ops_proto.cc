@@ -19,51 +19,6 @@ IMPLEMT_COMMON_INFERFUNC(OneInOneOutCommonInferShape) {
   }
   return GRAPH_FAILED;
 }
-
-// ----------------DiagPart-------------------
-IMPLEMT_COMMON_INFERFUNC(DiagPartInferShape) {
-  ge::OpDescPtr op_desc = ge::OpDescUtils::GetOpDescFromOperator(op);
-  CHECK(op_desc == nullptr, VECTOR_INFER_SHAPE_INNER_ERR_REPORT("DiagPart", GetInputInvalidErrMsg("op_desc")),
-        return GRAPH_FAILED);
-  ge::ConstGeTensorDescPtr input_x_desc = op_desc->GetInputDescPtr(0);
-  CHECK(input_x_desc == nullptr, VECTOR_INFER_SHAPE_INNER_ERR_REPORT("DiagPart", GetInputInvalidErrMsg("x")),
-        return GRAPH_FAILED);
-  const GeShape &input_shape = input_x_desc->GetShape();
-  const size_t input_to_output_dims_times = 2;
-  size_t output_shape_len = input_shape.GetDimNum() / input_to_output_dims_times;
-  ge::GeTensorDescPtr output_desc = op_desc->MutableOutputDesc(0);
-  GeShape &output_shape = output_desc->MutableShape();
-  DataType input_dtype = input_x_desc->GetDataType();
-
-  if (input_shape.IsUnknownDimNum()) {
-    output_desc->SetShape(input_shape);
-  } else {
-    output_shape.SetDimNum(output_shape_len);
-    for (size_t i = 0; i < output_shape_len; i++) {
-      output_shape.SetDim(i, input_shape.GetDim(i));
-    }
-  }
-  if (input_shape.IsUnknownShape()) {
-    std::vector<std::pair<int64_t, int64_t>> shape_range;
-    input_x_desc->GetShapeRange(shape_range);
-    for (unsigned i = 0; i < shape_range.size(); i++) {
-      if (shape_range[i].first > 0) {
-        shape_range[i].first = shape_range[i].first;
-      }
-      if (shape_range[i].second > 0) {
-        shape_range[i].second = shape_range[i].second;
-      }
-    }
-    output_desc->SetShapeRange(shape_range);
-  }
-  output_desc->SetShape(output_shape);
-  output_desc->SetDataType(input_dtype);
-  return GRAPH_SUCCESS;
-}
-
-COMMON_INFER_FUNC_REG(DiagPart, DiagPartInferShape);
-// ----------------DiagPart END-------------------
-
 // ---------------Eye----------------------------
 static bool CheckRows(const Operator &op, const string &attr_num_rows) {
   int64_t num_rows;
@@ -165,8 +120,7 @@ IMPLEMT_COMMON_INFERFUNC(TraceGradInferShape) {
   Shape shape = op.GetInputDescByName("y_grad").GetShape();
   DataType input_dtype = op.GetInputDescByName("y_grad").GetDataType();
   std::vector<std::string> input_infer_depends = {"x_shape"};
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  op_desc->SetOpInferDepends(input_infer_depends);
+  PREPARE_DYNAMIC_SHAPE(input_infer_depends);
   Tensor tensor_input;
   Shape output_shape;
   if (op.GetInputConstData("x_shape", tensor_input) == GRAPH_SUCCESS) {
@@ -220,15 +174,15 @@ IMPLEMT_VERIFIER(ScatterNdUpdate, ScatterNdUpdateVerify) {
 
 IMPLEMT_COMMON_INFERFUNC(ScatterNdUpdateInferShape) {
   // main part of shape infer
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  ge::GeShape var_shape = op_desc->MutableInputDesc("var")->GetShape();
+  ge::Shape var_shape = op.GetInputDesc("var").GetShape();
   std::vector<std::pair<int64_t, int64_t>> var_shape_range;
-  op_desc->MutableInputDesc("var")->GetShapeRange(var_shape_range);
-  DataType input_dtype = op_desc->MutableInputDesc("var")->GetDataType();
-  GeTensorDescPtr td = op_desc->MutableOutputDesc("var");
-  td->SetShape(var_shape);
-  td->SetDataType(input_dtype);
-  td->SetShapeRange(var_shape_range);
+  op.GetInputDesc("var").GetShapeRange(var_shape_range);
+  DataType input_dtype = op.GetInputDesc("var").GetDataType();
+  TensorDesc td = op.GetOutputDesc("var");
+  td.SetShape(var_shape);
+  td.SetDataType(input_dtype);
+  td.SetShapeRange(var_shape_range);
+  op.UpdateOutputDesc("var", td);
   return GRAPH_SUCCESS;
 }
 COMMON_INFER_FUNC_REG(ScatterNdUpdate, ScatterNdUpdateInferShape);

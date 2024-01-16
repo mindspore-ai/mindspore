@@ -24,41 +24,41 @@ IMPLEMT_COMMON_INFERFUNC(ArgMinInferShape) {
   // get all input desc
   const vector<string> depend_names = {"dimension"};
   PREPARE_DYNAMIC_SHAPE(depend_names);
-  auto op_info_arg = OpDescUtils::GetOpDescFromOperator(op);
-  auto input_desc = op_info_arg->MutableInputDesc("x");
-  auto const_desc = op_info_arg->MutableInputDesc("dimension");
-  auto y_desc = op_info_arg->MutableOutputDesc("y");
+  auto input_desc = op.GetInputDesc("x");
+  auto const_desc = op.GetInputDesc("dimension");
+  auto y_desc = op.GetOutputDesc("y");
 
   // get and set output dtype
   ge::DataType dtype;
   if (op.GetAttr("dtype", dtype) == GRAPH_SUCCESS) {
-    y_desc->SetDataType(dtype);
+    y_desc.SetDataType(dtype);
   } else {
     OP_LOGW(TbeGetName(op).c_str(), "get attr dtype failed.");
-    y_desc->SetDataType(DT_INT32);
+    y_desc.SetDataType(DT_INT32);
   }
 
   // get x shape
-  auto x_shape = input_desc->MutableShape().GetDims();
+  auto x_shape = input_desc.GetShape().GetDims();
   // if x_shape == -2, set output -2
   if (IsUnknownRankShape(x_shape)) {
-    y_desc->SetShape(GeShape(x_shape));
+    y_desc.SetShape(Shape(x_shape));
+    op.UpdateOutputDesc(y_desc.GetName(), y_desc);
     return GRAPH_SUCCESS;
   }
 
   // if x_shape.size() < 2, set output scalar
   if (x_shape.size() < 2) {
     vector<int64_t> output_shape;
-    y_desc->SetShape(GeShape(output_shape));
+    y_desc.SetShape(Shape(output_shape));
+    op.UpdateOutputDesc(y_desc.GetName(), y_desc);
     return GRAPH_SUCCESS;
   }
 
   // read dimension const value
   vector<int64_t> dimension_value;
-  auto dimension_idx = static_cast<uint32_t>(op_info_arg->GetInputIndexByName("dimension"));
-  const GeTensor *dimension_tensor = OpDescUtils::GetInputConstData(op, dimension_idx);
-  if (dimension_tensor != nullptr) {
-    auto const_dtype = const_desc->GetDataType();
+  Tensor dimension_tensor;
+  if (op.GetInputConstData("dimension", dimension_tensor) == GRAPH_SUCCESS) {
+    auto const_dtype = const_desc.GetDataType();
     GetConstValue(op, dimension_tensor, const_dtype, dimension_value);
     // verify dimension_value
     if (dimension_value.size() != 1) {
@@ -79,15 +79,15 @@ IMPLEMT_COMMON_INFERFUNC(ArgMinInferShape) {
 
     vector<int64_t> output_shape(x_shape);
     output_shape.erase(output_shape.begin() + dimension);
-    y_desc->SetShape(GeShape(output_shape));
+    y_desc.SetShape(Shape(output_shape));
 
     // when output is dynamic will update range
     if (IsUnknown(output_shape)) {
       std::vector<std::pair<int64_t, int64_t>> input_range;
-      input_desc->GetShapeRange(input_range);
+      input_desc.GetShapeRange(input_range);
       MakeUpShapeRange(x_shape, input_range);
       input_range.erase(input_range.begin() + dimension);
-      y_desc->SetShapeRange(input_range);
+      y_desc.SetShapeRange(input_range);
     }
     return GRAPH_SUCCESS;
   }
@@ -99,9 +99,9 @@ IMPLEMT_COMMON_INFERFUNC(ArgMinInferShape) {
     output_shape.push_back(-1);
   }
   MakeUpShapeRange(output_shape, output_range);
-  y_desc->SetShape(GeShape(output_shape));
-  y_desc->SetShapeRange(output_range);
-
+  y_desc.SetShape(Shape(output_shape));
+  y_desc.SetShapeRange(output_range);
+  op.UpdateOutputDesc(y_desc.GetName(), y_desc);
   return GRAPH_SUCCESS;
 }
 

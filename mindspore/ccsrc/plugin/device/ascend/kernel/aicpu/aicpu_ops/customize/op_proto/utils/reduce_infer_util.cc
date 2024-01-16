@@ -45,12 +45,12 @@ static bool ConvertAxis(std::vector<int64_t> &axis, const int64_t input_len) {
   return true;
 }
 
-bool DoReduceInfershapeWithAxesKeepdims(const GeShape &input_shape, std::vector<int64_t> &reduce_axes,
-                                        GeShape &output_shape) {
+bool DoReduceInfershapeWithAxesKeepdims(const Shape &input_shape, std::vector<int64_t> &reduce_axes,
+                                        Shape &output_shape) {
   // case0: input is {-2}， set the output {-2}
-  if (input_shape.IsUnknownDimNum()) {
+  if (IsUnknownDimNum(input_shape)) {
     OP_LOGD("ReduceOps", "do unknownrank infershape for Reduce, output is {-2}");
-    output_shape.SetIsUnknownDimNum();
+    SetIsUnknownDimNum(output_shape);
     return true;
   }
 
@@ -61,19 +61,19 @@ bool DoReduceInfershapeWithAxesKeepdims(const GeShape &input_shape, std::vector<
     return false;
   }
 
+  std::vector<int64_t> dims;
   // case1: will reduce all shape, if reduce_axes is empty
   if (reduce_axes.empty()) {
     // return the shape(all 1) when reduce_axes is empty and keep_dims = true
     OP_LOGD("ReduceOps", "do all reduce infershape for Reduce, output is {}");
-    output_shape.SetDimNum(input_shape_len);
     for (size_t i = 0; i < input_shape_len; ++i) {
-      output_shape.SetDim(i, 1);
+      (void)dims.emplace_back(1);
     }
+    output_shape = ge::Shape(dims);
     return true;
   }
 
   // case2: shape is [x, y, z] axis is [0] --> [1, y, z] when keep_dims is true
-  output_shape.SetDimNum(input_shape_len);
   OP_LOGD("ReduceOps", "do norm infershape for Reduce");
   output_shape = input_shape;
   for (size_t i = 0; i < reduce_axes.size(); ++i) {
@@ -84,20 +84,20 @@ bool DoReduceInfershapeWithAxesKeepdims(const GeShape &input_shape, std::vector<
   return true;
 }
 
-bool DoReduceInfershapeWithAxesNoKeepdims(const GeShape &input_shape, std::vector<int64_t> &reduce_axes,
-                                          GeShape &output_shape) {
+bool DoReduceInfershapeWithAxesNoKeepdims(const Shape &input_shape, std::vector<int64_t> &reduce_axes,
+                                          Shape &output_shape) {
   // case0: will reduce all shape, if reduce_axes is empty
   if (reduce_axes.empty()) {
     // return a scalar shape when reduce_axes is empty and keep_dims = false
     OP_LOGD("ReduceOps", "reduce_axes is empty, output a scalar");
-    output_shape.SetDimNum(0);
+    output_shape = {};
     return true;
   }
 
   // case1: input is {-2}， set the output {-2}
-  if (input_shape.IsUnknownDimNum()) {
+  if (IsUnknownDimNum(input_shape)) {
     OP_LOGD("ReduceOps", "input is {-2}, set the output is {-2}");
-    output_shape.SetIsUnknownDimNum();
+    output_shape = Shape({UNKNOWN_DIM_NUM});
     return true;
   }
 
@@ -107,7 +107,7 @@ bool DoReduceInfershapeWithAxesNoKeepdims(const GeShape &input_shape, std::vecto
     return false;
   }
   // case2: shape is [x, y, z] axis is [0] --> [y, z] when keep_dims is false
-  output_shape.SetDimNum(input_shape_len);
+  output_shape = input_shape;
   int64_t output_dim = 0;
   for (int64_t i = 0; i < static_cast<int64_t>(input_shape_len); ++i) {
     if (std::find(reduce_axes.begin(), reduce_axes.end(), i) == reduce_axes.end()) {
@@ -116,14 +116,13 @@ bool DoReduceInfershapeWithAxesNoKeepdims(const GeShape &input_shape, std::vecto
       output_dim++;
     }
   }
-  output_shape.SetDimNum(output_dim);
 
   OP_LOGD("ReduceOps", "after reduce output shape = %s", to_string(output_shape).c_str());
   return true;
 }
 
-bool DoReduceInfershapeWithAxes(const GeShape &input_shape, const bool keep_dims, std::vector<int64_t> &reduce_axes,
-                                GeShape &output_shape) {
+bool DoReduceInfershapeWithAxes(const Shape &input_shape, const bool keep_dims, std::vector<int64_t> &reduce_axes,
+                                Shape &output_shape) {
   if (keep_dims) {
     return DoReduceInfershapeWithAxesKeepdims(input_shape, reduce_axes, output_shape);
   }
@@ -131,12 +130,12 @@ bool DoReduceInfershapeWithAxes(const GeShape &input_shape, const bool keep_dims
   return DoReduceInfershapeWithAxesNoKeepdims(input_shape, reduce_axes, output_shape);
 }
 
-bool DoReduceInferRangeWithAxes(GeTensorDescPtr &tensordesc_input_x, GeTensorDescPtr &tensordesc_output,
+bool DoReduceInferRangeWithAxes(TensorDesc &tensordesc_input_x, TensorDesc &tensordesc_output,
                                 std::vector<int64_t> &reduce_axes, bool keep_dims) {
   std::vector<std::pair<int64_t, int64_t>> output_shape_range;
   std::vector<std::pair<int64_t, int64_t>> input_shape_range;
-  tensordesc_input_x->GetShapeRange(input_shape_range);
-  std::vector<int64_t> input_shape_vec = tensordesc_input_x->MutableShape().GetDims();
+  tensordesc_input_x.GetShapeRange(input_shape_range);
+  std::vector<int64_t> input_shape_vec = tensordesc_input_x.GetShape().GetDims();
   // If InputShapeRange is None, MakeUpShapeRange will set range.
   MakeUpShapeRange(input_shape_vec, input_shape_range);
   if (keep_dims) {
@@ -151,20 +150,19 @@ bool DoReduceInferRangeWithAxes(GeTensorDescPtr &tensordesc_input_x, GeTensorDes
       }
     }
   }
-  tensordesc_output->SetShapeRange(output_shape_range);
+  tensordesc_output.SetShapeRange(output_shape_range);
   return true;
 }
 
 bool GetConstData(const Operator &op, const int64_t const_input_idx, std::vector<int64_t> &const_values) {
-  ge::Tensor const_tensor;
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  auto input_name = op_desc->GetInputNameByIndex(const_input_idx);
+  Tensor const_tensor;
+  auto input_name = op.GetInputDesc(const_input_idx).GetName();
   if (op.GetInputConstData(input_name.c_str(), const_tensor) != ge::GRAPH_SUCCESS) {
     OP_LOGW(TbeGetName(op).c_str(), "constvalue [%s] not exists.", input_name.c_str());
     return false;
   }
 
-  DataType const_dtype = op_desc->MutableInputDesc(const_input_idx)->GetDataType();
+  DataType const_dtype = op.GetInputDesc(const_input_idx).GetDataType();
   auto size = const_tensor.GetSize();
   auto data = const_tensor.GetData();
   const_values.reserve(size);
@@ -193,23 +191,23 @@ bool GetConstData(const Operator &op, const int64_t const_input_idx, std::vector
   return true;
 }
 
-bool DoReduceInferShapeWithoutAxes(const Operator &op, GeTensorDescPtr &tensordesc_input_x,
-                                   GeTensorDescPtr &tensordesc_output, const GeShape &axes_shape, bool keep_dims) {
+bool DoReduceInferShapeWithoutAxes(const Operator &op, TensorDesc &tensordesc_input_x, TensorDesc &tensordesc_output,
+                                   const Shape &axes_shape, bool keep_dims) {
   OP_LOGD(TbeGetName(op).c_str(), "the axes is not const, the output will be dynamic shape");
-  const GeShape &input_shape = tensordesc_input_x->MutableShape();
+  const Shape input_shape = tensordesc_input_x.GetShape();
   // case0: input is {}， set the output {}
-  if (input_shape.IsScalar()) {
+  if (IsScalar(input_shape)) {
     OP_LOGD(TbeGetName(op).c_str(), "input is scalar, so output is scalar");
     std::vector<int64_t> output_shape;
-    tensordesc_output->SetShape(GeShape(output_shape));
+    tensordesc_output.SetShape(Shape(output_shape));
     return true;
   }
   // case1: input is {-2}， set the output {-2}
-  if (input_shape.IsUnknownDimNum()) {
+  if (IsUnknownDimNum(input_shape)) {
     OP_LOGD(TbeGetName(op).c_str(), "input is {-2}, so output {-2}");
     constexpr int64_t kOutputShapeDim0 = 1;
     std::vector<int64_t> output_shape(kOutputShapeDim0, ge::UNKNOWN_DIM_NUM);
-    tensordesc_output->SetShape(GeShape(output_shape));
+    tensordesc_output.SetShape(Shape(output_shape));
     return true;
   }
 
@@ -217,7 +215,7 @@ bool DoReduceInferShapeWithoutAxes(const Operator &op, GeTensorDescPtr &tensorde
   std::vector<int64_t> output_shape;
   std::vector<std::pair<int64_t, int64_t>> output_shape_range;
   std::vector<std::pair<int64_t, int64_t>> input_shape_range;
-  tensordesc_input_x->GetShapeRange(input_shape_range);
+  tensordesc_input_x.GetShapeRange(input_shape_range);
   // If InputShapeRange is None, MakeUpShapeRange will set range.
   MakeUpShapeRange(input_shape_vec, input_shape_range);
   size_t input_length = input_shape_vec.size();
@@ -239,7 +237,7 @@ bool DoReduceInferShapeWithoutAxes(const Operator &op, GeTensorDescPtr &tensorde
     //            output dim num = (input dim num  - 1), when axes_shape = {} or {1}
     // case4: all output shape dim is -2
     int64_t output_dim_num = UNKNOWN_DIM_VALUE;
-    if (!axes_shape.IsUnknownDimNum() && axes_shape.GetDimNum() == 0) {
+    if (!IsUnknownDimNum(axes_shape) && axes_shape.GetDimNum() == 0) {
       OP_LOGD(TbeGetName(op).c_str(), "the axes is scalar, will reduce one dim for input shape");
       output_dim_num = static_cast<int64_t>(input_length - 1);
     }
@@ -269,35 +267,30 @@ bool DoReduceInferShapeWithoutAxes(const Operator &op, GeTensorDescPtr &tensorde
       }
     }
   }
-  tensordesc_output->SetShape(GeShape(output_shape));
-  tensordesc_output->SetShapeRange(output_shape_range);
+  tensordesc_output.SetShape(Shape(output_shape));
+  tensordesc_output.SetShapeRange(output_shape_range);
   return true;
 }
 
-bool CommonReduceInferWithInputAxes(const Operator &op, const int64_t input_x_idx, const int64_t output_idx,
+bool CommonReduceInferWithInputAxes(Operator &op, const int64_t input_x_idx, const int64_t output_idx,
                                     const int64_t input_axes_idx, bool keep_dims) {
   PROFILING_PROTO_INIT(TbeGetName(op).c_str());
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  auto axes_name = op_desc->GetInputNameByIndex(input_axes_idx);
-  op_desc->SetOpInferDepends({axes_name});
-  CHECK(op_desc == nullptr, VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg("invalid OpDesc.")),
-        return false);
-  auto tensordesc_input_x = op_desc->MutableInputDesc(input_x_idx);
-  auto tensordesc_input_axes = op_desc->MutableInputDesc(input_axes_idx);
-  auto tensordesc_output = op_desc->MutableOutputDesc(output_idx);
-  CHECK(tensordesc_input_x == nullptr || tensordesc_output == nullptr || tensordesc_input_axes == nullptr,
-        VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg("get mutable desc failed.")), return false);
-  auto input_type = tensordesc_input_x->GetDataType();
-  const GeShape &input_shape = tensordesc_input_x->MutableShape();
-  const GeShape &axes_shape = tensordesc_input_axes->MutableShape();
-  tensordesc_output->SetDataType(input_type);
+  auto axes_name = op.GetInputDesc(input_axes_idx).GetName();
+  SetOpInferDepends(op, {axes_name});
+  auto tensordesc_input_x = op.GetInputDesc(input_x_idx);
+  auto tensordesc_input_axes = op.GetInputDesc(input_axes_idx);
+  auto tensordesc_output = op.GetOutputDesc(output_idx);
+  auto input_type = tensordesc_input_x.GetDataType();
+  const Shape &input_shape = tensordesc_input_x.GetShape();
+  const Shape &axes_shape = tensordesc_input_axes.GetShape();
+  tensordesc_output.SetDataType(input_type);
 
   if (axes_shape.GetDimNum() == 1 && axes_shape.GetDim(0) == 0) {
     OP_LOGD(TbeGetName(op).c_str(), "axes_shape is [0], set output shape = input shape");
-    tensordesc_output->SetShape(input_shape);
+    tensordesc_output.SetShape(input_shape);
     std::vector<std::pair<int64_t, int64_t>> input_shape_range;
-    tensordesc_input_x->GetShapeRange(input_shape_range);
-    tensordesc_output->SetShapeRange(input_shape_range);
+    tensordesc_input_x.GetShapeRange(input_shape_range);
+    tensordesc_output.SetShapeRange(input_shape_range);
     return true;
   }
 
@@ -306,14 +299,14 @@ bool CommonReduceInferWithInputAxes(const Operator &op, const int64_t input_x_id
   if (GetConstData(op, input_axes_idx, reduce_axes)) {
     PROFILING_PROTO_AFTER_GET_SHAPE_REG();
     // do infershape with const axes for static op
-    GeShape &output_shape = tensordesc_output->MutableShape();
+    Shape output_shape = tensordesc_output.GetShape();
     CHECK(!DoReduceInfershapeWithAxes(input_shape, keep_dims, reduce_axes, output_shape),
           VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg("do reduce infershape failed.")),
           return false);
 
     // when output is dynamic shape, will infer range
-    if (output_shape.IsUnknownShape()) {
-      if (!output_shape.IsUnknownDimNum()) {
+    if (IsUnknownShape(output_shape)) {
+      if (!IsUnknownDimNum(output_shape)) {
         CHECK(!DoReduceInferRangeWithAxes(tensordesc_input_x, tensordesc_output, reduce_axes, keep_dims),
               VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg("do reduce infer range failed.")),
               return false);
@@ -335,26 +328,21 @@ bool CommonReduceInferWithInputAxes(const Operator &op, const int64_t input_x_id
 bool CommonReduceInferWithAttrAxes(const Operator &op, const int64_t input_x_idx, const int64_t output_idx,
                                    vector<int64_t> attr_axes, bool keep_dims) {
   PROFILING_PROTO_INIT(TbeGetName(op).c_str());
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  CHECK(op_desc == nullptr, VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg("invalid OpDesc.")),
-        return false);
-  auto tensordesc_input_x = op_desc->MutableInputDesc(input_x_idx);
-  auto tensordesc_output = op_desc->MutableOutputDesc(output_idx);
-  CHECK(tensordesc_input_x == nullptr || tensordesc_output == nullptr,
-        VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg("get mutable desc failed.")), return false);
-  auto input_type = tensordesc_input_x->GetDataType();
-  const GeShape &input_shape = tensordesc_input_x->MutableShape();
-  tensordesc_output->SetDataType(input_type);
+  auto tensordesc_input_x = op.GetInputDesc(input_x_idx);
+  auto tensordesc_output = op.GetOutputDesc(output_idx);
+  auto input_type = tensordesc_input_x.GetDataType();
+  const Shape &input_shape = tensordesc_input_x.GetShape();
+  tensordesc_output.SetDataType(input_type);
 
   PROFILING_PROTO_AFTER_GET_SHAPE_REG();
   // do infershape with const axes for static op
-  GeShape &output_shape = tensordesc_output->MutableShape();
+  Shape output_shape = tensordesc_output.GetShape();
   CHECK(!DoReduceInfershapeWithAxes(input_shape, keep_dims, attr_axes, output_shape),
         VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg("do reduce infershape failed.")), return false);
 
   // when output is dynamic shape, will infer range
-  if (output_shape.IsUnknownShape()) {
-    if (!output_shape.IsUnknownDimNum()) {
+  if (IsUnknownShape(output_shape)) {
+    if (!IsUnknownDimNum(output_shape)) {
       CHECK(!DoReduceInferRangeWithAxes(tensordesc_input_x, tensordesc_output, attr_axes, keep_dims),
             VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg("do reduce infer range failed.")),
             return false);

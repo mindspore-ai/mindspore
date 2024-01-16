@@ -54,41 +54,6 @@ graphStatus MakeBatchSquareMatrix(const TensorDesc &tensor, Shape &out, const ge
   return GRAPH_SUCCESS;
 }
 
-graphStatus MakeBatchSquareMatrix(const GeTensorDescPtr &tensor_desc, GeShape &out, const ge::Operator &op) {
-  GeShape ge_shape;
-  if (WithRankAtLeast(tensor_desc, kRnak, ge_shape, op) == GRAPH_FAILED) {
-    OP_LOGE(op, "Input tensor's rank at least 2.");
-    return GRAPH_FAILED;
-  }
-  Shape s(ge_shape.GetDims());
-  size_t existing = s.GetDimNum();
-  int64_t dim1 = s.GetDim(existing - 2);
-  int64_t dim2 = s.GetDim(existing - 1);
-
-  int64_t out_dim = 0;
-  if (Merge(dim1, dim2, out_dim) == GRAPH_FAILED) {
-    OP_LOGE(op, "Merge two dimension failed.");
-    return GRAPH_FAILED;
-  }
-
-  if (RankKnown(ge_shape)) {
-    GeShape batch_shape;
-    if (SubShape(ge_shape, 0, kEnd, 1, batch_shape, op) == GRAPH_FAILED) {
-      OP_LOGE(op, "Get subShape batch_shape failed.");
-      return GRAPH_FAILED;
-    }
-    if (Concatenate(batch_shape, GeShape({out_dim, out_dim}), out) == GRAPH_FAILED) {
-      OP_LOGE(op, "Concatenate batch_shape and out_dim failed.");
-      return GRAPH_FAILED;
-    }
-  } else {
-    GeShape unknown_shape(ge::UNKNOWN_SHAPE);
-    out = unknown_shape;
-  }
-
-  return GRAPH_SUCCESS;
-}
-
 graphStatus MatrixSolve(const TensorDesc &tensor1, const TensorDesc &tensor2, bool square, Shape &out,
                         const ge::Operator &op) {
   Shape lhs;

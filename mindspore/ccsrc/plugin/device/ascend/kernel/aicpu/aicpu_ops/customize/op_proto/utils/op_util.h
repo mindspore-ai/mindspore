@@ -28,9 +28,6 @@
 #include <string>
 
 #include "error_util.h"
-#include "exe_graph/runtime/continuous_vector.h"
-#include "runtime/shape.h"
-#include "runtime/tensor.h"
 
 namespace ops {
 template <typename _T, typename... _Args>
@@ -90,64 +87,28 @@ std::string ToString(const ge::DataType &type);
 std::string ToString(const ge::Format &format);
 
 /*
- * @brief: get shape string from gert::Shape, for debug
- * @param [in] shape: reference of gert::Shape
+ * @brief: get shape string from ge::Shape, for debug
+ * @param [in] shape: reference of ge::Shape
  * @return string: shape string
  */
-std::string ToString(const gert::Shape &shape);
+std::string ToString(const ge::Shape &shape);
 
 /*
- * @brief: get shape string from gert::Shape, for debug
- * @param [in] shape: ptr of gert::Shape
+ * @brief: get shape string from ge::Shape, for debug
+ * @param [in] shape: ptr of ge::Shape
  * @return string: shape string
  */
-std::string ToString(const gert::Shape *shape);
+std::string ToString(const ge::Shape *shape);
 
 std::string ToString(const std::vector<int64_t> &shape);
-std::string ToString(const std::vector<gert::Shape> &shapes);
+std::string ToString(const std::vector<ge::Shape> &shapes);
 
 /*
- * @brief: trans the gert::Shape to vector<int64_t>
- * @param [in] format: gert::Shape
+ * @brief: trans the ge::Shape to vector<int64_t>
+ * @param [in] format: ge::Shape
  * @return vector<int64_t>: the vector shape
  */
-std::vector<int64_t> ToVector(const gert::Shape &shape);
-
-/*
- * @brief: trans the gert::TypedContinuousVector<T> to vector<T>
- * @param [in] vec: reference of gert::TypedContinuousVector<T>
- * @return vector<T>: the vector of T
- */
-template <typename T>
-std::vector<T> ToVector(const gert::TypedContinuousVector<T> &vec) {
-  size_t vec_size = vec.GetSize();
-  std::vector<T> vec_t(vec_size, 0);
-
-  for (size_t i = 0; i < vec_size; i++) {
-    vec_t[i] = *(vec.GetData() + i);
-  }
-  return vec_t;
-}
-
-/*
- * @brief: get TypedContinuousVector string from gert::TypedContinuousVector&, for debug
- * @param [in] vec: reference of gert::TypedContinuousVector<T>
- * @return string: TypedContinuousVector string
- */
-template <typename T>
-std::string ToString(const gert::TypedContinuousVector<T> &vec) {
-  return ge::DebugString(ToVector(vec));
-}
-
-/*
- * @brief: get TypedContinuousVector string from gert::TypedContinuousVector*, for debug
- * @param [in] vec: ptr of gert::TypedContinuousVector<T>
- * @return string: TypedContinuousVector string
- */
-template <typename T>
-std::string ToString(const gert::TypedContinuousVector<T> *vec) {
-  return ge::DebugString(ToVector(*vec));
-}
+std::vector<int64_t> ToVector(const ge::Shape &shape);
 
 /*
  * @brief: floor(u_value/d_value)
@@ -202,20 +163,6 @@ std::string ToString(const T *value, size_t size) {
   }
   r = r + "]";
   return r;
-}
-/*
- * @brief: if shape is empty set {1}
- * @param [in] shape: gert::Shape
- * @return : void
- */
-inline void ScalarToShape(gert::Shape &shape) {
-  if (shape.IsScalar()) {
-    shape.AppendDim(1);
-  }
-}
-
-inline bool IsConstTensor(const gert::Tensor *input_tensor) {
-  return (input_tensor != nullptr) && (input_tensor->GetAddr() != nullptr);
 }
 }  // namespace ops
 #endif  // CANN_CUSTOMIZE_OP_UTIL_H_

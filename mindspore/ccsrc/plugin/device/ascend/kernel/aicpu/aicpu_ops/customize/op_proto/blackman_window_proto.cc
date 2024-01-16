@@ -35,8 +35,7 @@ IMPLEMT_COMMON_INFERFUNC(BlackmanWindowInferShape) {
     return GRAPH_FAILED;
   }
   std::vector<std::string> input_infer_depends = {"window_length"};
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  op_desc->SetOpInferDepends(input_infer_depends);
+  PREPARE_DYNAMIC_SHAPE(input_infer_depends);
   Tensor window_length_tensor;
   if (op.GetInputConstData("window_length", window_length_tensor) != GRAPH_SUCCESS) {
     auto output_desc = op.GetOutputDescByName("y");

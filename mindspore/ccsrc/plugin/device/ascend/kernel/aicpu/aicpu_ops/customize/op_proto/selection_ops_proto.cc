@@ -26,106 +26,19 @@ IMPLEMT_COMMON_INFERFUNC(CumulativeLogsumexpInferShape) {
 COMMON_INFER_FUNC_REG(CumulativeLogsumexp, CumulativeLogsumexpInferShape);
 // ----------------CumulativeLogsumexp END-------------------
 
-// ----------------GatherNd-------------------
-bool CheckGatherNdInputIndicesSize(const Operator &op, const string &input_name) {
-  auto indices_shape = OpDescUtils::GetOpDescFromOperator(op)->MutableInputDesc("indices")->GetShape();
-  auto indices_shape_size = indices_shape.GetDimNum();
-  int indices_last_element = indices_shape.GetDim(indices_shape_size - 1);
-  int64_t indices_part{1};
-  for (int i = 0; i < indices_last_element - 1; ++i) {
-    indices_part *= static_cast<int64_t>(indices_shape.GetDim(i));
-  }
-  if (indices_part > std::numeric_limits<int>::max()) {
-    OP_LOGE(TbeGetName(op).c_str(), "Indices has too many elements for int indexing");
-    return false;
-  }
-  return true;
-}
-
-bool CheckGatherNdParamsSize(const Operator &op, int last_dim, int shape_size) {
-  if (last_dim > shape_size) {
-    OP_LOGE(TbeGetName(op).c_str(), "The last dim(%d) of indices must be <= params.rank(%d).", last_dim, shape_size);
-    return false;
-  }
-  return true;
-}
-
-IMPLEMT_VERIFIER(GatherNd, GatherNdVerify) {
-  if (!CheckGatherNdInputIndicesSize(op, "indices")) {
-    return GRAPH_FAILED;
-  }
-  return GRAPH_SUCCESS;
-}
-
-IMPLEMT_COMMON_INFERFUNC(GatherNdInferShape) {
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  GeTensorDescPtr output_tensor_desc = op_desc->MutableOutputDesc("y");
-  std::vector<std::pair<int64_t, int64_t>> shape_range_x;
-  op_desc->MutableInputDesc("x")->GetShapeRange(shape_range_x);
-  std::vector<std::pair<int64_t, int64_t>> shape_range_indices;
-  op_desc->MutableInputDesc("indices")->GetShapeRange(shape_range_indices);
-  std::vector<std::pair<int64_t, int64_t>> out_range;
-  auto input_params = op_desc->MutableInputDesc("x");
-  auto input_indices = op_desc->MutableInputDesc("indices");
-  auto params_shape = input_params->GetShape();
-  auto indices_shape = input_indices->GetShape();
-  auto params_shape_size = params_shape.GetDimNum();
-  int indices_shape_size = static_cast<int>(indices_shape.GetDimNum());
-  vector<int64_t> dim_vec;
-  vector<int64_t> params_shape_vec = params_shape.GetDims();
-  vector<int64_t> indices_shape_vec = indices_shape.GetDims();
-  MakeUpShapeRange(params_shape_vec, shape_range_x);
-  MakeUpShapeRange(indices_shape_vec, shape_range_indices);
-  int indices_last_element{-2};
-  if (!IsUnknownRankShape(indices_shape_vec)) {
-    indices_last_element = indices_shape.GetDim(indices_shape_size - 1);
-  }
-  DataType params_type = input_params->GetDataType();
-  if (indices_last_element == -1 || indices_last_element == -2 || IsUnknownRankShape(params_shape_vec)) {
-    dim_vec.push_back(-2);
-  } else if (!CheckGatherNdParamsSize(op, indices_last_element, static_cast<int>(params_shape_size))) {
-    return GRAPH_FAILED;
-  } else {
-    for (int i = 0; i < indices_shape_size - 1; ++i) {
-      dim_vec.push_back(indices_shape.GetDim(i));
-      if (static_cast<size_t>(i) < shape_range_indices.size()) {
-        out_range.push_back(shape_range_indices[i]);
-      }
-    }
-    for (size_t i = static_cast<size_t>(indices_last_element); i < params_shape_size; ++i) {
-      dim_vec.push_back(params_shape.GetDim(i));
-      if (i < shape_range_x.size()) {
-        out_range.push_back(shape_range_x[i]);
-      }
-    }
-  }
-  ge::GeShape output_shape = ge::GeShape(dim_vec);
-  DataType output_dtype = params_type;
-  output_tensor_desc->SetShape(output_shape);
-  output_tensor_desc->SetDataType(output_dtype);
-  TensorUtils::SetRealDimCnt(*output_tensor_desc, dim_vec.size());
-  if (!IsUnknownRankShape(dim_vec)) {
-    output_tensor_desc->SetShapeRange(out_range);
-  }
-  return GRAPH_SUCCESS;
-}
-COMMON_INFER_FUNC_REG(GatherNd, GatherNdInferShape);
-VERIFY_FUNC_REG(GatherNd, GatherNdVerify);
-// ----------------GatherNd End-------------------
-
 // ----------------MaskedSelect Begin-------------------
 bool InferShapeAndTypeMaskedSelect(Operator &op) {
-  OpDescPtr op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  GeTensorDescPtr x_input = op_desc->MutableInputDesc(0);
-  GeShape x_shape = x_input->GetShape();
-  GeTensorDescPtr y_desc = op_desc->MutableOutputDesc(0);
-  DataType input_dtype = x_input->GetDataType();
-  y_desc->SetDataType(input_dtype);
+  TensorDesc x_input = op.GetInputDesc(0);
+  Shape x_shape = x_input.GetShape();
+  TensorDesc y_desc = op.GetOutputDesc(0);
+  DataType input_dtype = x_input.GetDataType();
+  y_desc.SetDataType(input_dtype);
   std::vector<std::pair<int64_t, int64_t>> range;
-  y_desc->SetShape(GeShape({UNKNOWN_DIM}));
-  y_desc->SetOriginShape(GeShape({UNKNOWN_DIM}));
+  y_desc.SetShape(Shape({UNKNOWN_DIM}));
+  y_desc.SetOriginShape(Shape({UNKNOWN_DIM}));
   range.emplace_back(std::make_pair(1, x_shape.GetShapeSize()));
-  y_desc->SetShapeRange(range);
+  y_desc.SetShapeRange(range);
+  op.UpdateOutputDesc(0, y_desc);
   return true;
 }
 
@@ -166,28 +79,12 @@ CUST_COMMON_INFER_FUNC_REG(IndexFill, IndexFillInferShape);
 // ----------------IndexFill END-------------------
 
 // ----------------SegmentSum-------------------
-static bool SegmentSumShapeVerify(const Operator &op, const std::string &input_name,
-                                  const std::string &segment_ids_name) {
-  auto op_info = OpDescUtils::GetOpDescFromOperator(op);
-  auto input_shape_dims = op_info->MutableInputDesc("x")->MutableShape().GetDims();
-  auto segment_ids_shape_dims = op_info->MutableInputDesc("segment_ids")->MutableShape().GetDims();
-
-  return true;
-}
-
-IMPLEMT_VERIFIER(SegmentSum, SegmentSumInferShapeVerifier) {
-  if (!SegmentSumShapeVerify(op, "x", "segment_ids")) {
-    return GRAPH_FAILED;
-  }
-  return GRAPH_SUCCESS;
-}
 
 IMPLEMT_COMMON_INFERFUNC(SegmentSumInferShape) {
-  auto op_info = OpDescUtils::GetOpDescFromOperator(op);
-  auto input_x_desc = op_info->MutableInputDesc("x");
-  auto output_desc = op_info->MutableOutputDesc("y");
-  auto shape_x = input_x_desc->MutableShape().GetDims();
-  auto output_shape_dims = input_x_desc->MutableShape().GetDims();
+  auto input_x_desc = op.GetInputDesc("x");
+  auto output_desc = op.GetOutputDesc("y");
+  auto shape_x = input_x_desc.GetShape().GetDims();
+  auto output_shape_dims = input_x_desc.GetShape().GetDims();
   if (output_shape_dims.empty()) {
     VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), std::string("the input[x]'s shape should not be empty."));
     return GRAPH_FAILED;
@@ -217,29 +114,29 @@ IMPLEMT_COMMON_INFERFUNC(SegmentSumInferShape) {
   }
 
   if (IsUnknownRankShape(shape_x)) {
-    output_desc->SetShape(GeShape(shape_x));
+    output_desc.SetShape(Shape(shape_x));
   } else {
     output_shape_dims[0] = first_axis_dims;
-    GeShape output_shape(output_shape_dims);
-    output_desc->SetShape(GeShape(output_shape_dims));
-    if (output_shape.IsUnknownShape()) {
+    Shape output_shape(output_shape_dims);
+    output_desc.SetShape(Shape(output_shape_dims));
+    if (IsUnknownShape(output_shape)) {
       std::vector<std::pair<int64_t, int64_t>> shape_range_x;
       std::vector<std::pair<int64_t, int64_t>> output_shape_range;
       output_shape_range.push_back(std::pair<int64_t, int64_t>(out_range_first_dims, first_axis_dims));
-      input_x_desc->GetShapeRange(shape_range_x);
+      input_x_desc.GetShapeRange(shape_range_x);
       MakeUpShapeRange(output_shape_dims, shape_range_x);
       for (size_t i = 1; i < output_shape_dims.size(); i++) {
         output_shape_range.push_back(shape_range_x[i]);
       }
-      output_desc->SetShapeRange(output_shape_range);
+      output_desc.SetShapeRange(output_shape_range);
     }
   }
-  DataType input_dtype = input_x_desc->GetDataType();
-  output_desc->SetDataType(input_dtype);
+  DataType input_dtype = input_x_desc.GetDataType();
+  output_desc.SetDataType(input_dtype);
+  op.UpdateOutputDesc("y", output_desc);
   return GRAPH_SUCCESS;
 }
 COMMON_INFER_FUNC_REG(SegmentSum, SegmentSumInferShape);
-VERIFY_FUNC_REG(SegmentSum, SegmentSumInferShapeVerifier);
 // ----------------SegmentSum END-------------------
 
 // ----------------Select----------------------
@@ -280,19 +177,18 @@ COMMON_INFER_FUNC_REG(ReverseV2, ReverseV2InferShape);
 // ----------------ScatterNd-------------------
 IMPLEMT_COMMON_INFERFUNC(ScatterNdInferShape) {
   vector<string> input_infer_depends = {"shape"};
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  op_desc->SetOpInferDepends(input_infer_depends);
+  PREPARE_DYNAMIC_SHAPE(input_infer_depends);
 
-  auto output_desc = op_desc->MutableOutputDesc("y");
-  auto shape_desc = op_desc->MutableInputDesc("shape");
-  std::vector<int64_t> shape_shape = shape_desc->MutableShape().GetDims();
+  auto output_desc = op.GetOutputDesc("y");
+  auto shape_desc = op.GetInputDesc("shape");
+  std::vector<int64_t> shape_shape = shape_desc.GetShape().GetDims();
   std::vector<std::pair<int64_t, int64_t>> out_range;
   Tensor shape;
   std::vector<int64_t> const_data;
   if (GRAPH_SUCCESS != op.GetInputConstData("shape", shape)) {
     const_data = {-2};
   } else {
-    auto data_type = shape_desc->GetDataType();
+    auto data_type = shape_desc.GetDataType();
     if (!GetConstIntData(shape, data_type, const_data)) {
       USER_GE_LOGE("Invalid data type of shape, data_type is %d.", (int)data_type);
       return GRAPH_FAILED;
@@ -322,10 +218,11 @@ IMPLEMT_COMMON_INFERFUNC(ScatterNdInferShape) {
     }
   }
 
-  GeShape output_shape(shape_dims);
-  output_desc->SetShape(output_shape);
-  output_desc->SetShapeRange(out_range);
-  output_desc->SetDataType(op_desc->MutableInputDesc("x")->GetDataType());
+  Shape output_shape(shape_dims);
+  output_desc.SetShape(output_shape);
+  output_desc.SetShapeRange(out_range);
+  output_desc.SetDataType(op.GetInputDesc("x").GetDataType());
+  op.UpdateOutputDesc("y", output_desc);
   return GRAPH_SUCCESS;
 }
 
@@ -350,24 +247,24 @@ IMPLEMT_COMMON_INFERFUNC(OneHotInferShape) {
   }
 
   // get all Desc info
-  auto op_info = OpDescUtils::GetOpDescFromOperator(op);
   static const int64_t input_x_idx = 0;
-  auto input_desc = op_info->MutableInputDesc(input_x_idx);
-  const ge::GeShape &input_shape = input_desc->MutableShape();
+  auto input_desc = op.GetInputDesc(input_x_idx);
+  const auto &input_shape = input_desc.GetShape();
 
   static const int64_t input_on_value_idx = 2;
-  auto value_desc = op_info->MutableInputDesc(input_on_value_idx);
-  DataType value_dtype = value_desc->GetDataType();
+  auto value_desc = op.GetInputDesc(input_on_value_idx);
+  DataType value_dtype = value_desc.GetDataType();
 
   // output desc and set dtype
   static const int64_t output_y_idx = 0;
-  auto output_desc = op_info->MutableOutputDesc(output_y_idx);
-  output_desc->SetDataType(value_dtype);
+  auto output_desc = op.GetOutputDesc(output_y_idx);
+  output_desc.SetDataType(value_dtype);
 
-  if (input_shape.IsUnknownDimNum()) {
+  if (IsUnknownDimNum(input_shape)) {
     // input is UnknownRank, set output UnknownRank
     OP_LOGW("OneHot", "input shape is UnknownRank, set output UnknownRank");
-    output_desc->SetShape(input_shape);
+    output_desc.SetShape(input_shape);
+    UpdateOutputDesc(op, output_desc);
     return GRAPH_SUCCESS;
   }
   // update axis to positive number
@@ -386,8 +283,8 @@ IMPLEMT_COMMON_INFERFUNC(OneHotInferShape) {
   }
 
   // update output shape
-  ge::GeShape &output_shape = output_desc->MutableShape();
-  output_shape.SetDimNum(dimnum + 1);
+  ge::Shape output_shape = output_desc.GetShape();
+  output_shape = Shape(std::vector(dimnum + 1, UNKNOWN_DIM));
   if (-1 == axis) {
     for (int32_t i = 0; i < dimnum; i++) {
       output_shape.SetDim(i, input_shape.GetDim(i));
@@ -405,10 +302,10 @@ IMPLEMT_COMMON_INFERFUNC(OneHotInferShape) {
   }
 
   // if output shape is dynamic update output range
-  if (output_shape.IsUnknownShape()) {
-    output_desc->SetOriginShape(output_shape);
+  if (IsUnknownShape(output_shape)) {
+    output_desc.SetOriginShape(output_shape);
     std::vector<std::pair<int64_t, int64_t>> input_range;
-    input_desc->GetShapeRange(input_range);
+    input_desc.GetShapeRange(input_range);
     MakeUpShapeRange(input_shape, input_range);
     std::pair<int64_t, int64_t> depth_range =
       depth_value == -1 ? std::pair<int64_t, int64_t>(1, -1) : std::pair<int64_t, int64_t>(depth_value, depth_value);
@@ -417,8 +314,9 @@ IMPLEMT_COMMON_INFERFUNC(OneHotInferShape) {
     } else {
       input_range.insert(input_range.begin() + axis, depth_range);
     }
-    output_desc->SetShapeRange(input_range);
+    output_desc.SetShapeRange(input_range);
   }
+  op.UpdateOutputDesc("y", output_desc);
 
   return GRAPH_SUCCESS;
 }
@@ -437,8 +335,8 @@ static void GetUnsortedSegmentSumConstValue(const Tensor &const_tensor, const Da
   }
 }
 
-static void GetRealRange(ge::GeShape shape, std::vector<std::pair<int64_t, int64_t>> &range) {
-  if (shape.IsUnknownDimNum()) {
+static void GetRealRange(ge::Shape shape, std::vector<std::pair<int64_t, int64_t>> &range) {
+  if (IsUnknownDimNum(shape)) {
     return;
   }
   if (range.empty()) {
@@ -456,17 +354,16 @@ static void GetRealRange(ge::GeShape shape, std::vector<std::pair<int64_t, int64
 IMPLEMT_COMMON_INFERFUNC(UnsortedSegmentSumInferShape) {
   PROFILING_PROTO_INIT(TbeGetName(op).c_str());
   vector<string> input_infer_depends = {"num_segments"};
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  op_desc->SetOpInferDepends(input_infer_depends);
+  PREPARE_DYNAMIC_SHAPE(input_infer_depends);
 
   Tensor input_num_segments_tensor;
   int64_t input_num_segments;
-  DataType input_num_segments_dtype = op_desc->GetInputDescPtr(2)->GetDataType();
+  DataType input_num_segments_dtype = op.GetInputDesc(2).GetDataType();
 
   std::vector<std::pair<int64_t, int64_t>> shape_range_x;
-  op_desc->GetInputDescPtr(0)->GetShapeRange(shape_range_x);
+  op.GetInputDesc(0).GetShapeRange(shape_range_x);
   std::vector<std::pair<int64_t, int64_t>> shape_range_seg_id;
-  op_desc->GetInputDescPtr(1)->GetShapeRange(shape_range_seg_id);
+  op.GetInputDesc(1).GetShapeRange(shape_range_seg_id);
 
   std::vector<std::pair<int64_t, int64_t>> out_range;
 
@@ -478,31 +375,32 @@ IMPLEMT_COMMON_INFERFUNC(UnsortedSegmentSumInferShape) {
     out_range.push_back(std::pair<int64_t, int64_t>(input_num_segments, input_num_segments));
   }
 
-  ge::GeShape shape = op_desc->GetInputDescPtr(0)->GetShape();
-  ge::GeShape shape_id = op_desc->GetInputDescPtr(1)->GetShape();
+  ge::Shape shape = op.GetInputDesc(0).GetShape();
+  ge::Shape shape_id = op.GetInputDesc(1).GetShape();
 
-  auto output_desc = op_desc->MutableOutputDesc(0);
-  ge::GeShape output_shape = output_desc->MutableShape();
+  auto output_desc = op.GetOutputDesc(0);
+  ge::Shape output_shape = output_desc.GetShape();
   GetRealRange(shape, shape_range_x);
   GetRealRange(shape_id, shape_range_seg_id);
 
   int64_t dim_idsize_input = static_cast<int64_t>(shape_id.GetDimNum());
   int64_t dim_size_input = static_cast<int64_t>(shape.GetDimNum());
-  DataType input_dtype = op_desc->GetInputDescPtr(0)->GetDataType();
+  DataType input_dtype = op.GetInputDesc(0).GetDataType();
   PROFILING_PROTO_AFTER_GET_SHAPE_REG();
-  if (shape.IsUnknownDimNum() || shape_id.IsUnknownDimNum()) {
-    if (shape.IsUnknownDimNum()) {
-      output_desc->SetShape(shape);
-      output_desc->SetDataType(input_dtype);
+  if (IsUnknownDimNum(shape) || IsUnknownDimNum(shape_id)) {
+    if (IsUnknownDimNum(shape)) {
+      output_desc.SetShape(shape);
+      output_desc.SetDataType(input_dtype);
     } else {
-      output_desc->SetShape(shape_id);
-      output_desc->SetDataType(input_dtype);
+      output_desc.SetShape(shape_id);
+      output_desc.SetDataType(input_dtype);
     }
+    UpdateOutputDesc(op, output_desc);
     return GRAPH_SUCCESS;
   } else if (dim_idsize_input > 1) {
     size_t rank = static_cast<size_t>(dim_size_input - dim_idsize_input + 1);
     size_t idx = 1;
-    output_shape.SetDimNum(rank);
+    output_shape = Shape(std::vector(rank, UNKNOWN_DIM));
     output_shape.SetDim(0, input_num_segments);
 
     for (int64_t i = dim_idsize_input; i < dim_size_input; i++) {
@@ -515,7 +413,7 @@ IMPLEMT_COMMON_INFERFUNC(UnsortedSegmentSumInferShape) {
     }
   } else {
     size_t rank = shape.GetDimNum();
-    output_shape.SetDimNum(rank);
+    output_shape = Shape(std::vector(rank, UNKNOWN_DIM));
     output_shape.SetDim(0, input_num_segments);
 
     for (size_t i = 1; i < rank; i++) {
@@ -528,9 +426,10 @@ IMPLEMT_COMMON_INFERFUNC(UnsortedSegmentSumInferShape) {
   }
 
   PROFILING_PROTO_AFTER_INFER_SHAPE_REG();
-  output_desc->SetShape(output_shape);
-  output_desc->SetDataType(input_dtype);
-  output_desc->SetShapeRange(out_range);
+  output_desc.SetShape(output_shape);
+  output_desc.SetDataType(input_dtype);
+  output_desc.SetShapeRange(out_range);
+  op.UpdateOutputDesc(0, output_desc);
   PROFILING_PROTO_END();
   return GRAPH_SUCCESS;
 }

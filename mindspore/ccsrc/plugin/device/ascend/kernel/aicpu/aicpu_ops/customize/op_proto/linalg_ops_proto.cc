@@ -471,10 +471,9 @@ INFER_FUNC_REG(Qr, QrInfer);
 
 // -----------------------CholeskyGrad---------------------------------
 IMPLEMT_INFERFUNC(CholeskyGrad, CholeskyGradInfer) {
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  auto x_desc = op_desc->MutableInputDesc(0);
+  auto x_desc = op.GetInputDesc(0);
 
-  GeShape y_shape;
+  Shape y_shape;
   if (MakeBatchSquareMatrix(x_desc, y_shape, op) != GRAPH_SUCCESS) {
     OP_LOGE(TbeGetName(op).c_str(),
             "Op CholeskyGrad first input x tensor make batch square matrix "
@@ -482,11 +481,11 @@ IMPLEMT_INFERFUNC(CholeskyGrad, CholeskyGradInfer) {
     return GRAPH_FAILED;
   }
 
-  DataType type = x_desc->GetDataType();
-  auto y_desc = op_desc->MutableOutputDesc(0);
-  y_desc->SetShape(y_shape);
-  y_desc->SetDataType(type);
-
+  DataType type = x_desc.GetDataType();
+  auto y_desc = op.GetOutputDesc(0);
+  y_desc.SetShape(y_shape);
+  y_desc.SetDataType(type);
+  op.UpdateOutputDesc(y_desc.GetName(), y_desc);
   return GRAPH_SUCCESS;
 }
 
@@ -498,13 +497,12 @@ CUST_IMPLEMT_INFERFUNC(LinearSumAssignment, LinearSumAssignmentInfer) {
   TensorDesc cost_matrix_tensor = op.get_input_desc_cost_matrix();
   Shape cost_matrix_shape = cost_matrix_tensor.GetShape();
 
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  auto row_ind_desc = op_desc->MutableOutputDesc(0);
-  auto col_ind_desc = op_desc->MutableOutputDesc(1);
-  GeShape row_ind_shape, col_ind_shape;
+  auto row_ind_desc = op.GetOutputDesc(0);
+  auto col_ind_desc = op.GetOutputDesc(1);
+  Shape row_ind_shape, col_ind_shape;
   if (!RankKnown(cost_matrix_shape)) {
-    row_ind_shape = GeShape(ge::UNKNOWN_SHAPE);
-    col_ind_shape = GeShape(ge::UNKNOWN_SHAPE);
+    row_ind_shape = Shape(ge::UNKNOWN_SHAPE);
+    col_ind_shape = Shape(ge::UNKNOWN_SHAPE);
   } else {
     constexpr int64_t kNumber2 = 2;
     if (cost_matrix_shape.GetDimNum() != kNumber2) {
@@ -515,11 +513,11 @@ CUST_IMPLEMT_INFERFUNC(LinearSumAssignment, LinearSumAssignmentInfer) {
     int64_t col_num = cost_matrix_shape.GetDim(1);
     int64_t out_dim = std::min(row_num, col_num);
     std::vector<int64_t> shape_vec{out_dim};
-    row_ind_shape = GeShape(shape_vec);
-    col_ind_shape = GeShape(shape_vec);
+    row_ind_shape = Shape(shape_vec);
+    col_ind_shape = Shape(shape_vec);
   }
-  row_ind_desc->SetShape(row_ind_shape);
-  col_ind_desc->SetShape(col_ind_shape);
+  row_ind_desc.SetShape(row_ind_shape);
+  col_ind_desc.SetShape(col_ind_shape);
 
   TensorDesc dimension_limit_tensor = op.get_input_desc_dimension_limit();
   TensorDesc maximize_tensor = op.get_input_desc_maximize();
@@ -555,8 +553,10 @@ CUST_IMPLEMT_INFERFUNC(LinearSumAssignment, LinearSumAssignmentInfer) {
     AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), err_msg);
     return GRAPH_FAILED;
   }
-  row_ind_desc->SetDataType(DT_INT64);
-  col_ind_desc->SetDataType(DT_INT64);
+  row_ind_desc.SetDataType(DT_INT64);
+  col_ind_desc.SetDataType(DT_INT64);
+  UpdateOutputDesc(op, row_ind_desc);
+  UpdateOutputDesc(op, col_ind_desc);
   return GRAPH_SUCCESS;
 }
 

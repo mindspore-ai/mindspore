@@ -34,24 +34,24 @@ constexpr int kNum2 = 2;
 }
 // ----------------Pad Op Begin-------------------
 static graphStatus PadInferShapeAndType(ge::Operator &op, std::vector<int64_t> &paddings) {
-  auto op_info = OpDescUtils::GetOpDescFromOperator(op);
   static const int64_t input_x_idx = 0;
-  auto input_desc = op_info->MutableInputDesc(input_x_idx);
-  const ge::GeShape &input_shape = input_desc->MutableShape();
-  auto input_dtype = input_desc->GetDataType();
+  auto input_desc = op.GetInputDesc(input_x_idx);
+  const auto &input_shape = input_desc.GetShape();
+  auto input_dtype = input_desc.GetDataType();
   static const int64_t output_y_idx = 0;
-  auto output_desc = op_info->MutableOutputDesc(output_y_idx);
-  ge::GeShape &output_shape = output_desc->MutableShape();
-  output_desc->SetDataType(input_dtype);
+  auto output_desc = op.GetOutputDesc(output_y_idx);
+  ge::Shape output_shape = output_desc.GetShape();
+  output_desc.SetDataType(input_dtype);
 
   // input shape is -2, output is -2
-  if (input_shape.IsUnknownDimNum()) {
-    output_desc->SetShape(input_shape);
+  if (IsUnknownDimNum(input_shape)) {
+    output_desc.SetShape(input_shape);
+    UpdateOutputDesc(op, output_desc);
     return GRAPH_SUCCESS;
   }
 
   size_t dim_num = input_shape.GetDimNum();
-  if (!input_shape.IsUnknownShape()) {
+  if (!IsUnknownShape(input_shape)) {
     // not dynamic shape, will output shape and dtype
     if (dim_num == 0) {
       VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg("input shape cannot empty"));
@@ -64,17 +64,18 @@ static graphStatus PadInferShapeAndType(ge::Operator &op, std::vector<int64_t> &
     }
 
     // calce the output shape
-    output_shape.SetDimNum(dim_num);
+    output_shape = Shape(std::vector(dim_num, UNKNOWN_DIM));
     for (size_t dim = 0; dim < dim_num; dim++) {
       output_shape.SetDim(dim, input_shape.GetDim(dim) + paddings[dim * kNum2] + paddings[dim * kNum2 + 1]);
     }
-
+    output_desc.SetShape(output_shape);
+    UpdateOutputDesc(op, output_desc);
     return GRAPH_SUCCESS;
   }
 
   // input shape is -1, will get the shape and range
   // calcu the output shape
-  output_shape.SetDimNum(dim_num);
+  output_shape = Shape(std::vector(dim_num, UNKNOWN_DIM));
   for (size_t dim = 0; dim < dim_num; dim++) {
     if (input_shape.GetDim(dim) == -1) {
       output_shape.SetDim(dim, input_shape.GetDim(dim));
@@ -85,7 +86,7 @@ static graphStatus PadInferShapeAndType(ge::Operator &op, std::vector<int64_t> &
 
   // calcu the output range
   std::vector<std::pair<int64_t, int64_t>> input_range;
-  input_desc->GetShapeRange(input_range);
+  input_desc.GetShapeRange(input_range);
   MakeUpShapeRange(input_shape, input_range);
   std::vector<std::pair<int64_t, int64_t>> output_range;
   for (size_t dim = 0; dim < dim_num; dim++) {
@@ -94,7 +95,9 @@ static graphStatus PadInferShapeAndType(ge::Operator &op, std::vector<int64_t> &
       input_range[dim].second == -1 ? -1 : input_range[dim].second + paddings[dim * 2] + paddings[dim * 2 + 1];
     output_range.push_back(std::pair<int64_t, int64_t>(range_min, range_max));
   }
-  output_desc->SetShapeRange(output_range);
+  output_desc.SetShapeRange(output_range);
+  output_desc.SetShape(output_shape);
+  UpdateOutputDesc(op, output_desc);
 
   return GRAPH_SUCCESS;
 }
@@ -105,22 +108,22 @@ IMPLEMT_COMMON_INFERFUNC(PadInferShape) {
   PREPARE_DYNAMIC_SHAPE(depend_names);
 
   // first get the padding const
-  auto op_info = OpDescUtils::GetOpDescFromOperator(op);
   // get const paddings data
   std::vector<int64_t> paddings;
   static const int64_t input_paddings_idx = 1;
   if (!ops::GetConstIntData(op, input_paddings_idx, paddings)) {
     OP_LOGW(TbeGetName(op), "the node paddings is not const node, will set the output dynamic");
-    auto input_desc = op_info->MutableInputDesc("x");
-    const ge::GeShape &input_shape = input_desc->MutableShape();
-    DataType input_dtype = input_desc->GetDataType();
-    auto output_desc = op_info->MutableOutputDesc("y");
+    auto input_desc = op.GetInputDesc("x");
+    const auto &input_shape = input_desc.GetShape();
+    DataType input_dtype = input_desc.GetDataType();
+    auto output_desc = op.GetOutputDesc("y");
 
     // shape_x is UNKNOWN_RANK
     if (IsUnknownRankShape(input_shape)) {
       OP_LOGW(TbeGetName(op), "shape_x is UNKNOWN_RANK. Set output UNKNOWN_RANK");
-      output_desc->SetShape(input_shape);
-      output_desc->SetDataType(input_dtype);
+      output_desc.SetShape(input_shape);
+      output_desc.SetDataType(input_dtype);
+      op.UpdateOutputDesc("y", output_desc);
       return GRAPH_SUCCESS;
     }
 
@@ -131,14 +134,15 @@ IMPLEMT_COMMON_INFERFUNC(PadInferShape) {
     }
     vector<int64_t> out_shape(dim_num, -1);
     std::vector<std::pair<int64_t, int64_t>> output_range;
-    input_desc->GetShapeRange(output_range);
+    input_desc.GetShapeRange(output_range);
     MakeUpShapeRange(out_shape, output_range);
     for (size_t i = 0; i < dim_num; i++) {
       output_range[i].second = -1;
     }
-    output_desc->SetShape(GeShape(out_shape));
-    output_desc->SetDataType(input_dtype);
-    output_desc->SetShapeRange(output_range);
+    output_desc.SetShape(Shape(out_shape));
+    output_desc.SetDataType(input_dtype);
+    output_desc.SetShapeRange(output_range);
+    op.UpdateOutputDesc("y", output_desc);
     return GRAPH_SUCCESS;
   }
 
@@ -181,9 +185,8 @@ IMPLEMT_COMMON_INFERFUNC(PadV3InferShape) {
     OP_LOGI(TbeGetName(op).c_str(), "Get attr [paddings_contiguous] failed");
   }
 
-  auto op_info = OpDescUtils::GetOpDescFromOperator(op);
-  auto input_desc = op_info->MutableInputDesc("x");
-  auto input_shape = input_desc->MutableShape().GetDims();
+  auto input_desc = op.GetInputDesc("x");
+  auto input_shape = input_desc.GetShape().GetDims();
   auto input_shape_max = input_shape.size();
   auto paddings_shape = paddings.size();
 
@@ -223,12 +226,11 @@ COMMON_INFER_FUNC_REG(PadV3, PadV3InferShape);
 
 // ----------------PadV3Grad Op Begin-------------------
 static graphStatus PadV3GradInferShapeAndType(ge::Operator &op, std::vector<int64_t> &paddings) {
-  auto op_info = OpDescUtils::GetOpDescFromOperator(op);
-  auto input_desc = op_info->MutableInputDesc("x");
-  auto input_shape = input_desc->MutableShape().GetDims();
-  auto input_dtype = input_desc->GetDataType();
-  auto output_desc = op_info->MutableOutputDesc("y");
-  output_desc->SetDataType(input_dtype);
+  auto input_desc = op.GetInputDesc("x");
+  auto input_shape = input_desc.GetShape().GetDims();
+  auto input_dtype = input_desc.GetDataType();
+  auto output_desc = op.GetOutputDesc("y");
+  output_desc.SetDataType(input_dtype);
 
   if (!IsUnknown(input_shape)) {
     // calce the output shape
@@ -236,14 +238,15 @@ static graphStatus PadV3GradInferShapeAndType(ge::Operator &op, std::vector<int6
     for (size_t dim = 0; dim < input_shape.size(); dim++) {
       output_shape.push_back(input_shape[dim] - paddings[dim * kNum2] - paddings[dim * kNum2 + 1]);
     }
-    output_desc->SetShape(GeShape(output_shape));
-
+    output_desc.SetShape(Shape(output_shape));
+    UpdateOutputDesc(op, output_desc);
     return GRAPH_SUCCESS;
   }
 
   // input shape is -2, output is -2
   if (IsUnknownRankShape(input_shape)) {
-    output_desc->SetShape(GeShape(input_shape));
+    output_desc.SetShape(Shape(input_shape));
+    UpdateOutputDesc(op, output_desc);
 
     return GRAPH_SUCCESS;
   }
@@ -258,11 +261,11 @@ static graphStatus PadV3GradInferShapeAndType(ge::Operator &op, std::vector<int6
       output_shape.push_back(input_shape[dim] - paddings[dim * 2] - paddings[dim * 2 + 1]);
     }
   }
-  output_desc->SetShape(GeShape(output_shape));
+  output_desc.SetShape(Shape(output_shape));
 
   // calcu the output range
   std::vector<std::pair<int64_t, int64_t>> input_range;
-  input_desc->GetShapeRange(input_range);
+  input_desc.GetShapeRange(input_range);
   MakeUpShapeRange(input_shape, input_range);
   std::vector<std::pair<int64_t, int64_t>> output_range;
   for (size_t dim = 0; dim < input_shape.size(); dim++) {
@@ -274,7 +277,8 @@ static graphStatus PadV3GradInferShapeAndType(ge::Operator &op, std::vector<int6
       input_range[dim].second == -1 ? -1 : input_range[dim].second - paddings[dim * 2] - paddings[dim * 2 + 1];
     output_range.push_back(std::pair<int64_t, int64_t>(range_min, range_max));
   }
-  output_desc->SetShapeRange(output_range);
+  output_desc.SetShapeRange(output_range);
+  op.UpdateOutputDesc("y", output_desc);
 
   return GRAPH_SUCCESS;
 }
