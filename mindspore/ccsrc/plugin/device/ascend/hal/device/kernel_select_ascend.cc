@@ -547,13 +547,21 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const Kerne
   if (select_host_priorly.count(op_name) != 0) {
     return {false, op_name + " select host kernel priorly.", NotSupportError};
   }
-
+  static std::set<std::string> kInternalKernelSelectedSet;
   static std::vector<std::set<std::string>> op_selected_type(4);
   transform::ErrorAclType acl_err_type = transform::ErrorAclType::kNormalOp;
   std::tuple<bool, std::string, ExceptionType> result = std::make_tuple(true, "", NoExceptionType);
   auto enable_internal = true;
+  if (common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") == "off") {
+    enable_internal = false;
+  }
   if (enable_internal && kernel::IsRegisteredInternalKernel(node)) {
     GenerateKernelBuildInfo(node, KernelType::INTERNAL_KERNEL);
+    std::string op_name = common::AnfAlgo::GetCNodeName(node);
+    if (kInternalKernelSelectedSet.count(op_name) == 0) {
+      (void)kInternalKernelSelectedSet.insert(op_name);
+      MS_LOG(INFO) << op_name << " select internal kernel.";
+    }
     return result;
   }
   if (IsEnableAclnn(graph, node)) {
