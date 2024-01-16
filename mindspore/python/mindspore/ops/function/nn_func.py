@@ -2857,32 +2857,39 @@ def silu(x):
     Computes Sigmoid Linear Unit of input element-wise. The SiLU function is defined as:
 
     .. math::
+
         \text{SiLU}(x) = x * \sigma(x),
 
-    where the Logistic Sigmoid function is defined as:
+    where :math:`x` is an element of the input, :math:`\sigma(x)` is Sigmoid function.
 
     .. math::
 
         \text{sigma}(x_i) = \frac{1}{1 + \exp(-x_i)},
-
-    where :math:`x_i` is an element of the x.
 
     SiLU Activation Function Graph:
 
     .. image:: ../images/SiLU.png
         :align: center
 
-    For more details, please refer to :class:`mindspore.nn.SiLU`.
+    Args:
+        input (Tensor): `input` is `x` in the preceding formula. Input with the data type
+        float16 or float32.
+
+    Returns:
+        Tensor, with the same type and shape as the `input`.
+
+    Raises:
+        TypeError: If dtype of `input` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import numpy as np
         >>> import mindspore
         >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
-        >>> output = ops.silu(x)
+        >>> import numpy as np
+        >>> input = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
+        >>> output = ops.silu(input)
         >>> print(output)
         [-0.269  1.762  -0.1423  1.762  -0.269]
     """
@@ -2945,9 +2952,9 @@ def sigmoid(input):
 
     .. math::
 
-        \text{sigmoid}(input_i) = \frac{1}{1 + \exp(-input_i)}
+        \text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)}
 
-    where :math:`input_i` is an element of the input.
+    where :math:`x_i` is an element of `x`.
 
     Sigmoid Activation Function Graph:
 
@@ -2955,7 +2962,8 @@ def sigmoid(input):
         :align: center
 
     Args:
-        input (Tensor): Tensor of any dimension, the data type is float16, float32, float64, complex64 or complex128.
+        input (Tensor): `input` is `x` in the preceding formula. Tensor of any dimension,
+        the data type is float16, float32, float64, complex64 or complex128.
 
     Returns:
         Tensor, with the same type and shape as the input.

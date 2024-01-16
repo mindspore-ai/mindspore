@@ -658,7 +658,7 @@ class SiLU(Cell):
 
         \text{SiLU}(x) = x * \sigma(x),
 
-    where :math:`x_i` is input, :math:`\sigma(x)` is Sigmoid function.
+    where :math:`x_i` is an element of the input, :math:`\sigma(x)` is Sigmoid function.
 
     .. math::
 
@@ -670,13 +670,14 @@ class SiLU(Cell):
         :align: center
 
     Inputs:
-        - **x** (Tensor) - Input with the data type float16 or float32.
+        - **input** (Tensor) - `input` is `x` in the preceding formula.
+          Input with the data type float16 or float32.
 
     Outputs:
-        Tensor, with the same type and shape as the `x`.
+        Tensor, with the same type and shape as the `input`.
 
     Raises:
-        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If dtype of `input` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -685,9 +686,9 @@ class SiLU(Cell):
         >>> import mindspore
         >>> from mindspore import Tensor, nn
         >>> import numpy as np
-        >>> x = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
+        >>> input = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
         >>> silu = nn.SiLU()
-        >>> output = silu(x)
+        >>> output = silu(input)
         >>> print(output)
         [-0.269  1.762  -0.1423  1.762  -0.269]
     """
@@ -991,7 +992,7 @@ class Sigmoid(Cell):
 
         \text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)},
 
-    where :math:`x_i` is the element of the input.
+    where :math:`x_i` is the element of `x`.
 
     Sigmoid Activation Function Graph:
 
@@ -999,15 +1000,15 @@ class Sigmoid(Cell):
         :align: center
 
     Inputs:
-        - **input_x** (Tensor) - Tensor of any dimension, the data type is
-          float16, float32, float64, complex64 or complex128.
+        - **input** (Tensor) - `input` is `x` in the preceding formula. Tensor of any dimension,
+          the data type is float16, float32, float64, complex64 or complex128.
 
     Outputs:
-        Tensor, with the same type and shape as the `input_x`.
+        Tensor, with the same type and shape as the `input`.
 
     Raises:
-        TypeError: If dtype of `input_x` is not float16, float32, float64, complex64 or complex128.
-        TypeError: If `input_x` is not a Tensor.
+        TypeError: If dtype of `input` is not float16, float32, float64, complex64 or complex128.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1016,9 +1017,9 @@ class Sigmoid(Cell):
         >>> import mindspore
         >>> from mindspore import Tensor, nn
         >>> import numpy as np
-        >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> input = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> sigmoid = nn.Sigmoid()
-        >>> output = sigmoid(x)
+        >>> output = sigmoid(input)
         >>> print(output)
         [0.2688  0.11914 0.5     0.881   0.7305 ]
     """

@@ -26,10 +26,8 @@ namespace pyboost {
 namespace {
 void SigmoidGradAscendCall(const device::DeviceContext *device_context, const TensorPtr &dy_tensor,
                            const TensorPtr &y_tensor, const std::vector<tensor::TensorPtr> &outputs) {
-  MS_LOG(DEBUG) << "Call start";
   auto stream_ptr = device_context->device_res_manager_->GetStream(kDefaultStreamIndex);
   LAUNCH_ACLNN(aclnnSigmoidBackward, device_context, stream_ptr, dy_tensor, y_tensor, outputs[0]);
-  MS_LOG(DEBUG) << "Launch end";
 }
 }  // namespace
 
@@ -49,7 +47,9 @@ tensor::TensorPtr SigmoidGradAscendCustomize(const std::shared_ptr<OpRunner> &op
     PyBoostUtils::MallocOpInputs(device_context, dy_tensor, y_tensor);
     // Malloc for output tensors
     PyBoostUtils::MallocOpOutputs(device_context, outputs);
+    MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
     SigmoidGradAscendCall(device_context, dy_tensor, y_tensor, outputs);
+    MS_LOG(DEBUG) << op->primitive()->name() << " Launch end";
   }));
   return op->output(0);
 }
