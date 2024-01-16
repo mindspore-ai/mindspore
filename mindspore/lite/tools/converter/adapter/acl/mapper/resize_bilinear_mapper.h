@@ -18,13 +18,15 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_RESIZE_BILINEAR_MAPPER_H_
 
 #include "tools/converter/adapter/acl/mapper/primitive_mapper.h"
-#include "ops/resize_bilinear.h"
 
 namespace mindspore {
 namespace lite {
+/* 1. For compatibility reasons (on MindIRs with old primitives), ResizeBilinear op still needs to be processed.
+   2. ResizeBilinear in core/ops is deprecated, avoid using name string defined in core/ops. */
+constexpr auto kNameResizeBilinear = "ResizeBilinear";
 class ResizeBilinearMapper : public PrimitiveMapper {
  public:
-  ResizeBilinearMapper() : PrimitiveMapper(ops::kNameResizeBilinear) {}
+  ResizeBilinearMapper() : PrimitiveMapper(kNameResizeBilinear) {}
 
   ~ResizeBilinearMapper() override = default;
 

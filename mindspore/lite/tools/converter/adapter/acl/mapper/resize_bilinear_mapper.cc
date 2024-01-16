@@ -50,7 +50,6 @@ STATUS ResizeBilinearMapper::Mapper(const CNodePtr &cnode) {
   return RET_OK;
 }
 
-using mindspore::ops::kNameResizeBilinear;
 REGISTER_PRIMITIVE_MAPPER(kNameResizeBilinear, ResizeBilinearMapper)
 }  // namespace lite
 }  // namespace mindspore
