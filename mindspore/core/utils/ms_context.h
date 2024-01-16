@@ -260,6 +260,9 @@ class MS_CORE_API MsContext {
 
   bool IsKByKExecutorMode() const;
 
+  void EnableCellRecompute() { cell_recompute_ = true; }
+  bool cell_recompute() { return cell_recompute_; }
+
   std::string GetLoadPluginErrorStr() const { return load_plugin_error_(); }
 
  private:
@@ -292,6 +295,7 @@ class MS_CORE_API MsContext {
   static std::map<std::string, InitDeviceTargetAndPolicy> &InitFuncMap();
   static std::map<std::string, std::string> &PluginPathMap();
   enum CellReuseLevel cell_reuse_level_ = CellReuseLevel::kNoCellReuse;
+  bool cell_recompute_{false};
 };
 
 // set method implementation for type bool/int/uint32_t/float/std::string
