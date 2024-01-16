@@ -22,6 +22,7 @@ import math
 import numbers
 import numpy as np
 
+import mindspore as ms
 from mindspore import log as logger
 import mindspore.ops as ops
 from mindspore.common import dtype as mstype
@@ -5846,7 +5847,6 @@ def outer(input, vec2):
 
     Raises:
         TypeError: If `input` or `vec2` is not a Tensor.
-        ValueError: If `input` or `vec2` is not an 1-D Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -7718,7 +7718,7 @@ def hann_window(window_length, periodic=True, *, dtype=None):
     w = 0.5 - 0.5 * np.cos(2 * math.pi / (window_length - 1) * n)
 
     if dtype is not None:
-        w = cast_(w, dtype)
+        w = cast_(ms.tensor(w), dtype)
     return Tensor(w[:-1]) if periodic else Tensor(w)
 
 
@@ -9036,7 +9036,7 @@ def kaiser_window(window_length, periodic=True, beta=12.0, *, dtype=None):
         beta * np.sqrt(1 - ((n - alpha) / alpha) ** 2.0)
     ) / np.i0(float(beta))
     if dtype is not None:
-        w = cast_(w, dtype)
+        w = cast_(ms.tensor(w), dtype)
     out = Tensor(w[:-1]) if periodic else Tensor(w)
     return out
 
