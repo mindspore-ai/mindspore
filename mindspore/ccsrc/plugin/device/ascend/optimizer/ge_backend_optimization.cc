@@ -88,7 +88,7 @@ void GEBackendOptimization(const KernelGraphPtr &kernel_graph) {
   opt_ge_pm->AddPass(std::make_shared<opt::ResizeBilinearAddAttr>());
   opt_ge_pm->AddPass(std::make_shared<opt::AscendConvertTupleInputToDynamicInput>(true, true));
   opt_ge_pm->AddPass(std::make_shared<opt::UnfoldNestedOutput>("unfold_nested_output"));
-  opt_ge_pm->AddPass(std::make_shared<opt::UnfoldMaketuple>());
+  opt_ge_pm->AddPass(std::make_shared<opt::UnfoldMaketuple>("unfold_nested_maketuple"));
   optimizer->AddPassManager(opt_ge_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
