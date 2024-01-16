@@ -424,13 +424,17 @@ Tensor::~Tensor() {
 #ifdef ENABLE_PYTHON
   try {
     if (Py_IsInitialized() > 0) {
-      if (static_cast<bool>(python_dict_)) {  // if it contains data
-        // Acquire Python GIL
+      // The C++ compiler will not acquire the GIL when it recycles
+      // python_dict_, so we have to do it manually.
+      if (static_cast<bool>(python_dict_)) {
         py::gil_scoped_acquire gil_acquire;
-        if (python_dict_.ref_count() == 1) {  // if we aren't referencing it anywhere else
-          (void)python_dict_.dec_ref();       // manually set the ref count to zero (to be garbage collected by Python)
-          python_dict_ = py::none();          // wrapper now pointing to a meaningful thing (added to avoid a segfault)
-        }
+        // We need to decrement the reference count of the py::object
+        // which python_dict_ refers to by 1, while avoiding the C++
+        // compiler from recycling this object again.
+        // So we assign python_dict_ to None, which can decrease the
+        // reference count of the py::object it refers to by 1. Then
+        // let the C++ compiler to recycle this None object.
+        python_dict_ = py::none();
       }
     }
   } catch (const py::error_already_set &e) {
