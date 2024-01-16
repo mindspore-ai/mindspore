@@ -29,8 +29,9 @@ class Stream(Stream_):
     independent from other streams.
 
     Args:
-        priority (int, optional) – priority of the stream, lower numbers
-        represent higher priorities. By default, streams have priority 0.
+        priority (int, optional): priority of the stream, lower numbers represent higher priorities.
+            By default, streams have priority ``0``.
+        kwargs (dict): keyword arguments.
 
     Examples:
         >>> import mindspore as ms
@@ -59,12 +60,15 @@ class Stream(Stream_):
         r"""
         Records an event.
 
-        Inputs:
+        Args:
             event (Event, optional): event to record. If not given, a new one
                 will be allocated.
 
         Returns:
-            Recorded event.
+            Event, recorded event. If this argument is ``None``, a new one will be allocated. Default value: ``None``.
+
+        Raises:
+            TypeError: If 'event' is neither a :class:`mindspore.hal.Event` nor a ``None``.
 
         Examples:
             >>> import mindspore as ms
@@ -97,8 +101,11 @@ class Stream(Stream_):
         r"""
         Makes all future work submitted to the stream wait for an event.
 
-        Inputs:
+        Args:
             event (Event): an event to wait for.
+
+        Raises:
+            TypeError: If 'event' is not a :class:`mindspore.hal.Event`.
         """
         if not isinstance(event, Event):
             raise TypeError(f"For 'wait_event', the argument 'event' should be Event,"
@@ -112,8 +119,11 @@ class Stream(Stream_):
         All future work submitted to this stream will wait until all kernels
         submitted to a given stream at the time of call complete.
 
-        Inputs:
+        Args:
             stream (Stream): a stream to synchronize.
+
+        Raises:
+            TypeError: If 'stream' is not a :class:`mindspore.hal.Stream`.
         """
         if not isinstance(stream, Stream):
             raise TypeError(f"For 'wait_stream', the argument 'stream' should be Stream,"
@@ -131,7 +141,7 @@ class Stream(Stream_):
         r"""
         Checks if all the work submitted has been completed.
 
-        Outputs:
+        Returns:
             A boolean indicating if all kernels in this stream are completed.
 
         Examples:
@@ -170,9 +180,13 @@ def set_cur_stream(stream):
     r"""
     Sets the current stream.This is a wrapper API to set the stream.
     Usage of this function is discouraged in favor of the ``stream`` context manager.
-    Inputs:
+
+    Args:
         stream (Stream): selected stream. This function is a no-op
             if this argument is ``None``.
+
+    Raises:
+        TypeError: If 'stream' is neither a :class:`mindspore.hal.Stream` nor a ``None``.
 
     Examples:
         >>> import mindspore as ms
@@ -193,7 +207,7 @@ def current_stream():
     r"""
     Return current stream used on this device.
 
-    Outputs:
+    Returns:
         stream (Stream): current stream.
     """
     return Stream(current_stream_())
@@ -202,7 +216,7 @@ def default_stream():
     r"""
     Return default stream on this device.
 
-    Outputs:
+    Returns:
         stream (Stream): default stream.
     """
     return Stream(default_stream_())
@@ -216,6 +230,9 @@ class StreamCtx():
 
     Args:
         ctx_stream (Stream): selected stream. This manager is a no-op if it's ``None``.
+
+    Raises:
+        TypeError: If 'stream' is neither a :class:`mindspore.hal.Stream` nor a ``None``.
     """
     def __init__(self, ctx_stream):
         if ctx_stream is not None and not isinstance(ctx_stream, Stream):

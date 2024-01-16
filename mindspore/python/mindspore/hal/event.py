@@ -25,12 +25,10 @@ class Event(Event_):
     Device events are synchronization markers that can be used to monitor the device’s progress,
     to accurately measure timing, and to synchronize device streams.
 
-    The underlying device events are lazily initialized when the event is first recorded or exported to another
-    process. After creation, only streams on the same device may record the event.
-    However, streams on any device can wait on the event.
+    The underlying device events are lazily initialized when the event is first recorded.
 
     Args:
-        enable_timing (bool, optional) – indicates if the event should measure time (default: ``False``)
+        enable_timing (bool, optional): indicates if the event should measure time (default: ``False``)
         blocking (bool, optional): if ``True``, `wait` will be blocking (default: ``False``)
 
     Examples:
@@ -68,8 +66,15 @@ class Event(Event_):
         r"""
         Records the event in a given stream.
 
-        Uses ``mindspore.hal.current_stream()`` if no stream is specified. The
+        Uses :func:`mindspore.hal.current_stream()` if no `stream` is specified. The
         stream's device must match the event's device.
+
+        Args:
+            stream (Stream, optional): a stream to record. If this argument is ``None``,
+                current stream will be used. Default value: ``None``.
+
+        Raises:
+            TypeError: If 'stream' is neither a :class:`mindspore.hal.Stream` nor a ``None``.
         """
         if stream is None:
             stream = current_stream_()
@@ -83,7 +88,14 @@ class Event(Event_):
         Makes all future work submitted to the given stream wait for this
         event.
 
-        Use ``mindspore.hal.current_stream()`` if no stream is specified.
+        Use :func:`mindspore.hal.current_stream()` if no `stream` is specified.
+
+        Args:
+            stream (Stream, optional): a stream to record. If this argument is ``None``,
+                current stream will be used. Default value: ``None``.
+
+        Raises:
+            TypeError: If 'stream' is neither a :class:`mindspore.hal.Stream` nor a ``None``.
         """
         if stream is None:
             stream = current_stream_()
@@ -106,7 +118,7 @@ class Event(Event_):
         r"""
         Checks if all work currently captured by event has completed.
 
-        Outputs:
+        Returns:
             A boolean indicating if all work currently captured by event has completed.
         """
         # pylint: disable=useless-super-delegation
@@ -117,8 +129,14 @@ class Event(Event_):
         Returns the time elapsed in milliseconds after the event was
         recorded and before the end_event was recorded.
 
-        Outputs:
-        end_event (Event): end event.
+        Args:
+            end_event (Event): end event.
+
+        Returns:
+            float, the time elapsed in milliseconds.
+
+        Raises:
+            TypeError: If 'end_event' is not a :class:`mindspore.hal.Event`.
         """
         # pylint: disable=useless-super-delegation
         if not isinstance(end_event, Event):
