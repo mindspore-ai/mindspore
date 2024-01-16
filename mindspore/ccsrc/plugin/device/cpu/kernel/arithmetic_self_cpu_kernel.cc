@@ -694,6 +694,11 @@ void Sigmoid(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t s
       for (size_t i = start; i < end; i++) {
         out[i] = one_complex / (one_complex + std::exp(-in[i]));
       }
+    } else if constexpr (std::is_same_v<T, float16>) {
+      float16 one{1};
+      for (size_t i = start; i < end; i++) {
+        out[i] = one / (one + exp(-in[i]));
+      }
     } else if constexpr (std::is_same_v<T, float>) {
       (void)::Sigmoid(in + start, SizeToInt(end - start), out + start);
     } else {
@@ -907,14 +912,17 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernelFloat16(const std::vector<KernelTe
   const size_t lens = outputs[0]->size() / sizeof(float16);
   static const std::unordered_map<
     std::string, std::function<void(ArithmeticSelfCpuKernelFunc *, const float16 *, float16 *, size_t)>>
-    arithmeticSelfFuncMap{{prim::kPrimNeg->name(), Neg<float16>},     {prim::kPrimAcosh->name(), Acosh<float16>},
-                          {prim::kPrimSin->name(), Sin<float16>},     {prim::kPrimCos->name(), Cos<float16>},
-                          {prim::kPrimAsin->name(), Asin<float16>},   {prim::kPrimACos->name(), ACos<float16>},
-                          {prim::kPrimSinh->name(), Sinh<float16>},   {prim::kPrimCosh->name(), Cosh<float16>},
-                          {prim::kPrimAsinh->name(), Asinh<float16>}, {prim::kPrimErfc->name(), Erfc<float16>},
-                          {prim::kPrimRsqrt->name(), Rsqrt<float16>}, {prim::kPrimErf->name(), Erf<float16>},
-                          {prim::kPrimSign->name(), Sign<float16>},   {prim::kPrimRint->name(), Rint<float16>},
-                          {prim::kPrimAtan->name(), Atan<float16>},   {prim::kPrimSqrt->name(), Sqrt<float16>}};
+    arithmeticSelfFuncMap{
+      {prim::kPrimNeg->name(), Neg<float16>},         {prim::kPrimAcosh->name(), Acosh<float16>},
+      {prim::kPrimSin->name(), Sin<float16>},         {prim::kPrimCos->name(), Cos<float16>},
+      {prim::kPrimAsin->name(), Asin<float16>},       {prim::kPrimACos->name(), ACos<float16>},
+      {prim::kPrimSinh->name(), Sinh<float16>},       {prim::kPrimCosh->name(), Cosh<float16>},
+      {prim::kPrimAsinh->name(), Asinh<float16>},     {prim::kPrimErfc->name(), Erfc<float16>},
+      {prim::kPrimRsqrt->name(), Rsqrt<float16>},     {prim::kPrimErf->name(), Erf<float16>},
+      {prim::kPrimSign->name(), Sign<float16>},       {prim::kPrimRint->name(), Rint<float16>},
+      {prim::kPrimAtan->name(), Atan<float16>},       {prim::kPrimSqrt->name(), Sqrt<float16>},
+      {prim::kPrimSigmoid->name(), Sigmoid<float16>},
+    };
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
     MS_LOG(EXCEPTION) << "For 'ArithmeticSelf', it does not support " << kernel_name_ << " with float16 as input. ";
@@ -1125,7 +1133,8 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
    {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc}}},
   {kExp,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},

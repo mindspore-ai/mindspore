@@ -9,4 +9,5 @@ silu:
     class:
         name: SiLU
     dispatch:
-        enable: False
+        enable: True
+        CPU: SiLUCPU
