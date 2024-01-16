@@ -4834,17 +4834,29 @@ bool UpdateFuncGraphFlags(const py::object &obj, const FuncGraphPtr &func_graph,
   return true;
 }
 
-void UpdateRecomputeScope(const FuncGraphPtr &func_graph) {
+void UpdateRecomputeScope(const FuncGraphPtr &func_graph, bool should_add_recompute_scope) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (!context->cell_recompute()) {
+    return;
+  }
   MS_EXCEPTION_IF_NULL(func_graph);
   auto nodes = TopoSort(func_graph->get_return(), SuccDeeperSimple);
 
   for (const auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
     const auto &origin_scope_name = node->scope()->name();
-    if (node->isa<CNode>() && origin_scope_name.compare(0, strlen(kAttrRecompute), kAttrRecompute) != 0) {
+    bool has_recompute_prefix = (origin_scope_name.compare(0, strlen(kAttrRecompute), kAttrRecompute) == 0);
+    if (should_add_recompute_scope && !has_recompute_prefix) {
       std::stringstream scope_name_buffer;
       scope_name_buffer << kAttrRecompute << "_" << origin_scope_name;
       node->set_scope(std::make_shared<Scope>(scope_name_buffer.str()));
+    } else if (!should_add_recompute_scope && has_recompute_prefix) {
+      auto remove_recompute_scope = origin_scope_name.substr(strlen(kAttrRecompute) + 1);
+      node->set_scope(std::make_shared<Scope>(remove_recompute_scope));
     }
   }
 }
