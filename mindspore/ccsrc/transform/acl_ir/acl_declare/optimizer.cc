@@ -19,5 +19,6 @@
 namespace mindspore {
 namespace transform {
 REGISTER_ACL_OP(AdamApplyOneWithDecay).set_run_mode(false);
+REGISTER_ACL_OP(SparseApplyAdagradD).set_run_mode(false);
 }  // namespace transform
 }  // namespace mindspore
