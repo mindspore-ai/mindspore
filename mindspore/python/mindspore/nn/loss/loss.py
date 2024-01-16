@@ -785,6 +785,12 @@ class SoftmaxCrossEntropyWithLogits(LossBase):
         return self.get_loss(x)
 
 
+@_primexpr
+def _check_dice_shape(logits_shape, label_shape, prim_name=None):
+    """Internal function, check whether the shape of logits and labels meets the requirements."""
+    validator.check('logits_shape', logits_shape, 'label_shape', label_shape, prim_name=prim_name)
+
+
 @constexpr
 def _check_label_dtype(labels_dtype, cls_name):
     """Internal function, used to check whether the data type of labels meets the requirements."""
@@ -843,6 +849,7 @@ class DiceLoss(LossBase):
     def construct(self, logits, label):
         _check_is_tensor('logits', logits, self.cls_name)
         _check_is_tensor('labels', label, self.cls_name)
+        _check_dice_shape(logits.shape, label.shape, self.cls_name)
         if logits.dtype == mstype.uint8:
             raise TypeError(f"For '{self.cls_name}', the dtype of 'logits' can not be uint8.")
         if label.dtype == mstype.uint8:
@@ -1650,12 +1657,6 @@ class BCELoss(LossBase):
         return loss
 
 
-@_primexpr
-def _check_reduced_shape_valid(ori_shape, reduced_shape, axis, cls_name, arg_name1, arg_name2):
-    """Internal function, used to check whether the reduced shape meets the requirements."""
-    validator.check_reduce_shape(ori_shape, reduced_shape, axis, cls_name, arg_name1, arg_name2)
-
-
 class CosineEmbeddingLoss(LossBase):
     r"""
     CosineEmbeddingLoss creates a criterion to measure the similarity between two tensors using cosine distance.
@@ -1920,7 +1921,7 @@ def _check_ndim(logits_nidm, labels_ndim, prime_name=None):
 
 @_primexpr
 def _check_channel_and_shape(logits, labels, prime_name=None):
-    '''Internal function, used to check whether the channels or shape of logits and labels meets the requirements.'''
+    """Internal function, used to check whether the channels or shape of logits and labels meets the requirements."""
     msg_prefix = f'For \'{prime_name}\', the' if prime_name else "The"
     if logits == 1:
         raise ValueError(f"{msg_prefix} 'logits'.shape[1] cannot be one, but got {logits}.")
@@ -2242,20 +2243,6 @@ class TripletMarginLoss(LossBase):
                                      eps=self.eps, swap=self.swap, reduction=self.reduction)
 
 
-@constexpr
-def _check_nll_loss_inputs(logits_shape, label_shape, logits_dtype, label_dtype, prim_name=None):
-    """Internal function, used to check whether the shape of logits and labels meets the requirements."""
-    validator.check_type_name('logits', logits_dtype, [mstype.float16, mstype.float32], prim_name)
-    validator.check_type_name('labels', label_dtype, [mstype.int32], prim_name)
-
-    logits_shape_new = (logits_shape[0], *logits_shape[2:])
-    msg_prefix = f'For \'{prim_name}\', the' if prim_name else "The"
-    if logits_shape_new != label_shape:
-        raise ValueError(f"{msg_prefix} shape of 'logits' should be (N, C, d_0, d_1, ...), "
-                         f"and the shape of 'labels' should be (N, d_0, d_1, ...), "
-                         f"but get 'logits' shape: {logits_shape} and 'labels' shape: {label_shape}")
-
-
 class NLLLoss(LossBase):
     r"""
     Gets the negative log likelihood loss between logits and labels.
@@ -2366,12 +2353,6 @@ def _check_cross_entropy_inputs(logits_shape, label_shape,
                          f"1. 'logits.ndim == labels.ndim' for probabilities, \n"
                          f"2. 'logits.ndim - 1 == labels.ndim' for class indices, \n"
                          f"but get 'logits' rank: {logits_rank} and 'labels' rank: {label_rank}.")
-
-
-@constexpr
-def _cross_entropy_ignore_index_warning(prim_name):
-    """Internal function, used to warning when ignore_index > 0 for probabilities."""
-    log.warning(f"For \'{prim_name}\', 'ignore_index' does not work when 'labels' is Probability.")
 
 
 class CrossEntropyLoss(LossBase):
@@ -2502,8 +2483,7 @@ class CrossEntropyLoss(LossBase):
                                     logits.ndim, labels.ndim,
                                     logits.dtype, labels.dtype,
                                     self.cls_name)
-        if logits.ndim == labels.ndim and self.ignore_index > 0:
-            _cross_entropy_ignore_index_warning(self.cls_name)
+
         return F.cross_entropy(logits, labels, self.weight, self.ignore_index, self.reduction, self.label_smoothing)
 
 
@@ -2583,6 +2563,7 @@ class KLDivLoss(LossBase):
         return F.kl_div(logits, labels, self.reduction)
 
 
+@_primexpr
 def _check_ctcloss_targets_shape(targets):
     """Internal function, used to check whether the shape of CTC targets meets the requirements."""
     if targets.ndim > 2:
