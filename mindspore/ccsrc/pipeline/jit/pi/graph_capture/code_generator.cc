@@ -1308,12 +1308,12 @@ static bool FindBlock(int start_bci, const CFG *cfg, int *end_bci, int *stack_ef
       block_end = FindLoopEnd(start_bci, cfg);
       break;
   }
-  if (list[start_bci]->op() == FOR_ITER && block_end == start_bci - 1) {
+  if (list[start_bci]->op() == FOR_ITER && static_cast<int>(block_end) == start_bci - 1) {
     // break at FOR_ITER and it is not a loop
     block_end = list[start_bci]->extra_jump()->bci() - 1;
   }
   *end_bci = block_end;
-  return block_end != start_bci - 1;
+  return static_cast<int>(block_end) != start_bci - 1;
 }
 
 #else

@@ -91,16 +91,40 @@ TEST_F(TestFuncGraphBuilder, TestAddNode) {
 }
 
 // Feature: Build graph in pi_jit.
-// Description: Use the func_graph_builder api to add cnode with unknown input.
+// Description: Use the func_graph_builder api to add cnode with constant input.
 // Expectation: The expected graph is constructed.
-TEST_F(TestFuncGraphBuilder, TestAddNodeUnkownInput) {
+TEST_F(TestFuncGraphBuilder, TestAddNodeConstantInput) {
   FuncGraphBuilder func_graph_builder;
   py::int_ int_v1 = 1;
   auto input1 = func_graph_builder.AddInput(int_v1);
   EXPECT_NE(input1.ptr(), nullptr);
   py::int_ int_v2 = 2;
   auto obj = func_graph_builder.AddNode(prim::kPrimScalarAdd, {input1, int_v2});
-  EXPECT_EQ(obj.ptr(), nullptr);
+  EXPECT_NE(obj.ptr(), nullptr);
+  EXPECT_TRUE(func_graph_builder.AddOutput(obj));
+  auto graph = func_graph_builder.graph();
+  EXPECT_NE(graph, nullptr);
+  FuncGraphPtr expected_graph = get_py_fun_.CallAndParseRet("test_add_node_with_constant", "graph");
+  EXPECT_TRUE(CheckEqual(graph, expected_graph));
+}
+
+// Feature: Build graph in pi_jit.
+// Description: Use the func_graph_builder api to add cnode with constant input.
+// Expectation: The expected graph is constructed.
+TEST_F(TestFuncGraphBuilder, TestAddBinaryNode) {
+  FuncGraphBuilder func_graph_builder;
+  py::int_ int_v1 = 1;
+  auto input1 = func_graph_builder.AddInput(int_v1);
+  EXPECT_NE(input1.ptr(), nullptr);
+  py::int_ int_v2 = 2;
+  auto input2 = func_graph_builder.AddInput(int_v2);
+  EXPECT_NE(input2.ptr(), nullptr);
+  auto add_obj = func_graph_builder.AddBinaryNode("add", {input1, input2});
+  EXPECT_TRUE(func_graph_builder.AddOutput(add_obj));
+  auto graph = func_graph_builder.graph();
+  EXPECT_NE(graph, nullptr);
+  FuncGraphPtr expected_graph = get_py_fun_.CallAndParseRet("test_add_binary_node", "graph");
+  EXPECT_TRUE(CheckEqual(graph, expected_graph));
 }
 
 // Feature: Build graph in pi_jit.
@@ -134,7 +158,6 @@ TEST_F(TestFuncGraphBuilder, TestAddFgCallNode) {
   EXPECT_NE(call_node_obj.ptr(), nullptr);
   EXPECT_TRUE(func_graph_builder2.AddOutput(call_node_obj));
   auto graph2 = func_graph_builder2.graph();
-  DumpIR("graph2.ir", graph2);
   FuncGraphPtr expected_graph = get_py_fun_.CallAndParseRet("test_add_fg_call_node", "graph");
   EXPECT_TRUE(CheckEqual(graph2, expected_graph));
 }
