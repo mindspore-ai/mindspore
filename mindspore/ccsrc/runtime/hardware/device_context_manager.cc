@@ -243,7 +243,7 @@ bool TestLoadDynamicLib(const std::string &plugin_file, std::string *err_msg) {
 }  // namespace
 namespace plugin_loader {
 bool PluginLoader::LoadDynamicLib(const std::string &plugin_file, std::map<std::string, void *> *all_handles,
-                                  std::stringstream *err_msg) {
+                                  std::stringstream *err_msg, const bool gpu_env) {
   MS_EXCEPTION_IF_NULL(all_handles);
   MS_EXCEPTION_IF_NULL(err_msg);
   void *handle = nullptr;
@@ -253,7 +253,9 @@ bool PluginLoader::LoadDynamicLib(const std::string &plugin_file, std::map<std::
   handle = LoadLibraryEx(plugin_file.c_str(), NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
   err_msg_str = std::to_string(GetLastError());
 #elif defined(__linux__)
-  if (TestLoadDynamicLib(plugin_file, &err_msg_str)) {
+  if (gpu_env) {
+    handle = dlopen(plugin_file.c_str(), RTLD_LAZY | RTLD_LOCAL);
+  } else if (TestLoadDynamicLib(plugin_file, &err_msg_str)) {
     handle = dlopen(plugin_file.c_str(), RTLD_LAZY | RTLD_LOCAL);
   }
 #else  // macos
@@ -428,12 +430,16 @@ void DeviceContextManager::LoadPlugin() {
   }
 
   for (const auto &[plugin_name, file_names] : multi_version_plugin_map) {
+    bool gpu_ret = false;
+    // if we can confirm the platform is gpu, we should directly dlopen gpu_plugin file instead of trying.
     if (plugin_name == kGpuPluginName) {
       std::string cuda_home = common::GetEnv(kCudaHomeEnv);
-      if (!cuda_home.empty() && file_names.size() > 1) {
-        SelectGpuPlugin(cuda_home, file_names);
-        continue;
+      if (!cuda_home.empty() && file_names.size() >= 1) {
+        gpu_ret = SelectGpuPlugin(cuda_home, file_names);
       }
+    }
+    if (gpu_ret) {
+      break;
     }
     for (auto iter = file_names.rbegin(); iter != file_names.rend();) {
       const auto &file_name = *(iter++);
@@ -560,66 +566,72 @@ void DeviceContextManager::WaitTaskFinishOnDevice() const {
 
 std::string DeviceContextManager::GetErrorMsg() const { return dlopen_error_msg_.str(); }
 
-void DeviceContextManager::SelectGpuPlugin(const std::string &cuda_home, const std::set<std::string> &file_names) {
+bool DeviceContextManager::SelectGpuPlugin(const std::string &cuda_home, const std::set<std::string> &file_names) {
 #ifdef __linux__
-  auto nvcc_path = GetNvccRealPath(cuda_home);
-  if (nvcc_path.empty()) {
-    return;
-  }
-  auto cuda_version = GetCudaVersionFromNvcc(nvcc_path);
-  if (cuda_version.empty()) {
-    return;
-  }
-  size_t target_major = 0;
-  size_t target_minor = 0;
-  if (!GetIntVersionFromVersionStr(cuda_version, &target_major, &target_minor)) {
-    MS_LOG(EXCEPTION) << "Get version num from version string " << cuda_version << " failed.";
-  }
+  bool ret;
+  if (file_names.size() == 1) {
+    ret = plugin_loader::PluginLoader::LoadDynamicLib(*file_names.begin(), &plugin_maps_, &dlopen_error_msg_, true);
+  } else {
+    auto nvcc_path = GetNvccRealPath(cuda_home);
+    if (nvcc_path.empty()) {
+      return false;
+    }
+    auto cuda_version = GetCudaVersionFromNvcc(nvcc_path);
+    if (cuda_version.empty()) {
+      return false;
+    }
+    size_t target_major = 0;
+    size_t target_minor = 0;
+    if (!GetIntVersionFromVersionStr(cuda_version, &target_major, &target_minor)) {
+      MS_LOG(EXCEPTION) << "Get version num from version string " << cuda_version << " failed.";
+    }
 
-  std::string selected_plugin = "";
-  std::vector<std::pair<size_t, size_t>> all_plugin_version;
-  std::vector<std::string> all_plugin_path;
-  std::for_each(file_names.begin(), file_names.end(),
-                [&selected_plugin, &all_plugin_version, &all_plugin_path, target_major,
-                 target_minor](const std::string &file_name) {
-                  size_t current_major = 0;
-                  size_t current_minor = 0;
-                  if (GetVersionFromFileName(file_name, &current_major, &current_minor)) {
-                    all_plugin_version.emplace_back(current_major, current_minor);
-                    all_plugin_path.emplace_back(file_name);
-                  }
-                  if (current_major == target_major && current_minor == target_minor) {
-                    selected_plugin = file_name;
-                  }
-                });
+    std::string selected_plugin = "";
+    std::vector<std::pair<size_t, size_t>> all_plugin_version;
+    std::vector<std::string> all_plugin_path;
+    std::for_each(file_names.begin(), file_names.end(),
+                  [&selected_plugin, &all_plugin_version, &all_plugin_path, target_major,
+                   target_minor](const std::string &file_name) {
+                    size_t current_major = 0;
+                    size_t current_minor = 0;
+                    if (GetVersionFromFileName(file_name, &current_major, &current_minor)) {
+                      all_plugin_version.emplace_back(current_major, current_minor);
+                      all_plugin_path.emplace_back(file_name);
+                    }
+                    if (current_major == target_major && current_minor == target_minor) {
+                      selected_plugin = file_name;
+                    }
+                  });
 
-  if (selected_plugin.empty()) {
-    for (size_t i = 0; i < all_plugin_version.size(); ++i) {
-      if (target_major != all_plugin_version[i].first) {
-        continue;
-      }
-      if (VersionToFloat(target_major, target_minor) >
-            VersionToFloat(all_plugin_version[i].first, all_plugin_version[i].second) &&
-          (i + 1 >= all_plugin_version.size() ||
-           VersionToFloat(target_major, target_minor) <
-             VersionToFloat(all_plugin_version[i + 1].first, all_plugin_version[i + 1].second))) {
-        selected_plugin = all_plugin_path[i];
+    if (selected_plugin.empty()) {
+      for (size_t i = 0; i < all_plugin_version.size(); ++i) {
+        if (target_major != all_plugin_version[i].first) {
+          continue;
+        }
+        if (VersionToFloat(target_major, target_minor) >
+              VersionToFloat(all_plugin_version[i].first, all_plugin_version[i].second) &&
+            (i + 1 >= all_plugin_version.size() ||
+             VersionToFloat(target_major, target_minor) <
+               VersionToFloat(all_plugin_version[i + 1].first, all_plugin_version[i + 1].second))) {
+          selected_plugin = all_plugin_path[i];
+        }
       }
     }
-  }
 
-  if (selected_plugin.empty()) {
-    MS_LOG(WARNING) << "Env CUDA_HOME is " << cuda_home << ", but can not find suitable gpu plugin.";
-    return;
-  }
+    if (selected_plugin.empty()) {
+      MS_LOG(WARNING) << "Env CUDA_HOME is " << cuda_home << ", but can not find suitable gpu plugin.";
+      return false;
+    }
 
-  auto ret = plugin_loader::PluginLoader::LoadDynamicLib(selected_plugin, &plugin_maps_, &dlopen_error_msg_);
+    ret = plugin_loader::PluginLoader::LoadDynamicLib(selected_plugin, &plugin_maps_, &dlopen_error_msg_, true);
+  }
   if (!ret) {
-    MS_LOG(WARNING) << "Env CUDA_HOME is " << cuda_home
-                    << ", but dlopen file_name failed, reason: " << dlopen_error_msg_.str();
-    return;
+    MS_LOG(EXCEPTION) << "Env CUDA_HOME is " << cuda_home
+                      << ", but dlopen file_name failed, reason: " << dlopen_error_msg_.str();
   }
+  return true;
 #endif  // #ifdef __linux__
+  return false;
 }
 }  // namespace device
 }  // namespace mindspore
