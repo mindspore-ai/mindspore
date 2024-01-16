@@ -645,6 +645,7 @@ OptPassGroupMap GetSymbolEngineOptPass(const opt::irpass::OptimizeIRPassLib &irp
                        {"elim_shapecalc", opt::OptPassConfig({irpass.elim_shapecalc_of_broadcastargs_})},
                        {"elim_not_effective", opt::OptPassConfig({irpass.elim_not_effective_node_})},
                        {"opt_reshape", opt::OptPassConfig({irpass.opt_reshape_})},
+                       {"fold_const_symbol", opt::OptPassConfig({irpass.fold_const_symbol_})},
                        {"renormalize", opt::OptPassConfig::Renormalize()}});
   return map;
 }

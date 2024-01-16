@@ -72,6 +72,21 @@ class OptReshape : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override;
 };
+
+/**
+ * Fold the input cnode when the symbolic value is constant value.
+ *
+ * example:
+ * %0 = ShapeCalc(p, ()) // the ShapeCalc has two output
+ * %1 = TupleGetItem(%0, 1) // the symbolic value of item 1 is const.
+ * %2 = Tile(p, %1)
+ * -->
+ * %2 = Tile(p, const_value)
+ */
+class FoldConstSymbol : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override;
+};
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

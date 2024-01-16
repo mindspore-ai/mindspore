@@ -22,6 +22,7 @@
 #include "ir/functor.h"
 #include "ops/array_ops.h"
 #include "ops/math_ops.h"
+#include "ops/op_def.h"
 #include "include/common/utils/utils.h"
 #include "mindspore/core/symbolic_shape/symbol.h"
 #include "mindspore/core/symbolic_shape/utils.h"
@@ -56,15 +57,11 @@ AnfNodePtr ElimShapeCalcOnBroadcastArgsGrad::operator()(const OptimizerPtr &opt,
   PConstant idx1(node, false, 1, true);
   MATCH_REPLACE_IF(
     node,
-    PPrimitive(prim::kPrimReduceSum, dout,
-               PPrimitive(prim::kPrimTensorToTuple, PPrimitive(prim::kPrimTupleGetItem, shape_calc, idx0)), keepdims,
-               skipmode),
+    PPrimitive(prim::kPrimReduceSum, dout, PPrimitive(prim::kPrimTupleGetItem, shape_calc, idx0), keepdims, skipmode),
     dout, Check(opt, shape_calc.GetNode(node), kIndex1));
   MATCH_REPLACE_IF(
     node,
-    PPrimitive(prim::kPrimReduceSum, dout,
-               PPrimitive(prim::kPrimTensorToTuple, PPrimitive(prim::kPrimTupleGetItem, shape_calc, idx1)), keepdims,
-               skipmode),
+    PPrimitive(prim::kPrimReduceSum, dout, PPrimitive(prim::kPrimTupleGetItem, shape_calc, idx1), keepdims, skipmode),
     dout, Check(opt, shape_calc.GetNode(node), kIndex2));
   return nullptr;
 }
@@ -197,6 +194,58 @@ AnfNodePtr OptReshape::operator()(const OptimizerPtr &, const AnfNodePtr &node) 
   MATCH_REPLACE_LAMBDA_IF(node, PPrimitive(prim::kPrimReshape, input, shape), MakeReshape,
                           CheckShape(shape.GetNode(node)));
   return nullptr;
+}
+
+AnfNodePtr FoldConstSymbol::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
+  auto symbol_engine = GetSymbolEngine(node);
+  if (symbol_engine == nullptr) {
+    return nullptr;
+  }
+  auto op_def = mindspore::ops::GetOpDef(AnfUtils::GetCNodeName(node));
+  if (op_def == nullptr) {
+    return nullptr;
+  }
+  if (node->abstract() != nullptr && !symbol_engine->QueryValue(node)->isa<ValueAny>()) {
+    return nullptr;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  AnfNodePtrList new_inputs;
+  bool need_replace = false;
+  for (size_t i = 1; i < cnode->size(); i++) {
+    auto inp = cnode->input(i);
+    if (!inp->isa<CNode>() || inp->abstract() == nullptr || i - 1 >= op_def->args_.size()) {
+      continue;
+    }
+    auto v = symbol_engine->QueryValue(inp);
+    if (v->isa<ValueAny>()) {
+      continue;
+    }
+    if (new_inputs.empty()) {
+      new_inputs = cnode->inputs();
+    }
+    if (v->isa<ValueSequence>() && op_def->args_[i - 1].arg_dtype_ == ops::OP_DTYPE::DT_TUPLE_INT) {
+      new_inputs[i] = NewValueNode(v);
+      need_replace = true;
+    } else {
+      MS_LOG(INFO) << "For node " << node->DebugString() << ", the input[" << i
+                   << "]'s value does not match the op_def type(" << op_def->args_[i - 1].arg_dtype_
+                   << "). value = :" << v->ToString();
+      continue;
+    }
+    MS_LOG(INFO) << "For node " << node->DebugString() << ", the input[" << i
+                 << "]'s symbolic value is constant, fold the input value: " << v->ToString();
+    auto new_abs = v->ToAbstract();
+    MS_EXCEPTION_IF_NULL(new_abs);
+    new_abs->SetSymbolicValue(inp->abstract()->GetSymbolicValue());
+    new_inputs[i]->set_abstract(new_abs);
+  }
+  if (!need_replace) {
+    return nullptr;
+  }
+  auto new_node = NewCNode(new_inputs, node->func_graph());
+  new_node->set_abstract(node->abstract());
+  return new_node;
 }
 }  // namespace irpass
 }  // namespace opt

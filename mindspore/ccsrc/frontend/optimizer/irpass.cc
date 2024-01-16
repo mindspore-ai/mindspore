@@ -303,6 +303,7 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
                                                       "elim_shapecalc_of_broadcastargs", prim::kPrimReduceSum);
   elim_not_effective_node_ = MakeSubstitution(std::make_shared<ElimNotEffectiveNode>(), "elim_not_effective", IsCNode);
   opt_reshape_ = MakeSubstitution(std::make_shared<OptReshape>(), "opt_reshape", prim::kPrimReshape);
+  fold_const_symbol_ = MakeSubstitution(std::make_shared<FoldConstSymbol>(), "fold_const_symbol", IsCNode);
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {

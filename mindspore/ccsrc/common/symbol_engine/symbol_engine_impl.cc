@@ -389,14 +389,9 @@ ValuePtr SymbolEngineImpl::QueryValue(const AnfNodePtr &node) {
   auto abs = node->abstract();
   MS_EXCEPTION_IF_NULL(abs);
   auto symbolic_value = abs->GetSymbolicValue();
-  auto digital_value = abs->GetValue();
-  MS_EXCEPTION_IF_NULL(digital_value);
   if (symbolic_value == nullptr) {
-    return digital_value;
-  }
-  if (!symbolic_value->HasData()) {
-    MS_LOG(WARNING) << "symbolic value of node has no data: " << node->fullname_with_scope();
-    return digital_value;
+    auto value = abs->GetValue();
+    return value != nullptr ? value : kValueAny;
   }
   return SymbolToValue(symbolic_value.get());
 }

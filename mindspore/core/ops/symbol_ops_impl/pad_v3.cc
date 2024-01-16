@@ -37,9 +37,20 @@ SymbolPtr PadV3::Eval() {
   if (!input->HasData() || !padding->HasData()) {
     return GenVList();
   }
+  if (padding->size() % 2 != 0 || padding->size() > input->size() * 2) {
+    MS_LOG(INFO) << "For 'PadV3', the padding size should be even number and less-equal to " << input->size() * 2
+                 << ", but got " << padding->size();
+    return nullptr;
+  }
   DoNotEvalOnRun();
-  SymbolPtrList result(input->size());
-  for (size_t i = 0; i < input->size(); i++) {
+
+  // when input shape is (A, B, C), contiguous=true
+  // paddings: (p0, p1)                 -- pads dim C
+  // paddings: (p0, p1, p2, p3)         -- the (p2,p3) pads dim B, the (p0,p1) pads dim C.
+  // paddings: (p0, p1, p2, p3, p4, p5) -- the (p4,p5) pads dim A, the (p2,p3) pads dim B, the (p0,p1) pads dim C.
+  SymbolPtrList result = input->symbols();
+  auto result_iter = result.rbegin();
+  for (size_t i = 0; i < input->size(); i++, ++result_iter) {
     size_t begin_i;
     size_t end_i;
     if (contiguous) {
@@ -49,15 +60,13 @@ SymbolPtr PadV3::Eval() {
     } else {
       // the padding is [begin_0, begin_1, ..., begin_n, end_0, end_1, ..., end_n]
       begin_i = i;
-      end_i = i + input->size();
+      end_i = i + padding->size() / 2;
     }
-    SymbolPtr p = nullptr;
-    if (end_i < padding->size()) {
-      p = Emit(std::make_shared<ScalarAdd>(padding->symbols()[begin_i], padding->symbols()[end_i]));
-    } else if (begin_i < padding->size()) {
-      p = padding->symbols()[begin_i];
+    if (end_i >= padding->size()) {
+      break;
     }
-    result[i] = (p == nullptr) ? input->symbols()[i] : Emit(std::make_shared<ScalarAdd>(input->symbols()[i], p));
+    auto p = Emit(std::make_shared<ScalarAdd>(padding->symbols()[begin_i], padding->symbols()[end_i]));
+    *result_iter = Emit(std::make_shared<ScalarAdd>(*result_iter, p));
   }
   return ResultIntList(std::move(result));
 }
