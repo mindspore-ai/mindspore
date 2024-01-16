@@ -46,7 +46,6 @@ class BinaryCrossEntropyGradGpuKernelMod : public NativeGpuKernelMod {
                     void *stream_ptr);
   size_t input_size_;
   ReductionMode reduction_;
-  bool weight_defined_;  // true: there are 4 inputs, false: there are 3 inputs(no [weight])
   bool is_null_input_;
   TypeId dtype_;
 };
