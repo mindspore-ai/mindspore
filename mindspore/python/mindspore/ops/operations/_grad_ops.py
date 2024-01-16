@@ -2491,6 +2491,12 @@ class MultiMarginLossGrad(Primitive):
     Supported Platforms:
         ``Ascend``  ``CPU``
     """
+    __mindspore_signature__ = (
+        sig.make_sig('y_grad'),
+        sig.make_sig('x'),
+        sig.make_sig('target'),
+        sig.make_sig('weight', default=None)
+    )
 
     @prim_attr_register
     def __init__(self, p=1, margin=1.0, reduction="mean"):

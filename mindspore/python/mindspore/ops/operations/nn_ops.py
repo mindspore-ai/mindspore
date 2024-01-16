@@ -2446,7 +2446,7 @@ class MultiMarginLoss(Primitive):
           or float64.
         - **target** (Tensor) - Ground truth labels, with shape :math:`(N,)`. Data type only support int64. The
           value of target should be non-negative, less than C.
-        - **weight** (Tensor) - The rescaling weight to each class with shape :math:`(C,)`. Data type only
+        - **weight** (Tensor, optional) - The rescaling weight to each class with shape :math:`(C,)`. Data type only
           support float16, float32 or float64.
 
     Outputs:
@@ -2468,6 +2468,11 @@ class MultiMarginLoss(Primitive):
         >>> print(output)
         0.6666667
     """
+    __mindspore_signature__ = (
+        sig.make_sig('x'),
+        sig.make_sig('target'),
+        sig.make_sig('weight', default=None)
+    )
 
     @prim_attr_register
     def __init__(self, p=1, margin=1.0, reduction="mean"):
