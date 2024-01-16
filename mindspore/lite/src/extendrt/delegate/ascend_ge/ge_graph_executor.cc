@@ -1345,7 +1345,7 @@ bool GeGraphExecutor::RunGeGraphAsync(uint32_t graph_id, const std::vector<::ge:
       MS_LOG(ERROR) << "RunAsync out of range: End of sequence.";
       end_of_sequence = true;
     } else {
-      MS_LOG(ERROR) << "RunAsync failed.";
+      MS_LOG(ERROR) << "RunAsync failed." << ge::GEGetErrorMsg();
     }
     promise.set_value();
     return;
