@@ -17,7 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_UTILS_H_
 
 #include "kernel/kernel.h"
-#include "internal_kernel.h"
+#include "./internal_kernel.h"
 
 namespace mindspore {
 namespace kernel {

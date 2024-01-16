@@ -16,10 +16,13 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_MOD_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_MOD_H_
 #include <memory>
+#include <string>
+#include <utility>
 #include <unordered_map>
 #include <vector>
+
 #include "kernel/kernel.h"
-#include "internal_kernel.h"
+#include "./internal_kernel.h"
 
 #include "plugin/factory/ms_factory.h"
 
@@ -38,9 +41,6 @@ class InternalKernelMod : public KernelMod {
   std::vector<KernelAttr> GetOpSupport() override {
     MS_LOG(EXCEPTION) << "This interface is not support in internal kernel.";
   }
-
-  virtual size_t GetTilingBufSize() { return impl_->GetTilingBufSize(); }
-  virtual int Tiling(internal::HostRawBuf &tilingBuf) { return impl_->Tiling(tilingBuf); }
 
  protected:
   virtual int Build(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);

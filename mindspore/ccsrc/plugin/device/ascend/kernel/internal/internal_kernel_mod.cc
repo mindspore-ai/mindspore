@@ -112,6 +112,10 @@ int InternalKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
   }
   ret = aclrtMemcpy(device_tiling_buf_.addr_, device_tiling_buf_.size_, host_tiling_buf.addr_, host_tiling_buf.size_,
                     ACL_MEMCPY_HOST_TO_DEVICE);
+  if (ret != 0) {
+    MS_LOG(ERROR) << "op " << op_type_ << " copy tiling buf to device failed";
+    return KRET_RESIZE_FAILED;
+  }
 
   // update workspace_size list
   auto workspace_size_list = impl_->GetWorkSpaceSize();

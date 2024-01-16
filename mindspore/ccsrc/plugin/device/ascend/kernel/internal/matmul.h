@@ -21,7 +21,7 @@ namespace mindspore {
 namespace kernel {
 class MatMul : public InternalKernelMod {
  public:
-  MatMul() : InternalKernelMod("MatMul"){};
+  MatMul() : InternalKernelMod("MatMul"){}
   ~MatMul() = default;
 
  protected:

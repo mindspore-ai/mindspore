@@ -15,6 +15,7 @@
  */
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_build.h"
 #include "plugin/device/ascend/kernel/internal/internal_kernel_mod.h"
