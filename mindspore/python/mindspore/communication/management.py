@@ -305,7 +305,7 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
         RuntimeError: If HCCL is not available or MindSpore is GPU/CPU version.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         .. note::
@@ -410,7 +410,7 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
         RuntimeError: If HCCL is not available or MindSpore is GPU/CPU version.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         .. note::
@@ -465,7 +465,7 @@ def get_world_rank_from_group_rank(group, group_rank_id):
         RuntimeError: If HCCL is not available or MindSpore is GPU/CPU version.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         .. note::
@@ -524,7 +524,7 @@ def get_group_rank_from_world_rank(world_rank_id, group):
         RuntimeError: If HCCL is not available or MindSpore is GPU/CPU version.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         .. note::
@@ -580,7 +580,7 @@ def create_group(group, rank_ids):
         RuntimeError: If HCCL is not available or MindSpore is GPU/CPU version.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         .. note::
@@ -633,7 +633,7 @@ def destroy_group(group):
         RuntimeError: If HCCL is not available or MindSpore is GPU/CPU version.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         .. note::
