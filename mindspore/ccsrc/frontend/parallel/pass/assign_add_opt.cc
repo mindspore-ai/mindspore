@@ -27,16 +27,35 @@
 #include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/device_manager.h"
+#include "frontend/parallel/pass/pass_utils.h"
 
 namespace mindspore {
 namespace parallel {
 namespace {
 constexpr auto kAttrConcatN = "N";
+constexpr auto kAttrCastDw = "CastDw";
 
-void MergeMultiMatmulAssingAdd(const FuncGraphManagerPtr &manager, const FuncGraphPtr &each_graph,
+CNodePtr GetMatmulDwNodeFront(const std::vector<CNodePtr> &matmul_dw_nodes,
+                              const std::unordered_map<CNodePtr, CNodePtr> &backward_matmul_dx_dw_map) {
+  auto matmul_dw_node_front = matmul_dw_nodes.front();
+  for (auto matmul_dw_node : matmul_dw_nodes) {
+    auto dx_dw_iter = std::find_if(backward_matmul_dx_dw_map.begin(), backward_matmul_dx_dw_map.end(), [&](auto dx_dw) {
+      return (dx_dw.second == matmul_dw_node && dx_dw.first->HasAttr(INTERLEAVED_OVERLAP_MATMUL));
+    });
+    if (dx_dw_iter != backward_matmul_dx_dw_map.end()) {
+      continue;
+    }
+    matmul_dw_node_front = matmul_dw_node;
+    break;
+  }
+  return matmul_dw_node_front;
+}
+
+void MergeMultiMatmulAssignAdd(const FuncGraphManagerPtr &manager, const FuncGraphPtr &each_graph,
                                const std::vector<CNodePtr> &matmul_dw_nodes,
-                               const std::pair<AnfNodePtr, std::vector<AnfNodePtr>> &pair) {
-  auto matmul_dw_nodes_front = matmul_dw_nodes.front();
+                               const std::pair<AnfNodePtr, std::vector<AnfNodePtr>> &pair,
+                               const std::unordered_map<CNodePtr, CNodePtr> &backward_matmul_dx_dw_map) {
+  auto matmul_dw_node_front = GetMatmulDwNodeFront(matmul_dw_nodes, backward_matmul_dx_dw_map);
   // concat all matmul nodes inputs
   std::vector<AnfNodePtr> maketuple1_inputs{NewValueNode(prim::kPrimMakeTuple)};
   std::vector<AnfNodePtr> maketuple2_inputs{NewValueNode(prim::kPrimMakeTuple)};
@@ -61,8 +80,7 @@ void MergeMultiMatmulAssingAdd(const FuncGraphManagerPtr &manager, const FuncGra
   std::vector<AnfNodePtr> merged_matmul_inputs{NewValueNode(prim::kPrimMatMul), concat1, concat2};
   auto merged_matmul = each_graph->NewCNode(merged_matmul_inputs);
   // set abstract and attr
-  auto matmul_dw_node_front = matmul_dw_nodes.front();
-  auto mat1_prim = GetCNodePrimitive(matmul_dw_nodes_front);
+  auto mat1_prim = GetCNodePrimitive(matmul_dw_node_front);
   auto transpose_a1 = GetValue<bool>(mat1_prim->GetAttr(TRANSPOSE_A));
   auto transpose_b1 = GetValue<bool>(mat1_prim->GetAttr(TRANSPOSE_B));
   auto matmul_dw_node_front_input_node1_abstract = matmul_dw_node_front->input(1)->abstract();
@@ -102,9 +120,35 @@ void MergeMultiMatmulAssingAdd(const FuncGraphManagerPtr &manager, const FuncGra
   merged_matmul_prim->SetAttrs(mat1_prim->attrs());
   merged_matmul->set_attrs(matmul_dw_node_front->attrs());
   merged_matmul->set_primal_attrs(matmul_dw_node_front->primal_attrs());
+  std::vector<std::string> unique_ids;
+  for (const auto &dw_matmul : matmul_dw_nodes) {
+    if (dw_matmul->HasPrimalAttr(kPrimalAttrForwardUniqueId)) {
+      unique_ids.push_back(GetValue<std::string>(dw_matmul->GetPrimalAttr(kPrimalAttrForwardUniqueId)));
+    }
+  }
+  merged_matmul->AddPrimalAttr(FORWARD_UNIQUE_ID_LIST, MakeValue<std::vector<std::string>>(unique_ids));
+  auto replace_node = merged_matmul;
   // concat1 -> merged_matmul -> assign_add
-  // concat2
-  std::vector<AnfNodePtr> assign_add_inputs{NewValueNode(prim::kPrimAssignAdd), pair.first, merged_matmul};
+  if (matmul_dw_node_front->HasAttr(kAttrCastDw)) {
+    auto matmul_users = manager->node_users()[matmul_dw_node_front];
+    CNodePtr cast_node = nullptr;
+    for (const auto &user_pair : matmul_users) {
+      if (IsPrimitiveCNode(user_pair.first, prim::kPrimCast) &&
+          user_pair.first->cast<CNodePtr>()->HasAttr(kAttrCastDw)) {
+        cast_node = user_pair.first->cast<CNodePtr>();
+      }
+    }
+    if (!cast_node) {
+      return;
+    }
+    std::vector<AnfNodePtr> cast_inputs{cast_node->input(0), merged_matmul, cast_node->input(2)};
+    auto new_cast = each_graph->NewCNode(cast_inputs);
+    new_cast->set_abstract(cast_node->abstract()->Clone());
+    new_cast->abstract()->set_shape(merged_matmul->abstract()->GetShapeTrack());
+    replace_node = new_cast;
+  }
+
+  std::vector<AnfNodePtr> assign_add_inputs{NewValueNode(prim::kPrimAssignAdd), pair.first, replace_node};
   auto assign_add_cnode = each_graph->NewCNode(assign_add_inputs);
   assign_add_cnode->set_abstract(merged_matmul->abstract()->Clone());
   for (const auto &assgin_add_origin_node : pair.second) {
@@ -123,6 +167,8 @@ void AssignAddOpt(const FuncGraphPtr &graph) {
     std::list<CNodePtr> graph_orders = each_graph->GetOrderedCnodes();
     std::vector<CNodePtr> origin_nodes_topological(graph_orders.cbegin(), graph_orders.cend());
     std::unordered_map<AnfNodePtr, std::vector<AnfNodePtr>> assign_add_map;
+    std::unordered_map<CNodePtr, CNodePtr> backward_matmul_dx_dw_map;
+    ExtractBackwardMatMul(origin_nodes_topological, &backward_matmul_dx_dw_map);
     for (const auto &node : origin_nodes_topological) {
       if (!IsPrimitiveCNode(node, prim::kPrimAssignAdd)) {
         continue;
@@ -142,11 +188,15 @@ void AssignAddOpt(const FuncGraphPtr &graph) {
       for (const auto &assign_add_node : pair.second) {
         if (IsPrimitiveCNode(assign_add_node->cast<CNodePtr>()->input(2), prim::kPrimMatMul)) {
           auto matmul_node = assign_add_node->cast<CNodePtr>()->input(2)->cast<CNodePtr>();
-          if (matmul_node->HasPrimalAttr("DISABLE_MERGE_ASSIGN_ADD")) {
-            matmul_dw_nodes.clear();
-            break;
-          }
           matmul_dw_nodes.push_back(matmul_node);
+        } else if (IsPrimitiveCNode(assign_add_node->cast<CNodePtr>()->input(2), prim::kPrimCast)) {
+          auto cast_node = assign_add_node->cast<CNodePtr>()->input(2)->cast<CNodePtr>();
+          if (IsPrimitiveCNode(cast_node->input(1), prim::kPrimMatMul)) {
+            auto matmul_node = cast_node->input(1)->cast<CNodePtr>();
+            matmul_dw_nodes.push_back(matmul_node);
+            matmul_node->AddAttr(kAttrCastDw, MakeValue(true));
+            cast_node->AddAttr(kAttrCastDw, MakeValue(true));
+          }
         } else {
           matmul_dw_nodes.clear();
           break;
@@ -164,6 +214,10 @@ void AssignAddOpt(const FuncGraphPtr &graph) {
           auto transpose_a2 = GetValue<bool>(mat2_prim->GetAttr(TRANSPOSE_A));
           auto transpose_b1 = GetValue<bool>(mat1_prim->GetAttr(TRANSPOSE_B));
           auto transpose_b2 = GetValue<bool>(mat2_prim->GetAttr(TRANSPOSE_B));
+          if (!(matmul_dw_nodes_front->HasAttr(kAttrCastDw) == matmul_dw_node->HasAttr(kAttrCastDw))) {
+            return false;
+          }
+
           if (transpose_a1 != transpose_a2 || transpose_b1 != transpose_b2) {
             return false;
           }
@@ -198,7 +252,7 @@ void AssignAddOpt(const FuncGraphPtr &graph) {
       if (!is_same_matmul) {
         return;
       }
-      MergeMultiMatmulAssingAdd(manager, each_graph, matmul_dw_nodes, pair);
+      MergeMultiMatmulAssignAdd(manager, each_graph, matmul_dw_nodes, pair, backward_matmul_dx_dw_map);
     }
   }
 }
