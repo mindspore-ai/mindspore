@@ -1029,6 +1029,7 @@ class InplaceAdd(Primitive):
             self.indices = (indices,)
         for item in self.indices:
             validator.check_value_type("item of indices", item, [int], self.name)
+        self.add_prim_attr("indices", self.indices)
 
 
 class InplaceIndexAdd(Primitive):
