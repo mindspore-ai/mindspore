@@ -164,6 +164,10 @@ static std::map<std::string, std::map<std::string, AttrConverterPair>> PrimAttrC
   {"FusedBatchNorm", DataFormatMap},
   {"DeformableConv2d", DataFormatMap}};
 
+bool CheckAndConvertUtils::CheckPrimAttrConverted(const std::string &op_name) {
+  return PrimAttrConvertMap.find(op_name) != PrimAttrConvertMap.end();
+}
+
 bool CheckAndConvertUtils::GetDataFormatEnumValue(const ValuePtr &value, int64_t *enum_value) {
   MS_EXCEPTION_IF_NULL(value);
   if (!value->isa<StringImm>()) {

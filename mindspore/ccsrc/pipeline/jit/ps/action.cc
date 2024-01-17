@@ -63,6 +63,7 @@
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "include/backend/debug/profiler/profiling.h"
 #include "frontend/optimizer/fallback_rewriter.h"
+#include "pipeline/jit/ps/load_mindir.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/backend/distributed/cluster/cluster_context.h"
 #include "include/backend/distributed/ps/ps_context.h"
@@ -1741,6 +1742,8 @@ std::vector<ActionItem> MindIRPipeline() {
   std::vector<ActionItem> actions;
   // Set funcGraph loaded from MindIR to resource.
   (void)actions.emplace_back(std::make_pair(kLoadMindir, SetMindIRGraphAction));
+  (void)actions.emplace_back(std::make_pair(kModifyMindirGraph, ModifyGraphGeneratedByMindIR));
+  (void)actions.emplace_back(std::make_pair(kInferMindir, InferMindIR));
   (void)actions.emplace_back(std::make_pair(kValidate, ValidateAction));
   return actions;
 }

@@ -71,6 +71,7 @@
 #include "tools/optimizer/graph/args_to_attr_pass.h"
 #include "tools/optimizer/fusion/ffn_antiquant_fusion.h"
 #include "tools/optimizer/common/pass_manager_extends.h"
+#include "load_mindir/infer_mindir.h"
 
 namespace mindspore {
 namespace lite {
@@ -136,6 +137,12 @@ FuncGraphPtr ConverterFuncGraph::Load(const std::shared_ptr<ConverterPara> &para
     MS_LOG(ERROR) << "Load MindIR file failed. Please check model file and decrypt key.";
     return nullptr;
   }
+  auto manager = func_graph->manager();
+  if (manager == nullptr) {
+    manager = MakeManager();
+    manager->AddFuncGraph(func_graph, true);
+  }
+  InferFuncGraphLoaded(func_graph);
   bool is_original = IsOriginalFuncGraph(func_graph);
   if (is_original) {
     func_graph->set_attr("graph_name", MakeValue("main_graph"));

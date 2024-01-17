@@ -4,6 +4,7 @@ package mind_ir;
 enum Version {
   IR_VERSION_START = 0;
   IR_VERSION = 1;
+  IR_VERSION_WITH_PRIM_FUNCTION=2;
 }
 
 message AttributeProto {

@@ -566,23 +566,21 @@ bool ValidMindir(const FuncGraphPtr &root) {
     manager = MakeManager();
     manager->AddFuncGraph(root, true);
   }
+  MS_LOG(DEBUG) << "Success to valid the mindir. " << root->ToString() << " : " << root.get();
+  return true;
+}
+
+void InferFuncGraphLoaded(const FuncGraphPtr &root) {
   abstract::AbstractBasePtrList func_args;
-  const auto inputs = root->get_inputs();
+  const auto &inputs = root->get_inputs();
   (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(func_args),
                        [](const AnfNodePtr &arg) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(arg);
                          if (arg->abstract() == nullptr) {
-                           MS_LOG(ERROR) << "The parameter's abstract is null:" << arg->DebugString();
+                           MS_LOG(EXCEPTION) << "The parameter's abstract is null:" << arg->DebugString();
                          }
-                         MS_EXCEPTION_IF_NULL(arg->abstract());
                          return arg->abstract();
                        });
-  auto valid = InferMindir(root, func_args);
-  if (!valid) {
-    MS_LOG(ERROR) << "There is some wrong in the mindir. " << root->ToString() << " : " << root.get();
-    return false;
-  }
-  MS_LOG(DEBUG) << "Success to valid the mindir. " << root->ToString() << " : " << root.get();
-  return true;
+  (void)InferMindir(root, func_args);
 }
 }  // namespace mindspore
