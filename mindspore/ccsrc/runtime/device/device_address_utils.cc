@@ -1072,7 +1072,7 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateInputAddress(const DeviceCont
   return device_address;
 }
 
-void DeviceAddressUtils::CreateOutputTensorAddress(DeviceContext *device_context, size_t stream_id,
+void DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_context, size_t stream_id,
                                                    const std::vector<tensor::TensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(device_context);
   for (size_t i = 0; i < outputs.size(); ++i) {
@@ -1102,7 +1102,7 @@ void DeviceAddressUtils::CreateOutputTensorAddress(DeviceContext *device_context
   }
 }
 
-device::DeviceAddressPtr DeviceAddressUtils::CreateDeviceAddress(DeviceContext *device_context,
+device::DeviceAddressPtr DeviceAddressUtils::CreateDeviceAddress(const DeviceContext *device_context,
                                                                  const tensor::TensorPtr &tensor,
                                                                  const ShapeVector &real_shape,
                                                                  const size_t &stream_id) {
@@ -1120,7 +1120,7 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateDeviceAddress(DeviceContext *
   return device_address;
 }
 
-void DeviceAddressUtils::MallocForOutputs(DeviceContext *device_context,
+void DeviceAddressUtils::MallocForOutputs(const DeviceContext *device_context,
                                           const std::vector<tensor::TensorPtr> &outputs) {
   for (const auto &output : outputs) {
     auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(output->device_address());

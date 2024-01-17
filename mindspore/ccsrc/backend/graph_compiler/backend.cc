@@ -44,7 +44,7 @@
 #include "runtime/graph_scheduler/graph_compiler.h"
 #include "runtime/pynative/op_runner.h"
 #include "runtime/pynative/graph_adapter.h"
-#include "kernel/pyboost/py_boost_utils.h"
+#include "kernel/pyboost/pyboost_utils.h"
 #include "runtime/pynative/op_function/pyboost_grad_functions.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
 #include "pybind_api/gil_scoped_long_running.h"

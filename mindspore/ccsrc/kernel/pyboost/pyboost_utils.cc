@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "kernel/pyboost/py_boost_utils.h"
+#include "kernel/pyboost/pyboost_utils.h"
 #include <algorithm>
 #include <utility>
 #include <unordered_map>
@@ -80,7 +80,7 @@ bool PyBoostUtils::IsKernelModRegistered(const std::string &device_name, const s
 }
 
 kernel::KernelModPtr PyBoostUtils::CreateKernelMod(const PrimitivePtr &prim, const std::string &op_name,
-                                                   DeviceContext *device_context,
+                                                   const DeviceContext *device_context,
                                                    const std::vector<KernelTensor *> &inputs,
                                                    const std::vector<KernelTensor *> &outputs) {
   MS_EXCEPTION_IF_NULL(device_context);
@@ -141,7 +141,7 @@ DeviceSyncPtr PyBoostUtils::ContiguousByDeviceAddress(const DeviceSyncPtr &devic
   return new_device_address;
 }
 
-void PyBoostUtils::CreateOutputTensor(DeviceContext *device_context, const tensor::TensorPtr &input,
+void PyBoostUtils::CreateOutputTensor(const DeviceContext *device_context, const tensor::TensorPtr &input,
                                       const TensorStorageInfoPtr &storage_info,
                                       std::vector<tensor::TensorPtr> *outputs) {
   MS_EXCEPTION_IF_NULL(input);
@@ -233,7 +233,7 @@ std::vector<kernel::KernelTensor *> PyBoostUtils::GetKernelTensorFromAddress(
   return input_kernel_tensors;
 }
 
-void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, size_t stream_id,
+void PyBoostUtils::GetKernelTensor(const DeviceContext *device_context, size_t stream_id,
                                    const abstract::AbstractBasePtr &input_abs, size_t index,
                                    std::vector<kernel::KernelTensor *> *kernel_tensor_list,
                                    device::DeviceAddressPtrList *device_address_list, const TensorPtr &tensor) {
@@ -248,7 +248,7 @@ void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, size_t stream_
   (void)kernel_tensor_list->emplace_back(kernel_tensor.get());
 }
 
-void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, size_t stream_id,
+void PyBoostUtils::GetKernelTensor(const DeviceContext *device_context, size_t stream_id,
                                    const abstract::AbstractBasePtr &input_abs, size_t index,
                                    std::vector<kernel::KernelTensor *> *kernel_tensor_list,
                                    device::DeviceAddressPtrList *device_address_list,
@@ -296,7 +296,7 @@ PyboostKernelExtraFuncFactory &PyboostKernelExtraFuncFactory::GetInstance() {
   return instance;
 }
 
-void PyBoostUtils::LaunchKernel(const PrimitivePtr &primitive, device::DeviceContext *device_context,
+void PyBoostUtils::LaunchKernel(const PrimitivePtr &primitive, const DeviceContext *device_context,
                                 const AddressInfoPair &input_address_info, const AddressInfoPair &output_address_info,
                                 void *stream_ptr) {
   const auto &real_name = primitive->name();
@@ -405,7 +405,8 @@ bool IsObjectTypeStrictlyMatched(const std::vector<TypeId> &object_dtypes,
 
 std::pair<bool, KernelAttr> PyBoostUtils::SelectKernel(const std::vector<AbstractBasePtr> &inputs_abs,
                                                        const AbstractBasePtr &outputs_abs,
-                                                       DeviceContext *device_context, const std::string &op_name) {
+                                                       const DeviceContext *device_context,
+                                                       const std::string &op_name) {
   // only support CPU
   const auto &kernel_mod = device_context->GetKernelExecutor(false)->CreateKernelMod(op_name);
   const auto &support_list = kernel_mod->GetOpSupport();
@@ -449,7 +450,6 @@ tensor::TensorPtr PyBoostUtils::CastTensor(const tensor::TensorPtr &tensor, cons
   }
   auto type_id64 = std::make_shared<Int64Imm>(static_cast<int64_t>(type_id));
   const auto &cast_op = CREATE_PYBOOST_OP(Cast, device_target);
-  cast_op->set_primitive(prim::kPrimCast);
   return cast_op->Call(tensor, type_id64);
 }
 

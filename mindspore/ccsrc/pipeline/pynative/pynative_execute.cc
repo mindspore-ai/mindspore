@@ -38,7 +38,7 @@
 #include "include/common/utils/python_fallback_running.h"
 #include "kernel/kernel_mod_cache.h"
 #include "runtime/pipeline/pipeline.h"
-#include "kernel/pyboost/py_boost_utils.h"
+#include "kernel/pyboost/pyboost_utils.h"
 
 namespace mindspore::pynative {
 std::shared_ptr<PyNativeExecutor> PyNativeExecutor::executor_ = nullptr;

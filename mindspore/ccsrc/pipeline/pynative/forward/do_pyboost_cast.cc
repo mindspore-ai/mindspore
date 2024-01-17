@@ -57,7 +57,6 @@ tensor::TensorPtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPtr &o
   cast_run_info->base_op_run_info.device_target =
     PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->GetCurrentDeviceTarget(cast_prim);
   auto cast_op = CREATE_PYBOOST_OP(Cast, cast_run_info->base_op_run_info.device_target);
-  cast_op->set_primitive(cast_prim);
   (void)cast_op->Call(t, type_id64);
   PyNativeAlgo::PyBoost::UpdateOpRunInfo(cast_op, cast_run_info->op_grad_info->input_value, cast_run_info);
   if (op_run_info->requires_grad) {

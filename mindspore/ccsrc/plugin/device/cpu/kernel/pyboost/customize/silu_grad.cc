@@ -16,11 +16,11 @@
 
 #include "plugin/device/cpu/kernel/pyboost/customize/silu_grad.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "kernel/pyboost/py_boost_utils.h"
+#include "kernel/pyboost/pyboost_utils.h"
 #include "plugin/device/cpu/kernel/pyboost/auto_generate/sigmoid.h"
 #include "plugin/device/cpu/kernel/pyboost/auto_generate/sigmoid_grad.h"
 #include "plugin/device/cpu/kernel/pyboost/auto_generate/mul.h"
-#include "plugin/device/cpu/kernel/pyboost/auto_generate/add.h"
+#include "plugin/device/cpu/kernel/pyboost/auto_generate/add_ext.h"
 #include "mindspore/core/ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore {
@@ -31,15 +31,11 @@ OpPtr SiLUGradCPUCall(const device::DeviceContext *device_context, const TensorP
                       const TensorPtr &x_tensor) {
   MS_LOG(DEBUG) << "Call start";
   const auto &sigmoid = CREATE_PYBOOST_OP(Sigmoid, device_context->device_context_key_.device_name_);
-  sigmoid->set_primitive(prim::kPrimSigmoid);
   const auto &mul_a = CREATE_PYBOOST_OP(Mul, device_context->device_context_key_.device_name_);
-  mul_a->set_primitive(prim::kPrimMul);
   const auto &mul_b = CREATE_PYBOOST_OP(Mul, device_context->device_context_key_.device_name_);
-  mul_b->set_primitive(prim::kPrimMul);
   const auto &sigmoid_grad = CREATE_PYBOOST_OP(SigmoidGrad, device_context->device_context_key_.device_name_);
-  sigmoid_grad->set_primitive(prim::kPrimSigmoidGrad);
-  const auto &add = CREATE_PYBOOST_OP(Add, device_context->device_context_key_.device_name_);
-  add->set_primitive(prim::kPrimAddExt);
+  const auto &add = CREATE_PYBOOST_OP(AddExt, device_context->device_context_key_.device_name_);
+
   auto alpha = std::make_shared<FP32Imm>(1.0);
 
   const auto &sigmoid_tensor = sigmoid->Call(x_tensor);

@@ -21,7 +21,7 @@
 #include "ir/value.h"
 #include "ir/tensor.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "kernel/pyboost/py_boost_utils.h"
+#include "kernel/pyboost/pyboost_utils.h"
 #include "mindspore/core/ops/auto_generate/gen_ops_primitive.h"
 #include "runtime/hardware/device_context_manager.h"
 

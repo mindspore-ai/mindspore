@@ -16,7 +16,7 @@
 
 #include "plugin/device/ascend/kernel/pyboost/customize/sigmoid_grad.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
-#include "kernel/pyboost/py_boost_utils.h"
+#include "kernel/pyboost/pyboost_utils.h"
 #include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
 #include "runtime/device/device_address_utils.h"
 

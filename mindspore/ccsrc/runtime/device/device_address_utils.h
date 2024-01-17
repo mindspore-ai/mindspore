@@ -109,18 +109,19 @@ class BACKEND_EXPORT DeviceAddressUtils {
     return device_address;
   }
 
-  static void CreateOutputTensorAddress(DeviceContext *device_context, size_t stream_id,
+  static void CreateOutputTensorAddress(const DeviceContext *device_context, size_t stream_id,
                                         const std::vector<tensor::TensorPtr> &outputs);
 
-  static void MallocForOutputs(DeviceContext *device_context, const std::vector<tensor::TensorPtr> &outputs);
+  static void MallocForOutputs(const DeviceContext *device_context, const std::vector<tensor::TensorPtr> &outputs);
 
   static device::DeviceAddressPtr CreateWorkspaceAddress(const DeviceContext *device_context, size_t stream_id,
                                                          const size_t &workspace_size);
 
   static void UpdateDeviceAddressHostInfoByNode(const device::DeviceAddressPtr &addr, const AnfNodePtr &node,
                                                 size_t output_idx);
-  static device::DeviceAddressPtr CreateDeviceAddress(DeviceContext *device_context, const tensor::TensorPtr &tensor,
-                                                      const ShapeVector &real_shape, const size_t &stream_id);
+  static device::DeviceAddressPtr CreateDeviceAddress(const DeviceContext *device_context,
+                                                      const tensor::TensorPtr &tensor, const ShapeVector &real_shape,
+                                                      const size_t &stream_id);
 };
 }  // namespace runtime
 }  // namespace mindspore

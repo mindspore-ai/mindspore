@@ -16,7 +16,7 @@
 
 #include "plugin/device/ascend/kernel/pyboost/customize/contiguous.h"
 #include "kernel/pyboost/op_register.h"
-#include "kernel/pyboost/py_boost_utils.h"
+#include "kernel/pyboost/pyboost_utils.h"
 #include "kernel/pyboost/auto_generate/copy.h"
 #include "kernel/pyboost/customize/op_common.h"
 
