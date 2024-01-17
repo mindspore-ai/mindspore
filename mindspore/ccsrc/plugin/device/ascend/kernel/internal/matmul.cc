@@ -21,6 +21,7 @@ internal::OpParamPtr MatMul::CreateOpParam(const std::vector<KernelTensor *> &in
                                            const std::vector<KernelTensor *> &outputs) {
   internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
   internal::MatMulParam matmul_param;
+  param_ptr->opId = internal::OpId::MatMul;
   // setup matmul param from inputs
   param_ptr->specificParam = matmul_param;
   return param_ptr;
