@@ -40,13 +40,13 @@ int InternalKernelMod::Build(const std::vector<KernelTensor *> &inputs, const st
   internal::ValidateInfo info;
   info.input_num_ = inputsIdxMap_.size();
   info.output_num_ = outputsIdxMap_.size();
-  for (auto input : inputs) {
-    info.input_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(input->GetDtype()));
-    info.input_format_.emplace_back(InternalKernelUtils::ToInternalFormat(input->GetFormat()));
+  for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); iter++) {
+    info.input_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(inputs[iter->first]->GetDtype()));
+    info.input_format_.emplace_back(InternalKernelUtils::ToInternalFormat(inputs[iter->first]->GetFormat()));
   }
-  for (auto output : outputs) {
-    info.output_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(output->GetDtype()));
-    info.output_format_.emplace_back(InternalKernelUtils::ToInternalFormat(output->GetFormat()));
+  for (auto iter = outputsIdxMap_.begin(); iter != outputsIdxMap_.end(); iter++) {
+    info.output_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(outputs[iter->first]->GetDtype()));
+    info.output_format_.emplace_back(InternalKernelUtils::ToInternalFormat(outputs[iter->first]->GetFormat()));
   }
   impl_->Init(info);
   for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); iter++) {
@@ -60,15 +60,13 @@ int InternalKernelMod::Build(const std::vector<KernelTensor *> &inputs, const st
 bool InternalKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   SetInOutIdx();
   inputs_.resize(inputsIdxMap_.size());
-  for (size_t i = 0; i < inputs_.size(); ++i) {
-    inputs_[i] = new internal::Tensor();
-  }
-  // std::fill(inputs_.begin(), inputs_.end(), new internal::Tensor());
+  std::generate(inputs_.begin(), inputs_.end(), []() { return new internal::Tensor(); });
+
   outputs_.resize(outputsIdxMap_.size());
-  for (size_t i = 0; i < outputs_.size(); ++i) {
-    outputs_[i] = new internal::Tensor();
-  }
-  // std::fill(outputs_.begin(), outputs_.end(), new internal::Tensor());
+  std::generate(outputs_.begin(), outputs_.end(), []() { return new internal::Tensor(); });
+
+  device_tiling_buf_.size_ = 0;
+  device_tiling_buf_.addr_ = nullptr;
   return true;
 }
 
@@ -104,11 +102,21 @@ int InternalKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
   }
 
   // allocate device tiling buf
-  device_tiling_buf_.size_ = tiling_size;
-  ret = aclrtMalloc(&device_tiling_buf_.addr_, tiling_size, ACL_MEM_MALLOC_HUGE_FIRST);
-  if (ret != 0) {
-    MS_LOG(ERROR) << "op " << op_type_ << " alloc device tiling buf failed";
-    return KRET_RESIZE_FAILED;
+  if (tiling_size != device_tiling_buf_.size_) {
+    if (device_tiling_buf_.addr_ != nullptr) {
+      ret = aclrtFree(device_tiling_buf_.addr_);
+      if (ret != 0) {
+        MS_LOG(ERROR) << "op " << op_type_ << " free old device tiling buf failed";
+        return KRET_RESIZE_FAILED;
+      }
+      device_tiling_buf_.addr_ = nullptr;
+    }
+    device_tiling_buf_.size_ = tiling_size;
+    ret = aclrtMalloc(&device_tiling_buf_.addr_, tiling_size, ACL_MEM_MALLOC_HUGE_FIRST);
+    if (ret != 0) {
+      MS_LOG(ERROR) << "op " << op_type_ << " alloc device tiling buf failed";
+      return KRET_RESIZE_FAILED;
+    }
   }
   ret = aclrtMemcpy(device_tiling_buf_.addr_, device_tiling_buf_.size_, host_tiling_buf.addr_, host_tiling_buf.size_,
                     ACL_MEMCPY_HOST_TO_DEVICE);
