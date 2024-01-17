@@ -19,22 +19,30 @@ from ... import Tensor
 
 
 def linear_sum_assignment(cost_matrix, maximize, dimension_limit=Tensor(sys.maxsize)):
-    """
+    r"""
     Solve the linear sum assignment problem.
 
+    The assignment problem is represented as follows:
+
+    .. math::
+        min\sum_{i}^{} \sum_{j}^{} C_{i,j} X_{i,j}
+
+    where :math:`C` is cost matrix, :math:`X_{i,j} = 1` means column :math:`j` is assigned to row :math:`i` .
+
     Args:
-        cost_matrix (Tensor): 2-D Input Tensor.
-            The cost matrix of the bipartite graph.
-        maximize (bool): bool.
-            Calculates a maximum weight matching if true.
-        dimension_limit (Tensor): 0-D Input Tensor.
-            A scalar used to limit the actual size of the 2nd dimension. Optimized for
-            padding scenes. Default means no dimension limit.
+        cost_matrix (Tensor): 2-D cost matrix. Tensor of shape :math:`(M, N)` .
+        maximize (bool): Calculate a maximum weight matching if true, otherwise calculate a minimum weight matching.
+        dimension_limit (Tensor, optional): A scalar used to limit the actual size of the 2nd dimension of
+            ``cost_matrix``. Default is ``Tensor(sys.maxsize)``, which means no limitation. The type is 0-D int64
+            Tensor.
 
     Returns:
-        1-D Output Tensors with 'row_idx' and 'col_idx'. An array of row indices and
-        one of corresponding column indices giving the optimal assignment. If specified
-        dimension_limit, padding value at the end would be -1.
+        A tuple of tensors containing 'row_idx' and 'col_idx'.
+
+        - **row_idx** (Tensor) - Row indices of the problem. If `dimension_limit` is given, -1 would be padded at the
+          end. The shape is  :math:`(N, )` , where :math:`N` is the minimum value of `cost_matrix` dimension.
+        - **col_idx** (Tensor) - Column indices of the problem. If `dimension_limit` is given, -1 would be padded at
+          the end. The shape is  :math:`(N, )` , where :math:`N` is the minimum value of `cost_matrix` dimension.
 
     Raises:
         TypeError: If the data type of `cost_matrix` is not the type in [float16, float32, float64,
