@@ -302,6 +302,12 @@ OUTPUT_MAP(InplaceIndexAdd) = {{0, OUTPUT_DESC(var)}};
 REG_ADPT_DESC(InplaceIndexAdd, prim::kPrimInplaceIndexAdd->name(), ADPT_DESC(InplaceIndexAdd))
 REG_ADPT_DESC(IndexAdd, prim::kPrimIndexAdd->name(), ADPT_DESC(InplaceIndexAdd))
 
+// MaskedScatter
+INPUT_MAP(MaskedScatter) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(mask)}, {3, INPUT_DESC(updates)}};
+ATTR_MAP(MaskedScatter) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(MaskedScatter) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MaskedScatter, kMaskedScatterOpName, ADPT_DESC(MaskedScatter))
+
 // UnsortedSegmentMax
 INPUT_MAP(UnsortedSegmentMax) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}, {3, INPUT_DESC(num_segments)}};
 ATTR_INPUT_MAP(UnsortedSegmentMax) = {{"num_segments", "num_segments"}};
