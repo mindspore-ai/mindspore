@@ -60,6 +60,11 @@ bool Im2ColCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const s
   dilations_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrDilations));
   pads_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kPads));
 
+  MS_EXCEPTION_IF_CHECK_FAIL(!ksizes_.empty(), "For Im2Col, Input ksize must not be empty.");
+  MS_EXCEPTION_IF_CHECK_FAIL(!strides_.empty(), "For Im2Col, Input strides must not be empty.");
+  MS_EXCEPTION_IF_CHECK_FAIL(!dilations_.empty(), "For Im2Col, Input dilations must not be empty.");
+  MS_EXCEPTION_IF_CHECK_FAIL(!pads_.empty(), "For Im2Col, Input pads must not be empty.");
+
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
