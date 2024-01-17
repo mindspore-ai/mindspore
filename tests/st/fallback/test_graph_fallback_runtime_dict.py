@@ -1160,3 +1160,50 @@ def test_dict_inner_method_overrrided_3():
         return obj.to_tuple()
     ms_out = foo()
     assert ms_out == (1, 2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pynative_jit_dict_grad():
+    """
+    Feature: Return dict in forward graph.
+    Description: Support grad for dict return in pynative mode.
+    Expectation: No exception.
+    """
+
+    @ms.jit
+    def dict_net(a):
+        x = {'a': a, 'b': 2}
+        return x
+
+    ms.set_context(mode=ms.PYNATIVE_MODE)
+    out = ops.grad(dict_net)(ms.Tensor([1]))
+    assert out == 1
+    ms.set_context(mode=ms.GRAPH_MODE)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pynative_jit_dict_grad_2():
+    """
+    Feature: Return dict in forward graph.
+    Description: Support grad for dict return in pynative mode.
+    Expectation: No exception.
+    """
+
+    @ms.jit
+    def dict_net(a):
+        x = {'a': a, 'b': 2}
+        return x
+
+    ms.set_context(mode=ms.PYNATIVE_MODE)
+    grad = ops.GradOperation()
+    out = grad(dict_net)(ms.Tensor([1]))
+    assert out == 1
+    ms.set_context(mode=ms.GRAPH_MODE)

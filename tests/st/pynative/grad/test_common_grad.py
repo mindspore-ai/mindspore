@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -108,6 +108,40 @@ def test_network_with_dict_output():
         def construct(self, x):
             y = self.relu(x)
             out = {Tensor(True): y}
+            return out
+
+    x = np.array([[0.8, 0.6, 0.2], [1.8, 1.3, 1.1]])
+    ms_net = DicNet()
+    # No sens
+    ms_grad = GradOfFirstInput(ms_net, False)
+    grad_out = ms_grad(Tensor(x))
+    assert np.allclose(np.ones_like(x), grad_out.asnumpy())
+
+    # Have sens
+    out = ms_net(Tensor(x))
+    ms_grad = GradOfFirstInput(ms_net, True)
+    grad_out = ms_grad(Tensor(x), out)
+    assert np.allclose(x, grad_out.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_jit_network_with_dict_output():
+    """
+    Feature: Test sens dict in jit
+    Description: Net out is dict in jit
+    Expectation: Success
+    """
+    class DicNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.relu = P.ReLU()
+
+        @jit
+        def construct(self, x):
+            y = self.relu(x)
+            out = {'a': y}
             return out
 
     x = np.array([[0.8, 0.6, 0.2], [1.8, 1.3, 1.1]])

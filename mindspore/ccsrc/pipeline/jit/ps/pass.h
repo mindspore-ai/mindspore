@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, co
                                 const std::vector<bool> &need_grad_flags);
 FuncGraphPtr JitBpropGraphPass(const ResourcePtr &resource, bool need_renormalize);
 FuncGraphPtr FinalBpropGraphPass(const ResourcePtr &resource, bool has_control_flow);
+void UpdateArgsSpec(const FuncGraphPtr &func_graph, const ResourcePtr &resource);
 }  // namespace pipeline
 }  // namespace mindspore
 

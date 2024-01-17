@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,6 @@ using CompileGraphs = compile::CompileGraphs;
 using abstract::AnalysisResult;
 using mindspore::abstract::AnalysisContextPtr;
 using mindspore::validator::Validate;
-namespace {
 void UpdateArgsSpec(const FuncGraphPtr &func_graph, const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(resource);
@@ -105,7 +104,6 @@ void UpdateArgsSpec(const FuncGraphPtr &func_graph, const ResourcePtr &resource)
                        [](const AnfNodePtr &p) { return p->abstract(); });
   resource->set_args_abs(args_abs);
 }
-}  // namespace
 
 bool PyInterpretToExecutePass(const ResourcePtr &resource) {
   const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
@@ -149,6 +147,11 @@ bool TransformTopGraphPass(const ResourcePtr &resource) {
 }
 
 bool RewriterAfterOptAPass(const ResourcePtr &resource) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->not_convert_jit()) {
+    return true;
+  }
   MS_EXCEPTION_IF_NULL(resource);
   FuncGraphPtr func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
