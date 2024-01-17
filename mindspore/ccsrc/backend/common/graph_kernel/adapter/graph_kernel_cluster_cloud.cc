@@ -150,6 +150,20 @@ bool StaticShapeCluster::IsClusterableOp(const AnfNodePtr &node) {
       return false;
     }
   }
+
+  if (IsPrimitiveCNode(node, prim::kPrimReshape)) {
+    auto output_format = cb->GetOutputFormat(node, 0);
+    if (output_format != kOpFormat_DEFAULT) {
+      auto primitive = GetCNodePrimitive(node);
+      MS_EXCEPTION_IF_NULL(primitive);
+      primitive = primitive->Clone();
+      // format attr used by ReshapeOp::InferFormat
+      primitive->AddAttr("format", MakeValue(output_format));
+      auto cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      cnode->set_input(kAnfPrimitiveIndex, NewValueNode(primitive));
+    }
+  }
   // For AICPU operators, only the Reshape can be clustered.
   if (cb->GetTargetFromContext() == kAscendDevice) {
     if (cb->GetProcessor(node) != "aicore" && !IsPrimitiveCNode(node, prim::kPrimReshape)) {
