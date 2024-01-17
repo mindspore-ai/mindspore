@@ -2344,5 +2344,18 @@ REG_BPROP_BUILDER("TridiagonalSolve").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib)
   auto grad_diags = ib->Sub(ib->Tensor(0, ib->GetDtype(a)), a);
   return {grad_diags, grad_rhs};
 });
+
+REG_BPROP_BUILDER("FFTShift").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
+  auto axes = ib->GetInput(kIndex1);
+  auto forward = ib->GetInput(kIndex2);
+  auto forward_value = GetValue<bool>(forward->BuildValue());
+  auto dout = ib->GetInput(kIndex4);
+  if (forward_value == true) {
+    return {ib->Emit("FFTShift", {dout, axes, ib->Value(false)}), ib->OutZeros(axes), ib->OutZeros(forward)};
+  } else {
+    return {ib->Emit("FFTShift", {dout, axes, ib->Value(true)}), ib->OutZeros(axes), ib->OutZeros(forward)};
+  }
+});
+
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

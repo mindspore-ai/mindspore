@@ -445,6 +445,17 @@ Reduction函数
     mindspore.ops.hann_window
     mindspore.ops.kaiser_window
 
+快速傅里叶变换函数
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.ifftshift
+    mindspore.ops.fftshift
+
 Tensor操作函数
 ----------------
 
