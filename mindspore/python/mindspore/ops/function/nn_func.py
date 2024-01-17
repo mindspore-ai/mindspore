@@ -7520,6 +7520,63 @@ def prompt_flash_attention(query, key, value, padding_mask, attn_mask, actual_se
                quant_scale1, deq_scale2, quant_scale2, quant_offset2)
 
 
+def incre_flash_attention(query, key, value, attn_mask, actual_seq_lengths, padding_mask, dequant_scale1, quant_scale1,
+                          dequant_scale2, quant_scale2, quant_offset2, antiquant_scale, antiquant_offset, block_table,
+                          num_heads, input_layout="BSH", scale_value=1.0, num_key_value_heads=0, block_size=0,
+                          inner_precise=1):
+    r"""
+    The interface for fully inference.
+
+    B -- Batch size
+
+    S -- Sequence length
+
+    H -- Hidden size
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Inputs:
+        - **query** (Tensor) - The query tensor with data type of float16 or bfloat16.
+          Input tensor of shape :math:`(B, 1, H)` / :math:`(B, N, 1, D)`.
+        - **key** (TensorList) - The key tensor with data type of float16 or bfloat16.
+          Input tensor of shape :math:`(B, S, H)` / :math:`(B, N, S, D)`.
+        - **value** (TensorList) - The value tensor with data type of float16 or bfloat16.
+          Input tensor of shape :math:`(B, S, H)` / :math:`(B, N, S, D)`.
+        - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or bool.
+          Input tensor of shape :math:`(B, S)` / :math:`(B, 1, S)` / :math:`(B, 1, 1, S)`.
+        - **actual_seq_lengths** (Tensor) - Describe actual sequence length of each input with data type of int.
+        - **padding_mask** (Tensor) - The padding mask tensor with data type of float16.
+        - **dequant_scale1** (Tensor) - Quantitative parametor, the tensor with data type of uint64.
+        - **quant_scale1** (Tensor) - Quantitative parametor, the tensor with data type of float.
+        - **dequant_scale2** (Tensor) - Quantitative parametor, the tensor with data type of uint64.
+        - **quant_scale2** (Tensor) - Quantitative parametor, the tensor with data type of float.
+        - **quant_offset2** (Tensor) - Quantitative parametor, the tensor with data type of float.
+        - **antiquant_scale** (Tensor) - Quantitative parametor, the tensor with data type of float.
+        - **antiquant_offset** (Tensor) - Quantitative parametor, the tensor with data type of float.
+        - **block_table** (Tensor) - The tensor with data type of float.
+        - **num_heads**  (int) - The number of heads.
+        - **input_layout** (str) - the data layout of the input qkv, support `(BSH)` and `(BNSD)`. Default `BSH`.
+        - **scale_value** (double) - The scale value indicating the scale coefficient, which is used as the scalar of
+          Muls in the calculation. Default: 1.0.
+        - **num_key_value_heads** (int) - head numbers of key/value which are used in GQA algorithm.
+          The value o indicates if the key and value have the same head nums, use numHeads.  Default: 0.
+        - **block_size** (int) - Default: 0.
+        - **inner_precise** (int) - Default: 1.
+
+    Outputs:
+        - **attention_out** (Tensor) - Input tensor of shape :math:`(B, 1, H)` / :math:`(B, N, 1, D)`.
+
+    Supported Platforms:
+        ``Ascend``
+    """
+
+    _ifa = _get_cache_prim(NN_OPS.IncreFlashAttention)(num_heads, input_layout, scale_value, num_key_value_heads,
+                                                       block_size, inner_precise)
+    return _ifa(query, key, value, attn_mask, actual_seq_lengths, padding_mask, dequant_scale1, quant_scale1,
+                dequant_scale2, quant_scale2, quant_offset2, antiquant_scale, antiquant_offset, block_table)
+
+
 __all__ = [
     'adaptive_avg_pool1d',
     'adaptive_avg_pool2d',

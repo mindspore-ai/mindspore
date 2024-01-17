@@ -51,8 +51,8 @@ enum FlashAttentionScoreOutputIndex : size_t {
   kFlashAttentionScoreGradOutputsNum,
 };
 constexpr size_t kSoftmaxLastDim = 8;
-constexpr size_t kInputQueryBSHRank = 3;
-constexpr size_t kInputQueryBNSDRank = 4;
+constexpr size_t kInputQueryBSHRankFASG = 3;
+constexpr size_t kInputQueryBNSDRankFASG = 4;
 constexpr char kInputLayoutBSH[] = "BSH";
 constexpr char kInputLayoutBNSD[] = "BNSD";
 
@@ -111,8 +111,8 @@ abstract::TupleShapePtr FlashAttentionScoreGradInferShape(const PrimitivePtr &pr
     input_args[kFlashAttentionScoreGradInputKeyIndex]->BuildShape())[kShape];
   ShapeVector expect_kv_shape;
   if (input_layout == kInputLayoutBSH) {
-    if (query_shape.size() != kInputQueryBSHRank) {
-      MS_LOG(EXCEPTION) << op_name << ": The rank of input `query` must be " << kInputQueryBSHRank << ", but got "
+    if (query_shape.size() != kInputQueryBSHRankFASG) {
+      MS_LOG(EXCEPTION) << op_name << ": The rank of input `query` must be " << kInputQueryBSHRankFASG << ", but got "
                         << query_shape.size();
     }
     batch_size = query_shape[kIndex0];
@@ -128,8 +128,8 @@ abstract::TupleShapePtr FlashAttentionScoreGradInferShape(const PrimitivePtr &pr
     kv_head_num = key_shape[kIndex2] / head_size;
     expect_kv_shape = {batch_size, kv_seq_len, kv_head_num * head_size};
   } else {
-    if (query_shape.size() != kInputQueryBNSDRank) {
-      MS_LOG(EXCEPTION) << op_name << ": The rank of 'query' must be " << kInputQueryBNSDRank << ", but got "
+    if (query_shape.size() != kInputQueryBNSDRankFASG) {
+      MS_LOG(EXCEPTION) << op_name << ": The rank of 'query' must be " << kInputQueryBNSDRankFASG << ", but got "
                         << query_shape.size();
     }
     batch_size = query_shape[kIndex0];

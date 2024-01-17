@@ -28,8 +28,8 @@ namespace mindspore {
 namespace ops {
 namespace {
 constexpr size_t kSoftmaxLastDim = 8;
-constexpr size_t kInputQueryBSHRank = 3;
-constexpr size_t kInputQueryBNSDRank = 4;
+constexpr size_t kInputQueryBSHRankFAS = 3;
+constexpr size_t kInputQueryBNSDRankFAS = 4;
 constexpr char kInputLayoutBSH[] = "BSH";
 constexpr char kInputLayoutBNSD[] = "BNSD";
 
@@ -87,9 +87,9 @@ abstract::TupleShapePtr FlashAttentionScoreInferShape(const PrimitivePtr &primit
   auto key_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
     input_args[kFlashAttentionScoreInputKeyIndex]->BuildShape())[kShape];
   if (input_layout == kInputLayoutBSH) {
-    if (query_shape.size() != kInputQueryBSHRank || key_shape.size() != query_shape.size()) {
-      MS_LOG(EXCEPTION) << op_name << ": The rank of 'query' and 'key' must be " << kInputQueryBSHRank << ", but got "
-                        << query_shape.size() << " and " << key_shape.size();
+    if (query_shape.size() != kInputQueryBSHRankFAS || key_shape.size() != query_shape.size()) {
+      MS_LOG(EXCEPTION) << op_name << ": The rank of 'query' and 'key' must be " << kInputQueryBSHRankFAS
+                        << ", but got " << query_shape.size() << " and " << key_shape.size();
     }
     batch_size = query_shape[0];
     q_seq_len = query_shape[1];
@@ -102,8 +102,8 @@ abstract::TupleShapePtr FlashAttentionScoreInferShape(const PrimitivePtr &primit
     kv_seq_len = key_shape[kIndex1];
     kv_head_num = key_shape[kIndex2] / head_size;
   } else {
-    if (query_shape.size() != kInputQueryBNSDRank) {
-      MS_LOG(EXCEPTION) << op_name << ": The rank of 'query' must be " << kInputQueryBNSDRank << ", but got "
+    if (query_shape.size() != kInputQueryBNSDRankFAS) {
+      MS_LOG(EXCEPTION) << op_name << ": The rank of 'query' must be " << kInputQueryBNSDRankFAS << ", but got "
                         << query_shape.size();
     }
     batch_size = query_shape[kIndex0];
