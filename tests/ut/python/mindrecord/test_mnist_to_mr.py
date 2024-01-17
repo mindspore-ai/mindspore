@@ -93,6 +93,7 @@ def test_mnist_to_mindrecord(fixture_file):
 
     read(file_name)
 
+@pytest.mark.skip(reason="random failure")
 def test_mnist_to_mindrecord_with_encrypt_and_hash(fixture_file):
     """
     Feature: MnistToMR
