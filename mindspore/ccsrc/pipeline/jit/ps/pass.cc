@@ -859,8 +859,7 @@ bool RemoveValueNodeDuplicationsPass(const ResourcePtr &resource) {
       // not be removed, if we found the fusion tag.
       if (users.size() == 1) {
         auto cnode = users.front().first->cast<CNodePtr>();
-        if (IsPrimitiveCNode(cnode, prim::kPrimAllReduce) && cnode->inputs().size() > 1 &&
-            cnode->input(1)->isa<ValueNode>()) {
+        if (IsPrimitiveCNode(cnode, prim::kPrimAllReduce) && cnode->size() > 1 && cnode->input(1)->isa<ValueNode>()) {
           auto allreduce_prim = GetCNodePrimitive(users.front().first);
           auto attrs = allreduce_prim->attrs();
           auto fusion_id = attrs.find(mindspore::parallel::FUSION);
@@ -907,6 +906,27 @@ bool MetaUnpackPreparePass(const ResourcePtr &resource) {
   auto prepare_map = GetMetaUnpackPreparePhases();
   auto infer_opt_prepare = opt::Optimizer::MakeOptimizer("meta_unpack_prepare", resource, prepare_map);
   (void)infer_opt_prepare->step(func_graph, false);
+  return true;
+}
+
+bool PreSimplifyInlinePass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  FuncGraphPtr func_graph = resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+
+  MS_LOG(DEBUG) << "Start, " << func_graph->ToString();
+  opt::irpass::OptimizeIRPassLib irpass;
+  auto simplify_inline_passes = opt::OptPassConfig({irpass.switch_simplify_, irpass.inline_});
+  OptPassGroupMap simplify_inline_map({{"switch_simplify_inline", simplify_inline_passes}});
+  auto simplify_inline = opt::Optimizer::MakeOptimizer("simplify_inline", resource, simplify_inline_map);
+  simplify_inline->step(func_graph, true);
+
+  OptPassGroupMap simplify_inline_renorm_map({{"renormalize", opt::OptPassConfig::Renormalize()}});
+  auto simplify_inline_renorm =
+    opt::Optimizer::MakeOptimizer("simplify_inline_renorm", resource, simplify_inline_renorm_map);
+  auto new_func_graph = simplify_inline_renorm->step(func_graph, true);
+  resource->set_func_graph(new_func_graph);
+  MS_LOG(DEBUG) << "End, " << func_graph->ToString() << ", new_graph: " << new_func_graph->ToString();
   return true;
 }
 

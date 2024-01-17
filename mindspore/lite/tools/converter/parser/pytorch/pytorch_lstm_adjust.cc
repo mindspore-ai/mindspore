@@ -60,7 +60,7 @@ bool PytorchLstmAdjustPass::Run(const FuncGraphPtr &func_graph) {
       auto bidirectional = lstm_prim->get_bidirectional();
       int64_t bidirectional_dim = bidirectional ? 2 : 1;
       MS_CHECK_TRUE_MSG(bidirectional == false, false, "torch lstm adjust pass doesn't support bidirectional");
-      MS_CHECK_TRUE_MSG(lstm->inputs().size() == kTorchLstmInputSize, false, "torch lstm inputs size is not 4.");
+      MS_CHECK_TRUE_MSG(lstm->size() == kTorchLstmInputSize, false, "torch lstm inputs size is not 4.");
       // unpack state tuple
       MS_CHECK_TRUE_MSG(CheckPrimitiveType(lstm->input(THIRD_INPUT), prim::kPrimMakeTuple), false,
                         "lstm's second input is not make tuple");

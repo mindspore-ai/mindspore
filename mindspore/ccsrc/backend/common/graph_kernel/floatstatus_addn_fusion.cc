@@ -66,7 +66,7 @@ void FloatStatusAddNFusion::ProcessFloatStatusAddN(const FuncGraphPtr &main_grap
   mindspore::HashSet<AnfNodePtr> visited_nodes;
   std::unordered_set<size_t> input_not_convert;
 
-  for (size_t i = 1; i < addn->inputs().size(); i++) {
+  for (size_t i = 1; i < addn->size(); i++) {
     if (visited_nodes.find(addn->input(i)) != visited_nodes.end()) {
       (void)input_not_convert.insert(i);
       continue;
@@ -75,7 +75,7 @@ void FloatStatusAddNFusion::ProcessFloatStatusAddN(const FuncGraphPtr &main_grap
   }
 
   // Expand floatstatus to subgraph
-  for (size_t i = 1; i < addn->inputs().size(); i++) {
+  for (size_t i = 1; i < addn->size(); i++) {
     if (input_not_convert.count(i) > 0) {
       continue;
     }
@@ -95,7 +95,7 @@ void FloatStatusAddNFusion::ProcessFloatStatusAddN(const FuncGraphPtr &main_grap
   auto broadcast_to_node = CreateCleanCompositeNode(op_info, main_graph, out_type->element()->type_id());
 
   // Insert extra input(broadcast node output) to composite node, and make elemany inplace-assign to it.
-  for (size_t i = 1; i < addn->inputs().size(); i++) {
+  for (size_t i = 1; i < addn->size(); i++) {
     if (input_not_convert.count(i) > 0) {
       continue;
     }

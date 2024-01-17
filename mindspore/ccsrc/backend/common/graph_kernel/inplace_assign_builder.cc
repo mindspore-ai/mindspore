@@ -104,7 +104,7 @@ void InplaceAssignBuilder::CreateAssignNodeAndCorrectReturn(
   if (IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
     auto output_cnode = output->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(output_cnode);
-    for (size_t i = 1; i < output_cnode->inputs().size(); ++i) {
+    for (size_t i = 1; i < output_cnode->size(); ++i) {
       std::map<size_t, size_t>::const_iterator cur_input = target_indices.find(i);
       if (cur_input == target_indices.end()) {
         continue;

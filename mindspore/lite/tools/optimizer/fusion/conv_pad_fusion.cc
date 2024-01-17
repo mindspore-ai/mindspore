@@ -235,7 +235,7 @@ AnfNodePtr ConvPadFusion::Process(const std::string &pattern_name, const FuncGra
   if (IsMarkedTrainOp(conv_cnode)) {
     return nullptr;
   }
-  if (conv_cnode->inputs().size() != kConvWithBiasLen && conv_cnode->inputs().size() != kConvNoBiasLen) {
+  if (conv_cnode->size() != kConvWithBiasLen && conv_cnode->size() != kConvNoBiasLen) {
     MS_LOG(INFO) << "conv node inputs error ,name:" << conv_cnode->fullname_with_scope();
     return nullptr;
   }

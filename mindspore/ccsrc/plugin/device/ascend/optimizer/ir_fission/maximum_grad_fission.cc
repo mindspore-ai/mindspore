@@ -94,7 +94,7 @@ const AnfNodePtr MaximumGradFission::Process(const FuncGraphPtr &func_graph, con
   MS_EXCEPTION_IF_NULL(node);
   auto maximum_grad_cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(maximum_grad_cnode);
-  if (maximum_grad_cnode->inputs().size() < kMaximumGradInputNum) {
+  if (maximum_grad_cnode->size() < kMaximumGradInputNum) {
     MS_LOG(WARNING) << "Invalid maximum node:" << maximum_grad_cnode->DebugString();
     return maximum_grad_cnode;
   }

@@ -63,7 +63,7 @@ void ReplaceOneOp(const Operator &replace_op, const CNodePtr &reshape_node) {
   std::string instance_name = CreateInstanceName(reshape_node, 0);
   std::vector<AnfNodePtr> replace_input;
   replace_input = ReplaceOpInput(replace_op, instance_name, reshape_node);
-  if (reshape_node->inputs().size() == RESHAPE_INPUT_SIZE) {
+  if (reshape_node->size() == RESHAPE_INPUT_SIZE) {
     replace_input.push_back(reshape_node->input(kIndex2));
   }
   CNodePtr replace_node = func_graph->NewCNode(replace_input);
@@ -159,7 +159,7 @@ std::vector<Operator> FlashAttentionScoreInfo::GetDropoutGenMaskReplaceOp(const 
     MS_LOG(EXCEPTION) << "The tensor info of FlashAttentionScore is empty";
   }
 
-  if (cnode->inputs().size() != RESHAPE_INPUT_SIZE) {
+  if (cnode->size() != RESHAPE_INPUT_SIZE) {
     MS_LOG(EXCEPTION) << "The size of reshape cnode's inputs must be " << RESHAPE_INPUT_SIZE;
   }
 

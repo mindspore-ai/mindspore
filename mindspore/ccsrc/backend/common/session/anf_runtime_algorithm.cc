@@ -199,7 +199,7 @@ void AnfRuntimeAlgorithm::KeepOrder(const KernelGraphPtr &kg, const AnfNodePtr &
     MS_EXCEPTION_IF_NULL(latter_cnode);
     constexpr size_t inputsize = 2;
     constexpr size_t kFirstDataInputIndex = 1;
-    if (latter_cnode->inputs().size() < inputsize) {
+    if (latter_cnode->size() < inputsize) {
       return;
     }
     auto latter_input = latter_cnode->input(kFirstDataInputIndex);
@@ -847,7 +847,7 @@ bool AnfRuntimeAlgorithm::OutputAddrExist(const AnfNodePtr &node, size_t output_
   if (common::AnfAlgo::IsNopNode(node) && (skip_nop_node || common::AnfAlgo::IsNeedSkipNopOpAddr(node))) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    if (cnode->inputs().size() > 1) {
+    if (cnode->size() > 1) {
       auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, 0);
       return OutputAddrExist(kernel_with_index.first, kernel_with_index.second, skip_nop_node);
     }
@@ -1410,7 +1410,7 @@ std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallSwitchKernelGraph(const 
     return {get_switch_kernel_graph(kSwitchTrueBranchIndex), get_switch_kernel_graph(kSwitchFalseBranchIndex)};
   } else if (common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitchLayer)) {
     std::vector<KernelGraphPtr> child_graphs;
-    for (size_t idx = kSwitchLayerBranchesIndex; idx < cnode->inputs().size(); idx++) {
+    for (size_t idx = kSwitchLayerBranchesIndex; idx < cnode->size(); idx++) {
       auto child_graph = get_switch_kernel_graph(idx);
       child_graphs.emplace_back(child_graph);
     }
@@ -1631,7 +1631,7 @@ bool AnfRuntimeAlgorithm::IsDynamicShapeSkipExecute(const CNodePtr &cnode) {
   }
 
   const size_t axes_index = 1;
-  if (cnode->inputs().size() <= axes_index + 1) {
+  if (cnode->size() <= axes_index + 1) {
     return false;
   }
   auto input_axes = cnode->input(axes_index + 1);
@@ -1982,7 +1982,7 @@ size_t AnfRuntimeAlgorithm::GetInputElementNum(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   size_t element_num = 0;
-  size_t input_num = cnode->inputs().size() - 1;
+  size_t input_num = cnode->size() - 1;
   bool cal_monad_flag = false;
   for (size_t i = input_num; i > 0; --i) {
     auto input_node = common::AnfAlgo::GetInputNode(cnode, i - 1);

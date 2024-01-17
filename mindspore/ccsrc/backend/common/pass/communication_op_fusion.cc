@@ -379,7 +379,7 @@ static void AdjustAllReduceInputWithLoad(const CNodePtr &cnode) {
     if (!IsPrimitiveCNode(search_cnode, prim::kPrimLoad)) {
       return false;
     }
-    if (search_cnode->inputs().size() != load_inputs_size) {
+    if (search_cnode->size() != load_inputs_size) {
       MS_LOG(EXCEPTION) << "Load CNode should have 3 inputs, but: " << search_cnode->DebugString();
     }
     return search_cnode->input(monad_index)->isa<CNode>();
@@ -423,12 +423,12 @@ static void AdjustAllReduceInputWithLoad(const CNodePtr &cnode) {
       }
     }
     if (cnode_update_state != nullptr) {
-      if (cnode_make_tuple == nullptr || cnode_make_tuple->inputs().size() == tuple_inputs_size) {
+      if (cnode_make_tuple == nullptr || cnode_make_tuple->size() == tuple_inputs_size) {
         // case 1 and case 3: Replace cnode_update_state to cnode_u;
         MS_LOG(DEBUG) << "Replace UpdateState with CNode U: " << cnode_update_state->DebugString()
                       << " ::TO:: " << cnode_u->DebugString();
         manager->Replace(cnode_update_state, cnode_u);
-      } else if (cnode_make_tuple->inputs().size() > tuple_inputs_size) {
+      } else if (cnode_make_tuple->size() > tuple_inputs_size) {
         // case 2: remove cnode_load from cnode_make_tuple;
         MS_LOG(DEBUG) << "Drop " << cnode_load->DebugString() << " from " << cnode_make_tuple->DebugString();
         const auto &make_tuple_inputs = cnode_make_tuple->inputs();
@@ -463,7 +463,8 @@ AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr 
     if (idx != start_index) {
       AdjustAllReduceInputWithLoad(cnode);
     }
-    (void)fusion_inputs.insert(fusion_inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
+    auto inputs = cnode->inputs();
+    (void)fusion_inputs.insert(fusion_inputs.cend(), inputs.cbegin() + 1, inputs.cend());
     (void)orig_nodes.emplace_back(cnode);
   }
   CheckInputs(fusion_inputs);

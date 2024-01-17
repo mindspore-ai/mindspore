@@ -97,7 +97,7 @@ const AnfNodePtr ConvertTupleOutputToMaketuple::Process(const FuncGraphPtr &func
   }
 
   bool cnode_input_changed = false;
-  for (size_t i = kIndex1; i < cnode->inputs().size(); ++i) {
+  for (size_t i = kIndex1; i < cnode->size(); ++i) {
     const auto &input = cnode->inputs()[i];
     if (IsNeedConvert(func_graph, input)) {
       MS_LOG(INFO) << "Convert tuple input to make tuple for node:" << node->fullname_with_scope()

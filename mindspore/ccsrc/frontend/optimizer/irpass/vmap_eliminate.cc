@@ -640,7 +640,8 @@ AnfNodePtr HandleVmapCellList(const FuncGraphPtr &top_func_graph, const CNodePtr
     if (IsPrimitiveCNode(vmap_fn_node, prim::kPrimPartial)) {
       const auto partial_cnode = dyn_cast_ptr<CNode>(vmap_fn_node);
       constexpr auto ignore_partial_fn_count = 2;
-      (void)std::copy(partial_cnode->inputs().cbegin() + ignore_partial_fn_count, partial_cnode->inputs().cend(),
+      auto partial_cnode_inputs = partial_cnode->inputs();
+      (void)std::copy(partial_cnode_inputs.cbegin() + ignore_partial_fn_count, partial_cnode_inputs.cend(),
                       std::back_inserter(param_table[i - 1]));
     } else {
       GetCellParams(vmap_fg, &param_table[i - 1]);
@@ -990,7 +991,8 @@ bool ExpandVmapPrim::operator()(const FuncGraphPtr &, const OptimizerPtr &optimi
       const auto partial_cnode = dyn_cast_ptr<CNode>(vmap_fn_node);
       vmap_fn_node = partial_cnode->input(1);
       constexpr auto ignore_partial_fn_count = 2;
-      (void)std::copy(partial_cnode->inputs().cbegin() + ignore_partial_fn_count, partial_cnode->inputs().cend(),
+      auto partial_cnode_inputs = partial_cnode->inputs();
+      (void)std::copy(partial_cnode_inputs.cbegin() + ignore_partial_fn_count, partial_cnode_inputs.cend(),
                       std::back_inserter(partial_inputs_));
     }
     FuncGraphPtr vmap_fg = GetValueNode<FuncGraphPtr>(vmap_fn_node);

@@ -118,7 +118,7 @@ static std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node) {
     }
     return layout_ptr;
   }
-  for (size_t index = 0; index < cnode->inputs().size(); ++index) {
+  for (size_t index = 0; index < cnode->size(); ++index) {
     if (prim->name() == DEPEND && index != 1) {
       continue;
     }
@@ -474,7 +474,7 @@ bool ModifyMakeTupleOps(const std::vector<AnfNodePtr> &all_nodes, const FuncGrap
     if (!IsSomePrimitive(expect_maketuple, prim::kPrimMakeTuple->name())) {
       continue;
     }
-    if (expect_maketuple->inputs().size() != 4) {
+    if (expect_maketuple->size() != 4) {
       continue;
     }
     if (expect_maketuple->input(1)->isa<CNode>() && expect_maketuple->input(2)->isa<CNode>() &&
@@ -825,7 +825,7 @@ static void StepReplaceGraph(const ReplaceGraphPtr &replace_graph, const CNodePt
       appear_count = 1;
     }
     auto replace_input_cnode = replace_input.first->cast<CNodePtr>();
-    size_t inputs_size = replace_input_cnode->inputs().size();
+    size_t inputs_size = replace_input_cnode->size();
     while (IntToSize(appear_count) < inputs_size && replace_input_cnode->input(appear_count)->func_graph() != nullptr) {
       ++appear_count;
     }

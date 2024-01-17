@@ -256,7 +256,8 @@ AnfNodePtr BuildTopk(const FuncGraphPtr &graph, const AnfNodePtr &m_topk, const 
   MS_EXCEPTION_IF_NULL(kernel_graph);
 
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kTopKDOpName))};
-  (void)new_inputs.insert(new_inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
+  auto cnode_inputs = cnode->inputs();
+  (void)new_inputs.insert(new_inputs.cend(), cnode_inputs.cbegin() + 1, cnode_inputs.cend());
   CNodePtr new_cnode = NewCNode(new_inputs, graph);
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(cnode->abstract());

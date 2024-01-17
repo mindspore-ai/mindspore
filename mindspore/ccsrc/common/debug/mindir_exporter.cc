@@ -56,7 +56,9 @@ void GetAllFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *al
     if (mindspore::utils::isa<CNodePtr>(node)) {
       auto cnode = node->cast<CNodePtr>();
       MS_ASSERT(cnode != nullptr);
-      for (auto &input : cnode->inputs()) {
+      for (auto &weak_input : cnode->weak_inputs()) {
+        auto input = weak_input.lock();
+        MS_EXCEPTION_IF_NULL(input);
         if (input->isa<ValueNode>()) {
           if (mindspore::IsValueNode<FuncGraph>(input)) {
             MS_ASSERT(input->cast<ValueNodePtr>() != nullptr);

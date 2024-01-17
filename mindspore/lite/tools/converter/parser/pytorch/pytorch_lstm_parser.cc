@@ -29,8 +29,8 @@ PrimitiveCPtr PytorchLstmParser::Parse(const torch::jit::Node *torch_node, std::
   MS_ASSERT(torch_node != nullptr && input_indices != nullptr);
   auto prim = std::make_unique<ops::LSTM>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  if (torch_node->inputs().size() < kLstmInputsNum) {
-    MS_LOG(ERROR) << "lstm input num is less than expected num 9, current num is " << torch_node->inputs().size();
+  if (torch_node->size() < kLstmInputsNum) {
+    MS_LOG(ERROR) << "lstm input num is less than expected num 9, current num is " << torch_node->size();
     return nullptr;
   }
 

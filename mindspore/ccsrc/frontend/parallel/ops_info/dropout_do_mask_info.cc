@@ -205,7 +205,7 @@ std::vector<Operator> DropoutDoMaskInfo::GetDropoutGenMaskReplaceOp(const CNodeP
     MS_LOG(EXCEPTION) << "The tensor info of dropout do mask is empty";
   }
 
-  if (cnode->inputs().size() != DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
+  if (cnode->size() != DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
     MS_LOG(EXCEPTION) << "The size of dropout do mask cnode's inputs must be " << DROPOUT_DO_MASK_CNODE_INPUT_SIZE;
   }
 
@@ -256,7 +256,7 @@ static void ReplaceOneOp(const Operator &replace_op, const CNodePtr &node) {
   std::string instance_name = CreateInstanceName(node, 0);
   std::vector<AnfNodePtr> replace_input;
   replace_input = ReplaceOpInput(replace_op, instance_name, node);
-  if (node->inputs().size() == DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
+  if (node->size() == DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
     replace_input.push_back(node->input(3));
   }
   CNodePtr replace_node = func_graph->NewCNode(replace_input);
@@ -280,7 +280,7 @@ void DropoutDoMaskInfo::ReplaceNodeInputOrAttrs() {
       MS_LOG(DEBUG) << name_ << ": No need to replace dropout_gen_mask";
       return;
     }
-    if (cnode->inputs().size() != DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
+    if (cnode->size() != DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
       MS_LOG(EXCEPTION) << name_ << ": The size of drop out do mask cnode's input is not "
                         << DROPOUT_DO_MASK_CNODE_INPUT_SIZE;
     }

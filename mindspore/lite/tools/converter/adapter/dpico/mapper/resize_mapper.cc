@@ -67,7 +67,7 @@ STATUS GetShapeAndFormat(const api::CNodePtr &cnode, const api::PrimitivePtr &pr
 STATUS SetResizeDataInfo(const api::CNodePtr &cnode, const api::PrimitivePtr &prim,
                          mapper::ResizeOperator *resize_operator) {
   MS_CHECK_TRUE_MSG(resize_operator != nullptr, RET_ERROR, "resize_operator is nullptr.");
-  if (cnode->inputs().size() != dpico::kDims3) {
+  if (cnode->size() != dpico::kDims3) {
     MS_LOG(DEBUG) << "only process two inputs. " << cnode->fullname_with_scope();
     return RET_OK;
   }

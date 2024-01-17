@@ -68,7 +68,7 @@ std::tuple<FuncGraphPtr, CNodePtr> CreateNewCNode(const FuncGraphManagerPtr &, c
   auto prim_name = old_prim->name();
   params.push_back(NewValueNode(std::make_shared<Primitive>(prim_name)));
 
-  for (size_t i = 1; i < old_node->inputs().size(); i++) {
+  for (size_t i = 1; i < old_node->size(); i++) {
     auto param = fg->add_parameter();
     params.push_back(param);
     param->set_abstract(old_node->input(i)->abstract());
@@ -111,7 +111,7 @@ void ProcessSend(const FuncGraphPtr &graph, const CNodePtr &node) {
 
   std::vector<AnfNodePtr> call_params;
   call_params.push_back(NewValueNode(fg));
-  for (size_t i = 1; i < node->inputs().size(); i++) {
+  for (size_t i = 1; i < node->size(); i++) {
     call_params.push_back(node->input(i));
   }
   auto call = graph->NewCNode(call_params);
@@ -231,7 +231,9 @@ void FindFollowing(const AnfNodePtr &send_node, std::map<AnfNodePtr, std::set<An
     if (top_cnode == nullptr) {
       continue;
     }
-    for (auto &next : top_cnode->inputs()) {
+    for (auto &weak_next : top_cnode->weak_inputs()) {
+      auto next = weak_next.lock();
+      MS_EXCEPTION_IF_NULL(next);
       if (next->seen_ == seen) {
         continue;
       }
@@ -279,7 +281,7 @@ void AddSendClosureDepend(const FuncGraphPtr &graph) {
           continue;
         }
         auto cnode = node->cast<CNodePtr>();
-        MS_EXCEPTION_IF_CHECK_FAIL(cnode->inputs().size() >= 1,
+        MS_EXCEPTION_IF_CHECK_FAIL(cnode->size() >= 1,
                                    "CNode inputs size is less equal than 1, cnode: " + cnode->DebugString());
         auto before_input = cnode->input(1);
         std::vector<AnfNodePtr> input = {NewValueNode(prim::kPrimDepend), before_input, send_node};
@@ -370,7 +372,7 @@ void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
     if (IsCommOps(node) || IsClosure(node)) {
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
-      if (last_need_depend != nullptr && cnode->inputs().size() > 1) {
+      if (last_need_depend != nullptr && cnode->size() > 1) {
         auto before_input = node->cast<CNodePtr>()->input(1);
         auto new_depend = graph->NewCNode({NewValueNode(prim::kPrimDepend), before_input, last_need_depend});
         new_depend->set_abstract(before_input->abstract());

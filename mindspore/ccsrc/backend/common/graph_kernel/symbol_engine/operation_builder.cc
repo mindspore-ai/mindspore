@@ -179,8 +179,8 @@ REG_OP_SYMBOL_BUILDER("MatMul").SetBuildShape(MatMulShape<false>);
 REG_OP_SYMBOL_BUILDER("BatchMatMul").SetBuildShape(MatMulShape<true>);
 REG_OP_SYMBOL_BUILDER("MakeTuple").SetBuildShape([](OperationBuilder *b) -> SymbolPtr {
   SymbolPtrList result(b->cnode()->size() - 1);
-  (void)std::transform(b->cnode()->inputs().cbegin() + 1, b->cnode()->inputs().cend(), result.begin(),
-                       [b](const AnfNodePtr &node) { return b->RealShape(node); });
+  (void)std::transform(b->cnode()->weak_inputs().cbegin() + 1, b->cnode()->weak_inputs().cend(), result.begin(),
+                       [b](const AnfNodeWeakPtr &node) { return b->RealShape(node.lock()); });
   return ListSymbol::Make(std::move(result));
 });
 }  // namespace

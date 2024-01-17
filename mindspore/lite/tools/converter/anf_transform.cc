@@ -199,7 +199,7 @@ AnfTransform::AnfTransform() = default;
 AnfTransform::~AnfTransform() = default;
 
 STATUS AnfTransform::MarkTrainInputOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
-  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+  for (size_t i = 1; i < cnode->size(); i++) {
     auto input_node = cnode->input(i);
     if (!utils::isa<CNodePtr>(input_node)) {
       continue;
@@ -229,8 +229,8 @@ STATUS AnfTransform::MarkTrainWeightSharingOp(const FuncGraphPtr &func_graph, co
       MS_LOG(DEBUG) << "Primitive is nullptr.";
       continue;
     }
-    for (size_t i = 1; i < graph_cnode->inputs().size(); i++) {
-      for (size_t j = 1; j < cnode->inputs().size(); j++) {
+    for (size_t i = 1; i < graph_cnode->size(); i++) {
+      for (size_t j = 1; j < cnode->size(); j++) {
         if ((graph_cnode->input(i) == cnode->input(j)) && utils::isa<Parameter>(cnode->input(j))) {
           (void)graph_prim->AddAttr("trainOp", MakeValue(true));
         }

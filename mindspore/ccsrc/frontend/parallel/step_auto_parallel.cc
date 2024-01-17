@@ -1014,7 +1014,7 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
     if (!FindReshape(cnode, &op_cache)) {
       continue;
     }
-    MS_ASSERT(cnode->inputs().size() == 3);
+    MS_ASSERT(cnode->size() == 3);
     // get previous node's strategy_cost_
     auto pre_node = cnode->input(1);
     if (IsPrimitiveCNode(pre_node, prim::kPrimLoad)) {

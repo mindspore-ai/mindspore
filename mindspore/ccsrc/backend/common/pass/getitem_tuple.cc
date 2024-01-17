@@ -54,7 +54,7 @@ const AnfNodePtr GetitemTuple::Process(const FuncGraphPtr &, const AnfNodePtr &n
     auto index = GetValue<int64_t>(value_node->value());
     auto make_tuple = make_tuple_anf->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(make_tuple);
-    if (make_tuple->inputs().size() > LongToSize(index + 1)) {
+    if (make_tuple->size() > LongToSize(index + 1)) {
       auto ret = make_tuple->input(LongToSize(index + 1));
       MS_EXCEPTION_IF_NULL(ret);
       return ret;

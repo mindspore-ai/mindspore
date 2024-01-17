@@ -31,7 +31,7 @@ STATUS SetPadDataInfo(const api::CNodePtr &cnode, mapper::PadOperator *pad_opera
     MS_LOG(ERROR) << "pad_operator is nullptr.";
     return RET_ERROR;
   }
-  for (size_t i = 2; i < cnode->inputs().size(); i++) {
+  for (size_t i = 2; i < cnode->size(); i++) {
     auto input_node = cnode->input(i);
     MS_ASSERT(input_node != nullptr);
     auto param_node = input_node->cast<api::ParameterPtr>();

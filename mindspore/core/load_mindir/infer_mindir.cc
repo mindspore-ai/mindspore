@@ -120,7 +120,7 @@ void MindIREngine::Init(const AbstractBasePtrList &args) {
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       (void)todo_.insert(node);
-      node_input_depends_[node] = SizeToInt(cnode->inputs().size());
+      node_input_depends_[node] = SizeToInt(cnode->size());
     } else if (node->isa<Parameter>()) {
       auto param = node->cast<ParameterPtr>();
       MS_EXCEPTION_IF_NULL(param);
@@ -235,7 +235,8 @@ void MindIREngine::EvalCommonPrimitive(const PrimitivePtr &prim, const CNodePtr 
 }
 
 void MindIREngine::EvalReturnPrimitive(const CNodePtr &node) {
-  if (node->inputs().size() < 2) {
+  constexpr auto min_size = 2;
+  if (node->size() < min_size) {
     MS_LOG(INTERNAL_EXCEPTION) << node->DebugString() << " input size < 2";
   }
   auto result = infer_result_[node->inputs()[1]];
@@ -277,7 +278,7 @@ void MindIREngine::EvalPartialPrimitive(const CNodePtr &node, const AbstractBase
   }
   // Not Resolved.
   constexpr size_t kSizeTwo = 2;
-  if (node->inputs().size() < kSizeTwo) {
+  if (node->size() < kSizeTwo) {
     MS_LOG(INTERNAL_EXCEPTION) << node->DebugString() << " input size < " << kSizeTwo;
   }
   auto &func = infer_result_[node->inputs()[1]];
@@ -360,7 +361,9 @@ void MindIREngine::EvalPrimitiveAbastract(const abstract::PrimitiveAbstractClosu
 
 bool MindIREngine::CheckCNodeNotReady(const CNodePtr &node) {
   int depend = 0;
-  for (const auto &input : node->inputs()) {
+  for (auto &weak_input : node->weak_inputs()) {
+    auto input = weak_input.lock();
+    MS_EXCEPTION_IF_NULL(input);
     depend += infer_result_.find(input) != infer_result_.end() ? 0 : 1;
   }
   this->node_input_depends_[node] = depend;

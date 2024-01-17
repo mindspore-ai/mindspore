@@ -691,18 +691,18 @@ void CheckSequenceNodesValid(const AnfNodeWeakPtrList &sequence_nodes) {
   }
   AnfNodePtr candidate_sequence_node = sequence_nodes[0].lock();
   if (candidate_sequence_node == nullptr) {
-    MS_LOG(ERROR) << "candidate_sequence_node is null.";
+    MS_LOG(DEBUG) << "candidate_sequence_node is null.";
     return;
   }
   auto candidate_flags = GetSequenceNodeElementsUseFlags(candidate_sequence_node);
   if (candidate_flags == nullptr) {
-    MS_LOG(ERROR) << "The candidate_flags is null, sequence_nodes[0]: " << candidate_sequence_node->DebugString();
+    MS_LOG(DEBUG) << "The candidate_flags is null, sequence_nodes[0]: " << candidate_sequence_node->DebugString();
     return;
   }
   for (size_t i = 0; i < sequence_nodes.size(); ++i) {
     auto current_sequence_node = sequence_nodes[i].lock();
     if (current_sequence_node == nullptr) {
-      MS_LOG(ERROR) << "current_sequence_node is null.";
+      MS_LOG(DEBUG) << "current_sequence_node is null.";
       return;
     }
     MS_LOG(DEBUG) << "sequence_nodes[" << i << "]: " << current_sequence_node << "/"
@@ -712,7 +712,7 @@ void CheckSequenceNodesValid(const AnfNodeWeakPtrList &sequence_nodes) {
   for (size_t i = 1; i < sequence_nodes.size(); ++i) {
     auto current_sequence_node = sequence_nodes[i].lock();
     if (current_sequence_node == nullptr) {
-      MS_LOG(ERROR) << "current_sequence_node is null.";
+      MS_LOG(DEBUG) << "current_sequence_node is null.";
       return;
     }
     if (candidate_sequence_node == current_sequence_node) {
@@ -725,7 +725,7 @@ void CheckSequenceNodesValid(const AnfNodeWeakPtrList &sequence_nodes) {
     if (candidate_flags == current_flags) {
       continue;
     }
-    MS_LOG(ERROR) << "Should use same flags pointer, candidate_node: " << candidate_sequence_node->DebugString()
+    MS_LOG(DEBUG) << "Should use same flags pointer, candidate_node: " << candidate_sequence_node->DebugString()
                   << ", current_node: " << current_sequence_node->DebugString();
 
     if (candidate_flags->size() != current_flags->size()) {
@@ -1055,11 +1055,11 @@ bool AbstractSequence::PurifyElements() {
   }
   if (elements_use_flags_ptr == nullptr) {
     if (not_free_node == nullptr) {
-      MS_LOG(ERROR) << "Check if all sequence nodes are released, or none elements use flags in them. nodes size: "
-                    << sequence_nodes_->size();
+      MS_LOG(WARNING) << "Check if all sequence nodes are released, or none elements use flags in them. nodes size: "
+                      << sequence_nodes_->size();
     } else {
-      MS_LOG(ERROR) << "Check if none elements use flags in sequence ndoes. one of node: "
-                    << not_free_node->DebugString();
+      MS_LOG(WARNING) << "Check if none elements use flags in sequence ndoes. one of node: "
+                      << not_free_node->DebugString();
     }
     return false;
   }

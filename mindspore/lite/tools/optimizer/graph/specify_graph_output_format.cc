@@ -63,7 +63,7 @@ STATUS SpecifyGraphOutputFormat::HandleGraphOutput(const FuncGraphPtr &graph) {
     auto cnode = node->cast<CNodePtr>();
     MS_CHECK_TRUE_MSG(cnode != nullptr, RET_ERROR, "cast node to cnode failed");
     if (opt::CheckPrimitiveType(cnode, prim::kPrimMakeTuple)) {
-      for (size_t i = kInputIndexOne; i < cnode->inputs().size(); i++) {
+      for (size_t i = kInputIndexOne; i < cnode->size(); i++) {
         nodes.push(cnode->input(i));
       }
       continue;

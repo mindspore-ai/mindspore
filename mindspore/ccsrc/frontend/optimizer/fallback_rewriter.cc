@@ -841,12 +841,13 @@ class AfterOptARewriter : public BaseRewriter {
     MS_EXCEPTION_IF_NULL(node);
     MS_EXCEPTION_IF_NULL(node->func_graph());
 
-    std::vector<AnfNodePtr> inputs;
+    AnfNodeWeakPtrList inputs;
     inputs.reserve(node->size());
-    (void)inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+    const auto make_tuple_node = NewValueNode(prim::kPrimMakeTuple);
+    (void)inputs.emplace_back(make_tuple_node);
     // Inputs of node should be [make_sparse, indices, values, dense_shape], so offset by 1 to get items.
-    (void)inputs.insert(inputs.cend(), node->inputs().cbegin() + 1, node->inputs().cend());
-    auto new_node = node->func_graph()->NewCNode(std::move(inputs));
+    (void)inputs.insert(inputs.cend(), node->weak_inputs().cbegin() + 1, node->weak_inputs().cend());
+    auto new_node = node->func_graph()->NewCNodeWeak(std::move(inputs));
     new_node->set_abstract(node->abstract());
     return new_node;
   }
@@ -1651,7 +1652,8 @@ class AfterOptARewriter : public BaseRewriter {
   // Only process the node that have a PyExecute node(the abstract is AbstractAny).
   bool CheckInputsHasAnyType(const CNodePtr &cnode) const {
     bool exist_any_type = false;
-    for (const auto &input : cnode->inputs()) {
+    for (const auto &weak_input : cnode->weak_inputs()) {
+      auto input = weak_input.lock();
       auto input_abs = input->abstract();
       if (fallback::ContainsSequenceAnyType(input_abs)) {
         exist_any_type = true;
@@ -1700,12 +1702,16 @@ class AfterOptARewriter : public BaseRewriter {
     // Convert all node to list[str]
     constexpr auto kConvertToListString = "list(map(str, __inner_convert_object__))";
     constexpr auto kConvertToListKey = "__inner_convert_object__";
-    std::vector<AnfNodePtr> list_str_value_list = {NewValueNode(prim::kPrimMakeTuple)};
-    (void)std::copy(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(list_str_value_list));
+    const auto make_tuple_value_node = NewValueNode(prim::kPrimMakeTuple);
+    AnfNodeWeakPtrList list_str_value_list = {make_tuple_value_node};
+    (void)std::copy(cnode->weak_inputs().cbegin() + 1, cnode->weak_inputs().cend(),
+                    std::back_inserter(list_str_value_list));
 
-    std::vector<AnfNodePtr> list_str_key_list = {NewValueNode(prim::kPrimMakeTuple), NewValueNode(kConvertToListKey)};
-    auto list_str_key_node = fg->NewCNode(list_str_key_list);
-    auto list_str_value_node = fg->NewCNode(list_str_value_list);
+    const auto make_tuple_key_node = NewValueNode(prim::kPrimMakeTuple);
+    const auto key_node = NewValueNode(kConvertToListKey);
+    AnfNodeWeakPtrList list_str_key_list = {make_tuple_key_node, key_node};
+    auto list_str_key_node = fg->NewCNodeWeak(list_str_key_list);
+    auto list_str_value_node = fg->NewCNodeWeak(list_str_value_list);
     auto convet_list_str_node = fallback::CreatePyExecuteCNodeInOrder(
       fg, NewValueNode(kConvertToListString), list_str_key_node,
       fg->NewCNode({NewValueNode(prim::kPrimMakeTuple), list_str_value_node}), cnode->debug_info());

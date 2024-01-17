@@ -129,7 +129,8 @@ void GetMaxSubGraph(const FuncGraphManagerPtr &mng, mindspore::HashSet<CNodePtr>
       continue;
     }
     if (get_inputs) {
-      for (const auto &input : current_node->inputs()) {
+      for (auto &weak_input : current_node->weak_inputs()) {
+        auto input = weak_input.lock();
         MS_EXCEPTION_IF_NULL(input);
         if (input->isa<CNode>()) {
           auto input_cnode = input->cast<CNodePtr>();
@@ -265,7 +266,9 @@ bool HasTargetOrRecomputeInputs(const mindspore::HashSet<CNodePtr> &recomputed_o
   }
 
   if (IsBpropNode(node)) {
-    for (auto &input : node->inputs()) {
+    for (auto &weak_input : node->weak_inputs()) {
+      auto input = weak_input.lock();
+      MS_EXCEPTION_IF_NULL(input);
       if (input->isa<CNode>() &&
           HasTargetOrRecomputeInputs(recomputed_origin_nodes, target_nodes, input->cast<CNodePtr>(),
                                      has_target_or_recompute_inputs_map)) {
@@ -593,7 +596,8 @@ void DuplicateRecomputedNodes(const FuncGraphPtr &graph, const mindspore::HashSe
     MS_EXCEPTION_IF_NULL(target_node);
     MS_LOG(DEBUG) << "Rebuild a new target_node " << target_node->DebugString() << " with the new recomputed input";
     std::vector<AnfNodePtr> new_target_inputs;
-    for (const auto &input : target_node->inputs()) {
+    for (auto &weak_input : target_node->weak_inputs()) {
+      auto input = weak_input.lock();
       MS_EXCEPTION_IF_NULL(input);
       if (!input->isa<CNode>()) {
         (void)new_target_inputs.emplace_back(input);

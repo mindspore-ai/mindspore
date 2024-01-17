@@ -662,7 +662,7 @@ void CacheEmbeddingForTrain(const FuncGraphPtr &graph, bool is_pipe, const CNode
   if (!IsPrimitiveCNode(return_node, prim::kPrimReturn)) {
     MS_LOG(EXCEPTION) << "The last cnode after sorting, not return cnode.";
   }
-  if (return_node->inputs().size() < 2) {
+  if (return_node->size() < 2) {
     MS_LOG(EXCEPTION) << "Number of return node inputs should be greater than or equal to 2.";
   }
 

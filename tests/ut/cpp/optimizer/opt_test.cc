@@ -58,7 +58,7 @@ class TestOptOpt : public UT::Common {
     };
 
     void Visit(const CNodePtr &cnode) override {
-      if (IsPrimitiveCNode(cnode, P) && cnode->inputs().size() == 2) {
+      if (IsPrimitiveCNode(cnode, P) && cnode->size() == 2) {
         x_ = cnode->input(1);
       }
     }

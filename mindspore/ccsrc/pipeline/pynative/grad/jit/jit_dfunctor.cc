@@ -226,7 +226,7 @@ std::vector<AnfNodePtr> RunInputReplace(const FuncGraphPtr &bprop_graph, const F
   const auto &paras = fprop_graph->parameters();
   if (cnode_morph->size() - 1 != paras.size() && !IsPrimitiveCNode(cnode_morph, prim::kPrimUpdateState)) {
     MS_LOG(EXCEPTION) << "The size of parameters in fprop graph:" << paras.size()
-                      << ", but the size of input tensors of forward node: " << cnode_morph->inputs().size() - 1;
+                      << ", but the size of input tensors of forward node: " << cnode_morph->size() - 1;
   }
 
   std::vector<AnfNodePtr> used_input_nodes;

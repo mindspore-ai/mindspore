@@ -102,7 +102,9 @@ bool CheckHasMonadInput(const CNodePtr &cnode) {
   auto first_input_node = cnode->input(kFirstInputIndex);
   if (IsPrimitiveCNode(first_input_node, prim::kPrimSwitch) ||
       IsPrimitiveCNode(first_input_node, prim::kPrimSwitchLayer)) {
-    for (auto &input : first_input_node->cast<CNodePtr>()->inputs()) {
+    for (auto &weak_input : first_input_node->cast<CNodePtr>()->weak_inputs()) {
+      auto input = weak_input.lock();
+      MS_EXCEPTION_IF_NULL(input);
       if (HasAbstractMonad(input)) {
         return true;
       }
@@ -204,7 +206,7 @@ bool ExistEnvironGet(const FuncGraphManagerPtr &manager) {
 AnfNodePtr EliminateUpdateStateMakeTupleWithUselessEnv(const CNodePtr &update_state, const CNodePtr &make_tuple) {
   std::vector<AnfNodePtr> env_nodes;
   std::vector<AnfNodePtr> new_maketuple_inputs{NewValueNode(prim::kPrimMakeTuple)};
-  size_t input_size = make_tuple->inputs().size();
+  size_t input_size = make_tuple->size();
   bool has_environ_set = false;
   for (size_t i = 1; i < input_size; i++) {
     auto node = make_tuple->input(i);
@@ -943,7 +945,7 @@ AnfNodePtr SwitchCallMonadParameterEliminater::operator()(const OptimizerPtr &, 
     return nullptr;
   }
   const size_t switch_call_input_size = 2;
-  if (switch_call->inputs().size() < switch_call_input_size) {
+  if (switch_call->size() < switch_call_input_size) {
     return nullptr;
   }
   constexpr size_t primary_index = 0;
@@ -969,7 +971,7 @@ AnfNodePtr SwitchCallMonadParameterEliminater::operator()(const OptimizerPtr &, 
       new_node = fg->NewCNode({NewValueNode(prim::kPrimPartial), node});
     }
     constexpr size_t args_start_index = 1;
-    for (size_t i = args_start_index; i < switch_call->inputs().size(); i++) {
+    for (size_t i = args_start_index; i < switch_call->size(); i++) {
       new_node->add_input(switch_call->input(i));
     }
     // partial's abstract is same with first input.

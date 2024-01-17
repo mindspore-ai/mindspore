@@ -142,7 +142,7 @@ VectorRef MultiGraphAclSession::ConstructOutputRefByTupleNode(const CNodePtr &tu
                                                               std::deque<MSTensor> *out_tensors) {
   MS_EXCEPTION_IF_NULL(out_tensors);
   VectorRef outs;
-  for (size_t i = 1; i < tuple_node->inputs().size(); ++i) {
+  for (size_t i = 1; i < tuple_node->size(); ++i) {
     auto item_with_index = common::AnfAlgo::VisitKernelWithReturnType(
       tuple_node->input(i), 0, false,
       std::vector<PrimitivePtr>{prim::kPrimMakeTuple, prim::kPrimUpdateState, prim::kPrimStateSetItem});

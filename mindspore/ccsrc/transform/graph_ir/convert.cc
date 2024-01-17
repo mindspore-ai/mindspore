@@ -216,26 +216,28 @@ ValuePtr CastDstValue(const ValuePtr &value, const TypeId &dst_type) {
 
 std::vector<AnfNodePtr> GetOrderedCNodes(const FuncGraphPtr fg, const AnfNodePtr node = nullptr) {
   MS_EXCEPTION_IF_NULL(fg);
-  auto succ_include_fv = [&fg](const AnfNodePtr &node) -> std::vector<AnfNodePtr> {
-    std::vector<AnfNodePtr> vecs;
+  auto succ_include_fv = [&fg](const AnfNodePtr &node) -> AnfNodeWeakPtrList {
+    AnfNodeWeakPtrList vecs;
     if (node == nullptr) {
       return vecs;
     }
     if (node->isa<CNode>()) {
       auto cnode = node->cast<CNodePtr>();
-      auto &inputs = cnode->inputs();
+      auto &weak_inputs = cnode->weak_inputs();
       // Check if free variables used.
-      for (const auto &input : inputs) {
+      for (const auto &weak_input : weak_inputs) {
+        auto input = weak_input.lock();
+        MS_EXCEPTION_IF_NULL(input);
         auto input_fg = GetValueNode<FuncGraphPtr>(input);
         if (input_fg) {
           for (auto &fv : input_fg->free_variables_nodes()) {
             if (fv->func_graph() == fg && fg->nodes().contains(fv)) {
-              vecs.emplace_back(fv);
+              (void)vecs.emplace_back(fv);
             }
           }
         }
       }
-      (void)vecs.insert(vecs.end(), inputs.begin(), inputs.end());
+      (void)vecs.insert(vecs.end(), weak_inputs.begin(), weak_inputs.end());
     }
     return vecs;
   };
@@ -1476,7 +1478,7 @@ std::shared_ptr<std::vector<DfGraph>> DfGraphConvertor::BuildBranchGraphs(const 
     size_t branch_call_input_size = 0;
     size_t node_input_index = 0;
     if (!is_kernel_graph_) {
-      for (size_t i = 1; i < cnode->inputs().size(); i++) {
+      for (size_t i = 1; i < cnode->size(); i++) {
         auto pred = cnode->input(i);
         if (!IsDataInput(cnode, pred, 0)) {
           continue;
@@ -1493,13 +1495,13 @@ std::shared_ptr<std::vector<DfGraph>> DfGraphConvertor::BuildBranchGraphs(const 
     MS_EXCEPTION_IF_NULL(bnode);
     const size_t init_i = is_case ? 1 : 2;
 
-    for (size_t i = init_i; i < bnode->inputs().size(); i++) {
+    for (size_t i = init_i; i < bnode->size(); i++) {
       ParamIndexMap branch_to_parent_node_map;
       size_t branch_index = 0;  //  branch graph input's index
       if (bnode->input(i)->isa<CNode>()) {
         auto branch_node = bnode->input(i)->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(branch_node);
-        for (size_t j = kInputOffset; j < branch_node->inputs().size(); j++) {
+        for (size_t j = kInputOffset; j < branch_node->size(); j++) {
           auto pred = branch_node->input(j);
           if (!IsDataInput(cnode, pred, 0)) {
             continue;
@@ -1630,7 +1632,7 @@ void DfGraphConvertor::GetBranchNodeInput(const CNodePtr node) {
 
   CNodePtr input_node = node;
   if (!is_kernel_graph_) {
-    for (size_t i = 1; i < node->inputs().size(); i++) {
+    for (size_t i = 1; i < node->size(); i++) {
       auto pred = node->input(i);
       (void)(branch_inputs.emplace_back(pred));
     }
@@ -1641,14 +1643,15 @@ void DfGraphConvertor::GetBranchNodeInput(const CNodePtr node) {
   auto bnode = is_case ? input_node->input(make_tuple_index)->cast<CNodePtr>() : input_node;
   MS_EXCEPTION_IF_NULL(bnode);
   const size_t init_i = is_case ? 1 : 2;
-  for (size_t i = init_i; i < bnode->inputs().size(); i++) {
-    MS_EXCEPTION_IF_NULL(bnode->input(i));
-    if (!bnode->input(i)->isa<CNode>()) {
+  for (size_t i = init_i; i < bnode->size(); ++i) {
+    const auto &bnode_input = bnode->input(i);
+    MS_EXCEPTION_IF_NULL(bnode_input);
+    if (!bnode_input->isa<CNode>()) {
       continue;
     }
-    auto branch_node = bnode->input(i)->cast<CNodePtr>();
+    auto branch_node = bnode_input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(branch_node);
-    for (size_t j = 2; j < branch_node->inputs().size(); j++) {
+    for (size_t j = 2; j < branch_node->size(); ++j) {
       auto pred = branch_node->input(j);
       (void)(branch_inputs.emplace_back(pred));
     }
@@ -2283,7 +2286,7 @@ const std::vector<std::string> trans_var_list = {string(kNameAssign), string(kNa
 AnfNodePtr DfGraphConvertor::ParseLoadInput(const CNodePtr &cnode) const {
   MS_EXCEPTION_IF_NULL(cnode);
   size_t min_inputs_size = 3;
-  if (cnode->inputs().size() < min_inputs_size) {
+  if (cnode->size() < min_inputs_size) {
     MS_LOG(EXCEPTION) << "input size error, " << cnode->ToString();
   }
   const size_t para_index = 1;

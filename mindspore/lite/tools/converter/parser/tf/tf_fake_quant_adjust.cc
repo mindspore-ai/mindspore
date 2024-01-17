@@ -66,7 +66,7 @@ bool TFFakeQuantAdjust::RemoveFakeQuant(const FuncGraphPtr &func_graph) {
     if (!opt::CheckPrimitiveType(cnode, std::make_unique<Primitive>(lite::kNameFakeQuantWithMinMaxVars))) {
       continue;
     }
-    MS_CHECK_GE(cnode->inputs().size(), kInputSize1, false);
+    MS_CHECK_GE(cnode->size(), kInputSize1, false);
     auto manager = func_graph->manager();
     if (manager == nullptr) {
       manager = Manage(func_graph, true);

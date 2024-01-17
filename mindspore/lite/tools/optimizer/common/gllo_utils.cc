@@ -191,12 +191,12 @@ bool IsRealKernel(const AnfNodePtr &node) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return false;
   }
-  if (cnode->inputs().empty()) {
+  if (cnode->empty()) {
     MS_LOG(ERROR) << "Illegal null input of cnode(%s)" << node->DebugString();
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INPUT_TENSOR_ERROR);
     return false;
   }
-  auto input = cnode->inputs()[0];
+  auto input = cnode->input(0);
 #ifndef ENABLE_SECURITY
   bool is_virtual_node = IsPrimitive(input, prim::kPrimImageSummary) || IsPrimitive(input, prim::kPrimScalarSummary) ||
                          IsPrimitive(input, prim::kPrimTensorSummary) ||
@@ -536,11 +536,10 @@ AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t index) {
     MS_LOG(ERROR) << "CNodePtr is nullptr";
     return nullptr;
   }
-  auto inputs = cnode->inputs();
-  if (!(index > 0 && index < inputs.size())) {
+  if (!(index > 0 && index < cnode->size())) {
     return nullptr;
   }
-  auto input = inputs[index];
+  auto input = cnode->input(index);
   if (input == nullptr) {
     MS_LOG(ERROR) << "CNode input is nullptr";
     return nullptr;
@@ -556,9 +555,8 @@ AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t index) {
   } else if (utils::isa<CNodePtr>(input)) {
     auto input_cnode = input->cast<CNodePtr>();
     if (CheckPrimitiveType(input_cnode, prim::kPrimTupleGetItem)) {
-      auto tuple_inputs = input_cnode->inputs();
-      MS_ASSERT(tuple_inputs.size() == kTupleGetItemInputSize);
-      auto get_item_input_cnode = tuple_inputs.at(1);
+      MS_ASSERT(input_cnode->size() == kTupleGetItemInputSize);
+      auto get_item_input_cnode = input_cnode->input(1);
       MS_ASSERT(get_item_input_cnode != nullptr);
       auto idx = GetTupleGetItemOutIndex(input_cnode);
       if (!utils::isa<abstract::AbstractTuplePtr>(get_item_input_cnode->abstract())) {
@@ -703,7 +701,7 @@ bool CheckIsAllInputsParam(const AnfNodePtr &node) {
   }
   if (utils::isa<CNode>(node)) {
     auto cnode = node->cast<CNodePtr>();
-    for (size_t i = 1; i < cnode->inputs().size(); i++) {
+    for (size_t i = 1; i < cnode->size(); i++) {
       if (!utils::isa<Parameter>(cnode->input(i)) && !utils::isa<ValueNodePtr>(cnode->input(i))) {
         return false;
       }
@@ -1553,7 +1551,7 @@ void PrintFuncGraph(const FuncGraphPtr &func_graph, const std::string &output_fi
     GetDataTypeFromAnfNode(node, &type_id);
     fp << node->fullname_with_scope() << ", type: " << type_name(node) << ", shape: " << GetAnfNodeOutputShape(node, 0)
        << ", data type: " << static_cast<int>(type_id) << std::endl;
-    auto inputs = cnode->inputs();
+    auto &inputs = cnode->inputs();
     for (auto &input : inputs) {
       if (IsValueNode<Primitive>(input)) {
         continue;
@@ -1629,7 +1627,7 @@ STATUS AdjustInputToCnode(const CNodePtr &cnode, size_t input_index) {
     MS_LOG(ERROR) << "tensor move prim is nullptr.";
     return RET_ERROR;
   }
-  auto tensor_move_cnode = func_graph->NewCNode(tensor_move_prim, {cnode->inputs()[input_index]});
+  auto tensor_move_cnode = func_graph->NewCNode(tensor_move_prim, {cnode->input(input_index)});
   if (tensor_move_cnode == nullptr) {
     MS_LOG(ERROR) << "new cnode failed.";
     return RET_ERROR;

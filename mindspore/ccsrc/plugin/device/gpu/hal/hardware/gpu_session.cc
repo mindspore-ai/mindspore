@@ -288,7 +288,7 @@ bool UpdatedByAssign(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node)
     MS_EXCEPTION_IF_NULL(user.first);
     auto output_cnode = user.first->cast<CNodePtr>();
     return output_cnode != nullptr && IsPrimitiveCNode(output_cnode, prim::kPrimAssign) &&
-           user.second == kAssignUpdateIndex && output_cnode->inputs().size() > kAssignInputSize;
+           user.second == kAssignUpdateIndex && output_cnode->size() > kAssignInputSize;
   });
 }
 

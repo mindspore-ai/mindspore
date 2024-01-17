@@ -168,7 +168,7 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   void SecondPass();
   void ProcessNode(const AnfNodePtr &node);
   bool ProcessCNode(const CNodePtr &cnode);
-  void ProcessCNodeEnd(const CNodePtr &cnode, const AnfNodePtrList &new_inputs);
+  void ProcessCNodeEnd(const CNodePtr &cnode, const AnfNodeWeakPtrList &new_weak_inputs);
   bool ProcessSwitchAppCNode(const CNodePtr &cnode);
   bool ParentNotSpecialized(const AnalysisContextPtr &context) const;
 

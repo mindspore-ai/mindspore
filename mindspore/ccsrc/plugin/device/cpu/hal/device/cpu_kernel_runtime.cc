@@ -256,7 +256,7 @@ BaseRef CPUKernelRuntime::GetOrCreateTensorForOutput(
     MS_EXCEPTION_IF_NULL(node);
     if (common::AnfAlgo::GetCNodeName(input_node) == prim::kPrimMakeTuple->name()) {
       VectorRef ret;
-      for (size_t i = 1; i < node->inputs().size(); i++) {
+      for (size_t i = 1; i < node->size(); i++) {
         auto item_with_index = common::AnfAlgo::VisitKernelWithReturnType(node->input(i), 0);
         auto out = GetOrCreateTensorForOutput(kernel_graph, item_with_index, tensor_to_node, input_param_tensor_map,
                                               bound_addresses);

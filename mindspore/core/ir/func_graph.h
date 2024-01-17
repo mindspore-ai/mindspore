@@ -123,12 +123,8 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   abstract::AbstractBasePtr ToAbstract() override;
 
   // get function graph inputs, but parameters
-  const std::vector<AnfNodePtr> get_inputs() const;
-  // Return the graph's output, or nullptr if not yet deduced.
-  AnfNodePtr output() const;
-  void set_output(const AnfNodePtr &value, bool force_new_ret = false);
-
-  const std::vector<AnfNodePtr> &parameters() const { return parameters_; }
+  const AnfNodePtrList get_inputs() const;
+  const AnfNodePtrList &parameters() const { return parameters_; }
   // Append
   virtual ParameterPtr add_parameter();
   ParameterPtr add_parameter(NodeDebugInfoPtr &&debug_info);
@@ -138,36 +134,48 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   virtual ParameterPtr InsertFrontParameter();
   void InsertFrontParameter(const ParameterPtr &param);
   void PrependParameter(const ParameterPtr &p) { parameters_.insert(parameters_.begin(), p); }
-  void set_parameters(const std::vector<AnfNodePtr> &params) { parameters_ = params; }
-  void set_parameters(std::vector<AnfNodePtr> &&params) { parameters_ = std::move(params); }
+  void set_parameters(const AnfNodePtrList &params) { parameters_ = params; }
+  void set_parameters(AnfNodePtrList &&params) { parameters_ = std::move(params); }
   // Add a FV weight parameter with specific name.
   ParameterPtr AddFvParameter(const std::string &name, const ValuePtr &default_value);
 
-  // Create a cnode with given inputs, bound to this graph.
-  virtual CNodePtr NewCNode(std::vector<AnfNodePtr> &&inputs);
-  virtual CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs);
-  CNodePtr NewCNode(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &inputs);
+  // Create a CNode with given inputs, bound to this graph.
+  virtual CNodePtr NewCNodeWeak(AnfNodeWeakPtrList &&weak_inputs);
+  virtual CNodePtr NewCNodeWeak(const AnfNodeWeakPtrList &weak_inputs);
 
-  // Create a cnode with given inputs, bound to this graph and push back to order list.
-  CNodePtr NewCNodeInOrder(std::vector<AnfNodePtr> &&inputs);
-  CNodePtr NewCNodeInOrder(const std::vector<AnfNodePtr> &inputs = std::vector<AnfNodePtr>());
-  CNodePtr NewCNodeInOrder(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &inputs);
+  // @deprecated
+  // To use 'CNodePtr NewCNodeWeak(AnfNodeWeakPtrList &&weak_inputs)' instead.
+  virtual CNodePtr NewCNode(AnfNodePtrList &&inputs);
+  // @deprecated
+  // To use 'CNodePtr NewCNodeWeak(const AnfNodeWeakPtrList &weak_inputs)' instead.
+  virtual CNodePtr NewCNode(const AnfNodePtrList &inputs);
 
-  // Create a cnode with given inputs, bound to this graph and push back to front of order list.
-  CNodePtr NewCNodeInFront(const std::vector<AnfNodePtr> &inputs = std::vector<AnfNodePtr>());
+  CNodePtr NewCNode(const PrimitivePtr &primitive, const AnfNodePtrList &inputs);
 
-  // Create a cnode with given inputs, put it to order list before the position node.
-  CNodePtr NewCNodeBefore(const AnfNodePtr &position, const std::vector<AnfNodePtr> &inputs);
+  // Create a CNode with given weak inputs, bound to this graph and push back to order list.
+  CNodePtr NewCNodeInOrderWeak(AnfNodeWeakPtrList &&weak_inputs);
+  CNodePtr NewCNodeInOrderWeak(const AnfNodeWeakPtrList &weak_inputs);
 
-  // Create a cnode with given inputs, put it to order list after the position node.
-  CNodePtr NewCNodeAfter(const AnfNodePtr &position, const std::vector<AnfNodePtr> &inputs);
+  // Create a CNode with given inputs, bound to this graph and push back to order list.
+  CNodePtr NewCNodeInOrder(AnfNodePtrList &&inputs);
+  CNodePtr NewCNodeInOrder(const AnfNodePtrList &inputs = AnfNodePtrList());
+  CNodePtr NewCNodeInOrder(const PrimitivePtr &primitive, const AnfNodePtrList &inputs);
+
+  // Create a CNode with given inputs, bound to this graph and push back to front of order list.
+  CNodePtr NewCNodeInFront(const AnfNodePtrList &inputs = AnfNodePtrList());
+
+  // Create a CNode with given inputs, put it to order list before the position node.
+  CNodePtr NewCNodeBefore(const AnfNodePtr &position, const AnfNodePtrList &inputs);
+
+  // Create a CNode with given inputs, put it to order list after the position node.
+  CNodePtr NewCNodeAfter(const AnfNodePtr &position, const AnfNodePtrList &inputs);
 
   // Functions for handling variable argument, keyword-only arguments and variable keyword argument.
   AnfNodePtr GetDefaultValueByName(const std::string &name);
   void set_param_default_value(const std::string &name, const AnfNodePtr &node) {
     parameter_default_value_[name] = node;
   }
-  void SetDefaultValues(const std::vector<std::string> &name_list, const std::vector<AnfNodePtr> &value_list);
+  void SetDefaultValues(const std::vector<std::string> &name_list, const AnfNodePtrList &value_list);
   void ClearDefaultValues();
   size_t GetDefaultValueCount();
   std::map<std::string, AnfNodePtr> &parameter_default_value() { return parameter_default_value_; }
@@ -211,9 +219,24 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
     transforms_ = transforms;
   }
 
-  CNodePtr get_return() const { return return_; }
-  void set_return(const CNodePtr &cnode) { return_ = cnode; }
-  const CNodePtr &return_node() const { return return_; }
+  // Return the graph's output, or nullptr if not yet deduced.
+  AnfNodePtr output() const;
+  void set_output(const AnfNodePtr &value, bool force_new_ret = false);
+
+  CNodePtr get_return() const { return return_.lock(); }
+  const CNodePtr return_node() const { return return_.lock(); }
+  void set_return(const CNodePtr &cnode) {
+    return_owner_ = cnode;
+    return_ = CNodeWeakPtr(cnode);
+  }
+  void ResetReturnOwner() { return_owner_.reset(); }
+
+  const std::list<AnfNodePtr> &own_nodes() const;
+  void AddOwnNode(const AnfNodePtr &node);
+  void AddOwnNode(const AnfNodePtrList &nodes);
+  void AddOwnNode(const AnfNodeWeakPtrList &weak_nodes);
+  void RemoveOwnNode(const AnfNodePtr &node);
+  void ResetOwnNodes();
 
   FuncGraphManagerPtr manager() const { return manager_.lock(); }
   void set_manager(const FuncGraphManagerPtr &m) { manager_ = std::weak_ptr<FuncGraphManager>(m); }
@@ -228,6 +251,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   }
   // Get all nodes belonging to this func graph.
   const AnfNodeSet &nodes() const;
+  const AnfNodeSet &switch_nodes() const;
   void CopyNodes(const FuncGraphPtr &source);
   void ClearNodes();
   void AddNode(const AnfNodePtr &node);
@@ -251,7 +275,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   const BaseRefCounterMap &free_variables_total();
 
   // Return the set of graphs free_variables_total belong to.
-  std::vector<AnfNodePtr> free_variables_nodes();
+  AnfNodePtrList free_variables_nodes();
 
   // Get all vars that are func graphs
   std::vector<FuncGraphPtr> free_variables_func_graphs();
@@ -305,45 +329,46 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
     }
   }
   void GenerateVarParams(const FuncGraphPtr &specialized_graph, int variable_args_count, int pos_args_input_count,
-                         std::vector<AnfNodePtr> *specialized_parameter_list,
+                         AnfNodePtrList *specialized_parameter_list,
                          mindspore::HashMap<AnfNodePtr, AnfNodePtr> *repl_nodes) const;
 
   void GenerateKwParams(const FuncGraphPtr &specialized_graph,
                         const std::vector<abstract::AbstractKeywordArgPtr> &kwarg_list, int pos_args_input_count,
-                        std::vector<AnfNodePtr> *specialized_parameter_list,
+                        AnfNodePtrList *specialized_parameter_list,
                         mindspore::HashMap<AnfNodePtr, AnfNodePtr> *repl_nodes) const;
 
-  void GenerateDefaultValue(const FuncGraphPtr &specialized_graph,
-                            const std::vector<AnfNodePtr> &specialized_parameter_list,
+  void GenerateDefaultValue(const FuncGraphPtr &specialized_graph, const AnfNodePtrList &specialized_parameter_list,
                             mindspore::HashMap<AnfNodePtr, AnfNodePtr> *repl_nodes) const;
 
-  const std::vector<AnfNodePtr> &parameter_obj_nodes() const { return parameter_obj_nodes_; }
+  const AnfNodePtrList &parameter_obj_nodes() const { return parameter_obj_nodes_; }
   void add_parameter_obj_node(const AnfNodePtr &p) { parameter_obj_nodes_.push_back(p); }
 
   mindspore::HashMap<std::string, ValuePtr> attrs_;
   mindspore::HashMap<std::string, FuncGraphTransform> transforms_;
   // Parameter default value.
   std::map<std::string, AnfNodePtr> parameter_default_value_;
-  SeenNum seen_;
+
+  SeenNum seen_{0};
+  SeenNum extra_seen_{0};
 
   std::list<CNodePtr> GetOrderedCnodes();
   void EraseUnusedNodeInOrder(const AnfNodePtr &node);
   void EraseUnusedNodeInOrder();
   void DumpCNodeList();
-  const OrderedSet<CNodePtr> &order_list() const { return order_; }
+  const std::list<CNodeWeakPtr> &order_list() const { return order_; }
 
-  void set_order_list(OrderedSet<CNodePtr> &&order_list) { order_ = std::move(order_list); }
+  void set_order_list(std::list<CNodeWeakPtr> &&order_list) { order_ = std::move(order_list); }
 
-  // Add a cnode at the end of order list.
-  void AppendOrderList(const CNodePtr &cnode) { order_.push_back(cnode); }
+  // Add a CNode at the end of order list.
+  void AppendOrderList(const CNodePtr &cnode) { (void)order_.emplace_back(CNodeWeakPtr(cnode)); }
 
-  // Prepend cnode at the front of order list.
-  void PrependOrderList(const CNodePtr &cnode) { order_.push_front(cnode); }
+  // Prepend CNode at the front of order list.
+  void PrependOrderList(const CNodePtr &cnode) { (void)order_.emplace_front(CNodeWeakPtr(cnode)); }
 
-  // Maintain cnode order list when a cnode is replaced by a new one.
+  // Maintain CNode order list when a CNode is replaced by a new one.
   void ReplaceInOrder(const AnfNodePtr &old_node, const AnfNodePtr &new_node);
 
-  // Clear cnode order list.
+  // Clear CNode order list.
   void ClearOrderList() { order_.clear(); }
 
   bool stub() const { return stub_; }
@@ -378,7 +403,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   bool modify_output() const { return modify_output_; }
   void set_modify_output(bool modify_output) { modify_output_ = modify_output; }
   const mindspore::OrderedSet<AnfNodePtr> &used_forward_nodes() const { return used_forward_nodes_; }
-  void set_used_forward_nodes(const std::vector<AnfNodePtr> &used_forward_nodes);
+  void set_used_forward_nodes(const AnfNodePtrList &used_forward_nodes);
   void ClearUsedForwardNodes() { used_forward_nodes_.clear(); }
 
   bool is_tensor_condition_branch() const { return is_tensor_condition_branch_; }
@@ -391,7 +416,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   /// \param[in] node The end node of the graph to be sorted.
   ///
   /// \return The sorted nodes.
-  static std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &node);
+  static AnfNodePtrList TopoSort(const AnfNodePtr &node);
 
   void set_python_obj(const ValuePtr &python_obj) { python_obj_ = python_obj; }
   ValuePtr python_obj() const { return python_obj_; }
@@ -412,6 +437,9 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   // All nodes of the function.
   AnfNodeSet nodes_;
 
+  // All switch nodes of the function.
+  AnfNodeSet switch_nodes_;
+
   // All value nodes of the function.
   AnfNodeCounterMap value_nodes_;
 
@@ -428,8 +456,8 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   CNodeIndexCounterMap func_graph_cnodes_index_;
 
   // Parameters of this function.
-  std::vector<AnfNodePtr> parameters_;
-  std::vector<AnfNodePtr> parameter_obj_nodes_;
+  AnfNodePtrList parameters_;
+  AnfNodePtrList parameter_obj_nodes_;
 
   // Whether there is a *args and **kwargs, and count kw_only_args'number.
   bool has_vararg_;
@@ -443,7 +471,9 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   bool is_generated_;
   // CNode that calls 'return' primitive.
   // We use shared pointer to manage it.
-  CNodePtr return_;
+  CNodeWeakPtr return_;
+  // Before release all func graphs in Manager, reset the owner firstly.
+  CNodePtr return_owner_;
 
   // Back-ref to its manager.
   // Hold a weak ref to FuncGraphManager as FuncGraphManager also hold many ref to FuncGraph.
@@ -457,13 +487,12 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   int attached_mng_cnt_ = 0;
 
   GraphDebugInfoPtr debug_info_;
-  void GenerateKwargReplNode(const FuncGraphPtr &specialized_graph,
-                             const std::vector<AnfNodePtr> &kwarg_keys_tuple_nodes,
-                             const std::vector<AnfNodePtr> &kwarg_values_tuple_nodes,
+  void GenerateKwargReplNode(const FuncGraphPtr &specialized_graph, const AnfNodePtrList &kwarg_keys_tuple_nodes,
+                             const AnfNodePtrList &kwarg_values_tuple_nodes,
                              mindspore::HashMap<AnfNodePtr, AnfNodePtr> *repl_nodes) const;
 
   // CNode order which relates to origin code order.
-  OrderedSet<CNodePtr> order_;
+  std::list<CNodeWeakPtr> order_;
   bool stub_;
 
   // The graph is used as some input of Switch, SwitchLayer, or Partial.
@@ -492,14 +521,16 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   // Corresponding python obj.
   ValuePtr python_obj_ = nullptr;
   std::string phase_;
+  // Own all nodes in the func graph.
+  std::list<AnfNodePtr> own_nodes_;
 };
 
-inline CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg) {
+inline CNodePtr NewCNode(const AnfNodePtrList &inputs, const FuncGraphPtr &fg) {
   MS_EXCEPTION_IF_NULL(fg);
   return fg->NewCNode(inputs);
 }
 
-inline CNodePtr NewCNode(std::vector<AnfNodePtr> &&inputs, const FuncGraphPtr &fg) {
+inline CNodePtr NewCNode(AnfNodePtrList &&inputs, const FuncGraphPtr &fg) {
   MS_EXCEPTION_IF_NULL(fg);
   return fg->NewCNode(std::move(inputs));
 }

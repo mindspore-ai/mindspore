@@ -1231,7 +1231,7 @@ AnfNodePtr PipelineTransformer::GetZeroOutputs(const FuncGraphPtr &graph) {
   std::vector<AnfNodePtr> out_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
   if (IsPrimitiveCNode(real_out, prim::kPrimMakeTuple)) {
     auto real_out_cnode = real_out->cast<CNodePtr>();
-    for (size_t i = 1; i < real_out_cnode->inputs().size(); ++i) {
+    for (size_t i = 1; i < real_out_cnode->size(); ++i) {
       auto each_out_shapes = GetNodeShape(real_out_cnode->input(i));
       // In case: tuple's input is also a tuple
       if (each_out_shapes.size() > 1) {

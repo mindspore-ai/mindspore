@@ -28,7 +28,7 @@ PrimitiveCPtr PytorchPowParser::Parse(const torch::jit::Node *torch_node, std::v
 
   input_indices->push_back(0);
 
-  if (torch_node->inputs().size() > SECOND_INPUT) {
+  if (torch_node->size() > SECOND_INPUT) {
     auto exponent = PytorchNodeParser::GetValueFromConstNode<float>(torch_node->input(SECOND_INPUT));
     prim->set_scale(exponent);
   }

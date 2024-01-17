@@ -387,7 +387,7 @@ KernelWithIndex VisitRealNodeWithNestLevel(const AnfNodePtr &anf_node, size_t in
 }
 
 bool NeedConvertToRealTupleGetItem(const CNodePtr &cnode) {
-  if (cnode->inputs().size() != kTupleGetItemInputSize) {
+  if (cnode->size() != kTupleGetItemInputSize) {
     return false;
   }
   if (!cnode->input(kInputNodeOutputIndexInTupleGetItem)->isa<ValueNode>() || GetTupleGetItemOutIndex(cnode) < 0) {
@@ -1320,7 +1320,7 @@ void MindRTBackendBase::ConstructOutputs(const AnfNodePtr &output_node,
     auto make_tuple = output_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(make_tuple);
     VectorRef make_tuple_output;
-    for (size_t i = 1; i < make_tuple->inputs().size(); i++) {
+    for (size_t i = 1; i < make_tuple->size(); i++) {
       ConstructOutputs(make_tuple->input(i), output_tensors, output_position, &make_tuple_output, tuple_tensors);
     }
     outputs->emplace_back(std::move(make_tuple_output));

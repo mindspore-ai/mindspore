@@ -21,7 +21,9 @@ namespace mindspore {
 void AnfIrVisitor::Visit(const AnfNodePtr &node) { node->accept(this); }
 
 void AnfIrVisitor::Visit(const CNodePtr &cnode) {
-  for (auto &input : cnode->inputs()) {
+  for (auto &weak_input : cnode->weak_inputs()) {
+    auto input = weak_input.lock();
+    MS_EXCEPTION_IF_NULL(input);
     Visit(input);
   }
 }

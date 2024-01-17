@@ -42,7 +42,7 @@ const AnfNodePtr DeformableOffsetsGradFusion::Process(const FuncGraphPtr &func_g
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   auto deformable_offsets_grad_cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(deformable_offsets_grad_cnode);
-  size_t origin_input_size = deformable_offsets_grad_cnode->inputs().size();
+  size_t origin_input_size = deformable_offsets_grad_cnode->size();
   if (origin_input_size <= kDeformableOffsetsGradInputNum) {
     MS_LOG(INFO) << "The node " << deformable_offsets_grad_cnode->DebugString() << " is not equal to "
                  << kDeformableOffsetsGradInputNum << " inputs";

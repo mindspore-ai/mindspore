@@ -502,7 +502,7 @@ Shapes GetNodeShape(const AnfNodePtr &node) {
   if (node->isa<CNode>() && !IsControlFlowNode(node)) {
     auto cnode = node->cast<CNodePtr>();
     if (cnode->input(0)->isa<CNode>()) {
-      if (cnode->inputs().size() < 2) {
+      if (cnode->size() < 2) {
         MS_LOG(EXCEPTION) << "GetNodeShape: " << node->ToString() << " size is smaller than 2";
       }
       base_shape_ptr = cnode->input(1)->Shape();
@@ -626,9 +626,9 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::st
                                        const CNodePtr &node) {
   OperatorArgs arg_replace_op = replace_op.second;
   OperatorParams params = arg_replace_op.second;
-  if (node->inputs().size() < 2) {
+  if (node->size() < 2) {
     // GetNext operator dose not has input
-    if (node->inputs().size() == 1) {
+    if (node->size() == 1) {
       return ConvertToRealInputs(replace_op.first, instance_name, AnfNodePtrList{}, arg_replace_op.first);
     }
     MS_LOG(EXCEPTION) << "Failure: " << node->ToString() << " size is smaller than 2";
@@ -654,7 +654,7 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::st
       (void)replace_input.insert(replace_input.cbegin() + position - 1, val);
     }
   } else if (replace_op.first == SYNC_BATCH_NORM) {
-    for (size_t i = 2; i < node->inputs().size(); ++i) {
+    for (size_t i = 2; i < node->size(); ++i) {
       replace_input.push_back(node->input(i));
     }
   }
@@ -1946,7 +1946,7 @@ ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_
       if (!IsValueNode<Primitive>(cnode->input(0))) {
         continue;
       }
-      if (IsCohesiveNode(cnode) && cnode->inputs().size() >= 1) {
+      if (IsCohesiveNode(cnode) && cnode->size() >= 1) {
         auto input_param_names = NodeParameterName(cnode, idx, 0);
         (void)param_names.insert(param_names.cend(), input_param_names.cbegin(), input_param_names.cend());
       }
@@ -2194,7 +2194,7 @@ FuncGraphPtr GetCellReuseBackwardGraph(const FuncGraphPtr &forward_graph) {
       return nullptr;
     }
     auto prev_node_index = pattern.second;
-    if (prev_node_index >= SizeToLong(cnode->inputs().size())) {
+    if (prev_node_index >= SizeToLong(cnode->size())) {
       return nullptr;
     }
     node = cnode->input(prev_node_index);

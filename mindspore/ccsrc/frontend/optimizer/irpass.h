@@ -109,6 +109,7 @@ class OptimizeIRPassLib {
 
   // inline
   SubstitutionPtr inline_;
+  SubstitutionPtr halfway_inline_;
   SubstitutionPtr inline_without_move_;
   SubstitutionPtr replace_applicator_;
   SubstitutionPtr specialize_transform_;

@@ -122,7 +122,8 @@ const AnfNodePtr MaxPool3DGradGradFission::Process(const FuncGraphPtr &graph, co
   }
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kMaxPool3DGradGradDOpName))};
   auto assist_const = CreateValueNode(cnode);
-  (void)new_inputs.insert(new_inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
+  auto cnode_inputs = cnode->inputs();
+  (void)new_inputs.insert(new_inputs.cend(), cnode_inputs.cbegin() + 1, cnode_inputs.cend());
   (void)new_inputs.emplace_back(assist_const);
   CNodePtr new_cnode = NewCNode(new_inputs, graph);
   MS_EXCEPTION_IF_NULL(new_cnode);

@@ -127,7 +127,7 @@ class MakeSliceSliceGetItemEliminator : public AnfVisitor {
         MS_EXCEPTION(ValueError) << "The slice must be [start, stop, step], but got " << slice_attr_;
       }
       idx_ = iter->second;
-      if (idx_ > make_slice_->inputs().size()) {
+      if (idx_ > make_slice_->size()) {
         MS_EXCEPTION(IndexError) << "The node make_slice should has 3 inputs but got " << make_slice_->DebugString();
       }
       is_match_ = true;

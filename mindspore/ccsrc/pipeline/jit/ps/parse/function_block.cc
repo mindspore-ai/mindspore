@@ -838,7 +838,7 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
   auto return_node = func_graph_->get_return();
   if (return_node != nullptr) {
     const size_t return_input_size = 2;
-    if (return_node->inputs().size() < return_input_size) {
+    if (return_node->size() < return_input_size) {
       MS_LOG(INTERNAL_EXCEPTION) << "Length of inputs of output node is less than 2";
     }
     old_output = return_node->input(1);

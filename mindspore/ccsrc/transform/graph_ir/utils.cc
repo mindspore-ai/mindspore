@@ -90,7 +90,7 @@ bool IsPartialSuccNode(const AnfNodePtr node) {
   }
   auto cnode = node->cast<CNodePtr>();
   if (!cnode->inputs().empty()) {
-    for (size_t i = 0; i < cnode->inputs().size(); i++) {
+    for (size_t i = 0; i < cnode->size(); i++) {
       if (IsPartialCNode(cnode->input(i))) {
         return true;
       }

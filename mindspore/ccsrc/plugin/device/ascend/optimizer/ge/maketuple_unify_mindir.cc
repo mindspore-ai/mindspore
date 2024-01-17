@@ -108,7 +108,7 @@ const AnfNodePtr MakeTupleUnifyMindIR::Process(const FuncGraphPtr &func_graph, c
                                   make_tuple_cnode->cast<CNodePtr>()->fullname_with_scope() + "_concat_make_tuple");
   auto primitive = GetCNodePrimitive(concat_node);
   MS_EXCEPTION_IF_NULL(primitive);
-  int64_t num_of_inputs = static_cast<int64_t>(new_make_tuple_cnode->inputs().size() - kSizeOne);
+  int64_t num_of_inputs = static_cast<int64_t>(new_make_tuple_cnode->size() - kSizeOne);
   std::vector<int64_t> dyn_input_size_empty{num_of_inputs};
   common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(num_of_inputs), concat_node);
 

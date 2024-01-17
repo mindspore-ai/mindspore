@@ -44,7 +44,7 @@ void LayerNormGradSplit::CreateOutputsOfLayerNormXBackpropV2(const FuncGraphPtr 
   MS_EXCEPTION_IF_NULL(layer_norm_x_backprop_outputs);
   auto prim = std::make_shared<Primitive>(kLayerNormXBackpropV2OpName);
   std::vector<AnfNodePtr> layer_norm_x_backprop_inputs = {NewValueNode(prim)};
-  for (size_t i = 1; i < layer_norm_grad->inputs().size(); ++i) {
+  for (size_t i = 1; i < layer_norm_grad->size(); ++i) {
     layer_norm_x_backprop_inputs.push_back(layer_norm_grad->input(i));
   }
   auto layer_norm_x_backprop = NewCNode(layer_norm_x_backprop_inputs, graph);

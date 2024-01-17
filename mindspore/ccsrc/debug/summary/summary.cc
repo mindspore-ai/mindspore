@@ -121,9 +121,9 @@ void Summary::SetSummaryNodes(KernelGraph *graph) {
     if (AnfAlgo::IsSummaryNode(n)) {
       auto cnode = n->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
-      if (cnode->inputs().size() <= kSummaryGetItem) {
-        MS_LOG(EXCEPTION) << "The node Summary should have 2 inputs at least, but got " << (cnode->inputs().size() - 1)
-                          << "." << trace::DumpSourceLines(cnode);
+      if (cnode->size() <= kSummaryGetItem) {
+        MS_LOG(EXCEPTION) << "The node Summary should have 2 inputs at least, but got " << (cnode->size() - 1) << "."
+                          << trace::DumpSourceLines(cnode);
       }
       auto node = cnode->input(kSummaryGetItem);
       MS_EXCEPTION_IF_NULL(node);

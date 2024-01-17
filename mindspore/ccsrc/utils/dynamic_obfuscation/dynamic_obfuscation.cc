@@ -150,11 +150,15 @@ ParameterPtr get_node_param(const FuncGraphPtr func_graph, const CNodePtr &node)
     return nullptr;
   }
   std::string parameter_name = "";
-  for (auto input : node->inputs()) {
+  for (auto &weak_input : node->weak_inputs()) {
+    auto input = weak_input.lock();
+    MS_EXCEPTION_IF_NULL(input);
     std::string op_name = get_node_prim_name(input);
     MS_LOG(INFO) << "op_name is: " << op_name;
     if (op_name == "Load") {
-      for (auto param : input->cast<mindspore::CNodePtr>()->inputs()) {
+      for (auto weak_param : input->cast<mindspore::CNodePtr>()->weak_inputs()) {
+        auto param = weak_param.lock();
+        MS_EXCEPTION_IF_NULL(param);
         if (param->fullname_with_scope().find("weight") != std::string::npos) {
           parameter_name = param->fullname_with_scope();
           break;
@@ -827,7 +831,7 @@ mindspore::CNodePtr DynamicObfuscator::AddPartialBranch(const FuncGraphPtr fg, F
   fg_subgraph_node->set_abstract(fg_sub->ToAbstract());
   fg->AddValueNode(fg_subgraph_node);
   std::vector<mindspore::AnfNodePtr> subgraph_inputs = {switch_partial, fg_subgraph_node};
-  if (nodes[0]->inputs().size() < kSwitchInputsNum) {
+  if (nodes[0]->size() < kSwitchInputsNum) {
     MS_LOG(ERROR) << "Add subgraph failed: the input number of node[0] is smaller than " << kSwitchInputsNum;
     return nullptr;
   }
@@ -839,8 +843,7 @@ mindspore::CNodePtr DynamicObfuscator::AddPartialBranch(const FuncGraphPtr fg, F
       break;
     }
     std::string obf_type = ObfuscateOpType(nodes[i]);
-    if ((obf_type == kConv2DOpName || obf_type == kMatMulOpName) &&
-        nodes[i]->inputs().size() >= kNodeWithWeightInputsNum) {
+    if ((obf_type == kConv2DOpName || obf_type == kMatMulOpName) && nodes[i]->size() >= kNodeWithWeightInputsNum) {
       subgraph_inputs.push_back(nodes[i]->inputs()[kWeightIndex]);
       pushed_inputs += 1;
     }
@@ -934,7 +937,9 @@ void DynamicObfuscator::AddSwitchNode(const FuncGraphPtr fg) {
 
     if (child_node != nullptr) {
       unsigned i = 0;
-      for (auto input : child_node->inputs()) {
+      for (auto &weak_input : child_node->weak_inputs()) {
+        auto input = weak_input.lock();
+        MS_EXCEPTION_IF_NULL(input);
         if (input->fullname_with_scope() == last_node->fullname_with_scope()) {
           child_node->set_input(i, call_cnode);
           break;
@@ -1021,7 +1026,7 @@ void DynamicObfuscator::SubGraphFakeBranch(const FuncGraphPtr func_graph) {
           curr_cnode = valid_input;
         } else {
           stop_traverse = true;
-          if (curr_cnode->inputs().size() > 1) {
+          if (curr_cnode->size() > 1) {
             CheckDuplicatedParent(curr_cnode->inputs()[1]);
           }
         }

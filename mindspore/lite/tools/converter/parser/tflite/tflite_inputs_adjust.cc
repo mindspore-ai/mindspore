@@ -72,8 +72,8 @@ lite::STATUS ReorderCnodeInputs(CNode *cnode, const std::vector<size_t> &perm) {
   // add inputs as perm order
   size_t new_idx = 0;
   for (size_t idx : perm) {
-    if (idx > cnode->inputs().size() - 1) {
-      MS_LOG(ERROR) << "Idx " << idx << " is larger than inputs size: " << (cnode->inputs().size() - 1);
+    if (idx > cnode->size() - 1) {
+      MS_LOG(ERROR) << "Idx " << idx << " is larger than inputs size: " << (cnode->size() - 1);
       return lite::RET_ERROR;
     }
     new_inputs.emplace_back(cnode->input(idx));
@@ -141,7 +141,7 @@ STATUS TfliteInputsAdjust::AdjustSlice(const AnfNodePtr &node, const FuncGraphPt
   MSLITE_CHECK_PTR(graph);
   auto cnode = node->cast<CNodePtr>();
   MS_ASSERT(cnode != nullptr);
-  if (cnode->inputs().size() < opt::kInputSizeFour) {
+  if (cnode->size() < opt::kInputSizeFour) {
     MS_LOG(ERROR) << "Slice should own 3 inputs";
     return RET_ERROR;
   }
@@ -191,7 +191,7 @@ bool TfliteInputsAdjust::Run(const FuncGraphPtr &graph) {
 
     if (opt::CheckPrimitiveType(cnode, prim::kPrimSplit)) {
       // axis, input, ??? => input, axis
-      if (cnode->inputs().size() == split_inputs_size &&
+      if (cnode->size() == split_inputs_size &&
           ReorderCnodeInputs(cnode.get(), {THIRD_INPUT, SECOND_INPUT}) != RET_OK) {
         MS_LOG(ERROR) << "Reorder split inputs failed.";
         return false;
@@ -199,7 +199,7 @@ bool TfliteInputsAdjust::Run(const FuncGraphPtr &graph) {
       auto manager = Manage(graph, true);
       MS_CHECK_TRUE_RET(manager != nullptr, false);
       // Remove constant inputs that has been converted to an attribute: axis for split and split_num/axis for splitv.
-      for (int idx = THIRD_INPUT; idx < static_cast<int>(cnode->inputs().size()); idx++) {
+      for (int idx = THIRD_INPUT; idx < static_cast<int>(cnode->size()); idx++) {
         auto umanod = NewValueNode(std::make_shared<UMonad>());
         MS_CHECK_TRUE_RET(umanod != nullptr, false);
         manager->SetEdge(cnode, idx, umanod);

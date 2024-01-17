@@ -74,7 +74,7 @@ KernelWithIndex VisitSplitKernel(const AnfNodePtr &anf_node, size_t index) {
       MS_EXCEPTION_IF_NULL(node);
       return VisitSplitKernel(node, 0);
     } else if (IsPrimitive(input0, prim::kPrimTupleGetItem)) {
-      if (cnode->inputs().size() != kTupleGetItemInputSize) {
+      if (cnode->size() != kTupleGetItemInputSize) {
         MS_LOG(INTERNAL_EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
       }
       auto input2 = cnode->input(kInputNodeOutputIndexInTupleGetItem);

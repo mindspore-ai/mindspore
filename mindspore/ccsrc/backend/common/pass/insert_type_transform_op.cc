@@ -363,7 +363,7 @@ void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<Kern
   // But if the input's object type is not set, this will throw exception so must pay attention when using this
   // function.
   auto general_input_obj_type_func = [&]() {
-    for (size_t i = kIndex1; i < cnode->inputs().size(); i++) {
+    for (size_t i = kIndex1; i < cnode->size(); i++) {
       auto input_node = cnode->input(i);
       MS_EXCEPTION_IF_NULL(input_node);
       // Set input kernel object type as input node's output kernel object type.

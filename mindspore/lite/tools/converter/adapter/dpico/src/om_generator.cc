@@ -56,7 +56,7 @@ api::CNodePtrList GetOutputCNodes(const api::FuncGraphManagerPtr &manager, const
       if (output_cnode != nullptr) {
         if (CheckPrimitiveType(output_cnode, api::MakeShared<ops::TupleGetItem>())) {
           has_tuple_get_item = true;
-          auto last_input_idx = output_cnode->inputs().size() - 1;
+          auto last_input_idx = output_cnode->size() - 1;
           auto anode = output_cnode->input(last_input_idx);
           MS_CHECK_TRUE_MSG(anode != nullptr, {},
                             output_cnode->fullname_with_scope() << " input(" << last_input_idx << ") is nullptr.");

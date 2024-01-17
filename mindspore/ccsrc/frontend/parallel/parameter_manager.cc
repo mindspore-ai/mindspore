@@ -858,7 +858,7 @@ static std::pair<AnfNodePtr, bool> FindParameterByFuncGraph(const AnfNodePtr &no
 
   auto pre_node = GetRealKernelNode(fg->output(), -1, nullptr).first;
   auto pre_cnode = pre_node->cast<CNodePtr>();
-  for (size_t index = 1; index < pre_cnode->inputs().size(); ++index) {
+  for (size_t index = 1; index < pre_cnode->size(); ++index) {
     auto res = FindParameter(pre_cnode->input(index), pre_cnode->func_graph());
     if (!res.first) {
       continue;
@@ -887,7 +887,7 @@ std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGrap
     return FindParameterByFuncGraph(node);
   }
   if (!IsValueNode<Primitive>(cnode->input(0))) {
-    for (size_t index = 0; index < cnode->inputs().size(); ++index) {
+    for (size_t index = 0; index < cnode->size(); ++index) {
       auto res = FindParameter(cnode->input(index), func_graph);
       if (!res.first) {
         continue;
@@ -903,7 +903,7 @@ std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGrap
   }
   ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(prim_anf_node);
-  for (size_t index = 0; index < cnode->inputs().size(); ++index) {
+  for (size_t index = 0; index < cnode->size(); ++index) {
     PrimitivePtr prim = prim_anf_node->value()->cast<PrimitivePtr>();
     MS_EXCEPTION_IF_NULL(prim);
     if ((prim->name() == DEPEND || prim->name() == LOAD || IsInAllGatherNodeList(cnode)) && index != 1) {
@@ -935,7 +935,7 @@ std::pair<AnfNodePtr, bool> FindParameterWithAllgather(const AnfNodePtr &node, c
 
   CNodePtr cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  for (size_t index = 0; index < cnode->inputs().size(); ++index) {
+  for (size_t index = 0; index < cnode->size(); ++index) {
     if (index != 1) {
       continue;
     }

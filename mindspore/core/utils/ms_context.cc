@@ -165,7 +165,7 @@ std::shared_ptr<MsContext> MsContext::GetInstance() {
       inst_context_ = std::make_shared<MsContext>("vm", kCPUDevice);
     }
   });
-
+  MS_EXCEPTION_IF_NULL(inst_context_);
   return inst_context_;
 }
 
@@ -398,8 +398,7 @@ std::string MsContext::GetSaveGraphsPath() const {
   }
 }
 
-bool MsContext::CanDump(const DumpLevel &level) const {
-  int save_graphs = MsContext::GetInstance()->get_param<int>(MS_CTX_SAVE_GRAPHS_FLAG);
+int MsContext::GetSaveGraphsLevel() const {
   static std::string save_env = common::GetEnv("MS_DEV_SAVE_GRAPHS");
   if (save_env.size() == 1) {
     int save_graphs_by_env = -1;
@@ -411,19 +410,14 @@ bool MsContext::CanDump(const DumpLevel &level) const {
     if (save_graphs_by_env < 0 || save_graphs_by_env > kFully) {
       MS_LOG(EXCEPTION) << "Dump level can only be from 0 to 3";
     }
-    if (save_graphs_by_env >= level) {
-      return true;
-    } else {
-      return false;
-    }
+    return save_graphs_by_env;
   } else if (save_env.size() > 1) {
     MS_LOG(EXCEPTION) << "MS_DEV_SAVE_GRAPHS should be a single number with one digit.";
   }
-  if (save_graphs >= level) {
-    return true;
-  }
-  return false;
+  return MsContext::GetInstance()->get_param<int>(MS_CTX_SAVE_GRAPHS_FLAG);
 }
+
+bool MsContext::CanDump(const DumpLevel &level) const { return GetSaveGraphsLevel() >= level; }
 
 void MsContext::MarkReadStatus(MsCtxParam param) const {
 #if !(defined(ENABLE_TEST) || defined(ENABLE_TESTCASES) || defined(BUILD_LITE))

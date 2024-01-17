@@ -132,7 +132,7 @@ void EliminateCollectedSequenceNodes(ProgramSpecializer *const specializer) {
     // Handle MakeTuple/MakeList CNode.
     auto cnode = dyn_cast_ptr<CNode>(node);
     if (cnode != nullptr) {
-      if (pos + 1 >= cnode->inputs().size()) {
+      if (pos + 1 >= cnode->size()) {
         continue;
       }
       if (!IsDeadNode(cnode->input(pos + 1))) {
@@ -476,28 +476,30 @@ void FuncGraphSpecializer::UpdateNewCNodeInputs(const AnfNodePtr &node, const An
   MS_EXCEPTION_IF_NULL(node);
   auto c_node = node->cast_ptr<CNode>();
   MS_EXCEPTION_IF_NULL(c_node);
-  auto inputs = c_node->inputs();
-  std::vector<AnfNodePtr> new_inputs;
-  (void)std::transform(
-    inputs.begin(), inputs.end(), std::back_inserter(new_inputs), [this](const AnfNodePtr &inp) -> AnfNodePtr {
-      MS_EXCEPTION_IF_NULL(inp);
-      auto new_inp = ReplicateDisconnectedNode(inp);
-      // Refer the comments in BuildReplacedNode.
-      if (inp->isa<CNode>()) {
-        auto c_inp = inp->cast<CNodePtr>();
-        MS_EXCEPTION_IF_NULL(c_inp);
-        auto c_new_inp = new_inp->cast<CNodePtr>();
-        MS_EXCEPTION_IF_NULL(c_new_inp);
-        MS_EXCEPTION_IF_NULL(c_new_inp->func_graph());
-        MS_LOG(DEBUG) << "Replace in order, inp node: " << inp->DebugString() << " -> " << new_inp->DebugString();
-        c_new_inp->func_graph()->ReplaceInOrder(c_inp, c_new_inp);
-      }
-      return new_inp;
-    });
+  auto inputs = c_node->weak_inputs();
+  AnfNodeWeakPtrList new_inputs;
+  (void)std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(new_inputs),
+                       [this](const AnfNodeWeakPtr &weak_inp) -> AnfNodePtr {
+                         auto inp = weak_inp.lock();
+                         MS_EXCEPTION_IF_NULL(inp);
+                         auto new_inp = ReplicateDisconnectedNode(inp);
+                         // Refer the comments in BuildReplacedNode.
+                         if (inp->isa<CNode>()) {
+                           auto c_inp = inp->cast<CNodePtr>();
+                           MS_EXCEPTION_IF_NULL(c_inp);
+                           auto c_new_inp = new_inp->cast<CNodePtr>();
+                           MS_EXCEPTION_IF_NULL(c_new_inp);
+                           MS_EXCEPTION_IF_NULL(c_new_inp->func_graph());
+                           MS_LOG(DEBUG) << "Replace in order, inp node: " << inp->DebugString() << " -> "
+                                         << new_inp->DebugString();
+                           c_new_inp->func_graph()->ReplaceInOrder(c_inp, c_new_inp);
+                         }
+                         return new_inp;
+                       });
   MS_EXCEPTION_IF_NULL(new_node);
   auto c_new_node = new_node->cast_ptr<CNode>();
   MS_EXCEPTION_IF_NULL(c_new_node);
-  c_new_node->set_inputs(new_inputs);
+  c_new_node->set_weak_inputs(new_inputs);
 }
 
 AnfNodePtr FuncGraphSpecializer::GetReplicatedNode(const AnfNodePtr &node) {
@@ -914,8 +916,9 @@ void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) co
   auto &sequence_abstract_list = specializer_->sequence_abstract_list();
 
   // Add CNode's inputs if they're sequence abstract, and sequence nodes exist.
-  (void)std::for_each(cnode->inputs().begin(), cnode->inputs().end(),
-                      [&sequence_abstract_list](const AnfNodePtr &input) {
+  (void)std::for_each(cnode->weak_inputs().cbegin(), cnode->weak_inputs().cend(),
+                      [&sequence_abstract_list](const AnfNodeWeakPtr &weak_input) {
+                        auto input = weak_input.lock();
                         MS_EXCEPTION_IF_NULL(input);
                         const AbstractBasePtr input_abs = input->abstract();
                         AbstractSequencePtr input_sequence_abs = dyn_cast<AbstractSequence>(input_abs);
@@ -964,7 +967,7 @@ void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) co
     }
   }
   // Purify each Tuple/List ValueNode in CNode.
-  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+  for (size_t i = 1; i < cnode->size(); ++i) {
     if (IsValueNode<ValueTuple>(cnode->input(i))) {
       if (IsValueNode<ValueNamedTuple>(cnode->input(i))) {
         PurifyNamedTupleValueNode(cnode, i, specializer_);
@@ -1020,10 +1023,11 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
   auto c_old = node->cast_ptr<CNode>();
   auto c_new = new_node->cast_ptr<CNode>();
   MS_EXCEPTION_IF_NULL(c_new);
-  auto new_inputs = c_new->inputs();
-  auto old_inputs = c_old->inputs();
+  auto new_inputs = c_new->weak_inputs();
+  auto old_inputs = c_old->weak_inputs();
   for (size_t i = 0; i < old_inputs.size(); ++i) {
-    auto node_input = old_inputs[i];
+    auto node_input = old_inputs[i].lock();
+    MS_EXCEPTION_IF_NULL(node_input);
     AnfNodeConfigPtr input_conf = MakeConfig(node_input);
     MS_EXCEPTION_IF_NULL(input_conf);
     const auto &eval_result = GetEvalResult(input_conf);
@@ -1064,16 +1068,18 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
       MS_LOG(DEBUG) << "Build possible value node for node: " << node_input->DebugString()
                     << ", real_abs: " << real_abs->ToString() << ", replace_node: " << replace_node->DebugString();
     }
+    MS_EXCEPTION_IF_NULL(replace_node);
     if (enable_eliminate_unused_element) {
       UpdateSequenceNode(replace_node, node_input, real_abs);
     }
-    if (new_inputs[i] != replace_node) {
+    if (new_inputs[i].lock() != replace_node) {
+      new_node->func_graph()->AddOwnNode(replace_node);
       new_inputs[i] = replace_node;
-      MS_EXCEPTION_IF_NULL(replace_node);
       MS_LOG(DEBUG) << "Set new_input[" << i << "]: " << replace_node->DebugString();
     }
   }
-  c_new->set_inputs(new_inputs);
+  c_new->set_weak_inputs(new_inputs);
+  MS_LOG(DEBUG) << "Update cnode: " << c_new << "/" << c_new->DebugString();
 }
 
 AnfNodePtr FuncGraphSpecializer::BuildReplacedNode(const AnfNodeConfigPtr &conf) {
@@ -1275,11 +1281,11 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const CNodePtr &cnode
 // If the Parameter is PartialApp, unpack it and rebuild a new one.
 AnfNodePtr FuncGraphSpecializer::BuildSpecializedParameterCNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
-  auto new_inputs = cnode->inputs();
+  auto new_inputs = cnode->weak_inputs();
   if (new_inputs.empty()) {
     MS_LOG(INTERNAL_EXCEPTION) << "inputs can't be empty.";
   }
-  AnfNodePtr func = new_inputs[0];
+  AnfNodePtr func = new_inputs[0].lock();
   MS_EXCEPTION_IF_NULL(func);
   AbstractBasePtr func_abs = func->abstract();
 
@@ -1291,10 +1297,12 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedParameterCNode(const CNodePtr &
     real_func_abs = partial_closure->fn();
     args = partial_closure->args();
   }
-  (void)std::transform(new_inputs.cbegin() + 1, new_inputs.cend(), std::back_inserter(args), [](const AnfNodePtr &inp) {
-    MS_EXCEPTION_IF_NULL(inp);
-    return inp->abstract();
-  });
+  (void)std::transform(new_inputs.cbegin() + 1, new_inputs.cend(), std::back_inserter(args),
+                       [](const AnfNodeWeakPtr &weak_inp) -> AbstractBasePtr {
+                         auto inp = weak_inp.lock();
+                         MS_EXCEPTION_IF_NULL(inp);
+                         return inp->abstract();
+                       });
 
   ScopeGuard scope_guard(cnode->scope());
   auto specialized_node = BuildSpecializedNode(cnode, func, real_func_abs, args);
@@ -1434,46 +1442,51 @@ bool IsHighOrderCall(const AnfNodePtr &func) {
 }
 
 // Update inputs' user data from their abstracts to nodes.
-void UpdateInputsUserData(const CNodePtr &old_cnode, const std::vector<AnfNodePtr> &new_inputs) {
-  const auto &old_inputs = old_cnode->inputs();
-  if (old_inputs.size() != new_inputs.size()) {
+void UpdateInputsUserData(const CNodePtr &old_cnode, const AnfNodeWeakPtrList &new_weak_inputs) {
+  const auto &old_weak_inputs = old_cnode->weak_inputs();
+  if (old_weak_inputs.size() != new_weak_inputs.size()) {
     MS_LOG(DEBUG) << "Old inputs size is not equal to new inputs size, node: " << old_cnode->DebugString();
     return;
   }
   // Update real type and shape info.
   for (size_t i = 0; i < old_cnode->size(); ++i) {
-    const auto &old_input = old_inputs[i];
+    const auto &old_input = old_weak_inputs[i].lock();
     MS_EXCEPTION_IF_NULL(old_input);
     const auto &old_input_abs = old_input->abstract();
-    MS_EXCEPTION_IF_NULL(old_input_abs);
-    MS_EXCEPTION_IF_NULL(new_inputs[i]);
+    if (old_input_abs == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The pointer 'old_input_abs' is null, old input node: " << old_input->DebugString();
+    }
+    auto new_weak_input = new_weak_inputs[i].lock();
+    if (new_weak_input == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The " << i << "th input is null, " << old_cnode->DebugString();
+    }
     if (fallback::HasRealType(old_input_abs)) {
       const auto &real_type = fallback::GetRealType<AbstractBase, Type>(old_input_abs);
-      fallback::SetRealType<AnfNode, Type>(new_inputs[i], real_type);
+      fallback::SetRealType<AnfNode, Type>(new_weak_input, real_type);
     }
     if (fallback::HasRealShape(old_input_abs)) {
       const auto &real_type = fallback::GetRealShape<AbstractBase, BaseShape>(old_input_abs);
-      fallback::SetRealShape<AnfNode, BaseShape>(new_inputs[i], real_type);
+      fallback::SetRealShape<AnfNode, BaseShape>(new_weak_input, real_type);
     }
     if (fallback::HasObjInExtraInfoHolder(old_input_abs)) {
       MS_LOG(DEBUG) << "Inherit python list object from old input abstract.";
       auto list_py_obj = fallback::GetObjFromExtraInfoHolder(old_input_abs);
-      fallback::AttachPyObjToExtraInfoHolder(new_inputs[i]->abstract(), list_py_obj, false);
+      fallback::AttachPyObjToExtraInfoHolder(new_weak_input->abstract(), list_py_obj, false);
     }
   }
 }
 
-AnfNodePtr BuildRealInputsFromPartialCNode(const AnfNodePtr &func, AnfNodePtrList *new_inputs_ptr) {
+AnfNodePtr BuildRealInputsFromPartialCNode(const AnfNodePtr &func, AnfNodeWeakPtrList *new_inputs_ptr) {
   auto &new_inputs = *new_inputs_ptr;
   AnfNodePtr real_func = func;
   constexpr int arg_start_index = 2;
   while (IsPrimitiveCNode(real_func, prim::kPrimPartial)) {
     auto func_cnode = real_func->cast_ptr<CNode>();
     MS_EXCEPTION_IF_NULL(func_cnode);
-    const AnfNodePtrList &inputs = func_cnode->inputs();
+    auto &inputs = func_cnode->weak_inputs();
     // First element is partial, second is func so arg is start from 2
     (void)new_inputs.insert(new_inputs.cbegin(), inputs.cbegin() + arg_start_index, inputs.cend());
-    real_func = inputs[1];
+    real_func = inputs[1].lock();
     MS_LOG(DEBUG) << "Real func: " << real_func->ToString() << ", func_cnode: " << func_cnode->DebugString()
                   << ", new_inputs size: " << new_inputs.size();
   }
@@ -1482,30 +1495,31 @@ AnfNodePtr BuildRealInputsFromPartialCNode(const AnfNodePtr &func, AnfNodePtrLis
 
 // If it's Partial CNode, repack the inputs.
 // CNode(CNode(Partial, f, arg1), arg2, ...) --> CNode(f, arg1, arg2, ...)
-AnfNodePtrList GetCNodeRealInputs(const CNodePtr &cnode) {
-  auto inputs = cnode->inputs();
+AnfNodeWeakPtrList GetCNodeRealInputs(const CNodePtr &cnode) {
+  auto &inputs = cnode->weak_inputs();
   if (inputs.empty()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Inputs of CNode is empty";
   }
-  AnfNodePtr func = inputs[0];
+  AnfNodePtr func = inputs[0].lock();
   MS_EXCEPTION_IF_NULL(func);
   if (!IsPrimitiveCNode(func, prim::kPrimPartial)) {
     return inputs;
   }
 
   // First element is func, so start from 1.
-  AnfNodePtrList new_inputs(inputs.begin() + 1, inputs.end());
+  AnfNodeWeakPtrList new_inputs(inputs.begin() + 1, inputs.end());
   func = BuildRealInputsFromPartialCNode(func, &new_inputs);
   (void)new_inputs.insert(new_inputs.cbegin(), func);
+  cnode->func_graph()->AddOwnNode(func);
   return new_inputs;
 }
 }  // namespace
 
-void FuncGraphSpecializer::ProcessCNodeEnd(const CNodePtr &cnode, const AnfNodePtrList &new_inputs) {
+void FuncGraphSpecializer::ProcessCNodeEnd(const CNodePtr &cnode, const AnfNodeWeakPtrList &new_weak_inputs) {
   // Update inputs' user data from their abstracts to nodes.
-  UpdateInputsUserData(cnode, new_inputs);
+  UpdateInputsUserData(cnode, new_weak_inputs);
   // Set the updated inputs.
-  cnode->set_inputs(new_inputs);
+  cnode->set_weak_inputs(new_weak_inputs);
 
   // Eliminate the unused elements in the tuple/list.
   static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
@@ -1522,18 +1536,17 @@ void FuncGraphSpecializer::ProcessCNodeEnd(const CNodePtr &cnode, const AnfNodeP
 // Process Switch App CNode in advance.
 // Including: Switch App CNode, Switch CNode, and Switch inputs CNodes(Partial CNode).
 bool FuncGraphSpecializer::ProcessSwitchAppCNode(const CNodePtr &cnode) {
-  constexpr auto recursive_level = 2;
-  auto new_switch_app_inputs = cnode->inputs();
+  auto new_switch_app_inputs = cnode->weak_inputs();
   if (new_switch_app_inputs.empty()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Inputs of CNode is empty";
   }
-  const AnfNodePtr &func = new_switch_app_inputs[0];
+  const AnfNodePtr &func = new_switch_app_inputs[0].lock();
   MS_EXCEPTION_IF_NULL(func);
   if (!IsPrimitiveCNode(func, prim::kPrimSwitch)) {
     return false;
   }
   const auto &switch_cnode = dyn_cast<CNode>(func);
-  auto new_switch_inputs = switch_cnode->inputs();
+  auto new_switch_inputs = switch_cnode->weak_inputs();
   if (new_switch_inputs.empty()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Switch CNode input is empty";
   }
@@ -1543,17 +1556,16 @@ bool FuncGraphSpecializer::ProcessSwitchAppCNode(const CNodePtr &cnode) {
   constexpr size_t switch_fg_arg_start_index = 1;
   constexpr size_t switch_fg_arg_end_index = 4;
   for (size_t i = switch_fg_arg_start_index; i < switch_fg_arg_end_index; ++i) {
-    auto &switch_input_node = new_switch_inputs[i];
+    auto switch_input_node = new_switch_inputs[i].lock();
+    MS_EXCEPTION_IF_NULL(switch_input_node);
     CNodePtr switch_input_cnode = nullptr;
     AnfNodePtr real_switch_input_cnode_func = nullptr;
-    AnfNodePtrList real_switch_input_cnode_inputs;
+    AnfNodeWeakPtrList real_switch_input_cnode_inputs;
     if (IsPrimitiveCNode(switch_input_node, prim::kPrimPartial)) {
       switch_input_cnode = dyn_cast<CNode>(switch_input_node);
       MS_EXCEPTION_IF_NULL(switch_input_cnode);
       real_switch_input_cnode_func =
         BuildRealInputsFromPartialCNode(switch_input_cnode, &real_switch_input_cnode_inputs);
-      MS_LOG(DEBUG) << "real_switch_input_cnode_func: " << real_switch_input_cnode_func->ToString()
-                    << ", real_switch_input_cnode_inputs size: " << real_switch_input_cnode_inputs.size();
     } else {
       if (!IsValueNode<FuncGraph>(switch_input_node)) {
         // The Switch input[i] is not Partial CNode, or FuncGraph node
@@ -1575,18 +1587,13 @@ bool FuncGraphSpecializer::ProcessSwitchAppCNode(const CNodePtr &cnode) {
     AbstractBasePtr func_abs = real_switch_input_cnode_func->abstract();
     // First element is function, so the arguments start from 1.
     for (size_t j = 0; j < real_switch_input_cnode_inputs.size(); ++j) {
-      args.push_back(real_switch_input_cnode_inputs[j]->abstract());
+      args.push_back(real_switch_input_cnode_inputs[j].lock()->abstract());
     }
-    MS_LOG(DEBUG) << "Specialize fg: " << real_switch_input_cnode_func->DebugString(recursive_level)
-                  << ", func_abs: " << func_abs << ", args size: " << args.size();
     auto specialized_func_node = BuildSpecializedNode(switch_input_cnode, real_switch_input_cnode_func, func_abs, args);
     if (specialized_func_node == nullptr) {
       finished = false;
       continue;
     }
-
-    MS_LOG(DEBUG) << "Switch input[" << i
-                  << "] func graph node: " << specialized_func_node->DebugString(recursive_level);
     if (!finished) {
       continue;
     }
@@ -1596,23 +1603,25 @@ bool FuncGraphSpecializer::ProcessSwitchAppCNode(const CNodePtr &cnode) {
       AnfNodePtr partial_value_node = NewValueNode(prim::kPrimPartial);
       partial_value_node->set_abstract(FromValueInside(prim::kPrimPartial));
       partial_value_node->set_debug_info(switch_input_node->debug_info());
-      AnfNodePtrList partial_node_list = {partial_value_node, specialized_func_node};
+      MS_EXCEPTION_IF_NULL(switch_input_cnode->func_graph());
+      switch_input_cnode->func_graph()->AddOwnNode(partial_value_node);
+      switch_input_cnode->func_graph()->AddOwnNode(specialized_func_node);
+      AnfNodeWeakPtrList partial_node_list = {partial_value_node, specialized_func_node};
       // Specialize Partial CNode func graph inputs.
       constexpr auto partial_arg_start_index = 2;
-      (void)std::copy(switch_input_cnode->inputs().cbegin() + partial_arg_start_index,
-                      switch_input_cnode->inputs().cend(), std::back_inserter(partial_node_list));
+      (void)std::copy(switch_input_cnode->weak_inputs().cbegin() + partial_arg_start_index,
+                      switch_input_cnode->weak_inputs().cend(), std::back_inserter(partial_node_list));
       for (size_t j = partial_arg_start_index; j < partial_node_list.size(); ++j) {
-        auto &old_node = partial_node_list[j];
+        auto old_node = partial_node_list[j].lock();
+        MS_EXCEPTION_IF_NULL(old_node);
         if (CanSpecializeValueNode(old_node)) {
           auto new_partial_input_node =
             BuildSpecializedNode(switch_input_cnode, old_node, old_node->abstract(), std::vector<AbstractBasePtr>{});
           if (new_partial_input_node == nullptr) {
             return false;
           }
-
-          MS_LOG(DEBUG) << "Specalize Partial CNode arg[" << j << "]: " << old_node->DebugString(recursive_level)
-                        << ", new_partial_input_node: " << new_partial_input_node->DebugString(recursive_level);
           partial_node_list[j] = new_partial_input_node;
+          switch_input_cnode->func_graph()->AddOwnNode(new_partial_input_node);
         }
       }
 
@@ -1620,8 +1629,6 @@ bool FuncGraphSpecializer::ProcessSwitchAppCNode(const CNodePtr &cnode) {
       MS_EXCEPTION_IF_NULL(switch_input_cnode);
       ProcessCNodeEnd(switch_input_cnode, partial_node_list);
       new_switch_inputs[i] = switch_input_cnode;
-      MS_LOG(DEBUG) << "switch_input_cnode: " << switch_input_cnode->DebugString(recursive_level)
-                    << ", abstract: " << switch_input_cnode->abstract()->ToString();
     } else {
       new_switch_inputs[i] = specialized_func_node;
     }
@@ -1648,7 +1655,7 @@ bool FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
   constexpr auto recursive_level = 2;
   MS_LOG(DEBUG) << "Handle CNode: " << cnode->DebugString(recursive_level);
   auto new_inputs = GetCNodeRealInputs(cnode);
-  const AnfNodePtr &func = new_inputs[0];
+  const AnfNodePtr &func = new_inputs[0].lock();
 
   // Deal with Switch App CNode.
   static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
@@ -1678,6 +1685,7 @@ bool FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
       MS_LOG(DEBUG) << "Partial closure or parameter call is handled, wrapped_node: "
                     << wrapped_node->DebugString(recursive_level);
       new_inputs[0] = wrapped_node;
+      cnode->func_graph()->AddOwnNode(wrapped_node);
     }
   }
 
@@ -1688,12 +1696,13 @@ bool FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
     // so we do not build replaced node again here in second pass.
     if (IsValueNode<Primitive>(func)) {
       new_inputs[0] = func;
+      cnode->func_graph()->AddOwnNode(func);
     } else {
       AbstractBasePtrList args;
-      AbstractBasePtr func_abs = new_inputs[0]->abstract();
+      AbstractBasePtr func_abs = new_inputs[0].lock()->abstract();
       // First element is function, so the arguments start from 1.
       for (size_t i = 1; i < new_inputs.size(); ++i) {
-        args.push_back(new_inputs[i]->abstract());
+        args.push_back(new_inputs[i].lock()->abstract());
       }
       auto specialized_func_node = BuildSpecializedNode(cnode, func, func_abs, args);
       if (specialized_func_node == nullptr) {
@@ -1701,14 +1710,15 @@ bool FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
       }
 
       new_inputs[0] = specialized_func_node;
+      cnode->func_graph()->AddOwnNode(specialized_func_node);
       MS_LOG(DEBUG) << "Specalize func: " << func->type_name() << "/" << func->DebugString(recursive_level)
-                    << ", new_func: " << new_inputs[0]->DebugString(recursive_level) << ", args: " << args;
+                    << ", new_func: " << new_inputs[0].lock()->DebugString(recursive_level) << ", args: " << args;
     }
   }
 
   // Specialize the arguments, except inputs[0].
   for (size_t i = 1; i < new_inputs.size(); ++i) {
-    auto &old_node = new_inputs[i];
+    auto old_node = new_inputs[i].lock();
     if (CanSpecializeValueNode(old_node)) {
       auto new_node = BuildSpecializedNode(cnode, old_node, old_node->abstract(), std::vector<AbstractBasePtr>{});
       if (new_node == nullptr) {
@@ -1718,6 +1728,7 @@ bool FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
       MS_LOG(DEBUG) << "Specalize arg[" << i << "]: " << old_node->DebugString(recursive_level)
                     << ", new_node: " << new_node->DebugString(recursive_level);
       new_inputs[i] = new_node;
+      cnode->func_graph()->AddOwnNode(new_node);
     }
   }
   ProcessCNodeEnd(cnode, new_inputs);

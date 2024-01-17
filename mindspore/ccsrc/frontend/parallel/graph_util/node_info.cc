@@ -420,7 +420,7 @@ bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_op
     }
     return false;
   }
-  for (size_t index = 0; index < cnode->inputs().size(); ++index) {
+  for (size_t index = 0; index < cnode->size(); ++index) {
     if (prim->name() == DEPEND && index != 1) {
       continue;
     }

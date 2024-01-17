@@ -243,17 +243,19 @@ BaseRef VM::Evaluate(const FuncGraphPtr &graph, const VectorRef &args, const Anf
 }
 
 SuccFunc VM::SuccVm(const FuncGraphPtr &graph) {
-  auto fn = [&, this](const AnfNodePtr &node) -> AnfNodePtrList {
+  auto fn = [&, this](const AnfNodePtr &node) -> AnfNodeWeakPtrList {
     MS_EXCEPTION_IF_NULL(node);
-    AnfNodePtrList ret;
+    AnfNodeWeakPtrList res;
 
     // Follow node.incoming
     if (node->isa<CNode>()) {
-      auto &inputs = node->cast<CNodePtr>()->inputs();
-      for (auto &i : inputs) {
+      auto &inputs = node->cast<CNodePtr>()->weak_inputs();
+      for (auto &weak_input : inputs) {
+        auto i = weak_input.lock();
+        MS_EXCEPTION_IF_NULL(i);
         if (i->func_graph() == node->func_graph() ||
             (IsValueNode<FuncGraph>(i) && GetValueNode<FuncGraphPtr>(i)->parent() == graph)) {
-          ret.push_back(i);
+          res.push_back(i);
         }
       }
     }
@@ -261,11 +263,11 @@ SuccFunc VM::SuccVm(const FuncGraphPtr &graph) {
     // for subgraph input, add their fvs as succ nodes
     if (IsValueNode<FuncGraph>(node) && GetValueNode<FuncGraphPtr>(node)->parent() == graph) {
       auto fvs = utils::cast<SetRef>(vars_[GetValueNode<FuncGraphPtr>(node)]);
-      (void)std::transform(fvs.begin(), fvs.end(), std::back_inserter(ret),
+      (void)std::transform(fvs.begin(), fvs.end(), std::back_inserter(res),
                            [](const BaseRef &value) -> AnfNodePtr { return utils::cast<AnfNodePtr>(value); });
     }
 
-    return ret;
+    return res;
   };
   return fn;
 }

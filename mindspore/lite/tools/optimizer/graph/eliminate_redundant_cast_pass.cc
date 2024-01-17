@@ -22,7 +22,7 @@ namespace mindspore::opt {
 int EliminateRedundantCastPass::RemoveCastOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager) {
   const int expected_cast_input_count = 3;
   auto cast_cnode = anf_node->cast<CNodePtr>();
-  MS_CHECK_TRUE_RET(cast_cnode->inputs().size() == expected_cast_input_count, lite::RET_NO_CHANGE);
+  MS_CHECK_TRUE_RET(cast_cnode->size() == expected_cast_input_count, lite::RET_NO_CHANGE);
   TypeId first_type;
   TypeId second_type;
   if (opt::GetDataTypeFromAnfNode(cast_cnode->input(1), &first_type) != RET_OK) {

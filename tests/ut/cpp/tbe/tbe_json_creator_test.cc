@@ -295,7 +295,7 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_fusion_common) {
   for (auto &node : compute_nodes) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    for (size_t idx = 1; idx < cnode->inputs().size(); ++idx) {
+    for (size_t idx = 1; idx < cnode->size(); ++idx) {
       auto real_input = common::AnfAlgo::VisitKernel(cnode->input(idx), 0);
       if (std::find(compute_nodes.begin(), compute_nodes.end(), real_input.first) == compute_nodes.end()) {
         if (auto in = cnode->input(idx); std::find(input_nodes.begin(), input_nodes.end(), in) == input_nodes.end()) {
@@ -356,7 +356,7 @@ TEST_F(TestHWTBEJsonCreator, test_fusion_add_conv2d) {
   for (auto &node : compute_nodes) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    for (size_t idx = 1; idx < cnode->inputs().size(); ++idx) {
+    for (size_t idx = 1; idx < cnode->size(); ++idx) {
       auto real_input = common::AnfAlgo::VisitKernel(cnode->input(idx), 0);
       if (std::find(compute_nodes.begin(), compute_nodes.end(), real_input.first) == compute_nodes.end()) {
         if (auto in = cnode->input(idx); std::find(input_nodes.begin(), input_nodes.end(), in) == input_nodes.end()) {

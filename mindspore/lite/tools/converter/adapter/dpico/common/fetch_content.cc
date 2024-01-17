@@ -68,8 +68,8 @@ int FetchFromDefaultParam(const api::ParameterPtr &param_node, DataInfo *data_in
 
 int FetchDataFromParameterNode(const api::CNodePtr &cnode, size_t index, DataInfo *data_info) {
   MS_ASSERT(cnode != nullptr && data_info != nullptr);
-  if (index >= cnode->inputs().size()) {
-    MS_LOG(ERROR) << "input index: " << index << " is greater than cnode inputs size " << cnode->inputs().size();
+  if (index >= cnode->size()) {
+    MS_LOG(ERROR) << "input index: " << index << " is greater than cnode inputs size " << cnode->size();
     return RET_ERROR;
   }
   auto param_node = cnode->input(index)->cast<api::ParameterPtr>();

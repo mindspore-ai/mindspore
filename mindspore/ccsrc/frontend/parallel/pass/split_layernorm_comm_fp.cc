@@ -293,7 +293,7 @@ static void ExpandSliceRangeToRight(const FuncGraphPtr &func_graph, const FuncGr
     auto make_tuple_cnode = concat_cnode->input(kIndex1)->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(make_tuple_cnode);
 
-    for (size_t i = 1; i < make_tuple_cnode->inputs().size(); ++i) {
+    for (size_t i = 1; i < make_tuple_cnode->size(); ++i) {
       auto input_node = make_tuple_cnode->input(i);
       auto next_cnode_sub = func_graph->NewCNode({NewValueNode(next_cnode_prim->Clone()), input_node});
       next_cnode_sub->set_abstract(input_node->abstract());

@@ -187,7 +187,7 @@ CNodePtr FunctionalizeControlOpPass::BelongToWhichNode(const CNodePtr &node, con
     }
     if (utils::isa<CNodePtr>(todo_node)) {
       auto cnode = utils::cast<CNodePtr>(todo_node);
-      for (size_t i = 0; i < cnode->inputs().size(); i++) {
+      for (size_t i = 0; i < cnode->size(); i++) {
         todo.push_back(cnode->input(i));
       }
     }

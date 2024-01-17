@@ -28,11 +28,11 @@ PrimitiveCPtr PytorchArgmaxParser::Parse(const torch::jit::Node *torch_node, std
 
   input_indices->push_back(0);
 
-  if (torch_node->inputs().size() > SECOND_INPUT) {
+  if (torch_node->size() > SECOND_INPUT) {
     auto dim = PytorchNodeParser::GetValueFromConstNode<int64_t>(torch_node->input(SECOND_INPUT));
     prim->set_axis(dim);
   }
-  if (torch_node->inputs().size() > THIRD_INPUT) {
+  if (torch_node->size() > THIRD_INPUT) {
     auto keep_dim = PytorchNodeParser::GetValueFromConstNode<bool>(torch_node->input(THIRD_INPUT));
     prim->set_keep_dims(keep_dim);
   }
