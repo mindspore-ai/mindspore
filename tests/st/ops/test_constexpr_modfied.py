@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -750,8 +750,8 @@ def test_resizebilinear():
                 [4.2, 5., 5.8, 6.6000004, 7.2],
                 [5., 5.8, 6.6, 7.4, 8.],
                 [5., 5.8, 6.6, 7.4, 8.]]]]
-    resize_bilinear = nn.ResizeBilinear()
-    output = resize_bilinear(x, size=(5, 5))
+    resize_bilinear = ops.ResizeBilinearV2()
+    output = resize_bilinear(x, (5, 5))
     assert np.allclose(output.asnumpy(), expect)
 
 

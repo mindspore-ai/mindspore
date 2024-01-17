@@ -26,19 +26,19 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.resize = P.ResizeBilinear((2, 4), False)
+        self.resize = P.ResizeBilinearV2(False)
 
     def construct(self, x):
-        return self.resize(x)
+        return self.resize(x, (2, 4))
 
 
 class NetCenter(nn.Cell):
     def __init__(self):
         super(NetCenter, self).__init__()
-        self.resize = P.ResizeBilinear((2, 4), False, True)
+        self.resize = P.ResizeBilinearV2(False, True)
 
     def construct(self, x):
-        return self.resize(x)
+        return self.resize(x, (2, 4))
 
 
 class Grad(nn.Cell):

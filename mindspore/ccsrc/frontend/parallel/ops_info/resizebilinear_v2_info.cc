@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "frontend/parallel/ops_info/resizebilinear_info.h"
+#include "frontend/parallel/ops_info/resizebilinear_v2_info.h"
 
 #include <algorithm>
 #include <memory>
@@ -32,9 +32,9 @@
 
 namespace mindspore {
 namespace parallel {
-// ResizeBilinear: support to split N/C/W
+// ResizeBilinearV2: support to split N/C/W
 // ResizeNearestNeighbor: support to split N/C/H/W if align_corners=False, support to split N/C if align_corners=True
-Status ResizeBilinearInfo::GetAttrs() {
+Status ResizeBilinearV2Info::GetAttrs() {
   auto op_def = mindspore::ops::GetOpDef(GetPrimNameFromInfoName(name_));
   if (op_def == nullptr) {
     size_ = GetTupleIntAttr(SIZE);
@@ -61,7 +61,7 @@ Status ResizeBilinearInfo::GetAttrs() {
   return SUCCESS;
 }
 
-Status ResizeBilinearInfo::CheckStrategy(const StrategyPtr &strategy) {
+Status ResizeBilinearV2Info::CheckStrategy(const StrategyPtr &strategy) {
   MS_EXCEPTION_IF_NULL(strategy);
   need_exchange_overlap_ = false;
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
@@ -107,7 +107,7 @@ Status ResizeBilinearInfo::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status ResizeBilinearInfo::InferDevMatrixShape() {
+Status ResizeBilinearV2Info::InferDevMatrixShape() {
   // the strategy is (n, c, h, w)
   // the dev matrix is (n, c, h, w)
   MS_EXCEPTION_IF_NULL(strategy_);
@@ -132,7 +132,7 @@ Status ResizeBilinearInfo::InferDevMatrixShape() {
   return SUCCESS;
 }
 
-Status ResizeBilinearInfo::InferMirrorOps() {
+Status ResizeBilinearV2Info::InferMirrorOps() {
   if (OperatorInfo::InferMirrorOps() != SUCCESS) {
     return FAILED;
   }
@@ -152,7 +152,7 @@ Status ResizeBilinearInfo::InferMirrorOps() {
   return SUCCESS;
 }
 
-Status ResizeBilinearInfo::InferTensorMap() {
+Status ResizeBilinearV2Info::InferTensorMap() {
   // input_strategy: (n, c, h, w)
   // output_strategy: (n, c, h, w)
   // dev_matrix: (n, c, h, w)
@@ -164,11 +164,11 @@ Status ResizeBilinearInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-Status ResizeBilinearInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
+Status ResizeBilinearV2Info::SetCostUnderStrategy(const StrategyPtr &strategy) {
   return SetCostUnderStrategyBase(strategy);
 }
 
-std::vector<StrategyPtr> ResizeBilinearInfo::GenerateOpStrategies(int64_t stage_id) {
+std::vector<StrategyPtr> ResizeBilinearV2Info::GenerateOpStrategies(int64_t stage_id) {
   Shape input0_split(inputs_shape_[0].size(), 0);
   input0_split[0] = 1;
   Shapes splittable_inputs = {input0_split};
@@ -180,7 +180,7 @@ std::vector<StrategyPtr> ResizeBilinearInfo::GenerateOpStrategies(int64_t stage_
   return sp_vector;
 }
 
-void ResizeBilinearInfo::ReplaceNodeInputOrAttrs() {
+void ResizeBilinearV2Info::ReplaceNodeInputOrAttrs() {
   // if need exchange overlap, use replace_graph()
   if (need_exchange_overlap_) {
     return;
@@ -199,7 +199,7 @@ void ResizeBilinearInfo::ReplaceNodeInputOrAttrs() {
   }
 }
 
-Status ResizeBilinearInfo::InferRankBias() {
+Status ResizeBilinearV2Info::InferRankBias() {
   // the origin dev_matrix is [n, c, h, w]
   // if repeated calculation
   //     1) repeated num in the left of dev matrix, the dev_matrix is [repeated_num, n, c, h, w]
@@ -268,7 +268,7 @@ Status ResizeBilinearInfo::InferRankBias() {
   return SUCCESS;
 }
 
-void ResizeBilinearInfo::InferScale() {
+void ResizeBilinearV2Info::InferScale() {
   origin_in_w_shape_ = inputs_shape_[0][3];
   origin_out_w_shape_ = outputs_shape_[0][3];
 
@@ -287,7 +287,7 @@ void ResizeBilinearInfo::InferScale() {
   MS_LOG(INFO) << name_ << ": The scale is " << w_scale_;
 }
 
-int64_t ResizeBilinearInfo::InferOverlapLeftSizeByRankBias(int64_t rank_bias) {
+int64_t ResizeBilinearV2Info::InferOverlapLeftSizeByRankBias(int64_t rank_bias) {
   // left_overlap_size = (rank * ori_in_w / w_shard) - floor(scale * rank * slice_w)
   int64_t map_left_boundary = DoubleToLong(std::floor(w_scale_ * rank_bias * slice_size_[1]));
   MS_EXCEPTION_IF_ZERO("w_dimension_shard_num_", w_dimension_shard_num_);
@@ -300,7 +300,7 @@ int64_t ResizeBilinearInfo::InferOverlapLeftSizeByRankBias(int64_t rank_bias) {
   return local_left_boundary - map_left_boundary;
 }
 
-int64_t ResizeBilinearInfo::InferOverlapRightSizeByRankBias(int64_t rank_bias) {
+int64_t ResizeBilinearV2Info::InferOverlapRightSizeByRankBias(int64_t rank_bias) {
   // right_overlap_size = ceil(scale * (rank + 1) * slice_w - 1) - ((rank + 1) * ori_in_w / w_shard - 1)
   int64_t map_right_boundary = DoubleToLong(std::ceil(w_scale_ * ((rank_bias + 1) * slice_size_[1] - 1)));
   MS_EXCEPTION_IF_ZERO("w_dimension_shard_num_", w_dimension_shard_num_);
@@ -319,7 +319,7 @@ int64_t ResizeBilinearInfo::InferOverlapRightSizeByRankBias(int64_t rank_bias) {
   return map_right_boundary - local_right_boundary;
 }
 
-void ResizeBilinearInfo::InferOverlapSize() {
+void ResizeBilinearV2Info::InferOverlapSize() {
   overlap_left_size_ = InferOverlapLeftSizeByRankBias(rank_bias_);
   overlap_right_size_ = InferOverlapRightSizeByRankBias(rank_bias_);
 
@@ -343,7 +343,7 @@ void ResizeBilinearInfo::InferOverlapSize() {
                << ", the left overlap size of right rank is " << right_rank_overlap_left_size_;
 }
 
-void ResizeBilinearInfo::InferCommunicationAttrs() {
+void ResizeBilinearV2Info::InferCommunicationAttrs() {
   // send rank ids: [-1, -1, send_right_rank, -1, -1, -1, send_left_rank, -1]
   // recv rank ids: [-1, -1, recv_right_rank, -1, -1, -1, recv_left_rank, -1]
   // send lens: [0, 0, send_left_len, send_right_len]
@@ -393,7 +393,7 @@ void ResizeBilinearInfo::InferCommunicationAttrs() {
                << ", the recv rank ids is " << recv_rank_ids_ << ", the recv lens is " << recv_lens_;
 }
 
-void ResizeBilinearInfo::InferResizeBilinearV2Attrs() {
+void ResizeBilinearV2Info::InferResizeBilinearV2Attrs() {
   origin_image_size_ = {inputs_shape_[0][2], inputs_shape_[0][3]};
   src_start_w_ = DoubleToLong(std::floor(w_scale_ * rank_bias_ * slice_size_[1]));
   dst_start_w_ = rank_bias_ * slice_size_[1];
@@ -402,12 +402,12 @@ void ResizeBilinearInfo::InferResizeBilinearV2Attrs() {
                << src_start_w_ << ", dst start index is " << dst_start_w_;
 }
 
-void ResizeBilinearInfo::InferNewOperatorAttrs() {
+void ResizeBilinearV2Info::InferNewOperatorAttrs() {
   InferCommunicationAttrs();
   InferResizeBilinearV2Attrs();
 }
 
-OperatorAttrs ResizeBilinearInfo::CreateNeighborExchangeV2Attrs() {
+OperatorAttrs ResizeBilinearV2Info::CreateNeighborExchangeV2Attrs() {
   // the type of send_rank_ids, recv_rank_ids, send_lens, recv_lens is list, is not tuple, can not use MakeValue
   // the MakeValue(vector) return a tuple
   Attr send_rank_ids = {SEND_RANK_IDS, MakeListValue(send_rank_ids_)};
@@ -421,7 +421,7 @@ OperatorAttrs ResizeBilinearInfo::CreateNeighborExchangeV2Attrs() {
   return attrs;
 }
 
-OperatorAttrs ResizeBilinearInfo::CreateParallelResizeBilinearAttrs() {
+OperatorAttrs ResizeBilinearV2Info::CreateParallelResizeBilinearAttrs() {
   Attr ori_image_size = {ORI_IMAGE_SIZE, MakeValue(origin_image_size_)};
   Attr split_size = {SPLIT_SIZE, MakeValue(slice_size_)};
   Attr src_start_w = {SRC_START_W, MakeValue(src_start_w_)};
@@ -432,7 +432,7 @@ OperatorAttrs ResizeBilinearInfo::CreateParallelResizeBilinearAttrs() {
   return attrs;
 }
 
-void ResizeBilinearInfo::InferReplaceGraph(const CNodePtr &cnode) {
+void ResizeBilinearV2Info::InferReplaceGraph(const CNodePtr &cnode) {
   auto graph = cnode->func_graph();
   MS_EXCEPTION_IF_NULL(graph);
 
@@ -455,7 +455,7 @@ void ResizeBilinearInfo::InferReplaceGraph(const CNodePtr &cnode) {
     std::make_pair(input_nodes, parallel_resize_bilinear_node));
 }
 
-ReplaceGraphPtr ResizeBilinearInfo::replace_graph(const CNodePtr &cnode) {
+ReplaceGraphPtr ResizeBilinearV2Info::replace_graph(const CNodePtr &cnode) {
   if (!need_exchange_overlap_) {
     return nullptr;
   }
@@ -528,7 +528,7 @@ std::vector<StrategyPtr> ResizeNearestNeighborInfo::GenerateOpStrategies(int64_t
   return sp_vector;
 }
 
-REGISTER(ResizeBilinearInfo);
+REGISTER(ResizeBilinearV2Info);
 REGISTER(ResizeNearestNeighborInfo);
 }  // namespace parallel
 }  // namespace mindspore

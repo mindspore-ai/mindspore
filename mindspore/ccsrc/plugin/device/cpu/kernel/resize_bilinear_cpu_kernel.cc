@@ -19,14 +19,12 @@
 #include <map>
 #include "kernel/ops_utils.h"
 #include "ops/auto_generate/gen_ops_primitive.h"
-#include "ops/resize_bilinear.h"
 #include "ops/ops_func_impl/resize_bilinear_v2.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kResizeBilinearInputsNum = 1;
 constexpr size_t kResizeBilinearV2InputsNum = 4;
 constexpr size_t kResizeBilinearOutputsNum = 1;
 constexpr size_t kResizeBilinearExpectedRank = 4;
@@ -36,9 +34,9 @@ using FuncVec = const std::vector<std::pair<KernelAttr, ResizeBilinearCpuKernelM
 
 bool ResizeBilinearCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                       const std::vector<KernelTensor *> &outputs) {
-  if (inputs.size() != kResizeBilinearInputsNum && inputs.size() != kResizeBilinearV2InputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be" << kResizeBilinearInputsNum << " or "
-                  << kResizeBilinearV2InputsNum << ", but got " << inputs.size();
+  if (inputs.size() != kResizeBilinearV2InputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be" << kResizeBilinearV2InputsNum
+                  << ", but got " << inputs.size();
     return false;
   }
   if (outputs.size() != kResizeBilinearOutputsNum) {
@@ -55,18 +53,8 @@ int ResizeBilinearCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
     return ret;
   }
 
-  // for ResizeBilinear, the inputs index will be out of range.
-  if (kernel_name_ == "ResizeBilinear") {
-    auto align_corners_ptr = primitive_->GetAttr(kAttrAlignCorners);
-    MS_EXCEPTION_IF_NULL(align_corners_ptr);
-    align_corners_ = GetValue<bool>(align_corners_ptr);
-    auto half_pixel_centers_ptr = primitive_->GetAttr(kAttrHalfPixelCenters);
-    MS_EXCEPTION_IF_NULL(half_pixel_centers_ptr);
-    half_pixel_centers_ = GetValue<bool>(half_pixel_centers_ptr);
-  } else {
-    align_corners_ = inputs.at(kIndex2)->GetValueWithCheck<bool>();
-    half_pixel_centers_ = inputs.at(kIndex3)->GetValueWithCheck<bool>();
-  }
+  align_corners_ = inputs.at(kIndex2)->GetValueWithCheck<bool>();
+  half_pixel_centers_ = inputs.at(kIndex3)->GetValueWithCheck<bool>();
   if (half_pixel_centers_ == true && align_corners_ == true) {
     MS_LOG(ERROR) << "align_corners and half_pixel_centers cannot be True at the same time.";
     return false;
@@ -269,7 +257,6 @@ FuncVec &ResizeBilinearCpuKernelMod::GetFuncList() const {
   return func_list;
 }
 
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ResizeBilinear, ResizeBilinearCpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ResizeBilinearV2, ResizeBilinearCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

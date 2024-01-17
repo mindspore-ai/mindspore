@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -354,12 +354,12 @@ def vm_impl_momentum(self):
     return vm_impl
 
 
-@vm_impl_getters.register(P.ResizeBilinear)
+@vm_impl_getters.register(P.ResizeBilinearV2)
 def vm_impl_resize_bilinear(self):
-    """Generate vm_impl function for ResizeBilinear"""
+    """Generate vm_impl function for ResizeBilinearV2"""
 
     def vm_impl(x):
-        out = vm.ResizeBilinear(x)
+        out = vm.ResizeBilinearV2(x)
         return Tensor(out)
 
     return vm_impl

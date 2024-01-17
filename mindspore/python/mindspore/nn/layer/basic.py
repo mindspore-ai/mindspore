@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ from mindspore.nn.layer.activation import get_activation
 from mindspore.common._decorator import deprecated
 
 __all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold', 'Tril', 'Triu',
-           'ResizeBilinear', 'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag', 'L1Regularizer', 'Dropout1d',
+           'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag', 'L1Regularizer', 'Dropout1d',
            'Dropout2d', 'Dropout3d', 'Upsample', 'Roll', 'Identity', 'Unflatten']
 
 
@@ -922,73 +922,6 @@ class Pad(Cell):
         else:
             x = self.pad(x, self.paddings)
         return x
-
-
-@_primexpr
-def bilinear(shape, size, scale, align_corners, prim_name=None):
-    """Check input and calculate shape"""
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if not isinstance(align_corners, bool):
-        raise TypeError(
-            f"{msg_prefix} type of 'align_corners' must be bool, but got {type(align_corners).__name__}.")
-    if size is None and scale is None:
-        raise ValueError(f"{msg_prefix} 'size' and 'scale' both none.")
-    if size is not None and scale is not None:
-        raise ValueError(f"{msg_prefix} 'size' and 'scale' both not none.")
-    if size is not None:
-        if not isinstance(size, (tuple, list)):
-            raise ValueError(
-                f"{msg_prefix} 'size' must be tuple or list or None, but got {type(size).__name__}.")
-        Validator.check_int(len(size), 2, Validator.EQ, "size", "bilinear")
-        Validator.check_int(size[0], 1, Validator.GE, "size[0]", "bilinear")
-        Validator.check_int(size[1], 1, Validator.GE, "size[1]", "bilinear")
-        return size
-    Validator.check_int(scale, 1, Validator.GE, "scale factor", "bilinear")
-    ret = (scale * shape[2], scale * shape[3])
-    return ret
-
-
-class ResizeBilinear(Cell):
-    r"""
-    'nn.ResizeBilinear' is deprecated from version 2.0 and will be removed in a future version,
-    use :class:`mindspore.ops.ResizeBilinearV2` or :func:`mindspore.ops.interpolate` instead.
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, nn
-        >>> x = Tensor([[[[1, 2, 3, 4], [5, 6, 7, 8]]]], mindspore.float32)
-        >>> resize_bilinear = nn.ResizeBilinear()
-        >>> result = resize_bilinear(x, size=(5,5))
-        >>> print(x)
-        [[[[1. 2. 3. 4.]
-           [5. 6. 7. 8.]]]]
-        >>> print(result)
-        [[[[1.        1.8       2.6       3.4       4.       ]
-           [2.6       3.4       4.2000003 5.        5.6000004]
-           [4.2       5.0000005 5.8       6.6       7.2      ]
-           [5.        5.8       6.6       7.4       8.       ]
-           [5.        5.8       6.6       7.4000006 8.       ]]]]
-        >>> print(result.shape)
-        (1, 1, 5, 5)
-    """
-
-    @deprecated("2.3", "ops.interpolate", False)
-    def __init__(self, half_pixel_centers=False):
-        """Initialize ResizeBilinear."""
-        super(ResizeBilinear, self).__init__()
-        logger.warning("'nn.ResizeBilinear' is deprecated from version 2.0 and will be removed in a "
-                       "future version, use 'ops.ResizeBilinearV2' or 'ops.interpolate' instead.")
-        self.half_pixel_centers = half_pixel_centers
-
-    def construct(self, x, size=None, scale_factor=None, align_corners=False):
-        shape = bilinear(x.shape, size, scale_factor,
-                         align_corners, self.cls_name)
-        resize_bilinear = P.ResizeBilinear(
-            shape, align_corners, self.half_pixel_centers)
-        return resize_bilinear(x)
 
 
 class Unfold(Cell):

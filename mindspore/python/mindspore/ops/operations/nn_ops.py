@@ -3023,50 +3023,6 @@ class L2Normalize(Primitive):
         self.axis = axis
 
 
-class ResizeBilinear(PrimitiveWithInfer):
-    r"""
-    This API is deprecated, please use the :class:`mindspore.ops.ResizeBilinearV2` instead.
-    For general resizing with other interpolation methods, refer to :func:`mindspore.ops.interpolate` for more details.
-
-    Note:
-        Dynamic shape feature is not supported for now.
-
-    Supported Platforms:
-        Deprecated
-    """
-
-    @deprecated("2.3", "ops.interpolate", False)
-    @prim_attr_register
-    def __init__(self, size, align_corners=False, half_pixel_centers=False):
-        """Initialize ResizeBilinear."""
-        validator.check_value_type("size", size, [tuple, list], self.name)
-        validator.check_equal_int(len(size), 2, "size len", self.name)
-        for item in size:
-            validator.check_positive_int(item, 'size item', self.name)
-            validator.check_value_type("size item", item, int, self.name)
-        self.align_corners = validator.check_value_type("align_corners", align_corners, [bool], self.name)
-        self.half_pixel_centers = validator.check_value_type("half_pixel_centers",
-                                                             half_pixel_centers, [bool], self.name)
-        if half_pixel_centers and align_corners:
-            raise ValueError(f"If half_pixel_centers is True, align_corners must be False, but got {align_corners}")
-        for i, value in enumerate(size):
-            validator.check_positive_int(value, f'{i}th value of size', self.name)
-
-    def infer_shape(self, input_shape):
-        validator.check("dimension of input", len(input_shape), "", 4, validator.EQ, self.name)
-        input_shape = list(input_shape)
-        batch, channel, _, _ = input_shape
-        out_shape = [batch, channel]
-        for i in self.size:
-            out_shape.append(int(i))
-        return out_shape
-
-    def infer_dtype(self, input_dtype):
-        validator.check_tensor_dtype_valid('input_dtype', input_dtype, [mstype.float16, mstype.float32],
-                                           self.name)
-        return input_dtype
-
-
 class UpsampleTrilinear3D(Primitive):
     r"""
     Performs upsampling with trilinear interpolation across 3dims for 5dim input Tensor.

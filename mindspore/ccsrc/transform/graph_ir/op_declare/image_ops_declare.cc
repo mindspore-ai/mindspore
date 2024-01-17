@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,6 @@ INPUT_ATTR_MAP(ResizeBilinearV2) = {{kIndex3, ATTR_DESC(align_corners, AnyTraits
 ATTR_INPUT_MAP(ResizeBilinearV2) = {{"size", "size"}};
 ATTR_MAP(ResizeBilinearV2) = {{"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(ResizeBilinearV2) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ResizeBilinear, kNameResizeBilinear, ADPT_DESC(ResizeBilinearV2))
 REG_ADPT_DESC(ResizeBilinearV2, kNameResizeBilinearV2, ADPT_DESC(ResizeBilinearV2))
 REG_ADPT_DESC(ResizeBilinearV2D, kResizeBilinearV2DOpName, ADPT_DESC(ResizeBilinearV2))
 

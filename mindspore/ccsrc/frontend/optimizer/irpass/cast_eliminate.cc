@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 #include "frontend/optimizer/irpass/cast_eliminate.h"
-#include "mindspore/core/ops/image_ops.h"
+#include "mindspore/core/ops/auto_generate/gen_ops_primitive.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "frontend/optimizer/irpass.h"
@@ -72,7 +72,7 @@ AnfNodePtr CastSameTypeEliminater::operator()(const OptimizerPtr &, const AnfNod
       return new_depend;
     }
     // Temporary patch for the output dtype mismatch, ResizeBilinear on Ascend always return Float32 tensor.
-    if (IsPrimitiveCNode(node->cast<CNodePtr>()->input(1), prim::kPrimResizeBilinear)) {
+    if (IsPrimitiveCNode(node->cast<CNodePtr>()->input(1), prim::kPrimResizeBilinearV2)) {
       return nullptr;
     }
     return src_;

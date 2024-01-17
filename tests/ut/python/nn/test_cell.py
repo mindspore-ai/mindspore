@@ -344,15 +344,3 @@ def test_kwargs_default_value1():
     net = TestKwargsNet()
     res = net(x, y, p4=True)
     print(res)
-
-
-def test_kwargs_default_value2():
-    """
-    Feature: Supports Cell kwargs inputs.
-    Description: Pass kwargs.
-    Expectation: No exception.
-    """
-    x = Tensor([[[[1.0, 2.0], [3.0, 4.0]]]], ms.float32)
-    nn_op = nn.ResizeBilinear()
-    res = nn_op(x, (4, 4), align_corners=True)
-    print(res)
