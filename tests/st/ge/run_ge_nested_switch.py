@@ -17,7 +17,6 @@ from mindspore import context
 from mindspore import Tensor, nn
 import mindspore.ops as P
 import numpy as np
-import ge_infer_env  # pylint: disable=unused-import
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 

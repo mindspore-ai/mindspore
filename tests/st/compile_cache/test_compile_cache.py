@@ -86,7 +86,7 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
     # First run without compile cache
     cmd_first = f"export GLOG_v=2; python " + file_name + " '" + cache_path + "' > " + log_file_name_first + " 2>&1"
     if use_ge:
-        cmd_first = f"export GLOG_v=2; export MS_ENABLE_GE=1; python " + \
+        cmd_first = f"export GLOG_v=2; python " + \
                     file_name + " '" + cache_path + "' > " + log_file_name_first + " 2>&1"
     subprocess.check_output(cmd_first, shell=True)
     assert os.path.exists(log_file_name_first)
@@ -102,13 +102,11 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
     array_first = np.array([float(x) for x in nums_first])
     shape_first = re.findall(match_num, match_output_first[1])
     array_shape_first = np.array([int(x) for x in shape_first])
-    exec_shell = f"unset MS_ENABLE_GE"
-    os.system(exec_shell)
 
     # Second run with compile cache
     cmd_second = f"export GLOG_v=2; python " + file_name + " '" + cache_path + "' > " + log_file_name_second + " 2>&1"
     if use_ge:
-        cmd_second = f"export GLOG_v=2; export MS_ENABLE_GE=1; python " + \
+        cmd_second = f"export GLOG_v=2; python " + \
                      file_name + " '" + cache_path + "' > " + log_file_name_second + " 2>&1"
     subprocess.check_output(cmd_second, shell=True)
     assert os.path.exists(log_file_name_second)
@@ -124,8 +122,6 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
     array_second = np.array([float(x) for x in nums_second])
     shape_second = re.findall(match_num, match_output_second[1])
     array_shape_second = np.array([int(x) for x in shape_second])
-    exec_shell = f"unset MS_ENABLE_GE"
-    os.system(exec_shell)
 
     assert np.allclose(array_first, array_second, 0.0001, 0.0001)
     assert (array_shape_first == array_shape_second).all()

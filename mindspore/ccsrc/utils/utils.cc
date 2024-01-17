@@ -256,10 +256,10 @@ bool IsOneOfDynRankNeedPadShape(const std::string &format) {
 }
 
 bool IsEnableRefMode() {
-  static const bool is_enable_ge = MsContext::GetInstance()->backend_policy() == "ge";
-  static const bool enable_ref_mode =
-    ((is_enable_ge && common::GetEnv("MS_DISABLE_REF_MODE") != "1") || !common::GetEnv("MS_DEV_FORCE_ACL").empty());
-  return enable_ref_mode;
+  if (common::GetEnv("MS_DISABLE_REF_MODE") == "1") {
+    return false;
+  }
+  return true;
 }
 
 size_t GetSystemMemorySize(const std::string &key) {

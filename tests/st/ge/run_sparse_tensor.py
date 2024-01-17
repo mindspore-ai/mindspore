@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-from tests.st.ge import ge_train_env  # pylint: disable=unused-import
 import mindspore.context as context
 from mindspore import Tensor, COOTensor, CSRTensor, nn, ops
 

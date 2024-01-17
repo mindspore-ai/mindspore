@@ -67,14 +67,12 @@ checkopts "$@"
 
 cd ${TEST_PATH}
 
-OP_INFO_CFG_PATH=${PROJECT_PATH}/config/op_info.config
 MINDSPORE_LIB_PATH=${PROJECT_PATH}/build/package/mindspore/lib/
 C_API_LIB_PATH=${PROJECT_PATH}/build/mindspore/mindspore/ccsrc/c_api/
 PYTHON_PATH=`which python`
 PYTHON_LIB_PATH=${PYTHON_PATH%/*}/../lib
 
 export LD_LIBRARY_PATH=${MINDSPORE_LIB_PATH}:${C_API_LIB_PATH}:${PYTHON_LIB_PATH}:${PROJECT_PATH}/tests/st/cpp/c_api:$LD_LIBRARY_PATH
-export MINDSPORE_OP_INFO_PATH=${OP_INFO_CFG_PATH}
 export GLOG_v=2
 export GC_COLLECT_IN_CELL=1
 export DEVICE_ID=$DEVICE_ID_OPT

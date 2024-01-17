@@ -777,13 +777,12 @@ void Somas::InitSomasOutputAndWorkspaceTensors(const session::KernelGraph &graph
 
 void Somas::InitSomasInputTensors(const session::KernelGraph &graph) {
   MS_LOG(DEBUG) << "Somas InitSomasInputTensors start...";
-  static const auto enable_fusion_clear = (common::GetEnv("ENV_FUSION_CLEAR") == "1");
   auto &kernel_cnodes = graph.execution_order();
   for (const auto &kernel : kernel_cnodes) {
     if (common::AnfAlgo::GetCNodeName(kernel) != kMemSetOpName) {
       InitCommonNodeInputs(kernel);
     } else {
-      InitAtomicCleanInputs(enable_fusion_clear, kernel);
+      InitAtomicCleanInputs(kernel);
     }
   }
 }
@@ -864,7 +863,7 @@ void Somas::InitCommonNodeInputs(const CNodePtr &kernel) {
   }
 }
 
-void Somas::InitAtomicCleanInputs(bool enable_fusion_clear, const CNodePtr &kernel) {
+void Somas::InitAtomicCleanInputs(const CNodePtr &kernel) {
   auto node = nodes_map_[kernel.get()].at(0);
   MS_EXCEPTION_IF_NULL(node);
   auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(kernel);
@@ -890,11 +889,6 @@ void Somas::InitAtomicCleanInputs(bool enable_fusion_clear, const CNodePtr &kern
         auto input_somas_tensor = pre_somas_node->output_tensors_[index];
         MS_EXCEPTION_IF_NULL(input_somas_tensor);
         node->input_tensors_.push_back(input_somas_tensor);
-        if (enable_fusion_clear) {
-          input_somas_tensor->lifelong_value_ = kLifeLongGraphStart;
-          MS_LOG(INFO) << "Set " << node->scope_full_name_ << "'s Input node " << pre_somas_node->scope_full_name_
-                       << " 's output" << index << " to lifelong";
-        }
       }
     }
     // set clean workspace tensors
@@ -910,11 +904,6 @@ void Somas::InitAtomicCleanInputs(bool enable_fusion_clear, const CNodePtr &kern
         auto input_somas_tensor = pre_somas_node->workspace_tensors_[index];
         MS_EXCEPTION_IF_NULL(input_somas_tensor);
         node->input_tensors_.push_back(input_somas_tensor);
-        if (enable_fusion_clear) {
-          input_somas_tensor->lifelong_value_ = kLifeLongGraphStart;
-          MS_LOG(INFO) << "Set " << node->scope_full_name_ << "'s Input node " << pre_somas_node->scope_full_name_
-                       << " 's workspace" << index << " to lifelong";
-        }
       }
     }
   }

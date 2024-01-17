@@ -162,7 +162,6 @@ def test_bert_performance_for_ge():
     Description: Test case for simplest bert
     Expectation: The results are as expected
     """
-    os.environ['MS_ENABLE_GE'] = '1'
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", reserve_class_name_in_scope=False)
     data_set, new_repeat_count, sink_size = me_de_train_dataset(sink_mode=True)
     version = os.getenv('VERSION', 'large')

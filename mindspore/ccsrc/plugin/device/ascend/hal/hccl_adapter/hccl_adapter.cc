@@ -34,8 +34,6 @@
 #include "ops/framework_op_name.h"
 
 static constexpr const auto kHcclPluginFileName = "libhccl_plugin.so";
-static constexpr const auto kHcclAlgoEnv = "HCCL_ALGO";
-static constexpr const auto kHcclAlgoOption = "HCCL_algorithm";
 
 #define CHECK_SYMBOL_NULL(symbol)                                                    \
   if ((symbol) == nullptr) {                                                         \
@@ -63,10 +61,6 @@ static std::map<std::string, std::string> GenHcclOptions(uint32_t device_id, std
     {ge::OPTION_GRAPH_RUN_MODE, "1"},          {ge::OPTION_EXEC_HCCL_FLAG, "1"},
     {ge::OPTION_EXEC_DEPLOY_MODE, "0"}};
 
-  auto env_hccl_algo = mindspore::common::GetEnv(kHcclAlgoEnv);
-  if (!env_hccl_algo.empty()) {
-    default_options_map.emplace(kHcclAlgoOption, env_hccl_algo);
-  }
   if (!rank_file.empty()) {
     default_options_map.emplace(ge::OPTION_EXEC_RANK_TABLE_FILE, rank_file.data());
   }

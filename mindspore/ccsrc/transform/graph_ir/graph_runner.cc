@@ -391,6 +391,7 @@ Status GraphRunner::RegisterExternalAllocator(const void *const stream, GeAlloca
     MS_LOG(ERROR) << "Call GE RegisterExternalAllocator Failed, ret is: " << ret;
     return Status::FAILED;
   }
+  is_allocator_registered = true;
   return Status::SUCCESS;
 }
 
@@ -404,6 +405,7 @@ Status GraphRunner::UnregisterExternalAllocator(const void *const stream) {
     MS_LOG(ERROR) << "Call GE UnregisterExternalAllocator Failed, ret is: " << ret;
     return Status::FAILED;
   }
+  is_allocator_registered = false;
   return Status::SUCCESS;
 }
 

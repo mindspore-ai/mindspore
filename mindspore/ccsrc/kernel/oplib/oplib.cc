@@ -108,41 +108,6 @@ void OpLib::DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_p
   }
 }
 
-bool OpLib::RegOpFromLocalInfo() {
-  static bool has_load = false;
-  if (has_load) {
-    return true;
-  }
-  MS_LOG(INFO) << "Start";
-  has_load = true;
-  std::string dir = common::GetEnv("MINDSPORE_OP_INFO_PATH");
-  if (dir.empty()) {
-    MS_LOG(INFO) << "MINDSPORE_OP_INFO_PATH has not been set, return.";
-    return true;
-  }
-  auto real_path = FileUtils::GetRealPath(dir.c_str());
-  if (!real_path.has_value()) {
-    MS_LOG(INFO) << "Invalid environment variable 'MINDSPORE_OP_INFO_PATH', the path is: " << dir
-                 << ". Please check (1) whether the path exists, (2) whether the path has the access permission, "
-                 << "(3) whether the path is too long. ";
-    return false;
-  }
-  std::ifstream file(real_path.value());
-  if (!file.is_open()) {
-    MS_LOG(ERROR) << "Find op info file failed.";
-    return false;
-  }
-  std::string line;
-  while (getline(file, line)) {
-    if (!line.empty()) {
-      (void)OpLib::RegOp(line, "");
-    }
-  }
-  file.close();
-  MS_LOG(INFO) << "End";
-  return true;
-}
-
 std::shared_ptr<OpInfo> OpLib::DecodeOpInfo(const nlohmann::json &obj, const mindspore::kernel::OpImplyType &imply_type,
                                             const std::string &impl_path) {
   std::shared_ptr<OpInfo> op_info = std::make_shared<OpInfo>();
@@ -301,9 +266,6 @@ bool OpLib::DecodeInputOutput(const nlohmann::json &obj, OpImplyType imply_type,
 }
 
 std::shared_ptr<OpInfo> OpLib::FindOp(const std::string &op_name, OpImplyType imply_type, bool is_dynamic_shape) {
-  if (!OpLib::RegOpFromLocalInfo()) {
-    MS_LOG(INFO) << "Warning reg local op info failed.";
-  }
   auto &op_infos = GetOpInfoMap();
   auto op_infos_iter = op_infos.find(imply_type);
   if (op_infos_iter == op_infos.end()) {

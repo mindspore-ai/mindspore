@@ -131,7 +131,7 @@ std::vector<void *> GeDeviceResManager::AllocateContinuousMemory(const std::vect
 
 DeviceAddressPtr GeDeviceResManager::CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
   MS_EXCEPTION_IF_NULL(kernel_tensor);
-  if (common::IsEnableRefMode()) {
+  if (IsEnableRefMode()) {
     if (kernel_tensor->device_name().empty()) {
       kernel_tensor->set_device_name(device_context_->device_context_key().device_name_);
       kernel_tensor->set_device_id(device_context_->device_context_key().device_id_);
@@ -178,14 +178,10 @@ void GeDeviceResManager::CreateSessionAndGraphRunner() {
     transform::SessionOptions options;
     options["ge.enablePrintOpPass"] = "0";
     GeSetContextOptions(ms_context, &options);
-    options["ge.featureBaseRefreshable"] = "0";
-    if (common::GetEnv("MS_FEA_REFRESHABLE") == "1") {
-      options["ge.featureBaseRefreshable"] = "1";
-    }
     options["ge.constLifecycle"] = "graph";
 
     options["ge.exec.formatMode"] = "0";
-    if (common::GetEnv("MS_ENABLE_FORMAT_MODE") == "1") {
+    if (common::GetEnv("MS_FORMAT_MODE") == "1") {
       options["ge.exec.formatMode"] = "1";
     }
 

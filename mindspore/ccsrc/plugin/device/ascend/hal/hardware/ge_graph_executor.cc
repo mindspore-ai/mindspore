@@ -489,6 +489,7 @@ void GeGraphExecutor::AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) 
     const auto &output_with_index = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
     auto &output_node = output_with_index.first;
     MS_EXCEPTION_IF_NULL(output_node);
+    SetKernelInfo(output_node);
 
     // Parameter's memory is allocated earlier, and there is no need to reallocate memory if Parameter is output.
     if (output_node->isa<Parameter>()) {
@@ -497,8 +498,11 @@ void GeGraphExecutor::AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) 
 
     auto i = output_with_index.second;
     TypeId output_type_id = common::AnfAlgo::GetOutputInferDataType(output_node, i);
-    auto output_device_addr =
-      std::make_shared<GeHostAddress>(nullptr, 0, kOpFormat_DEFAULT, output_type_id, kAscendDevice, 0);
+
+    const auto kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+      output_with_index, nullptr, 0, kOpFormat_DEFAULT, output_type_id, {}, kAscendDevice, 0);
+
+    auto output_device_addr = std::make_shared<GeHostAddress>(kernel_tensor);
     AnfAlgo::SetOutputAddr(output_device_addr, i, output_node.get());
 
     if (common::AnfAlgo::IsNopNode(output_node)) {
@@ -993,7 +997,7 @@ size_t GeGraphExecutor::GetGraphFeatureMemory(const FuncGraphPtr &graph) const {
 bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_name = GetGraphName(graph);
-  MS_LOG(INFO) << "GE run graph " << graph_name << " start.";
+  MS_LOG(INFO) << "GE run graph start in ref mode, graph: " << graph_name << ".";
   (void)ResManager()->BindDeviceToCurrentThread(false);
 
   // call ge rungraph
@@ -1082,12 +1086,12 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
                                const std::map<string, string> & /* compile_options */) {
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_name = GetGraphName(graph);
-  MS_LOG(INFO) << "GE run graph " << graph_name << " start.";
   if (IsEnableRefMode()) {
     if (!RunGraphRefMode(graph, inputs)) {
       return false;
     }
   } else {
+    MS_LOG(INFO) << "GE run graph start, graph: " << graph_name << ".";
     profiler::CollectHostInfo("Ascend", "RunGraph", "GeRunGraph_" + graph_name, 1, 0, 0);
     // copy input from device to host
     const auto &cur_inputs = graph->get_inputs();

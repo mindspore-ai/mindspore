@@ -44,7 +44,6 @@ def test_map_with_pyfunc_with_multi_op_process_mode():
     Description: Test map with dvpp resize operation
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     # can resolve tbe error when map with pyfun in process mode
@@ -78,8 +77,6 @@ def test_map_with_pyfunc_with_multi_op_process_mode():
         assert item[0].shape == (64, 32, 3)
         assert item[0].dtype == np.float32
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
@@ -90,7 +87,6 @@ def test_map_with_pyfunc_with_multi_op_thread_mode():
     Description: Test map with dvpp resize operation
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -312,7 +308,6 @@ def test_map_with_dvpp_resize():
     Description: Test map with dvpp resize operation
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -324,8 +319,6 @@ def test_map_with_dvpp_resize():
     map_with_dvpp_resize(3, True)
     map_with_dvpp_resize(8, True)
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
@@ -336,7 +329,6 @@ def test_map_with_dvpp_resize_mixed_op():
     Description: Test map with dvpp resize operation and mixed op
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -419,8 +411,6 @@ def test_map_with_dvpp_resize_mixed_op():
         assert item[0].shape == (3, 64, 48)
     assert count == 6
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
@@ -431,7 +421,6 @@ def test_map_with_dvpp_resize_with_exception():
     Description: Test map with dvpp resize operation when exception
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -630,8 +619,6 @@ def test_map_with_dvpp_resize_with_exception():
             count += 1
     assert "The current InterpolationMode is not supported by DVPP." in str(info.value)
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 def map_with_dvpp_decode(num_workers=1, python_multiprocess=False):
     """
@@ -670,7 +657,6 @@ def test_map_with_dvpp_decode():
     Description: Test map with dvpp decode operation
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -682,8 +668,6 @@ def test_map_with_dvpp_decode():
     map_with_dvpp_decode(3, True)
     map_with_dvpp_decode(8, True)
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
@@ -694,7 +678,6 @@ def test_map_with_dvpp_decode_with_pre_pyfun():
     Description: Test map with dvpp decode operation and with pre pyfunc
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -719,8 +702,6 @@ def test_map_with_dvpp_decode_with_pre_pyfun():
         print("count: {}".format(count), flush=True)
     assert count == 6
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
@@ -731,7 +712,6 @@ def test_map_with_dvpp_decode_mixed_op():
     Description: Test map with dvpp decode operation and mixed op
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -815,8 +795,6 @@ def test_map_with_dvpp_decode_mixed_op():
         assert item[0].shape == (3, 64, 48)
     assert count == 6
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
@@ -827,7 +805,6 @@ def test_map_with_dvpp_decode_with_exception():
     Description: Test map with dvpp decode operation when exception
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -902,8 +879,6 @@ def test_map_with_dvpp_decode_with_exception():
     with pytest.raises(ValueError) as error_info:
         _ = data1.map(vision.Decode().device("Ascennd"), input_columns="image")
     assert "Input device_target is not within the valid set of ['CPU', 'Ascend']" in str(error_info.value)
-
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
 
 
 def map_with_dvpp_normalize(num_workers=1, python_multiprocess=False):
@@ -1196,7 +1171,6 @@ def test_map_with_dvpp_normalize():
     Description: Test map with dvpp normalize operation
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -1208,8 +1182,6 @@ def test_map_with_dvpp_normalize():
     map_with_dvpp_normalize(3, True)
     map_with_dvpp_normalize(8, True)
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
@@ -1220,7 +1192,6 @@ def test_map_with_dvpp_normalize_mixed_op():
     Description: Test map with dvpp mixed operation
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -1304,8 +1275,6 @@ def test_map_with_dvpp_normalize_mixed_op():
         assert item[0].shape == (3, 64, 48)
     assert count == 6
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
@@ -1316,7 +1285,6 @@ def test_map_with_dvpp_normalize_exception():
     Description: Test map with dvpp normalize operation and exception
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -1491,9 +1459,6 @@ def test_map_with_dvpp_normalize_exception():
             count += 1
         assert count == 6
     assert "The input data's channel is not 3 or 1." in str(info.value)
-
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 if __name__ == '__main__':
     test_map_with_pyfunc_with_multi_op_process_mode()

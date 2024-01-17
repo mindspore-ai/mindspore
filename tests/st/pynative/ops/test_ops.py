@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import pytest
-import os
 import numpy as np
 import mindspore.nn as nn
 
@@ -272,12 +271,10 @@ def test_cumprod_with_acl():
     Description: Test CumProd with acl.
     Expectation: No exception.
     """
-    os.environ['MS_DEV_FORCE_ACL'] = '1'
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     fact = CumProdTest((1024, 2048), False, False, 0, np.float32)
     fact.forward_mindspore_impl()
     fact.grad_mindspore_impl()
-    del os.environ['MS_DEV_FORCE_ACL']
 
 
 @pytest.mark.level1

@@ -151,7 +151,6 @@ def test_nn_flash_attention_fwd(dtype):
     """
     context.set_context(mode=context.GRAPH_MODE)
     os.environ['GRAPH_OP_RUN'] = "1"
-    os.environ['MS_DEV_FORCE_ACL'] = "1"
     B = 1
     S = 4096
     H = 128
@@ -176,4 +175,3 @@ def test_nn_flash_attention_fwd(dtype):
     print(grad_out[0].asnumpy())
 
     os.environ.pop('GRAPH_OP_RUN')
-    os.environ.pop('MS_DEV_FORCE_ACL')

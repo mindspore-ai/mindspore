@@ -44,6 +44,7 @@ class GraphRunner {
   static std::shared_ptr<::ge::Session> NewSession(const SessionOptions &sess_options);
   Status RegisterExternalAllocator(const void *const stream, GeAllocatorPtr allocator);
   Status UnregisterExternalAllocator(const void *const stream);
+  const bool IsAllocatorRegistered() const { return is_allocator_registered; }
 
  private:
   Status GetWrapper(const std::string &name, DfGraphWrapperPtr *wrapper) const;
@@ -51,6 +52,7 @@ class GraphRunner {
   std::shared_ptr<::ge::Session> sess_;
   transform::GraphRunnerOptions options_;
   DfGraphManager &graph_manager_;
+  bool is_allocator_registered = false;
 };
 }  // namespace transform
 }  // namespace mindspore

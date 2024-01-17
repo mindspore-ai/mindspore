@@ -62,8 +62,10 @@ def test_gather_mem_check():
     Description: gather op mem check success.
     Expectation: the result equal to expect.
     """
-    os.environ['MS_COMPILER_OP_DEBUG_CONFIG'] = "oom"
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    cfg_path = os.path.abspath("./test_mem_check.cfg")
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
+                        ascend_config={"ge_options":
+                                       {"global": {"ge.exec.opDebugConfig": cfg_path}}})
     input_params = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7]), mindspore.float32)
     input_indices = Tensor(np.array([0, 2, 4, 2, 6, 0, 2, 4, 2, 6, 0, 2, 4, 2, 6]), mindspore.int32)
     axis = 0
@@ -72,7 +74,6 @@ def test_gather_mem_check():
     rtol = 1.e-4
     atol = 1.e-4
     assert np.allclose(output.asnumpy(), expect_np, rtol, atol, equal_nan=True)
-    del os.environ['MS_COMPILER_OP_DEBUG_CONFIG']
 
 
 @pytest.mark.level1
@@ -85,8 +86,10 @@ def test_add_mem_check():
     Description: add op mem check success.
     Expectation: the result equal to expect.
     """
-    os.environ['MS_COMPILER_OP_DEBUG_CONFIG'] = "oom"
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    cfg_path = os.path.abspath("./test_mem_check.cfg")
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
+                        ascend_config={"ge_options":
+                                       {"global": {"ge.exec.opDebugConfig": cfg_path}}})
     x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 1, 2]), mindspore.float32)
     y = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 1, 2]), mindspore.float32)
     net = AddNet()
@@ -95,7 +98,6 @@ def test_add_mem_check():
     rtol = 1.e-4
     atol = 1.e-4
     assert np.allclose(output.asnumpy(), expect_np, rtol, atol, equal_nan=True)
-    del os.environ['MS_COMPILER_OP_DEBUG_CONFIG']
 
 
 @pytest.mark.level1
@@ -108,7 +110,10 @@ def test_sort_mem_check_graph():
     Description: sort op mem check fail.
     Expectation: RuntimeError.
     """
-    os.environ['MS_COMPILER_OP_DEBUG_CONFIG'] = "oom"
+    cfg_path = os.path.abspath("./test_mem_check.cfg")
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
+                        ascend_config={"ge_options":
+                                       {"global": {"ge.exec.opDebugConfig": cfg_path}}})
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     tensor_x = Tensor(np.random.random([18018]), mindspore.float16)
     tensor_y = Tensor(np.random.random([18018]), mindspore.float16)
@@ -116,7 +121,6 @@ def test_sort_mem_check_graph():
     with pytest.raises(RuntimeError):
         y = net(tensor_x, tensor_y)
         print(y)
-    del os.environ['MS_COMPILER_OP_DEBUG_CONFIG']
 
 
 class NetSoftMax(nn.Cell):
@@ -135,11 +139,13 @@ def test_softmax_mem_check_graph():
     Expectation: RuntimeError.
     skip because tbe compiler error
     """
-    os.environ['MS_COMPILER_OP_DEBUG_CONFIG'] = "oom"
+    cfg_path = os.path.abspath("./test_mem_check.cfg")
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
+                        ascend_config={"ge_options":
+                                       {"global": {"ge.exec.opDebugConfig": cfg_path}}})
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     features = np.random.randn(32, 1000).astype(np.float32)
     labels = np.random.randn(32, 1000).astype(np.float32)
     net_softmax = NetSoftMax()
     output = net_softmax(Tensor(features), Tensor(labels))
     print(output.asnumpy())
-    del os.environ['MS_COMPILER_OP_DEBUG_CONFIG']

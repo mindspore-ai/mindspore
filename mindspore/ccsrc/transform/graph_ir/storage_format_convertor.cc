@@ -68,7 +68,7 @@ bool StorageFormatConvertor::SetupStorageFormat(const AnfGraphPtr &anf_graph, co
   MS_EXCEPTION_IF_NULL(anf_graph);
   MS_EXCEPTION_IF_NULL(param);
   MS_EXCEPTION_IF_NULL(desc);
-  if (common::GetEnv("MS_ENABLE_FORMAT_MODE") == "1" || !IsEnableRefMode()) {
+  if (common::GetEnv("MS_FORMAT_MODE") == "1" || !IsEnableRefMode()) {
     MS_LOG(INFO) << "Enable format mode or disable ref mode, no need to set storage format";
     return true;
   }

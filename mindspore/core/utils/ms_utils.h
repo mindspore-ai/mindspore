@@ -133,12 +133,6 @@ static inline bool UseDynamicCluster() {
 // UseDynamicCluster or UseMPI. If false, means use rank table file.
 static inline bool UseHostCollective() { return common::UseDynamicCluster() || common::UseMPI(); }
 
-static inline bool IsEnableRefMode() {
-  static bool enable_ref_mode =
-    (common::GetEnv("MS_ENABLE_REF_MODE") == "1" || !common::GetEnv("MS_DEV_FORCE_ACL").empty());
-  return enable_ref_mode;
-}
-
 template <typename T>
 bool IsEqual(const T *a, const T *b) {
   if (a == b) {

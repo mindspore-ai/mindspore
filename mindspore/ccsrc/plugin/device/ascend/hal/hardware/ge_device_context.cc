@@ -245,38 +245,6 @@ void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
   return;
 }
 
-void UseOpDebugConfig(std::map<std::string, std::string> *ge_options) {
-  auto op_debug_config = common::GetEnv("MS_COMPILER_OP_DEBUG_CONFIG");
-  if (!op_debug_config.empty()) {
-    auto config_path = Common::GetCompilerCachePath();
-    DIR *dir = opendir(config_path.c_str());
-    if (dir == nullptr) {
-      auto ret = mkdir(config_path.c_str(), S_IRWXU);
-      if (ret != 0) {
-        MS_LOG(INFO) << "kernel dir: " << config_path << "not exist";
-        return;
-      }
-    }
-    auto ge_op_debug_config_file = config_path + kOpDebugConfigFile;
-    if (ge_op_debug_config_file.size() > PATH_MAX) {
-      MS_LOG(WARNING) << "File path length should be smaller than " << PATH_MAX << ", but got "
-                      << ge_op_debug_config_file;
-      return;
-    }
-    (*ge_options)["op_debug_config"] = ge_op_debug_config_file;
-    std::string ge_op_debug_config = "op_debug_config = " + op_debug_config;
-    std::ofstream file_write;
-    file_write.open(ge_op_debug_config_file, std::ios::out | std::ios::trunc);
-    if (!file_write.is_open()) {
-      MS_LOG(WARNING) << "Create ge op debug config file failed. [" << ge_op_debug_config_file << "]";
-      return;
-    }
-    file_write << ge_op_debug_config << std::endl;
-    file_write.close();
-    MS_LOG(INFO) << "Use MS_COMPILER_OP_DEBUG_CONFIG:" << ge_op_debug_config;
-  }
-}
-
 // ge.exec.allow_hf32 default value is "10"(enable Conv, disable Matmul) set by CANN
 void SetAscendHF32Config(const std::shared_ptr<MsContext> &ms_context_ptr,
                          std::map<std::string, std::string> *ge_options) {
@@ -302,26 +270,16 @@ void GeDeviceContext::SetAscendConfig(const std::shared_ptr<MsContext> &ms_conte
   MS_EXCEPTION_IF_NULL(ge_options);
 
   std::string topo_sorting_mode = "0";
-  auto topo_sorting_env = common::GetEnv("GE_TOPO_SORTING_MODE");
-  MS_LOG(INFO) << "GE topo sorting mode is: " << topo_sorting_env;
-  if (topo_sorting_env == "bfs") {
-    topo_sorting_mode = "0";
-  } else if (topo_sorting_env == "dfs") {
-    topo_sorting_mode = "1";
-  } else if (topo_sorting_env == "dfs_postorder" ||
-             ms_context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+  if (ms_context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     topo_sorting_mode = "2";
   }
-
   (*ge_options)["ge.topoSortingMode"] = topo_sorting_mode;
+
   (*ge_options)["ge.exec.memoryOptimizationPolicy"] = "MemoryPriority";
   MS_LOG(INFO) << "Set GE topo mode to memory-priority.";
 
-  auto ge_use_static_memory = common::GetEnv("GE_USE_STATIC_MEMORY");
-  if (ge_use_static_memory.empty()) {
-    (*ge_options)["ge.exec.staticMemoryPolicy"] = "2";
-    MS_LOG(INFO) << "Set staticMemoryPolicy to default mode.";
-  }
+  (*ge_options)["ge.exec.staticMemoryPolicy"] = "2";
+  MS_LOG(INFO) << "Set staticMemoryPolicy to default mode 2.";
 
   if (ms_context_ptr->get_param<std::string>(MS_CTX_ENABLE_JIT_COMPILE) != "") {
     (*ge_options)["ge.jit_compile"] = ms_context_ptr->get_param<std::string>(MS_CTX_ENABLE_JIT_COMPILE);
@@ -356,17 +314,11 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   (*ge_options)["rank_table_file"] = "";
   (*ge_options)["graphType"] = "1";
 
-  SetDisableReuseMemoryFlag(ge_options);
   SetHcclOptions(ms_context_ptr, ge_options);
   SetDumpOptions(ge_options);
 
-  auto env_job_id = common::GetEnv("JOB_ID");
-  if (!env_job_id.empty()) {
-    (*ge_options)["ge.exec.jobId"] = env_job_id;
-  } else {
-    (*ge_options)["ge.exec.jobId"] = "0";
-    MS_LOG(INFO) << "JOB_ID is not set in ENV. Now set to default value 0";
-  }
+  (*ge_options)["ge.exec.jobId"] = "0";
+  MS_LOG(INFO) << "Set ge.exec.jobId to default value 0";
 
   if (CompileCacheEnable()) {
     auto ge_cache_path = Common::GetCompilerCachePath() + kGeCache;
@@ -406,7 +358,6 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   (*ge_options)["ge.exec.overflow"] = "1";
   // enable deterministic
   (*ge_options)[::ge::DETERMINISTIC] = ms_context_ptr->get_param<std::string>(MS_CTX_DETERMINISTIC) == "ON" ? "1" : "0";
-  UseOpDebugConfig(ge_options);
 
   SetPassthroughGeOptions(true, ge_options);
 }
@@ -457,17 +408,6 @@ void GeDeviceContext::SetDumpOptions(std::map<std::string, std::string> *ge_opti
   }
 }
 
-void GeDeviceContext::SetDisableReuseMemoryFlag(std::map<std::string, std::string> *ge_options) const {
-  MS_EXCEPTION_IF_NULL(ge_options);
-  auto env_disable_reuse_memory = common::GetEnv("DISABLE_REUSE_MEMORY");
-  if (!env_disable_reuse_memory.empty()) {
-    (*ge_options)["ge.exec.disableReuseMemory"] = env_disable_reuse_memory;
-  } else {
-    (*ge_options)["ge.exec.disableReuseMemory"] = "0";
-    MS_LOG(INFO) << "DISABLE_REUSE_MEMORY is not set in ENV. Now set to default value 0";
-  }
-}
-
 void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_context,
                                      std::map<std::string, std::string> *ge_options) {
   MS_EXCEPTION_IF_NULL(inst_context);
@@ -490,10 +430,7 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_cont
     } else if (hccl::HcclAdapter::GetInstance().UseHcclCM()) {
       hccl::HcclAdapter::AddCMEnvToHcclOption(ge_options);
     }
-    auto env_hccl_flag = common::GetEnv("HCCL_FLAG");
-    if (!env_hccl_flag.empty()) {
-      (*ge_options)["ge.exec.hcclFlag"] = env_hccl_flag;
-    }
+
     (*ge_options)["ge.exec.isUseHcom"] = "1";
     (*ge_options)["ge.exec.deviceId"] = env_device_id;
     (*ge_options)["ge.exec.rankId"] = env_rank_id;
@@ -626,18 +563,20 @@ MSCONTEXT_REGISTER_INIT_FUNC(kAscendDevice, [](MsContext *ctx) -> void {
   if (ctx->backend_policy() != "ge") {
     (void)ctx->set_backend_policy("ge");
   }
-  common::SetEnv("MS_ENABLE_GE", "1");
-  // if format not set, user default format
+  // change some Environment Variables name
   auto format_mode = common::GetEnv("MS_ENABLE_FORMAT_MODE");
+  if (!format_mode.empty()) {
+    MS_LOG(WARNING)
+      << "The Environment Variable MS_ENABLE_FORMAT_MODE will be discarded, please use MS_FORMAT_MODE instead.";
+    common::SetEnv("MS_FORMAT_MODE", format_mode.c_str());
+  }
+
+  // if format not set, user default format.
+  format_mode = common::GetEnv("MS_FORMAT_MODE");
   if (format_mode.empty()) {
-    common::SetEnv("MS_ENABLE_FORMAT_MODE", "1");
+    common::SetEnv("MS_FORMAT_MODE", "1");
   }
-  // MS_DEV_FORCE_ACL 1: ACL with special format, 2: ACL with default format.
-  auto force_acl = common::GetEnv("MS_DEV_FORCE_ACL");
-  auto disable_ref = common::GetEnv("MS_DISABLE_REF_MODE");
-  if (force_acl.empty() && disable_ref != "1") {
-    common::SetEnv("MS_DEV_FORCE_ACL", "1");
-  }
+
   SetContextSocVersion(ctx);
 });
 #endif
