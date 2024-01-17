@@ -382,7 +382,6 @@ Dynamic LR函数
 
     mindspore.nn.PixelShuffle
     mindspore.nn.PixelUnshuffle
-    mindspore.nn.ResizeBilinear
     mindspore.nn.Upsample
 
 工具
