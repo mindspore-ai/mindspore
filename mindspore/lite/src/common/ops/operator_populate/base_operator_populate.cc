@@ -40,7 +40,7 @@
 #include "ops/scatter_nd_update.h"
 #include "ops/tensor_scatter_add.h"
 #include "ops/ragged_range.h"
-#include "ops/is_finite.h"
+#include "ops/ops_func_impl/is_finite.h"
 #include "ops/invert_permutation.h"
 #include "ops/ops_func_impl/gather.h"
 #include "ops/fill.h"

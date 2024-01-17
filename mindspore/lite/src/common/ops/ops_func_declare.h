@@ -167,7 +167,6 @@
 #include "ops/random_standard_normal.h"
 #include "ops/crop_and_resize.h"
 #include "ops/grad/strided_slice_grad.h"
-#include "ops/is_finite.h"
 #include "ops/uniform_real.h"
 #include "ops/ops_func_impl/abs_grad.h"
 #include "ops/splice.h"

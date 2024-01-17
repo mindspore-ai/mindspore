@@ -1,0 +1,9 @@
+#operator is_finite
+is_finite:
+  args:
+    x:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+

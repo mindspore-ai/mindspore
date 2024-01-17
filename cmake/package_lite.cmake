@@ -123,7 +123,6 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/size.h
             ${TOP_DIR}/mindspore/core/ops/random_standard_normal.h
             ${TOP_DIR}/mindspore/core/ops/crop_and_resize.h
-            ${TOP_DIR}/mindspore/core/ops/is_finite.h
             ${TOP_DIR}/mindspore/core/ops/uniform_real.h
             ${TOP_DIR}/mindspore/core/ops/splice.h
             ${TOP_DIR}/mindspore/core/ops/call.h
