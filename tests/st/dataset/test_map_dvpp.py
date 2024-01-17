@@ -722,7 +722,7 @@ def test_map_with_dvpp_decode_with_pre_pyfun():
     os.environ['MS_ENABLE_REF_MODE'] = "0"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_map_with_dvpp_decode_mixed_op():
