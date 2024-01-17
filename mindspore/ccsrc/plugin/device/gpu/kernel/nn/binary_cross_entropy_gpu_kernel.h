@@ -45,7 +45,6 @@ class BinaryCrossEntropyGpuKernelMod : public NativeGpuKernelMod {
   template <typename T>
   void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                     const std::vector<KernelTensor *> &outputs, void *stream_ptr);
-  bool weight_defined_{false};  // true: there are 3 inputs, false: there are 2 inputs(no [weight])
   size_t input_size_{1};
   ReductionMode reduction_{ReductionMode::kMean};
   size_t workspace_size_{1};

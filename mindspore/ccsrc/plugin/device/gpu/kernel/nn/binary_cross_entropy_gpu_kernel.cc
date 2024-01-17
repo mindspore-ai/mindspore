@@ -22,9 +22,6 @@
 
 namespace mindspore {
 namespace kernel {
-namespace {
-size_t kNumInputWithWeight = 3;
-}
 bool BinaryCrossEntropyGpuKernelMod::BinaryCrossEntropyGpuKernelMod::Launch(
   const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
   const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
@@ -46,7 +43,7 @@ void BinaryCrossEntropyGpuKernelMod::LaunchKernel(const std::vector<KernelTensor
   T *input_x = GetDeviceAddress<T>(inputs, kIndex0);
   T *input_y = GetDeviceAddress<T>(inputs, kIndex1);
   T *weight = nullptr;
-  if (weight_defined_) {
+  if (inputs[kIndex2]->type_id() != kMetaTypeNone) {
     weight = GetDeviceAddress<T>(inputs, kIndex2);
   }
   T *loss = GetDeviceAddress<T>(outputs, kIndex0);
@@ -75,8 +72,6 @@ bool BinaryCrossEntropyGpuKernelMod::Init(const std::vector<KernelTensor *> &inp
   }
 
   dtype_ = inputs[kIndex0]->dtype_id();
-  size_t input_num = inputs.size();
-  weight_defined_ = (input_num == kNumInputWithWeight);
   return true;
 }
 
