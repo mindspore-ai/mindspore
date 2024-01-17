@@ -652,6 +652,7 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleUnfoldToTensor(const FuncGraph
     data_type = seq_abs->cast<abstract::AbstractSequencePtr>()->ElementsType()[kIndex0]->type_id();
     MS_LOG(DEBUG) << "Input " << input->DebugString() << " real data type is " << data_type;
   }
+
   auto type_id_value_node = NewValueNode(static_cast<int64_t>(data_type));
   auto type_id_value = std::make_shared<Int64Imm>(static_cast<int64_t>(data_type));
   type_id_value_node->set_abstract(type_id_value->ToAbstract());
@@ -659,12 +660,14 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleUnfoldToTensor(const FuncGraph
   MS_EXCEPTION_IF_NULL(kernel_graph);
   type_id_value_node = kernel_graph->NewValueNode(type_id_value_node);
   kernel_graph->AddValueNodeToGraph(type_id_value_node);
+
   // Use TupleToTensor op as the input of this node. Then TupleUnfoldToTuple pattern will be matched.
   auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimTupleToTensor->name()));
   MS_EXCEPTION_IF_NULL(prim);
   AnfNodePtrList inputs = {prim, input, type_id_value_node};
   CNodePtr tuple_to_tensor = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(tuple_to_tensor);
+
   // Set abstract for TupleToTensor op according to user node's input shape and type.
   auto abs = GenerateAbsByOpInfer(GetCNodePrimitive(tuple_to_tensor), {input, type_id_value_node});
   MS_EXCEPTION_IF_NULL(abs);
@@ -774,12 +777,14 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTensor(const FuncGraphPtr &f
   MS_EXCEPTION_IF_NULL(kernel_graph);
   type_id_value_node = kernel_graph->NewValueNode(type_id_value_node);
   kernel_graph->AddValueNodeToGraph(type_id_value_node);
+
   // Simply insert TupleToTensor op between 'input' and 'node'.
   auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimTupleToTensor->name()));
   MS_EXCEPTION_IF_NULL(prim);
   AnfNodePtrList inputs = {prim, input, type_id_value_node};
   CNodePtr tuple_to_tensor = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(tuple_to_tensor);
+
   // Set abstract for TupleToTensor op according to user node's input shape and type.
   auto abs = GenerateAbsByOpInfer(GetCNodePrimitive(tuple_to_tensor), {input, type_id_value_node});
   MS_EXCEPTION_IF_NULL(abs);
@@ -826,6 +831,7 @@ AnfNodePtrList InsertTypeTransformOp::ProcessScalarToTensor(const FuncGraphPtr &
   AnfNodePtrList inputs = {prim, input, type_id_value_node};
   CNodePtr scalar_to_tensor = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(scalar_to_tensor);
+
   auto abs = GenerateAbsByOpInfer(GetCNodePrimitive(scalar_to_tensor), {input, type_id_value_node});
   MS_EXCEPTION_IF_NULL(abs);
   MS_LOG(DEBUG) << "Abstract for ScalarToTensor op is " << abs->ToString();

@@ -216,6 +216,12 @@ bool BroadcastToCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &in
 
   const void *input_addr = inputs[0]->device_ptr();
   void *output_addr = outputs[0]->device_ptr();
+
+  if (output_shape_.empty()) {
+    *(reinterpret_cast<T *>(output_addr)) = *(reinterpret_cast<const T *>(input_addr));
+    return true;
+  }
+
   int status = static_cast<int>(NNACL_OK);
   if constexpr (std::is_same_v<T, bool>) {
     status = BroadcastToSize8(input_addr, &shape_info_, output_addr);

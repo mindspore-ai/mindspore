@@ -21,7 +21,6 @@ from mindspore.ops import functional as F
 from mindspore.ops.operations._inner_ops import SliceGetItem
 from mindspore.ops.operations import _map_tensor_ops
 from mindspore.ops.composite import base
-from mindspore.common import Tensor
 from mindspore.ops.composite.base import _dict_setitem
 from mindspore.ops.operations._sequence_ops import TensorToScalar
 from ...operations._sequence_ops import SequenceSliceSetItem
@@ -795,11 +794,8 @@ def _tensor_setitem_by_list_with_number(data, index, value):
     Outputs:
         Tensor, element type and shape is same as data.
     """
-    # list indices will be converted to tuple or tensor based on its contents.
-    index = compile_utils.format_list_indices(index, data.shape[0])
-    if isinstance(index, Tensor):
-        return compile_utils.tensor_setitem_by_tensor_with_number(data, index, value)
-    return compile_utils.tensor_setitem_by_tuple_with_number(data, index, value)
+    value = F.cast(value, F.dtype(data))
+    return compile_utils.tensor_setitem_by_list(data, index, value)
 
 
 @setitem.register("Tensor", "List", "Tensor")
@@ -819,11 +815,7 @@ def _tensor_setitem_by_list_with_tensor(data, index, value):
     Outputs:
         Tensor, element type and shape is same as data.
     """
-    # list indices will be converted to tuple or tensor based on its contents.
-    index = compile_utils.format_list_indices(index, data.shape[0])
-    if isinstance(index, Tensor):
-        return compile_utils.tensor_setitem_by_tensor_with_tensor(data, index, value)
-    return compile_utils.tensor_setitem_by_tuple_with_tensor(data, index, value)
+    return compile_utils.tensor_setitem_by_list(data, index, value)
 
 
 @setitem.register("Tensor", "List", "Tuple")
@@ -843,11 +835,8 @@ def _tensor_setitem_by_list_with_tuple(data, index, value):
     Outputs:
         Tensor, element type and shape is same as data.
     """
-    # list indices will be converted to tuple or tensor based on its contents.
-    index = compile_utils.format_list_indices(index, data.shape[0])
-    if isinstance(index, Tensor):
-        return compile_utils.tensor_setitem_by_tensor_with_sequence(data, index, value)
-    return compile_utils.tensor_setitem_by_tuple_with_sequence(data, index, value)
+    value = compile_utils.sequence_to_tensor(value, F.dtype(data))
+    return compile_utils.tensor_setitem_by_list(data, index, value)
 
 
 @setitem.register("Tensor", "List", "List")
@@ -867,11 +856,8 @@ def _tensor_setitem_by_list_with_list(data, index, value):
     Outputs:
         Tensor, element type and shape is same as data.
     """
-    # list indices will be converted to tuple or tensor based on its contents.
-    index = compile_utils.format_list_indices(index, data.shape[0])
-    if isinstance(index, Tensor):
-        return compile_utils.tensor_setitem_by_tensor_with_sequence(data, index, value)
-    return compile_utils.tensor_setitem_by_tuple_with_sequence(data, index, value)
+    value = compile_utils.sequence_to_tensor(value, F.dtype(data))
+    return compile_utils.tensor_setitem_by_list(data, index, value)
 
 
 @setitem.register("MapTensor", "Tensor", "Tensor")

@@ -45,6 +45,11 @@ int BroadcastToGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                       << SHAPE_SIZE << ", but got the dimension of input: " << inp_shape.size()
                       << ", the dimension of output: " << out_shape.size();
   }
+
+  is_null_input_ = CHECK_SHAPE_NULL(inp_shape, kernel_name_, "input");
+  if (is_null_input_) {
+    return KRET_OK;
+  }
   SimplifyBroadcastToShape(inp_shape, out_shape, &simplified_inp_shape_, &simplified_out_shape_);
   is_broadcast_ = IsBinaryBroadcast(simplified_inp_shape_, simplified_out_shape_);
   return KRET_OK;
@@ -56,6 +61,10 @@ bool BroadcastToGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &in
                                            const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   T *input_addr = GetDeviceAddress<T>(inputs, 0);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
+  if (is_null_input_) {
+    return true;
+  }
+
   if (is_broadcast_) {
     BroadcastTo(simplified_inp_shape_, simplified_out_shape_, input_addr, output_addr, device_id_,
                 reinterpret_cast<cudaStream_t>(stream_ptr));

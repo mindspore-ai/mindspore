@@ -28,6 +28,7 @@ from mindspore.ops._tracefunc import PackFunc
 from mindspore.common._utils import is_shape_unknown
 from mindspore import _checkparam as validator
 from mindspore.ops.operations.manually_defined._inner import ScalarCast
+from mindspore.common.initializer import Zero
 
 
 class ScalarDiv(Primitive):
@@ -1141,7 +1142,7 @@ def infer_value_for_Reshape(x, shape):
     out = None
     if not is_shape_unknown(x.shape):
         x_shp = x.shape
-        if dim_prod <= 0:
+        if dim_prod < 0:
             raise ValueError(f"For 'Reshape', the shape of 'input_x' is {x_shp}, "
                              f"the value of 'input_shape' is {shape}. "
                              f"The product of 'input_shape' should > 0, but got {dim_prod}.")
@@ -1153,5 +1154,10 @@ def infer_value_for_Reshape(x, shape):
             raise ValueError(f"For 'Reshape', the product of the 'input_x' shape "
                              f"should be equal to product of 'input_shape', but got product of the"
                              f" shape of 'input_x': {arr_prod}, product of 'input_shape': {dim_prod}.")
-        out = Tensor(x.asnumpy().reshape(shape))
+        if 0 in shape:
+            init_func = Zero()
+            init_func.__enable_zero_dim__ = True
+            out = Tensor(shape=shape, dtype=x.dtype, init=init_func)
+        else:
+            out = Tensor(x.asnumpy().reshape(shape))
     return out
