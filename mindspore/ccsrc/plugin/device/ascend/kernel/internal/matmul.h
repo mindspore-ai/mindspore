@@ -19,10 +19,10 @@
 #include "plugin/device/ascend/kernel/internal/internal_kernel_mod.h"
 namespace mindspore {
 namespace kernel {
-class MatMul : public InternalKernelMod {
+class InternalMatMul : public InternalKernelMod {
  public:
-  MatMul() : InternalKernelMod("MatMul") {}
-  ~MatMul() = default;
+  InternalMatMul() : InternalKernelMod("MatMul") {}
+  ~InternalMatMul() = default;
 
  protected:
   internal::OpParamPtr CreateOpParam(const std::vector<KernelTensor *> &inputs,

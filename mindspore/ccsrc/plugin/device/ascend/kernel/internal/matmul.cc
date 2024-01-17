@@ -17,7 +17,7 @@
 #include "plugin/device/ascend/kernel/internal/matmul.h"
 namespace mindspore {
 namespace kernel {
-internal::OpParamPtr MatMul::CreateOpParam(const std::vector<KernelTensor *> &inputs,
+internal::OpParamPtr InternalMatMul::CreateOpParam(const std::vector<KernelTensor *> &inputs,
                                            const std::vector<KernelTensor *> &outputs) {
   internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
   internal::MatMulParam matmul_param;
@@ -26,12 +26,12 @@ internal::OpParamPtr MatMul::CreateOpParam(const std::vector<KernelTensor *> &in
   param_ptr->specificParam = matmul_param;
   return param_ptr;
 }
-void MatMul::SetInOutIdx() {
+void InternalMatMul::SetInOutIdx() {
   inputsIdxMap_[0] = 0;
   inputsIdxMap_[1] = 1;
   outputsIdxMap_[0] = 0;
 }
 
-MS_INTERNAL_KERNEL_FACTORY_REG(MatMul, MatMul);
+MS_INTERNAL_KERNEL_FACTORY_REG(MatMul, InternalMatMul);
 }  // namespace kernel
 }  // namespace mindspore
