@@ -14,10 +14,11 @@
 # ============================================================================
 
 """
-Python hardware abstract layer interfaces.
-
-MindSpore export 'mindspore.hal' for users to access hardware resources and abilities.
+The HAL encapsulates interfaces for device management, flow management, and event management.
+MindSpore abstracts the preceding modules from different backends and allows users to schedule hardware
+resources at the Python layer. Currently, these interfaces take effect only in PyNative mode.
 """
+
 from mindspore.hal.device import is_initialized, is_available, device_count, get_device_capability,\
                                  get_device_properties, get_device_name, get_arch_list
 from mindspore.hal.stream import Stream, synchronize, set_cur_stream, current_stream, default_stream,\
@@ -27,5 +28,7 @@ from mindspore.hal.event import Event
 __all__ = [
     "is_initialized", "is_available", "device_count", "get_device_capability",
     "get_device_properties", "get_device_name", "get_arch_list",
-    "Stream", "synchronize", "set_cur_stream", "current_stream", "default_stream", "StreamCtx", "Event"
+    "Event", "Stream", "synchronize", "set_cur_stream", "current_stream", "default_stream", "StreamCtx"
 ]
+
+__all__.sort()
