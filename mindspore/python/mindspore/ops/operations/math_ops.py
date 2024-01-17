@@ -40,7 +40,7 @@ from ..auto_generate import (Add, Addcdiv, Addcmul, ReduceMean, ReduceSum, Reduc
                              LinSpace, MatrixDeterminant, LogMatrixDeterminant, Erfinv, Conj,
                              Real, Complex, Angle, MatrixExp, CholeskyInverse, Trace, Cholesky,
                              FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum, Div, CumProd,
-                             CumSum, Less, LessEqual)
+                             CumSum, Less, LessEqual, AssignAdd)
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
     """Common infer for reduce operator"""
@@ -247,56 +247,6 @@ class AddV2(Primitive):
     def __init__(self):
         """Initialize AddV2"""
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
-
-
-class AssignAdd(Primitive):
-    """
-    Updates a `Parameter` by adding a value to it.
-
-    Refer to :func:`mindspore.ops.assign_add` for more details.
-
-    Inputs:
-        - **variable** (Parameter) - The `Parameter`.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        - **value** (Union[numbers.Number, Tensor]) - The value to be added to the `variable`.
-          It must have the same shape as `variable` if it is a Tensor.
-
-    Outputs:
-        Tensor, has the same data type and shape as original `variable`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops, nn
-        >>> class Net(nn.Cell):
-        ...     def __init__(self):
-        ...         super(Net, self).__init__()
-        ...         self.AssignAdd = ops.AssignAdd()
-        ...         self.variable = mindspore.Parameter(initializer(1, [1], mindspore.int64), name="global_step")
-        ...
-        ...     def construct(self, x):
-        ...         self.AssignAdd(self.variable, x)
-        ...         return self.variable
-        ...
-        >>> net = Net()
-        >>> value = Tensor(np.ones([1]).astype(np.int64)*100)
-        >>> output = net(value)
-        >>> print(net.variable.asnumpy())
-        [101]
-    """
-    __mindspore_signature__ = (
-        sig.make_sig('ref', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
-        sig.make_sig('value', dtype=sig.sig_dtype.T)
-    )
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize AssignAdd"""
-        self.init_prim_io_names(inputs=['ref', 'value'], outputs=['ref'])
-        self.add_prim_attr('side_effect_mem', True)
 
 
 class AssignSub(Primitive):
