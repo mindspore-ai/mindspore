@@ -107,6 +107,8 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   {ProfilerEvent::kPyBoostMallocInput, "MallocInput"},
   {ProfilerEvent::kPyBoostMallocOutput, "MallocOutput"},
   {ProfilerEvent::kPyBoostLaunchAclnn, "LaunchAclnn"},
+  // python events
+  {ProfilerEvent::kPythonObserved, "PythonObserved"},
 };
 
 namespace {
@@ -140,6 +142,23 @@ ProfilerRecorder::~ProfilerRecorder() {
   ProfilerAnalyzer::GetInstance().RecordData(
     std::make_shared<ProfilerData>(data_->module_, data_->event_, data_->op_name_, data_->is_inner_event_,
                                    data_->start_time_, ProfilerAnalyzer::GetInstance().GetTimeStamp()));
+}
+
+PythonProfilerRecorder::PythonProfilerRecorder(const std::string &record_name)
+    : record_name_(record_name), module_(ProfilerModule::kPython), event_(ProfilerEvent::kPythonObserved) {}
+
+void PythonProfilerRecorder::record_start() {
+  if (runtime::ProfilerAnalyzer::GetInstance().profiler_enable()) {
+    start_time_ = runtime::ProfilerAnalyzer::GetInstance().GetTimeStamp();
+  }
+}
+
+void PythonProfilerRecorder::record_end() {
+  if (runtime::ProfilerAnalyzer::GetInstance().profiler_enable()) {
+    auto end_time = runtime::ProfilerAnalyzer::GetInstance().GetTimeStamp();
+    runtime::ProfilerAnalyzer::GetInstance().RecordData(
+      std::make_shared<runtime::ProfilerData>(module_, event_, record_name_, false, start_time_, end_time));
+  }
 }
 
 ProfilerStageRecorder::ProfilerStageRecorder(ProfilerStage stage) {
