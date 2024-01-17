@@ -127,20 +127,19 @@ CNodePtr ScalarOpPass::GenerateScalarToTensor(const FuncGraphPtr &func_graph, co
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto scalar_cnode = anf_node->cast<CNodePtr>();
   auto scalar_input = scalar_cnode->input(input_index);
-  AnfNodePtrList inputs = {prim, scalar_input};
-  CNodePtr scalar_to_tensor = func_graph->NewCNode(inputs);
-  MS_CHECK_TRUE_RET(scalar_to_tensor != nullptr, nullptr);
-
   // Data type of the tensor should be set as an attr of ScalarToTensor op.
   TypeId scalar_data_type;
   if (opt::GetDataTypeFromAnfNode(scalar_cnode->input(input_index), &scalar_data_type) != RET_OK) {
     MS_LOG(ERROR) << "Failed to get " << anf_node->fullname_with_scope() << " output tensor data type.";
     return nullptr;
   }
+  AnfNodePtrList inputs = {prim, scalar_input, NewValueNode(MakeValue(static_cast<int64_t>(scalar_data_type)))};
+  CNodePtr scalar_to_tensor = func_graph->NewCNode(inputs);
+  MS_CHECK_TRUE_RET(scalar_to_tensor != nullptr, nullptr);
   auto primitive = GetCNodePrimitive(scalar_to_tensor);
   MS_CHECK_TRUE_RET(primitive != nullptr, nullptr);
+  // dtype attr
   primitive->set_attr("dtype", TypeIdToType(scalar_data_type));
-
   // set abstract
   ShapeVector tensor_shape = {1};
   auto tensor_shape_ptr = std::make_shared<abstract::Shape>(tensor_shape);

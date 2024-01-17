@@ -144,35 +144,31 @@ ValueNodePtr InputsUnifyMindIR::CreateValueTensor(const FuncGraphPtr &func_graph
 CNodePtr InputsUnifyMindIR::CreateScalarToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const {
   auto prim = NewValueNode(std::make_shared<Primitive>(kScalarToTensorOpName));
   MS_EXCEPTION_IF_NULL(prim);
-  AnfNodePtrList inputs = {prim, node};
+  auto data_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
+  AnfNodePtrList inputs = {prim, node, NewValueNode(MakeValue(static_cast<int64_t>(data_type)))};
   CNodePtr scalar_to_tensor = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(scalar_to_tensor);
   auto primitive = GetCNodePrimitive(scalar_to_tensor);
   MS_EXCEPTION_IF_NULL(primitive);
-
   // attr dtype
-  auto data_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
   common::AnfAlgo::SetNodeAttr(kAttrDType, TypeIdToType(data_type), scalar_to_tensor);
-
   // set abstract
   auto abs = InferAbstract(primitive, {node});
   MS_EXCEPTION_IF_NULL(abs);
   MS_LOG(DEBUG) << "Abstract for ScalarToTensor op is " << abs->ToString();
   scalar_to_tensor->set_abstract(abs);
-
   return scalar_to_tensor;
 }
 
 CNodePtr InputsUnifyMindIR::CreateTupleToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const {
   auto prim = std::make_shared<Primitive>(kTupleToTensorOpName);
   MS_EXCEPTION_IF_NULL(prim);
-  AnfNodePtrList inputs = {NewValueNode(prim), node};
+  auto data_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
+  AnfNodePtrList inputs = {NewValueNode(prim), node, NewValueNode(MakeValue(static_cast<int64_t>(data_type)))};
   CNodePtr tuple_to_tensor = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(tuple_to_tensor);
   // attr dtype
-  auto data_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
   common::AnfAlgo::SetNodeAttr(kAttrDType, TypeIdToType(data_type), tuple_to_tensor);
-
   // set abstract
   auto abs = InferAbstract(prim, {node});
   MS_EXCEPTION_IF_NULL(abs);
