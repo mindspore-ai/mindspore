@@ -224,7 +224,7 @@ CNode::CNode(const AnfNodePtrList &inputs, const FuncGraphPtr &func_graph)
     MS_LOG(DEBUG) << "Create new CNode, " << this << "@" << func_graph->ToString();
     func_graph->AddOwnNode(inputs);
   } else {
-    MS_LOG(ERROR) << "The func graph should not be null.";
+    MS_LOG(WARNING) << "The func graph should not be null.";
     inputs_bound_ = true;
     inputs_ = inputs;
   }
