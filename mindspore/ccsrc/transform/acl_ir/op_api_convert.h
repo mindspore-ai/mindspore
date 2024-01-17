@@ -580,6 +580,10 @@ void ReleaseConvertTypes(const Tuple &t) {
       out = std::make_shared<BoolImm>(static_cast<bool>(num));              \
       break;                                                                \
     }                                                                       \
+    case kNumberTypeBFloat16: {                                             \
+      out = std::make_shared<FP32Imm>(static_cast<float>(num));             \
+      break;                                                                \
+    }                                                                       \
     default: {                                                              \
       MS_LOG(EXCEPTION) << "Not support typeid " << TypeIdToString(typeid); \
     }                                                                       \

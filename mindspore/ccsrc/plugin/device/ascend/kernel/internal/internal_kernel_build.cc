@@ -30,7 +30,8 @@ KernelModPtr InternalKernelBuild(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
 
   std::string opname = common::AnfAlgo::GetCNodeName(anf_node);
-  MS_LOG(DEBUG) << "internal op [" << opname << "]";
+  // Easy to compare accuracy and performance, later changed to debug
+  MS_LOG(WARNING) << "internal op [" << opname << "]";
   auto kernel_ptr = Factory<InternalKernelMod>::Instance().Create(opname);
   if (kernel_ptr == nullptr) {
     MS_LOG(ERROR) << "internal can't find Kernel[" << opname << "]";
