@@ -21,6 +21,7 @@ import glob
 import subprocess
 import csv
 from enum import Enum
+from typing import List
 import numpy as np
 
 from mindspore import log as logger, context
@@ -36,6 +37,7 @@ from mindspore.profiler.common.util import get_file_path
 from mindspore.profiler.common.validator.validate_path import validate_and_normalize_path
 from mindspore.profiler.parser.framework_parser import GpuFrameWorkParser, DynamicFrameWorkParser
 from mindspore.profiler.parser.integrator import Integrator, DeviceTarget
+from mindspore.profiler.parser.ascend_analysis.function_event import CANNEvent
 from mindspore.profiler.parser.cpu_gpu_timeline_generator import GpuTimelineGenerator, CpuTimelineGenerator
 from mindspore.profiler.parser.ascend_timeline_generator import AscendTimelineGenerator, AscendTimelineGeneratorOld
 from mindspore.profiler.parser.memory_usage_parser import MemoryUsageParser
@@ -67,6 +69,12 @@ AICORE_METRICS_DICT = {
     5: "MemoryUB",
     -1: "None"
 }
+
+class ModelTraingMode(Enum):
+    PYNATIVE = 0
+    GRAPH = 1
+    KERNEL_BY_KERNEL = 2
+    UNKNOWN = 3
 
 
 class DeviceSupportParam(Enum):
@@ -1089,7 +1097,7 @@ class Profiler:
             pass
         return points
 
-    def _ascend_op_analyse(self, op_summary, op_statistic, dynamic_status):
+    def _ascend_op_analyse(self, op_summary, op_statistic, dynamic_status, launch_ops: List):
         """
         Ascend graph model hwts analyse.
 
@@ -1116,7 +1124,7 @@ class Profiler:
             else:
                 output_timeline_data_path = None
 
-            op_analyser = AscendOPGenerator(op_summary, op_statistic, dynamic_status)
+            op_analyser = AscendOPGenerator(op_summary, op_statistic, dynamic_status, launch_ops)
             op_analyser.parse()
             op_analyser.write(op_intermediate_detail_path, op_intermediate_type_path,
                               aicpu_intermediate_detail_path, framework_raw_path, output_timeline_data_path)
@@ -1143,7 +1151,7 @@ class Profiler:
         finally:
             pass
 
-    def _ascend_timeline_analyse(self, op_summary, steptrace, source_path, flag):
+    def _ascend_timeline_analyse(self, op_summary, steptrace, source_path, flag) -> List:
         """Analyse timeline info."""
         try:
             logger.info("Profiling: analyzing the timeline data")
@@ -1164,6 +1172,7 @@ class Profiler:
             logger.warning('Fail to write timeline data: %s', err)
         finally:
             pass
+        return timeline_analyser.get_kernel_event_list()
 
     def _ascend_dynamic_net_analyse(self, op_summary):
         """Analyse dynamic shape network info."""
@@ -1177,7 +1186,7 @@ class Profiler:
         dynamic_parser = DynamicFrameWorkParser(self._output_path, self._rank_id)
         dynamic_parser.write_dynamic_shape_data(op_summary)
 
-    def _ascend_flops_analyse(self, op_summary):
+    def _ascend_flops_analyse(self, op_summary, launch_ops):
         """Get op FLOPs from op_summary, write output_op_flops_x.csv."""
         if 'vector_fops' not in op_summary.dtype.names and 'cube_fops' not in op_summary.dtype.names:
             logger.warning("[Profiler] Can not found cube fops and vector fops data in the op summary.")
@@ -1192,7 +1201,7 @@ class Profiler:
             flops_path = validate_and_normalize_path(flops_path)
             flops_summary_path = validate_and_normalize_path(flops_summary_path)
 
-            flops_analyser = AscendFlopsGenerator(op_summary)
+            flops_analyser = AscendFlopsGenerator(op_summary, launch_ops)
             flops_analyser.parse()
             flops_analyser.write(flops_path, flops_summary_path)
 
@@ -1280,6 +1289,26 @@ class Profiler:
         if context.get_context("mode") == context.PYNATIVE_MODE:
             logger.warning("Pynative mode does not support MSAdvisor analyzer currently.")
 
+    def _get_kernel_op_map(self, op_summary, kernels: List[CANNEvent]) -> List:
+        """Get the mapping between framework operator and device kernel."""
+        if not kernels:
+            return []
+        kernel_map = {}
+        for kernel in kernels:
+            key = kernel.name if kernel.is_comm_op else (kernel.name, str(kernel.ts))
+            kernel_map[key] = kernel.parent
+        launch_ops = [None] * len(op_summary)
+        for index, summary in enumerate(op_summary):
+            ts = str(summary['Task Start Time(us)']).strip("\t")
+            name = summary['Op Name']
+            key = name if name.startswith("hcom_") else (name, ts)
+            launch_op = kernel_map.get(key)
+            if not launch_op:
+                logger.warning(f"Failed to get launch operator for {name}!")
+                continue
+            launch_ops[index] = launch_op.name
+        return launch_ops
+
     def _ascend_graph_analyse(self):
         """Ascend graph mode analyse."""
         self._ascend_profiler.finalize()
@@ -1299,15 +1328,16 @@ class Profiler:
                                'this may lead to performance degradation. Suggest upgrading the driver package.')
             ProfilerInfo.set_export_flag(flag)
             op_summary, op_statistic, steptrace = _ascend_graph_msprof_analyse(source_path, flag)
-            self._ascend_op_analyse(op_summary, op_statistic, self._dynamic_status)
-            self._ascend_timeline_analyse(op_summary, steptrace, source_path, flag)
+            kernels = self._ascend_timeline_analyse(op_summary, steptrace, source_path, flag)
+            launch_ops = self._get_kernel_op_map(op_summary, kernels)
+            self._ascend_op_analyse(op_summary, op_statistic, self._dynamic_status, launch_ops)
             graph_ids = np.unique(op_summary['Model ID']).tolist()
             points = self._ascend_fpbp_analyse(op_summary, steptrace)
             if len(graph_ids) == 1:
                 self._ascend_step_trace_analyse(steptrace)
             if self._dynamic_status:
                 self._ascend_dynamic_net_analyse(op_summary)
-            self._ascend_flops_analyse(op_summary)
+            self._ascend_flops_analyse(op_summary, launch_ops)
             self._ascend_graph_memory_analyse(points)
             self._ascend_graph_cluster_analyse(source_path)
             self._ascend_graph_hccl_analyse(source_path, steptrace, flag)
@@ -1507,7 +1537,7 @@ class Profiler:
                 device_dir = [dir for dir in os.listdir(self._ascend_job_id) if dir.startswith('device')]
                 info_file_path = get_file_path(os.path.join(self._ascend_job_id, device_dir[0]), "info.json")
                 training_rank_id, _ = self._parse_info_json(info_file_path)
-                self._rank_id = int(training_rank_id)
+                self._rank_id = int(training_rank_id) if int(training_rank_id) >= 0 else self._rank_id
                 return os.path.join(job_id, device_dir[0])
             return job_id
 

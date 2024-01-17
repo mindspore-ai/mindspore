@@ -165,10 +165,11 @@ class AscendHCCLGenerator:
                 self.hccl_raw.append(self._iteration_analyse(hccl_detail_data, iteration_id))
 
         self.hccl_raw = sorted(self.hccl_raw, key=lambda x: x[0])
-        self.hccl_raw.append(copy.deepcopy(self.hccl_raw[-1]))
-        self.hccl_raw[-1][0] = '-'
-        for _, value in self.hccl_raw[-1][4].items():
-            value[0] = '-'
+        if self.hccl_raw:
+            self.hccl_raw.append(copy.deepcopy(self.hccl_raw[-1]))
+            self.hccl_raw[-1][0] = '-'
+            for _, value in self.hccl_raw[-1][4].items():
+                value[0] = '-'
 
     def write(self, hccl_raw_path):
         """
@@ -208,8 +209,8 @@ class AscendHCCLGenerator:
                 name = row.get('name')
                 pid = row.get('pid')
                 tid = row.get('tid')
-                ts = row.get('ts')
-                dur = row.get('dur')
+                ts = float(row.get('ts'))
+                dur = float(row.get('dur'))
                 te = ts + dur
                 ph = row.get('ph')
                 task_type = row.get('args', {}).get('task type', '')

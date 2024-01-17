@@ -28,6 +28,7 @@ from mindspore.profiler.parser.base_timeline_generator import BaseTimelineGenera
 from mindspore.profiler.parser.container import TimelineContainer
 from mindspore.profiler.parser.cpu_gpu_timeline_generator import CpuTimelineGenerator
 from mindspore.profiler.parser.integrator import DeviceTarget
+from mindspore.profiler.parser.ascend_analysis.fwk_cann_parser import FwkCANNParser
 
 
 class AscendTimelineGeneratorOld(BaseTimelineGenerator):
@@ -410,6 +411,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
     def __init__(self, profiling_dir, source_path, rank_id, mode):
         super().__init__(DeviceTarget.ASCEND.value, mode)
         self._profiling_dir = profiling_dir
+        self._source_path = source_path
         self._msprof_timeline_dir = os.path.join(source_path, 'timeline')
         self._rank_id = rank_id
         self._timeline_display_filename = self._timeline_display_filename.format(rank_id)
@@ -515,6 +517,9 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
 
         timeline_data = []
         task_list = []
+        hardware_data_list = []
+        cann_data_list = []
+        hccl_data_list = []
 
         with ThreadPoolExecutor() as pool:
 
@@ -527,32 +532,6 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                 logger.error('Could not find step trace file in %s', self._msprof_timeline_dir)
             else:
                 task_list.append(pool.submit(self._parse_step_trace_data, get_newest_file(file_list_step_trace)))
-
-            # get Ascend Hardware
-            hardware_file_name = fr'{self._msprof_timeline_dir}/task_time_*.json'
-            file_list_hardware = glob.glob(hardware_file_name)
-            if not file_list_hardware:
-                logger.error('Could not find ascend hardware file in %s', self._msprof_timeline_dir)
-            else:
-                ascend_timeline, scope_data = self._parse_ascend_hardware_data(get_newest_file(file_list_hardware))
-                timeline_data.extend(ascend_timeline)
-                all_scope_data.extend(scope_data)
-
-            # get hccl
-            hccl_file_name = fr'{self._msprof_timeline_dir}/hccl_*.json'
-            file_list_hccl = glob.glob(hccl_file_name)
-            if not file_list_hccl:
-                logger.error('Could not find hccl file in %s', self._msprof_timeline_dir)
-            else:
-                task_list.append(pool.submit(self._parse_hccl_data, get_newest_file(file_list_hccl)))
-
-            # get CANN
-            cann_file_name = fr'{self._msprof_timeline_dir}/msprof_*.json'
-            file_list = glob.glob(cann_file_name)
-            if not file_list:
-                logger.error('Could not find overlap analysis file in %s', self._msprof_timeline_dir)
-            else:
-                task_list.append(pool.submit(self._parse_cann_data, get_newest_file(file_list)))
 
             # get overlap analysis
             overlap_file_name = fr'{self._msprof_timeline_dir}/msprof_*.json'
@@ -572,15 +551,51 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                 timeline_data.extend(cpu_timeline)
                 all_scope_data.extend(scope_data)
 
+            # get Ascend Hardware
+            hardware_file_name = fr'{self._msprof_timeline_dir}/task_time_*.json'
+            file_list_hardware = glob.glob(hardware_file_name)
+            if not file_list_hardware:
+                logger.error('Could not find ascend hardware file in %s', self._msprof_timeline_dir)
+            else:
+                ascend_timeline, scope_data = self._parse_ascend_hardware_data(get_newest_file(file_list_hardware))
+                timeline_data.extend(ascend_timeline)
+                hardware_data_list.extend(ascend_timeline)
+                all_scope_data.extend(scope_data)
+
             # parse scope info
             task_list.append(pool.submit(self._parse_scope_info, all_scope_data))
 
-            all_done = list(range(len(task_list)))
-            while all_done:
-                for ind, t in enumerate(task_list):
-                    if ind in all_done and t.done():
-                        timeline_data.extend(t.result())
-                        all_done.remove(ind)
+            # get hccl
+            hccl_file_name = fr'{self._msprof_timeline_dir}/hccl_*.json'
+            file_list_hccl = glob.glob(hccl_file_name)
+            if not file_list_hccl:
+                logger.error('Could not find hccl file in %s', self._msprof_timeline_dir)
+            else:
+                hccl_data = self._parse_hccl_data(get_newest_file(file_list_hccl))
+                timeline_data.extend(hccl_data)
+                hccl_data_list.extend(hccl_data)
+
+            # get CANN
+            cann_file_name = fr'{self._msprof_timeline_dir}/msprof_*.json'
+            file_list = glob.glob(cann_file_name)
+            if not file_list:
+                logger.error('Could not find overlap analysis file in %s', self._msprof_timeline_dir)
+            else:
+                cann_data = self._parse_cann_data(get_newest_file(file_list))
+                timeline_data.extend(cann_data)
+                cann_data_list.extend(cann_data)
+
+            oprange_name = self._op_range_name.format(self._rank_id)
+            fwk_file_path = fr'{self._profiling_dir}/{self._framework_dir}/{oprange_name}'
+            if os.path.exists(fwk_file_path):
+                # It is faster not to submit to the pool
+                msprof_side_data = hardware_data_list + cann_data_list + hccl_data_list
+                result = self._parse_fwk_device_data(msprof_side_data)
+                timeline_data.extend(result.get("trace_data", []))
+                self._kernel_events = result.get("kernels", [])
+
+            self._wait_task_and_update(task_list, timeline_data)
+
         logger.info("All timeline data parse complete.")
         self._timeline_data = timeline_data
         return timeline_data
@@ -645,6 +660,27 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         except (IOError, OSError, json.JSONDecodeError) as err:
             print('parse_cann_data failed! please theck. detail: %s', err)
             return []
+
+    def _wait_task_and_update(self, task_list: list, timeline_data: list):
+        """
+        Wait the tasks to finish and get result
+        """
+        all_done = list(range(len(task_list)))
+        while all_done:
+            for ind, t in enumerate(task_list):
+                if ind in all_done and t.done():
+                    timeline_data.extend(t.result())
+                    all_done.remove(ind)
+
+    def _parse_fwk_device_data(self, cann_kernel_data):
+        """
+        Get framework op range trace data, flow events and hardware kernel events
+        """
+        fwkcann_parser = FwkCANNParser(self._source_path, cann_kernel_data, self._rank_id)
+        fwk_link_data = fwkcann_parser.generate_trace_data()
+        kernels = fwkcann_parser.kernels
+        result = {"trace_data": fwk_link_data, "kernels": kernels}
+        return result
 
     def _parse_step_trace_metadata(self, raw_data):
         """

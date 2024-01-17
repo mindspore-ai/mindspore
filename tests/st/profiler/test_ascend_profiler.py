@@ -178,5 +178,5 @@ def test_collect_custom_aicpu():
         with open(aicpu_intermediate_file_list[0], 'r') as fr:
             reader = csv.DictReader(fr)
             for row in reader:
-                s2.add(row.get('op_type'))
+                s2.add(row.get('kernel_type'))
         assert s1 == s2

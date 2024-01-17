@@ -39,7 +39,7 @@ class MsadvisorParser:
     def __init__(self, job_id, device_id, rank_id, output_path):
         self._job_id = job_id
         self._device_id = device_id
-        self._rank_id = rank_id
+        self._rank_id = str(rank_id)
         self._output_path = output_path
         self._aicore_path = ""
         self._aicpu_path = ""
