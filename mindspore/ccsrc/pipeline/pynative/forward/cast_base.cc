@@ -174,7 +174,7 @@ TypeId CastBaseOperation::JudgeMaxType(TypeId max_type, bool has_scalar_float32,
     }
   }
   if (max_type != TypeId::kNumberTypeFloat16 && max_type != TypeId::kNumberTypeFloat32 &&
-      max_type != TypeId::kNumberTypeFloat64 && max_type != TypeId::kTypeUnknown && has_scalar_float32) {
+      max_type != TypeId::kNumberTypeFloat64 && has_scalar_float32) {
     max_type = TypeId::kNumberTypeFloat32;
   }
   if (max_type == TypeId::kNumberTypeUInt8 && has_tensor_int8) {
