@@ -28,8 +28,13 @@ namespace device {
 namespace ascend {
 void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node,
                                const std::pair<std::string, ExceptionType> &failure_info);
+
 std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const CNodePtr &node, bool enable_aclnn);
+
+bool IsEnableAclNN(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node = nullptr);
+
 void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes);
+
 void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_type);
 }  // namespace ascend
 }  // namespace device
