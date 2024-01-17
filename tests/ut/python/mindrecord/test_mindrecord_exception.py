@@ -569,8 +569,7 @@ def test_write_with_invalid_data():
     mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
     # field: file_name  =>  filename
-    with pytest.raises(RuntimeError, match="Invalid data, " \
-                                           "the number of schema should be positive but got:"):
+    with pytest.raises(RuntimeError, match="There is no valid data which can be written"):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
@@ -605,8 +604,7 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # field: data  =>  image
-    with pytest.raises(RuntimeError, match="Invalid data, " \
-                                           "the number of schema should be positive but got:"):
+    with pytest.raises(RuntimeError, match="There is no valid data which can be written"):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
@@ -641,8 +639,7 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # string type with int value
-    with pytest.raises(RuntimeError, match="Invalid data, " \
-                                           "the number of schema should be positive but got:"):
+    with pytest.raises(RuntimeError, match="There is no valid data which can be written"):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
@@ -677,8 +674,7 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # field with int64 type, but the real data is string
-    with pytest.raises(RuntimeError, match="Invalid data, " \
-                                           "the number of schema should be positive but got:"):
+    with pytest.raises(RuntimeError, match="There is no valid data which can be written"):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
@@ -713,8 +709,7 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # bytes field is string
-    with pytest.raises(RuntimeError, match="Invalid data, " \
-                                           "the number of schema should be positive but got:"):
+    with pytest.raises(RuntimeError, match="There is no valid data which can be written"):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
@@ -749,8 +744,7 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # field is not numpy type
-    with pytest.raises(RuntimeError, match="Invalid data, " \
-                                           "the number of schema should be positive but got:"):
+    with pytest.raises(RuntimeError, match="There is no valid data which can be written"):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 
@@ -785,8 +779,7 @@ def test_write_with_invalid_data():
         writer.commit()
 
     # not enough field
-    with pytest.raises(RuntimeError, match="Invalid data, " \
-                                           "the number of schema should be positive but got:"):
+    with pytest.raises(RuntimeError, match="There is no valid data which can be written"):
         remove_one_file(mindrecord_file_name)
         remove_one_file(mindrecord_file_name + ".db")
 

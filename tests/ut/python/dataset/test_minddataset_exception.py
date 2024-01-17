@@ -16,6 +16,7 @@
 
 import os
 import pytest
+import numpy as np
 
 import mindspore.dataset as ds
 from mindspore.mindrecord import FileWriter
@@ -748,6 +749,129 @@ def test_rename_exception_09():
             os.remove(ori_file_name + str(x) + ".db")
 
 
+def test_write_with_invalid_float_type():
+    """
+    Feature: test FileWriter with invalid float type
+    Description: data type is not matched with the schema
+    Expectation: exception occur
+    """
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
+
+    # Some data in the data list is incorrect.
+    writer = FileWriter(file_name="test.mindrecord", shard_num=1, overwrite=True)
+    schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"},
+                   "data": {"type": "float64", "shape": [100]}}
+    writer.add_schema(schema_json, "test_schema")
+    for i in range(4):
+        if i % 2 == 0:
+            input_data = np.ones(([100]), dtype=np.float32)
+            data = [{"file_name": str(i) + ".jpg", "label": i,
+                     "data": input_data},
+                    {"file_name": str(i) + ".jpg", "label": i,
+                     "data": input_data.astype(np.float64)}]
+            writer.write_raw_data(data)
+        else:
+            input_data = np.ones(([100]), dtype=np.float64)
+            data = [{"file_name": str(i) + ".jpg", "label": i,
+                     "data": input_data},
+                    {"file_name": str(i) + ".jpg", "label": i,
+                     "data": input_data}]
+            writer.write_raw_data(data)
+    writer.commit()
+
+    dataset = ds.MindDataset("test.mindrecord")
+    assert dataset.get_dataset_size() == 6
+    count = 0
+    for _ in dataset.create_tuple_iterator():
+        count += 1
+    assert count == 6
+
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
+
+    # All data in the data list is incorrect.
+    with pytest.raises(Exception, match="There is no valid data which can be written"):
+        writer = FileWriter(file_name="test.mindrecord", shard_num=1, overwrite=True)
+        schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"},
+                       "data": {"type": "float64", "shape": [100]}}
+        writer.add_schema(schema_json, "test_schema")
+        input_data = np.ones(([100]), dtype=np.float32)
+        data = [{"file_name": str(i) + ".jpg", "label": i,
+                 "data": input_data},
+                {"file_name": str(i) + ".jpg", "label": i,
+                 "data": input_data}]
+        writer.write_raw_data(data)
+        writer.commit()
+
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
+
+    # All data in the data list is incorrect and write with parallel
+    with pytest.raises(Exception, match=" has stopped abnormally. Please check the above log"):
+        writer = FileWriter(file_name="test.mindrecord", shard_num=1, overwrite=True)
+        schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"},
+                       "data": {"type": "float64", "shape": [100]}}
+        writer.add_schema(schema_json, "test_schema")
+        for i in range(4):
+            if i % 2 == 1:
+                input_data = np.ones(([100]), dtype=np.float32)
+                data = [{"file_name": str(i) + ".jpg", "label": i,
+                         "data": input_data},
+                        {"file_name": str(i) + ".jpg", "label": i,
+                         "data": input_data}]
+                writer.write_raw_data(data, True)
+            else:
+                input_data = np.ones(([100]), dtype=np.float64)
+                data = [{"file_name": str(i) + ".jpg", "label": i,
+                         "data": input_data},
+                        {"file_name": str(i) + ".jpg", "label": i,
+                         "data": input_data}]
+                writer.write_raw_data(data, True)
+        writer.commit()
+
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
+
+    # All data in the data list is incorrect and write with parallel and use shard_num=4
+    with pytest.raises(Exception, match=" has stopped abnormally. Please check the above log"):
+        writer = FileWriter(file_name="test.mindrecord", shard_num=4, overwrite=True)
+        schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"},
+                       "data": {"type": "float64", "shape": [100]}}
+        writer.add_schema(schema_json, "test_schema")
+        for i in range(4):
+            if i % 2 == 1:
+                input_data = np.ones(([100]), dtype=np.float32)
+                data = [{"file_name": str(i) + ".jpg", "label": i,
+                         "data": input_data},
+                        {"file_name": str(i) + ".jpg", "label": i,
+                         "data": input_data}]
+                writer.write_raw_data(data, True)
+            else:
+                input_data = np.ones(([100]), dtype=np.float64)
+                data = [{"file_name": str(i) + ".jpg", "label": i,
+                         "data": input_data},
+                        {"file_name": str(i) + ".jpg", "label": i,
+                         "data": input_data}]
+                writer.write_raw_data(data, True)
+        writer.commit()
+
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
+
+
 if __name__ == '__main__':
     test_cv_lack_json()
     test_cv_lack_mindrecord()
@@ -771,3 +895,4 @@ if __name__ == '__main__':
     test_rename_exception_07()
     test_rename_exception_08()
     test_rename_exception_09()
+    test_write_with_invalid_float_type()
