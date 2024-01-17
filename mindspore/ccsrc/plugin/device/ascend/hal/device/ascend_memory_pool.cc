@@ -78,6 +78,8 @@ size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size, bool from_persistent_
     device_free_mem_size = size;
   }
   if (device_free_mem_size < size) {
+    MS_LOG(INFO) << "The device memory is not enough, the free memory size is " << device_free_mem_size
+                 << ", but the alloc size is " << size;
     MS_LOG(INFO) << "The dynamic memory pool total size is "
                  << device::ascend::AscendMemoryPool::GetInstance().TotalMemStatistics() / kMBToByte
                  << "M, total used size is "
