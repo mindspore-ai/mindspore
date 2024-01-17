@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_RESIZEBILINEAR_INFO_H_
-#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_RESIZEBILINEAR_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_RESIZEBILINEAR_V2_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_RESIZEBILINEAR_V2_INFO_H_
 
 #include <string>
 #include <memory>
@@ -30,12 +30,12 @@
 
 namespace mindspore {
 namespace parallel {
-class ResizeBilinearInfo : public OperatorInfo {
+class ResizeBilinearV2Info : public OperatorInfo {
  public:
-  ResizeBilinearInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                     const PrimitiveAttrs &attrs)
+  ResizeBilinearV2Info(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                       const PrimitiveAttrs &attrs)
       : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<ResizeBilinearCost>()) {}
-  ~ResizeBilinearInfo() override = default;
+  ~ResizeBilinearV2Info() override = default;
 
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
@@ -110,11 +110,11 @@ class ResizeBilinearInfo : public OperatorInfo {
   double w_scale_ = 1.0;  // the scale in w dimension, now only support to split w dimension
 };
 
-class ResizeNearestNeighborInfo : public ResizeBilinearInfo {
+class ResizeNearestNeighborInfo : public ResizeBilinearV2Info {
  public:
   ResizeNearestNeighborInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                             const PrimitiveAttrs &attrs)
-      : ResizeBilinearInfo(name, inputs_shape, outputs_shape, attrs) {}
+      : ResizeBilinearV2Info(name, inputs_shape, outputs_shape, attrs) {}
   ~ResizeNearestNeighborInfo() override = default;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
 
@@ -125,4 +125,4 @@ class ResizeNearestNeighborInfo : public ResizeBilinearInfo {
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_RESIZEBILINEAR_INFO_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_RESIZEBILINEAR_V2_INFO_H_

@@ -35,7 +35,6 @@ GVAR_DEF(PrimitivePtr, kPrimUpsampleNearest3D, std::make_shared<Primitive>("Upsa
 GVAR_DEF(PrimitivePtr, kPrimUpsampleNearest3DGrad, std::make_shared<Primitive>("UpsampleNearest3DGrad"));
 GVAR_DEF(PrimitivePtr, kPrimUpsampleTrilinear3D, std::make_shared<Primitive>("UpsampleTrilinear3D"));
 GVAR_DEF(PrimitivePtr, kPrimUpsampleTrilinear3DGrad, std::make_shared<Primitive>("UpsampleTrilinear3DGrad"));
-GVAR_DEF(PrimitivePtr, kPrimResizeBilinear, std::make_shared<Primitive>("ResizeBilinear"));
 GVAR_DEF(PrimitivePtr, kPrimResizeGrad, std::make_shared<Primitive>("ResizeGrad"));
 GVAR_DEF(PrimitivePtr, kPrimDynamicResizeNearestNeighbor, std::make_shared<Primitive>("DynamicResizeNearestNeighbor"));
 GVAR_DEF(PrimitivePtr, kPrimResizeArea, std::make_shared<Primitive>("ResizeArea"));

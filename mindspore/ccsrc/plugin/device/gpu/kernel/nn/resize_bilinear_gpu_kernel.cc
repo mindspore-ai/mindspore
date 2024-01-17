@@ -18,7 +18,6 @@
 #include <functional>
 #include <map>
 #include <utility>
-#include "mindspore/core/ops/resize_bilinear.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_bilinear_impl.cuh"
 
 namespace mindspore {
@@ -38,15 +37,15 @@ using FuncVec = std::vector<std::pair<KernelAttr, ResizeBilinearGpuKernelMod::Re
 
 bool ResizeBilinearGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                       const std::vector<KernelTensor *> &outputs) {
-  if (inputs.size() != kInputsNum && inputs.size() != kResizeBilinearV2InputsNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kInputsNum << " or "
-                      << kResizeBilinearV2InputsNum << ", but got " << inputs.size();
+  if (inputs.size() != kResizeBilinearV2InputsNum) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kInputsNum << ", but got "
+                      << inputs.size();
   }
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(ERROR) << "For 'ResizeBilinear', it does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For 'ResizeBilinearV2', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
   kernel_func_ = func_list_[index].second;
@@ -76,17 +75,8 @@ int ResizeBilinearGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
   output_h_ = LongToInt(output_shape[kTwo]);
   output_w_ = LongToInt(output_shape[kThree]);
 
-  if (kernel_name_ == "ResizeBilinear") {
-    auto align_corners_ptr = primitive_->GetAttr(kAttrAlignCorners);
-    MS_EXCEPTION_IF_NULL(align_corners_ptr);
-    align_corners_ = GetValue<bool>(align_corners_ptr);
-    auto half_pixel_centers_ptr = primitive_->GetAttr(kAttrHalfPixelCenters);
-    MS_EXCEPTION_IF_NULL(half_pixel_centers_ptr);
-    half_pixel_centers_ = GetValue<bool>(half_pixel_centers_ptr);
-  } else {
-    align_corners_ = inputs[kIndex2]->GetValueWithCheck<bool>();
-    half_pixel_centers_ = inputs[kIndex3]->GetValueWithCheck<bool>();
-  }
+  align_corners_ = inputs[kIndex2]->GetValueWithCheck<bool>();
+  half_pixel_centers_ = inputs[kIndex3]->GetValueWithCheck<bool>();
   return KRET_OK;
 }
 
@@ -143,7 +133,6 @@ std::vector<KernelAttr> ResizeBilinearGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ResizeBilinear, ResizeBilinearGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ResizeBilinearV2, ResizeBilinearGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
