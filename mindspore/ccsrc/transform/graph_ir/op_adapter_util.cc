@@ -287,7 +287,7 @@ GeTensor VectorToTensorUtil(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   auto vec = value->isa<ValueTuple>() ? value->cast<ValueTuplePtr>()->value() : value->cast<ValueListPtr>()->value();
   if (vec.empty()) {
-    MS_LOG(WARNING) << "Convert a none tuple to an empty ge tensor";
+    MS_LOG(INFO) << "Convert a none tuple to an empty ge tensor";
     return GeTensor(GeTensorDesc(::ge::Shape({0}), ::ge::FORMAT_ND, ::ge::DT_INT64));
   }
   MS_EXCEPTION_IF_NULL(vec[0]);
