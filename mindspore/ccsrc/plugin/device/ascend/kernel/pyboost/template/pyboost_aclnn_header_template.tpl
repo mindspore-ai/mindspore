@@ -31,8 +31,6 @@ class ${op_name}Ascend : public pyboost::${op_name} {
 
   ${return_type} Call(${call_args_with_type}) override;
 };
-
-MS_REG_PYBOOST_OP(Ascend, ${op_name});
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
