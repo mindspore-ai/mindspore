@@ -91,6 +91,13 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
 
   static AbstractBasePtr ConvertAbstract(const ValuePtr &t) { return t->ToAbstract(); }
 
+  // Tensor is held by Abstract, may lead to memory leak.
+  static AbstractBasePtr ConvertAbstract(const TensorPtr &t) {
+    auto abs = t->ToAbstract();
+    abs->set_value(kValueAny);
+    return abs;
+  }
+
   template <typename... T>
   void GenerateAbstract(T &... args) {
     (input_abs_.emplace_back(ConvertAbstract(args)), ...);
