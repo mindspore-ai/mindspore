@@ -972,11 +972,11 @@ Shape ValueSequeueScaleToShape(const ValuePtr &value_seq, const Shape &scale, si
   if (TransValueSequeueToVector(value_seq, &origin_value_vector) != SUCCESS) {
     MS_LOG(EXCEPTION) << "Transform value_seq to vector failed";
   }
-  if (origin_value_vector.size() != scale.size()) {
-    MS_LOG(EXCEPTION) << "Shape not equal, cannot scale, value_seq size is: " << origin_value_vector.size()
-                      << " scale size is: " << scale.size();
+  if (origin_value_vector.size() > scale.size()) {
+    MS_LOG(EXCEPTION) << "Cannot scale, the size of value_seq is: " << origin_value_vector.size()
+                      << ", which should be less_equal than scale's size which is: " << scale.size();
   }
-  for (size_t i = 0; i < scale.size(); ++i) {
+  for (size_t i = 0; i < origin_value_vector.size(); ++i) {
     origin_value_vector[i] = origin_value_vector[i] / scale[i];
     if (i == 0) {
       origin_value_vector[i] = origin_value_vector[i] * SizeToLong(expand_ratio);

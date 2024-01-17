@@ -585,7 +585,7 @@ REG_BPROP_BUILDER("ScalarCast").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(i
     auto dx = ib->Emit("ScalarToTensor", {dout, ib->Value(ib->GetDtype(x))});
     return {dx, ib->OutZeros(t)};
   }
-  auto dx = ib->Emit("ScalarCast", {dout, ib->Value(ib->GetDtype(x))});
+  auto dx = ib->Emit("ScalarCast", {dout, ib->Value<int64_t>(ib->GetDtypeId(x))});
   return {dx, ib->OutZeros(t)};
 });
 

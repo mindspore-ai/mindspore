@@ -27,6 +27,7 @@ from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._tracefunc import PackFunc
 from mindspore.common._utils import is_shape_unknown
 from mindspore import _checkparam as validator
+from mindspore.ops.operations.manually_defined._inner import ScalarCast
 
 
 class ScalarDiv(Primitive):
@@ -902,6 +903,34 @@ def tile(input, multiples):
     tile_op = _get_cache_prim(Tile)()
     return tile_op(input, multiples)
 
+
+def scalar_cast(input_x, input_y):
+    r"""
+    Casts the input scalar to another type.
+
+    Args:
+        input_x (scalar): The input scalar. Only constant value is allowed.
+        input_y (mindspore.dtype): The type to be cast. Only constant value is allowed.
+            The value should only be mindspore.int64, mindspore.float64, or mindspore.bool_.
+
+    Returns:
+        Scalar, the type is the same as the python type corresponding to `input_y`.
+
+    Raises:
+        ValueError: if input_y's value is invalid.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import ops
+        >>> output = ops.scalar_cast(255.0, mindspore.int64)
+        >>> print(output)
+        255
+    """
+    scalar_cast_op = _get_cache_prim(ScalarCast)()
+    return scalar_cast_op(input_x, input_y)
 
 # Following is Python Infer Value.
 # A valid infer value function should be:

@@ -32,6 +32,8 @@
 #include "ops/array_ops.h"
 #include "ops/arithmetic_ops.h"
 #include "ops/framework_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
+#include "ops/op_utils.h"
 #include "abstract/abstract_value.h"
 #include "base/base.h"
 #include "pipeline/jit/ps/debug/trace.h"
@@ -1560,14 +1562,16 @@ class AfterOptARewriter : public BaseRewriter {
     if (x_abs == nullptr) {
       return nullptr;
     }
-    auto dtype_abs = GetAbstract<abstract::AbstractType>(dtype_node);
+    auto dtype_abs = GetAbstract<abstract::AbstractScalar>(dtype_node);
     MS_EXCEPTION_IF_NULL(dtype_abs);
-    auto dtype_val = dtype_abs->BuildValue();
+    auto dtype_val = dtype_abs->GetValue();
     MS_EXCEPTION_IF_NULL(dtype_val);
-    auto scalar_type = dtype_val->cast<TypePtr>();
-    MS_EXCEPTION_IF_NULL(scalar_type);
+    auto type_id_opt = ops::GetScalarValue<int64_t>(dtype_val);
+    if (!type_id_opt.has_value()) {
+      MS_LOG(EXCEPTION) << "the dtype input is invalid!";
+    }
     std::string target_type_str;
-    auto type_id = NormalizeTypeId(scalar_type->type_id());
+    auto type_id = type_id_opt.value();
     if (type_id == kNumberTypeInt) {
       target_type_str = "int";
     } else if (type_id == kNumberTypeFloat) {
@@ -1575,7 +1579,7 @@ class AfterOptARewriter : public BaseRewriter {
     } else if (type_id == kNumberTypeBool) {
       target_type_str = "bool";
     } else {
-      MS_LOG(EXCEPTION) << "Unsupported type: " << scalar_type->ToString();
+      MS_LOG(EXCEPTION) << "Unsupported type: " << type_id;
     }
 
     const auto &fg = cnode->func_graph();

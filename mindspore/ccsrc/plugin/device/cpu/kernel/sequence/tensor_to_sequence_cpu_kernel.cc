@@ -86,6 +86,8 @@ std::vector<KernelAttr> TensorToSeqCpuKernelMod::sequence_list_ = {
 std::vector<KernelAttr> TensorToSeqCpuKernelMod::scalar_list_ = {
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kObjectTypeNumber, kNumberTypeFloat32),
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kObjectTypeNumber, kNumberTypeFloat64),
+  KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt8),
+  KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt16),
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt32),
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
   KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kObjectTypeNumber, kNumberTypeBool),

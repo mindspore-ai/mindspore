@@ -16,3 +16,45 @@
 """
 Inner-defined operators.
 """
+
+import numbers
+import numpy as np
+from mindspore.common import dtype as mstype
+from mindspore import _checkparam as validator
+from mindspore.ops.primitive import prim_attr_register, Primitive
+
+
+class ScalarCast(Primitive):
+    """
+    Casts the input scalar to another type.
+
+    Refer to :func:`mindspore.ops.scalar_cast` for more details.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import ops
+        >>> scalar_cast = ops.ScalarCast()
+        >>> output = scalar_cast(255.0, mindspore.int64)
+        >>> print(output)
+        255
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['input_x', 'input_y'], outputs=['output_data'])
+
+    def __call__(self, input_x, input_y):
+        validator.check_value_type("x", input_x, [bool, numbers.Number], self.name)
+        if input_y not in (mstype.int64, mstype.float64, mstype.bool_):
+            raise ValueError(f"For 'ScalarCast', the supported type is in the list: "
+                             f"[mindspore.int64, mindspore.float64, mindspore.bool], but got {input_y}")
+        dtype = input_y
+        if isinstance(dtype, type(mstype.tensor_type)):
+            dtype = dtype.element_type()
+        np_dtype = str(dtype)
+        value = np.cast[np_dtype.lower()](input_x)
+        value = value.item()
+        return value

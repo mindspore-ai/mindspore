@@ -216,7 +216,6 @@ rsqrt_ = P.Rsqrt()
 select_ = P.Select()
 slice_ = P.Slice()
 size_ = P.Size()
-scalar_cast_ = P.ScalarCast()
 scalar_to_tensor_ = P.ScalarToTensor()
 shape_ = P.Shape()
 sign_ = P.Sign()
@@ -6075,8 +6074,8 @@ def addmv(input, mat, vec, *, beta=1, alpha=1):
     _check_attr_dtype("alpha", alpha, [int, float, bool], "Addmv")
     _check_attr_dtype("beta", beta, [int, float, bool], "Addmv")
     if input_dtype in (mstype.int16, mstype.int32, mstype.int64):
-        alpha = scalar_cast_(alpha, mstype.int32)
-        beta = scalar_cast_(beta, mstype.int32)
+        alpha = ops.scalar_cast(alpha, mstype.int64)
+        beta = ops.scalar_cast(beta, mstype.int64)
     out = beta * input + alpha * mv(mat, vec)
     return out
 
@@ -6172,8 +6171,8 @@ def addr(x, vec1, vec2, *, beta=1, alpha=1):
     _check_attr_dtype("alpha", alpha, [int, float, bool], "Addr")
     _check_attr_dtype("beta", beta, [int, float, bool], "Addr")
     if input_dtype in (mstype.int16, mstype.int32, mstype.int64):
-        alpha = scalar_cast_(alpha, mstype.int32)
-        beta = scalar_cast_(beta, mstype.int32)
+        alpha = ops.scalar_cast(alpha, mstype.int64)
+        beta = ops.scalar_cast(beta, mstype.int64)
 
     length_vec1 = get_x_shape(vec1.shape)
     vec1 = reshape_(vec1, (length_vec1[0], 1))

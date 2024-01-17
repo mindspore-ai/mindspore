@@ -24,7 +24,6 @@ constexpr auto kScalarTruncOpName = "ScalarTrunc";
 constexpr auto kScalarFloorOpName = "ScalarFloor";
 constexpr auto kScalarBitwiseAndOpName = "bit_and";
 constexpr auto kScalarBitwiseOrOpName = "bit_or";
-constexpr auto kScalarCastOpName = "ScalarCast";
 constexpr auto kAcoshGradOpName = "AcoshGrad";
 constexpr auto kTruncOpName = "Trunc";
 constexpr auto kEuclideanNormOpName = "EuclideanNorm";

@@ -32,26 +32,12 @@ namespace {
 
 abstract::TupleShapePtr EllipsisToSliceInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
-  const auto &prim_name = primitive->name();
-  AbstractBasePtrList elements = input_args;
-  const size_t kIntNums = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input num", SizeToLong(elements.size()), kEqual, kIntNums, prim_name);
-  auto input_type = input_args[1]->GetType()->type_id();
-  if (!(input_type == kObjectTypeTuple || input_type == kObjectTypeList)) {
-    MS_EXCEPTION(TypeError) << "For '" << prim_name
-                            << "', the input data type must be list or tuple of tensors.But got:"
-                            << input_args[0]->ToString();
-  }
   auto data_shape = input_args[0]->GetShape()->cast<abstract::ShapePtr>()->shape();
   const size_t kSliceInfoNums = 3;
-  // If any shape is dynamic rank, return a dynamic rank.
-  if (IsDynamicRank(data_shape)) {
-    std::vector<abstract::BaseShapePtr> output_list(
-      kSliceInfoNums, std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny})));
-    return std::make_shared<abstract::TupleShape>(output_list);
-  }
-  std::vector<abstract::BaseShapePtr> output_list(
-    kSliceInfoNums, std::make_shared<abstract::Shape>(ShapeVector({SizeToLong(data_shape.size())})));
+
+  std::vector<abstract::BaseShapePtr> inner_tuple_elements(data_shape.size(), abstract::kNoShape);
+  std::vector<abstract::BaseShapePtr> output_list(kSliceInfoNums,
+                                                  std::make_shared<abstract::TupleShape>(inner_tuple_elements));
   return std::make_shared<abstract::TupleShape>(output_list);
 }
 
@@ -67,7 +53,35 @@ class MIND_API EllipsisToSliceInfer : public abstract::OpInferBase {
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     std::vector<TypePtr> type_tuple{kInt64, kInt64, kInt64};
-    return std::make_shared<Tuple>(type_tuple);
+    auto data_shape = input_args[0]->GetShape()->cast<abstract::ShapePtr>()->shape();
+    std::vector<TypePtr> inner_tuple_types(data_shape.size(), kInt64);
+    auto inner_tuple = std::make_shared<Tuple>(inner_tuple_types);
+    std::vector<TypePtr> out_tuple_types{inner_tuple, inner_tuple, inner_tuple};
+    return std::make_shared<Tuple>(out_tuple_types);
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    AbstractBasePtrList elements = input_args;
+    const size_t kInputNums = 4;
+    MS_CHECK_VALUE(elements.size() == kInputNums,
+                   CheckAndConvertUtils::FormatCheckIntegerMsg("input num", SizeToLong(elements.size()), kEqual,
+                                                               kInputNums, primitive));
+    auto data_shape = input_args[0]->GetShape()->cast<abstract::ShapePtr>()->shape();
+    const size_t kSliceInfoNums = 3;
+    auto any_scalar = std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64);
+    // If any shape is dynamic rank, return a dynamic rank.
+    if (IsDynamicRank(data_shape)) {
+      auto any_tuple = std::make_shared<abstract::AbstractTuple>(std::vector<abstract::AbstractBasePtr>({any_scalar}));
+      auto dynamic_tuple = any_tuple->BroadenToDynamicLenSequence();
+      std::vector<abstract::AbstractBasePtr> tuple_elements(kSliceInfoNums, dynamic_tuple);
+      return std::make_shared<abstract::AbstractTuple>(tuple_elements);
+    }
+
+    std::vector<abstract::AbstractBasePtr> inner_tuple_elements(data_shape.size(), any_scalar);
+    std::vector<abstract::AbstractBasePtr> output_list(kSliceInfoNums,
+                                                       std::make_shared<abstract::AbstractTuple>(inner_tuple_elements));
+    return std::make_shared<abstract::AbstractTuple>(output_list);
   }
 };
 REGISTER_PRIMITIVE_OP_INFER_IMPL(EllipsisToSlice, prim::kPrimEllipsisToSlice, EllipsisToSliceInfer, false);

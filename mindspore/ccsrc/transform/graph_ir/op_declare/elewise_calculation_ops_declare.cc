@@ -25,6 +25,7 @@
 #include "ops/framework_ops.h"
 #include "ops/math_ops.h"
 #include "ops/nn_optimizer_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore::transform {
 INPUT_MAP(ClipByValue) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(clip_value_min)}, {3, INPUT_DESC(clip_value_max)}};
