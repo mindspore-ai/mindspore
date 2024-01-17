@@ -18,7 +18,7 @@
 namespace mindspore {
 namespace kernel {
 internal::OpParamPtr InternalMatMul::CreateOpParam(const std::vector<KernelTensor *> &inputs,
-                                           const std::vector<KernelTensor *> &outputs) {
+                                                   const std::vector<KernelTensor *> &outputs) {
   internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
   internal::MatMulParam matmul_param;
   param_ptr->opId = internal::OpId::MatMul;
