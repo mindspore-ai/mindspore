@@ -44,7 +44,7 @@ class ConvertGraphKernelToFrontEnd : public opt::Pass {
 
  private:
   static void AddAttrToInput(const CNodePtr &cnode, const std::string &arg_name, const std::string &arg_handler,
-                             const PrimitivePtr &primitive);
+                             const PrimitivePtr &primitive, size_t pos);
   static bool ConvertInputsType(const CNodePtr &cnode, size_t idx, ops::OP_DTYPE fe_arg_type);
 };
 

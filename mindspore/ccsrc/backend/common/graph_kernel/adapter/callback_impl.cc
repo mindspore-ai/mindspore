@@ -264,6 +264,12 @@ void CallbackImpl::ResetKernelInfoInputs(const AnfNodePtr &node) {
     }
     opt::GenerateKernelObjectTypeForNewCNode(cnode, &input_obj_type, &output_obj_type);
   }
+  auto input_num = AnfUtils::GetInputTensorNum(cnode);
+  if (input_formats.size() > input_num) {
+    input_formats.erase(input_formats.begin() + input_num, input_formats.end());
+    input_types.erase(input_types.begin() + input_num, input_types.end());
+    input_obj_type.erase(input_obj_type.begin() + input_num, input_obj_type.end());
+  }
   build_info->SetInputsFormat(input_formats);
   build_info->SetInputsDeviceType(input_types);
   build_info->SetInputsKernelObjectType(input_obj_type);
