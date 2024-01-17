@@ -35,7 +35,7 @@ namespace plugin_loader {
 class PluginLoader {
  public:
   static bool LoadDynamicLib(const std::string &plugin_file, std::map<std::string, void *> *all_handles,
-                             std::stringstream *err_msg);
+                             std::stringstream *err_msg, const bool gpu_env = false);
   static void CloseDynamicLib(const std::string &dl_name, void *handle);
   static bool GetPluginPath(std::string *file_path);
 
@@ -77,7 +77,7 @@ class BACKEND_EXPORT DeviceContextManager {
   DeviceContextManager() = default;
   DISABLE_COPY_AND_ASSIGN(DeviceContextManager);
   void LoadPlugin();
-  void SelectGpuPlugin(const std::string &cuda_home, const std::set<std::string> &file_names);
+  bool SelectGpuPlugin(const std::string &cuda_home, const std::set<std::string> &file_names);
 
   std::map<std::string, void *> plugin_maps_;
   bool load_init_;
