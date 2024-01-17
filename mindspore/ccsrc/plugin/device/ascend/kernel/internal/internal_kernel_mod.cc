@@ -41,11 +41,11 @@ int InternalKernelMod::Build(const std::vector<KernelTensor *> &inputs, const st
   info.input_num_ = inputsIdxMap_.size();
   info.output_num_ = outputsIdxMap_.size();
   for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); iter++) {
-    info.input_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(inputs[iter->first]->GetDtype()));
+    info.input_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(inputs[iter->first]->dtype_id()));
     info.input_format_.emplace_back(InternalKernelUtils::ToInternalFormat(inputs[iter->first]->GetFormat()));
   }
   for (auto iter = outputsIdxMap_.begin(); iter != outputsIdxMap_.end(); iter++) {
-    info.output_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(outputs[iter->first]->GetDtype()));
+    info.output_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(outputs[iter->first]->dtype_id()));
     info.output_format_.emplace_back(InternalKernelUtils::ToInternalFormat(outputs[iter->first]->GetFormat()));
   }
   impl_->Init(info);
