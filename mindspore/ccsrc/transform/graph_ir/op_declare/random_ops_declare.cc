@@ -134,4 +134,12 @@ INPUT_ATTR_MAP(StatelessRandperm) = {{kIndex4, ATTR_DESC(layout, AnyTraits<int64
                                      {kIndex5, ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(StatelessRandperm) = {{kIndex0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(StatelessRandperm, prim::kPrimRandpermV2->name(), ADPT_DESC(StatelessRandperm));
+
+// Gamma
+CUST_INPUT_MAP(Gamma) = {
+  {1, INPUT_DESC(shape)}, {2, INPUT_DESC(alpha)}, {3, INPUT_DESC(beta)}, {4, INPUT_DESC(seed)}, {5, INPUT_DESC(seed2)}};
+CUST_ATTR_MAP(Gamma) = {{"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
+                        {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
+CUST_OUTPUT_MAP(Gamma) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(Gamma, kNameGamma, CUST_ADPT_DESC(Gamma));
 }  // namespace mindspore::transform

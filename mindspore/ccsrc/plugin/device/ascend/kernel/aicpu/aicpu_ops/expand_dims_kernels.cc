@@ -18,7 +18,6 @@
 #include <memory.h>
 #include <map>
 #include <thread>
-#include "ops/ops_func_impl/expand_dims.h"
 #include "./kernel_log.h"
 #include "./kernel_errcode.h"
 #include "proto/node_def.pb.h"
