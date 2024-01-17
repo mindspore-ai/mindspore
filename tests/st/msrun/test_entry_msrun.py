@@ -27,7 +27,8 @@ def test_msrun():
     Expectation: All workers are successfully spawned and running training.
     """
     return_code = os.system(
-        "msrun --worker_num=4 --local_worker_num=4 --master_addr=127.0.0.1 --master_port=10969 --join=True "\
+        "msrun --worker_num=4 --local_worker_num=4 --master_addr=127.0.0.1 "\
+        "--master_port=10969 --join=True "\
         "test_msrun.py --device_target=Ascend --dataset_path=/home/workspace/mindspore_dataset/mnist"
     )
     assert return_code == 0

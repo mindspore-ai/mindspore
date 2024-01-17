@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,21 +13,21 @@
 # limitations under the License.
 # ============================================================================
 import os
-
 import pytest
 
-
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
-def test_msrun_allreduce_sparsegatherv2_adam_auto_parallel():
+def test_msrun_comm_subgraph_8p():
     '''
-    Feature: auto parallel with sparse operators.
-    Description: Test auto parallel with sparse operators.
-    Expectation: Run success.
+    Feature: extract communication subgraphs and reuse them to replace original communication ops under GRAPH mode.
+    Description: Test a net that consists of 10 sharded matmul ops using msrun.
+    Expectation: Run success; results before and after enabling this feature should be the same.
     '''
-    sh_path = os.path.split(os.path.realpath(__file__))[0]
-    ret = os.system(f"source {sh_path}/env_hcom.sh && msrun --worker_num=8 --local_worker_num=8"
-                    " --master_addr=127.0.0.1 --master_port=10969 --join=True pytest -s -v hcom_sparsetensor.py")
-    assert ret == 0
+    return_code = os.system(
+        "msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 "\
+        "--master_port=10969 --join=True --log_dir=./comm_subgraph_logs "\
+        "pytest -s test_comm_subgraph.py::test_msrun_compute_process"
+    )
+    assert return_code == 0

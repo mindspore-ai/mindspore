@@ -21,8 +21,14 @@ import pytest
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
-def test_broadcast_auto_parallel():
+def test_msrun_broadcast_auto_parallel():
+    '''
+    Feature: broadcast parameter feature in auto parallel.
+    Description: Test broadcast parameter feature.
+    Expectation: Run success.
+    '''
     sh_path = os.path.split(os.path.realpath(__file__))[0]
-    ret = os.system(f"sh {sh_path}/run_broadcast_auto_parallel.sh")
-    os.system(f"grep -E 'ERROR|error' {sh_path}/lenet_broadcast*/test_lenet_auto_parallel_broadcast_8p_log*log -C 3")
+    ret = os.system(f"source {sh_path}/env.sh && msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 "
+                    "--master_port=10969 --join=True "
+                    "--log_dir=./broadcast_auto_parallel_logs pytest -s -v lenet_broadcast_auto_parallel.py")
     assert ret == 0

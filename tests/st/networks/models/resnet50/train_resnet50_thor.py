@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """resnet train & eval case."""
-import os
 import numpy as np
 import mindspore as ms
 from mindspore import nn
@@ -65,14 +64,9 @@ def get_thor_damping(global_step, damping_init, decay_rate, total_epochs, steps_
 
 def run_train():
     ms.context.set_context(mode=ms.GRAPH_MODE, device_target="Ascend")
-    rank_id = int(os.getenv('RANK_ID', '0'))
-    device_num = int(os.getenv('RANK_SIZE', '1'))
-    device_id = int(os.getenv('DEVICE_ID', '0'))
-    print(f"run resnet50 thor device_num:{device_num}, device_id:{device_id}, rank_id:{rank_id}")
-    if device_num > 1:
-        ms.communication.init()
-        ms.context.set_auto_parallel_context(parallel_mode=ms.ParallelMode.DATA_PARALLEL,
-                                             gradients_mean=True, all_reduce_fusion_config=[80, 160])
+    ms.communication.init()
+    ms.context.set_auto_parallel_context(parallel_mode=ms.ParallelMode.DATA_PARALLEL,
+                                         gradients_mean=True, all_reduce_fusion_config=[80, 160])
     net = resnet50(thor_config.class_num)
 
     if not thor_config.label_smooth:
@@ -105,7 +99,8 @@ def run_train():
     dist_eval_network = ClassifyCorrectCell(net)
     # model
     model = ms.Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale,
-                     metrics={'acc': DistAccuracy(batch_size=thor_config.eval_batch_size, device_num=device_num)},
+                     metrics={'acc': DistAccuracy(batch_size=thor_config.eval_batch_size,
+                                                  device_num=ms.communication.get_group_size())},
                      amp_level="O2", keep_batchnorm_fp32=False,
                      eval_network=dist_eval_network)
 
@@ -117,6 +112,7 @@ def run_train():
     loss_cb = LossGet(1, step_size)
 
     # train and eval
+    device_id = ms.communication.get_local_rank()
     print("run_start", device_id)
     model.train(2, dataset, callbacks=loss_cb, dataset_sink_mode=True, sink_size=step_size)
     time_cost = loss_cb.get_per_step_time()

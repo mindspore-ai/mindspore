@@ -15,11 +15,7 @@
 # ============================================================================
 set -e
 BASE_PATH=$(cd "$(dirname $0)"; pwd)
-CONFIG_PATH=/home/workspace/mindspore_config
-export DEVICE_NUM=8
-export RANK_SIZE=$DEVICE_NUM
 unset SLOG_PRINT_TO_STDOUT
-export MINDSPORE_HCCL_CONFIG_PATH=$CONFIG_PATH/hccl/rank_table_${DEVICE_NUM}p.json
 CODE_DIR="./"
 if [ -d ${BASE_PATH}/../../../../tests/models/official/recommend/wide_and_deep ]; then
     CODE_DIR=${BASE_PATH}/../../../../tests/models/official/recommend/wide_and_deep
@@ -39,28 +35,5 @@ cp -f ${BASE_PATH}/python_file_for_ci/datasets.py ${BASE_PATH}/wide_and_deep/src
 cp -f ${BASE_PATH}/python_file_for_ci/wide_and_deep.py ${BASE_PATH}/wide_and_deep/src/wide_and_deep.py
 source ${BASE_PATH}/env.sh
 export PYTHONPATH=${BASE_PATH}/wide_and_deep/:$PYTHONPATH
-process_pid=()
-for((i=0; i<$DEVICE_NUM; i++)); do
-    rm -rf ${BASE_PATH}/wide_and_deep_auto_parallel${i}
-    mkdir ${BASE_PATH}/wide_and_deep_auto_parallel${i}
-    cd ${BASE_PATH}/wide_and_deep_auto_parallel${i}
-    export RANK_ID=${i}
-    export DEVICE_ID=${i}
-    echo "start training for device $i"
-    env > env$i.log
-    pytest -s -v ../wide_and_deep/train_and_test_multinpu_ci.py > train_and_test_multinpu_ci$i.log 2>&1 &
-    process_pid[${i}]=`echo $!`
-done
 
-for((i=0; i<${DEVICE_NUM}; i++)); do
-    wait ${process_pid[i]}
-    status=`echo $?`
-    if [ "${status}" != "0" ]; then
-        echo "[ERROR] test wide_and_deep semi auto parallel failed. status: ${status}"
-        exit 1
-    else
-        echo "[INFO] test wide_and_deep semi auto parallel success."
-    fi
-done
-
-exit 0
+msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10969 --join=True --log_dir=./wide_and_deep_auto_parallel_logs pytest -s -v ./wide_and_deep/train_and_test_multinpu_ci.py

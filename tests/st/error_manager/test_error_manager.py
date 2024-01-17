@@ -22,7 +22,7 @@ import pytest
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@pytest.mark.env_onecard
 def test_hccl_init_fail():
     sh_path = os.path.split(os.path.realpath(__file__))[0]
     ret = os.system(f"sh {sh_path}/run_hccl_init_fail.sh")
@@ -34,7 +34,7 @@ def test_hccl_init_fail():
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@pytest.mark.env_onecard
 def test_aicerror_message():
     """
     Feature: Improve usability

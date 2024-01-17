@@ -134,4 +134,5 @@ if __name__ == "__main__":
     ds_eval = create_dataset(os.path.join(dataset_path, "test"), 32, 1)
     acc = model.eval(ds_eval, dataset_sink_mode=True)
 
-    print("Accuracy:", acc['Accuracy'])
+    print("=====Accuracy=====")
+    print(acc['Accuracy'])

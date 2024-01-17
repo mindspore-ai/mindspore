@@ -24,11 +24,6 @@
 #include <string>
 #include "pybind11/pybind11.h"
 #include "pybind_api/pybind_patch.h"
-#if defined(__linux__) && defined(WITH_BACKEND)
-#include "include/backend/distributed/cluster/cluster_context.h"
-#else
-#include "include/backend/distributed/cluster/dummy_cluster_context.h"
-#endif
 
 namespace py = pybind11;
 namespace mindspore {
@@ -43,7 +38,6 @@ class PyExceptionInitializer {
 
  private:
   static void HandleExceptionPy(ExceptionType exception_type, const std::string &str) {
-    distributed::cluster::ClusterContext::instance()->set_cluster_exit_with_exception();
     if (exception_type == IndexError) {
       throw py::index_error(str);
     }

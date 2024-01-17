@@ -21,8 +21,12 @@ import pytest
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_single
-def test_wide_and_deep():
+def test_msrun_wide_and_deep():
+    '''
+    Feature: wide and deep net.
+    Description: Test wide and deep net with auto parallel.
+    Expectation: Run success.
+    '''
     sh_path = os.path.split(os.path.realpath(__file__))[0]
-    ret = os.system(f"sh {sh_path}/run_wide_and_deep_auto_parallel.sh")
-    os.system(f"grep -E 'ERROR|error' {sh_path}/wide_and_deep_auto_parallel*/train*log -C 3")
+    ret = os.system(f"sh {sh_path}/run_msrun_wide_and_deep_auto_parallel.sh")
     assert ret == 0

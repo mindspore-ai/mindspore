@@ -161,6 +161,8 @@ def init(backend_name=None):
     if not isinstance(backend_name, str):
         raise TypeError("For 'init', the argument 'backend_name' must be a string, "
                         "but got the type : {}".format(type(backend_name)))
+    if os.getenv("MS_ROLE") == "MS_SCHED":
+        backend_name = "mccl"
 
     if backend_name == "hccl":
         if _is_ps_mode():
