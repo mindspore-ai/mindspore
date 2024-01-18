@@ -88,11 +88,17 @@ class MIND_API AGFillV2Infer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     auto input1_type = input_args[kInputIndex0]->GetType();
     auto input2_type = input_args[kInputIndex1]->GetType();
+    const std::set<TypePtr> input1_valid_types = {kInt32, kInt64};
+    const auto &shape = input_args[kInputIndex0];
 
     // Check the data type of the first input
     if (input1_type->isa<TensorType>()) {
-      const std::set<TypePtr> input1_valid_types = {kInt32, kInt64};
       (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", input1_type, input1_valid_types, prim_name);
+    } else if (CheckAndConvertUtils::IsTuple(shape)) {
+      auto const &type_ele = input1_type->cast<TuplePtr>()->elements();
+      for (const auto &ele_type : type_ele) {
+        (void)CheckAndConvertUtils::CheckTypeValid("input[shape]", ele_type, input1_valid_types, prim_name);
+      }
     }
     // Check the data type of the second input and infer the data type of the output from the second input
     (void)CheckAndConvertUtils::CheckTensorTypeValid("y", input2_type, common_valid_types_with_complex_and_bool,
