@@ -108,9 +108,8 @@ int ActivationFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     auto alpha = inputs[kIndex1]->GetValueWithCheck<float>();
     coef = static_cast<double>(alpha);
   }
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-    cudnnSetActivationDescriptor(activation_desc_, mode_, CUDNN_NOT_PROPAGATE_NAN, coef),
-    "For 'Activation', cudnnSetActivationDescriptor failed.");
+  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetActivationDescriptor(activation_desc_, mode_, CUDNN_PROPAGATE_NAN, coef),
+                                      "For 'Activation', cudnnSetActivationDescriptor failed.");
   const int split_dim = 4;
   if (input_shape_.size() <= split_dim) {
     ShapeNdTo4d(input_shape_, &shape);
