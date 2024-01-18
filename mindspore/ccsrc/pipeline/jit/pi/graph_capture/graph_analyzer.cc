@@ -220,13 +220,12 @@ bool GraphAnalyzer::TryToCapture(AbstractNode *n) {
   }
 
   if (v->GetGraph() != nullptr && this->graph_->Config().GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
-    auto tr = GetTrace(v, false, true, 0, -1);
-    GRAPH_JIT_LOG_F("trace %s", tr ? tr->ToString().c_str() : "trace failed");
     GRAPH_JIT_LOG_F("capture failed, operations is unsupported [%s] at [%U: %d]", v->ToString().c_str(),
                     v->GetGraph()->GetCodeObj()->co_filename, v->GetLineNo());
     GRAPH_JIT_LOG_F("parameters");
     for (auto &i : v->getInputs()) {
-      GRAPH_JIT_LOG_F("%s", i->GetVobj() ? i->GetVobj()->ToString().c_str() : "<nil>");
+      PyObject *op = i->GetVobj() ? i->GetVobj()->GetPyObject().ptr() : nullptr;
+      GRAPH_JIT_LOG_F("%s", op ? AObject::ToString(op).c_str() : "NULL");
     }
   }
 

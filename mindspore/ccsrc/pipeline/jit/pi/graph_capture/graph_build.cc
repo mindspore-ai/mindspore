@@ -31,6 +31,8 @@
 namespace mindspore {
 namespace jit {
 namespace graph {
+extern TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth);
+
 const char *GraphBuilder::ID___self__ = "__self__";
 const char *GraphBuilder::ID___globals__ = "__globals__";
 const char *GraphBuilder::ID___call__ = "__call__";
@@ -1397,6 +1399,17 @@ AObject *GraphBuilder::BuildSuperObject(PyCodeObject *co) {
   return super_obj;
 }
 
+void LogGuardFailed(ValueNode *node, const GraphJitConfig &conf, const std::string &msg) {
+  if (!conf.GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
+    return;
+  }
+  auto tr = GetTrace(node, false, true, 0, -1);
+  std::stringstream s;
+  s << "trace:\n" << (tr ? tr->FormatString().c_str() : "trace failed") << "\n";
+  s << msg << " [" << node->ToString() << "]";
+  GRAPH_JIT_LOG_F("%s", s.str().c_str());
+}
+
 bool GraphBuilder::HandleCallClass(CallNode *call_node) {
   AObject *vobj = call_node->input(0)->GetVobj();
   if (!vobj || vobj->GetType() != AObject::kTypeType) {
@@ -2156,6 +2169,7 @@ bool GraphBuilder::TraceRunForIterSequence(int jump_bci) {
     // loop start. just guard type
     TracePtr tr = graph_->TraceValueNode(seq_node);
     if (tr == nullptr || !graph_->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GDeduce, false)) {
+      LogGuardFailed(seq_node, graph_->Config(), "FOR_ITER guard failed");
       return false;
     }
   }
@@ -2280,7 +2294,6 @@ bool IsSatisfyPruneLimit(int cond, Graph *graph_, ValueNode *cond_node) {
   return graph_->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GId);
 }
 
-extern TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth);
 static void LogPrunBranch(ValueNode *cond, const Instr &instr, const GraphJitConfig &conf) {
   MS_LOG(DEBUG) << "trace run prune branch failed [" << cond->ToString() << "]";
   if (conf.GetBoolConfig(GraphJitConfig::kPrintGuard)) {
@@ -2291,7 +2304,7 @@ static void LogPrunBranch(ValueNode *cond, const Instr &instr, const GraphJitCon
 
   if (conf.GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
     auto tr = GetTrace(cond, false, true, 0, conf.getIntConfig(GraphJitConfig::kMaxTraceDepth));
-    GRAPH_JIT_LOG_F("trace %s", tr ? tr->ToString().c_str() : "trace failed");
+    GRAPH_JIT_LOG_F("trace:\n %s\n", tr ? tr->FormatString().c_str() : "trace failed");
     GRAPH_JIT_LOG_F("if branch prune failed, condition [%s] at [%U : %d]", cond->ToString().c_str(),
                     cond->GetGraph()->GetCodeObj()->co_filename, cond->GetLineNo());
   }

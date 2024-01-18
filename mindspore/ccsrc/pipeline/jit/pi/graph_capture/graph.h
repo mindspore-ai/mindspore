@@ -58,6 +58,12 @@ class FrameStates {
     MS_ASSERT((int)stack.size() > p);
     return stack[stack.size() - p - 1];
   }
+
+  ValueNode *Peek(int p) const {
+    MS_ASSERT((int)stack.size() > p);
+    return stack[stack.size() - p - 1];
+  }
+
   ValueNode *Pop() {
     MS_ASSERT(stack.size() > 0);
     auto r = stack[stack.size() - 1];
@@ -158,6 +164,7 @@ class Graph {
   std::string ToString(int depth = 0) const;
 
   std::string DumpLoops() const;
+  std::string DumpBreakInfo() const;
 
   void InstallToGlobal(const std::string &key, const py::object &value) {
     PyDict_SetItemString(f_globals_.ptr(), key.c_str(), value.ptr());

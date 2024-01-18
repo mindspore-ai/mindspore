@@ -37,9 +37,9 @@ struct SpecialAction {
   InferFunc infer;
 };
 
+extern void LogGuardFailed(ValueNode *node, const GraphJitConfig &conf, const std::string &msg);
 extern AObject *InferFuncResult(const py::object &func, const std::vector<AObject *> &stack_args, int opcode,
                                 const GraphJitConfig &conf, bool clear_guard);
-
 extern AObject *InferFuncResult(const py::object &func, const py::object &args, const py::object &kwargs,
                                 const GraphJitConfig &conf, bool clear_guard);
 
@@ -214,6 +214,9 @@ bool GuardConstCallNodeParam(CallNode *call_node, Graph *sub_graph, int max_guar
     }
     TracePtr tr = sub_graph->TraceValueNode(i, max_guard_depth);
     if (tr == nullptr) {
+      if (static_cast<size_t>(max_guard_depth) >= INT_MAX) {
+        LogGuardFailed(i, sub_graph->Config(), "GuardConstCannNodeParm failed");
+      }
       return false;
     }
     GuardLevel level = GuardLevel::GEqual;

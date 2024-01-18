@@ -106,6 +106,65 @@ bool AbstractObjectBase::IsMindSporeSupportedType() {
   return kMsSupportedType.find(GetType()) != kMsSupportedType.end();
 }
 
+std::string AbstractObjectBase::ToString(PyObject *op) {
+  if (op == nullptr) {
+    return "<NULL>";
+  }
+  ReprRecursionScope scope(op);
+  if (scope.ReEnter()) {
+    return "...";
+  }
+
+  py::object obj = py::cast<py::object>(op);
+  AObject::Type t = AObject::GetPyType(op);
+  std::stringstream s;
+  s << std::string(py::str(reinterpret_cast<PyObject *>(Py_TYPE(op)))) << "{ ";
+  switch (t) {
+    case AObject::kTypeTensor:
+    case AObject::kTypeStubTensor: {
+      s << std::string(py::str(obj.attr("shape"))) << ", " << std::string(py::str(obj.attr("dtype")));
+      break;
+    }
+    case AObject::kTypeBoundMethod: {
+      s << std::string(py::str(PyMethod_GET_FUNCTION(op))) << " at " << ToString(PyMethod_GET_SELF(op));
+      break;
+    }
+    case AObject::kTypeNNCellList:
+    case AObject::kTypeList:
+    case AObject::kTypeTuple: {
+      s << (t == AObject::kTypeTuple ? "( " : "[ ");
+      for (auto i : py::iter(obj)) {
+        s << ToString(i.ptr()) << ", ";
+      }
+      s.seekp(-2, s.cur);
+      s << (t == AObject::kTypeTuple ? " )" : " ]");
+      break;
+    }
+    case AObject::kTypeDict: {
+      PyObject *key;
+      PyObject *val;
+      Py_ssize_t pos = 0;
+      s << "{ ";
+      while (PyDict_Next(op, &pos, &key, &val)) {
+        s << ToString(key) << ":" << ToString(val) << ", ";
+      }
+      s.seekp(-2, s.cur);
+      s << " }";
+      break;
+    }
+    case AObject::kTypeAnyValue:
+    case AObject::kTypeCell: {
+      s << " at " << op;
+      break;
+    }
+    default:
+      s << std::string(py::str(obj));
+      break;
+  }
+  s << " }";
+  return s.str();
+}
+
 std::string AbstractObjectBase::ToString() const {
   std::string s = " ";
 #define ABSTRACT_MS_FLAG_DEF(unit, bit) s += ((ms_flag_ & kMsFlag##unit) ? #unit "|" : "");
