@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <vector>
 #include <queue>
-#include <set>
 #include <map>
 #include <utility>
 #include <string>
@@ -420,23 +419,20 @@ class ReshapeHandle : public TransformOp {
 constexpr int kOutputIndex = -1;
 class Mutator {
  public:
-  enum class ResultStatus { kUnchanged, kChanged, kRollback };
   Mutator(const NodePtr &node, const TransformOpPtr &handle) : op_handle_(handle), basenode_(node), ori_node_(1) {}
   ~Mutator() = default;
 
-  ResultStatus Run(std::set<NodePtr> *changed_nodes) {
+  bool Run(std::set<NodePtr> *changed_nodes) {
     VisitNode(basenode_, kOutputIndex);
     if (flexible_ops_.empty() && trans_ops_.size() <= 1) {
-      return ResultStatus::kUnchanged;
+      return false;
     }
     // remove transform ops in litegraph
     RemoveTransOp();
     GenFormatGraph();
-    if (!RebuildLiteGraph(changed_nodes)) {
-      return ResultStatus::kRollback;
-    }
+    RebuildLiteGraph(changed_nodes);
     changed_nodes->insert(flexible_ops_.begin(), flexible_ops_.end());
-    return ResultStatus::kChanged;
+    return true;
   }
 
   size_t new_trans_op_num() const { return new_trans_op_num_; }
@@ -529,22 +525,19 @@ class Mutator {
     }
   }
 
-  std::pair<bool, NodePtr> NewTransOp(const NodePtr &input, TransOpType trans_type, std::set<NodePtr> *changed_nodes) {
-    NodePtr trans_op = nullptr;
+  NodePtr NewTransOp(const NodePtr &input, TransOpType trans_type, std::set<NodePtr> *changed_nodes) {
     if (!op_handle_->NeedInsert(input)) {
-      return std::make_pair(true, trans_op);
+      return nullptr;
     }
-    trans_op = op_handle_->GenTransformOp(input, trans_type);
-    if (trans_op == nullptr) {
-      return std::make_pair(false, trans_op);
-    }
+    NodePtr trans_op = op_handle_->GenTransformOp(input, trans_type);
+    MS_EXCEPTION_IF_NULL(trans_op);
     static size_t inc_id = 0;
     trans_op->SetDebugName("new_trans_op_" + std::to_string(inc_id++));
     MS_LOG(DEBUG) << "Create " << trans_op->debug_name() << " of " << trans_type << " with input node "
                   << input->debug_name();
     (void)changed_nodes->insert(trans_op);
     new_trans_op_num_++;
-    return std::make_pair(true, trans_op);
+    return trans_op;
   }
 
   void RefineEdges(std::vector<std::pair<size_t, TransOpType>> *one_node_edge,
@@ -583,7 +576,7 @@ class Mutator {
     }
   }
 
-  bool RebuildLiteGraph(std::set<NodePtr> *changed_nodes) {
+  void RebuildLiteGraph(std::set<NodePtr> *changed_nodes) {
     MinCut min_cut(graph_vertex_, graph_edges_);
     min_cut.Run();
     auto one_node_edge = min_cut.GetOneNodeOps();
@@ -595,10 +588,7 @@ class Mutator {
                           << " index:" << ori_node_[node_id].second;
       }
       auto input_node = ori_node_[node_id].first;
-      auto [result, trans_op] = NewTransOp(input_node, trans_type, changed_nodes);
-      if (!result) {
-        return false;
-      }
+      auto trans_op = NewTransOp(input_node, trans_type, changed_nodes);
       if (trans_op == nullptr) {
         continue;
       }
@@ -616,10 +606,7 @@ class Mutator {
       auto node_from = ori_node_[insert_edge.from].first;
       auto node_to = ori_node_[insert_edge.to].first;
       if (trans_op_cache.count(insert_edge.from) == 0) {
-        auto [result, trans_op] = NewTransOp(node_from, trans_type, changed_nodes);
-        if (!result) {
-          return false;
-        }
+        auto trans_op = NewTransOp(node_from, trans_type, changed_nodes);
         if (trans_op == nullptr) {
           continue;
         }
@@ -642,7 +629,6 @@ class Mutator {
         }
       }
     }
-    return true;
   }
 
   size_t GetNodeId(const NodeWithIndex &node_with_index) {
@@ -692,34 +678,7 @@ class Mutator {
   std::vector<Edge> graph_edges_;
 };
 
-bool TransformOpOptimizer::Process(const LiteGraphPtr &litegraph, const TransformOpPtr &op_handle) const {
-  MS_LOG(DEBUG) << "Process begin, handle is " << *op_handle << ". litegraph: \n" << litegraph->ToString();
-  auto &ops = litegraph->ops();
-  bool changed = false;
-  auto check_is_trans_op = [&op_handle](const NodePtr &node) { return op_handle->IsTransformOp(node); };
-  size_t ori_trans_op_num = static_cast<size_t>(std::count_if(ops.begin(), ops.end(), check_is_trans_op));
-  size_t new_trans_op_num = 0;
-  std::set<NodePtr> nodes_may_change;
-  for (auto &op : ops) {
-    if (check_is_trans_op(op) && !op->inputs().empty()) {
-      if (op_handle->GetFormat(op->input(0)) != op_handle->GetFormat(op)) {
-        auto mutator = Mutator(op, op_handle);
-        MS_LOG(DEBUG) << "Run mutator with basenode " << op->debug_name();
-        auto ret = mutator.Run(&nodes_may_change);
-        MS_LOG(DEBUG) << "Run mutator result: " << ret;
-        if (ret == Mutator::ResultStatus::kRollback) {
-          return false;
-        }
-        new_trans_op_num += mutator.new_trans_op_num();
-        changed = changed || (ret == Mutator::ResultStatus::kChanged);
-      }
-    }
-  }
-  if (!changed || new_trans_op_num >= ori_trans_op_num) {
-    MS_LOG(DEBUG) << "The changed=" << changed << ", new_trans_op_num=" << new_trans_op_num
-                  << ", ori_trans_op_num=" << ori_trans_op_num << ". graph is dropped.";
-    return false;
-  }
+void TransformOpOptimizer::ReInfer(const LiteGraphPtr &litegraph, const std::set<NodePtr> &nodes_may_change) const {
   auto &new_ops = litegraph->GetOrderedNodes();
   MS_LOG(DEBUG) << "The changed graph before InferShape: \n" << litegraph->ToString();
   for (auto &op : new_ops) {
@@ -727,8 +686,36 @@ bool TransformOpOptimizer::Process(const LiteGraphPtr &litegraph, const Transfor
       op->SetBaseInfo(op->As<PrimOp>()->Infer(op->inputs(), op->attrs()));
     }
   }
-  MS_LOG(DEBUG) << "Final graph: \n" << litegraph->ToString();
-  return true;
+  MS_LOG(DEBUG) << "The changed graph after InferShape: \n" << litegraph->ToString();
+}
+
+bool TransformOpOptimizer::Process(const LiteGraphPtr &litegraph, const TransformOpPtr &op_handle) const {
+  MS_LOG(DEBUG) << "Process begin, handle is " << *op_handle << ". litegraph: \n" << litegraph->ToString();
+  auto ops = litegraph->ops();
+  bool changed = false;
+  auto check_is_trans_op = [&op_handle](const NodePtr &node) { return op_handle->IsTransformOp(node); };
+  size_t ori_trans_op_num = static_cast<size_t>(std::count_if(ops.begin(), ops.end(), check_is_trans_op));
+  size_t new_trans_op_num = 0;
+  for (auto &op : ops) {
+    if (check_is_trans_op(op) && !op->inputs().empty()) {
+      if (op_handle->GetFormat(op->input(0)) != op_handle->GetFormat(op)) {
+        std::set<NodePtr> nodes_may_change;
+        auto mutator = Mutator(op, op_handle);
+        MS_LOG(DEBUG) << "Run mutator with basenode " << op->debug_name();
+        auto ret = mutator.Run(&nodes_may_change);
+        MS_LOG(DEBUG) << "Run mutator result: " << ret;
+        new_trans_op_num += mutator.new_trans_op_num();
+        if (ret) {
+          changed = true;
+          ReInfer(litegraph, nodes_may_change);
+        }
+      }
+    }
+  }
+  bool result = changed && new_trans_op_num < ori_trans_op_num;
+  MS_LOG(DEBUG) << "Process result=" << result << ". changed=" << changed << ", new_trans_op_num=" << new_trans_op_num
+                << ", ori_trans_op_num=" << ori_trans_op_num;
+  return result;
 }
 
 void TransformOpOptimizer::Init() {
@@ -763,6 +750,7 @@ bool TransformOpOptimizer::Run(const FuncGraphPtr &func_graph) {
   auto todos = GkUtils::GetGraphKernelNodes(func_graph);
   bool changed = false;
   for (auto node : todos) {
+    MS_LOG(DEBUG) << "Run the node: " << node->fullname_with_scope();
     auto sub_func_graph = GetCNodeFuncGraph(node);
     auto node_name = sub_func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
     auto litegraph = GkUtils::AnfGraph2LiteGraph(sub_func_graph);
@@ -772,8 +760,17 @@ bool TransformOpOptimizer::Run(const FuncGraphPtr &func_graph) {
       if (i > 0) {
         litegraph = GkUtils::AnfGraph2LiteGraph(GetCNodeFuncGraph(node));
       }
-      if (Process(litegraph, handles[i])) {
+      bool result = false;
+      try {
+        MS_LOG_TRY_CATCH_SCOPE;
+        result = Process(litegraph, handles[i]);
+      } catch (std::exception &e) {
+        result = false;
+        MS_LOG(INFO) << "Process node " << node->DebugString() << " failed. message: " << e.what();
+      }
+      if (result) {
         changed = true;
+        MS_LOG(DEBUG) << "Replace with graph:\n" << litegraph->ToString(true);
         auto new_funcgraph = GkUtils::LiteGraph2AnfGraph(litegraph, Callback::Instance());
         MS_EXCEPTION_IF_NULL(new_funcgraph);
         new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, node_name);
@@ -782,6 +779,7 @@ bool TransformOpOptimizer::Run(const FuncGraphPtr &func_graph) {
         (void)ConvertTensorToParameter(new_funcgraph, &inputs);
         auto new_node = CreateNewFuseCNode(func_graph, new_funcgraph, inputs);
         (void)mng->Replace(node, new_node);
+        node = new_node;
         mng->AddFuncGraph(new_funcgraph);
       }
     }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <vector>
 #include <memory>
 #include <functional>
+#include <set>
 #include "include/backend/optimizer/pass.h"
 #include "ir/func_graph.h"
 #include "backend/common/graph_kernel/model/lite_graph.h"
@@ -117,6 +118,7 @@ class TransformOpOptimizer : public opt::Pass {
  protected:
   std::vector<TransformOpPtr> CreateOpHandles(const inner::LiteGraphPtr &litegraph) const;
   bool Process(const inner::LiteGraphPtr &litegraph, const TransformOpPtr &op_handle) const;
+  void ReInfer(const inner::LiteGraphPtr &litegraph, const std::set<NodePtr> &nodes_may_change) const;
   void Init();
   std::vector<TransformOpCreator> supported_ops_;
 };
