@@ -14,3 +14,5 @@ hshrink_grad:
             dtype: tensor
     class:
         name: HShrinkGrad
+    function:
+        disable: True

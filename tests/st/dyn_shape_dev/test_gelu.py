@@ -25,7 +25,7 @@ ms.context.set_context(ascend_config={"precision_mode": "force_fp32"})
 
 @test_utils.run_with_cell
 def gelu_forward_func(x):
-    return ops.auto_generate.gelu_(x)
+    return ops.Gelu()(x)
 
 
 @test_utils.run_with_cell
@@ -35,7 +35,7 @@ def gelu_backward_func(x):
 
 @test_utils.run_with_cell
 def gelu_dyn_shape_func(x):
-    return ops.auto_generate.gelu_(x)
+    return ops.GeLU()(x)
 
 
 @pytest.mark.level1

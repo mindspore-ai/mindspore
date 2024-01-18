@@ -7,6 +7,6 @@ reciprocal:
         y:
             dtype: tensor
     function:
-        name: reciprocal_
+        disable: True
     dispatch:
         enable: True

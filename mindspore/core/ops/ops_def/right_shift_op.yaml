@@ -8,3 +8,5 @@ right_shift:
   returns:
     output:
       dtype: tensor
+  function:
+    disable: True

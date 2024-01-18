@@ -4,7 +4,7 @@ div:
 
         .. math::
 
-        out_{i} = x_{i} / y_{i}
+            out_{i} = x_{i} / y_{i}
 
         Note:
             - When the two inputs have different shapes, they must be able to broadcast to a common shape.
@@ -37,7 +37,7 @@ div:
             >>> # case 1 :has same data type and shape of the two inputs
             >>> x = Tensor(np.array([-4.0, 5.0, 6.0]), mindspore.float32)
             >>> y = Tensor(np.array([3.0, 2.0, 3.0]), mindspore.float32)
-            >>> div = ops.div
+            >>> div = ops.Div()
             >>> output = div(x, y)
             >>> print(output)
             [-1.3333334  2.5        2.        ]

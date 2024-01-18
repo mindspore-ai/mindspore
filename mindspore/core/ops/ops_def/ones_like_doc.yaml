@@ -17,7 +17,7 @@ ones_like:
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
             >>> input_x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
-            >>> output = ops.ones_like(input_x)
+            >>> output = ops.OnesLike()(input_x)
             >>> print(output)
             [[1 1]
             [1 1]]

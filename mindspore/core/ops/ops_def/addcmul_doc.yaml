@@ -7,10 +7,10 @@ addcmul:
             output[i] = input[i] + value[i] * (tensor1[i] * tensor2[i])
 
         Args:
-            input (Tensor): The tensor to be added.
-            tensor1 (Tensor): The tensor to be multiplied.
-            tensor2 (Tensor): The tensor to be multiplied.
-            value (Tensor): The multiplier for tensor1*tensor2.
+            - **input** (Tensor): The tensor to be added.
+            - **x1** (Tensor): The tensor to be multiplied.
+            - **x2** (Tensor): The tensor to be multiplied.
+            - **value** (Tensor): The multiplier for tensor1*tensor2.
 
         Returns:
             Tensor, has the same shape and dtype as x1*x2.
@@ -35,7 +35,7 @@ addcmul:
             >>> x1 = Tensor(np.array([[1], [2], [3]]), mindspore.float32)
             >>> x2 = Tensor(np.array([[1, 2, 3]]), mindspore.float32)
             >>> value = Tensor([1], mindspore.float32)
-            >>> y = ops.addcmul_(input_data, x1, x2, value)
+            >>> y = ops.Addcmul()(input_data, x1, x2, value)
             >>> print(y)
             [[ 2.  3.  4.]
             [ 3.  5.  7.]

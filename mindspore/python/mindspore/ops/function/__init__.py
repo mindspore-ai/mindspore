@@ -413,7 +413,6 @@ from .math_func import (
     logical_xor,
     imag,
     roll,
-    roll_,
     orgqr,
     ormqr,
     sum,

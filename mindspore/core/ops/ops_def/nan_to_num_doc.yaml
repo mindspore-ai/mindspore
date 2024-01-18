@@ -1,32 +1,37 @@
 nan_to_num:
     description: |
-        Replace the `NaN`, positive infinity and negative infinity values in 'input' with the
-        specified values in `nan`, `posinf` and `neginf` respectively.
-
+        Replaces `NaN`, positive infinity and negative infinity values in the input Tensor with the values
+        specified by `nan`, `posinf` and `neginf` respectively.
+    
+        .. warning::
+        This is an experimental API that is subject to change or deletion.
+    
+        Refer to :func:`mindspore.ops.nan_to_num` for more details.
+    
         Args:
-            input (Tensor): The shape of tensor is :math:`(input_1, input_2, ..., input_R)`.
-                With float32 or float16 data type.
-            nan (float): The replace value of 'NaN'. Default value is 0.0.
-            posinf (float): the value to replace positive infinity values with. Default: ``None``,
-                replacing positive infinity with the maximum value supported by the data type of `input`.
-            neginf (float): the value to replace negative infinity values with. Default: ``None``,
-                replacing negative infinity with the minimum value supported by the data type of `input`.
-
-        Returns:
-            Tensor, has the same shape and dtype as the `input`.
-
-        Raises:
-            TypeError: If `input` is not a Tensor.
-            TypeError: If dtype of `input` is not float16 or float32.
-
+            nan (float, optional): The value to replace `NaN`. Default value is ``0.0`` .
+            posinf (float, optional): If a Number, the value to replace positive infinity values with. If None, positive
+                infinity values are replaced with the greatest finite value representable by `x`'s dtype.
+                Default value is ``None`` .
+            neginf (float, optional): if a Number, the value to replace negative infinity values with. If None, negative
+                infinity values are replaced with the lowest finite value representable by `x`'s dtype.
+                Default value is ``None`` .
+    
+        Inputs:
+            - **x** (Tensor) - Input Tensor of any dimensions. Supported data types: float32 or float16.
+    
+        Outputs:
+            Tensor, has the same shape and dtype as the `x`.
+    
         Supported Platforms:
             ``Ascend`` ``CPU``
-
+    
         Examples:
             >>> import mindspore
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
-            >>> input = Tensor(np.array([float('nan'), float('inf'), -float('inf'), 5.0]), mindspore.float32)
-            >>> output = ops.nan_to_num(input, 1.0, 2.0, 3.0)
+            >>> nan_to_num = ops.NanToNum()
+            >>> x = Tensor(np.array([float('nan'), float('inf'), -float('inf'), 3.14]), mindspore.float32)
+            >>> output = nan_to_num(x)
             >>> print(output)
-            [1.  2.  3.  5.0]
+            [ 0.0000000e+00  3.4028235e+38 -3.4028235e+38  3.1400001e+00]

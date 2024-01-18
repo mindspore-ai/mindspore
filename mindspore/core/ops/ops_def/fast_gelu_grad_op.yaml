@@ -10,3 +10,5 @@ fast_gelu_grad:
             dtype: tensor
     class:
         name: FastGeLUGrad
+    function:
+        disable: True

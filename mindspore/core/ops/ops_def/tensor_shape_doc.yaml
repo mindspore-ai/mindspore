@@ -10,6 +10,6 @@ tensor_shape:
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
             >>> input_x = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
-            >>> output = ops.tensor_shape(input_x)
+            >>> output = ops.TensorShape()(input_x)
             >>> print(output)
             [3 2 1]

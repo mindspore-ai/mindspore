@@ -23,7 +23,7 @@ ms.context.set_context(ascend_config={"precision_mode": "force_fp32"})
 
 @test_utils.run_with_cell
 def hswish_forward_func(x):
-    return ops.auto_generate.hardswish_(x)
+    return ops.auto_generate.HSwish()(x)
 
 
 @test_utils.run_with_cell
@@ -33,7 +33,7 @@ def hswish_backward_func(x):
 
 @test_utils.run_with_cell
 def hswish_dyn_shape_func(x):
-    return ops.auto_generate.hardswish_(x)
+    return ops.auto_generate.HSwish()(x)
 
 
 @pytest.mark.level1

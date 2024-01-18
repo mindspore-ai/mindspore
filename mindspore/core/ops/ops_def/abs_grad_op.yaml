@@ -8,3 +8,5 @@ abs_grad:
   returns:
     dx:
       dtype: tensor
+  function:
+    disable: True

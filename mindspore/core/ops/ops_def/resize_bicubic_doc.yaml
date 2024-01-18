@@ -35,6 +35,6 @@ resize_bicubic:
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
             >>> image = Tensor(np.array([1, 2, 3, 4]).reshape(1, 1, 2, 2).astype(np.float32))
-            >>> output = ops.auto_generate.resize_bicubic(image, (1, 4), False, False)
+            >>> output = ops.ResizeBicubic(False, False)(image, (1, 4))
             >>> print(output)
                 [[[[1. 1.5 2. 2.09375]]]]

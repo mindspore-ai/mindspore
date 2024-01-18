@@ -9,4 +9,4 @@ hswish:
     class:
         name: HSwish
     function:
-        name: hardswish_
+        disable: True

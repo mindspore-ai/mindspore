@@ -18,4 +18,4 @@ one_hot:
         output:
             dtype: tensor
     function:
-        name: one_hot_
+        disable: True

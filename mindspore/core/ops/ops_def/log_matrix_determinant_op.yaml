@@ -8,3 +8,5 @@ log_matrix_determinant:
             dtype: tensor
         output:
             dtype: tensor
+    function:
+        disable: True

@@ -23,7 +23,7 @@ ms.context.set_context(ascend_config={"precision_mode": "force_fp32"})
 
 @test_utils.run_with_cell
 def real_div_forward_func(x, y):
-    return ops.auto_generate.real_div(x, y)
+    return ops.RealDiv()(x, y)
 
 
 @test_utils.run_with_cell
@@ -112,7 +112,7 @@ def test_real_div_dynamic(mode):
     context.set_context(mode=mode)
     x_dyn = Tensor(shape=None, dtype=ms.float32)
     y_dyn = Tensor(shape=None, dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(ops.auto_generate.real_div)
+    test_cell = test_utils.to_cell_obj(ops.RealDiv())
     test_cell.set_inputs(x_dyn, y_dyn)
     x1 = Tensor(np.array([1.0, 2.0, 3.0]).astype(np.float32))
     y1 = Tensor(np.array([4.0, 5.0, 6.0]).astype(np.float32))

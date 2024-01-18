@@ -5,9 +5,13 @@ cummin:
         .. warning::
             This is an experimental API that is subject to change or deletion.
 
+        Refer to :func:mindspore.ops.cummin for more detail.
+        
         Args:
-            input (Tensor): The input tensor.
             axis (int): The axis to accumulate the tensor's value. Must be in the range [-rank(input), rank(input)).
+        
+        Inputs:
+            - **input** (Tensor): The input tensor.
 
         Returns:
             A tuple of 2 Tensors(values, indices), containing the cumulative minimum of elements and the index,
@@ -21,8 +25,7 @@ cummin:
             >>> import mindspore
             >>> a = Tensor([-0.2284, -0.6628,  0.0975,  0.2680, -1.3298, -0.4220], mindspore.float32)
             >>> axis = 0
-            >>> func = ops.cummin
-            >>> output = func(a, axis)
+            >>> output = ops.Cummin(axis)(a)
             >>> print(output[0])
             [-0.2284 -0.6628 -0.6628 -0.6628 -1.3298 -1.3298]
             >>> print(output[1])

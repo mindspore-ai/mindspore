@@ -6,3 +6,5 @@ bool_not:
   returns:
     output:
       dtype: number
+  function:
+    disable: True

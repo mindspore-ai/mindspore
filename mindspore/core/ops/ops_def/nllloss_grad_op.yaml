@@ -25,4 +25,6 @@ nllloss_grad:
             dtype: tensor
     class:
         name: NLLLossGrad
+    function:
+        disable: True
 

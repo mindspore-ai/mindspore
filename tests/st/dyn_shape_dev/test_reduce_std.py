@@ -24,7 +24,7 @@ ms.context.set_context(ascend_config={"precision_mode": "force_fp32"})
 
 @test_utils.run_with_cell
 def reduce_std_forward_func(x):
-    return ops.auto_generate.reduce_std(x, axis=0, unbiased=True, keep_dims=True)
+    return ops.ReduceStd(axis=0, unbiased=True, keep_dims=True)(x)
 
 
 @test_utils.run_with_cell

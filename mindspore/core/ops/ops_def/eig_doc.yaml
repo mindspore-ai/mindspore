@@ -3,15 +3,17 @@ eig:
     Computes the eigenvalues and eigenvectors of a square matrix(batch square matrices).
 
     Args:
-      x (Tensor) - Square matrices of shape :math:`(*, N, N)`, with float32, float64, complex64 or
-          complex128 data type.
       compute_v (bool, optional): If ``True`` , compute both eigenvalues and eigenvectors;
           If `False`, just eigenvalues will be computed. Default: ``False`` .
+    
+    Inputs:
+      - **x** (Tensor) - Square matrices of shape :math:`(*, N, N)`, with float32, float64, complex64 or
+      complex128 data type.
 
     Outputs:
-      eigen_values (Tensor) - Shape :math:`(*, N)`. Each inner most vector represents eigenvalues of
+      - **eigen_values** (Tensor) - Shape :math:`(*, N)`. Each inner most vector represents eigenvalues of
           the corresponding matrix. The eigenvalues may not have an order.
-      eigen_vectors (Tensor) - If `compute_v` is `False`, it's an empty tensor. Otherwise, this tensor has
+      - **eigen_vectors** (Tensor) - If `compute_v` is `False`, it's an empty tensor. Otherwise, this tensor has
           shape :math:`(*, N, N)`, whose columns represent normalized (unit length) eigenvectors of corresponding
           eigenvalues.
 
@@ -28,8 +30,8 @@ eig:
         >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.array([[1.0, 0.0], [0.0, 2.0]]), mindspore.float32)
-        >>> u, v = ops.eig_(input_x, True)
+        >>> x = Tensor(np.array([[1.0, 0.0], [0.0, 2.0]]), mindspore.float32)
+        >>> u, v = ops.Eig(True)(x)
         >>> print(u)
         [1.+0.j 2.+0.j]
         >>> print(v)

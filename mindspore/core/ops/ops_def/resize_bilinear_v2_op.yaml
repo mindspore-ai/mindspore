@@ -18,4 +18,4 @@ resize_bilinear_v2:
     output:
       dtype: tensor
   function:
-    name: resize_bilinear
+    disable: True

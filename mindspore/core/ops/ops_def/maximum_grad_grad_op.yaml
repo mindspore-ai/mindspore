@@ -26,3 +26,5 @@ maximum_grad_grad:
             dtype: tensor
         sopd_grad:
             dtype: tensor
+    function:
+        disable: True

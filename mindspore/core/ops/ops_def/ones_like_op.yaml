@@ -7,4 +7,4 @@ ones_like:
         y:
             dtype: tensor
     function:
-        name: ones_like_
+        disable: True

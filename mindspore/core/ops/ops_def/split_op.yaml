@@ -15,4 +15,4 @@ split:
     output:
       dtype: tuple[tensor]
   function:
-    name: split_
+    disable: True

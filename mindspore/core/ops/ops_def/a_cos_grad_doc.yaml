@@ -1,4 +1,4 @@
-acos_grad:
+a_cos_grad:
     description: |
         Computes ACosGrad of input element-wise.
 

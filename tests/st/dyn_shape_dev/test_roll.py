@@ -22,7 +22,7 @@ import test_utils
 
 @test_utils.run_with_cell
 def roll_forward_func(x):
-    return ops.auto_generate.roll_(x, shift=1, axis=0)
+    return ops.auto_generate.Roll(shift=1, axis=0)(x)
 
 
 @test_utils.run_with_cell

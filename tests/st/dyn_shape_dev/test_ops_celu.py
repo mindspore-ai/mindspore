@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def celu_forward_func(x, alpha=1.0):
-    return ops.auto_generate.celu_(x, alpha)
+    return ops.CeLU(alpha)(x)
 
 
 @test_utils.run_with_cell
@@ -32,7 +32,7 @@ def celu_backward_func(x, alpha=1.0):
 
 
 def celu_dyn_shape_func(x, alpha=1.0):
-    return ops.auto_generate.celu_(x, alpha)
+    return ops.CeLU(alpha)(x)
 
 
 @pytest.mark.level1

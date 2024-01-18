@@ -41,7 +41,7 @@ from mindspore.ops.operations.nn_ops import TripletMarginLoss
 from mindspore.ops.operations._inner_ops import SiLU
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
-from mindspore.ops.auto_generate import log_softmax, prelu
+from mindspore.ops.auto_generate import log_softmax, prelu, celu, fast_gelu
 
 abs_ = P.Abs()
 add_ = P.Add()
@@ -53,7 +53,6 @@ equal_ = P.Equal()
 erf_ = P.Erf()
 exp_ = P.Exp()
 expand_dims_ = P.ExpandDims()
-fast_gelu_ = P.FastGeLU()
 fillv2_ = P.FillV2()
 gather_ = P.Gather()
 gather_d_ = P.GatherD()
@@ -1290,54 +1289,6 @@ def dropout(input, p=0.5, training=True, seed=None):
     return out
 
 
-def celu(x, alpha=1.0):
-    r"""
-    celu activation function, computes celu (Continuously differentiable exponential
-    linear units) of input tensors element-wise. The formula is defined as follows:
-
-    .. math::
-
-        \text{CeLU}(x) = \max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))
-
-    For more details, please refer to `celu <https://arxiv.org/abs/1704.07483>`_.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    CELU Activation Function Graph:
-
-    .. image:: ../images/CELU.png
-        :align: center
-
-    Args:
-        x (Tensor): The input of celu with data type of float16 or float32.
-        alpha (float, optional): The :math:`\alpha` value for the Celu formulation. Default: 1.0
-
-    Returns:
-        Tensor, has the same data type and shape as the input.
-
-    Raises:
-        TypeError: If `alpha` is not a float.
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is neither float16 nor float32.
-        ValueError: If `alpha` has the value of 0.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0]), mindspore.float32)
-        >>> output = ops.celu(x, alpha=1.0)
-        >>> print(output)
-        [-0.86466473 -0.63212055  1.          2.        ]
-    """
-    celu_op = _get_cache_prim(P.CeLU)(alpha)
-    return celu_op(x)
-
-
 def dropout1d(input, p=0.5, training=True):
     r"""
     During training, randomly zeroes some channels of the input tensor with probability `p`
@@ -1519,47 +1470,6 @@ def dropout3d(input, p=0.5, training=True):
     dropout_3d_op = NN_OPS.Dropout3D(1.0 - p)
     out, _ = dropout_3d_op(input)
     return out
-
-
-def fast_gelu(x):
-    r"""
-    Fast Gaussian Error Linear Units activation function.
-
-    FastGeLU is defined as follows:
-
-    .. math::
-        \text{output} = \frac {x} {1 + \exp(-1.702 * \left| x \right|)} * \exp(0.851 * (x - \left| x \right|)),
-
-    where :math:`x` is the element of the input.
-
-    FastGelu Activation Function Graph:
-
-    .. image:: ../images/FastGelu.png
-        :align: center
-
-    Args:
-        x (Tensor): Input to compute the FastGeLU with data type of float16 or float32.
-
-    Returns:
-        Tensor, with the same type and shape as `x`.
-
-    Raises:
-        TypeError: If dtype of `x` is neither float16 nor float32.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> output = ops.fast_gelu(x)
-        >>> print(output)
-        [[-1.5418735e-01  3.9921875e+00 -9.7473649e-06]
-         [ 1.9375000e+00 -1.0052517e-03  8.9824219e+00]]
-    """
-    return fast_gelu_(x)
 
 
 @_primexpr

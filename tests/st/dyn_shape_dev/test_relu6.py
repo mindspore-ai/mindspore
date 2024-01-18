@@ -23,7 +23,7 @@ ms.context.set_context(ascend_config={"precision_mode": "force_fp32"})
 
 @test_utils.run_with_cell
 def relu6_forward_func(x):
-    return ops.auto_generate.relu6(x)
+    return ops.ReLU6()(x)
 
 
 @test_utils.run_with_cell

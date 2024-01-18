@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def reduce_all_forward_func(x):
-    return ops.auto_generate.reduce_all(x, axis=0, keep_dims=True)
+    return ops.auto_generate.ReduceAll(True)(x, 0)
 
 
 @test_utils.run_with_cell

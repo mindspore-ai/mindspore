@@ -16,3 +16,5 @@ resize_bicubic_grad:
   returns:
     output:
       dtype: tensor
+  function:
+    disable: True

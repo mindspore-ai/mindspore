@@ -12,4 +12,4 @@ lin_space:
     output:
       dtype: tensor
   function:
-    name: lin_space_
+    disable: True

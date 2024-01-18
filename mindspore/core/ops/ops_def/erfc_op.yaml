@@ -1,7 +1,7 @@
 #operator erfc
 erfc:
   args:
-    x:
+    input:
       dtype: tensor
   returns:
     output:

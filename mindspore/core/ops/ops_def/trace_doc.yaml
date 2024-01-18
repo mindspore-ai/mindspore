@@ -31,12 +31,10 @@ trace:
         >>> print(output)
         15.0
         >>> x = Tensor(np.arange(1, 13).reshape(3, 4), mindspore.float32)
-        >>> trace = ops.Trace()
-        >>> output = trace(x)
+        >>> output = ops.trace(x)
         >>> print(output)
         18.0
         >>> x = Tensor(np.arange(12, 0, -1).reshape(4, 3), mindspore.float32)
-        >>> trace = ops.Trace()
-        >>> output = trace(x)
+        >>> output = ops.trace(x)
         >>> print(output)
         24.0

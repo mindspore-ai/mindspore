@@ -9,4 +9,4 @@ rsqrt_grad:
     output:
       dtype: tensor
   function:
-    name: _rsqrt_grad
+    disable: True

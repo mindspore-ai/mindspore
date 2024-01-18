@@ -23,11 +23,11 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def resize_nearest_neighbor_v2_grad_forward_func(x, size, align_corners, half_pixel_centers):
-    return ops.auto_generate.resize_nearest_neighbor_v2_grad(x, size, align_corners, half_pixel_centers)
+    return ops.auto_generate.ResizeNearestNeighborV2Grad(align_corners, half_pixel_centers)(x, size)
 
 
 def resize_nearest_neighbor_v2_grad_dyn_shape_func(x, size, align_corners, half_pixel_centers):
-    return ops.auto_generate.resize_nearest_neighbor_v2_grad(x, size, align_corners, half_pixel_centers)
+    return ops.auto_generate.ResizeNearestNeighborV2Grad(align_corners, half_pixel_centers)(x, size)
 
 
 @pytest.mark.level0

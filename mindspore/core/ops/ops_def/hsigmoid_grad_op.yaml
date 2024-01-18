@@ -10,3 +10,5 @@ hsigmoid_grad:
             dtype: tensor
     class:
         name: HSigmoidGrad
+    function:
+        disable: True

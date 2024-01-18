@@ -12,3 +12,5 @@ gather_d_grad_v2:
   returns:
     dx:
       dtype: tensor
+  function:
+    disable: True

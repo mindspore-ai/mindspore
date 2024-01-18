@@ -12,3 +12,5 @@ logit_grad:
     returns:
         input_grad:
             dtype: tensor
+    function:
+        disable: True

@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def resize_nearest_neighbor_forward_func(x, size, align_corners):
-    return ops.auto_generate.resize_nearest_neighbor(x, size, align_corners)
+    return ops.ResizeNearestNeighbor(size, align_corners)(x)
 
 
 @test_utils.run_with_cell
@@ -32,7 +32,7 @@ def resize_nearest_neighbor_backward_func(x, size, align_corners):
 
 
 def resize_nearest_neighbor_dyn_shape_func(x, size, align_corners):
-    return ops.auto_generate.resize_nearest_neighbor(x, size, align_corners)
+    return ops.ResizeNearestNeighbor(size, align_corners)(x)
 
 @pytest.mark.level1
 @pytest.mark.env_onecard

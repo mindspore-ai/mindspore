@@ -26,3 +26,5 @@ layer_norm_grad:
       dtype: tensor
     pd_beta:
       dtype: tensor
+  function:
+    disable: True

@@ -10,3 +10,5 @@ hswish_grad:
             dtype: tensor
     class:
         name: HSwishGrad
+    function:
+        disable: True

@@ -17,3 +17,5 @@ resize_bicubic:
   returns:
     output:
       dtype: tensor
+  function:
+    disable: True

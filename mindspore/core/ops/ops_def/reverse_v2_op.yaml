@@ -10,3 +10,5 @@ reverse_v2:
   returns:
     output:
       dtype: tensor
+  function:
+    name: reverse

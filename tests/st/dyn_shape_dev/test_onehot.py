@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def onehot_forward_func(indices, depth, on_value, off_value, axis):
-    return ops.auto_generate.one_hot_(indices, depth, on_value, off_value, axis)
+    return ops.OneHot(axis)(indices, depth, on_value, off_value)
 
 
 @test_utils.run_with_cell

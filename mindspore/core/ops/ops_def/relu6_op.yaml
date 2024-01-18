@@ -8,3 +8,5 @@ relu6:
       dtype: tensor
   class:
     name: ReLU6
+  function:
+    disable: True

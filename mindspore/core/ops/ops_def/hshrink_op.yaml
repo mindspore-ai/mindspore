@@ -12,3 +12,5 @@ hshrink:
             dtype: tensor
     class:
         name: HShrink
+    function:
+        disable: True

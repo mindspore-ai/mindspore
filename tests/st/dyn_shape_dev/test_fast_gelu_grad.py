@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def fastgelugrad_forward_func(dy, x):
-    return ops.auto_generate.fast_gelu_grad(dy, x)
+    return ops.auto_generate.FastGeLUGrad()(dy, x)
 
 
 @test_utils.run_with_cell

@@ -22,6 +22,6 @@ nllloss:
         total_weight:
             dtype: tensor
     function:
-        name: nll_loss_
+        disable: True
     class:
         name: NLLLoss

@@ -51,7 +51,8 @@ grid_sampler_2d:
             >>> from mindspore import Tensor, ops
             >>> input_x = Tensor(np.arange(16).reshape((2, 2, 2, 2)).astype(np.float32))
             >>> grid = Tensor(np.arange(-9, 9, 0.5).reshape((2, 3, 3, 2)).astype(np.float32))
-            >>> output = ops.grid_sampler_2d(input_x, grid, interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)
+            >>> output = ops.GridSampler2D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)
+                (input_x, grid)
             >>> print(output)
             [[[[ 0.     0.     0.   ]
             [ 0.     0.     0.   ]

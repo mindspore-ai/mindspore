@@ -23,8 +23,8 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def grid_sampler_3d_forward_func(input_x, grid):
-    grid_sampler_3d = ops.auto_generate.grid_sampler_3d(
-        input_x, grid, interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)
+    grid_sampler_3d = ops.auto_generate.GridSampler3D(
+        interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)(input_x, grid)
     return grid_sampler_3d
 
 

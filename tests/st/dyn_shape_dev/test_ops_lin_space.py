@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def lin_space_forward_func(start, stop, num=5):
-    return ops.auto_generate.lin_space_(start, stop, num)
+    return ops.auto_generate.LinSpace()(start, stop, num)
 
 
 @test_utils.run_with_cell
@@ -31,8 +31,8 @@ def lin_space_backward_func(start, stop, num=5):
     return ops.grad(lin_space_forward_func, (0,))(start, stop, num)
 
 
-def lin_sapce_dyn_shape_func(start, stop, num=5):
-    return ops.auto_generate.lin_space_(start, stop, num)
+def lin_space_dyn_shape_func(start, stop, num=5):
+    return ops.auto_generate.LinSpace()(start, stop, num)
 
 
 @pytest.mark.level1
@@ -115,7 +115,7 @@ def test_lin_sapce_dynamic(mode):
     ms.context.set_context(mode=mode)
     num_np = 5
     place_holder = ms. Tensor(shape=[None], dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(lin_sapce_dyn_shape_func)
+    test_cell = test_utils.to_cell_obj(lin_space_dyn_shape_func)
     test_cell.set_inputs(place_holder, place_holder)
     start_np = 5
     stop_np = 25

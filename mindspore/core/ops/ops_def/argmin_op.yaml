@@ -16,4 +16,4 @@ argmin:
     output:
       dtype: tensor
   function:
-    name: argmin_
+    disable: True

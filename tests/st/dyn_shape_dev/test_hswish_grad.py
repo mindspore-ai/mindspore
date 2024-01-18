@@ -23,12 +23,12 @@ ms.context.set_context(ascend_config={"precision_mode": "force_fp32"})
 
 @test_utils.run_with_cell
 def hswish_grad_forward_func(y_grad, x):
-    return ops.auto_generate.hswish_grad(y_grad, x)
+    return ops.auto_generate.HSwishGrad()(y_grad, x)
 
 
 @test_utils.run_with_cell
 def hswish_grad_dyn_shape_func(y_grad, x):
-    return ops.auto_generate.hswish_grad(y_grad, x)
+    return ops.auto_generate.HSwishGrad()(y_grad, x)
 
 
 @pytest.mark.level1

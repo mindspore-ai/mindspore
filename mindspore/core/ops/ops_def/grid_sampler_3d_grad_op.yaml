@@ -28,3 +28,5 @@ grid_sampler_3d_grad:
             dtype: tensor
     class:
         name: GridSampler3DGrad
+    function:
+        disable: True

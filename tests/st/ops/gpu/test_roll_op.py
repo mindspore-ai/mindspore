@@ -72,6 +72,7 @@ def test_roll_1d():
     assert np.allclose(except_output, output_ms.asnumpy())
     assert np.allclose(except_grad_output, output_grad_ms[0].asnumpy())
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -103,6 +104,6 @@ def test_roll_exception_2():
     shifts = ()
     axis = 0
     try:
-        _ = ms.ops.roll_(input_x, shifts, dims=axis)
+        _ = ms.ops.roll(input_x, shifts, dims=axis)
     except TypeError:
         assert True

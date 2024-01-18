@@ -27,4 +27,6 @@ grid_sampler_2d_grad:
         dgrid: 
             dtype: tensor
     class:
-      name: GridSampler2DGrad
+        name: GridSampler2DGrad
+    function:
+        disable: True

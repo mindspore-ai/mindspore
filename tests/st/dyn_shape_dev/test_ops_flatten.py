@@ -22,7 +22,7 @@ import test_utils
 
 @test_utils.run_with_cell
 def flatten_forward_func(x):
-    return ops.auto_generate.flatten_(x)
+    return ops.Flatten()(x)
 
 
 @test_utils.run_with_cell

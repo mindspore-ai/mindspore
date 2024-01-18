@@ -24,7 +24,7 @@ ms.context.set_context(ascend_config={"precision_mode": "force_fp32"})
 
 @test_utils.run_with_cell
 def reduce_max_forward_func(x):
-    return ops.auto_generate.reduce_max(x, axis=0, keep_dims=True)
+    return ops.ReduceMax(keep_dims=True)(x, 0)
 
 
 @test_utils.run_with_cell

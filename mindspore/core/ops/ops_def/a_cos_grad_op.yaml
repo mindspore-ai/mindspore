@@ -1,5 +1,5 @@
 #operator acos_grad
-acos_grad:
+a_cos_grad:
   args:
     x:
       dtype: tensor
@@ -8,5 +8,5 @@ acos_grad:
   returns:
     dx:
       dtype: tensor
-  class:
-    name: ACosGrad
+  function:
+    disable: True

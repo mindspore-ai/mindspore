@@ -20,7 +20,7 @@ hshrink:
             >>> from mindspore import Tensor, nn
             >>> import numpy as np
             >>> x = Tensor(np.array([[0.5,  1,  2.0], [0.0533, 0.0776, -2.1233]]), ms.float32)
-            >>> output = ops.hshrink(x)
+            >>> output = ops.HShrink()(x)
             >>> print(output)
             [[ 0.      1.      2.    ]
             [ 0.      0.     -2.1233]]

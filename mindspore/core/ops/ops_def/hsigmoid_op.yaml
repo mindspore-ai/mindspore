@@ -8,3 +8,5 @@ hsigmoid:
             dtype: tensor
     class:
         name: HSigmoid
+    function:
+        disable: True
