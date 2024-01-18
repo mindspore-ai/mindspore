@@ -411,12 +411,14 @@ bool Common::CheckInterval() {
     try {
       interval = std::stoi(interval_str);
     } catch (const std::invalid_argument &ia) {
-      MS_LOG(ERROR) << "Invalid argument: " << ia.what() << " when parse " << interval_str
-                    << ". Please set this env variable to int value.";
-      return true;
+      MS_LOG(EXCEPTION) << "Invalid argument: " << ia.what() << " when parse " << interval_str
+                        << ". Please set this env variable to int value.";
     }
   } else {
     return true;
+  }
+  if (interval < 1) {
+    MS_LOG(EXCEPTION) << "Dump IR interval should be greater than 0.";
   }
   const int check = g_id_ % interval;
   if (check == 0) {
