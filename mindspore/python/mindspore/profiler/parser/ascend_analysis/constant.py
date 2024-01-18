@@ -26,7 +26,7 @@ class Constant:
 
     # file authority
     FILE_AUTHORITY = 0o640
-    DIR_AUTHORITY = 0o750
+    DIR_AUTHORITY = 0o700
     MAX_FILE_SIZE = 1024 * 1024 * 1024 * 10
     MAX_CSV_SIZE = 1024 * 1024 * 1024 * 5
     MAX_PATH_LENGTH = 4096
