@@ -93,7 +93,6 @@ Others
     :nosignatures:
 
 
-    mindspore.dataset.Dataset.device_que
     mindspore.dataset.Dataset.sync_update
     mindspore.dataset.Dataset.sync_wait
     mindspore.dataset.Dataset.to_json
@@ -188,7 +187,6 @@ Others
     :nosignatures:
 
 
-    mindspore.dataset.Dataset.device_que
     mindspore.dataset.Dataset.sync_update
     mindspore.dataset.Dataset.sync_wait
     mindspore.dataset.Dataset.to_json
@@ -284,7 +282,6 @@ Others
     :nosignatures:
 
 
-    mindspore.dataset.Dataset.device_que
     mindspore.dataset.Dataset.sync_update
     mindspore.dataset.Dataset.sync_wait
     mindspore.dataset.Dataset.to_json
@@ -380,7 +377,6 @@ Others
     :nosignatures:
 
 
-    mindspore.dataset.Dataset.device_que
     mindspore.dataset.Dataset.sync_update
     mindspore.dataset.Dataset.sync_wait
     mindspore.dataset.Dataset.to_json
