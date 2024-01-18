@@ -2873,7 +2873,7 @@ def silu(x):
 
     Args:
         input (Tensor): `input` is `x` in the preceding formula. Input with the data type
-        float16 or float32.
+            float16 or float32.
 
     Returns:
         Tensor, with the same type and shape as the `input`.
@@ -2963,7 +2963,7 @@ def sigmoid(input):
 
     Args:
         input (Tensor): `input` is `x` in the preceding formula. Tensor of any dimension,
-        the data type is float16, float32, float64, complex64 or complex128.
+            the data type is float16, float32, float64, complex64 or complex128.
 
     Returns:
         Tensor, with the same type and shape as the input.
