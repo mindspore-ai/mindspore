@@ -76,6 +76,11 @@ TypePtr TupleToTensorFuncImpl::InferType(const PrimitivePtr &primitive,
   TypePtr dst_type{nullptr};
   if (input_args[kInputIndex1]->GetType()->isa<TypeNone>()) {
     auto attr = primitive->GetAttr("dtype");
+    if (attr == nullptr) {
+      auto abs = elem->cast<abstract::AbstractTuplePtr>();
+      MS_EXCEPTION_IF_NULL(abs);
+      attr = abs->elements()[0]->BuildType();
+    }
     MS_EXCEPTION_IF_NULL(attr);
     if (!attr->isa<Type>()) {
       MS_EXCEPTION(TypeError)
