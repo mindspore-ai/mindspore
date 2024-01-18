@@ -63,12 +63,10 @@ struct Common {
   static const std::shared_ptr<PyNativeExecutor> &GetPyNativeExecutor();
   static void StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info);
   static TensorPtr StubNodeToTensor(const ValuePtr &value);
-  static TensorPtr ConvertStubNodeToTensor(const ValuePtr &v, const std::string &device_target, bool need_contiguous);
+  static TensorPtr ConvertStubNodeToTensor(const ValuePtr &v, bool need_contiguous);
   static std::optional<tensor::TensorPtr> ConvertStubNodeToTensor(const std::optional<ValuePtr> &v,
-                                                                  const std::string &device_target,
                                                                   bool need_contiguous);
-  static ValueTuplePtr ConvertStubNodeToValueTuple(const ValuePtr &v, const std::string &device_target,
-                                                   bool need_contiguous);
+  static ValueTuplePtr ConvertStubNodeToValueTuple(const ValuePtr &v, bool need_contiguous);
   static void GetConstInputToAttr(const PrimitivePtr &op_prim, const std::string &op_name,
                                   const std::string &device_target, bool is_dynamic_shape,
                                   mindspore::HashSet<size_t> *input_to_attr_index);
@@ -87,7 +85,7 @@ struct Common {
   static void ProcessTupleParam(const FuncGraphPtr &bprop_graph, size_t position);
   static void ProcessDictParam(const FuncGraphPtr &bprop_graph, size_t position);
   static void FreeFuncGraphForwardNodes(const FuncGraphPtr &func_graph);
-  static tensor::TensorPtr ConvertToContiguousTensor(const tensor::TensorPtr &tensor, const std::string &device_target);
+  static tensor::TensorPtr ConvertToContiguousTensor(const tensor::TensorPtr &tensor);
 };
 
 // Parser python

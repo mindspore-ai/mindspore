@@ -140,9 +140,8 @@ void PlantTupleParam(const FuncGraphPtr &bprop_graph, const abstract::AbstractSe
 }
 
 void RefreshGradContiguousTensor(const FrontendOpRunInfoPtr &op_run_info, size_t index) {
-  if (op_run_info->input_unused_in_bprop[index] || op_run_info->base_op_run_info.device_target != kAscendDevice) {
+  if (op_run_info->input_unused_in_bprop[index]) {
     // Input is not used in bprop, no need to contiguous.
-    // GPU/CPU contiguous tensor when convert stub node
     return;
   }
 
@@ -153,7 +152,15 @@ void RefreshGradContiguousTensor(const FrontendOpRunInfoPtr &op_run_info, size_t
       return nullptr;
     }
 
-    auto contiguous_op = CREATE_PYBOOST_OP(Contiguous, op_run_info->base_op_run_info.device_target);
+    auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+    MS_EXCEPTION_IF_NULL(device_address);
+    const auto &device_target = device_address->device_name();
+    if (device_target != kAscendDevice) {
+      // GPU/CPU contiguous tensor when convert stub node, contiguous before grad.
+      return nullptr;
+    }
+
+    auto contiguous_op = CREATE_PYBOOST_OP(Contiguous, device_target);
     return contiguous_op->Call(tensor);
   };
 
@@ -569,9 +576,16 @@ TensorPtr Common::StubNodeToTensor(const ValuePtr &v) {
   MS_LOG(EXCEPTION) << "It should be stub tensor, but got " << v->ToString();
 }
 
-tensor::TensorPtr Common::ConvertToContiguousTensor(const tensor::TensorPtr &tensor, const std::string &device_target) {
+tensor::TensorPtr Common::ConvertToContiguousTensor(const tensor::TensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
   if (tensor->storage_info() == nullptr) {
+    return tensor;
+  }
+
+  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  MS_EXCEPTION_IF_NULL(device_address);
+  const auto &device_target = device_address->device_name();
+  if (device_target == kAscendDevice) {
     return tensor;
   }
 
@@ -579,33 +593,30 @@ tensor::TensorPtr Common::ConvertToContiguousTensor(const tensor::TensorPtr &ten
   return contiguous_op->Call(tensor);
 }
 
-TensorPtr Common::ConvertStubNodeToTensor(const ValuePtr &v, const std::string &device_target, bool need_contiguous) {
+TensorPtr Common::ConvertStubNodeToTensor(const ValuePtr &v, bool need_contiguous) {
   const auto &tensor = StubNodeToTensor(v);
-  if (!need_contiguous || device_target == kAscendDevice) {
+  if (!need_contiguous) {
     return tensor;
   }
-  return ConvertToContiguousTensor(tensor, device_target);
+  return ConvertToContiguousTensor(tensor);
 }
 
 std::optional<tensor::TensorPtr> Common::ConvertStubNodeToTensor(const std::optional<ValuePtr> &v,
-                                                                 const std::string &device_target,
                                                                  bool need_contiguous) {
   if (!v.has_value()) {
     return std::nullopt;
   }
-  return std::make_optional(ConvertStubNodeToTensor(v.value(), device_target, need_contiguous));
+  return std::make_optional(ConvertStubNodeToTensor(v.value(), need_contiguous));
 }
 
-ValueTuplePtr Common::ConvertStubNodeToValueTuple(const ValuePtr &v, const std::string &device_target,
-                                                  bool need_contiguous) {
+ValueTuplePtr Common::ConvertStubNodeToValueTuple(const ValuePtr &v, bool need_contiguous) {
   if (utils::isa<ValueSequence>(v)) {
     const auto &value_seq = utils::cast<ValueSequencePtr>(v);
     const auto &values = value_seq->value();
     std::vector<ValuePtr> tensor_list;
-    (void)std::transform(values.begin(), values.end(), std::back_inserter(tensor_list),
-                         [&device_target, need_contiguous](const ValuePtr &value) {
-                           return ConvertStubNodeToTensor(value, device_target, need_contiguous);
-                         });
+    (void)std::transform(
+      values.begin(), values.end(), std::back_inserter(tensor_list),
+      [need_contiguous](const ValuePtr &value) { return ConvertStubNodeToTensor(value, need_contiguous); });
     return std::make_shared<ValueTuple>(tensor_list);
   }
   MS_LOG(EXCEPTION) << "It should be stub tensor sequence, but got " << v->ToString();
