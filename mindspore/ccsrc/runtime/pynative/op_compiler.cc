@@ -84,8 +84,8 @@ void SetIgnoreSyncHostToDeviceList(const SimpleGraphPtr &simple_graph) {
       // This behavior is incorrect, but it does exist in the current kernel
       // and needs to be rectified by the operators who develop this kernel.
       if (index >= edges.size()) {
-        MS_LOG(WARNING) << simple_graph->name_ << " ignore input index is " << index << ", but total input num is "
-                        << edges.size();
+        MS_LOG(INFO) << simple_graph->name_ << " ignore input index is " << index << ", but total input num is "
+                     << edges.size();
         continue;
       }
       edges[index]->ignore_h2d_ = true;
