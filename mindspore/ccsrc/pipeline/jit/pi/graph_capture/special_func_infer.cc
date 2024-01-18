@@ -743,7 +743,16 @@ static bool CheckJitForbidden(const py::object &func) {
   return forbidden;
 }
 
-bool CheckJitConstexpr(const py::object &func) { return kPIJitConfigDefault.CheckJitConstexpr(func); }
+bool CheckJitConstexpr(const py::object &func) {
+  PyObject *op = func.ptr();
+  if (op == nullptr) {
+    return false;
+  }
+  if (PyMethod_Check(op)) {
+    op = PyMethod_GET_FUNCTION(op);
+  }
+  return kPIJitConfigDefault.CheckJitConstexpr(py::cast<py::object>(op));
+}
 bool CheckMSConstexpr(const py::object &func) {
   std::string tp_name = py::str(reinterpret_cast<PyObject *>(Py_TYPE(func.ptr())));
   constexpr const char name[] = ".<locals>.deco.<locals>.CompileOp'>";
