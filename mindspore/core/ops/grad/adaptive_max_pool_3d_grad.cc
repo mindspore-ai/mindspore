@@ -45,7 +45,7 @@ abstract::ShapePtr AdaptiveMaxPool3DGradInferShape(const PrimitivePtr &primitive
   auto input_grad_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
   auto x_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 1);
   auto argmax_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 2);
-  if (!x_shape_ptr->IsDynamic() && !argmax_shape_ptr->IsDynamic() && !argmax_shape_ptr->IsDynamic()) {
+  if (!x_shape_ptr->IsDynamic() && !argmax_shape_ptr->IsDynamic()) {
     auto input_grad_shape = input_grad_shape_ptr->shape();
     auto x_shape = x_shape_ptr->shape();
     auto argmax_shape = argmax_shape_ptr->shape();
