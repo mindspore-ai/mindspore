@@ -174,18 +174,6 @@ bool ClusterContext::BuildCluster() {
     node_id_ = ps::core::CommUtil::GenerateUUID();
   }
   // Init the node according to the process role.
-  std::string time_out_str = common::GetEnv(kEnvClusterTimeOut);
-  size_t time_out_sec = topology::kDefaultClusterTimeOut;
-  if (!time_out_str.empty()) {
-    try {
-      time_out_sec = IntToSize(std::atoi(time_out_str.c_str()));
-    } catch (const std::exception &e) {
-      MS_LOG(EXCEPTION) << "Environmental variable 'MS_CLUSTER_TIMEOUT' " << time_out_str
-                        << " is invalid. Exception info: " << e.what();
-    }
-  }
-
-  size_t retry_num = time_out_sec / topology::kExecuteInterval;
   if (node_role_ == kEnvRoleOfScheduler) {
     auto node_num = node_num_each_role_[kEnvRoleOfWorker] + node_num_each_role_[kEnvRoleOfServer];
     node_base_ = std::make_shared<topology::MetaServerNode>(node_id_, node_role_, node_num);
@@ -201,6 +189,7 @@ bool ClusterContext::BuildCluster() {
     MsException::Instance().CheckException();
     return this->node_base_->Initialized();
   };
+  size_t retry_num = topology::GetClusterTimeoutRetryNum();
   EXECUTE_WITH_RETRY(check_func, retry_num, topology::kExecuteInterval, "Topology build timed out.");
 
   MS_LOG(WARNING) << "Cluster is successfully initialized.";

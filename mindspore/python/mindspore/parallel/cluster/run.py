@@ -81,8 +81,9 @@ def get_args():
         default=600,
         type=int,
         help="specifies time out window of cluster building procedure in second. "
-             "If only scheduler is launched or spawned worker number is not enough, "
-             "other processes will wait for 'cluster_time_out' seconds and then exit."
+             "If only scheduler is launched, or spawned worker number is not enough, "
+             "other processes will wait for 'cluster_time_out' seconds and then exit. "
+             "If this value is negative, other processes will wait infinitely."
     )
     parser.add_argument(
         "training_script",

@@ -63,9 +63,6 @@ static const int kDecimal = 10;
 // The timeout(second) for heartbeat from compute graph node to meta server.
 static const uint64_t kDefaultNodeTimeout = 30;
 
-// The timeout for initializing the cluster topology.
-static const std::chrono::milliseconds kTopoInitTimeout = std::chrono::milliseconds(1000 * 60 * 10);
-
 // All kinds of messages sent between compute graph nodes and meta server node.
 enum class MessageName {
   kRegistration,
@@ -90,6 +87,9 @@ static const size_t kMsnExecuteRetryNum = 210;
 static const size_t kNoRetry = 1;
 static const uint32_t kExecuteInterval = 3;
 static const size_t kDefaultClusterTimeOut = 600;
+
+// Cluster building time out window in second.
+constexpr char kEnvClusterTimeOut[] = "MS_CLUSTER_TIMEOUT";
 
 #define EXECUTE_WITH_RETRY(func, retry, interval, err_msg)                     \
   do {                                                                         \

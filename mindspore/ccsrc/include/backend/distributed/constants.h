@@ -39,6 +39,11 @@ constexpr char kDetailedFailureReason[] =
   "this issue, or refer to this link if you want to run distributed training without using 'mpirun': "
   "https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/dynamic_cluster.html";
 
+constexpr char kWorkerProcessNotEnoughError[] = "Spawned worker process number is not as expected.";
+constexpr char kSchedPortOccupiedError[] = "Configured scheduler port MS_SCHED_PORT is occupied by other processes.";
+constexpr char kSchedWorkerAddrNotConsistentError[] =
+  "Scheduler and worker's configured MS_SCHED_HOST or MS_SCHED_PORT is not consistent with each other.";
+
 constexpr char kEnvServerNum[] = "MS_SERVER_NUM";
 constexpr char kEnvWorkerNum[] = "MS_WORKER_NUM";
 constexpr char kEnvSchedulerHost[] = "MS_SCHED_HOST";
@@ -54,9 +59,6 @@ const std::set<std::string> kValidRoleName = {kEnvRoleOfServer, kEnvRoleOfPServe
 
 // Denote which ip address is used for cluster building.
 constexpr char kEnvWorkerIp[] = "MS_WORKER_IP";
-
-// Cluster building time out window in second.
-constexpr char kEnvClusterTimeOut[] = "MS_CLUSTER_TIMEOUT";
 
 // Used in parameter server embedding cache scenarios to identify the same Parameter between Worker and Server.
 constexpr char kParameterKey[] = "parameter_key";
