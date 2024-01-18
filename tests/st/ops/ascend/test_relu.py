@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import pytest
 import numpy as np
 
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore.common import dtype as mstype
 from mindspore.common.api import jit
 from mindspore.ops import operations as P
 
@@ -26,7 +28,7 @@ context.set_context(device_target="Ascend")
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.relu = P.ReLU(strategy=None)
+        self.relu = P.ReLU()
 
     @jit
     def construct(self, x):
@@ -39,3 +41,22 @@ def test_net():
     output = relu(Tensor(x))
     print(x)
     print(output.asnumpy())
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
+def test_relu_bfloat16(mode):
+    """
+    Feature: test relu forward.
+    Description: test bfloat16 inputs.
+    Expectation: compare the result with exception value.
+    """
+    context.set_context(mode=mode)
+    net = Net()
+    x = Tensor(np.array([1.0, -2.0, 3.0, -4.0, 5.0]), mstype.bfloat16)
+    output = net(x).float().asnumpy()
+    expect_output = np.array([1.0, 0.0, 3.0, 0.0, 5.0]).astype(np.float32)
+    np.testing.assert_allclose(output, expect_output)
+    
