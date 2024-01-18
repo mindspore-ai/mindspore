@@ -90,18 +90,18 @@ def _check_inputs_validation(fn):
 
 def is_initialized(device_target):
     """
-    Return whether specified backend is initialized.
+    Returns whether specified backend is initialized.
 
     Note:
         MindSpore's backends "CPU", "GPU" and "Ascend" will be initialized in the following scenarios:
         - For distributed job, backend will be initialized after `mindspore.communication.init` method is called.
-        - For graph mode, backend is initialized after graph compiling phase.
-        - For PyNative mode, backend is initialized when running the first operator.
+        - For standalone job, backend will be initialized after running
+          the first operator or calling creating stream/event interfaces.
 
     Args:
         device_target (str): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
 
-    Return:
+    Returns:
         Bool, whether the specified backend is initialized.
 
     Examples:
@@ -128,13 +128,13 @@ def is_initialized(device_target):
 
 def is_available(device_target):
     """
-    Return whether specified backend is available.
+    Returns whether specified backend is available.
     All dependent libraries should be successfully loaded if this backend is available.
 
     Args:
         device_target (str): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
 
-    Return:
+    Returns:
         Bool, whether the specified backend is available for this MindSpore package.
 
     Examples:
@@ -161,7 +161,7 @@ def is_available(device_target):
 @_check_inputs_validation
 def device_count(device_target=None):
     """
-    Return device count of specified backend.
+    Returns device count of specified backend.
 
     Note:
         If `device_target` is not specified, get the device count of the current backend set by context.
@@ -170,7 +170,7 @@ def device_count(device_target=None):
     Args:
         device_target (str): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
 
-    Return:
+    Returns:
         int.
 
     Examples:
@@ -193,8 +193,12 @@ def get_device_capability(device_id, device_target=None):
         device_id (int): The device id of which the capability will be returned.
         device_target (str): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
 
-    Return:
+    Returns:
         tuple(int, int) for GPU.
+
+        - param1：int，cuda major revision number.
+        - param2：int，cuda minor revision number.
+
         None for Ascend and CPU.
 
     Examples:
@@ -220,15 +224,19 @@ def get_device_properties(device_id, device_target=None):
         device_id (int): The device id of which the properties will be returned.
         device_target (str): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
 
-    Return:
-        `cudaDeviceProp` for GPU.
-        `AscendDeviceProperties` for Ascend:
-        AscendDeviceProperties {
-            std::string name;
-            size_t total_memory;
-            size_t free_memory;
-        }.
-        None for CPU.
+    Returns:
+        - `cudaDeviceProp <https://docs.nvidia.com/cuda/cuda-runtime-api/structcudaDeviceProp.html#structcudaDeviceProp>`_ for GPU.
+        - `AscendDeviceProperties` for Ascend:
+
+          .. code-block::
+
+              AscendDeviceProperties {
+                  name(str),
+                  total_memory(int),
+                  free_memory(int)
+              }
+
+        - None for CPU.
 
     Examples:
         >>> import mindspore as ms
@@ -251,7 +259,7 @@ def get_device_name(device_id, device_target=None):
         device_id (int): The device id of which the name will be returned.
         device_target (str): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
 
-    Return:
+    Returns:
         str.
 
     Examples:
@@ -273,7 +281,7 @@ def get_arch_list(device_target=None):
     Args:
         device_target (str): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
 
-    Return:
+    Returns:
         str for GPU.
         None for Ascend and CPU.
 

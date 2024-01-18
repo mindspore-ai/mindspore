@@ -251,7 +251,7 @@ def current_stream():
     Return current stream used on this device.
 
     Returns:
-        stream (Stream): current stream.
+        stream (Stream), current stream.
 
     Examples:
         >>> import mindspore as ms
@@ -268,7 +268,7 @@ def default_stream():
     Return default stream on this device.
 
     Returns:
-        stream (Stream): default stream.
+        stream (Stream), default stream.
 
     Examples:
         >>> import mindspore as ms
