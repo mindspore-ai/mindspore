@@ -374,7 +374,7 @@ Math operations include basic and advanced math operations on tensors, and they 
        [4 6]
        [4 6]]
 
-- Matrics multiplication
+- Matrix multiplication
 
   The following code implements the operation of multiplying two matrices `input_x` and `input_y`:
 
@@ -548,6 +548,20 @@ Math operations include basic and advanced math operations on tensors, and they 
     mindspore.numpy.trunc
     mindspore.numpy.unwrap
     mindspore.numpy.var
+
+Fast Fourier Transforms (FFTs)
+-----------------------------------------
+
+FFTs submodule include basic and advanced FFT operations.
+For example: 1-D to N-D discrete Fourier transform and its inverse transform, discrete cosine transform, fast Hankel transform, etc.
+
+.. msplatformautosummary::
+    :toctree: numpy
+    :nosignatures:
+    :template: classtemplate_inherited.rst
+    
+    mindspore.numpy.fft.ifftshift
+    mindspore.numpy.fft.fftshift
 
 Interact With MindSpore Functions
 ---------------------------------

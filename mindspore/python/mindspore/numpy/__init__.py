@@ -64,6 +64,8 @@ from mindspore.numpy.logic_ops import (not_equal, less_equal, less, greater_equa
                                        logical_or, logical_xor, in1d, isin, isclose, signbit, sometrue,
                                        array_equal, array_equiv, setdiff1d)
 
+from mindspore.numpy.fft import (fftshift, ifftshift)
+
 mod = remainder
 fabs = absolute
 round = around # pylint: disable=redefined-builtin
@@ -114,6 +116,8 @@ logic_module = ['not_equal', 'less_equal', 'less', 'greater_equal', 'greater', '
                 'logical_or', 'logical_xor', 'in1d', 'isin', 'isclose', 'signbit', 'sometrue',
                 'array_equal', 'array_equiv', 'setdiff1d']
 
-__all__ = array_ops_module + array_creations_module + math_module + logic_module + numeric_types
+fft_module = ['fftshift', 'ifftshift']
+
+__all__ = array_ops_module + array_creations_module + math_module + logic_module + numeric_types + fft_module
 
 __all__.sort()
