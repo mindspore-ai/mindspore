@@ -1286,10 +1286,6 @@ std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string 
 std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string &arg_name, const AbstractBasePtr &abs,
                                                               const std::string &prim_name) {
   std::vector<int64_t> result{};
-  if (!ops::IsValueKnown(abs)) {
-    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the value of  [" << arg_name
-                             << "] is unknown, please handle this case before calling this function.";
-  }
   if (IsSequence(abs)) {
     const auto &type_list = GetSequenceElementTypes(abs);
     if (type_list.empty()) {
@@ -1318,6 +1314,10 @@ std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string 
                               << type_list.front()->ToString();
     }
   } else {
+    if (!ops::IsValueKnown(abs)) {
+      MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the value of  [" << arg_name
+                               << "] is unknown, please handle this case before calling this function.";
+    }
     auto data_type = abs->GetType();
     MS_EXCEPTION_IF_NULL(data_type);
     if (data_type->type_id() == kNumberTypeInt64) {
