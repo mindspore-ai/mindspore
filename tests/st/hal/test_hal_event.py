@@ -23,6 +23,23 @@ import numpy as np
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
+def test_hal_event_args():
+    """
+    Feature: Hal event api.
+    Description: Test hal.event args.
+    Expectation: hal.event performs as expected.
+    """
+    ev1 = ms.hal.Event()
+    assert ev1 is not None
+
+    ev2 = ms.hal.Event(enable_timing=True, blocking=True)
+    assert ev2 is not None
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
 def test_hal_event_elapsed_time():
     """
     Feature: Hal event api.
@@ -34,9 +51,8 @@ def test_hal_event_elapsed_time():
     start = ms.hal.Event(enable_timing=True)
     end = ms.hal.Event(enable_timing=True)
     start.record()
-    a = Tensor(np.ones([1, 2]), ms.float32)
-    b = Tensor(np.ones([2,]), ms.float32)
-    ops.matmul(a, b)
+    a = Tensor(np.ones([50, 50]), ms.float32)
+    ops.matmul(a, a)
     end.record()
     start.synchronize()
     end.synchronize()
@@ -60,17 +76,23 @@ def test_hal_event_wait():
     s1 = ms.hal.Stream()
     s2 = ms.hal.Stream()
 
-    event = ms.hal.Event()
-    a = Tensor(np.ones([1, 2]), ms.float32)
-    b = Tensor(np.ones([2,]), ms.float32)
+    ev1 = ms.hal.Event()
+    ev2 = ms.hal.Event()
+    a = Tensor(np.random.randn(20, 20), ms.float32)
     with ms.hal.StreamCtx(s1):
-        ops.matmul(a, b)
-        event.record()
+        b = ops.matmul(a, a)
+        ev1.record()
 
     with ms.hal.StreamCtx(s2):
-        event.query()
-        event.wait()
-        ops.matmul(a, b)
+        ev1.wait()
+        c = ops.matmul(b, b)
+
+    ev2.wait()
+    ev2.synchronize()
+    assert ev1.query() is True
+    assert ev1.query() is True
+    assert np.allclose(ops.matmul(a, a).asnumpy(), b.asnumpy())
+    assert np.allclose(ops.matmul(b, b).asnumpy(), c.asnumpy())
 
 
 @pytest.mark.level0
@@ -85,18 +107,23 @@ def test_hal_event_sync():
     """
     context.set_context(mode=context.PYNATIVE_MODE)
 
-    s1 = ms.hal.Stream()
-    s2 = ms.hal.Stream()
+    stream = ms.hal.Stream()
 
-    event = ms.hal.Event()
-    a = Tensor(np.ones([1, 2]), ms.float32)
-    b = Tensor(np.ones([2,]), ms.float32)
-    c = Tensor(np.ones([2,]), ms.float32)
-    with ms.hal.StreamCtx(s1):
-        ops.matmul(a, b)
-        event.record()
-        c += 2
+    ev1 = ms.hal.Event(True, False)
+    ev2 = ms.hal.Event(True, False)
 
-    with ms.hal.StreamCtx(s2):
-        event.synchronize()
-        ops.matmul(a, b)
+    ev1.record(stream)
+    a = Tensor(np.random.randn(5000, 5000), ms.float32)
+    with ms.hal.StreamCtx(stream):
+        ops.matmul(a, a)
+        stream.record_event(ev2)
+        assert ev2.query() is False
+        assert stream.query() is False
+
+    ev1.synchronize()
+    ev2.synchronize()
+    assert ev2.query() is True
+    stream.synchronize()
+    assert stream.query() is True
+    elapsed_time = ev1.elapsed_time(ev2)
+    assert elapsed_time > 0

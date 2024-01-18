@@ -586,6 +586,8 @@ TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index)
 
   device_tensor->SetNodeIndex(output_node, output_index);
   device_tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(output_node, output_index));
+  runtime::DeviceAddressUtils::UpdateDeviceAddressHostInfoByNode(device_tensor, output_node, output_index);
+
   const auto &kernel_tensor = device_tensor->kernel_tensor();
   MS_EXCEPTION_IF_NULL(kernel_tensor);
 
@@ -1200,7 +1202,7 @@ void MindRTBackend::RunViewKernelTask(const pynative::BaseOpRunInfo &base_op_run
   }
 }
 
-void MindRTBackend::RunContiguousTask(const tensor::TensorPtr &tensor, const size_t &stream_id, bool enable_async) {
+void MindRTBackend::RunContiguousTask(const tensor::TensorPtr &tensor, size_t stream_id, bool enable_async) {
   MS_EXCEPTION_IF_NULL(tensor);
 
   auto old_storage_info = tensor->storage_info();
@@ -1214,7 +1216,7 @@ void MindRTBackend::RunContiguousTask(const tensor::TensorPtr &tensor, const siz
 
 device::DeviceAddressPtr MindRTBackend::RunContiguousTaskByAddress(const device::DeviceAddressPtr &old_device_address,
                                                                    const TensorStorageInfoPtr &old_storage_info,
-                                                                   const size_t &stream_id, bool enable_async) {
+                                                                   size_t stream_id, bool enable_async) {
   MS_EXCEPTION_IF_NULL(old_device_address);
   MS_EXCEPTION_IF_NULL(old_storage_info);
 
