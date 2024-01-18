@@ -969,14 +969,18 @@ bool GetJitBpropGraph(const ResourcePtr &resource) {
 }
 
 bool RewriterAfterOptAPassAfterJitBprop(const ResourcePtr &resource) {
-  MS_EXCEPTION_IF_NULL(resource);
-  FuncGraphPtr func_graph = resource->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
+  // This function is only used to convert unsupported syntax into PyExecute nodes through Fallback,
+  // when the forward graph is decorated with 'jit', and is derivative in pynative mode.
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  context->set_not_convert_jit(false);
-  (void)mindspore::opt::RewriterAfterOptA(func_graph, resource);
-  UpdateArgsSpec(func_graph, resource);
+  if (context->not_convert_jit()) {
+    context->set_not_convert_jit(false);
+    MS_EXCEPTION_IF_NULL(resource);
+    FuncGraphPtr func_graph = resource->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
+    (void)mindspore::opt::RewriterAfterOptA(func_graph, resource);
+    UpdateArgsSpec(func_graph, resource);
+  }
   return true;
 }
 
