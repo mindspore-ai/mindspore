@@ -11,7 +11,7 @@ mindspore.nn.Sigmoid
 
         \text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)},
 
-    其中 :math:`x_i` 是输入的元素。
+    其中 :math:`x_i` 是x的一个元素。
 
     Sigmoid函数图：
 
@@ -19,7 +19,7 @@ mindspore.nn.Sigmoid
         :align: center
 
     输入：
-        - **input** (Tensor) - 数据类型为float16、float32、float64、complex64或complex128的Sigmoid输入。任意维度的Tensor。
+        - **input** (Tensor) - `input`即为上述公式中的 :math:`x`。数据类型为float16、float32、float64、complex64或complex128的Sigmoid输入。任意维度的Tensor。
 
     返回：
         Tensor，数据类型和shape与 `input` 的相同。

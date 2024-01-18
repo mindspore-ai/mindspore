@@ -8,17 +8,22 @@ mindspore.ops.silu
     .. math::
         \text{SiLU}(x) = x * \sigma(x),
 
-    其中，Logistic Sigmoid函数如下：
+    其中 :math:`x` 是输入的元素， :math:`\sigma(x)` 是Sigmoid函数。
 
     .. math::
 
         \text{sigma}(x_i) = \frac{1}{1 + \exp(-x_i)},
-
-    其中，:math:`x_i` 是输入x的元素。
 
     SiLU函数图：
 
     .. image:: ../images/SiLU.png
         :align: center
 
-    更多详情请参考 :class:`mindspore.nn.SiLU`。
+    参数：
+        - **input** (Tensor) - `input`即为上述公式中的 :math:`x`。数据类型为float16或float32的输入。
+
+    返回：
+        Tensor，数据类型和shape与 `input` 的相同。
+
+    异常：
+        - **TypeError** - `input` 的数据类型既不是float16也不是float32。
