@@ -219,7 +219,6 @@ FuncGraphManager::~FuncGraphManager() {
 
 void FuncGraphManager::Reset() {
   func_graphs_ = FuncGraphSet();
-  func_graphs_index_ = FuncGraphIndexMap();
   all_nodes_ = AnfNodeSet();
   node_users_ = NodeUsersMap();
   signals_ = std::make_shared<Signals>();
@@ -294,15 +293,6 @@ FuncGraphSet &FuncGraphManager::func_graphs_used_total(const FuncGraphPtr &fg) c
   return func_graphs_used_total_->func_graph_used_total_analysis()[fg];
 }
 
-const FuncGraphIndexPtr &FuncGraphManager::func_graph_index(const FuncGraphPtr &fg) const {
-  MS_EXCEPTION_IF_NULL(fg);
-  auto iter = func_graphs_index_.find(fg);
-  if (iter == func_graphs_index_.end()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Func graph: " << fg->ToString() << " is not add FuncGraphIndexMap.";
-  }
-  return func_graphs_index_.at(fg);
-}
-
 bool FuncGraphManager::recursive(const FuncGraphPtr &fg) const {
   MS_EXCEPTION_IF_NULL(fg);
   MS_EXCEPTION_IF_NULL(recursive_);
@@ -368,8 +358,6 @@ void FuncGraphManager::AddFuncGraph(const FuncGraphPtr &func_graph, bool is_root
     MS_LOG(ERROR) << "The func graph " << func_graph->ToString() << " has no return node.";
   }
 
-  (void)func_graphs_index_.emplace(func_graph, std::make_shared<FuncGraphPassIndex>());
-
   // Acquire all nodes from func_graph.
   AcquireNodes(std::move(new_nodes));
 }
@@ -399,8 +387,6 @@ void FuncGraphManager::AddFuncGraphs(const FuncGraphPtr &source_func_graph) {
       MS_LOG(INFO) << "The func graph " << func_graph->ToString() << " has no return node.";
     }
 
-    (void)func_graphs_index_.emplace(func_graph, std::make_shared<FuncGraphPassIndex>());
-
     // Acquire all nodes from func_graph.
     AcquireNodes(std::move(new_nodes), false);
   }
@@ -408,8 +394,6 @@ void FuncGraphManager::AddFuncGraphs(const FuncGraphPtr &source_func_graph) {
 
 // Clear the all information in manager
 void FuncGraphManager::Clear() noexcept {
-  func_graphs_index_.clear();
-
   for (auto &fg : func_graphs_) {
     MS_EXCEPTION_IF_NULL(fg);
     fg->DecAttachedMngCnt();

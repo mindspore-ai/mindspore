@@ -135,7 +135,10 @@ TEST_F(TestFastPatternToPatternPass, Mul0) {
     manager->AddFuncGraph(fg_);
     fg_->set_manager(manager);
   }
-  auto func_graph_index = manager->func_graph_index(fg_);
+  if (!fg_->has_user_data<FuncGraphPassIndex>()) {
+    fg_->set_user_data<FuncGraphPassIndex>(std::make_shared<FuncGraphPassIndex>());
+  }
+  auto func_graph_index = fg_->user_data<FuncGraphPassIndex>();
   GenIndex(fg_, func_graph_index);
 
   ASSERT_TRUE(func_graph_index->node_degree_.at(add) == 1);
@@ -239,7 +242,10 @@ TEST_F(TestFastPatternToPatternPass, Mul0NotRoot) {
     manager->AddFuncGraph(fg_);
     fg_->set_manager(manager);
   }
-  auto func_graph_index = manager->func_graph_index(fg_);
+  if (!fg_->has_user_data<FuncGraphPassIndex>()) {
+    fg_->set_user_data<FuncGraphPassIndex>(std::make_shared<FuncGraphPassIndex>());
+  }
+  auto func_graph_index = fg_->user_data<FuncGraphPassIndex>();
   GenIndex(fg_, func_graph_index);
 
   ASSERT_TRUE(func_graph_index->node_degree_.at(add1) == 1);
@@ -367,7 +373,10 @@ TEST_F(TestFastPatternToPatternPass, Mul1) {
     manager->AddFuncGraph(fg_);
     fg_->set_manager(manager);
   }
-  auto func_graph_index = manager->func_graph_index(fg_);
+  if (!fg_->has_user_data<FuncGraphPassIndex>()) {
+    fg_->set_user_data<FuncGraphPassIndex>(std::make_shared<FuncGraphPassIndex>());
+  }
+  auto func_graph_index = fg_->user_data<FuncGraphPassIndex>();
   GenIndex(fg_, func_graph_index);
 
   ASSERT_TRUE(func_graph_index->node_degree_.at(b_add_d) == 1);
@@ -589,7 +598,10 @@ TEST_F(TestFastPatternToPatternPass, Mul2) {
     manager->AddFuncGraph(fg_);
     fg_->set_manager(manager);
   }
-  auto func_graph_index = manager->func_graph_index(fg_);
+  if (!fg_->has_user_data<FuncGraphPassIndex>()) {
+    fg_->set_user_data<FuncGraphPassIndex>(std::make_shared<FuncGraphPassIndex>());
+  }
+  auto func_graph_index = fg_->user_data<FuncGraphPassIndex>();
   GenIndex(fg_, func_graph_index);
 
   Check0(func_graph_index, node_map);
