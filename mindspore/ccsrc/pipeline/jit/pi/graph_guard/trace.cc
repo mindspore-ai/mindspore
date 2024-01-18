@@ -1493,6 +1493,9 @@ PyObject *OpTrace::Retrieve(PTraceContext context) {
   for (auto p : params) {
     Py_DECREF(p);
   }
+  if (PyErr_Occurred()) {
+    PyErr_Clear();
+  }
   Cache(context, ret);
   return ret;
 }

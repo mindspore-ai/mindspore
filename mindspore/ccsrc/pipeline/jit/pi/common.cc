@@ -429,7 +429,7 @@ static void MarkBreak(Graph *g) {
   } else {
     auto iter = g->GetTracedNodes().begin();
     for (; iter != g->GetTracedNodes().end(); ++iter) {
-      if (break_bci >= (*iter)->bci()) {
+      if ((*iter)->bci() >= break_bci) {
         break;
       }
     }
@@ -1325,6 +1325,7 @@ py::object get_code_extra(const py::object &func) {
   }
   PyDict_SetItemString(result.ptr(), "stat", py::str(stat_str[c->stat]).ptr());
   PyDict_SetItemString(result.ptr(), "compile_count_", py::int_(c->compile_count_).ptr());
+  PyDict_SetItemString(result.ptr(), "break_count_", py::int_(c->break_count_).ptr());
   return result;
 }
 
