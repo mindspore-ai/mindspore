@@ -339,7 +339,7 @@ void FuncGraphManager::AddFuncGraph(const FuncGraphPtr &func_graph, bool is_root
   MS_EXCEPTION_IF_NULL(func_graph);
   if (is_root) {
     roots_.add(func_graph);
-    // Call return AddFuncGraphs(func_graph) here later.
+    return AddFuncGraphs(func_graph);
   }
 
   if (func_graphs_.contains(func_graph)) {
@@ -355,7 +355,7 @@ void FuncGraphManager::AddFuncGraph(const FuncGraphPtr &func_graph, bool is_root
   if (return_node != nullptr) {
     (void)new_nodes.emplace_back(std::move(return_node));
   } else {
-    MS_LOG(ERROR) << "The func graph " << func_graph->ToString() << " has no return node.";
+    MS_LOG(INFO) << "The func graph " << func_graph->ToString() << " has no return node.";
   }
 
   // Acquire all nodes from func_graph.

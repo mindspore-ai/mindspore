@@ -921,7 +921,8 @@ bool PreSimplifyInlinePass(const ResourcePtr &resource) {
   opt::irpass::OptimizeIRPassLib irpass;
   auto simplify_inline_passes = opt::OptPassConfig({irpass.switch_simplify_, irpass.inline_});
   OptPassGroupMap simplify_inline_map({{"switch_simplify_inline", simplify_inline_passes}});
-  auto simplify_inline = opt::Optimizer::MakeOptimizer("simplify_inline", resource, simplify_inline_map);
+  auto simplify_inline =
+    opt::Optimizer::MakeOptimizer("simplify_inline", resource, simplify_inline_map, false, false, false);
   simplify_inline->step(func_graph, true);
 
   OptPassGroupMap simplify_inline_renorm_map({{"renormalize", opt::OptPassConfig::Renormalize()}});
