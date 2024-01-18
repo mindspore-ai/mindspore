@@ -22,7 +22,7 @@ namespace mindspore {
 namespace expander {
 Node::Node(Emitter *emitter) : emitter_(emitter) { MS_EXCEPTION_IF_NULL(emitter); }
 
-NodeType Node::node_type() { return NodeType::kConstant; }
+NodeType Node::node_type() { MS_EXCEPTION(NotImplementedError) << "Base node not implement node_type() method"; }
 
 AbstractBasePtr Node::abstract() { MS_EXCEPTION(NotImplementedError) << "Base node not implement abstract() method"; }
 
@@ -107,7 +107,7 @@ NodeType IrNode::node_type() {
   if (anf_node_->isa<ValueNode>()) {
     return NodeType::kConstant;
   } else if (anf_node_->isa<Parameter>()) {
-    return NodeType::kParameter;
+    return NodeType::kWeightParameter;
   } else {
     return NodeType::kOutput;
   }
@@ -157,17 +157,7 @@ std::string IrNode::debug_info() const {
 }
 
 ValuePtr FuncNode::BuildValue() { return value_; }
-NodeType FuncNode::node_type() {
-  if (value_->isa<tensor::Tensor>()) {
-    auto tensor = value_->cast<tensor::TensorPtr>();
-    auto meta_grad_type = tensor->auto_grad_meta_data();
-    if (meta_grad_type != nullptr && (meta_grad_type->grad_type() == pynative::TensorGradType::kParameter ||
-                                      meta_grad_type->grad_type() == pynative::TensorGradType::kInput)) {
-      return NodeType::kParameter;
-    }
-  }
-  return NodeType::kConstant;
-}
+NodeType FuncNode::node_type() { return node_type_; }
 
 AbstractBasePtr FuncNode::abstract() {
   if (abstract_ != nullptr) {

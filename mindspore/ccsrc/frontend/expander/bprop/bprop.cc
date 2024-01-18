@@ -128,7 +128,7 @@ class PynativeIRBuilder : public IrBuilder {
       auto item_idx = GetValue<int64_t>(inputs[1]->get()->cast<ValueNodePtr>()->value());
       auto valuenode = NewValueNode((*real_input_value)[item_idx]);
       valuenode->set_abstract(valuenode->value()->ToAbstract());
-      return NewTraceNode(valuenode);
+      return NewIrNode(valuenode);
     }
     return nullptr;
   }
@@ -157,7 +157,7 @@ class PynativeIRBuilder : public IrBuilder {
       cnode->set_scope(scope_);
     }
 
-    auto node = NewTraceNode(cnode->cast<AnfNodePtr>());
+    auto node = NewIrNode(cnode->cast<AnfNodePtr>());
     if (need_infer_) {
       auto value_depend = abstract::GetValueDependArgIndices(cnode);
       if (!value_depend.empty()) {
@@ -371,7 +371,7 @@ bool BpropExpander::RunBprop(const CNodePtr &cnode, const std::vector<ValuePtr> 
   input_nodes_.reserve(cnode->size());
   (void)std::transform(
     cnode->weak_inputs().cbegin() + 1, cnode->weak_inputs().cend(), std::back_inserter(input_nodes_),
-    [&ir_builder](const AnfNodeWeakPtr &no) { return std::make_shared<Node>(no.lock(), ir_builder.get()); });
+    [&ir_builder](const AnfNodeWeakPtr &no) { return std::make_shared<IrNode>(no.lock(), ir_builder.get()); });
   mindspore::HashMap<std::string, ValuePtr> attrs;
   {
     PrimitiveReadLock read_lock(prim->shared_mutex());
@@ -548,7 +548,7 @@ class GraphModeBuilder : public IrBuilder {
     if (scope_ != nullptr) {
       cnode->set_scope(scope_);
     }
-    auto node = NewTraceNode(cnode->cast<AnfNodePtr>());
+    auto node = NewIrNode(cnode->cast<AnfNodePtr>());
     infer_->Infer(node);
     return node;
   }

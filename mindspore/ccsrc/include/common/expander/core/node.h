@@ -31,8 +31,9 @@ using DAttr = std::vector<std::pair<std::string, ValuePtr>>;
 
 enum class NodeType {
   kConstant = 0,
-  kParameter = 1,
-  kOutput = 2,
+  kInputParameter = 1,
+  kWeightParameter = 2,
+  kOutput = 3,
 };
 
 class COMMON_EXPORT Node : public std::enable_shared_from_this<Node> {
@@ -102,14 +103,16 @@ class COMMON_EXPORT IrNode : public Node {
   // whether use value
   bool is_used_value_{false};
 };
-using TraceNodePtr = std::shared_ptr<IrNode>;
+using IrNodePtr = std::shared_ptr<IrNode>;
 
 class COMMON_EXPORT FuncNode : public Node {
  public:
-  FuncNode(const ValuePtr &value, Emitter *emitter) : Node(emitter, value) {}
+  FuncNode(const ValuePtr &value, NodeType node_type, Emitter *emitter) : Node(emitter, value), node_type_(node_type) {}
   ValuePtr BuildValue() override;
   NodeType node_type() override;
+  void set_node_type(NodeType node_type) { node_type_ = node_type; }
   AbstractBasePtr abstract() override;
+  void set_abstract(const AbstractBasePtr &abs) { abstract_ = abs; }
   BaseShapePtr GetShape() override;
   TypePtr GetType() override;
   std::string ToString() const override { return value_->ToString(); }
@@ -118,7 +121,9 @@ class COMMON_EXPORT FuncNode : public Node {
 
  private:
   AbstractBasePtr abstract_;
+  NodeType node_type_;
 };
+using FuncNodePtr = std::shared_ptr<FuncNode>;
 }  // namespace expander
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_COMMON_EXPANDER_CORE_NODE_H_

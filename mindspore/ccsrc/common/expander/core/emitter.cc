@@ -546,7 +546,7 @@ NodePtr CtrlFlowBlock::IfThenElse(const NodePtr &cond, const BlockFunc &true_cas
 
   auto cnode = func_graph_->NewCNode({s->get()});
   cnode->set_abstract(out_abstract_);
-  auto node = emitter_->NewTraceNode(cnode->cast<AnfNodePtr>());
+  auto node = emitter_->NewIrNode(cnode->cast<AnfNodePtr>());
   return node;
 }
 
@@ -574,7 +574,7 @@ NodePtr CtrlFlowBlock::While(const NodePtr &cond, const BlockFunc &while_body_fu
   auto empty_body_fg_with_inputs = BuildSubgraphOfPartial(empty_body_func);
   for (size_t i = 1; i < empty_body_fg_with_inputs.size(); i++) {
     auto inp = empty_body_fg_with_inputs[i]->get();
-    empty_body_fg_with_inputs[i] = while_fg_emitter->NewTraceNode(replace_by_param(inp));
+    empty_body_fg_with_inputs[i] = while_fg_emitter->NewIrNode(replace_by_param(inp));
   }
   for (size_t i = 1; i < cond_cnode->size(); i++) {
     auto inp = cond_cnode->input(i);
@@ -587,7 +587,7 @@ NodePtr CtrlFlowBlock::While(const NodePtr &cond, const BlockFunc &while_body_fu
   auto body_with_inputs = BuildSubgraphOfPartial(while_body_func);
   auto body_fg = body_with_inputs[0]->get()->cast<ValueNodePtr>()->value()->cast<FuncGraphPtr>();
   for (size_t i = 1; i < body_with_inputs.size(); i++) {
-    body_with_inputs[i] = while_fg_emitter->NewTraceNode(replace_by_param(body_with_inputs[i]->get()));
+    body_with_inputs[i] = while_fg_emitter->NewIrNode(replace_by_param(body_with_inputs[i]->get()));
   }
   // replace the body's output to call the outside while-fg
   AnfNodePtrList body_while_fg_inputs{NewValueNode(while_fg)};
@@ -611,7 +611,7 @@ NodePtr CtrlFlowBlock::While(const NodePtr &cond, const BlockFunc &while_body_fu
         auto param_idx = iter - body_with_inputs.begin() - 1;
         body_while_fg_inputs.push_back(body_fg->parameters()[LongToSize(param_idx)]);
       } else {
-        body_with_inputs.push_back(while_fg_emitter->NewTraceNode(inp));
+        body_with_inputs.push_back(while_fg_emitter->NewIrNode(inp));
         auto p = body_fg->add_parameter();
         p->set_abstract(inp->abstract());
         body_while_fg_inputs.push_back(p);
@@ -631,7 +631,7 @@ NodePtr CtrlFlowBlock::While(const NodePtr &cond, const BlockFunc &while_body_fu
 
   auto main_cnode = func_graph_->NewCNode(main_while_fg_inputs);
   main_cnode->set_abstract(out_abstract_);
-  return emitter_->NewTraceNode(main_cnode);
+  return emitter_->NewIrNode(main_cnode);
 }
 
 NodePtr CtrlFlowBlock::BuildSubgraph(const BlockFunc &func) {
@@ -707,7 +707,7 @@ NodePtrList CtrlFlowBlock::BuildSubgraphOfPartial(const BlockFunc &func) {
         if (param == nullptr) {
           param = fg->add_parameter();
           param->set_abstract(inp->abstract());
-          (void)fg_with_inputs.emplace_back(emitter_->NewTraceNode(inp));
+          (void)fg_with_inputs.emplace_back(emitter_->NewIrNode(inp));
         }
         node->set_input(i, param);
       }
@@ -735,13 +735,13 @@ NodePtr IrEmitter::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) {
   if (scope_ != nullptr) {
     cnode->set_scope(scope_);
   }
-  auto node = NewTraceNode(cnode->cast<AnfNodePtr>());
+  auto node = NewIrNode(cnode->cast<AnfNodePtr>());
   infer_->Infer(node);
   return node;
 }
 
 NodePtr IrEmitter::EmitValue(const ValuePtr &value) {
-  auto node = NewTraceNode(NewValueNode(value));
+  auto node = NewIrNode(NewValueNode(value));
   infer_->Infer(node);
   return node;
 }

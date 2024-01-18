@@ -33,9 +33,9 @@ namespace expander {
 namespace bprop {
 class BpropBuilder;
 
-using BpropIRBuilderFunc = std::function<NodePtrList(BpropBuilder *)>;
+using BpropBuilderFunc = std::function<NodePtrList(BpropBuilder *)>;
 struct COMMON_EXPORT BpropHandle {
-  BpropIRBuilderFunc func;
+  BpropBuilderFunc func;
   mindspore::HashSet<size_t> unused_inputs;
 };
 
@@ -43,6 +43,7 @@ class COMMON_EXPORT BpropBuilder : public Emitter {
  public:
   BpropBuilder(const std::string &name, const ExpanderInferPtr &infer)
       : Emitter(infer, std::make_shared<Scope>(std::string("Bprop/grad") + name)), name_(name) {}
+  BpropBuilder();
 
   /// \brief Run irbuilder to generate a graph
   NodePtrList Run(const NodePtrList &inputs, const mindspore::HashMap<std::string, ValuePtr> &attrs,
@@ -166,7 +167,7 @@ class COMMON_EXPORT BpropIRBuilderFactory {
     return (iter == registry_.end()) ? nullptr : &(iter->second);
   }
 
-  void RegBuilder(const std::string &name, const BpropIRBuilderFunc &func) { registry_[name].func = func; }
+  void RegBuilder(const std::string &name, const BpropBuilderFunc &func) { registry_[name].func = func; }
   void RegUnusedInputs(const std::string &name, const mindspore::HashSet<size_t> &unused) {
     registry_[name].unused_inputs = unused;
   }
@@ -179,7 +180,7 @@ class BpropIRBuilderRegHelper {
  public:
   explicit BpropIRBuilderRegHelper(const std::string &name) : name_(name) {}
   ~BpropIRBuilderRegHelper() = default;
-  const BpropIRBuilderRegHelper &SetBody(const BpropIRBuilderFunc &func) const {
+  const BpropIRBuilderRegHelper &SetBody(const BpropBuilderFunc &func) const {
     BpropIRBuilderFactory::Instance().RegBuilder(name_, func);
     return *this;
   }

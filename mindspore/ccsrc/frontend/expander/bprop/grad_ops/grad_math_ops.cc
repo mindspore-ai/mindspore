@@ -118,8 +118,7 @@ ShapeVector MatrixDeterminantInferFunc(const ShapeArray &inputs, const HashSet<s
   return {IsDynamicRank(new_shape) ? -1 : SizeToLong(new_shape.size()) + 2};
 }
 
-NodePtrList BpropAddcCommon(BpropBuilder *ib, const std::string &op_name,
-                            const std::unordered_set<TypeId> &type_list) {
+NodePtrList BpropAddcCommon(BpropBuilder *ib, const std::string &op_name, const std::unordered_set<TypeId> &type_list) {
   auto input_data = ib->GetInput(kIndex0);
   auto x1 = ib->GetInput(kIndex1);
   auto x2 = ib->GetInput(kIndex2);
@@ -1800,7 +1799,7 @@ REG_BPROP_BUILDER("Lerp").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
     auto val = GetValue<float>(v);
     sub_w = ib->Tensor(1.0 - val, dout_type);
     mul_w = ib->Tensor(val, dout_type);
-  } else if (weight->node_type() == NodeType::kParameter) {
+  } else if (weight->node_type() == NodeType::kWeightParameter || weight->node_type() == NodeType::kInputParameter) {
     auto v = weight->BuildValue();
     MS_EXCEPTION_IF_NULL(v);
     if (v->isa<Scalar>()) {

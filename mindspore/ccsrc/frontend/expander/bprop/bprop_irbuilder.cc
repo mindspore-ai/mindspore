@@ -33,7 +33,7 @@ namespace mindspore {
 namespace expander {
 namespace bprop {
 NodePtrList BpropBuilder::Run(const NodePtrList &inputs, const mindspore::HashMap<std::string, ValuePtr> &attrs,
-                                const BpropHandle &handle, const std::string &instance_name) {
+                              const BpropHandle &handle, const std::string &instance_name) {
   inputs_ptr_ = &inputs;
   attrs_ptr_ = &attrs;
   instance_name_ = instance_name;
@@ -240,7 +240,7 @@ NodePtr BpropBuilder::SequenceSetItem(const NodePtr &node, const NodePtr &index,
 }
 
 NodePtr BpropBuilder::SequenceSlice(const NodePtr &node, const NodePtr &start, const NodePtr &stop,
-                                      const NodePtr &step) {
+                                    const NodePtr &step) {
   return Emit(kSequenceSliceOpName, {node, start, stop, step});
 }
 
@@ -266,13 +266,13 @@ NodePtr IrBuilder::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) {
   if (scope_ != nullptr) {
     cnode->set_scope(scope_);
   }
-  auto node = NewTraceNode(cnode->cast<AnfNodePtr>());
+  auto node = NewIrNode(cnode->cast<AnfNodePtr>());
   infer_->Infer(node);
   return node;
 }
 
 NodePtr IrBuilder::EmitValue(const ValuePtr &value) {
-  auto node = NewTraceNode(NewValueNode(value));
+  auto node = NewIrNode(NewValueNode(value));
   infer_->Infer(node);
   return node;
 }

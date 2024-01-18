@@ -52,14 +52,16 @@ class COMMON_EXPORT Emitter {
   /// \brief Emit a ValueNode
   virtual NodePtr EmitValue(const ValuePtr &value);
 
-  NodePtr NewTraceNode(const AnfNodePtr &anfnode) { return std::make_shared<IrNode>(anfnode, this); }
-  NodePtr NewExecNode(const ValuePtr &value) { return std::make_shared<FuncNode>(value, this); }
-  NodePtr MakeTuple(const NodePtrList &inputs) { return EmitOp(prim::kPrimMakeTuple, inputs); }
+  NodePtr NewIrNode(const AnfNodePtr &anfnode) { return std::make_shared<IrNode>(anfnode, this); }
+  FuncNodePtr NewFuncNode(const ValuePtr &value, NodeType node_type) {
+    return std::make_shared<FuncNode>(value, node_type, this);
+  }
+  virtual NodePtr MakeTuple(const NodePtrList &inputs) { return EmitOp(prim::kPrimMakeTuple, inputs); }
   NodePtr MakeList(const NodePtrList &inputs) { return EmitOp(prim::kPrimMakeList, inputs); }
-  NodePtr TupleGetItem(const NodePtr &input, size_t i) {
+  virtual NodePtr TupleGetItem(const NodePtr &input, size_t i) {
     return Emit(mindspore::kTupleGetItemOpName, {input, Value(static_cast<int64_t>(i))});
   }
-  NodePtr TupleGetItem(const NodePtr &input, const NodePtr &i) { return Emit(kTupleGetItemOpName, {input, i}); }
+  virtual NodePtr TupleGetItem(const NodePtr &input, const NodePtr &i) { return Emit(kTupleGetItemOpName, {input, i}); }
   NodePtr Len(const NodePtr &input) { return Emit(kSequenceLenOpName, {input}); }
   NodePtr ScalarAdd(const NodePtr &lhs, const NodePtr &rhs) { return Emit(ops::kNameScalarAdd, {lhs, rhs}); }
   NodePtr ScalarSub(const NodePtr &lhs, const NodePtr &rhs) { return Emit(ops::kNameScalarSub, {lhs, rhs}); }
