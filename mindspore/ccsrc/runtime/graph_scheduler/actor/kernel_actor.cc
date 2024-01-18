@@ -53,7 +53,6 @@ void KernelActor::Init() {
   MS_EXCEPTION_IF_NULL(kernel_info_);
   kernel_mod_ = kernel_info_->MutableKernelMod();
   MS_EXCEPTION_IF_NULL(kernel_mod_);
-  is_dynamic_shape_ = common::AnfAlgo::IsDynamicShape(kernel_) || common::AnfAlgo::IsDynamicSequence(kernel_);
   is_dynamic_value_ = common::AnfAlgo::IsDynamicValue(kernel_);
   if (is_dynamic_shape_ && IsSomasEnable(somas_info_)) {
     MS_LOG(EXCEPTION) << "Not support the somas for the dynamic shape: " << GetAID().Name();
@@ -188,50 +187,16 @@ void KernelActor::Run(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
 
   FetchInputDeviceTensor(context);
-  if (is_dynamic_type_) {
-    try {
-      // For dynamic shape case, need Re-InferShape and Resize kernel mod.
-      InferShapeTypeAndResize();
-    } catch (const std::exception &e) {
-      if (strategy_ == GraphExecutionStrategy::kPipeline) {
-        MsException::Instance().SetException();
-      }
-      std::string error_info =
-        "#umsg#Kernel error:#umsg#InferShapeTypeAndResize for kernel exception: " + kernel_->fullname_with_scope();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
-    }
-  } else if (is_dynamic_shape_) {
-    uint64_t start_time = 0;
-    PROFILER_START(start_time);
 
-    try {
-      // For dynamic shape case, need Re-InferShape and Resize kernel mod.
-      InferShapeAndResize();
-    } catch (const std::exception &e) {
-      if (strategy_ == GraphExecutionStrategy::kPipeline) {
-        MsException::Instance().SetException();
-      }
-      std::string error_info =
-        "#umsg#Kernel error:#umsg#InferShapeAndResize for kernel exception: " + kernel_->fullname_with_scope();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
+  try {
+    InferAndResize();
+  } catch (const std::exception &e) {
+    if (strategy_ == GraphExecutionStrategy::kPipeline) {
+      MsException::Instance().SetException();
     }
-
-    PROFILER_END(start_time, ProfilerModule::kKernel, ProfilerEvent::kKernelInferAndResize, GetAID().Name(), false);
-  } else if (is_dynamic_value_) {
-    try {
-      // For dynamic value case, only need Resize kernel mod, the shape already inferred in compile phase.
-      int ret = kernel_mod_->Resize(input_kernel_tensors_, output_kernel_tensors_);
-      if (ret != kernel::KRET_OK) {
-        MS_LOG(EXCEPTION) << "Resize failed for kernel " << kernel_->fullname_with_scope();
-      }
-    } catch (const std::exception &e) {
-      if (strategy_ == GraphExecutionStrategy::kPipeline) {
-        MsException::Instance().SetException();
-      }
-      std::string error_info =
-        "#umsg#Kernel error:#umsg#Resize KernelMod for kernel exception: " + kernel_->fullname_with_scope();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
-    }
+    std::string error_info = "#umsg#Kernel error:#umsg#Infer shape and Resize kernel mod exception for kernel: " +
+                             kernel_->fullname_with_scope();
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
   }
 
   FetchOutputDeviceTensor(context);
@@ -641,6 +606,34 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
   }
 }
 
+void KernelActor::UpdateInputDeviceTensor(const OpData<DeviceTensor> *input_data,
+                                          OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(input_data);
+  MS_EXCEPTION_IF_NULL(context);
+  size_t input_index = IntToSize(input_data->index_);
+  if (input_index >= input_device_tensors_.size()) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(
+      strategy_, (*context),
+      "The input index:" + std::to_string(input_index) + " is out of vector size:" +
+        std::to_string(input_device_tensors_.size()) + " for kernel:" + kernel_->fullname_with_scope());
+  }
+
+  // Update the input device tensor.
+  if (input_device_tensors_[input_index] != input_data->data_) {
+    input_device_tensors_[input_index] = input_data->data_;
+    memory_free_list_[input_index] = input_data->data_;
+  }
+
+  // Update the input kernel tensor.
+  const auto &kernel_tensor = input_device_tensors_[input_index]->kernel_tensor();
+  if (input_kernel_tensors_[input_index] != kernel_tensor.get()) {
+    input_kernel_tensors_[input_index] = kernel_tensor.get();
+    if (is_dynamic_shape_) {
+      input_kernel_tensors_for_infer_[input_index] = kernel_tensor;
+    }
+  }
+}
+
 void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   if (device_contexts_.empty() || device_contexts_[0] == nullptr) {
@@ -652,25 +645,7 @@ void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context)
   const auto &data_iter = input_op_datas_.find(context->sequential_num_);
   if (data_iter != input_op_datas_.end()) {
     for (auto &input_data : data_iter->second) {
-      MS_EXCEPTION_IF_NULL(input_data);
-      size_t input_index = IntToSize(input_data->index_);
-      if (input_index >= input_device_tensors_.size()) {
-        SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), "The input index is out of range.");
-      }
-
-      if (input_device_tensors_[input_index] != input_data->data_) {
-        input_device_tensors_[input_index] = input_data->data_;
-        memory_free_list_[input_index] = input_data->data_;
-      }
-
-      // Collect the input kernel tensor.
-      const auto &kernel_tensor = input_device_tensors_[input_index]->kernel_tensor();
-      if (input_kernel_tensors_[input_index] != kernel_tensor.get()) {
-        input_kernel_tensors_[input_index] = kernel_tensor.get();
-        if (is_dynamic_shape_) {
-          input_kernel_tensors_for_infer_[input_index] = kernel_tensor;
-        }
-      }
+      UpdateInputDeviceTensor(input_data, context);
       CopyInputDeviceTensor(input_data, context);
     }
   }
@@ -758,7 +733,33 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
   }
 }
 
-void KernelActor::InferShapeTypeAndResize() {
+void KernelActor::InferAndResize() {
+  if (!enable_async_infer_) {
+    if (is_dynamic_type_) {
+      ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelInferAndResize, GetAID().Name());
+      // For dynamic shape case, need Re-InferShape and Resize kernel mod.
+      InferShapeAndType();
+      ResizeKernelMod();
+    } else if (is_dynamic_shape_) {
+      ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelInferAndResize, GetAID().Name());
+      // For dynamic shape case, need Re-InferShape and Resize kernel mod.
+      InferShape();
+      ResizeKernelMod();
+    } else if (is_dynamic_value_) {
+      ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelResize, GetAID().Name());
+      ResizeKernelMod();
+    }
+
+    return;
+  }
+
+  if (is_dynamic_value_ && !is_dynamic_shape_ && !is_dynamic_type_) {
+    ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelResize, GetAID().Name());
+    ResizeKernelMod();
+  }
+}
+
+void KernelActor::InferShapeAndType() {
   MS_LOG(DEBUG) << "Begin InferShapeAnyType for kernel: " << kernel_->fullname_with_scope()
                 << ", inputs: " << input_kernel_tensors_for_infer_;
   // 1. Infer operator's output's Shape and Type.
@@ -769,18 +770,9 @@ void KernelActor::InferShapeTypeAndResize() {
   // 2. Update shape of output kernel tensor.
   opt::dynamic_shape::UpdateKernelTensorType(abstract->GetType(), output_kernel_tensors_);
   opt::dynamic_shape::UpdateKernelTensorShape(abstract->GetShape(), output_kernel_tensors_);
-
-  // 3. Resize kernel mod.
-  MS_LOG(DEBUG) << "Begin Resize kernel mod for kernel: " << kernel_->fullname_with_scope();
-  int ret = kernel_mod_->Resize(input_kernel_tensors_, output_kernel_tensors_);
-  MS_LOG(DEBUG) << "End Resize kernel mod for kernel: " << kernel_->fullname_with_scope()
-                << ", the output size list: " << kernel_mod_->GetOutputSizeList();
-  if (ret != kernel::KRET_OK) {
-    MS_LOG(EXCEPTION) << "Resize failed for kernel: " << kernel_->fullname_with_scope();
-  }
 }
 
-void KernelActor::InferShapeAndResize() {
+void KernelActor::InferShape() {
   MS_LOG(DEBUG) << "Begin InferShape for kernel: " << kernel_->fullname_with_scope()
                 << ", inputs: " << input_kernel_tensors_for_infer_;
   // 1. Infer operator's output's Shape.
@@ -791,8 +783,9 @@ void KernelActor::InferShapeAndResize() {
 
   // 2. Update shape of output kernel tensor.
   opt::dynamic_shape::UpdateKernelTensorShape(base_shape, output_kernel_tensors_);
+}
 
-  // 3. Resize kernel mod.
+void KernelActor::ResizeKernelMod() {
   MS_LOG(DEBUG) << "Begin Resize kernel mod for kernel: " << kernel_->fullname_with_scope();
   int ret = kernel_mod_->Resize(input_kernel_tensors_, output_kernel_tensors_);
   MS_LOG(DEBUG) << "End Resize kernel mod for kernel: " << kernel_->fullname_with_scope()

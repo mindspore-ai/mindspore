@@ -80,6 +80,8 @@ const char kCopyActorNameSignFromStore[] = "_device_tensor_store:";
 const char kMemSwapInActorNameSuffix[] = "_MemorySwapInActor";
 const char kMemSwapOutActorNameSuffix[] = "_MemorySwapOutActor";
 const char kMemSwapActorNamePrefix[] = "MemorySwapActor_";
+const char kKernelInferActorNamePrefix[] = "KernelInferActor_";
+const char kKernelResizeActorNamePrefix[] = "KernelResizeActor_";
 
 enum class KernelTransformType {
   kUnknown,
@@ -87,6 +89,8 @@ enum class KernelTransformType {
   kDeviceDataSourceActor,
   kHostDataSourceActor,
   kKernelActor,
+  kKernelInferActor,
+  kKernelResizeActor,
   kCustomActor,
   // Super kernel actor represents the sink executing of graph which is the combination of kernels.
   kSuperKernelActor,
@@ -292,6 +296,9 @@ bool IsMemoryActor(KernelTransformType actor_type);
 
 // Judge whether skip the launch by the env MS_KERNEL_LAUNCH_SKIP.
 bool IsSkippedLaunch(const CNodePtr &kernel, const KernelGraphPtr &kernel_graph);
+
+// Whether enable asynchronously infer shape and resize kernel mod by KernelInferActor and KernelResizeActor.
+bool EnableAsyncInfer();
 
 // Copy data from src_device_tensor to dst_device_tensor.
 bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor);

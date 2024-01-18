@@ -76,6 +76,14 @@ std::vector<AbstractActorPtr> SchedulerHelper::CollectActors(const ActorSet *act
     MS_EXCEPTION_IF_NULL(kernel_actor);
     (void)actors.emplace_back(static_cast<AbstractActorPtr>(kernel_actor));
   }
+  for (auto &kernel_infer_actor : actor_set->kernel_infer_actors_) {
+    MS_EXCEPTION_IF_NULL(kernel_infer_actor);
+    (void)actors.emplace_back(static_cast<AbstractActorPtr>(kernel_infer_actor));
+  }
+  for (auto &kernel_resize_actor : actor_set->kernel_resize_actors_) {
+    MS_EXCEPTION_IF_NULL(kernel_resize_actor);
+    (void)actors.emplace_back(static_cast<AbstractActorPtr>(kernel_resize_actor));
+  }
   for (auto &super_kernel_actor : actor_set->super_kernel_actors_) {
     MS_EXCEPTION_IF_NULL(super_kernel_actor);
     (void)actors.emplace_back(static_cast<AbstractActorPtr>(super_kernel_actor));
@@ -1002,6 +1010,8 @@ void SchedulerHelper::DumpActorSet(const ActorSet *actor_set, std::ofstream &ofs
   DumpDataPrepareActor(actor_set->data_prepare_actor_, ofs);
   DumpDSActors(actor_set->data_source_actors_, ofs);
   DumpKernelActors(actor_set->kernel_actors_, ofs);
+  DumpKernelInferActors(actor_set->kernel_infer_actors_, ofs);
+  DumpKernelResizeActors(actor_set->kernel_resize_actors_, ofs);
   DumpSuperKernelActors(actor_set->super_kernel_actors_, ofs);
   DumpAnyTypeKernelActors(actor_set->any_type_kernel_actors_, ofs);
   // The on input kernel actors are taken over by control actor in the control flow scene.
