@@ -3295,24 +3295,33 @@ OperatorPtr DfGraphConvertor::Convert(const AnfNodePtr node) {
 
 void DfGraphConvertor::ConvertTopK(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  MS_LOG(INFO) << "Convert TopK second input's type from int64 to int32.";
-  auto value_ptr = node->input(2)->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_ptr);
-  auto input_value = value_ptr->value();
-  MS_EXCEPTION_IF_NULL(input_value);
-  if (input_value->isa<tensor::Tensor>()) {
-    // tensor case is already converted to int32 in TransDependValueToInt32
+  auto value_ptr = node->input(kIndex2)->cast<ValueNodePtr>();
+  if (value_ptr == nullptr) {
+    // input is not const valuenode, return
     return;
   }
+  MS_LOG(INFO) << "Convert TopK second input's type from int64 to int32.";
+  auto input_value = value_ptr->value();
+  MS_EXCEPTION_IF_NULL(input_value);
   std::ostringstream ss;
   ss << "op" << value_ptr.get();
   op_draw_name_[value_ptr.get()] = ss.str();
   compute_sout_ << ss.str() << "[label= \"" << value_ptr->value()->ToString() << "\" shape=ellipse]" << endl;
-  auto int64_value = GetValue<int64_t>(input_value);
+  int32_t k_value;
+  if (input_value->isa<tensor::Tensor>()) {
+    auto input_tensor = input_value->cast<tensor::TensorPtr>();
+    if (input_tensor->data_type() == kNumberTypeInt32) {
+      k_value = *static_cast<int32_t *>(input_tensor->data_c());
+    } else {
+      k_value = LongToInt(*static_cast<int64_t *>(input_tensor->data_c()));
+    }
+  } else {
+    k_value = LongToInt(GetValue<int64_t>(input_value));
+  }
   OpAdapterPtr adpt = FindAdapter(value_ptr, training_);
   MS_EXCEPTION_IF_NULL(adpt);
   auto op = adpt->generate(value_ptr);
-  (void)adpt->setAttr(op, "value", static_cast<int32_t>(int64_value));
+  (void)adpt->setAttr(op, "value", k_value);
   op_cache_[value_ptr.get()] = op;
 }
 
