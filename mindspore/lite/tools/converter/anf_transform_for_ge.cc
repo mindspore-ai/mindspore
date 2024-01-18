@@ -62,6 +62,9 @@ void EnableMatMulAllReduceFusion(std::vector<opt::PassPtr> *fusions) {
 
 void EnableFlashAttentionFusion(std::vector<opt::PassPtr> *fusions) {
   fusions->push_back(std::make_shared<opt::FlashAttentionFusion>());
+}
+
+void EnableFlashAttentionAntiquantFusion(std::vector<opt::PassPtr> *fusions) {
   fusions->push_back(std::make_shared<opt::FlashAttentionAntiquantFusion>());
 }
 
@@ -79,7 +82,9 @@ int AnfTransformForGe::RunGeFusionPass(const FuncGraphPtr &old_graph, const std:
   std::map<std::string, std::function<void(std::vector<opt::PassPtr> *)>> fusion_mappings = {
     {kFusionNameMatMulAllReduce, std::function<void(std::vector<opt::PassPtr> *)>(EnableMatMulAllReduceFusion)},
     {kFusionNameKVCache, std::function<void(std::vector<opt::PassPtr> *)>(EnableKVCacheFusion)},
-    {kFusionNameFlashAttention, std::function<void(std::vector<opt::PassPtr> *)>(EnableFlashAttentionFusion)}};
+    {kFusionNameFlashAttention, std::function<void(std::vector<opt::PassPtr> *)>(EnableFlashAttentionFusion)},
+    {kFusionNameFlashAttentionAntiquant,
+     std::function<void(std::vector<opt::PassPtr> *)>(EnableFlashAttentionAntiquantFusion)}};
 
   auto plugin_custom_ops = param->ascendGeOptionCfg.plugin_custom_ops;
   MS_LOG(INFO) << "plugin_custom_ops: " << plugin_custom_ops;
