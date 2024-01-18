@@ -458,6 +458,31 @@ class Node:
         return SymbolTree(subtree)
 
     def get_kwargs(self) -> {str: ScopedValue}:
+        """
+        Get keyword arguments of current node.
+
+        Returns:
+            A dict of keyword arguments, where key is of type str, and value is of type ``ScopedValue`` .
+
+        Examples:
+            >>> from mindspore.rewrite import SymbolTree
+            >>> from mindspore import nn
+            >>>
+            >>> class ReLUNet(nn.Cell):
+            >>>     def __init__(self):
+            >>>         super().__init__()
+            >>>         self.relu = nn.ReLU()
+            >>>
+            >>>     def construct(self, input):
+            >>>         output = self.relu(x=input)
+            >>>         return output
+            >>>
+            >>> net = ReLUNet()
+            >>> stree = SymbolTree.create(net)
+            >>> node = stree.get_node("relu")
+            >>> print(node.get_kwargs())
+            {'x': input}
+        """
         return self._node.get_kwargs()
 
     def set_attribute(self, key: str, value):

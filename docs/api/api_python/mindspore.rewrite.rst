@@ -88,6 +88,13 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
         返回：
             当前节点对应的代码语句里调用的对象类型。
 
+    .. py:method:: mindspore.rewrite.Node.get_kwargs()
+
+        获取当前节点的关键字参数列表。
+
+        返回：
+            一个包含关键字参数的字典，key的类型为str，value的类型为 ``ScopedValue`` 。
+
     .. py:method:: mindspore.rewrite.Node.get_name()
 
         获取当前节点的名称。当节点被插入到SymbolTree时，节点的名称在SymbolTree中应该是唯一的。
