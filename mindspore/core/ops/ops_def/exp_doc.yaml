@@ -9,7 +9,7 @@ exp:
             input (Tensor): The input tensor. :math:`x` in the following formula.
 
         Returns:
-            Tensor, has the same shape and dtype as the `input`.
+            Tensor, has the same shape as the `input`.
 
         Raises:
             TypeError: If `input` is not a Tensor.
