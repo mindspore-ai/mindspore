@@ -1,0 +1,18 @@
+#operator apply_rotary_pos_emb
+abs:
+  args:
+    query:
+      dtype: tensor
+    key:
+      dtype: tensor
+    cos:
+      dtype: tensor
+    sin:
+      dtype: tensor
+    seqLen:
+      dtype: tensor
+  returns:
+    query_embed:
+      dtype: tensor
+    key_embed:
+      dtype: tensor

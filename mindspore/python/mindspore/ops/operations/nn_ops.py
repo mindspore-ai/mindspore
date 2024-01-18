@@ -10169,3 +10169,13 @@ class RmsNorm(Primitive):
         """Initialize Dense."""
         validator.check_value_type("epsilon", epsilon, [float], self.name)
         self.init_prim_io_names(inputs=['x', 'gamma'], outputs=["y", "rstd"])
+
+class ApplyRotaryPosEmb(Primitive):
+    r"""
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+    """
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=["query", "key", "cos", "sin", "seqLen"],
+                                outputs=["query_embed", "key_embed"])
