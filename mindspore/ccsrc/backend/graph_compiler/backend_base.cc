@@ -701,7 +701,7 @@ void MindRTBackendBase::CompileSubGraph(const FuncGraphPtr &func_graph, device::
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(manager);
-  const auto &sub_graphs = manager->func_graphs();
+  const auto &sub_graphs = manager->func_graphs_used_total(root_graph);
   std::vector<FuncGraphPtr> cand_graph(sub_graphs.begin(), sub_graphs.end());
   std::sort(cand_graph.begin(), cand_graph.end(),
             [](const FuncGraphPtr &a, const FuncGraphPtr &b) { return a->ToString() < b->ToString(); });
