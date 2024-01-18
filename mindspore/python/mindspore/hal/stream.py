@@ -32,23 +32,6 @@ class Stream(Stream_):
         priority (int, optional): priority of the stream, lower numbers represent higher priorities.
             By default, streams have priority ``0``.
         kwargs (dict): keyword arguments.
-
-    Examples:
-        >>> import mindspore as ms
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> s1 = ms.hal.Stream()
-        >>> s2 = ms.hal.Stream()
-        >>> a = Tensor(np.ones([1, 2]), ms.float32)
-        >>> b = Tensor(np.ones([2, 2]), ms.float32)
-        >>> with ms.hal.StreamCtx(s1):
-        >>>     c = ops.matmul(a, b)
-        >>> with ms.hal.StreamCtx(s2):
-        >>>     s2.wait_stream(s1)
-        >>>     d = ops.matmul(c, b)
-        >>> ms.hal.synchronize()
-        >>> print(d)
-        [[4. 4.]]
     """
     def __init__(self, priority=0, **kwargs):
         if 'stream_id' in kwargs:
@@ -106,6 +89,25 @@ class Stream(Stream_):
 
         Raises:
             TypeError: If 'event' is not a :class:`mindspore.hal.Event`.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> a = Tensor(np.ones([3, 3]), ms.float32)
+            >>> b = Tensor(np.ones([3, 3]), ms.float32)
+            >>> s1 = ms.hal.Stream()
+            >>> with ms.hal.StreamCtx(s1):
+            >>>     c = a + b
+            >>>     event = s1.record_event()
+            >>>     d = a * b
+            >>> cur_stream = ms.hal.current_stream()
+            >>> cur_stream.wait_event(event)
+            >>> e = c + 3
+            >>> print(e)
+            [[5. 5. 5.]
+            [5. 5. 5.]
+            [5. 5. 5.]]
         """
         if not isinstance(event, Event):
             raise TypeError(f"For 'wait_event', the argument 'event' should be Event,"
@@ -124,6 +126,23 @@ class Stream(Stream_):
 
         Raises:
             TypeError: If 'stream' is not a :class:`mindspore.hal.Stream`.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> s1 = ms.hal.Stream()
+            >>> s2 = ms.hal.Stream()
+            >>> a = Tensor(np.ones([1, 2]), ms.float32)
+            >>> b = Tensor(np.ones([2, 2]), ms.float32)
+            >>> with ms.hal.StreamCtx(s1):
+            >>>     c = ops.matmul(a, b)
+            >>> with ms.hal.StreamCtx(s2):
+            >>>     s2.wait_stream(s1)
+            >>>     d = ops.matmul(c, b)
+            >>> ms.hal.synchronize()
+            >>> print(d)
+            [[4. 4.]]
         """
         if not isinstance(stream, Stream):
             raise TypeError(f"For 'wait_stream', the argument 'stream' should be Stream,"
@@ -133,6 +152,18 @@ class Stream(Stream_):
     def synchronize(self):
         r"""
         Wait for all the kernels in this stream to complete.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> a = Tensor(np.ones([1024, 2048]), ms.float32)
+            >>> b = Tensor(np.ones([2048, 4096]), ms.float32)
+            >>> s1 = ms.hal.Stream()
+            >>> with ms.hal.StreamCtx(s1):
+            >>>     ops.matmul(a, b)
+            >>> s1.synchronize()
+            >>> assert s1.query()
         """
         # pylint: disable=useless-super-delegation
         super().synchronize()
@@ -173,6 +204,18 @@ class Stream(Stream_):
 def synchronize():
     r"""
     Synchronize all streams on current device.(Each MindSpore process only occupies one device)
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> a = Tensor(np.ones([1024, 2048]), ms.float32)
+        >>> b = Tensor(np.ones([2048, 4096]), ms.float32)
+        >>> s1 = ms.hal.Stream()
+        >>> with ms.hal.StreamCtx(s1):
+        >>>     ops.matmul(a, b)
+        >>> ms.hal.synchronize()
+        >>> assert s1.query()
     """
     synchronize_()
 
@@ -209,6 +252,14 @@ def current_stream():
 
     Returns:
         stream (Stream): current stream.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> cur_stream = ms.hal.current_stream()
+        >>> assert cur_stream == ms.hal.default_stream()
+        >>> s1 = ms.hal.Stream()
+        >>> ms.hal.set_cur_stream(s1)
+        >>> assert ms.hal.current_stream() == s1
     """
     return Stream(current_stream_())
 
@@ -218,6 +269,14 @@ def default_stream():
 
     Returns:
         stream (Stream): default stream.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> cur_stream = ms.hal.current_stream()
+        >>> assert cur_stream == ms.hal.default_stream()
+        >>> s1 = ms.hal.Stream()
+        >>> ms.hal.set_cur_stream(s1)
+        >>> assert ms.hal.default_stream() != s1
     """
     return Stream(default_stream_())
 
@@ -233,6 +292,18 @@ class StreamCtx():
 
     Raises:
         TypeError: If 'stream' is neither a :class:`mindspore.hal.Stream` nor a ``None``.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> a = Tensor(np.ones([1024, 2048]), ms.float32)
+        >>> b = Tensor(np.ones([2048, 4096]), ms.float32)
+        >>> s1 = ms.hal.Stream()
+        >>> with ms.hal.StreamCtx(s1):
+        >>>     ops.matmul(a, b)
+        >>> ms.hal.synchronize()
+        >>> assert s1.query()
     """
     def __init__(self, ctx_stream):
         if ctx_stream is not None and not isinstance(ctx_stream, Stream):

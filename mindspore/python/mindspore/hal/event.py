@@ -120,6 +120,20 @@ class Event(Event_):
 
         Returns:
             A boolean indicating if all work currently captured by event has completed.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> a = Tensor(np.ones([1024, 2048]), ms.float32)
+            >>> b = Tensor(np.ones([2048, 4096]), ms.float32)
+            >>> s1 = ms.hal.Stream()
+            >>> with ms.hal.StreamCtx(s1):
+            >>>     ops.matmul(a, b)
+            >>>     ev = s1.record_event()
+            >>>     assert not ev.query()
+            >>> s1.synchronize()
+            >>> assert ev.query()
         """
         # pylint: disable=useless-super-delegation
         return super().query()
