@@ -182,6 +182,7 @@ GVAR_DEF(PrimitivePtr, kPrimFlashAttentionScoreGrad, std::make_shared<Primitive>
 GVAR_DEF(PrimitivePtr, kPrimPagedAttention, std::make_shared<Primitive>(kPagedAttentionOpName));
 GVAR_DEF(PrimitivePtr, kPrimPagedAttentionMask, std::make_shared<Primitive>(kPagedAttentionMaskOpName));
 GVAR_DEF(PrimitivePtr, kPrimReshapeAndCache, std::make_shared<Primitive>(kReshapeAndCacheOpName));
+GVAR_DEF(PrimitivePtr, kPrimApplyRotaryPosEmb, std::make_shared<Primitive>(KApplyRotaryPosEmbOpName));
 }  // namespace prim
 }  // namespace mindspore
 

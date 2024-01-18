@@ -10322,3 +10322,13 @@ class ReshapeAndCache(Primitive):
             inputs=['key', 'value', 'key_cache', 'value_cache', 'slot_mapping'],
             outputs=['key_out'])
         self.add_prim_attr('side_effect_mem', True)
+
+class ApplyRotaryPosEmb(Primitive):
+    r"""
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+    """
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=["query", "key", "cos", "sin", "seqLen"],
+                                outputs=["query_embed", "key_embed"])
