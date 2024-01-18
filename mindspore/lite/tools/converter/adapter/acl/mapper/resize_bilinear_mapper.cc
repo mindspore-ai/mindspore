@@ -16,6 +16,7 @@
 
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "tools/converter/adapter/acl/mapper/resize_bilinear_mapper.h"
+#include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "ops/op_name.h"
 
 namespace mindspore {
@@ -47,6 +48,20 @@ STATUS ResizeBilinearMapper::Mapper(const CNodePtr &cnode) {
     return RET_ERROR;
   }
   src_prim->AddAttr(ops::kSize, MakeValue(size_value_int32));
+
+  auto inputs = cnode->inputs();
+  // convert "size" attr to input, and add it to inputs list
+  ParameterPtr value_param =
+    opt::BuildIntVecParameterNode(cnode->func_graph(), size_value_int32, cnode->fullname_with_scope() + "_size_value");
+  inputs.push_back(value_param);
+  cnode->set_inputs(inputs);
+
+  // replace ResizeBilinear with ResizeBilinearV2
+  PrimitivePtr dst_prim = std::make_shared<acl::ResizeBilinearV2>();
+  CHECK_NULL_RETURN(dst_prim);
+  dst_prim->SetAttrs(src_prim->attrs());
+  value_node->set_value(dst_prim);
+
   return RET_OK;
 }
 
