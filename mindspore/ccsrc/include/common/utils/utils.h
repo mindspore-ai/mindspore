@@ -432,9 +432,6 @@ const size_t kCubeSize_C04 = 4;
 const size_t kNiSize = 16;
 const size_t kMemAlignSize = 512;
 const size_t kBNChannelMultipleFactor = 4;
-const int kParameterDataTensorMask = 0;
-const int kParameterWeightTensorMask = 1;
-const int kValueNodeMask = 2;
 constexpr auto kNCHWShapeSize = 4;
 const size_t kMaxTensorIndexDimNums = 8;
 
@@ -640,6 +637,18 @@ constexpr auto kRankID = "RANK_ID";
 
 // User data key for pyexecute.
 constexpr auto kSyncUserDataHandler = "sync_user_data_handler";
+
+// For expander and pynative grad graph
+enum class InputType {
+  // Scala or Constant tensor, no need to grad
+  kConstant = 0,
+  // Weight parameter tensor
+  kParameter,
+  // Net input tensor
+  kInput,
+  // Other op output tensor
+  kOpOutput,
+};
 
 COMMON_EXPORT bool IsOneOfCustomAkgType(const std::string &name);
 COMMON_EXPORT bool IsOneOfOperator(const std::string &name);

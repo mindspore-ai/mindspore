@@ -53,8 +53,8 @@ class COMMON_EXPORT Emitter {
   virtual NodePtr EmitValue(const ValuePtr &value);
 
   NodePtr NewIrNode(const AnfNodePtr &anfnode) { return std::make_shared<IrNode>(anfnode, this); }
-  FuncNodePtr NewFuncNode(const ValuePtr &value, NodeType node_type) {
-    return std::make_shared<FuncNode>(value, node_type, this);
+  FuncNodePtr NewFuncNode(const ValuePtr &value, InputType input_type) {
+    return std::make_shared<FuncNode>(value, input_type, this);
   }
   virtual NodePtr MakeTuple(const NodePtrList &inputs) { return EmitOp(prim::kPrimMakeTuple, inputs); }
   NodePtr MakeList(const NodePtrList &inputs) { return EmitOp(prim::kPrimMakeList, inputs); }
@@ -215,7 +215,7 @@ class COMMON_EXPORT Emitter {
   template <typename T>
   NodePtr Fill(const T &value, const NodePtr &shape, TypeId data_type) {
     MS_EXCEPTION_IF_NULL(shape);
-    if (shape->node_type() == NodeType::kConstant) {
+    if (shape->input_type() == InputType::kConstant) {
       auto v = shape->BuildValue();
       MS_EXCEPTION_IF_NULL(v);
       return Fill(value, GetValue<ShapeVector>(v), data_type);

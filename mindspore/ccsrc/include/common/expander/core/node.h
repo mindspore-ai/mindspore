@@ -21,20 +21,13 @@
 #include <memory>
 #include <utility>
 #include "ir/anf.h"
-#include "ir/dtype.h"
 #include "include/common/visible.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace expander {
 class Emitter;
 using DAttr = std::vector<std::pair<std::string, ValuePtr>>;
-
-enum class NodeType {
-  kConstant = 0,
-  kInputParameter = 1,
-  kWeightParameter = 2,
-  kOutput = 3,
-};
 
 class COMMON_EXPORT Node : public std::enable_shared_from_this<Node> {
  public:
@@ -44,7 +37,7 @@ class COMMON_EXPORT Node : public std::enable_shared_from_this<Node> {
 
   virtual const AnfNodePtr &get() const { MS_EXCEPTION(NotImplementedError) << "Base Node not implement get() method"; }
 
-  virtual NodeType node_type();
+  virtual InputType input_type();
   virtual AbstractBasePtr abstract();
 
   void SetValue(const ValuePtr &val) { value_ = val; }
@@ -83,7 +76,7 @@ class COMMON_EXPORT IrNode : public Node {
  public:
   IrNode(const AnfNodePtr anfnode, Emitter *emitter) : Node(emitter), anf_node_(anfnode) {}
   const AnfNodePtr &get() const override { return anf_node_; }
-  NodeType node_type() override;
+  InputType input_type() override;
   AbstractBasePtr abstract() override;
 
   ValuePtr BuildValue() override;
@@ -107,10 +100,11 @@ using IrNodePtr = std::shared_ptr<IrNode>;
 
 class COMMON_EXPORT FuncNode : public Node {
  public:
-  FuncNode(const ValuePtr &value, NodeType node_type, Emitter *emitter) : Node(emitter, value), node_type_(node_type) {}
+  FuncNode(const ValuePtr &value, InputType input_type, Emitter *emitter)
+      : Node(emitter, value), input_type_(input_type) {}
   ValuePtr BuildValue() override;
-  NodeType node_type() override;
-  void set_node_type(NodeType node_type) { node_type_ = node_type; }
+  InputType input_type() override;
+  void set_node_type(InputType input_type) { input_type_ = input_type; }
   AbstractBasePtr abstract() override;
   void set_abstract(const AbstractBasePtr &abs) { abstract_ = abs; }
   BaseShapePtr GetShape() override;
@@ -121,7 +115,7 @@ class COMMON_EXPORT FuncNode : public Node {
 
  private:
   AbstractBasePtr abstract_;
-  NodeType node_type_;
+  InputType input_type_;
 };
 using FuncNodePtr = std::shared_ptr<FuncNode>;
 }  // namespace expander

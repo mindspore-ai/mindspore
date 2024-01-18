@@ -770,13 +770,13 @@ std::vector<tensor::TensorPtr> OpRunner::GetTensorWithoutValueMask(const session
   MS_EXCEPTION_IF_NULL(op_run_info);
   std::vector<tensor::TensorPtr> tensors_without_value_node;
   const auto &input_values = op_run_info->base_op_run_info.expanded_input_values;
-  const auto &input_masks = op_run_info->base_op_run_info.input_masks;
+  const auto &input_masks = op_run_info->base_op_run_info.input_types;
   if (input_values.size() != input_masks.size()) {
     MS_LOG(EXCEPTION) << "Input tensors size " << input_values.size() << " should be equal to tensors mask size "
                       << input_masks.size();
   }
   for (size_t index = 0; index < input_masks.size(); ++index) {
-    if (input_masks.at(index) != kValueNodeMask) {
+    if (input_masks.at(index) != InputType::kConstant) {
       if (!input_values[index]->isa<tensor::Tensor>()) {
         MS_LOG(EXCEPTION) << "The " << index << "' input shoulde be a Tensor, but got "
                           << input_values[index]->ToString();

@@ -86,8 +86,8 @@ bool IsDynamicDetectPrimChange(const PrimitivePtr &old_prim, const PrimitivePtr 
 }
 
 bool IsDynamicDetectNodeInfoChange(const NodeInfo &old_node_info, const NodeInfo &new_node_info) {
-  if (new_node_info.grad_type == TensorGradType::kParameter &&
-      (old_node_info.grad_type == TensorGradType::kParameter || old_node_info.grad_type == TensorGradType::kConstant)) {
+  if (new_node_info.grad_type == InputType::kParameter &&
+      (old_node_info.grad_type == InputType::kParameter || old_node_info.grad_type == InputType::kConstant)) {
     MS_EXCEPTION_IF_NULL(new_node_info.value);
     MS_EXCEPTION_IF_NULL(old_node_info.value);
     auto new_tensor = new_node_info.value->cast<tensor::TensorPtr>();
@@ -111,14 +111,13 @@ bool IsDynamicDetectNodeInfoChange(const NodeInfo &old_node_info, const NodeInfo
     return true;
   }
 
-  if (new_node_info.grad_type == TensorGradType::kOpOutput && new_node_info.op_index != old_node_info.op_index) {
+  if (new_node_info.grad_type == InputType::kOpOutput && new_node_info.op_index != old_node_info.op_index) {
     MS_LOG(DEBUG) << "Graph is dynamic, new node info op_index: " << new_node_info.op_index
                   << ", old node info op_index: " << old_node_info.op_index;
     return true;
   }
 
-  if (new_node_info.grad_type == TensorGradType::kConstant &&
-      !IsValuePtrEqual(new_node_info.value, old_node_info.value)) {
+  if (new_node_info.grad_type == InputType::kConstant && !IsValuePtrEqual(new_node_info.value, old_node_info.value)) {
     MS_LOG(DEBUG) << "Graph is dynamic, new node info value: "
                   << (new_node_info.value != nullptr ? new_node_info.value->ToString() : "")
                   << ", grad type: " << new_node_info.grad_type << ", old node info value: "
@@ -139,13 +138,13 @@ void BuildDynamicDetectNodeInput(const ValuePtr &input, std::vector<std::pair<st
     auto auto_meta_data = tensor->auto_grad_meta_data();
     if (auto_meta_data == nullptr) {
       node_info.value = input;
-      node_info.grad_type = TensorGradType::kConstant;
+      node_info.grad_type = InputType::kConstant;
       (void)node_inputs->emplace_back(std::make_pair(value_idx, node_info));
       return;
     }
-    node_info.grad_type = auto_meta_data->grad_type();
+    node_info.grad_type = auto_meta_data->input_type();
     node_info.op_index = auto_meta_data->op_index();
-    if (node_info.grad_type == TensorGradType::kConstant || node_info.grad_type == TensorGradType::kParameter) {
+    if (node_info.grad_type == InputType::kConstant || node_info.grad_type == InputType::kParameter) {
       node_info.value = input;
     }
     (void)node_inputs->emplace_back(std::make_pair(value_idx, node_info));
@@ -161,7 +160,7 @@ void BuildDynamicDetectNodeInput(const ValuePtr &input, std::vector<std::pair<st
     BuildDynamicDetectNodeInput(stub_node->WaitValue(), node_inputs, value_idx);
   } else {
     NodeInfo node_info;
-    node_info.grad_type = TensorGradType::kConstant;
+    node_info.grad_type = InputType::kConstant;
     node_info.value = input;
     (void)node_inputs->emplace_back(std::make_pair(value_idx, node_info));
   }

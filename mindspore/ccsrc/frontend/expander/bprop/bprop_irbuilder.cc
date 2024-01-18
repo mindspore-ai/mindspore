@@ -198,7 +198,7 @@ NodePtr BpropBuilder::SequenceToTensor(const NodePtr &node, const TypePtr &dtype
   auto abs = node->abstract();
   MS_EXCEPTION_IF_NULL(abs);
   if (abs->isa<abstract::AbstractSequence>()) {
-    if (node->node_type() == NodeType::kConstant) {
+    if (node->input_type() == InputType::kConstant) {
       return Tensor(GetIntList(node), dtype);
     }
     if (abs->isa<abstract::AbstractTuple>()) {
@@ -213,12 +213,12 @@ NodePtr BpropBuilder::SequenceToTensor(const NodePtr &node, const TypePtr &dtype
 NodePtr BpropBuilder::TensorToSequence(const NodePtr &node, const AbstractBasePtr &abs, const TypePtr &dtype) {
   if (node->abstract()->isa<abstract::AbstractTensor>()) {
     if (abs->isa<abstract::AbstractTuple>()) {
-      if (node->node_type() == NodeType::kConstant) {
+      if (node->input_type() == InputType::kConstant) {
         return EmitValue(MakeValue(GetIntList(node)));
       }
       return Emit(kTensorToTupleOpName, {node});
     } else {
-      if (node->node_type() == NodeType::kConstant) {
+      if (node->input_type() == InputType::kConstant) {
         auto vec = GetIntList(node);
         std::vector<ValuePtr> value_list;
         (void)std::transform(vec.begin(), vec.end(), std::back_inserter(value_list),
@@ -245,7 +245,7 @@ NodePtr BpropBuilder::SequenceSlice(const NodePtr &node, const NodePtr &start, c
 }
 
 NodePtr BpropBuilder::TensorToScalar(const NodePtr &node) {
-  if (node->node_type() == NodeType::kConstant) {
+  if (node->input_type() == InputType::kConstant) {
     auto value = GetIntList(node);
     if (value.size() != 1) {
       MS_LOG(EXCEPTION) << "For TensorToScalar, the input value should have only one element, but got " << value.size();

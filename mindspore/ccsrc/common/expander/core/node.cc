@@ -22,7 +22,7 @@ namespace mindspore {
 namespace expander {
 Node::Node(Emitter *emitter) : emitter_(emitter) { MS_EXCEPTION_IF_NULL(emitter); }
 
-NodeType Node::node_type() { MS_EXCEPTION(NotImplementedError) << "Base node not implement node_type() method"; }
+InputType Node::input_type() { MS_EXCEPTION(NotImplementedError) << "Base node not implement input_type() method"; }
 
 AbstractBasePtr Node::abstract() { MS_EXCEPTION(NotImplementedError) << "Base node not implement abstract() method"; }
 
@@ -103,13 +103,13 @@ std::string Node::ToString() const {
   return "";
 }
 
-NodeType IrNode::node_type() {
+InputType IrNode::input_type() {
   if (anf_node_->isa<ValueNode>()) {
-    return NodeType::kConstant;
+    return InputType::kConstant;
   } else if (anf_node_->isa<Parameter>()) {
-    return NodeType::kWeightParameter;
+    return InputType::kParameter;
   } else {
-    return NodeType::kOutput;
+    return InputType::kOpOutput;
   }
 }
 
@@ -157,7 +157,7 @@ std::string IrNode::debug_info() const {
 }
 
 ValuePtr FuncNode::BuildValue() { return value_; }
-NodeType FuncNode::node_type() { return node_type_; }
+InputType FuncNode::input_type() { return input_type_; }
 
 AbstractBasePtr FuncNode::abstract() {
   if (abstract_ != nullptr) {

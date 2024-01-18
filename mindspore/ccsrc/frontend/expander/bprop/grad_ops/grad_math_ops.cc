@@ -1793,13 +1793,13 @@ REG_BPROP_BUILDER("Lerp").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   dout = ib->Cast(dout, kFloat32);
   auto dout_type = ib->GetDtype(dout);
   NodePtr sub_w, mul_w;
-  if (weight->node_type() == NodeType::kConstant) {
+  if (weight->input_type() == InputType::kConstant) {
     auto v = weight->BuildValue();
     MS_EXCEPTION_IF_NULL(v);
     auto val = GetValue<float>(v);
     sub_w = ib->Tensor(1.0 - val, dout_type);
     mul_w = ib->Tensor(val, dout_type);
-  } else if (weight->node_type() == NodeType::kWeightParameter || weight->node_type() == NodeType::kInputParameter) {
+  } else if (weight->input_type() == InputType::kParameter || weight->input_type() == InputType::kInput) {
     auto v = weight->BuildValue();
     MS_EXCEPTION_IF_NULL(v);
     if (v->isa<Scalar>()) {
@@ -1820,7 +1820,7 @@ REG_BPROP_BUILDER("Lerp").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto tmp = BinopGradCommon(ib, start, end, dstart, dend);
   dstart = tmp[0];
   dend = tmp[1];
-  if (weight->node_type() == NodeType::kConstant) {
+  if (weight->input_type() == InputType::kConstant) {
     dweight = ib->OutZeros(weight);
   } else {
     auto tmp2 = BinopGradCommon(ib, start, weight, dstart, dweight);

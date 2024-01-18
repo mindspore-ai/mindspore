@@ -55,7 +55,7 @@ struct BaseOpRunInfo {
   size_t next_input_index = 0;
 #endif
   std::vector<ValuePtr> expanded_input_values;
-  std::vector<int64_t> input_masks;
+  std::vector<InputType> input_types;
   AbstractBasePtr abstract;
   std::vector<size_t> output_indexes;
   std::vector<int64_t> dyn_input_sizes;
@@ -74,7 +74,7 @@ struct OpGradInfo {
   abstract::AbstractBasePtr out_abs{nullptr};
   std::vector<ValuePtr> input_value{};
   ValuePtr out_value{nullptr};
-  std::vector<TensorGradType> input_value_grad_type{};
+  std::vector<InputType> input_value_grad_type{};
   // Currently only packfunc will use the grad_graph_id, and it will not be used in other scenarios.
   // Since the current grad process uses the prim in FrontendOpRunInfo, not the prim in BackendOpRunInfo,
   // the grad_graph_id cannot be placed in the prim attr during the async run,

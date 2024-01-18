@@ -23,42 +23,30 @@
 #include <vector>
 #include <string>
 #include "ir/anf.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
-namespace pynative {
-namespace autograd {
+namespace pynative::autograd {
 class VariableAdjoint;
-}  // namespace autograd
-}  // namespace pynative
+}  // namespace pynative::autograd
+
 using VariableAdjointPtr = std::shared_ptr<pynative::autograd::VariableAdjoint>;
 using VariableAdjointWeakPtr = std::weak_ptr<pynative::autograd::VariableAdjoint>;
-namespace pynative {
-enum class TensorGradType {
-  // Constant tensor, no need to grad
-  kConstant = 0,
-  // Parameter, weight tensor
-  kParameter,
-  // Input tensor
-  kInput,
-  // Op output tensor
-  kOpOutput,
-};
-}  // namespace pynative
 
 class AutoGradMetaData {
  public:
   AutoGradMetaData() = default;
   AutoGradMetaData(const VariableAdjointPtr &variable, const ParameterPtr &parameter,
-                   const pynative::TensorGradType &grad_type = pynative::TensorGradType::kConstant)
-      : variable_(variable), parameter_(parameter), grad_type_(grad_type) {}
+                   const InputType input_type = InputType::kConstant)
+      : variable_(variable), parameter_(parameter), input_type_(input_type) {}
   VariableAdjointPtr variable() const { return variable_.lock(); }
   void set_variable(const VariableAdjointPtr &variable) { variable_ = variable; }
   ParameterPtr parameter() const { return parameter_.lock(); }
   void set_parameter(const ParameterPtr &parameter) { parameter_ = parameter; }
   void set_k_node(const AnfNodePtr &k_node) { k_node_ = k_node; }
   AnfNodePtr k_node() const { return k_node_.lock(); }
-  pynative::TensorGradType grad_type() const { return grad_type_; }
-  void set_grad_type(const pynative::TensorGradType &grad_type) { grad_type_ = grad_type; }
+  InputType input_type() const { return input_type_; }
+  void set_input_type(InputType input_type) { input_type_ = input_type; }
   size_t op_index() const { return op_index_; }
   void set_op_index(size_t op_index) { op_index_ = op_index; }
 
@@ -70,7 +58,7 @@ class AutoGradMetaData {
   // Weakptr to k_node for tensor
   AnfNodeWeakPtr k_node_;
   // Type of grad tensor
-  pynative::TensorGradType grad_type_;
+  InputType input_type_;
   // Optional for op output, represent index of op in execute order.
   size_t op_index_{0};
 };

@@ -276,7 +276,7 @@ NodePtr CalcNumSegment(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis) 
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(axis);
   auto num_segment = ib->ShapeCalc(g_calc_num_segment, {x, axis}, {1})[0];
-  if (num_segment->node_type() == NodeType::kConstant) {
+  if (num_segment->input_type() == InputType::kConstant) {
     auto num_segment_value = GetIntList(num_segment);
     MS_EXCEPTION_IF_CHECK_FAIL(num_segment_value.size() == 1,
                                "The num_segment should be a int for gradient of Gather.");
@@ -761,7 +761,7 @@ REG_BPROP_BUILDER("Sort").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto res1 = ib->ShapeCalc(std::make_shared<SortShapeCalc1>(axis), {input_x});
   auto k = res1[0];
   if (k->abstract()->isa<abstract::AbstractSequence>()) {
-    if (k->node_type() == NodeType::kConstant) {
+    if (k->input_type() == InputType::kConstant) {
       auto value = GetIntList(k);
       k = ib->Tensor(value.at(0), kInt64);
     } else {
@@ -1725,7 +1725,7 @@ REG_BPROP_BUILDER("MaskedFill").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
   }
 
   dinput = ib->Cast(bout[0], ib->GetDtype(input_data));
-  if (value->node_type() == NodeType::kConstant) {
+  if (value->input_type() == InputType::kConstant) {
     dvalue = ib->OutZeros(value);
   } else {
     dvalue = ib->Cast(dvalue, ib->GetDtype(value));
@@ -1776,7 +1776,7 @@ REG_BPROP_BUILDER("ResizeNearestNeighborV2").SetUnusedInputs({i1, i4}).SetBody(B
   auto half_pixel_centers = ib->GetInput(kIndex3);
   auto dout = ib->GetInput(kIndex5);
   auto grad_in_size = ib->ShapeCalc(std::make_shared<ResizeNearestNeighborV2ShapeCalc>(true), {x})[0];
-  if (grad_in_size->node_type() == NodeType::kConstant) {
+  if (grad_in_size->input_type() == InputType::kConstant) {
     grad_in_size = ib->Value<ShapeVector>(GetIntList(grad_in_size));
   }
   auto dx = ib->Emit("ResizeNearestNeighborV2Grad", {dout, grad_in_size, align_corners, half_pixel_centers});

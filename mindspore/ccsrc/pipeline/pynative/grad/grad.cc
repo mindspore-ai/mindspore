@@ -556,7 +556,7 @@ void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_
   AbstractBasePtrList abs_list;
   for (size_t i = 0; i < input_args_info->input_size; ++i) {
     const auto &v = input_value[i];
-    (void)PyNativeAlgo::Common::SetValueGradInfo(v, top_cell(), TensorGradType::kInput);
+    (void)PyNativeAlgo::Common::SetValueGradInfo(v, top_cell(), InputType::kInput);
     (void)input_param_values.emplace_back(v);
     auto param_i_abs = PyNativeAlgo::Common::SetAbstractValueToAnyValue(v->ToAbstract());
     (void)abs_list.emplace_back(param_i_abs);
@@ -704,7 +704,7 @@ void GradExecutor::SetForwardLastNodeInfo(const ValuePtr &v) const {
     auto coo_tensorptr = v->cast<tensor::COOTensorPtr>();
     value = coo_tensorptr->GetValues();
   }
-  (void)PyNativeAlgo::Common::SetValueGradInfo(value, top_cell_, TensorGradType::kConstant);
+  (void)PyNativeAlgo::Common::SetValueGradInfo(value, top_cell_, InputType::kConstant);
   // Set last output abstract and will be used for sens
   auto fake_v = PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(value);
   top_cell()->SetLastOutputValueForwardOutputFlag(fake_v);
@@ -822,9 +822,9 @@ void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info,
     (void)op_run_info->op_grad_info->input_abs.emplace_back(
       PyNativeAlgo::Common::SetAbstractValueToAnyValue(value->ToAbstract()));
     op_run_info->op_grad_info->input_value_grad_type[i] =
-      PyNativeAlgo::Common::SetValueGradInfo(value, top_cell(), TensorGradType::kConstant);
+      PyNativeAlgo::Common::SetValueGradInfo(value, top_cell(), InputType::kConstant);
   }
-  (void)PyNativeAlgo::Common::SetValueGradInfo(op_run_info->real_out, nullptr, TensorGradType::kOpOutput);
+  (void)PyNativeAlgo::Common::SetValueGradInfo(op_run_info->real_out, nullptr, InputType::kOpOutput);
   PyNativeAlgo::PyParser::PrepareOpGradInfo(op_run_info);
   DoOpGrad(op_run_info);
   auto node_info = std::make_shared<DynamicDetectNodeInfo>(

@@ -767,19 +767,18 @@ ValuePtr Common::CreateFakeValueWithoutDeviceAddress(const ValuePtr &value) {
   }
 }
 
-TensorGradType Common::SetValueGradInfo(const ValuePtr &value, const TopCellInfoPtr &top_cell,
-                                        TensorGradType grad_type) {
+InputType Common::SetValueGradInfo(const ValuePtr &value, const TopCellInfoPtr &top_cell, InputType grad_type) {
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::Tensor>()) {
     const auto &tensor_value = value->cast<tensor::TensorPtr>();
     if (tensor_value->auto_grad_meta_data() != nullptr) {
-      return tensor_value->auto_grad_meta_data()->grad_type();
+      return tensor_value->auto_grad_meta_data()->input_type();
     }
     const auto &auto_grad_meta_data = std::make_shared<AutoGradMetaData>();
-    if (tensor_value->is_parameter() && grad_type != TensorGradType::kInput) {
-      grad_type = TensorGradType::kParameter;
+    if (tensor_value->is_parameter() && grad_type != InputType::kInput) {
+      grad_type = InputType::kParameter;
     }
-    auto_grad_meta_data->set_grad_type(grad_type);
+    auto_grad_meta_data->set_input_type(grad_type);
     tensor_value->set_auto_grad_meta_data(auto_grad_meta_data);
     if (top_cell != nullptr && IsParam(grad_type)) {
       top_cell->AddParamGradInfo(tensor_value, auto_grad_meta_data);
@@ -787,7 +786,7 @@ TensorGradType Common::SetValueGradInfo(const ValuePtr &value, const TopCellInfo
     return grad_type;
   } else if (value->isa<ValueSequence>()) {
     const auto &value_seq = value->cast<ValueSequencePtr>()->value();
-    TensorGradType ret_type = grad_type;
+    InputType ret_type = grad_type;
     for (const auto &v : value_seq) {
       auto ret = SetValueGradInfo(v, top_cell, grad_type);
       if (IsParam(ret)) {
@@ -812,24 +811,24 @@ TensorGradType Common::SetValueGradInfo(const ValuePtr &value, const TopCellInfo
   return grad_type;
 }
 
-TensorGradType Common::SetTensorGradInfo(const tensor::TensorPtr &tensor, const TopCellInfoPtr &top_cell) {
+InputType Common::SetTensorGradInfo(const tensor::TensorPtr &tensor, const TopCellInfoPtr &top_cell) {
   MS_EXCEPTION_IF_NULL(tensor);
   if (tensor->auto_grad_meta_data() != nullptr) {
     const auto &auto_grad_meta_data = tensor->auto_grad_meta_data();
-    return auto_grad_meta_data->grad_type();
+    return auto_grad_meta_data->input_type();
   }
   tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
   const auto &auto_grad_meta_data = tensor->auto_grad_meta_data();
   // Set weight tensor grad type
   if (tensor->is_parameter()) {
-    auto_grad_meta_data->set_grad_type(TensorGradType::kParameter);
+    auto_grad_meta_data->set_input_type(InputType::kParameter);
     if (top_cell != nullptr) {
       top_cell->AddParamGradInfo(tensor, auto_grad_meta_data);
     }
-    return TensorGradType::kParameter;
+    return InputType::kParameter;
   }
   // Is a constant input tensor, but not constant scalar value
-  return TensorGradType::kConstant;
+  return InputType::kConstant;
 }
 
 void Common::SetGraphInputAndWeightsInfo(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &func_graph,
@@ -842,7 +841,7 @@ void Common::SetGraphInputAndWeightsInfo(const FrontendOpRunInfoPtr &op_run_info
   for (size_t i = 0; i < params_size; ++i) {
     if (i < op_run_info->input_size) {  // non-weights node.
       op_run_info->op_grad_info->input_value_grad_type[i] =
-        SetValueGradInfo(op_run_info->op_grad_info->input_value[i], top_cell, TensorGradType::kConstant);
+        SetValueGradInfo(op_run_info->op_grad_info->input_value[i], top_cell, InputType::kConstant);
       if (need_add_input_abs) {
         (void)op_run_info->op_grad_info->input_abs.emplace_back(original_params[i]->abstract());
       }
@@ -1177,7 +1176,7 @@ void PyParser::PrepareOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) {
   }
   // kIndex1 is for add output
   op_run_info->input_unused_in_bprop.resize(op_run_info->input_size + kIndex1, false);
-  op_run_info->op_grad_info->input_value_grad_type.resize(op_run_info->input_size, TensorGradType::kConstant);
+  op_run_info->op_grad_info->input_value_grad_type.resize(op_run_info->input_size, InputType::kConstant);
   if (!op_run_info->is_jit_input) {
     const auto &unused_inputs = BpropExpander::GetUnusedInputs(op_run_info->op_grad_info->op_prim->name());
     for (size_t i = 0; i < op_run_info->input_size; ++i) {
@@ -1211,7 +1210,7 @@ ValuePtr DataConvert::BaseRefToValue(const BaseRef &value, bool requires_grad, b
     auto t = utils::cast<tensor::TensorPtr>(value);
     if (requires_grad) {
       t->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
-      t->auto_grad_meta_data()->set_grad_type(TensorGradType::kOpOutput);
+      t->auto_grad_meta_data()->set_input_type(InputType::kOpOutput);
     }
     ret = t;
   } else if (utils::isa<ValuePtr>(value)) {
@@ -1341,7 +1340,7 @@ void PyBoost::UpdateOutputTensorGradInfo(const std::vector<TensorPtr> &outputs) 
   for (size_t i = 0; i < outputs.size(); ++i) {
     const auto &output_tensor = outputs[i];
     output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
-    output_tensor->auto_grad_meta_data()->set_grad_type(TensorGradType::kOpOutput);
+    output_tensor->auto_grad_meta_data()->set_input_type(InputType::kOpOutput);
   }
 }
 
@@ -1449,26 +1448,26 @@ void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_in
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(value_seq);
   if (op_run_info->requires_grad) {
-    op_run_info->op_grad_info->input_value_grad_type[index] = TensorGradType::kOpOutput;
+    op_run_info->op_grad_info->input_value_grad_type[index] = InputType::kOpOutput;
   }
   for (const auto &v : value_seq->value()) {
     if (!v->isa<tensor::Tensor>()) {
       MS_LOG(EXCEPTION) << "The input object is not a tensor!";
     }
-    int64_t tensor_mask = kParameterDataTensorMask;
+    InputType input_type = InputType::kInput;
     auto tensor = v->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
     if (tensor->is_parameter()) {
-      tensor_mask = kParameterWeightTensorMask;
+      input_type = InputType::kParameter;
     }
     if (op_run_info->requires_grad) {
       auto grad_type = Common::SetTensorGradInfo(tensor, top_cell);
       if (Common::IsParam(grad_type)) {
-        op_run_info->op_grad_info->input_value_grad_type[index] = TensorGradType::kParameter;
+        op_run_info->op_grad_info->input_value_grad_type[index] = InputType::kParameter;
       }
     }
     (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(tensor);
-    (void)op_run_info->base_op_run_info.input_masks.emplace_back(tensor_mask);
+    (void)op_run_info->base_op_run_info.input_types.emplace_back(input_type);
   }
 
   if (!op_run_info->base_op_run_info.dyn_input_sizes.empty()) {
@@ -1510,8 +1509,8 @@ void DataConvert::ConvertMapTensor(const FrontendOpRunInfoPtr &op_run_info, cons
     return;
   }
   (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(map_tensor);
-  const auto it = op_run_info->base_op_run_info.input_masks.end();
-  (void)op_run_info->base_op_run_info.input_masks.insert(it, input_num, kParameterWeightTensorMask);
+  const auto it = op_run_info->base_op_run_info.input_types.end();
+  (void)op_run_info->base_op_run_info.input_types.insert(it, input_num, InputType::kParameter);
   if (op_run_info->requires_grad) {
     op_run_info->op_grad_info->input_value_grad_type[index] = Common::SetTensorGradInfo(map_tensor, top_cell);
   }
@@ -1532,17 +1531,17 @@ void DataConvert::ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_ru
   (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(csr_tensor->GetIndptr());
   (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(csr_tensor->GetIndices());
   (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(csr_tensor->GetValues());
-  const auto it = op_run_info->base_op_run_info.input_masks.end();
-  (void)op_run_info->base_op_run_info.input_masks.insert(it, input_num, kParameterDataTensorMask);
+  const auto it = op_run_info->base_op_run_info.input_types.end();
+  (void)op_run_info->base_op_run_info.input_types.insert(it, input_num, InputType::kInput);
   op_run_info->op_grad_info->op_prim->set_attr("is_csr", MakeValue(true));
   op_run_info->op_grad_info->op_prim->set_attr("dense_shape", MakeValue(csr_tensor->shape()));
   if (op_run_info->requires_grad) {
-    op_run_info->op_grad_info->input_value_grad_type[index] = TensorGradType::kOpOutput;
+    op_run_info->op_grad_info->input_value_grad_type[index] = InputType::kOpOutput;
     for (int i = 0; i < input_num; ++i) {
       auto iter = op_run_info->base_op_run_info.expanded_input_values.rbegin() + i;
       auto grad_type = Common::SetTensorGradInfo((*iter)->cast<tensor::TensorPtr>(), top_cell);
       if (Common::IsParam(grad_type)) {
-        op_run_info->op_grad_info->input_value_grad_type[index] = TensorGradType::kParameter;
+        op_run_info->op_grad_info->input_value_grad_type[index] = InputType::kParameter;
       }
     }
   }
@@ -1569,14 +1568,14 @@ void DataConvert::ConvertTupleValueToTensor(const FrontendOpRunInfoPtr &op_run_i
   const auto &tuple_inputs = value_seq->value();
   if (tuple_inputs.empty()) {
     (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(value_seq);
-    (void)op_run_info->base_op_run_info.input_masks.emplace_back(kValueNodeMask);
+    (void)op_run_info->base_op_run_info.input_types.emplace_back(InputType::kConstant);
     return;
   }
   if (tuple_inputs[0]->isa<tensor::Tensor>()) {
     PlantTensorTupleToVector(op_run_info, value_seq, index, top_cell);
   } else {
     (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(value_seq);
-    (void)op_run_info->base_op_run_info.input_masks.emplace_back(kValueNodeMask);
+    (void)op_run_info->base_op_run_info.input_types.emplace_back(InputType::kConstant);
   }
 }
 
@@ -1585,21 +1584,21 @@ void DataConvert::MarkInputs(const FrontendOpRunInfoPtr &op_run_info, const Valu
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(v);
   tensor::TensorPtr tensor_ptr = nullptr;
-  int64_t input_mask = kParameterDataTensorMask;
+  InputType input_type = InputType::kInput;
   if (v->isa<tensor::MapTensor>()) {
     ConvertMapTensor(op_run_info, v->cast<tensor::MapTensorPtr>(), top_cell, index);
     return;
   } else if (v->isa<tensor::Tensor>()) {
     tensor_ptr = v->cast<tensor::TensorPtr>();
     if (tensor_ptr->is_parameter()) {
-      input_mask = kParameterWeightTensorMask;
+      input_type = InputType::kParameter;
     }
     if (op_run_info->requires_grad) {
       op_run_info->op_grad_info->input_value_grad_type[index] = Common::SetTensorGradInfo(tensor_ptr, top_cell);
     }
   } else if (v->isa<BoolImm>() || v->isa<FloatImm>() || v->isa<Type>() || v->isa<StringImm>() || v->isa<None>()) {
     (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(v);
-    (void)op_run_info->base_op_run_info.input_masks.emplace_back(kValueNodeMask);
+    (void)op_run_info->base_op_run_info.input_types.emplace_back(InputType::kConstant);
     return;
   } else if (v->isa<IntegerImm>()) {
     if (op_run_info->base_op_run_info.op_name == prim::kPrimCSRReduceSum->name()) {
@@ -1608,7 +1607,7 @@ void DataConvert::MarkInputs(const FrontendOpRunInfoPtr &op_run_info, const Valu
       return;
     }
     (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(v);
-    (void)op_run_info->base_op_run_info.input_masks.emplace_back(kValueNodeMask);
+    (void)op_run_info->base_op_run_info.input_types.emplace_back(InputType::kConstant);
     return;
   } else if (v->isa<ValueSequence>()) {
     ConvertTupleValueToTensor(op_run_info, v->cast<ValueSequencePtr>(), index, top_cell);
@@ -1625,7 +1624,7 @@ void DataConvert::MarkInputs(const FrontendOpRunInfoPtr &op_run_info, const Valu
   }
   MS_EXCEPTION_IF_NULL(tensor_ptr);
   (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(tensor_ptr);
-  (void)op_run_info->base_op_run_info.input_masks.emplace_back(input_mask);
+  (void)op_run_info->base_op_run_info.input_types.emplace_back(input_type);
 }
 
 void ReplaceReduceAxis(const FrontendOpRunInfoPtr &op_run_info) {
@@ -1665,7 +1664,7 @@ void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const 
   MS_EXCEPTION_IF_NULL(op_run_info);
 
   (void)op_run_info->base_op_run_info.expanded_input_values.reserve(op_run_info->input_size);
-  (void)op_run_info->base_op_run_info.input_masks.reserve(op_run_info->input_size);
+  (void)op_run_info->base_op_run_info.input_types.reserve(op_run_info->input_size);
   // Get input tensors.
   op_run_info->op_grad_info->op_prim->BeginRecordAddAttr();
   for (size_t index = 0; index < op_run_info->input_size; ++index) {

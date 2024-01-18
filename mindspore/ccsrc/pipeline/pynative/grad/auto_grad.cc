@@ -84,7 +84,7 @@ bool NeedGrad(const std::vector<ValuePtr> &input_values) {
       const auto &input_tensor = input_arg->cast<tensor::TensorPtr>();
       auto auto_grad_meta_data = input_tensor->auto_grad_meta_data();
       MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
-      if (PyNativeAlgo::Common::IsParam(auto_grad_meta_data->grad_type())) {
+      if (PyNativeAlgo::Common::IsParam(auto_grad_meta_data->input_type())) {
         return true;
       }
       auto variable = auto_grad_meta_data->variable();
@@ -262,8 +262,8 @@ bool IsConstant(const ValuePtr &value) {
     const auto &tensor = value->cast<tensor::TensorPtr>();
     auto auto_grad_meta_data = tensor->auto_grad_meta_data();
     MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
-    if (auto_grad_meta_data->grad_type() == TensorGradType::kParameter ||
-        auto_grad_meta_data->grad_type() == TensorGradType::kInput) {
+    if (auto_grad_meta_data->input_type() == InputType::kParameter ||
+        auto_grad_meta_data->input_type() == InputType::kInput) {
       return false;
     }
     auto k_node = auto_grad_meta_data->k_node();
@@ -499,7 +499,7 @@ void SetGradMetaData(const ValuePtr &value, const VariableAdjointPtr &variable, 
     auto_grad_meta_data->set_variable(variable);
     if (param != nullptr) {
       auto_grad_meta_data->set_parameter(param);
-      auto_grad_meta_data->set_grad_type(TensorGradType::kParameter);
+      auto_grad_meta_data->set_input_type(InputType::kParameter);
     }
   } else if (value->isa<ValueSequence>()) {
     auto value_sequence = value->cast<ValueSequencePtr>();
@@ -1175,13 +1175,13 @@ ValuePtrList AutoGradCellImpl::GetInputArgs(const CNodePtr &cnode, AnfNodePtrLis
         const auto &grad_meta = t->auto_grad_meta_data();
         // Jit forward graph has no parameters(input is tuple or constant), so input used in graph as valuenode, but it
         // is used by tape_ as parameter also
-        if (grad_meta != nullptr && PyNativeAlgo::Common::IsParam(grad_meta->grad_type())) {
+        if (grad_meta != nullptr && PyNativeAlgo::Common::IsParam(grad_meta->input_type())) {
           auto new_tensor = std::make_shared<tensor::Tensor>(t->data_type(), t->shape(), t->data_ptr());
           new_tensor->set_device_address(t->device_address());
           v = new_tensor;
         }
       }
-      (void)PyNativeAlgo::Common::SetValueGradInfo(v, nullptr, TensorGradType::kConstant);
+      (void)PyNativeAlgo::Common::SetValueGradInfo(v, nullptr, InputType::kConstant);
       // In case of jit forward graph and pynative bprop graph used same valuenode
       auto new_v_node = PyNativeAlgo::Common::CreateValueNodeByValue(v, v_node->abstract());
       (void)cnode_inputs->emplace_back(new_v_node);
@@ -1345,7 +1345,7 @@ AnfNodePtr AutoGradCellImpl::BuildKNodeForCNodeInput(const ValuePtr &input, cons
     if (k_node != nullptr) {
       return k_node;
     }
-    if (PyNativeAlgo::Common::IsParam(auto_grad_meta_data->grad_type())) {
+    if (PyNativeAlgo::Common::IsParam(auto_grad_meta_data->input_type())) {
       return MapParameter(input, abs);
     }
   } else if (input->isa<ValueSequence>() && !IsConstant(input)) {
@@ -1603,7 +1603,7 @@ AbstractBasePtr AutoGradCellImpl::BuildForwardLastNode() {
     const auto &sens_tensor = ad_param()->sens_value_->cast<tensor::TensorPtr>();
     const auto &auto_grad_meta_data = sens_tensor->auto_grad_meta_data();
     MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
-    if (PyNativeAlgo::Common::IsConstant(auto_grad_meta_data->grad_type())) {
+    if (PyNativeAlgo::Common::IsConstant(auto_grad_meta_data->input_type())) {
       sens_variable->set_is_need_grad(false);
     }
   }
@@ -1627,7 +1627,7 @@ ParameterPtr AutoGradCellImpl::CreateTapeParameter(const tensor::TensorPtr &tens
     auto_grad_meta_data = std::make_shared<AutoGradMetaData>();
     tensor->set_auto_grad_meta_data(auto_grad_meta_data);
   }
-  auto_grad_meta_data->set_grad_type(TensorGradType::kParameter);
+  auto_grad_meta_data->set_input_type(InputType::kParameter);
   auto_grad_meta_data->set_parameter(param);
   return param;
 }
@@ -1665,7 +1665,7 @@ void AutoGradCellImpl::UpdateSensParameter(const ValuePtr &value) {
     MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
     const auto variable = auto_grad_meta_data->variable();
     // Return input parameter or weight parameter for net, if v is parameter just entry once
-    if (PyNativeAlgo::Common::IsParam(auto_grad_meta_data->grad_type()) && variable == nullptr) {
+    if (PyNativeAlgo::Common::IsParam(auto_grad_meta_data->input_type()) && variable == nullptr) {
       (void)AddParameterNode(sens_tensor, PyNativeAlgo::Common::SetAbstractValueToAnyValue(sens_tensor->ToAbstract()));
     }
   } else if (value->isa<ValueSequence>()) {
@@ -1692,7 +1692,7 @@ AnfNodePtr AutoGradCellImpl::MapParameter(const ValuePtr &value, const abstract:
       param->set_abstract(abs);
       return param;
     }
-    if (auto_grad_meta_data->grad_type() == TensorGradType::kParameter) {
+    if (auto_grad_meta_data->input_type() == InputType::kParameter) {
       return AddParameterNode(tensor, abs);
     }
     return PyNativeAlgo::Common::CreateValueNodeByValue(value, abs);
@@ -1730,7 +1730,7 @@ AnfNodePtr AutoGradCellImpl::MapParameter(const ValuePtr &value, const abstract:
 ParameterPtr AutoGradCellImpl::ExtractParameter(const tensor::TensorPtr &tensor) const {
   MS_EXCEPTION_IF_NULL(tensor);
   const auto &auto_grad_meta_data = tensor->auto_grad_meta_data();
-  if (auto_grad_meta_data != nullptr && PyNativeAlgo::Common::IsParam(auto_grad_meta_data->grad_type())) {
+  if (auto_grad_meta_data != nullptr && PyNativeAlgo::Common::IsParam(auto_grad_meta_data->input_type())) {
     return auto_grad_meta_data->parameter();
   }
   return nullptr;

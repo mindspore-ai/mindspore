@@ -156,7 +156,7 @@ NodePtr Emitter::Reshape(const NodePtr &node, const NodePtr &shape) {
     return Emit(kReshapeOpName, {node, tuple_shape});
   }
 
-  if (node->node_type() == NodeType::kConstant) {
+  if (node->input_type() == InputType::kConstant) {
     // If node and shape is both known, return node itself or a new tensor with target shape.
     auto value = node->BuildValue();
     MS_EXCEPTION_IF_NULL(value);
@@ -245,7 +245,7 @@ NodePtr Emitter::BroadcastTo(const NodePtr &x, const NodePtr &y) {
 
 NodePtr Emitter::ZerosLike(const NodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  if (node->node_type() == NodeType::kConstant) {
+  if (node->input_type() == InputType::kConstant) {
     if (node->dtype()->type_id() == kMetaTypeNone) {
       return Tensor(0);
     }

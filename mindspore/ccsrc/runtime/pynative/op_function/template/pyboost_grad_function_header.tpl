@@ -28,7 +28,7 @@ session::BackendOpRunInfoPtr GetBackendOpRunInfo(OpRunnerInfo *op_runner_info) {
   base_op_run_info.op_name = op_runner_info->prim->name();
   base_op_run_info.device_target = op_runner_info->device_target;
   base_op_run_info.expanded_input_values = op_runner_info->inputs;
-  base_op_run_info.input_masks = op_runner_info->inputs_mask;
+  base_op_run_info.input_types = op_runner_info->inputs_mask;
   // Do infer and refresh output abstract
   op_runner_info->output_abs = kernel::pyboost::PyBoostUtils::InferByOpDef(op_runner_info->prim, op_runner_info->inputs_abs);
   base_op_run_info.abstract = op_runner_info->output_abs ;

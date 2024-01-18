@@ -482,7 +482,7 @@ NodePtr SumGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis, const N
     grad = ib->Reshape(grad, calc_res[0]);
   }
   auto tile_scaling = calc_res[1];
-  if (tile_scaling->node_type() == NodeType::kConstant || IsDynamic(x->shape())) {
+  if (tile_scaling->input_type() == InputType::kConstant || IsDynamic(x->shape())) {
     return ib->Tile(grad, tile_scaling);
   }
   return ib->BroadcastTo(grad, x);

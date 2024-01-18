@@ -100,8 +100,8 @@ class PynativeIRBuilder : public IrBuilder {
     for (size_t i = 0; i < output_nodes.size(); i++) {
       auto &node = output_nodes[i];
       // A Value node gradient will loss the trace context in pynative, so emit a node. A example is Eye.
-      if (node->node_type() == NodeType::kConstant || IsPrimitiveCNode(node->get(), prim::kPrimZerosLike)) {
-        if (node->node_type() == NodeType::kConstant) {
+      if (node->input_type() == InputType::kConstant || IsPrimitiveCNode(node->get(), prim::kPrimZerosLike)) {
+        if (node->input_type() == InputType::kConstant) {
           auto abs = node->abstract();
           MS_EXCEPTION_IF_NULL(abs);
           if (abs->isa<abstract::AbstractScalar>()) {
@@ -118,7 +118,7 @@ class PynativeIRBuilder : public IrBuilder {
 
  protected:
   NodePtr EmitGetItemValue(const NodePtrList &inputs) {
-    if (inputs[0]->node_type() != NodeType::kConstant) {
+    if (inputs[0]->input_type() != InputType::kConstant) {
       return nullptr;
     }
     auto real_input = inputs[0]->get()->cast<ValueNodePtr>();
@@ -298,7 +298,7 @@ class PynativeIRBuilderWithCache : public PynativeIRBuilder {
         }
       }
       PrimitivePtr primitive =
-        node->node_type() == NodeType::kConstant ? prim::kPrimTupleGetItem : GetCNodePrimitive(node->get());
+        node->input_type() == InputType::kConstant ? prim::kPrimTupleGetItem : GetCNodePrimitive(node->get());
       node_map[node] = graph->nodes.size();
       (void)graph->nodes.emplace_back(std::make_shared<SimpleNode>(primitive, node->abstract(), input_indexs));
     }

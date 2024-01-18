@@ -73,13 +73,12 @@ struct Common {
   static ValueNodePtr CreateValueNodeByValue(const ValuePtr &v, const abstract::AbstractBasePtr &abs = nullptr);
   static ValuePtr CreateFakeValueWithoutDeviceAddress(const ValuePtr &value);
   static tensor::TensorPtr CreateFakeTensorWithoutDeviceAddress(const tensor::TensorPtr &tensor);
-  static inline bool IsParam(TensorGradType grad_type) {
-    return grad_type == TensorGradType::kParameter || grad_type == TensorGradType::kInput;
+  static inline bool IsParam(InputType grad_type) {
+    return grad_type == InputType::kParameter || grad_type == InputType::kInput;
   }
-  static inline bool IsConstant(TensorGradType grad_type) { return grad_type == TensorGradType::kConstant; }
-  static TensorGradType SetValueGradInfo(const ValuePtr &value, const TopCellInfoPtr &top_cell,
-                                         TensorGradType grad_type);
-  static TensorGradType SetTensorGradInfo(const tensor::TensorPtr &tensor, const TopCellInfoPtr &top_cell);
+  static inline bool IsConstant(InputType grad_type) { return grad_type == InputType::kConstant; }
+  static InputType SetValueGradInfo(const ValuePtr &value, const TopCellInfoPtr &top_cell, InputType grad_type);
+  static InputType SetTensorGradInfo(const tensor::TensorPtr &tensor, const TopCellInfoPtr &top_cell);
   static void SetGraphInputAndWeightsInfo(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &func_graph,
                                           const TopCellInfoPtr &top_cell);
   static void ProcessTupleParam(const FuncGraphPtr &bprop_graph, size_t position);

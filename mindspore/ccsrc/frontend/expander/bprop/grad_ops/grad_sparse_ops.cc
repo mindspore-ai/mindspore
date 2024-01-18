@@ -49,7 +49,7 @@ NodePtr CsrMulDiv(BpropBuilder *ib, const NodePtr &indptr, const NodePtr &indice
                   const NodePtr &shape, const NodePtr &y, const std::string &op_name) {
   MS_EXCEPTION_IF_NULL(y);
   NodePtr new_y = y;
-  if (y->node_type() == NodeType::kConstant) {
+  if (y->input_type() == InputType::kConstant) {
     auto v = y->BuildValue();
     MS_EXCEPTION_IF_NULL(v);
     // isinstance(y, (int, float, bool))

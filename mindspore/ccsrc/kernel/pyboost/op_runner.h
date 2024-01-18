@@ -42,7 +42,7 @@ struct OpRunnerInfo {
   const std::string &device_target;
   const vector<ValuePtr> &inputs;
   const abstract::AbstractBasePtrList &inputs_abs;
-  const std::vector<int64_t> &inputs_mask;
+  const std::vector<InputType> &inputs_mask;
   abstract::AbstractBasePtr output_abs;
 };
 
