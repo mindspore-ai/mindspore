@@ -339,6 +339,8 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
   }
 
   for (size_t ms_proto_idx = 0; ms_proto_idx < info->GetNumInputsOfMsOpProto(); ++ms_proto_idx) {
+    MS_LOG(DEBUG) << "ms_proto_idx=" << ms_proto_idx << ", ms_real_idx=" << ms_real_idx
+                  << ", num_real_inputs=" << num_real_inputs;
     // skip attribute converted input
     if (NeedCheckAttrToInput(cnode, info->attr_input_map(), ms_proto_idx)) {
       MS_LOG(DEBUG) << "Op prototype input idx:" << ms_proto_idx << " is attr to input, skip check";
@@ -364,6 +366,7 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
     if (is_value_depend) {
       // if the input is value_depend,  verification is performed in the launch and type conversion if necessary
       MS_LOG(DEBUG) << "When input is value_depend, skip it." << cnode->fullname_with_scope();
+      ms_real_idx += 1;
       continue;
     }
 
@@ -372,9 +375,12 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
           [base_type, ge_input_info](const ::ge::DataType ge_type) { return ConvertGeType(ge_type) == base_type; })) {
       if (base_type == kMetaTypeNone && ge_input_info.type == Ms2GeParamInfo::OPTIONAL) {
         MS_LOG(DEBUG) << "Input is a placeholder, continue!";
+        ms_real_idx += 1;
         continue;
       }
       if (GetMoreDataTypeSupported(base_type, info->op_type())) {
+        MS_LOG(DEBUG) << "More data type is supported, continue!";
+        ms_real_idx += 1;
         continue;
       }
       MS_LOG(DEBUG) << "Unsupported input dtype:" << TypeIdLabel(base_type)
