@@ -88,7 +88,11 @@ int InternalKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
   for (size_t i = 0; i < inputs_.size(); ++i) {
     input_shapes[i] = inputs_[i]->desc.dims;
   }
-  impl_->InferShape(input_shapes, output_shapes);
+  ret = impl_->InferShape(input_shapes, output_shapes);
+  if (ret != 0) {
+    MS_LOG(ERROR) << "op " << op_type_ << " infer shape failed";
+    return KRET_RESIZE_FAILED;
+  }
 
   auto tiling_size = impl_->GetTilingBufSize();
   internal::HostRawBuf host_tiling_buf;
