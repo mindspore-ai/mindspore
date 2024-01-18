@@ -649,6 +649,9 @@ static bool SupportCall(PyObject *func, const std::string &name) {
     &PySet_Type,     &PyFrozenSet_Type, &PyDict_Type,       &PyUnicode_Type, &PyEnum_Type,
   };
   if (PyType_CheckExact(func)) {
+    if (IsMsClass(func)) {
+      return true;
+    }
     return support_create_instance_type.find(reinterpret_cast<PyTypeObject *>(func)) !=
            support_create_instance_type.end();
   }

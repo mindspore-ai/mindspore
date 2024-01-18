@@ -129,8 +129,7 @@ bool GraphAnalyzer::HandleCallableToGraph(AObject *f) {
   }
   // don't pass unknown callable to graph
   bool is_known_func = f->GetType() == AObject::kTypeCell || f->GetType() == AObject::kTypePrimitive ||
-                       f->GetType() == AObject::kTypeMetaFuncGraph ||
-                       (f->GetType() == AObject::kTypeFunction && CheckJitConstexpr(f->GetPyObject()));
+                       f->GetType() == AObject::kTypeMetaFuncGraph || CheckJitConstexpr(f->GetPyObject());
   bool is_ms_support_func = f->TestMsFlag(kMsFlagSet);
   if (!is_known_func && !is_ms_support_func) {
     return false;
