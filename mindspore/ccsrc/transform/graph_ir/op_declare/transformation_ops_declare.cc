@@ -181,4 +181,13 @@ CUST_ATTR_MAP(Im2col) = {{"ksizes", ATTR_DESC(ksizes, AnyTraits<std::vector<int6
 CUST_OUTPUT_MAP(Im2col) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Im2col, kNameIm2col, CUST_ADPT_DESC(Im2col));
 REG_ADPT_DESC(Im2Col, prim::kPrimIm2Col->name(), CUST_ADPT_DESC(Im2col));
+
+// Col2im
+INPUT_MAP(Col2im) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(output_size)}};
+ATTR_MAP(Col2im) = {{"kernel_size", ATTR_DESC(kernel_size, AnyTraits<std::vector<int64_t>>())},
+                    {"stride", ATTR_DESC(stride, AnyTraits<std::vector<int64_t>>())},
+                    {"dilation", ATTR_DESC(dilation, AnyTraits<std::vector<int64_t>>())},
+                    {"padding", ATTR_DESC(padding, AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(Col2im) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Col2im, prim::kPrimCol2Im->name(), ADPT_DESC(Col2im))
 }  // namespace mindspore::transform
