@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import os
+import re
+import shutil
 import pytest
 import numpy as np
 from mindspore.nn import Cell
@@ -168,10 +171,31 @@ class BackwardNet(Cell):
         return grads
 
 
-@pytest.mark.level2
+def clean_all_ir_files(folder_path):
+    if os.path.exists(folder_path):
+        for file_name in os.listdir(folder_path):
+            if file_name.endswith('.ir') or file_name.endswith('.dot') or \
+                    file_name.endswith('.dat') or file_name.endswith('.pb'):
+                os.remove(os.path.join(folder_path, file_name))
+
+
+def find_newest_validateir_file(folder_path):
+    ckpt_files = map(lambda f: os.path.join(folder_path, f),
+                     filter(lambda f: re.match(r'\d+_auto_monad_reorder_\d+.ir', f),
+                            os.listdir(folder_path)))
+    return max(ckpt_files, key=os.path.getctime)
+
+
+def read_file(save_path):
+    filename = find_newest_validateir_file(save_path)
+    with open((os.path.join(filename)), 'r') as f:
+        content = f.read()
+    clean_all_ir_files(save_path)
+    return content
+
+
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_load_convert_tensormove():
     """
@@ -179,12 +203,26 @@ def test_load_convert_tensormove():
     Description: record the value of load.
     Expectation: No exception.
     """
-    x = Tensor(np.array(1), ms.int32)
-    graph_forword_net = ForwardNet()
-    graph_backword_net = BackwardNet(graph_forword_net)
-    graph_mode_grads = graph_backword_net(x)
-    output_except = (Tensor(np.array(3), ms.int32),)
-    assert np.all(graph_mode_grads == output_except)
+
+    if ms.context.get_context('mode') == 0:
+        # set MS_DEV_SIDE_EFFECT_LOAD_ELIM = 0/1/2
+        os.environ['MS_DEV_SIDE_EFFECT_LOAD_ELIM'] = '1'
+        save_path = "./test_load_convert_tensormove"
+        context.set_context(save_graphs=True, save_graphs_path=save_path)
+        x = Tensor(np.array(1), ms.int32)
+        graph_forword_net = ForwardNet()
+        graph_backword_net = BackwardNet(graph_forword_net)
+        output_except = (Tensor(np.array(3), ms.int32),)
+        graph_mode_grads = graph_backword_net(x)
+        content2 = read_file(save_path)
+        tensormove_set = re.findall('= TensorMove', content2)
+        context.set_context(save_graphs=False)
+        try:
+            shutil.rmtree(save_path)
+        except FileNotFoundError:
+            pass
+        assert len(tensormove_set) == 3
+        assert np.all(graph_mode_grads == output_except)
 
 
 class ForwardNet2(Cell):
@@ -204,8 +242,6 @@ class ForwardNet2(Cell):
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_load_convert_tensormove_2():
     """
@@ -213,9 +249,17 @@ def test_load_convert_tensormove_2():
     Description: record the value of load.
     Expectation: No exception.
     """
-    graph_forword_net = ForwardNet2()
-    forward_res = graph_forword_net()
-    assert forward_res == 3
+    if ms.context.get_context('mode') == 0:
+        os.environ['MS_DEV_SIDE_EFFECT_LOAD_ELIM'] = '1'
+        save_path = "./test_load_convert_tensormove2"
+        context.set_context(save_graphs=True, save_graphs_path=save_path)
+        graph_forword_net = ForwardNet2()
+        forward_res = graph_forword_net()
+        assert forward_res == 3
+        content = read_file(save_path)
+        tensormove_set = re.findall('= TensorMove', content)
+        context.set_context(save_graphs=False)
+        assert len(tensormove_set) == 3
 
 
 @pytest.mark.level1

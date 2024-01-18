@@ -56,6 +56,8 @@ class OrderEnforcer {
     static const bool no_insert_tensormove = common::GetEnv("MS_DEV_SIDE_EFFECT_LOAD_ELIM") == "3";
     // Do not insert TensorMove for all Load nodes
     if (no_insert_tensormove) {
+      MS_LOG(WARNING) << "Do not insert TensorMove for all Load nodes, the memory footprint is minimal, "
+                         "but there may be accuracy issues with the results.";
       return;
     }
     // After ensuring the correct control edge relationship, then insert the TensorMove operator.
