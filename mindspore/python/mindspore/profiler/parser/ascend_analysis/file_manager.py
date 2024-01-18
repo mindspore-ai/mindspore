@@ -28,7 +28,7 @@ class FileManager:
     MAX_PATH_LENGTH = 4096
     MAX_FILE_NAME_LENGTH = 255
     DATA_FILE_AUTHORITY = 0o640
-    DATA_DIR_AUTHORITY = 0o750
+    DATA_DIR_AUTHORITY = 0o700
 
     @classmethod
     def read_file_content(cls, path: str, mode: str = "r"):
