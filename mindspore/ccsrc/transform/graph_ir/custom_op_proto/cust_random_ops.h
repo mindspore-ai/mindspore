@@ -59,5 +59,68 @@ REG_CUST_OP(Gamma)
   .REQUIRED_ATTR(seed2, Int)
   .OUTPUT(output, TensorType({DT_FLOAT}))
   .CUST_OP_END_FACTORY_REG(Gamma)
+
+REG_CUST_OP(Multinomial)
+    .INPUT(logits, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+    .INPUT(num_samples, TensorType({DT_INT32}))
+    .OUTPUT(y, TensorType({DT_INT32, DT_INT64}))
+    .ATTR(dtype, Type, DT_INT64)
+    .ATTR(seed, Int, 0)
+    .ATTR(seed2, Int, 0)
+    .CUST_OP_END_FACTORY_REG(Multinomial)
+
+REG_CUST_OP(RandomCategorical)
+  .INPUT(logits, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16}))
+  .INPUT(num_sample, TensorType({DT_INT32, DT_INT64}))
+  .INPUT(seed, TensorType({DT_INT32, DT_INT64}))
+  .OUTPUT(output, TensorType({DT_INT16, DT_INT32, DT_INT64}))
+  .CUST_OP_END_FACTORY_REG(RandomCategorical)
+
+REG_CUST_OP(RandomPoisson)
+    .INPUT(shape, TensorType({DT_INT32, DT_INT64}))
+    .INPUT(rate, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE, \
+        DT_INT32, DT_INT64}))
+    .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE, \
+        DT_INT32, DT_INT64}))
+    .ATTR(dtype, Type, DT_INT64)
+    .ATTR(seed, Int, 0)
+    .ATTR(seed2, Int, 0)
+    .CUST_OP_END_FACTORY_REG(RandomPoisson)
+
+REG_CUST_OP(RandomShuffle)
+    .INPUT(x, TensorType({DT_INT64, DT_INT32, DT_UINT16, DT_INT16,
+        DT_UINT8, DT_INT8, DT_UINT64, DT_UINT32, DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_COMPLEX64,
+        DT_COMPLEX128, DT_BOOL}))
+    .OUTPUT(y, TensorType({DT_INT64, DT_INT32, DT_UINT16, DT_INT16,
+        DT_UINT8, DT_INT8, DT_UINT64, DT_UINT32, DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_COMPLEX64,
+        DT_COMPLEX128, DT_BOOL}))
+    .ATTR(seed, Int, 0)
+    .ATTR(seed2, Int, 0)
+    .CUST_OP_END_FACTORY_REG(RandomShuffle)
+
+REG_CUST_OP(StandardLaplace)
+    .INPUT(shape, TensorType({DT_INT32, DT_INT64}))
+    .OUTPUT(output, TensorType({DT_FLOAT}))
+    .ATTR(seed, Int, 0)
+    .ATTR(seed2, Int, 0)
+    .CUST_OP_END_FACTORY_REG(StandardLaplace)
+
+REG_CUST_OP(RandomChoiceWithMask)
+    .INPUT(x, TensorType({DT_BOOL}))
+    .OUTPUT(index, TensorType({DT_INT32}))
+    .OUTPUT(mask, TensorType({DT_BOOL}))
+    .ATTR(count, Int, 0)
+    .ATTR(seed, Int, 0)
+    .ATTR(seed2, Int, 0)
+    .CUST_OP_END_FACTORY_REG(RandomChoiceWithMask)
+
+REG_CUST_OP(RandomUniformInt)
+    .INPUT(shape, TensorType({DT_INT32, DT_INT64}))
+    .INPUT(min, TensorType({DT_INT32, DT_INT64}))
+    .INPUT(max, TensorType({DT_INT32, DT_INT64}))
+    .OUTPUT(y, TensorType({DT_INT32, DT_INT64}))
+    .ATTR(seed, Int, 0)
+    .ATTR(seed2, Int, 0)
+    .CUST_OP_END_FACTORY_REG(RandomUniformInt)
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_RANDOM_OPS_H_

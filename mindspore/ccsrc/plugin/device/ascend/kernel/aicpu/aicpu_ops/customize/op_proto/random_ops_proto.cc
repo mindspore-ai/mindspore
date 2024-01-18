@@ -22,7 +22,16 @@
 #include "utils/common_shape_fns.h"
 
 namespace ge {
-IMPLEMT_INFERFUNC(NonDeterministicInts, NonDeterministicIntsInfer) {
+IMPLEMT_COMMON_INFERFUNC(OneInOneOutCommonInferShape) {
+  static const int64_t input_x_idx = 0;
+  static const int64_t output_y_idx = 0;
+  if (OneInOneOutDynamicInfer(op, input_x_idx, {output_y_idx})) {
+    return GRAPH_SUCCESS;
+  }
+  return GRAPH_FAILED;
+}
+
+IMPLEMT_COMMON_INFERFUNC(InputShapeAttrDtypeInfer) {
   Shape shape;
   Tensor shape_tensor;
   if (op.GetInputConstData("shape", shape_tensor) != GRAPH_SUCCESS) {
@@ -45,7 +54,8 @@ IMPLEMT_INFERFUNC(NonDeterministicInts, NonDeterministicIntsInfer) {
   return op.UpdateOutputDesc("y", outputDesc);
 }
 
-INFER_FUNC_REG(NonDeterministicInts, NonDeterministicIntsInfer);
+COMMON_INFER_FUNC_REG(NonDeterministicInts, InputShapeAttrDtypeInfer);
+CUST_COMMON_INFER_FUNC_REG(StandardLaplace, InputShapeAttrDtypeInfer);
 
 // ----------------LogNormalReverse-------------------
 // Obtains the processing function of the output tensor description.
@@ -172,4 +182,104 @@ CUST_IMPLEMT_INFERFUNC(Gamma, GammaInfer) {
 
 CUST_INFER_FUNC_REG(Gamma, GammaInfer);
 // ----------------Gamma END-------------------
+IMPLEMT_COMMON_INFERFUNC(BatchSizeAndNumSampleInferShape) {
+  auto logits_desc = op.GetInputDescByName("logits");
+  auto num_samples_desc = op.GetInputDescByName("num_samples");
+  auto output_desc = op.GetOutputDescByName("y");
+
+  DataType logits_dtype = logits_desc.GetDataType();
+  ge::Shape logits_shape = logits_desc.GetShape();
+  ge::Shape output_shape({logits_shape.GetDim(0), UNKNOWN_DIM});
+
+  std::vector<std::string> input_infer_depends = {"num_samples"};
+  PREPARE_DYNAMIC_SHAPE(input_infer_depends);
+  Tensor num_samples_tensor;
+  if (op.GetInputConstData("num_samples", num_samples_tensor) == GRAPH_SUCCESS) {
+    int64_t num_samples;
+    if (MakeDimForScalarInput(num_samples_tensor, num_samples, op) != GRAPH_SUCCESS) {
+      return GRAPH_FAILED;
+    }
+    output_shape.SetDim(1, num_samples);
+  }
+  output_desc.SetShape(output_shape);
+  output_desc.SetDataType(logits_dtype);
+
+  return op.UpdateOutputDesc("y", output_desc);
+}
+
+CUST_COMMON_INFER_FUNC_REG(Multinomial, BatchSizeAndNumSampleInferShape);
+CUST_COMMON_INFER_FUNC_REG(RandomCategorical, BatchSizeAndNumSampleInferShape);
+
+CUST_COMMON_INFER_FUNC_REG(RandomShuffle, OneInOneOutCommonInferShape);
+
+// ----------------RandomPoisson-------------------
+CUST_IMPLEMT_INFERFUNC(RandomPoisson, RandomPoissonInfer) {
+  std::vector<std::string> depend_input{"shape"};
+  PREPARE_DYNAMIC_SHAPE(depend_input);
+
+  auto output_desc = op.GetOutputDesc("y");
+  Shape output_shape(UNKNOWN_RANK);
+
+  auto rate_desc = op.GetInputDescByName("rate");
+  auto rate_shape = rate_desc.GetShape();
+
+  Shape shape;
+  Tensor shape_tensor;
+  if (op.GetInputConstData("shape", shape_tensor) == GRAPH_SUCCESS && !IsUnknownDimNum(rate_shape)) {
+    if (MakeShapeFromShapeTensor(shape_tensor, shape, op) != GRAPH_SUCCESS) {
+      OP_LOGE(TbeGetName(op).c_str(), "Get shape error.");
+      return GRAPH_FAILED;
+    }
+    if (Concatenate(shape, rate_shape, output_shape) != GRAPH_SUCCESS) {
+      OP_LOGE(TbeGetName(op).c_str(), "Concatenate shape error.");
+      return GRAPH_FAILED;
+    }
+  }
+
+  DataType dtype;
+  if (op.GetAttr("dtype", dtype) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Get attr dtype error.");
+    return GRAPH_FAILED;
+  }
+  TensorDesc outputDesc = op.GetOutputDescByName("y");
+  outputDesc.SetDataType(dtype);
+  outputDesc.SetShape(output_shape);
+  return op.UpdateOutputDesc("y", outputDesc);
+}
+
+CUST_INFER_FUNC_REG(RandomPoisson, RandomPoissonInfer);
+// ----------------RandomPoisson End-------------------
+
+// ----------------RandomChoiceWithMask-------------------
+CUST_IMPLEMT_INFERFUNC(RandomChoiceWithMask, RandomChoiceWithMaskInfer) {
+  auto x_desc = op.GetInputDescByName("x");
+  auto x_shape = x_desc.GetShape();
+  int64_t x_rank = IsUnknownRankShape(x_shape) ? UNKNOWN_DIM : x_shape.GetDims().size();
+
+  int64_t count;
+  if (op.GetAttr("count", count) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Get attr 'count' failed.");
+    return GRAPH_FAILED;
+  }
+
+  auto index_desc = op.GetOutputDesc("index");
+  auto mask_desc = op.GetOutputDesc("mask");
+  Shape index_shape({count, x_rank});
+  Shape mask_shape({count});
+
+  index_desc.SetDataType(DT_INT32);
+  mask_desc.SetDataType(DT_BOOL);
+  return op.UpdateOutputDesc("index", index_desc) && op.UpdateOutputDesc("mask", mask_desc);
+}
+CUST_INFER_FUNC_REG(RandomChoiceWithMask, RandomChoiceWithMaskInfer);
+// ----------------RandomChoiceWithMask End-------------------
+
+// ----------------RandomUniformInt-------------------
+CUST_IMPLEMT_INFERFUNC(RandomUniformInt, RandomUniformIntInfer) {
+  auto shape_desc = op.GetInputDescByName("shape");
+  shape_desc.SetDataType(DT_INT32);
+  return op.UpdateOutputDesc("y", shape_desc);
+}
+CUST_INFER_FUNC_REG(RandomUniformInt, RandomUniformIntInfer);
+// ----------------RandomUniformInt End-------------------
 }  // namespace ge

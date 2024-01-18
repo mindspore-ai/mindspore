@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "ms_kernel/random_poisson.h"
+#include <random>
 #include "random/utils.h"
 
 namespace {
@@ -72,6 +73,7 @@ uint32_t RandomPoissonCpuKernel::Compute(CpuKernelContext &ctx) {
 template <typename T>
 uint32_t RandomPoissonCpuKernel::Generate(const CpuKernelContext &ctx, Tensor *output) {
   // reset the state of ops
+  /*
   uint32_t kernel_ret = 0;
   uint64_t rng_seed =
     random::GetCpuKernelRandomStates(ctx, kCountsIndex, kStatesIndex, seed_, seed2_, "RandomPoisson", &kernel_ret);
@@ -79,6 +81,8 @@ uint32_t RandomPoissonCpuKernel::Generate(const CpuKernelContext &ctx, Tensor *o
     return KERNEL_STATUS_INNER_ERROR;
   }
   // use the origin method to get seed
+  */
+  uint64_t rng_seed = std::random_device()();
   rng_seed = PCG_XSH_RS_state(rng_seed, rng_seed);
   rng_.seed(rng_seed);
 

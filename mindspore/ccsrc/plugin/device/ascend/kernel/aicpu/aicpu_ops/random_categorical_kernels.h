@@ -29,6 +29,7 @@ class RandomCategoricalKernel : public KernelBase {
   int64_t batch_size_;
   int num_classes_;
   aicpuops::DataType input_type_;
+  aicpuops::DataType num_sample_type_;
   aicpuops::DataType output_type_;
 
  protected:

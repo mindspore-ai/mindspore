@@ -13,14 +13,13 @@
 # limitations under the License.
 # ============================================================================
 
+import pytest
 import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
-
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Net(nn.Cell):
@@ -36,12 +35,18 @@ class Net(nn.Cell):
         return self.random_poisson(self.shape, self.rate)
 
 
-def test_net():
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_net(mode):
     """
     Feature: test RandomPoisson op.
     Description: test RandomPoisson op.
     Expectation: success.
     """
+    context.set_context(mode=mode, device_target="Ascend")
     shape = Tensor(np.array([2, 3]), mstype.int32)
     rate = Tensor(np.array([2, 2]), mstype.int32)
     seed = 1

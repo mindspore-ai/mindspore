@@ -50,47 +50,14 @@ namespace mindspore {
 namespace ops {
 namespace {
 int64_t GetNumSample(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  int64_t num_sample = -1;
-  const auto &nun_sample_arg = input_args[kInputIndex1];
-  if (CheckAndConvertUtils::IsScalar(nun_sample_arg)) {
-    auto num_sample_input_type = nun_sample_arg->GetType();
-    auto value = nun_sample_arg->GetValue();
-    if (value->ContainsValueAny()) {
-      return num_sample;
-    }
-    if (num_sample_input_type->type_id() == kNumberTypeInt64) {
-      num_sample = GetValue<int64_t>(value);
-    } else if (num_sample_input_type->type_id() == kNumberTypeInt32) {
-      num_sample = GetValue<int32_t>(value);
-    } else {
-      MS_EXCEPTION(TypeError) << "For '" << prim->name() << "' second input build type is invalid:"
-                              << TypeIdToString(num_sample_input_type->type_id()) << ".";
-    }
-  } else if (CheckAndConvertUtils::IsTensor(nun_sample_arg)) {
-    auto nun_sample_type = nun_sample_arg->GetType()->cast<TensorTypePtr>();
-    MS_EXCEPTION_IF_NULL(nun_sample_type);
-    if (nun_sample_type->element()->type_id() == kNumberTypeInt64) {
-      auto num_sample_value_opt = GetArrayValue<int64_t>(nun_sample_arg);
-      if (num_sample_value_opt.has_value() || num_sample_value_opt.value().size() == 0) {
-        MS_EXCEPTION(TypeError) << "num_sample_value is invalid for RandomCategorical";
-      }
-      num_sample = num_sample_value_opt.value()[0];
-    } else if (nun_sample_type->element()->type_id() == kNumberTypeInt32) {
-      auto num_sample_value_opt = GetArrayValue<int32_t>(nun_sample_arg);
-      if (num_sample_value_opt.has_value() || num_sample_value_opt.value().size() == 0) {
-        MS_EXCEPTION(TypeError) << "num_sample_value is invalid for RandomCategorical";
-      }
-      num_sample = num_sample_value_opt.value()[0];
-    } else {
-      MS_EXCEPTION(TypeError) << "For '" << prim->name() << "' second input build type is invalid.";
-    }
-  } else {
-    MS_EXCEPTION(TypeError) << "For '" << prim->name()
-                            << "', the second input type should be scalar or tensor, but got invalid abstract type:"
-                            << nun_sample_arg->type_name() << ".";
+  const auto num_sample_value = GetScalarValue<int64_t>(input_args[kInputIndex1]->GetValue());
+  if (!num_sample_value.has_value()) {
+    MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', failed to get value 'num_sample'";
   }
+  auto num_sample = num_sample_value.value();
   if (num_sample <= 0) {
-    MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', num_sample must greater than 0, but got " << num_sample;
+    MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', num_sample can't has negative value, but got "
+                             << num_sample;
   }
   return num_sample;
 }

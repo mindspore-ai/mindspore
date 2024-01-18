@@ -54,12 +54,12 @@ REG_ADPT_DESC(LinSpace, kNameLinSpace, ADPT_DESC(LinSpace))
 REG_ADPT_DESC(LinSpaceD, kLinSpaceDOpName, ADPT_DESC(LinSpace))
 
 // RandomChoiceWithMask
-INPUT_MAP(RandomChoiceWithMask) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(RandomChoiceWithMask) = {{"count", ATTR_DESC(count, AnyTraits<int64_t>())},
-                                  {"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
-                                  {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
-OUTPUT_MAP(RandomChoiceWithMask) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(mask)}};
-REG_ADPT_DESC(RandomChoiceWithMask, kNameRandomChoiceWithMask, ADPT_DESC(RandomChoiceWithMask))
+CUST_INPUT_MAP(RandomChoiceWithMask) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(RandomChoiceWithMask) = {{"count", ATTR_DESC(count, AnyTraits<int64_t>())},
+                                       {"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
+                                       {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
+CUST_OUTPUT_MAP(RandomChoiceWithMask) = {{0, OUTPUT_DESC(index)}, {1, OUTPUT_DESC(mask)}};
+REG_ADPT_DESC(RandomChoiceWithMask, kNameRandomChoiceWithMask, CUST_ADPT_DESC(RandomChoiceWithMask))
 
 // TruncatedNormal
 INPUT_MAP(TruncatedNormal) = {{1, INPUT_DESC(shape)}};
@@ -82,7 +82,17 @@ ATTR_MAP(Multinomial) = {{"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())},
                          {"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
                          {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
 OUTPUT_MAP(Multinomial) = {{0, OUTPUT_DESC(y)}};
+
+CUST_INPUT_MAP(Multinomial) = {{1, INPUT_DESC(logits)}, {2, INPUT_DESC(num_samples)}};
+CUST_ATTR_MAP(Multinomial) = {{"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())},
+                              {"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
+                              {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
+CUST_OUTPUT_MAP(Multinomial) = {{0, OUTPUT_DESC(y)}};
+#ifdef BUILD_LITE
 REG_ADPT_DESC(Multinomial, prim::kPrimMultinomial->name(), ADPT_DESC(Multinomial))
+#else
+REG_ADPT_DESC(Multinomial, prim::kPrimMultinomial->name(), CUST_ADPT_DESC(Multinomial))
+#endif
 
 // Dropout
 INPUT_MAP(Dropout) = {{1, INPUT_DESC(x)}};
@@ -91,11 +101,11 @@ OUTPUT_MAP(Dropout) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Dropout, kDropoutOpName, ADPT_DESC(Dropout))
 
 // RandomUniformInt
-INPUT_MAP(RandomUniformInt) = {{1, INPUT_DESC(shape)}, {2, INPUT_DESC(min)}, {3, INPUT_DESC(max)}};
-ATTR_MAP(RandomUniformInt) = {{"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
-                              {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
-OUTPUT_MAP(RandomUniformInt) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(RandomUniformInt, kUniformIntOpName, ADPT_DESC(RandomUniformInt))
+CUST_INPUT_MAP(RandomUniformInt) = {{1, INPUT_DESC(shape)}, {2, INPUT_DESC(min)}, {3, INPUT_DESC(max)}};
+CUST_ATTR_MAP(RandomUniformInt) = {{"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
+                                   {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
+CUST_OUTPUT_MAP(RandomUniformInt) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(RandomUniformInt, kUniformIntOpName, CUST_ADPT_DESC(RandomUniformInt))
 
 // RandomUniform
 INPUT_MAP(RandomUniform) = {{1, INPUT_DESC(shape)}};
@@ -118,14 +128,12 @@ CUST_ATTR_MAP(Dropout2D) = {{"keep_prob", ATTR_DESC(keep_prob, AnyTraits<float>(
 CUST_OUTPUT_MAP(Dropout2D) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(mask)}};
 REG_ADPT_DESC(Dropout2D, kNameDropout2D, CUST_ADPT_DESC(Dropout2D))
 
-#if 0
 // StandardLaplace
-CUST_INPUT_MAP(StandardLaplace) = {{1, INPUT_DESC(shape)}, {2, INPUT_DESC(seed)}, {3, INPUT_DESC(seed2)}};
+CUST_INPUT_MAP(StandardLaplace) = {{1, INPUT_DESC(shape)}};
 CUST_ATTR_MAP(StandardLaplace) = {{"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
                                   {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
 CUST_OUTPUT_MAP(StandardLaplace) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(StandardLaplace, prim::kPrimStandardLaplace->name(), CUST_ADPT_DESC(StandardLaplace));
-#endif
 
 // RandpermV2
 INPUT_MAP(StatelessRandperm) = {{kIndex1, INPUT_DESC(n)}, {kIndex2, INPUT_DESC(seed)}, {kIndex3, INPUT_DESC(offset)}};
@@ -150,4 +158,23 @@ CUST_ATTR_MAP(Gamma) = {{"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
                         {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
 CUST_OUTPUT_MAP(Gamma) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(Gamma, kNameGamma, CUST_ADPT_DESC(Gamma));
+
+// RandomPoisson
+CUST_INPUT_MAP(RandomPoisson) = {{1, INPUT_DESC(shape)}, {2, INPUT_DESC(rate)}};
+CUST_ATTR_MAP(RandomPoisson) = {{"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
+                                {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
+CUST_OUTPUT_MAP(RandomPoisson) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(RandomPoisson, prim::kPrimRandomPoisson->name(), CUST_ADPT_DESC(RandomPoisson));
+
+// RandomCategorical
+CUST_INPUT_MAP(RandomCategorical) = {{1, INPUT_DESC(logits)}, {2, INPUT_DESC(num_sample)}, {3, INPUT_DESC(seed)}};
+CUST_ATTR_MAP(RandomCategorical) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(RandomCategorical) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(RandomCategorical, prim::kPrimRandomCategorical->name(), CUST_ADPT_DESC(RandomCategorical));
+
+CUST_INPUT_MAP(RandomShuffle) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(RandomShuffle) = {{"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
+                                {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
+CUST_OUTPUT_MAP(RandomShuffle) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(RandomShuffle, prim::kPrimRandomShuffle->name(), CUST_ADPT_DESC(RandomShuffle));
 }  // namespace mindspore::transform

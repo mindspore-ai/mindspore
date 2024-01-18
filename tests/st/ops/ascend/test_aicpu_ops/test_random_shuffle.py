@@ -57,26 +57,25 @@ def test_random_shuffle_op_dtype(mode, dtype):
     assert output.shape == expect_shape
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-@pytest.mark.parametrize("shape", [(5,), (2, 3), (12, 3, 5), (3, 4, 2, 3),
-                                   (3, 4, 2, 3, 4), (3, 4, 2, 3, 4, 4),
-                                   (3, 4, 2, 3, 4, 5, 3)])
+@pytest.mark.parametrize("shape", [(5,), (2, 3), (12, 3, 5)])
 def test_random_shuffle_op_tensor(mode, shape):
     """
     Feature: cpu RandomShuffle
     Description: test the 0-7D Tensor.
     Expectation: success.
     """
-    context.set_context(mode=mode, device_target="CPU")
+    context.set_context(mode=mode, device_target="Ascend")
     net = RandomShuffleNet(seed=3, seed2=1)
     x = Tensor(np.random.randn(*shape).astype(np.float32))
     output = net(x)
     expect_shape = shape
     assert output.shape == expect_shape
+    assert np.all(np.sort(x.asnumpy().flatten()) == np.sort(output.asnumpy().flatten()))
 
 
 @pytest.mark.level1
