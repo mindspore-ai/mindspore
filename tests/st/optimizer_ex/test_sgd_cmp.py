@@ -68,8 +68,8 @@ class SGDFactory():
                     bias_params.append(param[1])
                 else:
                     no_bias_params.append(param[1])
-            group_params = [{'params': bias_params, 'weight_decay': 0.01, 'lr': 0.9, "dampening": 1},
-                            {'params': no_bias_params, 'lr': 0.66, "momentum": 0.7, "nesterov": True}]
+            group_params = [{'params': bias_params, 'weight_decay': 0.01, 'lr': 0.009, "dampening": 1},
+                            {'params': no_bias_params, 'lr': 0.006, "momentum": 0.7, "nesterov": True}]
             optimizer = torch.optim.SGD(params=group_params, lr=self.lr)
 
         criterion = torch.nn.L1Loss(reduction='mean')
@@ -103,8 +103,8 @@ class SGDFactory():
         else:
             bias_params = list(filter(lambda x: 'bias' in x.name, model_ms.trainable_params()))
             no_bias_params = list(filter(lambda x: 'bias' not in x.name, model_ms.trainable_params()))
-            group_params = [{'params': bias_params, 'weight_decay': 0.01, 'lr': 0.9, "dampening": 1},
-                            {'params': no_bias_params, 'lr': 0.66, "momentum": 0.7, "nesterov": True}]
+            group_params = [{'params': bias_params, 'weight_decay': 0.01, 'lr': 0.009, "dampening": 1},
+                            {'params': no_bias_params, 'lr': 0.006, "momentum": 0.7, "nesterov": True}]
             optimizer = SGD(params=group_params, lr=self.lr)
 
         criterion = nn.MAELoss(reduction="mean")
@@ -213,7 +213,7 @@ def test_sgd_lr_dynamic(mode):
     fact.result_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
