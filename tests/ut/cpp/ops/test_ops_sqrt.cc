@@ -40,20 +40,20 @@ TEST_P(TestSqrt, dyn_shape) {
 
 namespace {
 auto SqrtOpTypeCases = testing::ValuesIn({
-  EltwiseOpTypeParams{kInt8, kInt8},
-  EltwiseOpTypeParams{kInt16, kInt16},
-  EltwiseOpTypeParams{kInt32, kInt32},
-  EltwiseOpTypeParams{kInt64, kInt64},
-  EltwiseOpTypeParams{kUInt8, kUInt8},
-  EltwiseOpTypeParams{kUInt16, kUInt16},
-  EltwiseOpTypeParams{kUInt32, kUInt32},
-  EltwiseOpTypeParams{kUInt64, kUInt64},
+  EltwiseOpTypeParams{kInt8, kFloat32},
+  EltwiseOpTypeParams{kInt16, kFloat32},
+  EltwiseOpTypeParams{kInt32, kFloat32},
+  EltwiseOpTypeParams{kInt64, kFloat32},
+  EltwiseOpTypeParams{kUInt8, kFloat32},
+  EltwiseOpTypeParams{kUInt16, kFloat32},
+  EltwiseOpTypeParams{kUInt32, kFloat32},
+  EltwiseOpTypeParams{kUInt64, kFloat32},
   EltwiseOpTypeParams{kFloat16, kFloat16},
   EltwiseOpTypeParams{kFloat32, kFloat32},
   EltwiseOpTypeParams{kFloat64, kFloat64},
   EltwiseOpTypeParams{kComplex64, kComplex64},
   EltwiseOpTypeParams{kComplex128, kComplex128},
-  EltwiseOpTypeParams{kBool, kBool},
+  EltwiseOpTypeParams{kBool, kFloat32},
 });
 }
 
