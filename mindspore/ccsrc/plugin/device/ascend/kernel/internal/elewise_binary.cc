@@ -44,7 +44,7 @@ class Add : public ElewiseBinary {
   }
 };
 
-class Sub : public ElemiseBinary {
+class Sub : public ElewiseBinary {
  public:
   Sub() : ElewiseBinary("Sub") {}
   ~Sub() = default;
