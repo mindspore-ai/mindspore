@@ -35,23 +35,23 @@ void CheckNLLLossGradShapeValid(const PrimitivePtr &primitive, const ShapeVector
     if (logits_shape[0] > abstract::Shape::kShapeDimAny) {
       if (labels_shape[0] > abstract::Shape::kShapeDimAny) {
         MS_CHECK_VALUE(labels_shape[0] == 1, CheckAndConvertUtils::FormatCheckIntegerMsg(
-                                               "labels_shape", labels_shape[0], kEqual, 1, primitive));
+                                               "labels shape", labels_shape[0], kEqual, 1, primitive));
       }
       if (weight_shape[0] > abstract::Shape::kShapeDimAny) {
         MS_CHECK_VALUE(weight_shape[0] == logits_shape[0],
-                       CheckAndConvertUtils::FormatCheckIntegerMsg("weight_shape", weight_shape[0], kEqual,
+                       CheckAndConvertUtils::FormatCheckIntegerMsg("weight shape", weight_shape[0], kEqual,
                                                                    logits_shape[0], primitive));
       }
     }
   } else if (logits_shape.size() == 2) {
     if (logits_shape[0] > abstract::Shape::kShapeDimAny && labels_shape[0] > abstract::Shape::kShapeDimAny) {
       MS_CHECK_VALUE(labels_shape[0] == logits_shape[0],
-                     CheckAndConvertUtils::FormatCheckIntegerMsg("labels_shape", labels_shape[0], kEqual,
+                     CheckAndConvertUtils::FormatCheckIntegerMsg("labels shape", labels_shape[0], kEqual,
                                                                  logits_shape[0], primitive));
     }
     if (logits_shape[1] > abstract::Shape::kShapeDimAny && weight_shape[0] > abstract::Shape::kShapeDimAny) {
       MS_CHECK_VALUE(weight_shape[0] == logits_shape[1],
-                     CheckAndConvertUtils::FormatCheckIntegerMsg("weight_shape", weight_shape[0], kEqual,
+                     CheckAndConvertUtils::FormatCheckIntegerMsg("weight shape", weight_shape[0], kEqual,
                                                                  logits_shape[1], primitive));
     }
   }

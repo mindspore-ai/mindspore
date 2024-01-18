@@ -69,7 +69,7 @@ def get_nll_loss_grad_vmap_rule(prim, axis_size):
         if lg_dim is not None and reduction != Reduction.NONE:
             _raise_value_error("The source axis of loss_grad in `NLLLossGrad` can be not None "
                                "just when reduction type is none for vmap, "
-                               "but reduction type is {}.".format(reduction))
+                               "but reduction type is {}.".format((Reduction(reduction)).name))
 
         # If stacked, move vmap_dim to first dim and reshape to right shape.
         if x_dim is not None:
