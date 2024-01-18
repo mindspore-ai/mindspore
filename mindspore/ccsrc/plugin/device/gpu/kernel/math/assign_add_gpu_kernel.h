@@ -25,7 +25,6 @@
 #include <functional>
 #include <map>
 #include <utility>
-#include "mindspore/core/ops/assign_add.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/assign_add_impl.cuh"

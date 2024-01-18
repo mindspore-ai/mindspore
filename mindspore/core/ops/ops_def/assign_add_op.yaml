@@ -1,0 +1,16 @@
+#operator assign_add
+assign_add:
+    args:
+        ref:
+            dtype: tensor
+        value:
+            dtype: tensor
+            type_cast: number
+    args_signature:
+        rw_write: ref
+        dtype_group: (ref, value)
+    labels:
+        side_effect_mem: True
+    returns:
+        output:
+            dtype: tensor

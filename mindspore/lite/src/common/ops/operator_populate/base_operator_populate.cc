@@ -27,7 +27,6 @@
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/adam.h"
 #include "ops/assert.h"
-#include "ops/assign_add.h"
 #include "ops/where.h"
 #include "ops/unsorted_segment_sum.h"
 #include "ops/unique.h"
