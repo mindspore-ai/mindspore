@@ -111,7 +111,6 @@
 #include "ops/unique.h"
 #include "ops/unstack.h"
 #include "ops/unsqueeze.h"
-#include "ops/unsorted_segment_sum.h"
 #include "ops/where.h"
 #include "ops/grad/activation_grad.h"
 #include "ops/grad/add_grad.h"

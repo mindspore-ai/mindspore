@@ -28,7 +28,6 @@
 #include "ops/adam.h"
 #include "ops/assert.h"
 #include "ops/where.h"
-#include "ops/unsorted_segment_sum.h"
 #include "ops/unique.h"
 #include "ops/triu.h"
 #include "ops/tril.h"

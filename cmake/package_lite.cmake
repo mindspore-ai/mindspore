@@ -114,7 +114,6 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/tensor_list_set_item.h
             ${TOP_DIR}/mindspore/core/ops/tensor_list_stack.h
             ${TOP_DIR}/mindspore/core/ops/unique.h
-            ${TOP_DIR}/mindspore/core/ops/unsorted_segment_sum.h
             ${TOP_DIR}/mindspore/core/ops/unsqueeze.h
             ${TOP_DIR}/mindspore/core/ops/unstack.h
             ${TOP_DIR}/mindspore/core/ops/where.h

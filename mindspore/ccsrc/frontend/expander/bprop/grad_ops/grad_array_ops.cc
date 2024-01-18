@@ -236,7 +236,7 @@ NodePtr CalcNumSegment(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis
                                "The num_segment should be a int for gradient of Gather.");
     num_segment = ib->Value(num_segment_value[0]);
   } else {
-    num_segment = ib->Reshape(ib->SequenceToTensor(num_segment), ShapeVector{});
+    num_segment = ib->TupleGetItem(num_segment, 0);
   }
   return num_segment;
 }

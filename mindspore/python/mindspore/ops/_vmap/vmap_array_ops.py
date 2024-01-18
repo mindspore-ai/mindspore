@@ -771,7 +771,6 @@ def get_tensor_scatter_op_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.UnsortedSegmentMin)
 @vmap_rules_getters.register(P.UnsortedSegmentMax)
 @vmap_rules_getters.register(P.UnsortedSegmentProd)
-@vmap_rules_getters.register(P.UnsortedSegmentSum)
 def get_unsorted_segment_arithmetic_vmap_rule(prim, axis_size):
     """VmapRule for `UnsortedSegment*` operation."""
 
@@ -779,7 +778,6 @@ def get_unsorted_segment_arithmetic_vmap_rule(prim, axis_size):
         "UnsortedSegmentMin": P.UnsortedSegmentMin,
         "UnsortedSegmentMax": P.UnsortedSegmentMax,
         "UnsortedSegmentProd": P.UnsortedSegmentProd,
-        "UnsortedSegmentSum": P.UnsortedSegmentSum,
     }
     prim_name = prim.name
     unsorted_segment_func = unsorted_segment_func_map.get(prim_name)()
@@ -809,6 +807,42 @@ def get_unsorted_segment_arithmetic_vmap_rule(prim, axis_size):
         segment_ids = _bdim_at_front(segment_ids, segment_ids_dim, axis_size)
 
         out = unsorted_segment_func(input_value, segment_ids, num_segment)
+        return out, 0
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.UnsortedSegmentSum)
+def get_unsorted_segment_sum_vmap_rule(prim, axis_size):
+    """VmapRule for `UnsortedSegmentSum*` operation."""
+
+    prim_name = prim.name
+    if prim.has_label("batch_rank"):
+        batch_rank = prim.get_label("batch_rank") + 1
+    else:
+        batch_rank = 1
+
+    prim = prim.clone()
+    prim.set_label('batch_rank', batch_rank)
+
+    def vmap_rule(input_bdim, segment_ids_bdim, num_segment_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, input_bdim, segment_ids_bdim, num_segment_bdim)
+        if is_all_none:
+            return result
+
+        # num_segment affect output shape, must be none
+        num_segment, num_segment_dim = num_segment_bdim
+        if num_segment_dim is not None:
+            _raise_value_error("The source axis of `num_segment` in `{}` must be None, "
+                               "but got {}.".format(prim_name, num_segment_dim))
+
+        input_value, input_dim = input_bdim
+        segment_ids, segment_ids_dim = segment_ids_bdim
+
+        input_value = _bdim_at_front(input_value, input_dim, axis_size)
+        segment_ids = _bdim_at_front(segment_ids, segment_ids_dim, axis_size)
+
+        out = prim(input_value, segment_ids, num_segment)
         return out, 0
 
     return vmap_rule

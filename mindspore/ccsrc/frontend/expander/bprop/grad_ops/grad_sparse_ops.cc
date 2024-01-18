@@ -137,12 +137,11 @@ NodePtrList CommonSparseSegmentBpropDefault(BpropIRBuilder *ib, bool with_segmen
   auto segment_ids = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(with_segments ? kIndex5 : kIndex4);
   auto shape_x = ib->GetShape(x);
-  auto output_dim0 = ib->Cast(ib->Tensor(shape_x[0]), kInt32);
   segment_ids = ib->Cast(segment_ids, kInt32);
   auto input0 = ib->Gather(dout, segment_ids, ib->Tensor(0, kInt64));
   input0 = ib->Cast(input0, kFloat32);
   indices = ib->Cast(indices, kInt32);
-  auto dx = ib->UnsortedSegmentSum(input0, indices, output_dim0);
+  auto dx = ib->UnsortedSegmentSum(input0, indices, ib->Value<int64_t>(shape_x[0]));
   dx = ib->Cast(dx, ib->GetDtype(dout));
   NodePtrList result = {dx, ib->OutZeros(indices), ib->OutZeros(segment_ids)};
   if (with_segments) {
