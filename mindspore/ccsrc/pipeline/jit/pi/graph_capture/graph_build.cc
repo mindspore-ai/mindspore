@@ -1885,7 +1885,7 @@ bool GraphBuilder::CheckAndSetDefaultParams(const py::object &func, FrameStates 
   return true;
 }
 
-static ValueNode *GetBoundSelf(CallNode *call_node) {
+ValueNode *GetBoundSelf(CallNode *call_node) {
   ValueNode *func_val = call_node->input(0);
   AObject *vo = func_val->GetVobj();
   auto &alloc = call_node->GetGraph()->allocator();
