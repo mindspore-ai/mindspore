@@ -1361,8 +1361,8 @@ transform::DfGraphPtr GeGraphExecutor::CompileGraphCommon(const FuncGraphPtr &an
   }
 #endif
 
-  // auto remove_load_pass = std::make_shared<opt::RemoveLoadPass>();
-  // remove_load_pass->Run(anf_graph);
+  auto remove_load_pass = std::make_shared<opt::RemoveLoadPass>();
+  remove_load_pass->Run(anf_graph);
 
   if (!UpdateGraphInputs(anf_graph)) {
     MS_LOG(ERROR) << "Failed to update graph inputs";
