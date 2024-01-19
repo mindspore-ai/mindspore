@@ -1296,7 +1296,7 @@ REG_BPROP_BUILDER("ReduceProd").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto keep_dims = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   if (ib->GetRank(x) == 0) {
-    return {dout, ib->OutZeros(axis)};
+    return {dout, ib->OutZeros(axis), ib->OutZeros(keep_dims)};
   }
   auto res = ib->ShapeCalc(g_reduce_prod, {x, axis}, {1});
   auto keep_dims_value = GetValue<bool>(keep_dims->BuildValue());
