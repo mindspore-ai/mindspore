@@ -253,7 +253,13 @@ class SummaryLandscape:
                 self._epoch_group[i].append(j)
 
     def clean_ckpt(self):
-        """Clean the checkpoint."""
+        """
+        Clean the checkpoint.
+
+        Tutorial Examples:
+            - `Training Optimization Process Visualization
+              <https://www.mindspore.cn/mindinsight/docs/en/master/landscape.html>`_
+        """
         shutil.rmtree(self._ckpt_dir, ignore_errors=True)
 
     def gen_landscapes_with_multi_process(self, callback_fn, collect_landscape=None,
