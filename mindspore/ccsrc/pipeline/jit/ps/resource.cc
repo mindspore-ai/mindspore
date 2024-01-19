@@ -689,7 +689,7 @@ void Resource::GetCompileCacheResource(const py::list &compile_cache_dep_files, 
                                        bool *compile_cache_consistent) {
   compile_cache_manager_ = std::make_shared<CompileCacheManager>(compile_cache_id);
   compile_cache_manager_->InitParallelGroupCkptSaveFile();
-  static const bool force_use_compile_cache = (common::GetEnv("MS_DEV_FORCE_USE_COMPILE_CACHE") == "1");
+  const bool force_use_compile_cache = (common::GetEnv("MS_DEV_FORCE_USE_COMPILE_CACHE") == "1");
   if (force_use_compile_cache) {
     MS_LOG(WARNING)
       << "The env MS_DEV_FORCE_USE_COMPILE_CACHE has been set. It will force to use the compile cache without "
