@@ -1506,7 +1506,16 @@ class SymbolTree(Observer, Observable, NodeManager):
         # add imports to import_asts of belonging_ast
         import_asts = self._get_imports_list_of_ast(belonging_ast)
         for import_node in import_nodes:
-            import_node = self._process_relative_import(import_node, file_path, belonging_ast)
+            # remove unused imports
+            if belonging_ast and isinstance(import_node, (ast.Import, ast.ImportFrom)):
+                str_checker = StrChecker(belonging_ast)
+                for alias in import_node.names[:]:
+                    name = alias.asname if alias.asname else alias.name
+                    if name != '*' and not str_checker.check(name):
+                        import_node.names.remove(alias)
+                if not import_node.names:
+                    continue
+            import_node = self._process_relative_import(import_node, file_path)
             if import_node:
                 import_asts.append(import_node)
 
@@ -1557,19 +1566,19 @@ class SymbolTree(Observer, Observable, NodeManager):
                 import_asts = self._external_ast.get(belonging_ast)
         return import_asts
 
-    def _process_relative_import(self, import_node, file_path, belonging_ast: ast.AST = None):
+    def _process_relative_import(self, import_node: Union[ast.Import, ast.ImportFrom], file_path: str):
         """Process relative imports"""
+        file_path = os.path.normcase(file_path)
+        file_path = os.path.normpath(file_path)
         if isinstance(import_node, ast.ImportFrom):
             # pad the ImportFrom with parent path
             # e.g. from ..C import xxx -> from A.B.C import xxx
-            import_module, import_path = self._get_valid_import_info(import_node, file_path)
+            import_module = self._get_valid_import_info(import_node, file_path)
             if import_module:
                 import_node = ast.ImportFrom(module=import_module, names=import_node.names, level=0)
-                if import_path:
-                    self.save_file_path_to_sys(0, import_path, belonging_ast)
         return import_node
 
-    def _get_valid_import_info(self, import_node, file_path):
+    def _get_valid_import_info(self, import_node: Union[ast.Import, ast.ImportFrom], file_path: str):
         """Get valid import info while import_node.module is at form of relative path"""
         # copy to a new node to avoid origin import_node being modified.
         import_node_test = copy.deepcopy(import_node)
@@ -1577,24 +1586,27 @@ class SymbolTree(Observer, Observable, NodeManager):
         # get real path from import_node.level
         # from .(A) import xxx: current path
         # from ..(A) import xxx: last level path
-        import_node_module_name = import_node.module
         level = import_node.level
         # from A import xxx: it does not need to pad, directly return the module name
         if level == 0:
-            return import_node_module_name, None
+            return import_node.module
         if level > 1:
             for _ in range(level - 1):
                 file_path = os.path.dirname(file_path)
         file_path_tmp = file_path[:]
-        max_level_count = file_path.count('/') + file_path.count('\\') - 1
+        max_level_count = file_path.count(os.path.sep) - 1
         level_count = 0
         # suffix is the module_name, e.g. 'A' in 'from ..(A) import xxx'
         suffix = ''
-        if import_node_module_name:
-            suffix = '.' + import_node_module_name
+        if import_node.module:
+            suffix = '.' + import_node.module
         while level_count < max_level_count:
             file_path_tmp = os.path.dirname(file_path_tmp)
-            import_node_test.module = file_path[len(file_path_tmp) + 1:].replace('/', '.') + suffix
+            if file_path_tmp not in sys.path:
+                logger.debug(f"{file_path_tmp} not in sys.path, try upper level.")
+                level_count += 1
+                continue
+            import_node_test.module = file_path[len(file_path_tmp) + 1:].replace(os.path.sep, '.') + suffix
             import_node_test.level = 0
             import_code = astunparse.unparse(import_node_test).strip()
             test_code = f"import sys\nsys.path.insert(0, r'{file_path_tmp}')\n{import_code}"
@@ -1608,13 +1620,13 @@ class SymbolTree(Observer, Observable, NodeManager):
                 continue
             except Exception as e: # pylint: disable=W0703
                 logger.info(f"Process import code: {import_code} failed: {e}, ignore this import code.")
-                return None, None
+                return None
             else:
                 # try test code success
-                return import_node_test.module, file_path_tmp
+                return import_node_test.module
         # try codes with all level failed
         logger.info(f"Test import code: {astunparse.unparse(import_node).strip()} failed, ignore this import code.")
-        return None, None
+        return None
 
     def _get_real_node(self, node_or_name: Union[Node, str]) -> Optional[Node]:
         if isinstance(node_or_name, str):

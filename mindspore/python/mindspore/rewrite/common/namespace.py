@@ -30,6 +30,8 @@ _ms_functional_ns = CellNamespace('mindspore.ops.functional')
 _subtree_black_list = ["QuantizeWrapperCell",]
 # Whether to convert mindspore built-in cells to symbol tree.
 _ms_cells_to_subtree = False
+# Paths of modules which will not be considered as third party module
+_ignore_third_party_paths = []
 
 def is_subtree(cls_inst):
     """Determine whether 'cls_inst' is a subtree."""
@@ -81,6 +83,9 @@ def is_third_party(func_obj):
     if not hasattr(module, '__file__'):
         return True
     module_path = os.path.abspath(module.__file__)
+    for path in _ignore_third_party_paths:
+        if module_path.startswith(path):
+            return False
     # Python builtin modules are treated as third-party libraries.
     python_builtin_dir = os.path.abspath(os.path.dirname(os.__file__))
     if module_path.startswith(python_builtin_dir):

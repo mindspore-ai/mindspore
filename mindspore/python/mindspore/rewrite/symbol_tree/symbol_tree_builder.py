@@ -33,7 +33,7 @@ class SymbolTreeBuilder:
     """
 
     # Entry function of the forward computation process
-    entry_function = "construct"
+    entry_functions = ["construct"]
 
     def __init__(self, network: Cell):
         if not isinstance(network, Cell):
@@ -54,7 +54,7 @@ class SymbolTreeBuilder:
         Returns:
              An instance of ast been optimized.
         """
-        ast_root = AstFlattener().transform(ast_root, [SymbolTreeBuilder.entry_function])
+        ast_root = AstFlattener().transform(ast_root, SymbolTreeBuilder.entry_functions)
         return ast_root
 
     def build(self) -> SymbolTree:

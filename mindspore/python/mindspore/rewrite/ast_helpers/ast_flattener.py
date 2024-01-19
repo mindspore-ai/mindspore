@@ -127,11 +127,15 @@ class AstFlattener(ast.NodeTransformer):
         # ast.Attribute in ast.For will be force flatten
         # when ast.Attribute is not in ast.For, it's value which is not type of ast.Name will be flatten
         if isinstance(node, ast.Attribute) and not isinstance(father_node, ast.For):
-            if isinstance(node.value, ast.Name):
+            iter_node = node
+            while isinstance(iter_node.value, ast.Attribute):
+                iter_node = iter_node.value
+            if isinstance(iter_node.value, ast.Name):
                 return node, None
-            new_target_name = self._generate_target_name(node.value, target_names)
-            new_node = ast.Attribute(value=ast.Name(id=new_target_name, ctx=ast.Load()), attr=node.attr, ctx=node.ctx)
-            return new_node, ast.Assign(targets=[ast.Name(id=new_target_name, ctx=ast.Store())], value=node.value)
+            new_target_name = self._generate_target_name(iter_node.value, target_names)
+            new_node = ast.Attribute(value=ast.Name(id=new_target_name, ctx=ast.Load()),
+                                     attr=iter_node.attr, ctx=iter_node.ctx)
+            return new_node, ast.Assign(targets=[ast.Name(id=new_target_name, ctx=ast.Store())], value=iter_node.value)
         # flatten nodes
         new_target_name = self._generate_target_name(node, target_names)
         new_node = ast.Name(id=new_target_name, ctx=ast.Load())

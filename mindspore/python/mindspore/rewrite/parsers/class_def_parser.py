@@ -32,7 +32,9 @@ class ClassDefParser(Parser):
     # List of denied function decorators
     denied_function_decorator_list = []
     # Entry function of the forward computation process
-    entry_function = "construct"
+    entry_functions = ["construct"]
+    # Final networks where the paring action stops
+    final_networks = ["Cell"]
 
     def __init__(self):
         """Constructor"""
@@ -72,7 +74,7 @@ class ClassDefParser(Parser):
         """Add ast bodies of code: father_class.__init__(...)"""
         father_class_init_bodies = []
         for idx, father_class in father_classes.items():
-            if father_class == "Cell":
+            if father_class in ClassDefParser.final_networks:
                 father_class_init_code = "super().__init__()"
             elif is_father_class:
                 father_class_init_code = f"{father_class}.__init__(self, obj.__bases__[{idx}])"
@@ -130,7 +132,7 @@ class ClassDefParser(Parser):
             if not father_class_name:
                 continue
             father_classes[idx] = father_class_name
-            if father_class_name == "Cell":
+            if father_class_name in ClassDefParser.final_networks:
                 continue
             father_class_def = cur_class_def.__bases__[idx]
             ClassDefParser._process_one_father_class(stree, father_class_def, father_class_name)
@@ -214,7 +216,7 @@ class ClassDefParser(Parser):
                 if body.name == "__init__":
                     stree.set_init_func_ast(body)
                     ClassDefParser._process_init_func_ast(body, stree.get_opt_cls_name(), False, father_classes)
-                elif body.name == ClassDefParser.entry_function:
+                elif body.name in ClassDefParser.entry_functions:
                     stree.set_ast_root(body)
                     parser: Parser = ParserRegister.instance().get_parser(ast.FunctionDef)
                     parser.process(stree, body, stree)

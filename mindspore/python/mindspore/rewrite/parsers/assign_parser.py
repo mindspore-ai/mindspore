@@ -466,12 +466,14 @@ class AssignParser(Parser):
         # Ignore functions in _function_parse_black_list
         if function_object in AssignParser._function_parse_black_list:
             logger.debug(f"'{func_scope_name}' is in the _function_parse_black_list and will not be parsed")
+            if not func_scope_name.scope:
+                self._add_import(func_scope_name.value)
             self.insert_callfunction_node(func_scope_name, node_name, None, function_object, False)
             return
         # break loop function
         node_manager = self.node_manager
         while node_manager and isinstance(node_manager, Node):
-            if isinstance(self.node_manager, CallFunction) and function_object == node_manager.get_instance():
+            if isinstance(node_manager, CallFunction) and node_manager.get_instance() == function_object:
                 logger.info(f"loop function detected in '{func_scope_name}', stop parsing function.")
                 self.insert_callfunction_node(func_scope_name, node_name, None, function_object, False)
                 return
