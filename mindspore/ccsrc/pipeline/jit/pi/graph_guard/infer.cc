@@ -634,6 +634,9 @@ bool FindTensorName(const std::string &name) {
   if (attr.find(name) != attr.end()) {
     return true;
   }
+  if (name == "device") {
+    return true;
+  }
   return IsFuncInByPassWhiteList(name);
 }
 

@@ -455,6 +455,12 @@ static bool GraphCapture(JitCompileResults *jcr) {
   GraphBuilder g(jcr->origin_frame_);
   (void)g.TraceRun();
 
+  if (g.GetGraph()->IsBreakAtLoop() && !g.GetGraph()->RestoreLoopStatus()) {
+    jcr->stat = JitCompileResults::NEVER_COMPILE;
+    AObject::aobject_mem_pool_.Clear(__FILE__, __LINE__);
+    return false;
+  }
+
   BytecodeInliner inliner(g.GetGraph(), py::cast<py::dict>(jcr->origin_frame_->f_globals));
   inliner.Run();
 
@@ -463,11 +469,6 @@ static bool GraphCapture(JitCompileResults *jcr) {
 
   MarkBreak(g.GetGraph());
 
-  if (g.GetGraph()->IsBreakAtLoop() && !g.GetGraph()->RestoreLoopStatus()) {
-    jcr->stat = JitCompileResults::NEVER_COMPILE;
-    AObject::aobject_mem_pool_.Clear(__FILE__, __LINE__);
-    return false;
-  }
   if (g.GetGraph()->IsBreakAtLoopAfterUnrolling()) {
     if (g.GetGraph()->GetStopTraceBci() != -1) {
       GRAPH_JIT_LOG_F("break after loop unrolling, restart capture because of:\n%s\n",
