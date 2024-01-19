@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2023-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 # ============================================================================
 """Primitive defined for arg handler."""
 
-from mindspore.ops.primitive import Primitive, prim_attr_register
+from mindspore.ops.primitive import Primitive, prim_attr_register, prim_arg_register
 from mindspore._c_expression import typing
 from mindspore._c_expression import op_enum
 
@@ -71,3 +71,59 @@ class StringToEnum(Primitive):
         if not isinstance(enum_str, str):
             raise TypeError(f"For '{op_name}', the input '{arg_name}' should be a str, but got {type(enum_str)}.")
         return op_enum.str_to_enum(op_name, arg_name, enum_str)
+
+
+class TupleToList(Primitive):
+    r"""
+    Convert tuple to list.
+
+    Inputs:
+        - **x** (tuple) - The input
+
+    Outputs:
+        List, has the same elements as the `input`.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> from mindspore.ops_generate import TupleToList
+        >>> x = (1, 2, 3)
+        >>> result = TupleToList()(x)
+        >>> print(result)
+        [1, 2, 3]
+    """
+    @prim_arg_register
+    def __init__(self):
+        """Initialize TupleToList"""
+
+    def __call__(self, input):
+        return list(input)
+
+
+class ListToTuple(Primitive):
+    r"""
+    Convert list to tuple.
+
+    Inputs:
+        - **x** (list) - The input
+
+    Outputs:
+        Tuple, has the same elements as the `input`.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> from mindspore.ops_generate import ListToTuple
+        >>> x = [1, 2, 3]
+        >>> result = ListToTuple()(x)
+        >>> print(result)
+        (1, 2, 3)
+    """
+    @prim_arg_register
+    def __init__(self):
+        """Initialize TupleToList"""
+
+    def __call__(self, input):
+        return tuple(input)

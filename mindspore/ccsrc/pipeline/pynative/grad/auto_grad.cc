@@ -1944,7 +1944,9 @@ void AutoGradCellImpl::SetSensAndWeights(const tensor::TensorPtrList &weights, b
   }
   for (auto &weight : weights_used_in_graph_) {
     auto tensor = PyNativeAlgo::Common::GetTensorFromParam(weight);
-    MS_EXCEPTION_IF_NULL(tensor);
+    if (tensor == nullptr) {
+      continue;
+    }
     if (need_grad_weights_.find(tensor->id()) == need_grad_weights_.end()) {
       UpdateTapeParameter(tensor);
     }
