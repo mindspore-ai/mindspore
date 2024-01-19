@@ -190,6 +190,8 @@ class DeviceAddress : public mindspore::DeviceSync {
     return true;
   }
   virtual void DeviceSynchronizerInit() { MS_LOG(EXCEPTION) << "Not implemented."; }
+  virtual bool CopyDeviceToHost(void *dst, const void *src, const size_t &size) const { return true; }
+  virtual bool CopyHostToDevice(void *dst, const void *src, const size_t &size) const { return true; }
 
   // Get kernel tensor pointer.
   const KernelTensorPtr &kernel_tensor() const { return kernel_tensor_; }
