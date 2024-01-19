@@ -29,6 +29,7 @@
 #include "backend/common/graph_kernel/convert_input_and_attr.h"
 #include "kernel/graph_kernel_info.h"
 #include "backend/common/pass/insert_type_transform_op.h"
+#include "mindspore/core/ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore::graphkernel {
 namespace {
@@ -294,7 +295,14 @@ void CallbackImpl::ResetKernelInfo(const AnfNodePtr &node) {
       cnode = ori_cnode;
     }
   }
-
+  std::vector<std::string> ori_out_format;
+  if (IsPrimitiveCNode(cnode, prim::kPrimReshape)) {
+    ori_out_format = AnfAlgo::GetAllOutputFormats(cnode);
+    if (std::all_of(ori_out_format.begin(), ori_out_format.end(),
+                    [](const std::string &f) { return f == kOpFormat_DEFAULT; })) {
+      ori_out_format.clear();
+    }
+  }
   if (GetTargetFromContext() == kAscendDevice) {
     auto kernel_info = cnode->kernel_info_ptr();
     if (kernel_info == nullptr) {
@@ -315,7 +323,13 @@ void CallbackImpl::ResetKernelInfo(const AnfNodePtr &node) {
       kernel_info_setter->SetKernelInfo(cnode, KernelType::UNKNOWN_KERNEL_TYPE);
     }
   }
-
+  if (!ori_out_format.empty()) {
+    auto kernel_info = dynamic_cast<device::KernelInfo *>(cnode->kernel_info());
+    MS_EXCEPTION_IF_NULL(kernel_info);
+    auto build_info = kernel_info->GetMutableSelectKernelBuildInfo();
+    MS_EXCEPTION_IF_NULL(build_info);
+    build_info->SetOutputsFormat(ori_out_format);
+  }
   if (need_convert) {
     ori_cnode->set_kernel_info(cnode->kernel_info_ptr());
     ResetKernelInfoInputs(ori_cnode);
