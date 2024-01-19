@@ -14,6 +14,7 @@
 # limitations under the License.
 """communicate data analyze api file"""
 import json
+import re
 import logging
 import os
 import stat
@@ -45,6 +46,9 @@ class AscendCommunicationGenerator:
     P2P = "p2p"
     COLLECTIVE = "collective"
     TRANSPORT_TYPE = "Transport Type"
+    PATTERN1 = re.compile(r"reduce|send")
+    PATTERN2 = re.compile(r"invalid|broadcast|allreduce|receive|"
+                          r"allgather|reducescatter|scatter|alltoall|alltoallv|alltoallvc")
 
     def __init__(self, source_path):
         super().__init__()
@@ -111,36 +115,13 @@ class AscendCommunicationGenerator:
         """
         comm_op_dict = {self.P2P: {}, self.COLLECTIVE: {}}
         for communication_op, communication_info in op_data.items():
-            # TODO: startswith
             if communication_op.find(self.HCOM_SEND) != -1 or communication_op.find(self.HCOM_RECEIVE) != -1:
-                print(communication_op)
                 comm_op_dict[self.P2P][communication_op] = communication_info
             elif communication_op.startswith(self.TOTAL):
                 continue
             else:
                 comm_op_dict[self.COLLECTIVE][communication_op] = communication_info
         return comm_op_dict
-
-    def compute_total_link_info(self, op_matrix_data: dict):
-        """
-        compute total link info
-        """
-        total_op_info = defaultdict(lambda: {
-            self.TRANSPORT_TYPE: '',
-            self.TRANSIT_TIME_MS: 0,
-            self.TRANSIT_SIZE_MB: 0
-        })
-        for _, link_dict in op_matrix_data.items():
-            for link, link_info in link_dict.items():
-                total_op_info[link][self.TRANSIT_TIME_MS] += link_info.get(self.TRANSIT_TIME_MS, 0)
-                total_op_info[link][self.TRANSIT_SIZE_MB] += link_info.get(self.TRANSIT_SIZE_MB, 0)
-                total_op_info[link][self.TRANSPORT_TYPE] = link_info.get(self.TRANSPORT_TYPE, 0)
-
-        for link, _ in total_op_info.items():
-            total_op_info[link][self.BANDWIDTH_GB_S] = \
-                self.compute_ratio(total_op_info[link].get(self.TRANSIT_SIZE_MB, 0),
-                                   total_op_info[link].get(self.TRANSIT_TIME_MS))
-        op_matrix_data['Total Op Info'] = total_op_info
 
     def split_matrix_by_step(self, matrix_data: dict) -> dict:
         """
@@ -165,10 +146,74 @@ class AscendCommunicationGenerator:
         self.compute_total_info(comm_op_dict[self.COLLECTIVE])
         return comm_op_dict
 
+    def integrate_matrix_data(self, comm_op_dict_simple):
+        """integrate the matrix data"""
+        comm_op_dict = defaultdict(dict)
+        for new_comm_op_name, data in comm_op_dict_simple.items():
+            data = sorted(data, key=lambda x: x[self.BANDWIDTH_GB_S], reverse=True)
+            t_type = data[0].get(self.TRANSPORT_TYPE, '')
+            t_size = sum([x.get(self.TRANSIT_SIZE_MB, 0) for x in data])
+            t_time = sum([x.get(self.TRANSIT_TIME_MS, 0) for x in data])
+            bandwidth = self.compute_ratio(t_size, t_time)
+
+            link = new_comm_op_name[2]
+            new_comm_op_name_top1 = f'{new_comm_op_name[0]}-top1@{new_comm_op_name[1]}'
+            new_comm_op_name_middle = f'{new_comm_op_name[0]}-middle@{new_comm_op_name[1]}'
+            new_comm_op_name_bottom1 = f'{new_comm_op_name[0]}-bottom1@{new_comm_op_name[1]}'
+            new_comm_op_name_bottom2 = f'{new_comm_op_name[0]}-bottom2@{new_comm_op_name[1]}'
+            new_comm_op_name_bottom3 = f'{new_comm_op_name[0]}-bottom3@{new_comm_op_name[1]}'
+            new_comm_op_name_total = f'{new_comm_op_name[0]}-total@{new_comm_op_name[1]}'
+            comm_op_dict[new_comm_op_name_top1].update({link: data[0]})
+            comm_op_dict[new_comm_op_name_middle].update({link: data[len(data) // 2]})
+            comm_op_dict[new_comm_op_name_bottom1].update({link: data[-1]})
+            index2 = -2
+            index3 = -3
+            if len(data) == 1:
+                index2 = -1
+                index3 = -1
+            elif len(data) == 2:
+                index3 = -2
+            comm_op_dict[new_comm_op_name_bottom2].update({link: data[index2]})
+            comm_op_dict[new_comm_op_name_bottom3].update({link: data[index3]})
+            comm_op_dict[new_comm_op_name_total].update({link: {
+                self.TRANSPORT_TYPE: t_type,
+                self.TRANSIT_SIZE_MB: t_size,
+                self.TRANSIT_TIME_MS: t_time,
+                self.BANDWIDTH_GB_S: bandwidth
+            }})
+        return comm_op_dict
+
     def get_matrix_ops_dict(self, op_data: dict) -> dict:
-        comm_op_dict = self.split_communication_p2p_ops(op_data)
-        self.compute_total_link_info(comm_op_dict[self.P2P])
-        self.compute_total_link_info(comm_op_dict[self.COLLECTIVE])
+        """parse matrix data"""
+        comm_op_dict_simple_p2p = defaultdict(list)
+        comm_op_dict_simple_collective = defaultdict(list)
+
+        for communication_op, communication_info in op_data.items():
+            if communication_op.find(self.HCOM_SEND) != -1 or communication_op.find(self.HCOM_RECEIVE) != -1:
+
+                match_obj = self.PATTERN1.search(communication_op.lower())
+                comm_op_type = match_obj.group()
+                for link, data in communication_info.items():
+                    new_comm_op_name = (comm_op_type, communication_op.split("@")[-1], link)
+                    data['op_name'] = communication_op.split("@")[0]
+                    comm_op_dict_simple_p2p[new_comm_op_name].append(data)
+
+            elif communication_op.startswith(self.TOTAL):
+                continue
+            else:
+                match_obj = self.PATTERN2.search(communication_op.lower())
+                if not match_obj:
+                    logging.warning("未找到通信算子类型：%s", communication_op)
+                    continue
+                comm_op_type = match_obj.group()
+                for link, data in communication_info.items():
+                    new_comm_op_name = (comm_op_type, communication_op.split("@")[-1], link)
+                    data['op_name'] = communication_op.split("@")[0]
+                    comm_op_dict_simple_collective[new_comm_op_name].append(data)
+
+        comm_op_dict = {self.P2P: self.integrate_matrix_data(comm_op_dict_simple_p2p),
+                        self.COLLECTIVE: self.integrate_matrix_data(comm_op_dict_simple_collective)}
+
         return comm_op_dict
 
     def is_step_list_empty(self):
