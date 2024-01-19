@@ -91,53 +91,6 @@ class BACKEND_EXPORT PyBoostDeviceTask : public AsyncTask {
   std::function<void()> run_func_;
 };
 
-class BACKEND_EXPORT AllocViewMemDeviceTask : public AsyncTask {
- public:
-  AllocViewMemDeviceTask(
-    std::function<void(device::DeviceContext *device_context, const tensor::TensorPtr &tensor)> run_func,
-    device::DeviceContext *device_context, const tensor::TensorPtr &tensor)
-      : AsyncTask(kDeviceOpTask), run_func_(std::move(run_func)), device_context_(device_context), tensor_(tensor) {}
-  ~AllocViewMemDeviceTask() override = default;
-  void Run() override;
-
- private:
-  std::function<void(device::DeviceContext *device_context, const tensor::TensorPtr &tensor)> run_func_;
-  device::DeviceContext *device_context_;
-  tensor::TensorPtr tensor_;
-};
-
-class BACKEND_EXPORT KernelDeviceTask : public AsyncTask {
- public:
-  KernelDeviceTask(
-    std::function<void(const KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
-                       const TensorStorageInfoPtrList &input_storage_list,
-                       const device::DeviceAddressPtrList &output_addr_list, device::DeviceContext *device_context)>
-      run_func,
-    const KernelTaskType &task_type, device::DeviceContext *device_context,
-    const device::DeviceAddressPtrList &input_addr_list, const TensorStorageInfoPtrList &input_storage_list,
-    const device::DeviceAddressPtrList &output_addr_list)
-      : AsyncTask(kDeviceOpTask),
-        run_func_(std::move(run_func)),
-        task_type_(task_type),
-        device_context_(device_context),
-        input_addr_list_(input_addr_list),
-        input_storage_list_(input_storage_list),
-        output_addr_list_(output_addr_list) {}
-  ~KernelDeviceTask() override = default;
-  void Run() override;
-
- private:
-  std::function<void(const KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
-                     const TensorStorageInfoPtrList &input_storage_list,
-                     const device::DeviceAddressPtrList &output_addr_list, device::DeviceContext *device_context)>
-    run_func_;
-  KernelTaskType task_type_;
-  device::DeviceContext *device_context_;
-  device::DeviceAddressPtrList input_addr_list_;
-  TensorStorageInfoPtrList input_storage_list_;
-  device::DeviceAddressPtrList output_addr_list_;
-};
-
 class BACKEND_EXPORT PassthroughDeviceTask : public AsyncTask {
  public:
   explicit PassthroughDeviceTask(std::function<void(void)> run_func)

@@ -130,11 +130,6 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
     abstract_cache_.Push(op->output_abs_);
   }
 
-  // Some operators do not support non-continuous tensors as inputs.
-  tensor::TensorPtr Contiguous(const tensor::TensorPtr &input_tensor) {
-    return PyBoostUtils::ContiguousTensor(input_tensor);
-  }
-
  protected:
   // Op primitive, may delete latter.
   PrimitivePtr primitive_{nullptr};

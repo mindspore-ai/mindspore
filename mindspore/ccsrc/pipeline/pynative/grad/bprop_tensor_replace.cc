@@ -156,8 +156,6 @@ void UpdateForwardOutputTensorInfo(const std::string &op_info, const ValuePtr &v
   }
   for (const auto &elem : it->second) {
     const auto &new_tensor = GetTensorFromOutValue(elem.first, v);
-    MS_EXCEPTION_IF_NULL(new_tensor);
-    PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->RunContiguousTaskForTensor(new_tensor, stream_id);
     UpdatePreTensorInfo(new_tensor, elem.second);
   }
 }

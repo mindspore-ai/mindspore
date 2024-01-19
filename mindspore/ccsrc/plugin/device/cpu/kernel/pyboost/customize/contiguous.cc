@@ -23,6 +23,11 @@ namespace pyboost {
 
 tensor::TensorPtr ContiguousCPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor) {
   MS_LOG(DEBUG) << "Call start";
+  auto output_tensor = ContiguousTensorOpProcess(op, input_tensor);
+  if (output_tensor != nullptr) {
+    return output_tensor;
+  }
+
   return CopyCustomizeCall(op, input_tensor, nullptr);
 }
 }  // namespace pyboost

@@ -41,18 +41,6 @@ void PyBoostDeviceTask::Run() {
   }
 }
 
-void AllocViewMemDeviceTask::Run() {
-  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
-                                     std::string("AllocView"), false);
-  run_func_(device_context_, tensor_);
-}
-
-void KernelDeviceTask::Run() {
-  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
-                                     std::string("KernelTask"), false);
-  run_func_(task_type_, input_addr_list_, input_storage_list_, output_addr_list_, device_context_);
-}
-
 void PassthroughDeviceTask::Run() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
                                      runtime::ProfilerRecorder::kNoName, false);

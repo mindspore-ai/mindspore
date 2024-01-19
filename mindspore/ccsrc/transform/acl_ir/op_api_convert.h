@@ -240,17 +240,28 @@ inline aclTensor *ConvertType(mindspore::kernel::KernelTensor *tensor) {
       format = ACL_FORMAT_ND;
   }
 
-  // Create strides.
-  auto strides = shape;
-  if (!strides.empty()) {
-    strides.erase(strides.begin());
+  aclTensor *acl_tensor = nullptr;
+  const auto &storage_info = tensor->tensor_storage_info();
+  if (storage_info == nullptr) {
+    // Create strides.
+    auto strides = shape;
+    if (!strides.empty()) {
+      strides.erase(strides.begin());
+    }
+    strides.push_back(1);
+    for (int i = static_cast<int>(strides.size()) - 2; i >= 0; i--) {
+      strides[i] = strides[i] * strides[i + 1];
+    }
+    acl_tensor = aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), 0, format, shape.data(),
+                                 shape.size(), tensor->device_ptr());
+  } else {
+    const auto &strides = storage_info->strides;
+    const auto &storage_shape = storage_info->ori_shape;
+    acl_tensor =
+      aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), SizeToLong(storage_info->storage_offset),
+                      format, storage_shape.data(), storage_shape.size(), tensor->device_ptr());
   }
-  strides.push_back(1);
-  for (int i = static_cast<int>(strides.size()) - 2; i >= 0; i--) {
-    strides[i] = strides[i] * strides[i + 1];
-  }
-  auto acl_tensor = aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), 0, format, shape.data(),
-                                    shape_size, tensor->device_ptr());
+
   return acl_tensor;
 }
 

@@ -1001,14 +1001,13 @@ DeviceEventPtr GPUDeviceResManager::CreateEventWithFlag(bool enable_timing, bool
 
 bool GPUKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_type,
                                           const device::DeviceAddressPtrList &input_addr_list,
-                                          const TensorStorageInfoPtrList &input_storage_list,
                                           const device::DeviceAddressPtrList &output_addr_list,
                                           const size_t &stream_id) const {
   auto stream = GPUDeviceManager::GetInstance().GetStream(stream_id);
   MS_EXCEPTION_IF_NULL(stream);
 
-  auto task_context = std::make_shared<runtime::KernelTaskContext>(device_context_, input_addr_list, input_storage_list,
-                                                                   output_addr_list, stream);
+  auto task_context =
+    std::make_shared<runtime::KernelTaskContext>(device_context_, input_addr_list, output_addr_list, stream);
 
   auto task = GetTaskByTaskType(task_type, task_context);
   MS_EXCEPTION_IF_NULL(task);

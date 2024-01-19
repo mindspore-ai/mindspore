@@ -26,7 +26,6 @@
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "include/backend/optimizer/helper.h"
 #include "mindspore/core/ops/framework_ops.h"
-#include "plugin/device/ascend/hal/device/ascend_kernel_task.h"
 #include "plugin/device/ascend/kernel/opapi/aclnn_kernel_build.h"
 #include "plugin/device/ascend/kernel/acl/acl_kernel_build.h"
 #include "plugin/device/ascend/kernel/host/host_kernel_build.h"

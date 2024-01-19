@@ -42,18 +42,21 @@ void GatherInfo(mindspore::kernel::KernelTensor *tensor) {
   if (!shape.empty()) {
     MemcpyToBuf(shape.data(), static_cast<int64_t>(shape_size * sizeof(int64_t)));
   }
+
   // data type
   auto dtype = tensor->dtype_id();
   MemcpyToBuf(&dtype, sizeof(int));
-  // separator
-  MemcpyToBuf(",", 1);
-  // strides(current hasn't uncontinus tensor)
-  MemcpyToBuf(",", 1);
-  // offset(current hasn't uncontinus tensor)
-  MemcpyToBuf(",", 1);
-  // storage shape(current hasn't special format)
-  if (!shape.empty()) {
-    MemcpyToBuf(shape.data(), static_cast<int64_t>(shape_size * sizeof(int64_t)));
+
+  const auto &storage_info = tensor->tensor_storage_info();
+  if (storage_info != nullptr) {
+    // strides
+    MemcpyToBuf(storage_info->strides.data(), static_cast<int64_t>(storage_info->strides.size() * sizeof(int64_t)));
+
+    // offset
+    MemcpyToBuf(&storage_info->storage_offset, sizeof(int64_t));
+
+    // origin shape
+    MemcpyToBuf(storage_info->ori_shape.data(), static_cast<int64_t>(storage_info->ori_shape.size()) * sizeof(int64_t));
   }
 
   add_tensor_addr_to_cached_list_func(tensor->device_ptr());

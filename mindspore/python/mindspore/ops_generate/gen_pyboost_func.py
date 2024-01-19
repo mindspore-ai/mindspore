@@ -400,9 +400,11 @@ def get_convert_tensor_template():
     Get convert tensor template
     """
     convert_to_tensor_template = CppTemplate(
-        'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToTensor(${input}, ${need_contiguous});\n')
+        'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToTensor(${input}, ${need_contiguous}, '\
+        'op_run_info->requires_grad);\n')
     convert_to_tensor_list_template = CppTemplate(
-        'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToValueTuple(${input}, ${need_contiguous});\n')
+        'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToValueTuple(${input}, ${need_contiguous}, '\
+        'op_run_info->requires_grad);\n')
     return convert_to_tensor_template, convert_to_tensor_list_template
 
 

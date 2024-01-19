@@ -100,7 +100,6 @@ class ForwardExecutor {
   std::string GetCurrentCellObjId() const;
   std::string GetCurrentDeviceTarget(const PrimitivePtr &op_prim) const;
   void ReInit();
-  void RunContiguousTaskForTensor(const tensor::TensorPtr &tensor, const size_t &stream_id);
   void ForwardOpGradImpl(const FrontendOpRunInfoPtr &op_run_info);
   GradExecutorPtr grad() const;
   void InitOpRunInfo(const FrontendOpRunInfoPtr &op_run_info);
@@ -134,35 +133,27 @@ class ForwardExecutor {
   void PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info);
   void PrepareOpOutputs(const FrontendOpRunInfoPtr &op_run_info) const;
   void OpRunInfoUsePrimC(const FrontendOpRunInfoPtr &op_run_info) const;
-  void CreateInputAddressForViewOp(const tensor::TensorPtr &input_tensor, const FrontendOpRunInfoPtr &op_run_info,
-                                   const size_t &input_idx);
+  void CreateInputAddressForViewOp(const tensor::TensorPtr &input_tensor, const FrontendOpRunInfoPtr &op_run_info);
   void DispatchViewKernelTask(const FrontendOpRunInfoPtr &op_run_info, const runtime::KernelTaskType &task_type);
   void ForwardRunViewKernelTask(const FrontendOpRunInfoPtr &op_run_info, const runtime::KernelTaskType &task_type,
                                 bool enable_async);
 
   bool ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info, const ops::StridesCalcFunc &func_info,
                      bool is_tuple_output);
-  void RefreshTensorContiguous(const tensor::TensorPtr &tensor, const size_t &stream_id);
   device::DeviceAddressPtr TensorContiguousCallback(const DeviceSyncPtr &device_address,
                                                     const TensorStorageInfoPtr &storage_info);
 
   void CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
-                              const TensorStorageInfoPtr &storage_info,
-                              const std::shared_ptr<tensor::FutureBase<DeviceSync>> &input_origin_address_future,
-                              const DeviceSyncPtr &input_origin_device_address, const TypePtr &real_type);
+                              const TensorStorageInfoPtr &storage_info, runtime::KernelTaskType task_type);
 
   void DispatchAllocateMemTask(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
                                const size_t &input_idx, bool need_wait = false);
-  void CreateDeviceAddressForViewInput(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
-                                       const size_t &input_idx, bool enable_async, bool need_wait = false);
-  void RunContiguousTask(const tensor::TensorPtr &tensor, const size_t &stream_id, bool enable_async);
   PrimitivePtr GetSlicePrimFromCache(const std::string &op_name, bool is_input_to_attr);
   FrontendOpRunInfoPtr GenerateSliceOpRunInfo(const std::string &op_name, bool requires_grad,
                                               const stub::StubNodePtr &stub_output);
   void CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &view_input_tensor,
-                           const TensorStorageInfoPtrList &storage_infos,
-                           const std::shared_ptr<tensor::FutureBase<DeviceSync>> &input_origin_address_future,
-                           const DeviceSyncPtr &input_origin_device_address, bool is_tuple_output);
+                           runtime::KernelTaskType task_type, const TensorStorageInfoPtrList &storage_infos,
+                           bool is_tuple_output);
 
  private:
   bool init_{false};

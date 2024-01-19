@@ -30,12 +30,10 @@ namespace runtime {
 class BACKEND_EXPORT KernelTaskContext {
  public:
   KernelTaskContext(const device::DeviceContext *device_context, device::DeviceAddressPtrList input_addr_list,
-                    TensorStorageInfoPtrList input_storage_list, device::DeviceAddressPtrList output_addr_list,
-                    void *stream)
+                    device::DeviceAddressPtrList output_addr_list, void *stream)
       : device_context_(device_context),
         input_addr_list_(std::move(input_addr_list)),
         output_addr_list_(std::move(output_addr_list)),
-        input_storage_list_(std::move(input_storage_list)),
         stream_(stream) {}
   ~KernelTaskContext() = default;
 
@@ -60,20 +58,10 @@ class BACKEND_EXPORT KernelTaskContext {
     return addr;
   }
 
-  const TensorStorageInfoPtr GetInputStorage(size_t idx) {
-    if (idx >= input_storage_list_.size()) {
-      MS_LOG(EXCEPTION) << "input_storage_list_ size is invalid, size:" << input_storage_list_.size()
-                        << ", idx:" << idx;
-    }
-    auto addr = input_storage_list_[idx];
-    return addr;
-  }
-
  private:
   const device::DeviceContext *device_context_;
   device::DeviceAddressPtrList input_addr_list_;
   device::DeviceAddressPtrList output_addr_list_;
-  TensorStorageInfoPtrList input_storage_list_;
   void *stream_;
 };
 

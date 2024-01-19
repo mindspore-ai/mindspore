@@ -974,7 +974,7 @@ void MindRTBackendBase::ContiguousArgs(const VectorRef &args, const GraphCompile
     GilReleaseWithCheck release_gil;
     MS_LOG(DEBUG) << "Tensor storage_info is not nullptr, id:" << t->id();
 
-    RunContiguousTask(t, stream_id, false);
+    RunContiguousTaskForArgs(t, stream_id, false);
   };
 
   for (const auto &arg : args) {

@@ -32,11 +32,11 @@
 #include "plugin/device/ascend/kernel/rts/rt_kernel_build.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_metadata.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_build.h"
+#include "plugin/device/ascend/kernel/pyboost/customize/customize_copy.h"
 
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "include/backend/optimizer/helper.h"
-#include "plugin/device/ascend/hal/device/ascend_kernel_task.h"
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
 #include "plugin/device/ascend/kernel/opapi/aclnn_kernel_build.h"
 #include "plugin/device/ascend/kernel/acl/acl_kernel_build.h"
@@ -91,18 +91,6 @@ bool GraphWithNoRealKernel(const KernelGraphPtr &kernel_graph) {
     }
   }
   return true;
-}
-
-runtime::KernelTaskPtr GetTaskByTaskType(const runtime::KernelTaskType &task_type,
-                                         const std::shared_ptr<runtime::KernelTaskContext> &context) {
-  switch (task_type) {
-    case runtime::KernelTaskType::kCONTIGUOUS_TASK:
-      return std::make_shared<AscendContiguousKernelTask>(context);
-    case runtime::KernelTaskType::kCOPY_TASK:
-      return std::make_shared<AscendCopyWithSliceKernelTask>(context);
-    default:
-      MS_LOG(EXCEPTION) << "KernelTaskType is invalid, task_type:" << task_type;
-  }
 }
 
 void SetAclOpPrecisionMode() {
@@ -506,22 +494,27 @@ bool GeKernelExecutor::LaunchCallback(CallbackFunc callback_func, size_t stream_
 
 bool GeKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_type,
                                          const device::DeviceAddressPtrList &input_addr_list,
-                                         const TensorStorageInfoPtrList &input_storage_list,
                                          const device::DeviceAddressPtrList &output_addr_list,
                                          const size_t &stream_id) const {
-  auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
-  MS_EXCEPTION_IF_NULL(stream);
-
-  auto task_context = std::make_shared<runtime::KernelTaskContext>(device_context_, input_addr_list, input_storage_list,
-                                                                   output_addr_list, stream);
-
-  auto task = GetTaskByTaskType(task_type, task_context);
-  MS_EXCEPTION_IF_NULL(task);
-  auto ret = task->RunWithRet();
-  if (!ret) {
-    MS_LOG(EXCEPTION) << "Exec task failed, task_type:" << task_type;
+  MS_LOG(DEBUG) << "task_type:" << task_type;
+  if (runtime::KernelTaskType::kCOPY_TASK == task_type) {
+    constexpr size_t kCopyTaskInputsNum = 2;
+    // Copy task is a in-place op, the output is the first input.
+    // To reuse the aclnnInplaceCopy, the first input of Copy is used as the operator output,
+    // and the second input is used as the operator input.
+    if (input_addr_list.size() != kCopyTaskInputsNum) {
+      MS_LOG(EXCEPTION) << "input_addr_list.size() is invalid, input_addr_list.size():" << input_addr_list.size();
+    }
+    kernel::pyboost::CustomizeCopyAscend(device_context_, input_addr_list[1], input_addr_list[0], stream_id);
+  } else {
+    // For contiguous task, there must be at least one input and one output.
+    if (input_addr_list.empty() || output_addr_list.empty()) {
+      MS_LOG(EXCEPTION) << "input_addr_list.size() or output_addr_list.size() is invalid, input_addr_list.size():"
+                        << input_addr_list.size() << ", output_addr_list.size():" << output_addr_list.size();
+    }
+    kernel::pyboost::CustomizeCopyAscend(device_context_, input_addr_list[0], output_addr_list[0], stream_id);
   }
-  return ret;
-}
 
+  return true;
+}
 }  // namespace mindspore::device::ascend

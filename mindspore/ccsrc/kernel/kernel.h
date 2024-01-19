@@ -624,6 +624,9 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // max shape is only used in compute-depended ops
   ShapeVector GetMaxShape() const;
 
+  const TensorStorageInfoPtr tensor_storage_info() const { return tensor_storage_info_; }
+  void set_tensor_storage_info(const TensorStorageInfoPtr &storage_info) { tensor_storage_info_ = storage_info; }
+
  private:
   // Set the element data type to KernelTensor for Sequence type(Tuple or List).
   void SetSequenceDType(const TypePtr &element_type);
@@ -669,6 +672,9 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   AddressPtr data_{nullptr};
   // Host data address.
   AddressPtr host_data_{nullptr};
+
+  // kernel tensor storage info for view node
+  TensorStorageInfoPtr tensor_storage_info_;
 };
 using KernelTensorPtr = std::shared_ptr<KernelTensor>;
 
