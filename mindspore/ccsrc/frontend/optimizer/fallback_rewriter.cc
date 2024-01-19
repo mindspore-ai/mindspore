@@ -449,7 +449,7 @@ class BeforeOptARewriter : public BaseRewriter {
     auto mng = func->manager();
     auto &users = mng->node_users()[node];
     for (auto &user : users) {
-      if (IsPrimitiveCNode(user.first, prim::kPrimPyExecute)) {
+      if (IsPrimitiveCNode(user.first, prim::kPrimPyExecute) || IsPrimitiveCNode(user.first, prim::kPrimPyInterpret)) {
         return true;
       } else if (IsPrimitiveCNode(user.first, prim::kPrimMakeTuple)) {
         if (CheckUserHasPyExecute(user.first, user.first->func_graph())) {
