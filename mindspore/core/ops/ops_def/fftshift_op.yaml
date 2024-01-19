@@ -10,6 +10,7 @@ fftshift:
     forward:
       dtype: bool
       prim_init: True
+      default: True
   returns:
     output:
       dtype: tensor

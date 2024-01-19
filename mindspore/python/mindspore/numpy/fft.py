@@ -24,6 +24,14 @@ def fftshift(x, axes=None):
     Refer to :func:`mindspore.ops.fftshift` for more details.
     The difference is that `x` corresponds to `input` and `axes` corresponds to `dim`.
 
+    Args:
+        x (Tensor): Input tensor.
+        axes (Union[int, list(int), tuple(int)], optional): Axes over which to shift.
+            Default is ``None`` , which shifts all axes.
+
+    Returns:
+        output (Tensor), the shifted tensor with the same shape and dtype as `x`.
+
     Supported Platforms:
         ``Ascend`` ``CPU``
 
@@ -44,6 +52,14 @@ def ifftshift(x, axes=None):
 
     Refer to :func:`mindspore.ops.ifftshift` for more details.
     The difference is that `x` corresponds to `input` and `axes` corresponds to `dim`.
+
+    Args:
+        x (Tensor): Input tensor.
+        axes (Union[int, list(int), tuple(int)], optional): Axes over which to shift.
+            Default is ``None`` , which shifts all axes.
+
+    Returns:
+        output (Tensor), the shifted tensor with the same shape and dtype as `x`.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
