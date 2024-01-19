@@ -88,7 +88,7 @@ class WithoutContiguousNet(nn.Cell):
         output = output * output
         return output
 
-@pytest.mark.level0
+@pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
