@@ -75,6 +75,7 @@ constexpr auto kAttrAxes = "axes";
 constexpr auto kAttrAlpha = "alpha";
 constexpr auto kAttrAclSpecialFormat = "acl_special_format";
 constexpr auto kAttrAclSpecialInputFormat = "acl_special_input_format";
+constexpr auto kAttrAclInconsistentInputDtype = "acl_inconsistent_input_dtype";
 constexpr auto kAttrBatchDims = "batch_dims";
 constexpr auto kAttrKeepDims = "keep_dims";
 constexpr auto kTransposeA = "transpose_a";

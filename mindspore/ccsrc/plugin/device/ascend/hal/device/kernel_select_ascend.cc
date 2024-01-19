@@ -118,6 +118,21 @@ TypeId GetInputDeviceType(const AnfNodePtr &kernel_node, size_t input_idx) {
   return type;
 }
 
+void ProcessInconsistentDtype(const AnfNodePtr &node, size_t input_num) {
+  MS_EXCEPTION_IF_NULL(node);
+  std::vector<size_t> inconsistent_dtype_inputs;
+  for (size_t i = 0; i < input_num; ++i) {
+    TypeId input_dtype = AnfAlgo::GetInputDeviceDataType(node, i);
+    TypeId prev_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, i);
+    if (input_dtype != prev_dtype) {
+      (void)inconsistent_dtype_inputs.emplace_back(i);
+    }
+  }
+  if (!inconsistent_dtype_inputs.empty()) {
+    common::AnfAlgo::SetNodeAttr(kAttrAclInconsistentInputDtype, MakeValue(inconsistent_dtype_inputs), node);
+  }
+}
+
 void SetWeightFormat(const AnfNodePtr &real_input_node, std::vector<string> output_format, const CNodePtr &kernel_node,
                      size_t input_index, bool force_fresh = false) {
   MS_EXCEPTION_IF_NULL(real_input_node);
@@ -493,6 +508,7 @@ void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_ty
                       << ", output_object_types size: " << output_object_types.size();
   }
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel.get());
+  ProcessInconsistentDtype(kernel, input_num);
 }
 
 void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node,
