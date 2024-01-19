@@ -946,6 +946,16 @@ bool AscendDeviceAddress::CopyBetweenHostDevice(void *dst, const void *src, size
   return true;
 }
 
+bool AscendDeviceAddress::CopyDeviceToHost(void *dst, const void *src, const size_t &size) const {
+  SyncMemory(dst, src, size, ACL_MEMCPY_DEVICE_TO_HOST);
+  return true;
+}
+
+bool AscendDeviceAddress::CopyHostToDevice(void *dst, const void *src, const size_t &size) const {
+  SyncMemory(dst, src, size, ACL_MEMCPY_HOST_TO_DEVICE);
+  return true;
+}
+
 AscendDeviceAddress::~AscendDeviceAddress() {
   try {
     // Only release offload memory, release device memory when `kernel_tensor_` in base class destroyed, because maybe

@@ -24,7 +24,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <unordered_map>
-
+#include <functional>
 #include "mindspore/core/ops/framework_ops.h"
 #include "pybind_api/pybind_patch.h"
 #include "pybind11/pybind11.h"
@@ -2565,6 +2565,48 @@ void FinalizeCluster() {
     }
   }
 #endif
+}
+
+void SwapCache(const tensor::TensorPtr &host, const tensor::TensorPtr &device, const tensor::TensorPtr &block_mapping,
+               const bool &is_device_to_host) {
+  MS_LOG(ERROR) << host->ToString();
+  MS_LOG(ERROR) << device->ToString();
+  MS_LOG(ERROR) << block_mapping->ToString();
+  auto block_mapping_shape = block_mapping->shape();
+  if (block_mapping_shape.size() != 2) {
+    MS_LOG_EXCEPTION << "The shape size of Cache input mapping tensor should be 2, but got: "
+                     << block_mapping_shape.size();
+  }
+  if (block_mapping_shape[1] != 2) {
+    MS_LOG_EXCEPTION << "The second dim of CacheKernel input mapping tensor should be 2, but got: "
+                     << block_mapping_shape[0];
+  }
+
+  auto in_shape = host->shape();
+  auto type_byte = GetTypeByte(TypeIdToType(host->data_type()));
+  size_t block_size_in_bytes = LongToSize(
+    std::accumulate(in_shape.begin() + 1, in_shape.end(), SizeToLong(type_byte), std::multiplies<int64_t>()));
+
+  uint8_t *host_ptr = reinterpret_cast<uint8_t *>(host->data_c());
+  MS_EXCEPTION_IF_NULL(host_ptr);
+  auto device_addr = std::dynamic_pointer_cast<device::DeviceAddress>(device->device_address());
+  MS_EXCEPTION_IF_NULL(device_addr);
+  uint8_t *device_ptr = reinterpret_cast<uint8_t *>(const_cast<void *>(device_addr->GetPtr()));
+  MS_EXCEPTION_IF_NULL(device_ptr);
+
+  auto block_mapping_data = reinterpret_cast<int64_t *>(block_mapping->data_c());
+  for (int64_t i = 0; i < block_mapping_shape[0]; i++) {
+    int64_t src_block_num = block_mapping_data[2 * i];
+    int64_t dst_block_num = block_mapping_data[2 * i + 1];
+    size_t src_block_offset = LongToSize(src_block_num) * block_size_in_bytes;
+    size_t dst_block_offset = LongToSize(dst_block_num) * block_size_in_bytes;
+
+    if (is_device_to_host) {
+      device_addr->CopyDeviceToHost(host_ptr + dst_block_offset, device_ptr + src_block_offset, block_size_in_bytes);
+    } else {
+      device_addr->CopyHostToDevice(device_ptr + dst_block_offset, host_ptr + src_block_offset, block_size_in_bytes);
+    }
+  }
 }
 }  // namespace pipeline
 }  // namespace mindspore

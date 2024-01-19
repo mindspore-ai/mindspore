@@ -354,6 +354,14 @@ bool GPUDeviceAddress::CopyHostToDevice(void *dst, const void *src, size_t size,
   return CopyBetweenHostDevice(dst, src, size, async, stream_id, true);
 }
 
+bool GPUDeviceAddress::CopyHostToDevice(void *dst, const void *src, const size_t &size) const {
+  return GPUDeviceManager::GetInstance().CopyHostMemToDevice(dst, src, size);
+}
+
+bool GPUDeviceAddress::CopyDeviceToHost(void *dst, const void *src, const size_t &size) const {
+  return GPUDeviceManager::GetInstance().CopyDeviceMemToHost(dst, const_cast<void *>(src), size);
+}
+
 /*
  * Feature group: Dump, Online debugger.
  * Target device group: GPU.

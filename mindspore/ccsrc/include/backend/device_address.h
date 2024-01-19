@@ -175,6 +175,8 @@ class DeviceAddress : public mindspore::DeviceSync {
   virtual bool AsyncDeviceToDevice(const ShapeVector &, size_t, TypeId, const void *, const std::string &) const {
     return true;
   }
+  virtual bool CopyDeviceToHost(void *dst, const void *src, const size_t &size) const { return true; }
+  virtual bool CopyHostToDevice(void *dst, const void *src, const size_t &size) const { return true; }
 
   // Get kernel tensor pointer.
   const KernelTensorPtr &kernel_tensor() const { return kernel_tensor_; }

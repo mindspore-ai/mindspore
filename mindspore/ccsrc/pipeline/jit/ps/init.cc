@@ -677,4 +677,6 @@ PYBIND11_MODULE(_c_expression, m) {
 
   (void)m.def("_ms_memory_recycle", &mindspore::pipeline::MemoryRecycle, "Recycle memory used by mindspore.");
   (void)m.def("_bind_device_ctx", &mindspore::pipeline::BindDeviceCtx, "Bind device context to current thread");
+  (void)m.def("swap_cache", &mindspore::pipeline::SwapCache, py::arg("host"), py::arg("device"),
+              py::arg("block_mapping"), py::arg("is_device_to_host"), "Swap Cache for PageAttention.");
 }
