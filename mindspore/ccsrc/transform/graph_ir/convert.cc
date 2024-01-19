@@ -2023,6 +2023,25 @@ void DfGraphConvertor::GenFakeGraph(const std::string &name) {
   auto input_name_list = std::make_shared<InputNameList>();
   input_name_list->input_names = input_names;
   anf_graph_->set_user_data(input_name_list);
+  for (auto &anf_node : anf_graph_->parameters()) {
+    MS_EXCEPTION_IF_NULL(anf_node);
+    auto para = anf_node->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(para);
+    auto name = para->name();
+    if (std::find(init_data_names_.begin(), init_data_names_.end(), name) == init_data_names_.end()) {
+      const auto &param_shape = para->Shape();
+      MS_EXCEPTION_IF_NULL(param_shape);
+      const auto &shape = param_shape->cast<abstract::ShapePtr>();
+      if (shape != nullptr) {
+        const auto &sv = shape->shape();
+        if (IsDynamic(sv)) {
+          dynamic_shape_inputs_ = true;
+        }
+        input_shapes_.push_back(sv);
+      }
+    }
+  }
+
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   // set up init sub graph
