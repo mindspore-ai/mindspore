@@ -40,10 +40,8 @@
 #include "transform/graph_ir/df_graph_manager.h"
 #include "transform/graph_ir/op_adapter.h"
 #include "graph/operator_reg.h"
-#include "external/ge/ge_api.h"
-#include "graph/utils/op_desc_utils.h"
-#include "graph/utils/tensor_utils.h"
-#include "ops/hcom_ops.h"
+#include "ge/ge_api.h"
+#include "op_proto/inc/hcom_ops.h"
 
 namespace mindspore {
 namespace transform {
@@ -263,7 +261,7 @@ class DfGraphConvertor {
   void SetGraphInputs(std::vector<Operator> *inputs);
   void SetGraphInputs(std::vector<Operator> *inputs, std::vector<OperatorPtr> *input_datas);
   void TransformConstOp(const CNodePtr &node, const AnfNodePtr &pred);
-  void ProcessInputData(vector<Operator> *init_input,
+  void ProcessInputData(std::vector<Operator> *init_input,
                         std::unordered_set<std::string> *infer_need_update_parameter_names, const OperatorPtr &param_op,
                         const string &name, const std::shared_ptr<GeTensorDesc> &desc);
   AnfNodePtr GetRealInputNode(const CNodePtr &node, const AnfNodePtr &input);
@@ -388,7 +386,7 @@ class DfGraphConvertor {
   bool is_kernel_graph_ = false;
 
   std::string phase_prefix_;
-  void AddInputInDataSink(vector<Operator> *inputs);
+  void AddInputInDataSink(std::vector<Operator> *inputs);
 };
 }  // namespace transform
 }  // namespace mindspore

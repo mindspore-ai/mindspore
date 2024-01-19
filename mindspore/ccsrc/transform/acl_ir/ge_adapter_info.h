@@ -27,7 +27,6 @@
 #include "ir/anf.h"
 #include "ir/tensor.h"
 #include "utils/hash_map.h"
-#include "graph/op_desc.h"
 #include "include/transform/graph_ir/types.h"
 #include "transform/graph_ir/op_adapter_base.h"
 #include "mindapi/base/shape_vector.h"

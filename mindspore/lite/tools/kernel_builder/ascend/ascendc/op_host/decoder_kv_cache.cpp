@@ -17,7 +17,7 @@
 
 #include "decoder_kv_cache_tiling.h"
 #include "register/op_def_registry.h"
-#include "platform_ascendc.h"
+#include "tiling/platform/platform_ascendc.h"
 
 namespace {
 constexpr int index0 = 0;

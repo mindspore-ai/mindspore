@@ -25,7 +25,7 @@
 #include "cxx_api/graph/graph_impl.h"
 #include "ir/anf.h"
 #include "cxx_api/model/model_impl.h"
-#include "runtime/context.h"
+#include "acl/acl_rt.h"
 
 namespace mindspore {
 class AscendGraphImpl : public GraphCell::GraphImpl {
@@ -48,7 +48,7 @@ class AscendGraphImpl : public GraphCell::GraphImpl {
   Status ExecuteModel(const std::vector<MSTensor> &request, std::vector<MSTensor> *reply);
 
   std::string device_type_;
-  rtContext_t context_;
+  aclrtContext context_;
 
   std::shared_ptr<MsEnvGuard> env_guard_;
 };

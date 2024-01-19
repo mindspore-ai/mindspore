@@ -20,7 +20,7 @@
 #define google ascend_private
 #include "common/opskernel/ops_kernel_info_store.h"
 #include "common/opskernel/ops_kernel_builder.h"
-#include "external/ge/ge_api_types.h"
+#include "ge/ge_api_types.h"
 #undef google
 #include "hccl/hccl.h"
 #include "hccl/hcom.h"

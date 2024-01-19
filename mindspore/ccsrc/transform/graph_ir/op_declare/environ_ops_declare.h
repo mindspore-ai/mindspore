@@ -17,10 +17,10 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ENVIRON_OPS_DECLARE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ENVIRON_OPS_DECLARE_H_
 
-#include "inc/ops/array_ops.h"
-#include "inc/ops/selection_ops.h"
+#include "op_proto/inc/array_ops.h"
+#include "op_proto/inc/selection_ops.h"
 #include "transform/graph_ir/custom_op_proto/cust_environ_ops.h"
-#include "inc/ops/transformation_ops.h"
+#include "op_proto/inc/transformation_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
 

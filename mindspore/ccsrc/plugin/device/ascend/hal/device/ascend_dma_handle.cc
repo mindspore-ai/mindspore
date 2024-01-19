@@ -26,7 +26,7 @@
 #include <cstdlib>
 #include <string>
 #include "toolchain/slog.h"
-#include "external/runtime/rt_error_codes.h"
+#include "runtime/rt_error_codes.h"
 #endif
 #include "utils/log_adapter.h"
 #include "include/common/utils/utils.h"

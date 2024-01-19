@@ -36,15 +36,12 @@
 #include "plugin/device/ascend/hal/device/ascend_event.h"
 #include "plugin/device/ascend/hal/device/ascend_device_synchronizer.h"
 #ifndef ENABLE_SECURITY
-#include "toolchain/prof_api.h"
 #include "include/backend/debug/profiler/profiling.h"
 #include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "include/backend/debug/data_dump/e2e_dump.h"
 #endif
-#include "toolchain/adx_datadump_server.h"
 #include "utils/trace_base.h"
-#include "external/acl/error_codes/rt_error_codes.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/parallel_context.h"
 #include "include/common/utils/comm_manager.h"
@@ -65,7 +62,7 @@ constexpr uint32_t kProfilingMaxTaskIdInStream = 65531;
 constexpr uint32_t kDefaultHcclExecTimeout = 1800;
 
 namespace mindspore::device::ascend {
-static thread_local rtContext_t thread_local_rt_context{nullptr};
+static thread_local aclrtContext thread_local_rt_context{nullptr};
 namespace {
 void IntHandler(int, siginfo_t *, void *) {
   int this_pid = getpid();

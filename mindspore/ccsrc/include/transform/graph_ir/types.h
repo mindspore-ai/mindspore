@@ -27,7 +27,7 @@
 #include "ir/tensor.h"
 
 #include "graph/tensor.h"
-#include "external/ge/ge_api.h"
+#include "ge/ge_api.h"
 
 using GeTensor = ::ge::Tensor;
 

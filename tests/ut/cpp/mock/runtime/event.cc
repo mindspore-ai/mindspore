@@ -15,7 +15,5 @@
  */
 
 #include "mock/runtime/event.h"
-#include "runtime/event.h"
 
-MOCK_C_FUNC(rtEventReset, rtError_t, rtEvent_t, rtStream_t);
 MOCK_C_FUNC(aclrtResetEvent, aclError, aclrtEvent, aclrtStream);

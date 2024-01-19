@@ -25,7 +25,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "runtime/device/kernel_runtime.h"
-#include "runtime/context.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "backend/common/session/session_basic.h"
 #include "acl/acl_rt.h"
@@ -83,7 +82,7 @@ class AscendKernelRuntime : public KernelRuntime {
   void ClearGraphModelMap();
   void CreateDefaultStream();
 
-  rtContext_t rt_context_{nullptr};
+  aclrtContext rt_context_{nullptr};
   bool initialized_{false};
   std::set<uint32_t> initialized_device_set_{};
 };

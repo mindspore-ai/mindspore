@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 #include "transform/graph_ir/op_adapter.h"
+
 #include <algorithm>
-#include <utility>
 #include <map>
 #include <string>
 #include <unordered_set>
 #include "utils/check_convert_utils.h"
-#include "ops/split_combination_ops.h"
-#include "graph/operator_factory_impl.h"
+#include "op_proto/inc/split_combination_ops.h"
+#include "graph/operator_factory.h"
 #include "include/common/utils/convert_utils.h"
 #include "utils/anf_utils.h"
 #include "include/common/utils/anfalgo.h"
@@ -95,7 +95,7 @@ std::vector<std::string> GetCustomOpKernelAttrs(const PrimitivePtr &prim) {
 
 void RegisterCustomOp(const PrimitivePtr &prim, const std::string &op_type, const std::vector<std::string> &attr_names,
                       bool is_akg) {
-  if (ge::OperatorFactoryImpl::IsExistOp(op_type)) {
+  if (ge::OperatorFactory::IsExistOp(op_type)) {
     return;
   }
   MS_EXCEPTION_IF_NULL(prim);
@@ -106,7 +106,7 @@ void RegisterCustomOp(const PrimitivePtr &prim, const std::string &op_type, cons
   MS_EXCEPTION_IF_NULL(output_names_v);
   auto output_names = GetValue<std::vector<std::string>>(output_names_v);
   // Register op create function, which describes how to create a custom op
-  (void)ge::OperatorFactoryImpl::RegisterOperatorCreator(
+  ::ge::OperatorCreatorRegister op_create_reg(
     op_type, [op_type, input_names, output_names, attr_names, is_akg](const std::string &name) {
       auto op = ge::CustomOperator(name, op_type);
       for (const auto &in_name : input_names) {
@@ -127,9 +127,9 @@ void RegisterCustomOp(const PrimitivePtr &prim, const std::string &op_type, cons
     });
   // Register op infer shape function
   if (is_akg) {
-    (void)ge::OperatorFactoryImpl::RegisterInferShapeFunc(op_type, CustomAkgOpInferFunc);
+    ::ge::InferShapeFuncRegister infer(op_type, CustomAkgOpInferFunc);
   } else {
-    (void)ge::OperatorFactoryImpl::RegisterInferShapeFunc(op_type, CustomTbeAicpuOpInferFunc);
+    ::ge::InferShapeFuncRegister infer(op_type, CustomTbeAicpuOpInferFunc);
   }
 }
 

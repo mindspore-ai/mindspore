@@ -21,7 +21,7 @@
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
-#include "external/acl/error_codes/rt_error_codes.h"
+#include "acl/error_codes/rt_error_codes.h"
 #include "acl/acl_rt.h"
 #include "plugin/device/ascend/hal/device/ascend_gmem_adapter.h"
 
