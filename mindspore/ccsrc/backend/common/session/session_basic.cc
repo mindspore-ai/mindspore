@@ -920,6 +920,39 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
   }
 }
 
+void SessionBasic::GetOpInputTensorsFromCNode(const CNodePtr &cnode,
+                                              const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
+                                              const std::map<AnfNodePtr, size_t> &parameter_index,
+                                              const std::vector<tensor::TensorPtr> &graph_inputs,
+                                              InputInfo *input_info) const {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(input_info);
+  const auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
+  input_info->input_values.resize(input_num);
+  for (size_t i = 1; i <= input_num; ++i) {
+    const auto &input = cnode->input(i);
+    auto kernel_with_index = common::AnfAlgo::VisitKernel(input, 0);
+    auto real_input = kernel_with_index.first;
+    MS_EXCEPTION_IF_NULL(real_input);
+    ValuePtr input_value = nullptr;
+    if (real_input->isa<CNode>()) {
+      input_value = GetCNodeOutputTensor(kernel_with_index, op_output);
+      input_info->input_kernel.insert(kernel_with_index);
+    } else if (real_input->isa<ValueNode>()) {
+      input_value = GetValueNodeOutput(real_input, kernel_with_index.second);
+    } else if (real_input->isa<Parameter>()) {
+      auto tensor = GetParameterOutputTensor(real_input, parameter_index, graph_inputs);
+      input_value = tensor;
+    } else {
+      MS_LOG(EXCEPTION) << "Invalid input node, node = " << real_input->DebugString();
+    }
+    MS_EXCEPTION_IF_NULL(input_value);
+    MS_LOG(DEBUG) << "Get" << i << "th input tensor of " << cnode->fullname_with_scope() << " from "
+                  << real_input->fullname_with_scope() << "-" << kernel_with_index.second;
+    input_info->input_values[i - 1] = input_value;
+  }
+}
+
 tensor::TensorPtr SessionBasic::GetOpInputTensorByIndex(const CNodePtr &cnode,
                                                         const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
                                                         const std::map<AnfNodePtr, size_t> &parameter_index,

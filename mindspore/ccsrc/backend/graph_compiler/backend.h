@@ -120,7 +120,7 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   void RunGraphByCondition(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
                            const VectorRef &args, VectorRef *outputs) override;
   // Split complete kernel graph to single op graph in PyNative back
-  // propagation, then compile and run single op graph.
+  // propagation, then compile and run single op graph or pyboost op(if op registered).
   void RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_info, const VectorRef &args, VectorRef *outputs);
 
   runtime::ActorSet *RealCompileGraphBeforeRunActor(const GraphCompilerInfo &graph_compiler_info, const VectorRef &args,

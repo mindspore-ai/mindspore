@@ -151,7 +151,8 @@ class GraphCompiler {
   // and prev kernel node's output.
   void GetSingleOpInputTensors(const CNodePtr &kernel, const std::map<KernelWithIndex, TensorPtr> &op_output,
                                const std::map<AnfNodePtr, size_t> &parameter_index,
-                               const std::vector<TensorPtr> &graph_inputs, InputInfo *const input_info);
+                               const std::vector<TensorPtr> &graph_inputs, bool is_run_pyboost,
+                               InputInfo *const input_info);
   // Get one input tensor for single control op, such as bprop_cut.
   TensorPtr GetSingleOpInputTensorByIndex(const CNodePtr &kernel, const std::map<KernelWithIndex, TensorPtr> &op_output,
                                           const std::map<AnfNodePtr, size_t> &parameter_index,

@@ -1214,10 +1214,14 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr,
   if (top_input_args_info_->is_high_order_top_cell) {
     MS_LOG(DEBUG) << "Get high grad";
     top_cell()->resource()->set_optimize_graph(bprop_graph);
+    bool has_bprop_cut = bprop_graph->has_flag(kFlagPyNativeBpropGraphWithBpropCut);
     if (bprop_graph->isa<session::KernelGraph>()) {
       bprop_graph = CloneKernelGraph(bprop_graph);
     } else {
       bprop_graph = BasicClone(bprop_graph);
+    }
+    if (has_bprop_cut) {
+      bprop_graph->set_flag(kFlagPyNativeBpropGraphWithBpropCut, true);
     }
     PyNativeAlgo::Common::ReplaceCNodeWithValueNode(bprop_graph);
   } else {
