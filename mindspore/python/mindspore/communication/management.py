@@ -110,6 +110,8 @@ def init(backend_name=None):
         - The full name of ``"hccl"`` is Huawei Collective Communication Library(HCCL).
         - The full name of ``"nccl"`` is NVIDIA Collective Communication Library(NCCL).
         - The full name of ``"mccl"`` is MindSpore Collective Communication Library(MCCL).
+        - In Ascend hardware platforms, ``init()`` should be set before the definition of any Tensor and Parameter,
+          and the instantiation and execution of any operation and net.
 
     Args:
         backend_name (str): Backend, using ``"hccl"`` / ``"nccl"`` / ``"mccl"``.
