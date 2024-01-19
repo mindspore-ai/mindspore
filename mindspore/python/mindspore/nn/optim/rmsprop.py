@@ -29,6 +29,10 @@ _centered_rmsprop_opt = C.MultitypeFuncGraph("rmsprop_opt")
 def _rmsprop_opt_(opt, decay, epsilon, momentum, learning_rate, weight, ms, mom, grad):
     """Apply rmsprop optimizer to the weight parameter using dynamic learning rate."""
     success = True
+    learning_rate = F.cast(learning_rate, grad.dtype)
+    decay = F.cast(decay, grad.dtype)
+    momentum = F.cast(momentum, grad.dtype)
+    epsilon = F.cast(epsilon, grad.dtype)
     success = F.depend(success, opt(weight, ms, mom, learning_rate, grad, decay, momentum, epsilon))
     return success
 
