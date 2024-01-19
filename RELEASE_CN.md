@@ -27,7 +27,7 @@ fary86, wanghenchang, haozhang, mengyuanli, emmmmtang, luoyang, zhupuxu, zhangyo
 
 ### 问题修复
 
-- [#I8TPLY] 修复 SSD MobolieNetv2 FPN 网络在Atlas 推理系列产品（配置 Ascend 310P AI 处理器）平台上的推理失败问题。
+- [#I8TPLY] 修复 SSD MobileNetV2 FPN 网络在Atlas 推理系列产品（配置 Ascend 310P AI 处理器）平台上的推理失败问题。
 
 ### 贡献者
 

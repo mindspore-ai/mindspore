@@ -27,7 +27,7 @@ Contributions of any kind are welcome!
 
 ### Bug Fixes
 
-- [#I8TPLY] Fixed SSD MobolieNetv2 FPN network inference error on Atlas inference series products(configured with Ascend 310P AI processor).
+- [#I8TPLY] Fixed SSD MobileNetV2 FPN network inference error on Atlas inference series products(configured with Ascend 310P AI processor).
 
 ### Contributors
 
