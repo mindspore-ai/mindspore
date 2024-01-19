@@ -932,8 +932,81 @@ static bool CheckTensorInContainer(py::object args) {
   }
 }
 
+static bool CheckAbstract(abstract::AbstractBasePtr abs, bool incontainer);
+
+static bool CheckContainer(abstract::AbstractBasePtr abs) {
+  if (abs->isa<abstract::AbstractTuple>()) {
+    auto elems = abs->cast<abstract::AbstractTuplePtr>()->elements();
+    for (size_t idx = 0; idx < elems.size(); ++idx) {
+      if (!CheckAbstract(elems[idx], true)) {
+        return false;
+      }
+    }
+  }
+  if (abs->isa<abstract::AbstractList>()) {
+    auto elems = abs->cast<abstract::AbstractListPtr>()->elements();
+    for (size_t idx = 0; idx < elems.size(); ++idx) {
+      if (!CheckAbstract(elems[idx], true)) {
+        return false;
+      }
+    }
+  }
+  if (abs->isa<abstract::AbstractSequence>()) {
+    auto elems = abs->cast<abstract::AbstractSequencePtr>()->elements();
+    for (size_t idx = 0; idx < elems.size(); ++idx) {
+      if (!CheckAbstract(elems[idx], true)) {
+        return false;
+      }
+    }
+  }
+  if (abs->isa<abstract::AbstractDictionary>()) {
+    auto elems = abs->cast<abstract::AbstractDictionaryPtr>()->elements();
+    for (size_t idx = 0; idx < elems.size(); ++idx) {
+      if (!CheckAbstract(elems[idx].first, true) || !CheckAbstract(elems[idx].first, true)) {
+        return false;
+      }
+    }
+  }
+  if (abs->isa<abstract::AbstractSlice>()) {
+    auto slice = abs->cast<abstract::AbstractSlicePtr>();
+    return !CheckAbstract(slice->start(), true) || !CheckAbstract(slice->stop(), true) ||
+           !CheckAbstract(slice->step(), true);
+  }
+  return true;
+}
+
+static bool CheckAbstract(abstract::AbstractBasePtr abs, bool incontainer) {
+  if (incontainer && abs->isa<abstract::AbstractAny>()) {
+    return false;
+  }
+  if (abs->isa<abstract::AbstractTuple>() || abs->isa<abstract::AbstractList>() ||
+      abs->isa<abstract::AbstractSequence>() || abs->isa<abstract::AbstractDictionary>() ||
+      abs->isa<abstract::AbstractSlice>()) {
+    return CheckContainer(abs);
+  }
+  if (abs->isa<abstract::AbstractNone>() || abs->isa<abstract::AbstractNull>() || abs->isa<abstract::AbstractType>() ||
+      abs->isa<abstract::AbstractFunction>() || abs->isa<abstract::AbstractAny>()) {
+    return false;
+  }
+  if (abs->isa<abstract::AbstractScalar>()) {
+    auto tp = abs->GetTypeTrack()->type_id();
+    return tp != kMetaTypeNone && tp != kMetaTypeNull && tp != kNumberTypeBool;
+  }
+  return true;
+}
+
+static bool CheckValidReturn(const JitCompileResults *c) {
+  auto graph_executor = mindspore::pipeline::GraphExecutorPy::GetInstance();
+  FuncGraphPtr ms_func_graph = graph_executor->GetFuncGraph(c->code->GetPhase());
+  auto abs = ms_func_graph->output()->abstract();
+  return CheckAbstract(abs, false);
+}
+
 static bool PreferCallGraph(const JitCompileResults *c, py::object args) {
   if (c->code->GetNativeFunc() == nullptr) {
+    return false;
+  }
+  if (!CheckValidReturn(c)) {
     return false;
   }
   py::tuple t = py::cast<py::tuple>(args);
