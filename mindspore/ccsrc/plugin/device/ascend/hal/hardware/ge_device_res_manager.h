@@ -36,6 +36,7 @@ class GeHostAddress : public cpu::CPUDeviceAddress {
   GeHostAddress(void *ptr, size_t size, const std::string &format, TypeId type_id, const std::string &device_name,
                 uint32_t device_id)
       : CPUDeviceAddress(ptr, size, format, type_id, device_name, device_id) {}
+  explicit GeHostAddress(const KernelTensorPtr &kernel_tensor) : CPUDeviceAddress(kernel_tensor) {}
   DeviceType GetDeviceType() const override { return DeviceType::kAscend; }
 };
 

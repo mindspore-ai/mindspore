@@ -377,12 +377,12 @@ void AscendDeprecatedInterface::AclLoadModel(Buffer *om_data) {
 }
 
 void AscendDeprecatedInterface::UnregisterExternalAllocator() {
-  if (!IsEnableRefMode()) {
-    return;
-  }
   auto graph_runner = transform::GetGraphRunner();
   if (graph_runner == nullptr) {
     MS_LOG(INFO) << "The graph_runner is not exist";
+    return;
+  }
+  if (!graph_runner->IsAllocatorRegistered()) {
     return;
   }
   MS_EXCEPTION_IF_NULL(ge_device_context_);

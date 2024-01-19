@@ -104,7 +104,7 @@ class AclDumper {
   AclDumper &operator=(AclDumper const &) = delete;  // disable assignment operator
 
   // constructor
-  AclDumper() : acl_dump_config_(mindspore::common::GetEnv(kAclDumpConfigPath)) {
+  AclDumper() : acl_dump_config_("") {
     // acl dump config path is not set
     if (acl_dump_config_.empty()) {
       return;

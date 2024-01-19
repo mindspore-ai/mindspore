@@ -158,7 +158,7 @@ class BACKEND_EXPORT Somas {
   void InitSomasOutputAndWorkspaceTensors(const session::KernelGraph &graph);
   void InitSomasInputTensors(const session::KernelGraph &graph);
   void InitCommonNodeInputs(const CNodePtr &kernel);
-  void InitAtomicCleanInputs(bool enable_fusion_clear, const CNodePtr &kernel);
+  void InitAtomicCleanInputs(const CNodePtr &kernel);
   SomasParameterPtr GetSomasParameter(const AnfNodePtr &node, size_t index, size_t param_size,
                                       const std::string &kernel_name);
   SomasParameterPtr CreateSomasParameter(const AnfNodePtr &node, size_t index, size_t param_size,

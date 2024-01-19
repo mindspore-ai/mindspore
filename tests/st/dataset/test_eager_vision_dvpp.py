@@ -40,7 +40,6 @@ def test_eager_decode_dvpp():
     Description: Test eager support for Decode with Dvpp
     Expectation: Output image info from op is correct
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -70,8 +69,6 @@ def test_eager_decode_dvpp():
     check_img = cv2.cvtColor(check_img, cv2.COLOR_BGR2RGB)
     assert (img_resize == check_img).all()
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
@@ -82,7 +79,6 @@ def test_eager_decode_dvpp_exception():
     Description: Test eager support for Decode with Dvpp
     Expectation: Output image info from op is correct
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -121,8 +117,6 @@ def test_eager_decode_dvpp_exception():
         _ = vision.Decode().device(123)(img_bytes)
     assert "Argument device_target with value 123 is not of type [<class 'str'>]," in str(error_info.value)
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
@@ -133,7 +127,6 @@ def test_eager_resize_dvpp():
     Description: Test eager support for Resize with Dvpp
     Expectation: Output image info from op is correct
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -214,8 +207,6 @@ def test_eager_resize_dvpp():
     assert img_resize_float_hw3.shape == (64, 32, 3)
     assert img_resize_float_hw3.dtype == np.float32
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
@@ -226,7 +217,6 @@ def test_eager_resize_dvpp_exception():
     Description: Test eager support for Resize with Dvpp when invalid input
     Expectation: Success
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -313,8 +303,6 @@ def test_eager_resize_dvpp_exception():
         _ = vision.Resize(size=(64, 32)).device("Asscend")
     assert "Input device_target is not within the valid set of ['CPU', 'Ascend']" in str(error_info.value)
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
@@ -325,7 +313,6 @@ def test_eager_normalize_dvpp():
     Description: Test eager support for Normalize with Dvpp
     Expectation: Output image info from op is correct
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -463,8 +450,6 @@ def test_eager_normalize_dvpp():
     check_result = np.load(os.path.join(result_data_dir, 'apple_dvpp_normalize.npy'))
     assert (check_result == img_normalize).all()
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
@@ -475,7 +460,6 @@ def test_eager_normalize_dvpp_exception():
     Description: Test eager support for Normalize with Dvpp
     Expectation: Output image info from op is correct
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -556,8 +540,6 @@ def test_eager_normalize_dvpp_exception():
         _ = vision.Normalize(mean=mean_vec, std=std_vec, is_hwc=False).device("Ascend")(img)
     assert "The input data is not uint8 or float32." in str(error_info.value)
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
@@ -568,7 +550,6 @@ def test_eager_multi_dvpp_op_dvpp_cpu_dvpp():
     Description: Test eager support for multi op with Dvpp
     Expectation: Output image info from op is correct
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -593,8 +574,6 @@ def test_eager_multi_dvpp_op_dvpp_cpu_dvpp():
     assert img_normalize.shape == (64, 32, 3)
     assert img_normalize.dtype == np.float32
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
@@ -605,7 +584,6 @@ def test_eager_multi_dvpp_op_dvpp_dvpp_cpu():
     Description: Test eager support for multi op with Dvpp
     Expectation: Output image info from op is correct
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -630,8 +608,6 @@ def test_eager_multi_dvpp_op_dvpp_dvpp_cpu():
     assert img_normalize.shape == (64, 32, 3)
     assert img_normalize.dtype == np.float32
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
@@ -642,7 +618,6 @@ def test_eager_multi_dvpp_op_cpu_dvpp_dvpp():
     Description: Test eager support for multi op with Dvpp
     Expectation: Output image info from op is correct
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -666,8 +641,6 @@ def test_eager_multi_dvpp_op_cpu_dvpp_dvpp():
     img_normalize = vision.Normalize(mean=mean_vec, std=std_vec).device("Ascend")(img_resize)
     assert img_normalize.shape == (64, 32, 3)
     assert img_normalize.dtype == np.float32
-
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
 
 
 if __name__ == '__main__':
