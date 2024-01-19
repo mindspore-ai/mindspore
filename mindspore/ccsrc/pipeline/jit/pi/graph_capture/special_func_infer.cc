@@ -37,6 +37,7 @@ struct SpecialAction {
   InferFunc infer;
 };
 
+extern ValueNode *GetBoundSelf(CallNode *call_node);
 extern void LogGuardFailed(ValueNode *node, const GraphJitConfig &conf, const std::string &msg);
 extern AObject *InferFuncResult(const py::object &func, const std::vector<AObject *> &stack_args, int opcode,
                                 const GraphJitConfig &conf, bool clear_guard);
@@ -76,9 +77,9 @@ static constexpr const char *kMindsporeNameConstexpr = "CompileOp";
  */
 static constexpr const char *kMindsporeNameGradFunc = "after_grad";
 static constexpr const char *kMindsporeNameJitFunc = "staging_specialize";  // mindspore.jit
-
 static constexpr const char *kMindsporeNamePrimitive = "Primitive_";
 static constexpr const char *kMindsporeNameMetaFuncGraph = "MetaFuncGraph_";
+static constexpr const char *kMindsporeNameTensorAsType = "astype";
 static constexpr const char *kMindsporeNameMsCell = "mindspore.nn.Cell";
 /**
  * convert function map
@@ -855,6 +856,56 @@ static bool InferBuiltinFuncOrMethod(CallNode *call_node) {
   return CallNodeReturnConst(call_node, sub_graph, call_node->GetVobj());
 }
 
+static bool CheckTensorAsType(const py::object &func) {
+  PyObject *op = func.ptr();
+  if (op == nullptr) {
+    return false;
+  }
+  if (PyMethod_Check(op)) {
+    op = PyMethod_GET_FUNCTION(op);
+  }
+  if (!PyFunction_Check(op)) {
+    return false;
+  }
+  auto func_ptr = reinterpret_cast<PyFunctionObject *>(op);
+  std::string name = PyUnicode_AsUTF8(func_ptr->func_module);
+  bool is_func = name == "mindspore.common.tensor";
+  return is_func;
+}
+
+static bool InferTensorAsType(CallNode *call_node) {
+  ValueNode *self_node = GetBoundSelf(call_node);
+  bool is_not_method = call_node->input(0)->GetVobj()->GetType() != AObject::kTypeBoundMethod;
+  ValueNode *dtype_node = call_node->input(1 + is_not_method);
+
+  Graph *sub_graph = call_node->GetSubGraph();
+
+  auto &alloc = sub_graph->allocator();
+  py::object prim_cast = Utils::GetModuleAttr("mindspore.ops.functional", "cast", false, true);
+
+  PyTypeObject *tp = Py_TYPE(prim_cast.ptr());
+  std::stringstream s;
+  s << (tp->tp_name ? tp->tp_name : "<unnamed>") << "<" << prim_cast.ptr() << ">";
+
+  ValueNode *prim_node = alloc.NewValueNode(AObject::Convert(prim_cast), LOAD_GLOBAL, -1, {});
+  prim_node->SetName(s.str());
+  prim_node->SetGraph(call_node->GetGraph());
+  call_node->GetGraph()->InstallToGlobal(prim_node->GetName(), prim_cast);
+
+  std::vector<ValueNode *> cast_args = {prim_node, self_node, dtype_node};
+  CallNode *ret_node = alloc.NewNode<CallNode>(CALL_FUNCTION, cast_args.size() - 1, cast_args);
+  ret_node->SetGraph(sub_graph);
+  (void)InferPrimitive(ret_node);
+
+  sub_graph->GetTracedNodes().push_back(prim_node);
+  sub_graph->GetTracedNodes().push_back(ret_node);
+  sub_graph->SetRetVal(ret_node);
+
+  call_node->SetSubGraph(sub_graph);
+  call_node->SetInlineReason(InlineReason::kInline);
+  return true;
+}
+
 // special function list
 // special function that mindspore support and not inline,
 // the return values or type can be infer
@@ -877,6 +928,7 @@ static const std::unordered_map<std::string, SpecialAction> kFuncWhiteListMap = 
   {kJitForbidden, {CheckJitForbidden, SetCallResType<AObject::kTypeAnyValue>}},
   {kJitConstexpr, {CheckJitConstexpr, JustCallAndSetRes}},
   {kMindsporeNameConstexpr, {CheckMSConstexpr, InferMSConstexpr}},
+  {kMindsporeNameTensorAsType, {CheckTensorAsType, InferTensorAsType}},
 };
 
 static const std::vector<std::pair<CheckFunc, std::string>> kFuncWhiteListFuzzyMatcher = {
