@@ -219,11 +219,6 @@ bool AffineGridGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inp
 
 std::vector<std::pair<KernelAttr, AffineGridGpuKernelMod::AffineGridFunc>> AffineGridGpuKernelMod::func_list_ = {
   {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeFloat16),
-   &AffineGridGpuKernelMod::LaunchKernel<half>},
-  {KernelAttr()
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat32),
