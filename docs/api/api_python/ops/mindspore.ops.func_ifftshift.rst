@@ -1,20 +1,20 @@
 mindspore.ops.fftshift
 =================================
 
-.. py:function:: mindspore.ops.fftshift(input, dim)
+.. py:function:: mindspore.ops.fftshift(input, dim=None)
 
-    `fftshift`的逆运算，更多参考详见:func:`mindspore.ops.fftshift`。
+    :func:`mindspore.ops.fftshift` 的逆运算。
 
     .. note::
-        - `ifftshift` 目前仅用于`mindscience`科学计算场景，尚不支持其他使用场景。
+        - `ifftshift` 目前仅用于 `mindscience` 科学计算场景，尚不支持其他使用场景。
         - `ifftshift` 尚不支持Windows平台.
 
     参数：
         - **input** (Tensor) - 输入的Tensor。
-        - **dim** (Union[list(int), tuple(int), int], optional) - 指定需移动维度的轴。默认值： None ,将移动所有轴。
+        - **dim** (Union[list(int), tuple(int), int], 可选) - 指定需移动维度的轴。默认值： ``None`` ，将移动所有轴。
 
     返回：
-        Tensor，数据类型与shape `input` 相同。
+        Tensor，与 `input` 的数据类型和shape相同。
 
 
     异常：

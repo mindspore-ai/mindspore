@@ -61,7 +61,7 @@ def fftshift(input, dim=None):
 
 def ifftshift(input, dim=None):
     """
-    The inverse of `fftshift`. Refer to :func:`mindspore.ops.fftshift` for more details.
+    The inverse of :func:`mindspore.ops.fftshift` .
 
     Note:
         - `ifftshift` is currently only used in `mindscience` scientific computing scenarios and
