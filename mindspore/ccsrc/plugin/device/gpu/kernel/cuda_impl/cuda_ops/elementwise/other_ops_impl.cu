@@ -134,6 +134,29 @@ REGISTER_UNARY_OP_CUDA_FUNC_UINT_TYPE(ElwiseOpType::kReciprocal);
 REGISTER_UNARY_OP_CUDA_FUNC_FLOAT_TYPE(ElwiseOpType::kReciprocal);
 REGISTER_UNARY_OP_CUDA_FUNC_COMPLEX_TYPE(ElwiseOpType::kReciprocal);
 
+template <typename TypeIn, typename TypeOut>
+struct UnaryFunc<ElwiseOpType::kReciprocal, TypeIn, TypeOut> {
+  DEVICE_HOST UnaryFunc() {}
+  DEVICE TypeOut operator()(const TypeIn val) const {
+    if (val != TypeIn(0)) {
+      return TypeOut(1.0) / val;
+    }
+    return std::numeric_limits<TypeOut>::max() + TypeOut(1);
+  }
+};
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kReciprocal, int64_t, float>(const size_t num,
+    const int64_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kReciprocal, int, float>(const size_t num,
+    const int *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kReciprocal, int16_t, float>(const size_t num,
+    const int16_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kReciprocal, int8_t, float>(const size_t num,
+    const int8_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kReciprocal, uint8_t, float>(const size_t num,
+    const uint8_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kReciprocal, bool, float>(const size_t num,
+    const bool *inp, float *out, cudaStream_t cuda_stream);
+
 template <typename Type>
 struct UnaryFunc<ElwiseOpType::kExpm1, Type, Type> {
   DEVICE_HOST UnaryFunc() {}
