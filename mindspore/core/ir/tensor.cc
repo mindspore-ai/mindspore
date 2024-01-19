@@ -987,6 +987,11 @@ Tensor &Tensor::AssignValue(const Tensor &tensor) {
 }
 
 abstract::AbstractBasePtr Tensor::ToAbstract() {
+  auto abs = abstract_.lock();
+  if (abs != nullptr) {
+    MS_LOG(DEBUG) << "Get cached abstract " << abs->ToString() << " real tensor shape is " << shape_;
+    return abs;
+  }
   auto tens = shared_from_base<Tensor>();
   auto dtype = tens->Dtype();
   if (!IsSubType(dtype, kNumber) && !IsSubType(dtype, kString) && !IsSubType(dtype, kTensorType)) {

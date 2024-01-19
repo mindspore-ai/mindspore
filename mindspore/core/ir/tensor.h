@@ -893,6 +893,11 @@ class MS_CORE_API Tensor : public MetaTensor {
 
   std::vector<int64_t> stride();
 
+  /// \brief Set tensor abstract.
+  ///
+  /// \param[in] abstract The abstract of tensor.
+  void set_abstract(const std::weak_ptr<abstract::AbstractBase> &abstract) { abstract_ = abstract; }
+
   int64_t storage_offset() {
     auto storage_info = storage_info_;
     return storage_info == nullptr ? 0 : SizeToLong(storage_info->storage_offset);
@@ -931,6 +936,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   std::string tensor_name_;
   mutable std::shared_ptr<FutureBase<DeviceSync>> address_future_{};
   mutable TensorStorageInfoPtr storage_info_{nullptr};
+  std::weak_ptr<abstract::AbstractBase> abstract_;
 };
 
 // CSRTensor entity class
