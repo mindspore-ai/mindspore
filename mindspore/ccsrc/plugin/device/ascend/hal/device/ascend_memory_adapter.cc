@@ -248,7 +248,8 @@ std::string AscendMemAdapter::DevMemDetailInfo() const {
 }
 
 size_t AscendMemAdapter::GetDeviceMemSizeFromContext() const {
-  static const std::set<std::string> kAscend910BVersions = {"Ascend910B1", "Ascend910B2", "Ascend910B3", "Ascend910B4"};
+  static const std::set<std::string> kAscend910BVersions = {"Ascend910B1", "Ascend910B2", "Ascend910B3", "Ascend910B4",
+                                                            "Ascend910C1", "Ascend910C2", "Ascend910C3"};
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   size_t size_from_context;

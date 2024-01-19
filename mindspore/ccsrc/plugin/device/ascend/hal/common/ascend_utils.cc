@@ -250,7 +250,8 @@ constexpr auto k910BAscendVersion = "ascend910b";
 const std::map<std::string, std::string> kAscendSocVersions = {
   {"Ascend910A", "ascend910"},    {"Ascend910B", "ascend910"},    {"Ascend910PremiumA", "ascend910"},
   {"Ascend910ProA", "ascend910"}, {"Ascend910ProB", "ascend910"}, {"Ascend910B1", "ascend910b"},
-  {"Ascend910B2", "ascend910b"},  {"Ascend910B3", "ascend910b"},  {"Ascend910B4", "ascend910b"}};
+  {"Ascend910B2", "ascend910b"},  {"Ascend910B3", "ascend910b"},  {"Ascend910B4", "ascend910b"},
+  {"Ascend910C1", "ascend910b"},  {"Ascend910C2", "ascend910b"},  {"Ascend910C3", "ascend910b"}};
 
 // for unify 1980 and 1980b, when the function throw exception, it means the 910b soc version is not available.
 const bool SelectAscendPlugin = []() -> bool {
