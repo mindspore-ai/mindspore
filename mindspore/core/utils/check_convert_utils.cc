@@ -1159,7 +1159,6 @@ void CheckAndConvertUtils::CheckSummaryParam(const AbstractBasePtr &name, const 
                                              const std::string &class_name) {
   MS_EXCEPTION_IF_NULL(name);
   MS_EXCEPTION_IF_NULL(value);
-  CheckMode(class_name);
   (void)CheckTypeValid("name", name->BuildType(), {kString}, class_name);
   auto s = GetValue<std::string>(name->BuildValue());
   if (s.empty()) {
@@ -1167,15 +1166,6 @@ void CheckAndConvertUtils::CheckSummaryParam(const AbstractBasePtr &name, const 
                              << " cannot be an empty string.";
   }
   (void)CheckTypeValid("value", value->BuildType(), {kTensorType}, class_name);
-}
-
-void CheckAndConvertUtils::CheckMode(const std::string &class_name) {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    MS_EXCEPTION(NotSupportError) << "The primitive[" << class_name << "] does not support PyNativeMode.\n"
-                                  << "Please convert the mode to GraphMode.";
-  }
 }
 
 std::vector<double> CheckAndConvertUtils::CheckTensorFloatValue(const std::string &type_name, const ValuePtr &value,
