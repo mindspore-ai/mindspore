@@ -993,10 +993,28 @@ size_t GeGraphExecutor::GetGraphFeatureMemory(const FuncGraphPtr &graph) const {
   AscendMemAdapter::GetInstance().UpdateActualPeakMemory(total_memory_size);
   return feature_memory_size;
 }
+int64_t GeGraphExecutor::CurGraphSinkSize(std::string graph_name) {
+  int64_t sink_size = -1;
+  auto result = graph_sink_size_.find(graph_name);
+  if (result != graph_sink_size_.end()) {
+    sink_size = result->second;
+  } else {
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE &&
+        ms_context->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK)) {
+      sink_size = ConfigManager::GetInstance().iter_num();
+    }
+    MS_LOG(INFO) << "Graph [" << graph_name << "] sink size is " << sink_size;
+    graph_sink_size_.insert(std::pair(graph_name, sink_size));
+  }
+  return sink_size;
+}
 
-bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs) const {
+bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs) {
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_name = GetGraphName(graph);
+  RunInitGraph(graph_name);
   MS_LOG(INFO) << "GE run graph start in ref mode, graph: " << graph_name << ".";
   (void)ResManager()->BindDeviceToCurrentThread(false);
 
@@ -1287,7 +1305,7 @@ std::vector<GeTensor> GeGraphExecutor::GenerateOutputGeTensor(const KernelGraphP
   return ge_outputs;
 }
 
-void GeGraphExecutor::RunInitGraph(const std::string &graph_name) const {
+void GeGraphExecutor::RunInitGraph(const std::string &graph_name) {
   transform::RunOptions run_options;
   run_options.name = "init_subgraph." + graph_name;
   if (transform::GetGraphByName(run_options.name) == nullptr) {
@@ -1299,6 +1317,12 @@ void GeGraphExecutor::RunInitGraph(const std::string &graph_name) const {
     MS_LOG(EXCEPTION) << "Can not found GraphRunner.";
   }
 
+  auto cur_sink_size = CurGraphSinkSize(graph_name);
+  if (pre_sink_size_ == cur_sink_size) {
+    return;
+  }
+  pre_sink_size_ = cur_sink_size;
+  MS_LOG(INFO) << "Start run init graph: " << run_options.name << ", sink size:" << cur_sink_size;
   std::vector<transform::GeTensorPtr> ge_outputs;
   std::vector<transform::GeTensorPtr> ge_tensors;
   {
