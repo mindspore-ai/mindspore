@@ -130,10 +130,9 @@ Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph
     }
   }
   auto &compile_cache_context = CompileCacheContext::GetInstance();
-  auto compile_cache_dep_files_hash = compile_cache_context.CompileCacheDepFilesHash();
-  if (CompileCacheEnable() && !compile_cache_dep_files_hash.empty()) {
-    auto suffix = IsEnableRefMode() ? name : std::to_string(id);
-    auto ge_graph_key = compile_cache_dep_files_hash + "_" + suffix;
+  auto init_compile_cache = compile_cache_context.init_compile_cache();
+  if (CompileCacheEnable() && init_compile_cache) {
+    auto ge_graph_key = IsEnableRefMode() ? name : std::to_string(id);
     ge_graph_key = NormalizeString(ge_graph_key);
     new_options.insert_or_assign(kGeGraphKey, ge_graph_key);
   }
