@@ -21,6 +21,7 @@
 #include "ops/op_utils.h"
 #include "utils/log_adapter.h"
 #include "abstract/abstract_value.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -83,6 +84,11 @@ class AddFrontendFuncImpl : public OpFrontendFuncImpl {
                     << ", the type is not supported.";
       return nullptr;
     }
+
+    // check type
+    std::map<std::string, TypePtr> types{{"x", input_args[kIndex0]->GetType()}, {"y", input_args[kIndex1]->GetType()}};
+    (void)CheckAndConvertUtils::CheckMathBinaryOpTensorType(types, common_valid_types, primitive->name());
+
     iter->second(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
     return result_tensor;
   }
