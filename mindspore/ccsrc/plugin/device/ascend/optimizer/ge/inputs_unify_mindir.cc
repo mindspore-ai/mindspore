@@ -145,15 +145,20 @@ CNodePtr InputsUnifyMindIR::CreateScalarToTensor(const FuncGraphPtr &func_graph,
   auto prim = NewValueNode(std::make_shared<Primitive>(kScalarToTensorOpName));
   MS_EXCEPTION_IF_NULL(prim);
   auto data_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
-  AnfNodePtrList inputs = {prim, node, NewValueNode(MakeValue(static_cast<int64_t>(data_type)))};
+  auto type_id_value_node = NewValueNode(static_cast<int64_t>(data_type));
+  auto type_id_value = std::make_shared<Int64Imm>(static_cast<int64_t>(data_type));
+  type_id_value_node->set_abstract(type_id_value->ToAbstract());
+  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  type_id_value_node = kernel_graph->NewValueNode(type_id_value_node);
+  kernel_graph->AddValueNodeToGraph(type_id_value_node);
+  AnfNodePtrList inputs = {prim, node, type_id_value_node};
   CNodePtr scalar_to_tensor = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(scalar_to_tensor);
   auto primitive = GetCNodePrimitive(scalar_to_tensor);
   MS_EXCEPTION_IF_NULL(primitive);
-  // attr dtype
-  common::AnfAlgo::SetNodeAttr(kAttrDType, TypeIdToType(data_type), scalar_to_tensor);
   // set abstract
-  auto abs = InferAbstract(primitive, {node});
+  auto abs = InferAbstract(primitive, {node, type_id_value_node});
   MS_EXCEPTION_IF_NULL(abs);
   MS_LOG(DEBUG) << "Abstract for ScalarToTensor op is " << abs->ToString();
   scalar_to_tensor->set_abstract(abs);
@@ -164,13 +169,18 @@ CNodePtr InputsUnifyMindIR::CreateTupleToTensor(const FuncGraphPtr &func_graph, 
   auto prim = std::make_shared<Primitive>(kTupleToTensorOpName);
   MS_EXCEPTION_IF_NULL(prim);
   auto data_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
-  AnfNodePtrList inputs = {NewValueNode(prim), node, NewValueNode(MakeValue(static_cast<int64_t>(data_type)))};
+  auto type_id_value_node = NewValueNode(static_cast<int64_t>(data_type));
+  auto type_id_value = std::make_shared<Int64Imm>(static_cast<int64_t>(data_type));
+  type_id_value_node->set_abstract(type_id_value->ToAbstract());
+  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  type_id_value_node = kernel_graph->NewValueNode(type_id_value_node);
+  kernel_graph->AddValueNodeToGraph(type_id_value_node);
+  AnfNodePtrList inputs = {NewValueNode(prim), node, type_id_value_node};
   CNodePtr tuple_to_tensor = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(tuple_to_tensor);
-  // attr dtype
-  common::AnfAlgo::SetNodeAttr(kAttrDType, TypeIdToType(data_type), tuple_to_tensor);
   // set abstract
-  auto abs = InferAbstract(prim, {node});
+  auto abs = InferAbstract(prim, {node, type_id_value_node});
   MS_EXCEPTION_IF_NULL(abs);
   MS_LOG(DEBUG) << "Abstract for TupleToTensor op is " << abs->ToString();
   tuple_to_tensor->set_abstract(abs);

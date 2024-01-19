@@ -1056,8 +1056,8 @@ REG_BPROP_BUILDER("Concat").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   // If so, the i will be treat as a const Tensor but variable expected which will be not caught as a while body
   // parameter.
   // Here Emit a `ScalarToTensor` to make it a fake-variable-in-logit node.
-  auto i = ib->Emit("ScalarToTensor", {ib->Value<int64_t>(1), ib->EmitValue(kInt64)});
-  auto len = ib->Emit("ScalarToTensor", {ib->Emit("sequence_len", {x}), ib->EmitValue(kInt64)});
+  auto i = ib->Emit("ScalarToTensor", {ib->Value<int64_t>(1), ib->Value<int64_t>(kInt64->type_id())});
+  auto len = ib->Emit("ScalarToTensor", {ib->Emit("sequence_len", {x}), ib->Value<int64_t>(kInt64->type_id())});
   auto while_body = [&x, &dout, &concat_offset, &i, &res_list](Emitter *e) -> NodePtrList {
     auto scalar_i = e->Emit("TensorToScalar", {i});
     auto input = e->Shape(e->Emit(kTupleGetItemOpName, {x, scalar_i}));

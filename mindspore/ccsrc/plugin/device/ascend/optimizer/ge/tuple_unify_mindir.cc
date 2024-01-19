@@ -36,7 +36,8 @@ namespace opt {
 
 const BaseRef TupleUnifyMindIR::DefinePattern() const {
   VarPtr x = std::make_shared<Var>();
-  VectorRef tensor_to_tuple({std::make_shared<Primitive>(kTensorToTupleOpName), x});
+  VarPtr dtype = std::make_shared<Var>();
+  VectorRef tensor_to_tuple({std::make_shared<Primitive>(kTensorToTupleOpName), x, dtype});
   return VectorRef({std::make_shared<Primitive>(kTupleToTensorOpName), tensor_to_tuple});
 }
 
