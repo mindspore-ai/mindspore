@@ -18,6 +18,7 @@
 #include <vector>
 #include <string>
 #include "ops/fusion/flash_attention.h"
+#include "ops/fusion/matmul_allreduce.h"
 
 namespace mindspore::transform {
 // KVCacheMgr
@@ -60,4 +61,14 @@ ATTR_MAP(FFN) = {{"activation", ATTR_DESC(activation, AnyTraits<string>())},
                  {"inner_precise", ATTR_DESC(inner_precise, AnyTraits<int64_t>())}};
 OUTPUT_MAP(FFN) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(FFN, kNameFFN, ADPT_DESC(FFN))
+
+// MatMulAllReduce
+INPUT_MAP(MatmulAllReduce) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(bias)}};
+OUTPUT_MAP(MatmulAllReduce) = {{0, OUTPUT_DESC(y)}};
+ATTR_MAP(MatmulAllReduce) = {{"group", ATTR_DESC(group, AnyTraits<std::string>())},
+                             {"op", ATTR_DESC(reduce_op, AnyTraits<std::string>())},
+                             {"transpose_a", ATTR_DESC(is_trans_a, AnyTraits<bool>())},
+                             {"transpose_b", ATTR_DESC(is_trans_b, AnyTraits<bool>())},
+                             {"comm_reuse", ATTR_DESC(comm_turn, AnyTraits<int>())}};
+REG_ADPT_DESC(MatMulAllReduce, kNameMatMulAllReduce, ADPT_DESC(MatmulAllReduce))
 }  // namespace mindspore::transform

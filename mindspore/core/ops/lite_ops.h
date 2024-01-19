@@ -75,6 +75,7 @@ GVAR_DEF(PrimitivePtr, kPrimPartialFusion, std::make_shared<Primitive>("PartialF
 GVAR_DEF(PrimitivePtr, kPrimFSEDecode, std::make_shared<Primitive>("FSEDecode"));
 GVAR_DEF(PrimitivePtr, kPrimKVCacheMgr, std::make_shared<Primitive>("KVCacheMgr"));
 GVAR_DEF(PrimitivePtr, kPrimMakeTupleV2, std::make_shared<Primitive>("make_tuple"));
+GVAR_DEF(PrimitivePtr, kPrimMatMulAllReduce, std::make_shared<Primitive>("MatMulAllReduce"));
 }  // namespace prim
 }  // namespace mindspore
 
