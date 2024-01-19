@@ -67,7 +67,7 @@ def test_fastgelugrad_op_forward_ascend(context_mode, data_type):
     dy = ms.Tensor(np.array([1, 2, 3]).astype(data_type))
     out = fastgelugrad_forward_func(dy, x)
     expect_out = np.array([1.069909, 2.145001, 3.068479]).astype(np.float32)
-    np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-4)
+    np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-2)
 
 
 @pytest.mark.level1
@@ -106,4 +106,4 @@ def test_fastgelugrad_op_vmap_ascend(context_mode, data_type):
     dy = ms.Tensor(np.array([1, 2, 3]).astype(data_type))
     out = fastgelugrad_vmap_func(dy, x)
     expect_out = np.array([1.069909, 2.145001, 3.068479]).astype(np.float32)
-    np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-4)
+    np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-2)

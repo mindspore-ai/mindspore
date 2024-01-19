@@ -49,6 +49,8 @@ void DumpLoopCountActor(const LoopCountActorPtr &actor, std::ofstream &ofs);
 void DumpOutputActor(const OutputActorPtr &actor, std::ofstream &ofs);
 void DumpDSActors(const std::vector<DataSourceActorPtr> &actors, std::ofstream &ofs);
 void DumpKernelActors(const std::vector<KernelActorPtr> &actors, std::ofstream &ofs);
+void DumpKernelInferActors(const std::vector<KernelInferActorPtr> &actors, std::ofstream &ofs);
+void DumpKernelResizeActors(const std::vector<KernelResizeActorPtr> &actors, std::ofstream &ofs);
 void DumpSuperKernelActors(const std::vector<SuperKernelActorPtr> &actors, std::ofstream &ofs);
 void DumpAnyTypeKernelActors(const std::vector<AnyTypeKernelActorPtr> &actors, std::ofstream &ofs);
 void DumpNoInputKernelActors(const std::vector<AbstractActorPtr> &actors, std::ofstream &ofs);

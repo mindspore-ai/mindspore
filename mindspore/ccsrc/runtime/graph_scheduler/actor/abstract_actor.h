@@ -84,6 +84,9 @@ class AbstractActor : public OpActor<DeviceTensor> {
   const std::vector<std::pair<size_t, AnfNodePtr>> &device_tensor_store_keys() const {
     return device_tensor_store_keys_;
   }
+  void set_device_tensor_store_keys(const std::vector<std::pair<size_t, AnfNodePtr>> &device_tensor_store_keys) {
+    device_tensor_store_keys_ = device_tensor_store_keys;
+  }
   const std::vector<std::pair<AID, DataArrow *>> &input_data_arrow_aids() const { return input_data_arrow_aids_; }
   const std::vector<std::pair<AID, ControlArrow *>> &input_control_arrow_aids() const {
     return input_control_arrow_aids_;

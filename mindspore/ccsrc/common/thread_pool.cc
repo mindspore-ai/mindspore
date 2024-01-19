@@ -16,6 +16,7 @@
 
 #include "include/common/thread_pool.h"
 #include <exception>
+#include "thread/threadlog.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_exception.h"
 
@@ -36,11 +37,12 @@ void ThreadPool::SyncRunLoop(const std::shared_ptr<ThreadContext> &context) {
     }
 
     if (!context->task) {
+      MS_EXCEPTION_IF_NULL(context->cond_var);
       ++yield_count;
       if (yield_count > kYieldThreshold) {
         yield_count = 0;
         std::unique_lock<std::mutex> lock(context->mutex);
-        context->cond_var.wait(lock, [&context, this] { return context->task != nullptr || exit_run_; });
+        context->cond_var->wait(lock, [&context, this] { return context->task != nullptr || exit_run_; });
       } else {
         std::this_thread::yield();
         continue;
@@ -82,7 +84,7 @@ bool ThreadPool::SyncRun(const std::vector<Task> &tasks) {
     contexts_.resize(new_thread_num);
     for (size_t i = thread_num; i < new_thread_num; ++i) {
       contexts_[i] = std::make_shared<ThreadContext>();
-      sync_run_threads_.emplace_back(std::thread(&ThreadPool::SyncRunLoop, this, contexts_[i]));
+      sync_run_threads_.emplace_back(std::make_unique<std::thread>(&ThreadPool::SyncRunLoop, this, contexts_[i]));
     }
   }
   if (contexts_.empty()) {
@@ -98,13 +100,14 @@ bool ThreadPool::SyncRun(const std::vector<Task> &tasks) {
     running = false;
     for (size_t i = 0; i < used_thread_num; ++i) {
       MS_EXCEPTION_IF_NULL(contexts_[i]);
+      MS_EXCEPTION_IF_NULL(contexts_[i]->cond_var);
       auto &task_run = contexts_[i]->task;
       if (task_run) {
         running = true;
       } else if (task_index < task_num) {
         std::lock_guard<std::mutex> task_lock(contexts_[i]->mutex);
         contexts_[i]->task = &(tasks[task_index]);
-        contexts_[i]->cond_var.notify_one();
+        contexts_[i]->cond_var->notify_one();
         running = true;
         ++task_index;
       }
@@ -129,11 +132,30 @@ void ThreadPool::ClearThreadPool() {
   exit_run_ = true;
   for (auto &context : contexts_) {
     MS_EXCEPTION_IF_NULL(context);
-    context->cond_var.notify_one();
+    context->cond_var->notify_one();
   }
   for (auto &it : sync_run_threads_) {
-    if (it.joinable()) {
-      it.join();
+    MS_EXCEPTION_IF_NULL(it);
+    if (it->joinable()) {
+      it->join();
+    }
+  }
+  sync_run_threads_.clear();
+}
+
+void ThreadPool::ChildAfterFork() {
+  THREAD_INFO("common thread pool clear thread after fork in child process");
+  for (auto &context : contexts_) {
+    MS_EXCEPTION_IF_NULL(context);
+    if (context->cond_var != nullptr) {
+      (void)context->cond_var.release();
+      context->task = nullptr;
+    }
+  }
+  contexts_.clear();
+  for (auto &it : sync_run_threads_) {
+    if (it != nullptr) {
+      (void)it.release();
     }
   }
   sync_run_threads_.clear();

@@ -2749,5 +2749,88 @@ void KernelGraphMgr::SetKernelGraphId(const KernelGraphPtr &kernel_graph) {
 }
 
 void KernelGraphMgr::UnifyMindIR(const KernelGraphPtr &graph) { opt::CommonUnifyMindIR(graph); }
+
+namespace {
+void CopyCNodeInfo(const FuncGraphPtr &func_graph, const uint32_t &target_graph_id, const AnfNodePtr &ori_node,
+                   const AnfNodePtr &new_node) {
+  MS_EXCEPTION_IF_NULL(new_node);
+  MS_EXCEPTION_IF_NULL(ori_node);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(new_node->kernel_info());
+  // deep copy kernel info
+  if (kernel_info != nullptr && kernel_info->has_build_info()) {
+    // some check
+    MS_EXCEPTION_IF_CHECK_FAIL(kernel_info->MutableKernelMod() == nullptr,
+                               "Inline ERROR: " + ori_node->DebugString() + ", kernel mod is not nullptr");
+    MS_EXCEPTION_IF_CHECK_FAIL(kernel_info->output_address_list().empty(),
+                               "Inline ERROR: " + ori_node->DebugString() + ", output_address_list is not empty");
+    MS_EXCEPTION_IF_CHECK_FAIL(kernel_info->workspace_address_list().empty(),
+                               "Inline ERROR: " + ori_node->DebugString() + ", workspace_address_list is not empty");
+
+    auto new_kernel_info = std::make_shared<device::KernelInfo>();
+    auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(
+      AnfRuntimeAlgorithm::GetSelectKernelBuildInfo(new_node));
+    MS_EXCEPTION_IF_NULL(builder);
+    MS_EXCEPTION_IF_NULL(new_kernel_info);
+    new_kernel_info->set_select_kernel_build_info(builder->Build());
+    new_kernel_info->set_graph_id(target_graph_id);
+    new_kernel_info->set_feature_map_flag(kernel_info->is_feature_map());
+    new_kernel_info->set_ref_map(false, kernel_info->out_in_ref_map());
+    new_node->set_kernel_info(new_kernel_info);
+  } else {
+    auto new_kernel_info = std::make_shared<device::KernelInfo>();
+    new_node->set_kernel_info(new_kernel_info);
+  }
+  if (ori_node->isa<CNode>()) {
+    auto ori_cnode = ori_node->cast<CNodePtr>();
+    if (common::AnfAlgo::HasNodeAttr(kAttrIsUBFusionOp, ori_cnode) &&
+        common::AnfAlgo::GetNodeAttr<bool>(ori_node, kAttrIsUBFusionOp)) {
+      // already done fusion compile
+      auto ori_full_name = ori_cnode->fullname_with_scope();
+      common::AnfAlgo::SetNodeAttr(kAttrOriFusionName, MakeValue(ori_full_name), new_node);
+    }
+    common::AnfAlgo::SetNodeAttr(kAttrNeedInline, MakeValue(ori_node->fullname_with_scope()), new_node);
+    common::AnfAlgo::SetNodeAttr(kAttrPreKernelGraph, MakeValue(func_graph), new_node);
+  }
+}
+}  // namespace
+
+AnfNodePtr KernelGraphMgr::DoInline(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph,
+                                    const AnfNodePtrList &func_graph_args, const ScopePtr &scope,
+                                    const uint32_t &target_graph_id,
+                                    const std::map<session::AnfWithOutIndex, session::AnfWithOutIndex> &ref_map,
+                                    const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(target_func_graph);
+  Cloner cloner({}, false);
+  if (scope != nullptr) {
+    cloner.set_scope(scope);
+  }
+  cloner.AddClone(func_graph, target_func_graph, func_graph_args, kInline);
+  auto node_list = TopoSort(func_graph->output());
+  for (auto &ori_node : node_list) {
+    MS_EXCEPTION_IF_NULL(ori_node);
+    if (ori_node->isa<Parameter>()) {
+      continue;
+    }
+    auto new_node = cloner[ori_node];
+    MS_EXCEPTION_IF_NULL(new_node);
+    if (new_node->isa<ValueNode>()) {
+      auto value_node = new_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      graph->AddValueNodeToGraph(value_node);
+    }
+    CopyCNodeInfo(func_graph, target_graph_id, ori_node, new_node);
+  }
+  for (const auto &kv : ref_map) {
+    auto final_pair = kv.first;
+    auto origin_pair = kv.second;
+    final_pair.first = cloner[final_pair.first];
+    origin_pair.first = cloner[origin_pair.first];
+    auto new_origin_pair = common::AnfAlgo::VisitKernel(origin_pair.first, origin_pair.second);
+    graph->AddRefCorrespondPairs(final_pair, new_origin_pair);
+  }
+  return cloner[func_graph->output()];
+}
 }  // namespace session
 }  // namespace mindspore

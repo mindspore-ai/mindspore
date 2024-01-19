@@ -88,8 +88,14 @@ bool AscendCollectiveCommLib::InitializeHccl() {
   MS_LOG(INFO) << "MINDSPORE_HCCL_CONFIG_PATH : " << full_path << ", RANK_ID: " << rank_id_str;
 
   auto mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
-  bool ret = hccl::HcclAdapter::GetInstance().InitHccl(
-    device_id, rank_id_str, full_path, mode == kGraphMode ? hccl::HcclMode::kGraph : hccl::HcclMode::kPynative);
+  hccl::HcclMode hccl_mode = hccl::HcclMode::kGraph;
+  if (mode == kPynativeMode) {
+    hccl_mode = hccl::HcclMode::kPynative;
+  } else if (ms_context->IsKByKExecutorMode()) {
+    hccl_mode = hccl::HcclMode::kKernelByKernel;
+  }
+
+  bool ret = hccl::HcclAdapter::GetInstance().InitHccl(device_id, rank_id_str, full_path, hccl_mode);
   free(full_path);
   if (!ret) {
     MS_LOG(ERROR) << "Hcom init failed.";

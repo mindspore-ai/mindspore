@@ -13,26 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_PROCESS_CALL_INLINE_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_PROCESS_CALL_INLINE_H_
 
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ELIMINATE_MAKETUPLE_GETITEM_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ELIMINATE_MAKETUPLE_GETITEM_H_
-#include <string>
-#include <memory>
-
-#include "include/backend/optimizer/pass.h"
-#include "ir/func_graph.h"
-#include "ir/anf.h"
-#include "include/backend/optimizer/helper.h"
 #include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {
-class EliminateMaketupleGetitem : public Pass {
+class ProcessCallInline : public PatternProcessPass {
  public:
-  EliminateMaketupleGetitem() : Pass("eliminate_maketuple_getitem") {}
-  ~EliminateMaketupleGetitem() override = default;
-  bool Run(const FuncGraphPtr &graph) override;
+  explicit ProcessCallInline(bool multi_graph = true) : PatternProcessPass("process call inline", multi_graph) {}
+  ~ProcessCallInline() override = default;
+  const BaseRef DefinePattern() const override;
+  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ELIMINATE_MAKETUPLE_GETITEM_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_PROCESS_CALL_INLINE_H_

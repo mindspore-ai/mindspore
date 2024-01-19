@@ -28,6 +28,7 @@
 #include "ops/framework_ops.h"
 #include "ir/anf.h"
 #include "utils/log_adapter.h"
+#include "ir/func_graph_cloner.h"
 #include "utils/shape_utils.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/parallel_context.h"

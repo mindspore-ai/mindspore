@@ -18,13 +18,9 @@
 #include "runtime/event.h"
 #include "acl/acl.h"
 #include "acl/acl_rt.h"
-#include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-
-using mindspore::ge::model_runner::EventRecordTaskInfo;
-using EventRecordTaskInfoPtr = std::shared_ptr<EventRecordTaskInfo>;
 
 namespace mindspore {
 namespace kernel {
@@ -56,15 +52,6 @@ bool SendKernel::Launch(const std::vector<KernelTensor *> &, const std::vector<K
     return false;
   }
   return true;
-}
-
-std::vector<TaskInfoPtr> SendKernel::GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                             const std::vector<AddressPtr> &, uint32_t stream_id) {
-  MS_LOG(INFO) << "SendKernel GenTask event id:" << event_id_ << ", stream id:" << stream_id;
-  stream_id_ = stream_id;
-  EventRecordTaskInfoPtr task_info_ptr = std::make_shared<EventRecordTaskInfo>(unique_name_, stream_id, event_id_);
-  MS_EXCEPTION_IF_NULL(task_info_ptr);
-  return {task_info_ptr};
 }
 }  // namespace kernel
 }  // namespace mindspore

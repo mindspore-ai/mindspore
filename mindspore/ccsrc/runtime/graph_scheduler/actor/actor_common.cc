@@ -68,17 +68,7 @@ void ComputeThreadNums(size_t *actor_thread_num, size_t *actor_and_kernel_thread
   }
 }
 
-bool IsDeviceQueueDSActor(const AnfNodePtr &node, GraphExecutionStrategy strategy) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (strategy == GraphExecutionStrategy::kStep) {
-    return false;
-  }
-
-  if (node->isa<CNode>() && common::AnfAlgo::IsGetNextNode(node)) {
-    return true;
-  }
-  return false;
-}
+bool IsDeviceQueueDSActor(const AnfNodePtr &, GraphExecutionStrategy) { return false; }
 
 bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph,
                         const std::vector<AnfNodePtr> &host_parameters, GraphExecutionStrategy strategy) {
@@ -136,7 +126,7 @@ bool IsCustomActor(const AnfNodePtr &node) {
   return AnfUtils::IsCustomActorNode(node);
 }
 
-bool IsKernelActor(const AnfNodePtr &node, GraphExecutionStrategy strategy) {
+bool IsKernelActor(const AnfNodePtr &node, GraphExecutionStrategy) {
   MS_EXCEPTION_IF_NULL(node);
   if (IsCustomActor(node)) {
     return false;
@@ -146,11 +136,7 @@ bool IsKernelActor(const AnfNodePtr &node, GraphExecutionStrategy strategy) {
     return false;
   }
 
-  if (strategy == GraphExecutionStrategy::kStep) {
-    return true;
-  }
-
-  return !common::AnfAlgo::IsGetNextNode(node);
+  return true;
 }
 
 bool IsSkippedKernelActor(const AnfNodePtr &node) {
@@ -226,6 +212,11 @@ bool IsSkippedLaunch(const CNodePtr &kernel, const KernelGraphPtr &kernel_graph)
   }
 
   return false;
+}
+
+bool EnableAsyncInfer() {
+  static const char kEnableAsyncInferdEnv[] = "MS_ENABLE_ASYNC_INFER";
+  return common::GetEnv(kEnableAsyncInferdEnv) == "1";
 }
 
 bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor) {
@@ -387,6 +378,14 @@ std::string FetchActorName(KernelTransformType kernel_type, const std::string &a
     case KernelTransformType::kKernelActor:
       MS_EXCEPTION_IF_NULL(real_node);
       actor_name = real_node->fullname_with_scope();
+      break;
+    case KernelTransformType::kKernelInferActor:
+      MS_EXCEPTION_IF_NULL(real_node);
+      actor_name = kKernelInferActorNamePrefix + real_node->fullname_with_scope();
+      break;
+    case KernelTransformType::kKernelResizeActor:
+      MS_EXCEPTION_IF_NULL(real_node);
+      actor_name = kKernelResizeActorNamePrefix + real_node->fullname_with_scope();
       break;
     default:
       break;

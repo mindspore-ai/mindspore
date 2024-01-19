@@ -46,7 +46,6 @@ file(GLOB_RECURSE UNUSED_SRC_IN_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "./dump/kernel_dumper.cc"
         "./dump/data_dumper.cc"
         "./dump/dumper_base.cc"
-        "./ascend_stream_assign.cc"
         "./ascend_host_queue.cc"
         )
 list(REMOVE_ITEM MS_DEVICE_910B ${UNUSED_SRC_IN_910B})

@@ -64,20 +64,21 @@ struct SomasInfo {
   std::map<size_t, void *> merged_base_addresses_;
 
   // Used to keep the graph output address when somas block memory free.
-  void InsertGraphOutputInfo(device::DeviceAddress *graph_output_device_address, size_t graph_output_address_size) {
+  void InsertGraphOutputInfo(device::DeviceAddress *graph_output_device_address, size_t graph_output_address_offset,
+                             size_t graph_output_address_size) {
     // Not insert the repeat size.
-    if (graph_output_address_sizes_set_.count(graph_output_address_size) > 0) {
+    if (graph_output_address_offsets_set_.count(graph_output_address_offset) > 0) {
       MS_LOG(INFO) << "The graph:" << graph_id_
-                   << " output somas device is same for size: " << graph_output_address_size;
+                   << " output somas device is same for offset: " << graph_output_address_offset;
       return;
     }
     (void)graph_output_device_addresses_.emplace_back(graph_output_device_address);
     (void)graph_output_address_sizes_.emplace_back(graph_output_address_size);
-    (void)graph_output_address_sizes_set_.insert(graph_output_address_size);
+    (void)graph_output_address_offsets_set_.insert(graph_output_address_offset);
   }
   std::vector<device::DeviceAddress *> graph_output_device_addresses_;
   std::vector<size_t> graph_output_address_sizes_;
-  std::set<size_t> graph_output_address_sizes_set_;
+  std::set<size_t> graph_output_address_offsets_set_;
 
   // The owner graph id.
   uint32_t graph_id_{0};

@@ -16,7 +16,6 @@
 
 #include "plugin/device/ascend/kernel/rts/recv.h"
 #include "utils/ms_context.h"
-#include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -25,8 +24,6 @@
 
 namespace mindspore {
 namespace kernel {
-using mindspore::ge::model_runner::EventWaitTaskInfo;
-using EventWaitTaskInfoPtr = std::shared_ptr<EventWaitTaskInfo>;
 
 RecvKernel::~RecvKernel() {}
 
@@ -61,15 +58,6 @@ bool RecvKernel::Launch(const std::vector<KernelTensor *> &, const std::vector<K
     MS_LOG(EXCEPTION) << "aclrtResetEvent failed, ret:" << status;
   }
   return true;
-}
-
-std::vector<TaskInfoPtr> RecvKernel::GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                             const std::vector<AddressPtr> &, uint32_t stream_id) {
-  MS_LOG(INFO) << "RecvKernel GenTask event_id_:" << event_id_ << ", stream_id_:" << stream_id;
-  stream_id_ = stream_id;
-  EventWaitTaskInfoPtr task_info_ptr = std::make_shared<EventWaitTaskInfo>(unique_name_, stream_id, event_id_);
-  MS_EXCEPTION_IF_NULL(task_info_ptr);
-  return {task_info_ptr};
 }
 }  // namespace kernel
 }  // namespace mindspore

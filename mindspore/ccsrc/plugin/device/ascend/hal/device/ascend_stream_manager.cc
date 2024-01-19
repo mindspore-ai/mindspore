@@ -133,6 +133,16 @@ void AscendStreamMng::CreateStreamWithFlags(size_t *stream_id, uint32_t flags, i
   AscendGmemAdapter::GetInstance().AddCallbackThread(stream);
 }
 
+aclrtEvent AscendStreamMng::ApplyRtEvent() {
+  aclrtEvent rt_event = nullptr;
+  auto ret = aclrtCreateEvent(&rt_event);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclrtCreateEvent failed, ret:" << ret;
+  }
+  (void)events_.emplace_back(rt_event);
+  return rt_event;
+}
+
 bool AscendStreamMng::DestroyStream(size_t stream_id) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
   if (stream_id >= streams_.size()) {

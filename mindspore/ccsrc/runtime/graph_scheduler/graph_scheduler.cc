@@ -23,6 +23,7 @@
 #include "runtime/graph_scheduler/actor/debug_actor.h"
 #include "runtime/graph_scheduler/actor/recorder_actor.h"
 #include "runtime/graph_scheduler/optimizer/optimizer.h"
+#include "runtime/graph_scheduler/optimizer/kernel_infer_resize_actor_insert.h"
 #include "runtime/graph_scheduler/optimizer/memory_actor_insert.h"
 #include "runtime/graph_scheduler/optimizer/invalid_data_arrow_elimination.h"
 #include "runtime/graph_scheduler/optimizer/batch_data_arrow_fusion.h"
@@ -994,6 +995,10 @@ void GraphScheduler::Optimize(const ActorSetPtr &actor_set) const {
 
   auto optimizer = std::make_shared<ActorSetOptimizer>();
   MS_EXCEPTION_IF_NULL(optimizer);
+
+  if (EnableAsyncInfer()) {
+    optimizer->AddPass(std::make_shared<KernelInferResizeActorInsert>());
+  }
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);

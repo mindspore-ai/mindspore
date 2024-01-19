@@ -60,6 +60,7 @@ class GeKernelExecutor : public KernelExecutor {
   // Unify the MindIR, the default behavior uses the common unified MindIR.
   void UnifyMindIR(const KernelGraphPtr &graph) const override;
   void AddMindIRPass(const KernelGraphPtr &graph) const override;
+  void OptimizeExecutionOrder(const FuncGraphPtr &graph) const;
 
   // Get rank id for distributed training.
   uint32_t GetRankID() const override { return 0; }
@@ -69,10 +70,12 @@ class GeKernelExecutor : public KernelExecutor {
                          const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id) const override;
 
  private:
+  static void DoSomas(const FuncGraphPtr &graph);
+  static void DoStreamAssign(const KernelGraphPtr &kernel_graph);
   // launch
-  bool PySyncRuning() const;
   bool MemoryCopyAsync(const CNodePtr &node, const vector<KernelTensor *> &inputs,
                        const vector<KernelTensor *> &outputs) const;
+  bool PySyncRuning(size_t stream_id) const;
 
   mutable std::set<CNodePtr> nop_op_to_memcpy_;
   // Maybe AscendDeviceResManager and GEDeviceResManager now
