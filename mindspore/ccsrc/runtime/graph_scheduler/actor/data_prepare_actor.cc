@@ -1013,6 +1013,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
           {backend_node, 0}, nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
           device_tensor->host_shape(), device_context->device_context_key().device_name_,
           device_context->device_context_key().device_id_);
+        kernel_tensor->set_stream_id(device_tensor->stream_id());
         host_tensor_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
         MS_EXCEPTION_IF_NULL(host_tensor_address);
         MS_LOG(DEBUG) << "Create device tensor:" << host_tensor_address << " type:" << host_tensor_address->type_id();

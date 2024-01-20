@@ -186,9 +186,11 @@ void AscendMemoryPool::ResetIdleMemBuf() const {
     if (mem_mng->mem_block_list_.empty()) {
       return;
     }
-    for (const auto &it : mem_mng->idle_mem_buf_map_) {
-      MS_EXCEPTION_IF_NULL(it.second);
-      (void)aclrtMemset(it.second->device_addr_, it.first, 0, it.first);
+    for (const auto &idle_mem_buf : mem_mng->idle_mem_bufs_) {
+      for (const auto &it : idle_mem_buf.second) {
+        MS_EXCEPTION_IF_NULL(it.second);
+        (void)aclrtMemset(it.second->device_addr_, it.first, 0, it.first);
+      }
     }
   };
   fn(persistent_mem());

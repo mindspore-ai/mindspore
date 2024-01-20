@@ -30,6 +30,7 @@
 #include <vector>
 
 #include "include/common/visible.h"
+#include "include/common/utils/stream_util.h"
 #include "ir/dtype/type.h"
 #include "utils/log_adapter.h"
 
@@ -424,8 +425,6 @@ constexpr auto kNCHWShapeSize = 4;
 const size_t kMaxTensorIndexDimNums = 8;
 
 // define special index in special node
-constexpr auto kDefaultStreamIndex = 0;
-constexpr auto kWorldGroupStreamIndex = 1;
 constexpr auto kAnfPrimitiveIndex = 0;
 constexpr auto kFirstDataInputIndex = 1;
 constexpr auto kRealInputNodeIndexInTupleGetItem = 1;

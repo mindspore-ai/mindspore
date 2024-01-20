@@ -381,6 +381,7 @@ void CreateDeviceTensorForValueNode(const KernelWithIndex &front_node_with_index
     const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
       {backend_node, 0}, nullptr, tensor_size, output_format, output_type_id, ShapeVector(),
       device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+    kernel_tensor->set_stream_id(AnfAlgo::GetStreamId(backend_node));
     address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   }
   MS_EXCEPTION_IF_NULL(address);
@@ -478,6 +479,7 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
         sub_abstract->BuildShape(), sub_abstract->BuildType(), sub_abstract->BuildValue(), nullptr, size,
         kOpFormat_DEFAULT, type_id, ShapeVector(), device_context->device_context_key().device_name_,
         device_context->device_context_key().device_id_);
+      kernel_tensor->set_stream_id(AnfAlgo::GetStreamId(node));
       address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     }
   } else {
@@ -485,6 +487,7 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
     const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
       {node, front_node_with_index.second}, nullptr, size, kOpFormat_DEFAULT, type_id, ShapeVector(),
       device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+    kernel_tensor->set_stream_id(AnfAlgo::GetStreamId(node));
     address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   }
   MS_EXCEPTION_IF_NULL(address);

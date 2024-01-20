@@ -130,6 +130,7 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
           dev_ptr_list[index], old_size, kernel::GetFormatFromStrToEnum(old_dev_addr->format()),
           old_dev_addr->type_id(), old_dev_addr->host_shape(), device_context->device_context_key().device_name_,
           device_context->device_context_key().device_id_);
+        kernel_tensor->set_stream_id(old_dev_addr->stream_id());
         auto new_dev_addr = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
         MS_LOG(DEBUG) << "Create device tensor:" << new_dev_addr << " type:" << new_dev_addr->type_id();
         (void)new_dev_addr->SyncDeviceToDevice(old_dev_addr.get());
@@ -352,9 +353,8 @@ void MemoryManagerActor::FreeMemoryByRefCount(DeviceTensor *const device_tensor,
   std::lock_guard<std::mutex> locker(mem_free_mutex_);
   if (device_tensor->original_ref_count() != SIZE_MAX) {
     // The static reference count is decremented to zero to free memory, and reset to the original count.
-    device_tensor->DecreaseRefCount();
-    if (device_tensor->ref_count() == 0) {
-      MS_LOG(DEBUG) << "ref count for device address:" << device_tensor << " to zero, free memory by actor:" << op_name;
+    size_t ref_count = device_tensor->DecreaseRefCount();
+    if (ref_count == 0) {
       device_tensor->ResetRefCount();
       device_tensor->ClearUserData();
       if (device_tensor->GetPtr() != nullptr) {
@@ -371,7 +371,7 @@ void MemoryManagerActor::FreeMemoryByRefCount(DeviceTensor *const device_tensor,
     device_tensor->DecreaseDynamicRefCount(op_name);
     if ((device_tensor->dynamic_ref_count() == 0) && (device_tensor->GetPtr() != nullptr)) {
       device_tensor->ClearUserData();
-      MS_LOG(DEBUG) << "Free memory by the dynamic reference count, device address" << device_tensor->GetPtr();
+      MS_LOG(DEBUG) << "Free memory by the dynamic reference count, device address" << device_tensor->GetPtr() << ".";
       FreeMemoryByDeviceContext(device_tensor, device_context);
     }
   }

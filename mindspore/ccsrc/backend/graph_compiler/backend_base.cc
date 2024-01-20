@@ -1231,7 +1231,7 @@ void MindRTBackendBase::ConstructOutputByTupleTensor(tensor::TensorPtr output_te
       device_context->device_context_key().device_id_);
     kernel_tensor->SetType(element_types[i]);
     kernel_tensor->SetShape((*tensor_shape)[i]);
-
+    kernel_tensor->set_stream_id(device_tensor->stream_id());
     auto split_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     MS_LOG(DEBUG) << "Create device tensor:" << split_device_tensor << " type:" << device_tensor->type_id();
     // Copy data from origin tensor to the split tensor.

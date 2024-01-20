@@ -76,6 +76,7 @@ class KernelActor : public DebugAwareActor {
         somas_info_(nullptr) {
     (void)device_contexts_.emplace_back(device_context);
     is_dynamic_shape_ = common::AnfAlgo::IsDynamicShape(kernel_) || common::AnfAlgo::IsDynamicSequence(kernel_);
+    enable_callback_ = common::GetEnv("GRAPH_OP_RUN") == "1";
   }
   ~KernelActor() override = default;
 
@@ -98,6 +99,8 @@ class KernelActor : public DebugAwareActor {
   bool inputs_continuous_memory() const { return inputs_continuous_memory_; }
   SomasInfo *somas_info() const { return somas_info_; }
   const std::set<size_t> &somas_graph_output_indexes() const { return somas_graph_output_indexes_; }
+  CallbackCounterPtr callback_counter() const { return callback_counter_; }
+  void set_callback_counter(const CallbackCounterPtr &callback_counter) { callback_counter_ = callback_counter; }
 
   void set_enable_async_infer(bool enable_async_infer) { enable_async_infer_ = enable_async_infer; }
 
@@ -108,6 +111,8 @@ class KernelActor : public DebugAwareActor {
 
   // Do kernel launching in this method after 'PreLaunchKernel' and 'PostLaunchKernel'.
   virtual bool LaunchKernel(OpContext<DeviceTensor> *const context);
+
+  virtual void LaunchCallback(OpContext<DeviceTensor> *const context);
 
   // Infer shape(and type) and resize kernel mod.
   void InferAndResize();
@@ -219,6 +224,9 @@ class KernelActor : public DebugAwareActor {
   SomasInfo *somas_info_;
   // The graph output node and index use somas info.
   std::set<size_t> somas_graph_output_indexes_;
+
+  bool enable_callback_{false};
+  CallbackCounterPtr callback_counter_;
 };
 
 using KernelActorPtr = std::shared_ptr<KernelActor>;

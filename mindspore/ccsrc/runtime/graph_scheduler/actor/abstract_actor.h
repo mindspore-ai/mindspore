@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_ABSTRACT_ACTOR_H_
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_ABSTRACT_ACTOR_H_
 
+#include <chrono>
 #include <vector>
 #include <string>
 #include <memory>
@@ -48,6 +49,64 @@ constexpr size_t kOutputDataFlagBetweenFusion = 8;
 // Indicates that the output data destination is the fusion actor, and needs to use the fusion output index.
 constexpr size_t kOutputDataFlagToFusion = 16;
 
+// Counter for callback.
+class CallbackCounter {
+ public:
+  CallbackCounter() = default;
+  ~CallbackCounter() = default;
+
+  CallbackCounter(const CallbackCounter &) = delete;
+  CallbackCounter &operator=(const CallbackCounter &) = delete;
+
+  size_t Counter() { return counter_.load(); }
+  size_t Increase() { return ++counter_; }
+  size_t Decrease() { return --counter_; }
+
+  std::atomic<size_t> memory_size;
+
+  void Wait() {
+    std::unique_lock<std::mutex> locker(lock_);
+    MS_LOG(DEBUG) << "Wait for callback execution start.";
+    auto start_time = std::chrono::steady_clock::now();
+    int64_t start_time_microseconds =
+      std::chrono::duration_cast<std::chrono::microseconds>(start_time.time_since_epoch()).count();
+    while (counter_.load() != 0 &&
+           !cv_.wait_for(locker, std::chrono::seconds(1), [&]() { return counter_.load() == 0; })) {
+      MS_LOG(DEBUG) << "Wait cycle";
+    }
+    auto end_time = std::chrono::steady_clock::now();
+    int64_t cost_microseconds =
+      std::chrono::duration_cast<std::chrono::microseconds>(end_time.time_since_epoch()).count() -
+      start_time_microseconds;
+    MS_LOG(DEBUG) << "Wait for callback execution cost : " << cost_microseconds << " us.";
+  }
+
+  void WaitForLimits(size_t limits) {
+    std::unique_lock<std::mutex> locker(lock_);
+    MS_LOG(DEBUG) << "Wait for callback WaitForLimits start.";
+    auto start_time = std::chrono::steady_clock::now();
+    int64_t start_time_microseconds =
+      std::chrono::duration_cast<std::chrono::microseconds>(start_time.time_since_epoch()).count();
+    while (counter_.load() > limits &&
+           cv_.wait_for(locker, std::chrono::seconds(1), [&]() { return counter_.load() <= limits; })) {
+      MS_LOG(DEBUG) << "Wait cycle";
+    }
+    auto end_time = std::chrono::steady_clock::now();
+    int64_t cost_microseconds =
+      std::chrono::duration_cast<std::chrono::microseconds>(end_time.time_since_epoch()).count() -
+      start_time_microseconds;
+    MS_LOG(DEBUG) << "Wait for callback execution limits : " << limits << ", cost : " << cost_microseconds << " us.";
+  }
+
+  void Signal() { cv_.notify_all(); }
+
+ private:
+  std::atomic<size_t> counter_;
+  std::mutex lock_;
+  std::condition_variable cv_;
+};
+using CallbackCounterPtr = std::shared_ptr<CallbackCounter>;
+
 // The abstract common attributes of actors. The actor inheritance relationship:  OpActor --> AbstractActor -->
 // MemoryAwareActor --> DebugAwareActor --> KernelActor/DataSourceActor/CopyActor/LoopCountActor/OutputActor.
 class AbstractActor : public OpActor<DeviceTensor> {
@@ -61,7 +120,10 @@ class AbstractActor : public OpActor<DeviceTensor> {
         running_dependent_msg_num_(0),
         parent_fusion_actor_{nullptr},
         memory_alloc_insert_position_{nullptr},
-        memory_free_insert_position_{nullptr} {}
+        memory_free_insert_position_{nullptr} {
+    static std::atomic<int64_t> gActorId;
+    actor_id_ = ++gActorId;
+  }
   ~AbstractActor() override = default;
 
   bool IsActive(int msg_num) override { return msg_num >= running_dependent_msg_num_ ? true : false; }
@@ -79,6 +141,7 @@ class AbstractActor : public OpActor<DeviceTensor> {
 
   // Get the member.
   KernelTransformType type() const { return type_; }
+  int64_t actor_id() const { return actor_id_; }
   const std::vector<const DeviceContext *> &device_contexts() const { return device_contexts_; }
   const std::vector<AnfNodePtr> &output_data_nodes() const { return output_data_nodes_; }
   const std::vector<std::pair<size_t, AnfNodePtr>> &device_tensor_store_keys() const {
@@ -148,6 +211,9 @@ class AbstractActor : public OpActor<DeviceTensor> {
 
   // The id of recorder actor. Send message to it for recording info.
   const AID *recorder_aid_;
+
+  // Auto increment id for actor.
+  int64_t actor_id_;
 
   // The output_data_nodes_ and output_data_ corresponds to the output_data_arrows_ one by one.
   std::vector<AnfNodePtr> output_data_nodes_;

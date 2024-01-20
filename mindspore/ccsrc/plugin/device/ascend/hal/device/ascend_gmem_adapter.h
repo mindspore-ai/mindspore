@@ -26,6 +26,7 @@
 #include "utils/log_adapter.h"
 
 #include "include/backend/mem_reuse/mem_dynamic_allocator.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -41,9 +42,6 @@ namespace ascend {
 // Definition for GMem lib function : GMEM_FREE_EAGER.
 DEFINE_LIB_METHOD(GMEM_FREE_EAGER, size_t, uint64_t, size_t, void *);
 
-struct CallbackThread;
-using CallbackThreadPtr = std::shared_ptr<CallbackThread>;
-
 class AscendGmemAdapter {
  public:
   static AscendGmemAdapter &GetInstance() {
@@ -52,16 +50,7 @@ class AscendGmemAdapter {
   }
 
   AscendGmemAdapter() { LoadGMemLib(); }
-  ~AscendGmemAdapter() {
-#ifdef WITH_BACKEND
-    for (auto iter = callback_map_.begin(); iter != callback_map_.end();) {
-      aclrtStream stream = iter->first;
-      iter++;
-      RemoveCallbackThread(stream);
-    }
-#endif
-    UnloadGMemLib();
-  }
+  ~AscendGmemAdapter() { UnloadGMemLib(); }
 
  public:
   const size_t GetRoundUpAlignSize(size_t input_size) const;
@@ -69,9 +58,6 @@ class AscendGmemAdapter {
 
   size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr) const;
   size_t EagerFreeDeviceMem(const DeviceMemPtr addr, const size_t size) const;
-
-  bool AddCallbackThread(aclrtStream stream);
-  bool RemoveCallbackThread(aclrtStream stream);
 
   uint8_t *MmapMemory(size_t size, void *addr) const;
   bool MunmapMemory(void *addr, const size_t size) const;
@@ -86,8 +72,6 @@ class AscendGmemAdapter {
   void *gmem_handle_{nullptr};
   // Function for eager free.
   LIB_FUNC(GMEM_FREE_EAGER) free_eager_;
-  // Map for call back threads.
-  mindspore::HashMap<aclrtStream, CallbackThreadPtr> callback_map_;
 };
 }  // namespace ascend
 }  // namespace device

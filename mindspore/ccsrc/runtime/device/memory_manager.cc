@@ -120,7 +120,7 @@ uint8_t *MemoryManager::MallocDynamicMem(size_t size, bool communication_mem) {
 
 bool MemoryManager::MallocMemFromMemPool(const DeviceAddressPtr &address, size_t size) {
   MS_EXCEPTION_IF_NULL(address);
-  auto device_ptr = MallocMemFromMemPool(size, address->from_persistent_mem_);
+  auto device_ptr = MallocMemFromMemPool(size, address->from_persistent_mem_, false, address->stream_id());
   if (!device_ptr) {
     return false;
   }
@@ -131,7 +131,7 @@ bool MemoryManager::MallocMemFromMemPool(const DeviceAddressPtr &address, size_t
   return true;
 }
 
-void *MemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool) {
+void *MemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool, uint32_t stream_id) {
   if (size == 0) {
     MS_LOG(ERROR) << "MallocMemFromMemPool size is 0.";
   }

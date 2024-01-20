@@ -807,6 +807,7 @@ ActorSetPtr GraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info) 
   MS_EXCEPTION_IF_NULL(rpc_node_scheduler_);
   actor_set->rpc_actors_ = rpc_node_scheduler_->Build(actor_set.get());
 #endif
+  actor_set->InitCallbackCounter();
   return actor_set;
 }
 
@@ -2641,6 +2642,7 @@ void GraphScheduler::PersistDeviceTensorForValueNode(const AnfNodePtr &value_nod
       {value_node, 0}, nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
       device_tensor->host_shape(), device_context->device_context_key().device_name_,
       device_context->device_context_key().device_id_);
+    kernel_tensor->set_stream_id(device_tensor->stream_id());
     auto other_type_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     MS_EXCEPTION_IF_NULL(other_type_device_tensor);
     other_type_device_tensor->SetNodeIndex(value_node, 0);
@@ -2689,6 +2691,7 @@ void GraphScheduler::PersistDeviceTensorForParameter(const AnfNodePtr &parameter
       {parameter, 0}, nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
       device_tensor->host_shape(), device_context->device_context_key().device_name_,
       device_context->device_context_key().device_id_);
+    kernel_tensor->set_stream_id(device_tensor->stream_id());
     auto other_type_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     if (front_node->isa<ValueNode>()) {
       const auto &value_node = front_node->cast<ValueNodePtr>();
@@ -2749,6 +2752,7 @@ void GraphScheduler::PersistDeviceTensorForRootGraphControlNode(const GraphCompi
       sub_device_tensor->type_id(), sub_device_tensor->host_shape(), device_context->device_context_key().device_name_,
       device_context->device_context_key().device_id_);
     MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+    kernel_tensor->set_stream_id(AnfAlgo::GetStreamId(backend_node));
     auto new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     MS_EXCEPTION_IF_NULL(new_device_tensor);
     new_device_tensor->SetNodeIndex(backend_node, index);
@@ -2817,7 +2821,8 @@ void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compil
       for (const auto &device_tensor : device_tensors) {
         MS_EXCEPTION_IF_NULL(device_tensor);
         ofs << "\t\t\tdevice tensor value:" << device_tensor << "\tptr:" << device_tensor->GetPtr()
-            << "\tsize:" << device_tensor->GetSize() << "\toriginal_ref_count:" << device_tensor->original_ref_count()
+            << "\tsize:" << device_tensor->GetSize() << "\tstream id:" << device_tensor->stream_id()
+            << "\toriginal_ref_count:" << device_tensor->original_ref_count()
             << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count() << "\tflag:" << device_tensor->flag()
             << "\tdevice_type:" << device_tensor->GetDeviceType()
             << "\tis_ptr_persisted:" << device_tensor->is_ptr_persisted() << "\n ";

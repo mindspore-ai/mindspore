@@ -456,7 +456,7 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
       return false;
     }
   } else {
-    MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
+    MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope() << ", stream id : " << stream_id << ".";
     bool ret = kernel_mod->Launch(inputs, workspace, outputs, stream);
     MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
     if (!ret) {
@@ -470,6 +470,36 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
   PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelLaunch,
                kernel->fullname_with_scope(), false);
   return ret;
+}
+
+void AclrtLaunchCallback(void *user_data) {
+  CallbackFunc *callback_func = reinterpret_cast<CallbackFunc *>(user_data);
+  (*callback_func)();
+  delete callback_func;
+}
+
+bool GeKernelExecutor::LaunchCallback(CallbackFunc callback_func, size_t stream_id) const {
+  auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  if (stream == nullptr) {
+    stream_id = kDefaultStreamIndex;
+    stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  }
+  MS_EXCEPTION_IF_NULL(stream);
+  auto callback_func_ptr = new CallbackFunc(callback_func);
+  aclError ret =
+    aclrtLaunchCallback(AclrtLaunchCallback, callback_func_ptr, aclrtCallbackBlockType::ACL_CALLBACK_NO_BLOCK, stream);
+  MS_LOG(DEBUG) << "Launch callback for stream_id : " << stream_id << ", ret : " << ret << ".";
+  if (ret) {
+    delete callback_func_ptr;
+    MS_LOG(WARNING) << "Launch callback for stream_id : " << stream_id << " failed, ret : " << ret << ".";
+    if (res_manager_->SyncStream(stream_id)) {
+      callback_func();
+      return true;
+    }
+    res_manager_->ResetStreamAndCtx();
+    return false;
+  }
+  return true;
 }
 
 bool GeKernelExecutor::ExecuteKernelTask(const pynative::KernelTaskType &task_type,

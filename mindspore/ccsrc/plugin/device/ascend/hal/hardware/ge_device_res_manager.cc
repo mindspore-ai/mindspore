@@ -86,7 +86,8 @@ bool GeDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   }
   auto size =
     address->type_id() == kObjectTypeString ? address->GetSize() + sizeof(ge::StringHead) : address->GetSize();
-  void *device_ptr = mem_manager_->MallocMemFromMemPool(size, address->from_persistent_mem(), address->need_recycle());
+  void *device_ptr = mem_manager_->MallocMemFromMemPool(size, address->from_persistent_mem(), address->need_recycle(),
+                                                        address->stream_id());
   if (!device_ptr) {
     return false;
   }
@@ -96,9 +97,14 @@ bool GeDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   return true;
 }
 
-void *GeDeviceResManager::AllocateMemory(size_t size) const {
+void *GeDeviceResManager::AllocateMemory(size_t size, uint32_t stream_id) const {
+  MS_EXCEPTION_IF_NULL(runtime_instance_);
+  runtime_instance_->SetContext();
   MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->MallocMemFromMemPool(size, false);
+  if (swap_manager_ != nullptr) {
+    return swap_manager_->AllocDeviceMemory(size);
+  }
+  return mem_manager_->MallocMemFromMemPool(size, false, false, stream_id);
 }
 
 size_t GeDeviceResManager::GetMaxUsedMemorySize() const {
@@ -126,7 +132,18 @@ void GeDeviceResManager::SwapOut(const void *device_ptr, void *host_ptr, size_t 
 }
 
 std::vector<void *> GeDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
-  return mem_manager_->MallocContinuousMemFromMemPool(size_list);
+  MS_EXCEPTION_IF_NULL(runtime_instance_);
+  runtime_instance_->SetContext();
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  std::vector<size_t> aligned_size_list;
+  for (auto size : size_list) {
+    auto align_size = device::MemoryManager::GetCommonAlignSize(size);
+    aligned_size_list.emplace_back(align_size);
+  }
+  if (swap_manager_ != nullptr) {
+    return swap_manager_->AllocDeviceContinuousMem(aligned_size_list);
+  }
+  return mem_manager_->MallocContinuousMemFromMemPool(aligned_size_list);
 }
 
 DeviceAddressPtr GeDeviceResManager::CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {

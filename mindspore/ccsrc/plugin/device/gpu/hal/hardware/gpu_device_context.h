@@ -72,7 +72,7 @@ class GPUDeviceResManager : public DeviceResManager {
 
  protected:
   // Relevant function to allocate and free device memory of raw ptr.
-  void *AllocateMemory(size_t size) const override;
+  void *AllocateMemory(size_t size, uint32_t stream_id = UINT32_MAX) const override;
   void FreeMemory(void *ptr) const override;
   void FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
                        const std::vector<size_t> &keep_addr_sizes) const override;

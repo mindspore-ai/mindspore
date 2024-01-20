@@ -157,7 +157,7 @@ class BACKEND_EXPORT DeviceResManager {
   virtual void ResetStreamAndCtx() {}
 
   // Relevant function to allocate and free device memory of raw ptr.
-  virtual void *AllocateMemory(size_t size) const = 0;
+  virtual void *AllocateMemory(size_t size, uint32_t stream_id = UINT32_MAX) const = 0;
   virtual void FreeMemory(void *ptr) const = 0;
   virtual void FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
                                const std::vector<size_t> &keep_addr_sizes) const = 0;
@@ -299,6 +299,8 @@ class GraphExecutor {
   void SetDeviceContext(DeviceContext *device_context) { device_context_ = device_context; }
 };
 
+using CallbackFunc = std::function<void(void)>;
+
 class BACKEND_EXPORT KernelExecutor {
  public:
   virtual ~KernelExecutor() = default;
@@ -323,6 +325,11 @@ class BACKEND_EXPORT KernelExecutor {
                             size_t stream_id) const {
     MS_LOG(EXCEPTION) << "Unimplemented interface.";
   }
+  // Launch callback.
+  virtual bool LaunchCallback(std::function<void(void)> callback_func, size_t stream_id) const {
+    callback_func();
+    return true;
+  };
   // Unify the MindIR, the default behavior uses the common unified MindIR.
   virtual void UnifyMindIR(const KernelGraphPtr &graph) const;
   virtual void AddMindIRPass(const KernelGraphPtr &graph) const {};

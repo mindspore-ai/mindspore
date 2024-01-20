@@ -21,6 +21,7 @@
 
 namespace mindspore {
 namespace device {
+constexpr uint32_t kDefaultStreamId = 0;
 constexpr size_t kSize1G = 1 << 30;
 constexpr size_t kTotalMem = kSize1G * 10;
 constexpr size_t expected_size_zero = 0;
@@ -41,7 +42,7 @@ class DummyPool : public DynamicMemPoolBestFit {
 
   size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr) override {
     *addr = malloc(size);
-    allocated_size_ += kSize1G;
+    allocated_size_ += size;
     (void)allocated_mems_.emplace(*addr);
     return size;
   }
@@ -83,19 +84,22 @@ TEST_F(TestMemDynamicAllocator, test_basic_allocation) {
   // Malloc from persistent mem pool.
   auto addr1 = mem_pool_.AllocTensorMem(kSize1G >> 1, true, true);
   EXPECT_EQ(persitent_mem_pool->mem_block_list_.size(), expected_size_one);
-  EXPECT_EQ(persitent_mem_pool->idle_mem_buf_map_.size(), expected_size_one);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_.size(), expected_size_one);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_[kDefaultStreamId].size(), expected_size_one);
   EXPECT_EQ(persitent_mem_pool->mem_block_list_[0]->device_addr(), addr1);
   EXPECT_EQ(persitent_mem_pool->mem_block_list_[0]->block_all_mem_buf_map_.count(addr1), expected_size_one);
   // Malloc 512M from common mem pool.
   auto addr2 = mem_pool_.AllocTensorMem(kSize1G >> 1, false, true);
   EXPECT_EQ(common_mem_pool->mem_block_list_.size(), expected_size_one);
-  EXPECT_EQ(common_mem_pool->idle_mem_buf_map_.size(), expected_size_one);
+  EXPECT_EQ(common_mem_pool->idle_mem_bufs_.size(), expected_size_one);
+  EXPECT_EQ(common_mem_pool->idle_mem_bufs_[kDefaultStreamId].size(), expected_size_one);
   EXPECT_EQ(common_mem_pool->mem_block_list_[0]->device_addr(), addr2);
   EXPECT_EQ(common_mem_pool->mem_block_list_[0]->block_all_mem_buf_map_.count(addr2), expected_size_one);
   // Malloc more 1g from persistent pool, set need_recycle to false, so triggle extension of common pool.
   auto addr3 = mem_pool_.AllocTensorMem(kSize1G, true, false);
   EXPECT_EQ(common_mem_pool->mem_block_list_.size(), expected_size_two);
-  EXPECT_EQ(common_mem_pool->idle_mem_buf_map_.size(), expected_size_one);
+  EXPECT_EQ(common_mem_pool->idle_mem_bufs_.size(), expected_size_one);
+  EXPECT_EQ(common_mem_pool->idle_mem_bufs_[kDefaultStreamId].size(), expected_size_one);
   EXPECT_EQ(persitent_mem_pool->mem_block_list_.size(), expected_size_one);
   EXPECT_EQ(persitent_mem_pool->mem_block_list_[0]->block_all_mem_buf_map_.count(addr3), expected_size_zero);
   // Malloc more 1g from persistent pool, triggle extension of persistent pool.
@@ -104,28 +108,35 @@ TEST_F(TestMemDynamicAllocator, test_basic_allocation) {
   // Direction of mmap is from top to down, address of new block is less than prev addresses.
   EXPECT_EQ(persitent_mem_pool->mem_block_list_[0]->device_addr(), addr4);
   EXPECT_EQ(persitent_mem_pool->mem_block_list_[0]->block_all_mem_buf_map_.count(addr4), expected_size_one);
-  EXPECT_EQ(persitent_mem_pool->idle_mem_buf_map_.size(), expected_size_one);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_.size(), expected_size_one);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_[kDefaultStreamId].size(), expected_size_one);
   EXPECT_EQ(persitent_mem_pool->mem_block_list_[1]->device_addr(), addr1);
   // Malloc another 512M from persistent pool.
   auto addr5 = mem_pool_.AllocTensorMem(kSize1G >> 1, true, true);
   EXPECT_EQ(persitent_mem_pool->mem_block_list_.size(), expected_size_two);
-  EXPECT_EQ(persitent_mem_pool->idle_mem_buf_map_.size(), expected_size_zero);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_.size(), expected_size_one);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_[kDefaultStreamId].size(), expected_size_zero);
   mem_pool_.FreeTensorMem(addr1);
-  EXPECT_EQ(persitent_mem_pool->idle_mem_buf_map_.size(), expected_size_one);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_.size(), expected_size_one);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_[kDefaultStreamId].size(), expected_size_one);
   mem_pool_.FreeTensorMem(addr5);
   EXPECT_EQ(persitent_mem_pool->mem_block_list_.size(), expected_size_two);
-  EXPECT_EQ(persitent_mem_pool->idle_mem_buf_map_.size(), expected_size_one);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_.size(), expected_size_one);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_[kDefaultStreamId].size(), expected_size_one);
   // Malloc another 512M from common pool.
   mem_pool_.AllocTensorMem(kSize1G >> 1, false, true);
-  EXPECT_EQ(common_mem_pool->idle_mem_buf_map_.size(), expected_size_zero);
+  EXPECT_EQ(common_mem_pool->idle_mem_bufs_.size(), expected_size_one);
+  EXPECT_EQ(common_mem_pool->idle_mem_bufs_[kDefaultStreamId].size(), expected_size_zero);
   mem_pool_.FreeTensorMem(addr4);
-  EXPECT_EQ(persitent_mem_pool->idle_mem_buf_map_.size(), expected_size_two);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_.size(), expected_size_one);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_[kDefaultStreamId].size(), expected_size_two);
   // Malloc another 1g from common mem pool.
   mem_pool_.AllocTensorMem(kSize1G, false, true);
   EXPECT_EQ(common_mem_pool->mem_block_list_.size(), expected_size_three);
   // Free 512M from common pool.
   mem_pool_.FreeTensorMem(addr2);
-  EXPECT_EQ(common_mem_pool->idle_mem_buf_map_.size(), expected_size_one);
+  EXPECT_EQ(common_mem_pool->idle_mem_bufs_.size(), expected_size_one);
+  EXPECT_EQ(common_mem_pool->idle_mem_bufs_[kDefaultStreamId].size(), expected_size_one);
 }
 
 /// Feature: test persitent memory malloc from common pool of mem dynamic allocator.
@@ -137,7 +148,8 @@ TEST_F(TestMemDynamicAllocator, test_malloc_persistent_from_common) {
   // Malloc from persistent mem pool.
   auto addr1 = mem_pool_.AllocTensorMem(kSize1G >> 1, true, true);
   EXPECT_EQ(persitent_mem_pool->mem_block_list_.size(), expected_size_one);
-  EXPECT_EQ(persitent_mem_pool->idle_mem_buf_map_.size(), expected_size_one);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_.size(), expected_size_one);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_[kDefaultStreamId].size(), expected_size_one);
   EXPECT_EQ(persitent_mem_pool->mem_block_list_[0]->device_addr(), addr1);
   EXPECT_EQ(persitent_mem_pool->mem_block_list_[0]->block_all_mem_buf_map_.count(addr1), expected_size_one);
   // Malloc from common mem pool.
@@ -170,10 +182,40 @@ TEST_F(TestMemDynamicAllocator, test_malloc_common_from_persistent) {
   EXPECT_EQ(persitent_mem_pool->mem_block_list_.size(), expected_size_one);
   EXPECT_EQ(common_mem_pool->mem_block_list_.size(), block_size);
   // Try to malloc common memory from persistent pool.
-  EXPECT_EQ(persitent_mem_pool->idle_mem_buf_map_.size(), expected_size_one);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_.size(), expected_size_one);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_[kDefaultStreamId].size(), expected_size_one);
   mem_pool_.AllocTensorMem(kSize1G, false, true);
   // Make sure allocation from persistent pool.
-  EXPECT_EQ(persitent_mem_pool->idle_mem_buf_map_.size(), expected_size_zero);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_.size(), expected_size_one);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_[kDefaultStreamId].size(), expected_size_zero);
+}
+
+/// Feature: test memory malloc with multi stream id.
+/// Description: test mem dynamic allocatordata pool allocation strategy.
+/// Expectation: all interface work normally and can not throw exception.
+TEST_F(TestMemDynamicAllocator, test_malloc_with_multi_stream_id) {
+  int stream0 = 0;
+  int stream1 = 1;
+  auto persitent_mem_pool = mem_pool_.persistent_mem();
+  // Malloc from persistent mem pool.
+  auto addr1 = mem_pool_.AllocTensorMem(kSize1G >> 1, true, true, stream0);
+  auto addr2 = mem_pool_.AllocTensorMem(kSize1G >> 1, true, true, stream1);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_.size(), expected_size_two);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_.count(stream0), expected_size_one);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_[stream0].size(), expected_size_one);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_[stream1].size(), expected_size_one);
+  mem_pool_.FreeTensorMem(addr1);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_.size(), expected_size_two);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_[stream0].size(), expected_size_one);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_[stream1].size(), expected_size_one);
+  auto addr3 = mem_pool_.AllocTensorMem(kSize1G, true, true, stream1);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_.size(), expected_size_two);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_[stream0].size(), expected_size_one);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_[stream1].size(), expected_size_one);
+  mem_pool_.FreeTensorMem(addr3);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_[stream1].size(), expected_size_two);
+  mem_pool_.FreeTensorMem(addr2);
+  EXPECT_EQ(persitent_mem_pool->idle_mem_bufs_[stream1].size(), expected_size_two);
 }
 }  // namespace device
 }  // namespace mindspore

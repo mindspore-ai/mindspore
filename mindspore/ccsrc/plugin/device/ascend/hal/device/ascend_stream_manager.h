@@ -21,8 +21,10 @@
 #include <vector>
 #include <set>
 #include <mutex>
-#include "utils/hash_map.h"
+
 #include "acl/acl_rt.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
+#include "utils/hash_map.h"
 
 namespace mindspore {
 namespace device {
@@ -30,6 +32,16 @@ namespace ascend {
 class AscendStreamMng {
  public:
   static AscendStreamMng &GetInstance();
+
+  ~AscendStreamMng() {
+#ifdef WITH_BACKEND
+    for (auto iter = stream_call_backs_.begin(); iter != stream_call_backs_.end();) {
+      aclrtStream stream = iter->first;
+      iter++;
+      UnRegCallback(stream);
+    }
+#endif
+  }
 
   void ResetResource() {
     cur_stream_num_ = 0;
@@ -57,6 +69,8 @@ class AscendStreamMng {
 
   void CreateStream(aclrtStream *stream, int32_t priority = 0);
   void CreateStream(size_t *stream_id, int32_t priority = 0);
+  void RegCallback(aclrtStream stream);
+  void UnRegCallback(aclrtStream stream);
   void CreateStreamWithFlags(aclrtStream *stream, uint32_t flags, int32_t priority = 0);
   void CreateStreamWithFlags(size_t *stream_id, uint32_t flags, int32_t priority = 0);
   bool DestroyStream(size_t stream_id);
@@ -82,6 +96,9 @@ class AscendStreamMng {
     single_op_multi_stream_enable_ = single_op_multi_stream_enable;
   }
 
+  void enable_callback(bool is_enable_callback) { is_enable_callback_ = is_enable_callback; }
+  bool is_enable_callback() { return is_enable_callback_; }
+
  private:
   // Count streams and events number in task sink scenario
   uint32_t cur_stream_num_{0};
@@ -104,6 +121,13 @@ class AscendStreamMng {
   void *default_stream_{nullptr};
   size_t default_stream_id_{0};
   bool single_op_multi_stream_enable_{false};
+
+  // Flag of registering callback or not, default value is false.
+  // When multi streams are created, or gmem is enabled, this flag would change to ture.
+  bool is_enable_callback_{false};
+  // This vector used for simplify logic of tracing multi stream creates.
+  std::vector<aclrtStream> callback_cached_streams_;
+  mindspore::HashMap<aclrtStream, CallbackThreadPtr> stream_call_backs_;
 };
 }  // namespace ascend
 }  // namespace device

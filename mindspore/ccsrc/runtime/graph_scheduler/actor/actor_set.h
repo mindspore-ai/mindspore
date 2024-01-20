@@ -102,6 +102,22 @@ using RpcActorSetWeakPtr = std::weak_ptr<RpcActorSet>;
 // The output actor is used to receive the output result of actor which represents the graph output.
 struct ActorSet {
   explicit ActorSet(const ActorInfo &name) : name_(name) {}
+
+  void InitCallbackCounter() {
+    if (loop_count_actor_ != nullptr) {
+      loop_count_actor_->set_callback_counter(callback_counter_);
+    }
+    for (auto &kernel_actor : kernel_actors_) {
+      kernel_actor->set_callback_counter(callback_counter_);
+    }
+    if (control_actors_ != nullptr) {
+      auto &exit_actors = control_actors_->exit_actors_;
+      for (auto &exit_actor : exit_actors) {
+        exit_actor->set_callback_counter(callback_counter_);
+      }
+    }
+  }
+
   DataPrepareActorPtr data_prepare_actor_{nullptr};
   std::vector<DataSourceActorPtr> data_source_actors_;
   std::vector<KernelActorPtr> kernel_actors_;
@@ -130,6 +146,8 @@ struct ActorSet {
   double single_thread_execution_time_{0};
   // Record the execution state.
   bool is_execution_failed_{false};
+  // Control variable for callback.
+  CallbackCounterPtr callback_counter_ = std::make_shared<CallbackCounter>();
 };
 using ActorSetPtr = std::shared_ptr<ActorSet>;
 
