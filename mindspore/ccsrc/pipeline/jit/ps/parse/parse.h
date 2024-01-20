@@ -550,7 +550,7 @@ class ParseFunctionAst {
 bool UpdateFuncGraphFlags(const py::object &obj, const FuncGraphPtr &func_graph, bool is_construct_function = false);
 
 // Update recomputed scope for the graph.
-void UpdateRecomputeScope(const FuncGraphPtr &func_graph, bool should_add_recompute_scope);
+void UpdateRecomputeScope(const FuncGraphPtr &func_graph);
 
 AnfNodePtr GetMixedPrecisionCastHelp(const FuncGraphPtr &func_graph, const AnfNodePtr &param);
 }  // namespace parse
