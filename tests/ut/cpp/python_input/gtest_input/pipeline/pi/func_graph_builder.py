@@ -56,8 +56,13 @@ def test_add_node(tag):
     scalar_add = _scalar_ops.ScalarAdd()
 
     @fns
-    def graph(x, y):
+    def graph_single_output(x, y):
         return scalar_add(x, y)
+
+    @fns
+    def graph_multi_output(x, y):
+        out = scalar_add(x, y)
+        return make_tuple(out, out)
 
     return fns[tag]
 
@@ -93,6 +98,22 @@ def test_add_binary_node(tag):
     return fns[tag]
 
 
+def test_remove_output(tag):
+    """
+    Feature: Build graph in pi_jit.
+    Description: Use the func_graph_builder api to remove an output.
+    Expectation: The expected graph is constructed.
+    """
+    fns = FnDict()
+    scalar_add = _scalar_ops.ScalarAdd()
+
+    @fns
+    def graph(x, y, z):
+        return scalar_add(y, z)
+
+    return fns[tag]
+
+
 def test_add_fg_call_node(tag):
     """
     Feature: Build graph in pi_jit.
@@ -105,8 +126,15 @@ def test_add_fg_call_node(tag):
     def graph1(x, y):
         return scalar_add(x, y)
 
+    def graph2(x, y):
+        return make_tuple(scalar_add(x, y), scalar_add(x, y))
+
     @fns
-    def graph(x, y):
+    def graph_single_output(x, y):
         return graph1(x, y)
+
+    @fns
+    def graph_multi_output(x, y):
+        return graph2(x, y)
 
     return fns[tag]
