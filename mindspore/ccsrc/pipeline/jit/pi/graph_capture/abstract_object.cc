@@ -66,14 +66,25 @@ MemPool<AbstractObjectBase> AbstractObjectBase::aobject_mem_pool_(__FILE__, __LI
 
 // exact equal check
 static const std::unordered_map<PyTypeObject *, AObject::Type> exact_type_map = {
-  {&PyFunction_Type, AObject::kTypeFunction}, {&PyMethod_Type, AObject::kTypeBoundMethod},
-  {&PyCode_Type, AObject::kTypeCodeObject},   {&PySlice_Type, AObject::kTypeSlice},
-  {&PySet_Type, AObject::kTypeSet},           {&PyFrozenSet_Type, AObject::kTypeSet},
-  {&PyBool_Type, AObject::kTypeBool},         {&PyFloat_Type, AObject::kTypeFloat},
-  {&PyLong_Type, AObject::kTypeInt},          {&PyList_Type, AObject::kTypeList},
-  {&PyTuple_Type, AObject::kTypeTuple},       {&PyDict_Type, AObject::kTypeDict},
-  {&PyType_Type, AObject::kTypeType},         {&PyUnicode_Type, AObject::kTypeString},
-  {&PyModule_Type, AObject::kTypeModule},     {&PyCFunction_Type, AObject::kTypeCFunction},
+  {&PyFunction_Type, AObject::kTypeFunction},
+  {&PyMethod_Type, AObject::kTypeBoundMethod},
+  {&PyCode_Type, AObject::kTypeCodeObject},
+  {&PySlice_Type, AObject::kTypeSlice},
+  {&PySet_Type, AObject::kTypeSet},
+  {&PyFrozenSet_Type, AObject::kTypeSet},
+  {&PyBool_Type, AObject::kTypeBool},
+  {&PyFloat_Type, AObject::kTypeFloat},
+  {&PyLong_Type, AObject::kTypeInt},
+  {&PyList_Type, AObject::kTypeList},
+  {&PyTuple_Type, AObject::kTypeTuple},
+  {&PyDict_Type, AObject::kTypeDict},
+  {&PyDictValues_Type, AObject::kTypeDictValues},
+  {&PyDictKeys_Type, AObject::kTypeDictKeys},
+  {&PyDictItems_Type, AObject::kTypeDictItems},
+  {&PyType_Type, AObject::kTypeType},
+  {&PyUnicode_Type, AObject::kTypeString},
+  {&PyModule_Type, AObject::kTypeModule},
+  {&PyCFunction_Type, AObject::kTypeCFunction},
   {nullptr, AObject::kTypeAnyValue},
 };
 
@@ -706,7 +717,7 @@ static AObject *BinaryIs(AObject *l, AObject *r) {
 static AObject *BinaryContains(AObject *l, AObject *r) {
   PyObject *o = l->GetPyObject().ptr();
   PyObject *c = r->GetPyObject().ptr();
-  if (c == nullptr || o == nullptr || l->GetType() == AObject::kTypeAnyValue) {
+  if (c == nullptr || o == nullptr || r->GetType() == AObject::kTypeAnyValue) {
     return AObject::MakeAObject(AObject::kTypeBool);
   }
   int res = PySequence_Contains(c, o);
