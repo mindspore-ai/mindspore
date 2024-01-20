@@ -470,9 +470,10 @@ static bool GraphCapture(JitCompileResults *jcr) {
   MarkBreak(g.GetGraph());
 
   if (g.GetGraph()->IsBreakAtLoopAfterUnrolling()) {
-    if (g.GetGraph()->GetStopTraceBci() != -1) {
-      GRAPH_JIT_LOG_F("break after loop unrolling, restart capture because of:\n%s\n",
-                      g.GetGraph()->DumpBreakInfo().c_str());
+    if (conf.GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
+      std::string repr = std::regex_replace(g.GetGraph()->ToString(), std::regex("\nbreak bci: [^-]"),
+                                            "\ngraph break after loop unrolling");
+      GRAPH_JIT_LOG_F("%s\n", repr.c_str());
     }
     // reset guard
     jcr->code->SetGuard(std::make_shared<OptGuard>());
