@@ -1767,12 +1767,13 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AbstractBasePtrList &arg
 
   auto new_node_to_fg = GetValueNode<FuncGraphPtr>(new_node);
   if (new_node_to_fg != nullptr) {
-    if (pipeline::GetJitLevel() == "O0") {
-      UpdateDebugInfo(new_node_to_fg, out_node->scope(), out_node->debug_info());
-    }
     bool has_recompute_scope = (out_node->scope() != nullptr &&
                                 out_node->scope()->name().compare(0, strlen(kAttrRecompute), kAttrRecompute) == 0);
-    parse::UpdateRecomputeScope(new_node_to_fg, has_recompute_scope);
+    if (has_recompute_scope) {
+      parse::UpdateRecomputeScope(new_node_to_fg);
+    } else if (pipeline::GetJitLevel() == "O0") {
+      UpdateDebugInfo(new_node_to_fg, out_node->scope(), out_node->debug_info());
+    }
   }
 
   AnalysisEnginePtr eng = out_conf->engine();
@@ -2096,13 +2097,14 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
 
     auto converted_fg = converted_value->cast<FuncGraphPtr>();
     if (converted_fg != nullptr) {
-      if (pipeline::GetJitLevel() == "O0") {
-        UpdateDebugInfo(converted_fg, out_conf->node()->scope(), out_conf->node()->debug_info());
-      }
       bool has_recompute_scope =
         (out_conf->node()->scope() != nullptr &&
          out_conf->node()->scope()->name().compare(0, strlen(kAttrRecompute), kAttrRecompute) == 0);
-      parse::UpdateRecomputeScope(converted_fg, has_recompute_scope);
+      if (has_recompute_scope) {
+        parse::UpdateRecomputeScope(converted_fg);
+      } else if (pipeline::GetJitLevel() == "O0") {
+        UpdateDebugInfo(converted_fg, out_conf->node()->scope(), out_conf->node()->debug_info());
+      }
     }
 
     if (!converted_value->isa<Primitive>()) {

@@ -30,8 +30,7 @@ from mindspore.common.parameter import PARAMETER_NAME_DEFAULT
 from mindspore.common.hook_handle import HookHandle
 from mindspore.context import ParallelMode
 from mindspore import context
-from mindspore._c_expression import init_pipeline, update_func_graph_hyper_params, Cell_, FuncGraph, \
-    MixedPrecisionType, MSContext
+from mindspore._c_expression import init_pipeline, update_func_graph_hyper_params, Cell_, FuncGraph, MixedPrecisionType
 from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
 from mindspore.common.api import _cell_graph_executor, _pynative_executor, _get_args_for_run, cells_compile_cache
@@ -2369,7 +2368,6 @@ class Cell(Cell_):
                 Default: ``False`` .
         """
         self._recompute()
-        MSContext.get_instance()._enable_cell_recompute()
         if 'mp_comm_recompute' in kwargs.keys():
             self._mp_comm_recompute(kwargs.get('mp_comm_recompute', False))
         if 'parallel_optimizer_comm_recompute' in kwargs.keys():

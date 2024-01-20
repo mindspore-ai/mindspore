@@ -261,9 +261,6 @@ class MS_CORE_API MsContext {
 
   bool IsKByKExecutorMode() const;
 
-  void EnableCellRecompute() { cell_recompute_ = true; }
-  bool cell_recompute() { return cell_recompute_; }
-
   std::string GetLoadPluginErrorStr() const { return load_plugin_error_(); }
 
   void set_not_convert_jit(bool not_convert_jit) { not_convert_jit_ = not_convert_jit; }
@@ -299,7 +296,6 @@ class MS_CORE_API MsContext {
   static std::map<std::string, InitDeviceTargetAndPolicy> &InitFuncMap();
   static std::map<std::string, std::string> &PluginPathMap();
   enum CellReuseLevel cell_reuse_level_ = CellReuseLevel::kNoCellReuse;
-  bool cell_recompute_{false};
   bool not_convert_jit_{false};
 };
 

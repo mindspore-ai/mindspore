@@ -147,7 +147,6 @@ void RegMsContext(const py::module *m) {
          "Register callback function for check environment variable.")
     .def("is_pkg_support_device", &mindspore::MsContext::IsSupportDevice,
          "Return whether this MindSpore package supports specified device.")
-    .def("_enable_cell_recompute", &mindspore::MsContext::EnableCellRecompute, "Set a cell to be recomputed.")
     .def("load_plugin_error", &mindspore::MsContext::GetLoadPluginErrorStr,
          "Return error message when loading plugins for this MindSpore package.")
     .def("_set_not_convert_jit", &mindspore::MsContext::set_not_convert_jit, "Set not convert jit.");
