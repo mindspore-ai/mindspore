@@ -137,7 +137,7 @@ def test_transformerencoder_square_input_cpu(dtype, training, jit):
     np.allclose(result.asnumpy(), ref_output.asnumpy(), rtol=1e-7, atol=1e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
