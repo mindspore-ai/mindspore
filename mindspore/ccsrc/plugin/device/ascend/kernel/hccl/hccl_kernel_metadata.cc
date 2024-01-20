@@ -69,12 +69,12 @@ std::string GetKernelFormat(const CNodePtr &kernel_node, size_t index) {
 }
 }  // namespace
 
-bool IsHcclCommunicationOp(const std::string &op_name) {
-  return op_name != kAllGatherOpName && op_name != kAllReduceOpName && op_name != kBroadcastOpName &&
-         op_name != kReduceScatterOpName && op_name != kSendOpName && op_name != kReceiveOpName &&
-         op_name != kAllToAllvOpName && op_name != kMuxReceiveOpName && op_name != kMuxSendOpName &&
-         op_name != kReduceOpName && op_name != kBarrierOpName && op_name != kCollectiveScatterOpName &&
-         op_name != kCollectiveGatherOpName;
+bool IsNotHcclCommunicationOp(const std::string &op_name) {
+  static std::set<std::string> hccl_op = {
+    kAllGatherOpName, kAllReduceOpName,         kBroadcastOpName,       kReduceScatterOpName, kSendOpName,
+    kReceiveOpName,   kAllToAllvOpName,         kMuxReceiveOpName,      kMuxSendOpName,       kReduceOpName,
+    kBarrierOpName,   kCollectiveScatterOpName, kCollectiveGatherOpName};
+  return hccl_op.find(op_name) == hccl_op.end();
 }
 
 void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list) {
@@ -83,7 +83,7 @@ void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::string op_name = common::AnfAlgo::GetCNodeName(kernel_node);
-  if (!IsHcclCommunicationOp(op_name)) {
+  if (IsNotHcclCommunicationOp(op_name)) {
     MS_LOG(DEBUG) << "Hccl does not have op [" << op_name << "]";
     return;
   }
