@@ -45,10 +45,7 @@ TypePtr ScalarToTensorFuncImpl::InferType(const PrimitivePtr &primitive,
                                          kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   TypePtr dst_type{nullptr};
   if (input_args[kInputIndex1]->GetType()->isa<TypeNone>()) {
-    auto attr = primitive->GetAttr("dtype");
-    if (attr == nullptr) {
-      attr = input_args[0]->GetType();
-    }
+    auto attr = input_args[0]->GetType();
     MS_EXCEPTION_IF_NULL(attr);
     if (!attr->isa<Type>()) {
       MS_EXCEPTION(TypeError) << "For '" << op_name << "the second input must be a `Type`, but got "
