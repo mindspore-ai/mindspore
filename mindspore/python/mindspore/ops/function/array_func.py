@@ -283,7 +283,7 @@ def cat(tensors, axis=0):
 
     Returns:
         Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
-            The data type is the same with `tensors`.
+        The data type is the same with `tensors`.
 
     Raises:
         TypeError: If `axis` is not an int.
