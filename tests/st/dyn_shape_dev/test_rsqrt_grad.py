@@ -61,6 +61,41 @@ def test_rsqrt_grad(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_func
+def test_rsqrt_grad_dyn_rank(mode):
+    """
+    Feature: Ops.
+    Description: test op rsqrt_grad dynamic rank.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    dy_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(rsqrt_grad_func)
+    test_cell.set_inputs(dy_dyn, x_dyn)
+    dy = ms.Tensor(np.array([[[[-1, 1, 10],
+                               [5.9, 6.1, 6],
+                               [10, 1, -1]]]]).astype(np.float32))
+    x = ms.Tensor(np.array([[[[1, 1, 1],
+                              [2, 2, 2],
+                              [3, 3, 3]]]]).astype(np.float32))
+    expect_out = np.array([[[[0.5, -0.5, -500],
+                             [-205.37901, -226.98099, -216],
+                             [-1500, -1.5, 1.5]]]]).astype(np.float32)
+    out = test_cell(dy, x)
+    np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-3)
+    dy1 = ms.Tensor(np.array([-1, 1, 10, 5.9, 6.1, 6, 10, 1, -1]).astype(np.float32))
+    x1 = ms.Tensor(np.array([1, 1, 1, 2, 2, 2, 3, 3, 3]).astype(np.float32))
+    expect_out1 = np.array([0.5, -0.5, -500, -205.37901, -226.98099, -216, -1500, -1.5, 1.5]).astype(np.float32)
+    out1 = test_cell(dy1, x1)
+    np.testing.assert_allclose(out1.asnumpy(), expect_out1, rtol=1e-3)
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_rsqrt_grad_vmap(mode):
     """
     Feature: test vmap function.
