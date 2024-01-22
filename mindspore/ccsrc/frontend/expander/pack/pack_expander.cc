@@ -48,7 +48,7 @@ void UpdateRecomputeScope(const FuncGraphPtr &fg, const py::object &obj) {
   if (!py::isinstance<py::none>(scope_str)) {
     auto scope_name = py::cast<std::string>(scope_str);
     if (scope_name.find("recompute_") == 0) {
-      parse::UpdateRecomputeScope(fg, true);
+      parse::UpdateRecomputeScope(fg);
     }
   }
 }

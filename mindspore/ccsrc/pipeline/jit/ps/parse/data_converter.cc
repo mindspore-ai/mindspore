@@ -824,6 +824,10 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const ValuePtrList &args_
   PyObjectWrapperPtr python_obj = std::make_shared<PyObjectWrapper>(obj, "graph python obj");
   func_graph->set_python_obj(python_obj);
 
+  if (forbid_reuse) {
+    // Return the clone graph because the graph may be set recomputed later.
+    return BasicClone(func_graph);
+  }
   return func_graph;
 }
 

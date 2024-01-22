@@ -282,8 +282,8 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
     return interpreted_output;
   }
 
-  if (convert_result->isa<FuncGraph>()) {
-    UpdateRecomputeScope(convert_result->cast<FuncGraphPtr>(), has_recompute_scope);
+  if (convert_result->isa<FuncGraph>() && has_recompute_scope) {
+    UpdateRecomputeScope(convert_result->cast<FuncGraphPtr>());
   }
   ConvertLoadedGraph(func_graph, convert_result);
   AnfNodePtr output = NewValueNode(convert_result);
