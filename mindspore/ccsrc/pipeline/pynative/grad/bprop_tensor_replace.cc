@@ -76,9 +76,18 @@ void UpdatePreTensorInfo(const tensor::TensorPtr &new_tensor, const tensor::Tens
   if (device_address == nullptr) {
     return;
   }
+
+  auto kernel_tensor = device_address->kernel_tensor();
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  if (!kernel_tensor->host_info_exist()) {
+    // The tensor from PyBoost output.
+    kernel_tensor->SetHostInfo(std::make_shared<abstract::TensorShape>(new_tensor->shape()),
+                               std::make_shared<TensorType>(new_tensor->Dtype()), nullptr);
+  }
+
   auto forward = PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor();
   if (forward->device_target() != kCPUDevice && device_address->GetDeviceType() != device::DeviceType::kCPU) {
-    old_tensor->set_device_address(new_tensor->device_address());
+    old_tensor->set_device_address(device_address);
     return;
   }
   for (const auto &item : forward->mindrt_backend()) {
@@ -89,27 +98,25 @@ void UpdatePreTensorInfo(const tensor::TensorPtr &new_tensor, const tensor::Tens
   if (old_tensor->device_address() != nullptr) {
     // If tensor is dynamic shape, Just replace device address.
     if (PyNativeAlgo::Common::ValueHasDynamicShape(old_tensor)) {
-      old_tensor->set_device_address(new_tensor->device_address());
+      old_tensor->set_device_address(device_address);
       return;
     }
     auto old_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(old_tensor->device_address());
     MS_EXCEPTION_IF_NULL(old_device_address);
-    auto new_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(new_tensor->device_address());
-    MS_EXCEPTION_IF_NULL(new_device_address);
 
     // CPU host tensor data_c is different from device address if the address is from mem_pool.
-    if (new_device_address->from_mem_pool()) {
-      old_tensor->set_device_address(new_device_address);
+    if (device_address->from_mem_pool()) {
+      old_tensor->set_device_address(device_address);
       return;
     }
 
     auto old_ptr = old_device_address->GetMutablePtr();
     MS_EXCEPTION_IF_NULL(old_ptr);
-    auto new_ptr = new_device_address->GetPtr();
+    auto new_ptr = device_address->GetPtr();
     MS_EXCEPTION_IF_NULL(new_ptr);
-    MS_EXCEPTION_IF_CHECK_FAIL(old_device_address->GetSize() == new_device_address->GetSize(), "Size not equal");
+    MS_EXCEPTION_IF_CHECK_FAIL(old_device_address->GetSize() == device_address->GetSize(), "Size not equal");
     if (old_device_address->GetSize() < SECUREC_MEM_MAX_LEN) {
-      auto ret_code = memcpy_s(old_ptr, old_device_address->GetSize(), new_ptr, new_device_address->GetSize());
+      auto ret_code = memcpy_s(old_ptr, old_device_address->GetSize(), new_ptr, device_address->GetSize());
       MS_EXCEPTION_IF_CHECK_FAIL(ret_code == EOK, "Memory copy failed, ret code: " + std::to_string(ret_code));
     } else {
       auto ret_code = std::memcpy(old_ptr, new_ptr, old_device_address->GetSize());
