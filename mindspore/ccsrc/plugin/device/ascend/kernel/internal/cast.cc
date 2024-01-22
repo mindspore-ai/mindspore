@@ -13,23 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "plugin/device/ascend/kernel/internal/elewise_unary.h"
 
-#include <memory>
+#include "plugin/device/ascend/kernel/internal/cast.h"
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
+#include "include/param/cast_param.h"
 
 namespace mindspore {
 namespace kernel {
-internal::OpParamPtr ElewiseUnary::CreateOpParam(const std::vector<KernelTensor *> &inputs,
+internal::OpParamPtr InternalCast::CreateOpParam(const std::vector<KernelTensor *> &inputs,
                                                  const std::vector<KernelTensor *> &outputs) {
-  internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
-  SetComputeType(param_ptr);
-  return param_ptr;
+  auto param_ptr = std::make_shared<internal::CastParam>();
+  param_ptr->in_dtype_ = InternalKernelUtils::ToInternalDType(inputs[0]->dtype_id());
+  param_ptr->out_dtype_ = InternalKernelUtils::ToInternalDType(outputs[0]->dtype_id());
+  param_ptr->opId = internal::OpId::Cast;
+  return std::static_pointer_cast<internal::OpParam>(param_ptr);
 }
 
-void ElewiseUnary::SetInOutIdx() {
+void InternalCast::SetInOutIdx() {
   inputsIdxMap_[0] = 0;
   outputsIdxMap_[0] = 0;
 }
+
+MS_INTERNAL_KERNEL_FACTORY_REG(Cast, InternalCast);
 }  // namespace kernel
 }  // namespace mindspore
