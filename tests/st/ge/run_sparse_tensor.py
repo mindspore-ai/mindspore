@@ -39,7 +39,7 @@ class COOTensorNet(nn.Cell):
 
 
 def coo_data_generate(values_shape):
-    x = np.random.randint(1, 1024, size=(1,)).astype(np.int32)
+    x = np.random.randint(2, 1024, size=(1,)).astype(np.int32)
     y = np.random.randint(np.ceil(values_shape / x).astype(np.int32), 1024, size=(1,)).astype(np.int32)
     shape = (int(x[0]), int(y[0]))
     row = np.random.randint(0, shape[0], size=(values_shape,)).astype(np.int32)
@@ -80,7 +80,7 @@ class CSRTensorNet(nn.Cell):
 
 
 def csr_data_generate(values_shape):
-    x = np.random.randint(1, 1024, size=(1,)).astype(np.int32)
+    x = np.random.randint(2, 1024, size=(1,)).astype(np.int32)
     y = np.random.randint(np.ceil(values_shape / x).astype(np.int32), 1024, size=(1,)).astype(np.int32)
     shape = (int(x[0]), int(y[0]))
     indptr = np.sort(np.random.choice(values_shape, x[0] + 1, replace=False)).astype(np.int32)
