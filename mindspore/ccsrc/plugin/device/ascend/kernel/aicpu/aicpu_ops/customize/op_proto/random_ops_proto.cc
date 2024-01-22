@@ -91,4 +91,64 @@ IMPLEMT_COMMON_INFERFUNC(Dropout2DInferShape) {
 
 CUST_COMMON_INFER_FUNC_REG(Dropout2D, Dropout2DInferShape);
 // ----------------Dropout2D END-------------------
+
+// ----------------Gamma-------------------
+template <typename T>
+static void GammaCaclDims(const Tensor &data, std::vector<int64_t> &vec_dim) {
+  int32_t size = data.GetSize() / static_cast<int64_t>(sizeof(T));
+  for (int32_t i = 0; i < size; i++) {
+    T dim = *(reinterpret_cast<const T *>(data.GetData()) + i);
+    vec_dim.push_back(dim);
+  }
+}
+
+CUST_IMPLEMT_INFERFUNC(Gamma, GammaInfer) {
+  const std::vector<std::string> depend_names = {"shape"};
+  PREPARE_DYNAMIC_SHAPE(depend_names);
+  Tensor shape_data;
+  if (op.GetInputConstData("shape", shape_data) != GRAPH_SUCCESS) {
+    OP_LOGI(TbeGetName(op).c_str(), "Get const value failed of [shape]");
+    auto shape_desc = op.GetInputDesc("shape");
+    std::vector<int64_t> shapedims = shape_desc.GetShape().GetDims();
+    size_t dim_num = shapedims.size();
+
+    if (dim_num > 1) {
+      std::string err_msg = ConcatString("the rank[", dim_num, "] of input[shape] should not be more than 1");
+      AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
+      return GRAPH_FAILED;
+    }
+
+    std::vector<int64_t> shape_vector(dim_num, -1);
+    std::vector<std::pair<int64_t, int64_t>> range_vector(dim_num, std::make_pair(1, -1));
+
+    auto output_desc = op.GetOutputDesc("output");
+    output_desc.SetShape(Shape(shape_vector));
+    output_desc.SetShapeRange(range_vector);
+    output_desc.SetDataType(DT_FLOAT);
+    op.UpdateOutputDesc("output", output_desc);
+    return GRAPH_SUCCESS;
+  }
+
+  DataType shape_dtype = shape_data.GetTensorDesc().GetDataType();
+  std::vector<int64_t> shape_dims;
+  if (shape_dtype == DT_INT32) {
+    GammaCaclDims<int32_t>(shape_data, shape_dims);
+  } else if (shape_dtype == DT_INT64) {
+    GammaCaclDims<int64_t>(shape_data, shape_dims);
+  } else {
+    std::string err_msg =
+      ConcatString("dtype of input[shape] must be INT32 or INT64, but got [", DataTypeToStringDesc(shape_dtype), "].");
+    AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_PARAM_INVALID;
+  }
+
+  auto output_desc = op.GetOutputDesc("output");
+  output_desc.SetShape(Shape(shape_dims));
+  output_desc.SetDataType(DT_FLOAT);
+  op.UpdateOutputDesc("output", output_desc);
+  return GRAPH_SUCCESS;
+}
+
+CUST_INFER_FUNC_REG(Gamma, GammaInfer);
+// ----------------Gamma END-------------------
 }  // namespace ge

@@ -123,6 +123,7 @@ cust_op_lists = [
     "mvlgammagrad",
     "nextafter",
     "nondeterministicints",
+    "gamma",
     "gatherdgradv2",
     "isnan",
     "maskedselectgrad",
