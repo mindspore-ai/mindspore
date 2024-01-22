@@ -22,6 +22,17 @@
 #include "utils/common_shape_fns.h"
 
 namespace ge {
+namespace {
+template <typename T>
+static void RandomOpCalcDims(const Tensor &data, std::vector<int64_t> &vec_dim) {
+  int32_t size = data.GetSize() / static_cast<int64_t>(sizeof(T));
+  for (int32_t i = 0; i < size; i++) {
+    T dim = *(reinterpret_cast<const T *>(data.GetData()) + i);
+    vec_dim.push_back(dim);
+  }
+}
+}  // namespace
+
 IMPLEMT_COMMON_INFERFUNC(OneInOneOutCommonInferShape) {
   static const int64_t input_x_idx = 0;
   static const int64_t output_y_idx = 0;
@@ -102,7 +113,7 @@ CUST_INFER_FUNC_REG(Randperm, RandpermInfer);
 
 // ----------------Dropout2D-------------------
 IMPLEMT_COMMON_INFERFUNC(Dropout2DInferShape) {
-  TensorDesc output_desc = op.GetOutputDescByName("output");
+  TensorDesc output_desc = op.GetOutputDescByName("y");
   TensorDesc mask_desc = op.GetOutputDescByName("mask");
 
   DataType input_dtype = op.GetInputDescByName("x").GetDataType();
@@ -113,7 +124,7 @@ IMPLEMT_COMMON_INFERFUNC(Dropout2DInferShape) {
   mask_desc.SetShape(shape_input);
   mask_desc.SetDataType(DT_BOOL);
 
-  if (op.UpdateOutputDesc("output", output_desc) != GRAPH_SUCCESS ||
+  if (op.UpdateOutputDesc("y", output_desc) != GRAPH_SUCCESS ||
       op.UpdateOutputDesc("mask", mask_desc) != GRAPH_SUCCESS) {
     return GRAPH_FAILED;
   }
@@ -124,15 +135,6 @@ CUST_COMMON_INFER_FUNC_REG(Dropout2D, Dropout2DInferShape);
 // ----------------Dropout2D END-------------------
 
 // ----------------Gamma-------------------
-template <typename T>
-static void GammaCaclDims(const Tensor &data, std::vector<int64_t> &vec_dim) {
-  int32_t size = data.GetSize() / static_cast<int64_t>(sizeof(T));
-  for (int32_t i = 0; i < size; i++) {
-    T dim = *(reinterpret_cast<const T *>(data.GetData()) + i);
-    vec_dim.push_back(dim);
-  }
-}
-
 CUST_IMPLEMT_INFERFUNC(Gamma, GammaInfer) {
   const std::vector<std::string> depend_names = {"shape"};
   PREPARE_DYNAMIC_SHAPE(depend_names);
@@ -163,9 +165,9 @@ CUST_IMPLEMT_INFERFUNC(Gamma, GammaInfer) {
   DataType shape_dtype = shape_data.GetTensorDesc().GetDataType();
   std::vector<int64_t> shape_dims;
   if (shape_dtype == DT_INT32) {
-    GammaCaclDims<int32_t>(shape_data, shape_dims);
+    RandomOpCalcDims<int32_t>(shape_data, shape_dims);
   } else if (shape_dtype == DT_INT64) {
-    GammaCaclDims<int64_t>(shape_data, shape_dims);
+    RandomOpCalcDims<int64_t>(shape_data, shape_dims);
   } else {
     std::string err_msg =
       ConcatString("dtype of input[shape] must be INT32 or INT64, but got [", DataTypeToStringDesc(shape_dtype), "].");
@@ -182,6 +184,7 @@ CUST_IMPLEMT_INFERFUNC(Gamma, GammaInfer) {
 
 CUST_INFER_FUNC_REG(Gamma, GammaInfer);
 // ----------------Gamma END-------------------
+
 IMPLEMT_COMMON_INFERFUNC(BatchSizeAndNumSampleInferShape) {
   auto logits_desc = op.GetInputDescByName("logits");
   auto num_samples_desc = op.GetInputDescByName("num_samples");
@@ -282,4 +285,69 @@ CUST_IMPLEMT_INFERFUNC(RandomUniformInt, RandomUniformIntInfer) {
 }
 CUST_INFER_FUNC_REG(RandomUniformInt, RandomUniformIntInfer);
 // ----------------RandomUniformInt End-------------------
+
+// ----------------Igamma-------------------
+CUST_IMPLEMT_INFERFUNC(Igamma, IgammaInfer) {
+  DataType a_type = op.GetInputDescByName("a").GetDataType();
+  TensorDesc z_desc = op.GetOutputDescByName("z");
+  z_desc.SetDataType(a_type);
+  if (op.UpdateOutputDesc("z", z_desc) != GRAPH_SUCCESS) {
+    return GRAPH_FAILED;
+  }
+  return BROADCAST_INFER("a", "x", "z")(op);
+}
+
+CUST_INFER_FUNC_REG(Igamma, IgammaInfer);
+// ----------------Igamma END-------------------
+
+// ----------------Poisson-------------------
+CUST_IMPLEMT_INFERFUNC(Poisson, PoissonInfer) {
+  const std::vector<std::string> depend_names = {"shape"};
+  PREPARE_DYNAMIC_SHAPE(depend_names);
+  Tensor shape_data;
+  if (op.GetInputConstData("shape", shape_data) != GRAPH_SUCCESS) {
+    OP_LOGI(TbeGetName(op).c_str(), "Get const value failed of [shape]");
+    auto shape_desc = op.GetInputDesc("shape");
+    std::vector<int64_t> shapedims = shape_desc.GetShape().GetDims();
+    size_t dim_num = shapedims.size();
+
+    if (dim_num > 1) {
+      std::string err_msg = ConcatString("the rank[", dim_num, "] of input[shape] should not be more than 1");
+      AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
+      return GRAPH_FAILED;
+    }
+
+    std::vector<int64_t> shape_vector(dim_num, -1);
+    std::vector<std::pair<int64_t, int64_t>> range_vector(dim_num, std::make_pair(1, -1));
+
+    auto output_desc = op.GetOutputDesc("output");
+    output_desc.SetShape(Shape(shape_vector));
+    output_desc.SetShapeRange(range_vector);
+    output_desc.SetDataType(DT_INT32);
+    op.UpdateOutputDesc("output", output_desc);
+    return GRAPH_SUCCESS;
+  }
+
+  DataType shape_dtype = shape_data.GetTensorDesc().GetDataType();
+  std::vector<int64_t> shape_dims;
+  if (shape_dtype == DT_INT32) {
+    RandomOpCalcDims<int32_t>(shape_data, shape_dims);
+  } else if (shape_dtype == DT_INT64) {
+    RandomOpCalcDims<int64_t>(shape_data, shape_dims);
+  } else {
+    std::string err_msg =
+      ConcatString("dtype of input[shape] must be INT32 or INT64, but got [", DataTypeToStringDesc(shape_dtype), "].");
+    AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_PARAM_INVALID;
+  }
+
+  auto output_desc = op.GetOutputDesc("output");
+  output_desc.SetShape(Shape(shape_dims));
+  output_desc.SetDataType(DT_INT32);
+  op.UpdateOutputDesc("output", output_desc);
+  return GRAPH_SUCCESS;
+}
+
+CUST_INFER_FUNC_REG(Poisson, PoissonInfer);
+// ----------------Poisson END-------------------
 }  // namespace ge
