@@ -18,6 +18,7 @@ from mindspore._c_expression import set_cur_stream as set_cur_stream_
 from mindspore._c_expression import synchronize as synchronize_
 from mindspore._c_expression import current_stream as current_stream_
 from mindspore._c_expression import default_stream as default_stream_
+from mindspore import _checkparam as Validator
 from .event import Event
 
 
@@ -34,10 +35,17 @@ class Stream(Stream_):
         kwargs (dict): keyword arguments.
     """
     def __init__(self, priority=0, **kwargs):
+        self.init_finished = False
+        if 'stream' in kwargs and kwargs['stream'] is not None:
+            super().__init__(kwargs['stream'])
+
+        Validator.check_is_int(priority, 'priority', "Stream")
         if 'stream_id' in kwargs:
+            Validator.check_is_int(kwargs['stream_id'], 'stream_id', "Stream")
             super().__init__(priority, kwargs['stream_id'])
         else:
             super().__init__(priority)
+        self.init_finished = True
 
     def record_event(self, event=None):
         r"""
@@ -200,6 +208,11 @@ class Stream(Stream_):
     def __hash__(self):
         return hash((self.id, self.device_id))
 
+    def __repr__(self):
+        if self.init_finished:
+            return super().__repr__()
+        return ''
+
 
 def synchronize():
     r"""
@@ -261,7 +274,7 @@ def current_stream():
         >>> ms.hal.set_cur_stream(s1)
         >>> assert ms.hal.current_stream() == s1
     """
-    return Stream(current_stream_())
+    return Stream(stream=current_stream_())
 
 def default_stream():
     r"""
@@ -278,7 +291,7 @@ def default_stream():
         >>> ms.hal.set_cur_stream(s1)
         >>> assert ms.hal.default_stream() != s1
     """
-    return Stream(default_stream_())
+    return Stream(stream=default_stream_())
 
 class StreamCtx():
     r"""
