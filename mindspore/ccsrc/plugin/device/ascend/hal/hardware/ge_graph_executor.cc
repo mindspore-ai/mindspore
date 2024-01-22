@@ -286,13 +286,44 @@ struct GraphSummary {
   GraphSummary() = default;
   explicit GraphSummary(const ::ge::CompiledGraphSummaryPtr &graph_summary) {
     MS_EXCEPTION_IF_NULL(graph_summary);
-    (void)graph_summary->GetConstMemorySize(const_memory_size);
-    (void)graph_summary->GetFeatureMemorySize(feature_memory_size);
-    (void)graph_summary->GetFeatureMemoryBaseRefreshable(is_feature_memory_refreshable);
-    (void)graph_summary->GetStreamNum(stream_num);
-    (void)graph_summary->GetEventNum(event_num);
+    ::ge::graphStatus status;
+    status = graph_summary->GetConstMemorySize(const_memory_size);
+    if (status != ::ge::GRAPH_SUCCESS) {
+      MS_LOG(WARNING) << "GetConstMemorySize failed, status = " << status
+                      << ", const_memory_size: " << const_memory_size
+                      << ", maybe the execution mode is not as expected.";
+    }
+    status = graph_summary->GetFeatureMemorySize(feature_memory_size);
+    if (status != ::ge::GRAPH_SUCCESS) {
+      MS_LOG(WARNING) << "GetFeatureMemorySize failed, status = " << status
+                      << ", feature_memory_size: " << feature_memory_size
+                      << ", maybe the execution mode is not as expected.";
+    }
+    status = graph_summary->GetFeatureMemoryBaseRefreshable(is_feature_memory_refreshable);
+    if (status != ::ge::GRAPH_SUCCESS) {
+      MS_LOG(WARNING) << "GetFeatureMemoryBaseRefreshable failed, status = " << status
+                      << ", is_feature_memory_refreshable: " << is_feature_memory_refreshable
+                      << ", maybe the execution mode is not as expected.";
+    }
+    status = graph_summary->GetStreamNum(stream_num);
+    if (status != ::ge::GRAPH_SUCCESS) {
+      MS_LOG(WARNING) << "GetStreamNum failed, status = " << status << ", stream_num: " << stream_num
+                      << ", maybe the execution mode is not as expected.";
+    }
+    status = graph_summary->GetEventNum(event_num);
+    if (status != ::ge::GRAPH_SUCCESS) {
+      MS_LOG(WARNING) << "GetEventNum failed, status = " << status << ", event_num: " << event_num
+                      << ", maybe the execution mode is not as expected.";
+    }
     std::vector<::ge::Shape> ge_shapes;
-    (void)graph_summary->GetOutputShapes(ge_shapes);
+    status = graph_summary->GetOutputShapes(ge_shapes);
+    if (status != ::ge::GRAPH_SUCCESS) {
+      MS_LOG(WARNING) << "GetOutputShapes failed, status = " << status
+                      << ", maybe the execution mode is not as expected.";
+      for (const auto &shape : ge_shapes) {
+        MS_LOG(WARNING) << "output shape size: " << shape.GetShapeSize();
+      }
+    }
     (void)std::transform(ge_shapes.begin(), ge_shapes.end(), std::back_inserter(output_shapes),
                          [](const ::ge::Shape &ge_shape) -> ShapeVector { return ge_shape.GetDims(); });
   }
