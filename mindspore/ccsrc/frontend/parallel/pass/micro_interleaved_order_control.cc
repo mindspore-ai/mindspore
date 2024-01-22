@@ -353,15 +353,26 @@ void MicroInterleavedOrderControlProcess(const FuncGraphManagerPtr &manager,
       return;
     }
   }
+
+  auto interleaved_level = 3;
+  auto interleaved_level_str = common::GetEnv("MS_DEV_INTERLEAVED_LEVEL");
+  if (!interleaved_level_str.empty()) {
+    interleaved_level = std::stoi(interleaved_level_str);
+  }
+  MS_LOG(INFO) << "MS_DEV_INTERLEAVED_LEVEL: " << interleaved_level;
   // find the fp_begin node
-  InsertDependForBegin(manager, micro_interleaved_forward_node_list);
-  InsertInterleavedNodesDepend(manager, micro_interleaved_forward_node_list);
-  InsertDependBetweenInterleavedNodes(manager, micro_interleaved_forward_node_list, true);
-  InsertDependForEnd(manager, micro_interleaved_forward_node_list);
-  InsertDependForBegin(manager, micro_interleaved_backward_node_list);
-  InsertInterleavedNodesDepend(manager, micro_interleaved_backward_node_list);
-  InsertDependBetweenInterleavedNodes(manager, micro_interleaved_backward_node_list);
-  InsertDependForEnd(manager, micro_interleaved_backward_node_list);
+  if (interleaved_level == 1 || interleaved_level == 3) {
+    InsertDependForBegin(manager, micro_interleaved_forward_node_list);
+    InsertInterleavedNodesDepend(manager, micro_interleaved_forward_node_list);
+    InsertDependBetweenInterleavedNodes(manager, micro_interleaved_forward_node_list, true);
+    InsertDependForEnd(manager, micro_interleaved_forward_node_list);
+  }
+  if (interleaved_level == 2 || interleaved_level == 3) {
+    InsertDependForBegin(manager, micro_interleaved_backward_node_list);
+    InsertInterleavedNodesDepend(manager, micro_interleaved_backward_node_list);
+    InsertDependBetweenInterleavedNodes(manager, micro_interleaved_backward_node_list);
+    InsertDependForEnd(manager, micro_interleaved_backward_node_list);
+  }
 }
 
 void MicroInterleavedOrderControlInBlock(const FuncGraphPtr &graph, const FuncGraphManagerPtr &manager,

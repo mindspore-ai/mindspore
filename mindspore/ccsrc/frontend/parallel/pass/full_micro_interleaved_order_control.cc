@@ -270,8 +270,8 @@ void MicroInterleavedOrderControl(const FuncGraphManagerPtr &manager,
   auto interleaved_level_str = common::GetEnv("MS_DEV_INTERLEAVED_LEVEL");
   if (!interleaved_level_str.empty()) {
     interleaved_level = std::stoi(interleaved_level_str);
-    MS_LOG(INFO) << "MS_DEV_INTERLEAVED_LEVEL: " << interleaved_level;
   }
+  MS_LOG(INFO) << "MS_DEV_INTERLEAVED_LEVEL: " << interleaved_level;
   if (interleaved_level == 1 || interleaved_level == 3) {
     InsertInterleavedNodesDepend(manager, micro_interleaved_forward_node_list);
   }
