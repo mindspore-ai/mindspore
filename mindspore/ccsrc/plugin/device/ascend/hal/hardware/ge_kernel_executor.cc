@@ -48,7 +48,7 @@
 #include "transform/acl_ir/acl_helper.h"
 #include "transform/acl_ir/ge_adapter_info.h"
 #include "include/common/debug/anf_ir_dump.h"
-#include "include/backend/debug/data_dump/overflow_dumper.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "include/backend/debug/profiler/profiling.h"
 #include "utils/anf_utils.h"
 
@@ -563,9 +563,8 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Address
   }
 #ifdef ENABLE_DEBUGGER
   if (DumpJsonParser::GetInstance().async_dump_enabled()) {
-    auto register_dumper = debug::OverflowDumper::GetInstance(kAscendDevice);
-    register_dumper->Init();
-    register_dumper->OpDebugRegisterForStream(kernel);
+    MS_LOG(WARNING) << "Dump is currently not support for pynative mode or kernelbykernel mode, skip dump kernel: "
+                    << kernel->fullname_with_scope();
   }
 #endif
   // launch kernel
@@ -585,12 +584,6 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Address
       return false;
     }
   }
-#ifdef ENABLE_DEBUGGER
-  if (DumpJsonParser::GetInstance().async_dump_enabled()) {
-    auto kernel_dumper = debug::OverflowDumper::GetInstance(kAscendDevice);
-    kernel_dumper->OpLoadDumpInfo(kernel);
-  }
-#endif
 #ifndef ENABLE_SECURITY
   auto ascend_instance = profiler::ascend::AscendProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(ascend_instance);
