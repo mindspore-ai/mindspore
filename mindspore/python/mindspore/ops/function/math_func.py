@@ -4561,7 +4561,6 @@ def reciprocal(input):
 
     Args:
         input (Tensor): The input tensor.
-            :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
         Tensor, has the same shape as the `input`.
@@ -4581,10 +4580,6 @@ def reciprocal(input):
         >>> print(output)
         [1.   0.5  0.25]
     """
-    if not isinstance(input, Tensor):
-        raise TypeError(f"For reciprocal, the input must be a Tensor, but got {type(input)}.")
-    if not is_complex(input) and not ops.is_floating_point(input):
-        input = ops.cast(input, mstype.float32)
     return reciprocal_(input)
 
 

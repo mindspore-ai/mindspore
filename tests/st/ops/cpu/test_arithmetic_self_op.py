@@ -254,8 +254,9 @@ def test_reciprocal(shape, dtype, tol):
         # In Mac-arm platform, if x contains 0 element, 1/0 will be -1 in that platform.
         # Therefore, here we eliminate 0 uniformly.
         x[x == 0] = 1
+        x = x.astype(np.float32)
     output = net(Tensor(x))
-    expect_output = np.reciprocal(x).astype(dtype)
+    expect_output = np.reciprocal(x)
     diff = output.asnumpy() - expect_output
     error = np.ones(shape=expect_output.shape) * tol
     assert np.all(np.abs(diff) < error)

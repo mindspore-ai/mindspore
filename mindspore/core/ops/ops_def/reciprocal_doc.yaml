@@ -8,7 +8,6 @@ reciprocal:
 
         Inputs:
             - **x** (Tensor) - The input tensor.
-              :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
 
         Returns:
             Tensor, has the same shape as the `x`.
