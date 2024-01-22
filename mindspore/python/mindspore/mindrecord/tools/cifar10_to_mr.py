@@ -26,10 +26,6 @@ from ..common.exceptions import PathNotExistsError
 from ..filewriter import FileWriter
 from ..shardutils import check_filename, ExceptionThread, SUCCESS
 
-try:
-    cv_import = import_module("cv2")
-except ModuleNotFoundError:
-    cv_import = None
 
 __all__ = ['Cifar10ToMR']
 
@@ -57,6 +53,8 @@ class Cifar10ToMR:
     """
 
     def __init__(self, source, destination):
+        self.cv_import = import_module("cv2")
+
         check_filename(source)
         self.source = source
 
@@ -96,11 +94,11 @@ class Cifar10ToMR:
         test_labels = cifar10_data.Test.labels
         logger.info("test images label: {}".format(test_labels.shape))
 
-        data_list = _construct_raw_data(images, labels)
-        test_data_list = _construct_raw_data(test_images, test_labels)
+        data_list = self._construct_raw_data(images, labels)
+        test_data_list = self._construct_raw_data(test_images, test_labels)
 
-        _generate_mindrecord(self.destination, data_list, fields, "img_train")
-        _generate_mindrecord(self.destination + "_test", test_data_list, fields, "img_test")
+        self._generate_mindrecord(self.destination, data_list, fields, "img_train")
+        self._generate_mindrecord(self.destination + "_test", test_data_list, fields, "img_test")
         return SUCCESS
 
     def transform(self, fields=None):
@@ -131,55 +129,50 @@ class Cifar10ToMR:
             raise t.exception
 
 
-def _construct_raw_data(images, labels):
-    """
-    Construct raw data from cifar10 data.
+    def _construct_raw_data(self, images, labels):
+        """
+        Construct raw data from cifar10 data.
 
-    Args:
-        images (list): image list from cifar10.
-        labels (list): label list from cifar10.
+        Args:
+            images (list): image list from cifar10.
+            labels (list): label list from cifar10.
 
-    Returns:
-        list[dict], data dictionary constructed from cifar10.
-    """
-
-    if not cv_import:
-        raise ModuleNotFoundError("opencv-python module not found, please use pip install it.")
-
-    raw_data = []
-    for i, img in enumerate(images):
-        label = np.int(labels[i][0])
-        _, img = cv_import.imencode(".jpeg", img[..., [2, 1, 0]])
-        row_data = {"id": int(i),
-                    "data": img.tobytes(),
-                    "label": int(label)}
-        raw_data.append(row_data)
-    return raw_data
+        Returns:
+            list[dict], data dictionary constructed from cifar10.
+        """
+        raw_data = []
+        for i, img in enumerate(images):
+            label = np.int(labels[i][0])
+            _, img = self.cv_import.imencode(".jpeg", img[..., [2, 1, 0]])
+            row_data = {"id": int(i),
+                        "data": img.tobytes(),
+                        "label": int(label)}
+            raw_data.append(row_data)
+        return raw_data
 
 
-def _generate_mindrecord(file_name, raw_data, fields, schema_desc):
-    """
-    Generate MindRecord file from raw data.
+    def _generate_mindrecord(self, file_name, raw_data, fields, schema_desc):
+        """
+        Generate MindRecord file from raw data.
 
-    Args:
-        file_name (str): File name of MindRecord File.
-        fields (list[str]): Fields would be set as index which
-          could not belong to blob fields and type could not be 'array' or 'bytes'.
-        raw_data (dict): dict of raw data.
-        schema_desc (str): String of schema description.
+        Args:
+            file_name (str): File name of MindRecord File.
+            fields (list[str]): Fields would be set as index which
+            could not belong to blob fields and type could not be 'array' or 'bytes'.
+            raw_data (dict): dict of raw data.
+            schema_desc (str): String of schema description.
 
-    Returns:
-        SUCCESS or FAILED.
-    """
+        Returns:
+            SUCCESS or FAILED.
+        """
 
-    schema = {"id": {"type": "int64"}, "label": {"type": "int64"},
-              "data": {"type": "bytes"}}
+        schema = {"id": {"type": "int64"}, "label": {"type": "int64"}, "data": {"type": "bytes"}}
 
-    logger.info("transformed MindRecord schema is: {}".format(schema))
+        logger.info("transformed MindRecord schema is: {}".format(schema))
 
-    writer = FileWriter(file_name, 1)
-    writer.add_schema(schema, schema_desc)
-    if fields and isinstance(fields, list):
-        writer.add_index(fields)
-    writer.write_raw_data(raw_data)
-    writer.commit()
+        writer = FileWriter(file_name, 1)
+        writer.add_schema(schema, schema_desc)
+        if fields and isinstance(fields, list):
+            writer.add_index(fields)
+        writer.write_raw_data(raw_data)
+        writer.commit()

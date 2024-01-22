@@ -22,10 +22,6 @@ from mindspore import log as logger
 from ..filewriter import FileWriter
 from ..shardutils import check_filename, ExceptionThread
 
-try:
-    pd = import_module("pandas")
-except ModuleNotFoundError:
-    pd = None
 
 __all__ = ['CsvToMR']
 
@@ -55,8 +51,8 @@ class CsvToMR:
     """
 
     def __init__(self, source, destination, columns_list=None, partition_number=1):
-        if not pd:
-            raise Exception("Module pandas is not found, please use pip install it.")
+        self.pd = import_module("pandas")
+
         if isinstance(source, str):
             check_filename(source)
             self.source = source
@@ -135,8 +131,8 @@ class CsvToMR:
         if not os.path.exists(self.source):
             raise IOError("Csv file {} do not exist.".format(self.source))
 
-        pd.set_option('display.max_columns', None)
-        df = pd.read_csv(self.source)
+        self.pd.set_option('display.max_columns', None)
+        df = self.pd.read_csv(self.source)
 
         csv_schema = self._get_schema(df)
 
