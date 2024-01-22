@@ -308,6 +308,7 @@ constexpr const char kNameMaxPoolWithArgmax[] = "MaxPoolWithArgmax";
 constexpr const char kNameMaxPoolWithArgmaxV2[] = "MaxPoolWithArgmaxV2";
 constexpr const char kNameBatchNorm[] = "BatchNorm";
 constexpr const char kNameBatchNormGrad[] = "BatchNormGrad";
+constexpr const char kNameBatchNormGradGrad[] = "BatchNormGradGrad";
 constexpr const char kNameROIAlign[] = "ROIAlign";
 constexpr const char kNameROIAlignGrad[] = "ROIAlignGrad";
 constexpr const char kNameRandomChoiceWithMask[] = "RandomChoiceWithMask";

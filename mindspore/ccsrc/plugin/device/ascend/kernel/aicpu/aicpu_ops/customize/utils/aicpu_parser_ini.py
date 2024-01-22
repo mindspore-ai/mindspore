@@ -197,7 +197,8 @@ cust_op_lists = [
     "environget",
     "environset",
     "layernormgradgrad",
-    "fftshift"
+    "fftshift",
+    "batchnormgradgrad"
 ]
 
 

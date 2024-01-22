@@ -123,6 +123,22 @@ REG_CUST_OP(LayerNormGradGrad)
   .OUTPUT(sopd_gamma, TensorType({DT_FLOAT, DT_FLOAT16}))
   .CUST_OP_END_FACTORY_REG(LayerNormGradGrad)
 
+REG_CUST_OP(BatchNormGradGrad)
+  .INPUT(x, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .INPUT(dy, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .INPUT(scale, TensorType({DT_FLOAT}))
+  .INPUT(reserve_space_1, TensorType({DT_FLOAT}))
+  .INPUT(reserve_space_2, TensorType({DT_FLOAT}))
+  .INPUT(ddx, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .INPUT(ddscale, TensorType({DT_FLOAT}))
+  .INPUT(ddoffset, TensorType({DT_FLOAT}))
+  .OUTPUT(dx, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .OUTPUT(ddy, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .OUTPUT(dscale, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .REQUIRED_ATTR(is_training, Bool)
+  .REQUIRED_ATTR(epsilon, Float)
+  .REQUIRED_ATTR(data_format, String)
+  .CUST_OP_END_FACTORY_REG(BatchNormGradGrad)
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_NN_OPS_H_
 
