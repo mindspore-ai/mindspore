@@ -84,6 +84,21 @@ OUTPUT_MAP(BatchNormGrad) = {{0, OUTPUT_DESC(x_backprop)},
                              {4, OUTPUT_DESC(reserve_space_5)}};
 REG_ADPT_DESC(BatchNormGrad, kNameBatchNormGrad, ADPT_DESC(BatchNormGrad))
 
+CUST_INPUT_MAP(BatchNormGradGrad) = {{1, INPUT_DESC(x)},
+                                     {2, INPUT_DESC(dy)},
+                                     {3, INPUT_DESC(scale)},
+                                     {4, INPUT_DESC(reserve_space_1)},
+                                     {5, INPUT_DESC(reserve_space_2)},
+                                     {6, INPUT_DESC(ddx)},
+                                     {7, INPUT_DESC(ddscale)},
+                                     {8, INPUT_DESC(ddoffset)}};
+CUST_INPUT_ATTR_MAP(BatchNormGradGrad) = {{9, ATTR_DESC(is_training, AnyTraits<bool>())},
+                                          {10, ATTR_DESC(epsilon, AnyTraits<float>())},
+                                          {11, ATTR_DESC(data_format, AnyTraits<GEDataFormat>())}};
+CUST_ATTR_MAP(BatchNormGradGrad) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(BatchNormGradGrad) = {{0, OUTPUT_DESC(dx)}, {1, OUTPUT_DESC(ddy)}, {2, OUTPUT_DESC(dscale)}};
+REG_ADPT_DESC(BatchNormGradGrad, kNameBatchNormGradGrad, CUST_ADPT_DESC(BatchNormGradGrad))
+
 // L2NormalizeGrad
 INPUT_MAP(L2NormalizeGrad) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(y)}, {3, INPUT_DESC(dy)}};
 ATTR_MAP(L2NormalizeGrad) = {
