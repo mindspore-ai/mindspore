@@ -237,8 +237,6 @@ function ConfigAscend() {
     fi
     echo "Copy file success"
     # source ascend env
-    export ASCEND_SLOG_PRING_TO_STDOUT=1
-    export ASCEND_GLOBAL_LOG_LEVEL=1
     export ASCEND_HOME=/usr/local/Ascend/latest
     export PATH=${ASCEND_HOME}/compiler/ccec_compiler/bin:${PATH}
     export LD_LIBRARY_PATH=${ASCEND_HOME}/lib64:${ASCEND_HOME}/../driver/lib64:${LD_LIBRARY_PATH}
