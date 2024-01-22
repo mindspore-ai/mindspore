@@ -276,6 +276,7 @@ class MS_CORE_API MsContext {
   void MarkReadStatus(MsCtxParam param) const;  // record status to mutable member params_read_status_
   template <typename T>
   void CheckReadStatus(MsCtxParam param, const T &value) const;
+  bool CheckIsKByK() const;
   void SetAscendConfig();
 
   static DeviceSeter seter_;
