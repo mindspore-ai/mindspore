@@ -28,10 +28,33 @@ namespace hal {
 std::unordered_map<std::shared_ptr<DeviceEvent>, int64_t> EventCnt::unrecorded_cnt_;
 std::mutex EventCnt::unrecorded_cnt_mtx_;
 
+EventPy::~EventPy() {
+  if (creator_stream_ != nullptr && event_ != nullptr) {
+    const auto &device_ctx = creator_stream_->device_ctx();
+    pynative::DispatchOp(std::make_shared<pynative::PassthroughFrontendTask>([device_ctx, event = event_]() {
+      auto destroy_fn = [device_ctx, event]() {
+        MS_LOG(DEBUG) << "DestroyEvent, event:" << event;
+        if (device_ctx != nullptr && device_ctx->initialized()) {
+          device_ctx->device_res_manager_->DestroyEvent(event);
+        }
+      };
+      if (!runtime::OpExecutor::NeedSync()) {
+        runtime::OpExecutor::GetInstance().PushSimpleOpRunTask(
+          std::make_shared<pynative::PassthroughDeviceTask>(destroy_fn));
+      } else {
+        destroy_fn();
+      }
+    }));
+  }
+  creator_stream_ = nullptr;
+  event_ = nullptr;
+}
+
 void EventPy::CreateEvent(const StreamPyPtr &stream) {
   MS_EXCEPTION_IF_NULL(stream);
+  creator_stream_ = stream;
   MS_LOG(DEBUG) << "enable_timing:" << enable_timing_ << ", blocking:" << blocking_;
-  event_ = stream->device_ctx()->device_res_manager_->CreateEventWithFlag(enable_timing_, blocking_);
+  event_ = creator_stream_->device_ctx()->device_res_manager_->CreateEventWithFlag(enable_timing_, blocking_);
   is_created_ = true;
 }
 

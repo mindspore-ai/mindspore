@@ -18,6 +18,7 @@
 #define MINDSPORE_CORE_IR_DEVICE_EVENT_H
 
 #include <memory>
+#include <vector>
 
 namespace mindspore {
 class DeviceEvent {
@@ -30,9 +31,11 @@ class DeviceEvent {
   virtual void SyncEvent() = 0;
   virtual bool QueryEvent() = 0;
   virtual void ElapsedTime(float *cost_time, const DeviceEvent *other) = 0;
+  virtual bool DestroyEvent() = 0;
   virtual void set_wait_stream(void *stream) = 0;
   virtual void set_record_stream(void *stream) = 0;
 };
 using DeviceEventPtr = std::shared_ptr<DeviceEvent>;
+using DeviceEventPtrList = std::vector<DeviceEventPtr>;
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_DEVICE_EVENT_H

@@ -106,7 +106,7 @@ class GeDeviceResManager : public DeviceResManager {
   bool SyncNotDefaultStreams() const override;
   size_t DefaultStream() const override;
 
-  DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) const override;
+  DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) override;
 
   bool single_op_multi_stream_enable() const override;
   void set_single_op_multi_stream_enable(bool single_op_multi_stream_enable) override;

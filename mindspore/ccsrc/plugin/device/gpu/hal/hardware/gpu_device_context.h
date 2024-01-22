@@ -63,7 +63,7 @@ class GPUDeviceResManager : public DeviceResManager {
   bool SyncNotDefaultStreams() const override;
   size_t DefaultStream() const override;
 
-  DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) const override;
+  DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) override;
 
   bool LoadCollectiveCommLib() override;
 

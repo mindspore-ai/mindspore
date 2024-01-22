@@ -60,6 +60,7 @@ void GeDeviceResManager::Initialize() {
 }
 
 void GeDeviceResManager::Destroy() {
+  (void)DestroyAllEvents();
   // Release memory.
   if (mem_manager_ != nullptr) {
     mem_manager_->Finalize();
@@ -325,10 +326,11 @@ size_t GeDeviceResManager::DefaultStream() const {
   return AscendStreamMng::GetInstance().default_stream_id();
 }
 
-DeviceEventPtr GeDeviceResManager::CreateEventWithFlag(bool enable_timing, bool blocking) const {
+DeviceEventPtr GeDeviceResManager::CreateEventWithFlag(bool enable_timing, bool blocking) {
   auto flag = enable_timing ? ACL_EVENT_TIME_LINE : ACL_EVENT_DEFAULT;
   auto event = std::make_shared<AscendEvent>(flag);
   MS_EXCEPTION_IF_NULL(event);
+  device_events_.push_back(event);
   return event;
 }
 }  // namespace ascend

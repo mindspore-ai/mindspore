@@ -196,6 +196,8 @@ void GeDeviceContext::Destroy() {
     transform::DestroyAoeUtil();
   }
   FinalizeDump();
+  // Device resource manager must be destroyed before 'FinalizeGe' unless some runtime APIs will throw exception.
+  device_res_manager_->Destroy();
   (void)FinalizeGe(ms_context);
   if (hccl::HcclAdapter::GetInstance().Inited()) {
     (void)hccl::HcclAdapter::GetInstance().FinalizeHccl();
@@ -203,6 +205,7 @@ void GeDeviceContext::Destroy() {
   if (deprecated_interface_ != nullptr) {
     (void)deprecated_interface_->CloseTsd(MsContext::GetInstance(), true);
   }
+  initialized_ = false;
 }
 
 void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
