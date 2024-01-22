@@ -137,7 +137,7 @@ std::string ErrorManagerAdapter::GetErrorMessage(bool add_title) {
   }
   if (add_title) {
     return "#umsg#Ascend Error Message:#umsg#" + error_message +
-           "\n(Please search \"Ascend Error Message\" at https://www.mindspore.cn for error code description)";
+           "\n(Please search \"CANN Common Error Analysis\" at https://www.mindspore.cn for error code description)";
   }
   return error_message;
 }
