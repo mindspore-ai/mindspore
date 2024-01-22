@@ -457,11 +457,11 @@ REG_BPROP_BUILDER("LRN").SetBody(BODYFUNC(ib) {
 });
 
 REG_BPROP_BUILDER("Dropout").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
-  auto out = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex2);
+  auto out = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex5);
   auto mask = ib->TupleGetItem(out, 1);
   auto dy = ib->TupleGetItem(dout, 0);
-  auto dx = ib->Emit(kDropoutGradOpName, {dy, mask}, {{"keep_prob", ib->GetAttr("keep_prob")}});
+  auto dx = ib->Emit(kDropoutGradOpName, {dy, mask}, {{"keep_prob", ib->GetInput(kIndex1)->BuildValue()}});
   return {dx};
 });
 

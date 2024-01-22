@@ -402,26 +402,21 @@ Status ActivationBase::InferOutputTensorMap() {
 }
 
 Status DropoutInfo::GetAttrs() {
-  auto iter0 = attrs_.find(SEED0);
-  if (iter0 != attrs_.end()) {
-    MS_EXCEPTION_IF_NULL(iter0->second);
-    if (iter0->second->isa<Int64Imm>()) {
-      seed0_ = iter0->second->cast<Int64ImmPtr>()->value();
-    } else {
-      MS_LOG(ERROR) << name_ << " : The value of seed0 is not int64_t.";
-      return FAILED;
-    }
+  auto keep_prob_value = GetScalarValueFromInputsWithCheck<float>(input_value_, name_, KEEP_PROB);
+  if (!keep_prob_value.has_value()) {
+    return FAILED;
   }
-  auto iter1 = attrs_.find(SEED1);
-  if (iter1 != attrs_.end()) {
-    MS_EXCEPTION_IF_NULL(iter1->second);
-    if (iter1->second->isa<Int64Imm>()) {
-      seed1_ = iter1->second->cast<Int64ImmPtr>()->value();
-    } else {
-      MS_LOG(ERROR) << name_ << " : The value of seed1 is not int64_t.";
-      return FAILED;
-    }
+  keep_prob_ = keep_prob_value.value();
+  auto seed0_value = GetScalarValueFromInputsWithCheck<int64_t>(input_value_, name_, SEED0);
+  if (!seed0_value.has_value()) {
+    return FAILED;
   }
+  seed0_ = seed0_value.value();
+  auto seed1_value = GetScalarValueFromInputsWithCheck<int64_t>(input_value_, name_, SEED1);
+  if (!seed1_value.has_value()) {
+    return FAILED;
+  }
+  seed1_ = seed1_value.value();
   return SUCCESS;
 }
 
@@ -458,9 +453,10 @@ void DropoutInfo::InferReplaceOps() {
   int64_t seed = get_seed();
   ValuePtr new_seed0 = MakeValue(seed);
   ValuePtr new_seed1 = MakeValue(seed);
+  ValuePtr new_keep_prob = MakeValue(keep_prob_);
   Attr attr_seed0 = std::make_pair(SEED0, new_seed0);
   Attr attr_seed1 = std::make_pair(SEED1, new_seed1);
-  Attr attr_keep_probs = std::make_pair(KEEP_PROB, attrs_[KEEP_PROB]);
+  Attr attr_keep_probs = std::make_pair(KEEP_PROB, new_keep_prob);
   OperatorAttrs attrs = {attr_keep_probs, attr_seed0, attr_seed1};
   OperatorParams params;
   OperatorArgs args = std::make_pair(attrs, params);

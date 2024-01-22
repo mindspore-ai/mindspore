@@ -1,0 +1,45 @@
+dropout:
+  description: |
+    During training, randomly zeroes some of the elements of the input tensor
+    with probability :math:`1 - keep\_prob` from a Bernoulli distribution. It plays the
+    role of reducing neuron correlation and avoid overfitting.
+
+    Refer to :func:`mindspore.ops.dropout` for more details.
+
+    Args:
+        keep_prob (float, optional): The keep rate, between 0 and 1, e.g. keep_prob = 0.9,
+            means dropping out 10% of input units. Default: ``0.5`` .
+        Seed0 (int, optional): Seed0 value for random generating. Default: ``0`` .
+        Seed1 (int, optional): Seed1 value for random generating. Default: ``0`` .
+
+    Inputs:
+        - **x** (Tensor) - The input Tensor of shape :math:`(*, N)`, with data type of float16, float32 or float64.
+
+    Outputs:
+        - **output** (Tensor) - With the same shape and data type as `x`.
+        - **mask** (Tensor) - The mask applied to `x`.
+
+          - On GPU and CPU, `mask` has the same shape and data type as `x`.
+          - On Ascend, to achieve a better performance, it is denoted as a 1-D Tensor
+            with Uint8 data type. It has shape :math:`(byte\_counts, )` where :math:`byte\_counts` is the
+            number of bytes needed to mask the input `x`, :math:`byte\_counts` is calculated using the
+            following formula:
+
+            .. math::
+
+                byte\_counts = \text{ceil}(\text{cumprod}(x.shape) / 128) * 16
+
+            If shape of `x` is :math:`(2, 3, 4, 5, 6)`, the shape of `mask` will be :math:`(96, )`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> dropout = ops.Dropout(keep_prob=0.5)
+        >>> x = Tensor(np.ones([1, 2, 3, 4, 5]), mindspore.float32)
+        >>> output, mask = dropout(x)
+        >>> print(output.shape, mask.shape, mask.dtype)
+        (1, 2, 3, 4, 5) (16,) UInt8

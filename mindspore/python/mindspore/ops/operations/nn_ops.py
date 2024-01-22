@@ -33,7 +33,7 @@ from mindspore.ops.primitive import prim_attr_register
 from ..auto_generate import (CeLU, Flatten, LogSoftmax, ReLU, ReLU6,
                              Elu, Sigmoid, Softmax, HSwish, HSigmoid, AvgPool, BiasAdd,
                              NLLLoss, OneHot, GeLU, FastGeLU, PReLU,
-                             GridSampler3D, GridSampler2D, LayerNorm, HShrink, AdamWeightDecay)
+                             GridSampler3D, GridSampler2D, LayerNorm, HShrink, AdamWeightDecay, Dropout)
 from .manually_defined import BatchNorm
 
 
@@ -5934,69 +5934,6 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
         validator.check_tensor_dtype_valid("indicese", indices_dtype, [mstype.int32], self.name)
         return var_dtype, accum_dtype, linear_dtype
-
-
-class Dropout(PrimitiveWithCheck):
-    r"""
-    During training, randomly zeroes some of the elements of the input tensor
-    with probability :math:`1 - keep\_prob` from a Bernoulli distribution. It plays the
-    role of reducing neuron correlation and avoid overfitting.
-
-    Refer to :func:`mindspore.ops.dropout` for more details.
-
-    Args:
-        keep_prob (float, optional): The keep rate, between 0 and 1, e.g. keep_prob = 0.9,
-            means dropping out 10% of input units. Default: ``0.5`` .
-        Seed0 (int, optional): Seed0 value for random generating. Default: ``0`` .
-        Seed1 (int, optional): Seed1 value for random generating. Default: ``0`` .
-
-    Inputs:
-        - **x** (Tensor) - The input Tensor of shape :math:`(*, N)`, with data type of float16, float32 or float64.
-
-    Outputs:
-        - **output** (Tensor) - With the same shape and data type as `x`.
-        - **mask** (Tensor) - The mask applied to `x`.
-
-          - On GPU and CPU, `mask` has the same shape and data type as `x`.
-          - On Ascend, to achieve a better performance, it is denoted as a 1-D Tensor
-            with Uint8 data type. It has shape :math:`(byte\_counts, )` where :math:`byte\_counts` is the
-            number of bytes needed to mask the input `x`, :math:`byte\_counts` is calculated using the
-            following formula:
-
-            .. math::
-
-                byte\_counts = \text{ceil}(\text{cumprod}(x.shape) / 128) * 16
-
-            If shape of `x` is :math:`(2, 3, 4, 5, 6)`, the shape of `mask` will be :math:`(96, )`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> dropout = ops.Dropout(keep_prob=0.5)
-        >>> x = Tensor(np.ones([1, 2, 3, 4, 5]), mindspore.float32)
-        >>> output, mask = dropout(x)
-        >>> print(output.shape, mask.shape, mask.dtype)
-        (1, 2, 3, 4, 5) (16,) UInt8
-    """
-
-    @prim_attr_register
-    def __init__(self, keep_prob=0.5, Seed0=0, Seed1=0):
-        """Initialize Dropout."""
-        self.seed0 = validator.check_value_type("Seed0", Seed0, [int], self.name)
-        self.seed1 = validator.check_value_type("Seed1", Seed1, [int], self.name)
-        self.keep_prob = validator.check_float_range(keep_prob, 0, 1, validator.INC_RIGHT, "keep_prob", self.name)
-        self.add_prim_attr("side_effect_hidden", True)
-
-    def check_shape(self, x_shape):
-        validator.check_int(len(x_shape), 1, validator.GE, "x_shape", self.name)
-
-    def check_dtype(self, x_dtype):
-        valid_dtypes = (mstype.float16, mstype.bfloat16, mstype.float32, mstype.float64)
-        validator.check_tensor_dtype_valid("x", x_dtype, valid_dtypes, self.name)
 
 
 class Dropout2D(PrimitiveWithInfer):
