@@ -756,10 +756,22 @@ std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode) {
     return {};
   }
   std::vector<int64_t> axis_list;
-  if (axis_attr->isa<Int64Imm>()) {
-    (void)axis_list.emplace_back(GetValue<int64_t>(axis_attr));
+  if (axis_attr->isa<Int64Imm>() || axis_attr->isa<Int32Imm>()) {
+    (void)axis_list.emplace_back(AnfUtils::GetIntValue(axis_attr));
+  } else if (axis_attr->isa<ValueSequence>()) {
+    auto axis_vec = axis_attr->cast<ValueSequencePtr>()->value();
+    if (axis_vec.empty() || axis_vec[0]->isa<Int32Imm>() || axis_vec[0]->isa<Int64Imm>()) {
+      for (auto ax : axis_vec) {
+        auto ax_int64 = AnfUtils::GetIntValue(ax);
+        axis_list.push_back(ax_int64);
+      }
+    } else {
+      MS_LOG(EXCEPTION) << "Axis of reduce node[" << cnode->fullname_with_scope() << "] should be int32 or int64, but "
+                        << "got " << axis_attr->ToString();
+    }
   } else {
-    axis_list = GetValue<std::vector<int64_t>>(axis_attr);
+    MS_LOG(EXCEPTION) << "Axis of reduce node[" << cnode->fullname_with_scope() << "] should be int32 or int64, but "
+                      << "got " << axis_attr->ToString();
   }
   return axis_list;
 }
