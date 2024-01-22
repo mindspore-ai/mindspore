@@ -3,14 +3,13 @@ softmax:
         Applies the Softmax operation to the input tensor on the specified axis.
 
         Args:
-            logits (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means,
-                any number of additional dimensions, with float16, float32 or
-                float64(CPU, GPU) data type.
+            input (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means,
+                any number of additional dimensions.
             axis (int, optional): The axis to perform the Softmax operation.
                 Default: ``-1`` .
 
         Returns:
-            Tensor, with the same type and shape as the logits.
+            Tensor, with the same type and shape as the `input` .
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -19,8 +18,8 @@ softmax:
             >>> import mindspore
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
-            >>> logits = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
+            >>> input = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
             >>> op = ops.Softmax()
-            >>> output = op(logits)
+            >>> output = op(input)
             >>> print(output)
             [0.01165623 0.03168492 0.08612854 0.23412167 0.6364086 ]
