@@ -76,9 +76,5 @@ def test_apply_adagrad_da():
     global_step = Tensor(2, mstype.int32)
     output = net(grad, lr, l1, l2, global_step)
     res_var_mindspore = output[0]
-    res_grad_accum_mindspore = output[1]
-    res_grad_squared_accum_mindspore = output[2]
     eps = np.array([1e-6 for i in range(4)]).reshape(2, 2)
     assert np.all(np_var - res_var_mindspore < eps)
-    assert np.all(np_grad_accum - res_grad_accum_mindspore < eps)
-    assert np.all(np_grad_squared_accum - res_grad_squared_accum_mindspore < eps)

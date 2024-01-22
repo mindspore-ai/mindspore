@@ -310,7 +310,7 @@ INPUT_MAP(ApplyAdagradDA) = {{1, INPUT_DESC(var)},
                              {8, INPUT_DESC(global_step)}};
 ATTR_MAP(ApplyAdagradDA) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyAdagradDA) = {{0, OUTPUT_DESC(var)}};
-REG_ADPT_DESC(ApplyAdagradDA, kApplyAdagradDADOpName, ADPT_DESC(ApplyAdagradDA))
+REG_ADPT_DESC(ApplyAdagradDA, kApplyAdagradDAOpName, ADPT_DESC(ApplyAdagradDA))
 
 // ApplyRMSProp
 INPUT_MAP(ApplyRMSProp) = {

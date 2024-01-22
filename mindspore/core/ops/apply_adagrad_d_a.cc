@@ -53,8 +53,6 @@ abstract::TupleShapePtr ApplyAdagradDAInferShape(const PrimitivePtr &primitive,
   }
   auto prim_name = primitive->name();
   auto var_shape_ptr = input_args[kInputIndex0]->GetShape();
-  auto gradient_accumulator_shape_ptr = input_args[kInputIndex1]->GetShape();
-  auto gradient_squared_accumulator_shape_ptr = input_args[kInputIndex2]->GetShape();
   auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   auto gradient_accumulator_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
@@ -86,8 +84,7 @@ abstract::TupleShapePtr ApplyAdagradDAInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("l2_shape size", l2_shape_rank, kEqual, batch_rank, primitive->name());
   (void)CheckAndConvertUtils::CheckInteger("global_step_shape size", global_step_shape.size(), kEqual, batch_rank,
                                            primitive->name());
-  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
-    var_shape_ptr, gradient_accumulator_shape_ptr, gradient_squared_accumulator_shape_ptr});
+  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{var_shape_ptr});
 }
 
 TuplePtr ApplyAdagradDAInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -100,8 +97,6 @@ TuplePtr ApplyAdagradDAInferType(const PrimitivePtr &prim, const std::vector<Abs
     MS_EXCEPTION_IF_NULL(item);
   }
   auto var_type = input_args[kInputIndex0]->GetType();
-  auto gradient_accumulator_type = input_args[kInputIndex1]->GetType();
-  auto gradient_squared_accumulator_type = input_args[kInputIndex2]->GetType();
   auto grad_type = input_args[kInputIndex3]->GetType();
   auto lr_type = input_args[kInputIndex4]->GetType();
   auto l1_type = input_args[kInputIndex5]->GetType();
@@ -111,8 +106,6 @@ TuplePtr ApplyAdagradDAInferType(const PrimitivePtr &prim, const std::vector<Abs
   // gradient_accumulator、gradient_squared_accumulator、grad must have the same type as var
   std::map<std::string, TypePtr> args;
   (void)args.insert(std::make_pair("var_type", var_type));
-  (void)args.insert(std::make_pair("gradient_accumulator_type", gradient_accumulator_type));
-  (void)args.insert(std::make_pair("gradient_squared_accumulator_type", gradient_squared_accumulator_type));
   (void)args.insert(std::make_pair("grad_type", grad_type));
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
   // lr、l1、l2、global_step_type must be a scalar type
@@ -129,8 +122,7 @@ TuplePtr ApplyAdagradDAInferType(const PrimitivePtr &prim, const std::vector<Abs
   (void)args_global_step.insert(std::make_pair("global_step_type", global_step_type));
   const std::set<TypePtr> valid_types1 = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_global_step, valid_types1, prim_name);
-  return std::make_shared<Tuple>(
-    std::vector<TypePtr>{var_type, gradient_accumulator_type, gradient_squared_accumulator_type});
+  return std::make_shared<Tuple>(std::vector<TypePtr>{var_type});
 }
 }  // namespace
 
