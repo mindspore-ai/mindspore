@@ -35,8 +35,13 @@
 namespace ge {
 using namespace std;
 
-void UpdateOutputDesc(Operator &op, TensorDesc &output_desc) {
-  op.UpdateOutputDesc(output_desc.GetName(), output_desc);
+ge::graphStatus UpdateOutputDesc(Operator &op, TensorDesc &output_desc) {
+  auto output_name = output_desc.GetName();
+  if (op.UpdateOutputDesc(output_name, output_desc) == GRAPH_FAILED) {
+    OP_LOGE(op.GetName().c_str(), "Update output_desc '%s' failed.", output_name.c_str());
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
 }
 
 bool GetInputDataType(const ge::DataType &data_type, const std::vector<ge::DataType> &supportList) {

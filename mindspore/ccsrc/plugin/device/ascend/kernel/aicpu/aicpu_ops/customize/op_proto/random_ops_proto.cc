@@ -69,6 +69,27 @@ IMPLEMT_COMMON_INFERFUNC(LogNormalReverseInferShape) {
 CUST_COMMON_INFER_FUNC_REG(LogNormalReverse, LogNormalReverseInferShape);
 // ----------------LogNormalReverse END-------------------
 
+// ----------------Randperm-------------------
+CUST_IMPLEMT_INFERFUNC(Randperm, RandpermInfer) {
+  TensorDesc output_desc = op.GetOutputDescByName("output");
+  DataType dtype;
+  if (op.GetAttr("dtype", dtype) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Get attr dtype error.");
+    return GRAPH_FAILED;
+  }
+  int64_t max_length;
+  if (op.GetAttr("max_length", max_length) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Get attr 'max_length' error.");
+    return GRAPH_FAILED;
+  }
+  auto output_shape = Shape({max_length});
+  output_desc.SetDataType(dtype);
+  output_desc.SetShape(output_shape);
+  return UpdateOutputDesc(op, output_desc);
+}
+CUST_INFER_FUNC_REG(Randperm, RandpermInfer);
+// ----------------Randperm END-------------------
+
 // ----------------Dropout2D-------------------
 IMPLEMT_COMMON_INFERFUNC(Dropout2DInferShape) {
   TensorDesc output_desc = op.GetOutputDescByName("output");

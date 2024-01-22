@@ -140,6 +140,7 @@ cust_op_lists = [
     "qr",
     "raggedrange",
     "randompoisson",
+    "randperm",
     "reciprocal",
     "reciprocalgrad",
     "reducemean",
