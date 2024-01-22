@@ -1247,7 +1247,7 @@ bool SetModeForControlFlow(const FuncGraphPtr &func_graph, const std::vector<Anf
   return true;
 }
 
-void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
+void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr, std::string *kbk_reason) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -1276,21 +1276,32 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
 
   // GRAPH | Single Op : KernelByKernel path in MindRT.
   if (context_ptr->IsKByKExecutorMode()) {
-    MS_LOG(INFO) << "Run graph mode with kernel by kernel by configuration.";
+    if (kbk_reason != nullptr) {
+      *kbk_reason = "Run graph mode with kernel by kernel by configuration.";
+      MS_LOG(INFO) << *kbk_reason;
+    }
     set_ctx(false, false, false);
     return;
   }
 
   // GRAPH | Dynamic Shape : KernelByKernel path in MindRT.
   if (IsDynamicShapeGraph(func_graph) && (context_ptr->backend_policy() != "ge")) {
-    MS_LOG(INFO) << "Run graph mode with kernel by kernel because graph exist dynamic shape.";
+    if (kbk_reason != nullptr) {
+      *kbk_reason =
+        "Run graph mode with kernel by kernel because graph exist dynamic shape. Call "
+        "'set_context(save_graphs=True)' to check graph irs.";
+      MS_LOG(INFO) << *kbk_reason;
+    }
     set_ctx(false, false, false);
     return;
   }
 
   // GRAPH | Dynamic Scalar : Dynamic scalar ops in graph.
   if (IsNeedBackoffGraph(func_graph)) {
-    MS_LOG(INFO) << "Run graph mode with kernel by kernel because graph exist dynamic scalar ops.";
+    if (kbk_reason != nullptr) {
+      *kbk_reason = "Run graph mode with kernel by kernel because graph exist dynamic scalar ops.";
+      MS_LOG(INFO) << *kbk_reason;
+    }
     set_ctx(false, false, false);
     return;
   }
@@ -1350,8 +1361,10 @@ void SetRunMode(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
+  // The root cause of KernelByKernel mode should be returned.
+  std::string kbk_reason = "";
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-    SetRunMode(resource->func_graph(), resource->GetBackend().get());
+    SetRunMode(resource->func_graph(), resource->GetBackend().get(), &kbk_reason);
   } else {
     OriginSetRunMode(resource);
   }
@@ -1360,9 +1373,11 @@ void SetRunMode(const ResourcePtr &resource) {
   auto enable_hccl = context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL);
   bool using_cm = common::UseDynamicCluster() && common::GetEnv("MS_HCCL_CM_INIT") == "1";
   if (!is_task_sink && mode == kGraphMode && enable_hccl && (!common::UseHostCollective() || using_cm)) {
-    MS_LOG(INTERNAL_EXCEPTION)
-      << "Current execute mode is kernelbykernel, the processes must be launched with OpenMPI or "
-         "Dynamic Cluster(Without setting MS_HCCL_CM_INIT to 1)";
+    MS_LOG(INTERNAL_EXCEPTION) << "Current execution mode is 'kernelbykernel', reason: " << kbk_reason
+                               << ", but you're launching job using 'ranktable', which "
+                                  "does not support 'kernelbykernel' mode.\n Please refer to link: "
+                                  "https://www.mindspore.cn/tutorials/experts/en/master/parallel/startup_method.html "
+                                  "and use 'Dynamic cluster'(suggested) or 'mpirun' to launch your job.";
   }
 }
 
