@@ -17,10 +17,9 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_MEMORY_FREE_ACTOR_H_
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_MEMORY_FREE_ACTOR_H_
 
-#include <chrono>
+#include <memory>
 #include <set>
 #include <string>
-#include <memory>
 #include "runtime/graph_scheduler/actor/memory_aware_actor.h"
 
 namespace mindspore {
@@ -47,28 +46,20 @@ class MemoryFreeActor : public MemoryAwareActor {
   void AddStreamId(uint32_t stream_id) { (void)stream_ids_.emplace(stream_id); }
   std::set<uint32_t> &stream_ids() { return stream_ids_; }
 
+  // Process somas cross streams memory synchronize.
+  void ProcessSomasCrossStreamMemorySynchronization(OpContext<DeviceTensor> *const context);
+
  protected:
   void Run(OpContext<DeviceTensor> *const context) override {
-    if (stream_ids_.size() > 0 && !(stream_ids_.size() == 1 && stream_ids_.count(kDefaultStreamIndex) == 1)) {
-      auto start_time = std::chrono::steady_clock::now();
-      int64_t start_time_microseconds =
-        std::chrono::duration_cast<std::chrono::microseconds>(start_time.time_since_epoch()).count();
-      device_contexts_[0]->device_res_manager_->SyncAllStreams();
-      auto end_time = std::chrono::steady_clock::now();
-      int64_t cost_microseconds =
-        std::chrono::duration_cast<std::chrono::microseconds>(end_time.time_since_epoch()).count() -
-        start_time_microseconds;
-      MS_LOG(DEBUG) << "Memory free actor start to sync streams end, cost : " << cost_microseconds << "us.";
-    }
-
+    ProcessSomasCrossStreamMemorySynchronization(context);
     PostRun(context);
   }
 
  private:
   friend class SchedulerHelper;
 
-  std::set<uint32_t> stream_ids_;
   SomasInfo *somas_info_;
+  std::set<uint32_t> stream_ids_;
 };
 
 using MemoryFreeActorPtr = std::shared_ptr<MemoryFreeActor>;
