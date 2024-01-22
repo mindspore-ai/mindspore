@@ -1232,6 +1232,33 @@ std::vector<double> CheckAndConvertUtils::CheckListOrTupleFloat(const std::strin
   return result;
 }
 
+std::vector<pyfloat> CheckAndConvertUtils::CheckListOrTupleFloat(const std::string &arg_name,
+                                                                 const AbstractBasePtr &abs,
+                                                                 const std::string &prim_name) {
+  std::vector<pyfloat> result{};
+  if (IsSequence(abs)) {
+    const auto &type_list = GetSequenceElementTypes(abs);
+    if (type_list.empty()) {
+      return result;
+    }
+    if (type_list.front()->type_id() == kNumberTypeFloat64 || type_list.front()->type_id() == kNumberTypeFloat32) {
+      const auto &arr_value = ops::GetArrayValue<pyfloat>(abs);
+      if (arr_value->HasUnknownValue()) {
+        MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], there are unknown values in the " << arg_name
+                                 << ", please handle this case before calling this function.";
+      }
+      result = arr_value->ToVector();
+    } else {
+      MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the " << arg_name
+                              << " must be one of ['tuple', 'list'] with all Float elements, but got "
+                              << type_list.front()->ToString();
+    }
+    return result;
+  }
+  MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the " << arg_name
+                          << " must be one of ['tuple', 'list'] with all Float elements, but got " << abs->ToString();
+}
+
 std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string &arg_name, const ValuePtr &attr,
                                                               const std::string &prim_name) {
   std::vector<int64_t> result;
