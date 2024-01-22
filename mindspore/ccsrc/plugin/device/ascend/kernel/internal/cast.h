@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "plugin/device/ascend/kernel/internal/elewise_unary.h"
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_CAST_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_CAST_H_
 
-#include <memory>
-#include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
+#include <vector>
+#include "plugin/device/ascend/kernel/internal/internal_kernel_mod.h"
 
 namespace mindspore {
 namespace kernel {
-internal::OpParamPtr ElewiseUnary::CreateOpParam(const std::vector<KernelTensor *> &inputs,
-                                                 const std::vector<KernelTensor *> &outputs) {
-  internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
-  SetComputeType(param_ptr);
-  return param_ptr;
-}
+class InternalCast : public InternalKernelMod {
+ public:
+  InternalCast() : InternalKernelMod("Cast") {}
+  ~InternalCast() = default;
 
-void ElewiseUnary::SetInOutIdx() {
-  inputsIdxMap_[0] = 0;
-  outputsIdxMap_[0] = 0;
-}
+ protected:
+  internal::OpParamPtr CreateOpParam(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs);
+  void SetInOutIdx();
+};
 }  // namespace kernel
 }  // namespace mindspore
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_CAST_H_
