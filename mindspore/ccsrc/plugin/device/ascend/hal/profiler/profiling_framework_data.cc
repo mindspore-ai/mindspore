@@ -31,28 +31,6 @@ namespace mindspore {
 namespace profiler {
 namespace ascend {
 
-uint64_t getClockSyscnt() {
-  uint64_t cycles;
-#if defined(__aarch64__)
-  asm volatile("mrs %0, cntvct_el0" : "=r"(cycles));
-#elif defined(__x86_64__)
-  constexpr uint32_t uint32Bits = 32U;
-  uint32_t hi = 0;
-  uint32_t lo = 0;
-  __asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
-  cycles = (static_cast<uint64_t>(lo)) | ((static_cast<uint64_t>(hi)) << uint32Bits);
-#elif defined(__arm__)
-  const uint32_t uint32Bits = 32U;
-  uint32_t hi = 0;
-  uint32_t lo = 0;
-  asm volatile("mrrc p15, 1, %0, %1, c14" : "=r"(lo), "=r"(hi));
-  cycles = (static_cast<uint64_t>(lo)) | ((static_cast<uint64_t>(hi)) << uint32Bits);
-#else
-  cycles = 0;
-#endif
-  return cycles;
-}
-
 uint64_t GetClockMonotonicRawNs() {
   struct timespec ts = {0};
   clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
@@ -60,7 +38,7 @@ uint64_t GetClockMonotonicRawNs() {
          static_cast<uint64_t>(ts.tv_nsec);  // 1000000000为秒转换为纳秒的倍数
 }
 
-inline void encodeStrData(uint16_t type, const std::string &data, const std::unique_ptr<std::vector<uint8_t>> &result) {
+inline void EncodeStrData(uint16_t type, const std::string &data, const std::unique_ptr<std::vector<uint8_t>> &result) {
   for (size_t i = 0; i < sizeof(uint16_t); ++i) {
     result->push_back((type >> (i * 8)) & 0xff);
   }
@@ -72,7 +50,7 @@ inline void encodeStrData(uint16_t type, const std::string &data, const std::uni
 }
 
 template <typename T>
-void encodeFixedData(const std::vector<T> &data_list, const std::unique_ptr<std::vector<uint8_t>> &result) {
+void EncodeFixedData(const std::vector<T> &data_list, const std::unique_ptr<std::vector<uint8_t>> &result) {
   for (auto data : data_list) {
     for (size_t i = 0; i < sizeof(T); ++i) {
       result->push_back((static_cast<size_t>(data) >> (i * 8)) & 0xff);
@@ -81,7 +59,7 @@ void encodeFixedData(const std::vector<T> &data_list, const std::unique_ptr<std:
 }
 
 template <typename T>
-void encode2DIntegerMatrixDatas(const uint16_t type, const std::vector<std::vector<T>> &data_list,
+void Encode2DIntegerMatrixDatas(const uint16_t type, const std::vector<std::vector<T>> &data_list,
                                 const std::unique_ptr<std::vector<uint8_t>> &result) {
   std::string rst;
   for (auto tensor : data_list) {
@@ -96,36 +74,36 @@ void encode2DIntegerMatrixDatas(const uint16_t type, const std::vector<std::vect
   if (!rst.empty()) {
     rst.pop_back();
   }
-  encodeStrData(type, rst, result);
+  EncodeStrData(type, rst, result);
 }
 
-inline void encodeStrArrayData(const uint16_t type, const std::vector<std::string> &data_list,
+inline void EncodeStrArrayData(const uint16_t type, const std::vector<std::string> &data_list,
                                const std::unique_ptr<std::vector<uint8_t>> &result) {
   std::string rst = std::accumulate(data_list.begin(), data_list.end(), std::string(""),
                                     [](const std::string &r, const auto d) { return r + ';' + d; });
   if (!rst.empty()) {
     rst.pop_back();
   }
-  encodeStrData(type, rst, result);
+  EncodeStrData(type, rst, result);
 }
 
 std::vector<uint8_t> OpRangeData::encode() {
   std::unique_ptr<std::vector<uint8_t>> result = std::make_unique<std::vector<uint8_t>>();
-  encodeFixedData<int64_t>({start_ns, end_ns, sequence_number}, result);
-  encodeFixedData<uint64_t>({process_id, start_thread_id, end_thread_id, forward_thread_id}, result);
+  EncodeFixedData<int64_t>({start_ns, end_ns, sequence_number}, result);
+  EncodeFixedData<uint64_t>({process_id, start_thread_id, end_thread_id, forward_thread_id}, result);
   result->push_back(is_async);
-  encodeStrData(static_cast<uint16_t>(OpRangeDataType::NAME), name, result);
+  EncodeStrData(static_cast<uint16_t>(OpRangeDataType::NAME), name, result);
   if (!input_dtypes.empty()) {
-    encodeStrArrayData(static_cast<uint16_t>(OpRangeDataType::INPUT_DTYPES), input_dtypes, result);
+    EncodeStrArrayData(static_cast<uint16_t>(OpRangeDataType::INPUT_DTYPES), input_dtypes, result);
   }
   if (!input_shapes.empty()) {
-    encode2DIntegerMatrixDatas<int64_t>(static_cast<uint16_t>(OpRangeDataType::INPUT_SHAPE), input_shapes, result);
+    Encode2DIntegerMatrixDatas<int64_t>(static_cast<uint16_t>(OpRangeDataType::INPUT_SHAPE), input_shapes, result);
   }
   if (!stack.empty()) {
-    encodeStrArrayData(static_cast<uint16_t>(OpRangeDataType::STACK), stack, result);
+    EncodeStrArrayData(static_cast<uint16_t>(OpRangeDataType::STACK), stack, result);
   }
   if (!module_hierarchy.empty()) {
-    encodeStrArrayData(static_cast<uint16_t>(OpRangeDataType::MODULE_HIERARCHY), module_hierarchy, result);
+    EncodeStrArrayData(static_cast<uint16_t>(OpRangeDataType::MODULE_HIERARCHY), module_hierarchy, result);
   }
   std::vector<uint8_t> resultTLV;
   uint16_t dataType = static_cast<uint16_t>(OpRangeDataType::OP_RANGE_DATA);
@@ -148,7 +126,7 @@ void ProfilingFrameworkData::RecordLaunchGETaskBegin(const CNodePtr &node) {
     return;
   }
 
-  int64_t start_ns = getClockSyscnt();
+  int64_t start_ns = Utils::GetClockSyscnt();
   auto tid = syscall(SYS_gettid);
   kernel_launch_begin_[std::to_string(tid) + "_" + node->fullname_with_scope()] = start_ns;
 }
@@ -169,7 +147,7 @@ void ProfilingFrameworkData::RecordGETask(const CNodePtr &node) {
     return;
   }
   int64_t start_ns = iter->second;
-  int64_t end_ns = getClockSyscnt();
+  int64_t end_ns = Utils::GetClockSyscnt();
   int64_t sequence_number = 0;
   uint64_t process_id = getpid();
   uint64_t start_thread_id = static_cast<uint64_t>(tid);

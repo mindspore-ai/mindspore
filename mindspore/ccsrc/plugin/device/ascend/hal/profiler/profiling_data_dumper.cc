@@ -65,6 +65,7 @@ bool Utils::CreateDir(const std::string &path) {
     return IsDir(path) ? true : false;
   }
   size_t pos = 0;
+  static const int DEFAULT_MKDIR_MODE = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
   while ((pos = path.find_first_of('/', pos)) != std::string::npos) {
     std::string base_dir = path.substr(0, ++pos);
     if (IsFileExist(base_dir)) {
@@ -74,11 +75,11 @@ bool Utils::CreateDir(const std::string &path) {
         return false;
       }
     }
-    if (mkdir(base_dir.c_str(), 0750) != 0) {
+    if (mkdir(base_dir.c_str(), DEFAULT_MKDIR_MODE) != 0) {
       return false;
     }
   }
-  return (mkdir(path.c_str(), 0750) == 0) ? true : false;
+  return (mkdir(path.c_str(), DEFAULT_MKDIR_MODE) == 0) ? true : false;
 }
 
 std::string Utils::RealPath(const std::string &path) {
@@ -119,10 +120,10 @@ uint64_t Utils::GetClockMonotonicRawNs() {
   struct timespec ts = {0};
   clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
   return static_cast<uint64_t>(ts.tv_sec) * 1000000000 +
-         static_cast<uint64_t>(ts.tv_nsec);  // 1000000000为秒转换为纳秒的倍数
+         static_cast<uint64_t>(ts.tv_nsec);  // To convert to nanoseconds, it needs to be 1000000000.
 }
 
-uint64_t Utils::getClockSyscnt() {
+uint64_t Utils::GetClockSyscnt() {
   uint64_t cycles;
 #if defined(__aarch64__)
   asm volatile("mrs %0, cntvct_el0" : "=r"(cycles));

@@ -40,7 +40,6 @@ constexpr uint32_t kDefaultRingBuffer = 1024;
 constexpr uint32_t kBatchMaxLen = 5 * 1024 * 1024;  // 5 MB
 constexpr uint32_t kMaxWaitTimeUs = 1024;
 constexpr uint32_t kNotifyInterval = 2;
-// constexpr uint32_t PATH_MAX = 255;
 
 class Utils {
  public:
@@ -52,7 +51,7 @@ class Utils {
   static std::string RelativeToAbsPath(const std::string &path);
   static std::string DirName(const std::string &path);
   static uint64_t GetClockMonotonicRawNs();
-  static uint64_t getClockSyscnt();
+  static uint64_t GetClockSyscnt();
   static uint64_t GetClockTime();
   static bool CreateFile(const std::string &path);
   static bool IsSoftLink(const std::string &path);
