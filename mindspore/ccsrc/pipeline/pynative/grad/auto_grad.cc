@@ -1269,7 +1269,7 @@ void AutoGradCellImpl::BuildKNodeListForHighOrderGraph(const ValuePtrList &input
                                                        AnfNodePtrList *const node_list) {
   for (size_t i = 0; i < input_value.size(); ++i) {
     const auto knode = BuildKNodeForCNodeInput(input_value[i], input_abs[i]);
-    // Convert value sequence to make tuple, so that finalpass can elimnate tuplegetitem.
+    // Convert value sequence to make tuple, so that finalpass can eliminate tuplegetitem.
     // BuildKnodeForTuplgeGetItem now do not support input is valuesequence.
     if (knode->isa<ValueNode>()) {
       auto value_node = knode->cast<ValueNodePtr>();

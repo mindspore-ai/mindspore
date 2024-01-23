@@ -23,6 +23,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
+#include "mindspore/core/ops/auto_generate/gen_ops_primitive.h"
 #include "ops/sequence_ops.h"
 #include "ops/other_ops.h"
 #include "ops/framework_ops.h"
