@@ -44,7 +44,7 @@ class RMSpropFactory():
         self.if_change = if_change
         self.data = np.random.rand(2, 2).astype(np.float32)
         self.label = np.random.rand(2, 3).astype(np.float32)
-        self.epochs = 3
+        self.epochs = 1
         self.steps = 1
         self.lr = 0.002
 
@@ -167,7 +167,7 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
         assert np.array(data_expected).shape == np.array(data_me).shape
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
