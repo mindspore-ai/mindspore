@@ -62,6 +62,7 @@
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/compact_tensor_liveness.h"
 #include "backend/common/graph_kernel/adapter/symbol_engine_builder.h"
+#include "backend/common/graph_kernel/symbol_engine_extender.h"
 #include "backend/common/graph_kernel/core/graph_kernel_op_combiner.h"
 #include "backend/common/graph_kernel/set_infershape_functor.h"
 #include "backend/common/graph_kernel/recognize_softmax_grad_ext.h"
@@ -277,6 +278,13 @@ PassManagerPtr GraphKernelOptimizer::PostProcess() const {
 
   // Add the new tensors to the kernel_graph
   pm->Add(std::make_shared<BindValueToGraph>(), OptLevel_1);
+
+  auto kernel_packet_lv = GetPassLevelByFlag(common::GetEnv("MS_DEV_CLUSTER_SHAPE") != "off");
+  pm->Add(std::make_shared<SymbolEngineBuilder>(true), kernel_packet_lv, is_gpu);
+  pm->Add(std::make_shared<SymbolEngineExtender>(), kernel_packet_lv, is_gpu);
+  pm->Add(std::make_shared<ConvertCallToPrim>(kAttrKernelPacketNode, prim::kPrimKernelPacket->name()), kernel_packet_lv,
+          is_gpu);
+
   return pm;
 }
 

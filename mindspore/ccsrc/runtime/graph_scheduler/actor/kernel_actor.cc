@@ -790,6 +790,7 @@ void KernelActor::InferShapeAndResize() {
     auto functor = common::AnfAlgo::GetNodeAttr<InferShapeFunctorPtr>(kernel_, "infer_shape_functor");
     base_shape = functor->InferShape(kernel_, input_kernel_tensors_for_infer_);
   } else {
+    MS_EXCEPTION_IF_NULL(kernel_mod_->primitive());
     base_shape = opt::dynamic_shape::InferShape(kernel_mod_->primitive(), input_kernel_tensors_for_infer_);
   }
   MS_EXCEPTION_IF_NULL(base_shape);

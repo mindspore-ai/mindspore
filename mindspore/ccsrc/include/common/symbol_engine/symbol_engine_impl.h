@@ -45,10 +45,14 @@ class COMMON_EXPORT SymbolEngineImpl : public SymbolEngine {
   MS_DECLARE_PARENT(SymbolEngineImpl, SymbolEngine)
 
   /// \brief Build SymbolEngine, and set to the FuncGraph.
-  static void Build(const FuncGraphPtr &func_graph);
+  static std::shared_ptr<symshape::SymbolEngineImpl> Build(const FuncGraphPtr &func_graph);
 
   bool Infer(const AbstractBasePtrList &inputs) override;
   BaseShapePtr QueryShape(const AnfNodePtr &node) override;
+  ValuePtr QueryValue(const AnfNodePtr &node) override;
+  bool IsDependValue(const AnfNodePtr &node) override;
+  bool IsDependShape(const AnfNodePtr &node) override;
+  bool SupportInfer() override { return support_infer_; }
   void QuerySymbolExpr(const AnfNodePtr &node, std::unordered_map<std::string, std::string> *symbol_expr_map) override;
 
   std::string ToString() const override { return "SymbolEngine_" + name_; }
@@ -87,6 +91,7 @@ class COMMON_EXPORT SymbolEngineImpl : public SymbolEngine {
   std::set<FuncGraph *> visited_graph_;
 };
 
+using SymbolEngineImplPtr = std::shared_ptr<symshape::SymbolEngineImpl>;
 /// \brief nodes have same digital shape may use same abstract object, but their symbolic shape may not same, clone a
 /// new abstract for symbolic info.
 COMMON_EXPORT void CloneAbstractIfSymbolExists(const AnfNodePtr &node);

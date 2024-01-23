@@ -28,6 +28,7 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/framework_utils.h"
+#include "kernel/graph_kernel/kernel_packet/kernel_packet_kernel_mod.h"
 #include "plugin/device/gpu/hal/device/cuda_env_checker.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 namespace mindspore {
@@ -58,6 +59,39 @@ void SetGpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<ke
     kernel_info->set_ref_map(matched_kernel_attr.GetAllOutInRef(), matched_kernel_attr.GetOutInRefMap());
   }
 }
+
+// Create KernelPacketKernelMod and return the real inner kernel
+void CreateKernelPacketKernelMods(const std::vector<CNodePtr> &kernels) {
+  for (auto &kernel : kernels) {
+    MS_LOG(DEBUG) << "kernel name: " << kernel->DebugString();
+    auto real_node = kernel::GetKernelPacketRealNode(kernel);
+    auto kernel_mod = std::make_shared<kernel::KernelPacketKernelMod>(
+      [](void *dst, const void *src, size_t count, void *stream_ptr) -> bool {
+        cudaError_t status =
+          cudaMemcpyAsync(dst, src, count, cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr));
+        if (status != cudaSuccess) {
+          MS_LOG(ERROR) << "#umsg#CUDA Error:#umsg#cudaMemcpyAsync for KernelPacketdNode failed | Error Number: "
+                        << status << " " << cudaGetErrorString(status);
+          return false;
+        }
+        return true;
+      });
+    std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(kernel);
+    std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(kernel);
+
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    kernel_mod->SetDevicedId(device_id);
+    if (!kernel_mod->KernelMod::Init(common::AnfAlgo::GetCNodePrimitive(kernel), input_kernel_tensors,
+                                     output_kernel_tensors) ||
+        !kernel_mod->Init(real_node)) {
+      MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize gpu kernel op[" << kernel->fullname_with_scope()
+                        << "] failed.";
+    }
+    session::AnfRuntimeAlgorithm::SetKernelMod(kernel_mod, kernel.get());
+  }
+}
 }  // namespace
 
 void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
@@ -65,8 +99,13 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
   MS_EXCEPTION_IF_NULL(bin_map);
   bool already_check_nvcc = false;
   std::vector<AnfNodePtr> akg_nodes;
-  for (const auto &kernel : kernels) {
+  std::vector<CNodePtr> kernel_packet_nodes;
+  for (auto kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
+    if (kernel->HasAttr(kAttrKernelPacketNode)) {
+      kernel_packet_nodes.push_back(kernel);
+      kernel = kernel::GetKernelPacketRealNode(kernel);
+    }
     // Need backoff to create CPU kernel.
     if (AnfAlgo::IsKernelSelectBackoffOp(kernel)) {
       continue;
@@ -142,6 +181,7 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
   kernel::AkgGpuKernelBuilder akg_gpu_kernel_builder;
   (void)akg_gpu_kernel_builder.SingleOpParallelBuild(akg_nodes);
 #endif
+  CreateKernelPacketKernelMods(kernel_packet_nodes);
 }
 }  // namespace gpu
 }  // namespace device

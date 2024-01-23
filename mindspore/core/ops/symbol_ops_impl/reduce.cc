@@ -19,12 +19,19 @@
 namespace mindspore {
 namespace symshape {
 namespace ops {
+/// @brief Get values from axis parameter,
+/// if there are undetermined symbols in axis, return false
+/// @param axis The symbol represent axis parameter
+/// @param rank Rank of input
+/// @param skip_mode skip_mode
+/// @param axis_set The set stores the values of axes
+/// @return if success
 bool Reduce::GetAxisSet(const SymbolPtr &axis, int64_t rank, bool skip_mode, HashSet<int64_t> *axis_set) const {
   auto axis_list = axis->as<ListSymbol>();
   if (axis_list != nullptr) {
     if (axis_list->symbols().empty()) {
       if (skip_mode) {
-        return false;
+        return true;
       } else {
         for (int64_t i = 0; i < rank; i++) {
           (void)axis_set->insert(i);
@@ -32,13 +39,38 @@ bool Reduce::GetAxisSet(const SymbolPtr &axis, int64_t rank, bool skip_mode, Has
       }
     } else {
       for (auto &x : axis_list->symbols()) {
-        (void)axis_set->insert(AsInt(x));
+        if (x->HasData()) {
+          (void)axis_set->insert(AsInt(x));
+        } else {
+          return false;
+        }
       }
     }
   } else {
-    (void)axis_set->insert(AsInt(axis));
+    if (axis->HasData()) {
+      (void)axis_set->insert(AsInt(axis));
+    } else {
+      return false;
+    }
   }
   return true;
+}
+
+SymbolPtr Reduce::DynEval(size_t rank, bool keep_dims, SymbolPtr axis) {
+  if (!is_building()) {
+    MS_LOG_EXCEPTION << "at runtime, there should not be unknown symbols";
+  }
+  size_t res_len = rank;
+  if (keep_dims) {
+    return GenVIntList(res_len);
+  }
+  auto axis_list = axis->as<ListSymbol>();
+  // axis_list may contain duplicate numbers
+  if (axis_list == nullptr || axis_list->symbols().size() == 1) {
+    MS_EXCEPTION_IF_CHECK_FAIL(rank >= 1, "input's rank is smaller than axis size");
+    return GenVIntList(rank - 1);
+  }
+  return GenVList();
 }
 
 SymbolPtr Reduce::Eval() {
@@ -65,11 +97,14 @@ SymbolPtr Reduce::Eval() {
     }
     return GenVList();
   }
-  DoNotEvalOnRun();
   HashSet<int64_t> axis_set;
   auto &inp = data->symbols();
   auto rank = SizeToLong(inp.size());
   if (!GetAxisSet(axis, rank, skip_mode, &axis_set)) {
+    return DynEval(rank, keep_dims, axis);
+  }
+  DoNotEvalOnRun();
+  if (axis_set.empty()) {
     return input(kIndex0);
   }
   SymbolPtrList out_shape;

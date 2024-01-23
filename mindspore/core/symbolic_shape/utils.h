@@ -34,6 +34,8 @@ MS_CORE_API SymbolPtr BuildSymbolicValue(const AbstractBasePtr &abstract);
 MS_CORE_API ShapeVector ToShape(const Symbol *symbol);
 inline ShapeVector ToShape(const SymbolPtr &symbol) { return ToShape(symbol.get()); }
 
+MS_CORE_API ValuePtr SymbolToValue(const Symbol *symbol);
+
 MS_CORE_API SymbolPtr ShapeVector2Symbol(const ShapeVector &shape, const OpPtr &op = nullptr);
 
 MS_CORE_API SymbolPtr IntValues2Symbol(const std::vector<int64_t> &shape, const OpPtr &op = nullptr);

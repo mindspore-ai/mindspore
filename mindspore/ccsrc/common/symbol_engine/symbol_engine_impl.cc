@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,11 +47,12 @@ std::pair<FuncGraphPtr, size_t> GetFuncGraphFromCNode(const CNodePtr &cnode) {
   return std::make_pair(sub_fg, index);
 }
 
-void SymbolEngineImpl::Build(const FuncGraphPtr &func_graph) {
+SymbolEngineImplPtr SymbolEngineImpl::Build(const FuncGraphPtr &func_graph) {
   auto engine = std::make_shared<SymbolEngineImpl>(func_graph);
   func_graph->set_symbol_engine(engine);
   engine->PreBuild();
   engine->BuildImpl();
+  return engine;
 }
 
 void SymbolEngineImpl::BuildNodesSymbol(const FuncGraphPtr &fg, const AnfNodePtrList &cnodes) {
@@ -197,11 +198,12 @@ bool SymbolEngineImpl::Infer(const AbstractBasePtrList &inputs) {
   auto fg = func_graph_.lock();
   MS_EXCEPTION_IF_NULL(fg);
   auto &params = fg->parameters();
-  if (params.size() != inputs.size()) {
-    MS_LOG(EXCEPTION) << "The parameter size should be equal to inputs size, but got " << params.size() << " vs "
-                      << inputs.size();
+  // There may be params like UpdateStates, which won't contribute to infer
+  if (params.size() < inputs.size()) {
+    MS_LOG(EXCEPTION) << "The parameter size should be equal to or larger than inputs size, but got " << params.size()
+                      << " vs " << inputs.size();
   }
-  for (size_t i = 0; i < params.size(); i++) {
+  for (size_t i = 0; i < inputs.size(); i++) {
     if (auto shape = params[i]->abstract()->GetSymbolicShape(); shape != nullptr) {
       auto cur_shape = inputs[i]->GetShape()->BuildSymbolicShape();
       MS_EXCEPTION_IF_NULL(cur_shape);
@@ -223,6 +225,7 @@ bool SymbolEngineImpl::Infer(const AbstractBasePtrList &inputs) {
 
 BaseShapePtr SymbolEngineImpl::QueryShape(const AnfNodePtr &node) {
   auto abs = node->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
   auto symbolic_shape = abs->GetSymbolicShape();
   if (symbolic_shape == nullptr) {
     return nullptr;
@@ -249,6 +252,35 @@ BaseShapePtr SymbolEngineImpl::QueryShape(const AnfNodePtr &node) {
   return std::make_shared<abstract::TupleShape>(std::move(shape_arr));
 }
 
+ValuePtr SymbolEngineImpl::QueryValue(const AnfNodePtr &node) {
+  auto abs = node->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+  auto symbolic_value = abs->GetSymbolicValue();
+  auto digital_value = abs->GetValue();
+  MS_EXCEPTION_IF_NULL(digital_value);
+  if (symbolic_value == nullptr) {
+    return digital_value;
+  }
+  if (!symbolic_value->HasData()) {
+    MS_LOG(WARNING) << "symbolic value of node has no data: " << node->fullname_with_scope();
+    return digital_value;
+  }
+  return SymbolToValue(symbolic_value.get());
+}
+
+bool SymbolEngineImpl::IsDependValue(const AnfNodePtr &node) {
+  if (depend_status_map_.find(node) != depend_status_map_.end()) {
+    return depend_status_map_[node].value;
+  }
+  return false;
+}
+
+bool SymbolEngineImpl::IsDependShape(const AnfNodePtr &node) {
+  if (depend_status_map_.find(node) != depend_status_map_.end()) {
+    return depend_status_map_[node].shape;
+  }
+  return false;
+}
 std::string SymbolEngineImpl::QuerySymbolExprHelper(
   const SymbolPtr &s, const std::unordered_map<std::string, std::string> &symbol_expr_map) {
   auto raw_string = s->ToRawString();
