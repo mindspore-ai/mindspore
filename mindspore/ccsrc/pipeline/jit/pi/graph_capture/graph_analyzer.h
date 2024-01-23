@@ -18,8 +18,10 @@
 
 #include <set>
 #include <vector>
+#include <memory>
 #include "pipeline/jit/pi/graph_capture/cfg.h"
 #include "pipeline/jit/pi/graph_capture/abstract_object.h"
+#include "pipeline/jit/pi/graph_capture/graph_build.h"
 namespace mindspore {
 namespace jit {
 namespace graph {
@@ -28,6 +30,10 @@ class Graph;
 class AbstractNode;
 class ValueNode;
 class CallNode;
+class GraphAnalyzer;
+class MindGraphAnalyzer;
+using GraphAnalyzerPtr = std::shared_ptr<GraphAnalyzer>;
+using MindGraphAnalyzerPtr = std::shared_ptr<MindGraphAnalyzer>;
 
 class GraphAnalyzer {
  public:
@@ -44,11 +50,15 @@ class GraphAnalyzer {
   };
 
   explicit GraphAnalyzer(Graph *g) : graph_(g) {}
+  static GraphAnalyzerPtr Creator(const GraphBuilderPtr &g) {
+    return g->trace_flag() ? std::static_pointer_cast<GraphAnalyzer>(std::make_shared<MindGraphAnalyzer>(g->GetGraph()))
+                           : std::make_shared<GraphAnalyzer>(g->GetGraph());
+  }
   auto &GetCaptureInfo() { return info_; }
   const auto &GetCaptureInfo() const { return info_; }
-  void Analyze();
+  virtual void Analyze();
   bool HasTensorOperation() const;
-  bool NeedInterpret() const { return need_interpret_; }
+  virtual bool NeedInterpret() const { return need_interpret_; }
 
  private:
   bool AnalyzeRecursive(Graph *g);
@@ -69,6 +79,15 @@ class GraphAnalyzer {
   Graph *graph_;
   CapturedInfo info_;
   bool need_interpret_;
+};
+
+class MindGraphAnalyzer : public GraphAnalyzer {
+ public:
+  explicit MindGraphAnalyzer(Graph *g) : GraphAnalyzer(g) {}
+  void Analyze() {
+    // TODO(chaiyouheng): new plan need UD, from now on we just focus on no break case
+  }
+  bool NeedInterpret() const { return false; }
 };
 
 bool ValidateGraphParameters(ValueNode *i);

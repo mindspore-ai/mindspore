@@ -136,6 +136,7 @@ typedef struct CodeExtra {
 } JitCompileResults;
 
 JitCompileResults *getJitCompileResults(PyObject *code, bool alloc = true);
+std::vector<py::object> PackArgs(const PyFrameObject *frame);
 }  // namespace graph
 }  // namespace jit
 }  // namespace mindspore

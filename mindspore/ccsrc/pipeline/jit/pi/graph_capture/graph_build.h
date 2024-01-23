@@ -19,11 +19,17 @@
 #include <vector>
 #include <unordered_map>
 #include <utility>
+#include <memory>
 #include "pipeline/jit/pi/graph_capture/graph.h"
+#include "pipeline/jit/pi/graph_build/func_graph_builder.h"
 
 namespace mindspore {
 namespace jit {
 namespace graph {
+class GraphBuilder;
+class MindGraphBuilder;
+using GraphBuilderPtr = std::shared_ptr<GraphBuilder>;
+using MindGraphBuilderPtr = std::shared_ptr<MindGraphBuilder>;
 class GraphBuilder {
  public:
   static const char *ID___self__;
@@ -40,8 +46,18 @@ class GraphBuilder {
     }
     graph_pool_.clear();
   }
+  static GraphBuilderPtr Creator(const PyFrameObject *f, bool trace_flag) {
+    return trace_flag ? std::static_pointer_cast<GraphBuilder>(std::make_shared<MindGraphBuilder>(f))
+                      : std::make_shared<GraphBuilder>(f);
+  }
+  static GraphBuilderPtr Creator(GraphBuilder *r, GraphBuilder *p, PyCodeObject *co, PyObject *globals,
+                                 bool trace_flag) {
+    return trace_flag ? std::static_pointer_cast<GraphBuilder>(std::make_shared<MindGraphBuilder>(r, p, co, globals))
+                      : std::make_shared<GraphBuilder>(r, p, co, globals);
+  }
 
-  StopTraceReason TraceRun();
+  virtual StopTraceReason TraceRun(const std::vector<py::object> &args);
+  virtual bool trace_flag() { return false; }
 
   void CollectInlineInfo(CallNode *node, int depth);
   Graph *GetGraph() const { return graph_; }
@@ -53,7 +69,8 @@ class GraphBuilder {
 
   static bool IsByteCodeImplemented(int bytecode);
 
- private:
+ protected:
+  std::vector<py::object> args_;  // inputs
   GraphBuilder *root_;
   GraphBuilder *parent_;
   Graph *graph_;
@@ -79,7 +96,7 @@ class GraphBuilder {
    * \param [out] stop_reason
    * \return The function object of call target
    */
-  py::object ResolveCallable(CallNode *call_node, StopTraceReason *stop_reason);
+  virtual py::object ResolveCallable(CallNode *call_node, StopTraceReason *stop_reason);
 
   /**
    * Resolve closure of function, generate cell free nodes to trace closure
@@ -150,7 +167,8 @@ class GraphBuilder {
   bool HandlePositionParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame);
 
   // build subgraph, return stop trace reason
-  StopTraceReason BuildSubGraph(CallNode *call_node, int depth, const py::object &func, GraphBuilder *subgraph);
+  virtual StopTraceReason BuildSubGraph(CallNode *call_node, int depth, const py::object &func,
+                                        const GraphBuilderPtr &subgraph);
 
   bool ReplaceCall(CallNode *call_node, const py::object &func);
 
@@ -212,6 +230,29 @@ class GraphBuilder {
   bool DoImport(const Instr &instr);
   bool NotImplementBytecode(const Instr &instr);
   static const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> bytecode_meth_map_;
+  std::vector<py::object> GetNewArgs(CallNode *call_node);
+};
+
+class MindGraphBuilder : public GraphBuilder {
+ public:
+  explicit MindGraphBuilder(const PyFrameObject *f) : GraphBuilder(f) {}
+  MindGraphBuilder(GraphBuilder *r, GraphBuilder *p, PyCodeObject *co, PyObject *globals)
+      : GraphBuilder(r, p, co, globals) {}
+  mindspore::FuncGraphBuilder fg_builder_;
+  bool trace_flag() { return true; }
+  StopTraceReason TraceRun(const std::vector<py::object> &args) {
+    FGAddInput(args);
+    auto res = GraphBuilder::TraceRun(args);
+    FGAddOutput();
+    return res;
+  }
+  void FGAddInput(const std::vector<py::object> &args);
+  py::object FGAddNode(CallNode *call_node, const py::object &callable_info, const std::vector<py::object> &args,
+                       StopTraceReason *stop_reason);
+  void FGAddOutput();
+  StopTraceReason BuildSubGraph(CallNode *call_node, int depth, const py::object &func,
+                                const GraphBuilderPtr &subgraph);
+  py::object ResolveCallable(CallNode *call_node, StopTraceReason *stop_reason);
 };
 }  // namespace graph
 }  // namespace jit
