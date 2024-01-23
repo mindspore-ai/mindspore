@@ -33,5 +33,5 @@ mindspore.scipy.linalg.cholesky
     返回：
         Tensor，`a` 的上三角或下三角cholesky因子。
 
-    异常:
+    异常：
         - **ValueError** - 如果输入的Tensor不是2D方阵。

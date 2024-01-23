@@ -32,5 +32,5 @@ mindspore.scipy.linalg.lu_factor
 
         - **piv** (Tensor) - shape为 :math:`(M,)` 的Tensor，表示置换矩阵 `p` 的索引：索引中的第 `i` 个元素值 `j` 表示矩阵的第 `i` 行与第 `j` 行互换。
 
-    异常:
+    异常：
         - **ValueError** - 如果 `a` 不是2D方阵。

@@ -40,5 +40,5 @@ mindspore.scipy.linalg.cho_factor
           矩阵的其他部分包含随机数据。
         - **lower** (bool) - 表示cholesky因子是在下三角形还是上三角形。
 
-    异常:
+    异常：
         - **ValueError** - 如果输入的Tensor不是2D方阵。

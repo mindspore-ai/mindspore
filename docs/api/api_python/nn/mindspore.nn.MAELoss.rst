@@ -33,7 +33,7 @@ mindspore.nn.MAELoss
         - **labels** (Tensor) - Tensor的shape是 :math:`(N, *)`，通常和 `logits` 的shape相同。然而，当 `logits` 和 `labels` 的shape不同时，它们需要支持广播。
 
     输出：
-        Tensor，加权损失，dtype是float，如果 `reduction` 是 ``'mean'`` 或 ``'sum'``，shape则为0，否则当`reduction` 是 ``'none'`` 时，shape是广播之后的shape。
+        Tensor，加权损失，dtype是float，如果 `reduction` 是 ``'mean'`` 或 ``'sum'``，shape则为0，否则当 `reduction` 是 ``'none'`` 时，shape是广播之后的shape。
 
     异常：
         - **ValueError** - 如果 `reduction` 不是 ``'none'``， ``'mean'``， ``'sum'`` 中的一个。

@@ -23,5 +23,5 @@ mindspore.scipy.linalg.block_diag
     返回：
         对角线上含有 `A`、`B`、`C`，...的Tensor，数据类型与 `A` 相同。
 
-    异常:
+    异常：
         - **ValueError** - 输入参数中存在维度大于2的Tensor。

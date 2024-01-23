@@ -124,6 +124,7 @@ def is_initialized(device_target):
 
     Note:
         MindSpore's backends "CPU", "GPU" and "Ascend" will be initialized in the following scenarios:
+
         - For distributed job, backend will be initialized after `mindspore.communication.init` method is called.
         - For standalone job, backend will be initialized after running
           the first operator or calling creating stream/event interfaces.
@@ -198,7 +199,7 @@ def device_count(device_target=None):
         For CPU backend, this method always returns 1.
 
     Args:
-        device_target (str): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+        device_target (str, optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
 
     Returns:
         int.
@@ -222,13 +223,13 @@ def get_device_capability(device_id, device_target=None):
 
     Args:
         device_id (int): The device id of which the capability will be returned.
-        device_target (str): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+        device_target (str, optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
 
     Returns:
         tuple(int, int) for GPU.
 
-        - param1：int，cuda major revision number.
-        - param2：int，cuda minor revision number.
+        - param1 - int, cuda major revision number.
+        - param2 - int, cuda minor revision number.
 
         None for Ascend and CPU.
 
@@ -254,11 +255,11 @@ def get_device_properties(device_id, device_target=None):
 
     Args:
         device_id (int): The device id of which the properties will be returned.
-        device_target (str): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+        device_target (str, optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
 
     Returns:
-        - `cudaDeviceProp <https://docs.nvidia.com/cuda/cuda-runtime-api/structcudaDeviceProp.html#structcudaDeviceProp>`_ for GPU.
-        - `AscendDeviceProperties` for Ascend:
+        - `cudaDeviceProp`_ for GPU.
+        - `AscendDeviceProperties` for Ascend.
 
           .. code-block::
 
@@ -269,6 +270,8 @@ def get_device_properties(device_id, device_target=None):
               }
 
         - None for CPU.
+
+    .. _cudaDeviceProp: https://docs.nvidia.com/cuda/cuda-runtime-api/structcudaDeviceProp.html#structcudaDeviceProp
 
     Examples:
         >>> import mindspore as ms
@@ -290,7 +293,7 @@ def get_device_name(device_id, device_target=None):
 
     Args:
         device_id (int): The device id of which the name will be returned.
-        device_target (str): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+        device_target (str, optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
 
     Returns:
         str.
@@ -312,7 +315,7 @@ def get_arch_list(device_target=None):
         If `device_target` is not specified, get the device name of the current backend set by context.
 
     Args:
-        device_target (str): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+        device_target (str, optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
 
     Returns:
         str for GPU.
