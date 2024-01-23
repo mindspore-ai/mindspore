@@ -953,7 +953,7 @@ void AclConverter::ProcessRunnerSpecialInfo(const std::string &prim_name,
   auto op_type = opinfo->op_type();
   if (!AclAdapterManager::GetInstance().CheckAclAdapter(op_type)) {
     is_dynamic_ = is_dynamic;
-    precision_mode_ = (AclUtil::KeepOriginDType() == 1) ? MUST_KEEP_ORIGIN_DTYPE : ALLOW_FP32_TO_FP16;
+    precision_mode_ = DEFAULT_MODE;
     return;
   }
   auto info = AclAdapterManager::GetInstance().GetOpInfo(op_type);
@@ -966,11 +966,6 @@ void AclConverter::ProcessRunnerSpecialInfo(const std::string &prim_name,
 
   // Set acl precision mode
   precision_mode_ = info.precision_mode();
-  if (precision_mode_ == FORCE_FP32 &&
-      std::any_of(output_params.begin(), output_params.end(),
-                  [](const TensorParams &param) { return param.data_type != kNumberTypeFloat32; })) {
-    precision_mode_ = ALLOW_FP32_TO_FP16;
-  }
 }
 
 void AclConverter::SetRunnerSpecialInfo() {

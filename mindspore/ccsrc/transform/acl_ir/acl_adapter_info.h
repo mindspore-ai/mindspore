@@ -138,7 +138,7 @@ class AclAdapterInfo {
   bool set_dynamic_mode{false};
   bool is_dynamic_{true};
   bool is_const_input_{false};
-  AclPrecisionMode precision_mode_{ALLOW_FP32_TO_FP16};  // 910 default mix precision.
+  AclPrecisionMode precision_mode_{DEFAULT_MODE};
   std::map<size_t, AclSpecialInfo> input_info_{};
   std::map<size_t, std::vector<std::string>> output_info_{};
   std::map<size_t, size_t> output_index_info_{};
