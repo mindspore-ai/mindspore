@@ -92,7 +92,7 @@ namespace dataset {
 PYBIND_REGISTER(AdjustBrightnessOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::AdjustBrightnessOperation, TensorOperation,
                                    std::shared_ptr<vision::AdjustBrightnessOperation>>(*m, "AdjustBrightnessOperation")
-                    .def(py::init([](float brightness_factor, std::string device_target) {
+                    .def(py::init([](float brightness_factor, const std::string &device_target) {
                       auto adjust_brightness =
                         std::make_shared<vision::AdjustBrightnessOperation>(brightness_factor, device_target);
                       THROW_IF_ERROR(adjust_brightness->ValidateParams());
@@ -103,7 +103,7 @@ PYBIND_REGISTER(AdjustBrightnessOperation, 1, ([](const py::module *m) {
 PYBIND_REGISTER(AdjustContrastOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::AdjustContrastOperation, TensorOperation,
                                    std::shared_ptr<vision::AdjustContrastOperation>>(*m, "AdjustContrastOperation")
-                    .def(py::init([](float contrast_factor, std::string device_target) {
+                    .def(py::init([](float contrast_factor, const std::string &device_target) {
                       auto adjust_contrast =
                         std::make_shared<vision::AdjustContrastOperation>(contrast_factor, device_target);
                       THROW_IF_ERROR(adjust_contrast->ValidateParams());
@@ -126,7 +126,7 @@ PYBIND_REGISTER(
   AdjustHueOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::AdjustHueOperation, TensorOperation, std::shared_ptr<vision::AdjustHueOperation>>(
       *m, "AdjustHueOperation")
-      .def(py::init([](float hue_factor, std::string device_target) {
+      .def(py::init([](float hue_factor, const std::string &device_target) {
         auto adjust_hue = std::make_shared<vision::AdjustHueOperation>(hue_factor, device_target);
         THROW_IF_ERROR(adjust_hue->ValidateParams());
         return adjust_hue;
@@ -136,7 +136,7 @@ PYBIND_REGISTER(
 PYBIND_REGISTER(AdjustSaturationOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::AdjustSaturationOperation, TensorOperation,
                                    std::shared_ptr<vision::AdjustSaturationOperation>>(*m, "AdjustSaturationOperation")
-                    .def(py::init([](float saturation_factor, std::string device_target) {
+                    .def(py::init([](float saturation_factor, const std::string &device_target) {
                       auto ajust_saturation =
                         std::make_shared<vision::AdjustSaturationOperation>(saturation_factor, device_target);
                       THROW_IF_ERROR(ajust_saturation->ValidateParams());
@@ -262,7 +262,7 @@ PYBIND_REGISTER(CutOutOperation, 1, ([](const py::module *m) {
 PYBIND_REGISTER(DecodeOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::DecodeOperation, TensorOperation, std::shared_ptr<vision::DecodeOperation>>(
                     *m, "DecodeOperation")
-                    .def(py::init([](bool rgb, std::string device_target) {
+                    .def(py::init([](bool rgb, const std::string &device_target) {
                       auto decode = std::make_shared<vision::DecodeOperation>(rgb, device_target);
                       THROW_IF_ERROR(decode->ValidateParams());
                       return decode;
@@ -340,8 +340,8 @@ PYBIND_REGISTER(GetImageSize, 1, ([](py::module *m) {
 PYBIND_REGISTER(HorizontalFlipOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::HorizontalFlipOperation, TensorOperation,
                                    std::shared_ptr<vision::HorizontalFlipOperation>>(*m, "HorizontalFlipOperation")
-                    .def(py::init([]() {
-                      auto horizontal_flip = std::make_shared<vision::HorizontalFlipOperation>();
+                    .def(py::init([](const std::string &device_target) {
+                      auto horizontal_flip = std::make_shared<vision::HorizontalFlipOperation>(device_target);
                       THROW_IF_ERROR(horizontal_flip->ValidateParams());
                       return horizontal_flip;
                     }));
@@ -431,8 +431,10 @@ PYBIND_REGISTER(
     (void)py::class_<vision::PerspectiveOperation, TensorOperation, std::shared_ptr<vision::PerspectiveOperation>>(
       *m, "PerspectiveOperation", "Tensor operation to apply perspective transformations on an image.")
       .def(py::init([](const std::vector<std::vector<int32_t>> &start_points,
-                       const std::vector<std::vector<int32_t>> &end_points, InterpolationMode interpolation) {
-        auto perspective = std::make_shared<vision::PerspectiveOperation>(start_points, end_points, interpolation);
+                       const std::vector<std::vector<int32_t>> &end_points, InterpolationMode interpolation,
+                       const std::string &device_target) {
+        auto perspective =
+          std::make_shared<vision::PerspectiveOperation>(start_points, end_points, interpolation, device_target);
         THROW_IF_ERROR(perspective->ValidateParams());
         return perspective;
       }));
@@ -826,9 +828,9 @@ PYBIND_REGISTER(
     (void)py::class_<vision::ResizedCropOperation, TensorOperation, std::shared_ptr<vision::ResizedCropOperation>>(
       *m, "ResizedCropOperation")
       .def(py::init([](int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<int32_t> &size,
-                       InterpolationMode interpolation) {
+                       InterpolationMode interpolation, const std::string &device_target) {
         auto resized_crop =
-          std::make_shared<vision::ResizedCropOperation>(top, left, height, width, size, interpolation);
+          std::make_shared<vision::ResizedCropOperation>(top, left, height, width, size, interpolation, device_target);
         THROW_IF_ERROR(resized_crop->ValidateParams());
         return resized_crop;
       }));
@@ -920,8 +922,8 @@ PYBIND_REGISTER(
   VerticalFlipOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::VerticalFlipOperation, TensorOperation, std::shared_ptr<vision::VerticalFlipOperation>>(
       *m, "VerticalFlipOperation")
-      .def(py::init([]() {
-        auto vertical_flip = std::make_shared<vision::VerticalFlipOperation>();
+      .def(py::init([](const std::string &device_target) {
+        auto vertical_flip = std::make_shared<vision::VerticalFlipOperation>(device_target);
         THROW_IF_ERROR(vertical_flip->ValidateParams());
         return vertical_flip;
       }));

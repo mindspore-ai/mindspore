@@ -643,6 +643,327 @@ def test_eager_multi_dvpp_op_cpu_dvpp_dvpp():
     assert img_normalize.dtype == np.float32
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_eager_horizontal_flip_dvpp_exception():
+    """
+    Feature: Horizontal Flip op when Ascend910B
+    Description: Test eager support for horizontal flip with Dvpp when invalid input
+    Expectation: Success
+    """
+    os.environ['MS_ENABLE_REF_MODE'] = "1"
+    ms.set_context(device_target="Ascend")
+
+    print("Run testcase: " + sys._getframe().f_code.co_name)
+
+    f = open(input_apple_jpg, "rb")
+    img = f.read()
+    f.close()
+
+    # the input is list
+    img = np.ones([1024], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.HorizontalFlip().device("Ascend")(img)
+    assert "invalid input shape, only support NHWC input" in str(error_info.value)
+
+    # the input is HW2
+    img = np.ones([224, 224, 2], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.HorizontalFlip().device("Ascend")(img)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(error_info.value)
+
+    # the input is HW4
+    img = np.ones([224, 224, 4], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.HorizontalFlip().device("Ascend")(img)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(error_info.value)
+
+    # the input is 23HW3
+    img = np.ones([2, 3, 224, 224, 3], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.HorizontalFlip().device("Ascend")(img)
+    assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(error_info.value)
+
+    # the input is 3HW1
+    img = np.ones([3, 224, 224, 1], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        _ = vision.HorizontalFlip().device("Ascend")(img)
+    assert "The input tensor NHWC should be 1HWC or HWC." in str(error_info.value)
+
+    # the input is 3HW3
+    img = np.ones([3, 224, 224, 3], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        _ = vision.HorizontalFlip().device("Ascend")(img)
+    assert "The input tensor NHWC should be 1HWC or HWC." in str(error_info.value)
+
+    # the input is 6HW3
+    img = np.ones([6, 224, 224, 3], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        _ = vision.HorizontalFlip().device("Ascend")(img)
+    assert "The input tensor NHWC should be 1HWC or HWC." in str(error_info.value)
+
+    # the input is float 9HW3
+    img = np.ones([9, 224, 224, 3], dtype=np.float32)
+    with pytest.raises(RuntimeError) as error_info:
+        _ = vision.HorizontalFlip().device("Ascend")(img)
+    assert "The input tensor NHWC should be 1HWC or HWC." in str(error_info.value)
+
+    img = cv2.imread(input_apple_jpg)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+    # the device(device_target) is invalid
+    with pytest.raises(TypeError) as error_info:
+        _ = vision.HorizontalFlip().device(20)
+    assert "Argument device_target with value 20 is not of type [<class 'str'>]" in str(error_info.value)
+
+    with pytest.raises(ValueError) as error_info:
+        _ = vision.HorizontalFlip().device("Asscend")
+    assert "Input device_target is not within the valid set of ['CPU', 'Ascend']" in str(error_info.value)
+
+    os.environ['MS_ENABLE_REF_MODE'] = "0"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_eager_vertical_flip_dvpp_exception():
+    """
+    Feature: Vertical Flip op when Ascend910B
+    Description: Test eager support for vertical flip with Dvpp when invalid input
+    Expectation: Success
+    """
+    os.environ['MS_ENABLE_REF_MODE'] = "1"
+    ms.set_context(device_target="Ascend")
+
+    print("Run testcase: " + sys._getframe().f_code.co_name)
+
+    f = open(input_apple_jpg, "rb")
+    img = f.read()
+    f.close()
+
+    # the input is list
+    img = np.ones([1024], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.VerticalFlip().device("Ascend")(img)
+    assert "invalid input shape, only support NHWC input" in str(error_info.value)
+
+    # the input is HW2
+    img = np.ones([224, 224, 2], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.VerticalFlip().device("Ascend")(img)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(error_info.value)
+
+    # the input is HW4
+    img = np.ones([224, 224, 4], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.VerticalFlip().device("Ascend")(img)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(error_info.value)
+
+    # the input is 23HW3
+    img = np.ones([2, 3, 224, 224, 3], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.VerticalFlip().device("Ascend")(img)
+    assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(error_info.value)
+
+    # the input is 3HW1
+    img = np.ones([3, 224, 224, 1], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        _ = vision.VerticalFlip().device("Ascend")(img)
+    assert "The input tensor NHWC should be 1HWC or HWC." in str(error_info.value)
+
+    # the input is 3HW3
+    img = np.ones([3, 224, 224, 3], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        _ = vision.VerticalFlip().device("Ascend")(img)
+    assert "The input tensor NHWC should be 1HWC or HWC." in str(error_info.value)
+
+    # the input is 6HW3
+    img = np.ones([6, 224, 224, 3], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        _ = vision.VerticalFlip().device("Ascend")(img)
+    assert "The input tensor NHWC should be 1HWC or HWC." in str(error_info.value)
+
+    # the input is float 9HW3
+    img = np.ones([9, 224, 224, 3], dtype=np.float32)
+    with pytest.raises(RuntimeError) as error_info:
+        _ = vision.VerticalFlip().device("Ascend")(img)
+    assert "The input tensor NHWC should be 1HWC or HWC." in str(error_info.value)
+
+    img = cv2.imread(input_apple_jpg)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+    # the device(device_target) is invalid
+    with pytest.raises(TypeError) as error_info:
+        _ = vision.VerticalFlip().device(20)
+    assert "Argument device_target with value 20 is not of type [<class 'str'>]" in str(error_info.value)
+
+    with pytest.raises(ValueError) as error_info:
+        _ = vision.VerticalFlip().device("Asscend")
+    assert "Input device_target is not within the valid set of ['CPU', 'Ascend']" in str(error_info.value)
+
+    os.environ['MS_ENABLE_REF_MODE'] = "0"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_eager_resize_crop_dvpp_exception():
+    """
+    Feature: Resize crop op when Ascend910B
+    Description: Test eager support for resize crop with Dvpp when invalid input
+    Expectation: Success
+    """
+    os.environ['MS_ENABLE_REF_MODE'] = "1"
+    ms.set_context(device_target="Ascend")
+
+    print("Run testcase: " + sys._getframe().f_code.co_name)
+
+    f = open(input_apple_jpg, "rb")
+    img = f.read()
+    f.close()
+
+    # the input is HW2
+    img = np.ones([224, 224, 2], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.ResizedCrop(0, 0, 128, 128, (100, 75)).device("Ascend")(img)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(error_info.value)
+
+    # the input is HW4
+    img = np.ones([224, 224, 4], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.ResizedCrop(0, 0, 128, 128, (100, 75)).device("Ascend")(img)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(error_info.value)
+
+    # the input is 23HW3
+    img = np.ones([2, 3, 224, 224, 3], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.ResizedCrop(0, 0, 128, 128, (100, 75)).device("Ascend")(img)
+    assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(error_info.value)
+
+    # the input is 3HW1
+    img = np.ones([3, 224, 224, 1], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        _ = vision.ResizedCrop(0, 0, 128, 128, (100, 75)).device("Ascend")(img)
+    assert "The input tensor NHWC should be 1HWC or HWC." in str(error_info.value)
+
+    # the input is 3HW3
+    img = np.ones([3, 224, 224, 3], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        _ = vision.ResizedCrop(0, 0, 128, 128, (100, 75)).device("Ascend")(img)
+    assert "The input tensor NHWC should be 1HWC or HWC." in str(error_info.value)
+
+    # the input is 6HW3
+    img = np.ones([6, 224, 224, 3], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        _ = vision.ResizedCrop(0, 0, 128, 128, (100, 75)).device("Ascend")(img)
+    assert "The input tensor NHWC should be 1HWC or HWC." in str(error_info.value)
+
+    # the input is float 9HW3
+    img = np.ones([9, 224, 224, 3], dtype=np.float32)
+    with pytest.raises(RuntimeError) as error_info:
+        _ = vision.ResizedCrop(0, 0, 128, 128, (100, 75)).device("Ascend")(img)
+    assert "The input tensor NHWC should be 1HWC or HWC." in str(error_info.value)
+
+    img = cv2.imread(input_apple_jpg)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+    # the device(device_target) is invalid
+    with pytest.raises(TypeError) as error_info:
+        _ = vision.ResizedCrop(0, 0, 128, 128, (100, 75)).device(20)
+    assert "Argument device_target with value 20 is not of type [<class 'str'>]" in str(error_info.value)
+
+    with pytest.raises(ValueError) as error_info:
+        _ = vision.ResizedCrop(0, 0, 128, 128, (100, 75)).device("Asscend")
+    assert "Input device_target is not within the valid set of ['CPU', 'Ascend']" in str(error_info.value)
+
+    os.environ['MS_ENABLE_REF_MODE'] = "0"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_eager_perspective_dvpp_exception():
+    """
+    Feature: Perspective op when Ascend910B
+    Description: Test eager support for perspective with Dvpp when invalid input
+    Expectation: Success
+    """
+    os.environ['MS_ENABLE_REF_MODE'] = "1"
+    ms.set_context(device_target="Ascend")
+
+    print("Run testcase: " + sys._getframe().f_code.co_name)
+
+    f = open(input_apple_jpg, "rb")
+    img = f.read()
+    f.close()
+
+    start_points = [[0, 63], [63, 63], [63, 0], [0, 0]]
+    end_points = [[0, 32], [32, 32], [32, 0], [0, 0]]
+
+    # the input is list
+    img = np.ones([1024], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.Perspective(start_points, end_points).device("Ascend")(img)
+    assert "invalid input shape, only support NHWC input" in str(error_info.value)
+
+    # the input is HW2
+    img = np.ones([224, 224, 2], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.Perspective(start_points, end_points).device("Ascend")(img)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(error_info.value)
+
+    # the input is HW4
+    img = np.ones([224, 224, 4], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.Perspective(start_points, end_points).device("Ascend")(img)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(error_info.value)
+
+    # the input is 23HW3
+    img = np.ones([2, 3, 224, 224, 3], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.Perspective(start_points, end_points).device("Ascend")(img)
+    assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(error_info.value)
+
+    # the input is 3HW1
+    img = np.ones([3, 224, 224, 1], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        _ = vision.Perspective(start_points, end_points).device("Ascend")(img)
+    assert "The input tensor NHWC should be 1HWC or HWC." in str(error_info.value)
+
+    # the input is 3HW3
+    img = np.ones([3, 224, 224, 3], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        _ = vision.Perspective(start_points, end_points).device("Ascend")(img)
+    assert "The input tensor NHWC should be 1HWC or HWC." in str(error_info.value)
+
+    # the input is 6HW3
+    img = np.ones([6, 224, 224, 3], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        _ = vision.Perspective(start_points, end_points).device("Ascend")(img)
+    assert "The input tensor NHWC should be 1HWC or HWC." in str(error_info.value)
+
+    # the input is float 9HW3
+    img = np.ones([9, 224, 224, 3], dtype=np.float32)
+    with pytest.raises(RuntimeError) as error_info:
+        _ = vision.Perspective(start_points, end_points).device("Ascend")(img)
+    assert "The input tensor NHWC should be 1HWC or HWC." in str(error_info.value)
+
+    img = cv2.imread(input_apple_jpg)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+    # the device(device_target) is invalid
+    with pytest.raises(TypeError) as error_info:
+        _ = vision.Perspective(start_points, end_points).device(20)
+    assert "Argument device_target with value 20 is not of type [<class 'str'>]" in str(error_info.value)
+
+    with pytest.raises(ValueError) as error_info:
+        _ = vision.Perspective(start_points, end_points).device("Asscend")
+    assert "Input device_target is not within the valid set of ['CPU', 'Ascend']" in str(error_info.value)
+
+    os.environ['MS_ENABLE_REF_MODE'] = "0"
+
+
 if __name__ == '__main__':
     test_eager_resize_dvpp()
     test_eager_resize_dvpp_exception()
@@ -653,3 +974,7 @@ if __name__ == '__main__':
     test_eager_multi_dvpp_op_dvpp_cpu_dvpp()
     test_eager_multi_dvpp_op_dvpp_dvpp_cpu()
     test_eager_multi_dvpp_op_cpu_dvpp_dvpp()
+    test_eager_horizontal_flip_dvpp_exception()
+    test_eager_vertical_flip_dvpp_exception()
+    test_eager_resize_crop_dvpp_exception()
+    test_eager_perspective_dvpp_exception()

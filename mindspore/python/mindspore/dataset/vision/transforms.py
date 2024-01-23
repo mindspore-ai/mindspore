@@ -160,7 +160,7 @@ class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
             >>> import mindspore.dataset.vision as vision
             >>>
             >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-            >>> transforms_list = [vision.Decode().device("CPU"), vision.AdjustBrightness(2.0).device("Ascend")]
+            >>> transforms_list = [vision.Decode(), vision.AdjustBrightness(2.0).device("Ascend")]
             >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
 
         Tutorial Examples:
@@ -245,7 +245,7 @@ class AdjustContrast(ImageTensorOperation, PyTensorOperation):
             >>> import mindspore.dataset.vision as vision
             >>>
             >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-            >>> transforms_list = [vision.Decode().device("CPU"), vision.AdjustContrast(0).device("Ascend")]
+            >>> transforms_list = [vision.Decode(), vision.AdjustContrast(0).device("Ascend")]
             >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
 
         Tutorial Examples:
@@ -393,7 +393,7 @@ class AdjustHue(ImageTensorOperation, PyTensorOperation):
             >>> import mindspore.dataset.vision as vision
             >>>
             >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-            >>> transforms_list = [vision.Decode().device("CPU"), vision.AdjustHue(0.5).device("Ascend")]
+            >>> transforms_list = [vision.Decode(), vision.AdjustHue(0.5).device("Ascend")]
             >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
 
         Tutorial Examples:
@@ -479,7 +479,7 @@ class AdjustSaturation(ImageTensorOperation, PyTensorOperation):
             >>> import mindspore.dataset.vision as vision
             >>>
             >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-            >>> transforms_list = [vision.Decode().device("CPU"), vision.AdjustSaturation(2.0).device("Ascend")]
+            >>> transforms_list = [vision.Decode(), vision.AdjustSaturation(2.0).device("Ascend")]
             >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
 
         Tutorial Examples:
@@ -1519,8 +1519,41 @@ class HorizontalFlip(ImageTensorOperation):
         super().__init__()
         self.implementation = Implementation.C
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>>
+            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+            >>> decode_op = vision.Decode(to_pil=True)
+            >>> horizontal_flip_op = vision.HorizontalFlip().device("Ascend")
+            >>> transforms_list = [decode_op, horizontal_flip_op]
+            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
-        return cde.HorizontalFlipOperation()
+        return cde.HorizontalFlipOperation(self.device_target)
 
 
 class HsvToRgb(PyTensorOperation):
@@ -2214,10 +2247,46 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
             self.implementation = Implementation.PY
         self.random = False
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>>
+            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+            >>> start_points = [[0, 63], [63, 63], [63, 0], [0, 0]]
+            >>> end_points = [[0, 32], [32, 32], [32, 0], [0, 0]]
+            >>> decode_op = vision.Decode(to_pil=True)
+            >>> perspective_op = vision.Perspective(start_points, end_points).device("Ascend")
+            >>> transforms_list = [decode_op, perspective_op]
+            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
         if self.interpolation == Inter.ANTIALIAS:
             raise TypeError("Current Interpolation is not supported with NumPy input.")
-        return cde.PerspectiveOperation(self.start_points, self.end_points, Inter.to_c_type(self.interpolation))
+        return cde.PerspectiveOperation(self.start_points, self.end_points,
+                                        Inter.to_c_type(self.interpolation), self.device_target)
 
     def _execute_py(self, img):
         """
@@ -4314,9 +4383,42 @@ class ResizedCrop(ImageTensorOperation):
         self.interpolation = interpolation
         self.implementation = Implementation.C
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>>
+            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+            >>> decode_op = vision.Decode()
+            >>> resize_crop_op = vision.ResizedCrop(0, 0, 128, 128, (100, 75)).device("Ascend")
+            >>> transforms_list = [decode_op, resize_crop_op]
+            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
         return cde.ResizedCropOperation(self.top, self.left, self.height,
-                                        self.width, self.size, Inter.to_c_type(self.interpolation))
+                                        self.width, self.size, Inter.to_c_type(self.interpolation), self.device_target)
 
 
 class ResizeWithBBox(ImageTensorOperation):
@@ -5007,8 +5109,41 @@ class VerticalFlip(ImageTensorOperation):
         super().__init__()
         self.implementation = Implementation.C
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>>
+            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+            >>> decode_op = vision.Decode(to_pil=True)
+            >>> vertical_flip_op = vision.VerticalFlip().device("Ascend")
+            >>> transforms_list = [decode_op, vertical_flip_op]
+            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
-        return cde.VerticalFlipOperation()
+        return cde.VerticalFlipOperation(self.device_target)
 
 
 def not_random(func):

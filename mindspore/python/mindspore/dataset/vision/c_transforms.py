@@ -705,7 +705,7 @@ class HorizontalFlip(ImageTensorOperation):
         super().__init__()
 
     def parse(self):
-        return cde.HorizontalFlipOperation()
+        return cde.HorizontalFlipOperation("CPU")
 
 
 class HWC2CHW(ImageTensorOperation):
@@ -2638,4 +2638,4 @@ class VerticalFlip(ImageTensorOperation):
         super().__init__()
 
     def parse(self):
-        return cde.VerticalFlipOperation()
+        return cde.VerticalFlipOperation("CPU")

@@ -106,6 +106,22 @@ class AclAdapter {
   APP_ERROR DvppAdjustSaturation(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                  std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
 
+  APP_ERROR DvppHorizontalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                               std::shared_ptr<DeviceTensorAscend910B> *output);
+
+  APP_ERROR DvppVerticalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                             std::shared_ptr<DeviceTensorAscend910B> *output);
+
+  APP_ERROR DvppPerspective(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                            std::shared_ptr<DeviceTensorAscend910B> *output,
+                            const std::vector<std::vector<int32_t>> &start_points,
+                            const std::vector<std::vector<int32_t>> &end_points, InterpolationMode interpolation);
+
+  APP_ERROR DvppResizedCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                            std::shared_ptr<DeviceTensorAscend910B> *output, int32_t top, int32_t left, int32_t height,
+                            int32_t width, int32_t output_height, int32_t output_width,
+                            InterpolationMode interpolation);
+
   // acl
   APP_ERROR GetSocName(std::string *soc_name);
 
@@ -171,6 +187,10 @@ class AclAdapter {
   DvppAdjustContrastFunObj dvpp_contrast_fun_obj_;
   DvppAdjustHueFunObj dvpp_hue_fun_obj_;
   DvppAdjustSaturationFunObj dvpp_saturation_fun_obj_;
+  DvppHorizontalFlipFunObj dvpp_horizontal_flip_fun_obj_;
+  DvppVerticalFlipFunObj dvpp_vertical_flip_fun_obj_;
+  DvppPerspectiveFunObj dvpp_perspective_fun_obj_;
+  DvppResizedCropFunObj dvpp_resized_crop_fun_obj_;
 
   // acl interface
   GetSocNameFunObj get_soc_name_fun_obj_;

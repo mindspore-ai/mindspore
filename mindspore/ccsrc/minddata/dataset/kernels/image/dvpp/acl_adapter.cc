@@ -113,6 +113,10 @@ void AclAdapter::InitPlugin() {
   dvpp_contrast_fun_obj_ = DlsymFuncObj(DvppAdjustContrast, plugin_handle_);
   dvpp_hue_fun_obj_ = DlsymFuncObj(DvppAdjustHue, plugin_handle_);
   dvpp_saturation_fun_obj_ = DlsymFuncObj(DvppAdjustSaturation, plugin_handle_);
+  dvpp_horizontal_flip_fun_obj_ = DlsymFuncObj(DvppHorizontalFlip, plugin_handle_);
+  dvpp_vertical_flip_fun_obj_ = DlsymFuncObj(DvppVerticalFlip, plugin_handle_);
+  dvpp_perspective_fun_obj_ = DlsymFuncObj(DvppPerspective, plugin_handle_);
+  dvpp_resized_crop_fun_obj_ = DlsymFuncObj(DvppResizedCrop, plugin_handle_);
 
   // acl
   get_soc_name_fun_obj_ = DlsymFuncObj(GetSocName, plugin_handle_);
@@ -174,6 +178,10 @@ void AclAdapter::FinalizePlugin() {
   dvpp_contrast_fun_obj_ = nullptr;
   dvpp_hue_fun_obj_ = nullptr;
   dvpp_saturation_fun_obj_ = nullptr;
+  dvpp_horizontal_flip_fun_obj_ = nullptr;
+  dvpp_vertical_flip_fun_obj_ = nullptr;
+  dvpp_perspective_fun_obj_ = nullptr;
+  dvpp_resized_crop_fun_obj_ = nullptr;
   // acl
   get_soc_name_fun_obj_ = nullptr;
   create_acl_tensor_fun_obj_ = nullptr;
@@ -523,6 +531,44 @@ APP_ERROR AclAdapter::DvppAdjustSaturation(const std::shared_ptr<DeviceTensorAsc
     return APP_ERR_ACL_FAILURE;
   }
   return dvpp_saturation_fun_obj_(input, output, factor);
+}
+
+APP_ERROR AclAdapter::DvppHorizontalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                         std::shared_ptr<DeviceTensorAscend910B> *output) {
+  if (!HasAclPlugin() || dvpp_horizontal_flip_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_horizontal_flip_fun_obj_(input, output);
+}
+
+APP_ERROR AclAdapter::DvppVerticalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                       std::shared_ptr<DeviceTensorAscend910B> *output) {
+  if (!HasAclPlugin() || dvpp_vertical_flip_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_vertical_flip_fun_obj_(input, output);
+}
+
+APP_ERROR AclAdapter::DvppPerspective(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                      std::shared_ptr<DeviceTensorAscend910B> *output,
+                                      const std::vector<std::vector<int32_t>> &start_points,
+                                      const std::vector<std::vector<int32_t>> &end_points,
+                                      InterpolationMode interpolation) {
+  if (!HasAclPlugin() || dvpp_perspective_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_perspective_fun_obj_(input, output, start_points, end_points, interpolation);
+}
+
+APP_ERROR AclAdapter::DvppResizedCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                      std::shared_ptr<DeviceTensorAscend910B> *output, int32_t top, int32_t left,
+                                      int32_t height, int32_t width, int32_t output_height, int32_t output_width,
+                                      InterpolationMode interpolation) {
+  if (!HasAclPlugin() || dvpp_resized_crop_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_resized_crop_fun_obj_(input, output, top, left, height, width, output_height, output_width,
+                                    interpolation);
 }
 
 // acl

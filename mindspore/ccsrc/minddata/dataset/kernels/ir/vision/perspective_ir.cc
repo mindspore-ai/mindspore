@@ -17,18 +17,31 @@
 
 #include "minddata/dataset/kernels/image/perspective_op.h"
 #include "minddata/dataset/util/validators.h"
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_perspective.h"
+#endif
+#include "minddata/dataset/kernels/ir/validators.h"
 
 namespace mindspore {
 namespace dataset {
 namespace vision {
 PerspectiveOperation::PerspectiveOperation(const std::vector<std::vector<int32_t>> &start_points,
                                            const std::vector<std::vector<int32_t>> &end_points,
-                                           InterpolationMode interpolation)
-    : start_points_(start_points), end_points_(end_points), interpolation_(interpolation) {}
+                                           InterpolationMode interpolation, const std::string &device_target)
+    : start_points_(start_points),
+      end_points_(end_points),
+      interpolation_(interpolation),
+      device_target_(device_target) {}
 
 PerspectiveOperation::~PerspectiveOperation() = default;
 
 Status PerspectiveOperation::ValidateParams() {
+  // device target
+  if (device_target_ != "CPU" && device_target_ != "Ascend") {
+    std::string err_msg = "Perspective: Invalid device target. It's not CPU or Ascend.";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
   // interpolation
   if (interpolation_ != InterpolationMode::kLinear && interpolation_ != InterpolationMode::kNearestNeighbour &&
       interpolation_ != InterpolationMode::kCubic && interpolation_ != InterpolationMode::kArea &&
@@ -59,10 +72,21 @@ Status PerspectiveOperation::ValidateParams() {
 }
 
 std::shared_ptr<TensorOp> PerspectiveOperation::Build() {
-  std::shared_ptr<PerspectiveOp> tensor_op =
-    std::make_shared<PerspectiveOp>(start_points_, end_points_, interpolation_);
-  return tensor_op;
-}
+  if (device_target_ == "CPU") {
+    std::shared_ptr<PerspectiveOp> tensor_op =
+      std::make_shared<PerspectiveOp>(start_points_, end_points_, interpolation_);
+    return tensor_op;
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+  } else if (device_target_ == "Ascend") {
+    std::shared_ptr<DvppPerspectiveOp> dvpp_tensor_op =
+      std::make_shared<DvppPerspectiveOp>(start_points_, end_points_, interpolation_);
+    return dvpp_tensor_op;
+#endif
+  } else {
+    MS_LOG(ERROR) << "Perspective: Invalid device target. It's not CPU or Ascend.";
+    return nullptr;
+  }
+}  // namespace vision
 
 Status PerspectiveOperation::to_json(nlohmann::json *out_json) {
   RETURN_UNEXPECTED_IF_NULL(out_json);
@@ -70,6 +94,7 @@ Status PerspectiveOperation::to_json(nlohmann::json *out_json) {
   args["start_points"] = start_points_;
   args["end_points"] = end_points_;
   args["interpolation"] = interpolation_;
+  args["device_target"] = device_target_;
   *out_json = args;
   return Status::OK();
 }
@@ -79,11 +104,24 @@ Status PerspectiveOperation::from_json(nlohmann::json op_params, std::shared_ptr
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "start_points", kPerspectiveOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "end_points", kPerspectiveOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "interpolation", kPerspectiveOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "device_target", kPerspectiveOperation));
   std::vector<std::vector<int32_t>> start_points = op_params["start_points"];
   std::vector<std::vector<int32_t>> end_points = op_params["end_points"];
   auto interpolation = static_cast<InterpolationMode>(op_params["interpolation"]);
-  *operation = std::make_shared<vision::PerspectiveOperation>(start_points, end_points, interpolation);
+  std::string device_target = op_params["device_target"];
+  *operation = std::make_shared<vision::PerspectiveOperation>(start_points, end_points, interpolation, device_target);
   return Status::OK();
+}
+
+MapTargetDevice PerspectiveOperation::Type() {
+  if (device_target_ == "CPU") {
+    return MapTargetDevice::kCpu;
+  } else if (device_target_ == "Ascend") {
+    return MapTargetDevice::kAscend910B;
+  } else {
+    MS_LOG(ERROR) << "Perspective: Invalid device target. It's not CPU or Ascend.";
+    return MapTargetDevice::kInvalid;
+  }
 }
 }  // namespace vision
 }  // namespace dataset

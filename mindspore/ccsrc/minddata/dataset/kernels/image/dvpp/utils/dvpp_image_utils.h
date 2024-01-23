@@ -114,6 +114,46 @@ APP_ERROR DvppAdjustHue(const std::shared_ptr<DeviceTensorAscend910B> &input,
 APP_ERROR DvppAdjustSaturation(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
 
+/// \brief Returns horizontal flip image
+/// \param input: Tensor of shape <N,H,W,C>, c == 1 or c == 3
+/// \param output: vertical filp image Tensor of same input shape (type DE_FLOAT32 and DE_UINT8)
+APP_ERROR DvppHorizontalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                             std::shared_ptr<DeviceTensorAscend910B> *output);
+
+/// \brief Returns vertical flip image.
+/// \param input: Tensor of shape <N,H,W,C>, c == 1 or c == 3
+/// \param output: vertical filp image Tensor of same input shape (type DE_FLOAT32 and DE_UINT8)
+APP_ERROR DvppVerticalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                           std::shared_ptr<DeviceTensorAscend910B> *output);
+
+/// \brief Returns Perspective image
+/// \param input: Tensor of shape <H,W,C> format.
+/// \param start_points List containing four lists of two integers corresponding to four
+///     corners [top-left, top-right, bottom-right, bottom-left] of the original image.
+/// \param[in] end_points List containing four lists of two integers corresponding to four
+///     corners [top-left, top-right, bottom-right, bottom-left] of the transformed image.
+/// \param[in] interpolation Method of interpolation.
+/// \param output: Perspective image Tensor of same input shape (type DE_FLOAT32 and DE_UINT8)
+APP_ERROR DvppPerspective(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                          std::shared_ptr<DeviceTensorAscend910B> *output,
+                          const std::vector<std::vector<int32_t>> &start_points,
+                          const std::vector<std::vector<int32_t>> &end_points,
+                          InterpolationMode interpolation = InterpolationMode::kLinear);
+
+/// \brief Returns Crop and Resized image.
+/// \param input: Tensor of shape <N,H,W,C>, c == 1 or c == 3
+/// \param top: horizontal start point
+/// \param left: vertical start point
+/// \param height: height of the cropped ROI
+/// \param width: width of the cropped ROI
+/// \param output_height: height of output
+/// \param output_width: width of output
+/// \param mode: the interpolation mode
+/// \param output: Resized image of shape <H,outputHeight,outputWidth,C> and same type as input
+APP_ERROR DvppResizedCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                          std::shared_ptr<DeviceTensorAscend910B> *output, int32_t top, int32_t left, int32_t height,
+                          int32_t width, int32_t output_height, int32_t output_width, InterpolationMode mode);
+
 APP_ERROR GetSocName(std::string *soc_name);
 
 APP_ERROR CreateAclTensor(const int64_t *view_dims, uint64_t view_dims_num, mindspore::TypeId data_type,
