@@ -19,6 +19,8 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <algorithm>
+#include <utility>
 #include "utils/log_adapter.h"
 #include "pipeline/jit/pi/graph_capture/abstract_object.h"
 #include "pipeline/jit/pi/utils/utils.h"
@@ -181,6 +183,12 @@ class CallNode : public ValueNode {
   }
 
   const auto &GetParams() const { return params_; }
+  std::vector<py::object> GetArgs() {
+    std::vector<py::object> args;
+    std::transform(getInputs().begin() + 1, getInputs().end(), std::back_inserter(args),
+                   [](ValueNode *n) { return n->GetVobj() ? n->GetVobj()->GetPyObject() : py::object(); });
+    return args;
+  }
 
  private:
   // sub-graph if traced function

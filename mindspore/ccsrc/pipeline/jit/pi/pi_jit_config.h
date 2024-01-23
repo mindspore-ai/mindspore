@@ -58,6 +58,7 @@ class GraphJitConfig {
     kEnableEliminateUnusedOperation,
     kFeatureBreakAtInlinedFunction,
     kEnableDynamicShape,
+    kTraceFlag,
     /* ------------------------------ */
     kIntConf,
     kMaxInlineDepth,

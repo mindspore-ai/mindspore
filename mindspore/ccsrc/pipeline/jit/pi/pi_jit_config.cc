@@ -34,6 +34,7 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
   {"auto_jit_func_filter", &GraphJitConfig::SetAutoJitFilter},
   // remove this config if 'strict_mode_cells' works well, and default inline all construct
   {"replace_nncell_by_construct", &GraphJitConfig::SetBool<GraphJitConfig::kReplaceNNCellByConstruct>},
+  {"trace_flag", &GraphJitConfig::SetBool<GraphJitConfig::kTraceFlag>},
   {"print_after_all", &GraphJitConfig::SetBool<GraphJitConfig::kPrintAfterAll>},
   {"print_tb", &GraphJitConfig::SetBool<GraphJitConfig::kPrintTraceback>},
   {"print_bb", &GraphJitConfig::SetBool<GraphJitConfig::kPrintBB>},
@@ -82,6 +83,7 @@ GraphJitConfig::GraphJitConfig() {
   bool_conf[kAutoJit - kBoolConf] = false;
   bool_conf[kReplaceNNCellByConstruct - kBoolConf] = false;
   bool_conf[kPrintAfterAll - kBoolConf] = false;
+  bool_conf[kTraceFlag - kBoolConf] = false;
   bool_conf[kPrintTraceback - kBoolConf] = false;
   bool_conf[kPrintBB - kBoolConf] = false;
   bool_conf[kPrintCFG - kBoolConf] = false;
