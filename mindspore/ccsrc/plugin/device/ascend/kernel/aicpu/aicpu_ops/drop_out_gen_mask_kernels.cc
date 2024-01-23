@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "drop_out_gen_mask_kernels.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_ops/drop_out_gen_mask_kernels.h"
 #include <cfloat>
 #include <ctime>
 #include <random>
-#include <memory.h>
+#include <string>
 
 #include "aicpu_sharder/aicpu_sharder.h"
 #include "common/kernel_errcode.h"
@@ -335,13 +335,19 @@ uint32_t DropOutGenMaskKernel::DoCompute() {
 
   // if prob is 0, set all bits to 0
   if (prob <= FLT_EPSILON) {
-    memset_s(reinterpret_cast<void *>(io_addrs_[kIndexOutput]), byte_count, 0x00, byte_count);
-    return kAicpuKernelStateSucess;
+    if (memset_s(reinterpret_cast<void *>(io_addrs_[kIndexOutput]), byte_count, 0x00, byte_count) != EOK) {
+      return kAicpuKernelStateFailed;
+    } else {
+      return kAicpuKernelStateSucess;
+    }
   }
   // if prob is 1, set all bits to 1
   if (abs(prob - 1.0f) <= FLT_EPSILON) {
-    memset_s(reinterpret_cast<void *>(io_addrs_[kIndexOutput]), byte_count, 0xff, byte_count);
-    return kAicpuKernelStateSucess;
+    if (memset_s(reinterpret_cast<void *>(io_addrs_[kIndexOutput]), byte_count, 0xff, byte_count) != EOK) {
+      return kAicpuKernelStateFailed;
+    } else {
+      return kAicpuKernelStateSucess;
+    }
   }
 
   uint8_t *outBuff = reinterpret_cast<uint8_t *>(io_addrs_[kIndexOutput]);
