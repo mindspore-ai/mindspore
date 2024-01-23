@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+import mindspore as ms
 from mindspore import context, nn, Tensor, ops
 
 
@@ -24,6 +25,15 @@ class AddNet(nn.Cell):
 class SubNet(nn.Cell):
     def construct(self, x, y):
         return x - y
+
+
+class CastNet(nn.Cell):
+    def __init__(self, out_dtype):
+        super().__init__()
+        self.out_dtype = out_dtype
+
+    def construct(self, x):
+        return ops.cast(x, self.out_dtype)
 
 
 def add_net(x_shape, y_shape, dtype):
@@ -71,6 +81,25 @@ def sub_net(x_shape, y_shape, dtype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
+def cast_net(x_shape, dtype, out_dtype):
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    from bfloat16 import bfloat16
+    dtype_map = {
+        np.int32: ms.int32,
+        np.int64: ms.int64,
+        np.float16: ms.float16,
+        bfloat16: ms.bfloat16
+    }
+    x = np.random.randn(*x_shape).astype(dtype)
+
+    net = CastNet(dtype_map[out_dtype])
+    output = net(Tensor(x))
+    expected = x.astype(out_dtype)
+
+    if out_dtype != bfloat16:
+        np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
 def test_add(dtype=np.float16):
     """
     Feature: test add operator in graph mode
@@ -103,3 +132,24 @@ def test_sub():
     y_shape = (1,)
     dtype = np.int64
     sub_net(x_shape, y_shape, dtype)
+
+
+def test_cast():
+    """
+    Feature: test cast operator in graph mode.
+    Description: test cast.
+    Expectation: the result is correct
+    """
+    x_shape = (4, 1)
+    dtype = np.int64
+    out_dtype = np.int32
+    cast_net(x_shape, dtype, out_dtype)
+
+    dtype = np.int32
+    out_dtype = np.int64
+    cast_net(x_shape, dtype, out_dtype)
+
+    from bfloat16 import bfloat16
+    dtype = np.float16
+    out_dtype = bfloat16
+    cast_net(x_shape, dtype, out_dtype)
