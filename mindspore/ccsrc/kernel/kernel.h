@@ -281,7 +281,7 @@ struct KernelDeviceInfo {
   uint32_t device_id_{0};
 
   // The stream index in all stream array managed by Framework, starting from 0.
-  uint32_t stream_id_{UINT32_MAX};
+  uint32_t stream_id_{0};
 };
 
 // Used to encapsulate host-side related data structures in KernelTensor.
