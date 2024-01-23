@@ -31,7 +31,7 @@
 #include "include/backend/kernel_info.h"
 #include "utils/ms_context.h"
 #include "plugin/device/ascend/optimizer/optimizer_factory.h"
-#include "external/platform/platform_info.h"
+#include "platform/platform_info.h"
 
 namespace mindspore::opt {
 namespace {

@@ -20,7 +20,6 @@
 #include "include/transform/graph_ir/utils.h"
 #include "transform/graph_ir/transform_util.h"
 #include "graph/operator_factory.h"
-#include "graph/utils/op_desc_utils.h"
 
 namespace mindspore {
 namespace transform {

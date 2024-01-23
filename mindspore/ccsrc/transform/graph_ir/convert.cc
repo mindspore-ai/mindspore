@@ -20,15 +20,16 @@
 #include <cinttypes>
 #include <functional>
 #include <limits>
-#include <queue>
 #include <stack>
 #include <unordered_set>
-#include "inc/ops/array_ops.h"
-#include "inc/ops/data_flow_ops.h"
-#include "inc/ops/elewise_calculation_ops.h"
-#include "inc/ops/math_ops.h"
-#include "inc/ops/save_ops.h"
-#include "inc/ops/state_ops.h"
+#include <queue>
+
+#include "op_proto/inc/array_ops.h"
+#include "op_proto/inc/data_flow_ops.h"
+#include "op_proto/inc/elewise_calculation_ops.h"
+#include "op_proto/inc/math_ops.h"
+#include "op_proto/inc/save_ops.h"
+#include "op_proto/inc/state_ops.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/config_manager.h"
@@ -3225,21 +3226,6 @@ void DfGraphConvertor::UpdateOpDesc(const AnfNodePtr node) {
   }
 
   adpt->updateOutputDesc(op, node->Shape(), node->Type(), node);
-
-  if (op_type == prim::kPrimNonZeroWithValueShape->name()) {
-    MS_EXCEPTION_IF_NULL(op);
-    auto op_desc = ::ge::OpDescUtils::GetOpDescFromOperator(*op);
-    if (op_desc == nullptr) {
-      return;
-    }
-    const auto output_desc0 = op_desc->MutableOutputDesc("out_value");
-    ::ge::TensorUtils::SetReuseInput(*output_desc0, true);
-    ::ge::TensorUtils::SetReuseInputIndex(*output_desc0, 0);
-
-    const auto output_desc1 = op_desc->MutableOutputDesc("out_index");
-    ::ge::TensorUtils::SetReuseInput(*output_desc1, true);
-    ::ge::TensorUtils::SetReuseInputIndex(*output_desc1, 1);
-  }
 }
 
 OperatorPtr DfGraphConvertor::Convert(const AnfNodePtr node) {

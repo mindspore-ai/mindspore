@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_RANDOM_OPS_DECLARE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_RANDOM_OPS_DECLARE_H_
 
-#include "inc/ops/random_ops.h"
-#include "inc/ops/stateful_random_ops.h"
+#include "op_proto/inc/random_ops.h"
+#include "op_proto/inc/stateful_random_ops.h"
 #include "transform/graph_ir/custom_op_proto/cust_random_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"

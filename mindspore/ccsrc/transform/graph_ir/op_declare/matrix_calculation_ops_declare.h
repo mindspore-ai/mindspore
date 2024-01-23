@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MATRIX_CALCULATION_OPS_DECLARE_H_
 
 #include "mindspore/ccsrc/include/common/utils/utils.h"
-#include "inc/ops/matrix_calculation_ops.h"
+#include "op_proto/inc/matrix_calculation_ops.h"
 #include "transform/graph_ir/custom_op_proto/cust_math_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"

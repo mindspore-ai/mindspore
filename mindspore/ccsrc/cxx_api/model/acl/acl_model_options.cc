@@ -17,7 +17,7 @@
 #include <set>
 #include <memory>
 #include "utils/log_adapter.h"
-#include "external/ge/ge_api_types.h"
+#include "ge/ge_api_types.h"
 #include "acl/acl_base.h"
 #include "cxx_api/acl_utils.h"
 

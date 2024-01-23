@@ -25,6 +25,7 @@
 #include "plugin/device/ascend/hal/device/ascend_event.h"
 #include "plugin/device/cpu/hal/device/cpu_device_synchronizer.h"
 #include "include/transform/graph_ir/utils.h"
+#include "graph/def_types.h"
 
 namespace mindspore {
 namespace device {
