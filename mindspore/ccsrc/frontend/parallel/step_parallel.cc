@@ -1584,7 +1584,7 @@ void SetVirtualDatasetStrategy(const CNodePtr &node) {
       Dimensions input_strategy;
       input_strategy.push_back(dev_num);
       if (shape_list[0][i][0] > 0 && shape_list[0][i][0] % dev_num != 0) {
-        MS_LOG(EXCEPTION) << "the shapes of dataset is " << shape_list[0]
+        MS_LOG(EXCEPTION) << "The shapes of dataset is " << shape_list[0]
                           << ", the batch dim can not be evenly div by dev_num " << dev_num;
       }
       for (size_t j = 1; j < shape_list[0][i].size(); j++) {
@@ -1609,11 +1609,8 @@ static bool CheckExtractInformation(const CNodePtr &cnode) {
     return false;
   }
 
-  if (!IsParallelCareNode(cnode)) {
-    return false;
+  return IsParallelCareNode(cnode);
   }
-  return true;
-}
 
 static void ExtractStrategyAndInit(const CNodePtr &cnode, const PrimitivePtr &prim, const OperatorInfoPtr &op_info) {
   StrategyPtr in_strategy = nullptr, out_strategy = nullptr;
