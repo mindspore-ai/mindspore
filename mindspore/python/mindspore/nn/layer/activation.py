@@ -389,9 +389,9 @@ class ReLU(Cell):
 
     .. math::
 
-        \text{ReLU}(x) = (x)^+ = \max(0, x),
+        \text{ReLU}(input) = (input)^+ = \max(0, input),
 
-    It returns element-wise :math:`\max(0, x)`.
+    It returns element-wise :math:`\max(0, input)`.
 
     .. note::
         The neurons with the negative output
@@ -403,25 +403,24 @@ class ReLU(Cell):
         :align: center
 
     Inputs:
-        - **x** (Tensor) - The input of ReLU is a Tensor of any dimension. The data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+        - **input** (Tensor) - The input of ReLU is a Tensor of any dimension.
 
     Outputs:
-        Tensor, with the same type and shape as the `x`.
+        Tensor, with the same type and shape as the `input`.
 
     Raises:
-        TypeError: If dtype of `x` is not a number.
+        TypeError: If dtype of `input` is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore
         >>> from mindspore import Tensor, nn
-        >>> import numpy as np
-        >>> x = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
+        >>> input = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
         >>> relu = nn.ReLU()
-        >>> output = relu(x)
+        >>> output = relu(input)
         >>> print(output)
         [0. 2. 0. 2. 0.]
     """

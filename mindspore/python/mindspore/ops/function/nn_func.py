@@ -3490,24 +3490,24 @@ def relu(input):
         :align: center
 
     Args:
-        input (Tensor): Input Tensor of numeric types.
+        input (Tensor): The input Tensor.
 
     Returns:
-        Tensor, has the same dtype and shape as `input_x`.
+        Tensor, has the same dtype and shape as `input`.
 
     Raises:
-        TypeError: If dtype of `input` is not a number.
+        TypeError: If dtype of `input` is not supported.
         TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore
         >>> import numpy as np
+        >>> import mindspore
         >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> output = ops.relu(input_x)
+        >>> input = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> output = ops.relu(input)
         >>> print(output)
         [[0. 4. 0.]
          [2. 0. 9.]]

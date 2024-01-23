@@ -16,7 +16,7 @@ mindspore.ops.relu
         :align: center
 
     参数：
-        - **input** (Tensor) - 输入Tensor，其数据类型为数值型。
+        - **input** (Tensor) - 输入Tensor。
 
     返回：
         Tensor，其shape和数据类型与输入一致。
