@@ -968,7 +968,7 @@ void KernelGraphMgr::InitInternalOutputParameter(const AnfNodePtr &out_node, con
 
     // If the flag is enable, it means the graph would run in subgraph sink mode, the internal parameter cannot share
     // the same device address.
-    auto address = AnfAlgo::GetMutableOutputAddr(ref_real_node, ref_real_node_index);
+    auto address = AnfAlgo::GetMutableOutputAddr(ref_real_node, ref_real_node_index, false);
     if (!node_graph->has_flag(kFlagEnableZeroCopyInGraph)) {
       AnfAlgo::SetOutputAddr(address, 0, parameter.get());
     }
