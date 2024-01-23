@@ -24,6 +24,7 @@
 #include "include/common/pybind_api/api_register.h"
 #include "frontend/optimizer/ad/grad.h"
 #include "pipeline/jit/ps/pass.h"
+#include "pipeline/jit/pi/auto_grad/function_node.h"
 #include "runtime/pynative/op_executor.h"
 #include "runtime/pynative/op_compiler.h"
 #include "include/common/profiler.h"
@@ -332,6 +333,7 @@ void PyNativeExecutor::ReinitAfterFork() {
 
 void RegPyNativeExecutor(const py::module *m) {
   stub::RegStubNodes(m);
+  jit::grad::RegFunctionNodes(m);
 
   (void)py::class_<PyNativeExecutor, std::shared_ptr<PyNativeExecutor>>(*m, "PyNativeExecutor_")
     .def_static("get_instance", &PyNativeExecutor::GetInstance, "PyNativeExecutor get_instance.")
