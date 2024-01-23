@@ -31,11 +31,12 @@ void ElewiseBinary::SetInOutIdx() {
   outputsIdxMap_[0] = 0;
 }
 
-class Add : public ElewiseBinary {
+class InternalAdd : public ElewiseBinary {
  public:
-  Add() : ElewiseBinary("Add") {}
-  ~Add() = default;
+  InternalAdd() : ElewiseBinary("Add") {}
+  ~InternalAdd() = default;
 
+ protected:
   void SetComputeType(internal::OpParamPtr param_ptr) override {
     param_ptr->opId = internal::OpId::Add;
     internal::ElewiseParam op_param;
@@ -44,11 +45,12 @@ class Add : public ElewiseBinary {
   }
 };
 
-class Sub : public ElewiseBinary {
+class InternalSub : public ElewiseBinary {
  public:
-  Sub() : ElewiseBinary("Sub") {}
-  ~Sub() = default;
+  InternalSub() : ElewiseBinary("Sub") {}
+  ~InternalSub() = default;
 
+ protected:
   void SetComputeType(internal::OpParamPtr param_ptr) override {
     param_ptr->opId = internal::OpId::Sub;
     internal::ElewiseParam op_param;
@@ -57,7 +59,7 @@ class Sub : public ElewiseBinary {
   }
 };
 
-MS_INTERNAL_KERNEL_FACTORY_REG(Add, Add);
-MS_INTERNAL_KERNEL_FACTORY_REG(Sub, Sub);
+MS_INTERNAL_KERNEL_FACTORY_REG(Add, InternalAdd);
+MS_INTERNAL_KERNEL_FACTORY_REG(Sub, InternalSub);
 }  // namespace kernel
 }  // namespace mindspore

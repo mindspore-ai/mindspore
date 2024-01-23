@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_ELEWISE_BINARY_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_ELEWISE_BINARY_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_ELEWISE_UNARY_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_ELEWISE_UNARY_H_
 #include <string>
 #include <vector>
 #include <utility>
@@ -23,10 +23,10 @@
 
 namespace mindspore {
 namespace kernel {
-class ElewiseBinary : public InternalKernelMod {
+class ElewiseUnary : public InternalKernelMod {
  public:
-  explicit ElewiseBinary(std::string &&op_type) : InternalKernelMod(std::move(op_type)) {}
-  ~ElewiseBinary() = default;
+  explicit ElewiseUnary(std::string &&op_type) : InternalKernelMod(std::move(op_type)) {}
+  ~ElewiseUnary() = default;
 
  protected:
   virtual void SetComputeType(internal::OpParamPtr param_ptr) = 0;
@@ -36,4 +36,4 @@ class ElewiseBinary : public InternalKernelMod {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_ELEWISE_BINARY_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_ELEWISE_UNARY_H_
