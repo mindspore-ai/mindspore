@@ -24,9 +24,8 @@ internal::OpParamPtr InternalStridedSlice::CreateOpParam(const std::vector<Kerne
       GetValue<int64_t>(primitive_->GetAttr("ellipsis_mask")) != 0 ||
       GetValue<int64_t>(primitive_->GetAttr("new_axis_mask")) != 0 ||
       GetValue<int64_t>(primitive_->GetAttr("shrink_axis_mask")) != 0) {
-    MS_LOG(ERROR) << "internal op StridedSlice only support: begin_mask=0, end_mask=0, ellipsis_mask=0, "
-                     "new_axis_mask=0, shrink_axis_mask=0";
-    return nullptr;
+    MS_LOG(WARNING) << "internal op StridedSlice only support: begin_mask=0, end_mask=0, ellipsis_mask=0, "
+                       "new_axis_mask=0, shrink_axis_mask=0";
   }
   auto strides = inputs[3]->GetValue<std::vector<size_t>>().value();
   for (size_t value : strides) {
