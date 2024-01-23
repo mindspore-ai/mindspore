@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 
 import mindspore as ms
-from tests.st.model_zoo_tests import utils
+from tests.st.networks import utils
 
 ms.set_seed(1)
 np.random.seed(1)
