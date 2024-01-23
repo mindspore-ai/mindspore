@@ -65,6 +65,9 @@ class StubTensor:
     def __init__(self, stub=None, tensor=None):
         self.stub = stub
         self.tensor = tensor
+        self.grad_ = None
+        self.grad_fn_ = None
+        self.requires_grad_ = False
 
     __str__ = _stub_method(Tensor.__str__)
     __repr__ = _stub_method(Tensor.__repr__)
@@ -137,6 +140,57 @@ class StubTensor:
         Alias for :func:`mindspore.Tensor.ndim`.
         """
         return self.ndim
+
+    @property
+    def grad_fn(self):
+        r"""
+        function for backward.
+        """
+        return self.grad_fn_
+
+    @grad_fn.setter
+    def grad_fn(self, grad_fn):
+        r"""
+        set function for backward.
+        """
+        self.grad_fn_ = grad_fn
+
+    @property
+    def grad(self):
+        r"""
+        get grad value.
+        """
+        if self.grad_fn_ is not None:
+            self.grad_fn_.get_grad()
+        return self.grad_
+
+    @grad.setter
+    def grad(self, grad):
+        r"""
+        set grad value.
+        """
+        self.grad_ = grad
+
+    @property
+    def requires_grad(self):
+        r"""
+        whether the stub tensor need requires grad.
+        """
+        return self.requires_grad_
+
+    @requires_grad.setter
+    def requires_grad(self, requires_grad):
+        r"""
+        mark this stub tensor need requires grad.
+        """
+        self.requires_grad_ = requires_grad
+
+    def backward(self, grad=None):
+        r"""
+        calculate the gradient.
+        """
+        if self.grad_fn_ is not None:
+            self.grad_fn_.apply(grad)
 
     asnumpy = _stub_method(Tensor.asnumpy)
     is_persistent_data = _stub_method(Tensor.is_persistent_data)
