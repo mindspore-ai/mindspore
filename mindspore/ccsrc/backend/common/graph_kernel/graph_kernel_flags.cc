@@ -290,11 +290,12 @@ void GraphKernelFlags::Refresh() {
 void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_map) {
   FlagRegister reg(flag_map);
   bool is_ascend{false};
-  bool is_910b{false};
+  bool is_910bc{false};
   auto context_ptr = MsContext::GetInstance();
   if (context_ptr != nullptr) {
+    auto const &soc_version = context_ptr->ascend_soc_version();
+    is_910bc = (soc_version == "ascend910b") || (soc_version == "ascend910c");
     is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
-    is_910b = context_ptr->ascend_soc_version() == "ascend910b";
   }
 
   // Set opt_level first, some flags' default value depends on it.
@@ -310,7 +311,7 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
 
   // Boolean flags
   reg.AddFlag("dump_as_text", &dump_as_text);
-  reg.AddFlag("enable_stitch_fusion", &enable_stitch_fusion, (opt_level == OptLevel_3 && !is_910b));
+  reg.AddFlag("enable_stitch_fusion", &enable_stitch_fusion, (opt_level == OptLevel_3 && !is_910bc));
   reg.AddFlag("enable_recompute_fusion", &enable_recompute_fusion, opt_level >= OptLevel_2);
   reg.AddFlag("enable_parallel_fusion", &enable_parallel_fusion, opt_level == OptLevel_3);
   reg.AddFlag("enable_horizontal_fusion", &enable_horizontal_fusion);

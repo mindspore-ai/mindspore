@@ -235,7 +235,7 @@ class _CustomInstaller:
             # generate and copy reg info file
             op_info = self._gen_ai_core_reg_info(imply_path, self.func.__name__)
             self._copy_file(imply_path, self.ai_core_impl_dir)
-            for arc_name in ["ascend910", "ascend910b"]:
+            for arc_name in ["ascend910", "ascend910b", "ascend910c"]:
                 arc_dir = os.path.join(self.ai_core_config_dir, arc_name)
                 _CustomInstaller._create_dir(arc_dir)
                 self._save_op_info(arc_dir, "aic-{}-ops-info.json".format(arc_name), op_info)

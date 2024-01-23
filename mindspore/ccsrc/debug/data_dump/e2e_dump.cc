@@ -550,7 +550,7 @@ void E2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
   MS_EXCEPTION_IF_NULL(context);
   std::string backend = context->backend_policy();
   if (backend == "ge") {
-    MS_LOG(INFO) << "On 910B platform, execution_order is not support to dump.";
+    MS_LOG(INFO) << "On 910B or 910C platform, execution_order is not support to dump.";
     return;
   }
   bool sink_mode =

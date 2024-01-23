@@ -252,8 +252,11 @@ size_t AscendMemAdapter::GetDeviceMemSizeFromContext() const {
   MS_EXCEPTION_IF_NULL(context);
   size_t size_from_context;
   auto max_device_memory = context->get_param<float>(MS_CTX_MAX_DEVICE_MEMORY);
-  const float kAscendMaxDeviceMemory = context->ascend_soc_version() == kAscendVersion910b ? 64.0f : 32.0f;
-  if (max_device_memory <= kAscendMaxDeviceMemory) {
+  float total_device_memory = 32.0f;
+  if (context->ascend_soc_version() == kAscendVersion910b || context->ascend_soc_version() == kAscendVersion910c) {
+    total_device_memory = 64.0f;
+  }
+  if (max_device_memory <= total_device_memory) {
     MS_LOG(INFO) << "context max_device_memory:" << max_device_memory;
     size_from_context = FloatToSize(max_device_memory * kGBToByte);
   } else {
