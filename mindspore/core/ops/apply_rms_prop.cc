@@ -127,6 +127,8 @@ class ApplyRMSPropInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(types_lr, valid_types, primitive->name(), true);
     return var_dtype;
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {5, 6, 7}; }
 };
 float ApplyRMSProp::get_attr(const char *attr) const {
   auto attr_ptr = GetAttr(attr);
