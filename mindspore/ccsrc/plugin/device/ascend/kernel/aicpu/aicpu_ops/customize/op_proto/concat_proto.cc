@@ -162,7 +162,7 @@ bool ConcatInferShapeCommonStatic(Operator &op, const int64_t dynamic_input_star
 
   // set data type
   output_desc.SetDataType(input_desc.GetDataType());
-  op.UpdateOutputDesc(output_desc.GetName(), output_desc);
+  op.UpdateOutputDesc("y", output_desc);
   return true;
 }
 
@@ -202,7 +202,7 @@ static graphStatus ConcatInferShapeCommon(Operator &op, const int64_t dy_input_s
     output_desc.SetDataType(input_dtype);
     output_desc.SetShape(ge::Shape(UNKNOWN_RANK));
     OP_LOGD(TbeGetName(op).c_str(), "output shape:%s", to_string(output_desc.GetShape()).c_str());
-    op.UpdateOutputDesc(output_desc.GetName(), output_desc);
+    op.UpdateOutputDesc("y", output_desc);
     return GRAPH_SUCCESS;
   }
 
@@ -218,7 +218,7 @@ static graphStatus ConcatInferShapeCommon(Operator &op, const int64_t dy_input_s
       OP_LOGD(TbeGetName(op).c_str(), "output shape range:%s", to_string(output_shape_ranges).c_str());
     }
     OP_LOGD(TbeGetName(op).c_str(), "output shape:%s", to_string(output_desc.GetShape()).c_str());
-    op.UpdateOutputDesc(output_desc.GetName(), output_desc);
+    op.UpdateOutputDesc("y", output_desc);
     return GRAPH_SUCCESS;
   }
 
@@ -312,7 +312,7 @@ static graphStatus ConcatInferShapeCommon(Operator &op, const int64_t dy_input_s
     output_desc.SetShapeRange(output_shape_ranges);
     OP_LOGD(TbeGetName(op).c_str(), "output shape range:%s", to_string(output_shape_ranges).c_str());
   }
-  op.UpdateOutputDesc(output_desc.GetName(), output_desc);
+  op.UpdateOutputDesc("y", output_desc);
 
   return GRAPH_SUCCESS;
 }

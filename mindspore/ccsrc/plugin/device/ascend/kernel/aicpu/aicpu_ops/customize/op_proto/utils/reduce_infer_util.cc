@@ -154,15 +154,14 @@ bool DoReduceInferRangeWithAxes(TensorDesc &tensordesc_input_x, TensorDesc &tens
   return true;
 }
 
-bool GetConstData(const Operator &op, const int64_t const_input_idx, std::vector<int64_t> &const_values) {
+bool GetConstData(const Operator &op, const std::string &input_name, std::vector<int64_t> &const_values) {
   Tensor const_tensor;
-  auto input_name = op.GetInputDesc(const_input_idx).GetName();
   if (op.GetInputConstData(input_name.c_str(), const_tensor) != ge::GRAPH_SUCCESS) {
     OP_LOGW(TbeGetName(op).c_str(), "constvalue [%s] not exists.", input_name.c_str());
     return false;
   }
 
-  DataType const_dtype = op.GetInputDesc(const_input_idx).GetDataType();
+  DataType const_dtype = op.GetInputDescByName(input_name.c_str()).GetDataType();
   auto size = const_tensor.GetSize();
   auto data = const_tensor.GetData();
   const_values.reserve(size);
@@ -273,12 +272,11 @@ bool DoReduceInferShapeWithoutAxes(const Operator &op, TensorDesc &tensordesc_in
 }
 
 bool CommonReduceInferWithInputAxes(Operator &op, const int64_t input_x_idx, const int64_t output_idx,
-                                    const int64_t input_axes_idx, bool keep_dims) {
+                                    const std::string &axes_name, bool keep_dims) {
   PROFILING_PROTO_INIT(TbeGetName(op).c_str());
-  auto axes_name = op.GetInputDesc(input_axes_idx).GetName();
   SetOpInferDepends(op, {axes_name});
   auto tensordesc_input_x = op.GetInputDesc(input_x_idx);
-  auto tensordesc_input_axes = op.GetInputDesc(input_axes_idx);
+  auto tensordesc_input_axes = op.GetInputDescByName(axes_name.c_str());
   auto tensordesc_output = op.GetOutputDesc(output_idx);
   auto input_type = tensordesc_input_x.GetDataType();
   const Shape &input_shape = tensordesc_input_x.GetShape();
@@ -296,7 +294,7 @@ bool CommonReduceInferWithInputAxes(Operator &op, const int64_t input_x_idx, con
 
   // get const value from input_axes_idx
   std::vector<int64_t> reduce_axes;
-  if (GetConstData(op, input_axes_idx, reduce_axes)) {
+  if (GetConstData(op, axes_name, reduce_axes)) {
     PROFILING_PROTO_AFTER_GET_SHAPE_REG();
     // do infershape with const axes for static op
     Shape output_shape = tensordesc_output.GetShape();

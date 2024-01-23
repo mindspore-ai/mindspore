@@ -132,7 +132,7 @@ REG_ADPT_DESC(Dropout2D, kNameDropout2D, CUST_ADPT_DESC(Dropout2D))
 CUST_INPUT_MAP(StandardLaplace) = {{1, INPUT_DESC(shape)}};
 CUST_ATTR_MAP(StandardLaplace) = {{"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
                                   {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
-CUST_OUTPUT_MAP(StandardLaplace) = {{0, OUTPUT_DESC(output)}};
+CUST_OUTPUT_MAP(StandardLaplace) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(StandardLaplace, prim::kPrimStandardLaplace->name(), CUST_ADPT_DESC(StandardLaplace));
 
 // RandpermV2
@@ -167,9 +167,9 @@ CUST_OUTPUT_MAP(RandomPoisson) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(RandomPoisson, prim::kPrimRandomPoisson->name(), CUST_ADPT_DESC(RandomPoisson));
 
 // RandomCategorical
-CUST_INPUT_MAP(RandomCategorical) = {{1, INPUT_DESC(logits)}, {2, INPUT_DESC(num_sample)}, {3, INPUT_DESC(seed)}};
+CUST_INPUT_MAP(RandomCategorical) = {{1, INPUT_DESC(logits)}, {2, INPUT_DESC(num_samples)}, {3, INPUT_DESC(seed)}};
 CUST_ATTR_MAP(RandomCategorical) = EMPTY_ATTR_MAP;
-CUST_OUTPUT_MAP(RandomCategorical) = {{0, OUTPUT_DESC(output)}};
+CUST_OUTPUT_MAP(RandomCategorical) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(RandomCategorical, prim::kPrimRandomCategorical->name(), CUST_ADPT_DESC(RandomCategorical));
 
 CUST_INPUT_MAP(RandomShuffle) = {{1, INPUT_DESC(x)}};

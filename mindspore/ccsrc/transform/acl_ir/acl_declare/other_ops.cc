@@ -25,5 +25,7 @@ REGISTER_ACL_OP(RightShift).set_run_mode(false);
 REGISTER_ACL_OP(LeftShift).set_run_mode(false);
 
 REGISTER_ACL_OP(CheckValid).set_run_mode(false);
+
+REGISTER_ACL_OP(OneHot).set_run_mode(false);
 }  // namespace transform
 }  // namespace mindspore

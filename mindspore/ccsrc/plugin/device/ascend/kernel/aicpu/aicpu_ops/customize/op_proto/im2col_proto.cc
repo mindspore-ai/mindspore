@@ -196,7 +196,7 @@ IMPLEMT_COMMON_INFERFUNC(CustIm2colInferShape) {
 
   desc_out.SetShape(ge::Shape(out_dim));
   desc_out.SetDataType(dtype);
-  op.UpdateOutputDesc(desc_out.GetName(), desc_out);
+  op.UpdateOutputDesc("y", desc_out);
   return GRAPH_SUCCESS;
 }
 

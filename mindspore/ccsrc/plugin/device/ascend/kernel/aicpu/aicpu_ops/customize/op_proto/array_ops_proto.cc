@@ -21,6 +21,9 @@
 #include "utils/util.h"
 
 namespace ge {
+
+ONE_IN_ONE_OUT_INFER(CheckNumerics, x, y);
+
 // ----------------Expand Begin-------------------
 template <typename T>
 static bool ExpandCalDim(const Tensor &data, std::vector<int64_t> &vec_dim, std::vector<int64_t> &x_dims,
@@ -222,7 +225,7 @@ IMPLEMT_INFERFUNC(IdentityN, IdentityNInfer) {
     output_desc.SetOriginShape(Shape(input_dims));
     output_desc.SetDataType(intput_dtype);
     output_desc.SetShapeRange(input_range);
-    op.UpdateOutputDesc(output_desc.GetName(), output_desc);
+    op.UpdateDynamicOutputDesc("y", i, output_desc);
   }
   return GRAPH_SUCCESS;
 }
@@ -298,12 +301,12 @@ IMPLEMT_INFERFUNC(ListDiff, ListDiffInfer) {
   auto output_desc = op.GetOutputDesc(0);
   output_desc.SetShape(Shape(result));
   output_desc.SetDataType(output_type);
-  op.UpdateOutputDesc(output_desc.GetName(), output_desc);
+  op.UpdateOutputDesc("out", output_desc);
 
   auto index_desc = op.GetOutputDesc(1);
   index_desc.SetShape(Shape(result));
   index_desc.SetDataType(index_type);
-  op.UpdateOutputDesc(index_desc.GetName(), index_desc);
+  op.UpdateOutputDesc("idx", index_desc);
 
   return GRAPH_SUCCESS;
 }

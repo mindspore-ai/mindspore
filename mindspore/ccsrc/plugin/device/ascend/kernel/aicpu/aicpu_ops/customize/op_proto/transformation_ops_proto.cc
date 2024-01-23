@@ -256,8 +256,7 @@ IMPLEMT_COMMON_INFERFUNC(TransposeInferShape) {
 
   bool perm_done = true;
   std::vector<int64_t> perm_list;
-  static const int64_t perm_input_index = 1;
-  if (!(ops::GetConstIntData(op, perm_input_index, perm_list))) {
+  if (!(ops::GetConstIntData(op, "perm", perm_list))) {
     perm_done = false;
     OP_LOGW(TbeGetName(op), "Get Const perm value failed ");
   }

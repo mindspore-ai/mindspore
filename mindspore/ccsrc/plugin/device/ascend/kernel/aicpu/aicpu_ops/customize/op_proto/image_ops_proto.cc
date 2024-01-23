@@ -42,7 +42,7 @@ IMPLEMT_INFERFUNC(AdjustHue, AdjustHueInfer) {
   y_desc.SetShape(out);
   y_desc.SetShapeRange(range);
   y_desc.SetDataType(images_desc.GetDataType());
-  op.UpdateOutputDesc(y_desc.GetName(), y_desc);
+  op.UpdateOutputDesc("y", y_desc);
   return GRAPH_SUCCESS;
 }
 
@@ -71,7 +71,7 @@ static graphStatus AdjustSaturationCommInferShape(Operator &op) {
   y_desc.SetShape(out);
   y_desc.SetShapeRange(range);
   y_desc.SetDataType(images_desc.GetDataType());
-  op.UpdateOutputDesc(y_desc.GetName(), y_desc);
+  op.UpdateOutputDesc("y", y_desc);
   return GRAPH_SUCCESS;
 }
 
@@ -474,7 +474,7 @@ IMPLEMT_INFERFUNC(CropAndResize, CropAndResizeInfer) {
   }
   y_desc.SetShape(y_shape);
   y_desc.SetDataType(boxes_desc.GetDataType());
-  op.UpdateOutputDesc(y_desc.GetName(), y_desc);
+  op.UpdateOutputDesc("y", y_desc);
   return GRAPH_SUCCESS;
 }
 
