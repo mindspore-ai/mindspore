@@ -909,9 +909,9 @@ def scalar_cast(input_x, input_y):
     Casts the input scalar to another type.
 
     Args:
-        input_x (scalar): The input scalar. Only constant value is allowed.
+        input_x (scalar): The input scalar.
         input_y (mindspore.dtype): The type to be cast. Only constant value is allowed.
-            The value should only be mindspore.int64, mindspore.float64, or mindspore.bool_.
+            The value should only be mindspore.int64, mindspore.float64, or mindspore.bool\_.
 
     Returns:
         Scalar, the type is the same as the python type corresponding to `input_y`.
