@@ -1726,7 +1726,10 @@ static std::shared_ptr<TensorLayout> FindNextLayout(const AnfNodePtr &cnode, boo
     }
     if (IsPrimitiveCNode(use_apply, prim::kPrimMakeTuple)) {
       make_tuple_index = node_pair.second;
-      return FindNextLayout(use_apply, next_is_reshape, visit, make_tuple_index);
+      auto next_layout = FindNextLayout(use_apply, next_is_reshape, visit, make_tuple_index);
+      if (next_layout != nullptr) {
+        return next_layout;
+      }
     }
     if (IsParallelCareNode(use_apply) && use_apply->has_user_data<OperatorInfo>()) {
       if (make_tuple_index != -1) {
