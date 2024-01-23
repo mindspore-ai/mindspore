@@ -1,7 +1,7 @@
-mindspore.ops.fftshift
+mindspore.ops.ifftshift
 =================================
 
-.. py:function:: mindspore.ops.fftshift(input, dim=None)
+.. py:function:: mindspore.ops.ifftshift(input, dim=None)
 
     :func:`mindspore.ops.fftshift` 的逆运算。
 

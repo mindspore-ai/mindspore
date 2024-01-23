@@ -56,7 +56,7 @@ mindspore.scipy.linalg.eigh
 
         - **v** (Tensor) - 如果 `eigvals_only==False`，返回shape为 :math:`(M, N)` 的Tensor。
 
-    异常:
+    异常：
         - **RuntimeError** - 如果特征值计算不收敛或 `b` 不是正定矩阵，则会触发报错。
           如果输入矩阵不是对称矩阵或Hermitian矩阵，则不会报告错误，但结果将是错误的。
         - **TypeError** - 如果 `a` 不是Tensor。

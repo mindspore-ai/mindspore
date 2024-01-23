@@ -56,7 +56,7 @@ class Stream(Stream_):
                 will be allocated.
 
         Returns:
-            Event, recorded event. If this argument is ``None``, a new one will be allocated. Default value: ``None``.
+            Event, recorded event. If this argument is ``None``, a new one will be allocated. Default is ``None``.
 
         Raises:
             TypeError: If 'event' is neither a :class:`mindspore.hal.Event` nor a ``None``.

@@ -19,9 +19,9 @@ mindspore.nn.Sigmoid
         :align: center
 
     输入：
-        - **input** (Tensor) - `input`即为上述公式中的 :math:`x`。数据类型为float16、float32、float64、complex64或complex128的Sigmoid输入。任意维度的Tensor。
+        - **input** (Tensor) - `input` 即为上述公式中的 :math:`x`。数据类型为float16、float32、float64、complex64或complex128的Sigmoid输入。任意维度的Tensor。
 
-    返回：
+    输出：
         Tensor，数据类型和shape与 `input` 的相同。
 
     异常：
