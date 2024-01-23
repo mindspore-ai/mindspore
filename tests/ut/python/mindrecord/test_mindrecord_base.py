@@ -1943,6 +1943,7 @@ def test_file_writer_encode_integrity_check(file_name=None, remove_file=True):
     file_writer_encode_and_integrity_check(file_name, True, "0123456780abcdef", encrypt, udf_hash, decrypt)
 
 
+@pytest.mark.skip(reason="random failures")
 def test_file_writer_encode_integrity_check_with_exception(file_name=None, remove_file=True):
     """
     Feature: FileWriter

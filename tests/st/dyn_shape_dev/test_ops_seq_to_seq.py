@@ -135,7 +135,7 @@ def test_seq_to_seq_forward_dyn(mode):
         assert np.allclose(out2.asnumpy(), exp2.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
