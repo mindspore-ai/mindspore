@@ -32,7 +32,7 @@ bool GetNextAclKernelMod::Init(const std::vector<KernelTensor *> &inputs, const 
   converter_->ResizeAclOpInputs(primitive_);
   converter_->ConvertAttrToAclInput(primitive_->attrs(), kernel_name_);
   converter_->ConvertInputToAclAttr(inputs, kernel_name_);
-  converter_->ProcessRunnerSpecialInfo(kernel_name_, output_params_);
+  converter_->ProcessRunnerSpecialInfo(kernel_name_, output_params_, is_dynamic_);
   return true;
 }
 

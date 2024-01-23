@@ -57,6 +57,7 @@ KernelModPtr AclOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
   // acl_kernel_mod use proto value_depend indices
   kernel_mod_ptr->SetValueDependArgs(abstract::GetValueDependArgIndices(cnode, true));
   if (common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, cnode)) {
+    kernel_mod_ptr->SetDynamic(true);
     return kernel_mod_ptr;
   }
 
@@ -74,6 +75,7 @@ KernelModPtr AclOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
   }
   kernel_mod_ptr->SetNeedConvertHostTensor(true);
   if (kernel::CheckResizeCondition(cnode)) {
+    kernel_mod_ptr->SetDynamic(false);
     kernel_mod_ptr->Resize(input_kernel_tensors, output_kernel_tensors);
   }
 

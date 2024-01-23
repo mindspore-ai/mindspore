@@ -60,6 +60,7 @@ class AclKernelMod : public KernelMod {
   void SetNeedConvertHostTensor(const bool convert_flag) { need_convert_host_tensor_ = convert_flag; }
   void CreateAclConverter();
   void SetValueDependArgs(const std::set<int64_t> &indices);
+  void SetDynamic(bool is_dynamic) { is_dynamic_ = is_dynamic; }
   std::string GetFormatFromInput(const std::vector<KernelTensor *> &inputs);
 
   const std::set<int64_t> &GetValueDependArgs() const { return value_depend_args_; }
@@ -69,6 +70,8 @@ class AclKernelMod : public KernelMod {
   std::string DebugString() const;
   void GetInputInfo(const std::vector<KernelTensor *> &inputs);
   int GetOutputInfo(const std::vector<KernelTensor *> &outputs);
+
+  bool is_dynamic_{true};
 
   std::vector<std::string> ms_attr_str_;
   transform::AclConverterPtr converter_;

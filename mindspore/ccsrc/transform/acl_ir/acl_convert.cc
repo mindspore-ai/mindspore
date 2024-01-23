@@ -947,13 +947,12 @@ std::string AclConverter::DebugString() const {
 }
 
 void AclConverter::ProcessRunnerSpecialInfo(const std::string &prim_name,
-                                            const std::vector<TensorParams> &output_params) {
+                                            const std::vector<TensorParams> &output_params, bool is_dynamic) {
   auto opinfo = GeAdapterManager::GetInstance().GetInfo(prim_name, true);
   MS_EXCEPTION_IF_NULL(opinfo);
   auto op_type = opinfo->op_type();
   if (!AclAdapterManager::GetInstance().CheckAclAdapter(op_type)) {
-    // Default fuzz compile.
-    is_dynamic_ = true;
+    is_dynamic_ = is_dynamic;
     precision_mode_ = (AclUtil::KeepOriginDType() == 1) ? MUST_KEEP_ORIGIN_DTYPE : ALLOW_FP32_TO_FP16;
     return;
   }
@@ -963,7 +962,7 @@ void AclConverter::ProcessRunnerSpecialInfo(const std::string &prim_name,
   is_need_retrieve_output_shape_ = info.is_need_retrieve_output_shape();
 
   // Set dynamic or static compile mode.
-  is_dynamic_ = info.is_dynamic();
+  is_dynamic_ = info.is_dynamic(is_dynamic);
 
   // Set acl precision mode
   precision_mode_ = info.precision_mode();

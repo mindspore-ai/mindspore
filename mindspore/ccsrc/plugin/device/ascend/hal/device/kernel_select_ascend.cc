@@ -569,6 +569,28 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const CNode
   return {false, msg, etype};
 }
 
+bool IsEnableAclNN(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  if (kernel_graph->is_from_single_op()) {
+    return false;
+  }
+  static bool special_format = common::GetEnv("MS_FORMAT_MODE") == "0";
+  if (special_format && !kernel_graph->is_dynamic_shape()) {
+    return false;
+  }
+
+  if (node != nullptr && kernel::IsEnabledAclnnDispatch(node)) {
+    return true;
+  }
+
+  static bool enable_aclnn_env = common::GetEnv("MS_ENABLE_ACLNN") == "1";
+  if (enable_aclnn_env) {
+    return true;
+  }
+
+  return false;
+}
+
 void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
   for (const auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
@@ -577,10 +599,9 @@ void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
       continue;
     }
 
-    // Kernel selection process.
     const auto &kernel_graph = AnfAlgo::FetchKernelGraph(node.get());
-    bool aclnn_can_used = ((kernel_graph != nullptr) && !kernel_graph->is_from_single_op());
-    auto [select_res, msg, etype] = SelectKernelInfoWithMsg(node, aclnn_can_used && kernel::IsEnabledAclnn(node));
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    auto [select_res, msg, etype] = SelectKernelInfoWithMsg(node, IsEnableAclNN(kernel_graph, node));
     if (!select_res) {
       MS_LOG(INFO) << "node is " << node->fullname_with_scope() << " should backoff";
       std::pair<std::string, ExceptionType> failure_info = std::make_pair(msg, etype);

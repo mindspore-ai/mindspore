@@ -26,8 +26,6 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr char kEnableAclnn[] = "MS_ENABLE_ACLNN";
-
 KernelModPtr AclnnOpBuild(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
 
@@ -74,22 +72,6 @@ bool IsEnabledAclnnDispatch(const AnfNodePtr &anf_node) {
     return false;
   }
   return op_def->enable_dispatch_;
-}
-
-bool IsEnabledAclnn(const AnfNodePtr &anf_node) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  // The op yaml enable aclnn dispatch.
-  if (IsEnabledAclnnDispatch(anf_node)) {
-    return true;
-  }
-
-  static std::string enable_aclnn = common::GetEnv(kEnableAclnn);
-  // Manually set to open aclnn for performance acceleration.
-  if (enable_aclnn == "1") {
-    return true;
-  }
-
-  return false;
 }
 }  // namespace kernel
 }  // namespace mindspore
