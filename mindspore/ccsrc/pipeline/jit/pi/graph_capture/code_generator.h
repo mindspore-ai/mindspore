@@ -23,6 +23,8 @@
 #include <utility>
 #include <memory>
 #include "pipeline/jit/pi/graph_capture/graph_analyzer.h"
+#include "pipeline/jit/pi/graph_capture/graph_build.h"
+#include "pipeline/jit/pi/graph_build/func_graph_builder.h"
 
 namespace mindspore {
 namespace jit {
@@ -164,9 +166,18 @@ class CodeGenerator {
   std::unordered_map<ValueNode *, int> locals_map_;
 };
 
+class CodeBreakGenerator;
+class MindCodeBreakGenerator;
+using CodeBreakGeneratorPtr = std::shared_ptr<CodeBreakGenerator>;
+using MindCodeBreakGeneratorPtr = std::shared_ptr<MindCodeBreakGenerator>;
 class CodeBreakGenerator {
  public:
   explicit CodeBreakGenerator(PyCodeObject *co) : co_(co), cfg_(nullptr), break_bci_(-1), extra_local_(-1) {}
+  static CodeBreakGeneratorPtr Creator(const GraphBuilderPtr &builder, PyCodeObject *co) {
+    return builder->trace_flag()
+             ? std::static_pointer_cast<CodeBreakGenerator>(std::make_shared<MindCodeBreakGenerator>(builder, co))
+             : std::make_shared<CodeBreakGenerator>(co);
+  }
 
   void SetGlobals(const py::dict &dict) { globals_ = dict; }
   const py::dict &GetGlobals() const { return globals_; }
@@ -174,10 +185,10 @@ class CodeBreakGenerator {
   // TODO(chaiyouheng): collect nodes inputs and outputs at graph analyze
   void Init(const Graph *, const GraphAnalyzer::CapturedInfo *);
 
-  py::object MakeCode(bool make_graph);
+  virtual py::object MakeCode(bool make_graph);
   const CFG *GetCFG() const;
 
- private:
+ protected:
   // rebuild parameters of graph, identify parameters that graph only support as constant
   void BuildGraphParameters(const std::unordered_map<ValueNode *, int> &locals, GraphParameterBuilder *);
 
@@ -239,12 +250,18 @@ class CodeBreakGenerator {
   int extra_local_;
 };
 
+class MindCodeBreakGenerator : public CodeBreakGenerator {
+ public:
+  MindCodeBreakGenerator(const GraphBuilderPtr &builder, PyCodeObject *co)
+      : CodeBreakGenerator(co), builder_(builder) {}
+  GraphBuilderPtr builder_;
+  py::object MakeCode(bool make_graph);
+};
 // add a key and value to py::dict, check key conflict or rename the key
 void MapAdd(const py::dict &dict, const std::string &key, const py::object &value, std::string *rename = nullptr);
 
 // make new code by graph and captured information
-py::object MakeCodeFromCodeGen(Graph *graph, const GraphAnalyzer &analyzer, PyObject *globals);
-
+py::object MakeCodeFromCodeGen(const GraphBuilderPtr &builder, const GraphAnalyzerPtr &analyzer, PyObject *globals);
 }  // namespace graph
 }  // namespace jit
 }  // namespace mindspore

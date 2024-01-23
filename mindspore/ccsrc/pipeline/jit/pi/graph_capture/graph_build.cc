@@ -27,6 +27,8 @@
 #include "pipeline/jit/pi/graph_capture/special_func_infer.h"
 #include "pipeline/jit/pi/graph_guard/infer.h"
 #include "pipeline/jit/pi/external.h"
+#include "pipeline/jit/pi/graph_build/func_graph_builder.h"
+#include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore {
 namespace jit {
@@ -1625,9 +1627,8 @@ bool GraphBuilder::ReplaceCall(CallNode *call_node, const py::object &old_func) 
   return true;
 }
 
-// build sub-graph
-StopTraceReason GraphBuilder::BuildSubGraph(CallNode *call_node, int depth, const py::object &func,
-                                            GraphBuilder *subgraph) {
+StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, const py::object &func,
+                                                const GraphBuilderPtr &subgraph) {
   InlineReason stat = InlineReason::kInline;
   bool is_make_func = call_node->input(0)->GetOpcode() == MAKE_FUNCTION;
   if (is_make_func) {
@@ -1640,7 +1641,69 @@ StopTraceReason GraphBuilder::BuildSubGraph(CallNode *call_node, int depth, cons
   MS_EXCEPTION_IF_NULL(code);
   code->GetGuard()->Backup();
 
-  subgraph->TraceRun();
+  auto args = call_node->GetArgs();
+
+  MS_LOG(INFO) << "new subgraph->TraceRun";
+  subgraph->TraceRun(args);
+
+  call_node->SetSubGraph(subgraph->GetGraph());
+  if (subgraph->GetGraph()->GetRetVal() != nullptr) {
+    auto sg = std::dynamic_pointer_cast<MindGraphBuilder>(subgraph);
+    auto res = fg_builder_.AddNode(sg->fg_builder_.graph(), args);
+    if (res.ptr()) {
+      MS_LOG(INFO) << "add fg node suc: ";
+      call_node->SetVobj(AObject::Convert(res));
+    } else {
+      MS_LOG(ERROR) << "add fg node fail";
+      stat = InlineReason::kInlineInfer_Fail;
+    }
+    stat = is_make_func || ApplyInlinePolicy(subgraph->GetGraph()) ? stat : InlineReason::kInlinePolicyDisabled;
+  } else {
+    stat = InlineReason::kInlineInfer_Fail;
+  }
+  if (stat != InlineReason::kInline) {
+    code->GetGuard()->Rollback();
+    if (!is_make_func) {
+      /**
+       * replace function call, inline or resume capture after break graph
+       * exclude make function, because of function always a new function but code is constant
+       **/
+      stat = ReplaceCall(call_node, func) ? stat : InlineReason::kInlinePolicyDisabled;
+    }
+  } else {
+    if (!is_make_func) {
+      // exclude make function, because of function always a new function but code is constant
+      stat = GuardInlinedFunc(call_node) ? stat : InlineReason::kInlinePolicyDisabled;
+    }
+    if (stat != InlineReason::kInline) {
+      code->GetGuard()->Rollback();
+    } else {
+      code->GetGuard()->Pop();
+    }
+  }
+
+  // if stat == InlineReason::kInline, guard free variable
+  call_node->SetInlineReason(stat);
+  return StopTraceReason::kNonStopTrace;
+}
+
+// build sub-graph
+StopTraceReason GraphBuilder::BuildSubGraph(CallNode *call_node, int depth, const py::object &func,
+                                            const GraphBuilderPtr &subgraph) {
+  InlineReason stat = InlineReason::kInline;
+  bool is_make_func = call_node->input(0)->GetOpcode() == MAKE_FUNCTION;
+  if (is_make_func) {
+    // inline MAKE_FUNCTION, need eliminate cell and free variable if the function is not dead local.
+    bool has_cell = PyTuple_GET_SIZE(subgraph->GetGraph()->GetCodeObj()->co_cellvars) != 0;
+    stat = has_cell ? InlineReason::kInlinePolicyDisabled : stat;
+  }
+
+  auto code = subgraph->GetGraph()->GetGuard();
+  MS_EXCEPTION_IF_NULL(code);
+  code->GetGuard()->Backup();
+
+  MS_LOG(INFO) << "old subgraph->TraceRun";
+  subgraph->TraceRun(call_node->GetArgs());
 
   call_node->SetSubGraph(subgraph->GetGraph());
   if (subgraph->GetGraph()->GetRetVal() != nullptr) {
@@ -2024,6 +2087,117 @@ bool GraphBuilder::HandleCallParameters(const py::object &func_info, CallNode *c
 
 static void SetGradFuncInfo(mindspore::jit::graph::CallNode *call_node);
 
+void MindGraphBuilder::FGAddInput(const std::vector<py::object> &args) {
+  for (size_t i = 0; i < args.size(); ++i) {
+    MS_LOG(INFO) << "try add input: " << py::str(args[i]);
+    fg_builder_.AddInput(args[i]);
+    MS_LOG(INFO) << "add input suc";
+  }
+}
+
+void MindGraphBuilder::FGAddOutput() {
+  if (auto ret = GetGraph()->GetRetVal()) {
+    auto out = ret->GetVobj()->GetPyObject();
+    MS_LOG(INFO) << "try add output: " << py::str(out);
+    if (fg_builder_.AddOutput(out)) {
+      MS_LOG(INFO) << "add output succuss";
+      DumpIR("new.ir", fg_builder_.graph());
+    } else {
+      MS_LOG(ERROR) << "add output fail";
+      // TODO(xiaruijie)
+    }
+  }
+}
+
+py::object MindGraphBuilder::FGAddNode(CallNode *call_node, const py::object &callable_info,
+                                       const std::vector<py::object> &args, StopTraceReason *stop_reason) {
+  MS_LOG(INFO) << "try add node: " << py::str(callable_info);
+  auto res = fg_builder_.AddNode(callable_info, args);
+  if (res.ptr() == nullptr) {
+    MS_LOG(ERROR) << "add node fail";
+  } else {
+    MS_LOG(INFO) << "add node suc";
+    call_node->SetVobj(AObject::Convert(res));
+    *stop_reason = StopTraceReason::kNonStopTrace;
+  }
+  return py::object();
+}
+std::vector<py::object> GraphBuilder::GetNewArgs(CallNode *call_node) {
+  std::vector<py::object> new_args;
+  auto new_callable_info = GetFuncInfo(call_node->input(0));
+  FrameStates f;
+  if (!HandleCallParameters(new_callable_info, call_node, &f)) {
+    MS_LOG(ERROR) << "HandleCallParameters error" << std::endl;
+  }
+  PyCodeObject *co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(new_callable_info.ptr()));
+  int argc = co->co_argcount + co->co_kwonlyargcount;
+  argc += (co->co_flags & CO_VARARGS) ? 1 : 0;
+  argc += (co->co_flags & CO_VARKEYWORDS) ? 1 : 0;
+  std::transform(f.GetLocals().begin(), f.GetLocals().begin() + argc, std::back_inserter(new_args),
+                 [](ValueNode *n) { return n->GetVobj() ? n->GetVobj()->GetPyObject() : py::object(); });
+  return new_args;
+}
+py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReason *stop_reason) {
+  AObject *callable = call_node->input(0)->GetVobj();
+  py::object callable_info;
+  *stop_reason = StopTraceReason::kStopTraceInfer_Fail;
+  call_node->SetInlineReason(InlineReason::kInlineInfer_Fail);
+  if (!callable) {
+    return callable_info;
+  }
+  callable_info = callable->GetPyObject();
+  MS_LOG(INFO) << "trace_flag for: " << py::str(callable_info);
+  auto args = call_node->GetArgs();
+  auto func = fg_builder_.ConvertMethod(callable_info);
+  if (func.ptr() != nullptr) {
+    MS_LOG(INFO) << "convert method :" << py::str(callable_info) << " to " << py::str(func);
+    callable_info = func;
+    args = GetNewArgs(call_node);
+  }
+  if (fg_builder_.CheckCallable(callable_info)) {
+    return FGAddNode(call_node, callable_info, args, stop_reason);
+  }
+  if (fg_builder_.CanConstantFoldFunc(callable_info)) {
+    JustCallAndSetRes(call_node);
+    *stop_reason = StopTraceReason::kNonStopTrace;
+    return py::object();
+  }
+  if (callable_info.ptr() == nullptr) {
+    callable_info = py::cast<py::object>(reinterpret_cast<PyObject *>(callable->GetTypeObject()));
+  }
+
+  AObject::Type callable_type = callable->GetType();
+  if (callable_info.ptr() == nullptr) {
+    if (callable->TestMsFlag(AObject::kMsFlagGradFunc | AObject::kMsFlagShardFunc | AObject::kMsFlagVmapFunc)) {
+      SetGradFuncInfo(call_node);
+      *stop_reason = StopTraceReason::kNonStopTrace;
+    }
+    return py::object();
+  }
+
+  *stop_reason = StopTraceReason::kNonStopTrace;
+  if (callable_type == AObject::kTypeType) {
+    call_node->SetInlineReason(InlineReason::kInlineFunc_ArgType_IsClass);
+    HandleCallClass(call_node);
+    if (static_cast<AbstractType *>(callable)->GetTypeType() == AObject::kTypeCell) {
+      *stop_reason = StopTraceReason::kStopTraceInfer_Fail;
+    }
+    return py::object();
+  }
+
+  if (WhiteListFuncCheckAndInfer(call_node, callable_info)) {
+    return py::object();
+  }
+
+  // find code object
+  callable_info = GetFuncInfo(call_node->input(0));
+  if (callable_info.ptr() == nullptr) {
+    *stop_reason = StopTraceReason::kStopTraceFunc_Type_Unsupported;
+    call_node->SetInlineReason(InlineReason::kInlineCFunction_Unsupported);
+  }
+  return callable_info;
+}
+
 py::object GraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReason *stop_reason) {
   AObject *callable = call_node->input(0)->GetVobj();
   py::object callable_info;
@@ -2128,10 +2302,10 @@ StopTraceReason GraphBuilder::HandleCall(int depth) {
   }
 
   PyObject *globals = PyFunction_GET_GLOBALS(callable_info.ptr());
-  GraphBuilder subgraph(this->root_ ? this->root_ : this, this, co, globals);
+  auto subgraph = GraphBuilder::Creator(this->root_ ? this->root_ : this, this, co, globals, trace_flag());
 
   // frame build
-  FrameStates *frame = &subgraph.frame_;
+  FrameStates *frame = &(subgraph->frame_);
   ResolveClosure(callable_info, call_node->input(0), frame);
   if (!HandleCallParameters(callable_info, call_node, frame)) {
     call_node->SetInlineReason(InlineReason::kInlineFunc_ArgHandle_Unsupported);
@@ -2139,7 +2313,7 @@ StopTraceReason GraphBuilder::HandleCall(int depth) {
   }
 
   // build sub-graph
-  stop_reason = BuildSubGraph(call_node, depth, callable_info, &subgraph);
+  stop_reason = BuildSubGraph(call_node, depth, callable_info, subgraph);
   CollectInlineInfo(call_node, depth);
 
   if (call_node->GetSubGraph() && call_node->GetInlineReason() == InlineReason::kInline) {
@@ -2365,7 +2539,8 @@ bool GraphBuilder::TraceRunControl(const Instr &instr) {
   return false;
 }
 
-StopTraceReason GraphBuilder::TraceRun() {
+StopTraceReason GraphBuilder::TraceRun(const std::vector<py::object> &args) {
+  args_ = args;
   current_block_ = graph_->GetCFG()->GetFirstBB();
   cur_bci_ = 0;
   const auto &instrs = graph_->GetCFG()->instr_pool();
@@ -2421,7 +2596,7 @@ AObject *InferFuncResult(const py::object &callable, const py::object &args, con
   if (g == nullptr) {
     return nullptr;
   }
-  g->TraceRun();
+  g->TraceRun(py::cast<py::list>(args).cast<std::vector<py::object>>());
   if (clear_guard) {
     Graph *graph = g->GetGraph();
     auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(graph->GetCodeObj()));

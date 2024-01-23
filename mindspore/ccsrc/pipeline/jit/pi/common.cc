@@ -454,26 +454,28 @@ static bool GraphCapture(JitCompileResults *jcr) {
 
   GraphJitConfig &conf = *jcr->conf;
 
-  GraphBuilder g(jcr->origin_frame_);
-  (void)g.TraceRun();
+  auto g = GraphBuilder::Creator(jcr->origin_frame_, conf.GetBoolConfig(GraphJitConfig::kTraceFlag));
 
-  if (g.GetGraph()->IsBreakAtLoop() && !g.GetGraph()->RestoreLoopStatus()) {
+  (void)g->TraceRun(py::cast<py::list>(PackArgs(jcr->origin_frame_)[0]).cast<std::vector<py::object>>());
+
+  if (g->GetGraph()->IsBreakAtLoop() && !g->GetGraph()->RestoreLoopStatus()) {
     jcr->stat = JitCompileResults::NEVER_COMPILE;
     AObject::aobject_mem_pool_.Clear(__FILE__, __LINE__);
     return false;
   }
 
-  BytecodeInliner inliner(g.GetGraph(), py::cast<py::dict>(jcr->origin_frame_->f_globals));
+  BytecodeInliner inliner(g->GetGraph(), py::cast<py::dict>(jcr->origin_frame_->f_globals));
   inliner.Run();
 
-  GraphAnalyzer analyzer(g.GetGraph());
-  analyzer.Analyze();
+  auto analyzer = GraphAnalyzer::Creator(g);
+  analyzer->Analyze();
 
-  MarkBreak(g.GetGraph());
+  MarkBreak(g->GetGraph());
 
-  if (g.GetGraph()->IsBreakAtLoopAfterUnrolling()) {
+  // one stage need adapter
+  if (g->GetGraph()->IsBreakAtLoopAfterUnrolling()) {
     if (conf.GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
-      std::string repr = std::regex_replace(g.GetGraph()->ToString(), std::regex("\nbreak bci: [^-]"),
+      std::string repr = std::regex_replace(g->GetGraph()->ToString(), std::regex("\nbreak bci: [^-]"),
                                             "\ngraph break after loop unrolling");
       GRAPH_JIT_LOG_F("%s\n", repr.c_str());
     }
@@ -490,10 +492,10 @@ static bool GraphCapture(JitCompileResults *jcr) {
 
   // dump DFG
   if (conf.GetBoolConfig(GraphJitConfig::kPrintAfterAll)) {
-    g.DumpDFG();
+    g->DumpDFG();
   }
 
-  py::object new_code = MakeCodeFromCodeGen(g.GetGraph(), analyzer, jcr->origin_frame_->f_globals);
+  py::object new_code = MakeCodeFromCodeGen(g, analyzer, jcr->origin_frame_->f_globals);
   jcr->code->SetPythonCode(new_code);
   jcr->stat = JitCompileResults::GRAPH_CALLABLE;
 
@@ -503,10 +505,10 @@ static bool GraphCapture(JitCompileResults *jcr) {
   }
 
   // collect stop trace reason to traceback
-  jcr->tbs->PushStopTraceRes(g.GetGraph()->GetCodeName(), g.GetGraph()->GetStopTraceReason());
+  jcr->tbs->PushStopTraceRes(g->GetGraph()->GetCodeName(), g->GetGraph()->GetStopTraceReason());
   AObject::aobject_mem_pool_.Clear(__FILE__, __LINE__);
 
-  bool captured = !analyzer.NeedInterpret() && !conf.GetBoolConfig(GraphJitConfig::kInterpretCapturedCode);
+  bool captured = !analyzer->NeedInterpret() && !conf.GetBoolConfig(GraphJitConfig::kInterpretCapturedCode);
   if (captured) {
     jcr->stat = JitCompileResults::GRAPH_CAPTURED;
   }
@@ -671,7 +673,6 @@ static void AddGradFlagForParam(bool grad_flag, OptGuardPtr guard, bool detach) 
 static std::string CallGraphCompiler(JitCompileResults *jcr, PyFunctionObject *func, const PyFrameObject *frame) {
   std::string phase = GetFuncGraphPhase(*frame, jcr->code);
   MS_LOG(DEBUG) << "Phase is " << phase << "!";
-
   CallableGraph callable = mindspore::jit::graph::Compiler::Compile(*func, *frame, phase);
 
   ReleaseFunc rFunc = nullptr;
@@ -820,7 +821,7 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
   return true;
 }
 
-static std::vector<py::object> PackArgs(const PyFrameObject *frame) {
+std::vector<py::object> PackArgs(const PyFrameObject *frame) {
   const Py_ssize_t argc = frame->f_code->co_argcount + frame->f_code->co_kwonlyargcount;
   bool has_varg = frame->f_code->co_flags & CO_VARARGS;
   py::list args(argc);
