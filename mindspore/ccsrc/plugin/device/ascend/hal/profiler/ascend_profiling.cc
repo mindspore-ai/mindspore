@@ -24,6 +24,7 @@
 #include "plugin/device/ascend/hal/profiler/memory_profiling.h"
 #include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
 #include "plugin/device/ascend/hal/profiler/profiling_framework_data.h"
+#include "runtime/hardware/device_context_manager.h"
 #include "acl/acl_rt.h"
 
 using mindspore::device::ascend::ErrorManagerAdapter;
@@ -160,22 +161,24 @@ void AscendProfiler::Start() {
   profiler::ascend::ParallelStrategy::GetInstance()->SaveParallelStrategyToFile();
   std::string op_range_dir = profile_data_path_ + "/FRAMEWORK";
   if (access(op_range_dir.c_str(), 0) != 0) {
-    int DEFAULT_MKDIR_MODE = 0700;
+    static const int DEFAULT_MKDIR_MODE = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
     auto result = mkdir(op_range_dir.c_str(), DEFAULT_MKDIR_MODE);
     if (result != 0) {
       MS_LOG(ERROR) << "create op range dir failed, op_range_dir: " << op_range_dir;
       return;
     }
   }
-
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice) {
-    ProfilingFrameworkData::Device_Id = context->get_param<int32_t>(MS_CTX_DEVICE_ID);
+  uint32_t global_rank_id_ = 0;
+  device::DeviceContextKey host_key = {"CPU", 0};
+  auto host_ctx_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
+  MS_EXCEPTION_IF_NULL(host_ctx_);
+  auto host_comm_lib_instance_ = host_ctx_->device_res_manager_->collective_comm_lib();
+  if (host_comm_lib_instance_ != nullptr) {
+    global_rank_id_ = host_comm_lib_instance_->global_rank_id();
   } else if (!common::GetEnv("RANK_ID").empty()) {
-    ProfilingFrameworkData::Device_Id = static_cast<int32_t>(std::atoi(common::GetEnv("RANK_ID").c_str()));
+    global_rank_id_ = static_cast<int32_t>(std::atoi(common::GetEnv("RANK_ID").c_str()));
   }
-
+  ProfilingFrameworkData::Device_Id = global_rank_id_;
   ProfilingDataDumper::GetInstance()->Init(op_range_dir);
   ProfilingDataDumper::GetInstance()->Start();
   StepProfilingEnable(true);
