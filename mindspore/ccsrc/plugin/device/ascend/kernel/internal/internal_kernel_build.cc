@@ -13,6 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#ifndef ENABLE_INTERNAL_KERNELS
+#include "plugin/device/ascend/kernel/internal/internal_kernel_build.h"
+
+namespace mindspore {
+namespace kernel {
+KernelModPtr InternalKernelBuild(const AnfNodePtr &anf_node) { return nullptr; }
+
+bool IsRegisteredInternalKernel(const AnfNodePtr &anf_node) { return false; }
+}  // namespace kernel
+}  // namespace mindspore
+
+#else
 #include <string>
 #include <utility>
 #include <vector>
@@ -65,3 +78,4 @@ bool IsRegisteredInternalKernel(const AnfNodePtr &anf_node) {
 }
 }  // namespace kernel
 }  // namespace mindspore
+#endif

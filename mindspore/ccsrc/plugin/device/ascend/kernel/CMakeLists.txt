@@ -61,7 +61,12 @@ if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
     include_directories($ENV{MS_INTERNAL_KERNEL_HOME}/include)
     include_directories($ENV{MS_INTERNAL_KERNEL_HOME}/ascend-op-common-lib/output/asdops/include)
 
+    add_compile_definitions(ENABLE_INTERNAL_KERNELS)
     set(SRC_IN_910B ${SRC_IN_910B} ${INTERNAL_SRC_LIST})
+else()
+    set(SRC_IN_910B ${SRC_IN_910B}
+        "internal/internal_kernel_build.cc"
+    )
 endif()
 list(REMOVE_ITEM SRC_IN_910B ${AICPU_OPS_SRC})
 
