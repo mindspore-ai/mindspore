@@ -18,7 +18,6 @@ Test ReshapeAndCache plugin custom ops.
 import numpy as np
 import pytest
 import mindspore.nn as nn
-import mindspore.ops as ops
 from mindspore import Tensor, context, Parameter
 from mindspore.ops import ReshapeAndCache
 
@@ -38,7 +37,7 @@ class ReshapeAndCacheNet(nn.Cell):
         self.reshape_and_cache = ReshapeAndCache()
 
     def construct(self, key, value, key_cache, value_cache, slot_map):
-        out = self.reshape_and_cache(key, value, key_cache, value_cache, slot_map)
+        self.reshape_and_cache(key, value, key_cache, value_cache, slot_map)
         return key_cache, value_cache
 
 
@@ -46,13 +45,13 @@ def np_inference(key, value, key_cache, value_cache, slot_map):
     """
     np_inference
     """
-    slot_size = key_cache.shape[1]
-    s = key.shape[1]
+    slot_size_val = key_cache.shape[1]
+    s_val = key.shape[1]
     for i, slot in enumerate(slot_map):
-        slot_idx = slot // slot_size
-        slot_offset = slot % slot_size
-        b_idx = i // s
-        s_idx = i % s
+        slot_idx = slot // slot_size_val
+        slot_offset = slot % slot_size_val
+        b_idx = i // s_vals
+        s_idx = i % s_val
         key_token = key[b_idx][s_idx]
         value_token = value[b_idx][s_idx]
         key_cache[slot_idx][slot_offset] = key_token
@@ -75,7 +74,7 @@ def create_ms_inputs():
     ms_key_cache = Parameter(Tensor(key_cache))
     ms_value = Tensor(value_update)
     ms_value_cache = Parameter(Tensor(value_cache))
-    
+
     num_tokens = b * s
     slot_map = np.random.choice(np.arange(num_tokens), num_tokens,
                                 replace=False).astype(np.int32)
@@ -91,7 +90,7 @@ def create_np_inputs(ms_k, ms_v, ms_k_cache, ms_v_cache, ms_slot_map):
            ms_v_cache.asnumpy(), ms_slot_map.asnumpy()
 
 
-@pytest.mark.level0
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_reshape_and_cache_net():
@@ -108,4 +107,3 @@ def test_reshape_and_cache_net():
     np_cache_k, np_cache_v = np_inference(k, v, k_cache, v_cache, slot_map)
     assert np.allclose(ms_cache_k.asnumpy(), np_cache_k, 0.001, 0.001)
     assert np.allclose(ms_cache_v.asnumpy(), np_cache_v, 0.001, 0.001)
-
