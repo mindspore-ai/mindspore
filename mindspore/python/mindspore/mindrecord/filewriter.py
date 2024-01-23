@@ -179,8 +179,8 @@ class FileWriter:
         instance.init_append(file_name, header)
         return instance
 
+    # pylint: disable=missing-docstring
     def init_append(self, file_name, header):
-        """init open for append"""
         self._append = True
 
         if platform.system().lower() == "windows":

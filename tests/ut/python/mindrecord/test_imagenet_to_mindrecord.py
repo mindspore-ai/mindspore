@@ -14,7 +14,6 @@
 # ============================================================================
 """test imagenet to mindrecord tool"""
 import os
-import shutil
 import pytest
 
 from mindspore import log as logger
@@ -169,10 +168,6 @@ def imagenet_to_mindrecord_with_enc_and_hash(encode, enc_mode, hash_mode):
         os.remove(file_name)
     if os.path.exists(file_name + '.db'):
         os.remove(file_name + '.db')
-
-    decrypt_dir = os.path.dirname(os.path.realpath(file_name)) + "/.decrypt_mindrecord"
-    if os.path.exists(decrypt_dir):
-        shutil.rmtree(decrypt_dir)
 
 
 def test_imagenet_to_mindrecord_with_enc_and_hash_check(fixture_file):

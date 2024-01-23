@@ -16,7 +16,6 @@
 This is the test module for saveOp.
 """
 import os
-import shutil
 from string import punctuation
 
 import numpy as np
@@ -676,10 +675,6 @@ def save_with_encode_and_hash_check(file_name, enc_key, enc_mode, hash_mode):
 
     set_enc_key(None)
     set_hash_mode(None)
-
-    decrypt_dir = os.path.dirname(os.path.realpath(file_name)) + "/.decrypt_mindrecord"
-    if os.path.exists(decrypt_dir):
-        shutil.rmtree(decrypt_dir)
 
 
 def test_case_with_encode_and_hash_check():
