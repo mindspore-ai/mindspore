@@ -102,6 +102,7 @@ using RpcActorSetWeakPtr = std::weak_ptr<RpcActorSet>;
 // The output actor is used to receive the output result of actor which represents the graph output.
 struct ActorSet {
   explicit ActorSet(const ActorInfo &name) : name_(name) {}
+  ~ActorSet() { callback_counter_->set_expired(true); }
 
   void InitCallbackCounter() {
     if (loop_count_actor_ != nullptr) {

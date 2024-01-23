@@ -77,10 +77,10 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
 
   // The main program entry of memory alloc.
   DeviceMemPtr AllocTensorMem(size_t size, bool from_persistent_mem = false, bool need_recycle = false,
-                              uint32_t stream_id = UINT32_MAX);
+                              uint32_t stream_id = kDefaultStreamIndex);
   // The main program entry of continuous memory alloc.
   std::vector<DeviceMemPtr> AllocContinuousTensorMem(const std::vector<size_t> &size_list,
-                                                     uint32_t stream_id = UINT32_MAX);
+                                                     uint32_t stream_id = kDefaultStreamIndex);
   // The main program entry of memory free.
   void FreeTensorMem(const DeviceMemPtr &device_addr);
   // The main program entry of part memorys free and part memorys keep.
