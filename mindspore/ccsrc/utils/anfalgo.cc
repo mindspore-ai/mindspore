@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <map>
 #include <set>
+#include <complex>
 #include "ops/ascend_op_name.h"
 #include "ops/nn_optimizer_op_name.h"
 #include "ops/lite_op_name.h"
@@ -51,6 +52,8 @@ using abstract::AbstractTuple;
 
 namespace {
 constexpr size_t kNopNodeRealInputIndex = 1;
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
 
 const PrimitiveSet expand_prims = {prim::kPrimMakeTuple};
 const std::set<std::string> kNodeTupleOutSet = {kMakeTupleOpName, kGetNextOpName};
@@ -2110,6 +2113,10 @@ std::string AnfAlgo::GetTensorValueString(const tensor::TensorPtr &tensor) {
     fn(reinterpret_cast<float *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeBFloat16) {
     fn(reinterpret_cast<bfloat16 *>(tensor->data_c()));
+  } else if (dtype->type_id() == kNumberTypeComplex64) {
+    fn(reinterpret_cast<complex64 *>(tensor->data_c()));
+  } else if (dtype->type_id() == kNumberTypeComplex128) {
+    fn(reinterpret_cast<complex128 *>(tensor->data_c()));
   } else {
     MS_LOG(INTERNAL_EXCEPTION) << "The dtype of the constant input is " << dtype->ToString();
   }
