@@ -115,9 +115,9 @@ def test_hal_device_cpu():
     assert get_arch_list() is None
 
 
-@pytest.mark.level0
-# @pytest.mark.platform_arm_ascend_training
-# @pytest.mark.platform_x86_ascend_training
+@pytest.mark.skip("PyNative cases need to be extracted to a single file.")
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
 def test_hal_device_pynative():
     """

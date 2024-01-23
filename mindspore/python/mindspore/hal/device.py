@@ -59,7 +59,7 @@ for target in valid_targets:
 
 def _check_inputs_validation(fn):
     """
-    Decorator to check whether the device target validation.
+    Decorator to check inputs validation of device interfaces.
     If device target's hal instance is not created, throw an exception.
     """
     @functools.wraps(fn)
@@ -72,6 +72,9 @@ def _check_inputs_validation(fn):
             if device_target is None:
                 device_target = context.get_context("device_target")
                 params["device_target"] = device_target
+            if not isinstance(device_target, str):
+                raise TypeError(f"The argument 'device_target' must be str, but got {device_target}, "
+                                f"type is {type(device_target)}.")
             if device_target not in valid_targets:
                 raise ValueError(f"The argument 'device_target' must be one of "
                                  f"{valid_targets}, but got {device_target}.")
@@ -79,12 +82,39 @@ def _check_inputs_validation(fn):
                 raise ValueError(f"{device_target} backend is not available for this MindSpore package."
                                  "You can call hal.is_available to check the reason.")
 
+        return fn(*bound_args.args, **bound_args.kwargs)
+    return deco
+
+
+def _check_device_id(fn):
+    """
+    Decorator to check whether the device id is valid: must be equal or greater than 0 and less than device count.
+    """
+    @functools.wraps(fn)
+    def deco(*args, **kwargs):
+        bound_args = inspect.signature(fn).bind(*args, **kwargs)
+        bound_args.apply_defaults()
+        params = bound_args.arguments
+
+        device_target = None
+        if "device_target" in params:
+            device_target = params["device_target"]
+        dev_count = device_count(device_target)
+
         if "device_id" in params:
             device_id = params["device_id"]
+            if not isinstance(device_id, int):
+                raise TypeError(f"The argument 'device_id' must be int, but got {device_id}, "
+                                f"type is {type(device_id)}.")
             if device_id < 0:
-                raise ValueError(f"`device_id` should not be negative, but got {device_id}.")
-
-        return fn(*bound_args.args, **bound_args.kwargs)
+                raise ValueError(f"The argument 'device_id' should not be negative, but got {device_id}.")
+            if device_id >= dev_count:
+                raise ValueError(f"The argument 'device_id' must be less than device count: {dev_count}, "
+                                 f"but got {device_id}.")
+        else:
+            raise RuntimeError(f"Function {fn} has no input named 'device_id'. "
+                               "Please do not use '_check_device_id' decorator.")
+        return fn(*args, **kwargs)
     return deco
 
 
@@ -181,6 +211,7 @@ def device_count(device_target=None):
     return hal_instances[device_target].device_count()
 
 
+@_check_device_id
 @_check_inputs_validation
 def get_device_capability(device_id, device_target=None):
     """
@@ -209,6 +240,7 @@ def get_device_capability(device_id, device_target=None):
     return hal_instances[device_target].get_device_capability(device_id)
 
 
+@_check_device_id
 @_check_inputs_validation
 def get_device_properties(device_id, device_target=None):
     """
@@ -246,6 +278,7 @@ def get_device_properties(device_id, device_target=None):
     return hal_instances[device_target].get_device_properties(device_id)
 
 
+@_check_device_id
 @_check_inputs_validation
 def get_device_name(device_id, device_target=None):
     """
