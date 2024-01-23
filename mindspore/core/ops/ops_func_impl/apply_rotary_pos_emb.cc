@@ -26,10 +26,8 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-
-abstract::TupleShapePtr ApplyRotaryPosEmbInferShape(const PrimitivePtr &primitive,
-                                                    const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr ApplyRotaryPosEmbFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                                   const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kApplyRotaryPosEmbInputsNum, op_name);
@@ -42,13 +40,14 @@ abstract::TupleShapePtr ApplyRotaryPosEmbInferShape(const PrimitivePtr &primitiv
   return std::make_shared<abstract::TupleShape>(abstract::BaseShapePtrList{query_shape2, key_shape2});
 }
 
-TuplePtr ApplyRotaryPosEmbInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr ApplyRotaryPosEmbFuncImpl::InferType(const PrimitivePtr &prim,
+                                             const std::vector<AbstractBasePtr> &input_args) const {
   const std::set valid_types = {kFloat16, kBFloat16};
   auto op_name = prim->name();
   std::map<std::string, TypePtr> types;
 
-  (void)types.emplace("query", input_args[kApplyRotaryPosEmbQueryIndex]->BuildType());
-  (void)types.emplace("key", input_args[kApplyRotaryPosEmbKeyIndex]->BuildType());
+  (void)types.emplace("query", input_args[kApplyRotaryPosEmbQueryIndex]->GetType());
+  (void)types.emplace("key", input_args[kApplyRotaryPosEmbKeyIndex]->GetType());
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
 
   TypePtrList output_type_ptr_list(kFApplyRotaryPosEmbOutputsNum);
@@ -56,36 +55,5 @@ TuplePtr ApplyRotaryPosEmbInferType(const PrimitivePtr &prim, const std::vector<
   output_type_ptr_list[kApplyRotaryPosEmbKeyEmbedIndex] = type;
   return std::make_shared<Tuple>(output_type_ptr_list);
 }
-}  // namespace
-
-AbstractBasePtr ApplyRotaryPosEmbInferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                   const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kApplyRotaryPosEmbInputsNum, primitive->name());
-  auto infer_type = ApplyRotaryPosEmbInferType(primitive, input_args);
-  auto infer_shape = ApplyRotaryPosEmbInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
-}
-
-MIND_API_OPERATOR_IMPL(ApplyRotaryPosEmb, BaseOperator);
-
-// AG means auto generated
-class MIND_API AGApplyRotaryPosEmbInfer : public abstract::OpInferBase {
- public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) const override {
-    return ApplyRotaryPosEmbInferShape(primitive, input_args);
-  }
-
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return ApplyRotaryPosEmbInferType(primitive, input_args);
-  }
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args) const override {
-    return ApplyRotaryPosEmbInferShapeAndType(engine, primitive, input_args);
-  }
-};
-
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ApplyRotaryPosEmb, prim::kPrimApplyRotaryPosEmb, AGApplyRotaryPosEmbInfer, false);
 }  // namespace ops
 }  // namespace mindspore

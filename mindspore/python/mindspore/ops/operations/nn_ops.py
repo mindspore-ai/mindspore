@@ -33,7 +33,8 @@ from mindspore.ops.primitive import prim_attr_register
 from ..auto_generate import (CeLU, Flatten, LogSoftmax, ReLU, ReLU6,
                              Elu, Sigmoid, Softmax, HSwish, HSigmoid, AvgPool, BiasAdd,
                              NLLLoss, OneHot, GeLU, FastGeLU, PReLU,
-                             GridSampler3D, GridSampler2D, LayerNorm, HShrink, AdamWeightDecay, Dropout)
+                             GridSampler3D, GridSampler2D, LayerNorm, HShrink, AdamWeightDecay, Dropout,
+                             ApplyRotaryPosEmb)
 from .manually_defined import BatchNorm
 
 
@@ -10169,13 +10170,3 @@ class RmsNorm(Primitive):
         """Initialize Dense."""
         validator.check_value_type("epsilon", epsilon, [float], self.name)
         self.init_prim_io_names(inputs=['x', 'gamma'], outputs=["y", "rstd"])
-
-class ApplyRotaryPosEmb(Primitive):
-    r"""
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-    """
-    @prim_attr_register
-    def __init__(self):
-        self.init_prim_io_names(inputs=["query", "key", "cos", "sin", "seqLen"],
-                                outputs=["query_embed", "key_embed"])

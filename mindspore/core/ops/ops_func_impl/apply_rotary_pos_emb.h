@@ -24,11 +24,11 @@
 #include "mindapi/base/types.h"
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
-#include "mindspore/core/ops/op_name.h"
+#include "ops/op_name.h"
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameApplyRotaryPosEmb = "ApplyRotaryPosEmb";
 enum ApplyRotaryPosEmbQueryInputIndex : size_t {
   kApplyRotaryPosEmbQueryIndex = 0,
   kApplyRotaryPosEmbKeyIndex,
@@ -43,17 +43,11 @@ enum ApplyRotaryPosEmbQueryOutputIndex : size_t {
   kFApplyRotaryPosEmbOutputsNum,
 };
 
-class MIND_API ApplyRotaryPosEmb : public BaseOperator {
+class MIND_API ApplyRotaryPosEmbFuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(ApplyRotaryPosEmb);
-  ApplyRotaryPosEmb() : BaseOperator(kNameApplyRotaryPosEmb) {
-    InitIOName({"query", "key", "cos", "sin", "seqLen"}, {"query_embed", "key_embed"});
-  }
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
-AbstractBasePtr ApplyRotaryPosEmbInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<AbstractBasePtr> &input_args);
-using ApplyRotaryPosEmbPtr = std::shared_ptr<ApplyRotaryPosEmb>;
-
 }  // namespace ops
 }  // namespace mindspore
 
