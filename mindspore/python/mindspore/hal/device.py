@@ -124,6 +124,7 @@ def is_initialized(device_target):
 
     Note:
         MindSpore's backends "CPU", "GPU" and "Ascend" will be initialized in the following scenarios:
+
         - For distributed job, backend will be initialized after `mindspore.communication.init` method is called.
         - For standalone job, backend will be initialized after running
           the first operator or calling creating stream/event interfaces.

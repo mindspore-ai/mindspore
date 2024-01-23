@@ -27,4 +27,4 @@ mindspore.hal.get_device_properties
                   free_memory(int)
               }
 
-        - Ascend后端，返回None。
+        - CPU后端，返回None。
