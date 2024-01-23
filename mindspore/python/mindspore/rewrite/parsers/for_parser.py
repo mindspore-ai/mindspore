@@ -35,6 +35,7 @@ class ForParser(Parser):
         # parse ast codes of for branch into ControlFlow Node
         args = [AstConverter.create_scopedvalue(node.iter),]
         for_node = ControlFlow("for_node", ast_for, False, args, stree)
+        for_node.loop_vars = AstConverter.get_ast_target_elems(node.target, True)
         stree.append_origin_field(for_node, node_manager)
         for_node.set_node_manager(node_manager)
         for body in ast_for.body:
@@ -46,6 +47,7 @@ class ForParser(Parser):
         # parse ast codes of else branch into ControlFlow Node
         if ast_for.orelse:
             for_else_node = ControlFlow("for_else_node", ast_for, True, args, stree)
+            for_else_node.loop_vars = AstConverter.get_ast_target_elems(node.target, True)
             stree.append_origin_field(for_else_node, node_manager)
             for body in ast_for.orelse:
                 parser: Parser = ParserRegister.instance().get_parser(type(body))

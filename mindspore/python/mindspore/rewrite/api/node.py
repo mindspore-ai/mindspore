@@ -495,3 +495,23 @@ class Node:
     def get_attribute(self, key: str):
         Validator.check_value_type("key", key, [str], "Node attribute")
         return self._node.get_attribute(key)
+
+    # pylint: disable=missing-docstring
+    def get_arg_providers(self) -> dict:
+        arg_providers = {}
+        for arg_idx, providers in self._node.get_arg_providers().items():
+            arg_providers[arg_idx] = (Node(providers[0]), providers[1])
+        return arg_providers
+
+    # pylint: disable=missing-docstring
+    def get_target_users(self, index=-1) -> Union[dict, list]:
+        Validator.check_value_type("index", index, [int], "get_target_users")
+        if index == -1:
+            target_users = {}
+            for target_idx, users in self._node.get_target_users().items():
+                target_users[target_idx] = [(Node(user[0]), user[1]) for user in users]
+            return target_users
+        target_users = []
+        for users in self._node.get_target_users(index):
+            target_users.append((Node(users[0]), users[1]))
+        return target_users

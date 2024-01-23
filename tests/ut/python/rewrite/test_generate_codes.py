@@ -188,9 +188,9 @@ def test_generate_codes_with_if_in_init():
     net = IfInInitNet()
     stree = SymbolTree.create(net)
     codes = stree.get_code()
-    assert codes.count("class IfInInitNetOpt(nn.Cell):") == 1
-    assert codes.count("class IfInInitNetSubNetOpt(nn.Cell):") == 1
-    assert codes.count("class IfInInitNetSubNetOpt_1(nn.Cell):") == 1
+    assert codes.count("class IfInInitNetOpt(IfInInitNet, nn.Cell):") == 1
+    assert codes.count("class IfInInitNetSubNetOpt(IfInInitNetSubNet, nn.Cell):") == 1
+    assert codes.count("class IfInInitNetSubNetOpt_1(IfInInitNetSubNet, nn.Cell):") == 1
     assert codes.count("self.net1 = MOEOpt(self.net1)") == 1
     assert codes.count("self.net = TransformerEncoderLayerOpt(self.net)") == 1
     assert codes.count("self.net2 = TransformerEncoderLayerOpt(self.net2)") == 1
@@ -254,9 +254,9 @@ def test_generate_codes_with_if_in_init_and_construct_same_func_name():
     net = IfInInitNet2()
     stree = SymbolTree.create(net)
     codes = stree.get_code()
-    assert codes.count("class IfInInitNet2Opt(nn.Cell):") == 1
-    assert codes.count("class IfInInitNetSubNet2Opt(nn.Cell):") == 1
-    assert codes.count("class IfInInitNetSubNet2Opt_1(nn.Cell):") == 1
+    assert codes.count("class IfInInitNet2Opt(IfInInitNet2, nn.Cell):") == 1
+    assert codes.count("class IfInInitNetSubNet2Opt(IfInInitNetSubNet2, nn.Cell):") == 1
+    assert codes.count("class IfInInitNetSubNet2Opt_1(IfInInitNetSubNet2, nn.Cell):") == 1
     assert codes.count("self.net = MOE2Opt(self.net)") == 2
     assert codes.count("self.net = TransformerEncoderLayer2Opt(self.net)") == 3
 
@@ -317,11 +317,11 @@ def test_generate_codes_with_if_in_init_same_func_name():
     net = IfInInitNet3()
     stree = SymbolTree.create(net)
     codes = stree.get_code()
-    assert codes.count("class IfInInitNet3Opt(nn.Cell):") == 1
-    assert codes.count("class IfInInitNetSubNet3Opt(nn.Cell):") == 1
-    assert codes.count("class IfInInitNetSubNet3Opt_1(nn.Cell):") == 1
-    assert codes.count("class MOE3Opt(nn.Cell):") == 1
-    assert codes.count("class TransformerEncoderLayer3Opt(nn.Cell):") == 1
+    assert codes.count("class IfInInitNet3Opt(IfInInitNet3, nn.Cell):") == 1
+    assert codes.count("class IfInInitNetSubNet3Opt(IfInInitNetSubNet3, nn.Cell):") == 1
+    assert codes.count("class IfInInitNetSubNet3Opt_1(IfInInitNetSubNet3, nn.Cell):") == 1
+    assert codes.count("class MOE3Opt(MOE3, nn.Cell):") == 1
+    assert codes.count("class TransformerEncoderLayer3Opt(TransformerEncoderLayer3, nn.Cell):") == 1
     assert codes.count("self.subnet1 = IfInInitNetSubNet3Opt(self.subnet1)") == 1
     assert codes.count("self.subnet2 = IfInInitNetSubNet3Opt_1(self.subnet2)") == 1
     assert codes.count("self.subnet3 = IfInInitNetSubNet3Opt(self.subnet3)") == 1

@@ -22,7 +22,6 @@ import ast
 import importlib.util
 import time
 import inspect
-import copy
 from textwrap import dedent
 from collections import OrderedDict
 
@@ -264,6 +263,23 @@ class SymbolTree(Observer, Observable, NodeManager):
         ast_args: List[ast.arg] = AstFinder(module_ast).find_all(ast.arg)
         for ast_arg in ast_args:
             ast_arg.annotation = None
+
+    @staticmethod
+    def _check_import(import_path: str, import_module: str):
+        """
+        Check whether import operation is valid when importing module from specific path.
+        """
+        if import_path not in sys.path:
+            sys.path.append(import_path)
+        try:
+            importlib.import_module(name=import_module)
+        except (ValueError, ImportError) as e:
+            logger.info(f"Test import {import_module} from {import_path} failed: {e}.")
+            return False
+        except Exception as e: # pylint: disable=W0703
+            logger.info(f"Test import {import_module} from {import_path} failed: {e}.")
+            return False
+        return True
 
     @staticmethod
     def insert_to_ast_while_insert_input(new_node: Node, node_manager: NodeManager):
@@ -1032,9 +1048,12 @@ class SymbolTree(Observer, Observable, NodeManager):
         node.set_targets(targets)
         self._topo_mgr.on_update_target(node, index, old_target, target)
 
-    def all_nodes(self):
+    def all_nodes(self, subtree_nodes: bool = True):
         """
         Get all nodes including nodes in CallFunction node, CellContainer node and sub symbol tree.
+
+        Args:
+            subtree_nodes (bool): Whether include nodes in subtree. Default: True.
 
         Returns:
             A list of nodes.
@@ -1047,9 +1066,10 @@ class SymbolTree(Observer, Observable, NodeManager):
             for node in node_manager.nodes():
                 if isinstance(node, NodeManager):
                     node_managers.append(node)
-        for tree_node in self.get_tree_nodes():
-            stree = tree_node.symbol_tree
-            nodes.extend(stree.all_nodes())
+        if subtree_nodes:
+            for tree_node in self.get_tree_nodes():
+                stree = tree_node.symbol_tree
+                nodes.extend(stree.all_nodes())
         return nodes
 
     def get_node_from_name(self, node_name: str):
@@ -1422,7 +1442,7 @@ class SymbolTree(Observer, Observable, NodeManager):
         # Get the module where the code of ast_node is located
         file_path = inspect.getfile(type(self.get_origin_network()))
         module = None
-        for _, m in sys.modules.items():
+        for m in list(sys.modules.values()):
             if hasattr(m, "__file__") and m.__file__ and os.path.normcase(m.__file__) == os.path.normcase(file_path):
                 module = m
                 break
@@ -1540,21 +1560,26 @@ class SymbolTree(Observer, Observable, NodeManager):
             # add import of obj to ast
             func_file_path = inspect.getabsfile(module)
             func_file_path = os.path.normcase(func_file_path)
-            maxlen_sys_path = ""
+            prefix_paths = []
             for path in sys.path:
                 path = os.path.normcase(path)
-                if func_file_path.startswith(path) and len(path) > len(maxlen_sys_path):
-                    maxlen_sys_path = path
-            if maxlen_sys_path:
-                import_path = func_file_path[len(maxlen_sys_path):]
+                if func_file_path.startswith(path):
+                    prefix_paths.append(path)
+            prefix_paths.sort(key=len, reverse=True)
+            for path in prefix_paths:
+                import_path = func_file_path[len(path):]
                 import_str = import_path.replace(os.path.sep, '.')
                 import_str = import_str[1:] # remove first '.'
                 mod = import_str.rsplit('.', 1)[0]
+                if SymbolTree._check_import(func_file_path[:len(path)], mod):
+                    import_node = ast.ImportFrom(module=mod, names=[ast.alias(name=name, asname=None)], level=0)
+                    import_asts.append(import_node)
+                    break
             else:
                 self.save_file_path_to_sys(0, func_file_path, belonging_ast)
                 mod = os.path.basename(func_file_path).rsplit('.')[0]
-            import_node = ast.ImportFrom(module=mod, names=[ast.alias(name=name, asname=None)], level=0)
-            import_asts.append(import_node)
+                import_node = ast.ImportFrom(module=mod, names=[ast.alias(name=name, asname=None)], level=0)
+                import_asts.append(import_node)
 
     def _get_imports_list_of_ast(self, belonging_ast: ast.AST):
         # get import_asts of belonging_ast
@@ -1578,10 +1603,8 @@ class SymbolTree(Observer, Observable, NodeManager):
                 import_node = ast.ImportFrom(module=import_module, names=import_node.names, level=0)
         return import_node
 
-    def _get_valid_import_info(self, import_node: Union[ast.Import, ast.ImportFrom], file_path: str):
+    def _get_valid_import_info(self, import_node: ast.ImportFrom, file_path: str):
         """Get valid import info while import_node.module is at form of relative path"""
-        # copy to a new node to avoid origin import_node being modified.
-        import_node_test = copy.deepcopy(import_node)
         file_path = os.path.dirname(os.path.abspath(file_path))
         # get real path from import_node.level
         # from .(A) import xxx: current path
@@ -1606,24 +1629,13 @@ class SymbolTree(Observer, Observable, NodeManager):
                 logger.debug(f"{file_path_tmp} not in sys.path, try upper level.")
                 level_count += 1
                 continue
-            import_node_test.module = file_path[len(file_path_tmp) + 1:].replace(os.path.sep, '.') + suffix
-            import_node_test.level = 0
-            import_code = astunparse.unparse(import_node_test).strip()
-            test_code = f"import sys\nsys.path.insert(0, r'{file_path_tmp}')\n{import_code}"
-            try:
-                exec(test_code) # pylint: disable=W0122
-            except (ValueError, ImportError) as e:
-                # try upper level to avoid ValueError: attempted relative import beyond top-level package
-                # this exception is changed to ImportError after python3.9
-                logger.info(f"Test import code: {import_code} failed: {e}, try upper level.")
-                level_count += 1
-                continue
-            except Exception as e: # pylint: disable=W0703
-                logger.info(f"Process import code: {import_code} failed: {e}, ignore this import code.")
-                return None
-            else:
+            import_module = file_path[len(file_path_tmp) + 1:].replace(os.path.sep, '.') + suffix
+            if SymbolTree._check_import(file_path_tmp, import_module):
                 # try test code success
-                return import_node_test.module
+                return import_module
+            # test import ast failed, try upper level
+            level_count += 1
+            logger.info(f"Try upper level.")
         # try codes with all level failed
         logger.info(f"Test import code: {astunparse.unparse(import_node).strip()} failed, ignore this import code.")
         return None

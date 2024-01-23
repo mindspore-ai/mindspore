@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ControlFlow Node."""
-from typing import Union
+from typing import Union, List
 import ast
 from mindspore import log as logger
 from .node import Node
@@ -54,6 +54,8 @@ class ControlFlow(Node, NodeManager):
             self.body_node = self
         # record eval result of test code, used for ast.If
         self.test_result = None
+        # record loop variables of control flow, e.g. 'item' of 'for item in self.cell_list:'
+        self.loop_vars: List[str] = []
 
     def erase_node(self, node):
         """Erase node from container."""

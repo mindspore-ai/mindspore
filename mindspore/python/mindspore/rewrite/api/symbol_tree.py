@@ -486,3 +486,12 @@ class SymbolTree:
 
     def flatten_static_if_control_flow(self):
         return self._symbol_tree.flatten_static_if_control_flow()
+
+    # pylint: disable=missing-docstring
+    def get_origin_network(self):
+        return self._symbol_tree.get_origin_network()
+
+    # pylint: disable=missing-docstring
+    def all_nodes(self, subtree_nodes: bool = True):
+        Validator.check_value_type("subtree_nodes", subtree_nodes, [bool], "all_nodes")
+        return [Node(n) for n in self._symbol_tree.all_nodes(subtree_nodes)]

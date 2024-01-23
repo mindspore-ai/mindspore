@@ -26,8 +26,8 @@ def test_one_father_class(mode):
     y0 = net(Tensor(1))
     stree = SymbolTree.create(net)
     codes = stree.get_code()
-    assert codes.count("class NetAOpt(BaseNet):") == 1
-    assert codes.count("class BaseNet(nn.Cell):") == 1
+    assert codes.count("class NetAOpt(NetA, BaseNetOpt):") == 1
+    assert codes.count("class BaseNetOpt(BaseNet, nn.Cell):") == 1
     new_net = stree.get_network()
     y = new_net(Tensor(1))
     assert y == y0
@@ -54,9 +54,9 @@ def test_two_level_father_classes(mode):
     y0 = net(Tensor(1))
     stree = SymbolTree.create(net)
     codes = stree.get_code()
-    assert codes.count("class NetBOpt(NetA):") == 1
-    assert codes.count("class NetA(BaseNet):") == 1
-    assert codes.count("class BaseNet(nn.Cell):") == 1
+    assert codes.count("class NetBOpt(NetB, NetAOpt):") == 1, codes
+    assert codes.count("class NetAOpt(NetA, BaseNetOpt):") == 1, codes
+    assert codes.count("class BaseNetOpt(BaseNet, nn.Cell):") == 1, codes
     new_net = stree.get_network()
     y = new_net(Tensor(1))
     assert y == y0
@@ -97,10 +97,10 @@ def test_two_level_father_classes_in_tree(mode):
     y0 = net(Tensor(1))
     stree = SymbolTree.create(net)
     codes = stree.get_code()
-    assert codes.count("class NetCOpt(nn.Cell):") == 1
-    assert codes.count("class NetB1Opt(NetA):") == 1
-    assert codes.count("class NetA(BaseNet):") == 1
-    assert codes.count("class BaseNet(nn.Cell):") == 1
+    assert codes.count("class NetCOpt(NetC, nn.Cell):") == 1
+    assert codes.count("class NetB1Opt(NetB1, NetAOpt):") == 1
+    assert codes.count("class NetAOpt(NetA, BaseNetOpt):") == 1
+    assert codes.count("class BaseNetOpt(BaseNet, nn.Cell):") == 1
     new_net = stree.get_network()
     y = new_net(Tensor(1))
     assert y == y0
@@ -133,9 +133,9 @@ def test_two_father_classes_one_not_cell(mode):
     y0 = net(Tensor(1))
     stree = SymbolTree.create(net)
     codes = stree.get_code()
-    assert codes.count("class NetDOpt(BaseNet, NoCellNet):") == 1
-    assert codes.count("class NoCellNet():") == 1
-    assert codes.count("class BaseNet(nn.Cell):") == 1
+    assert codes.count("class NetDOpt(NetD, BaseNetOpt, NoCellNetOpt):") == 1
+    assert codes.count("class NoCellNetOpt(NoCellNet):") == 1
+    assert codes.count("class BaseNetOpt(BaseNet, nn.Cell):") == 1
     new_net = stree.get_network()
     y = new_net(Tensor(1))
     assert y == y0
@@ -174,7 +174,7 @@ def test_net_with_class_var(mode):
     y0 = net(Tensor(1))
     stree = SymbolTree.create(net)
     codes = stree.get_code()
-    assert codes.count("class NetEOpt(nn.Cell):") == 1
+    assert codes.count("class NetEOpt(NetE, nn.Cell):") == 1
     assert codes.count("def external_func(x):") == 0
     assert codes.count("var1 = Tensor(1.0)") == 0
     assert codes.count("var2 = external_func") == 0
@@ -212,10 +212,10 @@ def test_father_classes_with_class_var(mode):
     y0 = net(Tensor(1))
     stree = SymbolTree.create(net)
     codes = stree.get_code()
-    assert codes.count("class NetFOpt(BaseNet, NoCellNet, NetWithClassVar):") == 1
-    assert codes.count("class NoCellNet():") == 1
-    assert codes.count("class BaseNet(nn.Cell):") == 1
-    assert codes.count("class NetWithClassVar():") == 1
+    assert codes.count("class NetFOpt(NetF, BaseNetOpt, NoCellNetOpt, NetWithClassVarOpt):") == 1
+    assert codes.count("class NoCellNetOpt(NoCellNet):") == 1
+    assert codes.count("class BaseNetOpt(BaseNet, nn.Cell):") == 1
+    assert codes.count("class NetWithClassVarOpt(NetWithClassVar):") == 1
     assert codes.count("var1 = Tensor(1.0)") == 0
     assert codes.count("var2 = external_func") == 0
     assert codes.count("var3 = external_func2") == 0
@@ -280,6 +280,53 @@ def test_two_level_father_classes_with_class_var(mode):
     """
     ms.set_context(mode=mode)
     net = MyNet(Tensor(2), Tensor(3))
+    y0 = net(Tensor(1))
+    stree = SymbolTree.create(net)
+    net = stree.get_network()
+    y = net(Tensor(1))
+    assert y == y0
+
+
+class BaseNet2(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+
+    def construct(self, x):
+        x = self.relu(x)
+        return x
+
+
+class FatherNet2(BaseNet2, nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+
+    def construct(self, x):
+        x = self.relu(x)
+        return x
+
+
+class MyNet2(FatherNet2):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+
+    def construct(self, x):
+        x = self.relu(x)
+        return x
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
+def test_father_classes_has_two_bases(mode):
+    """
+    Feature: Test Rewrite.
+    Description: Test Rewrite when father class has two bases.
+    Expectation: Success.
+    """
+    ms.set_context(mode=mode)
+    net = MyNet2()
     y0 = net(Tensor(1))
     stree = SymbolTree.create(net)
     net = stree.get_network()

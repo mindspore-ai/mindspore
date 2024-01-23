@@ -14,6 +14,8 @@
 # ============================================================================
 """Auto mixed precision."""
 from __future__ import absolute_import
+import inspect
+import types
 
 import mindspore as ms
 from mindspore import nn
@@ -61,8 +63,17 @@ AMP_BLACK_LIST = [
     nn.LayerNorm
 ]
 
+# Primitives in inner amp black list will not be converted in O2/O3
+_INNER_AMP_BLACK_LIST = []
+
 MS_AMP_BY_REWRITE = False
-_amp_cast_op = P.Cast
+
+def amp_cast(value, dtype):
+    if isinstance(value, ms.Tensor):
+        return P.Cast()(value, dtype)
+    return value
+
+_amp_cast_op = amp_cast
 
 
 class _OutputTo16(nn.Cell):
@@ -89,152 +100,115 @@ class _OutputTo32(nn.Cell):
         return F.mixed_precision_cast(mstype.float32, out)
 
 
-
-def _allow_mix_precision(node, allowed_list, dtype) -> bool:
+def _operator_need_cast(node, force_cast: bool, white_list=None, black_list=None) -> bool:
     """
-    Check whether current node need do mix precision. Follow conditions need to be satisfied:
-        1) Type of node is one of (Primitive, nn.Cell)
-        2) Node is not Cast Op
-        3) to_float(mindspore.float16) is not set in Cell
+    Check whether current node is a operator that need to be casted. Follow conditions need to be satisfied:
+        1) Type of node is CallPrimitive and type of instance is Primitive
+        2) Type of instance is not P.Cast
+        3) force_cast is True, which means one of upper layer cells is under casting
+        4) white_list exist and type of node is in white_list
+        5) black_list exist and type of node is in not black_list
     """
-    node_inst = node.get_instance()
-    if node_inst in allowed_list:
+    if node.get_node_type() != ms.rewrite.NodeType.CallPrimitive:
+        return False
+    if not inspect.isclass(node.get_instance_type()):
+        return False
+    if not issubclass(node.get_instance_type(), Primitive):
+        return False
+    if issubclass(node.get_instance_type(), P.Cast):
+        return False
+    if node.get_instance_type() in _INNER_AMP_BLACK_LIST:
+        return False
+    if force_cast:
         return True
-    if not node.get_targets():
-        return False
-    if not issubclass(node.get_instance_type(), (Primitive, nn.Cell)):
-        return False
-    if isinstance(node_inst, _amp_cast_op):
-        return False
-    if issubclass(node.get_instance_type(), nn.Cell):
-        # if cell is already in allowed_list, it means to_float() is set by amp.
-        # if cell is not in allowed_list, but has to_float(),
-        # it means to_float() is set by user.
-        to_float_flag = "bf16" if dtype == mstype.bfloat16 else "fp16"
-        if hasattr(node_inst, to_float_flag) and getattr(node_inst, to_float_flag):
-            return False
-    allowed_list.append(node.get_instance())
-    return True
+    if white_list is not None and node.get_instance_type() in white_list:
+        return True
+    if black_list is not None and node.get_instance_type() not in black_list:
+        return True
+    return False
 
 
-def _insert_cast_operator_process(node, dtype):
-    """insert cast for operators in white_list."""
+def _precision_set_by_user(cell_inst: nn.Cell) -> bool:
+    """Check whether cell precision is set by user."""
+    for flag in ["fp32", "fp16", "bf16"]:
+        if hasattr(cell_inst, flag) and getattr(cell_inst, flag):
+            return True
+    return False
+
+
+def _net_need_cast(node, force_cast: bool, white_list=None, black_list=None) -> bool:
+    """
+    Check whether current node is type of tree whose network needs to be casted. Follow conditions need to
+    be satisfied:
+        1) Type of node is Tree and type of instance is Cell
+        2) Cell.to_float(xxx) is not set by user
+        3) force_cast is True, which means one of upper layer networks is under casting
+        4) white_list exist and type of node is in white_list
+        5) black_list exist and type of node is in not black_list
+    """
+    if node.get_node_type() != ms.rewrite.NodeType.Tree:
+        return False
+    if not inspect.isclass(node.get_instance_type()):
+        return False
+    if not issubclass(node.get_instance_type(), nn.Cell):
+        return False
+    if node.get_instance_type() in _INNER_AMP_BLACK_LIST:
+        return False
+    if _precision_set_by_user(node.get_instance()):
+        return False
+    if force_cast:
+        return True
+    if white_list is not None and node.get_instance_type() in white_list:
+        return True
+    if black_list is not None and node.get_instance_type() not in black_list:
+        return True
+    return False
+
+
+def _insert_cast_for_operator(node, dtype):
+    """insert cast pair for node."""
     dtype_str = "bfloat16" if dtype == mstype.bfloat16 else "float16"
-    new_cast_node = None
     stree = node.get_symbol_tree()
-    # insert cast fp16/bf16 before the primitive operators
-    if issubclass(node.get_instance_type(), Primitive):
-        for idx, arg in enumerate(node.get_args()):
-            position = stree.before(node)
-            new_node = _amp_cast_op()
-            cast_args = ms.rewrite.ScopedValue.create_name_values([arg.value, dtype_str], [arg.scope, "mindspore"])
-            arg_providers = node.get_handler().get_arg_providers()
-            if not arg_providers or idx not in arg_providers or \
-                len(arg_providers[idx][0].get_target_users(arg_providers[idx][1])) > 1:
-                # create new target names
-                cast_targets = [stree.unique_name(f"{arg.value}_var")]
-            else:
-                cast_targets = ms.rewrite.ScopedValue.create_name_values([arg.value], [arg.scope])
-            new_cast_node = ms.rewrite.Node.create_call_cell(new_node,
-                                                             targets=cast_targets,
-                                                             args=cast_args,
-                                                             name='incast_{}{}'.format(node.get_name(), idx))
-            stree.insert(position, new_cast_node)
-            node.set_arg_by_node(idx, new_cast_node)
-    # insert cast fp16/bf16 before the Cell operators
-    elif issubclass(node.get_instance_type(), nn.Cell):
-        node.get_instance().to_float(dtype)
-    # ignore if subclass is not one of (Primitive, nn.Cell)
-    else:
-        return
-
-    # insert cast float32 after the operators
-    position = stree.after(node)
-    new_node = _amp_cast_op()
-    cast_args = ms.rewrite.ScopedValue.create_name_values([node.get_targets()[0].value, "float32"],
-                                                          [node.get_targets()[0].scope, "mindspore"])
-    new_cast_node = ms.rewrite.Node.create_call_cell(new_node,
-                                                     targets=[node.get_targets()[0]],
-                                                     args=cast_args,
-                                                     name='outcast_{}'.format(node.get_name()))
-    # insert node & unique names
-    stree.insert(position, new_cast_node)
-    # update argument names
-    for user in node.get_users():
-        if user.get_name() == new_cast_node.get_name():
+    # insert cast fp16/bf16 for inputs of node
+    for idx, arg in enumerate(node.get_args()):
+        if arg.type != ms.rewrite.ValueType.NamingValue:
             continue
-        for idx, arg in enumerate(user.get_args()):
-            if arg == node.get_targets()[0]:
-                user.set_arg_by_node(idx, new_cast_node)
+        incast_args = ms.rewrite.ScopedValue.create_name_values([arg.value, dtype_str], [arg.scope, "mindspore"])
+        arg_providers = node.get_arg_providers()
+        if not arg_providers or idx not in arg_providers or \
+            len(arg_providers[idx][0].get_target_users(arg_providers[idx][1])) > 1:
+            # create new target names when argument is used by other node
+            incast_targets = [stree.unique_name(f"{arg.value}_var")]
+        else:
+            incast_targets = ms.rewrite.ScopedValue.create_name_values([arg.value], [arg.scope])
+        incast_node = ms.rewrite.Node.create_call_function(_amp_cast_op, targets=incast_targets, args=incast_args)
+        stree.insert(stree.before(node), incast_node)
+        node.set_arg_by_node(idx, incast_node)
+    # insert cast fp32 for outputs of node
+    for idx, target in enumerate(node.get_targets()):
+        if target.type != ms.rewrite.ValueType.NamingValue:
+            continue
+        outcast_args = ms.rewrite.ScopedValue.create_name_values([target.value, "float32"],
+                                                                 [target.scope, "mindspore"])
+        outcast_targets = ms.rewrite.ScopedValue.create_name_values([target.value], [target.scope])
+        outcast_node = ms.rewrite.Node.create_call_function(_amp_cast_op, targets=outcast_targets, args=outcast_args)
+        stree.insert(stree.after(node), outcast_node)
 
 
-def _insert_cast_operator_white_list(stree, white_list, dtype):
-    """insert cast for operators in white_list."""
-    allowed_list = []
-    # Ignore if net called ".to_float(dtype)"
-    net = stree.get_handler().get_origin_network()
-    to_float_flag = "bf16" if dtype == mstype.bfloat16 else "fp16"
-    if isinstance(net, nn.Cell) and hasattr(net, to_float_flag) and getattr(net, to_float_flag):
-        return
-    node_list = []
-    node_list.extend(list(stree.nodes()))
-    while node_list:
-        node = node_list.pop()
-        if node.get_node_type() == ms.rewrite.NodeType.CellContainer:
-            if MS_AMP_BY_REWRITE:
-                _insert_cast_for_cell_container(node, dtype, allowed_list, white_list=white_list)
-            for n in node.get_handler().node_list:
-                if n.get_node_type() == ms.rewrite.NodeType.Tree:
-                    _insert_cast_operator_white_list(ms.rewrite.Node(n).get_sub_tree(),
-                                                     white_list, dtype)
+def _insert_cast_for_operators(stree, dtype, force_cast, *, white_list=None, black_list=None):
+    """insert cast for operators not in black_list."""
+    # get all nodes of stree exclude nodes in subtree.
+    all_nodes = stree.all_nodes(False)
+    for node in all_nodes:
+        if not node.get_targets():
+            continue
+        elif _operator_need_cast(node, force_cast, white_list, black_list):
+            _insert_cast_for_operator(node, dtype)
         elif node.get_node_type() == ms.rewrite.NodeType.Tree:
-            substree = node.get_sub_tree()
-            _insert_cast_operator_white_list(substree, white_list, dtype)
-        elif node.get_node_type() in [ms.rewrite.NodeType.CallFunction, ms.rewrite.NodeType.ControlFlow]:
-            if isinstance(node.get_handler(), ms.rewrite.node.NodeManager):
-                nodes = [ms.rewrite.Node(n) for n in node.get_handler().nodes()]
-                node_list.extend(nodes)
-        elif node.get_instance_type() in white_list and _allow_mix_precision(node, allowed_list, dtype):
-            _insert_cast_operator_process(node, dtype)
-
-
-def _insert_cast_for_cell_container(cell_container, dtype, allowed_list, *, white_list=None, black_list=None):
-    """
-    Insert cast for cell containers.
-    Only one of white_list and black_list can be set.
-    """
-
-    class CastNet(nn.Cell):
-        """Cast net"""
-        def __init__(self, dtype):
-            super().__init__()
-            self.cast = _amp_cast_op()
-            self.dtype = dtype
-
-        def construct(self, x):
-            return self.cast(x, self.dtype)
-
-    cast_flag = False
-    current_node = None
-    stree = cell_container.get_symbol_tree()
-    for node in cell_container.get_handler().nodes():
-        current_node = ms.rewrite.Node(node)
-        if (white_list is not None and current_node.get_instance_type() in white_list) or \
-           (black_list is not None and current_node.get_instance_type() not in black_list) and \
-           (_allow_mix_precision(current_node, allowed_list, dtype)):
-            cast_flag = True
-            current_node.get_instance().to_float(dtype)
-        elif cast_flag:
-            # cast next node back to float32
-            current_node.get_instance().to_float(mstype.float32)
-            cast_flag = False
-    if cast_flag and current_node:
-        # if last node in cell_container is casted to fp16/bf16, insert a cast node to cast value back to fp32
-        cast_node = ms.rewrite.Node.create_call_cell(cell=CastNet(mstype.float32),
-                                                     args=[current_node.get_targets()[0]],
-                                                     targets=[current_node.get_targets()[0]],
-                                                     name=f"outcast_{cell_container.get_name()}")
-        stree.insert(stree.after(current_node), cast_node)
+            force_cast = force_cast or _net_need_cast(node, force_cast, white_list, black_list)
+            if not _precision_set_by_user(node.get_instance()):
+                subtree = node.get_sub_tree()
+                _insert_cast_for_operators(subtree, dtype, force_cast, white_list=white_list, black_list=black_list)
 
 
 def _need_removed_cast_pair(node, dtype):
@@ -243,126 +217,68 @@ def _need_removed_cast_pair(node, dtype):
     cast_dtypes = ms.rewrite.ScopedValue.create_name_values([dtype_str, "float32"], ["mindspore", "mindspore"])
     cast_dtype_f16 = cast_dtypes[0]
     cast_dtype_f32 = cast_dtypes[1]
-    # current node should be Cast Op to float32
+    # current node should be cast fp32
     if node.get_instance_type() != _amp_cast_op:
         return False
     node_cast_type = node.get_args()[1]
     if node_cast_type != cast_dtype_f32:
         return False
-    # all user nodes should be Cast Op to dtype or Cell with to_float(dtype)
+    # all user nodes should be cast fp16/bf16
     if not node.get_users():
         return False
     all_nodes = [ms.rewrite.Node(n) for n in node.get_handler().get_node_manager().nodes()]
     for user in node.get_users():
-        # If ControlFlow node(if statement) exists between current node and user node,
+        # If ControlFlow node(e.g. if, for, while) exists between current node and user node,
         # cast pair should not be removed.
         middle_nodes = all_nodes[all_nodes.index(node): all_nodes.index(user)]
         if any([n.get_node_type() == ms.rewrite.NodeType.ControlFlow for n in middle_nodes]):
             return False
-        if isinstance(user.get_instance(), nn.Cell):
-            to_float_flag = "bf16" if dtype == mstype.bfloat16 else "fp16"
-            if not (hasattr(user.get_instance(), to_float_flag) and getattr(user.get_instance(), to_float_flag)):
-                return False
-        elif user.get_instance_type() == _amp_cast_op:
+        if user.get_instance_type() == _amp_cast_op:
             user_cast_type = user.get_args()[1]
             if user_cast_type != cast_dtype_f16:
                 return False
+            # cast pair detected, check next user
+            continue
         else:
             return False
     return True
 
 
-def _removed_cast_pair_process(cast_f32_node):
-    """remove the duplicated cast operators."""
-    stree = cast_f32_node.get_symbol_tree()
-    cast_f32_users = cast_f32_node.get_users()
-    # remove cast f16 nodes
-    for user_node in cast_f32_users:
-        if user_node.get_instance_type() == _amp_cast_op:
-            cast_f16_node = user_node
-            # modify arguments using cast_f16's target[0] to cast_f32's args[0], which is f16 type
-            for cast_f16_user in cast_f16_node.get_users():
-                for idx, arg in enumerate(cast_f16_user.get_args()):
-                    if arg == cast_f16_node.get_targets()[0]:
-                        cast_f16_user.set_arg(idx, cast_f32_node.get_args()[0])
-            stree.erase(cast_f16_node)
-        # update args of cell f16 nodes
-        elif isinstance(user_node.get_instance(), nn.Cell):
-            cell_f16_node = user_node
-            for idx, arg in enumerate(cell_f16_node.get_args()):
-                if arg == cast_f32_node.get_targets()[0]:
-                    cell_f16_node.set_arg(idx, cast_f32_node.get_args()[0])
-    # remove the cast f32 node
-    stree.erase(cast_f32_node)
-
-
 def _remove_duplicated_cast(stree, dtype):
     """remove the duplicated cast operators."""
-    node_list = []
-    node_list.extend(list(stree.nodes()))
-    while node_list:
-        node = node_list.pop()
-        if node.get_node_type() == ms.rewrite.NodeType.CellContainer:
-            for n in node.get_handler().node_list:
-                if n.get_node_type() == ms.rewrite.NodeType.Tree:
-                    _remove_duplicated_cast(ms.rewrite.Node(n).get_sub_tree(), dtype)
-        elif node.get_node_type() == ms.rewrite.NodeType.Tree:
-            substree = node.get_sub_tree()
-            _remove_duplicated_cast(substree, dtype)
-        elif node.get_node_type() in [ms.rewrite.NodeType.CallFunction, ms.rewrite.NodeType.ControlFlow]:
-            if isinstance(node.get_handler(), ms.rewrite.node.NodeManager):
-                nodes = [ms.rewrite.Node(n) for n in node.get_handler().nodes()]
-                node_list.extend(nodes)
-        elif _need_removed_cast_pair(node, dtype):
-            _removed_cast_pair_process(node)
-
-
-def _auto_white_list(network, white_list, dtype):
-    """process the white list of network."""
-    stree = ms.rewrite.SymbolTree.create(network)
-    _insert_cast_operator_white_list(stree, white_list, dtype)
-    _remove_duplicated_cast(stree, dtype)
-    return stree.get_network()
-
-
-def _insert_cast_operator_black_list(stree, black_list, dtype):
-    """insert cast for operators not in black_list."""
-    allowed_list = []
-    # Ignore if net called ".to_float(dtype)"
-    net = stree.get_handler().get_origin_network()
-    to_float_flag = "bf16" if dtype == mstype.bfloat16 else "fp16"
-    if isinstance(net, nn.Cell) and hasattr(net, to_float_flag) and getattr(net, to_float_flag):
-        return
-    for node in stree.nodes(all_nodes=True):
-        if not node.get_targets():
-            continue
-        if node.get_node_type() == ms.rewrite.NodeType.CellContainer:
-            _insert_cast_for_cell_container(node, dtype, allowed_list, black_list=black_list)
-        elif isinstance(node.get_handler().get_node_manager(), ms.rewrite.node.CellContainer):
-            # nodes in CellContainer are processed by _insert_cast_for_cell_container
-            continue
-        elif node.get_instance_type() not in black_list and _allow_mix_precision(node, allowed_list, dtype):
-            _insert_cast_operator_process(node, dtype)
-
-
-def _remove_duplicated_cast_rewrite(stree, dtype):
-    """remove the duplicated cast operators."""
-    for node in stree.nodes(all_nodes=True):
+    all_nodes = list(stree.nodes(all_nodes=True))
+    for node in all_nodes:
         if _need_removed_cast_pair(node, dtype):
-            user_nodes = node.get_users()
-            # remove cast f16 nodes
-            for user_node in user_nodes:
-                if user_node.get_instance_type() == _amp_cast_op:
-                    stree.erase(user_node)
-            # remove the cast f32 node
+            incast_nodes = node.get_users()
+            # remove cast fp16/bf16 nodes
+            for incast_node in incast_nodes:
+                # get_target_users() return {target0: [(user0, arg_idx), ...], ...}
+                target_users = list(incast_node.get_target_users().values())
+                if not target_users or not target_users[0]:
+                    continue
+                for user_node, arg_idx in target_users[0]:
+                    user_node.set_arg(arg_idx, incast_node.get_args()[0])
+                stree.erase(incast_node)
+            # remove the cast fp32 node
             stree.erase(node)
 
 
-def _auto_black_list_rewrite(network, black_list, dtype):
+def _auto_mixed_precision_rewrite(network, dtype, *, white_list=None, black_list=None):
+    """Implement auto mixed precision by rewrite"""
+    if (white_list is None and black_list is None) or (white_list is not None and black_list is not None):
+        raise ValueError("For _auto_mixed_precision_rewrite, one of white_list and black_list must be provided.")
+    # enable rewrite configs for amp
+    ms.rewrite.common.namespace._ms_cells_to_subtree = True
+    ms.rewrite.parsers.assign_parser.AssignParser._share_one_implementation = True
+    # insert casts by rewrite
     stree = ms.rewrite.SymbolTree.create(network)
-    _insert_cast_operator_black_list(stree, black_list, dtype)
-    _remove_duplicated_cast_rewrite(stree, dtype)
-    return stree.get_network()
+    _insert_cast_for_operators(stree, dtype, False, white_list=white_list, black_list=black_list)
+    _remove_duplicated_cast(stree, dtype)
+    new_net = stree.get_network()
+    # disable rewrite configs
+    ms.rewrite.parsers.assign_parser.AssignParser._share_one_implementation = False
+    ms.rewrite.common.namespace._ms_cells_to_subtree = False
+    return new_net
 
 
 def _auto_black_list(network, black_list, dtype):
@@ -465,16 +381,16 @@ def auto_mixed_precision(network, amp_level="O0", dtype=mstype.float16):
                        f"degradation.")
 
     if amp_level == "O1":
-        network = _auto_white_list(network, AMP_WHITE_LIST, dtype)
+        network = _auto_mixed_precision_rewrite(network, dtype, white_list=AMP_WHITE_LIST)
     elif amp_level == "O2":
         if MS_AMP_BY_REWRITE:
-            network = _auto_black_list_rewrite(network, AMP_BLACK_LIST, dtype)
+            network = _auto_mixed_precision_rewrite(network, dtype, black_list=AMP_BLACK_LIST)
         else:
             network = _auto_black_list(network, AMP_BLACK_LIST, dtype)
             network = _OutputTo32(network)
     elif amp_level == "O3":
         if MS_AMP_BY_REWRITE:
-            network = _auto_black_list_rewrite(network, [], dtype)
+            network = _auto_mixed_precision_rewrite(network, dtype, black_list=[])
         else:
             network.to_float(dtype)
             network = _OutputTo32(network)
@@ -847,11 +763,11 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None, dtype=m
 
     if white_list is not None:
         _list_check(white_list, "white_list")
-        network = _auto_white_list(network, white_list, dtype)
+        network = _auto_mixed_precision_rewrite(network, dtype, white_list=white_list)
     else:
         _list_check(black_list, "black_list")
         if MS_AMP_BY_REWRITE:
-            network = _auto_black_list_rewrite(network, black_list, dtype)
+            network = _auto_mixed_precision_rewrite(network, dtype, black_list=black_list)
         else:
             network = _auto_black_list(network, black_list, dtype)
             network = _OutputTo32(network)
@@ -886,7 +802,7 @@ def _list_check(custom_list: list, list_name: str):
             if elem not in custom_list:
                 logger.warning(f"{elem} is removed from internal black list.")
 
-def _config_amp(*, enable_rewrite: bool = None, cast_op: type = None): # pylint: disable=unused-variable
+def _config_amp(*, enable_rewrite: bool = None, cast_op: types.FunctionType = None): # pylint: disable=unused-variable
     """Configure auto mixed precision."""
     global MS_AMP_BY_REWRITE
     global _amp_cast_op

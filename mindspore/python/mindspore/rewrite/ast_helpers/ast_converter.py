@@ -128,11 +128,15 @@ class AstConverter():
         return True
 
     @staticmethod
-    def get_ast_target_elems(ast_target: ast.AST):
+    def get_ast_target_elems(ast_target: ast.AST, convert_to_str: bool = False):
+        """Get elements in ast"""
         target_ast_elems = []
         if isinstance(ast_target, (ast.Tuple, ast.List)):
             for ast_elem in ast_target.elts:
                 target_ast_elems.extend(AstConverter.get_ast_target_elems(ast_elem))
         else:
-            target_ast_elems.append(ast_target)
+            if convert_to_str:
+                target_ast_elems.append(astunparse.unparse(ast_target).strip())
+            else:
+                target_ast_elems.append(ast_target)
         return target_ast_elems

@@ -18,6 +18,7 @@ import sys
 import inspect
 import types
 from mindspore._extends.parse.namespace import CellNamespace
+from mindspore.nn import CellList, SequentialCell
 
 
 _ms_common_ns = CellNamespace('mindspore.common')
@@ -27,7 +28,7 @@ _ms_functional_ns = CellNamespace('mindspore.ops.functional')
 
 # Elements in _subtree_black_list will not be converted to symbol tree.
 # Only str and types are stored in _subtree_black_list.
-_subtree_black_list = ["QuantizeWrapperCell",]
+_subtree_black_list = [CellList, SequentialCell]
 # Whether to convert mindspore built-in cells to symbol tree.
 _ms_cells_to_subtree = False
 # Paths of modules which will not be considered as third party module
@@ -36,8 +37,7 @@ _ignore_third_party_paths = []
 def is_subtree(cls_inst):
     """Determine whether 'cls_inst' is a subtree."""
     cls_name = type(cls_inst).__name__
-    black_list_types = tuple([elem for elem in _subtree_black_list if not isinstance(elem, str)])
-    if cls_name in _subtree_black_list or isinstance(cls_inst, black_list_types):
+    if isinstance(cls_inst, tuple(_subtree_black_list)):
         return False
     if cls_name in _ms_common_ns and isinstance(cls_inst, _ms_common_ns[cls_name]):
         return False

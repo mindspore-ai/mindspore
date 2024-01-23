@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Parse ast.Assign in construct function to node of SymbolTree."""
-from typing import Union, List
+from typing import Union, List, Dict
 import types
 import os
 import ast
@@ -30,7 +30,7 @@ from . import Parser, ParserRegister, reg_parser
 from ..symbol_tree import SymbolTree
 from ..node import Node, TreeNode, NodeManager, CallFunction, CellContainer, ControlFlow, LocalPrim
 from ..api.scoped_value import ScopedValue
-from ..ast_helpers import AstFlattener, AstReplacer, AstConverter, AstFinder
+from ..ast_helpers import AstFlattener, AstConverter, AstFinder
 from ..common.error_log import error_str
 from ..common.namespace import is_subtree, is_ms_function, is_third_party
 from ..common.namer import FunctionNamer
@@ -49,8 +49,15 @@ class AssignParser(Parser):
     types_for_cell_container = [SequentialCell,]
     # If mindspore built-in function to be parsered or skipped
     _skip_ms_function = False
-    # functions in black list will not be parsed
+    # Functions in black list will not be parsed
     _function_parse_black_list = [F.arange]
+    # Share one implementation for the same instances
+    _share_one_implementation = False
+    # Implementation caches of sub SymbolTrees, CallFunction nodes and CellContainer nodes
+    # Keys are ids of the instance object
+    _cached_trees: Dict[int, SymbolTree] = {}
+    _cached_functions: Dict[int, Node] = {}
+    _cahced_cell_containers: Dict[int, Node] = {}
 
     def __init__(self):
         super().__init__()
@@ -163,7 +170,8 @@ class AssignParser(Parser):
         # get module where function object is used
         func_path = AssignParser._get_path_of_node_manager(node_manager)
         func_path = os.path.normcase(os.path.normpath(func_path))
-        for _, m in sys.modules.items():
+        modules = list(sys.modules.values())
+        for m in modules:
             if hasattr(m, "__file__") and m.__file__ is not None and func_path == os.path.normcase(m.__file__):
                 return m, func_path
         return None, func_path
@@ -397,23 +405,43 @@ class AssignParser(Parser):
 
     def cell_container_process(self, func_name: str, node_name: str, container_obj: object):
         """ parse cell container object."""
+        # create unparsable node if container is already parsed when sharing one implementation
+        if AssignParser._share_one_implementation and id(container_obj) in AssignParser._cahced_cell_containers:
+            cell_container = Node.create_call_buildin_op(container_obj, self.ast_assign, self.targets,
+                                                         func_name, self.args, self.kwargs, node_name)
+            return cell_container
         cell_container = CellContainer(self.ast_assign, self.targets, func_name, self.args, self.kwargs,
                                        node_name, self.stree, container_obj)
         for i, cell in enumerate(container_obj):
             cell_name = type(cell).__name__
-            is_sub_tree = is_subtree(cell)
-            if is_sub_tree:
-                from ..symbol_tree import SymbolTreeBuilder
-                stb = SymbolTreeBuilder(cell)
-                new_stree = stb.build()
-                sub_node = TreeNode.create_tree_node(new_stree, None, self.targets, cell_name, self.args,
-                                                     self.kwargs, cell_name, cell)
-                self._update_cell_container_in_init(func_name, i, new_stree.get_opt_cls_name())
+            # The type of cell is container of cells (e.g. SequentialCell)
+            if isinstance(cell, tuple(AssignParser.types_for_cell_container)):
+                sub_node = self.cell_container_process(f"{func_name}[{i}]", cell_name, cell)
+            elif is_subtree(cell):
+                # create unparsable node if tree node is already parsed when sharing one implementation
+                if AssignParser._share_one_implementation and id(cell) in AssignParser._cached_trees:
+                    first_stree = AssignParser._cached_trees.get(id(cell))
+                    self._update_cell_container_in_init(func_name, i, first_stree.get_opt_cls_name())
+                    sub_node = Node.create_call_buildin_op(cell, None, self.targets, cell_name, self.args,
+                                                           self.kwargs, cell_name)
+                else:
+                    from ..symbol_tree import SymbolTreeBuilder
+                    stb = SymbolTreeBuilder(cell)
+                    new_stree = stb.build()
+                    sub_node = TreeNode.create_tree_node(new_stree, None, self.targets, cell_name, self.args,
+                                                         self.kwargs, cell_name, cell)
+                    self._update_cell_container_in_init(func_name, i, new_stree.get_opt_cls_name())
+                    # save symbol tree if it is firstly parsed when sharing one implementation
+                    if AssignParser._share_one_implementation:
+                        AssignParser._cached_trees[id(cell)] = new_stree
             else:
                 sub_node = Node.create_call_buildin_op(cell, None, self.targets, cell_name, self.args,
                                                        self.kwargs, cell_name)
             # add sub node to cell_container
             cell_container.append(sub_node, False)
+        # save the node if container is firstly parsed when sharing one implementation
+        if AssignParser._share_one_implementation:
+            AssignParser._cahced_cell_containers[id(container_obj)] = cell_container
         return cell_container
 
     def process_cell(self, func_scope_name: ScopedValue, node_name: str, cell_inst: Cell):
@@ -423,14 +451,22 @@ class AssignParser(Parser):
             node = self.cell_container_process(func_scope_name, node_name, cell_inst)
         # The type of cell is user custom network, then we create sub-symboltree
         elif is_subtree(cell_inst):
-            from ..symbol_tree import SymbolTreeBuilder
-            stb = SymbolTreeBuilder(cell_inst)
-            new_stree = stb.build()
-            self._update_field_in_init(str(func_scope_name), new_stree)
-            replacer = AstReplacer(new_stree.get_class_ast())
-            replacer.replace_all(new_stree.get_ori_cls_name(), new_stree.get_opt_cls_name())
-            node = TreeNode.create_tree_node(new_stree, self.ast_assign, self.targets, func_scope_name, self.args,
-                                             self.kwargs, node_name, new_stree.get_origin_network())
+            # create unparsable node if tree node is already parsed when sharing one implementation
+            if AssignParser._share_one_implementation and id(cell_inst) in AssignParser._cached_trees:
+                first_stree = AssignParser._cached_trees.get(id(cell_inst))
+                self._update_field_in_init(str(func_scope_name), first_stree)
+                node = Node.create_call_buildin_op(cell_inst, self.ast_assign, self.targets, func_scope_name,
+                                                   self.args, self.kwargs, node_name)
+            else:
+                from ..symbol_tree import SymbolTreeBuilder
+                stb = SymbolTreeBuilder(cell_inst)
+                new_stree = stb.build()
+                self._update_field_in_init(str(func_scope_name), new_stree)
+                node = TreeNode.create_tree_node(new_stree, self.ast_assign, self.targets, func_scope_name,
+                                                 self.args, self.kwargs, node_name, new_stree.get_origin_network())
+                # save symbol tree if it is firstly parsed when sharing one implementation
+                if AssignParser._share_one_implementation:
+                    AssignParser._cached_trees[id(cell_inst)] = new_stree
         else:
             # The type of cell is built-in cells
             node = Node.create_call_buildin_op(cell_inst, self.ast_assign, self.targets, func_scope_name, self.args,
@@ -543,6 +579,13 @@ class AssignParser(Parser):
         if new_name != str(func_scope_name):
             new_name = f"{new_name}_opt"
         new_name = FunctionNamer().instance().get_name(new_name)
+        # create unparsable node if function is already parsed when sharing one implementation
+        if AssignParser._share_one_implementation and id(function_object) in AssignParser._cached_functions:
+            first_node = AssignParser._cached_functions.get(id(function_object))
+            ast_call: ast.Call = self.ast_assign.value
+            ast_call.func = ast.Name(id=str(first_node.get_func_name()), ctx=ast.Load())
+            self.insert_callfunction_node(func_scope_name, new_name, None, function_object, False)
+            return
         ast_functiondef.name = new_name
         ast_call: ast.Call = self.ast_assign.value
         ast_call.func = ast.Name(id=new_name, ctx=ast.Load())
@@ -553,7 +596,10 @@ class AssignParser(Parser):
         self.stree.save_imports_from_file(func_file_path, ast_functiondef)
         # create CallFunction node
         func_scope_name = ScopedValue.create_naming_value(new_name, "")
-        self.insert_callfunction_node(func_scope_name, new_name, ast_functiondef, function_object, False)
+        node = self.insert_callfunction_node(func_scope_name, new_name, ast_functiondef, function_object, False)
+        # save function node if it is firstly parsed when sharing one implementation
+        if AssignParser._share_one_implementation:
+            AssignParser._cached_functions[id(function_object)] = node
 
     def insert_callfunction_node(self, func_name: ScopedValue, node_name: str, ast_functiondef: ast.FunctionDef,
                                  func_obj: object, is_method: bool) -> Node:
@@ -596,6 +642,11 @@ class AssignParser(Parser):
         # Ignore built-in functions
         if func_full_name in dir(builtins):
             logger.info(f"Ignore built-in function: {func_scope_name}")
+            self.insert_callfunction_node(func_scope_name, func_name, None, None, False)
+            return
+        # Ignore function name is target of for loop
+        if isinstance(self.node_manager, ControlFlow) and func_full_name in self.node_manager.loop_vars:
+            logger.info(f"Ignore function of loop variable: {func_scope_name}")
             self.insert_callfunction_node(func_scope_name, func_name, None, None, False)
             return
         # Instance with type of Cell

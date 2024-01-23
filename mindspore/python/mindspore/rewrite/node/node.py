@@ -1226,9 +1226,11 @@ class Node:
                             f"ast.Assign, but got: {type(assign_ast)}")
         assign_value = assign_ast.value
         if not isinstance(assign_value, ast.Call):
-            if isinstance(assign_value, ast.Attribute) and self._node_type == NodeType.CellContainer:
+            if isinstance(assign_value, ast.Attribute) and self._node_type in (NodeType.CellContainer,
+                                                                               NodeType.CallCell):
                 # CellContainers in control flow may be flatten to ast.Attribute: blocks_var = self.blocks
                 # In this case, no args exist in node, so we don't need to sync.
+                # CellContainers may be type of CallCell when share one implementation
                 return
             raise TypeError(f"When synchronizing args for '{self._name}'({self._node_type}), _ast_node.value should "
                             f"be ast.Call, but got: {type(assign_value)}")
