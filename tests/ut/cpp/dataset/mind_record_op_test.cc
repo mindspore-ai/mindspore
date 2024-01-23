@@ -56,7 +56,7 @@ std::shared_ptr<MindRecordOp> CreateMindRecord(int32_t mind_record_workers, bool
     mind_record_workers, dataset_files, load, op_connector_queue_size, columns_to_load, std::move(operators), 0,
     nullptr, sample_bytes, shuffle_mode, std::move(shard_reader), std::move(sampler));
   (void)op->Init();
-  return std::move(op);
+  return op;
 }
 
 /// Feature: MindRecord op

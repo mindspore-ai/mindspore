@@ -2022,7 +2022,7 @@ Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     }
 
     std::vector<float_t> matrix;
-    RETURN_IF_NOT_OK(GetAffineMatrix(input, &matrix, degrees, translation, scale, shear));
+    RETURN_IF_NOT_OK(GetAffineMatrix(input_cv, &matrix, degrees, translation, scale, shear));
     cv::Mat affine_mat(matrix);
     affine_mat = affine_mat.reshape(1, {2, 3});
 

@@ -34,12 +34,12 @@
 
 namespace mindspore {
 namespace dataset {
-#define RETURN_IF_NOT_OK(_s)       \
-  do {                             \
-    mindspore::Status __rc = (_s); \
-    if (__rc.IsError()) {          \
-      return __rc;                 \
-    }                              \
+#define RETURN_IF_NOT_OK(_s)              \
+  do {                                    \
+    const mindspore::Status &__rc = (_s); \
+    if (__rc.IsError()) {                 \
+      return __rc;                        \
+    }                                     \
   } while (false)
 
 #define STATUS_ERROR(_error_code, _e) mindspore::Status(_error_code, __LINE__, DATASET_SRC_FILE_NAME, _e)
@@ -94,13 +94,13 @@ namespace dataset {
     }                                 \
   } while (false)
 
-#define RETURN_SECOND_IF_ERROR(_s, _r) \
-  do {                                 \
-    mindspore::Status __rc = (_s);     \
-    if (__rc.IsError()) {              \
-      MS_LOG(ERROR) << __rc;           \
-      return _r;                       \
-    }                                  \
+#define RETURN_SECOND_IF_ERROR(_s, _r)    \
+  do {                                    \
+    const mindspore::Status &__rc = (_s); \
+    if (__rc.IsError()) {                 \
+      MS_LOG(ERROR) << __rc;              \
+      return _r;                          \
+    }                                     \
   } while (false)
 
 #define RETURN_STATUS_OOM(_e)                                       \
