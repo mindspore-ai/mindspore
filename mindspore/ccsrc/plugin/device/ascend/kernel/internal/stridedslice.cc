@@ -39,13 +39,22 @@ internal::OpParamPtr InternalStridedSlice::CreateOpParam(const std::vector<Kerne
       return nullptr;
     }
   }
-
+  auto input_shape = inputs[0]->GetShape()->GetShapeVector();
   internal::SliceParam slice_param;
   std::vector<size_t> begin = inputs[1]->GetValue<std::vector<size_t>>().value();
   std::vector<size_t> end = inputs[2]->GetValue<std::vector<size_t>>().value();
-  for (size_t i = 0; i < begin.size(); ++i) {
-    slice_param.offsets.emplace_back(begin[i]);
-    slice_param.size.emplace_back(end[i] - begin[i]);
+  size_t i = 0;
+  for (; i < begin.size(); ++i) {
+    size_t bg = begin[i] >= 0 ? begin[i] : input_shape[i] + begin[i];
+    size_t ed = end[i] >= 0 ? end[i] : input_shape[i] + end[i];
+    slice_param.offsets.emplace_back(bg);
+    slice_param.size.emplace_back(ed - bg);
+  }
+  if (begin.size() < input_shape.size()) {
+    for (; i < input_shape.size(); ++i) {
+      slice_param.offsets.emplace_back(0);
+      slice_param.size.emplace_back(input_shape[i]);
+    }
   }
 
   internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
