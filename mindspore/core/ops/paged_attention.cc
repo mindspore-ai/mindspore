@@ -38,7 +38,7 @@ abstract::ShapePtr PagedAttentionInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr PagedAttentionInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set valid_types = {kFloat16};
+  const std::set valid_types = {kFloat16, kBFloat16};
   auto op_name = prim->name();
   std::map<std::string, TypePtr> types;
 
@@ -48,9 +48,9 @@ TypePtr PagedAttentionInferType(const PrimitivePtr &prim, const std::vector<Abst
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
 
   auto block_tables_type = input_args[kPagedAttentionInputBlockTablesIndex]->BuildType();
-  CheckAndConvertUtils::CheckTensorTypeValid("block_tables", block_tables_type, {kInt32}, op_name);
+  CheckAndConvertUtils::CheckTensorTypeValid("block_tables", block_tables_type, {kInt32, kInt64, kUInt64}, op_name);
   auto context_lens_type = input_args[kPagedAttentionInputContextLensIndex]->BuildType();
-  CheckAndConvertUtils::CheckTensorTypeValid("context_lens", context_lens_type, {kInt32}, op_name);
+  CheckAndConvertUtils::CheckTensorTypeValid("context_lens", context_lens_type, {kInt32, kInt64, kUInt64}, op_name);
 
   return type;  // attention_out dtype
 }
