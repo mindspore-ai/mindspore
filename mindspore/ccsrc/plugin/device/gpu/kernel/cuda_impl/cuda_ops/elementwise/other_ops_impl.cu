@@ -122,10 +122,7 @@ template <typename Type>
 struct UnaryFunc<ElwiseOpType::kReciprocal, Type, Type> {
   DEVICE_HOST UnaryFunc() {}
   DEVICE Type operator()(const Type val) const {
-    if (val != Type(0)) {
-      return Type(1.0) / val;
-    }
-    return std::numeric_limits<Type>::max() + Type(1);
+    return Type(1.0) / val;
   }
 };
 REGISTER_UNARY_OP_CUDA_FUNC_BOOL_TYPE(ElwiseOpType::kReciprocal);
@@ -138,10 +135,7 @@ template <typename TypeIn, typename TypeOut>
 struct UnaryFunc<ElwiseOpType::kReciprocal, TypeIn, TypeOut> {
   DEVICE_HOST UnaryFunc() {}
   DEVICE TypeOut operator()(const TypeIn val) const {
-    if (val != TypeIn(0)) {
-      return TypeOut(1.0) / val;
-    }
-    return std::numeric_limits<TypeOut>::max() + TypeOut(1);
+    return TypeOut(1.0) / val;
   }
 };
 template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kReciprocal, int64_t, float>(const size_t num,

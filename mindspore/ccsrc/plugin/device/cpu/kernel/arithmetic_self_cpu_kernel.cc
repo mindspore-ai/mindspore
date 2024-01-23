@@ -892,7 +892,7 @@ void ArithmeticSelfCpuKernelFuncFloat16<T, S>::LaunchKernel(const std::vector<Ke
       {prim::kPrimRsqrt->name(), Rsqrt<T, S>},     {prim::kPrimErf->name(), Erf<T, S>},
       {prim::kPrimSign->name(), Sign<T, S>},       {prim::kPrimRint->name(), Rint<T, S>},
       {prim::kPrimAtan->name(), Atan<T, S>},       {prim::kPrimSqrt->name(), Sqrt<T, S>},
-      {prim::kPrimSigmoid->name(), Sigmoid<T, S>},
+      {prim::kPrimSigmoid->name(), Sigmoid<T, S>}, {prim::kPrimLog->name(), Log<T, S>},
     };
   const auto func_pair = arithmeticSelfFuncMap.find(this->kernel_name_);
   if (arithmeticSelfFuncMap.find(this->kernel_name_) == arithmeticSelfFuncMap.end()) {
@@ -1243,7 +1243,9 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
      &CreateArithSelfFuncComplex<complex128, complex128>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     &CreateArithSelfFuncCommon<float, float>}}},
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &CreateArithSelfFuncFloat16<float16, float16>}}},
   {ops::kNameErf,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
      &CreateArithSelfFuncFloat16<float16, float16>},
