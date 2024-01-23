@@ -39,35 +39,6 @@ bool IsFlashAttentionScoreOptionalInputNotPass(const AbstractBasePtr &input) {
   return input->BuildType()->type_id() == kMetaTypeNone;
 }
 
-void CheckFlashAttentionScoreInputShape(const AbstractBasePtr &input, const ShapeVector &expect_shape,
-                                        const std::string &op_name, const std::string &input_name,
-                                        bool optional = false) {
-  MS_EXCEPTION_IF_NULL(input);
-  if (IsFlashAttentionScoreOptionalInputNotPass(input) && optional) {
-    return;
-  }
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input->BuildShape())[kShape];
-  if (input_shape != expect_shape) {
-    MS_LOG(EXCEPTION) << op_name << ": The shape of input `" << input_name << "' must be " << expect_shape
-                      << ", but got shape is " << input_shape;
-  }
-}
-
-void CheckFlashAttentionScoreInputShape(const AbstractBasePtr &input, const std::vector<ShapeVector> &expect_shape_list,
-                                        const std::string &op_name, const std::string &input_name,
-                                        bool optional = false) {
-  MS_EXCEPTION_IF_NULL(input);
-  if (IsFlashAttentionScoreOptionalInputNotPass(input) && optional) {
-    return;
-  }
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input->BuildShape())[kShape];
-  if (std::all_of(expect_shape_list.begin(), expect_shape_list.end(),
-                  [&input_shape](const ShapeVector &expect_shape) { return input_shape != expect_shape; })) {
-    MS_LOG(EXCEPTION) << op_name << ": The shape of input `" << input_name << "' must be one of " << expect_shape_list
-                      << ", but got shape is " << input_shape;
-  }
-}
-
 abstract::TupleShapePtr FlashAttentionScoreInferShape(const PrimitivePtr &primitive,
                                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -76,7 +47,6 @@ abstract::TupleShapePtr FlashAttentionScoreInferShape(const PrimitivePtr &primit
 
   int64_t batch_size;
   int64_t seq_len;
-  int64_t head_size;
   int64_t head_num = GetValue<int64_t>(primitive->GetAttr("head_num"));
   auto query_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
     input_args[kFlashAttentionScoreInputQueryIndex]->BuildShape())[kShape];
@@ -92,13 +62,6 @@ abstract::TupleShapePtr FlashAttentionScoreInferShape(const PrimitivePtr &primit
     if (hidden_size % head_num != 0) {
       MS_LOG(EXCEPTION) << op_name << ": 'hidden_size` must be divisible by `head_num`, but got " << H << " and " << N;
     }
-    head_size = hidden_size / head_num;
-    CheckFlashAttentionScoreInputShape(input_args[kFlashAttentionScoreInputKeyIndex],
-                                       {{batch_size, seq_len, hidden_size}, {batch_size, seq_len, head_size}}, op_name,
-                                       "key");
-    CheckFlashAttentionScoreInputShape(input_args[kFlashAttentionScoreInputValueIndex],
-                                       {{batch_size, seq_len, hidden_size}, {batch_size, seq_len, head_size}}, op_name,
-                                       "value");
   } else if (input_layout == kInputFlashAttentionScoreLayoutBNSD) {
     if (query_shape.size() != kInputFlashAttentionScoreQueryBNSDRank) {
       MS_LOG(EXCEPTION) << op_name << ": The rank of 'query' must be " << kInputFlashAttentionScoreQueryBNSDRank
@@ -110,23 +73,11 @@ abstract::TupleShapePtr FlashAttentionScoreInferShape(const PrimitivePtr &primit
                         << query_shape[1] << " and " << head_num;
     }
     seq_len = query_shape[kIndex2];
-    head_size = query_shape[kIndex3];
-    CheckFlashAttentionScoreInputShape(
-      input_args[kFlashAttentionScoreInputKeyIndex],
-      {{batch_size, head_num, seq_len, head_size}, {batch_size, 1, seq_len, head_size}}, op_name, "key");
-    CheckFlashAttentionScoreInputShape(
-      input_args[kFlashAttentionScoreInputValueIndex],
-      {{batch_size, head_num, seq_len, head_size}, {batch_size, 1, seq_len, head_size}}, op_name, "value");
   } else {
     MS_LOG(EXCEPTION) << op_name << ": The value of attribute 'input_layout' must be one of ["
                       << kInputFlashAttentionScoreLayoutBNSD << ", " << kInputFlashAttentionScoreLayoutBSH
                       << "], but got " << input_layout;
   }
-  CheckFlashAttentionScoreInputShape(input_args[kFlashAttentionScoreInputAttnMaskIndex],
-                                     {batch_size, 1, seq_len, seq_len}, op_name, "attn_mask");
-  CheckFlashAttentionScoreInputShape(input_args[kFlashAttentionScoreInputDropMaskIndex],
-                                     {batch_size, head_num, seq_len, seq_len / 8}, op_name, "drop_mask", true);
-
   abstract::BaseShapePtrList output_shape_ptr_list(kFlashAttentionScoreOutputsNum);
   output_shape_ptr_list[kFlashAttentionScoreOutputAttentionOutIndex] = std::make_shared<abstract::Shape>(query_shape);
   output_shape_ptr_list[kFlashAttentionScoreOutputSoftmaxMaxIndex] =
@@ -145,8 +96,6 @@ TuplePtr FlashAttentionScoreInferType(const PrimitivePtr &prim, const std::vecto
   (void)types.emplace("key", input_args[kFlashAttentionScoreInputKeyIndex]->BuildType());
   (void)types.emplace("value", input_args[kFlashAttentionScoreInputValueIndex]->BuildType());
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
-  auto attn_mask_type = input_args[kFlashAttentionScoreInputAttnMaskIndex]->BuildType();
-  CheckAndConvertUtils::CheckTensorTypeValid("attn_mask", attn_mask_type, {kUInt8, kFloat16}, op_name);
   if (!IsFlashAttentionScoreOptionalInputNotPass(input_args[kFlashAttentionScoreInputPaddingMaskIndex])) {
     MS_LOG(EXCEPTION) << op_name << ": 'padding_mask' must be None currently.";
   }
