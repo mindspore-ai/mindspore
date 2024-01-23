@@ -659,6 +659,7 @@ void InsertDepend(const AnfNodePtr &prior_node, const AnfNodePtr &post_node, con
   MS_EXCEPTION_IF_NULL(post_cnode);
   std::vector<AnfNodePtr> depend_input = {NewValueNode(prim::kPrimDepend), post_cnode->input(1), prior_node};
   auto depend_node = root->NewCNode(depend_input);
+  depend_node->set_abstract(post_cnode->input(1)->abstract());
   if (!attr_tag.empty()) {
     depend_node->AddAttr(attr_tag, MakeValue<bool>(true));
   }
@@ -1120,12 +1121,17 @@ void ReorderForPredict(const FuncGraphPtr &root, const FuncGraphManagerPtr &mana
   std::vector<AnfNodePtr> forward_end;
   std::vector<AnfNodePtr> forward_start;
   std::vector<AnfNodePtr> forward_params;
+  int64_t slice_index = 0;
   for (auto &node : root->nodes()) {
     if (!node->isa<CNode>()) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
     if (cnode->HasPrimalAttr(PIPELINE_BEGIN)) {
+      if (IsPrimitiveCNode(cnode, prim::kPrimStridedSlice)) {
+        cnode->AddPrimalAttr(SLICE_INDEX, MakeValue(slice_index));
+        slice_index += 1;
+      }
       forward_start.push_back(node);
     }
     if (cnode->HasPrimalAttr(PIPELINE_END)) {
