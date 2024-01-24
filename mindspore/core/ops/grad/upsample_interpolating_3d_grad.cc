@@ -100,9 +100,8 @@ void InferFromScales(const AbstractBasePtr &input_arg, const std::string &prim_n
                      const std::vector<int64_t> &input_size, std::vector<int64_t> *const y_shape) {
   auto scales_value_ptr = input_arg->GetValue();
   MS_EXCEPTION_IF_NULL(scales_value_ptr);
-  auto scales_opt = GetArrayValue<pyfloat>(scales_value_ptr);
-  if (scales_opt.has_value() && !scales_opt.value().HasUnknownValue()) {
-    const auto &scales = scales_opt.value().ToVector();
+  if (IsValueKnown(scales_value_ptr)) {
+    auto scales = CheckAndConvertUtils::CheckListOrTupleFloat("scales", input_arg, prim_name);
     (void)CheckAndConvertUtils::CheckPositiveVector<pyfloat>(kScales, scales, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("elements number of scales", SizeToLong(scales.size()), kEqual, kVALUE_3,
                                              prim_name);

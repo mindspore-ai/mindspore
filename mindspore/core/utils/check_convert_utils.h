@@ -447,6 +447,8 @@ class MS_CORE_API CheckAndConvertUtils {
   static std::vector<int64_t> CheckIntOrTupleInt(const std::string &arg_name, const ValuePtr &attr,
                                                  const std::string &prim_name);
   // ==========================new=========================
+  static std::vector<pyfloat> CheckListOrTupleFloat(const std::string &arg_name, const AbstractBasePtr &abs,
+                                                    const std::string &prim_name);
   static std::vector<int64_t> CheckIntOrTupleInt(const std::string &arg_name, const AbstractBasePtr &abs,
                                                  const std::string &prim_name);
   static std::vector<int64_t> CheckTupleInt(const std::string &arg_name, const ValuePtr &attr,
