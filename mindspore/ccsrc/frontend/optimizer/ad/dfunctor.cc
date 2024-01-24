@@ -32,7 +32,6 @@
 #include "pipeline/jit/ps/resource.h"
 #include "frontend/optimizer/ad/adjoint.h"
 #include "frontend/operator/ops.h"
-#include "utils/ms_utils.h"
 #include "utils/symbolic.h"
 #include "utils/ms_context.h"
 #include "pipeline/jit/ps/action.h"
@@ -389,8 +388,7 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
     k_app = k_graph_->NewCNode(inputs);
   }
   // Run in pynative mode, when @jit is used.
-  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode &&
-      common::GetEnv("PIJIT") != "1") {
+  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     pynative::PyNativeExecutor::GetInstance()->grad_executor()->jit()->ProcessCnodeFromAdGrad(k_app, cnode_morph);
   }
 

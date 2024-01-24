@@ -25,6 +25,12 @@
 namespace mindspore {
 namespace jit {
 namespace grad {
+GradExecutorPtr GradExecutor::grad_executor_ = std::make_shared<GradExecutor>();
+
+FuncGraphPtr GradExecutor::PrimBpropGraphPass(const FuncGraphPtr &prim_grad_graph) {
+  return manager_->PrimBpropGraphPass(prim_grad_graph);
+}
+
 FuncGraphPtr GradExecutor::GetAccumulateGraph(const py::object &tensor) {
   auto value = pynative::PyNativeAlgo::DataConvert::PyObjToValue(tensor);
   return manager_->GetAccumulateGraph(value, value);

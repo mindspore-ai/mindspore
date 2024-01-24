@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 #include "pipeline/jit/pi/auto_grad/function_node.h"
+#include <algorithm>
+#include <iterator>
 #include <memory>
+#include "ops/sequence_ops.h"
 #include "pipeline/jit/pi/auto_grad/grad_executor.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "utils/tensor_construct_utils.h"
@@ -22,26 +25,33 @@
 namespace mindspore {
 namespace jit {
 namespace grad {
-void FunctionNode::AddInput(const py::object &input) {
-  FunctionContext::AddInput(pynative::PyNativeAlgo::DataConvert::PyObjToValue(input));
-}
-
-void FunctionNode::SetOutput(const py::object &output) {
-  FunctionContext::SetOutput(pynative::PyNativeAlgo::DataConvert::PyObjToValue(output));
-}
-
-/// \brief Generate the bprop function.
-void FunctionNode::GenBropFunction() {
-  auto executor = GradExecutor::GetInstance();
-  if (IsStubTensor(fn_)) {
-    grad_fn_ = grad::GradExecutor::GetInstance()->GetAccumulateGraph(fn_);
-  } else {
-    auto prim = pynative::PyNativeAlgo::DataConvert::PyObjToValue(fn_);
-    grad_fn_ = executor->GetBpropGraph(NewValueNode(prim), GetInputs(), GetOutput(), GetOutput());
+void FunctionNode::RecordPrimitive(const py::object &prim, const py::object &out, const py::list &inputs) {
+  auto func_node = std::make_shared<FunctionNode>(out);
+  std::for_each(inputs.begin(), inputs.end(), [&func_node, prim, inputs](const auto &obj) {
+    auto input = py::cast<py::object>(obj);
+    if (!IsStubTensor(input)) {
+      return;
+    }
+    auto requires_grad = input.attr("requires_grad");
+    if (py::isinstance<py::none>(requires_grad) || PyObject_Not(requires_grad.ptr())) {
+      return;
+    }
+    py::object grad_fn = input.attr("grad_fn");
+    if (py::isinstance<py::none>(grad_fn)) {
+      grad_fn = py::cast(std::make_shared<FunctionNode>(input));
+    }
+    auto edge = grad_fn.cast<grad::FunctionNodePtr>();
+    edge->GenBropFunction(prim, inputs);
+    func_node->AddNextEdge(edge);
+  });
+  if (func_node->GetNextEdges().empty()) {
+    return;
   }
+  py::setattr(out, "grad_fn", py::cast(func_node));
+  py::setattr(out, "requires_grad", py::bool_(True));
 }
 
-void InitGradIfNeed(const FunctionNodePtr &func_node, bool ones_like = false) {
+void InitGradIfNeed(const FunctionNodePtr &func_node, bool zero_like) {
   if (func_node->GetGrad() != nullptr) {
     return;
   }
@@ -50,44 +60,61 @@ void InitGradIfNeed(const FunctionNodePtr &func_node, bool ones_like = false) {
   auto tensor = output->cast<tensor::TensorPtr>();
   tensor = TensorConstructUtils::CreateZerosTensor(tensor->Dtype(), tensor->shape());
   char *data = reinterpret_cast<char *>(tensor->data_c());
-  std::fill(data, data + tensor->data().nbytes(), (ones_like ? 1 : 0));
+  std::fill(data, data + tensor->data().nbytes(), (zero_like ? 0 : 1));
   func_node->SetGrad(tensor);
 }
 
-void FunctionNode::Apply(const py::object &grad) {
-  if (!py::isinstance<py::none>(grad)) {
-    SetGrad(pynative::PyNativeAlgo::DataConvert::PyObjToValue(grad));
-  } else {
-    InitGradIfNeed(shared_from_base<FunctionNode>(), true);
-  }
+/// \brief Generate the bprop function.
+void FunctionNode::GenBropFunction(const py::object &prim, const py::tuple &inputs) {
+  InputList values;
+  std::transform(inputs.begin(), inputs.end(), std::back_inserter(values), [](const auto &input) {
+    return pynative::PyNativeAlgo::DataConvert::PyObjToValue(py::cast<py::object>(input));
+  });
+  FunctionContext::SetInputs(values);
   auto executor = GradExecutor::GetInstance();
-  if (IsStubTensor(fn_)) {
-    auto grad_value = executor->RunGraph(grad_fn_, GetInputs());
-    SetGrad(grad_value);
-    auto grad = pynative::PyNativeAlgo::DataConvert::ValueToPyObj(grad_value);
-    py::setattr(fn_, "grad", grad);
+  auto prim_value = pynative::PyNativeAlgo::DataConvert::PyObjToValue(prim);
+  grad_fn_ = executor->GetBpropGraph(NewValueNode(prim_value), GetInputs(), GetOutput(), GetOutput());
+  size_t index = std::distance(inputs.begin(), std::find(inputs.begin(), inputs.end(), tensor_));
+  MS_EXCEPTION_IF_CHECK_FAIL(index < inputs.size(), "The index of tensor is invalid.");
+  auto output = grad_fn_->output();
+  if (IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
+    grad_fn_->set_output(output->cast<CNodePtr>()->input(index + 1));
+  }
+  if (!edges_.empty()) {
+    return;
+  }
+  auto acc = grad::GradExecutor::GetInstance()->GetAccumulateGraph(tensor_);
+  auto param = grad_fn_->add_parameter();
+  param->set_abstract(acc->output()->abstract());
+  auto ret = grad_fn_->NewCNode({NewValueNode(acc), param, grad_fn_->output()});
+  grad_fn_->set_output(ret);
+  grad_fn_ = executor->PrimBpropGraphPass(grad_fn_);
+}
+
+void FunctionNode::Apply(const py::object &grad) {
+  if (py::isinstance<py::none>(grad)) {
+    InitGradIfNeed(shared_from_base<FunctionNode>(), edges_.empty());
   } else {
-    auto grad_value = executor->RunGraph(grad_fn_, GetInputs(), GetOutput(), GetGrad());
-    for (auto &edge : edges_) {
-      auto func_node = edge->GetFunction();
-      if (grad_value->isa<ValueTuple>()) {
-        auto values = grad_value->cast<ValueTuplePtr>()->value();
-        if (IsStubTensor(func_node->GetFunction())) {
-          InitGradIfNeed(func_node);
-          func_node->SetInputs({func_node->GetGrad(), values[edge->GetIndex()]});
-        } else {
-          func_node->SetGrad(values[edge->GetIndex()]);
-        }
-      } else {
-        if (IsStubTensor(func_node->GetFunction())) {
-          InitGradIfNeed(func_node);
-          func_node->SetInputs({func_node->GetGrad(), grad_value});
-        } else {
-          edge->GetFunction()->SetGrad(grad_value);
-        }
-      }
-      edge->GetFunction()->Apply();
-    }
+    SetGrad(pynative::PyNativeAlgo::DataConvert::PyObjToValue(grad));
+  }
+  auto grad_value = GetGrad();
+  auto executor = GradExecutor::GetInstance();
+  InputList inputs(GetInputs());
+  if (edges_.empty()) {
+    inputs.push_back(grad_value);
+  }
+  if (grad_fn_ != nullptr) {
+    grad_value = executor->RunGraph(grad_fn_, inputs);
+    SetGrad(grad_value);
+  }
+  py::setattr(tensor_, "grad", pynative::PyNativeAlgo::DataConvert::ValueToPyObj(grad_value));
+
+  auto output = GetOutput();
+  for (auto &edge : edges_) {
+    auto func_node = edge->GetFunction();
+    func_node->AddInput(output);
+    func_node->AddInput(grad_value);
+    func_node->Apply();
   }
 }
 }  // namespace grad

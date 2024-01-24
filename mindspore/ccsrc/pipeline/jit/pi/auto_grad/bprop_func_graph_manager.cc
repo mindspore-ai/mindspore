@@ -36,7 +36,7 @@
 namespace mindspore {
 namespace jit {
 namespace grad {
-FuncGraphPtr PrimBpropGraphPass(const FuncGraphPtr &prim_grad_graph) {
+FuncGraphPtr BpropFuncGraphManager::PrimBpropGraphPass(const FuncGraphPtr &prim_grad_graph) {
   opt::irpass::OptimizeIRPassLib irpass;
   opt::OptPassGroupMap map({
     {"inline", opt::OptPassConfig({irpass.inline_})},
@@ -73,16 +73,21 @@ FuncGraphPtr BpropFuncGraphManager::GetPrimBpropGraph(const PrimitivePtr &prim, 
 
 FuncGraphPtr BpropFuncGraphManager::GetPrimBpropGraph(const PrimitivePtr &prim,
                                                       const abstract::AbstractBasePtrList &args_abs) {
-  if (prim_to_bprop_.find({prim, args_abs}) != prim_to_bprop_.end()) {
-    return prim_to_bprop_.at({prim, args_abs});
-  }
   auto prim_name = prim->name();
+  if (prim_to_bprop_.find(prim_name) != prim_to_bprop_.end()) {
+    auto func_graph = BasicClone(prim_to_bprop_.at(prim_name));
+    MS_EXCEPTION_IF_CHECK_FAIL(func_graph->parameters().size() == args_abs.size(),
+                               "Arguments is not match parameters.");
+    for (size_t index = 0; index < args_abs.size(); index++) {
+      func_graph->parameters()[index]->set_abstract(args_abs[index]);
+    }
+    return PrimBpropGraphPass(func_graph);
+  }
   const expander::bprop::BpropHandle *handle = expander::bprop::BpropIRBuilderFactory::Instance().GetBuilder(prim_name);
   auto meta_graph = std::make_shared<expander::bprop::BpropMetaFuncGraph>(prim, handle);
   auto grad_graph = meta_graph->GenerateFuncGraph(args_abs);
-  grad_graph = PrimBpropGraphPass(grad_graph);
-  prim_to_bprop_[{prim, args_abs}] = grad_graph;
-  return grad_graph;
+  prim_to_bprop_[prim_name] = BasicClone(grad_graph);
+  return PrimBpropGraphPass(grad_graph);
 }
 
 // Modify the output node of func_graph to add forward nodes used in bprop graph.
@@ -134,13 +139,15 @@ FuncGraphPtr BpropFuncGraphManager::GetFuncGraphBpropGraph(const FuncGraphPtr &f
   resource->set_args_abs(args_abs);
   resource->set_func_graph(forward_graph);
   ModifyOutputNode(forward_graph);
-  common::SetEnv("PIJIT", "1");
+  auto ps_jit_instance = pynative::PyNativeExecutor::GetInstance()->grad_executor()->jit();
+  bool jit_eliminate_forward = ps_jit_instance->eliminate_forward();
+  ps_jit_instance->set_eliminate_forward(false);
   // Control flow not eliminate forward
   auto is_control_flow = pynative::PyNativeAlgo::Common::IsControlFlowGraph(forward_graph);
   auto grad_graph =
     ad::Grad(is_control_flow ? BasicClone(forward_graph) : forward_graph, opt::Optimizer::MakeEmptyOptimizer(resource));
   MS_EXCEPTION_IF_NULL(grad_graph);
-  common::SetEnv("PIJIT", "");
+  ps_jit_instance->set_eliminate_forward(jit_eliminate_forward);
   auto output = grad_graph->output();
   auto grad_out = grad_graph->NewCNodeInOrder(prim::kPrimTupleGetItem, {output, NewValueNode(MakeValue<int64_t>(1))});
   auto param_dout = grad_graph->add_parameter();

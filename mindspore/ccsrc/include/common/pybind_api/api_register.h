@@ -44,6 +44,10 @@ namespace pynative {
 void RegPyNativeExecutor(const py::module *m);
 }
 
+namespace pijit {
+void RegPIJitInterface(py::module *m);
+}
+
 namespace tensor {
 void RegMetaTensor(const py::module *m);
 void RegCSRTensor(const py::module *m);
