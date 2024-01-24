@@ -105,6 +105,7 @@ enum PadMode : int64_t {
   PAD = 0,
   SAME = 1,
   VALID = 2,
+  FULL = 3,
 };
 
 enum class LshProjectionType : int64_t {

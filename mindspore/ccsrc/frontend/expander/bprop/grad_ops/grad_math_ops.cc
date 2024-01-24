@@ -2384,5 +2384,90 @@ REG_BPROP_BUILDER("FFTShift").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   return {ib->Emit("FFTShift", {dout, axes, ib->Value(!forward_value)}), ib->OutZeros(axes), ib->OutZeros(forward)};
 });
 
+DEF_PURE_SHAPE_CALC(g_correlate)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
+    constexpr int64_t input_num = 4;
+    if (inputs.size() != input_num) {
+      MS_LOG_EXCEPTION << "ShapeCalc[g_correlate] expect 4 inputs, but got " << inputs.size() << "inputs";
+    }
+    auto a_size = inputs.at(kIndex0)[0];
+    auto v_size = inputs.at(kIndex1)[0];
+    auto dout_size = inputs.at(kIndex2)[0];
+    auto mode_value = inputs.at(kIndex3)[0];
+
+    std::vector<int64_t> size_arr;
+    size_arr.emplace_back(a_size + v_size - 1);
+    std::vector<int64_t> begin_arr;
+    begin_arr.emplace_back((a_size + v_size - dout_size) / 2);
+    std::vector<int64_t> end_arr;
+    end_arr.emplace_back((a_size + v_size - dout_size) / 2 + dout_size);
+
+    constexpr int64_t same_mode = 1;
+    if (mode_value == same_mode && a_size >= v_size && v_size % 2 == 0) {
+      begin_arr[0] = begin_arr[0] - 1;
+      end_arr[0] = end_arr[0] - 1;
+    }
+    return {size_arr, begin_arr, end_arr};
+  })
+  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
+    return {1, 1, 1};
+  });
+
+REG_BPROP_BUILDER("Correlate").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+  auto a = ib->GetInput(kIndex0);
+  auto v = ib->GetInput(kIndex1);
+  auto mode = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+
+  // step1: if dtype of a/v is not float or complex, cast a, v dtyte as to dout dtype
+  static const std::vector<TypeId> complex_or_float = {
+    kNumberTypeFloat16,
+    kNumberTypeFloat32,
+    kNumberTypeFloat64,
+    kNumberTypeComplex64,
+    kNumberTypeComplex128,
+  };
+  auto a_type = ib->GetDtypeId(a);
+  bool is_complex_or_float =
+    std::any_of(complex_or_float.begin(), complex_or_float.end(),
+                [&a_type](const TypeId &type_id) { return a_type == type_id; });
+  if (!is_complex_or_float) {
+    a = ib->Cast(a, ib->GetDtype(dout));
+    v = ib->Cast(v, ib->GetDtype(dout));
+  }
+
+  // step2: pad dout to (a_size + v_size - 1)
+  auto dout_padded = dout;
+  int64_t mode_value = GetValue<int64_t>(mode->BuildValue());
+  constexpr int64_t full_mode = 3;
+  if (mode_value != full_mode) {
+    // calculate StridedSliceGrad paragram [size] [begin] [end]
+    auto param_array = ib->ShapeCalc(g_correlate, {a, v, dout, mode}, {3});
+    dout_padded =
+      ib->Emit("StridedSliceGrad",
+               {dout, param_array[0], param_array[1], param_array[2], ib->Value<ShapeVector>(ShapeVector{1LL})},
+               {{"begin_mask", MakeValue<int64_t>(0LL)},
+                {"end_mask", MakeValue<int64_t>(0LL)},
+                {"ellipsis_mask", MakeValue<int64_t>(0LL)},
+                {"new_axis_mask", MakeValue<int64_t>(0LL)},
+                {"shrink_axis_mask", MakeValue<int64_t>(0LL)}});
+  }
+
+  // step3: calculate da, dv by convolution1d, reverse, conj
+  auto a_conj = a;
+  if (ib->GetDtypeId(a) == kNumberTypeComplex64 || ib->GetDtypeId(a) == kNumberTypeComplex128) {
+    a_conj = ib->Emit("Conj", {a});
+  }
+  auto v_r = ib->Emit("ReverseV2", {v, ib->Value<ShapeVector>(ShapeVector{0LL})});
+  auto dv_r = ib->Emit("Correlate", {dout_padded, a_conj, ib->Value<int64_t>(2LL)});
+  auto da = ib->Emit("Correlate", {dout_padded, v_r, ib->Value<int64_t>(2LL)});
+  auto dv_conj = ib->Emit("ReverseV2", {dv_r, ib->Value<ShapeVector>(ShapeVector{0LL})});
+  auto dv = dv_conj;
+  if (ib->GetDtypeId(a) == kNumberTypeComplex64 || ib->GetDtypeId(a) == kNumberTypeComplex128) {
+    dv = ib->Emit("Conj", {dv_conj});
+  }
+
+  return {da, dv, ib->OutZeros(mode)};
+});
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

@@ -72,7 +72,8 @@ inline std::unordered_map<std::string, int64_t> GetStringToFormatMap() {
 REG_STRING_TO_ENUM(format, GetStringToFormatMap())
 
 // PadMode
-StrToEnumMap StrToPadModeMap = {{"PAD", PadMode::PAD}, {"SAME", PadMode::SAME}, {"VALID", PadMode::VALID}};
+StrToEnumMap StrToPadModeMap = {
+  {"PAD", PadMode::PAD}, {"SAME", PadMode::SAME}, {"VALID", PadMode::VALID}, {"FULL", PadMode::FULL}};
 REG_STRING_TO_ENUM(pad_mode, StrToPadModeMap)
 
 // Reduction

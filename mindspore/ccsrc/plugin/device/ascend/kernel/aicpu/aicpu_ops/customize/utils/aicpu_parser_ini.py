@@ -56,6 +56,7 @@ cust_op_lists = [
     "complexabs",
     "concat",
     "conj",
+    "correlate",
     "cos",
     "cumprod",
     "cumulativelogsumexp",
@@ -231,7 +232,7 @@ def parse_ini_to_obj(ini_file, aicpu_ops_info):
             if not line:
                 continue
             if line.startswith("["):
-                if op_name and info: # set info for the last op
+                if op_name and info:  # set info for the last op
                     aicpu_ops_info["Cust"+op_name] = info
                 info = {}
                 op_name = line[1:-1]

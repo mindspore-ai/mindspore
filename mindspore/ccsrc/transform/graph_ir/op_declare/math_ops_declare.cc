@@ -370,4 +370,11 @@ CUST_INPUT_ATTR_MAP(FFTShift) = {{2, ATTR_DESC(axes, AnyTraits<std::vector<int64
 CUST_OUTPUT_MAP(FFTShift) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(FFTShift, prim::kPrimFFTShift->name(), CUST_ADPT_DESC(FFTShift));
 
+std::vector<std::string> mode_strings = {"pad", "same", "valid", "full"};
+// Correlate
+CUST_INPUT_MAP(Correlate) = {{1, INPUT_DESC(a)}, {2, INPUT_DESC(v)}};
+CUST_ATTR_MAP(Correlate) = EMPTY_ATTR_MAP;
+CUST_INPUT_ATTR_MAP(Correlate) = {{3, ATTR_DESC(mode, AnyTraits<GEEnumToStr>(), mode_strings)}};
+CUST_OUTPUT_MAP(Correlate) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(Correlate, prim::kPrimCorrelate->name(), CUST_ADPT_DESC(Correlate))
 }  // namespace mindspore::transform
