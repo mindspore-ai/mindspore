@@ -278,15 +278,15 @@ def check_statistic_dump(dump_file_path):
             if tensor['IO'] == 'input' and tensor['Slot'] == '0':
                 assert tensor['Min Value'] == '1'
                 assert tensor['Max Value'] == '6'
-                assert tensor['MD5'] == 'fa85978152c7dfb5f1322082915cb05'
+                assert tensor['MD5'] == 'fa85978152c7dfb5f1322082915cb050'
             elif tensor['IO'] == 'input' and tensor['Slot'] == '1':
                 assert tensor['Min Value'] == '7'
                 assert tensor['Max Value'] == '12'
-                assert tensor['MD5'] == '9fd3b07ba2cfea7833f1da3a2960aad'
+                assert tensor['MD5'] == '9fd3b07ba2cfea7833f1da3a2960aadd'
             elif tensor['IO'] == 'output' and tensor['Slot'] == '0':
                 assert tensor['Min Value'] == '8'
                 assert tensor['Max Value'] == '18'
-                assert tensor['MD5'] == '72bb57525231b5c8d3176bc5497f8aa'
+                assert tensor['MD5'] == '72bb57525231b5c8d3176bc5497f8aa0'
 
 
 def check_data_dump(dump_file_path, is_ge=False):
