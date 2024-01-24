@@ -21,13 +21,13 @@ import re
 import threading
 import time
 from collections import defaultdict
-import numpy as np
 
 from mindspore import log as logger
 from mindspore.nn import Cell
 from mindspore import context
 from mindspore._c_expression import security
 from mindspore._c_expression import Tensor as Tensor_
+from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore import _checkparam as Validator
 from mindspore.common.api import _cell_graph_executor
@@ -37,7 +37,8 @@ from mindspore.train.summary._summary_adapter import get_event_file_name, packag
 from mindspore.train.summary._writer_pool import WriterPool
 from mindspore.train.summary.enums import PluginEnum
 from mindspore.ops.operations import debug_ops
-import mindspore.ops as ops
+from mindspore.ops.primitive import _run_op
+from mindspore.ops._primitive_cache import _get_cache_prim
 
 # for the moment, this lock is for caution's sake,
 # there are actually no any concurrences happening.
@@ -64,20 +65,42 @@ def _cache_summary_tensor_data(summary):
         return True
 
 
-def _get_summary_tensor_data(end_flag=None, del_end_flag=False):
+def _get_summary_tensor_data():
     """Get summary tensor data."""
     global SUMMARY_TENSOR_CACHE
-    if end_flag:
-        for _ in range(0, 100):
-            if SUMMARY_TENSOR_CACHE.get(end_flag):
-                break
-            time.sleep(0.01)
-        if del_end_flag and SUMMARY_TENSOR_CACHE.get(end_flag):
-            del SUMMARY_TENSOR_CACHE[end_flag]
     with _summary_lock:
         data = SUMMARY_TENSOR_CACHE
         SUMMARY_TENSOR_CACHE = {}
         return data
+
+
+def _sync_summary_data(step):
+    """
+    In the GE process, the summary receiving process is asynchronous.
+    When the record function is called, some data may not be received and
+    needs to be synchronized.
+    """
+    if context.get_context('device_target') != "Ascend":
+        return
+
+    step_end_flag = Tensor([1], dtype=mstype.float32)
+    image_step_end_flag = Tensor([[[[1]]]], dtype=mstype.float32)
+    name = "_step_end_flag_" + str(step)
+    tags = ("[:Tensor]", "[:Scalar]", "[:Image]", "[:Histogram]")
+    _run_op(_get_cache_prim(debug_ops.TensorSummary)(), "TensorSummary", (name, step_end_flag))
+    _run_op(_get_cache_prim(debug_ops.ScalarSummary)(), "ScalarSummary", (name, step_end_flag))
+    _run_op(_get_cache_prim(debug_ops.HistogramSummary)(), "HistogramSummary", (name, step_end_flag))
+    _run_op(_get_cache_prim(debug_ops.ImageSummary)(), "ImageSummary", (name, image_step_end_flag))
+    global SUMMARY_TENSOR_CACHE
+    for tag in tags:
+        item_name = name + tag
+        while item_name not in SUMMARY_TENSOR_CACHE:
+            time.sleep(0.004)
+
+    with _summary_lock:
+        for tag in tags:
+            item_name = name + tag
+            SUMMARY_TENSOR_CACHE.pop(item_name, None)
 
 
 def _record_summary_tensor_data():
@@ -217,7 +240,6 @@ class SummaryRecord:
         self._num_process = num_process
         self.raise_exception = raise_exception
         self._export_options = export_options
-        self.tensor_summary = ops.TensorSummary()
 
         try:
             self._initialize()
@@ -399,8 +421,6 @@ class SummaryRecord:
                     return True
 
         if self._mode == 'train':
-            step_end_flag = Tensor((np.ones([1])).astype(np.int32))
-            self.tensor_summary("step_end_flag_" + str(step), step_end_flag)
             self._add_summary_tensor_data(step)
 
         if not plugin_filter:
@@ -458,11 +478,9 @@ class SummaryRecord:
 
     def _add_summary_tensor_data(self, step_index=-1):
         """Add summary tensor data."""
+        _sync_summary_data(step_index)
         _record_summary_tensor_data()
-        end_flag = None
-        if step_index >= 0:
-            end_flag = "step_end_flag_" + str(step_index) + "[:Tensor]"
-        summary_data = _get_summary_tensor_data(end_flag=end_flag, del_end_flag=True)
+        summary_data = _get_summary_tensor_data()
         if not summary_data:
             logger.debug(f'No summary data bubbled from the network.')
         for name, tensor in summary_data.items():
