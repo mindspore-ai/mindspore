@@ -26,10 +26,6 @@ from ..common.exceptions import PathNotExistsError
 from ..filewriter import FileWriter
 from ..shardutils import check_filename, ExceptionThread, SUCCESS
 
-try:
-    cv_import = import_module("cv2")
-except ModuleNotFoundError:
-    cv_import = None
 
 __all__ = ['Cifar100ToMR']
 
@@ -57,6 +53,8 @@ class Cifar100ToMR:
     """
 
     def __init__(self, source, destination):
+        self.cv_import = import_module("cv2")
+
         check_filename(source)
         self.source = source
 
@@ -100,11 +98,11 @@ class Cifar100ToMR:
         test_coarse_labels = cifar100_data.Test.coarse_labels
         logger.info("test images coarse label: {}".format(coarse_labels.shape))
 
-        data_list = _construct_raw_data(images, fine_labels, coarse_labels)
-        test_data_list = _construct_raw_data(test_images, test_fine_labels, test_coarse_labels)
+        data_list = self._construct_raw_data(images, fine_labels, coarse_labels)
+        test_data_list = self._construct_raw_data(test_images, test_fine_labels, test_coarse_labels)
 
-        _generate_mindrecord(self.destination, data_list, fields, "img_train")
-        _generate_mindrecord(self.destination + "_test", test_data_list, fields, "img_test")
+        self._generate_mindrecord(self.destination, data_list, fields, "img_train")
+        self._generate_mindrecord(self.destination + "_test", test_data_list, fields, "img_test")
         return SUCCESS
 
     def transform(self, fields=None):
@@ -136,56 +134,53 @@ class Cifar100ToMR:
             raise t.exception
 
 
-def _construct_raw_data(images, fine_labels, coarse_labels):
-    """
-    Construct raw data from cifar100 data.
+    def _construct_raw_data(self, images, fine_labels, coarse_labels):
+        """
+        Construct raw data from cifar100 data.
 
-    Args:
-        images (list): image list from cifar100.
-        fine_labels (list): fine label list from cifar100.
-        coarse_labels (list): coarse label list from cifar100.
+        Args:
+            images (list): image list from cifar100.
+            fine_labels (list): fine label list from cifar100.
+            coarse_labels (list): coarse label list from cifar100.
 
-    Returns:
-        list[dict], data dictionary constructed from cifar100.
-    """
-    if not cv_import:
-        raise ModuleNotFoundError("opencv-python module not found, please use pip install it.")
-
-    raw_data = []
-    for i, img in enumerate(images):
-        fine_label = np.int(fine_labels[i][0])
-        coarse_label = np.int(coarse_labels[i][0])
-        _, img = cv_import.imencode(".jpeg", img[..., [2, 1, 0]])
-        row_data = {"id": int(i),
-                    "data": img.tobytes(),
-                    "fine_label": int(fine_label),
-                    "coarse_label": int(coarse_label)}
-        raw_data.append(row_data)
-    return raw_data
+        Returns:
+            list[dict], data dictionary constructed from cifar100.
+        """
+        raw_data = []
+        for i, img in enumerate(images):
+            fine_label = np.int(fine_labels[i][0])
+            coarse_label = np.int(coarse_labels[i][0])
+            _, img = self.cv_import.imencode(".jpeg", img[..., [2, 1, 0]])
+            row_data = {"id": int(i),
+                        "data": img.tobytes(),
+                        "fine_label": int(fine_label),
+                        "coarse_label": int(coarse_label)}
+            raw_data.append(row_data)
+        return raw_data
 
 
-def _generate_mindrecord(file_name, raw_data, fields, schema_desc):
-    """
-    Generate MindRecord file from raw data.
+    def _generate_mindrecord(self, file_name, raw_data, fields, schema_desc):
+        """
+        Generate MindRecord file from raw data.
 
-    Args:
-        file_name (str): File name of MindRecord File.
-        fields (list[str]): Fields would be set as index which
-          could not belong to blob fields and type could not be 'array' or 'bytes'.
-        raw_data (dict): Dict of raw data.
-        schema_desc (str): String of schema description.
+        Args:
+            file_name (str): File name of MindRecord File.
+            fields (list[str]): Fields would be set as index which
+            could not belong to blob fields and type could not be 'array' or 'bytes'.
+            raw_data (dict): Dict of raw data.
+            schema_desc (str): String of schema description.
 
-    Returns:
-        SUCCESS or FAILED.
-    """
-    schema = {"id": {"type": "int64"}, "fine_label": {"type": "int64"},
-              "coarse_label": {"type": "int64"}, "data": {"type": "bytes"}}
+        Returns:
+            SUCCESS or FAILED.
+        """
+        schema = {"id": {"type": "int64"}, "fine_label": {"type": "int64"},
+                  "coarse_label": {"type": "int64"}, "data": {"type": "bytes"}}
 
-    logger.info("transformed MindRecord schema is: {}".format(schema))
+        logger.info("transformed MindRecord schema is: {}".format(schema))
 
-    writer = FileWriter(file_name, 1)
-    writer.add_schema(schema, schema_desc)
-    if fields and isinstance(fields, list):
-        writer.add_index(fields)
-    writer.write_raw_data(raw_data)
-    writer.commit()
+        writer = FileWriter(file_name, 1)
+        writer.add_schema(schema, schema_desc)
+        if fields and isinstance(fields, list):
+            writer.add_index(fields)
+        writer.write_raw_data(raw_data)
+        writer.commit()

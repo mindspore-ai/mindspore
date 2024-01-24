@@ -97,10 +97,7 @@ class TFRecordToMR:
     """
 
     def __init__(self, source, destination, feature_dict, bytes_fields=None):
-        try:
-            self.tf = import_module("tensorflow")  # just used to convert tfrecord to mindrecord
-        except ModuleNotFoundError:
-            raise Exception("Module tensorflow is not found, please use pip install it.")
+        self.tf = import_module("tensorflow")  # just used to convert tfrecord to mindrecord
 
         if self.tf.__version__ < SupportedTensorFlowVersion:
             raise Exception("Module tensorflow version must be greater or equal {}.".format(SupportedTensorFlowVersion))
