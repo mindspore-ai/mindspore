@@ -67,6 +67,7 @@ struct Edge {
   const EdgeType type_;
   const uint64_t id_;
   bool ignore_h2d_;
+  bool is_grad_;
   device::DeviceAddressPtr address_;
   // For cloning device address faster.
   const device::DeviceAddressPtr origin_address_;
