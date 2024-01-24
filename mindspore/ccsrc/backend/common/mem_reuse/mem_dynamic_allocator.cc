@@ -20,6 +20,7 @@
 #include <numeric>
 #include <ostream>
 #include <utility>
+#include "include/common/utils/utils.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
@@ -47,12 +48,6 @@ static const std::map<AllocatorType, std::string> kAllocatorTypeString = {
   {AllocatorType::kGraphOutput, "graph output"},
   {AllocatorType::kOther, "other"},
 };
-
-bool IsMemoryPoolRecycle() {
-  static const char kMemoryPoolRecycle[] = "MS_MEMORY_POOL_RECYCLE";
-  static const auto memory_pool_recycle = common::GetEnv(kMemoryPoolRecycle);
-  return memory_pool_recycle == "1";
-}
 
 DynamicMemPoolBestFit::~DynamicMemPoolBestFit() {
   persistent_mem_->Clear();

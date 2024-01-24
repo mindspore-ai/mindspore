@@ -46,15 +46,6 @@ size_t AscendMemAdapter::GetRoundUpAlignSize(size_t input_size) {
   return ((input_size + kAscendMemAlignSize - 1) / kAscendMemAlignSize) * kAscendMemAlignSize;
 }
 
-bool AscendMemAdapter::IsMemoryPoolRecycle() {
-  static const char kMemoryPoolRecycle[] = "MS_MEMORY_POOL_RECYCLE";
-  static const auto memory_pool_recycle = common::GetEnv(kMemoryPoolRecycle);
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  auto runtime_num_threads = static_cast<size_t>(context_ptr->get_param<uint32_t>(MS_CTX_RUNTIME_NUM_THREADS));
-  return memory_pool_recycle == "1" && runtime_num_threads == 1 && IsEnableRefMode();
-}
-
 bool AscendMemAdapter::Initialize() {
   if (initialized_) {
     return true;
