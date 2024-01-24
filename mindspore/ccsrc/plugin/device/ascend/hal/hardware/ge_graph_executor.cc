@@ -767,7 +767,7 @@ void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph) cons
     auto output_device_addr = std::make_shared<AscendDeviceAddress>(kernel_tensor);
     output_device_addr->set_device_synchronizer(std::make_shared<AscendDeviceSynchronizer>());
     output_device_addr->set_is_ptr_persisted(true);
-    if (AscendMemAdapter::GetInstance().IsMemoryPoolRecycle() && need_alloc_output_cnt <= kNeedRecycleOutput) {
+    if (IsMemoryPoolRecycle() && need_alloc_output_cnt <= kNeedRecycleOutput) {
       MS_LOG(INFO) << "Set Memory Pool Recycle, graph: " << kernel_graph->ToString()
                    << ", node: " << output_node->fullname_with_scope();
       output_device_addr->set_from_persistent_mem(true);
@@ -1012,7 +1012,7 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
   std::vector<GeTensor> ge_inputs = GenerateInputGeTensor(kg);
   std::vector<GeTensor> ge_outputs = GenerateOutputGeTensor(kg);
 
-  if (AscendMemAdapter::GetInstance().IsMemoryPoolRecycle()) {
+  if (IsMemoryPoolRecycle()) {
     auto max_static_memory_size = ResManager()->GetMaxUsedMemorySize();
     auto iter = feature_memorys.find(graph_name);
     if (iter == feature_memorys.end()) {

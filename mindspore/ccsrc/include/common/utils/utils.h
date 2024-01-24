@@ -643,6 +643,7 @@ COMMON_EXPORT size_t GetSystemMemorySize(const std::string &key);
 COMMON_EXPORT size_t GetSystemFreeDiskSize(const std::string &path);
 
 COMMON_EXPORT bool IsEnableRefMode();
+COMMON_EXPORT bool IsMemoryPoolRecycle();
 
 // The map between kernel's output and input ref relationship.
 // Key is the output index while the value is input index which will be used as the reference of output.
