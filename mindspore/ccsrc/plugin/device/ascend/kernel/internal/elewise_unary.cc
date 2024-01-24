@@ -46,7 +46,8 @@ class InternalCast : public ElewiseUnary {
     param_ptr->opId = internal::OpId::Cast;
     internal::ElewiseParam op_param;
     op_param.elewiseType = internal::ElewiseParam::ELEWISE_CAST;
-    if (inputs[0]->dtype_id() == TypeId::kNumberTypeFloat16 && outputs[0]->dtype_id() == TypeId::kNumberTypeBFloat16) {
+    if ((inputs[0]->dtype_id() == TypeId::kNumberTypeFloat16 || inputs[0]->dtype_id() == TypeId::kNumberTypeFloat32) &&
+        outputs[0]->dtype_id() == TypeId::kNumberTypeBFloat16) {
       op_param.outTensorType = internal::TensorDType::TENSOR_DTYPE_UNDEFINED;
     } else {
       op_param.outTensorType = InternalKernelUtils::ToInternalDType(outputs[0]->dtype_id());

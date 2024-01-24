@@ -36,6 +36,15 @@ class CastNet(nn.Cell):
         return ops.cast(x, self.out_dtype)
 
 
+class GeluNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.gelu = ops.GeLU()
+
+    def construct(self, x):
+        return self.gelu(x)
+
+
 def add_net(x_shape, y_shape, dtype):
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
@@ -100,6 +109,15 @@ def cast_net(x_shape, dtype, out_dtype):
         np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
+def gelu_net(x_shape, dtype):
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
+    x = np.random.randn(*x_shape)
+
+    net = GeluNet()
+    output = net(Tensor(x, dtype=dtype))
+
+
 def test_add(dtype=np.float16):
     """
     Feature: test add operator in graph mode
@@ -153,3 +171,14 @@ def test_cast():
     dtype = np.float16
     out_dtype = bfloat16
     cast_net(x_shape, dtype, out_dtype)
+
+
+def test_gelu():
+    """
+    Feature: test gelu operator in graph mode.
+    Description: test gelu.
+    Expectation: the result is correct
+    """
+    x_shape = (1,)
+    dtype = ms.bfloat16
+    gelu_net(x_shape, dtype)
