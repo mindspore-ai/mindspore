@@ -512,7 +512,8 @@ class GpuFrameWorkParser:
                 line_info = line_info.strip(' ').strip('\n').split(',')
                 if not self.op_detail.get(line_info[2]):
                     # line_info[4]: op_occurrences, line_info[5]: op_detail_time(us), line_info[6]: op_avg_time(us);
-                    self.op_detail[line_info[2]] = [line_info[4], line_info[5], line_info[6], op_side]
+                    self.op_detail[line_info[2]] = [float(line_info[4]), float(line_info[5]),
+                                                    float(line_info[6]), op_side]
 
     def get_execute_times(self):
         """Get gpu operators execute times."""

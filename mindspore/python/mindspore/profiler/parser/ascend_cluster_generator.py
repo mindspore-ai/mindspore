@@ -81,11 +81,11 @@ class AscendClusterGenerator:
         for file in find_files(self.root_path, "msprof_*.json"):
             with open(file) as jsonfile:
                 for row in json.load(jsonfile):
-                    if not row.get('name'):
-                        continue
+                    name = row.get('name', '')
+                    if name is None:
+                        name = ''
                     if row.get('name') in ['Computing', 'Communication', 'Communication(Not Overlapped)',
-                                           'Free'] or row.get('name').find('/Receive-op'):
-                        name = row.get('name', '')
+                                           'Free'] or name.find('/Receive-op'):
                         ts = row.get('ts', 0)
                         dur = row.get('dur', 0)
                         msprof_data.append(tuple([name, ts, dur]))
