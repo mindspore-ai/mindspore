@@ -35,8 +35,6 @@ bool IsSomasEnable(const SomasInfo *somas_info) {
 }
 }  // namespace
 
-constexpr size_t CALLBACK_MAX_LIMITS = 100;
-
 using distributed::collective::CollectiveManager;
 using distributed::recovery::RecoveryContext;
 
@@ -869,45 +867,37 @@ void KernelActor::LaunchCallback(OpContext<DeviceTensor> *const context) {
     if (ref_count == SIZE_MAX) {
       continue;
     }
-    auto counter = callback_counter_->Counter();
-    callback_counter_->memory_size += device_tensor_ptr->GetSize();
-    if (counter >= CALLBACK_MAX_LIMITS) {
-      callback_counter_->WaitForLimits(counter >> 1);
-    }
-
     auto now_count = callback_counter_->Increase();
-    MS_LOG(DEBUG) << "ref counter : " << now_count;
+    MS_LOG(DEBUG) << "Callback counter : " << now_count << ".";
     auto actor_manager = ActorMgr::GetActorMgrRef();
     auto base_actor = actor_manager->GetActor(memory_manager_aid_);
     MemoryManagerActor *memory_manager_actor = static_cast<MemoryManagerActor *>(base_actor.get());
     auto release_ref_callback = [device_tensor_ptr, memory_manager_actor, device_context_ptr = device_contexts_[0],
                                  context, &aid = GetAID(), callback_counter = callback_counter_]() {
+      // We need check parameters before execution, since main thread may exit before callback thread.
+      if (callback_counter == nullptr || callback_counter->expired()) {
+        MS_LOG(INFO)
+          << "Exit callback since callback_counter is nullptr or expired, which indicates that main thread is expired.";
+        return;
+      }
       auto start_time = std::chrono::steady_clock::now();
       int64_t start_time_microseconds =
         std::chrono::duration_cast<std::chrono::microseconds>(start_time.time_since_epoch()).count();
-      auto before_ref_count = device_tensor_ptr->ref_count();
-      auto before_dynamic_ref_count = device_tensor_ptr->dynamic_ref_count();
       std::vector<DeviceTensor *> free_list{device_tensor_ptr};
       memory_manager_actor->FreeMemory(&free_list, device_context_ptr, context, aid);
       auto ref_counter = callback_counter->Decrease();
-      if (device_tensor_ptr->ref_count() == device_tensor_ptr->original_ref_count()) {
-        callback_counter->memory_size -= device_tensor_ptr->GetSize();
-      }
-      callback_counter->Signal();
+      callback_counter->Notify();
       auto end_time = std::chrono::steady_clock::now();
       int64_t cost_microseconds =
         std::chrono::duration_cast<std::chrono::microseconds>(end_time.time_since_epoch()).count() -
         start_time_microseconds;
       MS_LOG(DEBUG) << "Callback is called, device tensor : " << device_tensor_ptr
                     << ", device_tensor_ptr ptr : " << device_tensor_ptr->GetMutablePtr()
-                    << ", size : " << device_tensor_ptr->GetSize() << ", before_ref_count : " << before_ref_count
-                    << ", before_dynamic_ref_count : " << before_dynamic_ref_count
                     << ", device_tensor_ptr ref count : " << device_tensor_ptr->ref_count()
                     << ", device_tensor_ptr dynamic ref count : " << device_tensor_ptr->dynamic_ref_count()
                     << ", device tensor ptr : " << device_tensor_ptr->GetMutablePtr()
-                    << ", ref counter : " << ref_counter << ", stream id : " << device_tensor_ptr->stream_id() << ".";
-      MS_LOG(DEBUG) << "Callback reserved size : " << callback_counter->memory_size << ", cost : " << cost_microseconds
-                    << "us.";
+                    << ", callback counter : " << ref_counter << ", stream id : " << device_tensor_ptr->stream_id()
+                    << ", cost : " << cost_microseconds << "us.";
     };
     (void)callback_funcs.emplace_back(release_ref_callback);
   }

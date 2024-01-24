@@ -62,7 +62,8 @@ class CallbackCounter {
   size_t Increase() { return ++counter_; }
   size_t Decrease() { return --counter_; }
 
-  std::atomic<size_t> memory_size;
+  bool expired() const { return expired_.load(); }
+  void set_expired(bool expired) { expired_ = expired; }
 
   void Wait() {
     std::unique_lock<std::mutex> locker(lock_);
@@ -70,9 +71,8 @@ class CallbackCounter {
     auto start_time = std::chrono::steady_clock::now();
     int64_t start_time_microseconds =
       std::chrono::duration_cast<std::chrono::microseconds>(start_time.time_since_epoch()).count();
-    while (counter_.load() != 0 &&
-           !cv_.wait_for(locker, std::chrono::seconds(1), [&]() { return counter_.load() == 0; })) {
-      MS_LOG(DEBUG) << "Wait cycle";
+    while (!cv_.wait_for(locker, std::chrono::seconds(1), [&]() { return counter_.load() == 0; })) {
+      MS_LOG(DEBUG) << "Wait cycle.";
     }
     auto end_time = std::chrono::steady_clock::now();
     int64_t cost_microseconds =
@@ -81,29 +81,21 @@ class CallbackCounter {
     MS_LOG(DEBUG) << "Wait for callback execution cost : " << cost_microseconds << " us.";
   }
 
-  void WaitForLimits(size_t limits) {
-    std::unique_lock<std::mutex> locker(lock_);
-    MS_LOG(DEBUG) << "Wait for callback WaitForLimits start.";
-    auto start_time = std::chrono::steady_clock::now();
-    int64_t start_time_microseconds =
-      std::chrono::duration_cast<std::chrono::microseconds>(start_time.time_since_epoch()).count();
-    while (counter_.load() > limits &&
-           cv_.wait_for(locker, std::chrono::seconds(1), [&]() { return counter_.load() <= limits; })) {
-      MS_LOG(DEBUG) << "Wait cycle";
+  void Notify() {
+    if (counter_.load() == 0) {
+      std::unique_lock<std::mutex> locker(lock_);
+      cv_.notify_all();
     }
-    auto end_time = std::chrono::steady_clock::now();
-    int64_t cost_microseconds =
-      std::chrono::duration_cast<std::chrono::microseconds>(end_time.time_since_epoch()).count() -
-      start_time_microseconds;
-    MS_LOG(DEBUG) << "Wait for callback execution limits : " << limits << ", cost : " << cost_microseconds << " us.";
   }
 
-  void Signal() { cv_.notify_all(); }
+  std::atomic<size_t> reserved_memory_size_{0};
 
  private:
-  std::atomic<size_t> counter_;
+  std::atomic<size_t> counter_{0};
   std::mutex lock_;
   std::condition_variable cv_;
+  // Callback executed within async thread, this help to indicate that actor is expired.
+  std::atomic<bool> expired_{false};
 };
 using CallbackCounterPtr = std::shared_ptr<CallbackCounter>;
 
