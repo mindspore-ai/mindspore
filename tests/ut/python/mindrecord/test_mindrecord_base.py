@@ -16,7 +16,6 @@
 import os
 import uuid
 import pytest
-import shutil
 import numpy as np
 from utils import get_data, get_nlp_data
 
@@ -1859,10 +1858,6 @@ def file_writer_encode_and_integrity_check(file_name=None, remove_file=True, enc
         remove_one_file(file_name_no_encode_no_hash)
         remove_one_file(file_name_no_encode_no_hash + ".db")
 
-    decrypt_dir = os.path.dirname(os.path.realpath(file_name)) + "/.decrypt_mindrecord"
-    if os.path.exists(decrypt_dir):
-        shutil.rmtree(decrypt_dir)
-
 
 def test_file_writer_encode_integrity_check(file_name=None, remove_file=True):
     """
@@ -1952,10 +1947,6 @@ def test_file_writer_encode_integrity_check_with_exception(file_name=None, remov
     """
     if not file_name:
         file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-
-    decrypt_dir = os.path.dirname(os.path.realpath(file_name)) + "/.decrypt_mindrecord"
-    if os.path.exists(decrypt_dir):
-        shutil.rmtree(decrypt_dir)
 
     ## 1. create with encode and hash check
     remove_one_file(file_name)
@@ -2353,9 +2344,6 @@ def test_file_writer_encode_integrity_check_with_exception(file_name=None, remov
     remove_one_file(file_name)
     remove_one_file(file_name + ".db")
 
-    if os.path.exists(decrypt_dir):
-        shutil.rmtree(decrypt_dir)
-
     set_enc_key(None)
     set_enc_mode()
     set_dec_mode(None)
@@ -2373,10 +2361,6 @@ def test_file_writer_encode_integrity_check_with_exception_invalid_key(file_name
 
     remove_one_file(file_name)
     remove_one_file(file_name + ".db")
-
-    decrypt_dir = os.path.dirname(os.path.realpath(file_name)) + "/.decrypt_mindrecord"
-    if os.path.exists(decrypt_dir):
-        shutil.rmtree(decrypt_dir)
 
     set_enc_key("zxcvasdfqwerbnm,")
     set_enc_mode("AES-CBC")
@@ -2447,9 +2431,6 @@ def test_file_writer_encode_integrity_check_with_exception_invalid_key(file_name
 
     remove_one_file(file_name)
     remove_one_file(file_name + ".db")
-
-    if os.path.exists(decrypt_dir):
-        shutil.rmtree(decrypt_dir)
 
     set_enc_key(None)
     set_enc_mode()
