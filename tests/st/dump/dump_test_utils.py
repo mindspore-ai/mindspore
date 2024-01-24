@@ -275,15 +275,19 @@ def check_statistic_dump(dump_file_path):
         num_tensors = len(add_statistics)
         assert num_tensors == 3
         for tensor in add_statistics:
-            if tensor['IO'] == 'input' and tensor['Slot'] == 0:
+            if tensor['IO'] == 'input' and tensor['Slot'] == '0':
                 assert tensor['Min Value'] == '1'
                 assert tensor['Max Value'] == '6'
-            elif tensor['IO'] == 'input' and tensor['Slot'] == 1:
+                assert tensor['MD5'] == 'fa85978152c7dfb5f1322082915cb05'
+            elif tensor['IO'] == 'input' and tensor['Slot'] == '1':
                 assert tensor['Min Value'] == '7'
                 assert tensor['Max Value'] == '12'
-            elif tensor['IO'] == 'output' and tensor['Slot'] == 0:
+                assert tensor['MD5'] == '9fd3b07ba2cfea7833f1da3a2960aad'
+            elif tensor['IO'] == 'output' and tensor['Slot'] == '0':
                 assert tensor['Min Value'] == '8'
                 assert tensor['Max Value'] == '18'
+                assert tensor['MD5'] == '72bb57525231b5c8d3176bc5497f8aa'
+
 
 def check_data_dump(dump_file_path, is_ge=False):
     output_name = "Add.Add-op*.output.0.*.npy"

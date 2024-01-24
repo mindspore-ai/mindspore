@@ -176,6 +176,7 @@ enum MsCtxParam : unsigned {
   MS_CTX_CONV_DGRAD_ALGO,
   MS_CTX_CONV_WGRAD_ALGO,
   MS_CTX_HOST_SCHEDULING_MAX_THRESHOLD,
+  MS_CTX_ENABLE_EXCEPTION_DUMP,
   MS_CTX_TYPE_STRING_END,
 
   // parameter numbers of each type
@@ -198,6 +199,7 @@ class MS_CORE_API MsContext {
   using EnvFunc = std::function<void(const std::string &, const std::string &)>;  // device name, library path
   static std::shared_ptr<MsContext> GetInstance();
 
+  void SetDeviceId();
   void Refresh();
 
   bool enable_dump_ir() const;

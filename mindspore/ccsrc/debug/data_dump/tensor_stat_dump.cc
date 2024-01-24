@@ -28,7 +28,7 @@ constexpr auto kInput = "input";
 constexpr auto kOutput = "output";
 constexpr auto kCsvHeader =
   "Op Type,Op Name,Task ID,Stream ID,Timestamp,IO,Slot,Data Size,Data Type,Shape,Max Value,Min Value,Avg Value,"
-  "Count,Negative Zero Count,Positive Zero Count,NaN Count,Negative Inf Count,Positive Inf Count,Zero Count\n";
+  "Count,Negative Zero Count,Positive Zero Count,NaN Count,Negative Inf Count,Positive Inf Count,Zero Count,MD5\n";
 constexpr auto kCsvFileName = "statistic.csv";
 }  // namespace
 
@@ -147,7 +147,8 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, const s
   csv.WriteToCsv(stat.nan_count);
   csv.WriteToCsv(stat.neg_inf_count);
   csv.WriteToCsv(stat.pos_inf_count);
-  csv.WriteToCsv(stat.zero_count, true);
+  csv.WriteToCsv(stat.zero_count);
+  csv.WriteToCsv(stat.md5, true);
   csv.CloseFile();
   return true;
 }

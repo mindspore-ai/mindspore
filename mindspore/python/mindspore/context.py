@@ -270,6 +270,8 @@ class _Context:
                 - atomic_clean_policy (int): ``0`` and ``1``. Default: ``1`` .
                 - op_precision_mode (str): precision mode config file path.
                 - ge_options (dict): Global or session CANN options.
+                - exception_dump (str): Enable exception dump for Ascend operators. ``"0"`` , ``"1"`` and ``"2"``.
+                  Default: ``"2"`` .
                 - parallel_speed_up_json_path(Union[str, None]): The path to the parallel speed up json file.
                   If its value is None or '', it does not take effect. Default None.
                 - host_scheduling_max_threshold(int): The host scheduling max threshold.
@@ -282,6 +284,7 @@ class _Context:
             'atomic_clean_policy': [0, 1],
             'matmul_allow_hf32': [True, False],
             'conv_allow_hf32': [True, False],
+            'exception_dump': ["0", "1", "2"],
             'op_precision_mode': (str,),
             'ge_options': (dict,),
             'parallel_speed_up_json_path': (str, None),
@@ -293,6 +296,7 @@ class _Context:
             'atomic_clean_policy': self._get_ascend_config_setter('atomic_clean_policy', str),
             'matmul_allow_hf32': self._get_ascend_config_setter('matmul_allow_hf32', lambda v: "1" if v else "0"),
             'conv_allow_hf32': self._get_ascend_config_setter('conv_allow_hf32', lambda v: "1" if v else "0"),
+            'exception_dump': self._get_ascend_config_setter('exception_dump'),
             'op_precision_mode': self._set_op_precision_mode,
             'ge_options': self._set_ge_options,
             'parallel_speed_up_json_path': self._set_speedup_config_path,
@@ -1341,6 +1345,10 @@ def set_context(**kwargs):
             - conv_allow_hf32 (bool): Whether to convert FP32 to HF32 for Conv operators. Default value: ``True``.
               This is an experimental prototype that is subject to change and/or deletion.
               For detailed information, please refer to `Ascend community <https://www.hiascend.com/>`_ .
+            - exception_dump (str): Enable exception dump for Ascend operators, providing the input and output data for
+              failing Ascend operators. The value can be ``"0"`` , ``"1"`` and ``"2"``. For ``"0"`` , exception dump is
+              turned off; for ``"1"``, all inputs and outputs will be dumped for AICore and AICPU exception operators;
+              for ``"2"``, inputs will be dumped for AICore exception operators. Default: ``"2"`` .
             - op_precision_mode (str): Path to config file of op precision mode. For detailed information, please refer
               to `Ascend community <https://www.hiascend.com/>`_ .
             - ge_options (dict): Set options for CANN. The options are divided into two categories: global and session.

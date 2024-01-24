@@ -128,6 +128,12 @@ def test_ascend_config():
     with pytest.raises(ValueError):
         context.set_context(ascend_config={"jit_compile": 2})
     with pytest.raises(ValueError):
+        context.set_context(ascend_config={"exception_dump": "10"})
+    with pytest.raises(ValueError):
+        context.set_context(ascend_config={"exception_dump": 10})
+    with pytest.raises(ValueError):
+        context.set_context(ascend_config={"exception_dump": "xxx"})
+    with pytest.raises(ValueError):
         context.set_context(ascend_config={"atomic_clean_policy": "xxx"})
     with pytest.raises(ValueError):
         context.set_context(ascend_config={"atomic_clean_policy": 3})
