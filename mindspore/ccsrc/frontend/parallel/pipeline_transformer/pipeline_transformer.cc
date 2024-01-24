@@ -251,7 +251,7 @@ bool PipelineTransformer::LabelParameterStart(const FuncGraphPtr &graph) {
     auto cnode = (*node)->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto stage_info = cnode->user_data<NodeStageInfo>();
-    if (stage_info != nullptr && stage_info->stage() > 0) {
+    if (stage_info == nullptr || stage_info->stage() != 0) {
       continue;
     }
     if (IsValueNode<FuncGraph>(cnode->input(0))) {
@@ -481,6 +481,22 @@ void PipelineTransformer::BroadCastColoring() {
           need_coloring = true;
         }
       }
+    }
+  }
+  for (auto &fg : manager_->func_graphs()) {
+    auto stage = fg->stage();
+    if (stage < 0) {
+      continue;
+    }
+    if (fg == root_ || fg == main_graph_ || fg == shared_cell_) {
+      continue;
+    }
+    auto all_nodes = fg->nodes();
+    for (auto node : all_nodes) {
+      if (node->user_data<NodeStageInfo>() != nullptr) {
+        continue;
+      }
+      node->set_user_data<NodeStageInfo>(std::make_shared<NodeStageInfo>(stage));
     }
   }
 }

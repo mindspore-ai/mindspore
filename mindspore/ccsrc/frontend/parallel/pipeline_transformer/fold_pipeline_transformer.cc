@@ -148,6 +148,33 @@ void FoldPipelineTransformer::Coloring() {
   }
 }
 
+void FoldPipelineTransformer::ColorForNodes() {
+  for (auto &fg : manager_->func_graphs()) {
+    auto stage = fg->stage();
+    auto segment = fg->segment();
+    if (stage < 0) {
+      continue;
+    }
+    if (segment < 0) {
+      continue;
+    }
+    if (fg == root_ || fg == main_graph_ || fg == shared_cell_) {
+      continue;
+    }
+    auto all_nodes = fg->nodes();
+    for (auto node : all_nodes) {
+      if (node->user_data<NodeStageInfo>() != nullptr) {
+        continue;
+      }
+      node->set_user_data<NodeStageInfo>(std::make_shared<NodeStageInfo>(stage));
+      if (node->user_data<NodeSegmentInfo>() != nullptr) {
+        continue;
+      }
+      node->set_user_data<NodeSegmentInfo>(std::make_shared<NodeSegmentInfo>(segment));
+    }
+  }
+}
+
 void FoldPipelineTransformer::BroadCastColoring() {
   auto need_coloring = true;
   while (need_coloring) {
@@ -190,6 +217,7 @@ void FoldPipelineTransformer::BroadCastColoring() {
       }
     }
   }
+  ColorForNodes();
 }
 
 SendAttr FoldPipelineTransformer::InsertSend(const AnfNodePtr &parameter, int64_t user_node_stage, int64_t node_stage,
