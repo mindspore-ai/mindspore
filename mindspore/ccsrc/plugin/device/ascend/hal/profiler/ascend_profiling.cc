@@ -17,12 +17,14 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <nlohmann/json.hpp>
 #include "utils/log_adapter.h"
 #include "include/common/utils/utils.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/profiler/memory_profiling.h"
 #include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
-#include <nlohmann/json.hpp>
+#include "plugin/device/ascend/hal/profiler/profiling_framework_data.h"
+#include "runtime/hardware/device_context_manager.h"
 #include "acl/acl_rt.h"
 
 using mindspore::device::ascend::ErrorManagerAdapter;
@@ -157,7 +159,28 @@ void AscendProfiler::Start() {
   MemoryProfiling::GetInstance().StartMemoryProfiling();
 
   profiler::ascend::ParallelStrategy::GetInstance()->SaveParallelStrategyToFile();
-
+  std::string op_range_dir = profile_data_path_ + "/FRAMEWORK";
+  if (access(op_range_dir.c_str(), 0) != 0) {
+    static const int DEFAULT_MKDIR_MODE = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+    auto result = mkdir(op_range_dir.c_str(), DEFAULT_MKDIR_MODE);
+    if (result != 0) {
+      MS_LOG(ERROR) << "create op range dir failed, op_range_dir: " << op_range_dir;
+      return;
+    }
+  }
+  uint32_t global_rank_id_ = 0;
+  device::DeviceContextKey host_key = {"CPU", 0};
+  auto host_ctx_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
+  MS_EXCEPTION_IF_NULL(host_ctx_);
+  auto host_comm_lib_instance_ = host_ctx_->device_res_manager_->collective_comm_lib();
+  if (host_comm_lib_instance_ != nullptr) {
+    global_rank_id_ = host_comm_lib_instance_->global_rank_id();
+  } else if (!common::GetEnv("RANK_ID").empty()) {
+    global_rank_id_ = static_cast<int32_t>(std::atoi(common::GetEnv("RANK_ID").c_str()));
+  }
+  ProfilingFrameworkData::Device_Id = global_rank_id_;
+  ProfilingDataDumper::GetInstance()->Init(op_range_dir);
+  ProfilingDataDumper::GetInstance()->Start();
   StepProfilingEnable(true);
 }
 
@@ -170,6 +193,7 @@ void AscendProfiler::Stop() {
          "before call Profiler.Stop function.";
   }
 
+  ProfilingDataDumper::GetInstance()->Stop();
   aclError aclRet = aclprofStop(acl_config_);
   if (aclRet != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Failed to call aclprofStop function.";

@@ -282,7 +282,7 @@ class Integrator:
             _ = next(csv_reader)
             for info in csv_reader:
                 framework_infos[info[3]] = [
-                    info[3], info[4], info[5], info[6], json.loads(info[7]) if info[7] else None
+                    info[3], info[5], info[6], info[7], json.loads(info[8]) if info[8] else None
                 ]
 
         with open(op_detail_file_path, 'r') as file:
@@ -290,6 +290,8 @@ class Integrator:
             _ = next(csv_reader)
             for info in csv_reader:
                 framework_info = framework_infos.get(info[0])
+                if not framework_info:
+                    continue
                 self._aicore_detail_data.append(
                     [
                         framework_info[1], framework_info[2], float(info[1]),

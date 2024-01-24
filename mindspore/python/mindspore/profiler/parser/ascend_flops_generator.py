@@ -20,27 +20,30 @@ import os
 import stat
 
 import numpy as np
+from mindspore import log as logger
 from mindspore.profiler.common.exceptions.exceptions import ProfilerIOException
 
 
 class AscendFlopsGenerator:
     """Generate ascend flops data from DataFrame."""
 
-    def __init__(self, op_summary):
+    def __init__(self, op_summary, launch_ops):
         self.op_summary = op_summary
+        self.launch_ops = launch_ops
         self.flops_dt = np.dtype(
-            [('op_full_name', object), ('MFLOPs(10^6 cube)', float), ('GFLOPS(10^9 cube)', float),
+            [('full_kernel_name', object), ('MFLOPs(10^6 cube)', float), ('GFLOPS(10^9 cube)', float),
              ('MFLOPs(10^6 vector)', float), ('GFLOPS(10^9 vector)', float)])
         self.flops = None
         self.flops_summary = None
+        self._full_kernel_name = None
 
     def parse(self):
         """Analyse the op_summary data generate flops data."""
 
         self.flops = np.empty((len(self.op_summary)), dtype=self.flops_dt)
-
+        self._set_full_kernel_name(self.op_summary, self.launch_ops)
         nonzero_duration = self.op_summary['Task Duration'] != 0
-        self.flops['op_full_name'] = self.op_summary['Op Name']
+        self.flops['full_kernel_name'] = self._full_kernel_name
         self.flops['MFLOPs(10^6 cube)'] = self.op_summary['cube_fops'] * 1e-6
         self.flops['GFLOPS(10^9 cube)'] = np.where(nonzero_duration, self.op_summary['cube_fops'] / self.op_summary[
             'Task Duration'] * 1e-6, 0)
@@ -92,3 +95,16 @@ class AscendFlopsGenerator:
             raise ProfilerIOException() from err
         if os.path.exists(flops_summary_path):
             os.chmod(flops_summary_path, stat.S_IREAD | stat.S_IWRITE)
+
+    def _set_full_kernel_name(self, op_summary, launch_ops):
+        """update full kernel name"""
+        self._full_kernel_name = op_summary['Op Name']
+
+        if launch_ops and len(launch_ops) != len(op_summary):
+            logger.error("Size mismatch between op_summary and launch_ops!")
+            launch_ops = []
+
+        for index, launch_op in enumerate(launch_ops):
+            if not launch_op:
+                continue
+            self._full_kernel_name[index] = f"{launch_op}/{self._full_kernel_name[index]}"

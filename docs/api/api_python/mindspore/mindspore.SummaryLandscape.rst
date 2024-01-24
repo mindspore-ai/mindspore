@@ -36,3 +36,7 @@ mindspore.SummaryLandscape
 
             - **device_ids** (List(int)) - 指定创建loss地形图所使用的目标设备的ID。例如：[0, 1]表示使用设备0和设备1来创建loss地形图。默认值： ``None`` 。
             - **output** (str) - 指定保存loss地形图的路径。默认值： ``None`` 。默认保存路径与summary文件相同。
+
+        教程样例：
+            - `训练优化过程可视化
+              <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/landscape.html>`_

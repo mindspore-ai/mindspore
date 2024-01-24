@@ -49,6 +49,7 @@
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/backend/debug/data_dump/overflow_dumper.h"
 #include "include/backend/debug/profiler/profiling.h"
+#include "plugin/device/ascend/hal/profiler/profiling_framework_data.h"
 #include "utils/anf_utils.h"
 #endif
 
@@ -444,6 +445,7 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
   }
 #endif
 
+  profiler::ascend::ProfilingFrameworkData::RecordLaunchGETaskBegin(kernel);
   // launch kernel
   // cppcheck-suppress unreadVariable
   auto lock = device::KernelRuntime::LockRuntime(stream);
@@ -464,6 +466,7 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
       return false;
     }
   }
+  profiler::ascend::ProfilingFrameworkData::RecordGETask(kernel);
   // for PyNative Sync Run mode
   auto ret = PySyncRuning(stream_id);
   PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelLaunch,
