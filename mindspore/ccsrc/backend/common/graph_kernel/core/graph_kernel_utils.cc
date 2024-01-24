@@ -127,9 +127,9 @@ std::vector<PrimitivePtr> GkUtils::FilterExcludedOps(const std::vector<Primitive
   if (!give_hint && final_filter_ops.size() > 0) {
     give_hint = true;
     for (size_t i = 0; i < final_filter_ops.size(); ++i) {
-      MS_LOG(WARNING) << "For op : " << final_filter_ops[i]
-                      << " can not be enabled in GraphKernel because the current device's computing capacity is "
-                      << major_compute_capability << ", which is != " << limited_capacity_ops[final_filter_ops[i]];
+      MS_LOG(INFO) << "For op : " << final_filter_ops[i]
+                   << " can not be enabled in GraphKernel because the current device's computing capacity is "
+                   << major_compute_capability << ", which is != " << limited_capacity_ops[final_filter_ops[i]];
     }
   }
   return dst_ops;

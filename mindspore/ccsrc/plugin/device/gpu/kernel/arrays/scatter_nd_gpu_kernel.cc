@@ -16,6 +16,7 @@
 
 #include "plugin/device/gpu/kernel/arrays/scatter_nd_gpu_kernel.h"
 #include <algorithm>
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
@@ -28,6 +29,9 @@ namespace kernel {
       .AddOutputAttr(OUTPUT),                                 \
       &ScatterNdGpuKernelMod::LaunchKernel<T, S>              \
   }
+
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 
 const std::vector<std::pair<KernelAttr, ScatterNdGpuKernelMod::KernelRunFunc>> &ScatterNdGpuKernelMod::GetFuncList()
   const {
@@ -68,6 +72,18 @@ const std::vector<std::pair<KernelAttr, ScatterNdGpuKernelMod::KernelRunFunc>> &
     DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeBool, kNumberTypeInt64, kNumberTypeBool, bool, int16_t),
     DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeBool, kNumberTypeInt64, kNumberTypeBool, bool, int32_t),
     DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeBool, kNumberTypeInt64, kNumberTypeBool, bool, int64_t),
+    DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeComplex64, kNumberTypeInt64, kNumberTypeComplex64, Complex<float>,
+                   int16_t),
+    DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeComplex64, kNumberTypeInt64, kNumberTypeComplex64, Complex<float>,
+                   int32_t),
+    DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeComplex64, kNumberTypeInt64, kNumberTypeComplex64, Complex<float>,
+                   int64_t),
+    DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeComplex128, kNumberTypeInt64, kNumberTypeComplex128, Complex<double>,
+                   int16_t),
+    DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeComplex128, kNumberTypeInt64, kNumberTypeComplex128, Complex<double>,
+                   int32_t),
+    DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeComplex128, kNumberTypeInt64, kNumberTypeComplex128, Complex<double>,
+                   int64_t),
   };
   return func_list;
 }
@@ -88,7 +104,7 @@ bool ScatterNdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inpu
   }
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemsetAsync(output, static_cast<T>(0.0), output_size_list_[0], reinterpret_cast<cudaStream_t>(stream_ptr_)),
+    cudaMemsetAsync(output, 0, output_size_list_[0], reinterpret_cast<cudaStream_t>(stream_ptr_)),
     "cudaMemSet failed in ScatterNdGpuKernelMod::LaunchKernel.");
 
   const size_t input_size = inputs[kIndex1]->size() / sizeof(T);
