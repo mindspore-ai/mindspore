@@ -16,6 +16,7 @@
 
 #include "runtime/pynative/op_executor.h"
 #include "pybind_api/gil_scoped_long_running.h"
+#include "runtime/pipeline/pipeline.h"
 
 namespace mindspore::runtime {
 OpExecutor &OpExecutor::GetInstance() {
@@ -29,11 +30,11 @@ OpExecutor::~OpExecutor() = default;
 
 void OpExecutor::RegisterForwardCallback(const std::function<void()> &callback) { forward_callback_ = callback; }
 
-void OpExecutor::Reset() { async_queue_.Reset(); }
+void OpExecutor::Reset() { runtime::Pipeline::Get().backend_stage()->Reset(); }
 
 void OpExecutor::WaitForRun() {
   MS_LOG(DEBUG) << "Start";
-  async_queue_.Wait();
+  runtime::Pipeline::Get().backend_stage()->Wait();
   MS_LOG(DEBUG) << "All task finish";
 }
 
@@ -50,28 +51,30 @@ void OpExecutor::WaitAll() {
   WaitForRun();
 }
 
-void OpExecutor::PushOpRunTask(const std::shared_ptr<pynative::DeviceOpRunTask> &op_run_task) {
+void OpExecutor::PushOpRunTask(const std::shared_ptr<DeviceOpRunTask> &op_run_task) {
   MS_EXCEPTION_IF_NULL(op_run_task);
   MS_EXCEPTION_IF_NULL(op_run_task->context());
-  async_queue_.Push(op_run_task);
+  runtime::Pipeline::Get().backend_stage()->Push(op_run_task);
 }
 
-void OpExecutor::PushOpRunTask(const std::shared_ptr<pynative::PyBoostDeviceTask> &op_run_task) {
+void OpExecutor::PushOpRunTask(const std::shared_ptr<PyBoostDeviceTask> &op_run_task) {
   MS_EXCEPTION_IF_NULL(op_run_task);
-  async_queue_.Push(op_run_task);
+  runtime::Pipeline::Get().backend_stage()->Push(op_run_task);
 }
 
-void OpExecutor::PushSimpleOpRunTask(const std::shared_ptr<pynative::AsyncTask> &op_run_task) {
-  async_queue_.Push(op_run_task);
+void OpExecutor::PushSimpleOpRunTask(const std::shared_ptr<AsyncTask> &op_run_task) {
+  runtime::Pipeline::Get().backend_stage()->Push(op_run_task);
 }
 
-bool OpExecutor::RunQueueEmpty() { return async_queue_.Empty(); }
+bool OpExecutor::RunQueueEmpty() { return runtime::Pipeline::Get().backend_stage()->Empty(); }
 
-bool OpExecutor::ActorInQueue(GraphId graph_id) { return async_queue_.TaskInQueue(graph_id); }
+bool OpExecutor::ActorInQueue(GraphId graph_id) {
+  return runtime::Pipeline::Get().backend_stage()->TaskInQueue(graph_id);
+}
 
 void OpExecutor::WorkerJoin() {
   GilReleaseWithCheck release_gil;
-  async_queue_.WorkerJoin();
+  runtime::Pipeline::Get().backend_stage()->WorkerJoin();
 }
 
 bool OpExecutor::NeedSync() {
@@ -84,7 +87,7 @@ bool OpExecutor::NeedSync() {
 void OpExecutor::ChildAfterFork() {
   MS_LOG(DEBUG) << "OpExecutor reinitialize after fork";
   MS_LOG(DEBUG) << "Reinitialize async_queue_.";
-  async_queue_.ChildAfterFork();
+  runtime::Pipeline::Get().backend_stage()->ChildAfterFork();
   MS_LOG(DEBUG) << "OpExecutor reinitialize after fork done.";
 }
 }  // namespace mindspore::runtime

@@ -45,7 +45,7 @@ tensor::TensorPtr UpsampleNearest1dAscendCustomize(const std::shared_ptr<OpRunne
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
 
   // Async
-  PyBoostUtils::DispatchRun(std::make_shared<pynative::PyBoostDeviceTask>([op, input_tensor, output_size_vector]() {
+  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, output_size_vector]() {
     MS_LOG(DEBUG) << "Run device task UpsampleNearest1d start";
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();

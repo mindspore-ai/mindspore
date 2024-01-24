@@ -78,7 +78,7 @@ tensor::TensorPtr Conv2DAscendCustomize(const std::shared_ptr<OpRunner> &op, con
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
 
   // Async
-  PyBoostUtils::DispatchRun(std::make_shared<pynative::PyBoostDeviceTask>(
+  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
     [op, input_tensor, weight_tensor, bias_tensor, stride_vector, padding_vector, dilation_vector, groups_imm]() {
       MS_LOG(DEBUG) << "Run device task Conv2d start";
       auto device_context = op->device_context();

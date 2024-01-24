@@ -16,7 +16,7 @@
 
 #include "pybind_api/hal/event_py.h"
 #include "runtime/pynative/op_executor.h"
-#include "runtime/pynative/async/device_task.h"
+#include "runtime/pipeline/task/device_task.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "utils/ms_context.h"
 #include "include/common/pybind_api/api_register.h"
@@ -40,7 +40,7 @@ EventPy::~EventPy() {
       };
       if (!runtime::OpExecutor::NeedSync()) {
         runtime::OpExecutor::GetInstance().PushSimpleOpRunTask(
-          std::make_shared<pynative::PassthroughDeviceTask>(destroy_fn));
+          std::make_shared<runtime::PassthroughDeviceTask>(destroy_fn));
       } else {
         destroy_fn();
       }
@@ -76,7 +76,7 @@ void EventPy::DispatchRecordEventTask(const StreamPyPtr &stream) {
     };
     if (!runtime::OpExecutor::NeedSync()) {
       runtime::OpExecutor::GetInstance().PushSimpleOpRunTask(
-        std::make_shared<pynative::PassthroughDeviceTask>(record_fn));
+        std::make_shared<runtime::PassthroughDeviceTask>(record_fn));
     } else {
       record_fn();
     }
@@ -104,8 +104,7 @@ void EventPy::DispatchWaitEventTask(const StreamPyPtr &stream) {
       event->WaitEventWithoutReset();
     };
     if (!runtime::OpExecutor::NeedSync()) {
-      runtime::OpExecutor::GetInstance().PushSimpleOpRunTask(
-        std::make_shared<pynative::PassthroughDeviceTask>(wait_fn));
+      runtime::OpExecutor::GetInstance().PushSimpleOpRunTask(std::make_shared<runtime::PassthroughDeviceTask>(wait_fn));
     } else {
       wait_fn();
     }

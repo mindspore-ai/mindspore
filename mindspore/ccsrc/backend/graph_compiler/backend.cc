@@ -922,7 +922,7 @@ void MindRTBackend::ReleaseForwardOutput(const std::vector<ValuePtr> &input_valu
   graph_compiler_->UpdateForwardOpOutputRefCount(input_values, &forward_op_output_tensor_id_);
 }
 
-void MindRTBackend::OpRunCallback(const std::shared_ptr<pynative::OpTaskContext> &context) {
+void MindRTBackend::OpRunCallback(const std::shared_ptr<runtime::OpTaskContext> &context) {
   MS_LOG(DEBUG) << "OpRunCallback start";
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -946,7 +946,7 @@ void MindRTBackend::OpRunCallback(const std::shared_ptr<pynative::OpTaskContext>
   MS_LOG(DEBUG) << "OpRunCallback end";
 }
 
-void MindRTBackend::OpRunCallbackDynamic(const std::shared_ptr<pynative::OpTaskContext> &context) {
+void MindRTBackend::OpRunCallbackDynamic(const std::shared_ptr<runtime::OpTaskContext> &context) {
   MS_LOG(DEBUG) << "OpRunCallback start";
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -984,15 +984,15 @@ void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
   MS_EXCEPTION_IF_NULL(ms_context);
   auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
   auto run_op_context =
-    std::make_shared<pynative::OpTaskContext>(graph->graph_id(), graph, op_run_info, op_compiler_info, infer_flag);
+    std::make_shared<runtime::OpTaskContext>(graph->graph_id(), graph, op_run_info, op_compiler_info, infer_flag);
 
   auto &op_executor = runtime::OpExecutor::GetInstance();
   if (!single_op_cache_hit) {
     CompileSingleOpGraph(op_compiler_info, op_compiler_info->device_context_);
   }
 
-  auto run_task = std::make_shared<pynative::DeviceOpRunTask>(
-    run_op_context, [this](const std::shared_ptr<pynative::OpTaskContext> &ctx) { OpRunCallback(ctx); });
+  auto run_task = std::make_shared<runtime::DeviceOpRunTask>(
+    run_op_context, [this](const std::shared_ptr<runtime::OpTaskContext> &ctx) { OpRunCallback(ctx); });
   run_task->set_task_id(op_compiler_info->graph_id_);
   op_executor.PushOpRunTask(run_task);
 }
@@ -1008,11 +1008,11 @@ void MindRTBackend::DispatchOpTaskDynamic(VectorRef *outputs, const OpCompilerIn
   MS_EXCEPTION_IF_NULL(ms_context);
   auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
   auto run_op_context =
-    std::make_shared<pynative::OpTaskContext>(graph->graph_id(), graph, op_run_info, op_compiler_info, infer_flag);
+    std::make_shared<runtime::OpTaskContext>(graph->graph_id(), graph, op_run_info, op_compiler_info, infer_flag);
 
   auto &op_executor = runtime::OpExecutor::GetInstance();
-  auto task = std::make_shared<pynative::DeviceOpRunTask>(
-    run_op_context, [this](const std::shared_ptr<pynative::OpTaskContext> &ctx) { OpRunCallbackDynamic(ctx); });
+  auto task = std::make_shared<runtime::DeviceOpRunTask>(
+    run_op_context, [this](const std::shared_ptr<runtime::OpTaskContext> &ctx) { OpRunCallbackDynamic(ctx); });
   task->set_task_id(op_compiler_info->graph_id_);
   op_executor.PushOpRunTask(task);
 }
@@ -1148,27 +1148,27 @@ void MindRTBackend::RunOpDynamic(const session::BackendOpRunInfoPtr &op_run_info
   RunOpImplDynamic(single_op_cache_hit, op_compiler_info, op_run_info, outputs);
 }
 
-void MindRTBackend::RunViewKernelTaskAsyncImpl(const pynative::KernelTaskType &task_type, DeviceContext *device_context,
+void MindRTBackend::RunViewKernelTaskAsyncImpl(const runtime::KernelTaskType &task_type, DeviceContext *device_context,
                                                const device::DeviceAddressPtrList &input_addr_list,
                                                const TensorStorageInfoPtrList &input_storage_list,
                                                const device::DeviceAddressPtrList &output_addr_list,
                                                const size_t &stream_id) {
   static auto kernel_task_func =
-    [stream_id](const pynative::KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
+    [stream_id](const runtime::KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
                 const TensorStorageInfoPtrList &input_storage_list,
                 const device::DeviceAddressPtrList &output_addr_list, DeviceContext *device_context) {
       runtime::OpRunner::LaunchKernelTask(task_type, device_context, input_addr_list, input_storage_list,
                                           output_addr_list, stream_id);
     };
 
-  auto kernel_task = std::make_shared<pynative::KernelDeviceTask>(
-    kernel_task_func, task_type, device_context, input_addr_list, input_storage_list, output_addr_list);
+  auto kernel_task = std::make_shared<runtime::KernelDeviceTask>(kernel_task_func, task_type, device_context,
+                                                                 input_addr_list, input_storage_list, output_addr_list);
   auto &op_executor = runtime::OpExecutor::GetInstance();
   op_executor.PushSimpleOpRunTask(kernel_task);
 }
 
 void MindRTBackend::RunViewKernelTask(const pynative::BaseOpRunInfo &base_op_run_info,
-                                      const pynative::KernelTaskType &task_type, bool enable_async) {
+                                      const runtime::KernelTaskType &task_type, bool enable_async) {
   device::DeviceAddressPtrList input_addr_list;
   TensorStorageInfoPtrList input_storage_list;
   device::DeviceAddressPtrList output_addr_list;
@@ -1258,12 +1258,12 @@ device::DeviceAddressPtr MindRTBackend::RunContiguousTaskByAddress(const device:
   new_device_address->ResetRefCount();
 
   if (enable_async) {
-    RunViewKernelTaskAsyncImpl(pynative::KernelTaskType::kCONTIGUOUS_TASK, device_context, {old_device_address},
+    RunViewKernelTaskAsyncImpl(runtime::KernelTaskType::kCONTIGUOUS_TASK, device_context, {old_device_address},
                                {old_storage_info}, {new_device_address}, stream_id);
   } else {
     WaitTaskFinish();
-    runtime::OpRunner::LaunchKernelTask(pynative::KernelTaskType::kCONTIGUOUS_TASK, device_context,
-                                        {old_device_address}, {old_storage_info}, {new_device_address}, stream_id);
+    runtime::OpRunner::LaunchKernelTask(runtime::KernelTaskType::kCONTIGUOUS_TASK, device_context, {old_device_address},
+                                        {old_storage_info}, {new_device_address}, stream_id);
   }
   return new_device_address;
 }
@@ -1278,7 +1278,7 @@ void MindRTBackend::RunAllocMemTask(DeviceContext *device_context, const tensor:
     AllocateMemForTensor(tensor, device_context);
   };
 
-  auto view_task = std::make_shared<pynative::AllocViewMemDeviceTask>(alloc_mem_func, device_context, tensor);
+  auto view_task = std::make_shared<runtime::AllocViewMemDeviceTask>(alloc_mem_func, device_context, tensor);
   auto &op_executor = runtime::OpExecutor::GetInstance();
   op_executor.PushSimpleOpRunTask(view_task);
 }

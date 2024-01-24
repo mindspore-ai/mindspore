@@ -27,7 +27,7 @@
 #include "pipeline/pynative/base.h"
 #include "pipeline/pynative/grad/top_cell.h"
 #include "pipeline/pynative/grad/jit/jit_grad.h"
-#include "runtime/pynative/async/async_hqueue.h"
+#include "runtime/pipeline/async_hqueue.h"
 #include "pipeline/pynative/grad/bprop_task.h"
 #include "pipeline/pynative/grad/dynamic_shape.h"
 #include "pipeline/jit/ps/resource.h"
@@ -46,8 +46,8 @@ class GradExecutor {
       : forward_executor_(ForwardExecutorWeakPtr(forward_executor)),
         jit_(std::make_shared<Jit>()),
         dynamic_shape_(std::make_shared<DynamicShape>()),
-        bprop_queue_(std::make_shared<AsyncHqueue>("bprop_queue")),
-        assist_queue_(std::make_shared<AsyncHqueue>("assist_queue")) {}
+        bprop_queue_(std::make_shared<runtime::AsyncHqueue>("bprop_queue")),
+        assist_queue_(std::make_shared<runtime::AsyncHqueue>("assist_queue")) {}
 
   void Init();
   std::function<void(const py::object &, const py::args &)> InitGraph = [this](auto &&PH1, auto &&PH2) {
@@ -91,7 +91,7 @@ class GradExecutor {
   inline bool RequiresGrad() const { return enable_grad() && grad_flag(); }
   // Construct grad graph for jit
   inline size_t custom_bprop_cell_count() const { return custom_bprop_cell_count_; }
-  inline AsyncHqueuePtr bprop_queue() const { return bprop_queue_; }
+  inline runtime::AsyncHqueuePtr bprop_queue() const { return bprop_queue_; }
   mindspore::OrderedMap<std::string, TopCellInfoPtr> &already_run_top_cell() { return already_run_top_cell_; }
   void SetHookChanged(const py::object &cell) const;
   void GradNetInner(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
@@ -246,8 +246,8 @@ class GradExecutor {
   ForwardExecutorWeakPtr forward_executor_;
   JitPtr jit_;
   DynamicShapePtr dynamic_shape_{nullptr};
-  AsyncHqueuePtr bprop_queue_;
-  AsyncHqueuePtr assist_queue_;
+  runtime::AsyncHqueuePtr bprop_queue_;
+  runtime::AsyncHqueuePtr assist_queue_;
   std::set<std::string> dynamic_inputs_cells_;
   std::vector<TopCellInfoPtr> need_gc_top_cell_list_;
   bool forward_use_dynamic_shape_process_{false};

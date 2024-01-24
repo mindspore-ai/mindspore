@@ -22,13 +22,13 @@
 #include <memory>
 #include <future>
 
-#include "runtime/pynative/async/task.h"
+#include "runtime/pipeline/task/task.h"
 #include "backend/common/session/session_basic.h"
 #include "runtime/pynative/op_compiler.h"
 
 namespace mindspore {
-namespace pynative {
-class OpTaskContext {
+namespace runtime {
+class BACKEND_EXPORT OpTaskContext {
  public:
   OpTaskContext(GraphId graph_id, KernelGraphPtr graph, session::BackendOpRunInfoPtr op_run_info,
                 OpCompilerInfoPtr op_compiler_info, bool is_pynative_infer)
@@ -54,9 +54,9 @@ class OpTaskContext {
   bool is_pyantive_infer_;
 };
 
-class DeviceOpTask : public AsyncTask {
+class BACKEND_EXPORT DeviceOpTask : public AsyncTask {
  public:
-  DeviceOpTask(std::shared_ptr<OpTaskContext> context, pynative::TaskType task_type)
+  DeviceOpTask(std::shared_ptr<OpTaskContext> context, TaskType task_type)
       : AsyncTask(task_type), context_(std::move(context)) {}
   ~DeviceOpTask() override = default;
 
@@ -68,7 +68,7 @@ class DeviceOpTask : public AsyncTask {
   std::shared_ptr<OpTaskContext> context_;
 };
 
-class DeviceOpRunTask : public DeviceOpTask {
+class BACKEND_EXPORT DeviceOpRunTask : public DeviceOpTask {
  public:
   DeviceOpRunTask(std::shared_ptr<OpTaskContext> context,
                   std::function<void(const std::shared_ptr<OpTaskContext> &context)> run_func)
@@ -91,7 +91,7 @@ class BACKEND_EXPORT PyBoostDeviceTask : public AsyncTask {
   std::function<void()> run_func_;
 };
 
-class AllocViewMemDeviceTask : public AsyncTask {
+class BACKEND_EXPORT AllocViewMemDeviceTask : public AsyncTask {
  public:
   AllocViewMemDeviceTask(
     std::function<void(device::DeviceContext *device_context, const tensor::TensorPtr &tensor)> run_func,
@@ -106,7 +106,7 @@ class AllocViewMemDeviceTask : public AsyncTask {
   tensor::TensorPtr tensor_;
 };
 
-class KernelDeviceTask : public AsyncTask {
+class BACKEND_EXPORT KernelDeviceTask : public AsyncTask {
  public:
   KernelDeviceTask(
     std::function<void(const KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
@@ -148,6 +148,6 @@ class BACKEND_EXPORT PassthroughDeviceTask : public AsyncTask {
  private:
   std::function<void(void)> run_func_;
 };
-}  // namespace pynative
+}  // namespace runtime
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_DEVICE_TASK_H_

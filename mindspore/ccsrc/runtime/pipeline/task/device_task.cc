@@ -15,11 +15,11 @@
  */
 
 #include <string>
-#include "runtime/pynative/async/device_task.h"
 #include "include/common/profiler.h"
+#include "runtime/pipeline/task/device_task.h"
 
 namespace mindspore {
-namespace pynative {
+namespace runtime {
 namespace {
 constexpr auto kProfilerNamePyboost = "pyboost";
 }
@@ -58,5 +58,5 @@ void PassthroughDeviceTask::Run() {
                                      runtime::ProfilerRecorder::kNoName, false);
   run_func_();
 }
-}  // namespace pynative
+}  // namespace runtime
 }  // namespace mindspore

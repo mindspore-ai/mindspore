@@ -12,7 +12,7 @@ PyBoostUtils::PrepareOpOutputs(device_context_, outputs_);
 // Async
 auto op = get_op();
 PyBoostUtils::DispatchRun(
-std::make_shared<pynative::PyBoostDeviceTask>(
+std::make_shared<runtime::PyBoostDeviceTask>(
   [op, ${real_call_args}]() {
       MS_LOG(DEBUG) << "Run device task " << op_name() << " end";
       runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostDeviceTask,

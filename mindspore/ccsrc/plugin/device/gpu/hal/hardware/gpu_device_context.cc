@@ -69,7 +69,7 @@
 #include "plugin/device/gpu/hal/device/gpu_device_synchronizer.h"
 #include "include/common/profiler.h"
 #include "ops/ascend_op_name.h"
-#include "runtime/pynative/async/kernel_task.h"
+#include "runtime/pipeline/task/kernel_task.h"
 
 namespace mindspore {
 namespace device {
@@ -94,13 +94,13 @@ std::string GetCurrentDir() {
 #endif
 }
 
-pynative::KernelTaskPtr GetTaskByTaskType(const pynative::KernelTaskType &task_type,
-                                          const std::shared_ptr<pynative::KernelTaskContext> &task_context) {
+runtime::KernelTaskPtr GetTaskByTaskType(const runtime::KernelTaskType &task_type,
+                                         const std::shared_ptr<runtime::KernelTaskContext> &task_context) {
   switch (task_type) {
-    case pynative::KernelTaskType::kCONTIGUOUS_TASK:
+    case runtime::KernelTaskType::kCONTIGUOUS_TASK:
       return std::make_shared<GpuContiguousKernelTask>(task_context);
       break;
-    case pynative::KernelTaskType::kCOPY_TASK:
+    case runtime::KernelTaskType::kCOPY_TASK:
       return std::make_shared<GpuCopyWithSliceKernelTask>(task_context);
       break;
     default:
@@ -996,7 +996,7 @@ DeviceEventPtr GPUDeviceResManager::CreateEventWithFlag(bool enable_timing, bool
   return event;
 }
 
-bool GPUKernelExecutor::ExecuteKernelTask(const pynative::KernelTaskType &task_type,
+bool GPUKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_type,
                                           const device::DeviceAddressPtrList &input_addr_list,
                                           const TensorStorageInfoPtrList &input_storage_list,
                                           const device::DeviceAddressPtrList &output_addr_list,
@@ -1004,8 +1004,8 @@ bool GPUKernelExecutor::ExecuteKernelTask(const pynative::KernelTaskType &task_t
   auto stream = GPUDeviceManager::GetInstance().GetStream(stream_id);
   MS_EXCEPTION_IF_NULL(stream);
 
-  auto task_context = std::make_shared<pynative::KernelTaskContext>(device_context_, input_addr_list,
-                                                                    input_storage_list, output_addr_list, stream);
+  auto task_context = std::make_shared<runtime::KernelTaskContext>(device_context_, input_addr_list, input_storage_list,
+                                                                   output_addr_list, stream);
 
   auto task = GetTaskByTaskType(task_type, task_context);
   MS_EXCEPTION_IF_NULL(task);

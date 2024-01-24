@@ -36,7 +36,7 @@ class BACKEND_EXPORT PyBoostUtils {
   static DeviceContext *GetDeviceContext(const std::string &device_type);
   static DeviceContext *CreateOrGetDeviceContextAndInit(const std::string &target_device);
   static AbstractBasePtr InferByOpDef(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_abs);
-  static void DispatchRun(const std::shared_ptr<pynative::PyBoostDeviceTask> &task);
+  static void DispatchRun(const std::shared_ptr<runtime::PyBoostDeviceTask> &task);
 
   static tensor::TensorPtr ContiguousTensor(const tensor::TensorPtr &input_tensor);
   static device::DeviceAddressPtr ContiguousByDeviceAddress(const device::DeviceAddressPtr &old_device_address,

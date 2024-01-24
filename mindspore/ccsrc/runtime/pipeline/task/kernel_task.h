@@ -22,12 +22,12 @@
 #include <memory>
 #include <future>
 
-#include "runtime/pynative/async/task.h"
+#include "runtime/pipeline/task/task.h"
 
 namespace mindspore {
-namespace pynative {
+namespace runtime {
 
-class KernelTaskContext {
+class BACKEND_EXPORT KernelTaskContext {
  public:
   KernelTaskContext(const device::DeviceContext *device_context, device::DeviceAddressPtrList input_addr_list,
                     TensorStorageInfoPtrList input_storage_list, device::DeviceAddressPtrList output_addr_list,
@@ -77,7 +77,7 @@ class KernelTaskContext {
   void *stream_;
 };
 
-class KernelTask : public AsyncTask {
+class BACKEND_EXPORT KernelTask : public AsyncTask {
  public:
   explicit KernelTask(std::shared_ptr<KernelTaskContext> context)
       : AsyncTask(kKernelTask), context_(std::move(context)) {}
@@ -89,6 +89,6 @@ class KernelTask : public AsyncTask {
 };
 using KernelTaskPtr = std::shared_ptr<KernelTask>;
 
-}  // namespace pynative
+}  // namespace runtime
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_KERNEL_TASK_H_

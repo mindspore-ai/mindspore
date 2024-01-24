@@ -46,7 +46,7 @@ tensor::TensorPtr SoftmaxAscendCustomize(const std::shared_ptr<OpRunner> &op, co
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
 
   // Async
-  PyBoostUtils::DispatchRun(std::make_shared<pynative::PyBoostDeviceTask>([op, logits_tensor, dim]() {
+  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, logits_tensor, dim]() {
     MS_LOG(DEBUG) << "Run device task Softmax start";
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();

@@ -143,10 +143,10 @@ device::DeviceAddressPtr PyBoostUtils::ContiguousByDeviceAddress(const device::D
   new_device_address->ResetRefCount();
   auto stream_id = device_context->device_res_manager_->GetCurrentStreamId();
 
-  if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(pynative::KernelTaskType::kCONTIGUOUS_TASK,
+  if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(runtime::KernelTaskType::kCONTIGUOUS_TASK,
                                                                    {old_device_address}, {old_storage_info},
                                                                    {new_device_address}, stream_id)) {
-    MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << pynative::KernelTaskType::kCONTIGUOUS_TASK;
+    MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << runtime::KernelTaskType::kCONTIGUOUS_TASK;
   }
   return new_device_address;
 }
@@ -231,7 +231,7 @@ DeviceContext *PyBoostUtils::CreateOrGetDeviceContextAndInit(const std::string &
   return device_context;
 }
 
-void PyBoostUtils::DispatchRun(const std::shared_ptr<pynative::PyBoostDeviceTask> &task) {
+void PyBoostUtils::DispatchRun(const std::shared_ptr<runtime::PyBoostDeviceTask> &task) {
   static auto need_sync = runtime::OpExecutor::NeedSync();
   if (need_sync) {
     MS_LOG(INFO) << "PyBoost sync run device task";

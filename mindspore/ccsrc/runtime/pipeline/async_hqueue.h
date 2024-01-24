@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,14 @@
 #include <condition_variable>
 
 #include "include/backend/visible.h"
-#include "runtime/pynative/async/task.h"
+#include "runtime/pipeline/task/task.h"
 #include "thread/hqueue.h"
 #ifndef USE_HQUEUE
 #define USE_HQUEUE
 #endif
 
 namespace mindspore {
-namespace pynative {
+namespace runtime {
 /* Thread status */
 constexpr int kThreadBusy = 0;  // busy, the thread is running task
 constexpr int kThreadIdle = 1;  // idle, the thread is waiting
@@ -90,7 +90,7 @@ class BACKEND_EXPORT AsyncHqueue {
   std::exception_ptr e_ptr_{nullptr};
 };
 using AsyncHqueuePtr = std::shared_ptr<AsyncHqueue>;
-}  // namespace pynative
+}  // namespace runtime
 }  // namespace mindspore
 
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_ASYNC_QUEUE_H_

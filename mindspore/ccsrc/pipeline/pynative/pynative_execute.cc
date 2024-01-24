@@ -36,6 +36,7 @@
 #include "backend/operator/ops_backend_infer_function.h"
 #include "include/common/utils/python_fallback_running.h"
 #include "kernel/kernel_mod_cache.h"
+#include "runtime/pipeline/pipeline.h"
 
 namespace mindspore::pynative {
 std::shared_ptr<PyNativeExecutor> PyNativeExecutor::executor_ = nullptr;
@@ -289,7 +290,7 @@ bool PyNativeExecutor::IsFirstCell() const { return forward_executor()->IsFirstC
 
 void PyNativeExecutor::WorkerJoin() {
   GilReleaseWithCheck release_gil;
-  forward_executor_->WorkerJoin();
+  runtime::Pipeline::Get().frontend_stage()->WorkerJoin();
 }
 
 void PyNativeExecutor::SetJitCompileStatus(bool is_compiling, const std::string &phase) const {

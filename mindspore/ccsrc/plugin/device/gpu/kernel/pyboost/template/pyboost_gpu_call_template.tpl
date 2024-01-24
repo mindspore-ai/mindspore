@@ -12,7 +12,7 @@ PyBoostUtils::PrepareOpOutputs(device_context_, outputs_);
 // Async
 auto op = get_op();
 PyBoostUtils::DispatchRun(
-std::make_shared<pynative::PyBoostDeviceTask>([this, op, ${call_args_with_tensor}]() {
+std::make_shared<runtime::PyBoostDeviceTask>([this, op, ${call_args_with_tensor}]() {
   auto device_context = op->device_context();
   const auto &outputs = op->outputs();
 

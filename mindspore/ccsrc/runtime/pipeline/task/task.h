@@ -19,9 +19,10 @@
 
 #include <cstdint>
 #include <exception>
+#include "include/backend/visible.h"
 
 namespace mindspore {
-namespace pynative {
+namespace runtime {
 enum TaskType {
   kUnknownTask = 0,
   kDeviceOpTask,
@@ -37,7 +38,7 @@ enum TaskType {
 
 enum class KernelTaskType { kNORMAL_VIEW_TASK = 0, kCONTIGUOUS_TASK, kCOPY_TASK };
 
-class AsyncTask {
+class BACKEND_EXPORT AsyncTask {
  public:
   explicit AsyncTask(TaskType task_type) : task_type_(task_type) {}
   virtual ~AsyncTask() = default;
@@ -67,7 +68,7 @@ class WaitTask : public AsyncTask {
   ~WaitTask() override = default;
   void Run() override {}
 };
-}  // namespace pynative
+}  // namespace runtime
 }  // namespace mindspore
 
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_TASK_H_

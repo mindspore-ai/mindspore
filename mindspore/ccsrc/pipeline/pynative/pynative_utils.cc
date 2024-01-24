@@ -36,6 +36,7 @@
 #include "ops/other_ops.h"
 #include "pipeline/pynative/predict_out_type_map.h"
 #include "kernel/pyboost/auto_generate/contiguous.h"
+#include "runtime/pipeline/pipeline.h"
 
 namespace mindspore {
 namespace pynative {
@@ -145,7 +146,7 @@ void RefreshGradContiguousTensor(const FrontendOpRunInfoPtr &op_run_info, size_t
     return;
   }
 
-  auto contiguous_tensor = [&op_run_info](const ValuePtr &v) -> ValuePtr {
+  auto contiguous_tensor = [](const ValuePtr &v) -> ValuePtr {
     const auto &tensor = v->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
     if (tensor->storage_info() == nullptr) {
@@ -1664,15 +1665,14 @@ void GradCommon::GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const mindspore
 }
 }  // namespace PyNativeAlgo
 
-void DispatchOp(const std::shared_ptr<AsyncTask> &task) {
-  auto forward_executor = PyNativeExecutor::GetInstance()->forward_executor();
+void DispatchOp(const std::shared_ptr<runtime::AsyncTask> &task) {
   static bool need_sync = runtime::OpExecutor::NeedSync();
   if (need_sync) {
     MS_LOG(INFO) << "PyBoost sync run frontend task";
     runtime::OpExecutor::GetInstance().WaitAll();
     task->Run();
   } else {
-    forward_executor->frontend_queue()->Push(task);
+    runtime::Pipeline::Get().frontend_stage()->Push(task);
   }
 }
 }  // namespace pynative

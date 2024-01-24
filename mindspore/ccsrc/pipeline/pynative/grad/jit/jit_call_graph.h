@@ -19,7 +19,7 @@
 
 #include <functional>
 #include <utility>
-#include "runtime/pynative/async/task.h"
+#include "runtime/pipeline/task/task.h"
 #include "pipeline/pynative/base.h"
 
 namespace mindspore {

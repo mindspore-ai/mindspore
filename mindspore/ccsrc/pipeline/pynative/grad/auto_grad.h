@@ -29,7 +29,7 @@
 #include "pipeline/pynative/base.h"
 #include "pipeline/pynative/grad/bprop_pass.h"
 #include "include/backend/kernel_graph.h"
-#include "runtime/pynative/async/async_hqueue.h"
+#include "runtime/pipeline/async_hqueue.h"
 
 namespace mindspore {
 namespace pynative {
@@ -146,7 +146,7 @@ using AdParamPtr = std::shared_ptr<AdParam>;
 class AutoGradCellImpl {
  public:
   AutoGradCellImpl(const std::vector<ValuePtr> &input_param_values, const AbstractBasePtrList &abs_list,
-                   size_t op_num_in_bprop_graph, const AsyncHqueuePtr &assist_queue, bool enable_async,
+                   size_t op_num_in_bprop_graph, const runtime::AsyncHqueuePtr &assist_queue, bool enable_async,
                    bool grad_by_value);
   ~AutoGradCellImpl() = default;
   // Reverse connect bprop of op
@@ -264,7 +264,7 @@ class AutoGradCellImpl {
   // Flag for ms_funtcion and high order
   bool grad_by_value_{false};
   bool need_do_manager_replace_{false};
-  AsyncHqueuePtr assist_queue_{nullptr};
+  runtime::AsyncHqueuePtr assist_queue_{nullptr};
   bool enable_async_{false};
   std::string device_target_;
 };
