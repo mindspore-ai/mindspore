@@ -25,6 +25,9 @@ class InternalGelu : public InternalKernelMod {
   InternalGelu() : InternalKernelMod("Gelu") {}
   ~InternalGelu() = default;
 
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+
  protected:
   int Build(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   internal::OpParamPtr CreateOpParam(const std::vector<KernelTensor *> &inputs,

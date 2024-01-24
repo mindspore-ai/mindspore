@@ -62,10 +62,37 @@ int InternalGelu::Build(const std::vector<KernelTensor *> &inputs, const std::ve
   impl_->Init(info);
   for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); iter++) {
     InternalKernelUtils::ToInternalTensor(inputs_[iter->second], inputs[iter->first]);
+    if (inputs[iter->first]->dtype_id() == TypeId::kNumberTypeBFloat16) {
+      inputs_[iter->second]->desc.dtype = internal::TensorDType::TENSOR_DTYPE_FLOAT16;
+    }
   }
   impl_->SetInputs(inputs_);
 
   return 0;
+}
+
+bool InternalGelu::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                          const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+  for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); ++iter) {
+    inputs_[iter->second]->data = inputs[iter->first]->device_ptr();
+  }
+  impl_->SetInputs(inputs_);
+  impl_->SetStream(stream_ptr);
+  impl_->SetDeviceTilingBuf(device_tiling_buf_);
+  std::vector<internal::DeviceRawBuf> ws_raw_bufs(workspace.size());
+  for (size_t i = 0; i < workspace.size(); ++i) {
+    ws_raw_bufs[i] = InternalKernelUtils::ToDeviceRawBuf(workspace[i]);
+  }
+  impl_->SetWorkSpace(ws_raw_bufs);
+  for (auto iter = outputsIdxMap_.begin(); iter != outputsIdxMap_.end(); ++iter) {
+    InternalKernelUtils::ToInternalTensor(outputs_[iter->second], outputs[iter->first]);
+    if (outputs[iter->first]->dtype_id() == TypeId::kNumberTypeBFloat16) {
+      outputs_[iter->second]->desc.dtype = internal::TensorDType::TENSOR_DTYPE_FLOAT16;
+    }
+  }
+  impl_->SetOutputs(outputs_);
+  impl_->Launch();
+  return true;
 }
 
 MS_INTERNAL_KERNEL_FACTORY_REG(GeLU, InternalGelu);
