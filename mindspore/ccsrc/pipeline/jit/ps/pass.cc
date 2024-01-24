@@ -147,11 +147,6 @@ bool TransformTopGraphPass(const ResourcePtr &resource) {
 }
 
 bool RewriterAfterOptAPass(const ResourcePtr &resource) {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  if (context->not_convert_jit()) {
-    return true;
-  }
   MS_EXCEPTION_IF_NULL(resource);
   FuncGraphPtr func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
