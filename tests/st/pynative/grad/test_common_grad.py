@@ -152,6 +152,7 @@ def test_jit_network_with_dict_output():
     assert np.allclose(np.ones_like(x), grad_out.asnumpy())
 
     # Have sens
+    ms_net = DicNet()
     out = ms_net(Tensor(x))
     ms_grad = GradOfFirstInput(ms_net, True)
     grad_out = ms_grad(Tensor(x), out)

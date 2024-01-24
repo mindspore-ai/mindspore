@@ -1207,3 +1207,51 @@ def test_pynative_jit_dict_grad_2():
     out = grad(dict_net)(ms.Tensor([1]))
     assert out == 1
     ms.set_context(mode=ms.GRAPH_MODE)
+
+
+def test_jitclass_grad():
+    """
+    Feature: Support grad with custom class in jit in pynative mode.
+    Description: Support grad with custom class in jit in pynative mode.
+    Expectation: No exception.
+    """
+    class GradNet(Cell):
+        def __init__(self, net, grad_position=0):
+            super().__init__()
+            self.grad = ops.grad
+            self.grad_net = self.grad(net, grad_position=grad_position)
+
+        def construct(self, *x):
+            return self.grad_net(*x)
+
+
+    class Net(Cell):
+        def __init__(self):
+            super().__init__()
+            self.x = 1
+
+    obj = Net()
+
+    class ModNet(Cell):
+        def construct(self, y):
+            self._mod_x()
+            return ops.mul(obj.x, y)
+
+        @jit
+        def _mod_x(self):
+            obj.x = -1*obj.x
+
+
+    ms.set_context(mode=ms.PYNATIVE_MODE)
+    ms_net = ModNet()
+    x_before = obj.x
+    y = Tensor(16)
+    ms_out = ms_net(y)
+    ms_out2 = ms_net(y)
+    ms_grad = GradNet(ms_net)(y)
+    ms.set_context(mode=ms.GRAPH_MODE)
+
+    assert ms_out == -16
+    assert ms_out2 == 16
+    assert x_before == 1
+    assert ms_grad == -1

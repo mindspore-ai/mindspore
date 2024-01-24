@@ -886,6 +886,11 @@ class AfterOptARewriter : public BaseRewriter {
 
   // DictGetItem --> PyExecute()
   AnfNodePtr ConvertDictGetItem(const CNodePtr &cnode) const {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    if (context->not_convert_jit()) {
+      return nullptr;
+    }
     MS_EXCEPTION_IF_NULL(cnode);
     // Inputs should be [dict_setitem, dict, item]
     const size_t expect_inputs_size = 3;
@@ -949,6 +954,11 @@ class AfterOptARewriter : public BaseRewriter {
 
   // DictSetItem --> PyExecute()
   AnfNodePtr ConvertDictSetItem(const CNodePtr &cnode) const {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    if (context->not_convert_jit()) {
+      return nullptr;
+    }
     MS_EXCEPTION_IF_NULL(cnode);
     // Inputs should be [dict_setitem, dict, item, value]
     const size_t expect_inputs_size = 4;
@@ -1059,6 +1069,11 @@ class AfterOptARewriter : public BaseRewriter {
 
   // MakeDict(keys, values) --> PyExecute('dict(zip(keys, values))', ...)
   AnfNodePtr ConvertMakeDict(const CNodePtr &node) const {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    if (context->not_convert_jit()) {
+      return nullptr;
+    }
     const auto &fg = node->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
     // Local parameters values.
@@ -2269,6 +2284,11 @@ class AfterOptARewriter : public BaseRewriter {
   // otherwise:
   //   dict(k0:v0, k1:v1, ...) --> PyExecute('dict(zip(keys, values))', ...)
   AnfNodePtr RebuildValueDict(const FuncGraphPtr &fg, const ValueNodePtr &value_node, const ValueDictionaryPtr &dict) {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    if (context->not_convert_jit()) {
+      return nullptr;
+    }
     auto abs = value_node->abstract();
     MS_EXCEPTION_IF_NULL(abs);
     auto abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
