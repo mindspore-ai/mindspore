@@ -40,6 +40,15 @@ REG_CUST_OP(Dropout2D)
   .REQUIRED_ATTR(keep_prob, Float)
   .CUST_OP_END_FACTORY_REG(Dropout2D)
 
+REG_CUST_OP(Randperm)
+  .INPUT(n, TensorType({DT_INT32, DT_INT64}))
+  .OUTPUT(output, TensorType({DT_INT8, DT_INT16, DT_INT32, DT_INT64,
+                              DT_UINT8, DT_UINT16, DT_UINT32, DT_UINT64}))
+  .ATTR(max_length, Int, 1)
+  .ATTR(pad, Int, 1)
+  .ATTR(dtype, Type, DT_INT32)
+  .CUST_OP_END_FACTORY_REG(Randperm)
+
 REG_CUST_OP(Gamma)
   .INPUT(shape, TensorType({DT_INT32, DT_INT64}))
   .INPUT(alpha, TensorType({DT_FLOAT}))

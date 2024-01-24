@@ -119,7 +119,7 @@ const size_t DIM_INDEX6 = 6;
 const size_t DIM_INDEX7 = 7;
 const size_t DIM_INDEX8 = 8;
 
-void UpdateOutputDesc(Operator &op, TensorDesc &output_desc);
+ge::graphStatus UpdateOutputDesc(Operator &op, TensorDesc &output_desc);
 
 /*
  * get the datatype of input

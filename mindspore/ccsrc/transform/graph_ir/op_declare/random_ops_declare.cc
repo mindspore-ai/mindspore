@@ -135,6 +135,14 @@ INPUT_ATTR_MAP(StatelessRandperm) = {{kIndex4, ATTR_DESC(layout, AnyTraits<int64
 OUTPUT_MAP(StatelessRandperm) = {{kIndex0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(StatelessRandperm, prim::kPrimRandpermV2->name(), ADPT_DESC(StatelessRandperm));
 
+// Randperm
+CUST_INPUT_MAP(Randperm) = {{1, INPUT_DESC(n)}};
+CUST_ATTR_MAP(Randperm) = {{"max_length", ATTR_DESC(max_length, AnyTraits<int64_t>())},
+                           {"pad", ATTR_DESC(pad, AnyTraits<int64_t>())},
+                           {"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
+CUST_OUTPUT_MAP(Randperm) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(Randperm, prim::kPrimRandperm->name(), CUST_ADPT_DESC(Randperm));
+
 // Gamma
 CUST_INPUT_MAP(Gamma) = {
   {1, INPUT_DESC(shape)}, {2, INPUT_DESC(alpha)}, {3, INPUT_DESC(beta)}, {4, INPUT_DESC(seed)}, {5, INPUT_DESC(seed2)}};
