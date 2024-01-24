@@ -31,7 +31,7 @@ from mindspore.train import Callback
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore.train import Model
 import mindspore.nn.learning_rate_schedule as lr_schedules
-from tests.st.model_zoo_tests import utils
+from tests.st.networks import utils
 
 head_path = os.path.dirname(os.path.abspath(__file__)) + "/../../../../../../"
 utils.replace_check_param(head_path)

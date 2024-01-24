@@ -18,7 +18,7 @@ import shutil
 import subprocess
 import pytest
 import numpy as np
-from tests.st.model_zoo_tests import utils
+from tests.st.networks import utils
 
 match_output = re.compile(r'AAA(.*?)BBB', re.S)
 match_num = re.compile(r'\d+\.?\d*', re.S)
