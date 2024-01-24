@@ -100,20 +100,29 @@ uint32_t RandomCategoricalKernel::DoComputeForEachType(T input_type, S output_ty
   Eigen::TensorMap<Eigen::Tensor<T, 2, Eigen::RowMajor>> input_map(reinterpret_cast<T *>(io_addrs_[0]), batch_size,
                                                                    num_classes);
   const auto &logits = Eigen::Tensor<T, 2, Eigen::RowMajor>(input_map);
-  int num_samples = *reinterpret_cast<int *>(io_addrs_[1]);
-  int seed = *reinterpret_cast<int *>(io_addrs_[2]);
+  int num_samples;
+  if (num_sample_type_ == aicpuops::DataType::MS_INT64) {
+    num_samples = static_cast<int>(*reinterpret_cast<int64_t *>(io_addrs_[1]));
+  } else {
+    num_samples = static_cast<int>(*reinterpret_cast<int32_t *>(io_addrs_[1]));
+  }
+  // int seed = *reinterpret_cast<int *>(io_addrs_[2]);
 
   // output
-  Eigen::TensorMap<Eigen::Tensor<S, 2, Eigen::RowMajor>> output(reinterpret_cast<S *>(io_addrs_[5]), batch_size,
-                                                                num_samples);
+  constexpr size_t kOutputIdx = 3;
+  Eigen::TensorMap<Eigen::Tensor<S, 2, Eigen::RowMajor>> output(reinterpret_cast<S *>(io_addrs_[kOutputIdx]),
+                                                                batch_size, num_samples);
 
   // get random generator seed
+  /*
   uint32_t kernel_ret = 0;
   uint64_t rng_seed = random::GetKernelBaseRandomStates(
     io_addrs_, kCountsIndex, kStatesIndex, static_cast<uint64_t>(seed), 0, "RandomCategorical", &kernel_ret);
   if (kernel_ret != kAicpuKernelStateSucess) {
     return kAicpuKernelStateFailed;
   }
+  */
+  uint64_t rng_seed = std::random_device()();
   // compute
   int64_t limit_row = batch_size;
   int64_t start_row = 0;
@@ -171,6 +180,7 @@ uint32_t RandomCategoricalKernel::ParseKernelParam() {
   batch_size_ = input_shape_.dim(0).size();
   num_classes_ = input_shape_.dim(1).size();
   input_type_ = static_cast<::aicpuops::DataType>(input_tensor.tensor_type());
+  num_sample_type_ = static_cast<::aicpuops::DataType>(node_def_.inputs(1).tensor_type());
   // end random categorical
 
   end = clock();

@@ -16,6 +16,7 @@
 #include "cpu_kernel/ms_kernel/log1p.h"
 
 #include <algorithm>
+#include <limits>
 
 #include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
@@ -83,9 +84,12 @@ uint32_t Log1pCpuKernel::Log1pCompute(const CpuKernelContext &ctx) {
   int64_t data_size = data_num * static_cast<int64_t>(sizeof(T));
   if (data_size <= kParallelDataNums) {
     for (int64_t i = 0; i < data_num; i++) {
-      KERNEL_CHECK_FALSE(*(input_x + i) >= static_cast<T>(-1), KERNEL_STATUS_PARAM_INVALID,
-                         "[%llu] must be at least more than -1.", i);
-      *(output_y + i) = Eigen::numext::log1p(*(input_x + i));
+      auto val = *(input_x + i);
+      if (val < static_cast<T>(-1)) {
+        *(output_y + i) = std::numeric_limits<T>::quiet_NaN();
+      } else {
+        *(output_y + i) = Eigen::numext::log1p(val);
+      }
     }
   } else {
     uint32_t min_core_num = 1;
@@ -95,9 +99,12 @@ uint32_t Log1pCpuKernel::Log1pCompute(const CpuKernelContext &ctx) {
     }
     auto shard_log1p = [&](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
-        KERNEL_CHECK_FALSE(*(input_x + i) >= static_cast<T>(-1), KERNEL_STATUS_PARAM_INVALID,
-                           "[%llu] must be at least more than -1.", i);
-        *(output_y + i) = Eigen::numext::log1p(*(input_x + i));
+        auto val = *(input_x + i);
+        if (val < static_cast<T>(-1)) {
+          *(output_y + i) = std::numeric_limits<T>::quiet_NaN();
+        } else {
+          *(output_y + i) = Eigen::numext::log1p(val);
+        }
       }
       return KERNEL_STATUS_OK;
     };

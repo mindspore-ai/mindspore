@@ -19,6 +19,7 @@
 #include <memory.h>
 #include <cfloat>
 #include <string>
+#include <random>
 
 #include "aicpu_sharder/aicpu_sharder.h"
 #include "common/kernel_errcode.h"
@@ -45,12 +46,15 @@ uint32_t UniformIntKernel::DoCompute() {
   }
 
   // get random generator seed
+  /*
   uint32_t kernel_ret = 0;
   uint64_t rng_seed =
     random::GetKernelBaseRandomStates(io_addrs_, kCountsIndex, kStatesIndex, seed_, seed2_, "UniformInt", &kernel_ret);
   if (kernel_ret != kAicpuKernelStateSucess) {
     return kAicpuKernelStateFailed;
   }
+  */
+  uint64_t rng_seed = std::random_device()();
   rng_.seed(rng_seed);
 
   for (uint64_t i = 0; i < out_count_; ++i) {
@@ -58,8 +62,9 @@ uint32_t UniformIntKernel::DoCompute() {
     tmp_out[i] = uni_int(rng_);
   }
 
-  int ret = memcpy_s(reinterpret_cast<void *>(io_addrs_[5]), out_count_ * sizeof(int32_t), tmp_out,
-                     out_count_ * sizeof(int32_t));
+  constexpr size_t kOutputIdx = 3;
+  auto output_data = reinterpret_cast<void *>(io_addrs_[kOutputIdx]);
+  int ret = memcpy_s(output_data, out_count_ * sizeof(int32_t), tmp_out, out_count_ * sizeof(int32_t));
   free(tmp_out);
   tmp_out = NULL;
   if (ret < 0) {
@@ -99,7 +104,7 @@ uint32_t UniformIntKernel::ParseKernelParam() {
 }  // namespace aicpu
 
 extern "C" {
-__attribute__((visibility("default"))) uint32_t UniformInt(void *param) {
+__attribute__((visibility("default"))) uint32_t RandomUniformInt(void *param) {
   aicpu::UniformIntKernel uniform_intKernel;
   return uniform_intKernel.Compute(param);
 }

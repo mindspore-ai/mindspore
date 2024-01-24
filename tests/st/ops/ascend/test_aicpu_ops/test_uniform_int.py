@@ -13,13 +13,12 @@
 # limitations under the License.
 # ============================================================================
 
+import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
-
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Net(nn.Cell):
@@ -32,7 +31,18 @@ class Net(nn.Cell):
         return self.uniformint(self.shape, minval, maxval)
 
 
-def test_net_1D():
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_net_1D(mode):
+    """
+    Feature: test UniformInt op.
+    Description: test UniformInt op.
+    Expectation: success.
+    """
+    context.set_context(mode=mode, device_target="Ascend")
     seed = 10
     shape = (3, 2, 4)
     minval = 1

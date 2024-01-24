@@ -18,6 +18,7 @@
 #include <vector>
 #include <algorithm>
 #include <string>
+#include <random>
 #include "aicpu_sharder/aicpu_sharder.h"
 #include "proto/aicpu_tensor.pb.h"
 #include "common/distinct_uniform_int_distribution.h"
@@ -30,6 +31,8 @@ namespace {
 const uint32_t kCountsIndex = 1;
 const uint32_t kStatesIndex = 2;
 const size_t kIndex0 = 0;
+const size_t kIndexOutput = 1;
+const size_t kIndexMask = 2;
 const size_t kIndex3 = 3;
 const size_t kIndex4 = 4;
 }  // namespace
@@ -161,19 +164,22 @@ static bool GenerateRandomMask(std::mt19937 *rng, const int64_t &output_length, 
 
 uint32_t RandomChoiceWithMaskKernel::DoCompute() {
   auto *input = reinterpret_cast<bool *>(io_addrs_[kIndex0]);
-  auto *output_coordinate = reinterpret_cast<int32_t *>(io_addrs_[kIndex3]);
-  auto *mask = reinterpret_cast<bool *>(io_addrs_[kIndex4]);
+  auto *output_coordinate = reinterpret_cast<int32_t *>(io_addrs_[kIndexOutput]);
+  auto *mask = reinterpret_cast<bool *>(io_addrs_[kIndexMask]);
   int64_t input_dim_size = static_cast<int64_t>(dims_.size());
   int64_t non_zero_num = 0;
   int64_t input_total_count = 1;
 
   // get random generator seed
+  /*
   uint32_t kernel_ret = 0;
   uint64_t rng_seed = random::GetKernelBaseRandomStates(io_addrs_, kCountsIndex, kStatesIndex, seed_, seed2_,
                                                         "RandomChoiceWithMask", &kernel_ret);
   if (kernel_ret != kAicpuKernelStateSucess) {
     return kAicpuKernelStateFailed;
   }
+  */
+  uint64_t rng_seed = std::random_device()();
   rng_.seed(rng_seed);
 
   bool ret = GetInputTotalCount(dims_, &input_total_count, input_dim_size);
