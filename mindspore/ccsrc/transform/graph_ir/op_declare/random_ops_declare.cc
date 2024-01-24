@@ -168,7 +168,7 @@ REG_ADPT_DESC(RandomPoisson, prim::kPrimRandomPoisson->name(), CUST_ADPT_DESC(Ra
 
 // RandomCategorical
 CUST_INPUT_MAP(RandomCategorical) = {{1, INPUT_DESC(logits)}, {2, INPUT_DESC(num_samples)}, {3, INPUT_DESC(seed)}};
-CUST_ATTR_MAP(RandomCategorical) = EMPTY_ATTR_MAP;
+CUST_ATTR_MAP(RandomCategorical) = {{"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 CUST_OUTPUT_MAP(RandomCategorical) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(RandomCategorical, prim::kPrimRandomCategorical->name(), CUST_ADPT_DESC(RandomCategorical));
 
