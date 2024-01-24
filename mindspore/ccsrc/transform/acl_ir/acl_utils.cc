@@ -275,9 +275,13 @@ void AclRunner::SetDynamicMode() {
 }
 
 void AclRunner::SetPrecisionMode(const AclPrecisionMode mode) {
-  auto iter = acl_precision_map.find(mode);
+  auto real_mode = mode;
+  if (mode == DEFAULT_MODE) {
+    real_mode = (AclUtil::KeepOriginDType() == 1) ? MUST_KEEP_ORIGIN_DTYPE : ALLOW_FP32_TO_FP16;
+  }
+  auto iter = acl_precision_map.find(real_mode);
   if (iter == acl_precision_map.end()) {
-    MS_LOG(EXCEPTION) << "Acl set run mode failed! op_name is " << op_type_ << " and error mode is " << mode;
+    MS_LOG(EXCEPTION) << "Acl set run mode failed! op_name is " << op_type_ << " and error mode is " << real_mode;
   }
 
   auto ret = AclUtil::SetPrecisionMode(iter->second);
