@@ -39,7 +39,7 @@ class BACKEND_EXPORT KernelInfo : public KernelInfoDevice {
     select_kernel_build_info_ = nullptr;
     output_address_list_ = {};
     workspace_address_list_ = {};
-    stream_id_ = UINT32_MAX;
+    stream_id_ = 0;
     stream_distinction_label_ = kInvalidDistincLabel;
     graph_id_ = kInvalidGraphId;
   }
