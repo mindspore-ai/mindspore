@@ -43,7 +43,7 @@ abstract::ShapePtr ReshapeAndCacheInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr ReshapeAndCacheInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set valid_types = {kFloat16};
+  const std::set valid_types = {kFloat16, kBFloat16};
   auto op_name = prim->name();
   std::map<std::string, TypePtr> types;
 
