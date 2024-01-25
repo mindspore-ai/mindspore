@@ -38,3 +38,15 @@ mindspore.scipy.optimize
     mindspore.scipy.optimize.line_search
     mindspore.scipy.optimize.linear_sum_assignment
     mindspore.scipy.optimize.minimize
+
+mindspore.scipy.fft
+------------------------
+
+快速傅里叶变换子模块。
+
+.. mscnplatformautosummary::
+    :toctree: scipy
+    :nosignatures:
+    :template: classtemplate_inherited.rst
+
+    mindspore.scipy.fft.idct
