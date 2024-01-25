@@ -98,11 +98,11 @@ py::tuple EliminateSelf(const py::tuple &args, const std::string &name) {
   return args;
 }
 
-py::tuple EliminateInvalidArgs(const py::tuple &args, const PyCodeObject &code, bool enable_tuple_broaden) {
+py::tuple EliminateInvalidArgs(const py::tuple &args, int co_flags, bool enable_tuple_broaden) {
   py::list new_args;
   for (size_t idx = 0; idx < args.size(); idx++) {
     if (IsValidRunArg(args[idx], enable_tuple_broaden)) {
-      if ((idx < (args.size() - 1) || (code.co_flags & CO_VARKEYWORDS) == 0) && py::isinstance<py::dict>(args[idx])) {
+      if ((idx < (args.size() - 1) || (co_flags & CO_VARKEYWORDS) == 0) && py::isinstance<py::dict>(args[idx])) {
         new_args.append(py::reinterpret_steal<py::tuple>(PyDict_Values(args[idx].ptr())));
       } else {
         new_args.append(args[idx]);
@@ -112,19 +112,19 @@ py::tuple EliminateInvalidArgs(const py::tuple &args, const PyCodeObject &code, 
   return py::cast<py::tuple>(new_args);
 }
 
-py::tuple ExpandVariableArgs(const py::tuple &args, const PyCodeObject &code) {
-  if ((code.co_flags & CO_VARARGS) == 0x0) {
+py::tuple ExpandVariableArgs(const py::tuple &args, int co_flags, int co_argcount) {
+  if ((co_flags & CO_VARARGS) == 0x0) {
     return args;
   }
-  py::tuple var_args = py::cast<py::tuple>(args[code.co_argcount]);
+  py::tuple var_args = py::cast<py::tuple>(args[co_argcount]);
   py::list new_args;
-  for (int index = 0; index < code.co_argcount; index++) {
+  for (int index = 0; index < co_argcount; index++) {
     new_args.append(args[index]);
   }
   for (const auto &var_arg : var_args) {
     new_args.append(var_arg);
   }
-  for (size_t index = code.co_argcount + 1; index < args.size(); index++) {
+  for (size_t index = co_argcount + 1; index < args.size(); index++) {
     new_args.append(args[index]);
   }
   return py::cast<py::tuple>(new_args);
@@ -144,12 +144,12 @@ CallableGraph Compiler::Compile(const PyFunctionObject &func, const PyFrameObjec
                                "Excepted nullptr or a Dict Object for run kwargs.");
 
     py::tuple tuple = MergeAllArgments(args, kwargs);
-    tuple = ExpandVariableArgs(tuple, *code);
+    tuple = ExpandVariableArgs(tuple, code->co_flags, code->co_argcount);
     std::string name = py::cast<std::string>(code->co_name);
     tuple = EliminateSelf(tuple, name);
     tuple = EliminateStubTensor(tuple);
     MarkArgmentMutable(tuple);
-    tuple = EliminateInvalidArgs(tuple, *code, enable_tuple_broaden);
+    tuple = EliminateInvalidArgs(tuple, code->co_flags, enable_tuple_broaden);
     auto graph_executor = pipeline::GraphExecutorPy::GetInstance();
     MS_EXCEPTION_IF_NULL(graph_executor);
     py::object ret = graph_executor->Run(tuple, py::str(phase));
@@ -188,10 +188,63 @@ CallableGraph Compiler::Compile(const PyFunctionObject &func, const PyFrameObjec
   if (graph == nullptr) {
     return nullptr;
   }
-  args = ExpandVariableArgs(args, *code);
+  args = ExpandVariableArgs(args, code->co_flags, code->co_argcount);
   args = EliminateSelf(args, name);
   MarkArgmentMutable(args);
   (void)graph_executor->CompileInner(graph, args, kwargs, phase, true);
+
+  return callable;
+}
+
+CallableGraph MindCompiler::Compile(const FuncGraphPtr &func_graph, const py::tuple &args, const py::dict &kwargs,
+                                    const std::string &phase, const CompileInfo &compile_info) {
+  MS_EXCEPTION_IF_CHECK_FAIL(!phase.empty(),
+                             "Phase name should not be empty for function " + compile_info.co_name_ + ".");
+
+  CallableGraph callable = [compile_info, phase](
+                             PyObject *args, PyObject *kwargs) -> PyObject * {
+    MS_EXCEPTION_IF_CHECK_FAIL(PyTuple_Check(args), "Excepted a Tuple Object for run args.");
+    MS_EXCEPTION_IF_CHECK_FAIL(((kwargs == nullptr) || PyDict_Check(kwargs)),
+                               "Excepted nullptr or a Dict Object for run kwargs.");
+
+    py::tuple tuple = MergeAllArgments(args, kwargs);
+    tuple = ExpandVariableArgs(tuple, compile_info.co_flags_, compile_info.co_argcount_);
+    tuple = EliminateSelf(tuple, compile_info.co_name_);
+    tuple = EliminateStubTensor(tuple);
+    MarkArgmentMutable(tuple);
+    tuple = EliminateInvalidArgs(tuple, compile_info.co_flags_, true);
+    auto graph_executor = pipeline::GraphExecutorPy::GetInstance();
+    MS_EXCEPTION_IF_NULL(graph_executor);
+    py::object ret = graph_executor->Run(tuple, py::str(phase));
+    int mode = MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE);
+    auto executor = pynative::PyNativeExecutor::GetInstance();
+    if (mode == kPynativeMode && executor->grad_flag()) {
+      executor->grad_executor()->jit()->set_graph_phase(phase);
+      executor->GradJit(ret, tuple);
+    }
+    FuncGraphPtr ms_func_graph = graph_executor->GetFuncGraph(phase);
+    MS_EXCEPTION_IF_NULL(ms_func_graph);
+    if (ms_func_graph->modify_output()) {
+      ret = py::cast<py::tuple>(ret)[0];
+    }
+    ret = python_adapter::CallPyFn("mindspore.common.api", "_convert_python_data", ret);
+    ret.inc_ref();
+    return ret.ptr();
+  };
+
+  auto graph_executor = mindspore::pipeline::GraphExecutorPy::GetInstance();
+  if (graph_executor->HasCompiled(phase)) {
+    return callable;
+  }
+
+  if (func_graph == nullptr) {
+    return nullptr;
+  }
+  py::tuple new_arg = EliminateStubTensor(args);
+  new_arg = ExpandVariableArgs(new_arg, compile_info.co_flags_, compile_info.co_argcount_);
+  new_arg = EliminateSelf(new_arg, compile_info.co_name_);
+  MarkArgmentMutable(new_arg);
+  (void)graph_executor->CompileInner(func_graph, args, kwargs, phase, true);
 
   return callable;
 }
