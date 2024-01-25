@@ -1106,7 +1106,7 @@ MSCONTEXT_REGISTER_INIT_FUNC(kGPUDevice, [](MsContext *ctx) -> void {
 // Register functions to _c_expression so python hal module could call GPU device interfaces.
 void PybindGPUStatelessFunc(py::module *m) {
   MS_EXCEPTION_IF_NULL(m);
-  (void)py::class_<cudaDeviceProp>(*m, "cudaDeviceProp")
+  (void)py::class_<cudaDeviceProp>(*m, "cudaDeviceProp", py::module_local())
     .def_readonly("name", &cudaDeviceProp::name)
     .def_readonly("major", &cudaDeviceProp::major)
     .def_readonly("minor", &cudaDeviceProp::minor)

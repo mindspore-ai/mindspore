@@ -16,7 +16,21 @@ mindspore.hal.get_device_properties
         - **device_target** (str，可选) - 默认值：None，必须是 ``"CPU"`` ， ``"GPU"`` 以及 ``"Ascend"`` 的其中一个。
 
     返回：
-        - GPU后端，返回 `cudaDeviceProp <https://docs.nvidia.com/cuda/cuda-runtime-api/structcudaDeviceProp.html#structcudaDeviceProp>`_ 。
+        - GPU后端，返回 `cudaDeviceProp` :
+
+          .. code-block::
+
+              cudaDeviceProp {
+                  name(str),
+                  major(int),
+                  minor(int),
+                  is_multi_gpu_board(int),
+                  is_integrated(int),
+                  multi_processor_count(int),
+                  total_memory(int),
+                  warp_size(int)
+              }
+
         - Ascend后端，返回 `AscendDeviceProperties` :
 
           .. code-block::
