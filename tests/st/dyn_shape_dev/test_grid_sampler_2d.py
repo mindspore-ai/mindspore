@@ -22,8 +22,8 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def grid_sampler_2d_forward_func(input_x, grid):
-    grid_sampler_2d = ops.auto_generate.grid_sampler_2d(
-        input_x, grid, interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)
+    grid_sampler_2d = ops.auto_generate.GridSampler2D(interpolation_mode='bilinear', padding_mode='zeros',
+                                                      align_corners=True)(input_x, grid)
     return grid_sampler_2d
 
 
@@ -162,10 +162,10 @@ def test_grid_sampler_2d_backward(mode):
     assert np.allclose(grads[1].asnumpy(), expect_out2, 1e-04, 1e-04)
 
 
-@ pytest.mark.level0
-@ pytest.mark.env_onecard
-@ pytest.mark.platform_x86_cpu
-@ pytest.mark.platform_x86_gpu_training
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_func

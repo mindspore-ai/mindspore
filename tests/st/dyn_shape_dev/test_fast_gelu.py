@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def fastgelu_forward_func(x):
-    return ops.auto_generate.fast_gelu(x)
+    return ops.fast_gelu(x)
 
 
 @test_utils.run_with_cell

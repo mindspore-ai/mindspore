@@ -11,7 +11,7 @@ silu_grad:
     class:
         name: SiLUGrad
     function:
-        name: _silu_grad
+        disable: True
     dispatch:
         enable: True
         CPU: SiLUGradCPU

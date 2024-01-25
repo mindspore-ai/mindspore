@@ -19,6 +19,8 @@ from mindspore import Tensor
 from mindspore import ops
 import test_utils
 
+def bias_add_grad(out, data_format):
+    return ops.auto_generate.BiasAddGrad(data_format)(out)
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
@@ -36,7 +38,7 @@ def test_bias_add_grad_2d(data_type, mode):
     """
     @test_utils.run_with_cell
     def bias_add_grad_forward_func(dout):
-        return ops.auto_generate.bias_add_grad(dout, data_format="NCHW")
+        return bias_add_grad(dout, data_format="NCHW")
 
     ms.context.set_context(mode=mode)
     dout = np.ones([2, 3]).astype(data_type)
@@ -62,7 +64,7 @@ def test_bias_add_grad_4d(data_type, mode):
     """
     @test_utils.run_with_cell
     def bias_add_grad_forward_func(dout):
-        return ops.auto_generate.bias_add_grad(dout, data_format="NCHW")
+        return bias_add_grad(dout, data_format="NCHW")
 
     ms.context.set_context(mode=mode)
     dout = np.ones([2, 3, 4, 4]).astype(data_type)
@@ -87,7 +89,7 @@ def test_bias_add_grad_5d(data_type, mode):
     """
     @test_utils.run_with_cell
     def bias_add_grad_forward_func(dout):
-        return ops.auto_generate.bias_add_grad(dout, data_format="NCHW")
+        return bias_add_grad(dout, data_format="NCHW")
 
     ms.context.set_context(mode=mode)
     dout = np.ones([2, 3, 4, 4, 2]).astype(data_type)
@@ -111,7 +113,7 @@ def test_bias_add_grad_vmap(mode):
     """
     @test_utils.run_with_cell
     def bias_add_grad_forward_func(dout):
-        return ops.auto_generate.bias_add_grad(dout, data_format="NCHW")
+        return bias_add_grad(dout, data_format="NCHW")
 
     ms.context.set_context(mode=mode)
     vmap_bias_add_grad = ops.vmap(bias_add_grad_forward_func, in_axes=(0))

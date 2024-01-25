@@ -16,4 +16,4 @@ argmax:
     output:
       dtype: tensor
   function:
-    name: argmax_
+    disable: True

@@ -302,22 +302,31 @@ def _normalize_func_description_fromat(description):
     return description
 
 
+def _get_op_description(operator_name, doc_str):
+    if doc_str is None:
+        print(f"Description is None, op_name: {operator_name}")
+        return ""
+    description = doc_str.get(operator_name)
+    if description is None:
+        print(f"Description is None, op_name: {operator_name}")
+        return ""
+    description = description.get("description")
+    if description is None:
+        print(f"Description is None, op_name: {operator_name}")
+        return ""
+    return _normalize_func_description_fromat(description)
+
+
 def generate_py_op_func(yaml_data, doc_data):
     """
     Generate operator python function api.
     """
     gen_py = ''
 
-    op_desc_dict = {}
-    for operator_name, operator_desc in doc_data.items():
-        desc = operator_desc.get("description")
-        op_desc_dict[operator_name] = desc
-
     for operator_name, operator_data in yaml_data.items():
         if _auto_generate_func_disabled(operator_data):
             continue
         func_name = _get_op_func_name(operator_name, operator_data)
-        description = op_desc_dict.get(operator_name)
         args = operator_data.get('args')
         class_name = _get_op_name(operator_name, operator_data)
         func_args = []
@@ -341,8 +350,7 @@ def generate_py_op_func(yaml_data, doc_data):
             # step3: Process primitive object call args.
             else:
                 prim_call_args.append(arg_name)
-
-        description = _normalize_func_description_fromat(description)
+        description = _get_op_description(operator_name, doc_data)
         function_code = f"""\n
 def {func_name}({', '.join(arg for arg in func_args)}):
     r\"\"\"
@@ -354,12 +362,14 @@ def {func_name}({', '.join(arg for arg in func_args)}):
 
     return gen_py
 
+
 def get_dtype(arg_info):
     dtype = arg_info.get('dtype')
     # Currently, TypeId is represented by int
     if dtype == 'TypeId':
         dtype = 'int'
     return dtype
+
 
 def process_args(class_name, args):
     """
@@ -425,8 +435,18 @@ def generate_pyboost_import_header(yaml_data):
     return pyboost_import_header
 
 
-def _generate_class_description(class_name, func_name, input_args, init_args):
+def _generate_class_description(class_name, func_name, input_args, init_args, func_disabled, doc_str):
     """Generate description for every primitive definition."""
+    if func_disabled:
+        # if function disabled, function name is equal to operator_name
+        description = _get_op_description(func_name, doc_str)
+        description = f"""    r\"\"\"
+    {description}
+    \"\"\"
+"""
+        return description
+
+    # If function is an released API, refer to the function doc.
     description_str = f"""    r\"\"\"
     .. code-block::
         
@@ -445,7 +465,7 @@ def _generate_class_description(class_name, func_name, input_args, init_args):
     return description_str
 
 
-def generate_py_primitive(yaml_data):
+def generate_py_primitive(yaml_data, doc_str):
     """
     Generate python primitive
     """
@@ -483,7 +503,9 @@ def generate_py_primitive(yaml_data):
 
         primitive_code = f"""\n
 class {class_name}(Primitive):\n"""
-        primitive_code += _generate_class_description(class_name, func_name, inputs_args, init_args)
+        func_disabled = _auto_generate_func_disabled(operator_data)
+        primitive_code += _generate_class_description(class_name, func_name, inputs_args, init_args, func_disabled,
+                                                      doc_str)
         if signature_code != "":
             primitive_code += signature_code
         if deprecated_code != "":
@@ -712,8 +734,8 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
                 is_optional_str = "true"
 
             input_args_str += f"""\n    {{/*.arg_name_=*/"{arg_name}", /*.arg_dtype_=*/{cc_dtype_str}, """ + \
-                        f"""/*.as_init_arg_=*/{is_prim_init}, /*.arg_handler_=*/"{arg_handler_str}", """ + \
-                        f"""/*.cast_dtype_ =*/{{{type_cast_str}}}, /*.is_optional_=*/{is_optional_str}}},"""
+                              f"""/*.as_init_arg_=*/{is_prim_init}, /*.arg_handler_=*/"{arg_handler_str}", """ + \
+                              f"""/*.cast_dtype_ =*/{{{type_cast_str}}}, /*.is_optional_=*/{is_optional_str}}},"""
 
         # Process outputs.
         return_args_str = ''
@@ -758,7 +780,7 @@ def generate_ops_py_files(work_path, yaml_str, doc_str, file_pre):
     py_path = os.path.join(work_path, f'mindspore/python/mindspore/ops/auto_generate/{file_pre}_ops_def.py')
     tmp_py_path = os.path.join(work_path, f'mindspore/python/mindspore/ops/auto_generate/tmp_{file_pre}_ops_def.py')
     pyboost_import_header = generate_pyboost_import_header(yaml_str)
-    py_prim = generate_py_primitive(yaml_str)
+    py_prim = generate_py_primitive(yaml_str, doc_str)
     py_func = generate_py_op_func(yaml_str, doc_str)
 
     with open(tmp_py_path, 'w') as py_file:

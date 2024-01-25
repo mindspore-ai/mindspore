@@ -21,3 +21,5 @@ reduce_std:
       dtype: tensor
     output_mean:
       dtype: tensor
+  function:
+    disable: True

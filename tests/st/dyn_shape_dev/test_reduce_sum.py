@@ -24,7 +24,7 @@ ms.context.set_context(ascend_config={"precision_mode": "force_fp32"})
 
 @test_utils.run_with_cell
 def reduce_sum_forward_func(x):
-    return ops.auto_generate.reduce_sum(x, axis=0, keep_dims=True, skip_mode=False)
+    return ops.ReduceSum(keep_dims=True, skip_mode=False)(x, 0)
 
 
 @test_utils.run_with_cell

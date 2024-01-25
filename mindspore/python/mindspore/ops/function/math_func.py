@@ -38,7 +38,8 @@ from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.ops.operations.math_ops import Roll
 from mindspore.ops.operations.math_ops import Ormqr
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3, Transpose
-from mindspore.ops.auto_generate import (minimum, mul, sin, sinc, sinh, cummax, real, roll_)
+from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh, cummax, real, conj, add, cos, cosh,
+                                         matrix_exp, sqrt, rsqrt, square, trace)
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from mindspore import _checkparam as validator
@@ -85,7 +86,7 @@ from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore._c_expression import Tensor as Tensor_
 import mindspore.ops.function as F
 from mindspore.ops.operations._sequence_ops import TupleToTensor
-from mindspore.ops.auto_generate import add
+from mindspore.ops.auto_generate import (add, cos)
 
 
 @constexpr
@@ -160,8 +161,6 @@ bitwise_and_ = P.BitwiseAnd()
 bitwise_or_ = P.BitwiseOr()
 bitwise_xor_ = P.BitwiseXor()
 conj_ = P.Conj()
-cos_ = P.Cos()
-cosh_ = P.Cosh()
 cumprod_ = P.CumProd()
 cumsum_ = P.CumSum()
 cumulative_logsumexp_ = CumulativeLogsumexp()
@@ -201,9 +200,7 @@ lu_solve_ = LuSolve()
 lu_unpack_ = LuUnpack()
 matmul_ = P.MatMul()
 matrix_determinant_ = P.MatrixDeterminant()
-matrix_exp_ = MatrixExp()
 matrix_inverse_ = P.MatrixInverse()
-maximum_ = P.Maximum()
 mod_ = P.Mod()
 nextafter_ = P.NextAfter()
 ones_ = P.Ones()
@@ -213,7 +210,6 @@ rank_ = P.Rank()
 reciprocal_ = P.Reciprocal()
 reduce_sum_ = P.ReduceSum()
 reshape_ = P.Reshape()
-rsqrt_ = P.Rsqrt()
 select_ = P.Select()
 slice_ = P.Slice()
 size_ = P.Size()
@@ -221,8 +217,6 @@ scalar_to_tensor_ = P.ScalarToTensor()
 shape_ = P.Shape()
 sign_ = P.Sign()
 sparse_segment_mean_ = SparseSegmentMean()
-sqrt_ = P.Sqrt()
-square_ = P.Square()
 tan_ = P.Tan()
 tanh_ = P.Tanh()
 tensor_round_ = P.Round()
@@ -1909,43 +1903,6 @@ def sgn(input):
     return res
 
 
-def cos(input):
-    r"""
-    Computes cosine of input element-wise.
-
-    .. math::
-        out_i = \cos(x_i)
-
-    .. warning::
-        Supported dtypes are float16 and float32, and using float64 may
-        cause a problem of missing precision.
-
-    Args:
-        input (Tensor): The shape of tensor is
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-
-    Returns:
-        Tensor, has the same shape and dtype as `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is not float16, float32 or float64, complex64, complex128.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
-        >>> output = ops.cos(x)
-        >>> print(output)
-        [0.971338 0.6748758 0.95233357 0.9959527]
-    """
-    return cos_(input)
-
-
 def cosine_similarity(x1, x2, dim=1, eps=1e-08):
     r"""
     Calculate cosine similarity between `x1` and `x2` along the axis, `dim`.
@@ -2478,45 +2435,6 @@ def atan(input):
         [0.7853982 0.       ]
     """
     return atan_(input)
-
-
-def cosh(input):
-    r"""
-    Computes hyperbolic cosine of input element-wise.
-
-    .. math::
-
-        out_i = \cosh(input_i)
-
-    Args:
-        input (Tensor): The input tensor of hyperbolic cosine function, its data type
-            must be float16, float32, float64, complex64 or complex128.
-
-    Returns:
-        Tensor, has the same shape as `input`.
-
-    Raises:
-        TypeError: If the dtype of `input` is not one of the following types:
-                   float16, float32, float64, complex64, complex128.
-        TypeError: If `input` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
-        >>> output = ops.cosh(x)
-        >>> print(output)
-        [1.0289385 1.364684 1.048436 1.0040528]
-        >>> x = Tensor(2.1, mindspore.float32)
-        >>> output = ops.cosh(x)
-        >>> print(output)
-        4.144313
-    """
-    return cosh_(input)
 
 
 def tanh(input):
@@ -3594,46 +3512,6 @@ def log_matrix_determinant(input):
     """
     logger.warning("`log_matrix_determinant` is deprecated, please use `matrix_solve` instead.")
     return log_matrix_determinant_(input)
-
-
-def matrix_exp(input):
-    r"""
-    Computes the exponential of a single or a batch of square matrices.
-
-    .. math::
-
-        matrix\_exp(x) = \sum_{k=0}^{\infty} \frac{1}{k !} x^{k} \in \mathbb{K}^{n \times n}
-
-    where :math:`x` corresponds to `input` .
-
-    Args:
-        input (Tensor): The shape of tensor is :math:`(*, n, n)` where * is zero or more batch dimensions.
-            Must be one of the following types: float16, float32, float64, complex64, complex128.
-
-    Returns:
-        Tensor, has the same shape and dtype as the `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If the dtype of `input` is not one of the following dtype:
-                   float16, float32, float64, complex64, complex128.
-        ValueError: If the rank of `input` is less than 2.
-        ValueError: If the size of last two dimensions of `input` are not equal.
-
-    Supported Platforms:
-
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([[1, 2], [0, 1]]), mindspore.float32)
-        >>> output = ops.matrix_exp(input)
-        >>> print(output)
-        [[2.7182817 5.436563 ]
-        [0.        2.7182817]]
-    """
-    return matrix_exp_(input)
 
 
 def lu_solve(b, LU_data, LU_pivots):
@@ -4750,61 +4628,6 @@ def fmax(input, other):
     return fmax_(input, other)
 
 
-def maximum(input, other):
-    r"""
-    Computes the maximum of input tensors element-wise.
-
-    Note:
-        - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
-          consistent.
-        - The inputs must be two tensors or one tensor and one scalar.
-        - When the inputs are two tensors,
-          dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
-        - When the inputs are one tensor and one scalar,
-          the scalar could only be a constant.
-        - Broadcasting is supported.
-        - If one of the elements being compared is a NaN, then that element is returned.
-
-    .. math::
-        output_i = \max(input_i, other_i)
-
-    Args:
-        input (Union[Tensor, Number, bool]): The first input is a number or
-            a bool or a tensor whose data type is number or bool.
-        other (Union[Tensor, Number, bool]): The second input is a number or
-            a bool when the first input is a tensor or a tensor whose data type is number or bool.
-
-    Returns:
-        Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
-
-    Raises:
-        TypeError: If `input` and `other` is not one of the following: Tensor, Number, bool.
-        ValueError: If `input` and `other` are not the same shape.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> # case 1 : same data type
-        >>> x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
-        >>> y = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
-        >>> output = ops.maximum(x, y)
-        >>> print(output)
-        [4. 5. 6.]
-        >>> # case 2 : different data type
-        >>> x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.int32)
-        >>> y = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
-        >>> output = ops.maximum(x, y)
-        >>> print(output.dtype)
-        Float32
-    """
-    return maximum_(input, other)
-
-
 def fmin(input, other):
     r"""
     Computes the minimum of input tensors element-wise.
@@ -5734,101 +5557,6 @@ def reciprocal(input):
     return reciprocal_(input)
 
 
-def rsqrt(input):
-    r"""
-    Computes reciprocal of square root of input tensor element-wise.
-
-    .. math::
-
-        out_{i} =  \frac{1}{\sqrt{input_{i}}}
-
-    Args:
-        input (Tensor): The input of rsqrt. Its each element must be a non-negative
-            number, if an element is negative, the calculation result is nan.
-
-    Returns:
-        Tensor, has the same shape and dtype as the `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore as ms
-        >>> import mindspore.ops as ops
-        >>> input = ms.Tensor([-0.0370,  0.2970,  1.5420, -0.9105])
-        >>> output = ops.rsqrt(input)
-        >>> print(output)
-        [       nan 1.8349396  0.80530024        nan]
-    """
-    return rsqrt_(input)
-
-
-def sqrt(x):
-    """
-    Returns sqrt of a tensor element-wise.
-
-    .. math::
-
-        out_{i} = \\sqrt{x_{i}}
-
-    Args:
-        x (Tensor): The input tensor with a dtype of number.Number.
-    Returns:
-        Tensor, has the same shape and dtype as the `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([1.0, 4.0, 9.0]), mindspore.float32)
-        >>> output = ops.sqrt(x)
-        >>> print(output)
-        [1. 2. 3.]
-    """
-    return sqrt_(x)
-
-
-def square(input):
-    """
-    Returns square of a tensor element-wise.
-
-    .. math::
-
-        y_i = input_i ^ 2
-
-    Args:
-        input (Tensor): The input tensor with a dtype of Number.
-
-    Returns:
-        Tensor, has the same shape and dtype as the `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
-        >>> output = ops.square(input)
-        >>> print(output)
-        [1. 4. 9.]
-    """
-    return square_(input)
-
-
 def outer(input, vec2):
     """
     Return outer product of `input` and `vec2`. If `input` is a vector of size :math:`n`
@@ -6111,6 +5839,7 @@ def adjoint(x):
     if _dtype in mstype.complex_type:
         return _t.conj()
     return _t
+
 
 def addr(x, vec1, vec2, *, beta=1, alpha=1):
     """
@@ -10610,42 +10339,6 @@ def cholesky_solve(input, input2, upper=False):
     return _get_cache_prim(P.CholeskySolve)(upper)(input, input2)
 
 
-def conj(input):
-    r"""
-    Returns a tensor of complex numbers that are the complex conjugate of each element in input.
-    The complex numbers in input must be of the form a + bj, where a is the real part and b is the imaginary part.
-
-    The complex conjugate returned by this operation is of the form a - bj.
-
-    If `input` is real, it is returned unchanged.
-
-    Args:
-        input (Tensor): The input tensor to compute to. Must have numeric type.
-
-    Returns:
-        Tensor, has the same dtype as the `input`.
-
-    Raises:
-        TypeError: If the dtype of `input` is not a numeric type.
-        TypeError: If the `input` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.asarray(np.complex(1.3+0.4j)), mindspore.complex64)
-        >>> output = ops.conj(x)
-        >>> print(output)
-        (1.3-0.4j)
-    """
-    if not isinstance(input, (Tensor, Tensor_)):
-        raise TypeError("For conj op, input must be Tensor.")
-    return conj_(input)
-
-
 def cross(input, other, dim=None):
     r"""
     Computes the cross product of `input` and `other` in dimension `dim`.
@@ -13348,7 +13041,6 @@ __all__ = [
     'logical_xor',
     'imag',
     'roll',
-    'roll_',
     'sum',
     'matrix_exp',
     'matrix_power',

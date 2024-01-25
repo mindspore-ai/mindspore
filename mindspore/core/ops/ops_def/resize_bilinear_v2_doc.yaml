@@ -38,7 +38,7 @@ resize_bilinear_v2:
         >>> import mindspore
         >>> from mindspore import Tensor, ops
         >>> image = Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mindspore.float32)
-        >>> output = ops.resize_bilinear()(image, (5, 5))
+        >>> output = ops.ResizeBilinearV2()(image, (5, 5))
         >>> print(output)
         [[[[1. 2. 3. 4. 5.]
            [1. 2. 3. 4. 5.]

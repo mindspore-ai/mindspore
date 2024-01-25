@@ -7,10 +7,10 @@ addcdiv:
             y[i] = input[i] + value[i] * (tensor1[i] / tensor2[i])
 
         Args:
-            input (Tensor): The tensor to be added.
-            tensor1 (Tensor): The numerator tensor.
-            tensor2 (Tensor): The denominator tensor.
-            value (Tensor): The multiplier for tensor1/tensor2.
+            - **input** (Tensor): The tensor to be added.
+            - **x1** (Tensor): The numerator tensor.
+            - **x2** (Tensor): The denominator tensor.
+            - **value** (Tensor): The multiplier for tensor1/tensor2.
 
         Returns:
             Tensor, has the same shape and dtype as tensor1/tensor2.
@@ -32,6 +32,6 @@ addcdiv:
             >>> x1 = Tensor(np.array([1, 2, 3, 4]), mindspore.float32)
             >>> x2 = Tensor(np.array([4, 3, 2, 1]), mindspore.float32)
             >>> value = Tensor([1], mindspore.float32)
-            >>> y = ops.addcdiv_(input_data, x1, x2, value)
+            >>> y = ops.Addcdiv()(input_data, x1, x2, value)
             >>> print(y)
             [1.25      1.6666667 2.5       5.       ]

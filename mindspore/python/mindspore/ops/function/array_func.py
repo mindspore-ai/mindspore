@@ -61,7 +61,8 @@ from mindspore import _checkparam as validator
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
 
-from mindspore.ops.auto_generate import concat_, range, scatter_nd, deepcopy, masked_fill, diagonal
+from mindspore.ops.auto_generate import concat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
+    nonzero, reverse, transpose
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
 arg_max_with_value_ = P.ArgMaxWithValue()
@@ -69,7 +70,6 @@ batch_to_space_nd_v2_ = P.BatchToSpaceNDV2()
 cast_ = P.Cast()
 diag_ = P.Diag()
 dynamic_broadcast_to_ = DynamicBroadcastTo()
-expand_dims_ = P.ExpandDims()
 eye_ = P.Eye()
 fills_ = Fills()
 fillv2_ = P.FillV2()
@@ -82,7 +82,6 @@ index_fill_ = IndexFill()
 lstsq_ = Lstsq()
 masked_select_ = P.MaskedSelect()
 matrix_band_part_ = P.array_ops.MatrixBandPart()
-nonzero_ = NonZero()
 ones_ = P.Ones()
 ones_like_ = P.OnesLike()
 population_count_ = P.PopulationCount()
@@ -311,7 +310,7 @@ def cat(tensors, axis=0):
         [[0. 1. 0. 1.]
          [2. 1. 2. 1.]]
     """
-    return concat_(tensors, axis)
+    return concat(tensors, axis)
 
 
 def eye(n, m=None, dtype=None):
@@ -487,46 +486,6 @@ def where(condition, x, y):
     x = broadcast_to(x, output_shape)
     y = broadcast_to(y, output_shape)
     return tensor_select_(condition, x, y)
-
-
-def reverse(x, axis):
-    """
-    Reverses specific dimensions of a tensor.
-
-    .. warning::
-        The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
-
-    Args:
-        x (Tensor): The target tensor.
-            The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        axis (Union[tuple(int), list(int)]): The indices of the dimensions to reverse.
-
-    Outputs:
-        Tensor, has the same shape and type as `x`.
-
-    Raises:
-        TypeError: If `axis` is neither list nor tuple.
-        TypeError: If element of `axis` is not an int.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), mindspore.int32)
-        >>> output = ops.reverse(input_x, axis=[1])
-        >>> print(output)
-        [[4 3 2 1]
-         [8 7 6 5]]
-        >>> input_x = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), mindspore.int32)
-        >>> output = ops.reverse(input_x, axis=[1, 0])
-        >>> print(output)
-        [[8 7 6 5]
-         [4 3 2 1]]
-    """
-    return _get_cache_prim(P.ReverseV2)(axis)(x)
 
 
 def ravel(input):
@@ -2038,20 +1997,6 @@ def slice(input_x, begin, size):
     return tensor_slice(input_x, begin, size)
 
 
-def concat(tensors, axis=0):
-    """
-    Alias for :func:`mindspore.ops.cat()`.
-
-    Tutorial Examples:
-        - `Tensor - Tensor Operation <https://mindspore.cn/tutorials/en/master/beginner/tensor.html#tensor-operation>`_
-        - `Vision Transformer Image Classification - Building ViT as a whole
-          <https://mindspore.cn/tutorials/application/en/master/cv/vit.html#building-vit-as-a-whole>`_
-        - `Sentiment Classification Implemented by RNN - Dense
-          <https://mindspore.cn/tutorials/application/en/master/nlp/sentiment_analysis.html#dense>`_
-    """
-    return concat_(tensors, axis)
-
-
 def stack(tensors, axis=0):
     r"""
     Stacks a list of tensors in specified axis.
@@ -2162,45 +2107,6 @@ def unbind(input, dim=0):
     return _unstack(input)
 
 
-def expand_dims(input_x, axis):
-    """
-    Adds an additional dimension to `input_x` at the given axis, the dimension
-    of `input_x` should be greater than or equal to 1.
-
-    Note:
-        If the specified axis is a negative number, the index is counted
-        backward from the end and starts at 1.
-
-    Args:
-        input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        axis (int): Specifies the dimension index at which to expand
-            the shape of `input_x`. The value of axis must be in the range
-            `[-input_x.ndim-1, input_x.ndim]`. Only constant value is allowed.
-
-    Returns:
-        Tensor, the shape of tensor is :math:`(1, x_1, x_2, ..., x_R)` if the
-        value of `axis` is 0. It has the same data type as `input_x`.
-
-    Raises:
-        TypeError: If `axis` is not an int.
-        ValueError: If `axis` is not in the valid range :math:`[-a.ndim-1, a.ndim]`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-        >>> output = ops.expand_dims(input_tensor, 0)
-        >>> print(output)
-        [[[2. 2.]
-          [2. 2.]]]
-    """
-    return expand_dims_(input_x, axis)
-
-
 def unsqueeze(input, dim):
     """
     Adds an additional dimension to `input` at the given dim.
@@ -2232,7 +2138,7 @@ def unsqueeze(input, dim):
         [[[2. 2.]
           [2. 2.]]]
     """
-    return expand_dims_(input, dim)
+    return expand_dims(input, dim)
 
 
 def squeeze(input, axis=None):
@@ -2287,57 +2193,6 @@ def squeeze(input, axis=None):
         axis = tuple(axis)
     squeeze_ = _get_cache_prim(P.Squeeze)(axis)
     return squeeze_(input)
-
-
-def transpose(input, input_perm):
-    """
-    Permutes the dimensions of the input tensor according to input permutation.
-
-    For a 1-D array this has no effect, as a transposed vector is simply the same vector.
-    To convert a 1-D array into a 2D column vector please refer the class: mindspore.ops.ExpandDims.
-    For a 2-D array, this is a standard matrix transpose. For an n-D array, if axes are given,
-    their order indicates how the axes are permuted (see Examples).
-    If axes are not provided and a.shape is :math:`(i[0], i[1], ... i[n-2], i[n-1])`,
-    then a.transpose().shape is :math:`(i[n-1], i[n-2], ... i[1], i[0])`.
-
-    Note:
-        On GPU and CPU, if the value of `input_perm` is negative, its actual value is `input_perm[i] + rank(input)`.
-        Negative value of `input_perm` is not supported on Ascend.
-
-    Args:
-        input (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        input_perm (tuple[int]): The permutation to be converted. The elements in `input_perm` are composed of
-            the indexes of each dimension of `input`. The length of `input_perm` and the shape of `input` must be
-            the same. Only constant value is allowed. Must be in the range [-rank(input), rank(input)).
-
-    Returns:
-        Tensor, the type of output tensor is the same as `input` and the shape of output tensor is decided by the
-        shape of `input` and the value of `input_perm`.
-
-    Raises:
-        TypeError: If `input_perm` is not a tuple.
-        ValueError: If length of shape of `input` is not equal to length of shape of `input_perm`.
-        ValueError: If the same element exists in `input_perm`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
-        >>> input_perm = (0, 2, 1)
-        >>> output = ops.transpose(input, input_perm)
-        >>> print(output)
-        [[[ 1.  4.]
-          [ 2.  5.]
-          [ 3.  6.]]
-         [[ 7. 10.]
-          [ 8. 11.]
-          [ 9. 12.]]]
-    """
-    return transpose_(input, input_perm)
 
 
 def scatter_mul(input_x, indices, updates):
@@ -2668,6 +2523,7 @@ def scatter_div(input_x, indices, updates):
          [ 9.  9.  9.]]
     """
     return scatter_div_(input_x, indices, updates)
+
 
 def scatter_update(input_x, indices, updates):
     r"""
@@ -4080,43 +3936,6 @@ def batch_to_space_nd(input_x, block_shape, crops):
         return batch_to_space_nd_v2_(input_x, block_shape, crops)
     _batch_to_space_nd = _get_cache_prim(P.BatchToSpaceND)(block_shape, crops)
     return _batch_to_space_nd(input_x)
-
-
-def nonzero(input):
-    """
-    Return a Tensor of the positions of all non-zero values.
-
-    Args:
-        input (Tensor): The input Tensor, its rank should be greater than or eaqual to 1.
-
-    Returns:
-        Tensor, a 2-D Tensor whose data type is int64, containing the positions of all non-zero values of the input.
-
-    Raises:
-        TypeError: If `input` is not Tensor.
-        ValueError: If dim of `x` equals to 0.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> import mindspore.ops as ops
-        >>> x = Tensor(np.array([[[1,  0], [-5, 0]]]), mindspore.int32)
-        >>> output = ops.nonzero(x)
-        >>> print(output)
-        [[0 0 0]
-         [0 1 0]]
-        >>> x = Tensor(np.array([1, 0, 2, 0, 3]), mindspore.int32)
-        >>> output = ops.nonzero(x)
-        >>> print(output)
-        [[0]
-         [2]
-         [4]]
-    """
-    return nonzero_(input)
 
 
 def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_LEFT"):
@@ -5947,7 +5766,7 @@ def argmax(input, dim=None, keepdim=False):
         is_dim_none = True
     out = _get_cache_prim(Argmax)(dim, mstype.int64)(input)
     if keepdim and not is_dim_none:
-        out = expand_dims_(out, dim)
+        out = expand_dims(out, dim)
     return out
 
 
@@ -6748,9 +6567,9 @@ def column_stack(tensors):
         if not isinstance(tensor, Tensor):
             raise TypeError(f"For column_stack, the input element must be tensor, but got {type(tensor)}.")
         if tensor.ndim < 1:
-            tensor = expand_dims_(tensor, 0)
+            tensor = expand_dims(tensor, 0)
         if tensor.ndim == 1:
-            tensor = expand_dims_(tensor, 1)
+            tensor = expand_dims(tensor, 1)
         trans_x += (tensor,)
     if not trans_x:
         raise ValueError(f"For column_stack, the input must have at least 1 tensor, but got 0.")
@@ -6796,7 +6615,7 @@ def hstack(tensors):
         if not isinstance(tensor, Tensor):
             raise TypeError(f"For hstack, the input element must be tensor, but got {type(tensor)}.")
         if tensor.ndim < 1:
-            tensor = expand_dims_(tensor, 0)
+            tensor = expand_dims(tensor, 0)
         tuple_of_tensor += (tensor,)
     if not tuple_of_tensor:
         raise ValueError("For hstack, the input must have at least 1 tensor, but got 0.")
@@ -7123,7 +6942,7 @@ def repeat_elements(x, rep, axis=0):
     axis = _check_axis_range(axis, x_rank, "axis", "repeat_elements")
     axis = axis + x.ndim if axis < 0 else axis
     expand_axis = axis + 1
-    x_expand = expand_dims_(x, expand_axis)
+    x_expand = expand_dims(x, expand_axis)
     rep_dims = _cal_repeat_dims(x_rank, rep, expand_axis)
     x_expand = tile_(x_expand, rep_dims)
     x_shape = shape_(x)
@@ -7196,7 +7015,7 @@ def sequence_mask(lengths, maxlen=None):
         maxlen = scalar_to_tensor_(maxlen, mstype.int32)
 
     range_vector = range_(scalar_to_tensor_(0, mstype.int32), maxlen, scalar_to_tensor_(1, mstype.int32))
-    mask = expand_dims_(lengths, -1)
+    mask = expand_dims(lengths, -1)
     result = range_vector < mask
     return result
 

@@ -35,7 +35,7 @@ def _logical_not_scala(x):
     Returns:
        bool, Return logical not operation result of x.
    """
-    return auto_generate.bool_not(x.__bool__())
+    return F.bool_not(x.__bool__())
 
 
 @logical_not.register("String")
@@ -76,7 +76,7 @@ def _logical_not_tensor(x):
        Tensor, Return logical not operation result of x.
    """
     if F.isconstant(x):
-        return auto_generate.bool_not(x.__bool__())
+        return F.bool_not(x.__bool__())
     return F.logical_not(x.__bool__())
 
 

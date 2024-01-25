@@ -32,6 +32,6 @@ gelu:
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
             >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
-            >>> result = ops.gelu(x)
+            >>> result = ops.GeLU()(x)
             >>> print(result)
             [0.841192  1.9545976  2.9963627]

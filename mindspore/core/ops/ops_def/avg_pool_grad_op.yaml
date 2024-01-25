@@ -31,4 +31,4 @@ avg_pool_grad:
         output:
             dtype: tensor
     function:
-        name: _avg_pool_grad
+        disable: True

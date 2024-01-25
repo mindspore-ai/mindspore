@@ -42,16 +42,16 @@ logical_or:
             [ True  True  True]
             >>> x = Tensor(1, mindspore.bool_)
             >>> y = Tensor(0, mindspore.bool_)
-            >>> output = ops.logical_or(x, y)
+            >>> output = ops.LogicalOr()(x, y)
             >>> print(output)
             True
             >>> x = True
             >>> y = Tensor(0, mindspore.bool_)
-            >>> output = ops.logical_or(x, y)
+            >>> output = ops.LogicalOr()(x, y)
             >>> print(output)
             True
             >>> x = True
             >>> y = Tensor(np.array([True, False]), mindspore.bool_)
-            >>> output = ops.logical_or(x, y)
+            >>> output = ops.LogicalOr()(x, y)
             >>> print(output)
             [True True]

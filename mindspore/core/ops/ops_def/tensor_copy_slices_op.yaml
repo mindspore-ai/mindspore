@@ -17,3 +17,5 @@ tensor_copy_slices:
     returns:
         output:
             dtype: tensor
+    function:
+        disable: True

@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def avg_pool_forward_func(x):
-    return ops.auto_generate.avg_pool(x, kernel_size=2, strides=2, pad_mode="VALID", data_format="NCHW")
+    return ops.AvgPool(kernel_size=2, strides=2, pad_mode="VALID", data_format="NCHW")(x)
 
 
 @test_utils.run_with_cell
@@ -32,7 +32,7 @@ def avg_pool_backward_func(x):
 
 
 def avg_pool_dyn_shape_func(x):
-    return ops.auto_generate.avg_pool(x, kernel_size=2, strides=2, pad_mode="VALID", data_format="NCHW")
+    return ops.AvgPool(kernel_size=2, strides=2, pad_mode="VALID", data_format="NCHW")(x)
 
 
 @pytest.mark.level1

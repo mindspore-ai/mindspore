@@ -22,14 +22,14 @@ import test_utils
 
 @test_utils.run_with_cell
 def eig_forward_func(input_x, compute_v):
-    return ops.auto_generate.eig_(input_x, compute_v)
+    return ops.Eig(compute_v)(input_x)
 
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-#@pytest.mark.platform_arm_ascend_training
+# @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_eig_forward(mode):
     """
@@ -41,7 +41,7 @@ def test_eig_forward(mode):
     input_x = Tensor(np.array([[1.0, 0.0], [0.0, 2.0]]), ms.float32)
     compute_v = True
     u, v = eig_forward_func(input_x, compute_v)
-    expect_u = [1.+0.j, 2.+0.j]
-    expect_v = [[1.+0.j, 0.+0.j], [0.+0.j, 1.+0.j]]
+    expect_u = [1. + 0.j, 2. + 0.j]
+    expect_v = [[1. + 0.j, 0. + 0.j], [0. + 0.j, 1. + 0.j]]
     assert np.allclose(u.asnumpy(), expect_u, rtol=0.0001)
     assert np.allclose(v.asnumpy(), expect_v, rtol=0.0001)

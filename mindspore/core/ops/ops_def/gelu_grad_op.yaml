@@ -12,3 +12,5 @@ gelu_grad:
             dtype: tensor
     class:
         name: GeLUGrad
+    function:
+        disable: True

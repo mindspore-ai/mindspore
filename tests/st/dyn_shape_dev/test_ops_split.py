@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def split_forward_func(x, axis=0, output_num=2):
-    return ops.auto_generate.split_(x, axis, output_num)
+    return ops.Split(axis, output_num)(x)
 
 
 @test_utils.run_with_cell
@@ -32,7 +32,7 @@ def split_backward_func(x, axis, output_num):
 
 
 def split_dyn_shape_func(x, axis=0, output_num=2):
-    return ops.auto_generate.split_(x, axis, output_num)
+    return ops.Split(axis, output_num)(x)
 
 
 @pytest.mark.level1

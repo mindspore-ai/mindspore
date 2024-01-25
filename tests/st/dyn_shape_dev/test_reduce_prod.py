@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def reduce_prod_forward_func(x):
-    return ops.auto_generate.reduce_prod(x, axis=1, keep_dims=False)
+    return ops.ReduceProd(keep_dims=False)(x, 1)
 
 
 @test_utils.run_with_cell

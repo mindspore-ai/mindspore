@@ -13,7 +13,7 @@ div:
         output:
             dtype: tensor
     function:
-        name: div_
+        disable: True
     dispatch:
         enable: False
 

@@ -13,4 +13,4 @@ eig:
     eigen_vectors:
       dtype: tensor
   function:
-    name: eig_
+    disable: True

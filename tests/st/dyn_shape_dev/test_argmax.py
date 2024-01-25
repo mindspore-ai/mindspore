@@ -15,10 +15,12 @@
 import pytest
 import numpy as np
 from mindspore import context
-from mindspore.ops import auto_generate as P
+from mindspore import ops
 
 from test_argmin import argmin_argmax_case, argmin_argmax_case_dyn, argmin_argmax_case_vmap
 
+def argmax_(input_x, axis, output_type):
+    return ops.Argmax(axis, output_type)(input_x)
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
@@ -33,7 +35,7 @@ def test_argmax(mode):
     Expectation: the result match with expected result.
     """
     context.set_context(mode=mode)
-    argmin_argmax_case(P.argmax_, np.argmax)
+    argmin_argmax_case(argmax_, np.argmax)
 
 
 @pytest.mark.level1
@@ -49,7 +51,7 @@ def test_argmax_vmap(mode):
     Expectation: the result match with expected result.
     """
     context.set_context(mode=mode)
-    argmin_argmax_case_vmap(P.argmax_)
+    argmin_argmax_case_vmap(argmax_)
 
 
 @pytest.mark.level1
@@ -65,4 +67,4 @@ def test_argmax_dyn(mode):
     Expectation: the result match with expected result.
     """
     context.set_context(mode=mode)
-    argmin_argmax_case_dyn(P.argmax_, np.argmax)
+    argmin_argmax_case_dyn(argmax_, np.argmax)

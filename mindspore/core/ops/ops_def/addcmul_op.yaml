@@ -13,4 +13,4 @@ addcmul:
         output: 
             dtype: tensor
     function:
-        name: addcmul_
+        disable: True

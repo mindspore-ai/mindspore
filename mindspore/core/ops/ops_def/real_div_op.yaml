@@ -12,3 +12,5 @@ real_div:
     returns:
         output:
             dtype: tensor
+    function:
+        disable: True

@@ -16,3 +16,5 @@ resize_linear_1d:
       dtype: tensor
   class:
     name: ResizeLinear1D
+  function:
+    disable: True

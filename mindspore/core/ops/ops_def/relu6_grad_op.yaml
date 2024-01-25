@@ -11,4 +11,4 @@ relu6_grad:
   class:
     name: ReLU6Grad
   function:
-    name: _relu6_grad
+    disable: True

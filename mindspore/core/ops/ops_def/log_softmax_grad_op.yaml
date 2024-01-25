@@ -12,3 +12,5 @@ log_softmax_grad:
     returns:
         logits_grad:
             dtype: tensor
+    function:
+        disable: True

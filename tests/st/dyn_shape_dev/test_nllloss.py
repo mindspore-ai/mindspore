@@ -22,7 +22,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def nllloss_forward_func(logits, labels, weight):
-    return ops.auto_generate.nll_loss_(logits, labels, weight, reduction='none', ignore_index=-100)
+    return ops.NLLLoss(reduction='none', ignore_index=-100)(logits, labels, weight)
 
 
 @test_utils.run_with_cell
@@ -54,6 +54,7 @@ def test_nllloss_forward(mode, data_type):
     expect_total_weight = np.array(0.75).astype(data_type)
     assert np.allclose(actual_output[0].asnumpy(), expect_loss)
     assert np.allclose(actual_output[1].asnumpy(), expect_total_weight)
+
 
 @pytest.mark.level0
 @pytest.mark.env_onecard

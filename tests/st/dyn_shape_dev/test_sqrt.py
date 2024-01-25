@@ -22,7 +22,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def sqrt_forward_func(x):
-    return ops.auto_generate.sqrt_(x)
+    return ops.sqrt(x)
 
 
 @test_utils.run_with_cell
@@ -32,7 +32,7 @@ def sqrt_backward_func(x):
 
 @test_utils.run_with_cell
 def sqrt_dyn_shape_func(x):
-    return ops.auto_generate.sqrt_(x)
+    return ops.sqrt(x)
 
 
 @pytest.mark.level1

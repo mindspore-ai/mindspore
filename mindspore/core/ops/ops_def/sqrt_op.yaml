@@ -6,8 +6,6 @@ sqrt:
     returns:
         output: 
             dtype: tensor
-    function:
-        name: sqrt_
     dispatch:
         enable: False
 

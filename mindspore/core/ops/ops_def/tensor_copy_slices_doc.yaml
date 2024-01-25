@@ -18,7 +18,7 @@ tensor_copy_slices:
         Examples:
         >>> import numpy as np
         >>> from mindspore import ops, Tensor
-        >>> out = ops.tensor_copy_slices(Tensor(np.zeros((5, 5))), Tensor(np.ones((2, 5))), (3, 0), (5, 5), (1, 1))
+        >>> out = ops.TensorCopySlices()(Tensor(np.zeros((5, 5))), Tensor(np.ones((2, 5))), (3, 0), (5, 5), (1, 1))
         >>> print(out)
             [[1., 1., 1., 1., 1.],
               [1., 1., 1., 1., 1.],

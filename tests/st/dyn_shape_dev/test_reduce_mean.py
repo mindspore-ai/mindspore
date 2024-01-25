@@ -25,7 +25,7 @@ ms.context.set_context(ascend_config={"precision_mode": "force_fp32"})
 
 @test_utils.run_with_cell
 def reduce_mean_forward_func(x):
-    return ops.auto_generate.reduce_mean(x, axis=0, keep_dims=True)
+    return ops.ReduceMean(keep_dims=True)(x, 0)
 
 
 @test_utils.run_with_cell
@@ -93,7 +93,7 @@ def test_reduce_mean_with_mutable_axis():
 
     @ms.jit
     def func(x, axis):
-        return ops.reduce_mean(x, axis)
+        return ops.ReduceMean()(x, axis)
 
     input_x = ms.Tensor([1.0])
     with pytest.raises(ValueError):

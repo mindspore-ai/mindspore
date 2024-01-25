@@ -6,3 +6,5 @@ tensor_shape:
     returns:
         output:
             dtype: tensor
+    function:
+        disable: True

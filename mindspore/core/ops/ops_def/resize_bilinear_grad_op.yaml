@@ -16,3 +16,5 @@ resize_bilinear_grad:
   returns:
     output:
       dtype: tensor
+  function:
+    disable: True

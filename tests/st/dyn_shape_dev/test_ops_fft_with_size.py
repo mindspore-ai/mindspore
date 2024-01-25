@@ -22,7 +22,7 @@ import test_utils
 
 @test_utils.run_with_cell
 def fft_forward_func(x, signal_ndim, inverse, real, norm='backward', onesided=True, signal_sizes=()):
-    return ops.auto_generate.fft_with_size_(x, signal_ndim, inverse, real, norm, onesided, signal_sizes)
+    return ops.FFTWithSize(signal_ndim, inverse, real, norm, onesided, signal_sizes)(x)
 
 
 @test_utils.run_with_cell

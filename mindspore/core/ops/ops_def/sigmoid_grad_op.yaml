@@ -9,7 +9,7 @@ sigmoid_grad:
         output:
             dtype: tensor
     function:
-        name: _sigmoid_grad
+        disable: True
     dispatch:
         enable: True
         Ascend: SigmoidGradAscend

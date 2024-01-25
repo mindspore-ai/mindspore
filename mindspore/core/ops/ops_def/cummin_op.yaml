@@ -12,4 +12,4 @@ cummin:
     indices:
       dtype: tensor
   function:
-      name: cummin_
+      disable: True

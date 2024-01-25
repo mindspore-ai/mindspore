@@ -13,4 +13,4 @@ qr:
         r:
             dtype: tensor
     function:
-        name: qr_
+        disable: True

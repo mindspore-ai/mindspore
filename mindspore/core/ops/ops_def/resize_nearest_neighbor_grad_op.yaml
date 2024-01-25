@@ -17,3 +17,6 @@ resize_nearest_neighbor_grad:
     returns:
         y:
             dtype: tensor
+    function:
+        disable:
+            True

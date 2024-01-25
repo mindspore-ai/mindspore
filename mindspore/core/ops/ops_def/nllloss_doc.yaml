@@ -21,13 +21,8 @@ nllloss:
             \sum_{n=1}^{N} \frac{1}{\sum_{n=1}^{N} w_{t n}} l_{n}, & \text { if reduction }=\text { 'mean'; } \\
             \sum_{n=1}^{N} l_{n}, & \text { if reduction }=\text { 'sum' }
             \end{array}\right.
-
-        Inputs:
-            - **logits** (Tensor) - Input logits, with shape :math:`(N, C)` or `(C)`. Data type only supports float32 or float16.
-            - **labels** (Tensor) - Ground truth labels, with shape :math:`(N,)` or `(1)`, where each value belong to
-            :math:`[0, C-1]`. Data type only supports int32 or int64.
-            - **weight** (Tensor) - The rescaling weight to each class, with shape :math:`(C,)` and data type only
-            supports float32 or float16.
+        
+        Args:
             - **reduction** (str, optional): - Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
                 ``'sum'`` . Default: ``'mean'`` .
 
@@ -36,7 +31,15 @@ nllloss:
                 - ``'sum'``: the output elements will be summed.
 
             - **ignore_index** (int): Specifies a target value that is ignored
-                and does not contribute to the input gradient. Default: ``-100`` .
+                and does not contribute to the input gradient. Default: ``-100`` .            
+
+        Inputs:
+            - **logits** (Tensor) - Input logits, with shape :math:`(N, C)` or `(C)`. Data type only supports float32 or float16.
+            - **labels** (Tensor) - Ground truth labels, with shape :math:`(N,)` or `(1)`, where each value belong to
+            :math:`[0, C-1]`. Data type only supports int32 or int64.
+            - **weight** (Tensor) - The rescaling weight to each class, with shape :math:`(C,)` and data type only
+            supports float32 or float16.
+
 
         Outputs:
             Tuple of 2 tensors composed with `loss` and `total_weight`.
@@ -68,7 +71,7 @@ nllloss:
             ...                           [0.4236548, 0.6458941]]).astype(np.float32))
             >>> labels = Tensor(np.array([0, 0, 0]).astype(np.int32))
             >>> weight = Tensor(np.array([0.3834415, 0.79172504]).astype(np.float32))
-            >>> loss, weight = ops.nll_loss_(logits, labels, weight, "mean")
+            >>> loss, weight = ops.NLLLoss("mean")(logits, labels, weight)
             >>> print(loss)
             -0.52507716
             >>> print(weight)

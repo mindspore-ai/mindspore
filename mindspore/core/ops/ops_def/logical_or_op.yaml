@@ -13,4 +13,4 @@ logical_or:
         output:
             dtype: tensor
     function:
-        name: logical_or_
+        disable: True

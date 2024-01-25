@@ -15,3 +15,5 @@ resize_linear_1d_grad:
       dtype: tensor
   class:
     name: ResizeLinear1DGrad
+  function:
+    disable: True

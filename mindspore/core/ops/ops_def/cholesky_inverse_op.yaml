@@ -11,4 +11,4 @@ cholesky_inverse:
     output:
       dtype: tensor
   function:
-    name: cholesky_inverse_
+    disable: True

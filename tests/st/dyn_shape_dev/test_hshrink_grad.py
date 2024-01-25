@@ -24,12 +24,12 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def hshrink_grad_forward_func(gradients, features, lambd):
-    return ops.auto_generate.hshrink_grad(gradients, features, lambd)
+    return ops.auto_generate.HShrinkGrad(lambd)(gradients, features)
 
 
 @test_utils.run_with_cell
 def hshrink_grad_dyn_shape_func(gradients, features, lambd):
-    return ops.auto_generate.hshrink_grad(gradients, features, lambd)
+    return ops.auto_generate.HShrinkGrad(lambd)(gradients, features)
 
 
 @pytest.mark.level1

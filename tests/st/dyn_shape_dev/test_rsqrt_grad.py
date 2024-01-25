@@ -17,14 +17,13 @@ import numpy as np
 import pytest
 import mindspore as ms
 from mindspore import ops
-from mindspore.ops.auto_generate.gen_ops_def import _rsqrt_grad
 import test_utils
 
 ms.context.set_context(ascend_config={"precision_mode": "force_fp32"})
 
 @test_utils.run_with_cell
 def rsqrt_grad_func(dy, x):
-    return _rsqrt_grad(dy, x)
+    return ops.auto_generate.RsqrtGrad()(dy, x)
 
 
 @pytest.mark.level1

@@ -24,12 +24,12 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def hsigmoid_grad_forward_func(grads, x):
-    return ops.auto_generate.hsigmoid_grad(grads, x)
+    return ops.auto_generate.HSigmoidGrad()(grads, x)
 
 
 @test_utils.run_with_cell
 def hsigmoid_grad_dyn_shape_func(grads, x):
-    return ops.auto_generate.hsigmoid_grad(grads, x)
+    return ops.auto_generate.HSigmoidGrad()(grads, x)
 
 
 @pytest.mark.level1

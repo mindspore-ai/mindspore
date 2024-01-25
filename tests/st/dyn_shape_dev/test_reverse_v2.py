@@ -22,7 +22,7 @@ import test_utils
 
 @test_utils.run_with_cell
 def reverse_v2_forward_func(x):
-    return ops.auto_generate.reverse_v2(x, axis=(0,))
+    return ops.ReverseV2(axis=(0,))(x)
 
 
 @test_utils.run_with_cell

@@ -6,11 +6,13 @@ argmin:
         :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
         
         Args:
-            x (Tensor): Input tensor. The shape is :math:`(N, *)` where :math:`*` means, 
-                any number of additional dimensions.
             axis (int): Axis where the Argmin operation applies to. Default: ``-1`` .
             output_type (:class:`mindspore.dtype`): Output data type.
                 Supported types: ``mstype.int32`` , ``mstype.int64`` . Default: ``mstype.int32`` .
+        
+        **Inputs**:
+            - **input_x** (Tensor): Input tensor. The shape is :math:`(N, *)` where :math:`*` means, 
+                any number of additional dimensions.
  
         Outputs:
             Tensor, whose dtype is determined by `output_type`.
@@ -27,6 +29,6 @@ argmin:
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
             >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]), mindspore.float32)
-            >>> index = ops.argmin_(input_x)
+            >>> index = ops.Argmin()(input_x)
             >>> print(index)
             2

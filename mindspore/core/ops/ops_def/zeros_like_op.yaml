@@ -7,4 +7,4 @@ zeros_like:
         y:
             dtype: tensor
     function:
-        name: zeros_like_
+        disable: True

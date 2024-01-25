@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def nan_to_num_forward_func(x, nan, posinf, neginf):
-    return ops.auto_generate.nan_to_num_(x, nan, posinf, neginf)
+    return ops.NanToNum(nan, posinf, neginf)(x)
 
 
 @test_utils.run_with_cell

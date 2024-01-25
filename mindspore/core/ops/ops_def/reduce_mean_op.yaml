@@ -14,3 +14,5 @@ reduce_mean:
   returns:
     output:
       dtype: tensor
+  function:
+    disable: True

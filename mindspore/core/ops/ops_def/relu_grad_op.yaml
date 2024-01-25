@@ -9,4 +9,4 @@ relu_grad:
     output:
       dtype: tensor
   function:
-    name: _relu_grad
+    disable: True

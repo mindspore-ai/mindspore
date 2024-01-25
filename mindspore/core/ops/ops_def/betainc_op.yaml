@@ -10,3 +10,5 @@ betainc:
     returns:
         output:
             dtype: tensor
+    function:
+        disable: True
