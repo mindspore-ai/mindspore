@@ -90,12 +90,7 @@ void TensorShape::Broaden() {
   }
 }
 
-bool DynamicSequenceShape::IsDynamic() const {
-  if (element_shape_ == nullptr) {
-    return false;
-  }
-  return element_shape_->IsDynamic();
-}
+bool DynamicSequenceShape::IsDynamic() const { return true; }
 
 bool DynamicSequenceShape::IsDimZero() const {
   if (element_shape_ == nullptr) {

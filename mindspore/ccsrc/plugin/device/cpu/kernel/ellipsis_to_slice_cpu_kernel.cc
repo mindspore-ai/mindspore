@@ -30,6 +30,7 @@ bool EllipsisToSliceCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs
                                        const std::vector<KernelTensor *> &outputs) {
   auto tuple_index_types = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrTupleIndexTypes));
   end_mask_ = GetValue<int64_t>(primitive_->GetAttr(kAttrEndMask));
+  begin_mask_ = GetValue<int64_t>(primitive_->GetAttr(kAttrBeginMask));
 
   const size_t max_indices_num = 8;
   not_ellipse_occupy_dims_ = 0;
@@ -104,10 +105,17 @@ bool EllipsisToSliceCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *>
 
   // for x[4, ..., 1:] where x.shape = (5, 6, 7, 8), the end_mask_ is 0b100
   // '...' here occupise 2 dims, so we need rectify the end_mask_ to 0b1000
-  for (size_t i = ellipse_position_ + 1; i < dim_size; i++) {
-    if (end_mask_ & (1 << i)) {
-      auto dim = i + ellipsis_range_size - 1;
-      end_strides[dim] = data_shape[dim];
+  auto size_of_indices_after_ellipse_position = not_ellipse_occupy_dims_ - ellipse_position_;
+  for (size_t i = 0; i < size_of_indices_after_ellipse_position; i++) {
+    auto idx = i + 1 + ellipse_position_;
+    if (end_mask_ & (1 << idx)) {
+      auto dim = idx + ellipsis_range_size - 1;
+      end_strides[dim] = step_strides[dim] > 0 ? data_shape[dim] : -(data_shape[dim] + 1);
+    }
+
+    if (begin_mask_ & (1 << idx)) {
+      auto dim = idx + ellipsis_range_size - 1;
+      begin_strides[dim] = step_strides[dim] > 0 ? 0 : -1;
     }
   }
 

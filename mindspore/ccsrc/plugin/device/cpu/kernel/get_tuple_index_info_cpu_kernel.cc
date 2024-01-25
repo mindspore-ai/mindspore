@@ -48,7 +48,6 @@ int GetTupleIndexInfoCpuKernelMod::Resize(const std::vector<KernelTensor *> &inp
                                           const std::vector<KernelTensor *> &outputs) {
   (void)KernelMod::Resize(inputs, outputs);
   data_shapes_ = GetShapes(inputs);
-  output_size_list_ = std::vector<size_t>(outputs.size(), sizeof(size_t) * max_indices_num);
   return KRET_OK;
 }
 
@@ -91,25 +90,20 @@ bool GetTupleIndexInfoCpuKernelMod::LaunchKernel(const std::vector<KernelTensor 
   auto new_slice_shapes = ops::GetTupleIndexInfo::ConstGetTupleIndexInfo(
     data_shape, tensor_indices_shapes, tuple_index_types_, &broadcast_shape, &final_shape, &index_tensor_new_shape,
     &fancy_position, tuple_index_info_type_);
-  out_shapes_ = {broadcast_shape, index_tensor_new_shape, final_shape, {}, final_shape};
-  (void)out_shapes_.insert(out_shapes_.end(), new_slice_shapes.begin(), new_slice_shapes.end());
+
+  CheckCopy(static_cast<int64_t *>(outputs[0]->device_ptr()), sizeof(int64_t), &fancy_position, sizeof(int64_t),
+            kernel_name_);
+  std::vector<std::vector<int64_t>> out_datas = {broadcast_shape, index_tensor_new_shape, final_shape};
+  (void)out_datas.insert(out_datas.end(), new_slice_shapes.begin(), new_slice_shapes.end());
   const size_t indices_size = final_shape.size();
   for (size_t i = 0; i < max_indices_num - new_slice_shapes.size(); i++) {
-    (void)out_shapes_.emplace_back(ShapeVector(indices_size, 1));
+    (void)out_datas.emplace_back(ShapeVector(indices_size, 1));
   }
-  for (size_t i = 0; i < out_shapes_.size(); i++) {
-    const size_t out_size = out_shapes_[i].size() * sizeof(int64_t);
-    if (i == kIndex3) {
-      CheckCopy(static_cast<int64_t *>(outputs[i]->device_ptr()), sizeof(int64_t), &fancy_position, sizeof(int64_t),
-                kernel_name_);
-    } else if (i == kIndex4) {
-      if (memset_s(outputs[i]->device_ptr(), sizeof(int64_t), 0, sizeof(int64_t)) != EOK) {
-        MS_LOG(EXCEPTION) << kernel_name_ << " memset error";
-      }
-    } else {
-      CheckCopy(static_cast<int64_t *>(outputs[i]->device_ptr()), out_size, out_shapes_[i].data(), out_size,
-                kernel_name_);
-    }
+
+  for (size_t i = 0; i < out_datas.size(); i++) {
+    const size_t out_size = out_datas[i].size() * sizeof(int64_t);
+    CheckCopy(static_cast<int64_t *>(outputs[i + 1]->device_ptr()), out_size, out_datas[i].data(), out_size,
+              kernel_name_);
   }
   return true;
 }
@@ -137,10 +131,12 @@ std::vector<KernelAttr> GetTupleIndexInfoCpuKernelMod::GetOpSupport() {
                          for (size_t i = 0; i < max_indices_num; i++) {
                            (void)kernel_attr.AddInputAttr(kNumberTypeInt64);
                          }
-                         const size_t output_size = 13;
-                         for (size_t i = 0; i < output_size; i++) {
-                           (void)kernel_attr.AddOutputAttr(kNumberTypeInt64);
+                         const size_t output_size = 12;
+                         kernel_attr.AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64);
+                         for (size_t i = 1; i < output_size; i++) {
+                           (void)kernel_attr.AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64);
                          }
+
                          return {kernel_attr, &GetTupleIndexInfoCpuKernelMod::LaunchKernel};
                        });
 

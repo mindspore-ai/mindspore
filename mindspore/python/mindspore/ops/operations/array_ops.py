@@ -1361,11 +1361,14 @@ class FillV2(PrimitiveWithCheck):
         return (True, x)
 
     def infer_value(self, dims, x):
-        if x is None or dims is None or \
-                (isinstance(dims, (tuple, list)) and dims) or \
-                isinstance(dims, (Tensor, Tensor_)):
+        if x is None or dims is None or isinstance(dims, (Tensor, Tensor_)):
             return None
-        return x
+        if 0 in dims:
+            init_func = Zero()
+            init_func.__enable_zero_dim__ = True
+            out = Tensor(shape=dims, dtype=x.dtype, init=init_func)
+            return out
+        return Tensor(np.full(dims, x.asnumpy()))
 
 
 class Ones(Primitive):
@@ -4751,7 +4754,7 @@ class BroadcastTo(PrimitiveWithCheck):
     def __init__(self, shape):
         """Initialize BroadcastTo"""
         validator.check_value_type("shape", shape, (tuple), self.name)
-        validator.check("dimension of x", len(shape), "", 0, validator.GT, self.name)
+        validator.check("dimension of x", len(shape), "", 0, validator.GE, self.name)
         for ix, i in enumerate(shape):
             validator.check_value_type('target shape index -> ' + str(ix), i, [int], self.name)
             validator.check("shape element", i, "shape element min limit", -1, validator.GE, self.name)
@@ -4760,7 +4763,13 @@ class BroadcastTo(PrimitiveWithCheck):
     def infer_value(self, x):
         if x is None:
             return None
-        return Tensor(np.broadcast_to(x.asnumpy(), self.shape))
+        np_data = np.broadcast_to(x.asnumpy(), self.shape)
+        if 0 in self.shape:
+            init_func = Zero()
+            init_func.__enable_zero_dim__ = True
+            out = Tensor(shape=self.shape, dtype=x.dtype, init=init_func)
+            return out
+        return Tensor(np_data)
 
 
 class Meshgrid(PrimitiveWithInfer):

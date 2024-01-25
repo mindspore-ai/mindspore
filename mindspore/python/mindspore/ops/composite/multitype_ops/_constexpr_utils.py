@@ -23,6 +23,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops
 from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore import log as logger
 from mindspore import context
@@ -533,12 +534,6 @@ def generate_broadcast_shape(shapes, op_name):
 
 
 @_primexpr
-def check_two_shapes_need_broadcast(shape_x, shape_y):
-    """Check shape_y needs to be broadcast to shape_x."""
-    return shape_y != shape_x
-
-
-@_primexpr
 def compute_multiples(origin_shape, broadcast_shape):
     """Compute multiples between origin shape with broadcast shape."""
     len_gap = len(broadcast_shape) - len(origin_shape)
@@ -627,94 +622,6 @@ def check_number_index_type(number):
         return INT_
     raise IndexError("Only support integers, slices(`:`), ellipsis(`...`), None and bool, got {0} type is {1} "
                      .format(number, type(number)))
-
-
-@_primexpr
-def get_stride_info_from_slice(data_shape, slice_index):
-    """Get stride info from a python slice"""
-    begin, end, step = get_slice_stride(slice_index, data_shape[0])
-    begin_strides = [begin]
-    end_strides = [end]
-    step_strides = [step]
-    for end in data_shape[1:]:
-        begin_strides.append(0)
-        end_strides.append(end)
-        step_strides.append(1)
-    return tuple(begin_strides), tuple(end_strides), tuple(step_strides)
-
-
-@constexpr
-def get_stride_info_from_integer(data_shape, number):
-    """Get stride info from an integer"""
-    begin_strides = [number]
-    end_strides = [number + 1]
-    step_strides = [1]
-    for end in data_shape[1:]:
-        begin_strides.append(0)
-        end_strides.append(end)
-        step_strides.append(1)
-    return tuple(begin_strides), tuple(end_strides), tuple(step_strides)
-
-
-@constexpr
-def get_slice_stride(index_slice, dim_size):
-    """Get slice stride info"""
-    step = 1 if index_slice.step is None else index_slice.step
-    if step < 0:
-        start_default = -1
-        stop_default = -(dim_size + 1)
-        stop = stop_default if index_slice.stop is None else max(stop_default, index_slice.stop)
-    else:
-        start_default = 0
-        stop_default = dim_size
-        stop = stop_default if index_slice.stop is None else min(stop_default, index_slice.stop)
-    start = start_default if index_slice.start is None else index_slice.start
-    return start, stop, step
-
-
-@constexpr
-def get_stride_info_from_tuple(data_shape, tuple_index):
-    """Get stride info from a tuple"""
-    begin_strides, end_strides, step_strides = [], [], []
-    tuple_index_len = len(tuple_index)
-    data_dim = len(data_shape)
-    shrink_axis, index_count, ellipsis_count = 0, 0, 0
-    for index, dim_size in zip(tuple_index, data_shape):
-        if isinstance(index, slice):
-            start, stop, step = get_slice_stride(index, dim_size)
-            begin_strides.append(start)
-            end_strides.append(stop)
-            step_strides.append(step)
-            index_count = index_count + 1
-        elif isinstance(index, int):
-            begin_strides.append(index)
-            end_strides.append(index + 1)
-            step_strides.append(1)
-            shrink_axis = shrink_axis + (1 << index_count)
-            index_count = index_count + 1
-        elif index is ...:
-            ellipsis_count = ellipsis_count + 1
-            if ellipsis_count > 1:
-                raise IndexError("An index can have only one ellipsis (...)")
-            ellipsis_range_size = data_dim - tuple_index_len + 1
-            begin_strides.extend([0] * ellipsis_range_size)
-            end_strides.extend(
-                [shape for shape in data_shape[index_count: index_count + ellipsis_range_size]])
-            step_strides.extend([1] * ellipsis_range_size)
-            index_count = index_count + ellipsis_range_size
-        else:
-            raise IndexError("Not supported index data type, got ",
-                             index, " type is ", type(index))
-    for index in range(index_count, data_dim):
-        begin_strides.append(0)
-        end_strides.append(data_shape[index])
-        step_strides.append(1)
-    strides_v = {
-        'begin': tuple(begin_strides),
-        'end': tuple(end_strides),
-        'step': tuple(step_strides)
-    }
-    return strides_v, shrink_axis
 
 
 @constexpr
@@ -857,33 +764,6 @@ def sequence_to_index(sequence, dim_size):
     return make_tensor(sequence, mstype.int64, None, dim_size)
 
 
-@_primexpr
-def int_to_index(i, shape):
-    """Converts integer to tensor indices."""
-    def _check(i, dim_size):
-        if i < -dim_size or i >= dim_size:
-            raise IndexError(f'index {i} is out of bounds for axis 0 with size {dim_size}')
-
-    dim_size = shape[0]
-    _check(i, dim_size)
-    i = (i + dim_size) % dim_size
-    if len(shape) == 1:
-        return P.FillV2()((1, 1), P.Cast()(i, mstype.int64))
-    mesh = list()
-    ndim = len(shape) - 1
-    for j, size in enumerate(shape[1:]):
-        grid = P.Range()(Tensor(0, mstype.int64), P.Cast()(size, mstype.int64), Tensor(1, mstype.int64))
-        mesh.append(P.Reshape()(grid, tuple([size if j == t else 1 for t in range(ndim)])))
-    shapes = map(P.Shape(), mesh)
-    out_shape = infer_out_shape(*shapes)
-    mesh_arrays = list()
-    for arr in mesh:
-        mesh_arrays.append(P.BroadcastTo(out_shape)(arr))
-    index = P.Stack(-1)(mesh_arrays)
-    return P.Concat(-1)((P.FillV2()(P.Shape()(index)[:-1] + (1,),
-                                    P.Cast()(i, mstype.int64)), index))
-
-
 @constexpr
 def rem_not_expanded_dims(idx_advanced, expand_true, tensor_index_ndim, rem_ndim, not_expanded_dim):
     """Adds remaining dimensions not indexed to not_expanded_dim"""
@@ -942,7 +822,7 @@ def infer_out_shape(*shapes):
     return tuple(shape_out)
 
 
-@constexpr
+@constexpr(check=False)
 def use_copy_slice(tuple_index):
     if tuple_index is not None and len(tuple_index) >= 2:
         return (isinstance(tuple_index[0], int) and
@@ -997,7 +877,9 @@ def generate_padding_shape(shape, length):
     """
     pad the `shape` to `length` with 1.
     """
-    if len(shape) > length:
-        raise ValueError(f"Can not pad {shape} to length {length}.")
+
+    if _inner_ops.IsConstant()(length) and _inner_ops.IsConstant()(len(shape)):
+        if len(shape) > length:
+            raise ValueError(f"Can not pad {shape} to length {length}.")
 
     return shape + (1,) * (length - len(shape))

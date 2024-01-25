@@ -37,6 +37,8 @@ bool TensorToSeqCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   if (kernel_name_ != kernel_type_) {
     MS_LOG(EXCEPTION) << "Suppose to be " << kernel_type_ << " but got " << kernel_name_;
   }
+
+  is_sequence_input_ = kernel_name_ != kTensorToScalar;
   return true;
 }
 
@@ -47,7 +49,8 @@ int TensorToSeqCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     return ret;
   }
   auto shape0 = inputs[kIndex0]->GetShapeVector();
-  is_empty_tensor_ = std::any_of(shape0.begin(), shape0.end(), [](const int64_t shape) { return shape == 0; });
+  is_empty_tensor_ = (is_sequence_input_ && shape0.empty()) ||
+                     std::any_of(shape0.begin(), shape0.end(), [](const int64_t shape) { return shape == 0; });
   return KRET_OK;
 }
 
