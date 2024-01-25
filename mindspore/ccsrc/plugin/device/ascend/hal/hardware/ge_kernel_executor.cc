@@ -51,6 +51,7 @@
 #include "include/backend/debug/data_dump/overflow_dumper.h"
 #include "include/backend/debug/profiler/profiling.h"
 #include "plugin/device/ascend/hal/profiler/profiling_framework_data.h"
+#include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
 #include "utils/anf_utils.h"
 #endif
 
@@ -484,9 +485,13 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
       return false;
     }
   } else {
+    ProfilingUtils::InitReportNode(kernel, true);
+    ProfilingUtils::RecordLaunchTaskBegin(kernel->fullname_with_scope(), true);
     MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope() << ", stream id : " << stream_id << ".";
     bool ret = kernel_mod->Launch(inputs, workspace, outputs, stream);
     MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
+    ProfilingUtils::ReportTask(kernel->fullname_with_scope(), true);
+
     if (!ret) {
       MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
       res_manager_->ResetStreamAndCtx();
