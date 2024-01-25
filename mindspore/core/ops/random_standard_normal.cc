@@ -84,6 +84,13 @@ abstract::ShapePtr RandomStandardNormalInferShape(const PrimitivePtr &primitive,
     }
   } else if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex0])) {
     if (IsValueKnown(shape_value)) {
+      auto shape_ptr = input_args[kInputIndex0]->GetShape();
+      auto shape_vec = shape_ptr->GetShapeVector();
+      auto rank = shape_vec.size();
+      MS_CHECK_VALUE(
+        rank == 1 || rank == 0,
+        CheckAndConvertUtils::FormatCommMsg(
+          "For op[", prim_name, "], if input [shape] is a tensor, its rank must be 1 or 0, but got: ", rank));
       ShapeVector input_shape = CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, prim_name,
                                                                           input_args[kInputIndex0]->GetType());
       (void)CheckAndConvertUtils::CheckPositiveVector("shape", input_shape, prim_name);
