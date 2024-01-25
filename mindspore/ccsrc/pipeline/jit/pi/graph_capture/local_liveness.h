@@ -25,6 +25,8 @@ namespace pijit {
 class Instr;
 class Block;
 class CFG;
+class Graph;
+class ValueNode;
 
 class Liveness {
  public:
@@ -32,7 +34,7 @@ class Liveness {
 
   void Init();
   BitMap CollectAlive(int start_bci) const;
-
+  std::vector<ValueNode *> CollectAliveNode(const Graph *graph, int bci, std::vector<int> *ids = nullptr) const;
   static void BuildRW(const Instr &instr, BitMap *read, BitMap *write);
 
  private:

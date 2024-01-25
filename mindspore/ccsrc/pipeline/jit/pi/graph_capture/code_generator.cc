@@ -1124,21 +1124,16 @@ static std::vector<ValueNode *> CollectGraphOutputs(const std::set<ValueNode *> 
       outputs.push_back(i);
     }
   }
+  std::set<ValueNode *> uniques(outputs.begin(), outputs.end());
+  outputs.assign(uniques.begin(), uniques.end());
   return outputs;
 }
 
 void CodeBreakGenerator::Init(const Graph *graph, const GraphAnalyzer::CapturedInfo *info) {
   break_bci_ = graph->GetStopTraceBci();
   cfg_ = graph->GetCFG().get();
-
-  std::vector<ValueNode *> alive_nodes;
-  if (break_bci_ != -1) {
-    const auto &f = graph->GetFrame(break_bci_);
-    alive_nodes = CollectInterpretOutputs(f, graph->GetCFG()->GetLiveness()->CollectAlive(break_bci_), &alive_locals_);
-  } else {
-    alive_nodes = {graph->GetRetVal()};
-  }
-
+  auto liveness = graph->GetCFG()->GetLiveness();
+  std::vector<ValueNode *> alive_nodes = liveness->CollectAliveNode(graph, break_bci_, &alive_locals_);
   interpret_ = {
     .inputs = graph->GetFrame(0).GetLocals(),
     .outputs = std::move(alive_nodes),

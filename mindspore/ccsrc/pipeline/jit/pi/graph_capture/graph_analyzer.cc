@@ -333,29 +333,14 @@ void GraphAnalyzer::Analyze() {
 FrameStates buildLastFrame(Graph *g) { return g->GetFrame(g->GetStopTraceBci()); }
 
 std::vector<ValueNode *> GraphAnalyzer::GetAliveLocals(Graph *g) {
-  std::vector<ValueNode *> liveLocals;
   int bci = g->GetStopTraceBci();
-  if (bci == -1) {
-    if (g->GetRetVal()) {
-      liveLocals.push_back(g->GetRetVal());
-    }
-    return liveLocals;
-  }
-  const Liveness *liveness = g->GetCFG()->GetLiveness();
   if (this->graph_->Config().GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
     GRAPH_JIT_LOG_F("UD analyze: enter GetAliveLocals bci %d", bci);
   }
-  BitMap lives = liveness->CollectAlive(bci);
-  FrameStates f = buildLastFrame(graph_);
-  std::vector<ValueNode *> locals = f.GetLocals();
-  for (size_t i = 0; i < locals.size(); i++) {
-    if (lives.Get(i)) {
-      liveLocals.push_back(locals[i]);
-    }
-  }
-  std::vector<ValueNode *> stacks = f.GetStacks();
-  std::copy(stacks.begin(), stacks.end(), std::back_inserter(liveLocals));
-  return liveLocals;
+  std::vector<ValueNode *> outputs = g->GetCFG()->GetLiveness()->CollectAliveNode(g, bci);
+  std::set<ValueNode *> uniques(outputs.begin(), outputs.end());
+  outputs.assign(uniques.begin(), uniques.end());
+  return outputs;
 }
 
 void PrintAliveNodes(std::vector<ValueNode *> aliveNodes) {
