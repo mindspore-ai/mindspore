@@ -2,31 +2,16 @@ logical_or:
     description: |
         Computes the "logical OR" of two tensors element-wise.
 
-        Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
-        The inputs must be two tensors or one tensor and one bool.
-        When the inputs are two tensors, the shapes of them could be broadcast,
-        and the data types of them must be bool.
-        When the inputs are one tensor and one bool, the bool object could only be a constant,
-        and the data type of the tensor must be bool.
+        Refer to :func:`mindspore.ops.logical_or` for more details.
 
-        .. math::
+        Inputs:
+            - **x** (Union[Tensor, bool]) - The first input is a bool or a tensor whose data type can be implicitly
+            converted to bool.
+            - **y** (Union[Tensor, bool]) - The second input is a bool when the first input is a tensor or
+            a tensor whose data type can be implicitly converted to bool.
 
-            out_{i} = x_{i} \\vee y_{i}
-
-        Note:
-            LogicalOr supports broadcasting.
-
-        Args:
-            input (Union[Tensor, bool]): The first input is a bool or a tensor whose data type can be implicitly
-                converted to bool.
-            other (Union[Tensor, bool]): The second input is a bool when the first input is a tensor or
-                a tensor whose data type can be implicitly converted to bool.
-
-        Returns:
-            Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
-
-        Raises:
-            TypeError: If neither `input` nor `other` is a Tensor.
+        Outputs:
+            Tensor, the shape is the same as the `x` and `y` after broadcasting, and the data type is bool.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -37,7 +22,8 @@ logical_or:
             >>> from mindspore import Tensor, ops
             >>> x = Tensor(np.array([True, False, True]), mindspore.bool_)
             >>> y = Tensor(np.array([True, True, False]), mindspore.bool_)
-            >>> output = ops.logical_or(x, y)
+            >>> logical_or = ops.LogicalOr()
+            >>> output = logical_or(x, y)
             >>> print(output)
             [ True  True  True]
             >>> x = Tensor(1, mindspore.bool_)

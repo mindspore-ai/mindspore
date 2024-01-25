@@ -1,22 +1,19 @@
 trace:
   description: |
-    Computes the sum of the diagonal elements in a 2-D matrix.
+    Returns a new tensor that is the sum of the `input` main trace.
 
     Note:
         Input must be matrix, and complex number is not supported at present.
 
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
+    Args:
+        input (Tensor): A matrix to be calculated. The matrix must be two dimensional.
 
-    Inputs:
-        - **x** (Tensor) - A matrix to be calculated. The matrix must be two dimensional.
-
-    Outputs:
-        Tensor, 0D Tensor with 1 element, it has the same data type as input `x`.
+    Returns:
+        Tensor, with the same data type as input `input`, and size equals to 1.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        ValueError: If the dimension of `x` is not equal to 2.
+        TypeError: If `input` is not a Tensor.
+        ValueError: If the dimension of `input` is not equal to 2.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -25,16 +22,15 @@ trace:
         >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
-        >>> trace = ops.Trace()
-        >>> output = trace(x)
+        >>> input = Tensor(np.array([[10, 11, 12], [13, 14, 15], [16, 17, 18]]), mindspore.float32)
+        >>> output = ops.trace(input)
         >>> print(output)
-        15.0
-        >>> x = Tensor(np.arange(1, 13).reshape(3, 4), mindspore.float32)
-        >>> output = ops.trace(x)
+        42.0
+        >>> input = Tensor(np.arange(1, 13).reshape(3, 4), mindspore.float32)
+        >>> output = ops.trace(input)
         >>> print(output)
         18.0
-        >>> x = Tensor(np.arange(12, 0, -1).reshape(4, 3), mindspore.float32)
-        >>> output = ops.trace(x)
+        >>> input = Tensor(np.arange(12, 0, -1).reshape(4, 3), mindspore.float32)
+        >>> output = ops.trace(input)
         >>> print(output)
         24.0

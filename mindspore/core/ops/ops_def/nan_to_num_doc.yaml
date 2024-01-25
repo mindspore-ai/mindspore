@@ -2,12 +2,12 @@ nan_to_num:
     description: |
         Replaces `NaN`, positive infinity and negative infinity values in the input Tensor with the values
         specified by `nan`, `posinf` and `neginf` respectively.
-    
+
         .. warning::
-        This is an experimental API that is subject to change or deletion.
-    
+            This is an experimental API that is subject to change or deletion.
+
         Refer to :func:`mindspore.ops.nan_to_num` for more details.
-    
+
         Args:
             nan (float, optional): The value to replace `NaN`. Default value is ``0.0`` .
             posinf (float, optional): If a Number, the value to replace positive infinity values with. If None, positive
@@ -16,16 +16,16 @@ nan_to_num:
             neginf (float, optional): if a Number, the value to replace negative infinity values with. If None, negative
                 infinity values are replaced with the lowest finite value representable by `x`'s dtype.
                 Default value is ``None`` .
-    
+
         Inputs:
             - **x** (Tensor) - Input Tensor of any dimensions. Supported data types: float32 or float16.
-    
+
         Outputs:
             Tensor, has the same shape and dtype as the `x`.
-    
+
         Supported Platforms:
             ``Ascend`` ``CPU``
-    
+
         Examples:
             >>> import mindspore
             >>> import numpy as np

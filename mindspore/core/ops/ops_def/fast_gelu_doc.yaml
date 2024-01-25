@@ -2,13 +2,21 @@ fast_gelu:
     description: |
         Fast Gaussian Error Linear Units activation function.
 
-        Refer to :func:`mindspore.ops.fast_gelu` for more details.
+        FastGeLU is defined as follows:
 
-        Inputs:
-            - **x** (Tensor) - Input to compute the FastGeLU with data type of float16 or float32.
+        .. math::
+            \text{output} = \frac {x} {1 + \exp(-1.702 * \left| x \right|)} * \exp(0.851 * (x - \left| x \right|)),
 
-        Outputs:
+        where :math:`x` is the element of the input.
+
+        Args:
+            x (Tensor): Input to compute the FastGeLU with data type of float16 or float32.
+
+        Returns:
             Tensor, with the same type and shape as `x`.
+
+        Raises:
+            TypeError: If dtype of `x` is neither float16 nor float32.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
