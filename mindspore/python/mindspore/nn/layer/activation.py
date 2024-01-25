@@ -232,25 +232,24 @@ class Softmax(Cell):
     Softmax is defined as:
 
     .. math::
-        \text{softmax}(x_{i}) =  \frac{\exp(x_i)}{\sum_{j=0}^{n-1}\exp(x_j)},
+        \text{softmax}(input_{i}) =  \frac{\exp(input_i)}{\sum_{j=0}^{n-1}\exp(input_j)},
 
-    where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
+    where :math:`input_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
 
     Args:
-        axis (int, optional): The axis to apply Softmax operation, if the dimension of input `x` is x.ndim,
-            the range of axis is `[-x.ndim, x.ndim)`, -1 means the last dimension. Default: ``-1`` .
+        axis (int, optional): The axis to apply Softmax operation, if the dimension of `input` is input.ndim,
+            the range of axis is `[-input.ndim, input.ndim)`, -1 means the last dimension. Default: ``-1`` .
 
     Inputs:
-        - **x** (Tensor) - The input of Softmax with data type of float16 or float32.
+        - **input** (Tensor) - The input of Softmax.
 
     Outputs:
-        Tensor, which has the same type and shape as `x` with values in the range[0,1].
+        Tensor, which has the same type and shape as `input` with values in the range[0, 1].
 
     Raises:
         TypeError: If `axis` is neither an int nor a tuple.
-        TypeError: If dtype of `x` is neither float16 nor float32.
         ValueError: If `axis` is a tuple whose length is less than 1.
-        ValueError: If `axis` is a tuple whose elements are not all in range [-len(x), len(x)).
+        ValueError: If `axis` is a tuple whose elements are not all in range `[-input.ndim, input.ndim)`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -260,9 +259,9 @@ class Softmax(Cell):
         >>> from mindspore import Tensor, nn
         >>> import numpy as np
         >>> # axis = -1(default), and the sum of return value is 1.0.
-        >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> input = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> softmax = nn.Softmax()
-        >>> output = softmax(x)
+        >>> output = softmax(input)
         >>> print(output)
         [0.03168 0.01166 0.0861  0.636   0.2341 ]
     """
@@ -272,8 +271,8 @@ class Softmax(Cell):
         super(Softmax, self).__init__()
         self.softmax = P.Softmax(axis)
 
-    def construct(self, x):
-        return self.softmax(x)
+    def construct(self, input):
+        return self.softmax(input)
 
 
 class LogSoftmax(Cell):
