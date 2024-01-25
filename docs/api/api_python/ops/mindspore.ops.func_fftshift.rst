@@ -11,7 +11,7 @@ mindspore.ops.fftshift
 
     参数：
         - **input** (Tensor) - 输入的Tensor。
-        - **dim** (Union[list(int), tuple(int), int], 可选) - 指定需移动维度的轴。默认值： ``None`` ，将移动所有轴。
+        - **dim** (Union[int, list(int), tuple(int)], 可选) - 指定需移动维度的轴。默认值： ``None`` ，将移动所有轴。
 
     返回：
         Tensor，与 `input` 的数据类型和shape相同。

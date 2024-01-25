@@ -363,6 +363,7 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
     its eigenvector `vi` (i-th column of `v`) satisfies:
 
     .. code-block::
+
                       a @ vi = λ * b @ vi
         vi.conj().T @ a @ vi = λ
         vi.conj().T @ b @ vi = 1
@@ -395,6 +396,7 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
             to be solved for `w` and `v` (only takes 1, 2, 3 as possible inputs):
 
             .. code-block::
+
                 1 =>     a @ v = w @ b @ v
                 2 => a @ b @ v = w @ v
                 3 => b @ a @ v = w @ v
