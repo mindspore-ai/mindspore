@@ -1,25 +1,26 @@
 addcdiv:
     description: |
-        Performs the element-wise division of tensor tensor1 by tensor tensor2,
-        multiply the result by the scalar value and add it to input_data.
+        Adds the element-wise division of `x1` by `x2`, multiplied by `value` to `input_data`.
+        It computes the following operation:
 
         .. math::
-            y[i] = input[i] + value[i] * (tensor1[i] / tensor2[i])
+            y[i] = input\_data[i] + value[i] * (x1[i] / x2[i])
 
-        Args:
-            - **input** (Tensor): The tensor to be added.
-            - **x1** (Tensor): The numerator tensor.
-            - **x2** (Tensor): The denominator tensor.
-            - **value** (Tensor): The multiplier for tensor1/tensor2.
+        Inputs:
+            - **input_data** (Tensor) - The tensor to be added.
+            - **x1** (Tensor) - The numerator tensor.
+            - **x2** (Tensor) - The denominator tensor.
+            - **value** (Tensor) - The multiplier for tensor x1/x2.
 
-        Returns:
-            Tensor, has the same shape and dtype as tensor1/tensor2.
+        Outputs:
+            Tensor, has the same shape and dtype as x1/x2.
 
         Raises:
-            TypeError: If dtype of `tensor1`, `tensor2`, `input` is not tensor.
-            ValueError: If `tensor1` could not be broadcast to a tensor with shape of `tensor2`.
-            ValueError: If `value` could not be broadcast to tensors with shapes of `tensor1/tensor2`.
-            ValueError: If `input` could not be broadcast to tensors with shapes of `value*(tensor1/tensor2)`.
+            TypeError: If dtype of `x1`, `x2`, `value`, `input_data` is not tensor.
+            TypeError: If dtype of `x1`, `x2`, `value`, `input_data` are not the same.
+            ValueError: If `x1` could not be broadcast to `x2`.
+            ValueError: If `value` could not be broadcast to `x1/x2`.
+            ValueError: If `input_data` could not be broadcast to `value*(x1/x2)`.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -32,6 +33,7 @@ addcdiv:
             >>> x1 = Tensor(np.array([1, 2, 3, 4]), mindspore.float32)
             >>> x2 = Tensor(np.array([4, 3, 2, 1]), mindspore.float32)
             >>> value = Tensor([1], mindspore.float32)
-            >>> y = ops.Addcdiv()(input_data, x1, x2, value)
+            >>> addcdiv = ops.Addcdiv()
+            >>> y = addcdiv(input_data, x1, x2, value)
             >>> print(y)
             [1.25      1.6666667 2.5       5.       ]

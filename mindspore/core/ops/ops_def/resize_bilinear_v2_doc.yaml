@@ -3,31 +3,33 @@ resize_bilinear_v2:
     Resizes an image to a certain size using the bilinear interpolation.
 
     The resizing only affects the lower two dimensions which represent the height and width.
-    
+
     .. warning::
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        image (Tensor): Image to be resized. Input image must be a 4-D tensor with shape
-          :math:`(batch, channels, height, width)`, with data type of float32 or float16.
-        size (Union[tuple[int], list[int], Tensor]): The new size of the image.
-          A tuple or list or Tensor of 2 int elements :math:`(new_height, new_width)`.
-        align_corners (bool, optional): If ``True`` , rescale input by :math:`(new_height - 1) / (height - 1)`,
-                       which exactly aligns the 4 corners of image and resized image. If ``False`` ,
-                       rescale by :math:`new_height / height`. Default: ``False`` .
+        align_corners (bool, optional): If ``True`` , rescale input by :math:`(new\_height - 1) / (height - 1)`,
+                       which exactly aligns the 4 corners of images and resized images. If ``False`` ,
+                       rescale by :math:`new\_height / height`. Default: ``False`` .
         half_pixel_centers (bool, optional): Whether half pixel center. If set to ``True`` , `align_corners` should be
                            ``False`` . Default: ``False`` .
 
+    Inputs:
+        - **x** (Tensor): Image to be resized. Input images must be a 4-D tensor with shape
+          :math:`(batch, channels, height, width)`, with data type of float32 or float16.
+        - **size** (Union[tuple[int], list[int], Tensor]): The new size of the images.
+          A tuple or list or Tensor of 2 int elements :math:`(new\_height, new\_width)`.
+
     Outputs:
-        Tensor, resized image. 4-D with shape :math:`(batch, channels, new_height, new_width)`,
-        with the same data type as input `image`.
+        Tensor, resized image. 4-D with shape :math:`(batch, channels, new\_height, new\_width)`,
+        with the same data type as input `x`.
 
     Raises:
         TypeError: If `align_corners` is not a bool.
         TypeError: If `half_pixel_centers` is not a bool.
         TypeError: If `align_corners` and `half_pixel_centers` are all ``True`` .
         ValueError: If `half_pixel_centers` is ``True`` and device_target is CPU.
-        ValueError: If dim of `image` is not 4.
+        ValueError: If dim of `x` is not 4.
         ValueError: If `size` is Tensor and its dim is not 1.
         ValueError: If `size` contains other than 2 elements.
 
@@ -37,8 +39,8 @@ resize_bilinear_v2:
     Examples:
         >>> import mindspore
         >>> from mindspore import Tensor, ops
-        >>> image = Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mindspore.float32)
-        >>> output = ops.ResizeBilinearV2()(image, (5, 5))
+        >>> x = Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mindspore.float32)
+        >>> output = ops.ResizeBilinearV2()(x, (5, 5))
         >>> print(output)
         [[[[1. 2. 3. 4. 5.]
            [1. 2. 3. 4. 5.]
