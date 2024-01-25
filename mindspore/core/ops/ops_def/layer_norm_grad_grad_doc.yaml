@@ -14,11 +14,11 @@ layer_norm_grad_grad:
           float32 or float16.
         - **d_db** (Tensor) - The gradient of db, where db is the gradient of LayerNorm's weight beta,
           float32 or float16.
-        - **begin_norm_axis** (int): The begin axis for the input to apply layernorm. Default: 1.
-        - **begin_params_axis** (int): The begin axis for the parameter input to apply layernorm. Default: 1.
+        - **begin_norm_axis** (int) - The begin axis for the input to apply layernorm. Default: 1.
+        - **begin_params_axis** (int) - The begin axis for the parameter input to apply layernorm. Default: 1.
 
 
-    Returns:
+    Outputs:
         Tuple[Tensor], tuple of 3 Tensors (the gradients of layernormgrad x, dy, gamma).
 
     Raises:

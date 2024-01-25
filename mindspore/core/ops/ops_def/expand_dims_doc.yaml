@@ -12,7 +12,7 @@ expand_dims:
             the shape of `input_x`. The value of axis must be in the range
             `[-input_x.ndim-1, input_x.ndim]`. Only constant value is allowed.
 
-    Returns:
+    Outputs:
         Tensor, the shape of tensor is :math:`(1, x_1, x_2, ..., x_R)` if the
         value of `axis` is 0. It has the same data type as `input_x`.
 

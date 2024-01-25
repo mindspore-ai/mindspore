@@ -15,9 +15,9 @@ resize_bilinear_v2:
                            ``False`` . Default: ``False`` .
 
     Inputs:
-        - **x** (Tensor): Image to be resized. Input images must be a 4-D tensor with shape
+        - **x** (Tensor) - Image to be resized. Input images must be a 4-D tensor with shape
           :math:`(batch, channels, height, width)`, with data type of float32 or float16.
-        - **size** (Union[tuple[int], list[int], Tensor]): The new size of the images.
+        - **size** (Union[tuple[int], list[int], Tensor]) - The new size of the images.
           A tuple or list or Tensor of 2 int elements :math:`(new\_height, new\_width)`.
 
     Outputs:

@@ -1,4 +1,4 @@
-ReduceProd():
+reduce_prod:
   description: |
     Reduces a dimension of a tensor by multiplying all elements in the dimension, by default. And also can
     reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
