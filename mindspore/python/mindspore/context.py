@@ -284,7 +284,8 @@ class _Context:
             'conv_allow_hf32': [True, False],
             'exception_dump': ["0", "1", "2"],
             'op_precision_mode': (str,),
-            'parallel_speed_up_json_path': (str, None)
+            'parallel_speed_up_json_path': (str, None),
+            'topo_order': (dict,)
         }
         ascend_cfg_setters = {
             'precision_mode': self._get_ascend_config_setter('precision_mode'),
@@ -294,7 +295,8 @@ class _Context:
             'conv_allow_hf32': self._get_ascend_config_setter('conv_allow_hf32', lambda v: "1" if v else "0"),
             'exception_dump': self._get_ascend_config_setter('exception_dump'),
             'op_precision_mode': self._set_op_precision_mode,
-            'parallel_speed_up_json_path': self._set_speedup_config_path
+            'parallel_speed_up_json_path': self._set_speedup_config_path,
+            'topo_order': self._set_topo_order
         }
         ascend_cfg_set = tuple(ascend_cfg_modes.keys())
         for ascend_key, ascend_value in ascend_config.items():
@@ -617,6 +619,28 @@ class _Context:
             raise ValueError(f"For 'ascend_config', the 'op_precision_mode' is invalid path, "
                              f"got '{op_precision_path}'.")
         self.set_param(ms_ctx_param.op_precision_mode, ascend_value)
+
+    def _set_topo_order(self, topo_order):
+        """
+        Set topo order.
+
+        Args:
+            topo_order (dict):
+                key: str, the name of the graph.
+                value: str, the topo order of the graph, should be one of 'dfs', 'bfs', 'rdfs'.
+        """
+        valid_order = {'dfs', 'bfs', 'rdfs'}
+        if not isinstance(topo_order, dict):
+            raise TypeError(f"For 'ascend_config', the 'topo_order' should be a dict, "
+                            f"got '{type(topo_order)}'.")
+        for k, v in topo_order.items():
+            if not isinstance(k, str):
+                raise TypeError("key {} is not a str".format(k))
+            if v not in valid_order:
+                raise ValueError("value {} should be one of {}.".format(v, valid_order))
+
+        options_str = json.dumps(topo_order)
+        self.set_param(ms_ctx_param.topo_order, options_str)
 
     def _set_speedup_config_path(self, speedup_config_path):
         """"Check and set speedup config for auto parallel."""
