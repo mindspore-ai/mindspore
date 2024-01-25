@@ -21,6 +21,7 @@
 #include <map>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "runtime/device/device_address_utils.h"
 
@@ -214,8 +215,9 @@ Edge::Edge(mindspore::pynative::EdgeType type, device::DeviceAddressPtr address,
     : type_(type),
       id_(MakeEdgeId()),
       ignore_h2d_(false),
+      is_grad_(false),
       address_(std::move(address)),
-      origin_address_(origin_address),
+      origin_address_(std::move(origin_address)),
       node_with_index_(std::move(node_with_index)) {}
 
 SingleOp::SingleOp(PrimitivePtr primitive, CNodePtr kernel, std::vector<EdgePtr> inputs, std::vector<EdgePtr> outputs)

@@ -546,17 +546,22 @@ void SetOutputDeviceAddressFlag(const pynative::OpCompilerInfoPtr &op_compiler_i
   MS_EXCEPTION_IF_NULL(op_run_info);
   const auto &simple_graph = op_compiler_info->simple_graph_;
   size_t output_size = simple_graph->outputs_.size();
+  // Reset grad output flag.
+  const auto &outputs = simple_graph->outputs_;
+  for (const auto &output : outputs) {
+    output->is_grad_ = false;
+  }
+
   if (op_run_info->is_gradient_out) {
     const auto &output_indexes = op_run_info->base_op_run_info.output_indexes;
     for (auto index : output_indexes) {
       if (index >= output_size) {
         MS_LOG(EXCEPTION) << "Gradient output index " << index << " >= graph output size " << output_size;
       }
-      const auto &output = simple_graph->outputs_[index];
+      const auto &output = outputs[index];
       MS_EXCEPTION_IF_NULL(output);
-      const auto &address = output->address_;
-      MS_EXCEPTION_IF_NULL(address);
-      address->set_from_persistent_mem(true);
+      output->is_grad_ = true;
+      MS_LOG(DEBUG) << "Set grad flag for op " << op_run_info->base_op_run_info.op_name << " index " << index;
     }
   }
 }
@@ -637,6 +642,9 @@ void AllocateOutputMemory(const std::vector<EdgePtr> &output_edges, const device
     const auto &device_address = edge->address_;
     MS_EXCEPTION_IF_NULL(device_address);
     if (device_address->GetPtr() == nullptr) {
+      if (edge->is_grad_) {
+        device_address->set_from_persistent_mem(true);
+      }
       MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
       if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
         MS_LOG(EXCEPTION) << "Allocate device memory failed!";
