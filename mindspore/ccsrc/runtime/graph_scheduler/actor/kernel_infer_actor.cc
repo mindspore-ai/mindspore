@@ -24,7 +24,6 @@ void KernelInferActor::Init() {
 
   // Erase output and workspace device tensors which is released by kernel actor.
   size_t input_num = input_device_tensors_.size();
-  // size_t output_num = output_device_tensors_.size();
   if (memory_free_list_.size() > input_num) {
     memory_free_list_.erase(memory_free_list_.begin() + input_num, memory_free_list_.end());
   }
@@ -33,10 +32,9 @@ void KernelInferActor::Init() {
 void KernelInferActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(input_data);
   MS_EXCEPTION_IF_NULL(input_data->data_);
-  MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
   (void)input_op_datas_[sequential_num].emplace_back(input_data);
-  // Without verifying that the device pointer for device tensor is empty, the kernel before the KernelResizeActor phase
+  // Without verifying that the device pointer for device tensor is empty, the kernel before the KernelActor phase
   // may not have started memory allocate and launch.
   auto can_run = CheckRunningCondition(context);
   MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the input op data and check running condition:" << can_run
@@ -53,9 +51,6 @@ void KernelInferActor::RunOpData(OpData<DeviceTensor> *const input_data, OpConte
 }
 
 void KernelInferActor::Run(OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(context);
-  MS_EXCEPTION_IF_ZERO("device_contexts_ size", device_contexts_.size());
-  MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   try {
     ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelInfer, GetAID().Name());
     // 1. Collect the inputs from input data.
@@ -85,16 +80,15 @@ void KernelInferActor::Run(OpContext<DeviceTensor> *const context) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context), error_info);
   }
 
-  PostRun(context);
+  // PostRun
+  EraseInput(context);
+  SendMemoryFreeReq(context);
+  SendOutput(context);
 }
 
 void KernelInferActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
-  if (ActorDispatcher::is_memory_free_sync()) {
-    ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list_,
-                              device_contexts_[0], context, GetAID());
-  } else {
-    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list_, device_contexts_[0],
-                          context, GetAID());
+  if (memory_free_list_.size() > 0) {
+    MemoryManagerActor::GetInstance()->FreeMemory(&memory_free_list_, device_contexts_[0], context, GetAID());
   }
 }
 }  // namespace runtime

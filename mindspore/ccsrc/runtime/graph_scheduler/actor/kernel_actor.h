@@ -65,6 +65,7 @@ class KernelActor : public DebugAwareActor {
       : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid),
         kernel_(kernel),
         is_dynamic_value_(false),
+        has_dynamic_(false),
         enable_async_infer_(false),
         kernel_info_(nullptr),
         real_input_num_(0),
@@ -85,11 +86,6 @@ class KernelActor : public DebugAwareActor {
   void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
   // The callback after memory alloc finished.
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
-
-  // The debug related operation interface.
-  void SendDebugReq(OpContext<DeviceTensor> *const context) override;
-  // The callback after debug finished.
-  void OnDebugFinish(OpContext<DeviceTensor> *const context) override;
 
   const CNodePtr &kernel() const { return kernel_; }
   const std::set<size_t> &modifiable_ref_input_indexes() const { return modifiable_ref_input_indexes_; }
@@ -133,6 +129,7 @@ class KernelActor : public DebugAwareActor {
   bool is_dynamic_shape_;
   bool is_dynamic_value_;
   bool is_dynamic_type_;
+  bool has_dynamic_;
   // Whether enable asynchronously infer shape and resize kernel mod by KernelInferActor and KernelResizeActor.
   bool enable_async_infer_;
   KernelInfo *kernel_info_;
@@ -185,8 +182,6 @@ class KernelActor : public DebugAwareActor {
   void FetchWorkspaceDeviceTensor();
   // Need copy when the data type or format between real parameters and formal parameters are inconsistent.
   void CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *const context);
-  // In step mode, push the input tensors which contain valid device address into input_device_tensors_ directly.
-  void PushInputDeviceTensor(const std::vector<TensorPtr> *input_tensors);
 
   // The processing before kernel launch: update the info of kernel launch.
   void PreLaunchKernel(OpContext<DeviceTensor> *const context);

@@ -452,7 +452,7 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
   MS_EXCEPTION_IF_NULL(actor_manager);
 
   // Create and schedule memory manager actor.
-  auto memory_manager_actor = std::make_shared<MemoryManagerActor>();
+  auto &memory_manager_actor = MemoryManagerActor::GetInstance();
   MS_EXCEPTION_IF_NULL(memory_manager_actor);
   memory_manager_aid_ = memory_manager_actor->GetAID();
   auto base_actor = static_cast<ActorReference>(memory_manager_actor);
