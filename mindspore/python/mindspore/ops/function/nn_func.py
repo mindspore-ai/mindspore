@@ -3812,7 +3812,7 @@ def _nll_loss(inputs, target, target_dim=-1, weight=None, ignore_index=None, red
         target = target.expand_dims(target_dim)
     if ignore_index is not None:
         non_pad_mask = equal_(target, ignore_index)
-        target = target.masked_fill(non_pad_mask, 0)
+        target = target.masked_fill(non_pad_mask, ops.cast(0, target.dtype))
     else:
         non_pad_mask = target
     if weight is not None:
@@ -3830,9 +3830,9 @@ def _nll_loss(inputs, target, target_dim=-1, weight=None, ignore_index=None, red
         smooth_loss = neg_(inputs.sum(axis=target_dim, keepdims=True))
         loss_weights = ones_like_(loss)
     if ignore_index is not None:
-        loss = loss.masked_fill(non_pad_mask, 0.)
-        loss_weights = loss_weights.masked_fill(non_pad_mask, 0.)
-        smooth_loss = smooth_loss.masked_fill(non_pad_mask, 0.)
+        loss = loss.masked_fill(non_pad_mask, ops.cast(0, loss.dtype))
+        loss_weights = loss_weights.masked_fill(non_pad_mask, ops.cast(0, loss_weights.dtype))
+        smooth_loss = smooth_loss.masked_fill(non_pad_mask, ops.cast(0, smooth_loss.dtype))
 
     loss = loss.squeeze(target_dim)
     smooth_loss = smooth_loss.squeeze(target_dim)
