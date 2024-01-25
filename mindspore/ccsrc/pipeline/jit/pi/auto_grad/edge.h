@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_JIT_GRAPH_EDGE_H_
-#define MINDSPORE_JIT_GRAPH_EDGE_H_
+#ifndef MINDSPORE_PI_JIT_EDGE_H_
+#define MINDSPORE_PI_JIT_EDGE_H_
 
 #include <memory>
 #include <vector>
 
 namespace mindspore {
-namespace jit {
+namespace pijit {
 namespace grad {
 class FunctionNode;
 using FunctionNodePtr = std::shared_ptr<FunctionNode>;
@@ -57,6 +57,6 @@ class Edge {
 using EdgePtr = std::shared_ptr<Edge>;
 using EdgePtrList = std::vector<EdgePtr>;
 }  // namespace grad
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
-#endif  // MINDSPORE_JIT_GRAPH_EDGE_H_
+#endif  // MINDSPORE_PI_JIT_EDGE_H_

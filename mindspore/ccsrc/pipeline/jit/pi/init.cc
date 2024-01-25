@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace pijit {
 namespace py = pybind11;
-using FunctionNode = mindspore::jit::grad::FunctionNode;
+using FunctionNode = mindspore::pijit::grad::FunctionNode;
 
 // Interface with python
 void RegPIJitInterface(py::module *m) {
@@ -31,7 +31,7 @@ void RegPIJitInterface(py::module *m) {
   (void)m->def("get_code_extra", &mindspore::get_code_extra,
                "get copy of code extra which is the pijit compile result");
 
-  (void)py::class_<FunctionNode, mindspore::jit::grad::FunctionNodePtr>(*m, "FunctionNode_")
+  (void)py::class_<FunctionNode, mindspore::pijit::grad::FunctionNodePtr>(*m, "FunctionNode_")
     .def_static("record_primitive", &FunctionNode::RecordPrimitive, py::arg("prim"), py::arg("out"), py::arg("inputs"),
                 "Record the executed primitive during forward execution.")
     .def("apply", &FunctionNode::Apply, py::arg("grad"), "Calculate the gradient of the function node.")

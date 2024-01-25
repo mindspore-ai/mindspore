@@ -34,8 +34,7 @@
 #include "include/common/utils/convert_utils_py.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 #define FIND_MAP_CACHE(map, target) \
   do {                              \
     auto iter = (map).find(target); \
@@ -1711,6 +1710,5 @@ std::string AbstractTensor::ToString() const {
   return s.str();
 }
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

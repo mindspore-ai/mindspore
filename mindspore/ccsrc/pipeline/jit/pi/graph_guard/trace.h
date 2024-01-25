@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_TRACE_H
-#define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_TRACE_H
+#ifndef MINDSPORE_PI_JIT_TRACE_H
+#define MINDSPORE_PI_JIT_TRACE_H
 
 #include <memory>
 #include <string>
@@ -27,8 +27,7 @@
 namespace py = pybind11;
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 
 typedef enum _TraceType {
   Unknown = 0,
@@ -235,8 +234,7 @@ using UnsupportedTracePtr = std::shared_ptr<UnsupportedTrace>;
 /// \brief Get the reference for the object by Py_INCREF and call Py_DECREF by yourself.
 PyObject *GetObjectFromTrace(const PyFrameObject *frame, TracePtr trace,
                              std::map<std::string, PyObject *> *cache = nullptr);
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_TRACE_H
+#endif  // MINDSPORE_PI_JIT_TRACE_H

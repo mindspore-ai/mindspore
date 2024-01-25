@@ -26,8 +26,7 @@
 #include "pipeline/pynative/pynative_execute.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace {
 // Reference : method _generate_run_args of _MindsporeFunctionExecutor in api.py
 // Parameters should be eliminated in the following case：
@@ -196,6 +195,5 @@ CallableGraph Compiler::Compile(const PyFunctionObject &func, const PyFrameObjec
 
   return callable;
 }
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

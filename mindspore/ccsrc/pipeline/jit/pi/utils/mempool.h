@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_MEMPOOL_H
-#define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_MEMPOOL_H
+#ifndef MINDSPORE_PI_JIT_MEMPOOL_H
+#define MINDSPORE_PI_JIT_MEMPOOL_H
 
 #include <string>
 #include <utility>
 #include <vector>
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 template <typename T>
 class MemPool {
  public:
@@ -49,8 +48,7 @@ class MemPool {
   std::vector<T *> pool_;
   std::string decs_;
 };
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_MEMPOOL_H
+#endif  // MINDSPORE_PI_JIT_MEMPOOL_H

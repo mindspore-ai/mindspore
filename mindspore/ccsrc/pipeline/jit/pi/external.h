@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_EXTERNAL_H
-#define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_EXTERNAL_H
+#ifndef MINDSPORE_PI_JIT_EXTERNAL_H
+#define MINDSPORE_PI_JIT_EXTERNAL_H
 
 #include "pybind11/pybind11.h"
 #include "include/api/visible.h"
@@ -34,4 +34,4 @@ MS_API PyObject *EvalFrame(PyThreadState *tstate, PyFrameObject *f, int exc);
 #endif
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_EXTERNAL_H
+#endif  // MINDSPORE_PI_JIT_EXTERNAL_H

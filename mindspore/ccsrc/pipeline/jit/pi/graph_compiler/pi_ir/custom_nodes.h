@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_JIT_GRAPH_CUSTOM_NODES_H_
-#define MINDSPORE_JIT_GRAPH_CUSTOM_NODES_H_
+#ifndef MINDSPORE_PI_JIT_CUSTOM_NODES_H_
+#define MINDSPORE_PI_JIT_CUSTOM_NODES_H_
 
 #include <memory>
 #include <string>
@@ -22,8 +22,7 @@
 #include "pipeline/jit/pi/graph_compiler/pi_ir/operation.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace ir {
 /// \brief RefNode is the class which represent that this node is defined elsewhere and is only used here.
 class RefNode : public Node {
@@ -1010,8 +1009,7 @@ class NaryWithFlagNode : public NaryOperation, public InstrArg {
 
 using NaryWithFlagNodePtr = std::shared_ptr<NaryWithFlagNode>;
 }  // namespace ir
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_JIT_GRAPH_CUSTOM_NODES_H_
+#endif  // MINDSPORE_PI_JIT_CUSTOM_NODES_H_

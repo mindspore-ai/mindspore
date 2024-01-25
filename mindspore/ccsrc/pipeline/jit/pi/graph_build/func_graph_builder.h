@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PI_GRAPH_BUILD_FUNC_GRAPH_BUILDER_H_
-#define MINDSPORE_CCSRC_PIPELINE_JIT_PI_GRAPH_BUILD_FUNC_GRAPH_BUILDER_H_
+#ifndef MINDSPORE_PI_JIT_GRAPH_BUILD_FUNC_GRAPH_BUILDER_H_
+#define MINDSPORE_PI_JIT_GRAPH_BUILD_FUNC_GRAPH_BUILDER_H_
 
 #include <vector>
 #include <memory>
@@ -138,4 +138,4 @@ class FuncGraphBuilder {
   std::vector<AnfNodePtr> output_nodes_;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_PI_GRAPH_BUILD_FUNC_GRAPH_BUILDER_H_
+#endif  // MINDSPORE_PI_JIT_GRAPH_BUILD_FUNC_GRAPH_BUILDER_H_

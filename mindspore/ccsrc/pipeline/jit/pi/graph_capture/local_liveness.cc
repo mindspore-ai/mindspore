@@ -20,8 +20,7 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 
 BitMap Liveness::CollectAlive(int start_bci) const {
   Block *cur = cfg_->GetBlockByBci(start_bci);
@@ -101,6 +100,5 @@ void Liveness::Propagate(Block *cur, std::vector<Block *> *list) {
   }
 }
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

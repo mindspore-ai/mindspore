@@ -19,8 +19,7 @@
 #include "pipeline/jit/pi/graph_capture/graph.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 ValueNode ValueNode::UnboundLocal(ValueNode::Unbound, nullptr, 0, 0);
 
 // these value node not in locals
@@ -106,6 +105,5 @@ void CallNode::SetSubGraph(Graph *n) {
     n->SetParent(GetGraph());
   }
 }
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

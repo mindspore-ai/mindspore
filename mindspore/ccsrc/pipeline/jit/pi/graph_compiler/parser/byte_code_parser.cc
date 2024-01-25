@@ -22,8 +22,7 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace {
 template <typename T>
 T var_init(PyObject *obj) {
@@ -1066,6 +1065,5 @@ void ByteCodeParser::ParseRaiseVarargs(const InstrPtr &instr) {
 ir::DebugInfoPtr ByteCodeParser::GetNodeDebugInfo(const InstrPtr &instr) {
   return std::move(std::make_shared<ir::DebugInfo>(instr->GetArgRepr(), func_->GetFileName(), instr->GetStartsLine()));
 }
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

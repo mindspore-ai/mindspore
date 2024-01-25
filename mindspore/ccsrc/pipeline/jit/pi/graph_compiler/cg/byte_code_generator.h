@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_JIT_GRAPH_BYTE_CODE_GENERATOR_H_
-#define MINDSPORE_JIT_GRAPH_BYTE_CODE_GENERATOR_H_
+#ifndef MINDSPORE_PI_JIT_BYTE_CODE_GENERATOR_H_
+#define MINDSPORE_PI_JIT_BYTE_CODE_GENERATOR_H_
 
 #include <Python.h>
 #include <map>
@@ -27,8 +27,7 @@
 #include "pipeline/jit/pi/graph_compiler/pi_ir/ir_visitor.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace py = pybind11;
 
 // ByteCodeGenerator to parse python byte code
@@ -135,8 +134,7 @@ class ByteCodeGenerator : public ir::IRVisitor {
 };
 
 using ByteCodeGeneratorPtr = std::shared_ptr<ByteCodeGenerator>;
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_JIT_GRAPH_BYTE_CODE_GENERATOR_H_
+#endif  // MINDSPORE_PI_JIT_BYTE_CODE_GENERATOR_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_JIT_GRAPH_IR_MUTATOR_H_
-#define MINDSPORE_JIT_GRAPH_IR_MUTATOR_H_
+#ifndef MINDSPORE_PI_JIT_IR_MUTATOR_H_
+#define MINDSPORE_PI_JIT_IR_MUTATOR_H_
 
 #include "pipeline/jit/pi/graph_compiler/pi_ir/ctrl_flow.h"
 #include "pipeline/jit/pi/graph_compiler/pi_ir/custom_nodes.h"
@@ -22,8 +22,7 @@
 #include "pipeline/jit/pi/graph_compiler/pi_ir/value.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace ir {
 class IRMutator {
  public:
@@ -92,8 +91,7 @@ class IRMutator {
 #define DISPATCH_TO_MUTATE(OP) \
   set_dispatch<OP>([](const NodePtr &node, IRMutator *m) { return m->Mutate_(std::static_pointer_cast<OP>(node)); })
 }  // namespace ir
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_JIT_GRAPH_IR_MUTATOR_H_
+#endif  // MINDSPORE_PI_JIT_IR_MUTATOR_H_

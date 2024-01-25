@@ -37,8 +37,7 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace ir {
 STATIC_IR_FUNCTOR(IRMutator, vtable).set_dispatch<MindNode>([](const NodePtr &node, IRMutator *m) { return node; });
 }  // namespace ir
@@ -664,6 +663,5 @@ AnfNodePtr FuncGraphBuilder::MergeDict(const AnfNodePtr &left, const AnfNodePtr 
   CNodePtr values_cnode = func_graph_->NewCNodeInOrder(prim::kPrimMakeTuple, values);
   return func_graph_->NewCNodeInOrder({NewValueNode(prim::kPrimMakeDict), keys_cnode, values_cnode});
 }
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

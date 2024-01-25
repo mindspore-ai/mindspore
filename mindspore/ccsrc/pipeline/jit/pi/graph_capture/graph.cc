@@ -22,8 +22,7 @@
 #include "pipeline/jit/pi/common.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 Graph::Graph(PyCodeObject *co, PyObject *globals, const GraphJitConfig &conf)
     : ret_val_(nullptr),
       co_(py::cast<py::object>(reinterpret_cast<PyObject *>(co))),
@@ -183,12 +182,12 @@ TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_d
       return ret;
     } break;
     case AbstractNode::Type::Param: {
-      return std::make_shared<RootTrace>(p->GetVobj()->GetPyObject().ptr(), mindspore::jit::graph::TraceType::Param,
+      return std::make_shared<RootTrace>(p->GetVobj()->GetPyObject().ptr(), mindspore::pijit::TraceType::Param,
                                          p->GetOparg(), p->GetName());
     }
     case AbstractNode::Type::CellVar:
     case AbstractNode::Type::FreeVar: {
-      return std::make_shared<RootTrace>(p->GetVobj()->GetPyObject().ptr(), mindspore::jit::graph::TraceType::Param,
+      return std::make_shared<RootTrace>(p->GetVobj()->GetPyObject().ptr(), mindspore::pijit::TraceType::Param,
                                          p->GetOparg(), p->GetName());
     }
     case AbstractNode::Type::Unbound:
@@ -211,7 +210,7 @@ bool Graph::GuardValueNode(ValueNode *node) {
                         Config().GetBoolConfig(GraphJitConfig::kPrintGuard), 0,
                         Config().getIntConfig(GraphJitConfig::GraphJitConfig::kMaxTraceDepth));
   if (t != nullptr) {
-    bool ret = guard_->GetGuard()->GuardOn(t, mindspore::jit::graph::GuardLevel::GEqual);
+    bool ret = guard_->GetGuard()->GuardOn(t, mindspore::pijit::GuardLevel::GEqual);
     if (Config().GetBoolConfig(GraphJitConfig::kGuardDetachObject)) {
       t->Detach();
     }
@@ -412,6 +411,5 @@ std::string Graph::DumpLoops() const {
   return os.str();
 }
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_INFER_H
-#define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_INFER_H
+#ifndef MINDSPORE_PI_JIT_INFER_H
+#define MINDSPORE_PI_JIT_INFER_H
 
 #include <memory>
 #include <vector>
@@ -23,8 +23,7 @@
 #include "pybind_api/ir/primitive_py.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 
 class InferEngine : public std::enable_shared_from_this<InferEngine> {
  public:
@@ -85,8 +84,7 @@ bool FindTensorName(const std::string &name);
 
 bool CheckTensorDataInitialized(const py::object &tensor);
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_INFER_H
+#endif  // MINDSPORE_PI_JIT_INFER_H

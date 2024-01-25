@@ -15,15 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_JIT_GRAPH_COMPILER_UTILS_H_
-#define MINDSPORE_JIT_GRAPH_COMPILER_UTILS_H_
+#ifndef MINDSPORE_PI_JIT_COMPILER_UTILS_H_
+#define MINDSPORE_PI_JIT_COMPILER_UTILS_H_
 
 #include <string>
 #include "include/common/utils/python_adapter.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 class GraphUtils {
  public:
   // object is const when it has attr(const_arg) and the value of attr(const_arg) is true
@@ -68,7 +67,6 @@ class GraphUtils {
     return py::hasattr(obj, common::SafeCStr(attr)) && py::cast<bool>(py::getattr(obj, common::SafeCStr(attr)));
   }
 };
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
-#endif  // MINDSPORE_JIT_GRAPH_COMPILER_UTILS_H_
+#endif  // MINDSPORE_PI_JIT_COMPILER_UTILS_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PI_GRAPH_CAPTURE_CODE_GENERATOR_H
-#define MINDSPORE_CCSRC_PIPELINE_JIT_PI_GRAPH_CAPTURE_CODE_GENERATOR_H
+#ifndef MINDSPORE_PI_JIT_GRAPH_CAPTURE_CODE_GENERATOR_H
+#define MINDSPORE_PI_JIT_GRAPH_CAPTURE_CODE_GENERATOR_H
 
 #include <string>
 #include <vector>
@@ -27,8 +27,7 @@
 #include "pipeline/jit/pi/graph_build/func_graph_builder.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 
 namespace py = pybind11;
 
@@ -262,8 +261,7 @@ void MapAdd(const py::dict &dict, const std::string &key, const py::object &valu
 
 // make new code by graph and captured information
 py::object MakeCodeFromCodeGen(const GraphBuilderPtr &builder, const GraphAnalyzerPtr &analyzer, PyObject *globals);
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_CODE_GEN_H

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_JIT_GRAPH_CTRL_FLOW_H_
-#define MINDSPORE_JIT_GRAPH_CTRL_FLOW_H_
+#ifndef MINDSPORE_PI_JIT_CTRL_FLOW_H_
+#define MINDSPORE_PI_JIT_CTRL_FLOW_H_
 
 #include <map>
 #include <memory>
@@ -23,8 +23,7 @@
 #include "pipeline/jit/pi/graph_compiler/pi_ir/custom_nodes.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace ir {
 
 /// \brief Parameter is is the class which represent a parameter of function or method
@@ -774,8 +773,7 @@ class WhileNode : public Node {
 
 using WhileNodePtr = std::shared_ptr<WhileNode>;
 }  // namespace ir
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_JIT_GRAPH_CTRL_FLOW_H_
+#endif  // MINDSPORE_PI_JIT_CTRL_FLOW_H_

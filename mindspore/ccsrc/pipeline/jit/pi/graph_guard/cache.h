@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_CACHE_H
-#define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_CACHE_H
+#ifndef MINDSPORE_PI_JIT_CACHE_H
+#define MINDSPORE_PI_JIT_CACHE_H
 
 #include <memory>
 #include <map>
@@ -26,8 +26,7 @@
 #include "pipeline/jit/pi/graph_guard/perf.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 using NativeFunc = std::function<PyObject *(PyObject *, PyObject *)>;
 using ReleaseFunc = std::function<void()>;
 class OptFunc {
@@ -112,8 +111,7 @@ class OptCodeHub : public std::enable_shared_from_this<OptCodeHub> {
 };
 
 using OptCodeHubPtr = std::shared_ptr<OptCodeHub>;
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_CACHE_H
+#endif  // MINDSPORE_PI_JIT_CACHE_H

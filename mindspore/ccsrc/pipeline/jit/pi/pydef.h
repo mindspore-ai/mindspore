@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_JIT_GRAPH_JIT_PYDEF_H
-#define MINDSPORE_JIT_GRAPH_JIT_PYDEF_H
+#ifndef MINDSPORE_PI_JIT_PYDEF_H
+#define MINDSPORE_PI_JIT_PYDEF_H
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>

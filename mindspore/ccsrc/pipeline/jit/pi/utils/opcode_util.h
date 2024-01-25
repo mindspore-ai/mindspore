@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_OPCODE_UTIL_H
-#define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_OPCODE_UTIL_H
+#ifndef MINDSPORE_PI_JIT_OPCODE_UTIL_H
+#define MINDSPORE_PI_JIT_OPCODE_UTIL_H
 
 #include <string>
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace code {
 enum OpcodeFlag {
   kNamed = 1 << 0,        // has co_names
@@ -54,8 +53,7 @@ struct Opcode {
 
 const Opcode &GetOpcodeInfo(int opcode);
 }  // namespace code
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_OPCODE_UTIL_H
+#endif  // MINDSPORE_PI_JIT_OPCODE_UTIL_H

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_JIT_GRAPH_VALUE_H_
-#define MINDSPORE_JIT_GRAPH_VALUE_H_
+#ifndef MINDSPORE_PI_JIT_VALUE_H_
+#define MINDSPORE_PI_JIT_VALUE_H_
 
 #include <memory>
 #include <string>
@@ -23,8 +23,7 @@
 #include "pybind11/stl.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace ir {
 namespace py = pybind11;
 
@@ -132,8 +131,7 @@ class Value : public Node {
 
 using ValuePtr = std::shared_ptr<Value>;
 }  // namespace ir
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_JIT_GRAPH_VALUE_H_
+#endif  // MINDSPORE_PI_JIT_VALUE_H_

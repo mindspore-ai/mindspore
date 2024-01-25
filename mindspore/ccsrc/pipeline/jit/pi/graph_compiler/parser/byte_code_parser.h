@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_JIT_GRAPH_BYTECODE_PARSER_H_
-#define MINDSPORE_JIT_GRAPH_BYTECODE_PARSER_H_
+#ifndef MINDSPORE_PI_JIT_BYTECODE_PARSER_H_
+#define MINDSPORE_PI_JIT_BYTECODE_PARSER_H_
 
 #include <Python.h>
 #include <map>
@@ -28,8 +28,7 @@
 #include "pipeline/jit/pi/graph_compiler/pi_ir/value.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace py = pybind11;
 
 // ByteCodeParser to parse python byte code
@@ -179,8 +178,7 @@ class ByteCodeParser {
   std::vector<ir::NodePtrList *> nodes_;
   ir::NodePtr latest_gen_node_{nullptr};
 };
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_JIT_GRAPH_BYTECODE_PARSER_H_
+#endif  // MINDSPORE_PI_JIT_BYTECODE_PARSER_H_

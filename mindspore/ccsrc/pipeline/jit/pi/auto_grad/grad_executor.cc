@@ -23,7 +23,7 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-namespace jit {
+namespace pijit {
 namespace grad {
 GradExecutorPtr GradExecutor::grad_executor_ = std::make_shared<GradExecutor>();
 
@@ -98,5 +98,5 @@ FuncGraphPtr GradExecutor::GetFuncGraphBpropGraph(const std::string &phase, cons
   return manager_->GetFuncGraphBpropGraph(forward_graph, inputs, nullptr, nullptr);
 }
 }  // namespace grad
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

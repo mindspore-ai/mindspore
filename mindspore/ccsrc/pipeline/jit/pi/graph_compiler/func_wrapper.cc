@@ -25,8 +25,7 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 const ValuePtrList &InputsCollector::GetInputs() {
   VISIT_NODE_LIST(nodes_)
   return inputs_;
@@ -130,6 +129,5 @@ void FuncWrapper::GenerateReturn() const {
   func_->AddNode(ret);
 }
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

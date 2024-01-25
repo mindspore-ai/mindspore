@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_JIT_GRAPH_JIT_CONFIG_H
-#define MINDSPORE_JIT_GRAPH_JIT_CONFIG_H
+#ifndef MINDSPORE_PI_JIT_CONFIG_H
+#define MINDSPORE_PI_JIT_CONFIG_H
 
 #include <set>
 #include <string>
 #include "pybind11/pybind11.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace py = pybind11;
 
 class GraphJitConfig {
@@ -127,8 +126,7 @@ class GraphJitConfig {
 
 extern GraphJitConfig kPIJitConfigDefault;
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_JIT_GRAPH_JIT_CONFIG_H
+#endif  // MINDSPORE_PI_JIT_CONFIG_H

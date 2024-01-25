@@ -28,8 +28,7 @@
 #include "pipeline/jit/ps/pipeline.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 
 OptStrategy::ExecKind OptStrategy::MakeExecStrategyByPerf(OptPerfPtr graph_perf, OptPerfPtr pynative_perf, int count,
                                                           double adj_coef) {
@@ -290,6 +289,5 @@ OptStrategy::CalcKind OptStrategy::MakeCalcStrategyByShape(const ShapeVector &sh
     return CalcKind::kCalcShape;
   }
 }
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

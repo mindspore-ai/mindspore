@@ -16,6 +16,7 @@
 #include "pipeline/jit/pi/graph_guard/infer.h"
 #include <map>
 #include <string>
+#include <unordered_set>
 #include "abstract/ops/primitive_infer_map.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/stub_tensor.h"
@@ -42,8 +43,7 @@ extern mindspore::abstract::AbstractBasePtr ToAbstract(const mindspore::ValuePtr
 extern std::optional<StandardPrimitiveImplReg> GetPrimitiveInferImpl(const PrimitivePtr &primitive);
 }  // namespace abstract
 
-namespace jit {
-namespace graph {
+namespace pijit {
 
 static InferEnginePtr g_pInferEngine = nullptr;
 
@@ -640,6 +640,5 @@ bool FindTensorName(const std::string &name) {
   return IsFuncInByPassWhiteList(name);
 }
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

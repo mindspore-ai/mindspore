@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_JIT_GRAPH_IR_FUNCTOR_H_
-#define MINDSPORE_JIT_GRAPH_IR_FUNCTOR_H_
+#ifndef MINDSPORE_PI_JIT_IR_FUNCTOR_H_
+#define MINDSPORE_PI_JIT_IR_FUNCTOR_H_
 
 #include <map>
 #include <utility>
@@ -22,8 +22,7 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace ir {
 template <typename FType>
 class NodeFunctor;
@@ -88,8 +87,7 @@ class NodeFunctor<R(const NodePtr &node, Args...)> {
 #define STATIC_IR_FUNCTOR(ClsName, FField) \
   static IR_ATTRIBUTE_UNUSED auto &__make_functor##_##ClsName##__COUNTER__ = ClsName::FField()
 }  // namespace ir
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_JIT_GRAPH_IR_FUNCTOR_H_
+#endif  // MINDSPORE_PI_JIT_IR_FUNCTOR_H_

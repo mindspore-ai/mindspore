@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_INLINE_CHECK_H
-#define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_INLINE_CHECK_H
+#ifndef MINDSPORE_PI_JIT_GRAPH_CAPTURE_INLINE_CHECK_H
+#define MINDSPORE_PI_JIT_GRAPH_CAPTURE_INLINE_CHECK_H
 
 #include <string>
 #include "pipeline/jit/pi/graph_capture/node.h"
 #include "pipeline/jit/pi/graph_guard/trace.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 // check the function is special function that mindspore support and not inline,
 // the return values or type can be infer
 // set key for handler
@@ -37,8 +36,7 @@ void HandleGradFuncCall(CallNode *call_node, AObject *decorated, bool sens_param
 bool GuardConstCallNodeParam(CallNode *call_node, Graph *sub_graph, int max_guard_depth);
 bool JustCallAndSetRes(CallNode *call_node);
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_INLINE_CHECK_H
+#endif  // MINDSPORE_PI_JIT_GRAPH_CAPTURE_INLINE_CHECK_H

@@ -24,8 +24,7 @@
 #include "pipeline/jit/pi/utils/utils.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 
 constexpr const int PY_BCSIZE = sizeof(_Py_CODEUNIT);
 
@@ -499,6 +498,5 @@ const Liveness *CFG::GetLiveness() {
   return liveness_.get();
 }
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

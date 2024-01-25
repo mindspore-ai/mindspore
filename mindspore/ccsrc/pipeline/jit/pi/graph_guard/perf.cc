@@ -16,8 +16,7 @@
 #include "pipeline/jit/pi/graph_guard/perf.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 
 class PerfStatisticsImpl : public PerfStatistics {
  public:
@@ -53,6 +52,5 @@ void OptPerf::AddDuration(double duration) {
 
 PerfStatisticsPtr OptPerf::GetStatistics() { return stat_; }
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

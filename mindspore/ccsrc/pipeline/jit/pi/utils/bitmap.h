@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PI_UTILS_BITMAP_H
-#define MINDSPORE_CCSRC_PIPELINE_JIT_PI_UTILS_BITMAP_H
+#ifndef MINDSPORE_PI_JIT_UTILS_BITMAP_H
+#define MINDSPORE_PI_JIT_UTILS_BITMAP_H
 
 #include <vector>
 #include <numeric>
 #include <algorithm>
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 
 constexpr int popcount(unsigned x) {
 #ifdef __GNUC__
@@ -100,8 +99,7 @@ class BitMap {
   std::vector<size_t> bits_;
 };
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
 #endif

@@ -20,8 +20,7 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 // the number of bits per byte
 constexpr int bits_per_byte = 8;
 
@@ -328,6 +327,5 @@ void ByteCodeGenerator::SetStartsLine(const ir::NodePtr &node) {
   co_lnotab_.push_back(dis);
   co_lnotab_.push_back(inc);
 }
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

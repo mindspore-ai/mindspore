@@ -20,8 +20,7 @@
 #include "pipeline/jit/pi/graph_capture/graph.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 std::string LoopInfo::Dump() const {
   std::stringstream os;
   os << "header: " << header_->id();
@@ -89,6 +88,5 @@ void LoopFinder::FormSimpleLoopInfo() {
   }
   UpdateLoop2Graph();
 }
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

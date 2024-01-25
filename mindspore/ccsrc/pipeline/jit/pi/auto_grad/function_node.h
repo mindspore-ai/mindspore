@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_JIT_GRAPH_FUNCTION_NODE_H_
-#define MINDSPORE_JIT_GRAPH_FUNCTION_NODE_H_
+#ifndef MINDSPORE_PI_JIT_FUNCTION_NODE_H_
+#define MINDSPORE_PI_JIT_FUNCTION_NODE_H_
 
 #include <memory>
 #include "include/common/utils/convert_utils_py.h"
@@ -25,7 +25,7 @@
 #include "pybind11/stl.h"
 
 namespace mindspore {
-namespace jit {
+namespace pijit {
 namespace grad {
 namespace py = pybind11;
 /// \brief FunctionNode is a class, which represent a way to calculate the gradient.
@@ -97,6 +97,6 @@ class FunctionNode : public FunctionContext {
 
 using FunctionNodePtr = std::shared_ptr<FunctionNode>;
 }  // namespace grad
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
-#endif  // MINDSPORE_JIT_GRAPH_FUNCTION_NODE_H_
+#endif  // MINDSPORE_PI_JIT_FUNCTION_NODE_H_

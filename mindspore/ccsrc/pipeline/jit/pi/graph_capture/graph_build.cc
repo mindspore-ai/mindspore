@@ -31,8 +31,7 @@
 #include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 extern TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth);
 
 const char *GraphBuilder::ID___self__ = "__self__";
@@ -2085,7 +2084,7 @@ bool GraphBuilder::HandleCallParameters(const py::object &func_info, CallNode *c
   return true;
 }
 
-static void SetGradFuncInfo(mindspore::jit::graph::CallNode *call_node);
+static void SetGradFuncInfo(mindspore::pijit::CallNode *call_node);
 
 void MindGraphBuilder::FGAddInput(const std::vector<py::object> &args) {
   for (size_t i = 0; i < args.size(); ++i) {
@@ -2681,6 +2680,5 @@ static void SetGradFuncInfo(CallNode *call_node) {
 
 void GraphBuilder::DumpDFG() { GRAPH_JIT_LOG_F("%s", graph_->ToString().c_str()); }
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

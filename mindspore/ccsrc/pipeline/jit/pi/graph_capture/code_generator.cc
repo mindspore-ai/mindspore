@@ -32,8 +32,7 @@
 #endif
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 
 class GraphParameterBuilder {
  public:
@@ -1487,6 +1486,5 @@ std::string PrintNodeSet(const NodeSet &nodes) {
   return s.str();
 }
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
