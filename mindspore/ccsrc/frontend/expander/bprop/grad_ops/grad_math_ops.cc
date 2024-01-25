@@ -2421,16 +2421,11 @@ REG_BPROP_BUILDER("Correlate").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
 
   // step1: if dtype of a/v is not float or complex, cast a, v dtyte as to dout dtype
   static const std::vector<TypeId> complex_or_float = {
-    kNumberTypeFloat16,
-    kNumberTypeFloat32,
-    kNumberTypeFloat64,
-    kNumberTypeComplex64,
-    kNumberTypeComplex128,
+    kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64, kNumberTypeComplex64, kNumberTypeComplex128,
   };
   auto a_type = ib->GetDtypeId(a);
-  bool is_complex_or_float =
-    std::any_of(complex_or_float.begin(), complex_or_float.end(),
-                [&a_type](const TypeId &type_id) { return a_type == type_id; });
+  bool is_complex_or_float = std::any_of(complex_or_float.begin(), complex_or_float.end(),
+                                         [&a_type](const TypeId &type_id) { return a_type == type_id; });
   if (!is_complex_or_float) {
     a = ib->Cast(a, ib->GetDtype(dout));
     v = ib->Cast(v, ib->GetDtype(dout));
@@ -2469,5 +2464,130 @@ REG_BPROP_BUILDER("Correlate").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
 
   return {da, dv, ib->OutZeros(mode)};
 });
+
+REG_BPROP_BUILDER("FFTBase").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto s = ib->GetInput(kIndex1);
+  auto dims = ib->GetInput(kIndex2);
+  auto norm = ib->GetInput(kIndex3);
+  auto norm_value = GetValue<int64_t>(norm->BuildValue());
+  auto fft_mode = ib->GetInput(kIndex4);
+  auto fft_mode_value = GetValue<int64_t>(fft_mode->BuildValue());
+  auto forward = ib->GetInput(kIndex5);
+  auto forward_value = GetValue<bool>(forward->BuildValue());
+  auto out = ib->GetInput(kIndex6);
+  auto dout = ib->GetInput(kIndex7);
+
+  constexpr int64_t norm_backward = 0;
+  constexpr int64_t norm_forward = 1;
+  constexpr int64_t norm_ortho = 2;
+  constexpr int64_t fft_mode_fft = 0;
+  constexpr int64_t fft_mode_ifft = 1;
+
+  // step1：Get the inputs needed to solve for the gradient.
+  int64_t grad_norm_value = norm_forward;
+  switch (norm_value) {
+    case norm_backward:
+      grad_norm_value = norm_forward;
+      break;
+    case norm_forward:
+      grad_norm_value = norm_backward;
+      break;
+    case norm_ortho:
+      grad_norm_value = norm_ortho;
+      break;
+    default:
+      break;
+  }
+  int64_t grad_fft_mode_value = fft_mode_ifft;
+  switch (fft_mode_value) {
+    case fft_mode_fft:
+      grad_fft_mode_value = fft_mode_ifft;
+      break;
+    case fft_mode_ifft:
+      grad_fft_mode_value = fft_mode_fft;
+      break;
+    default:
+      break;
+  }
+
+  // step2：Get the gradient.
+  auto grad_dout = ib->Emit(
+    "FFTBase", {dout, s, dims, ib->Value(grad_norm_value), ib->Value(grad_fft_mode_value), ib->Value(!forward_value)});
+
+  auto s_vec = mindspore::ops::GetArrayValue<int64_t>(s->abstract()).value().ToVector();
+  auto dims_vec = mindspore::ops::GetArrayValue<int64_t>(dims->abstract()).value().ToVector();
+
+  // step3：If given, the gradient will be zero-padded or trimmed to this length.
+  if (!s_vec.empty()) {
+    auto input_shape_vec = ib->GetShape(x);
+    auto output_shape_vec = ib->GetShape(out);
+
+    if (IsDynamic(input_shape_vec) || IsDynamicRank(input_shape_vec)) {
+      MS_LOG_EXCEPTION << "When given `s`, FFTBase grad doesn't support dynamic shape/rank, because it need shape/rank "
+                          "of x to cut ot pad the gradient.";
+    }
+
+    size_t x_rank = input_shape_vec.size();
+    ShapeVector begin;
+    ShapeVector end;
+    ShapeVector strides;
+    for (size_t i = 0; i < x_rank; i++) {
+      (void)begin.emplace_back(0LL);
+      (void)end.emplace_back(output_shape_vec[i]);
+      (void)strides.emplace_back(1LL);
+    }
+
+    if (dims_vec.empty()) {
+      for (size_t i = 0; i < s_vec.size(); i++) {
+        (void)dims_vec.emplace_back(static_cast<int64_t>(x_rank - s_vec.size() + i));
+      }
+    } else {
+      for (size_t i = 0; i < dims_vec.size(); i++) {
+        dims_vec[i] = dims_vec[i] < 0 ? static_cast<int64_t>(x_rank) + dims_vec[i] : dims_vec[i];
+      }
+    }
+
+    bool need_slice = false;
+    bool need_pad = false;
+
+    for (size_t i = 0; i < dims_vec.size(); i++) {
+      if (input_shape_vec[dims_vec[i]] < s_vec[i]) {
+        // The gradient needs to be truncated
+        end[dims_vec[i]] = input_shape_vec[dims_vec[i]];
+        need_slice = true;
+      } else if (input_shape_vec[dims_vec[i]] > s_vec[i]) {
+        // The gradient needs to be zero padded
+        need_pad = true;
+      }
+    }
+
+    if (need_pad) {
+      NodePtr input_shape_node = ib->EmitValue(MakeValue(input_shape_vec));
+      grad_dout = ib->Emit("StridedSliceGrad",
+                           {grad_dout, input_shape_node, ib->Value<ShapeVector>(begin), ib->Value<ShapeVector>(end),
+                            ib->Value<ShapeVector>(strides)},
+                           {{kAttrBeginMask, MakeValue<int64_t>(0)},
+                            {kAttrEndMask, MakeValue<int64_t>(0)},
+                            {kAttrEllipsisMask, MakeValue<int64_t>(0)},
+                            {kAttrNewAxisMask, MakeValue<int64_t>(0)},
+                            {kAttrShrinkAxisMask, MakeValue<int64_t>(0)}});
+    } else if (need_slice) {
+      grad_dout = ib->Emit(
+        "StridedSlice",
+        {grad_dout, ib->Value<ShapeVector>(begin), ib->Value<ShapeVector>(end), ib->Value<ShapeVector>(strides)},
+        {{kAttrBeginMask, MakeValue<int64_t>(0)},
+         {kAttrEndMask, MakeValue<int64_t>(0)},
+         {kAttrEllipsisMask, MakeValue<int64_t>(0)},
+         {kAttrNewAxisMask, MakeValue<int64_t>(0)},
+         {kAttrShrinkAxisMask, MakeValue<int64_t>(0)}});
+    }
+  }
+
+  // step4：Return gradient results.
+  return {grad_dout,          ib->OutZeros(s),        ib->OutZeros(dims),
+          ib->OutZeros(norm), ib->OutZeros(fft_mode), ib->OutZeros(forward)};
+});
+
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

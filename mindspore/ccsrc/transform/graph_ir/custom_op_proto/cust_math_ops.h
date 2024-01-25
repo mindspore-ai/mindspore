@@ -139,5 +139,15 @@ REG_CUST_OP(Correlate)
   .OUTPUT(output, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_COMPLEX64, DT_COMPLEX128}))
   .ATTR(mode, String, "valid")
   .CUST_OP_END_FACTORY_REG(Correlate)
+
+REG_CUST_OP(FFTBase)
+  .INPUT(x, TensorType({DT_INT16, DT_INT32, DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_COMPLEX64, DT_COMPLEX128}))
+  .ATTR(s, ListInt, {})
+  .ATTR(dims, ListInt, {})
+  .ATTR(norm, String, "backward")
+  .ATTR(fft_mode, String, "fft")
+  .ATTR(forward, Bool, true)
+  .OUTPUT(y, TensorType({DT_COMPLEX64, DT_COMPLEX128}))
+  .CUST_OP_END_FACTORY_REG(FFTBase)
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_MATH_OPS_H_

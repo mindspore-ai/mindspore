@@ -126,6 +126,10 @@ enum PoolMode : int64_t {
   MEAN_POOLING = 1,
 };
 
+enum NormMode : int64_t { BACKWARD = 0, FORWARD = 1, ORTHO = 2 };
+
+enum FFTMode : int64_t { FFT = 0, IFFT = 1 };
+
 // float is a float64 in python. But for some historical reason, python float is converted to float32 in
 using pyfloat = float;
 using pyint = int32_t;

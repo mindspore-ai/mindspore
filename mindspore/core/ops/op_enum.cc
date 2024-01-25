@@ -151,6 +151,10 @@ REG_STRING_TO_ENUM(grid_sampler_padding_mode, StrToGridSamplerPaddingMode)
 REG_STRING_TO_ENUM(k_v_cache_align_mode,
                    StrToEnumMap{{"LEFT", KVCacheAlignMode::LEFT}, {"RIGHT", KVCacheAlignMode::RIGHT}})
 
+// FFTMode
+StrToEnumMap StrToFFTModeMap = {{"FFT", FFTMode::FFT}, {"IFFT", FFTMode::IFFT}};
+REG_STRING_TO_ENUM(fft_mode, StrToFFTModeMap)
+
 }  // namespace
 
 int64_t StringToEnumImpl(const std::string &op_name, const std::string &arg_name, const std::string &enum_string) {

@@ -45,6 +45,8 @@ enum NormMode : int64_t { BACKWARD = 0, FORWARD = 1, ORTHO = 2 };
 enum GridSamplerPaddingMode : int64_t { ZEROS = 0, BORDER = 1, REFLECTION = 2 };
 
 enum KVCacheAlignMode : int64_t { RIGHT = 0, LEFT = 1 };
+
+enum FFTMode : int64_t { FFT = 0, IFFT = 1 };
 }  // namespace ops
 }  // namespace mindspore
 #endif  //  MINDSPORE_CORE_OPS_ENUM_H_

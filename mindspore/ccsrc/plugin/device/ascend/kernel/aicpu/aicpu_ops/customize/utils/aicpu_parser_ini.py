@@ -206,7 +206,8 @@ cust_op_lists = [
     "environset",
     "layernormgradgrad",
     "fftshift",
-    "batchnormgradgrad"
+    "batchnormgradgrad",
+    "fftbase"
 ]
 
 
