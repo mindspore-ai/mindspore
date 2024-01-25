@@ -197,6 +197,8 @@ class CodeBreakGenerator {
   // make call operations of graph, build parameters load operations
   void CallCapturedCode(CodeGenerator *code_gen);
 
+  void FixInterpretOuput(CodeGenerator *code_gen);
+
   // make function of untracked bytecode, build restore frame operations of untracked bytecode
   py::object MakeUntrackedCode(int untracked_bci, int untracked_stack_effect) const;
 
@@ -213,9 +215,9 @@ class CodeBreakGenerator {
   // make call operations of untracked bytecode for each branch
   void BreakAtIf(CodeGenerator *code_gen) const;
 
-  std::vector<std::unique_ptr<Instr>> RestoreStack(const std::unordered_map<ValueNode *, int> &map) const;
+  void RestoreStack(CodeGenerator *code_gen) const;
 
-  std::vector<std::unique_ptr<Instr>> RestoreLocals(const std::unordered_map<ValueNode *, int> &map, bool load) const;
+  void RestoreLocals(CodeGenerator *code_gen, bool load) const;
 
   // return co_cellvars and co_freevars
   std::vector<std::string> GetClosureNames() const;
