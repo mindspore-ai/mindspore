@@ -53,7 +53,12 @@ int CustomCoder::Prepare(CoderContext *const context) {
     if (tensor->category() == lite::Category::CONST_TENSOR) {
       if (!const_tensor_map_.count(tensor)) {
         auto buff = allocator_->Malloc(kNumberTypeUInt8, tensor->Size(), kOfflinePackWeight);
-        memcpy_s(buff, tensor->Size(), tensor->data(), tensor->Size());
+        auto ret = memcpy_s(buff, tensor->Size(), tensor->data(), tensor->Size());
+        if (ret != EOK) {
+          MS_LOG(ERROR) << "memcpy_s failed, src_len = " << tensor->Size() << ", dst_len = " << tensor->Size()
+                        << ", ret = " << ret;
+          return RET_ERROR;
+        }
         const_tensor_map_[tensor] = buff;
       }
     }
