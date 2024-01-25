@@ -577,7 +577,7 @@ static bool GraphCapture(JitCompileResults *jcr) {
   AObject::aobject_mem_pool_.Clear(__FILE__, __LINE__);
 
   bool captured = !analyzer->NeedInterpret() && !conf.GetBoolConfig(GraphJitConfig::kInterpretCapturedCode);
-  if (captured) {
+  if (captured && !jcr->conf->GetBoolConfig(GraphJitConfig::kTraceFlag)) {
     jcr->stat = JitCompileResults::GRAPH_CAPTURED;
   }
   return new_code.ptr() != reinterpret_cast<PyObject *>(jcr->origin_frame_->f_code);
