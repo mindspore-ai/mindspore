@@ -38,11 +38,9 @@ mindspore.ops.ApplyAdagradDA
         - **global_step** ([Number, Tensor]) - 训练步骤的编号。必须是Scalar。数据类型为int32或int64。
 
     输出：
-        3个Tensor组成的tuple，更新后的参数。
+        1个Tensor组成的tuple，更新后的参数。
 
         - **var** (Tensor) - shape和数据类型与 `var` 相同。
-        - **gradient_accumulator** (Tensor) - shape和数据类型与 `gradient_accumulator` 相同。
-        - **gradient_squared_accumulator** (Tensor) - shape和数据类型与 `gradient_squared_accumulator` 相同。
 
     异常：
         - **TypeError** - 如果 `var` 、 `gradient_accumulator` 或 `gradient_squared_accumulator` 不是Parameter。
