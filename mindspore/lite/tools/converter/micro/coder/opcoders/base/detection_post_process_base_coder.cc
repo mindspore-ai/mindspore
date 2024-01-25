@@ -70,7 +70,12 @@ int DetectionPostProcessBaseCoder::Prepare(CoderContext *const context) {
     params_->anchors_ =
       static_cast<float *>(allocator_->Malloc(kNumberTypeFloat, anchor_tensor->Size(), kOfflinePackWeight));
     MS_CHECK_PTR(params_->anchors_);
-    memcpy_s(params_->anchors_, anchor_tensor->Size(), anchor_tensor->data(), anchor_tensor->Size());
+    auto ret = memcpy_s(params_->anchors_, anchor_tensor->Size(), anchor_tensor->data(), anchor_tensor->Size());
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "memcpy_s failed, src_len = " << anchor_tensor->Size() << ", dst_len = " << anchor_tensor->Size()
+                    << ", ret = " << ret;
+      return RET_ERROR;
+    }
   } else {
     MS_LOG(ERROR) << "unsupported anchor data type " << anchor_tensor->data_type();
     return RET_ERROR;
