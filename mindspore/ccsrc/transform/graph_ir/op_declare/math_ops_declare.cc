@@ -376,7 +376,7 @@ CUST_INPUT_MAP(Correlate) = {{1, INPUT_DESC(a)}, {2, INPUT_DESC(v)}};
 CUST_ATTR_MAP(Correlate) = EMPTY_ATTR_MAP;
 CUST_INPUT_ATTR_MAP(Correlate) = {{3, ATTR_DESC(mode, AnyTraits<GEEnumToStr>(), mode_strings)}};
 CUST_OUTPUT_MAP(Correlate) = {{0, OUTPUT_DESC(output)}};
-REG_ADPT_DESC(Correlate, prim::kPrimCorrelate->name(), CUST_ADPT_DESC(Correlate))
+REG_ADPT_DESC(Correlate, prim::kPrimCorrelate->name(), CUST_ADPT_DESC(Correlate));
 
 std::vector<std::string> norm_mode = {"backward", "forward", "ortho"};
 std::vector<std::string> fft_mode = {"fft", "ifft"};
@@ -398,5 +398,5 @@ CUST_INPUT_ATTR_MAP(DCT) = {{2, ATTR_DESC(type, AnyTraits<int64_t>())}, {3, ATTR
                             {4, ATTR_DESC(axis, AnyTraits<int64_t>())}, {5, ATTR_DESC(norm, AnyTraits<int64_t>())},
                             {6, ATTR_DESC(forward, AnyTraits<bool>())}, {7, ATTR_DESC(grad, AnyTraits<bool>())}};
 CUST_OUTPUT_MAP(DCT) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(DCT, prim::kPrimDCT->name(), CUST_ADPT_DESC(DCT))
+REG_ADPT_DESC(DCT, prim::kPrimDCT->name(), CUST_ADPT_DESC(DCT));
 }  // namespace mindspore::transform

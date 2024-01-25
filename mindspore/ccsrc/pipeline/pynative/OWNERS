@@ -5,25 +5,11 @@ approvers:
 - baochong
 - gaoxiong1
 - zjun3021
-- echomingzhu
-- zhumingming
-- liangchenghui
-- melody
-- cmy_melody
-- kangyangzc
-- kyang
 
 reviewers:
 - wangch1009
 - luochao60
 - nomindcarry
-- echomingzhu
-- zhumingming
-- liangchenghui
-- melody
-- cmy_melody
-- kangyangzc
-- kyang
 
 options:
     no_parent_owners: true
