@@ -8,3 +8,6 @@ identity:
       dtype: tensor
   function:
     name: deepcopy
+  dispatch:
+    enable: True
+    Ascend: IdentityAscend
