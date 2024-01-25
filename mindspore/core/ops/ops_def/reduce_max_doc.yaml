@@ -1,4 +1,4 @@
-ReduceMax():
+reduce_max:
   description: |
     Reduces a dimension of a tensor by the maximum value in this dimension, by default. And also can
     reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
@@ -9,11 +9,11 @@ ReduceMax():
             If ``False`` , don't keep these dimensions. Default: ``False`` .
     
     Inputs:
-        - **x** (Tensor[Number]): The input tensor.
-        - **axis** (Union[int, tuple(int), list(int), tensor]): The dimensions to reduce. Default: ``()`` , reduce all
-            dimensions. Must be in the range [-r, r).
+        - **x** (Tensor[Number]) - The input tensor.
+        - **axis** (Union[int, tuple(int), list(int), tensor]) - The dimensions to reduce. Default: ``()`` , reduce all
+          dimensions. Must be in the range [-r, r).
     
-    Returns:
+    Outputs:
         output(Tensor): has the same dtype as the `x`.
     
         - If `axis` is (), and `keep_dims` is False,

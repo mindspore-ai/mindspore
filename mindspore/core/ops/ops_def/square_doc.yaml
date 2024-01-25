@@ -9,7 +9,7 @@ square:
         Inputs:
             - **x** (Tensor) - The input tensor.
 
-        Returns:
+        Outputs:
             Tensor, has the same shape and dtype as `x`.
 
         Raises:

@@ -1,4 +1,4 @@
-ReduceMin():
+reduce_min:
   description: |
     Reduces a dimension of a tensor by the minimum value in the dimension, by default. And also can
     reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by

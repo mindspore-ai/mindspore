@@ -15,7 +15,7 @@ resize_linear_1d:
     Inputs:
         - **x** (Tensor) - A 3-D tensor which to resize, with shape [batch, channel, width]. Must be one of the
           following types: float16, float32, float64.
-        - **size** (Union[Tuple[int], List[int], Tensor[int]]): describes the new width of `x` .
+        - **size** (Union[Tuple[int], List[int], Tensor[int]]) - describes the new width of `x` .
           A tuple or list or 1-D tensor with only one int element :math:`(new\_width)`.
 
     Outputs:
