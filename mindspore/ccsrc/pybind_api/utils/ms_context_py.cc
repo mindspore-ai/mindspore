@@ -130,7 +130,8 @@ void RegMsContext(const py::module *m) {
     .value("enable_grad_comm_opt", MsCtxParam::MS_CTX_ENABLE_GRAD_COMM_OPT)
     .value("interleaved_matmul_comm", MsCtxParam::MS_CTX_INTERLEAVED_MATMUL_COMM)
     .value("interleaved_layernorm_comm", MsCtxParam::MS_CTX_INTERLEAVED_LAYERNORM_COMM)
-    .value("host_scheduling_max_threshold", MsCtxParam::MS_CTX_HOST_SCHEDULING_MAX_THRESHOLD);
+    .value("host_scheduling_max_threshold", MsCtxParam::MS_CTX_HOST_SCHEDULING_MAX_THRESHOLD)
+    .value("topo_order", MsCtxParam::MS_CTX_TOPO_ORDER);
   (void)py::class_<mindspore::MsContext, std::shared_ptr<mindspore::MsContext>>(*m, "MSContext")
     .def_static("get_instance", &mindspore::MsContext::GetInstance, "Get ms context instance.")
     .def("get_param", &mindspore::MsCtxGetParameter, "Get value of specified parameter.")
