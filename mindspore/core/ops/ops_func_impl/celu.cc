@@ -15,6 +15,8 @@
  */
 #include "ops/ops_func_impl/celu.h"
 #include "utils/check_convert_utils.h"
+#include "ops/op_name.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -24,6 +26,15 @@ BaseShapePtr CeLUFuncImpl::InferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, 2, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
+  // check attr: alpha
+  auto input_alpha = input_args[kIndex1];
+  MS_EXCEPTION_IF_NULL(input_alpha);
+  ValuePtr alpha_ptr = input_alpha->GetValue();
+  auto alpha_value = GetScalarValue<float>(alpha_ptr);
+  if (MS_LIKELY(alpha_value.has_value())) {
+    (void)CheckAndConvertUtils::CheckValue<float>(kAlpha, alpha_value.value(), kNotEqual, 0.0f, prim_name);
+  }
+
   auto x_shape = input_args[kIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape);
   return x_shape->Clone();

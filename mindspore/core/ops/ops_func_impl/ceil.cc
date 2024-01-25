@@ -28,7 +28,7 @@ BaseShapePtr CeilFuncImpl::InferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, 1, prim_name);
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   const int64_t max_dim = 8;
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex0]->BuildShape())[kShape];
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex0]->GetShape());
   (void)CheckAndConvertUtils::CheckInteger("The dimension of Ceil input", SizeToLong(in_shape.size()), kLessEqual,
                                            max_dim, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
