@@ -67,12 +67,23 @@ class DATASET_API DeviceTensorAscend910B {
 
   Status ToHostTensor(std::shared_ptr<Tensor> *host_tensor);
 
+  bool AddWorkSpace(void *workspace);
+
+  bool AddMaintenFloatArrayMemory(void *float_array);
+
+  bool AddMaintenIntArrayMemory(void *int_array);
+
+  bool ReleaseDeviceMemory();
+
  private:
   // Ascend910B resource
   device::DeviceContext *device_context_;
   size_t stream_id_;
   void *device_address_;
-  void *tensor_;  // aclTensor
+  void *tensor_;                      // aclTensor which point to device_address_
+  void *workspace_;                   // used by step1 with dvpp HostAPI
+  std::vector<void *> float_arrays_;  // used by dvpp in execution
+  std::vector<void *> int_arrays_;    // used by dvpp in execution
   TensorShape tensor_shape_;
   DataType data_type_;
   bool is_hwc_;

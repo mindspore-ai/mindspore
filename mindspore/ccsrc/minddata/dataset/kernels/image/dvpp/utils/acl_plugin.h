@@ -123,6 +123,12 @@ PLUGIN_METHOD(GetSocName, int, std::string *);
 
 PLUGIN_METHOD(CreateAclTensor, int, const int64_t *, uint64_t, mindspore::TypeId, const int64_t *, int64_t,
               const int64_t *, uint64_t, void *, bool, void **);
+
+PLUGIN_METHOD(DestroyTensor, int, void *);
+
+PLUGIN_METHOD(DestroyFloatArray, int, void *);
+
+PLUGIN_METHOD(DestroyIntArray, int, void *);
 #endif
 
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_ACL_PLUGIN_H_

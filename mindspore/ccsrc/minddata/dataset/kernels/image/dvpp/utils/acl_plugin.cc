@@ -443,4 +443,31 @@ APP_ERROR PluginCreateAclTensor(const int64_t *view_dims, uint64_t view_dims_num
   return mindspore::dataset::CreateAclTensor(view_dims, view_dims_num, data_type, stride, offset, storage_dims,
                                              storage_dims_num, tensor_data, is_hwc, acl_tensor);
 }
+
+APP_ERROR PluginDestroyTensor(void *tensor) {
+  if (tensor == nullptr) {
+    MS_LOG(ERROR) << "Input tensor is null.";
+    return APP_ERR_ACL_FAILURE;
+  }
+
+  return mindspore::dataset::DestroyTensor(tensor);
+}
+
+APP_ERROR PluginDestroyFloatArray(void *float_array) {
+  if (float_array == nullptr) {
+    MS_LOG(ERROR) << "Input float_array is null.";
+    return APP_ERR_ACL_FAILURE;
+  }
+
+  return mindspore::dataset::DestroyFloatArray(float_array);
+}
+
+APP_ERROR PluginDestroyIntArray(void *int_array) {
+  if (int_array == nullptr) {
+    MS_LOG(ERROR) << "Input int_array is null.";
+    return APP_ERR_ACL_FAILURE;
+  }
+
+  return mindspore::dataset::DestroyIntArray(int_array);
+}
 #endif

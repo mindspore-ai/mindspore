@@ -159,6 +159,12 @@ APP_ERROR GetSocName(std::string *soc_name);
 APP_ERROR CreateAclTensor(const int64_t *view_dims, uint64_t view_dims_num, mindspore::TypeId data_type,
                           const int64_t *stride, int64_t offset, const int64_t *storage_dims, uint64_t storage_dims_num,
                           void *tensor_data, bool is_hwc, void **acl_tensor);
+
+APP_ERROR DestroyTensor(void *tensor);
+
+APP_ERROR DestroyFloatArray(void *float_array);
+
+APP_ERROR DestroyIntArray(void *int_array);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_DVPP_IMAGE_UTILS_H_
