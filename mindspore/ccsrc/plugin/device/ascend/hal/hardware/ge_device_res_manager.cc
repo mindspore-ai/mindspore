@@ -132,7 +132,8 @@ void GeDeviceResManager::SwapOut(const void *device_ptr, void *host_ptr, size_t 
   (void)mem_manager_->SwapOut(device_ptr, host_ptr, mem_size, stream);
 }
 
-std::vector<void *> GeDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
+std::vector<void *> GeDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list,
+                                                                 uint32_t stream_id) const {
   MS_EXCEPTION_IF_NULL(runtime_instance_);
   runtime_instance_->SetContext();
   MS_EXCEPTION_IF_NULL(mem_manager_);
@@ -144,7 +145,7 @@ std::vector<void *> GeDeviceResManager::AllocateContinuousMemory(const std::vect
   if (swap_manager_ != nullptr) {
     return swap_manager_->AllocDeviceContinuousMem(aligned_size_list);
   }
-  return mem_manager_->MallocContinuousMemFromMemPool(aligned_size_list);
+  return mem_manager_->MallocContinuousMemFromMemPool(aligned_size_list, stream_id);
 }
 
 DeviceAddressPtr GeDeviceResManager::CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {

@@ -139,8 +139,8 @@ void *MemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem,
 }
 
 bool MemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t,
-                                                   std::vector<size_t> size_list) {
-  auto device_ptr_list = MallocContinuousMemFromMemPool(size_list);
+                                                   std::vector<size_t> size_list, uint32_t stream_id) {
+  auto device_ptr_list = MallocContinuousMemFromMemPool(size_list, stream_id);
   if (device_ptr_list.empty()) {
     return false;
   }
@@ -171,7 +171,8 @@ void MemoryManager::FreeMemFromMemPool(void *device_ptr) {
   }
 }
 
-std::vector<void *> MemoryManager::MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list) {
+std::vector<void *> MemoryManager::MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list,
+                                                                  uint32_t stream_id) {
   if (size_list.empty()) {
     MS_LOG(ERROR) << "MallocContinuousMemFromMemPool size list's size is 0.";
   }

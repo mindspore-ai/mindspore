@@ -48,7 +48,8 @@ class MemoryManagerStub : public MemoryManager {
     }
   }
 
-  std::vector<void *> MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list) override {
+  std::vector<void *> MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list,
+                                                     uint32_t /*stream_id*/) override {
     const size_t total_size = std::accumulate(size_list.begin(), size_list.end(), 0);
     std::vector<void *> ret;
     if (device_virtual_count_ + total_size > kDeviceMemSize) {

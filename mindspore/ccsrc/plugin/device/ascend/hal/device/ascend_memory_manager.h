@@ -34,16 +34,17 @@ class AscendMemoryManager : public MemoryManager {
   void ResetDynamicMemory() override;
   void ClearGlobalIdleMem() override;
   void *MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool need_recycle = false,
-                             uint32_t stream_id = UINT32_MAX) override;
+                             uint32_t stream_id = kDefaultStreamIndex) override;
   void *MallocOverflowMemFromMemFromMemPool(size_t size, bool from_persistent_mem) const;
   void FreeMemFromMemPool(void *device_ptr) override;
   size_t GetMaxUsedMemorySize() const override;
   uint64_t GetMsMaxMemSize() const;
-  uint8_t *MallocCommunicationMemFromMemPool(size_t size) override;
+  uint8_t *MallocCommunicationMemFromMemPool(size_t size, uint32_t stream_id = kDefaultStreamIndex) override;
   bool MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,
-                                      std::vector<size_t> size_list) override;
-  std::vector<void *> MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list) override {
-    return AscendMemoryPool::GetInstance().AllocContinuousTensorMem(size_list);
+                                      std::vector<size_t> size_list, uint32_t stream_id = kDefaultStreamIndex) override;
+  std::vector<void *> MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list,
+                                                     uint32_t stream_id = kDefaultStreamIndex) override {
+    return AscendMemoryPool::GetInstance().AllocContinuousTensorMem(size_list, stream_id);
   }
 
   void SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) override;

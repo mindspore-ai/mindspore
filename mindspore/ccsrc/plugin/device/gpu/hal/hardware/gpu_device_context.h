@@ -45,7 +45,8 @@ class GPUDeviceResManager : public DeviceResManager {
 
   std::shared_ptr<void> AllocateHostMemory(size_t size) const override;
 
-  std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list) const override;
+  std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list,
+                                               uint32_t stream_id = kDefaultStreamIndex) const override;
 
   size_t GetAvailableMemSize() const override { return mem_manager_->GetAvailableMemSize(); }
 

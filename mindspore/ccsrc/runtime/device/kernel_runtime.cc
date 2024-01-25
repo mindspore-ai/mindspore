@@ -224,7 +224,8 @@ void KernelRuntime::AssignCommunicationInputFromMemoryPool(const AnfNodePtr &nod
     return;
   }
 
-  if (!mem_manager_->MallocContinuousMemFromMemPool(address_list, total_size, align_size_list)) {
+  if (!mem_manager_->MallocContinuousMemFromMemPool(address_list, total_size, align_size_list,
+                                                    AnfAlgo::GetStreamId(node))) {
     MS_LOG(EXCEPTION) << "Allocate continuous memory failed, totol_size:" << total_size;
   }
 }
@@ -275,7 +276,8 @@ void KernelRuntime::AssignCommunicationOutputFromMemoryPool(const AnfNodePtr &no
     return;
   }
 
-  if (!mem_manager_->MallocContinuousMemFromMemPool(address_list, total_size, align_size_list)) {
+  if (!mem_manager_->MallocContinuousMemFromMemPool(address_list, total_size, align_size_list,
+                                                    AnfAlgo::GetStreamId(node))) {
     MS_LOG(EXCEPTION) << "Allocate continuous memory failed, totol_size:" << total_size;
   }
 }
