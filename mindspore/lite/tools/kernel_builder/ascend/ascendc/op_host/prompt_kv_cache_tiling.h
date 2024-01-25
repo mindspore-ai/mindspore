@@ -20,7 +20,7 @@
 #include "register/tilingdata_base.h"
 
 namespace optiling {
-BEGIN_TILING_DATA_DEF(TilingData)
+BEGIN_TILING_DATA_DEF(PromptKvTilingData)
 TILING_DATA_FIELD_DEF(int64_t, core_num);
 TILING_DATA_FIELD_DEF(int64_t, b);
 TILING_DATA_FIELD_DEF(int64_t, h);
@@ -28,7 +28,12 @@ TILING_DATA_FIELD_DEF(int64_t, s);
 TILING_DATA_FIELD_DEF(int64_t, d);
 TILING_DATA_FIELD_DEF(int64_t, ub);
 TILING_DATA_FIELD_DEF(int64_t, us);
+TILING_DATA_FIELD_DEF(int64_t, former_each_core_bs_num);
+TILING_DATA_FIELD_DEF(int64_t, tail_each_core_bs_num);
+TILING_DATA_FIELD_DEF(int64_t, split_us);
+TILING_DATA_FIELD_DEF(int64_t, former_block_us);
+TILING_DATA_FIELD_DEF(int64_t, tail_block_us);
 END_TILING_DATA_DEF;
-REGISTER_TILING_DATA_CLASS(PromptKvCache, TilingData)
+REGISTER_TILING_DATA_CLASS(PromptKvCache, PromptKvTilingData)
 }  // namespace optiling
 #endif  // PROMPT_KV_CACHE_TILING_H

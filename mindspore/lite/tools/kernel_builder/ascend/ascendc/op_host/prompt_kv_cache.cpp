@@ -30,11 +30,18 @@ constexpr int index6 = 6;
 constexpr int32_t kSize1 = 1;
 constexpr int32_t kSize2 = 2;
 constexpr int32_t kSize4 = 4;
-
 constexpr int64_t kAxisOne = 1;
 constexpr int64_t kAxisTwo = 2;
-
 constexpr size_t k910bWS = 16 * 1024 * 1024;
+
+constexpr int64_t kBufferNum = 2;
+const int64_t kDivisor = 4;
+static inline int64_t CeilRound(int64_t value, int64_t divisor) {
+  if (divisor == 0) {
+    return 0;
+  }
+  return (value + divisor - 1) / divisor * divisor;
+}
 }  // namespace
 
 namespace optiling {
@@ -93,23 +100,45 @@ static ge::graphStatus TilingFunc(gert::TilingContext *context) {
   auto platform = platform_ascendc::PlatformAscendC(context->GetPlatformInfo());
   auto aiv_num = platform.GetCoreNumAiv();
 
-  context->SetBlockDim(aiv_num);
+  // todo get ub size
+  uint64_t ub_size = 0;
+  platform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ub_size);
+  int64_t remain_ub_size = ub_size - CeilRound(ub, kDivisor) * 2 * sizeof(int64_t);
+
+  int64_t bs = b * h;
+  int64_t former_each_core_bs_num = (bs + aiv_num - 1) / aiv_num;
+  int64_t core_num = (bs + former_each_core_bs_num - 1) / former_each_core_bs_num;
+  int64_t tail_each_core_bs_num = bs - (core_num - 1) * former_each_core_bs_num;
+  int64_t split_us = 1;
+  int64_t block_us = us / split_us;
+  while (kBufferNum * block_us * d * type_size >= remain_ub_size) {
+    split_us++;
+    block_us = (us + split_us - 1) / split_us;
+  }
+  int64_t former_block_us = block_us;
+  int64_t tail_block_us = us - (split_us - 1) * former_block_us;
 
   // set workspace for 910B
   size_t *currentWorkspace = context->GetWorkspaceSizes(1);
   currentWorkspace[0] = k910bWS;
 
-  TilingData tiling;
-  tiling.set_core_num(aiv_num);
+  context->SetBlockDim(core_num);
+
+  PromptKvTilingData tiling;
+  tiling.set_core_num(core_num);
   tiling.set_b(b);
   tiling.set_h(h);
   tiling.set_s(s);
   tiling.set_d(d);
   tiling.set_ub(ub);
   tiling.set_us(us);
+  tiling.set_former_each_core_bs_num(former_each_core_bs_num);
+  tiling.set_tail_each_core_bs_num(tail_each_core_bs_num);
+  tiling.set_split_us(split_us);
+  tiling.set_former_block_us(former_block_us);
+  tiling.set_tail_block_us(tail_block_us);
   tiling.SaveToBuffer(context->GetRawTilingData()->GetData(), context->GetRawTilingData()->GetCapacity());
   context->GetRawTilingData()->SetDataSize(tiling.GetDataSize());
-
   return ge::GRAPH_SUCCESS;
 }
 
