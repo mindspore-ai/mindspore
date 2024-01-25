@@ -23,8 +23,7 @@
 #include "pipeline/jit/pi/pi_jit_config.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 
 extern std::string PrintInstr(const std::vector<std::unique_ptr<Instr>> &list);
 extern std::vector<ValueNode *> CollectInterpretOutputs(const FrameStates &last_frame, const BitMap &alive,
@@ -445,6 +444,5 @@ void BytecodeInliner::EraseDeadLocal(const std::vector<ValueNode *> &alive_nodes
   } while (true);
 }
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

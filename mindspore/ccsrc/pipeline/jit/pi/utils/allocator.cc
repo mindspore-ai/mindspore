@@ -19,8 +19,7 @@
 #include "pipeline/jit/pi/graph_capture/loop.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 Allocator::~Allocator() {
   for (Instr *i : instr_pool_) {
     delete i;
@@ -41,6 +40,5 @@ InstrNode *Allocator::NewInstrNode(int op, int arg) { return NewNode<InstrNode>(
 ValueNode *Allocator::NewValueNode(AObject *a, int b, int c, const std::vector<ValueNode *> &d) {
   return NewNode<ValueNode>(a, b, c, d);
 }
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

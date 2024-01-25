@@ -23,8 +23,7 @@
 #include "pipeline/jit/pi/graph_guard/strategy.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 static std::string GetObjectString(PyObject *objName) {
   std::string ret = "";
   if (objName == NULL) {
@@ -2065,6 +2064,5 @@ PyObject *GetMsTensorType() {
   }
 }
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

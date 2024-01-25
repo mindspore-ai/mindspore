@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_CFG_H
-#define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_CFG_H
+#ifndef MINDSPORE_PI_JIT_GRAPH_CAPTURE_CFG_H
+#define MINDSPORE_PI_JIT_GRAPH_CAPTURE_CFG_H
 
 #include <memory>
 #include <set>
@@ -27,8 +27,7 @@
 #include "pipeline/jit/pi/graph_capture/local_liveness.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 
 namespace py = pybind11;
 
@@ -243,8 +242,7 @@ class CFG {
   int nlocals_;
   bool is_generated_ = false;
 };
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_CFG_H
+#endif  // MINDSPORE_PI_JIT_GRAPH_CAPTURE_CFG_H

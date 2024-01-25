@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_ABSTRACT_OBJECT_H
-#define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_ABSTRACT_OBJECT_H
+#ifndef MINDSPORE_PI_JIT_GRAPH_CAPTURE_ABSTRACT_OBJECT_H
+#define MINDSPORE_PI_JIT_GRAPH_CAPTURE_ABSTRACT_OBJECT_H
 
 #include <set>
 #include <string>
@@ -25,8 +25,7 @@
 
 namespace py = pybind11;
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 
 class AbstractObjectBase;
 using AObject = AbstractObjectBase;
@@ -303,8 +302,7 @@ class AbstractTensor : public AbstractObject {
  private:
   bool is_stub_;
 };
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_ABSTRACT_OBJECT_H
+#endif  // MINDSPORE_PI_JIT_GRAPH_CAPTURE_ABSTRACT_OBJECT_H

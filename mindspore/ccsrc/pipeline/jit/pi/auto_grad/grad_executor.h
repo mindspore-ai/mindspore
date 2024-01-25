@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_JIT_GRAPH_GRAD_EXECUTOR_H_
-#define MINDSPORE_JIT_GRAPH_GRAD_EXECUTOR_H_
+#ifndef MINDSPORE_PI_JIT_GRAD_EXECUTOR_H_
+#define MINDSPORE_PI_JIT_GRAD_EXECUTOR_H_
 
 #include <map>
 #include <memory>
@@ -25,7 +25,7 @@
 #include "pybind11/stl.h"
 
 namespace mindspore {
-namespace jit {
+namespace pijit {
 namespace grad {
 namespace py = pybind11;
 
@@ -57,7 +57,7 @@ class GradExecutor {
   BpropFuncGraphManagerPtr manager_;
 };
 }  // namespace grad
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_JIT_GRAPH_GRAD_EXECUTOR_H_
+#endif  // MINDSPORE_PI_JIT_GRAD_EXECUTOR_H_

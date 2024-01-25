@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_JIT_GRAPH_TYPE_H_
-#define MINDSPORE_JIT_GRAPH_TYPE_H_
+#ifndef MINDSPORE_PI_JIT_TYPE_H_
+#define MINDSPORE_PI_JIT_TYPE_H_
 
 #include <memory>
 #include <string>
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace ir {
 using TypeId = int;
 
@@ -74,8 +73,7 @@ class Type : public std::enable_shared_from_this<Type> {
 
 using TypePtr = std::shared_ptr<Type>;
 }  // namespace ir
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_JIT_GRAPH_TYPE_H_
+#endif  // MINDSPORE_PI_JIT_TYPE_H_

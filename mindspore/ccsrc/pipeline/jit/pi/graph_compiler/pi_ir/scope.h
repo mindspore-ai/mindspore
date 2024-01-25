@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_JIT_GRAPH_SCOPE_H_
-#define MINDSPORE_JIT_GRAPH_SCOPE_H_
+#ifndef MINDSPORE_PI_JIT_SCOPE_H_
+#define MINDSPORE_PI_JIT_SCOPE_H_
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace ir {
 enum Scope {
   kScopeUnknown,
@@ -32,8 +31,7 @@ enum Scope {
   kScopeClousre   // means this value will be placed in the tuple clousre_.
 };
 }  // namespace ir
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_JIT_GRAPH_SCOPE_H_
+#endif  // MINDSPORE_PI_JIT_SCOPE_H_

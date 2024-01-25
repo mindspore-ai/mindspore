@@ -15,21 +15,21 @@
  * limitations under the License.
  */
 #include "pipeline/jit/pi/graph_capture/special_func_infer.h"
-#include <string>
-#include <memory>
 #include <algorithm>
-#include <utility>
-#include <unordered_map>
-#include <vector>
+#include <map>
+#include <memory>
 #include <set>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 #include "pipeline/jit/pi/common.h"
 #include "pipeline/jit/pi/external.h"
 #include "pipeline/jit/pi/graph_capture/graph_build.h"
 #include "pipeline/jit/pi/graph_guard/infer.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 using CheckFunc = bool (*)(const py::object &);
 using InferFunc = bool (*)(CallNode *);
 struct SpecialAction {
@@ -287,7 +287,7 @@ static bool InferConvertMap(CallNode *call_node) {
     if (infer_fail) {
       return false;
     }
-    auto inst = mindspore::jit::graph::InferEngine::GetInstance();
+    auto inst = mindspore::pijit::InferEngine::GetInstance();
     bool is_abstract = false;
     PyObject *ret = inst->InferPrimitive(infer_obj.ptr(), list, &is_abstract);
     if (ret == nullptr) {
@@ -436,7 +436,7 @@ bool InferPrimitive(CallNode *call_node) {
     return false;
   }
 
-  auto inst = mindspore::jit::graph::InferEngine::GetInstance();
+  auto inst = mindspore::pijit::InferEngine::GetInstance();
   bool is_abstract = false;
   PyObject *ret;
   try {
@@ -635,7 +635,7 @@ static void HandleGradFunc(CallNode *call_node, const py::object &after_grad, Tr
   MS_LOG(DEBUG) << "infer function 'after_grad', has sens_param " << (sens_param ? "True" : "False");
 
   auto guard = call_node->GetGraph()->GetGuard()->GetGuard();
-  guard->GuardOn(*trace, mindspore::jit::graph::GuardLevel::GEqual);
+  guard->GuardOn(*trace, mindspore::pijit::GuardLevel::GEqual);
   if (config.GetBoolConfig(GraphJitConfig::kGuardDetachObject)) {
     (*trace)->Detach();
   }
@@ -978,6 +978,5 @@ bool HandleFuncInWhiteList(const std::string &key, CallNode *n) {
   MS_LOG(DEBUG) << "specialize for " << key;
   return kFuncWhiteListMap.find(key)->second.infer(n);
 }
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

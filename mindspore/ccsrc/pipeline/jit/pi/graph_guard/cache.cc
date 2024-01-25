@@ -18,8 +18,7 @@
 #include "pipeline/jit/ps/pipeline.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 OptFunc::OptFunc(NativeFunc cFunc, ReleaseFunc rFunc) : cFunc_(cFunc), rFunc_(rFunc) {}
 
 OptFunc::~OptFunc() {
@@ -195,6 +194,5 @@ OptCodePtr OptCodeHub::Filter(std::string key, OptCodeFilterFunc filter) {
   }
   return nullptr;
 }
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

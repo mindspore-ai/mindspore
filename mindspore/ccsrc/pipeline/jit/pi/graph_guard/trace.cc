@@ -32,8 +32,7 @@
 #include "pipeline/jit/pi/graph_capture/abstract_object.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 
 extern bool check_builtin_cfunc(const py::object &func);
 
@@ -614,7 +613,7 @@ static PyObject *RichCompare(PyObject *left, PyObject *right, int oparg) {
 
 static bool support_infer_primitive(PyObject *obj) {
   if (py::isinstance<mindspore::PrimitivePyAdapter>(obj)) {
-    auto inst = mindspore::jit::graph::InferEngine::GetInstance();
+    auto inst = mindspore::pijit::InferEngine::GetInstance();
     return inst->SupportInfer(obj);
   } else {
     return false;
@@ -678,7 +677,7 @@ static PyObject *DoCall(const std::vector<PyObject *> &params, int op, const std
   }
   if (support_infer_primitive(params[0])) {
     std::vector<PyObject *> list;
-    auto inst = mindspore::jit::graph::InferEngine::GetInstance();
+    auto inst = mindspore::pijit::InferEngine::GetInstance();
     list.insert(list.begin(), params.begin() + 1, params.end());
     bool is_abstract = false;
     return inst->InferPrimitive(params[0], list, &is_abstract);
@@ -1761,6 +1760,5 @@ PyObject *GetObjectFromTrace(const PyFrameObject *frame, TracePtr trace, std::ma
   }
 }
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

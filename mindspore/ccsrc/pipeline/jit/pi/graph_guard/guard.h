@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GUARD_H
-#define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GUARD_H
+#ifndef MINDSPORE_PI_JIT_GUARD_H
+#define MINDSPORE_PI_JIT_GUARD_H
 
 #include <memory>
 #include <vector>
@@ -29,8 +29,7 @@
 #include "pipeline/jit/pi/graph_guard/guard_utils.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 
 typedef enum _GuardLevel {
   GDeduce = 0,
@@ -92,8 +91,7 @@ extern const char kSpecializeScalar[];
 extern const char kSpecializeTensor[];
 extern const char kSpecializeContainer[];
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GUARD_H
+#endif  // MINDSPORE_PI_JIT_GUARD_H

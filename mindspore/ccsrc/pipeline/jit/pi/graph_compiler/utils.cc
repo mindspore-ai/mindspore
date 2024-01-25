@@ -39,8 +39,7 @@
 #include "pipeline/jit/ps/static_analysis/static_analysis.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace {
 // Arg is mutable when it is mutable or it is meta tensor and it is not const
 bool IsMutableArg(const py::object &obj, const ValuePtr &value) {
@@ -199,6 +198,5 @@ AnfNodePtr GraphUtils::ConvertPythonObjectToAnfNode(const py::object &object) {
   return NewValueNode(value);
 }
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

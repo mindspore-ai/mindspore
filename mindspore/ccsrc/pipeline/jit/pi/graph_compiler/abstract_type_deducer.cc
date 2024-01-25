@@ -35,8 +35,7 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 abstract::AbstractBasePtr GetAbstract(const ir::TypePtr &type) {
   auto abs_type = std::dynamic_pointer_cast<AbstractType>(type);
   if (abs_type == nullptr) {
@@ -296,6 +295,5 @@ void AbstractTypeDeducer::Visit_(const ir::PairNodePtr &node) {
   Visit(node->GetFirst());
   Visit(node->GetSecond());
 }
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

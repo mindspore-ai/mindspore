@@ -45,8 +45,7 @@
 #include "pipeline/jit/pi/graph_capture/bytecode_inliner.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 static Py_tss_t *tss = NULL;
 
 void AddConfigToGuard(const GraphJitConfig &c, OptGuardPtr guard);
@@ -561,24 +560,23 @@ void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard, bool detach) {
     kwargs = reinterpret_cast<PyDictObject *>(f->f_localsplus[argc + (vargs ? 1 : 0)]);
   }
   for (int i = 0; i < argc; ++i) {
-    RootTracePtr ptr = std::make_shared<RootTrace>(f->f_localsplus[i], mindspore::jit::graph::TraceType::Param, i);
-    guard->GuardOn(ptr, mindspore::jit::graph::GuardLevel::GDeduce, false);
+    RootTracePtr ptr = std::make_shared<RootTrace>(f->f_localsplus[i], mindspore::pijit::TraceType::Param, i);
+    guard->GuardOn(ptr, mindspore::pijit::GuardLevel::GDeduce, false);
     if (detach) {
       ptr->Detach();
     }
   }
   if (vargs != NULL) {
-    RootTracePtr ptr =
-      std::make_shared<RootTrace>(f->f_localsplus[argc], mindspore::jit::graph::TraceType::Param, argc);
-    guard->GuardOn(ptr, mindspore::jit::graph::GuardLevel::GDeduce, false);
+    RootTracePtr ptr = std::make_shared<RootTrace>(f->f_localsplus[argc], mindspore::pijit::TraceType::Param, argc);
+    guard->GuardOn(ptr, mindspore::pijit::GuardLevel::GDeduce, false);
     if (detach) {
       ptr->Detach();
     }
   }
   if (kwargs != NULL) {
     RootTracePtr ptr = std::make_shared<RootTrace>(f->f_localsplus[argc + (vargs ? 1 : 0)],
-                                                   mindspore::jit::graph::TraceType::Param, argc + (vargs ? 1 : 0));
-    guard->GuardOn(ptr, mindspore::jit::graph::GuardLevel::GDeduce, false);
+                                                   mindspore::pijit::TraceType::Param, argc + (vargs ? 1 : 0));
+    guard->GuardOn(ptr, mindspore::pijit::GuardLevel::GDeduce, false);
     if (detach) {
       ptr->Detach();
     }
@@ -587,8 +585,8 @@ void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard, bool detach) {
     Py_ssize_t arg = f->f_code->co_cell2arg[i];
     if (arg != CO_CELL_NOT_AN_ARG) {
       auto cell = f->f_localsplus[f->f_code->co_nlocals + i];
-      RootTracePtr ptr = std::make_shared<RootTrace>(PyCell_GET(cell), mindspore::jit::graph::TraceType::Deref, i);
-      guard->GuardOn(ptr, mindspore::jit::graph::GuardLevel::GDeduce, false);
+      RootTracePtr ptr = std::make_shared<RootTrace>(PyCell_GET(cell), mindspore::pijit::TraceType::Deref, i);
+      guard->GuardOn(ptr, mindspore::pijit::GuardLevel::GDeduce, false);
       if (detach) {
         ptr->Detach();
       }
@@ -597,8 +595,8 @@ void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard, bool detach) {
   for (int i = 0; i < PyTuple_GET_SIZE(f->f_code->co_freevars); ++i) {
     Py_ssize_t arg = PyTuple_GET_SIZE(f->f_code->co_cellvars) + i;
     auto cell = f->f_localsplus[f->f_code->co_nlocals + arg];
-    RootTracePtr ptr = std::make_shared<RootTrace>(PyCell_GET(cell), mindspore::jit::graph::TraceType::Deref, arg);
-    guard->GuardOn(ptr, mindspore::jit::graph::GuardLevel::GDeduce, false);
+    RootTracePtr ptr = std::make_shared<RootTrace>(PyCell_GET(cell), mindspore::pijit::TraceType::Deref, arg);
+    guard->GuardOn(ptr, mindspore::pijit::GuardLevel::GDeduce, false);
     if (detach) {
       ptr->Detach();
     }
@@ -664,7 +662,7 @@ static void AddGradFlagForParam(bool grad_flag, OptGuardPtr guard, bool detach) 
       return std::string("{PyNativeExecutor::GetInstance()->grad_flag == ") + std::to_string(grad_flag) +
              std::string("}(type:") + std::to_string(TraceType::Customized) + std::string(")");
     });
-  guard->GuardOn(ptr, mindspore::jit::graph::GuardLevel::GEqual, true);
+  guard->GuardOn(ptr, mindspore::pijit::GuardLevel::GEqual, true);
   if (detach) {
     ptr->Detach();
   }
@@ -673,7 +671,7 @@ static void AddGradFlagForParam(bool grad_flag, OptGuardPtr guard, bool detach) 
 static std::string CallGraphCompiler(JitCompileResults *jcr, PyFunctionObject *func, const PyFrameObject *frame) {
   std::string phase = GetFuncGraphPhase(*frame, jcr->code);
   MS_LOG(DEBUG) << "Phase is " << phase << "!";
-  CallableGraph callable = mindspore::jit::graph::Compiler::Compile(*func, *frame, phase);
+  CallableGraph callable = mindspore::pijit::Compiler::Compile(*func, *frame, phase);
 
   ReleaseFunc rFunc = nullptr;
   if (jcr->conf->GetBoolConfig(GraphJitConfig::kAutoCleanCache)) {
@@ -1137,10 +1135,10 @@ py::object test_graph_ir_code_gen(PyFrameObject *frame) {
   PyFrame_FastToLocals(frame);
   auto func =
     py::reinterpret_steal<py::object>(PyFunction_New(reinterpret_cast<PyObject *>(frame->f_code), frame->f_globals));
-  mindspore::jit::graph::Utils::DisFuncObject(func.ptr());
-  auto byteCodeParser = std::make_shared<mindspore::jit::graph::ByteCodeParser>(func);
-  mindspore::jit::graph::ir::FunctionNodePtr func_node = byteCodeParser->Parse();
-  auto inliner = std::make_shared<mindspore::jit::graph::FuncInliner>(func_node);
+  mindspore::pijit::Utils::DisFuncObject(func.ptr());
+  auto byteCodeParser = std::make_shared<mindspore::pijit::ByteCodeParser>(func);
+  mindspore::pijit::ir::FunctionNodePtr func_node = byteCodeParser->Parse();
+  auto inliner = std::make_shared<mindspore::pijit::FuncInliner>(func_node);
   inliner->Run();
   int arg_cnt = frame->f_code->co_argcount + frame->f_code->co_kwonlyargcount;
   if (frame->f_code->co_flags & CO_VARARGS) {
@@ -1151,11 +1149,11 @@ py::object test_graph_ir_code_gen(PyFrameObject *frame) {
   py::dict kwargs =
     (frame->f_code->co_flags & CO_VARKEYWORDS) == 0x0 ? py::dict() : py::cast<py::dict>(locals[arg_cnt]);
   args = EliminateStubTensor(args);
-  mindspore::jit::graph::AbstractTypeDeducer::Deduce(func_node, args, kwargs);
+  mindspore::pijit::AbstractTypeDeducer::Deduce(func_node, args, kwargs);
   func_node->Sort();
   std::cout << func_node->ToString() << std::endl;
-  auto func_obj = mindspore::jit::graph::ByteCodeGenerator::GenFunction(func_node);
-  mindspore::jit::graph::Utils::DisFuncObject(func_obj.ptr());
+  auto func_obj = mindspore::pijit::ByteCodeGenerator::GenFunction(func_node);
+  mindspore::pijit::Utils::DisFuncObject(func_obj.ptr());
   if ((func_node->GetFlags() & CO_VARARGS) != 0) {
     auto pos_cnt = args.size() - 1;
     auto var_vargs = py::cast<py::tuple>(args[pos_cnt]);
@@ -1311,8 +1309,7 @@ PyObject *EvalFrame(PyThreadState *tstate, PyFrameObject *f, int exc) {
   }
   return res.inc_ref().ptr();
 }
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
 namespace mindspore {
@@ -1325,15 +1322,15 @@ py::bool_ pi_jit_enable() {
   if (prev != _PyEval_EvalFrameDefault) {
     return false;
   }
-  mindspore::jit::graph::ensureInitialize();
-  _PyInterpreterState_SetEvalFrameFunc(inter, mindspore::jit::graph::EvalFrame);
+  mindspore::pijit::ensureInitialize();
+  _PyInterpreterState_SetEvalFrameFunc(inter, mindspore::pijit::EvalFrame);
   return true;
 }
 
 py::bool_ pi_jit_disable() {
   PyInterpreterState *inter = PyInterpreterState_Main();
   _PyFrameEvalFunction prev = _PyInterpreterState_GetEvalFrameFunc(inter);
-  if (prev != mindspore::jit::graph::EvalFrame) {
+  if (prev != mindspore::pijit::EvalFrame) {
     return false;
   }
   _PyInterpreterState_SetEvalFrameFunc(inter, _PyEval_EvalFrameDefault);
@@ -1353,12 +1350,12 @@ py::bool_ pi_jit_should_compile(const py::object &funcHandle, const py::object &
   } else {
     return false;
   }
-  mindspore::jit::graph::JitCompileResults *c = mindspore::jit::graph::getJitCompileResults(code);
+  mindspore::pijit::JitCompileResults *c = mindspore::pijit::getJitCompileResults(code);
   if (c == nullptr) {
     return false;
   }
-  if (c->stat != mindspore::jit::graph::JitCompileResults::NEVER_COMPILE) {
-    *c->conf = mindspore::jit::graph::GraphJitConfig(tag);
+  if (c->stat != mindspore::pijit::JitCompileResults::NEVER_COMPILE) {
+    *c->conf = mindspore::pijit::GraphJitConfig(tag);
     return true;
   }
 
@@ -1369,14 +1366,14 @@ py::bool_ pi_jit_should_compile(const py::object &funcHandle, const py::object &
     const char *module_name = PyUnicode_AsUTF8(PyFunction_GET_MODULE(func));
     const char *s = strchr(module_name, '.');
     std::string top_module = s ? std::string(module_name, s - module_name) : module_name;
-    mindspore::jit::graph::kPIJitConfigDefault.AddAllowedInlineModules(top_module);
+    mindspore::pijit::kPIJitConfigDefault.AddAllowedInlineModules(top_module);
 
-    raw_func_name = mindspore::jit::graph::Utils::GetPyName(reinterpret_cast<PyFunctionObject *>(func)->func_qualname);
+    raw_func_name = mindspore::pijit::Utils::GetPyName(reinterpret_cast<PyFunctionObject *>(func)->func_qualname);
   }
 
-  c->stat = mindspore::jit::graph::JitCompileResults::GRAPH_CANDIDATE;
-  *c->conf = mindspore::jit::graph::GraphJitConfig(tag);
-  *c->tbs = mindspore::jit::graph::Tracebackes(raw_func_name, raw_func_info_name, raw_code_size);
+  c->stat = mindspore::pijit::JitCompileResults::GRAPH_CANDIDATE;
+  *c->conf = mindspore::pijit::GraphJitConfig(tag);
+  *c->tbs = mindspore::pijit::Tracebackes(raw_func_name, raw_func_info_name, raw_code_size);
   return true;
 }
 #else
@@ -1391,7 +1388,7 @@ py::bool_ pi_jit_should_compile(const py::object &func, const py::object &tag) {
 
 #endif
 
-static py::object ConvertCodeExtra(mindspore::jit::graph::CodeExtra *c) {
+static py::object ConvertCodeExtra(mindspore::pijit::CodeExtra *c) {
   if (c->code == nullptr) {
     return py::object();
   }
@@ -1416,11 +1413,11 @@ static py::object ConvertCodeExtra(mindspore::jit::graph::CodeExtra *c) {
 }
 
 py::object get_code_extra(const py::object &func) {
-  py::object code = mindspore::jit::graph::GetPyCodeObject(func);
+  py::object code = mindspore::pijit::GetPyCodeObject(func);
   if (code.ptr() == nullptr) {
     return py::none();
   }
-  auto c = mindspore::jit::graph::getJitCompileResults(code.ptr(), false);
+  auto c = mindspore::pijit::getJitCompileResults(code.ptr(), false);
   if (c == nullptr) {
     return py::none();
   }

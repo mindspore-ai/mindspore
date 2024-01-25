@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_LOOP_UNROLLING_H
-#define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_LOOP_UNROLLING_H
+#ifndef MINDSPORE_PI_JIT_GRAPH_CAPTURE_LOOP_UNROLLING_H
+#define MINDSPORE_PI_JIT_GRAPH_CAPTURE_LOOP_UNROLLING_H
 
 #include <map>
 #include <memory>
@@ -28,8 +28,7 @@
 #include "pipeline/jit/pi/utils/utils.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 class Graph;
 class LoopUnrolling {
  public:
@@ -63,8 +62,7 @@ class LoopUnrolling {
   ValueNode *loop_value_ = nullptr;
   bool is_cfg_changed_ = false;
 };
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_LOOP_UNROLLING_H
+#endif  // MINDSPORE_PI_JIT_GRAPH_CAPTURE_LOOP_UNROLLING_H

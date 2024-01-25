@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_LOOP_H
-#define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_LOOP_H
+#ifndef MINDSPORE_PI_JIT_GRAPH_CAPTURE_LOOP_H
+#define MINDSPORE_PI_JIT_GRAPH_CAPTURE_LOOP_H
 
 #include <memory>
 #include <queue>
@@ -24,8 +24,7 @@
 #include "pipeline/jit/pi/utils/allocator.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 class Block;
 class LoopInfo {
  public:
@@ -74,8 +73,7 @@ class LoopFinder {
   Allocator &alloc_;
   LoopInfo *loops_ = nullptr;
 };
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_LOOP_H
+#endif  // MINDSPORE_PI_JIT_GRAPH_CAPTURE_LOOP_H

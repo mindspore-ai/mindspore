@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_JIT_GRAPH_IR_VISITOR_H_
-#define MINDSPORE_JIT_GRAPH_IR_VISITOR_H_
+#ifndef MINDSPORE_PI_JIT_IR_VISITOR_H_
+#define MINDSPORE_PI_JIT_IR_VISITOR_H_
 
 #include "pipeline/jit/pi/graph_compiler/pi_ir/ctrl_flow.h"
 #include "pipeline/jit/pi/graph_compiler/pi_ir/custom_nodes.h"
@@ -22,8 +22,7 @@
 #include "pipeline/jit/pi/graph_compiler/pi_ir/value.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace ir {
 class IRVisitor {
  public:
@@ -93,8 +92,7 @@ class IRVisitor {
 #define DISPATCH_TO_VISIT(OP) \
   set_dispatch<OP>([](const NodePtr &node, IRVisitor *v) { v->Visit_(std::static_pointer_cast<OP>(node)); })
 }  // namespace ir
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_JIT_GRAPH_IR_VISITOR_H_
+#endif  // MINDSPORE_PI_JIT_IR_VISITOR_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_JIT_GRAPH_ABSTRACT_TYPE_H_
-#define MINDSPORE_JIT_GRAPH_ABSTRACT_TYPE_H_
+#ifndef MINDSPORE_PI_JIT_ABSTRACT_TYPE_H_
+#define MINDSPORE_PI_JIT_ABSTRACT_TYPE_H_
 
 #include <string>
 #include <memory>
@@ -23,8 +23,7 @@
 #include "pybind11/stl.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace py = pybind11;
 class AbstractType : public ir::Type {
  public:
@@ -75,8 +74,7 @@ class AbstractType : public ir::Type {
 };
 
 using AbstractTypePtr = std::shared_ptr<AbstractType>;
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_JIT_GRAPH_ABSTRACT_TYPE_H_
+#endif  // MINDSPORE_PI_JIT_ABSTRACT_TYPE_H_

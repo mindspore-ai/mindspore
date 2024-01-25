@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_JIT_GRAPH_ABSTRACT_TYPE_DEDUCER_H_
-#define MINDSPORE_JIT_GRAPH_ABSTRACT_TYPE_DEDUCER_H_
+#ifndef MINDSPORE_PI_JIT_ABSTRACT_TYPE_DEDUCER_H_
+#define MINDSPORE_PI_JIT_ABSTRACT_TYPE_DEDUCER_H_
 
 #include <map>
 #include <memory>
@@ -23,8 +23,7 @@
 #include "pipeline/jit/pi/graph_compiler/pi_ir/ir_visitor.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 class AbstractTypeDeducer : public ir::IRVisitor {
  public:
   /// \brief The default constructor for Type.
@@ -79,8 +78,7 @@ class AbstractTypeDeducer : public ir::IRVisitor {
 };
 
 using AbstractTypeDeducerPtr = std::shared_ptr<AbstractTypeDeducer>;
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_JIT_GRAPH_ABSTRACT_TYPE_DEDUCER_H_
+#endif  // MINDSPORE_PI_JIT_ABSTRACT_TYPE_DEDUCER_H_

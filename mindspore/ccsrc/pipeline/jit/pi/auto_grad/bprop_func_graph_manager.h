@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_JIT_GRAPH_BPROP_FUNC_GRAPH_MANAGERER_H_
-#define MINDSPORE_JIT_GRAPH_BPROP_FUNC_GRAPH_MANAGERER_H_
+#ifndef MINDSPORE_PI_JIT_BPROP_FUNC_GRAPH_MANAGERER_H_
+#define MINDSPORE_PI_JIT_BPROP_FUNC_GRAPH_MANAGERER_H_
 
 #include <map>
 #include <memory>
@@ -24,7 +24,7 @@
 #include "ir/func_graph.h"
 
 namespace mindspore {
-namespace jit {
+namespace pijit {
 namespace grad {
 class BpropFuncGraphManager {
  public:
@@ -46,7 +46,7 @@ class BpropFuncGraphManager {
 
 using BpropFuncGraphManagerPtr = std::shared_ptr<BpropFuncGraphManager>;
 }  // namespace grad
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_JIT_GRAPH_BPROP_FUNC_GRAPH_MANAGERER_H_
+#endif  // MINDSPORE_PI_JIT_BPROP_FUNC_GRAPH_MANAGERER_H_

@@ -21,8 +21,7 @@
 #include "pipeline/jit/pi/utils/utils.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 const char kSpecializeScalar[] = "specialize_scalar";
 const char kSpecializeContainer[] = "specialize_container";
 const char kSpecializeTensor[] = "specialize_tensor";
@@ -502,6 +501,5 @@ std::string OptGuard::ToString() const {
   return s.str();
 }
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

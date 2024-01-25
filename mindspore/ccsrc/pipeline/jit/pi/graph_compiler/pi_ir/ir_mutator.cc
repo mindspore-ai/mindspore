@@ -16,8 +16,7 @@
 #include "pipeline/jit/pi/graph_compiler/pi_ir/ir_mutator.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace ir {
 IRMutator::FMutate &IRMutator::vtable() {  // NOLINT(*)
   static FMutate inst;
@@ -136,6 +135,5 @@ STATIC_IR_FUNCTOR(IRMutator, vtable)
   .DISPATCH_TO_MUTATE(AttrNode)
   .DISPATCH_TO_MUTATE(PairNode);
 }  // namespace ir
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

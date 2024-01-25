@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_JIT_GRAPH_FUNC_INLINER_H_
-#define MINDSPORE_JIT_GRAPH_FUNC_INLINER_H_
+#ifndef MINDSPORE_PI_JIT_FUNC_INLINER_H_
+#define MINDSPORE_PI_JIT_FUNC_INLINER_H_
 
 #include <map>
 #include <memory>
@@ -24,10 +24,7 @@
 #include "pipeline/jit/pi/graph_compiler/pi_ir/ir_visitor.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
-namespace py = pybind11;
-
+namespace pijit {
 class FuncInlineDetector : public ir::IRVisitor {
  public:
   explicit FuncInlineDetector(const ir::FunctionNodePtr &func) : func_(func), index_(0), cur_root_node_(nullptr) {}
@@ -106,8 +103,7 @@ class FuncInliner : public ir::IRMutator {
 };
 
 using FuncInlinerPtr = std::shared_ptr<FuncInliner>;
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_JIT_GRAPH_FUNC_INLINER_H_
+#endif  // MINDSPORE_PI_JIT_FUNC_INLINER_H_

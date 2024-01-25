@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_JIT_GRAPH_BPROP_FUNC_CONTEXT_H_
-#define MINDSPORE_JIT_GRAPH_BPROP_FUNC_CONTEXT_H_
+#ifndef MINDSPORE_PI_JIT_BPROP_FUNC_CONTEXT_H_
+#define MINDSPORE_PI_JIT_BPROP_FUNC_CONTEXT_H_
 
 #include <memory>
 #include <vector>
 #include "ir/value.h"
 
 namespace mindspore {
-namespace jit {
+namespace pijit {
 namespace grad {
 using InputList = std::vector<ValuePtr>;
 
@@ -105,6 +105,6 @@ class FunctionContext : public std::enable_shared_from_this<FunctionContext> {
 
 using FuncCtxPtr = std::shared_ptr<FunctionContext>;
 }  // namespace grad
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
-#endif  // MINDSPORE_JIT_GRAPH_BPROP_FUNC_CONTEXT_H_
+#endif  // MINDSPORE_PI_JIT_BPROP_FUNC_CONTEXT_H_

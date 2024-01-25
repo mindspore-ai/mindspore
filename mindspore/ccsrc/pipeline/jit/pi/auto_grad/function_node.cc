@@ -23,7 +23,7 @@
 #include "utils/tensor_construct_utils.h"
 
 namespace mindspore {
-namespace jit {
+namespace pijit {
 namespace grad {
 void FunctionNode::RecordPrimitive(const py::object &prim, const py::object &out, const py::list &inputs) {
   auto func_node = std::make_shared<FunctionNode>(out);
@@ -118,5 +118,5 @@ void FunctionNode::Apply(const py::object &grad) {
   }
 }
 }  // namespace grad
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

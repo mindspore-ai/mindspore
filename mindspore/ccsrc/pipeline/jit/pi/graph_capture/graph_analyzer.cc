@@ -22,8 +22,7 @@
 #include "pipeline/jit/pi/graph_capture/graph.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 
 extern bool CheckMSConstexpr(const py::object &func);
 extern bool CheckJitConstexpr(const py::object &func);
@@ -471,6 +470,5 @@ bool ValidateGraphParameters(ValueNode *node) {
   return unsupported_parameter.find(info->GetType()) == unsupported_parameter.end();
 }
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

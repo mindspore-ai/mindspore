@@ -23,8 +23,7 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace {
 py::object GetPyFunction(const ir::NodePtr &node) {
   if (node->isa<ir::Value>()) {
@@ -233,6 +232,5 @@ ir::NodePtr FuncInliner::Mutate_(const ir::CallNodePtr &node) {
   MS_EXCEPTION_IF_CHECK_FAIL(ret->isa<ir::ReturnNode>(), "Excepted Return Node, but got " + ret->GetNodeName() + ".");
   return ret->cast<ir::ReturnNodePtr>()->GetReturn();
 }
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

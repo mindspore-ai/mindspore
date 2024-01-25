@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_UTILS_H
-#define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_UTILS_H
+#ifndef MINDSPORE_PI_JIT_UTILS_H
+#define MINDSPORE_PI_JIT_UTILS_H
 
 #include <string>
 #include <vector>
@@ -23,8 +23,7 @@
 #include "pybind11/pybind11.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 
 namespace py = pybind11;
 
@@ -221,8 +220,7 @@ class RefTracker {
   PyMethodDef mdef_;
 };
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_UTILS_H
+#endif  // MINDSPORE_PI_JIT_UTILS_H

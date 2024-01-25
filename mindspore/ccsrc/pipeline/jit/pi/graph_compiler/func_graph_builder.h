@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_JIT_GRAPH_FUNC_GRAPH_BUILDER_H_
-#define MINDSPORE_JIT_GRAPH_FUNC_GRAPH_BUILDER_H_
+#ifndef MINDSPORE_PI_JIT_FUNC_GRAPH_BUILDER_H_
+#define MINDSPORE_PI_JIT_FUNC_GRAPH_BUILDER_H_
 
 #include <map>
 #include <memory>
@@ -27,8 +27,7 @@
 #include "utils/trace_info.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace py = pybind11;
 
 class MindNode : public ir::Node {
@@ -124,8 +123,7 @@ class FuncGraphBuilder : public ir::IRMutator {
 };
 
 using FuncGraphBuilderPtr = std::shared_ptr<FuncGraphBuilder>;
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_JIT_GRAPH_FUNC_GRAPH_BUILDER_H_
+#endif  // MINDSPORE_PI_JIT_FUNC_GRAPH_BUILDER_H_

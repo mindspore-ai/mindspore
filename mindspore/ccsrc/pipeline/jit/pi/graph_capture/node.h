@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_NODE_H
-#define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_NODE_H
+#ifndef MINDSPORE_PI_JIT_GRAPH_CAPTURE_NODE_H
+#define MINDSPORE_PI_JIT_GRAPH_CAPTURE_NODE_H
 
 #include <string>
 #include <map>
@@ -26,8 +26,7 @@
 #include "pipeline/jit/pi/utils/utils.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 class Graph;
 class Block;
 
@@ -200,8 +199,7 @@ class CallNode : public ValueNode {
 };
 
 bool IsNonLocalValue(ValueNode *i);
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_NODE_H
+#endif  // MINDSPORE_PI_JIT_GRAPH_CAPTURE_NODE_H

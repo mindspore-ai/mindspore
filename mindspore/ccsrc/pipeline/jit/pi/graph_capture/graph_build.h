@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_GRAPH_BUILD_H
-#define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_GRAPH_BUILD_H
+#ifndef MINDSPORE_PI_JIT_GRAPH_CAPTURE_GRAPH_BUILD_H
+#define MINDSPORE_PI_JIT_GRAPH_CAPTURE_GRAPH_BUILD_H
 
 #include <vector>
 #include <unordered_map>
@@ -24,8 +24,7 @@
 #include "pipeline/jit/pi/graph_build/func_graph_builder.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 class GraphBuilder;
 class MindGraphBuilder;
 using GraphBuilderPtr = std::shared_ptr<GraphBuilder>;
@@ -254,8 +253,7 @@ class MindGraphBuilder : public GraphBuilder {
                                 const GraphBuilderPtr &subgraph);
   py::object ResolveCallable(CallNode *call_node, StopTraceReason *stop_reason);
 };
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_GRAPH_BUILD_H
+#endif  // MINDSPORE_PI_JIT_GRAPH_CAPTURE_GRAPH_BUILD_H

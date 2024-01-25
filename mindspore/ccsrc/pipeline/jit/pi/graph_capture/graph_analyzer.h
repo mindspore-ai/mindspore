@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_GRAPH_ANALYZER_H
-#define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_GRAPH_ANALYZER_H
+#ifndef MINDSPORE_PI_JIT_GRAPH_CAPTURE_GRAPH_ANALYZER_H
+#define MINDSPORE_PI_JIT_GRAPH_CAPTURE_GRAPH_ANALYZER_H
 
 #include <set>
 #include <vector>
@@ -23,8 +23,7 @@
 #include "pipeline/jit/pi/graph_capture/abstract_object.h"
 #include "pipeline/jit/pi/graph_capture/graph_build.h"
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 
 class Graph;
 class AbstractNode;
@@ -92,8 +91,7 @@ class MindGraphAnalyzer : public GraphAnalyzer {
 
 bool ValidateGraphParameters(ValueNode *i);
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_GRAPH_ANALYZER_H
+#endif  // MINDSPORE_PI_JIT_GRAPH_CAPTURE_GRAPH_ANALYZER_H

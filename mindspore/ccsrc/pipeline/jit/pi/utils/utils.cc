@@ -23,8 +23,7 @@
 #include "runtime/hardware/device_context_manager.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 
 namespace py = pybind11;
 
@@ -463,6 +462,5 @@ RefTracker::~RefTracker() {
 
 RefTracker::RefTracker() : mdef_({"ref_untrack", &RefTracker::UnTrack, METH_O, PyDoc_STR("")}) {}
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

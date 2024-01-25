@@ -17,8 +17,7 @@
 #include <algorithm>
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace ir {
 IRVisitor::FVisit &IRVisitor::vtable() {  // NOLINT(*)
   static FVisit inst;
@@ -136,6 +135,5 @@ STATIC_IR_FUNCTOR(IRVisitor, vtable)
   .DISPATCH_TO_VISIT(PairNode)
   .DISPATCH_TO_VISIT(SubscrNode);
 }  // namespace ir
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

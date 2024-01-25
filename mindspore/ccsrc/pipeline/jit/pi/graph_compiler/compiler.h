@@ -16,16 +16,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_JIT_GRAPH_COMPILER_H_
-#define MINDSPORE_JIT_GRAPH_COMPILER_H_
+#ifndef MINDSPORE_PI_JIT_COMPILER_H_
+#define MINDSPORE_PI_JIT_COMPILER_H_
 
 #include <functional>
 #include <string>
 #include "include/common/utils/python_adapter.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 using CallableGraph = std::function<PyObject *(PyObject *, PyObject *)>;
 // Compiler to parse python byte code
 class Compiler {
@@ -35,8 +34,7 @@ class Compiler {
  private:
   Compiler() = default;
 };
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_JIT_GRAPH_COMPILER_H_
+#endif  // MINDSPORE_PI_JIT_COMPILER_H_

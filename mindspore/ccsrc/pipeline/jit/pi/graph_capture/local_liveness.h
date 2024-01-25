@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PI_GRAPH_CAPTURE_LOCAL_LIVENESS_H
-#define MINDSPORE_CCSRC_PIPELINE_JIT_PI_GRAPH_CAPTURE_LOCAL_LIVENESS_H
+#ifndef MINDSPORE_PI_JIT_GRAPH_CAPTURE_LOCAL_LIVENESS_H
+#define MINDSPORE_PI_JIT_GRAPH_CAPTURE_LOCAL_LIVENESS_H
 
 #include <vector>
 #include "pipeline/jit/pi/utils/bitmap.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 
 class Instr;
 class Block;
@@ -46,8 +45,7 @@ class Liveness {
   std::vector<BitMap> alive_effect_;
 };
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
 #endif

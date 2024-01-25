@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_ALLOCATOR_H
-#define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_ALLOCATOR_H
+#ifndef MINDSPORE_PI_JIT_ALLOCATOR_H
+#define MINDSPORE_PI_JIT_ALLOCATOR_H
 
 #include <utility>
 #include <vector>
 #include "pipeline/jit/pi/graph_capture/node.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 
 class Instr;
 class LoopInfo;
@@ -67,8 +66,7 @@ class Allocator {
   std::vector<AbstractNode *> node_pool_;
   std::vector<LoopInfo *> loop_pool_;
 };
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_ALLOCATOR_H
+#endif  // MINDSPORE_PI_JIT_ALLOCATOR_H

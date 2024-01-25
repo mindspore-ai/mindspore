@@ -34,7 +34,7 @@
 #include "utils/ms_utils.h"
 
 namespace mindspore {
-namespace jit {
+namespace pijit {
 namespace grad {
 FuncGraphPtr BpropFuncGraphManager::PrimBpropGraphPass(const FuncGraphPtr &prim_grad_graph) {
   opt::irpass::OptimizeIRPassLib irpass;
@@ -172,5 +172,5 @@ FuncGraphPtr BpropFuncGraphManager::GetFuncGraphBpropGraph(const FuncGraphPtr &f
   return grad_graph;
 }
 }  // namespace grad
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

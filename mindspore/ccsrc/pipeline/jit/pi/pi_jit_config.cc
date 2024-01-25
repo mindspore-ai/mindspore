@@ -22,8 +22,7 @@
 #include "pipeline/jit/pi/pydef.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 
 GraphJitConfig kPIJitConfigDefault;
 
@@ -332,11 +331,10 @@ GraphJitConfig::GraphJitConfig(const py::object &c) {
   }
 }
 
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 
 void update_pijit_default_config(const py::kwargs &conf) {
-  mindspore::jit::graph::kPIJitConfigDefault = mindspore::jit::graph::GraphJitConfig(conf);
+  mindspore::pijit::kPIJitConfigDefault = mindspore::pijit::GraphJitConfig(conf);
 }
 
 }  // namespace mindspore

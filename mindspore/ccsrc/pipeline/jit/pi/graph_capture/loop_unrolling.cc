@@ -25,8 +25,7 @@
 #include "pipeline/jit/pi/pi_jit_config.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 #define CHECK_PHASE(func, ...)                   \
   do {                                           \
     res_ = func(__VA_ARGS__);                    \
@@ -302,6 +301,5 @@ std::string LoopUnrolling::DumpLoopUnrolling() {
   os << '\n';
   return os.str();
 }
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore

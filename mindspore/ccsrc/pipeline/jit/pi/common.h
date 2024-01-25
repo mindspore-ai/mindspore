@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PIPELINE_JIT_GRAPH_JIT_COMMON_H
-#define MINDSPORE_CCSRC_PIPELINE_JIT_GRAPH_JIT_COMMON_H
+#ifndef MINDSPORE_PI_JIT_COMMON_H
+#define MINDSPORE_PI_JIT_COMMON_H
 
 #define PY_SSIZE_T_CLEAN
 #include <functional>
@@ -33,8 +33,7 @@
 #include "pipeline/jit/pi/utils/utils.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace py = pybind11;
 using NativeFunc = std::function<PyObject *(PyObject *, PyObject *)>;
 using InlineInfoKey = std::tuple<std::string, std::string, int>;
@@ -124,7 +123,7 @@ typedef struct CodeExtra {
   OptCodePtr code;
 
   // code cache
-  mindspore::jit::graph::OptCodeHubPtr codehub;
+  mindspore::pijit::OptCodeHubPtr codehub;
 
   std::shared_ptr<Tracebackes> tbs;
 
@@ -137,8 +136,7 @@ typedef struct CodeExtra {
 
 JitCompileResults *getJitCompileResults(PyObject *code, bool alloc = true);
 std::vector<py::object> PackArgs(const PyFrameObject *frame);
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_JIT_JITBYTECODE_COMMON_H
+#endif  // MINDSPORE_PI_JIT_COMMON_H

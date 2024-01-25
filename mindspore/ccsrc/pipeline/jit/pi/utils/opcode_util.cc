@@ -17,8 +17,7 @@
 #include "pipeline/jit/pi/pydef.h"
 
 namespace mindspore {
-namespace jit {
-namespace graph {
+namespace pijit {
 namespace code {
 const Opcode &GetOpcodeInfo(int op) {
   static Opcode kOpcodes[NO_IMPL_OPCODE] = {{"", 0, 0}};
@@ -37,6 +36,5 @@ const Opcode &GetOpcodeInfo(int op) {
 
 #undef DEF_OPCODE_ATTR
 }  // namespace code
-}  // namespace graph
-}  // namespace jit
+}  // namespace pijit
 }  // namespace mindspore
