@@ -2589,5 +2589,87 @@ REG_BPROP_BUILDER("FFTBase").SetBody(BODYFUNC(ib) {
           ib->OutZeros(norm), ib->OutZeros(fft_mode), ib->OutZeros(forward)};
 });
 
+REG_BPROP_BUILDER("DCT").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto type = ib->GetInput(kIndex1);
+  auto type_value = GetValue<int64_t>(type->BuildValue());
+  auto n = ib->GetInput(kIndex2);
+  auto n_value = GetValue<int64_t>(n->BuildValue());
+  auto axis = ib->GetInput(kIndex3);
+  auto axis_value = GetValue<int64_t>(axis->BuildValue());
+  auto norm = ib->GetInput(kIndex4);
+  auto norm_value = GetValue<int64_t>(norm->BuildValue());
+  auto forward = ib->GetInput(kIndex5);
+  auto forward_value = GetValue<bool>(forward->BuildValue());
+  auto grad = ib->GetInput(kIndex6);
+  auto out = ib->GetInput(kIndex7);
+  auto dout = ib->GetInput(kIndex8);
+
+  auto input_shape_vec = ib->GetShape(x);
+
+  int64_t grad_norm_value = 2;
+  if (norm_value == 0) {
+    grad_norm_value = 1;
+  } else if (norm_value == 1) {
+    grad_norm_value = 0;
+  }
+  bool grad_forward_value = !forward_value;
+
+  auto temp_dout = ib->Emit("DCT", {dout, ib->Value(type_value), n, axis, ib->Value(grad_norm_value),
+                                    ib->Value(grad_forward_value), ib->Value(true)});
+  auto grad_dout = temp_dout;
+  if (forward_value && norm_value != 2) {
+    auto ones = ib->OnesLike(dout);
+    grad_dout = temp_dout + ones;
+  }
+
+  auto output_shape_vec = ib->GetShape(out);
+  auto x_rank = static_cast<int64_t>(input_shape_vec.size());
+
+  axis_value = axis_value < 0 ? axis_value + x_rank : axis_value;
+  n_value = n_value > 0 ? n_value : input_shape_vec[axis_value];
+
+  ShapeVector begin;
+  ShapeVector end;
+  ShapeVector strides;
+  for (int64_t i = 0; i < x_rank; i++) {
+    (void)begin.emplace_back(0LL);
+    (void)end.emplace_back(output_shape_vec[i]);
+    (void)strides.emplace_back(1LL);
+  }
+  bool need_slice = false;
+  bool need_pad = false;
+  if (input_shape_vec[axis_value] < n_value) {
+    end[axis_value] = input_shape_vec[axis_value];
+    need_slice = true;
+  } else if (input_shape_vec[axis_value] > n_value) {
+    need_pad = true;
+  }
+
+  // at most one of need_pad or need_slice is true
+  if (need_pad) {
+    NodePtr input_shape_node = ib->EmitValue(MakeValue(input_shape_vec));
+    grad_dout = ib->Emit("StridedSliceGrad",
+                         {grad_dout, input_shape_node, ib->Value<ShapeVector>(begin), ib->Value<ShapeVector>(end),
+                          ib->Value<ShapeVector>(strides)},
+                         {{kAttrBeginMask, MakeValue<int64_t>(0)},
+                          {kAttrEndMask, MakeValue<int64_t>(0)},
+                          {kAttrEllipsisMask, MakeValue<int64_t>(0)},
+                          {kAttrNewAxisMask, MakeValue<int64_t>(0)},
+                          {kAttrShrinkAxisMask, MakeValue<int64_t>(0)}});
+  } else if (need_slice) {
+    grad_dout =
+      ib->Emit("StridedSlice",
+               {grad_dout, ib->Value<ShapeVector>(begin), ib->Value<ShapeVector>(end), ib->Value<ShapeVector>(strides)},
+               {{kAttrBeginMask, MakeValue<int64_t>(0)},
+                {kAttrEndMask, MakeValue<int64_t>(0)},
+                {kAttrEllipsisMask, MakeValue<int64_t>(0)},
+                {kAttrNewAxisMask, MakeValue<int64_t>(0)},
+                {kAttrShrinkAxisMask, MakeValue<int64_t>(0)}});
+  }
+
+  return {grad_dout,          ib->OutZeros(type),    ib->OutZeros(n),   ib->OutZeros(axis),
+          ib->OutZeros(norm), ib->OutZeros(forward), ib->OutZeros(grad)};
+});
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

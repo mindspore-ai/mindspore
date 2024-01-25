@@ -14,4 +14,5 @@
 # ============================================================================
 """Scipy-like interfaces in mindspore."""
 
-from . import linalg, optimize
+# pylint: disable=import-self
+from . import linalg, optimize, fft

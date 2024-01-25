@@ -390,4 +390,13 @@ CUST_INPUT_ATTR_MAP(FFTBase) = {{2, ATTR_DESC(s, AnyTraits<std::vector<int64_t>>
                                 {6, ATTR_DESC(forward, AnyTraits<bool>())}};
 CUST_OUTPUT_MAP(FFTBase) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(FFTBase, prim::kPrimFFTBase->name(), CUST_ADPT_DESC(FFTBase));
+
+// DCT
+CUST_INPUT_MAP(DCT) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(DCT) = EMPTY_ATTR_MAP;
+CUST_INPUT_ATTR_MAP(DCT) = {{2, ATTR_DESC(type, AnyTraits<int64_t>())}, {3, ATTR_DESC(n, AnyTraits<int64_t>())},
+                            {4, ATTR_DESC(axis, AnyTraits<int64_t>())}, {5, ATTR_DESC(norm, AnyTraits<int64_t>())},
+                            {6, ATTR_DESC(forward, AnyTraits<bool>())}, {7, ATTR_DESC(grad, AnyTraits<bool>())}};
+CUST_OUTPUT_MAP(DCT) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(DCT, prim::kPrimDCT->name(), CUST_ADPT_DESC(DCT))
 }  // namespace mindspore::transform

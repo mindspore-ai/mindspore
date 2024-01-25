@@ -62,6 +62,7 @@ cust_op_lists = [
     "cumulativelogsumexp",
     "dataformatvecpermute",
     "depthtospace",
+    "dct",
     "diag",
     "diagonal",
     "diagpart",
