@@ -33,13 +33,6 @@ void OnMemoryAllocFinish(const AID &from_aid, OpContext<DeviceTensor> *const op_
 void MemoryManagerActor::AllocateMemory(const std::vector<DeviceTensor *> *alloc_list,
                                         const DeviceContext *device_context, OpContext<DeviceTensor> *const op_context,
                                         const AID &from_aid) {
-  uint64_t start_time = 0;
-  PROFILER_START(start_time);
-
-  MS_EXCEPTION_IF_NULL(alloc_list);
-  MS_EXCEPTION_IF_NULL(device_context);
-  MS_EXCEPTION_IF_NULL(op_context);
-
   for (auto &device_tensor : *alloc_list) {
     MS_EXCEPTION_IF_NULL(device_tensor);
     // Unused device address need skip to reduce memory use.
@@ -52,25 +45,11 @@ void MemoryManagerActor::AllocateMemory(const std::vector<DeviceTensor *> *alloc
       device::DynamicMemAllocatorDebugInfo::SetDebugInfo(from_aid.Name(), device::AllocatorType::kKernelOutput);
       if (!device_context->device_res_manager_->AllocateMemory(device_tensor)) {
         SetOpContextMemoryAllocFail(from_aid.Name(), device_context, device_tensor->GetSize(), op_context);
-        return;
       }
     } catch (const std::exception &e) {
       SetOpContextMemoryAllocFail(from_aid.Name(), device_context, device_tensor->GetSize(), op_context);
-      return;
-    }
-
-    if (common::IsNeedProfileMemory()) {
-      auto output_address = reinterpret_cast<std::uintptr_t>(device_tensor);
-      MS_LOG(WARNING) << "Need Profile Memory, alloc type: MemoryManagerActor, device address class ptr: "
-                      << output_address << ", device address size: " << device_tensor->GetSize()
-                      << ", device address addr: " << device_tensor->GetPtr();
     }
   }
-
-  // Call back to the from actor to process after memory allocation finished.
-  OnMemoryAllocFinish(from_aid, op_context);
-
-  PROFILER_END(start_time, ProfilerModule::kRuntime, ProfilerEvent::kMemoryAlloc, from_aid.Name(), false);
 }
 
 void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<DeviceTensorPtr>> *alloc_list_list,
@@ -254,15 +233,9 @@ void MemoryManagerActor::AllocateSomasMemory(SomasInfo *const somas_info, const 
 
 void MemoryManagerActor::FreeMemory(const std::vector<DeviceTensor *> *free_list, const DeviceContext *device_context,
                                     OpContext<DeviceTensor> *, const AID &from_aid) {
-  uint64_t start_time = 0;
-  PROFILER_START(start_time);
-
-  MS_EXCEPTION_IF_NULL(free_list);
   for (auto &device_tensor : *free_list) {
     FreeMemoryByRefCount(device_tensor, device_context, from_aid.Name());
   }
-
-  PROFILER_END(start_time, ProfilerModule::kRuntime, ProfilerEvent::kMemoryFree, from_aid.Name(), false);
 }
 
 void MemoryManagerActor::FreeBatchMemory(const std::vector<DeviceTensor *> *free_list,
