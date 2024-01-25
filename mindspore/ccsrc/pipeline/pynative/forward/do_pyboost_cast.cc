@@ -29,25 +29,28 @@ tensor::TensorPtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPtr &o
     MS_LOG(DEBUG) << "Cast to dst tensor: " << dst_tensor->ToString() << " without dispatching cast op";
     return dst_tensor;
   }
+  auto new_type = GetDstTypeValue(type_id);
   const auto &cast_run_info = std::make_shared<FrontendOpRunInfo>();
+  cast_run_info->requires_grad = op_run_info->requires_grad;
+  if (cast_run_info->requires_grad) {
+    (void)cast_run_info->op_grad_info->input_value.emplace_back(t);
+    (void)cast_run_info->op_grad_info->input_value.emplace_back(new_type);
+  }
   auto cast_prim = GetPrimByTypeId(type_id);
   // Use pyboost op call
   cast_run_info->base_op_run_info.device_target =
     PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->GetCurrentDeviceTarget(cast_prim);
   auto cast_op = CREATE_PYBOOST_OP(Cast, cast_run_info->base_op_run_info.device_target);
   cast_op->set_primitive(cast_prim);
-  auto new_type = GetDstTypeValue(type_id);
+
   (void)cast_op->Call(t, new_type->cast<TypePtr>());
   PyNativeAlgo::PyBoost::UpdateOpRunInfo(cast_op, cast_run_info->op_grad_info->input_value, cast_run_info);
   if (op_run_info->requires_grad) {
     constexpr auto input_size = 2;
     cast_run_info->input_size = input_size;
     cast_run_info->base_op_run_info.op_name = kCast;
-    (void)cast_run_info->op_grad_info->input_value.emplace_back(t);
-    (void)cast_run_info->op_grad_info->input_value.emplace_back(new_type);
     cast_run_info->op_grad_info->op_prim = cast_prim;
-    cast_run_info->requires_grad = true;
-    cast_op->DoGrad();
+    PyNativeAlgo::PyBoost::DoGrad(cast_run_info);
   }
   return cast_run_info->real_out->cast<tensor::TensorPtr>();
 }
