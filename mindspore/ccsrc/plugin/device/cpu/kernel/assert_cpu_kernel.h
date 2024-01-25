@@ -41,7 +41,7 @@ class AssertCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  using AssertPrintFunc = std::function<void(const KernelTensor *, int)>;
+  using AssertPrintFunc = std::function<void(KernelTensor *, int)>;
 
   static std::map<TypeId, AssertCpuKernelMod::AssertPrintFunc> func_map_;
 

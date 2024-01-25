@@ -2696,7 +2696,7 @@ void GraphScheduler::PersistDeviceTensorForParameter(const AnfNodePtr &parameter
     if (front_node->isa<ValueNode>()) {
       const auto &value_node = front_node->cast<ValueNodePtr>();
       MS_EXCEPTION_IF_NULL(value_node);
-      if (value_node->value() != nullptr && value_node->value()) {
+      if (value_node->value() != nullptr) {
         kernel_tensor->set_value(value_node->value());
       }
     }

@@ -28,20 +28,21 @@ class ContiguousGpuKernel {
   ContiguousGpuKernel() = default;
   ~ContiguousGpuKernel() = default;
 
-  bool LaunchContiguous(TypeId input_type_id, const kernel::AddressPtr &inputs,
+  bool LaunchContiguous(TypeId input_type_id, const kernel::KernelTensorPtr &inputs,
                         const TensorStorageInfoPtr &input_storage_info, TypeId output_type_id,
-                        const kernel::AddressPtr &outputs, const kernel::AddressPtr &shape_addr,
-                        const kernel::AddressPtr &strides_addr, void *stream_ptr);
+                        const kernel::KernelTensorPtr &outputs, const kernel::KernelTensorPtr &shape_addr,
+                        const kernel::KernelTensorPtr &strides_addr, void *stream_ptr);
 
  private:
-  using ContiguousFunc = std::function<bool(
-    ContiguousGpuKernel *, const kernel::AddressPtr &, const TensorStorageInfoPtr &, const kernel::AddressPtr &,
-    const kernel::AddressPtr &, const kernel::AddressPtr &, const int64_t &, void *)>;
+  using ContiguousFunc =
+    std::function<bool(ContiguousGpuKernel *, const kernel::KernelTensorPtr &, const TensorStorageInfoPtr &,
+                       const kernel::KernelTensorPtr &, const kernel::KernelTensorPtr &,
+                       const kernel::KernelTensorPtr &, const int64_t &, void *)>;
 
   template <typename T>
-  bool LaunchContiguousImpl(const kernel::AddressPtr &inputs, const TensorStorageInfoPtr &input_storage_info,
-                            const kernel::AddressPtr &outputs, const kernel::AddressPtr &shape_addr,
-                            const kernel::AddressPtr &strides_addr, const int64_t &type_size, void *stream_ptr);
+  bool LaunchContiguousImpl(const kernel::KernelTensorPtr &inputs, const TensorStorageInfoPtr &input_storage_info,
+                            const kernel::KernelTensorPtr &outputs, const kernel::KernelTensorPtr &shape_addr,
+                            const kernel::KernelTensorPtr &strides_addr, const int64_t &type_size, void *stream_ptr);
   static std::map<std::pair<TypeId, TypeId>, ContiguousFunc> func_list_;
 };
 }  // namespace kernel

@@ -43,9 +43,9 @@ std::unordered_map<TypeId, CopyWithSliceGpuKernel::CopyWithSliceFunc> CopyWithSl
   {kNumberTypeUInt64, &CopyWithSliceGpuKernel::LaunchCopyWithSliceImpl<uint64_t>}};
 
 bool CopyWithSliceGpuKernel::LaunchCopyWithSlice(TypeId type_id, const TensorStorageInfoPtr &src_storage_info,
-                                                 const kernel::AddressPtr &src_addr,
+                                                 const kernel::KernelTensorPtr &src_addr,
                                                  const TensorStorageInfoPtr &dst_storage_info,
-                                                 const kernel::AddressPtr &dst_addr, void *stream_ptr) {
+                                                 const kernel::KernelTensorPtr &dst_addr, void *stream_ptr) {
   const auto &iter = func_list_.find(type_id);
   if (iter == func_list_.end()) {
     MS_LOG(EXCEPTION) << "type_id:" << type_id << " is invalid";
@@ -56,12 +56,12 @@ bool CopyWithSliceGpuKernel::LaunchCopyWithSlice(TypeId type_id, const TensorSto
 
 template <typename T>
 bool CopyWithSliceGpuKernel::LaunchCopyWithSliceImpl(const TensorStorageInfoPtr &src_storage_info,
-                                                     const kernel::AddressPtr &src_addr,
+                                                     const kernel::KernelTensorPtr &src_addr,
                                                      const TensorStorageInfoPtr &dst_storage_info,
-                                                     const kernel::AddressPtr &dst_addr, void *stream_ptr) {
+                                                     const kernel::KernelTensorPtr &dst_addr, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(dst_storage_info);
-  T *copy_src_addr = GetDeviceAddress<T>({src_addr}, 0);
-  T *self_addr = GetDeviceAddress<T>({dst_addr}, 0);
+  T *copy_src_addr = GetDeviceAddress<T>({src_addr.get()}, 0);
+  T *self_addr = GetDeviceAddress<T>({dst_addr.get()}, 0);
   const auto &output_shape = dst_storage_info->shape;
   auto output_size =
     LongToSize(std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>()));
@@ -69,9 +69,9 @@ bool CopyWithSliceGpuKernel::LaunchCopyWithSliceImpl(const TensorStorageInfoPtr 
 
   if (dst_storage_info->is_contiguous && src_is_contiguous) {
     auto &dst_storage_offset = dst_storage_info->storage_offset;
-    if ((dst_storage_offset + output_size) * sizeof(T) > dst_addr->size) {
+    if ((dst_storage_offset + output_size) * sizeof(T) > dst_addr->size()) {
       MS_LOG(EXCEPTION) << "Offset is out of bounds, offset:" << (dst_storage_offset * sizeof(T))
-                        << " output_size:" << (output_size * sizeof(T)) << " dst_addr->size:" << dst_addr->size;
+                        << " output_size:" << (output_size * sizeof(T)) << " dst_addr->size:" << dst_addr->size();
     }
     size_t src_storage_offset{0};
     if (src_storage_info != nullptr) {

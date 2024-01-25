@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-bool AscendDeviceSynchronizer::SyncDeviceToHost(void *host_ptr, void *device_ptr, size_t size,
+bool AscendDeviceSynchronizer::SyncDeviceToHost(void *host_ptr, const void *device_ptr, size_t size,
                                                 const std::string &device_name, uint32_t device_id,
                                                 mindspore::Format format, const ShapeVector &shape, size_t stream_id,
                                                 const UserDataPtr &user_data) const {
@@ -54,7 +54,7 @@ bool AscendDeviceSynchronizer::SyncDeviceToHost(void *host_ptr, void *device_ptr
   return true;
 }
 
-bool AscendDeviceSynchronizer::SyncHostToDevice(void *device_ptr, void *host_ptr, size_t size,
+bool AscendDeviceSynchronizer::SyncHostToDevice(void *device_ptr, const void *host_ptr, size_t size,
                                                 const std::string &device_name, uint32_t device_id,
                                                 mindspore::Format format, const ShapeVector &shape, size_t stream_id,
                                                 const UserDataPtr &user_data) const {

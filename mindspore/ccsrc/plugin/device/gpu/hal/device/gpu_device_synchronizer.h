@@ -30,12 +30,12 @@ class GPUDeviceSynchronizer : public DeviceSynchronizer {
   ~GPUDeviceSynchronizer() override = default;
 
   // Copy device memory to host side synchronously.
-  bool SyncDeviceToHost(void *host_ptr, void *device_ptr, size_t size, const std::string &device_name,
+  bool SyncDeviceToHost(void *host_ptr, const void *device_ptr, size_t size, const std::string &device_name,
                         uint32_t device_id, mindspore::Format format, const ShapeVector &shape, size_t stream_id,
                         const UserDataPtr &user_data = nullptr) const override;
 
   // Copy host memory to device side synchronously.
-  bool SyncHostToDevice(void *device_ptr, void *host_ptr, size_t size, const std::string &device_name,
+  bool SyncHostToDevice(void *device_ptr, const void *host_ptr, size_t size, const std::string &device_name,
                         uint32_t device_id, mindspore::Format format, const ShapeVector &shape, size_t stream_id,
                         const UserDataPtr &user_data = nullptr) const override;
 };

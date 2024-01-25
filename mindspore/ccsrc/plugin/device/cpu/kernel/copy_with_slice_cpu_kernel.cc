@@ -41,9 +41,9 @@ std::unordered_map<TypeId, CopyWithSliceCpuKernel::CopyWithSliceFunc> CopyWithSl
   {kNumberTypeUInt64, &CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl<uint64_t>}};
 
 bool CopyWithSliceCpuKernel::LaunchCopyWithSlice(TypeId type_id, const TensorStorageInfoPtr &src_storage_info,
-                                                 const kernel::AddressPtr &src_addr,
+                                                 const kernel::KernelTensorPtr &src_addr,
                                                  const TensorStorageInfoPtr &dst_storage_info,
-                                                 const kernel::AddressPtr &dst_addr) {
+                                                 const kernel::KernelTensorPtr &dst_addr) {
   const auto &iter = func_list_.find(type_id);
   if (iter == func_list_.end()) {
     MS_LOG(EXCEPTION) << "type_id:" << type_id << " is invalid";
@@ -65,12 +65,12 @@ int64_t OffsetCalc(size_t ndim, const ShapeVector &shape, int64_t tmp_index, con
 
 template <typename T>
 bool CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl(const TensorStorageInfoPtr &src_storage_info,
-                                                     const kernel::AddressPtr &src_addr,
+                                                     const kernel::KernelTensorPtr &src_addr,
                                                      const TensorStorageInfoPtr &dst_storage_info,
-                                                     const kernel::AddressPtr &dst_addr) {
+                                                     const kernel::KernelTensorPtr &dst_addr) {
   MS_EXCEPTION_IF_NULL(dst_storage_info);
-  T *copy_src_addr = GetDeviceAddress<T>({src_addr}, 0);
-  T *self_addr = GetDeviceAddress<T>({dst_addr}, 0);
+  T *copy_src_addr = GetDeviceAddress<T>({src_addr.get()}, 0);
+  T *self_addr = GetDeviceAddress<T>({dst_addr.get()}, 0);
   MS_EXCEPTION_IF_NULL(copy_src_addr);
   MS_EXCEPTION_IF_NULL(self_addr);
   const auto &output_shape = dst_storage_info->shape;
@@ -84,9 +84,9 @@ bool CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl(const TensorStorageInfoPtr 
   auto src_is_contiguous = src_storage_info == nullptr || src_storage_info->is_contiguous;
 
   if (dst_storage_info->is_contiguous && src_is_contiguous) {
-    if ((dst_storage_offset + output_size) * sizeof(T) > dst_addr->size) {
+    if ((dst_storage_offset + output_size) * sizeof(T) > dst_addr->size()) {
       MS_LOG(EXCEPTION) << "Offset is out of bounds, offset:" << (dst_storage_offset * sizeof(T))
-                        << " output_size:" << (output_size * sizeof(T)) << " dst_addr->size:" << dst_addr->size;
+                        << " output_size:" << (output_size * sizeof(T)) << " dst_addr->size:" << dst_addr->size();
     }
 
     int ret = memcpy_s(self_addr + dst_storage_offset, output_size * sizeof(T), copy_src_addr + src_storage_offset,

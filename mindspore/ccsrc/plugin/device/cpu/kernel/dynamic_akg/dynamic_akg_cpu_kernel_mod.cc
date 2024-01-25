@@ -172,9 +172,9 @@ bool DynamicAkgCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, c
   std::vector<void *> runtimeargs;
   runtimeargs.reserve(inputs.size() + outputs.size());
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(runtimeargs),
-                       [](const KernelTensor *input) { return input->device_ptr(); });
+                       [](KernelTensor *input) { return input->device_ptr(); });
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
-                       [](const KernelTensor *output) { return output->device_ptr(); });
+                       [](KernelTensor *output) { return output->device_ptr(); });
 
   if (is_dynamic_) {
     MS_LOG(INFO) << "The kernel mod deals with dynamic shape inputs.";

@@ -113,7 +113,7 @@ void GetGroupIdx(const int64_t flat_group_index, const ShapeVector &group_shape,
 }  // namespace
 
 template <typename T>
-void GetGroupSet(const kernel::KernelTensor *input, const size_t last_dim, const std::vector<size_t> &input_strides,
+void GetGroupSet(kernel::KernelTensor *input, const size_t last_dim, const std::vector<size_t> &input_strides,
                  const std::vector<size_t> &group_indices, std::set<T> *result) {
   if (group_indices.size() != input_strides.size() - 1) {
     MS_LOG(EXCEPTION) << "For DenseToDenseSerOperation, "

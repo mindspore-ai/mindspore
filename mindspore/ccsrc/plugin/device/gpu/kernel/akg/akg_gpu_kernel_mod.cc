@@ -114,12 +114,12 @@ bool AkgGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const st
   std::vector<void *> runtimeargs;
   runtimeargs.reserve(inputs.size() + outputs.size() + workspace.size());
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(runtimeargs),
-                       [](const KernelTensor *input) { return reinterpret_cast<void *>(input->device_ptr()); });
+                       [](KernelTensor *input) { return reinterpret_cast<void *>(input->device_ptr()); });
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
                        [](const KernelTensor *output) { return reinterpret_cast<void *>(output->device_ptr()); });
   if (!workspace.empty()) {
     (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(runtimeargs),
-                         [](const KernelTensor *addr) { return reinterpret_cast<void *>(addr->device_ptr()); });
+                         [](KernelTensor *addr) { return reinterpret_cast<void *>(addr->device_ptr()); });
   }
   std::vector<void *> runtimeargs_addr;
   for (size_t i = 0; i < runtimeargs.size(); i++) {

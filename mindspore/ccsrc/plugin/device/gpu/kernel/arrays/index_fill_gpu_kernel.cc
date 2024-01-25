@@ -60,7 +60,7 @@ int IndexFillGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   return KRET_OK;
 }
 
-bool IndexFillGpuKernelMod::GetSizeInfo(const KernelTensor *address_ptr, int64_t &outer_size, int64_t &dim_size,
+bool IndexFillGpuKernelMod::GetSizeInfo(KernelTensor *address_ptr, int64_t &outer_size, int64_t &dim_size,
                                         int64_t &inner_size, cudaStream_t cuda_stream) {
   // Initialize and check 'dim'.
   auto dim_ptr = address_ptr->device_ptr();

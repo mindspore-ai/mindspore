@@ -19,10 +19,10 @@
 #include "plugin/device/cpu/kernel/copy_with_slice_cpu_kernel.h"
 
 namespace mindspore::device::cpu {
-kernel::AddressPtr MallocMemoryForDeviceAddress(const device::DeviceAddressPtr &device_address,
-                                                const device::DeviceContext *device_context) {
+kernel::KernelTensorPtr MallocMemoryForDeviceAddress(const device::DeviceAddressPtr &device_address,
+                                                     const device::DeviceContext *device_context) {
   if (!device_address) {
-    return std::make_shared<kernel::Address>();
+    return std::make_shared<kernel::KernelTensor>();
   }
   if (device_address->GetPtr() == nullptr) {
     if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
@@ -30,7 +30,7 @@ kernel::AddressPtr MallocMemoryForDeviceAddress(const device::DeviceAddressPtr &
     }
   }
 
-  return std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize());
+  return device_address->kernel_tensor();
 }
 
 bool CpuContiguousKernelTask::RunWithRet() {
