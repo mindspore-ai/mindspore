@@ -26,3 +26,5 @@ avg_pool:
   returns:
     output:
       dtype: tensor
+  function:
+      disable: True

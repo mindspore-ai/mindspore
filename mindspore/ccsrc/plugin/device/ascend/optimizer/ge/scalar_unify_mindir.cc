@@ -36,7 +36,8 @@ namespace opt {
 
 const BaseRef ScalarUnifyMindIR::DefinePattern() const {
   VarPtr x = std::make_shared<Var>();
-  VectorRef tensor_to_scalar({std::make_shared<Primitive>(kTensorToScalarOpName), x});
+  VarPtr dtype = std::make_shared<Var>();
+  VectorRef tensor_to_scalar({std::make_shared<Primitive>(kTensorToScalarOpName), x, dtype});
   return VectorRef({std::make_shared<Primitive>(kScalarToTensorOpName), tensor_to_scalar});
 }
 

@@ -68,7 +68,7 @@ bool NoAdditionalMemory() {
   MS_EXCEPTION_IF_NULL(context);
   const auto is_cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
   const auto is_multi_graph_sink = context->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK);
-  return is_cell_reuse || is_multi_graph_sink;
+  return (is_cell_reuse || is_multi_graph_sink) && !context->IsKByKExecutorMode();
 }
 }  // namespace
 
@@ -78,6 +78,8 @@ size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size, bool from_persistent_
     device_free_mem_size = size;
   }
   if (device_free_mem_size < size) {
+    MS_LOG(INFO) << "The device memory is not enough, the free memory size is " << device_free_mem_size
+                 << ", but the alloc size is " << size;
     MS_LOG(INFO) << "The dynamic memory pool total size is "
                  << device::ascend::AscendMemoryPool::GetInstance().TotalMemStatistics() / kMBToByte
                  << "M, total used size is "
@@ -184,9 +186,11 @@ void AscendMemoryPool::ResetIdleMemBuf() const {
     if (mem_mng->mem_block_list_.empty()) {
       return;
     }
-    for (const auto &it : mem_mng->idle_mem_buf_map_) {
-      MS_EXCEPTION_IF_NULL(it.second);
-      (void)aclrtMemset(it.second->device_addr_, it.first, 0, it.first);
+    for (const auto &idle_mem_buf : mem_mng->idle_mem_bufs_) {
+      for (const auto &it : idle_mem_buf.second) {
+        MS_EXCEPTION_IF_NULL(it.second);
+        (void)aclrtMemset(it.second->device_addr_, it.first, 0, it.first);
+      }
     }
   };
   fn(persistent_mem());

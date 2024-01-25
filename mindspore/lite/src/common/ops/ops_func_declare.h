@@ -26,7 +26,6 @@
 #include "ops/all.h"
 #include "ops/apply_momentum.h"
 #include "ops/assert.h"
-#include "ops/assign_add.h"
 #include "ops/attention.h"
 #include "ops/audio_spectrogram.h"
 #include "ops/batch_to_space.h"

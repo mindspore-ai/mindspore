@@ -66,7 +66,7 @@ void GetNeedReplaceEdges(const AnfNodePtr &old_make_tuple, const AnfNodePtr &nod
     MS_EXCEPTION_IF_NULL(item_with_index.first);
     auto make_tuple = item_with_index.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(make_tuple);
-    for (size_t i = 1; i < make_tuple->inputs().size(); i++) {
+    for (size_t i = 1; i < make_tuple->size(); i++) {
       GetNeedReplaceEdges(make_tuple, make_tuple->input(i), i, transdata_ref_count, edges);
     }
   } else {

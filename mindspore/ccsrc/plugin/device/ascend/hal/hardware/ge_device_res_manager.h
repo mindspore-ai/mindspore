@@ -36,6 +36,7 @@ class GeHostAddress : public cpu::CPUDeviceAddress {
   GeHostAddress(void *ptr, size_t size, const std::string &format, TypeId type_id, const std::string &device_name,
                 uint32_t device_id)
       : CPUDeviceAddress(ptr, size, format, type_id, device_name, device_id) {}
+  explicit GeHostAddress(const KernelTensorPtr &kernel_tensor) : CPUDeviceAddress(kernel_tensor) {}
   DeviceType GetDeviceType() const override { return DeviceType::kAscend; }
 };
 
@@ -82,7 +83,7 @@ class GeDeviceResManager : public DeviceResManager {
 
   // Relevant function to allocate and free device memory of raw ptr.
   bool AllocateMemory(DeviceAddress *const &address) const override;
-  void *AllocateMemory(size_t size) const override;
+  void *AllocateMemory(size_t size, uint32_t stream_id = UINT32_MAX) const override;
   void FreeMemory(void *ptr) const override;
   void FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
                        const std::vector<size_t> &keep_addr_sizes) const override;
@@ -95,9 +96,20 @@ class GeDeviceResManager : public DeviceResManager {
   void SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) override;
 
   bool CreateStream(size_t *stream_id) const override;
+  bool CreateStreamWithPriority(size_t *stream_id, int32_t priority) const override;
   void *GetStream(size_t stream_id) const override;
+  void SetCurrentStreamId(size_t stream_id) override;
+  size_t GetCurrentStreamId() const override;
+  bool QueryStream(size_t stream_id) const override;
   bool SyncStream(size_t stream_id = 0) const override;
   bool SyncAllStreams() const override;
+  bool SyncNotDefaultStreams() const override;
+  size_t DefaultStream() const override;
+
+  DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) const override;
+
+  bool single_op_multi_stream_enable() const override;
+  void set_single_op_multi_stream_enable(bool single_op_multi_stream_enable) override;
 
  private:
   friend class GeGraphExecutor;

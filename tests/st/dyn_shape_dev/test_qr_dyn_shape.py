@@ -22,7 +22,7 @@ import test_utils
 
 @test_utils.run_with_cell
 def qr_forward_func(x, full_matrices):
-    return ops.auto_generate.qr_(x, full_matrices)
+    return ops.Qr(full_matrices)(x)
 
 
 @test_utils.run_with_cell
@@ -71,9 +71,12 @@ def test_qr_dynamic(mode):
     Description: test ops qr dynamic tensor input.
     Expectation: output right results.
     """
+    def qr_(x, full_matrices):
+        return ops.Qr(full_matrices)(x)
+
     context.set_context(mode=mode)
     x_dyn = Tensor(shape=None, dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(ops.auto_generate.qr_)
+    test_cell = test_utils.to_cell_obj(qr_)
     test_cell.set_inputs(x_dyn, False)
     x1 = Tensor(np.array([[1., 2., 3.],
                           [4., 5., 6.]]).astype(np.float32))

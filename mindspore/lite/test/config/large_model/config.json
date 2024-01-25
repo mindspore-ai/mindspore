@@ -2,7 +2,7 @@
     "llama2_910B_static_2p_full": {
         "ascend_context": {
             "rank_table_file": "./predict_config/hccl_2p.json",
-            "plugin_custom_ops": "KVCache",
+            "plugin_custom_ops": "KVCache,MatMulAllReduce",
             "provider": "ge"
         },
         "graph_kernel_param": {
@@ -20,7 +20,7 @@
     "llama2_910B_static_2p_inc": {
         "ascend_context": {
             "rank_table_file": "./predict_config/hccl_2p.json",
-            "plugin_custom_ops": "KVCache",
+            "plugin_custom_ops": "KVCache,MatMulAllReduce",
             "provider": "ge"
         },
         "graph_kernel_param": {
@@ -38,7 +38,7 @@
     "llama2_910A_static_2p_full": {
         "ascend_context": {
             "rank_table_file": "./predict_config/hccl_2p.json",
-            "plugin_custom_ops": "All",
+            "plugin_custom_ops": "KVCache",
             "provider": "ge"
         },
         "graph_kernel_param": {

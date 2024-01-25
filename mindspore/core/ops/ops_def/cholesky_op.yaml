@@ -11,4 +11,4 @@ cholesky:
     output:
       dtype: tensor
   function:
-    name: cholesky_
+    disable: True

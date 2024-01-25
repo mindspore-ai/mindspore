@@ -17,6 +17,7 @@ import numpy as np
 import pytest
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore as ms
 from mindspore import Tensor
 from mindspore.ops import operations as P
 
@@ -31,35 +32,18 @@ class RandomChoiceWithMaskNet(nn.Cell):
         return self.random_choice_with_mask(x)
 
 
-@pytest.mark.skip(reason="fail on run package upgrade")
-def test_random_choice_with_mask_graph():
-    """
-    Feature: Custom aicpu feature.
-    Description: Test random_choice_with_mask kernel in graph mode.
-    Expectation: No exception.
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    input_tensor = Tensor(np.array([[1, 0, 1, 0], [0, 0, 0, 1], [1, 1, 1, 1],
-                                    [0, 0, 0, 1]]).astype(np.bool))
-    expect1 = (4, 2)
-    expect2 = (4,)
-    net = RandomChoiceWithMaskNet()
-    output1, output2 = net(input_tensor)
-    assert output1.shape == expect1
-    assert output2.shape == expect2
-
-
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_random_choice_with_mask_pynative():
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_random_choice_with_mask_graph(mode):
     """
     Feature: Custom aicpu feature.
-    Description: Test random_choice_with_mask kernel in pynative mode.
+    Description: Test random_choice_with_mask kernel.
     Expectation: No exception.
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    context.set_context(mode=mode, device_target="Ascend")
     input_tensor = Tensor(np.array([[1, 0, 1, 0], [0, 0, 0, 1], [1, 1, 1, 1],
                                     [0, 0, 0, 1]]).astype(np.bool))
     expect1 = (4, 2)

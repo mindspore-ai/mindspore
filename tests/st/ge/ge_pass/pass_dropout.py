@@ -15,7 +15,6 @@
 """ test ge frontend pass `DropoutForGE` `DropoutGradForGE` """
 import numpy as np
 
-from tests.st.ge import ge_infer_env  # pylint: disable=unused-import
 from mindspore import ops, nn, context, Tensor
 from mindspore.ops.composite import GradOperation
 

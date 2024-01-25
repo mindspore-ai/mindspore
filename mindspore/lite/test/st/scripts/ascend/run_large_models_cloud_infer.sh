@@ -4,18 +4,16 @@ function check_device() {
     npu-smi info >./device.log
     line_idx=0
     target_line=7
-    pattern_910a="910(.*)A*"
-    pattern_910b="910(.*)B*"
     while read rows; do
         let line_idx++
         if [ ${line_idx} -eq ${target_line} ]; then
             device=$(echo ${rows} | awk '{print $3}')
-            if grep -qE "^$pattern_910a$" <<<$device; then
-                device="910A"
-            fi
-            if grep -qE "^$pattern_910b$" <<<$device; then
+            if [[ ${device} =~ "910B" ]]; then
                 device="910B"
             fi
+            if [[ ${device} =~ "910PremiumA" ]]; then
+                device="910A"
+            fi 
             echo "${device}"
         fi
     done <./device.log
@@ -33,15 +31,10 @@ function ConfigAscend() {
 
     echo "Copy file success"
     # source ascend env
-    export ASCEND_SLOG_PRING_TO_STDOUT=1
-    export ASCEND_GLOBAL_LOG_LEVEL=1
     export ASCEND_HOME=/usr/local/Ascend/latest
     ls /usr/local/Ascend/latest/bin/
     export PATH=${ASCEND_HOME}/compiler/ccec_compiler/bin:${PATH}
-    export LD_LIBRARY_PATH=${ASCEND_HOME}/lib64:${ASCEND_HOME}/../driver/lib64:${LD_LIBRARY_PATH}
-    export ASCEND_OPP_PATH=${ASCEND_HOME}/opp
-    export TBE_IMPL_PATH=${ASCEND_HOME}/opp/built-in/op_impl/ai_core/tbe
-    export PYTHONPATH=${TBE_IMPL_PATH}:${PYTHONPATH}
+    source ${ASCEND_HOME}/aarch64-linux/bin/setenv.bash
 }
 
 function run_infer_parallel() {

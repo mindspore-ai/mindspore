@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-from tests.st.ge import ge_train_env  # pylint: disable=unused-import
 import mindspore as ms
 
 ms.set_context(mode=ms.GRAPH_MODE)

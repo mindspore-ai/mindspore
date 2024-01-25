@@ -121,7 +121,7 @@ void CPUProfiler::RecordFrameWorkInfo(const CNodePtr &kernel) {
     cur_kernel_info.op_type = op_name.substr(begin_iter, end_iter - begin_iter);
     cur_kernel_info.op_name = op_name.substr(begin_iter, op_name.length() - begin_iter);
   }
-  for (size_t i = 0; i < kernel->inputs().size(); i++) {
+  for (size_t i = 0; i < kernel->size(); i++) {
     if (kernel->input(i)->Shape() != nullptr) {
       cur_kernel_input_info.input_id = i;
       cur_kernel_input_info.shape = kernel->input(i)->Shape()->DumpText();

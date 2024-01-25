@@ -27,7 +27,6 @@
 #include "utils/hash_set.h"
 #include "frontend/operator/composite/composite.h"
 #include "ir/tensor.h"
-#include "pipeline/jit/ps/debug/anf_ir_utils.h"
 #include "include/common/debug/common.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "pipeline/jit/ps/static_analysis/evaluator.h"
@@ -125,26 +124,37 @@ void TraceGraphEval() {
   MS_LOG(INFO) << oss.str();
 }
 
-class AnalyzeFailExporter : public AnfExporter {
+class AnalyzeFailExporter {
  public:
-  AnalyzeFailExporter() : AnfExporter(true, false) { is_top_graph = false; }
-  ~AnalyzeFailExporter() override = default;
+  AnalyzeFailExporter() {
+    is_top_graph_ = false;
+    exported_.clear();
+  }
+  ~AnalyzeFailExporter() {}
 
   bool ExportFuncGraph(const std::string &filename, const TraceCNodeEvalStack &node_config_stack);
 
  protected:
-  void OutputCNode(std::ostringstream &oss, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
-                   std::map<AnfNodePtr, int> *const apply_map) override;
-  std::string GetNodeType(const AnfNodePtr &node) override;
+  void OutputCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph, const OrderedMap<AnfNodePtr, int32_t> &para_map,
+                   const std::shared_ptr<SubGraphIRInfo> &gsub);
   AbstractBasePtr GetNodeAbstract(const AnfNodePtr &node);
   AnfNodeConfigPtr GetForwardConfig(const AnfNodeConfigPtr &cfg);
   void ProcessFuncGraphCall(const CNodePtr &node, std::string *const op_comment);
   mindspore::HashMap<FuncGraphPtr, TaggedNodeMap> CreateTaggedNodeMap(
     const std::vector<abstract::AnfNodeConfigPtr> &node_config_stack);
+  void ExportOneFuncGraph(const FuncGraphPtr &func_graph, const TaggedNodeMap &tagged_cnodes_map,
+                          std::ostringstream &oss, OrderedMap<AnfNodePtr, int32_t> *para_map, int32_t total_para);
+  void OutputStatementComment(const CNodePtr &node, const FuncGraphPtr &func_graph, std::ostringstream &oss);
+  std::string OuputIrStyleCNodes(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &nodes,
+                                 const TaggedNodeMap &tagged_cnodes_map, int32_t total_para,
+                                 OrderedMap<AnfNodePtr, int32_t> *para_map);
+  std::string GetNodeType(const AnfNodePtr &node);
 
  private:
   AnalysisContextPtr current_context_ = nullptr;
   AnalysisEnginePtr engine_ = nullptr;
+  OrderedMap<FuncGraphPtr, ParamIndexMap> exported_;
+  bool is_top_graph_;
 };
 
 mindspore::HashMap<FuncGraphPtr, TaggedNodeMap> AnalyzeFailExporter::CreateTaggedNodeMap(
@@ -182,9 +192,81 @@ bool OutputAnalyzedGraphWithType(const string &file_path) {
   return exporter.ExportFuncGraph(file_path, GetCNodeDebugStack());
 }
 
+void PrintTupleNodeUsedFlagsDat(const abstract::AbstractSequencePtr &sequence_abs, std::ostringstream &buffer) {
+  if (sequence_abs == nullptr || sequence_abs->sequence_nodes() == nullptr || sequence_abs->sequence_nodes()->empty()) {
+    return;
+  }
+
+  buffer << ", sequence_nodes={";
+  for (size_t i = 0; i < sequence_abs->sequence_nodes()->size(); ++i) {
+    auto node = (*sequence_abs->sequence_nodes())[i].lock();
+    if (node == nullptr) {
+      MS_LOG(DEBUG) << "The node in sequence_nodes is free.";
+      buffer << "node={<freed node>}";
+    } else {
+      buffer << "node={" << node->DebugString();
+      auto flags = GetSequenceNodeElementsUseFlags(node);
+      if (flags != nullptr) {
+        buffer << ", elements_use_flags: {ptr: " << flags << ", value: " << (*flags) << "}";
+      }
+      buffer << "}";
+    }
+    if (i != sequence_abs->sequence_nodes()->size() - 1) {
+      buffer << ", ";
+    }
+  }
+  buffer << "}";
+}
+
+std::string GetNodeTypeOrigin(const AnfNodePtr &nd) {
+  MS_EXCEPTION_IF_NULL(nd);
+  ValuePtr tensor_value = nullptr;
+  StringImmPtr ref_key = nullptr;
+  abstract::AbstractSequencePtr sequence_abs = nullptr;
+  auto abstract = nd->abstract();
+  if (abstract != nullptr) {
+    if (abstract->isa<abstract::AbstractTensor>()) {
+      tensor_value = abstract->BuildValue();
+    }
+    if (auto ref_tensor = abstract->cast_ptr<abstract::AbstractRefTensor>(); ref_tensor != nullptr) {
+      ref_key = dyn_cast<StringImm>(ref_tensor->ref_key_value());
+    } else if (auto map_tensor = abstract->cast_ptr<abstract::AbstractMapTensor>(); map_tensor != nullptr) {
+      ref_key = dyn_cast<StringImm>(map_tensor->ref_key_value());
+    }
+    sequence_abs = dyn_cast<abstract::AbstractSequence>(abstract);
+  }
+  abstract::BaseShapePtr shape = nd->Shape() == nullptr ? nullptr : dyn_cast<abstract::BaseShape>(nd->Shape());
+  TypePtr type = dyn_cast<Type>(nd->Type());
+  std::ostringstream oss;
+  if ((shape != nullptr) && (type != nullptr)) {
+    oss << "<" << type << ", " << shape->ToString();
+    if (tensor_value != nullptr && tensor_value != kValueAny) {
+      oss << ", value=...";
+    }
+    if (ref_key != nullptr) {
+      oss << ", ref_key=:" << ref_key->value();
+    }
+    PrintTupleNodeUsedFlagsDat(sequence_abs, oss);
+    oss << ">";
+  } else if (type != nullptr) {
+    oss << "<" << type;
+    if (tensor_value != nullptr && tensor_value != kValueAny) {
+      oss << ", value=...";
+    }
+    if (ref_key != nullptr) {
+      oss << ", ref_key=:" << ref_key->value();
+    }
+    PrintTupleNodeUsedFlagsDat(sequence_abs, oss);
+    oss << ">";
+  } else {
+    oss << "<null>";
+  }
+  return oss.str();
+}
+
 std::string AnalyzeFailExporter::GetNodeType(const AnfNodePtr &node) {
   if (current_context_ == nullptr) {
-    return AnfExporter::GetNodeType(node);
+    return GetNodeTypeOrigin(node);
   }
 
   MS_EXCEPTION_IF_NULL(engine_);
@@ -284,19 +366,185 @@ void AnalyzeFailExporter::ProcessFuncGraphCall(const CNodePtr &node, std::string
   }
 }
 
-void AnalyzeFailExporter::OutputCNode(std::ostringstream &oss, const CNodePtr &cnode, const FuncGraphPtr &func_graph,
-                                      int *idx, std::map<AnfNodePtr, int> *const apply_map) {
-  OutputCNodeText(oss, cnode, func_graph, idx, apply_map);
+void AnalyzeFailExporter::OutputStatementComment(const CNodePtr &node, const FuncGraphPtr &func_graph,
+                                                 std::ostringstream &oss) {
+  if (node == nullptr) {
+    return;
+  }
+  // Output type of each input argument
+  auto &inputs = node->inputs();
+  if (node != func_graph->get_return()) {
+    if (inputs.size() > 1) {
+      oss << "\n      : (";
+      for (size_t i = 1; i < inputs.size(); ++i) {
+        if (i != 1) {
+          oss << ", ";
+        }
+        AnfNodePtr arg = inputs[i];
+        oss << GetNodeType(arg);
+      }
+      oss << ")"
+          << " -> "
+          << "(" << GetNodeType(node) << ")";
+    }
+  } else {
+    oss << "\n      : (" << GetNodeType(node) << ")";
+  }
+  // Output other comment, map the graph name to original representation(containing unicode character)
+  oss << "\n";
+  oss << "      #scope: (" << node->scope()->name() << ")";
+}
+
+void AnalyzeFailExporter::OutputCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph,
+                                      const OrderedMap<AnfNodePtr, int32_t> &para_map,
+                                      const std::shared_ptr<SubGraphIRInfo> &gsub) {
+  if (node != sub_graph->get_return()) {
+    gsub->buffer << "  %" << gsub->local_var << "(" << node->ToString() << ")"
+                 << " = ";
+    gsub->local_var_map[node] = gsub->local_var++;
+  } else {
+    gsub->buffer << "  ";
+  }
+
+  if (node->inputs().empty()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Input of CNode is empty";
+  }
+
+  // Print operator
+  DumpOperator(node, gsub);
+
+  // Print operands
+  DumpOperands(node, para_map, gsub);
+
+  // Print operator attrs
+  AnfNodePtr op = node->input(0);
+  DumpOperateAttrs(op, gsub);
+
+  // Print cnode attrs
+  DumpCNodeAttrs(node, gsub);
+
+  // Print cnode primal attrs
+  DumpCNodePrimalAttrs(node, gsub);
+
+  // Print parallel info
+  DumpParallelInfo(node, gsub);
+
   // Process function graph call
   std::string op_comment;
-  ProcessFuncGraphCall(cnode, &op_comment);
+  ProcessFuncGraphCall(node, &op_comment);
   if (!op_comment.empty()) {
-    auto &inputs = cnode->inputs();
-    oss << "    #" << GetAnfNodeText(func_graph, inputs[0], *apply_map) << ".prototype = " << op_comment;
+    auto &inputs = node->inputs();
+    std::shared_ptr<SubGraphIRInfo> input_gsub = std::make_shared<SubGraphIRInfo>();
+    input_gsub->local_var = 0;
+    DumpOperator(inputs[0], input_gsub);
+    gsub->buffer << "    #" << input_gsub->buffer.str() << ".prototype = " << op_comment;
   }
   // Output comment
-  OutputStatementComment(cnode, func_graph, oss);
-  oss << "\n";
+  OutputStatementComment(node, sub_graph, gsub->buffer);
+  gsub->buffer << "\n";
+}
+
+std::string AnalyzeFailExporter::OuputIrStyleCNodes(const FuncGraphPtr &func_graph,
+                                                    const std::vector<AnfNodePtr> &nodes,
+                                                    const TaggedNodeMap &tagged_cnodes_map, int32_t total_para,
+                                                    OrderedMap<AnfNodePtr, int32_t> *para_map) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto &parameters = func_graph->parameters();
+  std::shared_ptr<SubGraphIRInfo> gsub = std::make_shared<SubGraphIRInfo>();
+  gsub->local_var = 0;
+  if (!is_top_graph_) {
+    if (parameters.size() == 1) {
+      MS_EXCEPTION_IF_NULL(parameters[0]);
+      gsub->buffer << "%para" << (*para_map)[parameters[0]] << "_" << parameters[0]->ToString();
+    } else if (parameters.size() > 1) {
+      for (size_t idx = 0; idx < parameters.size() - 1; idx++) {
+        MS_EXCEPTION_IF_NULL(parameters[idx]);
+        gsub->buffer << "%para" << (*para_map)[parameters[idx]] << "_" << parameters[idx]->ToString();
+        gsub->buffer << ", ";
+      }
+      MS_EXCEPTION_IF_NULL(parameters[parameters.size() - 1]);
+      gsub->buffer << "%para" << (*para_map)[parameters[parameters.size() - 1]] << "_"
+                   << parameters[parameters.size() - 1]->ToString();
+    }
+  } else {
+    is_top_graph_ = false;
+  }
+  gsub->buffer << ") {\n";
+  ParamIndexMap param_map;
+  exported_[func_graph] = param_map;
+  gsub->local_var = 0;
+  for (size_t idx = 0; idx < parameters.size(); idx++) {
+    MS_EXCEPTION_IF_NULL(parameters[idx]);
+    if ((*para_map).count(parameters[idx]) == 0) {
+      (*para_map)[parameters[idx]] = total_para++;
+    }
+  }
+  for (const AnfNodePtr &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    if (!tagged_cnodes_map.empty()) {
+      auto iter = tagged_cnodes_map.find(node);
+      if (iter != tagged_cnodes_map.end()) {
+        gsub->buffer << "\n#------------------------> " << iter->second << "\n";
+      }
+    }
+    OutputCNode(cnode, func_graph, *para_map, gsub);
+    if (trace::GetGlobalTraceLabelType() == trace::TraceLabelType::kWithUniqueId) {
+      gsub->buffer << trace::GetDebugInfoStr(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "#"
+                   << trace::Label(cnode->debug_info()) << "\n";
+    } else {
+      std::string dgi = trace::GetDebugInfoStr(cnode->debug_info(), "      # ", kSourceLineTipDiscard);
+      if (dgi != "") {
+        gsub->buffer << trace::GetDebugInfoStr(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "\n";
+      }
+    }
+  }
+  return gsub->buffer.str();
+}
+
+void AnalyzeFailExporter::ExportOneFuncGraph(const FuncGraphPtr &func_graph, const TaggedNodeMap &tagged_cnodes_map,
+                                             std::ostringstream &oss, OrderedMap<AnfNodePtr, int32_t> *para_map,
+                                             int32_t total_para) {
+  if (func_graph == nullptr) {
+    return;
+  }
+
+  std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return(), SuccIncoming, AlwaysInclude);
+
+  if (*(func_graph->indirect())) {
+    oss << "indirect: " << *(func_graph->indirect()) << "\n";
+  }
+  oss << "subgraph attr:" << std::endl;
+  for (const auto &attr : func_graph->attrs()) {
+    oss << attr.first << " : ";
+    MS_EXCEPTION_IF_NULL(attr.second);
+    if (attr.second->isa<BoolImm>()) {
+      oss << GetValue<bool>(attr.second);
+    } else if (attr.second->isa<StringImm>()) {
+      oss << (GetValue<std::string>(attr.second));
+    }
+    oss << std::endl;
+  }
+  oss << "subgraph instance: " << func_graph->ToString() << " : " << func_graph.get() << std::endl;
+  if (trace::GetGlobalTraceLabelType() == trace::TraceLabelType::kWithUniqueId) {
+    oss << trace::GetDebugInfoStr(func_graph->debug_info(), "# ", kSourceLineTipDiscard) << "#"
+        << trace::Label(func_graph->debug_info()) << "\n";
+  } else {
+    oss << trace::GetDebugInfoStr(func_graph->debug_info(), "# ", kSourceLineTipDiscard) << "\n";
+  }
+  oss << "subgraph @" << func_graph->ToString();
+  if (func_graph->parent() != nullptr) {
+    oss << " parent: [subgraph @" << func_graph->parent()->ToString() << "]";
+  }
+  oss << "(";
+  oss << OuputIrStyleCNodes(func_graph, nodes, tagged_cnodes_map, total_para, para_map);
+
+  oss << "}\n";
+
+  OutputOrderList(func_graph, oss);
 }
 
 bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const TraceCNodeEvalStack &node_config_stack) {
@@ -334,7 +582,15 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
   }
   auto top_func = node_config_stack.front()->func_graph();
   std::ostringstream head_buffer;
-  DumpIRHead(top_func, head_buffer);
+  MS_EXCEPTION_IF_NULL(top_func);
+  is_top_graph_ = true;
+  auto sub_graphs = top_func->func_graphs_used_total();
+  std::ostringstream oss;
+  DumpGlobalInfoEntry(top_func, oss, sub_graphs.size());
+  OrderedMap<AnfNodePtr, int32_t> para_map;
+  int32_t total_para = DumpParams(top_func, oss, &para_map);
+  ofs << oss.str();
+  ofs << std::endl;
   ofs << head_buffer.str();
   auto tagged_func_graphs = CreateTaggedNodeMap(node_config_stack);
   mindspore::HashSet<FuncGraphPtr> printed_func_graphs;  // Check if func graph has been printed.
@@ -357,7 +613,7 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
 
     current_context_ = node_config->context();  // Set current context.
     std::ostringstream buffer;
-    ExportOneFuncGraph(fg, tagged_func_graphs[fg], buffer);
+    ExportOneFuncGraph(fg, tagged_func_graphs[fg], buffer, &para_map, total_para);
     ofs << buffer.str() << "\n\n";
   }
   current_context_ = nullptr;
@@ -384,7 +640,7 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
       continue;
     }
     std::ostringstream buffer;
-    ExportOneFuncGraph(fg, empty_map, buffer);
+    ExportOneFuncGraph(fg, empty_map, buffer, &para_map, total_para);
     ofs << buffer.str() << "\n\n";
     has_rest_fg = true;
   }

@@ -246,6 +246,9 @@ class DeviceAddress : public mindspore::DeviceSync {
                                        : KernelWithIndex{node_index_.first.lock(), node_index_.second};
   }
 
+  size_t IncreaseCounter() { return kernel_tensor_->pointer_ref_count()->IncreaseCounter(); }
+  size_t DecreaseCounter() { return kernel_tensor_->pointer_ref_count()->DecreaseCounter(); }
+
   // The related interface of reference count operation.
   void set_original_ref_count(size_t original_ref_count) const override {
     kernel_tensor_->pointer_ref_count()->set_original_ref_count(original_ref_count);
@@ -265,7 +268,7 @@ class DeviceAddress : public mindspore::DeviceSync {
       kernel_tensor_->pointer_ref_count()->DecreaseOriginalRefCount();
     }
   }
-  void DecreaseRefCount() { kernel_tensor_->pointer_ref_count()->DecreaseRefCount(); }
+  size_t DecreaseRefCount() { return kernel_tensor_->pointer_ref_count()->DecreaseRefCount(); }
 
   // The related interface of dynamic reference count operation.
   void set_dynamic_ref_count(int32_t dynamic_ref_count) {

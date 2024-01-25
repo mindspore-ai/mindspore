@@ -365,6 +365,55 @@ APP_ERROR PluginDvppAdjustSaturation(const std::shared_ptr<mindspore::dataset::D
   return DvppAdjustSaturation(input, output, factor);
 }
 
+APP_ERROR PluginDvppHorizontalFlip(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                                   std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppHorizontalFlip(input, output);
+}
+
+APP_ERROR PluginDvppResizedCrop(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                                std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output, int32_t top,
+                                int32_t left, int32_t height, int32_t width, int32_t output_height,
+                                int32_t output_width, mindspore::dataset::InterpolationMode mode) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppResizedCrop(input, output, top, left, height, width, output_height, output_width, mode);
+}
+
+APP_ERROR PluginDvppVerticalFlip(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                                 std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppVerticalFlip(input, output);
+}
+
+APP_ERROR PluginDvppPerspective(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                                std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output,
+                                const std::vector<std::vector<int32_t>> &start_points,
+                                const std::vector<std::vector<int32_t>> &end_points,
+                                mindspore::dataset::InterpolationMode interpolation) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppPerspective(input, output, start_points, end_points, interpolation);
+}
+
 APP_ERROR PluginGetSocName(std::string *soc_name) { return mindspore::dataset::GetSocName(soc_name); }
 
 APP_ERROR PluginCreateAclTensor(const int64_t *view_dims, uint64_t view_dims_num, mindspore::TypeId data_type,

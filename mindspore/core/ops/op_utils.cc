@@ -120,15 +120,18 @@ BaseShapePtr EltwiseGradInferShape(const PrimitivePtr &primitive, const std::vec
   MS_EXCEPTION_IF_NULL(dout_shape_ptr);
   auto x_shape = x_shape_ptr->GetShapeVector();
   auto dout_shape = dout_shape_ptr->GetShapeVector();
-  if (!IsDynamicRank(x_shape) && !IsDynamicRank(dout_shape) && x_shape.size() != dout_shape.size()) {
-    MS_EXCEPTION(RuntimeError) << "Rank of x(" << x_shape.size() << ") and dout(" << dout_shape.size()
-                               << ") not equal, primitive name: " << prim_name << ".";
+  if (IsDynamicRank(x_shape) || IsDynamicRank(dout_shape)) {
+    return input_args[1]->GetShape()->Clone();
+  } else if (x_shape.size() != dout_shape.size()) {
+    MS_EXCEPTION(ValueError) << "Rank of x(" << x_shape.size() << ") and dout(" << dout_shape.size()
+                             << ") not equal, primitive name: " << prim_name << ".";
   }
+
   for (size_t i = 0; i < x_shape.size(); i++) {
     if (x_shape[i] != abstract::Shape::kShapeDimAny && dout_shape[i] != abstract::Shape::kShapeDimAny &&
         x_shape[i] != dout_shape[i]) {
-      MS_EXCEPTION(RuntimeError) << "The " << i << "th dim of x(" << x_shape[i] << ") and dout(" << dout_shape[i]
-                                 << ") not equal, primitive name: " << prim_name << ".";
+      MS_EXCEPTION(ValueError) << "The " << i << "th dim of x(" << x_shape[i] << ") and dout(" << dout_shape[i]
+                               << ") not equal, primitive name: " << prim_name << ".";
     }
   }
   return input_args[0]->GetShape()->Clone();

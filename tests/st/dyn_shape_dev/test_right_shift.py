@@ -22,7 +22,7 @@ import test_utils
 
 @test_utils.run_with_cell
 def right_shift_forward_func(x, y):
-    return ops.auto_generate.right_shift(x, y)
+    return ops.RightShift()(x, y)
 
 
 @test_utils.run_with_cell

@@ -24,6 +24,7 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/device/memory_manager.h"
 #include "plugin/device/gpu/hal/hardware/gpu_deprecated_interface.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 namespace mindspore {
 namespace device {
@@ -51,15 +52,27 @@ class GPUDeviceResManager : public DeviceResManager {
   DeviceAddressPtr CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const override;
 
   bool CreateStream(size_t *stream_id) const override;
+  bool CreateStreamWithPriority(size_t *stream_id, int32_t priority) const override;
+  void *GetStream(size_t stream_id) const;
   bool DestroyStream(size_t stream_id) const override;
+  void SetCurrentStreamId(size_t stream_id) override;
+  size_t GetCurrentStreamId() const override;
+  bool QueryStream(size_t stream_id) const override;
   bool SyncStream(size_t stream_id) const override;
   bool SyncAllStreams() const override;
+  bool SyncNotDefaultStreams() const override;
+  size_t DefaultStream() const override;
+
+  DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) const override;
 
   bool LoadCollectiveCommLib() override;
 
+  bool single_op_multi_stream_enable() const override;
+  void set_single_op_multi_stream_enable(bool single_op_multi_stream_enable) override;
+
  protected:
   // Relevant function to allocate and free device memory of raw ptr.
-  void *AllocateMemory(size_t size) const override;
+  void *AllocateMemory(size_t size, uint32_t stream_id = UINT32_MAX) const override;
   void FreeMemory(void *ptr) const override;
   void FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
                        const std::vector<size_t> &keep_addr_sizes) const override;
@@ -96,7 +109,7 @@ class GPUKernelExecutor : public KernelExecutor {
 
   bool ExecuteKernelTask(const pynative::KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
                          const TensorStorageInfoPtrList &input_storage_list,
-                         const device::DeviceAddressPtrList &output_addr_list) const override;
+                         const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id) const override;
 
  private:
   // Select the matching backend kernels according to the data type and format of input and output for all
@@ -135,8 +148,7 @@ class GPUKernelExecutor : public KernelExecutor {
 
 class GPUDeviceContext : public DeviceInterface<GPUKernelExecutor, GPUDeviceResManager> {
  public:
-  explicit GPUDeviceContext(const DeviceContextKey &device_context_key)
-      : DeviceInterface(device_context_key), initialized_(false) {}
+  explicit GPUDeviceContext(const DeviceContextKey &device_context_key) : DeviceInterface(device_context_key) {}
   ~GPUDeviceContext() override = default;
 
   // Set device id and initialize device resource, such as stream, cudnn and cublas handle.
@@ -149,9 +161,14 @@ class GPUDeviceContext : public DeviceInterface<GPUKernelExecutor, GPUDeviceResM
 
   DeprecatedInterface *GetDeprecatedInterface() override;
 
+  static uint32_t GetDeviceCount();
+  static std::string GetDeviceName(uint32_t device_id);
+  static std::vector<int> GetDeviceCapability(uint32_t device_id);
+  static cudaDeviceProp GetDeviceProperties(uint32_t device_id);
+  static std::string GetArchList();
+
  private:
   DISABLE_COPY_AND_ASSIGN(GPUDeviceContext);
-  bool initialized_;
   std::unique_ptr<GPUDeprecatedInterface> deprecated_interface_;
 };
 }  // namespace gpu

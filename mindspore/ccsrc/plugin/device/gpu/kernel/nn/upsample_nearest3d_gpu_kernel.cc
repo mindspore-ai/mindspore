@@ -24,7 +24,6 @@
 #include <vector>
 #include "abstract/utils.h"
 #include "kernel/kernel.h"
-#include "kernel/kernel_get_value.h"
 #include "kernel/ops_utils.h"
 #include "ops/upsample_nearest_3d.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/upsample_nearest_3d_impl.cuh"

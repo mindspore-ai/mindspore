@@ -23,7 +23,6 @@
 #include <utility>
 #include <map>
 #include <memory>
-#include "kernel/kernel_get_value.h"
 #include "mindspore/core/ops/op_name.h"
 #include "mindspore/core/ops/grad/slice_grad.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"

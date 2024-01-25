@@ -516,7 +516,9 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
                   << ", NodeConfig: " << conf->ToString() << ", result: " << arg << "/" << arg->ToString();
   }
   PushAlwaysEvalFlag(always_eval_flag);
-  MS_EXCEPTION_IF_NULL(fg->get_return());
+  if (fg->get_return() == nullptr) {
+    MS_LOG(EXCEPTION) << "The func graph " << fg << "/" << fg->ToString() << " has no return node.";
+  }
   MS_LOG(DEBUG) << "Analysis FuncGraph begin, func graph: " << fg << "/" << fg->ToString()
                 << ", context: " << context->ToString() << ", return node: " << fg->get_return()->DebugString()
                 << ", parent: " << (parent_context_->func_graph() ? parent_context_->func_graph()->ToString() : "NULL")

@@ -13,9 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback """
+import os
 import operator
 import builtins
 import functools
+import subprocess
 import pytest
 import numpy as np
 from numpy import logspace
@@ -24,9 +26,27 @@ from scipy.linalg import qr
 
 import mindspore as ms
 from mindspore import nn
+from mindspore.common.initializer import initializer
 from . import utils
 
 ms.set_context(mode=ms.GRAPH_MODE)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_tensor_asnumpy():
+    """
+    Feature: JIT Fallback
+    Description: Test tensor.asnumpy().
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func(x):
+        return ms.Tensor(x.asnumpy())
+
+    x = ms.Tensor(1)
+    assert func(x) == 1
 
 
 @pytest.mark.level2
@@ -176,3 +196,87 @@ def test_scipy_linalg_qr():
 
     out = func()
     assert out[0].shape == (2, 2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_env_ms_jit():
+    """
+    Feature: JIT Fallback
+    Description: Test environ variables in graph mode.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def foo():
+        t = initializer('ones', [1, 2, 3], ms.float32)
+        return t
+
+    os.environ['MS_JIT'] = '0'
+    out = foo()
+    assert out.shape == (1, 2, 3)
+    os.environ['MS_JIT'] = '1'
+    with pytest.raises(RuntimeError):
+        foo()
+    del os.environ['MS_JIT']
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_env_ms_jit_modules():
+    """
+    Feature: JIT Fallback
+    Description: Test environ variables in graph mode.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func():
+        return logspace(0, 0, 5)
+
+    os.environ['MS_JIT_MODULES'] = 'numpy'
+    with pytest.raises(Exception):
+        func()
+    os.environ['MS_JIT_IGNORE_MODULES'] = 'numpy'
+    out = func()
+    expect = np.array([1., 1., 1., 1., 1.])
+    assert np.allclose(out, expect)
+    del os.environ['MS_JIT_MODULES']
+    del os.environ['MS_JIT_IGNORE_MODULES']
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_env_fallback_dump_node():
+    """
+    Feature: JIT Fallback
+    Description: Test environ variables in graph mode.
+    Expectation: No exception.
+    """
+    def check_dump_node_log():
+        # Clear log files
+        log_file_name = "fallback_dump_node.log"
+        if os.path.exists(log_file_name):
+            os.remove(log_file_name)
+        assert not os.path.exists(log_file_name)
+
+        cmd_first = f"GLOG_v=3 pytest -sv test_graph_fallback_third_party.py::test_tensor_asnumpy > " + \
+            log_file_name + " 2>&1"
+        subprocess.check_output(cmd_first, shell=True)
+        assert os.path.exists(log_file_name)
+        with open(log_file_name, "r") as f_first:
+            data_first = f_first.read()
+
+        expected_msg = "Found unsupported syntax in graph mode, those codes would be fallen back to Python interpreter"
+        match = expected_msg in data_first
+
+        # Clean files
+        os.remove(log_file_name)
+        return match
+
+    os.environ['MS_DEV_FALLBACK_DUMP_NODE'] = '0'
+    assert not check_dump_node_log()
+    os.environ['MS_DEV_FALLBACK_DUMP_NODE'] = '1'
+    assert check_dump_node_log()
+    del os.environ['MS_DEV_FALLBACK_DUMP_NODE']

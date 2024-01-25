@@ -20,6 +20,7 @@
 #include "ops/array_ops.h"
 #include "ops/other_ops.h"
 #include "ops/arithmetic_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

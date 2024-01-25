@@ -36,15 +36,12 @@
 #include "plugin/device/ascend/hal/device/ascend_event.h"
 #include "plugin/device/ascend/hal/device/ascend_device_synchronizer.h"
 #ifndef ENABLE_SECURITY
-#include "toolchain/prof_api.h"
 #include "include/backend/debug/profiler/profiling.h"
 #include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "include/backend/debug/data_dump/e2e_dump.h"
 #endif
-#include "toolchain/adx_datadump_server.h"
 #include "utils/trace_base.h"
-#include "external/acl/error_codes/rt_error_codes.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/parallel_context.h"
 #include "include/common/utils/comm_manager.h"
@@ -65,7 +62,7 @@ constexpr uint32_t kProfilingMaxTaskIdInStream = 65531;
 constexpr uint32_t kDefaultHcclExecTimeout = 1800;
 
 namespace mindspore::device::ascend {
-static thread_local rtContext_t thread_local_rt_context{nullptr};
+static thread_local aclrtContext thread_local_rt_context{nullptr};
 namespace {
 void IntHandler(int, siginfo_t *, void *) {
   int this_pid = getpid();
@@ -569,6 +566,7 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
 
 bool AscendKernelRuntime::SyncStream() {
   SetContextForce();
+  std::set<aclrtStream> except_streams;
   if (stream_ != nullptr) {
     // cppcheck-suppress unreadVariable
     auto lock = device::KernelRuntime::LockRuntime(stream_);
@@ -576,6 +574,7 @@ bool AscendKernelRuntime::SyncStream() {
       MS_LOG(ERROR) << "Sync default stream failed.";
       return false;
     }
+    (void)except_streams.insert(stream_);
   }
   if (communication_stream_ != nullptr) {
     // cppcheck-suppress unreadVariable
@@ -584,6 +583,13 @@ bool AscendKernelRuntime::SyncStream() {
       MS_LOG(ERROR) << "Sync default stream failed.";
       return false;
     }
+    (void)except_streams.insert(communication_stream_);
+  }
+
+  // Sync all stream except stream_ and communication_stream_.
+  if (!AscendStreamMng::GetInstance().SyncExceptStreamsInList(except_streams)) {
+    MS_LOG(ERROR) << "Sync except streams failed.";
+    return false;
   }
   return true;
 }

@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,12 +22,13 @@ context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
 class NetResizeBilinear(nn.Cell):
-    def __init__(self, size=None, align_corner=False, half_pixel_centers=False):
+    def __init__(self, size, align_corner=False, half_pixel_centers=False):
         super(NetResizeBilinear, self).__init__()
-        self.op = P.ResizeBilinear(size=size, align_corners=align_corner, half_pixel_centers=half_pixel_centers)
+        self.size = size
+        self.op = P.ResizeBilinearV2(align_corners=align_corner, half_pixel_centers=half_pixel_centers)
 
     def construct(self, inputs):
-        return self.op(inputs)
+        return self.op(inputs, self.size)
 
 
 def test_resize_nn_grayscale_integer_ratio_half(datatype=np.float16):

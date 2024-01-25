@@ -387,13 +387,13 @@ std::map<string, int> NormFusion::ShapeSizeInfer(const FuncGraphPtr &func_graph)
       node_shape[cnode->fullname_with_scope()] = node_shape[cnode->input(1)->fullname_with_scope()];
     } else if (prim_type == schema::PrimitiveType_Stack) {
       auto shape = node_shape[cnode->input(1)->fullname_with_scope()];
-      shape.insert(shape.begin(), cnode->inputs().size() - 1);
+      shape.insert(shape.begin(), cnode->size() - 1);
       node_shape[cnode->fullname_with_scope()] = shape;
     }
 
     // Get in node shape size
     std::vector<int> in_shape_sizes;
-    for (size_t i = 1; i < cnode->inputs().size(); i++) {
+    for (size_t i = 1; i < cnode->size(); i++) {
       int in_shape_size = 0;
       if (utils::isa<CNodePtr>(cnode->input(i))) {
         in_shape_size = node_shape_size[cnode->input(i)->fullname_with_scope()];

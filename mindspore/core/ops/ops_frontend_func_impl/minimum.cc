@@ -40,11 +40,10 @@ void ImplMinimum(void *x1, void *x2, void *result, size_t size) {
 using Handler = std::function<void(void *x1, void *x2, void *result, size_t size)>;
 std::map<TypeId, Handler> minimum_impl_list = {
   {kNumberTypeInt8, ImplMinimum<int8_t>},     {kNumberTypeInt16, ImplMinimum<int16_t>},
-  {kNumberTypeInt32, ImplMinimum<int32_t>},   {kNumberTypeInt, ImplMinimum<int>},
-  {kNumberTypeInt64, ImplMinimum<int64_t>},   {kNumberTypeUInt8, ImplMinimum<uint8_t>},
-  {kNumberTypeUInt16, ImplMinimum<uint16_t>}, {kNumberTypeUInt32, ImplMinimum<uint32_t>},
-  {kNumberTypeUInt64, ImplMinimum<uint64_t>}, {kNumberTypeFloat16, ImplMinimum<float16>},
-  {kNumberTypeFloat32, ImplMinimum<float>},   {kNumberTypeFloat, ImplMinimum<float>},
+  {kNumberTypeInt32, ImplMinimum<int32_t>},   {kNumberTypeInt64, ImplMinimum<int64_t>},
+  {kNumberTypeUInt8, ImplMinimum<uint8_t>},   {kNumberTypeUInt16, ImplMinimum<uint16_t>},
+  {kNumberTypeUInt32, ImplMinimum<uint32_t>}, {kNumberTypeUInt64, ImplMinimum<uint64_t>},
+  {kNumberTypeFloat16, ImplMinimum<float16>}, {kNumberTypeFloat32, ImplMinimum<float>},
   {kNumberTypeFloat64, ImplMinimum<double>},  {kNumberTypeBFloat16, ImplMinimum<bfloat16>}};
 
 class MinimumFrontendFuncImpl : public OpFrontendFuncImpl {
@@ -72,8 +71,9 @@ class MinimumFrontendFuncImpl : public OpFrontendFuncImpl {
     MS_EXCEPTION_IF_NULL(result_tensor);
     auto iter = minimum_impl_list.find(dtype);
     if (iter == minimum_impl_list.end()) {
-      MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
-                              << ", the type is not supported.";
+      MS_LOG(DEBUG) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
+                    << ", the type is not supported.";
+      return nullptr;
     }
     iter->second(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
     return result_tensor;

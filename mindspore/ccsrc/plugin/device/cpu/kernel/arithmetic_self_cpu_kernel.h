@@ -29,6 +29,8 @@
 namespace mindspore {
 namespace kernel {
 constexpr auto kUnknown = "Unknown";
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
 
 class ArithmeticSelfCpuKernelMod : public NativeCpuKernelMod {
  public:

@@ -24,7 +24,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def gelu_grad_forward_func(dy, x, y):
-    return ops.auto_generate.gelu_grad(dy, x, y)
+    return ops.auto_generate.GeLUGrad()(dy, x, y)
 
 
 @test_utils.run_with_cell
@@ -34,7 +34,7 @@ def gelu_grad_backward_func(dy, x, y):
 
 @test_utils.run_with_cell
 def gelu_grad_dyn_shape_func(dy, x, y):
-    return ops.auto_generate.gelu_grad(dy, x, y)
+    return ops.auto_generate.GeLUGrad()(dy, x, y)
 
 
 @pytest.mark.level1

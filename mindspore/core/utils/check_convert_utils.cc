@@ -1159,7 +1159,6 @@ void CheckAndConvertUtils::CheckSummaryParam(const AbstractBasePtr &name, const 
                                              const std::string &class_name) {
   MS_EXCEPTION_IF_NULL(name);
   MS_EXCEPTION_IF_NULL(value);
-  CheckMode(class_name);
   (void)CheckTypeValid("name", name->BuildType(), {kString}, class_name);
   auto s = GetValue<std::string>(name->BuildValue());
   if (s.empty()) {
@@ -1167,15 +1166,6 @@ void CheckAndConvertUtils::CheckSummaryParam(const AbstractBasePtr &name, const 
                              << " cannot be an empty string.";
   }
   (void)CheckTypeValid("value", value->BuildType(), {kTensorType}, class_name);
-}
-
-void CheckAndConvertUtils::CheckMode(const std::string &class_name) {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    MS_EXCEPTION(NotSupportError) << "The primitive[" << class_name << "] does not support PyNativeMode.\n"
-                                  << "Please convert the mode to GraphMode.";
-  }
 }
 
 std::vector<double> CheckAndConvertUtils::CheckTensorFloatValue(const std::string &type_name, const ValuePtr &value,
@@ -1242,6 +1232,33 @@ std::vector<double> CheckAndConvertUtils::CheckListOrTupleFloat(const std::strin
   return result;
 }
 
+std::vector<pyfloat> CheckAndConvertUtils::CheckListOrTupleFloat(const std::string &arg_name,
+                                                                 const AbstractBasePtr &abs,
+                                                                 const std::string &prim_name) {
+  std::vector<pyfloat> result{};
+  if (IsSequence(abs)) {
+    const auto &type_list = GetSequenceElementTypes(abs);
+    if (type_list.empty()) {
+      return result;
+    }
+    if (type_list.front()->type_id() == kNumberTypeFloat64 || type_list.front()->type_id() == kNumberTypeFloat32) {
+      const auto &arr_value = ops::GetArrayValue<pyfloat>(abs);
+      if (arr_value->HasUnknownValue()) {
+        MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], there are unknown values in the " << arg_name
+                                 << ", please handle this case before calling this function.";
+      }
+      result = arr_value->ToVector();
+    } else {
+      MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the " << arg_name
+                              << " must be one of ['tuple', 'list'] with all Float elements, but got "
+                              << type_list.front()->ToString();
+    }
+    return result;
+  }
+  MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the " << arg_name
+                          << " must be one of ['tuple', 'list'] with all Float elements, but got " << abs->ToString();
+}
+
 std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string &arg_name, const ValuePtr &attr,
                                                               const std::string &prim_name) {
   std::vector<int64_t> result;
@@ -1286,10 +1303,6 @@ std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string 
 std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string &arg_name, const AbstractBasePtr &abs,
                                                               const std::string &prim_name) {
   std::vector<int64_t> result{};
-  if (!ops::IsValueKnown(abs)) {
-    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the value of  [" << arg_name
-                             << "] is unknown, please handle this case before calling this function.";
-  }
   if (IsSequence(abs)) {
     const auto &type_list = GetSequenceElementTypes(abs);
     if (type_list.empty()) {
@@ -1318,6 +1331,10 @@ std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string 
                               << type_list.front()->ToString();
     }
   } else {
+    if (!ops::IsValueKnown(abs)) {
+      MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the value of  [" << arg_name
+                               << "] is unknown, please handle this case before calling this function.";
+    }
     auto data_type = abs->GetType();
     MS_EXCEPTION_IF_NULL(data_type);
     if (data_type->type_id() == kNumberTypeInt64) {

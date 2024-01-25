@@ -700,7 +700,7 @@ AnfNodePtr ConvertCNodeToPyExecuteForPrim(const CNodePtr &cnode, const string &n
   MS_EXCEPTION_IF_NULL(fg);
   std::string script = name + "(";
   std::string internal_arg;
-  size_t arg_nums = cnode->inputs().size() - 1;
+  size_t arg_nums = cnode->size() - 1;
   std::vector<AnfNodePtr> keys_tuple_node_inputs{NewValueNode(prim::kPrimMakeTuple)};
   std::vector<AnfNodePtr> values_tuple_node_inputs{NewValueNode(prim::kPrimMakeTuple)};
   for (size_t index = 1; index < arg_nums; ++index) {
@@ -931,9 +931,9 @@ std::string GetTupleOrListString(const AbstractBasePtr &arg, const AnfNodePtr &i
     for (size_t index = 0; index < arg_tuple_elements.size(); ++index) {
       auto &element = arg_tuple_elements[index];
       const auto &inputs = cnode->inputs();
-      if (arg_tuple_elements.size() >= cnode->inputs().size()) {
+      if (arg_tuple_elements.size() >= cnode->size()) {
         MS_LOG(EXCEPTION) << "Size of cnode should be greater than arg_tuple_elements, "
-                          << "but got cnode size: " << cnode->inputs().size()
+                          << "but got cnode size: " << cnode->size()
                           << " arg_tuple_elements size: " << arg_tuple_elements.size();
       }
       auto inputs_in_tuple = inputs[index + 1];

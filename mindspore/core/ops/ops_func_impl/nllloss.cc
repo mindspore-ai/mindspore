@@ -34,23 +34,23 @@ void CheckNLLLossShapeValid(const PrimitivePtr &primitive, const ShapeVector &lo
     if (logits_shape[0] > abstract::Shape::kShapeDimAny) {
       if (labels_shape[0] > abstract::Shape::kShapeDimAny) {
         MS_CHECK_VALUE(labels_shape[0] == 1, CheckAndConvertUtils::FormatCheckIntegerMsg(
-                                               "labels_shape", labels_shape[0], kEqual, 1, primitive));
+                                               "labels shape", labels_shape[0], kEqual, 1, primitive));
       }
       if (weight_shape[0] > abstract::Shape::kShapeDimAny) {
         MS_CHECK_VALUE(weight_shape[0] == logits_shape[0],
-                       CheckAndConvertUtils::FormatCheckIntegerMsg("weight_shape", weight_shape[0], kEqual,
+                       CheckAndConvertUtils::FormatCheckIntegerMsg("weight shape", weight_shape[0], kEqual,
                                                                    logits_shape[0], primitive));
       }
     }
   } else if (logits_shape.size() == 2) {
     if (logits_shape[0] > abstract::Shape::kShapeDimAny && labels_shape[0] > abstract::Shape::kShapeDimAny) {
       MS_CHECK_VALUE(labels_shape[0] == logits_shape[0],
-                     CheckAndConvertUtils::FormatCheckIntegerMsg("labels_shape", labels_shape[0], kEqual,
+                     CheckAndConvertUtils::FormatCheckIntegerMsg("labels shape", labels_shape[0], kEqual,
                                                                  logits_shape[0], primitive));
     }
     if (logits_shape[1] > abstract::Shape::kShapeDimAny && weight_shape[0] > abstract::Shape::kShapeDimAny) {
       MS_CHECK_VALUE(weight_shape[0] == logits_shape[1],
-                     CheckAndConvertUtils::FormatCheckIntegerMsg("weight_shape", weight_shape[0], kEqual,
+                     CheckAndConvertUtils::FormatCheckIntegerMsg("weight shape", weight_shape[0], kEqual,
                                                                  logits_shape[1], primitive));
     }
   }
@@ -74,6 +74,7 @@ BaseShapePtr NLLLossFuncImpl::InferShape(const PrimitivePtr &primitive,
   MS_CHECK_VALUE(logits_shape.size() >= x_rank && logits_shape.size() <= DIM_2,
                  CheckAndConvertUtils::FormatCheckInRangeMsg("logits_shape_rank", logits_shape.size(), kIncludeBoth,
                                                              {1, 2}, primitive));
+  CheckNLLLossShapeValid(primitive, logits_shape, labels_shape, weight_shape);
   ShapeVector loss_shape;
   ShapeVector total_weight_shape;
   abstract::ShapePtr total_weight_shape_ptr = std::make_shared<abstract::TensorShape>(total_weight_shape);
@@ -106,8 +107,6 @@ BaseShapePtr NLLLossFuncImpl::InferShape(const PrimitivePtr &primitive,
       }
     }
   }
-
-  CheckNLLLossShapeValid(primitive, logits_shape, labels_shape, weight_shape);
   abstract::ShapePtr loss_shape_ptr = std::make_shared<abstract::TensorShape>(loss_shape);
   return std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>{loss_shape_ptr, total_weight_shape_ptr});

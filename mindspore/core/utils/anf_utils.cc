@@ -27,6 +27,7 @@
 #include "utils/hash_map.h"
 #include "utils/os.h"
 #include "include/common/utils/utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace {
@@ -152,24 +153,12 @@ bool AnfUtils::IsNodeOutputShapeDynamic(const AnfNodePtr &node) {
 bool AnfUtils::IsRealKernel(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
 #ifndef ENABLE_SECURITY
-  static const PrimitiveSet virtual_prims = {prim::kPrimImageSummary,
-                                             prim::kPrimScalarSummary,
-                                             prim::kPrimTensorSummary,
-                                             prim::kPrimHistogramSummary,
-                                             prim::kPrimMakeTuple,
-                                             prim::kPrimStateSetItem,
-                                             prim::kPrimTupleGetItem,
-                                             prim::kPrimReturn,
-                                             prim::kPrimPartial,
-                                             prim::kPrimDepend,
-                                             prim::kPrimUpdateState,
-                                             prim::kPrimLoad,
-                                             prim::kPrimDynamicLossScale,
-                                             prim::kPrimMakeList,
-                                             prim::kPrimListGetItem,
-                                             prim::kPrimIs_,
-                                             prim::kPrimIsNot,
-                                             prim::kPrimIsInstance};
+  static const PrimitiveSet virtual_prims = {
+    prim::kPrimMakeTuple,   prim::kPrimStateSetItem, prim::kPrimTupleGetItem,
+    prim::kPrimReturn,      prim::kPrimPartial,      prim::kPrimDepend,
+    prim::kPrimUpdateState, prim::kPrimLoad,         prim::kPrimDynamicLossScale,
+    prim::kPrimMakeList,    prim::kPrimListGetItem,  prim::kPrimIs_,
+    prim::kPrimIsNot,       prim::kPrimIsInstance};
 #else
   static const PrimitiveSet virtual_prims = {
     prim::kPrimMakeTuple,   prim::kPrimStateSetItem, prim::kPrimTupleGetItem,
@@ -193,7 +182,21 @@ bool AnfUtils::IsRealKernel(const AnfNodePtr &node) {
       return (runtime_cache.runtime_cache().is_real_kernel() == True);
     }
   }
+
+  // In the GE backend, summary is the actual operator,
+  // and the corresponding back-end operator is OutfeedEnqueueOpV2
+  static const PrimitiveSet summary_prims = {
+    prim::kPrimImageSummary,
+    prim::kPrimScalarSummary,
+    prim::kPrimTensorSummary,
+    prim::kPrimHistogramSummary,
+  };
+
   bool res = !IsOneOfPrimitive(cnode->input(kAnfPrimitiveIndex), virtual_prims);
+  static std::string backend = MsContext::GetInstance()->backend_policy();
+  if (backend != "ge") {
+    res = res && !IsOneOfPrimitive(cnode->input(kAnfPrimitiveIndex), summary_prims);
+  }
 
   if (kernel_info) {
     auto runtime_cache = kernel_info->runtime_cache();
@@ -267,7 +270,7 @@ size_t AnfUtils::GetInputTensorNum(const AnfNodePtr &node) {
     }
   }
 
-  size_t input_num = cnode->inputs().size();
+  size_t input_num = cnode->size();
   if (input_num == 0) {
     MS_LOG(INTERNAL_EXCEPTION) << "Cnode inputs size can't be zero" << trace::DumpSourceLines(node);
   }
@@ -417,7 +420,7 @@ std::pair<AnfNodePtr, size_t> AnfUtils::VisitKernel(const AnfNodePtr &anf_node, 
       MS_EXCEPTION_IF_NULL(node);
       return VisitKernel(node, 0);
     } else if (IsPrimitive(input0, prim::kPrimTupleGetItem)) {
-      if (cnode->inputs().size() != kTupleGetItemInputSize) {
+      if (cnode->size() != kTupleGetItemInputSize) {
         MS_LOG(INTERNAL_EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
       }
       auto input2 = cnode->input(kInputNodeOutputIndexInTupleGetItem);

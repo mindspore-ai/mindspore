@@ -179,8 +179,8 @@ class FileWriter:
         instance.init_append(file_name, header)
         return instance
 
+    # pylint: disable=missing-docstring
     def init_append(self, file_name, header):
-        """init open for append"""
         self._append = True
 
         if platform.system().lower() == "windows":
@@ -288,15 +288,6 @@ class FileWriter:
             if not isinstance(field, str):
                 raise ParamTypeError('index field', 'str')
         self._header.add_index_fields(index_fields)
-
-    def open_and_set_header(self):
-        logger.warning("This interface will be deleted or invisible in the future.")
-
-        if not self._writer.is_open:
-            ret = self._writer.open(self._paths, self._overwrite)
-        if not self._writer.get_shard_header():
-            return self._writer.set_shard_header(self._header)
-        return ret
 
     def write_raw_data(self, raw_data, parallel_writer=False):
         """
@@ -509,15 +500,18 @@ class FileWriter:
             if self._workers[i].is_alive():
                 alive_count += 1
         if alive_count != len(self._paths):
-            raise RuntimeError("Parallel write worker error, please check the log file.")
+            raise RuntimeError("Parallel write worker error, please check the above log.")
 
         # send EOF to worker process
-        for _ in range(len(self._paths)):
+        for i in range(len(self._paths)):
             while True:
                 try:
                     self._queue.put("EOF", block=False)
                 except queue.Full:
                     time.sleep(1)
+                    if not self._workers[i].is_alive():
+                        raise RuntimeError("Worker process(pid:{}) has stopped abnormally. Please check " \
+                                           "the above log".format(self._workers[i].pid))
                     continue
                 break
 
@@ -605,29 +599,38 @@ class FileWriter:
 
                 if field not in v:
                     error_data_dic[i] = "for schema, {} th data is wrong, " \
-                                        "there is not '{}' object in the raw data.".format(i, field)
+                                        "there is not field: '{}' in the raw data.".format(i, field)
                     continue
                 field_type = type(v[field]).__name__
                 if field_type not in VALUE_TYPE_MAP:
                     error_data_dic[i] = "for schema, {} th data is wrong, " \
-                                        "data type for '{}' is not matched.".format(i, field)
+                                        "data type: '{}' for field: '{}' is not matched.".format(i, field_type, field)
                     continue
 
                 if schema_content[field]["type"] not in VALUE_TYPE_MAP[field_type]:
                     error_data_dic[i] = "for schema, {} th data is wrong, " \
-                                        "data type for '{}' is not matched.".format(i, field)
+                                        "data type: '{}' for field: '{}' is not matched." \
+                                        .format(i, schema_content[field]["type"], field)
                     continue
 
                 if field_type == 'ndarray':
                     if 'shape' not in schema_content[field]:
                         error_data_dic[i] = "for schema, {} th data is wrong, " \
-                                            "data type for '{}' is not matched.".format(i, field)
+                                            "data shape for field: '{}' is not specified.".format(i, field)
+                    elif 'type' not in schema_content[field]:
+                        error_data_dic[i] = "for schema, {} th data is wrong, " \
+                                            "data type for field: '{}' is not specified.".format(i, field)
+                    elif schema_content[field]['type'] != str(v[field].dtype):
+                        error_data_dic[i] = "for schema, {} th data is wrong, " \
+                                            "data type: '{}' for field: '{}' is not matched." \
+                                            .format(i, str(v[field].dtype), field)
                     else:
                         try:
                             np.reshape(v[field], schema_content[field]['shape'])
                         except ValueError:
                             error_data_dic[i] = "for schema, {} th data is wrong, " \
-                                                "data type for '{}' is not matched.".format(i, field)
+                                                "data shape: '{}' for field: '{}' is not matched." \
+                                                .format(i, str(v[field].shape), field)
         error_data_dic = sorted(error_data_dic.items(), reverse=True)
         for i, v in error_data_dic:
             raw_data.pop(i)

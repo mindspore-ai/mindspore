@@ -34,7 +34,7 @@ from mindspore._c_expression import typing
 from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
-from mindspore.communication.management import GlobalComm, get_rank
+from mindspore.communication.management import GlobalComm, get_rank, _get_group, get_group_size
 from mindspore.common.api import _pynative_executor
 from mindspore.common._register_for_adapter import ms_adapter_registry
 from mindspore import ops
@@ -2632,3 +2632,142 @@ class FFN(Primitive):
         cls_name = self.name
         validator.check_value_type("activation", activation, [str], cls_name)
         validator.check_value_type("inner_precise", inner_precise, [int], cls_name)
+
+
+class CollectiveScatter(Primitive):
+    """
+    Scatter tensor across the processes in the specified communication group.
+
+    Note:
+        Collect communication domain scatter operation interface.
+        Distribute the tensors of the specified rank evenly to each rank.
+
+    Args:
+        src_rank (int): Specifies the rank of the process that send the tensor.
+        group (str, optional): The communication group to work on.
+            Default: "hccl_world_group" on Ascend, "nccl_world_group" on GPU.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.communication.management import init, get_rank
+        >>> from mindspore.ops.operations import _inner_ops as inner_p
+        >>> # Launch 4 processes.
+        >>> init()
+        >>> class CollectiveScatterNet(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(self).__init__()
+        >>>         self.collective_scatter = inner_p.CollectiveScatter(src_rank=0)
+        >>>
+        >>>     def construct(self, x):
+        >>>         out = self.collective_scatter(x)
+        >>>         return out
+        >>> input = Tensor(np.ones([8, 8]).astype(np.float32))
+        >>> net = CollectiveScatterNet()
+        >>> output = net(input)
+        >>> print(output)
+        Process with all rank : [[1. 1. 1. 1. 1. 1. 1. 1.]
+                                [1. 1. 1. 1. 1. 1. 1. 1.]],
+    """
+
+    @prim_attr_register
+    def __init__(self, src_rank=0, group=GlobalComm.WORLD_COMM_GROUP):
+        validator.check_value_type('group', _get_group(group), (str,), self.name)
+        self.rank_size = get_group_size(_get_group(group))
+        self.src_rank = src_rank
+
+        self.add_prim_attr('src_rank', self.src_rank)
+        self.add_prim_attr('rank_size', self.rank_size)
+        self.add_prim_attr('group', _get_group(group))
+
+
+class CollectiveGather(Primitive):
+    """
+    Gathers tensors from the specified communication group.
+
+    Note:
+        Implement the gatherer operation interface.
+        Combine all tensors of the rank in order of rank, and then send the results to the target rank.
+
+    Args:
+        group (str): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` , which
+            means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor. If the number of devices in the group is N,
+        then the shape of output is :math:`(N, x_1, x_2, ..., x_R)`.
+
+    Raises:
+        TypeError: If `group` is not a str.
+        ValueError: If the local rank id of the calling process in the group
+                    is larger than the group's rank size.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `rank table Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+
+            For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
+            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
+
+            This example should be run with 4 devices.
+
+        >>> import numpy as np
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> from mindspore.communication import init
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.operations import _inner_ops as inner_p
+        >>>
+        >>> ms.set_context(mode=ms.GRAPH_MODE)
+        >>> init()
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.collective_gather = inner_p.CollectiveGather(dest_rank=0)
+        ...
+        ...     def construct(self, x):
+        ...         return self.collective_gather(x)
+        ...
+        >>> input_x = Tensor(np.ones([1, 8]).astype(np.float32))
+        >>> net = Net()
+        >>> output = net(input_x)
+        >>> print(output)
+        [[1. 1. 1. 1. 1. 1. 1. 1.]
+         [1. 1. 1. 1. 1. 1. 1. 1.]
+         [1. 1. 1. 1. 1. 1. 1. 1.]
+         [1. 1. 1. 1. 1. 1. 1. 1.]]
+    """
+
+    @prim_attr_register
+    def __init__(self, dest_rank, group=GlobalComm.WORLD_COMM_GROUP):
+        """Initialize Gather."""
+        validator.check_value_type('group', _get_group(group), (str,), self.name)
+        self.rank_id = get_rank(_get_group(group))
+        self.dest_rank = dest_rank
+        self.rank_size = get_group_size(_get_group(group))
+        validator.check('rank', self.rank_id, 'rank_size', self.rank_size, validator.LT, self.name)
+        self.add_prim_attr('rank_size', self.rank_size)
+        self.add_prim_attr('group', _get_group(group))
+        self.add_prim_attr('dest_rank', self.dest_rank)
+        self.add_prim_attr('rank_id', self.rank_id)

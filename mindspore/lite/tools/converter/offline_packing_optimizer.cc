@@ -134,7 +134,7 @@ STATUS CreateLiteTensor(const CNodePtr &cnode, std::vector<Tensor *> *in_tensors
   mindspore::TypeId type_id = TypeId::kTypeUnknown;
 
   // Generate input tensor.
-  for (size_t i = kPrimIndex + 1; i < cnode->inputs().size(); i++) {
+  for (size_t i = kPrimIndex + 1; i < cnode->size(); i++) {
     if (opt::GetDataTypeFromAnfNode(cnode->input(i), &type_id) != RET_OK) {
       MS_LOG(ERROR) << "Cannot get data type from " << cnode->input(i)->fullname_with_scope();
       return RET_ERROR;
@@ -185,7 +185,7 @@ STATUS CreateLiteTensor(const CNodePtr &cnode, std::vector<Tensor *> *in_tensors
   MS_CHECK_TRUE_MSG(out_tensor != nullptr, RET_ERROR, "Create output tensor failed.");
   (void)out_tensors->emplace_back(out_tensor);
 
-  if (in_tensors->size() != cnode->inputs().size() - 1 || out_tensors->empty()) {
+  if (in_tensors->size() != cnode->size() - 1 || out_tensors->empty()) {
     MS_LOG(ERROR) << "Failed to populate input tensors for " << cnode->fullname_with_scope() << ".";
     return RET_ERROR;
   }

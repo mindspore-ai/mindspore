@@ -51,7 +51,6 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/all.h
             ${TOP_DIR}/mindspore/core/ops/apply_momentum.h
             ${TOP_DIR}/mindspore/core/ops/assert.h
-            ${TOP_DIR}/mindspore/core/ops/assign_add.h
             ${TOP_DIR}/mindspore/core/ops/audio_spectrogram.h
             ${TOP_DIR}/mindspore/core/ops/batch_to_space.h
             ${TOP_DIR}/mindspore/core/ops/batch_to_space_nd.h

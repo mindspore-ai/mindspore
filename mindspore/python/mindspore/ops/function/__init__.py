@@ -26,6 +26,7 @@ from . import (
     nn_func,
     linalg_func,
     clip_func,
+    fft_func
 )
 from .array_func import (
     unique,
@@ -86,7 +87,6 @@ from .array_func import (
     gather_elements,
     gather_nd,
     is_tensor,
-    scalar_cast,
     masked_fill,
     narrow,
     tensor_scatter_add,
@@ -413,7 +413,6 @@ from .math_func import (
     logical_xor,
     imag,
     roll,
-    roll_,
     orgqr,
     ormqr,
     sum,
@@ -717,10 +716,16 @@ from .clip_func import (
     clip,
     clip_by_global_norm,
 )
+from .fft_func import (
+    fftshift,
+    ifftshift,
+)
 from .other_func import (
     depend,
     partial,
 )
+
+from ..operations.manually_defined import (rank, scalar_cast)
 
 __all__ = []
 __all__.extend(array_func.__all__)
@@ -737,5 +742,6 @@ __all__.extend(spectral_func.__all__)
 __all__.extend(vmap_func.__all__)
 __all__.extend(sparse_unary_func.__all__)
 __all__.extend(clip_func.__all__)
+__all__.extend(fft_func.__all__)
 __all__.extend(other_func.__all__)
 __all__.sort()

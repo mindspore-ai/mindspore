@@ -15,7 +15,6 @@
 """ test ge backend pass `AdaptiveMaxPool2DGeFusion` """
 import numpy as np
 
-from tests.st.ge import ge_infer_env  # pylint: disable=unused-import
 import mindspore.context as context
 from mindspore.nn.layer.pooling import AdaptiveMaxPool2d as AdaptiveMaxPool2DNet
 from mindspore.common.tensor import Tensor

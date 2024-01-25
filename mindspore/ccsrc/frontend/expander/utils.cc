@@ -128,7 +128,8 @@ class PrimpyConverter {
       auto new_prim = ConvertPrimToPrimPy(primitive);
       AnfNodePtrList inputs = {NewValueNode(new_prim)};
       auto cnode = dyn_cast_ptr<CNode>(node);
-      (void)inputs.insert(inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
+      auto cnode_inputs = cnode->inputs();
+      (void)inputs.insert(inputs.cend(), cnode_inputs.cbegin() + 1, cnode_inputs.cend());
       auto new_cnode = graph->NewCNodeInOrder(inputs);
       (void)mng->Replace(node, new_cnode);
     }

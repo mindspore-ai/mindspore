@@ -394,7 +394,7 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
 void CopyInputWeights(const CNodePtr &kernel_node, const std::vector<kernel::KernelTensor *> &inputs) {
   std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   if (kernel_name == lite::kNameCustomAscend || kernel_name == kNameTranspose) {
-    auto node_input_size = kernel_node->inputs().size();
+    auto node_input_size = kernel_node->size();
     if (node_input_size < kInputNum) {
       MS_LOG(ERROR) << "Input num of custom ascend kernel should larger than " << (kInputNum - 1) << ", real num is "
                     << node_input_size;

@@ -30,7 +30,7 @@
 #include "ir/primitive.h"
 #include "ir/value.h"
 #include "graph/operator_reg.h"
-#include "external/ge/ge_api.h"
+#include "ge/ge_api.h"
 #include "graph/tensor.h"
 #include "graph/types.h"
 #include "mindapi/base/format.h"

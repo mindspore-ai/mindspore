@@ -8,7 +8,7 @@ mindspore.ops.Sigmoid
     更多参考详见 :func:`mindspore.ops.sigmoid`。
 
     输入：
-        - **input_x** (Tensor) - 任意维度的Tensor。
+        - **input** (Tensor) - 任意维度的Tensor。
 
     输出：
-        Tensor，数据类型和shape与 `input_x` 的相同。
+        Tensor，数据类型和shape与 `input` 的相同。

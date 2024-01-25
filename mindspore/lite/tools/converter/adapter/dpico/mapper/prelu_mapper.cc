@@ -29,7 +29,7 @@ namespace dpico {
 namespace {
 STATUS SetPReluDataInfo(const api::CNodePtr &cnode, const api::PrimitivePtr &prim,
                         mapper::PreluOperator *prelu_operator) {
-  if (cnode->inputs().size() > kInputIndex2) {
+  if (cnode->size() > kInputIndex2) {
     auto input_anode = cnode->input(kInputIndex2);
     if (api::utils::isa<api::ParameterPtr>(input_anode)) {
       auto input_param_node = input_anode->cast<api::ParameterPtr>();

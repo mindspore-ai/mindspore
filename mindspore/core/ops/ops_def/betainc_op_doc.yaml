@@ -48,6 +48,6 @@ betainc:
             >>> a = Tensor(np.array([0.3, 0.1, 0.4]), mindspore.float32)
             >>> b = Tensor(np.array([0.4, 0.5, 0.9]), mindspore.float32)
             >>> x = Tensor(np.array([0.2, 0.6, 0.5]), mindspore.float32)
-            >>> output = ops.betainc(a, b, x)
+            >>> output = ops.Betainc()(a, b, x)
             >>> print(betainc(output))
             [0.41462693 0.8706035  0.7298298 ]

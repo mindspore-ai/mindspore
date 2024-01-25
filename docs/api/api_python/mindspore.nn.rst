@@ -264,6 +264,7 @@ Dropout层
     mindspore.nn.KLDivLoss
     mindspore.nn.L1Loss
     mindspore.nn.MarginRankingLoss
+    mindspore.nn.MAELoss
     mindspore.nn.MSELoss
     mindspore.nn.MultiClassDiceLoss
     mindspore.nn.MultilabelMarginLoss
@@ -381,7 +382,6 @@ Dynamic LR函数
 
     mindspore.nn.PixelShuffle
     mindspore.nn.PixelUnshuffle
-    mindspore.nn.ResizeBilinear
     mindspore.nn.Upsample
 
 工具

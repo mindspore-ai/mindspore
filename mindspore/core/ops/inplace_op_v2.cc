@@ -128,8 +128,9 @@ TypePtr InplaceOpV2InferType(const PrimitivePtr &prim, const std::vector<Abstrac
     if (type_ele.empty()) {
       MS_EXCEPTION(ValueError) << "Input indices should not be empty: " << indices_abs->ToString();
     }
-    const auto &ele0_type = type_ele[kInputIndex0];
-    (void)CheckAndConvertUtils::CheckTypeValid("indices", ele0_type, indices_valid_types, prim->name());
+    for (const auto &ele_type : type_ele) {
+      (void)CheckAndConvertUtils::CheckTypeValid("indices", ele_type, indices_valid_types, prim->name());
+    }
   } else {
     MS_EXCEPTION(TypeError) << "Input 'indices' should be int scalar, tuple or Tensor, but got "
                             << indices_abs->ToString();

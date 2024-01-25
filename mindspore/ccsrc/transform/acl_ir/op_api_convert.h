@@ -23,6 +23,7 @@
 #include <memory>
 #include <algorithm>
 #include <functional>
+#include <regex>
 #include <utility>
 #include <tuple>
 #include "acl/acl_base.h"
@@ -83,8 +84,18 @@ inline void *GetOpApiLibHandler(const std::string &lib_path) {
 }
 
 inline void *GetOpApiFunc(const char *api_name) {
-  static auto cust_path = common::GetEnv("ASCEND_CUSTOM_OPP_PATH");
-  if (!cust_path.empty()) {
+  static auto cust_paths = common::GetEnv("ASCEND_CUSTOM_OPP_PATH");
+  static std::vector<std::string> cust_path_vec;
+  if (!cust_paths.empty() && cust_path_vec.empty()) {
+    std::regex re{":"};
+    cust_path_vec = {std::sregex_token_iterator(cust_paths.begin(), cust_paths.end(), re, -1),
+                     std::sregex_token_iterator()};
+  }
+
+  for (const auto &cust_path : cust_path_vec) {
+    if (cust_path.empty()) {
+      continue;
+    }
     auto cust_lib_path = cust_path + GetCustOpApiLibName();
     static auto cust_handler = GetOpApiLibHandler(cust_lib_path);
     if (cust_handler != nullptr) {
@@ -94,7 +105,6 @@ inline void *GetOpApiFunc(const char *api_name) {
       }
     }
   }
-
   static auto ascend_path = device::ascend::GetAscendPath();
   static const std::vector<std::string> depend_libs = {"libdummy_tls.so", "libnnopbase.so"};
   for (const auto &dep_lib : depend_libs) {

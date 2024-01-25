@@ -3,7 +3,6 @@ reduce_std:
     Returns the standard-deviation and mean of the input Tensor along dimension(s) specified by `axis`.
     
     Args:
-        x (Tensor[Number]): The input tensor.
         axis (Union[int, tuple(int), list(int), tensor]): The dimensions to reduce. Default: ``()`` , reduce all
             dimensions. Let `r` be rank of `input_x`, it should be in the range :math:`[-r,r)`.
         unbiased(bool): Whether to use Bessel's correction.
@@ -15,6 +14,9 @@ reduce_std:
             If ``False`` , don't keep these dimensions.
             Default: ``Fasle`` .
     
+    Inputs:
+        - **x** (Tensor[Number]): The input tensor.
+        
     Returns:
         output(tuple(Tensor)): (output_std, output_mean) containing the standard deviation and mean.
     
@@ -27,8 +29,8 @@ reduce_std:
         ``Ascend`` ``CPU``
     
     Examples:
-        >>> input_x = Tensor(np.array([[1, 2, 3], [-1, 1, 4]]).astype(np.float32))
-        >>> output = ops.reduce_std(input_x, axis=1, unbiased=True, keep_dims=False)
+        >>> x = Tensor(np.array([[1, 2, 3], [-1, 1, 4]]).astype(np.float32))
+        >>> output = ops.ReduceStd(axis=1, unbiased=True, keep_dims=False)(x)
         >>> output_std, output_mean = output[0], output[1]
         >>> print(output_std)
         [1.        2.5166113]

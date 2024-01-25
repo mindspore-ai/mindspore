@@ -38,7 +38,7 @@ AbstractBasePtr GetRealAbstract(const CNodePtr &cnode) {
     return cnode->abstract();
   }
   std::vector<abstract::AbstractBasePtr> abstracts;
-  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+  for (size_t i = 1; i < cnode->size(); ++i) {
     const auto &input = cnode->inputs()[i];
     MSLITE_CHECK_PTR_RETURN(input, nullptr);
     const auto &abstract = input->abstract();

@@ -552,7 +552,7 @@ void KernelRuntime::RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value
       continue;
     }
     if (common::AnfAlgo::IsNopNode(real_output_cnode)) {
-      if (real_output_cnode->inputs().size() < kMinInputSize) {
+      if (real_output_cnode->size() < kMinInputSize) {
         MS_LOG(EXCEPTION) << "The input size of output node: " << real_output_cnode->DebugString()
                           << " should large than one!";
       }
@@ -893,7 +893,7 @@ void KernelRuntime::AssignCommunicationNodeInputMem(MemType type, const AnfNodeP
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->inputs().size() < kMinInputSize) {
+  if (cnode->size() < kMinInputSize) {
     // communication node's input should contain itself and at least on input
     MS_LOG(ERROR) << "No inputs for " << cnode->fullname_with_scope();
     return;
@@ -1323,7 +1323,7 @@ void KernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
       if (common::AnfAlgo::IsCommunicationOp(child)) {
         continue;
       }
-      auto input_size = child->inputs().size() - 1;
+      auto input_size = child->size() - 1;
       for (size_t k = 0; k < input_size; ++k) {
         auto kernel_index =
           common::AnfAlgo::VisitKernelWithReturnType(common::AnfAlgo::GetInputNode(child, k), 0, true);
@@ -1348,7 +1348,7 @@ void KernelRuntime::GenKernelTensorLaunchArgs(const CNodePtr &cnode, std::vector
                                               const std::shared_ptr<MemScheduler> &mem_scheduler) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(kernel_inputs);
-  if (cnode->inputs().size() != kAtomicCleanInputSize) {
+  if (cnode->size() != kAtomicCleanInputSize) {
     MS_LOG(EXCEPTION) << "Atomic Addr clean Node Input nodes not equal 2.";
   }
   MS_EXCEPTION_IF_NULL(cnode->inputs()[1]);

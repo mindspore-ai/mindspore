@@ -787,13 +787,13 @@ STATUS TFModelParser::ConvertSubgraph() {
     CNodePtr cnode = nullptr;
     if (function_while_map_.count(sub_graph_name)) {
       cnode = function_while_map_[sub_graph_name]->cast<CNodePtr>();
-      if (cnode == nullptr || static_cast<int>(cnode->inputs().size()) != input_arg_size + 1) {
+      if (cnode == nullptr || static_cast<int>(cnode->size()) != input_arg_size + 1) {
         MS_LOG(ERROR) << "while cnode  not equal input arg size";
         return RET_ERROR;
       }
     } else if (function_if_map_.count(sub_graph_name)) {
       cnode = function_if_map_[sub_graph_name]->cast<CNodePtr>();
-      if (cnode == nullptr || static_cast<int>(cnode->inputs().size()) != input_arg_size + 2) {
+      if (cnode == nullptr || static_cast<int>(cnode->size()) != input_arg_size + 2) {
         MS_LOG(ERROR) << "if cnode  not equal input arg size";
         return RET_ERROR;
       }

@@ -18,7 +18,7 @@ import shutil
 import subprocess
 import pytest
 import numpy as np
-from tests.st.model_zoo_tests import utils
+from tests.st.networks import utils
 
 match_output = re.compile(r'AAA(.*?)BBB', re.S)
 match_num = re.compile(r'\d+\.?\d*', re.S)
@@ -86,7 +86,7 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
     # First run without compile cache
     cmd_first = f"export GLOG_v=2; python " + file_name + " '" + cache_path + "' > " + log_file_name_first + " 2>&1"
     if use_ge:
-        cmd_first = f"export GLOG_v=2; export MS_ENABLE_GE=1; python " + \
+        cmd_first = f"export GLOG_v=2; python " + \
                     file_name + " '" + cache_path + "' > " + log_file_name_first + " 2>&1"
     subprocess.check_output(cmd_first, shell=True)
     assert os.path.exists(log_file_name_first)
@@ -102,13 +102,11 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
     array_first = np.array([float(x) for x in nums_first])
     shape_first = re.findall(match_num, match_output_first[1])
     array_shape_first = np.array([int(x) for x in shape_first])
-    exec_shell = f"unset MS_ENABLE_GE"
-    os.system(exec_shell)
 
     # Second run with compile cache
     cmd_second = f"export GLOG_v=2; python " + file_name + " '" + cache_path + "' > " + log_file_name_second + " 2>&1"
     if use_ge:
-        cmd_second = f"export GLOG_v=2; export MS_ENABLE_GE=1; python " + \
+        cmd_second = f"export GLOG_v=2; python " + \
                      file_name + " '" + cache_path + "' > " + log_file_name_second + " 2>&1"
     subprocess.check_output(cmd_second, shell=True)
     assert os.path.exists(log_file_name_second)
@@ -124,8 +122,6 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
     array_second = np.array([float(x) for x in nums_second])
     shape_second = re.findall(match_num, match_output_second[1])
     array_shape_second = np.array([int(x) for x in shape_second])
-    exec_shell = f"unset MS_ENABLE_GE"
-    os.system(exec_shell)
 
     assert np.allclose(array_first, array_second, 0.0001, 0.0001)
     assert (array_shape_first == array_shape_second).all()
@@ -170,7 +166,7 @@ def run_compile_cache_mp(file_name, cache_path, log_file_name_first, log_file_na
     with open(log_fullname, "r") as f_second:
         data_second = f_second.read()
     assert "Use the compilation cache and execute the backend actions only. Be aware of correctness risks." in \
-        data_second
+           data_second
     assert "loss is" in data_second
 
     # Clean files
@@ -312,6 +308,37 @@ def run_lenet_ps_twice(file_name, cache_path, log_file_name_first, log_file_name
     shutil.rmtree(cache_path, ignore_errors=True)
 
 
+def run_network_once_with_force_use_compile_cache(file_name, cache_path, log_file_name_first, use_ge=False):
+    # Clear compile cache folder and log files
+    if os.path.exists(cache_path):
+        shutil.rmtree(cache_path)
+    if os.path.exists(log_file_name_first):
+        os.remove(log_file_name_first)
+    assert not os.path.exists(cache_path)
+    assert not os.path.exists(log_file_name_first)
+
+    # First run without compile cache
+    cmd_first = f"export MS_DEV_FORCE_USE_COMPILE_CACHE=1; export GLOG_v=2; python " + file_name + " '" + \
+                cache_path + "' > " + log_file_name_first + " 2>&1"
+    if use_ge:
+        cmd_first = f"export MS_DEV_FORCE_USE_COMPILE_CACHE=1; export GLOG_v=2; export MS_ENABLE_GE=1; python " + \
+                    file_name + " '" + cache_path + "' > " + log_file_name_first + " 2>&1"
+    subprocess.check_output(cmd_first, shell=True)
+    assert os.path.exists(log_file_name_first)
+    assert os.path.exists(cache_path)
+    with open(log_file_name_first, "r") as f_first:
+        data_first = f_first.read()
+    assert "The env MS_DEV_FORCE_USE_COMPILE_CACHE has been set. It will force to use the compile cache" in data_first
+    assert "Failed to load the compilation cache file. Execute all the compilation actions." in data_first
+
+    exec_shell = f"unset MS_ENABLE_GE; unset MS_DEV_FORCE_USE_COMPILE_CACHE"
+    os.system(exec_shell)
+
+    # Clean files
+    os.remove(log_file_name_first)
+    shutil.rmtree(cache_path)
+
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
@@ -336,6 +363,19 @@ def test_compile_cache_lenet():
     Expectation: success.
     """
     run_twice_with_same_network("run_lenet.py", "./lenet", "lenet_first.txt", "lenet_second.txt")
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_compile_cache_lenet_with_force_use_compile_cache():
+    """
+    Feature: Compile cache.
+    Description: Test whether the env MS_DEV_FORCE_USE_COMPILE_CACHE takes effect.
+    Expectation: success.
+    """
+    run_network_once_with_force_use_compile_cache("run_lenet.py", "./lenet", "lenet_first.txt")
 
 
 @pytest.mark.level0

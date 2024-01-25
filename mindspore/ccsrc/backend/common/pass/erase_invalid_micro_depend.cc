@@ -69,7 +69,7 @@ bool EraseMicroDepend(const FuncGraphPtr &graph) {
     MS_EXCEPTION_IF_NULL(make_tuple);
     bool not_has_micro = false;
     std::vector<CNodePtr> tuple_inputs;
-    for (size_t i = 1; i < make_tuple->inputs().size(); i++) {
+    for (size_t i = 1; i < make_tuple->size(); i++) {
       auto input = make_tuple->input(i);
       MS_EXCEPTION_IF_NULL(input);
       if (!input->isa<CNode>()) {

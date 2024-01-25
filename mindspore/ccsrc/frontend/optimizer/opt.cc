@@ -274,7 +274,11 @@ void SubstitutionList::DisplayStatusOfSubstitution(const mindspore::HashMap<std:
   for (size_t i = 0; i < list_.size(); i++) {
     auto name = list_[i]->name_;
     ss << std::left << std::setw(SizeToInt(space) + pad_width) << name << "\t";
-    for (auto change : status.at(name + std::to_string(i))) {
+    auto iter = status.find(name + std::to_string(i));
+    if (iter == status.cend()) {
+      continue;
+    }
+    for (auto change : iter->second) {
       ss << change << " ";
     }
     ss << std::endl;
@@ -298,7 +302,9 @@ bool SubstitutionList::ApplySubstitutionsToIR(const OptimizerPtr &optimizer, con
     loop = false;
     for (size_t i = 0; i < list_.size(); i++) {
       const auto &substitution = list_[i];
+      MS_LOG(INFO) << "Start substitution: " << substitution->name_;
       bool change = ApplySubstitutionToIR(optimizer, func_graph, substitution);
+      MS_LOG(INFO) << "End substitution: " << substitution->name_ << ", change: " << change;
       changes = changes || change;
       loop = loop || change;
 #ifdef ENABLE_DUMP_IR
@@ -306,7 +312,6 @@ bool SubstitutionList::ApplySubstitutionsToIR(const OptimizerPtr &optimizer, con
       static const auto input_name = common::GetEnv("MS_DEV_DUMP_IR_PASSES");
       auto enable_dump_pass_ir = (input_name.size() != 0) || enable_dump_pass;
       auto context = MsContext::GetInstance();
-      MS_EXCEPTION_IF_NULL(context);
       if ((enable_dump_pass_ir && context->CanDump(kIntroductory)) || context->CanDump(kFully)) {
         auto fg_name = optimizer->name() + "_r" + std::to_string(optimizer->current_pass_.counter) + "_" +
                        optimizer->current_pass_.name + "_" + substitution->name_;
@@ -353,12 +358,12 @@ bool SubstitutionList::operator()(const FuncGraphPtr &func_graph, const Optimize
   if (traverse_mode == kOptTraverseFromIRToSubstitutions &&
       MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode &&
       optimizer->traverse_nodes_first() && !is_once_ && !global_sensitive_) {
-    MS_LOG(DEBUG) << "IR >> SUB, " << optimizer->name() << "(r" << optimizer->current_pass_.counter << ")_"
-                  << optimizer->current_pass_.name;
+    MS_LOG(INFO) << "IR >> SUB, *, " << optimizer->name() << "(r" << optimizer->current_pass_.counter << ")_"
+                 << optimizer->current_pass_.name;
     changes = ApplyIRToSubstitutions(optimizer, func_graph);
   } else {
-    MS_LOG(DEBUG) << "SUB >> IR, " << optimizer->name() << "(r" << optimizer->current_pass_.counter << ")_"
-                  << optimizer->current_pass_.name;
+    MS_LOG(INFO) << "SUB >> IR, " << optimizer->name() << "(r" << optimizer->current_pass_.counter << ")_"
+                 << optimizer->current_pass_.name;
     changes = ApplySubstitutionsToIR(optimizer, func_graph);
   }
   return changes;
@@ -384,8 +389,8 @@ bool SimpleRewriter::Run() {
     node->seen_ = seen;
     auto cnode = node->cast_ptr<CNode>();
     if (cnode != nullptr) {
-      for (auto &input : cnode->inputs()) {
-        add_todo(input);
+      for (auto &input : cnode->weak_inputs()) {
+        add_todo(input.lock());
       }
     } else {
       auto fg = GetValuePtr<FuncGraph>(node);

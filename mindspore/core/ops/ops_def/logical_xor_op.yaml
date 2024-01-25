@@ -13,4 +13,4 @@ logical_xor:
         output:
             dtype: tensor
     function:
-        name: logical_xor_
+        disable: True

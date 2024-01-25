@@ -29,6 +29,7 @@
 #include "ops/op_def.h"
 #include "mindspore/core/utils/flags.h"
 #include "mindspore/core/ops/arithmetic_ops.h"
+#include "mindspore/core/ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore {
 // namespace to support composite operators definition
@@ -228,7 +229,7 @@ AnfNodePtr DoCast(const AnfNodePtr &param, const TypeId &type_id, const FuncGrap
 
 AnfNodePtr DoScalarCast(const AnfNodePtr &param, const TypeId &type_id, const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  auto dtype_node = NewValueNode(TypeIdToType(type_id));
+  auto dtype_node = NewValueNode(static_cast<int64_t>(type_id));
   return graph->NewCNodeAfter(param, {NewValueNode(prim::kPrimScalarCast), param, dtype_node});
 }
 

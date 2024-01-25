@@ -11,5 +11,5 @@ concat:
     returns:
         output:
             dtype: tensor
-    function:
-        name: concat_
+    dispatch:
+      enable: False

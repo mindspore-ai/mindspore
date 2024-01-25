@@ -40,6 +40,8 @@ constexpr const char kNameBlackmanWindow[] = "BlackmanWindow";
 constexpr const char kNameBartlettWindow[] = "BartlettWindow";
 constexpr const char kNameAllgather[] = "AllGather";
 constexpr const char kNameAllToAllv[] = "AllToAllv";
+constexpr const char kNameCollectiveScatter[] = "CollectiveScatter";
+constexpr const char kNameCollectiveGather[] = "CollectiveGather";
 constexpr const char kNameReduceScatter[] = "ReduceScatter";
 constexpr const char kNameReduceSum[] = "ReduceSum";
 constexpr const char kNameIsFinite[] = "IsFinite";
@@ -306,6 +308,7 @@ constexpr const char kNameMaxPoolWithArgmax[] = "MaxPoolWithArgmax";
 constexpr const char kNameMaxPoolWithArgmaxV2[] = "MaxPoolWithArgmaxV2";
 constexpr const char kNameBatchNorm[] = "BatchNorm";
 constexpr const char kNameBatchNormGrad[] = "BatchNormGrad";
+constexpr const char kNameBatchNormGradGrad[] = "BatchNormGradGrad";
 constexpr const char kNameROIAlign[] = "ROIAlign";
 constexpr const char kNameROIAlignGrad[] = "ROIAlignGrad";
 constexpr const char kNameRandomChoiceWithMask[] = "RandomChoiceWithMask";
@@ -504,6 +507,10 @@ constexpr const char kNameSwinAttentionFFN[] = "SwinAttentionFFN";
 constexpr const char kNameSwinTransformerLnQKV[] = "SwinTransformerLnQKV";
 constexpr const char kNameSwinAttentionScore[] = "SwinAttentionScore";
 constexpr const char kNameComputeAccidentalHits[] = "ComputeAccidentalHits";
+constexpr const char kNameMatMulAllReduce[] = "MatMulAllReduce";
+constexpr const char kNameGamma[] = "Gamma";
+constexpr const char kNameIgamma[] = "Igamma";
+constexpr const char kNamePoisson[] = "Poisson";
 
 class OpAdapterDesc;
 

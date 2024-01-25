@@ -96,9 +96,6 @@ class TensorIndexGetitem : public TensorIndex {
                       const abstract::AbstractSlicePtr &abs_slice_ptr);
   void GetItemByTuple(const AnfNodePtr &data_node, const AnfNodePtr &index_node, const AbstractBasePtr &data,
                       const abstract::AbstractTuplePtr &tuple_abs_ptr, const AbstractBasePtr &all_empty_tensor_index);
-  std::tuple<AnfNodePtr, AnfNodePtr, AnfNodePtr> NormalizeStrideInfoFromTuple(
-    const AnfNodePtr &data_node, const AnfNodePtr &index_node, const AbstractBasePtr &index_abs,
-    const std::vector<int64_t> &tuple_index_types, size_t tuple_index);
   void ConstGetStrideInfoFromTuple(const AnfNodePtr &data_node, const AnfNodePtr &index_node,
                                    const std::vector<int64_t> &tuple_index_types, bool has_ellipsis,
                                    const abstract::AbstractTuplePtr &tuple_abs_ptr, size_t not_ellipsis_position_cnt,
@@ -107,9 +104,12 @@ class TensorIndexGetitem : public TensorIndex {
                               const std::vector<int64_t> &tuple_index_types, const IndexHandleLevel index_handle_level,
                               bool has_ellipsis, const abstract::AbstractTuplePtr &tuple_abs_ptr,
                               size_t not_ellipsis_position_cnt, size_t ellipsis_position);
+  std::tuple<AnfNodePtr, AnfNodePtr, AnfNodePtr, int64_t> NormalizeStrideInfoFromTuple(
+    const AnfNodePtr &data_node, const AnfNodePtr &index_node, const AbstractBasePtr &index_abs,
+    const std::vector<int64_t> &tuple_index_types, size_t tuple_index);
   AnfNodePtrList EllipsisIndexToSlice(const std::vector<int64_t> &tuple_index_types, const AnfNodePtr &data_node,
                                       const AnfNodePtr &begin_stride, const AnfNodePtr &end_stride,
-                                      const AnfNodePtr &step_stride);
+                                      const AnfNodePtr &step_stride, int64_t end_mask);
 };
 
 class TensorIndexSetitem : public TensorIndex {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "include/backend/debug/profiler/profiling.h"
+#include "frontend/optimizer/fallback_rewriter.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/backend/distributed/cluster/cluster_context.h"
 #include "include/backend/distributed/ps/ps_context.h"
@@ -728,6 +729,16 @@ bool SetMixedPrecisionAction(const ResourcePtr &resource) {
   return true;
 }
 
+bool PreSimplifyInlineAction(const ResourcePtr &resource) {
+#ifndef ENABLE_PRE_SIMPLIFY  // Open pre-simplify in default later.
+  return true;
+#else
+  MS_EXCEPTION_IF_NULL(resource);
+  MS_EXCEPTION_IF_NULL(resource->func_graph());
+  return PreSimplifyInlinePass(resource);
+#endif
+}
+
 bool AutoMonadAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   if (resource->manager() == nullptr) {
@@ -955,6 +966,22 @@ bool GetJitBpropGraph(const ResourcePtr &resource) {
     return true;
   }
   return pynative::PyNativeExecutor::GetInstance()->grad_executor()->jit()->GetJitGradGraph(resource);
+}
+
+bool RewriterAfterOptAPassAfterJitBprop(const ResourcePtr &resource) {
+  // This function is only used to convert unsupported syntax into PyExecute nodes through Fallback,
+  // when the forward graph is decorated with 'jit', and is derivative in pynative mode.
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->not_convert_jit()) {
+    context->set_not_convert_jit(false);
+    MS_EXCEPTION_IF_NULL(resource);
+    FuncGraphPtr func_graph = resource->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
+    (void)mindspore::opt::RewriterAfterOptA(func_graph, resource);
+    UpdateArgsSpec(func_graph, resource);
+  }
+  return true;
 }
 
 bool EliminateSpecialOpNode(const ResourcePtr &resource) {
@@ -1220,7 +1247,7 @@ bool SetModeForControlFlow(const FuncGraphPtr &func_graph, const std::vector<Anf
   return true;
 }
 
-void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
+void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr, std::string *kbk_reason) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -1249,21 +1276,32 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
 
   // GRAPH | Single Op : KernelByKernel path in MindRT.
   if (context_ptr->IsKByKExecutorMode()) {
-    MS_LOG(INFO) << "Run graph mode with kernel by kernel by configuration.";
+    if (kbk_reason != nullptr) {
+      *kbk_reason = "Run graph mode with kernel by kernel by configuration.";
+      MS_LOG(INFO) << *kbk_reason;
+    }
     set_ctx(false, false, false);
     return;
   }
 
   // GRAPH | Dynamic Shape : KernelByKernel path in MindRT.
   if (IsDynamicShapeGraph(func_graph) && (context_ptr->backend_policy() != "ge")) {
-    MS_LOG(INFO) << "Run graph mode with kernel by kernel because graph exist dynamic shape.";
+    if (kbk_reason != nullptr) {
+      *kbk_reason =
+        "Run graph mode with kernel by kernel because graph exist dynamic shape. Call "
+        "'set_context(save_graphs=True)' to check graph irs.";
+      MS_LOG(INFO) << *kbk_reason;
+    }
     set_ctx(false, false, false);
     return;
   }
 
   // GRAPH | Dynamic Scalar : Dynamic scalar ops in graph.
   if (IsNeedBackoffGraph(func_graph)) {
-    MS_LOG(INFO) << "Run graph mode with kernel by kernel because graph exist dynamic scalar ops.";
+    if (kbk_reason != nullptr) {
+      *kbk_reason = "Run graph mode with kernel by kernel because graph exist dynamic scalar ops.";
+      MS_LOG(INFO) << *kbk_reason;
+    }
     set_ctx(false, false, false);
     return;
   }
@@ -1323,8 +1361,10 @@ void SetRunMode(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
+  // The root cause of KernelByKernel mode should be returned.
+  std::string kbk_reason = "";
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-    SetRunMode(resource->func_graph(), resource->GetBackend().get());
+    SetRunMode(resource->func_graph(), resource->GetBackend().get(), &kbk_reason);
   } else {
     OriginSetRunMode(resource);
   }
@@ -1333,9 +1373,11 @@ void SetRunMode(const ResourcePtr &resource) {
   auto enable_hccl = context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL);
   bool using_cm = common::UseDynamicCluster() && common::GetEnv("MS_HCCL_CM_INIT") == "1";
   if (!is_task_sink && mode == kGraphMode && enable_hccl && (!common::UseHostCollective() || using_cm)) {
-    MS_LOG(INTERNAL_EXCEPTION)
-      << "Current execute mode is kernelbykernel, the processes must be launched with OpenMPI or "
-         "Dynamic Cluster(Without setting MS_HCCL_CM_INIT to 1)";
+    MS_LOG(INTERNAL_EXCEPTION) << "Current execution mode is 'kernelbykernel', reason: " << kbk_reason
+                               << ", but you're launching job using 'ranktable', which "
+                                  "does not support 'kernelbykernel' mode.\n Please refer to link: "
+                                  "https://www.mindspore.cn/tutorials/experts/en/master/parallel/startup_method.html "
+                                  "and use 'Dynamic cluster'(suggested) or 'mpirun' to launch your job.";
   }
 }
 
@@ -1619,6 +1661,8 @@ static std::vector<ActionItem> CommonPipeline() {
   if (common::GetEnv("MS_DEV_DISABLE_TRACE") != "on") {
     (void)actions.emplace_back(std::make_pair(kPackExpand, PackExpandAction));
   }
+  // Pre switch simplify and inline.
+  (void)actions.emplace_back(std::make_pair(kPreSimplifyInline, PreSimplifyInlineAction));
   // Auto-monad for side-effects handling.
   (void)actions.emplace_back(std::make_pair(kAutoMonad, AutoMonadAction));
   // Do data structure simplifications and inline.
@@ -1647,6 +1691,9 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
 
     // Eliminate forward cnode for grad graph
     (void)actions.emplace_back(std::make_pair(kGetJitBpropGraph, GetJitBpropGraph));
+
+    // Rewriter(dict convert pyexecute) after jit bprop.
+    (void)actions.emplace_back(std::make_pair(kRewriterAfterJitBprop, RewriterAfterOptAPassAfterJitBprop));
 
     // Eliminate the virtual mirror node
     (void)actions.emplace_back(std::make_pair(kEliminateSpecialOpNode, EliminateSpecialOpNode));

@@ -109,6 +109,10 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   tuple_list_get_item_depend_reorder_ =
     MakeSubstitution(std::make_shared<TupleListGetitemDependReorder>(), "tuple_list_get_item_depend_reorder",
                      {prim::kPrimTupleGetItem, prim::kPrimListGetItem});
+  list_to_tuple_eliminator_ =
+    MakeSubstitution(std::make_shared<ListToTupleEliminator>(), "list_to_tuple_eliminator_", {prim::kPrimListToTuple});
+  tuple_to_list_eliminator_ =
+    MakeSubstitution(std::make_shared<TupleToListEliminator>(), "tuple_to_list_eliminator_", {prim::kPrimTupleToList});
   tuple_list_convert_item_index_to_positive_ = MakeSubstitution(
     std::make_shared<TupleListConvertItemIndexToPositive>(), "tuple_list_convert_item_index_to_positive",
     {prim::kPrimTupleGetItem, prim::kPrimTupleSetItem, prim::kPrimListGetItem, prim::kPrimListSetItem});

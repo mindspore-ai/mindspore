@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,6 +97,9 @@ constexpr size_t kDependInputNum = 3;
 constexpr size_t kDependFirstInputIdx = 1;
 constexpr size_t kTupleGetItemFirstInputIdx = 1;
 constexpr auto kOpsTransPose = "Transpose";
+/* 1. For compatibility reasons (on MindIRs with old primitives), ResizeBilinear op still needs to be processed.
+   2. ResizeBilinear in core/ops is deprecated, avoid using name string defined in core/ops. */
+constexpr auto kNameResizeBilinear = "ResizeBilinear";
 const std::set<std::string> kSocVersionForAscendCFA = {"Ascend910B1", "Ascend910B2", "Ascend910B2C", "Ascend910B3",
                                                        "Ascend910B4"};
 
@@ -687,7 +690,8 @@ STATUS AclPassImpl::MapperForOrgMindIR(const FuncGraphPtr &func_graph) {
   lite::GetAllFuncGraph(func_graph, &all_func_graphs);
 
   std::set<std::string> mindir_mapper = {ops::kNameTranspose, ops::kNameStandardNormal, ops::kNameBatchMatMul,
-                                         ops::kNameMatMul,    ops::kNameAvgPool,        ops::kNameBatchNorm};
+                                         ops::kNameMatMul,    ops::kNameAvgPool,        ops::kNameBatchNorm,
+                                         kNameResizeBilinear};
   const std::set<PrimitivePtr> support_ptq_mindir_types = {prim::kPrimQuantDTypeCast, prim::kPrimAddFusion,
                                                            prim::kPrimMulFusion};
   for (auto graph : all_func_graphs) {

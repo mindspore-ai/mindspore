@@ -15,6 +15,10 @@ mindspore.SummaryLandscape
 
         清理checkpoint。
 
+        教程样例：
+            - `训练优化过程可视化
+              <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/landscape.html>`_
+
     .. py:method:: gen_landscapes_with_multi_process(callback_fn, collect_landscape=None, device_ids=None, output=None)
 
         使用多进程来生成地形图。

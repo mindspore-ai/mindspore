@@ -13,8 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """Utils for ms_run"""
+import os
+import json
 import requests
-import netifaces
 
 def _generate_cmd(cmd, cmd_args, output_name):
     """
@@ -22,8 +23,21 @@ def _generate_cmd(cmd, cmd_args, output_name):
     edirecting the output to a log file.
 
     """
-    command = f"python {cmd} {' '.join(cmd_args)} > {output_name}.log 2>&1 &"
+    if cmd != 'python' and cmd != 'pytest':
+        # If user don't set binary file name, defaulty use 'python' to launch the job.
+        command = f"python {cmd} {' '.join(cmd_args)} > {output_name} 2>&1 &"
+    else:
+        command = f"{cmd} {' '.join(cmd_args)} > {output_name} 2>&1 &"
     return command
+
+def _generate_cmd_args_list(cmd, cmd_args):
+    """
+    Generates arguments list for 'Popen'. It consists of a binary file name and subsequential arguments.
+    """
+    if cmd != 'python' and cmd != 'pytest':
+        # If user don't set binary file name, defaulty use 'python' to launch the job.
+        return ['python'] + [cmd] + cmd_args
+    return [cmd] + cmd_args
 
 def _generate_url(addr, port):
     """
@@ -38,17 +52,15 @@ def _is_local_ip(ip_address):
     Check if the current input IP address is a local IP address.
 
     """
-    interfaces = netifaces.interfaces()
-    for interface in interfaces:
-        addresses = netifaces.ifaddresses(interface)
-        if netifaces.AF_INET in addresses:
-            for addr_info in addresses[netifaces.AF_INET]:
-                if addr_info['addr'] == ip_address:
-                    return True
-        if netifaces.AF_INET6 in addresses:
-            for addr_info in addresses[netifaces.AF_INET6]:
-                if addr_info['addr'] == ip_address:
-                    return True
+    p = os.popen("ip -j addr")
+    addr_info_str = p.read()
+    p.close()
+    addr_infos = json.loads(addr_info_str)
+    for info in addr_infos:
+        for addr in info["addr_info"]:
+            if addr["local"] == ip_address:
+                print(f"IP address found on this node. Address info:{addr}.")
+                return True
     return False
 
 def _send_scale_num(url, scale_num):
@@ -75,8 +87,8 @@ def _get_status_and_params(url):
         response.raise_for_status()
         response_data = response.json()
         network_changed = response_data.get("network_changed")
-        total_nodes = response_data.get("total_nodes")
-        local_nodes = response_data.get("local_nodes")
-        return network_changed, total_nodes, local_nodes
+        worker_num = response_data.get("worker_num")
+        local_worker_num = response_data.get("local_worker_num")
+        return network_changed, worker_num, local_worker_num
     except requests.exceptions.RequestException:
         return None

@@ -51,7 +51,8 @@ static const std::set<std::string> kDefaultOutputNode = {
 
 static const std::set<std::string> kHcomOps = {kHcomOpTypeAllReduce,     kHcomOpTypeReduce,    kHcomOpTypeAllGather,
                                                kHcomOpTypeBroadcast,     kHcomOpTypeSend,      kHcomOpTypeReceive,
-                                               kHcomOpTypeReduceScatter, kHcomOpTypeAllToAllV, kHcomOpTypeBarrier};
+                                               kHcomOpTypeReduceScatter, kHcomOpTypeAllToAllV, kHcomOpTypeBarrier,
+                                               kHcomOpTypeScatter,       kHcomOpTypeGather};
 
 static const HashMap<GeDataType, TypeId> kGeTypeToMsType = {{GeDataType::DT_BOOL, kNumberTypeBool},
                                                             {GeDataType::DT_INT8, kNumberTypeInt8},
@@ -92,40 +93,24 @@ bool GLogIsDebug() {
   return is_debug || is_submodule_debug;
 }
 
-const std::map<std::string, std::vector<std::string>> kNextOpFormatList = {
-  {prim::kPrimConv2D->name(), {kOpFormat_NC1HWC0, kOpFormat_FRAC_Z}}};
-
-std::string GetCastWeightFormat(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  if (!common::AnfAlgo::HasNodeAttr(kAttrPynativeNextIndex, kernel_node) ||
-      !common::AnfAlgo::HasNodeAttr(kAttrPynativeNextOpName, kernel_node)) {
-    MS_LOG(EXCEPTION) << "The node [" << kernel_node->DebugString() << "] attr of " << kAttrPynativeNextIndex << " or "
-                      << kAttrPynativeNextOpName << " has not been set yet!";
-  }
-  auto next_index = common::AnfAlgo::GetNodeAttr<size_t>(kernel_node, kAttrPynativeNextIndex);
-  auto next_op_name = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrPynativeNextOpName);
-  auto iter = kNextOpFormatList.find(next_op_name);
-  if (iter == kNextOpFormatList.end()) {
-    MS_LOG(INFO) << "The op name " << next_op_name << "has not been set in the next op map ";
-    return "";
-  }
-  if (iter->second.size() < next_index) {
-    MS_LOG(EXCEPTION) << "Next input index " << next_index << "is out of range in the next op map max size is "
-                      << iter->second.size();
-  }
-  if (common::AnfAlgo::GetCNodeName(kernel_node) != prim::kPrimCast->name()) {
-    MS_LOG(INFO) << "Only supported to change the node Cast's build info!!!";
-    return "";
-  }
-  if (next_index == 0) {
-    return "";
-  }
-  return iter->second[next_index];
-}
-
 void SetParameterFormat(const AnfNodePtr &node, const std::string &format, std::string *old_foramt) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<Parameter>()) {
+    if (IsPrimitiveCNode(node, prim::kPrimCast)) {
+      auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, 0);
+      if (kernel_with_index.first->isa<Parameter>()) {
+        SetParameterFormat(kernel_with_index.first, format, old_foramt);
+      } else {
+        return;
+      }
+      auto kernel_info = std::dynamic_pointer_cast<device::KernelInfo>(node->kernel_info_ptr());
+      MS_EXCEPTION_IF_NULL(kernel_info);
+      auto build_info = kernel_info->GetMutableSelectKernelBuildInfo();
+      MS_EXCEPTION_IF_NULL(build_info);
+      build_info->SetInputsFormat({format});
+      build_info->SetOutputsFormat({format});
+      kernel_info->set_select_kernel_build_info(build_info);
+    }
     return;
   }
   const auto &output_with_indexs = common::AnfAlgo::GetAllOutputWithIndex(node);
@@ -197,6 +182,7 @@ void GetInputBuildInfo(const AnfNodePtr &node, const size_t input_num, const Acl
                        const GeAdapterInfoPtr &ge_info, std::vector<std::string> *input_formats,
                        std::vector<std::string> *input_reshape_types) {
   auto input_info = acl_info.inputs();
+  static bool default_format = (common::GetEnv("MS_FORMAT_MODE") == "1");
   std::vector<size_t> special_inputs;
   for (size_t i = 0; i < input_num; ++i) {
     auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i);
@@ -205,7 +191,7 @@ void GetInputBuildInfo(const AnfNodePtr &node, const size_t input_num, const Acl
     auto prev_shape = common::AnfAlgo::GetOutputInferShape(kernel_with_index.first, kernel_with_index.second);
     auto cnode = node->cast<CNodePtr>();
     auto new_format = input_format;
-    if (acl_info.input_selector().count(i) != 0) {
+    if (!default_format && acl_info.input_selector().count(i) != 0) {
       auto func = acl_info.input_selector().at(i);
       auto prev_dtype = common::AnfAlgo::GetOutputInferDataType(kernel_with_index.first, kernel_with_index.second);
       new_format = func(prev_dtype, {prev_shape});
@@ -241,7 +227,8 @@ void GetOutputBuildInfo(const AnfNodePtr &node, const size_t output_num, const A
                         const std::vector<std::string> &input_formats, std::vector<std::string> *output_formats) {
   // First use output func.
   auto input_num = common::AnfAlgo::GetInputTensorNum(node);
-  if (acl_info.output_selector() != nullptr) {
+  static bool default_format = (common::GetEnv("MS_FORMAT_MODE") == "1");
+  if (!default_format && acl_info.output_selector() != nullptr) {
     auto data_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
     std::vector<ShapeVector> input_shapes;
     for (size_t i = 0; i < input_num; ++i) {
@@ -270,7 +257,7 @@ void GetOutputBuildInfo(const AnfNodePtr &node, const size_t output_num, const A
 }
 
 void SetOutputIdentityFlag(const AnfNodePtr &node, const std::vector<std::string> &output_formats) {
-  if (common::GetEnv("MS_DEV_FORCE_ACL") != "1" && AclHelper::NeedIdentityFlag(output_formats)) {
+  if (common::GetEnv("MS_FORMAT_MODE") == "1" && AclHelper::NeedIdentityFlag(output_formats)) {
     common::AnfAlgo::SetNodeAttr(kAttrAclSpecialFormat, MakeValue(true), node);
   }
 }
@@ -338,6 +325,8 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
   }
 
   for (size_t ms_proto_idx = 0; ms_proto_idx < info->GetNumInputsOfMsOpProto(); ++ms_proto_idx) {
+    MS_LOG(DEBUG) << "ms_proto_idx=" << ms_proto_idx << ", ms_real_idx=" << ms_real_idx
+                  << ", num_real_inputs=" << num_real_inputs;
     // skip attribute converted input
     if (NeedCheckAttrToInput(cnode, info->attr_input_map(), ms_proto_idx)) {
       MS_LOG(DEBUG) << "Op prototype input idx:" << ms_proto_idx << " is attr to input, skip check";
@@ -363,6 +352,7 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
     if (is_value_depend) {
       // if the input is value_depend,  verification is performed in the launch and type conversion if necessary
       MS_LOG(DEBUG) << "When input is value_depend, skip it." << cnode->fullname_with_scope();
+      ms_real_idx += 1;
       continue;
     }
 
@@ -371,9 +361,12 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
           [base_type, ge_input_info](const ::ge::DataType ge_type) { return ConvertGeType(ge_type) == base_type; })) {
       if (base_type == kMetaTypeNone && ge_input_info.type == Ms2GeParamInfo::OPTIONAL) {
         MS_LOG(DEBUG) << "Input is a placeholder, continue!";
+        ms_real_idx += 1;
         continue;
       }
       if (GetMoreDataTypeSupported(base_type, info->op_type())) {
+        MS_LOG(DEBUG) << "More data type is supported, continue!";
+        ms_real_idx += 1;
         continue;
       }
       MS_LOG(DEBUG) << "Unsupported input dtype:" << TypeIdLabel(base_type)
@@ -502,18 +495,6 @@ void AclHelper::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std:
   size_t output_num = AnfUtils::GetOutputTensorNum(node);
   input_reshape_types->assign(input_num, "");
   output_reshape_types->assign(output_num, "");
-
-  if (common::AnfAlgo::HasNodeAttr(kAttrPynativeNextOpName, cnode)) {
-    auto cast_format = GetCastWeightFormat(cnode);
-    if (!cast_format.empty()) {
-      (void)input_formats->emplace_back(cast_format);
-      (void)output_formats->emplace_back(cast_format);
-      auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, 0);
-      auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
-      SetParameterFormat(kernel_with_index.first, cast_format, &input_format);
-      return;
-    }
-  }
 
   if (!AclAdapterManager::GetInstance().CheckAclAdapter(op_type)) {
     std::vector<size_t> special_inputs;

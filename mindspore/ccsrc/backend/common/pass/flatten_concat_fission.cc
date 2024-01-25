@@ -134,7 +134,7 @@ void ExpandFlattenConcatTupleInput(const FuncGraphPtr &graph, const CNodePtr &cn
   std::vector<AnfNodePtr> plant_inputs;
   std::vector<int64_t> dyn_input_sizes;
   plant_inputs.push_back(common::AnfAlgo::GetCNodePrimitiveNode(cnode_ptr));
-  size_t input_num = cnode_ptr->inputs().size() - 1;
+  size_t input_num = cnode_ptr->size() - 1;
   for (size_t i = 0; i < input_num; ++i) {
     auto input_node = common::AnfAlgo::GetInputNode(cnode_ptr, i);
     MS_EXCEPTION_IF_NULL(input_node);
@@ -183,7 +183,7 @@ const AnfNodePtr FlattenConcatFission::Process(const FuncGraphPtr &func_graph, c
   size_t block_size = GetFusionSize(node);
 
   std::vector<AnfNodePtr> concat_nodes;
-  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+  for (size_t i = 1; i < cnode->size(); ++i) {
     auto input_node = cnode->input(i);
     MS_EXCEPTION_IF_NULL(input_node);
     int64_t elem_num = GetElemNum(input_node);

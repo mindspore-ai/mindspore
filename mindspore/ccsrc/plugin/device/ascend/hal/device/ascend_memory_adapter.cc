@@ -46,15 +46,6 @@ size_t AscendMemAdapter::GetRoundUpAlignSize(size_t input_size) {
   return ((input_size + kAscendMemAlignSize - 1) / kAscendMemAlignSize) * kAscendMemAlignSize;
 }
 
-bool AscendMemAdapter::IsMemoryPoolRecycle() {
-  static const char kMemoryPoolRecycle[] = "MS_MEMORY_POOL_RECYCLE";
-  static const auto memory_pool_recycle = common::GetEnv(kMemoryPoolRecycle);
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  auto runtime_num_threads = static_cast<size_t>(context_ptr->get_param<uint32_t>(MS_CTX_RUNTIME_NUM_THREADS));
-  return memory_pool_recycle == "1" && runtime_num_threads == 1 && IsEnableRefMode();
-}
-
 bool AscendMemAdapter::Initialize() {
   if (initialized_) {
     return true;
@@ -252,8 +243,11 @@ size_t AscendMemAdapter::GetDeviceMemSizeFromContext() const {
   MS_EXCEPTION_IF_NULL(context);
   size_t size_from_context;
   auto max_device_memory = context->get_param<float>(MS_CTX_MAX_DEVICE_MEMORY);
-  const float kAscendMaxDeviceMemory = context->ascend_soc_version() == kAscendVersion910b ? 64.0f : 32.0f;
-  if (max_device_memory <= kAscendMaxDeviceMemory) {
+  float total_device_memory = 32.0f;
+  if (context->ascend_soc_version() == kAscendVersion910b || context->ascend_soc_version() == kAscendVersion910c) {
+    total_device_memory = 64.0f;
+  }
+  if (max_device_memory <= total_device_memory) {
     MS_LOG(INFO) << "context max_device_memory:" << max_device_memory;
     size_from_context = FloatToSize(max_device_memory * kGBToByte);
   } else {

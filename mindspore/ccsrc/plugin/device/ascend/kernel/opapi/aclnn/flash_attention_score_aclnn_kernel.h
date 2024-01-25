@@ -43,8 +43,7 @@ class FAScoreAclnnKernelMod : public AclnnKernelMod {
     auto head_num = GetFAAttr<int64_t>("head_num");
     auto input_layout = GetFAAttr<std::string>("input_layout");
     auto inner_precise = GetFAAttr<int64_t>("inner_precise");
-    EmptyKernelTensor empty_tensor;
-    empty_tensor.set_dtype_id(outputs[0]->dtype_id());
+    EmptyKernelTensor empty_tensor(outputs[0]->type_id(), outputs[0]->dtype_id());
     auto return_value =
       GEN_EXECUTOR(op_type_, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], nullptr, nullptr, nullptr,
                    inputs[kIndex3], nullptr, scale_value, keep_prob, pre_tokens, next_tokens, head_num, input_layout,

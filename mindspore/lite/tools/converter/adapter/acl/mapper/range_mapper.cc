@@ -29,7 +29,7 @@ constexpr auto kNameInputNums = 4;
 
 STATUS RangeMapper::Mapper(const CNodePtr &cnode) {
   CHECK_NULL_RETURN(cnode);
-  int input_num = cnode->inputs().size();
+  int input_num = cnode->size();
   if (input_num == kNameInputNums) {
     ops::RangeV2 rangev2;
     auto dst_prim = rangev2.GetPrim();

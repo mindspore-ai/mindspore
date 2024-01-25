@@ -31,7 +31,7 @@ class Msadvisor:
     """
     def __init__(self, job_id, rank_id, output_path):
         self._job_id, self._device_id = job_id.split("/")
-        self._rank_id = rank_id
+        self._rank_id = str(rank_id)
         self._output_path = output_path
 
     def call_msadvisor(self):

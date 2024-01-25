@@ -133,7 +133,7 @@ static STATUS AdapteNodeWithMultiOutputs(const FuncGraphPtr &func_graph, const C
     return lite::RET_OK;
   }
 
-  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+  for (size_t i = 1; i < cnode->size(); ++i) {
     auto input = cnode->input(i);
     MS_CHECK_TRUE_MSG(input != nullptr, lite::RET_ERROR, "input is nullptr.");
     if (!utils::isa<CNode>(input)) {

@@ -13,67 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include <vector>
 #include <memory>
-
-#include "ops/test_ops.h"
 #include "common/common_test.h"
-#include "ir/dtype/type.h"
-#include "abstract/dshape.h"
-#include "utils/tensor_construct_utils.h"
+#include "ops/ops_func_impl/sigmoid_grad.h"
+#include "ops/auto_generate/gen_ops_name.h"
 #include "ir/primitive.h"
 #include "abstract/abstract_value.h"
-#include "ops/op_name.h"
-#include "ops/ops_func_impl/sigmoid_grad.h"
-#include "include/backend/optimizer/helper.h"
+#include "ops/test_ops.h"
+#include "ops/test_ops_dyn_cases.h"
+#include "ops/test_ops_cmp_utils.h"
 
 namespace mindspore {
 namespace ops {
-struct SigmoidGradShape {
-  ShapeVector y_shape;
-  ShapeVector out_shape;
-};
-
-struct SigmoidGradDType {
-  TypePtr y_dtype;
-  TypePtr out_dtype;
-};
-
-class TestSigmoidGrad : public TestOps, public testing::WithParamInterface<std::tuple<SigmoidGradShape, SigmoidGradDType>> {};
+class TestSigmoidGrad
+    : public TestOps,
+      public testing::WithParamInterface<std::tuple<EltwiseGradOpShapeParams, EltwiseGradOpTypeParams>> {};
 
 TEST_P(TestSigmoidGrad, dyn_shape) {
   const auto &shape_param = std::get<0>(GetParam());
   const auto &dtype_param = std::get<1>(GetParam());
-  auto sigmoid_grad_func_impl = std::make_shared<SigmoidGradFuncImpl>();
-  auto prim = std::make_shared<Primitive>("SigmoidGrad");
-
-  auto y = std::make_shared<abstract::AbstractTensor>(dtype_param.y_dtype, shape_param.y_shape);
+  auto dy = std::make_shared<abstract::AbstractTensor>(dtype_param.grad_type, shape_param.grad_shape);
+  ASSERT_NE(dy, nullptr);
+  auto y = std::make_shared<abstract::AbstractTensor>(dtype_param.x_type, shape_param.x_shape);
   ASSERT_NE(y, nullptr);
-
   auto expect_shape = std::make_shared<abstract::Shape>(shape_param.out_shape);
-  auto expect_dtype = std::make_shared<TensorType>(dtype_param.out_dtype);
-
-  auto infer_shape = sigmoid_grad_func_impl->InferShape(prim, {y});
-  ASSERT_NE(infer_shape, nullptr);
-  ASSERT_TRUE(*infer_shape == *expect_shape);
-  auto infer_dtype = sigmoid_grad_func_impl->InferType(prim, {y});
-  ASSERT_NE(infer_dtype, nullptr);
-  ASSERT_TRUE(*infer_dtype == *expect_dtype);
+  auto expect_type = std::make_shared<TensorType>(dtype_param.out_type);
+  DoFuncImplInferAndCompare<SigmoidGradFuncImpl>("SigmoidGrad", {y, dy}, expect_shape, expect_type);
 }
 
-auto SigmoidGradDynTestCase = testing::ValuesIn({
-  SigmoidGradShape{{1}, {1}},
-  SigmoidGradShape{{-1}, {-1}},
-  SigmoidGradShape{{-2}, {-2}},
+namespace {
+auto SigmoidGradOpTypeCases = testing::ValuesIn({
+  EltwiseGradOpTypeParams{kFloat16, kFloat16, kFloat16},
+  EltwiseGradOpTypeParams{kFloat32, kFloat32, kFloat32},
+  EltwiseGradOpTypeParams{kFloat64, kFloat64, kFloat64},
+  EltwiseGradOpTypeParams{kComplex64, kComplex64, kComplex64},
+  EltwiseGradOpTypeParams{kComplex128, kComplex128, kComplex128},
 });
+}
 
-auto SigmoidGradDTypeTestCase = testing::ValuesIn({
-  SigmoidGradDType{kFloat16, kFloat16},
-  SigmoidGradDType{kFloat32, kFloat32},
-  SigmoidGradDType{kFloat64, kFloat64},
-});
-
-INSTANTIATE_TEST_CASE_P(TestSigmoidGradGroup, TestSigmoidGrad, testing::Combine(SigmoidGradDynTestCase, SigmoidGradDTypeTestCase));
+INSTANTIATE_TEST_CASE_P(TestSigmoidGradGroup, TestSigmoidGrad,
+                        testing::Combine(EltwiseGradDynShapeTestCases, SigmoidGradOpTypeCases));
 }  // namespace ops
 }  // namespace mindspore

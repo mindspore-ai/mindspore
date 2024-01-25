@@ -28,6 +28,7 @@
 #include <utility>
 #include <regex>
 #include <iomanip>
+#include "openssl/md5.h"
 #include "pybind11/stl.h"
 #ifndef OFFLINE_DBG_MODE
 #include "include/common/debug/common.h"
@@ -47,6 +48,8 @@ static constexpr const char constant_prefix[] = "Default--data-";
 static constexpr const char kNpyExt[] = ".npy";
 constexpr float ms_to_s = 1000.0;
 constexpr int precision = 2;
+constexpr int md5_bit_wide = 2;
+constexpr int md5_len = 32;
 static constexpr int32_t wp_progress_period = 300;
 #ifdef __APPLE__
 constexpr int kStrErrorNone = 0;
@@ -63,6 +66,14 @@ bool IsRegFile(const std::string &file_path) {
     return false;
   }
   return S_ISREG(st.st_mode);
+}
+
+void openssl_md5(char *input, char *output, int64_t len) {
+  unsigned char digest[MD5_DIGEST_LENGTH];
+  MD5((unsigned char *)input, len, (unsigned char *)digest);
+  for (int i = 0; i < MD5_DIGEST_LENGTH; i++) {
+    snprintf(&output[i * md5_bit_wide], md5_len - i * md5_bit_wide, "%02x", (unsigned int)digest[i]);
+  }
 }
 
 DebugServices::DebugServices() { tensor_loader_ = std::make_shared<TensorLoader>(); }
@@ -212,13 +223,17 @@ DebugServices::TensorStat DebugServices::GetTensorStatistics(const std::shared_p
     TensorStat empty_tensor_stat_data;
     return empty_tensor_stat_data;
   }
+  char md5str[32];
+  memset(md5str, '\0', sizeof(md5str));
+  openssl_md5(const_cast<char *>(tensor->GetDataPtr()), md5str, tensor->GetByteSize());
+  std::string md5(md5str);
   base_summary_ptr->TensorStatistics(tensor->GetType());
   TensorStat tensor_stat_data(tensor->GetByteSize(), tensor->GetType(), tensor->GetShape(), base_summary_ptr->is_bool(),
                               base_summary_ptr->max_value(), base_summary_ptr->min_value(),
                               base_summary_ptr->avg_value(), base_summary_ptr->count(),
                               base_summary_ptr->neg_zero_count(), base_summary_ptr->pos_zero_count(),
                               base_summary_ptr->nan_count(), base_summary_ptr->neg_inf_count(),
-                              base_summary_ptr->pos_inf_count(), base_summary_ptr->zero_count());
+                              base_summary_ptr->pos_inf_count(), base_summary_ptr->zero_count(), md5);
 
   return tensor_stat_data;
 }

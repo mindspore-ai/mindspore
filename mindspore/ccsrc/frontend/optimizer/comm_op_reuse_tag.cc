@@ -36,6 +36,8 @@ inline bool is_comm_ops(const AnfNodePtr &node) {
                                                                   prim::kPrimReduce,
                                                                   prim::kPrimAllGather,
                                                                   prim::kPrimReduceScatter,
+                                                                  prim::kPrimCollectiveScatter,
+                                                                  prim::kPrimCollectiveGather,
                                                                   prim::kPrimAllToAll,
                                                                   prim::kPrimAllSwap,
                                                                   prim::kPrimAllToAllv,

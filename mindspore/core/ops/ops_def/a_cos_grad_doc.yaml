@@ -1,0 +1,6 @@
+a_cos_grad:
+    description: |
+        Computes ACosGrad of input element-wise.
+
+        Returns:
+            Tensor, has the same type as input.

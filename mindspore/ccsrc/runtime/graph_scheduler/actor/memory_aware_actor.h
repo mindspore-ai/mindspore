@@ -19,6 +19,7 @@
 
 #include <string>
 #include <memory>
+#include <mutex>
 #include "runtime/graph_scheduler/actor/abstract_actor.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
 

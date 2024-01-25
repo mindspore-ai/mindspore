@@ -54,7 +54,8 @@ class BACKEND_EXPORT MemoryManager {
   // param address is the address type of each device
   // param from_persistent_mem shows whether the tensor is a parameter in Pynative mode
   virtual bool MallocMemFromMemPool(const DeviceAddressPtr &address, size_t size);
-  virtual void *MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool need_recycle = false);
+  virtual void *MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool need_recycle = false,
+                                     uint32_t stream_id = UINT32_MAX);
   virtual size_t GetMaxUsedMemorySize() const { return 0; }
   virtual uint8_t *MallocCommunicationMemFromMemPool(size_t size) { return nullptr; }
   virtual void FreeMemFromMemPool(const DeviceAddressPtr address);

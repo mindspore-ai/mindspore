@@ -12,4 +12,4 @@ eye:
     output:
       dtype: tensor
   function:
-    name: eye_
+    disable: True

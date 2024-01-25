@@ -30,6 +30,7 @@
 #include <vector>
 
 #include "include/common/visible.h"
+#include "include/common/utils/stream_util.h"
 #include "ir/dtype/type.h"
 #include "utils/log_adapter.h"
 
@@ -74,6 +75,7 @@ constexpr auto kAttrAxes = "axes";
 constexpr auto kAttrAlpha = "alpha";
 constexpr auto kAttrAclSpecialFormat = "acl_special_format";
 constexpr auto kAttrAclSpecialInputFormat = "acl_special_input_format";
+constexpr auto kAttrAclInconsistentInputDtype = "acl_inconsistent_input_dtype";
 constexpr auto kAttrBatchDims = "batch_dims";
 constexpr auto kAttrKeepDims = "keep_dims";
 constexpr auto kTransposeA = "transpose_a";
@@ -425,8 +427,6 @@ constexpr auto kNCHWShapeSize = 4;
 const size_t kMaxTensorIndexDimNums = 8;
 
 // define special index in special node
-constexpr auto kDefaultStreamIndex = 0;
-constexpr auto kWorldGroupStreamIndex = 1;
 constexpr auto kAnfPrimitiveIndex = 0;
 constexpr auto kFirstDataInputIndex = 1;
 constexpr auto kRealInputNodeIndexInTupleGetItem = 1;
@@ -645,6 +645,7 @@ COMMON_EXPORT size_t GetSystemMemorySize(const std::string &key);
 COMMON_EXPORT size_t GetSystemFreeDiskSize(const std::string &path);
 
 COMMON_EXPORT bool IsEnableRefMode();
+COMMON_EXPORT bool IsMemoryPoolRecycle();
 
 // The map between kernel's output and input ref relationship.
 // Key is the output index while the value is input index which will be used as the reference of output.
@@ -694,5 +695,8 @@ static inline uint64_t GetCurrentUSec() {
 #define SET_FLAG(value, flag) ((value) = ((value) | (flag)))
 #define TEST_FLAG(value, flag) (((value) & (flag)) == (flag))
 #define CLEAR_FLAG(value, flag) ((value) = ((value) & (~(flag))))
+
+#define _STRINGIZE(x) #x
+#define STRINGIZE(x) _STRINGIZE(x)
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_UTILS_H_

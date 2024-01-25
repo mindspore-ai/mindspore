@@ -84,41 +84,23 @@ KernelTensorPtr CreateKernelTensor(const abstract::AbstractBasePtr &cur_abstract
                                    const std::string &format_str, bool prev_node_has_getitem = false) {
   MS_EXCEPTION_IF_NULL(cur_abstract);
   abstract::AbstractBasePtr tag_abstract = nullptr;
+  abstract::AbstractBasePtr new_abstract = nullptr;
   if (prev_node_has_getitem) {
     tag_abstract = cur_abstract;
   } else {
     tag_abstract = GetChildAbstract(cur_abstract, idx);
   }
   TypePtr tag_type_ptr = TypeIdToType(real_type);
-  KernelTensorPtr res_tensor = std::make_shared<KernelTensor>();
-  if (tag_abstract->isa<abstract::AbstractScalar>()) {
-    // Scalar
-    auto new_abstract = tag_abstract->Clone()->cast<abstract::AbstractScalarPtr>();
-    ScalarInfo scalar_info{new_abstract};
-    res_tensor->SetScalarInfo(scalar_info);
-    res_tensor->SetMetaType(kObjectTypeNumber);
-  } else if (tag_abstract->isa<abstract::AbstractTuple>()) {
-    // Tuple
-    auto new_abstract = tag_abstract->Clone()->cast<abstract::AbstractTuplePtr>();
-    TupleInfo tuple_info{new_abstract};
-    res_tensor->SetTupleInfo(tuple_info);
-    res_tensor->SetMetaType(kObjectTypeTuple);
-  } else if (tag_abstract->isa<abstract::AbstractList>()) {
-    // List
-    auto new_abstract = tag_abstract->Clone()->cast<abstract::AbstractListPtr>();
-    ListInfo list_info{new_abstract};
-    res_tensor->SetListInfo(list_info);
-    res_tensor->SetMetaType(kObjectTypeList);
-  } else if (tag_abstract->isa<abstract::AbstractNone>()) {
-    res_tensor->SetMetaType(kMetaTypeNone);
-  } else {
-    // Tensor
+
+  if (tag_abstract->isa<abstract::AbstractTensor>()) {
     auto abstract_shape_ptr = GetValidShapeFromAbstract(tag_abstract);
-    auto new_abstract = std::make_shared<abstract::AbstractTensor>(tag_type_ptr, abstract_shape_ptr);
-    TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), new_abstract};
-    res_tensor->SetTensorInfo(tensor_info);
-    res_tensor->SetMetaType(kObjectTypeTensorType);
+    new_abstract = std::make_shared<abstract::AbstractTensor>(tag_type_ptr, abstract_shape_ptr);
+  } else {
+    new_abstract = tag_abstract->Clone();
   }
+  KernelTensorPtr res_tensor =
+    std::make_shared<KernelTensor>(new_abstract->GetShape(), new_abstract->GetType(), new_abstract->GetValue());
+  res_tensor->set_format(GetFormatFromStrToEnum(format_str));
   return res_tensor;
 }
 
@@ -704,7 +686,7 @@ void GetFuncGraphOutputNodes(const FuncGraphPtr &func_graph, std::vector<AnfNode
     auto input0 = cnode->input(kAnfPrimitiveIndex);
     MS_EXCEPTION_IF_NULL(input0);
     if (IsPrimitive(input0, prim::kPrimMakeTuple)) {
-      for (size_t input_idx = 1; input_idx < cnode->inputs().size(); ++input_idx) {
+      for (size_t input_idx = 1; input_idx < cnode->size(); ++input_idx) {
         auto input_node = cnode->input(input_idx);
         MS_EXCEPTION_IF_NULL(input_node);
         if (input_node->isa<CNode>() && common::AnfAlgo::GetInputTensorNum(input_node) == 0) {
@@ -1142,7 +1124,7 @@ void UpdateNodeShape(const CNodePtr &cnode) {
       return;
     }
     (void)shapes.emplace_back(std::move(out_shape));
-    (void)type_ids.emplace_back(output_tensor[i]->GetDtype());
+    (void)type_ids.emplace_back(output_tensor[i]->dtype_id());
   }
   common::AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, cnode.get(), true);
 }

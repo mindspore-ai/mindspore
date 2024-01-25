@@ -137,7 +137,7 @@ void ExtractInputs(const CNodePtr &cnode, std::vector<TensorPtr> *inputs_holder,
     return;
   }
   auto cb = Callback::Instance();
-  for (size_t index = 1; index < cnode->inputs().size(); index++) {
+  for (size_t index = 1; index < cnode->size(); index++) {
     if (cnode->input(index)->isa<CNode>()) {
       std::vector<int> shape;
       ShapeVector shp = cb->GetInputShape(cnode, index - 1);

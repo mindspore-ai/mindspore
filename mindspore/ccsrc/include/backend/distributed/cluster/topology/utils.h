@@ -92,6 +92,22 @@ __attribute__((unused)) static bool CheckFilePath(const std::string &path) {
   }
   return true;
 }
+
+__attribute__((unused)) static size_t GetClusterTimeoutRetryNum() {
+  std::string time_out_str = common::GetEnv(kEnvClusterTimeOut);
+  size_t time_out_sec = kDefaultClusterTimeOut;
+  if (!time_out_str.empty()) {
+    try {
+      int sec = std::atoi(time_out_str.c_str());
+      time_out_sec = sec < 0 ? SIZE_MAX : sec;
+    } catch (const std::exception &e) {
+      MS_LOG(EXCEPTION) << "Environmental variable 'MS_CLUSTER_TIMEOUT' " << time_out_str
+                        << " is invalid. Exception info: " << e.what();
+    }
+  }
+
+  return time_out_sec / kExecuteInterval;
+}
 }  // namespace topology
 }  // namespace cluster
 }  // namespace distributed

@@ -33,14 +33,18 @@ class Net(nn.Cell):
         return self.multinomial(x, self.sample)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_multinomial_1d():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_multinomial_1d(mode):
     """
     Feature: test Multinomial op.
     Description: test Multinomial op.
     Expectation: success.
     """
+    context.set_context(mode=mode, device_target='Ascend')
     x = Tensor(np.array([0, 10, 0]).astype(np.float32))
     net = Net(1)
     out = net(x)

@@ -64,20 +64,21 @@ struct SomasInfo {
   std::map<size_t, void *> merged_base_addresses_;
 
   // Used to keep the graph output address when somas block memory free.
-  void InsertGraphOutputInfo(device::DeviceAddress *graph_output_device_address, size_t graph_output_address_size) {
+  void InsertGraphOutputInfo(device::DeviceAddress *graph_output_device_address, size_t graph_output_address_offset,
+                             size_t graph_output_address_size) {
     // Not insert the repeat size.
-    if (graph_output_address_sizes_set_.count(graph_output_address_size) > 0) {
+    if (graph_output_address_offsets_set_.count(graph_output_address_offset) > 0) {
       MS_LOG(INFO) << "The graph:" << graph_id_
-                   << " output somas device is same for size: " << graph_output_address_size;
+                   << " output somas device is same for offset: " << graph_output_address_offset;
       return;
     }
     (void)graph_output_device_addresses_.emplace_back(graph_output_device_address);
     (void)graph_output_address_sizes_.emplace_back(graph_output_address_size);
-    (void)graph_output_address_sizes_set_.insert(graph_output_address_size);
+    (void)graph_output_address_offsets_set_.insert(graph_output_address_offset);
   }
   std::vector<device::DeviceAddress *> graph_output_device_addresses_;
   std::vector<size_t> graph_output_address_sizes_;
-  std::set<size_t> graph_output_address_sizes_set_;
+  std::set<size_t> graph_output_address_offsets_set_;
 
   // The owner graph id.
   uint32_t graph_id_{0};
@@ -89,7 +90,7 @@ using KernelMapTensor = std::map<session::KernelWithIndex, BaseRef, session::Ker
 class BACKEND_EXPORT KernelGraph : public FuncGraph {
  public:
   KernelGraph()
-      : inputs_(std::make_shared<std::vector<AnfNodePtr>>()),
+      : inputs_(std::make_shared<AnfNodePtrList>()),
         somas_info_(std::make_shared<SomasInfo>()),
         graph_id_(0),
         stream_distinction_label_(kInvalidDistincLabel),
@@ -156,16 +157,18 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
 
   MS_DECLARE_PARENT(KernelGraph, FuncGraph);
 
-  const std::vector<AnfNodePtr> &inputs() const;
-  std::vector<AnfNodePtr> *MutableInputs() const { return inputs_.get(); }
-  void SetGraphInputs(const std::vector<AnfNodePtr> &inputs) {
-    inputs_ = std::make_shared<std::vector<AnfNodePtr>>(inputs);
-  }
+  const AnfNodePtrList &inputs() const;
+  AnfNodePtrList *MutableInputs() const { return inputs_.get(); }
+  void SetGraphInputs(const AnfNodePtrList &inputs) { inputs_ = std::make_shared<AnfNodePtrList>(inputs); }
   void ReplaceGraphInput(const AnfNodePtr &old_parameter, const AnfNodePtr &new_parameter);
-  std::vector<AnfNodePtr> outputs() const;
-  CNodePtr NewCNode(std::vector<AnfNodePtr> &&inputs) override;
-  CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs = std::vector<AnfNodePtr>()) override;
-  CNodePtr NewCNodeWithInfos(const std::vector<AnfNodePtr> &inputs, const CNodePtr &ori_cnode = nullptr);
+  AnfNodePtrList outputs() const;
+  CNodePtr NewCNodeWeak(AnfNodeWeakPtrList &&weak_inputs) override;
+  CNodePtr NewCNodeWeak(const AnfNodeWeakPtrList &weak_inputs = AnfNodeWeakPtrList()) override;
+  // NewCNodeWeak is recommended.
+  CNodePtr NewCNode(AnfNodePtrList &&inputs) override;
+  // NewCNodeWeak is recommended.
+  CNodePtr NewCNode(const AnfNodePtrList &inputs = AnfNodePtrList()) override;
+  CNodePtr NewCNodeWithInfos(const AnfNodePtrList &inputs, const CNodePtr &ori_cnode = nullptr);
   void CreateKernelInfoFromNewParameter(const CNodePtr &cnode) const;
   CNodePtr NewCNode(const CNodePtr &cnode);
   void ResetAssignInputFeatureMapFlag(const CNodePtr &cnode) const;
@@ -322,8 +325,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   FuncGraphPtr GetFuncGraph();
   // Cache the backend graph output nodes and corresponding to front nodes with output index into
   // graph_output_to_front_node_map_.
-  void CacheGraphOutputToFrontNodeWithIndex(const std::vector<AnfNodePtr> &backend_outputs,
-                                            const std::vector<AnfNodePtr> &front_outputs);
+  void CacheGraphOutputToFrontNodeWithIndex(const AnfNodePtrList &backend_outputs, const AnfNodePtrList &front_outputs);
   AnfWithOutIndex GetFrontNodeWithIndexByGraphOutput(const AnfWithOutIndex &backend_graph_output_with_index) const;
 
   void SetKernelObjectTypesForUnrealNodes() const;
@@ -331,12 +333,10 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   uint32_t current_epoch() const { return current_epoch_; }
   void set_current_epoch(uint32_t epoch) { current_epoch_ = epoch; }
   void UpdateChildGraphOrder();
-  const std::vector<AnfNodePtr> &child_graph_result() const { return child_graph_result_; }
+  const AnfNodePtrList &child_graph_result() const { return child_graph_result_; }
   void AddChildGraphResult(const AnfNodePtr &parameter) { child_graph_result_.push_back(parameter); }
   bool IsChildGraphResult(const AnfNodePtr &node);
-  void set_child_graph_result(const std::vector<AnfNodePtr> &child_graph_result) {
-    child_graph_result_ = child_graph_result;
-  }
+  void set_child_graph_result(const AnfNodePtrList &child_graph_result) { child_graph_result_ = child_graph_result; }
 
   void InsertTupleParameterToMakeTupleMap(const AnfNodePtr &param, const AnfNodePtr &make_tuple) {
     if (tuple_parameter_to_make_tuple_map_.find(param) != tuple_parameter_to_make_tuple_map_.end()) {
@@ -360,7 +360,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   void UpdateGraphAquireGilAttr();
   void SetOptimizerFlag();
   void SetInputNodes();
-  const std::vector<AnfNodePtr> &input_nodes() const { return input_nodes_; }
+  const AnfNodePtrList &input_nodes() const { return input_nodes_; }
   void SetInputTensors(const std::vector<tensor::TensorPtr> &input_tensors) { input_tensors_ = input_tensors; }
   const std::vector<tensor::TensorPtr> &input_tensors() const { return input_tensors_; }
 
@@ -547,9 +547,9 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   std::vector<CNodePtr> SortStartLabelAndEndGoto();
 
   // members
-  std::shared_ptr<std::vector<AnfNodePtr>> inputs_;
+  std::shared_ptr<AnfNodePtrList> inputs_;
   std::shared_ptr<SomasInfo> somas_info_;
-  std::vector<AnfNodePtr> child_graph_result_;
+  AnfNodePtrList child_graph_result_;
   std::vector<CNodePtr> execution_order_;
   std::vector<CNodePtr> mem_reuse_exec_order_;
   uint32_t graph_id_;
@@ -567,7 +567,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   mindspore::HashMap<ValueNodePtr, size_t> graph_value_nodes_;
   // record map between ref final output anf with index and ref origin input with index
   std::map<AnfWithOutIndex, AnfWithOutIndex> ref_out_in_map_;
-  mindspore::HashMap<AnfNodePtr, std::vector<AnfNodePtr>> node_output_edges_;
+  mindspore::HashMap<AnfNodePtr, AnfNodePtrList> node_output_edges_;
   std::map<std::string, std::pair<AnfNodePtr, int>> summary_nodes_;
   // parameters that will be updated when graph is executed
   mindspore::HashSet<ParameterPtr> updated_parameters_;
@@ -611,7 +611,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   mindspore::HashMap<AnfNodePtr, mindspore::HashMap<size_t, tensor::TensorPtr>> internal_outputs_tensor_map_;
   uint32_t current_epoch_;
   mindspore::HashMap<AnfNodePtr, AnfNodePtr> tuple_parameter_to_make_tuple_map_;
-  std::vector<AnfNodePtr> input_nodes_;
+  AnfNodePtrList input_nodes_;
   std::vector<tensor::TensorPtr> input_tensors_;
   KernelMapTensor output_node_to_tensor_;
   std::map<session::KernelWithIndex, session::KernelWithIndex, session::KernelWithIndexCmp> nop_node_output_map_;

@@ -71,7 +71,7 @@ CNodePtr AnSubGraph::CreateTuple() {
 void AnSubGraph::FixGroup(SubGraphHelperPtr helper) {
   // handle inputs
   std::vector<AnfNodePtr> inputs;
-  for (size_t i = 1; i < cnode_->inputs().size(); i++) {
+  for (size_t i = 1; i < cnode_->size(); i++) {
     auto input = cnode_->input(i);
     auto is_ginput = helper->IsGraphInput(input);
     int group = helper->FindSubGraph(input);
@@ -98,7 +98,7 @@ void AnSubGraph::FixGroup(SubGraphHelperPtr helper) {
       for (const auto &node : func_graph_->nodes()) {
         if (node->isa<CNode>()) {
           const auto &cnode = node->cast<CNodePtr>();
-          for (size_t j = 1; j < cnode->inputs().size(); j++) {
+          for (size_t j = 1; j < cnode->size(); j++) {
             const auto &node_in = cnode->input(j);
             if (node_in == input) {
               cnode->set_input(j, para);
@@ -144,8 +144,8 @@ void AnSubGraph::Dump() {
     DumpNode(node);
     if (node->isa<CNode>()) {
       const auto &cnode = node->cast<CNodePtr>();
-      std::cout << "node " << count << " have " << cnode->inputs().size() - 1 << " inputs" << std::endl;
-      for (size_t i = 1; i < cnode->inputs().size(); i++) {
+      std::cout << "node " << count << " have " << cnode->size() - 1 << " inputs" << std::endl;
+      for (size_t i = 1; i < cnode->size(); i++) {
         const auto &input = cnode->input(i);
         DumpNode(input);
       }
@@ -200,7 +200,7 @@ void SubGraphHelper::FixGroups() {
 int SubGraphHelper::CheckAllInputInSameSg(const CNodePtr &cnode) {
   int prev_id = -1;
   int subg_id = sg_v_.size() - 1;
-  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+  for (size_t i = 1; i < cnode->size(); i++) {
     auto &input = cnode->input(i);
     if (!input->isa<CNode>()) {
       continue;
@@ -225,7 +225,7 @@ void SubGraphHelper::AddToSubGraph(int index, const CNodePtr &node, bool update)
   subg->Add(node);
   // add as inputs all non cnode and cnodes not in subgraph
   if (update) {
-    for (size_t i = 1; i < node->inputs().size(); i++) {
+    for (size_t i = 1; i < node->size(); i++) {
       const auto &input = node->input(i);
       if (!input->isa<CNode>()) {
         subg->AddInput(input);
@@ -388,7 +388,7 @@ void SubGraphHelper::UpdateInput(const CNodePtr &cnode, int index, const AnfNode
   if (group >= 0) {
     auto cnode_group = GetCNode(group);
     auto prev_input = cnode->input(index);
-    for (size_t i = 1; i < cnode_group->inputs().size(); i++) {
+    for (size_t i = 1; i < cnode_group->size(); i++) {
       if (cnode_group->input(i) == prev_input) {
         // update group input
         cnode_group->set_input(i, input);
@@ -406,7 +406,7 @@ void SubGraphHelper::FixAllNodes(const AnfNodePtrList &nodes) {
     if (node->isa<CNode>()) {
       int cnode_group = FindSubGraph(node);
       auto cnode = node->cast<CNodePtr>();
-      for (size_t i = 1; i < cnode->inputs().size(); i++) {
+      for (size_t i = 1; i < cnode->size(); i++) {
         auto const &input = cnode->input(i);
         if (input->isa<CNode>()) {
           auto cinput = input->cast<CNodePtr>();
@@ -526,7 +526,7 @@ void SubGraphHelper::DrawGraph(const FuncGraphPtr &graph, std::ostream &out, boo
         dst_composite = true;
       }
       auto cnode = node->cast<CNodePtr>();
-      for (size_t i = 1; i < cnode->inputs().size(); i++) {
+      for (size_t i = 1; i < cnode->size(); i++) {
         auto &in_node = cnode->input(i);
         if (in_node->isa<CNode>() || IsGraphInput(in_node)) {
           bool src_composite = false;
@@ -581,8 +581,8 @@ void SubGraphHelper::Dump(std::string file_name) const {
     DumpNode(out, node);
     if (node->isa<CNode>()) {
       const auto &cnode = node->cast<CNodePtr>();
-      out << "node " << count << " have " << cnode->inputs().size() - 1 << " inputs" << std::endl;
-      for (size_t i = 1; i < cnode->inputs().size(); i++) {
+      out << "node " << count << " have " << cnode->size() - 1 << " inputs" << std::endl;
+      for (size_t i = 1; i < cnode->size(); i++) {
         const auto &input = cnode->input(i);
         DumpNode(out, input);
       }

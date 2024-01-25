@@ -23,6 +23,6 @@ lin_space:
             >>> start = Tensor(1, mindspore.float32)
             >>> stop = Tensor(10, mindspore.float32)
             >>> num = 5
-            >>> output = ops.lin_space_(start, stop, num)
+            >>> output = ops.LinSpace()(start, stop, num)
             >>> print(output)
             [ 1.    3.25  5.5   7.75 10.  ]

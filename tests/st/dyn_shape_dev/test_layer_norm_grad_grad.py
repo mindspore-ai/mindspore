@@ -23,29 +23,28 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def layer_norm_grad_grad_forward_func(x, dy, variance, mean, gamma, d_dx, d_dg, d_db):
-    return ops.auto_generate.layer_norm_grad_grad(x,
-                                                  dy,
-                                                  variance,
-                                                  mean,
-                                                  gamma,
-                                                  d_dx,
-                                                  d_dg,
-                                                  d_db,
-                                                  begin_norm_axis=1,
-                                                  begin_params_axis=1)
+    return ops.auto_generate.LayerNormGradGrad(begin_norm_axis=1,
+                                               begin_params_axis=1)(x,
+                                                                    dy,
+                                                                    variance,
+                                                                    mean,
+                                                                    gamma,
+                                                                    d_dx,
+                                                                    d_dg,
+                                                                    d_db)
 
 
 def layer_norm_grad_grad_dyn_shape_func(x, dy, variance, mean, gamma, d_dx, d_dg, d_db):
-    return ops.auto_generate.layer_norm_grad_grad(x,
-                                                  dy,
-                                                  variance,
-                                                  mean,
-                                                  gamma,
-                                                  d_dx,
-                                                  d_dg,
-                                                  d_db,
-                                                  begin_norm_axis=1,
-                                                  begin_params_axis=1)
+    return ops.auto_generate.LayerNormGradGrad(begin_norm_axis=1,
+                                               begin_params_axis=1)(x,
+                                                                    dy,
+                                                                    variance,
+                                                                    mean,
+                                                                    gamma,
+                                                                    d_dx,
+                                                                    d_dg,
+                                                                    d_db
+                                                                    )
 
 
 @pytest.mark.level0

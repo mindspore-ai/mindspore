@@ -116,9 +116,10 @@ Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   // Calculating lambda
   // If x1 is a random variable from Gamma(a1, 1) and x2 is a random variable from Gamma(a2, 1)
   // then x = x1 / (x1+x2) is a random variable from Beta(a1, a2)
-  std::gamma_distribution<float> distribution(alpha_, 1);
-  float x1 = distribution(random_generator_);
-  float x2 = distribution(random_generator_);
+  std::gamma_distribution<float> distribution1(alpha_, 1);
+  std::gamma_distribution<float> distribution2(alpha_, 1);
+  float x1 = distribution1(random_generator_);
+  float x2 = distribution2(random_generator_);
   CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() - x1) > x2,
                                "multiplication out of bounds, with multipliers: " + std::to_string(x1) + " and " +
                                  std::to_string(x2) +

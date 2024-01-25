@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import pytest
 import numpy as np
 
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
-
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Net(nn.Cell):
@@ -32,7 +31,18 @@ class Net(nn.Cell):
         return self.poisson(self.shape, mean)
 
 
-def test_net_1():
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.parametrize("context_mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_net_1(context_mode):
+    """
+    Feature: aicpu ops Poisson.
+    Description: test Poisson forward.
+    Expectation: expect correct result.
+    """
+    context.set_context(mode=context_mode, device_target="Ascend")
     shape = (2, 16)
     mean = np.array([5.0]).astype(np.float32)
     net = Net(shape=shape)
@@ -41,7 +51,18 @@ def test_net_1():
     assert output.shape == (2, 16)
 
 
-def test_net_2():
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.parametrize("context_mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_net_2(context_mode):
+    """
+    Feature: aicpu ops Poisson.
+    Description: test Poisson forward.
+    Expectation: expect correct result.
+    """
+    context.set_context(mode=context_mode, device_target="Ascend")
     shape = (4, 1)
     mean = np.array([5.0, 10.0]).astype(np.float32)
     net = Net(shape=shape)

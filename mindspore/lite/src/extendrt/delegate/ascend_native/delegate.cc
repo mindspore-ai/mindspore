@@ -120,7 +120,7 @@ bool AscendNativeDelegate::IsSupport(const CNodePtr &cnode) {
         return false;
       }
       bool act = primitive->get_activation_type();
-      if ((act == ActivationType::NO_ACTIVATION) && (cnode->inputs().size() == Num3)) {
+      if ((act == ActivationType::NO_ACTIVATION) && (cnode->size() == Num3)) {
         ret = true;
       }
     } else if (prim->name() == ops::kNameAddFusion) {

@@ -27,6 +27,7 @@ from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._tracefunc import PackFunc
 from mindspore.common._utils import is_shape_unknown
 from mindspore import _checkparam as validator
+from mindspore.ops.operations.manually_defined._inner import ScalarCast
 
 
 class ScalarDiv(Primitive):
@@ -531,18 +532,88 @@ scalar_usub = ScalarUsub()
 
 class BatchNorm(Primitive):
     r"""
-    .. code-block::
+    Batch Normalization for input data and updated parameters.
 
-        prim = ops.BatchNorm(is_training, epsilon, momentum, data_format)
-        out = prim(input_x, scale, bias, mean, variance)
+    Batch Normalization is widely used in convolutional neural networks. This operation
+    applies Batch Normalization over inputs to avoid internal covariate shift as described
+    in the paper `Batch Normalization: Accelerating Deep Network Training by Reducing Internal
+    Covariate Shift <https://arxiv.org/abs/1502.03167>`_. It rescales and recenters the
+    features using a mini-batch of data and the learned parameters can be described
+    in the following formula,
 
-    is equivalent to
+    .. math::
 
-    .. code-block::
+       y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
 
-        ops.batch_norm_(input_x, scale, bias, mean, variance, is_training, epsilon, momentum, data_format)
+    where :math:`\gamma` is scale, :math:`\beta` is bias, :math:`\epsilon` is epsilon,
+    :math:`mean` is the mean of :math:`x`,
+    :math:`variance` is the variance of :math:`x`.
 
-    Refer to :func:`mindspore.ops.batch_norm_` for more details.
+    .. warning::
+       - If the operation is used for inference, and outputs "reserve_space_1" and "reserve_space_2" are available,
+         then "reserve_space_1" has the same value as "mean" and "reserve_space_2" has the same value as "variance".
+       - For Ascend 310, the result accuracy fails to reach 1‰ due to the square root instruction.
+
+    Args:
+       is_training (bool): If `is_training` is ``True`` , `mean` and `variance` are computed during training.
+           If `is_training` is ``False`` , they're loaded from checkpoint during inference. Default: ``False`` .
+       epsilon (float): A small value added for numerical stability. Default: ``1e-5``, value must be (0, 1] .
+       momentum (float): The hyper parameter to compute moving average for running_mean and running_var
+           (e.g. :math:`new\_running\_mean = (1 - momentum) * running\_mean + momentum * current\_mean`).
+           Momentum value must be [0, 1]. Default: ``0.1`` .
+       data_format (str): The optional value for data format, is ``'NHWC'`` or ``'NCHW'``, and the ``'NHWC'`` format
+           is only supported in GPU target. Default: ``"NCHW"`` .
+
+    Inputs:
+       If `is_training` is ``False`` , inputs are Tensors.
+
+       - **input_x** (Tensor) - Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
+       - **scale** (Tensor) - Tensor of shape :math:`(C,)`, with float16 or float32 data type.
+       - **bias** (Tensor) - Tensor of shape :math:`(C,)`, has the same data type with `scale`.
+       - **mean** (Tensor) - Tensor of shape :math:`(C,)`, has the same data type with `scale`.
+       - **variance** (Tensor) - Tensor of shape :math:`(C,)`, has the same data type with `scale`.
+
+       If `is_training` is ``True`` , `scale`, `bias`, `mean` and `variance` are Parameters.
+
+       - **input_x** (Tensor) - Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
+       - **scale** (Parameter) - Parameter of shape :math:`(C,)`, with float16 or float32 data type.
+       - **bias** (Parameter) - Parameter of shape :math:`(C,)`, has the same data type with `scale`.
+       - **mean** (Parameter) - Parameter of shape :math:`(C,)`, has the same data type with `scale`.
+       - **variance** (Parameter) - Parameter of shape :math:`(C,)`, has the same data type with `scale`.
+
+    Outputs:
+       Tuple of 5 Tensors, the normalized inputs and the updated parameters.
+
+       - **output_x** (Tensor) - The same type and shape as the input_x. The shape is :math:`(N, C)`.
+       - **batch_mean** (Tensor) - Tensor of shape :math:`(C,)`.
+       - **batch_variance** (Tensor) - Tensor of shape :math:`(C,)`.
+       - **reserve_space_1** (Tensor) - Tensor of shape :math:`(C,)`.
+       - **reserve_space_2** (Tensor) - Tensor of shape :math:`(C,)`.
+
+    Raises:
+       TypeError: If `is_training` is not a bool.
+       TypeError: If dtype of `epsilon` or `momentum` is not float.
+       TypeError: If `data_format` is not a str.
+       TypeError: If `input_x`, `scale`, `bias`, `mean` or `variance` is not a Tensor.
+       TypeError: If dtype of `input_x`, `scale` is neither float16 nor float32.
+
+    Supported Platforms:
+       ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+       >>> import mindspore
+       >>> import numpy as np
+       >>> from mindspore import Tensor, ops
+       >>> input_x = Tensor(np.ones([2, 2]), mindspore.float32)
+       >>> scale = Tensor(np.ones([2]), mindspore.float32)
+       >>> bias = Tensor(np.ones([2]), mindspore.float32)
+       >>> mean = Tensor(np.ones([2]), mindspore.float32)
+       >>> variance = Tensor(np.ones([2]), mindspore.float32)
+       >>> batch_norm = ops.BatchNorm()
+       >>> output = batch_norm(input_x, scale, bias, mean, variance)
+       >>> print(output[0])
+       [[1. 1.]
+        [1. 1.]]
     """
     __mindspore_signature__ = (sig.make_sig('input_x', dtype=sig.sig_dtype.T1),
                                sig.make_sig('scale',
@@ -902,6 +973,34 @@ def tile(input, multiples):
     tile_op = _get_cache_prim(Tile)()
     return tile_op(input, multiples)
 
+
+def scalar_cast(input_x, input_y):
+    r"""
+    Casts the input scalar to another type.
+
+    Args:
+        input_x (scalar): The input scalar. Only constant value is allowed.
+        input_y (mindspore.dtype): The type to be cast. Only constant value is allowed.
+            The value should only be mindspore.int64, mindspore.float64, or mindspore.bool_.
+
+    Returns:
+        Scalar, the type is the same as the python type corresponding to `input_y`.
+
+    Raises:
+        ValueError: if input_y's value is invalid.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import ops
+        >>> output = ops.scalar_cast(255.0, mindspore.int64)
+        >>> print(output)
+        255
+    """
+    scalar_cast_op = _get_cache_prim(ScalarCast)()
+    return scalar_cast_op(input_x, input_y)
 
 # Following is Python Infer Value.
 # A valid infer value function should be:

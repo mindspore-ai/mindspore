@@ -66,6 +66,7 @@ cust_op_lists = [
     "diagpart",
     "div",
     "divnonan",
+    "dropout2d",
     "eig",
     "eps",
     "exp",
@@ -87,6 +88,7 @@ cust_op_lists = [
     "histogram",
     "hypot",
     "identityn",
+    "igamma",
     "im2col",
     "indexfill",
     "isinf",
@@ -123,6 +125,7 @@ cust_op_lists = [
     "mvlgammagrad",
     "nextafter",
     "nondeterministicints",
+    "gamma",
     "gatherdgradv2",
     "isnan",
     "maskedselectgrad",
@@ -136,9 +139,15 @@ cust_op_lists = [
     "padv3",
     "padv3grad",
     "parameterizedtruncatednormal",
+    "poisson",
     "qr",
     "raggedrange",
     "randompoisson",
+    "randperm",
+    "randomcategorical",
+    "randomshuffle",
+    "randomchoicewithmask",
+    "randomuniformint",
     "reciprocal",
     "reciprocalgrad",
     "reducemean",
@@ -171,6 +180,7 @@ cust_op_lists = [
     "sqrt",
     "sqrtgrad",
     "stack",
+    "standardlaplace",
     "tanh",
     "tensorscatterupdate",
     "tile",
@@ -196,7 +206,9 @@ cust_op_lists = [
     "environdestroyall",
     "environget",
     "environset",
-    "layernormgradgrad"
+    "layernormgradgrad",
+    "fftshift",
+    "batchnormgradgrad"
 ]
 
 

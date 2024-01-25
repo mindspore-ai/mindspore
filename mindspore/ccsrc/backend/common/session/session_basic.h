@@ -264,6 +264,9 @@ class BACKEND_EXPORT SessionBasic : public KernelGraphMgr, public std::enable_sh
   void GetOpInputTensors(const CNodePtr &cnode, const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
                          const std::map<AnfNodePtr, size_t> &parameter_index,
                          const std::vector<tensor::TensorPtr> &graph_inputs, InputInfo *input_info) const;
+  void GetOpInputTensorsFromCNode(const CNodePtr &cnode, const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
+                                  const std::map<AnfNodePtr, size_t> &parameter_index,
+                                  const std::vector<tensor::TensorPtr> &graph_inputs, InputInfo *input_info) const;
   tensor::TensorPtr GetOpInputTensorByIndex(const CNodePtr &cnode,
                                             const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
                                             const std::map<AnfNodePtr, size_t> &parameter_index,

@@ -98,7 +98,7 @@ fft_with_size:
          1.9999999 +7.9472862e-08j]
         >>> # case RFFT2D: signal_ndim: 2, inverse: False, real: True.
         >>> rfft_in = Tensor(np.array([[2, 1, 2], [3, 1, 6]]), mindspore.float32)
-        >>> rfft_output = ops.fft_with_size_(rfft_in, signal_ndim=2, inverse=False, real=True)
+        >>> rfft_output = ops.FFTWithSize(signal_ndim=2, inverse=False, real=True)(rfft_in)
         >>> print(rfft_output)
         [[ 1.5000000e+01+1.1920929e-07j -2.3841858e-07+5.1961522e+00j]
          [-5.0000000e+00-2.9802322e-08j  9.9999988e-01-3.4641016e+00j]]

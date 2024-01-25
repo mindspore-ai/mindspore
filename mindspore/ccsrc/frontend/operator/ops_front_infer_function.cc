@@ -366,7 +366,7 @@ bool CheckCmpValid(const AbstractBasePtr &cmp) {
       // When cmp type is ms_class, fn should be create_instance.
       auto cmp_closure_fn = cmp_closure->fn();
       MS_EXCEPTION_IF_NULL(cmp_closure_fn);
-      const std::string ms_class_type_fn_name = "Prim: create_instance";
+      const std::string ms_class_type_fn_name = "PrimitiveAbstractClosure: create_instance";
       return cmp_closure_fn->ToString() == ms_class_type_fn_name;
     }
     return cmp_type_id == kMetaTypeTypeType;

@@ -20,15 +20,16 @@
 #include <cinttypes>
 #include <functional>
 #include <limits>
-#include <queue>
 #include <stack>
 #include <unordered_set>
-#include "inc/ops/array_ops.h"
-#include "inc/ops/data_flow_ops.h"
-#include "inc/ops/elewise_calculation_ops.h"
-#include "inc/ops/math_ops.h"
-#include "inc/ops/save_ops.h"
-#include "inc/ops/state_ops.h"
+#include <queue>
+
+#include "op_proto/inc/array_ops.h"
+#include "op_proto/inc/data_flow_ops.h"
+#include "op_proto/inc/elewise_calculation_ops.h"
+#include "op_proto/inc/math_ops.h"
+#include "op_proto/inc/save_ops.h"
+#include "op_proto/inc/state_ops.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/config_manager.h"
@@ -216,26 +217,28 @@ ValuePtr CastDstValue(const ValuePtr &value, const TypeId &dst_type) {
 
 std::vector<AnfNodePtr> GetOrderedCNodes(const FuncGraphPtr fg, const AnfNodePtr node = nullptr) {
   MS_EXCEPTION_IF_NULL(fg);
-  auto succ_include_fv = [&fg](const AnfNodePtr &node) -> std::vector<AnfNodePtr> {
-    std::vector<AnfNodePtr> vecs;
+  auto succ_include_fv = [&fg](const AnfNodePtr &node) -> AnfNodeWeakPtrList {
+    AnfNodeWeakPtrList vecs;
     if (node == nullptr) {
       return vecs;
     }
     if (node->isa<CNode>()) {
       auto cnode = node->cast<CNodePtr>();
-      auto &inputs = cnode->inputs();
+      auto &weak_inputs = cnode->weak_inputs();
       // Check if free variables used.
-      for (const auto &input : inputs) {
+      for (const auto &weak_input : weak_inputs) {
+        auto input = weak_input.lock();
+        MS_EXCEPTION_IF_NULL(input);
         auto input_fg = GetValueNode<FuncGraphPtr>(input);
         if (input_fg) {
           for (auto &fv : input_fg->free_variables_nodes()) {
             if (fv->func_graph() == fg && fg->nodes().contains(fv)) {
-              vecs.emplace_back(fv);
+              (void)vecs.emplace_back(fv);
             }
           }
         }
       }
-      (void)vecs.insert(vecs.end(), inputs.begin(), inputs.end());
+      (void)vecs.insert(vecs.end(), weak_inputs.begin(), weak_inputs.end());
     }
     return vecs;
   };
@@ -360,6 +363,22 @@ std::vector<int> GetGeTensorOrders(const mindspore::HashMap<int, int> &ge_input_
     ge_tensor_orders[ge_idx] = begin_idx;
   }
   return ge_tensor_orders;
+}
+
+bool IsNeedToUpdateTensorDesc(const std::string &op_type, const AnfNodePtr &node) {
+  // When IdentityN's input is Function or IdentityN, it can not
+  // find GEType mapping to MSType. There are ERROR logs that do not affect the result. So it no need to set OutputDesc
+  // of IdentityN, it can be inferred by GE. eg: MakeTuple-->MakeTuple. Output node should set OpDesc.
+  if (op_type == kTypeIdentityN && !IsPrimitiveCNode(node, prim::kPrimReturn)) {
+    MS_LOG(DEBUG) << "No need to set the OpDesc of Identity except return, node: " << node->fullname_with_scope();
+    return false;
+  }
+  // NoOp has not output, so it no need to set OutputDesc.
+  if (op_type == kTypeNoOp) {
+    MS_LOG(DEBUG) << "No need to set the OpDesc of NoOp, node: " << node->fullname_with_scope();
+    return false;
+  }
+  return true;
 }
 }  // namespace
 
@@ -1460,7 +1479,7 @@ std::shared_ptr<std::vector<DfGraph>> DfGraphConvertor::BuildBranchGraphs(const 
     size_t branch_call_input_size = 0;
     size_t node_input_index = 0;
     if (!is_kernel_graph_) {
-      for (size_t i = 1; i < cnode->inputs().size(); i++) {
+      for (size_t i = 1; i < cnode->size(); i++) {
         auto pred = cnode->input(i);
         if (!IsDataInput(cnode, pred, 0)) {
           continue;
@@ -1477,13 +1496,13 @@ std::shared_ptr<std::vector<DfGraph>> DfGraphConvertor::BuildBranchGraphs(const 
     MS_EXCEPTION_IF_NULL(bnode);
     const size_t init_i = is_case ? 1 : 2;
 
-    for (size_t i = init_i; i < bnode->inputs().size(); i++) {
+    for (size_t i = init_i; i < bnode->size(); i++) {
       ParamIndexMap branch_to_parent_node_map;
       size_t branch_index = 0;  //  branch graph input's index
       if (bnode->input(i)->isa<CNode>()) {
         auto branch_node = bnode->input(i)->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(branch_node);
-        for (size_t j = kInputOffset; j < branch_node->inputs().size(); j++) {
+        for (size_t j = kInputOffset; j < branch_node->size(); j++) {
           auto pred = branch_node->input(j);
           if (!IsDataInput(cnode, pred, 0)) {
             continue;
@@ -1614,7 +1633,7 @@ void DfGraphConvertor::GetBranchNodeInput(const CNodePtr node) {
 
   CNodePtr input_node = node;
   if (!is_kernel_graph_) {
-    for (size_t i = 1; i < node->inputs().size(); i++) {
+    for (size_t i = 1; i < node->size(); i++) {
       auto pred = node->input(i);
       (void)(branch_inputs.emplace_back(pred));
     }
@@ -1625,14 +1644,15 @@ void DfGraphConvertor::GetBranchNodeInput(const CNodePtr node) {
   auto bnode = is_case ? input_node->input(make_tuple_index)->cast<CNodePtr>() : input_node;
   MS_EXCEPTION_IF_NULL(bnode);
   const size_t init_i = is_case ? 1 : 2;
-  for (size_t i = init_i; i < bnode->inputs().size(); i++) {
-    MS_EXCEPTION_IF_NULL(bnode->input(i));
-    if (!bnode->input(i)->isa<CNode>()) {
+  for (size_t i = init_i; i < bnode->size(); ++i) {
+    const auto &bnode_input = bnode->input(i);
+    MS_EXCEPTION_IF_NULL(bnode_input);
+    if (!bnode_input->isa<CNode>()) {
       continue;
     }
-    auto branch_node = bnode->input(i)->cast<CNodePtr>();
+    auto branch_node = bnode_input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(branch_node);
-    for (size_t j = 2; j < branch_node->inputs().size(); j++) {
+    for (size_t j = 2; j < branch_node->size(); ++j) {
       auto pred = branch_node->input(j);
       (void)(branch_inputs.emplace_back(pred));
     }
@@ -1963,6 +1983,11 @@ void DfGraphConvertor::FillEmptyInputsWithNoInputOp(std::vector<Operator> *input
     if (!it->isa<CNode>()) {
       continue;
     }
+    std::string name = common::AnfAlgo::GetCNodeName(it);
+    if (name == prim::kPrimSwitch->name() || name == prim::kPrimSwitchLayer->name() ||
+        name == prim::kPrimPartial->name()) {
+      continue;
+    }
     auto adpt = FindAdapter(it, training_);
     if (adpt == nullptr) {
       continue;
@@ -2262,7 +2287,7 @@ const std::vector<std::string> trans_var_list = {string(kNameAssign), string(kNa
 AnfNodePtr DfGraphConvertor::ParseLoadInput(const CNodePtr &cnode) const {
   MS_EXCEPTION_IF_NULL(cnode);
   size_t min_inputs_size = 3;
-  if (cnode->inputs().size() < min_inputs_size) {
+  if (cnode->size() < min_inputs_size) {
     MS_LOG(EXCEPTION) << "input size error, " << cnode->ToString();
   }
   const size_t para_index = 1;
@@ -3194,28 +3219,13 @@ void DfGraphConvertor::UpdateOpDesc(const AnfNodePtr node) {
   // get Operator from op_cache_
   OperatorPtr op = Convert(node);
   MS_EXCEPTION_IF_NULL(op);
-  std::string name = op->GetOpType();
-  // NoOp has not output, so it no need to set OutputDesc.
-  if (name == kTypeNoOp) {
+  std::string op_type = op->GetOpType();
+  if (!IsNeedToUpdateTensorDesc(op_type, node)) {
+    MS_LOG(INFO) << "No need to set the opDesc of node: " << node->fullname_with_scope() << ", op type is " << op_type;
     return;
   }
 
   adpt->updateOutputDesc(op, node->Shape(), node->Type(), node);
-
-  if (name == prim::kPrimNonZeroWithValueShape->name()) {
-    MS_EXCEPTION_IF_NULL(op);
-    auto op_desc = ::ge::OpDescUtils::GetOpDescFromOperator(*op);
-    if (op_desc == nullptr) {
-      return;
-    }
-    const auto output_desc0 = op_desc->MutableOutputDesc("out_value");
-    ::ge::TensorUtils::SetReuseInput(*output_desc0, true);
-    ::ge::TensorUtils::SetReuseInputIndex(*output_desc0, 0);
-
-    const auto output_desc1 = op_desc->MutableOutputDesc("out_index");
-    ::ge::TensorUtils::SetReuseInput(*output_desc1, true);
-    ::ge::TensorUtils::SetReuseInputIndex(*output_desc1, 1);
-  }
 }
 
 OperatorPtr DfGraphConvertor::Convert(const AnfNodePtr node) {
@@ -3271,24 +3281,33 @@ OperatorPtr DfGraphConvertor::Convert(const AnfNodePtr node) {
 
 void DfGraphConvertor::ConvertTopK(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  MS_LOG(INFO) << "Convert TopK second input's type from int64 to int32.";
-  auto value_ptr = node->input(2)->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_ptr);
-  auto input_value = value_ptr->value();
-  MS_EXCEPTION_IF_NULL(input_value);
-  if (input_value->isa<tensor::Tensor>()) {
-    // tensor case is already converted to int32 in TransDependValueToInt32
+  auto value_ptr = node->input(kIndex2)->cast<ValueNodePtr>();
+  if (value_ptr == nullptr) {
+    // input is not const valuenode, return
     return;
   }
+  MS_LOG(INFO) << "Convert TopK second input's type from int64 to int32.";
+  auto input_value = value_ptr->value();
+  MS_EXCEPTION_IF_NULL(input_value);
   std::ostringstream ss;
   ss << "op" << value_ptr.get();
   op_draw_name_[value_ptr.get()] = ss.str();
   compute_sout_ << ss.str() << "[label= \"" << value_ptr->value()->ToString() << "\" shape=ellipse]" << endl;
-  auto int64_value = GetValue<int64_t>(input_value);
+  int32_t k_value;
+  if (input_value->isa<tensor::Tensor>()) {
+    auto input_tensor = input_value->cast<tensor::TensorPtr>();
+    if (input_tensor->data_type() == kNumberTypeInt32) {
+      k_value = *static_cast<int32_t *>(input_tensor->data_c());
+    } else {
+      k_value = LongToInt(*static_cast<int64_t *>(input_tensor->data_c()));
+    }
+  } else {
+    k_value = LongToInt(GetValue<int64_t>(input_value));
+  }
   OpAdapterPtr adpt = FindAdapter(value_ptr, training_);
   MS_EXCEPTION_IF_NULL(adpt);
   auto op = adpt->generate(value_ptr);
-  (void)adpt->setAttr(op, "value", static_cast<int32_t>(int64_value));
+  (void)adpt->setAttr(op, "value", k_value);
   op_cache_[value_ptr.get()] = op;
 }
 
@@ -3581,8 +3600,7 @@ void DfGraphConvertor::ConvertHcomFusionId(const CNodePtr &node) {
   }
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  auto not_cut_env = common::GetEnv("GE_NOT_CUT");
-  if (context->CellReuseLevel() != CellReuseLevel::kNoCellReuse && not_cut_env != "2") {
+  if (context->CellReuseLevel() != CellReuseLevel::kNoCellReuse) {
     MS_LOG(INFO) << "cell reuse not support all fusion";
     fusion = 0;
   }

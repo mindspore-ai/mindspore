@@ -25,8 +25,6 @@
 #include "graph/tensor.h"
 #include "graph/inference_context.h"
 #include "graph/operator.h"
-#include "graph/op_desc.h"
-#include "graph/utils/op_desc_utils.h"
 
 namespace ge {
 /**

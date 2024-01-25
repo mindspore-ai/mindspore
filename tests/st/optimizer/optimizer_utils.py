@@ -97,10 +97,14 @@ class FakeNet(nn.Cell):
                 m.bias.set_data(Tensor(fc2_bias))
 
 
-def build_network(opt_config, net, is_group=False, loss_fn=nn.L1Loss(reduction='mean')):
+def build_network(opt_config, net, is_group=None, loss_fn=None):
     """
     Construct training
     """
+    if is_group is None:
+        is_group = False
+    if loss_fn is None:
+        loss_fn = nn.L1Loss(reduction='mean')
     losses = []
     networkwithloss = NetWithLoss(net, loss_fn)
     networkwithloss.set_train()

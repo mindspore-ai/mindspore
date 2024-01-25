@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <map>
 #include <set>
+#include <complex>
 #include "ops/ascend_op_name.h"
 #include "ops/nn_optimizer_op_name.h"
 #include "ops/lite_op_name.h"
@@ -51,6 +52,8 @@ using abstract::AbstractTuple;
 
 namespace {
 constexpr size_t kNopNodeRealInputIndex = 1;
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
 
 const PrimitiveSet expand_prims = {prim::kPrimMakeTuple};
 const std::set<std::string> kNodeTupleOutSet = {kMakeTupleOpName, kGetNextOpName};
@@ -126,7 +129,7 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
   if (IsOneOfPrimitiveCNode(node, expand_prims)) {
     auto make_tuple = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(make_tuple);
-    for (size_t i = 1; i < make_tuple->inputs().size(); i++) {
+    for (size_t i = 1; i < make_tuple->size(); i++) {
       auto make_tuple_output = GetAllOutputWithIndexInner(make_tuple->input(i));
       (void)std::copy(make_tuple_output.begin(), make_tuple_output.end(), std::back_inserter(ret));
     }
@@ -391,7 +394,7 @@ std::vector<KernelWithIndex> AnfAlgo::GetAllOutputIndexByReturnTypes(const AnfNo
     MS_EXCEPTION_IF_NULL(item_with_index.first);
     auto make_tuple = item_with_index.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(make_tuple);
-    for (size_t i = 1; i < make_tuple->inputs().size(); i++) {
+    for (size_t i = 1; i < make_tuple->size(); i++) {
       auto input_i_vector = GetAllOutputIndexByReturnTypes(make_tuple->input(i), return_types);
       (void)std::copy(input_i_vector.begin(), input_i_vector.end(), std::back_inserter(ret));
     }
@@ -1116,9 +1119,9 @@ bool AnfAlgo::IsTupleOutput(const AnfNodePtr &anf) {
 AnfNodePtr AnfAlgo::GetInputNode(const CNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
   auto get_input_index = index + 1;
-  if (get_input_index >= node->inputs().size()) {
+  if (get_input_index >= node->size()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Input index size " << get_input_index << ", but the node input size just "
-                               << node->inputs().size() << ". node: " << node->DebugString() << "."
+                               << node->size() << ". node: " << node->DebugString() << "."
                                << trace::DumpSourceLines(node);
   }
   // input 0 is primitive node
@@ -1174,8 +1177,9 @@ bool AnfAlgo::IsInplaceNode(const mindspore::AnfNodePtr &kernel, const string &t
 
 bool AnfAlgo::IsCommunicationOp(const AnfNodePtr &node) {
   static const std::set<std::string> kCommunicationOpNames = {
-    kAllReduceOpName, kAllGatherOpName,  kBroadcastOpName, kReduceScatterOpName, kSendOpName,   kReceiveOpName,
-    kAllToAllvOpName, kMuxReceiveOpName, kMuxSendOpName,   kReduceOpName,        kBarrierOpName};
+    kAllReduceOpName, kAllGatherOpName,         kBroadcastOpName,       kReduceScatterOpName, kSendOpName,
+    kReceiveOpName,   kAllToAllvOpName,         kMuxReceiveOpName,      kMuxSendOpName,       kReduceOpName,
+    kBarrierOpName,   kCollectiveScatterOpName, kCollectiveGatherOpName};
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return false;
@@ -1328,7 +1332,7 @@ void FindDelayExecPosition(const std::vector<CNodePtr> &nodes, size_t current_in
       return;
     }
 
-    auto input_size = child->inputs().size() - 1;
+    auto input_size = child->size() - 1;
     for (size_t k = 0; k < input_size; ++k) {
       auto kernel_index = AnfAlgo::GetPrevNodeOutput(child, k, true);
       if (kernel_index.first != node) {
@@ -1356,7 +1360,7 @@ std::vector<CNodePtr> DelayExecNode(const std::vector<CNodePtr> &nodes, const st
     }
     if (only_seed) {
       bool is_seed = true;
-      auto input_size = node->inputs().size() - 1;
+      auto input_size = node->size() - 1;
       for (size_t k = 0; k < input_size; ++k) {
         auto input = AnfAlgo::GetPrevNodeOutput(node, k, true).first;
         if (input != nullptr && input->isa<CNode>()) {
@@ -1449,7 +1453,7 @@ TypeId AnfAlgo::GetPrevNodeOutputPrecision(const AnfNodePtr &node, size_t input_
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (input_idx + 1 >= cnode->inputs().size()) {
+  if (input_idx + 1 >= cnode->size()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Input index " << input_idx << " is larger than input number "
                                << GetInputTensorNum(cnode) << "." << trace::DumpSourceLines(node);
   }
@@ -1731,7 +1735,7 @@ void AnfAlgo::GetAllVisitedCNode(const CNodePtr &node, std::vector<AnfNodePtr> *
     return;
   }
   (void)visited->insert(node);
-  auto input_size = node->inputs().size() - 1;
+  auto input_size = node->size() - 1;
   for (size_t i = 0; i < input_size; ++i) {
     auto input = AnfAlgo::GetInputNode(node, i);
     if (!input->isa<CNode>()) {
@@ -1770,16 +1774,16 @@ void AnfAlgo::GetAllFatherRealNode(const AnfNodePtr &anf_node, std::vector<AnfNo
   }
   auto input0 = cnode->input(0);
   if (IsPrimitive(input0, prim::kPrimMakeTuple)) {
-    for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+    for (size_t i = 1; i < cnode->size(); ++i) {
       GetAllFatherRealNode(cnode->input(i), result, visited);
     }
   } else if (IsPrimitive(input0, prim::kPrimTupleGetItem)) {
-    if (cnode->inputs().size() != kTupleGetItemInputSize) {
+    if (cnode->size() != kTupleGetItemInputSize) {
       MS_LOG(INTERNAL_EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
     }
     GetAllFatherRealNode(cnode->input(kRealInputNodeIndexInTupleGetItem), result, visited);
   } else if (IsPrimitive(input0, prim::kPrimDepend)) {
-    if (cnode->inputs().size() != kDependInputSize) {
+    if (cnode->size() != kDependInputSize) {
       MS_LOG(INTERNAL_EXCEPTION) << "Depend node must have 2 inputs!" << trace::DumpSourceLines(cnode);
     }
     GetAllFatherRealNode(cnode->input(kRealInputIndexInDepend), result, visited);
@@ -1999,6 +2003,8 @@ bool AnfAlgo::IsNopNode(const AnfNodePtr &node) {
                                                       prim::kPrimFlatten->name(),
                                                       kFlattenGradOpName,
                                                       prim::kPrimReformat->name(),
+                                                      prim::kPrimTupleToList->name(),
+                                                      prim::kPrimListToTuple->name(),
                                                       prim::kPrimTupleToTensor->name(),
                                                       prim::kPrimScalarToTensor->name(),
                                                       prim::kPrimTensorToTuple->name(),
@@ -2107,6 +2113,10 @@ std::string AnfAlgo::GetTensorValueString(const tensor::TensorPtr &tensor) {
     fn(reinterpret_cast<float *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeBFloat16) {
     fn(reinterpret_cast<bfloat16 *>(tensor->data_c()));
+  } else if (dtype->type_id() == kNumberTypeComplex64) {
+    fn(reinterpret_cast<complex64 *>(tensor->data_c()));
+  } else if (dtype->type_id() == kNumberTypeComplex128) {
+    fn(reinterpret_cast<complex128 *>(tensor->data_c()));
   } else {
     MS_LOG(INTERNAL_EXCEPTION) << "The dtype of the constant input is " << dtype->ToString();
   }
@@ -2277,7 +2287,7 @@ bool AnfAlgo::IsAnyTypeInput(const std::vector<AnfNodePtr> &inputs) {
 
 bool AnfAlgo::HasTupleInput(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  size_t input_num = node->inputs().size() - 1;
+  size_t input_num = node->size() - 1;
   for (size_t i = 0; i < input_num; ++i) {
     auto input_node = common::AnfAlgo::GetInputNode(node, i);
     MS_EXCEPTION_IF_NULL(input_node);
@@ -2290,7 +2300,7 @@ bool AnfAlgo::HasTupleInput(const CNodePtr &node) {
 
 bool AnfAlgo::HasDynamicTupleInput(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  size_t input_num = node->inputs().size() - 1;
+  size_t input_num = node->size() - 1;
   for (size_t i = 0; i < input_num; ++i) {
     auto input_node = common::AnfAlgo::GetInputNode(node, i);
     MS_EXCEPTION_IF_NULL(input_node);

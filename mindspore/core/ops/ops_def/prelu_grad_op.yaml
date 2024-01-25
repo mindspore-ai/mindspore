@@ -14,3 +14,5 @@ prelu_grad:
             dtype: tensor
     class:
         name: PReLUGrad
+    function:
+        disable: True

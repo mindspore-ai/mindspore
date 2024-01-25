@@ -43,7 +43,7 @@ static std::vector<int64_t> GetAttrValue(const Operator &op, const std::string &
 // -----------------Im2col Op-------------------------
 CUST_IMPLEMT_VERIFIER(Im2col, CustIm2colVerify) {
   std::vector<int64_t> ksize;
-  ksize = GetAttrValue(op, "ksizes");
+  op.GetAttr("ksizes", ksize);
   if (ksize.size() < 2) {
     OP_LOGE(TbeGetName(op).c_str(), "The ksizes dose not have enough elements(%lu)!", ksize.size());
     return GRAPH_FAILED;
@@ -97,12 +97,11 @@ IMPLEMT_COMMON_INFERFUNC(CustIm2colInferShape) {
   std::vector<int64_t> pad;
   pad = GetAttrValue(op, "pads");
 
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  GeTensorDescPtr desc_in_ptr = op_desc->MutableInputDesc("x");
-  GeTensorDescPtr desc_out_ptr = op_desc->MutableOutputDesc("y");
-  auto dtype = desc_in_ptr->GetDataType();
-  auto shape_in = desc_in_ptr->GetShape();
-  auto x_format = desc_in_ptr->GetOriginFormat();
+  TensorDesc desc_in = op.GetInputDesc("x");
+  TensorDesc desc_out = op.GetOutputDesc("y");
+  auto dtype = desc_in.GetDataType();
+  auto shape_in = desc_in.GetShape();
+  auto x_format = desc_in.GetOriginFormat();
   if (x_format != FORMAT_NHWC && x_format != FORMAT_NCHW) {
     OP_LOGE(TbeGetName(op).c_str(), "Attr x_format only support NHWC, NCHW.");
     return GRAPH_FAILED;
@@ -195,8 +194,9 @@ IMPLEMT_COMMON_INFERFUNC(CustIm2colInferShape) {
     out_dim = {in_n, out_c, out_h, out_w};
   }
 
-  desc_out_ptr->SetShape(ge::GeShape(out_dim));
-  desc_out_ptr->SetDataType(dtype);
+  desc_out.SetShape(ge::Shape(out_dim));
+  desc_out.SetDataType(dtype);
+  op.UpdateOutputDesc(desc_out.GetName(), desc_out);
   return GRAPH_SUCCESS;
 }
 

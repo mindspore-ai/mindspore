@@ -38,7 +38,7 @@ from ..auto_generate import (AbsGrad, ACosGrad, LogitGrad, AcoshGrad,
                              ResizeLinear1DGrad, ResizeNearestNeighborV2Grad,
                              SigmoidGrad, HSwishGrad, NLLLossGrad, AtanGrad, GridSampler3DGrad,
                              GridSampler2DGrad, ResizeBicubicGrad, HSigmoidGrad, CholeskyGrad,
-                             ResizeNearestNeighborGrad, LayerNormGrad, HShrinkGrad, LayerNormGradGrad)
+                             ResizeNearestNeighborGrad, LayerNormGrad, HShrinkGrad, LayerNormGradGrad, SiLUGrad)
 
 
 class SparseFillEmptyRowsGrad(Primitive):
@@ -1535,15 +1535,6 @@ class RandomGammaGrad(Primitive):
         """Initialize RandomGammaGrad"""
         self.init_prim_io_names(inputs=['alpha', 'sample'], outputs=['output'])
         self.add_prim_attr("side_effect_hidden", True)
-
-
-class SiLUGrad(Primitive):
-    """Performs grad of SiLU operation."""
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize SiLUGrad"""
-        self.init_prim_io_names(inputs=['dout', 'out'], outputs=['output'])
 
 
 class UpsampleNearest3DGrad(Primitive):

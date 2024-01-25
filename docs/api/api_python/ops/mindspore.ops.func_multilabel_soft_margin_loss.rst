@@ -29,6 +29,3 @@ mindspore.ops.multilabel_soft_margin_loss
 
     返回：
         Tensor，数据类型和 `input` 相同。如果 `reduction` 为 ``'none'`` ，其shape为 :math:`(N)` 。否则，其shape为0。
-
-    异常：
-        - **ValueError** - `input` 或 `target` 的维度不等于2。

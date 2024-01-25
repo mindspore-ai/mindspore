@@ -23,6 +23,6 @@ logical_not:
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
             >>> x = Tensor(np.array([True, False, True]), mindspore.bool_)
-            >>> output = ops.logical_not(x)
+            >>> output = ops.LogicalNot()(x)
             >>> print(output)
             [False  True False]

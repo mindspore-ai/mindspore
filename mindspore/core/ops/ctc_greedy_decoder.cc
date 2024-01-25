@@ -61,6 +61,16 @@ std::vector<abstract::BaseShapePtr> GetOutputsShape(const ShapeVector &x_shape, 
 
   return out_shapes;
 }
+
+void CheckType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
+  const int64_t kInputNum = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+  auto inputs_x_dtype = input_args[kInputIndex0]->GetType();
+  auto sequence_length_dtype = input_args[kInputIndex1]->GetType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("inputs type", inputs_x_dtype, {kFloat32, kFloat64}, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("sequence length dtype", sequence_length_dtype, {kInt32}, prim_name);
+}
 }  // namespace
 
 void CTCGreedyDecoder::Init(const bool merge_repeated) { this->set_merge_repeated(merge_repeated); }
@@ -121,6 +131,8 @@ class CTCGreedyDecoderInfer : public abstract::OpInferBase {
                                << "but now inputs batch_size: " << inputs_x_shape[1]
                                << " and sequence_length batch_size: " << sequence_length_shape[0] << ".";
     }
+    // Check type
+    CheckType(primitive, input_args);
     // Get out shapes
     int64_t max_shape_value = abstract::TensorShape::kShapeDimAny;
     auto out_shapes = GetOutputsShape(inputs_x_shape, max_shape_value);
@@ -140,14 +152,8 @@ class CTCGreedyDecoderInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
-    const int64_t kInputNum = 2;
-    CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+    CheckType(primitive, input_args);
     auto inputs_x_ptr = abstract::CheckArg<abstract::AbstractTensor>(prim_name, input_args, 0);
-    auto inputs_x_dtype = input_args[kInputIndex0]->GetType();
-    auto sequence_length_dtype = input_args[kInputIndex1]->GetType();
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("inputs type", inputs_x_dtype, {kFloat32, kFloat64}, prim_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("sequence length dtype", sequence_length_dtype, {kInt32},
-                                                     prim_name);
     return std::make_shared<Tuple>(std::vector<TypePtr>{kInt64, kInt64, kInt64, inputs_x_ptr->element()->GetType()});
   }
 };

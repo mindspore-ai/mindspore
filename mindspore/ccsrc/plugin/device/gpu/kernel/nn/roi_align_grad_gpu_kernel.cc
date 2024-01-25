@@ -16,7 +16,6 @@
 
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/nn/roi_align_grad_gpu_kernel.h"
-#include "kernel/kernel_get_value.h"
 
 namespace mindspore {
 namespace kernel {

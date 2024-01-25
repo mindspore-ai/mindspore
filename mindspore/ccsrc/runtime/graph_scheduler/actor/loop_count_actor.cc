@@ -55,6 +55,9 @@ void LoopCountActor::IncreaseLoopCount(OpContext<DeviceTensor> *const context) {
   current_count_++;
   MS_LOG(INFO) << "Loop count actor(" << GetAID().Name() << ") running, loop count: " << loop_count_
                << ", current count: " << current_count_ << ", total running count: " << total_running_count_;
+  auto counter = callback_counter();
+  MS_EXCEPTION_IF_NULL(counter);
+  counter->Wait();
 
   // Debug actor is blocked, must wait debug actor callback message to process continue.
   if (debug_aid_ != nullptr) {

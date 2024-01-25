@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-from tests.st.ge import ge_train_env  # pylint: disable=unused-import
 from mindspore import Tensor, context
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")

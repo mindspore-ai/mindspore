@@ -6,3 +6,5 @@ matrix_determinant:
     returns:
         output:
             dtype: tensor
+    function:
+        disable: True

@@ -22,7 +22,7 @@ import test_utils
 
 @test_utils.run_with_cell
 def expand_dims_forward_func(x, axis):
-    return ops.auto_generate.expand_dims(x, axis)
+    return ops.expand_dims(x, axis)
 
 
 @test_utils.run_with_cell

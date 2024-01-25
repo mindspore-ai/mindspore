@@ -195,8 +195,8 @@ STATUS ReplaceConstant(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
 STATUS ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_CHECK_TRUE_RET(func_graph != nullptr, RET_NULL_PTR);
   MS_CHECK_TRUE_RET(cnode != nullptr, RET_NULL_PTR);
-  if (cnode->inputs().size() != opt::kInputSizeThree) {
-    MS_LOG(ERROR) << "onnx transpose input size should be 2, now is " << (cnode->inputs().size() - 1);
+  if (cnode->size() != opt::kInputSizeThree) {
+    MS_LOG(ERROR) << "onnx transpose input size should be 2, now is " << (cnode->size() - 1);
     return lite::RET_ERROR;
   }
   auto anf_node = cnode->input(1);
@@ -266,7 +266,7 @@ STATUS AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
     MS_LOG(ERROR) << "input is invalid.";
     return lite::RET_INPUT_TENSOR_ERROR;
   }
-  if (cnode->inputs().size() == opt::kInputSizeTwo) {
+  if (cnode->size() == opt::kInputSizeTwo) {
     if (AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "starts") != lite::RET_OK ||
         AddAttrToInput(func_graph, cnode, opt::kInputIndexThree, "ends") != lite::RET_OK ||
         AddAttrToInput(func_graph, cnode, opt::kInputIndexFour, "axes") != lite::RET_OK ||
@@ -274,12 +274,12 @@ STATUS AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
       MS_LOG(ERROR) << "attr to input failed.";
       return lite::RET_ERROR;
     }
-  } else if (cnode->inputs().size() <= opt::kInputSizeThree) {
-    MS_LOG(ERROR) << "onnx slice's input size need to be >2, now is " << (cnode->inputs().size() - 1);
+  } else if (cnode->size() <= opt::kInputSizeThree) {
+    MS_LOG(ERROR) << "onnx slice's input size need to be >2, now is " << (cnode->size() - 1);
     return lite::RET_INPUT_TENSOR_ERROR;
   }
   int size = 1;
-  for (size_t i = 2; i < cnode->inputs().size(); ++i) {
+  for (size_t i = 2; i < cnode->size(); ++i) {
     auto param_anf = cnode->input(opt::kInputIndexTwo);
     MS_CHECK_TRUE_RET(param_anf != nullptr, RET_NULL_PTR);
     const auto &param_node = param_anf->cast<ParameterPtr>();
@@ -299,7 +299,7 @@ STATUS AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
     }
     break;
   }
-  switch (cnode->inputs().size()) {
+  switch (cnode->size()) {
     case opt::kInputSizeFour: {
       std::vector<int32_t> axes;
       for (int i = 0; i < size; ++i) {
@@ -342,12 +342,12 @@ STATUS AdjustResize(bool *need_update_manager, const CNodePtr &cnode) {
     MS_LOG(ERROR) << "cnode is invalid.";
     return lite::RET_ERROR;
   }
-  if (cnode->inputs().size() == opt::kInputSizeFour) {
+  if (cnode->size() == opt::kInputSizeFour) {
     auto new_input = cnode->inputs();
     new_input.erase(new_input.begin() + opt::kInputIndexTwo);
     cnode->set_inputs(new_input);
     *need_update_manager = true;
-  } else if (cnode->inputs().size() > opt::kInputSizeFour) {
+  } else if (cnode->size() > opt::kInputSizeFour) {
     std::vector<AnfNodePtr> new_resize_inputs;
     new_resize_inputs.push_back(cnode->inputs()[0]);
     new_resize_inputs.push_back(cnode->inputs()[1]);
@@ -394,7 +394,7 @@ STATUS AdjustResize(bool *need_update_manager, const CNodePtr &cnode) {
 STATUS AdjustUnsqueeze(bool *need_update_manager, const CNodePtr &cnode) {
   MS_CHECK_TRUE_RET(cnode != nullptr, RET_NULL_PTR);
   MS_CHECK_TRUE_RET(!cnode->inputs().empty(), lite::RET_ERROR);
-  if (cnode->inputs().size() == opt::kInputSizeThree) {
+  if (cnode->size() == opt::kInputSizeThree) {
     auto new_input = cnode->inputs();
     new_input.erase(new_input.begin() + opt::kInputIndexTwo);
     cnode->set_inputs(new_input);
@@ -467,7 +467,7 @@ STATUS AdjustGatherD(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
 
 STATUS AdjustROIAlign(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_CHECK_TRUE_RET(func_graph != nullptr && cnode != nullptr, RET_NULL_PTR);
-  if (cnode->inputs().size() != kInputNum4) {
+  if (cnode->size() != kInputNum4) {
     MS_LOG(INFO) << "RoiAlign input size is not 3, does not need to adjust.";
     return RET_OK;
   }
@@ -548,7 +548,7 @@ STATUS AdjustOneHot(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_CHECK_TRUE_RET(value_input != nullptr, RET_ERROR);
 
   DataInfo data_info;
-  if (cnode->inputs().size() > kInputNum3 &&
+  if (cnode->size() > kInputNum3 &&
       FetchDataFromParameterNode(cnode, kInputNum3, converter::kFmkTypeMs, &data_info, true) == lite::RET_OK) {
     if (data_info.data_type_ != static_cast<int>(kNumberTypeFloat32)) {
       MS_LOG(ERROR) << "data_type not correct";

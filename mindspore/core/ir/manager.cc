@@ -210,9 +210,15 @@ FuncGraphManager::FuncGraphManager(const std::vector<FuncGraphPtr> &roots, bool 
   Reset();
 }
 
+FuncGraphManager::~FuncGraphManager() {
+  if (is_manage_) {
+    RemoveRoots();
+  }
+  Clear();
+}
+
 void FuncGraphManager::Reset() {
   func_graphs_ = FuncGraphSet();
-  func_graphs_index_ = FuncGraphIndexMap();
   all_nodes_ = AnfNodeSet();
   node_users_ = NodeUsersMap();
   signals_ = std::make_shared<Signals>();
@@ -287,15 +293,6 @@ FuncGraphSet &FuncGraphManager::func_graphs_used_total(const FuncGraphPtr &fg) c
   return func_graphs_used_total_->func_graph_used_total_analysis()[fg];
 }
 
-const FuncGraphIndexPtr &FuncGraphManager::func_graph_index(const FuncGraphPtr &fg) const {
-  MS_EXCEPTION_IF_NULL(fg);
-  auto iter = func_graphs_index_.find(fg);
-  if (iter == func_graphs_index_.end()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Func graph: " << fg->ToString() << " is not add FuncGraphIndexMap.";
-  }
-  return func_graphs_index_.at(fg);
-}
-
 bool FuncGraphManager::recursive(const FuncGraphPtr &fg) const {
   MS_EXCEPTION_IF_NULL(fg);
   MS_EXCEPTION_IF_NULL(recursive_);
@@ -342,7 +339,9 @@ void FuncGraphManager::AddFuncGraph(const FuncGraphPtr &func_graph, bool is_root
   MS_EXCEPTION_IF_NULL(func_graph);
   if (is_root) {
     roots_.add(func_graph);
+    return AddFuncGraphs(func_graph);
   }
+
   if (func_graphs_.contains(func_graph)) {
     return;
   }
@@ -355,32 +354,66 @@ void FuncGraphManager::AddFuncGraph(const FuncGraphPtr &func_graph, bool is_root
   auto return_node = func_graph->get_return();
   if (return_node != nullptr) {
     (void)new_nodes.emplace_back(std::move(return_node));
+  } else {
+    MS_LOG(INFO) << "The func graph " << func_graph->ToString() << " has no return node.";
   }
-
-  (void)func_graphs_index_.emplace(func_graph, std::make_shared<FuncGraphPassIndex>());
 
   // Acquire all nodes from func_graph.
   AcquireNodes(std::move(new_nodes));
 }
 
+// Add all func graphs from the root func graph.
+void FuncGraphManager::AddFuncGraphs(const FuncGraphPtr &source_func_graph) {
+  MS_EXCEPTION_IF_NULL(source_func_graph);
+  todo_.clear();
+  todo_.emplace_back(source_func_graph);
+  while (!todo_.empty()) {
+    auto func_graph = todo_.front();
+    MS_EXCEPTION_IF_NULL(func_graph);
+    todo_.pop_front();
+    if (func_graphs_.contains(func_graph)) {
+      continue;
+    }
+
+    // Add func_graph as a managed graph.
+    AddIntoManaged(func_graph);
+
+    // New nodes to be acquired.
+    std::vector<AnfNodePtr> new_nodes = func_graph->parameters();
+    auto return_node = func_graph->get_return();
+    if (return_node != nullptr) {
+      (void)new_nodes.emplace_back(std::move(return_node));
+    } else {
+      MS_LOG(INFO) << "The func graph " << func_graph->ToString() << " has no return node.";
+    }
+
+    // Acquire all nodes from func_graph.
+    AcquireNodes(std::move(new_nodes), false);
+  }
+}
+
 // Clear the all information in manager
 void FuncGraphManager::Clear() noexcept {
-  for (auto graph : func_graphs_) {
-    MS_EXCEPTION_IF_NULL(graph);
-    graph->DecAttachedMngCnt();
-    if (graph->attached_mng_cnt() == 0) {
-      graph->ClearAllManagerInfo();
-    } else if (graph->attached_mng_cnt() < 0) {
-      MS_LOG(INTERNAL_EXCEPTION) << "graph:" << graph->ToString()
-                                 << " attached cnt not right:" << graph->attached_mng_cnt();
+  for (auto &fg : func_graphs_) {
+    MS_EXCEPTION_IF_NULL(fg);
+    fg->DecAttachedMngCnt();
+    if (fg->attached_mng_cnt() == 0) {
+      fg->ClearAllManagerInfo();
+    } else if (fg->attached_mng_cnt() < 0) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The func graph '" << fg->ToString()
+                                 << "' attached cnt not right: " << fg->attached_mng_cnt();
+    }
+    if (fg.unique()) {
+      fg->ResetReturnOwner();
+      fg->ResetOwnNodes();
     }
   }
-
   func_graphs_.clear();
-  func_graphs_index_.clear();
+
   all_nodes_.clear();
   node_users_.clear();
   roots_.clear();
+  todo_.clear();
 
   signals_->InvalidateComputer();
 }
@@ -433,7 +466,11 @@ void FuncGraphManager::KeepRoots(const std::vector<FuncGraphPtr> &func_graphs) {
 void FuncGraphManager::RemoveRoots() {
   MS_LOG(DEBUG) << "Start remove roots";
   roots_.clear();
-  MaybeDropFuncGraphs(func_graphs_, true);
+  try {
+    MaybeDropFuncGraphs(func_graphs_, true);
+  } catch (std::exception &e) {
+    MS_LOG(DEBUG) << e.what();
+  }
 }
 
 void FuncGraphManager::AddIntoManaged(const FuncGraphPtr &fg) {
@@ -470,6 +507,7 @@ void FuncGraphManager::MaybeDropFuncGraphs(const FuncGraphSet &func_graphs, bool
       continue;
     }
     (void)dropped.insert(func_graph);
+    MS_EXCEPTION_IF_NULL(func_graph->get_return());
     std::vector<AnfNodePtr> return_vec = {func_graph->get_return()};
     auto drop_graphs = MaybeDropNodes(std::move(return_vec));
     (void)todo.insert(todo.end(), drop_graphs.begin(), drop_graphs.end());
@@ -523,12 +561,12 @@ static inline void FollowGraph(const FuncGraphPtr &fg, SeenNum seen, std::vector
   if (fg == nullptr) {
     return;
   }
-  if (auto ret = fg->get_return(); ret != nullptr && ret->seen_ != seen) {
-    (void)nodes->emplace_back(std::move(ret));
+  if (auto res = fg->get_return(); res != nullptr && res->seen_ != seen) {
+    (void)nodes->emplace_back(std::move(res));
   }
 }
 
-void FuncGraphManager::AcquireNodes(std::vector<AnfNodePtr> &&nodes) {
+void FuncGraphManager::AcquireNodes(std::vector<AnfNodePtr> &&nodes, bool recursive) {
   auto seen = NewSeenGeneration();
   while (!nodes.empty()) {
     // Take the last one.
@@ -559,15 +597,39 @@ void FuncGraphManager::AcquireNodes(std::vector<AnfNodePtr> &&nodes) {
     }
     // Follow graph for cnode or parameter.
     FollowGraph(fg, seen, &nodes);
-    // Handle cnode.
+
+    // Handle CNode.
     auto cnode = node->cast<CNodePtr>();
-    if (cnode != nullptr) {
-      // Handle input edges.
+    if (cnode == nullptr) {
+      continue;
+    }
+
+    // Handle input edges.
+    if (recursive) {
       ProcessInputsEdgeAdd(cnode);
       // Follow inputs.
       auto &inputs = cnode->inputs();
       (void)nodes.insert(nodes.end(), inputs.begin(), inputs.end());
+      continue;
     }
+    // The way not recursive.
+    for (size_t i = 0; i < cnode->size(); ++i) {
+      const auto &input = cnode->input(i);
+      if (input == nullptr) {
+        MS_LOG(INTERNAL_EXCEPTION) << "The input is null, " << cnode << "/" << cnode->DebugString() << "@" << fg << "/"
+                                   << fg->ToString();
+      }
+      if (IsValueNode<FuncGraph>(input)) {
+        todo_.emplace_back(GetValueNode<FuncGraphPtr>(input));
+      }
+
+      auto &users_node = node_users_[input];
+      users_node.add(std::make_pair(node, i));
+      OnEdgeAdded(node, i, input);
+    }
+    // Follow inputs.
+    auto &inputs = cnode->inputs();
+    (void)nodes.insert(nodes.end(), inputs.begin(), inputs.end());
   }
 }
 
@@ -676,7 +738,8 @@ void FuncGraphManager::AddEdge(const AnfNodePtr &node, const AnfNodePtr &value) 
 }
 
 void FuncGraphManager::MoveAllCNodeDropGraph(const FuncGraphPtr &source, const FuncGraphPtr &target,
-                                             const AnfNodePtr &call_node, const ScopePtr &scope) {
+                                             const AnfNodePtr &call_node, const ScopePtr &scope,
+                                             bool update_debug_info) {
   MS_EXCEPTION_IF_NULL(source);
   CNodePtr source_return = source->get_return();
   MS_EXCEPTION_IF_NULL(source_return);
@@ -697,7 +760,7 @@ void FuncGraphManager::MoveAllCNodeDropGraph(const FuncGraphPtr &source, const F
     if (node->scope() == kDefaultScope) {
       node->set_scope(scope);
     }
-    if (node->isa<CNode>()) {
+    if (update_debug_info && node->isa<CNode>()) {
       MS_LOG(DEBUG) << "Start move inlined node:" << node->DebugString();
       auto new_debug_info = DebugInfo::UpdateInlineCNodeDebugInfo(call_node->debug_info(), node->debug_info());
       auto node_new_debug_info = std::dynamic_pointer_cast<NodeDebugInfo>(new_debug_info);
@@ -835,7 +898,8 @@ bool FuncGraphTransaction::Replace(const AnfNodePtr &old_node, const AnfNodePtr 
   MS_EXCEPTION_IF_NULL(old_node);
   MS_EXCEPTION_IF_NULL(new_node);
   FuncGraphPtr old_func_graph = old_node->func_graph();
-  if (old_func_graph != nullptr && old_func_graph->get_return() == old_node) {
+  if (old_func_graph != nullptr && old_func_graph->get_return() != nullptr &&
+      old_func_graph->get_return() == old_node) {
     MS_LOG(WARNING) << "Cannot replace the return node of a func graph " << old_func_graph->ToString();
     return false;
   }
@@ -851,7 +915,8 @@ bool FuncGraphTransaction::Replace(const AnfNodePtr &old_node, const AnfNodePtr 
   MS_EXCEPTION_IF_NULL(old_node);
   MS_EXCEPTION_IF_NULL(new_node);
   FuncGraphPtr old_func_graph = old_node->func_graph();
-  if (old_func_graph != nullptr && old_func_graph->get_return() == old_node) {
+  if (old_func_graph != nullptr && old_func_graph->get_return() != nullptr &&
+      old_func_graph->get_return() == old_node) {
     MS_LOG(WARNING) << "Cannot replace the return node of a func graph " << old_func_graph->ToString();
     return false;
   }
@@ -906,52 +971,61 @@ void DepComputer::Recompute(const FuncGraphPtr &fg) {
   }
 }
 
-FuncGraphSetPtr FuncGraphParentsTotalComputer::SeekParents(
-  const FuncGraphPtr &fg, mindspore::HashMap<FuncGraphPtr, FuncGraphSetPtr> *seen_fgs) {
-  MS_EXCEPTION_IF_NULL(fg);
-  auto iter = seen_fgs->find(fg);
-  if (iter != seen_fgs->end()) {
-    return iter->second;
-  }
+FuncGraphSetPtr FuncGraphParentsTotalComputer::SeekParents(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  constexpr auto out_call_stack = 0;
+  constexpr auto in_call_stack = 1;
+  auto seen = NewFgSeenGeneration();
+  func_graph->seen_ = seen;
+  std::deque<FuncGraphPtr> todo;
+  (void)todo.emplace_back(func_graph);
   FuncGraphSetPtr parents = std::make_shared<FuncGraphSet>();
-
-  // Append all the fvs in fg.
-  auto &fvs = fg->free_variables();
-  for (auto fv : fvs) {
-    auto fv_node = fv.first;
-    MS_EXCEPTION_IF_NULL(fv_node);
-    auto fv_func_graph = fv_node->func_graph();
-    if (fv_func_graph == nullptr) {
-      MS_LOG(INFO) << "Meet a FV '" << fv_node->DebugString() << "' whose func graph is null, during seeking for "
-                   << fg->ToString() << "\nFV: " << trace::GetDebugInfoStr(fv_node->debug_info());
+  while (!todo.empty()) {
+    const auto &fg = todo.back();
+    // For the func graph both in deque and in call stack, just pop it.
+    if (fg->extra_seen_ == in_call_stack) {
+      fg->extra_seen_ = out_call_stack;
+      todo.pop_back();
       continue;
     }
-    parents->add(fv_func_graph);
-  }
 
-  // Search the fv in fg's child func graph.
-  auto &fgs = fg->func_graphs_used();
-  for (auto &item : fgs) {
-    auto gt = item.first;
-    if (gt->seen_ == 1) {
-      continue;
+    // Append all the fvs in fg.
+    auto &fvs = fg->free_variables();
+    for (const auto &fv : fvs) {
+      const auto &fv_node = fv.first;
+      MS_EXCEPTION_IF_NULL(fv_node);
+      auto fv_func_graph = fv_node->func_graph();
+      if (fv_func_graph == nullptr) {
+        MS_LOG(INFO) << "Meet a FV '" << fv_node->DebugString() << "' whose func graph is null, during seeking for "
+                     << fg->ToString() << "\nFV: " << trace::GetDebugInfoStr(fv_node->debug_info());
+        continue;
+      }
+      // Found a parent if not in the call stack.
+      if (fv_func_graph->extra_seen_ != in_call_stack) {
+        parents->add(fv_func_graph);
+      }
     }
-    gt->seen_ = 1;
-    parents->update(SeekParents(gt, seen_fgs));
-    gt->seen_ = 0;
+
+    // Before push the used func graphs of 'fg', mark it as in call stack.
+    fg->extra_seen_ = in_call_stack;
+    // Add the fg's used func graph to search.
+    auto &fgs = fg->func_graphs_used();
+    for (auto &item : fgs) {
+      auto &gt = item.first;
+      if (gt->seen_ != seen) {
+        gt->extra_seen_ = out_call_stack;
+        (void)todo.emplace_back(gt);
+        gt->seen_ = seen;
+      }
+    }
   }
-  (void)parents->erase(fg);
-  (*seen_fgs)[fg] = parents;
   return parents;
 }
 
 void FuncGraphParentsTotalComputer::RealRecompute(FuncGraphPtr fg) {
   MS_EXCEPTION_IF_NULL(fg);
-  mindspore::HashMap<FuncGraphPtr, FuncGraphSetPtr> seen_fgs;
-  fg->seen_ = 1;
-  auto parents = SeekParents(fg, &seen_fgs);
+  auto parents = SeekParents(fg);
   func_graph_parents_total_analysis_[fg].update(parents);
-  fg->seen_ = 0;
 }
 
 bool set_len_compare(const FuncGraphSetPair &lhs, const FuncGraphSetPair &rhs) {

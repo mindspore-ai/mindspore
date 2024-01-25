@@ -260,7 +260,7 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
   }
 
   bool has_dic = std::any_of(types.begin(), types.end(), [](const TypePtr &type) { return type->isa<Dictionary>(); });
-  if ((!need_raise_ || !has_dic) && name_ != "setitem") {
+  if (!need_raise_ || !has_dic) {
     FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
     AnfNodePtrList node_inputs{};
     for (auto type : types) {

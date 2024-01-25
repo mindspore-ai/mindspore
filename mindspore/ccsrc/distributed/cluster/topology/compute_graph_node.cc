@@ -63,8 +63,9 @@ bool ComputeGraphNode::Initialize() {
   // Register itself to meta server node.
   bool success = false;
   if (!enable_ssl) {
+    size_t retry_num = GetClusterTimeoutRetryNum();
     success = ReconnectIfNeeded(std::bind(&ComputeGraphNode::Register, this),
-                                "Failed to register and try to reconnect to the meta server.", kCgnExecuteRetryNum);
+                                "Failed to register and try to reconnect to the meta server.", retry_num);
   } else {
     const auto &server_url = meta_server_addr_.GetUrl();
     size_t retry = 10;
@@ -249,9 +250,6 @@ bool ComputeGraphNode::Heartbeat() {
     uint32_t timeout = 10;
 
     while (enable_hb_) {
-      if (topo_state_ == TopoState::kInitializing && ElapsedTime(start_time_) > kTopoInitTimeout) {
-        MS_LOG(EXCEPTION) << "Building networking for " << role_ << " failed.";
-      }
       HeartbeatMessage hb_msg;
       hb_msg.set_node_id(node_id_);
 

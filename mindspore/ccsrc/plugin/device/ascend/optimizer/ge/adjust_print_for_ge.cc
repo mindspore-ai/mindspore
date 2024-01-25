@@ -94,9 +94,12 @@ const AnfNodePtr AdjustPrintForGe::Process(const FuncGraphPtr &func_graph, const
   new_inputs.push_back(input_tensor_name);
   // unfold tuple inputs
   std::vector<AnfNodePtr> node_inputs = cnode->inputs();
-  for (size_t node_inputs_index = 1; node_inputs_index < node_inputs.size() - 1; ++node_inputs_index) {
+  for (size_t node_inputs_index = 1; node_inputs_index < node_inputs.size(); ++node_inputs_index) {
     auto &input = node_inputs[node_inputs_index];
     MS_EXCEPTION_IF_NULL(input);
+    if (IsValueNode<UMonad>(input) || IsValueNode<IOMonad>(input) || HasAbstractMonad(input)) {
+      continue;
+    }
     auto input_cnode = input->cast<CNodePtr>();
     if (IsPrimitiveCNode(input_cnode, prim::kPrimMakeTuple)) {
       std::vector<AnfNodePtr> tuple_inputs = input_cnode->inputs();

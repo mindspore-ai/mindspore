@@ -22,7 +22,7 @@ import test_utils
 
 @test_utils.run_with_cell
 def tensor_shape_forward_func(x):
-    return ops.auto_generate.tensor_shape(x)
+    return ops.TensorShape()(x)
 
 
 @test_utils.run_with_cell

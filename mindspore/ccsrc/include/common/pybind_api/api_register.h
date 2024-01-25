@@ -38,6 +38,10 @@ void RegMsContext(const py::module *m);
 void RegSecurity(py::module *m);
 void RegForkUtils(py::module *m);
 
+namespace hal {
+void RegStream(py::module *m);
+void RegEvent(py::module *m);
+}  // namespace hal
 namespace initializer {
 void RegRandomNormal(py::module *m);
 }

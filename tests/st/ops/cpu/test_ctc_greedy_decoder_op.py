@@ -16,11 +16,10 @@
 import pytest
 import numpy as np
 
+import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, context
 from mindspore.ops import operations as P
-
-context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
 class Net(nn.Cell):
@@ -35,12 +34,14 @@ class Net(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
-def test_ctc_greedy_deocder_float32():
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ctc_greedy_deocder_float32(mode):
     """
     Feature: CTCGreedyDecoder cpu op
     Description: Test output for fp32 dtype
     Expectation: Output matching expected values
     """
+    context.set_context(mode=mode)
     inputs_np = np.array([[[1.7640524, 0.4001572, 0.978738],
                            [2.2408931, 1.867558, -0.9772779]],
                           [[0.95008844, -0.1513572, -0.10321885],
@@ -63,12 +64,14 @@ def test_ctc_greedy_deocder_float32():
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
-def test_ctc_greedy_deocder_float64():
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ctc_greedy_deocder_float64(mode):
     """
     Feature: CTCGreedyDecoder cpu op
     Description: Test output for fp64 dtype
     Expectation: Output matching expected values
     """
+    context.set_context(mode=mode)
     inputs_np = np.array([[[1.76405235, 0.40015721, 0.97873798],
                            [2.2408932, 1.86755799, -0.97727788]],
                           [[0.95008842, -0.15135721, -0.10321885],
@@ -90,12 +93,14 @@ def test_ctc_greedy_deocder_float64():
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
-def test_ctc_greedy_deocder_float64_with_sequence_length_out_range():
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ctc_greedy_deocder_float64_with_sequence_length_out_range(mode):
     """
     Feature: CTCGreedyDecoder cpu op
     Description: Test output for fp64 dtype with sequence_length out range
     Expectation: Raise RunTimeError
     """
+    context.set_context(mode=mode)
     inputs_np = np.random.randn(2, 2, 3).astype(np.float64)
     sequence_length_np = np.array([3, 3]).astype(np.int32)
     net = Net()

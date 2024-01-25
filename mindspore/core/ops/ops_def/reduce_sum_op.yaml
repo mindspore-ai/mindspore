@@ -18,3 +18,5 @@ reduce_sum:
   returns:
     output:
       dtype: tensor
+  function:
+    disable: True

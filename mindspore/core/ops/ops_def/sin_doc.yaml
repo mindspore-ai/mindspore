@@ -11,8 +11,8 @@ sin:
                 :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
         Returns:
-            On CPU OR GPU: Tensor, has the same shape and dtype as the `input`. 
-            On Ascend: Tensor, has the same shape as the `input`. The dtype of output is float32 when dtype of `input` is in
+            Tensor, has the same shape and dtype as the `input`. 
+            The dtype of output is float32 when dtype of `input` is in
             [bool, int8, uint8, int16, int32, int64]. Otherwise output has the same dtype as the `input`.
 
         Raises:

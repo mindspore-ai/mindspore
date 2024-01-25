@@ -25,6 +25,6 @@ roll:
             >>> import mindspore.ops as ops
             >>> from mindspore import Tensor
             >>> input_x = Tensor(np.array([0, 1, 2, 3, 4]).astype(np.float32))
-            >>> output = ops.roll(input_x, shift=2, axis=0)
+            >>> output = ops.Roll(shift=2, axis=0)(input_x)
             >>> print(output)
             [3. 4. 0. 1. 2.]

@@ -88,6 +88,8 @@ class BaseTimelineGenerator:
     _op_name_list = []
     _device_target = DeviceTarget.ASCEND.value
     _model = context.GRAPH_MODE
+    _framework_dir = "FRAMEWORK"
+    _op_range_name = "op_range_{}"
 
     __col_names__ = ['op_name', 'stream_id', 'start_time', 'duration']
 
@@ -102,6 +104,10 @@ class BaseTimelineGenerator:
         self._model = model
         self._step_start_op_name = ""
         self._step_end_op_name = ""
+        self._kernel_events = []
+
+    def get_kernel_event_list(self):
+        return self._kernel_events
 
     @staticmethod
     def get_parallel_context():

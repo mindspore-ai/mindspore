@@ -38,8 +38,8 @@ STATUS ReshapeMapper::Mapper(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "Get value node and primitive from cnode failed.";
     return lite::RET_ERROR;
   }
-  if (cnode->inputs().size() != kInputNum) {
-    MS_LOG(ERROR) << "Reshape input num should be " << kInputNum << ", real size: " << cnode->inputs().size();
+  if (cnode->size() != kInputNum) {
+    MS_LOG(ERROR) << "Reshape input num should be " << kInputNum << ", real size: " << cnode->size();
     return RET_ERROR;
   }
   if (AttrAdjust(src_prim, value_node, cnode) != RET_OK) {

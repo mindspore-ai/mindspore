@@ -38,7 +38,6 @@ if(MSLITE_ENABLE_CONVERTER)
                 ${CCSRC_DIR}/kernel/kash/kernel_pack.cc
                 ${CCSRC_DIR}/kernel/kernel_build_info.cc
                 ${CCSRC_DIR}/kernel/oplib/oplib.cc
-                ${CCSRC_DIR}/kernel/kernel_get_value.cc
                 ${CCSRC_DIR}/runtime/device/kernel_info.cc
                 ${CCSRC_DIR}/runtime/graph_scheduler/actor/actor_common.cc
                 ${CCSRC_DIR}/runtime/device/ms_device_shape_transfer.cc

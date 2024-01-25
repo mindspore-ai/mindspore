@@ -20,10 +20,12 @@ import mindspore as ms
 from mindspore import ops
 from mindspore.common.tensor import Tensor
 from mindspore.ops.operations._sequence_ops import TensorToScalar, TensorToTuple
+from mindspore.ops_generate.gen_ops_inner_prim import ListToTuple, TupleToList
 from mindspore._c_expression import OpDtype
 
 tensor_to_tuple_ = TensorToTuple()
-
+list_to_tuple = ListToTuple()
+tuple_to_list = TupleToList()
 
 def int_to_float(data):
     return float(data)
@@ -31,14 +33,6 @@ def int_to_float(data):
 
 def scalar_to_tuple(data):
     return (data,)
-
-
-def list_to_tuple(data):
-    # tuple() currently does not support Any from JIT Fallback.
-    res = ()
-    for element in data:
-        res += (element,)
-    return res
 
 
 def tensor_to_tuple(data):
@@ -218,6 +212,13 @@ def do_type_cast(data, dst_type):
             return list_to_tuple(data)
         if isinstance(data, Tensor):
             return tensor_to_tuple(data)
+    elif is_list(dst_type):
+        if isinstance(data, (int, float, bool)):
+            return tuple_to_list(scalar_to_tuple(data))
+        if isinstance(data, tuple):
+            return tuple_to_list(data)
+        if isinstance(data, Tensor):
+            return tuple_to_list(tensor_to_tuple(data))
     elif dst_type == DT_TENSOR_VAL:
         if isinstance(data, (int, float, bool)):
             return scalar_to_tensor(data)

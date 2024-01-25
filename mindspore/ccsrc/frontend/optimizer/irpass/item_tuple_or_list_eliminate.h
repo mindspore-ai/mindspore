@@ -127,7 +127,7 @@ class MakeSliceSliceGetItemEliminator : public AnfVisitor {
         MS_EXCEPTION(ValueError) << "The slice must be [start, stop, step], but got " << slice_attr_;
       }
       idx_ = iter->second;
-      if (idx_ > make_slice_->inputs().size()) {
+      if (idx_ > make_slice_->size()) {
         MS_EXCEPTION(IndexError) << "The node make_slice should has 3 inputs but got " << make_slice_->DebugString();
       }
       is_match_ = true;
@@ -526,6 +526,89 @@ class TupleListGetitemDependReorder : public AnfVisitor {
   AnfNodePtr x_{nullptr}, y_{nullptr}, c_{nullptr};
 };
 
+// {prim::kPrimListToTuple, {prim::kPrimMakeList, a, b, c, ...}} => {prim::kPrimMakeTuple, a, b, c, ...}
+class ListToTupleEliminator : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    Reset();
+    AnfVisitor::Match(prim::kPrimListToTuple, {IsCNode})(node);
+    if (!is_match_) {
+      return nullptr;
+    }
+    auto fg = node->func_graph();
+    if (fg != nullptr) {
+      auto new_node = fg->NewCNode(args_);
+      new_node->set_abstract(node->abstract());
+      return new_node;
+    }
+    return nullptr;
+  }
+
+  void Visit(const CNodePtr &cnode) override {
+    CNodePtr real_node = cnode;
+    while (IsPrimitiveCNode(real_node, prim::kPrimDepend)) {
+      auto depend = real_node->cast<CNodePtr>();
+      real_node = depend->input(1)->cast<CNodePtr>();
+    }
+    if (IsPrimitiveCNode(real_node, prim::kPrimMakeList)) {
+      is_match_ = true;
+      auto &inputs = real_node->inputs();
+      (void)args_.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+      (void)std::copy(inputs.begin() + 1, inputs.end(), std::back_inserter(args_));
+    }
+  }
+
+  void Reset() {
+    is_match_ = false;
+    args_.clear();
+  }
+
+ private:
+  bool is_match_{false};
+  std::vector<AnfNodePtr> args_{};
+};
+
+// {prim::kPrimTupleToList, {prim::kPrimMakeTuple, a, b, c, ...}} => {prim::kPrimMakeList, a, b, c, ...}
+class TupleToListEliminator : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    Reset();
+    AnfVisitor::Match(prim::kPrimTupleToList, {IsCNode})(node);
+    if (!is_match_) {
+      return nullptr;
+    }
+    auto fg = node->func_graph();
+    if (fg != nullptr) {
+      auto new_node = fg->NewCNode(args_);
+      new_node->set_abstract(node->abstract());
+      return new_node;
+    }
+    return nullptr;
+  }
+
+  void Visit(const CNodePtr &cnode) override {
+    CNodePtr real_node = cnode;
+    while (IsPrimitiveCNode(real_node, prim::kPrimDepend)) {
+      auto depend = real_node->cast<CNodePtr>();
+      real_node = depend->input(1)->cast<CNodePtr>();
+    }
+    if (IsPrimitiveCNode(real_node, prim::kPrimMakeTuple)) {
+      is_match_ = true;
+      auto &inputs = real_node->inputs();
+      (void)args_.emplace_back(NewValueNode(prim::kPrimMakeList));
+      (void)std::copy(inputs.begin() + 1, inputs.end(), std::back_inserter(args_));
+    }
+  }
+
+  void Reset() {
+    is_match_ = false;
+    args_.clear();
+  }
+
+ private:
+  bool is_match_{false};
+  std::vector<AnfNodePtr> args_{};
+};
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

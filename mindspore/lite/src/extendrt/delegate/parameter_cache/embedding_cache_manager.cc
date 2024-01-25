@@ -96,7 +96,7 @@ Status EmbeddingCacheManager::InitCacheKernel(kernel::Kernel *kernel, uint32_t d
     MS_LOG(ERROR) << kernel->name() << " is not embedding kernel";
     return kLiteError;
   }
-  MS_ASSERT(kernel->inputs().size() == kGatherInputsSize);
+  MS_ASSERT(kernel->size() == kGatherInputsSize);
   auto device_tensor = kernel->inputs()[0];
   size_t batch_elements = kernel->inputs()[1].ElementNum();
   auto cache =

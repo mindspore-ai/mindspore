@@ -23,12 +23,11 @@ from dataclasses import dataclass
 import pyboost_utils
 from pyboost_utils import get_convert_type_str, get_input_dtype, get_return_type, tuple_input_to_cpp_type, \
     number_input_to_cpp_type, get_const_number_convert, get_tuple_input_convert, get_pyboost_name, is_cube, \
-    AclnnUtils, get_disable_flag, is_optional_param
+    AclnnUtils, get_disable_flag, is_optional_param, get_value_convert_type_str, is_pyboost_enable
 import template
 from template import CppTemplate
 from op_proto import OpProto
 from gen_utils import check_change_and_replace_file, py_licence_str
-
 
 @dataclass
 class FuncHeaderData:
@@ -135,14 +134,22 @@ def generate_create_input_address(need_malloc_tensors):
 
 
 def generate_tensor_cpu_cast_input_code(call_args_with_tensor, call_tensors):
+    """ generate_tensor_cpu_cast_input_code """
     cast_input = ""
     real_call_args_tensor = call_args_with_tensor.copy()
     for i, tensor in enumerate(call_args_with_tensor):
-        if real_call_args_tensor[i] in call_tensors:
+        is_tuple_tensor = real_call_args_tensor[i].endswith("_vector")
+        is_tensor = real_call_args_tensor[i] in call_tensors
+        if is_tensor:
             cast_input += f'const auto &real_{tensor} = PyBoostUtils::CastTensor({tensor}, ' \
                           f'select_kernel.input_type()[{i}].dtype, "CPU");\n'
             real_call_args_tensor[i] = "real_" + real_call_args_tensor[i]
-
+        if is_tuple_tensor:
+            cast_input += f'const auto &real_{tensor} = PyBoostUtils::CastTensor({tensor}, ' \
+                          f'select_kernel.input_type()[{i}].dtype, "CPU");\n'
+            real_call_args_tensor[i] = "PyBoostUtils::ConvertTensorVectorToTuple(real_" + real_call_args_tensor[i] + ")"
+    if cast_input != "":
+        cast_input = "auto &select_kernel = kernel_attr_pair.second;\n" + cast_input
     return cast_input, real_call_args_tensor
 
 
@@ -236,7 +243,8 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
                                          inplace_process=converter.inplace_process,
                                          cast_input_code=cast_input_code,
                                          real_call_args_tensor=real_call_args_tensor,
-                                         class_name=op_proto.class_name)
+                                         class_name=op_proto.class_name,
+                                         op_name_str=op_name_str)
 
         pyboost_op_source_str = src_tpl.replace(op_name=op_name_str,
                                                 operator_name=operator_name,
@@ -392,11 +400,9 @@ def get_convert_tensor_template():
     Get convert tensor template
     """
     convert_to_tensor_template = CppTemplate(
-        'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToTensor(${input}, ' \
-        'op_run_info->base_op_run_info.device_target, ${need_contiguous});\n')
+        'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToTensor(${input}, ${need_contiguous});\n')
     convert_to_tensor_list_template = CppTemplate(
-        'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToValueTuple(${input}, ' \
-        'op_run_info->base_op_run_info.device_target, ${need_contiguous});\n')
+        'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToValueTuple(${input}, ${need_contiguous});\n')
     return convert_to_tensor_template, convert_to_tensor_list_template
 
 
@@ -498,6 +504,74 @@ def generate_pyboost_functions(work_path, yaml_data):
     pathlib.Path(dir_path).mkdir(parents=True, exist_ok=True)
     tmp_file_path = os.path.join(dir_path, "tmp_pyboost_functions.cc")
     dst_file_path = os.path.join(dir_path, "pyboost_functions.cc")
+    with open(tmp_file_path, "w") as f:
+        f.write(pyboost_func_file)
+    check_change_and_replace_file(dst_file_path, tmp_file_path)
+
+
+def convert_value_type(op_proto: OpProto) -> str:
+    """
+    Generate parser func
+    :param op_proto:
+    :return: str
+    """
+    convert_template = CppTemplate("auto $arg_name = ValueConverter::${convert_func}(inputs, $arg_index);\n")
+    parser_func_str = ''
+    for index, arg in enumerate(op_proto.op_args):
+        is_optional = is_optional_param(arg)
+        convert_type_str = get_value_convert_type_str(arg.arg_dtype, is_optional)
+        parser_func_str += convert_template.replace(arg_name=arg.arg_name, convert_func=convert_type_str,
+                                                    arg_index=pyboost_utils.get_index(index))
+    return parser_func_str
+
+
+def generate_pyboost_grad_functions(work_path, yaml_data):
+    """
+    Generate pyboostgrad  functions file from yaml.
+    """
+    pyboost_func_str = ''
+    pyboost_func_reg_def = ''
+    pyboost_func_include_headers_str = ''
+    pyboost_func_include_header_template = CppTemplate("#include \"kernel/pyboost/auto_generate/${operator_name}.h\"\n")
+    for operator_name, operator_data in yaml_data.items():
+        if not is_pyboost_enable(operator_data):
+            continue
+        op_proto = OpProto.load_from_yaml(operator_name, operator_data)
+        if not op_proto.is_pyboost:
+            continue
+        operator_name = op_proto.operator_name
+        if operator_name.endswith('ext'):
+            operator_name = operator_name[:-4]
+        op_name_str = op_proto.class_name
+        if op_proto.class_name.endswith('Ext'):
+            op_name_str = op_proto.class_name[:-3]
+        op_args_str = [op_arg.arg_name for op_arg in op_proto.op_args]
+        convert_value_type_str = convert_value_type(op_proto)
+
+        call_args_str = []
+        for op_arg in op_proto.op_args:
+            call_arg = op_arg.arg_name
+            call_args_str.append(call_arg)
+        pyboost_func_str += template.PYBOOST_GRAD_FUNCTION_TEMPLATE.replace(func_name=op_proto.pyboost_function_name,
+                                                                            op_name=op_name_str,
+                                                                            op_args=op_args_str,
+                                                                            convert_body=convert_value_type_str,
+                                                                            call_args=call_args_str)
+        pyboost_func_str = pyboost_func_str + template.NEW_LINE
+        pyboost_func_reg_def += template.REGISTER_PYBOOST_GRAD_DEFINE_TEMPLATE.replace(
+            pyboost_op_name=op_proto.class_name,
+            pyboost_cfunc_name=op_proto.pyboost_function_name)
+        pyboost_func_include_headers_str += pyboost_func_include_header_template.replace(operator_name=operator_name)
+
+    register_func_str = template.REGISTER_PYBOOST_GRAD_TEMPLATE.replace(register_func=pyboost_func_reg_def)
+    pyboost_func_file = \
+        template.PYBOOST_GRAD_HEADER_TEMPLATE.replace(include_op_header=pyboost_func_include_headers_str,
+                                                      function_body=pyboost_func_str,
+                                                      register_function_body=register_func_str)
+    dir_path = os.path.join(work_path, "mindspore/ccsrc/runtime/pynative/op_function/auto_generate")
+    pathlib.Path(dir_path).mkdir(parents=True, exist_ok=True)
+    tmp_file_path = os.path.join(dir_path, "tmp_pyboost_grad_functions.cc")
+    dst_file_path = os.path.join(dir_path, "pyboost_grad_functions.cc")
     with open(tmp_file_path, "w") as f:
         f.write(pyboost_func_file)
     check_change_and_replace_file(dst_file_path, tmp_file_path)
@@ -873,5 +947,7 @@ def gen_pyboost_code(work_path, ops_yaml_data, doc_yaml_data):
     generate_ops_header_files(work_path, ops_yaml_data)
     # generate pyboost functions
     generate_pyboost_functions(work_path, ops_yaml_data)
+    # generate pyboost grad functions
+    generate_pyboost_grad_functions(work_path, ops_yaml_data)
     # generate pyboost backend cpp code
     generate_pyboost_op_cpp_code(work_path, ops_yaml_data)

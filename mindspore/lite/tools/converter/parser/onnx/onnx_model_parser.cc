@@ -542,7 +542,7 @@ FuncGraphPtr OnnxModelParser::BuildBodyGraph(const onnx::NodeProto &loop_node, c
   }
   auto return_node = loop_body_graph->get_return();
   MS_CHECK_TRUE_MSG(return_node != nullptr, nullptr, "return node of subgraph is nullptr");
-  MS_CHECK_TRUE_RET(return_node->inputs().size() == DIMENSION_2D, nullptr);
+  MS_CHECK_TRUE_RET(return_node->size() == DIMENSION_2D, nullptr);
   auto return_tuple_cnode = return_node->input(1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(return_tuple_cnode != nullptr, nullptr);
   auto return_new_inputs = return_tuple_cnode->inputs();
@@ -924,7 +924,7 @@ STATUS OnnxModelParser::ConvertIfSubgraph(const onnx::GraphProto &subgraph_proto
   }
   auto return_node = subgraph->get_return();
   MS_CHECK_TRUE_MSG(return_node != nullptr, RET_ERROR, "subgraph has no return");
-  MS_CHECK_GE(return_node->inputs().size(), kInputSize1, RET_ERROR);
+  MS_CHECK_GE(return_node->size(), kInputSize1, RET_ERROR);
   std::vector<AnfNodePtr> return_act_inputs;
   int start_index = 0;
   if (subgraph_proto.output_size() > 1) {

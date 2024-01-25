@@ -1,22 +1,22 @@
 #operator nan_to_num
 nan_to_num:
     args:
-        input:
+        x:
             dtype: tensor
         nan:
             dtype: float
-            default: 0.0
+            default: None
             prim_init: True
         posinf:
             dtype: float
-            default: 65504.0
+            default: None
             prim_init: True
         neginf:
             dtype: float
-            default: -65504.0
+            default: None
             prim_init: True
     returns:
         output: 
             dtype: tensor
     function:
-        name: nan_to_num_
+        disable: True

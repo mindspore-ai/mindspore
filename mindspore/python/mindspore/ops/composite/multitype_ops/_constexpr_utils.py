@@ -555,18 +555,12 @@ def convert_scalar_to_tensor(data_shape, data_dtype, indices_shape, value, op_ty
     return P.FillV2()(updates_shape, P.Cast()(value, data_dtype))
 
 
-def generate_updates_shape(data_shape, index_shape, op_type, is_dynamic):
+def generate_updates_shape(data_shape, index_shape, op_type):
     """Generate updates shape for 'tensor setitem'."""
     if op_type == SET_ITEM_BY_ONE_TENSOR:
-        if is_dynamic:
-            updates_shape = P.Concat(-1)((index_shape, data_shape[1:]))
-        else:
-            updates_shape = index_shape + data_shape[1:]
+        updates_shape = index_shape + data_shape[1:]
     else:
-        if is_dynamic:
-            updates_shape = P.Concat(-1)((index_shape[:-1], data_shape[index_shape[-1]:]))
-        else:
-            updates_shape = index_shape[:-1] + data_shape[index_shape[-1]:]
+        updates_shape = index_shape[:-1] + data_shape[index_shape[-1]:]
     return updates_shape
 
 

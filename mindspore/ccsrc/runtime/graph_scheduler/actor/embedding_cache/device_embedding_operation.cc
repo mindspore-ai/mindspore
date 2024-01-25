@@ -183,6 +183,7 @@ bool DeviceEmbeddingOperation::MemcpyHostToDeviceAsync(void *dst, const void *sr
   auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
     device_ptr, size, Format::DEFAULT_FORMAT, kTypeUnknown, ShapeVector(),
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  kernel_tensor->set_stream_id(stream_id);
   auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   MS_ERROR_IF_NULL(device_address);
   RETURN_IF_FALSE_WITH_LOG(device_address->AsyncHostToDevice({}, size, kTypeUnknown, host_ptr, stream_id),
@@ -204,6 +205,7 @@ bool DeviceEmbeddingOperation::MemcpyDeviceToHostAsync(void *dst, const void *sr
   auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
     device_ptr, size, Format::DEFAULT_FORMAT, kTypeUnknown, ShapeVector(),
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  kernel_tensor->set_stream_id(stream_id);
   auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   MS_ERROR_IF_NULL(device_address);
   RETURN_IF_FALSE_WITH_LOG(device_address->AsyncDeviceToHost({}, size, kTypeUnknown, host_ptr, stream_id),
@@ -270,7 +272,7 @@ ValueNodePtr DeviceEmbeddingOperation::NewValueNode(int64_t value, const DeviceC
     {value_node, output_idx}, value_addr, tensor_size, output_format, output_type_id,
     trans::GetRuntimePaddingShape(value_node, output_idx), device_context->device_context_key().device_name_,
     device_context->device_context_key().device_id_);
-
+  kernel_tensor->set_stream_id(stream_id);
   auto address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   MS_EXCEPTION_IF_NULL(address);
 

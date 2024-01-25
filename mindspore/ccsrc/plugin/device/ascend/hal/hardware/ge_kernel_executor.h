@@ -56,23 +56,27 @@ class GeKernelExecutor : public KernelExecutor {
   bool LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                     const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &outputs,
                     size_t stream_id) const override;
+  bool LaunchCallback(CallbackFunc callback_func, size_t stream_id) const;
 
   // Unify the MindIR, the default behavior uses the common unified MindIR.
   void UnifyMindIR(const KernelGraphPtr &graph) const override;
   void AddMindIRPass(const KernelGraphPtr &graph) const override;
+  void OptimizeExecutionOrder(const FuncGraphPtr &graph) const;
 
   // Get rank id for distributed training.
   uint32_t GetRankID() const override { return 0; }
 
   bool ExecuteKernelTask(const pynative::KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
                          const TensorStorageInfoPtrList &input_storage_list,
-                         const device::DeviceAddressPtrList &output_addr_list) const override;
+                         const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id) const override;
 
  private:
+  static void DoSomas(const FuncGraphPtr &graph);
+  static void DoStreamAssign(const KernelGraphPtr &kernel_graph);
   // launch
-  bool PySyncRuning() const;
   bool MemoryCopyAsync(const CNodePtr &node, const vector<KernelTensor *> &inputs,
                        const vector<KernelTensor *> &outputs) const;
+  bool PySyncRuning(size_t stream_id) const;
 
   mutable std::set<CNodePtr> nop_op_to_memcpy_;
   // Maybe AscendDeviceResManager and GEDeviceResManager now

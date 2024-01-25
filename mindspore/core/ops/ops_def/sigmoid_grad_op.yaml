@@ -8,3 +8,8 @@ sigmoid_grad:
     returns:
         output:
             dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: SigmoidGradAscend

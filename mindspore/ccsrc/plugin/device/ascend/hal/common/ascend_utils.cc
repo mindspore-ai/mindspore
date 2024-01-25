@@ -21,6 +21,7 @@
 #include "common/util/error_manager/error_manager.h"
 #include "utils/dlopen_macro.h"
 #include "acl/error_codes/rt_error_codes.h"
+#include "acl/acl.h"
 #include "acl/acl_base.h"
 
 namespace mindspore {
@@ -136,7 +137,7 @@ std::string ErrorManagerAdapter::GetErrorMessage(bool add_title) {
   }
   if (add_title) {
     return "#umsg#Ascend Error Message:#umsg#" + error_message +
-           "\n(Please search \"Ascend Error Message\" at https://www.mindspore.cn for error code description)";
+           "\n(Please search \"CANN Common Error Analysis\" at https://www.mindspore.cn for error code description)";
   }
   return error_message;
 }
@@ -187,6 +188,24 @@ std::string GetErrorMsg(uint32_t rt_error_code) {
     return "Return error code unknown, ret code: " + std::to_string(rt_error_code);
   }
   return find_iter->second;
+}
+
+void *callback_thread_func(void *data) {
+  pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr);
+  pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, nullptr);
+#ifdef WITH_BACKEND
+  auto callback_thread = reinterpret_cast<CallbackThread *>(data);
+  while (callback_thread->flag_.load()) {
+    try {
+      aclrtProcessReport(callback_thread->default_timeout_);
+    } catch (const std::exception &ex) {
+      MS_LOG(ERROR) << "aclrtProcessReport exception : " << ex.what() << ".";
+      break;
+    }
+  }
+  MS_LOG(INFO) << "Exit callback thread loop.";
+#endif
+  return data;
 }
 }  // namespace ascend
 }  // namespace device

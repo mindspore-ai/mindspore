@@ -22,6 +22,7 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/parallel_context.h"
 #include "ops/other_ops.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {
@@ -36,6 +37,16 @@ const AnfNodePtr InsertLoadForAllGather::Process(const FuncGraphPtr &graph, cons
                                                  const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
+  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
+    MS_LOG(DEBUG) << "AllGather parallel optimization is not required in pipeline parallel mode.";
+    return nullptr;
+  }
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  const auto cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
+  if (cell_reuse) {
+    return nullptr;
+  }
   if (!IsPrimitiveCNode(node, prim::kPrimAllGather)) {
     MS_LOG(ERROR) << "Not target node AllGather, but is: " << node->fullname_with_scope();
     return nullptr;

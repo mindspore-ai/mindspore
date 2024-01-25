@@ -585,7 +585,7 @@ REG_BPROP_BUILDER("ScalarCast").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(i
     auto dx = ib->Emit("ScalarToTensor", {dout, ib->Value(ib->GetDtype(x))});
     return {dx, ib->OutZeros(t)};
   }
-  auto dx = ib->Emit("ScalarCast", {dout, ib->Value(ib->GetDtype(x))});
+  auto dx = ib->Emit("ScalarCast", {dout, ib->Value<int64_t>(ib->GetDtypeId(x))});
   return {dx, ib->OutZeros(t)};
 });
 
@@ -2239,14 +2239,14 @@ REG_BPROP_BUILDER("Cholesky").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
     MS_EXCEPTION(ValueError) << "Input `upper` does not support variable in GRAPH_MODE currently.";
   }
   auto upper = GetValue<bool>(upper_input_value);
-  auto out = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex2);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
   if (upper) {
     out = MatrixTranspose(ib, out);
     dout = MatrixTranspose(ib, dout);
   }
   auto dx = ib->Emit("CholeskyGrad", {out, dout});
-  return {dx};
+  return {dx, ib->OutZeros(upper_input)};
 });
 
 REG_BPROP_BUILDER("InplaceIndexAdd").SetUnusedInputs({i0, i2, i3}).SetBody(BODYFUNC(ib) {
@@ -2374,5 +2374,15 @@ REG_BPROP_BUILDER("TridiagonalSolve").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib)
   auto grad_diags = ib->Sub(ib->Tensor(0, ib->GetDtype(a)), a);
   return {grad_diags, grad_rhs};
 });
+
+REG_BPROP_BUILDER("FFTShift").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
+  auto axes = ib->GetInput(kIndex1);
+  auto forward = ib->GetInput(kIndex2);
+  auto forward_value = GetValue<bool>(forward->BuildValue());
+  auto dout = ib->GetInput(kIndex4);
+
+  return {ib->Emit("FFTShift", {dout, axes, ib->Value(!forward_value)}), ib->OutZeros(axes), ib->OutZeros(forward)};
+});
+
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

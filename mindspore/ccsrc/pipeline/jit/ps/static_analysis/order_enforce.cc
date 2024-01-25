@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2023 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,8 @@ class OrderEnforcer {
     static const bool no_insert_tensormove = common::GetEnv("MS_DEV_SIDE_EFFECT_LOAD_ELIM") == "3";
     // Do not insert TensorMove for all Load nodes
     if (no_insert_tensormove) {
+      MS_LOG(WARNING) << "Do not insert TensorMove for all Load nodes, the memory footprint is minimal, "
+                         "but there may be accuracy issues with the results.";
       return;
     }
     // After ensuring the correct control edge relationship, then insert the TensorMove operator.
@@ -82,7 +84,7 @@ class OrderEnforcer {
     auto update_state = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(update_state);
     const size_t update_state_inputs_size = 3;
-    if (update_state->inputs().size() < update_state_inputs_size) {
+    if (update_state->size() < update_state_inputs_size) {
       MS_LOG(ERROR) << "UpdateState inputs size is less than 3, node is:" << update_state->DebugString();
     }
     if (!HasAbstractUMonad(update_state->input(1))) {
@@ -208,7 +210,8 @@ class OrderEnforcer {
   }
 
   bool IsSpecialPrimitive(const AnfNodePtr &node) const {
-    return IsPrimitiveCNode(node, prim::kPrimExpandDims) || IsPrimitiveCNode(node, prim::kPrimBatchNormGrad);
+    return IsPrimitiveCNode(node, prim::kPrimExpandDims) || IsPrimitiveCNode(node, prim::kPrimBatchNormGrad) ||
+           IsPrimitiveCNode(node, prim::kPrimReshape);
   }
 
   bool IsSpecialParallelPrimitive(const AnfNodePtr &node) const {
@@ -261,7 +264,7 @@ class OrderEnforcer {
   bool IsInUpdateState(const AnfNodePtr &load_user, const CNodePtr &update_state) const {
     MS_EXCEPTION_IF_NULL(update_state);
     const size_t attach_index = 2;
-    const size_t input_size = update_state->inputs().size();
+    const size_t input_size = update_state->size();
     for (size_t index = attach_index; index < input_size; index++) {
       auto &attach = update_state->input(index);
       if (attach == load_user) {
@@ -321,7 +324,9 @@ class OrderEnforcer {
       auto cnode = q.front();
       MS_EXCEPTION_IF_NULL(cnode);
       q.pop();
-      for (auto &input : cnode->inputs()) {
+      for (auto &weak_input : cnode->weak_inputs()) {
+        auto input = weak_input.lock();
+        MS_EXCEPTION_IF_NULL(input);
         if (input == update_state) {
           // Dependency found.
           return true;
@@ -647,7 +652,7 @@ class OrderEnforcer {
         continue;
       }
       auto cnode = node->cast<CNodePtr>();
-      for (size_t index = 1; index < cnode->inputs().size(); ++index) {
+      for (size_t index = 1; index < cnode->size(); ++index) {
         auto input = cnode->input(index);
         if (IsPrimitiveCNode(input, prim::kPrimLoad)) {
           auto load = input->cast<CNodePtr>();

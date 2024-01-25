@@ -21,7 +21,7 @@
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
-#include "external/acl/error_codes/rt_error_codes.h"
+#include "acl/error_codes/rt_error_codes.h"
 #include "acl/acl_rt.h"
 #include "plugin/device/ascend/hal/device/ascend_gmem_adapter.h"
 
@@ -79,7 +79,12 @@ void AscendStreamMng::CreateStream(aclrtStream *stream, int32_t priority) {
     MS_LOG(EXCEPTION) << "aclrtSetStreamFailureMode failed, ret:" << ret;
   }
   (void)streams_.emplace_back(*stream);
-  AscendGmemAdapter::GetInstance().AddCallbackThread(*stream);
+  // If this is the first stream ever created, set it as default stream.
+  if (streams_.size() == 1) {
+    default_stream_ = *stream;
+    default_stream_id_ = kIndex0;
+  }
+  RegCallback(*stream);
 }
 
 void AscendStreamMng::CreateStream(size_t *stream_id, int32_t priority) {
@@ -95,7 +100,56 @@ void AscendStreamMng::CreateStream(size_t *stream_id, int32_t priority) {
   }
   *stream_id = streams_.size();
   (void)streams_.emplace_back(stream);
-  AscendGmemAdapter::GetInstance().AddCallbackThread(stream);
+  RegCallback(stream);
+}
+
+void AscendStreamMng::RegCallback(aclrtStream stream) {
+  MS_LOG(INFO) << "Register callback thread, stream : " << stream << ".";
+  (void)callback_cached_streams_.emplace_back(stream);
+  if (callback_cached_streams_.size() > 1 && !is_enable_callback_) {
+    is_enable_callback_ = true;
+  }
+  if (!is_enable_callback_) {
+    return;
+  }
+#ifdef WITH_BACKEND
+  for (const auto &callback_cached_stream : callback_cached_streams_) {
+    if (stream_call_backs_.count(callback_cached_stream) > 0) {
+      MS_LOG(WARNING) << "Register callback thread failed, stream : " << callback_cached_stream
+                      << " is already registered.";
+      continue;
+    }
+
+    auto callback_thread = std::make_shared<CallbackThread>();
+    callback_thread->create();
+    auto ret = aclrtSubscribeReport(callback_thread->thread_, (aclrtStream)callback_cached_stream);
+    if (!ret) {
+      MS_LOG(INFO) << "Register callback thread success, stream : " << callback_cached_stream << ".";
+      (void)stream_call_backs_.emplace(callback_cached_stream, callback_thread);
+    } else {
+      MS_LOG(INTERNAL_EXCEPTION) << "Register callback thread failed, stream : " << callback_cached_stream
+                                 << ", ret : " << ret;
+    }
+  }
+#endif
+  callback_cached_streams_.clear();
+}
+
+void AscendStreamMng::UnRegCallback(aclrtStream stream) {
+  MS_LOG(INFO) << "Unregister callback thread, stream : " << stream << ".";
+  if (!is_enable_callback_) {
+    return;
+  }
+#ifdef WITH_BACKEND
+  if (stream_call_backs_.count(stream) == 0) {
+    MS_LOG(WARNING) << "Unregister callback thread failed, stream : " << stream << " is not exist.";
+    return;
+  }
+  auto callback_thread = stream_call_backs_.at(stream);
+  // Cannot call aclrtUnSubscribeReport.
+  callback_thread->cancel();
+  stream_call_backs_.erase(stream);
+#endif
 }
 
 void AscendStreamMng::CreateStreamWithFlags(aclrtStream *stream, uint32_t flags, int32_t priority) {
@@ -109,7 +163,7 @@ void AscendStreamMng::CreateStreamWithFlags(aclrtStream *stream, uint32_t flags,
     MS_LOG(EXCEPTION) << "aclrtSetStreamFailureMode failed, ret:" << ret;
   }
   (void)streams_.emplace_back(*stream);
-  AscendGmemAdapter::GetInstance().AddCallbackThread(*stream);
+  RegCallback(*stream);
 }
 
 void AscendStreamMng::CreateStreamWithFlags(size_t *stream_id, uint32_t flags, int32_t priority) {
@@ -125,7 +179,17 @@ void AscendStreamMng::CreateStreamWithFlags(size_t *stream_id, uint32_t flags, i
   }
   *stream_id = streams_.size();
   (void)streams_.emplace_back(stream);
-  AscendGmemAdapter::GetInstance().AddCallbackThread(stream);
+  RegCallback(stream);
+}
+
+aclrtEvent AscendStreamMng::ApplyRtEvent() {
+  aclrtEvent rt_event = nullptr;
+  auto ret = aclrtCreateEvent(&rt_event);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclrtCreateEvent failed, ret:" << ret;
+  }
+  (void)events_.emplace_back(rt_event);
+  return rt_event;
 }
 
 bool AscendStreamMng::DestroyStream(size_t stream_id) {
@@ -142,7 +206,7 @@ bool AscendStreamMng::DestroyStream(size_t stream_id) {
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call aclrtDestroyStream, ret[" << ret << "]";
   }
-  AscendGmemAdapter::GetInstance().RemoveCallbackThread(streams_.at(stream_id));
+  UnRegCallback(streams_.at(stream_id));
   streams_[stream_id] = nullptr;
   return true;
 }
@@ -157,7 +221,7 @@ bool AscendStreamMng::DestroyAllStreams() {
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Call aclrtDestroyStream, ret[" << ret << "]";
     }
-    AscendGmemAdapter::GetInstance().RemoveCallbackThread(stream);
+    UnRegCallback(stream);
   }
   streams_.clear();
   return true;
@@ -205,6 +269,50 @@ bool AscendStreamMng::SyncAllStreams() const {
     }
   }
   return true;
+}
+
+bool AscendStreamMng::SyncNotDefaultStreams() const {
+  bool res = true;
+  for (size_t i = 0; i < streams_.size(); i++) {
+    if (i != default_stream_id_ && !SyncStream(i)) {
+      MS_LOG(ERROR) << "Failed to sync for ascend stream id: " << i;
+      res = false;
+    }
+  }
+  return res;
+}
+
+bool AscendStreamMng::SyncExceptStreamsInList(const std::set<aclrtStream> &except_streams) const {
+  bool res = true;
+  for (size_t i = 0; i < streams_.size(); i++) {
+    if (except_streams.count(streams_[i]) > 0) {
+      MS_LOG(DEBUG) << "Stream id:" << i << " is been synchronized.";
+      continue;
+    }
+    if (!SyncStream(i)) {
+      MS_LOG(ERROR) << "Failed to sync for ascend stream id: " << i;
+      res = false;
+    }
+  }
+  return res;
+}
+
+bool AscendStreamMng::QueryStream(size_t stream_id) {
+  if (stream_id >= streams_.size()) {
+    MS_LOG(EXCEPTION) << "Stream for stream id[" << stream_id << "] has not been created.";
+  }
+  const auto stream = streams_[stream_id];
+  if (stream == nullptr) {
+    MS_LOG(WARNING) << "Stream for stream id[" << stream_id << "] has been destroyed.";
+    return false;
+  }
+
+  aclrtStreamStatus status;
+  auto ret = aclrtStreamQuery(stream, &status);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Failed to query completion status for stream id: " << stream_id;
+  }
+  return status == ACL_STREAM_STATUS_COMPLETE;
 }
 }  // namespace ascend
 }  // namespace device

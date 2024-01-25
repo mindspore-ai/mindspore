@@ -18,7 +18,7 @@ zeros_like:
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
             >>> input_x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
-            >>> output = ops.zeros_like_(input_x)
+            >>> output = ops.ZerosLike()(input_x)
             >>> print(output)
             [[0. 0.]
              [0. 0.]]

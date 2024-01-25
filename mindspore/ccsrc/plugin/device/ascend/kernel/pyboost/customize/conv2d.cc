@@ -35,8 +35,8 @@ std::vector<int64_t> ExpandVector(const std::vector<int64_t> &value, const size_
   return value;
 }
 
-tensor::TensorPtr Conv2DAscendCall(const device::DeviceContext *device_context, const tensor::TensorPtr &input_tensor,
-                                   const tensor::TensorPtr &weight_tensor,
+tensor::TensorPtr Conv2DAscendCall(const std::shared_ptr<OpRunner> &op, const device::DeviceContext *device_context,
+                                   const tensor::TensorPtr &input_tensor, const tensor::TensorPtr &weight_tensor,
                                    const std::optional<tensor::TensorPtr> &bias_tensor,
                                    const std::vector<int64_t> &stride, const std::vector<int64_t> &padding,
                                    const std::vector<int64_t> &dilation, const int64_t &groups,
@@ -48,7 +48,7 @@ tensor::TensorPtr Conv2DAscendCall(const device::DeviceContext *device_context, 
   const auto &expand_dilation = ExpandVector(dilation, dim);
   auto transposed = false;
   std::vector<int64_t> output_padding = {0, 0};
-  auto stream_ptr = device_context->device_res_manager_->GetStream(kDefaultStreamIndex);
+  auto stream_ptr = device_context->device_res_manager_->GetStream(op->stream_id());
   if (outputs.empty()) {
     MS_LOG(EXCEPTION) << "outputs is empty";
     return nullptr;
@@ -88,7 +88,7 @@ tensor::TensorPtr Conv2DAscendCustomize(const std::shared_ptr<OpRunner> &op, con
       // Malloc for output tensors
       PyBoostUtils::MallocOpOutputs(op->device_context(), op->outputs());
 
-      Conv2DAscendCall(device_context, input_tensor, weight_tensor, bias_tensor, stride_vector, padding_vector,
+      Conv2DAscendCall(op, device_context, input_tensor, weight_tensor, bias_tensor, stride_vector, padding_vector,
                        dilation_vector, groups_imm, outputs);
       MS_LOG(DEBUG) << "Run device task Conv2d end";
     }));

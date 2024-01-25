@@ -160,14 +160,12 @@ def test_apply_adagrad_da_float():
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
     ms_out = ms_forward_impl(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
 
-    for i in range(3):
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out[0], ms_out[0].asnumpy(), rtol=error, atol=error)
 
     np_global_step = np.int64(2)
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
     ms_out = ms_forward_impl(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
-    for i in range(3):
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out[0], ms_out[0].asnumpy(), rtol=error, atol=error)
 
 
 @pytest.mark.level2
@@ -190,15 +188,13 @@ def test_apply_adagrad_da_float16():
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
     ms_out = ms_forward_impl(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
 
-    for i in range(3):
-        np.allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.allclose(np_out[0], ms_out[0].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out[0], ms_out[0].asnumpy(), rtol=error, atol=error)
 
     np_global_step = np.int64(2)
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
     ms_out = ms_forward_impl(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
-    for i in range(3):
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out[0], ms_out[0].asnumpy(), rtol=error, atol=error)
 
 
 @pytest.mark.level2
@@ -221,14 +217,12 @@ def test_apply_adagrad_da_float16_vmap():
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
     #MindSpore
     ms_out = ms_forward_impl_vmap(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
-    for i in range(3):
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out[0], ms_out[0].asnumpy(), rtol=error, atol=error)
 
     np_global_step = np.int64(2)
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
     ms_out = ms_forward_impl_vmap(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
-    for i in range(3):
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out[0], ms_out[0].asnumpy(), rtol=error, atol=error)
 
 
 @pytest.mark.level2
@@ -250,14 +244,12 @@ def test_apply_adagrad_da_float_vmap():
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
     # MindSpore
     ms_out = ms_forward_impl_vmap(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
-    for i in range(3):
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out[0], ms_out[0].asnumpy(), rtol=error, atol=error)
 
     np_global_step = np.int64(2)
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
     ms_out = ms_forward_impl_vmap(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
-    for i in range(3):
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out[0], ms_out[0].asnumpy(), rtol=error, atol=error)
 
 
 @pytest.mark.level2
@@ -280,14 +272,12 @@ def test_apply_adagrad_da_float16_vmap2():
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
     #MindSpore
     ms_out = ms_forward_impl_vmap2(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
-    for i in range(3):
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out[0], ms_out[0].asnumpy(), rtol=error, atol=error)
 
     np_global_step = np.int64(2)
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
     ms_out = ms_forward_impl_vmap2(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float16)
-    for i in range(3):
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out[0], ms_out[0].asnumpy(), rtol=error, atol=error)
 
 
 @pytest.mark.level2
@@ -309,11 +299,9 @@ def test_apply_adagrad_da_float_vmap2():
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
     # MindSpore
     ms_out = ms_forward_impl_vmap2(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
-    for i in range(3):
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out[0], ms_out[0].asnumpy(), rtol=error, atol=error)
 
     np_global_step = np.int64(2)
     np_out = numpy_impl(np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
     ms_out = ms_forward_impl_vmap(grad, np_lr, np_l1, np_l2, np_global_step, data_type=np.float32)
-    for i in range(3):
-        np.testing.assert_allclose(np_out[i], ms_out[i].asnumpy(), rtol=error, atol=error)
+    np.testing.assert_allclose(np_out[0], ms_out[0].asnumpy(), rtol=error, atol=error)

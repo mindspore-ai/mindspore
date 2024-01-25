@@ -22,6 +22,7 @@
 #include "acl/acl_prof.h"
 #include "include/backend/kernel_graph.h"
 #include "kernel/kernel.h"
+#include "plugin/device/ascend/hal/profiler/profiling_data_dumper.h"
 
 namespace mindspore {
 namespace profiler {

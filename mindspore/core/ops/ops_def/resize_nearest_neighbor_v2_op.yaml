@@ -17,3 +17,5 @@ resize_nearest_neighbor_v2:
   returns:
     output:
       dtype: tensor
+  function:
+    disable: True

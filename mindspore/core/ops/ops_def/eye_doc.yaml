@@ -1,40 +1,40 @@
 eye:
   description: |
-      Creates a tensor with ones on the diagonal and zeros in the rest.
+    Creates a tensor with ones on the diagonal and zeros in the rest.
 
-      Note:
+    Note:
         - An anti-diagonal Tensor can be produced by Eye and ReverseV2 operators,
         but ReverseV2 only supports Ascend and GPU platforms currently.
         - The data type of returned tensor can be float16, float32, int8, int16, int32, int64, uint8 or bool on Ascend platforms.
 
 
-      Args:
-        n (int): The number of rows of returned tensor. Constant value only.
-        m (int): The number of columns of returned tensor. Constant value only.
-        dtype (mindspore.dtype): MindSpore's dtype, the data type of the returned tensor.
+    Inputs:
+        - **n** (int): The number of rows of returned tensor. Constant value only.
+        - **m** (int): The number of columns of returned tensor. Constant value only.
+        - **dtype** (mindspore.dtype): MindSpore's dtype, the data type of the returned tensor.
           The data type can be bool or Number.
 
-      Returns:
+    Returns:
         Tensor, a tensor with ones on the diagonal and the rest of elements are zero. The shape of `output` depends on
         the user's Inputs `n` and `m`. And the data type depends on Inputs `dtype`.
 
-      Raises:
+    Raises:
         TypeError: If `m` or `n` is not an int.
         ValueError: If `m` or `n` is less than 0.
 
-      Supported Platforms:
+    Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
-      Examples:
+    Examples:
         >>> import mindspore
         >>> from mindspore import ops
-        >>> output = ops.eye(2, 2, mindspore.int32)
+        >>> output = ops.Eye()(2, 2, mindspore.int32)
         >>> print(output)
         [[1 0]
          [0 1]]
         >>> print(output.dtype)
         Int32
-        >>> output = ops.eye(1, 2, mindspore.float32)
+        >>> output = ops.Eye()(1, 2, mindspore.float32)
         >>> print(output)
         [[1. 0.]]
         >>> print(output.dtype)

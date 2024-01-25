@@ -145,3 +145,34 @@ class TestSummaryOps:
         assert np.allclose(expected_data, image_data)
         assert np.allclose(expected_data, tensor_data)
         assert not np.allclose(0, x_fc3)
+
+    @pytest.mark.level0
+    @pytest.mark.platform_x86_ascend_training
+    @pytest.mark.platform_arm_ascend_training
+    @pytest.mark.platform_x86_gpu_training
+    @pytest.mark.env_onecard
+    @security_off_wrap
+    def test_kernel_by_kernel_summary_ops(self):
+        os.environ['GRAPH_OP_RUN'] = '1'
+        context.set_context(mode=context.GRAPH_MODE, device_id=self.device_id)
+        ds_train = create_mnist_dataset('train', num_samples=1, batch_size=1)
+        ds_train_iter = ds_train.create_dict_iterator()
+        expected_data = next(ds_train_iter)['image'].asnumpy()
+
+        net = LeNet5()
+        loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
+        optim = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+        model = Model(net, loss_fn=loss, optimizer=optim, metrics={'loss': Loss()})
+        model.train(1, ds_train, dataset_sink_mode=False)
+
+        time.sleep(0.5)
+        summary_data = _get_summary_tensor_data()
+        image_data = summary_data.get('x[:Image]').asnumpy()
+        tensor_data = summary_data.get('x[:Tensor]').asnumpy()
+        x_fc3 = summary_data.get('x_fc3[:Scalar]').asnumpy()
+
+        assert np.allclose(expected_data, image_data)
+        assert np.allclose(expected_data, tensor_data)
+        assert not np.allclose(0, x_fc3)
+
+        del os.environ['GRAPH_OP_RUN']

@@ -264,7 +264,7 @@ const mindspore::HashSet<size_t> GetUnusedInputs(const FuncGraphPtr &func_graph)
     auto is_unused_index = [&unused_inputs](size_t i) {
       return std::find(unused_inputs.begin(), unused_inputs.end(), i) != unused_inputs.end();
     };
-    for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+    for (size_t i = 1; i < cnode->size(); ++i) {
       auto input_node = cnode->input(i);
       if (unused_input_nodes.count(input_node) > 0 && !is_unused_index(i - 1)) {
         unused_input_nodes.erase(input_node);

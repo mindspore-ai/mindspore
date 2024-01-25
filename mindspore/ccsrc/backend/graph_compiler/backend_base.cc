@@ -387,7 +387,7 @@ KernelWithIndex VisitRealNodeWithNestLevel(const AnfNodePtr &anf_node, size_t in
 }
 
 bool NeedConvertToRealTupleGetItem(const CNodePtr &cnode) {
-  if (cnode->inputs().size() != kTupleGetItemInputSize) {
+  if (cnode->size() != kTupleGetItemInputSize) {
     return false;
   }
   if (!cnode->input(kInputNodeOutputIndexInTupleGetItem)->isa<ValueNode>() || GetTupleGetItemOutIndex(cnode) < 0) {
@@ -701,7 +701,7 @@ void MindRTBackendBase::CompileSubGraph(const FuncGraphPtr &func_graph, device::
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(manager);
-  const auto &sub_graphs = manager->func_graphs();
+  const auto &sub_graphs = manager->func_graphs_used_total(root_graph);
   std::vector<FuncGraphPtr> cand_graph(sub_graphs.begin(), sub_graphs.end());
   std::sort(cand_graph.begin(), cand_graph.end(),
             [](const FuncGraphPtr &a, const FuncGraphPtr &b) { return a->ToString() < b->ToString(); });
@@ -957,8 +957,15 @@ void MindRTBackendBase::ConstructOutputs(runtime::ActorSet *actor_set, VectorRef
   }
 }
 
-void MindRTBackendBase::ContiguousArgs(const VectorRef &args) {
-  auto dispatch_contiguous_task = [this](const tensor::TensorPtr &t) {
+void MindRTBackendBase::ContiguousArgs(const VectorRef &args, const GraphCompilerInfo &graph_compiler_info) {
+  auto stream_id = kDefaultStreamIndex;
+  if (!graph_compiler_info.device_contexts_.empty()) {
+    auto device_context = graph_compiler_info.device_contexts_[0];
+    MS_EXCEPTION_IF_NULL(device_context);
+    stream_id = device_context->device_res_manager_->GetCurrentStreamId();
+  }
+
+  auto dispatch_contiguous_task = [stream_id, this](const tensor::TensorPtr &t) {
     MS_EXCEPTION_IF_NULL(t);
     if (t->storage_info() == nullptr) {
       return;
@@ -966,7 +973,8 @@ void MindRTBackendBase::ContiguousArgs(const VectorRef &args) {
 
     GilReleaseWithCheck release_gil;
     MS_LOG(DEBUG) << "Tensor storage_info is not nullptr, id:" << t->id();
-    RunContiguousTask(t, false);
+
+    RunContiguousTask(t, stream_id, false);
   };
 
   for (const auto &arg : args) {
@@ -989,6 +997,15 @@ void MindRTBackendBase::ContiguousArgs(const VectorRef &args) {
         auto t = v->cast<tensor::TensorPtr>();
         dispatch_contiguous_task(t);
       }
+    }
+  }
+}
+
+void MindRTBackendBase::WaitMultiStream(const GraphCompilerInfo &graph_compiler_info) {
+  for (auto device_context : graph_compiler_info.device_contexts_) {
+    MS_EXCEPTION_IF_NULL(device_context);
+    if (device_context->device_res_manager_->single_op_multi_stream_enable()) {
+      device_context->device_res_manager_->SyncNotDefaultStreams();
     }
   }
 }
@@ -1017,9 +1034,9 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
   MS_EXCEPTION_IF_NULL(graph_iter->second);
   const auto &graph_compiler_info = *(graph_iter->second);
   // For pynative and graph mix execution.
-
-  ContiguousArgs(args);
+  ContiguousArgs(args, graph_compiler_info);
   WaitTaskFinish();
+  WaitMultiStream(graph_compiler_info);
 
   // Run in the pynative mode.
   MS_EXCEPTION_IF_NULL(outputs);
@@ -1214,7 +1231,7 @@ void MindRTBackendBase::ConstructOutputByTupleTensor(tensor::TensorPtr output_te
       device_context->device_context_key().device_id_);
     kernel_tensor->SetType(element_types[i]);
     kernel_tensor->SetShape((*tensor_shape)[i]);
-
+    kernel_tensor->set_stream_id(device_tensor->stream_id());
     auto split_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     MS_LOG(DEBUG) << "Create device tensor:" << split_device_tensor << " type:" << device_tensor->type_id();
     // Copy data from origin tensor to the split tensor.
@@ -1303,7 +1320,7 @@ void MindRTBackendBase::ConstructOutputs(const AnfNodePtr &output_node,
     auto make_tuple = output_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(make_tuple);
     VectorRef make_tuple_output;
-    for (size_t i = 1; i < make_tuple->inputs().size(); i++) {
+    for (size_t i = 1; i < make_tuple->size(); i++) {
       ConstructOutputs(make_tuple->input(i), output_tensors, output_position, &make_tuple_output, tuple_tensors);
     }
     outputs->emplace_back(std::move(make_tuple_output));

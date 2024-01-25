@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,6 +72,7 @@ const int kOptimizeO0 = 0;
 const int kOptimizeO1 = 1;
 constexpr auto kAscendVersion910 = "ascend910";
 constexpr auto kAscendVersion910b = "ascend910b";
+constexpr auto kAscendVersion910c = "ascend910c";
 
 const std::set<std::string> kTargetSet = {kCPUDevice, kGPUDevice, kAscendDevice, kDavinciDevice};
 // The default max available device memory is 1024GB.
@@ -170,10 +171,12 @@ enum MsCtxParam : unsigned {
   MS_CTX_MATMUL_ALLOW_HF32,
   MS_CTX_CONV_ALLOW_HF32,
   MS_CTX_OP_PRECISION_MODE,
+  MS_CTX_GE_OPTIONS,
   MS_CTX_CONV_FPROP_ALGO,
   MS_CTX_CONV_DGRAD_ALGO,
   MS_CTX_CONV_WGRAD_ALGO,
   MS_CTX_HOST_SCHEDULING_MAX_THRESHOLD,
+  MS_CTX_ENABLE_EXCEPTION_DUMP,
   MS_CTX_TYPE_STRING_END,
 
   // parameter numbers of each type
@@ -196,10 +199,12 @@ class MS_CORE_API MsContext {
   using EnvFunc = std::function<void(const std::string &, const std::string &)>;  // device name, library path
   static std::shared_ptr<MsContext> GetInstance();
 
+  void SetDeviceId();
   void Refresh();
 
   bool enable_dump_ir() const;
   std::string GetSaveGraphsPath() const;
+  int GetSaveGraphsLevel() const;
   bool CanDump(const DumpLevel &level) const;
   std::string backend_policy() const;
   bool set_backend_policy(const std::string &policy);
@@ -261,6 +266,11 @@ class MS_CORE_API MsContext {
 
   bool IsKByKExecutorMode() const;
 
+  std::string GetLoadPluginErrorStr() const { return load_plugin_error_(); }
+
+  void set_not_convert_jit(bool not_convert_jit) { not_convert_jit_ = not_convert_jit; }
+  bool not_convert_jit() { return not_convert_jit_; }
+
  private:
   void RefreshExecutionMode();
   void RefreshMemoryOffload();
@@ -268,6 +278,8 @@ class MS_CORE_API MsContext {
   void MarkReadStatus(MsCtxParam param) const;  // record status to mutable member params_read_status_
   template <typename T>
   void CheckReadStatus(MsCtxParam param, const T &value) const;
+  bool CheckIsKByK() const;
+  void SetAscendConfig();
 
   static DeviceSeter seter_;
   static std::shared_ptr<MsContext> inst_context_;
@@ -291,6 +303,7 @@ class MS_CORE_API MsContext {
   static std::map<std::string, InitDeviceTargetAndPolicy> &InitFuncMap();
   static std::map<std::string, std::string> &PluginPathMap();
   enum CellReuseLevel cell_reuse_level_ = CellReuseLevel::kNoCellReuse;
+  bool not_convert_jit_{false};
 };
 
 // set method implementation for type bool/int/uint32_t/float/std::string

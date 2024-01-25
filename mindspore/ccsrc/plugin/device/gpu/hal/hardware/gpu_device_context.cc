@@ -42,6 +42,7 @@
 #include "include/backend/kernel_graph.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
+#include "plugin/device/gpu/hal/device/gpu_event.h"
 #include "plugin/device/gpu/hal/device/gpu_kernel_task.h"
 #include "plugin/device/gpu/hal/device/gpu_hash_table_util.h"
 #include "plugin/device/gpu/optimizer/reg_gpu_const_input_to_attr.h"
@@ -243,7 +244,7 @@ void GPUDeviceContext::Destroy() {
   device_res_manager_->Destroy();
 }
 
-void *GPUDeviceResManager::AllocateMemory(size_t size) const {
+void *GPUDeviceResManager::AllocateMemory(size_t size, uint32_t stream_id) const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   if (!BindDeviceToCurrentThread(false)) {
     return nullptr;
@@ -251,7 +252,7 @@ void *GPUDeviceResManager::AllocateMemory(size_t size) const {
   if (swap_manager_ != nullptr) {
     return swap_manager_->AllocDeviceMemory(size);
   }
-  return mem_manager_->MallocMemFromMemPool(size, false);
+  return mem_manager_->MallocMemFromMemPool(size, false, false, stream_id);
 }
 
 void GPUDeviceResManager::FreeMemory(void *ptr) const {
@@ -285,7 +286,8 @@ bool GPUDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   if (swap_manager_ != nullptr) {
     device_ptr = swap_manager_->AllocDeviceMemory(address->GetSize());
   } else {
-    device_ptr = mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem());
+    device_ptr = mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem(), false,
+                                                    address->stream_id());
   }
   if (!device_ptr) {
     return false;
@@ -908,8 +910,34 @@ bool GPUDeviceResManager::CreateStream(size_t *stream_id) const {
   return GPUDeviceManager::GetInstance().CreateStream(stream_id);
 }
 
+bool GPUDeviceResManager::CreateStreamWithPriority(size_t *stream_id, int32_t priority) const {
+  return GPUDeviceManager::GetInstance().CreateStreamWithPriority(stream_id, priority);
+}
+
+bool GPUDeviceResManager::single_op_multi_stream_enable() const {
+  return GPUDeviceManager::GetInstance().single_op_multi_stream_enable();
+}
+
+void GPUDeviceResManager::set_single_op_multi_stream_enable(bool single_op_multi_stream_enable) {
+  return GPUDeviceManager::GetInstance().set_single_op_multi_stream_enable(single_op_multi_stream_enable);
+}
+
+void *GPUDeviceResManager::GetStream(size_t stream_id) const {
+  return GPUDeviceManager::GetInstance().GetStream(stream_id);
+}
+
 bool GPUDeviceResManager::DestroyStream(size_t stream_id) const {
   return GPUDeviceManager::GetInstance().DestroyStream(stream_id);
+}
+
+void GPUDeviceResManager::SetCurrentStreamId(size_t stream_id) {
+  GPUDeviceManager::GetInstance().set_current_stream(stream_id);
+}
+
+size_t GPUDeviceResManager::GetCurrentStreamId() const { return GPUDeviceManager::GetInstance().current_stream(); }
+
+bool GPUDeviceResManager::QueryStream(size_t stream_id) const {
+  return GPUDeviceManager::GetInstance().QueryStream(stream_id);
 }
 
 bool GPUDeviceResManager::SyncStream(size_t stream_id) const {
@@ -939,6 +967,11 @@ bool GPUDeviceResManager::SyncAllStreams() const {
 #endif
   return result;
 }
+bool GPUDeviceResManager::SyncNotDefaultStreams() const {
+  return GPUDeviceManager::GetInstance().SyncNotDefaultStreams();
+}
+
+size_t GPUDeviceResManager::DefaultStream() const { return GPUDeviceManager::GetInstance().default_stream_id(); }
 
 uint32_t GPUKernelExecutor::GetRankID() const {
   bool collective_inited = distributed::collective::CollectiveManager::instance()->initialized();
@@ -951,11 +984,20 @@ uint32_t GPUKernelExecutor::GetRankID() const {
   return rank_id;
 }
 
+DeviceEventPtr GPUDeviceResManager::CreateEventWithFlag(bool enable_timing, bool blocking) const {
+  uint32_t flag =
+    (blocking ? cudaEventBlockingSync : cudaEventDefault) | (enable_timing ? cudaEventDefault : cudaEventDisableTiming);
+  auto event = std::make_shared<GpuEvent>(flag);
+  MS_EXCEPTION_IF_NULL(event);
+  return event;
+}
+
 bool GPUKernelExecutor::ExecuteKernelTask(const pynative::KernelTaskType &task_type,
                                           const device::DeviceAddressPtrList &input_addr_list,
                                           const TensorStorageInfoPtrList &input_storage_list,
-                                          const device::DeviceAddressPtrList &output_addr_list) const {
-  auto stream = GPUDeviceManager::GetInstance().default_stream();
+                                          const device::DeviceAddressPtrList &output_addr_list,
+                                          const size_t &stream_id) const {
+  auto stream = GPUDeviceManager::GetInstance().GetStream(stream_id);
   MS_EXCEPTION_IF_NULL(stream);
 
   auto task_context = std::make_shared<pynative::KernelTaskContext>(device_context_, input_addr_list,
@@ -1019,6 +1061,24 @@ DeprecatedInterface *GPUDeviceContext::GetDeprecatedInterface() {
   return deprecated_interface_.get();
 }
 
+uint32_t GPUDeviceContext::GetDeviceCount() { return IntToUint(CudaDriver::device_count()); }
+
+std::string GPUDeviceContext::GetDeviceName(uint32_t device_id) {
+  return GPUdeviceInfo::GetInstance(device_id)->name();
+}
+
+std::vector<int> GPUDeviceContext::GetDeviceCapability(uint32_t device_id) {
+  int major_sm = GPUdeviceInfo::GetInstance(device_id)->major_sm();
+  int minor_sm = GPUdeviceInfo::GetInstance(device_id)->minor_sm();
+  return {major_sm, minor_sm};
+}
+
+cudaDeviceProp GPUDeviceContext::GetDeviceProperties(uint32_t device_id) {
+  return GPUdeviceInfo::GetInstance(device_id)->properties();
+}
+
+std::string GPUDeviceContext::GetArchList() { return STRINGIZE(CUDA_ARCH_LIST); }
+
 std::shared_ptr<void> GPUDeviceResManager::AllocateHostMemory(size_t size) const {
   void *ptr;
   if (CudaDriver::AllocHostPinnedMem(size, &ptr) != size) {
@@ -1042,6 +1102,36 @@ MSCONTEXT_REGISTER_INIT_FUNC(kGPUDevice, [](MsContext *ctx) -> void {
   }
 });
 #endif
+
+// Register functions to _c_expression so python hal module could call GPU device interfaces.
+void PybindGPUStatelessFunc(py::module *m) {
+  MS_EXCEPTION_IF_NULL(m);
+  (void)py::class_<cudaDeviceProp>(*m, "cudaDeviceProp")
+    .def_readonly("name", &cudaDeviceProp::name)
+    .def_readonly("major", &cudaDeviceProp::major)
+    .def_readonly("minor", &cudaDeviceProp::minor)
+    .def_readonly("is_multi_gpu_board", &cudaDeviceProp::isMultiGpuBoard)
+    .def_readonly("is_integrated", &cudaDeviceProp::integrated)
+    .def_readonly("multi_processor_count", &cudaDeviceProp::multiProcessorCount)
+    .def_readonly("total_memory", &cudaDeviceProp::totalGlobalMem)
+    .def_readonly("warp_size", &cudaDeviceProp::warpSize)
+    .def("__repr__", [](const cudaDeviceProp &p) {
+      std::ostringstream s;
+      s << "cudaDeviceProp(name='" << p.name << "', major=" << p.major << ", minor=" << p.minor
+        << ", is_multi_gpu_board=" << p.isMultiGpuBoard << ", is_integrated=" << p.integrated
+        << ", multi_processor_count=" << p.multiProcessorCount << ", total_memory=" << p.totalGlobalMem / (1024 * 1024)
+        << "MB, warp_size=" << p.warpSize << ")";
+      return s.str();
+    });
+  (void)m->def("gpu_get_device_count", &GPUDeviceContext::GetDeviceCount, "Get GPU device count.");
+  (void)m->def("gpu_get_device_name", &GPUDeviceContext::GetDeviceName, "Get GPU device name of specified device id.");
+  (void)m->def("gpu_get_device_capability", &GPUDeviceContext::GetDeviceCapability,
+               "Get GPU major and minor capability of specified device id.");
+  (void)m->def("gpu_get_device_properties", &GPUDeviceContext::GetDeviceProperties,
+               "Get GPU device properties of specified device id.");
+  (void)m->def("gpu_get_arch_list", &GPUDeviceContext::GetArchList, "Get GPU arch list of this MindSpore package.");
+}
+REGISTER_DEV_STATELESS_FUNC_CB(kGPUDevice, PybindGPUStatelessFunc);
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore

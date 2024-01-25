@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,9 +53,7 @@ class CholeskyCpuKernelMod : public NativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, CholeskyFunc>> func_list_;
   CholeskyFunc kernel_func_;
 
-  bool flag_{true};
   bool upper_{false};
-  bool lower_{true};
   bool clean_{true};
   size_t outer_batch_{1};
   size_t input_row_{1};

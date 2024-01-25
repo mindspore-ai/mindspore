@@ -94,7 +94,7 @@ std::vector<int64_t> ReshapeInfo::GetInputShape(const AnfNodePtr &shape_input_no
   } else if (IsPrimitiveCNode(shape_input_node, prim::kPrimMakeTuple)) {
     auto shape_input_cnode = shape_input_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(shape_input_cnode);
-    for (size_t i = 1; i < shape_input_cnode->inputs().size(); ++i) {
+    for (size_t i = 1; i < shape_input_cnode->size(); ++i) {
       auto input_node = shape_input_cnode->input(i);
       MS_EXCEPTION_IF_NULL(input_node);
       if (input_node->isa<ValueNode>()) {
@@ -216,7 +216,7 @@ bool DstShapeIsConstant(const AnfNodePtr &shape_input_node) {
   if (IsPrimitiveCNode(shape_input_node, prim::kPrimMakeTuple)) {
     auto shape_input_cnode = shape_input_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(shape_input_cnode);
-    for (size_t i = 1; i < shape_input_cnode->inputs().size(); ++i) {
+    for (size_t i = 1; i < shape_input_cnode->size(); ++i) {
       auto input_node = shape_input_cnode->input(i);
       MS_EXCEPTION_IF_NULL(input_node);
       if (input_node->isa<ValueNode>()) {
@@ -253,11 +253,10 @@ void ReshapeInfo::ChangeDynamicDstShapeForSkipRedistribution(const AnfNodePtr &s
   // but the size of out_strategy's size may be not equal to the size of dst shape for reshape1,
   // here find the total shard num in the constant part of the original shape,
   // and find a constant shape from the dst shape that can be divided by it and perform the division
-  if (out_strategy.size() != (make_tuple_cnode->inputs().size() - 1)) {
+  if (out_strategy.size() != (make_tuple_cnode->size() - 1)) {
     MS_LOG(WARNING) << name_ << ": It may be a scene of two consecutive reshapes， the out_strategy size is "
-                    << out_strategy.size() << ", but the size of make_tuple's input is "
-                    << make_tuple_cnode->inputs().size() - 1 << ", the input shape is " << inputs_shape_[0]
-                    << ", the output shape is " << outputs_shape_[0];
+                    << out_strategy.size() << ", but the size of make_tuple's input is " << make_tuple_cnode->size() - 1
+                    << ", the input shape is " << inputs_shape_[0] << ", the output shape is " << outputs_shape_[0];
     Shape input_shape = inputs_shape_[0];
     if (input_shape.size() != out_strategy.size()) {
       MS_LOG(EXCEPTION) << name_ << ": the size of input shape is not equal to the size of out_strategy";
@@ -272,7 +271,7 @@ void ReshapeInfo::ChangeDynamicDstShapeForSkipRedistribution(const AnfNodePtr &s
     if (constant_shard_num <= 1) {
       return;
     }
-    for (size_t i = 1; i < make_tuple_cnode->inputs().size(); ++i) {
+    for (size_t i = 1; i < make_tuple_cnode->size(); ++i) {
       auto input_node = make_tuple_cnode->input(i);
       MS_EXCEPTION_IF_NULL(input_node);
       auto value_node = GetValueNode(input_node);
@@ -292,7 +291,7 @@ void ReshapeInfo::ChangeDynamicDstShapeForSkipRedistribution(const AnfNodePtr &s
   }
 
   // common reshape, handle the constant part of the dst shape, div by the corresponding out_strategy
-  for (size_t i = 1; i < make_tuple_cnode->inputs().size(); ++i) {
+  for (size_t i = 1; i < make_tuple_cnode->size(); ++i) {
     if (out_strategy[i - 1] <= 1) {
       continue;
     }

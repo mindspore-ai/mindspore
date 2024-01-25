@@ -82,7 +82,7 @@ class Area {
     for (auto node : this->spy_cnodes_) {
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
-      for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+      for (size_t i = 1; i < cnode->size(); ++i) {
         AnfNodePtr in_node = cnode->input(i);
         if (!IsExternalCNode(in_node)) {
           continue;
@@ -423,7 +423,7 @@ class Splitter {
     for (auto node : sub_nodes) {
       if (auto cnode = node->cast<CNodePtr>(); cnode != nullptr) {
         cnode->set_func_graph(main_func_graph_);
-        for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+        for (size_t i = 1; i < cnode->size(); ++i) {
           auto iter = param_input.find(cnode->input(i));
           if (iter != param_input.end()) {
             cnode->set_input(i, iter->second);
@@ -484,7 +484,7 @@ class Splitter {
       if (cnode == nullptr) {
         return;
       }
-      for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+      for (size_t i = 1; i < cnode->size(); ++i) {
         auto input_node = cnode->input(i);
         auto iter = replace_map.find(input_node);
         if (iter != replace_map.end()) {
@@ -520,7 +520,7 @@ class Splitter {
       if (sub_cnode == nullptr) {
         continue;
       }
-      for (size_t i = 1; i < sub_cnode->inputs().size(); ++i) {
+      for (size_t i = 1; i < sub_cnode->size(); ++i) {
         auto in_node = sub_cnode->input(i);
         if (in_node->isa<CNode>()) {
           continue;

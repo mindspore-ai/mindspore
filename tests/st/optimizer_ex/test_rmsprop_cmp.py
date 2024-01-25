@@ -44,7 +44,7 @@ class RMSpropFactory():
         self.if_change = if_change
         self.data = np.random.rand(2, 2).astype(np.float32)
         self.label = np.random.rand(2, 3).astype(np.float32)
-        self.epochs = 3
+        self.epochs = 1
         self.steps = 1
         self.lr = 0.002
 

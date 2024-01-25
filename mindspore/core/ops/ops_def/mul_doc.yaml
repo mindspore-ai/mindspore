@@ -35,7 +35,6 @@ mul:
             >>> from mindspore import Tensor, ops
             >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
             >>> y = Tensor(np.array([4.0, 5.0, 6.0]), mindspore.float32)
-            >>> mul = ops.Mul()
-            >>> output = mul(x, y)
+            >>> output = ops.mul(x, y)
             >>> print(output)
             [ 4. 10. 18.]

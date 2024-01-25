@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/upsample_trilinear_3d_grad_cpu_kernel.h"
 #include <string>
-#include "kernel/kernel_get_value.h"
 #include "kernel/ops_utils.h"
 #include "mindapi/base/type_id.h"
 #include "ops/grad/upsample_trilinear_3d_grad.h"

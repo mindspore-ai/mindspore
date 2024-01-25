@@ -20,8 +20,13 @@ import pytest
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
-def test_sit_optimizer_parallel():
-    sh_path = os.path.split(os.path.realpath(__file__))[0]
-    ret = os.system(f"sh {sh_path}/run_optimizer_parallel.sh")
-    os.system(f"grep -E 'ERROR|error' {sh_path}/optimizer_parallel*/optimizer_parallel*log -C 3")
+def test_msrun_sit_optimizer_parallel():
+    '''
+    Feature: Optimizer parallel.
+    Description: Test optimizer parallel feature along with model parallel.
+    Expectation: Run success.
+    '''
+    ret = os.system("msrun --worker_num=4 --local_worker_num=4 --master_addr=127.0.0.1 --master_port=10969 "
+                    "--join=True --log_dir=./sit_optimizer_parallel_logs pytest -s -v "
+                    "optimizer_parallel.py::test_optimizer_parallel_auto_4p_6_parameter_same_strategy_1_1_2_1_momentum")
     assert ret == 0

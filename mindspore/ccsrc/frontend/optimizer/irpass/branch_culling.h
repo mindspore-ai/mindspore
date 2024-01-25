@@ -52,11 +52,20 @@ class SwitchSimplify : public OptimizerCaller {
                           << " not support this condition value: " << value_ptr->ToString();
       }
 
-      MS_LOG(DEBUG) << "condition value: " << value_ptr->ToString() << ", cond: " << cond_value;
+      MS_LOG(DEBUG) << "condition value: " << value_ptr->ToString() << ", cond: " << cond_value
+                    << ", node: " << node->DebugString();
+      AnfNodePtr branch_node;
       if (cond_value) {
-        return true_br.GetNode(node);
+        branch_node = true_br.GetNode(node);
+      } else {
+        branch_node = false_br.GetNode(node);
       }
-      return false_br.GetNode(node);
+      auto fg = GetValuePtr<FuncGraph>(branch_node);
+      if (fg != nullptr) {
+        MS_LOG(DEBUG) << "No recursive, " << fg->ToString();
+        fg->set_flag(FUNC_GRAPH_FLAG_NO_RECURSIVE, true);
+      }
+      return branch_node;
     };
 
     auto IsDeterminateCondition = [](const AnfNodePtr &node) -> bool { return IsValueNode<BoolImm>(node); };

@@ -17,8 +17,9 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_MEMORY_FREE_ACTOR_H_
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_MEMORY_FREE_ACTOR_H_
 
-#include <string>
 #include <memory>
+#include <set>
+#include <string>
 #include "runtime/graph_scheduler/actor/memory_aware_actor.h"
 
 namespace mindspore {
@@ -42,13 +43,23 @@ class MemoryFreeActor : public MemoryAwareActor {
   // Get the member.
   SomasInfo *somas_info() const { return somas_info_; }
 
+  void AddStreamId(uint32_t stream_id) { (void)stream_ids_.emplace(stream_id); }
+  std::set<uint32_t> &stream_ids() { return stream_ids_; }
+
+  // Process somas cross streams memory synchronize.
+  void ProcessSomasCrossStreamMemorySynchronization(OpContext<DeviceTensor> *const context);
+
  protected:
-  void Run(OpContext<DeviceTensor> *const context) override { PostRun(context); }
+  void Run(OpContext<DeviceTensor> *const context) override {
+    ProcessSomasCrossStreamMemorySynchronization(context);
+    PostRun(context);
+  }
 
  private:
   friend class SchedulerHelper;
 
   SomasInfo *somas_info_;
+  std::set<uint32_t> stream_ids_;
 };
 
 using MemoryFreeActorPtr = std::shared_ptr<MemoryFreeActor>;

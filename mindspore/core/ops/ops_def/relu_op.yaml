@@ -1,10 +1,12 @@
 #operator relu
 relu:
   args:
-    x:
+    input:
       dtype: tensor
   returns:
     output:
       dtype: tensor
   class:
     name: ReLU
+  function:
+    disable: True

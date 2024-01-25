@@ -22,3 +22,5 @@ minimum_grad:
             dtype: tensor
         y2: 
             dtype: tensor
+    function:
+        disable: True

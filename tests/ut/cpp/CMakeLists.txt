@@ -17,7 +17,6 @@ message("PYTHON_INCLUDE_DIRS = ${PYTHON_INCLUDE_DIRS}")
 message("PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
 include_directories(${PYTHON_INCLUDE_DIRS})
 include_directories(${MS_CCSRC_PATH})
-include_directories(${MS_CCSRC_PATH}/c_api)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/core)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/core/mindrt/include)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/core/mindrt/src)
@@ -44,15 +43,10 @@ link_directories(${MS_CCSRC_BUILD_PATH}/minddata/mindrecord)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/kernels/image)
 
-#file(GLOB_RECURSE UT_CORE_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./core/abstract/*.cc ./core/utils/*.cc
-#        ./ir/dtype/*.cc ./ir/*.cc ./mindapi/*.cc ./mindir/*.cc ./ops/*.cc ./ops/view/*.cc ./base/*.cc)
 file(GLOB_RECURSE UT_CORE_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./ops/*.cc)
-file(GLOB_RECURSE UT_CORE_OPS_TODO_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./ops/todo/*.cc)
-list(REMOVE_ITEM UT_CORE_SRCS ${UT_CORE_OPS_TODO_SRCS})
-
 file(GLOB_RECURSE UT_MINDDATA_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./dataset/*.cc ./mindrecord/*.cc)
 file(GLOB_RECURSE UT_MINDDATA_COMMON_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./dataset/common/*.cc)
-file(GLOB_RECURSE UT_API_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./cxx_api/*.cc ./c_api/*.cc)
+file(GLOB_RECURSE UT_API_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./cxx_api/*.cc)
 file(GLOB_RECURSE UT_FRONTEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./operator/*.cc ./optimizer/*.cc
         ./parallel/*.cc ./pipeline/*.cc ./pynative/*.cc)
 file(GLOB_RECURSE UT_OLD_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./device/*.cc ./kernel/*.cc
@@ -271,7 +265,7 @@ list(REMOVE_ITEM MINDSPORE_SRC_LIST
 
 add_library(_ut_mindspore_obj STATIC ${MINDSPORE_SRC_LIST} $<TARGET_OBJECTS:core_proto_obj> $<TARGET_OBJECTS:mindrt_mid>
         $<TARGET_OBJECTS:common_shared_lib_obj> $<TARGET_OBJECTS:_mindspore_utils_obj>
-        $<TARGET_OBJECTS:_mindspore_common_obj> $<TARGET_OBJECTS:mindspore_c_api_obj> ${dataengine_submodules}
+        $<TARGET_OBJECTS:_mindspore_common_obj> ${dataengine_submodules}
         $<TARGET_OBJECTS:mindrecord_obj> $<TARGET_OBJECTS:md_log_adapter_obj>)
 add_dependencies(_ut_mindspore_obj proto_input_ut)
 

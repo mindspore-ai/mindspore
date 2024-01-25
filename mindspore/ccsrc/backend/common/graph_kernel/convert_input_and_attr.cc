@@ -244,7 +244,8 @@ bool ConvertFrontEndToGraphKernel::Run(const FuncGraphPtr &func_graph) {
 }
 
 void ConvertGraphKernelToFrontEnd::AddAttrToInput(const CNodePtr &cnode, const std::string &arg_name,
-                                                  const std::string &arg_handler, const PrimitivePtr &primitive) {
+                                                  const std::string &arg_handler, const PrimitivePtr &primitive,
+                                                  size_t pos) {
   auto value = primitive->GetAttr(arg_name);
   ValueNodePtr value_node;
   if (!arg_handler.empty()) {
@@ -262,7 +263,9 @@ void ConvertGraphKernelToFrontEnd::AddAttrToInput(const CNodePtr &cnode, const s
   auto cb = Callback::Instance();
   MS_EXCEPTION_IF_NULL(cb);
   cb->SetEmptyKernelInfo(value_node);
-  cnode->add_input(value_node);
+  auto inputs = cnode->inputs();
+  inputs.insert(inputs.begin() + pos, value_node);
+  cnode->set_inputs(inputs);
   primitive->DelAttr(arg_name);
 }
 
@@ -309,16 +312,21 @@ bool ConvertGraphKernelToFrontEnd::Process(const AnfNodePtr &node) {
   // 1. Convert attr to input.
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto ori_input_size = cnode->size() - 1;
-  auto iter = op_def_args.cbegin() + ori_input_size;
-  for (; iter != op_def_args.cend(); ++iter) {
+  auto ori_input_size = AnfUtils::GetInputTensorNum(cnode);
+  if (ori_input_size > op_def_args.size()) {
+    MS_LOG(INFO) << node->fullname_with_scope() << " ori_input_size:" << ori_input_size << " > "
+                 << "op_def_args.size():" << op_def_args.size();
+  }
+
+  for (auto i = ori_input_size; i < op_def_args.size(); i++) {
     // as_init_arg_ == 1 indicate the arg need convert
-    if (iter->as_init_arg_ != 1) {
-      MS_LOG(EXCEPTION) << primitive->name() << "'s input:" << iter->arg_name_
+    if (op_def_args[i].as_init_arg_ != 1) {
+      MS_LOG(EXCEPTION) << primitive->name() << "'s input:" << op_def_args[i].arg_name_
                         << " must have as_init_arg_ when convert attr to input.";
     }
-    MS_LOG(DEBUG) << cnode->DebugString() << " convert attr [" << iter->arg_name_ << "] to input.";
-    ConvertGraphKernelToFrontEnd::AddAttrToInput(cnode, iter->arg_name_, iter->arg_handler_, primitive);
+    MS_LOG(DEBUG) << cnode->DebugString() << " convert attr [" << op_def_args[i].arg_name_ << "] to input: " << i;
+    ConvertGraphKernelToFrontEnd::AddAttrToInput(cnode, op_def_args[i].arg_name_, op_def_args[i].arg_handler_,
+                                                 primitive, i + 1);
     changed = true;
   }
 

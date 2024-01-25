@@ -203,7 +203,7 @@ std::vector<std::pair<CNodePtr, size_t>> GetFreeVariable(const FuncGraphPtr &fun
       continue;
     }
 
-    for (size_t i = 0; i < cnode->inputs().size(); ++i) {
+    for (size_t i = 0; i < cnode->size(); ++i) {
       auto &input = cnode->input(i);
       if (input->func_graph() != nullptr && input->func_graph() != func_graph) {
         (void)free_variables.emplace_back(std::make_pair(cnode, i));
@@ -374,13 +374,16 @@ bool IsValueContainScalar(const ValuePtr &value) {
 }
 
 bool IsOutputContainScalar(const CNodePtr &output_cnode) {
-  return std::any_of(output_cnode->inputs().cbegin() + 1, output_cnode->inputs().end(), [](const AnfNodePtr &node) {
-    if (node->isa<ValueNode>()) {
-      auto value_node = node->cast<ValueNodePtr>();
-      return IsValueContainScalar(value_node->value());
-    }
-    return false;
-  });
+  return std::any_of(output_cnode->weak_inputs().cbegin() + 1, output_cnode->weak_inputs().end(),
+                     [](const AnfNodeWeakPtr &weak_node) {
+                       auto node = weak_node.lock();
+                       MS_EXCEPTION_IF_NULL(node);
+                       if (node->isa<ValueNode>()) {
+                         auto value_node = node->cast<ValueNodePtr>();
+                         return IsValueContainScalar(value_node->value());
+                       }
+                       return false;
+                     });
 }
 
 bool CheckMiddleGraphOutputContainScalar(
@@ -397,7 +400,7 @@ bool CheckMiddleGraphOutputContainScalar(
     const auto &middle_graph_output_pair = GetRealOutputNodes(middle_call_graph);
     const auto middle_graph_output_cnode = middle_graph_output_pair.first;
     MS_EXCEPTION_IF_NULL(middle_graph_output_cnode);
-    auto middle_graph_output_cnode_size = middle_graph_output_cnode->inputs().size();
+    auto middle_graph_output_cnode_size = middle_graph_output_cnode->size();
     if (middle_graph_output_cnode_size <= 1) {
       MS_LOG(DEBUG) << "CNode's inputs size should exceed 1, " << middle_graph_output_cnode->DebugString(recur_2);
       return false;
@@ -429,14 +432,14 @@ bool CheckMiddleGraphOutputPyInterpret(
     const auto &middle_graph_output_pair = GetRealOutputNodes(middle_call_graph);
     const auto middle_graph_output_cnode = middle_graph_output_pair.first;
     MS_EXCEPTION_IF_NULL(middle_graph_output_cnode);
-    auto middle_graph_output_cnode_size = middle_graph_output_cnode->inputs().size();
+    auto middle_graph_output_cnode_size = middle_graph_output_cnode->size();
     if (middle_graph_output_cnode_size <= 1) {
       MS_LOG(DEBUG) << "CNode's inputs size should exceed 1, " << middle_graph_output_cnode->DebugString(recur_2);
       return false;
     }
-    bool exist_interpret =
-      std::any_of(middle_graph_output_cnode->inputs().cbegin() + 1, middle_graph_output_cnode->inputs().cend(),
-                  [](const AnfNodePtr &node) { return IsPrimitiveCNode(node, prim::kPrimPyInterpret); });
+    bool exist_interpret = std::any_of(
+      middle_graph_output_cnode->weak_inputs().cbegin() + 1, middle_graph_output_cnode->weak_inputs().cend(),
+      [](const AnfNodeWeakPtr &weak_node) { return IsPrimitiveCNode(weak_node.lock(), prim::kPrimPyInterpret); });
     contain_py_interpret |= exist_interpret;
     if (contain_py_interpret) {
       return true;
@@ -479,7 +482,7 @@ void Parser::TransformParallelCall() {
       MS_LOG(DEBUG) << "Tail call graphs return: {former: " << former_call_graph->get_return()->DebugString(recur_3)
                     << ", middle: " << middle_call_graph->get_return()->DebugString(recur_3) << "}";
       const auto &[middle_graph_output_cnode, middle_graph_dependency_node] = GetRealOutputNodes(middle_call_graph);
-      auto middle_graph_output_cnode_size = middle_graph_output_cnode->inputs().size();
+      auto middle_graph_output_cnode_size = middle_graph_output_cnode->size();
       if (middle_graph_output_cnode_size <= 1) {
         MS_LOG(DEBUG) << "CNode's inputs size should exceed 1, " << middle_graph_output_cnode->DebugString(recur_2);
         continue;
@@ -4143,7 +4146,7 @@ bool Parser::IsPopOperation(const AnfNodePtr &node) const {
     MS_EXCEPTION_IF_NULL(attr_cnode);
     constexpr size_t attr_cnode_size = 3;
     constexpr size_t member_index = 2;
-    if (attr_cnode->inputs().size() < attr_cnode_size) {
+    if (attr_cnode->size() < attr_cnode_size) {
       MS_LOG(EXCEPTION) << "The attr operate has wrong input.";
     }
     auto member_node = attr_cnode->input(member_index);
@@ -4620,7 +4623,7 @@ void RemoveJumpNodeArgs(const FunctionBlockPtr &block, const HashSet<size_t> &ne
       continue;
     }
     std::vector<AnfNodePtr> new_inputs = {jump_node->input(0)};
-    for (size_t arg_index = 0; arg_index < jump_node->inputs().size() - 1; ++arg_index) {
+    for (size_t arg_index = 0; arg_index < jump_node->size() - 1; ++arg_index) {
       if (need_removed_indexes.find(arg_index) == need_removed_indexes.end()) {
         new_inputs.push_back(jump_node->input(arg_index + 1));
       }

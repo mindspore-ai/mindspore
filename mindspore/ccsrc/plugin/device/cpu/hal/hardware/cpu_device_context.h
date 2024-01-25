@@ -43,7 +43,7 @@ class CPUDeviceResManager : public DeviceResManager {
   bool LoadCollectiveCommLib() override;
 
   // Relevant function to allocate and free device memory of raw ptr.
-  void *AllocateMemory(size_t size) const override;
+  void *AllocateMemory(size_t size, uint32_t stream_id = UINT32_MAX) const override;
   void FreeMemory(void *ptr) const override;
   void FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
                        const std::vector<size_t> &keep_addr_sizes) const override;
@@ -74,7 +74,7 @@ class CPUKernelExecutor : public KernelExecutor {
 
   bool ExecuteKernelTask(const pynative::KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
                          const TensorStorageInfoPtrList &input_storage_list,
-                         const device::DeviceAddressPtrList &output_addr_list) const override;
+                         const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id) const override;
 
  private:
   // Select the matching backend kernels according to the data type and format of input and output for all
@@ -100,8 +100,7 @@ class CPUKernelExecutor : public KernelExecutor {
 
 class CPUDeviceContext : public DeviceInterface<CPUKernelExecutor, CPUDeviceResManager> {
  public:
-  explicit CPUDeviceContext(const DeviceContextKey &device_context_key)
-      : DeviceInterface(device_context_key), initialized_(false) {}
+  explicit CPUDeviceContext(const DeviceContextKey &device_context_key) : DeviceInterface(device_context_key) {}
   ~CPUDeviceContext() override = default;
 
   void Initialize() override;
@@ -112,7 +111,6 @@ class CPUDeviceContext : public DeviceInterface<CPUKernelExecutor, CPUDeviceResM
 
  private:
   DISABLE_COPY_AND_ASSIGN(CPUDeviceContext);
-  bool initialized_;
 };
 }  // namespace cpu
 }  // namespace device

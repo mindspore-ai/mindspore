@@ -191,14 +191,24 @@ class ManualImpl : public GatherUtil {
   void set_attrs(const mindspore::HashMap<std::string, ValuePtr> &a) { attrs_ = a; }
   void set_replace_op_name(const std::string &a) { replace_op_name_ = a; }
 
- private:
+ protected:
   Status InferOffset();
+  std::string target_ = DEVICE;
+  mindspore::HashMap<std::string, ValuePtr> attrs_;
+  std::string replace_op_name_;
+  int64_t index_offset_ = 0;
+
+ private:
   Shape param_split_shapes_;
   Shape index_offsets_;
-  int64_t index_offset_ = 0;
-  std::string target_ = DEVICE;
-  std::string replace_op_name_;
-  mindspore::HashMap<std::string, ValuePtr> attrs_;
+};
+
+class GatherManualImpl : public ManualImpl {
+ public:
+  GatherManualImpl(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape, int64_t axis)
+      : ManualImpl(name, inputs_shape, outputs_shape, axis) {}
+  ~GatherManualImpl() override = default;
+  Status InferReplaceGraph(const CNodePtr &cnode) override;
 };
 
 // SHARD_AXIS_0_DYNAMIC, SHARD_AXIS_0_STATIC and SHARD_AXIS_1 mode: batch_dims = 0, and split axis
@@ -318,6 +328,8 @@ class GatherInfo : public OperatorInfo {
   Status GetAttrs() override;
   virtual void DealWithBatchDimsMirrorOp() noexcept;
   virtual void GetBatchDims() noexcept;
+  virtual GatherUtilPtr MakeManualUtil();
+  int64_t axis_ = 0;
 
  private:
   GatherMode GetGatherMode(const Shape &param_strategy, const Shape &indices_strategy) const;
@@ -327,7 +339,6 @@ class GatherInfo : public OperatorInfo {
   Status ComputeReplaceOp();
   bool ShardBatchAndAxis(const Shape &param_strategy, const Shape &indices_strategy) const;
 
-  int64_t axis_ = 0;
   std::string target_ = DEVICE;
   int64_t bias_ = 0;
   std::string replace_op_name_ = GATHERV2;
@@ -349,6 +360,7 @@ class SparseGatherV2Info final : public GatherInfo {
  protected:
   void DealWithBatchDimsMirrorOp() noexcept override {}
   void GetBatchDims() noexcept override {}
+  GatherUtilPtr MakeManualUtil() override;
 };
 
 class EmbeddingLookupInfo final : public GatherInfo {
@@ -361,6 +373,7 @@ class EmbeddingLookupInfo final : public GatherInfo {
  protected:
   void DealWithBatchDimsMirrorOp() noexcept override {}
   void GetBatchDims() noexcept override {}
+  GatherUtilPtr MakeManualUtil() override;
 };
 }  // namespace parallel
 }  // namespace mindspore

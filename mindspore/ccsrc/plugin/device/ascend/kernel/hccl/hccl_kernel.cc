@@ -35,6 +35,8 @@ namespace {
 static std::map<std::string, std::string> kMsOpNameToHcomHcclType = {
   {mindspore::kAllReduceOpName, mindspore::kHcomOpTypeAllReduce},
   {mindspore::kReduceOpName, mindspore::kHcomOpTypeReduce},
+  {mindspore::kCollectiveScatterOpName, mindspore::kHcomOpTypeScatter},
+  {mindspore::kCollectiveGatherOpName, mindspore::kHcomOpTypeGather},
   {mindspore::kAllGatherOpName, mindspore::kHcomOpTypeAllGather},
   {mindspore::kBroadcastOpName, mindspore::kHcomOpTypeBroadcast},
   {mindspore::kSendOpName, mindspore::kHcomOpTypeSend},
@@ -141,7 +143,7 @@ void HcclKernel::CalLoopSize() {
                       << hccl_kernel_input_shape_list_.size();
   }
   loop_size_ = hccl_data_type_list_.size();
-  if (hccl_kernel_input_shape_list_.size() > 1 && kernel_name_ == kAllGatherOpName && fusion >= 1) {
+  if (hccl_kernel_input_shape_list_.size() > 1 && (kernel_name_ == kAllGatherOpName) && fusion >= 1) {
     loop_size_ *= static_cast<ulong>(rank_size);
   }
   if (kernel_name_ == kReduceScatterOpName && fusion >= 1) {

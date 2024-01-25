@@ -1,4 +1,4 @@
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2021-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -3397,9 +3397,9 @@ test_case_nn_ops = [
                         Tensor([[[[1., 4., 6., 4.]]]], mstype.float32)],
         'desc_bprop': [Tensor([[[[1., 4., 6., 4.]]]], mstype.float32)],
         'skip': ['backward']}),
-    ('ResizeBilinear', {
-        'block': P.ResizeBilinear((5, 5)),
-        'desc_inputs': [Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mstype.float16)],
+    ('ResizeBilinearV2', {
+        'block': P.ResizeBilinearV2(),
+        'desc_inputs': [Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mstype.float16), Tensor([5, 5], mstype.int64)],
         'desc_bprop': [Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]],
                               mstype.float16)]}),
     ('ResizeBilinearGrad', {

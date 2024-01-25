@@ -51,6 +51,13 @@ MS_CORE_API TypePtr TypeIdToType(TypeId id);
 /// \return The string of Type.
 MS_CORE_API std::string TypeIdToString(TypeId id, bool to_lower = false);
 
+/// \brief Get the unit size in bytes according to a TypeId.
+///
+/// \param[in] id Define a TypeId.
+///
+/// \return The unit size of the id.
+MS_CORE_API size_t UnitSizeInBytes(TypeId id);
+
 /// \brief String defines a type of string.
 class MS_CORE_API String final : public Object {
  public:

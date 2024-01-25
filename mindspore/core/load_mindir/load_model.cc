@@ -1810,7 +1810,7 @@ bool MSANFModelParser::SetEmptyTensorProtoCNodeAbstract(const AnfNodePtr &node_p
     } else {
       auto cnode_ptr = node_ptr->cast<CNodePtr>();
       AbstractBasePtrList elem;
-      for (size_t index = 1; index < cnode_ptr->inputs().size(); ++index) {
+      for (size_t index = 1; index < cnode_ptr->size(); ++index) {
         auto abs = cnode_ptr->input(index)->abstract();
         if (abs != nullptr) {
           if (abs->GetValueTrack() == nullptr) {

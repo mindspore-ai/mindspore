@@ -423,14 +423,17 @@ Tensor::~Tensor() {
   }
 #ifdef ENABLE_PYTHON
   try {
+    // The default destructor will not acquire the Python GIL when it destructs
+    // the class members, so we need to handle py::object manually.
     if (Py_IsInitialized() > 0) {
-      if (static_cast<bool>(python_dict_)) {  // if it contains data
+      if (static_cast<bool>(python_dict_)) {
         // Acquire Python GIL
         py::gil_scoped_acquire gil_acquire;
-        if (python_dict_.ref_count() == 1) {  // if we aren't referencing it anywhere else
-          (void)python_dict_.dec_ref();       // manually set the ref count to zero (to be garbage collected by Python)
-          python_dict_ = py::none();          // wrapper now pointing to a meaningful thing (added to avoid a segfault)
-        }
+        // We need to reduce the reference count of the py::object to which python_dict_
+        // refers by 1, then break that reference relationship, otherwise the default
+        // destructor will destruct that py::object again while recycling class member
+        // python_dict_. A simple assignment to None satisfies all of the above.
+        python_dict_ = py::none();
       }
     }
   } catch (const py::error_already_set &e) {

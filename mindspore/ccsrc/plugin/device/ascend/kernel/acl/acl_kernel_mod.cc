@@ -56,7 +56,7 @@ bool AclKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::ve
   } else {
     converter_->ConvertToAclAttr(primitive_->attrs(), kernel_name_, nullptr);
   }
-  converter_->ProcessRunnerSpecialInfo(kernel_name_, output_params_);
+  converter_->ProcessRunnerSpecialInfo(kernel_name_, output_params_, is_dynamic_);
   return true;
 }
 

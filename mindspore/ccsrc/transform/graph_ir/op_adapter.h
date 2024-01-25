@@ -124,6 +124,7 @@ class OpAdapterImpl {
   const mindspore::HashMap<int, DynSubGraphDesc> &dyn_subgraph_map_;
   const mindspore::HashMap<std::string, AttrDesc> &attr_map_;
   const mindspore::HashMap<std::string, int> &enum_map_;
+  // NOTE: The key of input_attr_map_ is anf node index, so index 0 is primitive value node
   const mindspore::HashMap<unsigned int, AttrDesc> &input_attr_map_;
   const mindspore::HashMap<std::string, std::string> &attr_input_map_;
   mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> *const cus_input_map_;

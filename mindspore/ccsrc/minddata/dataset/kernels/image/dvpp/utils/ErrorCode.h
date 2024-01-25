@@ -108,6 +108,10 @@ enum {
   APP_ERR_DVPP_ADJUST_CONTRAST_FAIL = APP_ERR_DVPP_BASE + 17,    // DVPP: adjust contrast fail
   APP_ERR_DVPP_ADJUST_HUE_FAIL = APP_ERR_DVPP_BASE + 18,         // DVPP: adjust hue fail
   APP_ERR_DVPP_ADJUST_SATURATION_FAIL = APP_ERR_DVPP_BASE + 19,  // DVPP: adjust saturation fail
+  APP_ERR_DVPP_HORIZONTAL_FLIP_FAIL = APP_ERR_DVPP_BASE + 20,    // DVPP: Horizontal Flip
+  APP_ERR_DVPP_VERTICAL_FLIP_FAIL = APP_ERR_DVPP_BASE + 21,      // DVPP: vertical Flip
+  APP_ERR_DVPP_PERSPECTIVE_FAIL = APP_ERR_DVPP_BASE + 22,        // DVPP: perspective fail
+  APP_ERR_DVPP_RESIZED_CROP_FAIL = APP_ERR_DVPP_BASE + 23,       // DVPP: crop and resize fail
   APP_ERR_DVPP_END,  // Not an error code, define the range of common error code
 
   // define the error code of inference

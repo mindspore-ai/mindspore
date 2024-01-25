@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,6 @@
 #include "ops/reduce_asum.h"
 #include "ops/reduce_sum_square.h"
 #include "ops/resize.h"
-#include "ops/resize_bilinear.h"
 #include "ops/stack.h"
 #include "ops/tanh.h"
 #include "ops/softplus.h"
@@ -107,7 +106,6 @@ using mindspore::ops::kNameReduceSum;
 using mindspore::ops::kNameReduceSumSquare;
 using mindspore::ops::kNameReLU;
 using mindspore::ops::kNameReLU6;
-using mindspore::ops::kNameResizeBilinear;
 using mindspore::ops::kNameResizeNearestNeighbor;
 using mindspore::ops::kNameScale;
 using mindspore::ops::kNameSigmoid;
@@ -141,6 +139,7 @@ constexpr auto kNameSlice = "Slice";
 constexpr auto kNameAvgPoolGradGpu = "AvgPoolGradGpu";
 constexpr auto kNameAvgPoolGradCpu = "AvgPoolGradCpu";
 constexpr auto kNameTanhGrad = "TanhGrad";
+constexpr auto kNameResizeBilinear = "ResizeBilinear";
 constexpr auto kNameResizeBilinearGrad = "ResizeBilinearGrad";
 constexpr auto kNameResizeNearestNeighborGrad = "ResizeNearestNeighborGrad";
 constexpr auto kNameStandardNormal = "StandardNormal";

@@ -24,7 +24,7 @@ import test_utils
 
 @test_utils.run_with_cell
 def zeros_like_forward_func(x):
-    return ops.auto_generate.zeros_like_(x)
+    return ops.auto_generate.ZerosLike()(x)
 
 
 @test_utils.run_with_cell

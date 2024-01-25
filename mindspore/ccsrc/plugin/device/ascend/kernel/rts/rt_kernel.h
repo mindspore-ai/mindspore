@@ -22,26 +22,17 @@
 #include <memory>
 #include <map>
 #include <string>
-#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
-#include "kernel/task_stream.h"
+#include "kernel/kernel.h"
+#include "acl/acl.h"
+#include "acl/acl_rt.h"
 
 namespace mindspore {
 namespace kernel {
-class RtKernel : public AscendKernelMod {
+class RtKernel : public KernelMod {
  public:
   RtKernel();
   ~RtKernel() override;
   virtual bool Init(const AnfNodePtr &anf_node);
-  void SetInputSizeList(const std::vector<size_t> &size_list) override;
-  void SetOutputSizeList(const std::vector<size_t> &size_list) override;
-  void SetWorkspaceSizeList(const std::vector<size_t> &size_list) override;
-  const std::vector<size_t> &GetOutputSizeList() const override;
-  const std::vector<size_t> &GetWorkspaceSizeList() const override;
-
- protected:
-  mutable std::vector<size_t> mutable_input_size_list_;
-  mutable std::vector<size_t> mutable_output_size_list_;
-  mutable std::vector<size_t> mutable_workspace_size_list_;
 };
 
 using RTKernelPtr = std::shared_ptr<RtKernel>;

@@ -599,7 +599,7 @@ void GPUProfiler::RecordFrameWorkInfo(const CNodePtr &kernel) {
     auto kernel_graph = std::dynamic_pointer_cast<KernelGraph>(kernel->func_graph());
     cur_kernel_info_.graph_id = kernel_graph->graph_id();
   }
-  for (uint32_t i = 0; i < (uint32_t)kernel->inputs().size(); i++) {
+  for (uint32_t i = 0; i < (uint32_t)kernel->size(); i++) {
     if (kernel->input(i)->Shape() != nullptr) {
       cur_kernel_input_info_.input_id = i;
       cur_kernel_input_info_.shape = kernel->input(i)->Shape()->ToString();

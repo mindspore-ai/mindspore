@@ -23,7 +23,7 @@ import test_utils
 
 @test_utils.run_with_cell
 def prelu_forward_func(x, weight):
-    return ops.auto_generate.prelu(x, weight)
+    return ops.prelu(x, weight)
 
 
 @test_utils.run_with_cell
@@ -91,7 +91,7 @@ def test_prelu_dynamic(mode):
     context.set_context(mode=mode)
     x_dyn = Tensor(shape=None, dtype=ms.float32)
     weight_dyn = Tensor(shape=None, dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(ops.auto_generate.prelu)
+    test_cell = test_utils.to_cell_obj(ops.prelu)
     test_cell.set_inputs(x_dyn, weight_dyn)
     x1 = Tensor(np.arange(-6, 6).reshape((2, 3, 2)).astype(np.float32))
     weight1 = Tensor(np.array([0.1, 0.6, -0.3]).astype(np.float32))

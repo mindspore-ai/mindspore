@@ -194,8 +194,6 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kCastOpName)
   .set_input_attr_info(1, "int")
   .set_is_ascend_mindir();
 
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kScalarCastOpName).set_target_op_name(kScalarCastOpName).set_input_attr_info(1, "int");
-
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kScalarToTensorOpName)
   .set_target_op_name(kScalarToTensorOpName)
   .set_input_attr_info(1, "int");

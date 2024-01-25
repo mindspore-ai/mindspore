@@ -19,7 +19,7 @@
 
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
-#include "inc/ops/image_ops.h"
+#include "op_proto/inc/image_ops.h"
 
 DECLARE_OP_ADAPTER(ResizeNearestNeighborV2)
 DECLARE_OP_USE_OUTPUT(ResizeNearestNeighborV2)

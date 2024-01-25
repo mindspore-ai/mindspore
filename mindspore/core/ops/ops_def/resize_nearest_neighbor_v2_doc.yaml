@@ -36,7 +36,7 @@ resize_nearest_neighbor_v2:
         >>> from mindspore import dtype as mstype
         >>> input_tensor = Tensor(np.ones((1, 1, 4, 4)), mstype.float32)
         >>> size = (2, 2)
-        >>> output = ops.resize_nearest_neighbor_v2(input_tensor, size)
+        >>> output = ops.ResizeNearestNeighborV2()(input_tensor, size)
         >>> print(output)
         [[[[1. 1.]
             [1. 1.]]]]

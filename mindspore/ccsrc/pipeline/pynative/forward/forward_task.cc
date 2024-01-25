@@ -38,6 +38,12 @@ void FrontendTask::SetException(const std::exception_ptr &e) {
   op_run_info_->stub_output->SetException(e);
 }
 
+void PassthroughFrontendTask::Run() {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeFrontendTask,
+                                     runtime::ProfilerRecorder::kNoName, false);
+  run_func_();
+}
+
 void SliceOpFrontendTask::Run() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeFrontendTask,
                                      "Slice Op", false);

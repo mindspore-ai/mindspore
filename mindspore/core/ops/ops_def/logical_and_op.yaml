@@ -13,4 +13,4 @@ logical_and:
         output:
             dtype: tensor
     function:
-        name: logical_and_
+        disable: True

@@ -72,9 +72,9 @@ abstract::ShapePtr RandomStandardNormalInferShape(const PrimitivePtr &primitive,
   auto shape_value = input_args[kInputIndex0]->GetValue();
   MS_EXCEPTION_IF_NULL(shape_value);
   if (CheckAndConvertUtils::IsTuple(input_args[kInputIndex0])) {
+    std::vector<int64_t> out_shape =
+      CheckAndConvertUtils::CheckIntOrTupleInt("input[shape]", input_args[kInputIndex0], prim_name);
     if (IsValueKnown(shape_value)) {
-      std::vector<int64_t> out_shape =
-        CheckAndConvertUtils::CheckIntOrTupleInt("input[shape]", input_args[kInputIndex0], prim_name);
       (void)CheckAndConvertUtils::CheckPositiveVector("shape", out_shape, prim_name);
       return std::make_shared<abstract::Shape>(out_shape);
     } else {

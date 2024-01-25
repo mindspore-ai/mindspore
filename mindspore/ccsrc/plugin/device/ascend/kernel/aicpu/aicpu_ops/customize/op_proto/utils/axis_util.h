@@ -26,7 +26,6 @@
 #include <vector>
 #include <map>
 
-#include "framework/omg/omg_inner_types.h"
 #include "graph/operator.h"
 #include "graph/operator_reg.h"
 

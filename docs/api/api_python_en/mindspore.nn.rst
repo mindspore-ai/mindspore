@@ -264,6 +264,7 @@ Loss Function
     mindspore.nn.KLDivLoss
     mindspore.nn.L1Loss
     mindspore.nn.MarginRankingLoss
+    mindspore.nn.MAELoss
     mindspore.nn.MSELoss
     mindspore.nn.MultiClassDiceLoss
     mindspore.nn.MultilabelMarginLoss
@@ -384,7 +385,6 @@ Image Processing Layer
 
     mindspore.nn.PixelShuffle
     mindspore.nn.PixelUnshuffle
-    mindspore.nn.ResizeBilinear
     mindspore.nn.Upsample
 
 Tools

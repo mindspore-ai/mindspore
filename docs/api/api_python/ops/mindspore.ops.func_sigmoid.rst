@@ -7,9 +7,9 @@ mindspore.ops.sigmoid
 
     .. math::
 
-        \text{sigmoid}(input_i) = \frac{1}{1 + \exp(-input_i)}
+        \text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)}
 
-    其中， :math:`input_i` 是input的一个元素。
+    其中 :math:`x_i` 是x的一个元素。
 
     Sigmoid函数图：
 
@@ -17,7 +17,7 @@ mindspore.ops.sigmoid
         :align: center
 
     参数：
-        - **input** (Tensor) - 任意维度的Tensor，数据类型为float16、float32、float64、complex64或complex128。
+        - **input** (Tensor) - `input`即为上述公式中的 :math:`x`。任意维度的Tensor，数据类型为float16、float32、float64、complex64或complex128。
 
     返回：
         Tensor，数据类型和shape与 `input` 的相同。

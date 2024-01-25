@@ -24,3 +24,5 @@ grid_sampler_2d:
             dtype: tensor
     class:
         name: GridSampler2D
+    function:
+        disable: True

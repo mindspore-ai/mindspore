@@ -18,6 +18,7 @@
 
 #include <tuple>
 #include <utility>
+#include <nlohmann/json.hpp>
 #include "include/common/utils/anfalgo.h"
 #include "include/transform/graph_ir/types.h"
 #include "include/transform/graph_ir/utils.h"
@@ -135,6 +136,33 @@ void GetComputeGraphReuseOptions(const FuncGraphPtr &graph, OptionMap *option) {
     MS_LOG(INFO) << "key: ge.exec.inputReuseMemIndexes, value: 0."
                  << ", Graph name: " << graph->ToString();
     (void)option->insert(std::make_pair("ge.exec.inputReuseMemIndexes", "0"));
+  }
+
+  (void)option->insert(std::make_pair("ge.featureBaseRefreshable", "1"));
+}
+
+void SetPassthroughGeOptions(bool is_global, OptionMap *options) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+
+  const auto &ge_options_str = context->get_param<std::string>(MS_CTX_GE_OPTIONS);
+  if (ge_options_str.empty()) {
+    MS_LOG(DEBUG) << "The ge option for passthrough is not set.";
+    return;
+  }
+
+  string level = is_global ? "global" : "session";
+  nlohmann::json options_json = nlohmann::json::parse(ge_options_str);
+  auto options_iter = options_json.find(level);
+  if (options_iter == options_json.end()) {
+    MS_LOG(INFO) << "GE " << level << " option is not set.";
+    return;
+  }
+
+  const auto &new_options = *options_iter;
+  for (auto &[key, value] : new_options.items()) {
+    (*options)[key] = value;
+    MS_LOG(INFO) << "Set ge " << level << " option: {" << key << ", " << value << "}";
   }
 }
 

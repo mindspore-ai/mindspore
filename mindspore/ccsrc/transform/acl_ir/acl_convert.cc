@@ -309,7 +309,7 @@ void AclConverter::ConvertValueDependToHostInput(const std::string &kernel_name,
     MS_EXCEPTION_IF_NULL(value_ptr);
     auto type_id = input->dtype_id();
     AclHostInfoPtr acl_host_input;
-    bool is_const = input->IsConstTensor();
+    bool is_const = input->IsConstValue();
     if (!transform::AclHelper::IsInputDtypeSupport(kernel_name, param.data_type, ms_proto_idx) &&
         param.data_type != kMetaTypeNone) {
       ValueDependToInputConverter value_convert;
@@ -406,8 +406,13 @@ void AclConverter::ConvertInputsMutiDynParams(const PrimitivePtr &prim, const st
   size_t offset = 0;  // offset in real inputs corresponding to input proto index
   while (offset < inputs.size()) {
     size_t num_folded_inputs = (dyn_inputs_map_.count(ms_idx) > 0 ? dyn_inputs_map_[ms_idx] : 1);
-    auto ge_idx = info->GetGeInputByMsInputIndex(ms_idx).index;
-    ge2ms_real_input_map[ge_idx] = MsInputInfo{ms_idx, offset, num_folded_inputs, 0};
+    bool is_input2attr = info->input_attr_map().count(ms_idx) > 0;
+    MS_LOG(DEBUG) << "For primitive " << prim->name() << ", ms_proto_idx=" << ms_idx
+                  << ", offset_in_real_inputs=" << offset << ", is_input2attr=" << std::boolalpha << is_input2attr;
+    if (!is_input2attr) {
+      auto ge_idx = info->GetGeInputByMsInputIndex(ms_idx).index;
+      ge2ms_real_input_map[ge_idx] = MsInputInfo{ms_idx, offset, num_folded_inputs, 0};
+    }
     offset += num_folded_inputs;
     ms_idx += 1;
   }
@@ -942,14 +947,13 @@ std::string AclConverter::DebugString() const {
 }
 
 void AclConverter::ProcessRunnerSpecialInfo(const std::string &prim_name,
-                                            const std::vector<TensorParams> &output_params) {
+                                            const std::vector<TensorParams> &output_params, bool is_dynamic) {
   auto opinfo = GeAdapterManager::GetInstance().GetInfo(prim_name, true);
   MS_EXCEPTION_IF_NULL(opinfo);
   auto op_type = opinfo->op_type();
   if (!AclAdapterManager::GetInstance().CheckAclAdapter(op_type)) {
-    // Default fuzz compile.
-    is_dynamic_ = true;
-    precision_mode_ = (AclUtil::KeepOriginDType() == 1) ? MUST_KEEP_ORIGIN_DTYPE : ALLOW_FP32_TO_FP16;
+    is_dynamic_ = is_dynamic;
+    precision_mode_ = DEFAULT_MODE;
     return;
   }
   auto info = AclAdapterManager::GetInstance().GetOpInfo(op_type);
@@ -958,15 +962,10 @@ void AclConverter::ProcessRunnerSpecialInfo(const std::string &prim_name,
   is_need_retrieve_output_shape_ = info.is_need_retrieve_output_shape();
 
   // Set dynamic or static compile mode.
-  is_dynamic_ = info.is_dynamic();
+  is_dynamic_ = info.is_dynamic(is_dynamic);
 
   // Set acl precision mode
   precision_mode_ = info.precision_mode();
-  if (precision_mode_ == FORCE_FP32 &&
-      std::any_of(output_params.begin(), output_params.end(),
-                  [](const TensorParams &param) { return param.data_type != kNumberTypeFloat32; })) {
-    precision_mode_ = ALLOW_FP32_TO_FP16;
-  }
 }
 
 void AclConverter::SetRunnerSpecialInfo() {

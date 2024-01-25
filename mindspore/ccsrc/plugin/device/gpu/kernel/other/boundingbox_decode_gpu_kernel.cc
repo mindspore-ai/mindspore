@@ -25,6 +25,7 @@ bool BoundingBoxDecodeGpuKernelMod::Init(const std::vector<KernelTensor *> &inpu
 
   const size_t coordinate_size = 4;
   auto means = primitive_->GetAttr("means");
+  MS_EXCEPTION_IF_NULL(means);
   if (means->isa<ValueSequence>()) {
     means_ = GetValue<std::vector<float>>(means);
   } else if (means->isa<FloatImm>()) {

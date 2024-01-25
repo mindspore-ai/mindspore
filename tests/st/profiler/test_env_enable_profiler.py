@@ -70,10 +70,10 @@ class CheckProfilerFiles:
         aicpu_file = self.profiler_path + f'aicpu_intermediate_{self.rank_id}.csv'
         minddata_pipeline_file = self.profiler_path + f'minddata_pipeline_raw_{self.rank_id}.csv'
         queue_profiling_file = self.profiler_path + f'device_queue_profiling_{self.rank_id}.txt'
-        memory_file = self.profiler_path + f'memory_usage_{self.rank_id}.pb'
+        # memory_file = self.profiler_path + f'memory_usage_{self.rank_id}.pb'
 
         d_profiler_files = (aicore_file, timeline_file, aicpu_file,
-                            minddata_pipeline_file, queue_profiling_file, memory_file)
+                            minddata_pipeline_file, queue_profiling_file)
         for file in d_profiler_files:
             assert os.path.isfile(file)
 

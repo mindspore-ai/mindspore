@@ -19,6 +19,7 @@
 #ifndef MINDSPORE_CORE_IR_MANAGER_H_
 #define MINDSPORE_CORE_IR_MANAGER_H_
 
+#include <deque>
 #include <set>
 #include <map>
 #include <list>
@@ -52,13 +53,10 @@ using ChangePtr = std::unique_ptr<Change>;
 
 class FuncGraphTransaction;
 class FuncGraphManager;
-class FuncGraphPassIndex;
 using FuncGraphManagerPtr = std::shared_ptr<FuncGraphManager>;
-using FuncGraphIndexPtr = std::shared_ptr<FuncGraphPassIndex>;
 
 using AnfNodeIndexSet = CompactSet<std::pair<AnfNodePtr, int>>;
 using NodeUsersMap = mindspore::HashMap<AnfNodePtr, AnfNodeIndexSet>;
-using FuncGraphIndexMap = mindspore::HashMap<FuncGraphPtr, FuncGraphIndexPtr>;
 
 using FuncGraphSetPair = std::pair<FuncGraphPtr, FuncGraphSet>;
 using FuncGraphSetPtr = std::shared_ptr<FuncGraphSet>;
@@ -85,6 +83,7 @@ using FuncGraphToFuncGraphSetMap = OrderedMap<FuncGraphPtr, FuncGraphSet>;
 // For Fast Pass
 class FuncGraphPassIndex {
  public:
+  constexpr static char key[] = "FuncGraphPassIndex";
   FuncGraphPassIndex() : has_gen_index_(false) {}
   void set_has_gen_index(bool is_gen_index) { has_gen_index_ = is_gen_index; }
   bool has_gen_index() const { return has_gen_index_; }
@@ -96,6 +95,7 @@ class FuncGraphPassIndex {
  private:
   bool has_gen_index_;
 };
+using FuncGraphIndexPtr = std::shared_ptr<FuncGraphPassIndex>;
 
 // analysis base class, graphs analysis which need dynamic compute by DepCollector in each read
 class DepComputer {
@@ -154,7 +154,7 @@ class FuncGraphParentsTotalComputer final : public DepComputer {
   void RealRecompute(FuncGraphPtr fg) override;
 
  private:
-  FuncGraphSetPtr SeekParents(const FuncGraphPtr &fg, mindspore::HashMap<FuncGraphPtr, FuncGraphSetPtr> *seen_fgs);
+  FuncGraphSetPtr SeekParents(const FuncGraphPtr &fg);
 };
 
 using FuncGraphToFuncGraphMap = OrderedMap<FuncGraphPtr, FuncGraphPtr>;
@@ -298,17 +298,13 @@ class FuncGraphMetaFgPrimTotalComputer final : public DepComputer {
 class MS_CORE_API FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {
  public:
   explicit FuncGraphManager(const std::vector<FuncGraphPtr> &roots, bool manage = true);
-  virtual ~FuncGraphManager() {
-    if (is_manage_) {
-      RemoveRoots();
-    }
-    Clear();
-  }
+  virtual ~FuncGraphManager();
 
   void Reset();
   void Init();
   void Clear() noexcept;
   void AddFuncGraph(const FuncGraphPtr &func_graph, bool is_root = false);
+  void AddFuncGraphs(const FuncGraphPtr &source_func_graph);
   void KeepRoots(const std::vector<FuncGraphPtr> &roots = {});
   void RemoveRoots();
   void SetParameters(const FuncGraphPtr &fg, const std::vector<AnfNodePtr> &parameters);
@@ -320,12 +316,10 @@ class MS_CORE_API FuncGraphManager : public std::enable_shared_from_this<FuncGra
   void SetEdge(const AnfNodePtr &node, int index, const AnfNodePtr &value);
   void AddEdge(const AnfNodePtr &node, const AnfNodePtr &value);
   void MoveAllCNodeDropGraph(const FuncGraphPtr &source, const FuncGraphPtr &target, const AnfNodePtr &call_node,
-                             const ScopePtr &scope);
+                             const ScopePtr &scope, bool update_debug_info = false);
 
   FuncGraphTransaction Transact();
   void CommitChanges(std::vector<change::ChangePtr> &&changes);
-
-  bool IsManaged() const { return is_manage_; }
 
   const FuncGraphSet &roots() const { return roots_; }
 
@@ -348,8 +342,6 @@ class MS_CORE_API FuncGraphManager : public std::enable_shared_from_this<FuncGra
   FuncGraphSet &children(const FuncGraphPtr &fg) const;
 
   FuncGraphSet &func_graphs_used_total(const FuncGraphPtr &fg) const;
-
-  const FuncGraphIndexPtr &func_graph_index(const FuncGraphPtr &fg) const;
 
   bool recursive(const FuncGraphPtr &fg) const;
   std::shared_ptr<std::list<FuncGraphPtr>> recursive_graphs(const FuncGraphPtr &fg) const;
@@ -374,15 +366,15 @@ class MS_CORE_API FuncGraphManager : public std::enable_shared_from_this<FuncGra
   void ProcessEdgeAdd(const AnfNodePtr &node, int index, const AnfNodePtr &input);
   void ProcessInputsEdgeAdd(const CNodePtr &cnode);
   void ProcessInputsEdgeRemove(const CNodePtr &cnode);
-  void AcquireNodes(std::vector<AnfNodePtr> &&nodes);
+  void AcquireNodes(std::vector<AnfNodePtr> &&nodes, bool recursive = true);
   FuncGraphSet MaybeDropNodes(std::vector<AnfNodePtr> &&nodes);
   void OnEdgeAdded(const AnfNodePtr &node, int index, const AnfNodePtr &input);
   void OnEdgeRemoved(const AnfNodePtr &node, int index, const AnfNodePtr &input);
   void MoveAllNodes(const FuncGraphPtr &source, const FuncGraphPtr &target);
 
-  FuncGraphSet roots_;                   // Managed roots.
-  FuncGraphSet func_graphs_;             // Managed func graphs.
-  FuncGraphIndexMap func_graphs_index_;  // For Fast Pass
+  std::deque<FuncGraphPtr> todo_;
+  FuncGraphSet roots_;        // Managed roots.
+  FuncGraphSet func_graphs_;  // Managed func graphs.
 
   std::shared_ptr<Signals> signals_;
 

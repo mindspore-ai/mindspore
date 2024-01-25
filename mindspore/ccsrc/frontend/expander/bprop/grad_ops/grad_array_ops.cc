@@ -1056,8 +1056,8 @@ REG_BPROP_BUILDER("Concat").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   // If so, the i will be treat as a const Tensor but variable expected which will be not caught as a while body
   // parameter.
   // Here Emit a `ScalarToTensor` to make it a fake-variable-in-logit node.
-  auto i = ib->Emit("ScalarToTensor", {ib->Value<int64_t>(1), ib->EmitValue(kInt64)});
-  auto len = ib->Emit("ScalarToTensor", {ib->Emit("sequence_len", {x}), ib->EmitValue(kInt64)});
+  auto i = ib->Emit("ScalarToTensor", {ib->Value<int64_t>(1), ib->Value<int64_t>(kInt64->type_id())});
+  auto len = ib->Emit("ScalarToTensor", {ib->Emit("sequence_len", {x}), ib->Value<int64_t>(kInt64->type_id())});
   auto while_body = [&x, &dout, &concat_offset, &i, &res_list](Emitter *e) -> NodePtrList {
     auto scalar_i = e->Emit("TensorToScalar", {i});
     auto input = e->Shape(e->Emit(kTupleGetItemOpName, {x, scalar_i}));
@@ -2058,20 +2058,12 @@ REG_BPROP_BUILDER("MaskedScatter").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto dx = ib->Emit("MaskedFill", {dout, mask, ib->Tensor(0, kFloat32)});
   auto dupdates = ib->Cast(ib->Reshape(ib->ZerosLike(updates), {-1}), kFloat32);
   auto dupdates_val = ib->Cast(ib->Emit("MaskedSelect", {dout, mask}), kFloat32);
-  auto dupdates_val_shape = ib->Shape(dupdates_val, true);
-  // length = dupdates_val_shape[0]
-  auto length = ib->Emit(
-    "StridedSlice",
-    {dupdates_val_shape, ib->Value<ShapeVector>({0}), ib->Value<ShapeVector>({1}), ib->Value<ShapeVector>({1})},
-    {{"begin_mask", MakeValue<int64_t>(0)},
-     {"end_mask", MakeValue<int64_t>(0)},
-     {"ellipsis_mask", MakeValue<int64_t>(0)},
-     {"new_axis_mask", MakeValue<int64_t>(0)},
-     {"shrink_axis_mask", MakeValue<int64_t>(0)}});
-  length = ib->Cast(length, kInt64);
-  auto scatter_indices = ib->Range(ib->TensorToScalar(length));
+  auto length = ib->TupleGetItem(ib->Shape(dupdates_val), LongToSize(0));
+  auto scatter_indices = ib->Range(length);
   dupdates = ib->Emit("TensorScatterElements", {dupdates, scatter_indices, dupdates_val},
                       {{"reduction", MakeValue<string>("none")}, {"axis", MakeValue<int64_t>(0)}});
+  // The operator test case pass on cpu or ascend backend. But it may fail once enabled on gpu backend for pynative
+  // mode. Now it is not supported on gpu backend.
   dupdates = ib->Reshape(dupdates, ib->Shape(updates));
   return {ib->Cast(dx, ib->GetDtype(x)), ib->OutZeros(mask), ib->Cast(dupdates, ib->GetDtype(updates))};
 });

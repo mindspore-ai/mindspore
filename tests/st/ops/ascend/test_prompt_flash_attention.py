@@ -58,7 +58,7 @@ def test_prompt_flash_attention_bsh_fwd():
     net = PromptFlashAttention()
     attention_out = net(query, key, value, attn_mask, None, None, None, None, None, None, None, None, N,
                         num_key_value_heads=KV_N)
-    assert attention_out[0].shape == (B, S, Q_H)
+    assert attention_out.shape == (B, S, Q_H)
 
 
 @pytest.mark.level0
@@ -83,7 +83,7 @@ def test_prompt_flash_attention_bnsd_fwd():
     net = PromptFlashAttention()
     attention_out = net(query, key, value, None, None, None, None, None, None, None, None, None, num_heads=Q_N,
                         input_layout='BNSD', num_key_value_heads=N)
-    assert attention_out[0].shape == (B, Q_N, S, D)
+    assert attention_out.shape == (B, Q_N, S, D)
 
 
 @pytest.mark.level0
@@ -108,4 +108,4 @@ def test_prompt_flash_attention_bnsd_mod2_fwd():
     net = PromptFlashAttention()
     attention_out = net(query, key, value, attn_mask, None, None, None, None, None, None, None, None, N,
                         input_layout='BNSD', sparse_mode=2)
-    assert attention_out[0].shape == (B, N, S, D)
+    assert attention_out.shape == (B, N, S, D)

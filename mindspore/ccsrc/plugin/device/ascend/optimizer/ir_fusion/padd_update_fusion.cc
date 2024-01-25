@@ -23,7 +23,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "frontend/optimizer/opt.h"
 #include "include/backend/optimizer/helper.h"
-#include "external/platform/platform_info.h"
+#include "platform/platform_info.h"
 
 namespace mindspore {
 namespace opt {

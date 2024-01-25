@@ -24,12 +24,12 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def hsigmoid_grad_forward_func(grads, x):
-    return ops.auto_generate.hsigmoid_grad(grads, x)
+    return ops.auto_generate.HSigmoidGrad()(grads, x)
 
 
 @test_utils.run_with_cell
 def hsigmoid_grad_dyn_shape_func(grads, x):
-    return ops.auto_generate.hsigmoid_grad(grads, x)
+    return ops.auto_generate.HSigmoidGrad()(grads, x)
 
 
 @pytest.mark.level1
@@ -140,3 +140,23 @@ def test_hsigmoid_grad_dynamic_rank(mode):
     out1 = test_cell(grads1, x1)
     expect1 = np.array([[0.11111111, 0.13888888, 0., 0.0]]).astype(np.float32)
     assert np.allclose(out1.asnumpy(), expect1, rtol=1e-4, atol=1e-4)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
+@test_utils.run_test_func
+def test_hsigmoid_grad_different_input_ranks(mode):
+    """
+    Feature: Ops.
+    Description: test op hsigmoid_grad.
+    Expectation: catch the error.
+    """
+    ms.context.set_context(mode=mode)
+    grads = Tensor(np.array([0.6666667, 0.8333333, 1.]).astype('float32'))
+    np_array = np.array([1, 2, 3, 4]).astype('float32')
+    x = Tensor(np_array)
+    with pytest.raises(ValueError) as info:
+        _ = hsigmoid_grad_forward_func(grads, x)
+    assert "not equal" in str(info.value)

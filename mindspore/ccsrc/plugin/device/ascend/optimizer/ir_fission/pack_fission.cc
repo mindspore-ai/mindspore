@@ -76,7 +76,7 @@ const AnfNodePtr PackFission::Process(const FuncGraphPtr &func_graph, const AnfN
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   // The real input begins with index 1.
-  size_t origin_input_size = cnode->inputs().size() - 1;
+  size_t origin_input_size = cnode->size() - 1;
   if (origin_input_size <= inputs_divisor_) {
     return nullptr;
   }

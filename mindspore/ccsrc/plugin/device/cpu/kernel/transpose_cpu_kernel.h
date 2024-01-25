@@ -23,7 +23,6 @@
 #include <unordered_map>
 #include <memory>
 #include <string>
-#include "kernel/kernel_get_value.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "nnacl/transpose_parameter.h"
 

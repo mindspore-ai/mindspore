@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,10 +85,11 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
 
   void RunAllocMemTask(DeviceContext *device_context, const tensor::TensorPtr &tensor, bool enable_async);
 
-  void RunContiguousTask(const tensor::TensorPtr &tensor, bool enable_async) override;
+  void RunContiguousTask(const tensor::TensorPtr &tensor, size_t stream_id, bool enable_async) override;
 
   device::DeviceAddressPtr RunContiguousTaskByAddress(const device::DeviceAddressPtr &old_device_address,
-                                                      const TensorStorageInfoPtr &old_storage_info, bool enable_async);
+                                                      const TensorStorageInfoPtr &old_storage_info, size_t stream_id,
+                                                      bool enable_async);
   // Sync default stream in PyNative mode.
   void SyncStream();
 
@@ -96,7 +97,7 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
 
  private:
   // CreateKernel, Transform and Schedule have not been finished when LazyBuild is enabled in PyNative mode.
-  void CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context,
+  void CompileSingleOpGraph(const OpCompilerInfoPtr &op_compiler_info, const DeviceContext *device_context,
                             bool is_dynamic_shape = false) const;
 
   // In PyNative mode, the size of single op cache list will be increasing, which lead to memory cost increasing,
@@ -119,7 +120,7 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   void RunGraphByCondition(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
                            const VectorRef &args, VectorRef *outputs) override;
   // Split complete kernel graph to single op graph in PyNative back
-  // propagation, then compile and run single op graph.
+  // propagation, then compile and run single op graph or pyboost op(if op registered).
   void RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_info, const VectorRef &args, VectorRef *outputs);
 
   runtime::ActorSet *RealCompileGraphBeforeRunActor(const GraphCompilerInfo &graph_compiler_info, const VectorRef &args,
@@ -147,7 +148,7 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   void RunViewKernelTaskAsyncImpl(const pynative::KernelTaskType &task_type, DeviceContext *device_context,
                                   const device::DeviceAddressPtrList &input_addr_list,
                                   const TensorStorageInfoPtrList &input_storage_list,
-                                  const device::DeviceAddressPtrList &output_addr_list);
+                                  const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id);
 
   // Cache output tensor ref count of kernels for back propagation graph in PyNative mode.
   std::map<GraphId, std::map<KernelWithIndex, size_t>> cnode_ref_counts_;

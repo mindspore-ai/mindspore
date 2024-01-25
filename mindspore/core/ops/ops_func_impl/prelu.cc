@@ -21,8 +21,15 @@
 #include "ops/op_utils.h"
 #include "ops/op_name.h"
 #include "ops/ops_func_impl/prelu.h"
+#include "utils/ms_context.h"
 
 namespace mindspore::ops {
+bool IsAscend() {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  return context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice;
+}
+
 BaseShapePtr PReLUFuncImpl::InferShape(const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) const {
   auto x_shape_ptr = input_args[kInputIndex0]->GetShape();
@@ -60,6 +67,14 @@ int32_t PReLUFuncImpl::CheckValidation(const PrimitivePtr &primitive,
   MS_CHECK_VALUE(weight_rank == 1, "The dimension of 'weight' must be 1");
 
   auto x_rank = x_shape.size();
+
+  if (IsAscend() && x_rank <= 1) {
+    MS_EXCEPTION(ValueError)
+      << "For '" << prim_name
+      << "', the dimension of 'x' can not be 0-D or 1-D when the platform is \"Ascend\", but got dimension of 'x' is "
+      << x_rank << ".";
+  }
+
   auto channel_num = x_rank <= 1 ? 1 : x_shape[1];
   auto weight_len = weight_shape[0];
   if (weight_len != 1 && weight_len != channel_num) {

@@ -57,14 +57,14 @@ bool ConcatChecker::Check(api::CNodePtr op, int32_t output_num, mindspore::Forma
     }
   }
 
-  if (op->inputs().size() - 1 > static_cast<size_t>(kMaxBottomNum)) {
-    MS_LOG(WARNING) << op->fullname_with_scope() << "'s bottom size:" << (op->inputs().size() - 1)
-                    << " is greater than " << kMaxBottomNum;
+  if (op->size() - 1 > static_cast<size_t>(kMaxBottomNum)) {
+    MS_LOG(WARNING) << op->fullname_with_scope() << "'s bottom size:" << (op->size() - 1) << " is greater than "
+                    << kMaxBottomNum;
     return false;
   }
 
   std::vector<int64_t> input_shape;
-  for (size_t i = 1; i < op->inputs().size(); i++) {
+  for (size_t i = 1; i < op->size(); i++) {
     auto input = op->input(i);
     if (input->cast<api::ParameterPtr>() != nullptr && input->cast<api::ParameterPtr>()->has_default()) {
       MS_LOG(WARNING) << "there is offline data in concat, which dpico is unsupported. " << op->fullname_with_scope();

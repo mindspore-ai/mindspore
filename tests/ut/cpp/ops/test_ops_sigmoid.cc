@@ -13,67 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include <vector>
 #include <memory>
-
-#include "ops/test_ops.h"
 #include "common/common_test.h"
-#include "ir/dtype/type.h"
-#include "abstract/dshape.h"
-#include "utils/tensor_construct_utils.h"
+#include "ops/ops_func_impl/sigmoid.h"
+#include "ops/auto_generate/gen_ops_name.h"
 #include "ir/primitive.h"
 #include "abstract/abstract_value.h"
-#include "ops/op_name.h"
-#include "ops/ops_func_impl/sigmoid.h"
-#include "include/backend/optimizer/helper.h"
+#include "ops/test_ops.h"
+#include "ops/test_ops_dyn_cases.h"
+#include "ops/test_ops_cmp_utils.h"
 
 namespace mindspore {
 namespace ops {
-struct SigmoidShape {
-  ShapeVector x_shape;
-  ShapeVector out_shape;
-};
-
-struct SigmoidDType {
-  TypePtr x_dtype;
-  TypePtr out_dtype;
-};
-
-class TestSigmoid : public TestOps, public testing::WithParamInterface<std::tuple<SigmoidShape, SigmoidDType>> {};
+class TestSigmoid : public TestOps,
+                    public testing::WithParamInterface<std::tuple<EltwiseOpShapeParams, EltwiseOpTypeParams>> {};
 
 TEST_P(TestSigmoid, dyn_shape) {
   const auto &shape_param = std::get<0>(GetParam());
   const auto &dtype_param = std::get<1>(GetParam());
-  auto sigmoid_func_impl = std::make_shared<SigmoidFuncImpl>();
-  auto prim = std::make_shared<Primitive>("Sigmoid");
-
-  auto x = std::make_shared<abstract::AbstractTensor>(dtype_param.x_dtype, shape_param.x_shape);
+  auto x = std::make_shared<abstract::AbstractTensor>(dtype_param.x_type, shape_param.x_shape);
   ASSERT_NE(x, nullptr);
-
   auto expect_shape = std::make_shared<abstract::Shape>(shape_param.out_shape);
-  auto expect_dtype = std::make_shared<TensorType>(dtype_param.out_dtype);
-
-  auto infer_shape = sigmoid_func_impl->InferShape(prim, {x});
-  ASSERT_NE(infer_shape, nullptr);
-  ASSERT_TRUE(*infer_shape == *expect_shape);
-  auto infer_dtype = sigmoid_func_impl->InferType(prim, {x});
-  ASSERT_NE(infer_dtype, nullptr);
-  ASSERT_TRUE(*infer_dtype == *expect_dtype);
+  auto expect_type = std::make_shared<TensorType>(dtype_param.out_type);
+  DoFuncImplInferAndCompare<SigmoidFuncImpl>("Sigmoid", {x}, expect_shape, expect_type);
 }
 
-auto SigmoidDynTestCase = testing::ValuesIn({
-  SigmoidShape{{1}, {1}},
-  SigmoidShape{{-1}, {-1}},
-  SigmoidShape{{-2}, {-2}},
+namespace {
+auto SigmoidOpTypeCases = testing::ValuesIn({
+  EltwiseOpTypeParams{kFloat16, kFloat16},
+  EltwiseOpTypeParams{kFloat32, kFloat32},
+  EltwiseOpTypeParams{kFloat64, kFloat64},
+  EltwiseOpTypeParams{kComplex64, kComplex64},
+  EltwiseOpTypeParams{kComplex128, kComplex128},
 });
+}
 
-auto SigmoidDTypeTestCase = testing::ValuesIn({
-  SigmoidDType{kFloat16, kFloat16},
-  SigmoidDType{kFloat32, kFloat32},
-  SigmoidDType{kFloat64, kFloat64},
-});
-
-INSTANTIATE_TEST_CASE_P(TestSigmoidGroup, TestSigmoid, testing::Combine(SigmoidDynTestCase, SigmoidDTypeTestCase));
+INSTANTIATE_TEST_CASE_P(TestSigmoidGroup, TestSigmoid, testing::Combine(EltwiseDynShapeTestCases, SigmoidOpTypeCases));
 }  // namespace ops
 }  // namespace mindspore

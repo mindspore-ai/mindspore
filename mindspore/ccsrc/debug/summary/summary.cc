@@ -35,7 +35,7 @@ void Summary::RecurseSetSummaryNodesForAllGraphs(KernelGraph *graph) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   std::string backend = ms_context->backend_policy();
-  if (backend == "ge" && graph->is_graph_run_mode()) {
+  if (backend == "ge") {
     MS_LOG(INFO) << "This function should be skipped on GE backend.";
     return;
   }
@@ -59,7 +59,7 @@ void Summary::SummaryTensor(KernelGraph *graph) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   std::string backend = ms_context->backend_policy();
-  if (backend == "ge" && graph->is_graph_run_mode()) {
+  if (backend == "ge") {
     MS_LOG(INFO) << "This function should be skipped on GE backend.";
     return;
   }
@@ -107,7 +107,7 @@ void Summary::SetSummaryNodes(KernelGraph *graph) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   std::string backend = ms_context->backend_policy();
-  if (backend == "ge" && graph->is_graph_run_mode()) {
+  if (backend == "ge") {
     MS_LOG(INFO) << "This function should be skipped on GE backend.";
     return;
   }
@@ -121,9 +121,9 @@ void Summary::SetSummaryNodes(KernelGraph *graph) {
     if (AnfAlgo::IsSummaryNode(n)) {
       auto cnode = n->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
-      if (cnode->inputs().size() <= kSummaryGetItem) {
-        MS_LOG(EXCEPTION) << "The node Summary should have 2 inputs at least, but got " << (cnode->inputs().size() - 1)
-                          << "." << trace::DumpSourceLines(cnode);
+      if (cnode->size() <= kSummaryGetItem) {
+        MS_LOG(EXCEPTION) << "The node Summary should have 2 inputs at least, but got " << (cnode->size() - 1) << "."
+                          << trace::DumpSourceLines(cnode);
       }
       auto node = cnode->input(kSummaryGetItem);
       MS_EXCEPTION_IF_NULL(node);

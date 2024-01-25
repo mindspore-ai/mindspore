@@ -27,14 +27,14 @@
 #include "ir/tensor.h"
 
 #include "graph/tensor.h"
-#include "external/ge/ge_api.h"
+#include "ge/ge_api.h"
 
 using GeTensor = ::ge::Tensor;
 
 namespace mindspore {
 namespace transform {
 enum Status : int { SUCCESS = 0, FAILED, INVALID_ARGUMENT, ALREADY_EXISTS, NOT_FOUND };
-typedef enum { ALLOW_FP32_TO_FP16, FORCE_FP32, MUST_KEEP_ORIGIN_DTYPE } AclPrecisionMode;
+typedef enum { DEFAULT_MODE, ALLOW_FP32_TO_FP16, FORCE_FP32, MUST_KEEP_ORIGIN_DTYPE } AclPrecisionMode;
 
 using MeTensor = mindspore::tensor::Tensor;
 using MeTensorPtr = std::shared_ptr<MeTensor>;

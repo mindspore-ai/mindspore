@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "inc/batch_norm_grad_grad_op.h"
+#include "transform/graph_ir/custom_op_proto/cust_nn_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 

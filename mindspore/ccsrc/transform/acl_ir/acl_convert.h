@@ -98,7 +98,8 @@ class AclConverter {
   void ConvertInputToAclAttr(const std::vector<KernelTensor *> &inputs, const std::string &kernel_name);
   void ConvertToAclAttr(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std::string &prim_name,
                         std::vector<std::string> *ms_attr_str);
-  void ProcessRunnerSpecialInfo(const std::string &prim_name, const std::vector<TensorParams> &output_params);
+  void ProcessRunnerSpecialInfo(const std::string &prim_name, const std::vector<TensorParams> &output_params,
+                                bool is_dynamic);
   void SetRunnerSpecialInfo();
 
   bool is_need_retrieve_output_shape() const { return is_need_retrieve_output_shape_; }
@@ -152,7 +153,7 @@ class AclConverter {
   // number of folded inputs of dynamic input, only used for op with only one dynamic input
   std::pair<size_t, size_t> num_folded_inputs_{SIZE_MAX, 1};
   bool is_dynamic_ = false;
-  AclPrecisionMode precision_mode_ = FORCE_FP32;
+  AclPrecisionMode precision_mode_ = DEFAULT_MODE;
   bool is_need_retrieve_output_shape_ = false;
   // Fields for op containing multiple dynamic inputs, since operators with more than one dynamic inputs are rare, for
   // speed reason, we process this case separately.

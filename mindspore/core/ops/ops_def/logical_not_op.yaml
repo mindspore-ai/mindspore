@@ -7,4 +7,4 @@ logical_not:
         output:
             dtype: tensor
     function:
-        name: logical_not_
+        disable: True

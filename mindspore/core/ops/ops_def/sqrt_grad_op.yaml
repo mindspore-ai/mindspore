@@ -8,3 +8,5 @@ sqrt_grad:
     returns:
         z: 
             dtype: tensor
+    function:
+        disable: True

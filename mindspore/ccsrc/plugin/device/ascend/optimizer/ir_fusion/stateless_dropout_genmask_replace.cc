@@ -73,7 +73,8 @@ const AnfNodePtr StatelessDropOutGenMaskReplace::Process(const FuncGraphPtr &fun
   MS_EXCEPTION_IF_NULL(offset_node);
   // create StatelessDropOutGenMask
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kStatelessDropOutGenMaskOpName))};
-  (void)new_inputs.insert(new_inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
+  auto cnode_inputs = cnode->inputs();
+  (void)new_inputs.insert(new_inputs.cend(), cnode_inputs.cbegin() + 1, cnode_inputs.cend());
   new_inputs.push_back(seed0_node);
   new_inputs.push_back(seed1_node);
   new_inputs.push_back(offset_node);

@@ -74,7 +74,6 @@ Neural Network
     mindspore.ops.EmbeddingLookup
     mindspore.ops.Padding
     mindspore.ops.ResizeBicubic
-    mindspore.ops.ResizeBilinear
     mindspore.ops.ResizeNearestNeighbor
 
 Loss Function

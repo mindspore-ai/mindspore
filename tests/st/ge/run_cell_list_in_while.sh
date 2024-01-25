@@ -17,7 +17,6 @@ set -e
 BASE_PATH=$(cd "$(dirname $0)"; pwd)
 rm -rf ${BASE_PATH}/cell_list_in_while
 mkdir ${BASE_PATH}/cell_list_in_while
-export MS_ENABLE_GE=1
 unset SLOG_PRINT_TO_STDOUT
 cd ${BASE_PATH}/cell_list_in_while
 echo "start test cell list in while with ge backend"
@@ -25,7 +24,6 @@ env > env.log
 python ../run_cell_list_in_while.py > test_cell_list_in_while.log 2>&1 &
 process_pid=`echo $!`
 wait ${process_pid}
-unset MS_ENABLE_GE
 status=`echo $?`
 if [ "${status}" != "0" ]; then
     echo "[ERROR] test cell list in while with ge backend failed. status: ${status}"

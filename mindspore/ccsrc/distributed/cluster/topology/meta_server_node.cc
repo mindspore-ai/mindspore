@@ -407,17 +407,6 @@ void MetaServerNode::UpdateTopoState() {
 
       // Update the state of topology.
       if (topo_state_ == TopoState::kInitializing) {
-        // Set the state of topo to `kFailed` if the topology is still in process of initializtion but timed out.
-        if (ElapsedTime(start_time_) > kTopoInitTimeout) {
-          if (recovery::IsEnableRecovery()) {
-            MS_LOG(ERROR) << "Start Scheduler node timeout.";
-            topo_state_ = TopoState::kFailed;
-            continue;
-          } else {
-            MS_LOG(EXCEPTION) << "Start Scheduler node timeout.";
-          }
-        }
-
         if (TransitionToInitialized()) {
           continue;
         }

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,7 +138,13 @@ bool DynamicSequenceShape::operator==(const BaseShape &other) const {
     return false;
   }
   const auto &other_shape = dynamic_cast<const DynamicSequenceShape &>(other);
-  return element_shape_ == other_shape.element_shape_;
+  if (element_shape_ == nullptr && other_shape.element_shape_ == nullptr) {
+    return true;
+  }
+  if (element_shape_ == nullptr || other_shape.element_shape_ == nullptr) {
+    return false;
+  }
+  return *element_shape_ == *other_shape.element_shape_;
 }
 
 std::string SequenceShape::ToString() const {

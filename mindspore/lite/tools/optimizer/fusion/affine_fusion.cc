@@ -116,7 +116,7 @@ const AnfNodePtr AffineFusion::Process(const FuncGraphPtr &func_graph, const Anf
   MS_CHECK_TRUE_RET(affine_value_node != nullptr, nullptr);
   std::vector<AnfNodePtr> affine_inputs = {affine_value_node, splice_node->input(1),
                                            matmul_node->input(kInputIndexTwo)};
-  if (matmul_node->inputs().size() == kInputWithBiasNum) {
+  if (matmul_node->size() == kInputWithBiasNum) {
     affine_inputs.push_back(matmul_node->input(kInputBias));
   }
   auto affine_node = func_graph->NewCNode(affine_inputs);

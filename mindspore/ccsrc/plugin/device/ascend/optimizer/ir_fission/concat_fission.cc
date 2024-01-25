@@ -108,7 +108,7 @@ const AnfNodePtr ConcatFission::Process(const FuncGraphPtr &func_graph, const An
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   // The real input begins with index 1.
-  size_t origin_input_size = cnode->inputs().size() - 2;
+  size_t origin_input_size = cnode->size() - 2;
   if (origin_input_size <= inputs_divisor_) {
     return nullptr;
   }
@@ -142,7 +142,7 @@ const AnfNodePtr ConcatFission::Process(const FuncGraphPtr &func_graph, const An
     common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), base_concat);
 
     new_cnode = base_concat;
-    origin_input_size = base_concat->inputs().size() - 2;
+    origin_input_size = base_concat->size() - 2;
   }
 
   return new_cnode;

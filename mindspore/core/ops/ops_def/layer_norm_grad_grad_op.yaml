@@ -32,3 +32,5 @@ layer_norm_grad_grad:
       dtype: tensor
     sopd_gamma:
       dtype: tensor
+  function:
+    disable: True

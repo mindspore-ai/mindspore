@@ -19,7 +19,9 @@
 "mindspore/mindspore/ccsrc/utils/convert_utils_py.cc"                                              "whitespace/indent"
 "mindspore/mindspore/core/utils/log_adapter.cc"                                                    "runtime/references"
 "mindspore/mindspore/ccsrc/runtime/hardware/device_context.h"                                                "readability/braces"
+"mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/arithmetic_self_cpu_kernel.cc"                  "readability/braces"
 "mindspore/mindspore/ccsrc/transform/graph_ir/convert.h"                                            "runtime/references"
+"mindspore/mindspore/ccsrc/transform/graph_ir/convert.cc"                                           "build/include_what_you_use"
 "mindspore/mindspore/ccsrc/transform/graph_ir/op_adapter.cc"                                        "runtime/references"
 "mindspore/mindspore/ccsrc/transform/graph_ir/custom_op_infer.cc"                                   "runtime/references"
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/gather_grad_kernels.cc"      "build/include"
@@ -38,6 +40,8 @@
 "mindspore/mindspore/ccsrc/backend/operator/"                                                      "whitespace/braces"
 "mindspore/mindspore/ccsrc/pybind_api/ir/dtype_py.cc"                                              "whitespace/line_length"
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/linear_sum_assignment_cpu_kernel.cc"           "whitespace/indent"
+"mindspore/mindspore/ccsrc/runtime/pynative/op_function/func_object.h"                             "runtime/explicit"
+"mindspore/mindspore/ccsrc/runtime/pynative/op_function/func_object.h"                             "runtime/references"
 
 # Modelzoo
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/Yolov4TinyDetection.h"                 "runtime/references"

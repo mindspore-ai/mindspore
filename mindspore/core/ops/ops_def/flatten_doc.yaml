@@ -17,6 +17,6 @@ flatten:
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.ones(shape=[1, 2, 3, 4]), mindspore.float32)
-        >>> output = ops.flatten_(input_x)
+        >>> output = ops.Flatten()(input_x)
         >>> print(output.shape)
         (1, 24)

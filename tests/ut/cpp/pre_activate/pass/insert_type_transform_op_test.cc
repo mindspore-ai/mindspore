@@ -26,6 +26,7 @@
 #include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/kernel_build_info.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 
 #define private public
 #define protected public
@@ -451,7 +452,6 @@ TEST_F(TestInsertTypeTransformOp, test_tuple_to_tensor_transform) {
 
   auto tuple_to_tensor = func_graph->get_return()->input(1)->cast<CNodePtr>()->input(2)->cast<CNodePtr>();
   ASSERT_TRUE(IsPrimitiveCNode(tuple_to_tensor, prim::kPrimTupleToTensor));
-  auto dtype = common::AnfAlgo::GetNodeAttr<TypePtr>(tuple_to_tensor, kAttrDType);
   ASSERT_TRUE(tuple_to_tensor->abstract()->isa<abstract::AbstractTensor>());
   auto obj_type = AnfAlgo::GetOutputKernelObjectType(tuple_to_tensor, 0);
   ASSERT_TRUE(obj_type == KernelObjectType::TENSOR);
@@ -483,8 +483,6 @@ TEST_F(TestInsertTypeTransformOp, DISABLED_test_scalar_to_tensor_transform) {
 
   auto scalar_to_tensor1 = func_graph->get_return()->input(1)->cast<CNodePtr>()->input(1)->cast<CNodePtr>();
   ASSERT_TRUE(IsPrimitiveCNode(scalar_to_tensor1, prim::kPrimScalarToTensor));
-  auto dtype = common::AnfAlgo::GetNodeAttr<TypePtr>(scalar_to_tensor1, kAttrDType);
-  ASSERT_TRUE(dtype->type_id() == kNumberTypeInt64);
   ASSERT_TRUE(scalar_to_tensor1->abstract()->isa<abstract::AbstractTensor>());
   auto obj_type = AnfAlgo::GetOutputKernelObjectType(scalar_to_tensor1, 0);
   ASSERT_TRUE(obj_type == KernelObjectType::TENSOR);

@@ -26,7 +26,6 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "kernel/common_utils.h"
-#include "kernel/kernel_get_value.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/slice_copy_impl.cuh"
 
 namespace mindspore {

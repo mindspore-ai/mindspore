@@ -544,6 +544,21 @@ Array操作
     mindspore.numpy.unwrap
     mindspore.numpy.var
 
+快速傅里叶变换 (FFTs)
+-----------------------------------------
+
+快速傅里叶变换子模块包含了各类快速傅里叶变换。
+
+例如：1至N维的快速傅里叶变换及其逆变换、余弦变换以及快速汉克尔变换等等。
+
+.. msplatformautosummary::
+    :toctree: numpy
+    :nosignatures:
+    :template: classtemplate_inherited.rst
+
+    mindspore.numpy.fft.ifftshift
+    mindspore.numpy.fft.fftshift
+
 MindSpore Numpy与MindSpore特性结合
 -----------------------------------------
 

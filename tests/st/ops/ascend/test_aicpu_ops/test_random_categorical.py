@@ -13,13 +13,13 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+import pytest
 import mindspore
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.ops import operations as P
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 class Net(nn.Cell):
     def __init__(self, num_sample):
         super(Net, self).__init__()
@@ -29,10 +29,20 @@ class Net(nn.Cell):
     def construct(self, logits, seed=0):
         return self.random_categorical(logits, self.num_sample, seed)
 
-def test_net():
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_net(mode):
+    """
+    Feature: test RandomCategorical op.
+    Description: test RandomCategorical op.
+    Expectation: success.
+    """
+    context.set_context(mode=mode, device_target="Ascend")
     x = np.random.random((10, 5)).astype(np.float32)
     net = Net(8)
     output = net(Tensor(x))
-    print(x)
-    print(output.asnumpy())
-    #print(output.dtype())
+    expect_output_shape = (10, 8)
+    assert output.shape == expect_output_shape

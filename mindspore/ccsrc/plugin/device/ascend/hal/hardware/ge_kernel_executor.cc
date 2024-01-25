@@ -16,13 +16,20 @@
 #include "plugin/device/ascend/hal/hardware/ge_kernel_executor.h"
 #include <utility>
 #include <algorithm>
+#include "include/common/utils/parallel_context.h"
 #include "acl/acl_rt.h"
 #include "acl/acl_op_compiler.h"
 #include "include/common/profiler.h"
 #include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "backend/common/session/kernel_graph_mgr.h"
 #include "ops/auto_generate/gen_ops_primitive.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "plugin/device/ascend/hal/hardware/ge_graph_optimization.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
+#include "plugin/device/ascend/hal/hardware/acl_somas.h"
+#include "plugin/device/ascend/hal/hardware/acl_stream_assign.h"
+#include "plugin/device/ascend/kernel/rts/rt_kernel_build.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_metadata.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_build.h"
 
@@ -42,6 +49,7 @@
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/backend/debug/data_dump/overflow_dumper.h"
 #include "include/backend/debug/profiler/profiling.h"
+#include "plugin/device/ascend/hal/profiler/profiling_framework_data.h"
 #include "utils/anf_utils.h"
 #endif
 
@@ -121,6 +129,70 @@ void SetAclOpPrecisionMode() {
     MS_LOG(EXCEPTION) << "Acl set op precision mode failed! Error flag is " << ret;
   }
 }
+
+void SelectKernel(const KernelGraphPtr &kernel_graph, std::set<KernelGraphPtr> *const memo) {
+  // select kernel
+  MS_EXCEPTION_IF_NULL(memo);
+  if (memo->find(kernel_graph) != memo->end()) {
+    return;
+  }
+  memo->insert(kernel_graph);
+  const auto &kernels = kernel_graph->execution_order();
+  for (const auto &kernel : kernels) {
+    auto [select_res, msg, etype] =
+      device::ascend::SelectKernelInfoWithMsg(kernel, IsEnableAclNN(kernel_graph, kernel));
+    if (!select_res) {
+      MS_LOG(INFO) << "node is " << kernel->fullname_with_scope() << " should backoff";
+      std::pair<std::string, ExceptionType> failure_info = std::make_pair(msg, etype);
+      device::ascend::HandleKernelSelectFailure(kernel_graph, kernel, failure_info);
+    }
+  }
+  if (!kernel_graph->is_from_single_op()) {
+    kernel_graph->SetKernelObjectTypesForUnrealNodes();
+  }
+  for (auto &child_graph : kernel_graph->child_graph_order()) {
+    SelectKernel(child_graph.lock(), memo);
+  }
+}
+
+void InlineSubGraph(const KernelGraphPtr &graph) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+#ifdef ENABLE_DUMP_IR
+  bool save_graphs = context_ptr->CanDump(kIntroductory);
+  if (save_graphs) {
+    std::string file_name = "hwopt_d_before_inline_graph_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIR(file_name, graph, true, kWholeStack);
+  }
+#endif
+  auto kernel_cnodes = graph->execution_order();
+  for (auto &kernel_cnode : kernel_cnodes) {
+    MS_EXCEPTION_IF_NULL(kernel_cnode);
+    if (common::AnfAlgo::CheckPrimitiveType(kernel_cnode, prim::kPrimCallInline)) {
+      auto sub_graph = common::AnfAlgo::GetNodeAttr<KernelGraphPtr>(kernel_cnode, kAttrKernelGraph);
+      MS_EXCEPTION_IF_NULL(sub_graph);
+      MS_LOG(INFO) << "InlineSubGraph: " << kernel_cnode->fullname_with_scope()
+                   << ", sub graph: " << sub_graph->graph_id() << ", need inline: " << sub_graph->need_inline();
+      auto main_graph = kernel_cnode->func_graph();
+      MS_EXCEPTION_IF_NULL(main_graph);
+      auto mng = main_graph->manager();
+      auto kernel_info = dynamic_cast<device::KernelInfo *>(kernel_cnode->kernel_info());
+      MS_EXCEPTION_IF_NULL(kernel_info);
+      AnfNodePtrList inp(kernel_cnode->inputs().begin() + 1, kernel_cnode->inputs().end());
+      const auto &ref_map = sub_graph->GetRefMap();
+      auto out = session::KernelGraphMgr::DoInline(sub_graph, main_graph, inp, kernel_cnode->input(0)->scope(),
+                                                   kernel_info->graph_id(), ref_map, graph);
+      (void)mng->Replace(kernel_cnode, out);
+    }
+  }
+  GEGraphOptimization::GetInstance().OptimizeACLGraphAfterInline(graph);
+#ifdef ENABLE_DUMP_IR
+  if (save_graphs) {
+    std::string file_name = "hwopt_d_after_inline_graph_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIR(file_name, graph, true, kWholeStack);
+  }
+#endif
+}
 }  // namespace
 
 void GeKernelExecutor::Initialize() {
@@ -170,24 +242,15 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
     return;
   }
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "GeOptimizeGraph", 1, 0, 0);
-  GEGraphOptimization::GetInstance().OptimizeACLGraph(kernel_graph);
-  bool aclnn_can_used = !kernel_graph->is_from_single_op();
-  // select kernel
-  const auto &kernels = kernel_graph->execution_order();
-  for (const auto &kernel : kernels) {
-    auto [select_res, msg, etype] =
-      device::ascend::SelectKernelInfoWithMsg(kernel, aclnn_can_used && kernel::IsEnabledAclnn(kernel));
-    if (!select_res) {
-      MS_LOG(INFO) << "node is " << kernel->fullname_with_scope() << " should backoff";
-      std::pair<std::string, ExceptionType> failure_info = std::make_pair(msg, etype);
-      device::ascend::HandleKernelSelectFailure(kernel_graph, kernel, failure_info);
-    }
-  }
-  if (!kernel_graph->is_from_single_op() && !kernel_graph->has_flag(kFlagIsPyNativeBpropKernelGraph)) {
-    kernel_graph->SetKernelObjectTypesForUnrealNodes();
-  }
-
-  GEGraphOptimization::GetInstance().OptimizeACLGraphAfterKernelSelect(kernel_graph);
+  std::set<KernelGraphPtr> memo;
+  GEGraphOptimization::GetInstance().OptimizeACLGraph(kernel_graph, &memo);
+  memo.clear();
+  SelectKernel(kernel_graph, &memo);
+  memo.clear();
+  GEGraphOptimization::GetInstance().OptimizeACLGraphAfterKernelSelect(kernel_graph, &memo);
+  memo.clear();
+  InlineSubGraph(kernel_graph);
+  OptimizeExecutionOrder(NOT_NULL(graph));
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "GeOptimizeGraph", 1, 0, 1);
 }
 
@@ -212,6 +275,79 @@ void GeKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   PROF_END(create_kernel);
   profiler::CollectHostInfo("Ascend", "CreateKernel", "CreateGeKernel", 1, 0, 1);
   MS_LOG(DEBUG) << "Status record: end create kernel.";
+}
+
+namespace {
+void CreateEventKernelMod(const KernelGraphPtr &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto nodes = kernel_graph->execution_order();
+  for (auto &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!IsOneOfPrimitiveCNode(node, {prim::kPrimStreamSend, prim::kPrimStreamRecv})) {
+      continue;
+    }
+    device::ascend::GenerateKernelBuildInfo(node, RT_KERNEL);
+    auto kernel_mod_ptr = kernel::RtOpBuild(node);
+    MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
+    AnfAlgo::SetKernelMod(kernel_mod_ptr, node.get());
+  }
+}
+}  // namespace
+
+void GeKernelExecutor::DoStreamAssign(const KernelGraphPtr &kernel_graph) {
+  MS_LOG(DEBUG) << "Status record: start stream assign.";
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  // stream assign
+  AclStreamAssign::GetInstance().AssignStream(NOT_NULL(kernel_graph));
+  CreateEventKernelMod(kernel_graph);
+#ifdef ENABLE_DUMP_IR
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->CanDump(kIntroductory);
+  if (save_graphs) {
+    std::string file_name = "hwopt_d_after_stream_assign_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph, true, kWholeStack);
+  }
+#endif
+  kernel_graph->PrintGraphExecuteOrder();
+  MS_LOG(DEBUG) << "Status record: end stream assign.";
+}
+
+void GeKernelExecutor::DoSomas(const FuncGraphPtr &graph) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  MS_EXCEPTION_IF_NULL(graph);
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  DoStreamAssign(kernel_graph);
+  // somas
+  MS_LOG(DEBUG) << "Status record: start do somas.";
+  if (ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0) {
+    auto somas = std::make_shared<AclSomas>();
+    bool ret = somas->Assign(kernel_graph);
+    if (ret) {
+      MS_LOG(INFO) << "Somas allocate success for graph " << kernel_graph->graph_id()
+                   << " somas size: " << kernel_graph->somas_whole_block_size();
+    } else if (somas->IsSupportSomas(*kernel_graph)) {
+      MS_LOG(WARNING) << "Somas allocate failed for graph " << kernel_graph->graph_id();
+    }
+  }
+  MS_LOG(DEBUG) << "Status record: end do somas.";
+}
+
+void GeKernelExecutor::OptimizeExecutionOrder(const FuncGraphPtr &graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_LOG(DEBUG) << "Status record: start optimize execution order. graph id: " << kernel_graph->graph_id();
+  auto execution_order = kernel_graph->execution_order();
+  kernel_graph->EnableRuntimeCache();
+  common::AnfAlgo::ReorderExecList(NOT_NULL(&execution_order));
+  kernel_graph->DisableRuntimeCache();
+  kernel_graph->set_execution_order(execution_order);
+  MS_LOG(DEBUG) << "Status record: end optimize execution order. graph id: " << kernel_graph->graph_id();
 }
 
 void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
@@ -250,16 +386,16 @@ void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
     }
   }
 
+  DoSomas(NOT_NULL(graph));
+
   profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "GePreprocess", 1, 0, 1);
 }
 
-bool GeKernelExecutor::PySyncRuning() const {
+bool GeKernelExecutor::PySyncRuning(size_t stream_id) const {
+  MS_EXCEPTION_IF_NULL(res_manager_);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  MS_EXCEPTION_IF_NULL(res_manager_);
-  if ((ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) &&
-      ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) &&
-      !res_manager_->SyncStream(kDefaultStreamIndex)) {
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) && !res_manager_->SyncStream(stream_id)) {
     return false;
   }
   return true;
@@ -299,6 +435,7 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
   auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
   if (stream == nullptr) {
     stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
+    stream_id = kDefaultStreamIndex;
   }
   MS_EXCEPTION_IF_NULL(stream);
 #ifdef ENABLE_DEBUGGER
@@ -308,6 +445,7 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
   }
 #endif
 
+  profiler::ascend::ProfilingFrameworkData::RecordLaunchGETaskBegin(kernel);
   // launch kernel
   // cppcheck-suppress unreadVariable
   auto lock = device::KernelRuntime::LockRuntime(stream);
@@ -319,7 +457,7 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
       return false;
     }
   } else {
-    MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
+    MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope() << ", stream id : " << stream_id << ".";
     bool ret = kernel_mod->Launch(inputs, workspace, outputs, stream);
     MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
     if (!ret) {
@@ -328,19 +466,51 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
       return false;
     }
   }
+  profiler::ascend::ProfilingFrameworkData::RecordGETask(kernel);
   // for PyNative Sync Run mode
-  auto ret = PySyncRuning();
+  auto ret = PySyncRuning(stream_id);
   PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelLaunch,
                kernel->fullname_with_scope(), false);
-
   return ret;
+}
+
+void AclrtLaunchCallback(void *user_data) {
+  CallbackFunc *callback_func = reinterpret_cast<CallbackFunc *>(user_data);
+  (*callback_func)();
+  delete callback_func;
+}
+
+bool GeKernelExecutor::LaunchCallback(CallbackFunc callback_func, size_t stream_id) const {
+  auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  if (stream == nullptr) {
+    stream_id = kDefaultStreamIndex;
+    stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  }
+  MS_EXCEPTION_IF_NULL(stream);
+  auto callback_func_ptr = new CallbackFunc(callback_func);
+  aclError ret =
+    aclrtLaunchCallback(AclrtLaunchCallback, callback_func_ptr, aclrtCallbackBlockType::ACL_CALLBACK_NO_BLOCK, stream);
+  MS_LOG(DEBUG) << "Launch callback for stream_id : " << stream_id << ", ret : " << ret << ".";
+  if (ret) {
+    delete callback_func_ptr;
+    MS_LOG(WARNING) << "Launch callback for stream_id : " << stream_id << " failed, ret : " << ret << ".";
+    if (res_manager_->SyncStream(stream_id)) {
+      callback_func();
+      return true;
+    }
+    res_manager_->ResetStreamAndCtx();
+    return false;
+  }
+  return true;
 }
 
 bool GeKernelExecutor::ExecuteKernelTask(const pynative::KernelTaskType &task_type,
                                          const device::DeviceAddressPtrList &input_addr_list,
                                          const TensorStorageInfoPtrList &input_storage_list,
-                                         const device::DeviceAddressPtrList &output_addr_list) const {
-  auto stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
+                                         const device::DeviceAddressPtrList &output_addr_list,
+                                         const size_t &stream_id) const {
+  auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  MS_EXCEPTION_IF_NULL(stream);
 
   auto task_context = std::make_shared<pynative::KernelTaskContext>(device_context_, input_addr_list,
                                                                     input_storage_list, output_addr_list, stream);

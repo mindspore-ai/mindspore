@@ -25,12 +25,11 @@
 #include "include/transform/graph_ir/utils.h"
 #include "include/common/utils/scoped_long_running.h"
 #include "graph/model.h"
+#include "framework/common/helper/model_helper.h"
 #include "transform/graph_ir/op_adapter_map.h"
 #include "plugin/device/ascend/hal/device/tensorprint_utils.h"
 #include "acl/acl_rt.h"
 #include "acl/acl_base.h"
-#include "toolchain/plog.h"
-#include "framework/common/helper/model_helper.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
 #include "cxx_api/graph/acl/acl_env_guard.h"
@@ -281,12 +280,6 @@ bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_con
     }
     rank_size = IntToUint(rank_env);
   }
-
-  int log_ret = DlogReportInitialize();
-  if (log_ret != 0) {
-    MS_LOG(WARNING) << "Init slog failed, ret = " << log_ret;
-  }
-
   (void)ErrorManagerAdapter::Init();
   MS_LOG(INFO) << "Device id = " << device_id << ", rank size = " << rank_size << ".";
   auto ret = aclrtSetDevice(static_cast<int32_t>(device_id));
@@ -335,7 +328,6 @@ bool AscendDeprecatedInterface::CloseTsd(const std::shared_ptr<MsContext> &ms_co
     }
     ms_context_ptr->set_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT, false);
     MS_LOG(INFO) << "Call aclrtResetDevice, destroy and close tsd successful, ret[" << static_cast<int>(ret) << "]";
-    (void)DlogReportFinalize();
   } else {
     MS_LOG(DEBUG) << "Acltdt Dataset client is used, no need to close, tsd reference = "
                   << ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) << ".";
@@ -377,12 +369,12 @@ void AscendDeprecatedInterface::AclLoadModel(Buffer *om_data) {
 }
 
 void AscendDeprecatedInterface::UnregisterExternalAllocator() {
-  if (!IsEnableRefMode()) {
-    return;
-  }
   auto graph_runner = transform::GetGraphRunner();
   if (graph_runner == nullptr) {
     MS_LOG(INFO) << "The graph_runner is not exist";
+    return;
+  }
+  if (!graph_runner->IsAllocatorRegistered()) {
     return;
   }
   MS_EXCEPTION_IF_NULL(ge_device_context_);

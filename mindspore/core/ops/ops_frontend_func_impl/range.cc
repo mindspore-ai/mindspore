@@ -84,10 +84,10 @@ ValuePtr RangeImpl(const TypeId dtype, const std::vector<AbstractBasePtr> &input
 }
 
 using RangeFunc = std::function<ValuePtr(const TypeId, const std::vector<AbstractBasePtr> &)>;
-static std::unordered_map<TypeId, RangeFunc> RangeFuncMap{
-  {kNumberTypeInt, RangeImpl<int32_t>},   {kNumberTypeInt32, RangeImpl<int32_t>},
-  {kNumberTypeInt64, RangeImpl<int64_t>}, {kNumberTypeFloat, RangeImpl<float>},
-  {kNumberTypeFloat32, RangeImpl<float>}, {kNumberTypeFloat64, RangeImpl<double>}};
+static std::unordered_map<TypeId, RangeFunc> RangeFuncMap{{kNumberTypeInt32, RangeImpl<int32_t>},
+                                                          {kNumberTypeInt64, RangeImpl<int64_t>},
+                                                          {kNumberTypeFloat32, RangeImpl<float>},
+                                                          {kNumberTypeFloat64, RangeImpl<double>}};
 }  // namespace
 
 class RangeFrontendFuncImpl final : public OpFrontendFuncImpl {
@@ -130,8 +130,9 @@ class RangeFrontendFuncImpl final : public OpFrontendFuncImpl {
     auto type = input_args[0]->GetType()->type_id();
     auto it = RangeFuncMap.find(type);
     if (it == RangeFuncMap.end()) {
-      MS_EXCEPTION(TypeError) << "For Range, the dtype of input must be int32, int64, float32, float64, but got "
-                              << TypeIdToString(type) << ".";
+      MS_LOG(DEBUG) << "For Range, the dtype of input must be int32, int64, float32, float64, but got "
+                    << TypeIdToString(type) << ".";
+      return nullptr;
     }
     auto result_tensor = it->second(type, input_args);
     return result_tensor;

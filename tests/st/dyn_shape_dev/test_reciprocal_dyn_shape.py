@@ -22,7 +22,7 @@ from mindspore import ops
 
 @test_utils.run_with_cell
 def reciprocal_forward_func(x):
-    return ops.auto_generate.reciprocal_(x)
+    return ops.Reciprocal()(x)
 
 
 @test_utils.run_with_cell
@@ -106,7 +106,7 @@ def test_reciprocal_dynamic(mode):
     """
     context.set_context(mode=mode)
     x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(ops.auto_generate.reciprocal_)
+    test_cell = test_utils.to_cell_obj(ops.Reciprocal())
     test_cell.set_inputs(x_dyn)
     x1 = Tensor(np.array([1.0, 2.0, 4.0]).astype(np.float32))
     output1 = test_cell(x1)

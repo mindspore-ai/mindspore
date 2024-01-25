@@ -59,6 +59,12 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   const std::vector<pynative::DeviceAddressPromisePtr> &device_sync_promises() const { return device_sync_promises_; }
   const std::vector<tensor::TensorPtr> &outputs() const { return outputs_; }
   void set_outputs(const std::vector<tensor::TensorPtr> &outputs) { outputs_ = outputs; }
+  void SetStreamId() {
+    // device_context_ is checked in PyBoostUtils::GetDeviceContext
+    stream_id_ = device_context_->device_res_manager_->GetCurrentStreamId();
+  }
+
+  size_t stream_id() const { return stream_id_; }
 
   const tensor::TensorPtr &output(const size_t &idx) {
     if (idx >= outputs_.size()) {
@@ -84,6 +90,13 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   }
 
   static AbstractBasePtr ConvertAbstract(const ValuePtr &t) { return t->ToAbstract(); }
+
+  // Tensor is held by Abstract, may lead to memory leak.
+  static AbstractBasePtr ConvertAbstract(const TensorPtr &t) {
+    auto abs = t->ToAbstract();
+    abs->set_value(kValueAny);
+    return abs;
+  }
 
   template <typename... T>
   void GenerateAbstract(T &... args) {
@@ -131,6 +144,8 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   // If the grad_func is not a null pointer,
   // the operator will calculate the grad.
   GradFunc grad_func_{nullptr};
+  // Op stream id
+  size_t stream_id_{kDefaultStreamIndex};
 };
 using OpPtr = std::shared_ptr<OpRunner>;
 }  // namespace pyboost

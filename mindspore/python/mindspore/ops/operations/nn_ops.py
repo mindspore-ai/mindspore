@@ -3023,50 +3023,6 @@ class L2Normalize(Primitive):
         self.axis = axis
 
 
-class ResizeBilinear(PrimitiveWithInfer):
-    r"""
-    This API is deprecated, please use the :class:`mindspore.ops.ResizeBilinearV2` instead.
-    For general resizing with other interpolation methods, refer to :func:`mindspore.ops.interpolate` for more details.
-
-    Note:
-        Dynamic shape feature is not supported for now.
-
-    Supported Platforms:
-        Deprecated
-    """
-
-    @deprecated("2.3", "ops.interpolate", False)
-    @prim_attr_register
-    def __init__(self, size, align_corners=False, half_pixel_centers=False):
-        """Initialize ResizeBilinear."""
-        validator.check_value_type("size", size, [tuple, list], self.name)
-        validator.check_equal_int(len(size), 2, "size len", self.name)
-        for item in size:
-            validator.check_positive_int(item, 'size item', self.name)
-            validator.check_value_type("size item", item, int, self.name)
-        self.align_corners = validator.check_value_type("align_corners", align_corners, [bool], self.name)
-        self.half_pixel_centers = validator.check_value_type("half_pixel_centers",
-                                                             half_pixel_centers, [bool], self.name)
-        if half_pixel_centers and align_corners:
-            raise ValueError(f"If half_pixel_centers is True, align_corners must be False, but got {align_corners}")
-        for i, value in enumerate(size):
-            validator.check_positive_int(value, f'{i}th value of size', self.name)
-
-    def infer_shape(self, input_shape):
-        validator.check("dimension of input", len(input_shape), "", 4, validator.EQ, self.name)
-        input_shape = list(input_shape)
-        batch, channel, _, _ = input_shape
-        out_shape = [batch, channel]
-        for i in self.size:
-            out_shape.append(int(i))
-        return out_shape
-
-    def infer_dtype(self, input_dtype):
-        validator.check_tensor_dtype_valid('input_dtype', input_dtype, [mstype.float16, mstype.float32],
-                                           self.name)
-        return input_dtype
-
-
 class UpsampleTrilinear3D(Primitive):
     r"""
     Performs upsampling with trilinear interpolation across 3dims for 5dim input Tensor.
@@ -5457,22 +5413,21 @@ class ApplyAddSign(Primitive):
     is the last moment of :math:`m_{t+1}`, :math:`lr` represents scaling factor `lr`, :math:`g` represents `grad`,
     :math:`\alpha` represents `alpha`, :math:`\beta` represents `beta`.
 
-    Inputs of `var`, `accum` and `grad`  comply with the implicit type conversion rules
+    The data type of all inputs must be float16 or float32 on Ascend and float16, float32 or float64 on CPU and GPU.
+
+    Inputs of `var`, `accum` and `grad` , `sign_decay` and `beta` comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
-    The data type of inputs must be float16 or float32 on Ascend and float16, float32 or float64 on CPU and GPU.
 
     Inputs:
-        - **var** (Parameter) - Variable tensor to be updated. With float16, float32 or float64 data type.
+        - **var** (Parameter) - Variable tensor to be updated.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **m** (Parameter) - Variable tensor to be updated, has the same data type as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value, must be a scalar.
-          With float16, float32 or float64 data type.
-        - **alpha** (Union[Number, Tensor]) - Must be a scalar. With float16, float32 or float64 data type.
-        - **sign_decay** (Union[Number, Tensor]) - Must be a scalar. With float16, float32 or float64 data type.
+        - **alpha** (Union[Number, Tensor]) - Must be a scalar.
+        - **sign_decay** (Union[Number, Tensor]) - Must be a scalar.
         - **beta** (Union[Number, Tensor]) - The exponential decay rate, must be a scalar.
-          With float16, float32 or float64 data type.
         - **grad** (Tensor) - A tensor of the same shape as `var`, for the gradient.
 
     Outputs:
@@ -5482,7 +5437,8 @@ class ApplyAddSign(Primitive):
         - **m** (Tensor) - The same shape and data type as `m`.
 
     Raises:
-        TypeError: If dtype of `var`, `lr`, `alpha`, `sign_decay` or `beta` is not float16, float32 or float64.
+        TypeError: If dtype of `var`, `lr` and `alpha` is not float16, float32 or float64.
+        TypeError: If dtype of `sign_decay` and `beta` are both not float16, float32 or float64.
         TypeError: If `lr`, `alpha` or `sign_decay` is neither a Number nor a Tensor.
         TypeError: If `grad` is not a Tensor.
         TypeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
@@ -10131,7 +10087,7 @@ class PromptFlashAttention(Primitive):
           Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
         - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or float32.
           For each element, 0 indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, 1, S, S)`.
-        - **padding_mask** (Tensor) - The padding mask tensor with data type of float16 or float32
+        - **pse_shift** (Tensor) - The position encoding tensor with data type of float16 or float32
         - **actual_seq_lengths** (Tensor): Describe actual sequence length of each input with data type of int64.
         - **actual_seq_lengths_kv** (Tensor): Describe actual sequence length of each input with data type of int64.
         - **dep_scale1** (Tensor)
@@ -10176,7 +10132,7 @@ class PromptFlashAttention(Primitive):
         validator.check_value_type('num_key_value_heads', num_key_value_heads, [int], self.name)
         validator.check_value_type('sparse_mode', sparse_mode, [int], self.name)
         validator.check_value_type('inner_precise', inner_precise, [int], self.name)
-        self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "padding_mask", "actual_seq_lengths",
+        self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "pse_shift", "actual_seq_lengths",
                                         "actual_seq_lengths_kv", "deq_scale1", "quant_scale1", "deq_scale2",
                                         "quant_scale2", "quant_offset2"],
                                 outputs=["attention_out"])

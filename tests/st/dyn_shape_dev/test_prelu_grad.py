@@ -23,7 +23,7 @@ import test_utils
 
 @test_utils.run_with_cell
 def prelu_grad_func(y, x, weight):
-    return ops.auto_generate.prelu_grad(y, x, weight)
+    return ops.auto_generate.PReLUGrad()(y, x, weight)
 
 
 @pytest.mark.level1
@@ -67,7 +67,7 @@ def test_prelu_grad_dynamic(mode):
     dy_dyn = Tensor(shape=None, dtype=ms.float32)
     x_dyn = Tensor(shape=None, dtype=ms.float32)
     weight_dyn = Tensor(shape=None, dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(ops.auto_generate.prelu_grad)
+    test_cell = test_utils.to_cell_obj(ops.auto_generate.PReLUGrad())
     test_cell.set_inputs(dy_dyn, x_dyn, weight_dyn)
     dy1 = Tensor(np.array([[1., 1.],
                            [1., 1.],

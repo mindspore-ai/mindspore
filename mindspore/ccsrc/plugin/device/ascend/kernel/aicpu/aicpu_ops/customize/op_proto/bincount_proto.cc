@@ -21,13 +21,12 @@
 
 namespace ge {
 IMPLEMT_INFERFUNC(Bincount, BincountInfer) {
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  op_desc->SetOpInferDepends({"size"});
+  SetOpInferDepends(op, {"size"});
 
-  GeShape unused;
-  auto size_desc = op_desc->MutableInputDesc(1);
+  Shape unused;
+  auto size_desc = op.GetInputDesc(1);
   if (WithRank(size_desc, 0, unused, op) != GRAPH_SUCCESS) {
-    std::string err_msg = GetShapeErrMsg(1, DebugString(size_desc->GetShape().GetDims()), "scalar");
+    std::string err_msg = GetShapeErrMsg(1, DebugString(size_desc.GetShape().GetDims()), "scalar");
     err_msg = string("failed to call WithRank function, ") + err_msg;
     AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
     return GRAPH_FAILED;
@@ -52,10 +51,10 @@ IMPLEMT_INFERFUNC(Bincount, BincountInfer) {
     return GRAPH_FAILED;
   }
 
-  auto bins_desc = op_desc->MutableOutputDesc(0);
-  bins_desc->SetShape(GeShape(bins_shape.GetDims()));
-  bins_desc->SetDataType(op_desc->MutableInputDesc(2)->GetDataType());
-
+  auto bins_desc = op.GetOutputDesc(0);
+  bins_desc.SetShape(Shape(bins_shape.GetDims()));
+  bins_desc.SetDataType(op.GetInputDesc(2).GetDataType());
+  op.UpdateOutputDesc(bins_desc.GetName(), bins_desc);
   return GRAPH_SUCCESS;
 }
 

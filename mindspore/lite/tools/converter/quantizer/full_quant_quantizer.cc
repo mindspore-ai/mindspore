@@ -262,9 +262,9 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(primitive);
   auto op_name = cnode->fullname_with_scope();
-  MS_ASSERT(cnode->inputs().size() - 1 <= (*inputs_diverg_info)[op_name].size());
+  MS_ASSERT(cnode->size() - 1 <= (*inputs_diverg_info)[op_name].size());
   int ret;
-  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+  for (size_t i = 1; i < cnode->size(); i++) {
     auto input_node = cnode->input(i);
     CHECK_NULL_RETURN(input_node);
     bool is_graph_input = IsGraphInput(input_node);

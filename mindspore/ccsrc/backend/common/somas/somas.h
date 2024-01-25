@@ -106,6 +106,7 @@ class BACKEND_EXPORT Somas {
   virtual bool DevSpecNodeProcess(const session::KernelGraph &graph) = 0;
   virtual void CommunicationTensorProcess(const std::vector<SomasTensorPtr> &tensors) const;
   virtual bool NeedContiguous(const std::vector<size_t> &inputs) const = 0;
+  virtual bool NeedReuseGraphOutput() const { return false; }
   // end
 
   // SOMAS Configuration
@@ -157,7 +158,7 @@ class BACKEND_EXPORT Somas {
   void InitSomasOutputAndWorkspaceTensors(const session::KernelGraph &graph);
   void InitSomasInputTensors(const session::KernelGraph &graph);
   void InitCommonNodeInputs(const CNodePtr &kernel);
-  void InitAtomicCleanInputs(bool enable_fusion_clear, const CNodePtr &kernel);
+  void InitAtomicCleanInputs(const CNodePtr &kernel);
   SomasParameterPtr GetSomasParameter(const AnfNodePtr &node, size_t index, size_t param_size,
                                       const std::string &kernel_name);
   SomasParameterPtr CreateSomasParameter(const AnfNodePtr &node, size_t index, size_t param_size,

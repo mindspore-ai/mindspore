@@ -20,7 +20,7 @@
 #define google ascend_private
 #include "common/opskernel/ops_kernel_info_store.h"
 #include "common/opskernel/ops_kernel_builder.h"
-#include "external/ge/ge_api_types.h"
+#include "ge/ge_api_types.h"
 #undef google
 #include "hccl/hccl.h"
 #include "hccl/hcom.h"
@@ -34,8 +34,6 @@
 #include "ops/framework_op_name.h"
 
 static constexpr const auto kHcclPluginFileName = "libhccl_plugin.so";
-static constexpr const auto kHcclAlgoEnv = "HCCL_ALGO";
-static constexpr const auto kHcclAlgoOption = "HCCL_algorithm";
 
 #define CHECK_SYMBOL_NULL(symbol)                                                    \
   if ((symbol) == nullptr) {                                                         \
@@ -63,10 +61,6 @@ static std::map<std::string, std::string> GenHcclOptions(uint32_t device_id, std
     {ge::OPTION_GRAPH_RUN_MODE, "1"},          {ge::OPTION_EXEC_HCCL_FLAG, "1"},
     {ge::OPTION_EXEC_DEPLOY_MODE, "0"}};
 
-  auto env_hccl_algo = mindspore::common::GetEnv(kHcclAlgoEnv);
-  if (!env_hccl_algo.empty()) {
-    default_options_map.emplace(kHcclAlgoOption, env_hccl_algo);
-  }
   if (!rank_file.empty()) {
     default_options_map.emplace(ge::OPTION_EXEC_RANK_TABLE_FILE, rank_file.data());
   }
@@ -170,9 +164,10 @@ HcclMode HcclAdapter::GetCurrentHcclMode() const {
   MS_EXCEPTION_IF_NULL(context);
   bool is_graph_mode = context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode;
   bool is_task_sink = context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  bool graph_op_run = context->IsKByKExecutorMode();
   if (!is_graph_mode) {
     return HcclMode::kPynative;
-  } else if (is_task_sink) {
+  } else if (is_task_sink && !graph_op_run) {
     return HcclMode::kGraph;
   } else {
     return HcclMode::kKernelByKernel;
@@ -190,10 +185,9 @@ void HcclAdapter::CheckExcutionMode() const {
 }
 
 std::string HcclAdapter::GetHcclModeString(HcclMode hccl_mode) {
-  static std::map<HcclMode, std::string> kHcclModeString = {
-    {HcclMode::kGraph, "GRAPH_MODE"},
-    {HcclMode::kPynative, "PYNATIVE_MODE"},
-    {HcclMode::kKernelByKernel, "GRAPH_MODE disable TASK_SINK"}};
+  static std::map<HcclMode, std::string> kHcclModeString = {{HcclMode::kGraph, "GRAPH_MODE"},
+                                                            {HcclMode::kPynative, "PYNATIVE_MODE"},
+                                                            {HcclMode::kKernelByKernel, "KERNEL_BY_KERNEL_MODE"}};
   return kHcclModeString.at(hccl_mode);
 }
 

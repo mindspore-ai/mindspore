@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import numpy as np
+import pytest
 import mindspore
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.ops import operations as P
-
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Net(nn.Cell):
@@ -30,31 +30,19 @@ class Net(nn.Cell):
         return self.randperm(n)
 
 
-def test_net():
-    net = Net(max_length=1, pad=-1)
-    output = net(Tensor([1], mindspore.int32))
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_net(mode):
+    """
+    Feature: aicpu Randperm
+    Description: test Randperm on Acsend
+    Expectation: success.
+    """
+    context.set_context(mode=mode, device_target="Ascend")
+    net = Net(max_length=5, pad=-1)
+    output = net(Tensor([3], mindspore.int32))
 
-    print(output)
-    print(output.shape)
-    print(output.dtype)
-    assert output.shape == (1,)
-    assert output.dtype == mindspore.int32
-    assert output.asnumpy()[0] == 0
-
-
-def test_net_n20():
-    net = Net(max_length=30, pad=-1, dtype=mindspore.int32)
-    output = net(Tensor([20], dtype=mindspore.int32))
-
-    print(output)
-    assert output.shape == (30,)
-    assert output.dtype == mindspore.int32
-
-    sample_set = set()
-    for index, i in enumerate(output.asnumpy()):
-        if index < 20:
-            assert i not in sample_set
-            assert 0 <= i < 20
-            sample_set.add(i)
-        else:
-            assert i == -1
+    assert np.all(np.sort(output.asnumpy()) == [-1, -1, 0, 1, 2])

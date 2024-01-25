@@ -512,7 +512,8 @@ class GpuFrameWorkParser:
                 line_info = line_info.strip(' ').strip('\n').split(',')
                 if not self.op_detail.get(line_info[2]):
                     # line_info[4]: op_occurrences, line_info[5]: op_detail_time(us), line_info[6]: op_avg_time(us);
-                    self.op_detail[line_info[2]] = [line_info[4], line_info[5], line_info[6], op_side]
+                    self.op_detail[line_info[2]] = [float(line_info[4]), float(line_info[5]),
+                                                    float(line_info[6]), op_side]
 
     def get_execute_times(self):
         """Get gpu operators execute times."""
@@ -827,7 +828,7 @@ class DynamicFrameWorkParser:
             for line_info in framework_info:
                 line_info = line_info.strip('\n').split(',')
                 op_name = line_info[3].split('/')[-1]
-                shape_info = ','.join(line_info[7:]).replace('"', '')
+                shape_info = ','.join(line_info[8:]).replace('"', '')
                 self._op_shape_info[op_name].append(shape_info)
 
     def _get_total_step_num(self, op_summary):

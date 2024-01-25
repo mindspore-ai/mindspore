@@ -22,3 +22,5 @@ maximum_grad:
             dtype: tensor
         dy:
             dtype: tensor
+    function:
+        disable: True

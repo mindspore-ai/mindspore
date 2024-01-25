@@ -14,3 +14,5 @@ reduce_any:
   returns:
     output:
       dtype: tensor
+  function:
+    disable: True

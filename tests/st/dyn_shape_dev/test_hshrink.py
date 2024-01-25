@@ -24,7 +24,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def hshrink_forward_func(input_x, lambd):
-    return ops.auto_generate.hshrink(input_x, lambd)
+    return ops.HShrink(lambd)(input_x)
 
 
 @test_utils.run_with_cell
@@ -34,7 +34,7 @@ def hshrink_backward_func(input_x, lambd):
 
 @test_utils.run_with_cell
 def hshrink_dyn_shape_func(input_x, lambd):
-    return ops.auto_generate.hshrink(input_x, lambd)
+    return ops.HShrink(lambd)(input_x)
 
 
 @pytest.mark.level1

@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def nonzero_forward_func(x):
-    return ops.auto_generate.non_zero(x)
+    return ops.NonZero()(x)
 
 
 @test_utils.run_with_cell

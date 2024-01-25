@@ -22,12 +22,12 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def sqrt_grad_forward_func(dy, x):
-    return ops.auto_generate.sqrt_grad(dy, x)
+    return ops.auto_generate.SqrtGrad()(dy, x)
 
 
 @test_utils.run_with_cell
 def sqrt_grad_dyn_shape_func(dy, x):
-    return ops.auto_generate.sqrt_grad(dy, x)
+    return ops.auto_generate.SqrtGrad()(dy, x)
 
 
 @pytest.mark.level1

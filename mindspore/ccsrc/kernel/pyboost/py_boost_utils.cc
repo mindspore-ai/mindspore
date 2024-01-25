@@ -135,13 +135,17 @@ device::DeviceAddressPtr PyBoostUtils::ContiguousByDeviceAddress(const device::D
   auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
     nullptr, address_size, Format::DEFAULT_FORMAT, old_storage_info->data_type, old_storage_info->shape,
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(old_storage_info->data_type)));
+  kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(old_storage_info->shape));
   auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   new_device_address->set_device_shape(old_storage_info->shape);
   new_device_address->set_original_ref_count(SIZE_MAX);
   new_device_address->ResetRefCount();
+  auto stream_id = device_context->device_res_manager_->GetCurrentStreamId();
 
-  if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(
-        pynative::KernelTaskType::kCONTIGUOUS_TASK, {old_device_address}, {old_storage_info}, {new_device_address})) {
+  if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(pynative::KernelTaskType::kCONTIGUOUS_TASK,
+                                                                   {old_device_address}, {old_storage_info},
+                                                                   {new_device_address}, stream_id)) {
     MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << pynative::KernelTaskType::kCONTIGUOUS_TASK;
   }
   return new_device_address;
@@ -464,6 +468,17 @@ std::vector<tensor::TensorPtr> PyBoostUtils::CastTensor(const std::vector<tensor
   std::vector<tensor::TensorPtr> output_tensors;
   for (size_t i = 0; i < tensors.size(); ++i) {
     const auto &output = CastTensor(tensors[i], type_id_list[i], device_target);
+    (void)output_tensors.emplace_back(output);
+  }
+  return output_tensors;
+}
+
+std::vector<tensor::TensorPtr> PyBoostUtils::CastTensor(const std::vector<tensor::TensorPtr> &tensors, TypeId type_id,
+                                                        const std::string &device_target) {
+  // tuple input
+  std::vector<tensor::TensorPtr> output_tensors;
+  for (size_t i = 0; i < tensors.size(); ++i) {
+    const auto &output = CastTensor(tensors[i], type_id, device_target);
     (void)output_tensors.emplace_back(output);
   }
   return output_tensors;

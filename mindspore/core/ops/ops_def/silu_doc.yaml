@@ -1,15 +1,35 @@
 silu:
     description: |
-        Computes SiLU (Sigmoid Linear Unit activation function) of input tensors element-wise. Also known as the Swish
-        function.
+        Computes Sigmoid Linear Unit of input element-wise. The SiLU function is defined as:
 
-        Refer to :func:`mindspore.ops.silu` for more details.
+        .. math::
+
+            \text{SiLU}(x) = x * \sigma(x),
+
+        where :math:`x` is an element of the input, :math:`\sigma(x)` is Sigmoid function.
+
+        .. math::
+
+            \text{sigma}(x_i) = \frac{1}{1 + \exp(-x_i)},
+
+        Args:
+            input (Tensor): `input` is `x` in the preceding formula. Input with the data type
+            float16 or float32.
+
+        Returns:
+            Tensor, with the same type and shape as the `input`.
+
+        Raises:
+            TypeError: If dtype of `input` is neither float16 nor float32.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
-            >>> x = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
-            >>> output = ops.silu(x)
+            >>> import mindspore
+            >>> from mindspore import Tensor, ops
+            >>> import numpy as np
+            >>> input = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
+            >>> output = ops.silu(input)
             >>> print(output)
             [-0.269  1.762  -0.1423  1.762  -0.269]

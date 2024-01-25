@@ -61,8 +61,7 @@ CUST_VERIFY_FUNC_REG(AdaptiveAvgPool2D, AdaptiveAvgPool2dVerify);
 // ---------------AdaptiveAvgPool2DGrad-------------------
 CUST_IMPLEMT_INFERFUNC(AdaptiveAvgPool2DGrad, AdaptiveAvgPool2dGradInferShape) {
   std::vector<std::string> input_infer_depends = {"orig_input_shape"};
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  op_desc->SetOpInferDepends(input_infer_depends);
+  PREPARE_DYNAMIC_SHAPE(input_infer_depends);
   DataType input_dtype = op.GetInputDescByName("input_grad").GetDataType();
   Shape output_shape;
   Tensor orig_input_shape_tensor;
@@ -284,20 +283,19 @@ CUST_VERIFY_FUNC_REG(AdaptiveMaxPool3dGrad, AdaptiveMaxPool3dGradVerify);
 
 // -------------------DataFormatVecPermute---------------------
 IMPLEMT_INFERFUNC(DataFormatVecPermute, DataFormatVecPermuteInfer) {
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  auto x_desc = op_desc->MutableInputDesc(0);
+  auto x_desc = op.GetInputDesc(0);
 
   std::vector<std::pair<int64_t, int64_t>> range;
-  if (x_desc->GetShapeRange(range) != GRAPH_SUCCESS) {
+  if (x_desc.GetShapeRange(range) != GRAPH_SUCCESS) {
     return GRAPH_FAILED;
   }
-  DataType y_type = x_desc->GetDataType();
+  DataType y_type = x_desc.GetDataType();
 
-  auto y_desc = op_desc->MutableOutputDesc(0);
-  y_desc->SetShape(x_desc->GetShape());
-  y_desc->SetShapeRange(range);
-  y_desc->SetDataType(y_type);
-
+  auto y_desc = op.GetOutputDesc(0);
+  y_desc.SetShape(x_desc.GetShape());
+  y_desc.SetShapeRange(range);
+  y_desc.SetDataType(y_type);
+  UpdateOutputDesc(op, y_desc);
   return GRAPH_SUCCESS;
 }
 
@@ -522,11 +520,8 @@ CUST_IMPLEMT_VERIFIER(MaxPool3DGradWithArgmax, MaxPool3DGradWithArgmaxVerify) {
     return GRAPH_FAILED;
   }
 
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  CHECK_PTR_NULL(op_desc, "op desc", return GRAPH_FAILED);
-  auto grads_desc = op_desc->MutableInputDesc("grads");
-  CHECK_PTR_NULL(grads_desc, "grads desc", return GRAPH_FAILED);
-  vector<int64_t> grads_shape = grads_desc->MutableShape().GetDims();
+  auto grads_desc = op.GetInputDesc("grads");
+  vector<int64_t> grads_shape = grads_desc.GetShape().GetDims();
   if (grads_shape.size() != DIM_SIZE5 && !IsUnknownRankShape(grads_shape)) {
     OP_LOGE(TbeGetName(op).c_str(), "grads_shape's dim expect: %lu, but real: %lu.", DIM_SIZE5, grads_shape.size());
     return GRAPH_FAILED;
@@ -558,8 +553,7 @@ CUST_VERIFY_FUNC_REG(MaxPool3DGradWithArgmax, MaxPool3DGradWithArgmaxVerify);
 //-------------------NthElement---------------------
 IMPLEMT_INFERFUNC(NthElement, NthElementInfer) {
   std::vector<std::string> input_infer_depends = {"n"};
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
-  op_desc->SetOpInferDepends(input_infer_depends);
+  PREPARE_DYNAMIC_SHAPE(input_infer_depends);
   Shape x_shape;
   auto x_tensor = op.get_input_desc_x();
   if (WithRankAtLeast(x_tensor, 1, x_shape, op) != GRAPH_SUCCESS) {

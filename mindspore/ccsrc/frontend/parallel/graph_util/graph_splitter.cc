@@ -1074,7 +1074,7 @@ CNodePtr ParameterServerMode::FuseRpcSendNodes(const std::vector<CNodePtr> &rpc_
   std::string fused_inter_process_edge_name = "";
   for (const auto &send_node : rpc_send_nodes) {
     MS_EXCEPTION_IF_NULL(send_node);
-    for (size_t i = 1; i < send_node->inputs().size(); i++) {
+    for (size_t i = 1; i < send_node->size(); i++) {
       auto input_i = send_node->inputs()[i];
       MS_EXCEPTION_IF_NULL(input_i);
       // If the input of send is monad, do not pass it to fused send node.
@@ -1107,7 +1107,7 @@ CNodePtr ParameterServerMode::FuseRpcRecvNodes(const std::vector<CNodePtr> &rpc_
   std::string fused_inter_process_edge_name = "";
   for (const auto &recv_node : rpc_recv_nodes) {
     MS_EXCEPTION_IF_NULL(recv_node);
-    for (size_t i = 1; i < recv_node->inputs().size(); i++) {
+    for (size_t i = 1; i < recv_node->size(); i++) {
       auto input_i = recv_node->inputs()[i];
       MS_EXCEPTION_IF_NULL(input_i);
       // If the input of recv is monad, do not pass it to fused recv node.
@@ -1698,8 +1698,8 @@ void GraphSplitter::EliminateDataSyncNode() {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (common::AnfAlgo::GetCNodeName(cnode) == distributed::kDataSyncSrcOpName) {
-      if (cnode->inputs().size() != kSizeThree) {
-        MS_LOG(EXCEPTION) << "Node DataSyncSrc's input number should be 3, but got " << cnode->inputs().size();
+      if (cnode->size() != kSizeThree) {
+        MS_LOG(EXCEPTION) << "Node DataSyncSrc's input number should be 3, but got " << cnode->size();
       }
       // The first input is parameter and the second input is side effect node.
       auto param_node = cnode->inputs()[kIndex1];
@@ -1721,8 +1721,8 @@ void GraphSplitter::EliminateDataSyncNode() {
       load_node_replace_data_sync_src->set_abstract(cnode->abstract());
       (void)func_graph_->manager()->Replace(cnode, load_node_replace_data_sync_src);
     } else if (common::AnfAlgo::GetCNodeName(cnode) == distributed::kDataSyncDstOpName) {
-      if (cnode->inputs().size() != kSizeTwo) {
-        MS_LOG(EXCEPTION) << "Node DataSyncDst's input number should be 2, but got " << cnode->inputs().size();
+      if (cnode->size() != kSizeTwo) {
+        MS_LOG(EXCEPTION) << "Node DataSyncDst's input number should be 2, but got " << cnode->size();
       }
       auto input_node = cnode->inputs()[kIndex1];
       MS_EXCEPTION_IF_NULL(input_node);
@@ -1754,8 +1754,8 @@ void GraphSplitter::EliminateControlEdgeNode() {
       MS_EXCEPTION_IF_NULL(fake_value_node);
       (void)func_graph_->manager()->Replace(cnode, fake_value_node);
     } else if (common::AnfAlgo::GetCNodeName(cnode) == distributed::kControlDstOpName) {
-      if (cnode->inputs().size() != kSizeTwo) {
-        MS_LOG(EXCEPTION) << "Node DataSyncDst's input number should be 2, but got " << cnode->inputs().size();
+      if (cnode->size() != kSizeTwo) {
+        MS_LOG(EXCEPTION) << "Node DataSyncDst's input number should be 2, but got " << cnode->size();
       }
       auto input_node = cnode->inputs()[kIndex1];
       MS_EXCEPTION_IF_NULL(input_node);
@@ -1814,7 +1814,7 @@ InterProcessOpEdgesInfo GraphSplitter::GenerateInterProcessOpsForNodeInputs(cons
   CNodePtr cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   InterProcessOpEdgesInfo comm_edges;
-  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+  for (size_t i = 1; i < cnode->size(); i++) {
     auto input_i = cnode->inputs()[i];
     MS_EXCEPTION_IF_NULL(input_i);
 
@@ -1890,7 +1890,7 @@ std::vector<AnfNodePtr> GraphSplitter::FindInterProcessInDegree(const std::vecto
     }
 
     CNodePtr cnode = n->cast<CNodePtr>();
-    for (size_t i = 1; i < cnode->inputs().size(); i++) {
+    for (size_t i = 1; i < cnode->size(); i++) {
       auto input_i = cnode->inputs()[i];
       InterProcessOpEdge edge = {input_i, node_labels_[input_i], cnode, node_labels_[cnode]};
       if (comm_edges.count(edge) != 0 && edge.src_label == this_process_label_) {

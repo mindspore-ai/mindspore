@@ -777,13 +777,12 @@ void Somas::InitSomasOutputAndWorkspaceTensors(const session::KernelGraph &graph
 
 void Somas::InitSomasInputTensors(const session::KernelGraph &graph) {
   MS_LOG(DEBUG) << "Somas InitSomasInputTensors start...";
-  static const auto enable_fusion_clear = (common::GetEnv("ENV_FUSION_CLEAR") == "1");
   auto &kernel_cnodes = graph.execution_order();
   for (const auto &kernel : kernel_cnodes) {
     if (common::AnfAlgo::GetCNodeName(kernel) != kMemSetOpName) {
       InitCommonNodeInputs(kernel);
     } else {
-      InitAtomicCleanInputs(enable_fusion_clear, kernel);
+      InitAtomicCleanInputs(kernel);
     }
   }
 }
@@ -812,14 +811,13 @@ void Somas::InitCommonNodeInputs(const CNodePtr &kernel) {
       if ((op_name == kDynamicRNNOpName || op_name == kDynamicGRUV2OpName) && input_origin_type == kMetaTypeNone) {
         continue;
       }
-      auto index = AnfAlgo::GetInputKernelIdxByGraphIdx(kernel, i);
       size_t input_size = 0;
-      if (index >= input_size_list.size()) {
-        MS_LOG(INFO) << "Node: " << kernel->fullname_with_scope() << " input idx: " << index
+      if (i >= input_size_list.size()) {
+        MS_LOG(INFO) << "Node: " << kernel->fullname_with_scope() << " input idx: " << i
                      << " greater than the size of input_size_list: " << input_size_list.size()
                      << ", so use 0 as parameter size.";
       } else {
-        input_size = input_size_list.at(index);
+        input_size = input_size_list.at(i);
       }
       auto parameter =
         GetSomasParameter(prenode_index.first, prenode_index.second, input_size, kernel->fullname_with_scope());
@@ -864,7 +862,7 @@ void Somas::InitCommonNodeInputs(const CNodePtr &kernel) {
   }
 }
 
-void Somas::InitAtomicCleanInputs(bool enable_fusion_clear, const CNodePtr &kernel) {
+void Somas::InitAtomicCleanInputs(const CNodePtr &kernel) {
   auto node = nodes_map_[kernel.get()].at(0);
   MS_EXCEPTION_IF_NULL(node);
   auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(kernel);
@@ -890,11 +888,6 @@ void Somas::InitAtomicCleanInputs(bool enable_fusion_clear, const CNodePtr &kern
         auto input_somas_tensor = pre_somas_node->output_tensors_[index];
         MS_EXCEPTION_IF_NULL(input_somas_tensor);
         node->input_tensors_.push_back(input_somas_tensor);
-        if (enable_fusion_clear) {
-          input_somas_tensor->lifelong_value_ = kLifeLongGraphStart;
-          MS_LOG(INFO) << "Set " << node->scope_full_name_ << "'s Input node " << pre_somas_node->scope_full_name_
-                       << " 's output" << index << " to lifelong";
-        }
       }
     }
     // set clean workspace tensors
@@ -910,11 +903,6 @@ void Somas::InitAtomicCleanInputs(bool enable_fusion_clear, const CNodePtr &kern
         auto input_somas_tensor = pre_somas_node->workspace_tensors_[index];
         MS_EXCEPTION_IF_NULL(input_somas_tensor);
         node->input_tensors_.push_back(input_somas_tensor);
-        if (enable_fusion_clear) {
-          input_somas_tensor->lifelong_value_ = kLifeLongGraphStart;
-          MS_LOG(INFO) << "Set " << node->scope_full_name_ << "'s Input node " << pre_somas_node->scope_full_name_
-                       << " 's workspace" << index << " to lifelong";
-        }
       }
     }
   }
@@ -1018,6 +1006,7 @@ void Somas::SummaryInputProcess(const session::KernelGraph &graph) {
 #endif
 
 void Somas::GraphOutputProcess(const session::KernelGraph &graph) {
+  bool need_reuse_graph_output = NeedReuseGraphOutput();
   size_t count = 0;
   auto outputs = common::AnfAlgo::GetAllOutputWithIndex(graph.output());
   for (auto &output : outputs) {
@@ -1045,8 +1034,12 @@ void Somas::GraphOutputProcess(const session::KernelGraph &graph) {
       MS_EXCEPTION_IF_NULL(node);
       if (output_index <= node->output_tensors_.size()) {
         auto &tensor = node->output_tensors_[output_index];
-        tensor->aligned_size_ = 0;
-        tensor->type_ = kGraphOutput;
+        if (need_reuse_graph_output) {
+          tensor->lifelong_value_ = kLifeLongGraphEnd;
+        } else {
+          tensor->aligned_size_ = 0;
+          tensor->type_ = kGraphOutput;
+        }
         count++;
       } else {
         MS_LOG(INTERNAL_EXCEPTION) << "Graph's output node " << output_kernel->fullname_with_scope()
@@ -1707,6 +1700,7 @@ void Somas::UpdateUnionTensorsOffset() {
   }
 }
 
+namespace {
 // Disjoint-set
 size_t find_father(std::vector<size_t> *father, size_t x) {
   MS_EXCEPTION_IF_NULL(father);
@@ -1720,15 +1714,13 @@ size_t find_father(std::vector<size_t> *father, size_t x) {
   return (*father)[x];
 }
 
-void Somas::UpdateUnionTensorsConflict() {
-  // Keep all constraints for first tensor in list
-  MS_EXCEPTION_IF_NULL(tensors_list_.back());
-  size_t cnt = tensors_list_.back()->GetId() + 1;
+std::vector<vector<size_t>> GetRegularUnionTensorsList(size_t cnt,
+                                                       const std::vector<vector<size_t>> &union_tensors_list) {
   std::vector<size_t> father;
   for (size_t i = 0; i < cnt; i++) {
     father.push_back(i);
   }
-  for (auto union_node_list : union_tensors_list_) {
+  for (auto union_node_list : union_tensors_list) {
     if (union_node_list.empty()) {
       MS_LOG(INTERNAL_EXCEPTION) << "union node list is empty.";
     }
@@ -1740,19 +1732,32 @@ void Somas::UpdateUnionTensorsConflict() {
   }
 
   std::map<size_t, size_t> kv;
-  std::vector<vector<size_t>> tmp_union;
-  for (const auto &union_node_list : union_tensors_list_) {
+  std::vector<vector<size_t>> ret_union_list;
+  std::vector<std::set<size_t>> union_tensor_sets;
+  for (const auto &union_node_list : union_tensors_list) {
     for (size_t tid : union_node_list) {
       size_t fa = find_father(&father, tid);
       if (kv.find(fa) == kv.end()) {
-        tmp_union.emplace_back();
-        kv.emplace(fa, tmp_union.size() - 1);
+        ret_union_list.emplace_back();
+        union_tensor_sets.emplace_back();
+        kv.emplace(fa, ret_union_list.size() - 1);
       }
-      tmp_union[kv.at(fa)].push_back(tid);
+      auto &union_tensor_set = union_tensor_sets[kv.at(fa)];
+      if (union_tensor_set.find(tid) == union_tensor_set.end()) {
+        ret_union_list[kv.at(fa)].push_back(tid);
+        union_tensor_set.insert(tid);
+      }
     }
   }
+  return ret_union_list;
+}
+}  // namespace
 
-  union_tensors_list_ = tmp_union;
+void Somas::UpdateUnionTensorsConflict() {
+  // Keep all constraints for first tensor in list
+  MS_EXCEPTION_IF_NULL(tensors_list_.back());
+  size_t cnt = tensors_list_.back()->GetId() + 1;
+  union_tensors_list_ = GetRegularUnionTensorsList(cnt, union_tensors_list_);
 
   for (auto union_node_list : union_tensors_list_) {
     size_t tid_0 = union_node_list[0];

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,6 @@ using CompileGraphs = compile::CompileGraphs;
 using abstract::AnalysisResult;
 using mindspore::abstract::AnalysisContextPtr;
 using mindspore::validator::Validate;
-namespace {
 void UpdateArgsSpec(const FuncGraphPtr &func_graph, const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(resource);
@@ -106,7 +105,6 @@ void UpdateArgsSpec(const FuncGraphPtr &func_graph, const ResourcePtr &resource)
                        [](const AnfNodePtr &p) { return p->abstract(); });
   resource->set_args_abs(args_abs);
 }
-}  // namespace
 
 bool PyInterpretToExecutePass(const ResourcePtr &resource) {
   const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
@@ -251,6 +249,8 @@ FuncGraphPtr JitBpropGraphPass(const ResourcePtr &resource, bool need_renormaliz
     irpass.tuple_list_get_set_item_eliminator_,
     irpass.tuple_list_get_item_eliminator_,
     irpass.tuple_list_set_item_eliminator_,
+    irpass.list_to_tuple_eliminator_,
+    irpass.tuple_to_list_eliminator_,
     irpass.depend_value_elim_,
     irpass.reshape_eliminate_,
     irpass.switch_simplify_,
@@ -282,13 +282,13 @@ FuncGraphPtr FinalBpropGraphPass(const ResourcePtr &resource, bool has_control_f
   opt::OptPassConfig inline_opt = opt::OptPassConfig({
     irpass.inline_,
   });
-  map.push_back({"ad_inline", inline_opt});
+  map.emplace_back("ad_inline", inline_opt);
 
   opt::OptPassConfig grad_graph_opt = opt::OptPassConfig({
     irpass.tuple_list_get_item_eliminator_,
     irpass.zero_like_fill_zero_,
   });
-  (void)map.push_back({"grad_graph_opt", grad_graph_opt});
+  (void)map.emplace_back("grad_graph_opt", grad_graph_opt);
 
   if (has_control_flow) {
     opt::OptPassConfig env_eliminate = opt::OptPassConfig({
@@ -353,6 +353,8 @@ opt::OptPassConfig GetOptPassA1(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.tuple_list_set_item_eliminator_,
     irpass.tuple_list_get_set_item_eliminator_,
     irpass.tuple_list_get_item_depend_reorder_,
+    irpass.list_to_tuple_eliminator_,
+    irpass.tuple_to_list_eliminator_,
     irpass.tuple_list_convert_item_index_to_positive_,
     irpass.dict_get_item_eliminator_,
     irpass.dict_get_item_const_eliminator_,
@@ -526,6 +528,8 @@ OptPassGroupMap GetOptPassesTransformGraph(const opt::irpass::OptimizeIRPassLib 
     irpass.tuple_list_set_item_eliminator_,
     irpass.tuple_list_get_set_item_eliminator_,
     irpass.tuple_list_get_item_depend_reorder_,
+    irpass.list_to_tuple_eliminator_,
+    irpass.tuple_to_list_eliminator_,
     irpass.tuple_list_convert_item_index_to_positive_,
   });
 
@@ -543,6 +547,8 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
                                                irpass.tuple_list_set_item_eliminator_,
                                                irpass.tuple_list_get_set_item_eliminator_,
                                                irpass.tuple_list_get_item_depend_reorder_,
+                                               irpass.list_to_tuple_eliminator_,
+                                               irpass.tuple_to_list_eliminator_,
                                                irpass.tuple_list_convert_item_index_to_positive_,
                                                irpass.make_slice_get_slice_eliminator_,
                                                irpass.float_tuple_getitem_switch_,
@@ -876,8 +882,7 @@ bool RemoveValueNodeDuplicationsPass(const ResourcePtr &resource) {
       // not be removed, if we found the fusion tag.
       if (users.size() == 1) {
         auto cnode = users.front().first->cast<CNodePtr>();
-        if (IsPrimitiveCNode(cnode, prim::kPrimAllReduce) && cnode->inputs().size() > 1 &&
-            cnode->input(1)->isa<ValueNode>()) {
+        if (IsPrimitiveCNode(cnode, prim::kPrimAllReduce) && cnode->size() > 1 && cnode->input(1)->isa<ValueNode>()) {
           auto allreduce_prim = GetCNodePrimitive(users.front().first);
           auto attrs = allreduce_prim->attrs();
           auto fusion_id = attrs.find(mindspore::parallel::FUSION);
@@ -924,6 +929,28 @@ bool MetaUnpackPreparePass(const ResourcePtr &resource) {
   auto prepare_map = GetMetaUnpackPreparePhases();
   auto infer_opt_prepare = opt::Optimizer::MakeOptimizer("meta_unpack_prepare", resource, prepare_map);
   (void)infer_opt_prepare->step(func_graph, false);
+  return true;
+}
+
+bool PreSimplifyInlinePass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  FuncGraphPtr func_graph = resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+
+  MS_LOG(DEBUG) << "Start, " << func_graph->ToString();
+  opt::irpass::OptimizeIRPassLib irpass;
+  auto simplify_inline_passes = opt::OptPassConfig({irpass.switch_simplify_, irpass.inline_});
+  OptPassGroupMap simplify_inline_map({{"switch_simplify_inline", simplify_inline_passes}});
+  auto simplify_inline =
+    opt::Optimizer::MakeOptimizer("simplify_inline", resource, simplify_inline_map, false, false, false);
+  simplify_inline->step(func_graph, true);
+
+  OptPassGroupMap simplify_inline_renorm_map({{"renormalize", opt::OptPassConfig::Renormalize()}});
+  auto simplify_inline_renorm =
+    opt::Optimizer::MakeOptimizer("simplify_inline_renorm", resource, simplify_inline_renorm_map);
+  auto new_func_graph = simplify_inline_renorm->step(func_graph, true);
+  resource->set_func_graph(new_func_graph);
+  MS_LOG(DEBUG) << "End, " << func_graph->ToString() << ", new_graph: " << new_func_graph->ToString();
   return true;
 }
 

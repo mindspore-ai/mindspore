@@ -135,7 +135,7 @@ CNodePtr DoSignatureEvaluator::GenerateNewNodeBySignatures(const ValuePtr &func,
   auto fg = out_cnode->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
   const auto &out_node_inputs = out_cnode->inputs();
-  if (out_cnode->inputs().size() == 0 || (out_node_inputs.size() - 1) != args_abs_list.size()) {
+  if (out_cnode->size() == 0 || (out_node_inputs.size() - 1) != args_abs_list.size()) {
     MS_LOG(EXCEPTION) << "Op: " << func->ToString() << " args size should equal to inputs size minus 1, but args size "
                       << args_abs_list.size() << ", inputs size " << out_node_inputs.size();
   }
@@ -1279,7 +1279,7 @@ EvalResultPtr PrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePtr &engi
   bool need_infer_value = std::all_of(args.begin(), args.end(), [](const AbstractBasePtr &abs) -> bool {
     MS_EXCEPTION_IF_NULL(abs);
     auto value = abs->BuildValue();
-    return (value != nullptr && !value->isa<None>() && !value->isa<Monad>() && !value->isa<FuncGraph>());
+    return (value != nullptr && !value->isa<Monad>() && !value->isa<FuncGraph>());
   });
 
   AbstractBasePtr abs_base = nullptr;

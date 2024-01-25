@@ -6,3 +6,5 @@ non_zero:
     returns:
         y:
             dtype: tensor
+    function:
+        name: nonzero

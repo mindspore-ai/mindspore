@@ -75,7 +75,7 @@ bool IsDynamicShapeInput(const CNodePtr &node, const AnfNodePtr &input) {
     }
     auto shape_ptr = dyn_cast<abstract::Shape>(base_shape_ptr);
     MS_EXCEPTION_IF_NULL(shape_ptr);
-    if (shape_ptr->shape().size() == 0) {
+    if (shape_ptr->shape().empty()) {
       return true;
     }
   }
@@ -502,7 +502,7 @@ Shapes GetNodeShape(const AnfNodePtr &node) {
   if (node->isa<CNode>() && !IsControlFlowNode(node)) {
     auto cnode = node->cast<CNodePtr>();
     if (cnode->input(0)->isa<CNode>()) {
-      if (cnode->inputs().size() < 2) {
+      if (cnode->size() < 2) {
         MS_LOG(EXCEPTION) << "GetNodeShape: " << node->ToString() << " size is smaller than 2";
       }
       base_shape_ptr = cnode->input(1)->Shape();
@@ -626,9 +626,9 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::st
                                        const CNodePtr &node) {
   OperatorArgs arg_replace_op = replace_op.second;
   OperatorParams params = arg_replace_op.second;
-  if (node->inputs().size() < 2) {
+  if (node->size() < 2) {
     // GetNext operator dose not has input
-    if (node->inputs().size() == 1) {
+    if (node->size() == 1) {
       return ConvertToRealInputs(replace_op.first, instance_name, AnfNodePtrList{}, arg_replace_op.first);
     }
     MS_LOG(EXCEPTION) << "Failure: " << node->ToString() << " size is smaller than 2";
@@ -654,7 +654,7 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::st
       (void)replace_input.insert(replace_input.cbegin() + position - 1, val);
     }
   } else if (replace_op.first == SYNC_BATCH_NORM) {
-    for (size_t i = 2; i < node->inputs().size(); ++i) {
+    for (size_t i = 2; i < node->size(); ++i) {
       replace_input.push_back(node->input(i));
     }
   }
@@ -948,7 +948,7 @@ bool IsSplittableOperator(const std::string &op_name) {
      UNSORTED_SEGMENT_MAX, GATHER_ND, TOPK, SCATTER_UPDATE, SCATTER_ND_UPDATE, SCATTER_ND_ADD, SCATTER_ND_SUB,
      TENSOR_SCATTER_UPDATE, TENSOR_SCATTER_ADD, TENSOR_SCATTER_SUB, TENSOR_SCATTER_MAX, TENSOR_SCATTER_MIN, WKV,
      TENSOR_SCATTER_MUL, TENSOR_SCATTER_DIV, VIRTUAL_OUTPUT, CONV2D_BACK_PROP_INPUT, CONV2D_TRANSPOSE, SORT, PAD_V3,
-     MATMUL_DDS, DSD_MATMUL, UNIFORMREAL, STANDARD_NORMAL, RESIZE_BILINEAR, RESIZE_NEAREST_NEIGHBOR, FAST_GELU, IOU,
+     MATMUL_DDS, DSD_MATMUL, UNIFORMREAL, STANDARD_NORMAL, RESIZE_BILINEAR_V2, RESIZE_NEAREST_NEIGHBOR, FAST_GELU, IOU,
      BOUNDING_BOX_ENCODE, UNSORTED_SEGMENT_PROD, SQUARE_SUM_ALL, UNIQUE_CONSECUTIVE,
      RANDOM_CHOICE_WITH_MASK, CROP_AND_RESIZE, ROI_ALIGN, REDUCE_PROD, REDUCE_ANY, REDUCE_ALL, ARGMAX, ARGMIN, ARGMINV2,
      RESIZE_NEAREST_NEIGHBOR, CUM_SUM, FAST_GELU, IOU, BOUNDING_BOX_ENCODE, RANDOM_CHOICE_WITH_MASK, CROP_AND_RESIZE,
@@ -1708,11 +1708,11 @@ bool IsCarePrevCNode(const CNodePtr &prev_cnode, const PrimitivePtr &prev_prim) 
   return (IsValueNode<FuncGraph>(prev_cnode->input(0))) || (prev_prim->name() == kTupleGetItemOpName) ||
          (prev_prim->name() == kDependOpName) || (prev_prim->name() == kMakeListOpName) ||
          (prev_prim->name() == kLoadOpName) || (prev_prim->name() == kMakeTupleOpName) ||
-         (prev_prim->name() == SHAPE_OP) || IsAutoParallelCareNode(prev_cnode);
+         (prev_prim->name() == kShapeOpName) || IsAutoParallelCareNode(prev_cnode);
 }
 
 bool IsCrossedCNode(std::string prev_prim_name) {
-  const std::set<std::string> crossed_cnode_list = {kDependOpName, kLoadOpName, SHAPE_OP};
+  const std::set<std::string> crossed_cnode_list = {kDependOpName, kLoadOpName, kShapeOpName};
   return crossed_cnode_list.find(prev_prim_name) != crossed_cnode_list.end();
 }
 
@@ -1774,7 +1774,7 @@ std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node, const std
         // In dynamic shape scenarios, the situation op1->Shape->TupleGetItem->op2 will occur.
         // The incoming operator of op2 should be op1 instead of Shape,
         // so the Shape operator is skipped when looking for the incoming operator.
-        if (prev_prim->name() == SHAPE_OP) {
+        if (prev_prim->name() == kShapeOpName) {
           continue;
         }
 
@@ -1946,7 +1946,7 @@ ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_
       if (!IsValueNode<Primitive>(cnode->input(0))) {
         continue;
       }
-      if (IsCohesiveNode(cnode) && cnode->inputs().size() >= 1) {
+      if (IsCohesiveNode(cnode) && cnode->size() >= 1) {
         auto input_param_names = NodeParameterName(cnode, idx, 0);
         (void)param_names.insert(param_names.cend(), input_param_names.cbegin(), input_param_names.cend());
       }
@@ -2185,16 +2185,18 @@ bool IsCellReuseForwardGraph(const FuncGraphPtr &graph) { return graph->has_flag
 
 FuncGraphPtr GetCellReuseBackwardGraph(const FuncGraphPtr &forward_graph) {
   AnfNodePtr node = forward_graph->get_return();
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    return nullptr;
+  }
   std::vector<std::pair<PrimitivePtr, int64_t>> patterns = {
     {prim::kPrimReturn, kIndex1}, {prim::kPrimMakeTuple, kIndex2}, {prim::kPrimPartial, kIndex1}};
   for (const auto &pattern : patterns) {
-    auto cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
     if (!IsPrimitiveCNode(cnode, pattern.first)) {
       return nullptr;
     }
     auto prev_node_index = pattern.second;
-    if (prev_node_index >= SizeToLong(cnode->inputs().size())) {
+    if (prev_node_index >= SizeToLong(cnode->size())) {
       return nullptr;
     }
     node = cnode->input(prev_node_index);

@@ -18,9 +18,19 @@
 
 namespace mindspore {
 namespace transform {
-REGISTER_ACL_OP(BNTrainingReduce).Input(0, {"NCHW"}, "NCH").set_extra_supported_datatype({ge::DT_FLOAT16});
 
-REGISTER_ACL_OP(BNTrainingUpdate).Input(0, {"NCHW"}, "NCH").Output(0, 0).set_extra_supported_datatype({ge::DT_FLOAT16});
+std::string Set5HDFormat(TypeId, const std::vector<ShapeVector> &) { return kOpFormat_NC1HWC0; }
+
+REGISTER_ACL_OP(BNTrainingReduce)
+  .Input(0, {"NCHW"}, "NCH")
+  .set_extra_supported_datatype({ge::DT_FLOAT16})
+  .OutputSelector(&Set5HDFormat);
+
+REGISTER_ACL_OP(BNTrainingUpdate)
+  .Input(0, {"NCHW"}, "NCH")
+  .Output(0, 0)
+  .set_extra_supported_datatype({ge::DT_FLOAT16})
+  .OutputSelector(&Set5HDFormat);
 
 REGISTER_ACL_OP(BNTrainingUpdateGrad)
   .Input(0, {"NCHW"}, "NCH")

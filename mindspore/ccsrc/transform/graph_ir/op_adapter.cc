@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 #include "transform/graph_ir/op_adapter.h"
+
 #include <algorithm>
-#include <utility>
 #include <map>
 #include <string>
 #include <unordered_set>
 #include "utils/check_convert_utils.h"
-#include "ops/split_combination_ops.h"
-#include "graph/operator_factory_impl.h"
+#include "op_proto/inc/split_combination_ops.h"
+#include "graph/operator_factory.h"
 #include "include/common/utils/convert_utils.h"
 #include "utils/anf_utils.h"
 #include "include/common/utils/anfalgo.h"
@@ -95,7 +95,7 @@ std::vector<std::string> GetCustomOpKernelAttrs(const PrimitivePtr &prim) {
 
 void RegisterCustomOp(const PrimitivePtr &prim, const std::string &op_type, const std::vector<std::string> &attr_names,
                       bool is_akg) {
-  if (ge::OperatorFactoryImpl::IsExistOp(op_type)) {
+  if (ge::OperatorFactory::IsExistOp(op_type)) {
     return;
   }
   MS_EXCEPTION_IF_NULL(prim);
@@ -106,7 +106,7 @@ void RegisterCustomOp(const PrimitivePtr &prim, const std::string &op_type, cons
   MS_EXCEPTION_IF_NULL(output_names_v);
   auto output_names = GetValue<std::vector<std::string>>(output_names_v);
   // Register op create function, which describes how to create a custom op
-  (void)ge::OperatorFactoryImpl::RegisterOperatorCreator(
+  ::ge::OperatorCreatorRegister op_create_reg(
     op_type, [op_type, input_names, output_names, attr_names, is_akg](const std::string &name) {
       auto op = ge::CustomOperator(name, op_type);
       for (const auto &in_name : input_names) {
@@ -127,24 +127,35 @@ void RegisterCustomOp(const PrimitivePtr &prim, const std::string &op_type, cons
     });
   // Register op infer shape function
   if (is_akg) {
-    (void)ge::OperatorFactoryImpl::RegisterInferShapeFunc(op_type, CustomAkgOpInferFunc);
+    ::ge::InferShapeFuncRegister infer(op_type, CustomAkgOpInferFunc);
   } else {
-    (void)ge::OperatorFactoryImpl::RegisterInferShapeFunc(op_type, CustomTbeAicpuOpInferFunc);
+    ::ge::InferShapeFuncRegister infer(op_type, CustomTbeAicpuOpInferFunc);
   }
 }
 
-size_t GetDynInputNum(const CNodePtr &cnode) {
-  std::vector<int64_t> dyn_input_sizes;
-  // onlt support 1 dyn_input
-  size_t dyn_input_num = 0;
-  if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
-    dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
-    (void)std::for_each(dyn_input_sizes.begin(), dyn_input_sizes.end(), [&dyn_input_num](const int64_t &val) {
-      auto v = val == -1 ? 0 : val;
-      dyn_input_num += LongToSize(v);
-    });
+static std::vector<int64_t> GetRealInputIndices(const CNodePtr &cnode) {
+  if (!common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
+    return std::vector<int64_t>{};
   }
-  return dyn_input_num;
+  std::vector<int64_t> real_input_indices =
+    common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
+  int64_t count = 0;
+  // construct real input indices based on attribute kAttrDynInputSizes
+  for (size_t i = 0; i < real_input_indices.size(); ++i) {
+    int64_t num_folded_inputs = (real_input_indices[i] < 0 ? 1 : real_input_indices[i]);
+    real_input_indices[i] = count;
+    count += num_folded_inputs;
+  }
+  return real_input_indices;
+}
+
+static inline size_t GetRealAnfInputIndex(const std::vector<int64_t> &real_input_indices, size_t anf_input_index) {
+  // NOTE: anf_input_index start with 1, index 0 corresponding to primitive value node
+  size_t input_index = anf_input_index - 1;
+  size_t real_index =
+    input_index < real_input_indices.size() ? static_cast<size_t>(real_input_indices[input_index]) : input_index;
+  // at last convert `input_index` to anf node input index
+  return real_index + 1;
 }
 
 bool OpAdapterImpl::IsCustomOp(const OperatorPtr &op) const {
@@ -597,7 +608,7 @@ Status OpAdapterImpl::UpdateMultiOutputDesc(const OperatorPtr &op, const abstrac
 
     auto desc = CreateOutputDesc(dyn_cast<abstract::Shape>(tuple_shp->shape()[i]), type_elem, format);
     if (desc == nullptr) {
-      MS_LOG(ERROR) << "Create output descriptor failed!";
+      MS_LOG(ERROR) << "Create op: " << op->GetName() << " output descriptor failed!";
       return FAILED;
     }
 
@@ -892,10 +903,10 @@ std::map<std::string, ValuePtr> OpAdapterImpl::GetNormalOpAttrList(const Operato
     }
   }
 
-  size_t dyn_input_num = GetDynInputNum(cnode);
+  auto real_input_indices = GetRealInputIndices(cnode);
   // set attr from const input
   for (auto &it : input_attr_map_) {
-    auto cur_idx = dyn_input_num == 0 ? it.first : it.first + dyn_input_num - 1;
+    size_t cur_idx = GetRealAnfInputIndex(real_input_indices, it.first);
     if (inputs.size() <= cur_idx || !inputs[cur_idx]->isa<ValueNode>()) {
       continue;
     }
@@ -1009,10 +1020,10 @@ int OpAdapterImpl::setAttr(const OperatorPtr &op, const AnfNodePtr &node) {
     }
   }
 
-  size_t dyn_input_num = GetDynInputNum(cnode);
+  auto real_input_indices = GetRealInputIndices(cnode);
   // set attr from const input
   for (auto &it : input_attr_map_) {
-    auto cur_idx = dyn_input_num == 0 ? it.first : it.first + dyn_input_num - 1;
+    size_t cur_idx = GetRealAnfInputIndex(real_input_indices, it.first);
     if (inputs.size() <= cur_idx || !inputs[cur_idx]->isa<ValueNode>()) {
       continue;
     }

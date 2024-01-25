@@ -29,7 +29,7 @@ std::make_shared<pynative::PyBoostDeviceTask>([this, op, ${call_args_with_tensor
   const auto &output_address_info =
     PyBoostUtils::GetAddressInfo(device_context, {op->output_abs()}, outputs);
 
-  auto &stream = device::gpu::GPUDeviceManager::GetInstance().default_stream();
+  auto stream = device::gpu::GPUDeviceManager::GetInstance().GetStream(op->stream_id());
   PyBoostUtils::LaunchKernel(primitive(), op->device_context(),
                              input_address_info, output_address_info, stream);
   static auto sync = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);

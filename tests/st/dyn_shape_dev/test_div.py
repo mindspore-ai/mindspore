@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def div_forward_func(x1, x2):
-    return ops.auto_generate.div_(x1, x2)
+    return ops.Div()(x1, x2)
 
 
 @test_utils.run_with_cell
@@ -33,7 +33,7 @@ def div_backward_func(x1, x2):
 
 @test_utils.run_with_cell
 def div_dyn_shape_func(x1, x2):
-    return ops.auto_generate.div_(x1, x2)
+    return ops.Div()(x1, x2)
 
 
 @test_utils.run_with_cell

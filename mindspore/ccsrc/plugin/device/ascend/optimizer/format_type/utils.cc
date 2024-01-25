@@ -39,6 +39,8 @@ CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &
   builder.SetOutputsReshapeType({reshape_type});
   builder.SetInputsDeviceType({input_type});
   builder.SetOutputsDeviceType({output_type});
+  builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+  builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   builder.SetFusionType(kernel::kPatternOpaque);
   builder.SetProcessor(kernel::Processor::AICORE);
   if (kernel::OpLib::FindOp(prim::kPrimCast->name(), kernel::kImplyTBE) != nullptr) {

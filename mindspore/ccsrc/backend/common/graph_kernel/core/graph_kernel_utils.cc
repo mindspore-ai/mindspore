@@ -417,7 +417,8 @@ void GkUtils::GetValidKernelNodes(const FuncGraphPtr &func_graph, AnfNodePtrList
     if (IsPrimitiveCNode(todos.back(), prim::kPrimMakeTuple)) {
       auto fg_output = todos.back()->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(fg_output);
-      (void)output_list->insert(output_list->cend(), fg_output->inputs().cbegin() + 1, fg_output->inputs().cend());
+      auto output_inputs = fg_output->inputs();
+      (void)output_list->insert(output_list->cend(), output_inputs.cbegin() + 1, output_inputs.cend());
     } else {
       (void)output_list->emplace_back(func_graph->output());
     }

@@ -31,7 +31,7 @@ constexpr size_t kSizeFloat32 = 4;
 constexpr size_t kSizeInt32 = 4;
 constexpr size_t kSizeInt64 = 8;
 constexpr size_t kApplyAdagradDAInputsNum = 8;
-constexpr size_t kApplyAdagradDAOutputsNum = 3;
+constexpr size_t kApplyAdagradDAOutputsNum = 1;
 constexpr size_t kVarIndex = 0;
 constexpr size_t kAccIndex = 1;
 constexpr size_t kSquarAccIndex = 2;
@@ -185,11 +185,7 @@ std::vector<KernelAttr> ApplyAdagradDACpuKernelMod::GetOpSupport() {
                                                        .AddInputAttr(kNumberTypeFloat32)
                                                        .AddInputAttr(kNumberTypeInt32)
                                                        .AddOutputAttr(kNumberTypeFloat32)
-                                                       .AddOutputAttr(kNumberTypeFloat32)
-                                                       .AddOutputAttr(kNumberTypeFloat32)
-                                                       .AddOutInRef(0, 0)
-                                                       .AddOutInRef(1, 1)
-                                                       .AddOutInRef(2, 2),
+                                                       .AddOutInRef(0, 0),
                                                      KernelAttr()
                                                        .AddInputAttr(kNumberTypeFloat16)
                                                        .AddInputAttr(kNumberTypeFloat16)
@@ -200,11 +196,7 @@ std::vector<KernelAttr> ApplyAdagradDACpuKernelMod::GetOpSupport() {
                                                        .AddInputAttr(kNumberTypeFloat16)
                                                        .AddInputAttr(kNumberTypeInt64)
                                                        .AddOutputAttr(kNumberTypeFloat16)
-                                                       .AddOutputAttr(kNumberTypeFloat16)
-                                                       .AddOutputAttr(kNumberTypeFloat16)
-                                                       .AddOutInRef(0, 0)
-                                                       .AddOutInRef(1, 1)
-                                                       .AddOutInRef(2, 2)};
+                                                       .AddOutInRef(0, 0)};
   return kernel_attr_list;
 }
 

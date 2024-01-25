@@ -13,7 +13,7 @@ mindspore/mindspore/lite/tools/converter/graphdef_transform.cc:mindspore::lite::
 mindspore/mindspore/lite/providers/nnie_proposal/src/proposal.cc:mindspore::proposal::Rpn
 mindspore/mindspore/core/abstract/ops/primitive_infer_map.cc:mindspore::abstract::GetPrimitiveInferMap
 mindspore/mindspore/core/ir/tensor.cc:mindspore::tensor::MakeTensorData
-mindspore/mindspore/ccsrc/kernel/common_utils.cc:mindspore::kernel::UnitSizeInBytes
+mindspore/mindspore/core/ir/dtype_extends.cc:mindspore::UnitSizeInBytes
 mindspore/mindspore/ccsrc/frontend/optimizer/irpass.cc:mindspore::opt::irpass::OptimizeIRPassLib::OptimizeIRPassLib
 mindspore/mindspore/ccsrc/frontend/parallel/ops_info/gather_v2_p_info.cc:mindspore::parallel::GatherV2PInfo::CheckStrategy
 mindspore/mindspore/ccsrc/plugin/device/gpu/hal/device/gpu_kernel_runtime.cc:mindspore::device::gpu::GPUKernelRuntime::LaunchKernelDynamic

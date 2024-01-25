@@ -117,9 +117,10 @@ ValuePtr ScalarArithmeticUnaryFrontendFuncImpl::InferValue(const PrimitivePtr &p
       break;
     }
     default: {
-      MS_EXCEPTION(TypeError) << "For '" << op_name
-                              << "', the supported type is in the list: [int32, int64, float32, float64], but got "
-                              << x_type->ToString() << ".";
+      MS_LOG(DEBUG) << "For '" << op_name
+                    << "', the supported type is in the list: [int32, int64, float32, float64], but got "
+                    << x_type->ToString() << ".";
+      return nullptr;
     }
   }
   return result;

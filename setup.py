@@ -120,6 +120,8 @@ package_data = {
         'lib/plugin/*/*/*/*/*/*',
         'lib/plugin/*/*/*/*/*/*/*',
         'lib/plugin/*/*/*/*/*/*/*/*',
+        'lib/plugin/*/*/*/*/*/*/*/*/*',
+        'lib/plugin/*/*/*/*/*/*/*/*/*/*',
         'lib/*.so*',
         'lib/*.a',
         'lib/*.dylib*',
@@ -199,6 +201,7 @@ setup(
     entry_points={
         'console_scripts': [
             'cache_admin=mindspore.dataset.engine.cache_admin:main',
+            'msrun=mindspore.parallel.cluster.run:main'
         ],
     },
     python_requires='>=3.7',

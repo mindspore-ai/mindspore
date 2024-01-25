@@ -132,6 +132,8 @@ def test_ascend_pynative_profiling():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_shape():
@@ -178,5 +180,5 @@ def test_collect_custom_aicpu():
         with open(aicpu_intermediate_file_list[0], 'r') as fr:
             reader = csv.DictReader(fr)
             for row in reader:
-                s2.add(row.get('op_type'))
+                s2.add(row.get('kernel_type'))
         assert s1 == s2

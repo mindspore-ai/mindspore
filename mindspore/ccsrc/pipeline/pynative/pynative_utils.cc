@@ -140,9 +140,8 @@ void PlantTupleParam(const FuncGraphPtr &bprop_graph, const abstract::AbstractSe
 }
 
 void RefreshGradContiguousTensor(const FrontendOpRunInfoPtr &op_run_info, size_t index) {
-  if (op_run_info->input_unused_in_bprop[index] || op_run_info->base_op_run_info.device_target != kAscendDevice) {
+  if (op_run_info->input_unused_in_bprop[index]) {
     // Input is not used in bprop, no need to contiguous.
-    // GPU/CPU contiguous tensor when convert stub node
     return;
   }
 
@@ -153,7 +152,15 @@ void RefreshGradContiguousTensor(const FrontendOpRunInfoPtr &op_run_info, size_t
       return nullptr;
     }
 
-    auto contiguous_op = CREATE_PYBOOST_OP(Contiguous, op_run_info->base_op_run_info.device_target);
+    auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+    MS_EXCEPTION_IF_NULL(device_address);
+    const auto &device_target = device_address->device_name();
+    if (device_target != kAscendDevice) {
+      // GPU/CPU contiguous tensor when convert stub node, contiguous before grad.
+      return nullptr;
+    }
+
+    auto contiguous_op = CREATE_PYBOOST_OP(Contiguous, device_target);
     return contiguous_op->Call(tensor);
   };
 
@@ -401,7 +408,7 @@ bool Common::IsControlFlowGraph(const FuncGraphPtr &func_graph) {
   return !func_graph->func_graphs_used_total().empty();
 }
 
-ValuePtr Common::FilterSensValues(const ValuePtr &value) {
+ValuePtr Common::FilterSensValues(const ValuePtr &value, bool dict_convert_to_tuple) {
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::Tensor>() || value->isa<tensor::COOTensor>() || value->isa<tensor::CSRTensor>()) {
     return value;
@@ -410,13 +417,16 @@ ValuePtr Common::FilterSensValues(const ValuePtr &value) {
     auto value_seq = value->cast<ValueSequencePtr>();
     MS_EXCEPTION_IF_NULL(value_seq);
     for (auto &filter_value : value_seq->value()) {
-      if (auto t = FilterSensValues(filter_value); t != nullptr) {
+      if (auto t = FilterSensValues(filter_value, dict_convert_to_tuple); t != nullptr) {
         (void)value_list.emplace_back(t);
       }
     }
     return std::make_shared<ValueTuple>(value_list);
   } else if (value->isa<ValueDictionary>()) {
-    return FilterSensValues(DataConvert::ConvertValueDictToValueTuple(value));
+    if (dict_convert_to_tuple) {
+      return FilterSensValues(DataConvert::ConvertValueDictToValueTuple(value), dict_convert_to_tuple);
+    }
+    return value;
   } else {
     MS_LOG(DEBUG) << "Value type: " << value->ToString();
     return nullptr;
@@ -566,9 +576,16 @@ TensorPtr Common::StubNodeToTensor(const ValuePtr &v) {
   MS_LOG(EXCEPTION) << "It should be stub tensor, but got " << v->ToString();
 }
 
-tensor::TensorPtr Common::ConvertToContiguousTensor(const tensor::TensorPtr &tensor, const std::string &device_target) {
+tensor::TensorPtr Common::ConvertToContiguousTensor(const tensor::TensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
   if (tensor->storage_info() == nullptr) {
+    return tensor;
+  }
+
+  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  MS_EXCEPTION_IF_NULL(device_address);
+  const auto &device_target = device_address->device_name();
+  if (device_target == kAscendDevice) {
     return tensor;
   }
 
@@ -576,33 +593,30 @@ tensor::TensorPtr Common::ConvertToContiguousTensor(const tensor::TensorPtr &ten
   return contiguous_op->Call(tensor);
 }
 
-TensorPtr Common::ConvertStubNodeToTensor(const ValuePtr &v, const std::string &device_target, bool need_contiguous) {
+TensorPtr Common::ConvertStubNodeToTensor(const ValuePtr &v, bool need_contiguous) {
   const auto &tensor = StubNodeToTensor(v);
-  if (!need_contiguous || device_target == kAscendDevice) {
+  if (!need_contiguous) {
     return tensor;
   }
-  return ConvertToContiguousTensor(tensor, device_target);
+  return ConvertToContiguousTensor(tensor);
 }
 
 std::optional<tensor::TensorPtr> Common::ConvertStubNodeToTensor(const std::optional<ValuePtr> &v,
-                                                                 const std::string &device_target,
                                                                  bool need_contiguous) {
   if (!v.has_value()) {
     return std::nullopt;
   }
-  return std::make_optional(ConvertStubNodeToTensor(v.value(), device_target, need_contiguous));
+  return std::make_optional(ConvertStubNodeToTensor(v.value(), need_contiguous));
 }
 
-ValueTuplePtr Common::ConvertStubNodeToValueTuple(const ValuePtr &v, const std::string &device_target,
-                                                  bool need_contiguous) {
+ValueTuplePtr Common::ConvertStubNodeToValueTuple(const ValuePtr &v, bool need_contiguous) {
   if (utils::isa<ValueSequence>(v)) {
     const auto &value_seq = utils::cast<ValueSequencePtr>(v);
     const auto &values = value_seq->value();
     std::vector<ValuePtr> tensor_list;
-    (void)std::transform(values.begin(), values.end(), std::back_inserter(tensor_list),
-                         [&device_target, need_contiguous](const ValuePtr &value) {
-                           return ConvertStubNodeToTensor(value, device_target, need_contiguous);
-                         });
+    (void)std::transform(
+      values.begin(), values.end(), std::back_inserter(tensor_list),
+      [need_contiguous](const ValuePtr &value) { return ConvertStubNodeToTensor(value, need_contiguous); });
     return std::make_shared<ValueTuple>(tensor_list);
   }
   MS_LOG(EXCEPTION) << "It should be stub tensor sequence, but got " << v->ToString();
@@ -678,6 +692,13 @@ ValuePtr Common::CreateFakeValueWithoutDeviceAddress(const ValuePtr &value) {
   } else if (value->isa<stub::StubNode>()) {
     const auto &stub_node = value->cast<stub::StubNodePtr>();
     return CreateFakeValueWithoutDeviceAddress(stub_node->WaitValue());
+  } else if (value->isa<ValueDictionary>()) {
+    auto dic_v = value->cast<ValueDictionaryPtr>();
+    std::vector<std::pair<ValuePtr, ValuePtr>> key_values;
+    for (const auto &v : dic_v->value()) {
+      (void)key_values.emplace_back(v.first, CreateFakeValueWithoutDeviceAddress(v.second));
+    }
+    return std::make_shared<ValueDictionary>(key_values);
   } else {
     return value;
   }
@@ -800,6 +821,41 @@ void Common::ProcessTupleParam(const FuncGraphPtr &bprop_graph, size_t position)
   MS_EXCEPTION_IF_NULL(manager);
   auto tr = manager->Transact();
   (void)tr.Replace(target_param, make_tuple_param);
+  tr.Commit();
+}
+
+void Common::ProcessDictParam(const FuncGraphPtr &bprop_graph, size_t position) {
+  auto bprop_params = bprop_graph->parameters();
+  auto target_param = bprop_params[position];
+  MS_EXCEPTION_IF_NULL(target_param);
+  const auto &target_abstract = target_param->abstract();
+  MS_EXCEPTION_IF_NULL(target_abstract);
+  if (!target_abstract->isa<abstract::AbstractDictionary>()) {
+    MS_LOG(EXCEPTION) << "Get wrong param " << target_abstract->ToString();
+  }
+  MS_LOG(DEBUG) << "Process tuple param " << target_abstract->ToString();
+  auto it = std::find(bprop_params.begin(), bprop_params.end(), target_param);
+  it = bprop_params.erase(it);
+  const auto &abs_dict = target_abstract->cast<abstract::AbstractDictionaryPtr>();
+  abstract::AbstractBasePtrList local_key_abs_inputs;
+  abstract::AbstractBasePtrList local_value_abs_inputs;
+  for (size_t i = 0; i < abs_dict->size(); ++i) {
+    (void)local_key_abs_inputs.emplace_back(abs_dict->elements()[i].first);
+    (void)local_value_abs_inputs.emplace_back(abs_dict->elements()[i].second);
+  }
+  auto key_param = bprop_graph->add_parameter();
+  key_param->set_abstract(std::make_shared<abstract::AbstractTuple>(local_key_abs_inputs));
+  auto value_param = bprop_graph->add_parameter();
+  value_param->set_abstract(std::make_shared<abstract::AbstractTuple>(local_value_abs_inputs));
+  auto key_it = bprop_params.insert(it, value_param);
+  (void)bprop_params.insert(key_it, key_param);
+  bprop_graph->set_parameters(bprop_params);
+  auto dict_node = bprop_graph->NewCNode({NewValueNode(prim::kPrimMakeDict), key_param, value_param});
+  dict_node->set_abstract(abs_dict);
+  auto manager = bprop_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto tr = manager->Transact();
+  (void)tr.Replace(target_param, dict_node);
   tr.Commit();
 }
 
@@ -1284,12 +1340,15 @@ PrimitivePtr PyBoost::ConvertPrimitive(const py::object &obj) {
 
 py::object PyBoost::RunPyFunction(const PrimitivePtr &prim, const py::list &args) {
   py::tuple wrap_args(kIndex3);
-  auto prim_py = prim->cast<PrimitivePyPtr>();
-  MS_EXCEPTION_IF_NULL(prim_py);
-  if (!prim_py->HasPyObj()) {
-    MS_LOG(EXCEPTION) << "Prim has not python obj!";
+  if (prim->isa<PrimitivePy>()) {
+    auto prim_py = prim->cast<PrimitivePyPtr>();
+    if (!prim_py->HasPyObj()) {
+      MS_LOG(EXCEPTION) << "Prim has not python obj!";
+    }
+    wrap_args[kIndex0] = prim_py->GetPyObj();
+  } else {
+    wrap_args[kIndex0] = std::make_shared<PrimitivePyAdapter>(prim->name());
   }
-  wrap_args[kIndex0] = prim_py->GetPyObj();
   wrap_args[kIndex1] = prim->name();
   wrap_args[kIndex2] = args;
   const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
@@ -1422,6 +1481,8 @@ void DataConvert::ConvertValueTensorId(const ValuePtr &value, std::vector<std::s
     for (const auto &val : seq->value()) {
       ConvertValueTensorId(val, converted_tensor_id);
     }
+  } else if (value->isa<ValueDictionary>()) {
+    ConvertValueTensorId(ConvertValueDictToValueTuple(value), converted_tensor_id);
   }
 }
 
@@ -1603,7 +1664,7 @@ void GradCommon::GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const mindspore
 }
 }  // namespace PyNativeAlgo
 
-void DispatchOp(const std::shared_ptr<FrontendTask> &task) {
+void DispatchOp(const std::shared_ptr<AsyncTask> &task) {
   auto forward_executor = PyNativeExecutor::GetInstance()->forward_executor();
   static bool need_sync = runtime::OpExecutor::NeedSync();
   if (need_sync) {

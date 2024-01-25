@@ -283,7 +283,7 @@ STATUS ToFormatBase::DealConv2dTransposeFusionNode(const FuncGraphPtr &func_grap
   MS_ERROR_IF_NULL_W_RET_VAL(prim, lite::RET_ERROR);
   auto val_ptr = prim->GetAttr(ops::kOriginalOpName);
   if (val_ptr == nullptr || GetValue<std::string>(val_ptr) != "Conv2DBackpropInput" ||
-      cnode->inputs().size() < kInputSizeIndex + 1) {  // no input_size
+      cnode->size() < kInputSizeIndex + 1) {  // no input_size
     return lite::RET_OK;
   }
   if (func_graph->has_attr(lite::kIsDynamicShape) && GetValue<bool>(func_graph->get_attr(lite::kIsDynamicShape))) {

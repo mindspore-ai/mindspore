@@ -41,12 +41,13 @@ void GreaterImpl(void *x1, void *x2, void *result, size_t size) {
 
 using Handler = std::function<void(void *x1, void *x2, void *result, size_t size)>;
 std::map<TypeId, Handler> greater_impl_list = {
-  {kNumberTypeBool, GreaterImpl<bool>},       {kNumberTypeInt, GreaterImpl<int>},
-  {kNumberTypeInt8, GreaterImpl<int8_t>},     {kNumberTypeInt16, GreaterImpl<int16_t>},
-  {kNumberTypeInt32, GreaterImpl<int32_t>},   {kNumberTypeInt64, GreaterImpl<int64_t>},
-  {kNumberTypeUInt8, GreaterImpl<uint8_t>},   {kNumberTypeFloat, GreaterImpl<float>},
-  {kNumberTypeFloat16, GreaterImpl<float16>}, {kNumberTypeFloat32, GreaterImpl<float>},
-  {kNumberTypeFloat64, GreaterImpl<double>},  {kNumberTypeBFloat16, GreaterImpl<bfloat16>}};
+  {kNumberTypeBool, GreaterImpl<bool>},        {kNumberTypeInt8, GreaterImpl<int8_t>},
+  {kNumberTypeInt16, GreaterImpl<int16_t>},    {kNumberTypeInt32, GreaterImpl<int32_t>},
+  {kNumberTypeInt64, GreaterImpl<int64_t>},    {kNumberTypeUInt8, GreaterImpl<uint8_t>},
+  {kNumberTypeUInt16, GreaterImpl<uint16_t>},  {kNumberTypeUInt32, GreaterImpl<uint32_t>},
+  {kNumberTypeUInt64, GreaterImpl<uint64_t>},  {kNumberTypeFloat16, GreaterImpl<float16>},
+  {kNumberTypeFloat32, GreaterImpl<float>},    {kNumberTypeFloat64, GreaterImpl<double>},
+  {kNumberTypeBFloat16, GreaterImpl<bfloat16>}};
 
 class GreaterFrontendFuncImpl : public OpFrontendFuncImpl {
  public:
@@ -71,8 +72,9 @@ class GreaterFrontendFuncImpl : public OpFrontendFuncImpl {
     auto result_tensor = std::make_shared<tensor::Tensor>(kNumberTypeBool, x1_shape);
     auto iter = greater_impl_list.find(type_id);
     if (iter == greater_impl_list.end()) {
-      MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
-                              << ", the type is not supported.";
+      MS_LOG(DEBUG) << "For '" << primitive->name() << "', 'x1' is " << x1_tensor->ToString()
+                    << ", the type is not supported.";
+      return nullptr;
     }
     iter->second(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
     return result_tensor;

@@ -55,12 +55,12 @@ std::pair<bool, PrimitivePtr> IsNeedCheckPrimitiveNode(const AnfNodePtr &prim_no
   return {true, prim};
 }
 
-void CheckCNodeInputsNum(const AnfNodePtrList &inputs) {
+void CheckCNodeInputsNum(const AnfNodeWeakPtrList &inputs) {
   if (!IS_OUTPUT_ON(mindspore::kDebug) || inputs.empty()) {
     return;
   }
 
-  auto [need_check, prim] = IsNeedCheckPrimitiveNode(inputs[0]);
+  auto [need_check, prim] = IsNeedCheckPrimitiveNode(inputs[0].lock());
   if (!need_check) {
     return;
   }
@@ -70,7 +70,8 @@ void CheckCNodeInputsNum(const AnfNodePtrList &inputs) {
   constexpr size_t prim_num = 1;
   size_t input_tensor_num = inputs.size() - prim_num;
   if (prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_MEM) || prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_IO)) {
-    size_t monad_num = std::count_if(inputs.cbegin() + 1, inputs.end(), [](const AnfNodePtr &input) {
+    size_t monad_num = std::count_if(inputs.cbegin() + 1, inputs.end(), [](const AnfNodeWeakPtr &weak_input) {
+      const auto &input = weak_input.lock();
       if (HasAbstractMonad(input)) {
         return true;
       }
@@ -105,7 +106,7 @@ void CheckCNodeInputsNum(const AnfNodePtrList &inputs) {
     size_t i = 0;
     ss << "Inputs are as follows: \n";
     for (const auto &input : inputs) {
-      ss << "Input[" << i++ << "]: " << input->DebugString() << "\n";
+      ss << "Input[" << i++ << "]: " << input.lock()->DebugString() << "\n";
     }
     MS_LOG(DEBUG) << "Primitive<" << prim->name() << "> inputs num: " << input_tensor_num
                   << " is not equal to expect input num: " << op_def->args_.size() << "\n"
@@ -201,75 +202,226 @@ void AnfNode::set_abstract(const AbstractBasePtr &abs) {
   abstract_ = abs;
 }
 
-// namespace to support intermediate representation definition
-CNode::CNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph)
+void CNode::CheckCNodeWeakInput() {
+#if defined(DEBUG_CNODE_WEAK_INPUT)
+  for (size_t i = 0; i < weak_inputs_.size(); ++i) {
+    if (weak_inputs_[i].lock() == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The " << i << "th input is released.";
+    }
+  }
+#endif  // DEBUG_CNODE_WEAK_INPUT
+}
+
+// Namespace to support intermediate representation definition
+CNode::CNode(const AnfNodePtrList &inputs, const FuncGraphPtr &func_graph)
     : AnfNode(func_graph),
-      inputs_(inputs),
       primal_attrs_(PrimalAttrManager::GetInstance().GetCurrentPrimalAttr()),
       primal_debug_infos_(PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo()) {
-  CheckCNodeInputsNum(inputs_);
+  weak_inputs_.reserve(inputs.size());
+  std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(weak_inputs_),
+                 [](const AnfNodePtr &node) -> AnfNodeWeakPtr { return AnfNodeWeakPtr(node); });
+  if (func_graph != nullptr) {
+    MS_LOG(DEBUG) << "Create new CNode, " << this << "@" << func_graph->ToString();
+    func_graph->AddOwnNode(inputs);
+  } else {
+    MS_LOG(WARNING) << "The func graph should not be null.";
+    inputs_bound_ = true;
+    inputs_ = inputs;
+  }
+  CheckCNodeInputsNum(weak_inputs_);
+  CheckCNodeWeakInput();
 }
 
-CNode::CNode(std::vector<AnfNodePtr> &&inputs, const FuncGraphPtr &func_graph)
-    : AnfNode(func_graph),
-      inputs_(std::move(inputs)),
-      primal_attrs_(PrimalAttrManager::GetInstance().GetCurrentPrimalAttr()),
-      primal_debug_infos_(PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo()) {
-  CheckCNodeInputsNum(inputs_);
-}
-
-CNode::CNode(std::vector<AnfNodePtr> &&inputs, const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info)
-    : AnfNode(func_graph, std::move(debug_info)),
-      inputs_(std::move(inputs)),
-      primal_attrs_(PrimalAttrManager::GetInstance().GetCurrentPrimalAttr()),
-      primal_debug_infos_(PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo()) {
-  CheckCNodeInputsNum(inputs_);
-}
-
-CNode::CNode(const std::vector<AnfNodePtr> &inputs, const VarPtr &func_graph_as_var)
-    : AnfNode(nullptr), inputs_(inputs) {
+CNode::CNode(const AnfNodePtrList &inputs, const VarPtr &func_graph_as_var) : AnfNode(nullptr), inputs_(inputs) {
+  inputs_bound_ = true;
+  weak_inputs_.reserve(inputs.size());
+  std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(weak_inputs_),
+                 [](const AnfNodePtr &node) -> AnfNodeWeakPtr { return AnfNodeWeakPtr(node); });
   primal_attrs_ = PrimalAttrManager::GetInstance().GetCurrentPrimalAttr();
   primal_debug_infos_ = PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo();
   set_user_data(kFuncGraphVarKey, func_graph_as_var);
+  CheckCNodeWeakInput();
 }
 
-const size_t CNode::size() const { return inputs_.size(); }
+CNode::CNode(AnfNodeWeakPtrList &&weak_inputs, const FuncGraphPtr &func_graph)
+    : AnfNode(func_graph),
+      weak_inputs_(std::move(weak_inputs)),
+      primal_attrs_(PrimalAttrManager::GetInstance().GetCurrentPrimalAttr()),
+      primal_debug_infos_(PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo()) {
+  if (func_graph != nullptr) {
+    MS_LOG(DEBUG) << "Create new CNode, " << this << "@" << func_graph->ToString();
+    func_graph->AddOwnNode(weak_inputs_);
+  } else {
+    MS_LOG(INTERNAL_EXCEPTION) << "The func graph should not be null.";
+  }
+  CheckCNodeInputsNum(weak_inputs_);
+  CheckCNodeWeakInput();
+}
 
-const std::vector<AnfNodePtr> &CNode::inputs() const { return inputs_; }
+CNode::CNode(AnfNodeWeakPtrList &&weak_inputs, const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info)
+    : AnfNode(func_graph, std::move(debug_info)),
+      weak_inputs_(std::move(weak_inputs)),
+      primal_attrs_(PrimalAttrManager::GetInstance().GetCurrentPrimalAttr()),
+      primal_debug_infos_(PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo()) {
+  if (func_graph != nullptr) {
+    MS_LOG(DEBUG) << "Create new CNode, " << this << "@" << func_graph->ToString();
+    func_graph->AddOwnNode(weak_inputs_);
+  } else {
+    MS_LOG(INTERNAL_EXCEPTION) << "The func graph should not be null.";
+  }
+  CheckCNodeInputsNum(weak_inputs_);
+  CheckCNodeWeakInput();
+}
+
+CNode::CNode(const AnfNodeWeakPtrList &weak_inputs, const FuncGraphPtr &func_graph)
+    : AnfNode(func_graph),
+      weak_inputs_(weak_inputs),
+      primal_attrs_(PrimalAttrManager::GetInstance().GetCurrentPrimalAttr()),
+      primal_debug_infos_(PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo()) {
+  if (func_graph != nullptr) {
+    MS_LOG(DEBUG) << "Create new CNode, " << this << "@" << func_graph->ToString();
+    func_graph->AddOwnNode(weak_inputs_);
+  } else {
+    MS_LOG(INTERNAL_EXCEPTION) << "The func graph should not be null.";
+  }
+  CheckCNodeInputsNum(weak_inputs_);
+  CheckCNodeWeakInput();
+}
+
+const size_t CNode::size() const { return weak_inputs_.size(); }
+
+const bool CNode::empty() const { return size() == 0; }
+
+const AnfNodePtrList &CNode::inputs() {
+  // Check for 'CNode(const AnfNodePtrList &, const VarPtr &)' for compatible.
+  if (inputs_bound_) {
+    return inputs_;
+  }
+
+  inputs_.clear();
+  inputs_.reserve(weak_inputs_.size());
+  std::transform(weak_inputs_.cbegin(), weak_inputs_.cend(), std::back_inserter(inputs_),
+                 [this](const AnfNodeWeakPtr &weak_node) -> AnfNodePtr {
+                   auto node = weak_node.lock();
+#if defined(DEBUG_CNODE_WEAK_INPUT)
+                   if (node == nullptr) {
+                     MS_LOG(INTERNAL_EXCEPTION) << "Weak input lock failed, " << DebugString();
+                   }
+#endif  // DEBUG_CNODE_WEAK_INPUT
+                   return node;
+                 });
+  inputs_bound_ = true;
+  return inputs_;
+}
+
+const AnfNodeWeakPtrList &CNode::weak_inputs() const { return weak_inputs_; }
 
 // Check if CNode is an apply with the specific Primitive.
 bool CNode::IsApply(const PrimitivePtr &value) const {
-  if (value == nullptr || inputs_.empty()) {
+  if (value == nullptr || weak_inputs_.empty()) {
     return false;
   }
-  auto prim = GetValuePtr<Primitive>(inputs_[0]);
+  auto prim = GetValuePtr<Primitive>(weak_inputs_[0].lock());
   return (prim != nullptr) && (prim->Hash() == value->Hash()) && (prim->name() == value->name());
 }
 
 void CNode::add_input(const AnfNodePtr &input) {
-  (void)inputs_.emplace_back(input);
+  if (inputs_bound_) {
+    inputs_.emplace_back(input);
+  }
+
+  (void)weak_inputs_.emplace_back(AnfNodeWeakPtr(input));
+  if (func_graph() != nullptr) {
+    func_graph()->AddOwnNode(input);
+  }
+
   input_tensor_num_ = -1;
 }
 
 void CNode::set_input(size_t i, const AnfNodePtr &new_input) {
-  if (i >= inputs_.size()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "i: " << i << " out of range: " << inputs_.size() << ", cnode: " << DebugString();
+  if (inputs_bound_) {
+    if (i >= inputs_.size()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "i: " << i << " out of range: " << weak_inputs_.size()
+                                 << ", cnode: " << DebugString();
+    }
+    inputs_[i] = new_input;
   }
-  inputs_[i] = new_input;
+
+  if (i >= weak_inputs_.size()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "i: " << i << " out of range: " << weak_inputs_.size()
+                               << ", cnode: " << DebugString();
+  }
+  weak_inputs_[i] = AnfNodeWeakPtr(new_input);
+  if (func_graph() != nullptr) {
+    func_graph()->AddOwnNode(new_input);
+  }
+
   input_tensor_num_ = -1;
 }
 
-void CNode::set_inputs(const std::vector<AnfNodePtr> &inputs) {
-  inputs_ = inputs;
+void CNode::set_inputs(const AnfNodePtrList &inputs) {
+  if (inputs_bound_) {
+    inputs_ = inputs;
+  }
+
+  weak_inputs_.clear();
+  weak_inputs_.reserve(inputs.size());
+  std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(weak_inputs_),
+                 [](const AnfNodePtr &node) -> AnfNodeWeakPtr { return AnfNodeWeakPtr(node); });
+  if (func_graph() != nullptr) {
+    func_graph()->AddOwnNode(inputs);
+  }
   input_tensor_num_ = -1;
-  CheckCNodeInputsNum(inputs);
+  CheckCNodeInputsNum(weak_inputs_);
 }
 
-const AnfNodePtr &CNode::input(size_t i) const {
-  if (i >= inputs_.size()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "i: " << i << " out of range: " << inputs_.size() << ", cnode: " << DebugString();
+void CNode::set_weak_inputs(const AnfNodeWeakPtrList &weak_inputs) {
+  if (inputs_bound_) {
+    inputs_.clear();
+    inputs_.reserve(weak_inputs.size());
+    std::transform(weak_inputs.cbegin(), weak_inputs.cend(), std::back_inserter(inputs_),
+                   [this](const AnfNodeWeakPtr &weak_node) -> AnfNodePtr {
+                     auto node = weak_node.lock();
+                     if (node == nullptr) {
+                       MS_LOG(INTERNAL_EXCEPTION) << "Weak input lock failed, " << DebugString();
+                     }
+                     return node;
+                   });
   }
-  return inputs_.at(i);
+
+  weak_inputs_ = weak_inputs;
+  if (func_graph() != nullptr) {
+    func_graph()->AddOwnNode(weak_inputs_);
+  }
+  input_tensor_num_ = -1;
+  CheckCNodeInputsNum(weak_inputs_);
+}
+
+const AnfNodePtr CNode::input(size_t i) const {
+  if (inputs_bound_) {
+    if (i >= inputs_.size()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "i: " << i << " out of range: " << inputs_.size() << ", cnode: " << DebugString();
+    }
+    return inputs_.at(i);
+  }
+
+  if (i >= weak_inputs_.size()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "i: " << i << " out of range: " << weak_inputs_.size()
+                               << ", cnode: " << DebugString();
+  }
+  auto res = weak_inputs_.at(i).lock();
+  if (res == nullptr) {
+    MS_LOG(INTERNAL_EXCEPTION) << "The input[" << i << "] is released, cnode: " << DebugString();
+  }
+  return res;
+}
+
+const AnfNodeWeakPtr &CNode::weak_input(size_t i) const {
+  if (i >= weak_inputs_.size()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "i: " << i << " out of range: " << weak_inputs_.size()
+                               << ", cnode: " << DebugString();
+  }
+  return weak_inputs_.at(i);
 }
 
 std::string CNode::DebugString(int recursive_level) const {
@@ -281,15 +433,20 @@ std::string CNode::DebugString(int recursive_level) const {
     buffer << ToString() << "{";
     bool is_first_node = true;
     int idx = 0;
-    for (auto &node : inputs_) {
-      MS_EXCEPTION_IF_NULL(node);
+    for (const auto &weak_node : weak_inputs_) {
       if (is_first_node) {
         is_first_node = false;
       } else {
         buffer << ", ";
       }
+      const auto &node = weak_node.lock();
+      if (node == nullptr) {
+        buffer << "[" << idx << "]: (released_node)";
+        ++idx;
+        continue;
+      }
       buffer << "[" << idx << "]: " << node->DebugString(recursive_level - 1);
-      idx++;
+      ++idx;
     }
     buffer << "}";
   } else {
@@ -322,7 +479,7 @@ void CNode::AddFusedDebugInfo(const AnfNodePtr &node) {
   }
 }
 
-void CNode::AddFusedDebugInfoList(const std::vector<AnfNodePtr> &nodes) {
+void CNode::AddFusedDebugInfoList(const AnfNodePtrList &nodes) {
   (void)std::for_each(nodes.begin(), nodes.end(), [this](const AnfNodePtr &node) { this->AddFusedDebugInfo(node); });
 }
 
@@ -801,9 +958,9 @@ std::set<CNodePtr> GetLoadInputs(const AnfNodePtr &node) {
   if (cnode == nullptr) {
     return loads;
   }
-  auto &inputs = cnode->inputs();
+  auto &inputs = cnode->weak_inputs();
   for (size_t i = 1; i < inputs.size(); ++i) {
-    auto &input = inputs.at(i);
+    const auto &input = inputs.at(i).lock();
     if (IsPrimitiveCNode(input, prim::kPrimLoad)) {
       loads.insert(input->cast<CNodePtr>());
     } else if (IsPrimitiveCNode(input, prim::kPrimMakeTuple)) {
@@ -824,9 +981,10 @@ bool IsStateEquivalent(const AnfNodePtr &outer, const AnfNodePtr &inner) {
     return true;
   }
   outer_loads.merge(inner_loads);
-  auto &monad = (*outer_loads.begin())->inputs().at(kMonadInput);
-  return std::all_of(++outer_loads.begin(), outer_loads.end(),
-                     [&monad, kMonadInput](const CNodePtr &load) { return load->inputs().at(kMonadInput) == monad; });
+  const auto &monad = (*outer_loads.begin())->weak_inputs().at(kMonadInput).lock();
+  return std::all_of(++outer_loads.begin(), outer_loads.end(), [&monad, kMonadInput](const CNodePtr &load) {
+    return load->weak_inputs().at(kMonadInput).lock() == monad;
+  });
 }
 
 // Check if the node is DeadNode.
@@ -883,7 +1041,7 @@ PrimitivePtr GetPrimitiveFromValueNode(const AnfNodePtr &node) {
 
 static std::string GetNodeTargetForVarInputNode(const CNodePtr &cnode) {
   auto &inputs = cnode->inputs();
-  std::vector<AnfNodePtr> real_inputs;
+  AnfNodeWeakPtrList real_inputs;
   const size_t update_state_valid_input_index = 2;
   const size_t make_tuple_valid_input_index = 1;
   if (cnode->IsApply(prim::kPrimUpdateState) && inputs.size() > update_state_valid_input_index) {
@@ -895,8 +1053,8 @@ static std::string GetNodeTargetForVarInputNode(const CNodePtr &cnode) {
   }
   std::string first_input_target = kDeviceUnDefined;
   bool has_diff_target =
-    std::any_of(std::rbegin(real_inputs), std::rend(real_inputs), [&first_input_target](const AnfNodePtr &n) {
-      auto target = GetOriginNodeTarget(n);
+    std::any_of(std::rbegin(real_inputs), std::rend(real_inputs), [&first_input_target](const AnfNodeWeakPtr &n) {
+      auto target = GetOriginNodeTarget(n.lock());
       if (target == kDeviceUnDefined) {
         return false;
       }
@@ -920,23 +1078,27 @@ std::string GetVirtualNodeTargetFromInputs(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast_ptr<CNode>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto &inputs = cnode->inputs();
+  auto &weak_inputs = cnode->weak_inputs();
 #ifndef ENABLE_SECURITY
   if (IsSummaryPrimitiveCNode(node)) {
-    if (inputs.size() > 1) {
-      return GetOriginNodeTarget(inputs[1]);
+    if (weak_inputs.size() > 1) {
+      return GetOriginNodeTarget(weak_inputs[1].lock());
     }
     return kDeviceUnDefined;
   }
 #endif
   if (IsPrimitiveCNode(node, prim::kPrimDepend) || IsPrimitiveCNode(node, prim::kPrimLoad)) {
     const size_t node_inputs_num = 3;
-    if (inputs.size() >= node_inputs_num) {
+    if (weak_inputs.size() >= node_inputs_num) {
       size_t use_index = 1;
-      if (!inputs[use_index]->isa<CNode>()) {
+      auto use_node = weak_inputs[use_index].lock();
+      MS_EXCEPTION_IF_NULL(use_node);
+      if (!use_node->isa<CNode>()) {
         use_index = 2;
+        use_node = weak_inputs[use_index].lock();
+        MS_EXCEPTION_IF_NULL(use_node);
       }
-      return GetOriginNodeTarget(inputs[use_index]);
+      return GetOriginNodeTarget(use_node);
     }
   } else if (IsPrimitiveCNode(node, prim::kPrimMakeTuple) || IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
     return GetNodeTargetForVarInputNode(node->cast<CNodePtr>());
@@ -1080,7 +1242,7 @@ std::string GetCNodeTarget(const AnfNodePtr &node) {
   return target;
 }
 
-bool ContainMultiTarget(const std::vector<AnfNodePtr> &nodes) {
+bool ContainMultiTarget(const AnfNodePtrList &nodes) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   std::string last_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);

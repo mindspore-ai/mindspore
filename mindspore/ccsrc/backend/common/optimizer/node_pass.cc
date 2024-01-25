@@ -371,7 +371,10 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
   FuncGraphManagerPtr manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(func_graph);
-  auto func_graph_index = manager->func_graph_index(func_graph);
+  if (!func_graph->has_user_data<FuncGraphPassIndex>()) {
+    func_graph->set_user_data<FuncGraphPassIndex>(std::make_shared<FuncGraphPassIndex>());
+  }
+  auto func_graph_index = func_graph->user_data<FuncGraphPassIndex>();
   MS_EXCEPTION_IF_NULL(func_graph_index);
 
   if (IsFastPass()) {

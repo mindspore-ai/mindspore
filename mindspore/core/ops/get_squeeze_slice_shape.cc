@@ -29,19 +29,9 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(GetSqueezeSliceShape, BaseOperator);
-
-AbstractBasePtr GetSqueezeSliceShapeInferInner(const PrimitivePtr &primitive,
-                                               const std::vector<AbstractBasePtr> &input_args) {
-  const AbstractBasePtr &data_abs = input_args[kIndex0];
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data_abs->GetShape());
-  auto data_shape = shape_map[kShape];
+namespace {
+inline size_t GetOutDim(const PrimitivePtr &primitive, const ShapeVector &data_shape) {
   auto tuple_index_types = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrTupleIndexTypes));
-  AbstractBasePtr abs_any_tensor = std::make_shared<abstract::AbstractTensor>(
-    kInt64, std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny})));
-  if (IsDynamicRank(data_shape)) {
-    return abs_any_tensor;
-  }
   size_t ini_index = 0;
   const size_t max_indices_num = 8;
   for (size_t i = 0; i < max_indices_num; i++) {
@@ -49,21 +39,50 @@ AbstractBasePtr GetSqueezeSliceShapeInferInner(const PrimitivePtr &primitive,
       ini_index += 1;
     }
   }
-  auto new_data_dims = SizeToLong(data_shape.size() - ini_index);
-  auto abs_tensor = std::make_shared<abstract::AbstractTensor>(
-    kInt64, std::make_shared<abstract::Shape>(std::vector<int64_t>{new_data_dims}));
-  return abs_tensor;
+
+  return data_shape.size() - ini_index;
+}
+}  // namespace
+MIND_API_OPERATOR_IMPL(GetSqueezeSliceShape, BaseOperator);
+
+AbstractBasePtr GetSqueezeSliceShapeInferInner(const PrimitivePtr &primitive,
+                                               const std::vector<AbstractBasePtr> &input_args) {
+  const AbstractBasePtr &data_abs = input_args[kIndex0];
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data_abs->GetShape());
+  auto data_shape = shape_map[kShape];
+  auto any_scalar = std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64);
+  if (IsDynamicRank(data_shape)) {
+    auto abs_tuple = std::make_shared<abstract::AbstractTuple>(std::vector<abstract::AbstractBasePtr>({any_scalar}));
+    return abs_tuple->BroadenToDynamicLenSequence();
+  }
+  auto new_data_dims = GetOutDim(primitive, data_shape);
+  std::vector<abstract::AbstractBasePtr> elements(new_data_dims, any_scalar);
+  auto abs_tuple = std::make_shared<abstract::AbstractTuple>(elements);
+  return abs_tuple;
 }
 
 class MIND_API GetSqueezeSliceShapeInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return GetSqueezeSliceShapeInferInner(primitive, input_args)->GetShape();
+    const AbstractBasePtr &data_abs = input_args[kIndex0];
+    auto data_shape = data_abs->GetShape()->GetShapeVector();
+    auto new_data_dims = GetOutDim(primitive, data_shape);
+    std::vector<abstract::BaseShapePtr> elements(new_data_dims, abstract::kNoShape);
+    return std::make_shared<abstract::TupleShape>(elements);
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return GetSqueezeSliceShapeInferInner(prim, input_args)->GetType();
+    const AbstractBasePtr &data_abs = input_args[kIndex0];
+    auto data_shape = data_abs->GetShape()->GetShapeVector();
+    auto new_data_dims = GetOutDim(prim, data_shape);
+    std::vector<TypePtr> elements(new_data_dims, kInt64);
+    return std::make_shared<Tuple>(elements);
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return GetSqueezeSliceShapeInferInner(primitive, input_args);
   }
 };
 

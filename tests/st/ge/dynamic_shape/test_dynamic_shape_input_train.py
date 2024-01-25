@@ -24,7 +24,6 @@ from mindspore.common.initializer import HeNormal, HeUniform, Zero, initializer
 from mindspore.train.callback import LossMonitor
 from mindspore import Model, Tensor, context, nn, ops, set_seed
 
-from tests.st.ge import ge_train_env  # pylint: disable=unused-import
 
 set_seed(1)
 

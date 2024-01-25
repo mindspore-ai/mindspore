@@ -43,7 +43,7 @@ void BinaryCrossEntropyGradGpuKernelMod::LaunchKernel(const std::vector<KernelTe
   T *input_y = GetDeviceAddress<T>(inputs, kIndex1);
   T *dloss = GetDeviceAddress<T>(inputs, kIndex2);
   T *weight = nullptr;
-  if (weight_defined_) {
+  if (inputs[kIndex3]->type_id() != kMetaTypeNone) {
     weight = GetDeviceAddress<T>(inputs, kIndex3);
   }
   T *dx = GetDeviceAddress<T>(outputs, kIndex0);
@@ -81,9 +81,6 @@ int BinaryCrossEntropyGradGpuKernelMod::Resize(const std::vector<KernelTensor *>
     return ret;
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();
-  size_t input_num = inputs.size();
-  const size_t input_with_weight_num = 4;
-  weight_defined_ = (input_num == input_with_weight_num);
   input_size_ = SizeOf(input_shape);
   return KRET_OK;
 }

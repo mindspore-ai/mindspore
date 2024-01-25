@@ -67,18 +67,13 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_ENABLE_DUMP, false);
   set_param<std::string>(MS_CTX_SAVE_DUMP_PATH, ".");
   set_param<std::string>(MS_CTX_DETERMINISTIC, "OFF");
-  set_param<std::string>(MS_CTX_PRECISION_MODE, "");
-  set_param<std::string>(MS_CTX_ENABLE_JIT_COMPILE, "");
-  set_param<std::string>(MS_CTX_ATOMIC_CLEAN_POLICY, "");
-  set_param<std::string>(MS_CTX_MATMUL_ALLOW_HF32, "");
-  set_param<std::string>(MS_CTX_CONV_ALLOW_HF32, "");
-  set_param<std::string>(MS_CTX_OP_PRECISION_MODE, "");
   set_param<std::string>(MS_CTX_ENV_CONFIG_PATH, "");
   set_param<std::string>(MS_CTX_TUNE_MODE, "NO_TUNE");
   set_param<std::string>(MS_CTX_AOE_TUNE_MODE, "");
   set_param<std::string>(MS_CTX_AOE_JOB_TYPE, "2");
   set_param<std::string>(MS_CTX_GRAPH_KERNEL_FLAGS, "");
   set_param<std::string>(MS_CTX_HOST_SCHEDULING_MAX_THRESHOLD, "");
+  set_param<std::string>(MS_CTX_ENABLE_EXCEPTION_DUMP, "2");
 
   set_param<uint32_t>(MS_CTX_TSD_REF, 0);
   set_param<uint32_t>(MS_CTX_GE_REF, 0);
@@ -86,18 +81,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
   set_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT, false);
   set_param<bool>(MS_CTX_ENABLE_REDUCE_PRECISION, true);
-  auto env_device = common::GetEnv("DEVICE_ID");
-  if (!env_device.empty()) {
-    try {
-      uint32_t device_id = UlongToUint(std::stoul(env_device));
-      set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
-    } catch (std::invalid_argument &e) {
-      MS_LOG(WARNING) << "Invalid DEVICE_ID env:" << env_device << ". Please set DEVICE_ID to 0-7";
-      set_param<uint32_t>(MS_CTX_DEVICE_ID, 0);
-    }
-  } else {
-    set_param<uint32_t>(MS_CTX_DEVICE_ID, 0);
-  }
+  MsContext::SetDeviceId();
 
   set_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH, MAX_CALL_DEPTH_DEFAULT);
   string_params_[MS_CTX_DEVICE_TARGET - MS_CTX_TYPE_STRING_BEGIN] = target;
@@ -136,7 +120,12 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_ENABLE_GRAD_COMM_OPT, false);
   set_param<bool>(MS_CTX_INTERLEAVED_MATMUL_COMM, false);
   set_param<bool>(MS_CTX_INTERLEAVED_LAYERNORM_COMM, false);
-  set_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL, kOptimizeO0);
+  if (target == kAscendDevice || target == kDavinciDevice) {
+    // enable somas by default on ascend
+    set_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL, kOptimizeO1);
+  } else {
+    set_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL, kOptimizeO0);
+  }
   set_param<uint32_t>(MS_CTX_OP_TIMEOUT, kOpTimeout);
   set_param<int>(MS_CTX_JIT_SYNTAX_LEVEL, kLax);
   set_param<std::string>(MS_CTX_CONV_FPROP_ALGO, "normal");
@@ -160,6 +149,8 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
     static_cast<size_t>(MsCtxParam::NUM_BOOL_PARAMS + MsCtxParam::NUM_UINT32_PARAMS + MsCtxParam::NUM_INT_PARAMS +
                         MsCtxParam::NUM_FLOAT_PARAMS + MsCtxParam::NUM_STRING_PARAMS),
     false);
+
+  SetAscendConfig();
 }
 
 std::shared_ptr<MsContext> MsContext::GetInstance() {
@@ -170,8 +161,23 @@ std::shared_ptr<MsContext> MsContext::GetInstance() {
       inst_context_ = std::make_shared<MsContext>("vm", kCPUDevice);
     }
   });
-
+  MS_EXCEPTION_IF_NULL(inst_context_);
   return inst_context_;
+}
+
+void MsContext::SetDeviceId() {
+  auto env_device = common::GetEnv("DEVICE_ID");
+  if (!env_device.empty()) {
+    try {
+      uint32_t device_id = UlongToUint(std::stoul(env_device));
+      set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
+    } catch (std::invalid_argument &e) {
+      MS_LOG(WARNING) << "Invalid DEVICE_ID env:" << env_device << ". Please set DEVICE_ID to 0-7";
+      set_param<uint32_t>(MS_CTX_DEVICE_ID, 0);
+    }
+  } else {
+    set_param<uint32_t>(MS_CTX_DEVICE_ID, 0);
+  }
 }
 
 void MsContext::Refresh() {
@@ -409,8 +415,7 @@ std::string MsContext::GetSaveGraphsPath() const {
   }
 }
 
-bool MsContext::CanDump(const DumpLevel &level) const {
-  int save_graphs = MsContext::GetInstance()->get_param<int>(MS_CTX_SAVE_GRAPHS_FLAG);
+int MsContext::GetSaveGraphsLevel() const {
   static std::string save_env = common::GetEnv("MS_DEV_SAVE_GRAPHS");
   if (save_env.size() == 1) {
     int save_graphs_by_env = -1;
@@ -422,19 +427,14 @@ bool MsContext::CanDump(const DumpLevel &level) const {
     if (save_graphs_by_env < 0 || save_graphs_by_env > kFully) {
       MS_LOG(EXCEPTION) << "Dump level can only be from 0 to 3";
     }
-    if (save_graphs_by_env >= level) {
-      return true;
-    } else {
-      return false;
-    }
+    return save_graphs_by_env;
   } else if (save_env.size() > 1) {
     MS_LOG(EXCEPTION) << "MS_DEV_SAVE_GRAPHS should be a single number with one digit.";
   }
-  if (save_graphs >= level) {
-    return true;
-  }
-  return false;
+  return MsContext::GetInstance()->get_param<int>(MS_CTX_SAVE_GRAPHS_FLAG);
 }
+
+bool MsContext::CanDump(const DumpLevel &level) const { return GetSaveGraphsLevel() >= level; }
 
 void MsContext::MarkReadStatus(MsCtxParam param) const {
 #if !(defined(ENABLE_TEST) || defined(ENABLE_TESTCASES) || defined(BUILD_LITE))
@@ -493,7 +493,7 @@ bool MsContext::EnableAoeOffline() const {
   return aoe_tune_mode == "offline";
 }
 
-bool MsContext::IsKByKExecutorMode() const {
+bool MsContext::CheckIsKByK() const {
   // Get jit level.
   const auto &jit_config = PhaseManager::GetInstance().jit_config();
   std::string jit_level = "O1";
@@ -529,6 +529,22 @@ bool MsContext::IsKByKExecutorMode() const {
 
   MS_LOG(ERROR) << "No valid executor mode.";
   return false;
+}
+
+bool MsContext::IsKByKExecutorMode() const {
+  static bool is_kbyk = CheckIsKByK();
+  return is_kbyk;
+}
+
+void MsContext::SetAscendConfig() {
+  set_param<std::string>(MS_CTX_PRECISION_MODE, "");
+  set_param<std::string>(MS_CTX_ENABLE_JIT_COMPILE, "");
+  set_param<std::string>(MS_CTX_ATOMIC_CLEAN_POLICY, "");
+  set_param<std::string>(MS_CTX_MATMUL_ALLOW_HF32, "");
+  set_param<std::string>(MS_CTX_CONV_ALLOW_HF32, "");
+  set_param<std::string>(MS_CTX_OP_PRECISION_MODE, "");
+  set_param<std::string>(MS_CTX_HOST_SCHEDULING_MAX_THRESHOLD, "");
+  set_param<std::string>(MS_CTX_GE_OPTIONS, "");
 }
 
 template MS_CORE_API void MsContext::CheckReadStatus<bool>(MsCtxParam, const bool &) const;

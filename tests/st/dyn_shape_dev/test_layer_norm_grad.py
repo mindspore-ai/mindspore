@@ -23,23 +23,22 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def layer_norm_grad_forward_func(x, dy, variance, mean, gamma):
-    return ops.auto_generate.layer_norm_grad(x,
-                                             dy,
-                                             variance,
-                                             mean,
-                                             gamma,
-                                             begin_norm_axis=1,
-                                             begin_params_axis=1)
+    return ops.auto_generate.LayerNormGrad(begin_norm_axis=1,
+                                           begin_params_axis=1)(x,
+                                                                dy,
+                                                                variance,
+                                                                mean,
+                                                                gamma)
 
 
 def layer_norm_grad_dyn_shape_func(x, dy, variance, mean, gamma):
-    return ops.auto_generate.layer_norm_grad(x,
-                                             dy,
-                                             variance,
-                                             mean,
-                                             gamma,
-                                             begin_norm_axis=1,
-                                             begin_params_axis=1)
+    return ops.auto_generate.LayerNormGrad(begin_norm_axis=1,
+                                           begin_params_axis=1)(x,
+                                                                dy,
+                                                                variance,
+                                                                mean,
+                                                                gamma
+                                                                )
 
 
 @pytest.mark.level1

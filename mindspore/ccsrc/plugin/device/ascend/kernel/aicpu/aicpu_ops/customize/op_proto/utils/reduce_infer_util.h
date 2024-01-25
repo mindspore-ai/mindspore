@@ -32,48 +32,48 @@ namespace reduce_ops {
 
 /*
  * only do infer shape for reduce with input_shape/axes, when keepdims = true
- * param[in] input_shape: GeShape input shape
+ * param[in] input_shape: Shape input shape
  * param[in] reduce_axes: reduce axes list
- * param[in] output_shape: GeShape output shape
+ * param[in] output_shape: Shape output shape
  * return bool:
  *        true:infer success false:infer failed
  */
-bool DoReduceInfershapeWithAxesKeepdims(const GeShape &input_shape, std::vector<int64_t> &reduce_axes,
-                                        GeShape &output_shape);
+bool DoReduceInfershapeWithAxesKeepdims(const Shape &input_shape, std::vector<int64_t> &reduce_axes,
+                                        Shape &output_shape);
 
 /*
  * only do infer shape for reduce with input_shape/axes, when keepdims = false
- * param[in] input_shape: GeShape input shape
+ * param[in] input_shape: Shape input shape
  * param[in] reduce_axes: reduce axes list
- * param[in] output_shape: GeShape output shape
+ * param[in] output_shape: Shape output shape
  * return bool:
  *        true:infer success false:infer failed
  */
-bool DoReduceInfershapeWithAxesNoKeepdims(const GeShape &input_shape, std::vector<int64_t> &reduce_axes,
-                                          GeShape &output_shape);
+bool DoReduceInfershapeWithAxesNoKeepdims(const Shape &input_shape, std::vector<int64_t> &reduce_axes,
+                                          Shape &output_shape);
 
 /*
  * only do infer shape for reduce with input_shape, axes and keepdims
- * param[in] input_shape: GeShape input shape
+ * param[in] input_shape: Shape input shape
  * param[in] keep_dims: bool
  * param[in] reduce_axes: reduce axes list
- * param[in] output_shape: GeShape output shape
+ * param[in] output_shape: Shape output shape
  * return bool:
  *        true:infer success false:infer failed
  */
-bool DoReduceInfershapeWithAxes(const GeShape &input_shape, const bool keep_dims, std::vector<int64_t> &reduce_axes,
-                                GeShape &output_shape);
+bool DoReduceInfershapeWithAxes(const Shape &input_shape, const bool keep_dims, std::vector<int64_t> &reduce_axes,
+                                Shape &output_shape);
 
 /*
  * only do infer range for reduce
- * param[in] tensordesc_input_x: GeTensorDescPtr of input tensor
- * param[in] tensordesc_output: GeTensorDescPtr of output tensor
+ * param[in] tensordesc_input_x: TensorDesc of input tensor
+ * param[in] tensordesc_output: TensorDesc of output tensor
  * param[in] reduce_axes: reduce axes list
  * param[in] keep_dims: bool
  * return bool:
  *        true:infer success false:infer failed
  */
-bool DoReduceInferRangeWithAxes(GeTensorDescPtr &tensordesc_input_x, GeTensorDescPtr &tensordesc_output,
+bool DoReduceInferRangeWithAxes(TensorDesc &tensordesc_input_x, TensorDesc &tensordesc_output,
                                 std::vector<int64_t> &reduce_axes, bool keep_dims);
 
 /*
@@ -89,15 +89,15 @@ bool GetConstData(const Operator &op, const int64_t const_input_idx, std::vector
 /*
  * infer shape and range for reduce, when the axes is not const
  * param[in] op: op desc get from by ge
- * param[in] tensordesc_input_x: GeTensorDescPtr of input tensor
- * param[in] tensordesc_output: GeTensorDescPtr of output tensor
+ * param[in] tensordesc_input_x: TensorDesc of input tensor
+ * param[in] tensordesc_output: TensorDesc of output tensor
  * param[in] axes_shape: the axes shape
  * param[in] keep_dims: bool
  * return bool:
  *        true:get value success false:no not get the const value
  */
-bool DoReduceInferShapeWithoutAxes(const Operator &op, GeTensorDescPtr &tensordesc_input_x,
-                                   GeTensorDescPtr &tensordesc_output, const GeShape &axes_shape, bool keep_dims);
+bool DoReduceInferShapeWithoutAxes(const Operator &op, TensorDesc &tensordesc_input_x, TensorDesc &tensordesc_output,
+                                   const Shape &axes_shape, bool keep_dims);
 
 /*
  * reduce infershape function, when axes is input
@@ -109,9 +109,9 @@ bool DoReduceInferShapeWithoutAxes(const Operator &op, GeTensorDescPtr &tensorde
  * return bool:
  *        true:infer success false:infer failed
  */
-bool CommonReduceInferWithInputAxes(const Operator &op, const int64_t input_x_idx, const int64_t output_idx,
+bool CommonReduceInferWithInputAxes(Operator &op, const int64_t input_x_idx, const int64_t output_idx,
                                     const int64_t input_axes_idx, bool keep_dims);
-bool CommonReduceInferWithAttrAxes(const Operator &op, const int64_t input_x_idx, const int64_t output_idx,
+bool CommonReduceInferWithAttrAxes(Operator &op, const int64_t input_x_idx, const int64_t output_idx,
                                    vector<int64_t> attr_axes, bool keep_dims);
 }  // namespace reduce_ops
 

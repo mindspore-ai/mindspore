@@ -17,8 +17,9 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_BATCH_NORM_OPS_DECLARE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_BATCH_NORM_OPS_DECLARE_H_
 
-#include "inc/ops/nn_batch_norm_ops.h"
-#include "inc/ops/reduce_ops.h"
+#include "op_proto/inc/nn_batch_norm_ops.h"
+#include "op_proto/inc/reduce_ops.h"
+#include "transform/graph_ir/custom_op_proto/cust_nn_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
 
@@ -36,6 +37,9 @@ DECLARE_OP_USE_OUTPUT(BNInferGrad)
 
 DECLARE_OP_ADAPTER(BatchNormGrad)
 DECLARE_OP_USE_OUTPUT(BatchNormGrad)
+
+DECLARE_CUST_OP_ADAPTER(BatchNormGradGrad)
+DECLARE_CUST_OP_USE_OUTPUT(BatchNormGradGrad)
 
 DECLARE_OP_ADAPTER(L2Normalize)
 DECLARE_OP_USE_OUTPUT(L2Normalize)

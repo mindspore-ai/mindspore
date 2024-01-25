@@ -61,13 +61,13 @@ uint32_t GeqrfCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-void GeqrfCpuKernel::Larfg(int n, int vm, int vn, T **A, T *tau) {
+void GeqrfCpuKernel::Larfg(int n, int vm, int vn, double **A, T *tau) {
   T zero = static_cast<T>(0);
   if (n <= 1) {
     *tau = zero;
     return;
   }
-  T xnorm = zero;
+  double xnorm = zero;
   for (int i = vm + 1; i < vm + n; i++) {
     xnorm = xnorm + A[i][vn] * A[i][vn];
   }
@@ -76,11 +76,11 @@ void GeqrfCpuKernel::Larfg(int n, int vm, int vn, T **A, T *tau) {
     *tau = zero;
     return;
   } else {
-    T beta = sqrt(A[vm][vn] * A[vm][vn] + xnorm * xnorm);
+    double beta = sqrt(A[vm][vn] * A[vm][vn] + xnorm * xnorm);
     if (A[vm][vn] > zero) {
       beta = -beta;
     }
-    *tau = (beta - (A[vm][vn])) / beta;
+    *tau = static_cast<T>((beta - (A[vm][vn])) / beta);
     auto scal = (A[vm][vn]) - beta;
     for (int i = vm + 1; i < vm + n; i++) {
       A[i][vn] /= scal;
@@ -90,11 +90,11 @@ void GeqrfCpuKernel::Larfg(int n, int vm, int vn, T **A, T *tau) {
 }
 
 template <typename T>
-void GeqrfCpuKernel::Larf(int m, int n, T **A, T *tau, int cm, int cn) {
+void GeqrfCpuKernel::Larf(int m, int n, double **A, T *tau, int cm, int cn) {
   if (m <= 0 || n <= 0) {
     return;
   }
-  T *work = new T[n]();
+  double *work = new double[n]();
   for (int i = 0; i < m; i++) {
     for (int j = 0; j < n; j++) {
       work[j] += A[cm + i][cn - 1] * A[cm + i][cn + j];
@@ -110,7 +110,7 @@ void GeqrfCpuKernel::Larf(int m, int n, T **A, T *tau, int cm, int cn) {
 }
 
 template <typename T>
-void GeqrfCpuKernel::Geqrf(int m, int n, T **A, T *tau) {
+void GeqrfCpuKernel::Geqrf(int m, int n, double **A, T *tau) {
   if (m < 0 || n < 0) {
     return;
   }
@@ -118,7 +118,7 @@ void GeqrfCpuKernel::Geqrf(int m, int n, T **A, T *tau) {
   T one = static_cast<T>(1);
   for (int i = 0; i < k; i++) {
     Larfg<T>(m - i, i, i, A, tau + i);
-    T aii = A[i][i];
+    double aii = A[i][i];
     A[i][i] = one;
     Larf<T>(m - i, n - i - 1, A, tau + i, i, i + 1);
     A[i][i] = aii;
@@ -215,9 +215,9 @@ uint32_t GeqrfCpuKernel::DoCompute(CpuKernelContext &ctx) {
   auto output_r = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   auto output_tau = reinterpret_cast<T *>(ctx.Output(1)->GetData());
 
-  T **A = new T *[m];
+  double **A = new double *[m];
   for (int i = 0; i < m; i++) {
-    A[i] = new T[n];
+    A[i] = new double[n];
   }
   for (int i = 0; i < m; i++) {
     for (int j = 0; j < n; j++) {
@@ -227,7 +227,7 @@ uint32_t GeqrfCpuKernel::DoCompute(CpuKernelContext &ctx) {
   Geqrf<T>(m, n, A, output_tau);
   for (int i = 0; i < m; i++) {
     for (int j = 0; j < n; j++) {
-      *(output_r + i * n + j) = A[i][j];
+      *(output_r + i * n + j) = static_cast<T>(A[i][j]);
     }
   }
   for (int i = 0; i < m; i++) {

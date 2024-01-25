@@ -44,9 +44,9 @@ constexpr auto kNameSizeFour = 4;
 }  // namespace
 
 STATUS ResizeMapper::Mapper(const CNodePtr &cnode) {
-  if (cnode->inputs().size() != kNameInputNum) {
-    MS_LOG(WARNING) << "Input of resize must be " << kNameInputNum << ", real size: " << cnode->inputs().size()
-                    << ", cnode " << cnode->fullname_with_scope();
+  if (cnode->size() != kNameInputNum) {
+    MS_LOG(WARNING) << "Input of resize must be " << kNameInputNum << ", real size: " << cnode->size() << ", cnode "
+                    << cnode->fullname_with_scope();
     return lite::RET_OK;
   }
   ValueNodePtr value_node = nullptr;

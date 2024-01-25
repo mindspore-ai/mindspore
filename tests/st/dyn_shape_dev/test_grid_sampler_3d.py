@@ -23,8 +23,8 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def grid_sampler_3d_forward_func(input_x, grid):
-    grid_sampler_3d = ops.auto_generate.grid_sampler_3d(
-        input_x, grid, interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)
+    grid_sampler_3d = ops.auto_generate.GridSampler3D(
+        interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)(input_x, grid)
     return grid_sampler_3d
 
 
@@ -188,3 +188,21 @@ def test_grid_sampler_3d_vmap(mode):
                          in_axes=in_axes, out_axes=0)
     out = nest_vmap(input_x, grid)
     assert np.allclose(out.asnumpy(), except_out, 1e-04, 1e-04)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_grid_sampler_3d_diferent_input_types(mode):
+    """
+    Feature: Ops.
+    Description: test op grid_sampler_3d.
+    Expectation: catch the error.
+    """
+    ms.context.set_context(mode=mode)
+    input_x = Tensor(np.ones((2, 3, 3, 3, 3)).astype(np.float32))
+    grid = Tensor(np.ones((2, 3, 3, 3, 3)).astype(np.int32))
+    with pytest.raises(TypeError) as info:
+        _ = grid_sampler_3d_forward_func(input_x, grid)
+    assert "input type must be same" in str(info.value)

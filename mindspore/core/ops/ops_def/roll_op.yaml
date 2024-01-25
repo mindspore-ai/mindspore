@@ -15,4 +15,4 @@ roll:
     output:
       dtype: tensor
   function:
-    name: roll_
+    disable: True

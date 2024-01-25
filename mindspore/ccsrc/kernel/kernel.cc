@@ -29,8 +29,6 @@
 namespace mindspore {
 namespace kernel {
 constexpr int64_t kInvalidShape = -2;
-// Static mutex used to Used to ensure that all KernelTensor objects securely create the KernelHostInfo member variable.
-static std::mutex kernel_host_info_mutex;
 
 namespace {
 using ShapeTransposeFunc = std::function<void(const ShapeVector *, ShapeVector *)>;
@@ -94,7 +92,6 @@ KernelHostInfo::KernelHostInfo(const KernelHostInfo &other) {
   shape_vector_ = other.shape_vector_;
   shape_vector_after_format_trasform_ = other.shape_vector_after_format_trasform_;
   type_id_ = other.type_id_;
-  element_size_in_bytes_ = other.element_size_in_bytes_;
   kernel_tensor_value_ = other.kernel_tensor_value_;
 }
 
@@ -114,10 +111,6 @@ KernelTensor::KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &t
   if (value) {
     SetValue(value);
   }
-
-  // Update size_ at constructing KernelTensor.
-  // Note: calculate memory size should be executed after 'SetType' and 'SetShape'.
-  CalculateMemSize();
 }
 
 KernelTensor::KernelTensor(void *device_ptr, size_t size, Format format, TypeId dtype_id, const ShapeVector &host_shape,
@@ -164,7 +157,6 @@ KernelTensor::KernelTensor(const KernelTensor &other) {
 
 inline void KernelTensor::CheckHostInfoValid() {
   if (MS_UNLIKELY(!host_info_)) {
-    std::lock_guard<std::mutex> lock(kernel_host_info_mutex);
     host_info_ = std::make_unique<KernelHostInfo>();
   }
 }
@@ -209,53 +201,76 @@ void KernelTensor::SetShape(const abstract::BaseShapePtr &shape) {
   MS_EXCEPTION_IF_NULL(shape);
   shape_ = shape;
   CheckHostInfoValid();
+
   // Note: for performance, the function `SetShape` uses host_info_->type_id_, so need to SetType first.
-  if (host_info_->type_id_ == kObjectTypeTensorType || host_info_->type_id_ == kObjectTypeMapTensorType) {
-    // The shape type check will affect the performance. The following check will be deleted after the framework is
-    // stable.
-    if (!shape_->isa<abstract::TensorShape>()) {
-      MS_LOG(EXCEPTION) << "Expected TensorShape for SetShape, but got: " << shape_->type_name() << ", "
-                        << shape_->ToString();
+  switch (host_info_->type_id_) {
+    case kObjectTypeMapTensorType:
+    case kObjectTypeTensorType: {
+      // The shape type check will affect the performance. The following check will be deleted after the framework is
+      // stable.
+      if (!shape_->isa<abstract::TensorShape>()) {
+        MS_LOG(EXCEPTION) << "Expected TensorShape for SetShape, but got: " << shape_->type_name() << ", "
+                          << shape_->ToString();
+      }
+      host_info_->shape_vector_ = shape_->GetShapeVector();
+      break;
     }
-    host_info_->shape_vector_ = shape_->GetShapeVector();
-  } else if (host_info_->type_id_ == kObjectTypeTuple || host_info_->type_id_ == kObjectTypeList) {
-    if (shape->isa<abstract::DynamicSequenceShape>()) {
-      host_info_->shape_vector_ = {-1};
-      return;
+
+    case kObjectTypeList:
+    case kObjectTypeTuple: {
+      if (shape->isa<abstract::DynamicSequenceShape>()) {
+        host_info_->shape_vector_ = {-1};
+        break;
+      }
+      const auto &seq_shape = shape_->cast<abstract::SequenceShapePtr>();
+      if (seq_shape == nullptr) {
+        MS_LOG(EXCEPTION) << "Expected SequenceShape for SetShape, but got: " << shape_->type_name() << ", "
+                          << shape_->ToString();
+      }
+      host_info_->shape_vector_.clear();
+      host_info_->shape_vector_.push_back(seq_shape->size());
+      const auto &shapes = seq_shape->shape();
+      if (shapes.empty()) {
+        break;
+      }
+      const auto &element_shape = shapes[0];
+      MS_EXCEPTION_IF_NULL(element_shape);
+      if (element_shape->isa<abstract::TensorShape>()) {
+        const ShapeVector &element_shape_vector = element_shape->GetShapeVector();
+        host_info_->shape_vector_.insert(host_info_->shape_vector_.end(), element_shape_vector.begin(),
+                                         element_shape_vector.end());
+      } else if (element_shape->isa<abstract::SequenceShape>()) {
+        const ShapeVector &element_shape_vector = GetShapeVectorByBaseShape(element_shape);
+        host_info_->shape_vector_.insert(host_info_->shape_vector_.end(), element_shape_vector.begin(),
+                                         element_shape_vector.end());
+      }
+
+      break;
     }
-    const auto &seq_shape = shape_->cast<abstract::SequenceShapePtr>();
-    if (seq_shape == nullptr) {
-      MS_LOG(EXCEPTION) << "Expected SequenceShape for SetShape, but got: " << shape_->type_name() << ", "
-                        << shape_->ToString();
+
+    case kTypeUnknown: {
+      MS_LOG(EXCEPTION) << "Can not set shape for unknown type, please set correct type for kernel tensor first.";
     }
-    host_info_->shape_vector_.clear();
-    host_info_->shape_vector_.push_back(seq_shape->size());
-    const auto &shapes = seq_shape->shape();
-    if (shapes.empty()) {
-      return;
-    }
-    const auto &element_shape = shapes[0];
-    MS_EXCEPTION_IF_NULL(element_shape);
-    if (element_shape->isa<abstract::TensorShape>()) {
-      const ShapeVector &element_shape_vector = element_shape->GetShapeVector();
-      host_info_->shape_vector_.insert(host_info_->shape_vector_.end(), element_shape_vector.begin(),
-                                       element_shape_vector.end());
-    } else if (element_shape->isa<abstract::SequenceShape>()) {
-      const ShapeVector &element_shape_vector = GetShapeVectorByBaseShape(element_shape);
-      host_info_->shape_vector_.insert(host_info_->shape_vector_.end(), element_shape_vector.begin(),
-                                       element_shape_vector.end());
-    }
+
+    default:
+      MS_EXCEPTION_IF_NULL(type_);
+      MS_LOG(DEBUG) << "Need not set shape for: " << type_->ToString();
   }
+
+  // Update size_ after shape changed.
+  // Note: calculate memory size should be executed after 'SetType' and 'SetShape'.
+  CalculateMemSize();
 }
 
 void KernelTensor::CalculateMemSize() {
-  CheckHostInfoValid();
-  if (host_info_->type_id_ == kObjectTypeNumber) {
-    device_info_->size_ = host_info_->element_size_in_bytes_;
-  } else {
+  MS_EXCEPTION_IF_NULL(host_info_);
+  if (host_info_->type_id_ == kObjectTypeTensorType || host_info_->type_id_ == kObjectTypeTuple ||
+      host_info_->type_id_ == kObjectTypeList) {
     // If host_info_->shape_vector_ is a dynamic shape, device_info_->size_ will be 0.
     size_t element_num = SizeOf(host_info_->shape_vector_);
-    device_info_->size_ = element_num * host_info_->element_size_in_bytes_;
+    device_info_->size_ = element_num * UnitSizeInBytes(device_info_->dtype_id_);
+  } else if (host_info_->type_id_ == kObjectTypeNumber) {
+    device_info_->size_ = UnitSizeInBytes(device_info_->dtype_id_);
   }
 }
 
@@ -279,8 +294,7 @@ void KernelTensor::SetShapeVector(const ShapeVector &shape_vector) {
   }
 
   MS_LOG(EXCEPTION) << "Only support Scalar/Tensor/MapTensor type to set shape vector currently, but got type: "
-                    << TypeIdLabel(host_info_->type_id_)
-                    << ", please use KernelTensor::SetShape(const abstract::BaseShapePtr &shape) instead.";
+                    << TypeIdLabel(host_info_->type_id_);
 }
 
 void KernelTensor::SetShapeVector(ShapeVector &&shape_vector) {
@@ -303,8 +317,7 @@ void KernelTensor::SetShapeVector(ShapeVector &&shape_vector) {
   }
 
   MS_LOG(EXCEPTION) << "Only support Scalar/Tensor/MapTensor type to set shape vector currently, but got type: "
-                    << TypeIdLabel(host_info_->type_id_)
-                    << ", please use KernelTensor::SetShape(const abstract::BaseShapePtr &shape) instead.";
+                    << TypeIdLabel(host_info_->type_id_);
 }
 
 const ShapeVector &KernelTensor::TransposeToDeviceShape() const {
@@ -350,6 +363,11 @@ void KernelTensor::SetType(const TypePtr &type) {
   CheckHostInfoValid();
   type_ = type;
   host_info_->type_id_ = type_->object_type();
+  if (host_info_->type_id_ == kTypeUnknown) {
+    host_info_->type_id_ = type_->type_id();
+    MS_EXCEPTION_IF_CHECK_FAIL((host_info_->type_id_ != kTypeUnknown),
+                               "Got a unknown type id, type info: " + type_->ToString());
+  }
 
   switch (host_info_->type_id_) {
     case kObjectTypeTensorType: {
@@ -403,8 +421,6 @@ void KernelTensor::SetType(const TypePtr &type) {
       device_info_->dtype_id_ = type->type_id();
       MS_LOG(DEBUG) << "Set dtype for: " << type->ToString();
   }
-
-  host_info_->element_size_in_bytes_ = GetTypeByte(TypeIdToType(device_info_->dtype_id_));
 }
 
 void KernelTensor::SetSequenceDType(const TypePtr &element_type) {
@@ -556,233 +572,21 @@ bool KernelTensor::SyncDataFromDeviceToHost() const {
   return true;
 }
 
-string KernelTensor::GetAbstractName() const {
-  const TensorInfo &info = std::get<TensorInfo>(meta_);
-  if (info.base_ == nullptr) {
-    return "null(no abstract base)";
-  }
-  return info.base_->ToString();
-}
-
 bool KernelTensor::IsDynamicShape() const {
   const auto &shape = this->GetShapeVector();
   return std::any_of(shape.cbegin(), shape.cend(), [](auto i) { return i < 0; });
 }
 
-size_t KernelTensor::GetSizeInBytes() const {
-  auto unit_size = GetTypeByte(TypeIdToType(GetDtype()));
-  auto shapes = this->GetShapeVector();
-  if (shapes.size() == 0) {
-    return unit_size;
-  }
-
-  auto cur_size = unit_size;
-  for (const auto val : shapes) {
-    if (val < 0) {
-      MS_LOG_EXCEPTION << "Invalid shape value " << val << " for calculating size. Abstract name: " << GetAbstractName()
-                       << ". Please contact MindSpore support.";
-    }
-    if (val == 0) {
-      MS_LOG_WARNING << "One dim of the shape is 0. Abstract name: " << GetAbstractName() << ".";
-    }
-    cur_size *= val;
-  }
-
-  return cur_size;
-}
-
-TypeId GetSeqElementsDtype(const abstract::AbstractBasePtr &abs) {
-  MS_EXCEPTION_IF_NULL(abs);
-  if (!abs->isa<abstract::AbstractSequence>()) {
-    return TypeId::kTypeUnknown;
-  }
-  TypePtr type_ptr;
-  auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
-  MS_EXCEPTION_IF_NULL(seq_abs);
-  if (seq_abs->dynamic_len()) {
-    if (seq_abs->dynamic_len_element_abs() == nullptr) {
-      return TypeId::kTypeUnknown;
-    }
-    type_ptr = seq_abs->dynamic_len_element_abs()->BuildType();
-  } else {
-    if (seq_abs->elements().empty() || seq_abs->elements()[0] == nullptr) {
-      return TypeId::kTypeUnknown;
-    }
-    type_ptr = seq_abs->elements()[0]->BuildType();
-  }
-  MS_EXCEPTION_IF_NULL(type_ptr);
-  if (type_ptr->isa<TensorType>()) {
-    auto tensor_ptr = type_ptr->cast<TensorTypePtr>();
-    MS_EXCEPTION_IF_NULL(tensor_ptr);
-    auto elem = tensor_ptr->element();
-    if (elem == nullptr) {
-      return TypeId::kTypeUnknown;
-    }
-    return elem->type_id();
-  }
-  return type_ptr->type_id();
-}
-
-TypeId KernelTensor::GetDtype() const {
-  if (meta_type_ == kObjectTypeNumber) {
-    // Scalar
-    const ScalarInfo &info = std::get<ScalarInfo>(meta_);
-    return info.base_->BuildType()->type_id();
-  } else if (meta_type_ == kObjectTypeTuple) {
-    // Tuple
-    const TupleInfo &info = std::get<TupleInfo>(meta_);
-    return GetSeqElementsDtype(info.base_);
-  } else if (meta_type_ == kObjectTypeList) {
-    // List
-    const ListInfo &info = std::get<ListInfo>(meta_);
-    return GetSeqElementsDtype(info.base_);
-  } else if (meta_type_ == kMetaTypeNone) {
-    return TypeId::kMetaTypeNone;
-  } else {
-    // Tensor
-    const TensorInfo &info = std::get<TensorInfo>(meta_);
-    if (info.base_ == nullptr) {
-      return TypeId::kTypeUnknown;
-    }
-    auto type_ptr = info.base_->BuildType();
-    if (type_ptr == nullptr || !type_ptr->isa<TensorType>()) {
-      return TypeId::kTypeUnknown;
-    }
-    auto tensor_ptr = type_ptr->cast<TensorTypePtr>();
-    auto elem = tensor_ptr->element();
-    if (elem == nullptr) {
-      return TypeId::kTypeUnknown;
-    }
-    return elem->type_id();
-  }
-  return kTypeUnknown;
-}
-
-ShapeVector GetSequenceFlattenShape(const abstract::AbstractBasePtr &abs) {
-  MS_EXCEPTION_IF_NULL(abs);
-  if (!abs->isa<abstract::AbstractSequence>()) {
-    return {};
-  }
-  auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
-  MS_EXCEPTION_IF_NULL(seq_abs);
-  if (seq_abs->dynamic_len()) {
-    return {-1};
-  }
-  if (seq_abs->elements().empty() || seq_abs->elements()[0] == nullptr) {
-    MS_LOG(INFO) << "Empty sequence abstract:" << seq_abs->ToString();
-    return {0};
-  }
-  auto type_ptr = seq_abs->elements()[0]->BuildType();
-  MS_EXCEPTION_IF_NULL(type_ptr);
-  if (!type_ptr->isa<TensorType>()) {
-    return {static_cast<int64_t>(seq_abs->elements().size())};
-  }
-  // for tuple of tensor, the tensors shape must be same
-  ShapeVector flatten_shp;
-  (void)flatten_shp.emplace_back(seq_abs->elements().size());
-  if (seq_abs->elements().empty()) {
-    return flatten_shp;
-  }
-  auto tensor_shp_ptr = seq_abs->elements()[0]->BuildShape();
-  MS_EXCEPTION_IF_NULL(tensor_shp_ptr);
-  MS_LOG(DEBUG) << "tensor shape:" << tensor_shp_ptr->ToString() << " for abstract:" << abs->ToString();
-  MS_EXCEPTION_IF_NULL(tensor_shp_ptr->cast<abstract::ShapePtr>());
-  auto shape = tensor_shp_ptr->cast<abstract::ShapePtr>()->shape();
-  (void)flatten_shp.insert(flatten_shp.end(), shape.begin(), shape.end());
-  return flatten_shp;
-}
-
 ShapeVector KernelTensor::GetMaxShape() const {
-  if (meta_type_ != kObjectTypeTensorType) {
+  MS_EXCEPTION_IF_NULL(host_info_);
+  if (host_info_->type_id_ != kObjectTypeTensorType) {
     return {};
   }
-  auto base_shape_ptr = GetBaseShape();
-  if (base_shape_ptr == nullptr || !base_shape_ptr->isa<abstract::Shape>()) {
+  if (shape_ == nullptr || !shape_->isa<abstract::Shape>()) {
     return {};
   }
 
-  return base_shape_ptr->cast<abstract::ShapePtr>()->max_shape();
-}
-
-std::vector<TypeId> KernelTensor::GetListOrTupleDtype() const {
-  const TensorInfo &info = std::get<TensorInfo>(meta_);
-  if (info.base_ == nullptr) {
-    return {TypeId::kTypeUnknown};
-  }
-
-  auto type_ptr = info.base_->BuildType();
-  if (type_ptr == nullptr || !type_ptr->isa<List>() || !type_ptr->isa<Tuple>()) {
-    return {TypeId::kTypeUnknown};
-  }
-
-  std::vector<TypeId> types;
-  if (type_ptr->isa<List>()) {
-    auto tuple_ptr = type_ptr->cast<TuplePtr>();
-    auto elements = tuple_ptr->elements();
-    (void)std::transform(elements.begin(), elements.end(), std::back_inserter(types),
-                         [](const TypePtr &t) { return t->type_id(); });
-  } else if (type_ptr->isa<Tuple>()) {
-    auto tuple_ptr = type_ptr->cast<TuplePtr>();
-    auto elements = tuple_ptr->elements();
-    (void)std::transform(elements.begin(), elements.end(), std::back_inserter(types),
-                         [](const TypePtr &t) { return t->type_id(); });
-  } else if (type_ptr->isa<List>()) {
-    auto list_ptr = type_ptr->cast<ListPtr>();
-    auto elements = list_ptr->elements();
-    (void)std::transform(elements.begin(), elements.end(), std::back_inserter(types),
-                         [](const TypePtr &t) { return t->type_id(); });
-  } else {
-    types.push_back(TypeId::kTypeUnknown);
-  }
-
-  return types;
-}
-
-ShapeArray KernelTensor::GetListOrTupleShapeVector() const {
-  auto base_shape_ptr = GetBaseShape();
-  // ListShape or TupleShape is inherited from SequenceShape.
-  if (base_shape_ptr == nullptr || !base_shape_ptr->isa<abstract::SequenceShape>()) {
-    return {};
-  }
-  auto sequence_shape_ptr = base_shape_ptr->cast<abstract::SequenceShapePtr>();
-  auto base_shape_list = sequence_shape_ptr->shape();
-  std::vector<std::vector<int64_t>> shape_vector_list;
-  for (auto base_shape : base_shape_list) {
-    if (base_shape == nullptr || !base_shape->isa<abstract::Shape>()) {
-      return {};
-    }
-    auto tmp_shape = base_shape->cast<abstract::ShapePtr>()->shape();
-    shape_vector_list.push_back(tmp_shape);
-  }
-
-  return shape_vector_list;
-}
-
-void KernelTensor::SetDtype(const TypePtr &dtype) {
-  TensorInfo &info = std::get<TensorInfo>(meta_);
-  if (info.base_ == nullptr) {
-    return;
-  }
-  info.base_->set_type(dtype);
-}
-
-abstract::BaseShapePtr KernelTensor::GetBaseShape() const {
-  if (meta_type_ != kObjectTypeTensorType) {
-    return nullptr;
-  }
-  const TensorInfo &info = std::get<TensorInfo>(meta_);
-  if (info.base_ == nullptr) {
-    return nullptr;
-  }
-  return info.base_->BuildShape();
-}
-
-void KernelTensor::SetBaseShape(const abstract::BaseShapePtr &base_shape) {
-  TensorInfo &info = std::get<TensorInfo>(meta_);
-  if (info.base_ == nullptr) {
-    return;
-  }
-  info.base_->set_shape(base_shape);
+  return shape_->cast<abstract::ShapePtr>()->max_shape();
 }
 
 int KernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
@@ -794,7 +598,7 @@ int KernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vect
     auto &output = outputs[idx];
     size_t tensor_size = 0;
     MS_EXCEPTION_IF_NULL(output);
-    size_t type_size = GetTypeByte(TypeIdToType(output->dtype_id()));
+    size_t type_size = UnitSizeInBytes(output->dtype_id());
     if (type_size == 0) {
       MS_LOG(WARNING) << "The type size is 0, type: " << TypeIdToType(output->dtype_id())->ToString();
     }
@@ -825,16 +629,6 @@ int KernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vect
   return static_cast<int>(ret);
 }
 
-// ===========================Old interface===========================
-std::vector<std::vector<int64_t>> GetShapes(const std::vector<KernelTensorPtr> &tensors) {
-  std::vector<std::vector<int64_t>> shapes(tensors.size());
-  for (size_t idx = 0; idx < shapes.size(); idx++) {
-    shapes[idx] = tensors[idx]->GetShapeVector();
-  }
-  return shapes;
-}
-
-// ===========================New interface===========================
 std::vector<std::vector<int64_t>> GetShapes(const std::vector<KernelTensor *> &tensors) {
   std::vector<std::vector<int64_t>> shapes(tensors.size());
   for (size_t idx = 0; idx < shapes.size(); idx++) {

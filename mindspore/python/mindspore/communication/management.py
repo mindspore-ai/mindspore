@@ -110,6 +110,8 @@ def init(backend_name=None):
         - The full name of ``"hccl"`` is Huawei Collective Communication Library(HCCL).
         - The full name of ``"nccl"`` is NVIDIA Collective Communication Library(NCCL).
         - The full name of ``"mccl"`` is MindSpore Collective Communication Library(MCCL).
+        - In Ascend hardware platforms, ``init()`` should be set before the definition of any Tensor and Parameter,
+          and the instantiation and execution of any operation and net.
 
     Args:
         backend_name (str): Backend, using ``"hccl"`` / ``"nccl"`` / ``"mccl"``.
@@ -161,10 +163,12 @@ def init(backend_name=None):
     if not isinstance(backend_name, str):
         raise TypeError("For 'init', the argument 'backend_name' must be a string, "
                         "but got the type : {}".format(type(backend_name)))
+    if os.getenv("MS_ROLE") == "MS_SCHED":
+        backend_name = "mccl"
 
     if backend_name == "hccl":
         if _is_ps_mode():
-            # Use MindSpore cluster to build network for Parameter Server traning.
+            # Use MindSpore cluster to build network for Parameter Server training.
             init_cluster()
             if _is_role_sched() or _is_role_pserver():
                 raise RuntimeError("Parameter server and scheduler should use 'CPU' as backend instead of 'Ascend'")
@@ -305,7 +309,7 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
         RuntimeError: If HCCL is not available or MindSpore is GPU/CPU version.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         .. note::
@@ -410,7 +414,7 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
         RuntimeError: If HCCL is not available or MindSpore is GPU/CPU version.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         .. note::
@@ -465,7 +469,7 @@ def get_world_rank_from_group_rank(group, group_rank_id):
         RuntimeError: If HCCL is not available or MindSpore is GPU/CPU version.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         .. note::
@@ -524,7 +528,7 @@ def get_group_rank_from_world_rank(world_rank_id, group):
         RuntimeError: If HCCL is not available or MindSpore is GPU/CPU version.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         .. note::
@@ -580,7 +584,7 @@ def create_group(group, rank_ids):
         RuntimeError: If HCCL is not available or MindSpore is GPU/CPU version.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         .. note::
@@ -633,7 +637,7 @@ def destroy_group(group):
         RuntimeError: If HCCL is not available or MindSpore is GPU/CPU version.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         .. note::

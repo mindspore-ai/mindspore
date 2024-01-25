@@ -28,19 +28,17 @@
 #include <utility>
 
 #include "error_util.h"
-#include "framework/omg/omg_inner_types.h"
 #include "graph/operator.h"
 #include "graph/operator_reg.h"
 #include "transfer_shape_according_to_format.h"
-#include "graph/utils/op_desc_utils.h"
 #include "graph/utils/tensor_utils.h"
 #include "graph/utils/node_utils.h"
 #include "graph/tensor.h"
 #include "graph/node.h"
-#include "graph/ge_tensor.h"
-#include "graph/axis_type_info.h"
 
 #include "op_log.h"
+
+const std::string ATTR_NAME_OP_INFER_DEPENDS = "_op_infer_depends";
 
 #define CHECK_KEY_IN_MAP(map, key, name, re_expr)                \
   if ((map).find(key) == (map).end()) {                          \
@@ -61,16 +59,20 @@
     }                             \
   } while (0)
 
-#define DYNAMIC_SHAPE_NOT_SUPPORTED(op)                                        \
-  do {                                                                         \
-    auto static_op_desc = OpDescUtils::GetOpDescFromOperator(op);              \
-    for (size_t i = 0; i < static_op_desc->GetAllInputsSize(); ++i) {          \
-      auto input_i_desc = static_op_desc->MutableInputDesc(i);                 \
-      const GeShape &input_i_shape = input_i_desc->MutableShape();             \
-      if (input_i_shape.IsUnknownShape() || input_i_shape.IsUnknownDimNum()) { \
-        OP_LOGW(TbeGetName(op), OtherErrMsg("Not Support dynamic shape now")); \
-      }                                                                        \
-    }                                                                          \
+#define DYNAMIC_SHAPE_NOT_SUPPORTED(op)                                                      \
+  do {                                                                                       \
+    for (size_t i = 0; i < op.GetInputsSize(); ++i) {                                        \
+      auto input_i_desc = op.GetInputDesc(i);                                                \
+      const auto &input_i_shape = input_i_desc.GetShape();                                   \
+      const auto &dims = input_i_shape.GetDims();                                            \
+      auto is_unknown_shape = std::any_of(dims.begin(), dims.end(), [](const int64_t &dim) { \
+        return (dim == UNKNOWN_DIM) || (dim == UNKNOWN_DIM_NUM);                             \
+      });                                                                                    \
+      auto is_unknown_dim_num = (dims.size() == 1UL) && (dims[0UL] == UNKNOWN_DIM_NUM);      \
+      if (is_unknown_shape || is_unknown_dim_num) {                                          \
+        OP_LOGW(TbeGetName(op), OtherErrMsg("Not Support dynamic shape now"));               \
+      }                                                                                      \
+    }                                                                                        \
   } while (0)
 
 namespace ge {
@@ -116,6 +118,8 @@ const size_t DIM_INDEX5 = 5;
 const size_t DIM_INDEX6 = 6;
 const size_t DIM_INDEX7 = 7;
 const size_t DIM_INDEX8 = 8;
+
+ge::graphStatus UpdateOutputDesc(Operator &op, TensorDesc &output_desc);
 
 /*
  * get the datatype of input
@@ -246,16 +250,10 @@ bool GetConstValue(const Operator &op, const Tensor &const_tensor, const DataTyp
                    std::vector<int64_t> &const_data);
 bool GetConstValue(const Operator &op, const Tensor &const_tensor, const DataType &dtype,
                    std::vector<uint64_t> &const_data);
-bool GetConstValue(const Operator &op, const GeTensorPtr &const_tensor, const DataType &dtype,
-                   std::vector<int64_t> &const_data);
-bool GetConstValue(const Operator &op, const GeTensor *const_tensor, const DataType &dtype,
-                   std::vector<int64_t> &const_data);
 bool GetScalerValue(const Operator &op, const Tensor &const_tensor, const DataType &dtype, std::int64_t &const_data);
 bool InferShapeAndTypeTwoInOneOutBroadcast(Operator &op, const string &input_name1, const string &input_name2,
                                            const string &output_name);
 
-std::vector<int64_t> GetNewAxis4NewFormat(std::size_t ori_shape_len, int64_t axis, const std::string &ori_format,
-                                          const std::string &new_format, bool reduce_mode = false);
 std::string ToFormatString(ge::Format format);
 
 /*
@@ -370,21 +368,19 @@ class DynamicShapeInfer {
   std::map<std::string, uint32_t> inputs;
   std::map<std::string, uint32_t> outputs;
   Operator &op;
-  OpDescPtr &op_desc;
 
-  DynamicShapeInfer(Operator &op_v, OpDescPtr &opDesc_v) : op(op_v), op_desc(opDesc_v) {}
+  explicit DynamicShapeInfer(Operator &op_v) : op(op_v) {}
   bool CatchFormatAndShape();
   bool UpdateFormatAndShape();
 
   ~DynamicShapeInfer() { UpdateFormatAndShape(); }
 };
 
-#define PREPARE_DYNAMIC_SHAPE(depends_names)               \
-  do {                                                     \
-    auto op_desc = OpDescUtils::GetOpDescFromOperator(op); \
-    if (!depends_names.empty()) {                          \
-      op_desc->SetOpInferDepends((depends_names));         \
-    }                                                      \
+#define PREPARE_DYNAMIC_SHAPE(depend_names)          \
+  do {                                               \
+    if (!depend_names.empty()) {                     \
+      op.SetAttr("_op_infer_depends", depend_names); \
+    }                                                \
   } while (0)
 
 bool IsEmptyTensor(const std::vector<int64_t> &dims);
@@ -393,12 +389,21 @@ bool IsUnknownRank(const Operator &op, const std::string &tensor_name, const std
 
 bool IsUnknownRankShape(const std::vector<int64_t> &shape_vec);
 
+bool IsUnknownShape(const ge::Shape &shape);
+bool IsUnknownDimNum(const ge::Shape &shape);
+
+bool IsScalar(const ge::Shape &shape);
+
+void SetOpInferDepends(Operator &op, const std::vector<std::string> &depend_names);
+
+void SetIsUnknownDimNum(ge::Shape &shape);
+
 /*
  * @brief: check where the shape is unknown rank
  * @param [in] input_shape: GeShape
  * @return bool: true when shape is [-2] else false
  */
-bool IsUnknownRankShape(const GeShape &input_shape);
+bool IsUnknownRankShape(const Shape &input_shape);
 
 bool IsUnKnownShape(const std::vector<int64_t> &shape_vec);
 
@@ -407,11 +412,11 @@ bool IsUnknownVec(std::vector<int64_t> &shape_vec);
 bool IsUnknown(const std::vector<int64_t> &shape_vec);
 
 void MakeUpShapeRange(const std::vector<int64_t> &shape, std::vector<std::pair<int64_t, int64_t>> &range);
-void MakeUpShapeRange(const ge::GeShape &shape, std::vector<std::pair<int64_t, int64_t>> &range);
+void MakeUpShapeRange(const ge::Shape &shape, std::vector<std::pair<int64_t, int64_t>> &range);
 
 std::string DataTypeToStringDesc(const ge::DataType &dataType);
 
-bool OneInOneOutDynamicInfer(const Operator &op, const std::string &input_name,
+bool OneInOneOutDynamicInfer(Operator &op, const std::string &input_name,
                              const std::vector<std::string> &output_name_list);
 
 /*
@@ -431,169 +436,32 @@ void FixShapeRangeWithDims(const std::vector<int64_t> &dims, std::vector<int64_t
                            std::vector<int64_t> &shape_2, std::vector<std::pair<int64_t, int64_t>> &range_1,
                            std::vector<std::pair<int64_t, int64_t>> &range_2);
 
-bool SetScalarOutputDesc(const string &input, const string &output, OpDescPtr op_desc, GeShape &output_shape);
+bool IsEmptyTensor(TensorDesc tensor_desc);
 
-bool IsEmptyTensor(GeTensorDescPtr tensor_desc);
-
-bool IsEmptyTensor(const GeShape &ge_shape);
-
-std::string RangeToString(const std::vector<std::pair<int64_t, int64_t>> &ranges);
-
-/**
- * @brief: Sort and unique AxisTypeInfo, then serial to string
- * @param axis_type_info: Result of infer axis type for operator
- * @return string: the serial string of AxisTypeInfos
- * Result template such as:
- * string expect_info = "[{"                     \
- *       "type: 0,"                              \
- *       "relate_inputs: [{0, {0}}, {1, {0}}],"  \
- *       "relate_outputs: [{0, {0}}]"            \
- *   "}, {"                                      \
- *       "type: 0,"                              \
- *       "relate_inputs: [{0, {1}}, {1, {1}}],"  \
- *       "relate_outputs: [{0, {1}}]"            \
- *   "}]".DeleteWhitespace();
- */
-std::string AxisTypeInfoToString(const std::vector<ge::AxisTypeInfo> &axis_type_info);
-
-/**
- * @brief: Get all valid inputs desc with indices, contains: INPUT, OPTIONAL_INPUT, DYNAMIC_INPUT.
- * @param [in] op: ge operator
- * @param [out] inputs: the map of index and inputs desc
- * @return graphStatus: the status whether executed successfully
- */
-ge::graphStatus GetAllValidInputsWithIndices(const Operator &op, map<uint32_t, ConstGeTensorDescPtr> &inputs);
-
-/**
- * @brief: Get all valid outputs desc with indices, contains: OUTPUT, DYNAMIC_OUTPUT.
- * @param [in] op: ge operator
- * @param [out] outputs: the map of index and outputs desc
- * @return graphStatus: the status whether executed successfully
- */
-ge::graphStatus GetAllValidOutputsWithIndices(const Operator &op, map<uint32_t, ConstGeTensorDescPtr> &outputs);
-
-/**
- * @brief: Get all input/output shapes with indices
- * @param [in] op: ge operator
- * @param [out] input_shapes: the map of index and input shapes
- * @param [out] output_shapes: the map of index and output shapes
- * @param [out] is_unknown_dim_num: the flag whether some of input/output shape are unknown rank
- * @param [out] dim_num: the max dimension num of input/output shape
- * @return graphStatus: the status whether executed successfully
- */
-ge::graphStatus GetShapesForInferAxisType(const Operator &op, map<uint32_t, vector<int64_t>> &input_shapes,
-                                          map<uint32_t, vector<int64_t>> &output_shapes, bool &is_unknown_dim_num,
-                                          size_t &dim_num);
-
-class AxisTypeInfoBuilder {
- public:
-  AxisTypeInfoBuilder() = default;
-
-  AxisTypeInfoBuilder &AxisType(const AxisType axis_type) {
-    axis_type_info_.SetAxisType(axis_type);
-    return *this;
-  }
-
-  AxisTypeInfoBuilder &AxisTypes(std::vector<ge::AxisType> axis_types) {
-    axis_type_info_.SetAxisTypes(axis_types);
-    return *this;
-  }
-
-  AxisTypeInfoBuilder &AddInputCutInfo(std::pair<int64_t, std::vector<int64_t>> cut_info) {
-    axis_type_info_.AddInputCutInfo(cut_info);
-    return *this;
-  }
-
-  AxisTypeInfoBuilder &AddOutputCutInfo(std::pair<int64_t, std::vector<int64_t>> cut_info) {
-    axis_type_info_.AddOutputCutInfo(cut_info);
-    return *this;
-  }
-
-  AxisTypeInfoBuilder &AddInputValueCutInfo(std::pair<int64_t, std::vector<int64_t>> cut_info) {
-    axis_type_info_.AddInputValueCutInfo(cut_info);
-    return *this;
-  }
-
-  AxisTypeInfoBuilder &AddOutputValueCutInfo(std::pair<int64_t, std::vector<int64_t>> cut_info) {
-    axis_type_info_.AddOutputValueCutInfo(cut_info);
-    return *this;
-  }
-
-  bool IsRelateInputsEmpty() { return axis_type_info_.GetRelateInputs().empty(); }
-
-  bool IsRelateOutputsEmpty() { return axis_type_info_.GetRelateOutputs().empty(); }
-
-  AxisTypeInfo Build() { return axis_type_info_; }
-
- private:
-  AxisTypeInfo axis_type_info_;
-};
-
-/*
- * @brief: infer axis type for elemwise op register
- * @param [in] op: ge operator. The parameter name should be same to declaration in macro define
- * @param [out] axis_type: result of axis type info. The parameter name should be same to declaration in macro define
- * @return graphStatus: the status whether success to infer axis type
- */
-ge::graphStatus InferAxisType4ElementwiseOp(const Operator &op, vector<AxisTypeInfo> &axis_type);
-
-/*
- * @brief: infer axis type for elemwiseBroadcast op register
- * @param [in] op: ge operator. The parameter name should be same to declaration in macro define
- * @param [out] axis_type: result of axis type info. The parameter name should be same to declaration in macro define
- * @return graphStatus: the status whether success to infer axis type
- */
-ge::graphStatus InferAxisType4BroadcastOp(const Operator &op, vector<AxisTypeInfo> &axis_type);
-/*
- * @brief: infer elementwise axis type helper
- * @param [in] op: ge operator. The parameter name should be same to declaration in macro define
- * @param [out] axis_type: result of axis type info. The parameter name should be same to declaration in macro define
- * @param [in] allowed_split_inputs: a list of input indices to allow for axis split.
- * @param [in] allowed_split_outputs: a list of output indices to allow for axis split.
- * @param [in] excepted_axes: a list of axis indices to except for inputs/outputs axis split.
- * @return graphStatus: the status whether success to infer axis type
- */
-ge::graphStatus InferElementwiseAxisTypeHelper(const Operator &op, vector<AxisTypeInfo> &axis_type,
-                                               const vector<int64_t> &allowed_split_inputs,
-                                               const vector<int64_t> &allowed_split_outputs,
-                                               vector<int64_t> &excepted_axes);
-
-/*
- * @brief: infer axis type for reduce op register
- * @param [in] op: ge operator. The parameter name should be same to declaration in macro define
- * @param [in] reduce_type: reduce op of axis type info
- * @param [in] axis: the dimensions to reduce
- * @param [in] keep_dims: if true, retains reduced dimensions with length 1
- * @param [out] axis_type: result of axis type info. The parameter name should be same to declaration in macro define
- * @return graphStatus: the status whether success to infer axis type
- */
-ge::graphStatus InferAxisType4ReduceOpHelper(const Operator &op, const AxisType &reduce_type,
-                                             const std::vector<int64_t> &axis, const bool &keep_dims,
-                                             std::vector<ge::AxisTypeInfo> &axis_type);
+bool IsEmptyTensor(const Shape &ge_shape);
 
 namespace array_ops {
 bool CheckInt64MulOverflow(int64_t a, int64_t b);
 int64_t CalcMaxElementsCount(const Operator &op, const std::vector<std::pair<int64_t, int64_t>> &x_shape_range,
-                             const GeShape &x_shape);
+                             const Shape &x_shape);
 void GenerateWorstYShapeAndYShapeRange(int64_t y_rank, int64_t max_elements_count,
-                                       std::vector<std::pair<int64_t, int64_t>> &y_shape_range, GeShape &y_shape);
+                                       std::vector<std::pair<int64_t, int64_t>> &y_shape_range, Shape &y_shape);
 bool RepairAndCheckRange(const std::vector<std::pair<int64_t, int64_t>> &x_shape_range,
                          std::vector<std::pair<int64_t, int64_t>> &value_range);
 void InferShapeRangeForEmptyTensor(int64_t y_rank, int64_t max_elements_count,
                                    const std::vector<std::pair<int64_t, int64_t>> &value_range,
-                                   std::vector<std::pair<int64_t, int64_t>> &y_shape_range, GeShape &y_shape);
-void UpdateDimsAndShapeRange(const Operator &op, int64_t max_elements_count,
+                                   std::vector<std::pair<int64_t, int64_t>> &y_shape_range, Shape &y_shape);
+void UpdateDimsAndShapeRange(Operator &op, int64_t max_elements_count,
                              const std::vector<std::pair<int64_t, int64_t>> &value_range, std::vector<int64_t> &y_dims,
                              std::vector<std::pair<int64_t, int64_t>> &y_shape_range);
 
 void ReshapeRangeInferAllDims(const Operator &op, const std::vector<std::pair<int64_t, int64_t>> &x_shape_range,
-                              const GeShape &x_shape, const std::vector<std::pair<int64_t, int64_t>> &shape_value_range,
-                              int64_t y_rank, std::vector<std::pair<int64_t, int64_t>> &y_shape_range,
-                              GeShape &y_shape);
+                              const Shape &x_shape, const std::vector<std::pair<int64_t, int64_t>> &shape_value_range,
+                              int64_t y_rank, std::vector<std::pair<int64_t, int64_t>> &y_shape_range, Shape &y_shape);
 
 void ReshapeRangeInfer(const Operator &op, const std::vector<std::pair<int64_t, int64_t>> &x_range,
-                       std::vector<std::pair<int64_t, int64_t>> &y_range, GeShape &output_shape);
-void FixRangeMaxToInt32max(GeShape &shape, std::vector<std::pair<int64_t, int64_t>> &shape_range);
+                       std::vector<std::pair<int64_t, int64_t>> &y_range, Shape &output_shape);
+void FixRangeMaxToInt32max(Shape &shape, std::vector<std::pair<int64_t, int64_t>> &shape_range);
 }  // namespace array_ops
 }  // namespace ge
 

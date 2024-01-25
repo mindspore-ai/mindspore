@@ -23,6 +23,7 @@
 #include "runtime/graph_scheduler/actor/debug_actor.h"
 #include "runtime/graph_scheduler/actor/recorder_actor.h"
 #include "runtime/graph_scheduler/optimizer/optimizer.h"
+#include "runtime/graph_scheduler/optimizer/kernel_infer_resize_actor_insert.h"
 #include "runtime/graph_scheduler/optimizer/memory_actor_insert.h"
 #include "runtime/graph_scheduler/optimizer/invalid_data_arrow_elimination.h"
 #include "runtime/graph_scheduler/optimizer/batch_data_arrow_fusion.h"
@@ -806,6 +807,7 @@ ActorSetPtr GraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info) 
   MS_EXCEPTION_IF_NULL(rpc_node_scheduler_);
   actor_set->rpc_actors_ = rpc_node_scheduler_->Build(actor_set.get());
 #endif
+  actor_set->InitCallbackCounter();
   return actor_set;
 }
 
@@ -994,6 +996,10 @@ void GraphScheduler::Optimize(const ActorSetPtr &actor_set) const {
 
   auto optimizer = std::make_shared<ActorSetOptimizer>();
   MS_EXCEPTION_IF_NULL(optimizer);
+
+  if (EnableAsyncInfer()) {
+    optimizer->AddPass(std::make_shared<KernelInferResizeActorInsert>());
+  }
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -1410,7 +1416,8 @@ void GetAllUInputByCNode(const CNodePtr &cnode,
     return;
   }
   (*cnode_to_monad_inputs)[cnode] = {};
-  for (const auto &input : cnode->inputs()) {
+  for (auto &weak_input : cnode->weak_inputs()) {
+    auto input = weak_input.lock();
     MS_EXCEPTION_IF_NULL(input);
     if (!input->isa<CNode>()) {
       continue;
@@ -1441,12 +1448,12 @@ void GetAllCNodeUInputByGraph(const KernelGraphPtr &graph,
 bool IsNeedLinkForFirstInput(const CNodePtr &cnode,
                              const mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> &cnode_to_monad_inputs) {
   MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->inputs().size() <= kUpdateStateStateInput) {
+  if (cnode->size() <= kUpdateStateStateInput) {
     MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid update state node:" << cnode->DebugString();
   }
   const auto &u_input = cnode->input(kUpdateStateStateInput);
   MS_EXCEPTION_IF_NULL(u_input);
-  for (size_t i = kUpdateStateRealInput; i < cnode->inputs().size(); ++i) {
+  for (size_t i = kUpdateStateRealInput; i < cnode->size(); ++i) {
     MS_EXCEPTION_IF_NULL(cnode->input(i));
     const auto &iter = cnode_to_monad_inputs.find(cnode->input(i));
     if (iter != cnode_to_monad_inputs.end() && iter->second.find(u_input) != iter->second.end()) {
@@ -1848,12 +1855,12 @@ std::vector<AnfNodePtr> FetchRealDependInput(
     real_depend_inputs.push_back(cnode->input(kDependAttachNodeIndex));
   } else if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimUpdateState)) {
     MS_EXCEPTION_IF_NULL(cnode);
-    if (IsNeedLinkForFirstInput(cnode, cnode_to_monad_inputs) && cnode->inputs().size() > kUpdateStateStateInput) {
+    if (IsNeedLinkForFirstInput(cnode, cnode_to_monad_inputs) && cnode->size() > kUpdateStateStateInput) {
       // If all other inputs of the update state do not depend on the first input, we need to link control arrow
       // for the first input.
       real_depend_inputs.push_back(cnode->input(kUpdateStateStateInput));
     }
-    for (size_t i = kUpdateStateRealInput; i < cnode->inputs().size(); ++i) {
+    for (size_t i = kUpdateStateRealInput; i < cnode->size(); ++i) {
       MS_EXCEPTION_IF_NULL(cnode);
       real_depend_inputs.push_back(cnode->input(i));
     }
@@ -1894,7 +1901,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(
   // Make tuple node needs to be expanded.
   if (common::AnfAlgo::CheckPrimitiveType(input_anfnode, prim::kPrimMakeTuple)) {
     MS_EXCEPTION_IF_NULL(input_cnode);
-    for (size_t i = 1; i < input_cnode->inputs().size(); ++i) {
+    for (size_t i = 1; i < input_cnode->size(); ++i) {
       LinkControlArrowByAutoMonad(to_actor, input_cnode->input(i), graph, parser, cnode_to_monad_inputs, checked_nodes);
     }
     return;
@@ -2635,6 +2642,7 @@ void GraphScheduler::PersistDeviceTensorForValueNode(const AnfNodePtr &value_nod
       {value_node, 0}, nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
       device_tensor->host_shape(), device_context->device_context_key().device_name_,
       device_context->device_context_key().device_id_);
+    kernel_tensor->set_stream_id(device_tensor->stream_id());
     auto other_type_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     MS_EXCEPTION_IF_NULL(other_type_device_tensor);
     other_type_device_tensor->SetNodeIndex(value_node, 0);
@@ -2683,6 +2691,7 @@ void GraphScheduler::PersistDeviceTensorForParameter(const AnfNodePtr &parameter
       {parameter, 0}, nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
       device_tensor->host_shape(), device_context->device_context_key().device_name_,
       device_context->device_context_key().device_id_);
+    kernel_tensor->set_stream_id(device_tensor->stream_id());
     auto other_type_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     if (front_node->isa<ValueNode>()) {
       const auto &value_node = front_node->cast<ValueNodePtr>();
@@ -2743,6 +2752,7 @@ void GraphScheduler::PersistDeviceTensorForRootGraphControlNode(const GraphCompi
       sub_device_tensor->type_id(), sub_device_tensor->host_shape(), device_context->device_context_key().device_name_,
       device_context->device_context_key().device_id_);
     MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+    kernel_tensor->set_stream_id(AnfAlgo::GetStreamId(backend_node));
     auto new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     MS_EXCEPTION_IF_NULL(new_device_tensor);
     new_device_tensor->SetNodeIndex(backend_node, index);
@@ -2811,7 +2821,8 @@ void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compil
       for (const auto &device_tensor : device_tensors) {
         MS_EXCEPTION_IF_NULL(device_tensor);
         ofs << "\t\t\tdevice tensor value:" << device_tensor << "\tptr:" << device_tensor->GetPtr()
-            << "\tsize:" << device_tensor->GetSize() << "\toriginal_ref_count:" << device_tensor->original_ref_count()
+            << "\tsize:" << device_tensor->GetSize() << "\tstream id:" << device_tensor->stream_id()
+            << "\toriginal_ref_count:" << device_tensor->original_ref_count()
             << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count() << "\tflag:" << device_tensor->flag()
             << "\tdevice_type:" << device_tensor->GetDeviceType()
             << "\tis_ptr_persisted:" << device_tensor->is_ptr_persisted() << "\n ";

@@ -243,7 +243,7 @@ void StackFrame::Back(const AnalysisEnginePtr &engine, const StackFramePtr &last
       func_graph()->set_has_side_effect_node(true);
     } else {
       // Check inputs side-effect.
-      for (std::size_t i = 1; i < cnode->inputs().size(); ++i) {
+      for (std::size_t i = 1; i < cnode->size(); ++i) {
         auto input_cnode = dyn_cast_ptr<CNode>(cnode->input(i));
         if (input_cnode != nullptr && input_cnode->has_side_effect_node()) {
           MS_LOG(DEBUG) << "Found side-effect, cnode: " << cnode->DebugString()

@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def oneslike_forward_func(x):
-    return ops.auto_generate.ones_like_(x)
+    return ops.OnesLike()(x)
 
 
 @test_utils.run_with_cell

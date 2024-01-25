@@ -22,8 +22,10 @@
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_device_synchronizer.h"
+#include "plugin/device/ascend/hal/device/ascend_event.h"
 #include "plugin/device/cpu/hal/device/cpu_device_synchronizer.h"
 #include "include/transform/graph_ir/utils.h"
+#include "graph/def_types.h"
 
 namespace mindspore {
 namespace device {
@@ -85,7 +87,8 @@ bool GeDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   }
   auto size =
     address->type_id() == kObjectTypeString ? address->GetSize() + sizeof(ge::StringHead) : address->GetSize();
-  void *device_ptr = mem_manager_->MallocMemFromMemPool(size, address->from_persistent_mem(), address->need_recycle());
+  void *device_ptr = mem_manager_->MallocMemFromMemPool(size, address->from_persistent_mem(), address->need_recycle(),
+                                                        address->stream_id());
   if (!device_ptr) {
     return false;
   }
@@ -95,9 +98,14 @@ bool GeDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   return true;
 }
 
-void *GeDeviceResManager::AllocateMemory(size_t size) const {
+void *GeDeviceResManager::AllocateMemory(size_t size, uint32_t stream_id) const {
+  MS_EXCEPTION_IF_NULL(runtime_instance_);
+  runtime_instance_->SetContext();
   MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->MallocMemFromMemPool(size, false);
+  if (swap_manager_ != nullptr) {
+    return swap_manager_->AllocDeviceMemory(size);
+  }
+  return mem_manager_->MallocMemFromMemPool(size, false, false, stream_id);
 }
 
 size_t GeDeviceResManager::GetMaxUsedMemorySize() const {
@@ -125,12 +133,23 @@ void GeDeviceResManager::SwapOut(const void *device_ptr, void *host_ptr, size_t 
 }
 
 std::vector<void *> GeDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
-  return mem_manager_->MallocContinuousMemFromMemPool(size_list);
+  MS_EXCEPTION_IF_NULL(runtime_instance_);
+  runtime_instance_->SetContext();
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  std::vector<size_t> aligned_size_list;
+  for (auto size : size_list) {
+    auto align_size = device::MemoryManager::GetCommonAlignSize(size);
+    aligned_size_list.emplace_back(align_size);
+  }
+  if (swap_manager_ != nullptr) {
+    return swap_manager_->AllocDeviceContinuousMem(aligned_size_list);
+  }
+  return mem_manager_->MallocContinuousMemFromMemPool(aligned_size_list);
 }
 
 DeviceAddressPtr GeDeviceResManager::CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
   MS_EXCEPTION_IF_NULL(kernel_tensor);
-  if (common::IsEnableRefMode()) {
+  if (IsEnableRefMode()) {
     if (kernel_tensor->device_name().empty()) {
       kernel_tensor->set_device_name(device_context_->device_context_key().device_name_);
       kernel_tensor->set_device_id(device_context_->device_context_key().device_id_);
@@ -177,16 +196,14 @@ void GeDeviceResManager::CreateSessionAndGraphRunner() {
     transform::SessionOptions options;
     options["ge.enablePrintOpPass"] = "0";
     GeSetContextOptions(ms_context, &options);
-    options["ge.featureBaseRefreshable"] = "0";
-    if (common::GetEnv("MS_FEA_REFRESHABLE") == "1") {
-      options["ge.featureBaseRefreshable"] = "1";
-    }
     options["ge.constLifecycle"] = "graph";
 
     options["ge.exec.formatMode"] = "0";
-    if (common::GetEnv("MS_ENABLE_FORMAT_MODE") == "1") {
+    if (common::GetEnv("MS_FORMAT_MODE") == "1") {
       options["ge.exec.formatMode"] = "1";
     }
+
+    SetPassthroughGeOptions(false, &options);
 
     sess = transform::NewSession(options);
     transform::SetGeSession(sess);
@@ -227,12 +244,54 @@ bool GeDeviceResManager::CreateStream(size_t *stream_id) const {
   return true;
 }
 
+bool GeDeviceResManager::CreateStreamWithPriority(size_t *stream_id, int32_t priority) const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return false;
+  }
+  AscendStreamMng::GetInstance().CreateStreamWithFlags(stream_id, ACL_STREAM_FAST_LAUNCH | ACL_STREAM_FAST_SYNC,
+                                                       IntToUint(priority));
+  return true;
+}
+
+bool GeDeviceResManager::single_op_multi_stream_enable() const {
+  return AscendStreamMng::GetInstance().single_op_multi_stream_enable();
+}
+
+void GeDeviceResManager::set_single_op_multi_stream_enable(bool single_op_multi_stream_enable) {
+  return AscendStreamMng::GetInstance().set_single_op_multi_stream_enable(single_op_multi_stream_enable);
+}
+
 void *GeDeviceResManager::GetStream(size_t stream_id) const {
   if (!BindDeviceToCurrentThread(false)) {
     MS_LOG(ERROR) << "Bind context to current thread failed";
     return nullptr;
   }
   return AscendStreamMng::GetInstance().GetStream(stream_id);
+}
+
+void GeDeviceResManager::SetCurrentStreamId(size_t stream_id) {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return;
+  }
+  AscendStreamMng::GetInstance().set_current_stream(stream_id);
+}
+
+size_t GeDeviceResManager::GetCurrentStreamId() const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return SIZE_MAX;
+  }
+  return AscendStreamMng::GetInstance().current_stream();
+}
+
+bool GeDeviceResManager::QueryStream(size_t stream_id) const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return false;
+  }
+  return AscendStreamMng::GetInstance().QueryStream(stream_id);
 }
 
 bool GeDeviceResManager::SyncStream(size_t stream_id) const {
@@ -249,6 +308,29 @@ bool GeDeviceResManager::SyncAllStreams() const {
   }
   runtime_instance_->SetContext();
   return AscendStreamMng::GetInstance().SyncAllStreams();
+}
+
+bool GeDeviceResManager::SyncNotDefaultStreams() const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return false;
+  }
+  return AscendStreamMng::GetInstance().SyncNotDefaultStreams();
+}
+
+size_t GeDeviceResManager::DefaultStream() const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return SIZE_MAX;
+  }
+  return AscendStreamMng::GetInstance().default_stream_id();
+}
+
+DeviceEventPtr GeDeviceResManager::CreateEventWithFlag(bool enable_timing, bool blocking) const {
+  auto flag = enable_timing ? ACL_EVENT_TIME_LINE : ACL_EVENT_DEFAULT;
+  auto event = std::make_shared<AscendEvent>(flag);
+  MS_EXCEPTION_IF_NULL(event);
+  return event;
 }
 }  // namespace ascend
 }  // namespace device

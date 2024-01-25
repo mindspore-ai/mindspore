@@ -64,7 +64,6 @@
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/debug/dump_proto.h"
 #include "pipeline/jit/ps/fallback.h"
-#include "pipeline/jit/ps/debug/anf_ir_utils.h"
 #include "pipeline/jit/ps/debug/trace.h"
 #include "pipeline/jit/ps/event_message_print.h"
 #include "include/common/debug/draw.h"
@@ -953,6 +952,7 @@ void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   (void)profiler::CollectHostInfo(kCompiler, kPipelineClean, kPipelineClean, 0, 0, 1);
   ProcessStatus::GetInstance().RecordEnd();
   expander::ClearCompileAllCache();
+  CompileCacheContext::GetInstance().Clear();
   MS_LOG(INFO) << "Clean compile resource end";
 }
 
@@ -1752,7 +1752,7 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   p_init->set_attr("output_names", MakeValue(empty_str_list));
 
   FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
-  auto app_init = std::make_shared<CNode>(AnfNodePtrList{NewValueNode(p_init)}, func_graph);
+  auto app_init = std::make_shared<CNode>(AnfNodeWeakPtrList({NewValueNode(p_init)}), func_graph);
   func_graph->set_output(app_init);
   auto manager = MakeManager();
   manager->AddFuncGraph(func_graph);

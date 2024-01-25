@@ -115,7 +115,7 @@ def _get_dtype_max(dtype):
     """get max of the dtype"""
     np_type = mstype.dtype_to_nptype(dtype)
     if issubclass(np_type, numbers.Integral):
-        dtype_max = np.float64(np.iinfo(np_type).max)
+        dtype_max = np.float64(np.iinfo(np_type).max).item()
     else:
         dtype_max = 1.0
     return dtype_max
@@ -283,8 +283,7 @@ class SSIM(Cell):
         _check_input_filter_size(F.shape(img1), "img1", self.filter_size, self.cls_name)
         inner.SameTypeShape()(img1, img2)
         dtype_max_val = _get_dtype_max(F.dtype(img1))
-        max_val = F.scalar_cast(self.max_val, F.dtype(img1))
-        max_val = _convert_img_dtype_to_float32(max_val, dtype_max_val)
+        max_val = _convert_img_dtype_to_float32(self.max_val, dtype_max_val)
         img1 = _convert_img_dtype_to_float32(img1, dtype_max_val)
         img2 = _convert_img_dtype_to_float32(img2, dtype_max_val)
 
@@ -391,8 +390,7 @@ class MSSSIM(Cell):
         _check_input_dtype(F.dtype(img1), 'img1', valid_type, self.cls_name)
         inner.SameTypeShape()(img1, img2)
         dtype_max_val = _get_dtype_max(F.dtype(img1))
-        max_val = F.scalar_cast(self.max_val, F.dtype(img1))
-        max_val = _convert_img_dtype_to_float32(max_val, dtype_max_val)
+        max_val = _convert_img_dtype_to_float32(self.max_val, dtype_max_val)
         img1 = _convert_img_dtype_to_float32(img1, dtype_max_val)
         img2 = _convert_img_dtype_to_float32(img2, dtype_max_val)
 
@@ -469,8 +467,7 @@ class PSNR(Cell):
         _check_input_4d(F.shape(img2), "img2", self.cls_name)
         inner.SameTypeShape()(img1, img2)
         dtype_max_val = _get_dtype_max(F.dtype(img1))
-        max_val = F.scalar_cast(self.max_val, F.dtype(img1))
-        max_val = _convert_img_dtype_to_float32(max_val, dtype_max_val)
+        max_val = _convert_img_dtype_to_float32(self.max_val, dtype_max_val)
         img1 = _convert_img_dtype_to_float32(img1, dtype_max_val)
         img2 = _convert_img_dtype_to_float32(img2, dtype_max_val)
 

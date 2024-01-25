@@ -50,7 +50,9 @@ class EllipsisToSliceCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   std::vector<std::vector<int64_t>> data_shapes_;
-  std::vector<int64_t> tuple_index_types_;
+  int64_t end_mask_{0};
+  size_t ellipse_position_{0};
+  size_t not_ellipse_occupy_dims_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

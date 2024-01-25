@@ -32,7 +32,7 @@ PrimitiveCPtr PytorchReshapeParser::Parse(const torch::jit::Node *torch_node, st
 
   input_indices->push_back(0);
 
-  if (torch_node->inputs().size() > SECOND_INPUT) {
+  if (torch_node->size() > SECOND_INPUT) {
     std::vector<int32_t> shape;
     shape = PytorchNodeParser::GetValueFromConstNode<std::vector<int32_t>>(torch_node->input(SECOND_INPUT));
     prim_c->AddAttr("shape", MakeValue(shape));
@@ -47,7 +47,7 @@ PrimitiveCPtr PytorchSqueezeParser::Parse(const torch::jit::Node *torch_node, st
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   input_indices->push_back(0);
-  if (torch_node->inputs().size() > SECOND_INPUT) {
+  if (torch_node->size() > SECOND_INPUT) {
     auto dim = PytorchNodeParser::GetValueFromConstNode<std::vector<int64_t>>(torch_node->input(SECOND_INPUT));
     prim->set_axis(dim);
   }
@@ -62,7 +62,7 @@ PrimitiveCPtr PytorchUnSqueezeParser::Parse(const torch::jit::Node *torch_node, 
 
   input_indices->push_back(0);
   std::vector<int64_t> axis;
-  if (torch_node->inputs().size() > SECOND_INPUT) {
+  if (torch_node->size() > SECOND_INPUT) {
     auto dim = PytorchNodeParser::GetValueFromConstNode<int64_t>(torch_node->input(SECOND_INPUT));
     axis.emplace_back(dim);
     prim->set_axis(axis);

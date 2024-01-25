@@ -37,6 +37,7 @@ namespace mindspore {
 namespace pynative {
 namespace py = pybind11;
 const size_t kDefaultContainerSize = 5000;
+enum class SensType { kNormal = 0, kTuple = 1, kDict = 2 };
 
 struct BaseOpRunInfo {
   uint64_t py_prim_id_{0};
@@ -44,6 +45,7 @@ struct BaseOpRunInfo {
   bool is_mixed_precision_cast = false;
   bool use_dynamic_shape_process = false;
   bool need_earse_cache = false;
+  size_t stream_id{kDefaultStreamIndex};
   std::string op_name;
   std::string next_op_name;
   std::string device_target = "Unknown";
@@ -161,7 +163,7 @@ struct InputArgsInfo {
   size_t obj_order;
 
   bool has_custom_bprop{false};
-  bool has_sens{false};
+  SensType sens_type{SensType::kNormal};
   PrimitivePyPtr custom_bprop_prim{nullptr};
   ValuePtr out_value{nullptr};
   std::string obj_id;

@@ -68,19 +68,19 @@ std::shared_ptr<GPUdeviceInfo> GPUdeviceInfo::GetInstance(uint32_t device_id) {
 #endif
 
 GPUdeviceInfo::GPUdeviceInfo(const uint32_t device_id) {
-  cudaDeviceProp prop;
-  (void)cudaGetDeviceProperties(&prop, device_id);
-  threads_per_block_ = prop.maxThreadsPerBlock;
-  max_blocks_ = prop.multiProcessorCount;
-  major_sm_ = prop.major;
-  minor_sm_ = prop.minor;
-  max_share_memory_ = prop.sharedMemPerBlock;
+  (void)cudaGetDeviceProperties(&prop_, device_id);
+  name_ = prop_.name;
+  threads_per_block_ = prop_.maxThreadsPerBlock;
+  max_blocks_ = prop_.multiProcessorCount;
+  major_sm_ = prop_.major;
+  minor_sm_ = prop_.minor;
+  max_share_memory_ = prop_.sharedMemPerBlock;
   const int x_index = 0;
   const int y_index = 1;
   const int z_index = 2;
-  max_grid_size_.x = prop.maxGridSize[x_index];
-  max_grid_size_.y = prop.maxGridSize[y_index];
-  max_grid_size_.z = prop.maxGridSize[z_index];
+  max_grid_size_.x = prop_.maxGridSize[x_index];
+  max_grid_size_.y = prop_.maxGridSize[y_index];
+  max_grid_size_.z = prop_.maxGridSize[z_index];
 #ifndef _MSC_VER
   pthread_rwlock_init(&rwlock_, nullptr);
 #endif

@@ -74,7 +74,7 @@ int ConcatSplitEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode) 
     return RET_OK;
   }
 
-  size_t pre_inputs_size_unsigned = pre_cnode->inputs().size();
+  size_t pre_inputs_size_unsigned = pre_cnode->size();
   if (pre_inputs_size_unsigned > static_cast<size_t>(INT64_MAX)) {
     MS_LOG(ERROR) << "Size of inputs of pre_cnode out of range of int64:" << pre_inputs_size_unsigned;
     return RET_ERROR;

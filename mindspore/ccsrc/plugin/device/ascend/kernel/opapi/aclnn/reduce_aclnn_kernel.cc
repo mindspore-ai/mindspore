@@ -16,7 +16,6 @@
 #include "plugin/device/ascend/kernel/opapi/aclnn/reduce_aclnn_kernel.h"
 #include <vector>
 #include "ir/tensor.h"
-#include "runtime/stream.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "abstract/ops/primitive_infer_map.h"
 
@@ -91,9 +90,5 @@ bool ReduceSumAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   RunOp(stream_ptr, workspace);
   return true;
 }
-
-MS_ACLLNN_KERNEL_FACTORY_REG(ReduceAll, ReduceAllAclnnKernelMod);
-MS_ACLLNN_KERNEL_FACTORY_REG(ReduceAny, ReduceAnyAclnnKernelMod);
-MS_ACLLNN_KERNEL_FACTORY_REG(ReduceSum, ReduceSumAclnnKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

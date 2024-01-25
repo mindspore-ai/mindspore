@@ -89,11 +89,10 @@ AbstractBasePtr NormalizeSliceInferInner(const PrimitivePtr &primitive,
                               dim_index, tuple_index_types, expand_dims_mask);
   }
   auto abs_any = std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64);
-  auto abs_tensor =
-    std::make_shared<abstract::AbstractTensor>(abs_any, std::make_shared<abstract::Shape>(std::vector<int64_t>{1}));
+
   // Used in x[:], following op is dynamic StridedSlice so output is a tuple of tensors.
   auto output_any_abs =
-    std::make_shared<abstract::AbstractTuple>(abstract::AbstractBasePtrList{abs_tensor, abs_tensor, abs_tensor});
+    std::make_shared<abstract::AbstractTuple>(abstract::AbstractBasePtrList{abs_any, abs_any, abs_any});
 
   return output_any_abs;
 }
@@ -102,9 +101,8 @@ class NormalizeSliceInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    auto slice_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{1});
     return std::make_shared<abstract::TupleShape>(
-      std::vector<abstract::BaseShapePtr>{slice_shape, slice_shape, slice_shape});
+      std::vector<abstract::BaseShapePtr>{abstract::kNoShape, abstract::kNoShape, abstract::kNoShape});
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {

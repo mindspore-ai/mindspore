@@ -24,11 +24,7 @@
 
 #include <vector>
 #include "external/graph/operator.h"
-#include "graph/utils/op_desc_utils.h"
-#include "runtime/tiling_context.h"
-#include "runtime/infer_shape_context.h"
 #include "op_util.h"
-#include "context_util.h"
 
 namespace ops {
 using namespace ge;
@@ -52,23 +48,23 @@ inline void GetDataToVector(const uint8_t *const_data, size_t data_size, std::ve
  */
 template <typename T>
 bool GetConstIntData(const ge::Operator &paras, const int64_t const_input_idx, std::vector<T> &values) {
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(paras);
-  ConstGeTensorBarePtr const_tensor = OpDescUtils::GetInputConstData(paras, const_input_idx);
-  if (const_tensor == nullptr) {
-    auto input_name = op_desc->GetInputNameByIndex(const_input_idx);
+  Tensor const_tensor;
+  const auto const_input_name = paras.GetInputDesc(const_input_idx).GetName();
+  auto status = paras.GetInputConstData(const_input_name, const_tensor);
+  if (status == GRAPH_FAILED) {
+    auto input_name = paras.GetInputDesc(const_input_idx).GetName();
     OP_LOGW("GetConstIntData", "constvalue [%s] is not exists.", input_name.c_str());
     return false;
   }
 
-  const auto &tensor_data = const_tensor->GetData();
-  auto data = tensor_data.GetData();
+  auto data = const_tensor.GetData();
   if (data == nullptr) {
-    auto input_name = op_desc->GetInputNameByIndex(const_input_idx);
+    auto input_name = paras.GetInputDesc(const_input_idx).GetName();
     OP_LOGW("GetConstIntData", "constvalue [%s] is nullptr.", input_name.c_str());
     return false;
   }
-  auto size = tensor_data.GetSize();
-  DataType dtype = op_desc->MutableInputDesc(const_input_idx)->GetDataType();
+  auto size = const_tensor.GetSize();
+  DataType dtype = paras.GetInputDesc(const_input_idx).GetDataType();
   switch (dtype) {
     case DT_UINT64:
       GetDataToVector<T, uint64_t>(data, size, values);
@@ -102,22 +98,21 @@ bool GetConstIntData(const ge::Operator &paras, const int64_t const_input_idx, s
  */
 template <typename T>
 bool GetConstInt(const ge::Operator &paras, const int64_t const_input_idx, T &value) {
-  auto op_desc = OpDescUtils::GetOpDescFromOperator(paras);
-  ConstGeTensorBarePtr const_tensor = OpDescUtils::GetInputConstData(paras, const_input_idx);
-  if (const_tensor == nullptr) {
-    auto input_name = op_desc->GetInputNameByIndex(const_input_idx);
+  Tensor const_tensor;
+  const auto const_input_name = paras.GetInputDesc(const_input_idx).GetName();
+  if (paras.GetInputConstData(const_input_name, const_tensor) == GRAPH_FAILED) {
+    auto input_name = paras.GetInputDesc(const_input_idx).GetName();
     OP_LOGW("GetConstIntData", "constvalue [%s] is not exists.", input_name.c_str());
     return false;
   }
 
-  const auto &tensor_data = const_tensor->GetData();
-  auto data = tensor_data.GetData();
+  auto data = const_tensor.GetData();
   if (data == nullptr) {
-    auto input_name = op_desc->GetInputNameByIndex(const_input_idx);
+    auto input_name = paras.GetInputDesc(const_input_idx).GetName();
     OP_LOGW("GetConstIntData", "constvalue [%s] is nullptr.", input_name.c_str());
     return false;
   }
-  DataType dtype = op_desc->MutableInputDesc(const_input_idx)->GetDataType();
+  DataType dtype = paras.GetInputDesc(const_input_idx).GetDataType();
   switch (dtype) {
     case DT_UINT64:
       value = static_cast<T>(*reinterpret_cast<const uint64_t *>(data));
@@ -136,150 +131,6 @@ bool GetConstInt(const ge::Operator &paras, const int64_t const_input_idx, T &va
       return false;
     } break;
   }
-  return true;
-}
-
-/*
- * @brief: read constvalue from paras store into value
- * @param [in] context: gert::InferShapeContext
- * @param [in] const_input_idx: constvalue axes index
- * @param [out] value: integer to store return value.
- * @return bool: flag of success or not
- */
-template <typename T>
-bool GetConstInt(gert::InferShapeContext *context, const int64_t const_input_idx, T &value) {
-  auto axes_tensor = context->GetInputTensor(const_input_idx);
-  if (axes_tensor == nullptr) {
-    OP_LOGW("GetConstIntData", "constvalue is nullptr");
-    return false;
-  }
-  auto dtype = axes_tensor->GetDataType();
-  switch (dtype) {
-    case ge::DT_UINT64:
-      value = static_cast<T>(axes_tensor->GetData<uint64_t>()[0]);
-      break;
-    case ge::DT_INT64:
-      value = static_cast<T>(axes_tensor->GetData<int64_t>()[0]);
-      break;
-    case ge::DT_UINT32:
-      value = static_cast<T>(axes_tensor->GetData<uint32_t>()[0]);
-      break;
-    case ge::DT_INT32:
-      value = static_cast<T>(axes_tensor->GetData<int32_t>()[0]);
-      break;
-    default: {
-      OP_LOGW("GetConstInt", "GetConstInt of dtype[%d] has not implement yet.", dtype);
-      return false;
-    } break;
-  }
-  OP_LOGI("GetConstInt", "GetConstInt of value is %d", value);
-  return true;
-}
-
-/*
- * @brief: read constvalue from paras store into value
- * @param [in] context: gert::TilingContext
- * @param [in] const_input_idx: constvalue axes index
- * @param [out] value: integer to store return value.
- * @return bool: flag of success or not
- */
-template <typename T>
-bool GetConstInt(gert::TilingContext *context, const int64_t const_input_idx, T &value) {
-  const gert::Tensor *const_tensor = context->GetInputTensor(const_input_idx);
-  OPS_CHECK_NULL_WITH_CONTEXT_RET(context, const_tensor, false);
-  if (!IsConstTensor(const_tensor)) {
-    OP_LOGW(context->GetNodeName(), "the input[%ld] is not const tensor, will return failed.", const_input_idx);
-    return false;
-  }
-
-  ge::DataType dtype = const_tensor->GetDataType();
-  switch (dtype) {
-    case ge::DT_UINT64:
-      value = static_cast<T>(const_tensor->GetData<uint64_t>()[0]);
-      break;
-    case ge::DT_INT64:
-      value = static_cast<T>(const_tensor->GetData<int64_t>()[0]);
-      break;
-    case ge::DT_UINT32:
-      value = static_cast<T>(const_tensor->GetData<uint32_t>()[0]);
-      break;
-    case ge::DT_INT32:
-      value = static_cast<T>(const_tensor->GetData<int32_t>()[0]);
-      break;
-    default: {
-      OP_LOGW(context->GetNodeName(), "GetConstInt only support [int32, int64, uint64, uint32]. but is %s",
-              ops::ToString(dtype).c_str());
-      return false;
-    } break;
-  }
-  OP_LOGD("GetConstInt", "GetConstInt of value is %d", value);
-  return true;
-}
-
-template <typename T>
-void GetConstValueToShape(const gert::Tensor *tensor, size_t size, gert::Shape *shape) {
-  const T *value = tensor->GetData<T>();
-  shape->SetDimNum(size);
-  for (size_t i = 0; i < size; i++) {
-    shape->SetDim(i, value[i]);
-  }
-}
-
-template <typename T>
-void GetValueToShape(const gert::Tensor *const_tensor, gert::Shape *const_shape) {
-  const T *const_value = const_tensor->GetData<T>();
-  const size_t const_num = const_tensor->GetShapeSize();
-  const_shape->SetDimNum(0);
-  for (size_t i = 0; i < const_num; ++i) {
-    const_shape->AppendDim(const_value[i]);
-  }
-}
-
-template <typename T>
-void GetValueToShape(const gert::Tensor *const_tensor, gert::Shape &const_shape) {
-  const T *const_value = const_tensor->GetData<T>();
-  const size_t const_num = const_tensor->GetShapeSize();
-  const_shape.SetDimNum(0);
-  for (size_t i = 0; i < const_num; ++i) {
-    const_shape.AppendDim(const_value[i]);
-  }
-}
-
-template <typename T>
-bool GetConstIntToShape(T *context, const int64_t const_idx, gert::Shape &const_shape) {
-  const gert::Tensor *const_tensor = context->GetInputTensor(const_idx);
-  OPS_CHECK_NULL_WITH_CONTEXT_RET(context, const_tensor, false);
-  if (!IsConstTensor(const_tensor)) {
-    OP_LOGW(context->GetNodeName(), "the input[%ld] is not const tensor, will return failed.", const_idx);
-    return false;
-  }
-
-  ge::DataType const_dtype = const_tensor->GetDataType();
-
-  switch (const_dtype) {
-    case ge::DT_INT32: {
-      GetValueToShape<int32_t>(const_tensor, const_shape);
-      break;
-    }
-    case ge::DT_INT64: {
-      GetValueToShape<int64_t>(const_tensor, const_shape);
-      break;
-    }
-    case ge::DT_UINT64: {
-      GetValueToShape<uint64_t>(const_tensor, const_shape);
-      break;
-    }
-    case ge::DT_UINT32: {
-      GetValueToShape<uint32_t>(const_tensor, const_shape);
-      break;
-    }
-    default:
-      OP_LOGW(context->GetNodeName(), "GetConstIntToShape only support [int32, int64, uint64, uint32]. but is %s",
-              ops::ToString(const_dtype).c_str());
-      return false;
-  }
-
-  OP_LOGI(context->GetNodeName(), "GetConstIntToShape: output shape is %s", ToString(const_shape).c_str());
   return true;
 }
 }  // namespace ops

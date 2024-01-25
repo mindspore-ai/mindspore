@@ -368,9 +368,9 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
         self.gpu_target = (context.get_context("device_target") == "GPU")
         self.ascend_910a_target = (MSContext.get_instance().get_ascend_soc_version() == 'ascend910')
-        self.ascend_910b_target = (MSContext.get_instance().get_ascend_soc_version() == 'ascend910b')
+        self.ascend_910bc_target = (MSContext.get_instance().get_ascend_soc_version() in ['ascend910b', 'ascend910c'])
         self.loss_scaling_manager = None
-        self._ascend910b_check_overflow_status_mode = os.environ.get('MS_ASCEND_CHECK_OVERFLOW_MODE')
+        self._ascend_check_overflow_mode = os.environ.get('MS_ASCEND_CHECK_OVERFLOW_MODE')
 
 
         if isinstance(scale_sense, Cell):
@@ -450,8 +450,8 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
             is cleaned up when the function returns.
         """
         status = Tensor([0] * 8, mstype.int32)
-        if self.ascend_910a_target or (self.ascend_910b_target and \
-                                       self._ascend910b_check_overflow_status_mode == "SATURATION_MODE"):
+        if self.ascend_910a_target or (self.ascend_910bc_target and \
+                                       self._ascend_check_overflow_mode == "SATURATION_MODE"):
             status = F.depend(status, pre_cond)
             # clear overflow buffer
             clear_status = NPUClearFloatStatusV2()(status)
@@ -531,8 +531,8 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         """
         if self.gpu_target:
             overflow = self._get_gpu_overflow_status(compute_output)
-        elif self.ascend_910b_target:
-            if self._ascend910b_check_overflow_status_mode == "SATURATION_MODE":
+        elif self.ascend_910bc_target:
+            if self._ascend_check_overflow_mode == "SATURATION_MODE":
                 overflow = self._get_ascend_overflow_status_on_saturation_mode(status, compute_output)
             else:
                 overflow = self._get_ascend_overflow_status_on_infnan_mode(compute_output)

@@ -91,13 +91,13 @@ void DFunctor::BackPropagateFv(const AnfNodePtr &fv, const AnfNodePtr &din) {
   MS_EXCEPTION_IF_NULL(fv);
   if (lift_fv_before_grad) {
     MS_EXCEPTION_IF_NULL(fv->func_graph());
-    MS_LOG(INTERNAL_EXCEPTION) << "BackPropagateFv can not find adjoint in anfnode_to_adjoin_ fv:"
-                               << fv->func_graph()->ToString() << " " << fv->ToString() << ".";
+    MS_LOG(INTERNAL_EXCEPTION) << "Can not find adjoint in anfnode_to_adjoin_ fv:" << fv->func_graph()->ToString()
+                               << " " << fv->ToString() << ".";
   }
   auto fv_adjoint = anfnode_to_adjoin_.find(fv);
   if (fv_adjoint == anfnode_to_adjoin_.end()) {
-    MS_LOG(DEBUG) << "BackPropagateFv can not find adjoint in anfnode_to_adjoin_ fv " << fv->func_graph()->ToString()
-                  << " " << fv->ToString() << ".";
+    MS_LOG(DEBUG) << "Can not find adjoint in anfnode_to_adjoin_ fv " << fv->func_graph()->ToString() << " "
+                  << fv->ToString() << ".";
 
     if (fv->func_graph() == primal_graph_) {
       // If this fv is not mapped by MapMorphism because of cnode order, then map it now.
@@ -110,15 +110,15 @@ void DFunctor::BackPropagateFv(const AnfNodePtr &fv, const AnfNodePtr &din) {
     } else {
       fv_adjoint = anfnode_to_adjoin_indirect_fv_.find(fv);
       if (fv_adjoint == anfnode_to_adjoin_indirect_fv_.end()) {
-        MS_LOG(DEBUG) << "BackPropagateFv can not find adjoint in anfnode_to_adjoin_indirect_fv_ fv "
-                      << fv->func_graph()->ToString() << " " << fv->ToString() << ".";
+        MS_LOG(DEBUG) << "Can not find adjoint in anfnode_to_adjoin_indirect_fv_ fv " << fv->func_graph()->ToString()
+                      << " " << fv->ToString() << ".";
         auto parent_adjoint = FindAdjoint(fv);
         AdjointPtr adjoint = nullptr;
         if (parent_adjoint != nullptr) {
           adjoint = std::make_shared<Adjoint>(fv, parent_adjoint->k(), tape_);
         } else {
-          MS_LOG(DEBUG) << "BackPropagateFv failed can not find adjoint definition fv, add a k hole "
-                        << fv->func_graph()->ToString() << " " << fv->ToString() << ".";
+          MS_LOG(DEBUG) << "Can not find adjoint definition fv, add a k hole " << fv->func_graph()->ToString() << " "
+                        << fv->ToString() << ".";
           adjoint = std::make_shared<Adjoint>(fv, nullptr, tape_);
         }
         anfnode_to_adjoin_indirect_fv_[fv] = adjoint;
@@ -141,9 +141,9 @@ void DFunctor::BackPropagateFv(const AnfNodePtr &fv, const AnfNodePtr &din) {
     anfnode_to_envitem_[fv_node] = std::make_pair(embed_node, default_val_node);
   }
   auto dfv = tape_->NewCNode({NewValueNode(prim::kPrimEnvironGet), din, embed_node, default_val_node});
-  MS_LOG(DEBUG) << "BackPropagateFv find adjoint in anfnode_to_adjoin_ or anfnode_to_adjoin_indirect_fv_ fv "
+  MS_LOG(DEBUG) << "Find adjoint in anfnode_to_adjoin_ or anfnode_to_adjoin_indirect_fv_ fv "
                 << fv->func_graph()->ToString() << " " << fv->ToString() << ".";
-  MS_LOG(DEBUG) << "BackPropagateFv get item from " << din->ToString() << " key " << embed_node->ToString() << ".";
+  MS_LOG(DEBUG) << "Get item from " << din->ToString() << " key " << embed_node->ToString() << ".";
   fv_adjoint->second->AccumulateDout(dfv);
 }
 
@@ -165,8 +165,8 @@ void DFunctor::BackPropagateSwitchLayer(const CNodePtr &cnode_morph, const CNode
     auto func_graph = GetValueNode<FuncGraphPtr>(graph);
     auto functor = func_graph_to_functor_.find(func_graph);
     if (functor == func_graph_to_functor_.end()) {
-      MS_LOG(EXCEPTION) << "BackPropagateSwitchLayer failed functor for subgraph does not exist input[" << i << "] "
-                        << func_graph->ToString() << ".";
+      MS_LOG(EXCEPTION) << "Failed functor for subgraph does not exist input[" << i << "] " << func_graph->ToString()
+                        << ".";
     }
     // Consider direct and indirect fvs.
     for (auto fv : func_graph->free_variables_nodes()) {
@@ -177,8 +177,7 @@ void DFunctor::BackPropagateSwitchLayer(const CNodePtr &cnode_morph, const CNode
       BackPropagateFv(fv, env);
     }
     for (auto indirect_fv : functor->second->anfnode_to_adjoin_indirect_fv_) {
-      MS_LOG(DEBUG) << "BackPropagateSwitchLayer backprop indirect fv " << func_graph->ToString() << " "
-                    << indirect_fv.first->ToString() << ".";
+      MS_LOG(DEBUG) << "Backprop indirect fv " << func_graph->ToString() << " " << indirect_fv.first->ToString() << ".";
       if (node_to_fg.find(indirect_fv.first) != node_to_fg.end()) {
         continue;
       }
@@ -211,8 +210,9 @@ static AnfNodePtr SkipHookNodeInBackProp(const AnfNodePtr &node) {
     // Replace hook node with make tuple node.
     abstract::AbstractBasePtrList multi_output_abs;
     std::vector<AnfNodePtr> multi_output_nodes{NewValueNode(prim::kPrimMakeTuple)};
-    (void)std::for_each(output_cnode->inputs().cbegin() + 1, output_cnode->inputs().cend(),
-                        [&multi_output_nodes, &multi_output_abs](const AnfNodePtr &inp) {
+    (void)std::for_each(output_cnode->weak_inputs().cbegin() + 1, output_cnode->weak_inputs().cend(),
+                        [&multi_output_nodes, &multi_output_abs](const AnfNodeWeakPtr &weak_inp) {
+                          AnfNodePtr inp = weak_inp.lock();
                           MS_EXCEPTION_IF_NULL(inp);
                           (void)multi_output_nodes.emplace_back(inp);
                           (void)multi_output_abs.emplace_back(inp->abstract());
@@ -315,7 +315,7 @@ void DFunctor::BackPropagate(const CNodePtr &cnode_morph, const CNodePtr &k_app,
       auto func_graph = GetValueNode<FuncGraphPtr>(input);
       auto functor = func_graph_to_functor_.find(func_graph);
       if (functor == func_graph_to_functor_.end()) {
-        MS_LOG(INTERNAL_EXCEPTION) << "BackPropagate failed functor for subgraph does not exist input[" << i << "] "
+        MS_LOG(INTERNAL_EXCEPTION) << "Failed functor for subgraph does not exist input[" << i << "] "
                                    << func_graph->ToString() << ".";
       }
       // Consider direct and indirect fvs.
@@ -323,8 +323,8 @@ void DFunctor::BackPropagate(const CNodePtr &cnode_morph, const CNodePtr &k_app,
         BackPropagateFv(fv, din);
       }
       for (auto indirect_fv : functor->second->anfnode_to_adjoin_indirect_fv_) {
-        MS_LOG(DEBUG) << "BackPropagate backprop indirect fv " << func_graph->ToString() << " "
-                      << indirect_fv.first->ToString() << ".";
+        MS_LOG(DEBUG) << "Backprop indirect fv " << func_graph->ToString() << ", " << indirect_fv.first->ToString()
+                      << ".";
         BackPropagateFv(indirect_fv.first, din);
       }
       continue;
@@ -332,8 +332,8 @@ void DFunctor::BackPropagate(const CNodePtr &cnode_morph, const CNodePtr &k_app,
     // Backprop sens wrt inputs.
     auto input_adjoint = anfnode_to_adjoin_.find(input);
     if (input_adjoint == anfnode_to_adjoin_.end()) {
-      MS_LOG(INTERNAL_EXCEPTION) << "BackPropagate adjoint does not exist input[" << i << "] " << input->ToString()
-                                 << ".";
+      MS_LOG(INTERNAL_EXCEPTION) << "The adjoint does not exist input[" << i << "] " << input->ToString()
+                                 << ". primal_graph_: " << primal_graph_->ToString();
     }
     input_adjoint->second->AccumulateDout(din);
   }
@@ -342,7 +342,7 @@ void DFunctor::BackPropagate(const CNodePtr &cnode_morph, const CNodePtr &k_app,
 // Map a morphism.
 AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
   constexpr int recursive_level = 4;
-  MS_LOG(DEBUG) << "start MapMorphism:" << morph->DebugString(recursive_level);
+  MS_LOG(DEBUG) << "Start: " << morph->DebugString(recursive_level);
   // MapMorphism All type except CNode should already be mapped by MapObject.
   if (!morph->isa<CNode>()) {
     return nullptr;
@@ -367,11 +367,12 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
       // Input might be a CNode that needs to be handled previously.
       node_adjoint = MapMorphism(node);
     }
-    MS_EXCEPTION_IF_NULL(node_adjoint);
+    if (node_adjoint == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The node adjoint is null, " << node->DebugString();
+    }
     AnfNodePtr k = node_adjoint->k();
     if (k == nullptr) {
-      MS_LOG(INTERNAL_EXCEPTION) << "MapMorphism adjoint node does not exist, input[" << i << "] " << node->ToString()
-                                 << ".";
+      MS_LOG(INTERNAL_EXCEPTION) << "The adjoint node does not exist, input[" << i << "] " << node->ToString() << ".";
     }
     if (i == 0) {
       auto k_fg = GetValueNode<FuncGraphPtr>(k);
@@ -403,13 +404,13 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
   UpdateAdjoint(node_adjoint);
   anfnode_to_adjoin_[morph] = node_adjoint;
   if (cnode_morph->stop_gradient()) {
-    MS_LOG(DEBUG) << "MapMorphism node " << morph->ToString() << " is stopped.";
+    MS_LOG(DEBUG) << "The node " << morph->ToString() << " is stopped.";
     return node_adjoint;
   }
 
   // Do sens backpropagation
   BackPropagate(cnode_morph, k_app, node_adjoint);
-  MS_LOG(DEBUG) << "MapMorphism node " << morph->DebugString(4) << ".";
+  MS_LOG(DEBUG) << "End, node: " << morph->DebugString(recursive_level);
   return node_adjoint;
 }
 
@@ -447,7 +448,7 @@ void DFunctor::MapFreeMorphism() {
     if (!IsFreeMorphism(node)) {
       continue;
     }
-    MS_LOG(DEBUG) << "MapFreeMorphism map nonoutput cnode after MapMorphism " << node->ToString() << ".";
+    MS_LOG(DEBUG) << "Map nonoutput cnode after MapMorphism " << node->ToString() << ".";
     (void)MapMorphism(node);
   }
 }
@@ -458,7 +459,7 @@ AnfNodePtr DFunctor::AttachFvDoutToTape(const AnfNodePtr &grad_fv) {
   const auto &free_variables_nodes = primal_graph_->free_variables_nodes();
   if (!is_top_ && free_variables_nodes.size() != 0) {
     if (lift_fv_before_grad) {
-      MS_LOG(INTERNAL_EXCEPTION) << "direct fv size is: " << free_variables_nodes.size() << " in "
+      MS_LOG(INTERNAL_EXCEPTION) << "The direct fv size is: " << free_variables_nodes.size() << " in "
                                  << primal_graph_->ToString() << ".";
     }
   }
@@ -469,7 +470,7 @@ AnfNodePtr DFunctor::AttachFvDoutToTape(const AnfNodePtr &grad_fv) {
     }
     auto fv_adjoint = anfnode_to_adjoin_.find(fv);
     if (fv_adjoint == anfnode_to_adjoin_.end()) {
-      MS_LOG(INTERNAL_EXCEPTION) << "AttachFvDoutToTape fv adjoint does not exist " << fv->ToString() << ".";
+      MS_LOG(INTERNAL_EXCEPTION) << "The fv adjoint does not exist " << fv->ToString() << ".";
     }
     auto node = tape_->NewCNode({NewValueNode(prim::kPrimEmbed), fv_adjoint->second->k()});
     fv_adjoint->second->RegisterKUser(node, 1);
@@ -477,30 +478,28 @@ AnfNodePtr DFunctor::AttachFvDoutToTape(const AnfNodePtr &grad_fv) {
     new_grad_fv = tape_->NewCNode({NewValueNode(prim::kPrimEnvironSet), new_grad_fv, node, sens});
     constexpr size_t sens_index = 3;
     fv_adjoint->second->RegisterDoutUser(new_grad_fv->cast<CNodePtr>(), sens_index);
-    MS_LOG(DEBUG) << "AttachFvDoutToTape add fv sens " << sens->ToString() << " to " << new_grad_fv->ToString() << " "
-                  << fv->ToString() << " " << primal_graph_->ToString() << ".";
+    MS_LOG(DEBUG) << "Add fv sens " << sens->ToString() << " to " << new_grad_fv->ToString() << " " << fv->ToString()
+                  << " " << primal_graph_->ToString() << ".";
   }
   return new_grad_fv;
 }
 
 AnfNodePtr DFunctor::AttachIndirectFvDoutToTape(const AnfNodePtr &grad_fv) {
   if (lift_fv_before_grad) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Lift free variable case: AttachIndirectFvDoutToTape backprop indirect fv "
-                               << grad_fv->ToString() << " " << primal_graph_->ToString() << ".";
+    MS_LOG(INTERNAL_EXCEPTION) << "Lift free variable case: backprop indirect fv " << grad_fv->ToString() << " "
+                               << primal_graph_->ToString() << ".";
   }
   AnfNodePtr new_grad_fv = grad_fv;
   // Add indirect fv bprop.
   for (auto &fv_adjoint : anfnode_to_adjoin_indirect_fv_) {
-    MS_LOG(DEBUG) << "AttachIndirectFvDoutToTape backprop indirect fv " << fv_adjoint.first->ToString() << " "
-                  << primal_graph_->ToString() << ".";
+    MS_LOG(DEBUG) << "Backprop indirect fv " << fv_adjoint.first->ToString() << " " << primal_graph_->ToString() << ".";
     auto node = tape_->NewCNode({NewValueNode(prim::kPrimEmbed), fv_adjoint.second->k()});
     fv_adjoint.second->RegisterKUser(node, 1);
     auto sens = fv_adjoint.second->dout();
     new_grad_fv = tape_->NewCNode({NewValueNode(prim::kPrimEnvironSet), new_grad_fv, node, sens});
     constexpr size_t sens_index = 3;
     fv_adjoint.second->RegisterDoutUser(new_grad_fv->cast<CNodePtr>(), sens_index);
-    MS_LOG(DEBUG) << "AttachIndirectFvDoutToTape add indirect fv sens " << sens->ToString() << " to "
-                  << new_grad_fv->ToString() << ".";
+    MS_LOG(DEBUG) << "Add indirect fv sens " << sens->ToString() << " to " << new_grad_fv->ToString() << ".";
   }
   return new_grad_fv;
 }
@@ -515,7 +514,17 @@ void DFunctor::MapMorphism() {
   auto output_node = primal_graph_->output();
   output_node = SkipHookNodeInBackProp(output_node);
   // Handle morphism from output.
-  (void)MapMorphism(output_node);
+  // Topo sort all nodes firstly in case of stack overflow fault.
+  auto nodes = TopoSort(output_node, SuccIncoming, [this](const AnfNodePtr &node) -> IncludeType {
+    MS_EXCEPTION_IF_NULL(node);
+    if (node->func_graph() == nullptr || node->func_graph() != primal_graph_ || node->isa<Parameter>()) {
+      return EXCLUDE;
+    }
+    return FOLLOW;
+  });
+  for (const auto &node : nodes) {
+    (void)MapMorphism(SkipHookNodeInBackProp(node));
+  }
 
   // Construct K for primal_graph_.
   auto output_adjoint = anfnode_to_adjoin_.find(output_node);
@@ -702,7 +711,7 @@ void DFunctor::MapFvObject() {
   const auto &free_variables_nodes = primal_graph_->free_variables_nodes();
   for (auto &node : free_variables_nodes) {
     ScopeGuard scope_guard(node->scope());
-    MS_LOG(DEBUG) << "MapFvObject free variable " << node->ToString() << ".";
+    MS_LOG(DEBUG) << "The free variable " << node->ToString() << ".";
     // Find fv's K from parent.
     AdjointPtr adjoint = nullptr;
     auto parent_adjoint = FindAdjoint(node);
@@ -714,12 +723,12 @@ void DFunctor::MapFvObject() {
         adjoint = std::make_shared<Adjoint>(node, node, tape_);
         UpdateAdjoint(adjoint);
       } else {
-        MS_LOG(DEBUG) << "MapFvObject fail to find parent adjoint for nontop fv " << node->ToString() << ".";
+        MS_LOG(DEBUG) << "Fail to find parent adjoint for nontop fv " << node->ToString() << ".";
         adjoint = std::make_shared<Adjoint>(node, nullptr, tape_);
       }
     }
     if (adjoint == nullptr) {
-      MS_LOG(INTERNAL_EXCEPTION) << "MapFvObject failed for free variable " << node->ToString() << ".";
+      MS_LOG(INTERNAL_EXCEPTION) << "Failed for free variable " << node->ToString() << ".";
     }
     anfnode_to_adjoin_[node] = adjoint;
   }
@@ -729,7 +738,7 @@ void DFunctor::MapParamObject() {
   // Map parameter.
   for (auto &p : primal_graph_->parameters()) {
     ScopeGuard scope_guard(p->scope());
-    MS_LOG(DEBUG) << "MapParamObject parameter " << p->ToString() << ".";
+    MS_LOG(DEBUG) << "The parameter " << p->ToString() << ".";
     auto adjoint = std::make_shared<Adjoint>(p, MapParameterToK(p), tape_);
     UpdateAdjoint(adjoint);
     anfnode_to_adjoin_[p] = adjoint;
@@ -815,10 +824,10 @@ void DFunctor::UpdateAdjoint(const AdjointPtr &adjoint_definition) {
 AdjointPtr DFunctor::FindAdjoint(const AnfNodePtr &primal) const {
   auto adjoint = anfnode_to_adjoin_definition_.find(primal);
   if (adjoint != anfnode_to_adjoin_definition_.end()) {
-    MS_LOG(DEBUG) << "FindAdjoint found adjoint definition for free variable " << primal->ToString() << ".";
+    MS_LOG(DEBUG) << "Found adjoint definition for free variable " << primal->ToString() << ".";
     return adjoint->second;
   }
-  MS_LOG(DEBUG) << "FindAdjoint adjoint definition for free variable not defined yet " << primal->ToString() << ".";
+  MS_LOG(DEBUG) << "The adjoint definition for free variable not defined yet " << primal->ToString() << ".";
   return nullptr;
 }
 

@@ -110,7 +110,7 @@ const AnfNodePtr BCEWithLogitsLossFusion::Process(const FuncGraphPtr &func_graph
     return nullptr;
   }
   common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
-  if (cnode->inputs().size() == 0) {
+  if (cnode->size() == 0) {
     return nullptr;
   }
   return AddReduceNode(func_graph, node);

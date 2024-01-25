@@ -28,7 +28,7 @@ from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore.nn import learning_rate_schedule as lr_schedules
 from ...dataset_mock import MindData
 from ...ops_common import nn, np, batch_tuple_tensor, build_construct_graph
-from tests.st.model_zoo_tests import utils
+from tests.st.networks import utils
 
 head_path = os.path.dirname(os.path.abspath(__file__)) + "/../../../"
 utils.replace_check_param(head_path)

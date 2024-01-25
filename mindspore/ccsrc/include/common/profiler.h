@@ -58,6 +58,7 @@ enum class ProfilerEvent {
   kKernelResize,
   kKernelInferAndResize,
   kKernelLaunch,
+  kKernelLaunckCallback,
   kKernelUpdate,
   kGraphLaunch,
   kInputProcess,
@@ -98,6 +99,8 @@ enum class ProfilerEvent {
   kPyBoostMallocInput,
   kPyBoostMallocOutput,
   kPyBoostLaunchAclnn,
+  // Python
+  kPythonObserved,
 };
 
 #define PROFILER_START(start_time)                                          \
@@ -152,6 +155,21 @@ class COMMON_EXPORT ProfilerRecorder {
 
  private:
   std::unique_ptr<Data> data_{nullptr};
+};
+
+class COMMON_EXPORT PythonProfilerRecorder {
+ public:
+  explicit PythonProfilerRecorder(const std::string &record_name);
+  ~PythonProfilerRecorder() = default;
+
+  void record_start();
+  void record_end();
+
+ private:
+  uint64_t start_time_;
+  std::string record_name_;
+  ProfilerModule module_;
+  ProfilerEvent event_;
 };
 
 class COMMON_EXPORT ProfilerStageRecorder {

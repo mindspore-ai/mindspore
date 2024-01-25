@@ -19,6 +19,7 @@
 #include <memory.h>
 #include <cfloat>
 #include <string>
+#include <random>
 
 #include "aicpu_sharder/aicpu_sharder.h"
 #include "common/kernel_errcode.h"
@@ -42,12 +43,15 @@ uint32_t StandardLaplaceKernel::DoCompute() {
   }
 
   // get random generator seed
+  /*
   uint32_t kernel_ret = 0;
   uint64_t rng_seed = random::GetKernelBaseRandomStates(io_addrs_, kCountsIndex, kStatesIndex, seed_, seed2_,
                                                         "StandardLaplace", &kernel_ret);
   if (kernel_ret != kAicpuKernelStateSucess) {
     return kAicpuKernelStateFailed;
   }
+  */
+  uint64_t rng_seed = std::random_device()();
   rng_.seed(rng_seed);
 
   std::exponential_distribution<float> expo;
@@ -60,8 +64,9 @@ uint32_t StandardLaplaceKernel::DoCompute() {
     tmp_out[i] = expo_random;
   }
 
-  int ret =
-    memcpy_s(reinterpret_cast<void *>(io_addrs_[3]), out_count_ * sizeof(float), tmp_out, out_count_ * sizeof(float));
+  constexpr size_t kOutputIdx = 1;
+  auto output_data = reinterpret_cast<void *>(io_addrs_[kOutputIdx]);
+  int ret = memcpy_s(output_data, out_count_ * sizeof(float), tmp_out, out_count_ * sizeof(float));
   free(tmp_out);
   tmp_out = NULL;
   if (ret < 0) {

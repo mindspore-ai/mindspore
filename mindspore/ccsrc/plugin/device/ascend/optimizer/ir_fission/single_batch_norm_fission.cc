@@ -34,7 +34,7 @@ AnfNodePtr SingleBatchNormFission::CreateBNTrainingReduce(const FuncGraphPtr &fu
   MS_EXCEPTION_IF_NULL(bn);
   auto bn_cnode = bn->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(bn_cnode);
-  if (bn_cnode->inputs().size() < kBatchNormRealInputNum + 1) {
+  if (bn_cnode->size() < kBatchNormRealInputNum + 1) {
     MS_LOG(INTERNAL_EXCEPTION) << "The input size of node " + bn_cnode->DebugString() + " is less than "
                                << (kBatchNormRealInputNum + 1) << trace::DumpSourceLines(bn);
   }
@@ -60,7 +60,7 @@ AnfNodePtr SingleBatchNormFission::CreateBNTrainingUpdateV3(
   MS_EXCEPTION_IF_NULL(bn);
   auto bn_cnode = bn->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(bn_cnode);
-  if (bn_cnode->inputs().size() < kBatchNormRealInputNum + 1) {
+  if (bn_cnode->size() < kBatchNormRealInputNum + 1) {
     MS_LOG(INTERNAL_EXCEPTION) << "The input size of node " + bn_cnode->DebugString() + " is less than "
                                << (kBatchNormRealInputNum + 1) << trace::DumpSourceLines(bn);
   }

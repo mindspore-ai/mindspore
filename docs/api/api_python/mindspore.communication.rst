@@ -26,6 +26,7 @@ mindspore.communication
         - HCCL的全称是华为集合通信库（Huawei Collective Communication Library）。
         - NCCL的全称是英伟达集合通信库（NVIDIA Collective Communication Library）。
         - MCCL的全称是MindSpore集合通信库（MindSpore Collective Communication Library）。
+        - 在Ascend硬件平台下，``init()`` 接口的设置需要在创建Tensor和Parameter之前，以及所有算子和网络的实例化和运行之前。
 
     参数：
         - **backend_name** (str) - 分布式后端的名称，可选 ``"hccl"`` 、 ``"nccl"`` 或者 ``"mccl"`` 。在Ascend硬件平台下，应使用 ``"hccl"`` ，在GPU硬件平台下，应使用 ``"nccl"`` ，在CPU硬件平台下，应使用 ``"mccl"`` 。如果未设置则根据硬件平台类型（device_target）自动进行推断，默认值： ``None`` 。

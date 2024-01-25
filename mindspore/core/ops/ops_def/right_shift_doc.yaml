@@ -33,6 +33,6 @@ right_shift:
             >>> from mindspore import Tensor, ops
             >>> input_x = Tensor(np.array([1, 2, 3]).astype(np.uint8))
             >>> input_y = Tensor(np.array([1, 1, 1]).astype(np.uint8))
-            >>> output = ops.right_shift(input_x, input_y)
+            >>> output = ops.RightShift()(input_x, input_y)
             >>> print(output)
             [0 1 1]

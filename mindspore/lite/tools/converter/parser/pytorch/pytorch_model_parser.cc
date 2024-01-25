@@ -499,7 +499,7 @@ STATUS PytorchModelParser::ConvertNodes(const FuncGraphPtr &anf_graph) {
       primitive_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(NCHW));
     }
     if (input_indices.empty()) {
-      input_indices.resize(torch_node->inputs().size());
+      input_indices.resize(torch_node->size());
       std::iota(input_indices.begin(), input_indices.end(), 0);
     }
 

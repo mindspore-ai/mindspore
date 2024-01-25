@@ -32,6 +32,8 @@
 #include "ops/array_ops.h"
 #include "ops/arithmetic_ops.h"
 #include "ops/framework_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
+#include "ops/op_utils.h"
 #include "abstract/abstract_value.h"
 #include "base/base.h"
 #include "pipeline/jit/ps/debug/trace.h"
@@ -447,7 +449,7 @@ class BeforeOptARewriter : public BaseRewriter {
     auto mng = func->manager();
     auto &users = mng->node_users()[node];
     for (auto &user : users) {
-      if (IsPrimitiveCNode(user.first, prim::kPrimPyExecute)) {
+      if (IsPrimitiveCNode(user.first, prim::kPrimPyExecute) || IsPrimitiveCNode(user.first, prim::kPrimPyInterpret)) {
         return true;
       } else if (IsPrimitiveCNode(user.first, prim::kPrimMakeTuple)) {
         if (CheckUserHasPyExecute(user.first, user.first->func_graph())) {
@@ -839,12 +841,13 @@ class AfterOptARewriter : public BaseRewriter {
     MS_EXCEPTION_IF_NULL(node);
     MS_EXCEPTION_IF_NULL(node->func_graph());
 
-    std::vector<AnfNodePtr> inputs;
+    AnfNodeWeakPtrList inputs;
     inputs.reserve(node->size());
-    (void)inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+    const auto make_tuple_node = NewValueNode(prim::kPrimMakeTuple);
+    (void)inputs.emplace_back(make_tuple_node);
     // Inputs of node should be [make_sparse, indices, values, dense_shape], so offset by 1 to get items.
-    (void)inputs.insert(inputs.cend(), node->inputs().cbegin() + 1, node->inputs().cend());
-    auto new_node = node->func_graph()->NewCNode(std::move(inputs));
+    (void)inputs.insert(inputs.cend(), node->weak_inputs().cbegin() + 1, node->weak_inputs().cend());
+    auto new_node = node->func_graph()->NewCNodeWeak(std::move(inputs));
     new_node->set_abstract(node->abstract());
     return new_node;
   }
@@ -883,6 +886,11 @@ class AfterOptARewriter : public BaseRewriter {
 
   // DictGetItem --> PyExecute()
   AnfNodePtr ConvertDictGetItem(const CNodePtr &cnode) const {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    if (context->not_convert_jit()) {
+      return nullptr;
+    }
     MS_EXCEPTION_IF_NULL(cnode);
     // Inputs should be [dict_setitem, dict, item]
     const size_t expect_inputs_size = 3;
@@ -946,6 +954,11 @@ class AfterOptARewriter : public BaseRewriter {
 
   // DictSetItem --> PyExecute()
   AnfNodePtr ConvertDictSetItem(const CNodePtr &cnode) const {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    if (context->not_convert_jit()) {
+      return nullptr;
+    }
     MS_EXCEPTION_IF_NULL(cnode);
     // Inputs should be [dict_setitem, dict, item, value]
     const size_t expect_inputs_size = 4;
@@ -1056,6 +1069,11 @@ class AfterOptARewriter : public BaseRewriter {
 
   // MakeDict(keys, values) --> PyExecute('dict(zip(keys, values))', ...)
   AnfNodePtr ConvertMakeDict(const CNodePtr &node) const {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    if (context->not_convert_jit()) {
+      return nullptr;
+    }
     const auto &fg = node->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
     // Local parameters values.
@@ -1560,14 +1578,16 @@ class AfterOptARewriter : public BaseRewriter {
     if (x_abs == nullptr) {
       return nullptr;
     }
-    auto dtype_abs = GetAbstract<abstract::AbstractType>(dtype_node);
+    auto dtype_abs = GetAbstract<abstract::AbstractScalar>(dtype_node);
     MS_EXCEPTION_IF_NULL(dtype_abs);
-    auto dtype_val = dtype_abs->BuildValue();
+    auto dtype_val = dtype_abs->GetValue();
     MS_EXCEPTION_IF_NULL(dtype_val);
-    auto scalar_type = dtype_val->cast<TypePtr>();
-    MS_EXCEPTION_IF_NULL(scalar_type);
+    auto type_id_opt = ops::GetScalarValue<int64_t>(dtype_val);
+    if (!type_id_opt.has_value()) {
+      MS_LOG(EXCEPTION) << "the dtype input is invalid!";
+    }
     std::string target_type_str;
-    auto type_id = NormalizeTypeId(scalar_type->type_id());
+    auto type_id = type_id_opt.value();
     if (type_id == kNumberTypeInt) {
       target_type_str = "int";
     } else if (type_id == kNumberTypeFloat) {
@@ -1575,7 +1595,7 @@ class AfterOptARewriter : public BaseRewriter {
     } else if (type_id == kNumberTypeBool) {
       target_type_str = "bool";
     } else {
-      MS_LOG(EXCEPTION) << "Unsupported type: " << scalar_type->ToString();
+      MS_LOG(EXCEPTION) << "Unsupported type: " << type_id;
     }
 
     const auto &fg = cnode->func_graph();
@@ -1647,7 +1667,8 @@ class AfterOptARewriter : public BaseRewriter {
   // Only process the node that have a PyExecute node(the abstract is AbstractAny).
   bool CheckInputsHasAnyType(const CNodePtr &cnode) const {
     bool exist_any_type = false;
-    for (const auto &input : cnode->inputs()) {
+    for (const auto &weak_input : cnode->weak_inputs()) {
+      auto input = weak_input.lock();
       auto input_abs = input->abstract();
       if (fallback::ContainsSequenceAnyType(input_abs)) {
         exist_any_type = true;
@@ -1696,12 +1717,16 @@ class AfterOptARewriter : public BaseRewriter {
     // Convert all node to list[str]
     constexpr auto kConvertToListString = "list(map(str, __inner_convert_object__))";
     constexpr auto kConvertToListKey = "__inner_convert_object__";
-    std::vector<AnfNodePtr> list_str_value_list = {NewValueNode(prim::kPrimMakeTuple)};
-    (void)std::copy(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(list_str_value_list));
+    const auto make_tuple_value_node = NewValueNode(prim::kPrimMakeTuple);
+    AnfNodeWeakPtrList list_str_value_list = {make_tuple_value_node};
+    (void)std::copy(cnode->weak_inputs().cbegin() + 1, cnode->weak_inputs().cend(),
+                    std::back_inserter(list_str_value_list));
 
-    std::vector<AnfNodePtr> list_str_key_list = {NewValueNode(prim::kPrimMakeTuple), NewValueNode(kConvertToListKey)};
-    auto list_str_key_node = fg->NewCNode(list_str_key_list);
-    auto list_str_value_node = fg->NewCNode(list_str_value_list);
+    const auto make_tuple_key_node = NewValueNode(prim::kPrimMakeTuple);
+    const auto key_node = NewValueNode(kConvertToListKey);
+    AnfNodeWeakPtrList list_str_key_list = {make_tuple_key_node, key_node};
+    auto list_str_key_node = fg->NewCNodeWeak(list_str_key_list);
+    auto list_str_value_node = fg->NewCNodeWeak(list_str_value_list);
     auto convet_list_str_node = fallback::CreatePyExecuteCNodeInOrder(
       fg, NewValueNode(kConvertToListString), list_str_key_node,
       fg->NewCNode({NewValueNode(prim::kPrimMakeTuple), list_str_value_node}), cnode->debug_info());
@@ -2259,6 +2284,11 @@ class AfterOptARewriter : public BaseRewriter {
   // otherwise:
   //   dict(k0:v0, k1:v1, ...) --> PyExecute('dict(zip(keys, values))', ...)
   AnfNodePtr RebuildValueDict(const FuncGraphPtr &fg, const ValueNodePtr &value_node, const ValueDictionaryPtr &dict) {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    if (context->not_convert_jit()) {
+      return nullptr;
+    }
     auto abs = value_node->abstract();
     MS_EXCEPTION_IF_NULL(abs);
     auto abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();

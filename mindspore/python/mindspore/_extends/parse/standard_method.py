@@ -20,13 +20,13 @@ from __future__ import absolute_import
 from mindspore import Tensor, CSRTensor, COOTensor
 from mindspore import dtype as mstype
 from mindspore._c_expression import Tensor as Tensor_
-from mindspore.common import mutable
 import mindspore.common._monad as monad
 from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.ops.composite.base import _append, _insert, _pop, _list_clear, _reverse, \
     _extend, _dict_setitem, _dict_clear, _haskey, _update, _fromkeys
 from mindspore.ops.composite import multitype_ops
 from mindspore.ops.operations._sequence_ops import TensorToTuple
+from mindspore.ops_generate.gen_ops_inner_prim import ListToTuple, TupleToList
 
 from ... import _checkparam as validator
 from ..._checkparam import check_is_number, check_reshape_shp, check_axis_in_range, \
@@ -43,6 +43,7 @@ from ...ops.operations.math_ops import Median
 from ...ops.operations._inner_ops import Format
 from ...ops.operations import _csr_ops
 from ...ops.operations import _map_tensor_ops
+from ...ops.operations._sequence_ops import TensorToScalar
 from ...ops.primitive import constexpr, _primexpr
 from ...common import dtype as mstype
 from ...ops.operations._sequence_ops import ListAppend, ListInsert, SequenceMax, SequenceMin, \
@@ -2273,8 +2274,8 @@ def hypot(x, other):
     '''
     return F.hypot(x, other)
 
-def softmax(input, axis):
-    return F.softmax(input, axis)
+def softmax(input, axis, dtype=None):
+    return F.softmax(input, axis, dtype=dtype)
 
 def soft_shrink(input, lambd=0.5):
     """Apply the soft shrink function for a tensor. Calculates the output according to the input elements."""
@@ -2346,7 +2347,8 @@ def bool_func(*data):
         tensor_shape = F.shape(data)
         tensor_shape_len = len(tensor_shape)
         if tensor_shape_len == 0 or (tensor_shape_len == 1 and tensor_shape[0] == 1):
-            return F.scalar_cast(data, mstype.bool_)
+            data = F.cast(data, mstype.bool_)
+            return TensorToScalar()(data)
         raise ValueError("The truth value of an array with more than one element is ambiguous.")
     if not F.isconstant(data):
         if hasattr(data, "__bool__"):
@@ -2383,6 +2385,14 @@ def int_func(*data):
     if not F.isconstant(target):
         if base != 10:
             const_utils.raise_type_error("int() does not support non-constant input when 'base' is specified.")
+        if isinstance(target, Tensor):
+            tensor_shape = F.shape(target)
+            tensor_shape_len = len(tensor_shape)
+            if tensor_shape_len == 0 or (tensor_shape_len == 1 and tensor_shape[0] == 1):
+                target = F.cast(target, mstype.int64)
+                return TensorToScalar()(target)
+            raise ValueError(f"Can not convert Tensor with more than one element to Scalar, "
+                             f"while the data's shape is : {tensor_shape}")
         return F.scalar_cast(target, mstype.int64)
     if isinstance(target, (CSRTensor, COOTensor, RowTensorInner)):
         const_utils.raise_type_error(
@@ -2406,7 +2416,15 @@ def float_func(*data):
         return 0.0
     data = data[0]
     if not F.isconstant(data):
-        return F.scalar_cast(data, mstype.float32)
+        if isinstance(data, Tensor):
+            tensor_shape = F.shape(data)
+            tensor_shape_len = len(tensor_shape)
+            if tensor_shape_len == 0 or (tensor_shape_len == 1 and tensor_shape[0] == 1):
+                data = F.cast(data, mstype.float64)
+                return TensorToScalar()(data)
+            raise ValueError(f"Can not convert Tensor with more than one element to Scalar, "
+                             f"while the data's shape is: {tensor_shape}")
+        return F.scalar_cast(data, mstype.float64)
     if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
         const_utils.raise_type_error(
             "float() does not support sparse tensor input.")
@@ -2421,17 +2439,16 @@ def list_func(*data):
     if data_len == 0:
         return F.make_list()
     data = data[0]
+    if isinstance(data, list):
+        return data
+    if isinstance(data, tuple):
+        return TupleToList()(data)
     if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
         const_utils.raise_type_error(
             "list() does not support single sparse tensor input.")
     if isinstance(data, dict):
         data = data.keys()
-    if isinstance(data, (tuple, list)) and F.is_sequence_shape_unknown(data):
-        ret = mutable([], True)
-        if F.is_dynamic_sequence_element_unknown(data):
-            return ret
-    else:
-        ret = F.make_list()
+    ret = F.make_list()
     for i in data:
         ret = ret + F.make_list(i)
     return ret
@@ -2445,16 +2462,15 @@ def tuple_func(*data):
     if data_len == 0:
         return F.make_tuple()
     data = data[0]
+    if isinstance(data, tuple):
+        return data
+    if isinstance(data, list):
+        return ListToTuple()(data)
     if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
         raise TypeError("tuple() does not support single sparse tensor input.")
     if isinstance(data, dict):
         data = data.keys()
-    if isinstance(data, (tuple, list)) and F.is_sequence_shape_unknown(data):
-        ret = mutable((), True)
-        if F.is_dynamic_sequence_element_unknown(data):
-            return ret
-    else:
-        ret = F.make_tuple()
+    ret = F.make_tuple()
     for i in data:
         ret = ret + F.make_tuple(i)
     return ret
@@ -4424,6 +4440,12 @@ def outer(input, vec2):
     For details, please refer to :func:`mindspore.ops.vec2`.
     """
     return F.outer(input, vec2)
+
+def sigmoid(input):
+    r"""
+    For details, please refer to :func:`mindspore.ops.sigmoid`.
+    """
+    return F.sigmoid(input)
 
 def _getitem(data, index):
     return multitype_ops.getitem(data, index)

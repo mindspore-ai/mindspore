@@ -33,11 +33,10 @@ IMPLEMT_INFERFUNC(BroadcastTo, BroadcastToInferShape) {
   const vector<string> depend_names = {"shape"};
   PREPARE_DYNAMIC_SHAPE(depend_names);
   Tensor data;
-  auto op_info = OpDescUtils::GetOpDescFromOperator(op);
   if (op.GetInputConstData("shape", data) != GRAPH_SUCCESS) {
     OP_LOGI(TbeGetName(op).c_str(), "Get constValue failed of [shape]");
-    auto shape_desc = op_info->MutableInputDesc("shape");
-    vector<int64_t> shapedims = shape_desc->MutableShape().GetDims();
+    auto shape_desc = op.GetInputDesc("shape");
+    vector<int64_t> shapedims = shape_desc.GetShape().GetDims();
     size_t dim_num = shapedims.size();
 
     DataType input_dtype = op.GetInputDescByName("x").GetDataType();
@@ -54,10 +53,11 @@ IMPLEMT_INFERFUNC(BroadcastTo, BroadcastToInferShape) {
       shape_vector.push_back(-1);
       range_vector.push_back(std::make_pair(1, -1));
     }
-    auto output_desc = op_info->MutableOutputDesc("y");
-    output_desc->SetShape(GeShape(shape_vector));
-    output_desc->SetShapeRange(range_vector);
-    output_desc->SetDataType(input_dtype);
+    auto output_desc = op.GetOutputDesc("y");
+    output_desc.SetShape(Shape(shape_vector));
+    output_desc.SetShapeRange(range_vector);
+    output_desc.SetDataType(input_dtype);
+    op.UpdateOutputDesc("y", output_desc);
     return GRAPH_SUCCESS;
   }
 
@@ -73,9 +73,10 @@ IMPLEMT_INFERFUNC(BroadcastTo, BroadcastToInferShape) {
   OP_LOGI(TbeGetName(op).c_str(), "the op infer shape and dtype");
   DataType input_dtype = op.GetInputDescByName("x").GetDataType();
 
-  auto output_desc = op_info->MutableOutputDesc("y");
-  output_desc->SetShape(GeShape(vec_dim));
-  output_desc->SetDataType(input_dtype);
+  auto output_desc = op.GetOutputDesc("y");
+  output_desc.SetShape(Shape(vec_dim));
+  output_desc.SetDataType(input_dtype);
+  op.UpdateOutputDesc("y", output_desc);
   return GRAPH_SUCCESS;
 }
 

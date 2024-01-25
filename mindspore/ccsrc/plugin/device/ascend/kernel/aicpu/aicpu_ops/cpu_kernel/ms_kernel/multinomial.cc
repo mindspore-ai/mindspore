@@ -55,10 +55,17 @@ uint32_t Generate(Tensor *input_0, Tensor *input_1, Tensor *output, const CpuKer
   const auto input_rank = input_shape->GetDims();
   int64_t batch_size = input_rank == 1 ? 1 : input_shape->GetDimSize(0);
   int64_t num_classes = input_shape->GetDimSize(input_rank - 1);
-  int32_t num_samples = *(reinterpret_cast<int32_t *>(input_1->GetData()));
 
+  DataType input1_datatype = input_1->GetDataType();
+  int64_t num_samples;
+  if (input1_datatype == DT_INT32) {
+    num_samples = static_cast<int64_t>(*(reinterpret_cast<int32_t *>(input_1->GetData())));
+  } else {
+    num_samples = *(reinterpret_cast<int64_t *>(input_1->GetData()));
+  }
   // get random seed and setup generator
   RNG_Engine rng;
+  /*
   uint32_t kernel_ret = 0;
   AttrValue *seed_ptr = ctx.GetAttr("seed");
   AttrValue *seed2_ptr = ctx.GetAttr("seed2");
@@ -69,6 +76,8 @@ uint32_t Generate(Tensor *input_0, Tensor *input_1, Tensor *output, const CpuKer
   if (kernel_ret != KERNEL_STATUS_OK) {
     return KERNEL_STATUS_INNER_ERROR;
   }
+  */
+  uint64_t rng_seed = std::random_device()();
   rng.seed(rng_seed);
 
   auto input_0_data = reinterpret_cast<T_in *>(input_0->GetData());
@@ -180,8 +189,9 @@ uint32_t MultinomialCpuKernel::Compute(CpuKernelContext &ctx) {
                      "but got data type[%s].",
                      DTypeStr(input0_datatype).c_str());
   DataType input1_datatype = input_1->GetDataType();
-  KERNEL_CHECK_FALSE((input1_datatype == DT_INT32), KERNEL_STATUS_PARAM_INVALID,
-                     "Input[1] data type must DT_INT32, but got data type[%s].", DTypeStr(input1_datatype).c_str());
+  KERNEL_CHECK_FALSE((input1_datatype == DT_INT32 || input1_datatype == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
+                     "Input[1] data type must int32 or int64, but got data type[%s].",
+                     DTypeStr(input1_datatype).c_str());
 
   // check input dimension
   const auto rank_0 = input_0->GetTensorShape()->GetDims();

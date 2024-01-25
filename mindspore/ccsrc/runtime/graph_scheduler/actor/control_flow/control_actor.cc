@@ -416,6 +416,13 @@ void ControlActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, con
         {device_tensor->device_name(), device_tensor->device_id()});
       MS_EXCEPTION_IF_NULL(device_context);
       device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name(), device::AllocatorType::kOther, 0);
+      auto data_stream_id = data->stream_id();
+      auto device_tensor_stream_id = device_tensor->stream_id();
+      if (device_tensor_stream_id != data_stream_id) {
+        MS_LOG(INFO) << "Rewrite device tesnor stream id from : " << device_tensor_stream_id
+                     << " to data stream id : " << data_stream_id << ".";
+        device_tensor->set_stream_id(data_stream_id);
+      }
       if ((device_tensor->GetPtr() == nullptr) &&
           (!device_context->device_res_manager_->AllocateMemory(device_tensor.get()))) {
         SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_context,
@@ -587,6 +594,7 @@ void ControlActor::MergeDeviceAddress(OpContext<DeviceTensor> *const context,
   const auto &kernel_tensor = std::make_shared<kernel::KernelTensor>(
     tuple_shape, tuple_type, nullptr, nullptr, total_size, addr_list[0]->format(), addr_list[0]->type_id(), total_shape,
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  kernel_tensor->set_stream_id(addr_list[0]->stream_id());
   const auto &new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   MS_EXCEPTION_IF_NULL(new_device_tensor);
 
@@ -612,6 +620,7 @@ void ControlActor::MergeDeviceAddress(OpContext<DeviceTensor> *const context,
     new_device_tensor->GetMutablePtr(), addr_list[0]->GetSize(), kernel::GetFormatFromStrToEnum(addr_list[0]->format()),
     addr_list[0]->type_id(), shape, device_context->device_context_key().device_name_,
     device_context->device_context_key().device_id_);
+  tmp_kernel_tensor->set_stream_id(addr_list[0]->stream_id());
   const auto &tmp_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(tmp_kernel_tensor);
   MS_EXCEPTION_IF_NULL(tmp_device_tensor);
   MS_LOG(DEBUG) << "Create device tensor:" << tmp_device_tensor << " type:" << tmp_device_tensor->type_id();

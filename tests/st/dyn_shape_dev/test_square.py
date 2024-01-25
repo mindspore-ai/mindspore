@@ -22,7 +22,7 @@ import test_utils
 
 @test_utils.run_with_cell
 def square_forward_func(x):
-    return ops.auto_generate.square_(x)
+    return ops.square(x)
 
 
 @test_utils.run_with_cell
@@ -32,7 +32,7 @@ def square_backward_func(x):
 
 @test_utils.run_with_cell
 def square_dyn_shape_func(x):
-    return ops.auto_generate.square_(x)
+    return ops.square(x)
 
 
 @pytest.mark.level1

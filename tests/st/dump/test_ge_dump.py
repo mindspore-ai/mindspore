@@ -36,8 +36,6 @@ from dump_test_utils import generate_dump_json, generate_dump_json_with_overflow
 from tests.security_utils import security_off_wrap
 
 
-os.environ['MS_ENABLE_GE'] = '1'
-os.environ['MS_DISABLE_REF_MODE'] = '1'
 
 
 class Net(nn.Cell):
@@ -260,6 +258,8 @@ def run_overflow_dump():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_ge_overflow_dump():

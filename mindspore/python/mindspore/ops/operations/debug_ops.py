@@ -110,6 +110,7 @@ class ScalarSummary(Primitive):
 
         self.add_prim_attr("side_effect_io", True)
         self.add_prim_attr("channel_name", "ms_scalar_summary")
+        self.add_prim_attr("dyn_input_sizes", [-1, 1])
 
     def __call__(self, *args):
         _cache_summary_data(self.name, args[0], args[1])
@@ -160,6 +161,7 @@ class ImageSummary(PrimitiveWithInfer):
 
         self.add_prim_attr("side_effect_io", True)
         self.add_prim_attr("channel_name", "ms_image_summary")
+        self.add_prim_attr("dyn_input_sizes", [-1, 1])
 
     def __infer__(self, name, value):
         _check_summary_param(name, value, self.__class__.__name__)
@@ -369,6 +371,7 @@ class HistogramSummary(PrimitiveWithInfer):
 
         self.add_prim_attr("side_effect_io", True)
         self.add_prim_attr("channel_name", "ms_histogram_summary")
+        self.add_prim_attr("dyn_input_sizes", [-1, 1])
 
     def __infer__(self, name, value):
         _check_summary_param(name, value, self.__class__.__name__)

@@ -39,8 +39,8 @@ struct TensorReplaceInfo {
 
 void SetIdWithOpInfo(const ValuePtr &v, const std::string &op_info, size_t out_index,
                      TensorIdWithOpInfo *id_with_op_info);
-void UpdateForwardOutputTensorInfo(const std::string &op_info, const ValuePtr &v,
-                                   const TensorReplaceInfo &replace_info);
+void UpdateForwardOutputTensorInfo(const std::string &op_info, const ValuePtr &v, const TensorReplaceInfo &replace_info,
+                                   const size_t &stream_id);
 void SaveForwardOutputTensorInfo(const FuncGraphPtr &func_graph, bool need_save_tensor_info,
                                  TensorReplaceInfo *replace_info);
 }  // namespace pynative

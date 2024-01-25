@@ -32,9 +32,6 @@ build_mindspore()
     if [[ "X$RUN_CPP_ST_TESTS" = "Xon" ]]; then
       CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_CPP_ST=ON"
     fi
-    if [[ "X$RUN_C_ST_TESTS" = "Xon" ]]; then
-      CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_C_ST=ON"
-    fi
     if [[ -n "$ENABLE_BACKEND" ]]; then
       CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_${ENABLE_BACKEND}=ON"
     fi

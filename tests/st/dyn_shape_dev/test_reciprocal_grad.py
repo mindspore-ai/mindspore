@@ -22,7 +22,7 @@ from mindspore import ops
 
 @test_utils.run_with_cell
 def reciprocal_grad_func(y, dy):
-    return ops.auto_generate.reciprocal_grad(y, dy)
+    return ops.auto_generate.ReciprocalGrad()(y, dy)
 
 
 @pytest.mark.level1
@@ -84,7 +84,7 @@ def test_reciprocal_grad_dynamic(mode):
     context.set_context(mode=mode)
     y_dyn = ms.Tensor(shape=None, dtype=ms.float32)
     dy_dyn = ms.Tensor(shape=None, dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(ops.auto_generate.reciprocal_grad)
+    test_cell = test_utils.to_cell_obj(ops.auto_generate.ReciprocalGrad())
     test_cell.set_inputs(y_dyn, dy_dyn)
     y1 = Tensor(np.array([1., 0.5, 0.25]).astype(np.float32))
     dy1 = Tensor(np.array([1., 1., 1.]).astype(np.float32))

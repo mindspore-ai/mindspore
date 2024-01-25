@@ -29,6 +29,7 @@ constexpr auto kShapeIndex3rd = 3;
 constexpr auto kShapeIndex4th = 4;
 constexpr auto kShapeIndex5th = 5;
 constexpr auto kShapeIndex6th = 6;
+constexpr auto kShapeIndex7th = 7;
 constexpr size_t kMaximumInputsNum = 2;
 constexpr size_t kMaximumOutputsNum = 1;
 }  // namespace
@@ -109,14 +110,16 @@ void MaximumCpuKernelMod::BroadcastArith(const T *input_x, const T *input_y, T *
     BroadcastArithKernel(broadcast_input_x_shape_[kShapeIndexZero], broadcast_input_x_shape_[kShapeIndex1st],
                          broadcast_input_x_shape_[kShapeIndex2nd], broadcast_input_x_shape_[kShapeIndex3rd],
                          broadcast_input_x_shape_[kShapeIndex4th], broadcast_input_x_shape_[kShapeIndex5th],
-                         broadcast_input_x_shape_[kShapeIndex6th], broadcast_input_y_shape_[kShapeIndexZero],
-                         broadcast_input_y_shape_[kShapeIndex1st], broadcast_input_y_shape_[kShapeIndex2nd],
-                         broadcast_input_y_shape_[kShapeIndex3rd], broadcast_input_y_shape_[kShapeIndex4th],
-                         broadcast_input_y_shape_[kShapeIndex5th], broadcast_input_y_shape_[kShapeIndex6th],
+                         broadcast_input_x_shape_[kShapeIndex6th], broadcast_input_x_shape_[kShapeIndex7th],
+                         broadcast_input_y_shape_[kShapeIndexZero], broadcast_input_y_shape_[kShapeIndex1st],
+                         broadcast_input_y_shape_[kShapeIndex2nd], broadcast_input_y_shape_[kShapeIndex3rd],
+                         broadcast_input_y_shape_[kShapeIndex4th], broadcast_input_y_shape_[kShapeIndex5th],
+                         broadcast_input_y_shape_[kShapeIndex6th], broadcast_input_y_shape_[kShapeIndex7th],
                          broadcast_output_shape_[kShapeIndexZero], broadcast_output_shape_[kShapeIndex1st],
                          broadcast_output_shape_[kShapeIndex2nd], broadcast_output_shape_[kShapeIndex3rd],
                          broadcast_output_shape_[kShapeIndex4th], broadcast_output_shape_[kShapeIndex5th],
-                         broadcast_output_shape_[kShapeIndex6th], input_x, input_y, output);
+                         broadcast_output_shape_[kShapeIndex6th], broadcast_output_shape_[kShapeIndex7th], input_x,
+                         input_y, output);
   } else {
     if (input_x_shape_.size() == 0 || input_y_shape_.size() == 0) {
       BroadcastArithOneScalarOneTensor(input_x, input_y, output);
@@ -141,7 +144,7 @@ bool MaximumCpuKernelMod::IsBroadcast() const {
 void MaximumCpuKernelMod::InitTensorBroadcastShape() {
   if (output_shape_.size() > max_dims_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of output must be less than or equal to 7, but got " << output_shape_.size()
+                      << "', the dimension of output must be less than or equal to 8, but got " << output_shape_.size()
                       << ".";
   }
   broadcast_input_x_shape_.resize(max_dims_, 1);
@@ -170,38 +173,42 @@ size_t MaximumCpuKernelMod::Index(const size_t &index, const size_t &dim) const 
 // Broadcast Arithmetic
 template <typename T>
 void MaximumCpuKernelMod::BroadcastArithKernel(const size_t l0, const size_t l1, const size_t l2, const size_t l3,
-                                               const size_t l4, const size_t l5, const size_t l6, const size_t r0,
-                                               const size_t r1, const size_t r2, const size_t r3, const size_t r4,
-                                               const size_t r5, const size_t r6, const size_t d0, const size_t d1,
-                                               const size_t d2, const size_t d3, const size_t d4, const size_t d5,
-                                               const size_t d6, const T *input_x, const T *input_y, T *output) {
-  if (d0 == 0 || d1 == 0 || d2 == 0 || d3 == 0 || d4 == 0 || d5 == 0 || d6 == 0) {
+                                               const size_t l4, const size_t l5, const size_t l6, const size_t l7,
+                                               const size_t r0, const size_t r1, const size_t r2, const size_t r3,
+                                               const size_t r4, const size_t r5, const size_t r6, const size_t r7,
+                                               const size_t d0, const size_t d1, const size_t d2, const size_t d3,
+                                               const size_t d4, const size_t d5, const size_t d6, const size_t d7,
+                                               const T *input_x, const T *input_y, T *output) {
+  if (d0 == 0 || d1 == 0 || d2 == 0 || d3 == 0 || d4 == 0 || d5 == 0 || d6 == 0 || d7 == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output must not be 0";
   }
   auto task = [&](size_t start, size_t end) {
     for (size_t pos = start; pos < end; pos++) {
-      size_t i = pos / (d1 * d2 * d3 * d4 * d5 * d6) % d0;
-      size_t j = pos / (d2 * d3 * d4 * d5 * d6) % d1;
-      size_t k = pos / (d3 * d4 * d5 * d6) % d2;
-      size_t l = pos / (d4 * d5 * d6) % d3;
-      size_t m = pos / (d5 * d6) % d4;
-      size_t n = pos / d6 % d5;
-      size_t o = pos % d6;
+      size_t i = pos / (d1 * d2 * d3 * d4 * d5 * d6 * d7) % d0;
+      size_t j = pos / (d2 * d3 * d4 * d5 * d6 * d7) % d1;
+      size_t k = pos / (d3 * d4 * d5 * d6 * d7) % d2;
+      size_t l = pos / (d4 * d5 * d6 * d7) % d3;
+      size_t m = pos / (d5 * d6 * d7) % d4;
+      size_t n = pos / (d6 * d7) % d5;
+      size_t o = pos / d7 % d6;
+      size_t p = pos % d7;
 
-      size_t l_index = Index(i, l0) * l1 * l2 * l3 * l4 * l5 * l6;
-      l_index += Index(j, l1) * l2 * l3 * l4 * l5 * l6;
-      l_index += Index(k, l2) * l3 * l4 * l5 * l6;
-      l_index += Index(l, l3) * l4 * l5 * l6;
-      l_index += Index(m, l4) * l5 * l6;
-      l_index += Index(n, l5) * l6;
-      l_index += Index(o, l6);
-      size_t r_index = Index(i, r0) * r1 * r2 * r3 * r4 * r5 * r6;
-      r_index += Index(j, r1) * r2 * r3 * r4 * r5 * r6;
-      r_index += Index(k, r2) * r3 * r4 * r5 * r6;
-      r_index += Index(l, r3) * r4 * r5 * r6;
-      r_index += Index(m, r4) * r5 * r6;
-      r_index += Index(n, r5) * r6;
-      r_index += Index(o, r6);
+      size_t l_index = Index(i, l0) * l1 * l2 * l3 * l4 * l5 * l6 * l7;
+      l_index += Index(j, l1) * l2 * l3 * l4 * l5 * l6 * l7;
+      l_index += Index(k, l2) * l3 * l4 * l5 * l6 * l7;
+      l_index += Index(l, l3) * l4 * l5 * l6 * l7;
+      l_index += Index(m, l4) * l5 * l6 * l7;
+      l_index += Index(n, l5) * l6 * l7;
+      l_index += Index(o, l6) * l7;
+      l_index += Index(p, l7);
+      size_t r_index = Index(i, r0) * r1 * r2 * r3 * r4 * r5 * r6 * r7;
+      r_index += Index(j, r1) * r2 * r3 * r4 * r5 * r6 * r7;
+      r_index += Index(k, r2) * r3 * r4 * r5 * r6 * r7;
+      r_index += Index(l, r3) * r4 * r5 * r6 * r7;
+      r_index += Index(m, r4) * r5 * r6 * r7;
+      r_index += Index(n, r5) * r6 * r7;
+      r_index += Index(o, r6) * r7;
+      r_index += Index(p, r7);
       output[pos] = MaximumFunc(input_x[l_index], input_y[r_index]);
     }
   };

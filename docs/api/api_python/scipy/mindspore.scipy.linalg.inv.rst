@@ -21,6 +21,6 @@ mindspore.scipy.linalg.inv
     返回：
         Tensor，矩阵 `a` 的逆。
 
-    异常:
+    异常：
         - **LinAlgError** - 如果 :math:`a` 是单数。
         - **ValueError** - 如果 :math:`a` 不是2D方阵。

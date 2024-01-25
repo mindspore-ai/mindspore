@@ -34,7 +34,7 @@ STATUS GetAxesSet(const api::CNodePtr &op, const ShapeVector &input_shape, const
     return RET_ERROR;
   }
   DataInfo data_info;
-  if (op->inputs().size() > kInputIndex2 && FetchDataFromParameterNode(op, kInputIndex2, &data_info) == lite::RET_OK) {
+  if (op->size() > kInputIndex2 && FetchDataFromParameterNode(op, kInputIndex2, &data_info) == lite::RET_OK) {
     if (data_info.data_type_ != static_cast<int>(kNumberTypeInt32)) {
       MS_LOG(ERROR) << "data_type not correct";
       return RET_ERROR;

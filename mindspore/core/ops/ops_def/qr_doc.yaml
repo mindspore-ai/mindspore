@@ -6,11 +6,13 @@ qr:
         input. If `mode` is 'complete', compute full-sized Q and R.
 
         Args:
-            input (Tensor): A matrix to be calculated. The matrix must be at least two dimensions, the supported dtype are
+            full_matrices (bool, optional): Whether compute full-sized QR decomposition. Default: ``False`` .
+        
+        Inputs:
+            - **x** (Tensor): A matrix to be calculated. The matrix must be at least two dimensions, the supported dtype are
                 float16, float32, float64, complex64 and complex128.
                 Define the shape of input as :math:`(..., m, n)`, p as the
-                minimum values of m and n.
-            full_matrices (bool, optional): Whether compute full-sized QR decomposition. Default: ``False`` .
+                minimum values of m and n.    
 
         Returns:
             - **Q** (Tensor) - The orthonormal matrices of input. If `mode` is 'complete', the shape is :math:`(m, m)`,
@@ -30,8 +32,8 @@ qr:
             >>> import mindspore as ms
             >>> from mindspore import Tensor, ops
             >>> import numpy as np
-            >>> input = Tensor(np.array([[20., -31, 7], [4, 270, -90], [-8, 17, -32]]), ms.float32)
-            >>> Q, R = ops.qr_(input)
+            >>> x = Tensor(np.array([[20., -31, 7], [4, 270, -90], [-8, 17, -32]]), ms.float32)
+            >>> Q, R = ops.Qr()(x)
             >>> print(Q)
             [[-0.912871    0.16366126  0.37400758]
             [-0.18257418 -0.9830709  -0.01544376]

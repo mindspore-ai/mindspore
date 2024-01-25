@@ -41,7 +41,7 @@ class ScalarCastCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelp
   }
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
-  template <typename T, typename S>
+  template <typename T>
   bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                     const std::vector<KernelTensor *> &outputs);
 

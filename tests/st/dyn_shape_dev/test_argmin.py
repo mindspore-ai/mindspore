@@ -15,12 +15,12 @@
 import pytest
 import numpy as np
 from mindspore import Tensor, context
-from mindspore.ops import auto_generate as P
 import mindspore.common.dtype as mstype
 from mindspore import ops
 
 from test_utils import to_cell_obj
-
+def argmin_(input_x, axis, output_type):
+    return ops.Argmin(axis, output_type)(input_x)
 
 def argmin_argmax_case(op_func, np_func):
     x_np = np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]], np.float32)
@@ -82,7 +82,7 @@ def test_argmin(mode):
     Expectation: the result match with expected result.
     """
     context.set_context(mode=mode)
-    argmin_argmax_case(P.argmin_, np.argmin)
+    argmin_argmax_case(argmin_, np.argmin)
 
 
 @pytest.mark.level1
@@ -98,7 +98,7 @@ def test_argmin_vmap(mode):
     Expectation: the result match with expected result.
     """
     context.set_context(mode=mode)
-    argmin_argmax_case_vmap(P.argmin_)
+    argmin_argmax_case_vmap(argmin_)
 
 
 @pytest.mark.level1
@@ -114,4 +114,4 @@ def test_argmin_dyn(mode):
     Expectation: the result match with expected result.
     """
     context.set_context(mode=mode)
-    argmin_argmax_case_dyn(P.argmin_, np.argmin)
+    argmin_argmax_case_dyn(argmin_, np.argmin)
