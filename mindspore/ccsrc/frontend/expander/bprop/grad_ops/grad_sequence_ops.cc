@@ -135,15 +135,14 @@ REG_BPROP_BUILDER("TupleToList").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(
 REG_BPROP_BUILDER("ScalarToTensor").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex3);
-  dout = ib->Cast(dout, ib->GetDtype(x));
-  auto dx = ib->Emit("TensorToScalar", {dout});
+  auto dx = ib->Emit("TensorToScalar", {dout, ib->Value<int64_t>(ib->GetDtype(x)->type_id())});
   return {dx, ib->OutZeros(ib->GetInput(kIndex1))};
 });
 
 REG_BPROP_BUILDER("TensorToScalar").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex3);
-  auto dx = ib->Emit("ScalarToTensor", {dout, ib->Value(ib->GetDtype(x))});
+  auto dx = ib->Emit("ScalarToTensor", {dout, ib->Value<int64_t>(ib->GetDtype(x)->type_id())});
   return {dx};
 });
 

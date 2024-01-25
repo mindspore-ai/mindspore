@@ -20,6 +20,7 @@
 #include <string>
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/arithmetic_ops.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/convert_utils.h"
 
@@ -138,13 +139,7 @@ CNodePtr MakeTupleUnifyMindIR::CreateScalarToTensor(const FuncGraphPtr &func_gra
   auto prim = NewValueNode(std::make_shared<Primitive>(kScalarToTensorOpName));
   MS_EXCEPTION_IF_NULL(prim);
   auto data_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
-  auto type_id_value_node = NewValueNode(static_cast<int64_t>(data_type));
-  auto type_id_value = std::make_shared<Int64Imm>(static_cast<int64_t>(data_type));
-  type_id_value_node->set_abstract(type_id_value->ToAbstract());
-  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  type_id_value_node = kernel_graph->NewValueNode(type_id_value_node);
-  kernel_graph->AddValueNodeToGraph(type_id_value_node);
+  auto type_id_value_node = AnfAlgo::CreateTypeIdValueNodeToGraph(func_graph, data_type);
   AnfNodePtrList inputs = {prim, node, type_id_value_node};
   CNodePtr scalar_to_tensor = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(scalar_to_tensor);
