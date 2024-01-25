@@ -7976,11 +7976,9 @@ class ApplyAdagradDA(Primitive):
         - **global_step** ([Number, Tensor]) - Training step number. Must be a scalar. With int32 or int64 data type.
 
     Outputs:
-        Tuple of 3 Tensors, the updated parameters.
+        Tuple of 1 Tensors, the updated parameters.
 
         - **var** (Tensor) - The same shape and data type as `var`.
-        - **gradient_accumulator** (Tensor) - The same shape and data type as `gradient_accumulator`.
-        - **gradient_squared_accumulator** (Tensor) - The same shape and data type as `gradient_squared_accumulator`.
 
     Raises:
         TypeError: If `var`, `gradient_accumulator` or `gradient_squared_accumulator` is not a Parameter.
@@ -8031,11 +8029,7 @@ class ApplyAdagradDA(Primitive):
         >>> print(output)
         (Tensor(shape=[2, 2], dtype=Float32, value=
         [[-7.39064650e-04, -1.36888528e-03],
-         [-5.96988888e-04, -1.42478070e-03]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 4.00000006e-01,  7.00000048e-01],
-         [ 2.00000003e-01,  6.99999988e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 2.90000021e-01,  2.60000020e-01],
-         [ 1.09999999e-01,  2.40000010e-01]]))
+         [-5.96988888e-04, -1.42478070e-03]]))
     """
 
     __mindspore_signature__ = (
