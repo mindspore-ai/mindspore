@@ -244,7 +244,8 @@ void GPUDeviceContext::Destroy() {
   device_res_manager_->Destroy();
 }
 
-void *GPUDeviceResManager::AllocateMemory(size_t size, uint32_t stream_id) const {
+// GPU use default stream id currently, so stream id would be ignored.
+void *GPUDeviceResManager::AllocateMemory(size_t size, uint32_t /*stream_id*/) const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   if (!BindDeviceToCurrentThread(false)) {
     return nullptr;
@@ -252,7 +253,7 @@ void *GPUDeviceResManager::AllocateMemory(size_t size, uint32_t stream_id) const
   if (swap_manager_ != nullptr) {
     return swap_manager_->AllocDeviceMemory(size);
   }
-  return mem_manager_->MallocMemFromMemPool(size, false, false, stream_id);
+  return mem_manager_->MallocMemFromMemPool(size, false, false);
 }
 
 void GPUDeviceResManager::FreeMemory(void *ptr) const {
@@ -283,11 +284,11 @@ bool GPUDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
     return false;
   }
   void *device_ptr;
+  // GPU use default stream id currently, so stream id would be ignored.
   if (swap_manager_ != nullptr) {
     device_ptr = swap_manager_->AllocDeviceMemory(address->GetSize());
   } else {
-    device_ptr = mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem(), false,
-                                                    address->stream_id());
+    device_ptr = mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem(), false);
   }
   if (!device_ptr) {
     return false;
@@ -298,8 +299,9 @@ bool GPUDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   return true;
 }
 
+// GPU use default stream id currently, so stream id would be ignored.
 std::vector<void *> GPUDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list,
-                                                                  uint32_t stream_id) const {
+                                                                  uint32_t /*stream_id*/) const {
   if (!BindDeviceToCurrentThread(false)) {
     std::vector<void *> ptr_list;
     return ptr_list;

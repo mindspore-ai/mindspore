@@ -103,7 +103,7 @@ void *GeDeviceResManager::AllocateMemory(size_t size, uint32_t stream_id) const 
   runtime_instance_->SetContext();
   MS_EXCEPTION_IF_NULL(mem_manager_);
   if (swap_manager_ != nullptr) {
-    return swap_manager_->AllocDeviceMemory(size);
+    return swap_manager_->AllocDeviceMemory(size, stream_id);
   }
   return mem_manager_->MallocMemFromMemPool(size, false, false, stream_id);
 }
@@ -143,7 +143,7 @@ std::vector<void *> GeDeviceResManager::AllocateContinuousMemory(const std::vect
     aligned_size_list.emplace_back(align_size);
   }
   if (swap_manager_ != nullptr) {
-    return swap_manager_->AllocDeviceContinuousMem(aligned_size_list);
+    return swap_manager_->AllocDeviceContinuousMem(aligned_size_list, stream_id);
   }
   return mem_manager_->MallocContinuousMemFromMemPool(aligned_size_list, stream_id);
 }

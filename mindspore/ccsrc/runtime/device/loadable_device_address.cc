@@ -156,7 +156,7 @@ bool LoadableDeviceAddress::MoveToDevice(bool async, size_t stream_id) const {
   if (status_ == DeviceAddressStatus::kInFile) {
 #if defined(RT_MEMORY_P2PDMA)
     if (GetDevicePtr() == nullptr) {
-      SetDevicePtr(swap_manager->AllocDeviceMemory(GetSize()));
+      SetDevicePtr(swap_manager->AllocDeviceMemory(GetSize(), stream_id));
     }
     MS_EXCEPTION_IF_NULL(ptr_);
     if (FileToDeviceDirectly(GetDevicePtr(), GetSize(), storage_info_.file_name_, stream_id)) {
@@ -177,7 +177,7 @@ bool LoadableDeviceAddress::MoveToDevice(bool async, size_t stream_id) const {
     }
   }
   if (GetDevicePtr() == nullptr) {
-    SetDevicePtr(swap_manager->AllocDeviceMemory(GetSize()));
+    SetDevicePtr(swap_manager->AllocDeviceMemory(GetSize(), stream_id));
     if (GetDevicePtr() == nullptr) {
       MS_LOG(WARNING) << "Allocating device memory failed, size: " << GetSize();
       return false;
