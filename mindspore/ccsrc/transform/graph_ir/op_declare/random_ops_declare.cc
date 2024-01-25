@@ -177,4 +177,18 @@ CUST_ATTR_MAP(RandomShuffle) = {{"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
                                 {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
 CUST_OUTPUT_MAP(RandomShuffle) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(RandomShuffle, prim::kPrimRandomShuffle->name(), CUST_ADPT_DESC(RandomShuffle));
+
+// Igamma
+CUST_INPUT_MAP(Igamma) = {{1, INPUT_DESC(a)}, {2, INPUT_DESC(x)}};
+CUST_ATTR_MAP(Igamma) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(Igamma) = {{0, OUTPUT_DESC(z)}};
+REG_ADPT_DESC(Igamma, kNameIgamma, CUST_ADPT_DESC(Igamma));
+
+// Poisson
+CUST_INPUT_MAP(Poisson) = {
+  {1, INPUT_DESC(shape)}, {2, INPUT_DESC(mean)}, {3, INPUT_DESC(seed)}, {4, INPUT_DESC(seed2)}};
+CUST_ATTR_MAP(Poisson) = {{"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
+                          {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
+CUST_OUTPUT_MAP(Poisson) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(Poisson, kNamePoisson, CUST_ADPT_DESC(Poisson));
 }  // namespace mindspore::transform

@@ -33,6 +33,7 @@ uint64_t GetKernelBaseRandomStates(const std::vector<uintptr_t> &ioAddrs, const 
                                    const std::string &kernel_name, uint32_t *kernel_ret);
 uint64_t InferOutputShape(std::vector<uint64_t> *out_shape, std::vector<uint64_t> *shape,
                           std::vector<uint64_t> *mean_shape, std::vector<uint64_t> *stddev_shape, uint64_t *count);
+void NormalizeShape(std::vector<uint64_t> *shape, uint64_t size);
 }  // namespace random
 }  // namespace aicpu
 

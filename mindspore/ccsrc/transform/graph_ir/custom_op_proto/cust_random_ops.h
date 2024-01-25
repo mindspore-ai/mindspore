@@ -122,5 +122,21 @@ REG_CUST_OP(RandomUniformInt)
     .ATTR(seed, Int, 0)
     .ATTR(seed2, Int, 0)
     .CUST_OP_END_FACTORY_REG(RandomUniformInt)
+
+REG_CUST_OP(Igamma)
+  .INPUT(a, TensorType({DT_DOUBLE, DT_FLOAT}))
+  .INPUT(x, TensorType({DT_DOUBLE, DT_FLOAT}))
+  .OUTPUT(z, TensorType({DT_DOUBLE, DT_FLOAT}))
+  .CUST_OP_END_FACTORY_REG(Igamma)
+
+REG_CUST_OP(Poisson)
+  .INPUT(shape, TensorType({DT_INT32, DT_INT64}))
+  .INPUT(mean, TensorType({DT_FLOAT}))
+  .INPUT(seed, TensorType({DT_INT64}))  // seed_adapter convert attr to input
+  .INPUT(seed2, TensorType({DT_INT64}))  // seed_adapter convert attr to input
+  .REQUIRED_ATTR(seed, Int)
+  .REQUIRED_ATTR(seed2, Int)
+  .OUTPUT(output, TensorType({DT_INT32}))
+  .CUST_OP_END_FACTORY_REG(Poisson)
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_RANDOM_OPS_H_
