@@ -124,7 +124,7 @@ void ProcessInconsistentDtype(const AnfNodePtr &node, size_t input_num) {
   for (size_t i = 0; i < input_num; ++i) {
     TypeId input_dtype = AnfAlgo::GetInputDeviceDataType(node, i);
     TypeId prev_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, i);
-    if (input_dtype != prev_dtype) {
+    if (input_dtype != kTypeUnknown && prev_dtype != kTypeUnknown && input_dtype != prev_dtype) {
       (void)inconsistent_dtype_inputs.emplace_back(i);
     }
   }

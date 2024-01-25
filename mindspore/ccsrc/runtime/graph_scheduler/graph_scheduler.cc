@@ -430,6 +430,7 @@ void GraphScheduler::Initialize() {
   if (ret != MINDRT_OK) {
     MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Actor manager init failed.";
   }
+  defalut_actor_thread_num_ = actor_thread_num;
   common::SetOMPThreadNum();
   MS_LOG(INFO) << "The actor thread number: " << actor_thread_num
                << ", the kernel thread number: " << (actor_and_kernel_thread_num - actor_thread_num);
@@ -603,6 +604,30 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
 #endif
 }
 
+void GraphScheduler::RefreshContextAndThreadPool(ActorSet *const actor_set, ActorThreadPool *const thread_pool) {
+  static constexpr size_t kSingleThreadNum = 1;
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto set_ctx = [&context_ptr](bool task_sink, bool is_multi_graph_sink) {
+    context_ptr->set_param<bool>(MS_CTX_ENABLE_TASK_SINK, task_sink);
+    context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, is_multi_graph_sink);
+  };
+
+  if (!actor_set->kernel_actors_.empty()) {
+    // kernel by kernel
+    set_ctx(false, false);
+    thread_pool->SetActorThreadNum(defalut_actor_thread_num_);
+  } else if (actor_set->super_kernel_actors_.size() == 1 && actor_set->control_actors_ == nullptr) {
+    // multi graph sink
+    set_ctx(true, true);
+    thread_pool->SetActorThreadNum(kSingleThreadNum);
+  } else {
+    // sub graph sink
+    set_ctx(true, false);
+    thread_pool->SetActorThreadNum(kSingleThreadNum);
+  }
+}
+
 void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vector<TensorPtr>> &input_tensors,
                          GraphExecutionStrategy strategy) {
   MS_EXCEPTION_IF_NULL(actor_set);
@@ -653,6 +678,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
   MS_EXCEPTION_IF_NULL(ActorMgr::GetActorMgrRef());
   auto thread_pool = ActorMgr::GetActorMgrRef()->GetActorThreadPool();
   MS_EXCEPTION_IF_NULL(thread_pool);
+  RefreshContextAndThreadPool(actor_set, thread_pool);
   if (actor_set->is_multi_thread_execution_) {
     thread_pool->SetSpinCountMaxValue();
   }
