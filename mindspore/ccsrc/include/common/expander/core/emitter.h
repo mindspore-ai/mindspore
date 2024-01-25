@@ -86,7 +86,9 @@ class COMMON_EXPORT Emitter {
   NodePtr Transpose(const NodePtr &node, const ShapeVector &perm) { return Transpose(node, Value(perm)); }
   NodePtr Tile(const NodePtr &node, const NodePtr &dims);
   NodePtr Tile(const NodePtr &node, const ShapeVector &dims) { return Tile(node, Value(dims)); }
-  virtual NodePtr Concat(const NodePtr &input, int64_t axis) { return Emit(kConcatOpName, {input, Value(axis)}); }
+  virtual NodePtr Concat(const NodePtr &input, int64_t axis, const NodePtr &out = nullptr) {
+    return Emit(kConcatOpName, {input, Value(axis)});
+  }
   virtual NodePtr Concat(const NodePtrList &inputs, int64_t axis) {
     return Emit(kConcatOpName, {MakeTuple(inputs), Value(axis)});
   }
@@ -151,7 +153,9 @@ class COMMON_EXPORT Emitter {
   NodePtr ScatterNd(const NodePtr &indices, const NodePtr &update, const NodePtr &shape) {
     return Emit("ScatterNd", {indices, update, shape});
   }
-  virtual NodePtr Stack(const NodePtr &x, const ValuePtr &axis) { return Emit("Stack", {x}, {{"axis", axis}}); }
+  virtual NodePtr Stack(const NodePtr &x, const ValuePtr &axis, const NodePtr &out = nullptr) {
+    return Emit("Stack", {x}, {{"axis", axis}});
+  }
   virtual NodePtr Stack(const NodePtrList &x, int64_t axis) { return Stack(MakeTuple(x), MakeValue(axis)); }
   NodePtr TensorScatterUpdate(const NodePtr &input_x, const NodePtr &indices, const NodePtr &updates) {
     return Emit("TensorScatterUpdate", {input_x, indices, updates});
@@ -238,7 +242,10 @@ class COMMON_EXPORT Emitter {
   NodePtr GatherD(const NodePtr &x, const NodePtr &dim, const NodePtr &index) {
     return Emit("GatherD", {x, dim, index});
   }
-
+  virtual NodePtr BatchNormGrad(const NodePtrList &inputs) { return Emit("BatchNormGrad", inputs); }
+  virtual NodePtr SparseSoftmaxCrossEntropyWithLogits(const NodePtr &logits, const NodePtr &labels, bool is_grad) {
+    return Emit("SparseSoftmaxCrossEntropyWithLogits", {logits, labels}, {{kAttrIsGrad, MakeValue(is_grad)}});
+  }
   /// \brief Emit a value node
   template <typename T>
   NodePtr Value(const T &value) {

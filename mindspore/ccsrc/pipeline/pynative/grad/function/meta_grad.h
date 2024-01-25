@@ -55,11 +55,11 @@ class FuncBackwardNode : public BackwardNode {
                    const mindspore::HashMap<std::string, ValuePtr> &attrs, const ValuePtrList &op_inputs,
                    const ValuePtr &op_output, size_t output_size, const std::vector<InputType> &grad_type)
       : BackwardNode(name, output_size),
-        func_(func),
         attrs_(attrs),
         op_inputs_(op_inputs),
+        grad_type_(grad_type),
         op_output_(op_output),
-        grad_type_(grad_type) {}
+        func_(func) {}
   ~FuncBackwardNode() override = default;
   TensorPtrList CallBackward(const TensorPtrList &grads) override;
   NodePtrList PreProcess(const TensorPtrList &dout, FuncBuilder *emitter);
@@ -68,11 +68,11 @@ class FuncBackwardNode : public BackwardNode {
   void set_attrs(const mindspore::HashMap<std::string, ValuePtr> &attrs) { attrs_ = attrs; }
 
  private:
-  expander::bprop::BpropBuilderFunc func_;
   mindspore::HashMap<std::string, ValuePtr> attrs_;
   std::vector<ValuePtr> op_inputs_;
-  ValuePtr op_output_;
   std::vector<InputType> grad_type_;
+  ValuePtr op_output_;
+  expander::bprop::BpropBuilderFunc func_;
 };
 
 class HookBackwardNode : public BackwardNode {
@@ -92,6 +92,15 @@ class GraphRoot : public BackwardNode {
   ~GraphRoot() override = default;
   TensorPtrList CallBackward(const TensorPtrList &grads) override { return grads; }
   TensorPtrList BuildFlattenSensGradient(const ValuePtrList &sens_gradient) const;
+};
+
+class FakeBackwardNode : public BackwardNode {
+ public:
+  explicit FakeBackwardNode(const string &name) : BackwardNode(name) {}
+  ~FakeBackwardNode() override = default;
+  TensorPtrList CallBackward(const TensorPtrList &grads) override {
+    MS_LOG(EXCEPTION) << "Illegal primitive " << name() << "'s bprop not defined";
+  }
 };
 
 class AutoGradCell {
@@ -127,9 +136,8 @@ class AutoGradCell {
   ValuePtr GetWeightGrad(const tensor::TensorPtr &weight);
   void ClearGrads(const TensorPtrList &weights);
   ValuePtrList OnsLike(const ValuePtr &value);
-  // To do, combin code.
   void CheckSensShapeAndType(const ValuePtr &sens_gradient);
-  std::unique_ptr<FuncBuilder> func_impl_;
+  std::shared_ptr<FuncBuilder> func_impl_;
   OrderedSet<VariablePtr> variable_set_;
   std::vector<std::pair<ValuePtr, VariablePtr>> cell_inputs_;
   ValuePtr sens_value_{nullptr};

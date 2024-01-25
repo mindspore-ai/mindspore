@@ -43,10 +43,7 @@ std::vector<int64_t> Node::shape() {
     return {};
   }
   auto shape = shape_->cast<abstract::ShapePtr>();
-  if (shape == nullptr) {
-    MS_EXCEPTION_IF_NULL(anf_node_);
-    MS_LOG(INTERNAL_EXCEPTION) << "Shape should not be null, node: " << anf_node_->DebugString();
-  }
+  MS_EXCEPTION_IF_NULL(shape);
   return shape->shape();
 }
 

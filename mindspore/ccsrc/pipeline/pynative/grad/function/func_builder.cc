@@ -24,6 +24,8 @@
 #include <vector>
 #include "runtime/pynative/op_function/pyboost_grad_functions.h"
 #include "pipeline/pynative/grad/function/function_utils.h"
+#include "include/backend/optimizer/helper.h"
+#include "include/backend/optimizer/op_adaptation_info_factory.h"
 
 namespace mindspore::pynative {
 namespace {
@@ -57,18 +59,77 @@ AbstractBasePtr SetAbstractValueToAnyValue(const AbstractBasePtr &abs) {
   return abs;
 }
 
-// NodePtrList ConvertConstInputToAttr(const PrimitivePtr &prim, const NodePtrList &inputs) {
-//
-// }
+void GetConstInputToAttr(const PrimitivePtr &op_prim, const std::string &op_name, const std::string &device_target,
+                         bool is_dynamic_shape, mindspore::HashSet<size_t> *input_to_attr_index) {
+  if (op_name == prim::kPrimCustom->name()) {
+    // Custom op needs to set reg dynamically
+    mindspore::HashSet<size_t> attr_indexes;
+    PrimitiveReadLock read_lock(op_prim->shared_mutex());
+    opt::GetCustomOpAttrIndex(op_prim, input_to_attr_index);
+    return;
+  }
+
+  // Ascend const input to attr move to AscendVmOpAdapter
+  if (device_target == kAscendDevice) {
+    return;
+  }
+
+  auto reg_info =
+    opt::OpAdaptationInfoRegister::GetInstance().GetOpAdaptationInfo(op_name, device_target, is_dynamic_shape);
+  if (reg_info == nullptr) {
+    return;
+  } else {
+    MS_EXCEPTION_IF_NULL(input_to_attr_index);
+    for (auto &iter : reg_info->input_attr_map()) {
+      (void)input_to_attr_index->insert(iter.first);
+    }
+  }
+}
+
+NodePtrList ConvertConstInputToAttr(const PrimitivePtr &prim, const NodePtrList &inputs,
+                                    const std::string &device_target) {
+  mindspore::HashSet<size_t> input_to_attr;
+  GetConstInputToAttr(prim, prim->name(), device_target, false, &input_to_attr);
+  if (input_to_attr.empty()) {
+    return inputs;
+  }
+  const auto &input_names = prim->GetAttr(kAttrInputNames);
+  if (input_names == nullptr) {
+    MS_LOG(DEBUG) << "input_names are nullptr";
+    return inputs;
+  }
+  NodePtrList real_inputs;
+  real_inputs.reserve(inputs.size());
+  const auto &input_names_vec = GetValue<std::vector<std::string>>(input_names);
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    const auto &value = inputs[i]->Value();
+    if (input_to_attr.find(i) != input_to_attr.end()) {
+      if (i >= input_names_vec.size()) {
+        MS_LOG(EXCEPTION) << "Index " << i << " is larger than input names size [" << input_names_vec.size() << "]";
+      }
+      if (value->isa<tensor::Tensor>()) {
+        auto tensor = value->cast<tensor::TensorPtr>();
+        if (tensor->data().const_data() == nullptr && !tensor->has_user_data(kTensorValueIsEmpty)) {
+          return inputs;
+        }
+      }
+      prim->set_attr(input_names_vec[i], value);
+    } else {
+      (void)real_inputs.emplace_back(inputs[i]);
+    }
+  }
+  return real_inputs;
+}
 }  // namespace
 NodePtr FuncBuilder::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) {
+  auto real_inputs = ConvertConstInputToAttr(prim, inputs, device_target_);
   std::vector<ValuePtr> op_inputs;
-  op_inputs.reserve(inputs.size());
+  op_inputs.reserve(real_inputs.size());
   abstract::AbstractBasePtrList input_abs;
-  input_abs.reserve(inputs.size());
+  input_abs.reserve(real_inputs.size());
   std::vector<InputType> input_mask;
-  input_mask.reserve(inputs.size());
-  for (const auto &input : inputs) {
+  input_mask.reserve(real_inputs.size());
+  for (const auto &input : real_inputs) {
     (void)op_inputs.emplace_back(input->Value());
     auto abs = input->abstract();
     if (input->input_type() != InputType::kConstant) {
@@ -105,8 +166,8 @@ NodePtr FuncBuilder::EmitValue(const ValuePtr &value) {
   return node;
 }
 
-NodePtr FuncBuilder::Concat(const NodePtr &inputs, int64_t axis) {
-  NodePtrList node_inputs = FlattenNode(inputs);
+NodePtr FuncBuilder::Concat(const NodePtr &inputs, int64_t axis, const NodePtr &out) {
+  NodePtrList node_inputs = FlattenNode(inputs, out);
   return Concat(node_inputs, axis);
 }
 
@@ -118,18 +179,17 @@ NodePtr FuncBuilder::Concat(const NodePtrList &inputs, int64_t axis) {
   return Emit(kConcatOpName, real_input, attrs);
 }
 
-NodePtr FuncBuilder::Stack(const NodePtr &x, const ValuePtr &axis_value) {
-  NodePtrList node_inputs = FlattenNode(x);
+NodePtr FuncBuilder::Stack(const NodePtr &x, const ValuePtr &axis_value, const NodePtr &out) {
+  NodePtrList node_inputs = FlattenNode(x, out);
   int64_t axis = GetValue<int64_t>(axis_value);
   return Stack(node_inputs, axis);
 }
 
 NodePtr FuncBuilder::Stack(const NodePtrList &x, int64_t axis) {
   std::vector<int64_t> dyn_size{static_cast<int64_t>(x.size()), -1};
-  expander::DAttr attrs{std::make_pair(kAttrDynInputSizes, MakeValue(dyn_size))};
-  NodePtrList real_input(x);
-  (void)real_input.emplace_back(Value(axis));
-  return Emit(kStackOpName, real_input, attrs);
+  expander::DAttr attrs{std::make_pair(kAttrDynInputSizes, MakeValue(dyn_size)),
+                        std::make_pair("axis", MakeValue(axis))};
+  return Emit(kStackOpName, x, attrs);
 }
 
 NodePtr FuncBuilder::Cast(const NodePtr &node, const TypePtr &type) {
@@ -144,6 +204,35 @@ NodePtr FuncBuilder::Cast(const NodePtr &node, const TypePtr &type) {
   }
   prim->set_attr(input_names_vec[kIndex1], type);
   return EmitOp(prim, {node});
+}
+
+NodePtr FuncBuilder::BatchNormGrad(const NodePtrList &inputs) {
+  if (device_target_ != kAscendDevice) {
+    return Emitter::BatchNormGrad(inputs);
+  }
+  auto prim = NewPrimitive("BNInferGrad");
+  NodePtrList real_inputs;
+  real_inputs.reserve(kSizeFour);
+  constexpr size_t kIdxGrads = 0;
+  constexpr size_t kIdxScale = 2;
+  constexpr size_t kIdxVariance = 4;
+  constexpr size_t kIdxIsTraining = 6;
+  constexpr size_t kIdxEpsilon = 7;
+  prim->set_attr(kAttrIsTraining, inputs[kIdxIsTraining]->Value());
+  prim->set_attr(kAttrEpsilon, inputs[kIdxEpsilon]->Value());
+  real_inputs.emplace_back(inputs[kIdxGrads]);
+  real_inputs.emplace_back(inputs[kIdxScale]);
+  real_inputs.emplace_back(inputs[kIdxVariance]);
+  real_inputs.emplace_back(inputs[kIdxEpsilon]);
+  return Emit("BNInferGrad", real_inputs);
+}
+
+NodePtr FuncBuilder::SparseSoftmaxCrossEntropyWithLogits(const NodePtr &logits, const NodePtr &labels, bool is_grad) {
+  return Emitter::SparseSoftmaxCrossEntropyWithLogits(logits, labels, is_grad);
+  //  if (device_target_ != kAscendDevice || !is_grad) {
+  //  }
+  //  Reshape();
+  //  auto onehot = Emit("OneHot", {out_0, depth, on_value, off_value, ib->Value<int64_t>(onehot_axis)})
 }
 
 NodePtr FuncBuilder::TupleGetItem(const NodePtr &input, size_t i) {
@@ -193,14 +282,20 @@ void FuncBuilder::SetInputs(std::string instance_name, const std::vector<NodePtr
   attrs_ptr_ = attrs_ptr;
 }
 
-NodePtrList FuncBuilder::FlattenNode(const NodePtr &input) {
+NodePtrList FuncBuilder::FlattenNode(const NodePtr &input, const NodePtr &out) {
   if (!input->Value()->isa<ValueSequence>()) {
-    MS_LOG(EXCEPTION) << "Input should be value sequence, but got" << input->Value()->ToString();
+    return {input};
   }
   auto value_seq = input->Value()->cast<ValueSequencePtr>()->value();
+  auto out_seq = out->Value()->cast<ValueSequencePtr>()->value();
   NodePtrList flattenNodes;
   flattenNodes.reserve(value_seq.size());
-  for (const auto &value : value_seq) {
+  for (size_t i = 0; i < value_seq.size(); ++i) {
+    auto value = value_seq[i];
+    if (value->isa<None>()) {
+      (void)flattenNodes.emplace_back(ZerosLike(NewFuncNode(out_seq[i], out->input_type())));
+      continue;
+    }
     (void)flattenNodes.emplace_back(NewFuncNode(value, input->input_type()));
   }
   return flattenNodes;
