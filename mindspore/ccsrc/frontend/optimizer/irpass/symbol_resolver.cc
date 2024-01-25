@@ -32,6 +32,11 @@ namespace irpass {
 // {prim::kPrimSetAttr, object, attr, assigned}
 // {prim::kPrimResolve, namespace, symbol}
 AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
+  auto fg = node->func_graph();
+  if (fg != nullptr && fg->has_flag(FUNC_GRAPH_FLAG_IF_DEFER_RESOLVE)) {
+    return nullptr;
+  }
+
   PatternNode<AnfNodePtr> object;
   PatternNode<AnfNodePtr> attr;
   PatternNode<AnfNodePtr> setattr_target;

@@ -19,12 +19,39 @@ from mindspore import Tensor
 from mindspore.ops import functional as F
 
 
+@jit
+def defer_resolve(x):
+    y1 = x + 1
+    y2 = x + 2
+    y3 = 1
+    y = y1 + y2
+
+    if x > 10:
+        y = y + y1 + y3
+    else:
+        y = y + y2
+
+    y = y + 2
+    return y
+
+
+def test_defer_resolve():
+    """
+    Feature: defere resolve if true and false branches graphs.
+    Description: The if true and false branches graphs will been  resolved at infer phase.
+    Expectation: Run successfully
+    """
+    x = Tensor([10])
+    defer_resolve(x)
+
+
 def test_while_tensor_condition_():
     """
     Feature: Test condition of control flow.
     Description: Tensor condition must be one element or dynamic shape.
     Expectation: No exception.
     """
+
     @jit
     def foo(cond, x, y):
         return F.switch(cond, x, y)

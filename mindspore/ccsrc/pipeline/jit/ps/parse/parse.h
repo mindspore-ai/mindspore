@@ -567,6 +567,10 @@ bool UpdateFuncGraphFlags(const py::object &obj, const FuncGraphPtr &func_graph,
 void UpdateRecomputeScope(const FuncGraphPtr &func_graph);
 
 AnfNodePtr GetMixedPrecisionCastHelp(const FuncGraphPtr &func_graph, const AnfNodePtr &param);
+
+void SetConfig(const std::string &key, const std::string &value);
+
+const std::string &GetConfig(const std::string &key);
 }  // namespace parse
 }  // namespace mindspore
 
