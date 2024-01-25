@@ -674,7 +674,7 @@ def one_hot(indices, depth, on_value=1, off_value=0, axis=-1):
     Note:
         If the input `indices` has rank `N`, the output will have rank `N+1`.
         The new axis is created at dimension `axis`. On Ascend, if `on_value` is Int64 dtype, `indices` must be
-        Int64 dtype.
+        Int64 dtype, and the value for `on_value` and `off_value` can only be 1 and 0.
 
     Args:
         indices(Tensor): A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
