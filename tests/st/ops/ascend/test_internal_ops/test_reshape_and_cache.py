@@ -85,7 +85,7 @@ def create_np_inputs():
     return key_update, value_update, key_cache, value_cache, slot_map
 
 
-@pytest.mark.level0
+@pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_reshape_and_cache_net():
