@@ -21,44 +21,20 @@
 namespace mindspore {
 namespace runtime {
 void AbstractActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(input_data);
-  MS_EXCEPTION_IF_NULL(input_data->data_);
-  // The unused data may be invalid ptr.
-  if (!input_data->data_->IsPtrValid() && !TEST_FLAG(input_data->data_->flag(), device::kDeviceAddressFlagNotUsed)) {
-    MS_LOG(EXCEPTION) << "The input_data does not have a valid ptr of actor:" << GetAID().Name()
-                      << " with index:" << input_data->index_ << ", flag:" << input_data->data_->flag()
-                      << " device address:" << input_data->data_ << " ref count:" << input_data->data_->ref_count()
-                      << " dynamic ref count:" << input_data->data_->dynamic_ref_count()
-                      << " origin ref count:" << input_data->data_->original_ref_count();
-  }
-  MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
   (void)input_op_datas_[sequential_num].emplace_back(input_data);
 
   auto is_run = CheckRunningCondition(context);
-  MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the input op data and check running condition:" << is_run
-                << ", sequential num:" << sequential_num << ", the input data:" << input_data->data_
-                << " input index:" << input_data->index_ << ", size:" << input_data->data_->GetSize()
-                << " ptr:" << input_data->data_->GetMutablePtr()
-                << ", origin ref count:" << input_data->data_->original_ref_count()
-                << ", current ref count:" << input_data->data_->ref_count()
-                << ", dynamic ref count:" << input_data->data_->dynamic_ref_count()
-                << ", flag:" << input_data->data_->flag() << " user data:" << input_data->data_->user_data();
-
   if (is_run) {
     Run(context);
   }
 }
 
 void AbstractActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
   (void)input_op_controls_[sequential_num].emplace_back(input_control);
 
   auto is_run = CheckRunningCondition(context);
-  MS_LOG(DEBUG) << "Actor(" << GetAID().Name()
-                << ") receive the input op control from:" << (input_control == nullptr ? "null" : input_control->Name())
-                << " and check running condition:" << is_run << ", sequential num:" << sequential_num;
   if (is_run) {
     Run(context);
   }
@@ -108,7 +84,6 @@ bool AbstractActor::CheckRunningCondition(const OpContext<DeviceTensor> *context
 }
 
 void AbstractActor::EraseInput(const OpContext<DeviceTensor> *context) {
-  MS_EXCEPTION_IF_NULL(context);
   if ((input_datas_num_ != 0) && (!input_op_datas_.empty())) {
     auto ret = input_op_datas_.erase(context->sequential_num_);
     if (ret == 0) {
@@ -134,35 +109,13 @@ void AbstractActor::FetchInputByTensorStore(
   std::vector<DeviceTensor *> *const input_device_tensors, std::vector<KernelTensor *> *const input_kernel_tensors,
   std::vector<abstract::AbstractBasePtr> *const input_kernel_tensors_for_infer,
   std::vector<DeviceTensor *> *const memory_free_tensors, OpContext<DeviceTensor> *const context) const {
-  MS_EXCEPTION_IF_NULL(input_device_tensors);
-  MS_EXCEPTION_IF_NULL(memory_free_tensors);
-  MS_EXCEPTION_IF_NULL(context);
   for (auto &device_tensor_store_key : device_tensor_store_keys_) {
-    MS_EXCEPTION_IF_CHECK_FAIL((!device_contexts_.empty()), "The device context doesn't exist.");
-    MS_EXCEPTION_IF_NULL(device_contexts_[0]);
     auto device_tensor = DeviceTensorStore::GetInstance()
                            .Fetch(device_tensor_store_key.second.get(), device_contexts_[0]->GetDeviceType())
                            .get();
-    if (device_tensor == nullptr) {
-      std::string error_info =
-        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->DebugString() +
-        ", device type:" + std::to_string(static_cast<int>(device_contexts_[0]->GetDeviceType()));
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-    }
-    MS_LOG(DEBUG) << "Actor:" << GetAID()
-                  << " fetch device tensor store by node:" << device_tensor_store_key.second->DebugString()
-                  << " node addr:" << device_tensor_store_key.second.get() << " device address:" << device_tensor
-                  << " device type:" << device_contexts_[0]->GetDeviceType() << " dtype:" << device_tensor->type_id();
-    if ((device_tensor_store_key.first >= input_device_tensors->size()) ||
-        (device_tensor_store_key.first >= memory_free_tensors->size())) {
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input index is out of range.");
-    }
     if ((*input_device_tensors)[device_tensor_store_key.first] != device_tensor) {
       (*input_device_tensors)[device_tensor_store_key.first] = device_tensor;
       (*memory_free_tensors)[device_tensor_store_key.first] = device_tensor;
-      MS_LOG(DEBUG) << "actor:" << GetAID() << " fetch input index:" << device_tensor_store_key.first
-                    << " device address:" << device_tensor << " ptr:" << device_tensor->GetPtr()
-                    << " key node:" << device_tensor_store_key.second->DebugString();
     }
     // Collect the input kernel tensor.
     const auto &kernel_tensor = (*input_device_tensors)[device_tensor_store_key.first]->kernel_tensor();
@@ -221,19 +174,8 @@ void AbstractActor::SendOutputData(
   const std::vector<std::pair<OpDataUniquePtr<DeviceTensor>, size_t>> &output_data_list,
   const mindspore::HashMap<DataArrow *, size_t> &data_arrow_to_fusion_actor_indexs,
   mindspore::HashMap<std::string, std::vector<OpData<DeviceTensor> *>> *batch_output_data) {
-  MS_EXCEPTION_IF_NULL(context);
-
-  if (((output_data_arrows.size() != output_data_list.size()) ||
-       (output_data_arrows.size() != output_data_nodes.size())) &&
-      (type_ < KernelTransformType::kSwitchActor)) {
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR(
-      (*context), "The size of output data arrows:" + std::to_string(output_data_arrows.size()) +
-                    " output data:" + std::to_string(output_data_list.size()) + " output node size:" +
-                    std::to_string(output_data_nodes.size()) + " is not equal for actor:" + GetAID().Name());
-  }
   for (size_t i = 0; i < output_data_list.size(); ++i) {
     auto &output_data = output_data_list[i];
-    MS_EXCEPTION_IF_NULL(output_data.first);
     auto &to_op_id = output_data.first->op_id_;
     auto &output_data_arrow = output_data_arrows[i];
     UpdateOutputData(output_data.first.get(), output_data_arrow, output_data_nodes[i], context);
@@ -247,7 +189,6 @@ void AbstractActor::SendOutputData(
       // Send batch output data. As the data need update, so all data must be collected completely before sending.
       if (TEST_FLAG(output_data.second, kOutputDataFlagBetweenFusion)) {
         const auto &to_actor = FetchSubActorInFusionActor(to_op_id.Name());
-        MS_EXCEPTION_IF_NULL(to_actor);
         ActorDispatcher::SendSync(to_actor, &AbstractActor::RunBatchOpData, &((*batch_output_data)[to_op_id.Name()]),
                                   context);
       } else {
@@ -261,7 +202,6 @@ void AbstractActor::SendOutputData(
       (void)to_stack_data_.emplace_back(std::move(to_stack_data));
       if (TEST_FLAG(output_data.second, kOutputDataFlagBetweenFusion)) {
         const auto &to_actor = FetchSubActorInFusionActor(to_op_id.Name());
-        MS_EXCEPTION_IF_NULL(to_actor);
         ActorDispatcher::SendSync(to_actor, &OpActor::RunOpData, to_stack_data_.back().get(), context);
       } else {
         ActorDispatcher::Send(to_op_id, &OpActor::RunOpData, to_stack_data_.back().get(), context);
@@ -270,9 +210,6 @@ void AbstractActor::SendOutputData(
       // The batch output data only send when the output flag is kOutputDataFlagLastBatch.
       if (TEST_FLAG(output_data.second, kOutputDataFlagBetweenFusion)) {
         const auto &to_actor = FetchSubActorInFusionActor(to_op_id.Name());
-        if (to_actor == nullptr) {
-          MS_LOG(EXCEPTION) << "Failed to fetch to actor:" << to_op_id << " in actor:" << GetAID();
-        }
         ActorDispatcher::SendSync(to_actor, &OpActor::RunOpData, output_data.first.get(), context);
       } else {
         ActorDispatcher::Send(to_op_id, &OpActor::RunOpData, output_data.first.get(), context);
@@ -282,7 +219,6 @@ void AbstractActor::SendOutputData(
 }
 
 void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(context);
   // Must be the execution order: send data --> send control, avoid the illegal timing problem.
   // 1.Send output data.
   SendOutputData(context, output_data_nodes_, output_data_arrows_, output_data_, data_arrow_to_fusion_actor_indexs_,
@@ -292,7 +228,6 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
   if (output_control_arrows_.size() > 0) {
     auto from_aid = const_cast<AID *>(&GetAID());
     for (auto &output_control : output_control_arrows_) {
-      MS_EXCEPTION_IF_NULL(output_control);
       if (TEST_FLAG(output_control->flag_, kOutputDataFlagBetweenFusion)) {
         const auto &to_actor = FetchSubActorInFusionActor(output_control->to_op_id_.Name());
         ActorDispatcher::SendSync(to_actor, &OpActor::RunOpControl, from_aid, context);
@@ -300,15 +235,6 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
         ActorDispatcher::Send(output_control->to_op_id_, &OpActor::RunOpControl, from_aid, context);
       }
     }
-  }
-
-  // 3.Send recorder info.
-  SendRecorderInfo(context);
-
-  // No output.
-  if ((output_data_arrows_.size() == 0) && (output_control_arrows_.size() == 0) &&
-      (type_ < KernelTransformType::kSwitchActor)) {
-    SET_OPCONTEXT_SUCCESS_RET((*context));
   }
 }
 
