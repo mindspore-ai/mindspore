@@ -20,6 +20,7 @@
 #include <vector>
 #include <utility>
 #include <map>
+#include <chrono>
 #include "pybind11/pybind11.h"
 
 namespace mindspore {
@@ -171,6 +172,7 @@ bool IsMsClass(PyObject *obj);
 std::string GetTopModule(const py::object &o);
 py::object GetPyCodeObject(const py::object &any, bool exact_func = false);
 size_t DeviceAvailableMemSize();
+bool CheckConstPyObject(PyObject *cnst);
 
 class TimeRecorder {
  public:

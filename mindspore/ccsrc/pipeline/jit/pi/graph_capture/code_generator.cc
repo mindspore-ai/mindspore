@@ -55,9 +55,22 @@ class GraphParameterBuilder {
 };
 
 static bool FindBlock(int start_bci, const CFG *cfg, int *target_bci, int *stack_effect);
-std::unique_ptr<Instr> LoadNonLocalValue(ValueNode *node, const py::dict &map);
 std::string PrintInstr(const std::vector<std::unique_ptr<Instr>> &list);
 std::string PrintNodeSet(const NodeSet &);
+
+std::string GenerateObjectKey(const py::object &value) {
+  PyTypeObject *tp = Py_TYPE(value.ptr());
+  std::stringstream s;
+  s << (tp->tp_name ? tp->tp_name : "<unnamed>");
+  if (tp == &PyFunction_Type) {
+    s << "[" << PyUnicode_AsUTF8(reinterpret_cast<PyFunctionObject *>(value.ptr())->func_qualname) << "]";
+  }
+  if (tp == &PyModule_Type) {
+    s << "[" << PyModule_GetName(value.ptr()) << "]";
+  }
+  s << "<" << value.ptr() << ">";
+  return s.str();
+}
 
 void MapAdd(const py::dict &dict, const std::string &key, const py::object &value, std::string *rename) {
   py::str key_object(key);
@@ -70,10 +83,7 @@ void MapAdd(const py::dict &dict, const std::string &key, const py::object &valu
     return;
   }
   if (rename != nullptr) {
-    PyTypeObject *tp = Py_TYPE(value.ptr());
-    std::stringstream s;
-    s << (tp->tp_name ? tp->tp_name : "<unnamed>") << "<" << value.ptr() << ">";
-    std::string new_key = s.str();
+    std::string new_key = GenerateObjectKey(value);
     if (new_key != key) {
       PyDict_SetItem(dict.ptr(), py::str(new_key).ptr(), value.ptr());
       *rename = new_key;
@@ -503,7 +513,7 @@ int CodeGenerator::AllocLocal(ValueNode *node, int index) {
   int res;
   std::set<int> used_slots;  // order set
   for (iter = locals_map_.begin(); iter != locals_map_.end(); ++iter) {
-    if (nodes_alive_[iter->first] <= index && index != INT_MAX) {
+    if (index != INT_MAX && nodes_alive_[iter->first] <= index) {
       res = iter->second;
       locals_map_.erase(iter);
       locals_map_.insert({node, res});
@@ -533,7 +543,33 @@ void CodeGenerator::LoadValue(ValueNode *node) {
     return;
   }
   MS_EXCEPTION_IF_CHECK_FAIL(IsNonLocalValue(node), "missing value, [" + node->ToString() + "]");
-  code_.co_code.emplace_back(LoadNonLocalValue(node, GetGlobals()));
+
+  if (node->GetType() == ValueNode::CellVar || node->GetType() == ValueNode::FreeVar) {
+    NewInstr(LOAD_CLOSURE, static_cast<CellVarNode *>(node)->GetIndex());
+    return;
+  }
+  int opcode = node->GetOpcode();
+  if (opcode == LOAD_DEREF) {
+    NewInstr(opcode, node->GetOparg());
+    return;
+  }
+
+  std::string key = node->GetName();
+  py::object cnst = node->GetVobj()->GetPyObject();
+  if (opcode == LOAD_CONST) {
+    MS_EXCEPTION_IF_CHECK_FAIL(CheckConstPyObject(cnst.ptr()), "unsupported const object");
+    NewInstr(LOAD_CONST);
+    code_.co_code.back()->set_cnst(cnst);
+    return;
+  }
+
+  if (opcode == LOAD_GLOBAL) {
+    if (cnst.ptr() != nullptr) {
+      MapAdd(GetGlobals(), key, cnst, &key);
+    }
+    NewInstr(LOAD_GLOBAL);
+    code_.co_code.back()->set_name(key);
+  }
 }
 
 void CodeGenerator::BuildOper(ValueNode *node, int index) {
@@ -693,6 +729,50 @@ void CodeBreakGenerator::CallCapturedCode(CodeGenerator *code_gen) {
   code_gen->AddInstrs(std::move(param_info.dele_));
 }
 
+void CodeBreakGenerator::FixInterpretOuput(CodeGenerator *code_gen) {
+  if (captured_.outputs.empty()) {
+    return;
+  }
+  MS_EXCEPTION_IF_CHECK_FAIL(extra_local_ != -1, "can't find graph output");
+  code_gen->NewInstr(LOAD_FAST, extra_local_);
+  if (captured_.outputs.size() > 1) {
+    code_gen->NewInstr(UNPACK_SEQUENCE, captured_.outputs.size());
+  }
+  std::for_each(captured_.outputs.begin(), captured_.outputs.end(), [code_gen](ValueNode *i) {
+    // fill interpret local map
+    code_gen->NewInstr(STORE_FAST, code_gen->AllocLocal(i));
+  });
+  // reconstruct interpret values if need
+}
+
+void CodeBreakGenerator::RestoreStack(CodeGenerator *code_gen) const {
+  auto begin = interpret_.outputs.begin();
+  auto end = interpret_.outputs.end() - alive_locals_.size();
+  std::for_each(begin, end, [code_gen](ValueNode *i) { code_gen->LoadValue(i); });
+}
+
+void CodeBreakGenerator::RestoreLocals(CodeGenerator *code_gen, bool only_load) const {
+  auto begin = interpret_.outputs.end() - alive_locals_.size();
+  auto end = interpret_.outputs.end();
+  if (only_load) {
+    std::for_each(begin, end, [code_gen](ValueNode *i) { code_gen->LoadValue(i); });
+    return;
+  }
+  std::vector<std::unique_ptr<Instr>> st;
+  auto index_iter = alive_locals_.begin();
+  for (auto node_iter = begin; node_iter != end; ++node_iter, ++index_iter) {
+    auto target = code_gen->GetLocalsMap().find(*node_iter);
+    if (target != code_gen->GetLocalsMap().end() && target->second == *index_iter) {
+      continue;
+    }
+    MS_EXCEPTION_IF_CHECK_FAIL(index_iter != alive_locals_.end(), "error alive local");
+    code_gen->LoadValue(*node_iter);
+    st.push_back(std::make_unique<Instr>(0, STORE_FAST, *index_iter));
+  }
+  std::reverse(st.begin(), st.end());
+  code_gen->AddInstrs(std::move(st));
+}
+
 py::object CodeBreakGenerator::MakeUntrackedCode(int untracked_bci, int untracked_stack_effect) const {
   const int argc = interpret_.outputs.size() + untracked_stack_effect;
   int stack_count = argc - alive_locals_.size();
@@ -745,17 +825,17 @@ void CodeBreakGenerator::ReconstructStack(CodeGenerator *code_gen, int untracked
                                           int untracked_stack_effect) const {
   const auto &instr = GetCFG()->instr_pool()[break_bci_];
   if (break_bci_ == untracked_bci) {
-    code_gen->AddInstrs(RestoreStack(code_gen->GetLocalsMap()));
+    RestoreStack(code_gen);
     return;
   }
   if (instr->op() != CALL_FUNCTION && instr->op() != CALL_FUNCTION_KW) {
-    code_gen->AddInstrs(RestoreStack(code_gen->GetLocalsMap()));
+    RestoreStack(code_gen);
     code_gen->AddInstrs(CodeGenerator::CopyInstr(cfg_->instr_pool(), break_bci_, untracked_bci));
     return;
   }
 
   // TODO(chaiyouheng): replace function call, mark function to compile ...
-  code_gen->AddInstrs(RestoreStack(code_gen->GetLocalsMap()));
+  RestoreStack(code_gen);
   code_gen->NewInstr(instr->op(), instr->arg(), instr->line());
 }
 
@@ -769,7 +849,7 @@ void CodeBreakGenerator::BreakAtIf(CodeGenerator *code_gen) const {
 
   MS_EXCEPTION_IF_CHECK_FAIL(stack_count >= 1, "error stack");
 
-  code_gen->AddInstrs(RestoreStack(code_gen->GetLocalsMap()));
+  RestoreStack(code_gen);
   code_gen->NewInstr(op);
   Instr *if_instr = code_gen->GetCode().co_code.back().get();
 
@@ -777,7 +857,7 @@ void CodeBreakGenerator::BreakAtIf(CodeGenerator *code_gen) const {
   code = MakeUntrackedCode(break_bci_ + 1, stack_effect);
   code_gen->AddInstrs(MakeFunc(code, "<pijit.resume>", closures));
   code_gen->AddInstrs(CodeGenerator::RotStack(stack_count + stack_effect));
-  code_gen->AddInstrs(RestoreLocals(code_gen->GetLocalsMap(), true));
+  RestoreLocals(code_gen, true);
   code_gen->NewInstr(CALL_FUNCTION, interpret_.outputs.size() + stack_effect);
   code_gen->NewInstr(RETURN_VALUE);
 
@@ -788,14 +868,14 @@ void CodeBreakGenerator::BreakAtIf(CodeGenerator *code_gen) const {
   if_instr->set_extra_jump(jump_branch.begin()->get());
   code_gen->AddInstrs(std::move(jump_branch));
   code_gen->AddInstrs(CodeGenerator::RotStack(stack_count + stack_effect));
-  code_gen->AddInstrs(RestoreLocals(code_gen->GetLocalsMap(), true));
+  RestoreLocals(code_gen, true);
   code_gen->NewInstr(CALL_FUNCTION, interpret_.outputs.size() + stack_effect);
   code_gen->NewInstr(RETURN_VALUE);
 }
 
 void CodeBreakGenerator::BreakAtBlock(CodeGenerator *code_gen, int untracked_bci, int untracked_stack_effect) {
-  code_gen->AddInstrs(RestoreStack(code_gen->GetLocalsMap()));
-  code_gen->AddInstrs(RestoreLocals(code_gen->GetLocalsMap(), false));
+  RestoreStack(code_gen);
+  RestoreLocals(code_gen, false);
   code_gen->AddInstrs(CodeGenerator::CopyInstr(GetCFG()->instr_pool(), break_bci_, untracked_bci));
 
   BitMap alive = GetCFG()->liveness()->CollectAlive(untracked_bci);
@@ -845,8 +925,8 @@ void CodeBreakGenerator::CallUntrackedCode(CodeGenerator *code_gen) {
   bool find_block = FindBlock(start_bci, GetCFG(), &untracked_bci, &untracked_stack_effect);
   untracked_bci++;
   if (IsNotNeedTrack(GetCFG()->instr_pool(), std::min(untracked_bci + 1, static_cast<int>(list.size())))) {
-    code_gen->AddInstrs(RestoreStack(code_gen->GetLocalsMap()));
-    code_gen->AddInstrs(RestoreLocals(code_gen->GetLocalsMap(), false));
+    RestoreStack(code_gen);
+    RestoreLocals(code_gen, false);
     code_gen->AddInstrs(CodeGenerator::CopyInstr(GetCFG()->instr_pool(), break_bci_));
     return;
   }
@@ -876,7 +956,7 @@ void CodeBreakGenerator::CallUntrackedCode(CodeGenerator *code_gen) {
   code_gen->AddInstrs(MakeFunc(code, "<pijit.resume>", closures));
 
   ReconstructStack(code_gen, untracked_bci, untracked_stack_effect);
-  code_gen->AddInstrs(RestoreLocals(code_gen->GetLocalsMap(), true));
+  RestoreLocals(code_gen, true);
 
   code_gen->NewInstr(CALL_FUNCTION, interpret_.outputs.size() + untracked_stack_effect);
   code_gen->NewInstr(RETURN_VALUE);
@@ -959,6 +1039,8 @@ py::object CodeBreakGenerator::MakeCode(bool make_graph) {
   code_gen.Build();
 
   CallCapturedCode(&code_gen);
+  FixInterpretOuput(&code_gen);
+  // ... handle side effects
   CallUntrackedCode(&code_gen);
   MakeReturn(&code_gen);
 
@@ -1015,104 +1097,6 @@ void CodeBreakGenerator::MakeReturn(CodeGenerator *code_gen) const {
                              "can't find return value from interpret locals and graph locals");
   code_gen->NewInstr(LOAD_FAST, extra_local_);
   code_gen->NewInstr(RETURN_VALUE);
-}
-
-std::vector<std::unique_ptr<Instr>> CodeBreakGenerator::RestoreStack(
-  const std::unordered_map<ValueNode *, int> &interpret_locals) const {
-  std::vector<std::unique_ptr<Instr>> list;
-  auto end = interpret_.outputs.end() - alive_locals_.size();
-  auto c_iter = captured_.outputs.begin();
-  for (auto i = interpret_.outputs.begin(); i != end; ++i) {
-    auto iter = interpret_locals.find(*i);
-    if (iter != interpret_locals.end()) {
-      list.emplace_back(std::make_unique<Instr>(0, LOAD_FAST, iter->second));
-    } else if (IsNonLocalValue(*i)) {
-      list.emplace_back(LoadNonLocalValue(*i, GetGlobals()));
-    } else {
-      bool valid = c_iter != captured_.outputs.end() && *i == *c_iter && extra_local_ != -1;
-      MS_EXCEPTION_IF_CHECK_FAIL(valid, "can't find the stack value from interpret locals and graph outputs");
-      list.emplace_back(std::make_unique<Instr>(0, LOAD_FAST, extra_local_));
-      if (captured_.outputs.size() > 1) {
-        list.emplace_back(std::make_unique<Instr>(0, LOAD_CONST));
-        list.back()->set_cnst(py::int_(c_iter - captured_.outputs.begin()));
-        list.emplace_back(std::make_unique<Instr>(0, BINARY_SUBSCR));
-      }
-      ++c_iter;
-    }
-  }
-  return list;
-}
-
-std::vector<std::unique_ptr<Instr>> CodeBreakGenerator::RestoreLocals(
-  const std::unordered_map<ValueNode *, int> &interpret_locals, bool only_load) const {
-  std::vector<std::unique_ptr<Instr>> ld;
-  std::vector<std::unique_ptr<Instr>> st;
-  auto i_iter = interpret_.outputs.rbegin();
-  auto c_iter = captured_.outputs.rbegin();
-  for (auto i = alive_locals_.rbegin(); i != alive_locals_.rend(); ++i, ++i_iter) {
-    auto iter = interpret_locals.find(*i_iter);
-    bool find = iter != interpret_locals.end();
-    if (find) {
-      ld.emplace_back(std::make_unique<Instr>(0, LOAD_FAST, iter->second));
-    } else if (IsNonLocalValue(*i_iter)) {
-      ld.emplace_back(LoadNonLocalValue(*i_iter, GetGlobals()));
-    } else {
-      bool valid = c_iter != captured_.outputs.rend() && *i_iter == *c_iter && extra_local_ != -1;
-      MS_EXCEPTION_IF_CHECK_FAIL(valid, "can't find the local value from interpret locals and graph outputs");
-      ld.emplace_back(std::make_unique<Instr>(0, LOAD_FAST, extra_local_));
-      ++c_iter;
-    }
-    if (only_load) {
-      continue;
-    }
-    if (find && iter->second == *i) {
-      ld.pop_back();
-    } else {
-      st.emplace_back(std::make_unique<Instr>(0, STORE_FAST, *i));
-    }
-  }
-  // reverse load
-  std::vector<std::unique_ptr<Instr>> list;
-  bool subscr = captured_.outputs.size() > 1;
-  int graph_output_index = captured_.outputs.size() - std::distance(captured_.outputs.rbegin(), c_iter);
-  for (auto i = ld.rbegin(); i != ld.rend(); ++i) {
-    list.push_back(std::move(*i));
-    if (subscr && list.back()->op() == LOAD_FAST && list.back()->arg() == extra_local_) {
-      list.emplace_back(std::make_unique<Instr>(0, LOAD_CONST));
-      list.back()->set_cnst(py::int_(graph_output_index));
-      list.emplace_back(std::make_unique<Instr>(0, BINARY_SUBSCR));
-      graph_output_index++;
-    }
-  }
-  std::move(st.begin(), st.end(), std::back_inserter(list));
-  return list;
-}
-
-std::unique_ptr<Instr> LoadNonLocalValue(ValueNode *node, const py::dict &map) {
-  if (node->GetType() == ValueNode::CellVar || node->GetType() == ValueNode::FreeVar) {
-    int arg = reinterpret_cast<CellVarNode *>(node)->GetIndex();
-    return std::make_unique<Instr>(0, LOAD_CLOSURE, arg);
-  }
-  auto i = std::make_unique<Instr>(0, node->GetOpcode(), node->GetOparg(), node->GetLineNo());
-  switch (node->GetOpcode()) {
-    case LOAD_DEREF:
-      break;
-    case LOAD_CONST:
-      i->set_cnst(node->GetVobj()->GetPyObject());
-      break;
-    case LOAD_GLOBAL: {
-      std::string key = node->GetName();
-      if (node->GetVobj()->GetPyObject().ptr() != nullptr) {
-        MapAdd(map, key, node->GetVobj()->GetPyObject(), &key);
-      }
-      i->set_name(key);
-      break;
-    }
-    default:
-      MS_LOG(INTERNAL_EXCEPTION) << "is not non local value, [" << node->ToString() << "]";
-      break;
-  }
-  return i;
 }
 
 // collect untracked bytecodes inputs

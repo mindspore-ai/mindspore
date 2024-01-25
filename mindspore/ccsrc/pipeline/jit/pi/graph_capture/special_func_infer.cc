@@ -152,32 +152,6 @@ bool JustCallAndSetRes(CallNode *call_node) {
   return false;
 }
 
-bool CheckConstPyObject(PyObject *cnst) {
-  static bool cnst_types[AObject::kTypeCount] = {0, 0};
-  if (!cnst_types[AObject::kTypeNone]) {
-    // initialize
-    cnst_types[AObject::kTypeEllipsis] = true;
-    cnst_types[AObject::kTypeCodeObject] = true;
-    cnst_types[AObject::kTypeBool] = true;
-    cnst_types[AObject::kTypeFloat] = true;
-    cnst_types[AObject::kTypeInt] = true;
-    cnst_types[AObject::kTypeString] = true;
-    cnst_types[AObject::kTypeNone] = true;
-  }
-
-  if (PyComplex_CheckExact(cnst)) {
-    return true;
-  } else if (PyBytes_CheckExact(cnst)) {
-    return true;
-  } else if (PyTuple_CheckExact(cnst)) {
-    // tuple can't reference self
-    PyObject **begin = &PyTuple_GET_ITEM(cnst, 0);
-    PyObject **end = begin + PyTuple_GET_SIZE(cnst);
-    return end == std::find_if_not(begin, end, CheckConstPyObject);
-  }
-  return cnst_types[AObject::GetPyType(cnst)];
-}
-
 bool CallNodeReturnConst(CallNode *call_node, Graph *sub_graph, AObject *value, const std::string &global_key = "") {
   PyObject *cnst = value->GetPyObject().ptr();
   MS_EXCEPTION_IF_NULL(cnst);

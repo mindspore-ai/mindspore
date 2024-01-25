@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "pipeline/jit/pi/utils/utils.h"
+#include <unordered_set>
 #include "ir/tensor.h"
 #include "ir/map_tensor.h"
-#include "pipeline/jit/pi/utils/utils.h"
 #include "pipeline/jit/pi/pydef.h"
 #include "pybind11/pybind11.h"
 #include "utils/log_adapter.h"
@@ -398,6 +399,23 @@ py::object GetPyCodeObject(const py::object &any, bool exact_func) {
   // self reference self at __call__, recursive call self.
   // just call once
   return GetPyCodeObject(py::reinterpret_steal<py::object>(call), true);
+}
+
+bool CheckConstPyObject(PyObject *cnst) {
+  static const std::unordered_set<PyTypeObject *> cnst_types = {
+    Py_TYPE(Py_None), Py_TYPE(Py_Ellipsis), Py_TYPE(Py_True), &PyCode_Type,  &PyFloat_Type,
+    &PyLong_Type,     &PyUnicode_Type,      &PyComplex_Type,  &PyBytes_Type,
+  };
+  if (cnst == nullptr) {
+    return false;
+  }
+  if (PyTuple_CheckExact(cnst)) {
+    // tuple can't reference self
+    PyObject **begin = &PyTuple_GET_ITEM(cnst, 0);
+    PyObject **end = begin + PyTuple_GET_SIZE(cnst);
+    return end == std::find_if_not(begin, end, CheckConstPyObject);
+  }
+  return cnst_types.find(Py_TYPE(cnst)) != cnst_types.end();
 }
 
 size_t DeviceAvailableMemSize() {
