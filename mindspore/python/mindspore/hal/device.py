@@ -258,7 +258,21 @@ def get_device_properties(device_id, device_target=None):
         device_target (str, optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
 
     Returns:
-        - `cudaDeviceProp`_ for GPU.
+        - `cudaDeviceProp` for GPU.
+
+          .. code-block::
+
+              cudaDeviceProp {
+                  name(str),
+                  major(int),
+                  minor(int),
+                  is_multi_gpu_board(int),
+                  is_integrated(int),
+                  multi_processor_count(int),
+                  total_memory(int),
+                  warp_size(int)
+              }
+
         - `AscendDeviceProperties` for Ascend.
 
           .. code-block::
@@ -270,8 +284,6 @@ def get_device_properties(device_id, device_target=None):
               }
 
         - None for CPU.
-
-    .. _cudaDeviceProp: https://docs.nvidia.com/cuda/cuda-runtime-api/structcudaDeviceProp.html#structcudaDeviceProp
 
     Examples:
         >>> import mindspore as ms
