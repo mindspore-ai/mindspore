@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AICPU_AICPU_OPS_ENVIRON_ENVIRON_DESTORY_ALL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AICPU_AICPU_OPS_ENVIRON_ENVIRON_DESTORY_ALL_H_
+#ifndef AICPU_KERNELS_NORMALIZED_ENVIRON_CREATE_H_
+#define AICPU_KERNELS_NORMALIZED_ENVIRON_CREATE_H_
 
-#include "common/kernel_base.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
-class EnvironDestroyAllKernel : public KernelBase {
+class EnvironCreateKernel : public CpuKernel {
  public:
-  EnvironDestroyAllKernel() : KernelBase("EnvironDestroyAll") {}
-  ~EnvironDestroyAllKernel() = default;
+  EnvironCreateKernel() = default;
+  ~EnvironCreateKernel() = default;
+  uint32_t Compute(CpuKernelContext &ctx) override;
 
- protected:
-  uint32_t DoCompute() override;
-  uint32_t ParseKernelParam() override;
+ private:
+  uint32_t ParseKernelParam(const CpuKernelContext &ctx) const;
 };
 }  // namespace aicpu
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AICPU_AICPU_OPS_ENVIRON_ENVIRON_DESTORY_ALL_H_
+#endif  // AICPU_KERNELS_NORMALIZED_ENVIRON_CREATE_H_

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AICPU_AICPU_OPS_ENVIRON_AICPU_ENVIRON_MANAGER_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AICPU_AICPU_OPS_ENVIRON_AICPU_ENVIRON_MANAGER_H_
+#ifndef AICPU_KERNELS_NORMALIZED_ENVIRON_MANAGER_H_
+#define AICPU_KERNELS_NORMALIZED_ENVIRON_MANAGER_H_
 
 #include <utility>
 #include <map>
 #include <memory>
 #include <vector>
 #include <mutex>
-#include "environ/aicpu_environ.h"
-#include "aicpu_sharder/aicpu_sharder.h"
-#include "proto/aicpu_tensor.pb.h"
-#include "common/distinct_uniform_int_distribution.h"
-#include "common/tensor.h"
+#include "cpu_kernel/ms_kernel/environ/aicpu_environ.h"
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 
 namespace aicpu {
 class EnvironMgr {
@@ -49,9 +46,9 @@ class EnvironMgr {
   void Clear();
 
   // Check whether the inputs of EnvironGet kernel or EnvironSet kernel are valid.
-  bool CheckEnvInput(const aicpuops::NodeDef &node_def) const;
+  bool CheckEnvInput(const CpuKernelContext &ctx) const;
   // Check whether is scalar tensor. Environ handle and env key only support scalar tensor currently.
-  bool IsScalarTensor(const aicpuops::Tensor &tensor) const;
+  bool IsScalarTensor(const Tensor *tensor) const;
 
  private:
   EnvironMgr() = default;
@@ -66,4 +63,4 @@ class EnvironMgr {
 };
 }  // namespace aicpu
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AICPU_AICPU_OPS_ENVIRON_AICPU_ENVIRON_MANAGER_H_
+#endif  // AICPU_KERNELS_NORMALIZED_ENVIRON_MANAGER_H_
