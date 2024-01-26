@@ -27,6 +27,7 @@
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/scoped_long_running.h"
 #include "include/backend/debug/data_dump/dump_json_parser.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/hardware/ge_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/hal/device/cpu_memory_manager.h"
@@ -151,6 +152,8 @@ void GeDeviceContext::Initialize() {
   }
 
   MS_LOG(DEBUG) << "Start initialize...";
+
+  InitializeAcl();
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);

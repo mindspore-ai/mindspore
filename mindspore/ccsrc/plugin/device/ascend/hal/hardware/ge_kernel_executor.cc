@@ -681,7 +681,6 @@ void GeKernelExecutor::Initialize() {
   if (initialized_) {
     return;
   }
-  InitializeAcl();
   MS_EXCEPTION_IF_NULL(device_context_);
   res_manager_ = device_context_->device_res_manager_.get();
   MS_EXCEPTION_IF_NULL(res_manager_);

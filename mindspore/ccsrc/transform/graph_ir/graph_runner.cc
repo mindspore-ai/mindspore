@@ -400,6 +400,11 @@ Status GraphRunner::UnregisterExternalAllocator(const void *const stream) {
     MS_LOG(ERROR) << "The GE session is null, can't call GE UnregisterExternalAllocator!";
     return Status::FAILED;
   }
+  if (stream == nullptr) {
+    MS_LOG(INFO) << "The input stream is null, no need unregister.";
+    is_allocator_registered = false;
+    return Status::SUCCESS;
+  }
   ge::Status ret = sess_->UnregisterExternalAllocator(stream);
   if (ret != ge::GRAPH_SUCCESS) {
     MS_LOG(ERROR) << "Call GE UnregisterExternalAllocator Failed, ret is: " << ret;

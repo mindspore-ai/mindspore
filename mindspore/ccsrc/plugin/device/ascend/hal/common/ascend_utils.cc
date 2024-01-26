@@ -170,8 +170,14 @@ void InitializeAcl() {
     return;
   }
 
-  if (CALL_ASCEND_API(aclInit, nullptr) != ACL_ERROR_NONE) {
-    MS_LOG(WARNING) << "Call aclInit failed, acl data dump function will be unusable.";
+  auto ret_init = CALL_ASCEND_API(aclInit, nullptr);
+  if (ret_init != ACL_ERROR_NONE) {
+    if (ret_init == ACL_ERROR_REPEAT_INITIALIZE) {
+      MS_LOG(EXCEPTION) << "Can't call aclInit multiple times within the same process. "
+                        << "In the Ascend NPU environment, please do not use multiple training frameworks "
+                        << "(such as MindSpore, Torch, Tensorlfow) within a single process.";
+    }
+    MS_LOG(EXCEPTION) << "Call aclInit failed. The acl data dump function will be unusable. Error flag is " << ret_init;
   } else {
     MS_LOG(INFO) << "Call aclInit successfully";
   }
