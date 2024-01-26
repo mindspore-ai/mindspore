@@ -42,10 +42,12 @@ def test_ms_disable_ref_mode():
     Description: add net
     Expectation: the result is correct or the check log is not exist
     """
-    utils.run_testcase_and_check_log("test_ms_disable_ref_mode", "test_ms_disable_ref_mode_0",
+    utils.run_testcase_and_check_log("test_ms_disable_ref_mode", "test_ms_disable_ref_mode_0_graph_mode",
                                      "GE run graph start in ref mode, graph:")
-    utils.run_testcase_and_check_log("test_ms_disable_ref_mode", "test_ms_disable_ref_mode_1",
+    utils.run_testcase_and_check_log("test_ms_disable_ref_mode", "test_ms_disable_ref_mode_1_graph_mode",
                                      "GE run graph start, graph: ")
+    utils.run_testcase("test_ms_disable_ref_mode", "test_ms_disable_ref_mode_0_pynative_mode")
+    utils.run_testcase("test_ms_disable_ref_mode", "test_ms_disable_ref_mode_1_pynative_mode")
 
 
 @pytest.mark.level0

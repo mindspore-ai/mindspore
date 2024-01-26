@@ -111,6 +111,8 @@ class GeDeviceResManager : public DeviceResManager {
 
   bool single_op_multi_stream_enable() const override;
   void set_single_op_multi_stream_enable(bool single_op_multi_stream_enable) override;
+  // Only used in graph_mode with MS_DISABLE_REF_MODE, delete it when delete MS_DISABLE_REF_MODEF
+  void SetCPUMemManager();
 
  private:
   friend class GeGraphExecutor;
@@ -118,6 +120,8 @@ class GeDeviceResManager : public DeviceResManager {
   static void GeSetReuseOptions(const std::string &key, size_t num, transform::SessionOptions *options);
   std::shared_ptr<MemoryManager> mem_manager_ = nullptr;
   KernelRuntime *runtime_instance_ = nullptr;
+  // Only used in graph_mode with MS_DISABLE_REF_MODE, delete it when delete MS_DISABLE_REF_MODE
+  bool is_use_cpu_memory_ = false;
 };
 }  // namespace ascend
 }  // namespace device
