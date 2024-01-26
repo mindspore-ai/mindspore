@@ -557,6 +557,7 @@ void SetContextSocVersion(MsContext *ctx) {
   }
   std::string version(soc_name_c);
   MS_LOG(INFO) << "The soc version :" << version;
+  ctx->set_ascend_soc_name(version);
   auto iter = kAscendSocVersions.find(version);
   if (iter == kAscendSocVersions.end()) {
     ctx->set_ascend_soc_version(version);

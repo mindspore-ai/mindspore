@@ -164,12 +164,6 @@ bool StaticShapeCluster::IsClusterableOp(const AnfNodePtr &node) {
       cnode->set_input(kAnfPrimitiveIndex, NewValueNode(primitive));
     }
   }
-  // For AICPU operators, only the Reshape can be clustered.
-  if (cb->GetTargetFromContext() == kAscendDevice) {
-    if (cb->GetProcessor(node) != "aicore" && !IsPrimitiveCNode(node, prim::kPrimReshape)) {
-      return false;
-    }
-  }
   if (!ValueDependOpUtils::IsConstInput(node)) {
     return false;
   }

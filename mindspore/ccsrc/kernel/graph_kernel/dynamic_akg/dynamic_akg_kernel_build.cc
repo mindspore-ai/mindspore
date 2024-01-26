@@ -22,6 +22,7 @@ namespace mindspore {
 namespace kernel {
 constexpr int32_t PROCESS_NUM = 16;
 constexpr int32_t TIME_OUT = 300;
+constexpr auto platform = "default";
 
 bool DynamicAkgKernelBuilder::SingleOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) { return true; }
 
@@ -50,7 +51,7 @@ bool DynamicAkgKernelBuilder::ParallelBuild(const std::vector<JsonNodePair> &bui
 
     auto dyn_akg_client = GetClient();
     MS_EXCEPTION_IF_NULL(dyn_akg_client);
-    if (!dyn_akg_client->CompilerStart(PROCESS_NUM, TIME_OUT)) {
+    if (!dyn_akg_client->CompilerStart(PROCESS_NUM, TIME_OUT, platform)) {
       MS_LOG(ERROR) << "AKG V2 start failed.";
       return false;
     }
