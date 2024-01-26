@@ -65,6 +65,7 @@ class KernelActor : public DebugAwareActor {
       : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid),
         kernel_(kernel),
         is_dynamic_value_(false),
+        has_dynamic_(false),
         enable_async_infer_(false),
         kernel_info_(nullptr),
         real_input_num_(0),
@@ -85,6 +86,10 @@ class KernelActor : public DebugAwareActor {
   void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
   // The callback after memory alloc finished.
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
+
+  void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) override;
+  // The actor run when receive the input control.
+  void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
 
   // The debug related operation interface.
   void SendDebugReq(OpContext<DeviceTensor> *const context) override;
@@ -133,6 +138,7 @@ class KernelActor : public DebugAwareActor {
   bool is_dynamic_shape_;
   bool is_dynamic_value_;
   bool is_dynamic_type_;
+  bool has_dynamic_;
   // Whether enable asynchronously infer shape and resize kernel mod by KernelInferActor and KernelResizeActor.
   bool enable_async_infer_;
   KernelInfo *kernel_info_;

@@ -36,6 +36,11 @@ using mindspore::session::SomasInfo;
 class MemoryManagerActor : public ActorBase {
  public:
   MemoryManagerActor() : ActorBase("MemoryManagerActor") {}
+
+  static std::shared_ptr<MemoryManagerActor> &GetInstance() {
+    static std::shared_ptr<MemoryManagerActor> instance = std::shared_ptr<MemoryManagerActor>(new MemoryManagerActor());
+    return instance;
+  }
   ~MemoryManagerActor() override = default;
 
   // The process entry of memory alloc.
