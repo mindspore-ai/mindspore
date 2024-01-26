@@ -33,7 +33,7 @@ from mindspore.ops.primitive import prim_attr_register
 from ..auto_generate import (CeLU, Flatten, LogSoftmax, ReLU, ReLU6,
                              Elu, Sigmoid, Softmax, HSwish, HSigmoid, AvgPool, BiasAdd,
                              NLLLoss, OneHot, GeLU, FastGeLU, PReLU,
-                             GridSampler3D, GridSampler2D, LayerNorm, HShrink)
+                             GridSampler3D, GridSampler2D, LayerNorm, HShrink, AdamWeightDecay)
 from .manually_defined import BatchNorm
 
 
@@ -3868,120 +3868,6 @@ class Adam(Primitive):
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
         validator.check_value_type("use_nesterov", use_nesterov, [bool], self.name)
         self.add_prim_attr('side_effect_mem', True)
-
-
-class AdamWeightDecay(Primitive):
-    r"""
-    Updates gradients by the Adaptive Moment Estimation algorithm with weight decay (AdamWeightDecay).
-
-    The Adam algorithm is proposed in `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
-    The AdamWeightDecay variant was proposed in `Decoupled Weight Decay Regularization
-    <https://arxiv.org/abs/1711.05101>`_.
-
-    The updating formulas are as follows,
-
-    .. math::
-        \begin{array}{ll} \\
-            m = \beta_1 * m + (1 - \beta_1) * g \\
-            v = \beta_2 * v + (1 - \beta_2) * g * g \\
-            update = \frac{m}{\sqrt{v} + \epsilon} \\
-            update =
-            \begin{cases}
-                update + weight\_decay * w
-                    & \text{ if } weight\_decay > 0 \\
-                update
-                    & \text{ otherwise }
-            \end{cases} \\
-            w  = w - lr * update
-        \end{array}
-
-    :math:`m` represents the 1st moment vector, :math:`v` represents the 2nd moment vector, :math:`g` represents
-    `gradient`, :math:`\beta_1, \beta_2` represent `beta1` and `beta2`,
-    :math:`lr` represents `learning_rate`, :math:`w` represents `var`, :math:`decay` represents `weight_decay`,
-    :math:`\epsilon` represents `epsilon`.
-
-    Args:
-        use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
-            If ``True`` , updates of the var, m, and v tensors will be protected by a lock.
-            If ``False`` , the result is unpredictable. Default: ``False`` .
-
-    Inputs:
-        - **var** (Parameter) - Weights to be updated. The shape is :math:`(N, *)` where :math:`*` means,
-          any number of additional dimensions. The data type can be float16 or float32.
-        - **m** (Parameter) - The 1st moment vector in the updating formula,
-          it should have the the shape as `var`. The data type can be float16 or float32.
-        - **v** (Parameter) - The 2nd moment vector in the updating formula,
-          it should have the same shape as `m`.
-        - **lr** (float) - :math:`lr` in the updating formula. The paper suggested value is :math:`10^{-8}`,
-          the data type should be float32.
-        - **beta1** (float) - The exponential decay rate for the 1st moment estimations,
-          the data type should be float32. The paper suggested value is :math:`0.9`
-        - **beta2** (float) - The exponential decay rate for the 2nd moment estimations,
-          the data type should be float32. The paper suggested value is :math:`0.999`
-        - **epsilon** (float) - Term added to the denominator to improve numerical stability,
-          the data type should be float32.
-        - **decay** (float) - The weight decay value, must be a scalar tensor with float32 data type.
-          Default: ``0.0`` .
-        - **gradient** (Tensor) - Gradient, has the same shape as `var`.
-
-    Outputs:
-        Tuple of 3 Tensor, the updated parameters.
-
-        - **var** (Tensor) - The same shape and data type as `var`.
-        - **m** (Tensor) - The same shape and data type as `m`.
-        - **v** (Tensor) - The same shape and data type as `v`.
-
-    Raises:
-        TypeError: If `use_locking` is not a bool.
-        TypeError: If `lr`, `beta1`, `beta2`, `epsilon` or `decay` is not a float32.
-        TypeError: If `var`, `m` or `v` is not a Parameter with dtype float16 or float32.
-        TypeError: If `gradient` is not a Tensor.
-        ValueError: If `epsilon` <= 0.
-        ValueError: If `beta1`, `beta2` is not in range (0.0,1.0).
-        ValueError: If `decay` < 0.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter, ops
-        >>> class Net(nn.Cell):
-        ...     def __init__(self):
-        ...         super(Net, self).__init__()
-        ...         self.adam_weight_decay = ops.AdamWeightDecay()
-        ...         self.var = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="var")
-        ...         self.m = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="m")
-        ...         self.v = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="v")
-        ...     def construct(self, lr, beta1, beta2, epsilon, decay, grad):
-        ...         out = self.adam_weight_decay(self.var, self.m, self.v, lr, beta1, beta2,
-        ...                               epsilon, decay, grad)
-        ...         return out
-        >>> net = Net()
-        >>> gradient = Tensor(np.ones([2, 2]).astype(np.float32))
-        >>> output = net(0.001, 0.9, 0.999, 1e-8, 0.0, gradient)
-        >>> print(net.var.asnumpy())
-        [[0.999 0.999]
-         [0.999 0.999]]
-    """
-    __mindspore_signature__ = (
-        sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
-        sig.make_sig('m', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T2),
-        sig.make_sig('v', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T2),
-        sig.make_sig('lr', dtype=sig.sig_dtype.T1),
-        sig.make_sig('beta1', dtype=sig.sig_dtype.T1),
-        sig.make_sig('beta2', dtype=sig.sig_dtype.T1),
-        sig.make_sig('epsilon', dtype=sig.sig_dtype.T1),
-        sig.make_sig('decay', dtype=sig.sig_dtype.T1),
-        sig.make_sig('gradient', dtype=sig.sig_dtype.T)
-    )
-
-    @prim_attr_register
-    def __init__(self, use_locking=False):
-        """Initialize AdamWeightDecay."""
-        self.add_prim_attr('side_effect_mem', True)
-        validator.check_value_type("use_locking", use_locking, [bool], self.name)
 
 
 class AdamNoUpdateParam(Primitive):

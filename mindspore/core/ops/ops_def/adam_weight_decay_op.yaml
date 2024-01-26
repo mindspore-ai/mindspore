@@ -1,0 +1,39 @@
+#operator adam_weight_decay
+adam_weight_decay:
+  args:
+    var:
+      dtype: tensor
+    m:
+      dtype: tensor
+    v:
+      dtype: tensor
+    lr:
+      dtype: tensor
+    beta1:
+      dtype: tensor
+    beta2:
+      dtype: tensor
+    epsilon:
+      dtype: tensor
+    decay:
+      dtype: tensor
+    gradient:
+      dtype: tensor
+    use_locking:
+      dtype: bool
+      default: False
+      prim_init: True
+  args_signature:
+    rw_write: var, m, v
+    dtype_group: (m, v), (lr, beta1, beta2, epsilon, decay)
+  labels:
+    side_effect_mem: True
+  returns:
+    var:
+      dtype: tensor
+    m:
+      dtype: tensor
+    v:
+      dtype: tensor
+  function:
+    disable: True
