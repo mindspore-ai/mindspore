@@ -849,8 +849,7 @@ static std::map<ge::Format, std::string> kFormatToStringMap = {
   {ge::Format::FORMAT_FRACTAL_ZN_RNN, "FRACTAL_ZN_RNN"},
   {ge::Format::FORMAT_NYUV, "NYUV"},
   {ge::Format::FORMAT_NYUV_A, "NYUV_A"},
-  {ge::Format::FORMAT_NCL, "NCL"},
-  {ge::Format::FORMAT_FRACTAL_Z_WINO, "FRACTAL_Z_WINO"}};
+  {ge::Format::FORMAT_NCL, "NCL"}};
 
 std::string GeDataTypeToString(const ge::DataType datatype) {
   auto iter = kDataTypeToStringMap.find(datatype);

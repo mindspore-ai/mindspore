@@ -18,7 +18,7 @@
 #include <iostream>
 #include "Eigen/Core"
 #include "Eigen/LU"
-#include "cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "cpu_types.h"
 #include "utils/kernel_util.h"
 #include "unsupported/Eigen/CXX11/Tensor"

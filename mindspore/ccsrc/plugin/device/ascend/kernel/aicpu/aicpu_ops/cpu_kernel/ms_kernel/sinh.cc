@@ -20,8 +20,8 @@
 #include <algorithm>
 #include <complex>
 #include <vector>
-#include "common/kernel_log.h"
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "inc/kernel_log.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "cpu_types.h"
 #include "frontend/parallel/status.h"
 #include "utils/kernel_util.h"

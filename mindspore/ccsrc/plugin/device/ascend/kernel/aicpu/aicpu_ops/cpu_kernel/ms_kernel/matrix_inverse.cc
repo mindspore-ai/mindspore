@@ -22,7 +22,7 @@
 
 #include "Eigen/Core"
 #include "Eigen/LU"
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 
 namespace {

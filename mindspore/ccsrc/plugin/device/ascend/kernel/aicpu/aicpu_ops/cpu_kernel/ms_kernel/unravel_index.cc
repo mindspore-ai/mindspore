@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "unravel_index.h"
-#include "cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 
 namespace {

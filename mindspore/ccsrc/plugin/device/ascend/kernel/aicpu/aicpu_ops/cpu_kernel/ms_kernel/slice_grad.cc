@@ -16,9 +16,9 @@
 #include "slice_grad.h"
 #include <functional>
 #include "securec.h"
-#include "cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "unsupported/Eigen/CXX11/Tensor"
-#include "status.h"
+#include "context/common/status.h"
 #include "utils/kernel_util.h"
 
 namespace aicpu {

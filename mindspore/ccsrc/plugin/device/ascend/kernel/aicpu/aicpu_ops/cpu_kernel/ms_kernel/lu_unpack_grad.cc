@@ -19,11 +19,11 @@
 #include <iostream>
 
 #include "Eigen/Core"
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "cpu_types.h"
-#include "common/kernel_log.h"
+#include "inc/kernel_log.h"
 #include "securec/include/securec.h"
-#include "cpu_kernel/common/status.h"
+#include "context/common/status.h"
 #include "utils/broadcast_iterator.h"
 #include "utils/kernel_util.h"
 

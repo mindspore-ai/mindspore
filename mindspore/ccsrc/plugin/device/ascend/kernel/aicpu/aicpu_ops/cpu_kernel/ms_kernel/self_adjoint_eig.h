@@ -18,7 +18,7 @@
 #define AICPU_KERNELS_NORMALIZED_SELFADJOINTEIG_H_
 
 #include <iostream>
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include "Eigen/Eigenvalues"
 
 namespace aicpu {

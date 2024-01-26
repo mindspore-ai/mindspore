@@ -17,7 +17,7 @@
 #define AICPU_KERNELS_SPACETODEPTH_H_
 
 #include <string>
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class SpaceToDepthCpuKernel : public CpuKernel {

@@ -20,10 +20,10 @@ Copyright (c) Huawei Technologies Co., Ltd. 2021-2023. All rights reserved.
 #include <algorithm>
 #include <vector>
 #include "securec.h"
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "cpu_types.h"
-#include "common/kernel_log.h"
-#include "cpu_kernel/common/status.h"
+#include "inc/kernel_log.h"
+#include "context/common/status.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 

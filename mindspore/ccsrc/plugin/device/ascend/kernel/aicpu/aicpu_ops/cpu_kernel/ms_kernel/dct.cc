@@ -17,7 +17,7 @@
 
 #include <iostream>
 #include "Eigen/Dense"
-#include "cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "unsupported/Eigen/FFT"
 #include "utils/eigen_tensor.h"

@@ -25,7 +25,7 @@
 #include <mutex>
 
 #include "Eigen/Core"
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 #include "unsupported/Eigen/CXX11/Tensor"

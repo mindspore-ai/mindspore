@@ -16,7 +16,7 @@
 #ifndef AICPU_IMPL_HSV_TO_RGB_H_
 #define AICPU_IMPL_HSV_TO_RGB_H_
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {

@@ -17,12 +17,12 @@
 #include "upsample_nearest3d_grad.h"
 #include <stdint.h>
 #include <cstring>
-#include "cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "cpu_types.h"
 #include "utils/kernel_util.h"
-#include "kernel_log.h"
+#include "inc/kernel_log.h"
 #include "securec.h"
-#include "status.h"
+#include "context/common/status.h"
 #include "utils/eigen_tensor.h"
 
 namespace {

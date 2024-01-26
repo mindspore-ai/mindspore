@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_MAX_UNPOOL3D_H_
 #define AICPU_KERNELS_NORMALIZED_MAX_UNPOOL3D_H_
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include "cpu_types.h"
 namespace aicpu {
 class MaxUnpool3DCpuKernel : public CpuKernel {

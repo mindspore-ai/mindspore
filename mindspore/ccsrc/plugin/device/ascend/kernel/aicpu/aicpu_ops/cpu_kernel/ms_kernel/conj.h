@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_CONJ_H_
 #define AICPU_KERNELS_NORMALIZED_CONJ_H_
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class ConjCpuKernel : public CpuKernel {

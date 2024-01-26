@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_FRACTIONAL_MAX_POOL3D_WITH_FIXED_KSIZE_H_
 #define AICPU_KERNELS_NORMALIZED_FRACTIONAL_MAX_POOL3D_WITH_FIXED_KSIZE_H_
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include "cpu_types.h"
 
 namespace aicpu {

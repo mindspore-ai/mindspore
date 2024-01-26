@@ -18,11 +18,11 @@
 
 #include <vector>
 #include <algorithm>
-#include "cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 #include "utils/eigen_tensor.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "inc/kernel_log.h"
+#include "context/common/status.h"
 using namespace std;
 
 namespace {

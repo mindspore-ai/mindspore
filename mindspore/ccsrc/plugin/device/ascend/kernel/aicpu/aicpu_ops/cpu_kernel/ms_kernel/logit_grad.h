@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_LOGIT_GRAD_H
 #define AICPU_KERNELS_NORMALIZED_LOGIT_GRAD_H
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {

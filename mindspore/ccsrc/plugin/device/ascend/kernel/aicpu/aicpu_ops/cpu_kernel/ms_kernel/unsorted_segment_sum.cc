@@ -20,7 +20,7 @@
 #include <string>
 #include <functional>
 #include <atomic>
-#include "cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "cpu_types.h"
 #include "securec.h"
 #include "utils/eigen_tensor.h"

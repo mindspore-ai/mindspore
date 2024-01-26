@@ -2,7 +2,7 @@
 #define AICPU_KERNELS_NORMALIZED_FFTWITHSIZE_H_
 
 #include "Eigen/Dense"
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "unsupported/Eigen/FFT"
 #include "utils/bcast.h"

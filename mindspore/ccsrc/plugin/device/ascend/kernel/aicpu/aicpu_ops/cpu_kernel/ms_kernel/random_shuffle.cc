@@ -17,7 +17,7 @@
 #include <random>
 #include <complex>
 #include <algorithm>
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "random/utils.h"
 
 namespace {

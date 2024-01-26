@@ -22,8 +22,8 @@
 #include <vector>
 #include <algorithm>
 
-#include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/common/status.h"
+#include "context/inc/cpu_kernel_utils.h"
+#include "context/common/status.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 

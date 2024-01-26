@@ -17,7 +17,7 @@
 #define AICPU_KERNELS_NORMALIZED_DATA_FORMAT_VEC_PERMUTE_H_
 
 #include <string>
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class DataFormatVecPermute : public CpuKernel {

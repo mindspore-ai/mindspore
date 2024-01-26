@@ -17,7 +17,7 @@
 #include "cpu_kernel/ms_kernel/fftbase.h"
 #include <securec.h>
 #include "unsupported/Eigen/CXX11/Tensor"
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 #include "mindspore/core/mindapi/base/types.h"
 

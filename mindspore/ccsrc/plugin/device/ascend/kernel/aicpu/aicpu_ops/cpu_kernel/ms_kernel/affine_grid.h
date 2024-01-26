@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_AFFINE_GRID_H_
 #define AICPU_KERNELS_NORMALIZED_AFFINE_GRID_H_
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include <Eigen/Dense>
 #include <Eigen/Eigen>
 

@@ -43,6 +43,4 @@ set(AICPU_KERNELS ${CMAKE_CURRENT_BINARY_DIR}/../libmindspore_aicpu_kernels.so)
 set(IMPL_FILE_DIR ${INSTALL_LIBRARY_DIR}/custom_aicpu_ops/op_impl/cpu/aicpu_kernel/impl)
 set(ENV{CMAKE_INSTALL_MODE} REL_SYMLINK)
 # copy libmindspore_cpu_kernels.so to ${IMPL_FILE_DIR} and rename to "libcust_cpu_kernels.so"
-# copy libmindspore_aicpu_kernels.so to ${IMPL_FILE_DIR} and rename to "libcust_aicpu_kernels.so"
 install(FILES ${CPU_KERNELS} RENAME "libcust_cpu_kernels.so" DESTINATION ${IMPL_FILE_DIR})
-install(FILES ${AICPU_KERNELS} RENAME "libcust_aicpu_kernels.so" DESTINATION ${IMPL_FILE_DIR})

@@ -20,9 +20,9 @@
  */
 #include "one_hot.h"
 #include <string>
-#include "cpu_kernel_utils.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "context/inc/cpu_kernel_utils.h"
+#include "inc/kernel_log.h"
+#include "context/common/status.h"
 #include "cpu_types.h"
 #include "utils/kernel_util.h"
 #include "utils/eigen_tensor.h"

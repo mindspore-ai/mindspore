@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_MAX_UNPOOL2D_GRAD_H_
 #define AICPU_KERNELS_NORMALIZED_MAX_UNPOOL2D_GRAD_H_
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include "cpu_types.h"
 namespace aicpu {
 class MaxUnpool2DGradCpuKernel : public CpuKernel {
