@@ -621,7 +621,10 @@ void ProfilingUtils::ReportTask(const std::string &op_name, const bool is_op_nam
   auto tid = syscall(SYS_gettid);
   addition_info.node_basic_info.threadId = static_cast<uint32_t>(tid);
 
-  if (true || ProfilingManager::GetInstance().IsProfilingStart()) {
+  auto ascend_profiler = profiler::Profiler::GetInstance(kAscendDevice);
+  MS_EXCEPTION_IF_NULL(ascend_profiler);
+  auto enable_profiler_flag = ascend_profiler->GetEnableFlag();
+  if (enable_profiler_flag) {
     auto compact_ret = MsprofReportCompactInfo(false, &addition_info.node_basic_info, sizeof(MsprofCompactInfo));
     if (compact_ret != MSPROF_ERROR_NONE) {
       MS_LOG(ERROR) << "MsprofReportCompactInfo failed.";
@@ -635,7 +638,7 @@ void ProfilingUtils::ReportTask(const std::string &op_name, const bool is_op_nam
   for (auto &tensor_info_wrapper : addition_info.tensor_info_wrappers) {
     tensor_info_wrapper.tensor_info.timeStamp = prof_time;
     tensor_info_wrapper.tensor_info.threadId = static_cast<uint32_t>(tid);
-    if (true || ProfilingManager::GetInstance().IsProfilingStart()) {
+    if (enable_profiler_flag) {
       auto addition_ret =
         MsprofReportAdditionalInfo(false, &tensor_info_wrapper.tensor_info, sizeof(MsprofAdditionalInfo));
       if (addition_ret != MSPROF_ERROR_NONE) {
@@ -648,7 +651,7 @@ void ProfilingUtils::ReportTask(const std::string &op_name, const bool is_op_nam
 
   addition_info.api.endTime = prof_time;
   addition_info.api.threadId = static_cast<uint32_t>(tid);
-  if (true || ProfilingManager::GetInstance().IsProfilingStart()) {
+  if (enable_profiler_flag) {
     auto api_ret = MsprofReportApi(false, &addition_info.api);
     if (api_ret != MSPROF_ERROR_NONE) {
       MS_LOG(ERROR) << "MsprofReportAdditionalInfo failed.";
