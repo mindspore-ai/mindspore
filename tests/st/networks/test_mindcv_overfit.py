@@ -245,7 +245,7 @@ def compute_process(q, device_id, device_num, args):
     q.put(loss_end)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_resnet_50_1p():
