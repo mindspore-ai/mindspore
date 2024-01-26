@@ -18,6 +18,7 @@
 #include <algorithm>
 #include "common/range_sampler.h"
 #include "common/random_utils.h"
+#include "cpu_kernel/common/status.h"
 
 namespace aicpu {
 namespace {
@@ -112,9 +113,9 @@ uint32_t CandidateSamplerKernel::DoComputeForEachType() {
   int ret3 =
     memcpy_s(reinterpret_cast<void *>(io_addrs_[5]), num_sampled_ * sizeof(float),
              reinterpret_cast<void *>(&sampled_expected_count.front()), sampled_expected_count.size() * sizeof(float));
-  if (ret1 < 0 || ret2 < 0 || ret3 < 0) {
-    AICPU_LOGE("memcpy_s failed!");
-    return kAicpuKernelStateFailed;
+  if (ret1 != EOK || ret2 != EOK || ret3 != EOK) {
+    KERNEL_LOG_ERROR("For 'CandidateSampler', memcpy_s failed.");
+    return KERNEL_STATUS_INNER_ERROR;
   }
 
   return kAicpuKernelStateSucess;

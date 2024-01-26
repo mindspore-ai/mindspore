@@ -72,7 +72,11 @@ uint32_t NoRepeatNGramCpuKernel::ComputeKernel(CpuKernelContext &ctx, const int6
   size_t vocab_size = ctx.Input(1)->GetTensorShape()->GetDimSize(2);
 
   int copy_size = batch_size * beam_width * vocab_size * sizeof(T);
-  memcpy_s(log_probs, copy_size, log_probs_origin, copy_size);
+  auto ret = memcpy_s(log_probs, copy_size, log_probs_origin, copy_size);
+  if (ret != EOK) {
+    KERNEL_LOG_ERROR("For 'NoRepeatNGram', memcpy_s failed, ret=%d.", ret);
+    return KERNEL_STATUS_INNER_ERROR;
+  }
 
   int real_batch_size = batch_size * beam_width;
   std::vector<std::map<std::vector<int>, std::vector<int>>> gen_ngrams(real_batch_size);

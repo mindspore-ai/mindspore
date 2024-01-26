@@ -18,6 +18,7 @@
 #include <memory.h>
 #include <map>
 #include <thread>
+#include "cpu_kernel/common/status.h"
 #include "./kernel_log.h"
 #include "./kernel_errcode.h"
 #include "proto/node_def.pb.h"
@@ -34,8 +35,9 @@ uint32_t FlattenKernel::DoCompute() {
   }
   int ret = memcpy_s(reinterpret_cast<void *>(io_addrs_[1]), input_size_ * type_size,
                      reinterpret_cast<void *>(io_addrs_[0]), input_size_ * type_size);
-  if (ret < 0) {
-    return kAicpuKernelStateFailed;
+  if (ret != EOK) {
+    KERNEL_LOG_ERROR("For 'Flatten', memcpy_s failed, ret=%d.", ret);
+    return KERNEL_STATUS_INNER_ERROR;
   }
   return kAicpuKernelStateSucess;
 }
