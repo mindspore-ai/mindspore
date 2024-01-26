@@ -1270,7 +1270,8 @@ static std::pair<AnfNodePtr, int64_t> FindSubGraph(const FuncGraphPtr &graph, co
   return std::make_pair(nullptr, 0);
 }
 
-static CNodePtr InsertAllGatherAfterCast(const CNodePtr &cnode) {
+static CNodePtr InsertAllGatherAfterCast(const std::pair<AnfNodePtr, int> &node_pair) {
+  auto cnode = node_pair.first->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto graph = cnode->func_graph();
   MS_EXCEPTION_IF_NULL(graph);
@@ -1338,7 +1339,7 @@ static void InsertAllGatherOp(const FuncGraphPtr &root, const std::string &group
   } else {
     op = CreateAllGatherOp(group);
   }
-  CNodePtr cast_node = InsertAllGatherAfterCast(cnode);
+  CNodePtr cast_node = InsertAllGatherAfterCast(res);
   auto param_ptr = node->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(param_ptr);
   bool is_with_mirror = false;
@@ -1357,7 +1358,7 @@ static void InsertAllGatherOp(const FuncGraphPtr &root, const std::string &group
     auto pre_node = node;
     AnfNodePtr pre_node_ = node;
     auto &node_user_map = manager->node_users();
-    TypePtr next_node_dtype = FindChildCastWithFP32ToFP16(cnode, node_user_map);
+    TypePtr next_node_dtype = FindChildCastWithFP32ToFP16(res, node_user_map);
     if (next_node_dtype) {
       MS_LOG(INFO) << "Inserting Cast from float32 to float16 for node " << node->fullname_with_scope() << " for saving"
                    << " communication.";
