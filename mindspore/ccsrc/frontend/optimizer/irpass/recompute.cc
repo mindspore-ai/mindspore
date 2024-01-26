@@ -462,14 +462,20 @@ void AddDependNodes(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg, 
   // Get the nodes which the recomputed part should depend on;
   std::set<CNodePtr> final_nodes;
   std::set<AnfNodePtr> dependencies;
+  std::vector<AnfNodePtr> dependencies_vector;
   GetDependencies(manager, k_fg_caller_cnode, &final_nodes, &dependencies);
   if (dependencies.empty()) {
     return;
   }
+  (void)std::copy(dependencies.begin(), dependencies.end(), std::back_inserter(dependencies_vector));
+  std::sort(dependencies_vector.begin(), dependencies_vector.end(), [](const AnfNodePtr &l, const AnfNodePtr &r) {
+    return l->fullname_with_scope() < r->fullname_with_scope();
+  });
   std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimMakeTuple)};
   (void)std::copy_if(
-    dependencies.begin(), dependencies.end(), std::back_inserter(depend_inputs),
+    dependencies_vector.begin(), dependencies_vector.end(), std::back_inserter(depend_inputs),
     [&manager, &final_nodes](const auto &dependency) { return FilterDependency(manager, final_nodes, dependency); });
+
   FuncGraphPtr bprop_fg;
   // Add the dependency nodes to the first recomputed nodes.
   auto bprop_caller = GetBpropCaller(manager, GetBpropGetter(manager, k_fg_caller_cnode));
