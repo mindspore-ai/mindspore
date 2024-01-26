@@ -185,7 +185,7 @@ Status PromptKVCacheInfo::InferDevMatrixShape() {
     // update shape (batch   update_seq_len   hidden_size)
     // update_seq_len   batch     max_seq_len   hidden_size
     //      3              2              1             0
-    dev_matrix_shape_ = {update.at(2), cache.at(0), cache.at(1), cache.at(2)};
+    dev_matrix_shape_ = {update.at(1), cache.at(0), cache.at(1), cache.at(2)};
   }
 
   return SUCCESS;

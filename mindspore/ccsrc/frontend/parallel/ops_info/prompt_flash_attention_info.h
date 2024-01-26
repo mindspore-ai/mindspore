@@ -53,6 +53,7 @@ class PromptFlashAttentionInfo : public OperatorInfo {
 
  private:
   int64_t head_num_;
+  int64_t kv_head_num;
   std::string input_layout_;
   int64_t dp_;
   int64_t mp_;
