@@ -360,7 +360,7 @@ CUST_INPUT_ATTR_MAP(Diagonal) = {{2, ATTR_DESC(offset, AnyTraits<int64_t>())},
                                  {4, ATTR_DESC(dim2, AnyTraits<int64_t>())}};
 CUST_ATTR_MAP(Diagonal) = EMPTY_ATTR_MAP;
 CUST_OUTPUT_MAP(Diagonal) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Diagonal, prim::kPrimDiagonal->name(), CUST_ADPT_DESC(Diagonal));
+REG_ADPT_DESC(Diagonal, prim::kPrimDiagonal->name(), CUST_ADPT_DESC(Diagonal))
 
 // FFTShift
 CUST_INPUT_MAP(FFTShift) = {{1, INPUT_DESC(x)}};
@@ -370,33 +370,4 @@ CUST_INPUT_ATTR_MAP(FFTShift) = {{2, ATTR_DESC(axes, AnyTraits<std::vector<int64
 CUST_OUTPUT_MAP(FFTShift) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(FFTShift, prim::kPrimFFTShift->name(), CUST_ADPT_DESC(FFTShift));
 
-std::vector<std::string> mode_strings = {"pad", "same", "valid", "full"};
-// Correlate
-CUST_INPUT_MAP(Correlate) = {{1, INPUT_DESC(a)}, {2, INPUT_DESC(v)}};
-CUST_ATTR_MAP(Correlate) = EMPTY_ATTR_MAP;
-CUST_INPUT_ATTR_MAP(Correlate) = {{3, ATTR_DESC(mode, AnyTraits<GEEnumToStr>(), mode_strings)}};
-CUST_OUTPUT_MAP(Correlate) = {{0, OUTPUT_DESC(output)}};
-REG_ADPT_DESC(Correlate, prim::kPrimCorrelate->name(), CUST_ADPT_DESC(Correlate));
-
-std::vector<std::string> norm_mode = {"backward", "forward", "ortho"};
-std::vector<std::string> fft_mode = {"fft", "ifft"};
-// FFTBase
-CUST_INPUT_MAP(FFTBase) = {{1, INPUT_DESC(x)}};
-CUST_ATTR_MAP(FFTBase) = EMPTY_ATTR_MAP;
-CUST_INPUT_ATTR_MAP(FFTBase) = {{2, ATTR_DESC(s, AnyTraits<std::vector<int64_t>>())},
-                                {3, ATTR_DESC(dims, AnyTraits<std::vector<int64_t>>())},
-                                {4, ATTR_DESC(norm, AnyTraits<GEEnumToStr>(), norm_mode)},
-                                {5, ATTR_DESC(fft_mode, AnyTraits<GEEnumToStr>(), fft_mode)},
-                                {6, ATTR_DESC(forward, AnyTraits<bool>())}};
-CUST_OUTPUT_MAP(FFTBase) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(FFTBase, prim::kPrimFFTBase->name(), CUST_ADPT_DESC(FFTBase));
-
-// DCT
-CUST_INPUT_MAP(DCT) = {{1, INPUT_DESC(x)}};
-CUST_ATTR_MAP(DCT) = EMPTY_ATTR_MAP;
-CUST_INPUT_ATTR_MAP(DCT) = {{2, ATTR_DESC(type, AnyTraits<int64_t>())}, {3, ATTR_DESC(n, AnyTraits<int64_t>())},
-                            {4, ATTR_DESC(axis, AnyTraits<int64_t>())}, {5, ATTR_DESC(norm, AnyTraits<int64_t>())},
-                            {6, ATTR_DESC(forward, AnyTraits<bool>())}, {7, ATTR_DESC(grad, AnyTraits<bool>())}};
-CUST_OUTPUT_MAP(DCT) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(DCT, prim::kPrimDCT->name(), CUST_ADPT_DESC(DCT));
 }  // namespace mindspore::transform

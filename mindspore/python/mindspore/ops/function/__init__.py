@@ -434,8 +434,10 @@ from .math_func import (
     trace,
     zeta,
     histc,
+    fft,
     fft2,
     fftn,
+    ifft,
     ifft2,
     ifftn,
     count_nonzero,
@@ -715,9 +717,7 @@ from .clip_func import (
     clip_by_global_norm,
 )
 from .fft_func import (
-    fft,
     fftshift,
-    ifft,
     ifftshift,
 )
 from .other_func import (
