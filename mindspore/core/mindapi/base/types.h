@@ -105,7 +105,6 @@ enum PadMode : int64_t {
   PAD = 0,
   SAME = 1,
   VALID = 2,
-  FULL = 3,
 };
 
 enum class LshProjectionType : int64_t {
@@ -125,10 +124,6 @@ enum PoolMode : int64_t {
   MAX_POOLING = 0,
   MEAN_POOLING = 1,
 };
-
-enum NormMode : int64_t { BACKWARD = 0, FORWARD = 1, ORTHO = 2 };
-
-enum FFTMode : int64_t { FFT = 0, IFFT = 1 };
 
 // float is a float64 in python. But for some historical reason, python float is converted to float32 in
 using pyfloat = float;

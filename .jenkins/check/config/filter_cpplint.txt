@@ -42,7 +42,6 @@
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/linear_sum_assignment_cpu_kernel.cc"           "whitespace/indent"
 "mindspore/mindspore/ccsrc/runtime/pynative/op_function/func_object.h"                             "runtime/explicit"
 "mindspore/mindspore/ccsrc/runtime/pynative/op_function/func_object.h"                             "runtime/references"
-"mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/dct_cpu_kernel.cc"                             "readability/braces"
 
 # Modelzoo
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/Yolov4TinyDetection.h"                 "runtime/references"

@@ -250,7 +250,6 @@ typedef enum PadMode {
   PAD = 0,
   SAME = 1,
   VALID = 2,
-  FULL = 3,
 } PadMode;
 
 typedef enum Format {
