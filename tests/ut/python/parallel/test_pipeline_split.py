@@ -151,6 +151,16 @@ class PipelineSplit(nn.Cell):
         x = self.cell(x)
         return x
 
+class PipelineSplitLazyInline(nn.Cell):
+    @lazy_inline
+    def __init__(self, strategy1, strategy2, dtype=ms.float32):
+        super().__init__()
+        self.cell = Net(strategy1, strategy2, dtype=dtype)
+        self.cell.block[0].matmul.add_prim_attr("parameter_start", 0)
+
+    def construct(self, x, label):
+        x = self.cell(x)
+        return x
 
 class PipelineSplit2(nn.Cell):
     def __init__(self, strategy1, strategy2, dtype=ms.float32):
@@ -485,8 +495,10 @@ def run_pipeline_split_function(pipeline_net, micro_batch_interleaved=1):
     """
     data = Tensor(np.ones([32, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
-
-    net = PipelineCell(MicroBatchInterleaved(pipeline_net, micro_batch_interleaved), 4)
+    if micro_batch_interleaved > 1:
+        net = PipelineCell(MicroBatchInterleaved(pipeline_net, micro_batch_interleaved), 4)
+    else:
+        net = PipelineCell(pipeline_net, 4)
     params = net.infer_param_pipeline_stage()
     dataset = DatasetLenet(data, label, 3)
     optimizer = nn.Lamb(params, learning_rate=0.01)
@@ -526,7 +538,7 @@ class TestPipelineSplitWithNoOptimizer:
                      the number of the Mirror is not equal to 2, 2 is obtained by manually checked graph.
         """
         context.set_auto_parallel_context(device_num=32, global_rank=0, pipeline_stages=2,
-                                          enable_parallel_optimizer=False)
+                                          enable_parallel_optimizer=True)
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
         strategy1 = ((16, 1), (1, 1))
         strategy2 = ((8, 1), (1, 1))
@@ -535,7 +547,7 @@ class TestPipelineSplitWithNoOptimizer:
         self.cat_fp16_from_ir(pattern='grad_mirror_MirrorMicroStepOperator',
                               target_count=2)
         self.cat_fp16_from_ir(pattern='Cast(',
-                              target_count=22)
+                              target_count=14)
 
     def test_pipeline_with_micro_batch_no_parallel_optimizer(self):
         """
@@ -555,6 +567,24 @@ class TestPipelineSplitWithNoOptimizer:
                               target_count=2)
         self.cat_fp16_from_ir(pattern='Cast(',
                               target_count=42)
+
+    def test_pipeline_parallel_optimizer_cast_opt_lazy_inline(self):
+        """
+        Feature: Test Pipeline with Mirror Operator, when enabled the micro batch interleave.
+        Description: When using fp16 computation, there should be only one mirror operator for one parameter.
+        Expectation: the number of the float16 tensor is not equal to 16, 16 is obtained by manually checked graph.
+                     the number of the Mirror is not equal to 2, 2 is obtained by manually checked graph.
+        """
+        context.set_auto_parallel_context(device_num=32, global_rank=0, pipeline_stages=2,
+                                          enable_parallel_optimizer=True,
+                                          parallel_optimizer_config={"parallel_optimizer_threshold": 0})
+        context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+        strategy1 = ((16, 1), (1, 1))
+        strategy2 = ((8, 1), (1, 1))
+        pipeline_net = PipelineSplitLazyInline(strategy1, strategy2, dtype=ms.float16)
+        run_pipeline_split_function(pipeline_net, micro_batch_interleaved=1)
+        self.cat_fp16_from_ir(pattern='(<Tensor[Float16], (4, 64)>) -> (<Tensor[Float16], (64, 64)>)',
+                              target_count=2)
 
 
 def test_pipeline_split_stage0_device_num_48():
