@@ -41,7 +41,7 @@ class MinddataProfilingAnalyzer:
         ProfilerFileNotFoundException: If any of the MindData profiling input files do not exist.
     """
 
-    def __init__(self, source_dir, device_id, output_path='./'):
+    def __init__(self, source_dir, device_id, output_path='./', pretty=False):
         # Validate and save input parameters
         self._device_id = device_id
         self._source_dir = self._validate_directory(source_dir, 'Source directory')
@@ -55,6 +55,12 @@ class MinddataProfilingAnalyzer:
 
         # Save output filename
         self._save_path = self._get_save_path(output_path)
+        self._pretty = pretty
+
+    @property
+    def indent(self):
+        indent = 1 if self._pretty else None
+        return indent
 
     @property
     def save_path(self):
@@ -624,7 +630,7 @@ class MinddataProfilingAnalyzer:
 
         # Save summary output dictionary to JSON output file (format#1)
         with os.fdopen(os.open(self._save_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as save_file:
-            json.dump(summary_dict, save_file)
+            json.dump(summary_dict, save_file, indent=self.indent)
 
         os.chmod(self._save_path, stat.S_IREAD | stat.S_IWRITE)
 

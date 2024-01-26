@@ -40,7 +40,7 @@ GIGABYTES = 1024 * 1024 * 1024
 class MemoryUsageParser:
     """MemoryUsageParser to parse memory raw data."""
 
-    def __init__(self, profiling_dir, device_id):
+    def __init__(self, profiling_dir, device_id, pretty=False):
         self._profiling_dir = profiling_dir
         self._device_id = device_id
         self._proto_file_path = 'memory_usage_{}.pb'
@@ -57,6 +57,12 @@ class MemoryUsageParser:
         }
         self._framework = {}
         self._points = {}
+        self._pretty = pretty
+
+    @property
+    def indent(self):
+        indent = 1 if self._pretty else None
+        return indent
 
     @staticmethod
     def _process_framework_info(aicore_detail_data):
@@ -164,7 +170,7 @@ class MemoryUsageParser:
 
         try:
             with os.fdopen(os.open(file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as json_file:
-                json.dump(content, json_file)
+                json.dump(content, json_file, indent=self.indent)
             os.chmod(file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             logger.critical('Fail to write memory file.\n%s', err)
