@@ -57,6 +57,23 @@ int InternalKernelMod::Build(const std::vector<KernelTensor *> &inputs, const st
   return 0;
 }
 
+std::string InternalKernelMod::GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  return TilingCacheMgr::GetInstance().GenTilingCacheKey(kernel_name_, primitive_, inputs);
+}
+
+void InternalKernelMod::SetTilingInfo(const std::string &key) {
+  size_t tiling_size = impl_->GetTilingBufSize();
+  auto tiling_func = [this](internal::HostRawBuf &host_buf, internal::RunInfo &run_info) {
+    auto ret = this->impl_->Tiling(host_buf);
+    this->impl_->GetRunInfo().CopyTo(run_info);
+    return ret;
+  };
+  tiling_info_ = TilingCacheMgr::GetInstance().GetOrCreateTilingInfo(key, tiling_func, tiling_size);
+  impl_->SetRunInfo(tiling_info_.run_info_);
+  impl_->SetDeviceTilingBuf(tiling_info_.device_buf_);
+}
+
 bool InternalKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   SetInOutIdx();
   inputs_.resize(inputsIdxMap_.size());
@@ -65,8 +82,8 @@ bool InternalKernelMod::Init(const std::vector<KernelTensor *> &inputs, const st
   outputs_.resize(outputsIdxMap_.size());
   std::generate(outputs_.begin(), outputs_.end(), []() { return new internal::Tensor(); });
 
-  device_tiling_buf_.size_ = 0;
-  device_tiling_buf_.addr_ = nullptr;
+  tiling_info_.device_buf_.size_ = 0;
+  tiling_info_.device_buf_.addr_ = nullptr;
   return true;
 }
 
@@ -93,42 +110,8 @@ int InternalKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
     MS_LOG(ERROR) << "op " << op_type_ << " infer shape failed";
     return KRET_RESIZE_FAILED;
   }
-
-  auto tiling_size = impl_->GetTilingBufSize();
-  internal::HostRawBuf host_tiling_buf;
-  host_tiling_buf.addr_ = malloc(tiling_size);
-  host_tiling_buf.size_ = tiling_size;
-
-  ret = impl_->Tiling(host_tiling_buf);
-  if (ret != 0) {
-    MS_LOG(ERROR) << "op " << op_type_ << " tiling failed";
-    return KRET_RESIZE_FAILED;
-  }
-
-  // allocate device tiling buf
-  if (tiling_size != device_tiling_buf_.size_) {
-    if (device_tiling_buf_.addr_ != nullptr) {
-      ret = aclrtFree(device_tiling_buf_.addr_);
-      if (ret != 0) {
-        MS_LOG(ERROR) << "op " << op_type_ << " free old device tiling buf failed";
-        return KRET_RESIZE_FAILED;
-      }
-      device_tiling_buf_.addr_ = nullptr;
-    }
-    device_tiling_buf_.size_ = tiling_size;
-    ret = aclrtMalloc(&device_tiling_buf_.addr_, tiling_size, ACL_MEM_MALLOC_HUGE_FIRST);
-    if (ret != 0) {
-      MS_LOG(ERROR) << "op " << op_type_ << " alloc device tiling buf failed";
-      return KRET_RESIZE_FAILED;
-    }
-  }
-  ret = aclrtMemcpy(device_tiling_buf_.addr_, device_tiling_buf_.size_, host_tiling_buf.addr_, host_tiling_buf.size_,
-                    ACL_MEMCPY_HOST_TO_DEVICE);
-  if (ret != 0) {
-    MS_LOG(ERROR) << "op " << op_type_ << " copy tiling buf to device failed";
-    return KRET_RESIZE_FAILED;
-  }
-
+  std::string key = GenTilingCacheKey(inputs, outputs);
+  SetTilingInfo(key);
   // update workspace_size list
   auto workspace_size_list = impl_->GetWorkSpaceSize();
   workspace_size_list_.resize(workspace_size_list.size());
@@ -146,7 +129,6 @@ bool InternalKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const 
   }
   impl_->SetInputs(inputs_);
   impl_->SetStream(stream_ptr);
-  impl_->SetDeviceTilingBuf(device_tiling_buf_);
   std::vector<internal::DeviceRawBuf> ws_raw_bufs(workspace.size());
   for (size_t i = 0; i < workspace.size(); ++i) {
     ws_raw_bufs[i] = InternalKernelUtils::ToDeviceRawBuf(workspace[i]);
