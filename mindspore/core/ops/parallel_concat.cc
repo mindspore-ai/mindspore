@@ -39,6 +39,13 @@ abstract::ShapePtr ParallelConcatInferShape(const PrimitivePtr &primitive,
     } else {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
     }
+  } else {
+    (void)std::transform(input_args.begin(), input_args.end(), std::back_inserter(elements),
+                         [](const AbstractBasePtr &input_arg) {
+                           MS_CHECK_VALUE(input_arg->GetType()->object_type() == kObjectTypeTensorType,
+                                          "the inputs of ParallelConcat must be tuple(tensor) or list(tensor).");
+                           return input_arg->GetShape();
+                         });
   }
   (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1,
                                            prim_name);
