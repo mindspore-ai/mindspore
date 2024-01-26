@@ -14,18 +14,17 @@ mindspore.ops.ResizeBicubic
 
     输入：
         - **images** (Tensor) -输入图像为四维的Tensor，其shape为 :math:`(batch, channels, height, width)` ，支持的数据类型有：float16、float32、float64。
-        - **size** (tuple[int]) - 元组，含有两个元素，分别为new_height、new_width。
+        - **size** (Union[tuple[int], Tensor[int]]) - tuple或1-D Tensor，含有两个元素，分别为new_height、new_width。推荐使用tuple[int]。
 
     输出：
         四维Tensor，其shape为 :math:`(batch, channels, new\_height, new\_width)` ，且数据类型与 `images` 一致。
 
     异常：
         - **TypeError** - `images` 的数据类型不支持。
-        - **TypeError** - `size` 的数据类型不是int32。
         - **TypeError** - `align_corners` 不是bool类型。
         - **TypeError** - `half_pixel_centers` 不是bool类型。
         - **ValueError** - `images` 的维度不是4。
-        - **ValueError** - `size` 的维度不是1。
+        - **ValueError** - 当 `size` 是Tensor时，其维度不是1。
         - **ValueError** - `size` 所含元素的个数不是2。
         - **ValueError** - `size` 中的元素不全是正数。
         - **ValueError** - `align_corners` 和 `half_pixel_centers` 同时为 ``True`` 。
