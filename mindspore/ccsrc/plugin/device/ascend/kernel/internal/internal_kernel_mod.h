@@ -16,16 +16,15 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_MOD_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_MOD_H_
 #include <memory>
-#include <unordered_map>
-#include <vector>
 #include <string>
 #include <utility>
+#include <unordered_map>
+#include <vector>
 
 #include "kernel/kernel.h"
 #include "./internal_kernel.h"
 
 #include "plugin/factory/ms_factory.h"
-#include "plugin/device/ascend/kernel/internal/tiling_cache.h"
 
 namespace mindspore {
 namespace kernel {
@@ -48,15 +47,12 @@ class InternalKernelMod : public KernelMod {
   virtual void SetInOutIdx() = 0;
   virtual internal::OpParamPtr CreateOpParam(const std::vector<KernelTensor *> &inputs,
                                              const std::vector<KernelTensor *> &outputs) = 0;
-  virtual std::string GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
-                                        const std::vector<KernelTensor *> &outputs);
-  virtual void SetTilingInfo(const std::string &key);
   std::shared_ptr<internal::InternelKernelImpl> impl_;
   std::unordered_map<size_t, size_t> inputsIdxMap_;
   std::unordered_map<size_t, size_t> outputsIdxMap_;
   std::vector<internal::Tensor *> inputs_;
   std::vector<internal::Tensor *> outputs_;
-  TilingInfo tiling_info_;
+  internal::DeviceRawBuf device_tiling_buf_;
   std::string op_type_;
 };
 
