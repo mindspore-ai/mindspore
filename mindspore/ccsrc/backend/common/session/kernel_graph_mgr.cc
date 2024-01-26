@@ -1805,7 +1805,12 @@ bool KernelGraphMgr::CreateCNodeOfKernelGraph(const AnfNodePtr &node, KernelGrap
   }
   new_cnode->set_abstract(cnode->abstract());
   std::string fullname = cnode->fullname_with_scope();
-  new_cnode->set_fullname_with_scope(fullname);
+  auto prim_input = cnode->input(kAnfPrimitiveIndex);
+  // cnode is a call (partial/switch/switch_layer), full scope name is "1_2".
+  // it is hard to analysis bug when it used as ge node name.
+  if (!prim_input->isa<CNode>()) {
+    new_cnode->set_fullname_with_scope(fullname);
+  }
   new_cnode->set_scope(cnode->scope());
   graph->FrontBackendMapAdd(node, new_cnode);
   SetReturnNode(new_cnode, graph);
