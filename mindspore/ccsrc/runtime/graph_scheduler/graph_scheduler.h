@@ -224,6 +224,9 @@ class BACKEND_EXPORT GraphScheduler {
   // bind thread pool to same numa node
   void BindNumaNode();
 
+  // Refresh the context and thread pool before run model.
+  void RefreshContextAndThreadPool(ActorSet *const actor_set, ActorThreadPool *const thread_pool);
+
   // The global maps, only be cleared in the deconstruction.
   mindspore::HashMap<ActorInfo, ActorSetPtr> actors_;
 
@@ -259,6 +262,7 @@ class BACKEND_EXPORT GraphScheduler {
   bool execution_order_running_{false};
   // numa library handle
   std::shared_ptr<void> numa_handle_{};
+  size_t defalut_actor_thread_num_{1};
 
   bool init_{false};
 };

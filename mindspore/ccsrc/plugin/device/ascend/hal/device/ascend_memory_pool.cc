@@ -68,7 +68,8 @@ bool NoAdditionalMemory() {
   MS_EXCEPTION_IF_NULL(context);
   const auto is_cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
   const auto is_multi_graph_sink = context->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK);
-  return (is_cell_reuse || is_multi_graph_sink) && !context->IsKByKExecutorMode();
+  const auto is_task_sink = context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  return (is_cell_reuse || is_multi_graph_sink) && is_task_sink;
 }
 }  // namespace
 

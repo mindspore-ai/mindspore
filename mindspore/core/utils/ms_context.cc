@@ -487,7 +487,7 @@ bool MsContext::EnableAoeOffline() const {
   return aoe_tune_mode == "offline";
 }
 
-bool MsContext::CheckIsKByK() const {
+bool MsContext::IsKByKExecutorMode() const {
   // Get jit level.
   const auto &jit_config = PhaseManager::GetInstance().jit_config();
   std::string jit_level = "O1";
@@ -523,11 +523,6 @@ bool MsContext::CheckIsKByK() const {
 
   MS_LOG(ERROR) << "No valid executor mode.";
   return false;
-}
-
-bool MsContext::IsKByKExecutorMode() const {
-  static bool is_kbyk = CheckIsKByK();
-  return is_kbyk;
 }
 
 void MsContext::SetAscendConfig() {
