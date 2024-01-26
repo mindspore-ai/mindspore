@@ -107,8 +107,7 @@ std::vector<EdgePtr> ConvertGraphInputs(const KernelGraphPtr &graph, const devic
     MS_EXCEPTION_IF_NULL(node_address);
 
     auto cloned_address = runtime::DeviceAddressUtils::CloneEmptyDeviceAddress(node_address, device_context);
-    auto edge =
-      std::make_shared<Edge>(EdgeType::kParameterEdge, node_address, cloned_address, std::make_pair(input, 0));
+    auto edge = std::make_shared<Edge>(EdgeType::kParameterEdge, nullptr, cloned_address, std::make_pair(input, 0));
     (*address_to_edge)[node_address.get()] = edge;
     graph_inputs_edges.push_back(edge);
   }
@@ -168,7 +167,7 @@ std::vector<EdgePtr> ConvertSingleOpOutputEdges(const CNodePtr &node, const devi
     }
 
     auto clone_address = runtime::DeviceAddressUtils::CloneEmptyDeviceAddress(node_address, device_context);
-    auto edge = std::make_shared<Edge>(EdgeType::kOpOutputEdge, node_address, clone_address, std::make_pair(node, i));
+    auto edge = std::make_shared<Edge>(EdgeType::kOpOutputEdge, nullptr, clone_address, std::make_pair(node, i));
     output_edges.push_back(edge);
     (*address_to_edge)[node_address.get()] = edge;
   }
