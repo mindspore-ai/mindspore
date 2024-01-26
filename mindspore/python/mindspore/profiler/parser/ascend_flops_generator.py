@@ -27,7 +27,7 @@ from mindspore.profiler.common.exceptions.exceptions import ProfilerIOException
 class AscendFlopsGenerator:
     """Generate ascend flops data from DataFrame."""
 
-    def __init__(self, op_summary, launch_ops):
+    def __init__(self, op_summary, launch_ops, pretty=False):
         self.op_summary = op_summary
         self.launch_ops = launch_ops
         self.flops_dt = np.dtype(
@@ -36,6 +36,12 @@ class AscendFlopsGenerator:
         self.flops = None
         self.flops_summary = None
         self._full_kernel_name = None
+        self.pretty = pretty
+
+    @property
+    def indent(self):
+        indent = 1 if self.pretty else None
+        return indent
 
     def parse(self):
         """Analyse the op_summary data generate flops data."""
@@ -89,7 +95,7 @@ class AscendFlopsGenerator:
             with os.fdopen(os.open(flops_summary_path,
                                    os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
                            'w') as json_file:
-                json.dump(self.flops_summary, json_file)
+                json.dump(self.flops_summary, json_file, indent=self.indent)
         except (IOError, OSError) as err:
             logging.critical('Errot occurred when write step trace point info file: %s', err)
             raise ProfilerIOException() from err
