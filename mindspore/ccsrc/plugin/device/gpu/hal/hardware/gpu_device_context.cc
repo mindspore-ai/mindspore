@@ -298,7 +298,8 @@ bool GPUDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   return true;
 }
 
-std::vector<void *> GPUDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
+std::vector<void *> GPUDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list,
+                                                                  uint32_t stream_id) const {
   if (!BindDeviceToCurrentThread(false)) {
     std::vector<void *> ptr_list;
     return ptr_list;

@@ -101,7 +101,7 @@ class GPUKernelRuntime : public KernelRuntime {
   void AllocCommunicationOpOutputDynamicRes(const mindspore::AnfNodePtr &kernel);
   void AllocCommunicationOpMemory(bool is_need_alloc_memory, bool is_need_free_memory,
                                   const DeviceAddressPtrList addr_list, size_t total_size,
-                                  std::vector<size_t> size_list);
+                                  std::vector<size_t> size_list, uint32_t stream_id = kDefaultStreamIndex);
   void FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel);
   bool UpdateMemorySwapTask(const AnfNodePtr &kernel, bool mock, bool profiling);
   bool AddMemorySwapTask(const AnfNodePtr &kernel, bool mock, bool profiling);

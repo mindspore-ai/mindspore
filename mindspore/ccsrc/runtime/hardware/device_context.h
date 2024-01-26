@@ -157,7 +157,7 @@ class BACKEND_EXPORT DeviceResManager {
   virtual void ResetStreamAndCtx() {}
 
   // Relevant function to allocate and free device memory of raw ptr.
-  virtual void *AllocateMemory(size_t size, uint32_t stream_id = UINT32_MAX) const = 0;
+  virtual void *AllocateMemory(size_t size, uint32_t stream_id = kDefaultStreamIndex) const = 0;
   virtual void FreeMemory(void *ptr) const = 0;
   virtual void FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
                                const std::vector<size_t> &keep_addr_sizes) const = 0;
@@ -191,7 +191,8 @@ class BACKEND_EXPORT DeviceResManager {
   // Allocate continuous device memory according to size list.
   // Communication operators may need continuous memory for input and output
   // to optimize the communication performance.
-  virtual std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
+  virtual std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list,
+                                                       uint32_t stream_id = kDefaultStreamIndex) const {
     MS_LOG(EXCEPTION) << "Unimplemented interface.";
   }
 

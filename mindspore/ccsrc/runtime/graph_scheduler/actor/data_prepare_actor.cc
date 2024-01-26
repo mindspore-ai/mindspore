@@ -343,18 +343,22 @@ void DataPrepareActor::Init() {
     std::vector<DeviceTensorPtr> addr_list;
     // Inputs need continuous memory.
     if (iter.second.first) {
-      FetchContinuousMemoryInfo(iter.first.first, &addr_list, &size_list, &total_size, true);
+      const auto &cnode = iter.first.first;
+      FetchContinuousMemoryInfo(cnode, &addr_list, &size_list, &total_size, true);
       (void)continuous_memory_alloc_list_list_.emplace_back(addr_list);
       (void)size_list_list_.emplace_back(size_list);
+      (void)stream_id_list_.emplace_back(AnfAlgo::GetStreamId(cnode));
       (void)total_size_list_.emplace_back(total_size);
       (void)continuous_memory_device_contexts_.emplace_back(iter.first.second);
     }
 
     // Outputs need continuous memory.
     if (iter.second.second) {
-      FetchContinuousMemoryInfo(iter.first.first, &addr_list, &size_list, &total_size, false);
+      const auto &cnode = iter.first.first;
+      FetchContinuousMemoryInfo(cnode, &addr_list, &size_list, &total_size, false);
       (void)continuous_memory_alloc_list_list_.emplace_back(addr_list);
       (void)size_list_list_.emplace_back(size_list);
+      (void)stream_id_list_.emplace_back(AnfAlgo::GetStreamId(cnode));
       (void)total_size_list_.emplace_back(total_size);
       (void)continuous_memory_device_contexts_.emplace_back(iter.first.second);
     }
@@ -557,12 +561,12 @@ void DataPrepareActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context
   // Allocate continuous memory in the begin of the step running.
   if (ActorDispatcher::is_memory_allocation_sync()) {
     ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateContinuousMemory,
-                              &continuous_memory_alloc_list_list_, &size_list_list_, &total_size_list_,
-                              &continuous_memory_device_contexts_, context, GetAID());
+                              &continuous_memory_alloc_list_list_, &size_list_list_, &stream_id_list_,
+                              &total_size_list_, &continuous_memory_device_contexts_, context, GetAID());
     OnMemoryAllocFinish(context);
   } else {
     ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateContinuousMemory,
-                          &continuous_memory_alloc_list_list_, &size_list_list_, &total_size_list_,
+                          &continuous_memory_alloc_list_list_, &size_list_list_, &stream_id_list_, &total_size_list_,
                           &continuous_memory_device_contexts_, context, GetAID());
   }
 }

@@ -45,7 +45,7 @@ class MemoryManagerActor : public ActorBase {
   // device_contexts must be equal.
   void AllocateContinuousMemory(const std::vector<std::vector<DeviceTensorPtr>> *alloc_list_list,
                                 const std::vector<std::vector<size_t>> *size_list_list,
-                                const std::vector<size_t> *total_size_list,
+                                const std::vector<uint32_t> *stream_id_list, const std::vector<size_t> *total_size_list,
                                 const std::vector<const DeviceContext *> *device_contexts,
                                 OpContext<DeviceTensor> *const op_context, const AID &from_aid);
   // device_contexts is from different device, the size of device_contexts must be equal to the alloc_list.

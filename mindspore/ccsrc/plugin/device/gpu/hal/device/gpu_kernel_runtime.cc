@@ -1259,7 +1259,8 @@ void GPUKernelRuntime::AllocCommunicationOpInputDynamicRes(const mindspore::AnfN
     (void)size_list.emplace_back(input_sizes[i]);
     (void)addr_list.emplace_back(device_address);
   }
-  AllocCommunicationOpMemory(is_need_alloc_memory, is_need_free_memory, addr_list, total_size, size_list);
+  AllocCommunicationOpMemory(is_need_alloc_memory, is_need_free_memory, addr_list, total_size, size_list,
+                             AnfAlgo::GetStreamId(kernel));
 }
 
 void GPUKernelRuntime::AllocCommunicationOpOutputDynamicRes(const mindspore::AnfNodePtr &kernel) {
@@ -1284,13 +1285,15 @@ void GPUKernelRuntime::AllocCommunicationOpOutputDynamicRes(const mindspore::Anf
     (void)size_list.emplace_back(output_sizes[i]);
     (void)addr_list.emplace_back(device_address);
   }
-  AllocCommunicationOpMemory(is_need_alloc_memory, is_need_free_memory, addr_list, total_size, size_list);
+  AllocCommunicationOpMemory(is_need_alloc_memory, is_need_free_memory, addr_list, total_size, size_list,
+                             AnfAlgo::GetStreamId(kernel));
 }
 
 void GPUKernelRuntime::AllocCommunicationOpMemory(bool is_need_alloc_memory, bool, const DeviceAddressPtrList addr_list,
-                                                  size_t total_size, std::vector<size_t> size_list) {
+                                                  size_t total_size, std::vector<size_t> size_list,
+                                                  uint32_t stream_id) {
   MS_EXCEPTION_IF_NULL(mem_manager_);
-  auto ret = mem_manager_->MallocContinuousMemFromMemPool(addr_list, total_size, size_list);
+  auto ret = mem_manager_->MallocContinuousMemFromMemPool(addr_list, total_size, size_list, stream_id);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Malloc device memory failed.";
   }

@@ -137,6 +137,7 @@ class DataPrepareActor : public DebugAwareActor {
   // The members for continuous memory alloc fetched by continuous_memory_nodes_.
   std::vector<std::vector<DeviceTensorPtr>> continuous_memory_alloc_list_list_;
   std::vector<std::vector<size_t>> size_list_list_;
+  std::vector<uint32_t> stream_id_list_;
   std::vector<size_t> total_size_list_;
   std::vector<const DeviceContext *> continuous_memory_device_contexts_;
   std::vector<std::vector<TensorPtr>> init_tensors_;
