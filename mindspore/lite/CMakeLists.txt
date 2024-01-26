@@ -674,6 +674,7 @@ set(LITE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(CORE_DIR ${TOP_DIR}/mindspore/core)
 set(CCSRC_DIR ${TOP_DIR}/mindspore/ccsrc)
 set(NNACL_DIR ${CCSRC_DIR}/plugin/device/cpu/kernel/nnacl)
+set(GRAPHENGINE_PATH "${TOP_DIR}/graphengine/910")
 
 if(PLATFORM_MCU)
     set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -Wno-incompatible-pointer-types")
@@ -697,6 +698,7 @@ include_directories(${CCSRC_DIR}/minddata/dataset)
 include(${TOP_DIR}/cmake/utils.cmake)
 include(${TOP_DIR}/cmake/dependency_utils.cmake)
 include(${TOP_DIR}/cmake/dependency_securec.cmake)
+include(${TOP_DIR}/cmake/graphengine_variables.cmake)
 
 find_and_use_mold()
 

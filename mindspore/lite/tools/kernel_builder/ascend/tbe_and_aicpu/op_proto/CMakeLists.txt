@@ -18,8 +18,6 @@ add_compile_options(
 # add source files
 aux_source_directory(. SRCS)
 
-include_directories("${TOP_DIR}/graphengine/910/metadef/inc/external/")
-
 if("x${SRCS}" STREQUAL "x")
     add_custom_target(${OP_PROTO_TARGET}
             COMMAND mkdir -p ${OP_PROTO_TARGET_OUT_DIR}
