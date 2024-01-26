@@ -39,6 +39,7 @@ def run_compiler(op_json, compile_backend="AKG", attrs=None, kernel_meta_parent_
         build_tbe_kernel(op_json, kernel_meta_parent_dir)
     else:
         os.environ["MS_COMPILER_CACHE_PATH"] = kernel_meta_parent_dir
+        os.environ["KERNEL_META_DIR"] = "kernel_meta"
         from get_file_path import get_akg_path
         sys.path.insert(0, get_akg_path())
         p = __import__("akg", globals(), locals(), ['ms'], 0)

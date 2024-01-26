@@ -57,7 +57,7 @@
 #ifdef ENABLE_DUMP_IR
 #include "include/common/debug/rdr/recorder_manager.h"
 #endif
-
+#include "backend/common/session/kernel_build_client.h"
 #include "transform/acl_ir/op_api_exec.h"
 #include "kernel/framework_utils.h"
 using std::vector;
