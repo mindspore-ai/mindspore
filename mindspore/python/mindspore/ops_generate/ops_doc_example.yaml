@@ -27,7 +27,6 @@ abs:
             >>> output = ops.abs(input)
             >>> print(output)
             [1. 1. 0.]
-    category: function
 
 argmin:
     description: |
@@ -63,4 +62,3 @@ argmin:
             >>> index = ops.Argmin()(input_x)
             >>> print(index)
             2
-    category: primitive
