@@ -977,6 +977,9 @@ def tile(input, multiples):
 
 def scalar_cast(input_x, input_y):
     r"""
+    The interface is deprecated from version 2.3 and will be removed in a future version,
+    please use `int(x)` or `float(x)` instead.
+
     Casts the input scalar to another type.
 
     Args:
@@ -991,7 +994,7 @@ def scalar_cast(input_x, input_y):
         ValueError: if input_y's value is invalid.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
