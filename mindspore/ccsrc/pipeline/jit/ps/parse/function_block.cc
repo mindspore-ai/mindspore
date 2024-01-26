@@ -547,8 +547,8 @@ std::string GetVariableDefinedLocation(const FunctionBlock *block, const std::st
   std::vector<FunctionBlock *> todo_list = {};
   (void)std::copy(block->prev_blocks().cbegin(), block->prev_blocks().cend(), std::back_inserter(todo_list));
   while (!todo_list.empty()) {
-    auto cur_block = todo_list.back();
-    todo_list.pop_back();
+    auto cur_block = todo_list.front();
+    (void)todo_list.erase(todo_list.begin());
     if (visited.find(cur_block) != visited.cend()) {
       continue;
     }
