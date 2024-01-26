@@ -132,8 +132,6 @@ class InsertQuantNodeManager {
 
   int SetParallelStrategy(const CNodePtr &cnode, const std::vector<std::vector<int64_t>> &in_strategy);
 
-  std::vector<std::vector<int64_t>> ExtractStrategy(const ValuePtr &stra);
-
   std::vector<std::vector<int64_t>> GetAddMulNodeParallelStrategy(ShapeVector weight_shape,
                                                                   std::vector<int64_t> weight_strategy, int axis,
                                                                   bool per_channel);

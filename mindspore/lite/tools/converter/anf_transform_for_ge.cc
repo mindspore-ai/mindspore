@@ -45,6 +45,8 @@
 #include "tools/optimizer/fusion/matmul_allreduce_fusion.h"
 #include "tools/optimizer/graph/scalar_op_pass.h"
 #include "tools/optimizer/graph/make_list_pass.h"
+#include "tools/optimizer/graph/kvcache_quant_pass.h"
+#include "tools/optimizer/fusion/flash_attention_antiquant_fusion.h"
 
 namespace mindspore::lite {
 void EnableKVCacheFusion(std::vector<opt::PassPtr> *fusions) {
@@ -62,6 +64,10 @@ void EnableFlashAttentionFusion(std::vector<opt::PassPtr> *fusions) {
   fusions->push_back(std::make_shared<opt::FlashAttentionFusion>());
 }
 
+void EnableFlashAttentionAntiquantFusion(std::vector<opt::PassPtr> *fusions) {
+  fusions->push_back(std::make_shared<opt::FlashAttentionAntiquantFusion>());
+}
+
 AnfTransformForGe::AnfTransformForGe() = default;
 
 AnfTransformForGe::~AnfTransformForGe() = default;
@@ -76,7 +82,9 @@ int AnfTransformForGe::RunGeFusionPass(const FuncGraphPtr &old_graph, const std:
   std::map<std::string, std::function<void(std::vector<opt::PassPtr> *)>> fusion_mappings = {
     {KFusionNameMatMulAllReduce, std::function<void(std::vector<opt::PassPtr> *)>(EnableMatMulAllReduceFusion)},
     {KFusionNameKVCache, std::function<void(std::vector<opt::PassPtr> *)>(EnableKVCacheFusion)},
-    {KFusionNameFlashAttention, std::function<void(std::vector<opt::PassPtr> *)>(EnableFlashAttentionFusion)}};
+    {KFusionNameFlashAttention, std::function<void(std::vector<opt::PassPtr> *)>(EnableFlashAttentionFusion)},
+    {KFusionNameFlashAttentionAntiquant,
+     std::function<void(std::vector<opt::PassPtr> *)>(EnableFlashAttentionAntiquantFusion)}};
 
   auto plugin_custom_ops = param->ascendGeOptionCfg.plugin_custom_ops;
   MS_LOG(INFO) << "plugin_custom_ops: " << plugin_custom_ops;
@@ -85,6 +93,7 @@ int AnfTransformForGe::RunGeFusionPass(const FuncGraphPtr &old_graph, const std:
     EnableFlashAttentionFusion(&fusions);
     EnableKVCacheFusion(&fusions);
     EnableMatMulAllReduceFusion(&fusions);
+    EnableFlashAttentionAntiquantFusion(&fusions);
   } else {
     for (uint i = 0; i < plugin_custom_ops.size(); i++) {
       auto plugin_name = plugin_custom_ops[i];
@@ -94,6 +103,9 @@ int AnfTransformForGe::RunGeFusionPass(const FuncGraphPtr &old_graph, const std:
         plugin_func(&fusions);
       }
     }
+  }
+  if (param->chip_name == "910b") {
+    fusions.push_back(std::make_shared<opt::KVCacheQuantPass>());
   }
 
   for (size_t index = 0; index < fusions.size(); index++) {
