@@ -256,7 +256,7 @@ class GraphBuilder {
   bool DoCellAccess(const Instr &instr);
   bool DoGlobalAccess(const Instr &instr);
   bool DoAttrAccess(const Instr &instr);
-  bool DoGetItem(const Instr &instr);
+  virtual bool DoGetItem(const Instr &instr);
   bool DoItemAccess(const Instr &instr);
   bool DoStackOp(const Instr &instr);
   bool DoLoadConst(const Instr &instr);
@@ -264,14 +264,14 @@ class GraphBuilder {
   bool DoGetIter(const Instr &instr);
   bool DoMakeFunction(const Instr &instr);
   AObject *InferUnary(ValueNode *, const Instr &instr);
-  bool DoUnary(const Instr &instr);
+  virtual bool DoUnary(const Instr &instr);
   AObject *InferBinary(ValueNode *, ValueNode *, const Instr &instr);
-  bool DoBinary(const Instr &instr);
-  bool DoBinaryMul(const Instr &instr);
+  virtual bool DoBinary(const Instr &instr);
+  virtual bool DoBinaryMul(const Instr &instr);
   bool DoBinaryAdd(const Instr &instr);
   bool DoInplaceAdd(const Instr &instr);
-  bool DoCompare(const Instr &instr);
-  bool DoBuildOp(const Instr &instr);
+  virtual bool DoCompare(const Instr &instr);
+  virtual bool DoBuildOp(const Instr &instr);
   bool DoMergeOp(const Instr &instr);
   bool DoFormatValue(const Instr &instr);
   bool DoImport(const Instr &instr);
@@ -309,12 +309,22 @@ class MindGraphBuilder : public GraphBuilder {
   py::object ResolveCallable(CallNode *call_node, StopTraceReason *stop_reason) override;
   bool WhiteListFuncCheckAndInfer(CallNode *, const py::object &f) override;
 
+ protected:
+  bool DoGetItem(const Instr &instr) override;
+  bool DoUnary(const Instr &instr) override;
+  bool DoBinary(const Instr &instr) override;
+  bool DoBinaryMul(const Instr &instr) override;
+  bool DoCompare(const Instr &instr) override;
+  bool DoBuildOp(const Instr &instr) override;
+
  private:
   bool IsFuncInWhiteList(const py::object &f, std::string *special_func_key);
   bool HandleFuncInWhiteList(const std::string &key, CallNode *n) override;
 
  private:
   mindspore::FuncGraphBuilderPtr fg_builder_{nullptr};
+  AObject *HandleMultiOp(const Instr &instr, const std::vector<ValueNode *> &p, bool is_compare);
+  AObject *HandleBuildOp(const Instr &instr, const std::vector<ValueNode *> &p);
 };
 }  // namespace pijit
 }  // namespace mindspore

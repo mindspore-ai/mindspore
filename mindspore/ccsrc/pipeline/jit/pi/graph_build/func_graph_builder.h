@@ -59,7 +59,7 @@ class FuncGraphBuilder {
   /// \param[in] inputs_obj The input python objects.
   ///
   /// \return The python object of the infer result.
-  py::object AddBinaryNode(const std::string &opcode, const std::vector<py::object> &inputs_obj);
+  py::object AddMultiNode(const std::string &opcode, const std::vector<py::object> &inputs_obj);
 
   /// \brief Add an output node to the graph.
   ///

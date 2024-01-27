@@ -30,6 +30,9 @@
 #include "pipeline/jit/pi/graph_build/func_graph_builder.h"
 #include "pipeline/jit/pi/graph_capture/abstract_object.h"
 #include "include/common/debug/anf_ir_dump.h"
+#include "pipeline/jit/pi/graph_compiler/utils.h"
+#include "ops/sequence_ops.h"
+#include "ops/framework_ops.h"
 
 #ifndef PY_MINOR_VERSION
 #define PY_MINOR_VERSION 3.7
@@ -2610,6 +2613,117 @@ py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReaso
     call_node->SetInlineReason(InlineReason::kInlineCFunction_Unsupported);
   }
   return callable_info;
+}
+
+AObject *MindGraphBuilder::HandleMultiOp(const Instr &instr, const std::vector<ValueNode *> &p, bool is_compare) {
+  int opcode = instr.op();
+  int oparg = instr.arg();
+  std::vector<py::object> input_obj;
+  for (auto input : p) {
+    if (input->GetVobj() == nullptr) {
+      return AObject::MakeAObject(AObject::kTypeAnyValue);
+    }
+    (void)input_obj.emplace_back(input->GetVobj()->GetPyObject());
+  }
+  const auto &op_name =
+    is_compare ? pijit::GraphUtils::OpCompareArgToGraphName(oparg) : pijit::GraphUtils::OpCodeToGraphName(opcode);
+  MS_LOG(DEBUG) << "operation name is " << op_name;
+  if (op_name == "") {
+    return AObject::MakeAObject(AObject::kTypeAnyValue);
+  }
+  auto node = fg_builder_->AddMultiNode(op_name, input_obj);
+  return AObject::Convert(node);
+}
+
+AObject *MindGraphBuilder::HandleBuildOp(const Instr &instr, const std::vector<ValueNode *> &p) {
+  auto opcode = instr.op();
+  std::vector<py::object> input_obj;
+  for (auto input : p) {
+    if (input->GetVobj() == nullptr) {
+      return AObject::MakeAObject(AObject::kTypeAnyValue);
+    }
+    (void)input_obj.emplace_back(input->GetVobj()->GetPyObject());
+  }
+  auto primitive = pijit::GraphUtils::GetPrimitive(opcode);
+  if (primitive == nullptr) {
+    return AObject::MakeAObject(AObject::kTypeAnyValue);
+  }
+  if (primitive == prim::kPrimMakeDict) {
+    if (opcode == BUILD_CONST_KEY_MAP) {
+      MS_LOG(DEBUG) << "BUILD_CONST_KEY_MAP case, need to pack values.";
+      std::vector<py::object> value_inputs;
+      (void)std::transform(input_obj.begin(), input_obj.end() - 1, std::back_inserter(value_inputs),
+                           [](const py::object &obj) { return obj; });
+      auto value_node = fg_builder_->AddNode(prim::kPrimMakeTuple, value_inputs);
+      input_obj = {input_obj.back(), value_node};
+    } else {
+      // Graph do not support map with variable key.
+      return AObject::MakeAObject(AObject::kTypeAnyValue);
+    }
+  }
+  auto node = fg_builder_->AddNode(primitive, input_obj);
+  auto ret = AObject::Convert(node);
+  // Container object, such as list/tuple/dict will copy after Convert.
+  fg_builder_->UpdatePyObject(ret->GetPyObject(), node);
+  return ret;
+}
+
+bool MindGraphBuilder::DoGetItem(const Instr &instr) {
+  auto r = pop();
+  auto l = pop();
+  auto o = HandleMultiOp(instr, {l, r}, false);
+  auto v = NewValueNode(o, instr, {l, r});
+  push(v);
+  return true;
+}
+
+bool MindGraphBuilder::DoUnary(const Instr &instr) {
+  auto o = pop();
+  auto r = HandleMultiOp(instr, {o}, false);
+  auto v = NewValueNode(r, instr, {o});
+  push(v);
+  return true;
+}
+
+bool MindGraphBuilder::DoBinary(const Instr &instr) {
+  auto r = pop();
+  auto l = pop();
+  auto o = HandleMultiOp(instr, {l, r}, false);
+  auto v = NewValueNode(o, instr, {l, r});
+  push(v);
+  return true;
+}
+
+bool MindGraphBuilder::DoBinaryMul(const Instr &instr) {
+  auto r = pop();
+  auto l = pop();
+  auto o = HandleMultiOp(instr, {l, r}, false);
+  auto v = NewValueNode(o, instr, {l, r});
+  push(v);
+  return true;
+}
+
+bool MindGraphBuilder::DoCompare(const Instr &instr) {
+  auto r = pop();
+  auto l = pop();
+  auto o = HandleMultiOp(instr, {l, r}, true);
+  auto v = NewValueNode(o, instr, {l, r});
+  push(v);
+  return true;
+}
+
+bool MindGraphBuilder::DoBuildOp(const Instr &instr) {
+  int opcode = instr.op();
+  int oparg = instr.arg();
+  int tmp_arg = oparg;
+  tmp_arg += opcode == BUILD_CONST_KEY_MAP;
+  tmp_arg += opcode == BUILD_MAP ? tmp_arg : 0;
+  std::vector<ValueNode *> p(frame_.GetStacks().end() - tmp_arg, frame_.GetStacks().end());
+  auto o = HandleBuildOp(instr, p);
+  popn(tmp_arg);
+  auto v = NewValueNode(o, instr, p);
+  push(v);
+  return true;
 }
 
 py::object GraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReason *stop_reason) {

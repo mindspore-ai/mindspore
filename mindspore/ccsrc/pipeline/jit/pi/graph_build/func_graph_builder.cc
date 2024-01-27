@@ -16,6 +16,7 @@
 
 #include "pipeline/jit/pi/graph_build/func_graph_builder.h"
 #include <algorithm>
+#include <utility>
 #include "pipeline/jit/ps/static_analysis/static_analysis.h"
 #include "pipeline/jit/ps/action.h"
 #include "pipeline/jit/ps/parse/parse_base.h"
@@ -95,18 +96,31 @@ ValuePtr MaybeMakeEmptyTensor(const AbstractBasePtr &abs) {
       return std::make_shared<ValueList>(value_vec);
     }
   }
+  if (abs->isa<abstract::AbstractDictionary>()) {
+    auto abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
+    const auto &elements = abs_dict->elements();
+    std::vector<std::pair<ValuePtr, ValuePtr>> val_dict;
+    for (auto &element : elements) {
+      auto key_value = MaybeMakeEmptyTensor(element.first);
+      auto val_value = MaybeMakeEmptyTensor(element.second);
+      (void)val_dict.emplace_back(std::pair<ValuePtr, ValuePtr>{key_value, val_value});
+    }
+    return std::make_shared<ValueDictionary>(val_dict);
+  }
   if (build_value == kValueAny && abs->isa<abstract::AbstractTensor>()) {
     auto abs_tensor = abs->cast<abstract::AbstractTensorPtr>();
     TypePtr tensor_type_ptr = abs_tensor->element()->BuildType();
     ShapeVector tensor_shape = abs_tensor->shape()->shape();
     return std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
   }
-  // To add dict.
   return build_value;
 }
 }  // namespace
 
 ValuePtr FuncGraphBuilder::ConvertPyObjToValue(const py::object &obj) {
+  if (obj.ptr() == nullptr) {
+    return nullptr;
+  }
   ValuePtr ret = nullptr;
   try {
     if (!parse::ConvertData(obj, &ret)) {
@@ -137,19 +151,24 @@ AbstractBasePtr FuncGraphBuilder::EvalValue(const ValuePtr &value, const Abstrac
   if (value == nullptr) {
     return nullptr;
   }
-  if (value->isa<Primitive>()) {
-    auto prim = value->cast<PrimitivePtr>();
-    auto eval_res = abstract::EvalOnePrim(prim, inputs_abs_list);
-    if (eval_res != nullptr) {
-      return eval_res->abstract();
+  try {
+    if (value->isa<Primitive>()) {
+      auto prim = value->cast<PrimitivePtr>();
+      auto eval_res = abstract::EvalOnePrim(prim, inputs_abs_list);
+      if (eval_res != nullptr) {
+        return eval_res->abstract();
+      }
+    } else if (value->ToAbstract()->isa<abstract::AbstractFunction>()) {
+      auto analyze_res = pipeline::AbstractAnalyze(value, inputs_abs_list);
+      if (analyze_res.eval_result != nullptr) {
+        return analyze_res.eval_result->abstract();
+      }
     }
-  } else if (value->ToAbstract()->isa<abstract::AbstractFunction>()) {
-    auto analyze_res = pipeline::AbstractAnalyze(value, inputs_abs_list);
-    if (analyze_res.eval_result != nullptr) {
-      return analyze_res.eval_result->abstract();
-    }
+    return nullptr;
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Failed to EvalValue for value: " << value->ToString();
+    return nullptr;
   }
-  return nullptr;
 }
 
 bool FuncGraphBuilder::CheckCallable(const ValuePtr &value, const AbstractBasePtr &abs) {
@@ -288,7 +307,7 @@ py::object FuncGraphBuilder::AddNode(const ValuePtr &callable_value, const std::
   return output_py_obj;
 }
 
-py::object FuncGraphBuilder::AddBinaryNode(const std::string &name, const std::vector<py::object> &inputs_obj) {
+py::object FuncGraphBuilder::AddMultiNode(const std::string &name, const std::vector<py::object> &inputs_obj) {
   const std::string mod_str = "mindspore.ops.composite.multitype_ops";
   py::module mod = py::module::import(mod_str.c_str());
   if (!py::hasattr(mod, name.c_str())) {
