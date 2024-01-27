@@ -128,9 +128,6 @@ void ProcessInconsistentDtype(const AnfNodePtr &node, size_t input_num) {
       (void)inconsistent_dtype_inputs.emplace_back(i);
     }
   }
-  if (!inconsistent_dtype_inputs.empty()) {
-    common::AnfAlgo::SetNodeAttr(kAttrAclInconsistentInputDtype, MakeValue(inconsistent_dtype_inputs), node);
-  }
 }
 
 void SetWeightFormat(const AnfNodePtr &real_input_node, std::vector<string> output_format, const CNodePtr &kernel_node,
