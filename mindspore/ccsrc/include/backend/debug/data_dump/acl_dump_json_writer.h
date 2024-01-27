@@ -56,6 +56,7 @@ class BACKEND_EXPORT AclDumpJsonWriter {
   std::string dump_mode_ = "all";
   nlohmann::json layer_;
   std::string dump_scene_ = "normal";
+  std::string dump_debug_ = "off";
 };  // class AclDumpJsonWriter
 }  // namespace mindspore
 #endif  // MINDSPORE_ACL_DUMP_JSON_WRITER_H

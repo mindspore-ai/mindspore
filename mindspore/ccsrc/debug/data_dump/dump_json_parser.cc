@@ -660,9 +660,25 @@ bool DumpJsonParser::ParseEnable(const nlohmann::json &content) const {
 void DumpJsonParser::ParseOpDebugMode(const nlohmann::json &content) {
   CheckJsonUnsignedType(content, kOpDebugMode);
   op_debug_mode_ = content;
-  const size_t max_mode = 5;
-  if (op_debug_mode_ > max_mode) {
-    MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3, 4, 5";
+  switch (op_debug_mode_) {
+    case 0:
+      break;
+    case 1:
+    case 2:
+    case 3:
+      if (IsKernelByKernel()) {
+        MS_LOG(EXCEPTION) << "Overflow dump is not supported on KernelByKernel mode.";
+      } else {
+        break;
+      }
+    case 4:
+      if (IsKernelByKernel()) {
+        break;
+      } else {
+        MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3, 4";
+      }
+    default:
+      MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3, 4";
   }
 }
 

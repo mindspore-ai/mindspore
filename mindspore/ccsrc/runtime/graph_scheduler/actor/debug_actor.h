@@ -40,7 +40,7 @@ class DebugActor : public ActorBase {
   DebugActor() : ActorBase("DebugActor") {}
   ~DebugActor() override = default;
 
-  auto ACLDump(uint32_t device_id);
+  void ACLDump(uint32_t device_id);
 
   // The debug of each node.
   void Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_info_, const DeviceContext *device_context,

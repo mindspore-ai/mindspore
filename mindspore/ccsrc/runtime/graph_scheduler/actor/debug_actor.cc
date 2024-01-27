@@ -36,7 +36,7 @@
 
 namespace mindspore {
 namespace runtime {
-auto DebugActor::ACLDump(uint32_t device_id) {
+void DebugActor::ACLDump(uint32_t device_id) {
   std::string env_enable_str = common::GetEnv("GRAPH_OP_RUN");
   if (env_enable_str == "1") {
     auto step_count_num = 0;

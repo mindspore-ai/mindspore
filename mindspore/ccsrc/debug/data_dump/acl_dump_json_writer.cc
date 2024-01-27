@@ -63,19 +63,7 @@ void AclDumpJsonWriter::Parse() {
     case 0:
       dump_scene_ = "normal";
       break;
-    case 1:
-      dump_scene_ = "debug";
-      break;
-    case 2:
-      dump_scene_ = "debug";
-      break;
-    case 3:
-      dump_scene_ = "debug";
-      break;
     case 4:
-      dump_scene_ = "exception";
-      break;
-    case 5:
       dump_scene_ = "lite_exception";
       break;
     default:
@@ -97,7 +85,10 @@ bool AclDumpJsonWriter::WriteToFile(uint32_t device_id, uint32_t step_id) {
     dump["dump_list"] = nlohmann::json::array();
   }
   dump["dump_op_switch"] = "on";
-  nlohmann::json whole_content = {{"dump", dump}, {"dump_scene", dump_scene_}};
+  if (dump_scene_ != "normal") {
+    dump["dump_scene"] = dump_scene_;
+  }
+  nlohmann::json whole_content = {{"dump", dump}};
   std::string json_file_str = whole_content.dump();
   std::string file_name = acl_dump_json_path_ + "/acl_dump_" + std::to_string(device_id) + ".json";
   auto realpath = Common::CreatePrefixPath(file_name);
@@ -118,6 +109,7 @@ bool AclDumpJsonWriter::WriteToFile(uint32_t device_id, uint32_t step_id) {
     json_file.close();
     MS_LOG(EXCEPTION) << "Write dump json failed, error:" << e.what();
   }
+  json_file.close();
   MS_LOG(INFO) << "Write to file: " << file_name << " finished.";
   ChangeFileMode(realpath.value(), S_IRUSR);
   return true;
