@@ -210,7 +210,6 @@ class BaseTimelineGenerator:
                     item_json = json.dumps([item], indent=self.indent)
                     item_json = item_json.lstrip('[').rstrip('\n]')
                     json_file.write(item_json)
-                    json.dump(item, json_file, indent=self.indent)
                     if "scope_level" in item.keys():
                         self._max_scope_name_num = max(
                             self._max_scope_name_num, item["scope_level"] + 1)
