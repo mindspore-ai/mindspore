@@ -62,6 +62,31 @@ class ComposeOperation : public TensorOperation {
 
   static Status from_json(const nlohmann::json &op_params, std::shared_ptr<TensorOperation> *operation);
 
+  // Get the compose type: kInvalid / kAscend910B / kCpu.
+  virtual MapTargetDevice Type() {
+    bool have_dvpp = false;
+    bool have_cpu = false;
+    for (auto &item : transforms_) {
+      if (item->Type() == MapTargetDevice::kAscend910B) {
+        have_dvpp = true;
+      } else if (item->Type() == MapTargetDevice::kCpu) {
+        have_cpu = true;
+      } else {
+        MS_LOG(ERROR) << "The transform: " << item->Name() << " is not Ascend or Cpu.";
+        return MapTargetDevice::kInvalid;
+      }
+    }
+
+    if (have_dvpp && have_cpu) {
+      MS_LOG(ERROR) << "Currently, it is not supported to mix DVPP transforms with CPU transforms in Compose.";
+      return MapTargetDevice::kInvalid;
+    } else if (have_dvpp) {
+      return MapTargetDevice::kAscend910B;
+    } else {
+      return MapTargetDevice::kCpu;
+    }
+  }
+
  private:
   std::vector<std::shared_ptr<TensorOperation>> transforms_;
 };

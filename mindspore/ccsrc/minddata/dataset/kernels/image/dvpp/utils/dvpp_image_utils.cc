@@ -157,23 +157,16 @@ APP_ERROR DvppResize(const std::shared_ptr<DeviceTensorAscend910B> &input,
       workspace_addr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
 
-    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
-      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
       return APP_ERR_DVPP_RESIZE_FAIL;
     }
-
-    // release workspace_addr
-    (void)input->GetDeviceContext()->device_res_manager_->FreeMemory(workspace_addr);
   } else {
     // call DVPP step3
     ret = acldvppResize(
       nullptr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
-
-    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
-      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
-      return APP_ERR_DVPP_RESIZE_FAIL;
-    }
   }
 
   if (ret != ACL_SUCCESS) {
@@ -225,23 +218,16 @@ APP_ERROR DvppDecode(const std::shared_ptr<DeviceTensorAscend910B> &input,
       workspace_addr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
 
-    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
-      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
       return APP_ERR_DVPP_JPEG_DECODE_FAIL;
     }
-
-    // release workspace_addr
-    (void)input->GetDeviceContext()->device_res_manager_->FreeMemory(workspace_addr);
   } else {
     // call DVPP step3
     ret = acldvppDecodeJpeg(
       nullptr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
-
-    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
-      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
-      return APP_ERR_DVPP_JPEG_DECODE_FAIL;
-    }
   }
 
   if (ret != ACL_SUCCESS) {
@@ -330,6 +316,17 @@ APP_ERROR DvppNormalize(const std::shared_ptr<DeviceTensorAscend910B> &input,
     return APP_ERR_DVPP_NORMALIZE_FAIL;
   }
 
+  // the memory will be released when the map / executor is finished
+  if (!input->AddMaintenFloatArrayMemory(reinterpret_cast<void *>(acl_mean))) {
+    MS_LOG(ERROR) << "Add float array [acl_mean] to the input failed";
+    return APP_ERR_DVPP_NORMALIZE_FAIL;
+  }
+
+  if (!input->AddMaintenFloatArrayMemory(reinterpret_cast<void *>(acl_std))) {
+    MS_LOG(ERROR) << "Add float array [acl_std] to the input failed";
+    return APP_ERR_DVPP_NORMALIZE_FAIL;
+  }
+
   // call DVPP step1
   uint64_t workspace_size = 0;
   aclOpExecutor *executor;
@@ -356,27 +353,17 @@ APP_ERROR DvppNormalize(const std::shared_ptr<DeviceTensorAscend910B> &input,
       workspace_addr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
 
-    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
-      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
       return APP_ERR_DVPP_NORMALIZE_FAIL;
     }
-
-    // release workspace_addr
-    (void)input->GetDeviceContext()->device_res_manager_->FreeMemory(workspace_addr);
   } else {
     // call DVPP step3
     ret = acldvppNormalize(
       nullptr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
-
-    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
-      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
-      return APP_ERR_DVPP_NORMALIZE_FAIL;
-    }
   }
-
-  (void)aclDestroyFloatArray(acl_mean);
-  (void)aclDestroyFloatArray(acl_std);
 
   if (ret != ACL_SUCCESS) {
     MS_LOG(ERROR) << "Call acldvppNormalize failed, error code: " + std::to_string(ret) + ".";
@@ -457,23 +444,16 @@ APP_ERROR DvppAdjustBrightness(const std::shared_ptr<DeviceTensorAscend910B> &in
       workspace_addr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
 
-    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
-      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
       return APP_ERR_DVPP_ADJUST_BRIGHTNESS_FAIL;
     }
-
-    // release workspace_addr
-    (void)input->GetDeviceContext()->device_res_manager_->FreeMemory(workspace_addr);
   } else {
     // call DVPP step3
     ret = acldvppAdjustBrightness(
       nullptr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
-
-    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
-      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
-      return APP_ERR_DVPP_ADJUST_BRIGHTNESS_FAIL;
-    }
   }
 
   if (ret != ACL_SUCCESS) {
@@ -554,23 +534,16 @@ APP_ERROR DvppAdjustContrast(const std::shared_ptr<DeviceTensorAscend910B> &inpu
       workspace_addr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
 
-    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
-      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
       return APP_ERR_DVPP_ADJUST_CONTRAST_FAIL;
     }
-
-    // release workspace_addr
-    (void)input->GetDeviceContext()->device_res_manager_->FreeMemory(workspace_addr);
   } else {
     // call DVPP step3
     ret = acldvppAdjustContrast(
       nullptr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
-
-    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
-      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
-      return APP_ERR_DVPP_ADJUST_CONTRAST_FAIL;
-    }
   }
 
   if (ret != ACL_SUCCESS) {
@@ -651,23 +624,16 @@ APP_ERROR DvppAdjustHue(const std::shared_ptr<DeviceTensorAscend910B> &input,
       workspace_addr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
 
-    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
-      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
       return APP_ERR_DVPP_ADJUST_HUE_FAIL;
     }
-
-    // release workspace_addr
-    (void)input->GetDeviceContext()->device_res_manager_->FreeMemory(workspace_addr);
   } else {
     // call DVPP step3
     ret = acldvppAdjustHue(
       nullptr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
-
-    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
-      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
-      return APP_ERR_DVPP_ADJUST_HUE_FAIL;
-    }
   }
 
   if (ret != ACL_SUCCESS) {
@@ -748,23 +714,16 @@ APP_ERROR DvppAdjustSaturation(const std::shared_ptr<DeviceTensorAscend910B> &in
       workspace_addr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
 
-    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
-      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
       return APP_ERR_DVPP_ADJUST_SATURATION_FAIL;
     }
-
-    // release workspace_addr
-    (void)input->GetDeviceContext()->device_res_manager_->FreeMemory(workspace_addr);
   } else {
     // call DVPP step3
     ret = acldvppAdjustSaturation(
       nullptr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
-
-    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
-      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
-      return APP_ERR_DVPP_ADJUST_SATURATION_FAIL;
-    }
   }
 
   if (ret != ACL_SUCCESS) {
@@ -848,23 +807,16 @@ APP_ERROR DvppHorizontalFlip(const std::shared_ptr<DeviceTensorAscend910B> &inpu
       workspace_addr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
 
-    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
-      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
       return APP_ERR_DVPP_HORIZONTAL_FLIP_FAIL;
     }
-
-    // release workspace_addr
-    (void)input->GetDeviceContext()->device_res_manager_->FreeMemory(workspace_addr);
   } else {
     // call DVPP step3
     ret = acldvppHorizontalFlip(
       nullptr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
-
-    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
-      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
-      return APP_ERR_DVPP_HORIZONTAL_FLIP_FAIL;
-    }
   }
 
   if (ret != ACL_SUCCESS) {
@@ -947,23 +899,16 @@ APP_ERROR DvppVerticalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
       workspace_addr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
 
-    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
-      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
       return APP_ERR_DVPP_VERTICAL_FLIP_FAIL;
     }
-
-    // release workspace_addr
-    (void)input->GetDeviceContext()->device_res_manager_->FreeMemory(workspace_addr);
   } else {
     // call DVPP step3
     ret = acldvppVerticalFlip(
       nullptr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
-
-    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
-      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
-      return APP_ERR_DVPP_VERTICAL_FLIP_FAIL;
-    }
   }
 
   if (ret != ACL_SUCCESS) {
@@ -1050,6 +995,17 @@ APP_ERROR DvppPerspective(const std::shared_ptr<DeviceTensorAscend910B> &input,
     return APP_ERR_DVPP_PERSPECTIVE_FAIL;
   }
 
+  // the memory will be released when the map / executor is finished
+  if (!input->AddMaintenFloatArrayMemory(reinterpret_cast<void *>(matrix))) {
+    MS_LOG(ERROR) << "Add float array [matrix] to the input failed";
+    return APP_ERR_DVPP_PERSPECTIVE_FAIL;
+  }
+
+  if (!input->AddMaintenFloatArrayMemory(reinterpret_cast<void *>(fill))) {
+    MS_LOG(ERROR) << "Add float array [fill] to the input failed";
+    return APP_ERR_DVPP_PERSPECTIVE_FAIL;
+  }
+
   // create output DeviceTensorAscend910B
   std::shared_ptr<DeviceTensorAscend910B> device_tensor = nullptr;
   if (DeviceTensorAscend910B::CreateDeviceTensor(shape, type, input->GetDeviceContext(), input->GetStreamID(),
@@ -1093,27 +1049,17 @@ APP_ERROR DvppPerspective(const std::shared_ptr<DeviceTensorAscend910B> &input,
       workspace_addr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
 
-    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
-      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
       return APP_ERR_DVPP_PERSPECTIVE_FAIL;
     }
-
-    // release workspace_addr
-    (void)input->GetDeviceContext()->device_res_manager_->FreeMemory(workspace_addr);
   } else {
     // call DVPP step3
     ret = acldvppWarpPerspective(
       nullptr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
-
-    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
-      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
-      return APP_ERR_DVPP_PERSPECTIVE_FAIL;
-    }
   }
-
-  (void)aclDestroyFloatArray(matrix);
-  (void)aclDestroyFloatArray(fill);
 
   if (ret != ACL_SUCCESS) {
     MS_LOG(ERROR) << "Call acldvppWarpPerspective failed, error code: " + std::to_string(ret) + ".";
@@ -1201,6 +1147,13 @@ APP_ERROR DvppResizedCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
     MS_LOG(ERROR) << "Call aclCreateIntArray failed.";
     return APP_ERR_DVPP_RESIZED_CROP_FAIL;
   }
+
+  // the memory will be released when the map / executor is finished
+  if (!input->AddMaintenIntArrayMemory(reinterpret_cast<void *>(size))) {
+    MS_LOG(ERROR) << "Add int array [size] to the input failed";
+    return APP_ERR_DVPP_RESIZED_CROP_FAIL;
+  }
+
   uint64_t workspace_size = 0;
   aclOpExecutor *executor;
   auto ret = acldvppCropAndResizeGetWorkspaceSize(
@@ -1226,26 +1179,17 @@ APP_ERROR DvppResizedCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
       workspace_addr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
 
-    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
-      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
       return APP_ERR_DVPP_RESIZED_CROP_FAIL;
     }
-
-    // release workspace_addr
-    (void)input->GetDeviceContext()->device_res_manager_->FreeMemory(workspace_addr);
   } else {
     // call DVPP step3
     ret = acldvppCropAndResize(
       nullptr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
-
-    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
-      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
-      return APP_ERR_DVPP_RESIZED_CROP_FAIL;
-    }
   }
-
-  (void)aclDestroyIntArray(size);
 
   if (ret != ACL_SUCCESS) {
     MS_LOG(ERROR) << "Call acldvppCropAndResize failed, error code: " + std::to_string(ret) + ".";
@@ -1349,6 +1293,30 @@ APP_ERROR CreateAclTensor(const int64_t *view_dims, uint64_t view_dims_num, mind
     *acl_tensor = reinterpret_cast<void *>(aclCreateTensor(view_dims, view_dims_num, acl_data_type, stride, offset,
                                                            aclFormat::ACL_FORMAT_NCHW, storage_dims, storage_dims_num,
                                                            tensor_data));
+  }
+  return APP_ERR_OK;
+}
+
+APP_ERROR DestroyTensor(void *tensor) {
+  if (aclDestroyTensor(reinterpret_cast<aclTensor *>(tensor)) != OK) {
+    MS_LOG(ERROR) << "Call aclDestroyTensor failed.";
+    return APP_ERR_DESTORY_TENSOR;
+  }
+  return APP_ERR_OK;
+}
+
+APP_ERROR DestroyFloatArray(void *float_array) {
+  if (aclDestroyFloatArray(reinterpret_cast<aclFloatArray *>(float_array)) != OK) {
+    MS_LOG(ERROR) << "Call aclDestroyFloatArray failed.";
+    return APP_ERR_DESTORY_FLOAT_ARRAY;
+  }
+  return APP_ERR_OK;
+}
+
+APP_ERROR DestroyIntArray(void *int_array) {
+  if (aclDestroyIntArray(reinterpret_cast<aclIntArray *>(int_array)) != OK) {
+    MS_LOG(ERROR) << "Call aclDestroyIntArray failed.";
+    return APP_ERR_DESTORY_INT_ARRAY;
   }
   return APP_ERR_OK;
 }

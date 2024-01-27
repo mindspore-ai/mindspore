@@ -65,10 +65,15 @@ Status NpuMapJob::Run(std::vector<TensorRow> in, std::vector<TensorRow> *out,
   }
 
   std::vector<std::vector<std::shared_ptr<DeviceTensorAscend910B>>> device_out;
+  std::vector<std::vector<std::vector<std::shared_ptr<DeviceTensorAscend910B>>>> hold_input_lists;
 
   for (int32_t row = 0; row < num_rows; row++) {
     std::vector<std::shared_ptr<DeviceTensorAscend910B>> input_row = device_in[row];
     std::vector<std::shared_ptr<DeviceTensorAscend910B>> result_row;
+
+    // hold all the inputs and release them when the npu_map_job finish
+    std::vector<std::vector<std::shared_ptr<DeviceTensorAscend910B>>> hold_input_list;
+
     for (size_t i = 0; i < ops_.size(); i++) {
       // if the op is Decode, we should get the height and width form JPEG header and create the output tensor first
       int img_width = 0;
@@ -91,16 +96,8 @@ Status NpuMapJob::Run(std::vector<TensorRow> in, std::vector<TensorRow> *out,
         RETURN_IF_NOT_OK(util::RebuildMapErrorMsg(in[row], op_name, &rc));
       }
 
-      // Because we release the input memory, so we should sync first
-      if (!device_context->device_res_manager_->SyncStream(stream_id)) {
-        std::string err_msg = "SyncStream stream id: " + std::to_string(stream_id) + " failed.";
-        RETURN_STATUS_UNEXPECTED(err_msg);
-      }
-
-      // release the device memory first
-      for (auto &item : input_row) {
-        device_context->device_res_manager_->FreeMemory(item->GetDeviceAddress());
-      }
+      // move the input to the hold_input_list first
+      hold_input_list.push_back(std::move(input_row));
 
       // Assign result_row to to_process for the next TensorOp processing, except for the last TensorOp in the list.
       if (i + 1 < ops_.size()) {
@@ -108,6 +105,13 @@ Status NpuMapJob::Run(std::vector<TensorRow> in, std::vector<TensorRow> *out,
       }
     }
     device_out.push_back(std::move(result_row));
+    hold_input_lists.push_back(std::move(hold_input_list));
+  }
+
+  // Because we do ToHostTensor, we should sync first
+  if (!device_context->device_res_manager_->SyncStream(stream_id)) {
+    std::string err_msg = "SyncStream stream id: " + std::to_string(stream_id) + " failed.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
   // copy the data from device to host
@@ -119,6 +123,18 @@ Status NpuMapJob::Run(std::vector<TensorRow> in, std::vector<TensorRow> *out,
       result_row.push_back(std::move(host_out));
     }
     out->push_back(std::move(result_row));
+  }
+
+  // release all the device memory
+  for (auto &hold_input_list : hold_input_lists) {
+    for (auto &tensor_list : hold_input_list) {
+      for (auto &item : tensor_list) {
+        if (!item->ReleaseDeviceMemory()) {
+          std::string err_msg = "Release the device memory failed after the dvpp ops executed.";
+          RETURN_STATUS_UNEXPECTED(err_msg);
+        }
+      }
+    }
   }
 
   return Status::OK();

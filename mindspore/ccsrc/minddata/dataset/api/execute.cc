@@ -25,6 +25,7 @@
 #include "minddata/dataset/core/tensor_row.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/type_id.h"
+#include "minddata/dataset/kernels/data/compose_op.h"
 #include "minddata/dataset/kernels/ir/tensor_operation.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/log_adapter.h"
@@ -261,6 +262,18 @@ Status Execute::BuildTransforms(std::vector<std::shared_ptr<TensorOp>> *transfor
     RETURN_IF_NOT_OK(ops_[i]->ValidateParams());
     (void)transforms_rt->emplace_back(ops_[i]->Build());
   }
+
+  // if transforms_rt[0] is ComposeOp and all dvpp, extract all the ops from ComposeOp
+  if ((*transforms_rt)[0]->IsDvppOp() && (*transforms_rt)[0]->Name() == kComposeOp) {
+    if (dynamic_cast<ComposeOp *>((*transforms_rt)[0].get())->IsMixedOps()) {
+      std::string err_msg = "Currently, it is not supported to mix DVPP transforms with CPU transforms in Compose.";
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+    *transforms_rt = std::move(dynamic_cast<ComposeOp *>((*transforms_rt)[0].get())->GetOps());
+    MS_LOG(INFO) << "Extract the ComposeOp to " << std::to_string((*transforms_rt).size()) << " ops.";
+  }
+
   return Status::OK();
 }
 
@@ -431,9 +444,8 @@ Status PyExecute::operator()(const std::vector<std::shared_ptr<Tensor>> &input_t
 
   std::vector<std::shared_ptr<TensorOp>> transforms_rt;
   CHECK_FAIL_RETURN_UNEXPECTED(BuildTransforms(&transforms_rt), "Building Transform ops failed!");
-  CHECK_FAIL_RETURN_UNEXPECTED(transforms_rt.size() == 1, "PyExecute: only a single op operation is supported.");
 
-  if (transforms_rt[0]->IsDvppOp() == false) {
+  if (!transforms_rt[0]->IsDvppOp()) {
     TensorRow de_tensor_list(input_tensor_list);
 
     // Apply transforms on tensor
@@ -459,7 +471,11 @@ Status PyExecute::operator()(const std::vector<std::shared_ptr<Tensor>> &input_t
       device_tensor_list.push_back(std::move(device_tensor));
     }
 
+    // hold all the inputs and release them when the executor finish
+    std::vector<std::vector<std::shared_ptr<DeviceTensorAscend910B>>> hold_input_list;
+
     for (auto &t : transforms_rt) {
+      MS_LOG(INFO) << "Execute " << t->Name() << " transform.";
       std::vector<std::shared_ptr<DeviceTensorAscend910B>> device_output_list;
 
       // if the op is Decode, we should get the height and width form JPEG header and create the output tensor first
@@ -489,19 +505,17 @@ Status PyExecute::operator()(const std::vector<std::shared_ptr<Tensor>> &input_t
 
       RETURN_IF_NOT_OK(t->Compute(device_tensor_list, &device_output_list));
 
-      // Because we release the input memory, so we should sync first
-      if (!device_context_->device_res_manager_->SyncStream(stream_id_)) {
-        std::string err_msg = "SyncStream stream id: " + std::to_string(stream_id_) + " failed.";
-        RETURN_STATUS_UNEXPECTED(err_msg);
-      }
-
-      // release the input device memory
-      for (auto &item : device_tensor_list) {
-        device_context_->device_res_manager_->FreeMemory(item->GetDeviceAddress());
-      }
+      // move the input to the hold_input_list first
+      hold_input_list.push_back(std::move(device_tensor_list));
 
       // For next transform
       device_tensor_list = std::move(device_output_list);
+    }
+
+    // the transforms all done, do SyncStream
+    if (!device_context_->device_res_manager_->SyncStream(stream_id_)) {
+      std::string err_msg = "SyncStream stream id: " + std::to_string(stream_id_) + " failed.";
+      RETURN_STATUS_UNEXPECTED(err_msg);
     }
 
     // copy the data from device tensor to host tensor
@@ -513,6 +527,17 @@ Status PyExecute::operator()(const std::vector<std::shared_ptr<Tensor>> &input_t
     }
     *out = std::move(host_out);
     CHECK_FAIL_RETURN_UNEXPECTED(!out->empty(), "Output Tensor is not valid.");
+
+    // release all the inputs' device memory and workspace memory
+    for (auto &tensor_list : hold_input_list) {
+      for (auto &item : tensor_list) {
+        if (!item->ReleaseDeviceMemory()) {
+          std::string err_msg = "Release the device memory failed after the dvpp ops executed.";
+          MS_LOG(ERROR) << err_msg;
+          RETURN_STATUS_UNEXPECTED(err_msg);
+        }
+      }
+    }
 #endif
   } else {
     std::string err_msg = "Your input device is not supported. (Option: CPU or Ascend910B)";
