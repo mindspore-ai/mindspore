@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AICPU_AICPU_OPS_ENVIRON_AICPU_ENVIRON_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AICPU_AICPU_OPS_ENVIRON_AICPU_ENVIRON_H_
+#ifndef AICPU_KERNELS_NORMALIZED_AICPU_ENVIRON_H_
+#define AICPU_KERNELS_NORMALIZED_AICPU_ENVIRON_H_
 
 #include <vector>
 #include <string>
@@ -77,7 +77,7 @@ class Environ {
   void Clear() {
     // Foreach values to free the value addr.
     for (auto &value : values_) {
-      AICPU_CHECK_NULLPTR_VOID(value.second, "value.second is null.");
+      KERNEL_CHECK_NULLPTR_VOID(value.second, "value.second is null.");
       free(value.second->addr_);
     }
     values_.clear();
@@ -94,4 +94,4 @@ class Environ {
 using EnvironPtr = std::shared_ptr<Environ>;
 }  // namespace aicpu
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AICPU_AICPU_OPS_ENVIRON_AICPU_ENVIRON_H_
+#endif  // AICPU_KERNELS_NORMALIZED_AICPU_ENVIRON_H_

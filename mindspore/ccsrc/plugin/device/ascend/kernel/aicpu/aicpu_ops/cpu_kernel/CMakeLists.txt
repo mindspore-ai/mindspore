@@ -20,8 +20,10 @@ set(CPU_SRC
 )
 
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/ms_kernel MS_KERNELS)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/ms_kernel/environ ENVIRON_KERNELS)
 set(CPU_OPS_SRC
     ${MS_KERNELS}
+    ${ENVIRON_KERNELS}
     ${CMAKE_CURRENT_SOURCE_DIR}/ms_kernel/random/utils.cc
 )
 

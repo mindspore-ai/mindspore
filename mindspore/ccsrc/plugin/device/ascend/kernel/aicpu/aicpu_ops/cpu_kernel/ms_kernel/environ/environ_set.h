@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AICPU_AICPU_OPS_ENVIRON_ENVIRON_CREATE_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AICPU_AICPU_OPS_ENVIRON_ENVIRON_CREATE_H_
+#ifndef AICPU_KERNELS_NORMALIZED_ENVIRON_SET_H_
+#define AICPU_KERNELS_NORMALIZED_ENVIRON_SET_H_
 
-#include "common/kernel_base.h"
-
+#include "cpu_kernel/inc/cpu_ops_kernel.h"
 namespace aicpu {
-class EnvironCreateKernel : public KernelBase {
+class EnvironSetKernel : public CpuKernel {
  public:
-  EnvironCreateKernel() : KernelBase("EnvironCreate") {}
-  ~EnvironCreateKernel() = default;
+  EnvironSetKernel() = default;
+  ~EnvironSetKernel() = default;
 
- protected:
-  uint32_t DoCompute() override;
-  uint32_t ParseKernelParam() override;
+  uint32_t Compute(CpuKernelContext &ctx) override;
+
+ private:
+  uint32_t ParseKernelParam(const CpuKernelContext &ctx);
+  int64_t attr_value_type_{0};
+  size_t value_size_{0};
 };
 }  // namespace aicpu
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AICPU_AICPU_OPS_ENVIRON_ENVIRON_CREATE_H_
+#endif  // AICPU_KERNELS_NORMALIZED_ENVIRON_SET_H_
