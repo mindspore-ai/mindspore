@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # encoding: utf-8
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -42,8 +42,9 @@ def _get_package_data():
     """ get package data"""
     pkg_data = [
         '__init__.py', '_checkparam.py', 'base_model.py', 'context.py', 'converter.py', 'model.py', 'tensor.py',
-        'lite_split.py', 'lib/*.so*', '.commit_id', 'include/api/*', 'include/api/callback/*', 'include/api/metrics/*',
-        'include/mindapi/base/*', 'include/registry/converter_context.h', 'include/converter.h', 'custom_kernels/**'
+        'lite_split.py', '_check_ascend.py', 'lib/*.so*', '.commit_id', 'include/api/*', 'include/api/callback/*',
+        'include/api/metrics/*', 'include/mindapi/base/*', 'include/registry/converter_context.h',
+        'include/converter.h', 'custom_kernels/**'
     ]
     custom_ops_data = ['custom_kernels/*', 'custom_kernels/*/*', 'custom_kernels/*/*/*', 'custom_kernels/*/*/*/*',
                        'custom_kernels/*/*/*/*/*', 'custom_kernels/*/*/*/*/*/*', 'custom_kernels/*/*/*/*/*/*/*',
