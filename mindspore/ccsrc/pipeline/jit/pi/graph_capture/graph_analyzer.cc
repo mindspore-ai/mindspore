@@ -330,6 +330,62 @@ void GraphAnalyzer::Analyze() {
   }
 }
 
+void MindGraphAnalyzer::Analyze() {
+  UseDefAnalyze();
+  CollectInputs();
+
+  need_interpret_ = true;
+  if (graph_->GetStopTraceBci() != -1 || !GetCaptureInfo().ordered_escaped_locals.empty()) {
+    return;
+  }
+  bool support_ret = graph_->GetRetVal()->GetVobj() && graph_->GetRetVal()->GetVobj()->IsMindSporeSupportedType();
+  if (!support_ret) {
+    return;
+  }
+  PyCodeObject *co = graph_->GetCodeObj();
+  const FrameStates &enter_frame = graph_->GetFrame(0);
+  const auto &args = enter_frame.GetLocals();
+  int argc = co->co_argcount + co->co_kwonlyargcount;
+  // check all parameters is graph supported, but here not check variable arguments
+  auto end = args.begin() + argc;
+  auto iter = std::find_if(args.begin(), end, [](ValueNode *i) { return !ValidateGraphParameters(i); });
+  if (iter == end) {
+    need_interpret_ = false;
+  }
+}
+
+bool MindGraphAnalyzer::AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) {
+  bool isAllNodesSupportOutput = true;
+  for (auto node : aliveNodes) {
+    AObject *o = node->GetVobj();
+    auto out_py_obj = o->GetPyObject();
+    auto mind_graph_builder = std::static_pointer_cast<MindGraphBuilder>(graph_builder_);
+    MS_EXCEPTION_IF_NULL(mind_graph_builder);
+    auto func_graph_builder = mind_graph_builder->FGBuilder();
+    if (func_graph_builder->AddOutput(out_py_obj)) {
+      MS_LOG(DEBUG) << "Add output success.";
+      continue;
+    }
+    if (IsNonLocalValue(node)) {
+      MS_LOG(DEBUG) << "Skip non local value used as graph return.";
+      continue;
+    }
+    MS_LOG(DEBUG) << "Add output failed.";
+    //  reset break graph point
+    isAllNodesSupportOutput = false;
+    int new_break_point = node->bci();
+    auto curNode = node;
+    MS_EXCEPTION_IF_CHECK_FAIL(new_break_point != -1, "break point cannot be -1");
+    MS_EXCEPTION_IF_NULL(curNode->GetGraph());
+    if (this->graph_->Config().GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
+      GRAPH_JIT_LOG_F("reset break point: %d", new_break_point);
+    }
+    this->graph_->StopTraceAt(new_break_point, StopTraceReason::kStopTraceDataDependsOnGraphOut);
+    break;
+  }
+  return isAllNodesSupportOutput;
+}
+
 FrameStates buildLastFrame(Graph *g) { return g->GetFrame(g->GetStopTraceBci()); }
 
 std::vector<ValueNode *> GraphAnalyzer::GetAliveLocals(Graph *g) {
