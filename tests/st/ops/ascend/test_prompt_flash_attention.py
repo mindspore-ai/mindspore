@@ -86,7 +86,7 @@ def test_prompt_flash_attention_bnsd_fwd():
     assert attention_out[0].shape == (B, Q_N, S, D)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_prompt_flash_attention_bnsd_mod2_fwd():
