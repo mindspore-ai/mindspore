@@ -34,12 +34,12 @@ class BACKEND_EXPORT DeviceSynchronizer {
   virtual ~DeviceSynchronizer() = default;
 
   // Copy device memory to host side synchronously.
-  virtual bool SyncDeviceToHost(void *host_ptr, void *device_ptr, size_t size, const std::string &device_name,
+  virtual bool SyncDeviceToHost(void *host_ptr, const void *device_ptr, size_t size, const std::string &device_name,
                                 uint32_t device_id, mindspore::Format format, const ShapeVector &shape,
                                 size_t stream_id, const UserDataPtr &user_data = nullptr) const = 0;
 
   // Copy host memory to device side synchronously.
-  virtual bool SyncHostToDevice(void *device_ptr, void *host_ptr, size_t size, const std::string &device_name,
+  virtual bool SyncHostToDevice(void *device_ptr, const void *host_ptr, size_t size, const std::string &device_name,
                                 uint32_t device_id, mindspore::Format format, const ShapeVector &shape,
                                 size_t stream_id, const UserDataPtr &user_data = nullptr) const = 0;
 };

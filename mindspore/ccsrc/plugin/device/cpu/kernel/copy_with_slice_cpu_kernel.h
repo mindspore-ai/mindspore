@@ -32,8 +32,8 @@ class CopyWithSliceCpuKernel : public NativeCpuKernelMod {
   ~CopyWithSliceCpuKernel() = default;
 
   bool LaunchCopyWithSlice(TypeId type_id, const TensorStorageInfoPtr &src_storage_info,
-                           const kernel::AddressPtr &src_addr, const TensorStorageInfoPtr &dst_storage_info,
-                           const kernel::AddressPtr &dst_addr);
+                           const kernel::KernelTensorPtr &src_addr, const TensorStorageInfoPtr &dst_storage_info,
+                           const kernel::KernelTensorPtr &dst_addr);
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs) override {
     MS_LOG(EXCEPTION) << "This api is not external";
@@ -41,12 +41,12 @@ class CopyWithSliceCpuKernel : public NativeCpuKernelMod {
 
  private:
   using CopyWithSliceFunc =
-    std::function<bool(CopyWithSliceCpuKernel *, const TensorStorageInfoPtr &, const kernel::AddressPtr &,
-                       const TensorStorageInfoPtr &, const kernel::AddressPtr &)>;
+    std::function<bool(CopyWithSliceCpuKernel *, const TensorStorageInfoPtr &, const kernel::KernelTensorPtr &,
+                       const TensorStorageInfoPtr &, const kernel::KernelTensorPtr &)>;
 
   template <typename T>
-  bool LaunchCopyWithSliceImpl(const TensorStorageInfoPtr &src_storage_info, const kernel::AddressPtr &src_addr,
-                               const TensorStorageInfoPtr &dst_storage_info, const kernel::AddressPtr &dst_addr);
+  bool LaunchCopyWithSliceImpl(const TensorStorageInfoPtr &src_storage_info, const kernel::KernelTensorPtr &src_addr,
+                               const TensorStorageInfoPtr &dst_storage_info, const kernel::KernelTensorPtr &dst_addr);
   static std::unordered_map<TypeId, CopyWithSliceFunc> func_list_;
 };
 }  // namespace kernel

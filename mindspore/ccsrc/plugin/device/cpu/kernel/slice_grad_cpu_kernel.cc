@@ -38,7 +38,7 @@ constexpr auto kEnd = "end";
 constexpr auto kStrides = "strides";
 constexpr auto kSize = "size";
 
-std::vector<int64_t> GetIntValueFormAddress(const TypeId &dtype, const kernel::KernelTensor *address,
+std::vector<int64_t> GetIntValueFormAddress(const TypeId &dtype, kernel::KernelTensor *address,
                                             const size_t elem_size) {
   std::vector<int64_t> res;
   if (dtype == kNumberTypeInt32) {

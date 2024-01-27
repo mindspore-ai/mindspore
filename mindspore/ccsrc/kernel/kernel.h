@@ -790,34 +790,6 @@ class BACKEND_EXPORT KernelMod {
 };
 using KernelModPtr = std::shared_ptr<KernelMod>;
 
-// Delete after KernelMod rectified.
-template <typename T>
-inline T *GetDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t index) {
-  if (index >= addr_list.size()) {
-    MS_LOG(ERROR) << "Address index(" << index << ") out of range(" << addr_list.size() << ")";
-    return nullptr;
-  }
-
-  if (addr_list[index] == nullptr) {
-    MS_LOG(ERROR) << "The device address is nullptr, address index: " << index << ", and the length of 'addr_list' is "
-                  << addr_list.size();
-    return nullptr;
-  }
-
-  if (addr_list[index]->addr == nullptr) {
-    MS_LOG(WARNING) << "The memory of device address is nullptr, address index: " << index
-                    << ", and the length of 'addr_list' is " << addr_list.size();
-    return nullptr;
-  }
-
-  // When the input is an empty tuple, the input size will be 0.
-  if (addr_list[index]->size == 0) {
-    MS_LOG(INFO) << "The size of device address is zero, address index: " << index
-                 << ", and the length of 'addr_list' is " << addr_list.size();
-  }
-  return reinterpret_cast<T *>(addr_list[index]->addr);
-}
-
 template <typename T>
 inline T *GetDeviceAddress(const std::vector<KernelTensor *> &addr_list, size_t index) {
   if (index >= addr_list.size()) {
