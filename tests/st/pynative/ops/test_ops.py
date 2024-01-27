@@ -277,6 +277,29 @@ def test_cumprod_with_acl():
     fact.grad_mindspore_impl()
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_single_ops():
+    """
+    Feature: PyNative forward RunOp.
+    Description: Test PyNative forward RunOp.
+    Expectation: No exception.
+    """
+    class ReluAddNet(nn.Cell):
+        def construct(self, x):
+            y = ops.relu(x)
+            z = ops.add(y, y)
+            w = ops.add(x, z)
+            return w
+
+    x = Tensor(-1, dtype=ms.float32)
+    net = ReluAddNet()
+    net.set_inputs(Tensor(shape=[None], dtype=ms.float32))
+    output = net(x)
+    assert np.allclose(output.asnumpy(), np.array([-1]))
+
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
