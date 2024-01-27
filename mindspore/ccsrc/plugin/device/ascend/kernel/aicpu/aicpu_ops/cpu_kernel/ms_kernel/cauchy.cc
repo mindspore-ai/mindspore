@@ -110,5 +110,5 @@ uint32_t CauchyCpuKernel::CauchyCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kCauchy, CauchyCpuKernel);
+REGISTER_MS_CPU_KERNEL(kCauchy, CauchyCpuKernel);
 }  // namespace aicpu

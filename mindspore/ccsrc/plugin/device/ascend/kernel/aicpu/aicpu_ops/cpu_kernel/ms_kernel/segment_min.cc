@@ -241,5 +241,5 @@ bool SegmentMinCpuKernel::CheckLength(Tensor *seg, Tensor *data) {
   auto len2 = data->GetTensorShape()->GetDimSize(0);
   return len1 == len2;
 }
-REGISTER_CPU_KERNEL(kSegmentMin, SegmentMinCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSegmentMin, SegmentMinCpuKernel);
 }  // namespace aicpu

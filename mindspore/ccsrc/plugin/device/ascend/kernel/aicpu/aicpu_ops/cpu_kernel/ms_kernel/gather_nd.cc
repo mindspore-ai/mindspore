@@ -166,6 +166,6 @@ uint32_t GatherNdCpuKernel::GatherNdComputeRealKernel(CpuKernelContext &ctx) {
 
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kGatherNd, GatherNdCpuKernel);
+REGISTER_MS_CPU_KERNEL(kGatherNd, GatherNdCpuKernel);
 
 }  // namespace aicpu

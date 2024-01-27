@@ -406,5 +406,5 @@ uint32_t QuantileCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kQuantile, QuantileCpuKernel);
+REGISTER_MS_CPU_KERNEL(kQuantile, QuantileCpuKernel);
 }  // namespace aicpu

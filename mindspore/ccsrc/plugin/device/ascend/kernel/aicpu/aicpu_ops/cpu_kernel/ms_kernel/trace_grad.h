@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_TRACEGRAD_H_
 #define AICPU_KERNELS_NORMALIZED_TRACEGARD_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 

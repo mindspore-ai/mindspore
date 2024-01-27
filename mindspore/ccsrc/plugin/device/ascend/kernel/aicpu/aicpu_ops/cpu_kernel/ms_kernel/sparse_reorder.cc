@@ -181,5 +181,5 @@ uint32_t SparseReorderCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kSparseReorder, SparseReorderCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSparseReorder, SparseReorderCpuKernel);
 }  // namespace aicpu

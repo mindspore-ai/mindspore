@@ -187,5 +187,5 @@ uint32_t BlackmanWindowCpuKernel::BlackmanWindowCompute2(const CpuKernelContext 
 }
 
 // 注册该算子实现
-REGISTER_CPU_KERNEL(kBlackmanWindow, BlackmanWindowCpuKernel);
+REGISTER_MS_CPU_KERNEL(kBlackmanWindow, BlackmanWindowCpuKernel);
 }  // namespace aicpu

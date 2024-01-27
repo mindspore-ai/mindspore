@@ -535,5 +535,5 @@ uint32_t DeformableOffsetsGradKernel::Compute(CpuKernelContext &ctx) {
   return ret;
 }
 
-REGISTER_CPU_KERNEL(kDeformableOffsetsGrad, DeformableOffsetsGradKernel);
+REGISTER_MS_CPU_KERNEL(kDeformableOffsetsGrad, DeformableOffsetsGradKernel);
 }  // namespace aicpu

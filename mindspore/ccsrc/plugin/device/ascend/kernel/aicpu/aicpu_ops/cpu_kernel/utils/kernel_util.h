@@ -25,7 +25,7 @@
 #include <map>
 #include <memory>
 
-#include "cpu_kernel/inc/cpu_context.h"
+#include "cpu_context.h"
 #include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/kernel_log.h"
 #include "cpu_kernel/common/status.h"
 

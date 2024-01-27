@@ -321,5 +321,5 @@ uint32_t MatrixExpCpuKernel::MatrixExpDiffTypeCompute(const CpuKernelContext &ct
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kMatrixExp, MatrixExpCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMatrixExp, MatrixExpCpuKernel);
 }  // namespace aicpu

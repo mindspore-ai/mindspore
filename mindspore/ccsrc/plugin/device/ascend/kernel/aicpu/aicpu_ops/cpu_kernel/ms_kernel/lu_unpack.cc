@@ -23,10 +23,10 @@
 #include <utility>
 #include <vector>
 
-#include "cpu_kernel/inc/cpu_context.h"
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_context.h"
+#include "cpu_kernel_utils.h"
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_tensor.h"
+#include "cpu_tensor.h"
 #include "securec/include/securec.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
@@ -352,5 +352,5 @@ uint32_t LuUnpackCpuKernel::Compute(CpuKernelContext &ctx) {
   calls_.clear();
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kLuUnpack, LuUnpackCpuKernel);
+REGISTER_MS_CPU_KERNEL(kLuUnpack, LuUnpackCpuKernel);
 }  // namespace aicpu

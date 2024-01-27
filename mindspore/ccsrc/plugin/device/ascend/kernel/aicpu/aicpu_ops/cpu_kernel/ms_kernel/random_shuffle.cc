@@ -101,5 +101,5 @@ uint32_t RandomShuffleCpuKernel::RandomShuffleCompute(const CpuKernelContext &ct
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kRandomShuffle, RandomShuffleCpuKernel);
+REGISTER_MS_CPU_KERNEL(kRandomShuffle, RandomShuffleCpuKernel);
 }  // namespace aicpu

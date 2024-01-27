@@ -78,5 +78,5 @@ uint32_t PolarCpuKernel::PolarCompute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kPolar, PolarCpuKernel);
+REGISTER_MS_CPU_KERNEL(kPolar, PolarCpuKernel);
 }  // namespace aicpu

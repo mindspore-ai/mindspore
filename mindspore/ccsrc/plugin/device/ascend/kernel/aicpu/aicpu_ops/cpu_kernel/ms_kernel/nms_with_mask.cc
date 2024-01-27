@@ -133,5 +133,5 @@ uint32_t NMSWithMaskCpuKernel::DoCompute(CpuKernelContext &ctx) {
 
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kNMSWithMask, NMSWithMaskCpuKernel);
+REGISTER_MS_CPU_KERNEL(kNMSWithMask, NMSWithMaskCpuKernel);
 }  // namespace aicpu

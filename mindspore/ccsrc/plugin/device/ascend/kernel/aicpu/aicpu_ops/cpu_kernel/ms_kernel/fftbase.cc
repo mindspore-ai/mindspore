@@ -237,5 +237,5 @@ uint32_t FFTBaseCpuKernel::FFTBaseCompute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 };
 
-REGISTER_CPU_KERNEL(kFFTBase, FFTBaseCpuKernel);
+REGISTER_MS_CPU_KERNEL(kFFTBase, FFTBaseCpuKernel);
 }  // namespace aicpu

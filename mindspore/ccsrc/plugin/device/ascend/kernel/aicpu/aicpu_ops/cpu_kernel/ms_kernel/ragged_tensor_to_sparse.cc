@@ -329,5 +329,5 @@ uint32_t RaggedTensorToSparseCpuKernel::Compute(CpuKernelContext &ctx) {
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
-REGISTER_CPU_KERNEL(kRaggedTensorToSparse, RaggedTensorToSparseCpuKernel);
+REGISTER_MS_CPU_KERNEL(kRaggedTensorToSparse, RaggedTensorToSparseCpuKernel);
 }  // namespace aicpu

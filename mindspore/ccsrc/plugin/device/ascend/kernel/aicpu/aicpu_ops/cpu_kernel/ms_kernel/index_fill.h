@@ -19,7 +19,7 @@
 #include <map>
 #include <vector>
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "status.h"
 
 namespace aicpu {

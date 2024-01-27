@@ -20,7 +20,7 @@
 
 #include "common/kernel_log.h"
 #include "utils/kernel_util.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "cpu_kernel/common/status.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "cpu_kernel/common/cpu_kernel_utils.h"
@@ -101,5 +101,5 @@ uint32_t IsInfCpuKernel::IsInfCompute(const CpuKernelContext &ctx) {
   return static_cast<uint32_t>(KERNEL_STATUS_OK);
 }
 
-REGISTER_CPU_KERNEL(kIsInf, IsInfCpuKernel);
+REGISTER_MS_CPU_KERNEL(kIsInf, IsInfCpuKernel);
 }  // namespace aicpu

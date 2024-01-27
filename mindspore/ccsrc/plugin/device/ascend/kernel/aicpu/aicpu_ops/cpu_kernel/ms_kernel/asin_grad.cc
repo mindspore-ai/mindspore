@@ -167,5 +167,5 @@ uint32_t AsinGradCpuKernel::AsinGradComputeFP16(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kAsinGrad, AsinGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kAsinGrad, AsinGradCpuKernel);
 }  // namespace aicpu

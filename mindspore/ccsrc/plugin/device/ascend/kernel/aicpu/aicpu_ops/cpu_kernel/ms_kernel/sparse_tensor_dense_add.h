@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SPARSE_TENSOR_DENSE_ADD_H_
 #define AICPU_KERNELS_NORMALIZED_SPARSE_TENSOR_DENSE_ADD_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class SparseTensorDenseAddCpuKernel : public CpuKernel {

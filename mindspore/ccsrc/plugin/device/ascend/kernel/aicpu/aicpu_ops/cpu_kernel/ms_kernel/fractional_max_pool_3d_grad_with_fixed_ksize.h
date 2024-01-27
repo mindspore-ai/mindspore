@@ -18,8 +18,8 @@
 #define AICPU_KERNELS_NORMALIZED_FRACTIONAL_MAX_POOL3D_GRAD_WITH_FIXED_KSIZE_H_
 
 #include <vector>
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_kernel_utils.h"
+#include "cpu_types.h"
 
 namespace aicpu {
 class FractionalMaxPool3DGradWithFixedKsizeCpuKernel : public CpuKernel {

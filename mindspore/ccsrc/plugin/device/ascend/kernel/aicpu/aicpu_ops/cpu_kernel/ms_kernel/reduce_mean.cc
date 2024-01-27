@@ -484,5 +484,5 @@ uint32_t ReduceMeanCpuKernel::ReduceMeanCompute_Complex(const CpuKernelContext &
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kReduceMean, ReduceMeanCpuKernel);
+REGISTER_MS_CPU_KERNEL(kReduceMean, ReduceMeanCpuKernel);
 }  // namespace aicpu

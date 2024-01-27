@@ -102,5 +102,5 @@ uint32_t EyeCpuKernel::EyePartCompute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kEye, EyeCpuKernel);
+REGISTER_MS_CPU_KERNEL(kEye, EyeCpuKernel);
 }  // namespace aicpu

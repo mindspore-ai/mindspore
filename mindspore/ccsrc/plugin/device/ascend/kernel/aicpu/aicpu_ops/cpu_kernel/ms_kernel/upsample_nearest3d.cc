@@ -203,5 +203,5 @@ uint32_t UpsampleNearest3dCpuKernel::UpsampleNearest3dCompute(const CpuKernelCon
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kUpsampleNearest3d, UpsampleNearest3dCpuKernel);
+REGISTER_MS_CPU_KERNEL(kUpsampleNearest3d, UpsampleNearest3dCpuKernel);
 }  // namespace aicpu

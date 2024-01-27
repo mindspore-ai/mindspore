@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_EXPAND_H_
 #define AICPU_KERNELS_NORMALIZED_EXPAND_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/bcast.h"
 

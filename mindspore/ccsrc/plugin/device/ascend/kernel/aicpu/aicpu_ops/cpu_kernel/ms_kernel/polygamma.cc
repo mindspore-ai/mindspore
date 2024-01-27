@@ -224,5 +224,5 @@ std::uint32_t PolygammaCpuKernel::Compute(CpuKernelContext &ctx) {
                                                                               : detail::ComputePolygamma(ctx);
 }
 
-REGISTER_CPU_KERNEL(kPolygamma, PolygammaCpuKernel);
+REGISTER_MS_CPU_KERNEL(kPolygamma, PolygammaCpuKernel);
 }  // namespace aicpu

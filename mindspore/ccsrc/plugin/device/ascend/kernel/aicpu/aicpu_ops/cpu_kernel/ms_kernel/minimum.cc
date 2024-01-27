@@ -452,5 +452,5 @@ uint32_t MinimumCpuKernel::MinimumCompute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kMinimum, MinimumCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMinimum, MinimumCpuKernel);
 }  // namespace aicpu

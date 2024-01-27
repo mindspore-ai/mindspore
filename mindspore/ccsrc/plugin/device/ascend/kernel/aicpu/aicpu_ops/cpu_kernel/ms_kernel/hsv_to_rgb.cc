@@ -209,5 +209,5 @@ uint32_t HSVToRGBCpuKernel::HSVToRGBComputeHalf(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kHSVToRGB, HSVToRGBCpuKernel);
+REGISTER_MS_CPU_KERNEL(kHSVToRGB, HSVToRGBCpuKernel);
 }  // namespace aicpu

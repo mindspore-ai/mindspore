@@ -383,5 +383,5 @@ uint32_t SmoothL1LossGradV2CpuKernel::ComputeNone(const CpuKernelContext &ctx) {
   KERNEL_LOG_INFO("SmoothL1LossGradV2CpuKernel::ComputeNone end");
 }
 
-REGISTER_CPU_KERNEL(kSmoothL1LossGradV2, SmoothL1LossGradV2CpuKernel);
+REGISTER_MS_CPU_KERNEL(kSmoothL1LossGradV2, SmoothL1LossGradV2CpuKernel);
 }  // namespace aicpu

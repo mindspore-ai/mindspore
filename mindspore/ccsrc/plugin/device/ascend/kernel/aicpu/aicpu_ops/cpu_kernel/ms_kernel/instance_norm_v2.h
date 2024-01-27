@@ -18,7 +18,7 @@
 #define AICPU_KERNELS_NORMALIZED_INSTANCE_NORM_V2_H_
 
 #include <vector>
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 
 namespace aicpu {

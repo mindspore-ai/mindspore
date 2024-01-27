@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_LOG1P_H
 #define AICPU_KERNELS_NORMALIZED_LOG1P_H
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class Log1pCpuKernel : public CpuKernel {

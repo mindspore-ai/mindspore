@@ -140,5 +140,5 @@ uint32_t MatrixLogarithmCpuKernel::MatrixLogarithmCompute(const CpuKernelContext
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(KMatrixLogarithm, MatrixLogarithmCpuKernel);
+REGISTER_MS_CPU_KERNEL(KMatrixLogarithm, MatrixLogarithmCpuKernel);
 }  // namespace aicpu

@@ -85,5 +85,5 @@ uint32_t HardSigmoidCpuKernel::HardSigmoidCompute(const CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kHardSigmoid, HardSigmoidCpuKernel);
+REGISTER_MS_CPU_KERNEL(kHardSigmoid, HardSigmoidCpuKernel);
 }  // namespace aicpu

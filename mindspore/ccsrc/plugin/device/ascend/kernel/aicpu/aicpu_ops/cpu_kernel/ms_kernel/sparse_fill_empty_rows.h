@@ -17,7 +17,7 @@
 #define AICPU_KERNELS_NORMALIZED_SPARSE_FILL_EMPTY_ROWS_H_
 
 #include <set>
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "utils/sparse_group.h"
 #include "utils/sparse_tensor.h"
 

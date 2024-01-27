@@ -19,10 +19,11 @@
 #include <memory>
 #include <string>
 
-#include "cpu_kernel/inc/cpu_attr_value.h"
-#include "cpu_kernel/inc/cpu_context.h"
+#include "cpu_attr_value.h"
+#include "cpu_context.h"
 #include "cpu_kernel/common/cpu_node_def.h"
-#include "cpu_kernel/inc/cpu_tensor.h"
+#include "cpu_tensor.h"
+#include "cpu_kernel.h"
 
 namespace aicpu {
 class AICPU_VISIBILITY CpuKernelUtils {
@@ -115,5 +116,17 @@ class AICPU_VISIBILITY CpuKernelUtils {
    */
   static uint32_t GetCPUNum(const CpuKernelContext &ctx);
 };
+
+#define REGISTER_CUST_KERNEL(type, clazz)                      \
+  std::shared_ptr<CpuKernel> Creator_Cust##type##_Kernel() {   \
+    std::shared_ptr<clazz> ptr = nullptr;                      \
+    ptr = MakeShared<clazz>();                                 \
+    return ptr;                                                \
+  }                                                            \
+  bool g_Cust##type##_Kernel_Creator __attribute__((unused)) = \
+    RegistCpuKernel("Cust" + static_cast<std::string>(type), Creator_Cust##type##_Kernel)
+#define REGISTER_MS_CPU_KERNEL(type, clazz) \
+  REGISTER_CPU_KERNEL(type, clazz);         \
+  REGISTER_CUST_KERNEL(type, clazz);
 }  // namespace aicpu
 #endif  // AICPU_CONTEXT_INC_UTILS_H_

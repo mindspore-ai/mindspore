@@ -17,7 +17,7 @@
 #define AICPU_KERNELS_NORMALIZED_MASKED_SELECT_H_
 
 #include <vector>
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class MaskedSelectCpuKernel : public CpuKernel {

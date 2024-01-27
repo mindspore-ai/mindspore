@@ -238,5 +238,5 @@ uint32_t SegmentMeanCpuKernel::SegmentMeanCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kSegmentMean, SegmentMeanCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSegmentMean, SegmentMeanCpuKernel);
 }  // namespace aicpu

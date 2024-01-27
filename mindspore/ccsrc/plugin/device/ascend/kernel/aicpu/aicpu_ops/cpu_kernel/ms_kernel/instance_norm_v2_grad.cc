@@ -24,7 +24,7 @@
 #include <algorithm>
 
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "utils/kernel_util.h"
 #include "common/kernel_log.h"
 #include "cpu_kernel/common/status.h"
@@ -267,5 +267,5 @@ uint32_t InstanceNormV2GradCpuKernel::Compute(CpuKernelContext &ctx) {
   return result;
 }
 
-REGISTER_CPU_KERNEL(kInstanceNormV2Grad, InstanceNormV2GradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kInstanceNormV2Grad, InstanceNormV2GradCpuKernel);
 }  // namespace aicpu

@@ -167,5 +167,5 @@ uint32_t UnsortedSegmentProdCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kUnsortedSegmentProd, UnsortedSegmentProdCpuKernel);
+REGISTER_MS_CPU_KERNEL(kUnsortedSegmentProd, UnsortedSegmentProdCpuKernel);
 }  // namespace aicpu

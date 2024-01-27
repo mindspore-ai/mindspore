@@ -117,5 +117,5 @@ uint32_t DiagCpuKernel::DiagCompute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kDiag, DiagCpuKernel);
+REGISTER_MS_CPU_KERNEL(kDiag, DiagCpuKernel);
 }  // namespace aicpu

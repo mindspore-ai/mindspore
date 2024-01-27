@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "mindspore/ccsrc/transform/graph_ir/custom_op_proto/cust_array_ops.h"
-#include "inc/ops/transformation_ops.h"
+#include "op_proto/inc/transformation_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/common_shape_fns.h"

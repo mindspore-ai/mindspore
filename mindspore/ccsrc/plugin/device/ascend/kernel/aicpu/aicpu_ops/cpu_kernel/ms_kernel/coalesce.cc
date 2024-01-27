@@ -139,5 +139,5 @@ uint32_t CoalesceCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kCoalesce, CoalesceCpuKernel);
+REGISTER_MS_CPU_KERNEL(kCoalesce, CoalesceCpuKernel);
 }  // namespace aicpu

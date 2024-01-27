@@ -24,7 +24,7 @@
 #include "common/cpu_kernel_utils.h"
 #include "common/kernel_log.h"
 #include "common/status.h"
-#include "inc/cpu_types.h"
+#include "cpu_types.h"
 #include "utils/kernel_util.h"
 #include "utils/sparse_tensor.h"
 
@@ -263,5 +263,5 @@ uint32_t CropAndResizeCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kCropAndResize, CropAndResizeCpuKernel);
+REGISTER_MS_CPU_KERNEL(kCropAndResize, CropAndResizeCpuKernel);
 }  // namespace aicpu

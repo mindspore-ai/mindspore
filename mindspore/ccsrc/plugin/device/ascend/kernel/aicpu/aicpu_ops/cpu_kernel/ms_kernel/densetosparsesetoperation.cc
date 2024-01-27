@@ -426,5 +426,5 @@ uint32_t DenseToSparseSetOperationCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kDenseToSparseSetOperation, DenseToSparseSetOperationCpuKernel);
+REGISTER_MS_CPU_KERNEL(kDenseToSparseSetOperation, DenseToSparseSetOperationCpuKernel);
 }  // namespace aicpu

@@ -376,5 +376,5 @@ uint32_t SparseConcatCpuKernel::Compute(CpuKernelContext &ctx) {
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
-REGISTER_CPU_KERNEL(kSparseConcat, SparseConcatCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSparseConcat, SparseConcatCpuKernel);
 }  // namespace aicpu

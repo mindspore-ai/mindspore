@@ -397,5 +397,5 @@ uint32_t AffineGridGradCpuKernel::DoCompute_4D(const CpuKernelContext &ctx, Eige
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kAffineGridGrad, AffineGridGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kAffineGridGrad, AffineGridGradCpuKernel);
 }  // namespace aicpu

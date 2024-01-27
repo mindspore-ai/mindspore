@@ -188,5 +188,5 @@ uint32_t SplitCpuKernel::Compute(CpuKernelContext &ctx) {
   }
 }
 
-REGISTER_CPU_KERNEL(kSplit, SplitCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSplit, SplitCpuKernel);
 }  // namespace aicpu

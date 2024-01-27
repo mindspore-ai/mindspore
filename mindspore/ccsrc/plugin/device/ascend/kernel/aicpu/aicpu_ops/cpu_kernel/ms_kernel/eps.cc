@@ -102,5 +102,5 @@ void EpsCpuKernel::SpecialEpsOutput(int64_t start, int64_t end, T *output_data, 
   }
 }
 
-REGISTER_CPU_KERNEL(kEps, EpsCpuKernel);
+REGISTER_MS_CPU_KERNEL(kEps, EpsCpuKernel);
 }  // namespace aicpu

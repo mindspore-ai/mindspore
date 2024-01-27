@@ -275,5 +275,5 @@ uint32_t SmoothL1LossV2CpuKernel::ComputeNone(const CpuKernelContext &ctx) {
   }
 }
 
-REGISTER_CPU_KERNEL(SmoothL1LossV2, SmoothL1LossV2CpuKernel);
+REGISTER_MS_CPU_KERNEL(SmoothL1LossV2, SmoothL1LossV2CpuKernel);
 }  // namespace aicpu

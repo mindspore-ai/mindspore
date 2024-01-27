@@ -276,5 +276,5 @@ uint32_t GeqrfCpuKernel::DoComputeC(CpuKernelContext &ctx) {
   delete[] A;
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kGeqrf, GeqrfCpuKernel);
+REGISTER_MS_CPU_KERNEL(kGeqrf, GeqrfCpuKernel);
 }  // namespace aicpu

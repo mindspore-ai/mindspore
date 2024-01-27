@@ -113,7 +113,7 @@ uint32_t SparseSegmentMeanWithNumSegmentsCpuKernel::Compute(CpuKernelContext &ct
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(SparseSegmentMeanWithNumSegments, SparseSegmentMeanWithNumSegmentsCpuKernel);
+REGISTER_MS_CPU_KERNEL(SparseSegmentMeanWithNumSegments, SparseSegmentMeanWithNumSegmentsCpuKernel);
 
 template <typename T1, typename T2, typename T3, typename T4>
 uint32_t SparseSegmentMeanWithNumSegmentsCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {

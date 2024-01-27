@@ -24,7 +24,7 @@
 #include "common/cpu_kernel_utils.h"
 #include "common/kernel_log.h"
 #include "common/status.h"
-#include "inc/cpu_types.h"
+#include "cpu_types.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -235,5 +235,5 @@ uint32_t ResizeNearestNeighborV2CpuKernel::ResizeNearestNeighborV2Compute(const 
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kResizeNearestNeighborV2, ResizeNearestNeighborV2CpuKernel);
+REGISTER_MS_CPU_KERNEL(kResizeNearestNeighborV2, ResizeNearestNeighborV2CpuKernel);
 }  // namespace aicpu

@@ -164,5 +164,5 @@ uint32_t NonMaxSuppressionWithOverlapsCpuKernel::Compute(CpuKernelContext &ctx) 
   KERNEL_LOG_INFO("Compute end!!");
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kNonMaxSuppressionWithOverlaps, NonMaxSuppressionWithOverlapsCpuKernel);
+REGISTER_MS_CPU_KERNEL(kNonMaxSuppressionWithOverlaps, NonMaxSuppressionWithOverlapsCpuKernel);
 }  // namespace aicpu

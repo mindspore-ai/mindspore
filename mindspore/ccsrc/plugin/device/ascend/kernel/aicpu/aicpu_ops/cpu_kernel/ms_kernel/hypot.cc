@@ -247,5 +247,5 @@ uint32_t HypotCpuKernel::HypotCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kHypot, HypotCpuKernel);
+REGISTER_MS_CPU_KERNEL(kHypot, HypotCpuKernel);
 }  // namespace aicpu

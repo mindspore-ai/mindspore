@@ -109,5 +109,5 @@ uint32_t NoRepeatNGramCpuKernel::ComputeKernel(CpuKernelContext &ctx, const int6
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kNoRepeatNGram, NoRepeatNGramCpuKernel);
+REGISTER_MS_CPU_KERNEL(kNoRepeatNGram, NoRepeatNGramCpuKernel);
 }  // namespace aicpu

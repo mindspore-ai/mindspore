@@ -357,5 +357,5 @@ void LinearSumAssignmentCpuKernel::PostProcess(int64_t *a, int64_t *b, bool tran
   }
 }
 
-REGISTER_CPU_KERNEL(kLinearSumAssignment, LinearSumAssignmentCpuKernel);
+REGISTER_MS_CPU_KERNEL(kLinearSumAssignment, LinearSumAssignmentCpuKernel);
 }  // namespace aicpu

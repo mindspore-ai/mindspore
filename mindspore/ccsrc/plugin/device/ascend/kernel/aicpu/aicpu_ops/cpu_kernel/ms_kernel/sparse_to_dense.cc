@@ -19,7 +19,7 @@
 #include <algorithm>
 #include <vector>
 #include <securec.h>
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "common/kernel_log.h"
 #include "cpu_kernel/common/status.h"
 #include "cpu_kernel/common/cpu_kernel_utils.h"
@@ -298,5 +298,5 @@ uint32_t SparseToDenseCpuKernel::Compute(CpuKernelContext &ctx) {
   return static_cast<uint32_t>(KERNEL_STATUS_OK);
 }
 
-REGISTER_CPU_KERNEL(SPARSETODENSE, SparseToDenseCpuKernel);
+REGISTER_MS_CPU_KERNEL(SPARSETODENSE, SparseToDenseCpuKernel);
 }  // namespace aicpu

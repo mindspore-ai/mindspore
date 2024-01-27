@@ -106,5 +106,5 @@ uint32_t AngleCpuKernel::AngleCompute(const CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kAngle, AngleCpuKernel);
+REGISTER_MS_CPU_KERNEL(kAngle, AngleCpuKernel);
 }  // namespace aicpu

@@ -433,5 +433,5 @@ uint32_t MaxPoolGradCpuKernel::Compute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kMaxPoolGrad, MaxPoolGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMaxPoolGrad, MaxPoolGradCpuKernel);
 }  // namespace aicpu

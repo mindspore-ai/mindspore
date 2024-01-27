@@ -18,7 +18,7 @@
 #define AICPU_UtILS_SPARSE_DENSE_CWISE_UTILS_H_
 
 #include <string>
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "utils/bcast.h"
 #include "utils/eigen_tensor.h"
 

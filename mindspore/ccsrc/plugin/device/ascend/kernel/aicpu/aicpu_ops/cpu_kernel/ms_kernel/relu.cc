@@ -103,5 +103,5 @@ uint32_t ReluCpuKernel::ReluCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kRelu, ReluCpuKernel);
+REGISTER_MS_CPU_KERNEL(kRelu, ReluCpuKernel);
 }  // namespace aicpu

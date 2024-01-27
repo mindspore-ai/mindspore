@@ -125,5 +125,5 @@ uint32_t MinimumGradGradCpuKernel::BcastCompute(CpuKernelContext &ctx, Bcast &bc
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kMinimumGradGrad, MinimumGradGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMinimumGradGrad, MinimumGradGradCpuKernel);
 }  // namespace aicpu

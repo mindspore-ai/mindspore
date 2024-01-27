@@ -20,7 +20,7 @@
 #include <chrono>
 #include <algorithm>
 
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "common/kernel_log.h"
 #include "cpu_kernel/common/status.h"
 #include "unsupported/Eigen/CXX11/Tensor"
@@ -143,5 +143,5 @@ uint32_t Dropout2dCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kDropout2d, Dropout2dCpuKernel);
+REGISTER_MS_CPU_KERNEL(kDropout2d, Dropout2dCpuKernel);
 }  // namespace aicpu

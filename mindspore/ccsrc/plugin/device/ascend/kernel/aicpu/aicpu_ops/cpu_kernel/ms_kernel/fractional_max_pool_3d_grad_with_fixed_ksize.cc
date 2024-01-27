@@ -269,5 +269,5 @@ uint32_t FractionalMaxPool3DGradWithFixedKsizeCpuKernel::Compute(CpuKernelContex
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kFractionalMaxPool3DGradWithFixedKsize, FractionalMaxPool3DGradWithFixedKsizeCpuKernel);
+REGISTER_MS_CPU_KERNEL(kFractionalMaxPool3DGradWithFixedKsize, FractionalMaxPool3DGradWithFixedKsizeCpuKernel);
 }  // namespace aicpu

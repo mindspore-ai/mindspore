@@ -21,7 +21,7 @@
 
 #include "aicpu_sharder/aicpu_context.h"
 #include "aicpu_sharder/aicpu_async_event.h"
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/kernel_log.h"
 #include "cpu_kernel/common/status.h"
 #include "cpu_kernel/common/async_event_util.h"

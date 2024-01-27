@@ -17,8 +17,8 @@
 #ifndef AICPU_KERNELS_NORMALIZED_CHOLESKY_SOLVE_H_
 #define AICPU_KERNELS_NORMALIZED_CHOLESKY_SOLVE_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_kernel_utils.h"
+#include "cpu_types.h"
 #include "utils/bcast.h"
 
 namespace aicpu {

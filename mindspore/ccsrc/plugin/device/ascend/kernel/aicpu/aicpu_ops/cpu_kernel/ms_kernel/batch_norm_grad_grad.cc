@@ -660,5 +660,5 @@ void BatchNormGradGradCpuKernel::InferenceComputeNCHW(const CpuKernelContext &ct
   return;
 }
 
-REGISTER_CPU_KERNEL(kBatchNormGradGrad, BatchNormGradGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kBatchNormGradGrad, BatchNormGradGradCpuKernel);
 }  // namespace aicpu

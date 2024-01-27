@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "inc/ops/elewise_calculation_ops.h"
+#include "op_proto/inc/elewise_calculation_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/op_const.h"

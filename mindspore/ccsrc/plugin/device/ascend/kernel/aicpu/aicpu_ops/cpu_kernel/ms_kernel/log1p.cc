@@ -167,5 +167,5 @@ uint32_t Log1pCpuKernel::Log1pComputeComplex(const CpuKernelContext &ctx) {
     return KERNEL_STATUS_OK;
   }
 }
-REGISTER_CPU_KERNEL(kLog1p, Log1pCpuKernel);
+REGISTER_MS_CPU_KERNEL(kLog1p, Log1pCpuKernel);
 }  // namespace aicpu

@@ -160,5 +160,5 @@ uint32_t ListDiffCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kListDiff, ListDiffCpuKernel);
+REGISTER_MS_CPU_KERNEL(kListDiff, ListDiffCpuKernel);
 }  // namespace aicpu

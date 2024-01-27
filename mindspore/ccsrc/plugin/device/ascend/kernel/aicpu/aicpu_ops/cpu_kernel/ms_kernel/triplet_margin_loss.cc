@@ -870,5 +870,5 @@ uint32_t TripletMarginLossCpuKernel::TripletMarginLossComputeRealTypeFloat16(
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kTripletMarginLoss, TripletMarginLossCpuKernel);
+REGISTER_MS_CPU_KERNEL(kTripletMarginLoss, TripletMarginLossCpuKernel);
 }  // namespace aicpu

@@ -117,5 +117,5 @@ uint32_t BartlettWindowCpuKernel::BartlettWindowCompute(const CpuKernelContext &
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kBartlettWindow, BartlettWindowCpuKernel);
+REGISTER_MS_CPU_KERNEL(kBartlettWindow, BartlettWindowCpuKernel);
 }  // namespace aicpu

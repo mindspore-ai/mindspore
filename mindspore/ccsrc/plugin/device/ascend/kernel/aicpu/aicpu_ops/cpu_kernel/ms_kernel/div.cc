@@ -382,5 +382,5 @@ uint32_t DivCpuKernel::DivCompute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }  // namespace aicpu
-REGISTER_CPU_KERNEL(kDiv, DivCpuKernel);
+REGISTER_MS_CPU_KERNEL(kDiv, DivCpuKernel);
 }  // namespace aicpu

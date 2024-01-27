@@ -150,5 +150,5 @@ uint32_t QrCpuKernel::QrCompute(const CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kQr, QrCpuKernel);
+REGISTER_MS_CPU_KERNEL(kQr, QrCpuKernel);
 }  // namespace aicpu

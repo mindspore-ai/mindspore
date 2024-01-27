@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_DIAG_PART_H_
 #define AICPU_KERNELS_NORMALIZED_DIAG_PART_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class DiagPartCpuKernel : public CpuKernel {

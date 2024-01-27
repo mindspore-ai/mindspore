@@ -21,7 +21,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_STFT_H_
 #define AICPU_KERNELS_NORMALIZED_STFT_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class PolarCpuKernel : public CpuKernel {

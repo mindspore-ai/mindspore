@@ -21,6 +21,7 @@
 #include <cmath>
 #include <limits>
 #include <vector>
+#include <set>
 #include "Eigen/Dense"
 
 #include "cpu_kernel_utils.h"
@@ -50,6 +51,11 @@ constexpr int64_t kParallelDataNums = 512 * 1024;
 }  // namespace
 
 namespace aicpu {
+inline bool IsUnsignedType(DataType dataType) {
+  static const std::set<DataType> unsigned_types{DT_UINT8, DT_UINT16, DT_UINT32, DT_UINT64};
+  return unsigned_types.count(dataType) > 0;
+}
+
 uint32_t FillDiagonalCpuKernel::Compute(CpuKernelContext &ctx) {
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum, attr_names),
                       "FillDiagonal check input and output number failed or "
@@ -161,5 +167,5 @@ uint32_t FillDiagonalCpuKernel::FillDiag(int64_t input_dims, int64_t stride, int
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kFillDiagonal, FillDiagonalCpuKernel);
+REGISTER_MS_CPU_KERNEL(kFillDiagonal, FillDiagonalCpuKernel);
 }  // namespace aicpu

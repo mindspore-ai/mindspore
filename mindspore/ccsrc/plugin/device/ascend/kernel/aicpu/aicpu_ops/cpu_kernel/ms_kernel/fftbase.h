@@ -17,7 +17,7 @@
 #define AICPU_KERNELS_NORMALIZED_FFTBASE_H_
 
 #include <vector>
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class FFTBaseCpuKernel : public CpuKernel {

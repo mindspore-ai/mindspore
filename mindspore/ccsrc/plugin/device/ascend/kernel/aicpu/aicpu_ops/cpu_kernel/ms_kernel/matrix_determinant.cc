@@ -117,6 +117,6 @@ uint32_t MatrixDeterminantCpuKernel::MatrixDeterminantCompute(const CpuKernelCon
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kMatrixDeterminant, MatrixDeterminantCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMatrixDeterminant, MatrixDeterminantCpuKernel);
 
 }  // namespace aicpu

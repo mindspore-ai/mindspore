@@ -162,5 +162,5 @@ uint32_t ArgMinWithValueCpuKernel::Compute(CpuKernelContext &ctx) {
   }
 }
 
-REGISTER_CPU_KERNEL(kArgMinWithValue, ArgMinWithValueCpuKernel);
+REGISTER_MS_CPU_KERNEL(kArgMinWithValue, ArgMinWithValueCpuKernel);
 }  // namespace aicpu

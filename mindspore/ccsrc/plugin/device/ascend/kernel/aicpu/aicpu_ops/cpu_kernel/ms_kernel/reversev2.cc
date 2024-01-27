@@ -177,5 +177,5 @@ uint32_t ReverseV2CpuKernel::ComputeReverseV2(const CpuKernelContext &ctx) {
 
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kReverseV2, ReverseV2CpuKernel);
+REGISTER_MS_CPU_KERNEL(kReverseV2, ReverseV2CpuKernel);
 }  // namespace aicpu

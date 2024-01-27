@@ -166,5 +166,5 @@ std::uint32_t DigammaCpuKernel::Compute(CpuKernelContext &ctx) {
                                                                         : detail::ComputeDigamma(ctx);
 }
 
-REGISTER_CPU_KERNEL(kDigamma, DigammaCpuKernel);
+REGISTER_MS_CPU_KERNEL(kDigamma, DigammaCpuKernel);
 }  // namespace aicpu

@@ -191,5 +191,5 @@ uint32_t GatherDGradV2Kernel::Compute(CpuKernelContext &ctx) {
   return calls[index_type_][grad_type_](ctx);
 }
 
-REGISTER_CPU_KERNEL(kGatherDGradV2, GatherDGradV2Kernel);
+REGISTER_MS_CPU_KERNEL(kGatherDGradV2, GatherDGradV2Kernel);
 }  // namespace aicpu

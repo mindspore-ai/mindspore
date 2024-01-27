@@ -18,7 +18,7 @@
 #define AICPU_KERNELS_NORMALIZED_IDENTITY_N_H_
 
 #include <vector>
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class IdentityNCpuKernel : public CpuKernel {

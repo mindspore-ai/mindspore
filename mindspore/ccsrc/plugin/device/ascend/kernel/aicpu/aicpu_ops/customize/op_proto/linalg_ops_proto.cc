@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "inc/ops/linalg_ops.h"
+#include "op_proto/inc/linalg_ops.h"
 #include "custom_op_proto/cust_linalg_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"

@@ -22,7 +22,7 @@
 #include <algorithm>
 
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "common/kernel_log.h"
 #include "common/status.h"
 #include "utils/kernel_util.h"
@@ -107,5 +107,5 @@ std::uint32_t ComplexAbsCpuKernel::Compute(CpuKernelContext &ctx) {
   return check ? KERNEL_STATUS_PARAM_INVALID : detail::ComputeComplexAbs(ctx);
 }
 
-REGISTER_CPU_KERNEL(kComplexAbs, ComplexAbsCpuKernel);
+REGISTER_MS_CPU_KERNEL(kComplexAbs, ComplexAbsCpuKernel);
 }  // namespace aicpu

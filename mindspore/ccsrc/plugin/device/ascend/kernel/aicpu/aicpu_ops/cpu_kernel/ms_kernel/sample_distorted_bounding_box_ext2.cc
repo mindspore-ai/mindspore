@@ -417,5 +417,5 @@ uint32_t SDBBExt2CpuKernel::SDBBExt2Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kSDBBExt2, SDBBExt2CpuKernel);
+REGISTER_MS_CPU_KERNEL(kSDBBExt2, SDBBExt2CpuKernel);
 }  // namespace aicpu

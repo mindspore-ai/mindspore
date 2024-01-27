@@ -212,5 +212,5 @@ uint32_t DivNoNanCpuKernel::DivNoNanCompute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }  // namespace aicpu
-REGISTER_CPU_KERNEL(kDivNoNan, DivNoNanCpuKernel);
+REGISTER_MS_CPU_KERNEL(kDivNoNan, DivNoNanCpuKernel);
 }  // namespace aicpu

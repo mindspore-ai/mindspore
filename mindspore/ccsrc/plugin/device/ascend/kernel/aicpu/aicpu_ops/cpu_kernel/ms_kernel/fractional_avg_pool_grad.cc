@@ -204,5 +204,5 @@ uint32_t FractionalAvgPoolGradCpuKernel::Compute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kFractionalAvgPoolGrad, FractionalAvgPoolGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kFractionalAvgPoolGrad, FractionalAvgPoolGradCpuKernel);
 }  // namespace aicpu

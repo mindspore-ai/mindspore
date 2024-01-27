@@ -20,7 +20,7 @@
 #include <iostream>
 
 #include "random/utils.h"
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 #include "utils/eigen_tensor.h"
@@ -141,5 +141,5 @@ uint32_t TruncatedNormalCpuKernel::Compute(CpuKernelContext &ctx) {
   KERNEL_CHECK_FALSE((ret == KERNEL_STATUS_OK), ret, "Compute failed.");
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kTruncatedNormal, TruncatedNormalCpuKernel);
+REGISTER_MS_CPU_KERNEL(kTruncatedNormal, TruncatedNormalCpuKernel);
 }  // namespace aicpu

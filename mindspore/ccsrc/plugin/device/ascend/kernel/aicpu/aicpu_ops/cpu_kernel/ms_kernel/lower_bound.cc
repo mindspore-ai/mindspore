@@ -150,5 +150,5 @@ uint32_t LowerBoundCpuKernel::LowerBoundCompute(const CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kLowerBound, LowerBoundCpuKernel);
+REGISTER_MS_CPU_KERNEL(kLowerBound, LowerBoundCpuKernel);
 }  // namespace aicpu

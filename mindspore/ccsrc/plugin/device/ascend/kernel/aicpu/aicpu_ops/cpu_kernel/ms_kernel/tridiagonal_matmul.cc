@@ -123,5 +123,5 @@ uint32_t TridiagonalMatMulCpuKernel::TridiagonalMatMulCompute(CpuKernelContext &
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kTridiagonalMatMul, TridiagonalMatMulCpuKernel);
+REGISTER_MS_CPU_KERNEL(kTridiagonalMatMul, TridiagonalMatMulCpuKernel);
 }  // namespace aicpu

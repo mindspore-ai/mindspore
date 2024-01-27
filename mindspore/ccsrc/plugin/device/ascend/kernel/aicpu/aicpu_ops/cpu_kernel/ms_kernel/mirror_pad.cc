@@ -259,5 +259,5 @@ uint32_t MirrorPadCpuKernel::Compute(CpuKernelContext &ctx) {
   }
 }
 
-REGISTER_CPU_KERNEL(kMirrorPad, MirrorPadCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMirrorPad, MirrorPadCpuKernel);
 }  // namespace aicpu

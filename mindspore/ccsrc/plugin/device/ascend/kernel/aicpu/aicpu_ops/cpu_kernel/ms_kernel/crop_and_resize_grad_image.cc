@@ -213,5 +213,5 @@ uint32_t CropAndResizeGradImageCpuKernel::GradOfImageComputeShared(const CpuKern
 
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kCropAndResizeGradImage, CropAndResizeGradImageCpuKernel);
+REGISTER_MS_CPU_KERNEL(kCropAndResizeGradImage, CropAndResizeGradImageCpuKernel);
 }  // namespace aicpu

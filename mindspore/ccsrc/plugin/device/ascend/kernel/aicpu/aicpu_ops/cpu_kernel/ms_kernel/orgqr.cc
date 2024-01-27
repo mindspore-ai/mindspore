@@ -224,5 +224,5 @@ uint32_t OrgqrCpuKernel::OrgqrComputeComplex(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kOrgqr, OrgqrCpuKernel);
+REGISTER_MS_CPU_KERNEL(kOrgqr, OrgqrCpuKernel);
 }  // namespace aicpu

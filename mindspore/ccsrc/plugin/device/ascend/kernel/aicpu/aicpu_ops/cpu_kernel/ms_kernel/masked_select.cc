@@ -25,7 +25,7 @@
 #include "Eigen/Core"
 #include "securec/include/securec.h"
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/kernel_log.h"
 #include "cpu_kernel/common/status.h"
 #include "utils/broadcast_iterator.h"
@@ -289,5 +289,5 @@ uint32_t MaskedSelectCpuKernel::MaskedSelectCompute(const CpuKernelContext &ctx)
   ctx.Output(0)->GetTensorShape()->SetDimSizes({j});
   return static_cast<uint32_t>(KERNEL_STATUS_OK);
 }
-REGISTER_CPU_KERNEL(kMaskedSelect, MaskedSelectCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMaskedSelect, MaskedSelectCpuKernel);
 }  // namespace aicpu

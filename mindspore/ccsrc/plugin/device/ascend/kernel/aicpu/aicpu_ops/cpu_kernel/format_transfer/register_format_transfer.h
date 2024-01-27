@@ -20,7 +20,7 @@
 #include <memory>
 #include <vector>
 
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 
 namespace aicpu {
 namespace formats {

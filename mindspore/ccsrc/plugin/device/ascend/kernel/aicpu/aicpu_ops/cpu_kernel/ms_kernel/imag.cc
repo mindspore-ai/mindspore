@@ -96,5 +96,5 @@ uint32_t ImagCpuKernel::ImagCompute(const CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kImag, ImagCpuKernel);
+REGISTER_MS_CPU_KERNEL(kImag, ImagCpuKernel);
 }  // namespace aicpu

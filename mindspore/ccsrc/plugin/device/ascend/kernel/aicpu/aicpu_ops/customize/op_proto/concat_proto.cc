@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "inc/ops/split_combination_ops.h"
+#include "op_proto/inc/split_combination_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/common_shape_fns.h"

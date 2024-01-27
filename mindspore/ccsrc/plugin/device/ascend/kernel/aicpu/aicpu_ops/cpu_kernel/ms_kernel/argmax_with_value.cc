@@ -158,5 +158,5 @@ uint32_t ArgMaxWithValueCpuKernel::Compute(CpuKernelContext &ctx) {
   }
 }
 
-REGISTER_CPU_KERNEL(kArgMaxWithValue, ArgMaxWithValueCpuKernel);
+REGISTER_MS_CPU_KERNEL(kArgMaxWithValue, ArgMaxWithValueCpuKernel);
 }  // namespace aicpu

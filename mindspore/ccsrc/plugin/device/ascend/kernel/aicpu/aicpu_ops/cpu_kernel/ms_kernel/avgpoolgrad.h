@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_kernel_utils.h"
+#include "cpu_types.h"
 
 namespace aicpu {
 class AvgPoolGradCpuKernel : public CpuKernel {

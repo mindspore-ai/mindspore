@@ -303,5 +303,5 @@ uint32_t ConcatCpuKernel::ConcatCompute(const CpuKernelContext &ctx,
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(Concat, ConcatCpuKernel);
+REGISTER_MS_CPU_KERNEL(Concat, ConcatCpuKernel);
 }  // namespace aicpu
