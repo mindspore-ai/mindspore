@@ -139,6 +139,11 @@ std::vector<std::pair<KernelAttr, TileGpuKernelMod::TileLaunchFunc>> TileGpuKern
      .AddOutputAttr(kNumberTypeUInt32),
    &TileGpuKernelMod::LaunchKernel<int>},
   {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
+   &TileGpuKernelMod::LaunchKernel<int>},
+  {KernelAttr()
      .AddInputAttr(kNumberTypeBool)
      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeBool),
