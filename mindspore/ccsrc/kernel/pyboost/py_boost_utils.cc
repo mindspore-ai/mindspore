@@ -366,6 +366,10 @@ std::vector<TypeId> GetTypeFromAbstractBase(const std::vector<AbstractBasePtr> &
     if (abs->isa<abstract::AbstractTuple>()) {
       // a tuple tensors have same type
       auto abs_tuple = std::dynamic_pointer_cast<abstract::AbstractTuple>(abs);
+      if (abs_tuple->elements().empty()) {
+        input_type.emplace_back(kTypeUnknown);
+        continue;
+      }
       input_type.emplace_back(abs_tuple->elements()[0]->BuildType()->type_id());
     } else {
       input_type.emplace_back(GetTypeIdFromAbstractTensor(abs));
@@ -406,9 +410,12 @@ bool IsObjectTypeStrictlyMatched(const std::vector<TypeId> &object_dtypes,
   }
 
   for (size_t i = 0; i < object_dtypes.size(); i++) {
-    // For optional input, the real input object type can be a None.
+    auto is_tuple = (kernel_data_types[i].object_type == kObjectTypeTuple);
+    // For optional input, the real input object type can be a None.Tuple data-type unknown means empty tuple.
     if (object_dtypes[i] != kernel_data_types[i].dtype) {
-      return false;
+      if (!is_tuple || object_dtypes[i] != kTypeUnknown) {
+        return false;
+      }
     }
   }
 
@@ -421,27 +428,27 @@ std::pair<bool, KernelAttr> PyBoostUtils::SelectKernel(const std::vector<Abstrac
   // only support CPU
   const auto &kernel_mod = device_context->GetKernelExecutor(false)->CreateKernelMod(op_name);
   const auto &support_list = kernel_mod->GetOpSupport();
-  const auto &inputs_object_dtypes = GetTypeFromAbstractBase(inputs_abs);
-  const auto &output_object_dtypes = GetTypeFromAbstractBase(outputs_abs);
+  const auto &inputs_dtypes = GetTypeFromAbstractBase(inputs_abs);
+  const auto &output_dtypes = GetTypeFromAbstractBase(outputs_abs);
   for (auto &cur_kernel_attr : support_list) {
     auto data_pair = kernel::GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
     const auto &[input_data_types, output_data_types] = kernel::GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
-    if (IsObjectTypeStrictlyMatched(inputs_object_dtypes, input_data_types) &&
-        IsObjectTypeStrictlyMatched(output_object_dtypes, output_data_types)) {
+    if (IsObjectTypeStrictlyMatched(inputs_dtypes, input_data_types) &&
+        IsObjectTypeStrictlyMatched(output_dtypes, output_data_types)) {
       return std::make_pair(true, cur_kernel_attr);
     }
 
-    if (IsObjectTypeWeaklyMatched(inputs_object_dtypes, input_data_types) &&
-        IsObjectTypeWeaklyMatched(output_object_dtypes, output_data_types)) {
+    if (IsObjectTypeWeaklyMatched(inputs_dtypes, input_data_types) &&
+        IsObjectTypeWeaklyMatched(output_dtypes, output_data_types)) {
       return std::make_pair(false, cur_kernel_attr);
     }
   }
   std::vector<std::string> inputs;
   std::vector<std::string> outputs;
-  for (auto &input_type : inputs_object_dtypes) {
+  for (auto &input_type : inputs_dtypes) {
     (void)inputs.emplace_back(TypeIdToString(input_type));
   }
-  for (auto &output_type : output_object_dtypes) {
+  for (auto &output_type : output_dtypes) {
     (void)outputs.emplace_back(TypeIdToString(output_type));
   }
   MS_LOG(EXCEPTION) << "Unsupported op [" << op_name << "] on CPU, input_type:" << inputs << " ,output_type:" << outputs
