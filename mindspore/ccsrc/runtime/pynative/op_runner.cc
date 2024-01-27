@@ -620,10 +620,13 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
       MS_LOG(EXCEPTION) << "Malloc for kernel output failed, Memory isn't enough, node:" << node->fullname_with_scope();
     }
 
-    const size_t stream_id = op_run_info->base_op_run_info.stream_id;
     MS_EXCEPTION_IF_NULL(device_context);
     MS_EXCEPTION_IF_NULL(device_context->GetKernelExecutor(true));
-    if (!device_context->GetKernelExecutor(false)->LaunchKernel(node, inputs, workspaces, outputs, stream_id)) {
+    auto kernel_mod = AnfAlgo::GetKernelMod(node);
+    const size_t stream_id = op_run_info->base_op_run_info.stream_id;
+    auto stream = device_context->device_res_manager_->GetStream(stream_id);
+    if (!device_context->GetKernelExecutor(false)->LaunchKernel(node, inputs, workspaces, outputs, kernel_mod,
+                                                                stream)) {
       MS_LOG(EXCEPTION) << "Launch kernel failed, name:" << node->fullname_with_scope();
     }
   }
@@ -870,17 +873,18 @@ void DynamicOpRunner::RunSingleOpGraph(const session::BackendOpRunInfoPtr &op_ru
     AllocateOutputMemory(output_edges, device_context);
 
     // Launch kernel
-    const size_t stream_id = op_run_info->base_op_run_info.stream_id;
     MS_EXCEPTION_IF_NULL(device_context);
     MS_EXCEPTION_IF_NULL(device_context->GetKernelExecutor(true));
+    auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+    MS_EXCEPTION_IF_NULL(kernel_mod);
+    const size_t stream_id = op_run_info->base_op_run_info.stream_id;
+    auto stream = device_context->device_res_manager_->GetStream(stream_id);
     if (!device_context->GetKernelExecutor(true)->LaunchKernel(kernel, input_kernel_tensors, workspace_kernel_tensors,
-                                                               output_kernel_tensors, stream_id)) {
+                                                               output_kernel_tensors, kernel_mod, stream)) {
       MS_LOG(EXCEPTION) << "Launch kernel failed, name:" << kernel->fullname_with_scope();
     }
 
     if (is_need_infer) {
-      auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-      MS_EXCEPTION_IF_NULL(kernel_mod);
       if (kernel_mod->IsNeedUpdateOutputShapeAndSize()) {
         kernel_mod->UpdateOutputShapeAndSize(input_kernel_tensors, output_kernel_tensors);
         UpdateOutputShape(output_edges);

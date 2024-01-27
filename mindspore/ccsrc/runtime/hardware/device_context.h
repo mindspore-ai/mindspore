@@ -322,7 +322,7 @@ class BACKEND_EXPORT KernelExecutor {
   // Launch a kernel via 'KernelMod' of the kernel, use KernelTensor input type.
   virtual bool LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                             const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &outputs,
-                            size_t stream_id) const {
+                            KernelMod *kernel_mod, void *stream) const {
     MS_LOG(EXCEPTION) << "Unimplemented interface.";
   }
   // Launch callback.

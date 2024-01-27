@@ -55,7 +55,7 @@ class GeKernelExecutor : public KernelExecutor {
   // Launch a kernel via 'KernelMod' of the kernel.
   bool LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                     const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &outputs,
-                    size_t stream_id) const override;
+                    KernelMod *kernel_mod, void *stream) const override;
   bool LaunchCallback(CallbackFunc callback_func, size_t stream_id) const;
 
   // Unify the MindIR, the default behavior uses the common unified MindIR.
@@ -76,7 +76,7 @@ class GeKernelExecutor : public KernelExecutor {
   // launch
   bool MemoryCopyAsync(const CNodePtr &node, const vector<KernelTensor *> &inputs,
                        const vector<KernelTensor *> &outputs) const;
-  bool PySyncRuning(size_t stream_id) const;
+  bool PySyncRuning(void *stream) const;
 
   mutable std::set<CNodePtr> nop_op_to_memcpy_;
   // Maybe AscendDeviceResManager and GEDeviceResManager now

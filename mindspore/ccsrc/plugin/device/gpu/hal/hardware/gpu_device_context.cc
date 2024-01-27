@@ -809,17 +809,13 @@ void GPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
 
 bool GPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &workspace,
-                                     const std::vector<KernelTensor *> &outputs, size_t stream_id) const {
+                                     const std::vector<KernelTensor *> &outputs, KernelMod *kernel_mod,
+                                     void *stream) const {
   MS_EXCEPTION_IF_NULL(kernel);
   if (!res_manager_->BindDeviceToCurrentThread(false)) {
     return false;
   }
   bool ret = true;
-
-  auto stream = GPUDeviceManager::GetInstance().GetStream(stream_id);
-  if (stream == nullptr) {
-    stream = GPUDeviceManager::GetInstance().default_stream();
-  }
 
 #ifndef ENABLE_SECURITY
   const auto &profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
@@ -829,13 +825,13 @@ bool GPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<K
 #endif
     auto lock = LockLaunchKernel(stream);
     MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
-    ret = DoLaunchKernel(kernel, inputs, workspace, outputs, stream);
+    ret = DoLaunchKernel(kernel, inputs, workspace, outputs, kernel_mod, stream);
     MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
 #ifndef ENABLE_SECURITY
   } else {
     auto lock = LockLaunchKernel(stream);
     MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
-    ret = LaunchKernelWithProfiling(kernel, inputs, workspace, outputs, stream);
+    ret = LaunchKernelWithProfiling(kernel, inputs, workspace, outputs, kernel_mod, stream);
     MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
   }
 #endif
@@ -850,7 +846,8 @@ bool GPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<K
 #ifndef ENABLE_SECURITY
 bool GPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                                                   const std::vector<KernelTensor *> &workspace,
-                                                  const std::vector<KernelTensor *> &outputs, void *stream) const {
+                                                  const std::vector<KernelTensor *> &outputs, KernelMod *kernel_mod,
+                                                  void *stream) const {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(stream);
 
@@ -867,7 +864,7 @@ bool GPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const 
   }
 
   profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), GPUDeviceManager::GetInstance().default_stream());
-  bool ret = DoLaunchKernel(kernel, inputs, workspace, outputs, stream);
+  bool ret = DoLaunchKernel(kernel, inputs, workspace, outputs, kernel_mod, stream);
   profiler_inst->OpDataProducerEnd();
   profiler_inst->RecordFrameWorkInfo(kernel);
 
@@ -884,11 +881,11 @@ bool GPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const 
 
 bool GPUKernelExecutor::DoLaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                                        const std::vector<KernelTensor *> &workspace,
-                                       const std::vector<KernelTensor *> &outputs, void *stream) const {
+                                       const std::vector<KernelTensor *> &outputs, KernelMod *kernel_mod,
+                                       void *stream) const {
   MS_EXCEPTION_IF_NULL(kernel);
-  MS_EXCEPTION_IF_NULL(stream);
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
+  MS_EXCEPTION_IF_NULL(stream);
 
   uint64_t start_time = 0;
   PROFILER_START(start_time);
