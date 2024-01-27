@@ -100,6 +100,29 @@ bool GeDynamicUtils::GetGraphInputShapes(const std::shared_ptr<mindspore::Contex
   return true;
 }
 
+void GeDynamicUtils::UpdateGraphDynamicDims(const std::shared_ptr<mindspore::Context> &context,
+                                            ConfigInfos *config_infos, const std::string &dynamic_dims) {
+  if (config_infos == nullptr) {
+    return;
+  }
+
+  // get options from [ge_graph_options]
+  auto section_it = config_infos->find(lite::kGeGraphOptionsSection);
+  if (section_it != config_infos->end()) {
+    auto &options = section_it->second;
+    auto option_it = options.find("ge.dynamicDims");
+    if (option_it != options.end()) {
+      auto &dynamic_dims_ptr = option_it->second;
+      if (!dynamic_dims_ptr.empty()) {
+        MS_LOG(INFO) << "Find ge.dynamicDims " << dynamic_dims_ptr << " in " << lite::kGeGraphOptionsSection
+                     << " and updated to " << dynamic_dims;
+        dynamic_dims_ptr = dynamic_dims;
+        return;
+      }
+    }
+  }
+}
+
 void GeDynamicUtils::UpdateGraphInputShapes(const std::shared_ptr<mindspore::Context> &context,
                                             ConfigInfos *config_infos, const std::string &input_shape) {
   if (config_infos == nullptr) {
