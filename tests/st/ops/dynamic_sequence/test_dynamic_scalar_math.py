@@ -18,6 +18,7 @@ import numpy as np
 from mindspore import context
 from mindspore.nn import Cell
 from mindspore.ops import functional as F
+from mindspore.common import mutable
 from sequence_help import TupleFactory, context_prepare
 
 context.set_context(mode=context.GRAPH_MODE, grad_for_scalar=True)
@@ -49,6 +50,27 @@ def test_scalar_add():
     fact = TupleFactory(net_ms, func, (input_x, input_y))
     fact.forward_cmp()
     fact.grad_impl()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_scalar_sub_with_diff_type():
+    """
+    Feature: test ScalarSub.
+    Description: inputs is dynamic scalar.
+    Expectation: the result match with numpy result
+    """
+    class Net(Cell):
+        def construct(self, x, y):
+            return x - y
+
+    net_ms = Net()
+    input_x = mutable(2)
+    input_y = 0.5
+    out = net_ms(input_x, input_y)
+    assert out == 1.5
 
 
 @pytest.mark.level2
