@@ -104,8 +104,7 @@ bool GraphKernelExpanderCloud::CanExpand(const CNodePtr &node) const {
   if (!GraphKernelExpander::CanExpand(node)) {
     return false;
   }
-  bool enable_dynshape_expander = (common::GetEnv("MS_DEV_ENABLE_DYNSHAPE_EXPANDER") == "on") &&
-                                  GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion;
+  bool enable_dynshape_expander = GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion;
   if (enable_dynshape_expander) {
     if (common::AnfAlgo::IsDynamicRankNode(node)) {
       return false;

@@ -34,6 +34,55 @@
 #include "backend/common/graph_kernel/core/value_depend_op_utils.h"
 
 namespace mindspore::graphkernel {
+namespace {
+bool DvmSupported(const AnfNodePtr &node) {
+  auto cb = Callback::Instance();
+  MS_EXCEPTION_IF_NULL(cb);
+  auto node_output_type = cb->GetOutputType(node, 0);
+  // cast op
+  if (IsPrimitiveCNode(node, prim::kPrimCast)) {
+    static std::set<TypeId> supported_types{kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeBool, kNumberTypeInt32};
+    auto node_input_type = cb->GetInputType(node, 0);
+    return !(supported_types.find(node_input_type) == supported_types.end() ||
+             supported_types.find(node_output_type) == supported_types.end());
+  }
+  // special format
+  auto input_num = AnfUtils::GetInputTensorNum(node);
+  if (input_num > 0) {
+    bool has_special_format = false;
+    auto base_format = cb->GetInputFormat(node, 0);
+    for (size_t i = 0; i < input_num; ++i) {
+      auto input_format = cb->GetInputFormat(node, i);
+      if (!has_special_format &&
+          (input_format.find("FRACTAL") != std::string::npos || input_format.find("C0") != std::string::npos)) {
+        has_special_format = true;
+      }
+      if (has_special_format && input_format != base_format) {
+        // mixed special format and default format is not supported
+        return false;
+      }
+    }
+  }
+  // compare op
+  static std::vector<PrimitivePtr> compare_ops{prim::kPrimEqual,        prim::kPrimNotEqual, prim::kPrimGreater,
+                                               prim::kPrimGreaterEqual, prim::kPrimLess,     prim::kPrimLessEqual};
+  if (std::any_of(compare_ops.begin(), compare_ops.end(),
+                  [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); })) {
+    auto node_input_type = cb->GetInputType(node, 0);
+    return (node_input_type == kNumberTypeFloat16 || node_input_type == kNumberTypeFloat32);
+  }
+  // logical op
+  static std::vector<PrimitivePtr> logical_ops{prim::kPrimLogicalAnd, prim::kPrimLogicalOr, prim::kPrimLogicalNot,
+                                               prim::kPrimLogicalXor};
+  if (std::any_of(logical_ops.begin(), logical_ops.end(),
+                  [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); })) {
+    return (node_output_type == kNumberTypeBool);
+  }
+  // other op
+  return (node_output_type == kNumberTypeFloat16 || node_output_type == kNumberTypeFloat32);
+}
+}  // namespace
+
 std::vector<PrimitivePtr> StaticShapeCluster::GetClusterOps() {
   std::vector<OpWithLevel> clusterable_ops_with_level = {
     // all target
@@ -128,7 +177,8 @@ bool StaticShapeCluster::IsClusterableOp(const AnfNodePtr &node) {
   if (GkUtils::IsKeepBasicNode(node)) {
     return false;
   }
-  if (common::AnfAlgo::IsDynamicShape(node)) {
+  bool is_dvm = (GraphKernelFlags::GetInstance().kernel_generator == "DVM");
+  if (!is_dvm && common::AnfAlgo::IsDynamicShape(node)) {
     return false;
   }
   bool node_in_oplist = std::any_of(op_list_.begin(), op_list_.end(),
@@ -151,6 +201,10 @@ bool StaticShapeCluster::IsClusterableOp(const AnfNodePtr &node) {
     }
   }
 
+  if (is_dvm && !DvmSupported(node)) {
+    return false;
+  }
+
   if (IsPrimitiveCNode(node, prim::kPrimReshape)) {
     auto output_format = cb->GetOutputFormat(node, 0);
     if (output_format != kOpFormat_DEFAULT) {
@@ -162,12 +216,6 @@ bool StaticShapeCluster::IsClusterableOp(const AnfNodePtr &node) {
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       cnode->set_input(kAnfPrimitiveIndex, NewValueNode(primitive));
-    }
-  }
-  // For AICPU operators, only the Reshape can be clustered.
-  if (cb->GetTargetFromContext() == kAscendDevice) {
-    if (cb->GetProcessor(node) != "aicore" && !IsPrimitiveCNode(node, prim::kPrimReshape)) {
-      return false;
     }
   }
   if (!ValueDependOpUtils::IsConstInput(node)) {
