@@ -296,9 +296,9 @@ bool DeviceEmbeddingOperation::InferOpShape(
   MS_ERROR_IF_NULL(kernel_mod);
   // 1. Infer operator's output's Shape.
   auto base_shape = opt::dynamic_shape::InferShape(kernel_mod->primitive(), input_kernel_tensors_for_infer);
+  MS_ERROR_IF_NULL(base_shape);
   MS_LOG(DEBUG) << "End InferShape for kernel: " << kernel->fullname_with_scope()
                 << ", shape: " << base_shape->ToString();
-  MS_ERROR_IF_NULL(base_shape);
 
   // 2. Update shape of output kernel tensor.
   opt::dynamic_shape::UpdateKernelTensorShape(base_shape, output_kernel_tensors);
