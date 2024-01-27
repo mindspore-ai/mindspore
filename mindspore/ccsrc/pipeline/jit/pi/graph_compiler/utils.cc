@@ -174,6 +174,17 @@ std::string GraphUtils::OpCodeToGraphName(int op_code) {
   return iter->second;
 }
 
+std::string GraphUtils::OpCompareArgToGraphName(int oparg) {
+  static std::map<int, std::string> compare_arg_2_graph_name = {{Py_LT, "less"},    {Py_LE, "less_equal"},
+                                                                {Py_EQ, "equal"},   {Py_NE, "not_equal"},
+                                                                {Py_GT, "greater"}, {Py_GE, "greater_equal"}};
+  auto iter = compare_arg_2_graph_name.find(oparg);
+  if (iter == compare_arg_2_graph_name.end()) {
+    return "";
+  }
+  return iter->second;
+}
+
 AnfNodePtr GraphUtils::GetMetaFuncGraph(int op_code) {
   // MS_EXCEPTION_IF_CHECK_FAIL(op_code_2_graph_name.find(op_code) != op_code_2_graph_name.end(),
   //                            "Not find the mutitype ops of OpCode " + std::to_string(op_code) + ".");
