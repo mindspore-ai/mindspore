@@ -31,13 +31,11 @@ BaseShapePtr ApplyRotaryPosEmbFuncImpl::InferShape(const PrimitivePtr &primitive
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kApplyRotaryPosEmbInputsNum, op_name);
-  auto query_shape1 =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kApplyRotaryPosEmbQueryIndex]->BuildShape())[kShape];
-  auto key_shape1 =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kApplyRotaryPosEmbKeyIndex]->BuildShape())[kShape];
-  auto query_shape2 = std::make_shared<abstract::Shape>(query_shape1);
-  auto key_shape2 = std::make_shared<abstract::Shape>(key_shape1);
-  return std::make_shared<abstract::TupleShape>(abstract::BaseShapePtrList{query_shape2, key_shape2});
+  auto query_shape_vector = input_args[kApplyRotaryPosEmbQueryIndex]->GetShape()->GetShapeVector();
+  auto key_shape_vector = input_args[kApplyRotaryPosEmbKeyIndex]->GetShape()->GetShapeVector();
+  auto query_shape = std::make_shared<abstract::Shape>(query_shape_vector);
+  auto key_shape = std::make_shared<abstract::Shape>(key_shape_vector);
+  return std::make_shared<abstract::TupleShape>(abstract::BaseShapePtrList{query_shape, key_shape});
 }
 
 TypePtr ApplyRotaryPosEmbFuncImpl::InferType(const PrimitivePtr &prim,
