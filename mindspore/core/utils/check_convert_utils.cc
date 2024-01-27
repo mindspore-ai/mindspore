@@ -1241,7 +1241,11 @@ std::vector<pyfloat> CheckAndConvertUtils::CheckListOrTupleFloat(const std::stri
     if (type_list.empty()) {
       return result;
     }
-    if (type_list.front()->type_id() == kNumberTypeFloat64 || type_list.front()->type_id() == kNumberTypeFloat32) {
+    auto is_correct = std::all_of(type_list.begin(), type_list.end(), [](const TypePtr &e) -> bool {
+      MS_EXCEPTION_IF_NULL(e);
+      return e->type_id() == kNumberTypeFloat64 || e->type_id() == kNumberTypeFloat32;
+    });
+    if (is_correct) {
       const auto &arr_value = ops::GetArrayValue<pyfloat>(abs);
       if (arr_value->HasUnknownValue()) {
         MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], there are unknown values in the " << arg_name
@@ -1251,7 +1255,7 @@ std::vector<pyfloat> CheckAndConvertUtils::CheckListOrTupleFloat(const std::stri
     } else {
       MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the " << arg_name
                               << " must be one of ['tuple', 'list'] with all Float elements, but got "
-                              << type_list.front()->ToString();
+                              << abs->ToString();
     }
     return result;
   }
@@ -1308,7 +1312,16 @@ std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string 
     if (type_list.empty()) {
       return result;
     }
-    if (type_list.front()->type_id() == kNumberTypeInt64) {
+    auto is_correct = std::all_of(type_list.begin(), type_list.end(), [](const TypePtr &e) -> bool {
+      MS_EXCEPTION_IF_NULL(e);
+      return e->type_id() == kNumberTypeInt64 || e->type_id() == kNumberTypeInt32;
+    });
+    if (!is_correct) {
+      MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], when the " << arg_name
+                              << "'s type is one of ['tuple', 'list'], its element data type must be int32 or int64, "
+                                 "but got "
+                              << abs->ToString();
+    } else if (type_list.front()->type_id() == kNumberTypeInt64) {
       const auto &arr_value = ops::GetArrayValue<int64_t>(abs);
       if (arr_value->HasUnknownValue()) {
         MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], there are unknown values in the " << arg_name
@@ -1324,11 +1337,6 @@ std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string 
       const auto &vec_value = arr_value->ToVector();
       (void)std::transform(vec_value.begin(), vec_value.end(), std::back_inserter(result),
                            [](int ele) -> int64_t { return static_cast<int64_t>(ele); });
-    } else {
-      MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], when the " << arg_name
-                              << "'s type is one of ['tuple', 'list'], its element data type must be int32 or int64, "
-                                 "but got "
-                              << type_list.front()->ToString();
     }
   } else {
     if (!ops::IsValueKnown(abs)) {
