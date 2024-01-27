@@ -311,23 +311,25 @@ class AscendMsprofDataGenerator:
                         row.get('Output Data Types'),
                         row.get('Output Formats')
                     ]
+                    new_row.append('0.000')  # Add one column for Task Start Time(us)
                     if vector_fops is not None and cube_fops is not None:
                         new_row.append(vector_fops)
                         new_row.append(cube_fops)
                     elif aiv_vector_fops is not None and aic_cube_fops is not None:
                         new_row.append(aiv_vector_fops)
                         new_row.append(aic_cube_fops)
-                    new_row.append('0.000')  # Add one column for Task Start Time(us)
                     new_row = tuple(['0' if d == 'N/A' else d for d in new_row])
                     op_summary.append(new_row)
             break
+
+        self.op_summary_type.extend([('Task Start Time(us)', object)])
 
         if op_summary and len(op_summary[0]) > len(self.op_summary_type):
             self.op_summary_type.extend([
                 ('vector_fops', float),
                 ('cube_fops', float)
             ])
-        self.op_summary_type.extend([('Task Start Time(us)', object)])
+
         op_summary_dt = np.dtype(self.op_summary_type)
 
         self.op_summary = np.array(op_summary, dtype=op_summary_dt)
