@@ -36,6 +36,15 @@ constexpr int64_t kAxisOne = 1;
 constexpr int64_t kAxisTwo = 2;
 
 constexpr size_t k910bWS = 16 * 1024 * 1024;
+
+constexpr int64_t kBufferNum = 2;
+const int64_t kDivisor = 4;
+static inline int64_t CeilRound(int64_t value, int64_t divisor) {
+  if (divisor == 0) {
+    return 0;
+  }
+  return (value + divisor - 1) / divisor * divisor;
+}
 }  // namespace
 
 namespace optiling {
@@ -57,51 +66,87 @@ static ge::graphStatus TilingFunc(gert::TilingContext *context) {
       return ge::GRAPH_PARAM_INVALID;
   }
 
-  const gert::StorageShape *cur_shape = context->GetInputShape(index1);
+  const gert::StorageShape *cache_shape = context->GetInputShape(index0);
+  const gert::StorageShape *update_shape = context->GetInputShape(index1);
 
   bool is_dim4 = true;
   const size_t kDim3 = 3;
   const size_t kDim4 = 4;
-  if (cur_shape->GetStorageShape().GetDimNum() == kDim4) {
+  if (update_shape->GetStorageShape().GetDimNum() == kDim4) {
     is_dim4 = true;
-  } else if (cur_shape->GetStorageShape().GetDimNum() == kDim3) {
+  } else if (update_shape->GetStorageShape().GetDimNum() == kDim3) {
     is_dim4 = false;
   } else {
     return ge::GRAPH_PARAM_INVALID;
   }
 
-  int64_t b = cur_shape->GetStorageShape().GetDim(index0);
+  int64_t b = update_shape->GetStorageShape().GetDim(index0);
   int64_t h = 0;
+  int64_t s = 0;
   int64_t us = 0;
   // s need get when run
   int64_t d = 0;
 
   if (is_dim4) {
-    // (b, h, us, d) -> (bs, us, d)
-    h = cur_shape->GetStorageShape().GetDim(index1);
-    us = cur_shape->GetStorageShape().GetDim(index2);
-    d = cur_shape->GetStorageShape().GetDim(index3);
+    h = update_shape->GetStorageShape().GetDim(index1);
+    us = update_shape->GetStorageShape().GetDim(index2);
+    s = cache_shape->GetStorageShape().GetDim(index2);
+    d = update_shape->GetStorageShape().GetDim(index3);
   } else {
     h = 1;
-    us = cur_shape->GetStorageShape().GetDim(index1);
-    d = cur_shape->GetStorageShape().GetDim(index2);
+    us = update_shape->GetStorageShape().GetDim(index1);
+    s = cache_shape->GetStorageShape().GetDim(index1);
+    d = update_shape->GetStorageShape().GetDim(index2);
   }
 
   auto platform = platform_ascendc::PlatformAscendC(context->GetPlatformInfo());
   auto aiv_num = platform.GetCoreNumAiv();
+  uint64_t ub_size = 0;
+  platform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ub_size);
+  int64_t remain_ub_size = ub_size - CeilRound(b, kDivisor) * sizeof(int64_t);
 
-  context->SetBlockDim(aiv_num);
+  int64_t bs = b * h;
+  int64_t former_bh = (bs + aiv_num - 1) / aiv_num;
+  int64_t core_num = (bs + former_bh - 1) / former_bh;
+  int64_t tail_bh = bs - (core_num - 1) * former_bh;
+
+  int64_t f_split_bh = 1;
+  int64_t f_f_bh = former_bh;
+  while (kBufferNum * f_f_bh * us * d * type_size >= remain_ub_size) {
+    f_split_bh++;
+    f_f_bh = (former_bh + f_split_bh - 1) / f_split_bh;
+  }
+  int64_t f_t_bh = former_bh - (f_split_bh - 1) * f_f_bh;
+
+  int64_t t_split_bh = 1;
+  int64_t t_f_bh = tail_bh;
+  while (kBufferNum * t_f_bh * us * d * type_size >= remain_ub_size) {
+    t_split_bh++;
+    t_f_bh = (tail_bh + t_split_bh - 1) / t_split_bh;
+  }
+  int64_t t_t_bh = tail_bh - (t_split_bh - 1) * t_f_bh;
+
+  context->SetBlockDim(core_num);
 
   // set workspace for 910B
   size_t *currentWorkspace = context->GetWorkspaceSizes(1);
   currentWorkspace[0] = k910bWS;
 
-  TilingData tiling;
-  tiling.set_core_num(aiv_num);
+  DecoderKvTilingData tiling;
+  tiling.set_core_num(core_num);
   tiling.set_b(b);
   tiling.set_h(h);
+  tiling.set_s(s);
   tiling.set_d(d);
   tiling.set_us(us);
+  tiling.set_former_bh(former_bh);
+  tiling.set_tail_bh(tail_bh);
+  tiling.set_f_split_bh(f_split_bh);
+  tiling.set_f_f_bh(f_f_bh);
+  tiling.set_f_t_bh(f_t_bh);
+  tiling.set_t_split_bh(t_split_bh);
+  tiling.set_t_f_bh(t_f_bh);
+  tiling.set_t_t_bh(t_t_bh);
   tiling.SaveToBuffer(context->GetRawTilingData()->GetData(), context->GetRawTilingData()->GetCapacity());
   context->GetRawTilingData()->SetDataSize(tiling.GetDataSize());
 

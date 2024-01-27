@@ -18,13 +18,12 @@
 using namespace AscendC;
 namespace {
 constexpr int32_t kBufferNum = 2;
-constexpr int64_t kUbSize = 192 * 1024;
 const int64_t kDivisor = 4;
-static __aicore__ inline int64_t CeilRound(int64_t value, int64_t kDivisor) {
-  if (kDivisor == 0) {
+static __aicore__ inline int64_t CeilRound(int64_t value, int64_t divisor) {
+  if (divisor == 0) {
     return 0;
   }
-  return (value + kDivisor - 1) / kDivisor * kDivisor;
+  return (value + divisor - 1) / divisor * divisor;
 }
 }  // namespace
 
@@ -33,36 +32,26 @@ class KernelDecoderKvCache {
  public:
   __aicore__ inline KernelDecoderKvCache() {}
 
-  __aicore__ inline void GetNewMaxSeqLen(GM_ADDR new_max_seq_len) {
-    new_max_seq_len_gm_.SetGlobalBuffer((__gm__ int64_t *)new_max_seq_len, 4);
-    pipe_.InitBuffer(new_max_seq_len_queue_, 1, CeilRound(1, kDivisor) * sizeof(int64_t));
-    LocalTensor<int64_t> new_max_seq_len_tensor = new_max_seq_len_queue_.AllocTensor<int64_t>();
-    pipe_barrier((pipe_t)PIPE_ALL);
-    DataCopy(new_max_seq_len_tensor, new_max_seq_len_gm_, CeilRound(1, kDivisor));
-    pipe_barrier((pipe_t)PIPE_ALL);
-    s_ = new_max_seq_len_tensor.GetValue(0);
-    new_max_seq_len_queue_.FreeTensor(new_max_seq_len_tensor);
-  }
-
-  __aicore__ inline void GetValidSeqLen(GM_ADDR valid_seq_len, int64_t ub) {
-    int64_t valid_seq_len_ub_size = CeilRound(ub, kDivisor);
+  __aicore__ inline void GetValidSeqLen(GM_ADDR valid_seq_len) {
+    int64_t valid_seq_len_ub_size = CeilRound(b_, kDivisor);
     valid_seq_len_gm_.SetGlobalBuffer((__gm__ int64_t *)valid_seq_len, valid_seq_len_ub_size);
     pipe_.InitBuffer(valid_seq_len_queue_, 1, valid_seq_len_ub_size * sizeof(int64_t));
     valid_seq_len_tensor_ = valid_seq_len_queue_.AllocTensor<int64_t>();
     pipe_barrier((pipe_t)PIPE_ALL);
     DataCopy(valid_seq_len_tensor_, valid_seq_len_gm_, valid_seq_len_ub_size);
     pipe_barrier((pipe_t)PIPE_ALL);
-    remain_ub_size_ -= valid_seq_len_ub_size * sizeof(int64_t);
   }
 
-  __aicore__ inline void SplitBh(int64_t bh) {
-    split_bh_ = 1;
-    former_block_bh_ = bh;
-    while (kBufferNum * former_block_bh_ * us_ * d_ * sizeof(T) >= remain_ub_size_) {
-      split_bh_++;
-      former_block_bh_ = (bh + split_bh_ - 1) / split_bh_;
+  __aicore__ inline void SplitBh() {
+    if (core_idx_ != core_num_ - 1) {
+      split_bh_ = f_split_bh_;
+      former_block_bh_ = f_f_bh_;
+      tail_block_bh_ = f_t_bh_;
+    } else {
+      split_bh_ = t_split_bh_;
+      former_block_bh_ = t_f_bh_;
+      tail_block_bh_ = t_t_bh_;
     }
-    tail_block_bh_ = bh - (split_bh_ - 1) * former_block_bh_;
   }
 
   __aicore__ inline void Update(GM_ADDR cache, GM_ADDR update, LocalTensor<T> update_in_local_tensor) {
@@ -99,33 +88,37 @@ class KernelDecoderKvCache {
     }
   }
 
+  __aicore__ inline void InitParam(GM_ADDR tiling) {
+    GET_TILING_DATA(tiling_data, tiling);
+    core_num_ = tiling_data.core_num;
+    b_ = tiling_data.b;
+    h_ = tiling_data.h;
+    s_ = tiling_data.s;
+    d_ = tiling_data.d;
+    us_ = tiling_data.us;
+    former_bh_ = tiling_data.former_bh;
+    tail_bh_ = tiling_data.tail_bh;
+    f_split_bh_ = tiling_data.f_split_bh;
+    f_f_bh_ = tiling_data.f_f_bh;
+    f_t_bh_ = tiling_data.f_t_bh;
+    t_split_bh_ = tiling_data.t_split_bh;
+    t_f_bh_ = tiling_data.t_f_bh;
+    t_t_bh_ = tiling_data.t_t_bh;
+  }
+
   __aicore__ inline void Process(GM_ADDR cache, GM_ADDR update, GM_ADDR valid_seq_len, GM_ADDR batch_index,
-                                 GM_ADDR new_max_seq_len, GM_ADDR cur_max_seq_len, int64_t core_num, int64_t b,
-                                 int64_t h, int64_t d, int64_t us) {
+                                 GM_ADDR new_max_seq_len, GM_ADDR cur_max_seq_len, GM_ADDR tiling) {
+    InitParam(tiling);
     core_idx_ = GetBlockIdx();
-    former_bh_ = (b * h + core_num - 1) / core_num;
-    core_num_ = (b * h + former_bh_ - 1) / former_bh_;
     if (core_idx_ >= core_num_) {
       return;
     }
-    tail_bh_ = b * h - (core_num_ - 1) * former_bh_;
 
-    b_ = b;
-    h_ = h;
-    d_ = d;
-    us_ = us;
-
-    GetNewMaxSeqLen(new_max_seq_len);
-    GetValidSeqLen(valid_seq_len, b);
-
+    GetValidSeqLen(valid_seq_len);
     update_core_stride_ = former_bh_ * us_ * d_;
     cache_core_stride_ = former_bh_ * s_ * d_;
 
-    if (core_idx_ != core_num - 1) {
-      SplitBh(former_bh_);
-    } else {
-      SplitBh(tail_bh_);
-    }
+    SplitBh();
 
     pipe_.InitBuffer(update_queue_, kBufferNum, former_block_bh_ * us_ * d_ * sizeof(T));
     LocalTensor<T> update_in_local_tensor = update_queue_.AllocTensor<T>();
@@ -152,8 +145,6 @@ class KernelDecoderKvCache {
   TQue<QuePosition::VECIN, 1> valid_seq_len_queue_;
   TQue<QuePosition::VECIN, 1> new_max_seq_len_queue_;
 
-  int64_t remain_ub_size_ = kUbSize;
-
   int64_t split_bh_ = 0;
   int64_t former_block_bh_ = 0;
   int64_t tail_block_bh_ = 0;
@@ -165,32 +156,34 @@ class KernelDecoderKvCache {
   int64_t update_block_length_ = 0;
 
   int64_t core_num_ = 0;
-  int64_t former_bh_ = 0;
-  int64_t tail_bh_ = 0;
   int64_t b_ = 0;
   int64_t h_ = 0;
   int64_t s_ = 0;
   int64_t d_ = 0;
   int64_t us_ = 0;
+
+  int64_t former_bh_ = 0;
+  int64_t tail_bh_ = 0;
+  int64_t f_split_bh_ = 0;
+  int64_t f_f_bh_ = 0;
+  int64_t f_t_bh_ = 0;
+  int64_t t_split_bh_ = 0;
+  int64_t t_f_bh_ = 0;
+  int64_t t_t_bh_ = 0;
 };
 
 extern "C" __global__ __aicore__ void decoder_kv_cache(GM_ADDR cache, GM_ADDR update, GM_ADDR valid_seq_len,
                                                        GM_ADDR batch_index, GM_ADDR seq_len_axis,
                                                        GM_ADDR new_max_seq_len, GM_ADDR cur_max_seq_len, GM_ADDR out,
                                                        GM_ADDR workspace, GM_ADDR tiling) {
-  GET_TILING_DATA(tiling_data, tiling);
-
   if (TILING_KEY_IS(1)) {
     KernelDecoderKvCache<int8_t> op;
-    op.Process(cache, update, valid_seq_len, batch_index, new_max_seq_len, cur_max_seq_len, tiling_data.core_num,
-               tiling_data.b, tiling_data.h, tiling_data.d, tiling_data.us);
+    op.Process(cache, update, valid_seq_len, batch_index, new_max_seq_len, cur_max_seq_len, tiling);
   } else if (TILING_KEY_IS(2)) {
     KernelDecoderKvCache<int16_t> op;
-    op.Process(cache, update, valid_seq_len, batch_index, new_max_seq_len, cur_max_seq_len, tiling_data.core_num,
-               tiling_data.b, tiling_data.h, tiling_data.d, tiling_data.us);
+    op.Process(cache, update, valid_seq_len, batch_index, new_max_seq_len, cur_max_seq_len, tiling);
   } else if (TILING_KEY_IS(4)) {
     KernelDecoderKvCache<int32_t> op;
-    op.Process(cache, update, valid_seq_len, batch_index, new_max_seq_len, cur_max_seq_len, tiling_data.core_num,
-               tiling_data.b, tiling_data.h, tiling_data.d, tiling_data.us);
+    op.Process(cache, update, valid_seq_len, batch_index, new_max_seq_len, cur_max_seq_len, tiling);
   }
 }
