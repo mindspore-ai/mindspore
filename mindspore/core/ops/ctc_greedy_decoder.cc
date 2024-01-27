@@ -103,6 +103,8 @@ class CTCGreedyDecoderInfer : public abstract::OpInferBase {
     // Infer Shape for frontend
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
+    // Check type
+    CheckType(primitive, input_args);
     auto inputs_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
     auto sequence_length_shape =
       CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
@@ -131,8 +133,6 @@ class CTCGreedyDecoderInfer : public abstract::OpInferBase {
                                << "but now inputs batch_size: " << inputs_x_shape[1]
                                << " and sequence_length batch_size: " << sequence_length_shape[0] << ".";
     }
-    // Check type
-    CheckType(primitive, input_args);
     // Get out shapes
     int64_t max_shape_value = abstract::TensorShape::kShapeDimAny;
     auto out_shapes = GetOutputsShape(inputs_x_shape, max_shape_value);
