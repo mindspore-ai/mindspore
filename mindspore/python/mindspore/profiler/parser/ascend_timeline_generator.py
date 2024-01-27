@@ -570,7 +570,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             hccl_file_name = fr'{self._msprof_timeline_dir}/hccl_*.json'
             file_list_hccl = glob.glob(hccl_file_name)
             if not file_list_hccl:
-                logger.error('Could not find hccl file in %s', self._msprof_timeline_dir)
+                logger.warning('Could not find hccl file in %s', self._msprof_timeline_dir)
             else:
                 hccl_data = self._parse_hccl_data(get_newest_file(file_list_hccl))
                 timeline_data.extend(hccl_data)
