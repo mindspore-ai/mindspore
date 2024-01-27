@@ -113,6 +113,9 @@ class DeviceQueueDataSourceActor : public DataSourceActor {
 
   // The kernel tensors for resize and launch.
   std::vector<KernelTensor *> output_kernel_tensors_;
+
+  // The stream resource of the Actor to launch kernel.
+  void *stream_{nullptr};
 };
 
 // The class represents that the data source is host queue.

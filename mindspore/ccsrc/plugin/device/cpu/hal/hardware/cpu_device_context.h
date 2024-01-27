@@ -71,7 +71,7 @@ class CPUKernelExecutor : public KernelExecutor {
 
   bool LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                     const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &outputs,
-                    size_t /* stream_id */) const override;
+                    KernelMod *kernel_mod, void * /*stream*/) const override;
 
   bool ExecuteKernelTask(const runtime::KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
                          const TensorStorageInfoPtrList &input_storage_list,
@@ -89,11 +89,12 @@ class CPUKernelExecutor : public KernelExecutor {
   // Launch a kernel and record the elapsed time end to end.
   bool LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &workspace,
-                                 const std::vector<KernelTensor *> &outputs) const;
+                                 const std::vector<KernelTensor *> &outputs, KernelMod *kernel_mod) const;
 #endif
   // Launch a kernel by 'KernelMod' of the kernel.
   bool DoLaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
-                      const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &outputs) const;
+                      const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &outputs,
+                      KernelMod *kernel_mod) const;
   void UpdateKernelRefInfo(const KernelGraphPtr &graph) const;
 
   mutable std::mutex launch_mutex_;
