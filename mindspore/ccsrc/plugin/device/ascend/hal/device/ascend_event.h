@@ -36,6 +36,7 @@ class AscendEvent : public DeviceEvent {
   void SyncEvent() override;
   bool QueryEvent() override;
   void ElapsedTime(float *cost_time, const DeviceEvent *other) override;
+  bool DestroyEvent() override;
   void set_wait_stream(aclrtStream wait_stream) override { wait_stream_ = wait_stream; }
   void set_record_stream(aclrtStream record_stream) override { record_stream_ = record_stream; }
 
@@ -44,6 +45,7 @@ class AscendEvent : public DeviceEvent {
   aclrtStream wait_stream_{nullptr};
   aclrtStream record_stream_{nullptr};
   bool need_wait_{false};
+  bool event_destroyed_{false};
 };
 
 class AscendTimeEvent : public AscendEvent {

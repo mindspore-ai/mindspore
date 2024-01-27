@@ -34,6 +34,7 @@ class GpuEvent : public DeviceEvent {
   void SyncEvent() override;
   bool QueryEvent() override;
   void ElapsedTime(float *cost_time, const DeviceEvent *other) override;
+  bool DestroyEvent() override;
   void set_wait_stream(void *wait_stream) override { wait_stream_ = static_cast<cudaStream_t>(wait_stream); }
   void set_record_stream(void *record_stream) override { record_stream_ = static_cast<cudaStream_t>(record_stream); }
 
@@ -42,6 +43,11 @@ class GpuEvent : public DeviceEvent {
   cudaStream_t wait_stream_{nullptr};
   cudaStream_t record_stream_{nullptr};
   bool need_wait_{false};
+
+  // Set reentrant for real device event status because other module may hold DeviceEvent as well, we use
+  // event_destroyed_ to avoid calling device event destroyer multiple times. For example, calling destroyer in
+  // deconstructor again.
+  bool event_destroyed_{false};
 };
 }  // namespace mindspore::device::gpu
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_EVENT_H_

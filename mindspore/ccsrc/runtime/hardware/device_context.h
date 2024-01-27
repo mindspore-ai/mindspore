@@ -250,7 +250,13 @@ class BACKEND_EXPORT DeviceResManager {
   virtual size_t DefaultStream() const { return 0; }
 
   // Create device event with flag.
-  virtual DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) const { return nullptr; };
+  virtual DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) { return nullptr; };
+
+  // Destroy specified device event.
+  virtual bool DestroyEvent(const DeviceEventPtr &event);
+
+  // Destroy all device events.
+  virtual bool DestroyAllEvents();
 
   // Dynamically load collective communication library.
   // Currently, four types are supported: OpenMPI and self developed framework for CPU. NCCL for GPU. HCCL for Ascend.
@@ -271,6 +277,8 @@ class BACKEND_EXPORT DeviceResManager {
   DeviceContext *device_context_{nullptr};
 
   std::shared_ptr<SwapManager> swap_manager_{nullptr};
+
+  DeviceEventPtrList device_events_{};
 
  private:
   template <class... Args>

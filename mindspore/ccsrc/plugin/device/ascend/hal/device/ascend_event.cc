@@ -46,9 +46,11 @@ AscendTimeEvent::AscendTimeEvent() {
 }
 
 AscendEvent::~AscendEvent() {
-  auto ret = aclrtDestroyEvent(event_);
-  if (ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "aclrtDestroyEvent failed, ret:" << ret;
+  if (!event_destroyed_) {
+    auto ret = aclrtDestroyEvent(event_);
+    if (ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "aclrtDestroyEvent failed, ret:" << ret;
+    }
   }
 
   event_ = nullptr;
@@ -121,4 +123,14 @@ void AscendEvent::ElapsedTime(float *cost_time, const DeviceEvent *other) {
 }
 
 bool AscendEvent::NeedWait() { return need_wait_; }
+
+bool AscendEvent::DestroyEvent() {
+  MS_EXCEPTION_IF_NULL(event_);
+  auto ret = aclrtDestroyEvent(event_);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "aclrtDestroyEvent failed, ret:" << ret;
+  }
+  event_destroyed_ = true;
+  return true;
+}
 }  // namespace mindspore::device::ascend

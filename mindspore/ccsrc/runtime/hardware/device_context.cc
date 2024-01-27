@@ -55,6 +55,33 @@ void DeviceResManager::FreeMemory(DeviceAddress *const &address) const {
   address->set_ptr(nullptr);
 }
 
+bool DeviceResManager::DestroyEvent(const DeviceEventPtr &event) {
+  MS_EXCEPTION_IF_NULL(event);
+  if (!event->DestroyEvent()) {
+    MS_LOG(ERROR) << "DestroyEvent failed.";
+    return false;
+  }
+
+  const auto &iter = std::find(device_events_.begin(), device_events_.end(), event);
+  if (iter == device_events_.end()) {
+    MS_LOG(ERROR) << "Can't find specified device event.";
+    return false;
+  }
+  (void)device_events_.erase(iter);
+  return true;
+}
+
+bool DeviceResManager::DestroyAllEvents() {
+  (void)std::for_each(device_events_.begin(), device_events_.end(), [this](const auto &event) {
+    MS_EXCEPTION_IF_NULL(event);
+    if (!event->DestroyEvent()) {
+      MS_LOG(ERROR) << "DestroyEvent failed.";
+    }
+  });
+  device_events_.clear();
+  return true;
+}
+
 void KernelExecutor::UnifyMindIR(const KernelGraphPtr &graph) const { opt::CommonUnifyMindIR(graph); }
 }  // namespace device
 }  // namespace mindspore

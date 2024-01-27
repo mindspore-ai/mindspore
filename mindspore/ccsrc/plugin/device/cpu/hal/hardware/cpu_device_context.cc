@@ -126,6 +126,7 @@ void CPUDeviceContext::Initialize() {
 void CPUDeviceContext::Destroy() {
   MS_EXCEPTION_IF_NULL(device_res_manager_);
   device_res_manager_->Destroy();
+  initialized_ = false;
 }
 
 void CPUDeviceResManager::Initialize() {

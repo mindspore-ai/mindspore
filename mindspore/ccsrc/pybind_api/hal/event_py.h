@@ -32,7 +32,7 @@ class EventPy {
  public:
   EventPy() = default;
   explicit EventPy(bool enable_timing, bool blocking) : enable_timing_(enable_timing), blocking_(blocking) {}
-  ~EventPy() = default;
+  ~EventPy();
 
   // Record this event by stream
   void Record(const StreamPyPtr &stream);
@@ -67,8 +67,10 @@ class EventPy {
   bool blocking_{false};
   // is_created_ will be true after event was recorded.
   bool is_created_{false};
-  // Store event alloc from device
-  std::shared_ptr<DeviceEvent> event_;
+  // Store event alloc from device.
+  std::shared_ptr<DeviceEvent> event_{nullptr};
+  // The stream object that helps create event_. We can use this to access device_res_manager_;
+  StreamPyPtr creator_stream_{nullptr};
 };
 
 class EventCnt {

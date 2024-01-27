@@ -211,6 +211,7 @@ bool GPUDeviceResManager::InitDevice() {
 }
 
 void GPUDeviceResManager::Destroy() {
+  (void)DestroyAllEvents();
   if (DataQueueMgr::GetInstance().IsInit()) {
     if (!DataQueueMgr::GetInstance().IsClosed() && !DataQueueMgr::GetInstance().CloseNotify()) {
       MS_LOG(ERROR) << "Could not close gpu data queue.";
@@ -242,6 +243,7 @@ void GPUDeviceContext::Destroy() {
   MS_EXCEPTION_IF_NULL(GetKernelExecutor(false));
   GetKernelExecutor(false)->Destroy();
   device_res_manager_->Destroy();
+  initialized_ = false;
 }
 
 void *GPUDeviceResManager::AllocateMemory(size_t size, uint32_t stream_id) const {
@@ -985,11 +987,12 @@ uint32_t GPUKernelExecutor::GetRankID() const {
   return rank_id;
 }
 
-DeviceEventPtr GPUDeviceResManager::CreateEventWithFlag(bool enable_timing, bool blocking) const {
+DeviceEventPtr GPUDeviceResManager::CreateEventWithFlag(bool enable_timing, bool blocking) {
   uint32_t flag =
     (blocking ? cudaEventBlockingSync : cudaEventDefault) | (enable_timing ? cudaEventDefault : cudaEventDisableTiming);
   auto event = std::make_shared<GpuEvent>(flag);
   MS_EXCEPTION_IF_NULL(event);
+  device_events_.push_back(event);
   return event;
 }
 
