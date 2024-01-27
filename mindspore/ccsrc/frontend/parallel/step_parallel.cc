@@ -2393,11 +2393,20 @@ static void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes, const F
     MS_EXCEPTION_IF_NULL(prim);
     OperatorInfoPtr operator_info = cnode->user_data<OperatorInfo>();
     if (operator_info) {
-      if (operator_info->name().find(RESHAPEINFO) != std::string::npos) {
-        continue;
-      }
       std::string strategy_key_name = prim->name() + "_" + param_name;
-      stra_map[strategy_key_name] = operator_info->strategy();
+      StrategyPtr stra;
+      if (operator_info->name().find(RESHAPEINFO) != std::string::npos) {
+        auto reshape_info = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
+        stra = reshape_info->get_input_shard_strategy();
+        if (stra == nullptr) {
+          MS_LOG(INFO) << "Reshape has not input strategy, Skipped";
+          continue;
+        }
+      } else {
+        stra = operator_info->strategy();
+      }
+      stra_map[strategy_key_name] = stra;
+
       for (auto param_name_pair : param_names) {
         tensor_info_map[param_name_pair.first] = param_name_pair.second->user_data<TensorLayout>();
       }
