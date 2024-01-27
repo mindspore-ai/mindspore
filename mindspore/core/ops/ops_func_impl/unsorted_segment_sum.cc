@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ops/unsorted_segment_sum.h"
+#include "ops/ops_func_impl/unsorted_segment_sum.h"
 #include <algorithm>
 #include <map>
 #include <memory>
@@ -30,16 +30,14 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-abstract::ShapePtr UnsortedSegmentSumInferShape(const PrimitivePtr &primitive,
-                                                const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr UnsortedSegmentSumFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                                    const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string &op_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto x_shape = input_args[kInputIndex0]->GetShape()->GetShapeVector();
   auto x_shape_rank = SizeToLong(x_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("input_x size", x_shape_rank, kGreaterThan, 0, op_name);
-  auto segment_ids_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto segment_ids_shape = input_args[kInputIndex1]->GetShape()->GetShapeVector();
   auto segment_ids_shape_rank = SizeToLong(segment_ids_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("segment_ids size", segment_ids_shape_rank, kGreaterThan, 0, op_name);
   ShapeVector output_shape;
@@ -87,7 +85,8 @@ abstract::ShapePtr UnsortedSegmentSumInferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::Shape>(output_shape);
 }
 
-TypePtr UnsortedSegmentSumInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr UnsortedSegmentSumFuncImpl::InferType(const PrimitivePtr &primitive,
+                                              const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   /* check segment_ids */
@@ -107,40 +106,5 @@ TypePtr UnsortedSegmentSumInferType(const PrimitivePtr &primitive, const std::ve
   MS_EXCEPTION_IF_NULL(x_type_ptr);
   return CheckAndConvertUtils::CheckSubClass("input_x", x_type_ptr, {kTensorType}, prim_name);
 }
-}  // namespace
-
-MIND_API_OPERATOR_IMPL(UnsortedSegmentSum, BaseOperator);
-AbstractBasePtr UnsortedSegmentSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t kMinInputNum = 2;
-  const int64_t kMaxInputNum = 3;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kMinInputNum, primitive->name());
-  CheckAndConvertUtils::CheckInputArgs(input_args, kLessEqual, kMaxInputNum, primitive->name());
-  auto infer_type = UnsortedSegmentSumInferType(primitive, input_args);
-  auto infer_shape = UnsortedSegmentSumInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
-}
-
-// AG means auto generated
-class MIND_API AGUnsortedSegmentSumInfer : public abstract::OpInferBase {
- public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) const override {
-    return UnsortedSegmentSumInferShape(primitive, input_args);
-  }
-
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return UnsortedSegmentSumInferType(primitive, input_args);
-  }
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args) const override {
-    return UnsortedSegmentSumInfer(engine, primitive, input_args);
-  }
-
-  std::set<int64_t> GetValueDependArgIndices() const override { return {2}; }
-};
-
-REGISTER_PRIMITIVE_OP_INFER_IMPL(UnsortedSegmentSum, prim::kPrimUnsortedSegmentSum, AGUnsortedSegmentSumInfer, false);
 }  // namespace ops
 }  // namespace mindspore

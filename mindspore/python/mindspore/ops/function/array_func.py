@@ -35,7 +35,6 @@ from mindspore.ops.operations._sequence_ops import TensorToList
 from mindspore.ops.operations.array_ops import (
     UniqueConsecutive,
     SearchSorted,
-    NonZero,
     MatrixDiagV3,
     MatrixDiagPartV3,
     MatrixSetDiagV3,
@@ -62,7 +61,7 @@ from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
 
 from mindspore.ops.auto_generate import concat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
-    nonzero, reverse, transpose
+    nonzero, reverse, transpose, unsorted_segment_sum
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
 arg_max_with_value_ = P.ArgMaxWithValue()
@@ -5952,64 +5951,6 @@ def narrow(input, axis, start, length):
     sizes = list(input.shape)
     sizes[axis] = length
     return tensor_slice(input, begins, sizes)
-
-
-def unsorted_segment_sum(input_x, segment_ids, num_segments):
-    r"""
-    Computes the sum of a tensor along segments.
-
-    Calculates a tensor such that :math:`\text{output}[i] = \sum_{segment\_ids[j] == i} \text{data}[j, \ldots]`, where
-    :math:`j,...` is a tuple describing the index of element in data.
-    `segment_ids` selects which elements in data to sum
-    up. Segment_ids does not need to be sorted, and it does not need to cover all values in the entire valid value
-    range.
-
-    The following figure shows the calculation process of unsorted_segment_sum:
-
-    .. image:: UnsortedSegmentSum.png
-
-    Note:
-        - If the segment_id i is absent in the segment_ids, then output[i] will be filled with 0.
-        - On Ascend, if the value of segment_id is less than 0 or greater than the length of the input data shape, an
-          execution error will occur.
-
-    If the sum of the given segment_ids :math:`i` is empty, then :math:`\text{output}[i] = 0`. If the given segment_ids
-    is negative, the value will be ignored. 'num_segments' must be equal to the number of different segment_ids.
-
-    Args:
-        input_x (Tensor): Input Tensor contains the data to be summed.
-          The shape is :math:`(x_1, x_2, ..., x_R)`.
-        segment_ids (Tensor): TThe label indicates the segment to which each element belongs.
-            Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
-        num_segments (Union[int, Tensor], optional): Set :math:`z` as num_segments, it can be an int or 0-D Tensor.
-
-    Returns:
-        Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
-
-    Raises:
-        TypeError: If `num_segments` is not an int or 0-D Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore import Tensor
-        >>> from mindspore import ops
-        >>> import mindspore
-        >>> input_x = Tensor([1, 2, 3, 4], mindspore.float32)
-        >>> segment_ids = Tensor([0, 0, 1, 2], mindspore.int32)
-        >>> num_segments = 4
-        >>> output = ops.unsorted_segment_sum(input_x, segment_ids, num_segments)
-        >>> print(output)
-        [3. 3. 4. 0.]
-        >>> input_x = Tensor([1, 2, 3, 4, 2, 5], mindspore.float32)
-        >>> segment_ids = Tensor([0, 0, 1, 2, 3, 4], mindspore.int32)
-        >>> num_segments = 6
-        >>> output = ops.unsorted_segment_sum(input_x, segment_ids, num_segments)
-        >>> print(output)
-        [3. 3. 4. 2. 5. 0.]
-    """
-    return unsorted_segment_sum_(input_x, segment_ids, num_segments)
 
 
 def topk(input, k, dim=None, largest=True, sorted=True):
