@@ -125,7 +125,7 @@ class Net(nn.Cell):
         ret = self.square(query)
         out = self.fa_op(ret, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, padding_mask,
                          deq_scale1, quant_scale1, deq_scale2, quant_scale2, quant_offset2)
-        return self.square(out[0])
+        return self.square(out)
 
 
 @pytest.mark.parametrize('input_layout', ['BSH', 'BNSD'])
