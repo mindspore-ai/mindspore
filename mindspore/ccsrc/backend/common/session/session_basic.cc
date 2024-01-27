@@ -1116,8 +1116,8 @@ void SessionBasic::RegisterSummaryCallBackFunc(const CallBackFunc &callback) {
 }
 
 void SessionBasic::RecurseSetSummaryNodesForAllGraphs(KernelGraph *graph) {
-  MS_LOG(INFO) << "Recurse set summary nodes for all graphs in graph: " << graph->graph_id() << " start";
   MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(INFO) << "Recurse set summary nodes for all graphs in graph: " << graph->graph_id() << " start";
   Summary::GetInstance().RecurseSetSummaryNodesForAllGraphs(graph);
 }
 
