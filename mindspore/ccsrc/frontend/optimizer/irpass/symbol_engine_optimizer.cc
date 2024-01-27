@@ -36,10 +36,11 @@ bool SymbolEngineBuilder::operator()(const FuncGraphPtr &func_graph, const Optim
   try {
     MS_LOG_TRY_CATCH_SCOPE;
     symshape::SymbolEngineImpl::Build(func_graph);
+    MS_LOG(INFO) << "Build symbol engine successfully.";
   } catch (std::exception &e) {
     MS_LOG(WARNING) << "Build symbol engine failed. message: " << e.what();
   }
-  return false;
+  return true;
 }
 
 AnfNodePtr ElimShapeCalcOnBroadcastArgsGrad::operator()(const OptimizerPtr &opt, const AnfNodePtr &node) {

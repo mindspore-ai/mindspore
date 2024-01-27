@@ -45,6 +45,13 @@ void ScalarSub::UpdateMathInfo() {
   } else if (b->is_const() && !a->is_const()) {
     // out = a - const_b
     out->SetMathExpr(a, kFrac1, -b->value());
+  } else {
+    // both a and b are not const
+    auto d1 = a->divisor();
+    auto r1 = a->remainder();
+    auto d2 = b->divisor();
+    auto r2 = b->remainder();
+    out->SetDivisorRemainder(std::gcd(d1, d2), r1 - r2);
   }
 }
 

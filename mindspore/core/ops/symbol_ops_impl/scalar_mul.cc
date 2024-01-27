@@ -62,6 +62,17 @@ void ScalarMul::UpdateMathInfo() {
   } else if (input2->is_const() && !input1->is_const()) {
     // out = input1 * const2
     out->SetMathExpr(input1, Frac(input2->value()), 0);
+  } else {
+    // both input1 and input2 are not const
+    auto d1 = input1->divisor();
+    auto r1 = input1->remainder();
+    auto d2 = input2->divisor();
+    auto r2 = input2->remainder();
+    // the output is (d1*N1+r1) * (d2*N2+r2)
+    // => (d1*d2)*N1N2 + (d1*r2)*N1 + (d2*r1)*N2 + (r1*r2)
+    // => d3 = gcd(d1*d2, d1*r2, d2*r1)
+    auto d3 = std::gcd(d1 * std::gcd(d2, r2), d2 * r1);
+    out->SetDivisorRemainder(d3, r1 * r2);
   }
 }
 

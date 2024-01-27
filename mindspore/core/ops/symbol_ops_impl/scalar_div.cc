@@ -34,6 +34,10 @@ SymbolPtr ScalarDiv::Eval() {
     DoNotEvalOnRun();
     return input(0);
   }
+  if (*lhs == *rhs) {
+    DoNotEvalOnRun();
+    return GenInt(1);
+  }
   return GenVInt();
 }
 
@@ -66,10 +70,19 @@ void ScalarDiv::UpdateMathInfo() {
   if (input2->is_const() && !input1->is_const()) {
     // out = input1 / const2
     out->SetMathExpr(input1, Frac(1, input2->value()), 0);
+  } else if (!input1->is_const() && !input2->is_const()) {
+    auto d1 = input1->divisor();
+    auto d2 = input2->divisor();
+    auto r1 = input1->remainder();
+    auto r2 = input2->remainder();
+    if (r1 == 0 && r2 == 0 && d1 % d2 == 0) {
+      out->SetDivisorRemainder(d1 / d2, 0);
+    }
   }
 }
 
 REG_SYMBOL_OP_BUILDER("ScalarDiv").SetValueFunc(DefaultBuilder<ScalarDiv, 2>);
+REG_SYMBOL_OP_BUILDER("ScalarFloorDiv").SetValueFunc(DefaultBuilder<ScalarDiv, 2>);
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

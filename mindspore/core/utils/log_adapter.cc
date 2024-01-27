@@ -674,6 +674,7 @@ const std::string GetSubModuleName(SubModuleId module_id) {
     "RUNTIME_FRAMEWORK",  // SM_RUNTIME_FRAMEWORK
     "GE",                 // SM_GE
     "API",                // SM_API
+    "SYMBOLIC_SHAPE",     // SM_SYMBOLIC_SHAPE
   };
   return sub_module_names[IntToSize(module_id % NUM_SUBMODUES)];
 }

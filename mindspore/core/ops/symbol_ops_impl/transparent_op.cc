@@ -24,6 +24,7 @@ REG_SYMBOL_OP_BUILDER("BiasAdd").SetShapeDepend({DependOn::kShape, DependOn::kNo
 REG_SYMBOL_OP_BUILDER("Cast").SetShapeDepend({DependOn::kShape});
 REG_SYMBOL_OP_BUILDER("DropoutGrad").SetShapeDepend({DependOn::kShape});
 REG_SYMBOL_OP_BUILDER("Exp").SetShapeDepend({DependOn::kShape});
+REG_SYMBOL_OP_BUILDER("GeLU").SetShapeDepend({DependOn::kShape});
 REG_SYMBOL_OP_BUILDER("LogicalNot").SetShapeDepend({DependOn::kShape});
 REG_SYMBOL_OP_BUILDER("Log").SetShapeDepend({DependOn::kShape});
 REG_SYMBOL_OP_BUILDER("LogSoftmaxGrad").SetShapeDepend({DependOn::kNone, DependOn::kShape});

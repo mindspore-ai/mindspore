@@ -399,6 +399,20 @@ void DumpSymbolicInfo(const AnfNodePtr &node, const FuncGraphPtr &fg, const std:
   gsub->buffer << std::endl;
 }
 
+void PrintParamSymbolicShape(std::ostringstream &buffer, const AnfNodePtr &node) {
+  if (node == nullptr) {
+    return;
+  }
+  auto abstract = node->abstract();
+  if (abstract == nullptr) {
+    return;
+  }
+  SymbolPtr shape = abstract->GetSymbolicShape();
+  if (shape != nullptr) {
+    buffer << " : " << shape->ToString();
+  }
+}
+
 void GatherInputAndOutputInferType(std::ostringstream &buffer, const AnfNodePtr &node) {
   buffer << "      : (";
   PrintNodeInputType(buffer, node);
@@ -487,6 +501,7 @@ int32_t DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer, Ordere
     buffer << "%para" << para_num << "_" << parameter_ptr->name() << " : ";
     // Print parameters' type and shape
     PrintNodeOutputType(buffer, param);
+    PrintParamSymbolicShape(buffer, param);
     if (parameter_ptr->has_default()) {
       buffer << "  :  has_default";
     }

@@ -38,6 +38,18 @@ struct COMMON_EXPORT DependStatus {
   bool value{false};
 };
 
+/// \brief When a CNode's input[0] is also a CNode, it's a SpecialCNode.
+class COMMON_EXPORT SpecialCNodeHelper {
+ public:
+  explicit SpecialCNodeHelper(const CNodePtr &cnode) : cnode_(cnode) {}
+  virtual ~SpecialCNodeHelper() = default;
+  virtual void SetDependStatus(std::map<AnfNodePtr, DependStatus> *depend_status_map) = 0;
+  virtual std::pair<PrimitivePtr, AbstractBasePtrList> ExtractInputs() = 0;
+
+ protected:
+  CNodePtr cnode_;
+};
+
 class COMMON_EXPORT SymbolEngineImpl : public SymbolEngine {
  public:
   explicit SymbolEngineImpl(const FuncGraphPtr &fg) : SymbolEngine(fg), name_(fg->ToString()) {}
@@ -58,16 +70,18 @@ class COMMON_EXPORT SymbolEngineImpl : public SymbolEngine {
   std::string ToString() const override { return "SymbolEngine_" + name_; }
   std::string DumpText() const override;
 
+  virtual void BuildSubgraphImpl(const CNodePtr &cnode, const FuncGraphPtr &sub_fg, size_t begin_input_index);
+  virtual void PreBuildQuerySubgraphDependStatus(const CNodePtr &cnode, const FuncGraphPtr &sub_fg,
+                                                 size_t begin_input_index);
+
  protected:
   // prebuild of symbol engine, it should be called before BuildImpl
   void PreBuild();
   void PreBuildQueryDependStatus(const AnfNodePtrList &cnodes);
-  virtual void PreBuildQuerySubgraphDependStatus(const CNodePtr &cnode, const FuncGraphPtr &sub_fg,
-                                                 size_t begin_input_index);
+  void PreBuildSpecialNode(const CNodePtr &cnode);
 
   // build symbol engine
   void BuildImpl();
-  virtual void BuildSubgraphImpl(const CNodePtr &cnode, const FuncGraphPtr &sub_fg, size_t begin_input_index);
   SymbolPtr BuildCNodeSymbolicShape(OperationBuilder *builder, const PrimitivePtr &prim,
                                     const AbstractBasePtrList &inputs, const AbstractBasePtr &abstract,
                                     const CNodePtr &cnode);
@@ -89,12 +103,19 @@ class COMMON_EXPORT SymbolEngineImpl : public SymbolEngine {
   bool support_infer_{true};
   std::map<AnfNodePtr, DependStatus> depend_status_map_;
   std::set<FuncGraph *> visited_graph_;
+  std::map<AnfNodePtr, std::shared_ptr<SpecialCNodeHelper>> special_cnodes_;
 };
 
 using SymbolEngineImplPtr = std::shared_ptr<symshape::SymbolEngineImpl>;
 /// \brief nodes have same digital shape may use same abstract object, but their symbolic shape may not same, clone a
 /// new abstract for symbolic info.
-COMMON_EXPORT void CloneAbstractIfSymbolExists(const AnfNodePtr &node);
+COMMON_EXPORT AbstractBasePtr CloneAbstractIfSymbolExists(const AbstractBasePtr &abs);
+inline AbstractBasePtr CloneAbstractIfSymbolExists(const AnfNodePtr &node) {
+  node->set_abstract(CloneAbstractIfSymbolExists(node->abstract()));
+  return node->abstract();
+}
+
+COMMON_EXPORT void CleanSymbols(const FuncGraphPtr &func_graph);
 }  // namespace symshape
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_SYMBOL_ENGINE_SYMBOL_ENGINE_IMPL_H_

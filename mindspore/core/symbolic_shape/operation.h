@@ -22,6 +22,7 @@
 #include <map>
 
 #include "mindspore/core/symbolic_shape/symbol.h"
+#include "mindspore/core/symbolic_shape/int_symbol.h"
 
 namespace mindspore {
 namespace symshape {

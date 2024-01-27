@@ -41,11 +41,7 @@ MS_CORE_API SymbolPtr ShapeVector2Symbol(const ShapeVector &shape, const OpPtr &
 MS_CORE_API SymbolPtr IntValues2Symbol(const std::vector<int64_t> &shape, const OpPtr &op = nullptr);
 
 // get int value from symbol
-inline int64_t AsInt(const Symbol *s) {
-  auto v = s->as<IntSymbol>();
-  MS_EXCEPTION_IF_NULL(v);
-  return v->value();
-}
+MS_CORE_API int64_t AsInt(const Symbol *s);
 inline int64_t AsInt(const SymbolPtr &s) { return AsInt(s.get()); }
 
 // get bool value from symbol

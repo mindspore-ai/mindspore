@@ -38,11 +38,11 @@ class MultiSymbolEngine : public SymbolEngineImpl {
   static void BuildSubEngine(const AnfNodePtr &node);
 
   std::string ToString() const override { return "MultiSymbolEngine_" + name_; }
-
- protected:
+  void BuildSubgraphImpl(const CNodePtr &cnode, const FuncGraphPtr &sub_fg, size_t begin_input_index) override;
   void PreBuildQuerySubgraphDependStatus(const CNodePtr &cnode, const FuncGraphPtr &sub_fg,
                                          size_t begin_input_index) override;
-  void BuildSubgraphImpl(const CNodePtr &cnode, const FuncGraphPtr &sub_fg, size_t begin_input_index) override;
+
+ protected:
   void SaveInputParaMap(std::map<SymbolPtr, SymbolPtr> *input_para_map, const SymbolPtr &inp, const SymbolPtr &para);
   ListSymbolPtr BuildShapeWithInputHint(const AbstractBasePtr &para_abs, const std::vector<ListSymbolPtr> &inputs,
                                         std::map<SymbolPtr, SymbolPtr> *input_para_map);

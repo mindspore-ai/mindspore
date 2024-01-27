@@ -37,10 +37,18 @@ SymbolPtr ScalarMax::Eval() {
 }
 
 void ScalarMax::UpdateMathInfo() {
+  if (!need_eval()) {
+    return;
+  }
   auto lhs = input_as<IntSymbol>(0);
   auto rhs = input_as<IntSymbol>(1);
-  output_as<IntSymbol>()->SetRange(std::max(lhs->range_min(), rhs->range_min()),
-                                   std::max(lhs->range_max(), rhs->range_max()));
+  auto out = output_as<IntSymbol>();
+  out->SetRange(std::max(lhs->range_min(), rhs->range_min()), std::max(lhs->range_max(), rhs->range_max()));
+  auto d1 = lhs->divisor();
+  auto d2 = rhs->divisor();
+  auto r1 = lhs->remainder();
+  auto r2 = rhs->remainder();
+  out->SetDivisorRemainder(std::gcd(std::gcd(std::gcd(d1, d2), r1), r2), 0);
 }
 }  // namespace ops
 }  // namespace symshape

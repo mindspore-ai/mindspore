@@ -18,6 +18,7 @@
 
 #include "abstract/dshape.h"
 #include "utils/shape_utils.h"
+#include "mindspore/core/symbolic_shape/int_symbol.h"
 
 namespace mindspore {
 namespace abstract {
