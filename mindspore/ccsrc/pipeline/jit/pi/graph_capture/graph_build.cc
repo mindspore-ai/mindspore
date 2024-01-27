@@ -2251,12 +2251,15 @@ bool GraphBuilder::HandleCallParameters(const py::object &func_info, CallNode *c
 
 static void SetGradFuncInfo(mindspore::pijit::CallNode *call_node);
 
-void MindGraphBuilder::FGAddInput(const std::vector<py::object> &args) {
+StopTraceReason MindGraphBuilder::TraceRun(const std::vector<py::object> &args) {
+  // Add function graph inputs.
   for (size_t i = 0; i < args.size(); ++i) {
     MS_LOG(INFO) << "try add input: " << py::str(args[i]);
     FGBuilder()->AddInput(args[i]);
     MS_LOG(INFO) << "add input suc";
   }
+  auto res = GraphBuilder::TraceRun(args);
+  return res;
 }
 
 void MindGraphBuilder::FGAddOutput() {

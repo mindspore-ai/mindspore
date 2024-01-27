@@ -259,13 +259,7 @@ class MindGraphBuilder : public GraphBuilder {
       : GraphBuilder(r, p, co, globals), fg_builder_(std::make_shared<FuncGraphBuilder>()) {}
   bool trace_flag() { return true; }
   mindspore::FuncGraphBuilderPtr FGBuilder() const { return fg_builder_; }
-  StopTraceReason TraceRun(const std::vector<py::object> &args) override {
-    FGAddInput(args);
-    auto res = GraphBuilder::TraceRun(args);
-    FGAddOutput();
-    return res;
-  }
-  void FGAddInput(const std::vector<py::object> &args);
+  StopTraceReason TraceRun(const std::vector<py::object> &args);
   py::object FGAddNode(CallNode *call_node, const py::object &callable_info, const std::vector<py::object> &args,
                        StopTraceReason *stop_reason);
   void FGAddOutput();
