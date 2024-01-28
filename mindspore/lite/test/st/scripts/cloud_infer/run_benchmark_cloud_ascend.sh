@@ -122,9 +122,22 @@ function Run_Benchmark() {
         # model_info detail
         model_name=`echo ${model_info} | awk -F ';' '{print $1}'`
         input_info=`echo ${model_info} | awk -F ';' '{print $2}'`
-        #input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
+        input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
         mode=`echo ${model_info} | awk -F ';' '{print $3}'`
         input_num=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $1}'`
+        input_names=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $2}'`
+        spec_shapes=""
+        if [[ ${input_shapes} != "" && ${input_names} != "" ]]; then
+            if [[ ${input_num} == "" ]]; then
+                input_num=1
+            fi
+            IFS="," read -r -a name_array <<< ${input_names}
+            IFS=":" read -r -a shape_array <<< ${input_shapes}
+            for i in $(seq 0 $((${input_num}-1)))
+            do
+                spec_shapes=${spec_shapes}${name_array[$i]}':'${shape_array[$i]}';'
+            done
+        fi
         if [[ ${model_name##*.} == "caffemodel" ]]; then
             model_name=${model_name%.*}
         fi
@@ -181,9 +194,9 @@ function Run_Benchmark() {
         fi
 
         # different tensorrt run mode use different cuda command
-        echo './benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='${ascend_device} >> "${run_ascend_log_file}"
+        echo './benchmark --modelFile='${model_file}' --inputShape="'${spec_shapes}'" --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='${ascend_device} >> "${run_ascend_log_file}"
         elapsed_time=$(date +%s.%N)
-        ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=${ascend_device} >> ${run_ascend_log_file}
+        ./benchmark --modelFile=${model_file} --inputShape="${spec_shapes}" --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=${ascend_device} >> ${run_ascend_log_file}
         ret=$?
         elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
         if [ ${ret} = 0 ]; then
