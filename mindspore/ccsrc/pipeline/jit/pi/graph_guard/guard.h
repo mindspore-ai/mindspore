@@ -51,8 +51,11 @@ class OptGuard {
   /// \brief check whether the variables guarded have been modified
   /// \param[in] frame python frame
   /// \param[in] print guard
+  /// \param[in] cache to reuse the guard result
+  /// \param[in] perf to record the performance of guard
   /// \param[out] the variables have been modified
-  virtual bool Check(const PyFrameObject *frame, bool print, std::map<std::string, PyObject *> *cache = nullptr);
+  virtual bool Check(const PyFrameObject *frame, bool print, std::map<std::string, PyObject *> *cache = nullptr,
+                     bool perf = false);
   /// \brief guard the variable which has trace to retrieve
   /// \param[in] frame python frame
   /// \param[in] var to trace the path to retrieve the object
@@ -86,6 +89,19 @@ class OptGuard {
   std::map<std::string, bool> config_;
 };
 using OptGuardPtr = std::shared_ptr<OptGuard>;
+
+class OptGuardPerf {
+ public:
+  static OptGuardPerf *GetGuardPerf();
+  void GetGuardPerfInfo(std::map<std::string, std::pair<size_t, size_t>> *guard_info,
+                        std::map<std::string, std::pair<size_t, size_t>> *item_info) const = 0;
+  virtual void LogTracePerfStart() = 0;
+  virtual void LogTracePerfEnd(Trace *trace) = 0;
+
+ protected:
+  OptGuardPerf() = default;
+  virtual ~OptGuardPerf() = default;
+};
 
 extern const char kSpecializeScalar[];
 extern const char kSpecializeTensor[];
