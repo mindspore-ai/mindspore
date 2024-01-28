@@ -36,6 +36,7 @@
 #include "pipeline/jit/pi/graph_compiler/parser/byte_code_parser.h"
 #include "pipeline/jit/pi/graph_compiler/utils.h"
 #include "pipeline/jit/pi/utils/utils.h"
+#include "pipeline/jit/pi/graph_guard/guard.h"
 #include "pipeline/jit/pi/graph_guard/strategy.h"
 #include "pipeline/jit/ps/pipeline.h"
 #include "pipeline/pynative/pynative_utils.h"
@@ -77,6 +78,22 @@ static void ensureInitialize() {
       std::cout << i.first << " " << i.second.count << " times, " << (i.second.nano / TimeRecorder::scale) << " seconds"
                 << std::endl;
     }
+
+    if (kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogGuardPerf)) {
+      std::map<std::string, std::pair<int, int>> guard_info;
+      std::map<std::string, std::pair<int, int>> item_info;
+      OptGuardPerf::GetGuardPerf()->GetGuardPerfInfo(guard_info, item_info);
+      std::cout << "Guard performance info:" << std::endl;
+      std::cout << "guard, count, total time" << std::endl;
+      for (const auto &item : guard_info) {
+        std::cout << item.first << ", " << item.second.first << ", " << item.second.second << std::endl;
+      }
+      std::cout << "item, count, total time" << std::endl;
+      for (const auto &item : item_info) {
+        std::cout << item.first << ", " << item.second.first << ", " << item.second.second << std::endl;
+      }
+    }
+
     size_t sum_code_py =
       std::accumulate(code_size_execute_python.begin(), code_size_execute_python.end(), 0,
                       [](size_t sum, const std::pair<uint64_t, size_t> &i) { return sum + (i.first * i.second); });
@@ -1085,7 +1102,8 @@ static bool CheckGuard(JitCompileResults *c, const PyFrameObject *f) {
   for (auto &oc : c->codehub->GetOptTarget(opt)) {
     OptGuardPtr guard = oc->GetGuard();
     bool print_guard = c->conf->GetBoolConfig(GraphJitConfig::kPrintGuard);
-    if (guard != nullptr && guard->Check(f, print_guard, &cache)) {
+    if (guard != nullptr &&
+        guard->Check(f, print_guard, &cache, c->conf->GetBoolConfig(GraphJitConfig::kLogGuardPerf))) {
       c->code = oc;
       break;
     }
