@@ -1099,12 +1099,15 @@ static bool CheckGuard(JitCompileResults *c, const PyFrameObject *f) {
   c->code = nullptr;
   std::map<std::string, PyObject *> cache;
   OptOptionPtr opt = OptOption::CreateOptionByPoint(c);
-  for (auto &oc : c->codehub->GetOptTarget(opt)) {
+  auto set = c->codehub->GetOptTarget(opt);
+  for (size_t i = set.size(); i != 0; i--) {
+    auto oc = set[i - 1];
     OptGuardPtr guard = oc->GetGuard();
     bool print_guard = c->conf->GetBoolConfig(GraphJitConfig::kPrintGuard);
     if (guard != nullptr &&
         guard->Check(f, print_guard, &cache, c->conf->GetBoolConfig(GraphJitConfig::kLogGuardPerf))) {
       c->code = oc;
+      c->codehub->UpdateOptTarget(opt, oc);
       break;
     }
   }
