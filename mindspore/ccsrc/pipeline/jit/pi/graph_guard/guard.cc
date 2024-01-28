@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "pipeline/jit/pi/graph_guard/guard.h"
+#include <chrono>
+#include <regex>
 #include "pybind11/pybind11.h"
 #include "pybind_api/ir/cell_py.h"
 #include "pybind_api/ir/primitive_py.h"
@@ -100,14 +102,87 @@ bool CheckOwnerIsCell(TracePtr var) {
   }
 }
 
+class OptGuardPerfImpl : public OptGuardPerf {
+ public:
+  void GetGuardPerfInfo(std::map<std::string, std::pair<size_t, size_t>> *guard_info,
+                        std::map<std::string, std::pair<size_t, size_t>> *item_info);
+  OptGuardPerfImpl() = default;
+  virtual ~OptGuardPerfImpl() = default;
+  virtual void LogGuardPerfStart();
+  virtual void LogGuardPerfEnd(GuardItem *item);
+  virtual void LogTracePerfStart();
+  virtual void LogTracePerfEnd(Trace *trace);
+
+ protected:
+  std::chrono::steady_clock::time_point guard_start_;
+  std::chrono::steady_clock::time_point item_start_;
+  std::map<std::string, std::pair<size_t, size_t>> guard_info_;
+  std::map<std::string, std::pair<size_t, size_t>> item_info_;
+};
+
+static OptGuardPerfImpl g_guard_perf;
+static OptGuardPerf *OptGuardPerf::GetGuardPerf() { return &g_guard_perf; }
+
+void OptGuardPerfImpl::GetGuardPerfInfo(std::map<std::string, std::pair<size_t, size_t>> *guard_info,
+                                        std::map<std::string, std::pair<size_t, size_t>> *item_info) {
+  if (guard_info != nullptr) {
+    guard_info->clear();
+    guard_info->insert(guard_info->begin(), guard_info_.begin(), guard_info_.end());
+  }
+  if (item_info != nullptr) {
+    item_info->clear();
+    item_info->insert(item_info->begin(), item_info_.begin(), item_info_.end());
+  }
+}
+
+void OptGuardPerfImpl::LogGuardPerfStart() { guard_start_ = std::chrono::steady_clock::now(); }
+
+void OptGuardPerfImpl::LogGuardPerfEnd(GuardItem *item) {
+  auto duration =
+    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - guard_start_);
+  size_t dur = (size_t)(duration.count());
+  size_t inc = 1;
+  auto info = item->ToString();
+  info = std::regex_replace(info, std::regex("(\n)"), "");
+  if (guard_info_.find(info) != guard_info_.end()) {
+    guard_info[info].first += inc;
+    guard_info[info].second += dur;
+  } else {
+    guard_info[info] = std::make_pair(inc, dur);
+  }
+}
+
+void OptGuardPerfImpl::LogTracePerfStart() { item_start_ = std::chrono::steady_clock::now(); }
+
+void OptGuardPerfImpl::LogTracePerfEnd(Trace *trace) {
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - item_start_);
+  size_t dur = (size_t)(duration.count());
+  size_t inc = 1;
+  auto info = trace->ToString(false);
+  info = std::regex_replace(info, std::regex("(\n)"), "");
+  if (item_info.find(info) != item_info.end()) {
+    item_info[info].first += inc;
+    item_info[info].second += dur;
+  } else {
+    item_info[info] = std::make_pair(inc, dur);
+  }
+}
+
 OptGuard::OptGuard() { config_ = g_mapDefaultConfig; }
 
 OptGuard::OptGuard(const std::map<std::string, bool> &cfg) { UpdateConfig(cfg); }
 
-bool OptGuard::Check(const PyFrameObject *frame, bool print, std::map<std::string, PyObject *> *cache) {
+bool OptGuard::Check(const PyFrameObject *frame, bool print, std::map<std::string, PyObject *> *cache, bool perf) {
   for (size_t i = 0; i < guardList_.size(); ++i) {
     GuardItemPtr item = guardList_[i];
-    if (!item->Check(frame, cache)) {
+    if (perf) {
+      g_guard_perf.LogGuardPerfStart(item.get());
+    }
+    bool result = item->Check(frame, cache, perf);
+    if (perf) {
+      g_guard_perf.LogGuardPerfEnd(item.get());
+    }
+    if (!result) {
       // reorder list to speed up check on next run
       GuardItemPtr tmp = item;
       guardList_.erase(guardList_.begin() + i);

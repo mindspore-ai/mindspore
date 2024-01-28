@@ -1689,8 +1689,8 @@ class EqGuard : public GuardItem {
     type_ = GIType::GTEqual;
   }
 
-  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache) {
-    PyObject *obj = GetObjectFromTrace(frame, var_, cache);
+  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache, bool perf) {
+    PyObject *obj = GetObjectFromTrace(frame, var_, cache, perf);
     bool ret = Check(obj);
     if (obj != NULL) {
       Py_DECREF(obj);
@@ -1754,8 +1754,8 @@ class TypeGuard : public GuardItem {
     }
   }
 
-  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache) {
-    PyObject *obj = GetObjectFromTrace(frame, var_, cache);
+  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache, bool perf) {
+    PyObject *obj = GetObjectFromTrace(frame, var_, cache, perf);
     bool ret = Check(obj);
     if (var_->GetTraceType() != TraceType::Type && obj != NULL) {
       Py_DECREF(obj);
@@ -1806,8 +1806,8 @@ class IdGuard : public GuardItem {
     refId_ = obj->GetObject();
   }
 
-  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache) {
-    PyObject *obj = GetObjectFromTrace(frame, var_, cache);
+  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache, bool perf) {
+    PyObject *obj = GetObjectFromTrace(frame, var_, cache, perf);
     bool ret = Check(obj);
     if (obj != NULL) {
       Py_DECREF(obj);
@@ -1852,8 +1852,8 @@ class ReprGuard : public GuardItem {
 
   virtual ~ReprGuard() { Py_XDECREF(refRepr_); }
 
-  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache) {
-    PyObject *obj = GetObjectFromTrace(frame, var_, cache);
+  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache, bool perf) {
+    PyObject *obj = GetObjectFromTrace(frame, var_, cache, perf);
     bool ret = Check(obj);
     if (obj != nullptr) {
       Py_DECREF(obj);
@@ -1922,8 +1922,8 @@ class AttrGuard : public GuardItem {
 
   ~AttrGuard() = default;
 
-  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache) {
-    PyObject *obj = GetObjectFromTrace(frame, var_, cache);
+  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache, bool perf) {
+    PyObject *obj = GetObjectFromTrace(frame, var_, cache, perf);
     bool ret = CheckIntern(obj);
     if (obj != NULL) {
       Py_DECREF(obj);
