@@ -50,6 +50,8 @@ int MultiMarginLossCPUKernelMod::Resize(const std::vector<KernelTensor *> &input
   auto x_shape = inputs[kZero]->GetShapeVector();
   batch_size = LongToSize(x_shape[kZero]);
   dims = LongToSize(x_shape[kOne]);
+  auto type = inputs[kTwo]->GetType();
+  weight_defined_ = !type->isa<TypeNone>();
   return KRET_OK;
 }
 
@@ -74,28 +76,21 @@ const std::vector<std::pair<KernelAttr, MultiMarginLossCPUKernelMod::KernelRunFu
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeFloat16)
+       .AddOptionalInputAttr(kNumberTypeFloat16)
        .AddOutputAttr(kNumberTypeFloat16),
      &MultiMarginLossCPUKernelMod::LaunchKernel},
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeFloat32)
+       .AddOptionalInputAttr(kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &MultiMarginLossCPUKernelMod::LaunchKernel},
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat64)
        .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeFloat64)
+       .AddOptionalInputAttr(kNumberTypeFloat64)
        .AddOutputAttr(kNumberTypeFloat64),
-     &MultiMarginLossCPUKernelMod::LaunchKernel},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-     &MultiMarginLossCPUKernelMod::LaunchKernel},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-     &MultiMarginLossCPUKernelMod::LaunchKernel},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
-     &MultiMarginLossCPUKernelMod::LaunchKernel},
-  };
+     &MultiMarginLossCPUKernelMod::LaunchKernel}};
   return func_list;
 }
 
@@ -110,7 +105,6 @@ void MultiMarginLossCPUKernelMod::LaunchKernelFP32AndFP64(const std::vector<kern
     }
   }
   T *weight_addr = nullptr;
-  bool weight_defined_ = (input_num == 3);
   if (weight_defined_) {
     weight_addr = static_cast<T *>(inputs[kTwo]->device_ptr());
   }
