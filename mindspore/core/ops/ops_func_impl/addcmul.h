@@ -16,11 +16,16 @@
 #ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ADDCMUL_H_
 #define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ADDCMUL_H_
 
-#include "ops/ops_func_impl/addcdiv.h"
+#include <vector>
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-class AddcmulFuncImpl : public AddcdivFuncImpl {};
+class AddcmulFuncImpl : public OpFuncImpl {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+};
 }  // namespace ops
 }  // namespace mindspore
 
