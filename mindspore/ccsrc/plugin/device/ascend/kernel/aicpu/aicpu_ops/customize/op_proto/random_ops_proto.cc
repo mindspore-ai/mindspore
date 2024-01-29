@@ -33,15 +33,6 @@ static void RandomOpCalcDims(const Tensor &data, std::vector<int64_t> &vec_dim) 
 }
 }  // namespace
 
-IMPLEMT_COMMON_INFERFUNC(OneInOneOutCommonInferShape) {
-  static const int64_t input_x_idx = 0;
-  static const int64_t output_y_idx = 0;
-  if (OneInOneOutDynamicInfer(op, input_x_idx, {output_y_idx})) {
-    return GRAPH_SUCCESS;
-  }
-  return GRAPH_FAILED;
-}
-
 IMPLEMT_COMMON_INFERFUNC(InputShapeAttrDtypeInfer) {
   Shape shape;
   Tensor shape_tensor;
@@ -106,7 +97,7 @@ CUST_IMPLEMT_INFERFUNC(Randperm, RandpermInfer) {
   auto output_shape = Shape({max_length});
   output_desc.SetDataType(dtype);
   output_desc.SetShape(output_shape);
-  return UpdateOutputDesc(op, output_desc);
+  return op.UpdateOutputDesc("output", output_desc);
 }
 CUST_INFER_FUNC_REG(Randperm, RandpermInfer);
 // ----------------Randperm END-------------------
@@ -204,16 +195,20 @@ IMPLEMT_COMMON_INFERFUNC(BatchSizeAndNumSampleInferShape) {
     }
     output_shape.SetDim(1, num_samples);
   }
+
+  DataType output_dtype;
+  if (op.GetAttr("dtype", output_dtype) != GRAPH_SUCCESS) {
+    output_dtype = logits_dtype;
+  }
   output_desc.SetShape(output_shape);
-  output_desc.SetDataType(logits_dtype);
+  output_desc.SetDataType(output_dtype);
 
   return op.UpdateOutputDesc("y", output_desc);
 }
 
 CUST_COMMON_INFER_FUNC_REG(Multinomial, BatchSizeAndNumSampleInferShape);
 CUST_COMMON_INFER_FUNC_REG(RandomCategorical, BatchSizeAndNumSampleInferShape);
-
-CUST_COMMON_INFER_FUNC_REG(RandomShuffle, OneInOneOutCommonInferShape);
+CUST_ONE_IN_ONE_OUT_INFER(RandomShuffle, x, y);
 
 // ----------------RandomPoisson-------------------
 CUST_IMPLEMT_INFERFUNC(RandomPoisson, RandomPoissonInfer) {

@@ -128,8 +128,12 @@ uint32_t FillDiagonalCpuKernel::FillDiag(int64_t input_dims, int64_t stride, int
       max_core_num = data_nums;
     }
     auto shard_copy = [&](size_t start, size_t end) {
-      (void)memcpy_s(output_data + start, output_size - (start * sizeof(T)), input_data + start,
-                     (end - start) * sizeof(T));
+      auto size = (end - start) * sizeof(T);
+      auto ret = memcpy_s(output_data + start, output_size - (start * sizeof(T)), input_data + start, size);
+      if (ret != EOK) {
+        KERNEL_LOG_ERROR("FillDiagonal memcpy failed, src: %p, dest: %p, size: %zu.", input_data + start,
+                         output_data + start, size);
+      }
     };
 
     uint32_t ret = KERNEL_STATUS_INNER_ERROR;

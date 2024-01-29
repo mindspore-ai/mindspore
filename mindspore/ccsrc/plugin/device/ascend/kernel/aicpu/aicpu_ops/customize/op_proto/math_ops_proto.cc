@@ -12,6 +12,9 @@
 #include "utils/reduce_infer_util.h"
 
 namespace ge {
+
+ONE_IN_ONE_OUT_INFER(Conj, input, output);
+
 // ----------------ComplexAbs-------------------
 IMPLEMT_INFERFUNC(ComplexAbs, ComplexAbsInfer) {
   TensorDesc x_desc = op.GetInputDescByName("x");
@@ -35,10 +38,10 @@ IMPLEMT_INFERFUNC(ComplexAbs, ComplexAbsInfer) {
 INFER_FUNC_REG(ComplexAbs, ComplexAbsInfer);
 // ----------------ComplexAbs End-------------------
 
-// ----------------ComplexAbs-------------------
+// ----------------Complex-------------------
 IMPLEMT_INFERFUNC(Complex, ComplexInfer) {
   bool is_dynamic_output = true;
-  if (!InferShapeAndTypeTwoInOneOutBroadcast(op, 0, 1, 0, is_dynamic_output)) {
+  if (!InferShapeAndTypeTwoInOneOutBroadcast(op, "real", "imag", "out", is_dynamic_output)) {
     return GRAPH_FAILED;
   }
   TensorDesc x_desc = op.GetInputDescByName("real");
@@ -60,7 +63,7 @@ IMPLEMT_INFERFUNC(Complex, ComplexInfer) {
   return op.UpdateOutputDesc("out", out_desc);
 }
 INFER_FUNC_REG(Complex, ComplexInfer);
-// ----------------ComplexAbs-------------------
+// ----------------Complex End-------------------
 
 // ----------------IsNan-------------------
 IMPLEMT_INFERFUNC(IsNan, IsNanInfer) {
@@ -217,10 +220,10 @@ INFER_FUNC_REG(IsInf, IsInfInfer);
 
 // ----------------ReduceOp-------------------
 static bool InferReduceShapeProcess(Operator op, const int64_t input_x_idx, const int64_t output_y_idx,
-                                    const int64_t input_axes_idx) {
+                                    const std::string &input_axes_name) {
   bool keep_dims = false;
   op.GetAttr("keep_dims", keep_dims);
-  reduce_ops::CommonReduceInferWithInputAxes(op, input_x_idx, output_y_idx, input_axes_idx, keep_dims);
+  reduce_ops::CommonReduceInferWithInputAxes(op, input_x_idx, output_y_idx, input_axes_name, keep_dims);
   return true;
 }
 
@@ -228,8 +231,7 @@ IMPLEMT_COMMON_INFERFUNC(TypicalReduceInferShape) {
   OP_LOGD(TbeGetName(op), "Enter %s InferShape", TbeGetOpType(op).c_str());
   const int64_t input_x_idx = 0;
   const int64_t output_y_idx = 0;
-  const int64_t input_axes_idx = 1;
-  if (InferReduceShapeProcess(op, input_x_idx, output_y_idx, input_axes_idx)) {
+  if (InferReduceShapeProcess(op, input_x_idx, output_y_idx, "axes")) {
     return GRAPH_SUCCESS;
   }
   return GRAPH_FAILED;

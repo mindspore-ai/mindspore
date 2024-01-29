@@ -24,7 +24,6 @@
 #include "op_log.h"
 #include "error_util.h"
 #include "util.h"
-#include "common/util/error_manager/error_manager.h"
 
 namespace ge {
 const std::map<std::string, DataType> dtype_maps{{"DT_FLOAT", DT_FLOAT},
