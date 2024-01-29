@@ -525,11 +525,12 @@ int CodeGenerator::AllocLocal(ValueNode *node, int index) {
   for (auto i = used_slots.begin(); i != used_slots.end() && res == (*i); ++i, ++res) {
   }
   locals_map_.insert({node, res});
+  SetLocalsCount(res);
   return res;
 }
 
 void CodeGenerator::NewInstr(int op, int arg, int line) {
-  code_.co_code.emplace_back(std::make_unique<Instr>(0, op, arg, line));
+  code_.co_code.emplace_back(std::make_unique<Instr>(-1, op, arg, line));
 }
 
 void CodeGenerator::AddInstrs(std::vector<std::unique_ptr<Instr>> &&l) {
@@ -542,12 +543,11 @@ void CodeGenerator::LoadValue(ValueNode *node) {
     NewInstr(LOAD_FAST, iter->second);
     return;
   }
-  MS_EXCEPTION_IF_CHECK_FAIL(IsNonLocalValue(node), "missing value, [" + node->ToString() + "]");
-
   if (node->GetType() == ValueNode::CellVar || node->GetType() == ValueNode::FreeVar) {
     NewInstr(LOAD_CLOSURE, static_cast<CellVarNode *>(node)->GetIndex());
     return;
   }
+
   int opcode = node->GetOpcode();
   if (opcode == LOAD_DEREF) {
     NewInstr(opcode, node->GetOparg());
@@ -557,10 +557,13 @@ void CodeGenerator::LoadValue(ValueNode *node) {
   std::string key = node->GetName();
   py::object cnst = node->GetVobj()->GetPyObject();
   if (opcode == LOAD_CONST) {
-    MS_EXCEPTION_IF_CHECK_FAIL(CheckConstPyObject(cnst.ptr()), "unsupported const object");
-    NewInstr(LOAD_CONST);
-    code_.co_code.back()->set_cnst(cnst);
-    return;
+    if (CheckConstPyObject(cnst.ptr())) {
+      NewInstr(LOAD_CONST);
+      code_.co_code.back()->set_cnst(cnst);
+      return;
+    }
+    key = GenerateObjectKey(cnst);
+    opcode = LOAD_GLOBAL;
   }
 
   if (opcode == LOAD_GLOBAL) {
@@ -569,7 +572,9 @@ void CodeGenerator::LoadValue(ValueNode *node) {
     }
     NewInstr(LOAD_GLOBAL);
     code_.co_code.back()->set_name(key);
+    return;
   }
+  MS_LOG(INTERNAL_EXCEPTION) << "missing value, [" << node->ToString() << "]";
 }
 
 void CodeGenerator::BuildOper(ValueNode *node, int index) {
@@ -601,7 +606,7 @@ void CodeGenerator::BuildOper(ValueNode *node, int index) {
     return;
   }
   if (nodes_alive_[node] == 0) {
-    NewInstr(POP_TOP);  // dead local, erase by graph analyzer
+    NewInstr(POP_TOP);
   } else {
     NewInstr(STORE_FAST, AllocLocal(node, index), node->GetLineNo());
   }

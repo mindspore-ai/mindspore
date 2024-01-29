@@ -921,7 +921,12 @@ AObject *AbstractTuple::Unary(int op) const {
   }
 
 AbstractTuple::AbstractTuple(Type type, py::object seq, RecMap *rec)
-    : AbstractSequence(type, seq), items_(), element_type_(kTypeAnyValue), element_valid_(false), modify_(false) {
+    : AbstractSequence(type, seq),
+      items_(),
+      ms_support_(kBoolUnknown),
+      element_type_(kTypeAnyValue),
+      element_valid_(false),
+      modify_(false) {
   if (!seq.ptr()) {
     return;
   }
@@ -976,21 +981,27 @@ AbstractDict::AbstractDict(Type type, py::object seq, RecMap *rec)
 #undef RECURSION_CONVERT
 
 bool AbstractTuple::IsMindSporeSupportedType() {
+  if (ms_support_ != kBoolUnknown) {
+    return ms_support_ == kBoolTrue;
+  }
+  ms_support_ = kBoolFalse;
   if (kMsSupportedType.find(element_type_) != kMsSupportedType.end()) {
+    ms_support_ = kBoolTrue;
     return true;
   }
-  if (this->IsElementValid()) {
-    for (auto i : *this) {
-      if (!i) {
-        return false;
-      }
-      if (!i->IsMindSporeSupportedType()) {
-        return false;
-      }
+  if (!this->IsElementValid()) {
+    return false;
+  }
+  for (auto i : *this) {
+    if (!i) {
+      return false;
     }
-    return true;
+    if (!i->IsMindSporeSupportedType()) {
+      return false;
+    }
   }
-  return false;
+  ms_support_ = kBoolTrue;
+  return true;
 }
 
 bool AbstractDict::IsMindSporeSupportedType() {
@@ -1005,6 +1016,7 @@ bool AbstractDict::IsMindSporeSupportedType() {
       }
       Type t = i->GetType();
       if (t == kTypeList || t == kTypeTuple || t == kTypeDict) {
+        // check self reference object
         return false;
       }
       if (!i->IsMindSporeSupportedType()) {
@@ -1289,6 +1301,8 @@ bool AbstractTuple::Update() {
   this->element_type_ = kTypeAnyValue;
   // copy it
   PyObject *c = (this->type_ == kTypeTuple) ? PyTuple_New(items_.size()) : PyList_New(items_.size());
+  modify_ = false;
+  type_object_ = Py_TYPE(c);
   value_ = py::reinterpret_steal<py::object>(c);
   for (size_t i = 0; i < items_.size(); i++) {
     py::object item = (items_[i] != nullptr) ? items_[i]->GetPyObject() : py::object();
@@ -1308,8 +1322,6 @@ bool AbstractTuple::Update() {
       this->element_type_ = this->element_type_ == items_[i]->GetType() ? this->element_type_ : kTypeAnyValue;
     }
   }
-  modify_ = false;
-  type_object_ = Py_TYPE(c);
   return true;
 }
 

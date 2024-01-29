@@ -152,23 +152,11 @@ bool JustCallAndSetRes(CallNode *call_node) {
   return false;
 }
 
-bool CallNodeReturnConst(CallNode *call_node, Graph *sub_graph, AObject *value, const std::string &global_key = "") {
+bool CallNodeReturnConst(CallNode *call_node, Graph *sub_graph, AObject *value) {
   PyObject *cnst = value->GetPyObject().ptr();
   MS_EXCEPTION_IF_NULL(cnst);
 
-  auto &alloc = sub_graph->allocator();
-  ValueNode *ret_node;
-  if (global_key.empty()) {
-    if (!CheckConstPyObject(cnst)) {
-      MS_LOG(DEBUG) << value->ToString() + " as const is unsupported";
-      return false;
-    }
-    ret_node = alloc.NewValueNode(value, LOAD_CONST, -1, {});
-  } else {
-    ret_node = alloc.NewValueNode(value, LOAD_GLOBAL, -1, {});
-    ret_node->SetName(global_key);
-    call_node->GetGraph()->InstallToGlobal(global_key, value->GetPyObject());
-  }
+  ValueNode *ret_node = sub_graph->NewValueNode(value, LOAD_CONST, -1, {});
   call_node->SetSubGraph(sub_graph);
   ret_node->SetGraph(call_node->GetGraph());
 
@@ -180,6 +168,9 @@ bool CallNodeReturnConst(CallNode *call_node, Graph *sub_graph, AObject *value, 
 bool GuardConstCallNodeParam(CallNode *call_node, Graph *sub_graph, int max_guard_depth) {
   std::vector<std::pair<TracePtr, GuardLevel>> traces;
   for (auto i : call_node->getInputs()) {
+    if (i->is_constant()) {
+      continue;
+    }
     if (i->GetOpcode() == LOAD_CONST) {
       continue;
     }
@@ -349,15 +340,7 @@ static bool InferRegistryGet(CallNode *call_node) {
 
   py::object func = call_node->GetVobj()->GetPyObject();
   if (call_node->getInputs().back()->GetOpcode() == LOAD_CONST && func.ptr() != nullptr) {
-    // constant function call
-    std::stringstream s;
-    if (PyFunction_Check(func.ptr())) {
-      PyObject *name = reinterpret_cast<PyFunctionObject *>(func.ptr())->func_qualname;
-      s << PyUnicode_AsUTF8(name) << "<" << func.ptr() << ">";
-    } else {
-      s << "mindspore.Registry.get<" << func.ptr() << ">";
-    }
-    return CallNodeReturnConst(call_node, g, call_node->GetVobj(), s.str());
+    return CallNodeReturnConst(call_node, g, call_node->GetVobj());
   }
   return false;
 }
@@ -749,11 +732,13 @@ static bool InferMSConstexpr(CallNode *call_node) {
   if (!GuardConstCallNodeParam(call_node, g, 2)) {
     return false;
   }
+  if (!CheckConstPyObject(cnst.ptr())) {
+    MS_LOG(DEBUG) << std::string(py::str(cnst.ptr())) << " as const is unsupported";
+    return false;
+  }
 
   return CallNodeReturnConst(call_node, g, call_node->GetVobj());
 }
-
-static std::set<PyCFunction> kBuiltinFuncOrMethodWhileList;
 
 #define DECLARE_BUILTIN_CFUNCTION(func_name)                 \
   p = PyDict_GetItemString(PyEval_GetBuiltins(), func_name); \
@@ -761,9 +746,10 @@ static std::set<PyCFunction> kBuiltinFuncOrMethodWhileList;
   c_function_obj = PyCFunction_GET_FUNCTION(p);              \
   kBuiltinFuncOrMethodWhileList.emplace(c_function_obj);
 
-static void GenCFunctionMap() {
+static const std::set<PyCFunction> &GenCFunctionMap() {
+  static std::set<PyCFunction> kBuiltinFuncOrMethodWhileList = {};
   if (!kBuiltinFuncOrMethodWhileList.empty()) {
-    return;
+    return kBuiltinFuncOrMethodWhileList;
   }
   PyCFunction c_function_obj = nullptr;
   PyObject *p = nullptr;
@@ -808,10 +794,10 @@ static void GenCFunctionMap() {
   for (auto item : obj_cfunc_name) {
     Py_XDECREF(item.first);
   }
+  return kBuiltinFuncOrMethodWhileList;
 }
 
 bool CheckBuiltinFuncOrMethod(const py::object &f) {
-  GenCFunctionMap();
   PyObject *func = f.ptr();
   if (PyMethod_Check(func)) {
     func = PyMethod_GET_FUNCTION(func);
@@ -820,7 +806,7 @@ bool CheckBuiltinFuncOrMethod(const py::object &f) {
     return false;
   }
   auto c_function_obj = PyCFunction_GET_FUNCTION(func);
-  if (kBuiltinFuncOrMethodWhileList.find(c_function_obj) == kBuiltinFuncOrMethodWhileList.end()) {
+  if (GenCFunctionMap().find(c_function_obj) == GenCFunctionMap().end()) {
     return false;
   }
   return true;
@@ -863,20 +849,16 @@ static bool InferTensorAsType(CallNode *call_node) {
 
   Graph *sub_graph = call_node->GetSubGraph();
 
-  auto &alloc = sub_graph->allocator();
   py::object prim_cast = Utils::GetModuleAttr("mindspore.ops.functional", "cast", false, true);
 
   PyTypeObject *tp = Py_TYPE(prim_cast.ptr());
   std::stringstream s;
   s << (tp->tp_name ? tp->tp_name : "<unnamed>") << "<" << prim_cast.ptr() << ">";
 
-  ValueNode *prim_node = alloc.NewValueNode(AObject::Convert(prim_cast), LOAD_GLOBAL, -1, {});
-  prim_node->SetName(s.str());
-  prim_node->SetGraph(call_node->GetGraph());
-  call_node->GetGraph()->InstallToGlobal(prim_node->GetName(), prim_cast);
+  ValueNode *prim_node = sub_graph->NewValueNode(AObject::Convert(prim_cast), LOAD_CONST, -1, {});
 
   std::vector<ValueNode *> cast_args = {prim_node, self_node, dtype_node};
-  CallNode *ret_node = alloc.NewNode<CallNode>(CALL_FUNCTION, cast_args.size() - 1, cast_args);
+  CallNode *ret_node = sub_graph->NewCallNode(CALL_FUNCTION, cast_args.size() - 1, cast_args);
   ret_node->SetGraph(sub_graph);
   (void)InferPrimitive(ret_node);
 

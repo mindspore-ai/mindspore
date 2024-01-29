@@ -45,6 +45,12 @@ class AbstractObjectBase {
   static_assert(static_cast<int>(kTypeSlice) + 8 == static_cast<int>(kTypeType));  // builtin type
   static_assert(static_cast<int>(kTypeAnyValue) == 0);
 
+  enum BoolCache {
+    kBoolFalse = 0,
+    kBoolTrue,
+    kBoolUnknown,
+  };
+
   // record PyObject and check self reference for list,tuple,dict
   using RecMap = std::unordered_map<PyObject *, AObject *>;
 
@@ -199,6 +205,7 @@ class AbstractTuple : public AbstractSequence {
  protected:
   AbstractTuple(Type type, py::object list, RecMap *m);
   std::vector<AObject *> items_;
+  BoolCache ms_support_;
   Type element_type_;
   bool element_valid_;
   bool modify_;
