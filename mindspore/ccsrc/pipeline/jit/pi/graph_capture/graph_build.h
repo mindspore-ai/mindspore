@@ -183,6 +183,12 @@ class GraphBuilder {
   // return true if not inline
   bool WhiteListFuncCheckAndInfer(CallNode *, const py::object &f);
 
+  bool DoSetItem(ValueNode *map, ValueNode *key, ValueNode *val);
+
+  ValueNode *ReplaceMergeOp(int opcode, const std::vector<ValueNode *> &inputs);
+
+  bool ClassInstantiationFold(CallNode *, AObject::Type);
+
   // frame operation
   ValueNode *&seek(int p) { return frame_.Peek(p); }
   void push(ValueNode *v) { frame_.Push(v); }
@@ -193,10 +199,11 @@ class GraphBuilder {
 
   // pointers
   std::vector<Graph *> graph_pool_;
-  ValueNode *NewValueNode(AObject *o, int op, int arg, const std::vector<ValueNode *> &p);
-  ValueNode *NewValueNode(AObject *o, const Instr &, const std::vector<ValueNode *> &p);
-  InstrNode *NewInstrNode(int op, int arg);
+  ValueNode *NewValueNode(AObject *o, int op, int arg, const std::vector<ValueNode *> &p = {});
+  ValueNode *NewValueNode(AObject *o, const Instr &, const std::vector<ValueNode *> &p = {});
   Graph *NewGraph(PyCodeObject *co, PyObject *f_globals);
+
+  bool ReplaceAll(ValueNode *old_node, ValueNode *new_node);
 
   bool TraceRunForIterSequence(int jump_bci);
   bool TraceRunForIterEnumerate(int jump_bci);
@@ -222,6 +229,7 @@ class GraphBuilder {
   bool DoMakeFunction(const Instr &instr);
   bool DoUnary(const Instr &instr);
   bool DoBinary(const Instr &instr);
+  bool DoBinaryMul(const Instr &instr);
   bool DoCompare(const Instr &instr);
   bool DoBuildOp(const Instr &instr);
   bool DoMergeOp(const Instr &instr);

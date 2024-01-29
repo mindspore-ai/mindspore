@@ -96,7 +96,12 @@ class ValueNode : public InstrNode {
   static ValueNode UnboundLocal;
 
   ValueNode(AObject *vobj, int opcode, int oparg, const std::vector<ValueNode *> &inputs = {})
-      : InstrNode(Value, opcode, oparg), vobj_(vobj), inputs_(inputs), attr_(false), subscr_(false) {}
+      : InstrNode(Value, opcode, oparg),
+        vobj_(vobj),
+        inputs_(inputs),
+        attr_(false),
+        subscr_(false),
+        is_constant_(false) {}
   virtual ~ValueNode() {}
 
   std::vector<ValueNode *> &getInputs() { return inputs_; }
@@ -122,9 +127,17 @@ class ValueNode : public InstrNode {
   ValueNode *GetParent() { return parent_.value_or(nullptr); }
   void SetParent(ValueNode *parent);
 
+  bool is_constant() const { return is_constant_; }
+  void set_is_constant(bool constant) { is_constant_ = constant; }
+
  protected:
   ValueNode(Type type, AObject *vobj, int opcode, int oparg, const std::vector<ValueNode *> &inputs = {})
-      : InstrNode(type, opcode, oparg), vobj_(vobj), inputs_(inputs), attr_(false), subscr_(false) {}
+      : InstrNode(type, opcode, oparg),
+        vobj_(vobj),
+        inputs_(inputs),
+        attr_(false),
+        subscr_(false),
+        is_constant_(false) {}
 
  private:
   AObject *vobj_;                             // NOTE: vobj_ is not compute
@@ -132,6 +145,7 @@ class ValueNode : public InstrNode {
   std::map<std::string, ValueNode *> attrs_;  // store attrs
   bool attr_;                                 // track store attr not implement, marked as modified
   bool subscr_;                               // track store subscr not implement, marked as modified
+  bool is_constant_;                          // constant results, maybe not const object
   std::optional<ValueNode *> parent_;         // recode relationship between local and CallNode
 };
 

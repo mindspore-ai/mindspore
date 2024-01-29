@@ -91,11 +91,6 @@ class FrameStates {
     cell_free.resize(i);
   }
 
-  ValueNode *GetCondition() { return cond.first; }
-  bool ConditionIsTrue() { return cond.second; }
-  void SetCondition(ValueNode *c) { cond.first = c; }
-  void SetConditionIsTrue(bool c) { cond.second = c; }
-
   const auto &GetLocals() const { return locals; }
   const auto &GetStacks() const { return stack; }
   const auto &GetClosures() const { return cell_free; }
@@ -110,7 +105,6 @@ class FrameStates {
   std::vector<ValueNode *> stack;
   std::vector<ValueNode *> locals;
   std::vector<CellVarNode *> cell_free;
-  std::pair<ValueNode *, bool> cond;  // the condition come to this block
 };
 
 class Graph {
@@ -137,6 +131,8 @@ class Graph {
   auto &GetFrames() { return frame_states_; }
   const auto &GetFrames() const { return frame_states_; }
   Allocator &allocator() { return alloc_; }
+  ValueNode *NewValueNode(AObject *, int op, int arg, const std::vector<ValueNode *> & = {});
+  CallNode *NewCallNode(int op, int arg, const std::vector<ValueNode *> &);
   const std::vector<LoopInfo *> &loops() const { return loops_; }
   void AddLoop(LoopInfo *loop) { loops_.emplace_back(loop); }
 
@@ -164,10 +160,6 @@ class Graph {
 
   std::string DumpLoops() const;
   std::string DumpBreakInfo() const;
-
-  void InstallToGlobal(const std::string &key, const py::object &value) {
-    PyDict_SetItemString(f_globals_.ptr(), key.c_str(), value.ptr());
-  }
 
   void SetParent(Graph *parent) { parent_ = parent; }
   Graph *GetParent() const { return parent_; }
