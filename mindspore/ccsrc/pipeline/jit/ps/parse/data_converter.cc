@@ -745,6 +745,23 @@ static const std::vector<DataConvertFuncPtr> &GetStubDataConvertFuncs() {
   };
   return data_convert_funcs;
 }
+
+void RemoveRecomputeScope(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto nodes = TopoSort(func_graph->get_return(), SuccDeeperSimple);
+
+  for (const auto &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    const auto &origin_scope_name = node->scope()->name();
+    if (origin_scope_name.compare(0, strlen(kAttrRecompute), kAttrRecompute) == 0) {
+      auto remove_recompute_scope = origin_scope_name.substr(strlen(kAttrRecompute) + 1);
+      node->set_scope(std::make_shared<Scope>(remove_recompute_scope));
+    }
+  }
+}
 }  // namespace
 
 bool ConvertData(const py::object &obj, ValuePtr *data, bool use_signature, const TypePtr &dtype, bool forbid_reuse) {
@@ -825,6 +842,10 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const ValuePtrList &args_
   func_graph->set_python_obj(python_obj);
 
   if (forbid_reuse) {
+    // The function may be set recomputed in parse.
+    if (!data_converter::IsCellInstance(obj)) {
+      RemoveRecomputeScope(func_graph);
+    }
     // Return the clone graph because the graph may be set recomputed later.
     return BasicClone(func_graph);
   }
