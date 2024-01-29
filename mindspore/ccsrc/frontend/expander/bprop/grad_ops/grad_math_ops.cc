@@ -582,7 +582,7 @@ REG_BPROP_BUILDER("ScalarCast").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(i
   auto t = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   if (x->abstract()->isa<abstract::AbstractTensor>()) {
-    auto dx = ib->Emit("ScalarToTensor", {dout, ib->Value(ib->GetDtype(x))});
+    auto dx = ib->Emit("ScalarToTensor", {dout, ib->Value<int64_t>(ib->GetDtype(x)->type_id())});
     return {dx, ib->OutZeros(t)};
   }
   auto dx = ib->Emit("ScalarCast", {dout, ib->Value<int64_t>(ib->GetDtypeId(x))});
@@ -1997,7 +1997,8 @@ REG_BPROP_BUILDER("ReduceStd").SetBody(BODYFUNC(ib) {
     auto false_branch = [&std_d, &std, &mean_d, &mean](const Emitter *e) -> NodePtrList {
       return {std_d, std, mean_d, mean};
     };
-    auto keep_dims_t = ib->Emit("ScalarToTensor", {ib->Equal(keep_dims, ib->Value<bool>(false)), ib->Value(kBool)});
+    auto keep_dims_t =
+      ib->Emit("ScalarToTensor", {ib->Equal(keep_dims, ib->Value<bool>(false)), ib->Value<int64_t>(kBool->type_id())});
     auto cond = ib->LogicalAnd(keep_dims_t, ib->Tensor(!(ib->GetShape(x).empty()), kBool));
     auto cond_block = ib->Conditional(cond, true_branch, false_branch);
     std_d = ib->TupleGetItem(cond_block, 0);

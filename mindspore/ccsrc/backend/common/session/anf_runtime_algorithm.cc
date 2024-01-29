@@ -2330,4 +2330,14 @@ abstract::AbstractBasePtr AnfRuntimeAlgorithm::GetNodeAbstractByIndex(const AnfN
   }
   return elements[index];
 }
+ValueNodePtr AnfRuntimeAlgorithm::CreateTypeIdValueNodeToGraph(const FuncGraphPtr &func_graph, TypeId data_type) {
+  auto type_id_value_node = NewValueNode(static_cast<int64_t>(data_type));
+  auto type_id_value = std::make_shared<Int64Imm>(static_cast<int64_t>(data_type));
+  type_id_value_node->set_abstract(type_id_value->ToAbstract());
+  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  type_id_value_node = kernel_graph->NewValueNode(type_id_value_node);
+  kernel_graph->AddValueNodeToGraph(type_id_value_node);
+  return type_id_value_node;
+}
 }  // namespace mindspore::session
