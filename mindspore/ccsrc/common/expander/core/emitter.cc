@@ -252,10 +252,10 @@ NodePtr Emitter::Tile(const NodePtr &node, const NodePtr &multiples) {
 
 NodePtr Emitter::BroadcastTo(const NodePtr &x, const NodePtr &y) {
   if (IsDynamic(x->shape()) || IsDynamic(y->shape())) {
-    return Emit("DynamicBroadcastTo", {x, Shape(y)});
+    return Emit("BroadcastTo", {x, Shape(y)});
   }
 
-  return x->shape() == y->shape() ? x : Emit("BroadcastTo", {x}, {{"shape", MakeValue(y->shape())}});
+  return x->shape() == y->shape() ? x : Emit("BroadcastTo", {x, Shape(y)});
 }
 
 NodePtr Emitter::ZerosLike(const NodePtr &node) {

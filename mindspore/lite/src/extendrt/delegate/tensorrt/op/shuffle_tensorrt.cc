@@ -22,7 +22,7 @@
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/unsqueeze.h"
 #include "ops/squeeze.h"
-#include "ops/broadcast_to.h"
+#include "ops/auto_generate/gen_ops_name.h"
 
 namespace mindspore::lite {
 int ShuffleTensorRT::IsSqueezeSupport() {

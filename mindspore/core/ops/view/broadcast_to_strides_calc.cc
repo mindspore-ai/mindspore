@@ -18,9 +18,10 @@
 #include <memory>
 #include <string>
 #include "utils/check_convert_utils.h"
+#include "ops/array_op_name.h"
 
 namespace mindspore::ops {
-constexpr size_t kBroadCastToInputsNum = 1;
+constexpr size_t kBroadCastToInputsNum = 2;
 bool BroadcastToCheck(const std::string &prim_name, const std::vector<int64_t> &input_x,
                       const std::vector<int64_t> &x_shape) {
   CheckAndConvertUtils::Check("x shape", SizeToLong(x_shape.size()), kLessEqual, SizeToLong(input_x.size()),
@@ -78,8 +79,7 @@ TensorStorageInfoPtrList BroadCastToProcess(const PrimitivePtr &prim, const tens
   auto old_shape = old_tensor_info->old_shape;
   auto old_strides = old_tensor_info->old_strides;
   auto old_storage_offset = old_tensor_info->old_offset;
-  auto prim_name = prim->name();
-  if (!BroadcastToCheck(prim_name, input_x, old_shape)) {
+  if (!BroadcastToCheck(kBroadcastToOpName, input_x, old_shape)) {
     return {};
   }
   int64_t ndim = SizeToInt(input_x.size());
@@ -121,9 +121,7 @@ TensorStorageInfoPtrList BroadCastToCalc(const PrimitivePtr &prim, const std::ve
 
   auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
-  auto value_ptr = prim->GetAttr(kShape);
-  MS_EXCEPTION_IF_NULL(value_ptr);
-  auto input_x = GetValue<std::vector<int64_t>>(value_ptr);
+  auto input_x = GetValue<std::vector<int64_t>>(inputs[1]);
   return BroadCastToProcess(prim, input_tensor, input_x);
 }
 

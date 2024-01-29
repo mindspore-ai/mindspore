@@ -20,8 +20,7 @@ namespace mindspore {
 namespace kernel {
 void BroadcastToAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                                  const std::vector<KernelTensor *> &outputs) {
-  const auto &attrs = primitive()->attrs();
-  shape_ = std::move(GetValue<std::vector<int64_t>>(attrs.at("shape")));
+  shape_ = transform::ConvertKernelTensor<std::vector<int64_t>>(inputs[kIndex1]);
   auto return_value = GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[0], shape_, outputs[kIndex0]);
   UpdateWorkspace(return_value);
 }

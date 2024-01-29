@@ -1238,15 +1238,15 @@ REG_BPROP_BUILDER("BatchToSpaceND").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(i
   return {dx};
 });
 
-REG_BPROP_BUILDER("BroadcastTo").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("BroadcastTo").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
-  auto dout = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
   auto x_shape = ib->GetShape(x);
   auto dout_shape = ib->GetShape(dout);
 
   bool input_dynamic = IsDynamic(x_shape) || IsDynamic(dout_shape);
   if (!input_dynamic && x_shape == dout_shape) {
-    return {dout};
+    return {dout, ib->OutZeros(ib->GetInput(kIndex1))};
   }
 
   auto x_shape_node = ib->Shape(x);
@@ -1258,7 +1258,7 @@ REG_BPROP_BUILDER("BroadcastTo").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) 
   reduced_grad = ib->ReduceSum(dout, reduction_axes, true, true);
   auto dx = ib->Reshape(reduced_grad, x_shape_node);
 
-  return {dx};
+  return {dx, ib->OutZeros(ib->GetInput(kIndex1))};
 });
 
 REG_BPROP_BUILDER("SpaceToDepth").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {

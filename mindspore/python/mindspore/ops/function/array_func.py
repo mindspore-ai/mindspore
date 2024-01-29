@@ -61,7 +61,7 @@ from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
 
 from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
-    nonzero, reverse, transpose, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape
+    nonzero, reverse, transpose, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, broadcast_to
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
 arg_max_with_value_ = P.ArgMaxWithValue()
@@ -4071,86 +4071,6 @@ def affine_grid(theta, size, align_corners=False):
     """
     affine_grid_op = AffineGrid(align_corners)
     return affine_grid_op(theta, size)
-
-
-def broadcast_to(input, shape):  # pylint: disable=redefined-outer-name
-    """
-    Broadcasts input tensor to a given shape. The dim of input shape must be smaller
-    than or equal to that of target shape. Suppose input shape is :math:`(x_1, x_2, ..., x_m)`,
-    target shape is :math:`(*, y_1, y_2, ..., y_m)`, where :math:`*` means any additional dimension.
-    The broadcast rules are as follows:
-
-    Compare the value of :math:`x_m` and :math:`y_m`, :math:`x_{m-1}` and :math:`y_{m-1}`, ...,
-    :math:`x_1` and :math:`y_1` consecutively and
-    decide whether these shapes are broadcastable and what the broadcast result is.
-
-    If the value pairs at a specific dim are equal, then that value goes right into that dim of output shape.
-    With an input shape :math:`(2, 3)`, target shape :math:`(2, 3)` , the inferred output shape is :math:`(2, 3)`.
-
-    If the value pairs are unequal, there are three cases:
-
-    Case 1: If the value of the target shape in the dimension is -1, the value of the
-    output shape in the dimension is the value of the corresponding input shape in the dimension.
-    With an input shape :math:`(3, 3)`, target
-    shape :math:`(-1, 3)`, the output shape is :math:`(3, 3)`.
-
-    Case 2: If the value of target shape in the dimension is not -1, but the corresponding
-    value in the input shape is 1, then the corresponding value of the output shape
-    is that of the target shape. With an input shape :math:`(1, 3)`, target
-    shape :math:`(8, 3)`, the output shape is :math:`(8, 3)`.
-
-    Case 3: If the corresponding values of the two shapes do not satisfy the above cases,
-    it means that broadcasting from the input shape to the target shape is not supported.
-
-    So far we got the last m dims of the outshape, now focus on the first :math:`*` dims, there are
-    two cases:
-
-    If the first :math:`*` dims of output shape does not have -1 in it, then fill the input
-    shape with ones until their length are the same, and then refer to
-    Case 2 mentioned above to calculate the output shape. With target shape :math:`(3, 1, 4, 1, 5, 9)`,
-    input shape :math:`(1, 5, 9)`, the filled input shape will be :math:`(1, 1, 1, 1, 5, 9)` and thus the
-    output shape is :math:`(3, 1, 4, 1, 5, 9)`.
-
-    If the first :math:`*` dims of output shape have -1 in it, it implies this -1 is corresponding to
-    a non-existing dim so they're not broadcastable. With target shape :math:`(3, -1, 4, 1, 5, 9)`,
-    input shape :math:`(1, 5, 9)`, instead of operating the dim-filling process first, it raises errors directly.
-
-    Args:
-        input (Tensor): The input Tensor.
-        shape (tuple): The target shape to broadcast. Can be fully specified, or have -1 in one position
-                       where it will be substituted by the input tensor's shape in that position, see example.
-
-    Returns:
-        Tensor, with the given `shape` and the same data type as `input`.
-
-    Raises:
-        TypeError: If `shape` is not a tuple.
-        ValueError: If the target and input shapes are incompatible, or if a - 1 in the target shape is in an invalid
-                    location.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> shape = (2, 3)
-        >>> x = Tensor(np.array([1, 2, 3]).astype(np.float32))
-        >>> output = ops.broadcast_to(x, shape)
-        >>> print(output)
-        [[1. 2. 3.]
-         [1. 2. 3.]]
-        >>> shape = (-1, 2)
-        >>> x = Tensor(np.array([[1], [2]]).astype(np.float32))
-        >>> output = ops.broadcast_to(x, shape)
-        >>> print(output)
-        [[1. 1.]
-         [2. 2.]]
-    """
-    if isinstance(shape, Tensor) or ops.is_sequence_value_unknown(shape):
-        return dynamic_broadcast_to_(input, shape)
-    _broadcast_to = _get_cache_prim(P.BroadcastTo)(shape)
-    return _broadcast_to(input)
 
 
 def unsorted_segment_min(x, segment_ids, num_segments):

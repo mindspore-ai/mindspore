@@ -1969,11 +1969,7 @@ REG_BPROP_BUILDER("Renorm").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
                         {"axis", MakeValue(dims)},
                         {"p", MakeValue<int64_t>(p)},
                         {"epsilon", MakeValue<float>(1e-12)}});
-  if (IsDynamic(shape)) {
-    norm = ib->Emit("DynamicBroadcastTo", {norm, ib->Shape(input_x)});
-  } else {
-    norm = ib->Emit("BroadcastTo", {norm}, {{"shape", MakeValue(shape)}});
-  }
+  norm = ib->BroadcastTo(norm, input_x);
   auto grad_out = ib->Mul(input_x, dout);
   grad_out = ib->ReduceSum(grad_out, dims, true);
   NodePtr norm_bp = nullptr;
