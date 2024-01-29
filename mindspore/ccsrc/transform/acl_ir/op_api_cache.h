@@ -91,6 +91,20 @@ void GatherInfo(const T &arg, const Args &... args) {
   GatherInfo(args...);
 }
 
+void RefreshAddr(mindspore::kernel::KernelTensor *);
+void RefreshAddr(const std::pair<mindspore::kernel::KernelTensor *, bool> &);
+
+template <typename Args>
+void RefreshAddr(const Args &values) {}
+
+inline void RefreshAddr() {}
+
+template <typename T, typename... Args>
+void RefreshAddr(const T &arg, const Args &... args) {
+  RefreshAddr(arg);
+  RefreshAddr(args...);
+}
+
 uint64_t calc_hash_id();
 
 template <typename... Args>
@@ -114,6 +128,40 @@ bool HitCache(const char *aclnn_api, aclOpExecutor **executor, uint64_t *workspa
   uint64_t hash_id = calc_hash_id();
   set_hash_key_func(hash_id);
   *executor = get_exec_cache_func(hash_id, workspace_size);
+  if (*executor == nullptr) {
+    return false;
+  }
+  return true;
+}
+
+template <typename... Args>
+bool HitCacheSingle(const char *aclnn_api, aclOpExecutor **executor, uint64_t *workspace_size, uint64_t *hash_id,
+                    const Args &... args) {
+  static const auto get_exec_cache = transform::GetOpApiFunc("PTAGetExecCache");
+  static const auto init_cache_thread_local = transform::GetOpApiFunc("InitPTACacheThreadLocal");
+  static const auto set_hash_key = transform::GetOpApiFunc("SetPTAHashKey");
+  static const auto can_use_cache = transform::GetOpApiFunc("CanUsePTACache");
+  GetExecCache get_exec_cache_func = reinterpret_cast<GetExecCache>(get_exec_cache);
+  InitCacheThreadLocal init_cache_thread_local_func = reinterpret_cast<InitCacheThreadLocal>(init_cache_thread_local);
+  SetHashKey set_hash_key_func = reinterpret_cast<SetHashKey>(set_hash_key);
+  CanUseCache can_use_cache_func = reinterpret_cast<CanUseCache>(can_use_cache);
+  bool has_func = get_exec_cache_func && init_cache_thread_local_func && set_hash_key_func;
+  bool can_use = can_use_cache_func && can_use_cache_func(aclnn_api);
+  if (!has_func || !can_use) {
+    return false;
+  }
+  init_cache_thread_local_func();
+  g_hash_offset = 0;
+
+  if (*hash_id == 0) {
+    GatherInfo(std::string(aclnn_api), args...);
+    *hash_id = calc_hash_id();
+  } else {
+    RefreshAddr(args...);
+  }
+
+  set_hash_key_func(*hash_id);
+  *executor = get_exec_cache_func(*hash_id, workspace_size);
   if (*executor == nullptr) {
     return false;
   }
