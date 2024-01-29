@@ -9,7 +9,7 @@ apply_rotary_pos_emb:
             dtype: tensor
         sin:
             dtype: tensor
-        seqLen:
+        position_ids:
             dtype: tensor
     returns:
         query_embed:
