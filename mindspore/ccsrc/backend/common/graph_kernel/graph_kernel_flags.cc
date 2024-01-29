@@ -355,12 +355,14 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("enable_pass", &enable_pass);
   reg.AddFlag("disable_pass", &disable_pass);
 
+#ifndef MSLITE_ENABLE_GRAPH_KERNEL
   if (is_ascend && flag_map->find("kernel_generator") == flag_map->end()) {
     kernel_generator = "DVM";
   }
   if (kernel_generator == "DVM" && flag_map->find("enable_dynamic_shape_fusion") == flag_map->end()) {
     enable_dynamic_shape_fusion = true;
   }
+#endif
 }
 
 std::string GraphKernelFlags::DumpAllFlags() const {
