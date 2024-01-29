@@ -86,6 +86,7 @@ bool DeleteDirRecursively(const std::string &dir_name) {
     auto file_path = dir_name + "/" + file_name;
     auto real_file_path = FileUtils::GetRealPath(file_path.c_str());
     if (!real_file_path.has_value()) {
+      (void)(closedir(dir));
       MS_LOG(ERROR) << "Cannot get pwd path";
       return false;
     }
