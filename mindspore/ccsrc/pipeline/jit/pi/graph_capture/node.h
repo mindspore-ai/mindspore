@@ -19,6 +19,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <optional>
 #include <algorithm>
 #include <utility>
 #include <optional>

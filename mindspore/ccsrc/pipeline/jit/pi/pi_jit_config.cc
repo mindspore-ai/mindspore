@@ -57,7 +57,7 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
   {"perf_statistics", &GraphJitConfig::SetBool<GraphJitConfig::kPerfStatistics>},
   {"LOG_GRAPH_BREAK", &GraphJitConfig::SetBool<GraphJitConfig::kLogGraphBreak>},
   {"LOG_PERF", &GraphJitConfig::SetBool<GraphJitConfig::kLogPerf>},
-  {"LOG_GUARD_PERF", &GraphJitConfig::SetBool < GraphJitConfig::kLogGuardPerf},
+  {"LOG_GUARD_PERF", &GraphJitConfig::SetBool<GraphJitConfig::kLogGuardPerf>},
   {"enable_dynamic_shape", &GraphJitConfig::SetBool<GraphJitConfig::kEnableDynamicShape>},
   {"test_graph_ir", &GraphJitConfig::SetBool<GraphJitConfig::kTestGraphIR>},
   {"kFeatureBreakAtInlinedFunction", &GraphJitConfig::SetBool<GraphJitConfig::kFeatureBreakAtInlinedFunction>},
