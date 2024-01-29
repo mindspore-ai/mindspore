@@ -362,6 +362,7 @@ constexpr char TRANSPOSE[] = "Transpose";
 constexpr char RESHAPE[] = "Reshape";
 constexpr char ADD[] = "Add";
 constexpr char ADDN[] = "AddN";
+constexpr char INCRE_FLASH_ATTENTION[] = "IncreFlashAttention";
 constexpr char BIAS_ADD[] = "BiasAdd";
 constexpr char SUB[] = "Sub";
 constexpr char MUL[] = "Mul";
