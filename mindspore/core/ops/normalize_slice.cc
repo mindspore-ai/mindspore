@@ -88,11 +88,11 @@ AbstractBasePtr NormalizeSliceInferInner(const PrimitivePtr &primitive,
     return NormalizeSliceInfo(init_by_none, data_shape, input_args[kIndex1], input_args[kIndex2], input_args[kIndex3],
                               dim_index, tuple_index_types, expand_dims_mask);
   }
-  auto abs_any = std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64);
+  auto scalar_any = std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64);
 
   // Used in x[:], following op is dynamic StridedSlice so output is a tuple of tensors.
   auto output_any_abs =
-    std::make_shared<abstract::AbstractTuple>(abstract::AbstractBasePtrList{abs_any, abs_any, abs_any});
+    std::make_shared<abstract::AbstractTuple>(abstract::AbstractBasePtrList{scalar_any, scalar_any, scalar_any});
 
   return output_any_abs;
 }

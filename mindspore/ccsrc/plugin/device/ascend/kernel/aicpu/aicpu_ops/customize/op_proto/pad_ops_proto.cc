@@ -46,7 +46,7 @@ static graphStatus PadInferShapeAndType(ge::Operator &op, std::vector<int64_t> &
   // input shape is -2, output is -2
   if (IsUnknownDimNum(input_shape)) {
     output_desc.SetShape(input_shape);
-    UpdateOutputDesc(op, output_desc);
+    op.UpdateOutputDesc("y", output_desc);
     return GRAPH_SUCCESS;
   }
 
@@ -69,7 +69,7 @@ static graphStatus PadInferShapeAndType(ge::Operator &op, std::vector<int64_t> &
       output_shape.SetDim(dim, input_shape.GetDim(dim) + paddings[dim * kNum2] + paddings[dim * kNum2 + 1]);
     }
     output_desc.SetShape(output_shape);
-    UpdateOutputDesc(op, output_desc);
+    op.UpdateOutputDesc("y", output_desc);
     return GRAPH_SUCCESS;
   }
 
@@ -97,7 +97,7 @@ static graphStatus PadInferShapeAndType(ge::Operator &op, std::vector<int64_t> &
   }
   output_desc.SetShapeRange(output_range);
   output_desc.SetShape(output_shape);
-  UpdateOutputDesc(op, output_desc);
+  op.UpdateOutputDesc("y", output_desc);
 
   return GRAPH_SUCCESS;
 }
@@ -110,8 +110,7 @@ IMPLEMT_COMMON_INFERFUNC(PadInferShape) {
   // first get the padding const
   // get const paddings data
   std::vector<int64_t> paddings;
-  static const int64_t input_paddings_idx = 1;
-  if (!ops::GetConstIntData(op, input_paddings_idx, paddings)) {
+  if (!ops::GetConstIntData(op, "paddings", paddings)) {
     OP_LOGW(TbeGetName(op), "the node paddings is not const node, will set the output dynamic");
     auto input_desc = op.GetInputDesc("x");
     const auto &input_shape = input_desc.GetShape();
@@ -239,14 +238,14 @@ static graphStatus PadV3GradInferShapeAndType(ge::Operator &op, std::vector<int6
       output_shape.push_back(input_shape[dim] - paddings[dim * kNum2] - paddings[dim * kNum2 + 1]);
     }
     output_desc.SetShape(Shape(output_shape));
-    UpdateOutputDesc(op, output_desc);
+    op.UpdateOutputDesc("y", output_desc);
     return GRAPH_SUCCESS;
   }
 
   // input shape is -2, output is -2
   if (IsUnknownRankShape(input_shape)) {
     output_desc.SetShape(Shape(input_shape));
-    UpdateOutputDesc(op, output_desc);
+    op.UpdateOutputDesc("y", output_desc);
 
     return GRAPH_SUCCESS;
   }

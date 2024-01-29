@@ -308,8 +308,8 @@ bool MallocForKernelInput(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
     }
     auto input_address = runtime_info->GetInputDeviceAddress(i);
     MS_EXCEPTION_IF_NULL(kernel_mod);
-    kernel_mod->set_input_user_data(input_address->user_data().get(), i);
     MS_EXCEPTION_IF_NULL(input_address);
+    kernel_mod->set_input_user_data(input_address->user_data().get(), i);
     if (TEST_FLAG(input_address->flag(), device::kDeviceAddressFlagIgnoreDevicePtr)) {
       MS_LOG(DEBUG) << "Node " << node->DebugString() << " input[" << i << "] with address " << input_address
                     << " has flag ignore device address, so skip malloc device address";

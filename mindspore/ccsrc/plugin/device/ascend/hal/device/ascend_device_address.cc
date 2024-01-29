@@ -73,6 +73,8 @@ bool IsUseTransDataTypeFormat(const std::pair<std::string, std::string> &type_fo
   return use_trans_data.find(type_format) != use_trans_data.end();
 }
 
+static const std::set<std::string> basic_format = {kOpFormat_NCHW, kOpFormat_DEFAULT, kOpFormat_NCDHW, kOpFormat_ND};
+
 bool IsOpNeedTransFormat(const std::string &format) {
   static const std::set<std::string> op_need_trans_format = {
     kOpFormat_NHWC,    kOpFormat_HWCN,        kOpFormat_NC1HWC0,       kOpFormat_FRAC_Z,   kOpFormat_C1HWNCoC0,
@@ -346,8 +348,7 @@ bool AscendDeviceAddress::SyncDeviceToHost(const ShapeVector &shape, size_t size
     (void)host_shape.emplace_back(1);
   }
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
-  if (format() == kOpFormat_NCHW || format() == kOpFormat_DEFAULT || format() == kOpFormat_NCDHW ||
-      format() == kOpFormat_ND) {
+  if (basic_format.find(format()) != basic_format.end()) {
     if (type_id() == type) {
       CopyDeviceToHost(host_ptr, size);
       sync_ok = true;
@@ -538,8 +539,7 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
     (void)host_shape.emplace_back(1);
   }
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
-  if (DeviceAddress::format() == kOpFormat_NCHW || DeviceAddress::format() == kOpFormat_DEFAULT ||
-      DeviceAddress::format() == kOpFormat_NCDHW || DeviceAddress::format() == format) {
+  if (basic_format.find(DeviceAddress::format()) != basic_format.end() || DeviceAddress::format() == format) {
     if (type_id() == type) {
       CopyHostToDevice(host_ptr, size);
       sync_ok = true;

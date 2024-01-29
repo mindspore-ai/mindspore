@@ -39,11 +39,6 @@ if(EXISTS ${CMAKE_C_COMPILER} AND EXISTS ${CMAKE_CXX_COMPILER})
         ${CMAKE_CURRENT_SOURCE_DIR}/aicpu_sharder/aicpu_async_event.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/aicpu_sharder/aicpu_context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/aicpu_sharder/aicpu_pulse.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/environ/aicpu_environ_manager.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/environ/environ_create.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/environ/environ_set.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/environ/environ_get.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/environ/environ_destroy_all.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/replay_buffer/fifo_replay_buffer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/replay_buffer/priority_replay_buffer_kernels.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/replay_buffer/priority_replay_buffer.cc

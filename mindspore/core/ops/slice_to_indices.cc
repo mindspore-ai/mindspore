@@ -30,6 +30,25 @@
 
 namespace mindspore {
 namespace ops {
+namespace {
+std::vector<int64_t> GetSlicedIndices(int64_t start, int64_t stop, int64_t step) {
+  std::vector<int64_t> indices;
+  if ((start - stop) * step < 0) {
+    if (step > 0) {
+      for (int64_t i = start; i < stop; i += step) {
+        (void)indices.emplace_back(i);
+      }
+    } else {
+      for (int64_t i = start; i > stop; i += step) {
+        (void)indices.emplace_back(i);
+      }
+    }
+  }
+  return indices;
+}
+
+}  // namespace
+
 static abstract::AbstractTuplePtr VectorToAbsTuple(const std::vector<int64_t> &nums) {
   abstract::AbstractBasePtrList elems;
   std::transform(nums.begin(), nums.end(), std::back_inserter(elems),
@@ -86,6 +105,46 @@ AbstractBasePtr ConstSliceToIndices(const std::vector<int64_t> &init_by_none, co
   return std::make_shared<abstract::AbstractTuple>(elems);
 }
 
+std::vector<int64_t> CalSliceToIndices(const ShapeVector &data_shape, size_t index_axis, int64_t expand_dims_mask,
+                                       const std::vector<int64_t> &tuple_index_types,
+                                       const std::vector<int64_t> &init_by_none, int64_t *start, int64_t *stop,
+                                       int64_t *step) {
+  int64_t dim_size = data_shape[0];
+  if (!tuple_index_types.empty()) {
+    auto new_index_axis = ops::NormalizeDimIndex::ConstNormalizeDimIndex(data_shape.size(), index_axis,
+                                                                         tuple_index_types, expand_dims_mask);
+    dim_size = data_shape[new_index_axis];
+  }
+
+  bool start_by_none_init = init_by_none[0] == 1;
+  bool stop_by_none_init = init_by_none[1] == 1;
+  bool step_by_none_init = init_by_none[2] == 1;
+
+  *step = step_by_none_init ? 1 : *step;
+  if (*step == 0) {
+    MS_LOG(EXCEPTION) << "For 'slice', 'strides' cannot contain 0";
+  }
+
+  if (start_by_none_init) {
+    *start = *step < 0 ? dim_size - 1 : 0;
+  } else if (*start < 0) {
+    *start = *start < -dim_size ? 0 : (dim_size + (*start % dim_size)) % dim_size;
+  } else if (*start > 0) {
+    *start = *start < dim_size ? *start : dim_size;
+  }
+
+  if (stop_by_none_init) {
+    *stop = *step < 0 ? -(dim_size + 1) : dim_size;
+  } else if (*stop < 0) {
+    *stop = *stop < -dim_size ? 0 : (dim_size + (*stop % dim_size)) % dim_size;
+  } else if (*stop > 0) {
+    *stop = *stop < dim_size ? *stop : dim_size;
+  }
+
+  std::vector<int64_t> indices = GetSlicedIndices(*start, *stop, *step);
+  return indices;
+}
+
 AbstractBasePtr SliceToIndicesInferInner(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -104,24 +163,14 @@ AbstractBasePtr SliceToIndicesInferInner(const PrimitivePtr &primitive,
                                dim_index, tuple_index_types, expand_dims_mask);
   }
 
-  auto abs_any = std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64);
-  auto empty_abs_any = std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64);
-  auto abs_tensor =
-    std::make_shared<abstract::AbstractTensor>(abs_any, std::make_shared<abstract::Shape>(ShapeVector{1}));
-  auto empty_abs_tensor =
-    std::make_shared<abstract::AbstractTensor>(empty_abs_any, std::make_shared<abstract::Shape>());
-
+  auto scalar_any = std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64);
   auto indices_tensor_abs = abstract::MakeAbstractTensor(
     std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeDimAny, 1}), kInt64);
+  auto value_shape_abs = std::make_shared<abstract::AbstractTuple>(std::vector<abstract::AbstractBasePtr>{scalar_any});
 
-  if (!data_shape.empty() && data_shape[0] != abstract::Shape::kShapeDimAny) {
-    indices_tensor_abs = abstract::MakeAbstractTensor(
-      std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeDimAny, 1}), kInt64);
-  }
-  auto value_shape_tensor_abs =
-    abstract::MakeAbstractTensor(std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeDimAny}), kInt64);
-  auto output = std::make_shared<abstract::AbstractTuple>(abstract::AbstractBasePtrList{
-    indices_tensor_abs, value_shape_tensor_abs, abs_tensor, abs_tensor, abs_tensor, empty_abs_tensor});
+  auto output = std::make_shared<abstract::AbstractTuple>(
+    abstract::AbstractBasePtrList{indices_tensor_abs, value_shape_abs->BroadenToDynamicLenSequence(), scalar_any,
+                                  scalar_any, scalar_any, scalar_any});
   return output;
 }
 
@@ -131,15 +180,29 @@ class SliceToIndicesInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    ShapeVector data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
-    auto indices_tensor_shape = std::make_shared<abstract::Shape>(ShapeVector{data_shape[0], 1});
-    const size_t max_dims = 8;
-    auto value_shape = std::make_shared<abstract::Shape>(ShapeVector{max_dims});
-    auto slice_tensor_shape = std::make_shared<abstract::Shape>(ShapeVector{1});
-    auto empty_tensor_shape = std::make_shared<abstract::Shape>(ShapeVector{});
+    auto data_shape = input_args[kInputIndex0]->GetShape()->GetShapeVector();
+    auto start = GetScalarValue<int64_t>(input_args[kInputIndex1]->GetValue()).value();
+    auto stop = GetScalarValue<int64_t>(input_args[kInputIndex2]->GetValue()).value();
+    auto step = GetScalarValue<int64_t>(input_args[kInputIndex3]->GetValue()).value();
+    auto init_by_none = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrInitByNone));
+    auto index_axis = static_cast<size_t>(GetValue<int64_t>(primitive->GetAttr(kAttrTupleIndexAxis)));
+    auto tuple_index_types = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrTupleIndexTypes));
+    auto expand_dims_mask = GetValue<int64_t>(primitive->GetAttr(kAttrExpandDimsMask));
+
+    auto indices = CalSliceToIndices(data_shape, index_axis, expand_dims_mask, tuple_index_types, init_by_none, &start,
+                                     &stop, &step);
+    abstract::ShapePtr indices_tensor_shape;
+    if (tuple_index_types.empty()) {
+      indices_tensor_shape = std::make_shared<abstract::Shape>(ShapeVector{static_cast<int64_t>(indices.size()), 1});
+    } else {
+      indices_tensor_shape = std::make_shared<abstract::Shape>(ShapeVector{static_cast<int64_t>(indices.size())});
+    }
+
+    auto value_shape = std::make_shared<abstract::TupleShape>(
+      std::vector<abstract::BaseShapePtr>(data_shape.size(), abstract::kNoShape));
     return std::make_shared<abstract::TupleShape>(
-      std::vector<abstract::BaseShapePtr>{indices_tensor_shape, value_shape, slice_tensor_shape, slice_tensor_shape,
-                                          slice_tensor_shape, empty_tensor_shape});
+      std::vector<abstract::BaseShapePtr>{indices_tensor_shape, value_shape, abstract::kNoShape, abstract::kNoShape,
+                                          abstract::kNoShape, abstract::kNoShape});
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {

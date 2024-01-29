@@ -1,5 +1,3 @@
-include_directories(${TOP_DIR}/graphengine/910/inc/external)
-
 set(OP_KERNEL_DIR ${CMAKE_SOURCE_DIR}/mindspore/lite/tools/kernel_builder/ascend/ascendc/op_kernel)
 
 foreach(compute_unit ${ASCEND_COMPUTE_UNIT})

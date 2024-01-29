@@ -2561,32 +2561,31 @@ def soft_margin_loss(input, target, reduction='mean'):
     return output
 
 
-def softmax(x, axis=-1, *, dtype=None):
+def softmax(input, axis=-1, *, dtype=None):
     r"""
     Applies the Softmax operation to the input tensor on the specified axis.
-    Suppose a slice in the given axis :math:`x`, then for each element :math:`x_i`,
+    Suppose a slice in the given axis, then for each element :math:`input_i`,
     the Softmax function is shown as follows:
 
     .. math::
-        \text{output}(x_i) = \frac{\exp(x_i)}{\sum_{j = 0}^{N-1}\exp(x_j)},
+        \text{output}(input_i) = \frac{\exp(input_i)}{\sum_{j = 0}^{N-1}\exp(input_j)},
 
     where :math:`N` is the length of the tensor.
 
     Args:
-        x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+        input (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions, with float16 or float32 data type.
         axis (int, optional): The axis to perform the Softmax operation. Default: ``-1`` .
 
     Keyword Args:
-        dtype (:class:`mindspore.dtype`, optional): When set, `x` will be converted to the specified type,
+        dtype (:class:`mindspore.dtype`, optional): When set, `input` will be converted to the specified type,
             `dtype`, before execution, and dtype of returned Tensor will also be `dtype`. Default: ``None`` .
 
     Returns:
-        Tensor, with the same type and shape as the logits.
+        Tensor, with the same type and shape as the `input`.
 
     Raises:
         TypeError: If `axis` is not an int.
-        TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2595,8 +2594,8 @@ def softmax(x, axis=-1, *, dtype=None):
         >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
-        >>> output = ops.softmax(x)
+        >>> input = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
+        >>> output = ops.softmax(input)
         >>> print(output)
         [0.01165623 0.03168492 0.08612854 0.23412167 0.6364086 ]
     """
@@ -2605,9 +2604,9 @@ def softmax(x, axis=-1, *, dtype=None):
         type_axis = type(axis).__name__
         raise TypeError(f" the type of 'axis' must be 'int', but got '{axis}' with type '{type_axis}'.")
     if dtype is not None:
-        x = ops.cast(x, dtype)
+        input = ops.cast(input, dtype)
     softmax_ = _get_cache_prim(P.Softmax)(axis=axis)
-    return softmax_(x)
+    return softmax_(input)
 
 
 def softmin(x, axis=-1, *, dtype=None):
@@ -3813,7 +3812,7 @@ def _nll_loss(inputs, target, target_dim=-1, weight=None, ignore_index=None, red
         target = target.expand_dims(target_dim)
     if ignore_index is not None:
         non_pad_mask = equal_(target, ignore_index)
-        target = target.masked_fill(non_pad_mask, 0)
+        target = target.masked_fill(non_pad_mask, ops.cast(0, target.dtype))
     else:
         non_pad_mask = target
     if weight is not None:
@@ -3831,9 +3830,9 @@ def _nll_loss(inputs, target, target_dim=-1, weight=None, ignore_index=None, red
         smooth_loss = neg_(inputs.sum(axis=target_dim, keepdims=True))
         loss_weights = ones_like_(loss)
     if ignore_index is not None:
-        loss = loss.masked_fill(non_pad_mask, 0.)
-        loss_weights = loss_weights.masked_fill(non_pad_mask, 0.)
-        smooth_loss = smooth_loss.masked_fill(non_pad_mask, 0.)
+        loss = loss.masked_fill(non_pad_mask, ops.cast(0, loss.dtype))
+        loss_weights = loss_weights.masked_fill(non_pad_mask, ops.cast(0, loss_weights.dtype))
+        smooth_loss = smooth_loss.masked_fill(non_pad_mask, ops.cast(0, smooth_loss.dtype))
 
     loss = loss.squeeze(target_dim)
     smooth_loss = smooth_loss.squeeze(target_dim)

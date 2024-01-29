@@ -3,7 +3,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include "custom_op_proto/cust_math_ops.h"
 #include "inc/ops/math_ops.h"
 #include "inc/ops/ragged_math_ops.h"
 #include "register/op_impl_registry.h"
@@ -12,6 +12,9 @@
 #include "utils/reduce_infer_util.h"
 
 namespace ge {
+
+ONE_IN_ONE_OUT_INFER(Conj, input, output);
+
 // ----------------ComplexAbs-------------------
 IMPLEMT_INFERFUNC(ComplexAbs, ComplexAbsInfer) {
   TensorDesc x_desc = op.GetInputDescByName("x");
@@ -35,10 +38,10 @@ IMPLEMT_INFERFUNC(ComplexAbs, ComplexAbsInfer) {
 INFER_FUNC_REG(ComplexAbs, ComplexAbsInfer);
 // ----------------ComplexAbs End-------------------
 
-// ----------------ComplexAbs-------------------
+// ----------------Complex-------------------
 IMPLEMT_INFERFUNC(Complex, ComplexInfer) {
   bool is_dynamic_output = true;
-  if (!InferShapeAndTypeTwoInOneOutBroadcast(op, 0, 1, 0, is_dynamic_output)) {
+  if (!InferShapeAndTypeTwoInOneOutBroadcast(op, "real", "imag", "out", is_dynamic_output)) {
     return GRAPH_FAILED;
   }
   TensorDesc x_desc = op.GetInputDescByName("real");
@@ -60,7 +63,7 @@ IMPLEMT_INFERFUNC(Complex, ComplexInfer) {
   return op.UpdateOutputDesc("out", out_desc);
 }
 INFER_FUNC_REG(Complex, ComplexInfer);
-// ----------------ComplexAbs-------------------
+// ----------------Complex End-------------------
 
 // ----------------IsNan-------------------
 IMPLEMT_INFERFUNC(IsNan, IsNanInfer) {
@@ -217,10 +220,10 @@ INFER_FUNC_REG(IsInf, IsInfInfer);
 
 // ----------------ReduceOp-------------------
 static bool InferReduceShapeProcess(Operator op, const int64_t input_x_idx, const int64_t output_y_idx,
-                                    const int64_t input_axes_idx) {
+                                    const std::string &input_axes_name) {
   bool keep_dims = false;
   op.GetAttr("keep_dims", keep_dims);
-  reduce_ops::CommonReduceInferWithInputAxes(op, input_x_idx, output_y_idx, input_axes_idx, keep_dims);
+  reduce_ops::CommonReduceInferWithInputAxes(op, input_x_idx, output_y_idx, input_axes_name, keep_dims);
   return true;
 }
 
@@ -228,8 +231,7 @@ IMPLEMT_COMMON_INFERFUNC(TypicalReduceInferShape) {
   OP_LOGD(TbeGetName(op), "Enter %s InferShape", TbeGetOpType(op).c_str());
   const int64_t input_x_idx = 0;
   const int64_t output_y_idx = 0;
-  const int64_t input_axes_idx = 1;
-  if (InferReduceShapeProcess(op, input_x_idx, output_y_idx, input_axes_idx)) {
+  if (InferReduceShapeProcess(op, input_x_idx, output_y_idx, "axes")) {
     return GRAPH_SUCCESS;
   }
   return GRAPH_FAILED;
@@ -323,4 +325,86 @@ IMPLEMT_INFERFUNC(RaggedRange, RaggedRangeInfer) {
 
 INFER_FUNC_REG(RaggedRange, RaggedRangeInfer);
 // ----------------RaggedRange END-------------------
+
+// ----------------Correlate-------------------
+CUST_IMPLEMT_INFERFUNC(Correlate, CorrelateInfer) {
+  TensorDesc output_desc = op.GetOutputDescByName("output");
+  // infer type
+  DataType a_type = op.GetInputDescByName("a").GetDataType();
+  DataType v_type = op.GetInputDescByName("v").GetDataType();
+  if (a_type != v_type) {
+    OP_LOGE(TbeGetName(op).c_str(), "the type of a is different from that of v!");
+    return GRAPH_FAILED;
+  }
+  DataType out_type;
+
+  static const std::vector<DataType> type_to_float32 = {DT_INT16,  DT_INT32,  DT_INT8, DT_BOOL,
+                                                        DT_UINT16, DT_UINT32, DT_UINT8};
+  static const std::vector<DataType> type_to_float64 = {DT_INT64, DT_UINT64};
+  bool is_type_to_float32 = std::any_of(type_to_float32.begin(), type_to_float32.end(),
+                                        [&a_type](const DataType &dtype) { return a_type == dtype; });
+  bool is_type_to_float64 = std::any_of(type_to_float64.begin(), type_to_float64.end(),
+                                        [&a_type](const DataType &dtype) { return a_type == dtype; });
+  if (is_type_to_float32)
+    out_type = DT_FLOAT;
+  else if (is_type_to_float64)
+    out_type = DT_DOUBLE;
+  else
+    out_type = a_type;
+  output_desc.SetDataType(out_type);
+  // infer shape
+  Shape a_shape = op.GetInputDescByName("a").GetShape();
+  Shape v_shape = op.GetInputDescByName("v").GetShape();
+  if (IsUnknownShape(a_shape) || IsUnknownShape(v_shape)) {
+    std::vector<int64_t> unknow_dim_vec(1, UNKNOWN_DIM);
+    output_desc.SetShape(Shape(unknow_dim_vec));
+  } else {
+    auto a_dimension = a_shape.GetDimNum();
+    auto v_dimension = v_shape.GetDimNum();
+    if ((a_dimension != 1) || (v_dimension != 1)) {
+      string error_msg = ConcatString("'Correlate' only support 1-dimensional inputs , but got a at ", a_dimension,
+                                      "-dimensional and got v at ", v_dimension, "-dimensional");
+      AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), error_msg);
+      return GRAPH_FAILED;
+    }
+    int64_t a_size = a_shape.GetDim(0);
+    int64_t v_size = v_shape.GetDim(0);
+    if (a_shape.GetDim(0) == 0 || v_shape.GetDim(0) == 0) {
+      string error_msg =
+        ConcatString("all inputs of 'Correlate' cannot be empty , got a at (", a_size, ") and got v at (", v_size, ")");
+      AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), error_msg);
+      return GRAPH_FAILED;
+    }
+    int64_t out_size;
+    int64_t long_size = max(a_size, v_size);
+    int64_t short_size = min(a_size, v_size);
+    std::string mode;
+    if (op.GetAttr("mode", mode) != GRAPH_SUCCESS) {
+      AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), std::string("get attr[mode] failed"));
+      return GRAPH_FAILED;
+    }
+    if (mode == "valid") {
+      out_size = long_size - short_size + 1;
+    } else if (mode == "same") {
+      out_size = long_size;
+    } else if (mode == "full") {
+      out_size = long_size + short_size - 1;
+    } else {
+      string error_msg =
+        ConcatString("the mode of 'Correlate' should be one of [valid, same, full], but got ", mode, ".");
+      AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), error_msg);
+      return GRAPH_FAILED;
+    }
+    std::vector<int64_t> out_dim_vec(1, out_size);
+    output_desc.SetShape(Shape(out_dim_vec));
+  }
+
+  if (op.UpdateOutputDesc("output", output_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Update output desc failed.");
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+CUST_INFER_FUNC_REG(Correlate, CorrelateInfer);
+// ----------------Correlate END-------------------
 }  // namespace ge

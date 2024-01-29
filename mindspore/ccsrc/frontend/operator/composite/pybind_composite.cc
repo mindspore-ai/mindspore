@@ -184,15 +184,6 @@ void RegCompositeOpsGroup(const py::module *m) {
   (void)py::class_<TensorIndexSetitem, MetaFuncGraph, std::shared_ptr<TensorIndexSetitem>>(*m, "TensorIndexSetitem_")
     .def(py::init<std::string &>());
 
-  // Reg HandleEmptySlice
-  (void)py::class_<HandleEmptySlice, MetaFuncGraph, std::shared_ptr<HandleEmptySlice>>(*m, "HandleEmptySlice_")
-    .def(py::init<std::string &>());
-
-  // Reg HandleScalarTensorIndex
-  (void)py::class_<HandleScalarTensorIndex, MetaFuncGraph, std::shared_ptr<HandleScalarTensorIndex>>(
-    *m, "HandleScalarTensorIndex_")
-    .def(py::init<std::string &>());
-
   // Reg HandleBoolTensor
   (void)py::class_<HandleBoolTensor, MetaFuncGraph, std::shared_ptr<HandleBoolTensor>>(*m, "HandleBoolTensor_")
     .def(py::init<std::string &>());

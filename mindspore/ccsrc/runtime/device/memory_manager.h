@@ -55,14 +55,17 @@ class BACKEND_EXPORT MemoryManager {
   // param from_persistent_mem shows whether the tensor is a parameter in Pynative mode
   virtual bool MallocMemFromMemPool(const DeviceAddressPtr &address, size_t size);
   virtual void *MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool need_recycle = false,
-                                     uint32_t stream_id = UINT32_MAX);
+                                     uint32_t stream_id = kDefaultStreamIndex);
   virtual size_t GetMaxUsedMemorySize() const { return 0; }
-  virtual uint8_t *MallocCommunicationMemFromMemPool(size_t size) { return nullptr; }
+  virtual uint8_t *MallocCommunicationMemFromMemPool(size_t size, uint32_t stream_id = kDefaultStreamIndex) {
+    return nullptr;
+  }
   virtual void FreeMemFromMemPool(const DeviceAddressPtr address);
   virtual void FreeMemFromMemPool(void *device_ptr);
   virtual bool MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,
-                                              std::vector<size_t> size_list);
-  virtual std::vector<void *> MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list);
+                                              std::vector<size_t> size_list, uint32_t stream_id = kDefaultStreamIndex);
+  virtual std::vector<void *> MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list,
+                                                             uint32_t stream_id = kDefaultStreamIndex);
 
   static size_t GetCommonAlignSize(size_t input_size);
   static size_t GetCommunicationAlignSize(size_t input_size);

@@ -45,7 +45,8 @@ class TensorToSeqCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   std::string kernel_type_;
-  bool is_empty_tensor_{False};
+  bool is_empty_tensor_{false};
+  bool is_sequence_input_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

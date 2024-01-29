@@ -51,8 +51,7 @@ struct InvStd {
 }  // namespace
 
 template <typename T>
-void InstanceNormV2CpuKernelMod::CollectStatsKernel(const kernel::KernelTensor *x, float *_mean_,
-                                                    float *_var_sum) const {
+void InstanceNormV2CpuKernelMod::CollectStatsKernel(kernel::KernelTensor *x, float *_mean_, float *_var_sum) const {
   const int64_t batch = x_shape_4d_[kIndex0];
   const int64_t channel = x_shape_4d_[kIndex3];
   const int64_t image_size = x_shape_4d_[kIndex1] * x_shape_4d_[kIndex2];

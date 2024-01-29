@@ -54,7 +54,7 @@ IMPLEMT_INFERFUNC(Bincount, BincountInfer) {
   auto bins_desc = op.GetOutputDesc(0);
   bins_desc.SetShape(Shape(bins_shape.GetDims()));
   bins_desc.SetDataType(op.GetInputDesc(2).GetDataType());
-  op.UpdateOutputDesc(bins_desc.GetName(), bins_desc);
+  op.UpdateOutputDesc("bins", bins_desc);
   return GRAPH_SUCCESS;
 }
 

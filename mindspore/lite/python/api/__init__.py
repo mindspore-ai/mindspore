@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import sys
 import importlib
 from importlib.abc import MetaPathFinder
 
+from mindspore_lite._check_ascend import AscendEnvChecker
 from mindspore_lite.version import __version__
 from mindspore_lite.context import Context
 from mindspore_lite.converter import FmkType, Converter
@@ -77,6 +78,9 @@ class MSLiteMetaPathLoader:
 
 sys.meta_path.insert(0, MSLiteMetaPathFinder())
 
+# Check Ascend env when setup
+ascend_checker = AscendEnvChecker()
+ascend_checker.check_env()
 
 __all__ = []
 __all__.extend(__version__)

@@ -1,7 +1,7 @@
 #operator softmax
 softmax:
     args:
-        logits:
+        input:
             dtype: tensor
         axis:
             dtype: tuple[int]

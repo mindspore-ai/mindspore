@@ -43,7 +43,7 @@ IMPLEMT_INFERFUNC(Bucketize, BucketizeInfer) {
     return GRAPH_FAILED;
   }
   output_desc.SetDataType(dtype);
-  op.UpdateOutputDesc(output_desc.GetName(), output_desc);
+  op.UpdateOutputDesc("y", output_desc);
   return GRAPH_SUCCESS;
 }
 

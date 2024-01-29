@@ -71,9 +71,9 @@ REG_CUST_OP(Multinomial)
 
 REG_CUST_OP(RandomCategorical)
   .INPUT(logits, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16}))
-  .INPUT(num_sample, TensorType({DT_INT32, DT_INT64}))
+  .INPUT(num_samples, TensorType({DT_INT32, DT_INT64}))
   .INPUT(seed, TensorType({DT_INT32, DT_INT64}))
-  .OUTPUT(output, TensorType({DT_INT16, DT_INT32, DT_INT64}))
+  .OUTPUT(y, TensorType({DT_INT16, DT_INT32, DT_INT64}))
   .CUST_OP_END_FACTORY_REG(RandomCategorical)
 
 REG_CUST_OP(RandomPoisson)
@@ -100,9 +100,10 @@ REG_CUST_OP(RandomShuffle)
 
 REG_CUST_OP(StandardLaplace)
     .INPUT(shape, TensorType({DT_INT32, DT_INT64}))
-    .OUTPUT(output, TensorType({DT_FLOAT}))
+    .OUTPUT(y, TensorType({DT_FLOAT}))
     .ATTR(seed, Int, 0)
     .ATTR(seed2, Int, 0)
+    .ATTR(dtype, Type, DT_FLOAT)
     .CUST_OP_END_FACTORY_REG(StandardLaplace)
 
 REG_CUST_OP(RandomChoiceWithMask)

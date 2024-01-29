@@ -47,24 +47,21 @@ inline void GetDataToVector(const uint8_t *const_data, size_t data_size, std::ve
  * @return bool: flag of success or not
  */
 template <typename T>
-bool GetConstIntData(const ge::Operator &paras, const int64_t const_input_idx, std::vector<T> &values) {
+bool GetConstIntData(const ge::Operator &paras, const std::string &const_input_name, std::vector<T> &values) {
   Tensor const_tensor;
-  const auto const_input_name = paras.GetInputDesc(const_input_idx).GetName();
   auto status = paras.GetInputConstData(const_input_name, const_tensor);
   if (status == GRAPH_FAILED) {
-    auto input_name = paras.GetInputDesc(const_input_idx).GetName();
-    OP_LOGW("GetConstIntData", "constvalue [%s] is not exists.", input_name.c_str());
+    OP_LOGW("GetConstIntData", "constvalue [%s] is not exists.", const_input_name.c_str());
     return false;
   }
 
   auto data = const_tensor.GetData();
   if (data == nullptr) {
-    auto input_name = paras.GetInputDesc(const_input_idx).GetName();
-    OP_LOGW("GetConstIntData", "constvalue [%s] is nullptr.", input_name.c_str());
+    OP_LOGW("GetConstIntData", "constvalue [%s] is nullptr.", const_input_name.c_str());
     return false;
   }
   auto size = const_tensor.GetSize();
-  DataType dtype = paras.GetInputDesc(const_input_idx).GetDataType();
+  DataType dtype = paras.GetInputDescByName(const_input_name.c_str()).GetDataType();
   switch (dtype) {
     case DT_UINT64:
       GetDataToVector<T, uint64_t>(data, size, values);
@@ -97,22 +94,19 @@ bool GetConstIntData(const ge::Operator &paras, const int64_t const_input_idx, s
  * @return bool: flag of success or not
  */
 template <typename T>
-bool GetConstInt(const ge::Operator &paras, const int64_t const_input_idx, T &value) {
+bool GetConstInt(const ge::Operator &paras, const std::string &const_input_name, T &value) {
   Tensor const_tensor;
-  const auto const_input_name = paras.GetInputDesc(const_input_idx).GetName();
   if (paras.GetInputConstData(const_input_name, const_tensor) == GRAPH_FAILED) {
-    auto input_name = paras.GetInputDesc(const_input_idx).GetName();
-    OP_LOGW("GetConstIntData", "constvalue [%s] is not exists.", input_name.c_str());
+    OP_LOGW("GetConstIntData", "constvalue [%s] is not exists.", const_input_name.c_str());
     return false;
   }
 
   auto data = const_tensor.GetData();
   if (data == nullptr) {
-    auto input_name = paras.GetInputDesc(const_input_idx).GetName();
-    OP_LOGW("GetConstIntData", "constvalue [%s] is nullptr.", input_name.c_str());
+    OP_LOGW("GetConstIntData", "constvalue [%s] is nullptr.", const_input_name.c_str());
     return false;
   }
-  DataType dtype = paras.GetInputDesc(const_input_idx).GetDataType();
+  DataType dtype = paras.GetInputDescByName(const_input_name.c_str()).GetDataType();
   switch (dtype) {
     case DT_UINT64:
       value = static_cast<T>(*reinterpret_cast<const uint64_t *>(data));

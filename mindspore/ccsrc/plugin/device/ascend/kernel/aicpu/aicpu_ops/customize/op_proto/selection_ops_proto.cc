@@ -264,7 +264,7 @@ IMPLEMT_COMMON_INFERFUNC(OneHotInferShape) {
     // input is UnknownRank, set output UnknownRank
     OP_LOGW("OneHot", "input shape is UnknownRank, set output UnknownRank");
     output_desc.SetShape(input_shape);
-    UpdateOutputDesc(op, output_desc);
+    op.UpdateOutputDesc("y", output_desc);
     return GRAPH_SUCCESS;
   }
   // update axis to positive number
@@ -277,8 +277,7 @@ IMPLEMT_COMMON_INFERFUNC(OneHotInferShape) {
 
   // get depth const value, depth index is 1
   int64_t depth_value = -1;
-  static const int64_t input_depth_idx = 1;
-  if (!ops::GetConstInt(op, input_depth_idx, depth_value)) {
+  if (!ops::GetConstInt(op, "depth", depth_value)) {
     OP_LOGW("OneHot", "Get depth const tensor failed, set depth -1");
   }
 
@@ -395,7 +394,7 @@ IMPLEMT_COMMON_INFERFUNC(UnsortedSegmentSumInferShape) {
       output_desc.SetShape(shape_id);
       output_desc.SetDataType(input_dtype);
     }
-    UpdateOutputDesc(op, output_desc);
+    op.UpdateOutputDesc("y", output_desc);
     return GRAPH_SUCCESS;
   } else if (dim_idsize_input > 1) {
     size_t rank = static_cast<size_t>(dim_size_input - dim_idsize_input + 1);

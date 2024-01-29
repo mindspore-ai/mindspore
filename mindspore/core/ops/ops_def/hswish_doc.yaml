@@ -4,10 +4,10 @@ hswish:
 
         Refer to :func:`mindspore.ops.hardswish` for more details.
 
-        Args:
+        Inputs:
             - **input_x** (Tensor) - The input Tensor.
 
-        Returns:
+        Outputs:
             Tensor, with the same type and shape as the `input_x`.
 
         Supported Platforms:
@@ -17,7 +17,8 @@ hswish:
             >>> import mindspore
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
+            >>> hswish = ops.HSwish()
             >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
-            >>> result = ops.HSwish()(input_x)
+            >>> result = hswish(input_x)
             >>> print(result)
             [-0.3333  -0.3333  0  1.666  0.6665]

@@ -7,7 +7,12 @@ function(ge_protobuf_generate c_var h_var)
     set(${h_var} ${${h_var}} PARENT_SCOPE)
 endfunction()
 
-set(GRAPHENGINE_PATH "${CMAKE_SOURCE_DIR}/graphengine/910")
+if(MSLITE_ENABLE_ACL)
+    set(GRAPHENGINE_PATH "${TOP_DIR}/graphengine/910")
+else()
+    set(GRAPHENGINE_PATH "${CMAKE_SOURCE_DIR}/graphengine/910")
+endif()
+
 if(DEFINED ASCEND_VERSION)
     if(${ASCEND_VERSION} STREQUAL "910" OR ${ASCEND_VERSION} STREQUAL "910b")
         add_definitions(-DASCEND_910)

@@ -104,10 +104,6 @@ bool RemoveExpandedDimsCpuKernelMod::LaunchKernel(const std::vector<KernelTensor
   CheckCopy(new_value_shape_output_addr, sizeof(int64_t) * new_value_shape.size(), new_value_shape.data(),
             sizeof(int64_t) * new_value_shape.size(), kernel_name_);
   CheckCopy(new_idx_output_addr, sizeof(int64_t), &new_idx_advanced, sizeof(int64_t), kernel_name_);
-  out_shapes_ = std::vector<ShapeVector>(outputs.size(), ShapeVector());
-  if (!new_value_shape.empty()) {
-    out_shapes_[kIndex1] = ShapeVector{SizeToLong(new_value_shape.size())};
-  }
   return true;
 }
 
@@ -131,11 +127,11 @@ std::vector<KernelAttr> RemoveExpandedDimsCpuKernelMod::GetOpSupport() {
                    return {KernelAttr()
                              .AddInputAttr(data_type_id)
                              .AddInputAttr(data_type_id)
-                             .AddInputAttr(kNumberTypeInt64)
+                             .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                              .AddInputAttr(kNumberTypeInt64)
                              .AddInputAttr(kNumberTypeInt64)
                              .AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                             .AddOutputAttr(kNumberTypeInt64)
+                             .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64)
                              .AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
                            &RemoveExpandedDimsCpuKernelMod::LaunchKernel};
                  });

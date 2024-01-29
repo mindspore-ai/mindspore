@@ -485,7 +485,7 @@ IMPLEMT_INFERFUNC(CholeskyGrad, CholeskyGradInfer) {
   auto y_desc = op.GetOutputDesc(0);
   y_desc.SetShape(y_shape);
   y_desc.SetDataType(type);
-  op.UpdateOutputDesc(y_desc.GetName(), y_desc);
+  op.UpdateOutputDesc("y", y_desc);
   return GRAPH_SUCCESS;
 }
 
@@ -555,8 +555,8 @@ CUST_IMPLEMT_INFERFUNC(LinearSumAssignment, LinearSumAssignmentInfer) {
   }
   row_ind_desc.SetDataType(DT_INT64);
   col_ind_desc.SetDataType(DT_INT64);
-  UpdateOutputDesc(op, row_ind_desc);
-  UpdateOutputDesc(op, col_ind_desc);
+  op.UpdateOutputDesc("row_ind", row_ind_desc);
+  op.UpdateOutputDesc("col_ind", col_ind_desc);
   return GRAPH_SUCCESS;
 }
 

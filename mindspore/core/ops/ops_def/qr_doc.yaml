@@ -9,16 +9,16 @@ qr:
             full_matrices (bool, optional): Whether compute full-sized QR decomposition. Default: ``False`` .
         
         Inputs:
-            - **x** (Tensor): A matrix to be calculated. The matrix must be at least two dimensions, the supported dtype are
-                float16, float32, float64, complex64 and complex128.
-                Define the shape of input as :math:`(..., m, n)`, p as the
-                minimum values of m and n.    
+            - **x** (Tensor) - A matrix to be calculated. The matrix must be at least two dimensions, the supported dtype are
+              float16, float32, float64, complex64 and complex128.
+              Define the shape of input as :math:`(..., m, n)`, p as the
+              minimum values of m and n.    
 
-        Returns:
+        Outputs:
             - **Q** (Tensor) - The orthonormal matrices of input. If `mode` is 'complete', the shape is :math:`(m, m)`,
-            else the shape is :math:`(m, p)`. The dtype of `Q` is same as `input`.
+              else the shape is :math:`(m, p)`. The dtype of `Q` is same as `input`.
             - **R** (Tensor) - The upper triangular matrices of input. If `mode` is 'complete', the shape is :math:`(m, n)`,
-            else the shape is :math:`(p, n)`. The dtype of `R` is same as `input`.
+              else the shape is :math:`(p, n)`. The dtype of `R` is same as `input`.
 
         Raises:
             TypeError: If `input` is not a Tensor.

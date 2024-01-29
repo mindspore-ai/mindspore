@@ -88,12 +88,12 @@ class BACKEND_EXPORT KernelRuntime {
   uint8_t *MallocMem(MemType type, size_t size, const DeviceAddressPtr &address) {
     return mem_manager_->MallocMem(type, size, address);
   }
-  uint8_t *MallocCommunicationMemFromMemPool(size_t size) {
-    return mem_manager_->MallocCommunicationMemFromMemPool(size);
+  uint8_t *MallocCommunicationMemFromMemPool(size_t size, uint32_t stream_id = kDefaultStreamIndex) {
+    return mem_manager_->MallocCommunicationMemFromMemPool(size, stream_id);
   }
   bool MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,
-                                      const std::vector<size_t> &size_list) {
-    return mem_manager_->MallocContinuousMemFromMemPool(addr_list, total_size, size_list);
+                                      const std::vector<size_t> &size_list, uint32_t stream_id = kDefaultStreamIndex) {
+    return mem_manager_->MallocContinuousMemFromMemPool(addr_list, total_size, size_list, stream_id);
   }
   static void GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod, const AnfNodePtr &kernel,
                             KernelLaunchInfo *kernel_launch_info);

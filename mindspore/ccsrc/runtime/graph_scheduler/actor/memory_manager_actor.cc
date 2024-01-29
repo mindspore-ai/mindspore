@@ -75,6 +75,7 @@ void MemoryManagerActor::AllocateMemory(const std::vector<DeviceTensor *> *alloc
 
 void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<DeviceTensorPtr>> *alloc_list_list,
                                                   const std::vector<std::vector<size_t>> *size_list_list,
+                                                  const std::vector<uint32_t> *stream_id_list,
                                                   const std::vector<size_t> *total_size_list,
                                                   const std::vector<const DeviceContext *> *device_contexts,
                                                   OpContext<DeviceTensor> *const op_context, const AID &from_aid) {
@@ -87,15 +88,18 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
   MS_EXCEPTION_IF_NULL(device_contexts);
   MS_EXCEPTION_IF_NULL(op_context);
   if (((*alloc_list_list).size() != (*size_list_list).size()) ||
-      ((*size_list_list).size() != (*total_size_list).size()) ||
+      ((*size_list_list).size() != (*stream_id_list).size()) ||
+      ((*stream_id_list).size() != (*total_size_list).size()) ||
       ((*total_size_list).size() != (*device_contexts).size())) {
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR(
-      (*op_context), "The size of alloc_list_list, size_list_list, total_size_list and device_contexts are not equal.");
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*op_context),
+                                      "The size of alloc_list_list, size_list_list, stream_id_list, total_size_list "
+                                      "and device_contexts are not equal.");
   }
 
   for (size_t i = 0; i < (*alloc_list_list).size(); ++i) {
     auto &alloc_list = (*alloc_list_list)[i];
     auto &size_list = (*size_list_list)[i];
+    auto stream_id = (*stream_id_list)[i];
     auto &device_context = (*device_contexts)[i];
     MS_EXCEPTION_IF_NULL(device_context);
     // If the address of continuous tensor has already been allocated, skip the tensor.
@@ -106,7 +110,7 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
     }
     // Allocate memory through the device context.
     device::DynamicMemAllocatorDebugInfo::SetDebugInfo(from_aid.Name(), device::AllocatorType::kKernelOutput);
-    auto dev_ptr_list = device_context->device_res_manager_->AllocateContinuousMemory(size_list);
+    auto dev_ptr_list = device_context->device_res_manager_->AllocateContinuousMemory(size_list, stream_id);
     if (dev_ptr_list.empty() || dev_ptr_list.size() != alloc_list.size()) {
       MS_LOG(ERROR) << "Allocate continuous memory failed, device ptr list size: " << dev_ptr_list.size()
                     << ", address list size:" << alloc_list.size();

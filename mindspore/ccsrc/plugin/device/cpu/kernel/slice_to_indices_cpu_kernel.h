@@ -43,16 +43,6 @@ class SliceToIndicesCpuKernelMod : public NativeCpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
-  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
-                                const std::vector<KernelTensor *> &outputs) override {
-    for (size_t i = 0; i < out_shapes_.size(); i++) {
-      outputs[i]->SetShapeVector(out_shapes_[i]);
-      outputs[i]->set_size(
-        LongToSize(std::accumulate(out_shapes_[i].begin(), out_shapes_[i].end(),
-                                   UnitSizeInBytes(outputs[i]->dtype_id()), std::multiplies<int64_t>())));
-    }
-  }
 
   using SliceToIndicesFunc =
     std::function<bool(SliceToIndicesCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
@@ -62,7 +52,6 @@ class SliceToIndicesCpuKernelMod : public NativeCpuKernelMod {
   SliceToIndicesFunc kernel_func_;
 
  private:
-  std::vector<ShapeVector> out_shapes_;
   ShapeVector data_shape_;
   size_t index_axis_ = 0;
   int64_t expand_dims_mask_ = 0;

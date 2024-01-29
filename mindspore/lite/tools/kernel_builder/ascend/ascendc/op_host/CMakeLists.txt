@@ -1,14 +1,6 @@
-
-set(BUILD_INC_910A_DIR ${TOP_DIR}/graphengine/910/metadef/inc/external)
+set(BUILD_INC_910A_DIR ${ASCEND_PATH}/latest/include)
 set(SECUREC_INC_DIR ${TOP_DIR}/third_party/securec/include)
 
-include_directories(${TOP_DIR}/graphengine/910/metadef/inc/external)
-include_directories(${TOP_DIR}/graphengine/910/metadef/inc)
-include_directories(${TOP_DIR}/graphengine/910/inc)
-include_directories(${TOP_DIR}/graphengine/910/inc/run/ascendc/op_host)
-include_directories(${TOP_DIR}/graphengine/910/inc/external)
-include_directories(${TOP_DIR}/graphengine/910/third_party/fwkacllib)
-include_directories(${TOP_DIR}/graphengine/910/third_party/fwkacllib/inc)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} ops_srcs)

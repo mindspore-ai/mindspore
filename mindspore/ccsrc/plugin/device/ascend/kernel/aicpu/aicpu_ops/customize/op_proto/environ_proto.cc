@@ -24,7 +24,15 @@ IMPLEMT_COMMON_INFERFUNC(EnvironCreateInferShape) { return GRAPH_SUCCESS; }
 CUST_COMMON_INFER_FUNC_REG(EnvironCreate, EnvironCreateInferShape);
 
 // ----------------EnvironDestroyAll InferShape------------------------
-IMPLEMT_COMMON_INFERFUNC(EnvironDestroyAllInferShape) { return GRAPH_SUCCESS; }
+IMPLEMT_COMMON_INFERFUNC(EnvironDestroyAllInferShape) {
+  TensorDesc output_desc = op.GetOutputDescByName("result");
+  output_desc.SetShape(ge::Shape({1}));
+  output_desc.SetDataType(DT_BOOL);
+  if (op.UpdateOutputDesc("result", output_desc) != GRAPH_SUCCESS) {
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
 CUST_COMMON_INFER_FUNC_REG(EnvironDestroyAll, EnvironDestroyAllInferShape);
 
 // ----------------EnvironSet InferShape------------------------

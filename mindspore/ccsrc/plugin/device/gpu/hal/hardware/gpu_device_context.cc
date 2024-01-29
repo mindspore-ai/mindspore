@@ -211,6 +211,7 @@ bool GPUDeviceResManager::InitDevice() {
 }
 
 void GPUDeviceResManager::Destroy() {
+  (void)DestroyAllEvents();
   if (DataQueueMgr::GetInstance().IsInit()) {
     if (!DataQueueMgr::GetInstance().IsClosed() && !DataQueueMgr::GetInstance().CloseNotify()) {
       MS_LOG(ERROR) << "Could not close gpu data queue.";
@@ -242,6 +243,7 @@ void GPUDeviceContext::Destroy() {
   MS_EXCEPTION_IF_NULL(GetKernelExecutor(false));
   GetKernelExecutor(false)->Destroy();
   device_res_manager_->Destroy();
+  initialized_ = false;
 }
 
 void *GPUDeviceResManager::AllocateMemory(size_t size, uint32_t stream_id) const {
@@ -298,7 +300,8 @@ bool GPUDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   return true;
 }
 
-std::vector<void *> GPUDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
+std::vector<void *> GPUDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list,
+                                                                  uint32_t stream_id) const {
   if (!BindDeviceToCurrentThread(false)) {
     std::vector<void *> ptr_list;
     return ptr_list;
@@ -984,11 +987,12 @@ uint32_t GPUKernelExecutor::GetRankID() const {
   return rank_id;
 }
 
-DeviceEventPtr GPUDeviceResManager::CreateEventWithFlag(bool enable_timing, bool blocking) const {
+DeviceEventPtr GPUDeviceResManager::CreateEventWithFlag(bool enable_timing, bool blocking) {
   uint32_t flag =
     (blocking ? cudaEventBlockingSync : cudaEventDefault) | (enable_timing ? cudaEventDefault : cudaEventDisableTiming);
   auto event = std::make_shared<GpuEvent>(flag);
   MS_EXCEPTION_IF_NULL(event);
+  device_events_.push_back(event);
   return event;
 }
 
@@ -1106,7 +1110,7 @@ MSCONTEXT_REGISTER_INIT_FUNC(kGPUDevice, [](MsContext *ctx) -> void {
 // Register functions to _c_expression so python hal module could call GPU device interfaces.
 void PybindGPUStatelessFunc(py::module *m) {
   MS_EXCEPTION_IF_NULL(m);
-  (void)py::class_<cudaDeviceProp>(*m, "cudaDeviceProp")
+  (void)py::class_<cudaDeviceProp>(*m, "cudaDeviceProp", py::module_local())
     .def_readonly("name", &cudaDeviceProp::name)
     .def_readonly("major", &cudaDeviceProp::major)
     .def_readonly("minor", &cudaDeviceProp::minor)

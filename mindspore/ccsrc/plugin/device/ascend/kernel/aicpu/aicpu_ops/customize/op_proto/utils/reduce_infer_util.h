@@ -110,7 +110,7 @@ bool DoReduceInferShapeWithoutAxes(const Operator &op, TensorDesc &tensordesc_in
  *        true:infer success false:infer failed
  */
 bool CommonReduceInferWithInputAxes(Operator &op, const int64_t input_x_idx, const int64_t output_idx,
-                                    const int64_t input_axes_idx, bool keep_dims);
+                                    const std::string &axes_name, bool keep_dims);
 bool CommonReduceInferWithAttrAxes(Operator &op, const int64_t input_x_idx, const int64_t output_idx,
                                    vector<int64_t> attr_axes, bool keep_dims);
 }  // namespace reduce_ops

@@ -42,16 +42,6 @@ class RemoveExpandedDimsCpuKernelMod : public NativeCpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
-  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
-                                const std::vector<KernelTensor *> &outputs) override {
-    for (size_t i = 0; i < out_shapes_.size(); i++) {
-      outputs[i]->SetShapeVector(out_shapes_[i]);
-      outputs[i]->set_size(
-        LongToSize(std::accumulate(out_shapes_[i].begin(), out_shapes_[i].end(),
-                                   UnitSizeInBytes(outputs[i]->dtype_id()), std::multiplies<int64_t>())));
-    }
-  }
   using RemoveExpandedDimsFunc =
     std::function<bool(RemoveExpandedDimsCpuKernelMod *, const std::vector<KernelTensor *> &,
                        const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
@@ -59,7 +49,6 @@ class RemoveExpandedDimsCpuKernelMod : public NativeCpuKernelMod {
   RemoveExpandedDimsFunc kernel_func_;
 
  private:
-  std::vector<std::vector<int64_t>> out_shapes_;
   std::vector<std::vector<int64_t>> data_shapes_;
   std::vector<int64_t> tuple_index_types_;
   bool has_true_ = false;

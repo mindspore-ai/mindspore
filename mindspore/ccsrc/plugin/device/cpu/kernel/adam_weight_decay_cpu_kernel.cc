@@ -25,7 +25,7 @@ namespace kernel {
 namespace {
 constexpr size_t kSizeFloat32 = sizeof(float);
 constexpr size_t kScalarIndex = 0;
-constexpr size_t kAdamWeightDecayInputsNum = 9;
+constexpr size_t kAdamWeightDecayInputsNum = 10;
 constexpr size_t kAdamWeightDecayOutputsNum = 3;
 }  // namespace
 

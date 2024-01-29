@@ -75,8 +75,8 @@ void BatchNormShapeCheck(const PrimitivePtr &primitive, const std::vector<Abstra
     auto channel = (format == Format::NCHW) ? x_shape[kInputIndex1] : x_shape.back();
     if (MS_UNLIKELY(scale_shape[kInputIndex0] != channel)) {
       MS_EXCEPTION(ValueError) << "For " << primitive->name()
-                               << ", scale.shape[0] should be equal to input_x's channel dimension(" << channel
-                               << "), bug got scale.shape[0]: " << scale_shape[kInputIndex0] << ".";
+                               << ", scale.shape[0] should be equal to input_x's channel dimension: " << channel
+                               << ", bug got scale.shape[0]: " << scale_shape[kInputIndex0] << ".";
     }
   }
 

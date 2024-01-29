@@ -86,7 +86,6 @@ from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore._c_expression import Tensor as Tensor_
 import mindspore.ops.function as F
 from mindspore.ops.operations._sequence_ops import TupleToTensor
-from mindspore.ops.auto_generate import (add, cos)
 
 
 @constexpr
@@ -222,7 +221,6 @@ tanh_ = P.Tanh()
 tensor_round_ = P.Round()
 tile_ = P.Tile()
 tile_size_ = TileSize()
-trace_ = P.Trace()
 trunc_ = P.Trunc()
 truncate_div_ = P.TruncateDiv()
 truncate_mod_ = P.TruncateMod()
@@ -3654,46 +3652,6 @@ def slogdet(input):
     return log_matrix_determinant_(input)
 
 
-def trace(input):
-    """
-    Returns a new tensor that is the sum of the `input` main trace.
-
-    Note:
-        Input must be matrix, and complex number is not supported at present.
-
-    Args:
-        input (Tensor): A matrix to be calculated. The matrix must be two dimensional.
-
-    Returns:
-        Tensor, with the same data type as input `input`, and size equals to 1.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        ValueError: If the dimension of `input` is not equal to 2.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([[10, 11, 12], [13, 14, 15], [16, 17, 18]]), mindspore.float32)
-        >>> output = ops.trace(input)
-        >>> print(output)
-        42.0
-        >>> input = Tensor(np.arange(1, 13).reshape(3, 4), mindspore.float32)
-        >>> output = ops.trace(input)
-        >>> print(output)
-        18.0
-        >>> input = Tensor(np.arange(12, 0, -1).reshape(4, 3), mindspore.float32)
-        >>> output = ops.trace(input)
-        >>> print(output)
-        24.0
-    """
-    return trace_(input)
-
-
 def truncate_div(x, y):
     """
     Divides the first input tensor by the second input tensor element-wise and rounds the results
@@ -3743,7 +3701,6 @@ def truncate_mod(x, y):
     Returns the remainder of division element-wise.
 
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
     dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,

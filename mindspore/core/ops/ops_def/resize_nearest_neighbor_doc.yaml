@@ -13,9 +13,9 @@ resize_nearest_neighbor:
             - **input_x** (Tensor) - The input tensor. The shape of the tensor is :math:`(N, C, H, W)`.
             - **size** (Union[tuple, list]) - The target size. The dimension of size must be 2.
             - **align_corners** (bool) - Whether the centers of the 4 corner pixels of the input
-                                         and output tensors are aligned. Default: ``False`` .
-            - **half_pixel_centers** (bool, optional): Whether half pixel center. If set to ``True``,
-                    `align_corners` should be False. Default: ``False``.
+              and output tensors are aligned. Default: ``False`` .
+            - **half_pixel_centers** (bool, optional) - Whether half pixel center. If set to ``True``,
+              `align_corners` should be False. Default: ``False``.
 
         Outputs:
             Tensor, the shape of the output tensor is  :math:`(N, C, NEW\_H, NEW\_W)`.

@@ -63,7 +63,8 @@ class GeDeviceResManager : public DeviceResManager {
 
   void Destroy() override;
 
-  std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list) const override;
+  std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list,
+                                               uint32_t stream_id = kDefaultStreamIndex) const override;
 
   DeviceAddressPtr CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const override;
 
@@ -83,7 +84,7 @@ class GeDeviceResManager : public DeviceResManager {
 
   // Relevant function to allocate and free device memory of raw ptr.
   bool AllocateMemory(DeviceAddress *const &address) const override;
-  void *AllocateMemory(size_t size, uint32_t stream_id = UINT32_MAX) const override;
+  void *AllocateMemory(size_t size, uint32_t stream_id = kDefaultStreamIndex) const override;
   void FreeMemory(void *ptr) const override;
   void FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
                        const std::vector<size_t> &keep_addr_sizes) const override;
@@ -106,10 +107,12 @@ class GeDeviceResManager : public DeviceResManager {
   bool SyncNotDefaultStreams() const override;
   size_t DefaultStream() const override;
 
-  DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) const override;
+  DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) override;
 
   bool single_op_multi_stream_enable() const override;
   void set_single_op_multi_stream_enable(bool single_op_multi_stream_enable) override;
+  // Only used in graph_mode with MS_DISABLE_REF_MODE, delete it when delete MS_DISABLE_REF_MODEF
+  void SetCPUMemManager();
 
  private:
   friend class GeGraphExecutor;
@@ -117,6 +120,8 @@ class GeDeviceResManager : public DeviceResManager {
   static void GeSetReuseOptions(const std::string &key, size_t num, transform::SessionOptions *options);
   std::shared_ptr<MemoryManager> mem_manager_ = nullptr;
   KernelRuntime *runtime_instance_ = nullptr;
+  // Only used in graph_mode with MS_DISABLE_REF_MODE, delete it when delete MS_DISABLE_REF_MODE
+  bool is_use_cpu_memory_ = false;
 };
 }  // namespace ascend
 }  // namespace device

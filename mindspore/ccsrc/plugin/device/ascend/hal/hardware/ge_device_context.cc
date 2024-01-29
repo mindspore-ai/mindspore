@@ -172,15 +172,13 @@ void GeDeviceContext::Initialize() {
   ms_context->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, false);
   InitGe(ms_context);
 
-  if (IsEnableRefMode()) {
-    MS_EXCEPTION_IF_NULL(GetKernelExecutor(false));
-    GetKernelExecutor(false)->Initialize();
-    // DynamicKernelExecutor and KernenlExecutor should be equal for GE
-    MS_EXCEPTION_IF_CHECK_FAIL(GetKernelExecutor(true) == GetKernelExecutor(false),
-                               "GE dynamic KernelExecutor and KernenlExecutor is not Equal.");
-    MS_EXCEPTION_IF_NULL(GetKernelExecutor(true));
-    GetKernelExecutor(true)->Initialize();
-  }
+  MS_EXCEPTION_IF_NULL(GetKernelExecutor(false));
+  GetKernelExecutor(false)->Initialize();
+  // DynamicKernelExecutor and KernenlExecutor should be equal for GE
+  MS_EXCEPTION_IF_CHECK_FAIL(GetKernelExecutor(true) == GetKernelExecutor(false),
+                             "GE dynamic KernelExecutor and KernenlExecutor is not Equal.");
+  MS_EXCEPTION_IF_NULL(GetKernelExecutor(true));
+  GetKernelExecutor(true)->Initialize();
 
   InitDump();
   if (ms_context->EnableAoeOnline()) {
@@ -199,6 +197,8 @@ void GeDeviceContext::Destroy() {
     transform::DestroyAoeUtil();
   }
   FinalizeDump();
+  // Device resource manager must be destroyed before 'FinalizeGe' unless some runtime APIs will throw exception.
+  device_res_manager_->Destroy();
   (void)FinalizeGe(ms_context);
   if (hccl::HcclAdapter::GetInstance().Inited()) {
     (void)hccl::HcclAdapter::GetInstance().FinalizeHccl();
@@ -206,6 +206,7 @@ void GeDeviceContext::Destroy() {
   if (deprecated_interface_ != nullptr) {
     (void)deprecated_interface_->CloseTsd(MsContext::GetInstance(), true);
   }
+  initialized_ = false;
 }
 
 void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {

@@ -44,26 +44,6 @@ class GetTupleIndexInfoCpuKernelMod : public NativeCpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
-  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
-                                const std::vector<KernelTensor *> &outputs) override {
-    for (size_t i = 0; i < out_shapes_.size(); i++) {
-      const size_t out_size = out_shapes_[i].size() * sizeof(int64_t);
-      if (i == 4) {
-        outputs[i]->SetShapeVector(out_shapes_[i]);
-        outputs[i]->set_size(
-          LongToSize(std::accumulate(out_shapes_[i].begin(), out_shapes_[i].end(),
-                                     UnitSizeInBytes(outputs[i]->dtype_id()), std::multiplies<int64_t>())));
-
-      } else if (out_size != 0) {
-        outputs[i]->SetShapeVector({SizeToLong(out_shapes_[i].size())});
-        outputs[i]->set_size(out_shapes_[i].size() * UnitSizeInBytes(outputs[i]->dtype_id()));
-      } else {
-        outputs[i]->SetShapeVector({});
-        outputs[i]->set_size(UnitSizeInBytes(outputs[i]->dtype_id()));
-      }
-    }
-  }
 
   using GetTupleIndexInfoFunc =
     std::function<bool(GetTupleIndexInfoCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
@@ -72,7 +52,6 @@ class GetTupleIndexInfoCpuKernelMod : public NativeCpuKernelMod {
   GetTupleIndexInfoFunc kernel_func_;
 
  private:
-  std::vector<std::vector<int64_t>> out_shapes_;
   std::vector<std::vector<int64_t>> data_shapes_;
   std::vector<int64_t> tuple_index_types_;
   string tuple_index_info_type_;

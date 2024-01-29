@@ -469,6 +469,7 @@ class Profiler:
         self._dynamic_status = False
         self._profile_framework = "all"
         self._msprof_enable = os.getenv("PROFILER_SAMPLECONFIG")
+        self._pretty_json = False
         if self._msprof_enable:
             return
         self._start_time = int(time.time() * 1000000)
@@ -603,7 +604,7 @@ class Profiler:
                 return message
         return op_info
 
-    def analyse(self, offline_path=None):
+    def analyse(self, offline_path=None, pretty=False):
         """
         Collect and analyze training performance data, support calls during and after training. The example shows above.
 
@@ -612,6 +613,7 @@ class Profiler:
                 Offline mode isused in abnormal exit scenario. This parameter should be set to ``None``
                 for online mode. Default: ``None``.
         """
+        self._pretty_json = pretty
         self._analyse(offline_path=offline_path)
 
     def _analyse(self, offline_path=None, model_iteration_dict=None):
@@ -1068,7 +1070,8 @@ class Profiler:
         # Analyze minddata information
         logger.info("Profiling: analyzing the minddata information.")
         try:
-            MinddataProfilingAnalyzer(self._output_path, store_id, self._output_path).analyze()
+            MinddataProfilingAnalyzer(self._output_path, store_id,
+                                      self._output_path, pretty=self._pretty_json).analyze()
         except ProfilerException as err:
             logger.warning(err.message)
         finally:
@@ -1088,7 +1091,7 @@ class Profiler:
 
             step_trace_point_info_path = validate_and_normalize_path(step_trace_point_info_path)
 
-            fpbp_analyse = AscendFPBPGenerator(op_summary, steptrace)
+            fpbp_analyse = AscendFPBPGenerator(op_summary, steptrace, pretty=self._pretty_json)
             points, _ = fpbp_analyse.parse()
             fpbp_analyse.write(step_trace_point_info_path)
         except ProfilerException as err:
@@ -1159,13 +1162,13 @@ class Profiler:
                 timeline_analyser = AscendTimelineGenerator(self._output_path, source_path, self._rank_id,
                                                             context.get_context('mode'))
                 timeline_analyser.parse_cluster_data(op_summary, steptrace)
-                timeline_analyser.parse_timeline_data()
+                timeline_analyser.parse_timeline_data(pretty=self._pretty_json)
                 timeline_analyser.write_timeline_display()
                 timeline_analyser.write_timeline_summary()
             else:
                 timeline_analyser = AscendTimelineGeneratorOld(self._output_path, self._dev_id, self._rank_id,
                                                                self._rank_size, context.get_context('mode'))
-                timeline_analyser.init_timeline(op_summary, steptrace)
+                timeline_analyser.init_timeline(op_summary, steptrace, pretty=self._pretty_json)
                 timeline_analyser.write_timeline(self._timeline_size_limit_byte)
                 timeline_analyser.write_timeline_summary()
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
@@ -1183,7 +1186,7 @@ class Profiler:
             logger.warning("The profile_memory parameter cannot be set on the dynamic shape network.")
         logger.warning(
             "[Profiler]Dynamic Shape network does not support collecting step trace performance data currently.")
-        dynamic_parser = DynamicFrameWorkParser(self._output_path, self._rank_id)
+        dynamic_parser = DynamicFrameWorkParser(self._output_path, self._rank_id, pretty=self._pretty_json)
         dynamic_parser.write_dynamic_shape_data(op_summary)
 
     def _ascend_flops_analyse(self, op_summary, launch_ops):
@@ -1201,7 +1204,7 @@ class Profiler:
             flops_path = validate_and_normalize_path(flops_path)
             flops_summary_path = validate_and_normalize_path(flops_summary_path)
 
-            flops_analyser = AscendFlopsGenerator(op_summary, launch_ops)
+            flops_analyser = AscendFlopsGenerator(op_summary, launch_ops, pretty=self._pretty_json)
             flops_analyser.parse()
             flops_analyser.write(flops_path, flops_summary_path)
 
@@ -1272,7 +1275,7 @@ class Profiler:
     def _ascend_graph_msadvisor_analyse(self, job_id):
         """Call MSAdvisor function."""
         logger.info("MSAdvisor starts running.")
-        msadvisor = Msadvisor(job_id, self._rank_id, self._output_path)
+        msadvisor = Msadvisor(job_id, self._rank_id, self._output_path, pretty=self._pretty_json)
         try:
             msadvisor.analyse()
         except FileNotFoundError as err:
@@ -1429,7 +1432,7 @@ class Profiler:
             return
         try:
             timeline_generator = CpuTimelineGenerator(self._output_path, self._rank_id, context.get_context("mode"))
-            timeline_generator.init_timeline()
+            timeline_generator.init_timeline(pretty=self._pretty_json)
             timeline_generator.write_timeline(self._timeline_size_limit_byte)
             timeline_generator.write_timeline_summary()
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
@@ -1519,7 +1522,7 @@ class Profiler:
         """Analyse memory usage data."""
         integrator = Integrator(self._output_path, self._rank_id)
         aicore_detail_data = integrator.get_aicore_detail_data()
-        memory_parser = MemoryUsageParser(self._output_path, self._rank_id)
+        memory_parser = MemoryUsageParser(self._output_path, self._rank_id, pretty=self._pretty_json)
         memory_parser.init_memory_usage_info(aicore_detail_data, points)
         memory_parser.write_memory_files()
 

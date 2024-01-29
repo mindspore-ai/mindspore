@@ -20,7 +20,7 @@
 #include "abstract/utils.h"
 namespace mindspore {
 namespace kernel {
-void PrintDataInt8(const KernelTensor *input, int summarize) {
+void PrintDataInt8(KernelTensor *input, int summarize) {
   std::ostringstream oss;
   oss << "input data: [";
   int8_t *data = reinterpret_cast<int8_t *>(input->device_ptr());
@@ -33,7 +33,7 @@ void PrintDataInt8(const KernelTensor *input, int summarize) {
   return;
 }
 
-void PrintDataUInt8(const KernelTensor *input, int summarize) {
+void PrintDataUInt8(KernelTensor *input, int summarize) {
   std::ostringstream oss;
   oss << "input data: [";
   uint8_t *data = reinterpret_cast<uint8_t *>(input->device_ptr());
@@ -47,7 +47,7 @@ void PrintDataUInt8(const KernelTensor *input, int summarize) {
 }
 
 template <typename T>
-void PrintData(const KernelTensor *input, int summarize) {
+void PrintData(KernelTensor *input, int summarize) {
   std::ostringstream oss;
   oss << "input data: [";
   T *data = reinterpret_cast<T *>(input->device_ptr());

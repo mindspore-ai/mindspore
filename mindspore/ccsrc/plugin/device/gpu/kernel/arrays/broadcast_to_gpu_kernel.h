@@ -60,6 +60,7 @@ class BroadcastToGpuKernelMod : public NativeGpuKernelMod {
   bool is_broadcast_;
   std::vector<int64_t> simplified_inp_shape_;
   std::vector<int64_t> simplified_out_shape_;
+  bool is_null_input_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

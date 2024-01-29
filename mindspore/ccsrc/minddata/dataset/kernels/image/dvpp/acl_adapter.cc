@@ -121,6 +121,9 @@ void AclAdapter::InitPlugin() {
   // acl
   get_soc_name_fun_obj_ = DlsymFuncObj(GetSocName, plugin_handle_);
   create_acl_tensor_fun_obj_ = DlsymFuncObj(CreateAclTensor, plugin_handle_);
+  destroy_tensor_fun_obj_ = DlsymFuncObj(DestroyTensor, plugin_handle_);
+  destroy_float_array_fun_obj_ = DlsymFuncObj(DestroyFloatArray, plugin_handle_);
+  destroy_int_array_fun_obj_ = DlsymFuncObj(DestroyIntArray, plugin_handle_);
 #endif
 #endif
 }
@@ -185,6 +188,9 @@ void AclAdapter::FinalizePlugin() {
   // acl
   get_soc_name_fun_obj_ = nullptr;
   create_acl_tensor_fun_obj_ = nullptr;
+  destroy_tensor_fun_obj_ = nullptr;
+  destroy_float_array_fun_obj_ = nullptr;
+  destroy_int_array_fun_obj_ = nullptr;
 #endif
 #if !defined(_WIN32) && !defined(_WIN64)
   (void)dlclose(plugin_handle_);
@@ -587,6 +593,27 @@ APP_ERROR AclAdapter::CreateAclTensor(const int64_t *view_dims, uint64_t view_di
   }
   return create_acl_tensor_fun_obj_(view_dims, view_dims_num, data_type, stride, offset, storage_dims, storage_dims_num,
                                     tensor_data, is_hwc, acl_tensor);
+}
+
+APP_ERROR AclAdapter::DestroyTensor(void *tensor) {
+  if (!HasAclPlugin() || destroy_tensor_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return destroy_tensor_fun_obj_(tensor);
+}
+
+APP_ERROR AclAdapter::DestroyFloatArray(void *float_array) {
+  if (!HasAclPlugin() || destroy_float_array_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return destroy_float_array_fun_obj_(float_array);
+}
+
+APP_ERROR AclAdapter::DestroyIntArray(void *int_array) {
+  if (!HasAclPlugin() || destroy_int_array_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return destroy_int_array_fun_obj_(int_array);
 }
 #endif
 }  // namespace dataset

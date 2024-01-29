@@ -62,8 +62,8 @@ IMPLEMT_COMMON_INFERFUNC(MinimumGradGradInferShape) {
   auto spod_x2_desc = op.GetOutputDesc("spod_x2");
   spod_x2_desc.SetShape(Shape(x_dims));
   spod_x2_desc.SetDataType(grad_y1_dtype);
-  UpdateOutputDesc(op, spod_x1_desc);
-  UpdateOutputDesc(op, spod_x2_desc);
+  op.UpdateOutputDesc("spod_x1", spod_x1_desc);
+  op.UpdateOutputDesc("spod_x2", spod_x2_desc);
   return GRAPH_SUCCESS;
 }
 CUST_COMMON_INFER_FUNC_REG(MinimumGradGrad, MinimumGradGradInferShape);

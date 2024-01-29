@@ -61,7 +61,7 @@ py::object RawMemoryToScalar(const void *data, const TypeId &type) {
   }
 }
 
-void ScalarToRawMemory(const py::object &obj, const TypeId &type, const KernelTensor *address) {
+void ScalarToRawMemory(const py::object &obj, const TypeId &type, KernelTensor *address) {
   MS_EXCEPTION_IF_NULL(address);
   switch (type) {
     case kNumberTypeBool: {
@@ -145,7 +145,7 @@ void ScalarToRawMemory(const py::object &obj, const TypeId &type, const KernelTe
   }
 }
 
-void ArrayToRawMemory(const py::array &array, const KernelTensor *address) {
+void ArrayToRawMemory(const py::array &array, KernelTensor *address) {
   MS_EXCEPTION_IF_NULL(address);
   if (static_cast<unsigned int>(array.flags()) &
       static_cast<unsigned int>(pybind11::detail::npy_api::NPY_ARRAY_C_CONTIGUOUS_)) {
@@ -174,7 +174,7 @@ void ArrayToRawMemory(const py::array &array, const KernelTensor *address) {
 }
 
 void ObjectToRawMemory(const py::object &object, const PythonOjectType &object_type, const TypeId &data_type,
-                       const KernelTensor *address) {
+                       KernelTensor *address) {
   switch (object_type) {
     case PythonOjectType::kScalar:
       return ScalarToRawMemory(object, data_type, address);

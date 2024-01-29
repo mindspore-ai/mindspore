@@ -135,7 +135,7 @@ def test_seq_to_seq_forward_dyn(mode):
         assert np.allclose(out2.asnumpy(), exp2.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
@@ -146,17 +146,32 @@ def test_seq_to_seq_backward(mode):
     Expectation: empty tuple.
     """
     ms.context.set_context(mode=mode, device_target='CPU')
+
+    class Net(ms.nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.tuple_to_list = TupleToList()
+            self.list_to_tuple = ListToTuple()
+
+        def construct(self, x):
+            return self.list_to_tuple(self.tuple_to_list(x))
+
+    class GradNetWrtX(ms.nn.Cell):
+        def __init__(self, net):
+            super(GradNetWrtX, self).__init__()
+            self.net = net
+
+        def construct(self, x):
+            gradient_function = ms.grad(self.net)
+            return gradient_function(x)
+
     input_scalar = 1.5
     input_list = [1, 2, 3]
     input_tuple = (1, 2, 3)
-    input_dict = {"key1": 1}
+    input_dict = {0: Tensor([0]), 1: Tensor([1])}
     input_float32_tensor = ms.Tensor([1.1], ms.float32)
-    grads = list_to_tuple_backward_func(input_scalar, input_list, input_tuple,\
-                                        input_dict, input_float32_tensor)
-    assert grads == ()
-
-    grads = tuple_to_list_backward_func(input_scalar, input_list, input_tuple,\
-                                        input_dict, input_float32_tensor)
+    grads = GradNetWrtX(Net())((input_scalar, input_list, input_tuple,\
+                                         input_dict, input_float32_tensor))
     assert grads == ()
 
 

@@ -1,4 +1,4 @@
-cummin:
+cummax:
     description: |
         Returns the cumulative maximum of elements and the index.
 

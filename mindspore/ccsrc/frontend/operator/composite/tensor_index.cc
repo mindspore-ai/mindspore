@@ -90,7 +90,6 @@ AnfNodePtrList TensorIndex::ParseSlice(const AnfNodePtr &index_node, const abstr
   constexpr size_t kStep = 2;
   *init_by_one = {0, 0, 0};
   if (abs_slice_ptr->start()->isa<abstract::AbstractNone>()) {
-    slice_nodes[kStart] = NewValueNode(kZeroAnfValue);
     (*init_by_one)[kStart] = 1;
   }
   if (abs_slice_ptr->stop()->isa<abstract::AbstractNone>()) {
@@ -168,7 +167,7 @@ void TensorIndexGetitem::GetItemBySlice(const AnfNodePtr &data_node, const AnfNo
                                         const AbstractBasePtr &data, const abstract::AbstractSlicePtr &abs_slice_ptr) {
   std::vector<int64_t> init_by_none;
   auto slice_nodes = ParseSlice(index_node, abs_slice_ptr, &init_by_none);
-  auto strided_slice_vnode = MakeStridedSliceNode(0, 0, init_by_none[kIndex1]);
+  auto strided_slice_vnode = MakeStridedSliceNode(0, init_by_none[kIndex0], init_by_none[kIndex1]);
   for (size_t i = 0; i < slice_nodes.size(); i++) {
     auto make_tuple = NewValueNode(prim::kPrimMakeTuple);
     slice_nodes[i] = res_graph_->NewCNode({make_tuple, slice_nodes[i]});
@@ -192,9 +191,7 @@ FuncGraphPtr TensorIndexGetitem::GenerateFuncGraph(const AbstractBasePtrList &ar
     GetItemBySlice(data_node, index_node, args_abs_list[0], dyn_cast<abstract::AbstractSlice>(args_abs_list[1]));
   }
   if (args_abs_list[1]->isa<abstract::AbstractTuple>()) {
-    (void)res_graph_->add_parameter();
-    GetItemByTuple(data_node, index_node, args_abs_list[0], dyn_cast<abstract::AbstractTuple>(args_abs_list[1]),
-                   args_abs_list[kIndex2]);
+    GetItemByTuple(data_node, index_node, args_abs_list[0], dyn_cast<abstract::AbstractTuple>(args_abs_list[1]));
   }
   return res_graph_;
 }
@@ -306,15 +303,17 @@ AnfNodePtr TensorIndex::SequenceIndexToTensor(const AnfNodePtr &data_node, const
                  {kNumberTypeInt8, kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeBool});
              })) {
     AnfNodePtrList new_sequence_index_node_inputs = {NewValueNode(prim::kPrimMakeTuple)};
-    std::transform(list_index_val_ele.begin(), list_index_val_ele.end(),
-                   std::back_inserter(new_sequence_index_node_inputs), [this](const AbstractBasePtr &x) -> AnfNodePtr {
-                     auto ele_type_id = x->BuildType()->type_id();
-                     if (ele_type_id != kNumberTypeInt64) {
-                       return res_graph_->NewCNode({NewValueNode(kPrimScalarCast), NewValueNode(x->BuildValue()),
-                                                    NewValueNode(MakeValue(static_cast<int64_t>(kNumberTypeInt64)))});
-                     }
-                     return NewValueNode(x->BuildValue());
-                   });
+    for (size_t i = 0; i < list_index_val_ele.size(); i++) {
+      auto ele_type_id = list_index_val_ele[i]->BuildType()->type_id();
+      auto tuple_getitem = NewValueNode(kPrimTupleGetItem);
+      auto new_idx = res_graph_->NewCNode({tuple_getitem, new_index_node, NewValueNode(static_cast<int64_t>(i))});
+      if (ele_type_id != kNumberTypeInt64) {
+        new_idx = res_graph_->NewCNode(
+          {NewValueNode(kPrimScalarCast), new_idx, NewValueNode(static_cast<int64_t>(kNumberTypeInt64))});
+      }
+      new_sequence_index_node_inputs.emplace_back(new_idx);
+    }
+
     new_index_node = res_graph_->NewCNode(new_sequence_index_node_inputs);
     prim->SetAttrs({{kAttrOriginIndexType, MakeValue(kTensorIndexSequenceIndex)},
                     {kAttrTupleIndexTypes, MakeValue(tuple_index_types)},
@@ -461,12 +460,37 @@ std::vector<AnfNodePtr> TensorIndex::NormalizeTupleIndex(const AnfNodePtr &data_
   return normalized_tensors;
 }
 
-std::tuple<AnfNodePtr, AnfNodePtr, AnfNodePtr, int64_t> TensorIndexGetitem::NormalizeStrideInfoFromTuple(
+std::tuple<AnfNodePtr, AnfNodePtr, AnfNodePtr, std::vector<int64_t>> TensorIndexGetitem::NormalizeStrideInfoFromTuple(
   const AnfNodePtr &data_node, const AnfNodePtr &index_node, const AbstractBasePtr &index_abs,
   const std::vector<int64_t> &tuple_index_types, size_t tuple_index) {
   std::vector<int64_t> init_by_none;
   auto slice_nodes = ParseSlice(index_node, dyn_cast<abstract::AbstractSlice>(index_abs), &init_by_none);
-  return {slice_nodes[kIndex0], slice_nodes[kIndex1], slice_nodes[kIndex2], init_by_none[kIndex1]};
+  return {slice_nodes[kIndex0], slice_nodes[kIndex1], slice_nodes[kIndex2], init_by_none};
+}
+
+inline int64_t NormalizeMaskWithEllipsis(int64_t mask, size_t ellipsis_position, size_t ellipsis_range_size,
+                                         const ShapeVector &data_shape) {
+  int64_t new_mask = mask & ((1 << static_cast<int64_t>(ellipsis_position)) - 1);
+
+  if (ellipsis_range_size == 0) {
+    // '...' occupies 0 dimensions
+    // case1: x.shape = (2, 3), x[..., ::1, 1::-2], normalize end_mask from 0b110 to 0b11
+    // case2: x.shape = (2, 3, 4) x[::1, ..., ::2, 1::-2], normalize end_mask from 0b1101 to 0b111
+    new_mask |= (mask >> 1) & ~((1 << static_cast<int64_t>(ellipsis_position)) - 1);
+    return new_mask;
+  }
+
+  for (size_t i = ellipsis_position; i < ellipsis_position + ellipsis_range_size; i++) {
+    new_mask |= (1 << i);
+  }
+
+  for (size_t i = ellipsis_position + 1; i < data_shape.size(); i++) {
+    if (mask & (1 << i)) {
+      auto dim = i + ellipsis_range_size - 1;
+      new_mask |= (1 << dim);
+    }
+  }
+  return new_mask;
 }
 
 void TensorIndexGetitem::ConstGetStrideInfoFromTuple(const AnfNodePtr &data_node, const AnfNodePtr &index_node,
@@ -478,8 +502,10 @@ void TensorIndexGetitem::ConstGetStrideInfoFromTuple(const AnfNodePtr &data_node
   AnfNodePtrList step_strides{NewValueNode(kPrimMakeTuple)};
   int64_t shrink_axis = 0;
   int64_t end_mask = 0;
+  int64_t begin_mask = 0;
   size_t index_count = 0;
   size_t ellipsis_count = 0;
+  size_t ellipsis_range_size = 0;
   for (size_t i = 0; i < tuple_abs_ptr->size(); i++) {
     auto new_index_node =
       res_graph_->NewCNode({NewValueNode(kPrimTupleGetItem), index_node, NewValueNode(SizeToLong(i))});
@@ -513,19 +539,20 @@ void TensorIndexGetitem::ConstGetStrideInfoFromTuple(const AnfNodePtr &data_node
       shrink_axis += 1 << index_count;
       index_count += 1;
     } else if (index_type_id == kObjectTypeSlice) {
-      auto [begin_stride, end_stride, step_stride, end_mask_bit] =
+      auto [begin_stride, end_stride, step_stride, init_by_none] =
         NormalizeStrideInfoFromTuple(data_node, new_index_node, index_abs, tuple_index_types, i);
       (void)begin_strides.emplace_back(begin_stride);
       (void)end_strides.emplace_back(end_stride);
       (void)step_strides.emplace_back(step_stride);
-      end_mask |= (end_mask_bit << i);
+      end_mask |= (init_by_none[kIndex1] << i);
+      begin_mask |= (init_by_none[kIndex0] << i);
       index_count += 1;
     } else if (index_type_id == kMetaTypeEllipsis) {
       if (ellipsis_count >= 1) {
         MS_EXCEPTION(ValueError) << "An index can have only one ellipsis (...)";
       }
       ellipsis_count += 1;
-      size_t ellipsis_range_size = data_shape_.size() - not_ellipsis_position_cnt;
+      ellipsis_range_size = data_shape_.size() - not_ellipsis_position_cnt;
       for (size_t j = 0; j < ellipsis_range_size; j++) {
         (void)begin_strides.emplace_back(NewValueNode(static_cast<int64_t>(0)));
         if (ellipsis_position + j >= data_shape_.size()) {
@@ -538,10 +565,15 @@ void TensorIndexGetitem::ConstGetStrideInfoFromTuple(const AnfNodePtr &data_node
     }
   }
 
+  if (ellipsis_count > 0) {
+    begin_mask = NormalizeMaskWithEllipsis(begin_mask, ellipsis_position, ellipsis_range_size, data_shape_);
+    end_mask = NormalizeMaskWithEllipsis(end_mask, ellipsis_position, ellipsis_range_size, data_shape_);
+  }
+
   AnfNodePtr begin_stride = res_graph_->NewCNode(begin_strides);
   AnfNodePtr end_stride = res_graph_->NewCNode(end_strides);
   AnfNodePtr step_stride = res_graph_->NewCNode(step_strides);
-  auto strided_slice_vnode = MakeStridedSliceNode(shrink_axis, 0, end_mask);
+  auto strided_slice_vnode = MakeStridedSliceNode(shrink_axis, begin_mask, end_mask);
   auto slice_node = res_graph_->NewCNode({strided_slice_vnode, data_node, begin_stride, end_stride, step_stride});
   res_graph_->set_output(slice_node);
 }
@@ -549,10 +581,11 @@ void TensorIndexGetitem::ConstGetStrideInfoFromTuple(const AnfNodePtr &data_node
 AnfNodePtrList TensorIndexGetitem::EllipsisIndexToSlice(const std::vector<int64_t> &tuple_index_types,
                                                         const AnfNodePtr &data_node, const AnfNodePtr &begin_stride,
                                                         const AnfNodePtr &end_stride, const AnfNodePtr &step_stride,
-                                                        int64_t end_mask) {
+                                                        int64_t begin_mask, int64_t end_mask) {
   auto prim = std::make_shared<Primitive>(kPrimEllipsisToSlice->name());
   prim->set_attr(kAttrTupleIndexTypes, MakeValue(tuple_index_types));
   prim->set_attr(kAttrEndMask, MakeValue(end_mask));
+  prim->set_attr(kAttrBeginMask, MakeValue(begin_mask));
   auto ellipse_index_to_slice_node = NewValueNode(prim);
   AnfNodePtr normalized_ellipsis_node =
     res_graph_->NewCNode({ellipse_index_to_slice_node, data_node, begin_stride, end_stride, step_stride});
@@ -583,6 +616,8 @@ void TensorIndexGetitem::GetStrideInfoFromTuple(const AnfNodePtr &data_node, con
   bool has_int = false;
   size_t ellipsis_count = 0;
   int64_t end_mask = 0;
+  int64_t begin_mask = 0;
+  size_t ellipsis_range_size = 0;
   for (size_t i = 0; i < tuple_abs_ptr->size(); i++) {
     auto new_index_node =
       res_graph_->NewCNode({NewValueNode(kPrimTupleGetItem), index_node, NewValueNode(SizeToLong(i))});
@@ -618,12 +653,13 @@ void TensorIndexGetitem::GetStrideInfoFromTuple(const AnfNodePtr &data_node, con
       index_count += 1;
       has_int = true;
     } else if (index_type_id == kObjectTypeSlice) {
-      auto [begin_stride, end_stride, step_stride, end_mask_bit] =
+      auto [begin_stride, end_stride, step_stride, init_by_none] =
         NormalizeStrideInfoFromTuple(data_node, new_index_node, index_abs, tuple_index_types, i);
       (void)begin_strides.emplace_back(begin_stride);
       (void)end_strides.emplace_back(end_stride);
       (void)step_strides.emplace_back(step_stride);
-      end_mask |= (end_mask_bit << i);
+      end_mask |= (init_by_none[kIndex1] << i);
+      begin_mask |= (init_by_none[kIndex0] << i);
       index_count += 1;
     } else if (index_type_id == kMetaTypeEllipsis) {
       if (ellipsis_count >= 1) {
@@ -632,7 +668,7 @@ void TensorIndexGetitem::GetStrideInfoFromTuple(const AnfNodePtr &data_node, con
       ellipsis_count += 1;
 
       if (!IsDynamicRank(data_shape_)) {
-        size_t ellipsis_range_size = data_shape_.size() - not_ellipsis_position_cnt;
+        ellipsis_range_size = data_shape_.size() - not_ellipsis_position_cnt;
         for (size_t j = 0; j < ellipsis_range_size; j++) {
           (void)begin_strides.emplace_back(NewValueNode(static_cast<int64_t>(0)));
           if (ellipsis_position + j >= data_shape_.size()) {
@@ -640,7 +676,6 @@ void TensorIndexGetitem::GetStrideInfoFromTuple(const AnfNodePtr &data_node, con
           }
           (void)end_strides.emplace_back(NewValueNode(static_cast<int64_t>(0)));
           (void)step_strides.emplace_back(NewValueNode(static_cast<int64_t>(1)));
-          end_mask |= (1 << (i + j));
         }
       }
     }
@@ -654,14 +689,24 @@ void TensorIndexGetitem::GetStrideInfoFromTuple(const AnfNodePtr &data_node, con
   AnfNodePtr begin_stride = res_graph_->NewCNode(begin_strides);
   AnfNodePtr end_stride = res_graph_->NewCNode(end_strides);
   AnfNodePtr step_stride = res_graph_->NewCNode(step_strides);
-  auto strided_slice_vnode = MakeStridedSliceNode(shrink_axis, 0, end_mask);
-  if (has_ellipsis && IsDynamicRank(data_shape_)) {
-    auto new_slice_info =
-      EllipsisIndexToSlice(tuple_index_types, data_node, begin_stride, end_stride, step_stride, end_mask);
-    begin_stride = new_slice_info[kIndex0];
-    end_stride = new_slice_info[kIndex1];
-    step_stride = new_slice_info[kIndex2];
+  if (has_ellipsis) {
+    if (IsDynamicRank(data_shape_)) {
+      auto new_slice_info =
+        EllipsisIndexToSlice(tuple_index_types, data_node, begin_stride, end_stride, step_stride, begin_mask, end_mask);
+      begin_stride = new_slice_info[kIndex0];
+      end_stride = new_slice_info[kIndex1];
+      step_stride = new_slice_info[kIndex2];
+      begin_mask = begin_mask & ((1 << ellipsis_position) - 1);
+      end_mask = end_mask & ((1 << ellipsis_position) - 1);
+    } else {
+      // for x[4, ..., 1:] where x.shape = (5, 6, 7, 8), the end_mask_ is 0b100
+      // '...' here occupise 2 dims, so we need rectify the end_mask_ to 0b1000
+      // if data_shape_ is dynamic rank, this will be Done in EllipsisToSlice.
+      begin_mask = NormalizeMaskWithEllipsis(begin_mask, ellipsis_position, ellipsis_range_size, data_shape_);
+      end_mask = NormalizeMaskWithEllipsis(end_mask, ellipsis_position, ellipsis_range_size, data_shape_);
+    }
   }
+  auto strided_slice_vnode = MakeStridedSliceNode(shrink_axis, begin_mask, end_mask);
 
   auto slice_node = res_graph_->NewCNode({strided_slice_vnode, data_node, begin_stride, end_stride, step_stride});
   if (IsDynamicRank(data_shape_) & has_int & has_ellipsis) {
@@ -705,8 +750,7 @@ void TensorIndex::RemakeTupleIndex(bool has_ellipsis, const std::vector<int64_t>
 }
 
 void TensorIndexGetitem::GetItemByTuple(const AnfNodePtr &input_data_node, const AnfNodePtr &index_node,
-                                        const AbstractBasePtr &data, const abstract::AbstractTuplePtr &tuple_abs_ptr,
-                                        const AbstractBasePtr &all_empty_tensor_index) {
+                                        const AbstractBasePtr &data, const abstract::AbstractTuplePtr &tuple_abs_ptr) {
   if (tuple_abs_ptr->empty()) {
     res_graph_->set_output(input_data_node);
   }
@@ -748,13 +792,10 @@ void TensorIndexGetitem::GetItemByTuple(const AnfNodePtr &input_data_node, const
   mindspore::HashMap<std::string, ValuePtr> attrs(
     {{kAttrTupleIndexTypes, MakeValue(tuple_index_types)}, {kAttrExpandDimsCnt, MakeValue(SizeToLong(0))}});
   auto tuple_index_info_node = GetTupleIndexInfo(data_node, NewValueNode(SizeToLong(0)), normalized_tensors, attrs);
-  auto broad_cast_shape_node = tuple_index_info_node[kIndex0];
-  auto new_index_shape_node = tuple_index_info_node[kIndex1];
-  auto final_shape_node = tuple_index_info_node[kIndex2];
-  auto tensor_index_transfer =
-    prim::GetPythonOps("_tuple_index_transfer", "mindspore.ops.composite.multitype_ops._compile_utils");
+  auto broad_cast_shape_node = tuple_index_info_node[kIndex1];
+  auto new_index_shape_node = tuple_index_info_node[kIndex2];
+  auto final_shape_node = tuple_index_info_node[kIndex3];
   auto broadcast_to = prim::GetPythonOps("broadcast_to", "mindspore.ops.function.array_func");
-  ValueNodePtr tensor_index_transfer_node = NewValueNode(tensor_index_transfer);
   ValueNodePtr broadcast_to_node = NewValueNode(broadcast_to);
   size_t slice_index_count = 0;
   std::vector<AnfNodePtr> new_normalized_tensors{};
@@ -769,12 +810,13 @@ void TensorIndexGetitem::GetItemByTuple(const AnfNodePtr &input_data_node, const
   for (size_t i = 0; i < normalized_tensors.size(); i++) {
     AnfNodePtr new_tensor_index = normalized_tensors[i];
     if (new_tuple_index_types[i] == kObjectTypeTensorType) {
-      new_tensor_index =
-        NewCNode({tensor_index_transfer_node, broad_cast_shape_node, final_shape_node, new_index_shape_node,
-                  new_tensor_index, NewValueNode(all_empty_tensor_index->BuildValue())},
-                 res_graph_);
+      auto tensor_index_transfer =
+        prim::GetPythonOps("_tensor_index_transfer", "mindspore.ops.composite.multitype_ops._compile_utils");
+      auto tensor_index_transfer_node = NewValueNode(tensor_index_transfer);
+      new_tensor_index = res_graph_->NewCNodeInOrder(
+        {tensor_index_transfer_node, new_tensor_index, broad_cast_shape_node, final_shape_node, new_index_shape_node});
     } else {
-      auto new_slice_shape_node = tuple_index_info_node[kIndex5 + slice_index_count];
+      auto new_slice_shape_node = tuple_index_info_node[kIndex4 + slice_index_count];
       new_tensor_index = NewCNode({MakeReshapeNode(), new_tensor_index, new_slice_shape_node}, res_graph_);
       new_tensor_index = NewCNode({broadcast_to_node, new_tensor_index, final_shape_node}, res_graph_);
       slice_index_count += 1;
@@ -875,11 +917,11 @@ std::vector<CNodePtr> TensorIndex::GetTupleIndexInfo(const AnfNodePtr &data_node
   (void)get_tuple_index_info_inputs.insert(get_tuple_index_info_inputs.end(), normalized_tensors.begin(),
                                            normalized_tensors.end());
   for (size_t i = normalized_tensors.size(); i < kMaxTensorIndexDimNums; i++) {
-    (void)get_tuple_index_info_inputs.emplace_back(NewValueNode(std::vector<int64_t>{1}));
+    (void)get_tuple_index_info_inputs.emplace_back(NewValueNode(std::make_shared<tensor::Tensor>((int64_t)1)));
   }
   auto tuple_index_info_node = NewCNode(get_tuple_index_info_inputs, res_graph_);
-  // {broadcast_shape, new_index_shape_node, final_shape_node, fancy_position, zero_dim_tensor, new_slice_shape_nodes*8}
-  const size_t tuple_index_info_nums = 13;
+  // {fancy_position, broadcast_shape, new_index_shape_node, final_shape_node, new_slice_shape_nodes*8}
+  const size_t tuple_index_info_nums = 12;
   std::vector<CNodePtr> output_nodes;
   for (size_t i = 0; i <= tuple_index_info_nums; i++) {
     auto index_info_node =
@@ -898,9 +940,7 @@ void PreSetitemByTuple::RemoveExpandedDims(const AnfNodePtr &data_node, const An
   auto sub_tensor = std::make_shared<tensor::Tensor>(SizeToLong(1));
   auto sub_tensor_node = NewValueNode(sub_tensor->ToAbstract()->BuildValue());
   bool has_true = false;
-  AnfNodePtr has_false_node = NewValueNode(std::make_shared<tensor::Tensor>(static_cast<int64_t>(0)));
-  auto add = prim::GetPythonOps("add", "mindspore.ops.function.math_func");
-  ValueNodePtr add_vnode = NewValueNode(add);
+  AnfNodePtr has_false_node = NewValueNode(static_cast<int64_t>(0));
   bool has_sequence = false;
   std::vector<int64_t> new_tuple_index_types = tuple_index_types;
   for (size_t i = 0; i < tuple_abs_ptr->size(); i++) {
@@ -912,8 +952,9 @@ void PreSetitemByTuple::RemoveExpandedDims(const AnfNodePtr &data_node, const An
     bool empty_sequence = false;
     new_index_node =
       FormatIndex(index_abs, data_node, new_index_node, i, tuple_index_types, expand_dims_mask, &empty_sequence);
+    auto scalar_add = NewValueNode(kPrimScalarAdd);
     has_false_node =
-      res_graph_->NewCNode({add_vnode, has_false_node, NewValueNode(std::make_shared<tensor::Tensor>(empty_sequence))});
+      res_graph_->NewCNode({scalar_add, has_false_node, NewValueNode(static_cast<int64_t>(empty_sequence))});
     if (index_type_id == kMetaTypeNone) {
       (void)normalized_tensors.emplace_back(sub_tensor_node);
       new_tuple_index_types[i] = kMetaTypeNone;
@@ -930,7 +971,7 @@ void PreSetitemByTuple::RemoveExpandedDims(const AnfNodePtr &data_node, const An
       auto slice_to_indices_node = res_graph_->NewCNode(slice_to_indices);
       auto empty_slice_node = res_graph_->NewCNode(
         {NewValueNode(prim::kPrimTupleGetItem), slice_to_indices_node, NewValueNode(SizeToLong(kIndex5))});
-      has_false_node = res_graph_->NewCNode({add_vnode, has_false_node, empty_slice_node});
+      has_false_node = res_graph_->NewCNode({scalar_add, has_false_node, empty_slice_node});
     } else if (index_type_id == kObjectTypeTensorType) {
       (void)normalized_tensors.emplace_back(new_index_node);
       (void)indices_out_list.emplace_back(new_index_node);
@@ -952,8 +993,7 @@ void PreSetitemByTuple::RemoveExpandedDims(const AnfNodePtr &data_node, const An
       }
       has_true = has_true || GetValue<bool>(index_item_value);
       has_false_node = res_graph_->NewCNode(
-        {add_vnode, has_false_node,
-         NewValueNode(std::make_shared<tensor::Tensor>(static_cast<int64_t>(!GetValue<bool>(index_item_value))))});
+        {scalar_add, has_false_node, NewValueNode(static_cast<int64_t>(!GetValue<bool>(index_item_value)))});
     } else if (index_type_id == kObjectTypeList || index_type_id == kObjectTypeTuple) {
       (void)normalized_tensors.emplace_back(new_index_node);
       (void)indices_out_list.emplace_back(new_index_node);
@@ -967,14 +1007,14 @@ void PreSetitemByTuple::RemoveExpandedDims(const AnfNodePtr &data_node, const An
       MS_EXCEPTION(IndexError) << "invalid index type";
     }
   }
+
   mindspore::HashMap<std::string, ValuePtr> attrs(
     {{kAttrTupleIndexTypes, MakeValue(tuple_index_types)},
      {kAttrTupleIndexInfoType, MakeValue(kPreSetitemByTuple)},
      {kAttrExpandDimsCnt, MakeValue(SizeToLong(std::bitset<8>(expand_dims_mask).count()))}});
   auto tuple_index_infos = GetTupleIndexInfo(data_node, NewValueNode(SizeToLong(0)), normalized_tensors, attrs);
-  auto broadcast_shape = tuple_index_infos[kIndex0];
-  auto fancy_position = tuple_index_infos[kIndex3];
-
+  auto broadcast_shape = tuple_index_infos[kIndex1];
+  auto fancy_position = tuple_index_infos[kIndex0];
   auto indices_out = res_graph_->NewCNode(indices_out_list);
   auto rem_not_expanded_dims_node = res_graph_->NewCNode(
     {MakeRemoveExpandedDimsNode(has_true, has_sequence, indices_out_list, expand_dims_mask, new_tuple_index_types),
@@ -985,6 +1025,7 @@ void PreSetitemByTuple::RemoveExpandedDims(const AnfNodePtr &data_node, const An
     res_graph_->NewCNode({NewValueNode(kPrimTupleGetItem), rem_not_expanded_dims_node, NewValueNode(SizeToLong(1))});
   auto idx_advanced =
     res_graph_->NewCNode({NewValueNode(kPrimTupleGetItem), rem_not_expanded_dims_node, NewValueNode(SizeToLong(2))});
+
   auto output = res_graph_->NewCNode(
     {NewValueNode(kPrimMakeTuple), indices_out_type, indices_out, value_shape, idx_advanced, broadcast_shape});
   res_graph_->set_output(output);
@@ -1019,14 +1060,10 @@ void TensorIndexSetitem::SetItemByTuple(const AnfNodePtr &input_data_node, const
     attrs.insert(attrs.end(), {kAttrTupleIndexInfoType, MakeValue(kSetitemByTuple)});
   }
   auto tuple_index_info_node = GetTupleIndexInfo(data_node, fancy_position_node, normalized_tensors, attrs);
-  auto broad_cast_shape_node = tuple_index_info_node[kIndex0];
-  auto new_index_shape_node = tuple_index_info_node[kIndex1];
-  auto final_shape_node = tuple_index_info_node[kIndex2];
-  auto tensor_index_transfer =
-    prim::GetPythonOps("_tuple_index_transfer", "mindspore.ops.composite.multitype_ops._compile_utils");
+  auto broad_cast_shape_node = tuple_index_info_node[kIndex1];
+  auto new_index_shape_node = tuple_index_info_node[kIndex2];
+  auto final_shape_node = tuple_index_info_node[kIndex3];
   auto broadcast_to = prim::GetPythonOps("broadcast_to", "mindspore.ops.function.array_func");
-  ValueNodePtr tensor_index_transfer_node = NewValueNode(tensor_index_transfer);
-
   ValueNodePtr broadcast_to_node = NewValueNode(broadcast_to);
   size_t slice_index_count = 0;
   std::vector<AnfNodePtr> new_normalized_tensors{};
@@ -1041,12 +1078,13 @@ void TensorIndexSetitem::SetItemByTuple(const AnfNodePtr &input_data_node, const
   for (size_t i = 0; i < normalized_tensors.size(); i++) {
     AnfNodePtr new_tensor_index = normalized_tensors[i];
     if (new_tuple_index_types[i] == kObjectTypeTensorType) {
-      new_tensor_index =
-        NewCNode({tensor_index_transfer_node, broad_cast_shape_node, final_shape_node, new_index_shape_node,
-                  new_tensor_index, NewValueNode(all_empty_tensor_flag->BuildValue())},
-                 res_graph_);
+      auto tensor_index_transfer =
+        prim::GetPythonOps("_tensor_index_transfer", "mindspore.ops.composite.multitype_ops._compile_utils");
+      auto tensor_index_transfer_node = NewValueNode(tensor_index_transfer);
+      new_tensor_index = res_graph_->NewCNodeInOrder(
+        {tensor_index_transfer_node, new_tensor_index, broad_cast_shape_node, final_shape_node, new_index_shape_node});
     } else {
-      auto new_slice_shape_node = tuple_index_info_node[kIndex5 + slice_index_count];
+      auto new_slice_shape_node = tuple_index_info_node[kIndex4 + slice_index_count];
       new_tensor_index = NewCNode({MakeReshapeNode(), new_tensor_index, new_slice_shape_node}, res_graph_);
       new_tensor_index = NewCNode({broadcast_to_node, new_tensor_index, final_shape_node}, res_graph_);
       slice_index_count += 1;
@@ -1139,98 +1177,6 @@ AnfNodePtr TensorIndex::ExpandDimsByTupleIndex(const AnfNodePtr &input_data_node
   return data_node;
 }
 
-void HandleEmptySlice::HandleEmptySliceByTupleIndex(const AnfNodePtr &input_data_node, const AnfNodePtr &index_node,
-                                                    const AbstractBasePtr &data,
-                                                    const abstract::AbstractTuplePtr &tuple_abs_ptr) {
-  if (tuple_abs_ptr->empty()) {
-    res_graph_->set_output(input_data_node);
-  }
-  IndexHandleLevel index_handle_level = PreHandleIndex(data, tuple_abs_ptr);
-
-  // Get type of each index in tuple.
-  bool has_ellipsis = false;
-  size_t ellipsis_position = 0;
-  size_t not_ellipsis_position_cnt = 0;
-  std::bitset<kMaxTensorIndexDimNums> expand_dims_mask;
-  auto tuple_index_types = GetTupleIndexType(tuple_abs_ptr, data_shape_, &has_ellipsis, &ellipsis_position,
-                                             &not_ellipsis_position_cnt, &expand_dims_mask);
-  // Expand dims if there are bool/None index
-  size_t expand_dims_cnt = expand_dims_mask.count();
-  auto data_node = ExpandDimsByTupleIndex(input_data_node, tuple_abs_ptr, tuple_index_types, expand_dims_cnt);
-
-  if (data_shape_.size() < 1 || data_shape_.size() > kMaxTensorIndexDimNums) {
-    MS_EXCEPTION(ValueError) << "The input data's dim must in the range of [1, 8], but got '" << data_shape_.size()
-                             << "'.";
-  }
-  MS_LOG(DEBUG) << "Tuple index types in TensorIndexing is: " << tuple_index_types;
-  auto normalized_tensors =
-    NormalizeTupleIndex(data_node, index_node, tuple_index_types, index_handle_level, has_ellipsis, tuple_abs_ptr);
-
-  mindspore::HashMap<std::string, ValuePtr> attrs(
-    {{kAttrTupleIndexTypes, MakeValue(tuple_index_types)}, {kAttrExpandDimsCnt, MakeValue(SizeToLong(0))}});
-  auto tuple_index_info_node = GetTupleIndexInfo(data_node, NewValueNode(SizeToLong(0)), normalized_tensors, attrs);
-  auto final_shape_node = tuple_index_info_node[kIndex2];
-  auto zero_dim_tensor = tuple_index_info_node[kIndex4];
-  res_graph_->set_output(res_graph_->NewCNode({NewValueNode(kPrimMakeTuple), final_shape_node, zero_dim_tensor}));
-}
-
-FuncGraphPtr HandleEmptySlice::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
-  size_t arg_length = args_abs_list.size();
-  const size_t min_args_size = 2;
-  if (arg_length != min_args_size) {
-    MS_LOG(EXCEPTION) << "The HandleZeroTupleIndex operator requires arguments, but got " << arg_length << ".";
-  }
-  res_graph_ = std::make_shared<FuncGraph>();
-  res_graph_->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  res_graph_->debug_info()->set_name("HandleZeroTupleIndex");
-  AnfNodePtr data_node = res_graph_->add_parameter();
-  AnfNodePtr index_node = res_graph_->add_parameter();
-
-  if (args_abs_list[1]->isa<abstract::AbstractTuple>()) {
-    (void)HandleEmptySliceByTupleIndex(data_node, index_node, args_abs_list[0],
-                                       dyn_cast<abstract::AbstractTuple>(args_abs_list[1]));
-  }
-  return res_graph_;
-}
-
-FuncGraphPtr HandleScalarTensorIndex::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
-  size_t arg_length = args_abs_list.size();
-  const size_t min_args_size = 2;
-  if (arg_length != min_args_size) {
-    MS_LOG(EXCEPTION) << "The HandleBoolTensor operator requires arguments, but got " << arg_length << ".";
-  }
-  res_graph_ = std::make_shared<FuncGraph>();
-  res_graph_->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  res_graph_->debug_info()->set_name("HandleScalarTensorIndex");
-  AnfNodePtr data = res_graph_->add_parameter();
-  AnfNodePtr index_node = res_graph_->add_parameter();
-
-  auto tuple_abs_ptr = dyn_cast<abstract::AbstractTuple>(args_abs_list[1]);
-  IndexHandleLevel index_handle_level = PreHandleIndex(args_abs_list[0], tuple_abs_ptr);
-  // Get type of each index in tuple.
-  bool has_ellipsis = false;
-  size_t ellipsis_position = 0;
-  size_t not_ellipsis_position_cnt = 0;
-  std::bitset<kMaxTensorIndexDimNums> expand_dims_mask;
-
-  auto tuple_index_types = GetTupleIndexType(tuple_abs_ptr, data_shape_, &has_ellipsis, &ellipsis_position,
-                                             &not_ellipsis_position_cnt, &expand_dims_mask);
-  size_t expand_dims_cnt = expand_dims_mask.count();
-  // Expand dims if there are bool/None index
-  auto data_node = ExpandDimsByTupleIndex(data, tuple_abs_ptr, tuple_index_types, expand_dims_cnt);
-
-  MS_LOG(DEBUG) << "Tuple index types in TensorIndexing is: " << tuple_index_types;
-  auto normalized_tensors =
-    NormalizeTupleIndex(data_node, index_node, tuple_index_types, index_handle_level, has_ellipsis, tuple_abs_ptr);
-
-  mindspore::HashMap<std::string, ValuePtr> attrs(
-    {{kAttrTupleIndexTypes, MakeValue(tuple_index_types)}, {kAttrExpandDimsCnt, MakeValue(SizeToLong(0))}});
-  auto tuple_index_info_node = GetTupleIndexInfo(data_node, NewValueNode(SizeToLong(0)), normalized_tensors, attrs);
-  auto broad_cast_shape_node = tuple_index_info_node[kIndex0];
-  res_graph_->set_output(broad_cast_shape_node);
-  return res_graph_;
-}
-
 FuncGraphPtr HandleBoolTensor::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
   size_t arg_length = args_abs_list.size();
   const size_t min_args_size = 1;
@@ -1307,7 +1253,6 @@ FuncGraphPtr PreSetitemByTuple::GenerateFuncGraph(const AbstractBasePtrList &arg
   AnfNodePtr value_node = res_graph_->add_parameter();
   auto data = args_abs_list[0];
   auto tuple_abs_ptr = dyn_cast<abstract::AbstractTuple>(args_abs_list[1]);
-
   IndexHandleLevel index_handle_level = PreHandleIndex(data, tuple_abs_ptr);
   // Get type of each index in tuple.
   bool has_ellipsis = false;

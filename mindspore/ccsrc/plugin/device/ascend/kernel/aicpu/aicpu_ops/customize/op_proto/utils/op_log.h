@@ -155,7 +155,6 @@ std::string TbeGetOpType(const T &op) {
 #define AICPU_OP_LOGE(op_name, ...)                       \
   do {                                                    \
     AICPU_OP_LOGE_WITHOUT_REPORT(op_name, ##__VA_ARGS__); \
-    REPORT_INNER_ERROR("EZ9999", ##__VA_ARGS__);          \
   } while (0)
 
 #define OP_LOGI(opname, ...) D_OP_LOGI(get_op_info(opname), __VA_ARGS__)
@@ -165,7 +164,6 @@ std::string TbeGetOpType(const T &op) {
 #define OP_LOGE(op_name, ...)                       \
   do {                                              \
     OP_LOGE_WITHOUT_REPORT(op_name, ##__VA_ARGS__); \
-    REPORT_INNER_ERROR("EZ9999", ##__VA_ARGS__);    \
   } while (0)
 
 #define OP_LOGD(opname, ...) D_OP_LOGD(get_op_info(opname), __VA_ARGS__)
@@ -266,46 +264,4 @@ std::string TbeGetOpType(const T &op) {
       return return_value;                                                                                     \
     }                                                                                                          \
   } while (0)
-
-constexpr const int OP_MAX_LOG_SIZE = 16000;
-constexpr const int OP_MSG_HEADER_LEN = 200;
-// print very long log. long line will be split to multipile lines
-#define OP_LOG_FULL(level, opname, format, ...)                                                                     \
-  do {                                                                                                              \
-    if (0 == CheckLogLevel(OP, level)) {                                                                            \
-      break;                                                                                                        \
-    }                                                                                                               \
-    char msgbufxyz[OP_MAX_LOG_SIZE];                                                                                \
-    size_t msgmaxlen = (MSG_LENGTH - OP_MSG_HEADER_LEN);                                                            \
-    int rettmp = snprintf_s(msgbufxyz, sizeof(msgbufxyz), sizeof(msgbufxyz) - 1, format, ##__VA_ARGS__);            \
-    if (rettmp == -1) {                                                                                             \
-      msgbufxyz[sizeof(msgbufxyz) - 1] = '\0';                                                                      \
-    }                                                                                                               \
-    size_t msglength = std::strlen(msgbufxyz);                                                                      \
-    if (msglength < msgmaxlen) {                                                                                    \
-      OpLogSub(OP, level, opname, "%s", msgbufxyz);                                                                 \
-      break;                                                                                                        \
-    }                                                                                                               \
-    char *msgchunkbegin = msgbufxyz;                                                                                \
-    char *msgchunkend = nullptr;                                                                                    \
-    while (msgchunkbegin < msgbufxyz + msglength) {                                                                 \
-      if (msgchunkbegin[0] == '\n') {                                                                               \
-        OpLogSub(OP, level, opname, "");                                                                            \
-        msgchunkbegin += 1;                                                                                         \
-        continue;                                                                                                   \
-      }                                                                                                             \
-      msgchunkend = std::strchr(msgchunkbegin, '\n');                                                               \
-      if (msgchunkend == nullptr) {                                                                                 \
-        msgchunkend = msgchunkbegin + std::strlen(msgchunkbegin);                                                   \
-      }                                                                                                             \
-      while (msgchunkend > msgchunkbegin) {                                                                         \
-        std::string msgchunk(msgchunkbegin, std::min(msgmaxlen, static_cast<size_t>(msgchunkend - msgchunkbegin))); \
-        OpLogSub(OP, level, opname, "%s", msgchunk.c_str());                                                        \
-        msgchunkbegin += msgchunk.size();                                                                           \
-      }                                                                                                             \
-      msgchunkbegin += 1;                                                                                           \
-    }                                                                                                               \
-  } while (0)
-
-#define OP_LOGD_FULL(opname, ...) OP_LOG_FULL(DLOG_DEBUG, get_op_info(opname), __VA_ARGS__)
 #endif  // OPS_COMMON_INC_OP_LOG_H_

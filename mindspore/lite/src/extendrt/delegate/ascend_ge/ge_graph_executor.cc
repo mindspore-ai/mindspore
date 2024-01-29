@@ -50,8 +50,8 @@
 #include "mindspore/core/ops/custom.h"
 #include "mindspore/lite/src/common/common.h"
 #include "mindspore/lite/tools/common/custom_ascend_utils.h"
-#include "inc/ops/array_ops.h"
-#include "inc/ops/elewise_calculation_ops.h"
+#include "op_proto/inc/array_ops.h"
+#include "op_proto/inc/elewise_calculation_ops.h"
 #include "mindspore/lite/tools/optimizer/graph/attr_to_args_pass.h"
 #include <nlohmann/json.hpp>
 

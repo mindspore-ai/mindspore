@@ -1,9 +1,3 @@
-include_directories(${TOP_DIR}/graphengine/910/metadef/inc/external)
-include_directories(${TOP_DIR}/graphengine/910/metadef/inc)
-include_directories(${TOP_DIR}/graphengine/910/inc)
-include_directories(${TOP_DIR}/graphengine/910/inc/external)
-include_directories(${TOP_DIR}/graphengine/910/third_party/fwkacllib)
-include_directories(${TOP_DIR}/graphengine/910/third_party/fwkacllib/inc)
 include_directories(${CCSRC_DIR})
 
 file(STRINGS "${TOP_DIR}/version.txt" MSVERSION)

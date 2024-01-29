@@ -27,6 +27,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr auto kTupleToTensor = "TupleToTensor";
+constexpr auto kListToTensor = "ListToTensor";
 constexpr auto kScalarToTensor = "ScalarToTensor";
 }  // namespace
 
@@ -109,7 +110,8 @@ std::vector<std::pair<KernelAttr, SeqToTensorCpuKernelMod::SeqToTensorFunc>> Seq
   ADD_TUPLE_KERNEL(Int32, Float32, int32_t, float),  ADD_TUPLE_KERNEL(Int32, Float64, int32_t, double),
   ADD_TUPLE_KERNEL(Int32, Int32, int32_t, int32_t),  ADD_TUPLE_KERNEL(Int32, Int64, int32_t, int64_t),
   ADD_TUPLE_KERNEL(Int64, Float32, int64_t, float),  ADD_TUPLE_KERNEL(Int64, Float64, int64_t, double),
-  ADD_TUPLE_KERNEL(Int64, Int32, int64_t, int32_t),  ADD_TUPLE_KERNEL(Int64, Int64, int64_t, int64_t)};
+  ADD_TUPLE_KERNEL(Int64, Int32, int64_t, int32_t),  ADD_TUPLE_KERNEL(Int64, Int64, int64_t, int64_t),
+  ADD_TUPLE_KERNEL(Bool, Bool, bool, bool)};
 
 std::vector<std::pair<KernelAttr, SeqToTensorCpuKernelMod::SeqToTensorFunc>>
   SeqToTensorCpuKernelMod::scalar_func_list_ = {

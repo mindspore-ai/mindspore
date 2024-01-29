@@ -41,7 +41,7 @@ from mindspore._c_expression import COOTensor as COOTensor_
 from ..auto_generate import (ExpandDims, Reshape, TensorShape, Transpose, Gather, OnesLike, ZerosLike, Argmax,
                              ReverseV2, Diag, Eye, ScatterNd, ResizeNearestNeighborV2, GatherNd, GatherD,
                              Range, MaskedFill, RightShift, NonZero, ResizeNearestNeighbor, Identity, Split,
-                             CumSum, CumProd, Cummax, Cummin, Argmin, Concat)
+                             CumSum, CumProd, Cummax, Cummin, Argmin, Concat, UnsortedSegmentSum)
 from .manually_defined import Rank, Shape, Tile
 
 
@@ -1361,11 +1361,14 @@ class FillV2(PrimitiveWithCheck):
         return (True, x)
 
     def infer_value(self, dims, x):
-        if x is None or dims is None or \
-                (isinstance(dims, (tuple, list)) and dims) or \
-                isinstance(dims, (Tensor, Tensor_)):
+        if x is None or dims is None or isinstance(dims, (Tensor, Tensor_)):
             return None
-        return x
+        if 0 in dims:
+            init_func = Zero()
+            init_func.__enable_zero_dim__ = True
+            out = Tensor(shape=dims, dtype=x.dtype, init=init_func)
+            return out
+        return Tensor(np.full(dims, x.asnumpy()))
 
 
 class Ones(Primitive):
@@ -1801,49 +1804,6 @@ class ArgMinWithValue(Primitive):
         self.axis = axis
         self.keep_dims = keep_dims
         self.add_prim_attr('dimension', self.axis)
-
-
-class UnsortedSegmentSum(Primitive):
-    r"""
-    Computes the sum of a tensor along segments.
-
-    Refer to :func:`mindspore.ops.unsorted_segment_sum` for more details.
-
-    Inputs:
-        - **input_x** (Tensor) - Input Tensor contains the data to be summed.
-          The shape is :math:`(x_1, x_2, ..., x_R)`.
-        - **segment_ids** (Tensor) - The label indicates the segment to which each element belongs.
-          Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
-        - **num_segments** (Union[int, Tensor]) - Set :math:`z` as num_segments, it can be an int or 0-D Tensor.
-
-    Outputs:
-        Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore import Tensor
-        >>> from mindspore import ops
-        >>> import mindspore
-        >>> input_x = Tensor([1, 2, 3, 4], mindspore.float32)
-        >>> segment_ids = Tensor([0, 0, 1, 2], mindspore.int32)
-        >>> num_segments = 4
-        >>> output = ops.UnsortedSegmentSum()(input_x, segment_ids, num_segments)
-        >>> print(output)
-        [3. 3. 4. 0.]
-        >>> input_x = Tensor([1, 2, 3, 4, 2, 5], mindspore.float32)
-        >>> segment_ids = Tensor([0, 0, 1, 2, 3, 4], mindspore.int32)
-        >>> num_segments = 6
-        >>> output = ops.UnsortedSegmentSum()(input_x, segment_ids, num_segments)
-        >>> print(output)
-        [3. 3. 4. 2. 5. 0.]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize UnsortedSegmentSum"""
-        self.init_prim_io_names(inputs=['x', 'segment_ids', 'num_segments'], outputs=['y'])
 
 
 class UnsortedSegmentMin(PrimitiveWithCheck):
@@ -4751,7 +4711,7 @@ class BroadcastTo(PrimitiveWithCheck):
     def __init__(self, shape):
         """Initialize BroadcastTo"""
         validator.check_value_type("shape", shape, (tuple), self.name)
-        validator.check("dimension of x", len(shape), "", 0, validator.GT, self.name)
+        validator.check("dimension of x", len(shape), "", 0, validator.GE, self.name)
         for ix, i in enumerate(shape):
             validator.check_value_type('target shape index -> ' + str(ix), i, [int], self.name)
             validator.check("shape element", i, "shape element min limit", -1, validator.GE, self.name)
@@ -4760,7 +4720,13 @@ class BroadcastTo(PrimitiveWithCheck):
     def infer_value(self, x):
         if x is None:
             return None
-        return Tensor(np.broadcast_to(x.asnumpy(), self.shape))
+        np_data = np.broadcast_to(x.asnumpy(), self.shape)
+        if 0 in self.shape:
+            init_func = Zero()
+            init_func.__enable_zero_dim__ = True
+            out = Tensor(shape=self.shape, dtype=x.dtype, init=init_func)
+            return out
+        return Tensor(np_data)
 
 
 class Meshgrid(PrimitiveWithInfer):

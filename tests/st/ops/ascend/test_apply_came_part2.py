@@ -32,7 +32,7 @@ class Net(nn.Cell):
         return self.apply_came_part2(*inputs)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_net():

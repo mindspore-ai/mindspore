@@ -38,13 +38,13 @@ namespace mindspore::graphkernel {
 namespace {
 const std::set<std::string> &GetConvertInputAttrOps() {
   static const std::set<std::string> convert_input_attr_ops = {
-    prim::kPrimSoftmax->name(),       prim::kPrimReduceSum->name(),   prim::kPrimReduceMax->name(),
-    prim::kPrimReduceMin->name(),     prim::kPrimReduceMean->name(),  prim::kPrimOneHot->name(),
-    prim::kPrimMinimumGrad->name(),   prim::kPrimMaximumGrad->name(), prim::kPrimGather->name(),
-    prim::kPrimCumSum->name(),        prim::kPrimArgmin->name(),      prim::kPrimArgmax->name(),
-    prim::kPrimBiasAdd->name(),       prim::kPrimBiasAddGrad->name(), prim::kPrimLayerNorm->name(),
-    prim::kPrimLayerNormGrad->name(), prim::kPrimLogSoftmax->name(),  prim::kPrimLogSoftmaxGrad->name(),
-  };
+    prim::kPrimSoftmax->name(),        prim::kPrimReduceSum->name(),   prim::kPrimReduceMax->name(),
+    prim::kPrimReduceMin->name(),      prim::kPrimReduceMean->name(),  prim::kPrimOneHot->name(),
+    prim::kPrimMinimumGrad->name(),    prim::kPrimMaximumGrad->name(), prim::kPrimGather->name(),
+    prim::kPrimCumSum->name(),         prim::kPrimArgmin->name(),      prim::kPrimArgmax->name(),
+    prim::kPrimBiasAdd->name(),        prim::kPrimBiasAddGrad->name(), prim::kPrimLayerNorm->name(),
+    prim::kPrimLayerNormGrad->name(),  prim::kPrimLogSoftmax->name(),  prim::kPrimLogSoftmaxGrad->name(),
+    prim::kPrimAdamWeightDecay->name()};
   return convert_input_attr_ops;
 }
 
@@ -181,9 +181,10 @@ bool ConvertFrontEndToGraphKernel::Process(const CNodePtr &cnode, const ops::OpD
   const auto &op_def_args = op_def->args_;
   const auto &op_def_indexes = op_def->indexes_;
   bool changed = false;
-  if (op_def_args.size() != cnode->size() - 1) {
+  auto ori_input_size = AnfUtils::GetInputTensorNum(cnode);
+  if (op_def_args.size() != ori_input_size) {
     MS_LOG(EXCEPTION) << "The size of args in op_def `" << op_def->args_.size()
-                      << "` should be equal to the inputs size minus one `" << cnode->size() - 1 << "`.";
+                      << "` should be equal to the inputs size minus one `" << ori_input_size << "`.";
   }
   auto iter = op_def_args.crbegin();
   auto new_input_size = op_def_args.size();
@@ -206,6 +207,9 @@ bool ConvertFrontEndToGraphKernel::Process(const CNodePtr &cnode, const ops::OpD
   if (changed) {
     // remainder args in op_def_arg is the size of new input args
     AnfNodePtrList new_inputs(inputs.begin(), inputs.begin() + new_input_size + 1);
+    for (size_t i = ori_input_size; i < inputs.size() - 1; ++i) {
+      new_inputs.emplace_back(inputs[i + 1]);
+    }
     cnode->set_inputs(new_inputs);
     auto cb = Callback::Instance();
     MS_EXCEPTION_IF_NULL(cb);

@@ -1,0 +1,17 @@
+#operator correlate
+correlate:
+  args:
+    a:
+      dtype: tensor
+    v:
+      dtype: tensor
+    mode:
+      dtype: int
+      arg_handler: str_to_enum
+      default: "'valid'"
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True

@@ -102,6 +102,9 @@ tensor::TensorPtr CreateTensorWithValueTuple(const ValueSequencePtr &value_tuple
     return CreateTensorByTupleCast<T, float>(values, type_ptr, data_len);
   } else if (type_ptr->type_id() == kNumberTypeFloat64) {
     return CreateTensorByTupleCast<T, double>(values, type_ptr, data_len);
+  } else if (type_ptr->type_id() == kNumberTypeBool) {
+    // std::vector<bool> is not a valid container, so use std::vector<int8_t> to hold the values
+    return CreateTensorByTupleCast<T, int8_t>(values, type_ptr, data_len);
   } else {
     MS_EXCEPTION(TypeError) << "Invalid scalar type: " << type_ptr->ToString();
   }
@@ -130,6 +133,8 @@ tensor::TensorPtr SeqToTensorByType(const ValueSequencePtr &value_tuple, const T
     tensor = CreateTensorWithValueTuple<float>(value_tuple, data_type, data_len);
   } else if (scalar->isa<FP64Imm>()) {
     tensor = CreateTensorWithValueTuple<double>(value_tuple, data_type, data_len);
+  } else if (scalar->isa<BoolImm>()) {
+    tensor = CreateTensorWithValueTuple<bool>(value_tuple, data_type, data_len);
   } else {
     auto type = scalar->type();
     auto type_str = (type == nullptr) ? "nullptr" : type->ToString();

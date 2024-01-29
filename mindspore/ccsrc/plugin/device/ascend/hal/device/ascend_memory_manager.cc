@@ -108,10 +108,10 @@ uint8_t *AscendMemoryManager::MallocDynamicMem(size_t size, bool communication_m
 
 // communication memory: [512align_size + data + 512align_size]
 // return the pointer to the start of data address.
-uint8_t *AscendMemoryManager::MallocCommunicationMemFromMemPool(size_t size) {
+uint8_t *AscendMemoryManager::MallocCommunicationMemFromMemPool(size_t size, uint32_t stream_id) {
   auto align_size = GetCommunicationAlignSize(size);
-  uint8_t *base_ptr = reinterpret_cast<uint8_t *>(
-    AscendMemoryPool::GetInstance().AllocTensorMem(align_size, false, false, kWorldGroupStreamIndex));
+  uint8_t *base_ptr =
+    reinterpret_cast<uint8_t *>(AscendMemoryPool::GetInstance().AllocTensorMem(align_size, false, false, stream_id));
   if (base_ptr != nullptr) {
     return base_ptr + kMemAlignSize;
   }
@@ -120,8 +120,8 @@ uint8_t *AscendMemoryManager::MallocCommunicationMemFromMemPool(size_t size) {
 }
 
 bool AscendMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t /* total_size */,
-                                                         std::vector<size_t> size_list) {
-  auto device_ptr_list = MallocContinuousMemFromMemPool(size_list);
+                                                         std::vector<size_t> size_list, uint32_t stream_id) {
+  auto device_ptr_list = MallocContinuousMemFromMemPool(size_list, stream_id);
   if (device_ptr_list.empty()) {
     return false;
   }

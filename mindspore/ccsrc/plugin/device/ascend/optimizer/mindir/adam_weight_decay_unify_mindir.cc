@@ -23,8 +23,8 @@
 namespace mindspore {
 namespace opt {
 namespace {
-constexpr size_t kAdamWeightDecayInputNum = 11;
-const std::vector<size_t> kdamWeightDecayIndexMapping = {9, 3, 2, 1, 4, 5, 11, 6, 12, 8, 7};
+constexpr size_t kAdamWeightDecayInputNum = 12;
+const std::vector<size_t> kdamWeightDecayIndexMapping = {9, 3, 2, 1, 4, 5, 12, 6, 13, 8, 7};
 
 ValueNodePtr CreateValueNode(const FuncGraphPtr &graph, double value) {
   auto tensor = std::make_shared<tensor::Tensor>(value);
@@ -100,8 +100,8 @@ const AnfNodePtr AdamWeightDecayUnifyMindIR::Process(const FuncGraphPtr &func_gr
   input_list[kIndex9] = grad_fp32;
 
   // Mapping ms index to ge index.
-  for (size_t i = 1; i < input_list.size() - 1; ++i) {
-    const auto &cur_node = input_list[kdamWeightDecayIndexMapping[i - 1]];
+  for (size_t i = 0; i < kdamWeightDecayIndexMapping.size(); ++i) {
+    const auto &cur_node = input_list[kdamWeightDecayIndexMapping[i]];
     (void)new_node_inputs.emplace_back(cur_node);
   }
 

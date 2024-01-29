@@ -128,6 +128,12 @@ class AclAdapter {
   APP_ERROR CreateAclTensor(const int64_t *view_dims, uint64_t view_dims_num, mindspore::TypeId data_type,
                             const int64_t *stride, int64_t offset, const int64_t *storage_dims,
                             uint64_t storage_dims_num, void *tensor_data, bool is_hwc, void **acl_tensor);
+
+  APP_ERROR DestroyTensor(void *tensor);
+
+  APP_ERROR DestroyFloatArray(void *float_array);
+
+  APP_ERROR DestroyIntArray(void *int_array);
 #endif
 
  private:
@@ -195,6 +201,9 @@ class AclAdapter {
   // acl interface
   GetSocNameFunObj get_soc_name_fun_obj_;
   CreateAclTensorFunObj create_acl_tensor_fun_obj_;
+  DestroyTensorFunObj destroy_tensor_fun_obj_;
+  DestroyFloatArrayFunObj destroy_float_array_fun_obj_;
+  DestroyIntArrayFunObj destroy_int_array_fun_obj_;
 #endif
 };
 }  // namespace mindspore::dataset

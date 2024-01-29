@@ -21,12 +21,6 @@ function(opbuild)
       ${CMAKE_CXX_COMPILER} -g -fPIC -shared -std=c++11 ${OPBUILD_OPS_SRC}
       -D_GLIBCXX_USE_CXX11_ABI=0 -I ${ASCEND_CANN_PACKAGE_PATH}/include
       -I ${OPBUILD_INC_DIR} -I ${OPBUILD_SEC_INC}
-      -I ${TOP_DIR}/graphengine/910/metadef/inc
-      -I ${TOP_DIR}/graphengine/910/inc
-      -I ${TOP_DIR}/graphengine/910/inc/run/ascendc/op_host
-      -I ${TOP_DIR}/graphengine/910/inc/external
-      -I ${TOP_DIR}/graphengine/910/third_party/fwkacllib
-      -I ${TOP_DIR}/graphengine/910/third_party/fwkacllib/inc
       -L ${ASCEND_CANN_PACKAGE_PATH}/lib64 -lexe_graph -lregister -ltiling_api -o
       ${OPBUILD_OUT_DIR}/libascend_all_ops.so
     RESULT_VARIABLE EXEC_RESULT

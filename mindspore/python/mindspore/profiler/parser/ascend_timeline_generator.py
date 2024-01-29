@@ -57,7 +57,7 @@ class AscendTimelineGeneratorOld(BaseTimelineGenerator):
             [('Op Name', object), ('Stream ID', int), ('Task Start Time', float), ('Task Duration', float),
              ('pid', int)])
 
-    def init_timeline(self, op_summary, steptrace):
+    def init_timeline(self, op_summary, steptrace, pretty=False):
         """
         Init timeline metadata, adding all collected info.
 
@@ -67,6 +67,7 @@ class AscendTimelineGeneratorOld(BaseTimelineGenerator):
         """
 
         logger.info('Initiating timeline...')
+        self._pretty = pretty
 
         timeline_list = op_summary[~np.isin(op_summary['Task Type'], ['AI_CPU', 'HCCL'])][
             ['Op Name', 'Stream ID', 'Task Start Time', 'Task Duration']]
@@ -500,21 +501,21 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         )
         try:
             with os.fdopen(os.open(display_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as fw:
-                json.dump(self._timeline_data, fw)
+                json.dump(self._timeline_data, fw, indent=self.indent)
             os.chmod(display_file_path, stat.S_IREAD | stat.S_IWRITE)
             logger.info('Finished file writing!')
         except (IOError, OSError) as err:
             logger.critical('Error occurred when write timeline display file: %s', err)
             raise ProfilerIOException() from err
 
-    def parse_timeline_data(self):
+    def parse_timeline_data(self, pretty=False):
         """
         Get detail timeline
         Returns:
             json, the content of timeline data.
         """
         logger.info("Start parse timeline data...")
-
+        self._pretty = pretty
         timeline_data = []
         task_list = []
         hardware_data_list = []
@@ -569,7 +570,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             hccl_file_name = fr'{self._msprof_timeline_dir}/hccl_*.json'
             file_list_hccl = glob.glob(hccl_file_name)
             if not file_list_hccl:
-                logger.error('Could not find hccl file in %s', self._msprof_timeline_dir)
+                logger.warning('Could not find hccl file in %s', self._msprof_timeline_dir)
             else:
                 hccl_data = self._parse_hccl_data(get_newest_file(file_list_hccl))
                 timeline_data.extend(hccl_data)

@@ -396,6 +396,7 @@ DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size
     {node_index.first, node_index.second}, device_ptr, device_size, format, type_id, {}, kAscendDevice, device_id);
   auto ascend_device_address_ptr = std::make_shared<AscendDeviceAddress>(kernel_tensor);
   MS_EXCEPTION_IF_NULL(ascend_device_address_ptr);
+  kernel_tensor->set_stream_id(AnfAlgo::GetStreamId(node_index.first));
 
   ascend_device_address_ptr->SetNodeIndex(node_index.first, node_index.second);
   ascend_device_address_ptr->set_is_ptr_persisted(true);

@@ -23,15 +23,18 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
-void *GPUMemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool, uint32_t stream_id) {
-  return GPUMemoryAllocator::GetInstance().AllocTensorMem(size, from_persistent_mem, false, stream_id);
+// GPU use default stream id currently.
+void *GPUMemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool, uint32_t /*stream_id*/) {
+  return GPUMemoryAllocator::GetInstance().AllocTensorMem(size, from_persistent_mem, false);
 }
 
 void GPUMemoryManager::FreeMemFromMemPool(void *device_ptr) {
   GPUMemoryAllocator::GetInstance().FreeTensorMem(device_ptr);
 }
 
-std::vector<void *> GPUMemoryManager::MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list) {
+// GPU use default stream id currently.
+std::vector<void *> GPUMemoryManager::MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list,
+                                                                     uint32_t /*stream_id*/) {
   return GPUMemoryAllocator::GetInstance().AllocContinuousTensorMem(size_list);
 }
 
@@ -43,8 +46,8 @@ size_t GPUMemoryManager::GetAvailableMemSize() {
 }
 
 bool GPUMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,
-                                                      std::vector<size_t> size_list) {
-  auto device_ptr_list = MallocContinuousMemFromMemPool(size_list);
+                                                      std::vector<size_t> size_list, uint32_t steam_id) {
+  auto device_ptr_list = MallocContinuousMemFromMemPool(size_list, steam_id);
   if (device_ptr_list.empty()) {
     return false;
   }

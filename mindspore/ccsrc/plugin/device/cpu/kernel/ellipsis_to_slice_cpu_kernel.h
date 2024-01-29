@@ -51,6 +51,7 @@ class EllipsisToSliceCpuKernelMod : public NativeCpuKernelMod {
  private:
   std::vector<std::vector<int64_t>> data_shapes_;
   int64_t end_mask_{0};
+  int64_t begin_mask_{0};
   size_t ellipse_position_{0};
   size_t not_ellipse_occupy_dims_{0};
 };

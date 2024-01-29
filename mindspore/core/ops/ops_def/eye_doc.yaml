@@ -9,12 +9,12 @@ eye:
 
 
     Inputs:
-        - **n** (int): The number of rows of returned tensor. Constant value only.
-        - **m** (int): The number of columns of returned tensor. Constant value only.
-        - **dtype** (mindspore.dtype): MindSpore's dtype, the data type of the returned tensor.
+        - **n** (int) - The number of rows of returned tensor. Constant value only.
+        - **m** (int) - The number of columns of returned tensor. Constant value only.
+        - **dtype** (mindspore.dtype) - MindSpore's dtype, the data type of the returned tensor.
           The data type can be bool or Number.
 
-    Returns:
+    Outputs:
         Tensor, a tensor with ones on the diagonal and the rest of elements are zero. The shape of `output` depends on
         the user's Inputs `n` and `m`. And the data type depends on Inputs `dtype`.
 

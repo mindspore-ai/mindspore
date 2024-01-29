@@ -2,29 +2,32 @@ roll:
     description: |
         Rolls the elements of a tensor along an axis.
 
+        Refer to :func:`mindspore.ops.roll` for more details.
+
         Args:
-            input (Tensor): Input tensor.
             shift (Union[list(int), tuple(int), int]): Specifies the number of places by which elements are shifted
-                positively (towards larger indices) along the specified dimension. Negative shift will roll the elements
+                positively (towards larger indices) along the specified dimension. Negative shifts will roll the elements
                 in the opposite direction.
             axis (Union[list(int), tuple(int), int]): Specifies the dimension indexes of shape to be rolled.
 
-        Returns:
-            Tensor, has the same shape and type as `input`.
+        Inputs:
+            - **input_x** (Tensor) - Input tensor.
 
-        Raises:
-            TypeError: If `shift` is not an int, a tuple or a list.
-            TypeError: If `axis` is not an int, a tuple or a list.
+        Outputs:
+            Tensor, has the same shape and type as `input_x`.
 
         Supported Platforms:
             ``GPU``
 
         Examples:
-            >>> import numpy as np
-            >>> import mindspore as ms
-            >>> import mindspore.ops as ops
-            >>> from mindspore import Tensor
             >>> input_x = Tensor(np.array([0, 1, 2, 3, 4]).astype(np.float32))
-            >>> output = ops.Roll(shift=2, axis=0)(input_x)
+            >>> op = ops.Roll(shift=2, axis=0)
+            >>> output = op(input_x)
             >>> print(output)
             [3. 4. 0. 1. 2.]
+            >>> input_x = Tensor(np.array([[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]]).astype(np.float32))
+            >>> op = ops.Roll(shift=-1, axis=0)
+            >>> output = op(input_x)
+            >>> print(output)
+            [[5. 6. 7. 8. 9.]
+            [0. 1. 2. 3. 4.]]

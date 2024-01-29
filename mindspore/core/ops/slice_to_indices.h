@@ -17,7 +17,9 @@
 #ifndef MINDSPORE_CORE_OPS_SLICE_TO_INDICES_H_
 #define MINDSPORE_CORE_OPS_SLICE_TO_INDICES_H_
 
+#include <vector>
 #include "ops/base_operator.h"
+#include "mindapi/base/shape_vector.h"
 
 namespace mindspore {
 namespace ops {
@@ -33,6 +35,11 @@ class MIND_API SliceToIndices : public BaseOperator {
   /// \brief Init function.
   void Init() const {}
 };
+
+MIND_API std::vector<int64_t> CalSliceToIndices(const ShapeVector &data_shape, size_t index_axis,
+                                                int64_t expand_dims_mask, const std::vector<int64_t> &tuple_index_types,
+                                                const std::vector<int64_t> &init_by_none, int64_t *start, int64_t *stop,
+                                                int64_t *step);
 }  // namespace ops
 }  // namespace mindspore
 

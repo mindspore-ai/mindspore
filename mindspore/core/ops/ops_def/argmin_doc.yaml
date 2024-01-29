@@ -10,9 +10,9 @@ argmin:
             output_type (:class:`mindspore.dtype`): Output data type.
                 Supported types: ``mstype.int32`` , ``mstype.int64`` . Default: ``mstype.int32`` .
         
-        **Inputs**:
-            - **input_x** (Tensor): Input tensor. The shape is :math:`(N, *)` where :math:`*` means, 
-                any number of additional dimensions.
+        Inputs:
+            - **input_x** (Tensor) - Input tensor. The shape is :math:`(N, *)` where :math:`*` means, 
+              any number of additional dimensions.
  
         Outputs:
             Tensor, whose dtype is determined by `output_type`.

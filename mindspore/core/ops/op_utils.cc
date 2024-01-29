@@ -612,13 +612,9 @@ template <typename T>
 AbstractBasePtr TensorToSequenceInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const int64_t input_len = 1;
   constexpr size_t input_0_index = 0;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len, prim_name);
 
-  auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
-  MS_EXCEPTION_IF_NULL(shape_ptr);
-  auto x_shape = shape_ptr->shape();
+  auto x_shape = input_args[kInputIndex0]->GetShape()->GetShapeVector();
   if (x_shape.size() > 1) {
     MS_EXCEPTION(ValueError) << "For Primitive[" << prim_name << "], the input must be a 1-D Tensor, but got Tensor "
                              << "with shape: " << x_shape << ".";
@@ -640,9 +636,8 @@ AbstractBasePtr TensorToSequenceInfer(const PrimitivePtr &primitive, const std::
     abs->CheckAndConvertToDynamicLenSequence();
     return abs;
   }
-  if (x_shape.empty()) {
-    abs_list.push_back(std::make_shared<abstract::AbstractScalar>(kValueAny, element_type));
-  } else {
+
+  if (!x_shape.empty()) {
     for (int64_t i = 0; i < x_shape[0]; i++) {
       abs_list.push_back(std::make_shared<abstract::AbstractScalar>(kValueAny, element_type));
     }

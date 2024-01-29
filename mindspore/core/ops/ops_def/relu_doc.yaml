@@ -2,32 +2,24 @@ relu:
     description: |
         Computes ReLU (Rectified Linear Unit activation function) of input tensors element-wise.
 
-        It returns :math:`\max(input,\  0)` element-wise. Specially, the neurons with the negative output
-        will be suppressed and the active neurons will stay the same.
+        Refer to :func:`mindspore.ops.relu` for more details.
 
-        .. math::
+        Inputs:
+            - **input_x** (Tensor) - Input Tensor of numeric types.
 
-            ReLU(input) = (input)^+ = \max(0, input)
-
-        Args:
-            input (Tensor): The input Tensor.
-
-        Returns:
-            Tensor, has the same dtype and shape as `input`.
-
-        Raises:
-            TypeError: If dtype of `input` is not supported.
-            TypeError: If `input` is not a Tensor.
+        Outputs:
+            Tensor, has the same dtype and shape as `input_x`.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
-            >>> import numpy as np
             >>> import mindspore
+            >>> import numpy as np
             >>> from mindspore import Tensor, ops
-            >>> input = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-            >>> output = ops.ReLU()(input)
+            >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+            >>> relu = ops.ReLU()
+            >>> output = relu(input_x)
             >>> print(output)
             [[0. 4. 0.]
-             [2. 0. 9.]]
+            [2. 0. 9.]]

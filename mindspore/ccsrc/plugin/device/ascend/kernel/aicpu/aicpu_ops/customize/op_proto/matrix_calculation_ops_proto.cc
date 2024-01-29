@@ -11,14 +11,6 @@
 #include "utils/common_shape_fns.h"
 
 namespace ge {
-IMPLEMT_COMMON_INFERFUNC(OneInOneOutCommonInferShape) {
-  static const int64_t input_x_idx = 0;
-  static const int64_t output_y_idx = 0;
-  if (OneInOneOutDynamicInfer(op, input_x_idx, {output_y_idx})) {
-    return GRAPH_SUCCESS;
-  }
-  return GRAPH_FAILED;
-}
 // ---------------Eye----------------------------
 static bool CheckRows(const Operator &op, const string &attr_num_rows) {
   int64_t num_rows;
@@ -112,7 +104,7 @@ CUST_COMMON_INFER_FUNC_REG(MatrixLogarithm, MatrixLogarithmInferShaper);
 // ----------------MatrixLogarithm END-------------------
 
 // ----------------MatrixExp-------------------
-CUST_COMMON_INFER_FUNC_REG(MatirxExp, OneInOneOutCommonInferShape);
+CUST_ONE_IN_ONE_OUT_INFER(MatrixExp, x, y);
 // ----------------MatrixExp END-------------------
 
 // ----------------TraceGrad Begin------------------------
@@ -217,7 +209,7 @@ VERIFY_FUNC_REG(TensorScatterUpdate, TensorScatterUpdateVerify);
 // -------------------TensorScatterUpdate END----------------
 
 // -------------------Orgqr----------------
-CUST_COMMON_INFER_FUNC_REG(Orgqr, OneInOneOutCommonInferShape);
+CUST_ONE_IN_ONE_OUT_INFER(Orgqr, x, y);
 // -------------------Orgqr END----------------
 
 // -----------------------Trace-----------------------

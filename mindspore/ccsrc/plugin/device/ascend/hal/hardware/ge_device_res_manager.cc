@@ -44,23 +44,30 @@ void GeAllocator::Free(::ge::MemBlock *block) {
 }
 
 void GeDeviceResManager::Initialize() {
-  if (IsEnableRefMode()) {
-    auto ms_context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(ms_context);
-    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    runtime_instance_ = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
-    MS_EXCEPTION_IF_NULL(runtime_instance_);
-    if (!runtime_instance_->Init()) {
-      MS_LOG(EXCEPTION) << "Kernel runtime init error.";
-    }
-    mem_manager_ = runtime_instance_->GetMemoryManager();
-  } else {
-    mem_manager_ = std::make_shared<cpu::CPUMemoryManager>();
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  runtime_instance_ = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
+  MS_EXCEPTION_IF_NULL(runtime_instance_);
+  if (!runtime_instance_->Init()) {
+    MS_LOG(EXCEPTION) << "Kernel runtime init error.";
   }
+  mem_manager_ = runtime_instance_->GetMemoryManager();
   MS_EXCEPTION_IF_NULL(mem_manager_);
 }
 
+void GeDeviceResManager::SetCPUMemManager() {
+  if (is_use_cpu_memory_) {
+    return;
+  }
+  runtime_instance_ = nullptr;
+  mem_manager_ = std::make_shared<cpu::CPUMemoryManager>();
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  is_use_cpu_memory_ = true;
+}
+
 void GeDeviceResManager::Destroy() {
+  (void)DestroyAllEvents();
   // Release memory.
   if (mem_manager_ != nullptr) {
     mem_manager_->Finalize();
@@ -132,7 +139,8 @@ void GeDeviceResManager::SwapOut(const void *device_ptr, void *host_ptr, size_t 
   (void)mem_manager_->SwapOut(device_ptr, host_ptr, mem_size, stream);
 }
 
-std::vector<void *> GeDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
+std::vector<void *> GeDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list,
+                                                                 uint32_t stream_id) const {
   MS_EXCEPTION_IF_NULL(runtime_instance_);
   runtime_instance_->SetContext();
   MS_EXCEPTION_IF_NULL(mem_manager_);
@@ -144,12 +152,12 @@ std::vector<void *> GeDeviceResManager::AllocateContinuousMemory(const std::vect
   if (swap_manager_ != nullptr) {
     return swap_manager_->AllocDeviceContinuousMem(aligned_size_list);
   }
-  return mem_manager_->MallocContinuousMemFromMemPool(aligned_size_list);
+  return mem_manager_->MallocContinuousMemFromMemPool(aligned_size_list, stream_id);
 }
 
 DeviceAddressPtr GeDeviceResManager::CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
   MS_EXCEPTION_IF_NULL(kernel_tensor);
-  if (IsEnableRefMode()) {
+  if (!is_use_cpu_memory_) {
     if (kernel_tensor->device_name().empty()) {
       kernel_tensor->set_device_name(device_context_->device_context_key().device_name_);
       kernel_tensor->set_device_id(device_context_->device_context_key().device_id_);
@@ -326,10 +334,11 @@ size_t GeDeviceResManager::DefaultStream() const {
   return AscendStreamMng::GetInstance().default_stream_id();
 }
 
-DeviceEventPtr GeDeviceResManager::CreateEventWithFlag(bool enable_timing, bool blocking) const {
+DeviceEventPtr GeDeviceResManager::CreateEventWithFlag(bool enable_timing, bool blocking) {
   auto flag = enable_timing ? ACL_EVENT_TIME_LINE : ACL_EVENT_DEFAULT;
   auto event = std::make_shared<AscendEvent>(flag);
   MS_EXCEPTION_IF_NULL(event);
+  device_events_.push_back(event);
   return event;
 }
 }  // namespace ascend

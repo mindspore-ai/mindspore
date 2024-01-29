@@ -295,7 +295,7 @@ IMPLEMT_INFERFUNC(DataFormatVecPermute, DataFormatVecPermuteInfer) {
   y_desc.SetShape(x_desc.GetShape());
   y_desc.SetShapeRange(range);
   y_desc.SetDataType(y_type);
-  UpdateOutputDesc(op, y_desc);
+  op.UpdateOutputDesc("y", y_desc);
   return GRAPH_SUCCESS;
 }
 

@@ -36,6 +36,9 @@ const AnfNodePtr NanToNumFusionProcess(const FuncGraphPtr &graph, const AnfNodeP
   const auto &prim = common::AnfAlgo::GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(prim);
 
+  auto manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+
   size_t idx0 = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(cnode), "nan");
   if (idx0 != SIZE_MAX) {
     auto nan_node = common::AnfAlgo::GetInputNode(cnode, idx0);
@@ -45,7 +48,8 @@ const AnfNodePtr NanToNumFusionProcess(const FuncGraphPtr &graph, const AnfNodeP
     auto nan_value_node_ptr = nan_node->cast<ValueNodePtr>();
     auto nan_value_ptr = utils::cast<ValuePtr>(nan_value_node_ptr->value());
     if (nan_value_ptr->isa<None>()) {
-      nan_node->cast<ValueNodePtr>()->set_value(MakeValue(static_cast<float>(0.0)));
+      auto new_nan_node = opt::CreateValueNodeWithKernelInfo(graph, MakeValue(static_cast<float>(0.0)));
+      manager->SetEdge(cnode, kIndex2, new_nan_node);
     }
   } else {
     MS_LOG(ERROR) << "For '" << cnode->fullname_with_scope() << "', can't not find input of nan.";
@@ -65,7 +69,8 @@ const AnfNodePtr NanToNumFusionProcess(const FuncGraphPtr &graph, const AnfNodeP
     auto posinf_value_node_ptr = posinf_node->cast<ValueNodePtr>();
     auto posinf_value_ptr = utils::cast<ValuePtr>(posinf_value_node_ptr->value());
     if (posinf_value_ptr->isa<None>()) {
-      posinf_node->cast<ValueNodePtr>()->set_value(posinf);
+      auto new_posinf_node = opt::CreateValueNodeWithKernelInfo(graph, posinf);
+      manager->SetEdge(cnode, kIndex3, new_posinf_node);
     }
   } else {
     MS_LOG(ERROR) << "For '" << cnode->fullname_with_scope() << "', can't not find input of posinf.";
@@ -85,7 +90,8 @@ const AnfNodePtr NanToNumFusionProcess(const FuncGraphPtr &graph, const AnfNodeP
     auto neginf_value_node_ptr = neginf_node->cast<ValueNodePtr>();
     auto neginf_value_ptr = utils::cast<ValuePtr>(neginf_value_node_ptr->value());
     if (neginf_value_ptr->isa<None>()) {
-      neginf_node->cast<ValueNodePtr>()->set_value(neginf);
+      auto new_neginf_node = opt::CreateValueNodeWithKernelInfo(graph, neginf);
+      manager->SetEdge(cnode, kIndex4, new_neginf_node);
     }
   } else {
     MS_LOG(ERROR) << "For '" << cnode->fullname_with_scope() << "', can't not find input of neginf.";

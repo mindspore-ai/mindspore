@@ -1,18 +1,8 @@
-set(BUILD_INC_910A_DIR ${TOP_DIR}/graphengine/910/metadef/inc/external)
 set(SECUREC_INC_DIR ${TOP_DIR}/third_party/securec/include)
-
-include_directories(${TOP_DIR}/graphengine/910/metadef/inc/external)
-include_directories(${TOP_DIR}/graphengine/910/metadef/inc)
-include_directories(${TOP_DIR}/graphengine/910/inc)
-include_directories(${TOP_DIR}/graphengine/910/inc/run/ascendc/op_host)
-include_directories(${TOP_DIR}/graphengine/910/inc/external)
-include_directories(${TOP_DIR}/graphengine/910/third_party/fwkacllib)
-include_directories(${TOP_DIR}/graphengine/910/third_party/fwkacllib/inc)
 
 set(OP_HOST_DIR ${CMAKE_SOURCE_DIR}/mindspore/lite/tools/kernel_builder/ascend/ascendc/op_host)
 aux_source_directory(${OP_HOST_DIR} ops_srcs)
-opbuild(OPS_SRC ${ops_srcs} OUT_DIR ${ASCEND_AUTOGEN_PATH} INC_DIR ${BUILD_INC_910A_DIR}
-        SEC_INC ${SECUREC_INC_DIR})
+opbuild(OPS_SRC ${ops_srcs} OUT_DIR ${ASCEND_AUTOGEN_PATH} INC_DIR " " SEC_INC ${SECUREC_INC_DIR})
 
 add_library(cust_ascendc_op_proto SHARED ${ops_srcs} ${ASCEND_AUTOGEN_PATH}/op_proto.cc)
 target_compile_definitions(cust_ascendc_op_proto PRIVATE OP_PROTO_LIB)

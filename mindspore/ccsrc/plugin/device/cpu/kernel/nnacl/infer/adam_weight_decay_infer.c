@@ -20,7 +20,7 @@
 
 int AdamWeightDecayInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                               OpParameter *parameter) {
-  const size_t expected_inputs_size = 9;
+  const size_t expected_inputs_size = 10;
   const int var_idx = 0;
   const int m_idx = 1;
   const int v_idx = 2;

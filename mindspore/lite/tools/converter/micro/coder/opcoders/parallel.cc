@@ -37,7 +37,7 @@ void InitThread(int model_index) {
   }
   int ret = memcpy_s(const_cast<char *>(gThreadNum), (weight_name.size() + 1) * sizeof(char), weight_name.c_str(),
                      (weight_name.size() + 1) * sizeof(char));
-  if (ret == RET_ERROR) {
+  if (ret != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed";
     return;
   }

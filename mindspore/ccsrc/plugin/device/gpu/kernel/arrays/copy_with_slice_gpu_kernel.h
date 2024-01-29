@@ -29,17 +29,17 @@ class CopyWithSliceGpuKernel {
   ~CopyWithSliceGpuKernel() = default;
 
   bool LaunchCopyWithSlice(TypeId type_id, const TensorStorageInfoPtr &src_storage_info,
-                           const kernel::AddressPtr &src_addr, const TensorStorageInfoPtr &dst_storage_info,
-                           const kernel::AddressPtr &dst_addr, void *stream_ptr);
+                           const kernel::KernelTensorPtr &src_addr, const TensorStorageInfoPtr &dst_storage_info,
+                           const kernel::KernelTensorPtr &dst_addr, void *stream_ptr);
 
  private:
   using CopyWithSliceFunc =
-    std::function<bool(CopyWithSliceGpuKernel *, const TensorStorageInfoPtr &, const kernel::AddressPtr &,
-                       const TensorStorageInfoPtr &, const kernel::AddressPtr &, void *)>;
+    std::function<bool(CopyWithSliceGpuKernel *, const TensorStorageInfoPtr &, const kernel::KernelTensorPtr &,
+                       const TensorStorageInfoPtr &, const kernel::KernelTensorPtr &, void *)>;
 
   template <typename T>
-  bool LaunchCopyWithSliceImpl(const TensorStorageInfoPtr &src_storage_info, const kernel::AddressPtr &src_addr,
-                               const TensorStorageInfoPtr &dst_storage_info, const kernel::AddressPtr &dst_addr,
+  bool LaunchCopyWithSliceImpl(const TensorStorageInfoPtr &src_storage_info, const kernel::KernelTensorPtr &src_addr,
+                               const TensorStorageInfoPtr &dst_storage_info, const kernel::KernelTensorPtr &dst_addr,
                                void *stream_ptr);
   static std::unordered_map<TypeId, CopyWithSliceFunc> func_list_;
 };

@@ -44,7 +44,7 @@ class InstanceNormV2CpuKernelMod : public NativeCpuKernelMod {
   bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   template <typename T>
-  void CollectStatsKernel(const kernel::KernelTensor *x, float *_mean_, float *_var_sum) const;
+  void CollectStatsKernel(kernel::KernelTensor *x, float *_mean_, float *_var_sum) const;
 
   void CollectLinearAndConstant(const typename TTypes<float>::Vec &gamma, const typename TTypes<float>::Vec &beta,
                                 const typename TTypes<float>::Vec &running_mean,

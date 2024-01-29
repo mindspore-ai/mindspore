@@ -191,10 +191,18 @@ size_t CombinedNonMaxSuppressionCpuKernelMod::nms_perbath(float *boxes, float *s
                                                           int *valid_detection) {
   int box_size = SizeToInt(num_bath_ * num_detection_ * sizeof(float) * multiplier);
   int score_size = SizeToInt(num_bath_ * num_detection_ * sizeof(float));
-  void(memset_s(nmsed_boxes, box_size, 0, box_size));
-  void(memset_s(nmsed_scores, score_size, 0, score_size));
-  void(memset_s(nmsed_class, score_size, 0, score_size));
-  void(memset_s(valid_detection, sizeof(int) * num_bath_, 0, sizeof(int) * num_bath_));
+  if (memset_s(nmsed_boxes, box_size, 0, box_size) != EOK) {
+    MS_LOG(EXCEPTION) << "failed to init memory.";
+  }
+  if (memset_s(nmsed_scores, score_size, 0, score_size) != EOK) {
+    MS_LOG(EXCEPTION) << "failed to init memory.";
+  }
+  if (memset_s(nmsed_class, score_size, 0, score_size) != EOK) {
+    MS_LOG(EXCEPTION) << "failed to init memory.";
+  }
+  if (memset_s(valid_detection, sizeof(int) * num_bath_, 0, sizeof(int) * num_bath_) != EOK) {
+    MS_LOG(EXCEPTION) << "failed to init memory.";
+  }
   const float box_min = 0.0;
   const float box_max = 1.0;
   /**
@@ -247,7 +255,7 @@ size_t CombinedNonMaxSuppressionCpuKernelMod::nms_perbath(float *boxes, float *s
     }
   };
   ParallelLaunchAutoSearch(shard_nms, num_bath_, this, &parallel_search_info_);
-  return true;
+  return EOK;
 }
 
 void CombinedNonMaxSuppressionCpuKernelMod::CheckInput() {

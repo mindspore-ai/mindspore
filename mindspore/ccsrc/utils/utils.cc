@@ -257,35 +257,18 @@ bool IsOneOfDynRankNeedPadShape(const std::string &format) {
 }
 
 bool IsEnableRefMode() {
-  if (common::GetEnv("MS_DISABLE_REF_MODE") == "1") {
-    return false;
-  }
-  return true;
+  static bool ret = !(common::GetEnv("MS_DISABLE_REF_MODE") == "1");
+  return ret;
 }
-
-namespace {
-bool CheckNeedMemoryPoolRecycle() {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  static bool optimize_mem = context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0;
-  static auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
-  static bool enable_ref_mode = IsEnableRefMode();
-  static bool is_kbk = context_ptr->IsKByKExecutorMode();
-
-  MS_LOG(INFO) << "Check Need Memory Pool Recycle: optimize_mem[" << optimize_mem << "], mode[" << mode
-               << "], enable_ref_mode[" << enable_ref_mode << "], is_kbk[" << is_kbk << "].";
-  if (optimize_mem && enable_ref_mode && mode == kGraphMode && !is_kbk) {
-    context_ptr->set_param<uint32_t>(MS_CTX_RUNTIME_NUM_THREADS, 1);
-    MS_LOG(INFO) << "Enable memory pool recycle, set runtime thread num to 1.";
-    return true;
-  }
-  return false;
-}
-}  // namespace
 
 bool IsMemoryPoolRecycle() {
-  static bool is_memory_pool_recycle = CheckNeedMemoryPoolRecycle();
-  return is_memory_pool_recycle;
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool optimize_mem = context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0;
+  bool enable_ref_mode = IsEnableRefMode();
+  auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
+  auto task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  return optimize_mem && enable_ref_mode && mode == kGraphMode && task_sink;
 }
 
 size_t GetSystemMemorySize(const std::string &key) {

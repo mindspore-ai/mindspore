@@ -94,7 +94,11 @@ uint32_t TrilCpuKernel::ComputeTril(CpuKernelContext &ctx, size_t k) {
   } else {
     for (int j = 0; j < matrix_height_; j++) {
       for (int i = j; i < j - diagonal_ && i < matrix_width_; i++) {
-        memset_s(output.data() + i * matrix_height_ + j, sizeof(T), 0, sizeof(T));
+        auto ret = memset_s(output.data() + i * matrix_height_ + j, sizeof(T), 0, sizeof(T));
+        if (ret != EOK) {
+          KERNEL_LOG_ERROR("For 'Tril', memset_s failed, ret=%d.", ret);
+          return KERNEL_STATUS_INNER_ERROR;
+        }
       }
     }
   }
