@@ -982,7 +982,8 @@ void ForwardExecutor::ProcessAfterEndGraph(const py::object &obj, bool is_cell) 
 #if defined(__APPLE__)
     ClearNodeAbsMap();
 #else
-    auto forward_task = std::make_shared<FrontendTask>([this](...) { ClearNodeAbsMap(); }, nullptr);
+    static const auto op_run_info = std::make_shared<FrontendOpRunInfo>();
+    auto forward_task = std::make_shared<FrontendTask>([this](...) { ClearNodeAbsMap(); }, op_run_info);
     runtime::Pipeline::Get().frontend_stage()->Push(forward_task);
 #endif
   }
