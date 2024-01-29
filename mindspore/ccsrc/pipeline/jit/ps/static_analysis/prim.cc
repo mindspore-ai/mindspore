@@ -1804,7 +1804,7 @@ EvalResultPtr GenerateFuncGraphForOverriddenMethod(AnfNodePtr node, const ValueP
       MS_LOG(DEBUG) << value_obj << " has no attribute getattr.";
     }
   }
-  if (py::isinstance<py::none>(overridden_method) || py::isinstance<py::none>(overridden_method)) {
+  if (py::isinstance<py::none>(overridden_method) || py::isinstance<py::none>(value_obj)) {
     return nullptr;
   }
   {

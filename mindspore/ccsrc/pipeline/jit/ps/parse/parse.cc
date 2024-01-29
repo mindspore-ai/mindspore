@@ -3335,7 +3335,6 @@ AnfNodePtr Parser::ParseListCompIfs(const FunctionBlockPtr &list_body_block, con
   py::object elt_obj = python_adapter::GetPyObjAttr(node, "elt");
   AnfNodePtr elt_node = ParseExprNode(list_body_block, elt_obj);
   // Append the element.
-  MS_EXCEPTION_IF_NULL(list_body_block->func_graph());
   std::vector<AnfNodePtr> list_vec;
   AnfNodePtr make_list_op = list_body_block->MakeResolveOperation(NAMED_PRIMITIVE_MAKELIST);
   (void)list_vec.emplace_back(make_list_op);
