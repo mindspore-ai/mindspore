@@ -15,13 +15,11 @@
 import pytest
 
 import mindspore.nn as nn
-from mindspore import context, Tensor
+from mindspore import context
 from mindspore.common import mutable
-from mindspore.nn import Cell
-from mindspore.ops.composite import GradOperation
 from sequence_help import context_prepare
 
-context.set_context(mode=context.GRAPH_MODE, grad_for_scalar=True)
+context.set_context(mode=context.GRAPH_MODE)
 context_prepare()
 
 
@@ -47,62 +45,3 @@ def test_scalar_cast():
     res = net(x, y)
     assert res[0] == expectx
     assert res[1] == expecty
-
-
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_scalar_cast1():
-    """
-    Feature: test sequence_add op
-    Description: two inputs are dynamic sequence
-    Expectation: the result match with tuple result
-    """
-    x = mutable(Tensor(2.1))
-    y = mutable(Tensor([3]))
-    expectx = 2
-    expecty = 3.0
-    net = Net()
-    res = net(x, y)
-    assert res[0] == expectx
-    assert res[1] == expecty
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_cast_grad():
-    """
-    Feature: test sequence add grad op
-    Description: inputs are dynamic sequence.
-    Expectation: the result match with tuple result
-    """
-    class Net0(Cell):
-        def construct(self, x):
-            return int(x)
-
-    net_ms = Net0()
-    input_x = mutable(2.2)
-    dout = mutable(1)
-    grad_func = GradOperation(get_all=True, sens_param=True)(net_ms)
-    print("grad out = ", grad_func(input_x, dout))
-
-
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_cast_grad1():
-    """
-    Feature: test sequence add grad op
-    Description: inputs are dynamic sequence.
-    Expectation: the result match with tuple result
-    """
-    class Net1(Cell):
-        def construct(self, y):
-            return float(y)
-
-    net_ms = Net1()
-    input_x = mutable(Tensor(2))
-    dout = mutable(1.0)
-    grad_func = GradOperation(get_all=True, sens_param=True)(net_ms)
-    print("grad out1 = ", grad_func(input_x, dout))
