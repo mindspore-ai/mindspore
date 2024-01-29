@@ -32,9 +32,9 @@ abstract::ShapePtr PagedAttentionInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kPagedAttentionInputsNum, primitive->name());
 
-  auto query_shape_ptr = input_args[kPagedAttentionInputQueryIndex]->BuildShape();
-  auto shape_element = query_shape_ptr->cast<abstract::ShapePtr>();
-  return shape_element;
+  auto query_shape_vector = input_args[kPagedAttentionInputQueryIndex]->GetShape()->GetShapeVector();
+  auto query_shape = std::make_shared<abstract::Shape>(query_shape_vector);
+  return query_shape;
 }
 
 TypePtr PagedAttentionInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

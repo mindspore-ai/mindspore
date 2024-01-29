@@ -34,12 +34,9 @@ abstract::ShapePtr ReshapeAndCacheInferShape(const PrimitivePtr &primitive,
   auto ordinary_input_num = CheckAndConvertUtils::GetRemoveUMonadAbsNum(input_args);
   (void)CheckAndConvertUtils::CheckInteger("inputs num", SizeToLong(ordinary_input_num), kEqual,
                                            kReshapeAndCacheInputsNum, op_name);
-  (void)CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kReshapeAndCacheInputKeyIndex]->BuildShape());
-  (void)CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kReshapeAndCacheInputValueIndex]->BuildShape());
-
-  auto key_shape_ptr = input_args[kReshapeAndCacheInputKeyIndex]->BuildShape();
-  auto shape_element = key_shape_ptr->cast<abstract::ShapePtr>();
-  return shape_element;  // output shape
+  auto key_shape_ptr = input_args[kReshapeAndCacheInputKeyIndex]->GetShape()->GetShapeVector();
+  auto key_shape = std::make_shared<abstract::Shape>(key_shape_ptr);
+  return key_shape;  // output shape
 }
 
 TypePtr ReshapeAndCacheInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -47,13 +44,13 @@ TypePtr ReshapeAndCacheInferType(const PrimitivePtr &prim, const std::vector<Abs
   auto op_name = prim->name();
   std::map<std::string, TypePtr> types;
 
-  (void)types.emplace("key", input_args[kReshapeAndCacheInputKeyIndex]->BuildType());
-  (void)types.emplace("value", input_args[kReshapeAndCacheInputValueIndex]->BuildType());
-  (void)types.emplace("key_cache", input_args[kReshapeAndCacheInputKeyCacheIndex]->BuildType());
-  (void)types.emplace("value_cache", input_args[kReshapeAndCacheInputValueCacheIndex]->BuildType());
+  (void)types.emplace("key", input_args[kReshapeAndCacheInputKeyIndex]->GetType());
+  (void)types.emplace("value", input_args[kReshapeAndCacheInputValueIndex]->GetType());
+  (void)types.emplace("key_cache", input_args[kReshapeAndCacheInputKeyCacheIndex]->GetType());
+  (void)types.emplace("value_cache", input_args[kReshapeAndCacheInputValueCacheIndex]->GetType());
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
 
-  auto slot_mapping_type = input_args[kReshapeAndCacheInputSlotMappingIndex]->BuildType();
+  auto slot_mapping_type = input_args[kReshapeAndCacheInputSlotMappingIndex]->GetType();
   CheckAndConvertUtils::CheckTensorTypeValid("slot_mapping", slot_mapping_type, {kInt32}, op_name);
 
   return type;  // output type
