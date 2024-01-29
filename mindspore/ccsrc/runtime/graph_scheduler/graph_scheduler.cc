@@ -1309,6 +1309,9 @@ DataPrepareActorPtr GraphScheduler::BuildDataPrepareActor(const GraphCompilerInf
 
       auto &execution_order = graph->execution_order();
       for (auto &kernel : execution_order) {
+        if (common::AnfAlgo::GetCNodeName(kernel) == kFlattenConcatOpName) {
+          data_prepare_actor->exist_flatten_concat_ = true;
+        }
         if (!common::AnfAlgo::IsCommunicationOp(kernel)) {
           continue;
         }
