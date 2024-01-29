@@ -47,7 +47,7 @@ NodePtr GeLUByTanh(const inner::GraphBuilder &gb, const NodePtr &input_x, const 
   auto y = gb.Mul(tanh_res, const_csvalue_sqrt_two_div_pi);
 
   // cal gelu(x)
-  auto tanh_y = gb.Emit("Tanh", {y});
+  auto tanh_y = gb.Tanh(y);
   auto const_one = gb.Tensor(1, dtype);
   auto const_half = gb.Tensor(0.5, dtype);
   auto tanh_y_add_one = gb.Add(tanh_y, const_one);

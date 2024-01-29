@@ -77,6 +77,7 @@ class MindirEmitter : public Emitter {
     nullptr,                          // MetaOp::BroadcastTo
     nullptr,                          // MetaOp::Cast
     nullptr,                          // MetaOp::Concat
+    &MindirEmitter::DefaultEmitFunc,  // MetaOp::Cosh
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Div
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Equal
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Exp
@@ -93,6 +94,7 @@ class MindirEmitter : public Emitter {
     nullptr,                          // MetaOp::MatMul
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Mul
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Neg
+    &MindirEmitter::DefaultEmitFunc,  // MetaOp::Reciprocal
     nullptr,                          // MetaOp::ReduceMax
     nullptr,                          // MetaOp::ReduceMin
     nullptr,                          // MetaOp::ReduceSum
@@ -100,6 +102,7 @@ class MindirEmitter : public Emitter {
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Rsqrt
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Select
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Shape
+    &MindirEmitter::DefaultEmitFunc,  // MetaOp::Sinh
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Sqrt
     nullptr,                          // MetaOp::StridedSlice
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Sub
