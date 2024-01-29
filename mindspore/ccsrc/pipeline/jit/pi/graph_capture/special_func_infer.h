@@ -17,25 +17,28 @@
 #define MINDSPORE_PI_JIT_GRAPH_CAPTURE_INLINE_CHECK_H
 
 #include <string>
+#include <unordered_map>
+#include <vector>
+#include <utility>
 #include "pipeline/jit/pi/graph_capture/node.h"
 #include "pipeline/jit/pi/graph_guard/trace.h"
 
 namespace mindspore {
 namespace pijit {
-// check the function is special function that mindspore support and not inline,
-// the return values or type can be infer
-// set key for handler
-bool IsFuncInWhiteList(const py::object &, std::string *key, bool bInferPrimitive);
+using CheckFunc = bool (*)(const py::object &);
+using InferFunc = bool (*)(CallNode *);
+struct SpecialAction {
+  CheckFunc check;
+  InferFunc infer;
+};
 
-// infer the return value of special function and generate subgraph, or clear subgraph
-// return true if special function has subgraph
-bool HandleFuncInWhiteList(const std::string &, CallNode *);
-
+const char *GetFuncName(const py::object &f);
+bool CheckPrimitive(const py::object &func);
 void HandleGradFuncCall(CallNode *call_node, AObject *decorated, bool sens_param);
-
 bool GuardConstCallNodeParam(CallNode *call_node, Graph *sub_graph, int max_guard_depth);
 bool JustCallAndSetRes(CallNode *call_node);
-
+std::unordered_map<std::string, SpecialAction> GetFuncWhiteListMap(bool trace_flag = false);
+std::vector<std::pair<CheckFunc, std::string>> GetFuncWhiteListFuzzyMatcher(bool trace_flag = false);
 }  // namespace pijit
 }  // namespace mindspore
 

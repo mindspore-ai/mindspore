@@ -255,8 +255,13 @@ class MindCodeBreakGenerator : public CodeBreakGenerator {
  public:
   MindCodeBreakGenerator(const GraphBuilderPtr &builder, PyCodeObject *co)
       : CodeBreakGenerator(co), builder_(builder) {}
+  py::object MakeCode(bool make_graph) override;
+  mindspore::FuncGraphBuilderPtr FGBuilder() const {
+    return std::dynamic_pointer_cast<MindGraphBuilder>(builder_)->FGBuilder();
+  }
+
+ private:
   GraphBuilderPtr builder_;
-  py::object MakeCode(bool make_graph);
 };
 // add a key and value to py::dict, check key conflict or rename the key
 void MapAdd(const py::dict &dict, const std::string &key, const py::object &value, std::string *rename = nullptr);
