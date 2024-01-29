@@ -46,4 +46,10 @@ enum DataType
   DT_RESOURCE  = 23;         // resource type
   DT_STRING_REF = 24;        // string_ref type
   DT_DUAL      = 25;              /**< dual output type */
+  DT_VARIANT = 26;
+  DT_BF16 = 27;
+  DT_INT4 = 28;
+  DT_UINT1 = 29;
+  DT_INT2 = 30;
+  DT_UINT2 = 31;
 }
