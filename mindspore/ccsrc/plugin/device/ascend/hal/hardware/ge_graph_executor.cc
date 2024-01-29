@@ -892,6 +892,9 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
     KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
     return CompileGraph(kg, compile_options);
   } else {
+    // delete SetCPUMemManager when delete env MS_DISABLE_REF_MODE
+    ResManager()->SetCPUMemManager();
+
     KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
     MS_EXCEPTION_IF_NULL(kg);
     std::map<std::string, ShapeVector> m_origin_shape;
