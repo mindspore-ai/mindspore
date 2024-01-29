@@ -368,7 +368,7 @@ void FuncGraphManager::AddFuncGraphs(const FuncGraphPtr &source_func_graph) {
   todo_.clear();
   todo_.emplace_back(source_func_graph);
   while (!todo_.empty()) {
-    FuncGraphPtr &func_graph = todo_.front();
+    auto func_graph = todo_.front();
     MS_EXCEPTION_IF_NULL(func_graph);
     todo_.pop_front();
     if (func_graphs_.contains(func_graph)) {
