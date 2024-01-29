@@ -38,6 +38,16 @@ def softmax_backward_func(x, axis=-1):
 
 
 @test_utils.run_with_cell
+def softmax_backward_forward_func(dout, out, dim=-1):
+    return ops.auto_generate.SoftmaxBackward()(dout, out, dim)
+
+
+@test_utils.run_with_cell
+def softmax_double_backward_func(dout, out, dim=-1):
+    return ops.grad(softmax_backward_forward_func, (0, 1))(dout, out, dim)
+
+
+@test_utils.run_with_cell
 def tensor_softmax_forward_func(x, axis=-1):
     return x.softmax(axis)
 
@@ -74,7 +84,7 @@ def test_softmax_forward(mode):
 def test_softmax_backward(mode):
     """
     Feature: Auto grad.
-    Description: test auto grad of op softmax pool.
+    Description: test auto grad of op softmax.
     Expectation: expect correct result.
     """
     context.set_context(mode=mode)
@@ -82,6 +92,27 @@ def test_softmax_backward(mode):
     grads = softmax_backward_func(x, 0)
     expect_shape = (10, 36, 12, 12)
     assert grads.asnumpy().shape == expect_shape
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE])
+def test_softmax_double_backward(mode):
+    """
+    Feature: Auto grad.
+    Description: test auto grad of op SoftmaxBackward.
+    Expectation: expect correct result.
+    """
+    context.set_context(mode=mode)
+    dout = Tensor(np.random.rand(10, 10))
+    out = Tensor(np.random.rand(10, 10))
+    dim = -1
+    grads = softmax_double_backward_func(dout, out, dim)
+    print(grads)
 
 
 @pytest.mark.level1

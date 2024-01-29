@@ -1375,6 +1375,29 @@ REG_BPROP_BUILDER("Softmax").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   return {dx, ib->OutZeros(axis)};
 });
 
+REG_BPROP_BUILDER("SoftmaxBackward").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+  auto grad_output = ib->GetInput(kIndex0);
+  auto output = ib->GetInput(kIndex1);
+  auto dim = ib->GetInput(kIndex2);
+  auto grad = ib->GetInput(kIndex4);
+
+  auto grad_dout = ib->Emit("SoftmaxBackward", {grad, output, dim});
+
+  // grad_out = grad_output * grad - (output * grad_output).sum(dim, true) * grad -
+  // grad_output * (output * grad).sum(dim, true)
+  auto softmax_double_backward_func = [&]() -> NodePtr {
+    auto dims = ib->MakeTuple({dim});
+    auto part1 = ib->Mul(grad_output, grad);
+    auto part2 = ib->Mul(ib->ReduceSum(ib->Mul(output, grad_output), dims, true), grad);
+    auto part3 = ib->Mul(grad_output, ib->ReduceSum(ib->Mul(output, grad), dims, true));
+    auto grad_out = part1 - part2 - part3;
+    return grad_out;
+  };
+  auto grad_out = softmax_double_backward_func();
+
+  return {grad_dout, grad_out, ib->OutZeros(dim)};
+});
+
 REG_BPROP_BUILDER("SparseSoftmaxCrossEntropyWithLogits").SetBody(BODYFUNC(ib) {
   auto is_grad = ib->GetAttr<bool>(kAttrIsGrad);
   auto labels = ib->GetInput(kIndex1);
