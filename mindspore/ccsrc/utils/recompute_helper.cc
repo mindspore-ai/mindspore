@@ -562,10 +562,14 @@ CNodePtr NewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &origin_nod
   if (!has_recomputed_inputs && new_inputs.size() > 1) {
     std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple)};
     (void)std::copy(first_target_inputs.begin(), first_target_inputs.end(), std::back_inserter(make_tuple_inputs));
+    AbstractBasePtrList abstract_list;
+    (void)std::transform(first_target_inputs.begin(), first_target_inputs.end(), std::back_inserter(abstract_list),
+                         [](const AnfNodePtr &node) -> AbstractBasePtr { return node->abstract(); });
+    auto make_tuple = graph->NewCNode(make_tuple_inputs);
+    make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
     auto first_input = new_inputs[1];
     MS_EXCEPTION_IF_NULL(first_input);
-    std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimDepend), first_input,
-                                          graph->NewCNode(make_tuple_inputs)};
+    std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimDepend), first_input, make_tuple};
     auto depend_node = graph->NewCNode(depend_inputs);
     MS_EXCEPTION_IF_NULL(depend_node);
     depend_node->set_abstract(first_input->abstract());
