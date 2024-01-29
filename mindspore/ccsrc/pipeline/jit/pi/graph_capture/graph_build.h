@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <utility>
 #include <memory>
+#include <string>
 #include "pipeline/jit/pi/graph_capture/graph.h"
 #include "pipeline/jit/pi/graph_build/func_graph_builder.h"
 
@@ -181,7 +182,7 @@ class GraphBuilder {
   void GenIndexItemGeneral(ValueNode *iterable, int i, int j);
 
   // return true if not inline
-  bool WhiteListFuncCheckAndInfer(CallNode *, const py::object &f);
+  virtual bool WhiteListFuncCheckAndInfer(CallNode *, const py::object &f);
 
   // frame operation
   ValueNode *&seek(int p) { return frame_.Peek(p); }
@@ -230,16 +231,26 @@ class GraphBuilder {
   bool NotImplementBytecode(const Instr &instr);
   static const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> bytecode_meth_map_;
   std::vector<py::object> GetNewArgs(CallNode *call_node);
+
+  // check the function is special function that mindspore support and not inline,
+  // the return values or type can be infer
+  // set key for handler
+  bool IsFuncInWhiteList(const py::object &f, std::string *special_func_key, bool bInferPrimitive);
+
+  // infer the return value of special function and generate subgraph, or clear subgraph
+  // return true if special function has subgraph
+  virtual bool HandleFuncInWhiteList(const std::string &key, CallNode *n);
 };
 
 class MindGraphBuilder : public GraphBuilder {
  public:
-  explicit MindGraphBuilder(const PyFrameObject *f) : GraphBuilder(f) {}
+  explicit MindGraphBuilder(const PyFrameObject *f)
+      : GraphBuilder(f), fg_builder_(std::make_shared<FuncGraphBuilder>()) {}
   MindGraphBuilder(GraphBuilder *r, GraphBuilder *p, PyCodeObject *co, PyObject *globals)
-      : GraphBuilder(r, p, co, globals) {}
-  mindspore::FuncGraphBuilder fg_builder_;
+      : GraphBuilder(r, p, co, globals), fg_builder_(std::make_shared<FuncGraphBuilder>()) {}
   bool trace_flag() { return true; }
-  StopTraceReason TraceRun(const std::vector<py::object> &args) {
+  mindspore::FuncGraphBuilderPtr FGBuilder() const { return fg_builder_; }
+  StopTraceReason TraceRun(const std::vector<py::object> &args) override {
     FGAddInput(args);
     auto res = GraphBuilder::TraceRun(args);
     FGAddOutput();
@@ -250,8 +261,16 @@ class MindGraphBuilder : public GraphBuilder {
                        StopTraceReason *stop_reason);
   void FGAddOutput();
   StopTraceReason BuildSubGraph(CallNode *call_node, int depth, const py::object &func,
-                                const GraphBuilderPtr &subgraph);
-  py::object ResolveCallable(CallNode *call_node, StopTraceReason *stop_reason);
+                                const GraphBuilderPtr &subgraph) override;
+  py::object ResolveCallable(CallNode *call_node, StopTraceReason *stop_reason) override;
+  bool WhiteListFuncCheckAndInfer(CallNode *, const py::object &f) override;
+
+ private:
+  bool IsFuncInWhiteList(const py::object &f, std::string *special_func_key);
+  bool HandleFuncInWhiteList(const std::string &key, CallNode *n) override;
+
+ private:
+  mindspore::FuncGraphBuilderPtr fg_builder_{nullptr};
 };
 }  // namespace pijit
 }  // namespace mindspore

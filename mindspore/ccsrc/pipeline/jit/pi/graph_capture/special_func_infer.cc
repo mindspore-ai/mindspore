@@ -30,13 +30,6 @@
 
 namespace mindspore {
 namespace pijit {
-using CheckFunc = bool (*)(const py::object &);
-using InferFunc = bool (*)(CallNode *);
-struct SpecialAction {
-  CheckFunc check;
-  InferFunc infer;
-};
-
 extern ValueNode *GetBoundSelf(CallNode *call_node);
 extern void LogGuardFailed(ValueNode *node, const GraphJitConfig &conf, const std::string &msg);
 extern AObject *InferFuncResult(const py::object &func, const std::vector<AObject *> &stack_args, int opcode,
@@ -99,7 +92,7 @@ static const std::vector<std::string> bypass_function_whilelist = {kMindsporeNam
 
 static py::object GetGradClass() { return Utils::GetModuleAttr("mindspore._c_expression", "GradOperation_"); }
 
-static const char *GetFuncName(const py::object &f) {
+const char *GetFuncName(const py::object &f) {
   PyObject *func = f.ptr();
   if (PyMethod_Check(func)) {
     func = PyMethod_GET_FUNCTION(func);
@@ -362,7 +355,7 @@ static bool InferRegistryGet(CallNode *call_node) {
   return false;
 }
 
-static bool CheckPrimitive(const py::object &func) { return AObject::GetPyType(func.ptr()) == AObject::kTypePrimitive; }
+bool CheckPrimitive(const py::object &func) { return AObject::GetPyType(func.ptr()) == AObject::kTypePrimitive; }
 
 bool InferPrimitive(CallNode *call_node) {
   static const std::unordered_map<std::string, AObject::Type> not_ret_tensor_prim = {
@@ -926,31 +919,36 @@ static const std::vector<std::pair<CheckFunc, std::string>> kFuncWhiteListFuzzyM
   {CheckJitForbidden, kJitForbidden},
 };
 
-bool IsFuncInWhiteList(const py::object &f, std::string *special_func_key, bool bInferPrimitive) {
-  if (f.ptr() == nullptr) {
-    return false;
-  }
-  *special_func_key = GetFuncName(f);
-  auto iter = kFuncWhiteListMap.find(*special_func_key);
-  if (iter != kFuncWhiteListMap.end() && iter->second.check(f)) {
-    return true;
-  }
-  auto tar = std::find_if(kFuncWhiteListFuzzyMatcher.begin(), kFuncWhiteListFuzzyMatcher.end(),
-                          [&f](const std::pair<CheckFunc, std::string> &i) { return i.first(f); });
-  if (tar != kFuncWhiteListFuzzyMatcher.end()) {
-    *special_func_key = tar->second;
-    return true;
-  }
-  if (bInferPrimitive && CheckPrimitive(f)) {
-    *special_func_key = kMindsporeNamePrimitive;
-    return true;
-  }
-  return false;
-}
+static const std::unordered_map<std::string, SpecialAction> kMindFuncWhiteListMap = {
+  {kMindsporeNameJitFunc, {CheckJitFunc, SetCallResType<AObject::kTypeTensor>}},
+  {kMindsporeNameGetCachePrim, {CheckGetCachePrim_, InferGetCachePrim_}},
+  {kMindsporeNameRegistryGet, {CheckRegistryGet, InferRegistryGet}},
+  {kMindsporeNameTensorInitCheck, {CheckTensorBypass, InferTensorBypass}},
+  {kMindsporeNameTensorContiguous, {CheckTensorBypass, InferTensorBypass}},
+  {kBuiltinNameFunctionOrMethod, {CheckBuiltinFuncOrMethod, InferBuiltinFuncOrMethod}},
+  {kJitForbidden, {CheckJitForbidden, SetCallResType<AObject::kTypeAnyValue>}},
+  {kJitConstexpr, {CheckJitConstexpr, JustCallAndSetRes}},
+};
 
-bool HandleFuncInWhiteList(const std::string &key, CallNode *n) {
-  MS_LOG(DEBUG) << "specialize for " << key;
-  return kFuncWhiteListMap.find(key)->second.infer(n);
+static const std::vector<std::pair<CheckFunc, std::string>> kMindFuncWhiteListFuzzyMatcher = {
+  {CheckJitConstexpr, kJitConstexpr},
+  {CheckBuiltinFuncOrMethod, kBuiltinNameFunctionOrMethod},
+  {CheckJitForbidden, kJitForbidden},
+};
+
+std::unordered_map<std::string, SpecialAction> GetFuncWhiteListMap(bool trace_flag) {
+  if (trace_flag) {
+    return kMindFuncWhiteListMap;
+  } else {
+    return kFuncWhiteListMap;
+  }
+}
+std::vector<std::pair<CheckFunc, std::string>> GetFuncWhiteListFuzzyMatcher(bool trace_flag) {
+  if (trace_flag) {
+    return kMindFuncWhiteListFuzzyMatcher;
+  } else {
+    return kFuncWhiteListFuzzyMatcher;
+  }
 }
 }  // namespace pijit
 }  // namespace mindspore

@@ -83,10 +83,10 @@ class GraphAnalyzer {
 class MindGraphAnalyzer : public GraphAnalyzer {
  public:
   explicit MindGraphAnalyzer(Graph *g) : GraphAnalyzer(g) {}
-  void Analyze() {
+  void Analyze() override {
     // TODO(chaiyouheng): new plan need UD, from now on we just focus on no break case
   }
-  bool NeedInterpret() const { return false; }
+  bool NeedInterpret() const override { return false; }
 };
 
 bool ValidateGraphParameters(ValueNode *i);
