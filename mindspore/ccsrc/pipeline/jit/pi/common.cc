@@ -80,9 +80,9 @@ static void ensureInitialize() {
     }
 
     if (kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogGuardPerf)) {
-      std::map<std::string, std::pair<int, int>> guard_info;
-      std::map<std::string, std::pair<int, int>> item_info;
-      OptGuardPerf::GetGuardPerf()->GetGuardPerfInfo(guard_info, item_info);
+      std::map<std::string, std::pair<size_t, size_t>> guard_info;
+      std::map<std::string, std::pair<size_t, size_t>> item_info;
+      OptGuardPerf::GetGuardPerf()->GetGuardPerfInfo(&guard_info, &item_info);
       std::cout << "Guard performance info:" << std::endl;
       std::cout << "guard, count, total time" << std::endl;
       for (const auto &item : guard_info) {

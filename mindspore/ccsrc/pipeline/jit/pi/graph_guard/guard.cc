@@ -104,8 +104,8 @@ bool CheckOwnerIsCell(TracePtr var) {
 
 class OptGuardPerfImpl : public OptGuardPerf {
  public:
-  void GetGuardPerfInfo(std::map<std::string, std::pair<size_t, size_t>> *guard_info,
-                        std::map<std::string, std::pair<size_t, size_t>> *item_info);
+  virtual void GetGuardPerfInfo(std::map<std::string, std::pair<size_t, size_t>> *guard_info,
+                        std::map<std::string, std::pair<size_t, size_t>> *item_info) const;
   OptGuardPerfImpl() = default;
   virtual ~OptGuardPerfImpl() = default;
   virtual void LogGuardPerfStart();
@@ -121,17 +121,17 @@ class OptGuardPerfImpl : public OptGuardPerf {
 };
 
 static OptGuardPerfImpl g_guard_perf;
-static OptGuardPerf *OptGuardPerf::GetGuardPerf() { return &g_guard_perf; }
+OptGuardPerf *OptGuardPerf::GetGuardPerf() { return &g_guard_perf; }
 
 void OptGuardPerfImpl::GetGuardPerfInfo(std::map<std::string, std::pair<size_t, size_t>> *guard_info,
-                                        std::map<std::string, std::pair<size_t, size_t>> *item_info) {
+                                        std::map<std::string, std::pair<size_t, size_t>> *item_info) const {
   if (guard_info != nullptr) {
     guard_info->clear();
-    guard_info->insert(guard_info->begin(), guard_info_.begin(), guard_info_.end());
+    guard_info->insert(guard_info_.begin(), guard_info_.end());
   }
   if (item_info != nullptr) {
     item_info->clear();
-    item_info->insert(item_info->begin(), item_info_.begin(), item_info_.end());
+    item_info->insert(item_info_.begin(), item_info_.end());
   }
 }
 
@@ -145,10 +145,10 @@ void OptGuardPerfImpl::LogGuardPerfEnd(GuardItem *item) {
   auto info = item->ToString();
   info = std::regex_replace(info, std::regex("(\n)"), "");
   if (guard_info_.find(info) != guard_info_.end()) {
-    guard_info[info].first += inc;
-    guard_info[info].second += dur;
+    guard_info_[info].first += inc;
+    guard_info_[info].second += dur;
   } else {
-    guard_info[info] = std::make_pair(inc, dur);
+    guard_info_[info] = std::make_pair(inc, dur);
   }
 }
 
@@ -160,11 +160,11 @@ void OptGuardPerfImpl::LogTracePerfEnd(Trace *trace) {
   size_t inc = 1;
   auto info = trace->ToString(false);
   info = std::regex_replace(info, std::regex("(\n)"), "");
-  if (item_info.find(info) != item_info.end()) {
-    item_info[info].first += inc;
-    item_info[info].second += dur;
+  if (item_info_.find(info) != item_info_.end()) {
+    item_info_[info].first += inc;
+    item_info_[info].second += dur;
   } else {
-    item_info[info] = std::make_pair(inc, dur);
+    item_info_[info] = std::make_pair(inc, dur);
   }
 }
 
@@ -176,7 +176,7 @@ bool OptGuard::Check(const PyFrameObject *frame, bool print, std::map<std::strin
   for (size_t i = 0; i < guardList_.size(); ++i) {
     GuardItemPtr item = guardList_[i];
     if (perf) {
-      g_guard_perf.LogGuardPerfStart(item.get());
+      g_guard_perf.LogGuardPerfStart();
     }
     bool result = item->Check(frame, cache, perf);
     if (perf) {
