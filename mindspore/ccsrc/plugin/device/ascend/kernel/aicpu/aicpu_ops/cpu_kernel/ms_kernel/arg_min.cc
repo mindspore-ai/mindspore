@@ -200,5 +200,5 @@ uint32_t ArgMinCpuKernel::ArgMinCompute(const CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kArgMin, ArgMinCpuKernel);
+REGISTER_MS_CPU_KERNEL(kArgMin, ArgMinCpuKernel);
 }  // namespace aicpu

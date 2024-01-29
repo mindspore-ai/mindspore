@@ -312,5 +312,5 @@ uint32_t FloorDivCpuKernel::FloorDivCompute(const CpuKernelContext &ctx) {
   }
 }
 
-REGISTER_CPU_KERNEL(kFloorDiv, FloorDivCpuKernel);
+REGISTER_MS_CPU_KERNEL(kFloorDiv, FloorDivCpuKernel);
 }  // namespace aicpu

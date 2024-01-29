@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 #include "Eigen/Core"
-#include "inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 // weight data of every pixel

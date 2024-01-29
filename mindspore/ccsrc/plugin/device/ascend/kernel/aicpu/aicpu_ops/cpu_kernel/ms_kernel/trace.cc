@@ -101,5 +101,5 @@ uint32_t TraceCpuKernel::TraceCompute(Tensor *input, Tensor *output, const CpuKe
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kTrace, TraceCpuKernel);
+REGISTER_MS_CPU_KERNEL(kTrace, TraceCpuKernel);
 }  // namespace aicpu

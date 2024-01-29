@@ -261,5 +261,5 @@ uint32_t MatrixSetDiagV3CpuKernel::Compute(CpuKernelContext &ctx) {
   return ret;
 }
 
-REGISTER_CPU_KERNEL(MATRIX_SET_DIAG_V3, MatrixSetDiagV3CpuKernel);
+REGISTER_MS_CPU_KERNEL(MATRIX_SET_DIAG_V3, MatrixSetDiagV3CpuKernel);
 }  // namespace aicpu

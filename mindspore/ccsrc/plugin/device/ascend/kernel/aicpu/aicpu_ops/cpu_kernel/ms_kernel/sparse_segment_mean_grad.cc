@@ -187,5 +187,5 @@ KernelStatus SparseSegmentMeanGradCpuKernel::ComputeKernel(const CpuKernelContex
   }
 }
 
-REGISTER_CPU_KERNEL(SparseSegmentMeanGrad, SparseSegmentMeanGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(SparseSegmentMeanGrad, SparseSegmentMeanGradCpuKernel);
 }  // namespace aicpu

@@ -218,5 +218,5 @@ uint32_t SegmentMaxCpuKernel::SegmentMaxCompute(const CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kSegmentMax, SegmentMaxCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSegmentMax, SegmentMaxCpuKernel);
 }  // namespace aicpu

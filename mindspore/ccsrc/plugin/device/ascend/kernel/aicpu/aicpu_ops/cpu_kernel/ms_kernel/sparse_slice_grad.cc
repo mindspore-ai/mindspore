@@ -164,5 +164,5 @@ uint32_t SparseSliceGradCpuKernel::SparseSliceGradParamCheck(Tensor *backprop_va
                      start->NumElements());
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kSparseSliceGrad, SparseSliceGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSparseSliceGrad, SparseSliceGradCpuKernel);
 }  // namespace aicpu

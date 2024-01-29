@@ -196,5 +196,5 @@ uint32_t LogicalXorCpuKernel::LogicalXorCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kLogicalXor, LogicalXorCpuKernel);
+REGISTER_MS_CPU_KERNEL(kLogicalXor, LogicalXorCpuKernel);
 }  // namespace aicpu

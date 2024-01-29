@@ -41,5 +41,5 @@ uint32_t EnvironDestroyAllKernel::ParseKernelParam(const CpuKernelContext &ctx) 
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kEnvironDestroyAll, EnvironDestroyAllKernel);
+REGISTER_MS_CPU_KERNEL(kEnvironDestroyAll, EnvironDestroyAllKernel);
 }  // namespace aicpu

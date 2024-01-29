@@ -625,5 +625,5 @@ uint32_t PadV3CpuKernel::GetPaddingsAndSetOuputShape(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kPadV3, PadV3CpuKernel);
+REGISTER_MS_CPU_KERNEL(kPadV3, PadV3CpuKernel);
 }  // namespace aicpu

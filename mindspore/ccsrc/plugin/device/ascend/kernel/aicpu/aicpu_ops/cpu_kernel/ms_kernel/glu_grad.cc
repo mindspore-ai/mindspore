@@ -136,5 +136,5 @@ uint32_t GluGradCpuKernel::GluGradCompute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kGluGrad, GluGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kGluGrad, GluGradCpuKernel);
 }  // namespace aicpu

@@ -123,5 +123,5 @@ uint32_t MaximumGradGradCpuKernel::BcastCompute(const CpuKernelContext &ctx, con
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kMaximumGradGrad, MaximumGradGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMaximumGradGrad, MaximumGradGradCpuKernel);
 }  // namespace aicpu

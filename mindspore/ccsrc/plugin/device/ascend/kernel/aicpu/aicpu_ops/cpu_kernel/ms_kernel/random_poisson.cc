@@ -98,5 +98,5 @@ uint32_t RandomPoissonCpuKernel::Generate(const CpuKernelContext &ctx, Tensor *o
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kRandomPoisson, RandomPoissonCpuKernel);
+REGISTER_MS_CPU_KERNEL(kRandomPoisson, RandomPoissonCpuKernel);
 }  // namespace aicpu

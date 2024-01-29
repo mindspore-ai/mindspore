@@ -278,5 +278,5 @@ uint32_t SparseSliceCpuKernel::SparseSliceParamCheck(Tensor *indices, Tensor *va
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kSparseSlice, SparseSliceCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSparseSlice, SparseSliceCpuKernel);
 }  // namespace aicpu

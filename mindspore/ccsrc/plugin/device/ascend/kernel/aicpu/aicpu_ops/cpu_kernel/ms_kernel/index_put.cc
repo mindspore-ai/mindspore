@@ -257,5 +257,5 @@ uint32_t IndexPutCpuKernel::IndexPutCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kIndexPut, IndexPutCpuKernel);
+REGISTER_MS_CPU_KERNEL(kIndexPut, IndexPutCpuKernel);
 }  // namespace aicpu

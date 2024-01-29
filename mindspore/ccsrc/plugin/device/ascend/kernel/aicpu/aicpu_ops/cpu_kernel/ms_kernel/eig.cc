@@ -49,7 +49,7 @@ uint32_t EigCpuKernel::Compute(CpuKernelContext &ctx) {
   }
 }
 
-REGISTER_CPU_KERNEL(Eig, EigCpuKernel);
+REGISTER_MS_CPU_KERNEL(Eig, EigCpuKernel);
 
 template <typename T, typename C>
 uint32_t EigCpuKernel::ComputeKernel(CpuKernelContext &ctx) {

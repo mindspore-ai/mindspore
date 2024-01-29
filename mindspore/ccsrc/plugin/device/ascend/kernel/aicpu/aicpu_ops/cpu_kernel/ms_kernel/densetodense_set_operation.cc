@@ -336,5 +336,5 @@ uint32_t DenseToDenseSetOperationCpuKernel::DoCompute(const CpuKernelContext &ct
   return OutputSparseTensor<T>(ctx, group_shape, num_result_values, group_sets);
 }
 
-REGISTER_CPU_KERNEL(kDenseToDenseSetOperation, DenseToDenseSetOperationCpuKernel);
+REGISTER_MS_CPU_KERNEL(kDenseToDenseSetOperation, DenseToDenseSetOperationCpuKernel);
 }  // namespace aicpu

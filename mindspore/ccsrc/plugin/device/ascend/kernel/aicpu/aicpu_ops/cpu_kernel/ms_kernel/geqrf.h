@@ -17,7 +17,7 @@
 #define AICPU_KERNELS_NORMALIZED_GEQRF_H_
 
 #include <complex>
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class GeqrfCpuKernel : public CpuKernel {

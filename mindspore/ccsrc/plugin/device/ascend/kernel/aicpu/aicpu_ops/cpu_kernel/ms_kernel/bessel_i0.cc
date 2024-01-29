@@ -20,7 +20,7 @@
 
 #include "Eigen/Dense"
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "utils/kernel_util.h"
 #include "common/kernel_log.h"
 #include "securec.h"
@@ -229,5 +229,5 @@ void BesselI0CpuKernel::BesselI0ComputeFloat16(int64_t start, int64_t end, const
   }
 }
 
-REGISTER_CPU_KERNEL(kBesselI0, BesselI0CpuKernel);
+REGISTER_MS_CPU_KERNEL(kBesselI0, BesselI0CpuKernel);
 }  // namespace aicpu

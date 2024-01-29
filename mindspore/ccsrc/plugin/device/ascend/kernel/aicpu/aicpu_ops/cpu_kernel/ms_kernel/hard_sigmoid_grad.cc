@@ -93,5 +93,5 @@ uint32_t HardSigmoidGradCpuKernel::HardSigmoidGradCompute(const CpuKernelContext
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kHardSigmoidGrad, HardSigmoidGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kHardSigmoidGrad, HardSigmoidGradCpuKernel);
 }  // namespace aicpu

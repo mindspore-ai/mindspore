@@ -612,5 +612,5 @@ uint32_t SspaddmmCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(SSPADDMM, SspaddmmCpuKernel);
+REGISTER_MS_CPU_KERNEL(SSPADDMM, SspaddmmCpuKernel);
 }  // namespace aicpu

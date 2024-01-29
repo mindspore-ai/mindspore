@@ -238,5 +238,5 @@ uint32_t FractionalMaxPoolGradCpuKernel::Compute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kFractionalMaxPoolGrad, FractionalMaxPoolGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kFractionalMaxPoolGrad, FractionalMaxPoolGradCpuKernel);
 }  // namespace aicpu

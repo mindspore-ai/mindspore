@@ -494,5 +494,5 @@ uint32_t ReduceProdCpuKernel::ReduceProdCompute_Complex(const CpuKernelContext &
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kReduceProd, ReduceProdCpuKernel);
+REGISTER_MS_CPU_KERNEL(kReduceProd, ReduceProdCpuKernel);
 }  // namespace aicpu

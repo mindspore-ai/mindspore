@@ -80,7 +80,7 @@ uint32_t DenseToCSRSparseMatrixCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(DenseToCSRSparseMatrix, DenseToCSRSparseMatrixCpuKernel);
+REGISTER_MS_CPU_KERNEL(DenseToCSRSparseMatrix, DenseToCSRSparseMatrixCpuKernel);
 
 template <typename indiceT, typename valueT>
 uint32_t DenseToCSRSparseMatrixCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {

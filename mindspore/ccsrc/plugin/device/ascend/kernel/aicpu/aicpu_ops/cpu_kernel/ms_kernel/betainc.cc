@@ -178,5 +178,5 @@ uint32_t BetaincCpuKernel::BetaincCompute(const CpuKernelContext &ctx) {
   return result;
 }
 
-REGISTER_CPU_KERNEL(kBetainc, BetaincCpuKernel);
+REGISTER_MS_CPU_KERNEL(kBetainc, BetaincCpuKernel);
 }  // namespace aicpu

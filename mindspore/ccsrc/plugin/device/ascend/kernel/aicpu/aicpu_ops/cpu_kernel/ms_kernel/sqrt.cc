@@ -20,7 +20,7 @@
 #include <algorithm>
 #include <vector>
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "common/kernel_log.h"
 #include "cpu_kernel/common/status.h"
 #include "utils/kernel_util.h"
@@ -139,5 +139,5 @@ std::uint32_t SqrtCpuKernel::Compute(CpuKernelContext &ctx) {
   return detail::SqrtCheck(ctx, kSqrtInputNum, kSqrtOutputNum) ? KERNEL_STATUS_PARAM_INVALID : detail::SqrtCompute(ctx);
 }
 
-REGISTER_CPU_KERNEL(kSqrt, SqrtCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSqrt, SqrtCpuKernel);
 }  // namespace aicpu

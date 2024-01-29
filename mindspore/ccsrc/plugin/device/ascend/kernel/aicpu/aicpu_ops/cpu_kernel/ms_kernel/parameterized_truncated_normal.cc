@@ -376,5 +376,5 @@ uint32_t ParameterizedTruncatedNormalCpuKernel::Compute(CpuKernelContext &ctx) {
   return ret;
 }
 
-REGISTER_CPU_KERNEL(kParameterizedTruncatedNormal, ParameterizedTruncatedNormalCpuKernel);
+REGISTER_MS_CPU_KERNEL(kParameterizedTruncatedNormal, ParameterizedTruncatedNormalCpuKernel);
 }  // namespace aicpu

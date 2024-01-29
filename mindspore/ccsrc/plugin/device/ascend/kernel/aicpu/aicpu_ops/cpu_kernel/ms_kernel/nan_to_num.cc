@@ -111,5 +111,5 @@ uint32_t NanToNumCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kNanToNum, NanToNumCpuKernel);
+REGISTER_MS_CPU_KERNEL(kNanToNum, NanToNumCpuKernel);
 }  // namespace aicpu

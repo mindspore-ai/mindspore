@@ -86,5 +86,5 @@ uint32_t ZerosLikeCpuKernel::ZerosLikePartCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kZerosLike, ZerosLikeCpuKernel);
+REGISTER_MS_CPU_KERNEL(kZerosLike, ZerosLikeCpuKernel);
 }  // namespace aicpu

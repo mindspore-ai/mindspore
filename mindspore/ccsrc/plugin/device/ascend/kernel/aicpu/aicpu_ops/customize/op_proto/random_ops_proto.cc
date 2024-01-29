@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "inc/ops/random_ops.h"
-#include "inc/ops/stateful_random_ops.h"
+#include "op_proto/inc/random_ops.h"
+#include "op_proto/inc/stateful_random_ops.h"
 #include "custom_op_proto/cust_random_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"

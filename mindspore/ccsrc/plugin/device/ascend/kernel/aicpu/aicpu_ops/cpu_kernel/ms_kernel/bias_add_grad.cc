@@ -189,5 +189,5 @@ uint32_t BiasAddGradCpuKernel::BiasAddGradCompute(const CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kBiasAddGrad, BiasAddGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kBiasAddGrad, BiasAddGradCpuKernel);
 }  // namespace aicpu

@@ -175,5 +175,5 @@ uint32_t MatMulCpuKernel::Compute(CpuKernelContext &ctx) {
   return ret;
 }
 
-REGISTER_CPU_KERNEL(kMatmul, MatMulCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMatmul, MatMulCpuKernel);
 }  // namespace aicpu

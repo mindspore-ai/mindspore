@@ -126,5 +126,5 @@ uint32_t BucketizeCpuKernel::BucketizeCompute(const CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kBucketize, BucketizeCpuKernel);
+REGISTER_MS_CPU_KERNEL(kBucketize, BucketizeCpuKernel);
 }  // namespace aicpu

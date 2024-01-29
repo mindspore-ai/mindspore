@@ -20,7 +20,7 @@
 #include <algorithm>
 
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "common/kernel_log.h"
 #include "cpu_kernel/common/status.h"
 #include "utils/kernel_util.h"
@@ -113,5 +113,5 @@ std::uint32_t LgammaCpuKernel::Compute(CpuKernelContext &ctx) {
                                                                      : detail::ComputeLgamma(ctx);
 }
 
-REGISTER_CPU_KERNEL(kLgamma, LgammaCpuKernel);
+REGISTER_MS_CPU_KERNEL(kLgamma, LgammaCpuKernel);
 }  // namespace aicpu

@@ -18,7 +18,7 @@
 
 #include <vector>
 
-#include "inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 namespace aicpu {
 class QuantileCpuKernel : public CpuKernel {
  public:

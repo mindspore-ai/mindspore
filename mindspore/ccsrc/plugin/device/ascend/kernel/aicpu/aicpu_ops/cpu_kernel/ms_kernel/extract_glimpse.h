@@ -17,7 +17,7 @@
 #ifndef AICPU_IMPL_EXTRACT_GLIMPSE_H_
 #define AICPU_IMPL_EXTRACT_GLIMPSE_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class ExtractGlimpseCpuKernel : public CpuKernel {

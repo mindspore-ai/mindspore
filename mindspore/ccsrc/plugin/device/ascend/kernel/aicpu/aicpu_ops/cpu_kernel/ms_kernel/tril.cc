@@ -177,5 +177,5 @@ uint32_t TrilCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kTril, TrilCpuKernel);
+REGISTER_MS_CPU_KERNEL(kTril, TrilCpuKernel);
 }  // namespace aicpu

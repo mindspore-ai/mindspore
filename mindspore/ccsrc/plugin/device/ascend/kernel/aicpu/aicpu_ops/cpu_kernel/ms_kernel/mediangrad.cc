@@ -276,5 +276,5 @@ uint32_t MedianGradCpuKernel::MedianGradCompute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kMedianGrad, MedianGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMedianGrad, MedianGradCpuKernel);
 }  // namespace aicpu

@@ -26,7 +26,7 @@
 #include "common/kernel_log.h"
 #include "common/status.h"
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -131,5 +131,5 @@ std::uint32_t CheckNumericsCpuKernel::Compute(CpuKernelContext &ctx) {
   return check ? KERNEL_STATUS_PARAM_INVALID : detail::ComputeCheckNumerics(ctx);
 }
 
-REGISTER_CPU_KERNEL(kCheckNumerics, CheckNumericsCpuKernel);
+REGISTER_MS_CPU_KERNEL(kCheckNumerics, CheckNumericsCpuKernel);
 }  // namespace aicpu

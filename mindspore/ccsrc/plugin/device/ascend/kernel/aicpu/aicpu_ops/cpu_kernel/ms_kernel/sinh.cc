@@ -22,7 +22,7 @@
 #include <vector>
 #include "common/kernel_log.h"
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "frontend/parallel/status.h"
 #include "utils/kernel_util.h"
 
@@ -146,5 +146,5 @@ std::uint32_t SinhCpuKernel::Compute(CpuKernelContext &ctx) {
   return detail::SinhCheck(ctx, kSinhInputNum, kSinhOutputNum) ? KERNEL_STATUS_PARAM_INVALID : detail::SinhCompute(ctx);
 }
 
-REGISTER_CPU_KERNEL(kSinh, SinhCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSinh, SinhCpuKernel);
 }  // namespace aicpu

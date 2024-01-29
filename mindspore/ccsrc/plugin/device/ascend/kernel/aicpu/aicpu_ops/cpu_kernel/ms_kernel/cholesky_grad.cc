@@ -197,5 +197,5 @@ void CholeskyGradCpuKernel::CholeskyGradUnblocked(
   }
 }
 
-REGISTER_CPU_KERNEL(CholeskyGrad, CholeskyGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(CholeskyGrad, CholeskyGradCpuKernel);
 }  // namespace aicpu

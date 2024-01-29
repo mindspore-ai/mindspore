@@ -200,5 +200,5 @@ TSPLITS RaggedRange::RangeSize(T start, T limit, T delta) {
                                      : std::ceil(std::abs((limit - start) / delta)));
 }
 
-REGISTER_CPU_KERNEL(kRaggedRange, RaggedRange);
+REGISTER_MS_CPU_KERNEL(kRaggedRange, RaggedRange);
 }  // namespace aicpu

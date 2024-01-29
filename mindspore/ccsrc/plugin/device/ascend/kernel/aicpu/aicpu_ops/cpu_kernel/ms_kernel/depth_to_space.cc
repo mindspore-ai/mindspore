@@ -156,6 +156,6 @@ uint32_t DepthToSpaceCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kDepthToSpace, DepthToSpaceCpuKernel);
+REGISTER_MS_CPU_KERNEL(kDepthToSpace, DepthToSpaceCpuKernel);
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_SPACETODEPTH_CC_

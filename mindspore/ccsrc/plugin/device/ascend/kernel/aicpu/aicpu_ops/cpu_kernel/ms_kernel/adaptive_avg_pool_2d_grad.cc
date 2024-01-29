@@ -194,5 +194,5 @@ uint32_t AdaptiveAvgPool2dGrad::Compute(CpuKernelContext &ctx) {
   }
 }
 
-REGISTER_CPU_KERNEL(kAdaptiveAvgPool2dGrad, AdaptiveAvgPool2dGrad);
+REGISTER_MS_CPU_KERNEL(kAdaptiveAvgPool2dGrad, AdaptiveAvgPool2dGrad);
 }  // namespace aicpu

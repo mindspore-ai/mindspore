@@ -213,5 +213,5 @@ uint32_t ExpCpuKernel::ExpCompute2(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kExp, ExpCpuKernel);
+REGISTER_MS_CPU_KERNEL(kExp, ExpCpuKernel);
 }  // namespace aicpu

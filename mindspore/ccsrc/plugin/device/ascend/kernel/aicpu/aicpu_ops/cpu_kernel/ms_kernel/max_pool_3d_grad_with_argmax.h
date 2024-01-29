@@ -18,7 +18,7 @@
 #define AICPU_KERNELS_NORMALIZED_MAX_POOL3D_GRAD_WINTH_ARGMAX_H_
 
 #include <vector>
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "utils/bcast.h"
 
 namespace aicpu {

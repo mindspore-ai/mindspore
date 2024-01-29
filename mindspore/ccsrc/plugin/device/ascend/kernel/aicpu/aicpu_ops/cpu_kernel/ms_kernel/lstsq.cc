@@ -113,5 +113,5 @@ uint32_t LstsqCpuKernel::LstsqCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kLstsq, LstsqCpuKernel);
+REGISTER_MS_CPU_KERNEL(kLstsq, LstsqCpuKernel);
 }  // namespace aicpu

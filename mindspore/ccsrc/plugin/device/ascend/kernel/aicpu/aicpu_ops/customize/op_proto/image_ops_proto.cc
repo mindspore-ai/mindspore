@@ -15,7 +15,7 @@
  */
 
 #include <graph/utils/type_utils.h>
-#include "inc/ops/image_ops.h"
+#include "op_proto/inc/image_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/image_ops_shape_fns.h"
 #include "utils/op_const.h"

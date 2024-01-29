@@ -22,7 +22,7 @@
 #include <limits>
 
 #include "common/cpu_kernel_utils.h"
-#include "inc/cpu_types.h"
+#include "cpu_types.h"
 #include "common/kernel_log.h"
 #include "common/status.h"
 #include "utils/kernel_util.h"
@@ -523,5 +523,5 @@ uint32_t ResizeBicubicCpuKernel::Compute(CpuKernelContext &ctx) {
   KERNEL_CHECK_FALSE((res == KERNEL_STATUS_OK), res, "ResizeBicubic Compute failed.");
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kResizeBicubic, ResizeBicubicCpuKernel);
+REGISTER_MS_CPU_KERNEL(kResizeBicubic, ResizeBicubicCpuKernel);
 }  // namespace aicpu

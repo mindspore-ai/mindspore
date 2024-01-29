@@ -22,7 +22,7 @@
 #include "utils/bcast.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "securec.h"
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "cpu_kernel_utils.h"
 #include "kernel_log.h"
 #include "status.h"

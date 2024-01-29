@@ -159,5 +159,5 @@ uint32_t RsqrtGradCpuKernel::RsqrtGradComputeComplex(const CpuKernelContext &ctx
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kRsqrtGrad, RsqrtGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kRsqrtGrad, RsqrtGradCpuKernel);
 }  // namespace aicpu

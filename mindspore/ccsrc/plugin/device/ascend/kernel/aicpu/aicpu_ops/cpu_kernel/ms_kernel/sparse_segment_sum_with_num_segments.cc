@@ -96,7 +96,7 @@ uint32_t SparseSegmentSumWithNumSegmentsCpuKernel::Compute(CpuKernelContext &ctx
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(SparseSegmentSumWithNumSegments, SparseSegmentSumWithNumSegmentsCpuKernel);
+REGISTER_MS_CPU_KERNEL(SparseSegmentSumWithNumSegments, SparseSegmentSumWithNumSegmentsCpuKernel);
 
 template <typename dataT, typename indicesT>
 uint32_t SparseSegmentSumWithNumSegmentsCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {

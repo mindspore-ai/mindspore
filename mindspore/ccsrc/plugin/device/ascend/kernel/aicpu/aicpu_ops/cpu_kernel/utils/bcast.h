@@ -19,7 +19,7 @@
 
 #include <vector>
 
-#include "cpu_kernel/inc/cpu_context.h"
+#include "cpu_context.h"
 
 namespace aicpu {
 // broadcast shape type

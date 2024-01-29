@@ -230,5 +230,5 @@ uint32_t SparseFillEmptyRowsCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kSparseFillEmptyRows, SparseFillEmptyRowsCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSparseFillEmptyRows, SparseFillEmptyRowsCpuKernel);
 }  // namespace aicpu

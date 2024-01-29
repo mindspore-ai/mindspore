@@ -134,5 +134,5 @@ void UniformCpuKernel::UniformCompute(float from, float to, int64_t start, int64
   }
 }
 
-REGISTER_CPU_KERNEL(kUniform, UniformCpuKernel);
+REGISTER_MS_CPU_KERNEL(kUniform, UniformCpuKernel);
 }  // namespace aicpu

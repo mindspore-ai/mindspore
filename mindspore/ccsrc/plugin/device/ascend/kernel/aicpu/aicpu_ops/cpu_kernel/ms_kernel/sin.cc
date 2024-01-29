@@ -23,7 +23,7 @@
 
 #include "common/kernel_log.h"
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "frontend/parallel/status.h"
 #include "utils/kernel_util.h"
 
@@ -146,5 +146,5 @@ std::uint32_t SinCompute(const CpuKernelContext &ctx) {
 std::uint32_t SinCpuKernel::Compute(CpuKernelContext &ctx) {
   return detail::SinCheck(ctx, kSinInputNum, kSinOutputNum) ? KERNEL_STATUS_PARAM_INVALID : detail::SinCompute(ctx);
 }
-REGISTER_CPU_KERNEL(kSin, SinCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSin, SinCpuKernel);
 }  // namespace aicpu

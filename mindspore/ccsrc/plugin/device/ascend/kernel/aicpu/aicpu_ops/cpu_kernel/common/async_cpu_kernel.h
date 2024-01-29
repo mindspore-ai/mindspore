@@ -17,7 +17,7 @@
 #ifndef ASYNC_CPU_KERNEL_H
 #define ASYNC_CPU_KERNEL_H
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class AICPU_VISIBILITY AsyncCpuKernel : public CpuKernel {

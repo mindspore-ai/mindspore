@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_PARAMETERIZEDTRUNCATEDNORMAL_H_
 #define AICPU_KERNELS_NORMALIZED_PARAMETERIZEDTRUNCATEDNORMAL_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class ParameterizedTruncatedNormalCpuKernel : public CpuKernel {

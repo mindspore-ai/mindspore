@@ -17,7 +17,7 @@
 #define AICPU_CONTEXT_COMMON_SHARDER_H
 #include <functional>
 
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 
 namespace aicpu {
 class Sharder {

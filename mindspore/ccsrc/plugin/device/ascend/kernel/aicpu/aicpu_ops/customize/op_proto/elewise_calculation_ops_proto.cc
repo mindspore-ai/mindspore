@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "inc/ops/elewise_calculation_ops.h"
-#include "inc/ops/nonlinear_fuc_ops.h"
+#include "op_proto/inc/elewise_calculation_ops.h"
+#include "op_proto/inc/nonlinear_fuc_ops.h"
 #include "custom_op_proto/cust_math_ops.h"
 #include "custom_op_proto/cust_elewise_calculation_ops.h"
 

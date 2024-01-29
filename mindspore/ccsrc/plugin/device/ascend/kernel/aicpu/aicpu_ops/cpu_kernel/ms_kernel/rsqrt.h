@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_RSQRT_H
 #define AICPU_KERNELS_NORMALIZED_RSQRT_H
 
-#include "inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class RsqrtCpuKernel : public CpuKernel {

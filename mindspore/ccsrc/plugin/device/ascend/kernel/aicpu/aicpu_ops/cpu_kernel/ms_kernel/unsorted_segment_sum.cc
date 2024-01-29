@@ -174,5 +174,5 @@ uint32_t UnsortedSegmentSumCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kUnsortedSegmentSum, UnsortedSegmentSumCpuKernel);
+REGISTER_MS_CPU_KERNEL(kUnsortedSegmentSum, UnsortedSegmentSumCpuKernel);
 }  // namespace aicpu

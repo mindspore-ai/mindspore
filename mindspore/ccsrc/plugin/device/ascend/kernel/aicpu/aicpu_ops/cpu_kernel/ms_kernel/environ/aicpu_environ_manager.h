@@ -23,7 +23,7 @@
 #include <vector>
 #include <mutex>
 #include "cpu_kernel/ms_kernel/environ/aicpu_environ.h"
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class EnvironMgr {

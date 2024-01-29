@@ -19,7 +19,7 @@
 #include <algorithm>
 #include <vector>
 
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "common/kernel_log.h"
 #include "cpu_kernel/common/status.h"
 #include "utils/kernel_util.h"
@@ -82,5 +82,5 @@ uint32_t IdentityNCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kIdentityN, IdentityNCpuKernel);
+REGISTER_MS_CPU_KERNEL(kIdentityN, IdentityNCpuKernel);
 }  // namespace aicpu

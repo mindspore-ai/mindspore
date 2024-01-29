@@ -328,5 +328,5 @@ uint32_t MaxPool3DWithArgmaxCpuKernel::MaxPool3DWithArgmaxCompute(const CpuKerne
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kMaxPool3DWithArgmax, MaxPool3DWithArgmaxCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMaxPool3DWithArgmax, MaxPool3DWithArgmaxCpuKernel);
 }  // namespace aicpu

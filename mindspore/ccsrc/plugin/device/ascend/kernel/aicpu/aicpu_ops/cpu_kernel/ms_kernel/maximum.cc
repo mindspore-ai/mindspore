@@ -461,5 +461,5 @@ uint32_t MaximumCpuKernel::MaximumCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kMaximum, MaximumCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMaximum, MaximumCpuKernel);
 }  // namespace aicpu

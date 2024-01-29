@@ -220,5 +220,5 @@ uint32_t ScatterNdCpuKernel::ScatterNdComputeRealKernel(const CpuKernelContext &
                       "ScatterND task Compute failed.");
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kScatterNd, ScatterNdCpuKernel);
+REGISTER_MS_CPU_KERNEL(kScatterNd, ScatterNdCpuKernel);
 }  // namespace aicpu

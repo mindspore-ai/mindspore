@@ -167,5 +167,5 @@ uint32_t SparseFillEmptyRowsGradCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kSparseFillEmptyRowsGrad, SparseFillEmptyRowsGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSparseFillEmptyRowsGrad, SparseFillEmptyRowsGradCpuKernel);
 }  // namespace aicpu

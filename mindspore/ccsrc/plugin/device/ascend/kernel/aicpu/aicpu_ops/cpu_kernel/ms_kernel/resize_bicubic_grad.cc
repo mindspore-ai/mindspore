@@ -21,7 +21,7 @@
 #include <limits>
 
 #include "common/cpu_kernel_utils.h"
-#include "inc/cpu_types.h"
+#include "cpu_types.h"
 #include "utils/kernel_util.h"
 #include "utils/sparse_tensor.h"
 
@@ -607,5 +607,5 @@ uint32_t ResizeBicubicGradCpuKernel::Compute(CpuKernelContext &ctx) {
   KERNEL_CHECK_FALSE((res == KERNEL_STATUS_OK), res, "ResizeBicubicGrad Compute failed.");
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kResizeBicubicGrad, ResizeBicubicGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kResizeBicubicGrad, ResizeBicubicGradCpuKernel);
 }  // namespace aicpu

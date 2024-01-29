@@ -16,8 +16,8 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SPARSE_SEGMENT_SQRT_N_WITH_NUM_SEGMENTS_H_
 #define AICPU_KERNELS_NORMALIZED_SPARSE_SEGMENT_SQRT_N_WITH_NUM_SEGMENTS_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_kernel_utils.h"
+#include "cpu_types.h"
 #include "utils/bcast.h"
 #include "utils/sparse_tensor.h"
 

@@ -2,7 +2,7 @@
 #define AICPU_KERNELS_NORMALIZED_DCT_H_
 
 #include "Eigen/Dense"
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "unsupported/Eigen/FFT"
 #include "utils/bcast.h"

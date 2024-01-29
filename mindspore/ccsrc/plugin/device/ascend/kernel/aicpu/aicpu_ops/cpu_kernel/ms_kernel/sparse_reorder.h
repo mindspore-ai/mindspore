@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SPARSEREORDER_H_
 #define AICPU_KERNELS_NORMALIZED_SPARSEREORDER_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "utils/sparse_tensor.h"
 #include "utils/kernel_util.h"
 

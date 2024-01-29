@@ -251,5 +251,5 @@ uint32_t LogCpuKernel::LogCompute3(const CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kLog, LogCpuKernel);
+REGISTER_MS_CPU_KERNEL(kLog, LogCpuKernel);
 }  // namespace aicpu

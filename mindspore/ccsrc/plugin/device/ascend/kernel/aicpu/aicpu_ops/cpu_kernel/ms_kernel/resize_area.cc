@@ -324,5 +324,5 @@ uint32_t ResizeAreaCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kResizeArea, ResizeAreaCpuKernel);
+REGISTER_MS_CPU_KERNEL(kResizeArea, ResizeAreaCpuKernel);
 }  // namespace aicpu

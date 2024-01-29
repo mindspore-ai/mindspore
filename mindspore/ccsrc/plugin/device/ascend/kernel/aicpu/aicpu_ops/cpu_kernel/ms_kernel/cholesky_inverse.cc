@@ -88,5 +88,5 @@ uint32_t CholeskyInverseCpuKernel::CholeskyInverseCompute(const CpuKernelContext
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kCholeskyInverse, CholeskyInverseCpuKernel);
+REGISTER_MS_CPU_KERNEL(kCholeskyInverse, CholeskyInverseCpuKernel);
 }  // namespace aicpu

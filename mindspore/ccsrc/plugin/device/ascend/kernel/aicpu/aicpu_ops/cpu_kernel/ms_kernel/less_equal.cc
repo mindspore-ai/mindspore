@@ -221,5 +221,5 @@ uint32_t LessEqualCpuKernel::LessEqualCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kLessEqual, LessEqualCpuKernel);
+REGISTER_MS_CPU_KERNEL(kLessEqual, LessEqualCpuKernel);
 }  // namespace aicpu

@@ -181,5 +181,5 @@ uint32_t PdistGradCpuKernel::PdistGradCompute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kPdistGrad, PdistGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kPdistGrad, PdistGradCpuKernel);
 }  // namespace aicpu

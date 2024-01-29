@@ -24,7 +24,7 @@
 
 #include "common/kernel_log.h"
 #include "utils/kernel_util.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "cpu_kernel/common/status.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "cpu_kernel/common/cpu_kernel_utils.h"
@@ -186,5 +186,5 @@ std::uint32_t KLDivCpuKernel::Compute(CpuKernelContext &ctx) {
                                                                   : detail::KLDivCompute(ctx);
 }
 
-REGISTER_CPU_KERNEL(kKLDiv, KLDivCpuKernel);
+REGISTER_MS_CPU_KERNEL(kKLDiv, KLDivCpuKernel);
 }  // namespace aicpu

@@ -18,7 +18,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_CHECK_NUMERICS_H
 #define AICPU_KERNELS_NORMALIZED_CHECK_NUMERICS_H
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class CheckNumericsCpuKernel final : public CpuKernel {

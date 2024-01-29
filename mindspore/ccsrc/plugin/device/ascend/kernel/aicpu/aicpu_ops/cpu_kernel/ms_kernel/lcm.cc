@@ -171,5 +171,5 @@ uint32_t LcmCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kLcm, LcmCpuKernel);
+REGISTER_MS_CPU_KERNEL(kLcm, LcmCpuKernel);
 }  // namespace aicpu

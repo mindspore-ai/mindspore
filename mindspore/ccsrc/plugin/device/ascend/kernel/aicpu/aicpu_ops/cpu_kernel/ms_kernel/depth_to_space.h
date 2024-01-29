@@ -1,7 +1,7 @@
 #ifndef AICPU_KERNELS_DEPTHTOSPACE_H_
 #define AICPU_KERNELS_DEPTHTOSPACE_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class DepthToSpaceCpuKernel : public CpuKernel {

@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_TRIU_INDICES_H_
 #define AICPU_KERNELS_NORMALIZED_TRIU_INDICES_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "cpu_types.h"
 #include "utils/bcast.h"
 #include "utils/sparse_tensor.h"

@@ -89,5 +89,5 @@ uint32_t RandpermCpuKernel::RandpermCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kRandperm, RandpermCpuKernel);
+REGISTER_MS_CPU_KERNEL(kRandperm, RandpermCpuKernel);
 }  // namespace aicpu

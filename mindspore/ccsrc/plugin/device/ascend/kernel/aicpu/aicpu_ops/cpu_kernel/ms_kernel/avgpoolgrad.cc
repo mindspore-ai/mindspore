@@ -23,7 +23,7 @@
 #include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "cpu_kernel/inc/cpu_context.h"
+#include "cpu_context.h"
 
 namespace {
 const char *AVGPOOLGRAD = "AvgPoolGrad";
@@ -389,5 +389,5 @@ uint32_t AvgPoolGradCpuKernel::Compute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(AVGPOOLGRAD, AvgPoolGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(AVGPOOLGRAD, AvgPoolGradCpuKernel);
 }  // namespace aicpu

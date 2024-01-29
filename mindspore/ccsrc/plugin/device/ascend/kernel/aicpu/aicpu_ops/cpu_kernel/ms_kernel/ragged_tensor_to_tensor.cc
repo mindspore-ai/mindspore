@@ -620,5 +620,5 @@ uint32_t RaggedTensorToTensorCpuKernel::SetOutput(const CpuKernelContext &ctx, c
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kRaggedTensorToTensor, RaggedTensorToTensorCpuKernel);
+REGISTER_MS_CPU_KERNEL(kRaggedTensorToTensor, RaggedTensorToTensorCpuKernel);
 }  // namespace aicpu

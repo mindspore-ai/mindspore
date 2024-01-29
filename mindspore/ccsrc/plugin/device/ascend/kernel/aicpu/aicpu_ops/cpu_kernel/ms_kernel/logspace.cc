@@ -108,5 +108,5 @@ uint32_t LogSpaceCpuKernel::LogSpaceCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kLogSpace, LogSpaceCpuKernel);
+REGISTER_MS_CPU_KERNEL(kLogSpace, LogSpaceCpuKernel);
 }  // namespace aicpu

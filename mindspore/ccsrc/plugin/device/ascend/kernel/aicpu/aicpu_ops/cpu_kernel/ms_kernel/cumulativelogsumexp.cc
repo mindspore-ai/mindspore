@@ -214,5 +214,5 @@ uint32_t CumulativeLogsumexpCpuKernel::CumulativeLogsumexpCompute(const CpuKerne
   }  // end else
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(KCumulativeLogsumexp, CumulativeLogsumexpCpuKernel);
+REGISTER_MS_CPU_KERNEL(KCumulativeLogsumexp, CumulativeLogsumexpCpuKernel);
 }  // namespace aicpu

@@ -125,5 +125,5 @@ uint32_t MatrixInverseCpuKernel::MatrixInverseCompute(const CpuKernelContext &ct
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kMatrixInverse, MatrixInverseCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMatrixInverse, MatrixInverseCpuKernel);
 }  // namespace aicpu

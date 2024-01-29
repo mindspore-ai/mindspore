@@ -44,5 +44,5 @@ uint32_t EnvironCreateKernel::ParseKernelParam(const CpuKernelContext &ctx) cons
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kEnvironCreate, EnvironCreateKernel);
+REGISTER_MS_CPU_KERNEL(kEnvironCreate, EnvironCreateKernel);
 }  // namespace aicpu

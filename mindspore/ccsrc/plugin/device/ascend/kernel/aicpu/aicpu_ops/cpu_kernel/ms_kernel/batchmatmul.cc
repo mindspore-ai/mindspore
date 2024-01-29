@@ -247,5 +247,5 @@ uint32_t BatchMatMulCpuKernel::Compute(CpuKernelContext &ctx) {
   }
   return ret;
 }
-REGISTER_CPU_KERNEL(kBatchMatmul, BatchMatMulCpuKernel);
+REGISTER_MS_CPU_KERNEL(kBatchMatmul, BatchMatMulCpuKernel);
 }  // namespace aicpu

@@ -542,5 +542,5 @@ uint32_t DCTCpuKernel::DCTCompute(CpuKernelContext &ctx, int n, int axis, int no
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kDCT, DCTCpuKernel);
+REGISTER_MS_CPU_KERNEL(kDCT, DCTCpuKernel);
 }  // namespace aicpu
