@@ -20,6 +20,7 @@
 #include <functional>
 #include <memory>
 #include "utils/hash_map.h"
+#include "kernel/common_utils.h"
 #include "include/common/utils/utils.h"
 #include "backend/common/graph_kernel/expander/base/node.h"
 #include "backend/common/graph_kernel/expander/base/emitter.h"
@@ -132,6 +133,7 @@ class IrBuilder {
     return e->Emit(MetaOp::Reshape, {node, shape});
   }
   inline NodePtr Rsqrt(const NodePtr &node) const { return e->Emit(MetaOp::Rsqrt, {node}); }
+  inline NodePtr Reciprocal(const NodePtr &node) const { return e->Emit(MetaOp::Reciprocal, {node}); }
   inline NodePtr Select(const NodePtr &cond, const NodePtr &true_case, const NodePtr &false_case) const {
     return e->Emit(MetaOp::Select, {cond, true_case, false_case});
   }
@@ -142,7 +144,39 @@ class IrBuilder {
     return e->Emit(MetaOp::StridedSlice, {input, begin, end, strides});
   }
   inline NodePtr Sub(const NodePtr &lhs, const NodePtr &rhs) const { return e->Emit(MetaOp::Sub, {lhs, rhs}); }
-  inline NodePtr Tanh(const NodePtr &node) const { return e->Emit(MetaOp::Tanh, {node}); }
+  inline NodePtr Tanh(const NodePtr &node) const {
+    if (processor_ == kernel::kProcessorAiCore) {
+      // Tanh(x) = 1 - 2/(e^{2x}+1)
+      auto tanh_exp = Exp(Mul(node, Tensor(2, node->GetDtype())));
+      auto tanh_add_0 = Add(tanh_exp, Tensor(1, node->GetDtype()));
+      auto tanh_rec = Reciprocal(tanh_add_0);
+      auto tanh_neg = Mul(tanh_rec, Tensor(-2, node->GetDtype()));
+      auto tanh_add_1 = Add(tanh_neg, Tensor(1, node->GetDtype()));
+      return tanh_add_1;
+    }
+    return e->Emit(MetaOp::Tanh, {node});
+  }
+  inline NodePtr Cosh(const NodePtr &node) const {
+    if (processor_ == kernel::kProcessorAiCore) {
+      // Cosh(x) = (e^x + e^{-x})/2
+      auto cosh_exp_pos = Exp(node);
+      auto cosh_exp_neg = Exp(Mul(node, Tensor(-1, node->GetDtype())));
+      auto cosh_add = Add(cosh_exp_pos, cosh_exp_neg);
+      auto cosh_div = Div(cosh_add, Tensor(2, node->GetDtype()));
+      return cosh_div;
+    }
+    return e->Emit(MetaOp::Cosh, {node});
+  }
+  inline NodePtr Sinh(const NodePtr &node) const {
+    if (processor_ == kernel::kProcessorAiCore) {
+      auto sinh_exp_pos = Exp(node);
+      auto sinh_exp_neg = Exp(Mul(node, Tensor(-1, node->GetDtype())));
+      auto sinh_add = Sub(sinh_exp_pos, sinh_exp_neg);
+      auto sinh_div = Div(sinh_add, Tensor(2, node->GetDtype()));
+      return sinh_div;
+    }
+    return e->Emit(MetaOp::Sinh, {node});
+  }
   inline NodePtr TensorScatterAdd(const NodePtr &input, const NodePtr &indices, const NodePtr &update) const {
     return e->Emit(MetaOp::TensorScatterAdd, {input, indices, update});
   }
