@@ -93,7 +93,7 @@ using OptGuardPtr = std::shared_ptr<OptGuard>;
 class OptGuardPerf {
  public:
   static OptGuardPerf *GetGuardPerf();
-  void GetGuardPerfInfo(std::map<std::string, std::pair<size_t, size_t>> *guard_info,
+  virtual void GetGuardPerfInfo(std::map<std::string, std::pair<size_t, size_t>> *guard_info,
                         std::map<std::string, std::pair<size_t, size_t>> *item_info) const = 0;
   virtual void LogTracePerfStart() = 0;
   virtual void LogTracePerfEnd(Trace *trace) = 0;
