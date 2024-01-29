@@ -93,7 +93,7 @@ __attribute__((unused)) static bool CheckFilePath(const std::string &path) {
   return true;
 }
 
-__attribute__((unused)) static size_t GetClusterTimeoutRetryNum() {
+__attribute__((unused)) static size_t GetClusterTimeout() {
   std::string time_out_str = common::GetEnv(kEnvClusterTimeOut);
   size_t time_out_sec = kDefaultClusterTimeOut;
   if (!time_out_str.empty()) {
@@ -106,7 +106,7 @@ __attribute__((unused)) static size_t GetClusterTimeoutRetryNum() {
     }
   }
 
-  return time_out_sec / kExecuteInterval;
+  return time_out_sec;
 }
 }  // namespace topology
 }  // namespace cluster

@@ -98,7 +98,7 @@ class _ProcessManager:
             args: An object containing the command-line arguments.
 
         """
-        self.msn_process = []
+        self.msn_process = None
         self.cgn_processes = []
 
         """`is_master` flags whether the current node is the master node."""
@@ -207,10 +207,11 @@ class _ProcessManager:
                 has_exception = True
                 logger.error(f"Worker process {p.pid} exit with exception.")
 
-        self.msn_process.wait()
-        if self.msn_process.returncode != 0:
-            has_exception = True
-            logger.error(f"Scheduler process {self.msn_process.pid} exit with exception.")
+        if self.msn_process:
+            self.msn_process.wait()
+            if self.msn_process.returncode != 0:
+                has_exception = True
+                logger.error(f"Scheduler process {self.msn_process.pid} exit with exception.")
 
         if has_exception:
             logger.warning("Analyzing exception log...")
@@ -227,8 +228,9 @@ class _ProcessManager:
             p.terminate()
             p.join()
 
-        self.msn_process.terminate()
-        self.msn_process.join()
+        if self.msn_process:
+            self.msn_process.terminate()
+            self.msn_process.join()
 
     def stop_and_restart(self):
         """
@@ -244,8 +246,13 @@ class _ProcessManager:
         """
         Generate node id and log path for corresponding process.
         """
+        if self.local_worker_num > self.worker_num:
+            raise ValueError(f"Total worker number is {self.worker_num}, "
+                             f"but got exceeded local worker number: {self.local_worker_num}.")
         if self.local_worker_num == self.worker_num:
             # This means only one node is involved.
+            logger.info("All workers will be spawned on this node, "
+                        f"so 'node_rank': [{self.node_rank}] will be ignored.")
             return index, os.path.join(self.log_dir, "worker_" + str(index) + ".log")
 
         if self.node_rank >= 0:
@@ -263,7 +270,7 @@ class _ProcessManager:
         Analyze exception logs.
         """
         scheduler_log_path = os.path.join(self.log_dir, "scheduler.log")
-        os.system(f"cat {scheduler_log_path}|grep -E 'ERROR|CRITICAL|Traceback|RuntimeError' -C 10")
+        os.system(f"cat {scheduler_log_path}|grep -E 'ERROR|CRITICAL|Traceback|Error' -C 5")
         time_out_node_ids = []
         with open(scheduler_log_path, "r") as log:
             scheduler_log = log.read()
@@ -283,9 +290,9 @@ class _ProcessManager:
                                                       "|awk -F: '{print $1}'")
             log_names = list(grepper(id) for id in time_out_node_ids)
             for log in log_names:
-                logger.warning(f"cat log {log} error info and tail log:")
+                logger.warning(f"cat log {log} error info and tail log:"
+                               "==========================")
                 os.system(f"cat {os.path.join(self.log_dir, log)}"
-                          "|grep -E 'ERROR|CRITICAL|Traceback|RuntimeError' -C 10")
-                os.system(f"tail {os.path.join(self.log_dir, log)}")
+                          "|grep -E 'ERROR|CRITICAL|Traceback|Error' -C 5")
         else:
-            os.system(f"grep -rn -E 'ERROR|CRITICAL|Traceback|RuntimeError' -C 10 {self.log_dir}")
+            os.system(f"grep -rn -E 'ERROR|CRITICAL|Traceback|Error' -C 5 {self.log_dir}")

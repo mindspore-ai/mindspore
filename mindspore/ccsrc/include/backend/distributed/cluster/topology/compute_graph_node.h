@@ -84,6 +84,7 @@ class BACKEND_EXPORT ComputeGraphNode : public NodeBase {
 
   // Call the `Reconnect` function if the input func execution failed.
   bool ReconnectIfNeeded(const std::function<bool(void)> &func, const std::string &error, size_t retry);
+  bool ReconnectWithTimeoutWindow(const std::function<bool(void)> &func, const std::string &error, size_t time_out);
 
   // Reconnect to the meta server node.
   bool Reconnect();

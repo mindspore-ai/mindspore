@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_HARDWARE_GPU_GPU_DEVICE_CONTEXT_H_
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_GPU_GPU_DEVICE_CONTEXT_H_
 
+#include <tuple>
 #include <vector>
 #include <memory>
 #include <string>
@@ -164,7 +165,7 @@ class GPUDeviceContext : public DeviceInterface<GPUKernelExecutor, GPUDeviceResM
 
   static uint32_t GetDeviceCount();
   static std::string GetDeviceName(uint32_t device_id);
-  static std::vector<int> GetDeviceCapability(uint32_t device_id);
+  static std::tuple<int, int> GetDeviceCapability(uint32_t device_id);
   static cudaDeviceProp GetDeviceProperties(uint32_t device_id);
   static std::string GetArchList();
 
