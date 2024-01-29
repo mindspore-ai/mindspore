@@ -56,6 +56,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         Args:
             op_summary: op data
             steptrace: step data
+            pretty: whether to format json file
         """
 
         logger.info('Initiating timeline...')
