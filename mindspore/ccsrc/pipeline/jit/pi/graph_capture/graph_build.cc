@@ -2450,6 +2450,16 @@ StopTraceReason GraphBuilder::HandleCall(int depth) {
   return stop_reason;
 }
 
+static bool GuardLoopSequence(Graph *graph, ValueNode *seq_node) {
+  // guard type and length
+  TracePtr tr = graph->TraceValueNode(seq_node);
+  if (tr == nullptr) {
+    LogGuardFailed(seq_node, graph->Config(), "FOR_ITER guard failed");
+    return false;
+  }
+  return graph->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GDeduce, false);
+}
+
 bool GraphBuilder::TraceRunForIterSequence(int jump_bci) {
   // check for iter
   ValueNode *iter_node = seek(0);
@@ -2466,14 +2476,11 @@ bool GraphBuilder::TraceRunForIterSequence(int jump_bci) {
   }
 
   int &index = iter_node->marker_;
-  if (index == 0 && size != 0) {
-    // loop start. just guard type
-    TracePtr tr = graph_->TraceValueNode(seq_node);
-    if (tr == nullptr || !graph_->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GDeduce, false)) {
-      LogGuardFailed(seq_node, graph_->Config(), "FOR_ITER guard failed");
-      return false;
-    }
+  if (index == 0 && !GuardLoopSequence(graph_, seq_node)) {
+    // loop start.
+    return false;
   }
+
   if (index >= size) {
     pop();
     cur_bci_ = jump_bci;
@@ -2497,24 +2504,39 @@ bool GraphBuilder::TraceRunForIterSequence(int jump_bci) {
   return true;
 }
 
-bool GraphBuilder::TraceRunForIterEnumerate(int jump_bci) {
-  ValueNode *iter_node = seek(0);
+static bool CheckForIterEnumerate(ValueNode *iter_node) {
   ValueNode *enumerate_node = iter_node->input(0);
   if (enumerate_node->GetOpcode() != CALL_FUNCTION || iter_node->bci() - 1 != enumerate_node->bci()) {
     // enumerate object maybe alive, shouldn't reduce it
     return false;
   }
-  ValueNode *iterable_node = enumerate_node->input(1);
-  PyObject *iterable = iterable_node->GetVobj()->GetPyObject().ptr();
-  if (iterable == nullptr || !PySequence_Check(iterable)) {
-    // just support sequence iteration
-    return false;
-  }
-
   PyObject *enumerate = enumerate_node->GetVobj()->GetPyObject().ptr();
   if (enumerate == nullptr) {
     return false;
   }
+
+  MS_EXCEPTION_IF_NULL(iter_node->GetGraph());
+
+  ValueNode *iterable_node = enumerate_node->input(1);
+  PyObject *iterable = iterable_node->GetVobj()->GetPyObject().ptr();
+  if (iterable == nullptr || !PySequence_Check(iterable) || !GuardLoopSequence(iter_node->GetGraph(), iterable_node)) {
+    // just support sequence iteration
+    return false;
+  }
+  return true;
+}
+
+bool GraphBuilder::TraceRunForIterEnumerate(int jump_bci) {
+  ValueNode *iter_node = seek(0);
+  if (iter_node->marker_ == 0) {
+    if (!CheckForIterEnumerate(iter_node)) {
+      return false;
+    }
+    iter_node->marker_ = 1;
+  }
+  ValueNode *enumerate_node = iter_node->input(0);
+  PyObject *enumerate = enumerate_node->GetVobj()->GetPyObject().ptr();
+  ValueNode *iterable_node = enumerate_node->input(1);
 
   // reduce iterable object
   ValueNode *seq_node = iterable_node;
@@ -2544,9 +2566,73 @@ bool GraphBuilder::TraceRunForIterEnumerate(int jump_bci) {
   return true;
 }
 
+static bool CheckForIterZip(ValueNode *iter_node) {
+  ValueNode *zip_node = iter_node->input(0);
+  if (zip_node->GetOpcode() != CALL_FUNCTION || iter_node->bci() - 1 != zip_node->bci()) {
+    return false;
+  }
+  PyObject *zip = zip_node->GetVobj()->GetPyObject().ptr();
+  if (zip == nullptr) {
+    return false;
+  }
+  MS_EXCEPTION_IF_NULL(iter_node->GetGraph());
+  Graph *graph = iter_node->GetGraph();
+
+  std::vector<ValueNode *> iterable_nodes = {zip_node->getInputs().begin() + 1, zip_node->getInputs().end()};
+  auto iter = std::find_if(iterable_nodes.begin(), iterable_nodes.end(), [&graph](ValueNode *iterable_node) {
+    PyObject *iterable = iterable_node->GetVobj()->GetPyObject().ptr();
+    return iterable == nullptr || !PySequence_Check(iterable) || !GuardLoopSequence(graph, iterable_node);
+  });
+  if (iter != iterable_nodes.end()) {
+    return false;
+  }
+  return true;
+}
+
 bool GraphBuilder::TraceRunForIterZip(int jump_bci) {
-  // not implement
-  return false;
+  ValueNode *iter_node = seek(0);
+  int *index = &iter_node->marker_;
+  if ((*index) == 0) {
+    if (!CheckForIterZip(iter_node)) {
+      return false;
+    }
+  }
+
+  ValueNode *zip_node = iter_node->input(0);
+  PyObject *zip = zip_node->GetVobj()->GetPyObject().ptr();
+  std::vector<ValueNode *> iterable_nodes = {zip_node->getInputs().begin() + 1, zip_node->getInputs().end()};
+
+  // reduce iterable object
+  PyObject *tuple = PyIter_Next(zip);
+  py::object handle = py::reinterpret_steal<py::object>(tuple);
+  if (handle.ptr() == nullptr) {
+    if (PyErr_Occurred() && !PyErr_ExceptionMatches(PyExc_StopIteration)) {
+      MS_LOG(ERROR) << "trace FOR_ITER got an error " << py::error_already_set().what();
+      PyErr_Clear();
+      return false;
+    }
+    PyErr_Clear();
+    pop();
+    cur_bci_ = jump_bci;
+    return true;
+  }
+
+  std::vector<ValueNode *> inputs;
+  for (size_t tuple_index = 0; tuple_index < iterable_nodes.size(); ++tuple_index) {
+    PyObject *item = PyTuple_GET_ITEM(tuple, tuple_index);
+    ValueNode *seq_node = iterable_nodes[tuple_index];
+    ValueNode *index_node = NewValueNode(AObject::Convert(py::int_(*index)), LOAD_CONST, -1, {});
+    ValueNode *item_node = NewValueNode(AObject::Convert(item), BINARY_SUBSCR, 0, {seq_node, index_node});
+    inputs.push_back(item_node);
+    graph_->GetTracedNodes().push_back(item_node);
+  }
+  ValueNode *value_node = NewValueNode(AObject::Convert(tuple), BUILD_TUPLE, inputs.size(), inputs);
+  graph_->GetTracedNodes().push_back(value_node);
+  push(value_node);
+
+  (*index)++;
+  cur_bci_ = cur_bci_ + 1;
+  return true;
 }
 
 bool GraphBuilder::TraceRunForIter(const Instr &instr) {
