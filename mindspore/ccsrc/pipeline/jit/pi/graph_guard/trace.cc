@@ -647,7 +647,7 @@ static bool SupportCall(PyObject *func, const std::string &name) {
   static const std::set<PyTypeObject *> support_create_instance_type = {
     &PyComplex_Type, &PyMap_Type,       &PyBaseObject_Type, &PyRange_Type,   &PyZip_Type,  &PySlice_Type,
     &PyBool_Type,    &PyFloat_Type,     &PyLong_Type,       &PyType_Type,    &PyList_Type, &PyTuple_Type,
-    &PySet_Type,     &PyFrozenSet_Type, &PyDict_Type,       &PyUnicode_Type, &PyEnum_Type,
+    &PySet_Type,     &PyFrozenSet_Type, &PyDict_Type,       &PyUnicode_Type, &PyEnum_Type, &PyMethod_Type,
   };
   if (PyType_CheckExact(func)) {
     if (IsMsClass(func)) {
