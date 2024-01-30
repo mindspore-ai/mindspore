@@ -245,6 +245,11 @@ void GeGraphExecutor::SetRefShape(std::vector<int64_t> *ref_shape, bool dyn, std
     return;
   }
 
+  if (ref_shape->size() < Num4) {
+    MS_LOG(ERROR) << "Invalid ref_shape shape dim : " << ref_shape->size();
+    return;
+  }
+
   if (dyn) {
     if (dyn_kv_cache_info_.batch_size_dyn) {
       (*ref_shape)[Index0] = abstract::Shape::kShapeDimAny;
@@ -326,13 +331,19 @@ void GeGraphExecutor::SetDynamicKVCache() {
 }
 
 bool GeGraphExecutor::InitMaxShapeParam() {
+  auto &ref_shape = ref_data_infos_.front().shape;
+  if (ref_shape.size() < Num4) {
+    MS_LOG(ERROR) << "ref data info shape invalid.";
+    return false;
+  }
+
   std::string max_batch_size;
   if (GetConfigOption("ascend_context", "max_batch_size", &max_batch_size)) {
     MS_LOG(INFO) << "Get max batch size from config file, ascend_context, max_batch_size";
     dyn_kv_cache_info_.max_batch_size = std::stoi(max_batch_size);
   } else {
-    MS_LOG(INFO) << "Get max batch size from ref data shape : " << ref_data_infos_.front().shape;
-    dyn_kv_cache_info_.max_batch_size = ref_data_infos_.front().shape.at(kIndex0);
+    MS_LOG(INFO) << "Get max batch size from ref data shape : " << ref_shape;
+    dyn_kv_cache_info_.max_batch_size = ref_shape.at(kIndex0);
   }
 
   std::string max_seq_length;
@@ -340,8 +351,8 @@ bool GeGraphExecutor::InitMaxShapeParam() {
     MS_LOG(INFO) << "Get max seq length from config file, ascend_context, max_seq_length";
     dyn_kv_cache_info_.max_seq_len_size = std::stoi(max_seq_length);
   } else {
-    MS_LOG(INFO) << "Get max seq length ffrom ref data shape : " << ref_data_infos_.front().shape;
-    dyn_kv_cache_info_.max_seq_len_size = ref_data_infos_.front().shape.at(kIndex2);
+    MS_LOG(INFO) << "Get max seq length ffrom ref data shape : " << ref_shape;
+    dyn_kv_cache_info_.max_seq_len_size = ref_shape.at(kIndex2);
   }
 
   MS_LOG(INFO) << "set dynamic max shape, max batch size : " << dyn_kv_cache_info_.max_batch_size
@@ -1515,7 +1526,12 @@ bool GeGraphExecutor::BuildGraphRefMode(const FuncGraphPtr &anf_graph, uint32_t 
     return true;
   }
 
-  dyn_kv_cache_info_.is_ge_graph_static_ = ge_session_->GetCompiledGraphSummary(graph_id)->IsStatic();
+  auto graph_summary = ge_session_->GetCompiledGraphSummary(graph_id);
+  if (graph_summary == nullptr) {
+    MS_LOG(ERROR) << "Get ge graph_summary failed.";
+    return true;
+  }
+  dyn_kv_cache_info_.is_ge_graph_static_ = graph_summary->IsStatic();
   MS_LOG(INFO) << "Dyn kv cache info, ge graph is static :" << dyn_kv_cache_info_.is_ge_graph_static_;
 
   if (!InitMemoryContextManager()) {
