@@ -48,8 +48,7 @@ abstract::TupleShapePtr FlashAttentionScoreInferShape(const PrimitivePtr &primit
   int64_t batch_size;
   int64_t seq_len;
   int64_t head_num = GetValue<int64_t>(primitive->GetAttr("head_num"));
-  auto query_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
-    input_args[kFlashAttentionScoreInputQueryIndex]->BuildShape())[kShape];
+  auto query_shape = input_args[kFlashAttentionScoreInputQueryIndex]->GetShape()->GetShapeVector();
   auto input_layout = GetValue<std::string>(primitive->GetAttr("input_layout"));
   if (input_layout == kInputFlashAttentionScoreLayoutBSH) {
     if (query_shape.size() != kInputFlashAttentionScoreQueryBSHRank) {
