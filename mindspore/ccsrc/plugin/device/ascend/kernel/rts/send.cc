@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/ascend/kernel/rts/send.h"
-#include "runtime/event.h"
 #include "acl/acl.h"
 #include "acl/acl_rt.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"

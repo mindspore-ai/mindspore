@@ -591,6 +591,7 @@ void GeGraphExecutor::AllocFeatureMemory(const transform::RunOptions &options, s
 
 void GeGraphExecutor::AllocParameterMemory(const KernelGraphPtr &kernel_graph, std::set<KernelGraphPtr> *memo) const {
   // Set Device Type to be same as Host Type, AssignStaticMemoryInput will ignore parameters without DeviceType
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   if (memo == nullptr) {
     MS_LOG(INFO) << "Start AllocParameterMemory, kernel graph: " << kernel_graph->ToString();
     std::set<KernelGraphPtr> memo_set;
@@ -600,7 +601,6 @@ void GeGraphExecutor::AllocParameterMemory(const KernelGraphPtr &kernel_graph, s
   } else if (memo->find(kernel_graph) != memo->end()) {
     return;
   }
-  MS_EXCEPTION_IF_NULL(kernel_graph);
   (void)memo->insert(kernel_graph);
   auto parameters = FilterAllParameters(kernel_graph);
   for (const auto &iter : parameters) {

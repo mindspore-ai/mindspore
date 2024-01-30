@@ -24,7 +24,6 @@
 #include <unordered_map>
 #include <utility>
 #include "kernel/kernel.h"
-#include "toolchain/prof_api.h"
 #include "plugin/device/ascend/hal/profiler/profiling_data_dumper.h"
 
 namespace mindspore {

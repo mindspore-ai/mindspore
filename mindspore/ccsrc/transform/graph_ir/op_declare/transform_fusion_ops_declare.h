@@ -21,7 +21,6 @@
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "transform/graph_ir/custom_op_proto/cust_other_ops.h"
 #include "transform/graph_ir/custom_op_proto/flash_attention.h"
-#include "op_proto/inc/experiment_ops.h"
 #include "op_proto/inc/fusion_ops.h"
 
 DECLARE_OP_ADAPTER(KVCacheMgr)
