@@ -33,6 +33,7 @@ from mindspore.nn.optim import Adam
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
+@pytest.mark.skip(reason="No support trace in r2.3")
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_trace_basic_cell(mode):
     """
@@ -69,6 +70,7 @@ def test_trace_basic_cell(mode):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.skip(reason="No support trace in r2.3")
 def test_trace_python_infer_cell():
     """
     Feature: trace of cell
@@ -189,6 +191,7 @@ def get_mlp_cell_reuse_loss(enable_trace):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+@pytest.mark.skip(reason="No support trace in r2.3")
 def test_mlp_cell_reuse_trace():
     """
     Feature: cell reuse.
@@ -203,6 +206,7 @@ def test_mlp_cell_reuse_trace():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.skip(reason="No support trace in r2.3")
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_adam_trace(mode):
     """

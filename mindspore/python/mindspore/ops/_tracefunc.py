@@ -19,6 +19,7 @@ import textwrap
 import inspect
 import os
 from mindspore import nn
+from mindspore import log as logger
 from mindspore.common.tensor import Tensor
 from mindspore.ops.primitive import _RunOpHook, Primitive
 from mindspore._c_expression import PackExpander, PackNode
@@ -276,9 +277,9 @@ def trace(fn):
             pack_func = PackFunc(fn, f"{id(obj)}_{id(fn)}_{grad_flag_expr}", obj, True)
             setattr(obj, pack_func_name, pack_func)
         return pack_func(*args, **kwargs)
-
-    if "MS_DEV_DISABLE_TRACE" in os.environ and os.environ["MS_DEV_DISABLE_TRACE"] == "on":
-        return fn
-    _trace_wrap.pack_fn = fn
-    _trace_wrap.is_method = None
-    return _trace_wrap
+    logger.warning("The trace feature is not supported in r2.3")
+    if "MS_DEV_ENABLE_TRACE" in os.environ and os.environ["MS_DEV_ENABLE_TRACE"] == "on":
+        trace_wrap.pack_fn = fn
+        _trace_wrap.is_method = None
+        return _trace_wrap
+    return fn
