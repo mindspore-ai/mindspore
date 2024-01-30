@@ -1013,11 +1013,8 @@ py::object MindCodeBreakGenerator::MakeCode(bool make_graph) {
   py::object result = CodeGenerator::Transform(code_gen.GetCode());
   if (make_graph) {
     JitCompileResults *child = getJitCompileResults(result.ptr());
-    auto b = std::dynamic_pointer_cast<MindGraphBuilder>(builder_);
-    MS_LOG(INFO) << "child->fg = " << b->fg_builder_.graph();
-    // std::string phase = GetFuncGraphPhase(*frame, child->code);
-    // child->code->SetNativeFunc("", callable, nullptr);
-    // child->stat = CodeExtra::GRAPH_CALLABLE;
+    MS_LOG(INFO) << "child->fg = " << FGBuilder()->graph();
+    // child->fg = FGBuilder()->graph();
     child->stat = CodeExtra::GRAPH_CAPTURED;
     child->conf = jcr->conf;
     child->tbs = jcr->tbs;

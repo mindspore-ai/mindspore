@@ -137,5 +137,6 @@ class FuncGraphBuilder {
   HashMap<PyObject *, AnfNodePtr> py_obj_to_node_;
   std::vector<AnfNodePtr> output_nodes_;
 };
+using FuncGraphBuilderPtr = std::shared_ptr<FuncGraphBuilder>;
 }  // namespace mindspore
 #endif  // MINDSPORE_PI_JIT_GRAPH_BUILD_FUNC_GRAPH_BUILDER_H_

@@ -28,6 +28,7 @@
 #include "pipeline/jit/pi/graph_guard/infer.h"
 #include "pipeline/jit/pi/external.h"
 #include "pipeline/jit/pi/graph_build/func_graph_builder.h"
+#include "pipeline/jit/pi/graph_capture/abstract_object.h"
 #include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore {
@@ -426,6 +427,7 @@ bool GraphBuilder::DoCall(const Instr &instr) {
   this->graph_->GetTracedNodes().push_back(call_node);
 
   StopTraceReason r = HandleCall(0);
+  MS_EXCEPTION_IF_CHECK_FAIL(r != StopTraceReason::kTrace_Fail, "trace failed!");
   if (r != StopTraceReason::kNonStopTrace) {
     graph_->StopTraceAt(cur_bci_, r);
     return false;
@@ -1267,6 +1269,26 @@ py::object GraphBuilder::GetFuncInfo(ValueNode *func_node) {
   return FindPyFunc(vobj);
 }
 
+bool MindGraphBuilder::WhiteListFuncCheckAndInfer(CallNode *call_node, const py::object &callable) {
+  std::string special_func_key;
+  if (IsFuncInWhiteList(callable, &special_func_key)) {
+    call_node->SetSubGraph(NewGraph(nullptr, nullptr));
+    call_node->GetSubGraph()->SetGuard(root_->GetGraph()->GetGuard());
+    bool has_sub_graph = HandleFuncInWhiteList(special_func_key, call_node);
+    if (!has_sub_graph) {
+      call_node->SetInlineReason(InlineReason::kInlineFuncSpecialize);
+      MS_ASSERT(!call_node->GetSubGraph());  // check infer function
+      return true;
+    }
+    call_node->SetInlineReason(InlineReason::kInline);
+    ValueNode *ret_node = call_node->GetSubGraph()->GetRetVal();
+    MS_EXCEPTION_IF_CHECK_FAIL(ret_node, "infer special function failed");
+    seek(0) = ret_node;
+    return true;
+  }
+  return false;
+}
+
 bool GraphBuilder::WhiteListFuncCheckAndInfer(CallNode *call_node, const py::object &callable) {
   const auto &conf = call_node->GetGraph()->Config();
 
@@ -1772,17 +1794,26 @@ StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, 
 
   MS_LOG(INFO) << "new subgraph->TraceRun";
   subgraph->TraceRun(args);
+  MS_LOG(INFO) << "new subgraph->TraceRun end";
 
   call_node->SetSubGraph(subgraph->GetGraph());
-  if (subgraph->GetGraph()->GetRetVal() != nullptr) {
-    auto sg = std::dynamic_pointer_cast<MindGraphBuilder>(subgraph);
-    auto res = fg_builder_.AddNode(sg->fg_builder_.graph(), args);
-    if (res.ptr()) {
-      MS_LOG(INFO) << "add fg node suc: ";
-      call_node->SetVobj(AObject::Convert(res));
+  auto sg = std::dynamic_pointer_cast<MindGraphBuilder>(subgraph);
+  auto sub_ret = subgraph->GetGraph()->GetRetVal();
+  if (sub_ret != nullptr) {
+    if (CheckConstPyObject(sub_ret->GetVobj()->GetPyObject().ptr())) {
+      call_node->SetVobj(sub_ret->GetVobj());
+    } else if (sg->FGBuilder()->graph() == nullptr) {
+      MS_LOG(ERROR) << "subgraph trace null";
+      return StopTraceReason::kTrace_Fail;
     } else {
-      MS_LOG(ERROR) << "add fg node fail";
-      stat = InlineReason::kInlineInfer_Fail;
+      auto res = FGBuilder()->AddNode(sg->FGBuilder()->graph(), args);
+      if (res.ptr()) {
+        MS_LOG(INFO) << "add fg node suc: ";
+        call_node->SetVobj(AObject::Convert(res));
+      } else {
+        MS_LOG(ERROR) << "add fg node fail";
+        stat = InlineReason::kInlineInfer_Fail;
+      }
     }
     stat = is_make_func || ApplyInlinePolicy(subgraph->GetGraph()) ? stat : InlineReason::kInlinePolicyDisabled;
   } else {
@@ -2217,18 +2248,18 @@ static void SetGradFuncInfo(mindspore::pijit::CallNode *call_node);
 void MindGraphBuilder::FGAddInput(const std::vector<py::object> &args) {
   for (size_t i = 0; i < args.size(); ++i) {
     MS_LOG(INFO) << "try add input: " << py::str(args[i]);
-    fg_builder_.AddInput(args[i]);
+    FGBuilder()->AddInput(args[i]);
     MS_LOG(INFO) << "add input suc";
   }
 }
 
 void MindGraphBuilder::FGAddOutput() {
   if (auto ret = GetGraph()->GetRetVal()) {
+    MS_LOG(INFO) << ret->GetVobj()->ToString();
     auto out = ret->GetVobj()->GetPyObject();
-    MS_LOG(INFO) << "try add output: " << py::str(out);
-    if (fg_builder_.AddOutput(out)) {
+    MS_LOG(INFO) << "try add output: " << py::str(out) << " addr:" << out.ptr();
+    if (FGBuilder()->AddOutput(out)) {
       MS_LOG(INFO) << "add output succuss";
-      DumpIR("new.ir", fg_builder_.graph());
     } else {
       MS_LOG(ERROR) << "add output fail";
       // TODO(xiaruijie)
@@ -2239,12 +2270,16 @@ void MindGraphBuilder::FGAddOutput() {
 py::object MindGraphBuilder::FGAddNode(CallNode *call_node, const py::object &callable_info,
                                        const std::vector<py::object> &args, StopTraceReason *stop_reason) {
   MS_LOG(INFO) << "try add node: " << py::str(callable_info);
-  auto res = fg_builder_.AddNode(callable_info, args);
+  auto res = FGBuilder()->AddNode(callable_info, args);
   if (res.ptr() == nullptr) {
     MS_LOG(ERROR) << "add node fail";
+    *stop_reason = StopTraceReason::kTrace_Fail;
   } else {
     MS_LOG(INFO) << "add node suc";
-    call_node->SetVobj(AObject::Convert(res));
+    auto node = AbstractFuncGraphOut::MakeAObject(res);
+    MS_LOG(INFO) << py::str(node->GetPyObject());
+    MS_LOG(INFO) << node->ToString();
+    call_node->SetVobj(node);
     *stop_reason = StopTraceReason::kNonStopTrace;
   }
   return py::object();
@@ -2275,16 +2310,22 @@ py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReaso
   callable_info = callable->GetPyObject();
   MS_LOG(INFO) << "trace_flag for: " << py::str(callable_info);
   auto args = call_node->GetArgs();
-  auto func = fg_builder_.ConvertMethod(callable_info);
-  if (func.ptr() != nullptr) {
-    MS_LOG(INFO) << "convert method :" << py::str(callable_info) << " to " << py::str(func);
-    callable_info = func;
+  auto method = FGBuilder()->ConvertMethod(callable_info);
+  if (method.ptr() != nullptr) {
+    MS_LOG(INFO) << "convert method :" << py::str(callable_info) << " to " << py::str(method);
+    callable_info = method;
     args = GetNewArgs(call_node);
   }
-  if (fg_builder_.CheckCallable(callable_info)) {
+  auto func = FGBuilder()->ConvertFunction(callable_info);
+  if (func.ptr() != nullptr) {
+    MS_LOG(INFO) << "convert function:" << py::str(callable_info) << " to " << py::str(func);
+    callable_info = func;
+  }
+  if (FGBuilder()->CheckCallable(callable_info)) {
     return FGAddNode(call_node, callable_info, args, stop_reason);
   }
-  if (fg_builder_.CanConstantFoldFunc(callable_info)) {
+  if (FGBuilder()->CanConstantFoldFunc(callable_info)) {
+    MS_LOG(INFO) << "CanConstantFoldFunc for: " << py::str(callable_info);
     JustCallAndSetRes(call_node);
     *stop_reason = StopTraceReason::kNonStopTrace;
     return py::object();
@@ -2901,5 +2942,58 @@ static void SetGradFuncInfo(CallNode *call_node) {
 
 void GraphBuilder::DumpDFG() { GRAPH_JIT_LOG_F("%s", graph_->ToString().c_str()); }
 
+bool GraphBuilder::IsFuncInWhiteList(const py::object &f, std::string *special_func_key, bool bInferPrimitive) {
+  if (f.ptr() == nullptr) {
+    return false;
+  }
+  *special_func_key = GetFuncName(f);
+  auto FuncWhiteListMap = GetFuncWhiteListMap();
+  auto iter = FuncWhiteListMap.find(*special_func_key);
+  if (iter != FuncWhiteListMap.end() && iter->second.check(f)) {
+    return true;
+  }
+  auto fuzzmatcher = GetFuncWhiteListFuzzyMatcher();
+  auto tar = std::find_if(fuzzmatcher.begin(), fuzzmatcher.end(),
+                          [&f](const std::pair<CheckFunc, std::string> &i) { return i.first(f); });
+  if (tar != fuzzmatcher.end()) {
+    *special_func_key = tar->second;
+    return true;
+  }
+  if (bInferPrimitive && CheckPrimitive(f)) {
+    *special_func_key = "Primitive_";
+    return true;
+  }
+  return false;
+}
+
+bool GraphBuilder::HandleFuncInWhiteList(const std::string &key, CallNode *n) {
+  MS_LOG(DEBUG) << "specialize for " << key;
+  return GetFuncWhiteListMap().find(key)->second.infer(n);
+}
+
+bool MindGraphBuilder::IsFuncInWhiteList(const py::object &f, std::string *special_func_key) {
+  if (f.ptr() == nullptr) {
+    return false;
+  }
+  *special_func_key = GetFuncName(f);
+  auto MindFuncWhiteListMap = GetFuncWhiteListMap(true);
+  auto iter = MindFuncWhiteListMap.find(*special_func_key);
+  if (iter != MindFuncWhiteListMap.end() && iter->second.check(f)) {
+    return true;
+  }
+  auto fuzzmatcher = GetFuncWhiteListFuzzyMatcher(true);
+  auto tar = std::find_if(fuzzmatcher.begin(), fuzzmatcher.end(),
+                          [&f](const std::pair<CheckFunc, std::string> &i) { return i.first(f); });
+  if (tar != fuzzmatcher.end()) {
+    *special_func_key = tar->second;
+    return true;
+  }
+  return false;
+}
+
+bool MindGraphBuilder::HandleFuncInWhiteList(const std::string &key, CallNode *n) {
+  MS_LOG(INFO) << "specialize for " << key;
+  return GetFuncWhiteListMap(true).find(key)->second.infer(n);
+}
 }  // namespace pijit
 }  // namespace mindspore
