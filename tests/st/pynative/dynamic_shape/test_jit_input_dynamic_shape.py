@@ -214,7 +214,7 @@ class ListInsert(Cell):
         return xshape
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_set_inputs_shape_list_insert():
