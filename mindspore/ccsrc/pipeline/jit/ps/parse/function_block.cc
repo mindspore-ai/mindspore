@@ -703,8 +703,8 @@ CNodePtr FunctionBlock::ForceToCondNode(const AnfNodePtr &cond, bool is_while_co
 
 // Perform a jump from this block to target block
 void FunctionBlock::Jump(const FunctionBlockPtr &target_block, const std::vector<AnfNodePtr> &args) {
-  MS_LOG(DEBUG) << "Jump from block: " << ToString() << " to block: " << target_block->ToString();
   MS_EXCEPTION_IF_NULL(target_block);
+  MS_LOG(DEBUG) << "Jump from block: " << ToString() << " to block: " << target_block->ToString();
   if (is_dead_block_) {
     MS_LOG(DEBUG) << "Dead code block should not jump to other block! block: " << ToString();
     return;

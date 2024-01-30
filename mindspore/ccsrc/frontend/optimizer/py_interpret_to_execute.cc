@@ -109,7 +109,7 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> UnzipGlobalDict(cons
   auto dict_value = dyn_cast<ValueDictionary>(converted_value);
   if (dict_value == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "The PyInterpret local dict or global dict should be a dictionary, but got "
-                               << dict_value->ToString();
+                               << converted_value->ToString();
   }
   for (auto item : dict_value->value()) {
     (void)keys.emplace_back(NewValueNodeWithAbstract(item.first));
