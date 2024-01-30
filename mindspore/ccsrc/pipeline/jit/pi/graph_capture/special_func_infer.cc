@@ -918,6 +918,8 @@ static const std::vector<std::pair<CheckFunc, std::string>> kMindFuncWhiteListFu
   {CheckJitForbidden, kJitForbidden},
 };
 
+const std::string GetMindsporeNamePrimitive() { return kMindsporeNamePrimitive; }
+
 std::unordered_map<std::string, SpecialAction> GetFuncWhiteListMap(bool trace_flag) {
   if (trace_flag) {
     return kMindFuncWhiteListMap;
