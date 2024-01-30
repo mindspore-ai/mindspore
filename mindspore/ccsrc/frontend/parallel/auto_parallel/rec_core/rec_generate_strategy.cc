@@ -633,17 +633,13 @@ Strategies PrepareGather(const std::shared_ptr<OperatorInfo> &op, Dimensions str
   }
 
   int64_t batch_dims = -1;
-  auto attrs = op->attrs();
-  auto attr_iter = attrs.find("batch_dims");
-  if (attr_iter != attrs.end()) {
-    MS_EXCEPTION_IF_NULL(attr_iter->second);
-    if (!attr_iter->second->isa<Int64Imm>()) {
-      MS_LOG(EXCEPTION) << op->name() << ": The value of batch dims is not int";
-    }
-
-    batch_dims = attr_iter->second->cast<Int64ImmPtr>()->value();
-    MS_LOG(INFO) << op->name() << ": batch dims is " << batch_dims;
+  auto batch_dims_val = GetScalarValueFromInputs<int64_t>(op->input_value(), op->name(), BATCH_DIMS);
+  if (batch_dims_val.has_value()) {
+    batch_dims = batch_dims_val.value();
+  } else {
+    MS_LOG(EXCEPTION) << op->name() << ": Failed to fetch the value of batch dims";
   }
+
   if (batch_dims > 1) {
     for (size_t i = 0; i < op->inputs_shape().size(); i++) {
       strategies.push_back(strategie);
