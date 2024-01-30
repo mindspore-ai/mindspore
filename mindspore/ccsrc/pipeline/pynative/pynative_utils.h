@@ -125,7 +125,7 @@ struct PyParser {
         return ss.str();
       };
       if (tensor != nullptr) {
-        MS_EXCEPTION(ValueError) << "For " << op_def->name_ << ", the " << idx
+        MS_EXCEPTION(ValueError) << "For " << op_def->name_ << ", the " << idx + 1
                                  << "'th input is a Tensor whose shape is " << PrintVectorFunc(tensor->shape())
                                  << " and dtype is [" << TypeIdToString(tensor->data_type())
                                  << "], which can not be converted to " << ops::EnumToString(op_arg.arg_dtype_) << ".";
