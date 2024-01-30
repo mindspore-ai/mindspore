@@ -92,6 +92,7 @@ void GatherInfo(const T &arg, const Args &... args) {
 }
 
 uint64_t calc_hash_id();
+uint64_t gen_hash(const void *key, const int len, const uint32_t seed = 0xdeadb0d7);
 
 template <typename... Args>
 bool HitCache(const char *aclnn_api, aclOpExecutor **executor, uint64_t *workspace_size, const Args &... args) {

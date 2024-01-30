@@ -233,7 +233,7 @@ void gen_hash_tmp(const uint64_t *blocks, const int block_num, const uint32_t se
   *rhax = hax;
 }
 
-uint64_t gen_hash(const void *key, const int len, const uint32_t seed = 0xdeadb0d7) {
+uint64_t gen_hash(const void *key, const int len, const uint32_t seed) {
   const uint8_t *data = (const uint8_t *)key;
   // the length of each block is 16 bytes
   const int block_num = len / 16;
