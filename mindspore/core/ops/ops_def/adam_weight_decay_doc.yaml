@@ -29,6 +29,11 @@ adam_weight_decay:
         :math:`\epsilon` represents `epsilon`.
 
         Args:
+            use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
+                If ``True`` , updates of the var, m, and v tensors will be protected by a lock.
+                If ``False`` , the result is unpredictable. Default: ``False`` .
+
+        Inputs:
             - **var** (Parameter) - Weights to be updated. The shape is :math:`(N, *)` where :math:`*` means,
               any number of additional dimensions. The data type can be float16 or float32.
             - **m** (Parameter) - The 1st moment vector in the updating formula,
@@ -46,9 +51,6 @@ adam_weight_decay:
             - **decay** (float) - The weight decay value, must be a scalar tensor with float32 data type.
               Default: ``0.0`` .
             - **gradient** (Tensor) - Gradient, has the same shape as `var`.
-            - **use_locking** (bool): Whether to enable a lock to protect variable tensors from being updated.
-                If ``True`` , updates of the var, m, and v tensors will be protected by a lock.
-                If ``False`` , the result is unpredictable. Default: ``False`` .
 
         Outputs:
             Tuple of 3 Tensor, the updated parameters.
