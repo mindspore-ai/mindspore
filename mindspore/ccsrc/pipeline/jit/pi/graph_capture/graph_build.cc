@@ -427,7 +427,6 @@ bool GraphBuilder::DoCall(const Instr &instr) {
   this->graph_->GetTracedNodes().push_back(call_node);
 
   StopTraceReason r = HandleCall(0);
-  MS_EXCEPTION_IF_CHECK_FAIL(r != StopTraceReason::kTrace_Fail, "trace failed!");
   if (r != StopTraceReason::kNonStopTrace) {
     graph_->StopTraceAt(cur_bci_, r);
     return false;
@@ -2276,7 +2275,7 @@ py::object MindGraphBuilder::FGAddNode(CallNode *call_node, const py::object &ca
     *stop_reason = StopTraceReason::kTrace_Fail;
   } else {
     MS_LOG(INFO) << "add node suc";
-    auto node = AbstractFuncGraphOut::MakeAObject(res);
+    auto node = AbstractTraceNode::MakeAObject(res);
     MS_LOG(INFO) << py::str(node->GetPyObject());
     MS_LOG(INFO) << node->ToString();
     call_node->SetVobj(node);
@@ -2960,7 +2959,7 @@ bool GraphBuilder::IsFuncInWhiteList(const py::object &f, std::string *special_f
     return true;
   }
   if (bInferPrimitive && CheckPrimitive(f)) {
-    *special_func_key = "Primitive_";
+    *special_func_key = GetMindsporeNamePrimitive();
     return true;
   }
   return false;
