@@ -14,7 +14,7 @@
 # ============================================================================
 import pytest
 import mindspore
-from mindspore.ops.auto_generate.gen_pyboost_func import add, elu
+from mindspore.ops import add, elu
 from mindspore import Tensor
 import numpy as np
 

@@ -15,7 +15,7 @@
 import pytest
 import numpy as np
 from mindspore import ops
-from mindspore.ops.auto_generate.gen_pyboost_func import cast
+from mindspore.ops import cast
 import mindspore.common.dtype as mstype
 import mindspore as ms
 import tests.st.ops.test_utils as test_utils
