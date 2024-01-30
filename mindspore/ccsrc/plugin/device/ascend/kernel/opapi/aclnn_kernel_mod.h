@@ -43,19 +43,15 @@ class EmptyKernelTensor {
  public:
   EmptyKernelTensor() { tensor_ = new KernelTensor(); }
   EmptyKernelTensor(TypeId type_id, TypeId dtype_id) {
-    tensor_ = new KernelTensor();
-    set_type_id(type_id);
-    set_dtype_id(dtype_id);
-    set_empty_shape();
+    if (type_id == kObjectTypeTensorType) {
+      tensor_ = new KernelTensor();
+      auto tensor_shape = std::make_shared<abstract::TensorShape>();
+      tensor_shape->SetShapeVector({0});
+      tensor_->SetType(std::make_shared<TensorType>(TypeIdToType(dtype_id)));
+      tensor_->SetShape(tensor_shape);
+    }
   }
   ~EmptyKernelTensor() { delete tensor_; }
-  void set_dtype_id(TypeId dtype_id) { tensor_->set_dtype_id(dtype_id); }
-  void set_type_id(TypeId type_id) { tensor_->set_type_id(type_id); }
-  void set_empty_shape() {
-    auto tensor_shape = std::make_shared<abstract::TensorShape>();
-    tensor_shape->SetShapeVector({0});
-    tensor_->SetShape(tensor_shape);
-  }
   KernelTensor *get() const { return tensor_; }
 
  private:

@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_FLASH_ATTENTION_SCORE_GRAD_ACLNN_KERNEL_MOD_H_
 #include <vector>
 #include <string>
+#include <memory>
 #include "ops/base_operator.h"
 #include "plugin/device/ascend/kernel/opapi/aclnn_kernel_mod.h"
 #include "transform/acl_ir/acl_convert.h"
@@ -33,6 +34,15 @@ class FAScoreGradAclnnKernelMod : public AclnnKernelMod {
   void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    MS_EXCEPTION_IF_NULL(outputs[0]);
+    if (outputs[0]->type_id() != kObjectTypeTensorType) {
+      MS_LOG(EXCEPTION) << "now only support tensor type for EmptyKernelTensor in " << op_type_;
+    }
+    empty_kernel_tensor_ptr = std::make_shared<EmptyKernelTensor>(outputs[0]->type_id(), outputs[0]->dtype_id());
+    MS_EXCEPTION_IF_NULL(empty_kernel_tensor_ptr);
+    return true;
+  }
 
  protected:
   auto FAGradGenerate(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
@@ -43,12 +53,11 @@ class FAScoreGradAclnnKernelMod : public AclnnKernelMod {
     auto head_num = GetFAGradAttr<int64_t>("head_num");
     auto input_layout = GetFAGradAttr<std::string>("input_layout");
     auto inner_precise = GetFAGradAttr<int64_t>("inner_precise");
-    EmptyKernelTensor empty_tensor(outputs[0]->type_id(), outputs[0]->dtype_id());
     auto return_value =
       GEN_EXECUTOR(op_type_, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex7], nullptr, nullptr,
                    nullptr, inputs[kIndex3], inputs[kIndex5], inputs[kIndex6], nullptr, inputs[kIndex4], nullptr,
                    scale_value, keep_prob, pre_tokens, next_tokens, head_num, input_layout, inner_precise, nullptr,
-                   outputs[kIndex0], outputs[kIndex1], outputs[kIndex2], empty_tensor.get());
+                   outputs[kIndex0], outputs[kIndex1], outputs[kIndex2], empty_kernel_tensor_ptr->get());
     return return_value;
   }
 
@@ -61,6 +70,9 @@ class FAScoreGradAclnnKernelMod : public AclnnKernelMod {
     }
     return GetValue<T>(attr_list.at(attr_name));
   }
+
+ private:
+  std::shared_ptr<EmptyKernelTensor> empty_kernel_tensor_ptr;
 };
 }  // namespace kernel
 }  // namespace mindspore
