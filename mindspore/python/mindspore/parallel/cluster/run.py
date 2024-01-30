@@ -73,6 +73,7 @@ def get_args():
         "--join",
         default=False,
         type=ast.literal_eval,
+        choices=[True, False],
         help="specifies whether msrun should join spawned processes and return distributed job results."
              "If set to True, msrun will check process status and parse the log files."
     )

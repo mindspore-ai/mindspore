@@ -19,6 +19,7 @@
 #include <dlfcn.h>
 #include <libgen.h>
 #endif
+#include <tuple>
 #include <utility>
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
 #include "plugin/device/gpu/hal/device/gpu_kernel_build.h"
@@ -1071,10 +1072,10 @@ std::string GPUDeviceContext::GetDeviceName(uint32_t device_id) {
   return GPUdeviceInfo::GetInstance(device_id)->name();
 }
 
-std::vector<int> GPUDeviceContext::GetDeviceCapability(uint32_t device_id) {
+std::tuple<int, int> GPUDeviceContext::GetDeviceCapability(uint32_t device_id) {
   int major_sm = GPUdeviceInfo::GetInstance(device_id)->major_sm();
   int minor_sm = GPUdeviceInfo::GetInstance(device_id)->minor_sm();
-  return {major_sm, minor_sm};
+  return std::make_tuple(major_sm, minor_sm);
 }
 
 cudaDeviceProp GPUDeviceContext::GetDeviceProperties(uint32_t device_id) {
