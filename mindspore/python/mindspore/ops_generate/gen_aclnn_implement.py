@@ -73,12 +73,10 @@ def gen_cc(op_name, class_name, op_yaml, kernelmod_cc_path, need_update_shape):
 #include "plugin/device/ascend/kernel/opapi/aclnn{auto_gen}/{op_name}_aclnn_kernel.h"
 #include <algorithm>
 #include <vector>
-#include <map>
 #include <memory>
 #include <functional>
 #include "ir/tensor.h"
 #include "runtime/device/kernel_runtime.h"
-#include "transform/acl_ir/acl_helper.h"
 #include "transform/acl_ir/op_api_convert.h"
 #include "abstract/ops/primitive_infer_map.h"
 
@@ -117,7 +115,7 @@ namespace kernel {{
 void {kernelmod_name}::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                         const std::vector<KernelTensor *> &outputs) {{
   {input_templete}
-  auto return_value = GEN_EXECUTOR(op_type_, {inputs});
+  auto return_value = GEN_EXECUTOR_BOOST(op_type_, hash_id_, {inputs});
   UpdateWorkspace(return_value);
 }}
 """
@@ -126,7 +124,7 @@ bool {kernelmod_name}::Launch(const std::vector<KernelTensor *> &inputs, const s
                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {{
   MS_EXCEPTION_IF_NULL(stream_ptr);
   {input_templete}
-  ParseGenExecutor(GEN_EXECUTOR(op_type_, {inputs}));
+  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, {inputs}));
   RunOp(stream_ptr, workspace);
   return true;
 }}

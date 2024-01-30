@@ -53,10 +53,10 @@ class FAScoreAclnnKernelMod : public AclnnKernelMod {
     auto head_num = GetFAAttr<int64_t>("head_num");
     auto input_layout = GetFAAttr<std::string>("input_layout");
     auto inner_precise = GetFAAttr<int64_t>("inner_precise");
-    auto return_value = GEN_EXECUTOR(op_type_, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], nullptr, nullptr,
-                                     nullptr, inputs[kIndex3], nullptr, scale_value, keep_prob, pre_tokens, next_tokens,
-                                     head_num, input_layout, inner_precise, nullptr, outputs[kIndex1], outputs[kIndex2],
-                                     empty_kernel_tensor_ptr->get(), outputs[kIndex0]);
+    auto return_value = GEN_EXECUTOR_BOOST(
+      op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], nullptr, nullptr, nullptr, inputs[kIndex3],
+      nullptr, scale_value, keep_prob, pre_tokens, next_tokens, head_num, input_layout, inner_precise, nullptr,
+      outputs[kIndex1], outputs[kIndex2], empty_kernel_tensor_ptr->get(), outputs[kIndex0]);
     return return_value;
   }
 

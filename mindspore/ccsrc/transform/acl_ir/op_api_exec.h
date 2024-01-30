@@ -221,6 +221,42 @@ class ApiCachePool {
   }                                                                                                               \
   (aclnn_api + "GetWorkspaceSize", __VA_ARGS__)
 
+// For speed up generate executor.
+#define GEN_EXECUTOR_BOOST(aclnn_api, hash_id, ...)                                                               \
+  [](const std::string &api_str, const std::string &workspace_api_name, uint64_t hash_id,                         \
+     const auto &... args) -> auto {                                                                              \
+    static transform::ApiCachePool api_cache_pool;                                                                \
+    const char *api_name = api_cache_pool.get(api_str);                                                           \
+    static const auto get_workspace_size_func_ptr = transform::GetOpApiFunc(workspace_api_name.c_str());          \
+    if (get_workspace_size_func_ptr == nullptr) {                                                                 \
+      MS_LOG(EXCEPTION) << workspace_api_name << " not in " << transform::GetOpApiLibName() << ", please check!"; \
+    }                                                                                                             \
+    uint64_t workspace_size = 0;                                                                                  \
+    transform::aclOpExecutor *executor = nullptr;                                                                 \
+    std::function<void()> release_func = nullptr;                                                                 \
+    uint64_t *workspace_size_addr = &workspace_size;                                                              \
+    transform::aclOpExecutor **executor_addr = &executor;                                                         \
+    uint64_t new_hash_id = hash_id;                                                                               \
+    if (HitCacheSingle(api_name, executor_addr, workspace_size_addr, &new_hash_id, args...)) {                    \
+      return std::make_tuple(workspace_size, executor, release_func, new_hash_id);                                \
+    }                                                                                                             \
+    auto init_mem_func = transform::OpApiDefaultResource::GetInstance().init_mem_func();                          \
+    if (init_mem_func) {                                                                                          \
+      init_mem_func(nullptr, false);                                                                              \
+    }                                                                                                             \
+    auto converted_params = transform::ConvertTypes(args..., workspace_size_addr, executor_addr);                 \
+    static auto get_workspace_size_func =                                                                         \
+      transform::ConvertToOpApiFunc(converted_params, get_workspace_size_func_ptr);                               \
+    auto workspace_status = transform::call(get_workspace_size_func, converted_params);                           \
+    if (workspace_status != 0) {                                                                                  \
+      MS_LOG(EXCEPTION) << workspace_api_name << " call failed, please check!";                                   \
+    }                                                                                                             \
+    auto releas_call = transform::ReleaseCall(std::move(converted_params));                                       \
+    release_func = std::function<void()>(releas_call);                                                            \
+    return std::make_tuple(workspace_size, executor, release_func, new_hash_id);                                  \
+  }                                                                                                               \
+  (aclnn_api, aclnn_api + "GetWorkspaceSize", hash_id, __VA_ARGS__)
+
 // Async run op.
 #define RUN_OP_API_ASYNC(aclnn_api, workspace_addr, workspace_size, executor, acl_stream, release_func)  \
   do {                                                                                                   \

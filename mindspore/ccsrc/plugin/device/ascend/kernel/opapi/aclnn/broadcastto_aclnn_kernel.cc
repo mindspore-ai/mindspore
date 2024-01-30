@@ -22,7 +22,7 @@ void BroadcastToAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor 
                                                  const std::vector<KernelTensor *> &outputs) {
   const auto &attrs = primitive()->attrs();
   shape_ = std::move(GetValue<std::vector<int64_t>>(attrs.at("shape")));
-  auto return_value = GEN_EXECUTOR(op_type_, inputs[0], shape_, outputs[kIndex0]);
+  auto return_value = GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[0], shape_, outputs[kIndex0]);
   UpdateWorkspace(return_value);
 }
 
@@ -30,7 +30,7 @@ bool BroadcastToAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs
                                        const std::vector<KernelTensor *> &workspace,
                                        const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  ParseGenExecutor(GEN_EXECUTOR(op_type_, inputs[0], shape_, outputs[kIndex0]));
+  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[0], shape_, outputs[kIndex0]));
   RunOp(stream_ptr, workspace);
   return true;
 }

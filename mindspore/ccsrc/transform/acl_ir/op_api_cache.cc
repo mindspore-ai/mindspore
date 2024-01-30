@@ -173,6 +173,26 @@ void GatherInfo(const std::optional<string> &s) {
 
 void GatherInfo() {}
 
+void RefreshAddr(mindspore::kernel::KernelTensor *tensor) {
+  if (tensor == nullptr) {
+    return;
+  }
+
+  static const auto add_tensor_addr_to_cached_list = transform::GetOpApiFunc("AddTensorAddrToCachedList");
+  if (add_tensor_addr_to_cached_list == nullptr) {
+    MS_LOG(EXCEPTION) << "AddTensorAddrToCachedList not in " << transform::GetOpApiLibName() << ", please check!";
+  }
+  AddTensorAddrToCachedList add_tensor_addr_to_cached_list_func =
+    reinterpret_cast<AddTensorAddrToCachedList>(add_tensor_addr_to_cached_list);
+  MS_EXCEPTION_IF_NULL(add_tensor_addr_to_cached_list_func);
+
+  add_tensor_addr_to_cached_list_func(tensor->device_ptr());
+}
+
+void RefreshAddr(const std::pair<mindspore::kernel::KernelTensor *, bool> &tensor_and_trans) {
+  RefreshAddr(tensor_and_trans.first);
+}
+
 constexpr int g_rShift33Bits = 33;
 constexpr uint64_t MIX_STEP1 = 18397679294719823053LLU;
 constexpr uint64_t MIX_STEP2 = 14181476777654086739LLU;
