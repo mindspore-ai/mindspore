@@ -207,7 +207,9 @@ class BaseTimelineGenerator:
             with os.fdopen(os.open(display_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as json_file:
                 json_file.write('[')
                 for _, item in enumerate(self._timeline_meta):
-                    json.dump(item, json_file, indent=self.indent)
+                    item_json = json.dumps([item], indent=self.indent)
+                    item_json = item_json.lstrip('[').rstrip('\n]')
+                    json_file.write(item_json)
                     if "scope_level" in item.keys():
                         self._max_scope_name_num = max(
                             self._max_scope_name_num, item["scope_level"] + 1)
