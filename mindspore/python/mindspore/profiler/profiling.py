@@ -612,6 +612,7 @@ class Profiler:
             offline_path (Union[str, None], optional): The data path which need to be analysed with offline mode.
                 Offline mode isused in abnormal exit scenario. This parameter should be set to ``None``
                 for online mode. Default: ``None``.
+            pretty (bool, optional): Whether to pretty json files. Default: ``False``.
         """
         self._pretty_json = pretty
         self._analyse(offline_path=offline_path)
