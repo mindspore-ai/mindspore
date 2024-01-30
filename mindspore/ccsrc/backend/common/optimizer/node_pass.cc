@@ -304,7 +304,7 @@ bool NodePass::ProcessPass(const FuncGraphPtr &func_graph, const FuncGraphManage
   mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> subgraph_out_caller_map = {};
   mindspore::HashMap<AnfNodePtr, FuncGraphWeakPtr> node_to_fg = {};
   mindspore::HashSet<AnfNodePtr> seen_node;
-  std::deque<std::pair<AnfNodePtr, FuncGraphPtr>> todo{{func_graph->output(), func_graph}};
+  std::deque<std::pair<AnfNodePtr, FuncGraphPtr>> todo{{func_graph->get_return(), func_graph}};
   while (!todo.empty()) {
     AnfNodePtr node = todo.front().first;
     auto fg = todo.front().second;
