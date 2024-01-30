@@ -286,46 +286,38 @@ struct GraphSummary {
   GraphSummary() = default;
   explicit GraphSummary(const ::ge::CompiledGraphSummaryPtr &graph_summary) {
     MS_EXCEPTION_IF_NULL(graph_summary);
-    ::ge::graphStatus status;
-    status = graph_summary->GetConstMemorySize(const_memory_size);
-    if (status != ::ge::GRAPH_SUCCESS) {
-      MS_LOG(WARNING) << "GetConstMemorySize failed, status = " << status
-                      << ", const_memory_size: " << const_memory_size
-                      << ", maybe the execution mode is not as expected.";
-    }
-    status = graph_summary->GetFeatureMemorySize(feature_memory_size);
-    if (status != ::ge::GRAPH_SUCCESS) {
-      MS_LOG(WARNING) << "GetFeatureMemorySize failed, status = " << status
-                      << ", feature_memory_size: " << feature_memory_size
-                      << ", maybe the execution mode is not as expected.";
-    }
-    status = graph_summary->GetFeatureMemoryBaseRefreshable(is_feature_memory_refreshable);
-    if (status != ::ge::GRAPH_SUCCESS) {
-      MS_LOG(WARNING) << "GetFeatureMemoryBaseRefreshable failed, status = " << status
-                      << ", is_feature_memory_refreshable: " << is_feature_memory_refreshable
-                      << ", maybe the execution mode is not as expected.";
-    }
-    status = graph_summary->GetStreamNum(stream_num);
-    if (status != ::ge::GRAPH_SUCCESS) {
-      MS_LOG(WARNING) << "GetStreamNum failed, status = " << status << ", stream_num: " << stream_num
-                      << ", maybe the execution mode is not as expected.";
-    }
-    status = graph_summary->GetEventNum(event_num);
-    if (status != ::ge::GRAPH_SUCCESS) {
-      MS_LOG(WARNING) << "GetEventNum failed, status = " << status << ", event_num: " << event_num
-                      << ", maybe the execution mode is not as expected.";
-    }
-    std::vector<::ge::Shape> ge_shapes;
-    status = graph_summary->GetOutputShapes(ge_shapes);
-    if (status != ::ge::GRAPH_SUCCESS) {
-      MS_LOG(WARNING) << "GetOutputShapes failed, status = " << status
-                      << ", maybe the execution mode is not as expected.";
-      for (const auto &shape : ge_shapes) {
-        MS_LOG(WARNING) << "output shape size: " << shape.GetShapeSize();
+    if (graph_summary->IsStatic()) {
+      ::ge::graphStatus status;
+      status = graph_summary->GetConstMemorySize(const_memory_size);
+      if (status != ::ge::GRAPH_SUCCESS) {
+        MS_LOG(EXCEPTION) << "GetConstMemorySize failed, status = " << status;
       }
+      status = graph_summary->GetFeatureMemorySize(feature_memory_size);
+      if (status != ::ge::GRAPH_SUCCESS) {
+        MS_LOG(EXCEPTION) << "GetFeatureMemorySize failed, status = " << status;
+      }
+      status = graph_summary->GetFeatureMemoryBaseRefreshable(is_feature_memory_refreshable);
+      if (status != ::ge::GRAPH_SUCCESS) {
+        MS_LOG(EXCEPTION) << "GetFeatureMemoryBaseRefreshable failed, status = " << status;
+      }
+      status = graph_summary->GetStreamNum(stream_num);
+      if (status != ::ge::GRAPH_SUCCESS) {
+        MS_LOG(EXCEPTION) << "GetStreamNum failed, status = " << status;
+      }
+      status = graph_summary->GetEventNum(event_num);
+      if (status != ::ge::GRAPH_SUCCESS) {
+        MS_LOG(EXCEPTION) << "GetEventNum failed, status = " << status;
+      }
+      std::vector<::ge::Shape> ge_shapes;
+      status = graph_summary->GetOutputShapes(ge_shapes);
+      if (status != ::ge::GRAPH_SUCCESS) {
+        MS_LOG(EXCEPTION) << "GetOutputShapes failed, status = " << status;
+      }
+      (void)std::transform(ge_shapes.begin(), ge_shapes.end(), std::back_inserter(output_shapes),
+                           [](const ::ge::Shape &ge_shape) -> ShapeVector { return ge_shape.GetDims(); });
+    } else {
+      MS_LOG(WARNING) << "Graph is not static, maybe the execution mode is not as expected.";
     }
-    (void)std::transform(ge_shapes.begin(), ge_shapes.end(), std::back_inserter(output_shapes),
-                         [](const ::ge::Shape &ge_shape) -> ShapeVector { return ge_shape.GetDims(); });
   }
 
   std::string ToString() const {
