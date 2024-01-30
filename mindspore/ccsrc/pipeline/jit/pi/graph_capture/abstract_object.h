@@ -309,6 +309,18 @@ class AbstractTensor : public AbstractObject {
  private:
   bool is_stub_;
 };
+
+class AbstractFuncGraphOut : public AbstractObject {
+ public:
+  explicit AbstractFuncGraphOut(Type type, const py::object &o) : AbstractObject(type, o) {}
+  virtual ~AbstractFuncGraphOut() {}
+  static AObject *MakeAObject(const py::object &o) {
+    auto node = aobject_mem_pool_.New<AbstractObject>(kTypeFuncGraphOut, o);
+    node->SetTypeObject(Py_TYPE(o.ptr()));
+    return node;
+  }
+};
+
 }  // namespace pijit
 }  // namespace mindspore
 
