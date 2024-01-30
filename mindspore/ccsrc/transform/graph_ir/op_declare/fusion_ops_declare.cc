@@ -39,7 +39,9 @@ ATTR_MAP(PromptFlashAttention) = {{"num_heads", ATTR_DESC(num_heads, AnyTraits<i
                                   {"next_tokens", ATTR_DESC(next_tokens, AnyTraits<int64_t>())},
                                   {"input_layout", ATTR_DESC(input_layout, AnyTraits<std::string>())},
                                   {"num_key_value_heads", ATTR_DESC(num_key_value_heads, AnyTraits<int64_t>())},
-                                  {"scale_value", ATTR_DESC(scale_value, AnyTraits<float>())}};
+                                  {"scale_value", ATTR_DESC(scale_value, AnyTraits<float>())},
+                                  {"sparse_mode", ATTR_DESC(sparse_mode, AnyTraits<int64_t>())},
+                                  {"inner_precise", ATTR_DESC(inner_precise, AnyTraits<int64_t>())}};
 OUTPUT_MAP(PromptFlashAttention) = {{0, OUTPUT_DESC(attention_out)}};
 REG_ADPT_DESC(PromptFlashAttention, "PromptFlashAttention", ADPT_DESC(PromptFlashAttention))
 
