@@ -30,6 +30,7 @@ cust_op_lists = [
     "addn",
     "adjusthue",
     "adjustsaturation",
+    "affinegrid",
     "affinegridgrad",
     "argmax",
     "argmaxwithvalue",
