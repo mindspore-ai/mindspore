@@ -107,8 +107,9 @@ bool RewriteOutputShape::Run(const FuncGraphPtr &func_graph) {
   auto abs_tuple = dyn_cast<abstract::AbstractTuple>(output->abstract());
   MS_EXCEPTION_IF_NULL(abs_tuple);
   if (abs_tuple->elements().size() + 1 != output->size()) {
-    MS_LOG(EXCEPTION) << "Size of abstract elements does not match the MakeTuple's input size: "
-                      << abs_tuple->elements().size() << " vs " << output->size();
+    MS_LOG(INFO) << "Size of abstract elements does not match the MakeTuple's input size: "
+                 << abs_tuple->elements().size() << " vs " << output->size();
+    return false;
   }
 
   for (size_t i = 1; i < output->size(); i++) {
