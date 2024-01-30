@@ -5,7 +5,7 @@ mindspore.dataset.transforms.OneHot
 
     对输入标签进行OneHot编码。
 
-    对于 shape 为 :math:`(*)` 的 1 维输入，将返回 shape 为 :math:`(*, num_classes)` 的输出，其中输入值对应的索引位置处的元素值为 1 ，其余
+    对于 shape 为 :math:`(*)` 的 1 维输入，将返回 shape 为 :math:`(*, num\_classes)` 的输出，其中输入值对应的索引位置处的元素值为 1 ，其余
     位置值为 0 。若指定了标签平滑系数，还将进一步平滑各元素值，增强泛化能力。
 
     参数：
