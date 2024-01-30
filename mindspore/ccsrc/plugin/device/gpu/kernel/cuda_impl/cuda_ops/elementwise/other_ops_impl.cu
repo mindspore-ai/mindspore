@@ -122,7 +122,50 @@ template <typename Type>
 struct UnaryFunc<ElwiseOpType::kReciprocal, Type, Type> {
   DEVICE_HOST UnaryFunc() {}
   DEVICE Type operator()(const Type val) const {
-    return Type(1.0) / val;
+    if (val != Type(0)) {
+      return Type(1.0) / val;
+    }
+    return std::numeric_limits<Type>::max() + Type(1);
+  }
+};
+
+template <>
+struct UnaryFunc<ElwiseOpType::kReciprocal, half, half> {
+  DEVICE_HOST UnaryFunc() {}
+  DEVICE half operator()(const half val) const {
+    return half(1.0) / val;
+  }
+};
+
+template <>
+struct UnaryFunc<ElwiseOpType::kReciprocal, float, float> {
+  DEVICE_HOST UnaryFunc() {}
+  DEVICE float operator()(const float val) const {
+    return static_cast<float>(1.0) / val;
+  }
+};
+
+template <>
+struct UnaryFunc<ElwiseOpType::kReciprocal, double, double> {
+  DEVICE_HOST UnaryFunc() {}
+  DEVICE double operator()(const double val) const {
+    return static_cast<double>(1.0) / val;
+  }
+};
+
+template <>
+struct UnaryFunc<ElwiseOpType::kReciprocal, Complex<float>, Complex<float>> {
+  DEVICE_HOST UnaryFunc() {}
+  DEVICE Complex<float> operator()(const Complex<float> val) const {
+    return Complex<float>(1.0) / val;
+  }
+};
+
+template <>
+struct UnaryFunc<ElwiseOpType::kReciprocal, Complex<double>, Complex<double>> {
+  DEVICE_HOST UnaryFunc() {}
+  DEVICE Complex<double> operator()(const Complex<double> val) const {
+    return Complex<double>(1.0) / val;
   }
 };
 REGISTER_UNARY_OP_CUDA_FUNC_BOOL_TYPE(ElwiseOpType::kReciprocal);
