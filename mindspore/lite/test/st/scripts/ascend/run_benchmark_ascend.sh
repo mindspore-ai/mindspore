@@ -67,10 +67,23 @@ function Run_Benchmark() {
         extra_info=`echo ${model_info} | awk -F ';' '{print $5}'`
 
         input_shapes=""
+        spec_shapes=""
         infix=""
         # Without a configuration file, there is no need to set the inputshape
         if [[ ${cfg_file_name} =~ "_with_config_cloud_ascend" || ${extra_info} =~ "parallel_predict" ]]; then
           input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
+          input_names=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $2}'`
+          if [[ ${input_shapes} != "" && ${input_names} != "" ]]; then
+              if [[ ${input_num} == "" ]]; then
+                  input_num=1
+              fi
+              IFS="," read -r -a name_array <<< ${input_names}
+              IFS=":" read -r -a shape_array <<< ${input_shapes}
+              for i in $(seq 0 $((${input_num}-1)))
+              do
+                  spec_shapes=${spec_shapes}${name_array[$i]}':'${shape_array[$i]}';'
+              done
+          fi
         elif [[ ${cfg_file_name} =~ "_on_the_fly_quant_ge_cloud" ]]; then
           infix="_on_the_fly_quant"
         elif [[ ${cfg_file_name} =~ "_full_quant_ge_cloud" ]]; then
@@ -145,9 +158,9 @@ function Run_Benchmark() {
         fi
 
         # different tensorrt run mode use different cuda command
-        echo './benchmark --enableParallelPredict='${use_parallel_predict}' --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='${ascend_device} >> "${run_ascend_log_file}"
+        echo './benchmark --enableParallelPredict='${use_parallel_predict}' --modelFile='${model_file}' --inputShape="'${spec_shapes}'" --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='${ascend_device} >> "${run_ascend_log_file}"
         elapsed_time=$(date +%s.%N)
-        ./benchmark --enableParallelPredict=${use_parallel_predict} --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=${ascend_device} >> ${run_ascend_log_file}
+        ./benchmark --enableParallelPredict=${use_parallel_predict} --modelFile=${model_file} --inputShape="${spec_shapes}" --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=${ascend_device} >> ${run_ascend_log_file}
         ret=$?
         elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
         if [ ${ret} = 0 ]; then

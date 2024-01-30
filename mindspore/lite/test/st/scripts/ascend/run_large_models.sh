@@ -64,6 +64,19 @@ function Run_Benchmark() {
             input_shapes=$(echo ${model_info} | awk -F ';' '{print $3}')
             mode=$(echo ${model_info} | awk -F ';' '{print $5}')
             input_num=$(echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $1}')
+            input_names=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $2}'`
+            spec_shapes=""
+            if [[ ${input_shapes} != "" && ${input_names} != "" ]]; then
+                if [[ ${input_num} == "" ]]; then
+                    input_num=1
+                fi
+                IFS="," read -r -a name_array <<< ${input_names}
+                IFS=":" read -r -a shape_array <<< ${input_shapes}
+                for i in $(seq 0 $((${input_num}-1)))
+                do
+                    spec_shapes=${spec_shapes}${name_array[$i]}':'${shape_array[$i]}';'
+                done
+            fi
             if [[ ${model_name##*.} == "caffemodel" ]]; then
                 model_name=${model_name%.*}
             fi
@@ -115,9 +128,8 @@ function Run_Benchmark() {
               fi
               output_file=${data_path}'output/'${model_name}'.mindir.out'
             fi
-            benchmark_command="./benchmark --enableParallelPredict=${use_parallel_predict} --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=${benchmark_device} --configFile=${benchmark_config_file}"
-            echo "${benchmark_command}"
-            ${benchmark_command} >> ${run_benchmark_log_file}
+            echo './benchmark --enableParallelPredict='${use_parallel_predict}' --modelFile='${model_file}' --inputShape='${spec_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='${benchmark_device}' --configFile='${benchmark_config_file}
+            ./benchmark --enableParallelPredict=${use_parallel_predict} --modelFile=${model_file} --inputShape="${spec_shapes}" --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=${benchmark_device} --configFile=${benchmark_config_file} >> "${run_benchmark_log_file}"
             if [ $? = 0 ]; then
                 if [[ ${mode} =~ "parallel_predict" ]]; then
                     run_result="${benchmark_device}: ${model_name} parallel_pass"
