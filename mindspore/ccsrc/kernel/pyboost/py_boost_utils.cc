@@ -444,9 +444,10 @@ std::pair<bool, KernelAttr> PyBoostUtils::SelectKernel(const std::vector<Abstrac
   for (auto &output_type : output_object_dtypes) {
     (void)outputs.emplace_back(TypeIdToString(output_type));
   }
-  MS_LOG(EXCEPTION) << "Unsupported op [" << op_name << "] on CPU, input_type:" << inputs << " ,output_type:" << outputs
-                    << ". Please confirm whether the device target setting is correct, "
-                    << "or refer to 'mindspore.ops' at https://www.mindspore.cn to query the operator support list.";
+  MS_EXCEPTION(TypeError)
+    << "Unsupported op [" << op_name << "] on CPU, input_type:" << inputs << " ,output_type:" << outputs
+    << ". Please confirm whether the device target setting is correct, "
+    << "or refer to 'mindspore.ops' at https://www.mindspore.cn to query the operator support list.";
 }
 
 tensor::TensorPtr PyBoostUtils::CastTensor(const tensor::TensorPtr &tensor, const TypeId &type_id,
