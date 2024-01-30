@@ -2183,8 +2183,7 @@ FuncGraphPtr GetCellReuseBackwardGraph(const FuncGraphPtr &forward_graph) {
     {prim::kPrimReturn, kIndex1}, {prim::kPrimMakeTuple, kIndex2}, {prim::kPrimPartial, kIndex1}};
   for (const auto &pattern : patterns) {
     auto cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    if (!IsPrimitiveCNode(cnode, pattern.first)) {
+    if ((cnode == nullptr) || !IsPrimitiveCNode(cnode, pattern.first)) {
       return nullptr;
     }
     auto prev_node_index = pattern.second;

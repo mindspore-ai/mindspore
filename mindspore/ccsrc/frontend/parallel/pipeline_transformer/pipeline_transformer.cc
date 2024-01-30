@@ -106,10 +106,6 @@ static void SeparateParamBorder(const std::vector<AnfNodePtr> &nodes, bool send,
 }
 
 bool PipelineTransformer::MainGraph() {
-  if (!is_train_) {
-    main_graph_ = root_;
-    return true;
-  }
   bool find_main_graph = false;
   for (auto &fg : manager_->func_graphs()) {
     for (auto &node : fg->nodes()) {
@@ -331,9 +327,6 @@ size_t MicroSize(const AnfNodeIndexSet &input_node_users) {
 }
 
 void PipelineTransformer::LabelMicroBatch() {
-  if (!is_train_) {
-    return;
-  }
   auto graph = enable_share_cell_ ? shared_cell_ : main_graph_;
   MS_EXCEPTION_IF_NULL(graph);
   if (!LabelParameterStart(graph)) {
@@ -1694,9 +1687,6 @@ void PipelineTransformer::CutGraph() {
   if (IsLastStage() && !enable_share_cell_) {
     return;
   }
-  if (send_ops.empty() && !is_train_) {
-    return;
-  }
   if (!send_ops.empty()) {
     type_ptr_ = send_ops.back()->user_data<Type>(DTYPE);
     shape_ = send_ops.back()->user_data<ValueList>(SHAPE);
@@ -1709,8 +1699,6 @@ void PipelineTransformer::CutGraph() {
     (void)manager_->Replace(main_graph_->output(), out_node);
     return;
   }
-  send_tag_map.clear();
-  recv_tag_map.clear();
   if (!IsLastStage()) {
     HandleGraphOutputs(send_ops);
   }
@@ -1744,7 +1732,7 @@ void PipelineTransformer::RedundancyNode(const AnfNodePtr &node,
       continue;
     }
     // node->make_tuple, record with a map, Unified deleted later.
-    if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple)) {
+    if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) || IsPrimitiveCNode(cnode, prim::kPrimMakeList)) {
       if (make_tuple_map->find(cnode) == (*make_tuple_map).end()) {
         (*make_tuple_map)[cnode] = {node};
       } else {
