@@ -35,7 +35,8 @@ constexpr size_t kNumDimSize4 = 4;
 
 AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t index) {
   if (cnode == nullptr) {
-    MS_LOG(ERROR) << "Cnode " << cnode->fullname_with_scope() << "should not be null, but it is null.";
+    MS_LOG(ERROR) << "Cnode "
+                  << "should not be null, but it is null.";
     return nullptr;
   }
   auto inputs = cnode->inputs();
@@ -44,7 +45,7 @@ AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t index) {
   }
   auto input = inputs[index];
   if (input == nullptr) {
-    MS_LOG(ERROR) << "Cnode " << cnode->fullname_with_scope() << "should not be null, but it is null.";
+    MS_LOG(ERROR) << "input of Cnode " << cnode->fullname_with_scope() << "should not be null, but it is null.";
     return nullptr;
   }
 
