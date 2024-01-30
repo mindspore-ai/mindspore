@@ -569,10 +569,10 @@ class Mask(TensorOperation):
 
 
 class OneHot(TensorOperation):
-    """
+    r"""
     Apply One-Hot encoding to the input labels.
 
-    For a 1-D input of shape :math:`(*)`, an output of shape :math:`(*, num_classes)` will be
+    For a 1-D input of shape :math:`(*)`, an output of shape :math:`(*, num\_classes)` will be
     returned, where the elements with index values equal to the input values will be set to 1,
     and the rest will be set to 0. If a label smoothing rate is specified, the element values
     are further smoothed to enhance generalization.
