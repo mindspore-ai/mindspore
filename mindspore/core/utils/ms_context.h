@@ -238,6 +238,7 @@ class MS_CORE_API MsContext {
   template <typename T>
   void set_param(MsCtxParam param, const T &value) {
     CheckReadStatus<T>(param, value);
+    MarkWriteStatus(param);
     set_param_inner<T>(param, value);
   }
 
@@ -274,9 +275,11 @@ class MS_CORE_API MsContext {
   void RefreshExecutionMode();
   void RefreshMemoryOffload();
 
-  void MarkReadStatus(MsCtxParam param) const;  // record status to mutable member params_read_status_
+  void MarkReadStatus(MsCtxParam param) const;   // record status to mutable member params_read_status_
+  void MarkWriteStatus(MsCtxParam param) const;  // record status to mutable member params_write_status_
   template <typename T>
   void CheckReadStatus(MsCtxParam param, const T &value) const;
+  bool CheckWriteStatus(MsCtxParam param) const;
   void SetAscendConfig();
 
   static DeviceSeter seter_;
@@ -290,6 +293,7 @@ class MS_CORE_API MsContext {
   std::string string_params_[MsCtxParam::NUM_STRING_PARAMS];
 
   mutable std::vector<bool> params_read_status_;
+  mutable std::vector<bool> params_write_status_;
   MsBackendPolicy backend_policy_;
   std::string ascend_soc_version_;
   bool default_device_target_ = true;
