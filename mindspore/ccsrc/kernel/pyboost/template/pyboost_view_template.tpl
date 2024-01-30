@@ -1,12 +1,12 @@
   MS_LOG(DEBUG) << "View ${op_name} Call start";
   auto storage_info_list = ops::${op_name}Calc(primitive_, {${call_args}});
   if (!storage_info_list.empty()) {
+    auto op = get_op();
     // Create device address for input tensors
-    PyBoostUtils::PrepareOpInputs(device_context_, ${call_tensors});
+    PyBoostUtils::PrepareOpInputs(device_context_, op->stream_id(), ${call_tensors});
     PyBoostUtils::CreateOutputTensor(device_context_, ${input}, storage_info_list[0], &outputs_);
 
     // Async
-    auto op = get_op();
     PyBoostUtils::DispatchRun(
       std::make_shared<runtime::PyBoostDeviceTask>(
         [op, ${call_tensors}](){

@@ -26,6 +26,7 @@
 #include "pipeline/jit/ps/pass.h"
 #include "runtime/pynative/op_executor.h"
 #include "runtime/pynative/op_compiler.h"
+#include "runtime/pynative/op_runner.h"
 #include "include/common/profiler.h"
 #include "pipeline/jit/ps/parse/data_converter.h"
 #include "ir/cell.h"
@@ -341,7 +342,7 @@ void PyNativeExecutor::ChildAfterFork() {
     MS_LOG(DEBUG) << "Reinitialize grad_executor_.";
     grad_executor_->ChildAfterFork();
   }
-  kernel::pyboost::PyBoostUtils::ChildAfterFork();
+  runtime::OpRunner::ChildAfterFork();
   MS_LOG(DEBUG) << "PyNativeExecutor reinitialize after fork done.";
 }
 

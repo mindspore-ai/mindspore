@@ -60,9 +60,8 @@ void CustomizeCopyAscend(device::DeviceContext *device_context, const device::De
                   << ", input address size:" << input_kernel_tensor->size()
                   << ", output address size:" << output_kernel_tensor->size();
 
-    auto stream_ptr = device::ascend::AscendStreamMng::GetInstance().GetStream(stream_id);
     // Inplace output need be front
-    LAUNCH_ACLNN(aclnnInplaceCopy, device_context, stream_ptr, output_kernel_tensor.get(), input_kernel_tensor.get());
+    LAUNCH_ACLNN(aclnnInplaceCopy, device_context, stream_id, output_kernel_tensor.get(), input_kernel_tensor.get());
     MS_LOG(DEBUG) << "Launch end";
   }));
 }

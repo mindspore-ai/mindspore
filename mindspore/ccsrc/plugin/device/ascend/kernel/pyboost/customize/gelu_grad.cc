@@ -28,8 +28,8 @@ tensor::TensorPtr GeLUGradAscendCustomize(const std::shared_ptr<OpRunner> &op, c
   OpRunner::InferOpOutput(op, dy_tensor, x_tensor, y_tensor);
 
   // Create device address for input/output tensors
-  PyBoostUtils::PrepareOpInputs(op->device_context(), dy_tensor, x_tensor, y_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
+  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), dy_tensor, x_tensor, y_tensor);
+  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
   // Async
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, dy_tensor, x_tensor, y_tensor]() {
@@ -40,8 +40,7 @@ tensor::TensorPtr GeLUGradAscendCustomize(const std::shared_ptr<OpRunner> &op, c
     // Malloc for output tensors
     PyBoostUtils::MallocOpOutputs(device_context, outputs);
     MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
-    auto stream_ptr = device_context->device_res_manager_->GetStream(kDefaultStreamIndex);
-    LAUNCH_ACLNN(aclnnGeluBackward, device_context, stream_ptr, dy_tensor, x_tensor, outputs[0]);
+    LAUNCH_ACLNN(aclnnGeluBackward, device_context, op->stream_id(), dy_tensor, x_tensor, outputs[0]);
     MS_LOG(DEBUG) << op->primitive()->name() << " Launch end";
   }));
   return op->output(0);

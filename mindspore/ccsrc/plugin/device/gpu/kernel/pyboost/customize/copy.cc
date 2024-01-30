@@ -16,7 +16,6 @@
 
 #include "plugin/device/gpu/kernel/pyboost/customize/copy.h"
 #include "kernel/pyboost/customize/op_common.h"
-#include "plugin/device/gpu/hal/device/gpu_device_manager.h"
 
 namespace mindspore {
 namespace kernel {
@@ -24,8 +23,7 @@ namespace pyboost {
 
 tensor::TensorPtr CopyGPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor) {
   MS_LOG(DEBUG) << "Call start";
-  // No need to get default_stream here, after the multi-stream feature is complete.
-  auto stream = device::gpu::GPUDeviceManager::GetInstance().default_stream();
+  auto stream = op->device_context()->device_res_manager_->GetStream(op->stream_id());
   return CopyCustomizeCall(op, input_tensor, stream);
 }
 }  // namespace pyboost

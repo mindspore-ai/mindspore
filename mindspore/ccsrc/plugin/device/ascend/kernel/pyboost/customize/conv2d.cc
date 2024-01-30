@@ -48,14 +48,14 @@ tensor::TensorPtr Conv2DAscendCall(const std::shared_ptr<OpRunner> &op, const de
   const auto &expand_dilation = ExpandVector(dilation, dim);
   auto transposed = false;
   std::vector<int64_t> output_padding = {0, 0};
-  auto stream_ptr = device_context->device_res_manager_->GetStream(op->stream_id());
   if (outputs.empty()) {
     MS_LOG(EXCEPTION) << "outputs is empty";
     return nullptr;
   }
   auto cube_math_type = GetCubeMathType();
-  LAUNCH_ACLNN(aclnnConvolution, device_context, stream_ptr, input_tensor, weight_tensor, bias_tensor, expand_stride,
-               expand_padding, expand_dilation, transposed, output_padding, groups, outputs[0], cube_math_type);
+  LAUNCH_ACLNN(aclnnConvolution, device_context, op->stream_id(), input_tensor, weight_tensor, bias_tensor,
+               expand_stride, expand_padding, expand_dilation, transposed, output_padding, groups, outputs[0],
+               cube_math_type);
   MS_LOG(DEBUG) << "Launch end";
   return outputs[0];
 }
@@ -74,8 +74,8 @@ tensor::TensorPtr Conv2DAscendCustomize(const std::shared_ptr<OpRunner> &op, con
   // Convert ValuePtr to c++ scalar
   auto groups_imm = GetValue<int64_t>(groups);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), input_tensor, weight_tensor, bias_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
+  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, weight_tensor, bias_tensor);
+  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
   // Async
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(

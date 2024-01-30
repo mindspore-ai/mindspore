@@ -297,9 +297,7 @@ void EmplaceSliceInputs(const FrontendOpRunInfoPtr &op_run_info, const std::vect
 
 #ifndef ENABLE_TEST
 size_t GetCurStreamId(const std::string &device_target) {
-  const auto &device_ctx = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {device_target, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
-  MS_EXCEPTION_IF_NULL(device_ctx);
+  auto device_ctx = runtime::OpRunner::GetDeviceContext(device_target);
   return device_ctx->device_res_manager_->GetCurrentStreamId();
 }
 #endif
@@ -340,6 +338,8 @@ void ForwardExecutor::InitOpRunInfo(const FrontendOpRunInfoPtr &op_run_info) {
   }
   op_run_info->base_op_run_info.device_target = GetCurrentDeviceTarget(op_run_info->op_grad_info->op_prim);
   op_run_info->cell_obj_id = GetCurrentCellObjId();
+  auto device_context = runtime::OpRunner::GetDeviceContext(op_run_info->base_op_run_info.device_target);
+  op_run_info->base_op_run_info.stream_id = device_context->device_res_manager_->GetCurrentStreamId();
 }
 
 void ForwardExecutor::ReInit() {
@@ -1018,10 +1018,8 @@ void ForwardExecutor::CreateInputAddressForViewOp(const tensor::TensorPtr &input
     return;
   }
 
-  const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {op_run_info->base_op_run_info.device_target, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+  const auto &device_context = runtime::OpRunner::GetDeviceContext(op_run_info->base_op_run_info.device_target);
   MS_EXCEPTION_IF_NULL(device_context);
-  device_context->Initialize();
 
   MS_LOG(DEBUG) << "Input_tensor address is nullptr, need create address.";
   auto address_size = GetTypeByte(input_tensor->Dtype()) * input_tensor->ElementsNum();
@@ -1030,6 +1028,7 @@ void ForwardExecutor::CreateInputAddressForViewOp(const tensor::TensorPtr &input
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
   kernel_tensor->SetType(std::make_shared<TensorType>(input_tensor->Dtype()));
   kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(input_tensor->shape()));
+  kernel_tensor->set_stream_id(op_run_info->base_op_run_info.stream_id);
 
   auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   device_address->set_is_view(true);
@@ -1101,12 +1100,10 @@ void ForwardExecutor::CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_
     output_tensor->shape(), input_device_address->device_name(), input_device_address->device_id());
   kernel_tensor->set_tensor_storage_info(storage_info);
   kernel_tensor->set_size(input_device_address->GetSize());
+  kernel_tensor->set_stream_id(input_device_address->stream_id());
 
-  const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {input_device_address->device_name(), input_device_address->device_id()});
+  const auto &device_context = runtime::OpRunner::GetDeviceContext(input_device_address->device_name());
   MS_EXCEPTION_IF_NULL(device_context);
-  device_context->Initialize();
-
   auto output_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   MS_EXCEPTION_IF_NULL(output_device_address);
 

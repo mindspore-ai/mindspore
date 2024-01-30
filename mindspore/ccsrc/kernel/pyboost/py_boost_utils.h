@@ -33,8 +33,6 @@ namespace pyboost {
 using AddressInfoPair = std::pair<std::vector<kernel::KernelTensor *>, device::DeviceAddressPtrList>;
 class BACKEND_EXPORT PyBoostUtils {
  public:
-  static DeviceContext *GetDeviceContext(const std::string &device_type);
-  static void ChildAfterFork();
   static AbstractBasePtr InferByOpDef(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_abs);
   static void DispatchRun(const std::shared_ptr<runtime::PyBoostDeviceTask> &task);
 
@@ -52,10 +50,10 @@ class BACKEND_EXPORT PyBoostUtils {
 
   // Create input device address without kernel tensor
   template <typename... Args>
-  static void PrepareOpInputs(DeviceContext *device_context, const Args &... args) {
+  static void PrepareOpInputs(DeviceContext *device_context, size_t stream_id, const Args &... args) {
     size_t index = 0;
     auto add_index = [&index]() { return index++; };
-    (runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, add_index(), args), ...);
+    (runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, stream_id, add_index(), args), ...);
   }
 
   template <typename... T>
@@ -66,16 +64,16 @@ class BACKEND_EXPORT PyBoostUtils {
   }
 
   template <typename... T>
-  static AddressInfoPair GetAddressInfo(DeviceContext *device_context, const std::vector<AbstractBasePtr> &input_abs,
-                                        const T &... args) {
+  static AddressInfoPair GetAddressInfo(DeviceContext *device_context, size_t stream_id,
+                                        const std::vector<AbstractBasePtr> &input_abs, const T &... args) {
     std::vector<kernel::KernelTensor *> kernel_tensor_list;
     // Kernel tensor is a raw ppointer, device address need to be returned.
     device::DeviceAddressPtrList device_address_list;
     size_t index = 0;
     auto get_index = [&index]() { return index; };
     auto add_index = [&index]() { return index++; };
-    (GetKernelTensor(device_context, input_abs[add_index()], get_index(), &kernel_tensor_list, &device_address_list,
-                     args),
+    (GetKernelTensor(device_context, stream_id, input_abs[add_index()], get_index(), &kernel_tensor_list,
+                     &device_address_list, args),
      ...);
     return std::make_pair(kernel_tensor_list, device_address_list);
   }
@@ -84,12 +82,14 @@ class BACKEND_EXPORT PyBoostUtils {
                            const AddressInfoPair &input_address_info, const AddressInfoPair &output_address_info,
                            void *stream_ptr = nullptr);
 
-  static void GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs, size_t index,
+  static void GetKernelTensor(DeviceContext *device_context, size_t stream_id,
+                              const abstract::AbstractBasePtr &input_abs, size_t index,
                               std::vector<kernel::KernelTensor *> *kernel_tensor_list,
                               device::DeviceAddressPtrList *device_address_list, const TensorPtr &tensor);
 
   template <typename T>
-  static void GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs, size_t index,
+  static void GetKernelTensor(DeviceContext *device_context, size_t stream_id,
+                              const abstract::AbstractBasePtr &input_abs, size_t index,
                               std::vector<kernel::KernelTensor *> *kernel_tensor_list,
                               device::DeviceAddressPtrList *device_address_list, const std::optional<T> &val) {
     if (val.has_value()) {
@@ -103,22 +103,26 @@ class BACKEND_EXPORT PyBoostUtils {
         std::make_shared<abstract::TensorShape>(ShapeVector()), kTypeNone, kNone, nullptr, 0, kOpFormat_DEFAULT,
         kTypeNone->type_id(), ShapeVector(), device_context->device_context_key().device_name_,
         device_context->device_context_key().device_id_);
+      kernel_tensor->set_stream_id(stream_id);
       (void)kernel_tensor_list->emplace_back(kernel_tensor.get());
       auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
       (void)device_address_list->emplace_back(device_address);
     }
   }
 
-  static void GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs, size_t index,
+  static void GetKernelTensor(DeviceContext *device_context, size_t stream_id,
+                              const abstract::AbstractBasePtr &input_abs, size_t index,
                               std::vector<kernel::KernelTensor *> *kernel_tensor_list,
                               device::DeviceAddressPtrList *device_address_list, const std::vector<TensorPtr> &tensors);
 
   template <typename T>
-  static void GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs, size_t index,
+  static void GetKernelTensor(DeviceContext *device_context, size_t stream_id,
+                              const abstract::AbstractBasePtr &input_abs, size_t index,
                               std::vector<kernel::KernelTensor *> *kernel_tensor_list,
                               device::DeviceAddressPtrList *device_address_list, const T &val) {
     // Value ptr alloc device address and malloc mem here
-    auto device_address = runtime::DeviceAddressUtils::CreateInputAddress(device_context, input_abs, index, val);
+    auto device_address =
+      runtime::DeviceAddressUtils::CreateInputAddress(device_context, stream_id, input_abs, index, val);
     MS_EXCEPTION_IF_NULL(device_address);
     MS_EXCEPTION_IF_NULL(device_address_list);
     MS_EXCEPTION_IF_NULL(kernel_tensor_list);
@@ -127,8 +131,8 @@ class BACKEND_EXPORT PyBoostUtils {
   }
 
   // Create output tensor device address without kernel tensor
-  static void PrepareOpOutputs(DeviceContext *device_context, const std::vector<TensorPtr> &outputs) {
-    runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, outputs);
+  static void PrepareOpOutputs(DeviceContext *device_context, size_t stream_id, const std::vector<TensorPtr> &outputs) {
+    runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, stream_id, outputs);
   }
 
   // Create output tensor device address without kernel tensor

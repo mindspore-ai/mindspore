@@ -83,6 +83,7 @@ class AscendStreamMng {
   // Sync all streams except the streams in except_streams.
   bool SyncExceptStreamsInList(const std::set<aclrtStream> &except_streams) const;
   bool QueryStream(size_t stream_id);
+  size_t GetStreamId(void *stream_ptr);
   void SetBusyStreamNum(uint32_t stream_num) { busy_stream_num_ = stream_num; }
   uint32_t GetBusyStreamNum() const { return busy_stream_num_; }
 

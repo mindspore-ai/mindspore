@@ -34,8 +34,6 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
-std::unordered_map<std::string, DeviceContext *> g_device_contexts;
-
 void CreateTensor(const TypePtr &type, const ShapeVector &shape_vector, const AbstractBasePtr &abstract_tensor,
                   std::vector<tensor::TensorPtr> *outputs) {
   auto output_tensor = std::make_shared<tensor::Tensor>(type->type_id(), shape_vector);
@@ -75,29 +73,6 @@ void PyBoostUtils::CreateOutputTensor(const AbstractBasePtr &abstract, std::vect
   } else {
     MS_LOG(EXCEPTION) << "Not support abstract " << abstract->ToString();
   }
-}
-
-DeviceContext *PyBoostUtils::GetDeviceContext(const std::string &device_type) {
-  auto iter = g_device_contexts.find(device_type);
-  if (iter != g_device_contexts.end()) {
-    return iter->second;
-  }
-
-  auto device_id = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_type, device_id});
-  MS_EXCEPTION_IF_NULL(device_context);
-  device_context->Initialize();
-
-  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-  device_context->device_res_manager_->BindDeviceToCurrentThread(false);
-  g_device_contexts[device_type] = device_context;
-  MS_LOG(DEBUG) << "Get device context of " << device_type << " id " << device_id;
-  return device_context;
-}
-
-void PyBoostUtils::ChildAfterFork() {
-  MS_LOG(DEBUG) << "Clear device context " << g_device_contexts.size();
-  g_device_contexts.clear();
 }
 
 bool PyBoostUtils::IsKernelModRegistered(const std::string &device_name, const std::string &op_name) {
@@ -156,6 +131,7 @@ DeviceSyncPtr PyBoostUtils::ContiguousByDeviceAddress(const DeviceSyncPtr &devic
   new_device_address->set_original_ref_count(SIZE_MAX);
   new_device_address->ResetRefCount();
   auto stream_id = device_context->device_res_manager_->GetCurrentStreamId();
+  kernel_tensor->set_stream_id(stream_id);
 
   if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(
         runtime::KernelTaskType::kCONTIGUOUS_TASK, {old_device_address}, {new_device_address}, stream_id)) {
@@ -191,6 +167,7 @@ void PyBoostUtils::CreateOutputTensor(DeviceContext *device_context, const tenso
     device_context->device_context_key().device_id_);
   kernel_tensor->set_tensor_storage_info(storage_info);
   kernel_tensor->set_size(input_device_address->GetSize());
+  kernel_tensor->set_stream_id(input_device_address->stream_id());
 
   auto output_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   MS_EXCEPTION_IF_NULL(output_device_address);
@@ -255,8 +232,9 @@ std::vector<kernel::KernelTensor *> PyBoostUtils::GetKernelTensorFromAddress(
   return input_kernel_tensors;
 }
 
-void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs,
-                                   size_t index, std::vector<kernel::KernelTensor *> *kernel_tensor_list,
+void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, size_t stream_id,
+                                   const abstract::AbstractBasePtr &input_abs, size_t index,
+                                   std::vector<kernel::KernelTensor *> *kernel_tensor_list,
                                    device::DeviceAddressPtrList *device_address_list, const TensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(kernel_tensor_list);
@@ -269,13 +247,14 @@ void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, const abstract
   (void)kernel_tensor_list->emplace_back(kernel_tensor.get());
 }
 
-void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs,
-                                   size_t index, std::vector<kernel::KernelTensor *> *kernel_tensor_list,
+void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, size_t stream_id,
+                                   const abstract::AbstractBasePtr &input_abs, size_t index,
+                                   std::vector<kernel::KernelTensor *> *kernel_tensor_list,
                                    device::DeviceAddressPtrList *device_address_list,
                                    const std::vector<TensorPtr> &tensors) {
   for (const auto &tensor : tensors) {
     // input_abs is not used in GetKernelTensor when value is TensorPtr.
-    GetKernelTensor(device_context, input_abs, index, kernel_tensor_list, device_address_list, tensor);
+    GetKernelTensor(device_context, stream_id, input_abs, index, kernel_tensor_list, device_address_list, tensor);
   }
 }
 

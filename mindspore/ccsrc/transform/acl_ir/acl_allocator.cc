@@ -14,29 +14,19 @@
  * limitations under the License.
  */
 #include "transform/acl_ir/acl_allocator.h"
-#include <memory>
 #include "acl/acl_rt_allocator.h"
+#include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 
 namespace mindspore {
 namespace transform {
-void AclAllocator::Initialize() {
-  mem_manager_ = std::make_shared<device::ascend::AscendMemoryManager>();
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  mem_manager_->Initialize();
-}
-
-void AclAllocator::Finalize() {
-  if (mem_manager_ != nullptr) {
-    mem_manager_->Finalize();
-  }
-}
-
 void *AclAllocator::AllocFunc(void *obj, size_t size) {
   MS_EXCEPTION_IF_NULL(obj);
   auto allocator = static_cast<AclAllocator *>(obj);
   MS_EXCEPTION_IF_NULL(allocator);
   MS_EXCEPTION_IF_NULL(allocator->mem_manager_);
-  auto block = allocator->mem_manager_->MallocMemFromMemPool(size, false);
+  auto stream_ptr = allocator->stream();
+  auto stream_id = device::ascend::AscendStreamMng::GetInstance().GetStreamId(stream_ptr);
+  auto block = allocator->mem_manager_->MallocMemFromMemPool(size, false, false, stream_id);
   if (block == nullptr) {
     MS_LOG(EXCEPTION) << "Malloc Mem From Mem Pool failed, size:" << size;
   }
@@ -63,29 +53,34 @@ void *AclAllocator::GetAddrFromBlock(void *block) {
   return block;
 }
 
-AclAllocatorRegister::AclAllocatorRegister() {
-  allocator_obj_ = new AclAllocator();
-  MS_EXCEPTION_IF_NULL(allocator_obj_);
-  allocator_obj_->Initialize();
+AclAllocatorPtr AclAllocatorRegister::NewAclAllocator(
+  void *stream, std::shared_ptr<device::ascend::AscendMemoryManager> mem_manager) {
+  auto allocator_obj = std::make_shared<AclAllocator>(stream, mem_manager);
+  MS_EXCEPTION_IF_NULL(allocator_obj);
 
-  allocator_desc_ = aclrtAllocatorCreateDesc();
-  MS_EXCEPTION_IF_NULL(allocator_desc_);
-  (void)aclrtAllocatorSetObjToDesc(allocator_desc_, allocator_obj_);
-  (void)aclrtAllocatorSetAllocFuncToDesc(allocator_desc_, AclAllocator::AllocFunc);
-  (void)aclrtAllocatorSetFreeFuncToDesc(allocator_desc_, AclAllocator::FreeFunc);
-  (void)aclrtAllocatorSetAllocAdviseFuncToDesc(allocator_desc_, AclAllocator::AllocAdviseFunc);
-  (void)aclrtAllocatorSetGetAddrFromBlockFuncToDesc(allocator_desc_, AclAllocator::GetAddrFromBlock);
+  auto allocator_desc = aclrtAllocatorCreateDesc();
+  MS_EXCEPTION_IF_NULL(allocator_desc);
+  allocator_obj->set_allocator_desc(allocator_desc);
+  (void)aclrtAllocatorSetObjToDesc(allocator_desc, allocator_obj.get());
+  (void)aclrtAllocatorSetAllocFuncToDesc(allocator_desc, AclAllocator::AllocFunc);
+  (void)aclrtAllocatorSetFreeFuncToDesc(allocator_desc, AclAllocator::FreeFunc);
+  (void)aclrtAllocatorSetAllocAdviseFuncToDesc(allocator_desc, AclAllocator::AllocAdviseFunc);
+  (void)aclrtAllocatorSetGetAddrFromBlockFuncToDesc(allocator_desc, AclAllocator::GetAddrFromBlock);
+  return allocator_obj;
+}
+
+void AclAllocatorRegister::FreeAclAllocatorRes(const AclAllocatorPtr &allocator_obj) {
+  (void)aclrtAllocatorDestroyDesc(allocator_obj->allocator_desc());
+  (void)aclrtAllocatorUnregister(allocator_obj->stream());
 }
 
 AclAllocatorRegister::~AclAllocatorRegister() {
-  if (allocator_obj_ != nullptr) {
-    allocator_obj_->Finalize();
-    delete allocator_obj_;
-    allocator_obj_ = nullptr;
+  for (const auto &allocator_iter : allocator_map_) {
+    FreeAclAllocatorRes(allocator_iter.second);
   }
-  (void)aclrtAllocatorDestroyDesc(allocator_desc_);
-  for (auto stream : streams_) {
-    (void)aclrtAllocatorUnregister(stream);
+
+  if (mem_manager_ != nullptr) {
+    mem_manager_->Finalize();
   }
 }
 
@@ -95,9 +90,15 @@ AclAllocatorRegister &AclAllocatorRegister::Instance() {
 }
 
 void AclAllocatorRegister::RegisterAllocator(void *stream) {
-  if (streams_.find(stream) == streams_.end()) {
-    (void)aclrtAllocatorRegister(stream, allocator_desc_);
-    (void)streams_.insert(stream);
+  if (allocator_map_.find(stream) == allocator_map_.end()) {
+    if (mem_manager_ == nullptr) {
+      mem_manager_ = std::make_shared<device::ascend::AscendMemoryManager>();
+      MS_EXCEPTION_IF_NULL(mem_manager_);
+      mem_manager_->Initialize();
+    }
+    const auto &allocator_obj = NewAclAllocator(stream, mem_manager_);
+    (void)aclrtAllocatorRegister(stream, allocator_obj->allocator_desc());
+    allocator_map_[stream] = allocator_obj;
   }
 }
 }  // namespace transform

@@ -22,6 +22,7 @@
 #include <string>
 #include <utility>
 #include "kernel/pyboost/op_runner.h"
+#include "runtime/pynative/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
@@ -64,7 +65,7 @@ class OpRegister {
   static_assert(std::is_base_of<OpRunner, clazz>::value, " must be base of OpRunner");      \
   static const OpRegister<clazz> g_##clazz##DEVICE##_##_PyBoost_reg(#clazz, #DEVICE, []() { \
     auto op = std::make_shared<clazz##DEVICE>();                                            \
-    op->set_device_context(PyBoostUtils::GetDeviceContext(#DEVICE));                        \
+    op->set_device_context(runtime::OpRunner::GetDeviceContext(#DEVICE));                   \
     return op;                                                                              \
   });
 
