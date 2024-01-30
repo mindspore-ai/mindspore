@@ -194,7 +194,7 @@ TEST_F(TestFuncGraphBuilder, TestAddNodeUnCallable) {
 // Feature: Build graph in pi_jit.
 // Description: Use the func_graph_builder api to add cnode with constant input.
 // Expectation: The expected graph is constructed.
-TEST_F(TestFuncGraphBuilder, TestAddBinaryNode) {
+TEST_F(TestFuncGraphBuilder, TestAddMultiNode) {
   FuncGraphBuilder func_graph_builder;
   py::int_ int_v1 = 1;
   auto input1 = func_graph_builder.AddInput(int_v1);
@@ -202,7 +202,7 @@ TEST_F(TestFuncGraphBuilder, TestAddBinaryNode) {
   py::int_ int_v2 = 2;
   auto input2 = func_graph_builder.AddInput(int_v2);
   ASSERT_NE(input2.ptr(), nullptr);
-  auto add_obj = func_graph_builder.AddBinaryNode("add", {input1, input2});
+  auto add_obj = func_graph_builder.AddMultiNode("add", {input1, input2});
   ASSERT_TRUE(func_graph_builder.AddOutput(add_obj));
   auto graph = func_graph_builder.graph();
   ASSERT_NE(graph, nullptr);
