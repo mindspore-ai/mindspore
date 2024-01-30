@@ -681,6 +681,7 @@ constexpr char UPDATESTATE[] = "UpdateState";
 constexpr char LOAD[] = "Load";
 constexpr char OPPOSITE_RANK[] = "opposite_rank";
 constexpr char TARGET_PARAM[] = "target_param";
+constexpr char ASCEND_QUANT[] = "Quant";
 
 // Batch parallel black list
 constexpr char TENSOR_SCATTER_UPDATE[] = "TensorScatterUpdate";

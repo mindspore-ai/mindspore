@@ -1373,11 +1373,7 @@ int InsertQuantNodeManager::AdjustTransposeNodeForSingleMatMulNode(const FuncGra
     int ret = RET_ERROR;
     MS_LOG(INFO) << cnode->fullname_with_scope() << ":" << cnode->input(kWeightIndex + kPrimOffset)->type_name();
     if (cnode->input(kWeightIndex + kPrimOffset)->isa<CNode>()) {
-      ret = InsertTransposeNode(func_graph, cnode, kWeightQuant + kPrimOffset);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << cnode->fullname_with_scope() << " insert transpose node failed";
-        return ret;
-      }
+      return RET_OK;
     } else if (cnode->input(kWeightIndex + kPrimOffset)->isa<Parameter>()) {
       auto manager = Manage(func_graph);
       CHECK_NULL_RETURN(manager);
@@ -1388,6 +1384,11 @@ int InsertQuantNodeManager::AdjustTransposeNodeForSingleMatMulNode(const FuncGra
       ParameterPtr param_node;
       tensor::TensorPtr tensor_info;
       GetParameterAndTensor(weight_input, &param_node, &tensor_info);
+      if (tensor_info->shape_c().size() == DIMENSION_3D) {
+        MS_LOG(INFO) << weight_input->fullname_with_scope() << " shape is " << tensor_info->shape_c()
+                     << " will not do transpose";
+        return RET_OK;
+      }
       if (tensor_info->shape_c().size() != DIMENSION_2D) {
         MS_LOG(ERROR) << weight_input->fullname_with_scope() << " shape is " << tensor_info->shape_c()
                       << " is large than 2.";

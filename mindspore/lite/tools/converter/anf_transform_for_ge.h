@@ -32,6 +32,7 @@ namespace mindspore {
 namespace lite {
 constexpr auto kFusionNameKVCache = "KVCache";
 constexpr auto kFusionNameFlashAttention = "FlashAttention";
+constexpr auto kFusionNameFlashAttentionAntiquant = "FlashAttentionAntiquant";
 constexpr auto kFusionNameMatMulAllReduce = "MatMulAllReduce";
 class AnfTransformForGe {
  public:

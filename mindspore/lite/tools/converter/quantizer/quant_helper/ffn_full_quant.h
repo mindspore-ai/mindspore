@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,44 +14,32 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_HELPER_ASCEND_DISTRIBUTE_FAKE_QUANT_TRANSFORM
-#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_HELPER_ASCEND_DISTRIBUTE_FAKE_QUANT_TRANSFORM
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_FFN_ANTIQUANT_FUSION_H
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_FFN_ANTIQUANT_FUSION_H
 
 #include <memory>
 #include <set>
 #include <vector>
 #include "base/base.h"
 #include "tools/converter/cxx_api/converter_para.h"
-#include "tools/converter/quantizer/quant_helper/qat_transform.h"
 
 namespace mindspore::lite::quant {
-class AscendDistributeFakeQuantTransform {
+class FFNFullQuant {
  public:
-  AscendDistributeFakeQuantTransform(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param)
+  FFNFullQuant(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param)
       : func_graph_(func_graph), param_(param) {}
 
-  ~AscendDistributeFakeQuantTransform() = default;
+  ~FFNFullQuant() = default;
 
   int Transform();
 
  private:
-  int DoSingleGraphAscendDistributeFakeQuantTransform(const FuncGraphPtr &func_graph);
-
-  int SetInputQuantParam(const FuncGraphPtr &func_graph);
-
-  int SetWeightQuantParam(const FuncGraphPtr &func_graph);
-
-  int InsertAscendQuantDeQuantNode(const FuncGraphPtr &func_graph);
-
-  int MatMulWeightTranspose(const FuncGraphPtr &func_graph);
-
-  int RemoveWeightRedundantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
-
-  int NeedAscendDistributeFakeQuantTransform(const FuncGraphPtr &func_graph);
-
-  int FetchWeightQuantParamFromFakeQuant(const FuncGraphPtr &func_graph);
-
   int PreProcess(const FuncGraphPtr &func_graph);
+  int DoWeightQuantWithFakeQuantNode(const FuncGraphPtr &func_graph, const CNodePtr ffn_cnode, int index);
+  int IsFullQuantNode(const CNodePtr &cnode);
+  bool CheckFFNNeedFullQuant(const FuncGraphPtr &func_graph);
+  int Process(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+  int DoSingleGraphFFNFullQuantTransform(const FuncGraphPtr &func_graph);
 
  private:
   FuncGraphPtr func_graph_{nullptr};
