@@ -1041,6 +1041,8 @@ def set_adapter_config(config):
             ms_adapter_registry.register_parameter(value)
         elif key == "convert_object_map":
             ms_adapter_registry.register_convert_map(value)
+        elif key == "convert_adapter_tensor_map":
+            ms_adapter_registry.register_convert_adapter_tensor_map(value)
         else:
             raise ValueError(f"Unsupported key in adapter config: {key}")
 
