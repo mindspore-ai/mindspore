@@ -20,7 +20,6 @@
 #include <memory>
 #include <functional>
 #include "ir/tensor.h"
-#include "runtime/stream.h"
 #include "runtime/device/kernel_runtime.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "abstract/ops/primitive_infer_map.h"
