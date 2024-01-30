@@ -60,8 +60,6 @@ class COMMON_EXPORT SymbolEngineImpl : public SymbolEngine {
   static std::shared_ptr<symshape::SymbolEngineImpl> Build(const FuncGraphPtr &func_graph);
 
   bool Infer(const AbstractBasePtrList &inputs) override;
-  BaseShapePtr QueryShape(const AnfNodePtr &node) override;
-  ValuePtr QueryValue(const AnfNodePtr &node) override;
   bool IsDependValue(const AnfNodePtr &node) override;
   bool IsDependShape(const AnfNodePtr &node) override;
   bool SupportInfer() override { return support_infer_; }

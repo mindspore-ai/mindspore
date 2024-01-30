@@ -26,9 +26,74 @@
 #include "kernel/common_utils.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "include/common/utils/convert_utils.h"
+#include "mindspore/core/symbolic_shape/utils.h"
+#include "mindspore/core/symbolic_shape/symbol_engine.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore::kernel {
 constexpr size_t kShapeTypeSize = sizeof(int64_t);
+
+bool kernelpacket::Init(KernelPacketInner *kernel_packet, const CNodePtr &real_node) {
+  MS_EXCEPTION_IF_NULL(real_node);
+  kernel_packet->real_node_name_ = real_node->DebugString();
+  FuncGraphPtr func_graph = real_node->func_graph();
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "Empty func_graph of " << kernel_packet->real_node_name_;
+    return false;
+  }
+  auto symbol_engine = func_graph->symbol_engine();
+  if (symbol_engine == nullptr) {
+    MS_LOG(ERROR) << "Empty symbol engine of func_graph of " << kernel_packet->real_node_name_;
+    return false;
+  }
+  auto kernel_inputs = AnfAlgo::GetOrCreateAllInputKernelTensors(real_node);
+  kernel_packet->inputs_cache_.reserve(kernel_inputs.size());
+  for (auto kernel_input : kernel_inputs) {
+    auto input = std::make_shared<KernelTensor>(*kernel_input);
+    kernel_packet->inputs_cache_.push_back(std::move(input));
+  }
+  kernel_packet->input_shape_map_.clear();
+  auto outer_inputs = func_graph->parameters();
+  // initialize input index and workspace index
+  for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(real_node); ++i) {
+    MS_LOG(DEBUG) << "Input " << i << " :";
+    auto [prev_node, prev_out_idx] = common::AnfAlgo::GetPrevNodeOutput(real_node, i);
+    MS_LOG(DEBUG) << prev_out_idx << "th output of " << prev_node->DebugString();
+    auto iter = std::find(outer_inputs.begin(), outer_inputs.end(), prev_node);
+    if (iter != outer_inputs.end()) {
+      kernel_packet->input_map_[i] = iter - outer_inputs.begin();
+    } else {
+      // Skip value node
+      if (!symbol_engine->IsDependValue(prev_node)) {
+        auto value_node = prev_node->cast<ValueNodePtr>();
+        if (value_node == nullptr) {
+          MS_LOG(ERROR) << "The " << i << "th input of " << kernel_packet->real_node_name_
+                        << " is not one of [outer input, depend on value, value node]";
+          return false;
+        }
+        if (value_node->value()->isa<ValueAny>()) {
+          MS_LOG(ERROR) << "Value any in " << i << "th input of " << kernel_packet->real_node_name_;
+          return false;
+        }
+        continue;
+      }
+      auto abs = prev_node->abstract();
+      if (abs == nullptr) {
+        MS_LOG(ERROR) << "Node has no abstract, node: " << prev_node->fullname_with_scope();
+        return false;
+      }
+      SimpleNodeWithIndex a{abs, prev_out_idx, prev_node->DebugString()};
+      kernel_packet->input_shape_map_.insert({i, a});
+    }
+  }
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(real_node->kernel_info());
+  if (kernel_info == nullptr) {
+    MS_LOG(ERROR) << "Real node: " << kernel_packet->real_node_name_ << " has no kernel info";
+    return false;
+  }
+  kernel_packet->real_kernel_mod_ = kernel_info->GetKernelMod();
+  return true;
+}
 
 /// \brief convert int value or int array value to shape array
 /// \return if success
@@ -82,14 +147,13 @@ int KernelPacketKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
       inner_inputs[i] = inputs[iter->second];
     } else if (auto iter = input_shape_map_.find(i); iter != input_shape_map_.end()) {
       // Put shape into Input Kerneltensor
-      MS_LOG(DEBUG) << "Inner input " << i << "-> " << iter->second.second
-                    << "th cnode: " << iter->second.first->DebugString();
+      MS_LOG(DEBUG) << "Inner input " << i << "-> " << iter->second.idx << "th cnode: " << iter->second.debug_info;
       inner_inputs[i] = inputs_cache_[i].get();
 
       ShapeArray shape_values;
-      auto value = symbol_engine_->QueryValue(iter->second.first);
+      auto value = symshape::QueryValue(iter->second.abs);
       if (value == nullptr || value == kValueAny) {
-        MS_LOG(ERROR) << "Symbol engine query value failed, node: " << iter->second.first->fullname_with_scope();
+        MS_LOG(ERROR) << "Symbol engine query value failed, node: " << iter->second.debug_info;
         return KRET_RESIZE_FAILED;
       }
       MS_LOG(DEBUG) << "Result of QueryValue: " << value->DumpText();
@@ -98,7 +162,7 @@ int KernelPacketKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
         continue;
       }
 
-      auto idx_in_output = iter->second.second;
+      auto idx_in_output = iter->second.idx;
       if (idx_in_output >= shape_values.size()) {
         MS_LOG(ERROR) << "The " << i << "th input of inner kernel are " << idx_in_output
                       << "th of output of prev node, but that output's size is only " << shape_values.size();
@@ -179,66 +243,6 @@ bool KernelPacketKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
 std::vector<KernelAttr> KernelPacketKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
   return support_list;
-}
-
-bool KernelPacketKernelMod::Init(const CNodePtr &real_node) {
-  real_node_name_ = real_node->fullname_with_scope();
-  FuncGraphPtr func_graph = real_node->func_graph();
-  if (func_graph == nullptr) {
-    MS_LOG(ERROR) << "Empty func_graph of " << real_node_name_;
-    return false;
-  }
-  symbol_engine_ = func_graph->symbol_engine();
-  if (symbol_engine_ == nullptr) {
-    MS_LOG(ERROR) << "Empty symbol engine of func_graph of " << real_node_name_;
-    return false;
-  }
-  auto attr = primitive_->GetAttr(kAttrKernelPacketNode);
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "KernelPacketNode has no attr kernel_packet";
-    return false;
-  }
-  kernel_name_ = GetValue<std::string>(attr);
-  MS_LOG(DEBUG) << "KernelPacketKernelMod init: " << kernel_name_;
-  auto kernel_inputs = AnfAlgo::GetOrCreateAllInputKernelTensors(real_node);
-  inputs_cache_.reserve(kernel_inputs.size());
-  for (auto kernel_input : kernel_inputs) {
-    auto input = std::make_shared<KernelTensor>(*kernel_input);
-    inputs_cache_.push_back(std::move(input));
-  }
-  auto outer_inputs = func_graph->parameters();
-  // initialize input index and workspace index
-  for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(real_node); ++i) {
-    MS_LOG(DEBUG) << "Input " << i << " :";
-    auto [prev_node, prev_out_idx] = common::AnfAlgo::GetPrevNodeOutput(real_node, i);
-    MS_LOG(DEBUG) << prev_out_idx << "th output of " << prev_node->DebugString();
-    auto iter = std::find(outer_inputs.begin(), outer_inputs.end(), prev_node);
-    if (iter != outer_inputs.end()) {
-      input_map_[i] = iter - outer_inputs.begin();
-    } else {
-      // Skip value node
-      if (!symbol_engine_->IsDependValue(prev_node)) {
-        auto value_node = prev_node->cast<ValueNodePtr>();
-        if (value_node == nullptr) {
-          MS_LOG(ERROR) << "The " << i << "th input of " << real_node_name_
-                        << " is not one of [outer input, depend on value, value node]";
-          return false;
-        }
-        if (value_node->value()->isa<ValueAny>()) {
-          MS_LOG(ERROR) << "Value any in " << i << "th input of " << real_node_name_;
-          return false;
-        }
-        continue;
-      }
-      input_shape_map_[i] = {prev_node, prev_out_idx};
-    }
-  }
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(real_node->kernel_info());
-  if (kernel_info == nullptr) {
-    MS_LOG_ERROR << "Real node: " << real_node_name_ << " has no kernel info";
-  }
-  real_kernel_mod_ = kernel_info->GetKernelMod();
-  return true;
 }
 
 KernelPacketKernelMod::AddressArgs KernelPacketKernelMod::GetLaunchArgs(const std::vector<KernelTensor *> &inputs,

@@ -356,46 +356,6 @@ bool SymbolEngineImpl::Infer(const AbstractBasePtrList &inputs) {
   return true;
 }
 
-BaseShapePtr SymbolEngineImpl::QueryShape(const AnfNodePtr &node) {
-  auto abs = node->abstract();
-  MS_EXCEPTION_IF_NULL(abs);
-  auto symbolic_shape = abs->GetSymbolicShape();
-  if (symbolic_shape == nullptr) {
-    return nullptr;
-  }
-  auto digital_shape = abs->GetShape();
-  MS_EXCEPTION_IF_NULL(digital_shape);
-  if (!symbolic_shape->HasData()) {
-    return digital_shape;
-  }
-  if (digital_shape->isa<abstract::NoShape>()) {
-    return digital_shape;
-  }
-  if (digital_shape->isa<abstract::TensorShape>()) {
-    return std::make_shared<abstract::TensorShape>(ToShape(symbolic_shape));
-  }
-  abstract::BaseShapePtrList shape_arr;
-  shape_arr.reserve(symbolic_shape->size());
-  (void)std::transform(symbolic_shape->symbols().begin(), symbolic_shape->symbols().end(),
-                       std::back_inserter(shape_arr), [](const SymbolPtr &s) {
-                         auto shape = s->as<ListSymbol>();
-                         MS_EXCEPTION_IF_NULL(shape);
-                         return std::make_shared<abstract::TensorShape>(ToShape(shape));
-                       });
-  return std::make_shared<abstract::TupleShape>(std::move(shape_arr));
-}
-
-ValuePtr SymbolEngineImpl::QueryValue(const AnfNodePtr &node) {
-  auto abs = node->abstract();
-  MS_EXCEPTION_IF_NULL(abs);
-  auto symbolic_value = abs->GetSymbolicValue();
-  if (symbolic_value == nullptr) {
-    auto value = abs->GetValue();
-    return value != nullptr ? value : kValueAny;
-  }
-  return SymbolToValue(symbolic_value.get());
-}
-
 bool SymbolEngineImpl::IsDependValue(const AnfNodePtr &node) {
   if (depend_status_map_.find(node) != depend_status_map_.end()) {
     return depend_status_map_[node].value;

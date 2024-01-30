@@ -32,8 +32,6 @@ class MS_CORE_API SymbolEngine : public Base {
   MS_DECLARE_PARENT(SymbolEngine, Base)
 
   virtual bool Infer(const AbstractBasePtrList &inputs) = 0;
-  virtual BaseShapePtr QueryShape(const AnfNodePtr &node) = 0;
-  virtual ValuePtr QueryValue(const AnfNodePtr &node) = 0;
   virtual bool IsDependValue(const AnfNodePtr &node) = 0;
   virtual bool IsDependShape(const AnfNodePtr &node) = 0;
   virtual bool SupportInfer() = 0;

@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "mindspore/core/symbolic_shape/symbol_engine.h"
+#include "mindspore/core/symbolic_shape/utils.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/anf.h"
 #include "backend/common/graph_kernel/symbol_engine/jit/transform_visitor.h"
@@ -38,7 +39,7 @@ BaseShapePtr SymbolEngineInfer::InferShape(const CNodePtr &cnode, const Abstract
     MS_LOG(WARNING) << "Infer failed by symbol engine. node " << cnode->fullname_with_scope();
     return nullptr;
   }
-  return symbol_engine->QueryShape(output);
+  return mindspore::symshape::QueryShape(output->abstract());
 }
 
 BaseShapePtr SymbolEngineJitInfer::InferShape(const CNodePtr &cnode, const AbstractBasePtrList &inputs) {
