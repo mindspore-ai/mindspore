@@ -217,6 +217,12 @@ ATTR_MAP(TensorScatterAdd) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(TensorScatterAdd) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(TensorScatterAdd, kNameTensorScatterAdd, ADPT_DESC(TensorScatterAdd))
 
+// TensorScatterSub
+INPUT_MAP(TensorScatterSub) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
+ATTR_MAP(TensorScatterSub) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(TensorScatterSub) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(TensorScatterSub, kNameTensorScatterSub, ADPT_DESC(TensorScatterSub))
+
 // Triu
 INPUT_MAP(Triu) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Triu) = {{"diagonal", ATTR_DESC(diagonal, AnyTraits<int64_t>())}};
