@@ -244,7 +244,7 @@ CallableGraph MindCompiler::Compile(const FuncGraphPtr &func_graph, const py::tu
   new_arg = ExpandVariableArgs(new_arg, compile_info.co_flags_, compile_info.co_argcount_);
   new_arg = EliminateSelf(new_arg, compile_info.co_name_);
   MarkArgmentMutable(new_arg);
-  (void)graph_executor->CompileInner(func_graph, args, kwargs, phase, true);
+  (void)graph_executor->CompileInner(func_graph, args, kwargs, phase, true, true);
 
   return callable;
 }
