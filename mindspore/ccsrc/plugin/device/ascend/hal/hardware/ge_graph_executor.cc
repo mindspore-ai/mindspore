@@ -425,16 +425,26 @@ bool BuildFakeGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderM
   MS_EXCEPTION_IF_NULL(context);
   if (context->CanDump(kIntroductory)) {
     if (context->CanDump(kFully)) {
-      draw::Draw("anf_graph.dot", anf_graph);  // for debug
+      draw::Draw("anf_graph_before_build_df_graph.dot", anf_graph);  // for debug
     }
-    DumpIR("anf_graph.ir", anf_graph, true);
+    DumpIR("anf_graph_before_build_df_graph.ir", anf_graph, true, kWholeStack);
   }
 #endif
+
   (void)setenv("GE_TRAIN", IsGeTrain() ? "1" : "0", 1);
   if (!AddFakeGraph(anf_graph, init_inputs_map)) {
     MS_LOG(ERROR) << "Add fake graph failed";
     return false;
   }
+
+#ifdef ENABLE_DUMP_IR
+  if (context->CanDump(kIntroductory)) {
+    if (context->CanDump(kFully)) {
+      draw::Draw("anf_graph_after_build_df_graph.dot", anf_graph);  // for debug
+    }
+    DumpIR("anf_graph_after_build_df_graph.ir", anf_graph, true, kWholeStack);
+  }
+#endif
 
   return true;
 }
@@ -1217,9 +1227,9 @@ FuncGraphPtr GeGraphExecutor::BuildDFGraph(const FuncGraphPtr &anf_graph,
   MS_EXCEPTION_IF_NULL(context);
   if (context->CanDump(kIntroductory)) {
     if (context->CanDump(kFully)) {
-      draw::Draw("anf_graph.dot", anf_graph);  // for debug
+      draw::Draw("anf_graph_before_build_df_graph.dot", anf_graph);  // for debug
     }
-    DumpIR("anf_graph.ir", anf_graph, true);
+    DumpIR("anf_graph_before_build_df_graph.ir", anf_graph, true, kWholeStack);
   }
 #endif
 
@@ -1227,6 +1237,15 @@ FuncGraphPtr GeGraphExecutor::BuildDFGraph(const FuncGraphPtr &anf_graph,
     MS_LOG(ERROR) << "GenConvertor failed";
     return nullptr;
   }
+
+#ifdef ENABLE_DUMP_IR
+  if (context->CanDump(kIntroductory)) {
+    if (context->CanDump(kFully)) {
+      draw::Draw("anf_graph_after_build_df_graph.dot", anf_graph);  // for debug
+    }
+    DumpIR("anf_graph_after_build_df_graph.ir", anf_graph, true, kWholeStack);
+  }
+#endif
 
   if (export_air) {
     // export air can't use session->AddGraph, it will cause atc error.
