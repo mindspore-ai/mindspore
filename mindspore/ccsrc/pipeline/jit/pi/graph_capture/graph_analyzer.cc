@@ -356,16 +356,7 @@ void MindGraphAnalyzer::Analyze() {
   if (!support_ret) {
     return;
   }
-  PyCodeObject *co = graph_->GetCodeObj();
-  const FrameStates &enter_frame = graph_->GetFrame(0);
-  const auto &args = enter_frame.GetLocals();
-  int argc = co->co_argcount + co->co_kwonlyargcount;
-  // check all parameters is graph supported, but here not check variable arguments
-  auto end = args.begin() + argc;
-  auto iter = std::find_if(args.begin(), end, [](ValueNode *i) { return !ValidateGraphParameters(i); });
-  if (iter == end) {
-    need_interpret_ = false;
-  }
+  need_interpret_ = false;
 }
 
 bool MindGraphAnalyzer::AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) {
