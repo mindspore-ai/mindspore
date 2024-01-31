@@ -56,7 +56,7 @@ class TracePerf {
   OptGuardPerf *perf_;
 };
 
-Trace::Trace(PyObject *pObj, std::shared_ptr<Trace> pOrigin) : obj_(pObj), origin_(pOrigin) {
+Trace::Trace(PyObject *pObj, std::shared_ptr<Trace> pOrigin) : obj_(pObj), origin_(pOrigin), is_const_(false) {
   if (pOrigin != nullptr) {
     originType_ = pOrigin->GetOriginType();
     curType_ = pOrigin->GetTraceType();
@@ -108,7 +108,7 @@ bool Trace::operator==(const Trace &trace) {
 }
 
 void Trace::Detach() {
-  if (obj_ != Py_None && obj_ != nullptr) {
+  if (obj_ != Py_None && obj_ != nullptr && !is_const_) {
     Py_DECREF(obj_);
     obj_ = nullptr;
   }
@@ -118,6 +118,10 @@ void Trace::Detach() {
 }
 
 PyObject *Trace::Retrieve(PTraceContext context, bool perf) {
+  if (is_const_) {
+    Py_XINCREF(obj_);
+    return obj_;
+  }
   if (context->cache != nullptr) {
     std::string strTrace = this->ToString();
     auto cache = context->cache;
@@ -140,6 +144,8 @@ void Trace::Cache(PTraceContext context, PyObject *obj) {
     (*(context->cache))[strTrace] = obj;
   }
 }
+
+bool Trace::IsConst() const { return is_const_; }
 
 RootTrace::RootTrace(PyObject *pObj, TraceType tt, int index, std::string name, std::string module_name)
     : Trace(pObj, nullptr), idx_(index), name_(name), module_name_(module_name) {
@@ -370,6 +376,9 @@ bool RootTrace::operator==(const Trace &trace) {
 
 ItemTrace::ItemTrace(PyObject *pObj, TracePtr pOrigin, TracePtr pItem) : Trace(pObj, pOrigin), item_(pItem) {
   curType_ = TraceType::Item;
+  if (origin_ != nullptr && item_ != nullptr && origin_->IsConst() && item_->IsConst()) {
+    is_const_ = true;
+  }
 }
 
 TracePtr ItemTrace::GetItem() { return item_; }
@@ -444,6 +453,9 @@ void ItemTrace::Detach() {
 
 AttrTrace::AttrTrace(PyObject *pObj, TracePtr pOrigin, std::string strAttr) : Trace(pObj, pOrigin), attr_(strAttr) {
   curType_ = TraceType::Attr;
+  if (origin_ != nullptr && origin_->IsConst()) {
+    is_const_ = true;
+  }
 }
 
 std::string AttrTrace::GetAttribute() { return attr_; }
@@ -496,6 +508,9 @@ bool AttrTrace::operator==(const Trace &trace) {
 ConstTrace::ConstTrace(PyObject *pObj, int iIndex) : Trace(pObj, nullptr), index_(iIndex) {
   curType_ = TraceType::Const;
   originType_ = TraceType::Const;
+  if (index_ == -1) {
+    is_const_ = true;
+  }
 }
 
 int ConstTrace::GetIndex() { return index_; }
@@ -519,24 +534,6 @@ PyObject *ConstTrace::Retrieve(PTraceContext context, bool perf) {
     Py_INCREF(ret);
   }
   return ret;
-}
-
-void OpTrace::Replace(std::shared_ptr<Trace> dst, std::shared_ptr<Trace> src) {
-  Trace::Replace(dst, src);
-  for (size_t i = 0; i < params_.size(); ++i) {
-    if (*params_[i] == *src) {
-      params_[i] = dst;
-    } else {
-      params_[i]->Replace(dst, src);
-    }
-  }
-}
-
-void OpTrace::Detach() {
-  Trace::Detach();
-  for (auto t : params_) {
-    t->Detach();
-  }
 }
 
 std::string ConstTrace::ToString(bool include_param) {
@@ -566,11 +563,19 @@ void ConstTrace::Detach() {}
 TypeTrace::TypeTrace(PyObject *pObj, TracePtr pOrigin) : Trace(pObj, pOrigin) {
   pType_ = Py_TYPE(pObj);
   curType_ = TraceType::Type;
+  if (origin_ != nullptr && origin_->IsConst()) {
+    is_const_ = true;
+  }
 }
 
 PyTypeObject *TypeTrace::GetType() { return pType_; }
 
 PyObject *TypeTrace::Retrieve(PTraceContext context, bool perf) {
+  if (is_const_) {
+    auto rt = reinterpret_cast<PyObject *>(pType_);
+    Py_INCREF(rt);
+    return rt;
+  }
   PyObject *ret = Trace::Retrieve(context);
   if (ret != nullptr) {
     return ret;
@@ -609,6 +614,16 @@ bool TypeTrace::operator==(const Trace &trace) {
     return pType_ == t.pType_;
   }
   return false;
+}
+
+void TypeTrace::Detach() {
+  if (is_const_) {
+    is_const_ = false;
+    Trace::Detach();
+    is_const_ = true;
+  } else {
+    Trace::Detach();
+  }
 }
 
 static PyObject *RichCompare(PyObject *left, PyObject *right, int oparg) {
@@ -1422,6 +1437,9 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
 OpTrace::OpTrace(PyObject *obj, int opcode, int opargs, TraceVector params, std::string name)
     : Trace(obj, nullptr), opcode_(opcode), opargs_(opargs), params_(params), name_(name) {
   curType_ = TraceType::Operation;
+  if (!std::any_of(params.begin(), params.end(), [](const TracePtr &item) { return !item->IsConst(); })) {
+    is_const_ = true;
+  }
 }
 
 PyObject *OpTrace::Retrieve(PTraceContext context, bool perf) {
@@ -1540,6 +1558,24 @@ bool OpTrace::operator==(const Trace &trace) {
   return ret;
 }
 
+void OpTrace::Replace(std::shared_ptr<Trace> dst, std::shared_ptr<Trace> src) {
+  Trace::Replace(dst, src);
+  for (size_t i = 0; i < params_.size(); ++i) {
+    if (*params_[i] == *src) {
+      params_[i] = dst;
+    } else {
+      params_[i]->Replace(dst, src);
+    }
+  }
+}
+
+void OpTrace::Detach() {
+  Trace::Detach();
+  for (auto t : params_) {
+    t->Detach();
+  }
+}
+
 static std::map<int, TraceType> kMapBytecodeToTraceType = {
   {LOAD_CLOSURE, TraceType::Closure}, {LOAD_DEREF, TraceType::Deref},           {LOAD_GLOBAL, TraceType::Global},
   {LOAD_NAME, TraceType::Name},       {LOAD_CLASSDEREF, TraceType::ClassDeref},
@@ -1627,6 +1663,9 @@ std::string CustomizedTrace::ToString(bool include_param) {
 UnsupportedTrace::UnsupportedTrace(PyObject *obj, TraceVector params, int op, int arg)
     : Trace(obj, nullptr), params_(params), op_(op), arg_(arg) {
   curType_ = TraceType::Unsupported;
+  if (!std::any_of(params.begin(), params.end(), [](const TracePtr &item) { return !item->IsConst(); })) {
+    is_const_ = true;
+  }
 }
 
 PyObject *UnsupportedTrace::Retrieve(PTraceContext context, bool perf) {
