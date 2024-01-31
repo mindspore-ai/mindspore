@@ -1,26 +1,23 @@
 sqrt:
-    description: |  
-        Returns square root of a tensor element-wise.
-
-        Note:
-            When there are some negative number, it will return a Tensor whose specific position is nan.
+    description: |
+        Returns sqrt of a tensor element-wise.
 
         .. math::
-
-            out_{i} =  \sqrt{x_{i}}
-
+        
+            out_{i} = \sqrt{x_{i}}
+    
         Args:
-            - **x** (Tensor) - The input tensor.
-
+            x (Tensor): The input tensor with a dtype of number.Number.
+        
         Returns:
-            Tensor, has the same shape and data type as the `x`.
-
+            Tensor, has the same shape and dtype as the `x`.
+    
         Raises:
             TypeError: If `x` is not a Tensor.
-
+    
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-
+    
         Examples:
             >>> import mindspore
             >>> import numpy as np

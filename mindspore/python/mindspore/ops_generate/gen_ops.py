@@ -86,18 +86,18 @@ def _auto_generate_func_disabled(yaml_value):
     raise TypeError(f"The disable label for function should be True or False, but get {disable_item}.")
 
 
-def signature_get_rw_label(rw_op_name, write_list, read_list, ref_list):
+def signature_get_rw_label(arg_name, write_list, read_list, ref_list):
     """
     Generate signature rw code
     """
-    for op in write_list:
-        if op == rw_op_name:
+    for rw_arg_name in write_list:
+        if rw_arg_name == arg_name:
             return ', sig.sig_rw.RW_WRITE'
-    for op in read_list:
-        if op == rw_op_name:
+    for read_arg_name in read_list:
+        if read_arg_name == arg_name:
             return ', sig.sig_rw.RW_READ'
-    for op in ref_list:
-        if op == rw_op_name:
+    for ref_arg_name in ref_list:
+        if ref_arg_name == arg_name:
             return ', sig.sig_rw.RW_REF'
     return ''
 
@@ -179,11 +179,15 @@ def get_same_dtype_groups(args_signature, args_name):
             dtype_conut = dtype_conut + 1
     return same_dtype_groups, dtype_conut
 
-
-def generate_py_op_signature(args_signature, args_name, args_default):
+def generate_py_op_signature(op_name, args_signature, args_name, args_default):
     """
     Generate __mindspore_signature__
     """
+    def _check_signature_arg_valid(op_name, sig_arg_names, args_names):
+        for sig_arg_name in sig_arg_names:
+            if sig_arg_name not in args_names:
+                raise ValueError(f"Op {op_name} has no input arg named '{sig_arg_name}'!")
+
     if args_signature is None and not args_default:
         return ''
 
@@ -199,12 +203,16 @@ def generate_py_op_signature(args_signature, args_name, args_default):
         rw_ref = args_signature.get('rw_ref')
         if rw_write is not None:
             write_list = rw_write.replace(' ', '').split(",")
+            _check_signature_arg_valid(op_name, write_list, args_name)
         if rw_read is not None:
             read_list = rw_read.replace(' ', '').split(",")
+            _check_signature_arg_valid(op_name, read_list, args_name)
         if rw_ref is not None:
             ref_list = rw_ref.replace(' ', '').split(",")
+            _check_signature_arg_valid(op_name, ref_list, args_name)
     # Init dtype group.
     same_dtype_groups, dtype_conut = get_same_dtype_groups(args_signature, args_name)
+    _check_signature_arg_valid(op_name, list(same_dtype_groups.keys()), args_name)
     # Only one dtype_group is set.
     if dtype_conut == 1 and not any([write_list, read_list, ref_list, args_default]):
         signature_code += '('
@@ -303,6 +311,9 @@ def _normalize_func_description_fromat(description):
 
 
 def _get_op_description(operator_name, doc_str):
+    """
+    Generate ops api description.
+    """
     if doc_str is None:
         print(f"Description is None, op_name: {operator_name}")
         return ""
@@ -488,7 +499,7 @@ def generate_py_primitive(yaml_data, doc_str):
         inputs_args, inputs_default, init_args, args_assign, init_args_with_default, args_handlers = \
             process_args(class_name, args)
         init_code = '\n'.join(args_assign)
-        signature_code = generate_py_op_signature(operator_data.get('args_signature'), inputs_args,
+        signature_code = generate_py_op_signature(class_name, operator_data.get('args_signature'), inputs_args,
                                                   inputs_default)
         deprecated_code = generate_py_op_deprecated(operator_data.get('deprecated'))
 

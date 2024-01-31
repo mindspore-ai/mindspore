@@ -41,7 +41,7 @@ from mindspore._c_expression import COOTensor as COOTensor_
 from ..auto_generate import (ExpandDims, Reshape, TensorShape, Transpose, Gather, OnesLike, ZerosLike, Argmax,
                              ReverseV2, Diag, Eye, ScatterNd, ResizeNearestNeighborV2, GatherNd, GatherD,
                              Range, MaskedFill, RightShift, NonZero, ResizeNearestNeighbor, Identity, Split,
-                             CumSum, CumProd, Cummax, Cummin, Argmin, Concat, UnsortedSegmentSum)
+                             CumSum, CumProd, Cummax, Cummin, Argmin, Concat, UnsortedSegmentSum, ScalarToTensor)
 from .manually_defined import Rank, Shape, Tile, Cast
 
 
@@ -1421,42 +1421,6 @@ class TupleToArray(PrimitiveWithInfer):
         return _run_op(self, self.name, args)
 
 
-class ScalarToTensor(PrimitiveWithInfer):
-    """
-    Converts a scalar to a `Tensor`, and converts the data type to the specified type.
-
-    Refer to :func:`mindspore.ops.scalar_to_tensor` for more details.
-
-    Inputs:
-        - **input_x** (Union[int, float]) - The input is a scalar. Only constant value is allowed.
-        - **dtype** (mindspore.dtype) - The target data type. Default: ``mindspore.float32`` . Only
-          constant value is allowed.
-
-    Outputs:
-        Tensor. 0-D Tensor and the content is the input.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import ops
-        >>> op = ops.ScalarToTensor()
-        >>> data = 1
-        >>> output = op(data, mindspore.float32)
-        >>> print(output)
-        1.0
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        self.init_prim_io_names(inputs=['input_scalar', 'dtype'], outputs=['output_data'])
-
-    def __call__(self, x, dtype=mstype.float32):
-        validator.check_value_type("x", x, [bool, int, float], self.name)
-        validator.check_subclass("dtype", dtype, mstype.number, self.name)
-        data_type = mstype.dtype_to_nptype(dtype)
-        return Tensor(np.array(x, data_type), dtype=dtype)
 
 
 class InvertPermutation(PrimitiveWithInfer):

@@ -1,14 +1,14 @@
 #operator maximum
 maximum:
     args:
-        x:
+        input:
             dtype: tensor
             type_cast: number
-        y:
+        other:
             dtype: tensor
             type_cast: number
     args_signature:
-        dtype_group: (x, y)
+        dtype_group: (input, other)
     returns:
         output:
             dtype: tensor

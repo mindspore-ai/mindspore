@@ -1,15 +1,15 @@
 #operator mul
 mul:
     args:
-        x:
+        input:
             dtype: tensor
             type_cast: number
-        y:
+        other:
             dtype: tensor
             type_cast: number
     args_signature:
-        rw_read: x, y
-        dtype_group: (x, y)
+        rw_read: input, other
+        dtype_group: (input, other)
     returns:
         output: 
             dtype: tensor

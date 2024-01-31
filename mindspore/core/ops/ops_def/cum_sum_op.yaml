@@ -1,7 +1,7 @@
 #operator cum_sum
 cum_sum:
   args:
-    x:
+    input:
       dtype: tensor
     axis:
       dtype: int
@@ -16,3 +16,5 @@ cum_sum:
   returns:
     output:
       dtype: tensor
+  function:
+    disable: True

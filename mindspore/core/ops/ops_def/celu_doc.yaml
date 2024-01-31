@@ -2,18 +2,18 @@ celu:
     description: |
         celu activation function, computes celu (Continuously differentiable exponential
         linear units) of input tensors element-wise. The formula is defined as follows:
-
-        .. math::
     
+        .. math::
+        
             \text{CeLU}(x) = \max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))
-
+    
         For more details, please refer to `celu <https://arxiv.org/abs/1704.07483>`_.
     
         .. warning::
             This is an experimental API that is subject to change or deletion.
-    
+        
         CELU Activation Function Graph:
-    
+        
         .. image:: ../images/CELU.png
             :align: center
     
@@ -38,6 +38,6 @@ celu:
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
             >>> x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0]), mindspore.float32)
-            >>> output = ops.celu(x, 1.0)
+            >>> output = ops.celu(x, alpha=1.0)
             >>> print(output)
             [-0.86466473 -0.63212055  1.          2.        ]

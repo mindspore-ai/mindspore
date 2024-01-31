@@ -2,34 +2,33 @@ div:
     description: |
         Computes the quotient of dividing the first input tensor by the second input tensor element-wise.
 
-        .. math::
-
-            out_{i} = x_{i} / y_{i}
-
+        Refer to :func:`mindspore.ops.div` for more details.
+    
         Note:
-            - When the two inputs have different shapes, they must be able to broadcast to a common shape.
+            - One of the two inputs must be a Tensor, when the two inputs have different shapes,
+              they must be able to broadcast to a common shape.
             - The two inputs can not be bool type at the same time,
               [True, Tensor(True, bool\_), Tensor(np.array([True]), bool\_)] are all considered bool type.
             - The two inputs comply with the implicit type conversion rules to make the data types
               consistent.
-
+    
         Inputs:
             - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
               a bool or a tensor whose data type is
               `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
               `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-            - **y** (Union[Tensor, number.Number, bool]) - The second input, which is a number.Number or
-              a bool or a tensor whose data type is
+            - **y** (Union[Tensor, number.Number, bool]) - The second input is a number.Number or
+              a bool or a tensor whose data type is 
               `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
               `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-
+    
         Outputs:
             Tensor, the shape is the same as the one of the input `x` , `y` after broadcasting,
             and the data type is the one with higher precision or higher digits among the two inputs.
-
+    
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-
+    
         Examples:
             >>> import mindspore
             >>> import numpy as np

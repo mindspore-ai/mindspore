@@ -4,23 +4,23 @@ resize_bicubic:
 
         .. warning::
             This is an experimental API that is subject to change or deletion.
-
+    
         Args:
             align_corners (bool, optional): If ``True`` , the centers of the 4 corner pixels of the input
                 and output tensors are aligned, preserving the values at the corner pixels. Default: ``False`` .
             half_pixel_centers (bool, optional): Whether to use half-pixel center alignment. If set to ``True`` ,
-                `align_corners` should be ``False`` . Default: ``False`` .
-
+                                                     `align_corners` should be ``False`` . Default: ``False`` .
+    
         Inputs:
             - **images** (Tensor) - The input image must be a 4-D tensor of shape :math:`(batch, channels, height, width)`.
-                The format must be NCHW.
-                Types allowed: float16, float32, float64.
-            - **size** (Tensor) - A 1-D tensor with 2 elements: new_height, new_width.
-                Types allowed: int32.
-
+              The format must be NCHW.
+              Types allowed: float16, float32, float64.
+            - **size** (tuple[int]) - A tuple with 2 int elements: new_height, new_width.
+              Types allowed: int32.
+    
         Outputs:
             A 4-D tensor with shape :math:`(batch, channels, new\_height, new\_width)` whose dtype is the same as `images` .
-
+    
         Raises:
             TypeError: If the type of `images` is not allowed.
             TypeError: If the type of `size` is not int32.
@@ -31,11 +31,11 @@ resize_bicubic:
             ValueError: If the number of elements in `size` is not 2.
             ValueError: If any value of `size` is not positive.
             ValueError: If the values of `align_corners` and `half_pixel_centers` are both ``True`` .
-
-
+    
+    
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-
+    
         Examples:
             >>> import mindspore
             >>> import numpy as np

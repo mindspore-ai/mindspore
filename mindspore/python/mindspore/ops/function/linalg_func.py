@@ -24,6 +24,7 @@ from mindspore.ops import functional as F
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.function.math_func import _check_input_dtype, _check_attr_dtype
 from mindspore._c_expression import Tensor as Tensor_
+from mindspore.ops.auto_generate import geqrf
 
 from ..operations import linalg_ops
 from .._primitive_cache import _get_cache_prim
@@ -178,46 +179,6 @@ def eigvals(A):
     """
     u, _ = _get_cache_prim(P.Eig)(compute_v=False)(A)
     return u
-
-
-def geqrf(input):
-    r"""
-    Decomposes a matrix into the product of an orthogonal matrix `Q` and an upper triangular matrix `R`.
-    The process is called QR decomposition: :math:`A = QR`.
-
-    Both `Q` and `R` matrices are stored in the same output tensor `y`.
-    The elements of `R` are stored on and above the diagonal, whereas elementary reflectors
-    (or Householder vectors) implicitly defining matrix `Q` are stored below the diagonal.
-
-    This function returns two tensors (`y`, `tau`).
-
-    Args:
-        input (Tensor): Tensor of shape :math:`(*, m, n)`, input must be a matrix greater than or equal to 2D,
-            with dtype of float32, float64, complex64, complex128.
-
-    Returns:
-        - **y** (Tensor) - Tensor of shape :math:`(*, m, n)`, has the same dtype as the `input`.
-        - **tau** (Tensor) - Tensor of shape :math:`(*, p)` and :math:`p = min(m, n)`,
-          has the same dtype as the `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If the dtype of `input` is neither float32, float64, complex64, complex128.
-        ValueError: If `input` dimension is less than 2.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> input_x = Tensor(np.array([[-2.0, -1.0], [1.0, 2.0]]).astype(np.float32))
-        >>> y, tau = ops.geqrf(input_x)
-        >>> print(y)
-        [[ 2.236068   1.7888544]
-         [-0.236068   1.3416407]]
-        >>> print(tau)
-        [1.8944271 0.       ]
-    """
-    return geqrf_(input)
 
 
 def svd(input, full_matrices=False, compute_uv=True):

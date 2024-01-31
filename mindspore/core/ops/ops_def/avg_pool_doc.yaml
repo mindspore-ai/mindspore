@@ -12,9 +12,9 @@ avg_pool:
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: ``1`` .
         pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
-            ``"same"`` or ``"valid"`` . Default: ``"valid"`` .
+            ``"SAME"`` or ``"VALID"`` . Default: ``"VALID"`` .
 
-            - ``"same"``: Pad the input around its edges so that the shape of input and output
+            - ``"SAME"``: Pad the input around its edges so that the shape of input and output
               are the same when `stride` is set to ``1``.
               The amount of padding to is calculated by the operator internally, If the amount is even, it is
               uniformly distributed around the input, if it is odd, the excess amount goes to the right/bottom side.
@@ -50,7 +50,7 @@ avg_pool:
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.avgpool_op = ops.AvgPool(pad_mode="VALID", kernel_size=2, strides=1)
+        ...         self.avgpool_op = ops.AvgPool(pad_mode='VALID', kernel_size=2, strides=1)
         ...
         ...     def construct(self, x):
         ...         result = self.avgpool_op(x)

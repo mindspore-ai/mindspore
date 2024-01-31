@@ -307,4 +307,4 @@ def test_diagonal_unsupported_input_type(mode):
     ms.set_context(precompile_only=False, mode=mode)
     with pytest.raises(TypeError) as info:
         Diagonal()(1.0, 1, 1, -3)
-    assert "Failed calling Diagonal with \"Diagonal(offset=int, dim1=int, dim2=int)(x=float)\"" in str(info.value)
+    assert "Failed calling Diagonal with \"Diagonal(offset=int, dim1=int, dim2=int)(input=float)\"" in str(info.value)

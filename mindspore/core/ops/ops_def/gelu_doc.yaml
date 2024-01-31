@@ -14,10 +14,10 @@ gelu:
         where :math:`P` is the cumulative distribution function of the standard Gaussian distribution,
         :math:`x_i` is the input element.
 
-        Args:
+        Inputs:
             - **x** (Tensor) - The input of the activation function GeLU, the data type is float16, float32 or float64.
 
-        Returns:
+        Outputs:
             Tensor, with the same type and shape as `x`.
 
         Raises:

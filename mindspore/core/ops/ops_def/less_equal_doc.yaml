@@ -1,21 +1,29 @@
 less_equal:
   description: |
-    Computes the boolean value of :math:`x <= y` element-wise.
+    Computes the boolean value of :math:`input <= other` element-wise.
 
-    Refer to :func:`mindspore.ops.le` for more details.
+    .. math::
+        out_{i} =\begin{cases}
+            & \text{True,    if } input_{i}<=other_{i} \\
+            & \text{False,   if } input_{i}>other_{i}
+            \end{cases}
 
-    Inputs:
-        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
-        a bool or a tensor whose data type is
-        `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-        `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        - **y** (Union[Tensor, number.Number, bool]) - The second input, which is a number.Number or
-        a bool or a tensor whose data type is
-        `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-        `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+    .. note::
+        - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
+          consistent.
+        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
-    Outputs:
+    Args:
+        input (Union[Tensor, Number, bool]): The first input is a Number or a bool or a tensor whose data type is 
+            number or bool_.
+        other (Union[Tensor, Number, bool]): The second input is a Number or a bool or a tensor whose data type is 
+            number or bool_.
+
+    Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+    Raises:
+        TypeError: If neither `input` nor `other` is a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -25,7 +33,7 @@ less_equal:
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
-        >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
-        >>> output = ops.less_equal(x, y)
+        >>> other = Tensor(np.array([1, 1, 4]), mindspore.int32)
+        >>> output = ops.less_equal(x, other)
         >>> print(output)
         [ True False  True]

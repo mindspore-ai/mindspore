@@ -3,18 +3,18 @@ relu6:
         Computes ReLU (Rectified Linear Unit) upper bounded by 6 of input tensors element-wise.
 
         Refer to :func:`mindspore.ops.relu6` for more details.
-
+    
         Inputs:
             - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`,
-                where :math:`*` means any number of additional dimensions.
-                Data type must be float16, float32.
-
+              where :math:`*` means any number of additional dimensions.
+              Data type must be float16, float32.
+    
         Outputs:
             Tensor, with the same type and shape as the `input_x`.
-
+    
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-
+    
         Examples:
             >>> import mindspore
             >>> import numpy as np
@@ -24,4 +24,4 @@ relu6:
             >>> result = relu6(input_x)
             >>> print(result)
             [[0. 4. 0.]
-            [2. 0. 6.]]
+             [2. 0. 6.]]

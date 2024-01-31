@@ -10,3 +10,5 @@ scalar_to_tensor:
     returns:
         output:
             dtype: tensor
+    class:
+        disable: True
