@@ -922,6 +922,19 @@ DfGraphConvertor &DfGraphConvertor::GenerateBroadcastGraph(const TensorOrderMap 
 DfGraphConvertor &DfGraphConvertor::GenerateCheckpointGraph() {
   if (error_ != SUCCESS) {
     MS_LOG(ERROR) << "Generate checkpoint graph failed, found error code " << error_ << ".";
+    if (!unsupported_ops_names_.empty()) {
+      MS_LOG(ERROR) << "===========================================";
+      MS_LOG(ERROR) << unsupported_ops_names_.size() << " Operator(s) cannot be converted:";
+      std::string unsupported_ops_list;
+      for (const auto &unsupported_ops : unsupported_ops_names_) {
+        if (!unsupported_ops_list.empty()) {
+          unsupported_ops_list += ", ";
+        }
+        unsupported_ops_list += unsupported_ops;
+      }
+      MS_LOG(ERROR) << "Unsupported op type list: " << unsupported_ops_list;
+      MS_LOG(ERROR) << "===========================================";
+    }
     return *this;
   }
   if (anf_graph_ == nullptr || anf_graph_->output() == nullptr) {
@@ -3848,6 +3861,7 @@ OperatorPtr DfGraphConvertor::ConvertCNode(const CNodePtr node) {
   OpAdapterPtr adpt = FindAdapter(node, training_);
   if (adpt == nullptr) {
     MS_LOG(ERROR) << "Cannot get adapter for " << node->fullname_with_scope();
+    unsupported_ops_names_.insert(name);
     error_ = NOT_FOUND;
     return nullptr;
   }
