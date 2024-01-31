@@ -78,6 +78,7 @@ class Trace {
   virtual std::string ToString(bool include_param = true) = 0;
   virtual std::string FormatString() = 0;
   virtual void Cache(PTraceContext context, PyObject *obj);
+  virtual bool IsConst() const;
 
  protected:
   PyObject *obj_;
@@ -85,6 +86,7 @@ class Trace {
   TraceType originType_;
   TraceType curType_;
   std::string strTrace_;
+  bool is_const_;
 };
 using TracePtr = std::shared_ptr<Trace>;
 using TraceVector = std::vector<TracePtr>;
@@ -172,6 +174,7 @@ class TypeTrace : public Trace {
   virtual std::string ToString(bool include_param = true);
   virtual bool operator==(const Trace &trace);
   std::string FormatString() override { return ToString(); }
+  virtual void Detach();
 
  protected:
   PyTypeObject *pType_;
