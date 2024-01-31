@@ -612,6 +612,11 @@ constexpr auto kGeCache = "ge_cache";
 constexpr auto kGeGraphKey = "ge.graph_key";
 constexpr auto kGeGraphCompilerCacheDir = "ge.graph_compiler_cache_dir";
 
+constexpr auto kNcclWorldGroup = "nccl_world_group";
+constexpr auto kHcclWorldGroup = "hccl_world_group";
+constexpr auto kSyncBnGroup = "sync_bn_group";
+constexpr auto kRankID = "RANK_ID";
+
 COMMON_EXPORT bool IsOneOfCustomAkgType(const std::string &name);
 COMMON_EXPORT bool IsOneOfOperator(const std::string &name);
 COMMON_EXPORT bool IsOneOfNotSupportedTransFormat(const std::string &format);
