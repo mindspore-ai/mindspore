@@ -89,8 +89,29 @@ std::vector<PrimitivePtr> GraphKernelExpanderCloud::GetExpanderOps() {
     {kCPUDevice, OpLevel_1, prim::kPrimSoftplus},
     {kCPUDevice, OpLevel_1, prim::kPrimSoftplusGrad},
   };
+  std::vector<OpWithLevel> expand_ops_with_level_dvm = {
+    {kAscendDevice, OpLevel_0, prim::kPrimAddN},
+    {kAscendDevice, OpLevel_0, prim::kPrimGeLU},
+    {kAscendDevice, OpLevel_0, prim::kPrimGelu},
+    {kAscendDevice, OpLevel_0, prim::kPrimGeLUGrad},
+    {kAscendDevice, OpLevel_0, prim::kPrimRsqrtGrad},
+    {kAscendDevice, OpLevel_0, prim::kPrimSqrtGrad},
+    {kAscendDevice, OpLevel_0, prim::kPrimSquare},
+    {kAscendDevice, OpLevel_0, prim::kPrimTile},
+    {kAscendDevice, OpLevel_0, prim::kPrimClipByNormNoDivSum},
+    {kAscendDevice, OpLevel_0, prim::kFusedMulAdd},
+    {kAscendDevice, OpLevel_0, prim::kPrimSigmoid},
+    {kAscendDevice, OpLevel_0, prim::kPrimSigmoidGrad},
+    {kAscendDevice, OpLevel_1, prim::kPrimAssignAdd},
+    {kAscendDevice, OpLevel_1, prim::kPrimExpandDims},
+    {kAscendDevice, OpLevel_1, prim::kLambApplyOptimizerAssign},
+    {kAscendDevice, OpLevel_1, prim::kLambApplyWeightAssign},
+    {kAscendDevice, OpLevel_1, prim::kSoftmaxGradExt},
+  };
   const auto &flags = GraphKernelFlags::GetInstance();
-  auto ops = GkUtils::GetValidOps(expand_ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
+  auto ops_with_level = GraphKernelFlags::GetInstance().kernel_generator == "DVM" ? std::move(expand_ops_with_level_dvm)
+                                                                                  : std::move(expand_ops_with_level);
+  auto ops = GkUtils::GetValidOps(ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
                                   flags.enable_expand_ops, flags.disable_expand_ops);
   return GkUtils::FilterExcludedOps(ops);
 }

@@ -57,6 +57,7 @@
 #include "backend/common/graph_kernel/reduce_fake_out_mem.h"
 #include "backend/common/graph_kernel/depend_elimination.h"
 #include "backend/common/graph_kernel/tensor_inplace.h"
+#include "backend/common/graph_kernel/floatstatus_fusion.h"
 #include "backend/common/graph_kernel/floatstatus_addn_fusion.h"
 #include "backend/common/graph_kernel/parallel_optimizer.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
@@ -109,8 +110,11 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
 PassManagerPtr GraphKernelOptimizer::Cluster() const {
   auto pm = std::make_shared<GraphKernelPassManager>(1, "cluster");
 
+  // Convert IsFinite and its user to FloatStatus
+  pm->Add(std::make_shared<FloatStatusFusion>(), OptLevel_2, is_dvm);
+
   // Expand FloatStatus(AddN)
-  pm->Add(std::make_shared<FloatStatusAddNFusion>(), OptLevel_2, is_gpu);
+  pm->Add(std::make_shared<FloatStatusAddNFusion>(), OptLevel_2, is_gpu || is_dvm);
 
   // Expand complex basic kernels to composite kernels
   pm->Add(std::make_shared<GraphKernelExpanderCloud>(), OptLevel_1);
@@ -242,7 +246,7 @@ PassManagerPtr GraphKernelOptimizer::Build() const {
   pm->Add(std::make_shared<DynamicShapeCluster>(), enable_dyn_level, is_cpu || is_gpu);
   pm->Add(std::make_shared<SymbolEngineBuilder>(), enable_dyn_level, is_cpu || is_gpu);
 #ifdef ENABLE_AKG
-  pm->Add(std::make_shared<GraphKernelBuild>(), OptLevel_1, !is_ge);
+  pm->Add(std::make_shared<GraphKernelBuild>(), OptLevel_1, !is_ge && !is_dvm);
 #endif
   pm->Add(std::make_shared<ConvertCustomForGE>(), OptLevel_1, is_ge);
   pm->Add(std::make_shared<GeneratedDependElimination>(), OptLevel_2, is_gpu || is_ascend);
@@ -275,6 +279,7 @@ void GraphKernelOptimizer::Run(const KernelGraphPtr &kernel_graph) {
   is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
   is_cpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
   is_ge = (is_ascend && (context_ptr->backend_policy() == "ge") && kernel_graph->is_graph_run_mode());
+  is_dvm = (GraphKernelFlags::GetInstance().kernel_generator == "DVM");
   auto cb = Callback::Instance();
   if (is_ge) {
     Callback::RegImpl(std::make_shared<CallbackImplWithInferShape>());
