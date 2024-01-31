@@ -26,6 +26,7 @@ from .utils import rand_int, rand_bool, run_binop_test, run_unary_test, run_mult
 
 context.set_context(mode=context.PYNATIVE_MODE)
 
+
 class Cases():
     def __init__(self):
         self.arrs = [
@@ -2637,19 +2638,19 @@ def test_rint():
             match_array(actual.asnumpy(), expected, error=5)
 
 
-def mnp_correlate(a, v):
-    a = mnp.correlate(a, v, mode="valid")
-    b = mnp.correlate(a, v, mode="full")
-    c = mnp.correlate(a, v, mode="same")
-    d = mnp.correlate(a, v)
+def mnp_correlate(seq_a, seq_v):
+    a = mnp.correlate(seq_a, seq_v, mode="valid")
+    b = mnp.correlate(seq_a, seq_v, mode="full")
+    c = mnp.correlate(seq_a, seq_v, mode="same")
+    d = mnp.correlate(seq_a, seq_v)
     return a, b, c, d
 
 
-def onp_correlate(a, v):
-    a = onp.correlate(a, v, mode="valid")
-    b = onp.correlate(a, v, mode="full")
-    c = onp.correlate(a, v, mode="same")
-    d = onp.correlate(a, v)
+def onp_correlate(seq_a, seq_v):
+    a = onp.correlate(seq_a, seq_v, mode="valid")
+    b = onp.correlate(seq_a, seq_v, mode="full")
+    c = onp.correlate(seq_a, seq_v, mode="same")
+    d = onp.correlate(seq_a, seq_v)
     return a, b, c, d
 
 
