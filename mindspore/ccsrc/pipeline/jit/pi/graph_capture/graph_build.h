@@ -230,6 +230,7 @@ class GraphBuilder {
   bool DoMakeFunction(const Instr &instr);
   virtual bool DoUnary(const Instr &instr);
   virtual bool DoBinary(const Instr &instr);
+  virtual bool DoIsOp(const Instr &instr);
   virtual bool DoBinaryMul(const Instr &instr);
   virtual bool DoCompare(const Instr &instr);
   virtual bool DoBuildOp(const Instr &instr);
@@ -271,6 +272,7 @@ class MindGraphBuilder : public GraphBuilder {
   bool DoGetItem(const Instr &instr) override;
   bool DoUnary(const Instr &instr) override;
   bool DoBinary(const Instr &instr) override;
+  bool DoIsOp(const Instr &instr) override;
   bool DoBinaryMul(const Instr &instr) override;
   bool DoCompare(const Instr &instr) override;
   bool DoBuildOp(const Instr &instr) override;
