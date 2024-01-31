@@ -742,8 +742,8 @@ void GeGraphExecutor::BuildOutputDataGeTensor(const KernelGraphPtr &kernel_graph
 }
 
 void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph) const {
-  MS_LOG(INFO) << "Start AllocOutputMemory, kernel graph: " << kernel_graph->ToString();
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_LOG(INFO) << "Start AllocOutputMemory, kernel graph: " << kernel_graph->ToString();
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
