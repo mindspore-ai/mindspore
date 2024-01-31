@@ -466,4 +466,10 @@ INPUT_MAP(IgammaGradA) = {{1, INPUT_DESC(a)}, {2, INPUT_DESC(x)}};
 ATTR_MAP(IgammaGradA) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(IgammaGradA) = {{0, OUTPUT_DESC(z)}};
 REG_ADPT_DESC(IgammaGradA, prim::kPrimIgammaGradA->name(), ADPT_DESC(IgammaGradA));
+
+// Zeta
+INPUT_MAP(Zeta) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(q)}};
+ATTR_MAP(Zeta) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Zeta) = {{0, OUTPUT_DESC(z)}};
+REG_ADPT_DESC(Zeta, prim::kPrimZeta->name(), ADPT_DESC(Zeta));
 }  // namespace mindspore::transform
