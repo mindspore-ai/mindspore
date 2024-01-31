@@ -535,7 +535,7 @@ inline CNodePtr NewCNode(AnfNodePtrList &&inputs, const FuncGraphPtr &fg) {
   return fg->NewCNode(std::move(inputs));
 }
 
-SeenNum NewFgSeenGeneration();
+MS_CORE_API SeenNum NewFgSeenGeneration();
 
 // Find the root cnodes of a segment of cnodes.
 std::shared_ptr<OrderedSet<CNodePtr>> FindRoots(const std::vector<CNodePtr> &segment);

@@ -915,28 +915,6 @@ bool MetaUnpackPreparePass(const ResourcePtr &resource) {
   return true;
 }
 
-bool PreSimplifyInlinePass(const ResourcePtr &resource) {
-  MS_EXCEPTION_IF_NULL(resource);
-  FuncGraphPtr func_graph = resource->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-
-  MS_LOG(DEBUG) << "Start, " << func_graph->ToString();
-  opt::irpass::OptimizeIRPassLib irpass;
-  auto simplify_inline_passes = opt::OptPassConfig({irpass.switch_simplify_, irpass.inline_});
-  OptPassGroupMap simplify_inline_map({{"switch_simplify_inline", simplify_inline_passes}});
-  auto simplify_inline =
-    opt::Optimizer::MakeOptimizer("simplify_inline", resource, simplify_inline_map, false, false, false);
-  simplify_inline->step(func_graph, true);
-
-  OptPassGroupMap simplify_inline_renorm_map({{"renormalize", opt::OptPassConfig::Renormalize()}});
-  auto simplify_inline_renorm =
-    opt::Optimizer::MakeOptimizer("simplify_inline_renorm", resource, simplify_inline_renorm_map);
-  auto new_func_graph = simplify_inline_renorm->step(func_graph, true);
-  resource->set_func_graph(new_func_graph);
-  MS_LOG(DEBUG) << "End, " << func_graph->ToString() << ", new_graph: " << new_func_graph->ToString();
-  return true;
-}
-
 bool GradPartialTransformPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   FuncGraphPtr func_graph = resource->func_graph();
