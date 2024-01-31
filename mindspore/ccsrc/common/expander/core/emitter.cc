@@ -640,7 +640,7 @@ NodePtr CtrlFlowBlock::While(const NodePtr &cond, const BlockFunc &while_body_fu
   auto tb = while_fg_emitter->Emit("Partial", body_with_inputs);
   auto fb = while_fg_emitter->Emit("Partial", empty_body_fg_with_inputs);
   auto s = while_fg_emitter->Emit("Switch", {cond, tb, fb});
-  auto cnode = func_graph_->NewCNode({s->get()});
+  auto cnode = while_fg_emitter->func_graph()->NewCNode({s->get()});
   cnode->set_abstract(out_abstract_);
   while_fg->set_output(cnode);
 

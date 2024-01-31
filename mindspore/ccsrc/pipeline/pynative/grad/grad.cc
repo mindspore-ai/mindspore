@@ -40,6 +40,8 @@
 #include "pybind_api/gil_scoped_long_running.h"
 #include "frontend/expander/pack/packfunc_grad.h"
 #include "frontend/optimizer/fallback_rewriter.h"
+#include "runtime/pynative/op_function/pyboost_grad_functions.h"
+
 namespace mindspore {
 namespace pynative {
 namespace {
@@ -2122,6 +2124,7 @@ void GradExecutor::ChildAfterFork() {
     MS_LOG(DEBUG) << "Reinitialize assist_queue_.";
     assist_queue_->ChildAfterFork();
   }
+  runtime::PyBoostOpExecute::GetInstance().ClearBackend();
   MS_LOG(DEBUG) << "GradExecutor reinitialize after fork done.";
 }
 }  // namespace pynative

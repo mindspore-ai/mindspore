@@ -199,14 +199,15 @@ AbstractBasePtr PyBoostUtils::InferByOpDef(const PrimitivePtr &prim, const std::
     auto shape = op_def->func_impl_.InferShape(prim, input_abs);
     auto type = op_def->func_impl_.InferType(prim, input_abs);
     output_abs = mindspore::abstract::MakeAbstract(shape, type);
-    MS_LOG(DEBUG) << "Pynative Infer by OpDef, got abstract: " << output_abs->ToString();
+    MS_LOG(DEBUG) << "Pynative Infer" << prim->name() << "by OpDef, got abstract: " << output_abs->ToString();
     return output_abs;
   } else {
     const auto &infer_map = abstract::GetPrimitiveInferMapPtr();
     const auto &iter = infer_map->find(prim);
     if (iter != infer_map->end()) {
       output_abs = iter->second.InferShapeAndType(nullptr, prim, input_abs);
-      MS_LOG(DEBUG) << "Pynative Infer by C++ PrimitiveInferMap, got abstract: " << output_abs->ToString();
+      MS_LOG(DEBUG) << "Pynative Infer" << prim->name()
+                    << "by C++ PrimitiveInferMap, got abstract: " << output_abs->ToString();
       return output_abs;
     } else {
       MS_LOG(EXCEPTION) << "Cannot found infer function for Op " << prim->name();

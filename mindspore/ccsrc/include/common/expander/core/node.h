@@ -100,8 +100,8 @@ using IrNodePtr = std::shared_ptr<IrNode>;
 
 class COMMON_EXPORT FuncNode : public Node {
  public:
-  FuncNode(const ValuePtr &value, InputType input_type, Emitter *emitter)
-      : Node(emitter, value), input_type_(input_type) {}
+  FuncNode(const ValuePtr &value, const abstract::AbstractBasePtr &abs, InputType input_type, Emitter *emitter)
+      : Node(emitter, value), abstract_(abs), input_type_(input_type) {}
   ValuePtr BuildValue() override;
   InputType input_type() override;
   void set_node_type(InputType input_type) { input_type_ = input_type; }

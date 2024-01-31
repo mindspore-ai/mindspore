@@ -819,7 +819,7 @@ REG_BPROP_BUILDER("ReverseV2").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("Unstack").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Stack(dout, ib->GetAttr("axis"), out);
+  auto dx = ib->Stack(dout, ib->GetAttr("axis"));
   return {dx};
 });
 
@@ -1480,7 +1480,7 @@ REG_BPROP_BUILDER("Split").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   auto axis_ptr = axis->BuildValue();
   MS_EXCEPTION_IF_NULL(axis_ptr);
   auto axis_value = GetValue<int64_t>(axis_ptr);
-  auto dx = ib->Concat(dout, axis_value, out);
+  auto dx = ib->Concat(dout, axis_value);
   return {dx, ib->OutZeros(axis), ib->OutZeros(output_num)};
 });
 
@@ -1845,7 +1845,7 @@ REG_BPROP_BUILDER("SplitV").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto split_dim = GetValue<int64_t>(ib->GetAttr("split_dim"));
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Concat(dout, split_dim, out);
+  auto dx = ib->Concat(dout, split_dim);
   return {dx};
 });
 

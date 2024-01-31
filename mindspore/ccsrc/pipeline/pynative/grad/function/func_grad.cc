@@ -198,15 +198,15 @@ NodePtrList FuncBackwardNode::PreProcess(const TensorPtrList &dout, FuncBuilder 
   NodePtrList node_inputs;
   node_inputs.reserve(op_inputs_.size() + kSizeFive);
   for (size_t i = 0; i < op_inputs_.size(); ++i) {
-    (void)node_inputs.emplace_back(emitter->NewFuncNode(op_inputs_[i], grad_type_[i]));
+    (void)node_inputs.emplace_back(emitter->NewFuncNode(op_inputs_[i], input_abstract_[i], grad_type_[i]));
   }
-  (void)node_inputs.emplace_back(emitter->NewFuncNode(op_output_, InputType::kOpOutput));
+  (void)node_inputs.emplace_back(emitter->NewFuncNode(op_output_, out_abstract_, InputType::kOpOutput));
   if (dout.size() == kSizeOne) {
-    (void)node_inputs.emplace_back(emitter->NewFuncNode(dout[kIndex0], InputType::kOpOutput));
+    (void)node_inputs.emplace_back(emitter->NewFuncNode(dout[kIndex0], out_abstract_, InputType::kOpOutput));
   } else {
     ValuePtrList value_dout;
     value_dout.reserve(dout.size());
-    // If dout is nullptr, lazy update zero tensor to expander.
+    // If dout is nullptr, lazy update zero tensor to funcbuilder emitop.
     std::transform(dout.begin(), dout.end(), std::back_inserter(value_dout), [](const auto &val) -> ValuePtr {
       if (val == nullptr) {
         return kNone;
@@ -214,7 +214,7 @@ NodePtrList FuncBackwardNode::PreProcess(const TensorPtrList &dout, FuncBuilder 
       return val;
     });
     (void)node_inputs.emplace_back(
-      emitter->NewFuncNode(std::make_shared<ValueTuple>(value_dout), InputType::kOpOutput));
+      emitter->NewFuncNode(std::make_shared<ValueTuple>(value_dout), out_abstract_, InputType::kOpOutput));
   }
   return node_inputs;
 }
@@ -510,10 +510,9 @@ void FuncGrad::ConstructParameterNodes(const ValuePtrList &inputs) {
 
 BackwardNodePtr FuncGrad::BuildFuncBackwardNode(const PrimitivePtr &prim, const expander::bprop::BpropBuilderFunc &func,
                                                 const ValuePtrList &flatten_inputs, const OpGradInfoPtr &op_grad_info) {
-  auto fn = std::make_shared<FuncBackwardNode>(prim->name(), func, prim->attrs(), op_grad_info->input_value,
-                                               op_grad_info->out_value, op_grad_info->output_size,
-                                               op_grad_info->input_value_grad_type);
-  fn->set_attrs(prim->attrs());
+  auto fn = std::make_shared<FuncBackwardNode>(
+    prim->name(), func, prim->attrs(), op_grad_info->input_value, op_grad_info->input_abs, op_grad_info->out_value,
+    op_grad_info->output_size, op_grad_info->out_abs, op_grad_info->input_value_grad_type);
   fn->UpdateNextEdges(flatten_inputs);
   return fn;
 }
@@ -628,7 +627,7 @@ ValuePtr FuncGrad::GetInputGrads(bool grad_all_inputs, bool get_by_position, con
         MS_LOG(EXCEPTION) << "Position index " << index << " is exceed input size.";
       }
       // Tuple, List, scalar will be ignore
-      if (!IsValidTensorInput(cell_inputs_[kIndex0].first)) {
+      if (!IsValidTensorInput(cell_inputs_[index].first)) {
         MS_LOG(DEBUG) << cell_inputs_[index].first->ToString() << "is no tensor";
         continue;
       }

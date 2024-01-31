@@ -555,7 +555,7 @@ REG_BPROP_BUILDER("LSTM").SetBody(BODYFUNC(ib) {
   auto dx = ib->TupleGetItem(res1, kIndex0);
   auto dhx = ib->TupleGetItem(res1, kIndex1);
   auto dcx = ib->TupleGetItem(res1, kIndex2);
-  auto dw = ib->Emit("LSTMGradWeight", {ib->Emit("Depend", {x, dx}), hx, y, reserve, state},
+  auto dw = ib->Emit("LSTMGradWeight", {ib->Depend(x, dx), hx, y, reserve, state},
                      {{"input_size", input_size},
                       {"hidden_size", hidden_size},
                       {"num_layers", num_layers},
@@ -592,7 +592,7 @@ REG_BPROP_BUILDER("CudnnGRU.NotReady").SetBody(BODYFUNC(ib) {
                         {"dropout", dropout}});
   auto dx = ib->TupleGetItem(res1, kIndex0);
   auto dhx = ib->TupleGetItem(res1, kIndex1);
-  auto dw = ib->Emit("GruGradWeight", {ib->Emit("Depend", {x, dx}), hx, y, reserve, state},
+  auto dw = ib->Emit("GruGradWeight", {ib->Depend(x, dx), hx, y, reserve, state},
                      {{"input_size", input_size},
                       {"hidden_size", hidden_size},
                       {"num_layers", num_layers},

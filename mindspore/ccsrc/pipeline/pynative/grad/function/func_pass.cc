@@ -110,7 +110,8 @@ class SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR {
       kReshapeOpName, {{kAttrInputNames, MakeValue(input_names)}, {kAttrOutputNames, MakeValue(output_names)}});
     constexpr auto kShapeFromTensor = "shape_from_tensor";
     prim->set_attr(kShapeFromTensor, MakeValue(true));
-    auto shape_node = func_builder_->NewFuncNode(CreateTensorByConstantValue(MakeValue(shape)), InputType::kConstant);
+    auto shape_node =
+      func_builder_->NewFuncNode(CreateTensorByConstantValue(MakeValue(shape)), nullptr, InputType::kConstant);
     shape_node->set_abstract(shape_node->Value()->ToAbstract());
     return func_builder_->EmitOp(prim, {input_node, shape_node});
   }
@@ -140,13 +141,13 @@ class SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR {
     std::vector<std::string> output_names = {"output"};
     auto one_hot_primitive = func_builder_->NewPrimitive(
       kOneHotOpName, {{kAttrInputNames, MakeValue(input_names)}, {kAttrOutputNames, MakeValue(output_names)}});
-    auto depth_node = func_builder_->NewFuncNode(MakeValue<int64_t>(depth_), InputType::kConstant);
+    auto depth_node = func_builder_->NewFuncNode(MakeValue<int64_t>(depth_), nullptr, InputType::kConstant);
     depth_node->set_abstract(depth_node->Value()->ToAbstract());
-    auto value_on_node = func_builder_->NewFuncNode(value_on, InputType::kConstant);
+    auto value_on_node = func_builder_->NewFuncNode(value_on, nullptr, InputType::kConstant);
     value_on_node->set_abstract(PyNativeAlgo::Common::SetAbstractValueToAnyValue(value_on_node->Value()->ToAbstract()));
-    auto value_off_node = func_builder_->NewFuncNode(value_off, InputType::kConstant);
+    auto value_off_node = func_builder_->NewFuncNode(value_off, nullptr, InputType::kConstant);
     value_off_node->set_abstract(value_off_node->Value()->ToAbstract());
-    auto value_axis_node = func_builder_->NewFuncNode(value_axis, InputType::kConstant);
+    auto value_axis_node = func_builder_->NewFuncNode(value_axis, nullptr, InputType::kConstant);
     value_axis_node->set_abstract(
       PyNativeAlgo::Common::SetAbstractValueToAnyValue(value_axis_node->Value()->ToAbstract()));
     NodePtrList one_hot_inputs{reshape_node, depth_node, value_on_node, value_off_node, value_axis_node};
@@ -190,7 +191,7 @@ class SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR {
       tile_inputs = {dout, shape_node};
     } else {
       std::vector<int64_t> multiples_v = {batch_size_};
-      auto multiples_node = func_builder_->NewFuncNode(MakeValue(multiples_v), InputType::kConstant);
+      auto multiples_node = func_builder_->NewFuncNode(MakeValue(multiples_v), nullptr, InputType::kConstant);
       multiples_node->set_abstract(multiples_node->Value()->ToAbstract());
       tile_inputs = {dout, multiples_node};
     }
@@ -207,7 +208,7 @@ class SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR {
     MS_EXCEPTION_IF_NULL(tile_node);
     auto y_value = static_cast<float>(batch_size_);
     auto y = std::make_shared<tensor::Tensor>(y_value, kFloat32);
-    auto y_node = func_builder_->NewFuncNode(y, InputType::kConstant);
+    auto y_node = func_builder_->NewFuncNode(y, nullptr, InputType::kConstant);
     y_node->set_abstract(PyNativeAlgo::Common::SetAbstractValueToAnyValue(y_node->Value()->ToAbstract()));
     std::vector<std::string> input_names = {"x", "y"};
     std::vector<std::string> output_names = {"output"};
@@ -220,7 +221,7 @@ class SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR {
     MS_EXCEPTION_IF_NULL(real_div_node);
     constexpr int64_t axis = -1;
     auto axis_v = MakeValue(axis);
-    auto axis_node = func_builder_->NewFuncNode(axis_v, InputType::kConstant);
+    auto axis_node = func_builder_->NewFuncNode(axis_v, nullptr, InputType::kConstant);
     axis_node->set_abstract(axis_v->ToAbstract());
     std::vector<std::string> input_names = {"x"};
     std::vector<std::string> output_names = {"output"};
@@ -255,10 +256,15 @@ size_t SplitTupleInputs(autograd::FuncBuilder *func_builder, const NodePtr &inpu
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(plant_inputs);
   MS_EXCEPTION_IF_NULL(input->Value());
+  auto input_abs = input->abstract();
   auto value_seq = input->Value()->cast<ValueSequencePtr>()->value();
+  auto abs_seq = input_abs->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(abs_seq);
   size_t input_size = value_seq.size();
-  for (const auto &value : value_seq) {
-    (void)plant_inputs->emplace_back(func_builder->NewFuncNode(value, input->input_type()));
+  for (size_t i = 0; i < input_size; ++i) {
+    const auto &value = value_seq[i];
+    const auto &abs = abs_seq->elements()[i];
+    (void)plant_inputs->emplace_back(func_builder->NewFuncNode(value, abs, input->input_type()));
   }
   return input_size;
 }

@@ -38,13 +38,16 @@ using NodePtrList = expander::NodePtrList;
 class FuncBackwardNode : public BackwardNode {
  public:
   FuncBackwardNode(const string &name, expander::bprop::BpropBuilderFunc func,
-                   mindspore::HashMap<std::string, ValuePtr> attrs, ValuePtrList op_inputs, ValuePtr op_output,
-                   size_t output_size, std::vector<InputType> grad_type)
+                   mindspore::HashMap<std::string, ValuePtr> attrs, ValuePtrList op_inputs,
+                   AbstractBasePtrList input_abstract, ValuePtr op_output, size_t output_size,
+                   AbstractBasePtr out_abstract, std::vector<InputType> grad_type)
       : BackwardNode(name, output_size),
         attrs_(std::move(attrs)),
         op_inputs_(std::move(op_inputs)),
+        input_abstract_(std::move(input_abstract)),
         grad_type_(std::move(grad_type)),
         op_output_(std::move(op_output)),
+        out_abstract_(std::move(out_abstract)),
         func_(std::move(func)) {}
   ~FuncBackwardNode() override = default;
   TensorPtrList CallBackward(const TensorPtrList &grads) override;
@@ -54,9 +57,11 @@ class FuncBackwardNode : public BackwardNode {
 
  private:
   mindspore::HashMap<std::string, ValuePtr> attrs_;
-  std::vector<ValuePtr> op_inputs_;
+  ValuePtrList op_inputs_;
+  abstract::AbstractBasePtrList input_abstract_;
   std::vector<InputType> grad_type_;
   ValuePtr op_output_;
+  abstract::AbstractBasePtr out_abstract_;
   expander::bprop::BpropBuilderFunc func_;
 };
 

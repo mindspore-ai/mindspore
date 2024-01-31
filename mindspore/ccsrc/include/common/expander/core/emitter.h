@@ -54,11 +54,11 @@ class COMMON_EXPORT Emitter {
   virtual NodePtr EmitValue(const ValuePtr &value);
 
   NodePtr NewIrNode(const AnfNodePtr &anfnode) { return std::make_shared<IrNode>(anfnode, this); }
-  FuncNodePtr NewFuncNode(const ValuePtr &value, InputType input_type) {
-    return std::make_shared<FuncNode>(value, input_type, this);
+  FuncNodePtr NewFuncNode(const ValuePtr &value, const abstract::AbstractBasePtr &abs, InputType input_type) {
+    return std::make_shared<FuncNode>(value, abs, input_type, this);
   }
   virtual NodePtr MakeTuple(const NodePtrList &inputs) { return EmitOp(prim::kPrimMakeTuple, inputs); }
-  NodePtr MakeList(const NodePtrList &inputs) { return EmitOp(prim::kPrimMakeList, inputs); }
+  virtual NodePtr MakeList(const NodePtrList &inputs) { return EmitOp(prim::kPrimMakeList, inputs); }
   virtual NodePtr TupleGetItem(const NodePtr &input, size_t i) {
     return Emit(mindspore::kTupleGetItemOpName, {input, Value(static_cast<int64_t>(i))});
   }
@@ -70,7 +70,7 @@ class COMMON_EXPORT Emitter {
   NodePtr ScalarDiv(const NodePtr &lhs, const NodePtr &rhs) { return Emit(ops::kNameScalarDiv, {lhs, rhs}); }
   NodePtr ScalarFloorDiv(const NodePtr &lhs, const NodePtr &rhs) { return Emit(ops::kNameScalarFloorDiv, {lhs, rhs}); }
   NodePtr ScalarNeg(const NodePtr &node) { return Emit(ops::kNameScalarUsub, {node}); }
-  virtual NodePtr Cast(const NodePtr &node, const TypePtr &type);
+  NodePtr Cast(const NodePtr &node, const TypePtr &type);
   NodePtr Cast(const NodePtr &node, TypeId type_id) { return Cast(node, TypeIdToType(type_id)); }
 
   NodePtr Reshape(const NodePtr &node, const NodePtr &shape);
@@ -87,9 +87,7 @@ class COMMON_EXPORT Emitter {
   NodePtr Transpose(const NodePtr &node, const ShapeVector &perm) { return Transpose(node, Value(perm)); }
   NodePtr Tile(const NodePtr &node, const NodePtr &dims);
   NodePtr Tile(const NodePtr &node, const ShapeVector &dims) { return Tile(node, Value(dims)); }
-  virtual NodePtr Concat(const NodePtr &input, int64_t axis, const NodePtr &out = nullptr) {
-    return Emit(kConcatOpName, {input, Value(axis)});
-  }
+  virtual NodePtr Concat(const NodePtr &input, int64_t axis) { return Emit(kConcatOpName, {input, Value(axis)}); }
   virtual NodePtr Concat(const NodePtrList &inputs, int64_t axis) {
     return Emit(kConcatOpName, {MakeTuple(inputs), Value(axis)});
   }
@@ -154,9 +152,7 @@ class COMMON_EXPORT Emitter {
   NodePtr ScatterNd(const NodePtr &indices, const NodePtr &update, const NodePtr &shape) {
     return Emit("ScatterNd", {indices, update, shape});
   }
-  virtual NodePtr Stack(const NodePtr &x, const ValuePtr &axis, const NodePtr &out = nullptr) {
-    return Emit("Stack", {x}, {{"axis", axis}});
-  }
+  virtual NodePtr Stack(const NodePtr &x, const ValuePtr &axis) { return Emit("Stack", {x}, {{"axis", axis}}); }
   virtual NodePtr Stack(const NodePtrList &x, int64_t axis) { return Stack(MakeTuple(x), MakeValue(axis)); }
   NodePtr TensorScatterUpdate(const NodePtr &input_x, const NodePtr &indices, const NodePtr &updates) {
     return Emit("TensorScatterUpdate", {input_x, indices, updates});
@@ -212,7 +208,7 @@ class COMMON_EXPORT Emitter {
   NodePtr BroadcastTo(const NodePtr &x, const NodePtr &y);
 
   NodePtr ZerosLike(const NodePtr &node);
-  NodePtr Depend(const NodePtr &value, const NodePtr &expr) {
+  virtual NodePtr Depend(const NodePtr &value, const NodePtr &expr) {
     return Emit("Depend", {value, expr}, {{"side_effect_propagate", MakeValue(1)}});
   }
   NodePtr Fill(double value, const ShapeVector &shape, TypeId data_type);
@@ -388,8 +384,9 @@ class COMMON_EXPORT IrEmitter : public Emitter {
   using BlockFunc = std::function<NodePtrList(Emitter *)>;
   NodePtr Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) override;
   NodePtr While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list) override;
+  FuncGraphPtr func_graph() { return func_graph_; }
 
- private:
+ protected:
   FuncGraphPtr func_graph_;
 };
 
