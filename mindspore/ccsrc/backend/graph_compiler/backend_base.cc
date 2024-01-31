@@ -706,6 +706,7 @@ void MindRTBackendBase::CompileSubGraph(const FuncGraphPtr &func_graph, device::
   std::sort(cand_graph.begin(), cand_graph.end(),
             [](const FuncGraphPtr &a, const FuncGraphPtr &b) { return a->ToString() < b->ToString(); });
   for (const auto &sub_graph : cand_graph) {
+    MS_EXCEPTION_IF_NULL(sub_graph);
     bool skip_inline_graph =
       sub_graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE) && context->CellReuseLevel() == CellReuseLevel::kLazyInline;
     if (sub_graph != func_graph && sub_graph != nullptr && !sub_graph->has_flag(kFlagJitCallGraph) &&

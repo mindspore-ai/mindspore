@@ -1633,6 +1633,8 @@ void DfGraphConvertor::GetBranchNodeInput(const CNodePtr node) {
   std::vector<AnfNodePtr> branch_inputs;
   const size_t branch_index = 1;
 
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(node->input(0));
   CNodePtr sw_node = is_kernel_graph_ ? node : node->input(0)->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(sw_node);
   AnfNodePtr branch_index_iter = sw_node->input(branch_index);
@@ -1650,7 +1652,6 @@ void DfGraphConvertor::GetBranchNodeInput(const CNodePtr node) {
       auto pred = node->input(i);
       (void)(branch_inputs.emplace_back(pred));
     }
-    MS_EXCEPTION_IF_NULL(node->input(0));
     input_node = node->input(0)->cast<CNodePtr>();
   }
   MS_EXCEPTION_IF_NULL(input_node);
