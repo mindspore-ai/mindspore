@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020-2023 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -163,6 +163,25 @@ def get_attr_from_object(obj, attr_name=None):
     if obj is not None and attr_name is not None and hasattr(obj, attr_name):
         return getattr(obj, attr_name)
     return None
+
+
+def check_attr_is_property(obj, attr_name):
+    """
+    Check if the attribute is decorated by @property.
+
+    Args:
+        obj(Object): Instance of a class.
+        attr_name(str): Attribute name to check.
+
+    Returns:
+        obj(bool): If the attribute is decorated by @property.
+    """
+    logger.debug(f"attr_name:{attr_name}")
+    logger.debug(f"obj.__class__.__dict__.keys():{obj.__class__.__dict__.keys()}")
+    if attr_name in obj.__class__.__dict__.keys() and  isinstance(obj.__class__.__dict__[attr_name], property):
+        logger.debug(f'The attribute {attr_name} is decorated by @property.')
+        return True
+    return False
 
 
 def get_parse_method_of_class(obj, parse_method=None):
