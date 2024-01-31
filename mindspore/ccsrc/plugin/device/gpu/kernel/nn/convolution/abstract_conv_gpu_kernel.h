@@ -33,7 +33,7 @@ namespace kernel {
 class AbstractConvolutionGpuKernel {
  public:
   AbstractConvolutionGpuKernel() {}
-  ~AbstractConvolutionGpuKernel() {}
+  virtual ~AbstractConvolutionGpuKernel() {}
   explicit AbstractConvolutionGpuKernel(enum ConvType conv_type) : conv_type_(conv_type) {}
 
   ConvType get_conv_type() const { return conv_type_; }
