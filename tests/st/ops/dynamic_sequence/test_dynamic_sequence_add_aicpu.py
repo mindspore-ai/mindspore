@@ -99,7 +99,7 @@ def test_seq_add_grad_aicpu():
     net_ms = Net()
     input_x = mutable((1, 2, 3), True)
     input_y = mutable((3, 4, 5, 6), True)
-    dout = mutable((1, 1, 1, 1, 1, 1, 1), True)
+    dout = (1, 1, 1, 1, 1, 1, 1)
     grad_func = GradOperation(get_all=True, sens_param=True)(net_ms)
     print("grad out = ", grad_func(input_x, input_y, dout))
 
@@ -121,6 +121,6 @@ def test_seq_add_grad_other_aicpu():
     net_ms = Net()
     input_x = mutable((1, 2, 3), True)
     input_y = (3, 4, 5, 6)
-    dout = mutable((1, 1, 1, 1, 1, 1, 1), True)
+    dout = (1, 1, 1, 1, 1, 1, 1)
     grad_func = GradOperation(get_all=True, sens_param=True)(net_ms)
     print("grad out1 = ", grad_func(input_x, input_y, dout))

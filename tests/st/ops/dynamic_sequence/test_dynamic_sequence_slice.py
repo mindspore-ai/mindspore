@@ -79,7 +79,7 @@ def test_seq_slice_grad():
     start = 1
     stop = 3
     step = 1
-    dout = mutable((1, 1), True)
+    dout = (1, 1)
     net_ms = Net()
     grad_func = GradOperation(get_all=True, sens_param=True)(net_ms)
     print("grad out1 = ", grad_func(seq, start, stop, step, dout))
