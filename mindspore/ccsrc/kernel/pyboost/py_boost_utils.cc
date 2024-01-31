@@ -41,9 +41,11 @@ void PyBoostUtils::CreateOutputTensor(const AbstractBasePtr &abstract, std::vect
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
                                      runtime::ProfilerEvent::kPyBoostCreateOutputTensor,
                                      runtime::ProfilerRecorder::kNoName, false);
-  auto create_tensor = [&outputs](const TypePtr &type, const ShapeVector &shape_vector) {
+  auto create_tensor = [&outputs](const TypePtr &type, const ShapeVector &shape_vector,
+                                  const AbstractBasePtr &abstract_tensor) {
     auto output_tensor = std::make_shared<tensor::Tensor>(type->type_id(), shape_vector);
     output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
+    output_tensor->set_abstract(abstract_tensor);
     (void)outputs->emplace_back(output_tensor);
     MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
   };
@@ -64,12 +66,12 @@ void PyBoostUtils::CreateOutputTensor(const AbstractBasePtr &abstract, std::vect
       MS_LOG(EXCEPTION) << "AbstractTensor shape is valid " << shape->ToString();
     }
     auto shape_vector = shape->cast<abstract::ShapePtr>()->shape();
-    create_tensor(type, shape_vector);
+    create_tensor(type, shape_vector, abstract_tensor);
   } else if (abstract->isa<abstract::AbstractScalar>()) {
     auto scalar = abstract->cast<abstract::AbstractScalarPtr>();
     const auto &type = scalar->BuildType();
     MS_LOG(DEBUG) << "Create scalar tensor type " << type->ToString();
-    create_tensor(type, {});
+    create_tensor(type, {}, nullptr);
   } else {
     MS_LOG(EXCEPTION) << "Not support abstract " << abstract->ToString();
   }
