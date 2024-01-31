@@ -900,7 +900,8 @@ bool IsPhaseLoadFromMindIR(const std::string &phase) {
   return phase.rfind(mindir_graph) != std::string::npos;
 }
 
-std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::string &phase, bool use_vm) {
+std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::string &phase, bool use_vm,
+                                    bool trace_flag = false) {
   MS_EXCEPTION_IF_NULL(resource);
   compile::SetMindRTEnable();
   return VmPipeline(resource);
@@ -970,7 +971,7 @@ void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
 }
 
 bool GraphExecutorPy::CompileInner(const FuncGraphPtr &graph, const py::tuple &args, const py::dict &kwargs,
-                                   const std::string &phase, bool use_vm) {
+                                   const std::string &phase, bool use_vm, bool trace_flag) {
   PhaseManager::GetInstance().set_phase(phase);
   phase_ = phase;
 
@@ -981,7 +982,7 @@ bool GraphExecutorPy::CompileInner(const FuncGraphPtr &graph, const py::tuple &a
   bool use_compile_cache = resource->EnableCompileCache() && resource->func_graph();
   ConfigManager::GetInstance().ResetQueue(queue_name_);
 
-  auto actions = GetPipeline(resource, phase, use_vm);
+  auto actions = GetPipeline(resource, phase, use_vm, trace_flag);
   for (auto iter = actions.begin(); iter != actions.end();) {
     if (iter->first == "parse") {
       iter = actions.erase(iter);

@@ -1673,40 +1673,42 @@ bool SetMindIRGraphAction(const ResourcePtr &resource) {
   return true;
 }
 
-static std::vector<ActionItem> CommonPipeline() {
+static std::vector<ActionItem> CommonPipeline(bool trace_flag) {
   std::vector<ActionItem> actions;
 
-  // Parse the python ast to ANF graph
-  (void)actions.emplace_back(std::make_pair(kParse, ParseAction));
+  if (!trace_flag) {
+    // Parse the python ast to ANF graph
+    (void)actions.emplace_back(std::make_pair(kParse, ParseAction));
 
-  // Resolve the python func
-  static auto boost_parse = common::GetEnv("MS_DEV_GREED_PARSE");
-  if (boost_parse != "1") {
-    (void)actions.emplace_back(std::make_pair(kSymbolResolve, SymbolResolveAction));
+    // Resolve the python func
+    static auto boost_parse = common::GetEnv("MS_DEV_GREED_PARSE");
+    if (boost_parse != "1") {
+      (void)actions.emplace_back(std::make_pair(kSymbolResolve, SymbolResolveAction));
+    }
+
+    // Notice: Temporary solution, to be implemented using Python Rewriter in the future.
+    // Set mixed Precision flag in subgraph.
+    static bool enable_set_mixed_precision_flag = (common::GetEnv("MS_DEV_AMP_ENABLE_ALL_FG") == "1");
+    if (enable_set_mixed_precision_flag) {
+      (void)actions.emplace_back(std::make_pair(kSetMixedPrecisionFlag, SetMixedPrecisionAction));
+    }
+
+    auto parallel_context = parallel::ParallelContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(parallel_context);
+    auto parallel_mode = parallel_context->parallel_mode();
+    const bool is_parallel_mode =
+      parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
+    static const auto combine_like_graphs = (common::GetEnv("COMBINE_LIKE_GRAPHS") == "1");
+    if (!is_cluster_initialized && (!is_parallel_mode || combine_like_graphs)) {
+      (void)actions.emplace_back(std::make_pair(kCombineLikeGraphs, CombineLikeGraphs));
+    }
+
+    // Make the reusable cell to be the reusable function graph
+    (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
+    (void)actions.emplace_back(std::make_pair(kMetaUnpackPrepare, MetaUnpackPrepareAction));
+    // Pre-Lift the func graphs.
+    (void)actions.emplace_back(std::make_pair(kPreCConv, PreCConvAction));
   }
-
-  // Notice: Temporary solution, to be implemented using Python Rewriter in the future.
-  // Set mixed Precision flag in subgraph.
-  static bool enable_set_mixed_precision_flag = (common::GetEnv("MS_DEV_AMP_ENABLE_ALL_FG") == "1");
-  if (enable_set_mixed_precision_flag) {
-    (void)actions.emplace_back(std::make_pair(kSetMixedPrecisionFlag, SetMixedPrecisionAction));
-  }
-
-  auto parallel_context = parallel::ParallelContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(parallel_context);
-  auto parallel_mode = parallel_context->parallel_mode();
-  const bool is_parallel_mode =
-    parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
-  static const auto combine_like_graphs = (common::GetEnv("COMBINE_LIKE_GRAPHS") == "1");
-  if (!is_cluster_initialized && (!is_parallel_mode || combine_like_graphs)) {
-    (void)actions.emplace_back(std::make_pair(kCombineLikeGraphs, CombineLikeGraphs));
-  }
-
-  // Make the reusable cell to be the reusable function graph
-  (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
-  (void)actions.emplace_back(std::make_pair(kMetaUnpackPrepare, MetaUnpackPrepareAction));
-  // Pre-Lift the func graphs.
-  (void)actions.emplace_back(std::make_pair(kPreCConv, PreCConvAction));
   // Evaluate type and shape, and specialize.
   (void)actions.emplace_back(std::make_pair(kAbstractSpecialize, AbstractSpecializeAction));
   // PackFunc Expand.
@@ -1725,7 +1727,7 @@ static std::vector<ActionItem> CommonPipeline() {
   return actions;
 }
 
-std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
+std::vector<ActionItem> VmPipeline(const ResourcePtr &resource, bool trace_flag) {
   is_cluster_initialized = distributed::cluster::ClusterContext::instance()->initialized();
   std::vector<ActionItem> actions;
   // If enable compilation cache and the cache is read successfully, only do the backend actions.
