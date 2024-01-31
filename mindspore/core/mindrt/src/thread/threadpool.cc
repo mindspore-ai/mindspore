@@ -17,6 +17,7 @@
 #include <sched.h>
 #include <unistd.h>
 #endif
+#include <sstream>
 #include "thread/threadpool.h"
 #include "thread/core_affinity.h"
 #if !defined(_WIN32) && !defined(BUILD_LITE)
@@ -64,6 +65,17 @@ void Worker::ChildAfterFork() {
   }
 }
 
+#if defined(BIND_CORE) && !defined(_WIN32)
+std::string MaskToStr(cpu_set_t *mask) {
+  std::stringstream ss;
+  int64_t cpu_num = sysconf(_SC_NPROCESSORS_ONLN);
+  for (auto i = 0; i < cpu_num; i++) {
+    ss << (CPU_ISSET(i, mask) ? "1" : "0");
+  }
+  return ss.str();
+}
+#endif
+
 void Worker::SetAffinity() {
 #ifdef _WIN32
   SetWindowsSelfAffinity(core_id_);
@@ -76,6 +88,8 @@ void Worker::SetAffinity() {
   return;
 #else
 #if !defined(__APPLE__) && !defined(_MSC_VER)
+
+  THREAD_INFO("Worker pthread_setaffinity_np, mask %s", MaskToStr(&mask_));
   int ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &mask_);
   if (ret != THREAD_OK) {
     THREAD_ERROR("bind thread %lu to cpu failed. ERROR %d", pthread_self(), errno);
