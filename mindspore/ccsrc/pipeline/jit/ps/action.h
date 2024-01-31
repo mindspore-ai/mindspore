@@ -42,7 +42,7 @@ bool StartPSSchedulerAction(const ResourcePtr &resource);
 bool DistributedSplitAction(const ResourcePtr &resource);
 #endif
 
-std::vector<ActionItem> VmPipeline(const ResourcePtr &resource);
+std::vector<ActionItem> VmPipeline(const ResourcePtr &resource, bool trace_flag = false);
 std::vector<ActionItem> MindIRPipeline();
 #if defined(__linux__) && defined(WITH_BACKEND)
 std::vector<ActionItem> PSchedulerPipeline(const ResourcePtr &resource);
