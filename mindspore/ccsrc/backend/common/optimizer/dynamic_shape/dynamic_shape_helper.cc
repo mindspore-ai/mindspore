@@ -38,6 +38,7 @@
 #include "include/common/profiler.h"
 #include "backend/common/graph_kernel/symbol_engine/symbol_engine.h"
 #include "backend/operator/ops_backend_infer_function.h"
+#include "ir/functor.h"
 
 namespace mindspore {
 namespace opt::dynamic_shape {
@@ -573,6 +574,11 @@ inline bool IsCpuKernelMod(kernel::KernelModType kernel_mod_type) {
 
 BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  if (primitive->HasAttr("infer_shape_functor")) {
+    // sub graph infer shape
+    auto functor = GetValue<InferShapeFunctorPtr>(primitive->GetAttr("infer_shape_functor"));
+    return functor->InferShape(input_args);
+  }
   const auto &op_name = primitive->name();
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelInferInner,
                                      op_name, true);
