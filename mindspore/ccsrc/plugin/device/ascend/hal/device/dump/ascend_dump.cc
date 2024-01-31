@@ -114,8 +114,16 @@ dump_data_t ParseAttrsFromDumpData(const std::string &dump_path, char *data_ptr,
   (void)std::transform(tensor.shape().dim().begin(), tensor.shape().dim().end(), std::back_inserter(shape_d),
                        SizeToLong);
   ShapeVector shape_to;
-  (void)std::transform(tensor.original_shape().dim().begin(), tensor.original_shape().dim().end(),
-                       std::back_inserter(shape_to), SizeToLong);
+  for (auto dim : tensor.original_shape().dim()) {
+    if (dim > static_cast<size_t>((std::numeric_limits<int64_t>::max)())) {
+      MS_LOG(INFO) << "The size_t value(" << dim
+                   << ") exceeds the max value of int64_t, this maybe caused by the unfixed shape operaters.";
+      shape_to.clear();
+      break;
+    } else {
+      shape_to.push_back(SizeToLong(dim));
+    }
+  }
   // get size and sub_format
   size_t data_size = static_cast<size_t>(tensor.size());
   int32_t sub_format = tensor.sub_format();
