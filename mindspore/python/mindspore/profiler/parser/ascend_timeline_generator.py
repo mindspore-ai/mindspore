@@ -531,7 +531,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             step_trace_file_name = fr'{self._msprof_timeline_dir}/step_trace_*.json'
             file_list_step_trace = glob.glob(step_trace_file_name)
             if not file_list_step_trace:
-                logger.error('Could not find step trace file in %s', self._msprof_timeline_dir)
+                logger.info('Could not find step trace file in %s', self._msprof_timeline_dir)
             else:
                 task_list.append(pool.submit(self._parse_step_trace_data, get_newest_file(file_list_step_trace)))
 

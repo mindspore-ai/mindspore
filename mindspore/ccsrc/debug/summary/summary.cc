@@ -30,8 +30,8 @@ Summary &Summary::GetInstance() {
 }
 
 void Summary::RecurseSetSummaryNodesForAllGraphs(KernelGraph *graph) {
-  MS_LOG(INFO) << "Recurse set summary nodes for all graphs in graph: " << graph->graph_id() << " start";
   MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(INFO) << "Recurse set summary nodes for all graphs in graph: " << graph->graph_id() << " start";
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   std::string backend = ms_context->backend_policy();
