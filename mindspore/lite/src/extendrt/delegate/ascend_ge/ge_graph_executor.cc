@@ -922,6 +922,10 @@ transform::DfGraphPtr GeGraphExecutor::CreateFakeGraph(std::map<std::string, std
 
 bool GeGraphExecutor::UpdateWeights(const std::vector<std::vector<std::shared_ptr<tensor::Tensor>>> &weights) {
   auto time1 = lite::GetTimeUs();
+  if (init_graph_id_list_.empty()) {
+    MS_LOG(ERROR) << "init graph id list is empty.";
+    return false;
+  }
   uint32_t init_graph_id = init_graph_id_list_[0];
   MS_LOG(INFO) << "init_graph_id: " << init_graph_id;
   if (update_weight_ptr_ == nullptr) {
