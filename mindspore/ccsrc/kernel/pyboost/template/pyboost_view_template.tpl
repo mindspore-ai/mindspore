@@ -9,7 +9,7 @@
     // Async
     auto op = get_op();
     PyBoostUtils::DispatchRun(
-      std::make_shared<pynative::PyBoostDeviceTask>(
+      std::make_shared<runtime::PyBoostDeviceTask>(
         [op, ${call_tensors}](){
           MS_LOG(DEBUG) << "View device task ${op_name} start";
           auto device_context = op->device_context();

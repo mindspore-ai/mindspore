@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "runtime/pynative/async/async_hqueue.h"
+#include "runtime/pipeline/async_hqueue.h"
 
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
 #include "include/common/utils/signal_util.h"
@@ -25,7 +25,7 @@
 #include "include/common/profiler.h"
 
 namespace mindspore {
-namespace pynative {
+namespace runtime {
 #ifndef LIKELY
 #ifdef _MSC_VER
 #define LIKELY(x) (x)
@@ -199,5 +199,5 @@ void AsyncHqueue::CheckException() {
     std::rethrow_exception(temp_ptr);
   }
 }
-}  // namespace pynative
+}  // namespace runtime
 }  // namespace mindspore

@@ -33,7 +33,7 @@ tensor::TensorPtr IdentityAscendCustomize(const std::shared_ptr<OpRunner> &op, c
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
 
   // Async
-  PyBoostUtils::DispatchRun(std::make_shared<pynative::PyBoostDeviceTask>([op, x_tensor]() {
+  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, x_tensor]() {
     MS_LOG(DEBUG) << "Run device task Identity start";
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();

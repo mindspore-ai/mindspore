@@ -32,7 +32,7 @@ tensor::TensorPtr AddAscendCustomize(const std::shared_ptr<OpRunner> &op, const 
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
 
   // Async
-  PyBoostUtils::DispatchRun(std::make_shared<pynative::PyBoostDeviceTask>([op, x_tensor, y_tensor]() {
+  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, x_tensor, y_tensor]() {
     MS_LOG(DEBUG) << "Run device task Add start";
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();

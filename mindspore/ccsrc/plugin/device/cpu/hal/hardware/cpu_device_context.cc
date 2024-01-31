@@ -78,12 +78,12 @@ const char kModelNameCPU[] = "CPU";
 const char kEventOptimizeGraph[] = "OptimizeGraph";
 const char kStageSetKernelInfo[] = "SetKernelInfo";
 
-pynative::KernelTaskPtr GetTaskByTaskType(const pynative::KernelTaskType &task_type,
-                                          const std::shared_ptr<pynative::KernelTaskContext> &task_context) {
+runtime::KernelTaskPtr GetTaskByTaskType(const runtime::KernelTaskType &task_type,
+                                         const std::shared_ptr<runtime::KernelTaskContext> &task_context) {
   switch (task_type) {
-    case pynative::KernelTaskType::kCONTIGUOUS_TASK:
+    case runtime::KernelTaskType::kCONTIGUOUS_TASK:
       return std::make_shared<CpuContiguousKernelTask>(task_context);
-    case pynative::KernelTaskType::kCOPY_TASK:
+    case runtime::KernelTaskType::kCOPY_TASK:
       return std::make_shared<CpuCopyWithSliceKernelTask>(task_context);
     default:
       MS_LOG(EXCEPTION) << "KernelTaskType is invalid, task_type:" << task_type;
@@ -514,13 +514,13 @@ bool CPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<K
   return ret;
 }
 
-bool CPUKernelExecutor::ExecuteKernelTask(const pynative::KernelTaskType &task_type,
+bool CPUKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_type,
                                           const device::DeviceAddressPtrList &input_addr_list,
                                           const TensorStorageInfoPtrList &input_storage_list,
                                           const device::DeviceAddressPtrList &output_addr_list,
                                           const size_t &stream_id) const {
-  auto task_context = std::make_shared<pynative::KernelTaskContext>(device_context_, input_addr_list,
-                                                                    input_storage_list, output_addr_list, nullptr);
+  auto task_context = std::make_shared<runtime::KernelTaskContext>(device_context_, input_addr_list, input_storage_list,
+                                                                   output_addr_list, nullptr);
   auto task = GetTaskByTaskType(task_type, task_context);
   MS_EXCEPTION_IF_NULL(task);
 

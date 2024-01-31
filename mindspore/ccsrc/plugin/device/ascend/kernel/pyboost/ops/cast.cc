@@ -37,7 +37,7 @@ tensor::TensorPtr CastAscend::Call(const TensorPtr &input_tensor, const TypePtr 
 
   // Async
   auto op = get_op();
-  PyBoostUtils::DispatchRun(std::make_shared<pynative::PyBoostDeviceTask>([op, input_tensor, type]() {
+  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, type]() {
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();
     // Malloc for input tensors

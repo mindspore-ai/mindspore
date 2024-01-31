@@ -809,7 +809,7 @@ void OpRunner::RunSingleOpGraph(const session::BackendOpRunInfoPtr &op_run_info,
   LaunchKernels(op_compiler_info->graph_, op_compiler_info->device_context_, op_run_info);
 }
 
-void OpRunner::LaunchKernelTask(const pynative::KernelTaskType &task_type, DeviceContext *device_context,
+void OpRunner::LaunchKernelTask(const runtime::KernelTaskType &task_type, DeviceContext *device_context,
                                 const device::DeviceAddressPtrList &input_addr_list,
                                 const TensorStorageInfoPtrList &input_storage_list,
                                 const device::DeviceAddressPtrList &output_addr_list, size_t stream_id) {

@@ -221,7 +221,7 @@ struct GradCommon {
 };
 };  // namespace PyNativeAlgo
 
-void DispatchOp(const std::shared_ptr<AsyncTask> &task);
+void DispatchOp(const std::shared_ptr<runtime::AsyncTask> &task);
 }  // namespace pynative
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_UTILS_H_

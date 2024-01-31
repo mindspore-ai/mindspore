@@ -609,8 +609,8 @@ std::string VariableAdjoint::ToString() const {
 }
 
 AutoGradCellImpl::AutoGradCellImpl(const std::vector<ValuePtr> &input_param_values, const AbstractBasePtrList &abs_list,
-                                   size_t op_num_in_bprop_graph, const AsyncHqueuePtr &assist_queue, bool enable_async,
-                                   bool grad_by_value)
+                                   size_t op_num_in_bprop_graph, const runtime::AsyncHqueuePtr &assist_queue,
+                                   bool enable_async, bool grad_by_value)
     : ad_param_(std::make_shared<AdParam>()) {
   ad_param()->tape_->debug_info()->set_name("grad_top");
   MS_LOG(DEBUG) << "Start AutoGradCellImpl, input size: " << input_param_values.size();

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,12 @@
 #include <utility>
 
 #include "include/backend/visible.h"
-#include "runtime/pynative/async/task.h"
+#include "runtime/pipeline/task/task.h"
 
-#include "runtime/pynative/async/ring_queue.h"
+#include "runtime/pipeline/ring_queue.h"
 
 namespace mindspore {
-namespace pynative {
+namespace runtime {
 using AsyncTaskPtr = std::shared_ptr<AsyncTask>;
 constexpr auto kQueueCapacity = 1024;
 enum kThreadWaitLevel : int {
@@ -95,8 +95,8 @@ class BACKEND_EXPORT AsyncRQueue {
 
   RingQueue<AsyncTaskPtr, kQueueCapacity> tasks_queue_;
 };
-using AsyncRQueuePtr = std::shared_ptr<AsyncRQueue>;
-}  // namespace pynative
+}  // namespace runtime
+using AsyncRQueuePtr = std::shared_ptr<runtime::AsyncRQueue>;
 }  // namespace mindspore
 
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_ASYNC_R_QUEUE_H_

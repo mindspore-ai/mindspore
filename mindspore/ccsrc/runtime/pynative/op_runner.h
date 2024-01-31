@@ -35,7 +35,7 @@ class OpRunner {
                                const std::vector<tensor::TensorPtr> &input_tensors);
 
   static std::vector<tensor::TensorPtr> GetTensorWithoutValueMask(const session::BackendOpRunInfoPtr &op_run_info);
-  static void LaunchKernelTask(const pynative::KernelTaskType &task_type, DeviceContext *device_context,
+  static void LaunchKernelTask(const runtime::KernelTaskType &task_type, DeviceContext *device_context,
                                const device::DeviceAddressPtrList &input_addr_list,
                                const TensorStorageInfoPtrList &input_storage_list,
                                const device::DeviceAddressPtrList &output_addr_list, size_t stream_id);

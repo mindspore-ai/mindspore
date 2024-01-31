@@ -32,7 +32,7 @@
 #include "runtime/hardware/deprecated_interface.h"
 #include "runtime/device/auto_mem_offload.h"
 #include "include/backend/optimizer/graph_optimizer.h"
-#include "runtime/pynative/async/task.h"
+#include "runtime/pipeline/task/task.h"
 #include "ir/device_event.h"
 #ifdef __APPLE__
 #include "mindrt/include/async/spinlock.h"
@@ -348,7 +348,7 @@ class BACKEND_EXPORT KernelExecutor {
 
   void SetDeviceContext(DeviceContext *device_context) { device_context_ = device_context; }
 
-  virtual bool ExecuteKernelTask(const pynative::KernelTaskType &task_type,
+  virtual bool ExecuteKernelTask(const runtime::KernelTaskType &task_type,
                                  const device::DeviceAddressPtrList &input_addr_list,
                                  const TensorStorageInfoPtrList &input_storage_list,
                                  const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id) const {

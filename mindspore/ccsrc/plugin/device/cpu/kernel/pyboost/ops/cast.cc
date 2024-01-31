@@ -31,7 +31,7 @@ tensor::TensorPtr CastCPU::Call(const TensorPtr &input_tensor, const TypePtr &ty
 
   // Async
   auto op = get_op();
-  PyBoostUtils::DispatchRun(std::make_shared<pynative::PyBoostDeviceTask>([this, op, input_tensor, type]() {
+  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([this, op, input_tensor, type]() {
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();
 

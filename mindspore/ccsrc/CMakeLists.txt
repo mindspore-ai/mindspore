@@ -427,6 +427,7 @@ set(BACKEND_SUB_COMP
         runtime/graph_scheduler
         runtime/hardware
         runtime/pynative
+        runtime/pipeline
         runtime/data_queue
         plugin/device/cpu/hal/device
         plugin/device/cpu/hal/hardware

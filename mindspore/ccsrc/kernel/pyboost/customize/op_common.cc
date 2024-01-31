@@ -41,7 +41,7 @@ tensor::TensorPtr CopyCustomizeCall(const std::shared_ptr<OpRunner> &op, const T
 
   // Async
   PyBoostUtils::DispatchRun(
-    std::make_shared<pynative::PyBoostDeviceTask>([op, input_tensor, input_storage_info, stream]() {
+    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, input_storage_info, stream]() {
       auto device_context = op->device_context();
       const auto &outputs = op->outputs();
 
@@ -62,10 +62,10 @@ tensor::TensorPtr CopyCustomizeCall(const std::shared_ptr<OpRunner> &op, const T
       } else {
         const auto &input_address = std::dynamic_pointer_cast<device::DeviceAddress>(input_tensor->device_address());
         const auto &output_address = std::dynamic_pointer_cast<device::DeviceAddress>(op->output(0)->device_address());
-        if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(pynative::KernelTaskType::kCONTIGUOUS_TASK,
+        if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(runtime::KernelTaskType::kCONTIGUOUS_TASK,
                                                                          {input_address}, {input_storage_info},
                                                                          {output_address}, op->stream_id())) {
-          MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << pynative::KernelTaskType::kCONTIGUOUS_TASK;
+          MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << runtime::KernelTaskType::kCONTIGUOUS_TASK;
         }
       }
 

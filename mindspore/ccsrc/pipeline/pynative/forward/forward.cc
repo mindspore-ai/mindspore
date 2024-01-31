@@ -39,6 +39,7 @@ using mindspore::profiler::ProfilerManager;
 #endif
 #include "include/common/utils/tensor_future.h"
 #include "frontend/operator/ops_front_infer_function.h"
+#include "runtime/pipeline/pipeline.h"
 
 namespace mindspore {
 namespace pynative {
@@ -264,11 +265,11 @@ void UpdateStubTensor(const FrontendOpRunInfoPtr &op_run_info) {
   }
 }
 
-KernelTaskType GetViewOpTaskType(const std::string &op_name) {
+runtime::KernelTaskType GetViewOpTaskType(const std::string &op_name) {
   if (op_name == kCopyWithSliceOpName) {
-    return KernelTaskType::kCOPY_TASK;
+    return runtime::KernelTaskType::kCOPY_TASK;
   }
-  return KernelTaskType::kNORMAL_VIEW_TASK;
+  return runtime::KernelTaskType::kNORMAL_VIEW_TASK;
 }
 
 void EmplaceSliceInputs(const FrontendOpRunInfoPtr &op_run_info, const std::vector<ValuePtr> &input_values,
@@ -349,18 +350,9 @@ size_t GetCurStreamId(const std::string &device_target) {
 #endif
 }  // namespace
 
-void ForwardExecutor::ClearForwardTask() {
-  if (frontend_queue_ != nullptr) {
-    GilReleaseWithCheck gil_release;
-    frontend_queue_->Clear();
-  }
-}
-
 void ForwardExecutor::WaitForwardTask() {
-  if (frontend_queue_ != nullptr) {
-    GilReleaseWithCheck gil_release;
-    frontend_queue_->Wait();
-  }
+  GilReleaseWithCheck gil_release;
+  runtime::Pipeline::Get().frontend_stage()->Wait();
 }
 
 bool ForwardExecutor::IsVmOp(const std::string &op_name) const {
@@ -413,13 +405,14 @@ void ForwardExecutor::Init() {
   MS_LOG(DEBUG) << "Init ForwardExecutor";
   compile::SetMindRTEnable();
   python_adapter::set_python_env_flag(true);
-  runtime::OpExecutor::GetInstance().RegisterForwardCallback([this]() { frontend_queue_->Wait(); });
+  runtime::OpExecutor::GetInstance().RegisterForwardCallback(
+    []() { runtime::Pipeline::Get().frontend_stage()->Wait(); });
 }
 
 void ForwardExecutor::RefreshForwardCallback() {
 #if defined(_WIN32) || defined(_WIN64)
   runtime::OpExecutor::GetInstance().RegisterForwardCallback([this]() {
-    frontend_queue_->Wait();
+    runtime::Pipeline::Get().frontend_stage()->Wait();
     grad()->WaitBpropTask();
   });
 #endif
@@ -443,7 +436,7 @@ bool ForwardExecutor::EnablePipeline(const std::string &op_name) const {
 void ForwardExecutor::DispatchFrontendTask(const FrontendOpRunInfoPtr &op_run_info) {
   auto forward_task = std::make_shared<FrontendTask>(
     [this](const FrontendOpRunInfoPtr &op_run_info) { RunOpFrontend(op_run_info); }, op_run_info);
-  frontend_queue_->Push(forward_task);
+  runtime::Pipeline::Get().frontend_stage()->Push(forward_task);
 }
 
 void ForwardExecutor::ForwardOpGradImpl(const FrontendOpRunInfoPtr &op_run_info) {
@@ -458,9 +451,9 @@ void ForwardExecutor::ForwardOpGradImpl(const FrontendOpRunInfoPtr &op_run_info)
   }
 }
 
-void ForwardExecutor::ForwardRunViewKernelTask(const FrontendOpRunInfoPtr &op_run_info, const KernelTaskType &task_type,
-                                               bool enable_async) {
-  if (task_type == KernelTaskType::kNORMAL_VIEW_TASK) {
+void ForwardExecutor::ForwardRunViewKernelTask(const FrontendOpRunInfoPtr &op_run_info,
+                                               const runtime::KernelTaskType &task_type, bool enable_async) {
+  if (task_type == runtime::KernelTaskType::kNORMAL_VIEW_TASK) {
     return;
   }
   MS_LOG(DEBUG) << "Start, task_type:" << task_type;
@@ -627,8 +620,8 @@ bool ForwardExecutor::ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info,
   CreateViewOpOutputs(op_run_info, view_input_tensor, storage_infos, input_origin_address_future,
                       input_origin_device_address, is_tuple_output);
 
-  KernelTaskType task_type = GetViewOpTaskType(op_run_info->base_op_run_info.op_name);
-  if (op_run_info->requires_grad || task_type != KernelTaskType::kNORMAL_VIEW_TASK) {
+  runtime::KernelTaskType task_type = GetViewOpTaskType(op_run_info->base_op_run_info.op_name);
+  if (op_run_info->requires_grad || task_type != runtime::KernelTaskType::kNORMAL_VIEW_TASK) {
     const auto &top_cell = op_run_info->requires_grad ? grad()->top_cell() : nullptr;
     for (size_t index = 0; index < op_run_info->input_size; ++index) {
       const ValuePtr &input_object = op_run_info->op_grad_info->input_value[index];
@@ -653,7 +646,7 @@ void ForwardExecutor::DispatchSilceOpFrontendTask(const std::vector<ValuePtr> &i
       (void)RunSliceOpFrontend(input_values, slice_op_infos, requires_grad, stub_output);
     },
     input_values, slice_op_infos, requires_grad, stub_output);
-  frontend_queue_->Push(forward_task);
+  runtime::Pipeline::Get().frontend_stage()->Push(forward_task);
 }
 
 ValuePtr ForwardExecutor::RunSliceOpFrontend(const std::vector<ValuePtr> &input_values,
@@ -1065,10 +1058,10 @@ void ForwardExecutor::ProcessBeforeEndGraph(const py::object &obj, bool is_cell)
 
   // Do some finishing work before end graph
   if (IsFirstCell()) {
-    if (frontend_queue_ != nullptr) {
+    {
       runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kWaitPipeline);
       GilReleaseWithCheck gil_release;
-      frontend_queue_->Wait();
+      runtime::Pipeline::Get().frontend_stage()->Wait();
     }
     // Finish lazy task
     ExecuteLazyTask();
@@ -1088,7 +1081,7 @@ void ForwardExecutor::ProcessAfterEndGraph(const py::object &obj, bool is_cell) 
     ClearNodeAbsMap();
 #else
     auto forward_task = std::make_shared<FrontendTask>([this](...) { ClearNodeAbsMap(); }, nullptr);
-    frontend_queue_->Push(forward_task);
+    runtime::Pipeline::Get().frontend_stage()->Push(forward_task);
 #endif
   }
   PrintPyObjInfo(obj, kEnd, is_cell);
@@ -1229,7 +1222,7 @@ void ForwardExecutor::CreateViewOutputTensor(
                                                 const TensorStorageInfoPtr &storage_info) -> DeviceSyncPtr {
     if (tensor != nullptr) {
       GilReleaseWithCheck gil_release;
-      frontend_queue_->Wait();
+      runtime::Pipeline::Get().frontend_stage()->Wait();
 
       auto new_addr = TensorContiguousCallback(tensor->device_address(), tensor->storage_info());
       tensor->set_device_address(new_addr);
@@ -1284,7 +1277,7 @@ void ForwardExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear forward res";
   {
     GilReleaseWithCheck gil_release;
-    frontend_queue_->Clear();
+    runtime::Pipeline::Get().frontend_stage()->Clear();
   }
   for (const auto &item : mindrt_backends_) {
     MS_EXCEPTION_IF_NULL(item.second);
@@ -1303,10 +1296,8 @@ void ForwardExecutor::ClearRes() {
 
 void ForwardExecutor::ChildAfterFork() {
   MS_LOG(DEBUG) << "ForwardExecutor reinitialize after fork.";
-  if (frontend_queue_ != nullptr) {
-    MS_LOG(DEBUG) << "Reinitialize frontend_queue_.";
-    frontend_queue_->ChildAfterFork();
-  }
+  MS_LOG(DEBUG) << "Reinitialize frontend_queue_.";
+  runtime::Pipeline::Get().frontend_stage()->ChildAfterFork();
   MS_LOG(DEBUG) << "ForwardExecutor reinitialize after fork done.";
 }
 }  // namespace pynative

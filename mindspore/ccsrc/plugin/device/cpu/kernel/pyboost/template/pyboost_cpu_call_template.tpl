@@ -16,7 +16,7 @@ if (kernel_attr_pair.first || op_name() == "Cast") {
   // Async
   auto op = get_op();
   PyBoostUtils::DispatchRun(
-  std::make_shared<pynative::PyBoostDeviceTask>([this, op, ${call_args_with_tensor}]() {
+  std::make_shared<runtime::PyBoostDeviceTask>([this, op, ${call_args_with_tensor}]() {
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();
 
