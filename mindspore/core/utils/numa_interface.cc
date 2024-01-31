@@ -23,6 +23,7 @@
 #include <cerrno>
 #include <memory>
 #include <mutex>
+#include <vector>
 #include "utils/log_adapter.h"
 
 #define RETURN_STATUS_UNEXPECTED(_e)                                \
@@ -153,6 +154,47 @@ Status NumaBind(void *handle, const int32_t &rank_id) {
   } else {
     RETURN_STATUS_UNEXPECTED("Value error, rank_id is a negative value.");
   }
+  return Status::OK();
+}
+
+#define DEFINE_NUMA_METHOD(handle, func_name, return_type, ...)     \
+  auto func_name##_func = GetNumaAdapterFunc(handle, #func_name);   \
+  if (func_name##_func == nullptr) {                                \
+    RETURN_STATUS_UNEXPECTED("Numa api: numa_max_node not found."); \
+  }                                                                 \
+  auto func_name = (return_type(*)(__VA_ARGS__))(func_name##_func)
+
+Status LoadNumaCpuInfo(void *handle, const int32_t rank_id, std::vector<int> *numa_cpus) {
+  DEFINE_NUMA_METHOD(handle, numa_available, int);
+  DEFINE_NUMA_METHOD(handle, numa_max_node, int);
+  DEFINE_NUMA_METHOD(handle, numa_num_task_cpus, int);
+  DEFINE_NUMA_METHOD(handle, numa_bitmask_alloc, struct bitmask *, int);
+  DEFINE_NUMA_METHOD(handle, numa_node_to_cpus, int, int, struct bitmask *);
+  DEFINE_NUMA_METHOD(handle, numa_bitmask_isbitset, int, const struct bitmask *, unsigned int);
+  DEFINE_NUMA_METHOD(handle, numa_bitmask_free, void, struct bitmask *);
+  // Call numa_available first to make sure numa available.
+  auto flag = numa_available();
+  if (flag == -1) {
+    // Here we do not care return value.
+    return Status::OK();
+  }
+  auto numa_node_max_id = numa_max_node();
+  uint32_t numa_bind_id = static_cast<uint32_t>(rank_id % (numa_node_max_id + 1));
+  MS_LOG(DEBUG) << "rank id : " << rank_id << ", numa bind id : " << numa_bind_id
+                << ", numa_node_max_id : " << numa_node_max_id << ".";
+  auto numa_cpu_num = numa_num_task_cpus();
+  MS_LOG(DEBUG) << "Numa cpu num : " << numa_cpu_num << ".";
+  auto numa_cpu_mask = numa_bitmask_alloc(numa_cpu_num);
+  numa_node_to_cpus(numa_bind_id, numa_cpu_mask);
+  MS_LOG(DEBUG) << "Numa numa_available call return : " << flag << ", numa_cpu_mask size : " << numa_cpu_mask->size
+                << ".";
+  for (size_t i = 0; i < numa_cpu_mask->size; i++) {
+    if (numa_bitmask_isbitset(numa_cpu_mask, i)) {
+      (void)numa_cpus->emplace_back(i);
+      MS_LOG(DEBUG) << "Numa cpus put : " << i << ".";
+    }
+  }
+  numa_bitmask_free(numa_cpu_mask);
   return Status::OK();
 }
 }  // namespace mindspore

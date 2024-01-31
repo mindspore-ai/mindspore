@@ -259,6 +259,7 @@ class BACKEND_EXPORT GraphScheduler {
   bool execution_order_running_{false};
   // numa library handle
   std::shared_ptr<void> numa_handle_{};
+  std::vector<int> numa_cpus_;
 
   bool init_{false};
 };
