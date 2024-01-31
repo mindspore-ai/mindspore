@@ -806,11 +806,9 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
       return false;
     }
 #ifdef ENABLE_DUMP_IR
-    kernel::KernelLaunchInfo mem_info = {kernel_inputs, kernel_workspaces, kernel_outputs};
     std::string op_name = kernel->fullname_with_scope();
-    kernel::KernelLaunchAddr mem_addr_info;
-    kernel::ConvertLaunchInfoToAddr(mem_info, &mem_addr_info);
-    (void)mindspore::RDR::UpdateMemAddress(SubModuleId::SM_KERNEL, name, op_name, mem_addr_info);
+    (void)mindspore::RDR::UpdateMemAddress(SubModuleId::SM_KERNEL, name, op_name, kernel_inputs, kernel_outputs,
+                                           kernel_workspaces);
 #endif
     if (!mock) {
       LaunchKernelWithoutMock(graph, kernel, kernel_inputs, kernel_workspaces, kernel_outputs, profiling);

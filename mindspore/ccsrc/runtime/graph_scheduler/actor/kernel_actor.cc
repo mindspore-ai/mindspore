@@ -101,7 +101,6 @@ void KernelActor::InitInputInfo() {
   input_kernel_tensors_for_infer_.resize(real_input_num_);
   for (auto &input_address : input_device_tensors_) {
     (void)memory_free_list_.emplace_back(input_address);
-    (void)launch_info_.inputs_.emplace_back(std::make_shared<Address>());
   }
 }
 
@@ -125,7 +124,6 @@ void KernelActor::InitOutputInfo() {
                   << " addr:" << output_address << " type:" << output_address->type_id()
                   << ", kernel tensor addr:" << output_address->kernel_tensor().get()
                   << ", kernel tensor: " << output_address->kernel_tensor()->ToString();
-    (void)launch_info_.outputs_.emplace_back(std::make_shared<Address>());
 
     // The output taken over by soma does not need to allocate memory.
     if (kernel_info_->IsTensorEnableSomas(somas_outputs, i)) {
@@ -173,7 +171,6 @@ void KernelActor::InitWorkspaceInfo() {
     MS_EXCEPTION_IF_NULL(workspace_address);
     (void)workspace_device_tensors_.emplace_back(workspace_address.get());
     (void)workspace_kernel_tensors_.emplace_back(workspace_address->kernel_tensor().get());
-    (void)launch_info_.workspaces_.emplace_back(std::make_shared<Address>());
 
     // The workspace taken over by soma does not need to allocate memory.
     if (kernel_info_->IsTensorEnableSomas(somas_workspace, i)) {
@@ -232,23 +229,22 @@ void KernelActor::Run(OpContext<DeviceTensor> *const context) {
 
 void KernelActor::FetchWorkspaceDeviceTensor() {
   auto workspace_sizes = kernel_mod_->GetWorkspaceSizeList();
-  // Resize of workspace_device_tensors_, memory_alloc_list_, memory_free_list_ and launch_info_.workspaces_,
-  // because of the dynamic size of workspace.
-  if (launch_info_.workspaces_.size() > workspace_sizes.size()) {
-    size_t size = launch_info_.workspaces_.size() - workspace_sizes.size();
+  // Resize of workspace_device_tensors_, memory_alloc_list_ and memory_free_list_, because of
+  // the dynamic size of workspace.
+  if (workspace_device_tensors_.size() > workspace_sizes.size()) {
+    size_t size = workspace_device_tensors_.size() - workspace_sizes.size();
     (void)workspace_device_tensors_.erase(workspace_device_tensors_.end() - size, workspace_device_tensors_.end());
-    (void)launch_info_.workspaces_.erase(launch_info_.workspaces_.end() - size, launch_info_.workspaces_.end());
 
     MS_EXCEPTION_IF_CHECK_FAIL((memory_alloc_list_.size() >= size), "The memory alloc list size is wrong.");
     MS_EXCEPTION_IF_CHECK_FAIL((memory_free_list_.size() >= size), "The memory free list size is wrong.");
     (void)memory_alloc_list_.erase(memory_alloc_list_.end() - size, memory_alloc_list_.end());
     (void)memory_free_list_.erase(memory_free_list_.end() - size, memory_free_list_.end());
-  } else if (launch_info_.workspaces_.size() < workspace_sizes.size()) {
+  } else if (workspace_device_tensors_.size() < workspace_sizes.size()) {
     if (device_contexts_.empty() || device_contexts_[0] == nullptr) {
       MS_LOG(ERROR) << "Invalid device context for kernel actor:" + GetAID().Name();
       return;
     }
-    for (size_t i = launch_info_.workspaces_.size(); i < workspace_sizes.size(); ++i) {
+    for (size_t i = workspace_device_tensors_.size(); i < workspace_sizes.size(); ++i) {
       auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
         nullptr, workspace_sizes[i], Format::DEFAULT_FORMAT, kTypeUnknown, ShapeVector(),
         device_contexts_[0]->device_context_key().device_name_, device_contexts_[0]->device_context_key().device_id_);
@@ -259,7 +255,6 @@ void KernelActor::FetchWorkspaceDeviceTensor() {
                     << " addr:" << device_address;
       AnfAlgo::SetWorkspaceAddr(device_address, i, kernel_.get());  // set to kernel_info
       (void)workspace_device_tensors_.emplace_back(device_address.get());
-      (void)launch_info_.workspaces_.emplace_back(std::make_shared<Address>());
       (void)memory_alloc_list_.emplace_back(device_address.get());
       (void)memory_free_list_.emplace_back(device_address.get());
     }
@@ -382,7 +377,8 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
 
   // Debug actor is blocked, must wait debug actor callback message to process continue.
   if (debug_aid_ != nullptr) {
-    ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, kernel_, &launch_info_, device_contexts_[0], context,
+    KernelLaunchInfo launch_info = {input_kernel_tensors_, output_kernel_tensors_, workspace_kernel_tensors_};
+    ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, kernel_, &launch_info, device_contexts_[0], context,
                               &GetAID());
   }
 
@@ -542,18 +538,21 @@ void KernelActor::FetchOutputDeviceTensor(OpContext<DeviceTensor> *const context
 
 void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
-    launch_info_.inputs_[i]->addr = input_device_tensors_[i]->GetValidPtr(kernel_info_->stream_id());
-    launch_info_.inputs_[i]->size = input_device_tensors_[i]->GetSize();
+    if (!input_device_tensors_[i]->GetValidPtr(kernel_info_->stream_id())) {
+      MS_LOG(INFO) << "Input device tensor " << input_device_tensors_[i] << " has no device ptr.";
+    }
   }
 
   for (size_t i = 0; i < output_device_tensors_.size(); ++i) {
-    launch_info_.outputs_[i]->addr = output_device_tensors_[i]->GetValidPtr(kernel_info_->stream_id());
-    launch_info_.outputs_[i]->size = output_device_tensors_[i]->GetSize();
+    if (!output_device_tensors_[i]->GetValidPtr(kernel_info_->stream_id())) {
+      MS_LOG(INFO) << "Output device tensor " << output_device_tensors_[i] << " has no device ptr.";
+    }
   }
 
   for (size_t i = 0; i < workspace_device_tensors_.size(); ++i) {
-    launch_info_.workspaces_[i]->addr = workspace_device_tensors_[i]->GetValidPtr(kernel_info_->stream_id());
-    launch_info_.workspaces_[i]->size = workspace_device_tensors_[i]->GetSize();
+    if (!workspace_device_tensors_[i]->GetValidPtr(kernel_info_->stream_id())) {
+      MS_LOG(INFO) << "Workspace device tensor " << workspace_device_tensors_[i] << " has no device ptr.";
+    }
   }
 }
 
@@ -622,9 +621,9 @@ void KernelActor::ResizeKernelMod() {
 bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
   // Check the skipped launch condition.
   if (is_launch_skipped_) {
-    MS_EXCEPTION_IF_CHECK_FAIL((launch_info_.inputs_.size() >= 1), "The inputs size is wrong.");
-    MS_EXCEPTION_IF_CHECK_FAIL((launch_info_.outputs_.size() == 1), "The outputs size is wrong.");
-    if (launch_info_.inputs_[0]->addr == launch_info_.outputs_[0]->addr) {
+    MS_EXCEPTION_IF_CHECK_FAIL((input_device_tensors_.size() >= 1), "The inputs size is wrong.");
+    MS_EXCEPTION_IF_CHECK_FAIL((output_device_tensors_.size() == 1), "The outputs size is wrong.");
+    if (input_device_tensors_[0]->GetPtr() == output_device_tensors_[0]->GetPtr()) {
       return true;
     } else {
       MS_LOG(ERROR) << "Input address and output address are not equal of skipped launch actor: " << GetAID().Name();
@@ -781,7 +780,8 @@ void KernelActor::RefreshDeviceTensorCopyStore(OpContext<DeviceTensor> *const co
 void KernelActor::SendRecorderInfo(OpContext<DeviceTensor> *const context) const {
   if (recorder_aid_ != nullptr) {
     MS_EXCEPTION_IF_NULL(kernel_);
-    ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, kernel_->fullname_with_scope(), &launch_info_,
+    ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, kernel_->fullname_with_scope(),
+                          &input_kernel_tensors_, &output_kernel_tensors_, &workspace_kernel_tensors_,
                           device_contexts_[0], context);
   }
 }

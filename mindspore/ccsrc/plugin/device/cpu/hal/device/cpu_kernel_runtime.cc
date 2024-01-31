@@ -487,11 +487,9 @@ bool CPUKernelRuntime::Run(const session::KernelGraph &kernel_graph, bool) {
     profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), pid);
 #endif
 #ifdef ENABLE_DUMP_IR
-    kernel::KernelLaunchInfo mem_info = {kernel_inputs, kernel_workspaces, kernel_outputs};
     std::string op_name = kernel->fullname_with_scope();
-    kernel::KernelLaunchAddr mem_addr_info;
-    ConvertLaunchInfoToAddr(mem_info, &mem_addr_info);
-    (void)mindspore::RDR::UpdateMemAddress(SubModuleId::SM_KERNEL, name, op_name, mem_addr_info);
+    (void)mindspore::RDR::UpdateMemAddress(SubModuleId::SM_KERNEL, name, op_name, kernel_inputs, kernel_outputs,
+                                           kernel_workspaces);
 #endif
     try {
       ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, nullptr);
