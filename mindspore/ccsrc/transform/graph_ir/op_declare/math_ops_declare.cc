@@ -347,11 +347,10 @@ CUST_OUTPUT_MAP(Lgamma) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Lgamma, prim::kPrimLgamma->name(), CUST_ADPT_DESC(Lgamma));
 
 // Real
-INPUT_MAP(Real) = {{kIndex1, INPUT_DESC(input)}};
-ATTR_MAP(Real) = EMPTY_ATTR_MAP;
-INPUT_ATTR_MAP(Real) = {{kIndex2, ATTR_DESC(Tout, AnyTraits<GEType>())}};
-OUTPUT_MAP(Real) = {{kIndex0, OUTPUT_DESC(output)}};
-REG_ADPT_DESC(Real, prim::kPrimReal->name(), ADPT_DESC(Real))
+CUST_INPUT_MAP(Real) = {{1, INPUT_DESC(input)}};
+CUST_ATTR_MAP(Real) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(Real) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(Real, prim::kPrimReal->name(), CUST_ADPT_DESC(Real));
 
 // Diagonal
 CUST_INPUT_MAP(Diagonal) = {{1, INPUT_DESC(x)}};
@@ -399,4 +398,11 @@ CUST_INPUT_ATTR_MAP(DCT) = {{2, ATTR_DESC(type, AnyTraits<int64_t>())}, {3, ATTR
                             {6, ATTR_DESC(forward, AnyTraits<bool>())}, {7, ATTR_DESC(grad, AnyTraits<bool>())}};
 CUST_OUTPUT_MAP(DCT) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(DCT, prim::kPrimDCT->name(), CUST_ADPT_DESC(DCT));
+
+// Polar
+CUST_INPUT_MAP(Polar) = {{1, INPUT_DESC(abs)}, {2, INPUT_DESC(angle)}};
+CUST_ATTR_MAP(Polar) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(Polar) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Polar, prim::kPrimPolar->name(), CUST_ADPT_DESC(Polar));
+
 }  // namespace mindspore::transform
