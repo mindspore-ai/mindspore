@@ -39,8 +39,8 @@ from mindspore.common.api import _pynative_executor
 from mindspore.common._register_for_adapter import ms_adapter_registry
 from mindspore import ops
 from mindspore.ops._tracefunc import PackFunc
-from ..auto_generate import TensorCopySlices, SiLU, Cummin, ExtractImagePatches, DecoderKVCache, PromptKVCache, ApplyCamePart1, ApplyCamePart2, ApplyCamePart3, ApplyCamePart4
-
+from ..auto_generate import TensorCopySlices, SiLU, Cummin, ExtractImagePatches, DecoderKVCache, PromptKVCache, \
+    ApplyCamePart1, ApplyCamePart2, ApplyCamePart3, ApplyCamePart4
 
 # Bit operation
 bit_and = bit_and()
@@ -426,7 +426,7 @@ class Receive(PrimitiveWithInfer):
         self.dtype = dtype
         self.group = group
         self.add_prim_attr("no_eliminate", True)
-        valid_type = [mstype.float16, mstype.float32, mstype.float64,
+        valid_type = [mstype.float16, mstype.float32, mstype.float64, mstype.bfloat16,
                       mstype.int8, mstype.int16, mstype.int32, mstype.int64,
                       mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64]
         args = {"dtype": dtype}
@@ -1804,7 +1804,6 @@ class Format(PrimitiveWithInfer):
     def __init__(self):
         self.init_prim_io_names(inputs=['string', 'args'], outputs=['string'])
 
-
     def __infer__(self, str_, *var):
         def check_variable(str_, var):
             if _check_contains_variable(str_['dtype'], str_['value']):
@@ -1815,10 +1814,8 @@ class Format(PrimitiveWithInfer):
                     return True
             return False
 
-
         if check_variable(str_, var):
             return {'dtype': mstype.string, 'shape': [], 'value': None}
-
 
         str_value = str_['value']
         kwargs = dict()
@@ -2563,6 +2560,7 @@ class CopyWithSlice(Primitive):
     r"""
         Copy data to discontinuous tensor
     """
+
     @prim_attr_register
     def __init__(self):
         self.add_prim_attr('side_effect_mem', True)

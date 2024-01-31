@@ -60,7 +60,7 @@ std::string Broadcast::get_group() const {
 void CheckParallelValidTypes(const AbstractBasePtr x, const std::string &op_name) {
   // The data type check is only migrated from the previous corresponding python code,
   // and need further confirmation is required
-  const std::set<TypePtr> default_target_dtypes = {kInt8, kInt32, kFloat16, kFloat32};
+  const std::set<TypePtr> default_target_dtypes = {kInt8, kInt32, kFloat16, kFloat32, kBFloat16};
   const std::set<TypePtr> target_dtypes = common_valid_types_with_bool;
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
