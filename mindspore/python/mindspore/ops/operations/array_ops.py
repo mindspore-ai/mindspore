@@ -42,7 +42,7 @@ from ..auto_generate import (ExpandDims, Reshape, TensorShape, Transpose, Gather
                              ReverseV2, Diag, Eye, ScatterNd, ResizeNearestNeighborV2, GatherNd, GatherD,
                              Range, MaskedFill, RightShift, NonZero, ResizeNearestNeighbor, Identity, Split,
                              CumSum, CumProd, Cummax, Cummin, Argmin, Concat, UnsortedSegmentSum)
-from .manually_defined import Rank, Shape, Tile
+from .manually_defined import Rank, Shape, Tile, Cast
 
 
 class _ScatterOp(PrimitiveWithInfer):
@@ -260,87 +260,6 @@ class CheckNumerics(Primitive):
     def __init__(self):
         """init CheckNumerics"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
-
-
-class Cast(PrimitiveWithCheck):
-    """
-    Returns a tensor with the new specified data type.
-
-    Note:
-        When converting complex numbers to boolean type, the imaginary part of the complex number is not
-        taken into account. As long as the real part is non-zero, it returns True; otherwise, it returns False.
-
-    Inputs:
-        - **input_x** (Union[Tensor, Number]) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-          The tensor to be cast.
-        - **type** (dtype.Number) - The valid data type of the output tensor. Only constant value is allowed.
-
-    Outputs:
-        Tensor, the shape of tensor is the same as `input_x`, :math:`(x_1, x_2, ..., x_R)`.
-
-    Raises:
-        TypeError: If `input_x` is neither Tensor nor Number.
-        TypeError: If `type` is not a Number.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
-        >>> input_x = Tensor(input_np)
-        >>> type_dst = mindspore.int32
-        >>> cast = ops.Cast()
-        >>> output = cast(input_x, type_dst)
-        >>> print(output.dtype)
-        Int32
-        >>> print(output.shape)
-        (2, 3, 4, 5)
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Cast"""
-        self.init_prim_io_names(inputs=['x', 'dst_type'], outputs=['output'])
-
-    def check_elim(self, x, dtype):
-        if isinstance(x, (Tensor, numbers.Number, Parameter)):
-            if isinstance(x, Parameter):
-                data = x.data
-                if data.dtype == dtype:
-                    return (True, x)
-            if isinstance(x, Tensor) and x.dtype == dtype and not PackFunc.is_tracing():
-                x = Tensor(x)
-                x.set_cast_dtype()
-                return (True, x)
-            if isinstance(x, numbers.Number):
-                return (True, Tensor(x, dtype=dtype))
-        return (False, None)
-
-    def infer_value(self, x, dst_type):
-        if x is None:
-            return None
-        src_type = mstype.get_py_obj_dtype(x)
-        validator.check_subclass("input_x", src_type,
-                                 [mstype.tensor_type, mstype.number], self.name)
-        validator.check_subclass("type", dst_type, mstype.number, self.name)
-
-        if isinstance(src_type, type(mstype.tensor_type)):
-            src_type = src_type.element_type()
-        if isinstance(dst_type, type(mstype.tensor_type)):
-            dst_type = dst_type.element_type()
-
-        value = None
-        np_dst_type = mstype.dtype_to_nptype(dst_type)
-        if isinstance(x, (int, float)):
-            value = Tensor(np.array(x).astype(np_dst_type), dtype=dst_type)
-        elif x.dtype == mstype.bfloat16:
-            value = Tensor_(x.float().asnumpy().astype(np_dst_type), dtype=dst_type)
-        else:
-            value = Tensor_(x.asnumpy().astype(np_dst_type), dtype=dst_type)
-        return value
 
 
 class Im2Col(Primitive):

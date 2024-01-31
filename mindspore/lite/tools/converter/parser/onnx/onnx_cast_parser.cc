@@ -17,7 +17,7 @@
 #include "tools/converter/parser/onnx/onnx_cast_parser.h"
 #include "tools/converter/parser/onnx/onnx_model_parser.h"
 #include <memory>
-#include "ops/cast.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

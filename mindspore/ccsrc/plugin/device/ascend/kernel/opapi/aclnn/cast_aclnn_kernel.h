@@ -13,27 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CAST_ACLNN_KERNEL_MOD_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CAST_ACLNN_KERNEL_MOD_H_
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_OPS_CAST_ASCEND_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_OPS_CAST_ASCEND_H_
-
-#include "kernel/pyboost/ops/cast.h"
-#include "ir/tensor.h"
-#include "ir/scalar.h"
+#include <vector>
+#include <utility>
+#include "plugin/device/ascend/kernel/opapi/aclnn_kernel_mod.h"
 
 namespace mindspore {
 namespace kernel {
-namespace pyboost {
-class CastAscend : public pyboost::Cast {
+
+class CastAscend : public AclnnKernelMod {
  public:
-  CastAscend() = default;
+  CastAscend() : AclnnKernelMod(std::move("aclnnCast")) {}
   ~CastAscend() = default;
-
-  tensor::TensorPtr Call(const TensorPtr &input_tensor, const TypePtr &type) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 };
-
-MS_REG_PYBOOST_OP(Ascend, Cast);
-}  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_OPS_CAST_ASCEND_H_
+
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CAST_ACLNN_KERNEL_MOD_H_

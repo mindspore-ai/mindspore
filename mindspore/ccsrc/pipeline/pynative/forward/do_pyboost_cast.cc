@@ -16,7 +16,7 @@
 
 #include "pipeline/pynative/forward/do_pyboost_cast.h"
 #include "pipeline/pynative/pynative_utils.h"
-#include "kernel/pyboost/ops/cast.h"
+#include "kernel/pyboost/auto_generate/cast.h"
 #include "include/common/utils/stub_tensor.h"
 
 namespace mindspore {
@@ -29,12 +29,12 @@ tensor::TensorPtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPtr &o
     MS_LOG(DEBUG) << "Cast to dst tensor: " << dst_tensor->ToString() << " without dispatching cast op";
     return dst_tensor;
   }
-  auto new_type = GetDstTypeValue(type_id);
+  auto type_id64 = std::make_shared<Int64Imm>(static_cast<int64_t>(type_id));
   const auto &cast_run_info = std::make_shared<FrontendOpRunInfo>();
   cast_run_info->requires_grad = op_run_info->requires_grad;
   if (cast_run_info->requires_grad) {
     (void)cast_run_info->op_grad_info->input_value.emplace_back(t);
-    (void)cast_run_info->op_grad_info->input_value.emplace_back(new_type);
+    (void)cast_run_info->op_grad_info->input_value.emplace_back(type_id64);
   }
   auto cast_prim = GetPrimByTypeId(type_id);
   // Use pyboost op call
@@ -42,8 +42,7 @@ tensor::TensorPtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPtr &o
     PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->GetCurrentDeviceTarget(cast_prim);
   auto cast_op = CREATE_PYBOOST_OP(Cast, cast_run_info->base_op_run_info.device_target);
   cast_op->set_primitive(cast_prim);
-
-  (void)cast_op->Call(t, new_type->cast<TypePtr>());
+  (void)cast_op->Call(t, type_id64);
   PyNativeAlgo::PyBoost::UpdateOpRunInfo(cast_op, cast_run_info->op_grad_info->input_value, cast_run_info);
   if (op_run_info->requires_grad) {
     constexpr auto input_size = 2;

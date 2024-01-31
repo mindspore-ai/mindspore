@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_CAST_H_
-#define MINDSPORE_CORE_OPS_CAST_H_
-#include <memory>
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_CAST_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_CAST_H_
+
 #include <vector>
-#include "ops/base_operator.h"
+#include <set>
+#include "ops/ops_func_impl/op_func_impl.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameCast = "Cast";
-/// \brief Returns a tensor with the new specified data type.
-/// Refer to Python API @ref mindspore.ops.Cast for more details.
-class MIND_API Cast : public BaseOperator {
+class MIND_API CastFuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(Cast);
-  /// \brief Constructor.
-  Cast() : BaseOperator(kNameCast) { InitIOName({"x", "dst_type"}, {"output"}); }
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_OPS_CAST_H_
+
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_CAST_H_

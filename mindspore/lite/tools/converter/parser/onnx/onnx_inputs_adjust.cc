@@ -27,7 +27,6 @@
 #include "ops/resize.h"
 #include "ops/random_normal.h"
 #include "ops/roi_align.h"
-#include "ops/cast.h"
 #include "ops/multinomial.h"
 #include "ops/affine_grid.h"
 #include "include/errorcode.h"

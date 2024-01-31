@@ -16,6 +16,7 @@
 from __future__ import absolute_import
 from __future__ import division
 
+import numbers
 from math import log
 import numpy as np
 from mindspore.ops import signature as sig
@@ -23,12 +24,18 @@ from mindspore.ops.primitive import Primitive, prim_attr_register, prim_arg_regi
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.auto_generate import gen_arg_handler as handler
 from mindspore.common import Tensor, CSRTensor, COOTensor
+from mindspore.common import dtype as mstype
+from mindspore.common._stub_tensor import _convert_stub
+from mindspore._c_expression import typing
+from mindspore._c_expression import pyboost_cast
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._tracefunc import PackFunc
 from mindspore.common._utils import is_shape_unknown
 from mindspore import _checkparam as validator
 from mindspore.ops.operations.manually_defined._inner import ScalarCast
+from mindspore.ops_generate.gen_ops_inner_prim import DtypeToEnum
 from mindspore.common.initializer import Zero
+from mindspore.common.parameter import Parameter
 
 
 class ScalarDiv(Primitive):
@@ -1006,6 +1013,70 @@ def scalar_cast(input_x, input_y):
     scalar_cast_op = _get_cache_prim(ScalarCast)()
     return scalar_cast_op(input_x, input_y)
 
+
+class Cast(Primitive):
+    """
+    Returns a tensor with the new specified data type.
+
+    Note:
+        When converting complex numbers to boolean type, the imaginary part of the complex number is not
+        taken into account. As long as the real part is non-zero, it returns True; otherwise, it returns False.
+
+    Inputs:
+        - **input_x** (Union[Tensor, Number]) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+          The tensor to be cast.
+        - **type** (dtype.Number) - The valid data type of the output tensor. Only constant value is allowed.
+
+    Outputs:
+        Tensor, the shape of tensor is the same as `input_x`, :math:`(x_1, x_2, ..., x_R)`.
+
+    Raises:
+        TypeError: If `input_x` is neither Tensor nor Number.
+        TypeError: If `type` is not a Number.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
+        >>> input_x = Tensor(input_np)
+        >>> type_dst = mindspore.int32
+        >>> cast = ops.Cast()
+        >>> output = cast(input_x, type_dst)
+        >>> print(output.dtype)
+        Int32
+        >>> print(output.shape)
+        (2, 3, 4, 5)
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Cast"""
+        self.init_prim_io_names(inputs=['x', 'dst_type'], outputs=['output'])
+
+    def check_elim(self, x, dtype):
+        if isinstance(x, (Tensor, numbers.Number, Parameter)):
+            if isinstance(x, Parameter):
+                data = x.data
+                if data.dtype == dtype:
+                    return (True, x)
+            if isinstance(x, Tensor) and x.dtype == dtype and not PackFunc.is_tracing():
+                x = Tensor(x)
+                x.set_cast_dtype()
+                return (True, x)
+            if isinstance(x, numbers.Number):
+                return (True, Tensor(x, dtype=dtype))
+        return (False, None)
+
+    def __call__(self, input_x, dtype):
+        should_elim, output = self.check_elim(input_x, dtype)
+        if should_elim:
+            return output
+        return _convert_stub(pyboost_cast(self, [input_x, DtypeToEnum()('Cast', 'dtype', dtype)]))
+
 # Following is Python Infer Value.
 # A valid infer value function should be:
 #
@@ -1071,6 +1142,31 @@ def _infer_value_for_Reduce(input_x, axis, keep_dims, prim_name):
             value = np_reduce_func(value, axis, keepdims=keep_dims)
             value = np.array(value)
             value = Tensor(value)
+    return value
+
+
+def infer_value_for_Cast(x, dst_type_enum):
+    """Infer value for Cast op."""
+    if x is None:
+        return None
+    dst_type = typing.type_id_to_type(dst_type_enum)
+    src_type = mstype.get_py_obj_dtype(x)
+    validator.check_subclass("input_x", src_type, [mstype.tensor_type, mstype.number], "Cast")
+    validator.check_subclass("type", dst_type, mstype.number, "Cast")
+
+    if isinstance(src_type, type(mstype.tensor_type)):
+        src_type = src_type.element_type()
+    if isinstance(dst_type, type(mstype.tensor_type)):
+        dst_type = dst_type.element_type()
+
+    value = None
+    np_dst_type = mstype.dtype_to_nptype(dst_type)
+    if isinstance(x, (int, float)):
+        value = Tensor(np.array(x).astype(np_dst_type), dtype=dst_type)
+    elif x.dtype == mstype.bfloat16:
+        value = Tensor_(x.float().asnumpy().astype(np_dst_type), dtype=dst_type)
+    else:
+        value = Tensor_(x.asnumpy().astype(np_dst_type), dtype=dst_type)
     return value
 
 

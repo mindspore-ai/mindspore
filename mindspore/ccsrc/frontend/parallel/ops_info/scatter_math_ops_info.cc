@@ -157,7 +157,9 @@ Status ScatterMathOpsInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   auto minimum = gen_g.PushBack({gen_g.NewOpInst(MINIMUM), relu, CreateInt32Tensor(slice_size_ - 1)});
   auto equal = gen_g.PushBack({gen_g.NewOpInst(EQUAL), sub, minimum});
   auto dtype = gen_g.PushBack({gen_g.NewOpInst(DTYPE), gen_g.virtual_input_node()});
-  auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype});
+  auto dtype_id =
+    gen_g.PushBack({gen_g.NewOpInst(DTYPETOENUM), CreateStringImm("DtypeToEnum"), CreateStringImm("dtype"), dtype});
+  auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype_id});
   std::vector<int64_t> mask_shape = inputs_shape_[1];
   (void)mask_shape.insert(mask_shape.end(), inputs_shape_[2].size() - inputs_shape_[1].size(), 1);
   auto reshape = gen_g.PushBack({gen_g.NewOpInst(RESHAPE), cast, NewValueNode(MakeValue(mask_shape))});
@@ -199,7 +201,9 @@ Status ScatterAddInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   auto minimum = gen_g.PushBack({gen_g.NewOpInst(MINIMUM), relu, CreateInt32Tensor(slice_size_ - 1)});
   auto equal = gen_g.PushBack({gen_g.NewOpInst(EQUAL), sub, minimum});
   auto dtype = gen_g.PushBack({gen_g.NewOpInst(DTYPE), gen_g.virtual_input_node()});
-  auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype});
+  auto dtype_id =
+    gen_g.PushBack({gen_g.NewOpInst(DTYPETOENUM), CreateStringImm("DtypeToEnum"), CreateStringImm("dtype"), dtype});
+  auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype_id});
   std::vector<int64_t> mask_shape = inputs_shape_[1];
   (void)mask_shape.insert(mask_shape.end(), inputs_shape_[2].size() - inputs_shape_[1].size(), 1);
   auto reshape = gen_g.PushBack({gen_g.NewOpInst(RESHAPE), cast, NewValueNode(MakeValue(mask_shape))});

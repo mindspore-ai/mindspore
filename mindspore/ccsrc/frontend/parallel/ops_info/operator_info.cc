@@ -566,7 +566,8 @@ Operator CreateReduceScatterOp(const std::string &reduce_op, const std::string &
 }
 
 Operator CreateCastOp(TypePtr type) {
-  Param param_type = std::make_pair(std::make_pair(DTYPE, type), 2);
+  auto type_id = MakeValue(static_cast<int64_t>(type->type_id()));
+  Param param_type = std::make_pair(std::make_pair(DTYPE, type_id), 2);
   OperatorAttrs attrs;
   OperatorParams params = {param_type};
   OperatorArgs args = std::make_pair(attrs, params);

@@ -16,7 +16,7 @@
 #include "tools/converter/parser/tflite/tflite_quantize_parser.h"
 #include <vector>
 #include <memory>
-#include "ops/cast.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/quant_dtype_cast.h"
 #include "nnacl/op_base.h"
 

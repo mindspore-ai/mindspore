@@ -134,11 +134,12 @@ ValuePtr CastOperation::DoNormalCast(const FrontendOpRunInfoPtr &cast_run_info, 
   MS_EXCEPTION_IF_NULL(cast_run_info);
   constexpr auto input_size = 2;
   cast_run_info->op_grad_info->op_prim = GetPrimByTypeId(type_id);
+  auto type_id64 = std::make_shared<Int64Imm>(static_cast<int64_t>(type_id));
   PyNativeAlgo::Common::GetConstInputToAttr(
     cast_run_info->op_grad_info->op_prim, cast_run_info->base_op_run_info.op_name,
     cast_run_info->base_op_run_info.device_target, false, &cast_run_info->input_to_attr);
   (void)cast_run_info->op_grad_info->input_value.emplace_back(v);
-  (void)cast_run_info->op_grad_info->input_value.emplace_back(GetDstTypeValue(type_id));
+  (void)cast_run_info->op_grad_info->input_value.emplace_back(type_id64);
   cast_run_info->input_size = input_size;
   PyNativeAlgo::PyParser::PrepareOpGradInfo(cast_run_info);
   PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->RunOpFrontend(cast_run_info);
@@ -166,6 +167,7 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   constexpr auto input_size = 2;
   const auto &cast_run_info = std::make_shared<FrontendOpRunInfo>();
   auto cast_prim = GetPrimByTypeId(type_id);
+  auto type_id64 = std::make_shared<Int64Imm>(static_cast<int64_t>(type_id));
   cast_run_info->requires_grad = op_run_info->requires_grad;
   cast_run_info->base_op_run_info.op_name = prim::kPrimCast->name();
   cast_run_info->base_op_run_info.is_mixed_precision_cast = true;
@@ -181,7 +183,7 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
                                             cast_run_info->base_op_run_info.device_target, is_dynamic_shape,
                                             &cast_run_info->input_to_attr);
   (void)cast_run_info->op_grad_info->input_value.emplace_back(v);
-  (void)cast_run_info->op_grad_info->input_value.emplace_back(GetDstTypeValue(type_id));
+  (void)cast_run_info->op_grad_info->input_value.emplace_back(type_id64);
   cast_run_info->input_size = input_size;
   cast_run_info->op_grad_info->op_prim = cast_prim;
   PyNativeAlgo::PyParser::PrepareOpGradInfo(cast_run_info);

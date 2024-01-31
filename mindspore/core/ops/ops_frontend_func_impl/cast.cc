@@ -14,28 +14,19 @@
  * limitations under the License.
  */
 
-#include "kernel/pyboost/op_register.h"
-${op_includes}
+#include "ops/ops_frontend_func_impl.h"
 
-namespace mindspore {
-namespace kernel {
-namespace pyboost {
-template <typename T>
-OpFactory<T> &OpFactory<T>::Get() {
-  static OpFactory<T> instance;
-  return instance;
-}
+namespace mindspore::ops {
+namespace {
+constexpr auto kCast = "Cast";
+}  // namespace
 
-template <typename T>
-std::shared_ptr<T> OpFactory<T>::Create(const string &name, const string &device) {
-  auto iter = op_creator_.find(device);
-  if (iter == op_creator_.end()) {
-    MS_LOG(EXCEPTION) << "Not found op " << name << " on device " << device;
+class CastFrontendFuncImpl : public OpFrontendFuncImpl {
+ public:
+  ValuePtr InferValue(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {
+    return InferValueCallback::GetInstance().CallPyInferValue(kCast, input_args);
   }
-  return iter->second();
-}
+};
 
-${op_factory_templates}
-}  // namespace pyboost
-}  // namespace kernel
-}  // namespace mindspore
+REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL(kCast, CastFrontendFuncImpl);
+}  // namespace mindspore::ops

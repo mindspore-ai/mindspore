@@ -20,7 +20,6 @@
 #include "common/anf_util.h"
 #include "common/check_base.h"
 #include "ops/auto_generate/gen_lite_ops.h"
-#include "ops/cast.h"
 #include "ops/fusion/topk_fusion.h"
 #include "ops/fusion/tile_fusion.h"
 #include "ops/fusion/reduce_fusion.h"
