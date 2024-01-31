@@ -89,8 +89,8 @@ const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> GraphBuilde
   {INPLACE_AND, &GraphBuilder::DoBinary},
   {INPLACE_XOR, &GraphBuilder::DoBinary},
   {INPLACE_OR, &GraphBuilder::DoBinary},
-  {IS_OP, &GraphBuilder::DoBinary},
-  {CONTAINS_OP, &GraphBuilder::DoBinary},
+  {IS_OP, &GraphBuilder::DoIsOp},
+  {CONTAINS_OP, &GraphBuilder::DoIsOp},
   {BUILD_TUPLE, &GraphBuilder::DoBuildOp},
   {BUILD_LIST, &GraphBuilder::DoBuildOp},
   {BUILD_SET, &GraphBuilder::DoBuildOp},
@@ -868,6 +868,30 @@ bool GraphBuilder::DoUnary(const Instr &instr) {
   auto r = NewValueNode(t ? t->Unary(opcode) : AObject::MakeAObject(AObject::kTypeAnyValue), instr, {o});
   push(r);
   return true;
+}
+
+bool MindGraphBuilder::DoIsOp(const Instr &instr) {
+  int opcode = instr.op();
+  int oparg = instr.arg();
+  auto r = pop();
+  auto l = pop();
+  AObject *o;
+  if (l->is_constant() && r->is_constant()) {
+    o = static_cast<AbstractObject *>(l->GetVobj())->AbstractObject::Binary(r->GetVobj(), opcode);
+  } else {
+    o = l->GetVobj() ? l->GetVobj()->Binary(r->GetVobj(), opcode) : AObject::MakeAObject(AObject::kTypeAnyValue);
+  }
+  if ((opcode == CONTAINS_OP || opcode == IS_OP) && o && o->GetPyObject().ptr()) {
+    bool res = (o->GetPyObject().ptr() == Py_True) ^ oparg;
+    o = AObject::Convert(py::bool_(res));
+  }
+  auto v = NewValueNode(o, instr, {l, r});
+  push(v);
+  return true;
+}
+
+bool GraphBuilder::DoIsOp(const Instr &instr) {
+  return DoBinary(instr);
 }
 
 bool GraphBuilder::DoBinary(const Instr &instr) {
