@@ -905,6 +905,11 @@ AnfNodePtrList FuncGraph::TopoSort(const AnfNodePtr &node) { return mindspore::T
 
 SeenNum NewFgSeenGeneration() {
   static SeenNum fg_seen_generation = 0;
-  return ++fg_seen_generation;
+  ++fg_seen_generation;
+  // 0 is invalid number.
+  if (fg_seen_generation == 0) {
+    ++fg_seen_generation;
+  }
+  return fg_seen_generation;
 }
 }  // namespace mindspore

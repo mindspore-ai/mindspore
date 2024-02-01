@@ -261,99 +261,84 @@ class SccFinder {
  public:
   explicit SccFinder(const FuncGraphPtr &root) : root_(root) {}
   ~SccFinder() = default;
-  void Run() { SearchEssentialGraphs(root_); }
+  void Run() { Search(root_); }
   SccMap scc_map() { return std::move(scc_map_); }
 
  private:
-  // Save state of a func graph.
-  struct State {
-    size_t index = 0;
-    size_t lowlink = 0;
-    bool in_stack = false;
-    explicit State(size_t index) : index(index), lowlink(index), in_stack(false) {}
-    ~State() = default;
+  // Store each layer of visit stack.
+  struct SccVisitInfo {
+    FuncGraphPtr graph{nullptr};
+    size_t visit_index{0};
   };
 
-  bool HasBranchs(const FuncGraphPtr &graph) {
-    if (graph->switch_nodes().empty()) {
-      return false;
-    }
-    for (const auto &node : graph->switch_nodes()) {
-      const auto &cnode = dyn_cast<CNode>(node);
-      MS_EXCEPTION_IF_NULL(cnode);
-      constexpr auto true_branch_index = 2;
-      constexpr auto false_branch_index = 3;
-      if (!IsDeadNode(cnode->input(true_branch_index)) && !IsDeadNode(cnode->input(false_branch_index))) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  // Not search all func graphs, to search recursive func graph only.
-  void SearchEssentialGraphs(const FuncGraphPtr &graph) {
-    // Add top func graph.
-    MS_LOG(DEBUG) << "Total func graph: " << graph->func_graphs_used_total().size();
-    auto top_scc = std::make_shared<SccVector>();
-    top_scc->insert(graph);
-    (void)scc_map_.emplace(graph, top_scc);
-    // Add all used func graphs.
-    for (const auto &used : graph->func_graphs_used_total()) {
-      if (HasBranchs(used)) {
-        MS_LOG(DEBUG) << "To search recursive func graph: " << used->ToString();
-        (void)Search(used);
-      } else {
-        auto scc = std::make_shared<SccVector>();
-        scc->insert(used);
-        (void)scc_map_.emplace(used, scc);
-      }
-    }
-    MS_LOG(DEBUG) << "Finished for " << graph->ToString();
-  }
-
   // Tarjan algorithm. Search SCCs from the given graph.
-  State &Search(const FuncGraphPtr &graph) {
-    // Create graph state, set it as visited.
+  // Iterative implementation.
+  void Search(const FuncGraphPtr &graph) {
     MS_EXCEPTION_IF_NULL(graph);
-    auto [inserted, ok] = visited_.emplace(graph, std::make_unique<State>(index_++));
-    if (!ok) {
-      MS_LOG(INFO) << "Already visited: " << graph->ToString();
-      return *(inserted->second);
-    }
-    auto &state = *(inserted->second);
-    // Push visited graph to stack.
+    std::stack<SccVisitInfo> visit_stack;
+    auto seen = NewFgSeenGeneration();
+    // Push the origin graph.
+    SccVisitInfo info;
+    info.graph = graph;
+    info.graph->seen_ = seen;        // If visited.
+    info.graph->extra_seen_ = seen;  // If in stack.
+    auto index = 1;
+    info.graph->set_user_data<size_t>("index", std::make_shared<size_t>(index));
+    info.graph->set_user_data<size_t>("low", std::make_shared<size_t>(index));
     stack_.push(graph);
-    state.in_stack = true;
-    // Search successor graphs.
-    for (auto &used : graph->func_graphs_used()) {
-      auto &sg = used.first;
-      auto iter = visited_.find(sg);
-      if (iter == visited_.end()) {
-        // Successor graph has not yet been visited, recurse on it.
-        auto &sg_state = Search(sg);
-        state.lowlink = std::min(state.lowlink, sg_state.lowlink);
-      } else if (iter->second && iter->second->in_stack) {
-        // Successor graph is in stack and hence in the current SCC.
-        state.lowlink = std::min(state.lowlink, iter->second->index);
+    visit_stack.push(std::move(info));
+    while (!visit_stack.empty()) {
+      auto &current_info = visit_stack.top();
+      // If there's not visited used func graph, continue visiting the left used.
+      if (current_info.visit_index < current_info.graph->func_graphs_used().size()) {
+        auto iter = current_info.graph->func_graphs_used().begin();
+        std::advance(iter, current_info.visit_index);
+        ++current_info.visit_index;
+        auto used_graph = iter->first;
+        if (used_graph->seen_ != seen) {
+          // First visit, push it.
+          MS_LOG(DEBUG) << "Push graph: " << used_graph->ToString();
+          stack_.push(used_graph);
+          SccVisitInfo used_info;
+          ++index;
+          used_info.graph = used_graph;
+          used_info.graph->set_user_data<size_t>("index", std::make_shared<size_t>(index));
+          used_info.graph->set_user_data<size_t>("low", std::make_shared<size_t>(index));
+          used_info.graph->seen_ = seen;        // If visited.
+          used_info.graph->extra_seen_ = seen;  // If in stack.
+          visit_stack.push(std::move(used_info));
+        } else if (used_graph->extra_seen_ == seen) {
+          // Visited before AND in stack, update low.
+          auto min_low = std::min(*current_info.graph->user_data<size_t>("low"), *used_graph->user_data<size_t>("low"));
+          current_info.graph->set_user_data<size_t>("low", std::make_shared<size_t>(min_low));
+          MS_LOG(DEBUG) << "Update low [" << min_low << "] for " << current_info.graph->ToString() << " by "
+                        << used_graph->ToString();
+        }
+        continue;
       }
-    }
-    // If index == lowlink, this means it is the root of SCC.
-    if (state.index == state.lowlink) {
+      // If all used func graphs are visited, pop it and check if it's SCC root.
+      auto current_graph = current_info.graph;
+      if (*current_graph->user_data<size_t>("low") != *current_graph->user_data<size_t>("index")) {
+        // Update low when pop.
+        visit_stack.pop();
+        auto &next_info = visit_stack.top();
+        auto min_low = std::min(*next_info.graph->user_data<size_t>("low"), *current_graph->user_data<size_t>("low"));
+        next_info.graph->set_user_data<size_t>("low", std::make_shared<size_t>(min_low));
+        MS_LOG(DEBUG) << "Update low [" << min_low << "] for " << next_info.graph->ToString() << " by "
+                      << current_graph->ToString();
+        continue;
+      }
+      MS_LOG(DEBUG) << "Found SCC root: " << current_graph->ToString();
       // Pop members of the SCC from stack, they are on top of its root.
       auto scc = std::make_shared<SccVector>();
       while (!stack_.empty()) {
         auto g = stack_.top();
+        g->extra_seen_ = 0;  // Not in stack any more.
         stack_.pop();
-        auto found = visited_.find(g);
-        if (found == visited_.end()) {
-          MS_LOG(INTERNAL_EXCEPTION) << "Unexpected graph: " << g->ToString();
-        }
-        MS_EXCEPTION_IF_NULL(found->second);
-        found->second->in_stack = false;
         // Add graph to SCC, and create the map from graph to SCC.
         scc->insert(g);
         (void)scc_map_.emplace(g, scc);
-        if (g == graph) {
+        if (g == current_graph) {
           break;
         }
       }
@@ -361,18 +346,12 @@ class SccFinder {
       if (scc->empty()) {
         MS_LOG(INTERNAL_EXCEPTION) << "Invalid SCC for: " << graph->ToString();
       }
+      visit_stack.pop();
     }
-    return state;
   }
 
   // The root graph.
   FuncGraphPtr root_;
-
-  // Current index by DFS order.
-  size_t index_ = 1;
-
-  // Visited graphs and their states.
-  mindspore::HashMap<FuncGraphPtr, std::unique_ptr<State>> visited_;
 
   // The stack for Tarjan algorithm.
   std::stack<FuncGraphPtr> stack_;
