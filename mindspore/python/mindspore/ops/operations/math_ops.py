@@ -1618,7 +1618,6 @@ class TruncateDiv(Primitive):
     of division towards zero. Equivalent to C-style integer division.
 
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
     dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
