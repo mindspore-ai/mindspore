@@ -33,6 +33,7 @@
 #include "pipeline/jit/pi/graph_compiler/utils.h"
 #include "ops/sequence_ops.h"
 #include "ops/framework_ops.h"
+#include "ops/structure_ops.h"
 
 namespace mindspore {
 namespace pijit {
@@ -2414,7 +2415,7 @@ AObject *MindGraphBuilder::HandleMultiOp(const Instr &instr, const std::vector<V
     return AObject::MakeAObject(AObject::kTypeAnyValue);
   }
   auto node = fg_builder_->AddMultiNode(op_name, input_obj);
-  return AObject::Convert(node);
+  return AbstractFuncGraphOut::MakeAObject(node);
 }
 
 AObject *MindGraphBuilder::HandleBuildOp(const Instr &instr, const std::vector<ValueNode *> &p) {
@@ -2443,11 +2444,15 @@ AObject *MindGraphBuilder::HandleBuildOp(const Instr &instr, const std::vector<V
       return AObject::MakeAObject(AObject::kTypeAnyValue);
     }
   }
+  if (primitive == prim::kPrimMakeSlice) {
+    constexpr size_t slice_without_step_len = 2;
+    if (input_obj.size() == slice_without_step_len) {
+      // Handle slice without step input scene, such as 0:2. MakeSlice can only handle slice with full inputs.
+      (void)input_obj.emplace_back(py::int_(1));
+    }
+  }
   auto node = fg_builder_->AddNode(primitive, input_obj);
-  auto ret = AObject::Convert(node);
-  // Container object, such as list/tuple/dict will copy after Convert.
-  fg_builder_->UpdatePyObject(ret->GetPyObject(), node);
-  return ret;
+  return AbstractFuncGraphOut::MakeAObject(node);
 }
 
 bool MindGraphBuilder::DoGetItem(const Instr &instr) {
