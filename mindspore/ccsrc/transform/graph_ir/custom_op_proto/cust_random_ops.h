@@ -140,5 +140,17 @@ REG_CUST_OP(Poisson)
   .REQUIRED_ATTR(seed2, Int)
   .OUTPUT(output, TensorType({DT_INT32}))
   .CUST_OP_END_FACTORY_REG(Poisson)
+
+REG_CUST_OP(LogUniformCandidateSampler)
+  .INPUT(true_classes, TensorType({DT_INT64}))
+  .OUTPUT(sampled_candidates, TensorType({DT_INT64}))
+  .OUTPUT(true_expected_count, TensorType({DT_FLOAT}))
+  .OUTPUT(sampled_expected_count, TensorType({DT_FLOAT}))
+  .ATTR(num_true, Int, 1)
+  .ATTR(num_sampled, Int, 5)
+  .ATTR(unique, Bool, true)
+  .ATTR(range_max, Int, 5)
+  .ATTR(seed, Int, 0)
+  .CUST_OP_END_FACTORY_REG(LogUniformCandidateSampler)
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_RANDOM_OPS_H_
