@@ -832,7 +832,8 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
       return false;
     }
   } else {
-    GEGraphOptimization::GetInstance().OptimizeGEGraph(graph);
+    std::set<KernelGraphPtr> memo;
+    GEGraphOptimization::GetInstance().OptimizeGEGraph(graph, &memo);
     (void)BuildDFGraph(graph, tensor_order_map, false);
   }
   SetDynamicShapeAttr(graph);
@@ -899,7 +900,8 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
         return false;
       }
     } else {
-      GEGraphOptimization::GetInstance().OptimizeGEGraph(kg);
+      std::set<KernelGraphPtr> memo;
+      GEGraphOptimization::GetInstance().OptimizeGEGraph(kg, &memo);
       (void)BuildDFGraph(kg, tensor_order_map, false);
     }
     SetDynamicShapeAttr(kg);
