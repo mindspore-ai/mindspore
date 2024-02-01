@@ -37,7 +37,6 @@ bool ShouldFallBackInRuntime(const PrimitivePtr &prim) {
                                                                   kListInplaceClearOpName,
                                                                   kDictInplaceSetItemOpName,
                                                                   kRaiseOpName,
-                                                                  kMakeSliceOpName,
                                                                   kJoinedStrOpName,
                                                                   kFormatOpName};
   return prims_should_fallback_in_runtime.find(prim->name()) != prims_should_fallback_in_runtime.end();
@@ -334,21 +333,6 @@ bool FuncGraphBuilder::AddOutput(const py::object &output_obj) {
   }
   (void)output_nodes_.emplace_back(node);
   return true;
-}
-
-void FuncGraphBuilder::UpdatePyObject(const py::object &new_obj, const py::object &old_obj) {
-  if (new_obj.ptr() == old_obj.ptr()) {
-    return;
-  }
-  auto iter = py_obj_to_node_.find(old_obj.ptr());
-  if (iter == py_obj_to_node_.end()) {
-    return;
-  }
-  auto node = iter->second;
-  py_obj_to_node_.erase(iter);
-  (void)py_obj_to_node_.emplace(new_obj.ptr(), node);
-  MS_LOG(DEBUG) << "Update python object " << old_obj.ptr() << " to " << new_obj.ptr() << ". Corresponding node is "
-                << node->DebugString();
 }
 
 FuncGraphPtr FuncGraphBuilder::graph() {
