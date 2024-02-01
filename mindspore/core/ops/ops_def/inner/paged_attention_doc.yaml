@@ -1,0 +1,42 @@
+paged_attention:
+    description: |
+        The PagedAttention is the fusion of block-wise KV Cache access and self-attention computing.
+    
+        Args:
+            query (Tensor): The query tensor with data type of float16.
+              :math:`(num\_tokens, num\_head, head\_dim)`.
+            key_cache (Tensor): The cache tensor with data type of float16.
+              :math:`(num\_blocks, block\_size, num\_head, head\_dim)`.
+            value_cache (Tensor): The cache tensor with data type of float16.
+              :math:`(num\_blocks, block\_size, num\_head, head\_dim)`.
+            block_tables (Tensor): The block mapping table with data type of int32.
+              :math:`(num\_tokens, max_num_blocks_per_batch)`.
+            context_lens (Tensor): The context length of each sequence with data type of int32.
+              :math:`(num\_tokens,)`.
+                        
+        Outputs:
+            attention output.
+
+        Notes:
+            No backend implementation in MindSpore, only use to export MindIr and run in MindSpore Lite.
+
+        Examples:
+            >>> from mindspore.ops.operations import _inner_ops
+            >>> num_tokens =  = 4
+            >>> num_head = 40
+            >>> num_kv_head = 40
+            >>> head_dim = 128
+            >>> block_size = 16
+            >>> num_blocks = 128
+            >>> max_seq = 1024
+            >>> max_num_blocks_per_batch = max_seq // block_size
+            >>> scale_value = 1.0 / math.sqrt(head_dim)
+            >>> query = Tensor(np.random.randn(num_tokens, num_head, head_dim).astype(np.float16))
+            >>> key_cache = Parameter(default_input=Tensor(np.random.randn(num_blocks, block_size, num_head, head_dim).astype(np.float16)))
+            >>> value_cache = Parameter(default_input=Tensor(np.random.randn(num_blocks, block_size, num_head, head_dim).astype(np.float16)))
+            >>> dummy_block_indice = np.random.shuffle(np.arange(num_tokens * max_num_blocks_per_batch, dtype=np.int32))
+            >>> block_tables = Tensor(np.reshape(dummy_block_indice, (num_tokens, max_num_blocks_per_batch)))
+            >>> context_lens = Tensor(np.random.randint(max_seq, size=num_tokens).astype(np.int32)))
+            >>> paged_attention = _inner_ops.PagedAttention()
+            >>> output = paged_attention(query, key_cache, value_cache, block_tables, context_lens)
+            >>> print(output)
