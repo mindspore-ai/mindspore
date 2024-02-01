@@ -167,6 +167,10 @@ class AutoGradCellImpl {
   void AddUser(const AnfNodePtr &input, const CNodePtr &user, size_t index);
   void AddReverseUser(const AnfNodePtr &input, const CNodePtr &user, size_t index);
   inline bool grad_by_value() { return grad_by_value_; }
+  inline bool bprop_graph_run_by_single_op() { return bprop_graph_run_by_single_op_; }
+  void set_bprop_graph_run_by_single_op(bool bprop_graph_run_by_single_op) {
+    bprop_graph_run_by_single_op_ |= bprop_graph_run_by_single_op;
+  }
 
  private:
   FuncGraphPtr GradFuncGraph(const GradParamPtr &grad_param);
@@ -263,6 +267,7 @@ class AutoGradCellImpl {
   AnfNodePtrList k_nodes_used_in_graph_;
   // Flag for ms_funtcion and high order
   bool grad_by_value_{false};
+  bool bprop_graph_run_by_single_op_{false};
   bool need_do_manager_replace_{false};
   runtime::AsyncHqueuePtr assist_queue_{nullptr};
   bool enable_async_{false};

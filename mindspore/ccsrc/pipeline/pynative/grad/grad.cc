@@ -1204,6 +1204,9 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr,
                                          const std::vector<tensor::TensorPtr> &w_args,
                                          const std::vector<size_t> &p_args) {
   MS_EXCEPTION_IF_NULL(top_input_args_info_);
+  // Update bprop_graph_run_by_single_op for bprop graph, if it is true, pass like ConvertMakeTupleInputToDynamicInput
+  // will not take effect
+  top_cell()->auto_grad_cell_ptr()->set_bprop_graph_run_by_single_op(top_cell()->use_dynamic_shape_process());
   FuncGraphPtr bprop_graph = top_cell()->auto_grad_cell_ptr()->Finish(w_args, p_args, grad_attr);
 
   MS_LOG(DEBUG) << "Top graph input params size " << top_input_args_info_->input_arg_value_vec.size();
@@ -1243,8 +1246,8 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr,
   // Update run graph by single op flag. Has two scenario:
   // 1. Dynamic shape(or structure) or Dynamic structure
   // 2. Has bprop cut op
-  bprop_graph->set_flag(kFlagEnableRunGraphBySingleOp, bprop_graph->has_flag(kFlagPyNativeBpropGraphIsDynamic) ||
-                                                         bprop_graph->has_flag(kFlagPyNativeBpropGraphWithBpropCut));
+  bprop_graph->set_flag(kFlagEnableRunGraphBySingleOp,
+                        top_cell()->auto_grad_cell_ptr()->bprop_graph_run_by_single_op());
   if (top_cell()->has_call_graph()) {
     bprop_graph->set_flag(kFlagPyNativeWithJitCallGraph, true);
   }
