@@ -579,6 +579,7 @@ AnfNodePtr ResolveClassObjectWithAttr(const py::object &cls_obj, const AnfNodePt
 AnfNodePtr ResolveSequenceWithAttr(const FuncGraphManagerPtr &manager, const py::object &obj,
                                    const AnfNodePtr &resolve_node, const AnfNodePtr &attr,
                                    const CNodePtr &get_attr_node) {
+  MS_EXCEPTION_IF_NULL(get_attr_node);
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
   auto sequence = obj.cast<py::sequence>();
@@ -611,7 +612,6 @@ AnfNodePtr ResolveSequenceWithAttr(const FuncGraphManagerPtr &manager, const py:
 
   constexpr auto prim_index = 0;
   constexpr auto index_index = 2;
-  MS_EXCEPTION_IF_NULL(get_attr_node);
   auto fg = get_attr_node->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
   auto make_tuple_node = fg->NewCNodeInOrder(inputs);

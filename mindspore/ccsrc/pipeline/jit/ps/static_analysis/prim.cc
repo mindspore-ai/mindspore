@@ -110,6 +110,8 @@ AnfNodePtr GetNodeAfterArgHandler(const AnfNodePtr &node, const std::string &op_
     return node;
   }
   const auto arg_handler_func = prim::GetPythonOps(op_arg.arg_handler_, parse::PYTHON_MOD_PRIMITIVE_ARG_HANDLER_MODULE);
+  MS_LOG(DEBUG) << "The arg handler function for '" << op_arg.arg_name_ << "' of Primitive[" << op_name << "] is "
+                << arg_handler_func->ToString() << ".";
   if (arg_handler_func->isa<Primitive>()) {
     auto arg_handler_fg = dyn_cast<Primitive>(arg_handler_func);
     MS_EXCEPTION_IF_NULL(arg_handler_fg);
@@ -2431,11 +2433,13 @@ std::vector<AnfNodePtr> GeneratePrimitiveDefaultArgs(const std::string &op_name,
   std::vector<AnfNodePtr> nodes(args_list);
   if (args_size < op_args.size()) {
     for (size_t i = args_size; i < op_args.size(); i++) {
-      auto default_arg = NewValueNode(parse::GetArgDefaultValue(op_name, op_args[i].arg_name_));
+      auto default_arg = parse::GetArgDefaultValue(op_name, op_args[i].arg_name_);
       if (default_arg == nullptr) {
         break;
       }
-      (void)nodes.emplace_back(default_arg);
+      MS_LOG(DEBUG) << "Get the default value of '" << op_args[i].arg_name_ << "' attribute of Primitive[" << op_name
+                    << "], which is " << default_arg->ToString() << ".";
+      (void)nodes.emplace_back(NewValueNode(default_arg));
     }
   }
   if (nodes.size() != op_args.size()) {
@@ -2536,6 +2540,8 @@ AnfNodePtr CheckAndConvertPrimitiveArgs(const PrimitivePtr &prim,
     }
   }
 
+  MS_LOG(DEBUG) << "For Primitive[" << prim->name() << "], the number of init args is expected to be "
+                << op_init_args.size() << ", and the number of call args is expected to be " << op_call_args.size();
   auto eval_func = [&engine, &out_conf](const AnfNodePtr &node) {
     AnfNodeConfigPtr config = engine->MakeConfig(node, out_conf->context(), out_conf->func_graph());
     MS_EXCEPTION_IF_NULL(config);
@@ -2544,11 +2550,16 @@ AnfNodePtr CheckAndConvertPrimitiveArgs(const PrimitivePtr &prim,
     return eval_result->abstract();
   };
   // Generate primitive default args.
+  MS_LOG(DEBUG) << "For Primitive[ " << prim->name() << "], before processing default args, the number of init args is "
+                << init_args_list.size() << " and the number of call args is " << call_args_list.size();
   auto call_nodes = GeneratePrimitiveDefaultArgs(prim->name(), call_args_list, op_call_args, false);
   auto init_nodes = GeneratePrimitiveDefaultArgs(prim->name(), init_args_list, op_init_args, true);
+  MS_LOG(DEBUG) << "For Primitive[ " << prim->name() << "], after processing default args, the number of init args is "
+                << init_args_list.size() << " and the number of call args is " << call_args_list.size();
   // If it is not preprocessed, signatures and need to be processed.
   if (!is_preprocessed) {
     // Process signatures.
+    MS_LOG(DEBUG) << "Process signatures for Primitive[" << prim->name() << "].";
     AbstractBasePtrList call_abs_list;
     (void)std::transform(call_nodes.cbegin(), call_nodes.cend(), std::back_inserter(call_abs_list), eval_func);
     call_nodes = prim::GetNewInputsBySignatures(fg, prim->name(), prim, call_abs_list, call_nodes);
@@ -2568,6 +2579,8 @@ AnfNodePtr CheckAndConvertPrimitiveArgs(const PrimitivePtr &prim,
   AbstractBasePtrList init_abs_list;
   (void)std::transform(call_nodes.cbegin(), call_nodes.cend(), std::back_inserter(call_abs_list), eval_func);
   (void)std::transform(init_nodes.cbegin(), init_nodes.cend(), std::back_inserter(init_abs_list), eval_func);
+  MS_LOG(DEBUG) << "For Primitive[" << prim->name() << "], the number of init args is " << init_nodes.size()
+                << " and the number of call args is " << call_nodes.size();
   if (!ValidateAndConvertArgsType(op_call_args, call_abs_list, fg, &call_nodes) ||
       !ValidateAndConvertArgsType(op_init_args, init_abs_list, fg, &init_nodes)) {
     std::vector<std::string> op_type_list;
