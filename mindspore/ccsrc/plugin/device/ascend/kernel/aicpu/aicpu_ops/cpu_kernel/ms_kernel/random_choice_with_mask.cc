@@ -17,6 +17,7 @@
 #include <random>
 #include <complex>
 #include <algorithm>
+#include <securec.h>
 #include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "random/utils.h"
 
@@ -81,8 +82,10 @@ uint32_t RandomChoiceWithMaskCpuKernel::Compute(CpuKernelContext &ctx) {
   size_t input_rank = dims_.size();
   size_t output_coord_size = input_rank * count_target_ * sizeof(int32_t);
   size_t mask_size = count_target_ * sizeof(bool);
-  memset_s(output_data, output_coord_size, 0, output_coord_size);
-  memset_s(mask, mask_size, 0, mask_size);
+  auto ret = memset_s(output_data, output_coord_size, 0, output_coord_size);
+  KERNEL_CHECK_FALSE((ret == EOK), KERNEL_STATUS_INNER_ERROR, "memset failed.");
+  ret = memset_s(mask, mask_size, 0, mask_size);
+  KERNEL_CHECK_FALSE((ret == EOK), KERNEL_STATUS_INNER_ERROR, "memset failed.");
 
   return RandomChoiceWithMaskCompute(ctx);
 }
