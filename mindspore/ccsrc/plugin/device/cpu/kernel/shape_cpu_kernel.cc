@@ -80,6 +80,8 @@ const std::vector<std::pair<KernelAttr, ShapeCpuKernelMod::KernelRunFunc>> &Shap
      &ShapeCpuKernelMod::LaunchKernel},
     {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
      &ShapeCpuKernelMod::LaunchKernel},
+    {KernelAttr().AddInputAttr(kNumberTypeBFloat16).AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
+     &ShapeCpuKernelMod::LaunchKernel},
   };
   return func_list;
 }
