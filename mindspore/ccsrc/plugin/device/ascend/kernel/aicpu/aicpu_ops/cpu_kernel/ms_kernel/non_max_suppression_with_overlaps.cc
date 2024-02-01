@@ -25,7 +25,6 @@
 #include "cpu_tensor_shape.h"
 #include "kernel_log.h"
 #include "status.h"
-#include "utils/allocator_utils.h"
 #include "utils/kernel_util.h"
 
 namespace {

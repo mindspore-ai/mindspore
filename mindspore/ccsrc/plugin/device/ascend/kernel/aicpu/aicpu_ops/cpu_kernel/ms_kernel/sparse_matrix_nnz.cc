@@ -23,7 +23,6 @@
 #include "cpu_types.h"
 #include "common/kernel_log.h"
 #include "cpu_kernel/common/status.h"
-#include "utils/allocator_utils.h"
 #include "utils/kernel_util.h"
 
 namespace aicpu {

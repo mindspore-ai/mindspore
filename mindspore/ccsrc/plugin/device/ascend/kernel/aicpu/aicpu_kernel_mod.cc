@@ -37,7 +37,6 @@
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 #include "include/backend/data_queue/data_queue_mgr.h"
-#include "aicpu/common/aicpu_task_struct.h"
 #include "external/graph/types.h"
 
 namespace mindspore {

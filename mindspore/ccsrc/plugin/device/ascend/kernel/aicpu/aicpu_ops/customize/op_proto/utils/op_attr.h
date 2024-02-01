@@ -24,8 +24,7 @@
 
 #include <vector>
 #include "op_log.h"
-#include "external/graph/operator.h"
-#include "graph/utils/attr_utils.h"
+#include "graph/operator.h"
 
 namespace ops {
 using namespace ge;

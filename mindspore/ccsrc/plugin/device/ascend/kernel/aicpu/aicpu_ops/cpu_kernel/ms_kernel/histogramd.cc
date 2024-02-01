@@ -27,7 +27,6 @@
 #include "common/kernel_log.h"
 #include "cpu_kernel/common/status.h"
 #include "unsupported/Eigen/CXX11/Tensor"
-#include "utils/allocator_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 

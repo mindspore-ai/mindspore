@@ -20,7 +20,6 @@
 #include <numeric>
 
 #include "op_proto/inc/pad_ops.h"
-#include "graph/utils/node_utils.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/common_shape_fns.h"
