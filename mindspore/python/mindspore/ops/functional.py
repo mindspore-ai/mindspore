@@ -310,6 +310,7 @@ tensor_operator_registry.register('shape', shape)
 tensor_operator_registry.register('squeeze', squeeze)
 tensor_operator_registry.register('unsqueeze', unsqueeze)
 tensor_operator_registry.register('expand_dims', expand_dims)
+tensor_operator_registry.register('contiguous', auto_generate.contiguous)
 # support GE backend for no compare operators
 tensor_operator_registry.register('cast', cast)
 tensor_operator_registry.register('shape_mul', shape_mul)

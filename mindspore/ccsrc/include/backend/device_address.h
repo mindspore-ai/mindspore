@@ -230,6 +230,14 @@ class DeviceAddress : public mindspore::DeviceSync {
     return GetDevicePtr();
   }
 
+  const TensorStorageInfoPtr GetTensorStorageInfo() const override {
+    if (kernel_tensor_ == nullptr) {
+      return nullptr;
+    }
+
+    return kernel_tensor_->tensor_storage_info();
+  }
+
   const std::string &device_name() const { return kernel_tensor_->device_name(); }
   uint32_t device_id() const { return kernel_tensor_->device_id(); }
 
@@ -390,6 +398,9 @@ class DeviceAddress : public mindspore::DeviceSync {
     kernel_tensor_->set_pointer_ref_count(ptr_ref_cnt);
   }
 
+  void set_is_view(bool is_view) { is_view_ = is_view; }
+  bool is_view() const { return is_view_; }
+
  protected:
   KernelTensorPtr kernel_tensor_;
   size_t size() const { return kernel_tensor_->size(); }
@@ -420,6 +431,10 @@ class DeviceAddress : public mindspore::DeviceSync {
 
   // The device address flag.
   size_t flag_{0};
+
+  // Indicating whether the address is the input of view op.
+  // If yes, the device address cannot be reused with the host address in CPU.
+  bool is_view_{false};
 
   // The flag identify where data is stored
   mutable DeviceAddressStatus status_{DeviceAddressStatus::kInDevice};

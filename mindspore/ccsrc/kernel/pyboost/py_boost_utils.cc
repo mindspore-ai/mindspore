@@ -119,56 +119,74 @@ kernel::KernelModPtr PyBoostUtils::CreateKernelMod(const PrimitivePtr &prim, con
   return kernel_mod;
 }
 
-device::DeviceAddressPtr PyBoostUtils::ContiguousByDeviceAddress(const device::DeviceAddressPtr &old_device_address,
-                                                                 const TensorStorageInfoPtr &old_storage_info) {
+DeviceSyncPtr PyBoostUtils::ContiguousByDeviceAddress(const DeviceSyncPtr &device_sync) {
+  auto &storage_info = device_sync->GetTensorStorageInfo();
+  if (storage_info == nullptr) {
+    return device_sync;
+  }
+
+  auto old_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(device_sync);
+
   MS_EXCEPTION_IF_NULL(old_device_address);
-  MS_EXCEPTION_IF_NULL(old_storage_info);
+  MS_EXCEPTION_IF_NULL(storage_info);
   GilReleaseWithCheck gil_release;
 
   const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
     {old_device_address->device_name(), old_device_address->device_id()});
   MS_EXCEPTION_IF_NULL(device_context);
 
-  auto address_size = GetTypeByte(TypeIdToType(old_device_address->type_id())) * SizeOf(old_storage_info->shape);
-  if (old_storage_info->data_type == kTypeUnknown) {
-    MS_LOG(EXCEPTION) << "The view op out type is kTypeUnknown";
-  }
-
+  auto address_size = GetTypeByte(TypeIdToType(old_device_address->type_id())) * SizeOf(storage_info->shape);
   auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-    nullptr, address_size, Format::DEFAULT_FORMAT, old_storage_info->data_type, old_storage_info->shape,
+    nullptr, address_size, Format::DEFAULT_FORMAT, old_device_address->type_id(), storage_info->shape,
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-  kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(old_storage_info->data_type)));
-  kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(old_storage_info->shape));
+  kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(old_device_address->type_id())));
+  kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(storage_info->shape));
   auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
-  new_device_address->set_device_shape(old_storage_info->shape);
+  new_device_address->set_device_shape(storage_info->shape);
   new_device_address->set_original_ref_count(SIZE_MAX);
   new_device_address->ResetRefCount();
   auto stream_id = device_context->device_res_manager_->GetCurrentStreamId();
 
-  if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(runtime::KernelTaskType::kCONTIGUOUS_TASK,
-                                                                   {old_device_address}, {old_storage_info},
-                                                                   {new_device_address}, stream_id)) {
+  if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(
+        runtime::KernelTaskType::kCONTIGUOUS_TASK, {old_device_address}, {new_device_address}, stream_id)) {
     MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << runtime::KernelTaskType::kCONTIGUOUS_TASK;
   }
   return new_device_address;
 }
 
-void PyBoostUtils::CreateOutputTensor(const tensor::TensorPtr &input, const TensorStorageInfoPtr &storage_info,
+void PyBoostUtils::CreateOutputTensor(DeviceContext *device_context, const tensor::TensorPtr &input,
+                                      const TensorStorageInfoPtr &storage_info,
                                       std::vector<tensor::TensorPtr> *outputs) {
-  auto output_tensor = std::make_shared<tensor::Tensor>(storage_info->data_type, storage_info->shape);
-  output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
-  output_tensor->set_storage_info(storage_info);
-  output_tensor->set_device_address(input->device_address());
-  output_tensor->set_contiguous_callback([](const tensor::TensorPtr &tensor, const DeviceSyncPtr &device_address,
-                                            const TensorStorageInfoPtr &storage_info) -> DeviceSyncPtr {
-    if (tensor != nullptr) {
-      ContiguousTensor(tensor);
-      return nullptr;
-    }
+  MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(storage_info);
+  MS_EXCEPTION_IF_NULL(device_context);
 
-    auto device_addr = std::dynamic_pointer_cast<device::DeviceAddress>(device_address);
-    return ContiguousByDeviceAddress(device_addr, storage_info);
-  });
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
+                                     runtime::ProfilerEvent::kPyBoostCreateOutputTensor,
+                                     runtime::ProfilerRecorder::kNoName, false);
+  auto output_tensor = std::make_shared<tensor::Tensor>(input->data_type(), storage_info->shape);
+  output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
+  output_tensor->set_device_address(input->device_address());
+  output_tensor->set_contiguous_callback(
+    [](const DeviceSyncPtr &device_address) -> DeviceSyncPtr { return ContiguousByDeviceAddress(device_address); });
+
+  auto input_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(input->device_address());
+  MS_EXCEPTION_IF_NULL(input_device_address);
+  input_device_address->set_is_view(true);
+
+  // Create view output address
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    nullptr, input_device_address->GetSize(), Format::DEFAULT_FORMAT, output_tensor->data_type(),
+    output_tensor->shape(), device_context->device_context_key().device_name_,
+    device_context->device_context_key().device_id_);
+  kernel_tensor->set_tensor_storage_info(storage_info);
+  kernel_tensor->set_size(input_device_address->GetSize());
+
+  auto output_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+  MS_EXCEPTION_IF_NULL(output_device_address);
+
+  output_device_address->set_pointer_ref_count(input_device_address->pointer_ref_count());
+  output_tensor->set_device_address(output_device_address);
   (void)outputs->emplace_back(output_tensor);
   MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
 }
@@ -206,31 +224,6 @@ AbstractBasePtr PyBoostUtils::InferByOpDef(const PrimitivePtr &prim, const std::
       MS_LOG(EXCEPTION) << "Cannot found infer function for Op " << prim->name();
     }
   }
-}
-
-tensor::TensorPtr PyBoostUtils::ContiguousTensor(const tensor::TensorPtr &input_tensor) {
-  MS_EXCEPTION_IF_NULL(input_tensor);
-  if (input_tensor->storage_info() == nullptr) {
-    return input_tensor;
-  }
-  auto old_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(input_tensor->device_address());
-  MS_EXCEPTION_IF_NULL(old_device_address);
-  auto old_storage_info = input_tensor->storage_info();
-  auto new_device_address = ContiguousByDeviceAddress(old_device_address, old_storage_info);
-
-  input_tensor->set_device_address(new_device_address);
-  input_tensor->set_storage_info(nullptr);
-  return input_tensor;
-}
-
-DeviceContext *PyBoostUtils::CreateOrGetDeviceContextAndInit(const std::string &target_device) {
-  auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {target_device, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
-  MS_EXCEPTION_IF_NULL(device_context);
-  device_context->Initialize();
-  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-  device_context->device_res_manager_->BindDeviceToCurrentThread(false);
-  return device_context;
 }
 
 void PyBoostUtils::DispatchRun(const std::shared_ptr<runtime::PyBoostDeviceTask> &task) {

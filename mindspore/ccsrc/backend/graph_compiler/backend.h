@@ -85,7 +85,7 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
 
   void RunAllocMemTask(DeviceContext *device_context, const tensor::TensorPtr &tensor, bool enable_async);
 
-  void RunContiguousTask(const tensor::TensorPtr &tensor, size_t stream_id, bool enable_async) override;
+  void RunContiguousTaskForArgs(const tensor::TensorPtr &tensor, size_t stream_id, bool enable_async) override;
 
   device::DeviceAddressPtr RunContiguousTaskByAddress(const device::DeviceAddressPtr &old_device_address,
                                                       const TensorStorageInfoPtr &old_storage_info, size_t stream_id,
@@ -147,7 +147,6 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
 
   void RunViewKernelTaskAsyncImpl(const runtime::KernelTaskType &task_type, DeviceContext *device_context,
                                   const device::DeviceAddressPtrList &input_addr_list,
-                                  const TensorStorageInfoPtrList &input_storage_list,
                                   const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id);
 
   // Cache output tensor ref count of kernels for back propagation graph in PyNative mode.

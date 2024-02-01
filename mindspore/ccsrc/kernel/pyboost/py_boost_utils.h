@@ -34,13 +34,10 @@ using AddressInfoPair = std::pair<std::vector<kernel::KernelTensor *>, device::D
 class BACKEND_EXPORT PyBoostUtils {
  public:
   static DeviceContext *GetDeviceContext(const std::string &device_type);
-  static DeviceContext *CreateOrGetDeviceContextAndInit(const std::string &target_device);
   static AbstractBasePtr InferByOpDef(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_abs);
   static void DispatchRun(const std::shared_ptr<runtime::PyBoostDeviceTask> &task);
 
-  static tensor::TensorPtr ContiguousTensor(const tensor::TensorPtr &input_tensor);
-  static device::DeviceAddressPtr ContiguousByDeviceAddress(const device::DeviceAddressPtr &old_device_address,
-                                                            const TensorStorageInfoPtr &old_storage_info);
+  static DeviceSyncPtr ContiguousByDeviceAddress(const DeviceSyncPtr &device_sync);
 
   // Create device address
   static device::DeviceAddressPtrList CreateWorkSpaceDeviceAddress(const KernelModPtr &kernel_mod,
@@ -49,8 +46,8 @@ class BACKEND_EXPORT PyBoostUtils {
 
   // Create output tensors
   static void CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs);
-  static void CreateOutputTensor(const tensor::TensorPtr &input, const TensorStorageInfoPtr &storage_info,
-                                 std::vector<tensor::TensorPtr> *outputs);
+  static void CreateOutputTensor(DeviceContext *device_context, const tensor::TensorPtr &input,
+                                 const TensorStorageInfoPtr &storage_info, std::vector<tensor::TensorPtr> *outputs);
 
   // Create input device address without kernel tensor
   template <typename... Args>

@@ -839,7 +839,6 @@ void RegMetaTensor(const py::module *m) {
                               )mydelimiter")
     .def("set_cast_dtype", &Tensor::set_cast_dtype, py::arg("dtype") = nullptr)
     .def("data_sync", &Tensor::data_sync)
-    .def("contiguous", &Tensor::contiguous)
     .def("is_contiguous", &Tensor::is_contiguous)
     .def("stride", &Tensor::stride)
     .def("storage_offset", &Tensor::storage_offset)

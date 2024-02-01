@@ -108,7 +108,6 @@ py::object PyNativeExecutor::RunOpStub(const py::args &args) const {
   if (!forward_executor()->EnablePipeline(op_name)) {
     // Wait for async task finish
     forward_executor()->WaitForwardTask();
-    PyNativeAlgo::Common::StubNodeToValue(op_run_info);
     // RunOp sync
     PyNativeExecutorTry(forward_executor()->RunOpS, op_run_info);
     return PyNativeAlgo::DataConvert::ValueToPyObj(op_run_info->real_out);
