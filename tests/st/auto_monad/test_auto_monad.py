@@ -1921,3 +1921,39 @@ def test_return_none_with_side_effect():
     input_x = Tensor([2], dtype=mstype.int32)
     res = net(input_x)
     assert res == 4
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_return_none_with_side_effect_mutil_func():
+    """
+    Feature: Support None.
+    Description: Support None is the output of_function with side effect.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.param1 = Parameter(Tensor([5], dtype=mstype.int32), name='name_a')
+            self.param2 = Parameter(Tensor([6], dtype=mstype.int32), name='name_b')
+            self.param3 = Parameter(Tensor([7], dtype=mstype.int32), name='name_c')
+
+        def update_param(self, weight):  # pylint: disable=R1711
+            self.param1 = 2 * weight
+            self.param2 = 4 * weight
+            self.param3 = 6 * weight
+
+        def do_func(self, weight):
+            return weight * 2
+
+        def construct(self, weight):
+            out = self.do_func(weight)
+            self.update_param(weight)
+            return out, self.param3
+
+    net = Net()
+    input_x = Tensor([2], dtype=mstype.int32)
+    res = net(input_x)
+    assert res[0] == 4
+    assert res[1] == 12
