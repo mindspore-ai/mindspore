@@ -37,11 +37,9 @@ Status DvppResizeOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &inpu
                              std::shared_ptr<DeviceTensorAscend910B> *output) {
   IO_CHECK(input, output);
   // the input should be NHWC, N is 1.
-  const auto kNHWCImageRank = 4;
   CHECK_FAIL_RETURN_UNEXPECTED(input->GetShape().Rank() == kNHWCImageRank,
                                "DvppResize: the input tensor is not HW, HWC or 1HWC.");
   // the channel should be 3 or 1
-  const auto kChannelIndexNHWC = 3;
   CHECK_FAIL_RETURN_UNEXPECTED(input->GetShape().AsVector()[kChannelIndexNHWC] == 1 ||
                                  input->GetShape().AsVector()[kChannelIndexNHWC] == kDefaultImageChannel,
                                "DvppResize: the channel of the input is not 1 or 3.");
@@ -49,8 +47,9 @@ Status DvppResizeOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &inpu
   // the type should be uint8 or float
   CHECK_FAIL_RETURN_UNEXPECTED(input->GetType() == DataType::DE_UINT8 || input->GetType() == DataType::DE_FLOAT32,
                                "DvppResize: the type of the input is not uint8 or float.");
-  const auto kWidthIndexNHWC = 2;
-  std::vector<dsize_t> size = {input->GetShape().AsVector()[1], input->GetShape().AsVector()[kWidthIndexNHWC]};
+
+  std::vector<dsize_t> size = {input->GetShape().AsVector()[kHeightIndexNHWC],
+                               input->GetShape().AsVector()[kWidthIndexNHWC]};
   int32_t input_h = size[kHeightIndex];
   int32_t input_w = size[kWidthIndex];
   int32_t output_h;
@@ -78,6 +77,24 @@ Status DvppResizeOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &inpu
   CHECK_FAIL_RETURN_UNEXPECTED(GetDVPPInterpolationMode(interpolation_) != kInvalidInterpolationMode,
                                "The current InterpolationMode is not supported by DVPP. It is " +
                                  std::to_string(static_cast<int>(interpolation_)));
+
+  // Dvpp Limit
+  constexpr int32_t h_lb = 4;      // height lower bound
+  constexpr int32_t h_ub = 32768;  // height upper bound
+  constexpr int32_t w_lb = 6;      // width lower bound
+  constexpr int32_t w_ub = 32768;  // width upper bound
+  if ((input_h < h_lb || input_h > h_ub) || (input_w < w_lb || input_w > w_ub)) {
+    auto error =
+      "DvppResize: due to hardware limit, the input shape should be from [4, 6] to [32768, 32768], but got [" +
+      std::to_string(input_h) + ", " + std::to_string(input_w) + "].";
+    RETURN_STATUS_UNEXPECTED(error);
+  }
+  if ((output_h < h_lb || output_h > h_ub) || (output_w < w_lb || output_w > w_ub)) {
+    auto error =
+      "DvppResize: due to hardware limit, the output shape should be from [4, 6] to [32768, 32768], but got [" +
+      std::to_string(output_h) + ", " + std::to_string(output_w) + "].";
+    RETURN_STATUS_UNEXPECTED(error);
+  }
 
   APP_ERROR ret = AclAdapter::GetInstance().DvppResize(input, output, output_h, output_w, 0, 0, interpolation_);
   if (ret != APP_ERR_OK) {

@@ -31,7 +31,6 @@ Status DvppAdjustContrastOp::Compute(const std::shared_ptr<DeviceTensorAscend910
                                      std::shared_ptr<DeviceTensorAscend910B> *output) {
   IO_CHECK(input, output);
   // check the input tensor shape
-  const auto kNHWCImageRank = 4;
   if (input->GetShape().Rank() != kNHWCImageRank) {
     RETURN_STATUS_UNEXPECTED("DvppAdjustContrast: invalid input shape, only support NHWC input, got rank: " +
                              std::to_string(input->GetShape().Rank()));

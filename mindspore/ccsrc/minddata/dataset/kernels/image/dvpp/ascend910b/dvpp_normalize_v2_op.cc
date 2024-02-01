@@ -37,12 +37,9 @@ Status DvppNormalizeV2Op::Compute(const std::shared_ptr<DeviceTensorAscend910B> 
   IO_CHECK(input, output);
 
   // the input should be 1HWC
-  const auto kNHWCImageRank = 4;
   CHECK_FAIL_RETURN_UNEXPECTED(input->GetShape().Rank() == kNHWCImageRank,
                                "DvppNormalize: The input data's dims is not 4.");  // NHWC
 
-  const auto kDefaultImageChannel = 3;
-  const auto kChannelIndexNHWC = 3;
   if (!is_hwc_) {
     CHECK_FAIL_RETURN_UNEXPECTED(
       input->GetShape().AsVector()[1] == kDefaultImageChannel || input->GetShape().AsVector()[1] == 1,

@@ -32,14 +32,12 @@ Status DvppPerspectiveOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> 
                                   std::shared_ptr<DeviceTensorAscend910B> *output) {
   IO_CHECK(input, output);
   // check the input tensor shape
-  const auto kNHWCImageRank = 4;
   if (input->GetShape().Rank() != kNHWCImageRank) {
     RETURN_STATUS_UNEXPECTED("DvppPerspective: invalid input shape, only support NHWC input, got rank: " +
                              std::to_string(input->GetShape().Rank()));
   }
 
   // the channel should be 3 or 1
-  const auto kChannelIndexNHWC = 3;
   CHECK_FAIL_RETURN_UNEXPECTED(input->GetShape().AsVector()[kChannelIndexNHWC] == kMinImageChannel ||
                                  input->GetShape().AsVector()[kChannelIndexNHWC] == kDefaultImageChannel,
                                "DvppPerspective: the channel of the input is not 1 or 3.");

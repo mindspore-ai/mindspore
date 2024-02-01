@@ -5,6 +5,8 @@ mindspore.dataset.vision.Crop
 
     在输入图像上裁剪出指定区域。
 
+    支持 Ascend 硬件加速，需要通过 `.device("Ascend")` 方式开启。
+
     参数：
         - **coordinates**  (sequence) - 裁剪区域的起始左上角坐标。必须是两个值的序列，形式为(上，左)。
         - **size**  (Union[int, sequence]) - 裁剪区域的尺寸大小。
@@ -22,3 +24,14 @@ mindspore.dataset.vision.Crop
     教程样例：
         - `视觉变换样例库
           <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_
+
+    .. py:method:: device(device_target="CPU")
+
+        指定该变换执行的设备。
+
+        参数：
+            - **device_target** (str, 可选) - 算子将在指定的设备上运行。当前支持 ``CPU`` 和 ``Ascend`` 。默认值： ``CPU`` 。
+
+        异常：
+            - **TypeError** - 当 `device_target` 的类型不为str。
+            - **ValueError** - 当 `device_target` 的取值不为 ``CPU`` / ``Ascend`` 。

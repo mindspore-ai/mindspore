@@ -61,6 +61,10 @@ constexpr dsize_t kMinJpegQuality = 1;       // the minimum quality for JPEG
 constexpr dsize_t kMaxJpegQuality = 100;     // the maximum quality for JPEG
 constexpr dsize_t kMinPngCompression = 0;    // the minimum compression level for PNG
 constexpr dsize_t kMaxPngCompression = 9;    // the maximum compression level for PNG
+constexpr dsize_t kChannelIndexNHWC = 3;
+constexpr dsize_t kNHWCImageRank = 4;
+constexpr dsize_t kWidthIndexNHWC = 2;
+constexpr dsize_t kHeightIndexNHWC = 1;
 
 void JpegErrorExitCustom(j_common_ptr cinfo);
 

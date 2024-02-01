@@ -1128,6 +1128,92 @@ def test_eager_compose_dvpp_ops():
     assert "Building Transform ops failed!" in str(error_info.value)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_eager_crop_dvpp():
+    """
+    Feature: Crop op on Ascend910B
+    Description: Test eager support for Crop with Dvpp
+    Expectation: Output image info from op is correct
+    """
+    ms.set_context(device_target="Ascend")
+
+    print("Run testcase: " + sys._getframe().f_code.co_name)
+
+    # HWC input
+    img = cv2.imread(input_apple_jpg)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
+
+    img_transformed = vision.Crop((1000, 2000), (400, 500)).device("Ascend")(img)
+    logger.info("Image.type: {}, Image.shape: {}".format(img_transformed.dtype, img_transformed.shape))
+
+    assert img_transformed.shape == (400, 500, 3)
+
+    # check the result
+    check_img = cv2.imread(input_apple_jpg)
+    check_img = cv2.cvtColor(check_img, cv2.COLOR_BGR2RGB)
+    check_img = vision.Crop((1000, 2000), (400, 500)).device("CPU")(check_img)
+    assert (img_transformed == check_img).all()
+
+    # HW input
+    img = np.ones((300, 400)).astype(np.uint8)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
+
+    img_transformed = vision.Crop((100, 200), (40, 50)).device("Ascend")(img)
+    logger.info("Image.type: {}, Image.shape: {}".format(img_transformed.dtype, img_transformed.shape))
+
+    assert img_transformed.shape == (40, 50,)
+
+    # check the result
+    check_img = np.ones((300, 400)).astype(np.uint8)
+    check_img = vision.Crop((100, 200), (40, 50)).device("CPU")(check_img)
+
+    assert (img_transformed == check_img).all()
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_eager_crop_dvpp_exception():
+    """
+    Feature: Crop op on Ascend910B
+    Description: Test eager support for crop with Dvpp when invalid input
+    Expectation: Success
+    """
+    os.environ['MS_ENABLE_REF_MODE'] = "1"
+    ms.set_context(device_target="Ascend")
+
+    print("Run testcase: " + sys._getframe().f_code.co_name)
+
+    # the input is list
+    img = np.ones([1024], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.Crop((0, 0), 250).device("Ascend")(img)
+    assert "the input tensor is not HW, HWC or 1HWC," in str(error_info.value)
+
+    # the input is HW2
+    img = np.ones([224, 224, 2], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.Crop((0, 0), 250).device("Ascend")(img)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(error_info.value)
+
+    # the input is 3HW1
+    img = np.ones([3, 224, 224, 1], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        _ = vision.Crop((0, 0), 250).device("Ascend")(img)
+    assert "The input tensor NHWC should be 1HWC or HWC." in str(error_info.value)
+
+    # the input is 23HW3
+    img = np.ones([2, 3, 224, 224, 3], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.Crop((0, 0), 250).device("Ascend")(img)
+    assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(error_info.value)
+
+    os.environ['MS_ENABLE_REF_MODE'] = "0"
+
+
 if __name__ == '__main__':
     test_eager_resize_dvpp()
     test_eager_resize_dvpp_exception()

@@ -227,11 +227,12 @@ PYBIND_REGISTER(
 PYBIND_REGISTER(CropOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::CropOperation, TensorOperation, std::shared_ptr<vision::CropOperation>>(
                     *m, "CropOperation", "Tensor operation to crop images")
-                    .def(py::init([](std::vector<int32_t> coordinates, const std::vector<int32_t> &size) {
+                    .def(py::init([](std::vector<int32_t> coordinates, const std::vector<int32_t> &size,
+                                     const std::string &device_target) {
                       // In Python API, the order of coordinates is first top then left, which is different from
                       // those in CropOperation. So we need to swap the coordinates.
                       std::swap(coordinates[0], coordinates[1]);
-                      auto crop = std::make_shared<vision::CropOperation>(coordinates, size);
+                      auto crop = std::make_shared<vision::CropOperation>(coordinates, size, device_target);
                       THROW_IF_ERROR(crop->ValidateParams());
                       return crop;
                     }));

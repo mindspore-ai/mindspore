@@ -106,17 +106,18 @@ void AclAdapter::InitPlugin() {
   aclrt_memcpy_fun_obj_ = DlsymFuncObj(aclrtMemcpy, plugin_handle_);
 #if !defined(BUILD_LITE) && defined(ENABLE_D)
   // Ascend910B
-  dvpp_resize_fun_obj_ = DlsymFuncObj(DvppResize, plugin_handle_);
-  dvpp_decode_fun_obj_ = DlsymFuncObj(DvppDecode, plugin_handle_);
-  dvpp_normalize_fun_obj_ = DlsymFuncObj(DvppNormalize, plugin_handle_);
   dvpp_brightness_fun_obj_ = DlsymFuncObj(DvppAdjustBrightness, plugin_handle_);
   dvpp_contrast_fun_obj_ = DlsymFuncObj(DvppAdjustContrast, plugin_handle_);
-  dvpp_hue_fun_obj_ = DlsymFuncObj(DvppAdjustHue, plugin_handle_);
-  dvpp_saturation_fun_obj_ = DlsymFuncObj(DvppAdjustSaturation, plugin_handle_);
+  dvpp_crop_fun_obj_ = DlsymFuncObj(DvppCrop, plugin_handle_);
+  dvpp_decode_fun_obj_ = DlsymFuncObj(DvppDecode, plugin_handle_);
   dvpp_horizontal_flip_fun_obj_ = DlsymFuncObj(DvppHorizontalFlip, plugin_handle_);
-  dvpp_vertical_flip_fun_obj_ = DlsymFuncObj(DvppVerticalFlip, plugin_handle_);
+  dvpp_hue_fun_obj_ = DlsymFuncObj(DvppAdjustHue, plugin_handle_);
+  dvpp_normalize_fun_obj_ = DlsymFuncObj(DvppNormalize, plugin_handle_);
   dvpp_perspective_fun_obj_ = DlsymFuncObj(DvppPerspective, plugin_handle_);
+  dvpp_resize_fun_obj_ = DlsymFuncObj(DvppResize, plugin_handle_);
   dvpp_resized_crop_fun_obj_ = DlsymFuncObj(DvppResizedCrop, plugin_handle_);
+  dvpp_saturation_fun_obj_ = DlsymFuncObj(DvppAdjustSaturation, plugin_handle_);
+  dvpp_vertical_flip_fun_obj_ = DlsymFuncObj(DvppVerticalFlip, plugin_handle_);
 
   // acl
   get_soc_name_fun_obj_ = DlsymFuncObj(GetSocName, plugin_handle_);
@@ -174,17 +175,19 @@ void AclAdapter::FinalizePlugin() {
   aclrt_memcpy_fun_obj_ = nullptr;
 #if !defined(BUILD_LITE) && defined(ENABLE_D)
   // Ascend910B
-  dvpp_resize_fun_obj_ = nullptr;
-  dvpp_decode_fun_obj_ = nullptr;
-  dvpp_normalize_fun_obj_ = nullptr;
   dvpp_brightness_fun_obj_ = nullptr;
   dvpp_contrast_fun_obj_ = nullptr;
-  dvpp_hue_fun_obj_ = nullptr;
-  dvpp_saturation_fun_obj_ = nullptr;
+  dvpp_crop_fun_obj_ = nullptr;
+  dvpp_decode_fun_obj_ = nullptr;
   dvpp_horizontal_flip_fun_obj_ = nullptr;
-  dvpp_vertical_flip_fun_obj_ = nullptr;
+  dvpp_hue_fun_obj_ = nullptr;
+  dvpp_normalize_fun_obj_ = nullptr;
   dvpp_perspective_fun_obj_ = nullptr;
+  dvpp_resize_fun_obj_ = nullptr;
   dvpp_resized_crop_fun_obj_ = nullptr;
+  dvpp_saturation_fun_obj_ = nullptr;
+  dvpp_vertical_flip_fun_obj_ = nullptr;
+
   // acl
   get_soc_name_fun_obj_ = nullptr;
   create_acl_tensor_fun_obj_ = nullptr;
@@ -481,32 +484,6 @@ int AclAdapter::FreeHost(void *host_ptr) const {
 
 #if !defined(BUILD_LITE) && defined(ENABLE_D)
 // Ascend910B
-APP_ERROR AclAdapter::DvppResize(const std::shared_ptr<DeviceTensorAscend910B> &input,
-                                 std::shared_ptr<DeviceTensorAscend910B> *output, int32_t output_height,
-                                 int32_t output_width, double fx, double fy, InterpolationMode mode) {
-  if (!HasAclPlugin() || dvpp_resize_fun_obj_ == nullptr) {
-    return APP_ERR_ACL_FAILURE;
-  }
-  return dvpp_resize_fun_obj_(input, output, output_height, output_width, fx, fy, mode);
-}
-
-APP_ERROR AclAdapter::DvppDecode(const std::shared_ptr<DeviceTensorAscend910B> &input,
-                                 std::shared_ptr<DeviceTensorAscend910B> *output) {
-  if (!HasAclPlugin() || dvpp_decode_fun_obj_ == nullptr) {
-    return APP_ERR_ACL_FAILURE;
-  }
-  return dvpp_decode_fun_obj_(input, output);
-}
-
-APP_ERROR AclAdapter::DvppNormalize(const std::shared_ptr<DeviceTensorAscend910B> &input,
-                                    std::shared_ptr<DeviceTensorAscend910B> *output, std::vector<float> mean,
-                                    std::vector<float> std, bool is_hwc) {
-  if (!HasAclPlugin() || dvpp_normalize_fun_obj_ == nullptr) {
-    return APP_ERR_ACL_FAILURE;
-  }
-  return dvpp_normalize_fun_obj_(input, output, mean, std, is_hwc);
-}
-
 APP_ERROR AclAdapter::DvppAdjustBrightness(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                            std::shared_ptr<DeviceTensorAscend910B> *output, float factor) {
   if (!HasAclPlugin() || dvpp_brightness_fun_obj_ == nullptr) {
@@ -539,6 +516,23 @@ APP_ERROR AclAdapter::DvppAdjustSaturation(const std::shared_ptr<DeviceTensorAsc
   return dvpp_saturation_fun_obj_(input, output, factor);
 }
 
+APP_ERROR AclAdapter::DvppCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                               std::shared_ptr<DeviceTensorAscend910B> *output, uint32_t top, uint32_t left,
+                               uint32_t height, uint32_t width) {
+  if (!HasAclPlugin() || dvpp_crop_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_crop_fun_obj_(input, output, top, left, height, width);
+}
+
+APP_ERROR AclAdapter::DvppDecode(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                 std::shared_ptr<DeviceTensorAscend910B> *output) {
+  if (!HasAclPlugin() || dvpp_decode_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_decode_fun_obj_(input, output);
+}
+
 APP_ERROR AclAdapter::DvppHorizontalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                          std::shared_ptr<DeviceTensorAscend910B> *output) {
   if (!HasAclPlugin() || dvpp_horizontal_flip_fun_obj_ == nullptr) {
@@ -547,12 +541,13 @@ APP_ERROR AclAdapter::DvppHorizontalFlip(const std::shared_ptr<DeviceTensorAscen
   return dvpp_horizontal_flip_fun_obj_(input, output);
 }
 
-APP_ERROR AclAdapter::DvppVerticalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
-                                       std::shared_ptr<DeviceTensorAscend910B> *output) {
-  if (!HasAclPlugin() || dvpp_vertical_flip_fun_obj_ == nullptr) {
+APP_ERROR AclAdapter::DvppNormalize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                    std::shared_ptr<DeviceTensorAscend910B> *output, std::vector<float> mean,
+                                    std::vector<float> std, bool is_hwc) {
+  if (!HasAclPlugin() || dvpp_normalize_fun_obj_ == nullptr) {
     return APP_ERR_ACL_FAILURE;
   }
-  return dvpp_vertical_flip_fun_obj_(input, output);
+  return dvpp_normalize_fun_obj_(input, output, mean, std, is_hwc);
 }
 
 APP_ERROR AclAdapter::DvppPerspective(const std::shared_ptr<DeviceTensorAscend910B> &input,
@@ -566,6 +561,15 @@ APP_ERROR AclAdapter::DvppPerspective(const std::shared_ptr<DeviceTensorAscend91
   return dvpp_perspective_fun_obj_(input, output, start_points, end_points, interpolation);
 }
 
+APP_ERROR AclAdapter::DvppResize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                 std::shared_ptr<DeviceTensorAscend910B> *output, int32_t output_height,
+                                 int32_t output_width, double fx, double fy, InterpolationMode mode) {
+  if (!HasAclPlugin() || dvpp_resize_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_resize_fun_obj_(input, output, output_height, output_width, fx, fy, mode);
+}
+
 APP_ERROR AclAdapter::DvppResizedCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                       std::shared_ptr<DeviceTensorAscend910B> *output, int32_t top, int32_t left,
                                       int32_t height, int32_t width, int32_t output_height, int32_t output_width,
@@ -575,6 +579,14 @@ APP_ERROR AclAdapter::DvppResizedCrop(const std::shared_ptr<DeviceTensorAscend91
   }
   return dvpp_resized_crop_fun_obj_(input, output, top, left, height, width, output_height, output_width,
                                     interpolation);
+}
+
+APP_ERROR AclAdapter::DvppVerticalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                       std::shared_ptr<DeviceTensorAscend910B> *output) {
+  if (!HasAclPlugin() || dvpp_vertical_flip_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_vertical_flip_fun_obj_(input, output);
 }
 
 // acl

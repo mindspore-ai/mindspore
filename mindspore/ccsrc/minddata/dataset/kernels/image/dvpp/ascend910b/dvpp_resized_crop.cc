@@ -37,7 +37,6 @@ Status DvppResizedCropOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> 
                                   std::shared_ptr<DeviceTensorAscend910B> *output) {
   IO_CHECK(input, output);
   // the input should be NHWC, N is 1.
-  const auto kNHWCImageRank = 4;
   CHECK_FAIL_RETURN_UNEXPECTED(
     input->GetShape().Rank() == kNHWCImageRank,
     "DvppResizedCrop: the input tensor is not HW, HWC or 1HWC, but got: " + std::to_string(input->GetShape().Rank()));
@@ -51,8 +50,6 @@ Status DvppResizedCropOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> 
   // the type should be uint8 or float
   CHECK_FAIL_RETURN_UNEXPECTED(input->GetType() == DataType::DE_UINT8 || input->GetType() == DataType::DE_FLOAT32,
                                "DvppResizedCrop: the type of the input is not uint8 or float.");
-  const auto kWidthIndexNHWC = 2;
-  const auto kHeightIndexNHWC = 1;
   std::vector<dsize_t> size = {input->GetShape().AsVector()[kHeightIndexNHWC],
                                input->GetShape().AsVector()[kWidthIndexNHWC]};
   int32_t input_h = size[kHeightIndex];

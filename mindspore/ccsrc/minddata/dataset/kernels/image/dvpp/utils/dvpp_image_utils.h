@@ -57,35 +57,6 @@ inline int GetDVPPInterpolationMode(InterpolationMode mode) {
   }
 }
 
-/// \brief Returns Resized image.
-/// \param input/output: Tensor of shape <N,H,W,C>, c == 1 or c == 3
-/// \param output_height: height of output
-/// \param output_width: width of output
-/// \param fx: horizontal scale
-/// \param fy: vertical scale
-/// \param InterpolationMode: the interpolation mode
-/// \param output: Resized image of shape <H,outputHeight,outputWidth,C> and same type as input
-APP_ERROR DvppResize(const std::shared_ptr<DeviceTensorAscend910B> &input,
-                     std::shared_ptr<DeviceTensorAscend910B> *output, int32_t output_height, int32_t output_width,
-                     double fx = 0.0, double fy = 0.0, InterpolationMode mode = InterpolationMode::kLinear);
-
-/// \brief Returns Decoded image
-/// Supported images: JPEG JPG
-/// \param input: input containing the not decoded image 1D bytes
-/// \param output: Decoded image Tensor of shape <H,W,C> and type DE_UINT8. Pixel order is RGB
-APP_ERROR DvppDecode(const std::shared_ptr<DeviceTensorAscend910B> &input,
-                     std::shared_ptr<DeviceTensorAscend910B> *output);
-
-/// \brief Returns Normalized image
-/// \param input: Tensor of shape <H,W,C> in RGB order.
-/// \param mean: Tensor of shape <3> and type DE_FLOAT32 which are mean of each channel in RGB order
-/// \param std:  Tensor of shape <3> and type DE_FLOAT32 which are std of each channel in RGB order
-/// \param is_hwc: Check if input is HWC/CHW format
-/// \param output: Normalized image Tensor of same input shape and type DE_FLOAT32
-APP_ERROR DvppNormalize(const std::shared_ptr<DeviceTensorAscend910B> &input,
-                        std::shared_ptr<DeviceTensorAscend910B> *output, std::vector<float> mean,
-                        std::vector<float> std, bool is_hwc);
-
 /// \brief Returns image with adjusting brightness
 /// \param input: Tensor of shape <H,W,C> format.
 /// \param factor: brightness factor.
@@ -114,17 +85,39 @@ APP_ERROR DvppAdjustHue(const std::shared_ptr<DeviceTensorAscend910B> &input,
 APP_ERROR DvppAdjustSaturation(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
 
+/// \brief Returns croped image
+/// \param input: Tensor of shape <H,W,C> format.
+/// \param top: the vertical starting coordinate
+/// \param left: the horizontal starting coordinate
+/// \param height: the height of the crop box
+/// \param width: the width of the crop box
+/// \param output: Croped image Tensor (type DE_FLOAT32 or DE_UINT8)
+APP_ERROR DvppCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                   std::shared_ptr<DeviceTensorAscend910B> *output, uint32_t top, uint32_t left, uint32_t height,
+                   uint32_t width);
+
+/// \brief Returns Decoded image
+/// Supported images: JPEG JPG
+/// \param input: input containing the not decoded image 1D bytes
+/// \param output: Decoded image Tensor of shape <H,W,C> and type DE_UINT8. Pixel order is RGB
+APP_ERROR DvppDecode(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                     std::shared_ptr<DeviceTensorAscend910B> *output);
+
 /// \brief Returns horizontal flip image
 /// \param input: Tensor of shape <N,H,W,C>, c == 1 or c == 3
 /// \param output: vertical filp image Tensor of same input shape (type DE_FLOAT32 and DE_UINT8)
 APP_ERROR DvppHorizontalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
                              std::shared_ptr<DeviceTensorAscend910B> *output);
 
-/// \brief Returns vertical flip image.
-/// \param input: Tensor of shape <N,H,W,C>, c == 1 or c == 3
-/// \param output: vertical filp image Tensor of same input shape (type DE_FLOAT32 and DE_UINT8)
-APP_ERROR DvppVerticalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
-                           std::shared_ptr<DeviceTensorAscend910B> *output);
+/// \brief Returns Normalized image
+/// \param input: Tensor of shape <H,W,C> in RGB order.
+/// \param mean: Tensor of shape <3> and type DE_FLOAT32 which are mean of each channel in RGB order
+/// \param std:  Tensor of shape <3> and type DE_FLOAT32 which are std of each channel in RGB order
+/// \param is_hwc: Check if input is HWC/CHW format
+/// \param output: Normalized image Tensor of same input shape and type DE_FLOAT32
+APP_ERROR DvppNormalize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                        std::shared_ptr<DeviceTensorAscend910B> *output, std::vector<float> mean,
+                        std::vector<float> std, bool is_hwc);
 
 /// \brief Returns Perspective image
 /// \param input: Tensor of shape <H,W,C> format.
@@ -140,6 +133,18 @@ APP_ERROR DvppPerspective(const std::shared_ptr<DeviceTensorAscend910B> &input,
                           const std::vector<std::vector<int32_t>> &end_points,
                           InterpolationMode interpolation = InterpolationMode::kLinear);
 
+/// \brief Returns Resized image.
+/// \param input/output: Tensor of shape <N,H,W,C>, c == 1 or c == 3
+/// \param output_height: height of output
+/// \param output_width: width of output
+/// \param fx: horizontal scale
+/// \param fy: vertical scale
+/// \param InterpolationMode: the interpolation mode
+/// \param output: Resized image of shape <H,outputHeight,outputWidth,C> and same type as input
+APP_ERROR DvppResize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                     std::shared_ptr<DeviceTensorAscend910B> *output, int32_t output_height, int32_t output_width,
+                     double fx = 0.0, double fy = 0.0, InterpolationMode mode = InterpolationMode::kLinear);
+
 /// \brief Returns Crop and Resized image.
 /// \param input: Tensor of shape <N,H,W,C>, c == 1 or c == 3
 /// \param top: horizontal start point
@@ -153,6 +158,12 @@ APP_ERROR DvppPerspective(const std::shared_ptr<DeviceTensorAscend910B> &input,
 APP_ERROR DvppResizedCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
                           std::shared_ptr<DeviceTensorAscend910B> *output, int32_t top, int32_t left, int32_t height,
                           int32_t width, int32_t output_height, int32_t output_width, InterpolationMode mode);
+
+/// \brief Returns vertical flip image.
+/// \param input: Tensor of shape <N,H,W,C>, c == 1 or c == 3
+/// \param output: vertical filp image Tensor of same input shape (type DE_FLOAT32 and DE_UINT8)
+APP_ERROR DvppVerticalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                           std::shared_ptr<DeviceTensorAscend910B> *output);
 
 APP_ERROR GetSocName(std::string *soc_name);
 
