@@ -78,7 +78,7 @@ bool InternalGelu::Launch(const std::vector<KernelTensor *> &inputs, const std::
   }
   impl_->SetInputs(inputs_);
   impl_->SetStream(stream_ptr);
-  impl_->SetDeviceTilingBuf(device_tiling_buf_);
+  impl_->SetDeviceTilingBuf(tiling_info_.device_buf_);
   std::vector<internal::DeviceRawBuf> ws_raw_bufs(workspace.size());
   for (size_t i = 0; i < workspace.size(); ++i) {
     ws_raw_bufs[i] = InternalKernelUtils::ToDeviceRawBuf(workspace[i]);
