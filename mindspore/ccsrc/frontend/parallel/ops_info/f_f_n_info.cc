@@ -60,7 +60,11 @@ enum FFNInputIndex : size_t {
   kInputScale,
   kInputOffset,
   kInputDeqScale1,
-  kInputDeqScale2
+  kInputDeqScale2,
+  kInputAntiquantScale1,
+  kInputAntiquantScale2,
+  kInputAntiquantOffset1,
+  kInputAntiquantOffset2,
 };
 
 auto GetStrategy = [](const Dimensions &strategy, int64_t org_dim) {
@@ -222,6 +226,10 @@ Status FFNInfo::InferTensorMap() {
   size_t expert_index = GetStrategyRealIndex(kInputIndexExpert);
   size_t bias1_index = GetStrategyRealIndex(kInputIndexBias1);
   size_t bias2_index = GetStrategyRealIndex(kInputIndexBias2);
+  size_t antiquant_scale1 = GetStrategyRealIndex(kInputAntiquantScale1);
+  size_t antiquant_scale2 = GetStrategyRealIndex(kInputAntiquantScale2);
+  size_t antiquant_offset1 = GetStrategyRealIndex(kInputAntiquantOffset1);
+  size_t antiquant_offset2 = GetStrategyRealIndex(kInputAntiquantOffset2);
   // x: [bs * seq_length, hidden]
   Shape x_tensor_map;  // [...,5,4,3,2,1]
   for (size_t i = inputs_shape_[0].size(); i > 0; i--) {
@@ -238,6 +246,14 @@ Status FFNInfo::InferTensorMap() {
     Shape bias1_tensor_map{expert_pos, 0};
     // b1: [expert, hidden_size]
     Shape bias2_tensor_map{expert_pos, 1};
+    // aq scale1: [expert, ffn_hidden_size]
+    Shape antiquant_scale1_tensor_map{expert_pos, 0};
+    // aq scale2: [expert, hidden_size]
+    Shape antiquant_scale2_tensor_map{expert_pos, 1};
+    // aq offset1: [expert, ffn_hidden_size]
+    Shape antiquant_offset1_tensor_map{expert_pos, 0};
+    // aq offset2: [expert, hidden_size]
+    Shape antiquant_offset2_tensor_map{expert_pos, 1};
 
     inputs_tensor_map_.emplace_back(x_tensor_map);
     inputs_tensor_map_.emplace_back(weight1_tensor_map);
@@ -248,6 +264,18 @@ Status FFNInfo::InferTensorMap() {
     }
     if (inputs_shape_.size() > bias2_index) {
       inputs_tensor_map_.emplace_back(bias2_tensor_map);
+    }
+    if (inputs_shape_.size() > antiquant_scale1) {
+      inputs_tensor_map_.emplace_back(antiquant_scale1_tensor_map);
+    }
+    if (inputs_shape_.size() > antiquant_scale2) {
+      inputs_tensor_map_.emplace_back(antiquant_scale2_tensor_map);
+    }
+    if (inputs_shape_.size() > antiquant_offset1) {
+      inputs_tensor_map_.emplace_back(antiquant_offset1_tensor_map);
+    }
+    if (inputs_shape_.size() > antiquant_offset2) {
+      inputs_tensor_map_.emplace_back(antiquant_offset2_tensor_map);
     }
   } else {
     // w1: [hidden, ffn_hidden_size]

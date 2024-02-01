@@ -55,6 +55,7 @@ elif [[ ${backend} =~ "cloud" ]]; then
     models_ascend_with_config=${benchmark_test}/models_with_config_cloud_ascend.cfg
     ascend_cfg_file_list=("$models_ascend_config" "$models_ascend_with_config")
     if [[ ${backend} =~ "_ge" ]]; then
+        export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./runtime/lib
         models_ascend_config=${benchmark_test}/models_ascend_ge_cloud.cfg
         models_ascend_on_the_fly_quant_config=${benchmark_test}/models_ascend_on_the_fly_quant_ge_cloud.cfg
         models_ascend_fake_model_on_the_fly_quant_config=${benchmark_test}/models_ascend_fake_model_on_the_fly_quant_ge_cloud.cfg
