@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,6 +156,30 @@ bool IsSideEffectCNode(const AnfNodePtr &node) {
   return false;
 }
 
+bool HasIsolatedSideEffectNode(const FuncGraphPtr &func_graph);
+
+bool CheckSideEffect(const AnfNodePtr &input) {
+  if (IsSideEffectCNode(input)) {
+    MS_LOG(DEBUG) << "Multiple side-effect node: " << input->DebugString();
+    return true;
+  }
+  // Process {Depend -> StopGradient -> MakeTuple(call function, ...)}.
+  if (input->isa<CNode>()) {
+    auto fn_input = input->cast<CNodePtr>()->input(0);
+    if (IsValueNode<prim::UnpackCall>(fn_input)) {
+      fn_input = input->cast<CNodePtr>()->input(1);
+    }
+    if (IsValueNode<FuncGraph>(fn_input)) {
+      auto func = GetValueNode<FuncGraphPtr>(fn_input);
+      if (IsSideEffectCNode(func->output()) || HasIsolatedSideEffectNode(func)) {
+        MS_LOG(DEBUG) << "Single nested side-effect node: " << input->DebugString();
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 bool HasIsolatedSideEffectNode(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   const auto node = func_graph->output();
@@ -180,33 +204,17 @@ bool HasIsolatedSideEffectNode(const FuncGraphPtr &func_graph) {
   constexpr size_t isolated_node_pos = 1;
   auto isolated_node = stop_gradient_cnode->input(isolated_node_pos);
   MS_EXCEPTION_IF_NULL(isolated_node);
+  if (CheckSideEffect(isolated_node)) {
+    return true;
+  }
   if (IsPrimitiveCNode(isolated_node, prim::kPrimMakeTuple)) {
     auto isolated_cnode = dyn_cast<CNode>(isolated_node);
     MS_EXCEPTION_IF_NULL(isolated_cnode);
     for (size_t i = 1; i < isolated_cnode->size(); ++i) {
-      if (IsSideEffectCNode(isolated_cnode->input(i))) {
-        MS_LOG(DEBUG) << "Multiple side-effect node[" << i << "]: " << isolated_cnode->input(i)->DebugString();
+      auto input = isolated_cnode->input(i);
+      if (CheckSideEffect(input)) {
         return true;
       }
-    }
-  } else {
-    // Process call function
-    if (isolated_node->isa<CNode>()) {
-      auto fn_input = isolated_node->cast<CNodePtr>()->input(0);
-      if (IsValueNode<prim::UnpackCall>(fn_input)) {
-        fn_input = isolated_node->cast<CNodePtr>()->input(1);
-      }
-      if (IsValueNode<FuncGraph>(fn_input)) {
-        auto func = GetValueNode<FuncGraphPtr>(fn_input);
-        if (IsSideEffectCNode(func->output()) || HasIsolatedSideEffectNode(func)) {
-          MS_LOG(DEBUG) << "Single nested side-effect node: " << isolated_node->DebugString();
-          return true;
-        }
-      }
-    }
-    if (IsSideEffectCNode(isolated_node)) {
-      MS_LOG(DEBUG) << "Single side-effect node: " << isolated_node->DebugString();
-      return true;
     }
   }
   return false;
