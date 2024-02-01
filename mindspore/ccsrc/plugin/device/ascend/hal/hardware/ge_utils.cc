@@ -133,6 +133,34 @@ void GetComputeGraphReuseOptions(const FuncGraphPtr &graph, OptionMap *option) {
   }
 }
 
+namespace {
+void UpdateTopoOrderOptions(const string &graph_name, OptionMap *option) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+
+  const auto &topo_order = context->get_param<std::string>(MS_CTX_TOPO_ORDER);
+  if (topo_order.empty()) {
+    return;
+  }
+
+  nlohmann::json topo_order_json = nlohmann::json::parse(topo_order);
+  auto topo_order_iter = topo_order_json.find(graph_name);
+  if (topo_order_iter == topo_order_json.end()) {
+    return;
+  }
+  MS_LOG(INFO) << "Update topo order for graph " << graph_name << " to " << topo_order_iter.value();
+  std::string topo_sorting_mode = "1";
+  if (topo_order_iter.value() == "bfs") {
+    topo_sorting_mode = "0";
+  } else if (topo_order_iter.value() == "dfs") {
+    topo_sorting_mode = "1";
+  } else if (topo_order_iter.value() == "rdfs") {
+    topo_sorting_mode = "2";
+  }
+  (*option)["ge.topoSortingMode"] = topo_sorting_mode;
+}
+}  // namespace
+
 bool AddFakeGraph(const FuncGraphPtr &anf_graph) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   auto converter = transform::NewConverter(anf_graph, GetPhasePrefix());
@@ -142,6 +170,7 @@ bool AddFakeGraph(const FuncGraphPtr &anf_graph) {
   std::string checkpoint_name = "save." + graph_name;
   auto options = GetComputeGraphOptions(converter->input_shapes(), converter->dynamic_shape_inputs());
   GetComputeGraphReuseOptions(anf_graph, &options);
+  UpdateTopoOrderOptions(graph_name, &options);
   MS_LOG(INFO) << "Set options of compute graph: " << graph_name << " to " << MapToString(options);
   (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter), options);
   (void)transform::AddGraph(init_graph, transform::GetInitGraph(converter));
@@ -180,6 +209,7 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
   std::string checkpoint_name = "save." + graph_name;
   auto options = GetComputeGraphOptions(converter->input_shapes(), converter->dynamic_shape_inputs());
   GetComputeGraphReuseOptions(anf_graph, &options);
+  UpdateTopoOrderOptions(graph_name, &options);
   MS_LOG(INFO) << "Set options of compute graph: " << graph_name << " to " << MapToString(options);
   (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter), options);
   if (IsEnableRefMode()) {
