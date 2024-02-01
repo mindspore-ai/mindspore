@@ -295,10 +295,23 @@ class GraphBuilder {
 
 class MindGraphBuilder : public GraphBuilder {
  public:
-  explicit MindGraphBuilder(const PyFrameObject *f)
-      : GraphBuilder(f), fg_builder_(std::make_shared<FuncGraphBuilder>()) {}
+  explicit MindGraphBuilder(const PyFrameObject *f) : GraphBuilder(f) {
+    std::vector<std::string> comments;
+    auto location = std::make_shared<Location>(py::cast<std::string>(f->f_code->co_filename), f->f_code->co_firstlineno,
+                                               0, f->f_code->co_firstlineno, 0, "", std::move(comments));
+    TraceGuard trace_guard(location);
+    fg_builder_ = std::make_shared<FuncGraphBuilder>();
+    fg_builder_->SetGraphName(py::cast<std::string>(f->f_code->co_name) + "_" +
+                              std::to_string(f->f_code->co_firstlineno));
+  }
   MindGraphBuilder(GraphBuilder *r, GraphBuilder *p, PyCodeObject *co, PyObject *globals)
-      : GraphBuilder(r, p, co, globals), fg_builder_(std::make_shared<FuncGraphBuilder>()) {}
+      : GraphBuilder(r, p, co, globals) {
+    std::vector<std::string> comments;
+    auto location = std::make_shared<Location>(py::cast<std::string>(co->co_filename), co->co_firstlineno, 0,
+                                               co->co_firstlineno, 0, "", std::move(comments));
+    TraceGuard trace_guard(location);
+    fg_builder_ = std::make_shared<FuncGraphBuilder>();
+  }
   bool trace_flag() { return true; }
   mindspore::FuncGraphBuilderPtr FGBuilder() const { return fg_builder_; }
   StopTraceReason TraceRun(const std::vector<py::object> &args);
@@ -309,6 +322,8 @@ class MindGraphBuilder : public GraphBuilder {
                                 const GraphBuilderPtr &subgraph) override;
   py::object ResolveCallable(CallNode *call_node, StopTraceReason *stop_reason) override;
   bool WhiteListFuncCheckAndInfer(CallNode *, const py::object &f) override;
+
+  LocationPtr GetLocation(CallNode *call_node) const;
 
  protected:
   bool DoGetItem(const Instr &instr) override;

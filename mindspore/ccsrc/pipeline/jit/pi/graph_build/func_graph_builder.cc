@@ -495,4 +495,12 @@ bool FuncGraphBuilder::CanConstantFoldFunc(const py::object &obj) {
   py::object can_constant_fold = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_CAN_CONSTANT_FOLD, obj);
   return can_constant_fold.cast<bool>();
 }
+
+void FuncGraphBuilder::SetGraphName(const std::string &name) {
+  if (name.empty()) {
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(graph_->debug_info());
+  graph_->debug_info()->set_name(name);
+}
 }  // namespace mindspore

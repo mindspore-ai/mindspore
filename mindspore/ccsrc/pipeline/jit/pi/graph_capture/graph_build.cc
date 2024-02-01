@@ -2047,6 +2047,24 @@ bool GraphBuilder::ReplaceCall(CallNode *call_node, const py::object &old_func) 
   return true;
 }
 
+namespace {
+std::string GetFuncGraphName(const py::object &func, const GraphBuilderPtr &subgraph) {
+  auto func_str = py::cast<std::string>(py::str(func));
+  std::vector<std::string> vec;
+  std::istringstream iss(func_str);
+  std::string str;
+  while (iss >> str) {
+    (void)vec.emplace_back(str);
+  }
+  if (vec.size() <= 1) {
+    return "";
+  }
+  auto func_name = vec[1];
+  std::replace(func_name.begin(), func_name.end(), '.', '_');
+  return func_name + "_" + std::to_string(subgraph->GetGraph()->GetCodeObj()->co_firstlineno);
+}
+}
+
 StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, const py::object &func,
                                                 const GraphBuilderPtr &subgraph) {
   InlineReason stat = InlineReason::kInline;
@@ -2074,11 +2092,13 @@ StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, 
     if (CheckConstPyObject(sub_ret->GetVobj()->GetPyObject().ptr())) {
       call_node->SetVobj(sub_ret->GetVobj());
     } else {
+      sg->FGBuilder()->SetGraphName(GetFuncGraphName(func, subgraph));
       sg->FGAddOutput();
       if (sg->FGBuilder()->graph() == nullptr) {
         MS_LOG(ERROR) << "subgraph trace null";
         return StopTraceReason::kTrace_Fail;
       } else {
+        TraceGuard trace_guard(GetLocation(call_node));
         auto res = FGBuilder()->AddNode(sg->FGBuilder()->graph(), args);
         if (res.ptr()) {
           MS_LOG(INFO) << "add fg node suc: ";
@@ -2545,6 +2565,7 @@ void MindGraphBuilder::FGAddOutput() {
 py::object MindGraphBuilder::FGAddNode(CallNode *call_node, const py::object &callable_info,
                                        const std::vector<py::object> &args, StopTraceReason *stop_reason) {
   MS_LOG(INFO) << "try add node: " << py::str(callable_info);
+  TraceGuard trace_guard(GetLocation(call_node));
   auto res = FGBuilder()->AddNode(callable_info, args);
   if (res.ptr() == nullptr) {
     MS_LOG(ERROR) << "add node fail";
@@ -3475,6 +3496,13 @@ bool MindGraphBuilder::IsFuncInWhiteList(const py::object &f, std::string *speci
 bool MindGraphBuilder::HandleFuncInWhiteList(const std::string &key, CallNode *n) {
   MS_LOG(INFO) << "specialize for " << key;
   return GetFuncWhiteListMap(true).find(key)->second.infer(n);
+}
+
+LocationPtr MindGraphBuilder::GetLocation(CallNode *call_node) const {
+  auto file_name = py::cast<std::string>(graph_->GetCodeObj()->co_filename);
+  auto line_no = call_node->GetLineNo();
+  std::vector<std::string> comments;
+  return std::make_shared<Location>(file_name, line_no, 0, line_no, 0, "", std::move(comments));
 }
 }  // namespace pijit
 }  // namespace mindspore
