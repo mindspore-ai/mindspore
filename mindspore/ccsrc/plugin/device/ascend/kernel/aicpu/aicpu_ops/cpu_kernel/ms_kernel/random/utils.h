@@ -18,7 +18,6 @@
 #define AI_CPU_RANDOM_UTILS_H_
 #include <cstdint>
 #include <string>
-#include "common/kernel_base.h"
 #include "cpu_kernel_utils.h"
 
 namespace aicpu {

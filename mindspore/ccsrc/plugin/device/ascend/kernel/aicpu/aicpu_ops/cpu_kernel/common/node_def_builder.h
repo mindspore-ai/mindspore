@@ -15,8 +15,6 @@
 #include "cpu_kernel_utils.h"
 #include "cpu_kernel/common/status.h"
 #include "cpu_kernel/common/cpu_kernel_register.h"
-#include "aicpu/common/aicpu_task_struct.h"
-#include "cpu_kernel/common/device_cpu_kernel.h"
 
 namespace aicpu {
 class NodeDefBuilder {

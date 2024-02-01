@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <graph/utils/type_utils.h>
 #include "op_proto/inc/image_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/image_ops_shape_fns.h"
@@ -331,7 +330,7 @@ IMPLEMT_INFERFUNC(ResizeBicubicGrad, ResizeBicubicGradInfer) {
     y_shape.push_back(org_images_shape[2]);
     y_shape.push_back(org_images_shape[3]);
   } else {
-    std::string str_input_format = ge::TypeUtils::FormatToSerialString(input_format);
+    std::string str_input_format = GeFormatToString(input_format);
     std::string err_msg = ConcatString("only supporting NCHW and NHWC, current format is [", str_input_format, "]");
     AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), err_msg);
   }
@@ -439,7 +438,7 @@ IMPLEMT_INFERFUNC(CropAndResize, CropAndResizeInfer) {
     y_dims.push_back(crop_height);
     y_dims.push_back(crop_width);
   } else {
-    std::string str_input_format = ge::TypeUtils::FormatToSerialString(input_format);
+    std::string str_input_format = GeFormatToString(input_format);
     std::string err_msg = ConcatString(
       "only supporting NCHW and NHWC, "
       "current format is [",

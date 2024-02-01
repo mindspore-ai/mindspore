@@ -31,10 +31,8 @@
 #include "graph/operator.h"
 #include "graph/operator_reg.h"
 #include "transfer_shape_according_to_format.h"
-#include "graph/utils/tensor_utils.h"
-#include "graph/utils/node_utils.h"
 #include "graph/tensor.h"
-#include "graph/node.h"
+#include "graph/operator.h"
 
 #include "op_log.h"
 
@@ -364,10 +362,9 @@ bool GetConstAttr(const Operator &op, const std::vector<std::string> &attrNameLi
   return true;
 }
 
-std::string to_string(const vector<int64_t> &shape);
+std::string to_string(const std::vector<int64_t> &shape);
 std::string to_string(const ge::Shape &shape);
-std::string to_string(const ge::GeShape &shape);
-std::string to_string(const vector<pair<int64_t, int64_t>> &ranges);
+std::string to_string(const std::vector<std::pair<int64_t, int64_t>> &ranges);
 
 #define PREPARE_DYNAMIC_SHAPE(depend_names)          \
   do {                                               \
@@ -422,6 +419,10 @@ void FixShapeRangeWithDims(const std::vector<int64_t> &dims, std::vector<int64_t
 bool IsEmptyTensor(TensorDesc tensor_desc);
 
 bool IsEmptyTensor(const Shape &ge_shape);
+
+std::string GeDataTypeToString(const ge::DataType datatype);
+
+std::string GeFormatToString(const ge::Format format);
 
 namespace array_ops {
 bool CheckInt64MulOverflow(int64_t a, int64_t b);

@@ -23,7 +23,7 @@
 #define CANN_CUSTOMIZE_OPS_CONST_H_
 
 #include <vector>
-#include "external/graph/operator.h"
+#include "graph/operator.h"
 #include "op_util.h"
 
 namespace ops {

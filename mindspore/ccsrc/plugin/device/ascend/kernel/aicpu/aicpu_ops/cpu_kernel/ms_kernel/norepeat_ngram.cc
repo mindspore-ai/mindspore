@@ -23,6 +23,8 @@
 
 #include "utils/kernel_util.h"
 #include "cpu_kernel_utils.h"
+#include "securec/include/securec.h"
+#include "common/kernel_log.h"
 
 #define FLT_MAX __FLT_MAX__
 namespace {

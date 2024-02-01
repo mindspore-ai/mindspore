@@ -24,7 +24,6 @@
 #include <string>
 #include <type_traits>
 #include "graph/operator.h"
-#include "graph/node.h"
 #include "common/util/error_manager/error_manager.h"
 
 #define LOG_CPP
@@ -63,14 +62,6 @@ inline const std::string &get_op_info(const std::string &str) { return str; }
 
 inline const char *get_op_info(const char *str) { return str; }
 
-inline std::string get_op_info(const ge::NodePtr &node) {
-  return node != nullptr ? node->GetType() + ":" + node->GetName() : "nil";
-}
-
-inline std::string get_op_info(const ge::OpDescPtr &node) {
-  return node != nullptr ? node->GetType() + ":" + node->GetName() : "nil";
-}
-
 template <class T>
 constexpr bool is_ge_operator_type() {
   return std::is_base_of<ge::Operator, typename std::decay<T>::type>::value;
@@ -93,9 +84,7 @@ constexpr bool is_context_type() {
   return !std::is_base_of<ge::Operator, typename std::decay<T>::type>::value &&
          !std::is_same<const char *, typename std::decay<T>::type>::value &&
          !std::is_same<char *, typename std::decay<T>::type>::value &&
-         !std::is_same<std::string, typename std::decay<T>::type>::value &&
-         !std::is_same<ge::NodePtr, typename std::decay<T>::type>::value &&
-         !std::is_same<ge::OpDescPtr, typename std::decay<T>::type>::value;
+         !std::is_same<std::string, typename std::decay<T>::type>::value;
 }
 
 template <class T>

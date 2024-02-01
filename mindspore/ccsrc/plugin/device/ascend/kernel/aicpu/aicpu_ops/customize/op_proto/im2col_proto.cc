@@ -18,7 +18,6 @@
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/common_shape_fns.h"
-#include "graph/common_error_codes.h"
 namespace ge {
 namespace {
 const std::string ATTR_NAME_DATA_SLICE = "_data_slice";

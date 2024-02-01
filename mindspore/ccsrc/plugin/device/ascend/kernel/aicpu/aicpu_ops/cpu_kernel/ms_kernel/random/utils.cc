@@ -20,6 +20,7 @@
 #include <securec.h>
 #include "utils/philox_random.h"
 #include "unsupported/Eigen/CXX11/Tensor"
+#include "common/kernel_log.h"
 
 namespace aicpu {
 namespace random {

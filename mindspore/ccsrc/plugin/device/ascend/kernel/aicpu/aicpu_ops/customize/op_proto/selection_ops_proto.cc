@@ -502,7 +502,7 @@ IMPLEMT_COMMON_INFERFUNC(SliceInferShape) {
   size_t dimNum = shape_dims.size();
   std::vector<int64_t> outputList;
 
-  vector<pair<int64_t, int64_t>> ranges;
+  std::vector<std::pair<int64_t, int64_t>> ranges;
   input_desc.GetShapeRange(ranges);
   if (ranges.empty()) {
     MakeUpShapeRange(shape_dims, ranges);
