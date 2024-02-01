@@ -18,7 +18,7 @@ import mindspore as ms
 from mindspore import ops
 from mindspore.ops.auto_generate.gen_ops_def import Reciprocal
 
-import tests.st.ops.test_utils as test_utils
+import tests.st.utils.test_utils as test_utils
 reciprocal = Reciprocal()
 
 def generate_random_input(shape, dtype):

@@ -20,6 +20,8 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 
+from tests.st.utils import test_utils
+
 
 class Net(nn.Cell):
     def __init__(self):
@@ -66,6 +68,7 @@ class ParaNet(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_with_On
 def test_batchnorm3d_para_customed_dtype_float32(mode):
     """
     Feature: BatchNorm3d

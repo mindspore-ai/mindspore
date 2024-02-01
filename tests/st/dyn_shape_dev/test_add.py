@@ -19,7 +19,7 @@ from mindspore import ops
 from mindspore import Tensor
 import mindspore as ms
 
-from test_utils import get_inputs_np, get_inputs_tensor, compare, to_cell_obj, run_with_cell
+from tests.st.utils.test_utils import get_inputs_np, get_inputs_tensor, compare, to_cell_obj, run_with_cell
 
 def get_np_data():
     return get_inputs_np([(2, 4, 8, 16), (2, 4, 8, 16)], [np.float16, np.float16])

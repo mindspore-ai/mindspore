@@ -7,6 +7,7 @@ from mindspore import nn
 from mindspore import Tensor, context
 from mindspore.experimental.optim import Rprop
 from mindspore.experimental.optim.lr_scheduler import StepLR
+from tests.st.utils import test_utils
 
 
 class Network(nn.Cell):
@@ -173,6 +174,7 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@test_utils.run_test_with_On
 def test_rprop_basic(mode):
     """
     Feature: Test rprop.

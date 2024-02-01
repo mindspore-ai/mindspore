@@ -22,6 +22,7 @@ from mindspore import ops as P
 import mindspore.dataset as ds
 from mindspore import Tensor, context
 from mindspore.train.data_sink import data_sink
+from tests.st.utils import test_utils
 
 
 def fixed_dataset_generator():
@@ -156,6 +157,7 @@ def test_data_sink_dynamic_shape(mode):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@test_utils.run_test_with_On
 def test_function_data_sink_dynamic_shape(mode):
     """
     Feature: mindspore.train.data_sink

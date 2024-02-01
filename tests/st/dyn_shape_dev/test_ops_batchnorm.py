@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 from mindspore import Tensor, context, Parameter
 from mindspore import ops
-import test_utils
+from tests.st.utils import test_utils
 
 
 @test_utils.run_with_cell

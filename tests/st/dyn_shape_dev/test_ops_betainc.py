@@ -19,7 +19,7 @@ import mindspore as ms
 from mindspore import context
 from mindspore import Tensor
 from mindspore.ops.operations import math_ops as P
-import test_utils
+from tests.st.utils import test_utils
 
 context.set_context(precompile_only=True)
 

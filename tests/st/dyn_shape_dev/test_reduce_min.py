@@ -15,7 +15,7 @@
 
 import numpy as np
 import pytest
-import test_utils
+from tests.st.utils import test_utils
 
 from mindspore import ops
 import mindspore as ms
@@ -38,7 +38,7 @@ def reduce_min_backward_func(x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_reduce_min(mode):
     """
     Feature: Ops.
@@ -64,7 +64,7 @@ def test_reduce_min(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_reduce_min_vmap(mode):
     """
     Feature: test vmap function.

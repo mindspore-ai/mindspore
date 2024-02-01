@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 from mindspore import ops
 import mindspore as ms
-import test_utils
+from tests.st.utils import test_utils
 
 
 @test_utils.run_with_cell
@@ -36,7 +36,7 @@ def right_shift_backward_func(x, y):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_right_shift_forward(mode):
     """
     Feature: Ops.
@@ -57,7 +57,7 @@ def test_right_shift_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_right_shift_vmap(mode):
     """
     Feature: test vmap function.

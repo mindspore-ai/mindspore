@@ -31,6 +31,7 @@ from mindspore.common.initializer import initializer
 from mindspore.ops.primitive import constexpr
 from capture import Capture, capture, check_output
 from tests.security_utils import security_off_wrap
+from tests.st.utils import test_utils
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -1689,6 +1690,7 @@ def test_if_cast():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+@test_utils.run_test_with_On
 def test_while_forward():
     """
     Feature: Auto monad feature.

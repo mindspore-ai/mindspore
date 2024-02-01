@@ -18,7 +18,7 @@ from mindspore import ops
 from mindspore.ops import cast
 import mindspore.common.dtype as mstype
 import mindspore as ms
-import tests.st.ops.test_utils as test_utils
+import tests.st.utils.test_utils as test_utils
 
 
 def generate_random_input(shape, dtype):

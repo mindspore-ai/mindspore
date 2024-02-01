@@ -28,6 +28,8 @@ import pytest
 import mindspore as ms
 from mindspore.communication import get_group_size, get_rank, init
 
+from tests.st.utils import test_utils
+
 workspace = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(workspace, "mindcv"))
 os.system(f"git submodule init {os.path.join(workspace, 'mindcv')}")
@@ -312,6 +314,7 @@ def test_mobilenetv3_small_1p():
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
+@test_utils.run_test_with_On
 def test_inception_v3_1p():
     """
     Feature: MindCV inception_v3 1p test
@@ -331,6 +334,7 @@ def test_inception_v3_1p():
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
+@test_utils.run_test_with_On
 def test_vit_b32_1p():
     """
     Feature: MindCV vit 1p test

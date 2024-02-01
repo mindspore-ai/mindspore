@@ -17,6 +17,8 @@ import numpy as np
 import mindspore as ms
 from mindspore import ops, nn, mutable
 from mindspore.ops import fftshift
+from tests.st.utils import test_utils
+
 
 class FFTShiftNet(nn.Cell):
     def __init__(self):
@@ -55,6 +57,7 @@ def generate_expect_backward_output(dout, dim=None):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_with_On
 def test_ops_fftshift_forward(mode):
     """
     Feature: ops.fftshift
@@ -197,6 +200,7 @@ def test_ops_fftshift_backward_dynamic_shape(mode):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_with_On
 def test_ops_fftshift_backward_dynamic_rank(mode):
     """
     Feature: ops.fftshift

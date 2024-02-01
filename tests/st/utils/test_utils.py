@@ -100,7 +100,7 @@ def need_run_graph_op_mode(func, args, kwargs):
     return mode == ms.GRAPH_MODE
 
 
-def run_test_func(test_func):
+def run_test_with_On(test_func):
 
     @wraps(test_func)
     def wrapper(*args, **kwargs):

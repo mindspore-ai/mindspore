@@ -14,7 +14,7 @@
 # ============================================================================
 import pytest
 import numpy as np
-from tests.st.dyn_shape_dev import test_utils
+from tests.st.utils import test_utils
 
 import mindspore as ms
 from mindspore import Tensor, context

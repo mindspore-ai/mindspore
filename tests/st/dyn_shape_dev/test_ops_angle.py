@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 from mindspore import Tensor, context
 from mindspore.ops import auto_generate as P
-import test_utils
+from tests.st.utils import test_utils
 
 
 @test_utils.run_with_cell
