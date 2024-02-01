@@ -2858,6 +2858,23 @@ class DecoderKVCache(Primitive):
         self.add_prim_attr('side_effect_mem', True)
 
 
+class _MirrorSilentCheck(PrimitiveWithInfer):
+    """
+    MirrorOperator for SilentCheck, do SilentCheck in backpropagator.
+    """
+    @prim_attr_register
+    def __init__(self, min_steps=8, thresh=1000000.0, coeff=100000.0):
+        self.min_steps = min_steps
+        self.thresh = thresh
+        self.coeff = coeff
+
+    def infer_shape(self, x_shape, pre_shape, min_shape, max_shape, n_step, res_shape, loss_sale_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype, pre_dtype, min_dtype, max_dtype, n_dtype, res_dtype, loss_sale_dtype):
+        return x_dtype
+
+
 class PromptKVCache(Primitive):
     r"""
     The PromptKVCache is used for prefill the KVCache of transformer network.
