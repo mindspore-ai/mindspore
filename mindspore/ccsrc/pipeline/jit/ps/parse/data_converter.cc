@@ -852,6 +852,31 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const ValuePtrList &args_
   return func_graph;
 }
 
+ValuePtr GetArgDefaultValue(const std::string &prim_name, const std::string &arg_name) {
+  py::module mod = py::module::import(PYTHON_MOD_PRIMITIVE_OP_CREATE_INSTANCE_HELPER_MODULE);
+  if (!py::hasattr(mod, PYTHON_MOD_PRIMITIVE_OP_DEFAULT_VALUE_DICT)) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Can not found " << PYTHON_MOD_PRIMITIVE_OP_DEFAULT_VALUE_DICT << "in "
+                               << PYTHON_MOD_PRIMITIVE_OP_CREATE_INSTANCE_HELPER_MODULE << ".";
+  }
+  py::dict op_default_dict = mod.attr(PYTHON_MOD_PRIMITIVE_OP_DEFAULT_VALUE_DICT);
+  if (!op_default_dict.contains(py::str(prim_name))) {
+    return nullptr;
+  }
+  py::dict prim_default_dict = op_default_dict[py::str(prim_name)];
+  if (!prim_default_dict.contains(py::str(arg_name))) {
+    return nullptr;
+  }
+  auto default_value = prim_default_dict[py::str(arg_name)];
+  ValuePtr converted_ret = nullptr;
+  bool converted = ConvertData(default_value, &converted_ret);
+  if (!converted) {
+    const std::string &default_name = py::str(default_value);
+    MS_EXCEPTION(ValueError) << "For Operator[" << prim_name << "], '" << default_name
+                             << "' is not supported as the default value for '" << arg_name << "'.";
+  }
+  return converted_ret;
+}
+
 namespace data_converter {
 static mindspore::HashMap<std::string, ValuePtr> object_map_;
 

@@ -2090,6 +2090,16 @@ void MSANFModelParser::TrytoBuildCNodeAbstract() {
   }
 }
 
+bool CheckMindIRVseriosn(const mind_ir::ModelProto &model_proto) {
+  if (model_proto.has_mind_ir_version()) {
+    auto mind_ir_version = model_proto.mind_ir_version();
+    if (mind_ir_version >= 2) {
+      return true;
+    }
+  }
+  return false;
+}
+
 FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
                                      const std::map<std::string, ValuePtr> &weights,
                                      mindspore::HashMap<std::string, AnfNodePtr> *name_to_node) {
@@ -2139,6 +2149,8 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
       return nullptr;
     }
   }
+  bool generated_from_mindir_with_prim_func = CheckMindIRVseriosn(model_proto);
+  dstGraph->set_flag("generated_from_mindir_with_prim_func", generated_from_mindir_with_prim_func);
   MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! graph: " << graphBuild.name() << ": " << dstGraph.get();
   top_graph_ = dstGraph;
   for (int i = 0; i < model_proto.functions_size(); ++i) {
@@ -2148,6 +2160,7 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
       MS_LOG(ERROR) << "Build funcgraph failed!";
       return nullptr;
     }
+    graph->set_flag("generated_from_mindir_with_prim_func", generated_from_mindir_with_prim_func);
     MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! graph: " << graph_proto.name() << ": " << graph.get();
   }
   TrytoBuildCNodeAbstract();

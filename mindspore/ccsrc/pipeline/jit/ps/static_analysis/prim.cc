@@ -2424,30 +2424,6 @@ void AddLabelsToPrimitiveFunction(const PrimitivePtr &prim_func) {
   }
 }
 
-ValueNodePtr GetArgDefaultValue(const std::string &prim_name, const std::string &arg_name) {
-  py::module mod = py::module::import(parse::PYTHON_MOD_PRIMITIVE_OP_CREATE_INSTANCE_HELPER_MODULE);
-  if (!py::hasattr(mod, parse::PYTHON_MOD_PRIMITIVE_OP_DEFAULT_VALUE_DICT)) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Can not found " << parse::PYTHON_MOD_PRIMITIVE_OP_DEFAULT_VALUE_DICT << "in "
-                               << parse::PYTHON_MOD_PRIMITIVE_OP_CREATE_INSTANCE_HELPER_MODULE << ".";
-  }
-  py::dict op_default_dict = mod.attr(parse::PYTHON_MOD_PRIMITIVE_OP_DEFAULT_VALUE_DICT);
-  if (!op_default_dict.contains(py::str(prim_name))) {
-    return nullptr;
-  }
-  py::dict prim_default_dict = op_default_dict[py::str(prim_name)];
-  if (!prim_default_dict.contains(py::str(arg_name))) {
-    return nullptr;
-  }
-  auto default_value = prim_default_dict[py::str(arg_name)];
-  ValuePtr converted_ret = nullptr;
-  bool converted = parse::ConvertData(default_value, &converted_ret);
-  if (!converted) {
-    MS_EXCEPTION(ValueError) << "For Operator[" << prim_name << "], '" << py::str(default_value)
-                             << "' is not supported as the default value for '" << arg_name << "'.";
-  }
-  return NewValueNode(converted_ret);
-}
-
 std::vector<AnfNodePtr> GeneratePrimitiveDefaultArgs(const std::string &op_name,
                                                      const std::vector<AnfNodePtr> &args_list,
                                                      const std::vector<ops::OpInputArg> &op_args, bool check_init) {
@@ -2455,7 +2431,7 @@ std::vector<AnfNodePtr> GeneratePrimitiveDefaultArgs(const std::string &op_name,
   std::vector<AnfNodePtr> nodes(args_list);
   if (args_size < op_args.size()) {
     for (size_t i = args_size; i < op_args.size(); i++) {
-      auto default_arg = GetArgDefaultValue(op_name, op_args[i].arg_name_);
+      auto default_arg = NewValueNode(parse::GetArgDefaultValue(op_name, op_args[i].arg_name_));
       if (default_arg == nullptr) {
         break;
       }

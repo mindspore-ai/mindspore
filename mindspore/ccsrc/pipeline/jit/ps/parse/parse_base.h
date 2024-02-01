@@ -249,6 +249,7 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const ValuePtrList &args_
 FuncGraphPtr ParsePythonCode(const py::object &obj,
                              const std::string &python_mod_get_parse_method = PYTHON_MOD_GET_PARSE_METHOD,
                              const ValuePtrList &args_value_list = {});
+ValuePtr GetArgDefaultValue(const std::string &prim_name, const std::string &arg_name);
 }  // namespace parse
 }  // namespace mindspore
 
