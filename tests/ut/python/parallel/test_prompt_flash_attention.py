@@ -29,10 +29,10 @@ context.set_context(mode=context.GRAPH_MODE)
 
 def generate_inputs(dims, optinal_inputs, input_layout='BSH'):
     B, N, S, D = dims
-    has_atten_mask, has_actual_seq_lengths, has_actual_seq_lengths_kv, has_padding_mask, has_deq_scale1, \
+    has_atten_mask, has_actual_seq_lengths, has_actual_seq_lengths_kv, has_pse_shift, has_deq_scale1, \
     has_quant_scale1, has_deq_scale2, has_quant_scale2, has_quant_offset2 = optinal_inputs
     attn_mask = None
-    padding_mask = None
+    pse_shift = None
     actual_seq_lengths = np.ones((B,), dtype=np.int64) if has_actual_seq_lengths else None
     actual_seq_lengths_kv = np.ones((B,), dtype=np.int64) if has_actual_seq_lengths_kv else None
     deq_scale1 = Tensor(1, dtype=mindspore.uint64) if has_deq_scale1 else None
@@ -49,9 +49,9 @@ def generate_inputs(dims, optinal_inputs, input_layout='BSH'):
         value = Tensor(np.ones((B, S, H), dtype=np.float16))
         if has_atten_mask:
             attn_mask = Tensor(np.ones((B, 1, S, S)), dtype=mindspore.float16)
-        if has_padding_mask:
-            padding_mask = Tensor(np.zeros((B, 1, S, S)), dtype=mindspore.float16)
-        ret_inputs = (query, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, padding_mask,
+        if has_pse_shift:
+            pse_shift = Tensor(np.zeros((B, 1, S, S)), dtype=mindspore.float16)
+        ret_inputs = (query, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, pse_shift,
                       deq_scale1, quant_scale1, deq_scale2, quant_scale2, quant_offset2)
     elif input_layout == 'BNSD':
         query = Tensor(np.ones((B, N, S, D), dtype=np.float16))
@@ -59,9 +59,9 @@ def generate_inputs(dims, optinal_inputs, input_layout='BSH'):
         value = Tensor(np.ones((B, N, S, D), dtype=np.float16))
         if has_atten_mask:
             attn_mask = Tensor(np.ones((B, 1, S, S)), dtype=mindspore.float16)
-        if has_padding_mask:
-            padding_mask = Tensor(np.zeros((B, 1, S, S)), dtype=mindspore.float16)
-        ret_inputs = (query, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, padding_mask,
+        if has_pse_shift:
+            pse_shift = Tensor(np.zeros((B, 1, S, S)), dtype=mindspore.float16)
+        ret_inputs = (query, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, pse_shift,
                       deq_scale1, quant_scale1, deq_scale2, quant_scale2, quant_offset2)
     else:
         print("unsupported input layout ", input_layout)
@@ -69,7 +69,7 @@ def generate_inputs(dims, optinal_inputs, input_layout='BSH'):
 
 
 def generate_strategy(dp, mp, optinal_inputs, input_layout='BSH'):
-    has_atten_mask, has_actual_seq_lengths, has_actual_seq_lengths_kv, has_padding_mask, has_deq_scale1, \
+    has_atten_mask, has_actual_seq_lengths, has_actual_seq_lengths_kv, has_pse_shift, has_deq_scale1, \
     has_quant_scale1, has_deq_scale2, has_quant_scale2, has_quant_offset2 = optinal_inputs
     if dp is None or mp is None:
         return ()
@@ -81,7 +81,7 @@ def generate_strategy(dp, mp, optinal_inputs, input_layout='BSH'):
             stra += ((dp,),)
         if has_actual_seq_lengths_kv:
             stra += ((dp,),)
-        if has_padding_mask:
+        if has_pse_shift:
             stra += ((dp, 1, 1, 1),)
     if input_layout == 'BNSD':
         stra = ((dp, mp, 1, 1), (dp, mp, 1, 1), (dp, mp, 1, 1))
@@ -91,7 +91,7 @@ def generate_strategy(dp, mp, optinal_inputs, input_layout='BSH'):
             stra += ((dp,),)
         if has_actual_seq_lengths_kv:
             stra += ((dp,),)
-        if has_padding_mask:
+        if has_pse_shift:
             stra += ((dp, 1, 1, 1),)
     for i in [has_deq_scale1, has_quant_scale1, has_deq_scale2, has_quant_scale2, has_quant_offset2]:
         if i:
@@ -120,10 +120,10 @@ class Net(nn.Cell):
         self.square = OPS.Square().shard(stra_q)
         self.fa_op.shard(stra)
 
-    def construct(self, query, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, padding_mask,
+    def construct(self, query, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, pse_shift,
                   deq_scale1, quant_scale1, deq_scale2, quant_scale2, quant_offset2):
         ret = self.square(query)
-        out = self.fa_op(ret, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, padding_mask,
+        out = self.fa_op(ret, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, pse_shift,
                          deq_scale1, quant_scale1, deq_scale2, quant_scale2, quant_offset2)
         return self.square(out)
 
