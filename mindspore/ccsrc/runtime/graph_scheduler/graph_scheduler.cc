@@ -20,6 +20,9 @@
 #include "ops/framework_ops.h"
 #include "runtime/graph_scheduler/scheduler_helper.h"
 #include "runtime/graph_scheduler/actor/memory_manager_actor.h"
+#include "runtime/graph_scheduler/actor/kernel_async_launch_actor.h"
+#include "runtime/graph_scheduler/actor/kernel_async_infer_actor.h"
+#include "runtime/graph_scheduler/actor/kernel_async_resize_actor.h"
 #include "runtime/graph_scheduler/actor/debug_actor.h"
 #include "runtime/graph_scheduler/actor/recorder_actor.h"
 #include "runtime/graph_scheduler/optimizer/optimizer.h"
@@ -459,6 +462,12 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
   // Bind single thread to response to memory alloc and free quickly.
   (void)actor_manager->Spawn(base_actor, true);
 
+  if (ActorDispatcher::enable_async_launch_kernel()) {
+    auto &kernel_async_launch_actor = KernelAsyncLaunchActor::GetInstance();
+    MS_EXCEPTION_IF_NULL(kernel_async_launch_actor);
+    (void)actor_manager->Spawn(kernel_async_launch_actor, false);
+  }
+
   // Create and schedule recorder actor.
   bool recorder_actor_need = false;
 #ifndef ENABLE_SECURITY
@@ -573,6 +582,15 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   // Set rpc actors in order to update rpc actors status.
   RpcActorStatusUpdater::GetInstance().set_rpc_actors(graph_compiler_info.name_, actor_set->rpc_actors_);
 #endif
+
+  for (const auto &graph : graph_compiler_info.graphs_) {
+    MS_EXCEPTION_IF_NULL(graph);
+    if (graph->is_dynamic_shape()) {
+      actor_set->has_dynamic_shape_ = true;
+      break;
+    }
+  }
+
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageGraphTransform, 1, 0, 1);
   return actor_set.get();
 }
@@ -583,6 +601,19 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
   // Schedule actors.
   auto actor_manager = ActorMgr::GetActorMgrRef();
   MS_EXCEPTION_IF_NULL(actor_manager);
+
+  if (EnableRuntimePipeline() && actor_set->has_dynamic_shape_ && !multi_pipeline_actors_spawned_) {
+    auto &kernel_async_infer_actor = KernelAsyncInferActor::GetInstance();
+    MS_EXCEPTION_IF_NULL(kernel_async_infer_actor);
+    (void)actor_manager->Spawn(kernel_async_infer_actor, false);
+
+    auto &kernel_async_resize_actor = KernelAsyncResizeActor::GetInstance();
+    MS_EXCEPTION_IF_NULL(kernel_async_resize_actor);
+    (void)actor_manager->Spawn(kernel_async_resize_actor, false);
+
+    multi_pipeline_actors_spawned_ = true;
+  }
+
   for (auto actor : actors) {
     MS_EXCEPTION_IF_NULL(actor);
     // The sub actors in the fusion actor do not participate in message interaction.
@@ -658,6 +689,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
     thread_pool->SetSpinCountMaxValue();
   }
   ActorDispatcher::set_is_multi_thread_execution(actor_set->is_multi_thread_execution_);
+  ActorDispatcher::set_enable_runtime_multi_pipeline(EnableRuntimePipeline() && actor_set->has_dynamic_shape_);
   double start_time = GetTime();
   ActorDispatcher::Send(actor_set->data_prepare_actor_->GetAID(), &DataPrepareActor::PrepareData, input_tensors, args,
                         &op_context, GraphExecutionStrategy::kPipeline);
