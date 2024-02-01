@@ -32,6 +32,7 @@
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
@@ -51,7 +52,14 @@ TypePtr BesselI1eInferType(const PrimitivePtr &primitive, const std::vector<Abst
   auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_type = input_args[0]->GetType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, common_valid_types, prim_name);
+  auto is_ascend = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice;
+  if (is_ascend) {
+    const std::set<TypePtr> valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,   kUInt16,
+                                           kUInt32, kUInt64, kFloat16, kFloat32, kBFloat16};
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim_name);
+  } else {
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, common_valid_types, prim_name);
+  }
   return x_type;
 }
 }  // namespace
