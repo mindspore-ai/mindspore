@@ -51,6 +51,7 @@ cust_op_lists = [
     "choleskygrad",
     "choleskyinverse",
     "choleskysolve",
+    "coalesce",
     "combinednonmaxsuppression",
     "complex",
     "complexabs",
