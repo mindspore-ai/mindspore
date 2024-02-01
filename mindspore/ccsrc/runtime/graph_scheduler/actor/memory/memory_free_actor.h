@@ -21,6 +21,7 @@
 #include <set>
 #include <string>
 #include "runtime/graph_scheduler/actor/memory_aware_actor.h"
+#include "runtime/graph_scheduler/actor/kernel_launch_actor.h"
 
 namespace mindspore {
 namespace runtime {
@@ -51,6 +52,7 @@ class MemoryFreeActor : public MemoryAwareActor {
 
  protected:
   void Run(OpContext<DeviceTensor> *const context) override {
+    KernelLaunchActor::GetInstance()->Wait();
     ProcessSomasCrossStreamMemorySynchronization(context);
     PostRun(context);
   }

@@ -213,7 +213,14 @@ bool IsSkippedLaunch(const CNodePtr &kernel, const KernelGraphPtr &kernel_graph)
 
 bool EnableAsyncInfer() {
   static const char kEnableAsyncInferdEnv[] = "MS_ENABLE_ASYNC_INFER";
-  return common::GetEnv(kEnableAsyncInferdEnv) == "1";
+  static bool ret = common::GetEnv(kEnableAsyncInferdEnv) == "1";
+  return ret;
+}
+
+bool EnableAsyncLaunch() {
+  static const char kEnableAsyncInferdEnv[] = "MS_ENABLE_ASYNC_LAUNCH";
+  static bool ret = common::GetEnv(kEnableAsyncInferdEnv) == "1";
+  return ret;
 }
 
 bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor) {
