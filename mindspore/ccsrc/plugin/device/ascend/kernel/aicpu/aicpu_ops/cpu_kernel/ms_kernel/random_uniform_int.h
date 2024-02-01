@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef AICPU_AICPU_OPS_STANDARD_LAPLACE_KERNELS_H_
-#define AICPU_AICPU_OPS_STANDARD_LAPLACE_KERNELS_H_
-
-#include <random>
-#include "common/kernel_base.h"
+#ifndef AICPU_KERNELS_NORMALIZED_RANDOM_UNIFORM_INT_H_
+#define AICPU_KERNELS_NORMALIZED_RANDOM_UNIFORM_INT_H_
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
-class StandardLaplaceKernel : public KernelBase {
+class RandomUniformIntCpuKernel : public CpuKernel {
  public:
-  StandardLaplaceKernel() : KernelBase("StandardLaplace"), seed_(0), seed2_(0), out_count_(1) {}
-
-  ~StandardLaplaceKernel() = default;
-
- protected:
-  uint32_t DoCompute() override;
-
-  uint32_t ParseKernelParam() override;
-
-  uint64_t seed_;
-  uint64_t seed2_;
-  std::mt19937 rng_;
-  uint64_t out_count_;
+  RandomUniformIntCpuKernel() = default;
+  ~RandomUniformIntCpuKernel() = default;
+  uint32_t Compute(CpuKernelContext &ctx) override;
 };
 }  // namespace aicpu
-#endif  // AICPU_AICPU_OPS_STANDARD_LAPLACE_KERNELS_H_
+#endif  // AICPU_KERNELS_NORMALIZED_RANDOM_UNIFORM_INT_H_

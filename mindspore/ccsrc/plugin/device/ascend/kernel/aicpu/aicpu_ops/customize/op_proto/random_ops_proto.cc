@@ -274,9 +274,21 @@ CUST_INFER_FUNC_REG(RandomChoiceWithMask, RandomChoiceWithMaskInfer);
 
 // ----------------RandomUniformInt-------------------
 CUST_IMPLEMT_INFERFUNC(RandomUniformInt, RandomUniformIntInfer) {
-  auto shape_desc = op.GetInputDescByName("shape");
-  shape_desc.SetDataType(DT_INT32);
-  return op.UpdateOutputDesc("y", shape_desc);
+  Shape shape;
+  Tensor shape_tensor;
+  if (op.GetInputConstData("shape", shape_tensor) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Get shape_tensor error.");
+    return GRAPH_FAILED;
+  }
+  if (MakeShapeFromShapeTensor(shape_tensor, shape, op) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Get shape error.");
+    return GRAPH_FAILED;
+  }
+
+  TensorDesc outputDesc = op.GetOutputDescByName("y");
+  outputDesc.SetDataType(DT_INT32);
+  outputDesc.SetShape(shape);
+  return op.UpdateOutputDesc("y", outputDesc);
 }
 CUST_INFER_FUNC_REG(RandomUniformInt, RandomUniformIntInfer);
 // ----------------RandomUniformInt End-------------------
