@@ -106,6 +106,11 @@ class FuncGraphBuilder {
   /// \return The graph constructed.
   FuncGraphPtr graph();
 
+  /// \brief Set the name of the func_graph.
+  ///
+  /// \param[in] name The func_graph name to set.
+  void SetGraphName(const std::string &name);
+
   static ValuePtr ConvertPyObjToValue(const py::object &obj);
 
   static AbstractBasePtr EvalValue(const ValuePtr &value, const AbstractBasePtrList &inputs_abs_list);
