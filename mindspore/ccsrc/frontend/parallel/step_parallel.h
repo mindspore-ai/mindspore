@@ -39,7 +39,7 @@ using OperatorInfoPtr = std::shared_ptr<mindspore::parallel::OperatorInfo>;
 namespace mindspore {
 namespace parallel {
 const uint64_t kUSecondInSecond = 1000000;
-const int32_t RECURSION_LIMIT = 3;
+const int32_t RECURSION_LIMIT = 1000;
 
 struct LossNodeInfo {
   bool has_tuple_getitem = false;
