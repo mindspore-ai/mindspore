@@ -32,6 +32,13 @@ void ElewiseBinary::SetInOutIdx() {
   outputsIdxMap_[0] = 0;
 }
 
+uint64_t ElewiseBinary::GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  return TilingCacheMgr::GetInstance().GenTilingCacheKey(kernel_name_, inputs[0]->GetShapeVector(),
+                                                         inputs[0]->dtype_id(), inputs[1]->GetShapeVector(),
+                                                         inputs[1]->dtype_id());
+}
+
 class InternalAdd : public ElewiseBinary {
  public:
   InternalAdd() : ElewiseBinary("Add") {}
@@ -43,12 +50,6 @@ class InternalAdd : public ElewiseBinary {
     internal::ElewiseParam op_param;
     op_param.elewiseType = internal::ElewiseParam::ELEWISE_ADD;
     param_ptr->specificParam = op_param;
-  }
-  uint64_t GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
-                             const std::vector<KernelTensor *> &outputs) override {
-    return TilingCacheMgr::GetInstance().GenTilingCacheKey(kernel_name_, inputs[0]->GetShapeVector(),
-                                                           inputs[0]->dtype_id(), inputs[1]->GetShapeVector(),
-                                                           inputs[1]->dtype_id());
   }
 };
 

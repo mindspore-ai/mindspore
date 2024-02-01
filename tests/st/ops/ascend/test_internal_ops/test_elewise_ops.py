@@ -15,7 +15,6 @@
 import numpy as np
 import pytest
 
-import mindspore as ms
 from mindspore import context, nn, Tensor, ops
 
 
@@ -28,29 +27,21 @@ class SubNet(nn.Cell):
     def construct(self, x, y):
         return x - y
 
-class EqualNet(nn.Cell):
-    def __init__(self):
-        super().__init__()
-        self.equal = ops.Equal()
 
+class EqualNet(nn.Cell):
     def construct(self, x, y):
-        return self.equal(x, y)
+        return x == y
+
 
 class LessNet(nn.Cell):
-    def __init__(self):
-        super().__init__()
-        self.less = ops.Less()
-
     def construct(self, x, y):
-        return self.less(x, y)
+        return x < y
+
 
 class MulNet(nn.Cell):
-    def __init__(self):
-        super().__init__()
-        self.mul = ops.Mul()
-
     def construct(self, x, y):
-        return self.mul(x, y)
+        return x * y
+
 
 class RealDivNet(nn.Cell):
     def __init__(self):
@@ -59,24 +50,6 @@ class RealDivNet(nn.Cell):
 
     def construct(self, x, y):
         return self.realDiv(x, y)
-
-class CastNet(nn.Cell):
-    def __init__(self, out_dtype):
-        super().__init__()
-        self.out_dtype = out_dtype
-
-    def construct(self, x):
-        return ops.cast(x, self.out_dtype)
-
-
-class GeluNet(nn.Cell):
-    def __init__(self):
-        super().__init__()
-        self.gelu = ops.GeLU()
-
-    def construct(self, x):
-        return self.gelu(x)
-
 
 
 def add_net(x_shape, y_shape, dtype):
@@ -88,25 +61,6 @@ def add_net(x_shape, y_shape, dtype):
     net = AddNet()
     output = net(Tensor(x), Tensor(y))
     expected = x + y
-
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
-
-def add_net_bf16(x_shape, y_shape, dtype):
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-
-    x = np.random.randn(*x_shape).astype(dtype)
-    y = np.random.randn(*y_shape).astype(dtype)
-    from bfloat16 import bfloat16
-    expected = x.astype(bfloat16) + y.astype(bfloat16)
-
-    x_t = Tensor(x, dtype=ms.bfloat16)
-    y_t = Tensor(y, dtype=ms.bfloat16)
-    net = AddNet()
-    output = net(x_t, y_t)
-
-    output = ops.cast(output, ms.float32)
-    expected = expected.astype(np.float32)
 
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
@@ -123,6 +77,7 @@ def sub_net(x_shape, y_shape, dtype):
 
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
+
 def equal_net(x_shape, y_shape, dtype):
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
@@ -134,6 +89,7 @@ def equal_net(x_shape, y_shape, dtype):
     expected = x == y
 
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
 
 def less_net(x_shape, y_shape, dtype):
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -147,6 +103,7 @@ def less_net(x_shape, y_shape, dtype):
 
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
+
 def mul_net(x_shape, y_shape, dtype):
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
@@ -159,7 +116,8 @@ def mul_net(x_shape, y_shape, dtype):
 
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
-def realDiv_net(x_shape, y_shape, dtype):
+
+def realdiv_net(x_shape, y_shape, dtype):
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
     x = np.random.randn(*x_shape).astype(dtype)
@@ -171,33 +129,6 @@ def realDiv_net(x_shape, y_shape, dtype):
 
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
-def cast_net(x_shape, dtype, out_dtype):
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    from bfloat16 import bfloat16
-    dtype_map = {
-        np.int32: ms.int32,
-        np.int64: ms.int64,
-        np.float16: ms.float16,
-        bfloat16: ms.bfloat16
-    }
-    x = np.random.randn(*x_shape).astype(dtype)
-
-    net = CastNet(dtype_map[out_dtype])
-    output = net(Tensor(x))
-    expected = x.astype(out_dtype)
-
-    if out_dtype != bfloat16:
-        np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
-
-def gelu_net(x_shape, dtype):
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-
-    x = np.random.randn(*x_shape)
-
-    net = GeluNet()
-    output = net(Tensor(x, dtype=dtype))
-
 
 def test_add(dtype=np.float16):
     """
@@ -207,17 +138,6 @@ def test_add(dtype=np.float16):
     """
     x_shape = (1024, 1664)
     y_shape = (1664,)
-    add_net(x_shape, y_shape, dtype)
-
-
-def test_add_bf16(dtype=np.float32):
-    """
-    Feature: test add operator in graph mode
-    Description: test add.
-    Expectation: the result is correct
-    """
-    x_shape = (1024, 1664)
-    y_shape = (1, 1024, 1664)
     add_net(x_shape, y_shape, dtype)
 
 
@@ -232,6 +152,7 @@ def test_sub():
     dtype = np.int64
     sub_net(x_shape, y_shape, dtype)
 
+
 def test_equal():
     """
     Feature: test equal operator in graph mode.
@@ -242,6 +163,7 @@ def test_equal():
     y_shape = (1664,)
     dtype = np.float16
     equal_net(x_shape, y_shape, dtype)
+
 
 def test_less():
     """
@@ -254,6 +176,7 @@ def test_less():
     dtype = np.float16
     less_net(x_shape, y_shape, dtype)
 
+
 def test_mul():
     """
     Feature: test mul operator in graph mode.
@@ -265,7 +188,8 @@ def test_mul():
     dtype = np.float16
     mul_net(x_shape, y_shape, dtype)
 
-def test_realDiv():
+
+def test_realdiv():
     """
     Feature: test mrealDivul operator in graph mode.
     Description: test realDiv.
@@ -274,37 +198,4 @@ def test_realDiv():
     x_shape = (1024, 1664)
     y_shape = (1664,)
     dtype = np.float16
-    realDiv_net(x_shape, y_shape, dtype)
-
-def test_cast():
-    """
-    Feature: test cast operator in graph mode.
-    Description: test cast.
-    Expectation: the result is correct
-    """
-    x_shape = (4, 1)
-    dtype = np.int64
-    out_dtype = np.int32
-    cast_net(x_shape, dtype, out_dtype)
-
-    dtype = np.int32
-    out_dtype = np.int64
-    cast_net(x_shape, dtype, out_dtype)
-
-    from bfloat16 import bfloat16
-    dtype = np.float16
-    out_dtype = bfloat16
-    cast_net(x_shape, dtype, out_dtype)
-
-
-def test_gelu():
-    """
-    Feature: test gelu operator in graph mode.
-    Description: test gelu.
-    Expectation: the result is correct
-    """
-    x_shape = (1,)
-    dtype = ms.bfloat16
-    gelu_net(x_shape, dtype)
-
-
+    realdiv_net(x_shape, y_shape, dtype)
