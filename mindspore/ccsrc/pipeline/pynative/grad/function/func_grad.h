@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,45 +25,30 @@
 #include <tuple>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "frontend/expander/bprop/bprop.h"
 #include "pipeline/pynative/base.h"
 #include "pipeline/pynative/grad/variable.h"
+#include "pipeline/pynative/grad/ir/ir_bprop.h"
+#include "pipeline/pynative/grad/auto_grad.h"
 #include "pipeline/pynative/grad/function/func_builder.h"
 
 namespace mindspore::pynative::autograd {
-using TensorPtrList = tensor::TensorPtrList;
-struct GradAttr {
-  GradAttr(bool get_all, bool get_by_list, bool sens_param, bool get_by_position, bool weight_param_is_tuple)
-      : grad_all_inputs(get_all),
-        grad_weights(get_by_list),
-        has_sens(sens_param),
-        get_by_position(get_by_position),
-        weight_param_is_tuple(weight_param_is_tuple) {}
-
-  bool grad_all_inputs;
-  bool grad_weights;
-  bool has_sens;
-  bool get_by_position;
-  bool weight_param_is_tuple;
-};
-
 using NodePtr = expander::NodePtr;
 using NodePtrList = expander::NodePtrList;
+
 class FuncBackwardNode : public BackwardNode {
  public:
-  FuncBackwardNode(const string &name, const expander::bprop::BpropBuilderFunc &func,
-                   const mindspore::HashMap<std::string, ValuePtr> &attrs, const ValuePtrList &op_inputs,
-                   const ValuePtr &op_output, size_t output_size, const std::vector<InputType> &grad_type)
+  FuncBackwardNode(const string &name, expander::bprop::BpropBuilderFunc func,
+                   mindspore::HashMap<std::string, ValuePtr> attrs, ValuePtrList op_inputs, ValuePtr op_output,
+                   size_t output_size, std::vector<InputType> grad_type)
       : BackwardNode(name, output_size),
-        attrs_(attrs),
-        op_inputs_(op_inputs),
-        grad_type_(grad_type),
-        op_output_(op_output),
-        func_(func) {}
+        attrs_(std::move(attrs)),
+        op_inputs_(std::move(op_inputs)),
+        grad_type_(std::move(grad_type)),
+        op_output_(std::move(op_output)),
+        func_(std::move(func)) {}
   ~FuncBackwardNode() override = default;
   TensorPtrList CallBackward(const TensorPtrList &grads) override;
   NodePtrList PreProcess(const TensorPtrList &dout, FuncBuilder *emitter);
-  TensorPtrList LazeUpdateZeroGradient(const TensorPtrList &dout, FuncBuilder *emitter);
   const expander::bprop::BpropBuilderFunc &func() { return func_; }
   void set_attrs(const mindspore::HashMap<std::string, ValuePtr> &attrs) { attrs_ = attrs; }
 
@@ -77,12 +62,32 @@ class FuncBackwardNode : public BackwardNode {
 
 class HookBackwardNode : public BackwardNode {
  public:
-  HookBackwardNode(const string &name, const PrimitivePyPtr &prim, const VectorRef &args, size_t output_size)
-      : BackwardNode(name, output_size), prim_(prim), args_(args) {}
+  HookBackwardNode(const string &name, PrimitivePyPtr prim, VectorRef &&args, size_t output_size)
+      : BackwardNode(name, output_size), prim_(std::move(prim)), args_(args) {}
   TensorPtrList CallBackward(const TensorPtrList &grads) override;
 
  private:
   PrimitivePyPtr prim_;
+  VectorRef args_;
+};
+
+class GraphBackwardNode : public BackwardNode {
+ public:
+  explicit GraphBackwardNode(const string &name, size_t output_size, bool is_control_flow, std::string cache_key,
+                             FuncGraphPtr func_graph, const VectorRef &args)
+      : BackwardNode(name, output_size),
+        is_control_flow_(is_control_flow),
+        cache_key_(std::move(cache_key)),
+        func_graph_(std::move(func_graph)),
+        args_(args) {}
+  TensorPtrList CallBackward(const TensorPtrList &grads) override;
+  ValuePtr op_output_;
+  bool jit_out_has_dict_{false};
+
+ private:
+  bool is_control_flow_{false};
+  std::string cache_key_{false};
+  FuncGraphPtr func_graph_;
   VectorRef args_;
 };
 
@@ -103,32 +108,34 @@ class FakeBackwardNode : public BackwardNode {
   }
 };
 
-class AutoGradCell {
+class FuncGrad : public AutoGrad {
  public:
-  AutoGradCell(const ValuePtrList &input_param_values, size_t op_num_in_bprop_graph, bool grad_by_value);
-  ~AutoGradCell() = default;
-  bool KPynativeOp(const GradParamPtr &grad_param);
+  FuncGrad(const ValuePtrList &input_param_values, size_t op_num_in_bprop_graph, bool grad_by_value);
+  ~FuncGrad() override = default;
+
+  bool KPynativeOp(const GradParamPtr &grad_param) override;
   // Update top cell output, record last_node
-  void UpdateOutputNodeOfTopCell(const ValuePtr &sens_out);
+  void UpdateOutputNodeOfTopCell(const ValuePtr &sens_out) override;
+  // to do
+  // Reverse connect jit or higher order sub bprop funcgraph
+  bool KPynativeWithFProp(const GradParamPtr &grad_param) override;
 
   ValuePtr Finish(const TensorPtrList &weights, const std::vector<size_t> &grad_position, const GradAttr &grad_attr,
                   const ValuePtr &sens = nullptr);
-  // to do
-  // Reverse connect jit or higher order sub bprop funcgraph
-  bool KPynativeWithFProp(const GradParamPtr &grad_param) { return true; }
 
  private:
   void BackPropagate();
   void BuildForwardLastNode(const ValuePtr &sens_gradient);
-  OrderedSet<VariablePtr>::reverse_iterator GetLastNodeReverseIter();
+  OrderedSet<FuncVariablePtr>::reverse_iterator GetLastNodeReverseIter();
   void ConstructParameterNodes(const ValuePtrList &inputs);
 
-  static BackwardNodePtr BuildFuncBackwardNode(const PrimitivePtr &prim, const expander::bprop::BpropBuilderFunc &func,
-                                               const ValuePtrList &flatten_inputs, const OpGradInfoPtr &op_grad_info);
-  static BackwardNodePtr BuildCustomBackwardNode(const PrimitivePtr &prim, const ValuePtrList &flatten_inputs,
-                                                 const OpGradInfoPtr &op_grad_info);
-  static BackwardNodePtr BuildHookBackwardNode(const PrimitivePtr &prim, const ValuePtrList &flatten_inputs,
-                                               const OpGradInfoPtr &op_grad_info);
+  BackwardNodePtr BuildFuncBackwardNode(const PrimitivePtr &prim, const expander::bprop::BpropBuilderFunc &func,
+                                        const ValuePtrList &flatten_inputs, const OpGradInfoPtr &op_grad_info);
+  BackwardNodePtr BuildCustomBackwardNode(const PrimitivePtr &prim, const ValuePtrList &flatten_inputs,
+                                          const OpGradInfoPtr &op_grad_info);
+  BackwardNodePtr BuildHookBackwardNode(const PrimitivePtr &prim, const ValuePtrList &flatten_inputs,
+                                        const OpGradInfoPtr &op_grad_info);
+  BackwardNodePtr BuildGraphBackwardNode(const GradParamPtr &grad_param);
   ValuePtr GetGrads(const tensor::TensorPtrList &weights, const std::vector<size_t> &grad_position,
                     const GradAttr &grad_attr);
   ValuePtr GetInputGrads(bool grad_all_inputs, bool get_by_position, const std::vector<size_t> &grad_position);
@@ -138,16 +145,12 @@ class AutoGradCell {
   ValuePtrList OnsLike(const ValuePtr &value);
   void CheckSensShapeAndType(const ValuePtr &sens_gradient);
   std::shared_ptr<FuncBuilder> func_impl_;
-  OrderedSet<VariablePtr> variable_set_;
-  std::vector<std::pair<ValuePtr, VariablePtr>> cell_inputs_;
+  OrderedSet<FuncVariablePtr> variable_set_;
+  std::vector<std::pair<ValuePtr, FuncVariablePtr>> cell_inputs_;
   ValuePtr sens_value_{nullptr};
-  VariablePtr last_variable_{nullptr};
+  FuncVariablePtr last_variable_{nullptr};
   TensorPtrList root_gradients_;
-  bool grad_by_value_{true};
-  std::string device_target_;
 };
-using AutoGradCellPtr = std::shared_ptr<AutoGradCell>;
-void ClearPyNativeAutoGradStaticRes();
 }  // namespace mindspore::pynative::autograd
 
 #endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_FUNCTION_META_GRAD_H_

@@ -17,19 +17,25 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_FUNCTION_FUNC_BUILDER_H_
 #define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_FUNCTION_FUNC_BUILDER_H_
 
+#include <utility>
+#include <vector>
+#include <string>
+#include <memory>
 #include "utils/hash_map.h"
 #include "frontend/expander/bprop/bprop_irbuilder.h"
+#include "pipeline/pynative/grad/function/func_pass.h"
 
-namespace mindspore::pynative {
+namespace mindspore::pynative::autograd {
 using NodePtr = expander::NodePtr;
 using NodePtrList = expander::NodePtrList;
 using BpropBuilder = expander::bprop::BpropBuilder;
 
 class FuncBuilder : public BpropBuilder {
  public:
-  FuncBuilder(const std::string &name, const std::string &device_target,
-              const expander::ExpanderInferPtr &infer = nullptr)
-      : BpropBuilder(name, infer), device_target_(device_target) {}
+  FuncBuilder(const std::string &name, std::string device_target, const expander::ExpanderInferPtr &infer = nullptr)
+      : BpropBuilder(name, infer), device_target_(device_target) {
+    pass_forward_ = std::make_shared<bprop_pass::FuncPassForward>(this, std::move(device_target));
+  }
   ~FuncBuilder() override = default;
   NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) override;
   NodePtr EmitValue(const ValuePtr &value) override;
@@ -42,7 +48,8 @@ class FuncBuilder : public BpropBuilder {
   // const input to attr
   NodePtr Cast(const NodePtr &node, const TypePtr &type) override;
   NodePtr BatchNormGrad(const NodePtrList &inputs) override;
-  NodePtr SparseSoftmaxCrossEntropyWithLogits(const NodePtr &logits, const NodePtr &labels, bool is_grad) override;
+  NodePtr SparseSoftmaxCrossEntropyWithLogits(const NodePtrList &inputs, const expander::DAttr &attrs,
+                                              const NodePtr &out, const NodePtr &dout, bool is_graph_mode) override;
   NodePtr TupleGetItem(const NodePtr &input, size_t i) override;
   NodePtr TupleGetItem(const NodePtr &input, const NodePtr &index) override;
   NodePtr MakeTuple(const NodePtrList &inputs) override;
@@ -56,8 +63,9 @@ class FuncBuilder : public BpropBuilder {
  private:
   NodePtrList FlattenNode(const NodePtr &input, const NodePtr &out);
   std::string device_target_;
+  bprop_pass::FuncPassForwardPtr pass_forward_;
 };
 using FuncBuilderPtr = std::shared_ptr<FuncBuilder>;
-}  // namespace mindspore::pynative
+}  // namespace mindspore::pynative::autograd
 
 #endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_FUNCTION_FUNC_BUILDER_H_

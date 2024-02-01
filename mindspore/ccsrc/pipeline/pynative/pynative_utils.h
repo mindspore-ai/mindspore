@@ -26,6 +26,7 @@
 #include "kernel/pyboost/op_runner.h"
 #include "kernel/pyboost/op_register.h"
 #include "pipeline/pynative/forward/forward_task.h"
+#include "pipeline/pynative/grad/function/func_builder.h"
 #include "pipeline/jit/ps/parse/data_converter.h"
 #include "include/common/utils/primfunc_utils.h"
 
@@ -41,6 +42,9 @@
 namespace mindspore {
 namespace pynative {
 class PyNativeExecutor;
+using CallBackFn = std::function<VectorRef(const VectorRef &arg_list)>;
+enum class SpecialType { kZerosLikeType = 0, kOnesLikeType = 1 };
+
 namespace PyNativeAlgo {
 // Common function
 struct Common {
@@ -52,7 +56,6 @@ struct Common {
   static void SplitString(const std::string &str, std::vector<std::string> *id_vec);
   static bool ValueHasDynamicShape(const ValuePtr &value);
   static bool IsTensor(const ValuePtr &v, bool include_sequence = false);
-  static bool ExistTensor(const ValuePtr &seq);
   static bool IsControlFlowGraph(const FuncGraphPtr &func_graph);
   static ValuePtr FilterSensValues(const ValuePtr &value, bool dict_convert_to_tuple);
   static tensor::TensorPtr GetTensorFromParam(const AnfNodePtr &param_node);
@@ -88,6 +91,8 @@ struct Common {
   static void FreeFuncGraphForwardNodes(const FuncGraphPtr &func_graph);
   static tensor::TensorPtr ConvertToContiguousTensor(const tensor::TensorPtr &tensor, bool requires_grad);
   static ValuePtr ConvertToContiguousValue(const ValuePtr &v, bool requires_grad);
+  static size_t GetValueSize(const ValuePtr &v);
+  static tensor::TensorPtr ConvertToContiguousTensor(const tensor::TensorPtr &tensor);
 };
 
 // Parser python
@@ -108,48 +113,20 @@ struct PyParser {
     }
     return false;
   }
-
-  static inline void PrintTypeCastError(const ops::OpDefPtr &op_def, const py::list &op_inputs, size_t idx) {
-    auto const &op_arg = op_def->args_[idx];
-    if (IsSupportTensorCast(op_arg.cast_dtype_)) {
-      auto tensor = parse::ConvertTensorValue(op_inputs[idx]);
-      auto PrintVectorFunc = [](const ShapeVector &shape) -> std::string {
-        std::stringstream ss;
-        ss << "[";
-        for (size_t i = 0; i < shape.size(); i++) {
-          if (i != 0) {
-            ss << ", " << shape[i];
-          } else {
-            ss << shape[i];
-          }
-        }
-        ss << "]";
-        return ss.str();
-      };
-      if (tensor != nullptr) {
-        MS_EXCEPTION(ValueError) << "For " << op_def->name_ << ", the " << idx + 1
-                                 << "'th input is a Tensor whose shape is " << PrintVectorFunc(tensor->shape())
-                                 << " and dtype is [" << TypeIdToString(tensor->data_type())
-                                 << "], which can not be converted to " << ops::EnumToString(op_arg.arg_dtype_) << ".";
-      }
-    }
-    std::vector<std::string> op_type_list;
-    for (size_t index = 0; index < op_inputs.size(); ++index) {
-      (void)op_type_list.emplace_back(PyParser::BuilidPyInputTypeString(op_inputs[index]));
-    }
-    MS_EXCEPTION(TypeError) << ops::BuildOpErrorMsg(op_def, op_type_list);
-  }
+  static void PrintTypeCastError(const ops::OpDefPtr &op_def, const py::list &op_inputs, size_t idx);
 };
 
 // Data convert
 struct DataConvert {
   static py::object ValueToPyObj(const ValuePtr &v);
-  static ValuePtr TensorToValue(const std::vector<TensorPtr> tensors);
   static ValuePtr PyObjToValue(const py::object &obj, bool stub = false);
   static ValuePtr BaseRefToValue(const BaseRef &value, bool requires_grad, bool is_out_sequence);
   static ValuePtr VectorRefToValue(const VectorRef &vec_ref, bool requires_grad, bool is_out_sequence);
-  static void FlattenValueSeqArg(const ValuePtr &v, std::vector<ValuePtr> *flatten_v);
+  static void FlattenValueSeqArg(const ValuePtr &v, bool is_only_flatten_tensor_seq, std::vector<ValuePtr> *flatten_v);
   static void FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<ValuePtr> *flatten_v, bool has_sens);
+  static ValuePtrList FlattenTensorSeqInValue(const ValuePtr &v);
+  static ValuePtrList FlattenTensorSeqInValueSeq(const ValuePtrList &v);
+  static ValuePtrList VectorRefToValuePtrList(const VectorRef &vec_ref);
   static void GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const TopCellInfoPtr &top_cell);
   static void ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_run_info,
                                            const tensor::CSRTensorPtr &csr_tensor, const TopCellInfoPtr &top_cell,
@@ -214,6 +191,28 @@ struct PyBoost {
     return ret;
   }
   static void DataSyncForGraph(const kernel::pyboost::OpPtr &op);
+};
+
+// Used for auto grad, like func_grad and ir grad
+struct AutoGrad {
+  static bool IsPrimNeedGrad(const PrimitivePtr &prim);
+  static bool NeedGrad(const std::vector<ValuePtr> &input_values);
+  static bool IsZerosLikeNode(const AnfNodePtr &node);
+  static ValuePtr GetFakeZeroTensor();
+  static ValuePtr BuildSpecialValueGrad(const ValuePtr &value, const tensor::TensorPtr &grad,
+                                        autograd::FuncBuilder *func_builder, const SpecialType &type);
+  static AnfNodePtr BuildSpecialNode(const KernelGraphPtr &tape, const ValuePtr &value,
+                                     const abstract::AbstractBasePtr &abs, const SpecialType &type);
+  static AnfNodePtr BuildSparseTensorNode(const KernelGraphPtr &tape, const ValuePtr &sparse_value,
+                                          const AnfNodePtr &dout_value_node);
+  static void SetGradMetaData(const ValuePtr &value, const VariablePtr &variable, const ParameterPtr &param = nullptr);
+  static void SetGradInfoForInputs(const ValuePtr &value, const VariablePtr &variable,
+                                   const ParameterPtr &param = nullptr);
+  // Create fake bprop
+  static void BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CNodePtr> *outputs);
+  static CallBackFn CreateGraphCallBack(const FuncGraphPtr &call_graph, const std::string &cache_key,
+                                        bool is_control_flow, bool is_func_grad, bool jit_out_has_dict);
+  static void ClearAutoGradStaticCache();
 };
 
 // Some common functions used in both jit and PackFunc grad

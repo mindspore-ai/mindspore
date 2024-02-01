@@ -31,9 +31,9 @@ using DAttr = std::vector<std::pair<std::string, ValuePtr>>;
 
 class COMMON_EXPORT Node : public std::enable_shared_from_this<Node> {
  public:
-  Node(Emitter *emitter);
+  explicit Node(Emitter *emitter);
   Node(Emitter *emitter, const ValuePtr &value) : emitter_(emitter), value_(value) {}
-  ~Node() = default;
+  virtual ~Node() = default;
 
   virtual const AnfNodePtr &get() const { MS_EXCEPTION(NotImplementedError) << "Base Node not implement get() method"; }
 

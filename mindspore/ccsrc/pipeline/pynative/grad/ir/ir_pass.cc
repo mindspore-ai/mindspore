@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "pipeline/pynative/grad/ir/bprop_pass.h"
+#include "pipeline/pynative/grad/ir/ir_pass.h"
 #include <memory>
 #include <vector>
 #include <functional>
@@ -98,8 +98,8 @@ void ChangeInputToAttr(const PrimitivePtr &prim, const CNodePtr &cnode, const Va
   cnode->set_inputs(new_inputs);
 }
 
-void SetReverseParameterReplaceInfo(autograd::AutoGradCellImpl *auto_grad_cell_ptr, const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
+void SetReverseParameterReplaceInfo(autograd::IrBprop *ir_bprop, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(ir_bprop);
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return;
@@ -109,9 +109,9 @@ void SetReverseParameterReplaceInfo(autograd::AutoGradCellImpl *auto_grad_cell_p
     const auto &input = cnode->input(i);
     MS_EXCEPTION_IF_NULL(input);
     if (input->isa<Parameter>()) {
-      auto_grad_cell_ptr->AddReverseUser(input, cnode, i);
+      ir_bprop->AddReverseUser(input, cnode, i);
     } else if (input->isa<CNode>()) {
-      SetReverseParameterReplaceInfo(auto_grad_cell_ptr, input);
+      SetReverseParameterReplaceInfo(ir_bprop, input);
     }
   }
 }
@@ -129,9 +129,9 @@ std::optional<T> GetScalarAnfNodeValue(const AnfNodePtr &anf_node) {
   return value_opt.value();
 }
 
-CNodePtr CreateBNInferGrad(autograd::AutoGradCellImpl *auto_grad_cell_ptr, const CNodePtr &batchnorm_cnode,
-                           const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
+CNodePtr CreateBNInferGrad(autograd::IrBprop *ir_bprop, const CNodePtr &batchnorm_cnode, const AnfNodePtr &node,
+                           bool grad_by_value) {
+  MS_EXCEPTION_IF_NULL(ir_bprop);
   MS_EXCEPTION_IF_NULL(batchnorm_cnode);
   MS_EXCEPTION_IF_NULL(node);
   constexpr size_t kIdxGrads = 1;
@@ -145,18 +145,18 @@ CNodePtr CreateBNInferGrad(autograd::AutoGradCellImpl *auto_grad_cell_ptr, const
   (void)inputs.emplace_back(batchnorm_cnode->input(kIdxScale));
   (void)inputs.emplace_back(batchnorm_cnode->input(kIdxVariance));
   (void)inputs.emplace_back(batchnorm_cnode->input(kIdxEpsilon));
-  auto new_node = auto_grad_cell_ptr->ad_param()->tape_->FuncGraph::NewCNode(inputs);
+  auto new_node = ir_bprop->ad_param()->tape_->FuncGraph::NewCNode(inputs);
   new_node->set_abstract(node->abstract());
   new_node->set_scope(batchnorm_cnode->scope());
 
-  if (!auto_grad_cell_ptr->grad_by_value()) {
-    SetReverseParameterReplaceInfo(auto_grad_cell_ptr, batchnorm_cnode->input(kIndex2));
-    SetReverseParameterReplaceInfo(auto_grad_cell_ptr, batchnorm_cnode->input(kIndex4));
-    SetReverseParameterReplaceInfo(auto_grad_cell_ptr, batchnorm_cnode->input(kIndex6));
+  if (!grad_by_value) {
+    SetReverseParameterReplaceInfo(ir_bprop, batchnorm_cnode->input(kIndex2));
+    SetReverseParameterReplaceInfo(ir_bprop, batchnorm_cnode->input(kIndex4));
+    SetReverseParameterReplaceInfo(ir_bprop, batchnorm_cnode->input(kIndex6));
   }
-  auto_grad_cell_ptr->AddUser(batchnorm_cnode->input(kIdxGrads), new_node, kIndex1);
-  auto_grad_cell_ptr->AddUser(batchnorm_cnode->input(kIdxScale), new_node, kIndex2);
-  auto_grad_cell_ptr->AddUser(batchnorm_cnode->input(kIdxVariance), new_node, kIndex3);
+  ir_bprop->AddUser(batchnorm_cnode->input(kIdxGrads), new_node, kIndex1);
+  ir_bprop->AddUser(batchnorm_cnode->input(kIdxScale), new_node, kIndex2);
+  ir_bprop->AddUser(batchnorm_cnode->input(kIdxVariance), new_node, kIndex3);
 
   auto is_training_opt = GetScalarAnfNodeValue<bool>(batchnorm_cnode->input(kIdxIsTraining));
   if (is_training_opt.has_value()) {
@@ -186,7 +186,7 @@ class SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR {
     auto expand_dims_node = CreateMulInput(mul_node, sparse_softmax_node, &softmax_node_outputs);
 
     AnfNodePtrList new_mul_inputs{NewValueNode(prim::kPrimMul), softmax_node_outputs[kIndex1], expand_dims_node};
-    auto new_mul_node = auto_grad_cell_ptr_->ad_param()->tape_->FuncGraph::NewCNode(new_mul_inputs);
+    auto new_mul_node = ir_bprop_->ad_param()->tape_->FuncGraph::NewCNode(new_mul_inputs);
     new_mul_node->set_abstract(mul_node->abstract());
     new_mul_node->set_scope(mul_node->scope());
     auto is_dynamic = common::AnfAlgo::IsDynamicShape(sparse_softmax_node);
@@ -199,7 +199,7 @@ class SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR {
     return reshape_node;
   }
 
-  autograd::AutoGradCellImpl *auto_grad_cell_ptr_{nullptr};
+  autograd::IrBprop *ir_bprop_{nullptr};
 
  private:
   CNodePtr CreateReshape(const AnfNodePtr &input_node, const ShapeVector &shape) {
@@ -214,13 +214,13 @@ class SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR {
     auto shape_node = NewValueNode(shape);
     CreateTensorByConstantValue(shape_node);
     AnfNodePtrList reshape_inputs{NewValueNode(reshape_primitive), input_node, shape_node};
-    auto reshape_node = auto_grad_cell_ptr_->ad_param()->tape_->FuncGraph::NewCNode(reshape_inputs);
+    auto reshape_node = ir_bprop_->ad_param()->tape_->FuncGraph::NewCNode(reshape_inputs);
     auto data_types = common::AnfAlgo::GetOutputInferDataType(input_node, kIndex0);
     common::AnfAlgo::SetOutputInferTypeAndShape({data_types}, {shape}, reshape_node.get());
     reshape_node->set_scope(input_node->scope());
     constexpr auto kShapeFromTensor = "shape_from_tensor";
     common::AnfAlgo::SetNodeAttr(kShapeFromTensor, MakeValue(true), reshape_node);
-    auto_grad_cell_ptr_->AddUser(input_node, reshape_node, kIndex1);
+    ir_bprop_->AddUser(input_node, reshape_node, kIndex1);
     return reshape_node;
   }
 
@@ -263,11 +263,11 @@ class SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR {
     CreateTensorByConstantValue(depth_node);
     AnfNodePtrList one_hot_inputs{
       NewValueNode(one_hot_primitive), reshape_node, depth_node, value_on_node, value_off_node, value_axis_node};
-    auto one_hot_node = auto_grad_cell_ptr_->ad_param()->tape_->FuncGraph::NewCNode(one_hot_inputs);
+    auto one_hot_node = ir_bprop_->ad_param()->tape_->FuncGraph::NewCNode(one_hot_inputs);
     ShapeVector one_hot_shape = {batch_size_, depth_};
     common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {one_hot_shape}, one_hot_node.get());
     one_hot_node->set_scope(sparse_softmax_node->scope());
-    auto_grad_cell_ptr_->AddUser(reshape_node, one_hot_node, kIndex1);
+    ir_bprop_->AddUser(reshape_node, one_hot_node, kIndex1);
     return one_hot_node;
   }
 
@@ -282,7 +282,7 @@ class SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR {
     auto reshape_node = CreateReshape(sparse_softmax_node->input(kIndex1), shape);
     AnfNodePtrList inputs{NewValueNode(std::make_shared<Primitive>(kSoftmaxCrossEntropyWithLogitsOpName)), reshape_node,
                           one_hot_node};
-    auto softmax_node = auto_grad_cell_ptr_->ad_param()->tape_->FuncGraph::NewCNode(inputs);
+    auto softmax_node = ir_bprop_->ad_param()->tape_->FuncGraph::NewCNode(inputs);
     ShapeVector loss_shape = {batch_size_};
     auto data_types = common::AnfAlgo::GetOutputInferDataType(one_hot_node, kIndex0);
     auto types = {data_types, data_types};
@@ -304,7 +304,7 @@ class SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR {
     for (size_t i = 0; i < output_num; i++) {
       auto idx = PyNativeAlgo::Common::CreateValueNodeByValue(MakeValue<int64_t>(SizeToLong(i)));
       auto tuple_getitem =
-        auto_grad_cell_ptr_->ad_param()->tape_->FuncGraph::NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
+        ir_bprop_->ad_param()->tape_->FuncGraph::NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
       tuple_getitem->set_abstract(abs_seq->elements()[i]);
       (void)outputs->emplace_back(tuple_getitem);
     }
@@ -326,7 +326,7 @@ class SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR {
     if (batch_size_ < 0) {
       AnfNodePtrList dynamic_shape_inputs{NewValueNode(std::make_shared<Primitive>("DynamicShape")),
                                           sparse_softmax_node->input(kIndex2)};
-      auto shape_node = auto_grad_cell_ptr_->ad_param()->tape_->FuncGraph::NewCNode(dynamic_shape_inputs);
+      auto shape_node = ir_bprop_->ad_param()->tape_->FuncGraph::NewCNode(dynamic_shape_inputs);
       auto labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, kIndex1);
       ShapeVector tensor_shp({static_cast<int64_t>(labels_shape.size())});
       auto dynamic_shape_abstract =
@@ -334,7 +334,7 @@ class SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR {
       MS_EXCEPTION_IF_NULL(dynamic_shape_abstract);
       shape_node->set_abstract(dynamic_shape_abstract);
       shape_node->set_scope(mul_node->scope());
-      auto_grad_cell_ptr_->AddUser(sparse_softmax_node->input(kIndex2), shape_node, kIndex1);
+      ir_bprop_->AddUser(sparse_softmax_node->input(kIndex2), shape_node, kIndex1);
       tile_inputs = {NewValueNode(tile_primitive), mul_node->input(kIndex2), shape_node};
     } else {
       std::vector<int64_t> multiples_v = {batch_size_};
@@ -342,12 +342,12 @@ class SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR {
       tile_inputs = {NewValueNode(tile_primitive), mul_node->input(kIndex2), multiples_node};
     }
 
-    auto tile_node = auto_grad_cell_ptr_->ad_param()->tape_->FuncGraph::NewCNode(tile_inputs);
+    auto tile_node = ir_bprop_->ad_param()->tape_->FuncGraph::NewCNode(tile_inputs);
     ShapeVector tile_shape = {batch_size_};
     common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetPrevNodeOutputInferDataType(mul_node, 1UL)},
                                                 {tile_shape}, tile_node.get());
     tile_node->set_scope(mul_node->scope());
-    auto_grad_cell_ptr_->AddUser(mul_node->input(kIndex2), tile_node, kIndex1);
+    ir_bprop_->AddUser(mul_node->input(kIndex2), tile_node, kIndex1);
     // feature map set
     std::vector<size_t> feature_map_input_indexs;
     (void)feature_map_input_indexs.emplace_back(0);
@@ -370,7 +370,7 @@ class SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR {
     real_div_primitive->set_attr(kAttrOutputNames, MakeValue(output_names));
 
     AnfNodePtrList real_div_inputs{NewValueNode(real_div_primitive), tile_node, y_node};
-    auto real_div_node = auto_grad_cell_ptr_->ad_param()->tape_->FuncGraph::NewCNode(real_div_inputs);
+    auto real_div_node = ir_bprop_->ad_param()->tape_->FuncGraph::NewCNode(real_div_inputs);
     real_div_node->set_abstract(tile_node->abstract());
     real_div_node->set_scope(sparse_softmax_node->scope());
     return real_div_node;
@@ -393,7 +393,7 @@ class SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR {
     expand_dims_primitive->set_attr(kAttrOutputNames, MakeValue(output_names));
 
     AnfNodePtrList expand_dims_inputs = {NewValueNode(expand_dims_primitive), real_div_node, axis_node};
-    auto expand_dims_node = auto_grad_cell_ptr_->ad_param()->tape_->FuncGraph::NewCNode(expand_dims_inputs);
+    auto expand_dims_node = ir_bprop_->ad_param()->tape_->FuncGraph::NewCNode(expand_dims_inputs);
     auto y_shape = common::AnfAlgo::GetOutputInferShape(real_div_node, 0UL);
     (void)y_shape.emplace_back(1);
     common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, 0UL)},
@@ -416,7 +416,7 @@ class SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR {
     CNodePtr real_div_node;
     if (tile_node == nullptr) {
       real_div_node = CreateRealDiv(sparse_softmax_cnode, mul_node->input(kIndex2));
-      auto_grad_cell_ptr_->AddUser(mul_node->input(kIndex2), real_div_node, kIndex1);
+      ir_bprop_->AddUser(mul_node->input(kIndex2), real_div_node, kIndex1);
     } else {
       real_div_node = CreateRealDiv(sparse_softmax_cnode, tile_node);
     }
@@ -440,7 +440,7 @@ void AddCNodeInputs(const CNodePtr &cnode, AnfNodePtrList *cnode_inputs, size_t 
 }
 
 AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR(const AnfNodePtr &node, const std::string &op_name,
-                                                              autograd::AutoGradCellImpl *auto_grad_cell_ptr) {
+                                                              autograd::IrBprop *ir_bprop) {
   if (op_name != kSparseSoftmaxCrossEntropyWithLogitsOpName) {
     return node;
   }
@@ -458,12 +458,12 @@ AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR(const AnfNodePtr &
   // Use static class for create only once
   static auto sparse_softmax_cross_entropy_with_logits =
     std::make_shared<SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>();
-  sparse_softmax_cross_entropy_with_logits->auto_grad_cell_ptr_ = auto_grad_cell_ptr;
+  sparse_softmax_cross_entropy_with_logits->ir_bprop_ = ir_bprop;
   return sparse_softmax_cross_entropy_with_logits->Run(mul_node, sparse_softmax_node);
 }
 }  // namespace
 
-void PyNativePassForward::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node, SeenNum seen,
+void IrPassForward::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node, SeenNum seen,
                                                               bool run_by_single_op) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
@@ -495,7 +495,7 @@ void PyNativePassForward::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &
     for (size_t i = 1; i < cnode->size(); ++i) {
       const auto &input_node = cnode->input(i);
       if (common::AnfAlgo::CheckPrimitiveType(input_node, prim::kPrimMakeTuple)) {
-        auto dyn_input_size = opt::SplitTupleInputs(auto_grad_cell_ptr_->ad_param()->tape_, input_node, &plant_inputs);
+        auto dyn_input_size = opt::SplitTupleInputs(ir_bprop_->ad_param()->tape_, input_node, &plant_inputs);
         (void)dyn_input_sizes.emplace_back(dyn_input_size);
       } else {
         (void)plant_inputs.emplace_back(input_node);
@@ -516,13 +516,13 @@ void PyNativePassForward::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &
       MS_LOG(DEBUG) << "Change node to dynamic len " << cnode->DebugString();
       cnode->set_inputs(plant_inputs);
       for (size_t i = 1; i < plant_inputs.size(); ++i) {
-        auto_grad_cell_ptr_->AddUser(plant_inputs[i], cnode, i);
+        ir_bprop_->AddUser(plant_inputs[i], cnode, i);
       }
     }
   }
 }
 
-CNodePtr PyNativePassForward::ConvertConstInputToAttr(const CNodePtr &cnode, bool is_dynamic_shape) {
+CNodePtr IrPassForward::ConvertConstInputToAttr(const CNodePtr &cnode, bool is_dynamic_shape) {
   MS_EXCEPTION_IF_NULL(cnode);
   const auto &prim = GetCNodePrimitive(cnode);
   if (prim == nullptr) {
@@ -561,7 +561,7 @@ CNodePtr PyNativePassForward::ConvertConstInputToAttr(const CNodePtr &cnode, boo
   return cnode;
 }
 
-AnfNodePtr PyNativePassForward::BatchNormGradToBNInferGrad(const AnfNodePtr &node, const std::string &op_name) {
+AnfNodePtr IrPassForward::BatchNormGradToBNInferGrad(const AnfNodePtr &node, const std::string &op_name) {
   if (op_name != kBatchNormOpName) {
     return node;
   }
@@ -599,14 +599,14 @@ AnfNodePtr PyNativePassForward::BatchNormGradToBNInferGrad(const AnfNodePtr &nod
   }
 
   need_reverse_graph_ = true;
-  auto new_cnode = CreateBNInferGrad(auto_grad_cell_ptr_, batchnorm_grad_cnode, node);
+  auto new_cnode = CreateBNInferGrad(ir_bprop_, batchnorm_grad_cnode, node, grad_by_value_);
   auto &pair = node_attr_value_[new_cnode];
   (void)pair.emplace_back(UINT32_MAX, node);
   return new_cnode;
 }
 
-void PyNativePassForward::ReverseConstantToAttrNode(const CNodePtr &cnode, ValuePtrList *inputs_value,
-                                                    AnfNodePtrList *cnode_inputs) {
+void IrPassForward::ReverseConstantToAttrNode(const CNodePtr &cnode, ValuePtrList *inputs_value,
+                                              AnfNodePtrList *cnode_inputs) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (!cnode->HasAttr(kAttrConvertAttrNode)) {
     return;
@@ -614,8 +614,8 @@ void PyNativePassForward::ReverseConstantToAttrNode(const CNodePtr &cnode, Value
   ReverseCNodeInputs(cnode, cnode_inputs, inputs_value);
 }
 
-void PyNativePassForward::ReverseMakeTupleNode(const CNodePtr &cnode, ValuePtrList *inputs_value,
-                                               AnfNodePtrList *cnode_inputs) {
+void IrPassForward::ReverseMakeTupleNode(const CNodePtr &cnode, ValuePtrList *inputs_value,
+                                         AnfNodePtrList *cnode_inputs) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(inputs_value);
   MS_EXCEPTION_IF_NULL(cnode_inputs);
@@ -647,7 +647,7 @@ void PyNativePassForward::ReverseMakeTupleNode(const CNodePtr &cnode, ValuePtrLi
       (void)new_inputs.emplace_back(cnode_tuple);
 
       // Update knode inputs
-      auto knode_input = auto_grad_cell_ptr_->ad_param()->tape_->FuncGraph::NewCNode(knode_inputs);
+      auto knode_input = ir_bprop_->ad_param()->tape_->FuncGraph::NewCNode(knode_inputs);
       knode_input->set_abstract(abs);
       size_t begin_index = i + kIndex1;
       auto it = cnode_inputs->erase(cnode_inputs->begin() + SizeToLong(begin_index),
@@ -668,7 +668,7 @@ void PyNativePassForward::ReverseMakeTupleNode(const CNodePtr &cnode, ValuePtrLi
   cnode->EraseAttr(kTupleToMakeTuple);
 }
 
-void PyNativePassForward::ReverseBNInfer(const CNodePtr &cnode) {
+void IrPassForward::ReverseBNInfer(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (!IsPrimitiveCNode(cnode, prim::kPrimBNInferGrad)) {
     return;
@@ -693,8 +693,8 @@ void PyNativePassForward::ReverseBNInfer(const CNodePtr &cnode) {
   node_attr_value_.erase(item);
 }
 
-void PyNativePassForward::ReverseCNodeInputs(const CNodePtr &cnode, AnfNodePtrList *cnode_inputs,
-                                             ValuePtrList *inputs_value) {
+void IrPassForward::ReverseCNodeInputs(const CNodePtr &cnode, AnfNodePtrList *cnode_inputs,
+                                       ValuePtrList *inputs_value) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(inputs_value);
   MS_EXCEPTION_IF_NULL(cnode_inputs);
@@ -710,8 +710,8 @@ void PyNativePassForward::ReverseCNodeInputs(const CNodePtr &cnode, AnfNodePtrLi
       AddCNodeInputs(cnode, cnode_inputs, t.first, PyNativeAlgo::Common::CreateValueNodeByValue(v, nullptr));
       (void)inputs_value->insert(inputs_value->begin() + SizeToLong(t.first), v);
     } else if (t.second->isa<Parameter>()) {
-      const auto it = auto_grad_cell_ptr_->ad_param()->anfnode_to_variable_adjoint_.find(t.second);
-      if (it == auto_grad_cell_ptr_->ad_param()->anfnode_to_variable_adjoint_.end()) {
+      const auto it = ir_bprop_->ad_param()->anfnode_to_variable_adjoint_.find(t.second);
+      if (it == ir_bprop_->ad_param()->anfnode_to_variable_adjoint_.end()) {
         MS_LOG(EXCEPTION) << "Can not find " << t.second << " in anfnode_to_variable_adjoint";
       }
       AddCNodeInputs(cnode, cnode_inputs, t.first, it->second->k_node());
@@ -723,7 +723,7 @@ void PyNativePassForward::ReverseCNodeInputs(const CNodePtr &cnode, AnfNodePtrLi
   node_attr_value_.erase(item);
 }
 
-void PyNativePassForward::ReversePassFuncGraph(const FuncGraphPtr &func_graph) {
+void IrPassForward::ReversePassFuncGraph(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   const auto &order = TopoSort(func_graph->output());
   for (const auto &node : order) {
@@ -741,30 +741,29 @@ void PyNativePassForward::ReversePassFuncGraph(const FuncGraphPtr &func_graph) {
   PyNativeAlgo::Common::DumpGraphIR("reverse_cnode_graph.ir", func_graph);
 }
 
-void PyNativePassForward::ReversePassCNode(const CNodePtr &cnode, ValuePtrList *inputs_value,
-                                           AnfNodePtrList *cnode_inputs) {
+void IrPassForward::ReversePassCNode(const CNodePtr &cnode, ValuePtrList *inputs_value, AnfNodePtrList *cnode_inputs) {
   // Notice, The reverser step is opposite to the positive pass
-  auto tape_graph = auto_grad_cell_ptr_->ad_param()->tape_;
+  auto tape_graph = ir_bprop_->ad_param()->tape_;
   MS_EXCEPTION_IF_NULL(tape_graph);
 
   ReverseMakeTupleNode(cnode, inputs_value, cnode_inputs);
   ReverseConstantToAttrNode(cnode, inputs_value, cnode_inputs);
 }
 
-CNodePtr PyNativePassForward::PassForDin(const CNodePtr &cnode, const std::string &op_name, bool is_dynamic_shape) {
+CNodePtr IrPassForward::PassForDin(const CNodePtr &cnode, const std::string &op_name, bool is_dynamic_shape) {
   // If you want add a pass here, please take care of high grad
-  MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr_);
+  MS_EXCEPTION_IF_NULL(ir_bprop_);
   AnfNodePtr new_din = ConvertConstInputToAttr(cnode, is_dynamic_shape);
 
   // Ascend only
   if (device_target_ == kAscendDevice) {
     new_din = BatchNormGradToBNInferGrad(new_din, op_name);
-    new_din = GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR(new_din, op_name, auto_grad_cell_ptr_);
+    new_din = GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR(new_din, op_name, ir_bprop_);
   }
   return new_din->cast<CNodePtr>();
 }
 
-bool PyNativePassForward::need_reverse_graph_ = false;
+bool IrPassForward::need_reverse_graph_ = false;
 
 void ClearCache() { node_attr_value_.clear(); }
 }  // namespace bprop_pass

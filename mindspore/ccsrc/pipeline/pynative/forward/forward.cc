@@ -457,6 +457,7 @@ void ForwardExecutor::CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_inf
 
   if (is_single_tensor_output) {
     op_run_info->real_out = op_run_info->base_op_run_info.output_tensors[0];
+    op_run_info->op_grad_info->output_size = 1;
   } else {
     std::vector<ValuePtr> output_values;
     std::transform(op_run_info->base_op_run_info.output_tensors.begin(),
@@ -466,6 +467,7 @@ void ForwardExecutor::CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_inf
                      return t;
                    });
     op_run_info->real_out = std::make_shared<ValueTuple>(output_values);
+    op_run_info->op_grad_info->output_size = output_values.size();
   }
 
   UpdateOutputStubNodeValue(op_run_info);
@@ -641,7 +643,6 @@ void ForwardExecutor::RunOpBackendSync(const FrontendOpRunInfoPtr &op_run_info) 
     UpdateStubTensor(op_run_info);
     return;
   }
-  op_run_info->op_grad_info->output_size = backend_op_run_info->base_op_run_info.output_tensors.size();
   // 4. Do op grad and record op info
   ForwardOpGradImpl(op_run_info);
   // output is dynamic shape. Need to update abstract and value.
@@ -779,6 +780,7 @@ VectorRef ForwardExecutor::RunOpBackendInner(const FrontendOpRunInfoPtr &op_run_
       OpCompiler::GetInstance().IsInvalidInferResultOp(op_run_info->base_op_run_info.op_name)) {
     op_run_info->base_op_run_info.abstract = backend_op_run_info->base_op_run_info.abstract;
   }
+  op_run_info->op_grad_info->output_size = outputs.size();
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
   MS_LOG(DEBUG) << "RunOpBackendInner end";
   return outputs;
@@ -842,6 +844,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
     }
     auto result_v = ConstructOutputInVM(op_run_info, result);
     if (op_run_info->requires_grad) {
+      op_run_info->op_grad_info->output_size = result.size();
       (void)PyNativeAlgo::Common::SetValueGradInfo(result_v, nullptr, InputType::kOpOutput);
     }
     MS_LOG(DEBUG) << "RunOpInVM end";
@@ -868,6 +871,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
   if (op_run_info->requires_grad) {
     (void)PyNativeAlgo::Common::SetValueGradInfo(result_v, nullptr, InputType::kOpOutput);
   }
+  op_run_info->op_grad_info->output_size = PyNativeAlgo::Common::GetValueSize(result_v);
   MS_LOG(DEBUG) << "RunOpInVM end";
   return result_v;
 }

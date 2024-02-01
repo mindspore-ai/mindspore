@@ -98,11 +98,13 @@ struct GradParam {
   // For other used
   bool out_used_in_bporp_graph{false};
   bool is_control_flow{false};
+  bool is_func_grad{false};
   size_t input_size{0};
 
   // For jit domain
   bool has_added_v{false};
   bool is_jit_graph{false};
+  bool jit_out_has_dict{false};
   bool is_jit_self_dynamic_shape{false};
 
   // For KPynativeWithFProp used

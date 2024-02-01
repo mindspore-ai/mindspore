@@ -2305,7 +2305,6 @@ void MemoryRecycle() {
   parse::data_converter::ClearObjectCache();
   parse::Parser::CleanParserResource();
   trace::ClearTraceStack();
-  pynative::autograd::ClearPyNativeAutoGradStaticRes();
   pynative::PyNativeExecutor::GetInstance()->ClearRes();
   ConfigManager::GetInstance().ResetConfig();
   ScopeManager::GetInstance().ClearScope();

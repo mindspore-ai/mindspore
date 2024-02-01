@@ -16,6 +16,7 @@
 
 #include "pipeline/pynative/pynative_execute.h"
 #include "pipeline/pynative/pynative_utils.h"
+#include "pipeline/pynative/grad/ir/ir_bprop.h"
 #include "pipeline/pynative/predict_out_type_map.h"
 #include "pipeline/jit/ps/debug/trace.h"
 #include "pybind_api/pybind_patch.h"
@@ -191,7 +192,7 @@ void PyNativeExecutor::ClearRes() const {
   // Clear forward tasks before clear op graphs cache.
   pynative::OpCompiler::GetInstance().ClearAllCache();
   kernel::KernelModCache::GetInstance().ClearAllCache();
-  pynative::autograd::ClearPyNativeAutoGradStaticRes();
+  pynative::autograd::ClearAutoGradCache();
 
   // Maybe exit in runop step
   auto ms_context = MsContext::GetInstance();

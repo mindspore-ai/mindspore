@@ -48,6 +48,7 @@ class COMMON_EXPORT Emitter {
 
   /// \brief Emit a primitive CNode
   NodePtr Emit(const std::string &op_name, const NodePtrList &inputs, const DAttr &attrs = {});
+  PrimitivePtr NewPrimitive(const std::string &name, const DAttr &attrs = {});
 
   /// \brief Emit a ValueNode
   virtual NodePtr EmitValue(const ValuePtr &value);
@@ -243,9 +244,8 @@ class COMMON_EXPORT Emitter {
     return Emit("GatherD", {x, dim, index});
   }
   virtual NodePtr BatchNormGrad(const NodePtrList &inputs) { return Emit("BatchNormGrad", inputs); }
-  virtual NodePtr SparseSoftmaxCrossEntropyWithLogits(const NodePtr &logits, const NodePtr &labels, bool is_grad) {
-    return Emit("SparseSoftmaxCrossEntropyWithLogits", {logits, labels}, {{kAttrIsGrad, MakeValue(is_grad)}});
-  }
+  virtual NodePtr SparseSoftmaxCrossEntropyWithLogits(const NodePtrList &inputs, const DAttr &attrs, const NodePtr &out,
+                                                      const NodePtr &dout, bool is_graph_mode);
   /// \brief Emit a value node
   template <typename T>
   NodePtr Value(const T &value) {
@@ -309,7 +309,6 @@ class COMMON_EXPORT Emitter {
 
  protected:
   virtual NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs);
-  PrimitivePtr NewPrimitive(const std::string &name, const DAttr &attrs = {});
   NodePtr CmpOpWithCast(const std::string &op, const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type) {
     auto node = UnifyDtypeAndEmit(op, lhs, rhs);
     return dst_type == nullptr ? node : Cast(node, dst_type);

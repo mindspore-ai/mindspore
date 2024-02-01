@@ -536,6 +536,16 @@ std::tuple<NodePtr, NodePtr> Emitter::UnifyDtype2(const NodePtr &lhs, const Node
   return {lhs, this->Cast(rhs, lhs->dtype())};
 }
 
+NodePtr Emitter::SparseSoftmaxCrossEntropyWithLogits(const NodePtrList &inputs, const DAttr &attrs, const NodePtr &out,
+                                                     const NodePtr &dout, bool is_graph_mode) {
+  auto grad = Emit("SparseSoftmaxCrossEntropyWithLogits", inputs, attrs);
+  if (is_graph_mode) {
+    grad = Depend(grad, out);
+  }
+  grad = Mul(grad, dout);
+  return grad;
+}
+
 NodePtr Emitter::Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) {
   MS_EXCEPTION(NotImplementedError) << "Base Emitter not implement Conditional() method";
 }

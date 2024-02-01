@@ -1337,7 +1337,7 @@ REG_BPROP_BUILDER("BatchNorm").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
       [&out](Emitter *e) -> NodePtrList {
         return {e->TupleGetItem(out, 3), e->TupleGetItem(out, 4)};
       },
-      [&mean, &variance, &out](Emitter *e) -> NodePtrList {
+      [&mean, &variance](Emitter *e) -> NodePtrList {
         return {mean, variance};
       });
     saved_mean = ib->TupleGetItem(cond_out, 0);
@@ -1345,9 +1345,8 @@ REG_BPROP_BUILDER("BatchNorm").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   }
   auto reserve = ib->TupleGetItem(out, 2);
 
-  out = ib->Emit(
-    "BatchNormGrad",
-    {ib->TupleGetItem(dout, 0), x, scale, saved_mean, saved_variance, reserve, is_training, epsilon, data_format}, {});
+  out = ib->BatchNormGrad(
+    {ib->TupleGetItem(dout, 0), x, scale, saved_mean, saved_variance, reserve, is_training, epsilon, data_format});
   auto dx = ib->TupleGetItem(out, 0);
   auto dscale = ib->TupleGetItem(out, 1);
   auto dbias = ib->TupleGetItem(out, 2);
@@ -1432,11 +1431,8 @@ REG_BPROP_BUILDER("SparseSoftmaxCrossEntropyWithLogits").SetBody(BODYFUNC(ib) {
   // is_grad is false
   auto logits = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex3);
-  auto grad = ib->Emit(kSparseSoftmaxCrossEntropyWithLogitsOpName, {logits, labels}, {{kAttrIsGrad, MakeValue(true)}});
-  if (ib->IsGraphMode()) {
-    grad = ib->Depend(grad, out);
-  }
-  grad = ib->Mul(grad, dout);
+  auto grad = ib->SparseSoftmaxCrossEntropyWithLogits({logits, labels}, {{kAttrIsGrad, MakeValue(true)}}, out, dout,
+                                                      ib->IsGraphMode());
   return {grad, ib->OutZeros(labels)};
 });
 

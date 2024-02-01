@@ -22,6 +22,8 @@
 #include "ops/sequence_ops.h"
 #include "ops/framework_ops.h"
 #include "pipeline/pynative/grad/top_cell.h"
+#include "pipeline/pynative/grad/function/func_grad.h"
+#include "pipeline/pynative/grad/ir/auto_grad.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "pipeline/pynative/pynative_cache.h"
 #include "pipeline/jit/ps/pipeline.h"
@@ -35,7 +37,6 @@
 #include "frontend/optimizer/environ_conversion.h"
 #include "frontend/expander/utils.h"
 #include "pipeline/jit/ps/pass.h"
-#include "frontend/expander/bprop/bprop.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "frontend/expander/pack/packfunc_grad.h"
 #include "frontend/optimizer/fallback_rewriter.h"
@@ -413,7 +414,7 @@ void RunReplace(const expander::GraphGradInfoPtr &graph_grad_info, const ValuePt
   MS_LOG_DEBUG << "end RunReplace";
 }
 
-void KPynativeGraph(const autograd::AutoGradCellPtr &auto_grad_cell_ptr, const GradParamPtr &grad_param,
+void KPynativeGraph(const autograd::AutoGradPtr &auto_grad_cell_ptr, const GradParamPtr &grad_param,
                     const expander::GraphGradInfoPtr &graph_grad_info, const ValuePtrList &forward_vnodes_values) {
   // Replace vnode in ad_graph by current output value
   RunReplace(graph_grad_info, forward_vnodes_values);
@@ -437,6 +438,8 @@ void KPynativeGraph(const autograd::AutoGradCellPtr &auto_grad_cell_ptr, const G
   grad_param->fg = graph_grad_info->graph_set_forward;
   grad_param->source_fg = graph_grad_info->ori_graph;
   grad_param->graph_cache_key = std::to_string(graph_grad_info->graph_id);
+  MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
+  op_grad_info->output_size = PyNativeAlgo::Common::GetValueSize(op_grad_info->out_value);
   auto_grad_cell_ptr->KPynativeWithFProp(grad_param);
 }
 
@@ -562,11 +565,14 @@ void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_
     (void)abs_list.emplace_back(param_i_abs);
     RecordForwardGraphForInput(v, input_args_info->input_arg_id_vec[i], param_i_abs);
   }
-  //  top_cell()->set_auto_grad_cell_ptr(std::make_shared<autograd::AutoGradCellImpl>(
-  //    input_param_values, abs_list, op_num_in_bprop_graph_ * kContainerRatio, assist_queue_,
-  //    forward()->enable_async(), !top_cell()->is_high_order_top_cell()));
-  top_cell()->set_auto_grad_cell_ptr(std::make_shared<autograd::AutoGradCell>(
-    input_param_values, op_num_in_bprop_graph_ * kContainerRatio, !top_cell()->is_high_order_top_cell()));
+  if (top_cell()->is_ir_grad()) {
+    top_cell()->set_auto_grad_cell_ptr(std::make_shared<autograd::IrGrad>(
+      input_param_values, abs_list, op_num_in_bprop_graph_ * kContainerRatio, assist_queue_, forward()->enable_async(),
+      !top_cell()->is_high_order_top_cell()));
+  } else {
+    top_cell()->set_auto_grad_cell_ptr(std::make_shared<autograd::FuncGrad>(
+      input_param_values, op_num_in_bprop_graph_ * kContainerRatio, !top_cell()->is_high_order_top_cell()));
+  }
 }
 
 void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_info) {
@@ -592,10 +598,12 @@ void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_i
     SaveInputTensorGradInfo(input_args_info);
     MakeNewTopGraph(input_args_info);
     bprop_grad_stack_.push(std::make_pair(input_args_info->cell_id, true));
+    top_cell()->set_is_ir_grad(true);
   } else if (input_args_info->is_high_order_top_cell) {
     MS_LOG(DEBUG) << "Nested grad graph existed in construct";
     SaveInputTensorGradInfo(input_args_info);
     MakeNewTopGraph(input_args_info);
+    top_cell()->set_is_ir_grad(true);
   }
 
   // Init kPynativeCellPtr with input parameters of top cell
@@ -826,6 +834,7 @@ void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info,
     op_run_info->op_grad_info->input_value_grad_type[i] =
       PyNativeAlgo::Common::SetValueGradInfo(value, top_cell(), InputType::kConstant);
   }
+  op_run_info->op_grad_info->output_size = PyNativeAlgo::Common::GetValueSize(op_run_info->real_out);
   (void)PyNativeAlgo::Common::SetValueGradInfo(op_run_info->real_out, nullptr, InputType::kOpOutput);
   PyNativeAlgo::PyParser::PrepareOpGradInfo(op_run_info);
   DoOpGrad(op_run_info);
@@ -996,15 +1005,15 @@ py::object GradExecutor::RunGrad(const prim::GradOperationPtr &grad, const py::o
   auto p_args = GetGradPositionArgs(grad_position, grad->get_by_position_);
   autograd::GradAttr grad_attr(grad->get_all_, grad->get_by_list_, grad->sens_param_, grad->get_by_position_,
                                weight_param_is_tuple);
-  if (!top_cell()->is_high_order_top_cell()) {
+  if (top_cell()->is_ir_grad()) {
+    GetGradGraph(grad_attr, w_args, p_args);
+    top_cell()->ClearParamGradInfo();
+    return RunGradGraph();
+  } else {
     auto grads = RunBackward(grad_attr, w_args, p_args);
     top_cell()->ClearParamGradInfo();
     ClearGradRes();
     return grads;
-  } else {
-    GetGradGraph(grad_attr, w_args, p_args);
-    top_cell()->ClearParamGradInfo();
-    return RunGradGraph();
   }
 }
 
@@ -1214,9 +1223,9 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr,
                                          const std::vector<tensor::TensorPtr> &w_args,
                                          const std::vector<size_t> &p_args) {
   MS_EXCEPTION_IF_NULL(top_input_args_info_);
-  auto grads = top_cell()->auto_grad_cell_ptr()->Finish(w_args, p_args, grad_attr,
-                                                        top_input_args_info_->input_arg_value_vec.back());
-  FuncGraphPtr bprop_graph = nullptr;
+  const auto &auto_grad_cell = std::dynamic_pointer_cast<autograd::IrGrad>(top_cell()->auto_grad_cell_ptr());
+  MS_EXCEPTION_IF_NULL(auto_grad_cell);
+  FuncGraphPtr bprop_graph = auto_grad_cell->Finish(w_args, p_args, grad_attr);
   MS_LOG(DEBUG) << "Top graph input params size " << top_input_args_info_->input_arg_value_vec.size();
   UpdateParamAbsByArgs(top_input_args_info_->input_arg_value_vec, bprop_graph);
   if (top_cell()->need_do_final_opt()) {
@@ -1333,7 +1342,6 @@ py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, con
 py::object GradExecutor::RunBackward(const autograd::GradAttr &grad_attr, const std::vector<tensor::TensorPtr> &w_args,
                                      const std::vector<size_t> &p_args) {
   MS_EXCEPTION_IF_NULL(top_input_args_info_);
-
   ValuePtr sens = nullptr;
   if (grad_attr.has_sens) {
     sens = top_input_args_info_->input_arg_value_vec.back();
@@ -1341,7 +1349,9 @@ py::object GradExecutor::RunBackward(const autograd::GradAttr &grad_attr, const 
   grad_is_running_ = true;
   auto top_input_args_info = top_input_args_info_;
   auto pre_top_cell = top_cell_;
-  auto grads = top_cell()->auto_grad_cell_ptr()->Finish(w_args, p_args, grad_attr, sens);
+  const auto &auto_grad_cell = std::dynamic_pointer_cast<autograd::FuncGrad>(top_cell()->auto_grad_cell_ptr());
+  MS_EXCEPTION_IF_NULL(auto_grad_cell);
+  auto grads = auto_grad_cell->Finish(w_args, p_args, grad_attr, sens);
   grad_is_running_ = false;
   top_input_args_info_ = top_input_args_info;
   top_cell_ = pre_top_cell;
@@ -1435,6 +1445,7 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
   op_grad_info->input_value = op_run_info->op_grad_info->input_value;
   op_grad_info->input_abs = op_run_info->op_grad_info->input_abs;
   op_grad_info->out_value = out_value;
+  op_grad_info->output_size = PyNativeAlgo::Common::GetValueSize(op_grad_info->out_value);
   op_grad_info->out_abs = first_grad_fg->output()->abstract();
   op_grad_info->input_value_grad_type = op_run_info->op_grad_info->input_value_grad_type;
   auto grad_param = std::make_shared<GradParam>(op_grad_info, use_dynamic_shape_process);
@@ -1791,7 +1802,7 @@ void GradExecutor::ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) co
   if (op_run_info->stub_output != nullptr) {
     op_run_info->stub_output->SetValue(op_run_info->real_out);
   }
-  top_cell()->GetOpInfo(op_run_info);
+  top_cell()->GetOpInfo(op_run_info, false);
   UpdateTopCellForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->real_out,
                                              op_run_info->base_op_run_info.stream_id);
   auto node_info = std::make_shared<DynamicDetectNodeInfo>(

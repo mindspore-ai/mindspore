@@ -14,30 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_IR_BPROP_PASS_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_IR_BPROP_PASS_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_IR_BPROP_PASS_H_
+#define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_IR_BPROP_PASS_H_
 
 #include <string>
 #include <utility>
+#include <memory>
 #include "ir/anf.h"
 #include "include/backend/kernel_graph.h"
 
 namespace mindspore {
 namespace pynative {
-
 namespace autograd {
-class AutoGradCellImpl;
+class IrBprop;
 }
 
 namespace bprop_pass {
 constexpr auto kIsKNode = "is_knode";
 
-struct PyNativePassForward {
-  explicit PyNativePassForward(autograd::AutoGradCellImpl *auto_grad_cell_ptr, std::string device_target,
-                               bool grad_by_value)
-      : auto_grad_cell_ptr_(auto_grad_cell_ptr),
-        device_target_(std::move(device_target)),
-        grad_by_value_(grad_by_value) {}
+struct IrPassForward {
+  explicit IrPassForward(autograd::IrBprop *ir_bprop, std::string &&device_target, bool grad_by_value)
+      : ir_bprop_(ir_bprop), device_target_(std::move(device_target)), grad_by_value_(grad_by_value) {}
 
   // Pass for expander outputs
   CNodePtr PassForDin(const CNodePtr &cnode, const std::string &op_name, bool is_dynamic_shape);
@@ -56,14 +53,15 @@ struct PyNativePassForward {
   void ReverseBNInfer(const CNodePtr &cnode);
   void ReverseCNodeInputs(const CNodePtr &cnode, AnfNodePtrList *cnode_inputs, ValuePtrList *inputs_value);
 
-  autograd::AutoGradCellImpl *auto_grad_cell_ptr_{nullptr};
+  autograd::IrBprop *ir_bprop_{nullptr};
   std::string device_target_;
   bool grad_by_value_{false};
   static bool need_reverse_graph_;
 };
+using PyNativePassForwardPtr = std::shared_ptr<IrPassForward>;
 
 void ClearCache();
 }  // namespace bprop_pass
 }  // namespace pynative
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_IR_BPROP_PASS_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_IR_BPROP_PASS_H_

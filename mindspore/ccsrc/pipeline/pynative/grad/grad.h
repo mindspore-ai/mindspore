@@ -30,6 +30,7 @@
 #include "runtime/pipeline/async_hqueue.h"
 #include "pipeline/pynative/grad/bprop_task.h"
 #include "pipeline/pynative/grad/ir/dynamic_shape.h"
+#include "pipeline/pynative/grad/variable.h"
 #include "pipeline/jit/ps/resource.h"
 namespace mindspore {
 namespace pynative {

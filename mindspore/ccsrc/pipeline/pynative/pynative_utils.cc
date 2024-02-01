@@ -30,6 +30,8 @@
 #include "pipeline/jit/ps/parse/resolve.h"
 #include "include/common/utils/stub_tensor.h"
 #include "frontend/expander/bprop/bprop.h"
+#include "frontend/optimizer/environ_conversion.h"
+#include "frontend/optimizer/fallback_rewriter.h"
 #include "pipeline/pynative/grad/jit/jit_grad.h"
 #include "ops/sequence_op_name.h"
 #include "ops/structure_ops.h"
@@ -423,23 +425,6 @@ bool Common::IsTensor(const ValuePtr &v, bool include_sequence) {
     }
   }
   return v->isa<tensor::Tensor>() || v->isa<tensor::MetaSparseTensor>();
-}
-
-bool Common::ExistTensor(const ValuePtr &value) {
-  if (value->isa<tensor::Tensor>()) {
-    return true;
-  } else if (value->isa<ValueSequence>()) {
-    bool is_exist = false;
-    auto seq = value->cast<ValueSequencePtr>();
-    for (const auto &val : seq->value()) {
-      is_exist = is_exist || ExistTensor(val);
-      if (is_exist) {
-        return true;
-      }
-    }
-    return is_exist;
-  }
-  return false;
 }
 
 bool Common::IsControlFlowGraph(const FuncGraphPtr &func_graph) {
@@ -905,6 +890,9 @@ void Common::ProcessTupleParam(const FuncGraphPtr &bprop_graph, size_t position)
   auto make_tuple_param = bprop_graph->NewCNode(make_tuple);
   make_tuple_param->set_abstract(target_abstract);
   auto manager = bprop_graph->manager();
+  if (manager == nullptr) {
+    manager = MakeManager({bprop_graph}, false);
+  }
   MS_EXCEPTION_IF_NULL(manager);
   auto tr = manager->Transact();
   (void)tr.Replace(target_param, make_tuple_param);
@@ -940,7 +928,9 @@ void Common::ProcessDictParam(const FuncGraphPtr &bprop_graph, size_t position) 
   auto dict_node = bprop_graph->NewCNode({NewValueNode(prim::kPrimMakeDict), key_param, value_param});
   dict_node->set_abstract(abs_dict);
   auto manager = bprop_graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
+  if (manager == nullptr) {
+    manager = MakeManager({bprop_graph}, false);
+  }
   auto tr = manager->Transact();
   (void)tr.Replace(target_param, dict_node);
   tr.Commit();
@@ -958,6 +948,19 @@ void Common::FreeFuncGraphForwardNodes(const FuncGraphPtr &func_graph) {
     cnode->set_forward(nullptr, "");
   }
   func_graph->ClearUsedForwardNodes();
+}
+
+size_t Common::GetValueSize(const ValuePtr &v) {
+  MS_EXCEPTION_IF_NULL(v);
+  if (v->isa<tensor::Tensor>() || v->isa<Scalar>()) {
+    return 1;
+  } else if (v->isa<ValueSequence>()) {
+    return v->cast<ValueSequencePtr>()->size();
+  } else if (v->isa<ValueDictionary>()) {
+    const auto &v_dict = v->cast<ValueDictionaryPtr>();
+    return v_dict->size();
+  }
+  return 0;
 }
 
 std::string PyParser::GetIdByPyObj(const py::object &obj) {
@@ -1093,6 +1096,39 @@ std::string PyParser::BuilidPyInputTypeString(const py::object &obj) {
   std::stringstream ss;
   ss << obj.get_type();
   return ss.str();
+}
+
+void PyParser::PrintTypeCastError(const ops::OpDefPtr &op_def, const py::list &op_inputs, size_t idx) {
+  auto const &op_arg = op_def->args_[idx];
+  bool is_suppport_tensor_cast = std::any_of(op_arg.cast_dtype_.begin(), op_arg.cast_dtype_.end(),
+                                             [](const auto &type) { return type == ops::DT_TENSOR; });
+  if (is_suppport_tensor_cast) {
+    auto tensor = parse::ConvertTensorValue(op_inputs[idx]);
+    auto PrintVectorFunc = [](const ShapeVector &shape) -> std::string {
+      std::stringstream ss;
+      ss << "[";
+      for (size_t i = 0; i < shape.size(); i++) {
+        if (i != 0) {
+          ss << ", " << shape[i];
+        } else {
+          ss << shape[i];
+        }
+      }
+      ss << "]";
+      return ss.str();
+    };
+    if (tensor != nullptr) {
+      MS_EXCEPTION(ValueError) << "For " << op_def->name_ << ", the " << idx << "'th input is a Tensor whose shape is "
+                               << PrintVectorFunc(tensor->shape()) << " and dtype is ["
+                               << TypeIdToString(tensor->data_type()) << "], which can not be converted to "
+                               << ops::EnumToString(op_arg.arg_dtype_) << ".";
+    }
+  }
+  std::vector<std::string> op_type_list;
+  for (size_t index = 0; index < op_inputs.size(); ++index) {
+    (void)op_type_list.emplace_back(PyParser::BuilidPyInputTypeString(op_inputs[index]));
+  }
+  MS_EXCEPTION(TypeError) << ops::BuildOpErrorMsg(op_def, op_type_list);
 }
 
 inline ValuePtr ConvertScalarToTensor(const ValuePtr &value) {
@@ -1271,17 +1307,62 @@ ValuePtr DataConvert::VectorRefToValue(const VectorRef &vec_ref, bool requires_g
   return std::make_shared<ValueTuple>(v_list);
 }
 
-void DataConvert::FlattenValueSeqArg(const ValuePtr &v, std::vector<ValuePtr> *flatten_v) {
+void DataConvert::FlattenValueSeqArg(const ValuePtr &v, bool is_only_flatten_tensor_seq,
+                                     std::vector<ValuePtr> *flatten_v) {
   MS_EXCEPTION_IF_NULL(v);
   MS_EXCEPTION_IF_NULL(flatten_v);
   if (v->isa<tensor::Tensor>()) {
     (void)flatten_v->emplace_back(v);
   } else if (v->isa<ValueSequence>()) {
     const auto &v_vec = v->cast<ValueSequencePtr>()->value();
-    for (const auto &elem : v_vec) {
-      FlattenValueSeqArg(elem, flatten_v);
+    if (v_vec.empty()) {
+      return;
+    }
+    if (is_only_flatten_tensor_seq && !v_vec.front()->isa<tensor::Tensor>()) {
+      (void)flatten_v->emplace_back(v);
+    } else {
+      for (const auto &elem : v_vec) {
+        FlattenValueSeqArg(elem, is_only_flatten_tensor_seq, flatten_v);
+      }
+    }
+  } else if (is_only_flatten_tensor_seq) {
+    if (v->isa<ValueDictionary>()) {
+      auto dic_v = v->cast<ValueDictionaryPtr>();
+      for (const auto &elem : dic_v->value()) {
+        FlattenValueSeqArg(elem.second, is_only_flatten_tensor_seq, flatten_v);
+      }
+    } else {
+      (void)flatten_v->emplace_back(v);
     }
   }
+}
+
+ValuePtrList DataConvert::FlattenTensorSeqInValue(const ValuePtr &v) {
+  MS_EXCEPTION_IF_NULL(v);
+  ValuePtrList outputs;
+  FlattenValueSeqArg(v, true, &outputs);
+  return outputs;
+}
+
+ValuePtrList DataConvert::FlattenTensorSeqInValueSeq(const ValuePtrList &v) {
+  ValuePtrList outputs;
+  for (const auto &item : v) {
+    FlattenValueSeqArg(item, true, &outputs);
+  }
+  return outputs;
+}
+
+ValuePtrList DataConvert::VectorRefToValuePtrList(const VectorRef &vec_ref) {
+  MS_EXCEPTION_IF_NULL(vec_ref);
+  ValuePtrList value_ptr_list;
+  value_ptr_list.reserve(vec_ref.size());
+  for (const auto &ref : vec_ref.elements_) {
+    if (!utils::isa<tensor::Tensor>(ref)) {
+      MS_LOG(EXCEPTION) << "Get output is not tensor";
+    }
+    (void)value_ptr_list.emplace_back(utils::cast<ValuePtr>(ref));
+  }
+  return value_ptr_list;
 }
 
 void DataConvert::FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<ValuePtr> *flatten_v, bool has_sens) {
@@ -1300,7 +1381,7 @@ void DataConvert::FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<Va
     if (Common::IsTensor(v_vec[input_size])) {
       (void)flatten_v->emplace_back(v_vec[input_size]);
     } else if (v_vec[input_size]->isa<ValueSequence>()) {
-      FlattenValueSeqArg(v_vec[input_size], flatten_v);
+      FlattenValueSeqArg(v_vec[input_size], false, flatten_v);
     }
   }
 }
@@ -1332,41 +1413,6 @@ bool DataConvert::RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_ru
   }
   (void)op_run_info->op_grad_info->op_prim->AddAttr(input_name, v);
   return true;
-}
-
-void ConvertPyObjectToTensor(const py::object &input_object, std::vector<ValuePtr> *tensors) {
-  MS_EXCEPTION_IF_NULL(tensors);
-  ValuePtr tensor_ptr = nullptr;
-  if (py::isinstance<tensor::Tensor>(input_object)) {
-    tensor_ptr = py::cast<tensor::TensorPtr>(input_object);
-  } else if (IsStubTensor(input_object)) {
-    tensor_ptr = ConvertStubTensor(input_object);
-  } else if (py::isinstance<py::float_>(input_object)) {
-    double input_value = py::cast<py::float_>(input_object);
-    tensor_ptr = std::make_shared<tensor::Tensor>(input_value, kFloat32);
-  } else if (py::isinstance<py::int_>(input_object)) {
-    tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<int64_t>(input_object), kInt64);
-  } else if (py::isinstance<py::list>(input_object)) {
-    auto list_inputs = py::cast<py::list>(input_object);
-    for (size_t i = 0; i < list_inputs.size(); ++i) {
-      ConvertPyObjectToTensor(list_inputs[i], tensors);
-    }
-    return;
-  } else if (py::isinstance<py::tuple>(input_object)) {
-    auto tuple_inputs = py::cast<py::tuple>(input_object);
-    for (size_t i = 0; i < tuple_inputs.size(); ++i) {
-      ConvertPyObjectToTensor(tuple_inputs[i], tensors);
-    }
-    return;
-  } else if (py::isinstance<tensor::CSRTensor>(input_object)) {
-    tensor_ptr = py::cast<tensor::CSRTensorPtr>(input_object);
-  } else if (py::isinstance<tensor::COOTensor>(input_object)) {
-    tensor_ptr = py::cast<tensor::COOTensorPtr>(input_object);
-  } else {
-    MS_EXCEPTION(TypeError) << "Unreasonable data type: " << input_object.get_type() << ".";
-  }
-  MS_EXCEPTION_IF_NULL(tensor_ptr);
-  (void)tensors->emplace_back(tensor_ptr);
 }
 
 FrontendOpRunInfoPtr PyBoost::Init(const PrimitivePtr &prim, const py::list &args) {
@@ -1745,6 +1791,368 @@ void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const 
   ReplaceReduceAxis(op_run_info);
   AddDynInputsSizesAttr(op_run_info);
 }
+
+namespace {
+const mindspore::HashSet<std::string> kGradBlackList{kMakeTupleOpName,         kMakeListOpName,
+                                                     kTupleGetItemOpName,      kStopGradientOpName,
+                                                     kUpdateStateOpName,       kNPUAllocFloatStatusOpName,
+                                                     kNPUGetFloatStatusOpName, kNPUClearFloatStatusOpName};
+
+mindspore::HashMap<std::string, pipeline::ResourcePtr> jit_call_graph_compile_cache_;
+
+AnfNodePtr CreateMakeTupleNode(const KernelGraphPtr &tape, const ValueSequencePtr &tuple,
+                               const abstract::AbstractSequencePtr &abs_seq, const SpecialType &type) {
+  AnfNodePtrList args{NewValueNode(prim::kPrimMakeTuple)};
+  for (size_t i = 0; i < tuple->size(); ++i) {
+    AnfNodePtr special_like_value = AutoGrad::BuildSpecialNode(tape, tuple->value()[i], abs_seq->elements()[i], type);
+    (void)args.emplace_back(special_like_value);
+  }
+  auto special_like_value = tape->FuncGraph::NewCNode(args);
+  special_like_value->set_abstract(abs_seq);
+  return special_like_value;
+}
+
+AnfNodePtr CreateMakeDictNode(const KernelGraphPtr &tape, const ValueDictionaryPtr &v_dict,
+                              const abstract::AbstractDictionaryPtr &abs_dict, const SpecialType &type) {
+  MS_EXCEPTION_IF_NULL(tape);
+  MS_EXCEPTION_IF_NULL(v_dict);
+  MS_EXCEPTION_IF_NULL(abs_dict);
+  AnfNodePtrList key_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+  AnfNodePtrList value_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+  abstract::AbstractBasePtrList local_key_abs_inputs;
+  abstract::AbstractBasePtrList local_value_abs_inputs;
+  for (size_t i = 0; i < v_dict->size(); ++i) {
+    (void)key_inputs.emplace_back(
+      PyNativeAlgo::Common::CreateValueNodeByValue(v_dict->value()[i].first, abs_dict->elements()[i].first));
+    (void)local_key_abs_inputs.emplace_back(abs_dict->elements()[i].first);
+    AnfNodePtr special_like_value =
+      AutoGrad::BuildSpecialNode(tape, v_dict->value()[i].second, abs_dict->elements()[i].second, type);
+    (void)value_inputs.emplace_back(special_like_value);
+    (void)local_value_abs_inputs.emplace_back(abs_dict->elements()[i].second);
+  }
+  auto local_key_node = tape->NewCNode(key_inputs);
+  local_key_node->set_abstract(std::make_shared<abstract::AbstractTuple>(local_key_abs_inputs));
+  auto local_value_node = tape->NewCNode(value_inputs);
+  local_value_node->set_abstract(std::make_shared<abstract::AbstractTuple>(local_value_abs_inputs));
+  auto dict_node = tape->NewCNode({NewValueNode(prim::kPrimMakeDict), local_key_node, local_value_node});
+  dict_node->set_abstract(abs_dict);
+  return dict_node;
+}
+
+ValueNodePtr GetSparseTensorShapeNode(const ShapeVector &shape) {
+  auto value_shape = NewValueNode(shape);
+  std::vector<abstract::AbstractBasePtr> abstract_shape;
+  (void)std::transform(
+    shape.begin(), shape.end(), std::back_inserter(abstract_shape),
+    [](auto shp) -> abstract::AbstractScalarPtr { return std::make_shared<abstract::AbstractScalar>(shp); });
+  auto abs_shape = std::make_shared<abstract::AbstractTuple>(abstract_shape);
+  value_shape->set_abstract(abs_shape);
+  return value_shape;
+}
+
+ValuePtr WrapCOOTensor(const ValuePtr &coo_out, const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(coo_out);
+  auto coo_tensor = coo_out->cast<tensor::COOTensorPtr>();
+  MS_EXCEPTION_IF_NULL(coo_tensor);
+  auto value_tensor = value->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(value_tensor);
+  auto indices_tensor = coo_tensor->GetIndices();
+  auto shape_vector = coo_tensor->shape();
+  return std::make_shared<tensor::COOTensor>(indices_tensor, value_tensor, shape_vector);
+}
+
+ValuePtr WrapCSRTensor(const ValuePtr &csr_out, const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(csr_out);
+  auto csr_tensor = csr_out->cast<tensor::CSRTensorPtr>();
+  MS_EXCEPTION_IF_NULL(csr_tensor);
+  auto value_tensor = value->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(value_tensor);
+  auto indptr_tensor = csr_tensor->GetIndptr();
+  auto indices_tensor = csr_tensor->GetIndices();
+  auto shape_vector = csr_tensor->shape();
+  return std::make_shared<tensor::CSRTensor>(indptr_tensor, indices_tensor, value_tensor, shape_vector);
+}
+}  // namespace
+
+bool AutoGrad::IsPrimNeedGrad(const PrimitivePtr &prim) {
+  MS_EXCEPTION_IF_NULL(prim);
+  return kGradBlackList.find(prim->name()) == kGradBlackList.end();
+}
+
+bool AutoGrad::NeedGrad(const std::vector<ValuePtr> &input_values) {
+  for (const ValuePtr &input_arg : input_values) {
+    MS_EXCEPTION_IF_NULL(input_arg);
+    if (input_arg->isa<tensor::Tensor>()) {
+      const auto &input_tensor = input_arg->cast<tensor::TensorPtr>();
+      auto auto_grad_meta_data = input_tensor->auto_grad_meta_data();
+      MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
+      if (PyNativeAlgo::Common::IsParam(auto_grad_meta_data->input_type())) {
+        return true;
+      }
+      auto variable = auto_grad_meta_data->variable();
+      if (variable != nullptr) {
+        return true;
+      }
+    } else if (input_arg->isa<ValueSequence>()) {
+      auto value_seq = input_arg->cast<ValueSequencePtr>()->value();
+      if (NeedGrad(value_seq)) {
+        return true;
+      }
+    } else if (input_arg->isa<tensor::COOTensor>() || input_arg->isa<tensor::CSRTensor>()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool AutoGrad::IsZerosLikeNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  if (IsPrimitiveCNode(cnode, prim::kPrimZerosLike)) {
+    return true;
+  } else if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) || IsPrimitiveCNode(cnode, prim::kPrimMakeList)) {
+    return std::all_of(cnode->inputs().begin() + 1, cnode->inputs().end(),
+                       [](const auto &node) { return IsZerosLikeNode(node) == true; });
+  } else if (IsPrimitiveCNode(cnode, prim::kPrimMakeDict)) {
+    return IsZerosLikeNode(cnode->input(kIndex2));
+  } else {
+    return false;
+  }
+}
+
+ValuePtr AutoGrad::GetFakeZeroTensor() {
+  static ValuePtr fake_v = std::make_shared<tensor::Tensor>(0);
+  return fake_v;
+}
+
+ValuePtr AutoGrad::BuildSpecialValueGrad(const ValuePtr &value, const tensor::TensorPtr &grad,
+                                         autograd::FuncBuilder *func_builder, const SpecialType &type) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (grad != nullptr) {
+    return grad;
+  }
+  if (value->isa<tensor::Tensor>()) {
+    return (type == SpecialType::kZerosLikeType ? func_builder->Zeros(value) : func_builder->Ones(value));
+  } else if (value->isa<ValueSequence>()) {
+    ValuePtr zero_value = nullptr;
+    auto v_seq = value->cast<ValueSequencePtr>();
+    ValuePtrList v_list;
+    for (const auto &item : v_seq->value()) {
+      (void)v_list.emplace_back(BuildSpecialValueGrad(item, grad, func_builder, type));
+    }
+    return std::make_shared<ValueTuple>(v_list);
+  } else if (value->isa<Scalar>()) {
+    auto fake_tensor = std::make_shared<tensor::Tensor>(0, value->type());
+    return BuildSpecialValueGrad(fake_tensor, grad, func_builder, type);
+  } else if (value->isa<tensor::CSRTensor>()) {
+    auto csr_tensor = value->cast<tensor::CSRTensorPtr>();
+    return WrapCSRTensor(csr_tensor, BuildSpecialValueGrad(csr_tensor->GetValues(), grad, func_builder, type));
+  } else if (value->isa<tensor::COOTensor>()) {
+    auto coo_tensor = value->cast<tensor::COOTensorPtr>();
+    return WrapCOOTensor(coo_tensor, BuildSpecialValueGrad(coo_tensor->GetValues(), grad, func_builder, type));
+  } else {
+    MS_LOG(INFO) << "For value " << value->ToString() << ", the type is not tensor or scalar";
+    auto fake_tensor = std::make_shared<tensor::Tensor>(0, value->type());
+    return BuildSpecialValueGrad(fake_tensor, grad, func_builder, type);
+  }
+}
+
+AnfNodePtr AutoGrad::BuildSpecialNode(const KernelGraphPtr &tape, const ValuePtr &value,
+                                      const abstract::AbstractBasePtr &abs, const SpecialType &type) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<tensor::Tensor>()) {
+    auto prim_node =
+      (type == SpecialType::kZerosLikeType ? NewValueNode(std::make_shared<Primitive>(*prim::kPrimZerosLike))
+                                           : NewValueNode(std::make_shared<Primitive>(*prim::kPrimOnesLike)));
+    auto value_node = PyNativeAlgo::Common::CreateValueNodeByValue(value, abs);
+    auto special_like_value = tape->FuncGraph::NewCNode({prim_node, value_node});
+    special_like_value->set_abstract(value_node->abstract());
+    return special_like_value;
+  } else if (value->isa<ValueSequence>()) {
+    auto tuple = value->cast<ValueSequencePtr>();
+    abstract::AbstractSequencePtr abs_seq;
+    if (abs == nullptr) {
+      abs_seq =
+        PyNativeAlgo::Common::SetAbstractValueToAnyValue(value->ToAbstract())->cast<abstract::AbstractSequencePtr>();
+    } else {
+      abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+    }
+    return CreateMakeTupleNode(tape, tuple, abs_seq, type);
+  } else if (value->isa<Scalar>()) {
+    auto fake_tensor = GetFakeZeroTensor();
+    return BuildSpecialNode(tape, fake_tensor, nullptr, type);
+  } else if (value->isa<tensor::CSRTensor>()) {
+    auto csr_tensor = value->cast<tensor::CSRTensorPtr>();
+    MS_EXCEPTION_IF_NULL(csr_tensor);
+    auto data = csr_tensor->GetValues();
+    return BuildSpecialNode(tape, data, nullptr, type);
+  } else if (value->isa<tensor::COOTensor>()) {
+    auto coo_tensor = value->cast<tensor::COOTensorPtr>();
+    MS_EXCEPTION_IF_NULL(coo_tensor);
+    auto data = coo_tensor->GetValues();
+    return BuildSpecialNode(tape, data, nullptr, type);
+  } else if (value->isa<ValueDictionary>()) {
+    auto v_dict = value->cast<ValueDictionaryPtr>();
+    abstract::AbstractDictionaryPtr abs_dict;
+    if (abs == nullptr) {
+      abs_dict =
+        PyNativeAlgo::Common::SetAbstractValueToAnyValue(value->ToAbstract())->cast<abstract::AbstractDictionaryPtr>();
+    } else {
+      abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
+    }
+    return CreateMakeDictNode(tape, v_dict, abs_dict, type);
+  } else {
+    MS_LOG(INFO) << "For value " << value->ToString() << ", the type is not tensor or scalar";
+    return BuildSpecialNode(tape, GetFakeZeroTensor(), nullptr, type);
+  }
+}
+
+AnfNodePtr AutoGrad::BuildSparseTensorNode(const KernelGraphPtr &tape, const ValuePtr &sparse_value,
+                                           const AnfNodePtr &dout_value_node) {
+  MS_EXCEPTION_IF_NULL(tape);
+  MS_EXCEPTION_IF_NULL(sparse_value);
+  if (sparse_value->isa<tensor::CSRTensor>()) {
+    auto csr_tensor = sparse_value->cast<tensor::CSRTensorPtr>();
+    MS_EXCEPTION_IF_NULL(csr_tensor);
+    auto indptr_node = PyNativeAlgo::Common::CreateValueNodeByValue(csr_tensor->GetIndptr());
+    auto indices_node = PyNativeAlgo::Common::CreateValueNodeByValue(csr_tensor->GetIndices());
+    auto value_shape = GetSparseTensorShapeNode(csr_tensor->shape());
+    auto special_like_csr_node = tape->FuncGraph::NewCNode(
+      {NewValueNode(prim::kPrimMakeTuple), indptr_node, indices_node, dout_value_node, value_shape});
+    special_like_csr_node->set_abstract(sparse_value->ToAbstract()->Broaden());
+    return special_like_csr_node;
+  } else if (sparse_value->isa<tensor::COOTensor>()) {
+    auto coo_tensor = sparse_value->cast<tensor::COOTensorPtr>();
+    MS_EXCEPTION_IF_NULL(coo_tensor);
+    auto indices_node = PyNativeAlgo::Common::CreateValueNodeByValue(coo_tensor->GetIndices());
+    auto value_shape = GetSparseTensorShapeNode(coo_tensor->shape());
+    auto special_like_coo_node =
+      tape->FuncGraph::NewCNode({NewValueNode(prim::kPrimMakeTuple), indices_node, dout_value_node, value_shape});
+    special_like_coo_node->set_abstract(sparse_value->ToAbstract()->Broaden());
+    return special_like_coo_node;
+  }
+  MS_LOG(EXCEPTION) << "Get invalid sparse tensor";
+}
+
+void AutoGrad::SetGradMetaData(const ValuePtr &value, const VariablePtr &variable, const ParameterPtr &param) {
+  if (value->isa<tensor::Tensor>()) {
+    auto tensor = value->cast<tensor::TensorPtr>();
+    auto auto_grad_meta_data = tensor->auto_grad_meta_data();
+    if (auto_grad_meta_data == nullptr) {
+      MS_LOG(DEBUG) << "tensor has no auto_grad_meta_data";
+      auto_grad_meta_data = std::make_shared<AutoGradMetaData>();
+      tensor->set_auto_grad_meta_data(auto_grad_meta_data);
+    }
+    auto_grad_meta_data->set_variable(variable);
+    if (param != nullptr) {
+      auto_grad_meta_data->set_parameter(param);
+      auto_grad_meta_data->set_input_type(InputType::kParameter);
+    }
+  } else if (value->isa<ValueSequence>()) {
+    auto value_sequence = value->cast<ValueSequencePtr>();
+    for (const auto &val : value_sequence->value()) {
+      SetGradMetaData(val, variable);
+    }
+  } else if (value->isa<ValueDictionary>()) {
+    auto value_dict = value->cast<ValueDictionaryPtr>();
+    for (const auto &val : value_dict->value()) {
+      SetGradMetaData(val.second, variable);
+    }
+  }
+}
+
+void AutoGrad::SetGradInfoForInputs(const ValuePtr &value, const VariablePtr &variable, const ParameterPtr &param) {
+  if (value->isa<tensor::Tensor>()) {
+    const auto &input_tensor = value->cast<tensor::TensorPtr>();
+    const auto &auto_grad_meta_data = input_tensor->auto_grad_meta_data();
+    MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
+    auto_grad_meta_data->set_variable(variable);
+    auto_grad_meta_data->set_parameter(param);
+  } else if (value->isa<tensor::COOTensor>()) {
+    const auto &coo_tensor = value->cast<tensor::COOTensorPtr>();
+    const auto &indices_tensor = coo_tensor->GetIndices();
+    SetGradInfoForInputs(indices_tensor, variable, param);
+  } else if (value->isa<tensor::CSRTensor>()) {
+    const auto &csr_tensor = value->cast<tensor::CSRTensorPtr>();
+    const auto &indices_tensor = csr_tensor->GetIndices();
+    SetGradInfoForInputs(indices_tensor, variable, param);
+  }
+}
+
+// Create fake bprop
+void AutoGrad::BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CNodePtr> *outputs) {
+  auto prim = GetCNodePrimitive(cnode);
+  if (prim == nullptr) {
+    MS_LOG(EXCEPTION) << "Should be primitive, but: " << cnode->DebugString();
+  }
+  size_t dout_index = cnode->size() - 1;
+  const auto &dout = cnode->input(dout_index);
+  const auto &dout_cnode = dout->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(dout_cnode);
+  // Size is same as op_arg size
+  size_t input_size = cnode->size() - 2;
+  for (size_t i = 1; i < input_size; ++i) {
+    (void)outputs->emplace_back(dout_cnode);
+  }
+}
+
+CallBackFn AutoGrad::CreateGraphCallBack(const FuncGraphPtr &call_graph, const std::string &cache_key,
+                                         bool is_control_flow, bool is_func_grad, bool jit_out_has_dict) {
+  // kFlagJitCallGraph is set true to avoid compilig call_graph whe compiling the main graph
+  call_graph->set_flag(kFlagJitCallGraph, true);
+  // call graph not inline to grad top
+  call_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
+  // Pynative bprop graph flag
+  call_graph->set_flag(kFlagIsPynativeBpropGraph, true);
+  pipeline::ResourcePtr resource;
+  constexpr auto kNeedCompile = "NeedCompile";
+  const auto it = jit_call_graph_compile_cache_.find(cache_key);
+  bool need_compile = (it == jit_call_graph_compile_cache_.end());
+  if (need_compile) {
+    resource = std::make_shared<pipeline::Resource>();
+    resource->set_func_graph(call_graph);
+    auto manager = resource->manager();
+    manager->AddFuncGraph(call_graph, true);
+    if (is_func_grad) {
+      (void)opt::EnvironConversion(resource);
+      if (jit_out_has_dict) {
+        MS_LOG(DEBUG) << "Jit out is dict, need convert make dict to pyexecute";
+        (void)mindspore::opt::RewriterAfterOptA(resource->func_graph(), resource);
+      }
+    }
+    (void)jit_call_graph_compile_cache_.emplace(cache_key, resource);
+  } else {
+    resource = it->second;
+    // If resource func graph not compile(not call run grad graph), but hit cache
+    need_compile = resource->GetResult(kNeedCompile).cast<bool>();
+  }
+  MS_EXCEPTION_IF_NULL(resource);
+  auto fn = [resource, need_compile, is_control_flow, &kNeedCompile](const VectorRef &arg_list) -> VectorRef {
+    if (need_compile) {
+      MS_LOG(DEBUG) << "Start emit action for graph " << resource->func_graph()->ToString();
+      auto manager = resource->manager();
+      resource->SetBackendAsync([]() { return compile::CreateBackend(); });
+      // kFlagJitCallGraph is set false to compile sub graph in control flow
+      if (is_control_flow) {
+        for (const auto &g : manager->func_graphs()) {
+          g->set_flag(kFlagJitCallGraph, false);
+        }
+      }
+      (void)TaskEmitAction(resource);
+      (void)ExecuteAction(resource);
+      resource->SetResult(kNeedCompile, false);
+    }
+    MS_LOG(DEBUG) << "Start execute action for graph " << resource->func_graph()->ToString();
+    compile::VmEvalFuncPtr run = resource->GetResult(pipeline::kOutput).cast<compile::VmEvalFuncPtr>();
+    return utils::cast<VectorRef>((*run)(arg_list));
+  };
+  return fn;
+}
+
+void AutoGrad::ClearAutoGradStaticCache() { jit_call_graph_compile_cache_.clear(); }
 
 bool GradCommon::IsRealOp(const AnfNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
