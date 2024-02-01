@@ -59,5 +59,15 @@ REG_CUST_OP(NoRepeatNGram)
   .OUTPUT(out, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16}))
   .REQUIRED_ATTR(ngram_size, Int)
   .CUST_OP_END_FACTORY_REG(NoRepeatNGram)
+
+REG_CUST_OP(GenerateEodMask)
+    .INPUT(inputs_ids, TensorType({DT_INT8, DT_UINT8, DT_INT16, DT_INT32, DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+    .OUTPUT(position_ids, TensorType({DT_INT8, DT_UINT8, DT_INT16, DT_INT32, DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+    .REQUIRED_ATTR(n_pos, Int)
+    .REQUIRED_ATTR(eod_token_id, Int)
+    .REQUIRED_ATTR(n_step, Int)
+    .CUST_OP_END_FACTORY_REG(GenerateEodMask)
+
+
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_OTHER_OPS_H_
