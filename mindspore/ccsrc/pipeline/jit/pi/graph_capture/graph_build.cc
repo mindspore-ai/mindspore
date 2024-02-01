@@ -2072,17 +2072,20 @@ StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, 
   if (sub_ret != nullptr) {
     if (CheckConstPyObject(sub_ret->GetVobj()->GetPyObject().ptr())) {
       call_node->SetVobj(sub_ret->GetVobj());
-    } else if (sg->FGBuilder()->graph() == nullptr) {
-      MS_LOG(ERROR) << "subgraph trace null";
-      return StopTraceReason::kTrace_Fail;
     } else {
-      auto res = FGBuilder()->AddNode(sg->FGBuilder()->graph(), args);
-      if (res.ptr()) {
-        MS_LOG(INFO) << "add fg node suc: ";
-        call_node->SetVobj(AObject::Convert(res));
+      sg->FGAddOutput();
+      if (sg->FGBuilder()->graph() == nullptr) {
+        MS_LOG(ERROR) << "subgraph trace null";
+        return StopTraceReason::kTrace_Fail;
       } else {
-        MS_LOG(ERROR) << "add fg node fail";
-        stat = InlineReason::kInlineInfer_Fail;
+        auto res = FGBuilder()->AddNode(sg->FGBuilder()->graph(), args);
+        if (res.ptr()) {
+          MS_LOG(INFO) << "add fg node suc: ";
+          call_node->SetVobj(AbstractFuncGraphOut::MakeAObject(res));
+        } else {
+          MS_LOG(ERROR) << "add fg node fail";
+          stat = InlineReason::kInlineInfer_Fail;
+        }
       }
     }
     stat = is_make_func || ApplyInlinePolicy(call_node) ? stat : InlineReason::kInlinePolicyDisabled;
