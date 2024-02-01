@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,27 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_PYBOOST_KERNEL_EXTRA_FUNC_H_
-#define MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_PYBOOST_KERNEL_EXTRA_FUNC_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_PYBOOST_GPU_KERNRL_EXTRA_FUNC_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_PYBOOST_GPU_KERNRL_EXTRA_FUNC_H_
 
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 #include "kernel/kernel.h"
+#include "kernel/pyboost/pyboost_kernel_extra_func.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-class BACKEND_EXPORT PyboostKernelExtraFunc {
+class BACKEND_EXPORT PyboostGPUKernelExtraFunc : public PyboostKernelExtraFunc {
  public:
-  virtual ~PyboostKernelExtraFunc() = default;
-  virtual void SetThreadPool(const kernel::KernelModPtr &kernel) {}
-  virtual bool IsKernelModRegistered(const std::string &op_name) = 0;
+  bool IsKernelModRegistered(const std::string &op_name) override;
 };
-
-using PyboostKernelExtraFuncPtr = std::shared_ptr<PyboostKernelExtraFunc>;
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_PYBOOST_KERNEL_EXTRA_FUNC_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_PYBOOST_GPU_KERNRL_EXTRA_FUNC_H_

@@ -96,6 +96,10 @@ DeviceContext *PyBoostUtils::GetDeviceContext(const std::string &device_type) {
   return device_context;
 }
 
+bool PyBoostUtils::IsKernelModRegistered(const std::string &device_name, const std::string &op_name) {
+  return PyboostKernelExtraFuncFactory::GetInstance().IsKernelModRegistered(device_name, op_name);
+}
+
 kernel::KernelModPtr PyBoostUtils::CreateKernelMod(const PrimitivePtr &prim, const std::string &op_name,
                                                    DeviceContext *device_context,
                                                    const std::vector<KernelTensor *> &inputs,
@@ -108,7 +112,9 @@ kernel::KernelModPtr PyBoostUtils::CreateKernelMod(const PrimitivePtr &prim, con
   auto kernel_mod = cache_helper.GetKernelMod(key);
   if (kernel_mod == nullptr) {
     kernel_mod = device_context->GetKernelExecutor(false)->CreateKernelMod(op_name);
-    MS_EXCEPTION_IF_NULL(kernel_mod);
+    if (kernel_mod == nullptr) {
+      MS_LOG(EXCEPTION) << "Create kernelmod for op " << op_name << " failed";
+    }
     if (!kernel_mod->Init(prim, inputs, outputs)) {
       MS_LOG(EXCEPTION) << "KernelMod Init Failed: " << op_name;
     }
