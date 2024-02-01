@@ -209,7 +209,8 @@ bool ElementwiseOpsGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    MS_EXCEPTION(TypeError) << "For '" << kernel_name_
+                            << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
   kernel_func_ = iter->second[index].second;
