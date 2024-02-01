@@ -93,6 +93,8 @@ namespace kernel {{
         input_name = "inputs[kIndex" + str(idx) + "], "
         dtype = input_dtypes.get(n)
         if dtype != 'tensor':
+            if dtype == 'int':
+                dtype = 'int64_t'
             input_templete += "  auto {} = transform::ConvertKernelTensor<{}>(inputs[kIndex{}]);\n".format(
                 n, dtype, idx)
             input_name = n + ", "
@@ -104,6 +106,8 @@ namespace kernel {{
         output_name = "outputs[kIndex" + str(idx) + "], "
         dtype = output_dtypes.get(n)
         if dtype != 'tensor':
+            if dtype == 'int':
+                dtype = 'int64_t'
             input_templete += "  auto {} = transform::ConvertKernelTensor<{}>(outputs[kIndex{}]);\n".format(
                 n, dtype, idx)
             output_name = n + ", "
