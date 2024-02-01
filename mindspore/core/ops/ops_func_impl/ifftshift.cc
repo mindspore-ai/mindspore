@@ -14,28 +14,28 @@
  * limitations under the License.
  */
 
-#include "ops/ops_func_impl/fftshift.h"
+#include "ops/ops_func_impl/ifftshift.h"
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
-BaseShapePtr FFTShiftFuncImpl::InferShape(const PrimitivePtr &primitive,
-                                          const std::vector<AbstractBasePtr> &input_args) const {
+BaseShapePtr IFFTShiftFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
   MS_EXCEPTION_IF_NULL(input_args[kIndex0]->GetType());
   return input_args[kIndex0]->GetShape()->Clone();
 }
 
-TypePtr FFTShiftFuncImpl::InferType(const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args) const {
+TypePtr IFFTShiftFuncImpl::InferType(const PrimitivePtr &primitive,
+                                     const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
   MS_EXCEPTION_IF_NULL(input_args[kIndex0]->GetType());
   return input_args[kIndex0]->GetType()->Clone();
 }
 
-int32_t FFTShiftFuncImpl::CheckValidation(const PrimitivePtr &primitive,
-                                          const std::vector<AbstractBasePtr> &input_args) const {
+int32_t IFFTShiftFuncImpl::CheckValidation(const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args) const {
   // Check dim_value
   auto check_status = OP_CHECK_SUCCESS;
   auto x_shape_vec = input_args[kIndex0]->GetShape()->GetShapeVector();

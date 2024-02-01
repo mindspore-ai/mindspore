@@ -16,7 +16,7 @@
 #include <vector>
 #include <memory>
 #include "common/common_test.h"
-#include "ops/ops_func_impl/fftshift.h"
+#include "ops/ops_func_impl/ifftshift.h"
 #include "ops/auto_generate/gen_ops_name.h"
 #include "ops/op_name.h"
 #include "ir/primitive.h"
@@ -27,27 +27,27 @@
 
 namespace mindspore {
 namespace ops {
-struct FFTShiftShape {
+struct IFFTShiftShape {
   ShapeVector x_shape;
   ValuePtr dim;
   ShapeVector out_shape;
 };
 
-struct FFTShiftType {
+struct IFFTShiftType {
   TypePtr x_type;
   TypePtr out_type;
 };
 
-class TestFFTShift : public TestOps, public testing::WithParamInterface<std::tuple<FFTShiftShape, FFTShiftType>> {};
+class TestIFFTShift : public TestOps, public testing::WithParamInterface<std::tuple<IFFTShiftShape, IFFTShiftType>> {};
 
-TEST_P(TestFFTShift, dyn_shape) {
+TEST_P(TestIFFTShift, dyn_shape) {
   // prepare
   const auto &shape_param = std::get<0>(GetParam());
   const auto &type_param = std::get<1>(GetParam());
 
   // input
-  FFTShiftFuncImpl fftshift_func_impl;
-  auto primitive = std::make_shared<Primitive>("FFTShift");
+  IFFTShiftFuncImpl ifftshift_func_impl;
+  auto primitive = std::make_shared<Primitive>("IFFTShift");
   ASSERT_NE(primitive, nullptr);
   auto x = std::make_shared<abstract::AbstractTensor>(type_param.x_type, shape_param.x_shape);
   ASSERT_NE(x, nullptr);
@@ -61,8 +61,8 @@ TEST_P(TestFFTShift, dyn_shape) {
   ASSERT_NE(expect_dtype, nullptr);
 
   // execute
-  auto out_shape = fftshift_func_impl.InferShape(primitive, input_args);
-  auto out_dtype = fftshift_func_impl.InferType(primitive, input_args);
+  auto out_shape = ifftshift_func_impl.InferShape(primitive, input_args);
+  auto out_dtype = ifftshift_func_impl.InferType(primitive, input_args);
 
   // verify output
   ASSERT_NE(out_shape, nullptr);
@@ -71,27 +71,28 @@ TEST_P(TestFFTShift, dyn_shape) {
   ASSERT_TRUE(*out_dtype == *expect_dtype);
 }
 
-auto fftshift_shape_cases = testing::Values(FFTShiftShape{{5, 5}, CreateTuple({0, 1}), {5, 5}},
-                                            FFTShiftShape{{-1, -1, -1}, CreateTuple({0, 1}), {-1, -1, -1}},
-                                            FFTShiftShape{{-2}, CreateTuple({0, 1}), {-2}});
+auto ifftshift_shape_cases = testing::Values(IFFTShiftShape{{5, 5}, CreateTuple({0, 1}), {5, 5}},
+                                             IFFTShiftShape{{-1, -1, -1}, CreateTuple({0, 1}), {-1, -1, -1}},
+                                             IFFTShiftShape{{-2}, CreateTuple({0, 1}), {-2}});
 
-auto fftshift_type_cases = testing::ValuesIn({
-  FFTShiftType{kBool, kBool},
-  FFTShiftType{kUInt8, kUInt8},
-  FFTShiftType{kUInt16, kUInt16},
-  FFTShiftType{kUInt32, kUInt32},
-  FFTShiftType{kUInt64, kUInt64},
-  FFTShiftType{kInt8, kInt8},
-  FFTShiftType{kInt16, kInt16},
-  FFTShiftType{kInt32, kInt32},
-  FFTShiftType{kInt64, kInt64},
-  FFTShiftType{kFloat16, kFloat16},
-  FFTShiftType{kFloat32, kFloat32},
-  FFTShiftType{kFloat64, kFloat64},
-  FFTShiftType{kComplex64, kComplex64},
-  FFTShiftType{kComplex128, kComplex128},
+auto ifftshift_type_cases = testing::ValuesIn({
+  IFFTShiftType{kBool, kBool},
+  IFFTShiftType{kUInt8, kUInt8},
+  IFFTShiftType{kUInt16, kUInt16},
+  IFFTShiftType{kUInt32, kUInt32},
+  IFFTShiftType{kUInt64, kUInt64},
+  IFFTShiftType{kInt8, kInt8},
+  IFFTShiftType{kInt16, kInt16},
+  IFFTShiftType{kInt32, kInt32},
+  IFFTShiftType{kInt64, kInt64},
+  IFFTShiftType{kFloat16, kFloat16},
+  IFFTShiftType{kFloat32, kFloat32},
+  IFFTShiftType{kFloat64, kFloat64},
+  IFFTShiftType{kComplex64, kComplex64},
+  IFFTShiftType{kComplex128, kComplex128},
 });
 
-INSTANTIATE_TEST_CASE_P(TestFFTShiftGroup, TestFFTShift, testing::Combine(fftshift_shape_cases, fftshift_type_cases));
+INSTANTIATE_TEST_CASE_P(TestIFFTShiftGroup, TestIFFTShift,
+                        testing::Combine(ifftshift_shape_cases, ifftshift_type_cases));
 }  // namespace ops
 }  // namespace mindspore

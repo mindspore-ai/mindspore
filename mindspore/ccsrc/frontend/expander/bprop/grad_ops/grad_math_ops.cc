@@ -2376,13 +2376,16 @@ REG_BPROP_BUILDER("TridiagonalSolve").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib)
   return {grad_diags, grad_rhs};
 });
 
-REG_BPROP_BUILDER("FFTShift").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
-  auto axes = ib->GetInput(kIndex1);
-  auto forward = ib->GetInput(kIndex2);
-  auto forward_value = GetValue<bool>(forward->BuildValue());
-  auto dout = ib->GetInput(kIndex4);
+REG_BPROP_BUILDER("FFTShift").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
+  auto dim = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  return {ib->Emit("IFFTShift", {dout, dim}), ib->OutZeros(dim)};
+});
 
-  return {ib->Emit("FFTShift", {dout, axes, ib->Value(!forward_value)}), ib->OutZeros(axes), ib->OutZeros(forward)};
+REG_BPROP_BUILDER("IFFTShift").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
+  auto dim = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  return {ib->Emit("FFTShift", {dout, dim}), ib->OutZeros(dim)};
 });
 
 DEF_PURE_SHAPE_CALC(g_correlate)

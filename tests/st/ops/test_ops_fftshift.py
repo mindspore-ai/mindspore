@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,34 +15,40 @@
 import pytest
 import numpy as np
 import mindspore as ms
-from mindspore import ops
+from mindspore import ops, nn, mutable
 from mindspore.ops import fftshift
 
-import tests.st.ops.test_utils as test_utils
+class FFTShiftNet(nn.Cell):
+    def __init__(self):
+        super(FFTShiftNet, self).__init__()
+        self.fftshift = fftshift
+
+    def construct(self, x, dim=None):
+        return self.fftshift(x, dim)
+
+class FFTShiftGradNet(nn.Cell):
+    def __init__(self, net, dout):
+        super(FFTShiftGradNet, self).__init__()
+        self.net = net
+        self.dout = dout
+        self.grad = ops.GradOperation(sens_param=True)
+
+    def construct(self, x, dim=None):
+        return self.grad(self.net)(x, dim, self.dout)
 
 def generate_random_input(shape, dtype):
     return np.random.randn(*shape).astype(dtype)
 
 
-def generate_expect_forward_output(x):
-    return np.fft.fftshift(x)
+def generate_expect_forward_output(x, dim=None):
+    return np.fft.fftshift(x, dim)
 
 
-def generate_expect_backward_output(x):
-    return np.ones_like(x)
+def generate_expect_backward_output(dout, dim=None):
+    return np.fft.ifftshift(dout, dim)
 
 
-@test_utils.run_with_cell
-def fftshift_forward_func(x):
-    return fftshift(x)
-
-
-@test_utils.run_with_cell
-def fftshift_backward_func(x):
-    return ops.grad(fftshift_forward_func, (0))(x)
-
-
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_arm_ascend_training
@@ -57,12 +63,13 @@ def test_ops_fftshift_forward(mode):
     """
     ms.context.set_context(mode=mode)
     x = generate_random_input((2, 3, 4, 5), np.float32)
-    output = fftshift_forward_func(ms.Tensor(x))
+    net = FFTShiftNet()
+    output = net(ms.Tensor(x))
     expect = generate_expect_forward_output(x)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_arm_ascend_training
@@ -77,12 +84,16 @@ def test_ops_fftshift_backward(mode):
     """
     ms.context.set_context(mode=mode)
     x = generate_random_input((2, 3, 4, 5), np.float32)
-    output = fftshift_backward_func(ms.Tensor(x))
-    expect = generate_expect_backward_output(x)
+    dout = generate_random_input((2, 3, 4, 5), np.float32)
+    net = FFTShiftNet()
+    grad_net = FFTShiftGradNet(net, ms.Tensor(dout))
+    grad_net.set_train()
+    output = grad_net(ms.Tensor(x))
+    expect = generate_expect_backward_output(dout)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_arm_ascend_training
@@ -96,23 +107,24 @@ def test_ops_fftshift_forward_dynamic_shape(mode):
     Expectation: success
     """
     ms.context.set_context(mode=mode)
-
+    dim = 0
     x_dyn = ms.Tensor(shape=[None, None, None, None], dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(fftshift_forward_func)
-    test_cell.set_inputs(x_dyn)
+    dim_dyn = mutable(dim)
+    net = FFTShiftNet()
+    net.set_inputs(x_dyn, dim_dyn)
 
     x1 = generate_random_input((2, 3, 4, 5), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = generate_expect_forward_output(x1)
+    output = net(ms.Tensor(x1), dim_dyn)
+    expect = generate_expect_forward_output(x1, dim)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
     x2 = generate_random_input((3, 4, 5, 6), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = generate_expect_forward_output(x2)
+    output = net(ms.Tensor(x2), dim_dyn)
+    expect = generate_expect_forward_output(x2, dim)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_arm_ascend_training
@@ -126,23 +138,24 @@ def test_ops_fftshift_forward_dynamic_rank(mode):
     Expectation: success
     """
     ms.context.set_context(mode=mode)
-
+    dim = (0,)
     x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(fftshift_forward_func)
-    test_cell.set_inputs(x_dyn)
+    dim_dyn = mutable(dim)
+    net = FFTShiftNet()
+    net.set_inputs(x_dyn, dim_dyn)
 
     x1 = generate_random_input((2, 3, 4, 5), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = generate_expect_forward_output(x1)
+    output = net(ms.Tensor(x1), dim_dyn)
+    expect = generate_expect_forward_output(x1, dim)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
     x2 = generate_random_input((3, 4, 5, 6), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = generate_expect_forward_output(x2)
+    output = net(ms.Tensor(x2), dim_dyn)
+    expect = generate_expect_forward_output(x2, dim)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_arm_ascend_training
@@ -156,23 +169,28 @@ def test_ops_fftshift_backward_dynamic_shape(mode):
     Expectation: success
     """
     ms.context.set_context(mode=mode)
-
+    dim = 0
     x_dyn = ms.Tensor(shape=[None, None, None, None], dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(fftshift_backward_func)
-    test_cell.set_inputs(x_dyn)
+    dim_dyn = mutable(dim)
+    net = FFTShiftNet()
 
     x1 = generate_random_input((2, 3, 4, 5), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = generate_expect_backward_output(x1)
+    dout1 = generate_random_input((2, 3, 4, 5), np.float32)
+    grad_net = FFTShiftGradNet(net, ms.Tensor(dout1))
+    grad_net.set_inputs(x_dyn, dim_dyn)
+    output = grad_net(ms.Tensor(x1), dim_dyn)
+    expect = generate_expect_backward_output(dout1, dim)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
     x2 = generate_random_input((3, 4, 5, 6), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = generate_expect_backward_output(x2)
+    dout2 = generate_random_input((3, 4, 5, 6), np.float32)
+    grad_net = FFTShiftGradNet(net, ms.Tensor(dout2))
+    output = grad_net(ms.Tensor(x2), dim_dyn)
+    expect = generate_expect_backward_output(dout2, dim)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_arm_ascend_training
@@ -186,17 +204,22 @@ def test_ops_fftshift_backward_dynamic_rank(mode):
     Expectation: success
     """
     ms.context.set_context(mode=mode)
-
+    dim = (0,)
     x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(fftshift_backward_func)
-    test_cell.set_inputs(x_dyn)
+    dim_dyn = mutable(dim)
+    net = FFTShiftNet()
 
     x1 = generate_random_input((2, 3, 4, 5), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = generate_expect_backward_output(x1)
+    dout1 = generate_random_input((2, 3, 4, 5), np.float32)
+    grad_net = FFTShiftGradNet(net, ms.Tensor(dout1))
+    grad_net.set_inputs(x_dyn, dim_dyn)
+    output = grad_net(ms.Tensor(x1), dim_dyn)
+    expect = generate_expect_backward_output(dout1, dim)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
     x2 = generate_random_input((3, 4, 5, 6), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = generate_expect_backward_output(x2)
+    dout2 = generate_random_input((3, 4, 5, 6), np.float32)
+    grad_net = FFTShiftGradNet(net, ms.Tensor(dout2))
+    output = grad_net(ms.Tensor(x2), dim_dyn)
+    expect = generate_expect_backward_output(dout2, dim)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
