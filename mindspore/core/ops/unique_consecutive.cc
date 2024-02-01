@@ -166,13 +166,8 @@ abstract::BaseShapePtr UniqueConsecutiveFrontendInferShape(const PrimitivePtr &p
     counts_shape_vec = {0};
   }
 
-  if (IsDynamicRank(input_shape_vec) || IsDynamicShape(input_shape_vec)) {
-    output_shape = std::make_shared<abstract::Shape>(output_vec);
-    counts_shape = std::make_shared<abstract::Shape>(counts_shape_vec);
-  } else {
-    output_shape = std::make_shared<abstract::Shape>(output_vec);
-    counts_shape = std::make_shared<abstract::Shape>(counts_shape_vec);
-  }
+  output_shape = std::make_shared<abstract::Shape>(output_vec);
+  counts_shape = std::make_shared<abstract::Shape>(counts_shape_vec);
   idx_shape = std::make_shared<abstract::Shape>(idx_shape_vec);
 
   auto ret_shape_vec = std::vector<abstract::BaseShapePtr>{output_shape};
