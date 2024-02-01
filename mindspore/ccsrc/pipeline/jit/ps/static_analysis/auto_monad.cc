@@ -1672,7 +1672,7 @@ class AutoMonadConverter {
     auto &effect_info = cnode->GetEffectInfo();
     if (effect_info.state != EffectInfo::kDetected) {
       // Effect info should have been set by SideEffectFinder.
-      MS_LOG(INTERNAL_EXCEPTION) << "Side effects not detected: " << cnode->DebugString();
+      MS_LOG(WARNING) << "Side effects not detected: " << cnode->DebugString();
     }
     return effect_info;
   }

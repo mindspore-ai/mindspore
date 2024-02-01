@@ -249,6 +249,7 @@ cust_op_lists = [
     "flatten",
     "maxpoolv1",
     "norepeatngram",
+    "generateeodmask",
     "randint",
     "reversesequence",
     "environcreate",

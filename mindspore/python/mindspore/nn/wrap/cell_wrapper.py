@@ -16,17 +16,20 @@
 """Cell_wrapper."""
 from __future__ import absolute_import
 from __future__ import division
+import os
 
 from types import FunctionType, MethodType
 
 from mindspore import log as logger
 from mindspore.parallel._utils import _get_device_num, _get_gradients_mean,\
-    _get_parallel_mode, _get_enable_parallel_optimizer, _is_pynative_parallel
+    _get_parallel_mode, _get_enable_parallel_optimizer, _is_pynative_parallel, _get_global_rank
 from mindspore.context import ParallelMode
 from mindspore import _checkparam as validator
 from mindspore import ops, nn
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore.common.tensor import Tensor
+from mindspore.common.initializer import initializer
 from mindspore.ops.primitive import _primexpr
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
@@ -391,6 +394,7 @@ class TrainOneStepCell(Cell):
         self.return_grad = return_grad
         if return_grad:
             self.weights_name = [i.name for i in self.optimizer.parameters]
+        self._init_silent_detect()
         self.reducer_flag = False
         self.grad_reducer = nn.Identity()
         self.parallel_mode = _get_parallel_mode()
@@ -413,34 +417,161 @@ class TrainOneStepCell(Cell):
             self.grad_reducer = DistributedGradReducer(self.weights, self.mean, self.degree, group=group)
         self._get_attr_from_cell(network)
 
+    def _init_silent_detect(self):
+        """
+        Init silent detect.
+        """
+        self._enable_npu_silent_detect = os.environ.get('NPU_DETECT') == "1"
+        self._enable_npu_silent_recovery = os.environ.get('NPU_RECOVERY') == "1"
+
+        if not self._enable_npu_silent_detect:
+            self._enable_npu_silent_recovery = False
+            self._silent_check_index = []
+            return
+
+        self._silent_allreduce = P.AllReduce()
+        parallel_mode = _get_parallel_mode()
+        self._is_distributed = (parallel_mode != ParallelMode.STAND_ALONE)
+        self._rank_id = _get_global_rank()
+
+        self._silent_check_index = self._get_silent_check_index()
+        idx_len = len(self._silent_check_index)
+
+        if idx_len == 0:
+            return
+
+        _silent_init_minv, _silent_init_maxv = 1.0e30, -1.0e30
+        self._silent_features_min = Parameter(Tensor(
+            [_silent_init_minv] * idx_len, dtype=mstype.float32), requires_grad=False)
+        self._silent_features_max = Parameter(Tensor(
+            [_silent_init_maxv] * idx_len, dtype=mstype.float32), requires_grad=False)
+        self._silent_features_pre = Parameter(initializer(
+            'zeros', idx_len, mstype.float32), requires_grad=False)
+        self._silent_features = Parameter(initializer(
+            'zeros', idx_len, mstype.float32), requires_grad=False)
+        self._silent_sensitivity_thresh = 100000
+        self._silent_sensitivity_coeff = 1000000
+        self._silent_min_sev_step = 6
+        self._silent_check_steps = Parameter(Tensor([0]), requires_grad=False)
+
     def construct(self, *inputs):
         if not self.sense_flag:
             return self._no_sens_impl(*inputs)
         loss = self.network(*inputs)
         sens = F.fill(loss.dtype, loss.shape, self.sens)
         grads = self.grad(self.network, self.weights)(*inputs, sens)
+        is_silent_fault = self._get_silent_check_status(grads, self._silent_check_index)
         grads = self.grad_reducer(grads)
-        loss = F.depend(loss, self.optimizer(grads))
+        if not self._enable_npu_silent_recovery or not is_silent_fault:
+            loss = F.depend(loss, self.optimizer(grads))
         if self.return_grad:
-            grad_with_param_name = {}
-            for index, value in enumerate(grads):
-                grad_with_param_name[self.weights_name[index]] = value
-            return loss, grad_with_param_name
+            return loss, self._get_grad_name(grads)
         return loss
 
     def _no_sens_impl(self, *inputs):
         """construct implementation when the 'sens' parameter is passed in."""
         loss = self.network(*inputs)
         grads = self.grad_no_sens(self.network, self.weights)(*inputs)
+        is_silent_fault = self._get_silent_check_status(grads, self._silent_check_index)
+        grads = F.depend(grads, is_silent_fault)
         grads = self.grad_reducer(grads)
-        loss = F.depend(loss, self.optimizer(grads))
+        if not self._enable_npu_silent_recovery or not is_silent_fault:
+            loss = F.depend(loss, self.optimizer(grads))
+        if self._enable_npu_silent_recovery and is_silent_fault:
+            print(
+                "[Silent Fault]: Because of a silent fault, the update is automatically skipped.")
         if self.return_grad:
-            grad_with_param_name = {}
-            for index, value in enumerate(grads):
-                grad_with_param_name[self.weights_name[index]] = value
-            return loss, grad_with_param_name
+            return loss, self._get_grad_name(grads)
         return loss
 
+    def _get_silent_check_index(self):
+        """
+        Get silent check index
+        """
+        cells_to_check = (nn.LayerNorm, nn.Embedding, nn.Dense)
+
+        params = self.optimizer.parameters
+        params_idx = {param.name: idx for idx, param in enumerate(params)}
+        vaild_cells = []
+        vaild_index = []
+        for _, cell in self.network.cells_and_names():
+            if isinstance(cell, cells_to_check):
+                vaild_cells.append(cell)
+        for cell in vaild_cells:
+            for param in cell.trainable_params(recurse=False):
+                if param.name in params_idx:
+                    vaild_index.append(params_idx.get(param.name))
+        return vaild_index
+
+    def _get_silent_check_status(self, grads, index):
+        """
+        Get silent check status
+        """
+        status = False
+        if not self._enable_npu_silent_detect:
+            return status
+        if not index:
+            status = False
+        else:
+            feature_list = []
+            for i in index:
+                feature = ops.norm(grads[i]).unsqueeze(dim=0)
+                feature_list.append(feature)
+            features = ops.concat(feature_list)
+            status = self._silent_check(features)
+
+        if status:
+            print(f"[Silent Fault]: A silent fault occurs on rank {self._rank_id}.")
+        if self._is_distributed:
+            status = self._silent_allreduce(status.int()).bool()
+        if status:
+            print(
+                "[Silent Fault]: A silent fault occurs in the current step.")
+        return status
+
+    def _update_silent_params(self, features):
+        """
+        Update silent params
+        """
+        self._silent_features_max = ops.maximum(
+            self._silent_features_max, features)
+        self._silent_features_min = ops.minimum(
+            self._silent_features_min, features)
+        self._silent_features_pre = features
+
+    def _get_grad_name(self, grads):
+        """
+        Get grad with name
+        """
+        grad_with_param_name = {}
+        for index, value in enumerate(grads):
+            grad_with_param_name[self.weights_name[index]] = value
+        return grad_with_param_name
+
+    def _silent_check(self, features):
+        """
+        Silent check
+        """
+        x = ops.any(ops.isinf(features))
+        y = ops.any(ops.isnan(features))
+        ret = ops.logical_or(x, y)
+        x = ops.any(ops.greater(features, self._silent_sensitivity_thresh))
+        ret = ops.logical_or(ret, x)
+        if ret:
+            return ret
+
+        coeff = (self._silent_features_max - self._silent_features_min) / 2
+        thresh = self._silent_sensitivity_coeff * coeff
+        x = ops.any(ops.greater(coeff, F.zeros_like(coeff)))
+        y = ops.any(ops.greater(self.optimizer.global_step, self._silent_min_sev_step))
+        y = ops.logical_and(x, y)
+
+        x = features - self._silent_features_pre
+        x = ops.any(ops.greater(x, thresh))
+        ret = ops.logical_and(y, x)
+        self._update_silent_params(features)
+
+        return ret
 
 class GetNextSingleOp(Cell):
     """

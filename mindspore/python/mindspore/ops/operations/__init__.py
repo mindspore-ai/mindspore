@@ -65,7 +65,7 @@ from .image_ops import (CropAndResize, NonMaxSuppressionV3, HSVToRGB, AdjustHue,
                         CombinedNonMaxSuppression, RGBToHSV, ScaleAndTranslate, ResizeLinear1D, ResizeBicubic)
 from .inner_ops import (Randperm, NoRepeatNGram, LambApplyOptimizerAssign, LambApplyWeightAssign,
                         FusedWeightScaleApplyMomentum, FusedCastAdamWeightDecay, FusedAdaFactor,
-                        FusedAdaFactorWithGlobalNorm)
+                        FusedAdaFactorWithGlobalNorm, GenerateEodMask)
 from .linalg_ops import (Svd, Geqrf)
 from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, AssignSub, Atan2, BatchMatMul,
                        BitwiseAnd, BitwiseOr, Ger, BitwiseXor, Inv, Invert, ApproximateEqual,
@@ -180,6 +180,7 @@ __all__ = [
     'Conv3D',
     'Conv2DTranspose',
     'Conv3DTranspose',
+    "GenerateEodMask",
     'FillV2',
     'Flatten',
     'MaxPoolWithArgmax',
