@@ -79,7 +79,7 @@
 #include "ops/roi_pooling.h"
 #include "ops/scale.h"
 #include "ops/scatter_nd_update.h"
-#include "ops/select.h"
+#include "ops/ops_func_impl/select.h"
 #include "ops/sgd.h"
 #include "ops/sigmoid_cross_entropy_with_logits.h"
 #include "ops/skip_gram.h"

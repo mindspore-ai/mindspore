@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <utility>
 #include <complex>
-#include "mindspore/core/ops/select.h"
+#include "mindspore/core/ops/ops_func_impl/select.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {

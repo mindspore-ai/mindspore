@@ -42,7 +42,7 @@ from ..auto_generate import (ExpandDims, Reshape, TensorShape, Transpose, Gather
                              ReverseV2, Diag, Eye, ScatterNd, ResizeNearestNeighborV2, GatherNd, GatherD,
                              Range, MaskedFill, RightShift, NonZero, ResizeNearestNeighbor, Identity, Split,
                              CumSum, CumProd, Cummax, Cummin, Argmin, Concat, UnsortedSegmentSum, ScalarToTensor,
-                             BroadcastTo)
+                             BroadcastTo, Select)
 from .manually_defined import Rank, Shape, Tile, Cast
 
 
@@ -2313,54 +2313,6 @@ class Rint(Primitive):
     def __init__(self):
         """Initialize Rint."""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
-
-
-class Select(Primitive):
-    r"""
-    The conditional tensor determines whether the corresponding element in the output must be
-    selected from `x` (if True) or `y` (if False) based on the value of each
-    element.
-
-    It can be defined as:
-
-    .. math::
-        out_i = \begin{cases}
-        x_i, & \text{if } condition_i \\
-        y_i, & \text{otherwise}
-        \end{cases}
-
-    Inputs:
-        - **condition** (Tensor[bool]) - The condition tensor, decides which element is chosen.
-          The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
-        - **x** (Tensor) - The first tensor to be selected and the shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
-        - **y** (Tensor) - The second tensor to be selected and the shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
-
-    Outputs:
-        Tensor, has the same shape as `condition`.
-
-    Raises:
-        TypeError: If `x` or `y` is not a Tensor.
-        ValueError: If shape of the three inputs are different.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> select = ops.Select()
-        >>> input_cond = Tensor([True, False])
-        >>> input_x = Tensor([2,3], mindspore.float32)
-        >>> input_y = Tensor([1,2], mindspore.float32)
-        >>> output = select(input_cond, input_x, input_y)
-        >>> print(output)
-        [2. 2.]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Select."""
-        self.init_prim_io_names(inputs=['condition', 'x', 'y'], outputs=['output'])
 
 
 class StridedSliceV2(Primitive):
