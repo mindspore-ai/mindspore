@@ -77,13 +77,6 @@ void MindDataNode::Print(std::ostream &out) const { out << (Name() + "(file:" + 
 
 Status MindDataNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
-  constexpr size_t max_len = 4096;
-  if (!search_for_pattern_ && dataset_files_.size() > max_len) {
-    std::string err_msg =
-      "MindDataset: length of dataset_file must be less than or equal to 4096, dataset_file length: " +
-      std::to_string(dataset_file_.size());
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
 
   RETURN_IF_NOT_OK(
     ValidateEnum("MindDataset", "ShuffleMode", shuffle_mode_,
