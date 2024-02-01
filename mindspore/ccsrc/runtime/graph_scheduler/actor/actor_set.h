@@ -149,6 +149,7 @@ struct ActorSet {
   bool is_execution_failed_{false};
   // Control variable for callback.
   CallbackCounterPtr callback_counter_ = std::make_shared<CallbackCounter>();
+  bool has_dynamic_shape_{false};
 };
 using ActorSetPtr = std::shared_ptr<ActorSet>;
 

@@ -69,6 +69,7 @@ void LoopCountActor::IncreaseLoopCount(OpContext<DeviceTensor> *const context) {
   if ((strategy_ == GraphExecutionStrategy::kPipeline) && is_need_sync_stream_) {
     ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kStreamSync, GetAID().Name());
     std::set<const DeviceContext *> sync_stream_device_contexts;
+    WaitRuntimePipelineFinish();
     for (auto &device_context : device_contexts_) {
       MS_EXCEPTION_IF_NULL(device_context);
       if ((sync_stream_device_contexts.count(device_context) == 0) &&

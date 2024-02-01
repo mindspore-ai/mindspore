@@ -81,6 +81,9 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   {ProfilerEvent::kMemoryFree, "MemoryFree"},
   {ProfilerEvent::kCopyData, "CopyData"},
   {ProfilerEvent::kStreamSync, "StreamSync"},
+  {ProfilerEvent::kWaitKernelsInferFinish, "WaitKernelsInferFinish"},
+  {ProfilerEvent::kWaitKernelsResizeFinish, "WaitKernelsResizeFinish"},
+  {ProfilerEvent::kWaitKernelsLaunchFinish, "WaitKernelsLaunchFinish"},
   // Inner event.
   {ProfilerEvent::kKernelInferInner, "KernelInferInner"},
   {ProfilerEvent::kKernelInferDataSync, "KernelInferDataSync"},

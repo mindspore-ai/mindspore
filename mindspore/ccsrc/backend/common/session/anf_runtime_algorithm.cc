@@ -1672,6 +1672,27 @@ bool AnfRuntimeAlgorithm::IsNeedUpdateShapeAndTypeAfterLaunch(const AnfNodePtr &
   return kernel_mod->IsNeedUpdateOutputShapeAndSize();
 }
 
+bool AnfRuntimeAlgorithm::HasComputedDependInputNode(const CNodePtr &kernel) {
+  MS_EXCEPTION_IF_NULL(kernel);
+  auto real_input_num = common::AnfAlgo::GetInputTensorNum(kernel);
+
+  for (size_t i = 0; i < real_input_num; i++) {
+    const auto &input_node = common::AnfAlgo::GetInputNode(kernel, i);
+    MS_EXCEPTION_IF_NULL(input_node);
+    auto real_input_node = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
+    MS_EXCEPTION_IF_NULL(real_input_node.first);
+    if (!real_input_node.first->isa<CNode>()) {
+      continue;
+    }
+
+    auto kernel_mod = AnfAlgo::GetKernelMod(real_input_node.first);
+    if (kernel_mod && kernel_mod->IsNeedUpdateOutputShapeAndSize()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void AnfRuntimeAlgorithm::UpdateOutputAddrSize(device::KernelInfo const *kernel_info, const CNodePtr &kernel) {
   MS_EXCEPTION_IF_NULL(kernel_info);
   MS_EXCEPTION_IF_NULL(kernel);
