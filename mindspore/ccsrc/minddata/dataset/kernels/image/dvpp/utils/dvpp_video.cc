@@ -545,6 +545,9 @@ void DvppVideo::SaveYuvFile(FILE *const fd, const ImageData &frame) {
       if (ret != ACL_SUCCESS) {
         MS_LOG(ERROR) << "Chn " << channelId_ << " Copy aclrtMemcpy " << imageSize
                       << " from device to host failed, error code " << ret;
+        if (aclrtFreeHost(outImageBuf) != ACL_SUCCESS) {
+          MS_LOG(ERROR) << "aclrtFreeHost failed, errorno: " << ret;
+        }
         return;
       }
 
@@ -609,6 +612,7 @@ void DvppVideo::SaveYuvFile(FILE *const fd, const ImageData &frame) {
         int status = memcpy_s(outImageBuf + i * frame.width, frame.width, addr + i * outWidthStride, frame.width);
         if (status != 0) {
           MS_LOG(ERROR) << "[Internal ERROR] memcpy failed.";
+          free(outImageBuf);
           return;
         }
       }
@@ -618,6 +622,7 @@ void DvppVideo::SaveYuvFile(FILE *const fd, const ImageData &frame) {
                               addr + i * outWidthStride + outWidthStride * outHeightStride, frame.width);
         if (status != 0) {
           MS_LOG(ERROR) << "[Internal ERROR] memcpy failed.";
+          free(outImageBuf);
           return;
         }
       }
