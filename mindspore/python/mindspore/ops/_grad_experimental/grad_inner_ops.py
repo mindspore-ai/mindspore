@@ -36,6 +36,14 @@ def get_bprop_parallel_resize_bilinear(self):
     return bprop
 
 
+@bprop_getters.register(P.GenerateEodMask)
+def get_bprop_generate_eod_mask(self):
+
+    def bprop(x, out, dout):
+        return dout, dout
+    return bprop
+
+
 @bprop_getters.register(inner.PsROIPooling)
 def get_bprop_ps_roi_pooling(self):
     """Grad definition for `PsROIPooling` operation."""

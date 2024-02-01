@@ -254,6 +254,7 @@ static const std::unordered_set<std::string> kMigrateAicpuKernelOps = {
   mindspore::kTensorScatterUpdateOpName,
   mindspore::kIsNanOpName,
   mindspore::kNoRepeatNGramOpName,
+  mindspore::kGenerateEodMaskOpName,
   mindspore::kMatrixDeterminantOpName,
   mindspore::kMatrixLogarithmOpName,
   mindspore::kMatrixSetDiagV3OpName,
