@@ -350,7 +350,6 @@ void MemoryManagerActor::Wait(OpContext<DeviceTensor> *const op_context, const A
 void MemoryManagerActor::FreeMemoryByRefCount(DeviceTensor *const device_tensor, const DeviceContext *device_context,
                                               const std::string &op_name) {
   MS_EXCEPTION_IF_NULL(device_tensor);
-  std::lock_guard<std::mutex> locker(mem_free_mutex_);
   if (device_tensor->original_ref_count() != SIZE_MAX) {
     // The static reference count is decremented to zero to free memory, and reset to the original count.
     size_t ref_count = device_tensor->DecreaseRefCount();
@@ -368,8 +367,7 @@ void MemoryManagerActor::FreeMemoryByRefCount(DeviceTensor *const device_tensor,
     }
   } else if (device_tensor->dynamic_ref_count() != INT32_MAX) {
     // The dynamic reference count is decremented to zero to free memory.
-    device_tensor->DecreaseDynamicRefCount(op_name);
-    if ((device_tensor->dynamic_ref_count() == 0) && (device_tensor->GetPtr() != nullptr)) {
+    if ((device_tensor->DecreaseDynamicRefCount(op_name) == 0) && (device_tensor->GetPtr() != nullptr)) {
       device_tensor->ClearUserData();
       MS_LOG(DEBUG) << "Free memory by the dynamic reference count, device address" << device_tensor->GetPtr() << ".";
       FreeMemoryByDeviceContext(device_tensor, device_context);

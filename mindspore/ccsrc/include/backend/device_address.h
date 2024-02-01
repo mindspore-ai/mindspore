@@ -279,8 +279,8 @@ class DeviceAddress : public mindspore::DeviceSync {
   void IncreaseDynamicRefCount(const std::string &op_object) {
     kernel_tensor_->pointer_ref_count()->IncreaseDynamicRefCount(op_object);
   }
-  void DecreaseDynamicRefCount(const std::string &op_object) {
-    kernel_tensor_->pointer_ref_count()->DecreaseDynamicRefCount(op_object);
+  int32_t DecreaseDynamicRefCount(const std::string &op_object) {
+    return kernel_tensor_->pointer_ref_count()->DecreaseDynamicRefCount(op_object);
   }
 
   virtual bool DumpMemToFile(const std::string &filepath, const std::string &host_fmt, const ShapeVector &host_shape,

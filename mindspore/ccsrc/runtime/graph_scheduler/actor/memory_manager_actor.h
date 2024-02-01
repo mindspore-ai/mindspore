@@ -83,9 +83,6 @@ class MemoryManagerActor : public ActorBase {
   // fail message again, so we record allocating memory fail event by the uuid of the batch, which is key of the set.
   std::set<int> mem_alloc_failed_step_ids_;
   std::mutex mem_alloc_failed_mutex_;
-
-  // The memory free by the ref count maybe triggered concurrently, and the ref count decreased need the lock.
-  std::mutex mem_free_mutex_;
 };
 }  // namespace runtime
 }  // namespace mindspore
