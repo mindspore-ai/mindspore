@@ -68,12 +68,6 @@ class FuncGraphBuilder {
   /// \return Return true if the output object can be used as the output of the graph.
   bool AddOutput(const py::object &output_obj);
 
-  /// \brief Update key value for converted_py_obj_ map.
-  ///
-  /// \param[in] new_obj The new python object as key.
-  /// \param[in] old_obj The old python object as key.
-  void UpdatePyObject(const py::object &new_obj, const py::object &old_obj);
-
   /// \brief Remove an output node of the graph.
   ///
   /// \param[in] output_obj The output python object.
