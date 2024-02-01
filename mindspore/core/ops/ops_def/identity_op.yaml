@@ -9,5 +9,5 @@ identity:
   function:
     name: deepcopy
   dispatch:
-    enable: True
+    enable: False
     Ascend: IdentityAscend
