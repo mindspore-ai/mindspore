@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <chrono>
 #include <map>
+#include <unordered_map>
 #include <memory>
 #include <set>
 #include <string>
@@ -44,6 +45,7 @@
 #include "frontend/parallel/graph_util/fold_pipeline_split_utils.h"
 #include "frontend/parallel/graph_util/grad_accumulation_utils.h"
 #include "frontend/parallel/node_check.h"
+#include "frontend/parallel/silent_check/silent_check.h"
 #include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/ops_info/matmul_info.h"
 #include "frontend/parallel/tensor_layout/tensor_transform.h"
@@ -1123,7 +1125,8 @@ static void DoInsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_
       MS_LOG(EXCEPTION) << "backward_op size must be 1, real is " << backward_op.size();
     }
     auto op = backward_op[0];
-    if (pre_node->cast<CNodePtr>() && (InsertMirrorBeforeCast(node, index) || is_shared_param)) {
+    if (pre_node->cast<CNodePtr>() && (InsertMirrorBeforeCast(node, index) || is_shared_param ||
+                                       IsPrimitiveCNode(pre_node, prim::kPrimMirrorSilentCheck))) {
       // assume Load is inserted next to parameter
       // skip Load moving up and insert mirror next to the parameter
       CNodePtr load_node = SkipTrivialNodesMoveUp(pre_node->cast<CNodePtr>());
@@ -1207,6 +1210,9 @@ static std::pair<AnfNodePtr, int64_t> FindParallelCareNode(const AnfNodePtr &nod
     CNodePtr cnode = node_pair.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (!IsValueNode<Primitive>(cnode->input(0))) {
+      continue;
+    }
+    if (IsPrimitiveCNode(cnode, prim::kPrimMirrorSilentCheck) && node_pair.second != 1) {
       continue;
     }
     ValueNodePtr prim_node_anf = cnode->input(0)->cast<ValueNodePtr>();
@@ -2988,6 +2994,16 @@ static void MoveMicroMirrorOutCallFunc(const FuncGraphPtr &root) {
   }
 }
 
+static void HandleSilentCheck(const FuncGraphPtr &root, const FuncGraphManagerPtr &mng) {
+  auto env = common::GetEnv(NPU_DETECT);
+  if (env != "1") {
+    return;
+  }
+  auto sdc = std::make_shared<SilentCheck>(root, mng);
+  sdc->GetLossScaleAndGlobalStep();
+  sdc->ModifySilentCheckOps();
+}
+
 bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
 #if defined(__linux__) && defined(WITH_BACKEND)
   if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
@@ -3031,8 +3047,6 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
 
   MSLogTime msTime;
   msTime.Start();
-
-  MS_LOG(INFO) << "Now entering step parallel";
   DumpGraph(root, std::string(STEP_PARALLEL_BEGIN));
   AnfNodePtr ret = root->get_return();
   MS_EXCEPTION_IF_NULL(ret);
@@ -3049,6 +3063,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   MicroBatchPreProcess(root, manager, all_nodes);
   // mark the forward cnodes, parallel only care these nodes
   MarkForwardCNode(root);
+  HandleSilentCheck(root, manager);
   UpdateMicroBatchInterleavedStatus(all_nodes);
   if (parallel_mode != kAutoParallel) {
     TOTAL_OPS = 0;

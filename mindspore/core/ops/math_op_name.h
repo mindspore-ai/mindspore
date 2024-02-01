@@ -192,6 +192,8 @@ constexpr auto kTruncateDivOpName = "TruncateDiv";
 constexpr auto kXlogyOpName = "Xlogy";
 constexpr auto kXdivyOpName = "Xdivy";
 constexpr auto kEpsOpName = "Eps";
+constexpr auto kSilentCheckOpName = "SilentCheck";
+
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_BASE_MATH_OP_NAME_H_
