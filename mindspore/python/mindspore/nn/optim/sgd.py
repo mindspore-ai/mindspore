@@ -193,9 +193,9 @@ class SGD(Optimizer):
                             "or 'weight_decay' set in grouped 'params' must be float or int type.")
 
         if hasattr(self, "group_weight_decay") and self.group_weight_decay:
-            self.opt = tuple(P.SGD(dampening, wd, nesterov) for wd in self.group_weight_decay)
+            self.opt = tuple(P.SGD(dampening, 0.0, nesterov) for _ in self.group_weight_decay)
         else:
-            self.opt = tuple([P.SGD(dampening, float(weight_decay), nesterov)] * len(self._parameters))
+            self.opt = tuple([P.SGD(dampening, 0.0, nesterov)] * len(self._parameters))
 
         self.momentum = Parameter(Tensor(momentum, mstype.float32), name="momentum")
 
@@ -220,6 +220,7 @@ class SGD(Optimizer):
         params = self._parameters
         accum = self.accum
         stat = self.stat
+        gradients = self.decay_weight(gradients)
         gradients = self.flatten_gradients(gradients)
         gradients = self.gradients_centralization(gradients)
         gradients = self.scale_grad(gradients)
