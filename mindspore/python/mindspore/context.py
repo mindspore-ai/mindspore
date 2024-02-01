@@ -732,7 +732,7 @@ def _context():
                  auto_parallel_search_mode=str, search_mode=str, parameter_broadcast=bool, strategy_ckpt_load_file=str,
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool, enable_alltoall=bool,
                  all_reduce_fusion_config=list, pipeline_stages=int, pipeline_segments=int,
-                 parallel_optimizer_config=dict,
+                 pipeline_result_broadcast=bool, parallel_optimizer_config=dict,
                  comm_fusion=dict, strategy_ckpt_config=dict)
 def set_auto_parallel_context(**kwargs):
     r"""
@@ -828,6 +828,8 @@ def set_auto_parallel_context(**kwargs):
                         distributed alone in the pipeline. The total devices will be divided into 'pipeline_stags'
                         stages.
                         Default: ``1`` .
+        pipeline_result_broadcast (bool): A switch that broadcast the last stage result to all other stage in pipeline
+                        parallel inference. Default: ``False`` .
         parallel_optimizer_config (dict): A dict contains the keys and values for setting the parallel optimizer
                         configure. The configure provides more detailed behavior control about parallel training
                         when parallel optimizer is enabled. The configure will be effective when we use
@@ -916,6 +918,7 @@ def set_auto_parallel_context(**kwargs):
         >>> ms.set_auto_parallel_context(enable_alltoall=False)
         >>> ms.set_auto_parallel_context(all_reduce_fusion_config=[8, 160])
         >>> ms.set_auto_parallel_context(pipeline_stages=2)
+        >>> ms.set_auto_parallel_context(pipeline_stages=2, pipeline_result_broadcast=True)
         >>> parallel_config = {"gradient_accumulation_shard": True, "parallel_optimizer_threshold": 24,
         ...                    "optimizer_weight_shard_size": 2}
         >>> ms.set_auto_parallel_context(parallel_optimizer_config=parallel_config, enable_parallel_optimizer=True)
@@ -966,6 +969,7 @@ def reset_auto_parallel_context():
     - enable_parallel_optimizer: False.
     - enable_alltoall: False.
     - pipeline_stages: 1.
+    - pipeline_result_broadcast: False.
     - fusion_threshold: 64.
 
     Examples:
