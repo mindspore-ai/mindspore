@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,5 +27,7 @@ REGISTER_ACL_OP(LeftShift).set_run_mode(false);
 REGISTER_ACL_OP(CheckValid).set_run_mode(false);
 
 REGISTER_ACL_OP(OneHot).set_run_mode(false);
+
+REGISTER_ACL_OP(HistogramFixedWidth).set_extra_supported_datatype({ge::DT_DOUBLE});
 }  // namespace transform
 }  // namespace mindspore
