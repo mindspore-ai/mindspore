@@ -28,12 +28,13 @@ namespace pijit {
 class CallNode;
 
 /**
- * used by kFeatureBreakAtInlinedFunction
- * collect trace nodes for each sub-graph, rebuild bytecode by nodes.
- * if allowed inline the break graph, inline the second half bytecode.
- * guard the global variable if the globals of inlined function is different
- * from top function, eliminate the sideeffect or do not inline a function
- * with sideeffect
+ * used to inline bytecode, rebuild bytecode by nodes.
+ * 1.collect trace nodes for each sub-graph.
+ * 2.if allowed inline the break graph, inline the second half bytecode, and guard the global variable if the globals of
+ *   inlined function is different from top function, eliminate the sideeffect or do not inline a function with
+ *   sideeffect.
+ * 3.if allowed eliminate unused instruction, remove them.
+ * 4.rebuild bytecode, reset frame status, reset break point.
  */
 class BytecodeInliner {
  public:
@@ -59,6 +60,9 @@ class BytecodeInliner {
 
   void EraseDeadLocal(const std::vector<ValueNode *> &alive_nodes);
 
+  // eliminate closure access
+  void EliminateClosureSideEffect();
+
   void ResetCFG(CodeGenerator *cg);
 
   void ResetGraphStat();
@@ -75,6 +79,7 @@ class BytecodeInliner {
   // reset instruction oparg, guard globals which merge to top func. eliminate sideeffect of inline
   void FixInstr(Graph *, int local_off, std::vector<std::unique_ptr<Instr>> *);
 
+  // collect trace nodes for each sub-graph
   void CollectTracedNodes(Graph *);
 
   // top graph

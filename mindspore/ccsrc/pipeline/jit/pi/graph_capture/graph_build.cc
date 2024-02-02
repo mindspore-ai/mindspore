@@ -141,6 +141,7 @@ const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> GraphBuilde
   {JUMP_IF_TRUE_OR_POP, &GraphBuilder::TraceRunControl},
   {JUMP_FORWARD, &GraphBuilder::TraceRunControl},
   {JUMP_ABSOLUTE, &GraphBuilder::TraceRunControl},
+  {YIELD_VALUE, &GraphBuilder::DoYieldValue},
   // not implement
   {LOAD_CLASSDEREF, &GraphBuilder::NotImplementBytecode},
   {LOAD_BUILD_CLASS, &GraphBuilder::NotImplementBytecode},
@@ -149,7 +150,6 @@ const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> GraphBuilde
   {GET_AWAITABLE, &GraphBuilder::NotImplementBytecode},
   {GET_AITER, &GraphBuilder::NotImplementBytecode},
   {GET_ANEXT, &GraphBuilder::NotImplementBytecode},
-  {YIELD_VALUE, &GraphBuilder::NotImplementBytecode},
   {YIELD_FROM, &GraphBuilder::NotImplementBytecode},
   {PRINT_EXPR, &GraphBuilder::NotImplementBytecode},
   {POP_BLOCK, &GraphBuilder::NotImplementBytecode},
@@ -221,6 +221,7 @@ ValueNode *GraphBuilder::NewValueNode(AObject *o, int op, int arg, const std::ve
   ValueNode *v;
   if (Utils::IsCallOp(op)) {
     v = graph_->NewCallNode(op, arg, p);
+    v->SetVobj(o);
   } else {
     v = graph_->NewValueNode(o, op, arg, p);
   }
@@ -382,11 +383,11 @@ bool GraphBuilder::DoUnpack(const Instr &instr) {
     case AObject::kTypeList:
     case AObject::kTypeNNCellList:
     case AObject::kTypeTensor: {
-      auto tr = this->graph_->TraceValueNode(iterable);
-      if (tr == nullptr) {
-        return false;
-      }
       if (!iterable->is_constant()) {
+        auto tr = this->graph_->TraceValueNode(iterable);
+        if (tr == nullptr) {
+          return false;
+        }
         this->graph_->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GDeduce, false);
       }
       auto gen_item = [this, iterable](int i, int j) { this->GenIndexItemGeneral(iterable, i, j); };
@@ -437,8 +438,27 @@ bool GraphBuilder::DoCall(const Instr &instr) {
 bool GraphBuilder::DoNop(const Instr &instr) { return true; }
 bool GraphBuilder::NotImplementBytecode(const Instr &instr) { return false; }
 
+bool GraphBuilder::DoYieldValue(const Instr &instr) {
+  ValueNode *result = graph_->GetGeneratorResult();
+  if (result == nullptr) {
+    result = NewValueNode(nullptr, BUILD_TUPLE, 0);
+    graph_->SetGeneratorResult(result);
+  }
+  ValueNode *value = seek(0);
+  result->AddInput(value);
+  return true;
+}
+
 bool GraphBuilder::DoReturn(const Instr &instr) {
   graph_->SetRetVal(pop());
+  if (graph_->GetGeneratorResult() != nullptr) {
+    ValueNode *tuple_node = graph_->GetGeneratorResult();
+    AObject *object_info = AObject::BuildOperations(CollectObjects(tuple_node->getInputs()), BUILD_TUPLE);
+    tuple_node->SetVobj(object_info);
+    tuple_node->SetOparg(tuple_node->getInputs().size());
+    graph_->GetTracedNodes().push_back(tuple_node);
+    graph_->SetRetVal(tuple_node);
+  }
   return true;
 }
 
@@ -460,13 +480,6 @@ bool GraphBuilder::DoLocalAccess(const Instr &instr) {
 }
 
 bool GraphBuilder::DoCellAccess(const Instr &instr) {
-  bool is_make_func = false;
-  if (parent_ != nullptr) {
-    // check this function is produced by MAKE_FUNCTION
-    AbstractNode *n = parent_->GetGraph()->GetTracedNodes().back();
-    MS_EXCEPTION_IF_CHECK_FAIL(n->GetType() == ValueNode::Call, "must be call node");
-    is_make_func = static_cast<ValueNode *>(n)->input(0)->GetOpcode() == MAKE_FUNCTION;
-  }
   int opcode = instr.op();
   int oparg = instr.arg();
   ValueNode *node;
@@ -483,22 +496,14 @@ bool GraphBuilder::DoCellAccess(const Instr &instr) {
       break;
     case STORE_DEREF:
       value = pop();
-      frame_.Closure(oparg)->SetValue(value);
-      if (is_make_func) {
-        // inline MAKE_FUNCTION, closure is not sideeffect
-        break;
-      }
       node = NewValueNode(nullptr, instr, {value});
+      frame_.Closure(oparg)->SetValue(value);
       frame_.Closure(oparg)->AddCellOper(node);
       current_block_->SetTrackResult(Block::kHasClosureSideEffect);
       break;
     case DELETE_DEREF:
-      frame_.Closure(oparg)->SetValue(&ValueNode::UnboundLocal);
-      if (is_make_func) {
-        // inline MAKE_FUNCTION, closure is not sideeffect
-        break;
-      }
       node = NewValueNode(nullptr, instr, {});
+      frame_.Closure(oparg)->SetValue(&ValueNode::UnboundLocal);
       frame_.Closure(oparg)->AddCellOper(node);
       current_block_->SetTrackResult(Block::kHasClosureSideEffect);
       break;
@@ -1121,6 +1126,10 @@ bool GraphBuilder::DoByteCode(const Instr &instr) {
     (*i)->SetBlock(current_block_);
   }
 
+  if (instr.op() == RETURN_VALUE) {
+    return false;
+  }
+
   if (!support) {
     if (graph_->GetStopTraceBci() == -1) {
       graph_->StopTraceAt(cur_bci_, StopTraceReason::kStopTraceByteCode_Unsupported);
@@ -1339,7 +1348,7 @@ bool GraphBuilder::WhiteListFuncCheckAndInfer(CallNode *call_node, const py::obj
 
 bool UnsupportedCodeTypeCheck(PyCodeObject *co) {
   if (co->co_flags & (CO_GENERATOR | CO_COROUTINE | CO_ASYNC_GENERATOR)) {
-    MS_LOG(DEBUG) << "generator not inline";
+    MS_LOG(DEBUG) << "generator is unsupported";
     return true;
   }
   /**
@@ -1351,15 +1360,6 @@ bool UnsupportedCodeTypeCheck(PyCodeObject *co) {
    * ...    return super_init(self)
    * >>>assert super(int, 1).__hash__() == super_wrapper(1).__hash__()
    */
-  PyObject *frees = co->co_freevars;
-  const Py_ssize_t size = PyTuple_GET_SIZE(frees);
-  for (Py_ssize_t i = 0; i < size; ++i) {
-    const char *name = PyUnicode_AsUTF8(PyTuple_GET_ITEM(frees, i));
-    if (!strcmp("__class__", name)) {
-      MS_LOG(INFO) << ("unimplemented super call");
-      return false;
-    }
-  }
   return false;
 }
 
@@ -1863,6 +1863,14 @@ StopTraceReason GraphBuilder::BuildSubGraph(CallNode *call_node, int depth, cons
   subgraph->TraceRun(call_node->GetArgs());
 
   call_node->SetSubGraph(subgraph->GetGraph());
+  if (subgraph->GetGraph()->GetRetVal() != nullptr) {
+    call_node->SetVobj(subgraph->GetGraph()->GetRetVal()->GetVobj());
+  }
+  if (subgraph->GetGraph()->GetGeneratorResult() != nullptr &&
+      !subgraph->GetGraph()->Config().GetBoolConfig(GraphJitConfig::kEnableGeneratorExpressionToTuple)) {
+    subgraph->GetGraph()->SetRetVal(nullptr);
+  }
+
   if (subgraph->GetGraph()->GetRetVal() != nullptr) {
     call_node->SetVobj(subgraph->GetGraph()->GetRetVal()->GetVobj());
     stat = is_make_func || ApplyInlinePolicy(subgraph->GetGraph()) ? stat : InlineReason::kInlinePolicyDisabled;
@@ -2463,11 +2471,6 @@ StopTraceReason GraphBuilder::HandleCall(int depth) {
 
   // unsupported check
   PyCodeObject *co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(callable_info.ptr()));
-  if (UnsupportedCodeTypeCheck(co)) {
-    call_node->SetInlineReason(InlineReason::kInlineFunc_Type_Unsupported);
-    return StopTraceReason::kNonStopTrace;
-  }
-
   PyObject *globals = PyFunction_GET_GLOBALS(callable_info.ptr());
   auto subgraph = GraphBuilder::Creator(this->root_ ? this->root_ : this, this, co, globals, trace_flag());
 
@@ -2808,10 +2811,6 @@ StopTraceReason GraphBuilder::TraceRun(const std::vector<py::object> &args) {
     this->graph_->SetFrame(cur_bci_, frame_);
     MS_EXCEPTION_IF_CHECK_FAIL(static_cast<size_t>(cur_bci_) < instrs.size(), "error control flow");
     MS_EXCEPTION_IF_CHECK_FAIL(instrs[cur_bci_]->bci() == cur_bci_, "check instruction bci");
-    if (instrs[cur_bci_]->op() == RETURN_VALUE) {
-      graph_->SetRetVal(pop());
-      break;
-    }
     if (!DoByteCode(*instrs[cur_bci_])) {
       break;
     }

@@ -808,6 +808,17 @@ bool CheckBuiltinFuncOrMethod(const py::object &f) {
 static bool InferBuiltinFuncOrMethod(CallNode *call_node) {
   Graph *sub_graph = call_node->GetSubGraph();
   (void)JustCallAndSetRes(call_node);
+  if (call_node->GetVobj() == nullptr || call_node->GetVobj()->GetPyObject().ptr() == nullptr) {
+    return false;
+  }
+  for (auto i : call_node->getInputs()) {
+    if (i->GetVobj() && i->GetVobj()->GetType() == AObject::kTypeTensor) {
+      AbstractTensor *tensor = static_cast<AbstractTensor *>(i->GetVobj());
+      if (!tensor->IsStubTensor() && !CheckTensorDataInitialized(tensor->GetPyObject())) {
+        return false;
+      }
+    }
+  }
   if (!sub_graph->GuardValueNode(call_node)) {
     return false;
   }
@@ -860,6 +871,7 @@ static bool InferTensorAsType(CallNode *call_node) {
   sub_graph->SetRetVal(ret_node);
 
   call_node->SetSubGraph(sub_graph);
+  call_node->SetVobj(ret_node->GetVobj());
   call_node->SetInlineReason(InlineReason::kInline);
   return true;
 }

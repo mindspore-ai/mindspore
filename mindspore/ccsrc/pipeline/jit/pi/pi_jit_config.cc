@@ -60,6 +60,7 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
   {"test_graph_ir", &GraphJitConfig::SetBool<GraphJitConfig::kTestGraphIR>},
   {"kFeatureBreakAtInlinedFunction", &GraphJitConfig::SetBool<GraphJitConfig::kFeatureBreakAtInlinedFunction>},
   {"kEnableEliminateUnusedOperation", &GraphJitConfig::SetBool<GraphJitConfig::kEnableEliminateUnusedOperation>},
+  {"kEnableGeneratorExpressionToTuple", &GraphJitConfig::SetBool<GraphJitConfig::kEnableGeneratorExpressionToTuple>},
   // kEnableOptimizeForAttrItem
   {"MAX_INLINE_DEPTH", &GraphJitConfig::SetInt<GraphJitConfig::kMaxInlineDepth>},
   {"MAX_TRACE_DEPTH", &GraphJitConfig::SetInt<GraphJitConfig::kMaxTraceDepth>},
@@ -105,6 +106,7 @@ GraphJitConfig::GraphJitConfig() {
   bool_conf[kLogGraphBreak - kBoolConf] = false;
   bool_conf[kLogPerf - kBoolConf] = false;
   bool_conf[kTestGraphIR - kBoolConf] = false;
+  bool_conf[kEnableGeneratorExpressionToTuple - kBoolConf] = true;
   bool_conf[kEnableDynamicShape - kBoolConf] = false;
 
   /*'EnableOptimizeForAttrItem' options must be ensure that multiple calls of the

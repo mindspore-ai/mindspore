@@ -236,6 +236,7 @@ class GraphBuilder {
   bool DoMergeOp(const Instr &instr);
   bool DoFormatValue(const Instr &instr);
   bool DoImport(const Instr &instr);
+  bool DoYieldValue(const Instr &instr);
   bool NotImplementBytecode(const Instr &instr);
   static const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> bytecode_meth_map_;
   std::vector<py::object> GetNewArgs(CallNode *call_node);
