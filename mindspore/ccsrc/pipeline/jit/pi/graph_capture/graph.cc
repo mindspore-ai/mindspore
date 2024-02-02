@@ -63,6 +63,7 @@ Graph::Graph(PyCodeObject *co, PyObject *globals, const GraphJitConfig &conf)
       GRAPH_JIT_LOG_F("%s", DumpLoops().c_str());
     }
   }
+  sideEffect_ = std::make_unique<SideEffect>();
 }
 
 ValueNode *Graph::NewValueNode(AObject *obj_info, int op, int arg, const std::vector<ValueNode *> &inputs,

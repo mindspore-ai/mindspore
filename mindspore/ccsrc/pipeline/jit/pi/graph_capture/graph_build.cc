@@ -54,6 +54,7 @@ static const int infer_primitive_create = 1;
 static const int infer_primitive_object = 2;
 static const int infer_primitive_func = 4;
 static int infer_func_count = 0;
+static const int store_subscr_handle_size = 3;
 static constexpr const char *kPIJitCopyFuncKey = ".<pijit.copy>.";
 
 const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> GraphBuilder::bytecode_meth_map_ = {
@@ -206,6 +207,9 @@ bool GraphBuilder::ReplaceAll(ValueNode *old_node, ValueNode *new_node) {
   // check reference relationship
   const auto &nodes = graph_->GetTracedNodes();
   bool find = std::any_of(nodes.begin(), nodes.end(), [&old_node](ValueNode *node) {
+    if (Utils::IsGeneralNoSideEffectOp(node->GetOpcode())) {
+      return false;
+    }
     const auto &args = node->getInputs();
     return std::any_of(args.begin(), args.end(), [&old_node](ValueNode *i) { return i == old_node; });
   });
@@ -896,6 +900,49 @@ bool GraphBuilder::DoSetItem(ValueNode *map, ValueNode *key, ValueNode *val) {
   return true;
 }
 
+bool GraphBuilder::DoSideEffect(const Instr &instr, const std::vector<ValueNode *> &p) {
+  // only handle list dict ; after mark sideeffect, erase value node
+  auto key = p[0];
+  auto container = p[1];
+  auto value = p[2];
+  ValueNode *new_node;
+  PyObject *container_object = container->GetVobj()->GetPyObject().ptr();
+  if (container_object == nullptr || !PyList_Check(container_object)) {
+    return false;
+  }
+  std::vector<ValueNode *> items;
+  Py_ssize_t py_list_size = PyList_Size(container_object);
+  for (Py_ssize_t i = 0; i < py_list_size; i++) {
+    // BINARY_SUBSCR
+    ValueNode *index_node = NewValueNode(AObject::Convert(py::int_(i)), LOAD_CONST, -1, {});
+    PyObject *py_object_item = PyList_GET_ITEM(container_object, i);
+    ValueNode *item_node = NewValueNode(AObject::Convert(py_object_item), BINARY_SUBSCR, 0, {container, index_node});
+    items.push_back(item_node);
+  }
+  PyObject *key_object = key->GetVobj()->GetPyObject().ptr();
+  Py_ssize_t index = PyLong_AsSsize_t(key_object);
+  Py_ssize_t size = py_list_size;
+  if (index < -size || index >= size) {
+    return false;
+  }
+  index = index < 0 ? (size + index) : index;
+  items[index] = value;
+  AObject *object_info = AObject::BuildOperations(CollectObjects(items), BUILD_LIST);
+  new_node = NewValueNode(object_info, BUILD_LIST, items.size(), items);
+  if (!ReplaceAll(container, new_node)) {
+    return false;
+  }
+  for (auto item : items) {
+    graph_->GetTracedNodes().push_back(item);
+  }
+
+  graph_->GetSideEffect()->setVariableMaps(new_node, value);
+  graph_->GetSideEffect()->setReplaceMaps(new_node, container);
+
+  graph_->GetTracedNodes().push_back(new_node);
+  return true;
+}
+
 bool GraphBuilder::DoItemAccess(const Instr &instr) {
   int opcode = instr.op();
   switch (opcode) {
@@ -904,10 +951,24 @@ bool GraphBuilder::DoItemAccess(const Instr &instr) {
       break;
     }
     case STORE_SUBSCR: {
+      if (instr.arg() != store_subscr_handle_size) {
+        return false;
+      }
+      // STORE_SUBSCR: k->index v->item m-> container
       auto k = pop();
       auto m = pop();
       auto v = pop();
-      return DoSetItem(m, k, v);
+      if (DoSetItem(m, k, v) == true) {
+        return true;
+      }
+      if (m->GetVobj()->GetType() == AObject::kTypeList) {
+        DoSideEffect(instr, {k, m, v});
+        break;
+      } else {
+        NewValueNode(nullptr, instr, {v, m, k});
+        current_block_->SetTrackResult(Block::kHasAttrSideEffect);
+        break;
+      }
     }
     case DELETE_SUBSCR: {
       auto sub = pop();  // sub

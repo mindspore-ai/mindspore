@@ -26,6 +26,7 @@
 #include "pipeline/jit/pi/graph_capture/node.h"
 #include "pipeline/jit/pi/utils/allocator.h"
 #include "pipeline/jit/pi/graph_guard/trace.h"
+#include "pipeline/jit/pi/graph_capture/side_effect.h"
 
 namespace mindspore {
 namespace pijit {
@@ -168,6 +169,25 @@ class Graph {
   void SetParent(Graph *parent) { parent_ = parent; }
   Graph *GetParent() const { return parent_; }
 
+  auto &GetSideEffect() const { return sideEffect_; }
+
+  void SetSideEffectNode(ValueNode *node) { side_effect_nodes_.push_back(node); }
+  std::vector<ValueNode *> GetSideEffectNodes() { return side_effect_nodes_; }
+  std::vector<ValueNode *> GetSideEffectNodes() const { return side_effect_nodes_; }
+
+  void SetSideEffectReplacedMap(ValueNode *newNode, ValueNode *old) { replace_map.insert({newNode, old}); }
+  std::map<ValueNode *, ValueNode *> GetSideEffectReplacedMap() { return replace_map; }
+  std::vector<ValueNode *> GetSideEffectReplacedList() const {
+    std::vector<ValueNode *> replace_list;
+    for (auto &item : replace_map) {
+      replace_list.push_back(item.second);
+    }
+    return replace_list;
+  }
+  std::map<ValueNode *, ValueNode *> GetSideEffectReplacedMap() const { return replace_map; }
+  void SetOldBreakBci(int bci) { old_break_bci_ = bci; }
+  int GetOldBreakBci() { return old_break_bci_; }
+
  private:
   std::unique_ptr<CFG> cfg_;
   std::vector<LoopInfo *> loops_;
@@ -202,6 +222,10 @@ class Graph {
   std::shared_ptr<OptCode> guard_;
   int prune_branch_count_;
   Graph *parent_{nullptr};
+  std::unique_ptr<SideEffect> sideEffect_;
+  std::vector<ValueNode *> side_effect_nodes_;
+  std::map<ValueNode *, ValueNode *> replace_map;
+  int old_break_bci_;
 };
 }  // namespace pijit
 }  // namespace mindspore
