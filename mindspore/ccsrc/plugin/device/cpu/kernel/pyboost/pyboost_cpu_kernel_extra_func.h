@@ -30,6 +30,7 @@ namespace pyboost {
 class BACKEND_EXPORT PyboostCPUKernelExtraFunc : public PyboostKernelExtraFunc {
  public:
   void SetThreadPool(const kernel::KernelModPtr &kernel) override;
+  bool IsKernelModRegistered(const std::string &op_name) override;
 };
 }  // namespace pyboost
 }  // namespace kernel

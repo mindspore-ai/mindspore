@@ -44,6 +44,7 @@
 #include "runtime/graph_scheduler/graph_compiler.h"
 #include "runtime/pynative/op_runner.h"
 #include "runtime/pynative/graph_adapter.h"
+#include "kernel/pyboost/py_boost_utils.h"
 #include "runtime/pynative/op_function/pyboost_grad_functions.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
 #include "pybind_api/gil_scoped_long_running.h"
@@ -849,7 +850,8 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
       } else {
         const auto &primitive = common::AnfAlgo::GetCNodePrimitive(kernel);
         MS_EXCEPTION_IF_NULL(primitive);
-        if (runtime::PyBoostOpExecute::GetInstance().IsPyBoostOpRegistered(primitive->name())) {
+        if (runtime::PyBoostOpExecute::GetInstance().IsPyBoostOpRegistered(primitive->name()) &&
+            kernel::pyboost::PyBoostUtils::IsKernelModRegistered(device_target, primitive->name())) {
           MS_LOG(DEBUG) << "Run " << primitive->name() << " by pyboost";
           graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index], true,
                                                    &input_info);

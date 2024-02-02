@@ -30,7 +30,11 @@ void PyboostCPUKernelExtraFunc::SetThreadPool(const kernel::KernelModPtr &kernel
   cpu_kernel->SetThreadPool(thread_pool);
 }
 
-REG_PYBOOST_KERNEL_EXTRA_FUN(kCPUDevice, PyboostCPUKernelExtraFunc);
+bool PyboostCPUKernelExtraFunc::IsKernelModRegistered(const std::string &op_name) {
+  return kernel::Factory<kernel::NativeCpuKernelMod>::Instance().IsRegistered(op_name);
+}
+
+REG_PYBOOST_KERNEL_EXTRA_FUN(CPU, PyboostCPUKernelExtraFunc);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
