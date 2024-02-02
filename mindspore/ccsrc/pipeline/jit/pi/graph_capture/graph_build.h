@@ -178,6 +178,15 @@ class GraphBuilder {
   bool PackKwParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame,
                     std::vector<ValueNode *> *kwvargs);
 
+  /**
+   * handle store subscr side effect
+   * Set parameters to frame
+   * \param[in] instr The function of call target
+   * \param[in] p This calling stack
+   * \return false if parameters is illegal
+   */
+  bool DoSideEffect(const Instr &instr, const std::vector<ValueNode *> &p);
+
   bool CheckAndSetDefaultParams(const py::object &func, FrameStates *frame, int pargc);
 
   /**
