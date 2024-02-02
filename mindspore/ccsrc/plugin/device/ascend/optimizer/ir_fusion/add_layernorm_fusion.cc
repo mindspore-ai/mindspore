@@ -66,6 +66,11 @@ const AnfNodePtr AddLayernormFusion::Process(const FuncGraphPtr &graph, const An
   if (common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") == "off") {
     return nullptr;
   }
+
+  if (common::GetEnv("DISABLE_ADDLAYERNORM_FUSION") == "True") {
+    return nullptr;
+  }
+
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(equiv);
