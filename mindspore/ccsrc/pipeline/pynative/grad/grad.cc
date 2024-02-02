@@ -495,9 +495,9 @@ void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_
     (void)abs_list.emplace_back(param_i_abs);
     RecordForwardGraphForInput(v, input_args_info->input_arg_id_vec[i], param_i_abs);
   }
-  top_cell()->set_auto_grad_cell_ptr(std::make_shared<autograd::AutoGradCellImpl>(
-    input_param_values, abs_list, op_num_in_bprop_graph_ * kContainerRatio, assist_queue_, forward()->enable_async(),
-    !top_cell()->is_high_order_top_cell()));
+  top_cell()->set_auto_grad_cell_ptr(
+    std::make_shared<autograd::AutoGradCellImpl>(input_param_values, abs_list, op_num_in_bprop_graph_ * kContainerRatio,
+                                                 assist_queue_, !top_cell()->is_high_order_top_cell()));
 }
 
 void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_info) {

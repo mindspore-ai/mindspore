@@ -563,8 +563,7 @@ std::string VariableAdjoint::ToString() const {
 }
 
 AutoGradCellImpl::AutoGradCellImpl(const std::vector<ValuePtr> &input_param_values, const AbstractBasePtrList &abs_list,
-                                   size_t op_num_in_bprop_graph, const AsyncHqueuePtr &assist_queue, bool enable_async,
-                                   bool grad_by_value)
+                                   size_t op_num_in_bprop_graph, const AsyncHqueuePtr &assist_queue, bool grad_by_value)
     : ad_param_(std::make_shared<AdParam>()) {
   ad_param()->tape_->debug_info()->set_name("grad_top");
   MS_LOG(DEBUG) << "Start AutoGradCellImpl, input size: " << input_param_values.size();
@@ -596,7 +595,6 @@ AutoGradCellImpl::AutoGradCellImpl(const std::vector<ValuePtr> &input_param_valu
   }
 
   assist_queue_ = assist_queue;
-  enable_async_ = enable_async;
   grad_by_value_ = grad_by_value;
   device_target_ = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
 }
@@ -655,12 +653,8 @@ bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
   (void)ad_param()->variable_adjoint_set_.insert(variable_adjoint);
   SetGradMetaData(grad_param->op_grad_info->out_value, variable_adjoint);
 
-  if (enable_async_) {
-    UpdateNextEdgesAsync(variable_adjoint, outputs, grad_param);
-  } else {
-    UpdateNextEdges(variable_adjoint, outputs, grad_param->op_grad_info->input_value,
-                    grad_param->op_grad_info->input_abs, grad_by_value_);
-  }
+  UpdateNextEdges(variable_adjoint, outputs, grad_param->op_grad_info->input_value, grad_param->op_grad_info->input_abs,
+                  grad_by_value_);
   return true;
 }
 
@@ -1402,18 +1396,6 @@ AnfNodePtr AutoGradCellImpl::BuildKNodeForTupleGetItem(const AnfNodePtr &input_n
   (void)ad_param()->anfnode_to_variable_adjoint_.insert(std::make_pair(input_node, variable_adjoint));
   (void)ad_param()->variable_adjoint_set_.insert(variable_adjoint);
   return k_node;
-}
-
-void AutoGradCellImpl::UpdateNextEdgesAsync(const VariableAdjointPtr &variable, const std::vector<CNodePtr> &dins,
-                                            const GradParamPtr &grad_param) {
-  auto task = [this, variable, dins, grad_param]() {
-    this->UpdateNextEdges(variable, dins, grad_param->op_grad_info->input_value, grad_param->op_grad_info->input_abs,
-                          grad_by_value_);
-  };
-  bool success = assist_queue_->Push(new (std::nothrow) BpropTask(std::move(task)));
-  if (!success) {
-    assist_queue_->CheckException();
-  }
 }
 
 void AutoGradCellImpl::UpdateNextEdges(const VariableAdjointPtr &variable, const std::vector<CNodePtr> &dins,
