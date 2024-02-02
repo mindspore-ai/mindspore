@@ -21,6 +21,7 @@
 #include "pybind_api/ir/primitive_py.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "pipeline/jit/pi/utils/utils.h"
+#include "pipeline/jit/pi/graph_guard/strategy.h"
 
 namespace mindspore {
 namespace pijit {
@@ -105,7 +106,7 @@ bool CheckOwnerIsCell(TracePtr var) {
 class OptGuardPerfImpl : public OptGuardPerf {
  public:
   virtual void GetGuardPerfInfo(std::map<std::string, std::pair<size_t, size_t>> *guard_info,
-                        std::map<std::string, std::pair<size_t, size_t>> *item_info) const;
+                                std::map<std::string, std::pair<size_t, size_t>> *item_info) const;
   OptGuardPerfImpl() = default;
   virtual ~OptGuardPerfImpl() = default;
   virtual void LogGuardPerfStart();
@@ -172,9 +173,20 @@ OptGuard::OptGuard() { config_ = g_mapDefaultConfig; }
 
 OptGuard::OptGuard(const std::map<std::string, bool> &cfg) { UpdateConfig(cfg); }
 
-bool OptGuard::Check(const PyFrameObject *frame, bool print, std::map<std::string, PyObject *> *cache, bool perf) {
+void OptGuard::UpdateGuardList(GuardItemPtr item) {
+  // reorder list to speed up check on next run
   for (size_t i = 0; i < guardList_.size(); ++i) {
-    GuardItemPtr item = guardList_[i];
+    if (guardList_[i] == item) {
+      guardList_.erase(guardList_.begin() + i);
+      guardList_.insert(guardList_.begin(), item);
+    }
+  }
+}
+
+bool OptGuard::Check(const PyFrameObject *frame, bool print, std::map<size_t, PyObject *> *cache, bool perf) {
+  auto list = OptStrategy::MakeGuardItemListStrategyByFrame(frame, guardList_);
+  for (size_t i = 0; i < list.size(); ++i) {
+    GuardItemPtr item = list[i];
     if (perf) {
       g_guard_perf.LogGuardPerfStart();
     }
@@ -183,10 +195,7 @@ bool OptGuard::Check(const PyFrameObject *frame, bool print, std::map<std::strin
       g_guard_perf.LogGuardPerfEnd(item.get());
     }
     if (!result) {
-      // reorder list to speed up check on next run
-      GuardItemPtr tmp = item;
-      guardList_.erase(guardList_.begin() + i);
-      guardList_.insert(guardList_.begin(), tmp);
+      UpdateGuardList(item);
       if (print) {
         auto trace = item->GetTrace();
         auto obj = GetObjectFromTrace(frame, trace);
@@ -228,15 +237,29 @@ bool OptGuard::GuardOn(TracePtr var, GuardLevel tp, bool needSpecialize, int rec
     item = GuardEqual(var, 0);
   }
   if (item != nullptr) {
-    std::string strItem = item->ToString();
-    if (guardMap_.find(strItem) == guardMap_.end()) {
+    size_t szItem = item->Info().Id();
+    if (guardMap_.find(szItem) == guardMap_.end()) {
       guardList_.push_back(item);
-      guardMap_[strItem] = item;
+      guardMap_[szItem] = item;
     }
     return true;
   } else {
     return false;
   }
+}
+
+const InfoPack &OptGuard::Info() {
+  if (info_ == nullptr) {
+    InfoPack info;
+    info.Begin();
+    for (auto &item : guardList_) {
+      info << item->Info();
+    }
+    info.End();
+    info_ = std::make_shared<InfoPack>(info);
+    info_->Update();
+  }
+  return *info_;
 }
 
 static GuardItemPtr GuardOnGDeduce(TracePtr var, PyObject *obj, const std::map<std::string, bool> &config) {

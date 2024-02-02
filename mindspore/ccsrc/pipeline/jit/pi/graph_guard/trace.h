@@ -23,6 +23,7 @@
 #include <functional>
 #include "pipeline/jit/pi/pydef.h"
 #include "pybind11/pybind11.h"
+#include "pipeline/jit/pi/graph_guard/info.h"
 
 namespace py = pybind11;
 
@@ -54,7 +55,7 @@ typedef struct _TraceContext {
   PyObject *f_locals;
   PyObject *const *f_localsplus;
   PyCodeObject *f_code;
-  std::map<std::string, PyObject *> *cache;
+  std::map<size_t, PyObject *> *cache;
 } TraceContext, *PTraceContext;
 
 class Trace {
@@ -77,6 +78,7 @@ class Trace {
   virtual PyObject *Retrieve(PTraceContext context, bool perf = false);
   virtual std::string ToString(bool include_param = true) = 0;
   virtual std::string FormatString() = 0;
+  virtual const InfoPack &Info() = 0;
   virtual void Cache(PTraceContext context, PyObject *obj);
   virtual bool IsConst() const;
 
@@ -86,6 +88,7 @@ class Trace {
   TraceType originType_;
   TraceType curType_;
   std::string strTrace_;
+  InfoPackPtr info_;
   bool is_const_;
 };
 using TracePtr = std::shared_ptr<Trace>;
@@ -100,6 +103,7 @@ class RootTrace : public Trace {
   virtual void GetParam(int *index, std::string *name, std::string *module_name);
   virtual bool operator==(const Trace &trace);
   std::string FormatString() override { return ToString(); }
+  virtual const InfoPack &Info();
 
  protected:
   PyObject *RetrieveGlobal(PTraceContext context);
@@ -128,6 +132,7 @@ class ItemTrace : public Trace {
   virtual bool operator==(const Trace &trace);
   virtual void Detach();
   std::string FormatString() override { return ToString(); }
+  virtual const InfoPack &Info();
 
  protected:
   TracePtr item_;
@@ -143,6 +148,7 @@ class AttrTrace : public Trace {
   virtual std::string ToString(bool include_param = true);
   virtual bool operator==(const Trace &trace);
   std::string FormatString() override { return ToString(); }
+  virtual const InfoPack &Info();
 
  protected:
   std::string attr_;
@@ -159,6 +165,7 @@ class ConstTrace : public Trace {
   virtual bool operator==(const Trace &trace);
   virtual void Detach();
   std::string FormatString() override { return ToString(); }
+  virtual const InfoPack &Info();
 
  protected:
   int index_;
@@ -174,6 +181,7 @@ class TypeTrace : public Trace {
   virtual std::string ToString(bool include_param = true);
   virtual bool operator==(const Trace &trace);
   std::string FormatString() override { return ToString(); }
+  virtual const InfoPack &Info();
   virtual void Detach();
 
  protected:
@@ -191,6 +199,7 @@ class OpTrace : public Trace {
   virtual bool operator==(const Trace &trace);
   virtual void Detach();
   std::string FormatString() override;
+  virtual const InfoPack &Info();
 
  protected:
   int opcode_;
@@ -204,7 +213,7 @@ TracePtr CreateOpTrace(PyObject *obj, int opcode, int opargs, TraceVector params
 
 /// \brief retrieve the PyObject with ref count plus 1 which will be minus outside
 typedef std::function<PyObject *(PTraceContext context)> RetrieveFunc;
-typedef std::function<std::string()> ToStringFunc;
+typedef std::function<std::string(bool)> ToStringFunc;
 class CustomizedTrace : public Trace {
  public:
   CustomizedTrace(PyObject *obj, RetrieveFunc rfunc, ToStringFunc sfunc);
@@ -212,6 +221,7 @@ class CustomizedTrace : public Trace {
   virtual PyObject *Retrieve(PTraceContext context, bool perf = false);
   virtual std::string ToString(bool include_param = true);
   std::string FormatString() override { return ToString(); }
+  virtual const InfoPack &Info();
 
  protected:
   RetrieveFunc retrieve_;
@@ -228,6 +238,7 @@ class UnsupportedTrace : public Trace {
   virtual TraceVector GetParams();
   virtual void Detach();
   std::string FormatString() override;
+  virtual const InfoPack &Info();
 
  protected:
   TraceVector params_;
@@ -237,8 +248,8 @@ class UnsupportedTrace : public Trace {
 using UnsupportedTracePtr = std::shared_ptr<UnsupportedTrace>;
 
 /// \brief Get the reference for the object by Py_INCREF and call Py_DECREF by yourself.
-PyObject *GetObjectFromTrace(const PyFrameObject *frame, TracePtr trace,
-                             std::map<std::string, PyObject *> *cache = nullptr, bool perf = false);
+PyObject *GetObjectFromTrace(const PyFrameObject *frame, TracePtr trace, std::map<size_t, PyObject *> *cache = nullptr,
+                             bool perf = false);
 }  // namespace pijit
 }  // namespace mindspore
 

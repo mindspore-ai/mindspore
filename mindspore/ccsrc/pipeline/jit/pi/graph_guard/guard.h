@@ -40,7 +40,7 @@ typedef enum _GuardLevel {
 } GuardLevel;
 
 using GuardItemVector = std::vector<GuardItemPtr>;
-using GuardItemMap = std::map<std::string, GuardItemPtr>;
+using GuardItemMap = std::map<size_t, GuardItemPtr>;
 using GuardCheckPoint = std::pair<GuardItemVector, GuardItemMap>;
 
 class OptGuard {
@@ -54,7 +54,7 @@ class OptGuard {
   /// \param[in] cache to reuse the guard result
   /// \param[in] perf to record the performance of guard
   /// \param[out] the variables have been modified
-  virtual bool Check(const PyFrameObject *frame, bool print, std::map<std::string, PyObject *> *cache = nullptr,
+  virtual bool Check(const PyFrameObject *frame, bool print, std::map<size_t, PyObject *> *cache = nullptr,
                      bool perf = false);
   /// \brief guard the variable which has trace to retrieve
   /// \param[in] frame python frame
@@ -81,12 +81,15 @@ class OptGuard {
   virtual void RevertDynamicShape(PyFrameObject *frame, const std::vector<PyObject *> &backup);
 
   std::string ToString() const;
+  virtual const InfoPack &Info();
 
  protected:
+  void UpdateGuardList(GuardItemPtr item);
   std::vector<GuardItemPtr> guardList_;
-  std::map<std::string, GuardItemPtr> guardMap_;
+  std::map<size_t, GuardItemPtr> guardMap_;
   std::stack<GuardCheckPoint> guardStack_;
   std::map<std::string, bool> config_;
+  InfoPackPtr info_;
 };
 using OptGuardPtr = std::shared_ptr<OptGuard>;
 
@@ -94,7 +97,7 @@ class OptGuardPerf {
  public:
   static OptGuardPerf *GetGuardPerf();
   virtual void GetGuardPerfInfo(std::map<std::string, std::pair<size_t, size_t>> *guard_info,
-                        std::map<std::string, std::pair<size_t, size_t>> *item_info) const = 0;
+                                std::map<std::string, std::pair<size_t, size_t>> *item_info) const = 0;
   virtual void LogTracePerfStart() = 0;
   virtual void LogTracePerfEnd(Trace *trace) = 0;
 
