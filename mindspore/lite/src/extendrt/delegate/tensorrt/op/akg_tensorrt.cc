@@ -58,7 +58,7 @@ int AkgTensorRT::AddInnerOp(TensorRTContext *ctx) {
   auto attr_map = akg_op->get_attr();
   AkgParamT params;
   auto res = memset_s(&params, sizeof(params), 0, sizeof(params));
-  if (res != 0) {
+  if (res != EOK) {
     MS_LOG(ERROR) << "memset_s output was truncated or an error occurred.";
     return RET_ERROR;
   }
