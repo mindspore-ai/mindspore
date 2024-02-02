@@ -32,6 +32,22 @@
 namespace mindspore {
 namespace parallel {
 namespace {
+bool IsSameTargetShape(const CNodePtr &reshape_node_a, const CNodePtr &reshape_node_b) {
+  auto value_ptr_a = reshape_node_a->input(kIndex2)->cast<ValueNodePtr>()->value()->cast<ValueTuplePtr>()->value();
+  auto value_ptr_b = reshape_node_b->input(kIndex2)->cast<ValueNodePtr>()->value()->cast<ValueTuplePtr>()->value();
+  if (value_ptr_a.size() != value_ptr_b.size()) {
+    return false;
+  }
+  for (size_t i = 0; i < value_ptr_a.size(); i++) {
+    int64_t cur_shape_a = static_cast<int64_t>(GetValue<int64_t>(value_ptr_a.at(i)));
+    int64_t cur_shape_b = static_cast<int64_t>(GetValue<int64_t>(value_ptr_b.at(i)));
+    if (cur_shape_a != cur_shape_b) {
+      return false;
+    }
+  }
+  return true;
+}
+
 void MergeAllGather(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphManagerPtr &manager) {
   std::unordered_map<CNodePtr, std::vector<CNodePtr>> allgather_input_map;
   for (const auto &node : all_nodes) {
@@ -39,7 +55,7 @@ void MergeAllGather(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphMan
       continue;
     }
     auto allgather_cnode = node->cast<CNodePtr>();
-    auto pre_node = GetInputNodeWithFilter(allgather_cnode->input(1), [&](const CNodePtr &cnode) {
+    auto pre_node = GetInputNodeWithFilter(allgather_cnode->input(kIndex1), [&](const CNodePtr &cnode) {
       bool filter = IsPrimitiveCNode(cnode, prim::kPrimReshape);
       return std::make_pair(filter, 1);
     });
@@ -67,9 +83,16 @@ void MergeAllGather(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphMan
         if (GetValue<std::string>(group1) != GetValue<std::string>(group2)) {
           return false;
         }
-        if (IsPrimitiveCNode(allgather_cnode1->input(1), prim::kPrimReshape) !=
-            IsPrimitiveCNode(allgather_cnode2->input(1), prim::kPrimReshape)) {
+        if (IsPrimitiveCNode(allgather_cnode1->input(kIndex1), prim::kPrimReshape) !=
+            IsPrimitiveCNode(allgather_cnode2->input(kIndex1), prim::kPrimReshape)) {
           return false;
+        }
+        if (IsPrimitiveCNode(allgather_cnode1->input(kIndex1), prim::kPrimReshape) &&
+            IsPrimitiveCNode(allgather_cnode2->input(kIndex1), prim::kPrimReshape)) {
+          if (!IsSameTargetShape(allgather_cnode1->input(kIndex1)->cast<CNodePtr>(),
+                                 allgather_cnode2->input(kIndex1)->cast<CNodePtr>())) {
+            return false;
+          }
         }
         if (allgather_cnode1->func_graph() != allgather_cnode2->func_graph()) {
           return false;
