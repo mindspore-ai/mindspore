@@ -1,26 +1,25 @@
 conj:
     description: |
         Returns a tensor of complex numbers that are the complex conjugate of each element in input.
-
         The complex numbers in input must be of the form a + bj, where a is the real part and b is the imaginary part.
-
+    
         The complex conjugate returned by this operation is of the form a - bj.
-
-        If input is real, it is returned unchanged.
-
-        Inputs:
-            - **input** (Tensor) - The input tensor to compute to. Must have numeric type.
-
-        Outputs:
-            Tensor, has the same dtype as the input.
-
+    
+        If `input` is real, it is returned unchanged.
+    
+        Args:
+            input (Tensor): The input tensor to compute to. Must have numeric type.
+    
+        Returns:
+            Tensor, has the same dtype as the `input`.
+    
         Raises:
-        TypeError: If the dtype of input is not a numeric type.
-        TypeError: If the input is not a Tensor.
-
+            TypeError: If the dtype of `input` is not a numeric type.
+            TypeError: If the `input` is not a Tensor.
+    
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-
+    
         Examples:
             >>> import mindspore
             >>> import numpy as np

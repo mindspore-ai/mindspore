@@ -17,19 +17,19 @@ from __future__ import absolute_import
 from __future__ import division
 
 import numbers
-from math import log
+import math
 import numpy as np
 from mindspore.ops import signature as sig
-from mindspore.ops.primitive import Primitive, prim_attr_register, prim_arg_register
+from mindspore.ops.primitive import Primitive, prim_attr_register, prim_arg_register, PrimitiveWithInfer
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.auto_generate import gen_arg_handler as handler
 from mindspore.common import Tensor, CSRTensor, COOTensor
-from mindspore.common import dtype as mstype
 from mindspore.common._stub_tensor import _convert_stub
 from mindspore._c_expression import typing
 from mindspore._c_expression import pyboost_cast
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._tracefunc import PackFunc
+from mindspore.common import dtype as mstype
 from mindspore.common._utils import is_shape_unknown
 from mindspore import _checkparam as validator
 from mindspore.ops.operations.manually_defined._inner import ScalarCast
@@ -194,7 +194,7 @@ class ScalarLog(Primitive):
         """Initialize ScalarAdd"""
 
     def __call__(self, x):
-        return log(x)
+        return math.log(x)
 
 
 class ScalarUadd(Primitive):
@@ -781,7 +781,7 @@ class Rank(Primitive):
         return len(x.shape)
 
 
-def rank(x):
+def rank(input_x):
     """
     Returns the rank of a tensor.
 
@@ -813,7 +813,7 @@ def rank(x):
 
     """
     rank_op = _get_cache_prim(Rank)()
-    return rank_op(x)
+    return rank_op(input_x)
 
 
 class Shape(Primitive):
@@ -882,6 +882,43 @@ def shape_(input_x):
     shape_op = _get_cache_prim(Shape)()
     return shape_op(input_x)
 
+
+class ScalarToTensor(PrimitiveWithInfer):
+    """
+    Converts a scalar to a `Tensor`, and converts the data type to the specified type.
+
+    Refer to :func:`mindspore.ops.scalar_to_tensor` for more details.
+
+    Inputs:
+        - **input_x** (Union[int, float]) - The input is a scalar. Only constant value is allowed.
+        - **dtype** (mindspore.dtype) - The target data type. Default: ``mindspore.float32`` . Only
+          constant value is allowed.
+
+    Outputs:
+        Tensor. 0-D Tensor and the content is the input.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import ops
+        >>> op = ops.ScalarToTensor()
+        >>> data = 1
+        >>> output = op(data, mindspore.float32)
+        >>> print(output)
+        1.0
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['input_scalar', 'dtype'], outputs=['output_data'])
+
+    def __call__(self, x, dtype=mstype.float32):
+        validator.check_value_type("x", x, [bool, int, float], self.name)
+        validator.check_subclass("dtype", dtype, mstype.number, self.name)
+        data_type = mstype.dtype_to_nptype(dtype)
+        return Tensor(np.array(x, data_type), dtype=dtype)
 
 class Tile(Primitive):
     """

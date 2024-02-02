@@ -1,7 +1,7 @@
 #operator rsqrt
 rsqrt:
   args:
-    x:
+    input:
       dtype: tensor
   returns:
     output:

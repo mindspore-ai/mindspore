@@ -1,10 +1,10 @@
 #operator non_zero
 non_zero:
     args:
-        x:
+        input:
             dtype: tensor
     returns:
-        y:
+        output:
             dtype: tensor
     function:
         name: nonzero

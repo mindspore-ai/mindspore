@@ -1,7 +1,7 @@
 #operator masked_fill
 masked_fill:
     args:
-        input:
+        input_x:
             dtype: tensor
         mask:
             dtype: tensor
@@ -11,7 +11,7 @@ masked_fill:
     returns:
         output:
             dtype: tensor
-            inplace: input
+            inplace: input_x
     dispatch:
         enable: False
 

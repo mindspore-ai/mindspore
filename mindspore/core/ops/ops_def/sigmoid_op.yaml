@@ -1,7 +1,7 @@
 #sigmoid operator
 sigmoid:
     args:
-        x:
+        input:
             dtype: tensor
     returns:
         output:

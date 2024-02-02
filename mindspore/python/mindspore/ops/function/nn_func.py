@@ -38,10 +38,9 @@ from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize, Fra
 from mindspore.ops.operations.nn_ops import PadV3
 from mindspore.ops.operations.nn_ops import ChannelShuffle
 from mindspore.ops.operations.nn_ops import TripletMarginLoss
-from mindspore.ops.operations._inner_ops import SiLU
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
-from mindspore.ops.auto_generate import log_softmax, prelu, celu, fast_gelu
+from mindspore.ops.auto_generate import log_softmax, prelu, celu, fast_gelu, silu, elu, sigmoid
 
 abs_ = P.Abs()
 add_ = P.Add()
@@ -2761,51 +2760,6 @@ def softplus(input, beta=1, threshold=20): # pylint:disable=redefined-outer-name
     return ops.select(input * beta > threshold, input, op_output)
 
 
-def silu(x):
-    r"""
-    Computes Sigmoid Linear Unit of input element-wise. The SiLU function is defined as:
-
-    .. math::
-
-        \text{SiLU}(x) = x * \sigma(x),
-
-    where :math:`x` is an element of the input, :math:`\sigma(x)` is Sigmoid function.
-
-    .. math::
-
-        \text{sigma}(x_i) = \frac{1}{1 + \exp(-x_i)},
-
-    SiLU Activation Function Graph:
-
-    .. image:: ../images/SiLU.png
-        :align: center
-
-    Args:
-        input (Tensor): `input` is `x` in the preceding formula. Input with the data type
-            float16 or float32.
-
-    Returns:
-        Tensor, with the same type and shape as the `input`.
-
-    Raises:
-        TypeError: If dtype of `input` is neither float16 nor float32.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> import numpy as np
-        >>> input = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
-        >>> output = ops.silu(input)
-        >>> print(output)
-        [-0.269  1.762  -0.1423  1.762  -0.269]
-    """
-    silu_ = _get_cache_prim(SiLU)()
-    return silu_(x)
-
-
 def selu(input_x):
     r"""
     Activation function SeLU (Scaled exponential Linear Unit).
@@ -2853,47 +2807,6 @@ def selu(input_x):
         [ 2.101402 -1.7462534 9.456309 ]]
     """
     return selu_(input_x)
-
-
-def sigmoid(input):
-    r"""
-    Computes Sigmoid of input element-wise. The Sigmoid function is defined as:
-
-    .. math::
-
-        \text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)}
-
-    where :math:`x_i` is an element of `x`.
-
-    Sigmoid Activation Function Graph:
-
-    .. image:: ../images/Sigmoid.png
-        :align: center
-
-    Args:
-        input (Tensor): `input` is `x` in the preceding formula. Tensor of any dimension,
-            the data type is float16, float32, float64, complex64 or complex128.
-
-    Returns:
-        Tensor, with the same type and shape as the input.
-
-    Raises:
-        TypeError: If dtype of `input` is not float16, float32, float64, complex64 or complex128.
-        TypeError: If `input` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
-        >>> output = ops.sigmoid(input)
-        >>> print(output)
-        [0.7310586  0.880797   0.95257413 0.98201376 0.9933072 ]
-    """
-    return _get_cache_prim(NN_OPS.Sigmoid)()(input)
 
 
 def logsigmoid(x):
@@ -6352,60 +6265,6 @@ def multilabel_soft_margin_loss(input, target, weight=None, reduction='mean'):
     class_dim = input.ndim - 1
     loss = loss.sum(axis=class_dim) / input_shape[class_dim]
     return _get_loss(loss, reduction, cls_name)
-
-
-def elu(input_x, alpha=1.0):
-    r"""
-    Exponential Linear Unit activation function.
-
-    Applies the exponential linear unit function element-wise.
-    The activation function is defined as:
-
-    .. math::
-
-        \text{ELU}(x)= \left\{
-        \begin{array}{align}
-            \alpha(e^{x}  - 1) & \text{if } x \le 0\\
-            x & \text{if } x \gt 0\\
-        \end{array}\right.
-
-    Where :math:`x` is the element of input Tensor `input_x`, :math:`\alpha` is param `alpha`,
-    it determines the smoothness of ELU.
-    The picture about ELU looks like this `ELU <https://en.wikipedia.org/wiki/
-    Activation_function#/media/File:Activation_elu.svg>`_ .
-
-    ELU Activation Function Graph:
-
-    .. image:: ../images/ELU.png
-        :align: center
-
-    Args:
-        input_x (Tensor): The input of ELU is a Tensor of any dimension with data type of float16 or float32.
-        alpha (float, optional): The alpha value of ELU, the data type is float. Only support '1.0' currently.
-            Default: ``1.0`` .
-
-    Returns:
-        Tensor, has the same shape and data type as `input_x`.
-
-    Raises:
-        TypeError: If `alpha` is not a float.
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
-        ValueError: If `alpha` is not equal to 1.0.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> output = ops.elu(x)
-        >>> print(output)
-        [[-0.63212055  4.         -0.99966455]
-         [ 2.         -0.99326205  9.        ]]
-    """
-    return _get_cache_prim(P.Elu)(alpha=alpha)(input_x)
 
 
 def gelu(input_x, approximate='none'):

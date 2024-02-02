@@ -33,13 +33,15 @@ from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.ops.operations._inner_ops import TileSize
 from mindspore.ops.auto_generate import Cummin
 from mindspore.ops.operations.math_ops import STFT
-from mindspore.ops.operations.math_ops import Logit
 from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.ops.operations.math_ops import Roll
 from mindspore.ops.operations.math_ops import Ormqr
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3, Transpose
 from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh, cummax, real, conj, add, cos, cosh,
-                                         matrix_exp, sqrt, rsqrt, square, trace)
+                                         matrix_exp, sqrt, rsqrt, square, trace, nextafter, abs, acos, acosh, angle,
+                                         asin, asinh, atan, atan2, atanh, ceil, equal, erf, erfc, erfinv, exp, expm1,
+                                         floor, floor_div, floor_mod, gcd, greater, greater_equal, less, less_equal,
+                                         log, log1p, logit, neg, not_equal, pow, round)
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from mindspore import _checkparam as validator
@@ -266,39 +268,6 @@ def addn(x):
     return addn_(x)
 
 
-def abs(input):
-    r"""
-    Returns absolute value of a tensor element-wise.
-
-    .. math::
-
-        out_i = |input_i|
-
-    Args:
-        input (Tensor): The input tensor. The shape of tensor is
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-
-    Returns:
-        Tensor, has the same shape as the `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([-1.0, 1.0, 0.0]), mindspore.float32)
-        >>> output = ops.abs(input)
-        >>> print(output)
-        [1. 1. 0.]
-    """
-    return absolute_(input)
-
-
 def absolute(input):
     """
     Alias for :func:`mindspore.ops.abs` .
@@ -394,36 +363,6 @@ def addcmul(input, tensor1, tensor2, value=1):
          [ 4.  7. 10.]]
     """
     return addcuml_(input, tensor1, tensor2, Tensor(value))
-
-
-def angle(input):
-    """
-    Returns the element-wise argument of a complex tensor.
-    The elements in input are considered to be complex numbers of the form a+bj, where a is the real part and b
-    is the imaginary part. The argument returned by this function is of the form :math:`atan2(b, a)`.
-
-    Args:
-        input (Tensor): The input tensor. types: complex64, complex128.
-
-    Returns:
-        Tensor, has the float32 or float64 type and the same shape as input.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If the dtype of `input` is not one of: complex64, complex128.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor([-1.5 + 7.8j, 3 + 5.75j], mindspore.complex64)
-        >>> output = ops.angle(input)
-        >>> print(output)
-        [1.7607845 1.0899091]
-    """
-    return angle_(input)
 
 
 def bincount(input, weights=None, minlength=0):
@@ -616,38 +555,6 @@ def argmin(input, axis=None, keepdims=False):
     return out
 
 
-def neg(input):
-    """
-    Returns a tensor with negative values of the input tensor element-wise.
-
-    .. math::
-
-        out_{i} = - input_{i}
-
-    Args:
-        input (Tensor): The input tensor with a dtype of Number.
-
-    Returns:
-        Tensor, has the same shape and dtype as input.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([1, 2, -1, 2, 0, -3.5]), mindspore.float32)
-        >>> output = ops.neg(input)
-        >>> print(output)
-        [-1.  -2.   1.  -2.   0.   3.5]
-    """
-    return neg_tensor(input)
-
-
 def negative(input):
     r"""
     Alias for :func:`mindspore.ops.neg` .
@@ -747,71 +654,6 @@ def permute(input, axis):
           [ 9. 12.]]]
     """
     return transpose_(input, axis)
-
-
-def ceil(input):
-    r"""
-    Rounds a tensor up to the closest integer element-wise.
-
-    .. math::
-
-        out_i = \lceil x_i \rceil = \lfloor x_i \rfloor + 1
-
-    Args:
-        input (Tensor): The input tensor with a dtype of float16 or float32.
-
-    Returns:
-        Tensor, has the same shape as the `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is not float16 or float32.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([1.1, 2.5, -1.5]), mindspore.float32)
-        >>> output = ops.ceil(x)
-        >>> print(output)
-        [ 2.  3. -1.]
-    """
-    return tensor_ceil(input)
-
-
-def round(input):
-    r"""
-    Returns half to even of a tensor element-wise.
-
-    .. math::
-
-        out_i \approx input_i
-
-    Args:
-        input (Tensor): The input tensor.
-
-    Returns:
-        Tensor, has the same shape and type as the `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([0.8, 1.5, 2.3, 2.5, -4.5]), mindspore.float32)
-        >>> output = ops.round(input)
-        >>> print(output)
-        [ 1.  2.  2.  2. -4.]
-    """
-    return tensor_round_(input)
 
 
 def sub(input, other):
@@ -1044,15 +886,6 @@ def float_power(input, exponent):
     return pow(input, exponent)
 
 
-def floor_div(x, y):
-    """
-    Alias for :func:`mindspore.ops.floor_divide` .
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-    """
-    return tensor_floordiv(x, y)
-
 
 def floor_divide(input, other):
     """
@@ -1149,214 +982,6 @@ def fmod(input, other):
     return input - div(input, other, rounding_mode="trunc") * other
 
 
-def pow(input, exponent):
-    r"""
-    Calculates the `exponent` power of each element in `input`.
-
-    .. math::
-
-        out_{i} = input_{i} ^{ exponent_{i}}
-
-    .. note::
-        - Inputs of `input` and `exponent` comply with the implicit type conversion rules to make the
-          data types consistent.
-        - The inputs must be two tensors or one tensor and one scalar.
-        - When the inputs are two tensors,
-          dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
-
-    Args:
-        input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
-            a bool or a tensor whose data type is
-            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        exponent (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
-            the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
-            When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
-
-    Returns:
-        Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
-
-    Raises:
-        TypeError: If `input` and `exponent` is not one of the following: Tensor, number.Number or bool.
-        ValueError: If the shape of `input` and `exponent` are different.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
-        >>> y = 3.0
-        >>> output = ops.pow(x, y)
-        >>> print(output)
-        [ 1.  8. 64.]
-        >>>
-        >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
-        >>> y = Tensor(np.array([2.0, 4.0, 3.0]), mindspore.float32)
-        >>> output = ops.pow(x, y)
-        >>> print(output)
-        [ 1. 16. 64.]
-    """
-    return tensor_pow(input, exponent)
-
-
-def floor_mod(x, y):
-    r"""
-    Computes the remainder of division element-wise. It's a flooring divide.
-    E.g. :math:`floor(x / y) * y + mod(x, y) = x`.
-
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
-
-    .. math::
-
-        out_{i} =\text{floor}(x_{i} // y_{i})
-
-    where the :math:`floor` indicates the Floor operator, for more details,
-    please refer to the :class:`mindspore.ops.Floor` operator.
-
-    .. warning::
-        - Data of input `y` should not be 0, or the maximum value of its dtype will be returned.
-        - When the elements of input exceeds 2048 , the accuracy of operator cannot guarantee the requirement of
-          double thousandths in the mini form.
-        - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
-        - If shape is expressed as :math:`(D1, D2 ..., Dn)`, then D1\*D2... \*DN<=1000000,n<=8.
-
-    Args:
-        x (Union[Tensor, Number, bool]): The first input is a number or
-            a bool or a tensor whose data type is number or bool.
-        y (Union[Tensor, Number, bool]): The second input is a number or
-            a bool when the first input is a tensor, or it can be a tensor whose data type is number or bool.
-
-    Returns:
-        Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision of the two inputs.
-
-    Raises:
-        TypeError: If neither `x` nor `y` is a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
-        >>> y = Tensor(np.array([3, 3, 3]), mindspore.int32)
-        >>> output = ops.floor_mod(x, y)
-        >>> print(output)
-        [2 1 2]
-    """
-    return tensor_mod(x, y)
-
-
-def exp(input):
-    r"""
-    Returns exponential of a tensor element-wise.
-
-    .. math::
-
-        out_i = e^{x_i}
-
-    Args:
-        input (Tensor): The input tensor, which is :math:`x` in the formula above.
-
-    Returns:
-        Tensor, has the same shape and dtype as the `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
-        >>> output = ops.exp(x)
-        >>> print(output)
-        [ 2.718282  7.389056 54.598152]
-    """
-    return tensor_exp(input)
-
-
-def expm1(input):
-    r"""
-    Returns exponential then minus 1 of a tensor element-wise.
-
-    .. math::
-
-        out_i = e^{x_i} - 1
-
-    Args:
-        input (Tensor): The input Tensor, which is :math:`x` in the formula above.
-
-    Returns:
-        Tensor, has the same shape as the `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([0.0, 1.0, 2.0, 4.0]), mindspore.float32)
-        >>> output = ops.expm1(x)
-        >>> print(output)
-        [ 0.        1.718282  6.389056 53.598152]
-    """
-    return tensor_expm1(input)
-
-
-def log(input):
-    r"""
-    Returns the natural logarithm of a tensor element-wise.
-
-    .. math::
-        y_i = \log_e(x_i)
-
-    .. warning::
-        If the input value is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
-        be affacted.
-
-    Args:
-        input (Tensor): Input Tensor of any dimension. The value must be greater than 0.
-
-    Returns:
-        Tensor, has the same shape and dtype as the `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
-        >>> output = ops.log(x)
-        >>> print(output)
-        [0.        0.6931472 1.3862944]
-    """
-    return log_(input)
-
-
 def logdet(input):
     r"""
     Calculates log determinant of one or a batch of square matrices.
@@ -1384,40 +1009,6 @@ def logdet(input):
     """
     det_x = det(input)
     return log_(det_x)
-
-
-def floor(input):
-    r"""
-    Rounds a tensor down to the closest integer element-wise.
-
-    .. math::
-
-        out_i = \lfloor x_i \rfloor
-
-    Args:
-        input (Tensor): The input tensor, which is :math:`x` in the formula above.
-            Its data type must be float16, float32 or float64.
-
-    Returns:
-        Tensor, has the same shape as `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is not in [float16, float32, float64].
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([1.1, 2.5, -1.5]), mindspore.float32)
-        >>> output = ops.floor(x)
-        >>> print(output)
-        [ 1.  2. -2.]
-    """
-    return floor_(input)
 
 
 def i0(input):
@@ -2321,74 +1912,6 @@ def polar(abs, angle):  # pylint: disable=redefined-outer-name
     return polar_(abs, angle)
 
 
-def asin(input):
-    r"""
-    Computes arcsine of input tensors element-wise.
-
-    .. math::
-
-        out_i = \sin^{-1}(input_i)
-
-    Args:
-        input (Tensor): The shape of tensor is
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-
-    Returns:
-        Tensor, has the same shape and dtype as `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is not float16, float32, float64, complex64, complex128.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), mindspore.float32)
-        >>> output = ops.asin(x)
-        >>> print(output)
-        [0.8330704  0.04001067  0.30469266  0.5943858 ]
-    """
-    return asin_(input)
-
-
-def acos(input):
-    r"""
-    Computes arccosine of input tensors element-wise.
-
-    .. math::
-
-        out_i = \cos^{-1}(input_i)
-
-    Args:
-        input (Tensor): The shape of tensor is
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-
-    Returns:
-        Tensor, has the same shape and dtype as `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is not float16, float32 or float64, complex64, complex128.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), mindspore.float32)
-        >>> output = ops.acos(input)
-        >>> print(output)
-        [0.737726  1.5307857 1.2661036 0.9764105]
-    """
-    return acos_(input)
-
-
 def arccos(input):
     """
     Alias for :func:`mindspore.ops.acos` .
@@ -2397,42 +1920,6 @@ def arccos(input):
         ``Ascend`` ``GPU`` ``CPU``
     """
     return acos(input)
-
-
-def atan(input):
-    r"""
-    Computes the trigonometric inverse tangent of the input element-wise.
-
-    .. math::
-
-        out_i = \tan^{-1}(input_i)
-
-    Args:
-        input (Tensor): The shape of tensor is
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions. Supported dtypes:
-
-            - Ascend: float16, float32.
-            - GPU/CPU: float16, float32, float64, complex64 or complex128.
-    Returns:
-        A Tensor, has the same type as the input.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is not float16, float32, float64, complex64 or complex128.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([1.0, 0.0]), mindspore.float32)
-        >>> output = ops.atan(x)
-        >>> print(output)
-        [0.7853982 0.       ]
-    """
-    return atan_(input)
 
 
 def tanh(input):
@@ -2474,38 +1961,6 @@ def tanh(input):
     return tanh_(input)
 
 
-def asinh(input):
-    r"""
-    Computes inverse hyperbolic sine of the input element-wise.
-
-    .. math::
-
-        out_i = \sinh^{-1}(input_i)
-
-    Args:
-        input (Tensor): The input tensor of inverse hyperbolic sine function.
-
-    Returns:
-        Tensor, has the same shape and type as `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([-5.0, 1.5, 3.0, 100.0]), mindspore.float32)
-        >>> output = ops.asinh(input)
-        >>> print(output)
-        [-2.3124382  1.1947632  1.8184465  5.298342 ]
-    """
-    return asinh_(input)
-
-
 def arcsinh(input):
     r"""
     Alias for :func:`mindspore.ops.asinh`.
@@ -2524,118 +1979,6 @@ def arctanh(input):
         ``Ascend`` ``GPU`` ``CPU``
     """
     return atanh(input)
-
-
-def acosh(input):
-    r"""
-    Computes inverse hyperbolic cosine of the inputs element-wise.
-
-    .. math::
-
-        out_i = \cosh^{-1}(input_i)
-
-    .. warning::
-        Given an input tensor input, the function computes inverse hyperbolic cosine of every element.
-        Input range is [1, inf].
-
-    Args:
-        input (Tensor): The input tensor of inverse hyperbolic cosine function.
-
-    Returns:
-        Tensor, has the same shape and type as `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([1.0, 1.5, 3.0, 100.0]), mindspore.float32)
-        >>> output = ops.acosh(x)
-        >>> print(output)
-        [0.        0.9624237 1.7627472 5.298292 ]
-    """
-    return acosh_(input)
-
-
-def atanh(input):
-    r"""
-    Computes inverse hyperbolic tangent of the input element-wise.
-
-    .. math::
-
-        out_i = \tanh^{-1}(input_{i})
-
-    Args:
-        input (Tensor): The shape of tensor is
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-            The data type should be one of the following types: float16, float32.
-
-    Returns:
-        A Tensor, has the same type as the input.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is not float16 or float32.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([0, -0.5]), mindspore.float32)
-        >>> output = ops.atanh(input)
-        >>> print(output)
-        [ 0.         -0.54930615]
-    """
-    return atanh_(input)
-
-
-def atan2(input, other):
-    r"""
-    Returns arctangent of input/other element-wise.
-
-    It returns :math:`\theta\ \in\ [-\pi, \pi]`
-    such that :math:`input = r*\sin(\theta), other = r*\cos(\theta)`, where :math:`r = \sqrt{input^2 + other^2}`.
-
-    Note:
-        - Arg `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
-          If they have different data types, the lower precision data type will be converted to relatively the
-          highest precision data type.
-
-    Args:
-        input (Tensor, Number.number): The input tensor or scalar.
-        other (Tensor, Number.number): The input tensor or scalar. It has the same shape with `input` or
-            its shape is able to broadcast with `input`.
-
-    Returns:
-        Tensor, the shape is the same as the one after broadcasting, and the data type is same as `input`.
-
-    Raises:
-        TypeError: If `input` or `other` is not a Tensor or scalar.
-        RuntimeError: If the data type of `input` and `other` conversion of Parameter is required
-                      when data type conversion of Parameter is not supported.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([0, 1]), mindspore.float32)
-        >>> other = Tensor(np.array([1, 1]), mindspore.float32)
-        >>> output = ops.atan2(input, other)
-        >>> print(output)
-        [0.        0.7853982]
-    """
-    return atan2_(input, other)
 
 
 def bitwise_and(input, other):
@@ -2863,51 +2206,6 @@ def bitwise_right_shift(input, other):
     return rs(input, other)
 
 
-def nextafter(input, other):
-    """
-    Returns the next representable floating-point value after `input` towards `other` element-wise.
-
-    Say there are two float32 numbers :math:`a`, :math:`b`, and let the
-    representable delta of float32 datatype is :math:`eps`. If :math:`a < b`,
-    then the next representable of :math:`a` towards :math:`b` is :math:`a+eps`,
-    the next representable of :math:`b` towards :math:`a` is :math:`b-eps`.
-
-    .. math::
-
-        out_{i} =  nextafter({input_{i}, other_{i}})
-
-    Args:
-        input (Tensor): The first input tensor. The shape of tensor is :math:`(N,*)` where :math:`*` means,
-          any number of additional dimensions. Must be one of the following types: float32, float64.
-
-        other (Tensor): The second input tensor. The shape of tensor is :math:`(N,*)` where :math:`*` means,
-          any number of additional dimensions. Must be one of the following types: float32, float64.
-
-    Returns:
-        Tensor, has the same shape and data type as `input`.
-
-    Raises:
-        TypeError: If neither `input` nor `other` is a Tensor.
-        TypeError: If the dtype of `input` and `other` is not one of: float32, float64.
-        TypeError: If the dtypes of `input` and `other` are not same.
-        ValueError: If `input`'s shape is not the same as `other`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_ = Tensor(np.asarray([0.0]), mindspore.float32)
-        >>> other_ = Tensor(np.asarray([0.1]), mindspore.float32)
-        >>> output_ = ops.nextafter(input_, other_)
-        >>> print(output_)
-        [1.e-45]
-    """
-    return nextafter_(input, other)
-
-
 def inv(x):
     r"""
     Computes Reciprocal of input tensor element-wise.
@@ -3001,80 +2299,6 @@ def invert(x):
         [-26 -5 -14 -10]
     """
     return invert_(x)
-
-
-def erf(input):
-    r"""
-    Computes the Gauss error function of `input` element-wise.
-
-    .. math::
-
-        erf(x)=\frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
-
-    Args:
-        input (Tensor): The input tensor of Gaussian error function, which is :math:`x`
-            in the formula above. Supported dtypes:
-
-            - Ascend: float16, float32.
-            - GPU/CPU: float16, float32, float64.
-
-    Returns:
-        Tensor, has the same shape and dtype as the `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is neither float16 float32 or float64.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
-        >>> output = ops.erf(x)
-        >>> print(output)
-        [-0.8427168   0.          0.8427168   0.99530876  0.99997765]
-    """
-    return erf_(input)
-
-
-def erfc(input):
-    r"""
-    Computes the complementary error function of `input` element-wise.
-
-    .. math::
-
-        erfc(x) = 1 - \frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
-
-    Args:
-        input (Tensor): The input tensor, which is :math:`x`
-            in the formula above. Supported dtypes:
-
-            - Ascend: float16, float32.
-            - GPU/CPU: float16, float32, float64.
-
-    Returns:
-        Tensor, has the same shape and dtype as `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is not float16, float32 or float64.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
-        >>> output = ops.erfc(x)
-        >>> print(output)
-        [1.8427168e+00 1.0000000e+00 1.5728319e-01 4.6912432e-03 2.2351742e-05]
-    """
-    return erfc_(input)
 
 
 def bessel_j0(x):
@@ -3823,99 +3047,9 @@ def ldexp(x, other):
     return out
 
 
-def logit(input, eps=None):
-    r"""
-    Calculate the logit of a tensor element-wise. When eps is not None, element in `input` is clamped to [eps, 1-eps].
-    When eps is None, input `input` is not clamped.
-
-    .. math::
-        \begin{align}
-        y_{i} & = \ln(\frac{z_{i}}{1 - z_{i}}) \\
-        z_{i} & = \begin{cases}
-        input_{i} & \text{if eps is None} \\
-        \text{eps} & \text{if } input_{i} \lt \text{eps} \\
-        input_{i} & \text{if } \text{eps} \leq input_{i} \leq 1 - \text{eps} \\
-        1 - \text{eps} & \text{if } input_{i} \gt 1 - \text{eps}
-        \end{cases}
-        \end{align}
-
-    Args:
-        input (Tensor): The input tensor of type float16, float32 or float64.
-        eps (float, optional): The epsilon. If eps is not None, the input clamp bound is defined as [eps, 1-eps],
-            otherwise, the input `input` is not clamped. Default: ``None`` .
-
-    Returns:
-        Tensor, with the same shape and dtype as the `input`.
-
-    Raises:
-        TypeError: If `eps` is not a float.
-        TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is not float16, float32 or float64.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([0.1, 0.2, 0.3]).astype(np.float32))
-        >>> output = ops.logit(x, eps=1e-5)
-        >>> print(output)
-        [-2.1972246 -1.3862944 -0.8472978]
-    """
-    if eps is None:
-        eps = -1.0
-    logit_ = _get_cache_prim(Logit)(eps)
-    return logit_(input)
-
-
 #####################################
 # Comparison Operation Functions.
 #####################################
-
-
-def less(input, other):
-    r"""
-    Computes the boolean value of :math:`input < other` element-wise.
-
-    Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
-
-    .. math::
-
-        out_{i} =\begin{cases}
-            & \text{True,    if } input_{i}<other_{i} \\
-            & \text{False,   if } input_{i}>=other_{i}
-            \end{cases}
-
-    Args:
-        input (Union[Tensor, Number, bool]): The first input is a number or
-            a bool or a tensor whose data type is number or bool.
-        other (Union[Tensor, Number, bool]): The second input is a number or
-            a bool when the first input is a tensor, or it can be a tensor whose data type is number or bool.
-
-    Returns:
-        Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
-
-    Raises:
-        TypeError: If `input` and `other` is not one of the following: Tensor, Number, bool.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
-        >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
-        >>> output = ops.less(x, y)
-        >>> print(output)
-        [False False True]
-    """
-    return tensor_lt(input, other)
 
 
 def lt(input, other):
@@ -4130,57 +3264,6 @@ def eq(input, other):
     return equal_(input, other)
 
 
-def equal(input, other):
-    r"""
-    Computes the equivalence between two tensors element-wise.
-
-    The second argument can be a number or a tensor whose shape is broadcastable with the first argument and vise versa.
-
-    .. math::
-
-        out_{i} =\begin{cases}
-            & \text{True,    if } input_{i} = other_{i} \\
-            & \text{False,   if } input_{i} \ne other_{i}
-            \end{cases}
-
-    Note:
-        - `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
-        - The shapes of the inputs can be broadcasted to each other.
-
-    Args:
-        input (Union[Tensor, Number]): The first input is a number or
-            a tensor whose data type is number.query.dtye
-        other (Union[Tensor, Number]): The second input is a number when the first input is a tensor.
-            The data type is the same as the first input. If the first input is a number,
-            the second input should be a tensor.
-
-    Returns:
-        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
-
-    Raises:
-        TypeError: If neither `input` nor `other` is a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> # case 1: The shape of two inputs are different
-        >>> x = Tensor([1, 2, 3], mindspore.float32)
-        >>> output = ops.equal(x, 2.0)
-        >>> print(output)
-        [False True False]
-        >>> # case 2: The shape of two inputs are the same
-        >>> x = Tensor([1, 2, 3], mindspore.int32)
-        >>> y = Tensor([1, 2, 4], mindspore.int32)
-        >>> output = ops.equal(x, y)
-        >>> print(output)
-        [ True  True False]
-    """
-    return equal_(input, other)
-
-
 def ne(input, other):
     r"""
     Computes the non-equivalence of two tensors element-wise.
@@ -4231,16 +3314,6 @@ def ne(input, other):
         [False False  True]
     """
     return not_equal_(input, other)
-
-
-def not_equal(input, other):
-    r"""
-    Alias for :func:`mindspore.ops.ne` .
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-    """
-    return ne(input, other)
 
 
 def approximate_equal(x, y, tolerance=1e-5):
@@ -5947,39 +5020,6 @@ def cdist(x1, x2, p=2.0):
     """
     cdist_ = _get_cache_prim(P.Cdist)(p)
     return cdist_(x1, x2)
-
-
-def gcd(input, other):
-    """
-    Computes greatest common divisor of input tensors element-wise.
-    The shape of two inputs should be broadcastable, and data type of them should be
-    one of: int32, int64
-
-    Args:
-        input (Tensor): The first input tensor.
-        other (Tensor): The second input tensor.
-
-    Returns:
-        Tensor, the shape is the same as the one after broadcasting, and the data type is one
-        with higher digits in the two inputs.
-
-    Raises:
-        TypeError: If data type `input` or `other` is not int32 or int64.
-        ValueError: If shape of two inputs are not broadcastable.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x1 = Tensor(np.array([7, 8, 9]))
-        >>> x2 = Tensor(np.array([14, 6, 12]))
-        >>> y = ops.gcd(x1, x2)
-        >>> print(y)
-        [7 2 3]
-    """
-    return gcd_(input, other)
 
 
 def lerp(input, end, weight):
@@ -9570,37 +8610,6 @@ def log10(input):
     return output
 
 
-def log1p(input):
-    r"""
-    Returns the natural logarithm of one plus the input tensor element-wise.
-
-    .. math::
-        out_i = {log_e}(input_i + 1)
-
-    Args:
-        input (Tensor): The input tensor. The value must be greater than -1.
-
-    Returns:
-        Tensor, has the same shape as the `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
-        >>> output = ops.log1p(x)
-        >>> print(output)
-        [0.6931472 1.0986123 1.609438 ]
-    """
-    return log1p_(input)
-
-
 def kron(input, other):
     """
     Computes the Kronecker product :math:`input ⊗ other`, denoted by ⊗, of `input` and `other`.
@@ -10464,91 +9473,6 @@ def einsum(equation, *operands):
     return _get_cache_prim(P.Einsum)(equation)(operands)
 
 
-def erfinv(input):
-    r"""
-    Returns the result of the inverse error function with `input`, which is defined in the
-    range `(-1, 1)` as:
-
-    .. math::
-
-        erfinv(erf(x)) = x
-
-    where :math:`x` is the `input`.
-
-    Args:
-        input (Tensor): The input tensor. Supported dtypes:
-
-            - Ascend: float16, float32.
-            - GPU/CPU: float16, float32, float64.
-
-    Returns:
-        Tensor, has the same shape and dtype as `input`.
-
-    Raises:
-        TypeError: If dtype of `input` is not float16, float32 or float64.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([0, 0.5, -0.9]), mindspore.float32)
-        >>> output = ops.erfinv(x)
-        >>> print(output)
-        [ 0.          0.47695306 -1.1630805 ]
-    """
-    return erfinv_(input)
-
-
-def less_equal(input, other):
-    r"""
-    Computes the boolean value of :math:`input <= other` element-wise.
-
-    .. math::
-        out_{i} =\begin{cases}
-            & \text{True,    if } input_{i}<=other_{i} \\
-            & \text{False,   if } input_{i}>other_{i}
-            \end{cases}
-
-    .. note::
-        - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
-          consistent.
-        - The inputs must be two tensors or one tensor and one scalar.
-        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
-
-    Args:
-        input (Union[Tensor, Number, bool]): The first input is a Number or
-            a bool or a tensor whose data type is
-            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        other (Union[Tensor, Number, bool]): The second input, when the first input is a Tensor,
-            the second input should be a Number or bool value, or a Tensor whose data type is number or bool\_.
-            When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
-
-    Returns:
-        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
-
-    Raises:
-        TypeError: If neither `input` nor `other` is a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
-        >>> other = Tensor(np.array([1, 1, 4]), mindspore.int32)
-        >>> output = ops.less_equal(x, other)
-        >>> print(output)
-        [ True False  True]
-    """
-    return tensor_le(input, other)
-
-
 def cumprod(input, dim, dtype=None):
     r"""
     Computes the cumulative product of the `input` tensor along dimension `dim`.
@@ -10588,70 +9512,6 @@ def cumprod(input, dim, dtype=None):
     if dtype:
         output = cast_(output, dtype)
     return output
-
-
-def greater(input, other):
-    r"""
-    Computes the boolean value of :math:`input > other` element-wise.
-
-    Args:
-        input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
-            a bool or a tensor whose data type is
-            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
-        other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
-            the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
-            When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
-
-    Returns:
-        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
-        >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
-        >>> output = ops.greater(x, y)
-        >>> print(output)
-        [False True False]
-    """
-    return tensor_gt(input, other)
-
-
-def greater_equal(input, other):
-    r"""
-    Computes the boolean value of :math:`input \geq other` element-wise.
-
-    Args:
-        input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
-            a bool or a tensor whose data type is
-            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
-        other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
-            the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
-            When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
-
-    Returns:
-        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
-        >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
-        >>> output = ops.greater_equal(x, y)
-        >>> print(output)
-        [True True False]
-    """
-    return tensor_ge(input, other)
 
 
 def igamma(input, other):
