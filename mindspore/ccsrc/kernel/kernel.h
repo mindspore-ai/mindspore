@@ -164,12 +164,12 @@ class PointerRefCount {
       MS_LOG(DEBUG) << op_object << " increases dynamic ref count to:" << dynamic_ref_count_ << " for ptr:" << ptr();
     }
   }
-  void DecreaseDynamicRefCount(const std::string &op_object) {
+  int32_t DecreaseDynamicRefCount(const std::string &op_object) {
     if (dynamic_ref_count_ <= 0) {
       MS_LOG(EXCEPTION) << "The dynamic reference count is invalid value:" << dynamic_ref_count_;
     }
-    (void)--dynamic_ref_count_;
     MS_LOG(DEBUG) << op_object << " The dynamic ref count decreases to:" << dynamic_ref_count_ << " for ptr:" << ptr();
+    return --dynamic_ref_count_;
   }
 
   // Get pointer resource destructor.
