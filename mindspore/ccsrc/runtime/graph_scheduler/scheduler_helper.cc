@@ -1027,5 +1027,20 @@ void SchedulerHelper::DumpActorSet(const ActorSet *actor_set, std::ofstream &ofs
   DumpCustomActors(actor_set->custom_actors_, ofs);
   DumpSwapActors(actor_set->swap_actors_, ofs);
 }
+
+void SchedulerHelper::DumpFormatActorSet(const ActorSet *actor_set, std::ofstream &ofs) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  try {
+    MS_LOG(DEBUG) << "Start dump format actor set:" << actor_set->name_;
+    auto actors = TopoSortForActor(actor_set->output_actor_.get());
+    ActorInfoMap actor_info;
+    for (size_t i = 0; i < actors.size(); ++i) {
+      DumpActorInfo(actors[i], i, &actor_info, ofs);
+    }
+    MS_LOG(DEBUG) << "End dump format actor set:" << actor_set->name_;
+  } catch (const std::exception &e) {
+    MS_LOG(INFO) << "Failed to dump actor set:" << actor_set->name_ << ", msg: " << e.what();
+  }
+}
 }  // namespace runtime
 }  // namespace mindspore
