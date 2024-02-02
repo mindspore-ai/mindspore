@@ -144,6 +144,8 @@ constexpr auto kFlashPromptFlashAttentionOpName = "PromptFlashAttention";
 constexpr auto kFlashIncreFlashAttentionOpName = "IncreFlashAttention";
 constexpr auto kFlashAttentionScoreOpName = "FlashAttentionScore";
 constexpr auto kFlashAttentionScoreGradOpName = "FlashAttentionScoreGrad";
+constexpr auto kRmsNormOpName = "RmsNorm";
+constexpr auto kRmsNormGradOpName = "RmsNormGrad";
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_BASE_NN_OP_NAME_H_
