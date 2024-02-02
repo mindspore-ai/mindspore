@@ -184,7 +184,7 @@ APP_ERROR DvppPad(const std::shared_ptr<DeviceTensorAscend910B> &input, std::sha
 ///     corners [top-left, top-right, bottom-right, bottom-left] of the original image.
 /// \param[in] end_points List containing four lists of two integers corresponding to four
 ///     corners [top-left, top-right, bottom-right, bottom-left] of the transformed image.
-/// \param[in] interpolation Method of interpolation.
+/// \param[in] interpolation Method of interpolation, support linear and nearest-neighbor interpolation.
 APP_ERROR DvppPerspective(const std::shared_ptr<DeviceTensorAscend910B> &input,
                           std::shared_ptr<DeviceTensorAscend910B> *output,
                           const std::vector<std::vector<int32_t>> &start_points,

@@ -47,6 +47,12 @@ Status DvppPerspectiveOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> 
                                  input->GetShape().AsVector()[kChannelIndexNHWC] == kDefaultImageChannel,
                                "DvppPerspective: the channel of the input is not 1 or 3.");
 
+  // check Perspective support InterpolationMode
+  if (interpolation_ != InterpolationMode::kLinear && interpolation_ != InterpolationMode::kNearestNeighbour) {
+    std::string error = "DvppPerspective: Invalid InterpolationMode, check input value of enum.";
+    RETURN_STATUS_UNEXPECTED(error);
+  }
+
   // the type should be uint8 or float
   CHECK_FAIL_RETURN_UNEXPECTED(input->GetType() == DataType::DE_UINT8 || input->GetType() == DataType::DE_FLOAT32,
                                "DvppPerspective: the type of the input is not uint8 or float.");

@@ -12,6 +12,8 @@ mindspore.dataset.vision.Perspective
         - **end_points** (Sequence[Sequence[int, int]]) - 目标点坐标序列，包含四个两元素子序列，分别对应目标图中四边形的 [左上、右上、右下、左下]。
         - **interpolation** (:class:`~.vision.Inter`，可选) - 图像插值方法。可选值详见 :class:`mindspore.dataset.vision.Inter` 。
           默认值： ``Inter.BILINEAR``。
+          
+          - **Ascend模式**：通过 `.device("Ascend")` 设定执行设备为 Ascend 时， 只支持 `Inter.LINEAR` 、 `Inter.NEAREST` 差值方法。
 
     异常：
         - **TypeError** - 如果 `start_points` 不是Sequence[Sequence[int, int]]类型。
