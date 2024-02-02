@@ -55,6 +55,7 @@ class GraphJitConfig {
     kTestGraphIR,
     kEnableOptimizeForAttrItem,
     kEnableEliminateUnusedOperation,
+    kEnableGeneratorExpressionToTuple,
     kFeatureBreakAtInlinedFunction,
     kEnableDynamicShape,
     kTraceFlag,
@@ -88,7 +89,6 @@ class GraphJitConfig {
 
   bool ShouldAutoJit(PyFrameObject *f);
   bool CheckJitForbidden(const py::object &callable);
-  py::object GetJitConstexpr(const py::object &code);
   bool CheckJitConstexpr(const py::object &code);
 
   void AddAllowedInlineModules(const std::string &module_name);

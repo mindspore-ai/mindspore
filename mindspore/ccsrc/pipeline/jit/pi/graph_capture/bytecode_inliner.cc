@@ -30,6 +30,7 @@ extern std::vector<ValueNode *> CollectInterpretOutputs(const FrameStates &last_
                                                         std::vector<int> *alive_locals);
 extern bool CheckMSConstexpr(const py::object &func);
 extern bool CheckJitConstexpr(const py::object &func);
+extern bool ApplyInlinePolicy(Graph *g);
 
 void BytecodeInliner::Run() {
   if (graph_->IsBreakAtLoop() && !graph_->RestoreLoopStatus()) {
@@ -147,6 +148,7 @@ void BytecodeInliner::Rebuild() {
   if (graph_->Config().GetBoolConfig(GraphJitConfig::kEnableEliminateUnusedOperation)) {
     // erase dead local between inline and code rebuild
     EraseDeadLocal(ns.outputs);
+    EliminateClosureSideEffect();
   }
   Rebuild(&cg);
   if (last_frame_ != nullptr) {
@@ -240,7 +242,6 @@ static bool EliminateSideEffect(Graph *top_graph, Graph *sub_graph) {
   return true;
 }
 
-extern bool ApplyInlinePolicy(Graph *g);
 static bool CanIninePartial(Graph *top_graph, Graph *sub_graph) {
   if (sub_graph == nullptr) {
     return false;
@@ -442,6 +443,42 @@ void BytecodeInliner::EraseDeadLocal(const std::vector<ValueNode *> &alive_nodes
     }
     traced_nodes_.erase(iter, traced_nodes_.end());
   } while (true);
+}
+
+void BytecodeInliner::EliminateClosureSideEffect() {
+  PyCodeObject *co = graph_->GetCodeObj();
+  int ncells = PyTuple_GET_SIZE(co->co_cellvars);
+  int nfrees = PyTuple_GET_SIZE(co->co_freevars);
+  if (ncells + nfrees == 0) {
+    return;
+  }
+  std::set<InstrNode *> alive_closure_access;
+
+  if (last_frame_ != nullptr) {
+    auto iter = std::find_if(cfg_->instr_pool().begin(), cfg_->instr_pool().end(), [](const std::unique_ptr<Instr> &i) {
+      return i->op() == LOAD_DEREF || (i->op() == MAKE_FUNCTION && (i->arg() & 0x08));
+    });
+    if (iter != cfg_->instr_pool().end()) {
+      return;
+    }
+  }
+
+  for (auto i : traced_nodes_) {
+    if (i->GetOpcode() == MAKE_FUNCTION && (i->GetOparg() & 0x08)) {
+      ValueNode *tuple = *(i->getInputs().end() - 3);
+      for (auto c : tuple->getInputs()) {
+        const auto &nodes = static_cast<CellVarNode *>(c)->GetCellOper();
+        alive_closure_access.insert(nodes.begin(), nodes.end());
+      }
+    }
+  }
+
+  auto iter = std::remove_if(traced_nodes_.begin(), traced_nodes_.end(), [&alive_closure_access](ValueNode *i) {
+    int op = i->GetOpcode();
+    return (op == STORE_DEREF || op == DELETE_DEREF) && alive_closure_access.find(i) == alive_closure_access.end();
+  });
+
+  traced_nodes_.erase(iter, traced_nodes_.end());
 }
 
 }  // namespace pijit

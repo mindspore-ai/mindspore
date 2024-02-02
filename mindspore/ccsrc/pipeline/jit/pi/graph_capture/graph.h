@@ -112,6 +112,9 @@ class Graph {
   Graph(PyCodeObject *co, PyObject *globals, const GraphJitConfig &conf);
   virtual ~Graph() {}
 
+  ValueNode *GetGeneratorResult() const { return generator_result_; }
+  void SetGeneratorResult(ValueNode *generator_result) { generator_result_ = generator_result; }
+
   void SetRetVal(ValueNode *v) { ret_val_ = v; }
   ValueNode *GetRetVal() const { return ret_val_; }
   PyCodeObject *GetCodeObj() const { return reinterpret_cast<PyCodeObject *>(co_.ptr()); }
@@ -174,6 +177,9 @@ class Graph {
 
   // return value
   ValueNode *ret_val_;
+
+  // used to fold generator function call
+  ValueNode *generator_result_;
 
   // the traced code object
   py::object co_;
