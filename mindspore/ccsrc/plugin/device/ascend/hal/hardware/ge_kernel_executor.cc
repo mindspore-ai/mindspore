@@ -379,11 +379,12 @@ void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "GePreprocess", 1, 0, 1);
 }
 
-bool GeKernelExecutor::PySyncRuning(size_t stream_id) const {
+bool GeKernelExecutor::PySyncRuning(void *stream) const {
   MS_EXCEPTION_IF_NULL(res_manager_);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) && !res_manager_->SyncStream(stream_id)) {
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) &&
+      !AscendStreamMng::GetInstance().SyncStream(stream)) {
     return false;
   }
   return true;
@@ -412,20 +413,9 @@ bool GeKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<Kernel
 
 bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelTensor *> &inputs,
                                     const vector<KernelTensor *> &workspace, const vector<KernelTensor *> &outputs,
-                                    size_t stream_id) const {
-  MS_EXCEPTION_IF_NULL(kernel);
-  MS_EXCEPTION_IF_NULL(res_manager_);
+                                    KernelMod *kernel_mod, void *stream) const {
   (void)res_manager_->BindDeviceToCurrentThread(false);
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
 
-  // Stream id may not be assigned in some scenarios, such as PyNative. Use the default stream in those cases.
-  auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
-  if (stream == nullptr) {
-    stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
-    stream_id = kDefaultStreamIndex;
-  }
-  MS_EXCEPTION_IF_NULL(stream);
 #ifdef ENABLE_DEBUGGER
   if (DumpJsonParser::GetInstance().async_dump_enabled()) {
     MS_LOG(WARNING) << "Dump is currently not support for pynative mode or kernelbykernel mode, skip dump kernel: "
@@ -435,8 +425,6 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
 
   profiler::ascend::ProfilingFrameworkData::RecordLaunchGETaskBegin(kernel);
   // launch kernel
-  // cppcheck-suppress unreadVariable
-  auto lock = device::KernelRuntime::LockRuntime(stream);
   uint64_t start_time = 0;
   PROFILER_START(start_time);
   if (nop_op_to_memcpy_.find(kernel) != nop_op_to_memcpy_.end()) {
@@ -445,7 +433,9 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
       return false;
     }
   } else {
-    MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope() << ", stream id : " << stream_id << ".";
+    MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
+    MS_EXCEPTION_IF_NULL(kernel_mod);
+    MS_EXCEPTION_IF_NULL(stream);
     bool ret = kernel_mod->Launch(inputs, workspace, outputs, stream);
     MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
     if (!ret) {
@@ -456,7 +446,7 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
   }
   profiler::ascend::ProfilingFrameworkData::RecordGETask(kernel);
   // for PyNative Sync Run mode
-  auto ret = PySyncRuning(stream_id);
+  auto ret = PySyncRuning(stream);
   PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelLaunch,
                kernel->fullname_with_scope(), false);
   return ret;

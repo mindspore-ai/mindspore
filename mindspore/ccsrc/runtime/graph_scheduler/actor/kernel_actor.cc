@@ -60,6 +60,7 @@ void KernelActor::Init() {
   is_dynamic_type_ = common::AnfAlgo::IsAnyTypeOutput(kernel_);
   launch_ignored_inputs_ = kernel_mod_->GetLaunchIgnoredInputAddressIdx();
 
+  stream_ = device_contexts_[0]->device_res_manager_->GetStream(kernel_info_->stream_id());
   // Init the device tensors and kernel launch info.
   InitInputInfo();
   InitOutputInfo();
@@ -847,7 +848,7 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   MS_LOG(DEBUG) << "Begin launch kernel of actor: " << GetAID().Name() << ", id : " << actor_id() << ".";
   auto ret = device_contexts_[0]->GetKernelExecutor(false)->LaunchKernel(
-    kernel_, input_kernel_tensors_, workspace_kernel_tensors_, output_kernel_tensors_, kernel_info_->stream_id());
+    kernel_, input_kernel_tensors_, workspace_kernel_tensors_, output_kernel_tensors_, kernel_mod_, stream_);
   MS_LOG(DEBUG) << "End launch kernel of actor: " << GetAID().Name() << ", id : " << actor_id() << ".";
   return ret;
 }

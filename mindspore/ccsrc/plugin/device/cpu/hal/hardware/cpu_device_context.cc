@@ -495,7 +495,8 @@ void CPUKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
 
 bool CPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &workspace,
-                                     const std::vector<KernelTensor *> &outputs, size_t /* stream_id */) const {
+                                     const std::vector<KernelTensor *> &outputs, KernelMod *kernel_mod,
+                                     void * /* stream*/) const {
   MS_EXCEPTION_IF_NULL(kernel);
 
 #ifndef ENABLE_SECURITY
@@ -503,13 +504,13 @@ bool CPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<K
   MS_EXCEPTION_IF_NULL(profiler_inst);
   if (profiler_inst->GetEnableFlag() && profiler_inst->GetOpTimeFlag()) {
     MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
-    auto ret = LaunchKernelWithProfiling(kernel, inputs, workspace, outputs);
+    auto ret = LaunchKernelWithProfiling(kernel, inputs, workspace, outputs, kernel_mod);
     MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
     return ret;
   }
 #endif
   MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
-  auto ret = DoLaunchKernel(kernel, inputs, workspace, outputs);
+  auto ret = DoLaunchKernel(kernel, inputs, workspace, outputs, kernel_mod);
   MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
   return ret;
 }
@@ -557,7 +558,8 @@ bool CPUDeviceResManager::LoadCollectiveCommLib() {
 
 bool CPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                                                   const std::vector<KernelTensor *> &workspace,
-                                                  const std::vector<KernelTensor *> &outputs) const {
+                                                  const std::vector<KernelTensor *> &outputs,
+                                                  KernelMod *kernel_mod) const {
   MS_EXCEPTION_IF_NULL(kernel);
 
   auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
@@ -566,7 +568,7 @@ bool CPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const 
   uint32_t pid = IntToUint(getpid());
   // cpu support multi-thread with mindrt for profiling.
   profiler_inst->OpDataProducerBeginParallel(kernel->fullname_with_scope(), pid);
-  bool ret = DoLaunchKernel(kernel, inputs, workspace, outputs);
+  bool ret = DoLaunchKernel(kernel, inputs, workspace, outputs, kernel_mod);
   profiler_inst->OpDataProducerEndParallel(kernel->fullname_with_scope());
   profiler_inst->RecordFrameWorkInfo(kernel);
   return ret;
@@ -574,9 +576,8 @@ bool CPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const 
 
 bool CPUKernelExecutor::DoLaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                                        const std::vector<KernelTensor *> &workspace,
-                                       const std::vector<KernelTensor *> &outputs) const {
+                                       const std::vector<KernelTensor *> &outputs, KernelMod *kernel_mod) const {
   MS_EXCEPTION_IF_NULL(kernel);
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   uint64_t start_time = 0;
   PROFILER_START(start_time);

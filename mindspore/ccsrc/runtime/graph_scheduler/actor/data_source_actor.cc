@@ -91,6 +91,7 @@ void DeviceQueueDataSourceActor::Init() {
   }
 
   is_dynamic_shape_ = common::AnfAlgo::IsDynamicShape(data_kernel_);
+  stream_ = device_contexts_[0]->device_res_manager_->GetStream(kernel_info_->stream_id());
 }
 
 void DeviceQueueDataSourceActor::FillDataBuffer() {
@@ -171,8 +172,9 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
   try {
     uint64_t start_time = 0;
     PROFILER_START(start_time);
+    auto kernel_mod = AnfAlgo::GetKernelMod(data_kernel_);
     auto ret = device_contexts_[0]->GetKernelExecutor(false)->LaunchKernel(data_kernel_, {}, {}, output_kernel_tensors_,
-                                                                           kernel_info_->stream_id());
+                                                                           kernel_mod, stream_);
     PROFILER_END(start_time, ProfilerModule::kKernel, ProfilerEvent::kKernelLaunch, GetAID().Name(), false);
     if (!ret) {
       std::string error_info = "Launch kernel failed: " + data_kernel_->fullname_with_scope();
