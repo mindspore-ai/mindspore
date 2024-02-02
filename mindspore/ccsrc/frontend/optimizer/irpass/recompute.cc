@@ -17,6 +17,7 @@
 #include "frontend/optimizer/irpass/recompute.h"
 #include <set>
 #include <unordered_map>
+#include "ops/array_ops.h"
 
 namespace mindspore {
 namespace opt {
@@ -66,6 +67,7 @@ AnfNodePtr GetBpropCaller(const FuncGraphManagerPtr &manager, const AnfNodePtr &
 namespace {
 constexpr auto kGradientsFlag = "Gradients";
 constexpr auto kAttrReplacedWithPrimal = "replaced_with_primal";
+constexpr auto kAttrRecomputeMakeTuple = "recompute_make_tuple";
 
 bool WithRecomputedScope(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
@@ -132,6 +134,12 @@ bool AddNewPrimalNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg
     }
     // The op like concat will have a make_tuple input.
     if (IsPrimitiveCNode(user, prim::kPrimMakeTuple) && !IsFpropReturn(user) && (!IsGradNode(user) || recompute_cell)) {
+      auto user_cnode = user->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(user_cnode);
+      if (user_cnode->HasAttr(kAttrRecomputeMakeTuple)) {
+        manager->SetEdge(user_cnode, node_and_idx.second, new_primal);
+        continue;
+      }
       auto iter = origin_to_new_primal->find(user);
       if (iter != origin_to_new_primal->end()) {
         // The new make_tuple has been created, just set its inputs.
@@ -139,15 +147,13 @@ bool AddNewPrimalNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg
         continue;
       }
       // Create a new primal make_tuple.
-      auto user_cnode = user->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(user_cnode);
       std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple)};
       for (size_t i = 1; i < user_cnode->size(); ++i) {
-        // Create value_node 0 as a placeholder.
-        (void)make_tuple_inputs.emplace_back(NewValueNode(0));
+        (void)make_tuple_inputs.emplace_back(user_cnode->input(i));
       }
       auto new_primal_make_tuple = fg->NewCNode(make_tuple_inputs);
       new_primal_make_tuple->set_input(node_and_idx.second, new_primal);
+      new_primal_make_tuple->AddAttr(kAttrRecomputeMakeTuple, MakeValue(true));
       (void)origin_to_new_primal->emplace(user, new_primal_make_tuple);
       changed =
         AddNewPrimalNode(manager, fg, user, new_primal_make_tuple, recompute_cell, origin_to_new_primal) || changed;
@@ -269,6 +275,18 @@ void GetGradUsers(const FuncGraphManagerPtr &manager, const CNodePtr &node, cons
   }
 }
 
+bool IsFromForwardGetter(const AnfNodePtr &forward_getter, const AnfNodePtr &depend_node) {
+  if (forward_getter == depend_node) {
+    return true;
+  }
+  if (!IsOneOfPrimitiveCNode(depend_node, {prim::kPrimTupleGetItem, prim::kPrimMakeTuple, prim::kPrimZerosLike})) {
+    return false;
+  }
+  const auto &depend_node_inputs = depend_node->cast<CNodePtr>()->inputs();
+  return std::any_of(depend_node_inputs.begin(), depend_node_inputs.end(),
+                     [&forward_getter](const auto &input) { return IsFromForwardGetter(forward_getter, input); });
+}
+
 void GetDependencies(const FuncGraphManagerPtr &manager, const CNodePtr &k_fg_caller, std::set<CNodePtr> *final_nodes,
                      std::set<AnfNodePtr> *dependencies) {
   if (final_nodes->find(k_fg_caller) != final_nodes->end()) {
@@ -310,7 +328,11 @@ void GetDependencies(const FuncGraphManagerPtr &manager, const CNodePtr &k_fg_ca
         return;
       }
       (void)final_nodes->emplace(k_fg_caller);
-      (void)dependencies->emplace(bprop_caller->cast<CNodePtr>()->input(1));
+      auto dout = bprop_caller->cast<CNodePtr>()->input(1);
+      if (IsPrimitiveCNode(dout, prim::kPrimMakeTuple) && IsFromForwardGetter(forward_getter, dout)) {
+        return;
+      }
+      (void)dependencies->emplace(dout);
       return;
     }
   }
