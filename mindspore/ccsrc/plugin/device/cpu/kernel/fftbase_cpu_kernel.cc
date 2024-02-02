@@ -19,31 +19,31 @@
 #include "ops/op_utils.h"
 #include "kernel/kernel.h"
 
-#define SWITCH_DIM_CALCULATE(T1, T2)                                                                          \
-  if (x_rank_ == 1) {                                                                                         \
-    ComputeFFTBase<T1, T2, 1>(calculate_input, output_ptr, forward_, norm_type_, s_, dims_, calculate_shape_, \
-                              calculate_element_nums_);                                                       \
-  } else if (x_rank_ == 2) {                                                                                  \
-    ComputeFFTBase<T1, T2, 2>(calculate_input, output_ptr, forward_, norm_type_, s_, dims_, calculate_shape_, \
-                              calculate_element_nums_);                                                       \
-  } else if (x_rank_ == 3) {                                                                                  \
-    ComputeFFTBase<T1, T2, 3>(calculate_input, output_ptr, forward_, norm_type_, s_, dims_, calculate_shape_, \
-                              calculate_element_nums_);                                                       \
-  } else if (x_rank_ == 4) {                                                                                  \
-    ComputeFFTBase<T1, T2, 4>(calculate_input, output_ptr, forward_, norm_type_, s_, dims_, calculate_shape_, \
-                              calculate_element_nums_);                                                       \
-  } else if (x_rank_ == 5) {                                                                                  \
-    ComputeFFTBase<T1, T2, 5>(calculate_input, output_ptr, forward_, norm_type_, s_, dims_, calculate_shape_, \
-                              calculate_element_nums_);                                                       \
-  } else if (x_rank_ == 6) {                                                                                  \
-    ComputeFFTBase<T1, T2, 6>(calculate_input, output_ptr, forward_, norm_type_, s_, dims_, calculate_shape_, \
-                              calculate_element_nums_);                                                       \
-  } else if (x_rank_ == 7) {                                                                                  \
-    ComputeFFTBase<T1, T2, 7>(calculate_input, output_ptr, forward_, norm_type_, s_, dims_, calculate_shape_, \
-                              calculate_element_nums_);                                                       \
-  } else {                                                                                                    \
-    ComputeFFTBase<T1, T2, 8>(calculate_input, output_ptr, forward_, norm_type_, s_, dims_, calculate_shape_, \
-                              calculate_element_nums_);                                                       \
+#define SWITCH_DIM_CALCULATE(T1, T2)                                                                \
+  if (x_rank_ == 1) {                                                                               \
+    ComputeFFTBase<T1, T2, 1>(calculate_input, output_ptr, forward, norm, n, dim, calculate_shape_, \
+                              calculate_element_nums_);                                             \
+  } else if (x_rank_ == 2) {                                                                        \
+    ComputeFFTBase<T1, T2, 2>(calculate_input, output_ptr, forward, norm, n, dim, calculate_shape_, \
+                              calculate_element_nums_);                                             \
+  } else if (x_rank_ == 3) {                                                                        \
+    ComputeFFTBase<T1, T2, 3>(calculate_input, output_ptr, forward, norm, n, dim, calculate_shape_, \
+                              calculate_element_nums_);                                             \
+  } else if (x_rank_ == 4) {                                                                        \
+    ComputeFFTBase<T1, T2, 4>(calculate_input, output_ptr, forward, norm, n, dim, calculate_shape_, \
+                              calculate_element_nums_);                                             \
+  } else if (x_rank_ == 5) {                                                                        \
+    ComputeFFTBase<T1, T2, 5>(calculate_input, output_ptr, forward, norm, n, dim, calculate_shape_, \
+                              calculate_element_nums_);                                             \
+  } else if (x_rank_ == 6) {                                                                        \
+    ComputeFFTBase<T1, T2, 6>(calculate_input, output_ptr, forward, norm, n, dim, calculate_shape_, \
+                              calculate_element_nums_);                                             \
+  } else if (x_rank_ == 7) {                                                                        \
+    ComputeFFTBase<T1, T2, 7>(calculate_input, output_ptr, forward, norm, n, dim, calculate_shape_, \
+                              calculate_element_nums_);                                             \
+  } else {                                                                                          \
+    ComputeFFTBase<T1, T2, 8>(calculate_input, output_ptr, forward, norm, n, dim, calculate_shape_, \
+                              calculate_element_nums_);                                             \
   }
 
 namespace mindspore {
@@ -71,59 +71,42 @@ int FFTBaseCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
   x_rank_ = SizeToLong(tensor_shape_.size());
 
   // Get or set attribute s and dims.
-  s_ = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
-  dims_ = inputs[kIndex2]->GetValueWithCheck<std::vector<int64_t>>();
-  if (dims_.empty()) {
-    if (s_.empty()) {
-      for (int64_t i = 0; i < x_rank_; ++i) {
-        (void)dims_.emplace_back(i);
-        (void)s_.emplace_back(tensor_shape_[i]);
-      }
-    } else {
-      for (size_t i = 0; i < s_.size(); ++i) {
-        (void)dims_.emplace_back(x_rank_ - s_.size() + i);
-      }
-    }
+  auto n_opt = inputs[kIndex1]->GetOptionalValueWithCheck<int64_t>();
+  dim = inputs[kIndex2]->GetValueWithCheck<int64_t>();
+  dim = dim < 0 ? x_rank_ + dim : dim;
+
+  n = n_opt.has_value() ? n_opt.value() : tensor_shape_[dim];
+
+  auto norm_opt = inputs[kIndex3]->GetOptionalValueWithCheck<int64_t>();
+  if (norm_opt.has_value()) {
+    norm = static_cast<mindspore::NormMode>(norm_opt.value());
   } else {
-    for (size_t i = 0; i < dims_.size(); i++) {
-      dims_[i] = dims_[i] < 0 ? x_rank_ + dims_[i] : dims_[i];
-    }
-    if (s_.empty()) {
-      for (size_t i = 0; i < dims_.size(); i++) {
-        (void)s_.emplace_back(tensor_shape_[dims_[i]]);
-      }
-    }
+    norm = NormMode::BACKWARD;
   }
-  norm_ = inputs[kIndex3]->GetValueWithCheck<int64_t>();
-  norm_type_ = static_cast<mindspore::NormMode>(norm_);
-  forward_ = inputs[kIndex5]->GetValueWithCheck<bool>();
+
+  if (kernel_name_ == prim::kPrimIFFT->name()) {
+    forward = false;
+  } else {
+    forward = true;
+  }
+
   input_element_nums_ = SizeToLong(SizeOf(tensor_shape_));
+
   return KRET_OK;
 }
 
-int64_t get_fft_element_num(const std::vector<int64_t> &tensor_shape_, const std::vector<int64_t> &dims_) {
-  int64_t element_num = 1;
-  for (size_t i = 0; i < dims_.size(); i++) {
-    element_num *= tensor_shape_[dims_[i]];
-  }
-  return element_num;
-}
-
-double Getnormalized(int64_t element_nums_, mindspore::NormMode norm_type_, bool forward_) {
+double Getnormalized(int64_t element_nums_, mindspore::NormMode norm_type_, bool forward) {
   double result = 1.0;
-  if (forward_) {
+  if (forward) {
     if (norm_type_ == NormMode::FORWARD) {
       result = 1.0 / element_nums_;
-    }
-    if (norm_type_ == NormMode::ORTHO) {
+    } else if (norm_type_ == NormMode::ORTHO) {
       result = 1.0 / sqrt(static_cast<double>(element_nums_));
     }
-  }
-  if (!forward_) {
+  } else {
     if (norm_type_ == NormMode::FORWARD) {
       result = 1.0 * element_nums_;
-    }
-    if (norm_type_ == NormMode::ORTHO) {
+    } else if (norm_type_ == NormMode::ORTHO) {
       result = 1.0 * sqrt(static_cast<double>(element_nums_));
     }
   }
@@ -163,9 +146,8 @@ void GenarateCalculateInput(T_in *array_in, T_out *array_out, int64_t element_nu
 }
 
 template <typename T_in, typename T_out, int x_rank>
-bool ComputeFFTBase(T_in *input_ptr, T_out *output_ptr, bool forward_, mindspore::NormMode norm_type,
-                    std::vector<int64_t> s_, std::vector<int64_t> dims_, std::vector<int64_t> tensor_shape_,
-                    int64_t element_nums_) {
+bool ComputeFFTBase(T_in *input_ptr, T_out *output_ptr, bool forward, mindspore::NormMode norm_type, int64_t n,
+                    int64_t dim, std::vector<int64_t> tensor_shape_, int64_t element_nums_) {
   Eigen::array<Eigen::DenseIndex, x_rank> tensor_shape;
   for (int i = 0; i < x_rank; ++i) {
     tensor_shape[i] = tensor_shape_[i];
@@ -173,17 +155,16 @@ bool ComputeFFTBase(T_in *input_ptr, T_out *output_ptr, bool forward_, mindspore
   Eigen::TensorMap<Eigen::Tensor<T_in, x_rank, Eigen::RowMajor>, Eigen::RowMajor> in(&input_ptr[0], tensor_shape);
   Eigen::Tensor<T_out, x_rank, Eigen::RowMajor> out;
 
-  Eigen::array<int, 1> dims;
-  dims[0] = dims_[0];
+  Eigen::array<int, 1> dims_array;
+  dims_array[0] = dim;
 
-  if (forward_ == true) {
-    out = in.template fft<Eigen::BothParts, Eigen::FFT_FORWARD>(dims);
+  if (forward) {
+    out = in.template fft<Eigen::BothParts, Eigen::FFT_FORWARD>(dims_array);
   } else {
-    out = in.template fft<Eigen::BothParts, Eigen::FFT_REVERSE>(dims);
+    out = in.template fft<Eigen::BothParts, Eigen::FFT_REVERSE>(dims_array);
   }
 
-  int64_t fft_element_nums_ = get_fft_element_num(tensor_shape_, dims_);
-  double norm_weight = Getnormalized(fft_element_nums_, norm_type, forward_);
+  double norm_weight = Getnormalized(tensor_shape_[dim], norm_type, forward);
 
   T_out *out_ptr = out.data();
   for (int i = 0; i < out.size(); i++) {
@@ -202,15 +183,16 @@ bool FFTBaseCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *>
   auto *output_ptr = reinterpret_cast<T_out *>(outputs[kIndex0]->device_ptr());
 
   // Calculate the required memory based on s and dim.
-  int64_t calculate_element_nums_ = input_element_nums_ / tensor_shape_[dims_[0]] * s_[0];
+  int64_t calculate_element_nums_ = input_element_nums_ / tensor_shape_[dim] * n;
   std::vector<int64_t> calculate_shape_(tensor_shape_.begin(), tensor_shape_.end());
-  calculate_shape_[dims_[0]] = s_[0];
+  calculate_shape_[dim] = n;
 
   // Allocate temporary memory of the required type and size and copy the input into this space.
   T_mid *calculate_input = static_cast<T_mid *>(malloc(sizeof(T_mid) * calculate_element_nums_));
-  memset(calculate_input, 0, sizeof(T_mid) * calculate_element_nums_);
+  // memset(calculate_input, 0, sizeof(T_mid) * calculate_element_nums_);
+  memset_s(calculate_input, sizeof(T_mid) * calculate_element_nums_, 0, sizeof(T_mid) * calculate_element_nums_);
   GenarateCalculateInput<T_in, T_mid>(input_ptr, calculate_input, input_element_nums_, tensor_shape_, calculate_shape_,
-                                      s_[0], dims_[0]);
+                                      n, dim);
 
   // Run FFT according to parameters
   SWITCH_DIM_CALCULATE(T_mid, T_out);
@@ -222,26 +204,24 @@ bool FFTBaseCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *>
   return true;
 }
 
-#define FFTBASE_CPU_REG(MS_Tin, MS_Tout, T_in, T_mid, T_out)          \
-  KernelAttr()                                                        \
-    .AddInputAttr(MS_Tin)                              /* x */        \
-    .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)  /* s */        \
-    .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)  /* dims */     \
-    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64) /* norm */     \
-    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64) /* fft_mode */ \
-    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)  /* forward */  \
-    .AddOutputAttr(MS_Tout),                                          \
+#define ONE_DIM_CPU_REG(MS_Tin, MS_Tout, T_in, T_mid, T_out) \
+  KernelAttr()                                               \
+    .AddInputAttr(MS_Tin)                   /* x */          \
+    .AddOptionalInputAttr(kNumberTypeInt64) /* n */          \
+    .AddInputAttr(kNumberTypeInt64)         /* dim */        \
+    .AddOptionalInputAttr(kNumberTypeInt64) /* norm */       \
+    .AddOutputAttr(MS_Tout),                                 \
     &FFTBaseCpuKernelMod::LaunchKernel<T_in, T_mid, T_out>
 
 std::vector<std::pair<KernelAttr, FFTBaseCpuKernelMod::FFTBaseFunc>> FFTBaseCpuKernelMod::func_list_ = {
-  {FFTBASE_CPU_REG(kNumberTypeInt16, kNumberTypeComplex64, int16_t, float, complex64)},
-  {FFTBASE_CPU_REG(kNumberTypeInt32, kNumberTypeComplex64, int32_t, float, complex64)},
-  {FFTBASE_CPU_REG(kNumberTypeInt64, kNumberTypeComplex64, int64_t, float, complex64)},
-  {FFTBASE_CPU_REG(kNumberTypeFloat16, kNumberTypeComplex64, Eigen::half, float, complex64)},
-  {FFTBASE_CPU_REG(kNumberTypeFloat32, kNumberTypeComplex64, float, float, complex64)},
-  {FFTBASE_CPU_REG(kNumberTypeFloat64, kNumberTypeComplex128, double, double, complex128)},
-  {FFTBASE_CPU_REG(kNumberTypeComplex64, kNumberTypeComplex64, complex64, complex64, complex64)},
-  {FFTBASE_CPU_REG(kNumberTypeComplex128, kNumberTypeComplex128, complex128, complex128, complex128)}};
+  {ONE_DIM_CPU_REG(kNumberTypeInt16, kNumberTypeComplex64, int16_t, float, complex64)},
+  {ONE_DIM_CPU_REG(kNumberTypeInt32, kNumberTypeComplex64, int32_t, float, complex64)},
+  {ONE_DIM_CPU_REG(kNumberTypeInt64, kNumberTypeComplex64, int64_t, float, complex64)},
+  {ONE_DIM_CPU_REG(kNumberTypeFloat16, kNumberTypeComplex64, Eigen::half, float, complex64)},
+  {ONE_DIM_CPU_REG(kNumberTypeFloat32, kNumberTypeComplex64, float, float, complex64)},
+  {ONE_DIM_CPU_REG(kNumberTypeFloat64, kNumberTypeComplex128, double, double, complex128)},
+  {ONE_DIM_CPU_REG(kNumberTypeComplex64, kNumberTypeComplex64, complex64, complex64, complex64)},
+  {ONE_DIM_CPU_REG(kNumberTypeComplex128, kNumberTypeComplex128, complex128, complex128, complex128)}};
 
 std::vector<KernelAttr> FFTBaseCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
@@ -250,6 +230,7 @@ std::vector<KernelAttr> FFTBaseCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, FFTBase, FFTBaseCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, FFT, FFTBaseCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IFFT, FFTBaseCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

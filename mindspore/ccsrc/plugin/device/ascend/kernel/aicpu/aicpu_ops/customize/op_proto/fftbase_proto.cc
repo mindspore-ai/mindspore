@@ -20,7 +20,7 @@
 
 namespace ge {
 IMPLEMT_COMMON_INFERFUNC(FFTBaseInferShape) {
-  DataType x_dtype = op.GetInputDescByName("x").GetDataType();
+  DataType x_dtype = op.GetInputDescByName("input").GetDataType();
   DataType y_dtype;
   if (x_dtype == DT_DOUBLE || x_dtype == DT_COMPLEX128) {
     y_dtype = DT_COMPLEX128;
@@ -29,33 +29,28 @@ IMPLEMT_COMMON_INFERFUNC(FFTBaseInferShape) {
   }
   TensorDesc out_desc = op.GetOutputDescByName("y");
   out_desc.SetDataType(y_dtype);
+  out_desc.SetShape(op.GetInputDescByName("input").GetShape());
+  // TODO: If n is given, the input will be zero-padded or trimmed to this length.
+  // Tensor n_tensor;
+  // if (op.GetInputConstData("n", n_tensor) != GRAPH_SUCCESS) {
+  //   out_desc.SetShape(op.GetInputDescByName("input").GetShape());
+  // } else {
+  //   int64_t n = reinterpret_cast<int64_t>(n_tensor.GetData());
 
-  vector<int64_t> s;
-  op.GetAttr("s", s);
-  // If s is given, the input will be zero-padded or trimmed to this length.
-  if (s.size() == 0) {
-    out_desc.SetShape(op.GetInputDescByName("x").GetShape());
-  } else {
-    vector<int64_t> x_shape_list = op.GetInputDescByName("x").GetShape().GetDims();
-    std::vector<int64_t> out_shape_list = {};
-    out_shape_list.assign(x_shape_list.begin(), x_shape_list.end());
+  //   vector<int64_t> x_shape_list = op.GetInputDescByName("input").GetShape().GetDims();
+  //   std::vector<int64_t> out_shape_list = {};
+  //   out_shape_list.assign(x_shape_list.begin(), x_shape_list.end());
 
-    int64_t x_rank = x_shape_list.size();
-    vector<int64_t> dims;
-    op.GetAttr("dims", dims);
-    int64_t tmp_pos;
-    for (size_t i = 0; i < s.size(); i++) {
-      if (dims.size() == 0) {
-        tmp_pos = x_rank - s.size() + i;
-        out_shape_list[tmp_pos] = s[i];
-      } else {
-        tmp_pos = dims[i] < 0 ? x_rank + dims[i] : dims[i];
-        out_shape_list[tmp_pos] = s[i];
-      }
-    }
-    Shape out_shape(out_shape_list);
-    out_desc.SetShape(out_shape);
-  }
+  //   int64_t x_rank = x_shape_list.size();
+  //   Tensor dim_tensor;
+  //   op.GetInputConstData("dim", dim_tensor);
+  //   int64_t dim = reinterpret_cast<int64_t>(dim_tensor.GetData());
+  //   dim = dim < 0 ? x_rank + dim : dim;
+  //   out_shape_list[dim] = n;
+
+  //   Shape out_shape(out_shape_list);
+  //   out_desc.SetShape(out_shape);
+  // }
 
   if (op.UpdateOutputDesc("y", out_desc) != GRAPH_SUCCESS) {
     OP_LOGE(TbeGetName(op).c_str(), "Failed to update output desc.");
@@ -63,5 +58,6 @@ IMPLEMT_COMMON_INFERFUNC(FFTBaseInferShape) {
   }
   return GRAPH_SUCCESS;
 }
-CUST_COMMON_INFER_FUNC_REG(FFTBase, FFTBaseInferShape);
+CUST_COMMON_INFER_FUNC_REG(FFT, FFTBaseInferShape);
+CUST_COMMON_INFER_FUNC_REG(IFFT, FFTBaseInferShape);
 }  // namespace ge
