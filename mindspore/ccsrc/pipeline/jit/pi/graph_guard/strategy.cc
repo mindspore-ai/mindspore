@@ -288,5 +288,21 @@ OptStrategy::CalcKind OptStrategy::MakeCalcStrategyByShape(const ShapeVector &sh
     return CalcKind::kCalcShape;
   }
 }
+
+OptCodeSet OptStrategy::MakeGuardListStrategyByFrame(const PyFrameObject *frame, const OptCodeSet &codes) {
+  OptCodeSet ret;
+  for (auto code : codes) {
+    ret.push_back(code);
+  }
+  return ret;
+}
+
+GuardItemVector OptStrategy::MakeGuardItemListStrategyByFrame(const PyFrameObject *frame, const GuardItemVector &list) {
+  GuardItemVector ret;
+  for (auto item : list) {
+    ret.push_back(item);
+  }
+  return ret;
+}
 }  // namespace pijit
 }  // namespace mindspore

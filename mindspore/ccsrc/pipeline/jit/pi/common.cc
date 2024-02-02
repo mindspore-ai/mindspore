@@ -675,7 +675,10 @@ static void AddGradFlagForParam(bool grad_flag, OptGuardPtr guard, bool detach) 
       Py_INCREF(ret);
       return ret;
     },
-    [grad_flag]() -> std::string {
+    [grad_flag](bool simple) -> std::string {
+      if (simple) {
+        return std::string("g\\") + std::to_string(grad_flag ? 1 : 0);
+      }
       return std::string("{PyNativeExecutor::GetInstance()->grad_flag == ") + std::to_string(grad_flag) +
              std::string("}(type:") + std::to_string(TraceType::Customized) + std::string(")");
     });
@@ -1097,9 +1100,10 @@ static bool CheckGuard(JitCompileResults *c, const PyFrameObject *f) {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kCapture, runtime::ProfilerEvent::kCaptureGuard,
                                      "PIJitGuard");
   c->code = nullptr;
-  std::map<std::string, PyObject *> cache;
+  std::map<size_t, PyObject *> cache;
   OptOptionPtr opt = OptOption::CreateOptionByPoint(c);
   auto set = c->codehub->GetOptTarget(opt);
+  set = OptStrategy::MakeGuardListStrategyByFrame(f, set);
   for (size_t i = set.size(); i != 0; i--) {
     auto oc = set[i - 1];
     OptGuardPtr guard = oc->GetGuard();

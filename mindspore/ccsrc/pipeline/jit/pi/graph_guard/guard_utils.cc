@@ -100,7 +100,7 @@ typedef enum _ItemType {
 class ItemData {
  public:
   ItemData(ItemType itemType, bool needSpecialize, int recurseDepth)
-      : tp_(itemType), specialized_(needSpecialize), recurseDepth_(recurseDepth) {}
+      : tp_(itemType), specialized_(needSpecialize), recurseDepth_(recurseDepth), info_(nullptr) {}
 
   virtual ~ItemData() = default;
 
@@ -115,14 +115,32 @@ class ItemData {
     }
   }
 
+  virtual const InfoPack &Info() {
+    if (info_ == nullptr) {
+      InfoPack info;
+      info << size_t(tp_);
+      info.Begin();
+      if (tp_ != ItemType::PyNull && tp_ != ItemType::PyUnknown) {
+        info << specialized_ << recurseDepth_;
+      }
+      SubInfo(&info);
+      info.End();
+      info_ = std::make_shared<InfoPack>(info);
+      info_->Update();
+    }
+    return *info_;
+  }
+
   virtual ItemType GetItemType() { return tp_; }
 
   virtual bool MatchDynamicShape(std::shared_ptr<ItemData> other) { return false; }
 
  protected:
+  virtual void SubInfo(InfoPack *info) {}
   ItemType tp_;
   bool specialized_;
   int recurseDepth_;
+  InfoPackPtr info_;
 };
 using ItemDataPtr = std::shared_ptr<ItemData>;
 
@@ -143,6 +161,7 @@ class IntData : public ItemData {
   std::string ToString() override { return DESC_STRING(intVar_) + DESC_END; }
 
  protected:
+  virtual void SubInfo(InfoPack *info) { (*info) << intVar_; }
   int64_t intVar_;
 };
 
@@ -160,6 +179,7 @@ class FloatData : public ItemData {
   std::string ToString() override { return DESC_STRING(floatVar_) + DESC_END; }
 
  protected:
+  virtual void SubInfo(InfoPack *info) { (*info) << floatVar_; }
   double floatVar_;
 };
 
@@ -177,6 +197,7 @@ class BoolData : public ItemData {
   std::string ToString() override { return DESC_STRING(boolVar_) + DESC_END; }
 
  protected:
+  virtual void SubInfo(InfoPack *info) { (*info) << boolVar_; }
   bool boolVar_;
 };
 
@@ -218,6 +239,7 @@ class BytesData : public ItemData {
   }
 
  protected:
+  virtual void SubInfo(InfoPack *info) { (*info) << len_ << (void *)(buf_.get()); }
   Py_ssize_t len_;
   std::unique_ptr<uint8_t[]> buf_;
 };
@@ -239,6 +261,7 @@ class StringData : public ItemData {
   std::string ToString() override { return DESC(strVal_) + DESC_END; }
 
  protected:
+  virtual void SubInfo(InfoPack *info) { (*info) << strVal_; }
   std::string strVal_;
 };
 
@@ -362,6 +385,12 @@ class ListData : public ItemData {
   }
 
  protected:
+  virtual void SubInfo(InfoPack *info) {
+    (*info) << size_t(tp_);
+    for (auto v : listVar_) {
+      (*info) << v->Info();
+    }
+  }
   std::vector<ItemDataPtr> listVar_;
   bool inOrder_ = true;
 };
@@ -384,6 +413,7 @@ class ComplexData : public ItemData {
   }
 
  protected:
+  virtual void SubInfo(InfoPack *info) { (*info) << complexVar_.first << complexVar_.second; }
   std::pair<double, double> complexVar_;
 };
 
@@ -418,6 +448,7 @@ class SliceData : public ItemData {
   }
 
  protected:
+  virtual void SubInfo(InfoPack *info) { (*info) << sliceVar_; }
   std::vector<Py_ssize_t> sliceVar_;
 };
 
@@ -536,6 +567,15 @@ class DictData : public ItemData {
   }
 
  protected:
+  virtual void SubInfo(InfoPack *info) {
+    (*info) << dt_;
+    for (auto i : listK_) {
+      (*info) << i->Info();
+    }
+    for (auto i : listV_) {
+      (*info) << i->Info();
+    }
+  }
   DictType dt_;
   std::vector<ItemDataPtr> listK_;
   std::vector<ItemDataPtr> listV_;
@@ -579,6 +619,20 @@ class FunctionData : public ItemData {
   }
 
  protected:
+  virtual void SubInfo(InfoPack *info) {
+    (*info) << (defaults_ != nullptr);
+    if (defaults_ != nullptr) {
+      (*info) << defaults_->Info();
+    }
+    (*info) << (kwdefaults_ != nullptr);
+    if (kwdefaults_ != nullptr) {
+      (*info) << kwdefaults_->Info();
+    }
+    (*info) << (closure_ != nullptr);
+    if (closure_ != nullptr) {
+      (*info) << closure_->Info();
+    }
+  }
   PyCodeObject *code_;
   ItemDataPtr defaults_;
   ItemDataPtr kwdefaults_;
@@ -606,6 +660,16 @@ class MethodData : public ItemData {
   }
 
  protected:
+  virtual void SubInfo(InfoPack *info) {
+    (*info) << (refFunc_ != nullptr);
+    if (refFunc_ != nullptr) {
+      (*info) << refFunc_->Info();
+    }
+    (*info) << (refSelf_ != nullptr);
+    if (refSelf_ != nullptr) {
+      (*info) << refSelf_->Info();
+    }
+  }
   ItemDataPtr refFunc_;
   ItemDataPtr refSelf_;
 };
@@ -630,6 +694,12 @@ class InstanceMethodData : public ItemData {
   }
 
  protected:
+  virtual void SubInfo(InfoPack *info) {
+    (*info) << (refFunc_ != nullptr);
+    if (refFunc_ != nullptr) {
+      (*info) << refFunc_->Info();
+    }
+  }
   ItemDataPtr refFunc_;
 };
 
@@ -658,6 +728,7 @@ class TypeData : public ItemData {
   }
 
  protected:
+  virtual void SubInfo(InfoPack *info) { (*info) << refType_->tp_name; }
   PyTypeObject *refType_;
 };
 
@@ -714,6 +785,9 @@ class NumpyData : public ItemData {
   }
 
  protected:
+  virtual void SubInfo(InfoPack *info) {
+    (*info) << dtype_.kind() << size_ << itemsize_ << ndim_ << nbytes_ << shape_ << strides_;
+  }
   py::dtype dtype_;
   ssize_t size_;
   ssize_t itemsize_;
@@ -742,6 +816,7 @@ class TensorTypeData : public ItemData {
   }
 
  protected:
+  virtual void SubInfo(InfoPack *info) { (*info) << tpp_->ToString(); }
   mindspore::TypePtr tpp_;
 };
 
@@ -803,7 +878,17 @@ class ParamInfoData : public ItemData {
     return ret;
   }
 
+  static void SubInfo(InfoPack *info, mindspore::ParamInfoPtr p) {
+    if (p == nullptr) {
+      return;
+    }
+    (*info) << p->name() << p->requires_grad() << p->comm_fusion() << p->parallel_optimizer() << p->requires_aggr()
+            << p->parallel_optimizer_comm_recompute() << p->use_persistent_storage() << p->cache_enable()
+            << p->parameter_shape() << p->cache_shape() << p->param_strategy();
+  }
+
  protected:
+  virtual void SubInfo(InfoPack *info) { SubInfo(info, param_); }
   mindspore::ParamInfoPtr param_;
 };
 
@@ -974,6 +1059,16 @@ class MetaTensorData : public ItemData {
     } else {
       data_type_ = dt;
     }
+  }
+
+  virtual void SubInfo(InfoPack *info) {
+    (*info) << size_t(tid_) << format_ << host_format_ << (data_type_ != nullptr);
+    if (data_type_ != nullptr) {
+      (*info) << data_type_->ToString();
+    }
+    (*info) << is_parameter_;
+    ParamInfoData::SubInfo(info, param_);
+    (*info) << shape_ << is_stubtensor_;
   }
 
   mindspore::TypeId tid_;
@@ -1149,6 +1244,15 @@ class TensorData : public MetaTensorData {
     }
   }
 
+  virtual void SubInfo(InfoPack *info) {
+    MetaTensorData::SubInfo(info);
+    (*info) << is_forward_output_ << init_flag_ << graph_output_ << cast_dtype_->ToString()
+            << base_shape_ptr_->ToString() << size_t(compression_type_) << tensor_name_;
+    for (auto q : quant_params_) {
+      (*info) << q->ToString();
+    }
+  }
+
   bool init_flag_;
   bool is_forward_output_;
   std::unique_ptr<uint8_t[]> data_ptr_;
@@ -1256,6 +1360,13 @@ class MapTensorData : public TensorData {
            DESC_TOSTRING(value_tensor_) + DESC_TOSTRING(status_tensor_) + DESC_END;
   }
 
+  virtual void SubInfo(InfoPack *info) {
+    TensorData::SubInfo(info);
+    (*info) << key_dtype_ << default_value_->ToString() << permit_filter_value_->ToString()
+            << evict_filter_value_->ToString() << value_shape_;
+    (*info) << key_tensor_->Info() << value_tensor_->Info() << status_tensor_->Info();
+  }
+
   mindspore::TypeId key_dtype_;
   ShapeVector key_shape_;
   TypePtr default_value_;
@@ -1294,6 +1405,7 @@ class RowTensorData : public ItemData {
   }
 
  protected:
+  virtual void SubInfo(InfoPack *info) { (*info) << indices_->Info() << values_->Info() << data_type_ << shape_; }
   TensorDataPtr indices_;
   TensorDataPtr values_;
   mindspore::TypeId data_type_;
@@ -1327,6 +1439,7 @@ class COOTensorData : public ItemData {
   }
 
  protected:
+  virtual void SubInfo(InfoPack *info) { (*info) << indices_->Info() << values_->Info() << data_type_ << shape_; }
   TensorDataPtr indices_;
   TensorDataPtr values_;
   mindspore::TypeId data_type_;
@@ -1363,6 +1476,9 @@ class CSRTensorData : public ItemData {
   }
 
  protected:
+  virtual void SubInfo(InfoPack *info) {
+    (*info) << indices_->Info() << values_->Info() << indptr_->Info() << data_type_ << shape_;
+  }
   TensorDataPtr indices_;
   TensorDataPtr values_;
   TensorDataPtr indptr_;
@@ -1412,6 +1528,7 @@ class TensorDataData : public ItemData {
   }
 
  protected:
+  virtual void SubInfo(InfoPack *info) { (*info) << size_ << itemsize_ << nbytes_ << ndim_; }
   std::unique_ptr<uint8_t[]> data_ptr_;
   ssize_t size_;
   ssize_t itemsize_;
@@ -1471,6 +1588,14 @@ class PrimitiveData : public ItemData {
   }
 
  protected:
+  virtual void SubInfo(InfoPack *info) {
+    for (auto item : listK_) {
+      (*info) << item->Info();
+    }
+    for (auto item : listV_) {
+      (*info) << item->Info();
+    }
+  }
   std::vector<ItemDataPtr> listK_;
   std::vector<ItemDataPtr> listV_;
 };
@@ -1541,6 +1666,14 @@ class CellData : public ItemData {
   }
 
  protected:
+  virtual void SubInfo(InfoPack *info) {
+    for (auto item : listK_) {
+      (*info) << item->Info();
+    }
+    for (auto item : listV_) {
+      (*info) << item->Info();
+    }
+  }
   std::vector<ItemDataPtr> listK_;
   std::vector<ItemDataPtr> listV_;
 };
@@ -1662,7 +1795,7 @@ static ItemDataPtr CreateItem(PyObject *obj, bool need_specialize, int recurse_d
   return dp;
 }
 
-GuardItem::GuardItem(TracePtr tt) : var_(tt), type_(GIType::GTUnknown) {}
+GuardItem::GuardItem(TracePtr tt) : var_(tt), type_(GIType::GTUnknown), info_(nullptr) {}
 
 void GuardItem::Replace(TracePtr dst, TracePtr src) {
   if (!var_) {
@@ -1689,7 +1822,10 @@ class EqGuard : public GuardItem {
     type_ = GIType::GTEqual;
   }
 
-  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache, bool perf) {
+  virtual bool Check(const PyFrameObject *frame, std::map<size_t, PyObject *> *cache, bool perf) {
+    if (var_->IsConst()) {
+      return true;
+    }
     PyObject *obj = GetObjectFromTrace(frame, var_, cache, perf);
     bool ret = Check(obj);
     if (obj != NULL) {
@@ -1704,6 +1840,19 @@ class EqGuard : public GuardItem {
   }
 
   virtual std::string ToString() { return var_->ToString() + "==" + dp_->ToString(); }
+
+  virtual const InfoPack &Info() {
+    if (info_ == nullptr) {
+      InfoPack info;
+      info << size_t(type_);
+      info.Begin();
+      info << var_->Info() << dp_->Info();
+      info.End();
+      info_ = std::make_shared<InfoPack>(info);
+      info_->Update();
+    }
+    return *info_;
+  }
 
   bool operator==(const GuardItem &obj) const override {
     if (GuardItem::operator==(obj)) {
@@ -1754,7 +1903,10 @@ class TypeGuard : public GuardItem {
     }
   }
 
-  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache, bool perf) {
+  virtual bool Check(const PyFrameObject *frame, std::map<size_t, PyObject *> *cache, bool perf) {
+    if (var_->IsConst()) {
+      return true;
+    }
     PyObject *obj = GetObjectFromTrace(frame, var_, cache, perf);
     bool ret = Check(obj);
     if (var_->GetTraceType() != TraceType::Type && obj != NULL) {
@@ -1788,6 +1940,19 @@ class TypeGuard : public GuardItem {
     }
   }
 
+  virtual const InfoPack &Info() {
+    if (info_ == nullptr) {
+      InfoPack info;
+      info << size_t(type_);
+      info.Begin();
+      info << var_->Info() << refType_->tp_name;
+      info.End();
+      info_ = std::make_shared<InfoPack>(info);
+      info_->Update();
+    }
+    return *info_;
+  }
+
   bool operator==(const GuardItem &obj) const override {
     if (GuardItem::operator==(obj)) {
       return refType_ == ((const TypeGuard &)obj).refType_;
@@ -1806,7 +1971,10 @@ class IdGuard : public GuardItem {
     refId_ = obj->GetObject();
   }
 
-  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache, bool perf) {
+  virtual bool Check(const PyFrameObject *frame, std::map<size_t, PyObject *> *cache, bool perf) {
+    if (var_->IsConst()) {
+      return true;
+    }
     PyObject *obj = GetObjectFromTrace(frame, var_, cache, perf);
     bool ret = Check(obj);
     if (obj != NULL) {
@@ -1832,6 +2000,19 @@ class IdGuard : public GuardItem {
     return std::string("id(") + var_->ToString() + std::string(")==") + std::to_string((size_t)refId_);
   }
 
+  virtual const InfoPack &Info() {
+    if (info_ == nullptr) {
+      InfoPack info;
+      info << size_t(type_);
+      info.Begin();
+      info << var_->Info() << (void *)refId_;
+      info.End();
+      info_ = std::make_shared<InfoPack>(info);
+      info_->Update();
+    }
+    return *info_;
+  }
+
   bool operator==(const GuardItem &obj) const override {
     if (GuardItem::operator==(obj)) {
       return refId_ == ((const IdGuard &)obj).refId_;
@@ -1852,7 +2033,10 @@ class ReprGuard : public GuardItem {
 
   virtual ~ReprGuard() { Py_XDECREF(refRepr_); }
 
-  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache, bool perf) {
+  virtual bool Check(const PyFrameObject *frame, std::map<size_t, PyObject *> *cache, bool perf) {
+    if (var_->IsConst()) {
+      return true;
+    }
     PyObject *obj = GetObjectFromTrace(frame, var_, cache, perf);
     bool ret = Check(obj);
     if (obj != nullptr) {
@@ -1887,6 +2071,18 @@ class ReprGuard : public GuardItem {
   }
 
  protected:
+  virtual const InfoPack &Info() {
+    if (info_ == nullptr) {
+      InfoPack info;
+      info << size_t(type_);
+      info.Begin();
+      info << std::string(PyUnicode_AsUTF8(refRepr_));
+      info.End();
+      info_ = std::make_shared<InfoPack>(info);
+      info_->Update();
+    }
+    return *info_;
+  }
   PyObject *refRepr_;
 };
 
@@ -1922,7 +2118,10 @@ class AttrGuard : public GuardItem {
 
   ~AttrGuard() = default;
 
-  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache, bool perf) {
+  virtual bool Check(const PyFrameObject *frame, std::map<size_t, PyObject *> *cache, bool perf) {
+    if (var_->IsConst()) {
+      return true;
+    }
     PyObject *obj = GetObjectFromTrace(frame, var_, cache, perf);
     bool ret = CheckIntern(obj);
     if (obj != NULL) {
@@ -1966,7 +2165,10 @@ class AttrGuard : public GuardItem {
     return ret;
   }
 
-  virtual std::string ToString() { return std::string("exist(") + var_->ToString() + std::string(")"); }
+  virtual std::string ToString() {
+    return std::string("exist(") + var_->ToString() + std::string(".") + nameAttr_ + "==" + std::to_string(hasAttr_) +
+           std::string(")");
+  }
 
   bool operator==(const GuardItem &obj) const override {
     if (GuardItem::operator==(obj)) {
@@ -1976,6 +2178,18 @@ class AttrGuard : public GuardItem {
   }
 
  protected:
+  virtual const InfoPack &Info() {
+    if (info_ == nullptr) {
+      InfoPack info;
+      info << size_t(type_);
+      info.Begin();
+      info << var_->Info() << nameAttr_ << hasAttr_;
+      info.End();
+      info_ = std::make_shared<InfoPack>(info);
+      info_->Update();
+    }
+    return *info_;
+  }
   bool hasAttr_;
   std::string nameAttr_;
 };
