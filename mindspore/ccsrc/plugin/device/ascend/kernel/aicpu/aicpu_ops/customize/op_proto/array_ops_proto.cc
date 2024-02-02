@@ -23,6 +23,7 @@
 namespace ge {
 
 ONE_IN_ONE_OUT_INFER(CheckNumerics, x, y);
+ONE_IN_ONE_OUT_INFER(MatrixBandPart, x, output);
 
 // ----------------Expand Begin-------------------
 template <typename T>
@@ -356,6 +357,25 @@ IMPLEMT_COMMON_INFERFUNC(HammingWindowInferShape) {
 
 CUST_COMMON_INFER_FUNC_REG(HammingWindow, HammingWindowInferShape);
 // ----------------HammingWindow End---------------------
+
+// ----------------Padding Begin-------------------
+CUST_IMPLEMT_INFERFUNC(Padding, PaddingInferShape) {
+  int64_t pad_dim_size{0};
+  RETURN_IF_FAILURE(op.GetAttr("pad_dim_size", pad_dim_size));
+  auto x_desc = op.GetInputDescByName("x");
+  auto x_dtype = x_desc.GetDataType();
+  auto x_shape = x_desc.GetShape().GetDims();
+  RETURN_IF_FALSE(x_shape.size() > 0, op, "Input can't be scalar.");
+  x_shape.back() = pad_dim_size;
+
+  auto out_desc = op.GetOutputDescByName("y");
+  out_desc.SetDataType(x_dtype);
+  out_desc.SetShape(Shape(x_shape));
+
+  return op.UpdateOutputDesc("y", out_desc);
+}
+CUST_INFER_FUNC_REG(Padding, PaddingInferShape);
+// ----------------MvlgammaGrad END---------------------
 
 // ----------------Mvlgamma Begin-------------------
 CUST_IMPLEMT_INFERFUNC(Mvlgamma, MvlgammaInferShape) {

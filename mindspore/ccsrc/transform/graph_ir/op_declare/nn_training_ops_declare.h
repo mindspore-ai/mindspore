@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_TRAINING_OPS_DECLARE_H_
 
 #include "op_proto/inc/nn_training_ops.h"
+#include "transform/graph_ir/custom_op_proto/cust_nn_training.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
 
@@ -132,4 +133,7 @@ DECLARE_OP_USE_OUTPUT(ApplyAdadelta)
 
 DECLARE_OP_ADAPTER(SparseApplyAdadelta)
 DECLARE_OP_USE_OUTPUT(SparseApplyAdadelta)
+
+DECLARE_CUST_OP_ADAPTER(FusedSparseProximalAdagrad)
+DECLARE_CUST_OP_USE_OUTPUT(FusedSparseProximalAdagrad)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_TRAINING_OPS_DECLARE_H_

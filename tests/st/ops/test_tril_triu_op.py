@@ -70,7 +70,7 @@ class TriuNet(nn.Cell):
 
 
 def tril_triu(nptype, diagonal):
-    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    context.set_context(mode=context.GRAPH_MODE)
     tril_ = TrilNet(nptype, diagonal)
     triu_ = TriuNet(nptype, diagonal)
     tril_output = tril_()
@@ -91,6 +91,20 @@ def tril_triu_pynative(nptype, diagonal):
     triu_expect = np.triu(triu_.x_np, diagonal).astype(nptype)
     assert (tril_output.asnumpy() == tril_expect).all()
     assert (triu_output.asnumpy() == triu_expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_tril_triu_graph_float32():
+    """
+    Feature: ALL To ALL
+    Description: test cases for Tril and Triu
+    Expectation: the result match to numpy
+    """
+    tril_triu(np.float32, 4)
 
 
 @pytest.mark.level1
@@ -247,18 +261,6 @@ def test_tril_triu_graph_float16():
     Expectation: the result match to numpy
     """
     tril_triu(np.float16, 3)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_tril_triu_graph_float32():
-    """
-    Feature: ALL To ALL
-    Description: test cases for Tril and Triu
-    Expectation: the result match to numpy
-    """
-    tril_triu(np.float32, 4)
 
 
 @pytest.mark.level1

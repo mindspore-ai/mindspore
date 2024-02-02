@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -46,7 +47,18 @@ class Grad(nn.Cell):
         return self.grad(self.network)(x, y)
 
 
-def test_net_float32():
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.parametrize("context_mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_net_float32(context_mode):
+    """
+    Feature: aicpu ops Dropout3D.
+    Description: test Dropout3D forward.
+    Expectation: expect correct result.
+    """
+    context.set_context(mode=context_mode, device_target="Ascend")
     net = Net(0.7)
     output, mask = net(x0)
     print(x0)
@@ -60,9 +72,19 @@ def test_net_float32():
     return output, mask
 
 
-def test_net_grad():
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.parametrize("context_mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_net_grad(context_mode):
+    """
+    Feature: aicpu ops Dropout3D.
+    Description: test Dropout3D backward.
+    Expectation: expect correct result.
+    """
     net = Grad(Net(0.7))
-    y = test_net_float32()
+    y = test_net_float32(context_mode)
     output = net(x1, y)
     print("input: ", x1)
     print("forward output: ", y)

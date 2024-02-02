@@ -30,6 +30,7 @@
 
 namespace ge {
 // ----------------------------------OneInOneOutCommonInfer-----------------------------
+CUST_ONE_IN_ONE_OUT_INFER(BesselI0, x, y);
 ONE_IN_ONE_OUT_INFER(Cos, x, y);
 ONE_IN_ONE_OUT_INFER(Expm1, x, y);
 ONE_IN_ONE_OUT_INFER(Exp, x, y);
@@ -49,6 +50,7 @@ CUST_TWO_IN_ONE_OUT_INFER(Gcd, x1, x2, y);
 CUST_TWO_IN_ONE_OUT_INFER(Heaviside, x, values, y);
 CUST_TWO_IN_ONE_OUT_INFER(Hypot, x1, x2, y);
 CUST_TWO_IN_ONE_OUT_INFER(Lcm, x1, x2, y);
+CUST_TWO_IN_ONE_OUT_INFER(LogicalXor, x, y, output);
 // ----------------------------------TowInOneOutCommonInfer END-----------------------------
 
 // --------------AcosGrad----------------

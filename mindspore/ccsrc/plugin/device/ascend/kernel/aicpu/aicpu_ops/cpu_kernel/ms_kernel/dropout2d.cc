@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "dropout2d_kernels.h"
+#include "dropout2d.h"
 
 #include <securec.h>
 #include <random>

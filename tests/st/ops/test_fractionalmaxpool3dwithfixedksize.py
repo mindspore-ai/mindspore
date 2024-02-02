@@ -43,6 +43,8 @@ class NetFractionalMaxPool3DGradWithFixedKsize(nn.Cell):
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_fractionalmaxpool3dwithfixedksize():
     """
@@ -54,7 +56,7 @@ def test_fractionalmaxpool3dwithfixedksize():
     types_input1 = [np.float16, np.float32, np.int32, np.int64]
     types_input2 = [np.float16, np.float32]
     for context_mode_type in context_mode_types:
-        context.set_context(mode=context_mode_type, device_target='CPU')
+        context.set_context(mode=context_mode_type)
         for type_input1 in types_input1:
             for type_input2 in types_input2:
                 x_np = np.array([i+1 for i in range(64)]

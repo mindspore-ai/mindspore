@@ -139,6 +139,89 @@ REG_CUST_OP(BatchNormGradGrad)
   .REQUIRED_ATTR(epsilon, Float)
   .REQUIRED_ATTR(data_format, String)
   .CUST_OP_END_FACTORY_REG(BatchNormGradGrad)
+
+REG_CUST_OP(MultilabelMarginLossGrad)
+  .INPUT(y_grad, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .INPUT(x, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .INPUT(target, TensorType({DT_INT32}))
+  .INPUT(is_target, TensorType({DT_INT32}))
+  .OUTPUT(x_grad, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .REQUIRED_ATTR(reduction, String)
+  .CUST_OP_END_FACTORY_REG(MultilabelMarginLossGrad)
+
+REG_CUST_OP(FractionalMaxPool3DWithFixedKsize)
+  .INPUT(x, TensorType({DT_FLOAT, DT_DOUBLE, DT_FLOAT16, DT_INT32, DT_INT64}))
+  .INPUT(random_samples, TensorType({DT_FLOAT, DT_DOUBLE, DT_FLOAT16}))
+  .OUTPUT(y, TensorType({DT_FLOAT, DT_DOUBLE, DT_FLOAT16, DT_INT32, DT_INT64}))
+  .OUTPUT(argmax, TensorType({DT_INT32, DT_INT64}))
+  .REQUIRED_ATTR(ksize, ListInt)
+  .REQUIRED_ATTR(output_shape, ListInt)
+  .ATTR(data_format, String, "NCDHW")
+  .CUST_OP_END_FACTORY_REG(FractionalMaxPool3DWithFixedKsize);
+
+REG_CUST_OP(FractionalMaxPool3DGradWithFixedKsize)
+  .INPUT(origin_input, TensorType({DT_FLOAT, DT_DOUBLE, DT_FLOAT16, DT_INT32, DT_INT64}))
+  .INPUT(out_backprop, TensorType({DT_FLOAT, DT_DOUBLE, DT_FLOAT16, DT_INT32, DT_INT64}))
+  .INPUT(argmax, TensorType({DT_INT32, DT_INT64}))
+  .OUTPUT(y, TensorType({DT_FLOAT, DT_DOUBLE, DT_FLOAT16, DT_INT32, DT_INT64}))
+  .ATTR(data_format, String, "NCDHW")
+  .CUST_OP_END_FACTORY_REG(FractionalMaxPool3DGradWithFixedKsize);
+
+REG_CUST_OP(MaxUnpool3D)
+  .INPUT(x, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8,
+                        DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8}))
+  .INPUT(argmax, TensorType({DT_INT32, DT_INT64}))
+  .OUTPUT(y, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8,
+                         DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8}))
+  .REQUIRED_ATTR(ksize, ListInt)
+  .REQUIRED_ATTR(strides, ListInt)
+  .REQUIRED_ATTR(pads, ListInt)
+  .REQUIRED_ATTR(output_shape, ListInt)
+  .REQUIRED_ATTR(data_format, String)
+  .CUST_OP_END_FACTORY_REG(MaxUnpool3D)
+
+REG_CUST_OP(MaxUnpool3DGrad)
+  .INPUT(x, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8,
+                        DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8}))
+  .INPUT(grads, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8,
+                            DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8}))
+  .INPUT(argmax, TensorType({DT_INT32, DT_INT64}))
+  .OUTPUT(y, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8,
+                         DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8}))
+  .REQUIRED_ATTR(ksize, ListInt)
+  .REQUIRED_ATTR(strides, ListInt)
+  .REQUIRED_ATTR(pads, ListInt)
+  .REQUIRED_ATTR(output_shape, ListInt)
+  .REQUIRED_ATTR(data_format, String)
+  .CUST_OP_END_FACTORY_REG(MaxUnpool3DGrad)
+
+REG_CUST_OP(MaxUnpool2D)
+  .INPUT(x, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8,
+                        DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8}))
+  .INPUT(argmax, TensorType({DT_INT32, DT_INT64}))
+  .OUTPUT(y, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8,
+                         DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8}))
+  .REQUIRED_ATTR(ksize, ListInt)
+  .REQUIRED_ATTR(strides, ListInt)
+  .REQUIRED_ATTR(pads, ListInt)
+  .REQUIRED_ATTR(output_shape, ListInt)
+  .REQUIRED_ATTR(data_format, String)
+  .CUST_OP_END_FACTORY_REG(MaxUnpool2D)
+
+REG_CUST_OP(MaxUnpool2DGrad)
+  .INPUT(x, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8,
+                        DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8}))
+  .INPUT(grads, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8,
+                            DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8}))
+  .INPUT(argmax, TensorType({DT_INT32, DT_INT64}))
+  .OUTPUT(y, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8,
+                         DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8}))
+  .REQUIRED_ATTR(ksize, ListInt)
+  .REQUIRED_ATTR(strides, ListInt)
+  .REQUIRED_ATTR(pads, ListInt)
+  .REQUIRED_ATTR(output_shape, ListInt)
+  .REQUIRED_ATTR(data_format, String)
+  .CUST_OP_END_FACTORY_REG(MaxUnpool2DGrad)
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_NN_OPS_H_
 

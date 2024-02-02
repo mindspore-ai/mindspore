@@ -315,4 +315,11 @@ ATTR_MAP(UnsortedSegmentMax) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(UnsortedSegmentMax) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(UnsortedSegmentMax, kUnsortedSegmentMaxOpName, ADPT_DESC(UnsortedSegmentMax))
 REG_ADPT_DESC(UnsortedSegmentMaxD, kUnsortedSegmentMaxDOpName, ADPT_DESC(UnsortedSegmentMax))
+
+// SearchSorted
+INPUT_MAP(SearchSorted) = {{1, INPUT_DESC(sorted_sequence)}, {2, INPUT_DESC(values)}};
+ATTR_MAP(SearchSorted) = {{"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())},
+                          {"right", ATTR_DESC(right, AnyTraits<bool>())}};
+OUTPUT_MAP(SearchSorted) = {{0, OUTPUT_DESC(out)}};
+REG_ADPT_DESC(SearchSorted, prim::kPrimSearchSorted->name(), ADPT_DESC(SearchSorted));
 }  // namespace mindspore::transform

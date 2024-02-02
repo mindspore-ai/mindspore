@@ -33,6 +33,8 @@ static void RandomOpCalcDims(const Tensor &data, std::vector<int64_t> &vec_dim) 
 }
 }  // namespace
 
+ONE_IN_ONE_OUT_INFER(ShuffleChannel, x, y);
+
 IMPLEMT_COMMON_INFERFUNC(InputShapeAttrDtypeInfer) {
   Shape shape;
   Tensor shape_tensor;
@@ -103,7 +105,8 @@ CUST_INFER_FUNC_REG(Randperm, RandpermInfer);
 // ----------------Randperm END-------------------
 
 // ----------------Dropout2D-------------------
-IMPLEMT_COMMON_INFERFUNC(Dropout2DInferShape) {
+// ----------------Dropout3D-------------------
+IMPLEMT_COMMON_INFERFUNC(DropoutNDInferShape) {
   TensorDesc output_desc = op.GetOutputDescByName("y");
   TensorDesc mask_desc = op.GetOutputDescByName("mask");
 
@@ -122,7 +125,8 @@ IMPLEMT_COMMON_INFERFUNC(Dropout2DInferShape) {
   return GRAPH_SUCCESS;
 }
 
-CUST_COMMON_INFER_FUNC_REG(Dropout2D, Dropout2DInferShape);
+CUST_COMMON_INFER_FUNC_REG(Dropout2D, DropoutNDInferShape);
+CUST_COMMON_INFER_FUNC_REG(Dropout3D, DropoutNDInferShape);
 // ----------------Dropout2D END-------------------
 
 // ----------------Gamma-------------------

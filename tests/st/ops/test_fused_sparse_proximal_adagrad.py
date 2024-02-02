@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+import pytest
 import mindspore.nn as nn
 import mindspore.context as context
 import mindspore.common.dtype as mstype
@@ -54,6 +55,10 @@ def test_net():
     print(net.accum.data)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_fused_sparse_proximal_adagrad_dynamic():
     """
     Feature: FusedSparseProximalAdagrad

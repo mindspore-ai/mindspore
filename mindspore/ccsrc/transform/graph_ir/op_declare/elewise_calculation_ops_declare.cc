@@ -769,4 +769,16 @@ INPUT_MAP(AdamApplyOneWithDecay) = {{1, INPUT_DESC(input0)},  {2, INPUT_DESC(inp
 ATTR_MAP(AdamApplyOneWithDecay) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(AdamApplyOneWithDecay) = {{0, OUTPUT_DESC(output0)}, {1, OUTPUT_DESC(output1)}, {2, OUTPUT_DESC(output2)}};
 REG_ADPT_DESC(AdamApplyOneWithDecay, kAdamApplyOneWithDecayOpName, ADPT_DESC(AdamApplyOneWithDecay))
+
+// LogicalXor
+CUST_INPUT_MAP(LogicalXor) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(y)}};
+CUST_ATTR_MAP(LogicalXor) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(LogicalXor) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(LogicalXor, kNameLogicalXor, CUST_ADPT_DESC(LogicalXor));
+
+// BesselI0
+CUST_INPUT_MAP(BesselI0) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(BesselI0) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(BesselI0) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(BesselI0, prim::kPrimBesselI0->name(), CUST_ADPT_DESC(BesselI0));
 }  // namespace mindspore::transform
