@@ -1188,11 +1188,11 @@ def infer_value_for_Tile(input, dims):
     return Tensor(np.tile(input.asnumpy(), dims))
 
 
-def infer_value_for_Concat(input_x, axis):
+def infer_value_for_Concat(tensors, axis):
     """Infer value for Concat op."""
-    if input_x is None or None in input_x or axis is None:
+    if tensors is None or None in tensors or axis is None:
         return None
-    return Tensor(np.concatenate([x.asnumpy() for x in input_x], axis))
+    return Tensor(np.concatenate([x.asnumpy() for x in tensors], axis))
 
 
 def infer_value_for_ReduceSum(input_x, axis, keep_dims, skip_mode):

@@ -1,4 +1,5 @@
 Bmm: 'aclnnBatchMatMul'
+Concat: 'aclnnCat'
 SiLU: 'aclnnSilu'
 Pow: 'aclnnPowTensorTensor'
 MatMul: 'aclnnMatmul'

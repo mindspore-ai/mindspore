@@ -15,9 +15,14 @@
  */
 
 #include "tools/converter/adapter/acl/mapper/concat_mapper.h"
+#include <memory>
 #include <string>
+#include "ir/anf.h"
+#include "ir/primitive.h"
+#include "ops/array_ops.h"
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "src/common/log_util.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace lite {
@@ -27,6 +32,21 @@ STATUS ConcatMapper::Mapper(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "Concat rename failed.";
     return RET_ERROR;
   }
+
+  ValueNodePtr value_node = nullptr;
+  PrimitivePtr src_prim = nullptr;
+  if (GetValueNodeAndPrimFromCnode(cnode, &value_node, &src_prim) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Get value node and primitive from cnode failed.";
+    return lite::RET_ERROR;
+  }
+
+  if (src_prim->HasAttr("axis")) {
+    auto dst_prim = std::make_shared<Primitive>(prim::kPrimConcatD->name());
+    CHECK_NULL_RETURN(dst_prim);
+    dst_prim->SetAttrs(src_prim->attrs());
+    value_node->set_value(dst_prim);
+  }
+
   if (AddAttrForDynInputPrimitive(cnode) != RET_OK) {
     MS_LOG(ERROR) << "Concat mapper failed.";
     return RET_ERROR;

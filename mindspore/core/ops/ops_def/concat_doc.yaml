@@ -28,7 +28,8 @@ concat:
             TypeError: If `axis` is not an int.
             ValueError: If `tensors` have different dimension of tensor.
             ValueError: If `axis` not in range :math:`[-R, R)`.
-            RuntimeError: If tensor's shape in `tensors` except for `axis` are different.
+            ValueError: If tensor's shape in `tensors` except for `axis` are different.
+            ValueError: If `tensors` is an empty tuple or list.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``

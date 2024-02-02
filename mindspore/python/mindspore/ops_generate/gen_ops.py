@@ -388,7 +388,7 @@ def {func_name}({', '.join(arg for arg in func_args)}):
     r\"\"\"
     {description}
     \"\"\"
-    return {operator_name}_impl({', '.join(arg_name for arg_name in prim_call_args)})\n"""
+    return {operator_name}_impl({', '.join(arg_name for arg_name, _ in args.items())})\n"""
         gen_py += function_code
 
     return gen_py
