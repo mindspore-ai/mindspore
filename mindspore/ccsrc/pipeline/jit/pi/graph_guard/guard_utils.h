@@ -42,9 +42,10 @@ class GuardItem {
  public:
   explicit GuardItem(TracePtr var);
   virtual ~GuardItem() = default;
-  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache = nullptr, bool perf = false) = 0;
+  virtual bool Check(const PyFrameObject *frame, std::map<size_t, PyObject *> *cache = nullptr, bool perf = false) = 0;
   virtual bool Check(PyObject *obj) = 0;
   virtual std::string ToString() = 0;
+  virtual const InfoPack &Info() = 0;
   virtual void Replace(TracePtr dst, TracePtr src);
   virtual TracePtr GetTrace();
   virtual bool operator==(const GuardItem &obj) const;
@@ -55,6 +56,7 @@ class GuardItem {
  protected:
   TracePtr var_;
   GIType type_;
+  InfoPackPtr info_;
 };
 using GuardItemPtr = std::shared_ptr<GuardItem>;
 
