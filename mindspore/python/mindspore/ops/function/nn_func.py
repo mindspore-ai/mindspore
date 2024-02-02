@@ -663,8 +663,6 @@ def adaptive_max_pool1d(input, output_size):
     x_in_shape = input.shape
     x_dtype = dtype_(input)
 
-    if len(x_in_shape) != 3:
-        raise ValueError(f"For adaptive_max_pool1d input must have 3 dim, but got {len(x_in_shape)}.")
     if x_in_shape[2] < output_size:
         raise ValueError(f"For adaptive_max_pool1d input's last dimension must be greater or equal to "
                          f"output size {output_size}, but got {x_in_shape[2]}.")
@@ -686,7 +684,7 @@ def adaptive_max_pool1d(input, output_size):
     kernel_size = width - (output_size - 1) * stride
     stride = (1, width // output_size)
     kernel_size = (1, kernel_size)
-    max_pool_ = _get_cache_prim(NN_OPS.MaxPool)(kernel_size=kernel_size, strides=stride)
+    max_pool_ = _get_cache_prim(NN_OPS.MaxPool)(kernel_size, stride)
     input = expand_dims_(input, 2)
     input = max_pool_(input)
     input = squeeze_(input)
@@ -2984,10 +2982,8 @@ def dense(input, weight, bias=None):
     _check_is_tensor("bias", bias, "dense")
     weight = ops.t(weight)
     input = ops.matmul(input, weight)
-    input_shape = input.shape
     if bias is not None:
         input = input + bias
-        _check_dense_add_bias_shape(input_shape, input.shape, bias.shape)
     return input
 
 
@@ -5186,10 +5182,6 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         >>> print(output.shape)
         (4, 2, 5)
     """
-    if input.ndim != 3:
-        raise ValueError(f"For 'conv1d', the input must be a 3D Tensor, but got input of {input.ndim}D.")
-    if weight.ndim != 3:
-        raise ValueError(f"For 'conv1d', the weight must be a 3D Tensor, but got input of {weight.ndim}D.")
     expanded_input = expand_dims_(input, 2)
     sqz = _get_cache_prim(P.Squeeze)(2)
     weight_shape = weight.shape
@@ -5353,9 +5345,6 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         return conv(input, weight)
     if not isinstance(bias, Tensor):
         raise TypeError(f"For 'conv2d', the 'bias' must be a Tensor, but got {type(bias)}.")
-    if bias.shape[0] != out_channel:
-        raise ValueError(f"For 'conv2d', Given weight of size {weight_shape}, expected bias to be 1-dimensional with " \
-                        f"{out_channel} elements, but got bias of size {bias.shape[0]} instead.")
     conv_result = conv(input, weight)
     output = bias_add(conv_result, bias)
     return output
@@ -5593,8 +5582,6 @@ def adaptive_avg_pool1d(input, output_size):
 
         _check_adaptive_avg_pool1d_output_size(output_size)
 
-        if len(x_in_shape) != 3:
-            raise ValueError(f"For adaptive_avg_pool1d input must have 3 dim, but got {len(x_in_shape)}.")
         if x_in_shape[2] < output_size:
             raise ValueError(f"For adaptive_avg_pool1d input's last dimension must be greater or equal to " \
                              f"output size {output_size}, but got {x_in_shape[2]}.")
@@ -5613,7 +5600,7 @@ def adaptive_avg_pool1d(input, output_size):
     kernel_size = width - (output_size - 1) * stride
     stride = (1, width // output_size)
     kernel_size = (1, kernel_size)
-    avg_pool_ = _get_cache_prim(P.AvgPool)(kernel_size=kernel_size, strides=stride)
+    avg_pool_ = _get_cache_prim(P.AvgPool)(kernel_size, stride)
     input = expand_dims_(input, 2)
     input = avg_pool_(input)
     input = squeeze_(input)

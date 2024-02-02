@@ -5206,19 +5206,13 @@ def vander(x, N=None):
          [125.  25.  5.   1.]]
     """
     if not isinstance(x, Tensor):
-        raise TypeError(
-            f"For vander, x must be Tensor, but got {type(x)}")
-    if x.ndim != 1:
-        raise ValueError(
-            f"For vander, x must be 1-D, but got dimension = {x.ndim}")
+        raise TypeError(f"For vander, x must be Tensor, but got {type(x)}")
     if N is None:
         N = len(x)
     if not isinstance(N, int):
-        raise TypeError(
-            f"For vander, N must be an integer but got {type(N)}.")
+        raise TypeError(f"For vander, N must be an integer but got {type(N)}.")
     if N <= 0:
-        raise ValueError(
-            f"For vander, N must be greater than 0, but got {N}.")
+        raise ValueError(f"For vander, N must be greater than 0, but got {N}.")
     exponent = ops.range(Tensor(N - 1), Tensor(-1), Tensor(-1))
     x = F.expand_dims(x, 1)
     exponent = F.expand_dims(exponent, 0)
@@ -8630,11 +8624,6 @@ def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
     _check_attr_dtype("hard", hard, [bool], "gumbel_softmax")
     _check_attr_dtype("dim", dim, [int], "gumbel_softmax")
     _check_positive_float(tau, "tau", "gumbel_softmax")
-    if hard:
-        _check_int_range(dim, -1, len(logits.shape), 'dim', "gumbel_softmax")
-    else:
-        _check_int_range(dim, -len(logits.shape),
-                         len(logits.shape), 'dim', "gumbel_softmax")
 
     sample_shape = shape_(logits)
     uniform = C.uniform(sample_shape, scalar_to_tensor_(
@@ -10127,7 +10116,6 @@ def trapz(y, x=None, *, dx=1.0, dim=-1):
         raise TypeError(f"For `trapz`, the input `dim` must be int, but get {type(dim)}.")
     if not _check_is_float(y.dtype):
         y = cast_(y, mstype.float32)
-    _check_dim_in_range(dim, y.ndim)
     dim = dim + y.ndim if dim < 0 else dim
     if x is None:
         return trapezoid(y, dx, dim)

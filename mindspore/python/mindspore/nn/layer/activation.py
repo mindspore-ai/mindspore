@@ -27,7 +27,6 @@ from mindspore.ops import operations as P
 from mindspore.ops.operations import nn_ops as NN_OPS
 from mindspore.nn.cell import Cell
 from mindspore import ops
-from mindspore.ops.primitive import _primexpr
 
 __all__ = ['Softmin',
            'Softmax',
@@ -208,16 +207,7 @@ class Softmax2d(Cell):
         self.softmax = P.Softmax(axis=-3)
         self.shape = P.Shape()
 
-    @staticmethod
-    @_primexpr
-    def _check_input_dim(shape, cls_name):
-        dim = len(shape)
-        if dim not in (3, 4):
-            raise ValueError(f"For '{cls_name}', the in_shape must have 3 or 4 dims, but got {dim}.")
-
     def construct(self, x):
-        x_shape = self.shape(x)
-        self._check_input_dim(x_shape, self.cls_name)
         return self.softmax(x)
 
 

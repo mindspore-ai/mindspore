@@ -1198,20 +1198,6 @@ class AvgPool1d(_PoolNd):
         return x
 
 
-@_primexpr
-def _adaptive_shape_check(in_shape, output_size, prim_name):
-    """Check shape."""
-    msg_prefix = f"For {prim_name}, the"
-    if len(in_shape) != 3:
-        raise ValueError(f"{msg_prefix} input must has 3 dim, but got {len(in_shape)}.")
-    if in_shape[2] < output_size:
-        raise ValueError(f"{msg_prefix} input's last dimension must be greater or equal to "
-                         f"output size {output_size}, but got {in_shape[2]}.")
-    if in_shape[2] % output_size != 0:
-        raise ValueError(f"{msg_prefix} input's last dimension must be divisible by "
-                         f"output size {output_size}, but got {in_shape[2]}.")
-
-
 @constexpr
 def _adaptive_dtype_check(x_dtype, prim_name):
     """Check dtype."""
@@ -1277,7 +1263,6 @@ class AdaptiveAvgPool1d(Cell):
         self.dtype = P.DType()
 
     def construct(self, input):
-        _adaptive_shape_check(self.shape(input), self.output_size, self.cls_name)
         _adaptive_dtype_check(self.dtype(input), self.cls_name)
 
         _, _, width = self.shape(input)
@@ -1288,7 +1273,7 @@ class AdaptiveAvgPool1d(Cell):
         kernel_size = (1, kernel_size)
 
         input = self.expand(input, 2)
-        avg_pool = P.AvgPool(kernel_size=kernel_size, strides=stride)
+        avg_pool = P.AvgPool(kernel_size, stride)
         input = avg_pool(input)
         input = self.squeeze(input)
 
@@ -1495,7 +1480,6 @@ class AdaptiveMaxPool1d(Cell):
         self.dtype = P.DType()
 
     def construct(self, x):
-        _adaptive_shape_check(self.shape(x), self.output_size, self.cls_name)
         _adaptive_dtype_check(self.dtype(x), self.cls_name)
 
         _, _, width = self.shape(x)
@@ -1505,7 +1489,7 @@ class AdaptiveMaxPool1d(Cell):
         stride = (1, width // self.output_size)
         kernel_size = (1, kernel_size)
 
-        max_pool = P.MaxPool(kernel_size=kernel_size, strides=stride)
+        max_pool = P.MaxPool(kernel_size, stride)
         x = self.expand(x, 2)
         x = max_pool(x)
         x = self.squeeze(x)
