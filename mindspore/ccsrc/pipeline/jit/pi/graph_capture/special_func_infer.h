@@ -39,6 +39,7 @@ bool GuardConstCallNodeParam(CallNode *call_node, Graph *sub_graph, int max_guar
 bool JustCallAndSetRes(CallNode *call_node);
 std::unordered_map<std::string, SpecialAction> GetFuncWhiteListMap(bool trace_flag = false);
 std::vector<std::pair<CheckFunc, std::string>> GetFuncWhiteListFuzzyMatcher(bool trace_flag = false);
+const std::string GetMindsporeNamePrimitive();
 }  // namespace pijit
 }  // namespace mindspore
 
