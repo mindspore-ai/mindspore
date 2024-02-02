@@ -318,5 +318,37 @@ AbstractActor *AbstractActor::FetchSubActorInFusionActor(const std::string &sub_
   }
   return (parent_fusion_actor_->sub_actors_[sub_actor_name]).get();
 }
+
+bool AbstractActor::IsOutputAddressPersisted(const DeviceTensor *output_device_tensor,
+                                             const KernelWithIndex &output_node) {
+  MS_EXCEPTION_IF_NULL(output_node.first);
+  MS_EXCEPTION_IF_NULL(output_device_tensor);
+  // The persisted address can't be replaced.
+  if (output_device_tensor->is_ptr_persisted()) {
+    return true;
+  }
+
+  if (output_node.first->isa<ValueNode>()) {
+    return true;
+  }
+
+  // The device address of parameter may come from the device address of input tensor.
+  // In order to avoid mistakenly cleaning up the device data of input tensor, return it as persisted address.
+  if (output_node.first->isa<Parameter>()) {
+    return true;
+  }
+
+  // Ref node need check the origin node.
+  const auto &graph = AnfAlgo::FetchKernelGraph(output_node.first.get());
+  if ((graph != nullptr) && graph->IsInRefOutputMap(output_node)) {
+    const auto &origin_node = graph->GetRefCorrespondOutput(output_node).first;
+    MS_EXCEPTION_IF_NULL(origin_node);
+    if (origin_node->isa<ValueNode>() || origin_node->isa<Parameter>()) {
+      return true;
+    }
+  }
+
+  return false;
+}
 }  // namespace runtime
 }  // namespace mindspore

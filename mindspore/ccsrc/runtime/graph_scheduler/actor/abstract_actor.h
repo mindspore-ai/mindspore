@@ -195,6 +195,7 @@ class AbstractActor : public OpActor<DeviceTensor> {
                       mindspore::HashMap<std::string, std::vector<OpData<DeviceTensor> *>> *batch_output_data);
   // Fetch the sub actor in the fusion actor by the name.
   AbstractActor *FetchSubActorInFusionActor(const std::string &sub_actor_name) const;
+  bool IsOutputAddressPersisted(const DeviceTensor *output_device_tensor, const KernelWithIndex &output_node);
 
   KernelTransformType type_;
 
