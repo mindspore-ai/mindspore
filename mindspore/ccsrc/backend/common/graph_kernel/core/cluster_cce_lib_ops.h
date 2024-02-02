@@ -34,6 +34,7 @@ class ClusterCceLibOps : public GraphKernelCluster {
   std::vector<PrimitivePtr> GetClusterableOpList() override;
   bool IsClusterableOp(const AnfNodePtr &node) override;
   void CreateFuncGraph(const FuncGraphPtr &func_graph, const std::vector<size_t> &nodes_id) override;
+  void ReorderSubGraphInputs(const AnfNodePtr &custom_node, const AnfNodePtrList &old_nodes);
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_CLUSTER_CCE_LIB_OPS_H_
