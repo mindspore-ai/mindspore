@@ -362,12 +362,16 @@ CUST_OUTPUT_MAP(Diagonal) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Diagonal, prim::kPrimDiagonal->name(), CUST_ADPT_DESC(Diagonal));
 
 // FFTShift
-CUST_INPUT_MAP(FFTShift) = {{1, INPUT_DESC(x)}};
+CUST_INPUT_MAP(FFTShift) = {{1, INPUT_DESC(input)}, {2, INPUT_DESC(dim)}};
 CUST_ATTR_MAP(FFTShift) = EMPTY_ATTR_MAP;
-CUST_INPUT_ATTR_MAP(FFTShift) = {{2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>())},
-                                 {3, ATTR_DESC(forward, AnyTraits<bool>())}};
 CUST_OUTPUT_MAP(FFTShift) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(FFTShift, prim::kPrimFFTShift->name(), CUST_ADPT_DESC(FFTShift));
+
+// IFFTShift
+CUST_INPUT_MAP(IFFTShift) = {{1, INPUT_DESC(input)}, {2, INPUT_DESC(dim)}};
+CUST_ATTR_MAP(IFFTShift) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(IFFTShift) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(IFFTShift, prim::kPrimIFFTShift->name(), CUST_ADPT_DESC(IFFTShift));
 
 std::vector<std::string> mode_strings = {"pad", "same", "valid", "full"};
 // Correlate

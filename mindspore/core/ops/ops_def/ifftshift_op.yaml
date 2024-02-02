@@ -1,5 +1,5 @@
-#operator fftshift
-fftshift:
+#operator ifftshift
+ifftshift:
   args:
     input:
       dtype: tensor
@@ -11,4 +11,4 @@ fftshift:
     output:
       dtype: tensor
   class:
-    name: FFTShift
+    name: IFFTShift

@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_FFTSHIFT_H_
-#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_FFTSHIFT_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_IFFTSHIFT_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_IFFTSHIFT_H_
 
 #include <vector>
 #include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-class MIND_API FFTShiftFuncImpl : public OpFuncImpl {
+class MIND_API IFFTShiftFuncImpl : public OpFuncImpl {
  public:
-  FFTShiftFuncImpl() = default;
-  ~FFTShiftFuncImpl() = default;
+  IFFTShiftFuncImpl() = default;
+  ~IFFTShiftFuncImpl() = default;
 
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
@@ -32,4 +32,4 @@ class MIND_API FFTShiftFuncImpl : public OpFuncImpl {
 };
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_FFTSHIFT_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_IFFTSHIFT_H_
