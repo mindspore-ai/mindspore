@@ -1253,6 +1253,7 @@ AnfNodePtr PipelineTransformer::GetZeroOutputs(const FuncGraphPtr &graph) {
   }
   if (out_tuple_inputs.size() > INDEX_ONE) {
     auto out_tuple = main_graph_->NewCNode(out_tuple_inputs);
+    out_tuple->set_abstract(real_out->abstract());
     return out_tuple;
   } else {
     auto real_out_shapes = GetNodeShape(real_out);
@@ -1263,6 +1264,7 @@ AnfNodePtr PipelineTransformer::GetZeroOutputs(const FuncGraphPtr &graph) {
     } else {
       out_tensor = NewValueNode(CreateZeroseOutput(real_out, 0));
     }
+    out_tensor->set_abstract(real_out->abstract());
     return out_tensor;
   }
   return nullptr;
@@ -1434,6 +1436,7 @@ void PipelineTransformer::HandleGraphOutputs(const std::vector<AnfNodePtr> &node
   auto zero_outputs = GetZeroOutputs(main_graph_);
   std::vector<AnfNodePtr> out = {NewValueNode(prim::kPrimDepend), zero_outputs, make_tuple};
   auto out_node = main_graph_->NewCNode(out);
+  out_node->set_abstract(zero_outputs->abstract());
   (void)manager_->Replace(main_graph_->output(), out_node);
 }
 
@@ -1686,8 +1689,6 @@ void PipelineTransformer::CutGraph() {
     (void)manager_->Replace(main_graph_->output(), out_node);
     return;
   }
-  send_tag_map.clear();
-  recv_tag_map.clear();
   if (!IsLastStage()) {
     HandleGraphOutputs(send_ops);
   }
