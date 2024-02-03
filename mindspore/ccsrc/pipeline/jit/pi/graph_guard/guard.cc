@@ -183,8 +183,27 @@ void OptGuard::UpdateGuardList(GuardItemPtr item) {
   }
 }
 
-bool OptGuard::Check(const PyFrameObject *frame, bool print, std::map<size_t, PyObject *> *cache, bool perf) {
-  auto list = OptStrategy::MakeGuardItemListStrategyByFrame(frame, guardList_);
+bool OptGuard::Check(const PyFrameObject *frame, bool print, std::map<size_t, PyObject *> *cache,
+                     std::map<size_t, bool> *success, std::map<size_t, bool> *fail, bool perf) {
+  // filter failure case
+  if (fail != nullptr) {
+    for (auto item : guardMap_) {
+      if (fail->find(item.first) != fail->end()) {
+        return false;
+      }
+    }
+  }
+  std::vector<GuardItemPtr> list;
+  list.reserve(guardList_.size());
+  // filter success case
+  if (success != nullptr) {
+    for (auto item : guardList_) {
+      if (success->find(item->Info().Id()) == success->end()) {
+        list.push_back(item);
+      }
+    }
+  }
+  list = OptStrategy::MakeGuardItemListStrategyByFrame(frame, list);
   for (size_t i = 0; i < list.size(); ++i) {
     GuardItemPtr item = list[i];
     if (perf) {
@@ -196,6 +215,9 @@ bool OptGuard::Check(const PyFrameObject *frame, bool print, std::map<size_t, Py
     }
     if (!result) {
       UpdateGuardList(item);
+      if (fail != nullptr) {
+        fail->operator[](item->Info().Id()) = false;
+      }
       if (print) {
         auto trace = item->GetTrace();
         auto obj = GetObjectFromTrace(frame, trace);
@@ -206,6 +228,8 @@ bool OptGuard::Check(const PyFrameObject *frame, bool print, std::map<size_t, Py
         MS_LOG(DEBUG) << "Guard check fail:" << item->ToString();
       }
       return false;
+    } else if (success != nullptr) {
+      success->operator[](item->Info().Id()) = true;
     }
   }
   return true;

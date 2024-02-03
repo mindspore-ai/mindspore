@@ -52,9 +52,12 @@ class OptGuard {
   /// \param[in] frame python frame
   /// \param[in] print guard
   /// \param[in] cache to reuse the guard result
+  /// \param[in] success to record the items to guard successfully
+  /// \param[in] fail to record the items which fail to guard
   /// \param[in] perf to record the performance of guard
   /// \param[out] the variables have been modified
   virtual bool Check(const PyFrameObject *frame, bool print, std::map<size_t, PyObject *> *cache = nullptr,
+                     std::map<size_t, bool> *success = nullptr, std::map<size_t, bool> *fail = nullptr,
                      bool perf = false);
   /// \brief guard the variable which has trace to retrieve
   /// \param[in] frame python frame
