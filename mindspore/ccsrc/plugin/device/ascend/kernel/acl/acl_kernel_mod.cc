@@ -231,6 +231,15 @@ bool AclKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::
   return true;
 }
 
+std::vector<size_t> AclKernelMod::GetLaunchIgnoredInputAddressIdx() const {
+  static const std::map<std::string, std::vector<size_t>> launch_ignored_input_addr_idx = {{kReshapeOpName, {kIndex1}}};
+  if (launch_ignored_input_addr_idx.count(kernel_name_) > 0) {
+    return launch_ignored_input_addr_idx.at(kernel_name_);
+  } else {
+    return {};
+  }
+}
+
 void AclKernelMod::SetDeviceInfo(const std::vector<std::string> &input_device_formats,
                                  const std::vector<std::string> &output_device_formats,
                                  const std::vector<TypeId> &input_device_types,

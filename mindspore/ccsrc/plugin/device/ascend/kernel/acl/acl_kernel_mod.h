@@ -43,6 +43,9 @@ class AclKernelMod : public KernelMod {
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
+  // The input addresses that are not used in the kernel launch.
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override;
+
   void SetDeviceInfo(const std::vector<std::string> &input_device_formats,
                      const std::vector<std::string> &output_device_formats,
                      const std::vector<TypeId> &input_device_types, const std::vector<TypeId> &output_device_types);
