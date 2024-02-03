@@ -428,7 +428,7 @@ IMPLEMT_COMMON_INFERFUNC(UnsortedSegmentSumInferShape) {
   output_desc.SetShape(output_shape);
   output_desc.SetDataType(input_dtype);
   output_desc.SetShapeRange(out_range);
-  op.UpdateOutputDesc(0, output_desc);
+  op.UpdateOutputDesc("y", output_desc);
   PROFILING_PROTO_END();
   return GRAPH_SUCCESS;
 }
