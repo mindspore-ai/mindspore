@@ -302,7 +302,9 @@ VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const s
   // Run graph
   std::vector<tensor::TensorPtr> inputs;
   for (const auto &arg : args) {
-    PushInputTensor(arg, &inputs);
+    std::vector<tensor::TensorPtr> flatten_values;
+    AnfAlgo::FlattenInputArg(arg, nullptr, &flatten_values);
+    (void)std::copy(flatten_values.begin(), flatten_values.end(), std::back_inserter(inputs));
   }
 
   VectorRef outputs;
@@ -762,7 +764,8 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
 
   // Release GIL and run actor DAG.
   GilReleaseWithCheck release_gil;
-  runtime::GraphScheduler::GetInstance().Run(actor_set, input_tensors);
+  VectorRef empty_args;
+  runtime::GraphScheduler::GetInstance().Run(actor_set, input_tensors, empty_args);
 
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   graph_compiler_->Summary(graph_compiler_info.graphs_);

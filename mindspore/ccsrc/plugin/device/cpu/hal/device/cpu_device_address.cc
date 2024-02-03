@@ -208,12 +208,6 @@ bool CPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId
       return true;
     }
 
-    // If the value of host is a scalar type, then the host addr is a temporary address, which will be released after
-    // the sync ends. Therefore, if the value is a string type or whose length is less than 16, it needs to be copied.
-    const size_t kCopySize = 16;
-    if (size <= kCopySize || type == kObjectTypeString) {
-      return ((memcpy_s(GetDevicePtr(), size, host_ptr, size) != EOK) ? false : true);
-    }
     if (is_view_) {
       return CopySameTypeMem(GetDevicePtr(), size, host_ptr, size, type);
     }
