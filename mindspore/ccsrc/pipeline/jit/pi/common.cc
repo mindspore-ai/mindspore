@@ -1101,6 +1101,8 @@ static bool CheckGuard(JitCompileResults *c, const PyFrameObject *f) {
                                      "PIJitGuard");
   c->code = nullptr;
   std::map<size_t, PyObject *> cache;
+  std::map<size_t, bool> success;
+  std::map<size_t, bool> fail;
   OptOptionPtr opt = OptOption::CreateOptionByPoint(c);
   auto set = c->codehub->GetOptTarget(opt);
   set = OptStrategy::MakeGuardListStrategyByFrame(f, set);
@@ -1109,7 +1111,7 @@ static bool CheckGuard(JitCompileResults *c, const PyFrameObject *f) {
     OptGuardPtr guard = oc->GetGuard();
     bool print_guard = c->conf->GetBoolConfig(GraphJitConfig::kPrintGuard);
     if (guard != nullptr &&
-        guard->Check(f, print_guard, &cache, c->conf->GetBoolConfig(GraphJitConfig::kLogGuardPerf))) {
+        guard->Check(f, print_guard, &cache, &success, &fail, c->conf->GetBoolConfig(GraphJitConfig::kLogGuardPerf))) {
       c->code = oc;
       c->codehub->UpdateOptTarget(opt, oc);
       break;
