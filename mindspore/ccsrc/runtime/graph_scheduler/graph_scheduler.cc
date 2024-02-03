@@ -375,7 +375,7 @@ void GraphScheduler::ClearActorData(const ActorSet *actor_set) {
 
   for (auto &data_source_actor : actor_set->data_source_actors_) {
     MS_EXCEPTION_IF_NULL(data_source_actor);
-    data_source_actor->ReleaseDataNodeAddress();
+    data_source_actor->ReleaseData();
   }
 
   for (auto &super_kernel_actor : actor_set->super_kernel_actors_) {
@@ -609,7 +609,7 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
 }
 
 void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vector<TensorPtr>> &input_tensors,
-                         GraphExecutionStrategy strategy) {
+                         const VectorRef &args, GraphExecutionStrategy strategy) {
   MS_EXCEPTION_IF_NULL(actor_set);
   MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
@@ -664,7 +664,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
   }
   ActorDispatcher::set_is_multi_thread_execution(actor_set->is_multi_thread_execution_);
   double start_time = GetTime();
-  ActorDispatcher::Send(actor_set->data_prepare_actor_->GetAID(), &DataPrepareActor::PrepareData, input_tensors,
+  ActorDispatcher::Send(actor_set->data_prepare_actor_->GetAID(), &DataPrepareActor::PrepareData, input_tensors, args,
                         &op_context, GraphExecutionStrategy::kPipeline);
 
   // Get the run result.
@@ -1068,12 +1068,15 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
           MS_LOG(DEBUG) << "Init backend input node:" << input_node->DebugString() << " for host data source actor.";
         }
         MS_EXCEPTION_IF_NULL(front_node_with_index.first);
+
         // After graph partition and graph compile, multiple kernel graphs will share the same parameter. If the
         // parameter is already in the data node map, there is no need to process it again.
         if (host_queue_ds_actor->data_node_position_map_.find(std::make_pair(input_node, 0)) !=
             host_queue_ds_actor->data_node_position_map_.end()) {
           continue;
         }
+        graph_compiler_info.origin_parameters_to_backend_parameters_[front_node_with_index.first].emplace_back(
+          std::make_pair(front_node_with_index, KernelWithIndex(input_node, 0)));
         // In the scenario where multiple backend nodes correspond to the same front node, only the first backend node
         // is saved in the host queue data source actor. Particularly, the same front parameter corresponds to multiple
         // backend parameters in heterogeneous scenarios, and these heterogeneous parameters need to be placed in the
@@ -1096,28 +1099,6 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
                       << " index:" << front_node_with_index.second << " position:" << data_node_position;
         (void)front_node_position_temp_map.emplace(front_node_with_index, data_node_position);
         data_node_position++;
-      }
-    }
-
-    // The graph sink mode has no device queue data source actor.
-    if (!graph->is_graph_run_mode()) {
-      // Build device queue data source actor.
-      const auto &execution_order = graph->execution_order();
-      const auto &iter =
-        std::find_if(execution_order.begin(), execution_order.end(), [&graph_compiler_info](const CNodePtr &node) {
-          return IsDeviceQueueDSActor(node, graph_compiler_info.strategy_);
-        });
-      if (iter != execution_order.end()) {
-        auto actor_name =
-          graph_compiler_info.name_ + kDeviceDSActorNameSuffix + "_" + std::to_string(graph->graph_id());
-        MS_LOG(INFO) << "Create queue data source actor: " << actor_name;
-        auto device_queue_ds_actor = std::make_shared<DeviceQueueDataSourceActor>(
-          actor_name, 1, graph_device_context, memory_manager_aid_, debug_aid_, recorder_aid_);
-        MS_EXCEPTION_IF_NULL(device_queue_ds_actor);
-        InsertActor(device_queue_ds_actor.get());
-        (void)data_source_actors.emplace_back(device_queue_ds_actor);
-        device_queue_ds_actor->data_kernel_ = *iter;
-        device_queue_ds_actor->kernel_info_ = dynamic_cast<device::KernelInfo *>((*iter)->kernel_info());
       }
     }
   }
@@ -1316,7 +1297,7 @@ DataPrepareActorPtr GraphScheduler::BuildDataPrepareActor(const GraphCompilerInf
       auto &execution_order = graph->execution_order();
       for (auto &kernel : execution_order) {
         if (common::AnfAlgo::GetCNodeName(kernel) == kFlattenConcatOpName) {
-          data_prepare_actor->exist_flatten_concat_ = true;
+          graph_compiler_info.exist_flatten_concat_ = true;
         }
         if (!common::AnfAlgo::IsCommunicationOp(kernel)) {
           continue;

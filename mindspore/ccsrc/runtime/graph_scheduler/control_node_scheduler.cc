@@ -185,6 +185,9 @@ void ControlNodeScheduler::BuildDataSourceActorForControlNode(
     if (node_map.find(parameter_with_index) != node_map.end()) {
       continue;
     }
+    graph_compiler_info.origin_parameters_to_backend_parameters_[parameter_with_index.first].emplace_back(
+      std::make_pair(parameter_with_index, parameter_with_index));
+
     const auto &node_with_index_with_context =
       parser->FetchBackendParameterWithContextByFrontParameter(parameter_with_index);
     const auto &node_with_index = node_with_index_with_context.first;
