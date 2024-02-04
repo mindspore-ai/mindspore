@@ -138,6 +138,7 @@ class _ProcessManager:
         Runs the process manager.
 
         """
+        os.environ["RANK_SIZE"] = str(self.worker_num)
         if self.is_scale:
             response_message = _send_scale_num(self.scheduler_url, self.scale_num)
             is_first_manager = response_message
@@ -159,6 +160,8 @@ class _ProcessManager:
         Starts the scheduler node.
 
         """
+        # For Scheduler, 'RANK_ID' is always 0.
+        os.environ['RANK_ID'] = str(0)
         msn = _MetaServerNode(self.worker_num, self.master_addr, self.master_port, self.cluster_time_out,
                               _generate_cmd_args_list(self.cmd, self.cmd_args),
                               os.path.join(self.log_dir, "scheduler.log"))
@@ -169,21 +172,32 @@ class _ProcessManager:
         Starts the worker nodes.
 
         """
-        # If only one node is involved, ignore invalid 'node_rank'.
         if self.local_worker_num == self.worker_num and self.node_rank not in [0, -1]:
+            # If only one node is involved, ignore invalid 'node_rank'.
             logger.warning("All workers will be spawned on this node, "
                            f"so 'node_rank': [{self.node_rank}] will be ignored.")
+        if self.local_worker_num < self.worker_num and self.node_rank == -1:
+            logger.warning("You are running distributed job with multiple nodes but not setting '--node_rank'. So "
+                           "'rank_id' of each process will be assigned after cluster is successfully built.\n"
+                           "You can access 'RANK_ID' environment variable after calling "
+                           "'mindspore.communication.init()'")
+
         for i in range(self.local_worker_num):
             node_id, log_name = self._get_node_id_and_log_path(i)
+            if node_id is None:
+                logger.warning(f"Rank ids will be assigned automatically, "
+                               "please use 'grep -rn 'rank id:' command to check each worker log's rank id.")
+            else:
+                # If node_id is generated in '_get_node_id_and_log_path' method, export 'RANK_ID' environment variable.
+                # This is for rank_table method's compatibility consideration.
+                os.environ["RANK_ID"] = str(node_id)
+                logger.warning(f"Start worker process with rank id:{node_id}, log file:{log_name}. "
+                               "Environment variable [RANK_ID] is exported.")
+
             cgn = _ComputeGraphNode(self.worker_num, self.master_addr, self.master_port, self.cluster_time_out,
                                     node_id, _generate_cmd_args_list(self.cmd, self.cmd_args), log_name)
             process = cgn.run()
             self.cgn_processes.append(process)
-            if node_id is None:
-                logger.warning(f"Rank ids will be assigned automatically, "
-                               "please use 'grep -rn 'rank id:'' command to check each worker log's rank id.")
-            else:
-                logger.warning(f"Start worker process with rank id:{node_id}, log file:{log_name}")
 
     def heartbeat_with_scheduler(self):
         """
@@ -271,7 +285,6 @@ class _ProcessManager:
         Analyze exception logs.
         """
         scheduler_log_path = os.path.join(self.log_dir, "scheduler.log")
-        os.system(f"cat {scheduler_log_path}|grep -E 'ERROR|CRITICAL|Traceback|Error' -C 5")
         time_out_node_ids = []
         with open(scheduler_log_path, "r") as log:
             scheduler_log = log.read()
@@ -285,6 +298,7 @@ class _ProcessManager:
         # If 'time_out_node_ids' is not empty, only analyze logs of these time out nodes.
         # Unless get the error logs of all workers.
         if time_out_node_ids:
+            os.system(f"cat {scheduler_log_path}|grep -E 'ERROR|CRITICAL|Traceback|Error' -C 5")
             logger.error(f"Time out nodes are {time_out_node_ids}")
             # Get the logs which have these timeout node ids.
             grepper = lambda id: subprocess.getoutput(f"grep -rn 'This node {id}' {self.log_dir}"
