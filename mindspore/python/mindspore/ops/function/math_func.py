@@ -334,7 +334,7 @@ def addcmul(input, tensor1, tensor2, value=1):
         value (Union[Tensor, Number]): The multiplier for tensor1*tensor2. Default: ``1`` .
 
     Returns:
-        Tensor, has the same shape and dtype as x1*x2.
+        Tensor, has the same shape and dtype as tensor1*tensor2.
 
     Raises:
         TypeError: If dtype of `tensor1`, `tensor2`, `input` is not Tensor.
@@ -1258,7 +1258,7 @@ def logical_or(input, other):
         out_{i} = x_{i} \\vee y_{i}
 
     Note:
-        LogicalOr supports broadcasting.
+        logical_or supports broadcasting.
 
     Args:
         input (Union[Tensor, bool]): The first input is a bool or a tensor whose data type can be implicitly
@@ -1268,9 +1268,6 @@ def logical_or(input, other):
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
-
-    Raises:
-        NA.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1325,7 +1322,7 @@ def logical_and(input, other):
         out_{i} = input_{i} \wedge other_{i}
 
     Note:
-        LogicalAnd supports broadcasting.
+        logical_and supports broadcasting.
 
     Args:
         input (Union[Tensor, bool]): The first input is a bool or a tensor whose data type can be implicitly

@@ -1019,7 +1019,7 @@ def zeros(size, dtype=None):  # pylint: disable=redefined-outer-name
 
 def zeros_like(input, *, dtype=None):
     r"""
-    Creates a tensor filled with 0, with the same size as x, and the given dtype.
+    Creates a tensor filled with 0, with the same size as input, and the given dtype.
 
     If `dtype = None`, the tensor will have the same dtype as input `input`.
 
@@ -4930,9 +4930,9 @@ def split(tensor, split_size_or_sections, axis=0):
         TypeError: If argument `tensor` is not Tensor.
         TypeError: If argument `axis` is not Tensor.
         ValueError: If argument `axis` is out of range of :math:`[-tensor.ndim, tensor.ndim)` .
-        TypeError: If each element in 'split_size_or_sections' is not integer.
-        TypeError: If argument `indices_or_sections` is not int, tuple(int) or list(int).
-        ValueError: The sum of 'split_size_or_sections' is not equal to x.shape[axis].
+        TypeError: If each element in `split_size_or_sections` is not integer.
+        TypeError: If argument `split_size_or_sections` is not int, tuple(int) or list(int).
+        ValueError: The sum of `split_size_or_sections` is not equal to x.shape[axis].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

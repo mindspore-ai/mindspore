@@ -23,6 +23,3 @@ mindspore.ops.logical_or
 
     返回：
         Tensor，形状与广播后的shape相同，数据类型为bool。
- 
-    异常：
-        - 无。
