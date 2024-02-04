@@ -1489,7 +1489,6 @@ OperatorInfoPtr CreateOperatorInfo(const CNodePtr &cnode) {
   auto attrs = prim->attrs();
   OperatorInfoPtr op_info = OperatorInstance(prim, attrs, shape_list);
   MS_EXCEPTION_IF_NULL(op_info);
-  MS_LOG(INFO) << "shape_list.size(): " << shape_list.size();
 
   // When the 'inputs' contains numerical values for some operators, these values should be extracted from
   // ANF graph

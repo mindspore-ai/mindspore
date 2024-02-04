@@ -629,9 +629,8 @@ void InitRefMap(const FuncGraphPtr &root) {
 static void SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNodePtr, int64_t> &res, size_t rank_id) {
   MS_LOG(INFO) << "Begin set parallel shape";
   // check null for param and cnode
-  auto param_shape = parameter->Shape();
-
   MS_EXCEPTION_IF_NULL(parameter);
+  auto param_shape = parameter->Shape();
   MS_EXCEPTION_IF_NULL(param_shape);
 
   CNodePtr cnode = res.first->cast<CNodePtr>();
@@ -790,8 +789,8 @@ void ExtractGraphInformation(const std::vector<AnfNodePtr> &all_nodes) {
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
 
     OperatorInfoPtr operator_ = CreateOperatorInfo(cnode);
-    operator_->set_assigned_parallel(true);
     MS_EXCEPTION_IF_NULL(operator_);
+    operator_->set_assigned_parallel(true);
 
     if (prim->name() == RESHAPE) {
       cnode->set_user_data<OperatorInfo>(operator_);
