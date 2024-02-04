@@ -1242,29 +1242,6 @@ static void ApplyAutoJit(PyFrameObject *f) {
   (void)pi_jit_should_compile(py::cast<py::object>(code), py::dict());
 }
 
-py::list CollectGradientArguments(const PyFrameObject &frame) {
-  py::list arguments;
-
-  // Collect Positional Arguments
-  for (int index = 1; index < frame.f_code->co_argcount; index++) {
-    arguments.append(py::cast<py::object>(frame.f_localsplus[index]));
-  }
-
-  // Collect Variable Arguments
-  if ((frame.f_code->co_flags & CO_VARARGS) != 0x0) {
-    auto var_args = py::cast<py::tuple>(frame.f_localsplus[frame.f_code->co_argcount]);
-    std::for_each(var_args.begin(), var_args.end(), [&arguments](const auto &arg) { arguments.append(arg); });
-  }
-
-  // Collect Variable Arguments
-  if ((frame.f_code->co_flags & CO_VARKEYWORDS) != 0x0) {
-    auto kw_args = py::cast<py::dict>(frame.f_localsplus[frame.f_code->co_argcount + 1]);
-    std::for_each(kw_args.begin(), kw_args.end(), [&arguments](const auto &item) { arguments.append(item.second); });
-  }
-
-  return arguments;
-}
-
 #if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION < 9)
 PyObject *EvalFrame(PyFrameObject *f, int exc) {
   PyThreadState *tstate = PyThreadState_Get();
@@ -1284,15 +1261,6 @@ PyObject *EvalFrame(PyThreadState *tstate, PyFrameObject *f, int exc) {
   JitCompileResults *c = getJitCompileResults(code, false);
   if (c == nullptr) {
     auto ret = _PyEval_EvalFrameDefault(tstate, f, exc);
-    if (ret == nullptr || !IsStubTensor(ret)) {
-      return ret;
-    }
-    if (py::cast<py::object>(f->f_code->co_name).cast<std::string>() == "__call__" && f->f_code->co_argcount > 0 &&
-        f->f_localsplus[0] != nullptr && py::isinstance<PrimitivePyAdapter>(f->f_localsplus[0])) {
-      MS_EXCEPTION_IF_CHECK_FAIL(f->f_code->co_kwonlyargcount == 0, "Must not have kw only args.");
-      auto inputs = CollectGradientArguments(*f);
-      grad::FunctionNode::RecordPrimitive(py::cast<py::object>(f->f_localsplus[0]), py::cast<py::object>(ret), inputs);
-    }
     return ret;
   }
   py::object res;
@@ -1309,6 +1277,17 @@ PyObject *EvalFrame(PyThreadState *tstate, PyFrameObject *f, int exc) {
   }
   return res.inc_ref().ptr();
 }
+
+void AutoGrad(PyObject *prim, PyObject *args, PyObject *ret) {
+  if (ret == nullptr || !IsStubTensor(ret)) {
+    return;
+  }
+  if (!py::isinstance<PrimitivePyAdapter>(prim)) {
+    return;
+  }
+  grad::FunctionNode::RecordPrimitive(py::cast<py::object>(prim), py::cast<py::object>(ret), py::cast<py::list>(args));
+}
+
 }  // namespace pijit
 }  // namespace mindspore
 
