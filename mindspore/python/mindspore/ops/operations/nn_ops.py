@@ -10004,13 +10004,13 @@ class PromptFlashAttention(Primitive):
         >>> attn_mask = Tensor(np.ones((B, 1, S, S), dtype=np.float16))
         >>> pfa = P.PromptFlashAttention(N, input_layout='BNSD')
         >>> out = pfa(query, key, value, attn_mask, None, None, None, None, None, None, None, None)
-        >>> print(out[0].shape)
+        >>> print(out.shape)
         (1, 16, 256, 16)
     """
 
     @prim_attr_register
     def __init__(self, num_heads, scale_value=1.0, pre_tokens=214748647, next_tokens=0, input_layout='BSH',
-                 num_key_value_heads=1, sparse_mode=0, inner_precise=1):
+                 num_key_value_heads=0, sparse_mode=0, inner_precise=1):
         """Initialize PromptFlashAttention."""
         validator.check_value_type('num_heads', num_heads, [int], self.name)
         validator.check_value_type('scale_value', scale_value, [float], self.name)
