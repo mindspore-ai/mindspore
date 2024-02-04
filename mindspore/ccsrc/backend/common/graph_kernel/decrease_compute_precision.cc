@@ -173,6 +173,7 @@ bool DecreaseComputePrecision::Process(const FuncGraphPtr &func_graph) const {
   auto add_cast = [&func_graph](const CNodePtr &old_cnode, bool is_output, std::vector<AnfNodePtr> &new_inputs) {
     AnfNodePtrList inputs1 = {NewValueNode(prim::kPrimCast), old_cnode};
     auto cnode1 = func_graph->NewCNode(inputs1);
+    MS_EXCEPTION_IF_NULL(cnode1);
     func_graph->AddNode(cnode1);
     ShapeVector cast_shape = GetShape(old_cnode);
     auto shape_ptr = std::make_shared<abstract::Shape>(abstract::Shape(cast_shape));
@@ -180,7 +181,6 @@ bool DecreaseComputePrecision::Process(const FuncGraphPtr &func_graph) const {
     cnode1->set_abstract(new_abstract);
     cnode1->set_scope(old_cnode->scope());
     SetNodeAttrSafely(kAttrDstType, kFloat32, cnode1);
-    MS_EXCEPTION_IF_NULL(cnode1);
     cnode1->set_kernel_info(std::make_shared<device::KernelInfo>());
     std::vector<std::string> cnode_input_format = {GetFormat(old_cnode)};
     std::vector<TypeId> cnode_input_type = {kNumberTypeFloat16};
