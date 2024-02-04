@@ -816,7 +816,7 @@ class TensorTypeData : public ItemData {
   }
 
  protected:
-  virtual void SubInfo(InfoPack *info) { (*info) << tpp_->ToString(); }
+  virtual void SubInfo(InfoPack *info) { (*info) << tpp_; }
   mindspore::TypePtr tpp_;
 };
 
@@ -1062,13 +1062,8 @@ class MetaTensorData : public ItemData {
   }
 
   virtual void SubInfo(InfoPack *info) {
-    (*info) << size_t(tid_) << format_ << host_format_ << (data_type_ != nullptr);
-    if (data_type_ != nullptr) {
-      (*info) << data_type_->ToString();
-    }
-    (*info) << is_parameter_;
+    (*info) << size_t(tid_) << format_ << host_format_ << data_type_ << is_parameter_ << shape_ << is_stubtensor_;
     ParamInfoData::SubInfo(info, param_);
-    (*info) << shape_ << is_stubtensor_;
   }
 
   mindspore::TypeId tid_;
@@ -1246,10 +1241,10 @@ class TensorData : public MetaTensorData {
 
   virtual void SubInfo(InfoPack *info) {
     MetaTensorData::SubInfo(info);
-    (*info) << is_forward_output_ << init_flag_ << graph_output_ << cast_dtype_->ToString()
-            << base_shape_ptr_->ToString() << size_t(compression_type_) << tensor_name_;
-    for (auto q : quant_params_) {
-      (*info) << q->ToString();
+    (*info) << is_forward_output_ << init_flag_ << graph_output_ << cast_dtype_ << base_shape_ptr_
+            << size_t(compression_type_) << tensor_name_;
+    for (auto qp : quant_params_) {
+      (*info) << qp;
     }
   }
 
@@ -1362,9 +1357,8 @@ class MapTensorData : public TensorData {
 
   virtual void SubInfo(InfoPack *info) {
     TensorData::SubInfo(info);
-    (*info) << key_dtype_ << default_value_->ToString() << permit_filter_value_->ToString()
-            << evict_filter_value_->ToString() << value_shape_;
-    (*info) << key_tensor_->Info() << value_tensor_->Info() << status_tensor_->Info();
+    (*info) << key_dtype_ << default_value_ << permit_filter_value_ << evict_filter_value_ << value_shape_
+            << key_tensor_->Info() << value_tensor_->Info() << status_tensor_->Info();
   }
 
   mindspore::TypeId key_dtype_;
