@@ -1010,11 +1010,6 @@ class Profiler:
                            f"but got type {type(self._parallel_strategy)}, it will be set to True.")
             self._parallel_strategy = True
 
-        task_sink = os.getenv("GRAPH_OP_RUN")
-        if task_sink and task_sink == "1":
-            logger.warning(f"For '{self.__class__.__name__}', Profiling is not supported if set environment "
-                           f"'GRAPH_OP_RUN' value to 1, which means model training task is not sink.")
-
     def _set_ascend_job_id(self, ascend_job_id):
         """Set output_path for offline parsing performance data."""
         if not ascend_job_id:
@@ -1698,6 +1693,13 @@ class Profiler:
         else:
             logger.warning("The target dir already exists. "
                            "There may be some old profiling data, and they will be rewritten in the end.")
+        self._framework_path = os.path.join(self._output_path, "FRAMEWORK")
+        if not os.path.exists(self._framework_path):
+            os.makedirs(self._framework_path, exist_ok=True)
+            os.chmod(self._framework_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+        elif os.path.exists(os.path.join(self._framework_path, "op_range_" + str(self._rank_id))):
+            os.remove(self._framework_path, "op_range_" + str(self._rank_id))
+            logger.info("Clear old op range filer.")
 
     def _parser_kwargs(self, kwargs):
         """Parse kwargs vale."""
