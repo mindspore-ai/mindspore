@@ -108,6 +108,7 @@ cust_op_lists = [
     "logspace",
     "lowerbound",
     "lusolve",
+    "luunpack",
     "luunpackgrad",
     "linearsumassignment",
     "maskedselectgrad",
