@@ -40,7 +40,7 @@ from mindspore.ops.operations.nn_ops import ChannelShuffle
 from mindspore.ops.operations.nn_ops import TripletMarginLoss
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
-from mindspore.ops.auto_generate import log_softmax, prelu, celu, fast_gelu, silu, elu, sigmoid
+from mindspore.ops.auto_generate import log_softmax, prelu, celu, fast_gelu, silu, elu, sigmoid, bias_add, relu6
 
 abs_ = P.Abs()
 add_ = P.Add()
@@ -3338,50 +3338,6 @@ def relu(input):
     return relu_(input)
 
 
-def relu6(x):
-    r"""
-    Computes ReLU (Rectified Linear Unit) upper bounded by 6 of input tensors element-wise.
-
-    .. math::
-
-        \text{ReLU6}(x) = \min(\max(0,x), 6)
-
-    It returns :math:`\min(\max(0,x), 6)` element-wise.
-
-    ReLU6 Activation Function Graph:
-
-    .. image:: ../images/ReLU6.png
-        :align: center
-
-    Args:
-        x (Tensor): Tensor of shape :math:`(N, *)`,
-            where :math:`*` means any number of additional dimensions.
-            Data type must be float16, float32.
-
-    Returns:
-        Tensor, with the same dtype and shape as the `x`.
-
-    Raises:
-        TypeError: If dtype of `x` is neither float16 nor float32.
-        TypeError: If `x` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> result = ops.relu6(input_x)
-        >>> print(result)
-        [[0. 4. 0.]
-         [2. 0. 6.]]
-    """
-    relu6_ = _get_cache_prim(NN_OPS.ReLU6)()
-    return relu6_(x)
-
-
 def rrelu(input, lower=1.0 / 8, upper=1.0 / 3):
     r"""
 
@@ -5600,45 +5556,6 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
     batch_norm_op = _get_cache_prim(P.BatchNorm)(is_training=training, epsilon=eps, momentum=momentum)
     output = batch_norm_op(input_x, weight, bias, running_mean, running_var)
     return output[0]
-
-
-def bias_add(input_x, bias):
-    r"""
-    Returns the sum of the `input_x` and the `bias` Tensor. Before adding, the `bias` Tensor will be broadcasted to be
-    consistent with the shape of the `input_x` Tensor.
-
-    Args:
-        input_x (Tensor): The input tensor. The shape can be 2-5 dimensions. Supported dtypes:
-
-            - Ascend/CPU: all Number type.
-            - GPU: float16, float32, int8.
-
-        bias (Tensor): The bias tensor, with shape :math:`(C)`. C must be the same as channel dimension C of
-            `input_x`. It has the same type as `input_x`.
-
-    Returns:
-        Tensor, with the same shape and data type as `input_x`.
-
-    Raises:
-        TypeError: If `input_x` or `bias` is not a Tensor.
-        TypeError: If dtype of `input_x` and `bias` is inconsistent.
-        TypeError: If dimension of `input_x` is not in the range [2, 5].
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.arange(6).reshape((2, 3)), mindspore.float32)
-        >>> bias = Tensor(np.random.random(3).reshape((3)), mindspore.float32)
-        >>> output = ops.bias_add(input_x, bias)
-        >>> print(output.shape)
-        (2, 3)
-    """
-    bias_add_op = _get_cache_prim(P.BiasAdd)(data_format="NCHW")
-    return bias_add_op(input_x, bias)
 
 
 def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):

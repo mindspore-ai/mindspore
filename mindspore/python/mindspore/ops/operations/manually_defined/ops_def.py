@@ -922,7 +922,60 @@ class ScalarToTensor(PrimitiveWithInfer):
 
 class Tile(Primitive):
     """
-    Tile.
+    Replicates an input tensor with given multiples times.
+
+    Refer to :func:`mindspore.ops.tile` for more details.
+
+    Inputs:
+        - **input_x** (Tensor) - 1-D or higher dimensional Tensor. Set the shape of input tensor as
+          :math:`(x_1, x_2, ..., x_S)` .
+        - **multiples** (tuple[int]) - The parameter that specifies the number of replications,
+          the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
+          The length of `multiples` cannot be smaller than the length of the shape of `input_x`.
+          Only constant value is allowed.
+
+    Outputs:
+        Tensor, has the same data type as the `input_x`. Suppose the length of `multiples` is `d`,
+        the dimension of `input_x` is `input_x.dim`, and the shape of `input_x` is :math:`(x_1, x_2, ..., x_S)`.
+
+        - If `input_x.dim = d`, then the shape of their corresponding positions can be multiplied, and
+          the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_S)`.
+        - If `input_x.dim < d`, fill in multiple 1 in the length of the shape of `input_x` until their
+          lengths are consistent. Such as set the shape of `input_x` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
+          then the shape of their corresponding positions can be multiplied, and the shape of Outputs is
+          :math:`(1*y_1, ..., x_R*y_R, x_S*y_S)`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> tile = ops.Tile()
+        >>> input_x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.float32)
+        >>> multiples = (2, 3)
+        >>> output = tile(input_x, multiples)
+        >>> print(output)
+        [[1.  2.  1.  2.  1.  2.]
+         [3.  4.  3.  4.  3.  4.]
+         [1.  2.  1.  2.  1.  2.]
+         [3.  4.  3.  4.  3.  4.]]
+        >>> multiples = (2, 3, 2)
+        >>> output = tile(input_x, multiples)
+        >>> print(output)
+        [[[1. 2. 1. 2.]
+          [3. 4. 3. 4.]
+          [1. 2. 1. 2.]
+          [3. 4. 3. 4.]
+          [1. 2. 1. 2.]
+          [3. 4. 3. 4.]]
+         [[1. 2. 1. 2.]
+          [3. 4. 3. 4.]
+          [1. 2. 1. 2.]
+          [3. 4. 3. 4.]
+          [1. 2. 1. 2.]
+          [3. 4. 3. 4.]]]
     """
 
     @prim_attr_register

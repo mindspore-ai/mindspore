@@ -24,7 +24,7 @@ floor:
             >>> import mindspore
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
-            >>> x = Tensor(np.array([1.1, 2.5, -1.5]), mindspore.float32)
-            >>> output = ops.floor(x)
+            >>> input = Tensor(np.array([1.1, 2.5, -1.5]), mindspore.float32)
+            >>> output = ops.floor(input)
             >>> print(output)
             [ 1.  2. -2.]

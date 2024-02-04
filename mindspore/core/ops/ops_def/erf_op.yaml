@@ -1,7 +1,7 @@
 #operator erf
 erf:
   args:
-    x:
+    input:
       dtype: tensor
   returns:
     output:

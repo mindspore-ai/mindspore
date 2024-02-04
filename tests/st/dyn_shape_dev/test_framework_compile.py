@@ -286,7 +286,7 @@ def test_acos_unsupported_input_type(mode):
     ms.set_context(precompile_only=False, mode=mode)
     with pytest.raises(TypeError) as info:
         ACos()("str")
-    assert "Failed calling ACos with \"ACos()(x=string)\"" in str(info.value)
+    assert "Failed calling ACos with \"ACos()(input=string)\"" in str(info.value)
 
 
 @pytest.mark.level0

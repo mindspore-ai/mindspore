@@ -60,7 +60,7 @@ from mindspore import _checkparam as validator
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
 
-from mindspore.ops.auto_generate import concat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
+from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
     nonzero, reverse, transpose, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
@@ -257,59 +257,18 @@ def arange(start=0, end=None, step=1, *, dtype=None):
     return data
 
 
-def cat(tensors, axis=0):
-    r"""
-    Connect input tensors along with the given axis.
-
-    The input data is a tuple or a list of tensors. These tensors have the same rank :math:`R`.
-    Set the given axis as :math:`m`, and :math:`0 \le m < R`. Set the number of input tensors as :math:`N`.
-    For the :math:`i`-th tensor :math:`t_i`, it has the shape of :math:`(x_1, x_2, ..., x_{mi}, ..., x_R)`.
-    :math:`x_{mi}` is the :math:`m`-th dimension of the :math:`t_i`. Then, the shape of the output tensor is
-
-    .. math::
-
-        (x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)
-
-    Args:
-        tensors (Union[tuple, list]): A tuple or a list of input tensors.
-            Suppose there are two tensors in this tuple or list, namely t1 and t2.
-            To perform `concat` in the axis 0 direction, except for the :math:`0`-th axis,
-            all other dimensions should be equal, that is,
-            :math:`t1.shape[1] = t2.shape[1], t1.shape[2] = t2.shape[2], ..., t1.shape[R-1] = t2.shape[R-1]`,
-            where :math:`R` represents the rank of tensor.
-        axis (int): The specified axis, whose value is in range :math:`[-R, R)`. Default: ``0`` .
-
-    Returns:
-        Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
-        The data type is the same with `tensors`.
-
-    Raises:
-        TypeError: If `axis` is not an int.
-        ValueError: If `tensors` have different dimension of tensor.
-        ValueError: If `axis` not in range :math:`[-R, R)`.
-        RuntimeError: If tensor's shape in `tensors` except for `axis` are different.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x1 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
-        >>> input_x2 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
-        >>> output = ops.cat((input_x1, input_x2))
-        >>> print(output)
-        [[0. 1.]
-         [2. 1.]
-         [0. 1.]
-         [2. 1.]]
-        >>> output = ops.cat((input_x1, input_x2), 1)
-        >>> print(output)
-        [[0. 1. 0. 1.]
-         [2. 1. 2. 1.]]
+def concat(tensors, axis=0):
     """
-    return concat(tensors, axis)
+    Alias for :func:`mindspore.ops.cat()`.
+
+    Tutorial Examples:
+        - `Tensor - Tensor Operation <https://mindspore.cn/tutorials/en/master/beginner/tensor.html#tensor-operation>`_
+        - `Vision Transformer Image Classification - Building ViT as a whole
+          <https://mindspore.cn/tutorials/application/en/master/cv/vit.html#building-vit-as-a-whole>`_
+        - `Sentiment Classification Implemented by RNN - Dense
+          <https://mindspore.cn/tutorials/application/en/master/nlp/sentiment_analysis.html#dense>`_
+    """
+    return cat(tensors, axis)
 
 
 def eye(n, m=None, dtype=None):

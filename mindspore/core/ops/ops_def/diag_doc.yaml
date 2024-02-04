@@ -8,18 +8,18 @@ diag:
         Refer to :func:`mindspore.ops.diag` for more details.
 
         Args:
-            - **input_x** (Tensor) - The input tensor.
+            - **input** (Tensor) - The input tensor.
 
         Returns:
-            Tensor, has the same dtype as the `input_x`.
+            Tensor, has the same dtype as the `input`.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> from mindspore import Tensor, ops
-            >>> input_x = Tensor([1, 2, 3, 4]).astype('int32')
-            >>> output = ops.diag(input_x)
+            >>> input = Tensor([1, 2, 3, 4]).astype('int32')
+            >>> output = ops.diag(input)
             >>> print(output)
             [[1 0 0 0]
              [0 2 0 0]

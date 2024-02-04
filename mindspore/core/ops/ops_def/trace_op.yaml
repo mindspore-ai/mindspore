@@ -1,7 +1,7 @@
 #operator trace
 trace:
     args:
-        x:
+        input:
             dtype: tensor
     returns:
         output:

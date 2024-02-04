@@ -1,7 +1,7 @@
 #operator acos
 acos:
     args:
-        x: 
+        input:
             dtype: tensor
     returns:
         output: 

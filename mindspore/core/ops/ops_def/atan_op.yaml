@@ -1,7 +1,7 @@
 #operator atan
 atan:
     args:
-        x: 
+        input:
             dtype: tensor
     returns:
         output: 

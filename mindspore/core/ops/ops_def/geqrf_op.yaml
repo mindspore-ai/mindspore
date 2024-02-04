@@ -1,7 +1,7 @@
 #operator geqrf
 geqrf: 
     args:
-        x: 
+        input:
             dtype: tensor
     returns:
         y:

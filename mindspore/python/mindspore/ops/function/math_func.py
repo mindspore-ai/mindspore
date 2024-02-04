@@ -40,7 +40,7 @@ from mindspore.ops.operations.array_ops import MatrixSetDiagV3, Transpose
 from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh, cummax, real, conj, add, cos, cosh,
                                          matrix_exp, sqrt, rsqrt, square, trace, nextafter, abs, acos, acosh, angle,
                                          asin, asinh, atan, atan2, atanh, ceil, equal, erf, erfc, erfinv, exp, expm1,
-                                         floor, floor_div, floor_mod, gcd, greater, greater_equal, less, less_equal,
+                                         floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
                                          log, log1p, logit, neg, not_equal, pow, round)
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
@@ -886,59 +886,14 @@ def float_power(input, exponent):
     return pow(input, exponent)
 
 
-
-def floor_divide(input, other):
+def floor_div(x, y):
     """
-    Divides the first input tensor by the second input tensor element-wise and round down to the closest integer.
-
-    Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
-
-    .. math::
-
-        out_{i} = \\text{floor}( \\frac{x_i}{y_i})
-
-    where the :math:`floor` indicates the Floor operator, for more details,
-    please refer to the :class:`mindspore.ops.Floor` operator.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Args:
-        input (Union[Tensor, Number, bool]): The first input is a number or
-            a bool or a tensor whose data type is number or bool.
-        other (Union[Tensor, Number, bool]): The second input is a number or
-            a bool when the first input is a tensor, or it can be a tensor whose data type is number or bool.
-    Returns:
-        Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
-
-    Raises:
-        TypeError: If neither `input` nor `other` is a Tensor.
+    Alias for :func:`mindspore.ops.floor_divide` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> import numpy as np
-        >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
-        >>> y = Tensor(np.array([3, 3, 3]), mindspore.int32)
-        >>> output = ops.floor_divide(x, y)
-        >>> print(output)
-        [ 0  1 -1]
-        >>> x = Tensor(2.0, mindspore.float32)
-        >>> y = Tensor(2.0, mindspore.float32)
-        >>> output = ops.floor_divide(x, y)
-        >>> print(output)
-        1.0
     """
-    return tensor_floordiv(input, other)
+    return tensor_floordiv(x, y)
 
 
 def fmod(input, other):

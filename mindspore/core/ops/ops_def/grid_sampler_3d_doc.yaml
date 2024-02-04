@@ -4,7 +4,7 @@ grid_sampler_3d:
         and pixel positions in the grid. Only volume (5-D) input is supported.
     
         .. warning::
-        This is an experimental API that is subject to change or deletion.
+            This is an experimental API that is subject to change or deletion.
     
         Refer to :func:`mindspore.ops.grid_sample` for more details.
     

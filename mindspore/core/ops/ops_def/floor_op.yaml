@@ -1,7 +1,7 @@
 #operator floor
 floor:
   args:
-    x:
+    input:
       dtype: tensor
   returns:
     output:

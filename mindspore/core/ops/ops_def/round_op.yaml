@@ -1,7 +1,7 @@
 #operator round
 round:
   args:
-    x:
+    input:
       dtype: tensor
   returns:
     output:

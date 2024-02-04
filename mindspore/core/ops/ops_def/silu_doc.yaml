@@ -14,7 +14,7 @@ silu:
 
         Args:
             input (Tensor): `input` is `x` in the preceding formula. Input with the data type
-            float16 or float32.
+                float16 or float32.
 
         Returns:
             Tensor, with the same type and shape as the `input`.
