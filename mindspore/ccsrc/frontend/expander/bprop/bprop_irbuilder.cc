@@ -52,11 +52,11 @@ class BroadcastGradientArgsShapeCalc : public ShapeCalcFunctor {
     auto shape_x = inputs.at(kIndex0);
     auto shape_y = inputs.at(kIndex1);
     if (shift_ == 0) {
-      return bprop::BroadcastGradientArgs(shape_x, shape_y);
+      return BroadcastGradientArgsInferValue(shape_x, shape_y);
     } else {
       ShapeVector broadcast_shape_of_x(shape_x.begin(), shape_x.end() - shift_);
       ShapeVector broadcast_shape_of_y(shape_y.begin(), shape_y.end() - shift_);
-      return bprop::BroadcastGradientArgs(broadcast_shape_of_x, broadcast_shape_of_y);
+      return BroadcastGradientArgsInferValue(broadcast_shape_of_x, broadcast_shape_of_y);
     }
   }
   std::vector<int64_t> Infer(const ShapeArray &, const HashSet<size_t> &) const override {

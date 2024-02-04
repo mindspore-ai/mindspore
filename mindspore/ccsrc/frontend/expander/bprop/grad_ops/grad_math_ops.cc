@@ -61,7 +61,7 @@ NodePtrList IgammaBpropExpander(BpropIRBuilder *ib) {
   if (IsDynamic(sa) || IsDynamic(sx)) {
     return IgammaBpropExpanderDyn(ib);
   }
-  auto rax = BroadcastGradientArgs(sa, sx);
+  auto rax = BroadcastGradientArgsInferValue(sa, sx);
   auto ra = rax[0];
   auto rx = rax[1];
   auto partial_a = ib->Emit("IgammaGradA", {a, x});
