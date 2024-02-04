@@ -377,6 +377,9 @@ def bincount(input, weights=None, minlength=0):
     Each value in the output Tensor marks the number of occurrences of that index in `input`.
     If 'weights' is specified, the output results are weighted, i.e ``out[n] += weight[i]`` instead of ``out[n] += 1``.
 
+    Note:
+        If `input` contains negative value, the result will be undefined.
+
     Args:
         input (Tensor): 1-d input tensor.
         weights (Tensor, optional): Weights, a tensor of the same shape as `input`. Default: ``None`` .
@@ -388,7 +391,6 @@ def bincount(input, weights=None, minlength=0):
     Raises:
         TypeError: If `input` or `weights` is not a tensor.
         ValueError: If `input` is not one-dimensional, or if `input` and `weights` do not have the same shape.
-        ValueError: If `input` contains negative value.
         ValueError: If `minlength` is a negative integer.
 
     Supported Platforms:

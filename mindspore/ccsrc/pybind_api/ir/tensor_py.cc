@@ -432,7 +432,7 @@ void TensorPy::FlushFromCache(const Tensor &tensor) {
       auto hashmap_size = hashmap_tensor_ptr->shape_c()[0];
       auto host_shape = tensor.shape_c();
       auto cache_shape = cache_tensor_ptr->shape_c();
-      if (host_shape.size() != 2 && host_shape.size() != 2 && host_shape[1] != cache_shape[1]) {
+      if (host_shape.size() != 2 && cache_shape.size() != 2 && host_shape[1] != cache_shape[1]) {
         MS_LOG(EXCEPTION) << "Got host shape and cache shape invalid."
                           << "host shape:" << host_shape << ", cache shape:" << cache_shape;
       }

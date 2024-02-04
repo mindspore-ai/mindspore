@@ -188,7 +188,7 @@ void BindAndInitCacheTensor(const ParamMap &param_pair_list, const ParameterPtr 
     // init cache tensor data
     auto host_shape = host_tensor->shape_c();
     auto cache_shape = cache_tensor->shape_c();
-    if (host_shape.size() != 2 && host_shape.size() != 2 && host_shape[1] != cache_shape[1]) {
+    if (host_shape.size() != 2 && cache_shape.size() != 2 && host_shape[1] != cache_shape[1]) {
       MS_LOG(EXCEPTION) << "Got host shape and cache shape invalid."
                         << "host shape:" << host_shape << ", cache shape:" << cache_shape;
     }
