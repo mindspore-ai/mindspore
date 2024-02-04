@@ -111,6 +111,7 @@ auto call(Function f, Tuple t) {
 
 // Get output shape from acl tensor.
 ShapeVector UpdateOutputShape(const aclTensor *tensor);
+void LoadOpApiLib();
 void AclnnInit();
 void AclnnFinalize();
 
