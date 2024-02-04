@@ -64,6 +64,7 @@ class BACKEND_EXPORT DeviceContextManager {
   DeviceContextPtr GetDeviceContext(const std::string &device_target);
   void UpdateDeviceContextKey(const DeviceContextKey &old_key, const DeviceContextKey &new_key);
   void ClearDeviceContexts();
+  void ChildAfterFork();
   void WaitTaskFinishOnDevice() const;
   void UnloadPlugin();
   std::string GetErrorMsg() const;
