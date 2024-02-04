@@ -505,10 +505,16 @@ void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node
 
 std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const CNodePtr &node, bool enable_aclnn) {
   MS_EXCEPTION_IF_NULL(node);
+  // The shape op use the cpu kernel priorly.
+  static const std::set<std::string> select_host_priorly = {kShapeOpName};
+  std::string op_name = common::AnfAlgo::GetCNodeName(node);
+  if (select_host_priorly.count(op_name) != 0) {
+    return {false, op_name + " select host kernel priorly.", NotSupportError};
+  }
+
   static std::vector<std::set<std::string>> op_selected_type(4);
   transform::ErrorAclType acl_err_type = transform::ErrorAclType::kNormalOp;
   std::tuple<bool, std::string, ExceptionType> result = std::make_tuple(true, "", NoExceptionType);
-  std::string op_name = common::AnfAlgo::GetCNodeName(node);
   if (enable_aclnn && kernel::IsRegisteredAclnnOp(node)) {
     GenerateKernelBuildInfo(node, KernelType::OPAPI_KERNEL);
     if (op_selected_type[kAclnnOpSelect].count(op_name) == 0) {
