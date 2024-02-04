@@ -21,6 +21,7 @@
 #include "pipeline/jit/pi/graph_guard/infer.h"
 #include "pipeline/jit/pi/graph_capture/graph.h"
 #include "pipeline/jit/pi/graph_capture/special_func_infer.h"
+#include "pipeline/jit/pi/graph_capture/graph_build.h"
 
 namespace mindspore {
 namespace pijit {
@@ -195,6 +196,23 @@ void GraphAnalyzer::AddToEscaped(ValueNode *v) {
                              "duplicate escaped values");
   GetCaptureInfo().escaped_locals.insert(v);
   GetCaptureInfo().ordered_escaped_locals.push_back(v);
+}
+
+extern TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth);
+
+bool CheckSideEffectedFunc(ValueNode *v) {
+  std::vector<std::string> funcs{"set_enable_grad", "__enter__", "__exit__"};
+  auto str = v->getInputs()[0]->GetName();
+  bool flag = false;
+  if (v->GetType() != AbstractNode::Call) {
+    return std::find(funcs.begin(), funcs.end(), v->GetName()) != funcs.end();
+  }
+  flag = std::find(funcs.begin(), funcs.end(), str) != funcs.end();
+  if (v->getInputs()[0]->GetVobj()->GetType() == AObject::kTypeType &&
+      !CheckSupportCreateInstance(dynamic_cast<CallNode *>(v))) {
+    return flag && false;
+  }
+  return flag;
 }
 
 bool GraphAnalyzer::TryToCapture(AbstractNode *n) {
