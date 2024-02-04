@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1951,6 +1951,14 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
   py::object getattr_obj;
   const bool &is_self = ast()->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast()->IsClassMemberOfSelf(node);
   if (is_self) {
+    // Check if the current Attribute is decorated by @property.
+    py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
+    bool is_property =
+      (python_adapter::CallPyModFn(mod, PYTHON_PARSE_CHECK_ATTR_IS_PROPERTY, ast()->obj(), attr_str)).cast<bool>();
+    if (is_property) {
+      MS_LOG(EXCEPTION) << "The property decorator is not supported in graph mode.\n"
+                           "You can remove the property decorator and call the function as a method.\n";
+    }
     obj_name = "self";
     getattr_obj = ast()->obj();
     AnfNodePtr ret_node;

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2123,6 +2123,16 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
 EvalResultPtr GetClassAttrFromPyObject(const py::object &cls_obj, const std::string &cls_name,
                                        const AbstractBasePtrList &args_abs_list, const AnfNodeConfigPtr &out_conf) {
   py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+  constexpr auto item_index = 1;
+  auto item_arg = args_abs_list.at(item_index);
+  MS_EXCEPTION_IF_NULL(item_arg);
+  auto attr_name = GetValue<string>(item_arg->BuildValue());
+  bool is_property =
+    (python_adapter::CallPyModFn(mod, parse::PYTHON_PARSE_CHECK_ATTR_IS_PROPERTY, cls_obj, attr_name)).cast<bool>();
+  if (is_property) {
+    MS_LOG(EXCEPTION) << "The property decorator is not supported in graph mode.\n"
+                         "You can remove the property decorator and call the function as a method.\n";
+  }
   py::object ns_obj = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, cls_obj);
   auto ns = std::make_shared<parse::NameSpace>(parse::RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, ns_obj);
   return GetEvaluatedValueForNameSpaceString(args_abs_list, ns, out_conf, cls_name);
