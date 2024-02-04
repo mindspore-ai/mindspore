@@ -1478,10 +1478,15 @@ mindspore::abstract::AbstractTensorPtr InferWithPrim(const AbstractBasePtr &left
   }
 
   auto func = prim_func.find(opcode)->second;
-  auto eval_impl = mindspore::abstract::GetPrimitiveInferImpl(func);
-  auto infer_res = eval_impl->InferShapeAndType(nullptr, func, {left, right});
-  MS_EXCEPTION_IF_NULL(infer_res);
-  return dyn_cast<mindspore::abstract::AbstractTensor>(infer_res);
+  auto infer_res = mindspore::abstract::TryInferAbstract(func, {left, right});
+
+  if (infer_res.has_value()) {
+    MS_EXCEPTION_IF_NULL(infer_res.value());
+    return dyn_cast<mindspore::abstract::AbstractTensor>(infer_res.value());
+  } else {
+    return nullptr;
+  }
+
 }
 
 py::object TensorInferBinary(const AbstractBasePtr &left, const AbstractBasePtr &right, int opcode) {

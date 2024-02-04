@@ -29,6 +29,7 @@
 #include "pipeline/jit/ps/resource.h"
 #include "pipeline/jit/pi/pydef.h"
 #include "pipeline/jit/pi/graph_guard/guard_utils.h"
+#include "pipeline/jit/ps/parse/data_converter.h"
 
 namespace mindspore {
 namespace parse {
@@ -305,8 +306,57 @@ static bool HasTensor(py::object obj) {
   return false;
 }
 
-static AbstractBasePtrList ChangeAbstractArgList(const std::vector<PyObject *> &args, bool *has_tensor,
+ValuePtr ConvertArgByCastDtype(py::object arg, ops::OpInputArg op_arg) {
+  ValuePtr value = nullptr;
+  parse::OpDefConvertFunc convert_func = parse::GetConverterByType(static_cast<int32_t>(op_arg.arg_dtype_));
+  MS_EXCEPTION_IF_NULL(convert_func);
+  value = convert_func(arg);
+  if (value != nullptr) {
+    return value;
+  }
+  if (!op_arg.cast_dtype_.empty()) {
+    for (auto cast_dtype : op_arg.cast_dtype_) {
+      convert_func = parse::GetConverterByType(parse::CombineTypesForTypeCast(cast_dtype, op_arg.arg_dtype_));
+      MS_EXCEPTION_IF_NULL(convert_func);
+      auto value = convert_func(arg);
+      if (value != nullptr) {
+        return value;
+      }
+    }
+  }
+  return value;
+}
+
+mindspore::ValuePtr convertData(py::object param_obj, bool is_stub, ops::OpDef *op_def, size_t i) {
+  mindspore::ValuePtr converted = nullptr;
+  if (op_def != nullptr) {
+    if (op_def->args_.size() <= i) {
+      MS_LOG(EXCEPTION) << "Fail to convert the " << i << "th argument by dtype, args[" << i << "]: " << py::str(param_obj);
+      return nullptr;
+    }
+    converted = ConvertArgByCastDtype(param_obj, op_def->args_[i]);
+  }
+  if (converted) {
+    return converted;
+  }
+  if (is_stub) {
+    if (!mindspore::parse::ConvertStubData(param_obj, &converted, false, nullptr, false)) {
+      MS_LOG(EXCEPTION) << "Fail to convert the " << i << "th argument, args[" << i << "]: " << py::str(param_obj);
+      return nullptr;
+    }
+  } else {
+    if (!mindspore::parse::ConvertData(param_obj, &converted, false, nullptr, false)) {
+      MS_LOG(EXCEPTION) << "Fail to convert the " << i << "th argument, args[" << i << "]: " << py::str(param_obj);
+      return nullptr;
+    }
+  }
+  return converted;
+}
+
+
+static AbstractBasePtrList ChangeAbstractArgList(PrimitivePyPtr prim, std::vector<PyObject *> &args, bool *has_tensor,
                                                  int *monad_count) {
+  auto op_def = mindspore::ops::GetOpDef(prim->name());
   AbstractBasePtrList list;
   for (size_t i = 0; i < args.size(); ++i) {
     mindspore::ValuePtr converted = nullptr;
@@ -318,21 +368,29 @@ static AbstractBasePtrList ChangeAbstractArgList(const std::vector<PyObject *> &
       *monad_count = *monad_count + 1;
     }
     *has_tensor = HasTensor(param_obj);
-    if (is_stub) {
-      if (!mindspore::parse::ConvertStubData(param_obj, &converted, false, nullptr, false)) {
-        MS_LOG(EXCEPTION) << "Fail to convert the " << i << "th argument, args[" << i << "]: " << py::str(param_obj);
-        break;
-      }
-    } else {
-      if (!mindspore::parse::ConvertData(param_obj, &converted, false, nullptr, false)) {
-        MS_LOG(EXCEPTION) << "Fail to convert the " << i << "th argument, args[" << i << "]: " << py::str(param_obj);
-        break;
-      }
-    }
+    mindspore::ValuePtr converted = convertData(param_obj, is_stub, op_def, i);
     auto arg = mindspore::abstract::ToAbstract(converted, nullptr, nullptr);
     list.push_back(arg);
+
   }
   return list;
+}
+
+void FixOpDefAttributes(PrimitivePyPtr prim, std::vector<PyObject *> &list) {
+  auto op_def = mindspore::ops::GetOpDef(prim->name());
+  if (op_def != nullptr) {
+    auto obj = prim->GetPyObj();
+    for (const auto &op_arg : op_def->args_) {
+      if (op_arg.as_init_arg_) {
+        auto arg_name = op_arg.arg_name_;
+        py::object arg_value = py::getattr(obj, common::SafeCStr(arg_name));
+        if (arg_value.ptr() == nullptr) {
+          return;
+        }
+        list.push_back(arg_value.ptr());
+      }
+    }
+  }
 }
 
 // return new reference
@@ -343,7 +401,6 @@ PyObject *InferEngine::InferPrimitive(PyObject *primitive, const std::vector<PyO
   int monad_count = 0;
   bool has_tensor = false;
   std::vector<PyObject *> arglist = args;
-  AbstractBasePtrList list = ChangeAbstractArgList(arglist, &has_tensor, &monad_count);
   py::object adapter_obj = py::reinterpret_borrow<py::object>(primitive);
   mindspore::PrimitivePyAdapterPtr prim_adapter = adapter_obj.cast<mindspore::PrimitivePyAdapterPtr>();
   mindspore::PrimitivePyPtr prim = prim_adapter->attached_primitive();
@@ -351,18 +408,19 @@ PyObject *InferEngine::InferPrimitive(PyObject *primitive, const std::vector<PyO
     prim = std::make_shared<mindspore::PrimitivePy>(adapter_obj);
     prim_adapter->set_attached_primitive(prim);
   }
+  PyObject *special_type = InferSpecialPrimitive(primitive, arglist, prim);
+  if (special_type != nullptr) {
+    return special_type;
+  }
+  FixOpDefAttributes(prim, arglist);
+  AbstractBasePtrList list = ChangeAbstractArgList(prim, arglist, &has_tensor, &monad_count);
+
   *is_abstract = false;
-  auto eval_impl = mindspore::abstract::GetPrimitiveInferImpl(prim);
-  if (eval_impl != std::nullopt && eval_impl->Get().get() != nullptr) {
-    PyObject *special_type = InferSpecialPrimitive(primitive, arglist, prim);
-    if (special_type == nullptr) {
-      mindspore::abstract::BaseShapePtr shape = eval_impl->InferShape(prim, list);
-      mindspore::TypePtr type = eval_impl->InferType(prim, list);
-      auto pyObj = MakeObjectFromAbstract(shape, type, is_abstract);
-      return pyObj.inc_ref().ptr();
-    } else {
-      return special_type;
-    }
+  std::optional<AbstractBasePtr> opt_res = mindspore::abstract::TryInferAbstract(prim, list);
+  if (opt_res.has_value()) {
+    auto abs = opt_res.value();
+    auto pyObj = MakeObjectFromAbstract(abs->BuildShape(), abs->BuildType(), is_abstract);
+    return pyObj.inc_ref().ptr();
   } else if (prim->HasPyObj()) {
     if (py::hasattr(adapter_obj, PY_PRIM_METHOD_INFER)) {
       py::tuple py_vals(arglist.size() - monad_count);
@@ -556,11 +614,16 @@ bool InferEngine::SupportInfer(PyObject *primitive) {
     prim_adapter->set_attached_primitive(prim);
   }
   auto eval_impl = mindspore::abstract::GetPrimitiveInferImpl(prim);
+  auto op_name = prim->name();
   if (eval_impl != std::nullopt && eval_impl->Get().get() != nullptr) {
     return true;
-  } else {
-    return false;
+  };
+  auto frontend_func_impl = ops::GetOpFrontendFuncImplPtr(op_name);
+  auto op_def = ops::GetOpDef(op_name);
+  if (frontend_func_impl != nullptr || op_def != nullptr) {
+    return true;
   }
+  return false;
 }
 
 static bool CheckType(const char *mod_name, const char *type_name, bool check_sub_type, PyTypeObject *tp) {
