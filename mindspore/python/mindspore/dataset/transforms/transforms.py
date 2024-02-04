@@ -74,6 +74,11 @@ class TensorOperation:
         """
         Call method.
         """
+        # Check PIL Image with device_target
+        if (len(input_tensor_list) == 1 and is_pil(input_tensor_list[0])) and self.device_target == "Ascend":
+            raise TypeError("The input PIL Image cannot be executed on Ascend, "
+                            "you can convert the input to the numpy ndarray type.")
+
         # Check if Python implementation of op, or PIL input
         if (self.implementation == Implementation.PY) or \
                 (len(input_tensor_list) == 1 and is_pil(input_tensor_list[0]) and getattr(self, '_execute_py', None)):
