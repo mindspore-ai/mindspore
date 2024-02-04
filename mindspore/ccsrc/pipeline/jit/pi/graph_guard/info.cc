@@ -130,6 +130,22 @@ InfoPack &InfoPack::operator<<(void *v) {
   return *this;
 }
 
+InfoPack &InfoPack::operator<<(PyObject *v) {
+  info_ += std::to_string(v != nullptr ? 1 : 0) + SEP_FLAG;  
+  if (v != nullptr) {
+    info_ += std::to_string(CalcString(std::string(py::str(v)))) + SEP_FLAG;
+  }
+  return *this;
+}
+
+InfoPack &InfoPack::operator<<(mindspore::BasePtr v) {
+  info_ += std::to_string(v != nullptr ? 1 : 0) + SEP_FLAG;
+  if (v != nullptr) {
+    info_ += v->ToString();
+  }
+  return *this;
+}
+
 InfoPack &InfoPack::operator<<(const std::string &v) {
   info_ += std::to_string(CalcString(v)) + SEP_FLAG;
   return *this;
@@ -248,6 +264,22 @@ InfoPack &InfoPack::operator<<(const std::vector<void *> &v) {
   info_ += ARRAY_END_FLAG;
   info_ += SEP_FLAG;
   return *this;
+}
+
+InfoPack &InfoPack::operator<<(const std::vector<PyObject *> &v) {
+  info_ += ARRAY_BEGIN_FLAG;
+  for (auto p : v) {
+    info_ += std::to_string(p != nullptr ? 1 : 0) + SEP_FLAG;  
+    if (p != nullptr) {
+        info_ += std::to_string(CalcString(std::string(py::str(p)))) + SEP_FLAG;
+    }
+  }
+  if (info_.rfind(SEP_FLAG) == info_.size() - 1) {
+    info_ = info_.substr(0, info_.size() - 1);
+  }
+  info_ += ARRAY_END_FLAG;
+  info_ += SEP_FLAG;
+  return *this;  
 }
 
 InfoPack &InfoPack::operator<<(const InfoPack &v) {

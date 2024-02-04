@@ -373,6 +373,7 @@ const InfoPack &RootTrace::Info() {
     info.Begin();
     switch (curType_) {
       case TraceType::Global:
+        info << (!module_name_.empty());
         if (!module_name_.empty()) {
           info << module_name_ << name_;
         } else {
@@ -630,7 +631,7 @@ const InfoPack &ConstTrace::Info() {
     if (index_ != -1) {
       info << index_;
     } else {
-      info << index_ << std::string(py::str(obj_));
+      info << index_ << obj_;
     }
     info.End();
     info_ = std::make_shared<InfoPack>(info);
@@ -702,7 +703,7 @@ const InfoPack &TypeTrace::Info() {
     InfoPack info;
     info << size_t(curType_);
     info.Begin();
-    info << std::string(py::str(reinterpret_cast<PyObject *>(pType_)));
+    info << reinterpret_cast<PyObject *>(pType_);
     if (origin_ != nullptr) {
       info << origin_->Info();
     }

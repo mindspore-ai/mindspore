@@ -19,6 +19,10 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include "pybind11/pybind11.h"
+#include "mindspore/core/base/base.h"
+
+namespace py = pybind11;
 
 namespace mindspore {
 namespace pijit {
@@ -50,6 +54,8 @@ class InfoPack {
   InfoPack &operator<<(double v);
   InfoPack &operator<<(bool v);
   InfoPack &operator<<(void *v);
+  InfoPack &operator<<(PyObject *v);
+  InfoPack &operator<<(mindspore::BasePtr v);
   InfoPack &operator<<(const std::string &v);
   InfoPack &operator<<(const std::vector<int8_t> &v);
   InfoPack &operator<<(const std::vector<uint8_t> &v);
@@ -64,6 +70,7 @@ class InfoPack {
   InfoPack &operator<<(const std::vector<bool> &v);
   InfoPack &operator<<(const std::vector<std::string> &v);
   InfoPack &operator<<(const std::vector<void *> &v);
+  InfoPack &operator<<(const std::vector<PyObject *> &v);
   InfoPack &operator<<(const InfoPack &v);
 
  protected:
