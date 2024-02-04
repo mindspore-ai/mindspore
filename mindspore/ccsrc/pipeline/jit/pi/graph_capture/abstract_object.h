@@ -310,12 +310,12 @@ class AbstractTensor : public AbstractObject {
   bool is_stub_;
 };
 
-class AbstractFuncGraphOut : public AbstractObject {
+class AbstractTraceNode : public AbstractObject {
  public:
-  explicit AbstractFuncGraphOut(Type type, const py::object &o) : AbstractObject(type, o) {}
-  virtual ~AbstractFuncGraphOut() {}
+  explicit AbstractTraceNode(Type type, const py::object &o) : AbstractObject(type, o) {}
+  virtual ~AbstractTraceNode() {}
   static AObject *MakeAObject(const py::object &o) {
-    auto node = aobject_mem_pool_.New<AbstractObject>(kTypeFuncGraphOut, o);
+    auto node = aobject_mem_pool_.New<AbstractObject>(kTypeTraceNode, o);
     node->SetTypeObject(Py_TYPE(o.ptr()));
     return node;
   }

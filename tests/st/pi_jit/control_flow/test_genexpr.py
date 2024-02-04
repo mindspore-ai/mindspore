@@ -16,6 +16,7 @@
 import pytest
 import types
 from mindspore import jit
+from mindspore._c_expression import get_code_extra
 
 
 @pytest.mark.level0
@@ -27,7 +28,7 @@ def test_listcomp():
     Description: Test code <listcomp> unrolling
     Expectation: No exception.
     """
-    @jit(mode="PIJit", jit_config={"interpret_captured_code": True})
+    @jit(mode="PIJit", jit_config={"loop_unrolling": True, "kEnableGeneratorExpressionToTuple": False})
     def func(a, b, c):
         x = [a, b, c]
         a = [(k if k is None else (i for i in k))
@@ -39,3 +40,28 @@ def test_listcomp():
     assert len(x) == 2
     assert x[0] is None
     assert isinstance(x[1], types.GeneratorType)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("x", [(1, 2, 3), (1, 1, 1, 1)])
+def test_genexpr(x):
+    """
+    Feature: Generator expression unrolling
+    Description: Test code <genexpr> unrolling
+    Expectation: No exception.
+    """
+    @jit(mode="PIJit", jit_config={"kEnableEliminateUnusedOperation": True, "loop_unrolling": True,
+                                   "kEnableGeneratorExpressionToTuple": True})
+    def func(x):
+        mod = 2
+        return any(i % mod == 0 for i in x)
+
+    res = func(x)
+    jcr = get_code_extra(func)
+    new_code = jcr["code"]["compiled_code_"]
+
+    strs = {c if isinstance(c, str) else "" for c in new_code.co_consts}
+    assert all("<pijit.resume>" not in c for c in strs)
+    assert res is any(i % 2 == 0 for i in x)

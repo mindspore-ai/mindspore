@@ -26,6 +26,7 @@ namespace mindspore {
 namespace pijit {
 Graph::Graph(PyCodeObject *co, PyObject *globals, const GraphJitConfig &conf)
     : ret_val_(nullptr),
+      generator_result_(nullptr),
       co_(py::cast<py::object>(reinterpret_cast<PyObject *>(co))),
       f_globals_(py::cast<py::object>(globals)),
       conf_(conf),
@@ -169,10 +170,15 @@ const FrameStates &Graph::GetFrame(int bci) const {
   return *(iter->second);
 }
 
+static bool CheckObjPtr(ValueNode *node) {
+  return node->GetVobj() == nullptr || node->GetVobj()->GetPyObject().ptr() == nullptr;
+}
+
 TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth);
-static bool PrepareTraceParam(std::vector<ValueNode *> *inputs, TraceVector *tv, int depth, int max_depth,
-                              bool *has_unsupported, bool strict, bool print) {
-  for (auto it : *inputs) {
+static bool PrepareTraceParam(ValueNode *node, TraceVector *tv, int depth, int max_depth, bool *has_unsupported,
+                              bool strict, bool print) {
+  const std::vector<ValueNode *> &inputs = node->getInputs();
+  for (auto it : inputs) {
     auto t = GetTrace(it, strict, print, depth + 1, max_depth);
     if (t == nullptr) {
       return false;
@@ -181,69 +187,61 @@ static bool PrepareTraceParam(std::vector<ValueNode *> *inputs, TraceVector *tv,
     }
     tv->push_back(t);
   }
-  return true;
+  return !CheckObjPtr(node);
 }
 
 static bool CheckDepth(int depth, int max_depth) { return depth < max_depth || max_depth == -1; }
-
-static bool CheckObjPtr(ValueNode *node) {
-  return node->GetVobj() == nullptr || node->GetVobj()->GetPyObject().ptr() == nullptr;
-}
 
 TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth) {
   if (!CheckDepth(depth, max_depth)) {
     MS_LOG(DEBUG) << "too deep trace for guard";
     return nullptr;
   }
+  if (node->GetType() == AbstractNode::Type::Call) {
+    Graph *sub_graph = static_cast<CallNode *>(node)->GetSubGraph();
+    if (sub_graph && sub_graph->GetRetVal() != nullptr) {
+      return GetTrace(sub_graph->GetRetVal(), strict, print, depth, max_depth);
+    }
+  }
+
+  PyObject *obj = node->GetVobj() ? node->GetVobj()->GetPyObject().ptr() : nullptr;
+  int opcode = node->GetOpcode();
+  int oparg = node->GetOparg();
+  const std::string &name = node->GetName();
+  const char *module_name = node->GetGraph() ? node->GetGraph()->GetModuleName() : "";
+
   TraceVector tv;
-  ValueNode *p = node;
   bool has_unsupported = false;
-  if (!PrepareTraceParam(&(node->getInputs()), &tv, depth, max_depth, &has_unsupported, strict, print) ||
-      CheckObjPtr(node)) {
-    return strict ? nullptr : std::make_shared<UnsupportedTrace>(nullptr, tv, p->GetOpcode(), p->GetOparg());
+  if (!PrepareTraceParam(node, &tv, depth, max_depth, &has_unsupported, strict, print)) {
+    return strict ? nullptr : std::make_shared<UnsupportedTrace>(nullptr, tv, opcode, oparg);
   }
   TracePtr ret = nullptr;
   switch (node->GetType()) {
-    case AbstractNode::Type::Value: {
+    case AbstractNode::Type::Value:
       if (!has_unsupported) {
-        ret = CreateOpTrace(p->GetVobj()->GetPyObject().ptr(), p->GetOpcode(), p->GetOparg(), tv,
-                            node->GetGraph()->GetModuleName(), p->GetName(), strict, print);
+        ret = CreateOpTrace(obj, opcode, oparg, tv, module_name, name, strict, print);
       }
-      if (ret == nullptr && !strict) {
-        ret = std::make_shared<UnsupportedTrace>(p->GetVobj()->GetPyObject().ptr(), tv, p->GetOpcode(), p->GetOparg());
-      }
-      return ret;
-    } break;
-    case AbstractNode::Type::Call: {
+      break;
+    case AbstractNode::Type::Call:
       if (!has_unsupported) {
-        if (p->GetOpcode() == CALL_FUNCTION) {
-          ret = CreateOpTrace(p->GetVobj()->GetPyObject().ptr(), p->GetOpcode(), p->GetOparg(), tv,
-                              node->GetGraph()->GetModuleName(), p->getInputs()[0]->GetName(), strict, print);
-        } else {
-          ret = CreateOpTrace(p->GetVobj()->GetPyObject().ptr(), p->GetOpcode(), p->GetOparg(), tv,
-                              node->GetGraph()->GetModuleName(), p->GetName(), strict, print);
-        }
+        const std::string &func_name = node->input(0)->GetName();
+        ret = CreateOpTrace(obj, opcode, oparg, tv, module_name, func_name, strict, print);
       }
-      if (ret == nullptr && !strict) {
-        ret = std::make_shared<UnsupportedTrace>(p->GetVobj()->GetPyObject().ptr(), tv, p->GetOpcode(), p->GetOparg());
-      }
-      return ret;
-    } break;
-    case AbstractNode::Type::Param: {
-      return std::make_shared<RootTrace>(p->GetVobj()->GetPyObject().ptr(), mindspore::pijit::TraceType::Param,
-                                         p->GetOparg(), p->GetName());
-    }
-    case AbstractNode::Type::CellVar:
-    case AbstractNode::Type::FreeVar: {
-      return std::make_shared<RootTrace>(p->GetVobj()->GetPyObject().ptr(), mindspore::pijit::TraceType::Param,
-                                         p->GetOparg(), p->GetName());
-    }
+      break;
+    case AbstractNode::Type::Param:
+      return std::make_shared<RootTrace>(obj, mindspore::pijit::TraceType::Param, oparg, name);
+    case AbstractNode::Type::CellVar: /* fall-through */
+    case AbstractNode::Type::FreeVar:
+      return std::make_shared<RootTrace>(obj, mindspore::pijit::TraceType::Param, oparg, name);
     case AbstractNode::Type::Unbound:
       break;
     default:
       break;
   }
-  return nullptr;
+  if (ret == nullptr && !strict) {
+    ret = std::make_shared<UnsupportedTrace>(obj, tv, opcode, oparg);
+  }
+  return ret;
 }
 
 bool Graph::GuardValueNode(ValueNode *node) {
