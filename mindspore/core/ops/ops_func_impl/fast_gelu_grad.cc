@@ -27,7 +27,7 @@ BaseShapePtr FastGeLUGradFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr FastGeLUGradFuncImpl::InferType(const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args) const {
-  std::vector<TypeId> valid_types = {kNumberTypeFloat16, kNumberTypeFloat32};
+  std::vector<TypeId> valid_types = {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeBFloat16};
   auto tensor_type = input_args[0]->GetType()->cast<TensorTypePtr>();
   auto real_type = tensor_type->element()->type_id();
   if (std::find(valid_types.begin(), valid_types.end(), real_type) == valid_types.end()) {
