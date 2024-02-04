@@ -1834,16 +1834,20 @@ StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, 
   code->GetGuard()->Backup();
 
   auto args = call_node->GetArgs();
+  if (PyFunction_Check(func.ptr())) {
+    args = GetNewArgs(call_node);
+  }
 
-  MS_LOG(INFO) << "new subgraph->TraceRun";
+  MS_LOG(INFO) << "new subgraph->TraceRun:" << py::str(func);
   subgraph->TraceRun(args);
-  MS_LOG(INFO) << "new subgraph->TraceRun end";
+  MS_LOG(INFO) << "new subgraph->TraceRun end:" << py::str(func);
 
   call_node->SetSubGraph(subgraph->GetGraph());
   auto sg = std::dynamic_pointer_cast<MindGraphBuilder>(subgraph);
   auto sub_ret = subgraph->GetGraph()->GetRetVal();
   if (sub_ret != nullptr) {
-    if (CheckConstPyObject(sub_ret->GetVobj()->GetPyObject().ptr())) {
+    if (sub_ret->GetVobj()->GetPyObject().ptr() == nullptr ||
+        CheckConstPyObject(sub_ret->GetVobj()->GetPyObject().ptr())) {
       call_node->SetVobj(sub_ret->GetVobj());
     } else {
       sg->FGBuilder()->SetGraphName(GetFuncGraphName(func, subgraph));
@@ -2344,7 +2348,8 @@ py::object MindGraphBuilder::FGAddNode(CallNode *call_node, const py::object &ca
   }
   return py::object();
 }
-std::vector<py::object> GraphBuilder::GetNewArgs(CallNode *call_node) {
+
+std::vector<py::object> MindGraphBuilder::GetNewArgs(CallNode *call_node) {
   std::vector<py::object> new_args;
   auto new_callable_info = GetFuncInfo(call_node->input(0));
   FrameStates f;
@@ -2359,6 +2364,7 @@ std::vector<py::object> GraphBuilder::GetNewArgs(CallNode *call_node) {
                  [](ValueNode *n) { return n->GetVobj() ? n->GetVobj()->GetPyObject() : py::object(); });
   return new_args;
 }
+
 py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReason *stop_reason) {
   AObject *callable = call_node->input(0)->GetVobj();
   py::object callable_info;
@@ -2368,6 +2374,9 @@ py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReaso
     return callable_info;
   }
   callable_info = callable->GetPyObject();
+  if (callable_info.ptr() == nullptr) {
+    return py::object();
+  }
   MS_LOG(INFO) << "trace_flag for: " << py::str(callable_info);
   auto args = call_node->GetArgs();
   auto method = FGBuilder()->ConvertMethod(callable_info);
@@ -2382,6 +2391,9 @@ py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReaso
     callable_info = func;
   }
   if (FGBuilder()->CheckCallable(callable_info)) {
+    if (PyFunction_Check(callable_info.ptr())) {
+      args = GetNewArgs(call_node);
+    }
     return FGAddNode(call_node, callable_info, args, stop_reason);
   }
   if (FGBuilder()->CanConstantFoldFunc(callable_info)) {
