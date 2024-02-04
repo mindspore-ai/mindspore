@@ -115,8 +115,8 @@ class _ProcessManager:
         self.join = args.join
         self.cluster_time_out = args.cluster_time_out
 
-        self.cmd = args.training_script
-        self.cmd_args = args.training_script_args
+        self.cmd = args.task_script
+        self.cmd_args = args.task_script_args
 
         """`is_scale` flags whether the current task is a scaling task and there is already a
         manager on the current node."""
@@ -169,6 +169,10 @@ class _ProcessManager:
         Starts the worker nodes.
 
         """
+        # If only one node is involved, ignore invalid 'node_rank'.
+        if self.local_worker_num == self.worker_num and self.node_rank not in [0, -1]:
+            logger.warning("All workers will be spawned on this node, "
+                           f"so 'node_rank': [{self.node_rank}] will be ignored.")
         for i in range(self.local_worker_num):
             node_id, log_name = self._get_node_id_and_log_path(i)
             cgn = _ComputeGraphNode(self.worker_num, self.master_addr, self.master_port, self.cluster_time_out,
@@ -250,9 +254,6 @@ class _ProcessManager:
             raise ValueError(f"Total worker number is {self.worker_num}, "
                              f"but got exceeded local worker number: {self.local_worker_num}.")
         if self.local_worker_num == self.worker_num:
-            # This means only one node is involved.
-            logger.info("All workers will be spawned on this node, "
-                        f"so 'node_rank': [{self.node_rank}] will be ignored.")
             return index, os.path.join(self.log_dir, "worker_" + str(index) + ".log")
 
         if self.node_rank >= 0:
