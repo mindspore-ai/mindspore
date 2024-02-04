@@ -142,6 +142,9 @@ const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> GraphBuilde
   {JUMP_FORWARD, &GraphBuilder::TraceRunControl},
   {JUMP_ABSOLUTE, &GraphBuilder::TraceRunControl},
   {YIELD_VALUE, &GraphBuilder::DoYieldValue},
+  {POP_BLOCK, &GraphBuilder::DoException},
+  {SETUP_WITH, &GraphBuilder::DoException},
+  {SETUP_FINALLY, &GraphBuilder::DoException},
   // not implement
   {LOAD_CLASSDEREF, &GraphBuilder::NotImplementBytecode},
   {LOAD_BUILD_CLASS, &GraphBuilder::NotImplementBytecode},
@@ -152,7 +155,6 @@ const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> GraphBuilde
   {GET_ANEXT, &GraphBuilder::NotImplementBytecode},
   {YIELD_FROM, &GraphBuilder::NotImplementBytecode},
   {PRINT_EXPR, &GraphBuilder::NotImplementBytecode},
-  {POP_BLOCK, &GraphBuilder::NotImplementBytecode},
   {POP_EXCEPT, &GraphBuilder::NotImplementBytecode},
   {WITH_EXCEPT_START, &GraphBuilder::NotImplementBytecode},
   {SETUP_ANNOTATIONS, &GraphBuilder::NotImplementBytecode},
@@ -162,20 +164,18 @@ const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> GraphBuilde
   {LOAD_NAME, &GraphBuilder::NotImplementBytecode},
   {STORE_NAME, &GraphBuilder::NotImplementBytecode},
   {DELETE_NAME, &GraphBuilder::NotImplementBytecode},
-  {SETUP_WITH, &GraphBuilder::NotImplementBytecode},
-  {SETUP_FINALLY, &GraphBuilder::NotImplementBytecode},
   {JUMP_IF_NOT_EXC_MATCH, &GraphBuilder::NotImplementBytecode},
   {RERAISE, &GraphBuilder::NotImplementBytecode},
   {RAISE_VARARGS, &GraphBuilder::NotImplementBytecode},
 
 #if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 7)
   {BREAK_LOOP, &GraphBuilder::NotImplementBytecode},
-  {WITH_CLEANUP_START, &GraphBuilder::NotImplementBytecode},
-  {WITH_CLEANUP_FINISH, &GraphBuilder::NotImplementBytecode},
-  {END_FINALLY, &GraphBuilder::NotImplementBytecode},
+  {WITH_CLEANUP_START, &GraphBuilder::DoException},
+  {WITH_CLEANUP_FINISH, &GraphBuilder::DoException},
+  {END_FINALLY, &GraphBuilder::DoException},
   {CONTINUE_LOOP, &GraphBuilder::NotImplementBytecode},
   {SETUP_LOOP, &GraphBuilder::NotImplementBytecode},
-  {SETUP_EXCEPT, &GraphBuilder::NotImplementBytecode},
+  {SETUP_EXCEPT, &GraphBuilder::DoException},
   {BUILD_LIST_UNPACK, &GraphBuilder::NotImplementBytecode},
   {BUILD_MAP_UNPACK, &GraphBuilder::NotImplementBytecode},
   {BUILD_MAP_UNPACK_WITH_CALL, &GraphBuilder::NotImplementBytecode},
@@ -514,6 +514,111 @@ bool GraphBuilder::DoCellAccess(const Instr &instr) {
       return false;
   }
   return true;
+}
+
+// Parse byteCode -- SETUP_WITH
+bool GraphBuilder::DoWith(const Instr &instr) {
+  auto state = py::error_already_set();
+  if (graph_->Config().GetBoolConfig(GraphJitConfig::kSkipException) || state.type().ptr() == PyExc_RuntimeError) {
+    graph_->StopTraceAt(cur_bci_, StopTraceReason::kStopTraceSkip_Exception);
+    return false;
+  }
+  auto node = pop();
+  auto vobj = node->GetVobj();
+  auto func_enter = vobj->GetAttr("__enter__");
+  MS_EXCEPTION_IF_NULL(func_enter);
+  auto func_exit = vobj->GetAttr("__exit__");
+  MS_EXCEPTION_IF_NULL(func_exit);
+
+  auto func_node_exit = NewValueNode(func_exit, LOAD_ATTR, -1, {node});
+  func_node_exit->SetName("__exit__");
+  func_node_exit->SetLineNo(instr.bci());
+  graph_->GetTracedNodes().push_back(func_node_exit);
+  push(func_node_exit);
+
+  auto func_node_enter = NewValueNode(func_enter, LOAD_ATTR, -1, {node});
+  func_node_enter->SetName("__enter__");
+  func_node_enter->SetLineNo(instr.bci());
+  graph_->GetTracedNodes().push_back(func_node_enter);
+  push(func_node_enter);
+
+  auto newInstr = Instr(instr.bci(), CALL_FUNCTION, 0);
+  newInstr.set_line(instr.line());
+  if (!DoCall(newInstr)) {
+    MS_LOG(ERROR) << "funtion '__enter__' runs failed here, it should be successful!";
+    return false;
+  }
+  PushStack(TryBlock{SETUP_FINALLY, instr.extra_jump()->bci(), instr.bci(), True});
+  cur_bci_++;
+  return true;
+}
+
+bool GraphBuilder::DoException(const Instr &instr) {
+  int opCode = instr.op();
+  switch (opCode) {
+    case SETUP_WITH:
+      return DoWith(instr);
+    case POP_BLOCK: {
+      PopStack();
+      return true;
+    }
+    case SETUP_FINALLY: {
+      // TODO: implement try_exception
+      return false;
+    }
+#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 7)
+    case WITH_CLEANUP_START: {
+      ValueNode *exc = seek(0);
+      ValueNode *exit_func = seek(1);
+      if (exc->GetVobj()->GetType() != AObject::kTypeNone) {
+        return false;
+      }
+      if (exit_func->GetName() != "__exit__") {
+        MS_LOG(ERROR) << "it should call funtion '__exit__' here!";
+        return false;
+      }
+      // run exit func
+      push(exc);
+      push(exc);
+      auto newInstr = Instr(instr.bci(), CALL_FUNCTION, 3);
+      newInstr.set_line(instr.line());
+      if (!DoCall(newInstr)) {
+        MS_LOG(ERROR) << "funtion '__exit__' runs failed here, it should be successful!";
+        return false;
+      }
+      push(exc);
+      return true;
+    }
+    case WITH_CLEANUP_FINISH: {
+      auto exc = pop();
+      (void)pop();
+      push(exc);
+      return true;
+    }
+    case END_FINALLY: {
+      (void)pop();
+      return true;
+    }
+    case SETUP_EXCEPT: {
+      break;
+    }
+#endif
+    default:
+      break;
+  }
+  return false;
+}
+
+TryBlock &GraphBuilder::PeekStack(int p) {
+  MS_ASSERT(tryBlockStacks_.size() > p);
+  return tryBlockStacks_[tryBlockStacks_.size() - p - 1];
+}
+
+TryBlock &GraphBuilder::PopStack() {
+  MS_ASSERT(tryBlockStacks_.size() > 0);
+  auto &tb = tryBlockStacks_[tryBlockStacks_.size() - 1];
+  tryBlockStacks_.pop_back();
+  return tb;
 }
 
 bool GraphBuilder::DoGlobalAccess(const Instr &instr) {
@@ -2148,10 +2253,10 @@ ValueNode *GetBoundSelf(CallNode *call_node) {
   switch (vo->GetType()) {
     case AObject::kTypeBoundMethod: {
       self = GetSelfFromMethod(func_val);
-      AObject *tmp = func_val->get_attr(GraphBuilder::ID___self__);
-      ValueNode *node = graph->NewValueNode(tmp, LOAD_ATTR, -1, {func_val}, GraphBuilder::ID___self__);
-      node->SetGraph(call_node->GetGraph());
       if (self == nullptr) {
+        AObject *tmp = func_val->get_attr(GraphBuilder::ID___self__);
+        ValueNode *node = graph->NewValueNode(tmp, LOAD_ATTR, -1, {func_val}, GraphBuilder::ID___self__);
+        node->SetGraph(call_node->GetGraph());
         call_node->AddParam(node);
         self = node;
       }
@@ -2161,8 +2266,9 @@ ValueNode *GetBoundSelf(CallNode *call_node) {
     case AObject::kTypeAnyValue:
       self = func_val;
       break;
-    case AObject::kTypeFunction:
+    case AObject::kTypeFunction: {
       break;
+    }
     default:
       MS_LOG(INTERNAL_EXCEPTION) << "unimplemented type " << vo->ToString();
       break;
