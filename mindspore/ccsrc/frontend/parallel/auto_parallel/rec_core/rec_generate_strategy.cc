@@ -406,7 +406,7 @@ Dimensions PrepareOneHotOutputStrategy(const std::shared_ptr<OperatorInfo> &op) 
   auto op_strategy = op->selected_strategy();
   Dimensions strategy;
 
-  for (size_t i = 0; i < (size_t)op->inputs_shape().size(); i++) {
+  for (size_t i = 0; i < static_cast<size_t>(op->inputs_shape().size()); i++) {
     if (op->inputs_shape()[i].size() == 0) {
       continue;
     }
@@ -1042,13 +1042,45 @@ Dimensions CopyIncomingOperatorOutputStrategy(Graph::NodeType *node,
 Dimensions PrepareReshape(std::vector<int64_t> from_shape, std::vector<int64_t> to_shape,
                           std::vector<int64_t> from_strat) {
   Dimensions to_strat(to_shape.size(), 1);
+  std::vector<int64_t> from_shape_cpy(from_shape);
+  std::vector<int64_t> to_shape_cpy(to_shape);
   size_t from_idx = 0;
   size_t to_idx = 0;
 
+  // Attempt to assign full strategy to one dimension
   while (from_idx < from_shape.size() && to_idx < to_shape.size()) {
     if (from_shape[from_idx] > to_shape[to_idx]) {
-      to_strat[to_idx] *= std::gcd(from_strat[from_idx], to_shape[to_idx]);
-      from_strat[from_idx] /= to_strat[to_idx];
+      if (to_shape[to_idx] % from_strat[from_idx] == 0) {
+        to_strat[to_idx] *= from_strat[from_idx];
+        from_strat[from_idx] = 1;
+      }
+      from_shape[from_idx] /= to_shape[to_idx];
+      to_idx++;
+    } else if (from_shape[from_idx] < to_shape[to_idx]) {
+      to_shape[to_idx] /= from_shape[from_idx];
+      from_idx++;
+    } else {
+      if (to_shape[to_idx] % from_strat[from_idx] == 0) {
+        to_strat[to_idx] *= from_strat[from_idx];
+        from_strat[from_idx] = 1;
+      }
+      from_idx++;
+      to_idx++;
+    }
+  }
+
+  // Reset shapes & indices
+  from_idx = 0;
+  to_idx = 0;
+  from_shape = from_shape_cpy;
+  to_shape = to_shape_cpy;
+
+  // Assign remaining strategy
+  while (from_idx < from_shape.size() && to_idx < to_shape.size()) {
+    if (from_shape[from_idx] > to_shape[to_idx]) {
+      size_t d = std::gcd(from_strat[from_idx], to_shape[to_idx]);
+      to_strat[to_idx] *= d;
+      from_strat[from_idx] /= d;
       from_shape[from_idx] /= to_shape[to_idx];
       to_idx++;
     } else if (from_shape[from_idx] < to_shape[to_idx]) {
@@ -1061,9 +1093,9 @@ Dimensions PrepareReshape(std::vector<int64_t> from_shape, std::vector<int64_t> 
       to_idx++;
     }
   }
-
   return to_strat;
 }
+
 Dimensions PrepareReshapeOutputStrategy(const std::shared_ptr<OperatorInfo> &op) {
   auto output_shape = op->outputs_shape()[0];
   auto input_shape = op->inputs_shape()[0];
@@ -1260,7 +1292,7 @@ Dimensions PrepareIncomingOperatorInputStrategy(const std::shared_ptr<OperatorIn
     return PrepareOneHotOutputStrategy(op);
   }
 
-  for (size_t i = 0; i < (size_t)op->inputs_shape().size(); i++) {
+  for (size_t i = 0; i < static_cast<size_t>(op->inputs_shape().size()); i++) {
     if (op->inputs_shape()[i].size() == 0) {
       continue;
     }
@@ -1840,7 +1872,7 @@ Dimensions RecStrategyPropagator::GetDefaultStrategy(size_t i_op) {
 }
 
 bool StopPropAtOP(std::string op_type) {
-  const std::set<std::string> stop_at = {GATHERV2, ASSIGN, EXPAND_DIMS, RESHAPE};
+  const std::set<std::string> stop_at = {GATHERV2, ASSIGN, EXPAND_DIMS};
   return stop_at.find(op_type) != stop_at.end();
 }
 
@@ -2215,7 +2247,7 @@ RecStrategyPropagator::RecStrategyPropagator(const std::shared_ptr<Graph> &graph
 size_t RecStrategyPropagator::CopyMainOperatorsStrategy() {
   size_t changes = 0;
 
-  for (size_t i_op = 0; i_op < (size_t)index_list_->size(); i_op++) {
+  for (size_t i_op = 0; i_op < static_cast<size_t>(index_list_->size()); i_op++) {
     Strategies strategies;
     size_t iter_graph = index_list_->at(i_op);
     if (iter_graph != SIZE_MAX && ops_[i_op]->type() != GET_NEXT) {
@@ -2398,7 +2430,7 @@ void RecStrategyPropagator::ExtraShardMatmulOnBatchDim() {
   MS_EXCEPTION_IF_NULL(eli_list_);
   MS_EXCEPTION_IF_NULL(index_list_);
 
-  for (size_t i_op = 0; i_op < (size_t)index_list_->size(); i_op++) {
+  for (size_t i_op = 0; i_op < static_cast<size_t>(index_list_->size()); i_op++) {
     size_t iter_graph = index_list_->at(i_op);
     if (iter_graph == SIZE_MAX || ops_[i_op]->type() != MATMUL) {
       continue;
