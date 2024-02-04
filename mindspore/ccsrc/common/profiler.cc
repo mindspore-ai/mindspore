@@ -99,6 +99,16 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   {ProfilerEvent::kPyNativeGradUpdateSens, "UpdateSens"},
   {ProfilerEvent::kPyNativeGradClearTopCell, "ClearTopCell"},
   {ProfilerEvent::kPyNativeGradClearAutoGradCell, "ClearAutoGradCell"},
+  // PyBoost events
+  {ProfilerEvent::kPyBoostInferOutput, "InferOutput"},
+  {ProfilerEvent::kPyBoostInferByOpDef, "InferByOpDef"},
+  {ProfilerEvent::kPyBoostCreateOutputTensor, "CreateOutputTensor"},
+  {ProfilerEvent::kPyBoostDeviceTask, "DeviceTask"},
+  {ProfilerEvent::kPyBoostMallocInput, "MallocInput"},
+  {ProfilerEvent::kPyBoostMallocOutput, "MallocOutput"},
+  {ProfilerEvent::kPyBoostLaunchAclnn, "LaunchAclnn"},
+  // python events
+  {ProfilerEvent::kPythonObserved, "PythonObserved"},
   // Capture events
   {ProfilerEvent::kCaptureRunGraph, "CaptureRunGraph"},
   {ProfilerEvent::kCaptureProcess, "CaptureProcess"},

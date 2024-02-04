@@ -1486,7 +1486,6 @@ mindspore::abstract::AbstractTensorPtr InferWithPrim(const AbstractBasePtr &left
   } else {
     return nullptr;
   }
-
 }
 
 py::object TensorInferBinary(const AbstractBasePtr &left, const AbstractBasePtr &right, int opcode) {

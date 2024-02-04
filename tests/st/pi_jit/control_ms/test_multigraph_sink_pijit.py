@@ -193,7 +193,7 @@ def test_simple_while():
 @pytest.mark.env_onecard
 def test_while_by_while():
     """
-    Feature: while
+    Feature: while by while
     Description: Test while by while control flow
     Expectation: No exception.
     """
@@ -206,9 +206,9 @@ def test_while_by_while():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_while_in_while():
+def test_while_in_while_pi():
     """
-    Feature: while
+    Feature: while in while
     Description: Test while in while control flow
     Expectation: No exception.
     """

@@ -799,7 +799,12 @@ def test_tensor_all_construct_lack_branch():
     net(input_tensor_1, input_tensor_2)
 
 
-def test_parser_switch_layer_func_primitive():
+def test_parser_switch_layer_func_primitive_pi():
+    """
+    Feature: Switch layer.
+    Description: test switch layer.
+    Expectation: No exception.
+    """
     class FinalNet(nn.Cell):
         def __init__(self, funcs):
             super().__init__()

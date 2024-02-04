@@ -43,7 +43,7 @@ class CaseNet(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_switch_layer():
+def test_switch_layer_pi():
     """
     Feature: Switch layer.
     Description: test switch layer add function in construct.
