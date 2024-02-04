@@ -183,12 +183,12 @@ def test_softmax_dynamic_shape(mode):
     test_cell.set_inputs(x_dyn, axis)
 
     x_1 = Tensor(np.random.rand(10, 36, 12, 12).astype(np.float32))
-    out_1 = test_cell(x_1, axis)
+    out_1 = test_cell(x_1, (-1,))
     expect_shape_1 = (10, 36, 12, 12)
     assert out_1.asnumpy().shape == expect_shape_1
 
     x_2 = Tensor(np.random.rand(6, 20, 10, 10).astype(np.float32))
-    out_2 = test_cell(x_2, axis)
+    out_2 = test_cell(x_2, (-2,))
     expect_shape_2 = (6, 20, 10, 10)
     assert out_2.asnumpy().shape == expect_shape_2
 
@@ -213,12 +213,12 @@ def test_softmax_dynamic_rank(mode):
     test_cell.set_inputs(x_dyn, axis)
 
     x_1 = Tensor(np.random.rand(10, 36, 12).astype(np.float32))
-    out_1 = test_cell(x_1, axis)
+    out_1 = test_cell(x_1, -1)
     expect_shape_1 = (10, 36, 12)
     assert out_1.asnumpy().shape == expect_shape_1
 
     x_2 = Tensor(np.random.rand(6, 20, 10, 10).astype(np.float32))
-    out_2 = test_cell(x_2, axis)
+    out_2 = test_cell(x_2, -2)
     expect_shape_2 = (6, 20, 10, 10)
     assert out_2.asnumpy().shape == expect_shape_2
 
@@ -243,12 +243,12 @@ def test_softmax_backward_dynamic_shape(mode):
     test_cell.set_inputs(x_dyn, axis)
 
     x_1 = Tensor(np.random.rand(10, 36, 12, 12).astype(np.float32))
-    out_1 = test_cell(x_1, axis)
+    out_1 = test_cell(x_1, -1)
     expect_shape_1 = (10, 36, 12, 12)
     assert out_1.asnumpy().shape == expect_shape_1
 
     x_2 = Tensor(np.random.rand(6, 20, 10, 10).astype(np.float32))
-    out_2 = test_cell(x_2, axis)
+    out_2 = test_cell(x_2, -2)
     expect_shape_2 = (6, 20, 10, 10)
     assert out_2.asnumpy().shape == expect_shape_2
 
@@ -274,12 +274,12 @@ def test_softmax_backward_dynamic_rank(mode):
     test_cell.set_inputs(x_dyn, axis)
 
     x_1 = Tensor(np.random.rand(10, 36, 12).astype(np.float32))
-    out_1 = test_cell(x_1, axis)
+    out_1 = test_cell(x_1, (-1,))
     expect_shape_1 = (10, 36, 12)
     assert out_1.asnumpy().shape == expect_shape_1
 
     x_2 = Tensor(np.random.rand(6, 20, 10, 10).astype(np.float32))
-    out_2 = test_cell(x_2, axis)
+    out_2 = test_cell(x_2, (-2,))
     expect_shape_2 = (6, 20, 10, 10)
     assert out_2.asnumpy().shape == expect_shape_2
 

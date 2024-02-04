@@ -2604,7 +2604,7 @@ def softmax(input, axis=-1, *, dtype=None):
         raise TypeError(f" the type of 'axis' must be 'int', but got '{axis}' with type '{type_axis}'.")
     if dtype is not None:
         input = ops.cast(input, dtype)
-    softmax_ = _get_cache_prim(P.Softmax)(axis=axis)
+    softmax_ = _get_cache_prim(P.Softmax)(axis)
     return softmax_(input)
 
 
@@ -2652,7 +2652,7 @@ def softmin(x, axis=-1, *, dtype=None):
 
     if dtype is not None:
         x = ops.cast(x, dtype)
-    softmax_ = _get_cache_prim(P.Softmax)(axis=axis)
+    softmax_ = _get_cache_prim(P.Softmax)(axis)
     return softmax_(-1*x)
 
 
