@@ -50,6 +50,7 @@ bool DvmSupported(const AnfNodePtr &node) {
   auto input_num = AnfUtils::GetInputTensorNum(node);
   if (input_num > 0) {
     bool has_special_format = false;
+    auto is_dynamic = common::AnfAlgo::IsDynamicShape(node);
     auto base_format = cb->GetInputFormat(node, 0);
     for (size_t i = 0; i < input_num; ++i) {
       auto input_format = cb->GetInputFormat(node, i);
@@ -57,9 +58,18 @@ bool DvmSupported(const AnfNodePtr &node) {
           (input_format.find("FRACTAL") != std::string::npos || input_format.find("C0") != std::string::npos)) {
         has_special_format = true;
       }
-      if (has_special_format && input_format != base_format) {
-        // mixed special format and default format is not supported
-        return false;
+      if (has_special_format) {
+        if (input_format != base_format) {
+          // mixed special format and default format is not supported, because extra Reshape/TransData is needed
+          return false;
+        }
+        if (is_dynamic) {
+          // dvm kernel infer shape use inputs device shape, but the output abstract shape inferred from device shape is
+          // not unique if some shape value are not a multiple of 16
+          MS_LOG(DEBUG) << "skip node: " << node->fullname_with_scope()
+                        << " because only default format is supported in dynamic shape";
+          return false;
+        }
       }
     }
   }
