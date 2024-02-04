@@ -1816,7 +1816,7 @@ std::string GetFuncGraphName(const py::object &func, const GraphBuilderPtr &subg
   std::replace(func_name.begin(), func_name.end(), '.', '_');
   return func_name + "_" + std::to_string(subgraph->GetGraph()->GetCodeObj()->co_firstlineno);
 }
-}
+}  // namespace
 
 StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, const py::object &func,
                                                 const GraphBuilderPtr &subgraph) {
@@ -1855,7 +1855,7 @@ StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, 
         auto res = FGBuilder()->AddNode(sg->FGBuilder()->graph(), args);
         if (res.ptr()) {
           MS_LOG(INFO) << "add fg node suc: ";
-          call_node->SetVobj(AbstractFuncGraphOut::MakeAObject(res));
+          call_node->SetVobj(AbstractTraceNode::MakeAObject(res));
         } else {
           MS_LOG(ERROR) << "add fg node fail";
           stat = InlineReason::kInlineInfer_Fail;
@@ -2442,7 +2442,7 @@ AObject *MindGraphBuilder::HandleMultiOp(const Instr &instr, const std::vector<V
     return AObject::MakeAObject(AObject::kTypeAnyValue);
   }
   auto node = fg_builder_->AddMultiNode(op_name, input_obj);
-  return AbstractFuncGraphOut::MakeAObject(node);
+  return AbstractTraceNode::MakeAObject(node);
 }
 
 AObject *MindGraphBuilder::HandleBuildOp(const Instr &instr, const std::vector<ValueNode *> &p) {
@@ -2479,7 +2479,7 @@ AObject *MindGraphBuilder::HandleBuildOp(const Instr &instr, const std::vector<V
     }
   }
   auto node = fg_builder_->AddNode(primitive, input_obj);
-  return AbstractFuncGraphOut::MakeAObject(node);
+  return AbstractTraceNode::MakeAObject(node);
 }
 
 bool MindGraphBuilder::DoGetItem(const Instr &instr) {
