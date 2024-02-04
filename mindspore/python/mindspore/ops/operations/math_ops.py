@@ -1781,11 +1781,9 @@ class Xdivy(Primitive):
     Divides the first input tensor by the second input tensor element-wise. Returns zero when `x` is zero.
 
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
     dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
+    If one of the inputs is scalar, the scalar could only be a constant.
 
     Inputs:
         - **x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
