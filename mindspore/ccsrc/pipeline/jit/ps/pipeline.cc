@@ -2104,7 +2104,7 @@ FuncGraphPtr SplitDynamicMindIR(const std::string &file_name, size_t device_num,
       return nullptr;
     }
     pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
-    resource->set_is_load(False);
+    resource->set_is_load(false);
     resource->set_manager(func_graph_manager);
     resource->set_func_graph(tmp_func_graph);
     // Get the parameters items and add the value to args_abs.
@@ -2114,19 +2114,14 @@ FuncGraphPtr SplitDynamicMindIR(const std::string &file_name, size_t device_num,
                          [](const AnfNodePtr &p) -> AbstractBasePtr { return p->abstract(); });
     tmp_func_graph = pipeline::Renormalize(resource, tmp_func_graph, args_abs_list);
 
-  auto res = parallel::StepAssignedParallel(func_graph, func_graph_manager, device_num, rank_id, sapp);
-  if (!res) {
-    MS_LOG(ERROR) << "StepAssignedParallel failed. Please check.";
-    return nullptr;
-  }
-  resource->set_is_load(false);
-  resource->set_manager(func_graph_manager);
-  resource->set_func_graph(func_graph);
-  auto params = func_graph->parameters();
-  AbstractBasePtrList args_abs_list;
-  (void)std::transform(params.begin(), params.end(), std::back_inserter(args_abs_list),
-                       [](const AnfNodePtr &p) -> AbstractBasePtr { return p->abstract(); });
-  func_graph = pipeline::Renormalize(resource, func_graph, args_abs_list);
+#ifdef ENABLE_DUMP_IR
+    auto re_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(re_context);
+    if (re_context->CanDump(kIntroductory)) {
+      string renormalize_net_name = "Renomalize_" + std::to_string(rank_id_iter) + ".ir";
+      DumpIR(renormalize_net_name, tmp_func_graph);
+    }
+#endif
 
     parallel::HandleGroupInfo();
     string net_save_name = "split_net" + std::to_string(rank_id_iter);

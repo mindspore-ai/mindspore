@@ -319,32 +319,10 @@ EvalResultPtr ParsePyObjToFunc(const py::object &py_fn, const CNodePtr &cnode, c
   } else {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
     if (allow_fallback_runtime) {
-      return ConvertToPyExecuteCall(cnode, conf);
+      return ConvertToPyInterpretCall(cnode, conf);
     }
     MS_LOG(EXCEPTION) << "The input parameter is a function which MindSpore cannot be compiled, please check the code.";
   }
-}
-
-EvalResultPtr ConvertClassTypeToFunc(const CNodePtr &cnode, const AbstractBasePtr &abs, const AnfNodeConfigPtr &conf) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(abs);
-  auto val = abs->BuildValue();
-  MS_EXCEPTION_IF_NULL(val);
-  auto warp_obj = dyn_cast_ptr<parse::PyObjectWrapper>(val);
-  MS_EXCEPTION_IF_NULL(warp_obj);
-  py::object cls_obj = warp_obj->obj();
-  auto class_name = GetClassName(cls_obj);
-  py::object call_obj = py::none();
-  const std::string construct_func_name = "construct";
-  if (py::hasattr(cls_obj, common::SafeCStr(construct_func_name))) {
-    call_obj = py::getattr(cls_obj, common::SafeCStr(construct_func_name));
-  } else {
-    const std::string call_func_name = "__call__";
-    if (py::hasattr(cls_obj, common::SafeCStr(call_func_name))) {
-      call_obj = py::getattr(cls_obj, common::SafeCStr(call_func_name));
-    }
-  }
-  return ParsePyObjToFunc(py_fn, cnode, conf);
 }
 
 std::string GetClassName(const py::object &cls_obj) {
@@ -818,7 +796,7 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
   if (possible_func->isa<AbstractAny>()) {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
     if (allow_fallback_runtime) {
-      return ConvertToPyExecuteCall(cnode, conf);
+      return ConvertToPyInterpretCall(cnode, conf);
     }
   }
 

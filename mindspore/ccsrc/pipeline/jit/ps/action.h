@@ -57,7 +57,7 @@ FuncGraphPtr ProgramSpecialize(const abstract::AnalysisEnginePtr &engine, const 
 FuncGraphPtr Renormalize(const ResourcePtr &resource, const FuncGraphPtr &func_graph,
                          const abstract::AbstractBasePtrList &args_abs);
 FuncGraphPtr Renormalize(const ValuePtr &value, const abstract::AbstractBasePtrList &args_abs);
-void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr);
+void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr, std::string *kbk_reason = nullptr);
 AbstractBasePtr GetDefaultValueAbstract(const ParameterPtr &param);
 }  // namespace pipeline
 }  // namespace mindspore
