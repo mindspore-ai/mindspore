@@ -3,7 +3,7 @@ reverse_v2:
         Reverses specific dimensions of a tensor.
 
         .. warning::
-            The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
+            The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "x".
 
         Args:
             x (Tensor): The target tensor.
