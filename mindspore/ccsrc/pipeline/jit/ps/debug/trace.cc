@@ -360,6 +360,7 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
     ExportOneFuncGraph(fg, tagged_func_graphs[fg], buffer);
     ofs << buffer.str() << "\n\n";
   }
+
   current_context_ = nullptr;
 
   ofs << "# ===============================================================================================\n";
