@@ -4,12 +4,6 @@
 
 This example illustrates the various usages of APIs available in the [mindspore.rewrite](https://www.mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html) module.
 
-For a complete ReWrite example, refer to
-[rewrite_example.py](https://gitee.com/mindspore/mindspore/blob/master/docs/api/api_python_en/rewrite_example.py) .
-The main functions of the sample code include: how to create a SymbolTree through the network, and how to insert, delete,
-and replace the nodes in the SymbolTree. It also includes the modification of the subnet and node replacement through pattern
-matching.
-
 ## Function Introduction
 
 ReWrite module uses SymbolTree to record the forward computation of a network, where each code statement of the
