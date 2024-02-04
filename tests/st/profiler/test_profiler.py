@@ -61,6 +61,7 @@ class LeNet5(nn.Cell):
         super(LeNet5, self).__init__()
         self.num_class = num_class
         self.conv1 = conv(channel, 6, 5)
+        self.conv1.conv2d.add_prim_attr("primitive_target", "CPU")
         self.conv2 = conv(6, 16, 5)
         self.fc1 = fc_with_initialize(16 * 5 * 5, 120)
         self.fc2 = fc_with_initialize(120, 84)
