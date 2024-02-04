@@ -202,6 +202,8 @@ bool OptGuard::Check(const PyFrameObject *frame, bool print, std::map<size_t, Py
         list.push_back(item);
       }
     }
+  } else {
+    list = guardList_;
   }
   list = OptStrategy::MakeGuardItemListStrategyByFrame(frame, list);
   for (size_t i = 0; i < list.size(); ++i) {
