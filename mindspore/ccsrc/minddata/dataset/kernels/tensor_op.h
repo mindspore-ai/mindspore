@@ -89,6 +89,7 @@ constexpr char kDvppAdjustSaturationOp[] = "DvppAdjustSaturationOp";
 constexpr char kDvppCropOp[] = "kDvppCropOp";
 constexpr char kDvppDecodeOp[] = "DvppDecodeOp";
 constexpr char kDvppHorizontalFlipOp[] = "DvppHorizontalFlipOp";
+constexpr char kDvppPadOp[] = "DvppPadOp";
 constexpr char kDvppPerspectiveOp[] = "DvppPerspectiveOp";
 constexpr char kDvppResizeOp[] = "DvppResizeOp";
 constexpr char kDvppResizedCropOp[] = "DvppResizedCropOp";

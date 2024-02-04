@@ -1460,8 +1460,6 @@ def test_map_with_dvpp_normalize_exception():
         assert count == 6
     assert "The input data's channel is not 3 or 1." in str(info.value)
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
@@ -1472,7 +1470,6 @@ def test_map_with_dvpp_horizontal_flip_with_exception():
     Description: Test map with dvpp horizontal flip operation when exception
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -1540,8 +1537,6 @@ def test_map_with_dvpp_horizontal_flip_with_exception():
             count += 1
     assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(info.value)
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
@@ -1552,7 +1547,6 @@ def test_map_with_dvpp_vertical_flip_with_exception():
     Description: Test map with dvpp vertical flip operation when exception
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -1620,8 +1614,6 @@ def test_map_with_dvpp_vertical_flip_with_exception():
             count += 1
     assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(info.value)
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
@@ -1632,7 +1624,6 @@ def test_map_with_dvpp_resize_crop_with_exception():
     Description: Test map with dvpp resize crop operation when exception
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -1700,8 +1691,6 @@ def test_map_with_dvpp_resize_crop_with_exception():
             count += 1
     assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(info.value)
 
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
-
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
@@ -1712,7 +1701,6 @@ def test_map_with_dvpp_perspective_with_exception():
     Description: Test map with dvpp perspective operation when exception
     Expectation: The result is equal to the expected
     """
-    os.environ['MS_ENABLE_REF_MODE'] = "1"
     ms.set_context(device_target="Ascend")
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
@@ -1785,8 +1773,6 @@ def test_map_with_dvpp_perspective_with_exception():
         for _ in dataset3.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
     assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(info.value)
-
-    os.environ['MS_ENABLE_REF_MODE'] = "0"
 
 
 if __name__ == '__main__':

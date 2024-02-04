@@ -408,8 +408,9 @@ PYBIND_REGISTER(PadOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::PadOperation, TensorOperation, std::shared_ptr<vision::PadOperation>>(
                     *m, "PadOperation")
                     .def(py::init([](const std::vector<int32_t> &padding, const std::vector<uint8_t> &fill_value,
-                                     BorderType padding_mode) {
-                      auto pad = std::make_shared<vision::PadOperation>(padding, fill_value, padding_mode);
+                                     BorderType padding_mode, const std::string &device_target) {
+                      auto pad =
+                        std::make_shared<vision::PadOperation>(padding, fill_value, padding_mode, device_target);
                       THROW_IF_ERROR(pad->ValidateParams());
                       return pad;
                     }));

@@ -952,7 +952,7 @@ class Pad(ImageTensorOperation):
         self.padding_mode = padding_mode
 
     def parse(self):
-        return cde.PadOperation(self.padding, self.fill_value, DE_C_BORDER_TYPE.get(self.padding_mode))
+        return cde.PadOperation(self.padding, self.fill_value, DE_C_BORDER_TYPE.get(self.padding_mode), "CPU")
 
 
 class RandomAdjustSharpness(ImageTensorOperation):

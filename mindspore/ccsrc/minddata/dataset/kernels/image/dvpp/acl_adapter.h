@@ -109,6 +109,10 @@ class AclAdapter {
                           std::shared_ptr<DeviceTensorAscend910B> *output, std::vector<float> mean,
                           std::vector<float> std, bool is_hwc);
 
+  APP_ERROR DvppPad(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                    std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<int64_t> &padding,
+                    uint32_t padding_mode, const std::vector<float> &fill);
+
   APP_ERROR DvppPerspective(const std::shared_ptr<DeviceTensorAscend910B> &input,
                             std::shared_ptr<DeviceTensorAscend910B> *output,
                             const std::vector<std::vector<int32_t>> &start_points,
@@ -198,6 +202,7 @@ class AclAdapter {
   DvppDecodeFunObj dvpp_decode_fun_obj_;
   DvppHorizontalFlipFunObj dvpp_horizontal_flip_fun_obj_;
   DvppNormalizeFunObj dvpp_normalize_fun_obj_;
+  DvppPadFunObj dvpp_pad_fun_obj_;
   DvppPerspectiveFunObj dvpp_perspective_fun_obj_;
   DvppResizeFunObj dvpp_resize_fun_obj_;
   DvppResizedCropFunObj dvpp_resized_crop_fun_obj_;

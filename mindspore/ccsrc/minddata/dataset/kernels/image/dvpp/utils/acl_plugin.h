@@ -106,6 +106,10 @@ PLUGIN_METHOD(DvppNormalize, int, const std::shared_ptr<mindspore::dataset::Devi
               std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, std::vector<float>, std::vector<float>,
               bool);
 
+PLUGIN_METHOD(DvppPad, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
+              std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, const std::vector<int64_t> &, uint32_t,
+              const std::vector<float> &);
+
 PLUGIN_METHOD(DvppPerspective, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
               std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, const std::vector<std::vector<int32_t>> &,
               const std::vector<std::vector<int32_t>> &, mindspore::dataset::InterpolationMode);

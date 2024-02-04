@@ -40,6 +40,7 @@
 namespace mindspore {
 namespace dataset {
 const int kInvalidInterpolationMode = 100;
+const int kInvalidPaddingMode = 101;
 
 /// \brief Convert InterpolationMode to dvpp mode
 inline int GetDVPPInterpolationMode(InterpolationMode mode) {
@@ -54,6 +55,22 @@ inline int GetDVPPInterpolationMode(InterpolationMode mode) {
       return 1;  // dvpp NEAREST
     default:
       return kInvalidInterpolationMode;
+  }
+}
+
+/// \brief Convert Padding BorderType to dvpp mode
+inline uint32_t GetDVPPPaddingMode(BorderType type) {
+  switch (type) {
+    case BorderType::kConstant:
+      return 0;  // dvpp Constant
+    case BorderType::kEdge:
+      return 1;  // dvpp Edge
+    case BorderType::kReflect:
+      return 2;  // dvpp Reflect
+    case BorderType::kSymmetric:
+      return 3;  // dvpp Symmetric
+    default:
+      return kInvalidPaddingMode;
   }
 }
 
@@ -118,6 +135,15 @@ APP_ERROR DvppHorizontalFlip(const std::shared_ptr<DeviceTensorAscend910B> &inpu
 APP_ERROR DvppNormalize(const std::shared_ptr<DeviceTensorAscend910B> &input,
                         std::shared_ptr<DeviceTensorAscend910B> *output, std::vector<float> mean,
                         std::vector<float> std, bool is_hwc);
+
+/// \brief Returns Padded image
+/// \param input: Tensor of shape <H,W,C> format.
+/// \param padding The number of pixels to pad each border of the image [left, top, right, bottom].
+/// \param[in] padding_mode The method of padding
+/// \param[in] fill The pixel intensity of the borders
+/// \param output: Padded image (type DE_FLOAT32 or DE_UINT8)
+APP_ERROR DvppPad(const std::shared_ptr<DeviceTensorAscend910B> &input, std::shared_ptr<DeviceTensorAscend910B> *output,
+                  const std::vector<int64_t> &padding, uint32_t padding_mode, const std::vector<float> &fill);
 
 /// \brief Returns Perspective image
 /// \param input: Tensor of shape <H,W,C> format.

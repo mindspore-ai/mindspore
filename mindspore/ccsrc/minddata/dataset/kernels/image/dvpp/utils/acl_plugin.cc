@@ -376,6 +376,18 @@ APP_ERROR PluginDvppNormalize(const std::shared_ptr<mindspore::dataset::DeviceTe
   return DvppNormalize(input, output, mean, std, is_hwc);
 }
 
+APP_ERROR PluginDvppPad(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                        std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output,
+                        const std::vector<int64_t> &padding, uint32_t padding_mode, const std::vector<float> &fill) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppPad(input, output, padding, padding_mode, fill);
+}
+
 APP_ERROR PluginDvppPerspective(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
                                 std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output,
                                 const std::vector<std::vector<int32_t>> &start_points,

@@ -38,7 +38,7 @@ Status DvppCropOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &input,
   // the input should be NHWC, N is 1.
   CHECK_FAIL_RETURN_UNEXPECTED(
     input->GetShape().Rank() == kNHWCImageRank,
-    "DvppCropOp: the input tensor is not HW, HWC or 1HWC, but got: " + std::to_string(input->GetShape().Rank()));
+    "DvppCrop: the input tensor is not HW, HWC or 1HWC, but got: " + std::to_string(input->GetShape().Rank()));
 
   // crop region should not exceed image shape
   int64_t input_h = input->GetShape()[kHeightIndexNHWC];
