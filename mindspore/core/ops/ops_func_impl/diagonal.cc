@@ -53,7 +53,7 @@ BaseShapePtr DiagonalFuncImpl::InferShape(const PrimitivePtr &primitive,
   auto dim1_opt = GetScalarValue<int64_t>(input_args[2]->GetValue());
   auto dim2_opt = GetScalarValue<int64_t>(input_args[3]->GetValue());
 
-  if (!dim1_opt.has_value() || !dim1_opt.has_value()) {
+  if (!dim1_opt.has_value() || !dim2_opt.has_value()) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
   }
   auto dim1 = dim1_opt.value();
