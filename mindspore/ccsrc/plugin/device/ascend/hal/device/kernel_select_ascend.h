@@ -29,9 +29,9 @@ namespace ascend {
 void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node,
                                const std::pair<std::string, ExceptionType> &failure_info);
 
-std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const CNodePtr &node, bool enable_aclnn);
+std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const KernelGraphPtr &graph, const CNodePtr &node);
 
-bool IsEnableAclNN(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node = nullptr);
+bool IsEnableAclnn(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node);
 
 void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes);
 

@@ -47,6 +47,6 @@ bool BMMAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const 
   RunOp(stream_ptr, workspace);
   return true;
 }
-MS_ACLLNN_KERNEL_FACTORY_REG(BatchMatMul, BMMAclnnKernelMod);
+MS_ACLNN_KERNEL_FACTORY_REG(BatchMatMul, BMMAclnnKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

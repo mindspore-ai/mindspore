@@ -52,7 +52,7 @@ bool MMAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const s
   RunOp(stream_ptr, workspace);
   return true;
 }
-MS_ACLLNN_KERNEL_FACTORY_REG(MatMul, MMAclnnKernelMod);
-MS_ACLLNN_KERNEL_FACTORY_REG(MatMulV2, MMAclnnKernelMod);
+MS_ACLNN_KERNEL_FACTORY_REG(MatMul, MMAclnnKernelMod);
+MS_ACLNN_KERNEL_FACTORY_REG(MatMulV2, MMAclnnKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

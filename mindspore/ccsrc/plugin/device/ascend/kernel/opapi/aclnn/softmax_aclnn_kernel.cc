@@ -48,6 +48,6 @@ bool SoftmaxAscend::Launch(const std::vector<KernelTensor *> &inputs, const std:
   return true;
 }
 
-MS_ACLLNN_KERNEL_FACTORY_REG(Softmax, SoftmaxAscend);
+MS_ACLNN_KERNEL_FACTORY_REG(Softmax, SoftmaxAscend);
 }  // namespace kernel
 }  // namespace mindspore

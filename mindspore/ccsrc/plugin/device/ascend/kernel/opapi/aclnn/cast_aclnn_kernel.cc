@@ -33,6 +33,6 @@ bool CastAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::ve
   return true;
 }
 
-MS_ACLLNN_KERNEL_FACTORY_REG(Cast, CastAscend);
+MS_ACLNN_KERNEL_FACTORY_REG(Cast, CastAscend);
 }  // namespace kernel
 }  // namespace mindspore

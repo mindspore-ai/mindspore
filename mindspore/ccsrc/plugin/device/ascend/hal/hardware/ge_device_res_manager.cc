@@ -226,6 +226,19 @@ void GeDeviceResManager::CreateSessionAndGraphRunner() {
   transform::SetGraphRunner(graph_runner);
 }
 
+void GeDeviceResManager::SetDeviceIdToCurrentThread() const {
+  static thread_local std::once_flag is_set;
+  std::call_once(is_set, []() {
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    auto ret = aclrtSetDevice(static_cast<int32_t>(device_id));
+    if (ret != ACL_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "Device " << device_id << " call aclrtSetDevice failed, ret:" << static_cast<int>(ret);
+    }
+  });
+}
+
 bool GeDeviceResManager::BindDeviceToCurrentThread(bool force_bind) const {
   if (runtime_instance_ != nullptr) {
     if (force_bind) {

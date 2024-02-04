@@ -26,6 +26,7 @@ from pyboost_utils import AclnnUtils, get_dtypes
 
 auto_gen = ''
 
+
 def gen_h(op_name, aclnn_name, op_yaml, kernelmod_h_path, need_update_shape):
     """generate h files"""
     kernelmod_name = op_yaml.get('dispatch').get("Ascend")
@@ -68,6 +69,7 @@ class {kernelmod_name} : public AclnnKernelMod {{
     h_file.write(gen_utils.cc_license_str + h_head + h_body)
     h_file.close()
     gen_utils.check_change_and_replace_file(old_file, temp_file)
+
 
 def gen_cc(op_name, class_name, op_yaml, kernelmod_cc_path, need_update_shape):
     """generate cc files"""
@@ -147,7 +149,7 @@ void {kernelmod_name}::UpdateOutputShapeAndSize(const std::vector<KernelTensor *
         update_shape = ""
 
     reg = f"""
-MS_ACLLNN_KERNEL_FACTORY_REG({class_name}, {kernelmod_name});
+MS_ACLNN_KERNEL_FACTORY_REG({class_name}, {kernelmod_name});
 }}  // namespace kernel
 }}  // namespace mindspore
 
@@ -160,11 +162,13 @@ MS_ACLLNN_KERNEL_FACTORY_REG({class_name}, {kernelmod_name});
     cc_file.close()
     gen_utils.check_change_and_replace_file(old_file, temp_file)
 
+
 def generate(op_name, class_name, op_yaml, h_and_cc, need_update_shape):
     """generate cc and h files"""
     aclnn_name = AclnnUtils.get_aclnn_interface(class_name)
     gen_h(op_name, aclnn_name, op_yaml, h_and_cc, need_update_shape)
     gen_cc(op_name, class_name, op_yaml, h_and_cc, need_update_shape)
+
 
 def gen_aclnn_kernel(op_name, need_update_shape=False, auto=False):
     """gen_aclnn_kernel function"""
@@ -184,7 +188,7 @@ def gen_aclnn_kernel(op_name, need_update_shape=False, auto=False):
     yaml_str.update(inner_yaml_str)
     op_yaml = yaml_str.get(op_name)
     class_name = ''.join(word.capitalize() for word in op_name.split('_'))
-    if  op_yaml is None:
+    if op_yaml is None:
         raise ValueError("Input op {} is not find in ops.yaml.".format(op_name))
     dispatch = op_yaml.get("dispatch")
     if not dispatch or not dispatch.get("enable"):
@@ -207,6 +211,7 @@ def gen_aclnn_kernel(op_name, need_update_shape=False, auto=False):
     kernelmod_h_and_cc_path = os.path.join(work_path, aclnn_path + '{}_aclnn_kernel'.format(op_name))
     generate(op_name, class_name, op_yaml, kernelmod_h_and_cc_path, need_update_shape)
 
+
 def get_registed_ops(file_path='mindspore/ccsrc/plugin/device/ascend/kernel/opapi/'):
     '''get registered ops by search files'''
     # default search in 'mindspore/ccsrc/plugin/device/ascend/kernel/opapi/'
@@ -227,8 +232,10 @@ def get_registed_ops(file_path='mindspore/ccsrc/plugin/device/ascend/kernel/opap
         return ret
     return ret
 
+
 registed_ops = get_registed_ops()
 manual_registed_ops = get_registed_ops('mindspore/ccsrc/plugin/device/ascend/kernel/opapi/aclnn/')
+
 
 def check_op_registed(op_name, manual=False):
     '''if op already registered return true'''
@@ -236,6 +243,7 @@ def check_op_registed(op_name, manual=False):
     global manual_registed_ops
     class_name = ''.join(word.capitalize() for word in op_name.split('_'))
     return (class_name in manual_registed_ops) if manual else (class_name in registed_ops)
+
 
 def main(op_name, need_update_shape):
     '''main func'''
@@ -255,5 +263,5 @@ if __name__ == "__main__":
             raise ValueError("Please provide op name to generate aclnn kernelmod.")
         is_need_update_shape = options.need_update_shape
         main(name, is_need_update_shape)
-    except Exception as e: # pylint: disable=W0703
+    except Exception as e:  # pylint: disable=W0703
         logging.exception("Generate aclnn kernelmod failed, err info: %s", e)
