@@ -35,7 +35,7 @@ void AclDumpJsonWriter::Parse() {
   MS_LOG(INFO) << "Base dump path is: " << base_dump_path;
   dump_base_path_ = base_dump_path;
   acl_dump_json_path_ = base_dump_path;
-  auto dump_mode = dump_parser.dump_mode();
+  auto dump_mode = dump_parser.input_output();
   MS_LOG(INFO) << "Dump mode is: " << dump_mode;
   switch (dump_mode) {
     case 0:
