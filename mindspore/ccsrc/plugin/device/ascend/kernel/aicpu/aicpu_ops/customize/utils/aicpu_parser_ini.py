@@ -195,7 +195,6 @@ cust_op_lists = [
     "transpose",
     "tril",
     "truncatednormal",
-    "uniqueconsecutive",
     "unravelindex",
     "unsortedsegmentsum",
     "unstack",
