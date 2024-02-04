@@ -73,7 +73,7 @@ Status PromptKVCacheInfo::CheckStrategy3Dims(const Dimensions &strategy_cache, c
 
 Status PromptKVCacheInfo::CheckStrategy4Dims(const Dimensions &strategy_cache, const Dimensions &strategy_update) {
   // num_head must be the same strategy.
-  if (strategy_cache.at(1) != strategy_cache.at(1)) {
+  if (strategy_cache.at(1) != strategy_update.at(1)) {
     MS_LOG(ERROR) << name_ << " Invalid strategy: The num_head must be shard at the same time, but got"
                   << " strategy_cache's strategy: " << strategy_cache
                   << ", strategy_update's strategy: " << strategy_update;
