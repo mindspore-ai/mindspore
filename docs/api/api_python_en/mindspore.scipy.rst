@@ -44,6 +44,8 @@ mindspore.scipy.fft
 
 Fast Fourier Transform(FFT) submodule.
 
+.. automodule:: mindspore.scipy.fft
+
 .. msplatformautosummary::
     :toctree: scipy
     :nosignatures:

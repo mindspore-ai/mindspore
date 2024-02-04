@@ -28,4 +28,4 @@ cholesky:
             >>> output = ops.Cholesky()(input_x)
             >>> print(output)
             [[1. 0.]
-            [1. 1.]]
+             [1. 1.]]
