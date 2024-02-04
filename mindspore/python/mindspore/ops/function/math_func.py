@@ -281,7 +281,7 @@ def absolute(input):
 def addcdiv(input, tensor1, tensor2, value=1):
     r"""
     Performs the element-wise division of tensor tensor1 by tensor tensor2,
-    multiply the result by the scalar value and add it to input_data.
+    multiply the result by the scalar value and add it to input data.
 
     .. math::
         y[i] = input[i] + value[i] * (tensor1[i] / tensor2[i])
@@ -322,7 +322,7 @@ def addcdiv(input, tensor1, tensor2, value=1):
 def addcmul(input, tensor1, tensor2, value=1):
     r"""
     Performs the element-wise product of tensor tensor1 and tensor tensor2,
-    multiply the result by the scalar value and add it to input_data.
+    multiply the result by the scalar value and add it to input data.
 
     .. math::
         output[i] = input[i] + value[i] * (tensor1[i] * tensor2[i])

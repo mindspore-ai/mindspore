@@ -10,9 +10,10 @@ cholesky:
         Args:
             upper (bool, optional): - Flag that indicates whether to return a upper or lower triangular matrix.
                 Default: ``False`` .
+
         Inputs:
             - **input_x**  (Tensor) - Tensor of shape :math:`(*, N, N)`, where :math:`*` is zero or more batch dimensions
-            consisting of symmetric positive-definite matrices, with float32 or float64 data type.
+              consisting of symmetric positive-definite matrices, with float32 or float64 data type.
         
         Outputs:
             Tensor, has the same shape and data type as `input_x`.
