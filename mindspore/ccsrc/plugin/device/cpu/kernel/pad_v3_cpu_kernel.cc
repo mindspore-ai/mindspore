@@ -88,8 +88,10 @@ int PadV3CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
                     << ") is not valid for constant mode!";
       return KRET_RESIZE_FAILED;
     } else if (mode_ != ops::kConstant && !type->isa<TypeNone>()) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', const value(" << inputs[kIndex2]->ToString()
-                    << ") should be None for " << mode_ << " mode!";
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', the input[constant_value] is only valid when the attribute[mode] is `constant`. DO NOT set "
+                       "it in ["
+                    << mode_ << "] mode.";
       return KRET_RESIZE_FAILED;
     }
   }
