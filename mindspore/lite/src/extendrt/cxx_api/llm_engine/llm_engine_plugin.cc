@@ -21,7 +21,7 @@
 #include "mindspore/lite/src/extendrt/utils/tensor_utils.h"
 #include "mindspore/lite/src/common/common.h"
 #include "mindspore/lite/src/common/utils.h"
-#include "mindspore/lite/src/extendrt/cxx_api/llm_engine/llm_engine_mock.h"
+#include "external/llm_engine.h"
 #include "common/ge_common/ge_inner_error_codes.h"
 
 #define LLM_RUN_ASYNC
