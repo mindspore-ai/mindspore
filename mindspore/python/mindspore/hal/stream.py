@@ -69,16 +69,16 @@ class Stream(Stream_):
             >>> b = Tensor(np.ones([3, 3]), ms.float32)
             >>> s1 = ms.hal.Stream()
             >>> with ms.hal.StreamCtx(s1):
-            >>>     c = a + b
-            >>>     event = s1.record_event()
-            >>>     d = a * b
+            ...     c = a + b
+            ...     event = s1.record_event()
+            ...     d = a * b
             >>> cur_stream = ms.hal.current_stream()
             >>> cur_stream.wait_event(event)
             >>> e = c + 3
             >>> print(e)
             [[5. 5. 5.]
-            [5. 5. 5.]
-            [5. 5. 5.]]
+             [5. 5. 5.]
+             [5. 5. 5.]]
         """
         if event is None:
             event = Event()
@@ -106,16 +106,16 @@ class Stream(Stream_):
             >>> b = Tensor(np.ones([3, 3]), ms.float32)
             >>> s1 = ms.hal.Stream()
             >>> with ms.hal.StreamCtx(s1):
-            >>>     c = a + b
-            >>>     event = s1.record_event()
-            >>>     d = a * b
+            ...     c = a + b
+            ...     event = s1.record_event()
+            ...     d = a * b
             >>> cur_stream = ms.hal.current_stream()
             >>> cur_stream.wait_event(event)
             >>> e = c + 3
             >>> print(e)
             [[5. 5. 5.]
-            [5. 5. 5.]
-            [5. 5. 5.]]
+             [5. 5. 5.]
+             [5. 5. 5.]]
         """
         if not isinstance(event, Event):
             raise TypeError(f"For 'wait_event', the argument 'event' should be Event,"
@@ -144,10 +144,10 @@ class Stream(Stream_):
             >>> a = Tensor(np.ones([1, 2]), ms.float32)
             >>> b = Tensor(np.ones([2, 2]), ms.float32)
             >>> with ms.hal.StreamCtx(s1):
-            >>>     c = ops.matmul(a, b)
+            ...     c = ops.matmul(a, b)
             >>> with ms.hal.StreamCtx(s2):
-            >>>     s2.wait_stream(s1)
-            >>>     d = ops.matmul(c, b)
+            ...     s2.wait_stream(s1)
+            ...     d = ops.matmul(c, b)
             >>> ms.hal.synchronize()
             >>> print(d)
             [[4. 4.]]
@@ -169,7 +169,7 @@ class Stream(Stream_):
             >>> b = Tensor(np.ones([2048, 4096]), ms.float32)
             >>> s1 = ms.hal.Stream()
             >>> with ms.hal.StreamCtx(s1):
-            >>>     ops.matmul(a, b)
+            ...     c = ops.matmul(a, b)
             >>> s1.synchronize()
             >>> assert s1.query()
         """
@@ -191,8 +191,7 @@ class Stream(Stream_):
             >>> b = Tensor(np.ones([2048, 4096]), ms.float32)
             >>> s1 = ms.hal.Stream()
             >>> with ms.hal.StreamCtx(s1):
-            >>>     ops.matmul(a, b)
-            >>>     assert not s1.query()
+            ...     c = ops.matmul(a, b)
             >>> s1.synchronize()
             >>> assert s1.query()
         """
@@ -226,7 +225,7 @@ def synchronize():
         >>> b = Tensor(np.ones([2048, 4096]), ms.float32)
         >>> s1 = ms.hal.Stream()
         >>> with ms.hal.StreamCtx(s1):
-        >>>     ops.matmul(a, b)
+        ...     c = ops.matmul(a, b)
         >>> ms.hal.synchronize()
         >>> assert s1.query()
     """
@@ -251,6 +250,7 @@ def set_cur_stream(stream):
         >>> s1 = ms.hal.Stream()
         >>> ms.hal.set_cur_stream(s1)
         >>> assert ms.hal.current_stream() == s1
+        >>> ms.hal.set_cur_stream(ms.hal.default_stream())
     """
     if stream is None:
         return
@@ -270,9 +270,6 @@ def current_stream():
         >>> import mindspore as ms
         >>> cur_stream = ms.hal.current_stream()
         >>> assert cur_stream == ms.hal.default_stream()
-        >>> s1 = ms.hal.Stream()
-        >>> ms.hal.set_cur_stream(s1)
-        >>> assert ms.hal.current_stream() == s1
     """
     return Stream(stream=current_stream_())
 
@@ -287,9 +284,6 @@ def default_stream():
         >>> import mindspore as ms
         >>> cur_stream = ms.hal.current_stream()
         >>> assert cur_stream == ms.hal.default_stream()
-        >>> s1 = ms.hal.Stream()
-        >>> ms.hal.set_cur_stream(s1)
-        >>> assert ms.hal.default_stream() != s1
     """
     return Stream(stream=default_stream_())
 
@@ -314,7 +308,7 @@ class StreamCtx():
         >>> b = Tensor(np.ones([2048, 4096]), ms.float32)
         >>> s1 = ms.hal.Stream()
         >>> with ms.hal.StreamCtx(s1):
-        >>>     ops.matmul(a, b)
+        ...     c = ops.matmul(a, b)
         >>> ms.hal.synchronize()
         >>> assert s1.query()
     """

@@ -287,6 +287,7 @@ AbstractBasePtr InferOperation::GetInputTupleValueAbstract(const FrontendOpRunIn
 
 AbstractBasePtr InferOperation::GetAbstractByValue(const ValuePtr &value, size_t input_index,
                                                    const std::string &input_id) {
+  MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::Tensor>()) {
     auto cache_abs = GetNodeAbsById(input_id);
     if (cache_abs != nullptr) {
@@ -296,7 +297,6 @@ AbstractBasePtr InferOperation::GetAbstractByValue(const ValuePtr &value, size_t
   }
 
   // Get abstract by input value.
-  MS_EXCEPTION_IF_NULL(value);
   const auto &abs = value->ToAbstract();
   if (value->isa<tensor::Tensor>()) {
     SetNodeAbsById(input_id, PyNativeAlgo::Common::SetAbstractValueToAnyValue(abs));
@@ -308,10 +308,10 @@ void InferOperation::InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info
   // Step 1 : Infer output abstract.
   MS_EXCEPTION_IF_NULL(op_run_info);
   PynativeInfer(op_run_info);
+  MS_EXCEPTION_IF_NULL(op_run_info->base_op_run_info.abstract);
   MS_LOG(DEBUG) << "Op " << op_run_info->base_op_run_info.op_name
                 << " infer result: " << op_run_info->base_op_run_info.abstract->ToString();
   // Step 2: Check whether output shape is dynamic.
-  MS_EXCEPTION_IF_NULL(op_run_info->base_op_run_info.abstract);
   const auto &shape = op_run_info->base_op_run_info.abstract->BuildShape();
   MS_EXCEPTION_IF_NULL(shape);
   op_run_info->base_op_run_info.has_dynamic_output = shape->IsDynamic();

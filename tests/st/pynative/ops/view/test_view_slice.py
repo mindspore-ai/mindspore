@@ -697,3 +697,22 @@ def test_slice_multiple_op():
     grad = grad_op(net)(input_x, input_perm)
     np.testing.assert_array_equal(output, expect_output)
     np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_slice_zero_op():
+    """
+    Feature: slice
+    Description: Verify the result of slice
+    Expectation: success
+    """
+    ms.set_context(mode=ms.PYNATIVE_MODE)
+
+    a = ops.zeros((0, 4))
+    assert a.shape == (0, 4)
+    assert a[:2].shape == (0, 4)
+    assert a[:, 2].shape == (0,)
