@@ -21,6 +21,7 @@ from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.experimental.optim.optimizer import Optimizer
 from mindspore import ops
+from mindspore import jit
 
 _adamw_opt = C.MultitypeFuncGraph("adamw_opt")
 
@@ -28,21 +29,28 @@ op_mul = P.Mul()
 op_pow = P.Pow()
 op_sqrt = P.Sqrt()
 op_maximum = P.Maximum()
+hyper_map = C.HyperMap()
 
 
-@_adamw_opt.register("Float", "Tensor", "Bool", "Float", "Tensor", "Float", "Float", "Tensor", "Tensor",
-                     "Tensor", "Tensor", "Tensor")
-def _run_adamw_opt(weight_decay, lr, amsgrad, eps, state_step, beta1, beta2, param, grad,
-                   exp_avg, exp_avg_sq, max_exp_avg_sq):
-    """Apply adamw optimizer to the weight parameter."""
-    success = True
-    next_param = op_mul(param, 1 - lr * weight_decay)
-    F.assign(exp_avg, op_mul(exp_avg, beta1) + op_mul(grad, 1 - beta1))
-    F.assign(exp_avg_sq, ops.addcmul(op_mul(exp_avg_sq, beta2), grad, grad, 1 - beta2))
+@jit
+def prepare_func(lr, weight_decay, state_step, beta1, beta2):
+    weight_decay_new = 1 - lr * weight_decay
     bias_correction1 = 1 - op_pow(beta1, state_step)
     bias_correction2 = 1 - op_pow(beta2, state_step)
     step_size = lr / bias_correction1
     bias_correction2_sqrt = op_sqrt(bias_correction2)
+    return weight_decay_new, step_size, bias_correction2_sqrt
+
+
+@_adamw_opt.register("Tensor", "Tensor", "Bool", "Float", "Tensor", "Float", "Float", "Tensor", "Tensor",
+                     "Tensor", "Tensor", "Tensor")
+def _run_adamw_opt(weight_decay_new, step_size, amsgrad, eps, bias_correction2_sqrt, beta1, beta2, param, grad,
+                   exp_avg, exp_avg_sq, max_exp_avg_sq):
+    """Apply adamw optimizer to the weight parameter."""
+    success = True
+    next_param = op_mul(param, weight_decay_new)
+    F.assign(exp_avg, op_mul(exp_avg, beta1) + op_mul(grad, 1 - beta1))
+    F.assign(exp_avg_sq, ops.addcmul(op_mul(exp_avg_sq, beta2), grad, grad, 1 - beta2))
 
     if amsgrad:
         next_max_exp_avg = op_maximum(max_exp_avg_sq, exp_avg_sq)
@@ -142,6 +150,7 @@ class AdamW(Optimizer):
         ...     optimizer(grads)
         ...     return loss
     """
+
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8,
                  weight_decay=1e-2, amsgrad=False, *, maximize=False):
         if lr < 0.0:
@@ -168,6 +177,17 @@ class AdamW(Optimizer):
         self.assignadd = P.AssignAdd()
         self.op_cast = P.Cast()
 
+    @jit
+    def implementation(self, lr, weight_decay, beta1, beta2, amsgrad, eps, grads, start_id, end_id):
+        """Extract the common computing part for acceleration"""
+        weight_decay_new, step_size, bias_correction2_sqrt = prepare_func(lr, weight_decay,
+                                                                          self.state_step, beta1, beta2)
+        self.hyper_map(F.partial(_adamw_opt, weight_decay_new, step_size, amsgrad,
+                                 eps, bias_correction2_sqrt, beta1, beta2),
+                       self.parameters[start_id: end_id], grads, self.exp_avg[start_id: end_id],
+                       self.exp_avg_sq[start_id: end_id], self.max_exp_avg_sq[start_id: end_id])
+        return True
+
     def construct(self, gradients):
         self.assignadd(self.state_step, self.increase_tensor)
         for group_id, group in enumerate(self.param_groups):
@@ -175,11 +195,9 @@ class AdamW(Optimizer):
             start_id = self.group_start_id[group_id]
             end_id = self.group_start_id[group_id + 1]
             lr = self.lrs[group_id]
-            if isinstance(group.get("lr"), float):
-                lr = self.op_cast(group.get("lr"), mstype.float32)
             grads = tuple([grad if not group.get("maximize") else F.neg(grad) for grad in gradients[start_id: end_id]])
-            self.hyper_map(F.partial(_adamw_opt, group.get("weight_decay"), lr, group.get("amsgrad"),
-                                     group.get("eps"), self.state_step, beta1, beta2),
-                           self.parameters[start_id: end_id], grads, self.exp_avg[start_id: end_id],
-                           self.exp_avg_sq[start_id: end_id], self.max_exp_avg_sq[start_id: end_id])
+
+            self.implementation(lr, group.get("weight_decay"), beta1, beta2, group.get("amsgrad"), group.get("eps"),
+                                grads, start_id, end_id)
+
         return True
