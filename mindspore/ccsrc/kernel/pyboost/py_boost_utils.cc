@@ -32,46 +32,43 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-using DeviceAddressPromisePtr = pynative::DeviceAddressPromisePtr;
-using DeviceAddressPromise = pynative::DeviceAddressPromise;
-using DeviceAddressFutureDataPtr = pynative::DeviceAddressFutureDataPtr;
-using DeviceAddressFuture = pynative::DeviceAddressFuture;
+namespace {
+void CreateTensor(const TypePtr &type, const ShapeVector &shape_vector, const AbstractBasePtr &abstract_tensor,
+                  std::vector<tensor::TensorPtr> *outputs) {
+  auto output_tensor = std::make_shared<tensor::Tensor>(type->type_id(), shape_vector);
+  output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
+  output_tensor->set_abstract(abstract_tensor);
+  (void)outputs->emplace_back(output_tensor);
+  MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
+}
+}  // namespace
 
 void PyBoostUtils::CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs) {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
                                      runtime::ProfilerEvent::kPyBoostCreateOutputTensor,
                                      runtime::ProfilerRecorder::kNoName, false);
-  auto create_tensor = [&outputs](const TypePtr &type, const ShapeVector &shape_vector,
-                                  const AbstractBasePtr &abstract_tensor) {
-    auto output_tensor = std::make_shared<tensor::Tensor>(type->type_id(), shape_vector);
-    output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
-    output_tensor->set_abstract(abstract_tensor);
-    (void)outputs->emplace_back(output_tensor);
-    MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
-  };
-
   MS_EXCEPTION_IF_NULL(abstract);
   if (abstract->isa<abstract::AbstractSequence>()) {
-    auto seq = abstract->cast<abstract::AbstractSequencePtr>();
-    auto elements = seq->elements();
+    const auto &seq = abstract->cast<abstract::AbstractSequencePtr>();
+    const auto &elements = seq->elements();
     for (const auto &element : elements) {
       CreateOutputTensor(element, outputs);
     }
   } else if (abstract->isa<abstract::AbstractTensor>()) {
-    auto abstract_tensor = abstract->cast<abstract::AbstractTensorPtr>();
-    auto shape = abstract_tensor->BuildShape();
-    auto type = abstract_tensor->element()->BuildType();
+    const auto &abstract_tensor = abstract->cast<abstract::AbstractTensorPtr>();
+    const auto &shape = abstract_tensor->GetShapeTrack();
+    const auto &type = abstract_tensor->element()->GetTypeTrack();
     MS_LOG(DEBUG) << "get abstract tensor shape " << shape->ToString() << " type " << type->ToString();
     if (!shape->isa<abstract::Shape>()) {
       MS_LOG(EXCEPTION) << "AbstractTensor shape is valid " << shape->ToString();
     }
-    auto shape_vector = shape->cast<abstract::ShapePtr>()->shape();
-    create_tensor(type, shape_vector, abstract_tensor);
+    const auto &shape_vector = shape->cast<abstract::ShapePtr>()->shape();
+    CreateTensor(type, shape_vector, abstract_tensor, outputs);
   } else if (abstract->isa<abstract::AbstractScalar>()) {
-    auto scalar = abstract->cast<abstract::AbstractScalarPtr>();
-    const auto &type = scalar->BuildType();
+    const auto &scalar = abstract->cast<abstract::AbstractScalarPtr>();
+    const auto &type = scalar->GetTypeTrack();
     MS_LOG(DEBUG) << "Create scalar tensor type " << type->ToString();
-    create_tensor(type, {}, nullptr);
+    CreateTensor(type, {}, nullptr, outputs);
   } else {
     MS_LOG(EXCEPTION) << "Not support abstract " << abstract->ToString();
   }
