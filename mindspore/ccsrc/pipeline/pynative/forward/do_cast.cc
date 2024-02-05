@@ -156,6 +156,7 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
     MS_LOG(DEBUG) << "Source value: " << v->ToString() << " cast to value: " << dst_value->ToString();
     return dst_value;
   }
+  MS_EXCEPTION_IF_NULL(op_run_info);
   if (op_run_info->source_type[index] != ops::OP_DTYPE::DT_BEGIN && v->isa<tensor::Tensor>()) {
     MS_LOG(DEBUG) << "Source value: " << v->ToString();
     dst_value = TensorToDstDtypeValue(v, type_id);
@@ -163,7 +164,6 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
     return dst_value;
   }
   // When step 1 does not work, creating a cast op to get destination data type value.
-  MS_EXCEPTION_IF_NULL(op_run_info);
   constexpr auto input_size = 2;
   const auto &cast_run_info = std::make_shared<FrontendOpRunInfo>();
   auto cast_prim = GetPrimByTypeId(type_id);
