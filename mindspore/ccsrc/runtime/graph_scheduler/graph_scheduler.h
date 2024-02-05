@@ -74,7 +74,7 @@ class BACKEND_EXPORT GraphScheduler {
   void Schedule(const ActorSet *actor_set);
 
   // The processing entry of actors running. The fourth parameter is used only in the step execution strategy.
-  void Run(ActorSet *constactor_set, const std::vector<std::vector<TensorPtr>> &input_tensors,
+  void Run(ActorSet *constactor_set, const std::vector<std::vector<TensorPtr>> &input_tensors, const VectorRef &args,
            GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
 
   // Fetch the actor set by actor info.

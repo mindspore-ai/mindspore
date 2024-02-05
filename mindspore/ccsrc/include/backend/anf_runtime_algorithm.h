@@ -276,14 +276,20 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
 
   // Check whether the input scalar need converted to tensor.
   static bool IsScalarConvertToTensor(const AnfNodePtr &input_node, const CNodePtr &node);
-  static tensor::TensorPtr CreateMapTensor(const DeviceAddressPtr &output_device_address);
-  static tensor::TensorPtr CreateMapTensor(const AnfNodePtr &output_node, size_t output_index);
   // Check all elements of a ndoe's output(tuple/list type) are scalar.
   static bool IsSequenceOutputOfScalar(const AnfNodePtr &node);
 
+  // The tensor related interfaces.
+  static tensor::TensorPtr CreateMapTensor(const DeviceAddressPtr &output_device_address);
+  static tensor::TensorPtr CreateMapTensor(const AnfNodePtr &output_node, size_t output_index);
+  static tensor::TensorPtr SequenceToTensor(const ValuePtr &value);
+  static void FlattenDynamicInputArg(const BaseRef &arg, const AnfNodePtr &node,
+                                     std::vector<tensor::TensorPtr> *flatten_tensors);
+  static void FlattenInputArg(const BaseRef &arg, const AnfNodePtr &node,
+                              std::vector<tensor::TensorPtr> *flatten_tensors);
+
   // Used to check whether an AnfNode is a Summary Node.
   static bool IsSummaryNode(const AnfNodePtr &node);
-  static tensor::TensorPtr SequenceToTensor(const ValuePtr &value);
   static void UpdateValueNodeShape(const AnfNodePtr &node);
   static bool HasSelectKernelBuildInfo(const AnfNodePtr &node);
   static bool NeedEraseCache(const PrimitivePtr &prim);

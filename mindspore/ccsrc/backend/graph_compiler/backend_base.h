@@ -74,7 +74,6 @@ class BACKEND_EXPORT Backend {
 
 BACKEND_EXPORT void set_pydata_converter(const pyexecute::PyDataConverter &pydata_converter);
 
-void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs, const AnfNodePtr &node = nullptr);
 std::vector<std::vector<tensor::TensorPtr>> GetRunGraphInputs(const GraphCompilerInfo &graph_compiler_info,
                                                               const VectorRef &args);
 runtime::KernelMapPosition FetchOriginOutputOrder(const AnfNodePtr &root_output);

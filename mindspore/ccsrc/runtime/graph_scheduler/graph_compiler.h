@@ -95,6 +95,7 @@ struct BACKEND_EXPORT GraphCompilerInfo {
         outputs_num_(outputs_num),
         name_(name),
         need_erase_(need_erase),
+        exist_flatten_concat_(false),
         strategy_(strategy),
         compile_func_(std::move(compile_func)) {}
   ~GraphCompilerInfo();
@@ -105,10 +106,13 @@ struct BACKEND_EXPORT GraphCompilerInfo {
   std::vector<AnfNodePtr> control_nodes_;
   ControlNodeParserPtr control_node_parser_;
   std::vector<AnfNodePtr> origin_parameters_order_;
+  mutable mindspore::HashMap<AnfNodePtr, std::vector<std::pair<KernelWithIndex, KernelWithIndex>>>
+    origin_parameters_to_backend_parameters_;
   KernelMapPosition origin_outputs_order_;
   size_t outputs_num_;
   std::string name_;
   bool need_erase_;
+  mutable bool exist_flatten_concat_;
   mutable GraphExecutionStrategy strategy_;
   CompileFunc compile_func_;
 };

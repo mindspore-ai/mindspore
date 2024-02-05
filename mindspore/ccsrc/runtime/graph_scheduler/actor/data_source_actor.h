@@ -47,7 +47,7 @@ class DataSourceActor : public DebugAwareActor {
       : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid), buffer_capacity_(buffer_capacity) {}
   ~DataSourceActor() override = default;
 
-  virtual void ReleaseDataNodeAddress() {}
+  virtual void ReleaseData() {}
 
  protected:
   friend class GraphScheduler;
@@ -138,7 +138,7 @@ class HostQueueDataSourceActor : public DataSourceActor {
   KernelWithIndex FetchNode(size_t node_position) const;
   const std::vector<KernelWithIndex> &data_nodes() const { return data_node_with_indexs_; }
 
-  void ReleaseDataNodeAddress() override;
+  void ReleaseData() override;
 
  protected:
   void FillDataBuffer() override;
