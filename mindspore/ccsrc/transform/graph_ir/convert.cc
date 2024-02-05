@@ -3435,14 +3435,6 @@ void DfGraphConvertor::TransAttrDataType(const CNodePtr &node, const std::string
 void DfGraphConvertor::TransDataType(const FuncGraphPtr &anf_graph) const {
   MS_EXCEPTION_IF_NULL(anf_graph);
   MS_LOG(DEBUG) << "TransDataType begin. graph:" << anf_graph->ToString();
-#ifdef ENABLE_DUMP_IR
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->CanDump(kIntroductory)) {
-    std::string file_name = "ge_trans_data_type_before_graph_" + anf_graph->ToString() + ".ir";
-    DumpIR(file_name, anf_graph);
-  }
-#endif
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph);
   for (auto &it : nodes) {
     if (it->isa<CNode>()) {
@@ -3453,12 +3445,6 @@ void DfGraphConvertor::TransDataType(const FuncGraphPtr &anf_graph) const {
       TransAttrDataType(node, name);
     }
   }
-#ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(kIntroductory)) {
-    std::string file_name = "ge_trans_data_type_after_graph_" + anf_graph->ToString() + ".ir";
-    DumpIR(file_name, anf_graph);
-  }
-#endif
   MS_LOG(DEBUG) << "TransDataType end. graph:" << anf_graph->ToString();
 }
 
