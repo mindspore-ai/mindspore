@@ -549,7 +549,6 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const CNode
 
   // The shape op use the cpu kernel priorly.
   static const std::set<std::string> select_host_priorly = {kShapeOpName};
-  std::string op_name = common::AnfAlgo::GetCNodeName(node);
   if (select_host_priorly.count(op_name) != 0) {
     return {false, op_name + " select host kernel priorly.", NotSupportError};
   }
