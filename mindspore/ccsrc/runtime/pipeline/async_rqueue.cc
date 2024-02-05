@@ -47,11 +47,6 @@ void AsyncRQueue::SetThreadName() const {
 #endif
 }
 
-bool AsyncRQueue::TaskInQueue(uint32_t task_id) {
-  std::unique_lock<std::mutex> lock(set_mutex_);
-  return task_in_queue_.find(task_id) != task_in_queue_.end();
-}
-
 void AsyncRQueue::WorkerLoop() {
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
   // cppcheck-suppress unreadVariable
@@ -85,12 +80,9 @@ void AsyncRQueue::WorkerLoop() {
     try {
       task->Run();
       tasks_queue_.Dequeue();
-      std::lock_guard<std::mutex> lock(set_mutex_);
-      task_in_queue_.erase(task->task_id());
     } catch (const std::exception &e) {
       MS_LOG(INFO) << "Run task failed, error msg:" << e.what();
       {
-        std::lock_guard<std::mutex> lock(set_mutex_);
         MsException::Instance().SetException();
         // MsException is unreliable because it gets modified everywhere.
         auto e_ptr = std::current_exception();
@@ -101,7 +93,6 @@ void AsyncRQueue::WorkerLoop() {
           }
           t->SetException(e_ptr);
           tasks_queue_.Dequeue();
-          task_in_queue_.erase(task->task_id());
         }
       }
     }
@@ -113,10 +104,6 @@ void AsyncRQueue::Push(const AsyncTaskPtr &task) {
     worker_ = std::make_unique<std::thread>(&AsyncRQueue::WorkerLoop, this);
   }
   tasks_queue_.Enqueue(task);
-  std::lock_guard<std::mutex> lock(set_mutex_);
-  if (task->task_id() != UINT32_MAX) {
-    task_in_queue_.insert(task->task_id());
-  }
 }
 
 void AsyncRQueue::Wait() {
@@ -178,7 +165,6 @@ void AsyncRQueue::ClearTaskWithException() {
     auto &t = tasks_queue_.Head();
     t->SetException(std::make_exception_ptr(std::runtime_error("Clean up tasks that are not yet running")));
     tasks_queue_.Dequeue();
-    task_in_queue_.erase(t->task_id());
   }
 }
 

@@ -68,10 +68,6 @@ void OpExecutor::PushSimpleOpRunTask(const std::shared_ptr<AsyncTask> &op_run_ta
 
 bool OpExecutor::RunQueueEmpty() { return runtime::Pipeline::Get().backend_stage()->Empty(); }
 
-bool OpExecutor::ActorInQueue(GraphId graph_id) {
-  return runtime::Pipeline::Get().backend_stage()->TaskInQueue(graph_id);
-}
-
 void OpExecutor::WorkerJoin() {
   GilReleaseWithCheck release_gil;
   runtime::Pipeline::Get().backend_stage()->WorkerJoin();
