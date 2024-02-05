@@ -118,6 +118,39 @@ ValuePtr MaybeMakeEmptyTensor(const AbstractBasePtr &abs) {
   }
   return build_value;
 }
+
+bool FunctionShouldBeParseInAst(const py::object &obj) {
+  static mindspore::HashSet<std::string> func_names{"cast_to_adapter_tensor", "cast_to_ms_tensor"};
+  if (!py::hasattr(obj, "__name__")) {
+    return false;
+  }
+  return func_names.find(py::cast<std::string>(obj.attr("__name__"))) != func_names.end();
+}
+
+py::object ConvertToPythonTensor(const py::object &obj) {
+  if (py::isinstance<tensor::Tensor>(obj)) {
+    bool is_adapter_tensor = py::hasattr(obj, kAdapterFlag) && py::cast<bool>(py::getattr(obj, kAdapterFlag));
+    py::module mod = python_adapter::GetPyModule(kTensorModule);
+    auto py_tensor = python_adapter::CallPyModFn(mod, "Tensor", obj, py::none(), py::none(), py::none(), true);
+    if (is_adapter_tensor) {
+      mod = python_adapter::GetPyModule(kInnerOpsModule);
+      py_tensor = python_adapter::CallPyModFn(mod, "convert_to_adapter_tensor", py_tensor);
+    }
+    return py_tensor;
+  }
+  if (py::isinstance<py::sequence>(obj)) {
+    auto obj_tuple = py::cast<py::tuple>(obj);
+    py::tuple ret(obj_tuple.size());
+    for (size_t i = 0; i < obj_tuple.size(); ++i) {
+      ret[i] = ConvertToPythonTensor(obj_tuple[i]);
+    }
+    if (py::isinstance<py::list>(obj)) {
+      return ret.cast<py::list>();
+    }
+    return ret;
+  }
+  return obj;
+}
 }  // namespace
 
 ValuePtr FuncGraphBuilder::ConvertPyObjToValue(const py::object &obj) {
@@ -148,19 +181,7 @@ py::object FuncGraphBuilder::ConvertToPyObj(const AbstractBasePtr &abs) {
     return py::object();
   }
 
-  bool is_adapter_tensor = py::hasattr(py_obj, kAdapterFlag) && py::cast<bool>(py::getattr(py_obj, kAdapterFlag));
-  // Create python tensor.
-  if (abs->isa<abstract::AbstractTensor>()) {
-    py::module mod = python_adapter::GetPyModule(kTensorModule);
-    py_obj = python_adapter::CallPyModFn(mod, "Tensor", py_obj, py::none(), py::none(), py::none(), true);
-  }
-  // Create adapter tensor.
-  if (is_adapter_tensor) {
-    py::module mod = python_adapter::GetPyModule(kInnerOpsModule);
-    py_obj = python_adapter::CallPyModFn(mod, "convert_to_adapter_tensor", py_obj);
-  }
-
-  return py_obj;
+  return ConvertToPythonTensor(py_obj);
 }
 
 AbstractBasePtr FuncGraphBuilder::EvalValue(const ValuePtr &value, const AbstractBasePtrList &inputs_abs_list) {
@@ -240,6 +261,9 @@ py::object FuncGraphBuilder::AddNode(const py::object &callable_obj, const std::
     MS_LOG(ERROR) << "Convert python object " << py::str(callable_obj) << " to value failed.";
     return py::object();
   }
+  if (FunctionShouldBeParseInAst(callable_obj)) {
+    return TryToAddNode(callable_value, inputs_obj);
+  }
   return AddNode(callable_value, inputs_obj);
 }
 
@@ -288,14 +312,7 @@ AbstractBasePtr FuncGraphBuilder::DoInferAndCheck(const ValuePtr &callable_value
   return abs;
 }
 
-py::object FuncGraphBuilder::AddNode(const ValuePtr &callable_value, const std::vector<py::object> &inputs_obj) {
-  if (!callable_value->ToAbstract()->isa<abstract::AbstractFunction>()) {
-    MS_LOG(ERROR) << "The value " << callable_value->ToString() << " is not callable.";
-    return py::object();
-  }
-  if (callable_value->isa<FuncGraph>()) {
-    return AddFgCallNode(callable_value->cast<FuncGraphPtr>(), inputs_obj);
-  }
+py::object FuncGraphBuilder::TryToAddNode(const ValuePtr &callable_value, const std::vector<py::object> &inputs_obj) {
   // Collect the input nodes and input abstracts.
   std::vector<AnfNodePtr> input_node_list;
   std::vector<AbstractBasePtr> input_abs_list;
@@ -321,6 +338,17 @@ py::object FuncGraphBuilder::AddNode(const ValuePtr &callable_value, const std::
   (void)py_obj_to_node_.emplace(output_py_obj.ptr(), new_node);
   new_node->set_user_data(kPiJitPyObjKey, std::make_shared<py::object>(output_py_obj));
   return output_py_obj;
+}
+
+py::object FuncGraphBuilder::AddNode(const ValuePtr &callable_value, const std::vector<py::object> &inputs_obj) {
+  if (!callable_value->ToAbstract()->isa<abstract::AbstractFunction>()) {
+    MS_LOG(ERROR) << "The value " << callable_value->ToString() << " is not callable.";
+    return py::object();
+  }
+  if (callable_value->isa<FuncGraph>()) {
+    return AddFgCallNode(callable_value->cast<FuncGraphPtr>(), inputs_obj);
+  }
+  return TryToAddNode(callable_value, inputs_obj);
 }
 
 py::object FuncGraphBuilder::AddMultiNode(const std::string &name, const std::vector<py::object> &inputs_obj) {
@@ -446,7 +474,8 @@ py::object FuncGraphBuilder::AddFgCallNode(const FuncGraphPtr &fg, const vector<
 bool FuncGraphBuilder::CheckCallable(const py::object &obj) {
   return py::isinstance<MetaFuncGraph>(obj) ||
          (py::hasattr(obj, PYTHON_PRIMITIVE_FLAG) &&
-          parse::data_converter::GetObjType(obj) != parse::RESOLVE_TYPE_CLASS_TYPE);
+          parse::data_converter::GetObjType(obj) != parse::RESOLVE_TYPE_CLASS_TYPE) ||
+         FunctionShouldBeParseInAst(obj);
 }
 
 py::object FuncGraphBuilder::ConvertMethod(const py::object &obj) {
