@@ -141,7 +141,7 @@ cudaError_t CalSyncBatchNormGradPost(size_t N, size_t C, size_t H, size_t W, con
                                      S *dscale, S *dbias, float epsilon, cudaStream_t cuda_stream) {
   SyncBatchNormGradPost<<<C, GET_THREADS, 0, cuda_stream>>>(N, C, H, W, x_input, dy, dx, saved_mean, saved_invstd,
                                                             dy_sum_red, dot_p_red, scale, dscale, dbias, epsilon);
-  SyncBatchNormGradPostScaleBias<<<GET_BLOCKS(C), std::min(C, static_cast<size_t>(GET_THREADS)), 0, cuda_stream>>>(
+  SyncBatchNormGradPostScaleBias<<<GET_BLOCKS(C), std::min(C, GET_THREADS), 0, cuda_stream>>>(
     C, saved_invstd, dy_sum_red, dot_p_red, dscale, dbias);
   return GetCudaStatus();
 }

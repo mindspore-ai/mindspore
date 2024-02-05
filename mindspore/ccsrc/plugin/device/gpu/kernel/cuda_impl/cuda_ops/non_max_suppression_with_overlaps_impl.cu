@@ -160,7 +160,7 @@ cudaError_t CalSort(const int &num, int *index_buff, T *score_buff, T *up_score_
   cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream));
   cudaMemcpy(valid_num_host, valid_score_num, sizeof(int), cudaMemcpyDeviceToHost);
   int ceil_p_2 = NumRoundUpPower2(*valid_num_host);
-  int thread = std::min(ceil_p_2, CUDA_THREADS(device_id));
+  size_t thread = std::min(static_cast<size_t>(ceil_p_2), CUDA_THREADS(device_id));
   NmsSortByKeyKernel<<<1, thread, 0, stream>>>(ceil_p_2, up_score_buff, index_buff);
   return GetCudaStatus();
 }

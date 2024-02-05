@@ -83,8 +83,8 @@ cudaError_t CalUpsampleNearest3DGrad(const T *dy, const int n, const int c, cons
   const int dy_hw = dy_h * dy_w;
   const int dy_dhw = dy_d * dy_hw;
   const int dy_cdhw = c * dy_dhw;
-  const int blockSize = std::min(CUDA_THREADS(device_id), static_cast<int>(MAX_THREADS));
-  const int gridSize = (dx_cdhw + blockSize - 1) / blockSize;
+  const size_t blockSize = std::min(CUDA_THREADS(device_id), static_cast<size_t>(MAX_THREADS));
+  const size_t gridSize = (dx_cdhw + blockSize - 1) / blockSize;
   UpsampleNearest3DGradKernel<T, T>
     <<<gridSize, blockSize, 0, cuda_stream>>>(dy, n, c, dy_d, dy_h, dy_w, dy_cdhw, dy_dhw, dy_hw, dx_d, dx_h, dx_w,
                                               dx_cdhw, dx_dhw, dx_hw, d_scale, h_scale, w_scale, dx);
@@ -102,8 +102,8 @@ cudaError_t CalUpsampleNearest3DGrad(const half *dy, const int n, const int c, c
   const int dy_hw = dy_h * dy_w;
   const int dy_dhw = dy_d * dy_hw;
   const int dy_cdhw = c * dy_dhw;
-  const int blockSize = std::min(CUDA_THREADS(device_id), static_cast<int>(MAX_THREADS));
-  const int gridSize = (dx_cdhw + blockSize - 1) / blockSize;
+  const size_t blockSize = std::min(CUDA_THREADS(device_id), static_cast<size_t>(MAX_THREADS));
+  const size_t gridSize = (dx_cdhw + blockSize - 1) / blockSize;
   UpsampleNearest3DGradKernel<half, float>
     <<<gridSize, blockSize, 0, cuda_stream>>>(dy, n, c, dy_d, dy_h, dy_w, dy_cdhw, dy_dhw, dy_hw, dx_d, dx_h, dx_w,
                                               dx_cdhw, dx_dhw, dx_hw, d_scale, h_scale, w_scale, dx);
