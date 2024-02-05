@@ -28,8 +28,6 @@ GraphJitConfig kPIJitConfigDefault;
 
 constexpr int kDefaultMaxTraceDepth = 16;
 
-extern void AutoGrad(PyObject *prim, PyObject *args, PyObject *ret);
-
 static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *)> key_map = {
   {"auto_jit_func_filter", &GraphJitConfig::SetAutoJitFilter},
   {"auto_jit_cell", &GraphJitConfig::SetBool<GraphJitConfig::kAutoJitCell>},
@@ -84,7 +82,7 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
 
 GraphJitConfig::GraphJitConfig() {
   bool_conf[kAutoJitCell - kBoolConf] = false;
-  bool_conf[kAutoGrad - kBoolConf] = true;
+  bool_conf[kAutoGrad - kBoolConf] = false;
   bool_conf[kReplaceNNCellByConstruct - kBoolConf] = false;
   bool_conf[kPrintAfterAll - kBoolConf] = false;
   bool_conf[kTraceFlag - kBoolConf] = false;
@@ -379,30 +377,11 @@ void GraphJitConfig::ApplyAutoJitCell() {
   ReplaceMethod(cls, &mdef, save_name, enable);
 }
 
-void GraphJitConfig::ApplyAutoGrad() {
-  static constexpr const char *name = "__call__";
-  static constexpr const char *save_name = "_old__call__";
-  static const PyCFunction PrimitiveForward = [](PyObject *self, PyObject *vargs) {
-    PyObject *func = PyObject_GetAttrString(self, save_name);
-    PyObject *ret = PyObject_Call(func, vargs, nullptr);
-    Py_DECREF(func);
-
-    AutoGrad(self, vargs, ret);
-    return ret;
-  };
-  static PyMethodDef mdef = {name, PrimitiveForward, METH_VARARGS, "Hook"};
-
-  bool enable = kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kAutoGrad);
-  py::object cls = Utils::GetModuleAttr("mindspore.ops.primitive", "Primitive", false, false);
-  ReplaceMethod(cls, &mdef, save_name, enable);
-}
-
 }  // namespace pijit
 
 void update_pijit_default_config(const py::kwargs &conf) {
   mindspore::pijit::kPIJitConfigDefault = mindspore::pijit::GraphJitConfig(conf);
   mindspore::pijit::GraphJitConfig::ApplyAutoJitCell();
-  mindspore::pijit::GraphJitConfig::ApplyAutoGrad();
 }
 
 }  // namespace mindspore
