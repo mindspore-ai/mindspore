@@ -151,6 +151,7 @@ AnfNodePtr TwoCastEliminater::operator()(const OptimizerPtr &, const AnfNodePtr 
   }
   if (CheckTypesIsIncreasingOrDecreasing()) {
     auto cnode = NewCNode({NewValueNode(prim::kPrimCast), x_, t_}, node->func_graph());
+    MS_EXCEPTION_IF_NULL(cnode);
     cnode->set_abstract(node->abstract());
     return cnode;
   }

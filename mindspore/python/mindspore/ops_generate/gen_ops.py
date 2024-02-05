@@ -782,6 +782,7 @@ from mindspore.ops.auto_generate.gen_arg_dtype_cast import type_it
 from mindspore.ops.auto_generate.gen_arg_handler import *
 from mindspore._c_expression import OpDtype
 from mindspore.common._stub_tensor import _convert_stub
+from mindspore.ops.operations.manually_defined.ops_def import Cast
 """
 
 
