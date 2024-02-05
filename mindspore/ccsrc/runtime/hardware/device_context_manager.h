@@ -66,6 +66,7 @@ class BACKEND_EXPORT DeviceContextManager {
   void ClearDeviceContexts();
   void ChildAfterFork();
   void WaitTaskFinishOnDevice() const;
+  void SyncAllStreams() const;
   void UnloadPlugin();
   std::string GetErrorMsg() const;
   void BindDeviceCtx() const;
