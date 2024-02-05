@@ -109,11 +109,10 @@ bool HcomUtil::GetHcomCount(const PrimitivePtr &primitive, const vector<HcclData
       return false;
     }
 
-    if (primitive->HasAttr(kAttrFusion) && GetValue<int64_t>(primitive->GetAttr(kAttrFusion)) != 0 &&
-        input_tensor_num > 1) {
-      // use in task sink, there may be problems
+    if (input_tensor_num > 1) {
+      // communication operator with dynamic input should have continuous memory.
+      MS_LOG(INFO) << "Communication operator " << primitive->name() << " has dynamic input.";
       input_size = (input_size + align_size - 1 + filled_size) / align_size * align_size;
-      MS_LOG(EXCEPTION) << "Maybe wrong hccl count in fusion op: " << primitive->name();
     }
     if (primitive->name() == kReduceScatterOpName) {
       int64_t rank_size;
