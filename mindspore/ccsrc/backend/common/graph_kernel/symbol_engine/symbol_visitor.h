@@ -25,7 +25,7 @@ namespace mindspore::graphkernel::symbol {
 class SymbolVisitor {
  public:
   SymbolVisitor() = default;
-  ~SymbolVisitor() = default;
+  virtual ~SymbolVisitor() = default;
 
   void Visit(Symbol *symbol);
 

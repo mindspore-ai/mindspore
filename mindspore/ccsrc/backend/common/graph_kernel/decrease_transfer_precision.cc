@@ -268,11 +268,11 @@ bool DecreaseTransferPrecision::ProcessSon(const FuncGraphPtr &, const AnfNodePt
   auto tensor_input = node->cast<CNodePtr>()->input(index);
   AnfNodePtrList inputs = {NewValueNode(prim::kPrimCast), old_input};
   auto cnode = gk_graph->NewCNode(inputs);
+  MS_EXCEPTION_IF_NULL(cnode);
   gk_graph->AddNode(cnode);
   cnode->set_abstract(old_input->abstract());
   cnode->set_scope(old_input->scope());
   SetNodeAttrSafely(kAttrDstType, kFloat32, cnode);
-  MS_EXCEPTION_IF_NULL(cnode);
   old_input->set_abstract(std::make_shared<abstract::AbstractTensor>(kFloat16, GetShape(old_input)));
   cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
   std::vector<std::string> cnode_input_format = {AnfAlgo::GetOutputFormat(tensor_input, 0)};
