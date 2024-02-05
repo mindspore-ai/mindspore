@@ -368,7 +368,7 @@ static AbstractBasePtrList ChangeAbstractArgList(PrimitivePyPtr prim, const std:
       *monad_count = *monad_count + 1;
     }
     *has_tensor = HasTensor(param_obj);
-    mindspore::ValuePtr converted = convertData(param_obj, is_stub, op_def, i);
+    converted = convertData(param_obj, is_stub, op_def, i);
     auto arg = mindspore::abstract::ToAbstract(converted, nullptr, nullptr);
     list.push_back(arg);
   }

@@ -804,17 +804,17 @@ py::object CodeBreakGenerator::MakeUntrackedCode(int untracked_bci, int untracke
   int nlocals = GetCFG()->GetLocalCount();
 
   CodeGenerator::Code ccode = {
-    .co_argcount = argc,
-    .co_kwonlyargcount = 0,
-    .co_nlocals = std::max(argc, nlocals),
-    .co_flags = co_->co_flags & ~(CO_VARARGS | CO_VARKEYWORDS),
-    .co_firstlineno = first_line,
-    .co_code = std::move(list),
-    .co_varnames = py::cast<std::vector<std::string>>(co_->co_varnames),
-    .co_cellvars = std::vector<std::string>(),
-    .co_freevars = GetClosureNames(),
-    .co_name = MakeBrkName(PyUnicode_AsUTF8(co_->co_name), untracked_bci),
-    .co_filename = py::reinterpret_borrow<py::object>(co_->co_filename),
+    argc,
+    0,
+    std::max(argc, nlocals),
+    co_->co_flags & ~(CO_VARARGS | CO_VARKEYWORDS),
+    first_line,
+    std::move(list),
+    py::cast<std::vector<std::string>>(co_->co_varnames),
+    std::vector<std::string>(),
+    GetClosureNames(),
+    MakeBrkName(PyUnicode_AsUTF8(co_->co_name), untracked_bci),
+    py::reinterpret_borrow<py::object>(co_->co_filename),
   };
   CodeGenerator::EraseUnusedInstr(&ccode.co_code);
   py::object code = CodeGenerator::Transform(ccode);
@@ -1136,16 +1136,13 @@ void CodeBreakGenerator::Init(const Graph *graph, const GraphAnalyzer::CapturedI
   cfg_ = graph->GetCFG().get();
   auto liveness = graph->GetCFG()->GetLiveness();
   std::vector<ValueNode *> alive_nodes = liveness->CollectAliveNode(graph, break_bci_, &alive_locals_);
-  interpret_ = {
-    .inputs = graph->GetFrame(0).GetLocals(),
-    .outputs = std::move(alive_nodes),
-    .operations = info->ordered_escaped_locals,
-  };
-  captured_ = {
-    .inputs = std::vector<ValueNode *>(info->captured_locals.inputs.begin(), info->captured_locals.inputs.end()),
-    .outputs = CollectGraphOutputs(info->escaped_locals, interpret_.outputs),
-    .operations = info->captured_locals.order,
-  };
+  interpret_.inputs = graph->GetFrame(0).GetLocals();
+  interpret_.outputs = std::move(alive_nodes);
+  interpret_.operations = info->ordered_escaped_locals;
+
+  captured_.inputs = std::vector<ValueNode *>(info->captured_locals.inputs.begin(), info->captured_locals.inputs.end());
+  captured_.outputs = CollectGraphOutputs(info->escaped_locals, interpret_.outputs);
+  captured_.operations = info->captured_locals.order;
 }
 
 const CFG *CodeBreakGenerator::GetCFG() const { return cfg_; }

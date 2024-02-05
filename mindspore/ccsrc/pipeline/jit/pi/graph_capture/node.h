@@ -21,6 +21,7 @@
 #include <vector>
 #include <algorithm>
 #include <utility>
+#include <optional>
 #include "utils/log_adapter.h"
 #include "pipeline/jit/pi/graph_capture/abstract_object.h"
 #include "pipeline/jit/pi/utils/utils.h"

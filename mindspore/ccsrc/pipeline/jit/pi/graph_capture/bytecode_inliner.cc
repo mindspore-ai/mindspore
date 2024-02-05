@@ -131,9 +131,9 @@ void BytecodeInliner::Rebuild(CodeGenerator *cg) {
 
 void BytecodeInliner::Rebuild() {
   NodeSet ns = {
-    .inputs = graph_->GetFrame(0).GetLocals(),
-    .outputs = std::vector<ValueNode *>(),
-    .operations = traced_nodes_,
+    graph_->GetFrame(0).GetLocals(),
+    std::vector<ValueNode *>(),
+    traced_nodes_,
   };
   CodeGenerator cg(&ns);
 
