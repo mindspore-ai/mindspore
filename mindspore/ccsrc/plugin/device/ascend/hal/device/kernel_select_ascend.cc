@@ -651,8 +651,7 @@ class AscendGraphKernelInfo : public GraphKernelInfo {
     MS_EXCEPTION_IF_NULL(kernel_node);
     const auto &kernel_graph = AnfAlgo::FetchKernelGraph(kernel_node.get());
     MS_EXCEPTION_IF_NULL(kernel_graph);
-    auto enable_aclnn = IsEnableAclNN(kernel_graph, kernel_node);
-    auto [select_res, msg, etype] = SelectKernelInfoWithMsg(kernel_node, enable_aclnn);
+    auto [select_res, msg, etype] = SelectKernelInfoWithMsg(kernel_graph, kernel_node);
     if (select_res) {
       return;
     }
