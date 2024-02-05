@@ -1056,6 +1056,13 @@ def get_method_info(obj):
     return class_name_and_method_name[0], class_name_and_method_name[1]
 
 
+def is_ms_tensor_method(obj):
+    """Check if the obj is a method of MindSpore Tensor"""
+    if not hasattr(obj, "__self__"):
+        return False
+    return type(obj.__self__) == Tensor
+
+
 def can_constant_fold(obj):
     """Check if the obj is the function can be constantly folded."""
     return obj in constant_fold_functions

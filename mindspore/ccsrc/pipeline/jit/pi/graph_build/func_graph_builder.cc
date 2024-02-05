@@ -457,7 +457,12 @@ py::object FuncGraphBuilder::ConvertMethod(const py::object &obj) {
     MS_LOG(DEBUG) << "Can not get the method info of " << py::str(obj);
     return py::object();
   }
-  auto type_id = GetTypeIdFromClassName(class_name_obj.cast<std::string>());
+  auto class_name = class_name_obj.cast<std::string>();
+  if (class_name == "Tensor" &&
+      !py::cast<bool>(python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_IS_MS_TENSOR_METHOD, obj))) {
+    return py::object();
+  }
+  auto type_id = GetTypeIdFromClassName(class_name);
   auto method_name = method_info[1].cast<std::string>();
   MS_LOG(DEBUG) << "type_id: " << type_id << ", method_name: " << method_name;
   Any require = pipeline::Resource::GetMethodPtr(type_id, method_name);
