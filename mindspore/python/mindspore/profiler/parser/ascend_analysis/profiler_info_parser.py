@@ -142,7 +142,8 @@ class ProfilerInfoParser:
             jsondata = json.loads(FileManager.read_file_content(info_json_path, "rt"))
             config_freq = jsondata.get("CPU")[0].get("Frequency")
             if config_freq is None or not cls.__is_number(config_freq):
-                raise ValueError("Do not get valid CPU frequency!")
+                logger.warning("cpu frequency is: {config_freq}")
+                config_freq = "1000"
         except (AttributeError, IndexError, TypeError, ValueError, JSONDecodeError) as err:
             msg = f"Incorrect file content in {os.path.basename(info_json_path)}"
             raise RuntimeError(msg) from err
