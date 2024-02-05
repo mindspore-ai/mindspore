@@ -86,6 +86,7 @@ TilingInfo TilingCacheMgr::GetOrCreateTilingInfo(
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "ACL_MEMCPY_HOST_TO_DEVICE failed!";
   }
+  free(host_addr);
   AppendToCache(key, tiling_cache_elem);
   return tiling_cache_elem;
 }
