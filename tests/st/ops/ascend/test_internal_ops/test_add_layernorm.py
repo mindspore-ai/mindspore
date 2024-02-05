@@ -48,7 +48,7 @@ def _layer_norm_np(begin_norm_axis, begin_params_axis, x, gamma, beta):
     return y
 
 
-def _test_add_layernorm_fusion(shape, dtype, internal_kernel):
+def _test_add_layernorm_fusion(shape, dtype, internal_kernel, is_dynamic=False):
     np.random.seed(0)
     os.environ["MS_ENABLE_INTERNAL_KERNELS"] = "on" if internal_kernel else "off"
     np_dtype_map = {"float16": np.float16,
@@ -69,6 +69,11 @@ def _test_add_layernorm_fusion(shape, dtype, internal_kernel):
     gamma = np.ones([shape[-1]]).astype(np_dtype)
     beta = np.zeros([shape[-1]]).astype(np_dtype)
     net = Add_LayerNorm()
+    if is_dynamic:
+        input_dyn = Tensor(shape=[None, None, None], dtype=tensor_dtype)
+        gamma_dyn = Tensor(shape=[None], dtype=tensor_dtype)
+        net.set_inputs(input_dyn, input_dyn, gamma_dyn, gamma_dyn)
+
     output = net(Tensor(input_x, dtype=tensor_dtype), Tensor(input_y, dtype=tensor_dtype),
                  Tensor(gamma, dtype=tensor_dtype), Tensor(beta, dtype=tensor_dtype))
     os.unsetenv("MS_ENABLE_INTERNAL_KERNELS")
@@ -76,7 +81,7 @@ def _test_add_layernorm_fusion(shape, dtype, internal_kernel):
     return output[0].asnumpy(), output[1].asnumpy()
 
 
-def test_add_layernorm_f16(dtype=np.float32):
+def test_add_layernorm_f16():
     """
     Feature: test add_layernorm fusion in graph mode
     Description: test add_layernorm.
@@ -85,6 +90,20 @@ def test_add_layernorm_f16(dtype=np.float32):
     shape = (1, 1024, 11264)
     dtype = "float16"
     result_internal = _test_add_layernorm_fusion(shape, dtype, True)
+    result_aclnn = _test_add_layernorm_fusion(shape, dtype, False)
+    assert np.amax(np.abs(result_internal[0] - result_aclnn[0])) < 5e-3
+    assert np.amax(np.abs(result_internal[1] - result_aclnn[1])) < 5e-3
+
+
+def test_add_layernorm_f16_dyn():
+    """
+    Feature: test add_layernorm fusion in graph mode with dynamic shape
+    Description: test add_layernorm.
+    Expectation: the result is the same with aclnn version of two ops
+    """
+    shape = (1, 1024, 11264)
+    dtype = "float16"
+    result_internal = _test_add_layernorm_fusion(shape, dtype, True, True)
     result_aclnn = _test_add_layernorm_fusion(shape, dtype, False)
     assert np.amax(np.abs(result_internal[0] - result_aclnn[0])) < 5e-3
     assert np.amax(np.abs(result_internal[1] - result_aclnn[1])) < 5e-3
