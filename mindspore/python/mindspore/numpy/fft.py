@@ -14,7 +14,7 @@
 # ============================================================================
 """Fast Fourier Transform operations, the function docs are adapted from Numpy API."""
 from __future__ import absolute_import
-from mindspore.ops import function as F
+from mindspore import ops
 
 
 def fftshift(x, axes=None):
@@ -43,7 +43,7 @@ def fftshift(x, axes=None):
         >>> fftshift(x)
         Tensor(shape=[10], dtype=Int32, value= [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4])
     """
-    return F.fftshift(x, axes)
+    return ops.fftshift(x, axes)
 
 
 def ifftshift(x, axes=None):
@@ -72,7 +72,7 @@ def ifftshift(x, axes=None):
         >>> ifftshift(fftshift(x))
         Tensor(shape=[10], dtype=Int32, value= [ 0, 1, 2, 3, 4, -5, -4, -3, -2, -1])
     """
-    return F.ifftshift(x, axes)
+    return ops.ifftshift(x, axes)
 
 
 def fft(a, n=None, axis=-1, norm=None):
@@ -111,7 +111,7 @@ def fft(a, n=None, axis=-1, norm=None):
         [-0.5885514+0.j          2.1525172-0.46121222j  2.7808986+0.j
          2.1525172+0.46121222j]
     """
-    return F.fft(a, n, axis, norm)
+    return ops.fft(a, n, axis, norm)
 
 
 def ifft(a, n=None, axis=-1, norm=None):
@@ -150,4 +150,4 @@ def ifft(a, n=None, axis=-1, norm=None):
         [-0.14713785+0.j          0.5381293 +0.11530305j  0.69522465+0.j
          0.5381293 -0.11530305j]
     """
-    return F.ifft(a, n, axis, norm)
+    return ops.ifft(a, n, axis, norm)

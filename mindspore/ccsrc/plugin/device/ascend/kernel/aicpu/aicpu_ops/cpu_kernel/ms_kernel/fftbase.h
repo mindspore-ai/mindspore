@@ -30,6 +30,8 @@ class FFTBaseCpuKernel : public CpuKernel {
  private:
   template <typename T_in, typename T_mid, typename T_out>
   uint32_t FFTBaseCompute(CpuKernelContext &ctx);
+
+  std::string op_name;
 };
 }  // namespace aicpu
 #endif  //  AICPU_FFTBASE_H

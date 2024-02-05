@@ -76,6 +76,7 @@ cust_op_lists = [
     "expm1",
     "extractglimpse",
     "eye",
+    "fft",
     "fftshift",
     "filldiagonal",
     "floordiv",
@@ -91,6 +92,7 @@ cust_op_lists = [
     "histogram",
     "hypot",
     "identityn",
+    "ifft",
     "ifftshift",
     "igamma",
     "im2col",
@@ -215,7 +217,6 @@ cust_op_lists = [
     "environset",
     "layernormgradgrad",
     "batchnormgradgrad",
-    "fftbase"
 ]
 
 

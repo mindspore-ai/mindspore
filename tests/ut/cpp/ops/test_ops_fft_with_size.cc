@@ -34,9 +34,9 @@ struct FFTParams {
   TypePtr output_dtype;
 };
 
-class TestFFT : public TestOps, public testing::WithParamInterface<FFTParams> {};
+class TestFFTWithSize : public TestOps, public testing::WithParamInterface<FFTParams> {};
 
-TEST_P(TestFFT, dyn_shape) {
+TEST_P(TestFFTWithSize, dyn_shape) {
   const auto &param = GetParam();
   auto input = std::make_shared<abstract::AbstractTensor>(param.input_dtype, param.input_shape);
   auto signal_ndim = param.signal_ndim == -1 ? Any->ToAbstract() : CreatePyInt(param.signal_ndim)->ToAbstract();
@@ -118,5 +118,5 @@ auto cases = testing::Values(
   FFTParams{{2, 3, 4, -1}, 2, true, true, true, CreatePyIntList({4, 8}), {2, 3, 4, 8}, kComplex64, kFloat32},
   FFTParams{{2, -1}, 2, true, true, true, CreateList({CreatePyInt(4), Any}), {2, -1}, kComplex64, kFloat32});
 
-INSTANTIATE_TEST_CASE_P(TestFFT, TestFFT, cases);
+INSTANTIATE_TEST_CASE_P(TestFFTWithSize, TestFFTWithSize, cases);
 }  // namespace mindspore::ops
