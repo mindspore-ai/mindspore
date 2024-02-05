@@ -1229,9 +1229,7 @@ REG_BPROP_BUILDER("Reciprocal").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("Log").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
-  auto g = ib->Emit("Reciprocal", {x});
-  auto dx = g * dout;
-  return {dx};
+  return {ib->Emit("Div", {dout, x})};
 });
 
 REG_BPROP_BUILDER("Floor").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
