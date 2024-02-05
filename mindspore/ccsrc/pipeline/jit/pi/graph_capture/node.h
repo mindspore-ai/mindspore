@@ -19,12 +19,13 @@
 #include <string>
 #include <map>
 #include <vector>
-#include <optional>
 #include <algorithm>
 #include <utility>
 #include <optional>
+#include <memory>
 #include "utils/log_adapter.h"
 #include "pipeline/jit/pi/graph_capture/abstract_object.h"
+#include "pipeline/jit/pi/graph_capture/constant_info.h"
 #include "pipeline/jit/pi/utils/utils.h"
 
 namespace mindspore {
@@ -98,12 +99,7 @@ class ValueNode : public InstrNode {
   static ValueNode kUnboundLocal;
 
   ValueNode(AObject *vobj, int opcode, int oparg, const std::vector<ValueNode *> &inputs = {})
-      : InstrNode(Value, opcode, oparg),
-        vobj_(vobj),
-        inputs_(inputs),
-        attr_(false),
-        subscr_(false),
-        is_constant_(false) {}
+      : InstrNode(Value, opcode, oparg), vobj_(vobj), inputs_(inputs), attr_(false), subscr_(false) {}
   virtual ~ValueNode() {}
 
   std::vector<ValueNode *> &getInputs() { return inputs_; }
@@ -129,26 +125,36 @@ class ValueNode : public InstrNode {
   ValueNode *GetParent() { return parent_.value_or(nullptr); }
   void SetParent(ValueNode *parent);
 
-  bool is_constant() const { return is_constant_; }
-  void set_is_constant(bool constant) { is_constant_ = constant; }
+  bool IsConstantValue() const;
+  void SetConstantValue(bool constant);
+  const std::unique_ptr<ConstantInfo> &MakeConstantInfo();
+  const std::unique_ptr<ConstantInfo> &GetConstantInfo() const { return constant_info_; }
 
  protected:
   ValueNode(Type type, AObject *vobj, int opcode, int oparg, const std::vector<ValueNode *> &inputs = {})
-      : InstrNode(type, opcode, oparg),
-        vobj_(vobj),
-        inputs_(inputs),
-        attr_(false),
-        subscr_(false),
-        is_constant_(false) {}
+      : InstrNode(type, opcode, oparg), vobj_(vobj), inputs_(inputs), attr_(false), subscr_(false) {}
 
  private:
-  AObject *vobj_;                             // NOTE: vobj_ is not compute
-  std::vector<ValueNode *> inputs_;           // which nodes are used, ordered parameter
-  std::map<std::string, ValueNode *> attrs_;  // store attrs
-  bool attr_;                                 // track store attr not implement, marked as modified
-  bool subscr_;                               // track store subscr not implement, marked as modified
-  bool is_constant_;                          // constant results, maybe not const object
-  std::optional<ValueNode *> parent_;         // recode relationship between local and CallNode
+  // value info
+  AObject *vobj_;
+
+  // constant info
+  std::unique_ptr<ConstantInfo> constant_info_;
+
+  // which nodes are used, ordered parameter
+  std::vector<ValueNode *> inputs_;
+
+  // store attrs
+  std::map<std::string, ValueNode *> attrs_;
+
+  // track store attr not implement, marked as modified
+  bool attr_;
+
+  // track store subscr not implement, marked as modified
+  bool subscr_;
+
+  // recode relationship between local and CallNode
+  std::optional<ValueNode *> parent_;
 };
 
 // simulate PyCellObject, oparg is index

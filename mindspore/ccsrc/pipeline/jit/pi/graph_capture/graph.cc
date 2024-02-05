@@ -65,43 +65,18 @@ Graph::Graph(PyCodeObject *co, PyObject *globals, const GraphJitConfig &conf)
   }
 }
 
-static const std::set<int> support_constant_op = {
-  BINARY_SUBSCR, COMPARE_OP, IS_OP,     CONTAINS_OP, LOAD_ATTR,           LIST_TO_TUPLE,
-  BUILD_TUPLE,   BUILD_LIST, BUILD_MAP, BUILD_SLICE, BUILD_CONST_KEY_MAP,
-};
-
-bool IsConstantFold(int op, const std::vector<ValueNode *> &inputs) {
-  if (op == LOAD_CONST) {
-    return true;
-  }
-  auto iter = std::find_if_not(inputs.begin(), inputs.end(), [](ValueNode *i) { return i->is_constant(); });
-  if (iter != inputs.end()) {
-    return false;
-  }
-  if (support_constant_op.find(op) != support_constant_op.end()) {
-    return true;
-  }
-  if (Utils::IsBinaryMathOp(op) && Utils::IsGeneralNoSideEffectOp(op)) {
-    return true;
-  }
-  return false;
-}
-
-ValueNode *Graph::NewValueNode(AObject *obj_info, int op, int arg, const std::vector<ValueNode *> &inputs) {
+ValueNode *Graph::NewValueNode(AObject *obj_info, int op, int arg, const std::vector<ValueNode *> &inputs,
+                               const std::string &name) {
   MS_EXCEPTION_IF_CHECK_FAIL(!Utils::IsCallOp(op), "must not be call function opcode");
-  bool constant = false;
-  if (IsConstantFold(op, inputs) && obj_info && obj_info->GetPyObject().ptr()) {
-    // calculate real value...
-    constant = true;
-  }
-  ValueNode *node;
-  if (constant && CheckConstPyObject(obj_info->GetPyObject().ptr())) {
-    node = this->allocator().NewNode<ValueNode>(obj_info, LOAD_CONST, -1);
-  } else {
-    node = this->allocator().NewNode<ValueNode>(obj_info, op, arg, inputs);
-  }
+  ValueNode *node = this->allocator().NewNode<ValueNode>(obj_info, op, arg, inputs);
+  node->SetName(name);
   node->SetGraph(this);
-  node->set_is_constant(constant);
+  ConstantInfo::CollectConstantInfo(node);
+  if (node->IsConstantValue() && obj_info && CheckConstPyObject(obj_info->GetPyObject().ptr())) {
+    node->SetOpcode(LOAD_CONST);
+    node->SetOparg(-1);
+    node->ClearInputs();
+  }
   return node;
 }
 
@@ -249,7 +224,7 @@ bool Graph::GuardValueNode(ValueNode *node) {
   if (guard_ == nullptr || !vo || vo->GetPyObject().ptr() == nullptr) {
     return false;
   }
-  if (node->GetOpcode() == LOAD_CONST) {
+  if (node->IsConstantValue()) {
     return true;
   }
   TracePtr t = GetTrace(node, Config().GetBoolConfig(GraphJitConfig::kStrictTrace),
@@ -262,6 +237,7 @@ bool Graph::GuardValueNode(ValueNode *node) {
     }
     return ret;
   }
+  node->SetConstantValue(true);
   return false;
 }
 
