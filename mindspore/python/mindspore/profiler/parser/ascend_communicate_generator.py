@@ -46,8 +46,8 @@ class AscendCommunicationGenerator:
     P2P = "p2p"
     COLLECTIVE = "collective"
     TRANSPORT_TYPE = "Transport Type"
-    PATTERN1 = re.compile(r"reduce|send")
-    PATTERN2 = re.compile(r"invalid|broadcast|allreduce|receive|"
+    PATTERN1 = re.compile(r"receive|send")
+    PATTERN2 = re.compile(r"invalid|broadcast|allreduce|reduce|"
                           r"allgather|reducescatter|scatter|alltoall|alltoallv|alltoallvc")
 
     def __init__(self, source_path):
@@ -150,10 +150,10 @@ class AscendCommunicationGenerator:
         """integrate the matrix data"""
         comm_op_dict = defaultdict(dict)
         for new_comm_op_name, data in comm_op_dict_simple.items():
-            data = sorted(data, key=lambda x: x[self.BANDWIDTH_GB_S], reverse=True)
+            data.sort(key=lambda x: x[self.BANDWIDTH_GB_S], reverse=True)
             t_type = data[0].get(self.TRANSPORT_TYPE, '')
-            t_size = sum([x.get(self.TRANSIT_SIZE_MB, 0) for x in data])
-            t_time = sum([x.get(self.TRANSIT_TIME_MS, 0) for x in data])
+            t_size = sum(x.get(self.TRANSIT_SIZE_MB, 0) for x in data)
+            t_time = sum(x.get(self.TRANSIT_TIME_MS, 0) for x in data)
             bandwidth = self.compute_ratio(t_size, t_time)
 
             link = new_comm_op_name[2]
@@ -203,9 +203,12 @@ class AscendCommunicationGenerator:
             else:
                 match_obj = self.PATTERN2.search(communication_op.lower())
                 if not match_obj:
-                    logging.warning("未找到通信算子类型：%s", communication_op)
-                    continue
-                comm_op_type = match_obj.group()
+                    comm_op_type = communication_op.lower().split('/')[-1].split('-op')[0]
+                    logging.warning("Communication operator type not found communication_op: %s, use comm_op_type: %s",
+                                    communication_op, comm_op_type)
+                else:
+                    comm_op_type = match_obj.group()
+
                 for link, data in communication_info.items():
                     new_comm_op_name = (comm_op_type, communication_op.split("@")[-1], link)
                     data['op_name'] = communication_op.split("@")[0]
