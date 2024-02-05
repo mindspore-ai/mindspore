@@ -115,9 +115,9 @@ CNodePtr MatMulAllReduceFusion::CreateMatMulAllReduceNode(const FuncGraphPtr &fu
     MS_LOG(ERROR) << "get input node data type failed." << input_x_node->fullname_with_scope();
     return nullptr;
   }
-  const std::set<TypeId> support_dtype = {kNumberTypeFloat16, kNumberTypeBFloat16};
+  const std::set<TypeId> support_dtype = {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeBFloat16};
   if (support_dtype.find(matmul_input_data_type) == support_dtype.end()) {
-    MS_LOG(ERROR) << "only support float16 and bfloat16 data type";
+    MS_LOG(ERROR) << "unsupported data type: " << matmul_input_data_type;
     return nullptr;
   }
 
@@ -161,9 +161,9 @@ CNodePtr MatMulAllReduceFusion::CreateMatMulBiasAddAllReduceNode(const FuncGraph
     MS_LOG(ERROR) << "get input node data type failed." << input_x_node->fullname_with_scope();
     return nullptr;
   }
-  const std::set<TypeId> support_dtype = {kNumberTypeFloat16, kNumberTypeBFloat16};
+  const std::set<TypeId> support_dtype = {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeBFloat16};
   if (support_dtype.find(matmul_input_data_type) == support_dtype.end()) {
-    MS_LOG(ERROR) << "only support float16 and bfloat16 data type";
+    MS_LOG(ERROR) << "unsupported data type: " << matmul_input_data_type;
     return nullptr;
   }
 
