@@ -930,10 +930,10 @@ void MindRTBackend::OpRunCallback(const std::shared_ptr<runtime::OpTaskContext> 
   MS_EXCEPTION_IF_NULL(ms_context);
   auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, context->is_pynative_infer());
+  MS_EXCEPTION_IF_NULL(context);
   runtime::OpRunner::RunSingleOpGraph(context->op_run_info(), context->op_compiler_info(),
                                       runtime::OpRunner::GetTensorWithoutValueMask(context->op_run_info()));
 
-  MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(context->op_run_info());
   if (!context->op_run_info()->is_infer) {
     ReleaseForwardOutput(context->op_run_info()->base_op_run_info.expanded_input_values);
@@ -955,10 +955,10 @@ void MindRTBackend::OpRunCallbackDynamic(const std::shared_ptr<runtime::OpTaskCo
   auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, context->is_pynative_infer());
 
+  MS_EXCEPTION_IF_NULL(context);
   runtime::DynamicOpRunner::RunSingleOpGraph(context->op_run_info(), context->op_compiler_info(),
                                              runtime::OpRunner::GetTensorWithoutValueMask(context->op_run_info()));
 
-  MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(context->op_run_info());
   if (!context->op_run_info()->is_infer) {
     ReleaseForwardOutput(context->op_run_info()->base_op_run_info.expanded_input_values);

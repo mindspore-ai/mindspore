@@ -114,6 +114,7 @@ bool CastOperation::IsValueTypeInvalid(const ValuePtr &v) const {
 ValuePtr CastOperation::DoNormalCast(const FrontendOpRunInfoPtr &cast_run_info, const ValuePtr &v,
                                      const TypeId &type_id) const {
   MS_EXCEPTION_IF_NULL(v);
+  MS_EXCEPTION_IF_NULL(cast_run_info);
   // Step 1: Cast scalar value to another scalar value with destination data type.
   // It is used to avoid to call `cast infer value function` or launch cast op to backend.
   ValuePtr dst_value = ScalarToDstDtypeValue(v, type_id);
@@ -131,7 +132,6 @@ ValuePtr CastOperation::DoNormalCast(const FrontendOpRunInfoPtr &cast_run_info, 
     }
   }
 
-  MS_EXCEPTION_IF_NULL(cast_run_info);
   constexpr auto input_size = 2;
   cast_run_info->op_grad_info->op_prim = GetPrimByTypeId(type_id);
   auto type_id64 = std::make_shared<Int64Imm>(static_cast<int64_t>(type_id));
