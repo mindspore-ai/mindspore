@@ -113,6 +113,7 @@ class TilingCacheMgr {
   device::DeviceContext *device_context_;
   std::mutex key_mtx_, cache_mtx_;
 
+
   uint64_t calc_hash_id();
 
   inline size_t AlignMemorySize(size_t size) {
@@ -163,7 +164,6 @@ class TilingCacheMgr {
   // cache for scalar, eg. depend value
   void GenCache(const ScalarPtr &scalar) {
     MS_EXCEPTION_IF_NULL(scalar);
-    MS_LOG(WARNING) << "scalar -----";
     if (scalar->isa<BoolImm>()) {
       auto value = GetValue<bool>(scalar);
       GenCache(&value);

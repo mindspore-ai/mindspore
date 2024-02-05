@@ -24,13 +24,11 @@ internal::OpParamPtr Gather::CreateOpParam(const std::vector<KernelTensor *> &in
 
   auto axis_tensor = inputs.at(2);  // input 2 : axis
   if (axis_tensor->dtype_id() == TypeId::kNumberTypeInt64) {
-    MS_LOG(WARNING) << "GET VALUE " << kernel_name_;
     auto axis_list = axis_tensor->GetValue<std::vector<int64_t>>().value();
     for (auto axis : axis_list) {
       gather_param.axis.emplace_back(axis);
     }
   } else if (axis_tensor->dtype_id() == TypeId::kNumberTypeInt32) {
-    MS_LOG(WARNING) << "GET VALUE " << kernel_name_;
     auto axis_list = axis_tensor->GetValue<std::vector<int32_t>>().value();
     for (auto axis : axis_list) {
       gather_param.axis.emplace_back(axis);

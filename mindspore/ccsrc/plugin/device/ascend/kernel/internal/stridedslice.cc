@@ -40,7 +40,6 @@ internal::OpParamPtr InternalStridedSlice::CreateOpParam(const std::vector<Kerne
   }
   auto input_shape = inputs[0]->GetShape()->GetShapeVector();
   internal::SliceParam slice_param;
-  MS_LOG(WARNING) << "get value for SLICE----";
   std::vector<size_t> begin = inputs[1]->GetValue<std::vector<size_t>>().value();
   std::vector<size_t> end = inputs[2]->GetValue<std::vector<size_t>>().value();
   size_t i = 0;
