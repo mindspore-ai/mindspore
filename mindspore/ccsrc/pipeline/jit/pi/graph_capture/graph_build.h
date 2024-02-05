@@ -240,7 +240,6 @@ class GraphBuilder {
   bool DoYieldValue(const Instr &instr);
   bool NotImplementBytecode(const Instr &instr);
   static const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> bytecode_meth_map_;
-  std::vector<py::object> GetNewArgs(CallNode *call_node);
 
   // check the function is special function that mindspore support and not inline,
   // the return values or type can be infer
@@ -294,6 +293,7 @@ class MindGraphBuilder : public GraphBuilder {
   bool DoBuildOp(const Instr &instr) override;
 
  private:
+  std::vector<py::object> GetNewArgs(CallNode *call_node);
   bool IsFuncInWhiteList(const py::object &f, std::string *special_func_key);
   bool HandleFuncInWhiteList(const std::string &key, CallNode *n) override;
 
