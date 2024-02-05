@@ -28,6 +28,7 @@
 #include "pipeline/jit/ps/pipeline.h"
 #include "include/common/thread_pool.h"
 #include "include/common/pybind_api/api_register.h"
+#include "runtime/hardware/device_context_manager.h"
 
 namespace mindspore {
 
@@ -55,6 +56,10 @@ void RegisterForkCallbacks() {
   ForkUtils::GetInstance().RegisterCallbacks(
     &runtime::OpExecutor::GetInstance(), static_cast<void (runtime::OpExecutor::*)()>(nullptr),
     static_cast<void (runtime::OpExecutor::*)()>(nullptr), &runtime::OpExecutor::ChildAfterFork);
+  MS_LOG(DEBUG) << "Register DeviceContextManager fork callbacks.";
+  ForkUtils::GetInstance().RegisterCallbacks(
+    &device::DeviceContextManager::GetInstance(), static_cast<void (device::DeviceContextManager::*)()>(nullptr),
+    static_cast<void (device::DeviceContextManager::*)()>(nullptr), &device::DeviceContextManager::ChildAfterFork);
 #endif
 }
 

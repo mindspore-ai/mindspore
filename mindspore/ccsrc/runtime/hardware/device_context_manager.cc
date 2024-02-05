@@ -480,6 +480,13 @@ void DeviceContextManager::ClearDeviceContexts() {
   device_contexts_.clear();
 }
 
+void DeviceContextManager::ChildAfterFork() {
+  MS_LOG(DEBUG) << "DeviceContextManager reinitialize after fork.";
+  MS_LOG(DEBUG) << "Clear device_contexts_.";
+  device_contexts_.clear();
+  MS_LOG(DEBUG) << "DeviceContextManager reinitialize after fork done.";
+}
+
 void DeviceContextManager::BindDeviceCtx() const {
   for (auto &iter : device_contexts_) {
     MS_EXCEPTION_IF_NULL(iter.second);
