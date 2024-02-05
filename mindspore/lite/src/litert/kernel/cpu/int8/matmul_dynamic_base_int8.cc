@@ -54,12 +54,12 @@ void MatmulDynamicBaseInt8CPUKernel::FreeQuantParam() {
 }
 
 int MatmulDynamicBaseInt8CPUKernel::MallocQuantParam() {
-  quant_param_ = reinterpret_cast<MatmulDynamicQuantParameter *>(malloc(sizeof(MatmulQuantParameter)));
+  quant_param_ = reinterpret_cast<MatmulDynamicQuantParameter *>(malloc(sizeof(MatmulDynamicQuantParameter)));
   if (quant_param_ == nullptr) {
     MS_LOG(ERROR) << "Malloc MatmulDynamicQuantParameter for Matmul int8 op failed!";
     return RET_ERROR;
   }
-  memset(quant_param_, 0, sizeof(MatmulQuantParameter));
+  (void)memset(quant_param_, 0, sizeof(MatmulDynamicQuantParameter));
   return RET_OK;
 }
 
@@ -80,9 +80,16 @@ int MatmulDynamicBaseInt8CPUKernel::InitFilterQuantParam() {
     MS_LOG(ERROR) << weight_tensor->tensor_name() << " dims < 2.";
     return RET_ERROR;
   }
-  int col = param_->b_transpose_ ? w_shape[w_shape.size() - kSize2] : w_shape[w_shape.size() - kSize1];
   filter_per_channel_ = (weight_quant_params.size() > 1);
-  auto channel_num = filter_per_channel_ ? col : 1;
+  filter_per_batch_channel_ = false;
+  int channel_num = 1;
+  if (filter_per_channel_) {
+    channel_num = param_->col_;
+    if (weight_quant_params.size() > static_cast<size_t>(channel_num)) {
+      filter_per_batch_channel_ = true;
+      channel_num = in_tensors_.at(kWeightIndex)->ElementsNum() / param_->deep_;
+    }
+  }
   if (static_cast<int>(weight_quant_params.size()) != channel_num) {
     MS_LOG(ERROR) << weight_tensor->tensor_name() << " quant params size:" << weight_quant_params.size()
                   << " != channel_num:" << channel_num;
@@ -90,10 +97,10 @@ int MatmulDynamicBaseInt8CPUKernel::InitFilterQuantParam() {
   }
   quant_param_->filter_scale_ = reinterpret_cast<float *>(malloc(channel_num * sizeof(float)));
   CHECK_NULL_RETURN(quant_param_->filter_scale_);
-  memset(quant_param_->filter_scale_, 0, sizeof(channel_num));
+  (void)memset(quant_param_->filter_scale_, 0, sizeof(channel_num));
   quant_param_->filter_zp_ = reinterpret_cast<int32_t *>(malloc(channel_num * sizeof(int32_t)));
   CHECK_NULL_RETURN(quant_param_->filter_zp_);
-  memset(quant_param_->filter_zp_, 0, sizeof(channel_num));
+  (void)memset(quant_param_->filter_zp_, 0, sizeof(channel_num));
 
   for (int i = 0; i < channel_num; i++) {
     quant_param_->filter_scale_[i] = static_cast<float>(weight_quant_params[i].scale);
@@ -143,7 +150,15 @@ int MatmulDynamicBaseInt8CPUKernel::InitInputQuantParam(std::vector<float> *scal
     return RET_ERROR;
   }
   input_per_channel_ = (in_quant_params.size() > 1);
-  auto channel_num = input_per_channel_ ? param_->row_ : 1;
+  input_per_batch_channel_ = false;
+  int channel_num = 1;
+  if (input_per_channel_) {
+    channel_num = param_->row_;
+    if (in_quant_params.size() > static_cast<size_t>(channel_num)) {
+      input_per_batch_channel_ = true;
+      channel_num = in_tensors_.at(kInputIndex)->ElementsNum() / param_->deep_;
+    }
+  }
   if (static_cast<int>(in_quant_params.size()) != channel_num) {
     MS_LOG(ERROR) << in_tensors_.at(kInputIndex)->tensor_name() << " quant params size:" << in_quant_params.size()
                   << " != channel_num:" << channel_num;
@@ -199,7 +214,7 @@ int MatmulDynamicBaseInt8CPUKernel::InitMatrixABuffer() {
     return lite::RET_NULL_PTR;
   }
   input_sums_ = reinterpret_cast<int *>(pack_a_ptr_ + pack_a_size);
-  memset(pack_a_ptr_, 0, pack_a_size + sum_a_size);
+  (void)memset(pack_a_ptr_, 0, pack_a_size + sum_a_size);
   return RET_OK;
 }
 
@@ -240,8 +255,8 @@ int MatmulDynamicBaseInt8CPUKernel::InitMatrixBBuffer() {
     FreeTmpBuffer();
     return RET_ERROR;
   }
-  memset(pack_b_ptr_, 0, b_batch_ * param_->col_align_ * param_->deep_align_ * sizeof(int8_t));
-  memset(weight_sums_, 0, b_batch_ * param_->col_align_ * sizeof(int));
+  (void)memset(pack_b_ptr_, 0, b_batch_ * param_->col_align_ * param_->deep_align_ * sizeof(int8_t));
+  (void)memset(weight_sums_, 0, b_batch_ * param_->col_align_ * sizeof(int));
   return RET_OK;
 }
 
@@ -258,7 +273,7 @@ int MatmulDynamicBaseInt8CPUKernel::CopyBias() {
       FreeTmpBuffer();
       return RET_MEMORY_FAILED;
     }
-    memcpy(bias_ptr_, bias_tensor->data(), bias_tensor->Size());
+    (void)memcpy(bias_ptr_, bias_tensor->data(), bias_tensor->Size());
   } else {
     bias_ptr_ = nullptr;
   }
@@ -372,8 +387,8 @@ int MatmulDynamicBaseInt8CPUKernel::InitBroadcastParams(const std::vector<int> &
   int batch_sizes[MAX_SHAPE_SIZE] = {0};
   int a_batch_sizes[MAX_SHAPE_SIZE] = {0};
   int b_batch_sizes[MAX_SHAPE_SIZE] = {0};
-  for (int i = a_shape.size() - kCHWDimNumber; i >= 0; --i) {
-    if (static_cast<int>(a_shape.size() - kCHWDimNumber) == i) {
+  for (int i = static_cast<int>(a_shape.size()) - kCHWDimNumber; i >= 0; --i) {
+    if (static_cast<int>(a_shape.size()) - kCHWDimNumber == i) {
       batch_sizes[i] = std::max(a_shape[i], b_shape[i]);
       a_batch_sizes[i] = a_shape[i];
       b_batch_sizes[i] = b_shape[i];

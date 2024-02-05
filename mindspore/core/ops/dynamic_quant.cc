@@ -48,6 +48,18 @@ bool DynamicQuant::get_transpose() const {
   auto value_ptr = this->GetAttr(kTrans);
   return GetValue<bool>(value_ptr);
 }
+
+void DynamicQuant::set_prefer_axes(const std::vector<int> &prefer_axes) {
+  (void)AddAttr(kPreferAxes, api::MakeValue(prefer_axes));
+}
+
+std::vector<int> DynamicQuant::get_prefer_axes() const {
+  auto value_ptr = GetAttr(kPreferAxes);
+  auto tmp = GetValue<std::vector<int64_t>>(value_ptr);
+  std::vector<int> res(tmp.begin(), tmp.end());
+  return res;
+}
+
 void DynamicQuant::Init(const bool symmetric, const int64_t dst_type) {
   this->set_symmetric(symmetric);
   this->set_dst_type(dst_type);

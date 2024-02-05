@@ -104,7 +104,7 @@ int InsertQuantNodeManager::InsertDynamicQuantWithIndex(const FuncGraphPtr &grap
   bool symmetric = activation_channel ? true : false;
   primitive->set_symmetric(symmetric);
   primitive->set_activation_channel(activation_channel);
-  if (activation_channel && SetPreferAxis(cnode, index, primitive) != RET_OK) {
+  if (activation_channel && SetPreferAxes(cnode, index, primitive) != RET_OK) {
     MS_LOG(ERROR) << "Set prefer axis failed, " << cnode->fullname_with_scope();
     return RET_ERROR;
   }
@@ -134,18 +134,25 @@ int InsertQuantNodeManager::InsertDynamicQuantWithIndex(const FuncGraphPtr &grap
   return RET_OK;
 }
 
-int InsertQuantNodeManager::SetPreferAxis(const CNodePtr &cnode, size_t index,
+int InsertQuantNodeManager::SetPreferAxes(const CNodePtr &cnode, size_t index,
                                           const std::shared_ptr<ops::DynamicQuant> &dynamic_primitive) {
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   if (primitive->name() == ops::kNameMatMulFusion || primitive->name() == ops::kNameMatMul) {
     auto matmul_prim = api::MakeShared<ops::MatMul>(primitive);
     CHECK_NULL_RETURN(matmul_prim);
+    auto shape = opt::GetAnfNodeOutputShape(cnode->input(index), 0);
+    std::vector<int> prefer_axes;
+    for (int i = 0; i < static_cast<int>(shape.size()) - C2NUM; ++i) {
+      prefer_axes.push_back(i);
+    }
     // For MatMul A
     if (index == kInputIndex + kPrimOffset) {
       if (matmul_prim->GetAttr(ops::kTransposeA) != nullptr && matmul_prim->get_transpose_a()) {
+        prefer_axes.push_back(kLastFisrtIndex);
         dynamic_primitive->set_prefer_axis(kLastFisrtIndex);
         dynamic_primitive->set_transpose(true);
       } else {
+        prefer_axes.push_back(kLastSecondIndex);
         dynamic_primitive->set_prefer_axis(kLastSecondIndex);
         dynamic_primitive->set_transpose(false);
       }
@@ -153,13 +160,16 @@ int InsertQuantNodeManager::SetPreferAxis(const CNodePtr &cnode, size_t index,
     // For MatMul B
     if (index == kWeightIndex + kPrimOffset) {
       if (matmul_prim->GetAttr(ops::kTransposeB) != nullptr && matmul_prim->get_transpose_b()) {
+        prefer_axes.push_back(kLastSecondIndex);
         dynamic_primitive->set_prefer_axis(kLastSecondIndex);
         dynamic_primitive->set_transpose(true);
       } else {
+        prefer_axes.push_back(kLastFisrtIndex);
         dynamic_primitive->set_prefer_axis(kLastFisrtIndex);
         dynamic_primitive->set_transpose(false);
       }
     }
+    dynamic_primitive->set_prefer_axes(prefer_axes);
   } else {
     MS_LOG(WARNING) << "cnode don't need prefer axis, cnode name: " << cnode->fullname_with_scope();
   }
@@ -174,13 +184,17 @@ int InsertQuantNodeManager::NewDynamicQuantNode(const FuncGraphPtr &graph, const
     return RET_ERROR;
   }
   auto input = cnode->input(kInputIndex + kPrimOffset);
+  auto weight = cnode->input(kWeightIndex + kPrimOffset);
+  if (activation_channel && (input->isa<mindspore::CNode>() || IsGraphInput(input)) &&
+      (weight->isa<mindspore::CNode>() || IsGraphInput(weight))) {
+    return RET_NOT_SUPPORT;
+  }
   if (input->isa<mindspore::CNode>() || IsGraphInput(input)) {
     auto ret = InsertDynamicQuantWithIndex(graph, cnode, kInputIndex + kPrimOffset, activation_channel);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Insert dynamic quant with index failed.";
     }
   }
-  auto weight = cnode->input(kWeightIndex + kPrimOffset);
   if (weight->isa<mindspore::CNode>() || IsGraphInput(weight)) {
     auto ret = InsertDynamicQuantWithIndex(graph, cnode, kWeightIndex + kPrimOffset, activation_channel);
     if (ret != RET_OK) {
@@ -225,6 +239,9 @@ int InsertQuantNodeManager::InsertDynamicQuantNode(const FuncGraphPtr &graph,
       continue;
     }
     ret = NewDynamicQuantNode(graph, cnode, activation_channel);
+    if (ret == RET_NOT_SUPPORT) {
+      continue;
+    }
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "node:" << op_name << " new dynamic quant node failed.";
       return ret;
@@ -717,7 +734,7 @@ CNodePtr InsertQuantNodeManager::CreateQuantInputCastNode(const FuncGraphPtr &fu
 
 int InsertQuantNodeManager::CalculateScaleZPNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                                  size_t input_index, ParameterPtr *scales_node, ParameterPtr *zps_node,
-                                                 TypeId src_dtype, TypeId dst_dtype, int axis) {
+                                                 TypeId dst_dtype, int axis) {
   CHECK_NULL_RETURN(scales_node);
   CHECK_NULL_RETURN(zps_node);
   MS_CHECK_LT(input_index, cnode->size(), RET_ERROR);
@@ -874,7 +891,7 @@ int InsertQuantNodeManager::InsertAscendAntiQuantNode(const FuncGraphPtr &func_g
 
   ParameterPtr scales_node;
   ParameterPtr zps_node;
-  auto ret = CalculateScaleZPNode(func_graph, cnode, input_index, &scales_node, &zps_node, src_dtype, dst_dtype, axis);
+  auto ret = CalculateScaleZPNode(func_graph, cnode, input_index, &scales_node, &zps_node, dst_dtype, axis);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Fail to calculate scale & zero_point node: " << cnode->fullname_with_scope();
     return RET_ERROR;
