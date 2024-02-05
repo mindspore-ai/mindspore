@@ -134,7 +134,8 @@ class Graph {
   auto &GetFrames() { return frame_states_; }
   const auto &GetFrames() const { return frame_states_; }
   Allocator &allocator() { return alloc_; }
-  ValueNode *NewValueNode(AObject *, int op, int arg, const std::vector<ValueNode *> & = {});
+  ValueNode *NewValueNode(AObject *, int op, int arg, const std::vector<ValueNode *> & = {},
+                          const std::string &name = "");
   CallNode *NewCallNode(int op, int arg, const std::vector<ValueNode *> &);
   const std::vector<LoopInfo *> &loops() const { return loops_; }
   void AddLoop(LoopInfo *loop) { loops_.emplace_back(loop); }
