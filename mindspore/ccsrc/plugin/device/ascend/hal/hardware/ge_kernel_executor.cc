@@ -78,12 +78,15 @@ bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
     if (AnfAlgo::GetKernelMod(kernel)) {
+      MS_LOG(WARNING) << "Find KERNEMOD FOR " << common::AnfAlgo::GetCNodeName(kernel);
       continue;
     }
     if (AnfAlgo::IsKernelSelectBackoffOp(kernel)) {
+      MS_LOG(WARNING) << "Backoff KERNEMOD FOR " << common::AnfAlgo::GetCNodeName(kernel);
       continue;
     }
     std::string opname = common::AnfAlgo::GetCNodeName(kernel);
+    MS_LOG(WARNING) << "GEN KERNEMOD FOR " << opname;
     auto kernel_type = KernelType::ACL_KERNEL;
     kernel::KernelModPtr kernel_mod_ptr = nullptr;
     if (AnfAlgo::GetKernelType(kernel) == KernelType::ACL_KERNEL) {

@@ -24,6 +24,7 @@ internal::OpParamPtr InternalLayerNorm::CreateOpParam(const std::vector<KernelTe
   internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
   internal::NormParam op_param;
   op_param.normType = internal::NormParam::LAYER_NORM;
+  MS_LOG(WARNING) << "GET VALUE " << kernel_name_;
   op_param.beginNormAxis = inputs[kIndex3]->GetValueWithCheck<int64_t>();
   op_param.beginParamsAxis = inputs[kIndex4]->GetValueWithCheck<int64_t>();
   op_param.epsilon = inputs[kIndex5]->GetValueWithCheck<float>();

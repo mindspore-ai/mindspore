@@ -37,11 +37,13 @@ uint64_t TilingCacheMgr::GenTilingCacheKey(const std::string &name, PrimitivePtr
   for (size_t i = 0; i < inputs.size(); i++) {
     if (value_depend_list.find(i) != value_depend_list.end()) {
       // Should cache the value of depend inputs
-      ConcatKey(inputs[i]->GetValuePtr(), static_cast<int64_t>(inputs[i]->size()));
+      MS_LOG(WARNING) << "GET VALUE GenTilingCacheKey " << name << " i " << i;
+      // ConcatKey(inputs[i]->GetValuePtr(), static_cast<int64_t>(inputs[i]->size()));
     } else {
       GenCache(inputs[i]);
     }
   }
+  MS_LOG(WARNING) << "GenTilingCacheKey " << name << " end =====";
   uint64_t id = calc_hash_id();
   return id;
 }

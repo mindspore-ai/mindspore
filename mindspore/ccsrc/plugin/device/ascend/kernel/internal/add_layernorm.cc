@@ -22,7 +22,7 @@ internal::OpParamPtr InternalAddLayerNorm::CreateOpParam(const std::vector<Kerne
   internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
   // setup param from inputs
   internal::AddLayerNormParam op_param;
-
+  MS_LOG(WARNING) << "GET VALUE " << kernel_name_;
   auto beginNormAxis = inputs[kIndex4]->GetValueWithCheck<int64_t>();
   auto beginParamsAxis = inputs[kIndex5]->GetValueWithCheck<int64_t>();
   if (beginNormAxis != -1 || beginParamsAxis != -1) {
