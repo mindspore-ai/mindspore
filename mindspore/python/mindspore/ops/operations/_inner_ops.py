@@ -2743,6 +2743,7 @@ class _MirrorSilentCheck(PrimitiveWithInfer):
         self.min_steps = min_steps
         self.thresh = thresh
         self.coeff = coeff
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, x_shape, pre_shape, min_shape, max_shape, n_step, res_shape, loss_sale_shape):
         return x_shape

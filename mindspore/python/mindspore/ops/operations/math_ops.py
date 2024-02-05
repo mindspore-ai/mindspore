@@ -185,6 +185,7 @@ class SilentCheck(Primitive):
         validator.check_value_type("c_min_steps", c_min_steps, [int], self.name)
         validator.check_value_type("c_thresh", c_thresh, [float], self.name)
         validator.check_value_type("c_coeff", c_coeff, [float], self.name)
+        self.add_prim_attr('side_effect_mem', True)
 
 
 class _BitwiseBinaryOp(_MathBinaryOp):
