@@ -58,6 +58,7 @@ class InternalKernelMod : public KernelMod {
   std::vector<internal::Tensor *> outputs_;
   TilingInfo tiling_info_;
   std::string op_type_;
+  internal::DeviceRawBuf device_tiling_buf_;
 };
 
 using InternalKernelModPtr = std::shared_ptr<InternalKernelMod>;

@@ -84,6 +84,8 @@ bool InternalKernelMod::Init(const std::vector<KernelTensor *> &inputs, const st
 
   tiling_info_.device_buf_.size_ = 0;
   tiling_info_.device_buf_.addr_ = nullptr;
+  device_tiling_buf_.size_ = 0;
+  device_tiling_buf_.addr_ = nullptr;
   return true;
 }
 
