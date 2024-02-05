@@ -46,8 +46,17 @@ int CholeskySolveCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     return ret;
   }
   auto shape = inputs[kIndex0]->GetShapeVector();
+  auto shape2 = inputs[kIndex1]->GetShapeVector();
   dtype_ = inputs[kIndex0]->dtype_id();
   std::vector<size_t> x1_shape = Convert2SizeT(shape);
+  std::vector<size_t> x2_shape = Convert2SizeT(shape2);
+  if (x1_shape.size() != kDefalutRank && x1_shape.size() != kBatchRank) {
+    MS_EXCEPTION(ValueError) << "For CholeskySolve, the rank of x1 must be 2 or 3, but got rank " << x1_shape.size();
+  }
+  if (x1_shape.size() != x2_shape.size()) {
+    MS_EXCEPTION(ValueError) << "For CholeskySolve, ranks of inputs should be equal"
+                             << ", while got x1 rank " << x1_shape.size() << ", x2 rank " << x2_shape.size() << ".";
+  }
   size_t rank = x1_shape.size();
   if (rank == kDefalutRank) {
     dim = x1_shape[rank - kRowIndex];

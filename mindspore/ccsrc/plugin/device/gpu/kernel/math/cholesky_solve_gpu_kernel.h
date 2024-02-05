@@ -161,9 +161,17 @@ class CholeskySolveGpuKernelMod : public NativeGpuKernelMod {
       return ret;
     }
 
+    constexpr size_t kDefalutRank = 2;
+    constexpr size_t kBatchRank = 3;
     const auto b_shape = inputs.at(kIndex0)->GetShapeVector();
     const auto cho_shape = inputs.at(kIndex1)->GetShapeVector();
-
+    if (b_shape.size() != kDefalutRank && b_shape.size() != kBatchRank) {
+      MS_EXCEPTION(ValueError) << "For CholeskySolve, the rank of x1 must be 2 or 3, but got rank " << b_shape.size();
+    }
+    if (b_shape.size() != cho_shape.size()) {
+      MS_EXCEPTION(ValueError) << "For CholeskySolve, ranks of inputs should be equal"
+                               << ", while got x1 rank " << b_shape.size() << ", x2 rank " << cho_shape.size() << ".";
+    }
     is_null_input_ = CHECK_SHAPE_NULL(LongVecToSizeVec(b_shape), kernel_name_, "input_a") ||
                      CHECK_SHAPE_NULL(LongVecToSizeVec(cho_shape), kernel_name_, "input_b");
     batch_num_ = std::accumulate(b_shape.begin(), b_shape.end() - kIndex2, int64_t(1), std::multiplies{});
