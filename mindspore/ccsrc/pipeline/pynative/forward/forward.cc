@@ -1005,7 +1005,7 @@ void ForwardExecutor::Sync() {
   ExecuteLazyTask();
 
   runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kSyncStream);
-  device::DeviceContextManager::GetInstance().WaitTaskFinishOnDevice();
+  device::DeviceContextManager::GetInstance().SyncAllStreams();
 }
 
 ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info,

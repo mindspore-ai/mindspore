@@ -564,6 +564,15 @@ void DeviceContextManager::WaitTaskFinishOnDevice() const {
   }
 }
 
+void DeviceContextManager::SyncAllStreams() const {
+  for (const auto &item : device_contexts_) {
+    auto device_context = item.second;
+    if (device_context != nullptr && !device_context->device_res_manager_->SyncAllStreams()) {
+      MS_LOG(EXCEPTION) << "SyncStream failed, device info: " << device_context->device_context_key().ToString();
+    }
+  }
+}
+
 std::string DeviceContextManager::GetErrorMsg() const { return dlopen_error_msg_.str(); }
 
 bool DeviceContextManager::SelectGpuPlugin(const std::string &cuda_home, const std::set<std::string> &file_names) {
