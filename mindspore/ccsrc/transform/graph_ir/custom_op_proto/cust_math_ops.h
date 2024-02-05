@@ -106,6 +106,22 @@ REG_CUST_OP(Lgamma)
   .INPUT(x, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT32}))
   .OUTPUT(y, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16}))
   .CUST_OP_END_FACTORY_REG(Lgamma)
+
+REG_OP(SilentCheck)
+  .INPUT(val, TensorType({DT_FLOAT}))
+  .INPUT(pre_val, TensorType({DT_FLOAT}))
+  .INPUT(min_val, TensorType({DT_FLOAT}))
+  .INPUT(max_val, TensorType({DT_FLOAT}))
+  .INPUT(n_step, TensorType({DT_INT32}))
+  .INPUT(result, TensorType({DT_BOOL}))
+  .OUTPUT(result, TensorType({DT_BOOL}))
+  .OUTPUT(pre_val, TensorType({DT_FLOAT}))
+  .OUTPUT(min_val, TensorType({DT_FLOAT}))
+  .OUTPUT(max_val, TensorType({DT_FLOAT}))
+  .REQUIRED_ATTR(c_min_steps, Int)
+  .REQUIRED_ATTR(c_thresh, Float)
+  .REQUIRED_ATTR(c_coeff, Float)
+  .OP_END_FACTORY_REG(SilentCheck)
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_MATH_OPS_H_
 
