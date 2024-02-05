@@ -111,8 +111,9 @@ Status ShardHeader::ValidateHeader(const std::string &path, std::shared_ptr<json
   if (header_size > kMaxHeaderSize) {
     fin.close();
     RETURN_STATUS_UNEXPECTED_MR(
-      "Invalid file, the size of mindrecord file header is larger than the upper limit. \nPlease use 'FileWriter' to "
-      "generate valid mindrecord files.");
+      "Invalid file, the size of mindrecord file header is larger than the upper limit. \n"
+      "The invalid mindrecord file is [" +
+      path + "]. \nPlease use 'FileWriter' to generate valid mindrecord files.");
   }
 
   // read header content
