@@ -32,8 +32,7 @@ bool DvmKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::
     inputs_addr_[i] = inputs[inputs_idx_[i]]->device_ptr();
   }
   for (size_t i = 0; i < outputs_addr_.size(); ++i) {
-    auto idx = outputs_idx_[i];
-    outputs_addr_[i] = idx < inputs.size() ? inputs[idx]->device_ptr() : outputs[idx - inputs.size()]->device_ptr();
+    outputs_addr_[i] = outputs[outputs_idx_[i]]->device_ptr();
   }
   auto ret = kernel_.Launch(reloc_table_, inputs_addr_.data(), outputs_addr_.data(), stream_ptr);
   return ret == 0;
@@ -96,14 +95,11 @@ BaseShapePtr DvmKernelMod::InferShape(const AbstractBasePtrList &inputs_abs) {
   // update output shape
   for (size_t i = 0; i < outputs_.size(); ++i) {
     auto idx = outputs_idx_[i];
-    if (idx >= inputs_shape_.size()) {
-      idx -= inputs_shape_.size();
-      auto shape_ref = kernel_.GetShape(outputs_[i]);
-      outputs_shape_[idx] = ShapeVector(shape_ref->data, shape_ref->data + shape_ref->size);
-      output_size_list_[idx] = outputs_type_byte_[idx];
-      for (auto sh : outputs_shape_[idx]) {
-        output_size_list_[idx] *= LongToSize(sh);
-      }
+    auto shape_ref = kernel_.GetShape(outputs_[i]);
+    outputs_shape_[idx] = ShapeVector(shape_ref->data, shape_ref->data + shape_ref->size);
+    output_size_list_[idx] = outputs_type_byte_[idx];
+    for (auto sh : outputs_shape_[idx]) {
+      output_size_list_[idx] *= LongToSize(sh);
     }
   }
   // update output abstract

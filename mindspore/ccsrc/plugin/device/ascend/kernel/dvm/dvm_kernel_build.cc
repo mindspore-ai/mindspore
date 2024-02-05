@@ -177,14 +177,13 @@ class OpBuilder {
       case OP_ASSIGN: {
         auto out_type = AnfAlgo::GetOutputDeviceDataType(node, 0);
         auto input2 = EmitCast(GetInput(node->input(2)), out_type);
-        // store the second input of assign to the corresponding parameter of subgraph
-        auto input1 = node->input(1);
-        ops_map_[input1] = kernel_->Store(nullptr, input2);
-        outputs_[input1] = ops_map_[input1];
+        // store the second input of assign to the output of subgraph
+        // the output addr of subgraph equals to the corresponding parameter addr of subgraph
         if (outputs_.find(node) != outputs_.end()) {
-          // store the second input of assign to the output of subgraph
           ops_map_[anf_node] = kernel_->Store(nullptr, input2);
-          outputs_[node] = ops_map_[anf_node];
+          outputs_[anf_node] = ops_map_[anf_node];
+        } else {
+          MS_LOG(EXCEPTION) << "AssignOp " << node->fullname_with_scope() << " is not in graph kernel 's outputs.";
         }
         break;
       }
@@ -356,13 +355,10 @@ class DvmKernelBuilder {
       if (auto load = builder.GetLoad(params[i]); load != nullptr) {
         kernel_mod_->CacheLoad(load, i);
       }
-      if (auto store = builder.GetStore(params[i]); store != nullptr) {
-        kernel_mod_->CacheStore(store, i);
-      }
     }
     for (size_t i = 0; i < outputs.size(); ++i) {
       if (auto store = builder.GetStore(outputs[i]); store != nullptr) {
-        kernel_mod_->CacheStore(store, i + params.size());
+        kernel_mod_->CacheStore(store, i);
       }
     }
     kernel_mod_->UpdateIO();
