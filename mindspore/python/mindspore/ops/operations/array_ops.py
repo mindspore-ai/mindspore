@@ -6279,8 +6279,8 @@ class Sort(Primitive):
     Sorts the elements of the input tensor along the given dimension in the specified order.
 
     .. warning::
-        Currently, the data types of Float16 is well supported.
-        Using Float32 might cause loss of accuracy.
+        Currently, the data types of float16, uint8, int8, int16, int32, int64 are well supported.
+        If use float32, it may cause loss of accuracy.
 
     Args:
         axis (int, optional): The dimension to sort along. Default: ``-1``, means the last dimension.
