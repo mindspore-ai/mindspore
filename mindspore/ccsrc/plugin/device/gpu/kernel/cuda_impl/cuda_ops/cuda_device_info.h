@@ -66,19 +66,19 @@ class GPUdeviceInfo {
   ~GPUdeviceInfo();
   inline const cudaDeviceProp &properties() const { return prop_; }
   inline const std::string &name() const { return name_; }
-  inline int threads_num() const { return threads_per_block_; }
-  inline int threads_num(int size) const { return std::min(size, threads_per_block_); }
-  inline int major_sm() const { return major_sm_; }
-  inline int minor_sm() const { return minor_sm_; }
+  inline size_t threads_num() const { return threads_per_block_; }
+  inline size_t threads_num(size_t size) const { return std::min(size, threads_per_block_); }
+  inline size_t major_sm() const { return major_sm_; }
+  inline size_t minor_sm() const { return minor_sm_; }
   inline float cuda_cap() const { return static_cast<float>(major_sm_ * 10 + minor_sm_) / 10.0; }
-  inline int blocks_num(const int total_threads) const {
-    return std::min(((total_threads - 1) / threads_per_block_) + 1, max_blocks_);
+  inline size_t blocks_num(const size_t total_threads) const {
+    return std::min(static_cast<size_t>(((total_threads - 1) / threads_per_block_) + 1), max_blocks_);
   }
-  inline int blocks_num(const int total_threads, const int block_size) const {
-    int valid_block_size = std::min(block_size, threads_per_block_);
-    return std::min(((total_threads - 1) / valid_block_size) + 1, max_blocks_);
+  inline size_t blocks_num(const size_t total_threads, const size_t block_size) const {
+    size_t valid_block_size = std::min(block_size, threads_per_block_);
+    return std::min(static_cast<size_t>(((total_threads - 1) / valid_block_size) + 1), max_blocks_);
   }
-  inline int blocks_max_num(int size) const { return std::min(size, max_blocks_); }
+  inline size_t blocks_max_num(size_t size) const { return std::min(size, max_blocks_); }
   inline dim3 grids_max_size() const { return max_grid_size_; }
   size_t share_memory_size() const { return max_share_memory_; }
   void set_check_sm(const bool &flag) { check_sm_ = flag; }
@@ -92,10 +92,10 @@ class GPUdeviceInfo {
 
   cudaDeviceProp prop_;
   std::string name_;
-  int max_blocks_;
-  int threads_per_block_;
-  int major_sm_;
-  int minor_sm_;
+  size_t max_blocks_;
+  size_t threads_per_block_;
+  size_t major_sm_;
+  size_t minor_sm_;
   size_t max_share_memory_;
   bool check_sm_{true};
   dim3 max_grid_size_;

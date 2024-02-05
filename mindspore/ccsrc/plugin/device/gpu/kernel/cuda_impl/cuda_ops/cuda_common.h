@@ -25,11 +25,11 @@ namespace device {
 namespace gpu {
 class CudaCommon {
  public:
-  inline int threads_num() const { return CUDA_THREADS(device_id_); }
-  inline int threads_num(int size) const { return CUDA_THREADS_MAXSIZE(device_id_, size); }
-  inline int major_sm() const { return CUDA_MAJOR_SM(device_id_); }
+  inline size_t threads_num() const { return CUDA_THREADS(device_id_); }
+  inline size_t threads_num(size_t size) const { return CUDA_THREADS_MAXSIZE(device_id_, size); }
+  inline size_t major_sm() const { return CUDA_MAJOR_SM(device_id_); }
   inline float cuda_cap() const { return CUDA_CAP(device_id_); }
-  inline int blocks_num(const int total_threads) const { return CUDA_BLOCKS(device_id_, total_threads); }
+  inline size_t blocks_num(const size_t total_threads) const { return CUDA_BLOCKS(device_id_, total_threads); }
   size_t share_memory_size() const { return CUDA_SHARED_MEM_PER_BLOCK(device_id_); }
   void set_check_sm(const bool &flag) { GPUdeviceInfo::GetInstance(device_id_)->set_check_sm(flag); }
   bool check_sm() const { return GPUdeviceInfo::GetInstance(device_id_)->check_sm(); }

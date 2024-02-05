@@ -154,7 +154,7 @@ CUDA_LIB_EXPORT cudaError_t Quantile(const T *input, const T *q, T *out, T *sort
                                                                                             nan_flags);
   }
   int ceil_p_2 = RoundUpPower2(y);
-  int thread = std::min(ceil_p_2, CUDA_THREADS(device_id));
+  size_t thread = std::min(static_cast<size_t>(ceil_p_2), CUDA_THREADS(device_id));
   Copy<<<CUDA_BLOCKS(device_id, x * ceil_p_2 * z), CUDA_THREADS(device_id), 0, cuda_stream>>>(input, sort, x, ceil_p_2,
                                                                                               y, z);
   BitonicSort<<<x * z, thread, 0, cuda_stream>>>(ceil_p_2, sort, x * z, z);
