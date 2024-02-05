@@ -878,10 +878,13 @@ void Common::ProcessTupleParam(const FuncGraphPtr &bprop_graph, size_t position)
   if (!target_abstract->isa<abstract::AbstractSequence>()) {
     MS_LOG(EXCEPTION) << "Get wrong param " << target_abstract->ToString();
   }
+  const auto &abs_seq = target_abstract->cast<abstract::AbstractSequencePtr>();
+  if (abs_seq->dynamic_len() && abs_seq->dynamic_len_element_abs() != nullptr) {
+    return;
+  }
   MS_LOG(DEBUG) << "Process tuple param " << target_abstract->ToString();
   auto it = std::find(bprop_params.begin(), bprop_params.end(), target_param);
   it = bprop_params.erase(it);
-  const auto &abs_seq = target_abstract->cast<abstract::AbstractSequencePtr>();
   AnfNodePtrList make_tuple{NewValueNode(prim::kPrimMakeTuple)};
   AnfNodePtrList new_param;
   PlantTupleParam(bprop_graph, abs_seq, &make_tuple, &new_param);

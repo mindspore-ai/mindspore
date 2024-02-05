@@ -567,6 +567,10 @@ void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_
     (void)abs_list.emplace_back(param_i_abs);
     RecordForwardGraphForInput(v, input_args_info->input_arg_id_vec[i], param_i_abs);
   }
+  // If New cellid come up, bprop graph use cnode for reusing
+  if (IsNewCellId()) {
+    top_cell()->set_is_ir_grad(true);
+  }
   if (top_cell()->is_ir_grad()) {
     top_cell()->set_auto_grad_cell_ptr(std::make_shared<autograd::IrGrad>(
       input_param_values, abs_list, op_num_in_bprop_graph_ * kContainerRatio, assist_queue_, forward()->enable_async(),
@@ -575,6 +579,29 @@ void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_
     top_cell()->set_auto_grad_cell_ptr(std::make_shared<autograd::FuncGrad>(
       input_param_values, op_num_in_bprop_graph_ * kContainerRatio, !top_cell()->is_high_order_top_cell()));
   }
+}
+
+bool GradExecutor::IsNewCellId() {
+  const auto &already_top_cell_id = top_cell()->already_run_cell_id();
+  // Update top cell by current cell op info
+  auto pre_top_cell = GetAlreadyRunTopCell(already_top_cell_id);
+  if (pre_top_cell == nullptr) {
+    bool is_dynamic_cell_already_run = false;
+    if (top_cell()->use_dynamic_shape_process()) {
+      // The dynamic cell of set_inputs needs to be saved for the first run.
+      is_dynamic_cell_already_run =
+        std::any_of(already_run_top_cell_.begin(), already_run_top_cell_.end(), [this](const auto &item) {
+          MS_EXCEPTION_IF_NULL(item.second);
+          return item.second->obj_id_with_grad_order() == top_cell()->obj_id_with_grad_order();
+        });
+    }
+    // Get new cell id
+    if (!top_cell()->use_dynamic_shape_process() || !is_dynamic_cell_already_run) {
+      top_cell()->set_need_compile_graph(true);
+      return true;
+    }
+  }
+  return false;
 }
 
 void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_info) {
@@ -614,7 +641,6 @@ void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_i
     auto graph_info_cg = std::make_shared<PyNGraphInfo>();
     top_cell()->SetGraphInfoMap(curr_g(), graph_info_cg);
     HandleInputArgsForTopCell(input_args_info, false);
-    top_cell()->set_need_compile_graph(true);
     top_cell()->set_init_kpynative(true);
   }
 }
@@ -693,7 +719,7 @@ void GradExecutor::MakeNewTopGraph(const InputArgsInfoPtr &input_args_info) {
                                             op_num_in_bprop_graph_ * kContainerRatio);
   top_cell_->set_forward_already_run(true);
   top_cell_->set_input_args_id(input_args_info->input_args_id);
-  auto use_dynamic_shape_process = true || GetTopCellDynamicFlag(input_args_info, obj_id_with_grad_order);
+  auto use_dynamic_shape_process = GetTopCellDynamicFlag(input_args_info, obj_id_with_grad_order);
   top_cell_->set_use_dynamic_shape_process(use_dynamic_shape_process);
   top_cell_->set_need_save_dynamic_detect_nodes(
     dynamic_shape()->IsNeedSaveDynamicDetectNodes(top_cell_, use_dynamic_shape_process));
@@ -919,46 +945,37 @@ void GradExecutor::ClearPreTopCell(const TopCellInfoPtr &new_top_cell, bool is_n
 }
 
 void GradExecutor::CheckNeedCompileGraph(const InputArgsInfoPtr &input_args_info) {
-  const auto &new_top_cell = top_cell();
-  const auto &already_top_cell_id = new_top_cell->already_run_cell_id();
-  // Update top cell by current cell op info
-  auto pre_top_cell = GetAlreadyRunTopCell(already_top_cell_id);
-  if (pre_top_cell == nullptr) {
-    bool is_dynamic_cell_already_run = false;
-    if (new_top_cell->use_dynamic_shape_process()) {
-      // The dynamic cell of set_inputs needs to be saved for the first run.
-      is_dynamic_cell_already_run =
-        std::any_of(already_run_top_cell_.begin(), already_run_top_cell_.end(), [new_top_cell](const auto &item) {
-          MS_EXCEPTION_IF_NULL(item.second);
-          return item.second->obj_id_with_grad_order() == new_top_cell->obj_id_with_grad_order();
-        });
-    }
-    if (!new_top_cell->use_dynamic_shape_process() || !is_dynamic_cell_already_run) {
-      MS_LOG(DEBUG) << "Cell " << already_top_cell_id << " has never been ran, need compile graph";
-      already_run_top_cell_[already_top_cell_id] = new_top_cell;
-      return;
-    }
+  const auto &already_top_cell_id = top_cell()->already_run_cell_id();
+  // Get new cell id
+  if (top_cell()->need_compile_graph()) {
+    MS_LOG(DEBUG) << "Cell " << already_top_cell_id << " has never been ran, need compile graph";
+    already_run_top_cell_[already_top_cell_id] = top_cell();
+    return;
   }
 
+  // Older top cell id or dynamic shape
   MS_EXCEPTION_IF_NULL(input_args_info);
   // In high order situations, the internal top cell has changed, but outer top cell remains unchanged. Then outer
   // bprop graph need compile again
-  if (new_top_cell->use_dynamic_shape_process() || new_top_cell->force_top_cell_compile()) {
+  if (top_cell()->use_dynamic_shape_process() || top_cell()->force_top_cell_compile()) {
     // Function need compile every time.
-    new_top_cell->use_dynamic_shape_process() ? MS_LOG(DEBUG) << "The graph is dynamic, need to compile graph again"
-                                              : MS_LOG(DEBUG) << "Force outer graph compile graph";
+    top_cell()->use_dynamic_shape_process() ? MS_LOG(DEBUG) << "The graph is dynamic, need to compile graph again"
+                                            : MS_LOG(DEBUG) << "Force outer graph compile graph";
     auto has_higher_order = std::any_of(already_run_top_cell_.begin(), already_run_top_cell_.end(),
                                         [](const auto &elem) { return elem.second->is_high_order_top_cell(); });
-    ClearPreTopCell(new_top_cell, input_args_info->is_grad_topest_cell && !has_higher_order);
-    already_run_top_cell_[already_top_cell_id] = new_top_cell;
-    new_top_cell->set_force_top_cell_compile(false);
+    ClearPreTopCell(top_cell(), input_args_info->is_grad_topest_cell && !has_higher_order);
+    already_run_top_cell_[already_top_cell_id] = top_cell();
+    top_cell()->set_need_compile_graph(true);
+    top_cell()->set_force_top_cell_compile(false);
   } else {
-    MS_LOG(DEBUG) << "No need to compile graph again";
-    pre_top_cell->set_input_args_id(new_top_cell->input_args_id());
+    MS_LOG(DEBUG) << "Cell " << already_top_cell_id << " no need to compile graph again";
+    auto pre_top_cell = GetAlreadyRunTopCell(already_top_cell_id);
+    MS_EXCEPTION_IF_NULL(pre_top_cell);
+    pre_top_cell->set_input_args_id(top_cell()->input_args_id());
     // In high order situations, the internal top cell remains unchanged, but the external top cell has changed. Then
     // the graph info of the internal top cell needs to be updated so that the external top cell can perceive it.
     if (!input_args_info->is_grad_topest_cell) {
-      pre_top_cell->SetGraphInfoMap(pre_top_cell->fg(), new_top_cell->graph_info_map().at(new_top_cell->fg()));
+      pre_top_cell->SetGraphInfoMap(pre_top_cell->fg(), top_cell()->graph_info_map().at(top_cell()->fg()));
     }
     pre_top_cell->set_forward_already_run(true);
   }
@@ -1014,6 +1031,7 @@ py::object GradExecutor::RunGrad(const prim::GradOperationPtr &grad, const py::o
   } else {
     auto grads = RunBackward(grad_attr, w_args, p_args);
     top_cell()->ClearParamGradInfo();
+    AsyncClearAutoGradCell(top_cell());
     ClearGradRes();
     return grads;
   }

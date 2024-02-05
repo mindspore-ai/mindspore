@@ -278,7 +278,7 @@ NodePtrList FminFmaxGrad(BpropBuilder *ib, bool if_fmin) {
   return {brrx1, brrx2};
 }
 
-NodePtrList FFTGradCommon(BpropIRBuilder *ib, const std::string &op_name) {
+NodePtrList FFTGradCommon(BpropBuilder *ib, const std::string &op_name) {
   auto x = ib->GetInput(kIndex0);
   auto n = ib->GetInput(kIndex1);
   auto dim = ib->GetInput(kIndex2);

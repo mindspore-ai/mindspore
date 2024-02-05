@@ -16,6 +16,7 @@
 
 #include "runtime/pynative/op_executor.h"
 #include "runtime/pynative/op_function/value_converter.h"
+#include "kernel/pyboost/py_boost_utils.h"
 #include "runtime/pynative/op_function/pyboost_grad_functions.h"
 ${include_op_header}
 
@@ -48,13 +49,16 @@ bool PyBoostOpExecute::IsPyBoostOpRegistered(const std::string &op_name) {
 void PyBoostOpExecute::Execute(OpRunnerInfo *op_runner_info, VectorRef *op_outputs) {
   MS_EXCEPTION_IF_NULL(op_runner_info);
   const auto it = grad_op_func_map_.find(op_runner_info->prim->name());
-  // Run op by single op graph
-  if (it == grad_op_func_map_.end()) {
-    return RunOpDeprecated(op_runner_info, op_outputs);
+  // Run op by pyboost
+  if (it != grad_op_func_map_.end() && kernel::pyboost::PyBoostUtils::IsKernelModRegistered(
+                                         op_runner_info->device_target, op_runner_info->prim->name())) {
+    const auto &func = FuncCast<Func>(it->second);
+    MS_EXCEPTION_IF_NULL(func);
+    func(op_runner_info, op_outputs);
+    return;
   }
-  const auto &func = FuncCast<Func>(it->second);
-  MS_EXCEPTION_IF_NULL(func);
-  func(op_runner_info, op_outputs);
+  // Run op by single op graph
+  RunOpDeprecated(op_runner_info, op_outputs);
 }
 
 void PyBoostOpExecute::RunPyBoostCall(OpRunnerInfo *op_runner_info, VectorRef *op_outputs) {

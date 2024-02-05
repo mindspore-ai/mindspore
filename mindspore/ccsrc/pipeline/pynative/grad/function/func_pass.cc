@@ -316,19 +316,23 @@ NodePtr FuncPassForward::BatchNormGradToBNInferGrad(const NodePtrList &inputs) {
   if (device_target_ != kAscendDevice) {
     return func_builder_->Emit(kBatchNormGradOpName, inputs);
   }
+  constexpr size_t kIdxIsTraining = 6;
+  auto is_training_opt = mindspore::ops::GetScalarValue<bool>(inputs[kIdxIsTraining]->Value());
+  if (!is_training_opt.has_value()) {
+    MS_LOG(DEBUG) << "Can not find Attr 'is_training' in training input";
+    return func_builder_->Emit(kBatchNormGradOpName, inputs);
+  }
+  if (is_training_opt.value()) {
+    MS_LOG(DEBUG) << "Attr 'is_training' is true, no need do fusion";
+    return func_builder_->Emit(kBatchNormGradOpName, inputs);
+  }
+
   auto bn_infer_grad_prim = func_builder_->NewPrimitive(kBNInferGradOpName);
   constexpr size_t kIdxGrads = 0;
   constexpr size_t kIdxScale = 2;
   constexpr size_t kIdxVariance = 4;
-  constexpr size_t kIdxIsTraining = 6;
   constexpr size_t kIdxEpsilon = 7;
   NodePtrList new_inputs{inputs[kIdxGrads], inputs[kIdxScale], inputs[kIdxVariance], inputs[kIdxEpsilon]};
-  auto is_training_opt = mindspore::ops::GetScalarValue<bool>(inputs[kIdxIsTraining]->Value());
-  if (is_training_opt.has_value()) {
-    bn_infer_grad_prim->set_attr(kAttrIsTraining, inputs[kIdxIsTraining]->Value());
-  } else {
-    MS_LOG(ERROR) << "For BNInferGrad pass, failed to get attr is_training.";
-  }
 
   auto epsilon_opt = mindspore::ops::GetScalarValue<pyfloat>(inputs[kIdxEpsilon]->Value());
   float epsilon{1e-5};
@@ -338,6 +342,7 @@ NodePtr FuncPassForward::BatchNormGradToBNInferGrad(const NodePtrList &inputs) {
     MS_LOG(ERROR) << "For BNInferGrad pass, failed to get attr epsilon, use default epsilon: 1e-5.";
   }
   bn_infer_grad_prim->set_attr(kAttrIsTraining, MakeValue(epsilon));
+  bn_infer_grad_prim->set_attr(kAttrIsTraining, MakeValue(is_training_opt.value()));
   auto dx = func_builder_->EmitOp(bn_infer_grad_prim, new_inputs);
   return func_builder_->MakeTuple(
     {dx, func_builder_->OutZeros(inputs[kIdxScale]), func_builder_->OutZeros(inputs[kIdxScale])});

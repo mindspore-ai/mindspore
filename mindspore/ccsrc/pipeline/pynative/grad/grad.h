@@ -192,6 +192,7 @@ class GradExecutor {
   void PushInputArgsInfoStack(const InputArgsInfoPtr &input_args_info);
   void PopInputArgsInfoStack();
   void HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_info, bool is_bprop_top);
+  bool IsNewCellId();
   void InitResourceAndDfBuilder(const InputArgsInfoPtr &cell_info);
   void MakeNewTopGraph(const InputArgsInfoPtr &input_args_info);
 

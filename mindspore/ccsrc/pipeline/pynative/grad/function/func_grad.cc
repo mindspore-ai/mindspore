@@ -190,7 +190,7 @@ TensorPtrList FuncBackwardNode::CallBackward(const TensorPtrList &gradients_in) 
   std::transform(cal_grads_node.begin(), cal_grads_node.end(), std::back_inserter(cal_grads_values),
                  [](const NodePtr &node) { return node->Value(); });
   auto gradients = PostProcess(cal_grads_values);
-  MS_LOG(DEBUG) << "End CallBackward" << name();
+  MS_LOG(DEBUG) << "End CallBackward: " << name();
   return gradients;
 }
 
