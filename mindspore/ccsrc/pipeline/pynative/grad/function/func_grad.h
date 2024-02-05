@@ -121,13 +121,11 @@ class FuncGrad : public AutoGrad {
   bool KPynativeOp(const GradParamPtr &grad_param) override;
   // Update top cell output, record last_node
   void UpdateOutputNodeOfTopCell(const ValuePtr &sens_out) override;
-  // to do
   // Reverse connect jit or higher order sub bprop funcgraph
   bool KPynativeWithFProp(const GradParamPtr &grad_param) override;
 
   ValuePtr Finish(const TensorPtrList &weights, const std::vector<size_t> &grad_position, const GradAttr &grad_attr,
                   const ValuePtr &sens = nullptr);
-
  private:
   void BackPropagate();
   void BuildForwardLastNode(const ValuePtr &sens_gradient);
@@ -149,9 +147,11 @@ class FuncGrad : public AutoGrad {
   void ClearGrads(const TensorPtrList &weights);
   ValuePtrList OnsLike(const ValuePtr &value);
   void CheckSensShapeAndType(const ValuePtr &sens_gradient);
+  void PruningGradGraph(const TensorPtrList &weights, const GradAttr &grad_attr, const std::vector<size_t> &grad_position);
   std::shared_ptr<FuncBuilder> func_impl_;
   OrderedSet<FuncVariablePtr> variable_set_;
   std::vector<std::pair<ValuePtr, FuncVariablePtr>> cell_inputs_;
+  std::vector<tensor::TensorPtr> weights_used_in_graph_;
   ValuePtr sens_value_{nullptr};
   FuncVariablePtr last_variable_{nullptr};
   TensorPtrList root_gradients_;

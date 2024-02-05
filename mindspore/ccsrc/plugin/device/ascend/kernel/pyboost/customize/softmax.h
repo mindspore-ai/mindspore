@@ -28,7 +28,7 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 tensor::TensorPtr SoftmaxAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &logits_tensor,
-                                         const ValueTuplePtr &axis);
+                                         const ValueTuplePtr &axis, OpRunnerInfo *op_runner_info);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

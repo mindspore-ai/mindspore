@@ -57,6 +57,7 @@ class FuncBuilder : public BpropBuilder {
 
   ValuePtr Ones(const ValuePtr &value);
   ValuePtr Zeros(const ValuePtr &value);
+  ValuePtr Add(const ValuePtr &input, const ValuePtr &other);
   void SetInputs(std::string instance_name, const std::vector<NodePtr> *inputs,
                  mindspore::HashMap<std::string, ValuePtr> *attrs_ptr);
 

@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
+#include "runtime/pynative/op_function/pyboost_grad_functions.h"
 #include "runtime/pynative/op_executor.h"
 #include "runtime/pynative/op_function/value_converter.h"
 #include "kernel/pyboost/py_boost_utils.h"
 #include "runtime/pynative/op_function/pyboost_grad_functions.h"
+#include "backend/graph_compiler/vmimpl.h"
+#include "include/common/utils/python_adapter.h"
 ${include_op_header}
 
 namespace mindspore::runtime {
@@ -47,6 +50,7 @@ bool PyBoostOpExecute::IsPyBoostOpRegistered(const std::string &op_name) {
 }
 
 void PyBoostOpExecute::Execute(OpRunnerInfo *op_runner_info, VectorRef *op_outputs) {
+ #ifndef ENABLE_TEST
   MS_EXCEPTION_IF_NULL(op_runner_info);
   const auto it = grad_op_func_map_.find(op_runner_info->prim->name());
   // Run op by pyboost
@@ -59,6 +63,9 @@ void PyBoostOpExecute::Execute(OpRunnerInfo *op_runner_info, VectorRef *op_outpu
   }
   // Run op by single op graph
   RunOpDeprecated(op_runner_info, op_outputs);
+#else
+  RunOpInVm(op_runner_info, op_outputs);
+#endif
 }
 
 void PyBoostOpExecute::RunPyBoostCall(OpRunnerInfo *op_runner_info, VectorRef *op_outputs) {
@@ -77,6 +84,29 @@ void PyBoostOpExecute::RunOpDeprecated(OpRunnerInfo *op_runner_info, VectorRef *
   // Call single op graph run
   GetMindRtBackend(op_runner_info->device_target);
   backend_->RunOp(backend_op_run_info, op_outputs);
+}
+
+void PyBoostOpExecute::RunOpInVm(OpRunnerInfo *op_runner_info, VectorRef *op_outputs) {
+  VectorRef args;
+  std::transform(op_runner_info->inputs.begin(), op_runner_info->inputs.end(), std::back_inserter(args),
+                 [](const auto &value) { return value; });
+  auto result = compile::RunOperation(op_runner_info->prim, args);
+  if (utils::isa<PyObjectRef>(result)) {
+    PyObjectRef py_ref = utils::cast<PyObjectRef>(result);
+    py::object value = py_ref.object_;
+    auto result_v = python_adapter::PyAdapterCallback::PyDataToValue(value);
+    if (!result_v->isa<ValueSequence>()) {
+      (void)op_outputs->emplace_back(result_v);
+    } else {
+      auto seq = result_v->cast<ValueSequencePtr>();
+          std::transform(seq->value().begin(), seq->value().end(), std::back_inserter(*op_outputs),
+                         [](const auto &value) { return value; });
+    }
+    op_runner_info->output_abs = result_v->ToAbstract()->Broaden();
+    return;
+  }
+
+  MS_LOG(EXCEPTION) << "prim: " << op_runner_info->prim->name() << "did not has vm op!";
 }
 
 void PyBoostOpExecute::GetMindRtBackend(const string &cur_device_target) {

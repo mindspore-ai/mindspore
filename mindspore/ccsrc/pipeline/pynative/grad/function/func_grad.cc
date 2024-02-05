@@ -28,7 +28,7 @@
 
 namespace mindspore::pynative::autograd {
 namespace {
-TensorPtr Add(const TensorPtr &input, const TensorPtr &other) {
+TensorPtr Add(const TensorPtr &input, const TensorPtr &other, const FuncBuilderPtr &func_impl) {
   if (input == nullptr) {
     MS_EXCEPTION_IF_NULL(other);
     return other;
@@ -37,20 +37,19 @@ TensorPtr Add(const TensorPtr &input, const TensorPtr &other) {
     MS_EXCEPTION_IF_NULL(input);
     return input;
   }
-  // Create op
-  auto op = CREATE_PYBOOST_OP(Add, MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET));
-  op->set_primitive(prim::kPrimAdd);
-  (void)op->Call(input, other);
-  return op->output(0);
+  auto result = func_impl->Add(input, other)->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(result);
+  return result;
 }
 
-std::vector<TensorPtr> Add(const std::vector<TensorPtr> &inputs, const TensorPtr &other, size_t input_index) {
+std::vector<TensorPtr> Add(const std::vector<TensorPtr> &inputs, const TensorPtr &other, size_t input_index,
+                           const FuncBuilderPtr &func_impl) {
   if (input_index >= inputs.size()) {
     MS_LOG(EXCEPTION) << "The input index should less than inputs size";
   }
 
   std::vector<TensorPtr> outputs(inputs);
-  outputs[input_index] = Add(inputs[input_index], other);
+  outputs[input_index] = Add(inputs[input_index], other, func_impl);
   return outputs;
 }
 
@@ -458,7 +457,7 @@ void FuncGrad::BackPropagate() {
       }
       if (input_buffer.find(last_fn.get()) != input_buffer.end()) {
         auto &tmp_grads = input_buffer[last_fn.get()];
-        input_buffer[last_fn.get()] = Add(tmp_grads, last_gradient, next_edge.input_index);
+        input_buffer[last_fn.get()] = Add(tmp_grads, last_gradient, next_edge.input_index, func_impl_);
       } else {
         input_buffer[last_fn.get()] =
           PaddingGradientInput(last_gradient, last_fn->output_size(), next_edge.input_index);
@@ -503,6 +502,7 @@ void FuncGrad::ConstructParameterNodes(const ValuePtrList &inputs) {
         auto variable = std::make_shared<FuncVariable>(fn, true);
         auto_grad_meta_data->set_variable(variable);
         variable_set_.insert(variable);
+        weights_used_in_graph_.emplace_back(tensor);
       }
     }
   }
@@ -730,10 +730,52 @@ void FuncGrad::CheckSensShapeAndType(const ValuePtr &sens_gradient) {
   }
 }
 
+void FuncGrad::PruningGradGraph(const TensorPtrList &weights, const GradAttr &grad_attr, const std::vector<size_t> &grad_position) {
+  mindspore::HashSet<size_t> grad_pos_list{grad_position.begin(), grad_position.end()};
+  // Pruning input in grad graph
+  for (size_t i = 0; i < cell_inputs_.size(); ++i) {
+    if (!grad_attr.grad_all_inputs) {
+      if (!grad_attr.get_by_position) {
+        cell_inputs_[i].second->set_is_need_grad(false);
+      } else if (grad_pos_list.find(i) == grad_pos_list.end()) {
+        cell_inputs_[i].second->set_is_need_grad(false);
+      }
+    }
+  }
+  if (weights.size() == weights_used_in_graph_.size()) {
+    return;
+  }
+  // Pruning weights in grad graph
+  mindspore::HashSet<std::string> grad_weights_id;
+  for (const auto &weight: weights) {
+    grad_weights_id.insert(weight->id());
+  }
+  for (const auto &weight: weights_used_in_graph_) {
+    if (grad_weights_id.find(weight->id()) == grad_weights_id.end()) {
+      auto variable = weight->auto_grad_meta_data()->variable();
+      MS_EXCEPTION_IF_NULL(variable);
+      variable->set_is_need_grad(false);
+    }
+  }
+  for (const auto &variable: variable_set_) {
+    if (variable->is_leaf()) {
+      continue;
+    }
+    bool is_need_grad = false;
+    for (const auto &edge: variable->func_node()->next_edges()) {
+      is_need_grad = is_need_grad || edge.variable->is_need_grad();
+    }
+    if (!is_need_grad) {
+      variable->set_is_need_grad(false);
+    }
+  }
+}
+
 ValuePtr FuncGrad::Finish(const TensorPtrList &weights, const std::vector<size_t> &grad_position,
                           const GradAttr &grad_attr, const ValuePtr &sens) {
   CheckSensShapeAndType(sens);
   BuildForwardLastNode(sens);
+  PruningGradGraph(weights, grad_attr, grad_position);
   if (last_variable_->is_need_grad()) {
     BackPropagate();
   }

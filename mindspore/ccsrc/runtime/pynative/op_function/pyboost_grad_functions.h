@@ -51,6 +51,9 @@ class PyBoostOpExecute {
   // Run op by single op graph
   void RunOpDeprecated(OpRunnerInfo *op_runner_info, VectorRef *op_outputs);
 
+  // RunOp in VM
+  void RunOpInVm(OpRunnerInfo *op_runner_info, VectorRef *op_outputs);
+
   // Get backend
   void GetMindRtBackend(const string &cur_device_target);
 

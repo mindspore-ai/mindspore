@@ -110,8 +110,7 @@ NodePtr FuncBuilder::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs)
     auto abs = input->abstract();
     if (value->isa<None>()) {
       if (!abs->isa<abstract::AbstractNone>()) {
-        auto out_tensor =
-          std::make_shared<tensor::Tensor>(input->dtype()->type_id(), input->shape());
+        auto out_tensor = std::make_shared<tensor::Tensor>(input->dtype()->type_id(), input->shape());
         auto zero_node = ZerosLike(NewFuncNode(out_tensor, abs, input->input_type()));
         value = zero_node->Value();
       } else {
@@ -222,6 +221,14 @@ ValuePtr FuncBuilder::Zeros(const ValuePtr &value) {
   return ZerosLike(input)->Value();
 }
 
+ValuePtr FuncBuilder::Add(const ValuePtr &input, const ValuePtr &other) {
+  auto input_abs = PyNativeAlgo::Common::SetAbstractValueToAnyValue(input->ToAbstract());
+  auto other_abs = PyNativeAlgo::Common::SetAbstractValueToAnyValue(other->ToAbstract());
+  auto input_node = NewFuncNode(input, input_abs, InputType::kOpOutput);
+  auto other_node = NewFuncNode(other, other_abs, InputType::kOpOutput);
+  return Emit(mindspore::kAddOpName, {input_node, other_node})->Value();
+}
+
 NodePtr FuncBuilder::TupleGetItem(const NodePtr &input, const NodePtr &index) {
   auto value = index->Value();
   size_t i = GetValue<int64_t>(value);
@@ -238,9 +245,7 @@ NodePtr FuncBuilder::MakeTuple(const NodePtrList &inputs) {
   return tuple_node;
 }
 
-NodePtr FuncBuilder::MakeList(const NodePtrList &inputs) {
-  return MakeTuple(inputs);
-}
+NodePtr FuncBuilder::MakeList(const NodePtrList &inputs) { return MakeTuple(inputs); }
 
 void FuncBuilder::SetInputs(std::string instance_name, const std::vector<NodePtr> *inputs,
                             mindspore::HashMap<std::string, ValuePtr> *attrs_ptr) {
