@@ -122,7 +122,6 @@ class GraphJitConfig {
   }
 
   static void ApplyAutoJitCell();
-  static void ApplyAutoGrad();
 
  private:
   bool bool_conf[kIntConf - kBoolConf];
