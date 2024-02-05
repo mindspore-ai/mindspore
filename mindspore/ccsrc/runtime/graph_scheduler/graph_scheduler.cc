@@ -20,6 +20,7 @@
 #include "ops/framework_ops.h"
 #include "runtime/graph_scheduler/scheduler_helper.h"
 #include "runtime/graph_scheduler/actor/memory_manager_actor.h"
+#include "runtime/graph_scheduler/actor/kernel_launch_actor.h"
 #include "runtime/graph_scheduler/actor/debug_actor.h"
 #include "runtime/graph_scheduler/actor/recorder_actor.h"
 #include "runtime/graph_scheduler/optimizer/optimizer.h"
@@ -451,12 +452,16 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
   MS_EXCEPTION_IF_NULL(actor_manager);
 
   // Create and schedule memory manager actor.
-  auto memory_manager_actor = std::make_shared<MemoryManagerActor>();
+  auto &memory_manager_actor = MemoryManagerActor::GetInstance();
   MS_EXCEPTION_IF_NULL(memory_manager_actor);
   memory_manager_aid_ = memory_manager_actor->GetAID();
   auto base_actor = static_cast<ActorReference>(memory_manager_actor);
   // Bind single thread to response to memory alloc and free quickly.
   (void)actor_manager->Spawn(base_actor, true);
+
+  auto &kernel_launch_actor = KernelLaunchActor::GetInstance();
+  MS_EXCEPTION_IF_NULL(kernel_launch_actor);
+  (void)actor_manager->Spawn(kernel_launch_actor, false);
 
   // Create and schedule recorder actor.
   bool recorder_actor_need = false;
@@ -614,6 +619,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
   // hanging.
   MsException::Instance().CheckException();
 
+  actor_set->is_multi_thread_execution_ = EnableAsyncInfer();
   // Check the actor set state.
   if (actor_set->is_execution_failed_) {
     MS_LOG(EXCEPTION) << "#umsg#Model execution error:#umsg#An error occurred in the previous step of this model "
@@ -1309,6 +1315,9 @@ DataPrepareActorPtr GraphScheduler::BuildDataPrepareActor(const GraphCompilerInf
 
       auto &execution_order = graph->execution_order();
       for (auto &kernel : execution_order) {
+        if (common::AnfAlgo::GetCNodeName(kernel) == kFlattenConcatOpName) {
+          data_prepare_actor->exist_flatten_concat_ = true;
+        }
         if (!common::AnfAlgo::IsCommunicationOp(kernel)) {
           continue;
         }

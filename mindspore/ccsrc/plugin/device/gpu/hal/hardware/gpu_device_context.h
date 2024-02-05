@@ -103,7 +103,7 @@ class GPUKernelExecutor : public KernelExecutor {
 
   bool LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                     const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &outputs,
-                    size_t stream_id) const override;
+                    KernelMod *kernel_mod, void *stream) const override;
 
   uint32_t GetRankID() const override;
 
@@ -132,12 +132,12 @@ class GPUKernelExecutor : public KernelExecutor {
   // Launch a kernel and record the elapsed time end to end.
   bool LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &workspace,
-                                 const std::vector<KernelTensor *> &outputs, void *stream) const;
+                                 const std::vector<KernelTensor *> &outputs, KernelMod *kernel_mod, void *stream) const;
 #endif
   // Launch a kernel by 'KernelMod' of the kernel.
   bool DoLaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                       const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &outputs,
-                      void *stream) const;
+                      KernelMod *kernel_mod, void *stream) const;
 
   // The cublas handle is not thread safety specifically, it is not recommended that multiple threads access the same
   // cublas handle at the same time, so need the launch mutex when multiple threads launch the cublas kernels.

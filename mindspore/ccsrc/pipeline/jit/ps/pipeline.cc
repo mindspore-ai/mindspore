@@ -365,6 +365,8 @@ py::object GetVectorRefPyData(const VectorRef &value_list, const AbstractBasePtr
 }
 
 py::object BaseRefToPyDataWithUserData(const BaseRef &value, const AbstractBasePtr &abs) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kGraphExecutorPy, runtime::ProfilerEvent::kOutputProcess,
+                                     "BaseRefToPyData");
   const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
   if (!allow_fallback_runtime) {
     return BaseRefToPyData(value, abs);
@@ -1434,6 +1436,8 @@ void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef 
 }
 
 void GraphExecutorPy::ProcessVmArg(const py::tuple &args, const std::string &phase, VectorRef *const arg_list) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kGraphExecutorPy, runtime::ProfilerEvent::kInputProcess,
+                                     phase);
   ProcessVmArgInner(args, GetResource(phase), arg_list);
 }
 
@@ -1543,36 +1547,20 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
   if (run == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Can't find run graph func for " << phase;
   }
-  // Set loopsink size for each phase.
-  bool vm_loop_flag = info_[phase]->resource->vm_loop_flag();
-  int64_t loop_size = info_[phase]->resource->loop_size();
-  int64_t vm_loop = 1;
-  if (vm_loop_flag) {
-    vm_loop = loop_size;
-  } else {
-    // Set the loop size in config if graphs nums is 1(is_loop_sin=True), then there will be a loop embrace
-    // 'Execute(graph)' in GPUSession.
-    ConfigManager::GetInstance().set_gpu_loopsink_size(loop_size);
-  }
-  MS_LOG(INFO) << "VM loop size " << vm_loop << ", loopsink size " << vm_loop;
-  py::object res;
+
   MS_LOG(DEBUG) << "Eval run " << ms_context->backend_policy();
   const auto &output = execute_info->func_graph->output();
   MS_EXCEPTION_IF_NULL(output);
-
   const auto &output_abs = output->abstract();
   MS_EXCEPTION_IF_NULL(output_abs);
-  BaseRef value;
-  for (int64_t i = 0; i < vm_loop; i++) {
-    value = (*run)(execute_info->arg_list);
-    bool need_recovery = distributed::recovery::RecoveryContext::GetInstance()->enable_recovery() &&
-                         distributed::recovery::RecoveryContext::GetInstance()->need_reset();
-    if (need_recovery) {
-      // In recovery scenario, the output value could be empty, do not transform return data.
-      return py::none();
-    }
-    res = BaseRefToPyDataWithUserData(value, output_abs);
+  BaseRef value = (*run)(execute_info->arg_list);
+  bool need_recovery = distributed::recovery::RecoveryContext::GetInstance()->enable_recovery() &&
+                       distributed::recovery::RecoveryContext::GetInstance()->need_reset();
+  if (need_recovery) {
+    // In recovery scenario, the output value could be empty, do not transform return data.
+    return py::none();
   }
+  py::object res = BaseRefToPyDataWithUserData(value, output_abs);
 
   MS_LOG(DEBUG) << "Run end";
   return res;

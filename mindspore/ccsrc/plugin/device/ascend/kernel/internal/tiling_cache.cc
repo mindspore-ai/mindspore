@@ -30,6 +30,7 @@ uint64_t TilingCacheMgr::GenTilingCacheKey(const std::string &name, const Args &
 
 uint64_t TilingCacheMgr::GenTilingCacheKey(const std::string &name, PrimitivePtr prim,
                                            const std::vector<KernelTensor *> &inputs) {
+  std::lock_guard<std::mutex> lock(key_mtx_);
   ResetCacheKey();
   ConcatKey(name.c_str(), static_cast<int64_t>(name.size()));
   std::set<int64_t> value_depend_list = ops::GetInputDependValueList(prim);
@@ -48,6 +49,7 @@ uint64_t TilingCacheMgr::GenTilingCacheKey(const std::string &name, PrimitivePtr
 TilingInfo TilingCacheMgr::GetOrCreateTilingInfo(
   const uint64_t key, const std::function<int(internal::HostRawBuf &, internal::RunInfo &)> &tiling_func,
   size_t tiling_size) {
+  std::lock_guard<std::mutex> lock(cache_mtx_);
   // Check in cache_buf_
   auto iter = cache_buf_.find(key);
   if (iter != cache_buf_.end() && key != 0) {
@@ -84,6 +86,7 @@ TilingInfo TilingCacheMgr::GetOrCreateTilingInfo(
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "ACL_MEMCPY_HOST_TO_DEVICE failed!";
   }
+  free(host_addr);
   AppendToCache(key, tiling_cache_elem);
   return tiling_cache_elem;
 }

@@ -25,6 +25,7 @@
 #include "utils/hash_map.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "runtime/graph_scheduler/actor/debug_aware_actor.h"
+#include "runtime/graph_scheduler/actor/kernel_launch_actor.h"
 #include "runtime/hardware/device_context.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
 #include "kernel/kernel.h"
@@ -65,6 +66,7 @@ class KernelActor : public DebugAwareActor {
       : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid),
         kernel_(kernel),
         is_dynamic_value_(false),
+        has_dynamic_(false),
         enable_async_infer_(false),
         kernel_info_(nullptr),
         real_input_num_(0),
@@ -77,19 +79,17 @@ class KernelActor : public DebugAwareActor {
     (void)device_contexts_.emplace_back(device_context);
     is_dynamic_shape_ = common::AnfAlgo::IsDynamicShape(kernel_) || common::AnfAlgo::IsDynamicSequence(kernel_);
     enable_callback_ = common::GetEnv("GRAPH_OP_RUN") == "1";
+    enable_async_launch_ = EnableAsyncLaunch() && device_context->device_context_key().device_name_ != kCPUDevice;
+    if (enable_async_launch_) {
+      KernelLaunchActor::GetInstance()->set_enable_async_launch(enable_async_launch_);
+      kernel_launch_aid_ = KernelLaunchActor::GetInstance()->GetAID();
+    }
   }
   ~KernelActor() override = default;
 
-  // The memory related operation interface.
-  void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override;
-  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
-  // The callback after memory alloc finished.
-  void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
-
-  // The debug related operation interface.
-  void SendDebugReq(OpContext<DeviceTensor> *const context) override;
-  // The callback after debug finished.
-  void OnDebugFinish(OpContext<DeviceTensor> *const context) override;
+  void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) override;
+  // The actor run when receive the input control.
+  void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
 
   const CNodePtr &kernel() const { return kernel_; }
   const std::set<size_t> &modifiable_ref_input_indexes() const { return modifiable_ref_input_indexes_; }
@@ -103,6 +103,8 @@ class KernelActor : public DebugAwareActor {
   void set_callback_counter(const CallbackCounterPtr &callback_counter) { callback_counter_ = callback_counter; }
 
   void set_enable_async_infer(bool enable_async_infer) { enable_async_infer_ = enable_async_infer; }
+
+  void LaunchKernelWithMemManage(OpContext<DeviceTensor> *const context);
 
  protected:
   void Init() override;
@@ -133,8 +135,11 @@ class KernelActor : public DebugAwareActor {
   bool is_dynamic_shape_;
   bool is_dynamic_value_;
   bool is_dynamic_type_;
+  bool has_dynamic_;
   // Whether enable asynchronously infer shape and resize kernel mod by KernelInferActor and KernelResizeActor.
   bool enable_async_infer_;
+  bool enable_async_launch_;
+  AID kernel_launch_aid_;
   KernelInfo *kernel_info_;
   KernelMod *kernel_mod_;
   // The kernel launch info is fetched by the device tensors.
@@ -185,18 +190,10 @@ class KernelActor : public DebugAwareActor {
   void FetchWorkspaceDeviceTensor();
   // Need copy when the data type or format between real parameters and formal parameters are inconsistent.
   void CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *const context);
-  // In step mode, push the input tensors which contain valid device address into input_device_tensors_ directly.
-  void PushInputDeviceTensor(const std::vector<TensorPtr> *input_tensors);
 
-  // The processing before kernel launch: update the info of kernel launch.
-  void PreLaunchKernel(OpContext<DeviceTensor> *const context);
-  // The processing after kernel launch: 1.erase input, 2.free memory, 3.send output.
-  void PostLaunchKernel(OpContext<DeviceTensor> *const context);
   // Back refresh the dynamic device tensor stores that have been triggered copy.
   void RefreshDeviceTensorCopyStore(OpContext<DeviceTensor> *const context);
 
-  // Set the memory address for the tensors which use the somas.
-  void SetSomasMemory(OpContext<DeviceTensor> *const context) const;
   void *GetSomasDevicePtr(size_t offset) const;
 
   // The real input number of kernel launch.
@@ -227,6 +224,9 @@ class KernelActor : public DebugAwareActor {
 
   bool enable_callback_{false};
   CallbackCounterPtr callback_counter_;
+
+  // The stream resource of the KernelActor to launch kernel.
+  void *stream_{nullptr};
 };
 
 using KernelActorPtr = std::shared_ptr<KernelActor>;

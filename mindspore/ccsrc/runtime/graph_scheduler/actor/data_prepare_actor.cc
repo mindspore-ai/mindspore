@@ -500,18 +500,24 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
 
   MS_LOG(DEBUG) << "Data prepare actor(" << GetAID().Name() << ") prepares data.";
   real_strategy_ = real_strategy;
-  // Convert actor running data from input tensors.
-  if (!input_tensors.empty()) {
+  if (exist_flatten_concat_) {
     SyncTensorTrunk(input_tensors);
     SetInitTensorsIfNeeded(input_tensors);
+  }
+  // Convert actor running data from input tensors.
+  if (!input_tensors.empty()) {
     try {
-      PrepareDataForDeviceTensorStore(input_tensors, context);
+      auto mode = MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE);
+      if (first_step_ || mode == kPynativeMode) {
+        PrepareDataForDeviceTensorStore(input_tensors, context);
+      }
       PrepareDataForHostTensorQueue(input_tensors, context);
     } catch (const std::exception &e) {
       std::string error_info = e.what();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
     }
   }
+  first_step_ = false;
 
   if (IsRunningFailed(context)) {
     return;
@@ -578,6 +584,8 @@ void DataPrepareActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const contex
 
 void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::vector<TensorPtr>> &input_tensors,
                                                        OpContext<DeviceTensor> *const context) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kRuntime, runtime::ProfilerEvent::kPreLaunch,
+                                     "PrepareDataForDeviceTensorStore", true);
   MS_EXCEPTION_IF_NULL(graph_compiler_info_);
   const auto &parser = graph_compiler_info_->control_node_parser_;
   MS_EXCEPTION_IF_NULL(parser);
@@ -631,11 +639,12 @@ void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::ve
   }
 
   PrepareDeviceTensorStoreForControlNode(parser, input_tensors.back(), context);
-  value_node_prepared_ = true;
 }
 
 void DataPrepareActor::PrepareDataForHostTensorQueue(const std::vector<std::vector<TensorPtr>> &input_tensors,
                                                      OpContext<DeviceTensor> *const context) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kRuntime, runtime::ProfilerEvent::kPreLaunch,
+                                     "PrepareDataForHostTensorQueue", true);
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(graph_compiler_info_);
   if ((host_data_source_actor_ == nullptr) || (host_tensor_queue_ == nullptr)) {
@@ -666,7 +675,9 @@ void DataPrepareActor::PrepareDataForHostTensorQueue(const std::vector<std::vect
         continue;
       }
       // Synchronize dynamic shape info of the input tensor to the parameter node of graph.
-      UpdateDynamicShape(input_node, input_tensor);
+      if (graph->is_dynamic_shape()) {
+        UpdateDynamicShape(input_node, input_tensor);
+      }
 
       auto tensor_position = host_data_source_actor_->FetchNodePosition({input_node, 0});
       if (tensor_position >= host_tensors.size()) {
@@ -704,7 +715,7 @@ void DataPrepareActor::PrepareDataForValueNodeTensor(const ValueNodePtr &node, c
     return;
   }
 
-  if (value_node_prepared_) {
+  if (!first_step_) {
     return;
   }
 
@@ -824,7 +835,7 @@ void DataPrepareActor::PrepareDataForStringValue(const ValueNodePtr &node, size_
   MS_EXCEPTION_IF_NULL(device_tensor);
   // If the ptr of device tensor is not nullptr, it indicates that the device data has been prepared.
   if (device_tensor->GetPtr() != nullptr) {
-    if (!value_node_prepared_) {
+    if (first_step_) {
       CopyDataFromDeviceTensorStore(front_node, node, device_tensor, device_context, context);
     }
     return;
@@ -861,7 +872,7 @@ void DataPrepareActor::PrepareDataForSequenceAndScalarValue(const ValueNodePtr &
                                                             const AnfNodePtr &front_node,
                                                             const DeviceContext *device_context,
                                                             OpContext<DeviceTensor> *const context) const {
-  if (value_node_prepared_) {
+  if (!first_step_) {
     return;
   }
   MS_EXCEPTION_IF_NULL(node);

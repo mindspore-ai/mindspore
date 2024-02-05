@@ -50,7 +50,7 @@ enum class ProfilerStage {
   kSyncStream,
 };
 
-enum class ProfilerModule { kDefault, kRuntime, kPynative, kKernel, kPython, kOther };
+enum class ProfilerModule { kDefault, kGraphExecutorPy, kRuntime, kPynative, kKernel, kPython, kOther };
 
 enum class ProfilerEvent {
   kDefault,
@@ -76,6 +76,7 @@ enum class ProfilerEvent {
   kKernelInferInner,
   kKernelInferDataSync,
   kKernelLaunchInner,
+  kBackendGraphRunInner,
 
   // PyNative Pipeline
   kPyNativeFrontendTask,

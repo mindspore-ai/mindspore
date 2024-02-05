@@ -20,6 +20,7 @@
 #include <string>
 #include <functional>
 #include <vector>
+#include <mutex>
 #include "mindspore/core/ir/primitive.h"
 #include "kernel/kernel.h"
 #include "acl/acl.h"
@@ -110,6 +111,8 @@ class TilingCacheMgr {
   void *dev_addr_{nullptr};
   internal::HostRawBuf host_tiling_buf_;
   device::DeviceContext *device_context_;
+  std::mutex key_mtx_, cache_mtx_;
+
 
   uint64_t calc_hash_id();
 

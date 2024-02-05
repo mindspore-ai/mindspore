@@ -53,7 +53,6 @@ void KernelInferActor::RunOpData(OpData<DeviceTensor> *const input_data, OpConte
 }
 
 void KernelInferActor::Run(OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_ZERO("device_contexts_ size", device_contexts_.size());
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   try {
@@ -85,16 +84,15 @@ void KernelInferActor::Run(OpContext<DeviceTensor> *const context) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context), error_info);
   }
 
-  PostRun(context);
+  // PostRun
+  EraseInput(context);
+  SendMemoryFreeReq(context);
+  SendOutput(context);
 }
 
 void KernelInferActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
-  if (ActorDispatcher::is_memory_free_sync()) {
-    ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list_,
-                              device_contexts_[0], context, GetAID());
-  } else {
-    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list_, device_contexts_[0],
-                          context, GetAID());
+  if (memory_free_list_.size() > 0) {
+    MemoryManagerActor::GetInstance()->FreeMemory(&memory_free_list_, device_contexts_[0], context, GetAID());
   }
 }
 }  // namespace runtime
