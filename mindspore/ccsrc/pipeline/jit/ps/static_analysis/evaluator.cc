@@ -153,7 +153,7 @@ bool HasIsolatedSideEffectNode(const FuncGraphPtr &func_graph);
 
 bool CheckSideEffect(const AnfNodePtr &input) {
   if (IsSideEffectCNode(input)) {
-    MS_LOG(ERROR) << "Multiple side-effect node: " << input->DebugString();
+    MS_LOG(DEBUG) << "Multiple side-effect node: " << input->DebugString();
     return true;
   }
   // Process {Depend -> StopGradient -> MakeTuple(call function, ...)}.
@@ -165,7 +165,7 @@ bool CheckSideEffect(const AnfNodePtr &input) {
     if (IsValueNode<FuncGraph>(fn_input)) {
       auto func = GetValueNode<FuncGraphPtr>(fn_input);
       if (IsSideEffectCNode(func->output()) || HasIsolatedSideEffectNode(func)) {
-        MS_LOG(ERROR) << "Single nested side-effect node: " << input->DebugString();
+        MS_LOG(DEBUG) << "Single nested side-effect node: " << input->DebugString();
         return true;
       }
     }
