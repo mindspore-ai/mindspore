@@ -56,6 +56,7 @@ AddAttrToNodeImplRegistry::AddAttrToNodeImplRegistry() {
   Register(prim::kPrimDynamicShape->name(), TensorShapeAddDtype);
   Register(prim::kPrimHShrink->name(), HShrinkModifyLambd);
   Register(prim::kPrimHShrinkGrad->name(), HShrinkModifyLambd);
+  Register(prim::kPrimExtractVolumePatches->name(), ExtractVolumePatchesFormatTranspose);
 }
 
 AddAttrToNodeImplRegistry &AddAttrToNodeImplRegistry::GetInstance() {
