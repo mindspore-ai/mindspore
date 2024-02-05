@@ -127,8 +127,7 @@ void SelectKernel(const KernelGraphPtr &kernel_graph, std::set<KernelGraphPtr> *
   memo->insert(kernel_graph);
   const auto &kernels = kernel_graph->execution_order();
   for (const auto &kernel : kernels) {
-    auto [select_res, msg, etype] =
-      device::ascend::SelectKernelInfoWithMsg(kernel, IsEnableAclNN(kernel_graph, kernel));
+    auto [select_res, msg, etype] = device::ascend::SelectKernelInfoWithMsg(kernel_graph, kernel);
     if (!select_res) {
       MS_LOG(INFO) << "node is " << kernel->fullname_with_scope() << " should backoff";
       std::pair<std::string, ExceptionType> failure_info = std::make_pair(msg, etype);

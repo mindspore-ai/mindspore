@@ -41,6 +41,6 @@ bool SigmoidGradAscend::Launch(const std::vector<KernelTensor *> &inputs, const 
   return true;
 }
 
-MS_ACLLNN_KERNEL_FACTORY_REG(SigmoidGrad, SigmoidGradAscend);
+MS_ACLNN_KERNEL_FACTORY_REG(SigmoidGrad, SigmoidGradAscend);
 }  // namespace kernel
 }  // namespace mindspore

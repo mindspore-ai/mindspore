@@ -32,6 +32,6 @@ bool SquareAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::
   return true;
 }
 
-MS_ACLLNN_KERNEL_FACTORY_REG(Square, SquareAscend);
+MS_ACLNN_KERNEL_FACTORY_REG(Square, SquareAscend);
 }  // namespace kernel
 }  // namespace mindspore

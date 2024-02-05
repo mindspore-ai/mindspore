@@ -179,6 +179,7 @@ def get_same_dtype_groups(args_signature, args_name):
             dtype_conut = dtype_conut + 1
     return same_dtype_groups, dtype_conut
 
+
 def generate_py_op_signature(op_name, args_signature, args_name, args_default):
     """
     Generate __mindspore_signature__
@@ -927,7 +928,7 @@ namespace kernel {{
         inputs_outputs_num = len(operator_data.get("args")) + len(operator_data.get("returns"))
         aclnn_name = AclnnUtils.get_aclnn_interface(class_name)
         reg_code += f"""
-MS_ACLLNN_COMMON_KERNEL_FACTORY_REG({class_name}, {aclnn_name}, {inputs_outputs_num});"""
+MS_ACLNN_COMMON_KERNEL_FACTORY_REG({class_name}, {aclnn_name}, {inputs_outputs_num});"""
     reg_code += f"""
 }}  // namespace kernel
 }}  // namespace mindspore

@@ -35,6 +35,6 @@ bool FAScoreAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   return true;
 }
 
-MS_ACLLNN_KERNEL_FACTORY_REG(FlashAttentionScore, FAScoreAclnnKernelMod);
+MS_ACLNN_KERNEL_FACTORY_REG(FlashAttentionScore, FAScoreAclnnKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

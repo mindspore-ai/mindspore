@@ -192,6 +192,8 @@ void KernelActor::InitWorkspaceInfo() {
 void KernelActor::Run(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+  MS_EXCEPTION_IF_NULL(device_contexts_[0]->device_res_manager_);
+  device_contexts_[0]->device_res_manager_->SetDeviceIdToCurrentThread();
 
   FetchInputDeviceTensor(context);
 

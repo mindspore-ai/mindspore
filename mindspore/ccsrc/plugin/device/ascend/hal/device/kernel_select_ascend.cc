@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
 #include <vector>
 #include <tuple>
+#include <unordered_set>
 #include <unordered_map>
 #include <memory>
 #include <set>
@@ -390,6 +391,38 @@ bool IsEmptyTupleInput(const CNodePtr &kernel, const size_t i, const TypeId cur_
   }
   return false;
 }
+
+static std::once_flag kAclnnEnableListInit;
+static std::unordered_set<std::string> kAclnnEnableList;
+bool ReadAclnnEnableEnv(const AnfNodePtr &node) {
+  static auto enable_aclnn_env = common::GetEnv("MS_ENABLE_ACLNN");
+  if (enable_aclnn_env == "1") {
+    return kernel::IsRegisteredAclnnOp(node) ? true : false;
+  }
+
+  static auto read_config = !enable_aclnn_env.empty() && enable_aclnn_env != "0";
+  if (read_config) {
+    std::call_once(kAclnnEnableListInit, []() {
+      std::ifstream in_file(enable_aclnn_env);
+      if (!in_file.is_open()) {
+        MS_LOG(WARNING) << "MS_ENABLE_ACLNN set path:" << enable_aclnn_env << " is invalid.";
+        return;
+      }
+      std::string line;
+      while (getline(in_file, line)) {
+        kAclnnEnableList.insert(line);
+      }
+      in_file.close();
+    });
+
+    std::string op_name = common::AnfAlgo::GetCNodeName(node);
+    if (kAclnnEnableList.count(op_name) != 0) {
+      return kernel::IsRegisteredAclnnOp(node) ? true : false;
+    }
+  }
+
+  return false;
+}
 }  // namespace
 
 void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_type) {
@@ -503,7 +536,9 @@ void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node
   }
 }
 
-std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const CNodePtr &node, bool enable_aclnn) {
+std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const KernelGraphPtr &graph,
+                                                                     const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   // The shape op use the cpu kernel priorly.
   static const std::set<std::string> select_host_priorly = {kShapeOpName};
@@ -515,18 +550,13 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const CNode
   static std::vector<std::set<std::string>> op_selected_type(4);
   transform::ErrorAclType acl_err_type = transform::ErrorAclType::kNormalOp;
   std::tuple<bool, std::string, ExceptionType> result = std::make_tuple(true, "", NoExceptionType);
-  if (enable_aclnn && kernel::IsRegisteredAclnnOp(node)) {
+  if (IsEnableAclnn(graph, node)) {
     GenerateKernelBuildInfo(node, KernelType::OPAPI_KERNEL);
     if (op_selected_type[kAclnnOpSelect].count(op_name) == 0) {
       (void)op_selected_type[kAclnnOpSelect].insert(op_name);
       MS_LOG(INFO) << op_name << " select aclnn kernel.";
     }
     return result;
-  }
-  // Check must use the aclnn kernel mod.
-  if (enable_aclnn && kernel::IsEnabledAclnnDispatch(node)) {
-    MS_LOG(EXCEPTION) << "Kernel " << AnfUtils::GetCNodeName(node)
-                      << " is enabled dispatch in yaml, but not registered an aclnn kernelmod.";
   }
 
   // for backend inline
@@ -571,26 +601,27 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const CNode
   return {false, msg, etype};
 }
 
-bool IsEnableAclNN(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node) {
+bool IsEnableAclnn(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_EXCEPTION_IF_NULL(node);
   if (kernel_graph->is_from_single_op()) {
     return false;
   }
+
   static bool special_format = common::GetEnv("MS_FORMAT_MODE") == "0";
   if (special_format && !kernel_graph->is_dynamic_shape()) {
     return false;
   }
 
-  if (node != nullptr && kernel::IsEnabledAclnnDispatch(node)) {
+  if (kernel::IsEnabledAclnnDispatch(node)) {
+    if (!kernel::IsRegisteredAclnnOp(node)) {
+      MS_LOG(EXCEPTION) << "Kernel " << node->fullname_with_scope()
+                        << " is enabled dispatch in yaml, but not registered an aclnn kernelmod.";
+    }
     return true;
   }
 
-  static bool enable_aclnn_env = common::GetEnv("MS_ENABLE_ACLNN") == "1";
-  if (enable_aclnn_env) {
-    return true;
-  }
-
-  return false;
+  return ReadAclnnEnableEnv(node);
 }
 
 void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
@@ -603,7 +634,7 @@ void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
 
     const auto &kernel_graph = AnfAlgo::FetchKernelGraph(node.get());
     MS_EXCEPTION_IF_NULL(kernel_graph);
-    auto [select_res, msg, etype] = SelectKernelInfoWithMsg(node, IsEnableAclNN(kernel_graph, node));
+    auto [select_res, msg, etype] = SelectKernelInfoWithMsg(kernel_graph, node);
     if (!select_res) {
       MS_LOG(INFO) << "node is " << node->fullname_with_scope() << " should backoff";
       std::pair<std::string, ExceptionType> failure_info = std::make_pair(msg, etype);

@@ -184,8 +184,8 @@ using AclnnKernelModPtrList = std::vector<AclnnKernelModPtr>;
     }                                                                                                         \
   };
 
-#define MS_ACLLNN_KERNEL_FACTORY_REG(NAME, DERIVE_CLASS) MS_KERNEL_FACTORY_REG(AclnnKernelMod, NAME, DERIVE_CLASS)
-#define MS_ACLLNN_COMMON_KERNEL_FACTORY_REG(NAME, TYPE, N)                    \
+#define MS_ACLNN_KERNEL_FACTORY_REG(NAME, DERIVE_CLASS) MS_KERNEL_FACTORY_REG(AclnnKernelMod, NAME, DERIVE_CLASS)
+#define MS_ACLNN_COMMON_KERNEL_FACTORY_REG(NAME, TYPE, N)                     \
   REGISTER_ACLNN_CLASS(NAME)                                                  \
   static const KernelRegistrar<AclnnKernelMod> g_##NAME##_AclnnKernelMod_reg( \
     #NAME, []() { return std::make_shared<Aclnn##NAME##KernelMod<N>>(#TYPE); });
