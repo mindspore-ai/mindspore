@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include "pipeline/jit/pi/auto_grad/async_task_manager.h"
 #include "pipeline/jit/pi/auto_grad/bprop_func_graph_manager.h"
 #include "pybind11/stl.h"
 
@@ -37,13 +38,15 @@ using GradExecutorPtr = std::shared_ptr<GradExecutor>;
 
 class GradExecutor {
  public:
-  GradExecutor() : manager_(std::make_shared<BpropFuncGraphManager>()) {}
+  GradExecutor()
+      : func_graph_manager_(std::make_shared<BpropFuncGraphManager>()),
+        async_task_manager_(std::make_shared<AsyncTaskManager>()) {}
   virtual ~GradExecutor() = default;
 
   static GradExecutorPtr GetInstance() { return grad_executor_; }
 
   FuncGraphPtr PrimBpropGraphPass(const FuncGraphPtr &prim_grad_graph);
-  FuncGraphPtr GetAccumulateGraph(const py::object &tensor);
+  FuncGraphPtr GetAccumulateGraph(const ValuePtr &tensor);
   FuncGraphPtr GetBpropGraph(const AnfNodePtr &func, const ValuePtrList &inputs, const ValuePtr &out,
                              const ValuePtr &dout);
   FuncGraphPtr GetFuncGraphBpropGraph(const std::string &phase, const py::tuple &args);
@@ -51,10 +54,15 @@ class GradExecutor {
                     const ValuePtr &dout);
   ValuePtr RunGraph(const FuncGraphPtr &func_graph, const ValuePtrList &inputs);
   ValuePtr RunGraph(const FuncGraphPtr &func_graph, const VectorRef &inputs);
+  void DispatchRecordTask(const RecordTaskPtr &task) { async_task_manager_->DispatchRecordTask(task); }
+  void DispatchGenerateTask(const RunBpropTaskPtr &task) { async_task_manager_->DispatchGenerateTask(task); }
+  void DispatchRunTask(const RunBpropTaskPtr &task) { async_task_manager_->DispatchRunTask(task); }
+  const AsyncTaskManagerPtr &GetAsyncTaskManager() const { return async_task_manager_; }
 
  private:
   static GradExecutorPtr grad_executor_;
-  BpropFuncGraphManagerPtr manager_;
+  BpropFuncGraphManagerPtr func_graph_manager_;
+  AsyncTaskManagerPtr async_task_manager_;
 };
 }  // namespace grad
 }  // namespace pijit

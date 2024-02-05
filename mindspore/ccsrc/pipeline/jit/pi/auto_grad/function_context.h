@@ -30,31 +30,39 @@ class FunctionContext : public std::enable_shared_from_this<FunctionContext> {
  public:
   /// \brief The constructor of FunctionContext.
   ///
-  /// \return The instance of FunctionContext.
-  FunctionContext() : FunctionContext({}, nullptr) {}
-
-  /// \brief The constructor of FunctionContext.
-  ///
-  /// \param[in] inputs The inputs of FunctionContext.
-  ///
-  /// \return The instance of FunctionContext.
-  explicit FunctionContext(const InputList &inputs) : FunctionContext(inputs, nullptr) {}
-
-  /// \brief The constructor of FunctionContext.
-  ///
-  /// \param[in] inputs The inputs of FunctionContext.
   /// \param[in] output The output of FunctionContext.
   ///
   /// \return The instance of FunctionContext.
-  explicit FunctionContext(const InputList &inputs, const ValuePtr &output) : inputs_(inputs), output_(output) {}
+  explicit FunctionContext(const ValuePtr &output) : FunctionContext(nullptr, output) {}
+
+  /// \brief The constructor of FunctionContext.
+  ///
+  /// \param[in] fn The function of FunctionContext.
+  /// \param[in] output The output of FunctionContext.
+  ///
+  /// \return The instance of FunctionContext.
+  explicit FunctionContext(const ValuePtr &fn, const ValuePtr &output) : fn_(fn), inputs_({}), output_(output) {}
 
   /// \brief Destructor.
   virtual ~FunctionContext() = default;
+
+  /// \brief Get the function of the function node.
+  ///
+  /// \return The function of the function node.
+  const ValuePtr &GetFunction() const { return fn_; }
+
+  /// \brief Set the function of the function node.
+  ///
+  /// \param[in] fn The function.
+  void SetFunction(const ValuePtr &fn) { fn_ = fn; }
 
   /// \brief Get the inputs of the function node.
   ///
   /// \return The inputs of the function node.
   const InputList &GetInputs() const { return inputs_; }
+
+  /// \brief Remove all inputs of the function node.
+  void RemoveInputs() { inputs_.clear(); }
 
   /// \brief Set the inputs of the function node.
   ///
@@ -95,6 +103,8 @@ class FunctionContext : public std::enable_shared_from_this<FunctionContext> {
   }
 
  private:
+  /// \brief The function of the function node.
+  ValuePtr fn_;
   /// \brief The input list of the function node.
   InputList inputs_;
   /// \brief The output of the function node.
