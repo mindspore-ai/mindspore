@@ -32,6 +32,7 @@
 #include "ops/tensor_scatter_sub.h"
 #include "ops/tensor_scatter_update.h"
 #include "utils/check_convert_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
@@ -97,9 +98,19 @@ abstract::ShapePtr TensorScatterArithmeticInferShape(const PrimitivePtr &primiti
 TypePtr TensorScatterArithmeticInferType(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
+  auto context_ptr = MsContext::GetInstance();
+  auto is_ascend_backend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+  if (is_ascend_backend &&
+      (prim_name == prim::kPrimTensorScatterAdd->name() || prim_name == prim::kPrimTensorScatterSub->name() ||
+       prim_name == prim::kPrimTensorScatterMul->name() || prim_name == prim::kPrimTensorScatterMax->name() ||
+       prim_name == prim::kPrimTensorScatterMin->name())) {
+    auto input_x_type_ptr = input_args[kInputIndex0]->GetType();
+    std::set<TypePtr> input_x_type_set = {kInt32, kFloat16, kFloat32};
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x type", input_x_type_ptr, input_x_type_set, prim_name);
+  }
   auto indiecs_type_ptr = input_args[kInputIndex1]->GetType();
-  std::set<TypePtr> type_set = {kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indiecs_type_ptr, type_set, prim_name);
+  std::set<TypePtr> indiecs_type_set = {kInt32, kInt64};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indiecs_type_ptr, indiecs_type_set, prim_name);
   std::map<std::string, TypePtr> type_dict;
   type_dict.emplace("input_x", input_args[kInputIndex0]->GetType());
   type_dict.emplace("updates", input_args[kInputIndex2]->GetType());
