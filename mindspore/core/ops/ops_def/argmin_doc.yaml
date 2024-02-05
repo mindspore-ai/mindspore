@@ -15,7 +15,7 @@ argmin:
               The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
     
         Outputs:
-            Tensor, whose dtype is determined by `output_type`.
+            Tensor, which is the minimum index in the specified axis of input Tensor.
     
         Raises:
             TypeError: If `axis` is not an int.

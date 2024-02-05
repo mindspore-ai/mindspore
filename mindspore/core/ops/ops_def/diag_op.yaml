@@ -1,7 +1,7 @@
 #operator diag
 diag:
     args:
-        input_x:
+        input:
             dtype: tensor
     returns:
         output:

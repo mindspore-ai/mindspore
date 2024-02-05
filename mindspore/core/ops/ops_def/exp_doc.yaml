@@ -7,10 +7,10 @@ exp:
          out_i = e^{x_i}
 
       Inputs:
-         - **x** (Tensor) - The input tensor.
+         - **input** (Tensor) - The input tensor.
 
-      Outputs:
-         Tensor, has the same shape and dtype as the `x`.
+      Returns:
+         Tensor, has the same shape and dtype as the `input`.
 
       Raises:
           TypeError: If `input` is not a Tensor.
@@ -22,7 +22,7 @@ exp:
          >>> import mindspore
          >>> import numpy as np
          >>> from mindspore import Tensor, ops
-         >>> x = Tensor(np.array([0.0, 1.0, 3.0]), mindspore.float32)
-         >>> output = ops.exp(x)
+         >>> input = Tensor(np.array([0.0, 1.0, 3.0]), mindspore.float32)
+         >>> output = ops.exp(input)
          >>> print(output)
          [ 1.        2.718282 20.085537]

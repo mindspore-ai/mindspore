@@ -8,15 +8,15 @@ gcd:
             This is an experimental API that is subject to change or deletion.
 
         Args:
-            - **x1** (Tensor) - The first input tensor.
-            - **x2** (Tensor) - The second input tensor.
+            - **input** (Tensor) - The first input tensor.
+            - **other** (Tensor) - The second input tensor.
 
         Returns:
             Tensor, the shape is the same as the one after broadcasting, and the data type is one
             with higher precision in the two inputs.
 
         Raises:
-            TypeError: If data type `x1` or `x2` is not int32 or int64.
+            TypeError: If data type `input` or `other` is not int32 or int64.
             ValueError: If shape of two inputs are not broadcastable.
 
         Supported Platforms:
@@ -25,8 +25,8 @@ gcd:
         Examples:
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
-            >>> x1 = Tensor(np.array([7, 8, 9]))
-            >>> x2 = Tensor(np.array([14, 6, 12]))
-            >>> y = ops.gcd(x1, x2)
+            >>> input = Tensor(np.array([7, 8, 9]))
+            >>> other = Tensor(np.array([14, 6, 12]))
+            >>> y = ops.gcd(input, other)
             >>> print(y)
             [7 2 3]

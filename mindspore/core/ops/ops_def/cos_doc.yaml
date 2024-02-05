@@ -6,8 +6,7 @@ cos:
             out_i = \cos(x_i)
     
         .. warning::
-            Supported dtypes are float16 and float32, and using float64 may
-            cause a problem of missing precision.
+            Supported dtypes are float16 and float32, and using float64 may cause a problem of missing precision.
     
         Args:
             input (Tensor): The shape of tensor is
@@ -27,7 +26,7 @@ cos:
             >>> import mindspore
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
-            >>> x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
-            >>> output = ops.cos(x)
+            >>> input = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
+            >>> output = ops.cos(input)
             >>> print(output)
             [0.971338 0.6748758 0.95233357 0.9959527]

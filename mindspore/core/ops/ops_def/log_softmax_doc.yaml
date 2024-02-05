@@ -10,8 +10,8 @@ log_softmax:
         where :math:`N` is the length of the Tensor.
     
         Args:
-            logits (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-                additional dimensions, with float16 or float32 data type.
+            logits (Tensor): The input Tensor, which is the :math:`x` in the formula above, it's shape is :math:`(N, *)`, 
+                where :math:`*` means, any number of additional dimensions, with float16 or float32 data type.
             axis (int): The axis to perform the Log softmax operation. Default: ``-1`` .
     
         Returns:

@@ -23,12 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def layer_norm_forward_func(input_x, gamma, beta):
-    return ops.auto_generate.layer_norm(input_x,
-                                        gamma,
-                                        beta,
-                                        begin_norm_axis=1,
-                                        begin_params_axis=1,
-                                        epsilon=1e-7)
+    return ops.LayerNorm(begin_norm_axis=1, begin_params_axis=1, epsilon=1e-7)(input_x, gamma, beta)
 
 
 @test_utils.run_with_cell
@@ -37,12 +32,7 @@ def layer_norm_backward_func(input_x, gamma, beta):
 
 
 def layer_norm_dyn_shape_func(input_x, gamma, beta):
-    return ops.auto_generate.layer_norm(input_x,
-                                        gamma,
-                                        beta,
-                                        begin_norm_axis=1,
-                                        begin_params_axis=1,
-                                        epsilon=1e-7)
+    return ops.LayerNorm(begin_norm_axis=1, begin_params_axis=1, epsilon=1e-7)(input_x, gamma, beta)
 
 
 @pytest.mark.level1

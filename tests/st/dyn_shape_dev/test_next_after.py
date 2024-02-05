@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def next_after_forward_func(x, other):
-    return ops.auto_generate.next_after(x, other)
+    return ops.nextafter(x, other)
 
 
 @test_utils.run_with_cell

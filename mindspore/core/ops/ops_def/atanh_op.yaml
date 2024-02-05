@@ -1,7 +1,7 @@
 #operator atanh
 atanh:
     args:
-        x: 
+        input:
             dtype: tensor
     returns:
         output: 

@@ -16,3 +16,5 @@ cum_prod:
   returns:
     output:
       dtype: tensor
+  function:
+    disable: True

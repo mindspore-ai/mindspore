@@ -24,7 +24,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def cumsum_forward_func(x, axis, exclusive, reverse):
-    return ops.auto_generate.cum_sum(x, axis, exclusive, reverse)
+    return ops.CumSum(exclusive, reverse)(x, axis)
 
 
 @test_utils.run_with_cell
@@ -34,7 +34,7 @@ def cumsum_backward_func(x, axis, exclusive, reverse):
 
 @test_utils.run_with_cell
 def cumsum_dyn_shape_func(x, axis, exclusive, reverse):
-    return ops.auto_generate.cum_sum(x, axis, exclusive, reverse)
+    return ops.CumSum(exclusive, reverse)(x, axis)
 
 
 @pytest.mark.level1

@@ -1,31 +1,31 @@
 range:
     description: |
         Creates a sequence of numbers that begins at `start` and extends by increments of
-        `delta` up to but not including `limit`.
+        `step` up to but not including `end`.
 
         The types of all 3 inputs must be all integers or floating-point numbers.
 
         Args:
             start (number): The first number in the sequence. Must have
                 type: int32 ,int64, float32 or float64.
-            limit (number): Upper limit of the sequence, exclusive. Must
+            end (number): Upper end of the sequence, exclusive. Must
                 have type: int32 ,int64, float32 or float64.
-            delta (number): Number that increments `start`. Must have
+            step (number): Number that increments `start`. Must have
                 type: int32 ,int64, float32 or float64.
             maxlen (int, optional): Memory that can fit `maxlen` many elements
                 will be allocated for the output. Optional, must be positive. Default: 1000000.
                 If the output has more than `maxlen` elements, a runtime error will occur.
 
         Returns:
-            A 1-D Tensor. If `start`, `limit` and `delta` are all integers, the type of output is int64.
-            If `start`, `limit` and `delta` are all floating-point numbers, the type of output is float32.
+            A 1-D Tensor. If `start`, `end` and `step` are all integers, the type of output is int64.
+            If `start`, `end` and `step` are all floating-point numbers, the type of output is float32.
 
         Raises:
-            TypeError: If 'start', 'limit', 'delta' have both integers and floating-point numbers.
-            TypeError: If datatype of `start`, `limit` or `delta` is not supported.
-            ValueError: If `delta` = 0.
-            ValueError: If `start` >= `limit` when `delta` > 0.
-            ValueError: If `start` <= `limit` when `delta` < 0.
+            TypeError: If `start`, `end`, `step` have both integers and floating-point numbers.
+            TypeError: If datatype of `start`, `end` or `step` is not supported.
+            ValueError: If `step` = 0.
+            ValueError: If `start` >= `end` when `step` > 0.
+            ValueError: If `start` <= `end` when `step` < 0.
 
         Supported Platforms:
             ``GPU`` ``CPU``
@@ -33,8 +33,8 @@ range:
         Examples:
             >>> from mindspore import ops
             >>> start = 0
-            >>> limit = 10
-            >>> delta = 4
-            >>> output = ops.range(start, limit, delta)
+            >>> end = 10
+            >>> step = 4
+            >>> output = ops.range(start, end, step)
             >>> print(output)
             [0 4 8]
