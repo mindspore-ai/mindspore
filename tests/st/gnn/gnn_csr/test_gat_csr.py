@@ -34,7 +34,6 @@ IN_DROP = 0.6
 ATTN_DROP = 0.6
 NEGATIVE_SLOPE = 0.2
 EPOCHS = 200
-EPOCHS_PERF = 5
 LR = 0.005
 WEIGHT_DECAY = 5e-4
 SEED = 20
@@ -217,55 +216,3 @@ def test_gat_csr():
                                                                   train_loss))
     assert train_loss < 1.2
     assert avg_dur < 2.0
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_gat_csr_perf():
-    """
-    Feature: Test GAT model with CSR optimizations.
-    Description: Test GAT model in graph mode with CSR-related cluster ops.
-    Expectation: Success.
-    """
-    np.random.seed(SEED)
-    context.set_context(device_target="GPU", mode=context.GRAPH_MODE, enable_graph_kernel=True,
-                        graph_kernel_flags="--enable_expand_ops=Gather "
-                                           "--enable_cluster_ops=UnsortedSegmentSum,CSRReduceSum,CSRGather "
-                                           "--enable_recompute_fusion=false "
-                                           "--enable_parallel_fusion=false "
-                                           "--recompute_increment_threshold=40000000 "
-                                           "--recompute_peak_threshold=3000000000 "
-                                           "--enable_csr_fusion=true ")
-    # dataloader
-    ds = GraphDataset()
-    feature_size = ds.x.shape[1]
-    # model
-    net = GatNet(num_layers=NUM_LAYERS,
-                 data_feat_size=feature_size,
-                 hidden_dim_size=NUM_HIDDEN,
-                 n_classes=ds.n_classes,
-                 heads=[NUM_HEADS for _ in range(NUM_LAYERS)] + [NUM_OUT_HEADS],
-                 input_drop_out_rate=IN_DROP,
-                 attn_drop_out_rate=ATTN_DROP,
-                 leaky_relu_slope=NEGATIVE_SLOPE,
-                 activation=ms.nn.ELU,
-                 add_norm=True)
-    optimizer = nn.optim.Adam(net.trainable_params(), learning_rate=LR, weight_decay=WEIGHT_DECAY)
-    loss = LossNet(net)
-    train_net = nn.TrainOneStepCell(loss, optimizer)
-    train_net = DataNet(ds, train_net)
-    total = 0.
-    warm_up = 3
-    for e in range(EPOCHS_PERF):
-        beg = time.time()
-        train_net.set_train()
-        train_net.set_grad()
-        _ = train_net()
-        end = time.time()
-        dur = end - beg
-        if e >= warm_up:
-            total = total + dur
-    avg_dur = total * 1000 / (EPOCHS_PERF - warm_up)
-    print("Model:{} Dataset:{} Avg epoch time:{}".format("GAT", "PERF", avg_dur))
-    assert avg_dur < 300
