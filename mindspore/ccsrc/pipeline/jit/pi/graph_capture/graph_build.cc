@@ -1839,7 +1839,7 @@ StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, 
   }
 
   MS_LOG(INFO) << "new subgraph->TraceRun:" << py::str(func);
-  subgraph->TraceRun(args);
+  auto reason = subgraph->TraceRun(args);
   MS_LOG(INFO) << "new subgraph->TraceRun end:" << py::str(func);
 
   call_node->SetSubGraph(subgraph->GetGraph());
@@ -1894,7 +1894,7 @@ StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, 
 
   // if stat == InlineReason::kInline, guard free variable
   call_node->SetInlineReason(stat);
-  return StopTraceReason::kNonStopTrace;
+  return reason;
 }
 
 // build sub-graph
