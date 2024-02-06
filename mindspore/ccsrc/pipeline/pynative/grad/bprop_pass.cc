@@ -637,14 +637,14 @@ void PyNativePassForward::ReverseMakeTupleNode(const CNodePtr &cnode, ValuePtrLi
       auto knode_input = auto_grad_cell_ptr_->ad_param()->tape_->FuncGraph::NewCNode(knode_inputs);
       knode_input->set_abstract(abs);
       size_t begin_index = i + kIndex1;
-      (void)cnode_inputs->erase(cnode_inputs->begin() + SizeToLong(begin_index),
-                                cnode_inputs->begin() + SizeToLong(begin_index) + dyn_input_sizes[i]);
-      (void)cnode_inputs->emplace_back(knode_input);
+      auto it = cnode_inputs->erase(cnode_inputs->begin() + SizeToLong(begin_index),
+                                    cnode_inputs->begin() + SizeToLong(begin_index) + dyn_input_sizes[i]);
+      (void)cnode_inputs->insert(it, knode_input);
 
       // Update input value
-      (void)inputs_value->erase(inputs_value->begin() + SizeToLong(begin_index),
-                                inputs_value->begin() + SizeToLong(begin_index) + dyn_input_sizes[i]);
-      (void)inputs_value->emplace_back(std::make_shared<ValueTuple>(value_tuple));
+      auto item = inputs_value->erase(inputs_value->begin() + SizeToLong(kIndex0),
+                                      inputs_value->begin() + SizeToLong(kIndex0) + dyn_input_sizes[i]);
+      (void)inputs_value->insert(item, std::make_shared<ValueTuple>(value_tuple));
     } else {
       (void)new_inputs.emplace_back(cnode->input(i + kIndex1));
     }

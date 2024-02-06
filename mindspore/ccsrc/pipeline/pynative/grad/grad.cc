@@ -706,14 +706,14 @@ void GradExecutor::SetForwardLastNodeInfo(const ValuePtr &v) const {
   }
   (void)PyNativeAlgo::Common::SetValueGradInfo(value, top_cell_, TensorGradType::kConstant);
   // Set last output abstract and will be used for sens
+  auto fake_v = PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(value);
+  top_cell()->SetLastOutputValueForwardOutputFlag(fake_v);
   if (forward()->enable_async()) {
     auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
-    auto fake_v = PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(value);
     auto task = [auto_grad_cell_ptr, fake_v]() { auto_grad_cell_ptr->UpdateOutputNodeOfTopCell(fake_v); };
     DispatchGradQueueTask(std::move(task));
   } else {
-    top_cell()->auto_grad_cell_ptr()->UpdateOutputNodeOfTopCell(
-      PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(value));
+    top_cell()->auto_grad_cell_ptr()->UpdateOutputNodeOfTopCell(fake_v);
   }
 }
 
