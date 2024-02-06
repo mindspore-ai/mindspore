@@ -471,9 +471,7 @@ class Profiler:
         if kwargs.get("env_enable"):
             self._profiler_init(kwargs)
             return
-        if Profiler._has_initialized:
-            msg = "Do not init twice in the profiler."
-            raise RuntimeError(msg)
+
         Profiler._has_initialized = True
         # get device_id and device_target
         self._get_devid_rankid_and_devtarget()
@@ -713,10 +711,6 @@ class Profiler:
         if not self._has_started:
             if not self._has_started_twice:
                 self._has_started = True
-                self._has_started_twice = True
-            else:
-                raise RuntimeError("MindSpore Profiling has finished, repeated start and stop actions are not "
-                                   "supported.")
         else:
             raise RuntimeError("The profiler has already started. Use profiler.start() only when start_profile value "
                                "is set to False.")
