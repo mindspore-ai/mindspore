@@ -58,7 +58,7 @@ TilingInfo TilingCacheMgr::GetOrCreateTilingInfo(
   // Need free the dev mem after launch when the cache is full.
   FreeMemoryIfFull();
 
-  // Host addr will be free in tiling_func.
+  // Malloc host addr for tiling_func.
   void *host_addr = malloc(tiling_size);
   TilingInfo tiling_cache_elem;
   host_tiling_buf_.addr_ = host_addr;

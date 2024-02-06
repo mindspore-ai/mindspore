@@ -149,8 +149,8 @@ void AddDataArrows(const ActorSet *actor_set, const KernelActor *kernel_actor, K
       if (from_actor->type() == KernelTransformType::kCopyActor) {
         auto *copy_actor = dynamic_cast<CopyActor *>(from_actor);
         MS_EXCEPTION_IF_NULL(copy_actor);
-        UpdateRefCount(copy_actor->output[0].get(), false);
-        UpdateRefCount(copy_actor->output[0].get(), false);
+        UpdateRefCount(copy_actor->output().get(), false);
+        UpdateRefCount(copy_actor->output().get(), false);
       }
       SchedulerHelper::AddDataArrow(from_actor, kernel_resize_actor, data_arrow->from_output_index_,
                                     data_arrow->to_input_index_);
