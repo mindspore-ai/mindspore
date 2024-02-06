@@ -244,7 +244,7 @@ std::string GetNodeTypeOrigin(const AnfNodePtr &nd) {
       oss << ", value=...";
     }
     if (ref_key != nullptr) {
-      oss << ", ref_key=:" << ref_key->value();
+      oss << ", ref_key=" << ref_key->value();
     }
     PrintTupleNodeUsedFlagsDat(sequence_abs, oss);
     oss << ">";
@@ -254,7 +254,7 @@ std::string GetNodeTypeOrigin(const AnfNodePtr &nd) {
       oss << ", value=...";
     }
     if (ref_key != nullptr) {
-      oss << ", ref_key=:" << ref_key->value();
+      oss << ", ref_key=" << ref_key->value();
     }
     PrintTupleNodeUsedFlagsDat(sequence_abs, oss);
     oss << ">";
@@ -519,7 +519,7 @@ void AnalyzeFailExporter::ExportOneFuncGraph(const FuncGraphPtr &func_graph, con
   }
   oss << "subgraph attr:" << std::endl;
   for (const auto &attr : func_graph->attrs()) {
-    oss << attr.first << " : ";
+    oss << attr.first << ": ";
     MS_EXCEPTION_IF_NULL(attr.second);
     if (attr.second->isa<BoolImm>()) {
       oss << GetValue<bool>(attr.second);
@@ -529,6 +529,11 @@ void AnalyzeFailExporter::ExportOneFuncGraph(const FuncGraphPtr &func_graph, con
     oss << std::endl;
   }
   oss << "subgraph instance: " << func_graph->ToString() << " : " << func_graph.get() << std::endl;
+  // Dump side effect info.
+  auto effect_info = func_graph->GetEffectInfo();
+  if (effect_info.HasEffect()) {
+    oss << "# " << effect_info.ToString() << '\n';
+  }
   if (trace::GetGlobalTraceLabelType() == trace::TraceLabelType::kWithUniqueId) {
     oss << trace::GetDebugInfoStr(func_graph->debug_info(), "# ", kSourceLineTipDiscard) << "#"
         << trace::Label(func_graph->debug_info()) << "\n";

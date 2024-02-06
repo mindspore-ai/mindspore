@@ -403,7 +403,7 @@ class SideEffectFinder {
     // Update order list to include outer cnodes.
     UpdateOrderLists();
     // Find side effects by DFS from the top graph.
-    (void)ObtainEffectInfoForFuncGraph(root_);
+    ObtainEffectInfoForFuncGraphs(root_);
     // Check Switch calls, add monad arguments if need.
     HandleSwitchCalls();
     // Check SwitchLayer calls, add monad arguments if need.
@@ -1453,14 +1453,40 @@ class SideEffectFinder {
     }
   }
 
+  // Gets EffectInfo for func graph's total used.
+  void ObtainEffectInfoForFuncGraphs(const FuncGraphPtr &func_graph) {
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto &used_func_graphs = func_graph->func_graphs_used_total();
+    for (auto iter = used_func_graphs.crbegin(); iter != used_func_graphs.crend(); ++iter) {
+      auto used_func_graph = *iter;
+      // Get SCC that this graph belongs to.
+      auto used_func_graph_scc = GetScc(used_func_graph);
+      if (used_func_graph_scc == nullptr) {
+        MS_LOG(INTERNAL_EXCEPTION) << "Scc should not be null, func_graph: " << used_func_graph->ToString();
+      }
+      for (auto &scc_fg : *used_func_graph_scc) {
+        MS_EXCEPTION_IF_NULL(scc_fg);
+        (void)ObtainEffectInfoForFuncGraph(scc_fg);
+      }
+    }
+    ObtainEffectInfoForFuncGraph(func_graph);
+  }
+
   // Gets EffectInfo for func graph.
   EffectInfo ObtainEffectInfoForFuncGraph(const FuncGraphPtr &func_graph) {
     MS_EXCEPTION_IF_NULL(func_graph);
-    const auto &effect_info = func_graph->GetEffectInfo();
+    auto effect_info = func_graph->GetEffectInfo();
     if (effect_info.state != EffectInfo::kUnknown) {
       // Effect info already set, return it.
+      if (func_graph->stage() != -1) {
+        // Graph which need PipelineSplit doesn't have effect.
+        effect_info.memory = false;
+        effect_info.load = false;
+        effect_info.io = false;
+      }
       return effect_info;
     }
+
     // Get SCC that this graph belongs to.
     auto scc = GetScc(func_graph);
     if (scc == nullptr) {
