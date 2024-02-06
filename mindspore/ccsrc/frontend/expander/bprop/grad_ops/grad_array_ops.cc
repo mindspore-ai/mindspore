@@ -1780,6 +1780,40 @@ REG_BPROP_BUILDER("SplitV").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   return {dx};
 });
 
+REG_BPROP_BUILDER("Im2Col").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+  auto kernel_size = GetValue<std::vector<int64_t>>(ib->GetAttr("ksizes"));
+  auto dilation = GetValue<std::vector<int64_t>>(ib->GetAttr("dilations"));
+  auto stride = GetValue<std::vector<int64_t>>(ib->GetAttr("strides"));
+  auto pads = GetValue<std::vector<int64_t>>(ib->GetAttr("pads"));
+  std::vector<int64_t> padding = {pads[0], pads.back()};
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto x_shape = ib->GetShape(x);
+  NodePtr shape = nullptr;
+  if (IsDynamic(x_shape)) {
+    auto tensor_shape = ib->Emit("TensorShape", {x});
+    // Im2Col only support 4-D input, so we hard-code [2:4] here
+    shape =
+      ib->Emit("StridedSlice",
+               {tensor_shape, ib->Value<ShapeVector>({2}), ib->Value<ShapeVector>({4}), ib->Value<ShapeVector>({1})},
+               {{"begin_mask", MakeValue<int64_t>(0)},
+                {"end_mask", MakeValue<int64_t>(0)},
+                {"ellipsis_mask", MakeValue<int64_t>(0)},
+                {"new_axis_mask", MakeValue<int64_t>(0)},
+                {"shrink_axis_mask", MakeValue<int64_t>(0)}});
+    shape = ib->Cast(shape, kInt32);
+  } else {
+    ShapeVector output_shape(x_shape.begin() + i2, x_shape.end());
+    shape = ib->Tensor(output_shape, kInt32);
+  }
+  auto dx = ib->Emit("Col2Im", {dout, shape},
+                     {{"kernel_size", MakeValue(kernel_size)},
+                      {"dilation", MakeValue(dilation)},
+                      {"stride", MakeValue(stride)},
+                      {"padding", MakeValue(padding)}});
+  return {dx};
+});
+
 REG_BPROP_BUILDER("Col2Im").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto ksizes = GetValue<std::vector<int64_t>>(ib->GetAttr("kernel_size"));
   auto dilations = GetValue<std::vector<int64_t>>(ib->GetAttr("dilation"));

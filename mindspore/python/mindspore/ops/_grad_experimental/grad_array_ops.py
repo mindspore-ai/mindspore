@@ -36,8 +36,6 @@ from mindspore.ops.operations.array_ops import ScatterAddWithAxis
 from mindspore.ops.operations.array_ops import Expand
 from mindspore.ops.operations.array_ops import SegmentMean
 from mindspore.ops.operations.array_ops import AffineGrid
-from mindspore.ops.operations.array_ops import Im2Col
-from mindspore.ops.operations.array_ops import Col2Im
 from mindspore.ops.operations.array_ops import MaskedScatter
 from mindspore.ops.operations.array_ops import MaskedSelect
 from mindspore.ops.operations.array_ops import CountNonZero
@@ -356,35 +354,6 @@ def get_bprop_resize_nearest_neighbor_v2(self):
 
         dx = grad_op(dout, _create_tensor(grad_in_size, mstype.int32))
         return dx, zeros_like(grad_in_size)
-
-    return bprop
-
-
-@bprop_getters.register(Im2Col)
-def get_bprop_im2col(self):
-    """
-    Generate bprop for Im2Col
-
-    Im2Col, corresponding to torch's UnFold operator.
-    The Unfold operator has no `padding_mode` attribute,
-    and it's implementation corresponds to the mindspore
-    implementation with `padding_mode=CALCULATED` .
-    So, currently the bprop function of Im2Col only supports
-    the CALCULATED mode.
-    """
-    kernel_size = self.ksizes
-    dilation = self.dilations
-    stride = self.strides
-    padding = (self.pads[0], self.pads[-1])
-    col2im = Col2Im(kernel_size=kernel_size,
-                    dilation=dilation,
-                    stride=stride,
-                    padding=padding)
-
-    def bprop(x, out, dout):
-        x_shape = P.TensorShape()(x)[2:]
-        dx = col2im(dout, x_shape)
-        return (dx,)
 
     return bprop
 
