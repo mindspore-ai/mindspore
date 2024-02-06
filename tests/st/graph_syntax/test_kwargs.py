@@ -14,14 +14,12 @@
 # ============================================================================
 """ test kwargs with side effect. """
 import pytest
+import mindspore as ms
+from mindspore import nn
+from mindspore import Tensor, Parameter, context
 from mindspore.ops import operations as P
 
-import mindspore as ms
-from mindspore import Tensor, Parameter, context
-from mindspore import nn
-
 context.set_context(mode=context.GRAPH_MODE)
-
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -32,7 +30,6 @@ def test_kwargs_has_side_effect():
     Description: Support kwargs has side effect.
     Expectation: No exception.
     """
-
     def multi_forward(input_x, call_func=None):
         return call_func(input_x)
 
@@ -65,7 +62,6 @@ def test_kwargs_key_value_both_is_custom_class_attr():
     Description: Graph syntax resolve support custom class input is kwargs.
     Expectation: No error.
     """
-
     class Config:
         def __init__(self, **kwargs):
             self.aaa = kwargs.pop("aaa", 2.0)
@@ -89,51 +85,3 @@ def test_kwargs_key_value_both_is_custom_class_attr():
     net = Net(config)
     output = net()
     assert output == 6
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
-def test_useless_kwargs():
-    """
-    Feature: Support the kwargs is not used in function.
-    Description: Graph syntax support kwargs.
-    Expectation: No error.
-    """
-    x = Tensor([1, 2])
-
-    @jit
-    def func(*args, **conf):
-        def ff(x, *args, **conf):
-            return ops.mul(*x, *args)
-
-        return ff(*args)
-
-    res = func((x,), x, a=x)
-
-    assert np.allclose(res.asnumpy(), np.array([1, 4]))
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
-def test_use_partial_kwargs():
-    """
-    Feature: Support Not all key-value parameters are fully utilized in the iinput function.
-    Description: Graph syntax support kwargs.
-    Expectation: No error.
-    """
-    x = Tensor([1, 2])
-
-    @jit
-    def func(*args, **conf):
-        def ff(x, *args, **conf):
-            res = ops.mul(*x, *args)
-            res = res + conf.get('a', 0)
-            return res
-
-        return ff(*args)
-
-    res = func((x,), x, a=x, b=x)
-
-    assert np.allclose(res.asnumpy(), np.array([1, 4]))

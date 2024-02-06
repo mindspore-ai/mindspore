@@ -32,8 +32,8 @@ void InitPythonPath();
 
 class PyFuncGraphFetcher {
  public:
-  explicit PyFuncGraphFetcher(std::string model_path, bool doResolve = false, bool do_signature = false)
-      : model_path_(model_path), doResolve_(doResolve), do_signatue_(do_signature) {
+  explicit PyFuncGraphFetcher(std::string model_path, bool doResolve = false)
+      : model_path_(model_path), doResolve_(doResolve) {
     InitPythonPath();
   }
   void SetDoResolve(bool doResolve = true) { doResolve_ = doResolve; }
@@ -48,7 +48,7 @@ class PyFuncGraphFetcher {
       mindspore::FuncGraphPtr func_graph = mindspore::parse::ParsePythonCode(fn);
       if (doResolve_) {
         std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(func_graph, false);
-        mindspore::python_adapter::set_use_signature_in_resolve(do_signatue_);
+        mindspore::python_adapter::set_use_signature_in_resolve(false);
         mindspore::parse::ResolveAll(manager);
       }
       return func_graph;
@@ -88,7 +88,6 @@ class PyFuncGraphFetcher {
  private:
   std::string model_path_;
   bool doResolve_;
-  bool do_signatue_;
 };
 
 }  // namespace UT

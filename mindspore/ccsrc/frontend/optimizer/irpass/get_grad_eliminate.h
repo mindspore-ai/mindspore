@@ -92,11 +92,6 @@ class GetGradEliminater : public AnfVisitor {
       if (input[1]->isa<Parameter>()) {
         auto para = dyn_cast<Parameter>(input[1]);
         name_ = para->name();
-        MS_EXCEPTION_IF_NULL(para->abstract());
-        if (para->abstract()->isa<abstract::AbstractRefTensor>()) {
-          auto ref_tensor = dyn_cast<abstract::AbstractRefTensor>(para->abstract());
-          name_ = ref_tensor->ref_key_value()->cast_ptr<StringImm>()->value();
-        }
       } else if (IsValueNode<tensor::Tensor>(input[1])) {
         auto tensor = GetValueNode<tensor::TensorPtr>(input[1]);
         auto param_inf = tensor->param_info();

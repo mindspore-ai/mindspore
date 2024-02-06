@@ -74,8 +74,6 @@ py::object SetAdaptedAttrToTensor(const py::object &tensor, const AbstractBasePt
   auto tensor_abs = abs->cast<abstract::AbstractTensorPtr>();
   if (tensor_abs->is_adapter()) {
     py::setattr(tensor, "adapter_flag", py::bool_(true));
-  } else {
-    py::setattr(tensor, "adapter_flag", py::bool_(false));
   }
   return tensor;
 }
@@ -680,7 +678,6 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
       *ret_val = py::cast(tensor);
     }
     *ret_val = SetAdaptedAttrToTensor(*ret_val, output->abstract());
-    py::setattr(*ret_val, "__ms_parameter_output__", py::bool_(true));
     return true;
   }
   return false;
