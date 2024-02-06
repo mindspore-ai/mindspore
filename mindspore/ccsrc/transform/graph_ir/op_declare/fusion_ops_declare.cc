@@ -49,7 +49,7 @@ REG_ADPT_DESC(PromptFlashAttention, "PromptFlashAttention", ADPT_DESC(PromptFlas
 INPUT_MAP(IncreFlashAttention) = {{1, INPUT_DESC(query)},
                                   {4, INPUT_DESC(atten_mask)},
                                   {5, INPUT_DESC(actual_seq_lengths)},
-                                  {6, INPUT_DESC(padding_mask)},
+                                  {6, INPUT_DESC(pse_shift)},
                                   {7, INPUT_DESC(dequant_scale1)},
                                   {8, INPUT_DESC(quant_scale1)},
                                   {9, INPUT_DESC(dequant_scale2)},
