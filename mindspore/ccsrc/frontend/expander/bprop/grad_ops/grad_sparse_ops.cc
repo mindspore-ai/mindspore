@@ -370,7 +370,7 @@ REG_BPROP_BUILDER("CSRDiv").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto feature_dim = InferOutShape(shape1, dense_shape1);
   auto shape_x = feature_dim + shape2;
   auto shape_y = feature_dim + shape3;
-  auto tuple_out = BroadcastGradientArgs(shape_x, shape_y);
+  auto tuple_out = BroadcastGradientArgsInferValue(shape_x, shape_y);
   auto csr_div_res = CsrMulDiv(ib, indptr, indices, dout, shape_node, dense, "CSRDiv");
   NodePtr csr_tensor_grad_value = csr_div_res;
   if (!tuple_out[0].empty()) {

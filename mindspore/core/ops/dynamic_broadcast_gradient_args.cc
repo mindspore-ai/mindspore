@@ -19,6 +19,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <algorithm>
+#include <utility>
 
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
@@ -41,9 +43,6 @@
 namespace mindspore {
 namespace ops {
 namespace {
-const int kInputNum = 2;
-const size_t one = 1;
-
 int64_t CheckInputsAndGetShape(const AbstractBasePtr &input_arg, const string &prim_name) {
   MS_EXCEPTION_IF_NULL(input_arg);
   if (CheckAndConvertUtils::IsTensor(input_arg)) {
@@ -63,104 +62,6 @@ int64_t CheckInputsAndGetShape(const AbstractBasePtr &input_arg, const string &p
   } else {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input type must be a tuple or Tensor.";
   }
-}
-
-void UpdatePreIsOne(std::vector<bool> *const prev_is_one, std::vector<bool> current_is_one) {
-  for (size_t i = 0; i < kInputNum; ++i) {
-    (*prev_is_one)[i] = current_is_one[i];
-  }
-}
-
-void AddElementToGradReduceIdx(std::vector<std::vector<int64_t>> *const grad_reduce_idx,
-                               std::vector<bool> current_is_one, bool none_is_one, const size_t largest_rank,
-                               size_t j) {
-  MS_EXCEPTION_IF_NULL(grad_reduce_idx);
-  for (size_t i = 0; i < kInputNum; ++i) {
-    if (current_is_one[i] && !none_is_one) {
-      (void)(*grad_reduce_idx)[i].emplace_back(SizeToLong(largest_rank - one - j));
-    }
-  }
-}
-
-std::vector<std::vector<int64_t>> GetGradientIndices(const std::vector<std::vector<int64_t>> &reverse_shape,
-                                                     const size_t largest_rank) {
-  std::vector<std::vector<int64_t>> grad_reduce_idx(kInputNum);
-  // indices of j-th component of each input.
-  std::vector<bool> prev_is_one(kInputNum);
-  std::vector<bool> current_is_one(kInputNum);
-  for (size_t i = 0; i < kInputNum; ++i) {
-    prev_is_one[i] = false;
-    current_is_one[i] = false;
-  }
-
-  bool set_one = false;
-  for (size_t j = 0; j < largest_rank; ++j) {
-    int output_dim = -1;
-    bool output_dim_set = false;
-    bool none_is_one = true;
-    // Find which indices are 1.
-    for (size_t i = 0; i < kInputNum; ++i) {
-      if (reverse_shape[i][j] == 1) {
-        current_is_one[i] = true;
-        none_is_one = false;
-      } else {
-        current_is_one[i] = false;
-        if (!output_dim_set || reverse_shape[i][j] == static_cast<int64_t>(output_dim)) {
-          output_dim = LongToInt(reverse_shape[i][j]);
-          output_dim_set = true;
-        } else {
-          MS_LOG(EXCEPTION) << "Input[0] and input[1] Cannot broadcast!";
-        }
-      }
-    }
-    // All dimensions are 1.
-    if (!output_dim_set) {
-      for (size_t i = 0; i < kInputNum; ++i) {
-        (void)grad_reduce_idx[i].emplace_back(SizeToLong(largest_rank - one - j));
-      }
-      continue;
-    } else if (std::equal(current_is_one.begin(), current_is_one.end(), prev_is_one.begin()) && set_one) {
-      AddElementToGradReduceIdx(&grad_reduce_idx, current_is_one, none_is_one, largest_rank, j);
-    } else {
-      AddElementToGradReduceIdx(&grad_reduce_idx, current_is_one, none_is_one, largest_rank, j);
-    }
-    set_one = true;
-    UpdatePreIsOne(&prev_is_one, current_is_one);
-  }
-  return grad_reduce_idx;
-}
-
-std::vector<std::vector<int64_t>> CalculateOutput(const std::vector<std::vector<int64_t>> &x) {
-  std::vector<std::vector<int64_t>> grad_reduce_idx(kInputNum);
-  bool all_equal = true;
-  size_t largest_rank = 0;
-  for (size_t i = 0; i < kInputNum; ++i) {
-    if (x[i] != x[0]) {
-      all_equal = false;
-    }
-    if (x[i].size() > largest_rank) {
-      largest_rank = x[i].size();
-    }
-  }
-  if (all_equal) {
-    return grad_reduce_idx;
-  }
-
-  // Reverse input the shapes
-  std::vector<std::vector<int64_t>> reverse_shape(kInputNum);
-  for (size_t i = 0; i < kInputNum; ++i) {
-    reverse_shape[i] = x[i];
-    std::reverse(reverse_shape[i].begin(), reverse_shape[i].end());
-  }
-
-  // 1-extend and align all vectors.
-  for (size_t i = 0; i < kInputNum; ++i) {
-    if (reverse_shape[i].size() < largest_rank) {
-      reverse_shape[i].resize(largest_rank, 1);
-    }
-  }
-  grad_reduce_idx = GetGradientIndices(reverse_shape, largest_rank);
-  return grad_reduce_idx;
 }
 }  // namespace
 
@@ -213,25 +114,55 @@ class MIND_API DynamicBroadcastGradientArgsInfer : public abstract::OpInferBase 
       MS_EXCEPTION_IF_NULL(item);
     }
 
-    std::vector<std::vector<int64_t>> input_shapes(kInputNum);
     auto x = input_args[0]->GetValue();
     if (x->ContainsValueAny()) {
       MS_LOG(INFO) << "DynamicBroadcastGradientArgs input_0 is ValueAny, will backoff to cpu.";
       return nullptr;
     }
-    input_shapes[0] = GetValue<std::vector<int64_t>>(x);
 
     auto y = input_args[1]->GetValue();
     if (y->ContainsValueAny()) {
       MS_LOG(INFO) << "DynamicBroadcastGradientArgs input_1 is ValueAny, will backoff to cpu.";
       return nullptr;
     }
-    input_shapes[1] = GetValue<std::vector<int64_t>>(y);
-    auto grad_reduce_idx = CalculateOutput(input_shapes);
+    auto grad_reduce_idx = BroadcastGradientArgsInferValue(GetValue<ShapeVector>(x), GetValue<ShapeVector>(y));
     ValuePtr res = MakeValue(grad_reduce_idx);
     return res;
   }
 };
+
+ShapeArray BroadcastGradientArgsInferValue(const ShapeVector &x_shape, const ShapeVector &y_shape) {
+  ShapeArray bc_axis;
+  if (x_shape == y_shape) {
+    (void)bc_axis.emplace_back(ShapeVector{});
+    (void)bc_axis.emplace_back(ShapeVector{});
+    return bc_axis;
+  }
+  ShapeVector grad_x_reduce_idx;
+  ShapeVector grad_y_reduce_idy;
+  auto x_size = x_shape.size();
+  auto y_size = y_shape.size();
+  auto n = std::max(x_size, y_size);
+  for (size_t i = n; i >= 1; i--) {
+    auto x_i = x_size < i ? 1 : x_shape[x_size - i];
+    auto y_i = y_size < i ? 1 : y_shape[y_size - i];
+    const int64_t reduce_idx = SizeToLong(n - i);
+    if (x_i == y_i) {
+      continue;
+    } else if (x_i == 1) {
+      grad_x_reduce_idx.push_back(reduce_idx);
+    } else if (y_i == 1) {
+      grad_y_reduce_idy.push_back(reduce_idx);
+    } else {
+      MS_LOG(EXCEPTION) << "For 'BroadcastGradientArgs', the inputs shape " << x_shape << " and " << y_shape
+                        << " are not compatible";
+    }
+  }
+
+  (void)bc_axis.emplace_back(std::move(grad_x_reduce_idx));
+  (void)bc_axis.emplace_back(std::move(grad_y_reduce_idy));
+  return bc_axis;
+}
 
 MIND_API_OPERATOR_IMPL(DynamicBroadcastGradientArgs, BaseOperator);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(DynamicBroadcastGradientArgs, prim::kPrimDynamicBroadcastGradientArgs,

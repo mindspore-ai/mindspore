@@ -22,6 +22,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include "mindspore/core/ops/dynamic_broadcast_gradient_args.h"
 #include "frontend/expander/bprop/bprop_irbuilder.h"
 #include "include/common/expander/core/node.h"
 
@@ -41,12 +42,11 @@ inline const auto pi = std::acos(-1.0);
 inline const auto log_2 = std::log(2.0);
 inline const auto log_pi = std::log(pi);
 
+using mindspore::ops::BroadcastGradientArgsInferValue;
+
 NodePtrList ReturnZeros(BpropIRBuilder *ib);
 // normalize the axis to [0, rank)
 int64_t NormalizeAxis(int64_t axis, size_t rank);
-
-std::vector<std::vector<int64_t>> BroadcastGradientArgs(const std::vector<int64_t> &x_shape,
-                                                        const std::vector<int64_t> &y_shape);
 
 std::vector<int64_t> GetTransposeAxis(const std::vector<int64_t> &x_shape, int64_t axis);
 
