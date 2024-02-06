@@ -2857,6 +2857,11 @@ void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compil
 }
 
 void GraphScheduler::BindNumaNode() {
+  auto numa_enable = common::GetEnv(kNumaEnableEnv);
+  auto numa_enable2 = common::GetEnv(kNumaEnableEnv2);
+  if ((numa_enable.empty() || numa_enable != "1") && (numa_enable2.empty() || numa_enable2 != "1")) {
+    return;
+  }
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__) && !defined(ENABLE_ANDROID)
   uint32_t rank_id = CommManager::GetInstance().GetRank();
   MS_LOG(INFO) << "Bind numa node for rank " << rank_id;
@@ -2864,12 +2869,6 @@ void GraphScheduler::BindNumaNode() {
     numa_handle_ = GetNumaAdapterHandle();
     if (numa_handle_) {
       (void)LoadNumaCpuInfo(numa_handle_.get(), rank_id + 1, &numa_cpus_);
-    }
-
-    auto numa_enable = common::GetEnv(kNumaEnableEnv);
-    auto numa_enable2 = common::GetEnv(kNumaEnableEnv2);
-    if ((numa_enable.empty() || numa_enable != "1") && (numa_enable2.empty() || numa_enable2 != "1")) {
-      return;
     }
 
     if (numa_handle_ == nullptr) {
