@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_PI_JIT_ASYNC_TASK_MANAGERER_H_
 #define MINDSPORE_PI_JIT_ASYNC_TASK_MANAGERER_H_
 
+#include <functional>
 #include <memory>
 #include <utility>
 #include "runtime/pynative/async/async_queue.h"
