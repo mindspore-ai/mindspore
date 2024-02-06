@@ -29,8 +29,9 @@ GraphJitConfig kPIJitConfigDefault;
 constexpr int kDefaultMaxTraceDepth = 16;
 
 static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *)> key_map = {
-  // debug option, until fix the error of copied function reuse, if compiled results recursive call self
   {"auto_jit_func_filter", &GraphJitConfig::SetAutoJitFilter},
+  {"auto_jit_cell", &GraphJitConfig::SetBool<GraphJitConfig::kAutoJitCell>},
+  {"auto_grad", &GraphJitConfig::SetBool<GraphJitConfig::kAutoGrad>},
   // remove this config if 'strict_mode_cells' works well, and default inline all construct
   {"replace_nncell_by_construct", &GraphJitConfig::SetBool<GraphJitConfig::kReplaceNNCellByConstruct>},
   {"trace_flag", &GraphJitConfig::SetBool<GraphJitConfig::kTraceFlag>},
@@ -80,7 +81,8 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
 };
 
 GraphJitConfig::GraphJitConfig() {
-  bool_conf[kAutoJit - kBoolConf] = false;
+  bool_conf[kAutoJitCell - kBoolConf] = false;
+  bool_conf[kAutoGrad - kBoolConf] = false;
   bool_conf[kReplaceNNCellByConstruct - kBoolConf] = false;
   bool_conf[kPrintAfterAll - kBoolConf] = false;
   bool_conf[kTraceFlag - kBoolConf] = false;
@@ -333,10 +335,53 @@ GraphJitConfig::GraphJitConfig(const py::object &c) {
   }
 }
 
+static void ReplaceMethod(const py::object &cls, PyMethodDef *mdef, const char *save_name, bool enable) {
+  py::object func = cls.attr(mdef->ml_name);
+  bool is_hook = false;
+  if (Py_IS_TYPE(func.ptr(), &PyMethodDescr_Type)) {
+    is_hook = reinterpret_cast<PyMethodDescrObject *>(func.ptr())->d_method->ml_meth == mdef->ml_meth;
+  }
+  if (enable && !is_hook) {
+    PyTypeObject *tp = reinterpret_cast<PyTypeObject *>(cls.ptr());
+    py::object hook = py::reinterpret_steal<py::object>(PyDescr_NewMethod(tp, mdef));
+    cls.attr(mdef->ml_name) = hook;
+    cls.attr(save_name) = func;
+  }
+  if (!enable && is_hook) {
+    cls.attr(mdef->ml_name) = cls.attr(save_name);
+    py::delattr(cls, save_name);
+  }
+}
+
+void GraphJitConfig::ApplyAutoJitCell() {
+  static constexpr const char *name = "__call__";
+  static constexpr const char *save_name = "_old__call__";
+  static const PyCFunctionWithKeywords CellForward = [](PyObject *self, PyObject *vargs, PyObject *kwargs) {
+    PyObject *construct = PyObject_GetAttrString(self, "construct");
+    py::object handle = py::reinterpret_steal<py::object>(construct);
+    if (construct != nullptr) {
+      (void)pi_jit_should_compile(handle, py::dict());
+    } else {
+      PyErr_Clear();
+    }
+
+    PyObject *func = PyObject_GetAttrString(self, save_name);
+    PyObject *ret = PyObject_Call(func, vargs, kwargs);
+    Py_DECREF(func);
+    return ret;
+  };
+  static PyMethodDef mdef = {name, reinterpret_cast<PyCFunction>(CellForward), METH_VARARGS | METH_KEYWORDS, "Hook"};
+
+  bool enable = kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kAutoJitCell);
+  py::object cls = Utils::GetModuleAttr("mindspore.nn", "Cell", false, false);
+  ReplaceMethod(cls, &mdef, save_name, enable);
+}
+
 }  // namespace pijit
 
 void update_pijit_default_config(const py::kwargs &conf) {
   mindspore::pijit::kPIJitConfigDefault = mindspore::pijit::GraphJitConfig(conf);
+  mindspore::pijit::GraphJitConfig::ApplyAutoJitCell();
 }
 
 }  // namespace mindspore

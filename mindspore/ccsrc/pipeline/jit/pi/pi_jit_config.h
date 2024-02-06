@@ -28,6 +28,8 @@ class GraphJitConfig {
  public:
   enum Options {
     kBoolConf = 0,
+    kAutoJitCell,
+    kAutoGrad,
     kAutoJit,
     kReplaceNNCellByConstruct,
     kPrintAfterAll,
@@ -99,6 +101,7 @@ class GraphJitConfig {
   bool AddAllowedInlineModules(PyObject *list);
   bool AddPSJitStrictCells(PyObject *list);
   bool SetAutoJitFilter(PyObject *callable);
+
   template <Options o>
   bool SetBool(PyObject *value) {
     static_assert(o > kBoolConf && o < kIntConf);
@@ -117,6 +120,8 @@ class GraphJitConfig {
     int_conf[o - kIntConf] = res;
     return true;
   }
+
+  static void ApplyAutoJitCell();
 
  private:
   bool bool_conf[kIntConf - kBoolConf];

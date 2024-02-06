@@ -28,6 +28,8 @@ namespace mindspore {
 namespace pijit {
 namespace grad {
 namespace py = pybind11;
+using Convert = pynative::PyNativeAlgo::DataConvert;
+
 /// \brief FunctionNode is a class, which represent a way to calculate the gradient.
 class FunctionNode : public FunctionContext {
  public:
@@ -36,8 +38,15 @@ class FunctionNode : public FunctionContext {
   /// \param[in] tensor The tensor that is asked to calculate the gradient.
   ///
   /// \return The instance of FunctionNode.
-  explicit FunctionNode(const py::object &tensor)
-      : FunctionContext({}, pynative::PyNativeAlgo::DataConvert::PyObjToValue(tensor)), tensor_(tensor) {}
+  explicit FunctionNode(const py::object &tensor) : FunctionContext(Convert::PyObjToValue(tensor)), tensor_(tensor) {}
+
+  /// \brief The constructor of FunctionNode.
+  ///
+  /// \param[in] tensor The tensor that is asked to calculate the gradient.
+  ///
+  /// \return The instance of FunctionNode.
+  explicit FunctionNode(const py::object &tensor, const py::object &prim, const py::object &out)
+      : FunctionContext(Convert::PyObjToValue(prim), Convert::PyObjToValue(out)), tensor_(tensor) {}
 
   /// \brief Destructor.
   virtual ~FunctionNode() = default;
@@ -49,15 +58,29 @@ class FunctionNode : public FunctionContext {
   /// \param[in] inputs The inputs of the executed primitive.
   static void RecordPrimitive(const py::object &prim, const py::object &out, const py::list &inputs);
 
+  // \brief The method to init field of function node.
+  ///
+  /// \param[in] prim The executed primitive.
+  /// \param[in] inputs The inputs of the executed primitive.
+  void InitDataField(const py::object &prim, const py::list &inputs);
+
   /// \brief Get the tensor that is asked to calculate the gradient.
   ///
   /// \return The tensor that is asked to calculate the gradient.
   const py::object &GetTensor() const { return tensor_; }
 
+  /// \brief Set the inputs of the function node.
+  ///
+  /// \param[in] inputs The inputs.
+  void SetInputs(const py::list &inputs);
+
   /// \brief Get the bprop function graph.
   ///
   /// \return The bprop function graph.
   const FuncGraphPtr &GetBpropFunction() const { return grad_fn_; }
+
+  /// \brief Generate the bprop function.
+  void GenerateBropFunction();
 
   /// \brief Get the called functions in the previous/next step.
   ///
@@ -80,19 +103,27 @@ class FunctionNode : public FunctionContext {
   /// \return The python object grad.
   const py::object GetPyObjectGrad() const { return ValueToPyData(GetGrad()); }
 
-  /// \brief Generate the bprop function.
-  void GenBropFunction(const py::object &prim, const py::tuple &inputs);
-
   /// \brief Generate the grad value of function.
+  ///
+  /// \param[in] grad The default gradient value of the function node.
+  ///
+  /// \note This function node must be the tensor who call backward from python.
   void Apply(const py::object &grad = py::none());
 
  private:
+  /// \brief Generate the grad value of function.
+  ///
+  /// \param[in] dout The gradient of the output.
+  void ApplyInner(const ValuePtr &dout);
+
   /// \brief The called function.
   py::object tensor_;
   /// \brief The bprop function.
   FuncGraphPtr grad_fn_;
   /// \brief The called functions in the previous/next step.
   EdgePtrList edges_;
+  /// \brief The index.
+  size_t index_{0};
 };
 
 using FunctionNodePtr = std::shared_ptr<FunctionNode>;

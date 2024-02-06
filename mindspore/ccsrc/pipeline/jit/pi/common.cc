@@ -1265,6 +1265,21 @@ py::list CollectGradientArguments(const PyFrameObject &frame) {
   return arguments;
 }
 
+void AutoGrad(PyFrameObject *f, PyObject *ret) {
+  if (!kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kAutoGrad)) {
+    return;
+  }
+  if (ret == nullptr || !IsStubTensor(ret)) {
+    return;
+  }
+  if (py::cast<py::object>(f->f_code->co_name).cast<std::string>() == "__call__" && f->f_code->co_argcount > 0 &&
+      f->f_localsplus[0] != nullptr && py::isinstance<PrimitivePyAdapter>(f->f_localsplus[0])) {
+    MS_EXCEPTION_IF_CHECK_FAIL(f->f_code->co_kwonlyargcount == 0, "Must not have kw only args.");
+    auto inputs = CollectGradientArguments(*f);
+    grad::FunctionNode::RecordPrimitive(py::cast<py::object>(f->f_localsplus[0]), py::cast<py::object>(ret), inputs);
+  }
+}
+
 #if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION < 9)
 PyObject *EvalFrame(PyFrameObject *f, int exc) {
   PyThreadState *tstate = PyThreadState_Get();
@@ -1284,15 +1299,7 @@ PyObject *EvalFrame(PyThreadState *tstate, PyFrameObject *f, int exc) {
   JitCompileResults *c = getJitCompileResults(code, false);
   if (c == nullptr) {
     auto ret = _PyEval_EvalFrameDefault(tstate, f, exc);
-    if (ret == nullptr || !IsStubTensor(ret)) {
-      return ret;
-    }
-    if (py::cast<py::object>(f->f_code->co_name).cast<std::string>() == "__call__" && f->f_code->co_argcount > 0 &&
-        f->f_localsplus[0] != nullptr && py::isinstance<PrimitivePyAdapter>(f->f_localsplus[0])) {
-      MS_EXCEPTION_IF_CHECK_FAIL(f->f_code->co_kwonlyargcount == 0, "Must not have kw only args.");
-      auto inputs = CollectGradientArguments(*f);
-      grad::FunctionNode::RecordPrimitive(py::cast<py::object>(f->f_localsplus[0]), py::cast<py::object>(ret), inputs);
-    }
+    AutoGrad(f, ret);
     return ret;
   }
   py::object res;
@@ -1309,6 +1316,7 @@ PyObject *EvalFrame(PyThreadState *tstate, PyFrameObject *f, int exc) {
   }
   return res.inc_ref().ptr();
 }
+
 }  // namespace pijit
 }  // namespace mindspore
 

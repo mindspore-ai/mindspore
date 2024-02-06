@@ -74,6 +74,14 @@ FuncGraphPtr BpropFuncGraphManager::GetPrimBpropGraph(const PrimitivePtr &prim, 
 FuncGraphPtr BpropFuncGraphManager::GetPrimBpropGraph(const PrimitivePtr &prim,
                                                       const abstract::AbstractBasePtrList &args_abs) {
   auto prim_name = prim->name();
+  std::string key = prim_name;
+  std::for_each(args_abs.begin(), args_abs.end(), [&key](const auto &abs) {
+    key += "_" + abs->GetTypeTrack()->ToString();
+    key += "_" + abs->GetShapeTrack()->ToString();
+  });
+  if (prim_to_bprop_.find(key) != prim_to_bprop_.end()) {
+    return prim_to_bprop_.at(key);
+  }
   if (prim_to_bprop_.find(prim_name) != prim_to_bprop_.end()) {
     auto func_graph = BasicClone(prim_to_bprop_.at(prim_name));
     MS_EXCEPTION_IF_CHECK_FAIL(func_graph->parameters().size() == args_abs.size(),
@@ -81,13 +89,15 @@ FuncGraphPtr BpropFuncGraphManager::GetPrimBpropGraph(const PrimitivePtr &prim,
     for (size_t index = 0; index < args_abs.size(); index++) {
       func_graph->parameters()[index]->set_abstract(args_abs[index]);
     }
-    return PrimBpropGraphPass(func_graph);
+    prim_to_bprop_[key] = PrimBpropGraphPass(func_graph);
+    return prim_to_bprop_.at(key);
   }
   const expander::bprop::BpropHandle *handle = expander::bprop::BpropIRBuilderFactory::Instance().GetBuilder(prim_name);
   auto meta_graph = std::make_shared<expander::bprop::BpropMetaFuncGraph>(prim, handle);
   auto grad_graph = meta_graph->GenerateFuncGraph(args_abs);
-  prim_to_bprop_[prim_name] = BasicClone(grad_graph);
-  return PrimBpropGraphPass(grad_graph);
+  prim_to_bprop_[prim_name] = PrimBpropGraphPass(grad_graph);
+  prim_to_bprop_[key] = prim_to_bprop_[prim_name];
+  return prim_to_bprop_.at(key);
 }
 
 // Modify the output node of func_graph to add forward nodes used in bprop graph.

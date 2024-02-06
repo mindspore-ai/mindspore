@@ -477,8 +477,21 @@ void BytecodeInliner::EliminateClosureSideEffect() {
     int op = i->GetOpcode();
     return (op == STORE_DEREF || op == DELETE_DEREF) && alive_closure_access.find(i) == alive_closure_access.end();
   });
-
   traced_nodes_.erase(iter, traced_nodes_.end());
+
+  for (auto item = traced_nodes_.begin(); item != traced_nodes_.end();) {
+    if ((*item)->GetOpcode() == STORE_DEREF) {
+      if ((*item)->getInputs()[0]->GetOpcode() == LOAD_DEREF &&
+          (*item)->getInputs()[0]->GetOparg() == (*item)->GetOparg() &&
+          (*item)->getInputs()[0]->GetGraph() == (*item)->GetGraph()) {
+        item = traced_nodes_.erase(item);
+      } else {
+        ++item;
+      }
+    } else {
+      ++item;
+    }
+  }
 }
 
 }  // namespace pijit
