@@ -45,8 +45,6 @@ namespace mindspore {
 namespace pynative {
 enum class RunOpArgsEnum : size_t { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_ARGS_NUM };
 namespace {
-const mindspore::HashMap<std::string, mindspore::HashMap<size_t, std::string>> kSliceOpInputToAttr = {
-  {kBroadcastToOpName, {{0, ops::kShape}}}};
 const std::set<std::string> kVmOperators = {"InsertGradientOf", "StopGradient", "HookBackward", "CellBackwardHook"};
 constexpr char kBegin[] = "Begin";
 constexpr char kEnd[] = "End";
@@ -281,12 +279,6 @@ void EmplaceSliceInputs(const FrontendOpRunInfoPtr &op_run_info, const std::vect
     (void)op_run_info->op_grad_info->input_value.emplace_back(input_values[idx]);
   }
 
-  mindspore::HashMap<size_t, std::string> input_to_attr;
-  auto iter = kSliceOpInputToAttr.find(op_run_info->base_op_run_info.op_name);
-  if (iter != kSliceOpInputToAttr.end()) {
-    input_to_attr = iter->second;
-  }
-
   for (size_t i = 0; i < slice_op_info->slice_index_inputs.size(); i++) {
     auto slice_index = slice_op_info->slice_index_inputs[i];
     ValuePtr v = nullptr;
@@ -296,15 +288,7 @@ void EmplaceSliceInputs(const FrontendOpRunInfoPtr &op_run_info, const std::vect
       v = MakeValue(slice_index->vec_value());
     }
 
-    auto idx_iter = input_to_attr.find(i);
-    if (idx_iter == input_to_attr.end()) {
-      (void)op_run_info->op_grad_info->input_value.emplace_back(v);
-      continue;
-    }
-
-    MS_EXCEPTION_IF_NULL(op_run_info->op_grad_info->op_prim);
-    const auto &attr_name = idx_iter->second;
-    op_run_info->op_grad_info->op_prim->set_attr(attr_name, v);
+    (void)op_run_info->op_grad_info->input_value.emplace_back(v);
   }
 
   op_run_info->input_size = op_run_info->op_grad_info->input_value.size();
@@ -667,12 +651,9 @@ void ForwardExecutor::OpRunInfoUsePrimC(const FrontendOpRunInfoPtr &op_run_info)
   }
 }
 
-PrimitivePtr ForwardExecutor::GetSlicePrimFromCache(const std::string &op_name, bool is_input_to_attr) {
+PrimitivePtr ForwardExecutor::GetSlicePrimFromCache(const std::string &op_name) {
   auto iter = slice_prim_cache_.find(op_name);
   if (iter != slice_prim_cache_.end()) {
-    if (is_input_to_attr) {
-      return std::make_shared<Primitive>(*iter->second);
-    }
     return iter->second;
   }
 
@@ -702,9 +683,8 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateSliceOpRunInfo(const std::string &
     return op_run_info;
   }
 
-  bool is_input_to_attr = kSliceOpInputToAttr.find(op_name) != kSliceOpInputToAttr.end();
-  if (op_run_info->requires_grad || is_input_to_attr) {
-    op_run_info->op_grad_info->op_prim = GetSlicePrimFromCache(op_name, is_input_to_attr);
+  if (op_run_info->requires_grad) {
+    op_run_info->op_grad_info->op_prim = GetSlicePrimFromCache(op_name);
   }
   op_run_info->stub_output = stub_output;
   return op_run_info;

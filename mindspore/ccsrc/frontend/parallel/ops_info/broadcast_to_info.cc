@@ -32,25 +32,8 @@ namespace mindspore {
 namespace parallel {
 Status BroadcastToInfo::GetAttrs() {
   out_shape_.clear();
-  auto shape_iter = attrs_.find(SHAPE);
-  if (shape_iter != attrs_.end()) {
-    MS_EXCEPTION_IF_NULL(shape_iter->second);
-    auto var = shape_iter->second->cast<ValueTuplePtr>();
-    if (var == nullptr) {
-      MS_LOG(ERROR) << name_ << ": shape format is wrong! Need ValueSequence";
-      return FAILED;
-    }
-    for (auto &ele : var->value()) {
-      if (!ele->isa<Int64Imm>()) {
-        MS_LOG(ERROR) << name_ << ": The element of shape must be int";
-        return FAILED;
-      }
-      out_shape_.push_back(static_cast<int64_t>(GetValue<int64_t>(ele)));
-    }
-  } else {
-    MS_LOG(ERROR) << name_ << ": Can not find the shape attr";
-    return FAILED;
-  }
+  auto shape_opt = GetArrayValueFromInputsWithCheck<int64_t>(input_value_, name_, SHAPE);
+  out_shape_ = shape_opt.value();
   if (out_shape_.empty()) {
     MS_LOG(ERROR) << name_ << ": shape cannot be empty";
     return FAILED;
@@ -161,9 +144,8 @@ Status BroadcastToInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   }
 
   Shape to_shape = outputs_tensor_info_[0].slice_shape();
-  Attr attr_shape = std::make_pair(SHAPE, MakeValue(to_shape));
-  OperatorAttrs attrs = {attr_shape};
-  auto new_broadcast_to = gen_g.PushBack({gen_g.NewOpInst(BROADCAST_TO, attrs), gen_g.virtual_input_node()});
+  auto new_broadcast_to =
+    gen_g.PushBack({gen_g.NewOpInst(BROADCAST_TO), gen_g.virtual_input_node(), CreateTuple(to_shape)});
   std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(new_broadcast_to, 1)};
   replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
     std::make_pair(input_nodes, new_broadcast_to));

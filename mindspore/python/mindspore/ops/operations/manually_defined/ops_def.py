@@ -1301,6 +1301,21 @@ def infer_value_for_Diag(input_x):
     return Tensor(ret)
 
 
+def infer_value_for_BroadcastTo(x, shape):
+    """Infer value for BroadcastTo op."""
+    def none_in_tuple_or_list(x):
+        return isinstance(x, (tuple, list)) and None in x
+    if shape is None or none_in_tuple_or_list(shape) or x is None:
+        return None
+    np_data = np.broadcast_to(x.asnumpy(), shape)
+    if 0 in shape:
+        init_func = Zero()
+        init_func.__enable_zero_dim__ = True
+        out = Tensor(shape=shape, dtype=x.dtype, init=init_func)
+        return out
+    return Tensor(np_data)
+
+
 def infer_value_for_Reshape(x, shape):
     """Infer value for Reshape op."""
     def none_in_tuple_or_list(x):

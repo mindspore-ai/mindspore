@@ -340,16 +340,19 @@ def get_matrix_solve_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.BroadcastTo)
 def get_broadcast_to_vmap_rule(prim, axis_size):
     """VmapRule for `BroadcastTo` operation."""
-    shape = prim.shape
 
-    def vmap_rule(operand_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, operand_bdim)
+    def vmap_rule(operand_bdim, shape_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, operand_bdim, shape_bdim)
         if is_all_none:
             return result
 
         x, dim = operand_bdim
         x = mnp.moveaxis(x, dim, 0)
         x_shape = F.shape(x)
+        shape, shape_dim = shape_bdim
+        if shape_dim is not None:
+            _raise_value_error("The source axis of shape in `BroadcastTo` must be None, but got {}.".format(shape_dim))
+
         batch_shape = (axis_size,) + shape
         x = _handle_broadcasting(x, x_shape, batch_shape)
         out = P.BroadcastTo(batch_shape)(x)

@@ -28,24 +28,19 @@ const auto kA = "A";
 const auto kVs = "Vs";
 const auto kMBroadcastTo = "m_broadcast_to";
 const auto kRBroadcastTo = "r_broadcast_to";
+constexpr size_t kCNodePrimitiveIdx = 0;
 AnfNodePtr BuildBroadcastTo(const PatternMap &m, const AnfNodePtr &) {
   auto node = m.Get(kMBroadcastTo);
   MS_EXCEPTION_IF_NULL(node);
-  auto broadcast_to_op_name = prim::kPrimBroadcastTo->name();
-  auto ori_cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(ori_cnode);
-  auto input_x = common::AnfAlgo::GetInputNode(ori_cnode, 0);
-  auto func_graph = node->func_graph();
-  CNodePtr broadcast_to_node =
-    opt::NewCNode({NewValueNode(std::make_shared<Primitive>(broadcast_to_op_name)), input_x}, func_graph, {node});
+  auto broadcast_to_node = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(broadcast_to_node);
-  MS_EXCEPTION_IF_NULL(node->abstract());
-  MS_EXCEPTION_IF_NULL(node->abstract()->BuildShape());
-  broadcast_to_node->set_abstract(node->abstract());
-  auto shape_ptr = node->abstract()->BuildShape()->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(shape_ptr);
-  common::AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(shape_ptr->shape()), broadcast_to_node);
-  return broadcast_to_node;
+
+  auto broadcast_to_op_name = prim::kPrimBroadcastTo->name();
+  auto prim = GetValueNode<PrimitivePtr>(broadcast_to_node->input(kCNodePrimitiveIdx));
+  MS_EXCEPTION_IF_NULL(prim);
+  prim->Named::operator=(Named(broadcast_to_op_name));
+
+  return node;
 }
 }  // namespace
 
@@ -63,7 +58,7 @@ void ConvertDynamicBroadcastTo::DefineSrcPattern(SrcPattern *src_pattern) {
 }
 
 void ConvertDynamicBroadcastTo::DefineDstPattern(DstPattern *dst_pattern) {
-  (void)(*dst_pattern).AddCNode(kRBroadcastTo, {prim::kPrimBroadcastTo, kA}, BuildBroadcastTo);
+  (void)(*dst_pattern).AddCNode(kRBroadcastTo, {prim::kPrimBroadcastTo, kA, kVs}, BuildBroadcastTo);
 }
 }  // namespace opt
 }  // namespace mindspore

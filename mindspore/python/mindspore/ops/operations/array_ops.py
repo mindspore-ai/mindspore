@@ -41,7 +41,8 @@ from mindspore._c_expression import COOTensor as COOTensor_
 from ..auto_generate import (ExpandDims, Reshape, TensorShape, Transpose, Gather, OnesLike, ZerosLike, Argmax,
                              ReverseV2, Diag, Eye, ScatterNd, ResizeNearestNeighborV2, GatherNd, GatherD,
                              Range, MaskedFill, RightShift, NonZero, ResizeNearestNeighbor, Identity, Split,
-                             CumSum, CumProd, Cummax, Cummin, Argmin, Concat, UnsortedSegmentSum, ScalarToTensor)
+                             CumSum, CumProd, Cummax, Cummin, Argmin, Concat, UnsortedSegmentSum, ScalarToTensor,
+                             BroadcastTo)
 from .manually_defined import Rank, Shape, Tile, Cast
 
 
@@ -4551,65 +4552,6 @@ class BatchToSpaceNDV2(Primitive):
         """Initialize BatchToSpaceNDV2"""
         self.init_prim_io_names(inputs=['input_x', 'block_shape', 'crops'], outputs=['y'])
         self.add_prim_attr('origin_format', 'NHWC')
-
-
-class BroadcastTo(PrimitiveWithCheck):
-    """
-    Broadcasts input tensor to a given shape.
-
-    Refer to :func:`mindspore.ops.broadcast_to` for more details.
-
-    Args:
-        shape (tuple): The target shape to broadcast. Can be fully specified, or have -1 in one position
-            where it will be substituted by the input tensor's shape in that position, see example.
-
-    Inputs:
-        - **input_x** (Tensor) - The input tensor of any dimension.
-
-    Outputs:
-        Tensor, with the given `shape` and the same data type as `input_x`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> shape = (2, 3)
-        >>> x = Tensor(np.array([1, 2, 3]).astype(np.float32))
-        >>> output = ops.BroadcastTo(shape=shape)(x)
-        >>> print(output)
-        [[1. 2. 3.]
-         [1. 2. 3.]]
-        >>>
-        >>> shape = (-1, 2)
-        >>> x = Tensor(np.array([[1], [2]]).astype(np.float32))
-        >>> output = ops.BroadcastTo(shape=shape)(x)
-        >>> print(output)
-        [[1. 1.]
-         [2. 2.]]
-    """
-
-    @prim_attr_register
-    def __init__(self, shape):
-        """Initialize BroadcastTo"""
-        validator.check_value_type("shape", shape, (tuple), self.name)
-        validator.check("dimension of x", len(shape), "", 0, validator.GE, self.name)
-        for ix, i in enumerate(shape):
-            validator.check_value_type('target shape index -> ' + str(ix), i, [int], self.name)
-            validator.check("shape element", i, "shape element min limit", -1, validator.GE, self.name)
-        self.shape = shape
-
-    def infer_value(self, x):
-        if x is None:
-            return None
-        np_data = np.broadcast_to(x.asnumpy(), self.shape)
-        if 0 in self.shape:
-            init_func = Zero()
-            init_func.__enable_zero_dim__ = True
-            out = Tensor(shape=self.shape, dtype=x.dtype, init=init_func)
-            return out
-        return Tensor(np_data)
 
 
 class Meshgrid(PrimitiveWithInfer):
