@@ -29,7 +29,6 @@
 #include "mindspore/core/ops/framework_ops.h"
 #include "abstract/abstract_value.h"
 #include "pipeline/jit/ps/fallback.h"
-#include "pipeline/jit/ps/action.h"
 #include "pipeline/jit/ps/parse/resolve.h"
 #include "pipeline/jit/ps/static_analysis/prim.h"
 #include "frontend/operator/ops.h"
@@ -297,7 +296,11 @@ EvalResultPtr ConvertToPyInterpretCall(const CNodePtr &cnode, const AnfNodeConfi
 }
 
 EvalResultPtr ParsePyObjToFunc(const py::object &py_fn, const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
-  auto list_func_fg = parse::ParsePythonCode(py_fn);
+  FuncGraphPtr list_func_fg = nullptr;
+  {
+    MS_LOG_TRY_CATCH_SCOPE;
+    list_func_fg = parse::ParsePythonCode(py_fn);
+  }
   if (list_func_fg != nullptr) {
     auto fg = cnode->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
@@ -317,11 +320,7 @@ EvalResultPtr ParsePyObjToFunc(const py::object &py_fn, const CNodePtr &cnode, c
     AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_cnode, conf->context(), conf->func_graph());
     return eng->ForwardConfig(conf, fn_conf);
   } else {
-    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
-    if (allow_fallback_runtime) {
-      return ConvertToPyInterpretCall(cnode, conf);
-    }
-    MS_LOG(EXCEPTION) << "The input parameter is a function which MindSpore cannot be compiled, please check the code.";
+    return ConvertToPyInterpretCall(cnode, conf);
   }
 }
 
@@ -342,11 +341,19 @@ EvalResultPtr ConvertCallPyObjCallFunc(const CNodePtr &cnode, const AbstractBase
   MS_EXCEPTION_IF_NULL(warp_obj);
   py::object cls_obj = warp_obj->obj();
   auto class_name = GetClassName(cls_obj);
-  const std::string call_func_name = "__call__";
-  if (!py::hasattr(cls_obj, common::SafeCStr(call_func_name))) {
+  py::object call_obj = py::none();
+  const std::string construct_func_name = "construct";
+  if (py::hasattr(cls_obj, common::SafeCStr(construct_func_name))) {
+    call_obj = py::getattr(cls_obj, common::SafeCStr(construct_func_name));
+  } else {
+    const std::string call_func_name = "__call__";
+    if (py::hasattr(cls_obj, common::SafeCStr(call_func_name))) {
+      call_obj = py::getattr(cls_obj, common::SafeCStr(call_func_name));
+    }
+  }
+  if (py::isinstance<py::none>(call_obj)) {
     MS_EXCEPTION(ValueError) << class_name << "is not a callable object";
   }
-  py::object call_obj = py::getattr(cls_obj, common::SafeCStr(call_func_name));
   return ParsePyObjToFunc(call_obj, cnode, conf);
 }
 
@@ -794,10 +801,7 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
   }
 
   if (possible_func->isa<AbstractAny>()) {
-    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
-    if (allow_fallback_runtime) {
-      return ConvertToPyInterpretCall(cnode, conf);
-    }
+    return ConvertToPyInterpretCall(cnode, conf);
   }
 
   auto func = dyn_cast_ptr<AbstractFunction>(possible_func);
@@ -1679,8 +1683,7 @@ AbstractBasePtr FromValueInside(const ValuePtr &value, bool broaden) {
 EvalResultPtr EvalOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrList &arg_specs) {
   auto evaluator = GetPrimEvaluator(primitive, nullptr);
   if (evaluator == nullptr) {
-    MS_LOG(ERROR) << "The evaluator of the primitive is not defined (" << primitive->name() << ").";
-    return nullptr;
+    MS_LOG(EXCEPTION) << "The evaluator of the primitive is not defined (" << primitive->name() << ").";
   }
   auto trivial_evaluator = dyn_cast_ptr<TrivialPrimEvaluator>(evaluator);
   if (trivial_evaluator != nullptr) {
@@ -1688,37 +1691,12 @@ EvalResultPtr EvalOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrLi
   }
   // Support MakeTuple/MakeList ops in PyNative mode.
   auto transition_evaluator = dyn_cast_ptr<TransitionPrimEvaluator>(evaluator);
-  if (transition_evaluator != nullptr) {
-    if (transition_evaluator->isa<MakeTupleEvaluator>() || transition_evaluator->isa<MakeListEvaluator>()) {
-      return transition_evaluator->EvalPrim(nullptr, arg_specs, nullptr, nullptr);
-    }
-    return pipeline::AbstractAnalyze(primitive, arg_specs).eval_result;
+  if (transition_evaluator != nullptr &&
+      (transition_evaluator->isa<MakeTupleEvaluator>() || transition_evaluator->isa<MakeListEvaluator>())) {
+    return transition_evaluator->EvalPrim(nullptr, arg_specs, nullptr, nullptr);
   }
-  // To add EvalPrim call of TransitionPrimEvaluator such as GetAttr.
-  MS_LOG(ERROR) << "The primitive '" << primitive->ToString() << "' should be built as a TrivialPrimEvaluator, but "
-                << evaluator->ToString();
-  return nullptr;
-}
-
-AbstractBasePtr EvalFunctionValue(const ValuePtr &func, const AbstractBasePtrList &args_spec) {
-  auto func_abs = func->ToAbstract();
-  if (!func_abs->isa<AbstractFunction>()) {
-    MS_LOG(EXCEPTION) << "The value : " << func->ToString() << " is not a callable object.";
-  }
-  if (func->isa<Primitive>() && !func->isa<prim::DoSignaturePrimitive>()) {
-    return EvalOnePrim(func->cast<PrimitivePtr>(), args_spec)->abstract();
-  } else {
-    auto infer_graph = std::make_shared<FuncGraph>();
-    std::vector<AnfNodePtr> inputs = {std::make_shared<ValueNode>(func)};
-    std::transform(args_spec.begin(), args_spec.end(), std::back_inserter(inputs),
-                   [infer_graph](const AbstractBasePtr &) -> AnfNodePtr { return infer_graph->add_parameter(); });
-    auto infer_node = infer_graph->NewCNode(inputs);
-    infer_graph->set_return(infer_node);
-    auto manager = Manage(infer_graph, true);
-    auto engine = std::make_shared<abstract::AnalysisEngine>(abstract::GetPrimEvaluatorConstructors(), manager);
-    auto res = engine->Run(infer_graph, args_spec);
-    return res.eval_result->abstract();
-  }
+  MS_LOG(EXCEPTION) << "The primitive '" << primitive->ToString() << "' should be built as a TrivialPrimEvaluator, but "
+                    << evaluator->ToString();
 }
 }  // namespace abstract
 }  // namespace mindspore

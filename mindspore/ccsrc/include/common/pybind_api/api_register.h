@@ -51,10 +51,6 @@ void RegPyNativeExecutor(const py::module *m);
 void RegisterPyBoostFunction(py::module *m);
 }  // namespace pynative
 
-namespace pijit {
-void RegPIJitInterface(py::module *m);
-}
-
 namespace tensor {
 void RegMetaTensor(const py::module *m);
 void RegCSRTensor(const py::module *m);

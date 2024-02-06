@@ -255,16 +255,10 @@ class BeforeOptARewriter : public BaseRewriter {
  protected:
   void ConvertParameter() {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime || !is_dict_output_) {
+      return;
+    }
     for (const auto &para : root_graph_->parameters()) {
-      auto abs = para->abstract();
-      MS_EXCEPTION_IF_NULL(abs);
-      if (abs->isa<abstract::AbstractKeywordArg>()) {
-        auto kw_abs = abs->cast_ptr<abstract::AbstractKeywordArg>();
-        para->set_abstract(kw_abs->get_arg());
-      }
-      if (!allow_fallback_runtime || !is_dict_output_) {
-        continue;
-      }
       auto new_node_and_abs = ConvertParameterDictAbstract(para, para->abstract());
       if (new_node_and_abs.first == para) {
         continue;

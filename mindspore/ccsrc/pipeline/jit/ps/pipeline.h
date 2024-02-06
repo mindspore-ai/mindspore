@@ -77,8 +77,6 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
 
   bool Compile(const py::object &source, const py::tuple &args, const py::dict &kwargs, const py::object &phase,
                bool use_vm);
-  bool CompileInner(const FuncGraphPtr &graph, const py::tuple &args, const py::dict &kwargs, const std::string &phase,
-                    bool use_vm);
   py::object Run(const py::tuple &args, const py::object &phase);
 
   const std::string &phase() const { return phase_; }

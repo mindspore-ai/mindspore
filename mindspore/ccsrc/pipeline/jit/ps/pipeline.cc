@@ -959,68 +959,6 @@ void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   MS_LOG(INFO) << "Clean compile resource end";
 }
 
-bool GraphExecutorPy::CompileInner(const FuncGraphPtr &graph, const py::tuple &args, const py::dict &kwargs,
-                                   const std::string &phase, bool use_vm) {
-  PhaseManager::GetInstance().set_phase(phase);
-  phase_ = phase;
-
-  ExecutorInfoPtr executor_info = std::make_shared<ExecutorInfo>();
-  ResourcePtr resource = std::make_shared<Resource>();
-  resource->set_func_graph(graph);
-  InitCompileCacheInfo(resource, phase);
-  bool use_compile_cache = resource->EnableCompileCache() && resource->func_graph();
-  ConfigManager::GetInstance().ResetQueue(queue_name_);
-
-  auto actions = GetPipeline(resource, phase, use_vm);
-  for (auto iter = actions.begin(); iter != actions.end();) {
-    if (iter->first == "parse") {
-      iter = actions.erase(iter);
-    } else {
-      iter++;
-    }
-  }
-  std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(actions, phase));
-
-  if (pip->NeedCreateBackend()) {
-    // Create backend asynchronously.
-    resource->SetBackendAsync([]() {
-      auto backend = compile::CreateBackend();
-#ifdef ENABLE_DEBUGGER
-      // Connect session to debugger.
-      backend->SetDebugger();
-#endif
-      return backend;
-    });
-  }
-
-  // Get the parameters items and add the value to args_abs.
-  abstract::AbstractBasePtrList args_abs;
-  std::vector<ValuePtr> arguments;
-  MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
-  bool is_auto_parallel = (parallel::ParallelContext::GetInstance()->parallel_mode() == parallel::kSemiAutoParallel ||
-                           parallel::ParallelContext::GetInstance()->parallel_mode() == parallel::kAutoParallel);
-  ConvertArgs(args, kwargs, is_auto_parallel, &args_abs, &arguments);
-  resource->set_arguments(arguments);
-  resource->set_args_abs(args_abs);
-  executor_info->arg_list_size = args.size() + kwargs.size();
-  executor_info->resource = resource;
-  info_[phase] = executor_info;
-  pip->Run();
-
-  // Save the compiled graph to MsPipeLine.
-  SaveCompiledGraph(phase);
-  if (is_auto_parallel) {
-    ParallelPostProcess(phase, use_compile_cache);
-  }
-#ifdef ENABLE_DUMP_IR
-  mindspore::RDR::Snapshot();
-#endif
-  CleanCompileRes(resource);
-  PhaseManager::GetInstance().ClearPhase();
-  MS_LOG(INFO) << "Finish compiling.";
-  return true;
-}
-
 bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &args, const py::dict &kwargs,
                                    const py::object &phase, bool use_vm) {
   // Check if the phase is valid.
@@ -2105,7 +2043,7 @@ FuncGraphPtr SplitDynamicMindIR(const std::string &file_name, size_t device_num,
       return nullptr;
     }
     pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
-    resource->set_is_load(false);
+    resource->set_is_load(False);
     resource->set_manager(func_graph_manager);
     resource->set_func_graph(tmp_func_graph);
     // Get the parameters items and add the value to args_abs.

@@ -1845,11 +1845,9 @@ std::string AbstractTensor::ToString() const {
   MS_EXCEPTION_IF_NULL(element_);
   auto value_track = GetValueTrack();
   MS_EXCEPTION_IF_NULL(value_track);
-  std::string is_adapter = this->is_adapter() ? "True" : "False";
   buffer << type_name() << "("
          << "shape: " << shape_track->ToString() << ", element: " << element_->ToString()
-         << ", is adapter: " << is_adapter << ", value_ptr: " << value_track << ", value: " << value_track->ToString()
-         << ")";
+         << ", value_ptr: " << value_track << ", value: " << value_track->ToString() << ")";
   return buffer.str();
 }
 

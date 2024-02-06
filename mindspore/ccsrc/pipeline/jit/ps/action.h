@@ -47,16 +47,12 @@ std::vector<ActionItem> MindIRPipeline();
 #if defined(__linux__) && defined(WITH_BACKEND)
 std::vector<ActionItem> PSchedulerPipeline(const ResourcePtr &resource);
 #endif
-abstract::AnalysisResult AbstractAnalyze(const abstract::AnalysisEnginePtr &engine, const FuncGraphPtr &func_graph,
-                                         const abstract::AbstractBasePtrList &args_abs, bool is_load_resoure,
-                                         bool clear = false);
-abstract::AnalysisResult AbstractAnalyze(const ValuePtr &value, const abstract::AbstractBasePtrList &args_abs,
-                                         bool clear = false);
-FuncGraphPtr ProgramSpecialize(const abstract::AnalysisEnginePtr &engine, const FuncGraphPtr &func_graph,
+abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &resource, const FuncGraphPtr &func_graph,
+                                         const abstract::AbstractBasePtrList &args_abs, bool clear = false);
+FuncGraphPtr ProgramSpecialize(const ResourcePtr &resource, const FuncGraphPtr &func_graph,
                                const abstract::AnalysisContextPtr &context);
 FuncGraphPtr Renormalize(const ResourcePtr &resource, const FuncGraphPtr &func_graph,
                          const abstract::AbstractBasePtrList &args_abs);
-FuncGraphPtr Renormalize(const ValuePtr &value, const abstract::AbstractBasePtrList &args_abs);
 void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr, std::string *kbk_reason = nullptr);
 AbstractBasePtr GetDefaultValueAbstract(const ParameterPtr &param);
 }  // namespace pipeline

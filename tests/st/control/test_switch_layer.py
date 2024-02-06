@@ -173,7 +173,7 @@ def test_switch_layer_add_func_in_construct():
 @case_register.level0
 @case_register.target_ascend
 @case_register.target_gpu
-def test_parser_switch_layer_func_primitive_pi():
+def test_parser_switch_layer_func_primitive():
     """
     Feature: Switch layer.
     Description: test switch layer.
