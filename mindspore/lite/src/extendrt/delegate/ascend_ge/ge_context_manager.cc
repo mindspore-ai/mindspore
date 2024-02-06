@@ -26,15 +26,15 @@ GeContextManager::~GeContextManager() { DestroyContext(); }
 
 bool GeContextManager::InitContext(uint32_t device_id) {
   device_id_ = device_id;
-  auto ret = rtSetDevice(device_id_);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "Failed to call rtSetDevice , device id " << device_id_ << ", ret: " << static_cast<int>(ret);
+  auto ret = aclrtSetDevice(device_id_);
+  if (ret != ACL_RT_SUCCESS) {
+    MS_LOG(ERROR) << "Failed to call aclrtSetDevice , device id " << device_id_ << ", ret: " << static_cast<int>(ret);
     return false;
   }
-  // Context will be created by rtSetDevice
-  ret = rtCtxGetCurrent(&context_);
-  if (ret != RT_ERROR_NONE || context_ == nullptr) {
-    MS_LOG(ERROR) << "Call rtCtxGetCurrent failed, ret[" << ret << "]";
+  // Context will be created by aclrtSetDevice
+  ret = aclrtGetCurrentContext(&context_);
+  if (ret != ACL_RT_SUCCESS || context_ == nullptr) {
+    MS_LOG(ERROR) << "Call aclrtGetCurrentContext failed, ret[" << ret << "]";
     return false;
   }
   MS_LOG(INFO) << "Open device " << device_id_ << " success";
@@ -47,9 +47,9 @@ bool GeContextManager::InitContext(uint32_t device_id) {
 }
 
 bool GeContextManager::SetContext() {
-  auto rt_ret = rtCtxSetCurrent(context_);
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "Failed to call rtCtxSetCurrent";
+  auto rt_ret = aclrtSetCurrentContext(context_);
+  if (rt_ret != ACL_RT_SUCCESS) {
+    MS_LOG(ERROR) << "Failed to call aclrtSetCurrentContext";
     return false;
   }
   return true;

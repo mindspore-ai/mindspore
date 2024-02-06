@@ -16,6 +16,7 @@
 LLMEngin interface
 """
 import os
+import sys
 import threading
 from enum import Enum
 from typing import Union, List, Tuple, Dict
@@ -293,7 +294,7 @@ class LLMClusterInfo:
             try:
                 import socket
                 ip = socket.inet_aton(ip)
-                ip = int.from_bytes(ip, byteorder='big')
+                ip = int.from_bytes(ip, byteorder=sys.byteorder)
             except OSError:
                 raise ValueError(
                     f"address must be in format of ('xxx.xxx.xxx.xxx', xxx) or (xxx, xxx), but got {address}")
