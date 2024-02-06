@@ -93,23 +93,23 @@ int InternalKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
     MS_LOG(ERROR) << "op " << op_type_ << " invoke resize failed";
     return KRET_RESIZE_FAILED;
   }
+  if (impl_ = nullptr) {
+    ret = Build(inputs, outputs);
+    if (ret != 0) {
+      MS_LOG(ERROR) << "op " << op_type_ << " build kernel failed";
+      return KRET_RESIZE_FAILED;
+    }
+  }
+  for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); iter++) {
+    InternalKernelUtils::ToInternalTensor(inputs_[iter->second], inputs[iter->first]);
+  }
+  impl_->SetInputs(inputs_);
 
-  ret = Build(inputs, outputs);
-  if (ret != 0) {
-    MS_LOG(ERROR) << "op " << op_type_ << " build kernel failed";
-    return KRET_RESIZE_FAILED;
+  for (auto iter = outputsIdxMap_.begin(); iter != outputsIdxMap_.end(); iter++) {
+    InternalKernelUtils::ToInternalTensor(outputs_[iter->second], outputs[iter->first]);
   }
+  impl_->SetOutputs(outputs_);
 
-  // Invoke Tiling
-  std::vector<internal::DIMS> input_shapes(inputs_.size()), output_shapes;
-  for (size_t i = 0; i < inputs_.size(); ++i) {
-    input_shapes[i] = inputs_[i]->desc.dims;
-  }
-  ret = impl_->InferShape(input_shapes, output_shapes);
-  if (ret != 0) {
-    MS_LOG(ERROR) << "op " << op_type_ << " infer shape failed";
-    return KRET_RESIZE_FAILED;
-  }
   auto key = GenTilingCacheKey(inputs, outputs);
   SetTilingInfo(key);
   // update workspace_size list
