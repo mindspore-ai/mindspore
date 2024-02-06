@@ -113,8 +113,8 @@ BaseShapePtr LayerNormFuncImpl::InferShape(const PrimitivePtr &primitive,
 
   std::vector<BaseShapePtr> shapes_list = {x_shape_ptr};
   auto mean_var_shape = CalLayerNormMeanAndVarShape(begin_norm_axis, x_shape);
-  (void)shapes_list.emplace_back(std::make_shared<abstract::TensorShape>(mean_var_shape));
-  (void)shapes_list.emplace_back(std::make_shared<abstract::TensorShape>(mean_var_shape));
+  (void)shapes_list.emplace_back(gamma_shape_ptr);
+  (void)shapes_list.emplace_back(beta_shape_ptr);
 
   ValuePtr bpa_ptr = input_args[kInputIndex4]->GetValue();
   std::optional<int64_t> bpa_opt = GetScalarValue<int64_t>(bpa_ptr);
