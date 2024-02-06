@@ -531,8 +531,11 @@ static bool GraphCapture(JitCompileResults *jcr) {
     return false;
   }
 
-  BytecodeInliner inliner(g->GetGraph(), py::cast<py::dict>(jcr->origin_frame_->f_globals));
-  inliner.Run();
+  // One stage should skip inline process.
+  if (!conf.GetBoolConfig(GraphJitConfig::kTraceFlag)) {
+    BytecodeInliner inliner(g->GetGraph(), py::cast<py::dict>(jcr->origin_frame_->f_globals));
+    inliner.Run();
+  }
 
   auto analyzer = GraphAnalyzer::Creator(g);
   analyzer->Analyze();

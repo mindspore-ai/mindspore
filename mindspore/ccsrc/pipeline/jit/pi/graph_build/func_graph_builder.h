@@ -66,7 +66,7 @@ class FuncGraphBuilder {
   /// \param[in] output_obj The output python object.
   ///
   /// \return Return true if the output object can be used as the output of the graph.
-  bool AddOutput(const py::object &output_obj);
+  bool AddOutput(const py::object &output_obj, bool add_repeat=true);
 
   /// \brief Remove an output node of the graph.
   ///
@@ -114,6 +114,8 @@ class FuncGraphBuilder {
   static ValuePtr ConvertPyObjToValue(const py::object &obj);
 
   static AbstractBasePtr EvalValue(const ValuePtr &value, const AbstractBasePtrList &inputs_abs_list);
+
+  void EraseUnusedParameter();
 
   static py::object ConvertToPyObj(const AbstractBasePtr &abs);
 

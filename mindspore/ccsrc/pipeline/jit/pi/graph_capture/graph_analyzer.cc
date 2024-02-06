@@ -390,7 +390,7 @@ bool MindGraphAnalyzer::AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) 
     auto mind_graph_builder = std::static_pointer_cast<MindGraphBuilder>(graph_builder_);
     MS_EXCEPTION_IF_NULL(mind_graph_builder);
     auto func_graph_builder = mind_graph_builder->FGBuilder();
-    if (func_graph_builder->AddOutput(out_py_obj)) {
+    if (func_graph_builder->AddOutput(out_py_obj, false)) {
       MS_LOG(DEBUG) << "Add output success.";
       continue;
     }
