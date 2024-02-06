@@ -1545,7 +1545,7 @@ void GraphExecutorPy::GeFirstInitParams() {
 #endif
 
 py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &phase_obj) {
-  if (common::GetEnv(kCompileLevel) == kCompileLevelCompileGraph) {
+  if (common::GetEnv(kSimulationLevel) == kSimulationLevelCompileGraph) {
     py::int_ ret = 0;
     return ret;
   }

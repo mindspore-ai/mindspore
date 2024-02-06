@@ -1761,7 +1761,7 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
     return actions;
   }
 
-  if (common::GetEnv(kCompileLevel) == kCompileLevelCompileGraph) {
+  if (common::GetEnv(kSimulationLevel) == kSimulationLevelCompileGraph) {
     return actions;
   }
 

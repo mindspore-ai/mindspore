@@ -21,7 +21,7 @@ from mindspore.nn import TrainOneStepCell, WithLossCell, Momentum
 from mindspore.communication.management import init, create_group, destroy_group, get_group_size, get_rank, \
     get_local_rank, get_world_rank_from_group_rank, get_group_rank_from_world_rank
 
-os.environ["MS_COMPILE_LEVEL"] = "0"
+os.environ["MS_SIMULATION_LEVEL"] = "0"
 context.set_context(mode=context.GRAPH_MODE)
 init()
 
@@ -50,10 +50,10 @@ def test_get_group_size_default():
     Description: get group size default when set compile level 0.
     Expectation: return default 1.
     """
-    os.environ["MS_COMPILE_LEVEL"] = "0"
+    os.environ["MS_SIMULATION_LEVEL"] = "0"
     ret = get_group_size()
     assert ret == 1
-    os.environ["MS_COMPILE_LEVEL"] = ""
+    os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
 def test_get_group_size_env():
@@ -62,11 +62,11 @@ def test_get_group_size_env():
     Description: get group size default when set compile level 0.
     Expectation: return env rank size.
     """
-    os.environ["MS_COMPILE_LEVEL"] = "0"
+    os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_SIZE"] = "8"
     ret = get_group_size()
     assert ret == 8
-    os.environ["MS_COMPILE_LEVEL"] = ""
+    os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
 def test_get_rank_id_default():
@@ -75,10 +75,10 @@ def test_get_rank_id_default():
     Description: get rank id default when set compile level 0.
     Expectation: return default 0.
     """
-    os.environ["MS_COMPILE_LEVEL"] = "0"
+    os.environ["MS_SIMULATION_LEVEL"] = "0"
     ret = get_rank()
     assert ret == 0
-    os.environ["MS_COMPILE_LEVEL"] = ""
+    os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
 def test_get_rank_id_env():
@@ -87,11 +87,11 @@ def test_get_rank_id_env():
     Description: get rank id default when set compile level 0.
     Expectation: return env rank id.
     """
-    os.environ["MS_COMPILE_LEVEL"] = "0"
+    os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_ID"] = "7"
     ret = get_rank()
     assert ret == 7
-    os.environ["MS_COMPILE_LEVEL"] = ""
+    os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
 def test_get_local_rank_id():
@@ -100,12 +100,12 @@ def test_get_local_rank_id():
     Description: get local rank id when set compile level 0.
     Expectation: return local rank id.
     """
-    os.environ["MS_COMPILE_LEVEL"] = "0"
+    os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_SIZE"] = "32"
     os.environ["RANK_ID"] = "9"
     ret = get_local_rank()
     assert ret == 1
-    os.environ["MS_COMPILE_LEVEL"] = ""
+    os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
 def test_create_group():
@@ -114,7 +114,7 @@ def test_create_group():
     Description: create group when set compile level 0.
     Expectation: no exception.
     """
-    os.environ["MS_COMPILE_LEVEL"] = "0"
+    os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_SIZE"] = "32"
     os.environ["RANK_ID"] = "7"
     group = "g-01234567"
@@ -124,7 +124,7 @@ def test_create_group():
     assert ret == 32
     ret = get_group_size(group)
     assert ret == 8
-    os.environ["MS_COMPILE_LEVEL"] = ""
+    os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
 def test_destroy_group():
@@ -133,14 +133,14 @@ def test_destroy_group():
     Description: destroy group when set compile level 0.
     Expectation: no exception.
     """
-    os.environ["MS_COMPILE_LEVEL"] = "0"
+    os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_SIZE"] = "32"
     os.environ["RANK_ID"] = "7"
     group = "g8-01234567"
     rank_ids = [i for i in range(8)]
     create_group(group, rank_ids)
     destroy_group(group)
-    os.environ["MS_COMPILE_LEVEL"] = ""
+    os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
 def test_get_world_rank_from_group_rank():
@@ -149,7 +149,7 @@ def test_get_world_rank_from_group_rank():
     Description: get world rank from group rank when set compile level 0.
     Expectation: return world rank.
     """
-    os.environ["MS_COMPILE_LEVEL"] = "0"
+    os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_SIZE"] = "32"
     os.environ["RANK_ID"] = "9"
     group = "g-to-w-8+01234567"
@@ -157,7 +157,7 @@ def test_get_world_rank_from_group_rank():
     create_group(group, rank_ids)
     ret = get_world_rank_from_group_rank(group, 3)
     assert ret == 11
-    os.environ["MS_COMPILE_LEVEL"] = ""
+    os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
 def test_get_group_rank_from_world_rank():
@@ -166,7 +166,7 @@ def test_get_group_rank_from_world_rank():
     Description: get local rank id default when set compile level 0.
     Expectation: return local rank id.
     """
-    os.environ["MS_COMPILE_LEVEL"] = "0"
+    os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_SIZE"] = "32"
     os.environ["RANK_ID"] = "9"
     group = "w-to-g-8+01234567"
@@ -174,7 +174,7 @@ def test_get_group_rank_from_world_rank():
     create_group(group, rank_ids)
     ret = get_group_rank_from_world_rank(12, group)
     assert ret == 4
-    os.environ["MS_COMPILE_LEVEL"] = ""
+    os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
 def test_compile_graph():
@@ -183,7 +183,7 @@ def test_compile_graph():
     Description: compile graph when set compile level 0.
     Expectation: no exception.
     """
-    os.environ["MS_COMPILE_LEVEL"] = "0"
+    os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_SIZE"] = "32"
     os.environ["RANK_ID"] = "1"
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
@@ -191,7 +191,7 @@ def test_compile_graph():
     net.fc1.matmul.shard(((4, 1), (8, 1)))
     _cell_graph_executor.compile(net, input_)
     context.reset_auto_parallel_context()
-    os.environ["MS_COMPILE_LEVEL"] = ""
+    os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
 def test_run_graph():
@@ -200,7 +200,7 @@ def test_run_graph():
     Description: run graph when set compile level 1.
     Expectation: no exception.
     """
-    os.environ["MS_COMPILE_LEVEL"] = "1"
+    os.environ["MS_SIMULATION_LEVEL"] = "1"
     os.environ["RANK_SIZE"] = "32"
     os.environ["RANK_ID"] = "1"
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
@@ -213,4 +213,4 @@ def test_run_graph():
     train_net.set_train()
     train_net(input_, label_)
     context.reset_auto_parallel_context()
-    os.environ["MS_COMPILE_LEVEL"] = ""
+    os.environ["MS_SIMULATION_LEVEL"] = ""

@@ -184,7 +184,7 @@ bool IsSkippedLaunch(const CNodePtr &kernel, const KernelGraphPtr &kernel_graph)
   if (first_get_launch_skipped_env) {
     launch_skipped = common::GetEnv(kLaunchSkippedEnv);
     first_get_launch_skipped_env = false;
-    if (launch_skipped.empty() && !common::GetEnv(kCompileLevel).empty()) {
+    if (launch_skipped.empty() && !common::GetEnv(kSimulationLevel).empty()) {
       launch_skipped = "ALL";
     }
   }

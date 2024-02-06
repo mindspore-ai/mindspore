@@ -267,41 +267,6 @@ bool HcclAdapter::FinalizeHccl() {
   return true;
 }
 
-int64_t HcclAdapter::CalcWorkspaceSize(const PrimitivePtr &prim, const std::vector<KernelTensor *> &inputs,
-                                       const std::vector<KernelTensor *> &outputs, HcclDataType datatype) const {
-  if (!common::GetEnv(kCompileLevel).empty()) {
-    return 0;
-  }
-  MS_EXCEPTION_IF_NULL(prim);
-  if (ops_kernel_builder_ == nullptr) {
-    MS_LOG(EXCEPTION) << "#umsg#Framework Error Message:#umsg#Hccl ops kernel builder is null, may not be inited. "
-                         "Please call HCCL init() first.";
-  }
-  MS_LOG(INFO) << "Start calc workspace size for hccl node " << prim->name() << " ,dtype is " << datatype;
-  auto [ge_node, ge_graph] = GenerateStubGeNode(prim, inputs, outputs, datatype);
-  MS_EXCEPTION_IF_NULL(ge_node);
-  auto op = ge_node->GetOpDesc();
-  MS_EXCEPTION_IF_NULL(op);
-
-  MS_LOG(INFO) << "Start to call CalcOpRunningParam";
-  ge::Status ret = ops_kernel_builder_->CalcOpRunningParam(*ge_node);
-  if (ret != ge::SUCCESS) {
-    MS_LOG(ERROR) << "Call hccl OpsKernelBuilder CalcOpRunningParam failed, ret = " << ret;
-    return false;
-  }
-
-  auto workspace_sizes = op->GetWorkspaceBytes();
-  if (workspace_sizes.size() != 1) {
-    MS_LOG(EXCEPTION) << "Unexpected workspace size " << workspace_sizes.size() << ", which should be 1.";
-  }
-  int64_t workspace_size = workspace_sizes[0];
-  MS_LOG(INFO) << "Node " << prim->name() << " workspace size is " << workspace_size;
-  ge_graph.reset();
-  return workspace_size;
-}
-
-void *HcclAdapter::GetHcclOpsKernelInfoStore() const { return ops_kernel_info_store_.get(); }
-
 HcclResult HcclAdapter::HcclBroadcast(void *buf, uint64_t count, HcclDataType dataType, uint32_t root,
                                       aclrtStream stream, HcclComm hccl_comm) const {
   CheckExcutionMode();

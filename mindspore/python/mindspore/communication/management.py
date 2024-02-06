@@ -73,7 +73,7 @@ def _check_parallel_envs():
     """
     if not GlobalComm.CHECK_ENVS:
         return
-    compile_level = os.getenv("MS_COMPILE_LEVEL")
+    compile_level = os.getenv("MS_SIMULATION_LEVEL")
     if compile_level:
         return
     rank_id_str = os.getenv("RANK_ID")

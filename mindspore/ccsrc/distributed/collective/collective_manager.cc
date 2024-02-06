@@ -148,7 +148,7 @@ bool CollectiveManager::Initialize() {
     return true;
   }
 
-  if (!common::GetEnv(kCompileLevel).empty()) {
+  if (!common::GetEnv(kSimulationLevel).empty()) {
     return InitializeDummyCommLib();
   }
 
@@ -247,7 +247,7 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
   }
 
   MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
-  if (!need_host_collective_ || !common::GetEnv(kCompileLevel).empty()) {
+  if (!need_host_collective_ || !common::GetEnv(kSimulationLevel).empty()) {
     RETURN_IF_FALSE_WITH_LOG(device_comm_lib_instance_->CreateDeviceCommunicationGroup(group_name, group_ranks),
                              "Failed to create device communication group " + group_name);
     return true;
@@ -313,7 +313,7 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
 
 bool CollectiveManager::DestroyCommunicationGroup(const std::string &group_name) {
   MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
-  if (!need_host_collective_ || !common::GetEnv(kCompileLevel).empty()) {
+  if (!need_host_collective_ || !common::GetEnv(kSimulationLevel).empty()) {
     RETURN_IF_FALSE_WITH_LOG(device_comm_lib_instance_->DestroyDeviceCommunicationGroup(group_name),
                              "Failed to destroy device communication group " + group_name);
     return true;
