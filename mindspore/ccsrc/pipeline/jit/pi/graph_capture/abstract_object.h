@@ -315,6 +315,9 @@ class AbstractTraceNode : public AbstractObject {
   explicit AbstractTraceNode(Type type, const py::object &o) : AbstractObject(type, o) {}
   virtual ~AbstractTraceNode() {}
   static AObject *MakeAObject(const py::object &o) {
+    if (o.ptr() == nullptr) {
+      return AObject::MakeAObject(AObject::kTypeAnyValue);
+    }
     auto node = aobject_mem_pool_.New<AbstractObject>(kTypeTraceNode, o);
     node->SetTypeObject(Py_TYPE(o.ptr()));
     return node;
