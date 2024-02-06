@@ -193,6 +193,7 @@ GVAR_DEF(PrimitivePtr, kPrimAffineGridGrad, std::make_shared<Primitive>(kAffineG
 GVAR_DEF(PrimitivePtr, kPrimSegmentMean, std::make_shared<Primitive>(kSegmentMeanOpName));
 GVAR_DEF(PrimitivePtr, kPrimSegmentProd, std::make_shared<Primitive>(kSegmentProdOpName));
 GVAR_DEF(PrimitivePtr, kPrimBincount, std::make_shared<Primitive>(kBincountOpName));
+GVAR_DEF(PrimitivePtr, kPrimReshapeExt, std::make_shared<Primitive>(kReshapeExtOpName));
 }  // namespace prim
 }  // namespace mindspore
 
