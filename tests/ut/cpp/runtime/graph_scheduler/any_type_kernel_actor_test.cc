@@ -111,7 +111,7 @@ TEST_F(AnyTypeKernelActorTest, RunOpData) {
   auto graph_pair = BuildAnyTypeGraph();
   auto func_graph = graph_pair.first;
   auto kernel_graph = graph_pair.second;
-  auto &memory_manager_actor = MemoryManagerActor::GetInstance();
+  auto memory_manager_actor = std::make_shared<MemoryManagerActor>();
   const auto &any_type_kernel_actor =
     std::make_shared<AnyTypeKernelActor>(kernel_graph->ToString() + "_AnyTypeKernelActor", kernel_graph,
                                          device_context.get(), memory_manager_actor->GetAID(), nullptr, nullptr);

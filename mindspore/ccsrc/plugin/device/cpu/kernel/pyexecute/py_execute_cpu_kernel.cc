@@ -84,8 +84,7 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, co
   constexpr auto kPyExecuteOutIndex = 0;
   py_output->obj = output;
   // Set Python data for kernel node.
-  auto out_user_data = outputs[kPyExecuteOutIndex]->user_data();
-  MS_EXCEPTION_IF_NULL(out_user_data);
+  auto out_user_data = output_user_data_.at(kPyExecuteOutIndex);
   out_user_data->set(PyExecuteOutputUserData::key, py_output);
   if (is_output_any_) {
     return true;

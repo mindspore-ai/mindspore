@@ -480,7 +480,7 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
       ProfilingUtils::InitReportNode(kernel, true);
       ProfilingUtils::RecordLaunchTaskBegin(kernel->fullname_with_scope(), true);
     }
-    MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
+    MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope() << ", stream id : " << stream_id << ".";
     MS_EXCEPTION_IF_NULL(kernel_mod);
     MS_EXCEPTION_IF_NULL(stream);
     bool ret = kernel_mod->Launch(inputs, workspace, outputs, stream);

@@ -35,10 +35,7 @@ using mindspore::session::SomasInfo;
 // MemoryManagerActor need response to memory alloc and free quickly, so must bind single thread.
 class MemoryManagerActor : public ActorBase {
  public:
-  static std::shared_ptr<MemoryManagerActor> &GetInstance() {
-    static std::shared_ptr<MemoryManagerActor> instance = std::shared_ptr<MemoryManagerActor>(new MemoryManagerActor());
-    return instance;
-  }
+  MemoryManagerActor() : ActorBase("MemoryManagerActor") {}
   ~MemoryManagerActor() override = default;
 
   // The process entry of memory alloc.
@@ -74,9 +71,6 @@ class MemoryManagerActor : public ActorBase {
   void Wait(OpContext<DeviceTensor> *const op_context, const AID &from_aid);
 
  private:
-  MemoryManagerActor() : ActorBase("MemoryManagerActor") {}
-  DISABLE_COPY_AND_ASSIGN(MemoryManagerActor);
-
   void FreeMemoryByRefCount(DeviceTensor *const device_tensor, const DeviceContext *device_context,
                             const std::string &op_name);
 

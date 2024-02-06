@@ -361,20 +361,6 @@ void SchedulerHelper::AddControlArrow(AbstractActor *const from_actor, AbstractA
     return;
   }
 
-  // No need add control arrow if already exists data arrow in from and to actor.
-  if (from_actor->type() == KernelTransformType::kKernelActor &&
-      to_actor->type() == KernelTransformType::kKernelActor) {
-    const auto &input_data_arrows = to_actor->input_data_arrow_aids();
-    if (std::any_of(input_data_arrows.begin(), input_data_arrows.end(),
-                    [&from_actor](const std::pair<AID, DataArrow *> &input_data_arrow_pair) {
-                      return input_data_arrow_pair.first.Name() == from_actor->GetAID().Name();
-                    })) {
-      MS_LOG(INFO) << "No need add control arrow, because already exists data arrow in from actor: "
-                   << from_actor->GetAID().Name() << " and to actor: " << to_actor->GetAID().Name();
-      return;
-    }
-  }
-
   auto control_arrow = std::make_shared<ControlArrow>(to_actor->GetAID());
   (void)from_actor->output_control_arrows_.emplace_back(control_arrow);
   to_actor->input_controls_num_++;
