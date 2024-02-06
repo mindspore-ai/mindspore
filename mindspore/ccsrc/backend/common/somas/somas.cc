@@ -1660,12 +1660,12 @@ std::map<size_t, size_t> Somas::GetRefTensorsInContiguousList() {
                                                 [this](size_t tid) { return tensors_list_[tid]->contiguous_; });
     // Keep info about contiguous and check for errors
     if (ref_node_list.size() > kRefNodeTensorNum && contiguous_in_ref_list > 0) {
-      MS_LOG(WARNING) << "Ref node of size greater than two with at least one contiguous tensor in";
+      MS_LOG(INFO) << "Ref node of size greater than two with at least one contiguous tensor in";
     }
     if (ref_node_list.size() == kRefNodeTensorNum && contiguous_in_ref_list == 1) {
-      MS_LOG(WARNING) << "Ref node of size two with only one contiguous tensor" << ref_node_list[0] << ":"
-                      << tensors_list_[ref_node_list[0]]->contiguous_ << ", " << ref_node_list[1] << ":"
-                      << tensors_list_[ref_node_list[1]]->contiguous_;
+      MS_LOG(INFO) << "Ref node of size two with only one contiguous tensor" << ref_node_list[0] << ":"
+                   << tensors_list_[ref_node_list[0]]->contiguous_ << ", " << ref_node_list[1] << ":"
+                   << tensors_list_[ref_node_list[1]]->contiguous_;
     }
     if (ref_node_list.size() == kRefNodeTensorNum && LongToSize(contiguous_in_ref_list) == kRefNodeTensorNum) {
       ref_tensors_in_contiguous_map[ref_node_list[0]] = ref_node_list[1];
