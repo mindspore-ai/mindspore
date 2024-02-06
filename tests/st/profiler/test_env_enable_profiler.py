@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import glob
 import os
 import sys
 import shutil
@@ -76,6 +77,11 @@ class CheckProfilerFiles:
                             minddata_pipeline_file, queue_profiling_file)
         for file in d_profiler_files:
             assert os.path.isfile(file)
+        ascend_ms_path = os.path.join(self.profiler_path, fr'rank-{self.rank_id}*', 'ASCEND_PROFILER_OUTPUT')
+        ascend_ms_path = glob.glob(ascend_ms_path)[0]
+        assert os.path.isdir(ascend_ms_path)
+        step_trace_time_file = os.path.join(ascend_ms_path, 'step_trace_time.csv')
+        assert os.path.isfile(step_trace_time_file)
 
     def _check_cpu_profiling_file(self):
         """Check cpu profiling file."""
