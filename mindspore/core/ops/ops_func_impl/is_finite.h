@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_IS_FINITE_H_
-#define MINDSPORE_CORE_OPS_IS_FINITE_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_IS_FINITE_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_IS_FINITE_H_
 
+#include <memory>
+#include <vector>
 #include "mindapi/base/types.h"
-#include "ops/base_operator.h"
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameIsFinite = "IsFinite";
-/// \brief Determines which elements are finite for each position.
-/// Refer to Python API @ref mindspore.ops.IsFinite for more details.
-class MIND_API IsFinite : public BaseOperator {
+class MIND_API IsFiniteFuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(IsFinite);
-  /// \brief Constructor.
-  IsFinite() : BaseOperator(kNameIsFinite) {}
-  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.IsFinite for the inputs.
-  void Init() const {}
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_IS_FINITE_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_IS_FINITE_H_
