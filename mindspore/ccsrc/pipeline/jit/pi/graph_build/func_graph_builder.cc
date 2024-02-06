@@ -17,6 +17,7 @@
 #include "pipeline/jit/pi/graph_build/func_graph_builder.h"
 #include <algorithm>
 #include <utility>
+#include <unordered_set>
 #include "pipeline/jit/ps/static_analysis/static_analysis.h"
 #include "pipeline/jit/ps/action.h"
 #include "pipeline/jit/ps/parse/parse_base.h"
@@ -362,7 +363,7 @@ py::object FuncGraphBuilder::AddMultiNode(const std::string &name, const std::ve
   return AddNode(fn, inputs_obj);
 }
 
-bool FuncGraphBuilder::AddOutput(const py::object &output_obj) {
+bool FuncGraphBuilder::AddOutput(const py::object &output_obj, bool add_repeat) {
   auto iter = py_obj_to_node_.find(output_obj.ptr());
   if (iter == py_obj_to_node_.end()) {
     MS_LOG(ERROR) << "The output python object " << py::str(output_obj) << " should have been added to the graph.";
@@ -375,6 +376,13 @@ bool FuncGraphBuilder::AddOutput(const py::object &output_obj) {
     MS_LOG(ERROR) << "The output python object " << py::str(output_obj)
                   << " should not be the graph output, abstract: " << (abs == nullptr ? "null" : abs->ToString());
     return false;
+  }
+  if (!add_repeat) {
+    auto iter = std::find(output_nodes_.begin(), output_nodes_.end(), node);
+    if (iter != output_nodes_.end()) {
+      MS_LOG(DEBUG) << "Output node " << node->DebugString() << " has already been set as output.";
+      return true;
+    }
   }
   (void)output_nodes_.emplace_back(node);
   return true;
@@ -425,6 +433,33 @@ FuncGraphPtr FuncGraphBuilder::graph() {
   graph_->set_output(output_node);
   has_set_output_ = true;
   return graph_;
+}
+
+void FuncGraphBuilder::EraseUnusedParameter() {
+  // Build output for graph.
+  if (!has_set_output_) {
+    (void)graph();
+  }
+  const auto &nodes = graph_->TopoSort(graph_->output());
+  std::unordered_set<AnfNodePtr> used_params;
+  for (auto node : nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    const auto &cnode_inputs = cnode->inputs();
+    (void)std::copy_if(cnode_inputs.begin(), cnode_inputs.end(), std::inserter(used_params, used_params.begin()),
+                       [](const AnfNodePtr &input) {
+                         return input->isa<Parameter>();
+                       });
+  }
+  std::vector<AnfNodePtr> new_params;
+  const auto &origin_params = graph_->parameters();
+  (void)std::copy_if(origin_params.begin(), origin_params.end(), std::back_inserter(new_params),
+                     [&used_params](const AnfNodePtr param) {
+                       return used_params.find(param) != used_params.end();
+                     });
+  graph_->set_parameters(new_params);
 }
 
 py::object FuncGraphBuilder::AddFgCallNode(const FuncGraphPtr &fg, const vector<py::object> &inputs_obj) {

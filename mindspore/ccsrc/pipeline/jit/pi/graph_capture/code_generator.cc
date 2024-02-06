@@ -1509,6 +1509,10 @@ py::object MakeCodeFromCodeGen(const GraphBuilderPtr &builder, const GraphAnalyz
     } else {
       info.captured_locals.order = graph->GetTracedNodes();
     }
+    auto mind_builder = std::dynamic_pointer_cast<MindGraphBuilder>(builder);
+    auto mind_fg_builder = mind_builder->FGBuilder();
+    MS_EXCEPTION_IF_NULL(mind_fg_builder);
+    mind_fg_builder->EraseUnusedParameter();
   }
   cg->Init(graph, &info);
   cg->SetGlobals(py::cast<py::dict>(globals));
