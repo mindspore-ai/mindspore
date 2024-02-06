@@ -31,7 +31,6 @@ enum DType {
 
 enum UnaryOpType {
   kSqrt = 0,
-  kRsqrt,
   kAbs,
   kLog,
   kExp,
@@ -102,27 +101,34 @@ class Kernel {
 
   void Reset(KernelType type);
   void Reserve(size_t size);
-  // int ParallelNext();     -- TODO: parallel fusion
+  int ParallelNext();
 
   NDObject *Load(void *addr, ShapeRef *shape, DType type);
+  NDObject *SliceLoad(void *addr, ShapeRef *shape, ShapeRef *start, ShapeRef *size, DType type);
+  NDObject *StridedSliceLoad(void *addr, ShapeRef *shape, ShapeRef *start, ShapeRef *end, ShapeRef *step, DType type);
   NDObject *Store(void *addr, NDObject *input);
 
   NDObject *Unary(int op_type, NDObject *input);
   NDObject *Binary(int op_type, NDObject *lhs, NDObject *rhs);
-  NDObject *Binary(int op_type, float val, NDObject *rhs);
-  NDObject *Binary(int op_type, NDObject *lhs, float val);
-  NDObject *Reduce(int op_type, NDObject *input, ShapeRef *dims, bool keepdims = false);
+  template <typename T>
+  NDObject *Binary(int op_type, T val, NDObject *rhs);
+  template <typename T>
+  NDObject *Binary(int op_type, NDObject *lhs, T val);
+
+  NDObject *Reduce(int op_type, NDObject *input, ShapeRef *dims, bool keepdims);
   NDObject *Select(NDObject *cond, NDObject *lhs, NDObject *rhs);
 
   NDObject *Cast(NDObject *input, DType type);
   NDObject *Broadcast(NDObject *input, ShapeRef *shape);
-  NDObject *Broadcast(float val, ShapeRef *shape, DType type, bool dummy_load);
+
+  template <typename T>
+  NDObject *Broadcast(T val, ShapeRef *shape, DType type, bool dummy_load);
   NDObject *Reshape(NDObject *input, ShapeRef *shape);
   NDObject *Copy(NDObject *input);
 
   NDObject *ElemAny(NDObject *input);
 
-  int CodeGen();
+  uint64_t CodeGen();
   int Launch(void *stream);
   int Launch(const RelocTable &reloc_table, void **inputs, void **outputs, void *stream);
   int Launch(NDObject **op, int size, void *stream);

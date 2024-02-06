@@ -88,6 +88,15 @@ bool DvmSupported(const AnfNodePtr &node) {
                   [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); })) {
     return (node_output_type == kNumberTypeBool);
   }
+  // int op
+  static std::vector<PrimitivePtr> int_ops{prim::kPrimAdd,     prim::kPrimSub,        prim::kPrimMul,
+                                           prim::kPrimMaximum, prim::kPrimMinimum,    prim::kPrimNeg,
+                                           prim::kPrimAssign,  prim::kPrimBroadcastTo};
+  if (std::any_of(int_ops.begin(), int_ops.end(),
+                  [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); })) {
+    return (node_output_type == kNumberTypeInt32 || node_output_type == kNumberTypeFloat16 ||
+            node_output_type == kNumberTypeFloat32);
+  }
   // other op
   return (node_output_type == kNumberTypeFloat16 || node_output_type == kNumberTypeFloat32);
 }
@@ -167,21 +176,22 @@ std::vector<PrimitivePtr> StaticShapeCluster::GetClusterOps() {
     {kCPUDevice, OpLevel_0, prim::kPrimLessEqual},
   };
   std::vector<OpWithLevel> clusterable_ops_with_level_dvm = {
-    {kAscendDevice, OpLevel_0, prim::kPrimAbs},        {kAscendDevice, OpLevel_0, prim::kPrimAdd},
-    {kAscendDevice, OpLevel_0, prim::kPrimCast},       {kAscendDevice, OpLevel_0, prim::kPrimExp},
-    {kAscendDevice, OpLevel_0, prim::kPrimLog},        {kAscendDevice, OpLevel_0, prim::kPrimMaximum},
-    {kAscendDevice, OpLevel_0, prim::kPrimMinimum},    {kAscendDevice, OpLevel_0, prim::kPrimMul},
-    {kAscendDevice, OpLevel_0, prim::kPrimNeg},        {kAscendDevice, OpLevel_0, prim::kPrimPow},
-    {kAscendDevice, OpLevel_0, prim::kPrimDiv},        {kAscendDevice, OpLevel_0, prim::kPrimRealDiv},
-    {kAscendDevice, OpLevel_0, prim::kPrimReciprocal}, {kAscendDevice, OpLevel_0, prim::kPrimRsqrt},
-    {kAscendDevice, OpLevel_0, prim::kPrimSqrt},       {kAscendDevice, OpLevel_0, prim::kPrimSub},
-    {kAscendDevice, OpLevel_0, prim::kPrimEqual},      {kAscendDevice, OpLevel_0, prim::kPrimNotEqual},
-    {kAscendDevice, OpLevel_0, prim::kPrimGreater},    {kAscendDevice, OpLevel_0, prim::kPrimGreaterEqual},
-    {kAscendDevice, OpLevel_0, prim::kPrimLess},       {kAscendDevice, OpLevel_0, prim::kPrimLessEqual},
-    {kAscendDevice, OpLevel_0, prim::kPrimLogicalAnd}, {kAscendDevice, OpLevel_0, prim::kPrimLogicalOr},
-    {kAscendDevice, OpLevel_0, prim::kPrimLogicalNot}, {kAscendDevice, OpLevel_0, prim::kPrimSelect},
-    {kAscendDevice, OpLevel_1, prim::kPrimAssign},     {kAscendDevice, OpLevel_1, prim::kPrimReshape},
-    {kAscendDevice, OpLevel_1, prim::kPrimTranspose},  {kAscendDevice, OpLevel_1, prim::kPrimReduceSum},
+    {kAscendDevice, OpLevel_0, prim::kPrimAbs},          {kAscendDevice, OpLevel_0, prim::kPrimAdd},
+    {kAscendDevice, OpLevel_0, prim::kPrimBroadcastTo},  {kAscendDevice, OpLevel_0, prim::kPrimCast},
+    {kAscendDevice, OpLevel_0, prim::kPrimExp},          {kAscendDevice, OpLevel_0, prim::kPrimLog},
+    {kAscendDevice, OpLevel_0, prim::kPrimMaximum},      {kAscendDevice, OpLevel_0, prim::kPrimMinimum},
+    {kAscendDevice, OpLevel_0, prim::kPrimMul},          {kAscendDevice, OpLevel_0, prim::kPrimNeg},
+    {kAscendDevice, OpLevel_0, prim::kPrimPow},          {kAscendDevice, OpLevel_0, prim::kPrimDiv},
+    {kAscendDevice, OpLevel_0, prim::kPrimRealDiv},      {kAscendDevice, OpLevel_0, prim::kPrimReciprocal},
+    {kAscendDevice, OpLevel_0, prim::kPrimRsqrt},        {kAscendDevice, OpLevel_0, prim::kPrimSqrt},
+    {kAscendDevice, OpLevel_0, prim::kPrimSub},          {kAscendDevice, OpLevel_0, prim::kPrimEqual},
+    {kAscendDevice, OpLevel_0, prim::kPrimNotEqual},     {kAscendDevice, OpLevel_0, prim::kPrimGreater},
+    {kAscendDevice, OpLevel_0, prim::kPrimGreaterEqual}, {kAscendDevice, OpLevel_0, prim::kPrimLess},
+    {kAscendDevice, OpLevel_0, prim::kPrimLessEqual},    {kAscendDevice, OpLevel_0, prim::kPrimLogicalAnd},
+    {kAscendDevice, OpLevel_0, prim::kPrimLogicalOr},    {kAscendDevice, OpLevel_0, prim::kPrimLogicalNot},
+    {kAscendDevice, OpLevel_0, prim::kPrimSelect},       {kAscendDevice, OpLevel_1, prim::kPrimAssign},
+    {kAscendDevice, OpLevel_1, prim::kPrimReshape},      {kAscendDevice, OpLevel_1, prim::kPrimTranspose},
+    {kAscendDevice, OpLevel_1, prim::kPrimReduceSum},
   };
   const auto &flags = GraphKernelFlags::GetInstance();
   auto ops_with_level = GraphKernelFlags::GetInstance().kernel_generator == "DVM"
