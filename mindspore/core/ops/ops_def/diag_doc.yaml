@@ -5,10 +5,8 @@ diag:
         .. warning::
             This is an experimental API that is subject to change or deletion.
 
-        Refer to :func:`mindspore.ops.diag` for more details.
-
         Args:
-            - **input** (Tensor) - The input tensor.
+            input (Tensor): The input tensor.
 
         Returns:
             Tensor, has the same dtype as the `input`.

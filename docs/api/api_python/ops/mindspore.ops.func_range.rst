@@ -1,7 +1,7 @@
 mindspore.ops.range
 ====================
 
-.. py:function:: mindspore.ops.range(start, end, step)
+.. py:function:: mindspore.ops.range(start, end, step, maxlen=1000000)
 
     返回从 `start` 开始，步长为 `step` ，且不超过 `end` （不包括 `end` ）的序列。
 

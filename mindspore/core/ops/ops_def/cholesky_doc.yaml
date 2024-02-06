@@ -8,7 +8,7 @@ cholesky:
         Refer to :func:`mindspore.ops.cholesky` for more details.
 
         Args:
-            upper (bool, optional): - Flag that indicates whether to return a upper or lower triangular matrix.
+            upper (bool, optional): Flag that indicates whether to return a upper or lower triangular matrix.
                 Default: ``False`` .
 
         Inputs:

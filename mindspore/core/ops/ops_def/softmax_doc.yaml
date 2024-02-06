@@ -5,7 +5,7 @@ softmax:
         Refer to :func:`mindspore.ops.softmax` for more details.
     
         Args:
-            axis (Union[int, tuple]): The axis to perform the Softmax operation. Default: ``-1`` .
+            axis (Union[int, tuple], optional): The axis to perform the Softmax operation. Default: ``-1`` .
     
         Inputs:
             - **input** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of

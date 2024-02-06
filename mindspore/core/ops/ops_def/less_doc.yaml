@@ -2,15 +2,13 @@ less:
   description: |
     Computes the boolean value of :math:`input < other` element-wise.
 
-    Refer to :func:`mindspore.ops.less` for more details.
+    Args:
+        input (Union[Tensor, Number, bool]): The first input is a number or
+            a bool or a tensor whose data type is number or bool.
+        other (Union[Tensor, Number, bool]): The second input is a number or
+            a bool or a tensor whose data type is number or bool.
 
-    Inputs:
-        - **input** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is number or bool.
-        - **other** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool or a tensor whose data type is number or bool.
-
-    Outputs:
+    Returns:
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
 
     Supported Platforms:

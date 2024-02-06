@@ -9,13 +9,12 @@ gather:
         where params represents the input `input_params`, and indices represents the index to be sliced `input_indices`.
 
         .. note::
-        1. The value of input_indices must be in the range of `[0, input_param.shape[axis])`.
-        On CPU and GPU, an error is raised if an out of bound indice is found. On Ascend, the results may be
-        undefined.
-
-        2. The data type of input_params cannot be
-        `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ on Ascend
-        platform currently.
+            1. The value of input_indices must be in the range of `[0, input_param.shape[axis])`.
+               On CPU and GPU, an error is raised if an out of bound indice is found. On Ascend, the results may be
+               undefined.
+            2. The data type of input_params cannot be
+               `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ on Ascend
+               platform currently.
 
         Args:
             input_params (Tensor): The original Tensor. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.

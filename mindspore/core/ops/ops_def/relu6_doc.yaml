@@ -11,7 +11,7 @@ relu6:
         ReLU6 Activation Function Graph:
     
         .. image:: ../images/ReLU6.png
-        :align: center
+            :align: center
     
         Args:
             x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means any number of additional dimensions.

@@ -20,7 +20,7 @@ mindspore.scipy.fft.idct
           默认值： ``None``，默认为 `x.shape[axis]` 。
         - **axis** (int, 可选) - 进行逆离散傅里叶变换的维度（轴）。
           默认值： ``-1``。
-        - **norm** (str, 可选) - 标准化类型。默认值： ``None`` ，默认为 ``'ORTHO'``（正交标准化），目前只支持 ``'ORTHO'``。
+        - **norm** (str, 可选) - 标准化类型。默认值： ``None`` ，默认为 ``'ORTHO'`` （正交标准化），目前只支持 ``'ORTHO'`` 。
 
     返回：
         Tensor， `x` 进行逆离散傅里叶变换的结果。

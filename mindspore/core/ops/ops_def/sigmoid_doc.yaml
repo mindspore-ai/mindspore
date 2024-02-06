@@ -9,6 +9,7 @@ sigmoid:
         where :math:`x_i` is an element of `x`.
         
         Sigmoid Function Graph:
+
         .. image:: ../images/Sigmoid.png
             :align: center
 
