@@ -32,7 +32,6 @@ mindspore::HashMap<std::string, std::string> IOFormatMap::io_format_map_ = {{"BN
                                                                             {"Conv2DBackpropFilter", "NCHW"},
                                                                             {"BasicLSTMCellWeightGrad", "HWCN"},
                                                                             {"ExtractImagePatches", "NCHW"},
-                                                                            {"ApplyMomentum", "NCHW"},
                                                                             {"FullConnection", "NCHW"},
                                                                             {"PReLU", "NCHW"},
                                                                             {"Scale", "NCHW"},
