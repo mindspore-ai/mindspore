@@ -131,6 +131,8 @@ class FuncGraphBuilder {
   static AbstractBasePtr DoInferAndCheck(const ValuePtr &callable_value,
                                          const std::vector<AbstractBasePtr> &input_abs_list);
 
+  py::object TryToAddNode(const ValuePtr &callable_value, const std::vector<py::object> &inputs_obj);
+
   FuncGraphPtr graph_{nullptr};
   bool has_set_output_{false};
   HashMap<PyObject *, AnfNodePtr> py_obj_to_node_;
