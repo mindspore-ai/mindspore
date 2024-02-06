@@ -25,7 +25,6 @@
 #include "utils/hash_map.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "runtime/graph_scheduler/actor/debug_aware_actor.h"
-#include "runtime/graph_scheduler/actor/kernel_launch_actor.h"
 #include "runtime/hardware/device_context.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
 #include "kernel/kernel.h"
@@ -79,11 +78,6 @@ class KernelActor : public DebugAwareActor {
     (void)device_contexts_.emplace_back(device_context);
     is_dynamic_shape_ = common::AnfAlgo::IsDynamicShape(kernel_) || common::AnfAlgo::IsDynamicSequence(kernel_);
     enable_callback_ = common::GetEnv("GRAPH_OP_RUN") == "1";
-    enable_async_launch_ = EnableAsyncLaunch() && device_context->device_context_key().device_name_ != kCPUDevice;
-    if (enable_async_launch_) {
-      KernelLaunchActor::GetInstance()->set_enable_async_launch(enable_async_launch_);
-      kernel_launch_aid_ = KernelLaunchActor::GetInstance()->GetAID();
-    }
   }
   ~KernelActor() override = default;
 
@@ -103,8 +97,6 @@ class KernelActor : public DebugAwareActor {
   void set_callback_counter(const CallbackCounterPtr &callback_counter) { callback_counter_ = callback_counter; }
 
   void set_enable_async_infer(bool enable_async_infer) { enable_async_infer_ = enable_async_infer; }
-
-  void LaunchKernelWithMemManage(OpContext<DeviceTensor> *const context);
 
  protected:
   void Init() override;
@@ -138,8 +130,6 @@ class KernelActor : public DebugAwareActor {
   bool has_dynamic_;
   // Whether enable asynchronously infer shape and resize kernel mod by KernelInferActor and KernelResizeActor.
   bool enable_async_infer_;
-  bool enable_async_launch_;
-  AID kernel_launch_aid_;
   KernelInfo *kernel_info_;
   KernelMod *kernel_mod_;
   // The kernel launch info is fetched by the device tensors.

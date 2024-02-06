@@ -20,7 +20,6 @@
 #include "ops/framework_ops.h"
 #include "runtime/graph_scheduler/scheduler_helper.h"
 #include "runtime/graph_scheduler/actor/memory_manager_actor.h"
-#include "runtime/graph_scheduler/actor/kernel_launch_actor.h"
 #include "runtime/graph_scheduler/actor/debug_actor.h"
 #include "runtime/graph_scheduler/actor/recorder_actor.h"
 #include "runtime/graph_scheduler/optimizer/optimizer.h"
@@ -459,10 +458,6 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
   auto base_actor = static_cast<ActorReference>(memory_manager_actor);
   // Bind single thread to response to memory alloc and free quickly.
   (void)actor_manager->Spawn(base_actor, true);
-
-  auto &kernel_launch_actor = KernelLaunchActor::GetInstance();
-  MS_EXCEPTION_IF_NULL(kernel_launch_actor);
-  (void)actor_manager->Spawn(kernel_launch_actor, false);
 
   // Create and schedule recorder actor.
   bool recorder_actor_need = false;
