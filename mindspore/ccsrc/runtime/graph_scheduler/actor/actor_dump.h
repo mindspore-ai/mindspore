@@ -21,6 +21,7 @@
 #include <string>
 #include <memory>
 #include <fstream>
+#include <tuple>
 #include "runtime/graph_scheduler/actor/abstract_actor.h"
 #include "runtime/graph_scheduler/actor/data_prepare_actor.h"
 #include "runtime/graph_scheduler/actor/data_source_actor.h"
@@ -60,6 +61,11 @@ void DumpFusionActors(const std::vector<FusionActorPtr> &actors, std::ofstream &
 void DumpControlActors(const ControlActorSetPtr &control_actor_set, std::ofstream &ofs);
 void DumpCustomActors(const std::vector<CustomActorPtr> &actors, std::ofstream &ofs);
 void DumpSwapActors(const std::vector<std::vector<MemSwapActorPtr>> &actors, std::ofstream &ofs);
+
+using ActorInfoMap =
+  mindspore::HashMap<AbstractActor *, std::tuple<size_t, std::vector<BaseShapePtr>, std::vector<TypePtr>>>;
+std::vector<AbstractActor *> TopoSortForActor(AbstractActor *root);
+void DumpActorInfo(AbstractActor *actor, size_t index, ActorInfoMap *actor_info, std::ofstream &ofs);
 }  // namespace runtime
 }  // namespace mindspore
 

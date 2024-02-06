@@ -220,7 +220,7 @@ class BACKEND_EXPORT GraphScheduler {
   // Display the actor information of corresponding kernel graph.
   void DumpActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) const;
   void DumpDeviceTensorStore(const GraphCompilerInfo &graph_compiler_info, std::ofstream &ofs) const;
-
+  void DumpFinalActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info);
   // bind thread pool to same numa node
   void BindNumaNode();
 

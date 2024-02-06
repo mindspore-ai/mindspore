@@ -389,7 +389,7 @@ void OutputActor::UpdateOutputDeviceAddress() {
                           << ", output node: " << output_node->fullname_with_scope();
       }
     } else {
-      MS_LOG(DEBUG) << "Swap ptr:" << tensor_device_address->GetPtr() << " from device tensor:" << device_tensor
+      MS_LOG(DEBUG) << "Swap ptr:" << device_tensor->GetPtr() << " from device tensor:" << device_tensor
                     << " device type:" << device_tensor->GetDeviceType() << " to :" << tensor_device_address
                     << " device type:" << tensor_device_address->GetDeviceType();
       // Move the device ptr from device_tensor to tensor_device_address.
