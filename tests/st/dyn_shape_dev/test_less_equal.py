@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def less_equal_forward_func(x, y):
-    return ops.auto_generate.less_equal(x, y)
+    return ops.less_equal(x, y)
 
 
 @test_utils.run_with_cell
@@ -32,21 +32,21 @@ def less_equal_backward_func(x, y):
 
 
 def less_equal_dyn_shape_func(x, y):
-    return ops.auto_generate.less_equal(x, y)
+    return ops.less_equal(x, y)
 
 
 @test_utils.run_with_cell
 def less_equal_infervalue_func1():
     x = ms.Tensor(np.array([1, 2, 3]), ms.int32)
     y = ms.Tensor(np.array([1, 1, 4]), ms.int32)
-    return ops.auto_generate.less_equal(x, y)
+    return ops.less_equal(x, y)
 
 
 @test_utils.run_with_cell
 def less_equal_infervalue_func2():
     x = ms.Tensor(np.array([1, 2, 4]), ms.int32)
     y = ms.Tensor(np.array([3, 2, 1]), ms.int32)
-    return ops.auto_generate.less_equal(x, y)
+    return ops.less_equal(x, y)
 
 
 @pytest.mark.level1

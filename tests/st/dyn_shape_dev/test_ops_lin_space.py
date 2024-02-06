@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def lin_space_forward_func(start, stop, num=5):
-    return ops.auto_generate.LinSpace()(start, stop, num)
+    return ops.LinSpace()(start, stop, num)
 
 
 @test_utils.run_with_cell
@@ -32,7 +32,7 @@ def lin_space_backward_func(start, stop, num=5):
 
 
 def lin_space_dyn_shape_func(start, stop, num=5):
-    return ops.auto_generate.LinSpace()(start, stop, num)
+    return ops.LinSpace()(start, stop, num)
 
 
 @pytest.mark.level1

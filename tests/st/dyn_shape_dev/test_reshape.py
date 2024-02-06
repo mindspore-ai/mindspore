@@ -22,7 +22,7 @@ import test_utils
 
 @test_utils.run_with_cell
 def reshape_forward_func(x, shape):
-    return ops.auto_generate.reshape(x, shape)
+    return ops.reshape(x, shape)
 
 
 @test_utils.run_with_cell

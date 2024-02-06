@@ -22,7 +22,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def geqrf_forward_func(x):
-    return ops.auto_generate.geqrf(x)
+    return ops.geqrf(x)
 
 
 @pytest.mark.level0

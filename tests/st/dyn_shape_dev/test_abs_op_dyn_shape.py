@@ -57,19 +57,19 @@ def eltwise_case_vmap(prim_func, mode, inputs_np=None):
 
 
 def abs_func(x):
-    return ops.auto_generate.abs(x)
+    return ops.abs(x)
 
 
 @run_with_cell
 def abs_infervalue_func1():
     x = ms.Tensor(np.array([-1, 2, -3]), ms.int32)
-    return ops.auto_generate.abs(x)
+    return ops.abs(x)
 
 
 @run_with_cell
 def abs_infervalue_func2():
     x = ms.Tensor(np.array([3, -5, 4]), ms.int32)
-    return ops.auto_generate.abs(x)
+    return ops.abs(x)
 
 
 @pytest.mark.level1

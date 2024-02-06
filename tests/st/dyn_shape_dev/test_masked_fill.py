@@ -22,7 +22,7 @@ from mindspore import ops
 
 @test_utils.run_with_cell
 def masked_fill_forward_func(input_x, mask, value):
-    return ops.auto_generate.masked_fill(input_x, mask, value)
+    return ops.masked_fill(input_x, mask, value)
 
 
 @test_utils.run_with_cell
@@ -113,7 +113,7 @@ def test_masked_fill_dynamic(mode):
     context.set_context(mode=mode)
     input_x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
     mask_dyn = ms.Tensor(shape=None, dtype=ms.bool_)
-    test_cell = test_utils.to_cell_obj(ops.auto_generate.masked_fill)
+    test_cell = test_utils.to_cell_obj(ops.masked_fill)
     test_cell.set_inputs(input_x_dyn, mask_dyn, 0.5)
     input_x1 = Tensor(np.array([1., 2., 3., 4.]).astype(np.float32))
     mask1 = Tensor(np.array([True, True, False, True]).astype(np.bool_))

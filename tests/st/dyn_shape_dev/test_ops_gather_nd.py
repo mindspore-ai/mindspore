@@ -22,7 +22,7 @@ import test_utils
 
 @test_utils.run_with_cell
 def gather_nd_forward_func(input_x, indices):
-    return ops.auto_generate.gather_nd(input_x, indices)
+    return ops.gather_nd(input_x, indices)
 
 
 @test_utils.run_with_cell

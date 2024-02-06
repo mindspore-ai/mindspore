@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def neg_forward_func(x):
-    return ops.auto_generate.neg(x)
+    return ops.neg(x)
 
 
 @test_utils.run_with_cell

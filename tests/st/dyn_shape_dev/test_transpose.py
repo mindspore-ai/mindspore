@@ -22,7 +22,7 @@ import test_utils
 
 @test_utils.run_with_cell
 def transpose_forward_func(x):
-    return ops.auto_generate.transpose(x, (1, 2, 0))
+    return ops.transpose(x, (1, 2, 0))
 
 
 @test_utils.run_with_cell

@@ -24,7 +24,7 @@ import test_utils
 
 @test_utils.run_with_cell
 def randperm_v2_forward_func(n):
-    return ops.auto_generate.randperm(n, seed=0, offset=0, dtype=mstype.float16)
+    return ops.randperm(n, seed=0, offset=0, dtype=mstype.float16)
 
 
 @test_utils.run_with_cell

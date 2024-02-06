@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def less_forward_func(x, y):
-    return ops.auto_generate.less(x, y)
+    return ops.less(x, y)
 
 
 @test_utils.run_with_cell
@@ -32,21 +32,21 @@ def less_backward_func(x, y):
 
 
 def less_dyn_shape_func(x, y):
-    return ops.auto_generate.less(x, y)
+    return ops.less(x, y)
 
 
 @test_utils.run_with_cell
 def less_infervalue_func1():
     x = ms.Tensor(np.array([1, 2, 3]).astype(np.float32))
     y = ms.Tensor(np.array([1, 1, 4]).astype(np.float32))
-    return ops.auto_generate.less(x, y)
+    return ops.less(x, y)
 
 
 @test_utils.run_with_cell
 def less_infervalue_func2():
     x = ms.Tensor(np.array([1, 2, 4]).astype(np.float32))
     y = ms.Tensor(np.array([3, 2, 1]).astype(np.float32))
-    return ops.auto_generate.less(x, y)
+    return ops.less(x, y)
 
 
 @pytest.mark.level1

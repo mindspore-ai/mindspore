@@ -22,7 +22,7 @@ import test_utils
 
 @test_utils.run_with_cell
 def gather_forward_func(input_params, input_indices, axis, batch_dims=0):
-    return ops.auto_generate.gather(input_params, input_indices, axis, batch_dims)
+    return ops.gather(input_params, input_indices, axis, batch_dims)
 
 
 @test_utils.run_with_cell

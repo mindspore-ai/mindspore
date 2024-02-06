@@ -22,7 +22,7 @@ import test_utils
 
 @test_utils.run_with_cell
 def real_forward_func(x):
-    return ops.auto_generate.real(x)
+    return ops.real(x)
 
 
 @test_utils.run_with_cell
@@ -84,7 +84,7 @@ def test_real_dynamic(mode):
     """
     context.set_context(mode=mode)
     x_dyn = Tensor(shape=None, dtype=ms.complex64)
-    test_cell = test_utils.to_cell_obj(ops.auto_generate.real)
+    test_cell = test_utils.to_cell_obj(ops.real)
     test_cell.set_inputs(x_dyn)
     x1 = Tensor(np.asarray(np.complex(1.3 + 0.4j)).astype(np.complex64))
     output1 = test_cell(x1)

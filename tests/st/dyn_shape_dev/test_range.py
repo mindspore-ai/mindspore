@@ -24,7 +24,7 @@ import test_utils
 
 @test_utils.run_with_cell
 def range_forward_func(start, limit, delta):
-    return ops.auto_generate.range(start, limit, delta, maxlen=10)
+    return ops.range(start, limit, delta, maxlen=10)
 
 
 @test_utils.run_with_cell

@@ -23,7 +23,7 @@ ms.context.set_context(ascend_config={"precision_mode": "force_fp32"})
 
 @test_utils.run_with_cell
 def round_forward_func(x):
-    return ops.auto_generate.round(x)
+    return ops.round(x)
 
 
 @test_utils.run_with_cell

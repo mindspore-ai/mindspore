@@ -22,7 +22,7 @@ from mindspore import ops, Tensor
 
 @test_utils.run_with_cell
 def exp_forward_func(x):
-    return ops.auto_generate.exp(x)
+    return ops.exp(x)
 
 
 @test_utils.run_with_cell

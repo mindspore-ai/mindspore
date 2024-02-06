@@ -29,14 +29,14 @@ def get_np_data():
 def add_infervalue_func1():
     x = ms.Tensor(np.array([1, 2, 4]).astype(np.float32))
     y = ms.Tensor(np.array([2, 4, 3]).astype(np.float32))
-    return ops.auto_generate.add(x, y)
+    return ops.add(x, y)
 
 
 @run_with_cell
 def add_infervalue_func2():
     x = ms.Tensor(np.array([1, 2, 4]).astype(np.float32))
     y = ms.Tensor(np.array([3, 5, 1]).astype(np.float32))
-    return ops.auto_generate.add(x, y)
+    return ops.add(x, y)
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu

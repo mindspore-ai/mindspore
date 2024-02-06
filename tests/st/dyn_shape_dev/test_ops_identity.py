@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def identity_forward_func(x):
-    return ops.auto_generate.deepcopy(x)
+    return ops.deepcopy(x)
 
 
 @test_utils.run_with_cell
@@ -32,7 +32,7 @@ def identity_backward_func(x):
 
 
 def identity_dyn_shape_func(x):
-    return ops.auto_generate.deepcopy(x)
+    return ops.deepcopy(x)
 
 
 @pytest.mark.level1

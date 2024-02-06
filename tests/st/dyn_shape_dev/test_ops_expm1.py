@@ -22,7 +22,7 @@ import test_utils
 
 @test_utils.run_with_cell
 def expm1_forward_func(x):
-    return ops.auto_generate.expm1(x)
+    return ops.expm1(x)
 
 
 @test_utils.run_with_cell

@@ -22,15 +22,7 @@ import test_utils
 
 @test_utils.run_with_cell
 def batch_norm_forward_func(x, scale, bias, mean, var, is_train=False):
-    out = ops.auto_generate.batch_norm_(x,
-                                        scale,
-                                        bias,
-                                        mean,
-                                        var,
-                                        is_train,
-                                        epsilon=1e-5,
-                                        momentum=0.1,
-                                        data_format="NCHW")
+    out = ops.BatchNorm(is_train, 1e-5, 0.1, "NCHW")(x, scale, bias, mean, var)
     return out[0]
 
 

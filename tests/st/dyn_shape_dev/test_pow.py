@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def pow_forward_func(x, y):
-    return ops.auto_generate.pow(x, y)
+    return ops.pow(x, y)
 
 
 @test_utils.run_with_cell

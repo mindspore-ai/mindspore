@@ -26,8 +26,7 @@ from mindspore.ops import composite as C
 class AvgPool(nn.Cell):
     def __init__(self, kernel_size, strides, pad_mode, data_format):
         super(AvgPool, self).__init__()
-        self.avgpool = ops.auto_generate.AvgPool(kernel_size=kernel_size, strides=strides,
-                                                 pad_mode=pad_mode, data_format=data_format)
+        self.avgpool = ops.AvgPool(kernel_size=kernel_size, strides=strides, pad_mode=pad_mode, data_format=data_format)
 
     def construct(self, x):
         return self.avgpool(x)

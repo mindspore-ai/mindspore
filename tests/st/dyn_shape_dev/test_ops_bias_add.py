@@ -36,7 +36,7 @@ def test_bias_add_4d(mode):
     """
     @test_utils.run_with_cell
     def bias_add_forward_func(x, b):
-        return ops.auto_generate.bias_add(x, b, data_format="NCHW")
+        return ops.bias_add(x, b, data_format="NCHW")
 
     ms.context.set_context(mode=mode)
     x_shape = [2, 3, 4, 5]
@@ -64,7 +64,7 @@ def test_bias_add_2d(mode):
     """
     @test_utils.run_with_cell
     def bias_add_forward_func(x, b):
-        return ops.auto_generate.bias_add(x, b, data_format="NCHW")
+        return ops.bias_add(x, b, data_format="NCHW")
 
     ms.context.set_context(mode=mode)
     x_shape = [2, 3]
@@ -92,7 +92,7 @@ def test_bias_add_3d(mode):
     """
     @test_utils.run_with_cell
     def bias_add_forward_func(x, b):
-        return ops.auto_generate.bias_add(x, b, data_format="NCHW")
+        return ops.bias_add(x, b, data_format="NCHW")
 
     ms.context.set_context(mode=mode)
     x_shape = [2, 3, 4]
@@ -120,7 +120,7 @@ def test_bias_add_5d(mode):
     """
     @test_utils.run_with_cell
     def bias_add_forward_func(x, b):
-        return ops.auto_generate.bias_add(x, b, data_format="NCHW")
+        return ops.bias_add(x, b, data_format="NCHW")
 
     ms.context.set_context(mode=mode)
     x_shape = [2, 5, 2, 3, 4]
@@ -148,7 +148,7 @@ def test_bias_add_backward(mode):
     """
     @test_utils.run_with_cell
     def bias_add_backward_func(x, b):
-        return ops.grad(ops.auto_generate.bias_add, (0,))(x, b, "NCHW")
+        return ops.grad(ops.bias_add, (0,))(x, b, "NCHW")
 
     ms.context.set_context(mode=mode)
     x = np.ones((2, 3)).astype(np.float32)
@@ -173,7 +173,7 @@ def test_bias_add_vmap(mode):
     """
     @test_utils.run_with_cell
     def bias_add_forward_func(x, b):
-        return ops.auto_generate.bias_add(x, b, data_format="NCHW")
+        return ops.bias_add(x, b, data_format="NCHW")
 
     # must set mode to ms.GRAPH_MODE, or else would trigger pynative procedure and cause precision problem.
     ms.context.set_context(mode=mode)
@@ -232,7 +232,7 @@ def test_bias_add_different_input_types(mode):
     """
     @test_utils.run_with_cell
     def bias_add_forward_func(x, b):
-        return ops.auto_generate.bias_add(x, b, data_format="NCHW")
+        return ops.bias_add(x, b, data_format="NCHW")
 
     ms.context.set_context(mode=mode)
     x_shape = [2, 3, 4]

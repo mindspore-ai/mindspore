@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def greater_forward_func(x, y):
-    return ops.auto_generate.greater(x, y)
+    return ops.greater(x, y)
 
 
 @test_utils.run_with_cell

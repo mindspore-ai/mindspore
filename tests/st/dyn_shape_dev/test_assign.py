@@ -23,7 +23,7 @@ from mindspore import ops
 
 @test_utils.run_with_cell
 def assign_forward_func(x, y):
-    return ops.auto_generate.assign(x, y)
+    return ops.assign(x, y)
 
 
 @test_utils.run_with_cell

@@ -22,7 +22,7 @@ import test_utils
 
 @test_utils.run_with_cell
 def erf_forward_func(x):
-    return ops.auto_generate.erf(x)
+    return ops.erf(x)
 
 
 @test_utils.run_with_cell
