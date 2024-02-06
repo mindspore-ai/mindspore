@@ -515,8 +515,9 @@ constexpr const char kNameGamma[] = "Gamma";
 constexpr const char kNameIgamma[] = "Igamma";
 constexpr const char kNamePoisson[] = "Poisson";
 constexpr const char kNamePolar[] = "Polar";
-constexpr const char kNameRfeal[] = "Real";
+constexpr const char kNameReal[] = "Real";
 constexpr const char kNameLogUniformCandidateSampler[] = "LogUniformCandidateSampler";
+constexpr const char kNameCoalesce[] = "Coalesce";
 
 class OpAdapterDesc;
 
