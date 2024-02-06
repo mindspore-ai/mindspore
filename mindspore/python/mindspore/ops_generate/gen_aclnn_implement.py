@@ -56,6 +56,19 @@ class {kernelmod_name} : public AclnnKernelMod {{
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
   void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   {update_shape}
+
+ private:
+  template <typename... Args>
+  void GetWorkspaceForResize(const Args &... args) {{
+    hash_id_ = transform::CalcOpApiHash(args...);
+    if (cache_hash_.count(hash_id_) == 0) {{
+      auto return_value = GEN_EXECUTOR_CUST(op_type_, args...);
+      UpdateWorkspace(return_value);
+    }} else {{
+      auto return_value = GEN_EXECUTOR_BOOST(op_type_, hash_id_, args...);
+      UpdateWorkspace(return_value);
+    }}
+  }}
 }};
 }}  // namespace kernel
 }}  // namespace mindspore
@@ -124,8 +137,7 @@ namespace kernel {{
 void {kernelmod_name}::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                         const std::vector<KernelTensor *> &outputs) {{
   {input_templete}
-  auto return_value = GEN_EXECUTOR_BOOST(op_type_, hash_id_, {inputs});
-  UpdateWorkspace(return_value);
+  GetWorkspaceForResize({inputs});
 }}
 """
     launch = f"""

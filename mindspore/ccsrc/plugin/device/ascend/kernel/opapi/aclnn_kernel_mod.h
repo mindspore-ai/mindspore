@@ -20,6 +20,7 @@
 #include <map>
 #include <string>
 #include <tuple>
+#include <unordered_set>
 #include <utility>
 #include "ops/base_operator.h"
 #include "ops/op_def.h"
@@ -78,17 +79,13 @@ class AclnnKernelMod : public KernelMod {
 
   template <typename... Args>
   void UpdateWorkspace(const std::tuple<Args...> &args) {
-    auto call_back_func = std::get<2>(args);
-    if (call_back_func != nullptr) {
-      call_back_func();
-    }
     auto real_workspace_size = static_cast<size_t>(std::get<0>(args));
     if (real_workspace_size != 0) {
       std::vector<size_t> workspace_size_list = {real_workspace_size};
       SetWorkspaceSizeList(workspace_size_list);
     }
 
-    constexpr size_t kBoostGeneratorSize = 4;
+    constexpr size_t kBoostGeneratorSize = 5;
     if constexpr (std::tuple_size_v<std::tuple<Args...>> == kBoostGeneratorSize) {
       constexpr size_t kHashIdIndex = 3;
       hash_id_ = std::get<kHashIdIndex>(args);
@@ -102,6 +99,19 @@ class AclnnKernelMod : public KernelMod {
       MS_LOG(INTERNAL_EXCEPTION) << "Please check op api's generate!";
     }
     release_func_ = std::get<2>(args);
+
+    constexpr size_t kBoostGeneratorSize = 5;
+    if constexpr (std::tuple_size_v<std::tuple<Args...>> == kBoostGeneratorSize) {
+      constexpr size_t kHashIdIndex = 3;
+      hash_id_ = std::get<kHashIdIndex>(args);
+      if (cache_hash_.count(hash_id_) != 0) {
+        return;
+      }
+      constexpr size_t kHitIndex = 4;
+      if (std::get<kHitIndex>(args)) {
+        cache_hash_.insert(hash_id_);
+      }
+    }
   }
 
   void RunOp(void *stream_ptr, const std::vector<KernelTensor *> &workspace);
@@ -148,6 +158,7 @@ class AclnnKernelMod : public KernelMod {
   CallBackFunc release_func_{nullptr};
   std::string op_type_;
   uint64_t hash_id_{0};
+  std::unordered_set<uint64_t> cache_hash_;
 };
 
 using AclnnKernelModPtr = std::shared_ptr<AclnnKernelMod>;
@@ -161,8 +172,19 @@ using AclnnKernelModPtrList = std::vector<AclnnKernelModPtr>;
     ~Aclnn##TYPE##KernelMod() = default;                                                                      \
     void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,                                          \
                           const std::vector<KernelTensor *> &outputs) override {                              \
-      auto executor_info = GenExecutor(inputs, outputs);                                                      \
-      this->UpdateWorkspace(executor_info);                                                                   \
+      const auto &res_tuple = this->GetKernelTuple<N>(inputs, outputs);                                       \
+      std::apply(                                                                                             \
+        [this](const auto &... args) {                                                                        \
+          hash_id_ = transform::CalcOpApiHash(args...);                                                       \
+          if (cache_hash_.count(hash_id_) == 0) {                                                             \
+            auto return_value = GEN_EXECUTOR_CUST(op_type_, args...);                                         \
+            UpdateWorkspace(return_value);                                                                    \
+          } else {                                                                                            \
+            auto return_value = GEN_EXECUTOR_BOOST(op_type_, hash_id_, args...);                              \
+            UpdateWorkspace(return_value);                                                                    \
+          }                                                                                                   \
+        },                                                                                                    \
+        res_tuple);                                                                                           \
     }                                                                                                         \
     bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,      \
                 const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {                      \

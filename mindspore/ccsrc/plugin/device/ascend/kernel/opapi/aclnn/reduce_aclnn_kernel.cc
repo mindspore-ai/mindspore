@@ -25,8 +25,7 @@ void ReduceAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &i
                                             const std::vector<KernelTensor *> &outputs) {
   dims_ = transform::ConvertKernelTensor<std::vector<int64_t>>(inputs[kIndex1]);
   keep_dim_ = transform::ConvertKernelTensor<bool>(inputs[kIndex2]);
-  auto return_value = GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], dims_, keep_dim_, outputs[kIndex0]);
-  UpdateWorkspace(return_value);
+  GetWorkspaceForResize(inputs[kIndex0], dims_, keep_dim_, outputs[kIndex0]);
 }
 
 bool ReduceAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
