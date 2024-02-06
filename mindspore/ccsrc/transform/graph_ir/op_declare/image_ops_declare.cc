@@ -61,6 +61,40 @@ OUTPUT_MAP(ResizeBilinearV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ResizeBilinearV2, kNameResizeBilinearV2, ADPT_DESC(ResizeBilinearV2))
 REG_ADPT_DESC(ResizeBilinearV2D, kResizeBilinearV2DOpName, ADPT_DESC(ResizeBilinearV2))
 
+// UpsampleTrilinear3d
+INPUT_MAP(UpsampleTrilinear3d) = {{1, INPUT_DESC(x)}};
+INPUT_ATTR_MAP(UpsampleTrilinear3d) = {{kIndex2, ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())},
+                                       {kIndex3, ATTR_DESC(scales, AnyTraits<std::vector<float>>())}};
+ATTR_MAP(UpsampleTrilinear3d) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+OUTPUT_MAP(UpsampleTrilinear3d) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(UpsampleTrilinear3d, kUpsampleTrilinear3DOpName, ADPT_DESC(UpsampleTrilinear3d))
+
+// UpsampleTrilinear3dGrad
+INPUT_MAP(UpsampleTrilinear3dGrad) = {{1, INPUT_DESC(grad_output)}};
+INPUT_ATTR_MAP(UpsampleTrilinear3dGrad) = {{kIndex2, ATTR_DESC(input_size, AnyTraits<std::vector<int64_t>>())},
+                                           {kIndex3, ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())},
+                                           {kIndex4, ATTR_DESC(scales, AnyTraits<std::vector<float>>())}};
+ATTR_MAP(UpsampleTrilinear3dGrad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+OUTPUT_MAP(UpsampleTrilinear3dGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(UpsampleTrilinear3dGrad, kUpsampleTrilinear3DGradOpName, ADPT_DESC(UpsampleTrilinear3dGrad))
+
+// UpsampleNearest3d
+INPUT_MAP(UpsampleNearest3d) = {{1, INPUT_DESC(x)}};
+INPUT_ATTR_MAP(UpsampleNearest3d) = {{kIndex2, ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())},
+                                     {kIndex3, ATTR_DESC(scales, AnyTraits<std::vector<float>>())}};
+ATTR_MAP(UpsampleNearest3d) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(UpsampleNearest3d) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(UpsampleNearest3d, kUpsampleNearest3DOpName, ADPT_DESC(UpsampleNearest3d))
+
+// UpsampleNearest3dGrad
+INPUT_MAP(UpsampleNearest3dGrad) = {{1, INPUT_DESC(grad_output)}};
+INPUT_ATTR_MAP(UpsampleNearest3dGrad) = {{kIndex2, ATTR_DESC(input_size, AnyTraits<std::vector<int64_t>>())},
+                                         {kIndex3, ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())},
+                                         {kIndex4, ATTR_DESC(scales, AnyTraits<std::vector<float>>())}};
+ATTR_MAP(UpsampleNearest3dGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(UpsampleNearest3dGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(UpsampleNearest3dGrad, kUpsampleNearest3DGradOpName, ADPT_DESC(UpsampleNearest3dGrad))
+
 // ResizeArea
 INPUT_MAP(ResizeArea) = {{1, INPUT_DESC(images)}, {2, INPUT_DESC(size)}};
 ATTR_INPUT_MAP(ResizeArea) = {{"size", "size"}};
