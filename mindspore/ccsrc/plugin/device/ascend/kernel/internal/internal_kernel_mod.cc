@@ -64,13 +64,13 @@ uint64_t InternalKernelMod::GenTilingCacheKey(const std::vector<KernelTensor *> 
 
 void InternalKernelMod::SetTilingInfo(const uint64_t key) {
   size_t tiling_size = impl_->GetTilingBufSize();
-  auto tiling_func = [this](internal::HostRawBuf &host_buf, internal::RunInfo &run_info) {
+  auto tiling_func = [this](internal::HostRawBuf &host_buf, internal::CacheInfo &cache_info) {
     auto ret = this->impl_->Tiling(host_buf);
-    this->impl_->GetRunInfo().CopyTo(run_info);
+    cache_info = this->impl_->GetCacheInfo();
     return ret;
   };
   tiling_info_ = TilingCacheMgr::GetInstance().GetOrCreateTilingInfo(key, tiling_func, tiling_size);
-  impl_->SetRunInfo(tiling_info_.run_info_);
+  impl_->SetCacheInfo(tiling_info_.cache_info_);
   impl_->SetDeviceTilingBuf(tiling_info_.device_buf_);
 }
 

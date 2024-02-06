@@ -34,7 +34,7 @@ namespace mindspore::kernel {
 
 struct TilingInfo {
   internal::DeviceRawBuf device_buf_;
-  internal::RunInfo run_info_;
+  internal::CacheInfo cache_info_;
 
   TilingInfo() {
     this->device_buf_.size_ = 0;
@@ -43,12 +43,12 @@ struct TilingInfo {
 
   TilingInfo(const TilingInfo &other) {
     this->device_buf_ = other.device_buf_;
-    other.run_info_.CopyTo(this->run_info_);
+    cache_info_ = other.cache_info_;
   }
 
   const TilingInfo &operator=(const TilingInfo &other) {
     this->device_buf_ = other.device_buf_;
-    other.run_info_.CopyTo(this->run_info_);
+    cache_info_ = other.cache_info_;
     return *this;
   }
 };
@@ -89,7 +89,7 @@ class TilingCacheMgr {
 
   // Get the device tiling buffer form cache if exist, else create a new one.
   TilingInfo GetOrCreateTilingInfo(const uint64_t key,
-                                   const std::function<int(internal::HostRawBuf &, internal::RunInfo &)> &tiling_func,
+                                   const std::function<int(internal::HostRawBuf &, internal::CacheInfo &)> &tiling_func,
                                    size_t tiling_size);
   // Clear all the resource used in tiling cache.
   void Clear();
