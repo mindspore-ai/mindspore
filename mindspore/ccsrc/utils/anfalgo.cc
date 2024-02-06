@@ -2005,7 +2005,8 @@ bool AnfAlgo::IsNopNode(const AnfNodePtr &node) {
                                                       prim::kPrimTupleToTensor->name(),
                                                       prim::kPrimScalarToTensor->name(),
                                                       prim::kPrimTensorToTuple->name(),
-                                                      prim::kPrimTensorToScalar->name()};
+                                                      prim::kPrimTensorToScalar->name(),
+                                                      "ReshapeExt"};
   if (node == nullptr || !node->isa<CNode>()) {
     return false;
   }
