@@ -925,7 +925,7 @@ class ReduceLROnPlateau:
         else:
             ops.assign_add(self.wait, self.increase_tensor)
 
-        if self.in_cooldown:
+        if self.in_cooldown():
             ops.assign_sub(self.cooldown_counter, self.increase_tensor)
             ops.assign(self.wait, 0)
 
@@ -944,7 +944,6 @@ class ReduceLROnPlateau:
                 ops.assign(lr, new_lr)
         return True
 
-    @property
     def in_cooldown(self):
         """ Whether in cooldown period. """
         return self.cooldown_counter > 0
