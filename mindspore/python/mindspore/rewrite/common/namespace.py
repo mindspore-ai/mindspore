@@ -58,7 +58,10 @@ def is_ms_function(func_obj):
     except TypeError:
         return False
     func_file = os.path.normcase(func_file)
-    ms_path = sys.modules['mindspore'].__file__
+    ms_module = sys.modules.get('mindspore')
+    if ms_module is None:
+        return False
+    ms_path = ms_module.__file__
     ms_path = os.path.normcase(ms_path)
     ms_path = ms_path.rsplit(os.path.sep, 1)[0]
     return func_file.startswith(ms_path)

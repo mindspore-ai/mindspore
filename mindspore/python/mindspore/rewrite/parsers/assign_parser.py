@@ -67,7 +67,7 @@ class AssignParser(Parser):
         self.node_manager: NodeManager = None
         self.targets: List[ScopedValue] = None
         self.args: List[ScopedValue] = None
-        self.kwargs: List[ScopedValue] = None
+        self.kwargs: Dict[str, ScopedValue] = None
 
     @staticmethod
     def _get_func_name(ast_call: ast.Call) -> str:
@@ -117,7 +117,7 @@ class AssignParser(Parser):
         return targets
 
     @staticmethod
-    def _create_kwargs(keywords: [ast.keyword]) -> {str, ScopedValue}:
+    def _create_kwargs(keywords: [ast.keyword]) -> Dict[str, ScopedValue]:
         """
         Transfer ast.Call keywords to a dict of ScopedValue when creating a symbol tree node.
 
@@ -797,7 +797,7 @@ class AssignParser(Parser):
         Convert ast node of ast.Subscript to a symbol tree node.
         """
         targets = AssignParser._create_targets(self.ast_assign.targets[0])
-        args = [AstConverter.create_scopedvalue(ast_subscript),]
+        args = [AstConverter.create_scopedvalue(ast_subscript)]
         node = Node.create_call_method(self.ast_assign, targets, "pass_through", args, {}, "subscript_var")
         self.stree.append_origin_field(node, self.node_manager)
 
@@ -825,7 +825,6 @@ class AssignParser(Parser):
         self.stree = stree
         self.ast_assign = node
         self.node_manager = node_manager
-        # TODO: 节点插入时的RunTimeError处理
         value = node.value
         if isinstance(value, ast.Call):
             self.process_ast_call(value)

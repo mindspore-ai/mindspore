@@ -199,28 +199,28 @@ class ClassNamer(Namer):
             ClassNamer._instance = ClassNamer()
         return ClassNamer._instance
 
-    def get_name(self, origin_class_name: str) -> str:
+    def get_name(self, origin_name: str) -> str:
         """
-        Unique input `origin_class_name`.
+        Unique input `origin_name`.
 
         Args:
-            origin_class_name (str): A string represents original class name.
+            origin_name (str): A string represents original class name.
 
         Returns:
-            A string represents a unique class name generated from `origin_class_name`.
+            A string represents a unique class name generated from `origin_name`.
         """
 
-        return super(ClassNamer, self).get_name(origin_class_name + self._prefix)
+        return super(ClassNamer, self).get_name(origin_name + self._prefix)
 
-    def add_name(self, class_name: str):
+    def add_name(self, name: str):
         """
-        Declare a `class_name` so that other class can not apply this `class_name` anymore.
+        Declare a `name` so that other class can not apply this `name` anymore.
 
         Args:
-            class_name (str): A string represents a class name.
+            name (str): A string represents a class name.
         """
 
-        super(ClassNamer, self).add_name(class_name + self._prefix)
+        super(ClassNamer, self).add_name(name + self._prefix)
 
 class FunctionNamer(Namer):
     """
@@ -247,25 +247,25 @@ class FunctionNamer(Namer):
             FunctionNamer._instance = FunctionNamer()
         return FunctionNamer._instance
 
-    def get_name(self, origin_func_name: str) -> str:
+    def get_name(self, origin_name: str) -> str:
         """
-        Unique input `origin_func_name`.
+        Unique input `origin_name`.
 
         Args:
-            origin_func_name (str): A string represents original function name.
+            origin_name (str): A string represents original function name.
 
         Returns:
-            A string represents a unique function name generated from `origin_func_name`.
+            A string represents a unique function name generated from `origin_name`.
         """
 
-        return super(FunctionNamer, self).get_name(origin_func_name + self._prefix)
+        return super(FunctionNamer, self).get_name(origin_name + self._prefix)
 
-    def add_name(self, func_name: str):
+    def add_name(self, name: str):
         """
-        Declare a `func_name` so that other function can not apply this `func_name` anymore.
+        Declare a `name` so that other function can not apply this `name` anymore.
 
         Args:
-            func_name (str): A string represents a function name.
+            name (str): A string represents a function name.
         """
 
-        super(FunctionNamer, self).add_name(func_name + self._prefix)
+        super(FunctionNamer, self).add_name(name + self._prefix)

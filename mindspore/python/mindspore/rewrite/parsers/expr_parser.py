@@ -25,6 +25,7 @@ if sys.version_info >= (3, 9):
 else:
     import astunparse
 
+
 class ExprParser(Parser):
     """ Class that implements parsing ast.Expr nodes """
 
