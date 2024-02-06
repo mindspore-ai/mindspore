@@ -93,7 +93,7 @@ int InternalKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
     MS_LOG(ERROR) << "op " << op_type_ << " invoke resize failed";
     return KRET_RESIZE_FAILED;
   }
-  if (impl_ = nullptr) {
+  if (impl_ == nullptr) {
     ret = Build(inputs, outputs);
     if (ret != 0) {
       MS_LOG(ERROR) << "op " << op_type_ << " build kernel failed";
