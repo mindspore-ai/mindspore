@@ -1064,6 +1064,9 @@ py::object MindCodeBreakGenerator::MakeCopyCode(const std::string &co_name, int 
   auto b = std::dynamic_pointer_cast<MindGraphBuilder>(builder_);
   MS_EXCEPTION_IF_NULL(b);
   auto func_graph = FGBuilder()->graph();
+  if (func_graph == nullptr) {
+    MS_LOG(EXCEPTION) << "Get function graph from function graph builder failed.";
+  }
   std::string phase =
     py::cast<std::string>(co_->co_filename) + "_" + std::to_string(co_->co_firstlineno) + "_" + co_name;
   const auto &parameters = func_graph->parameters();

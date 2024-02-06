@@ -2491,6 +2491,9 @@ bool GraphBuilder::HandlePositionParams(const py::object &func, std::vector<Valu
 }
 
 bool GraphBuilder::HandleCallParameters(const py::object &func_info, CallNode *call_node, FrameStates *frame) {
+  if (func_info.ptr() == nullptr) {
+    MS_LOG(EXCEPTION) << "HandleCallParameters with empty func_info input.";
+  }
   PyCodeObject *co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(func_info.ptr()));
   frame->ResizeLocal(co->co_nlocals);
 
@@ -2691,6 +2694,9 @@ AObject *MindGraphBuilder::HandleMultiOp(const Instr &instr, const std::vector<V
     return AObject::MakeAObject(AObject::kTypeAnyValue);
   }
   auto node = fg_builder_->AddMultiNode(op_name, input_obj);
+  if (node.ptr() == nullptr) {
+    return AObject::MakeAObject(AObject::kTypeAnyValue);
+  }
   return AbstractTraceNode::MakeAObject(node);
 }
 

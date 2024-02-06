@@ -871,6 +871,11 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
       PyFrameObject *f = PrepareCallCompiledCallable(tstate, c->origin_frame_, c);
       frame = py::reinterpret_steal<py::object>(reinterpret_cast<PyObject *>(f));
     }
+    if (c->conf->GetBoolConfig(GraphJitConfig::kTraceFlag)) {
+      PyFrameObject *f = reinterpret_cast<PyFrameObject *>(frame.ptr());
+      GuardForFrame(f, c->code, *c->conf);
+      AddGuardForGlobals(f, c->code->GetGuard(), c->conf->GetBoolConfig(GraphJitConfig::kGuardDetachObject));
+    }
   }
 
   if (c->stat == JitCompileResults::GRAPH_CAPTURED) {
@@ -1403,6 +1408,8 @@ PyObject *EvalFrame(PyThreadState *tstate, PyFrameObject *f, int exc) {
                   << std::string(py::str(reinterpret_cast<PyObject *>(f->f_code)));
 
     e.restore();
+  } catch (const std::exception &) {
+    PyErr_SetString(PyExc_RuntimeError, "CodeHook Failed for one stage");
   }
   if (PyErr_Occurred()) {
     res = py::object();
