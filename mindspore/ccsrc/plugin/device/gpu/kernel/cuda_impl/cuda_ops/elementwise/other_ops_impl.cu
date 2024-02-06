@@ -191,6 +191,12 @@ template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kReciprocal,
     const int8_t *inp, float *out, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kReciprocal, uint8_t, float>(const size_t num,
     const uint8_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kReciprocal, uint16_t, float>(const size_t num,
+    const uint16_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kReciprocal, uint32_t, float>(const size_t num,
+    const uint32_t *inp, float *out, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kReciprocal, uint64_t, float>(const size_t num,
+    const uint64_t *inp, float *out, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t UnaryOpsCudaFunc<ElwiseOpType::kReciprocal, bool, float>(const size_t num,
     const bool *inp, float *out, cudaStream_t cuda_stream);
 

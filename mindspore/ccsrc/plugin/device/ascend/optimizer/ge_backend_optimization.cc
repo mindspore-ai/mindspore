@@ -47,6 +47,7 @@
 #include "plugin/device/ascend/optimizer/ge/shape_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/ge/inputs_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/ge/maketuple_unify_mindir.h"
+#include "plugin/device/ascend/optimizer/ge/reciprocal_fusion.h"
 #include "plugin/device/ascend/optimizer/ge/scalar_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/ge/tuple_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/ir_fission/seed_adapter.h"
@@ -86,6 +87,7 @@ void GEBackendOptimization(const KernelGraphPtr &kernel_graph) {
   opt_ge_pm->AddPass(std::make_shared<opt::AddParallelGroupForHcom>());
   opt_ge_pm->AddPass(std::make_shared<opt::ExpandDimsForBatchNorm>());
   opt_ge_pm->AddPass(std::make_shared<opt::DropoutGenMaskDepend>());
+  opt_ge_pm->AddPass(std::make_shared<opt::ReciprocalFusion>());
   opt_ge_pm->AddPass(std::make_shared<opt::ResizeBilinearAddAttr>());
   opt_ge_pm->AddPass(std::make_shared<opt::AscendConvertTupleInputToDynamicInput>(true, true));
   opt_ge_pm->AddPass(std::make_shared<opt::UnfoldNestedOutput>("unfold_nested_output"));
