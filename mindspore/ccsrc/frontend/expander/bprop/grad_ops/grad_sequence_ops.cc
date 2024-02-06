@@ -117,8 +117,8 @@ REG_BPROP_BUILDER("ListInsert").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
 
 REG_BPROP_BUILDER("TupleToTensor").SetUnusedInputs({i0, i1, i2}).SetBody(SequenceToTensorGrad);
 REG_BPROP_BUILDER("ListToTensor").SetUnusedInputs({i0, i1, i2}).SetBody(SequenceToTensorGrad);
-REG_BPROP_BUILDER("TensorToTuple").SetUnusedInputs({i0, i1, i2}).SetBody(TensorToSequenceGrad);
-REG_BPROP_BUILDER("TensorToList").SetUnusedInputs({i0, i1, i2}).SetBody(TensorToSequenceGrad);
+REG_BPROP_BUILDER("TensorToTuple").SetUnusedInputs({i0, i1}).SetBody(TensorToSequenceGrad);
+REG_BPROP_BUILDER("TensorToList").SetUnusedInputs({i0, i1}).SetBody(TensorToSequenceGrad);
 
 REG_BPROP_BUILDER("ListToTuple").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
@@ -139,9 +139,9 @@ REG_BPROP_BUILDER("ScalarToTensor").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFU
   return {dx, ib->OutZeros(ib->GetInput(kIndex1))};
 });
 
-REG_BPROP_BUILDER("TensorToScalar").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("TensorToScalar").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
-  auto dout = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("ScalarToTensor", {dout, ib->Value<int64_t>(ib->GetDtype(x)->type_id())});
   return {dx};
 });
