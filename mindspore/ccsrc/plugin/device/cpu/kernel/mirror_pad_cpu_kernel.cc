@@ -55,7 +55,7 @@ bool process_dim_one(T *outputs_addr, T *inputs_addr, int64_t *paddings, const i
 
 template <typename T>
 void extract_paddings(const T *paddings_arg, int64_t padd_dim, int64_t *extracted_paddings) {
-  for (int64_t i = 0; i < padd_dim; i++) {
+  for (int64_t i = 0; i < padd_dim && i < MAX_PADDINGS; i++) {
     extracted_paddings[i * PADDING_SIZE] = int64_t(paddings_arg[i * PADDING_SIZE]);
     extracted_paddings[i * PADDING_SIZE + 1] = int64_t(paddings_arg[i * PADDING_SIZE + 1]);
   }
