@@ -127,7 +127,12 @@ std::vector<std::pair<KernelAttr, TileGpuKernelMod::TileLaunchFunc>> TileGpuKern
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeInt32),
-   &TileGpuKernelMod::LaunchKernel<int>},
+   &TileGpuKernelMod::LaunchKernel<int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt8)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt8),
+   &TileGpuKernelMod::LaunchKernel<int8_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeInt64)
      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
@@ -137,12 +142,22 @@ std::vector<std::pair<KernelAttr, TileGpuKernelMod::TileLaunchFunc>> TileGpuKern
      .AddInputAttr(kNumberTypeUInt32)
      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeUInt32),
-   &TileGpuKernelMod::LaunchKernel<int>},
+   &TileGpuKernelMod::LaunchKernel<uint32_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeUInt8)
      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeUInt8),
-   &TileGpuKernelMod::LaunchKernel<int>},
+   &TileGpuKernelMod::LaunchKernel<uint8_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt16)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt16),
+   &TileGpuKernelMod::LaunchKernel<uint16_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt64),
+   &TileGpuKernelMod::LaunchKernel<uint64_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeBool)
      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
