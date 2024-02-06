@@ -898,8 +898,8 @@ void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context, con
     MS_LOG(EXCEPTION) << "Allocate memory failed";
   }
   auto tensor_size = LongToSize(tensor->data().nbytes());
-  if (!device_address->SyncHostToDevice(tensor->shape(), tensor_size, tensor->data_type(), tensor->data_c(),
-                                        device_address->format())) {
+  if (!device_address->SyncHostToDevice(tensor->shape(), tensor_size, tensor->data_type(), device_address->format(),
+                                        tensor->data_ptr())) {
     MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
   }
 }
@@ -959,8 +959,8 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateInputAddress(const DeviceCont
   if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
     MS_LOG(EXCEPTION) << "Allocate memory failed";
   }
-  if (!device_address->SyncHostToDevice(tensor->shape(), tensor_size, tensor->data_type(), tensor->data_c(),
-                                        kernel::GetFormatFromEnumToStr(format))) {
+  if (!device_address->SyncHostToDevice(tensor->shape(), tensor_size, tensor->data_type(),
+                                        kernel::GetFormatFromEnumToStr(format), tensor->data_ptr())) {
     MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
   }
   MS_LOG(DEBUG) << "Create input tensor device address " << device_address << " for " << index

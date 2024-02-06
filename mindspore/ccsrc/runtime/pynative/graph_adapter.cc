@@ -125,7 +125,7 @@ bool CopyTensorData(const tensor::TensorPtr &tensor, const device::DeviceAddress
   auto host_tensor_size = LongToSize(tensor->data().nbytes());
   auto host_tensor_type = tensor->data_type();
   if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0), host_tensor_size, host_tensor_type,
-                                        tensor->data_c(), tensor->device_info().host_format_)) {
+                                        tensor->device_info().host_format_, tensor->data_ptr())) {
     std::string error_info = "SyncHostToDevice failed, node name: " + node->fullname_with_scope() +
                              ", tensor size: " + std::to_string(host_tensor_size) +
                              ", tensor type: " + std::to_string(static_cast<int>(host_tensor_type)) +

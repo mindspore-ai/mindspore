@@ -270,8 +270,8 @@ void AllocateMemForTensor(const tensor::TensorPtr &tensor, DeviceContext *device
 
   auto tensor_size = LongToSize(tensor->data().nbytes());
   auto tensor_type = tensor->data_type();
-  if (!device_address->SyncHostToDevice(tensor->shape(), tensor_size, tensor_type, tensor->data_c(),
-                                        tensor->device_info().host_format_)) {
+  if (!device_address->SyncHostToDevice(tensor->shape(), tensor_size, tensor_type, tensor->device_info().host_format_,
+                                        tensor->data_ptr())) {
     MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
   }
 }
