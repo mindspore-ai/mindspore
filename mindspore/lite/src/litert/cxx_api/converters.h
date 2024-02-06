@@ -24,14 +24,12 @@
 #include "include/api/cfg.h"
 #include "include/train/train_cfg.h"
 #include "src/litert/inner_context.h"
-#include "src/litert/c_api/context_c.h"
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
 class MS_API ContextUtils {
  public:
   static std::shared_ptr<lite::InnerContext> Convert(Context *context);
-  static std::shared_ptr<lite::InnerContext> Convert(const ContextC *context_c);
 
  private:
   static void SetContextAttr(int32_t thread_num, int32_t inter_op_parallel_num, bool enable_parallel,

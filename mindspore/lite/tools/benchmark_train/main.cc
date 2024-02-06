@@ -17,7 +17,8 @@
 #include <malloc.h>
 #include <unistd.h>
 #include <fstream>
-#include "tools/benchmark_train/net_train.h"
+#include <iostream>
+#include "tools/benchmark_train/run_net_train.h"
 
 void PrintMem() {
   std::string proc_file = "/proc/" + std::to_string(getpid()) + "/status";

@@ -31,18 +31,23 @@ MSTensorHandle MSTensorCreate(const char *name, MSDataType type, const int64_t *
   }
   auto lite_tensor =
     mindspore::lite::Tensor::CreateTensor(name, static_cast<mindspore::TypeId>(type), vec_shape, data, data_len);
-  auto impl = new (std::nothrow) mindspore::LiteTensorImpl(lite_tensor);
-  if (impl == nullptr || impl->lite_tensor() == nullptr) {
+  auto lite_tensor_impl = std::make_shared<mindspore::LiteTensorImpl>(lite_tensor);
+  if (lite_tensor_impl == nullptr || lite_tensor_impl->lite_tensor() == nullptr) {
     MS_LOG(ERROR) << "Failed to allocate tensor impl.";
     return nullptr;
   }
-  impl->set_from_session(false);
+  lite_tensor_impl->set_from_session(false);
+  auto impl = new (std::nothrow) mindspore::MSTensor(lite_tensor_impl);
+  if (impl == nullptr) {
+    MS_LOG(ERROR) << "Failed to allocate MSTensor.";
+    return nullptr;
+  }
   return impl;
 }
 
 void MSTensorDestroy(MSTensorHandle *tensor) {
   if (tensor != nullptr && *tensor != nullptr) {
-    auto impl = static_cast<mindspore::LiteTensorImpl *>(*tensor);
+    auto impl = static_cast<mindspore::MSTensor *>(*tensor);
     delete impl;
     *tensor = nullptr;
   }
@@ -53,21 +58,14 @@ MSTensorHandle MSTensorClone(MSTensorHandle tensor) {
     MS_LOG(ERROR) << "param is nullptr.";
     return nullptr;
   }
-  auto impl = static_cast<mindspore::LiteTensorImpl *>(tensor);
-  auto lite_tensor = static_cast<mindspore::lite::Tensor *>(impl->lite_tensor());
-  auto clone = mindspore::lite::Tensor::CopyTensor(*lite_tensor, true, lite_tensor->allocator());
-  if (clone == nullptr) {
-    MS_LOG(ERROR) << "Failed to allocate tensor.";
-    return nullptr;
-  }
-  auto clone_impl = new (std::nothrow) mindspore::LiteTensorImpl(clone);
+  auto impl = static_cast<mindspore::MSTensor *>(tensor);
+  auto clone_impl = impl->Clone();
   if (clone_impl == nullptr) {
-    delete clone;
     MS_LOG(ERROR) << "Failed to allocate tensor impl.";
     return nullptr;
   }
-  clone_impl->set_from_session(false);
-  clone_impl->set_own_data(true);
+  std::static_pointer_cast<mindspore::LiteTensorImpl>(clone_impl->impl())->set_own_data(false);
+  clone_impl->SetTensorName(impl->Name() + "_duplicate");
   return clone_impl;
 }
 
@@ -76,8 +74,8 @@ void MSTensorSetName(MSTensorHandle tensor, const char *name) {
     MS_LOG(ERROR) << "param is nullptr.";
     return;
   }
-  auto impl = static_cast<mindspore::LiteTensorImpl *>(tensor);
-  impl->SetName(name);
+  auto impl = static_cast<mindspore::MSTensor *>(tensor);
+  impl->SetTensorName(name);
 }
 
 const char *MSTensorGetName(const MSTensorHandle tensor) {
@@ -85,8 +83,8 @@ const char *MSTensorGetName(const MSTensorHandle tensor) {
     MS_LOG(ERROR) << "param is nullptr.";
     return nullptr;
   }
-  auto impl = static_cast<mindspore::LiteTensorImpl *>(tensor);
-  return impl->Name().c_str();
+  auto ms_tensor = static_cast<mindspore::MSTensor *>(tensor);
+  return std::static_pointer_cast<mindspore::LiteTensorImpl>(ms_tensor->impl())->Name().c_str();
 }
 
 void MSTensorSetDataType(MSTensorHandle tensor, MSDataType type) {
@@ -94,7 +92,7 @@ void MSTensorSetDataType(MSTensorHandle tensor, MSDataType type) {
     MS_LOG(ERROR) << "param is nullptr.";
     return;
   }
-  auto impl = static_cast<mindspore::LiteTensorImpl *>(tensor);
+  auto impl = static_cast<mindspore::MSTensor *>(tensor);
   impl->SetDataType(static_cast<mindspore::DataType>(type));
 }
 
@@ -103,7 +101,7 @@ MSDataType MSTensorGetDataType(const MSTensorHandle tensor) {
     MS_LOG(ERROR) << "param is nullptr.";
     return kMSDataTypeUnknown;
   }
-  auto impl = static_cast<mindspore::LiteTensorImpl *>(tensor);
+  auto impl = static_cast<mindspore::MSTensor *>(tensor);
   auto dtype = impl->DataType();
   return static_cast<MSDataType>(dtype);
 }
@@ -113,7 +111,7 @@ void MSTensorSetShape(MSTensorHandle tensor, const int64_t *shape, size_t shape_
     MS_LOG(ERROR) << "param is nullptr.";
     return;
   }
-  auto impl = static_cast<mindspore::LiteTensorImpl *>(tensor);
+  auto impl = static_cast<mindspore::MSTensor *>(tensor);
   std::vector<int64_t> vec_shape(shape_num);
   for (size_t i = 0; i < shape_num; i++) {
     vec_shape[i] = shape[i];
@@ -126,7 +124,7 @@ const int64_t *MSTensorGetShape(const MSTensorHandle tensor, size_t *shape_num) 
     MS_LOG(ERROR) << "param is nullptr.";
     return nullptr;
   }
-  auto impl = static_cast<mindspore::LiteTensorImpl *>(tensor);
+  auto impl = static_cast<mindspore::MSTensor *>(tensor);
   *shape_num = impl->Shape().size();
   return impl->Shape().data();
 }
@@ -136,7 +134,7 @@ void MSTensorSetFormat(MSTensorHandle tensor, MSFormat format) {
     MS_LOG(ERROR) << "param is nullptr.";
     return;
   }
-  auto impl = static_cast<mindspore::LiteTensorImpl *>(tensor);
+  auto impl = static_cast<mindspore::MSTensor *>(tensor);
   return impl->SetFormat(static_cast<mindspore::Format>(format));
 }
 
@@ -145,8 +143,8 @@ MSFormat MSTensorGetFormat(const MSTensorHandle tensor) {
     MS_LOG(ERROR) << "param is nullptr.";
     return kMSFormatNHWC;
   }
-  auto impl = static_cast<mindspore::LiteTensorImpl *>(tensor);
-  return static_cast<MSFormat>(impl->Format());
+  auto impl = static_cast<mindspore::MSTensor *>(tensor);
+  return static_cast<MSFormat>(impl->format());
 }
 
 void MSTensorSetData(MSTensorHandle tensor, void *data) {
@@ -154,7 +152,7 @@ void MSTensorSetData(MSTensorHandle tensor, void *data) {
     MS_LOG(ERROR) << "param is nullptr.";
     return;
   }
-  auto impl = static_cast<mindspore::LiteTensorImpl *>(tensor);
+  auto impl = static_cast<mindspore::MSTensor *>(tensor);
   return impl->SetData(data, true);
 }
 
@@ -163,7 +161,7 @@ const void *MSTensorGetData(const MSTensorHandle tensor) {
     MS_LOG(ERROR) << "param is nullptr.";
     return nullptr;
   }
-  auto impl = static_cast<mindspore::LiteTensorImpl *>(tensor);
+  auto impl = static_cast<mindspore::MSTensor *>(tensor);
   return impl->Data().get();
 }
 
@@ -172,7 +170,7 @@ void *MSTensorGetMutableData(const MSTensorHandle tensor) {
     MS_LOG(ERROR) << "param is nullptr.";
     return nullptr;
   }
-  auto impl = static_cast<mindspore::LiteTensorImpl *>(tensor);
+  auto impl = static_cast<mindspore::MSTensor *>(tensor);
   return impl->MutableData();
 }
 
@@ -181,7 +179,7 @@ int64_t MSTensorGetElementNum(const MSTensorHandle tensor) {
     MS_LOG(ERROR) << "param is nullptr.";
     return 0;
   }
-  auto impl = static_cast<mindspore::LiteTensorImpl *>(tensor);
+  auto impl = static_cast<mindspore::MSTensor *>(tensor);
   return impl->ElementNum();
 }
 
@@ -190,6 +188,6 @@ size_t MSTensorGetDataSize(const MSTensorHandle tensor) {
     MS_LOG(ERROR) << "param is nullptr.";
     return 0;
   }
-  auto impl = static_cast<mindspore::LiteTensorImpl *>(tensor);
+  auto impl = static_cast<mindspore::MSTensor *>(tensor);
   return impl->DataSize();
 }

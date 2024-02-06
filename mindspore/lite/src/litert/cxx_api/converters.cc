@@ -171,42 +171,4 @@ std::shared_ptr<lite::InnerContext> ContextUtils::Convert(Context *context) {
   }
   return inner_context;
 }
-
-std::shared_ptr<lite::InnerContext> ContextUtils::Convert(const ContextC *context_c) {
-  auto inner_context = std::make_shared<lite::InnerContext>();
-  if ((context_c == nullptr) || (inner_context == nullptr)) {
-    MS_LOG(ERROR) << "Invalid context pointers.";
-    return nullptr;
-  }
-  auto device_list = context_c->device_info_list;
-  if (device_list.size() == 0 || device_list.size() > kMaxNumOfDevices) {
-    MS_LOG(ERROR) << "Device num, support min: 1, max: " << kMaxNumOfDevices;
-    return nullptr;
-  }
-  SetContextAttr(context_c->thread_num, 1, context_c->enable_parallel, context_c->affinity_core_list,
-                 context_c->delegate_mode, context_c->delegate, inner_context.get());
-  inner_context->device_list_.clear();
-  Status ret = kLiteError;
-  for (auto &device_info_c : device_list) {
-    MS_CHECK_TRUE_RET(device_info_c != nullptr, nullptr);
-    lite::DeviceInfo device_info = {{0}};
-    if (device_info_c->device_type == kMSDeviceTypeCPU) {
-      if (device_info_c->allocator == nullptr) {
-        device_info_c->allocator = Allocator::Create();
-      }
-      ret = AddCpuDevice(device_info_c->allocator, context_c->affinity_mode, device_info_c->enable_fp16,
-                         device_info_c->provider, device_info_c->provider_device, inner_context.get());
-    } else if (device_info_c->device_type == kMSDeviceTypeGPU) {
-      ret = AddGpuDevice(device_info_c->enable_fp16, 0, 0, 0, false, nullptr, nullptr, device_info_c->provider,
-                         device_info_c->provider_device, device_info_c->allocator, inner_context.get());
-    } else if (device_info_c->device_type == kMSDeviceTypeKirinNPU) {
-      ret = AddNpuDevice(device_info_c->enable_fp16, device_info_c->frequency, inner_context.get());
-    }
-    if (ret != kSuccess) {
-      MS_LOG(ERROR) << "Add device failed!";
-      return nullptr;
-    }
-  }
-  return inner_context;
-}
 }  // namespace mindspore
