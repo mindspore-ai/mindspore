@@ -275,11 +275,11 @@ def _parse_host_info(input_file, output_timeline_file, output_memory_file, is_de
         logger.warning("No valid time_stamp is record in file: %s", input_file)
 
 
-def _ascend_graph_msprof_generator(source_path):
+def _ascend_graph_msprof_generator(source_path, step_list):
     try:
         ProfilerInfo.set_export_start_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
         msprof_exporter = AscendMsprofExporter(source_path)
-        msprof_exporter.export()
+        msprof_exporter.export(step_list)
         ProfilerInfo.set_export_end_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
     except ProfilerException as err:
         logger.warning(err.message)
@@ -457,6 +457,7 @@ class Profiler:
         self._profile_framework = "all"
         self._msprof_enable = os.getenv("PROFILER_SAMPLECONFIG")
         self._pretty_json = False
+        self._step_list = []
         if self._msprof_enable:
             return
         self._start_time = int(time.time() * 1000000)
@@ -589,7 +590,7 @@ class Profiler:
                 return message
         return op_info
 
-    def analyse(self, offline_path=None, pretty=False):
+    def analyse(self, offline_path=None, pretty=False, step_list=None):
         """
         Collect and analyze training performance data, support calls during and after training. The example shows above.
 
@@ -600,6 +601,8 @@ class Profiler:
             pretty (bool, optional): Whether to pretty json files. Default: ``False``.
         """
         self._pretty_json = pretty
+        if isinstance(step_list, list):
+            self._step_list = step_list
         self._analyse(offline_path=offline_path)
 
     def _analyse(self, offline_path=None):
@@ -1284,7 +1287,7 @@ class Profiler:
         source_path = os.path.join(self._output_path, job_id)
         self._minddata_analyse(source_path)
         if self._op_time:
-            _ascend_graph_msprof_generator(source_path)
+            _ascend_graph_msprof_generator(source_path, self._step_list)
             op_summary, op_statistic, steptrace = _ascend_graph_msprof_analyse(source_path)
             self._ascend_op_analyse(op_summary, op_statistic, self._dynamic_status)
             self._ascend_timeline_analyse(op_summary, steptrace)
@@ -1499,7 +1502,7 @@ class Profiler:
 
         for dir_name in sorted_job_dirs:
             prof_dir = os.path.join(self._output_path, dir_name)
-            device_dir = [dir for dir in os.listdir(prof_dir)\
+            device_dir = [dir for dir in os.listdir(prof_dir) \
                           if dir.startswith('device') and os.path.isdir(os.path.join(prof_dir, dir))]
             job_dir = os.path.join(self._output_path, dir_name, device_dir[0])
 
