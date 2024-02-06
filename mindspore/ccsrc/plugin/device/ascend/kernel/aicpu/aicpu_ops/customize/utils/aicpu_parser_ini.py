@@ -110,6 +110,7 @@ cust_op_lists = [
     "log1p",
     "lognormalreverse",
     "logspace",
+    "loguniformcandidatesampler",
     "lowerbound",
     "lusolve",
     "luunpack",

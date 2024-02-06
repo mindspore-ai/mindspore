@@ -56,6 +56,7 @@ class CandidateSamplerKernel : public KernelBase {
   bool unique_;
   int64_t range_max_;
   int64_t seed_;
+  std::mt19937 rng_;
   std::unique_ptr<RangeSampler> sampler_;
 
   int batch_size_;

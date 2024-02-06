@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Huawei Technologies Co., Ltd
+# Copyright 2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,12 +23,12 @@ from mindspore.common import dtype as mstype
 
 
 class Net(nn.Cell):
-    def __init__(self, num_true=1, num_sampled=5, unique=True, range_max=5, seed=0):
+    def __init__(self):
         super(Net, self).__init__()
-        self.sampler = P.LogUniformCandidateSampler(num_true, num_sampled, unique, range_max, seed)
+        self.real = P.Real()
 
-    def construct(self, x):
-        return self.sampler(x)
+    def construct(self, input_ms):
+        return self.real(input_ms)
 
 
 @pytest.mark.level0
@@ -36,20 +36,20 @@ class Net(nn.Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.parametrize("context_mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_net_false(context_mode):
+def test_net_2D_complex64(context_mode):
     """
-    Feature: aicpu ops LogUniformCandidateSampler.
-    Description: test LogUniformCandidateSampler forward.
+    Feature: aicpu ops Real.
+    Description: test Real forward.
     Expectation: expect correct result.
     """
     context.set_context(mode=context_mode, device_target="Ascend")
-    x = np.array([[1, 7], [0, 4], [3, 3]])
-    net = Net(2, 5, False, 10)
-    output = net(Tensor(x, mstype.int64))
-    assert output[0].shape == (5,)
-    assert output[1].shape == (3, 2)
-    assert output[2].shape == (5,)
-
+    real = np.random.randn(3, 4).astype(np.float32)
+    img = np.random.randn(3, 4).astype(np.float32) * 1j
+    input_np = real + img
+    input_ms = Tensor(input_np, mstype.complex64)
+    net = Net()
+    output = net(input_ms)
+    assert np.allclose(output.asnumpy(), real)
 
 
 @pytest.mark.level1
@@ -57,16 +57,17 @@ def test_net_false(context_mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.parametrize("context_mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_net_true(context_mode):
+def test_net_3D_complex128(context_mode):
     """
-    Feature: aicpu ops LogUniformCandidateSampler.
-    Description: test LogUniformCandidateSampler forward.
+    Feature: aicpu ops Real.
+    Description: test Real forward.
     Expectation: expect correct result.
     """
     context.set_context(mode=context_mode, device_target="Ascend")
-    x = np.array([[1, 7], [0, 4], [3, 3]])
-    net = Net(2, 5, True, 5)
-    output = net(Tensor(x, mstype.int64))
-    assert output[0].shape == (5,)
-    assert output[1].shape == (3, 2)
-    assert output[2].shape == (5,)
+    real = np.random.randn(3, 4).astype(np.float64)
+    img = np.random.randn(3, 4).astype(np.float64) * 1j
+    input_np = real + img
+    input_ms = Tensor(input_np, mstype.complex128)
+    net = Net()
+    output = net(input_ms)
+    assert np.allclose(output.asnumpy(), real)
