@@ -381,7 +381,6 @@ const std::set<std::string> kDynamicInputOps{kRaggedTensorToTensor,
 const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kKLDivLoss, "KLDiv"},
   {kKLDivLossGrad, "KlDivLossGrad"},
-  {kHistogram, "HistogramD"},
   {kMaxPoolV1, "MaxPool"},
   {kCol2Im, "Col2im"},
   {kIm2Col, "Im2col"},

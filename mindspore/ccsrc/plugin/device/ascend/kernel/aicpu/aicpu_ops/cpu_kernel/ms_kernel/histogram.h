@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef AICPU_KERNELS_HISTOGRAMD_H_
-#define AICPU_KERNELS_HISTOGRAMD_H_
+#ifndef AICPU_KERNELS_HISTOGRAM_H_
+#define AICPU_KERNELS_HISTOGRAM_H_
 
 #include "cpu_kernel_utils.h"
 
 namespace aicpu {
-class HistogramDCpuKernel : public CpuKernel {
+class HistogramCpuKernel : public CpuKernel {
  public:
-  HistogramDCpuKernel() = default;
-  ~HistogramDCpuKernel() override = default;
+  HistogramCpuKernel() = default;
+  ~HistogramCpuKernel() override = default;
 
  protected:
   uint32_t Compute(CpuKernelContext &ctx) override;
