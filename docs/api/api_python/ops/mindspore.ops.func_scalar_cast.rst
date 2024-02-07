@@ -15,4 +15,4 @@ mindspore.ops.scalar_cast
         Scalar，类型与 `input_y` 对应的python类型相同。
 
     异常：
-        - **TypeError** - 如果 `input_y` 不是合法值。
+        - **ValueError** - 如果 `input_y` 不是合法值。
