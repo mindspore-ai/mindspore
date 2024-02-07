@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <utility>
 #include "pipeline/pynative/forward/cast_base.h"
 
 namespace mindspore {
@@ -40,10 +41,10 @@ class CastOperation : public CastBaseOperation {
                                         size_t index) const;
   ValuePtr DoParamMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, bool *is_cast, const ValuePtr &v,
                                    const std::string &op_name, size_t index) const;
-  ValuePtr DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, const TypeId &type_id,
-                      const std::string &op_name, size_t index) const;
+  ValuePtr DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v,
+                      const std::pair<TypeId, bool> &dst_type, const std::string &op_name, size_t index) const;
   void DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
-                       const mindspore::HashMap<SignatureEnumDType, TypeId> &dst_type,
+                       const mindspore::HashMap<SignatureEnumDType, std::pair<TypeId, bool>> &dst_type,
                        const std::vector<SignatureEnumDType> &dtypes) const;
   void SetImplicitCast(const FrontendOpRunInfoPtr &op_run_info);
 };

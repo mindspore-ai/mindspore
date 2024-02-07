@@ -20,77 +20,10 @@
 #include <algorithm>
 #include "mindspore/core/ops/array_ops.h"
 #include "pipeline/pynative/pynative_utils.h"
-#include "include/common/utils/stub_tensor.h"
 #include "include/common/profiler.h"
 
 namespace mindspore {
 namespace pynative {
-namespace {
-template <typename S>
-ValuePtr Cast(S in, const TypeId &dst_type_id) {
-  switch (dst_type_id) {
-    case kNumberTypeInt32:
-      return std::make_shared<tensor::Tensor>(static_cast<int>(in), kInt32);
-    case kNumberTypeFloat16:
-      return std::make_shared<tensor::Tensor>(static_cast<float16>(in), kFloat16);
-    case kNumberTypeFloat32:
-      return std::make_shared<tensor::Tensor>(static_cast<float>(in), kFloat32);
-    case kNumberTypeBool:
-      return std::make_shared<tensor::Tensor>(static_cast<bool>(in), kBool);
-    case kNumberTypeInt64:
-      return std::make_shared<tensor::Tensor>(static_cast<int64_t>(in), kInt64);
-    case kNumberTypeFloat64:
-      return std::make_shared<tensor::Tensor>(static_cast<double>(in), kFloat64);
-    case kNumberTypeInt16:
-      return std::make_shared<tensor::Tensor>(static_cast<int16_t>(in), kInt16);
-    case kNumberTypeInt8:
-      return std::make_shared<tensor::Tensor>(static_cast<int8_t>(in), kInt8);
-    case kNumberTypeUInt64:
-      return std::make_shared<tensor::Tensor>(static_cast<uint64_t>(in), kUInt64);
-    case kNumberTypeUInt32:
-      return std::make_shared<tensor::Tensor>(static_cast<uint32_t>(in), kUInt32);
-    case kNumberTypeUInt16:
-      return std::make_shared<tensor::Tensor>(static_cast<uint16_t>(in), kUInt16);
-    case kNumberTypeUInt8:
-      return std::make_shared<tensor::Tensor>(static_cast<uint8_t>(in), kUInt8);
-    case kNumberTypeBFloat16:
-      return std::make_shared<tensor::Tensor>(static_cast<bfloat16>(in), kBFloat16);
-    default:
-      MS_LOG(DEBUG) << "Not support cast to dst type: " << TypeIdToType(dst_type_id)->ToString();
-      return nullptr;
-  }
-}
-
-// This function is used to convert scalar value to another scalar value with destination data type.
-// The scope of scalar type includes common data types, such as `FP64`, `FP32`, `FP16, `Int64`, `Int32`, ...
-// The following sort is based on the hot spots of the data type.
-ValuePtr ScalarToDstDtypeValue(const ValuePtr &src_value, const TypeId &dst_type_id) {
-  MS_EXCEPTION_IF_NULL(src_value);
-  if (src_value->isa<Int64Imm>()) {
-    const auto &int64_v = src_value->cast<Int64ImmPtr>();
-    return Cast<int64_t>(int64_v->value(), dst_type_id);
-  } else if (src_value->isa<FP32Imm>()) {
-    const auto &fp32_v = src_value->cast<FP32ImmPtr>();
-    return Cast<float>(fp32_v->value(), dst_type_id);
-  } else if (src_value->isa<Int32Imm>()) {
-    const auto &int32_v = src_value->cast<Int32ImmPtr>();
-    return Cast<int32_t>(int32_v->value(), dst_type_id);
-  } else if (src_value->isa<FP64Imm>()) {
-    const auto &fp64_v = src_value->cast<FP64ImmPtr>();
-    return Cast<double>(fp64_v->value(), dst_type_id);
-  } else if (src_value->isa<BoolImm>()) {
-    const auto &bool_v = src_value->cast<BoolImmPtr>();
-    return Cast<bool>(bool_v->value(), dst_type_id);
-  } else if (src_value->isa<Int16Imm>()) {
-    const auto &int16_v = src_value->cast<Int16ImmPtr>();
-    return Cast<int16_t>(int16_v->value(), dst_type_id);
-  } else {
-    MS_LOG(DEBUG) << "Now, the value [" << src_value->ToString() << "] is not supported to cast directly.";
-    return nullptr;
-  }
-}
-}  // namespace
-
 void CastOperation::DoCast(const FrontendOpRunInfoPtr &op_run_info) {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeCast,
                                      op_run_info->base_op_run_info.op_name, true);
@@ -117,7 +50,7 @@ ValuePtr CastOperation::DoNormalCast(const FrontendOpRunInfoPtr &cast_run_info, 
   MS_EXCEPTION_IF_NULL(cast_run_info);
   // Step 1: Cast scalar value to another scalar value with destination data type.
   // It is used to avoid to call `cast infer value function` or launch cast op to backend.
-  ValuePtr dst_value = ScalarToDstDtypeValue(v, type_id);
+  ValuePtr dst_value = ScalarToDstDtypeValue(v, std::make_pair(type_id, true));
   if (dst_value != nullptr) {
     MS_LOG(DEBUG) << "Source value: " << v->ToString() << " cast to value: " << dst_value->ToString();
     cast_run_info->real_out = dst_value;
@@ -146,12 +79,13 @@ ValuePtr CastOperation::DoNormalCast(const FrontendOpRunInfoPtr &cast_run_info, 
   return cast_run_info->real_out;
 }
 
-ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, const TypeId &type_id,
-                                   const std::string &op_name, size_t index) const {
+ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v,
+                                   const std::pair<TypeId, bool> &dst_type, const std::string &op_name,
+                                   size_t index) const {
   MS_EXCEPTION_IF_NULL(v);
   // Step 1: Cast scalar value to another scalar value with destination data type.
   // It is used to avoid to call `cast infer value function` or launch cast op to backend.
-  ValuePtr dst_value = ScalarToDstDtypeValue(v, type_id);
+  ValuePtr dst_value = ScalarToDstDtypeValue(v, dst_type);
   if (dst_value != nullptr) {
     MS_LOG(DEBUG) << "Source value: " << v->ToString() << " cast to value: " << dst_value->ToString();
     return dst_value;
@@ -159,15 +93,15 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   MS_EXCEPTION_IF_NULL(op_run_info);
   if (op_run_info->source_type[index] != ops::OP_DTYPE::DT_BEGIN && v->isa<tensor::Tensor>()) {
     MS_LOG(DEBUG) << "Source value: " << v->ToString();
-    dst_value = TensorToDstDtypeValue(v, type_id);
+    dst_value = TensorToDstDtypeValue(v, dst_type.first);
     MS_LOG(DEBUG) << "Cast to value: " << dst_value->ToString() << "without dispatching cast op";
     return dst_value;
   }
   // When step 1 does not work, creating a cast op to get destination data type value.
   constexpr auto input_size = 2;
   const auto &cast_run_info = std::make_shared<FrontendOpRunInfo>();
-  auto cast_prim = GetPrimByTypeId(type_id);
-  auto type_id64 = std::make_shared<Int64Imm>(static_cast<int64_t>(type_id));
+  auto cast_prim = GetPrimByTypeId(dst_type.first);
+  auto type_id64 = std::make_shared<Int64Imm>(static_cast<int64_t>(dst_type.first));
   cast_run_info->requires_grad = op_run_info->requires_grad;
   cast_run_info->base_op_run_info.op_name = prim::kPrimCast->name();
   cast_run_info->base_op_run_info.is_mixed_precision_cast = true;
@@ -211,7 +145,7 @@ ValuePtr CastOperation::DoParamMixPrecisionCast(const FrontendOpRunInfoPtr &op_r
       MS_LOG(DEBUG) << "MixPrecision cast for " << op_run_info->base_op_run_info.op_name << " " << index
                     << "th input, and to type " << dst_dtype->ToString();
       *is_cast = true;
-      return DoAutoCast(op_run_info, tensor, dst_dtype->type_id(), op_name, index);
+      return DoAutoCast(op_run_info, tensor, std::make_pair(dst_dtype->type_id(), true), op_name, index);
     }
   }
   return v;
@@ -245,7 +179,7 @@ ValuePtr CastOperation::DoParamMixPrecisionCastTuple(const FrontendOpRunInfoPtr 
 }
 
 void CastOperation::DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
-                                    const mindspore::HashMap<SignatureEnumDType, TypeId> &dst_type,
+                                    const mindspore::HashMap<SignatureEnumDType, std::pair<TypeId, bool>> &dst_type,
                                     const std::vector<SignatureEnumDType> &dtypes) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(op_run_info->op_grad_info->op_prim);
@@ -262,7 +196,7 @@ void CastOperation::DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
       continue;
     }
     auto it = dst_type.find(dtypes[i]);
-    if (it == dst_type.end() || it->second == kTypeUnknown) {
+    if (it == dst_type.end() || it->second.first == kTypeUnknown) {
       continue;
     }
     const auto &v = input_args[i];
@@ -282,11 +216,11 @@ void CastOperation::DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
     // Implicit cast
     bool is_same_type = false;
     if (arg_type_id != kTypeUnknown) {
-      is_same_type = (prim::type_map.find(arg_type_id) == prim::type_map.end() || arg_type_id == it->second);
+      is_same_type = (prim::type_map.find(arg_type_id) == prim::type_map.end() || arg_type_id == it->second.first);
     }
     if (sig == SignatureEnumRW::kRWWrite && arg_type_id != kTypeUnknown && !is_same_type) {
       prim::RaiseExceptionForConvertRefDtype(op_run_info->op_grad_info->op_prim, TypeIdToMsTypeStr(arg_type_id),
-                                             TypeIdToMsTypeStr(it->second), i);
+                                             TypeIdToMsTypeStr(it->second.first), i);
     }
     if (is_same_type) {
       continue;
@@ -299,7 +233,7 @@ void CastOperation::DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
                               << "Its type is " << type_str << ". Only support Tensor or Scalar.";
     }
     MS_LOG(DEBUG) << "Implicit cast for " << op_run_info->base_op_run_info.op_name << " " << i
-                  << "th input, and to type " << TypeIdToType(it->second)->ToString();
+                  << "th input, and to type " << TypeIdToType(it->second.first)->ToString();
     input_args[i] = DoAutoCast(op_run_info, v, it->second, op_run_info->base_op_run_info.op_name, i);
   }
 }
@@ -374,7 +308,7 @@ void CastOperation::SetImplicitCast(const FrontendOpRunInfoPtr &op_run_info) {
                                << "signature size " << sig_size;
     }
     mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> type_indexes;
-    mindspore::HashMap<SignatureEnumDType, TypeId> dst_type;
+    mindspore::HashMap<SignatureEnumDType, std::pair<TypeId, bool>> dst_type;
     GetTypeIndex(dtypes, &type_indexes);
     GetDstType(op_run_info, type_indexes, &dst_type);
     DoSignatureCast(op_run_info, dst_type, dtypes);
@@ -386,7 +320,7 @@ void CastOperation::SetImplicitCast(const FrontendOpRunInfoPtr &op_run_info) {
       return;
     }
     MS_LOG(DEBUG) << "Do signature for " << op_run_info->base_op_run_info.op_name << " with cache";
-    mindspore::HashMap<SignatureEnumDType, TypeId> dst_type;
+    mindspore::HashMap<SignatureEnumDType, std::pair<TypeId, bool>> dst_type;
     GetDstType(op_run_info, it->second.type_indexes, &dst_type);
     DoSignatureCast(op_run_info, dst_type, it->second.dtypes);
   }

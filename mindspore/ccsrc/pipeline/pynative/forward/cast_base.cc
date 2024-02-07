@@ -16,7 +16,6 @@
 
 #include "pipeline/pynative/forward/cast_base.h"
 #include <memory>
-#include <utility>
 #include <algorithm>
 #include "ops/array_ops.h"
 #include "frontend/operator/composite/do_signature.h"
@@ -25,7 +24,83 @@ namespace mindspore {
 namespace pynative {
 namespace {
 const char kOpsFunctionModelName[] = "mindspore.ops.functional";
+
+template <typename S>
+ValuePtr CastScalarToScalar(S in, const TypeId &type_id) {
+  switch (type_id) {
+    case kNumberTypeInt32:
+      MakeValue(static_cast<int>(in));
+    case kNumberTypeFloat32:
+      MakeValue(static_cast<float>(in));
+    case kNumberTypeBool:
+      MakeValue(static_cast<bool>(in));
+    case kNumberTypeInt64:
+      MakeValue(static_cast<int64_t>(in));
+    case kNumberTypeFloat64:
+      MakeValue(static_cast<double>(in));
+    case kNumberTypeInt16:
+      MakeValue(static_cast<int16_t>(in));
+    case kNumberTypeInt8:
+      MakeValue(static_cast<int8_t>(in));
+    case kNumberTypeUInt64:
+      MakeValue(static_cast<uint64_t>(in));
+    case kNumberTypeUInt32:
+      MakeValue(static_cast<uint32_t>(in));
+    case kNumberTypeUInt16:
+      MakeValue(static_cast<uint16_t>(in));
+    case kNumberTypeUInt8:
+      MakeValue(static_cast<uint8_t>(in));
+    default:
+      MS_LOG(DEBUG) << "Not support cast to dst type: " << TypeIdToType(type_id)->ToString();
+      return nullptr;
+  }
 }
+
+template <typename S>
+ValuePtr CastScalarToTensor(S in, const TypeId &type_id) {
+  switch (type_id) {
+    case kNumberTypeInt32:
+      return std::make_shared<tensor::Tensor>(static_cast<int>(in), kInt32);
+    case kNumberTypeFloat16:
+      return std::make_shared<tensor::Tensor>(static_cast<float16>(in), kFloat16);
+    case kNumberTypeFloat32:
+      return std::make_shared<tensor::Tensor>(static_cast<float>(in), kFloat32);
+    case kNumberTypeBool:
+      return std::make_shared<tensor::Tensor>(static_cast<bool>(in), kBool);
+    case kNumberTypeInt64:
+      return std::make_shared<tensor::Tensor>(static_cast<int64_t>(in), kInt64);
+    case kNumberTypeFloat64:
+      return std::make_shared<tensor::Tensor>(static_cast<double>(in), kFloat64);
+    case kNumberTypeInt16:
+      return std::make_shared<tensor::Tensor>(static_cast<int16_t>(in), kInt16);
+    case kNumberTypeInt8:
+      return std::make_shared<tensor::Tensor>(static_cast<int8_t>(in), kInt8);
+    case kNumberTypeUInt64:
+      return std::make_shared<tensor::Tensor>(static_cast<uint64_t>(in), kUInt64);
+    case kNumberTypeUInt32:
+      return std::make_shared<tensor::Tensor>(static_cast<uint32_t>(in), kUInt32);
+    case kNumberTypeUInt16:
+      return std::make_shared<tensor::Tensor>(static_cast<uint16_t>(in), kUInt16);
+    case kNumberTypeUInt8:
+      return std::make_shared<tensor::Tensor>(static_cast<uint8_t>(in), kUInt8);
+    case kNumberTypeBFloat16:
+      return std::make_shared<tensor::Tensor>(static_cast<bfloat16>(in), kBFloat16);
+    default:
+      MS_LOG(DEBUG) << "Not support cast to dst type: " << TypeIdToType(type_id)->ToString();
+      return nullptr;
+  }
+}
+
+template <typename S>
+ValuePtr Cast(S in, const std::pair<TypeId, bool> &dst_type) {
+  bool has_tensor_input = dst_type.second;
+  if (has_tensor_input) {
+    return CastScalarToTensor(in, dst_type.first);
+  }
+  return CastScalarToScalar(in, dst_type.first);
+}
+}  // namespace
+
 PrimitivePtr CastBaseOperation::GetPrimByTypeId(const TypeId &type_id) const {
   const auto &iter = type_prim_cache_.find(type_id);
   if (iter != type_prim_cache_.end()) {
@@ -108,7 +183,7 @@ void CastBaseOperation::GetTypeIndex(const std::vector<SignatureEnumDType> &dtyp
 
 void CastBaseOperation::GetDstType(const FrontendOpRunInfoPtr &op_run_info,
                                    const mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> &type_indexes,
-                                   mindspore::HashMap<SignatureEnumDType, TypeId> *dst_type) const {
+                                   mindspore::HashMap<SignatureEnumDType, std::pair<TypeId, bool>> *dst_type) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   constexpr size_t index_size = 2;
   for (auto it = type_indexes.begin(); it != type_indexes.end(); (void)++it) {
@@ -122,6 +197,8 @@ void CastBaseOperation::GetDstType(const FrontendOpRunInfoPtr &op_run_info,
     bool has_scalar_float32 = false;
     bool has_scalar_int64 = false;
     bool has_tensor_int8 = false;
+    // The indexes value has tensor input
+    bool has_tensor_input = false;
     // Find the maximum priority of the same dtype
     for (size_t index : indexes) {
       const auto &v = op_run_info->op_grad_info->input_value[index];
@@ -132,6 +209,7 @@ void CastBaseOperation::GetDstType(const FrontendOpRunInfoPtr &op_run_info,
         has_scalar_int64 = true;
       }
       if (v->isa<tensor::Tensor>()) {
+        has_tensor_input = true;
         auto arg = v->cast<tensor::TensorPtr>();
         TypeId arg_type_id = arg->data_type();
         auto type_priority = prim::type_map.find(arg_type_id);
@@ -159,7 +237,7 @@ void CastBaseOperation::GetDstType(const FrontendOpRunInfoPtr &op_run_info,
     }
     max_type = JudgeMaxType(max_type, has_scalar_float32, has_scalar_int64, has_tensor_int8);
     MS_EXCEPTION_IF_NULL(dst_type);
-    (void)dst_type->emplace(std::make_pair(type, max_type));
+    (*dst_type)[type] = std::make_pair(max_type, has_tensor_input);
   }
 }
 
@@ -212,6 +290,39 @@ tensor::TensorPtr CastBaseOperation::TensorToDstDtypeValue(const ValuePtr &src_v
   MS_EXCEPTION_IF_NULL(src_tensor);
   src_tensor->set_data_type(dst_type_id);
   return src_tensor;
+}
+
+// This function is used to convert scalar value to another scalar value with destination data type.
+// The scope of scalar type includes common data types, such as `FP64`, `FP32`, `FP16, `Int64`, `Int32`, ...
+// The following sort is based on the hot spots of the data type.
+ValuePtr CastBaseOperation::ScalarToDstDtypeValue(const ValuePtr &src_value,
+                                                  const std::pair<TypeId, bool> &dst_type) const {
+  MS_EXCEPTION_IF_NULL(src_value);
+  // Tensor not do scalar cast
+  if (src_value->isa<tensor::Tensor>()) {
+    return nullptr;
+  } else if (src_value->isa<Int64Imm>()) {
+    const auto &int64_v = src_value->cast<Int64ImmPtr>();
+    return Cast<int64_t>(int64_v->value(), dst_type);
+  } else if (src_value->isa<FP32Imm>()) {
+    const auto &fp32_v = src_value->cast<FP32ImmPtr>();
+    return Cast<float>(fp32_v->value(), dst_type);
+  } else if (src_value->isa<Int32Imm>()) {
+    const auto &int32_v = src_value->cast<Int32ImmPtr>();
+    return Cast<int32_t>(int32_v->value(), dst_type);
+  } else if (src_value->isa<FP64Imm>()) {
+    const auto &fp64_v = src_value->cast<FP64ImmPtr>();
+    return Cast<double>(fp64_v->value(), dst_type);
+  } else if (src_value->isa<BoolImm>()) {
+    const auto &bool_v = src_value->cast<BoolImmPtr>();
+    return Cast<bool>(bool_v->value(), dst_type);
+  } else if (src_value->isa<Int16Imm>()) {
+    const auto &int16_v = src_value->cast<Int16ImmPtr>();
+    return Cast<int16_t>(int16_v->value(), dst_type);
+  } else {
+    MS_LOG(DEBUG) << "Now, the value [" << src_value->ToString() << "] is not supported to cast directly.";
+    return nullptr;
+  }
 }
 }  // namespace pynative
 }  // namespace mindspore
