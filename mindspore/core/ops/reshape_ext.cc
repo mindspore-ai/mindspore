@@ -35,7 +35,7 @@ abstract::ShapePtr ReshapeExtInferShape(const PrimitivePtr &primitive, const std
   auto ordinary_input_num = CheckAndConvertUtils::GetRemoveUMonadAbsNum(input_args);
   (void)CheckAndConvertUtils::CheckInteger("inputs num", SizeToLong(ordinary_input_num), kEqual, kReshapeExtInputsNum,
                                            op_name);
-  auto key_shape_ptr = input_args[0]->GetShape()->GetShapeVector();
+  auto key_shape_ptr = input_args[1]->GetShape()->GetShapeVector();
   int64_t var = GetScalarValue<int64_t>(input_args[2]->GetValue()).value();
   key_shape_ptr[2] = var;
   auto key_shape = std::make_shared<abstract::Shape>(key_shape_ptr);
@@ -43,7 +43,7 @@ abstract::ShapePtr ReshapeExtInferShape(const PrimitivePtr &primitive, const std
 }
 
 TypePtr ReshapeExtInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto input_type = input_args[0]->GetType();
+  auto input_type = input_args[1]->GetType();
   return input_type;  // output type
 }
 }  // namespace
@@ -77,7 +77,7 @@ class MIND_API AGReshapeExtInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return ReshapeExtInfer(engine, primitive, input_args);
   }
-  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
+  std::set<int64_t> GetValueDependArgIndices() const override { return {2}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(ReshapeExt, prim::kPrimReshapeExt, AGReshapeExtInfer, false);

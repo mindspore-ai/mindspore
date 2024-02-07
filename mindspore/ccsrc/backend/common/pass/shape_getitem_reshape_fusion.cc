@@ -28,6 +28,7 @@ const BaseRef ShapeGetItemReshapeFusion::DefinePattern() const {
   //  c = RealGetItem(a, 1)
   //  d = RealMakeTuple(b, c, var)
   //  out = Reshape(Y, d)
+  // --> out = ReshapeExt(Y, X, var)
   VectorRef shape = VectorRef({std::make_shared<Primitive>("Shape"), x_});
   VectorRef get_0 = VectorRef({prim::kPrimRealTupleGetItem, shape, index0_});
   VectorRef get_1 = VectorRef({prim::kPrimRealTupleGetItem, shape, index1_});
@@ -42,10 +43,9 @@ const AnfNodePtr ShapeGetItemReshapeFusion::Process(const FuncGraphPtr &func_gra
   MS_EXCEPTION_IF_NULL(equiv);
   auto real_maktuple = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 1);
   auto var = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(real_maktuple), 2);
-  int64_t value = AnfUtils::GetIntValue(utils::cast<ValueNodePtr>(var)->value());
   auto prim = std::make_shared<Primitive>("ReshapeExt");
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), utils::cast<AnfNodePtr>((*equiv)[x_]),
-                                    utils::cast<AnfNodePtr>((*equiv)[y_]), utils::cast<AnfNodePtr>((*equiv)[var_])};
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), utils::cast<AnfNodePtr>((*equiv)[y_]),
+                                    utils::cast<AnfNodePtr>((*equiv)[x_]), utils::cast<AnfNodePtr>((*equiv)[var_])};
   auto new_node = NewCNode(inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->AddAttr("var", utils::cast<ValueNodePtr>(var)->value());

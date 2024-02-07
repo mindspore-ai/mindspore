@@ -34,6 +34,12 @@ void InternalCast::SetInOutIdx() {
   outputsIdxMap_[0] = 0;
 }
 
+uint64_t InternalCast::GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  std::vector<KernelTensor *> inputs_and_outputs = inputs;
+  inputs_and_outputs.insert(inputs_and_outputs.end(), outputs.begin(), outputs.end());
+  return TilingCacheMgr::GetInstance().GenTilingCacheKey(kernel_name_, primitive_, inputs_and_outputs);
+}
 MS_INTERNAL_KERNEL_FACTORY_REG(Cast, InternalCast);
 }  // namespace kernel
 }  // namespace mindspore
