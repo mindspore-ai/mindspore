@@ -593,6 +593,9 @@ std::string AclHelper::ConvertOriginShapeAndFormat(const std::string &name, size
   }
   // case3: if config input ori format or dev_format is special
   if (!special_iter->second.ori_format.empty() || !CheckDefaultSupportFormat(dev_format)) {
+    if (special_iter->second.ori_format[0] == kOpFormat_ND) {
+      return kOpFormat_ND;
+    }
     if (ret_format == kOpFormat_DEFAULT && shape->size() < kDim4) {
       *shape = trans::PaddingShape(*shape, kOpFormat_NCHW, special_iter->second.reshape_type);
       ret_format = kOpFormat_NCHW;

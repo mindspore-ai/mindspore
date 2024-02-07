@@ -29,5 +29,7 @@ REGISTER_ACL_OP(AsStrided).set_is_const_input();
 REGISTER_ACL_OP(ArgMin).set_is_const_input();
 
 REGISTER_ACL_OP(ApplyRMSProp).set_is_const_input();
+
+REGISTER_ACL_OP(Transpose).Input(0, {"ND"}).Input(1, {"ND"});
 }  // namespace transform
 }  // namespace mindspore
