@@ -61,11 +61,12 @@ REG_CUST_OP(NoRepeatNGram)
   .CUST_OP_END_FACTORY_REG(NoRepeatNGram)
 
 REG_CUST_OP(GenerateEodMask)
-    .INPUT(inputs_ids, TensorType({DT_INT8, DT_UINT8, DT_INT16, DT_INT32, DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
-    .OUTPUT(position_ids, TensorType({DT_INT8, DT_UINT8, DT_INT16, DT_INT32, DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+    .INPUT(inputs_ids, TensorType({DT_FLOAT16, DT_BF16, DT_FLOAT, DT_DOUBLE}))
+    .OUTPUT(position_ids, TensorType({DT_INT64, DT_FLOAT16, DT_BF16, DT_FLOAT, DT_DOUBLE}))
     .REQUIRED_ATTR(n_pos, Int)
     .REQUIRED_ATTR(eod_token_id, Int)
-    .REQUIRED_ATTR(n_step, Int)
+    .REQUIRED_ATTR(n_step, ListInt)
+    .REQUIRED_ATTR(n_error_mode, String)
     .CUST_OP_END_FACTORY_REG(GenerateEodMask)
 
 
