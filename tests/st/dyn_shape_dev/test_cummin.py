@@ -14,7 +14,7 @@
 # ============================================================================
 import numpy as np
 import pytest
-import test_utils
+from tests.st.utils import test_utils
 
 from mindspore import ops
 from mindspore import Tensor

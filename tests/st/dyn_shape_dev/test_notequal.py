@@ -15,7 +15,7 @@
 
 import numpy as np
 import pytest
-import test_utils
+from tests.st.utils import test_utils
 
 from mindspore import ops
 import mindspore as ms
@@ -57,7 +57,7 @@ def notequal_vmap_func(x, y):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_notequal_op_forward(context_mode, data_type):
     """
     Feature: Ops.
@@ -78,7 +78,7 @@ def test_notequal_op_forward(context_mode, data_type):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_notequal_op_infervalue(context_mode):
     """
     Feature: Ops.
@@ -101,7 +101,7 @@ def test_notequal_op_infervalue(context_mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_notequal_op_backward(context_mode, data_type):
     """
     Feature: Auto grad.
@@ -123,7 +123,7 @@ def test_notequal_op_backward(context_mode, data_type):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_notequal_op_vmap(context_mode, data_type):
     """
     Feature: test vmap function.

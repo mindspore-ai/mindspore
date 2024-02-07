@@ -14,7 +14,7 @@
 # ============================================================================
 import numpy as np
 import pytest
-import test_utils
+from tests.st.utils import test_utils
 
 from mindspore import ops
 from mindspore import Tensor
@@ -34,7 +34,7 @@ def grid_sampler_3d_grad_forward_func(grad, input_x, grid):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_grid_sampler_3d_grad_forward(mode):
     """
     Feature: Ops.
@@ -102,7 +102,7 @@ def test_grid_sampler_3d_grad_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_grid_sampler_3d_grad_vmap(mode):
     """
     Feature: test vmap function.

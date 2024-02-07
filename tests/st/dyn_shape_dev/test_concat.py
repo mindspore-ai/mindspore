@@ -21,7 +21,7 @@ import pytest
 import mindspore as ms
 from mindspore import ops
 import mindspore.ops.functional as F
-import test_utils
+from tests.st.utils import test_utils
 
 
 def concat_func(x1, x2):

@@ -17,6 +17,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import ops, nn, mutable
 from mindspore.ops import ifftshift
+from tests.st.utils import test_utils
 
 class IFFTShiftNet(nn.Cell):
     def __init__(self):
@@ -131,6 +132,7 @@ def test_ops_ifftshift_forward_dynamic_shape(mode):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_with_On
 def test_ops_ifftshift_forward_dynamic_rank(mode):
     """
     Feature: ops.ifftshift
@@ -197,6 +199,7 @@ def test_ops_ifftshift_backward_dynamic_shape(mode):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_with_On
 def test_ops_ifftshift_backward_dynamic_rank(mode):
     """
     Feature: ops.ifftshift

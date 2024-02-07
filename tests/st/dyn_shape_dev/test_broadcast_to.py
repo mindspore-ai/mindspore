@@ -15,7 +15,7 @@
 
 import numpy as np
 import pytest
-import test_utils
+from tests.st.utils import test_utils
 
 from mindspore import ops
 from mindspore import Tensor
@@ -43,7 +43,7 @@ def broadcast_to_dyn_shape_func(x, shape):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_broadcast_to_forward(mode):
     """
     Feature: Ops.
@@ -65,7 +65,7 @@ def test_broadcast_to_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_broadcast_to_backward(mode):
     """
     Feature: Auto grad.
@@ -87,7 +87,7 @@ def test_broadcast_to_backward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_broadcast_to_vmap(mode):
     """
     Feature: test vmap function.

@@ -14,7 +14,7 @@
 # ============================================================================
 import numpy as np
 import pytest
-import tests.st.ops.test_utils as test_utils
+import tests.st.utils.test_utils as test_utils
 
 from mindspore import ops
 import mindspore as ms
@@ -43,7 +43,7 @@ def scatter_nd_vmap_func(indices, updates, shape):
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32, np.float16, np.int64, np.int32, np.int16, np.int8])
 @pytest.mark.parametrize("indices_type", [np.int64, np.int32])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_scatter_nd_op_forward(context_mode, data_type, indices_type):
     """
     Feature: Ops.
@@ -74,7 +74,7 @@ def test_scatter_nd_op_forward(context_mode, data_type, indices_type):
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32, np.float16, np.int64, np.int32, np.int16, np.int8])
 @pytest.mark.parametrize("indices_type", [np.int64, np.int32])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_scatter_nd_op_backward(context_mode, data_type, indices_type):
     """
     Feature: Ops.
@@ -109,7 +109,7 @@ def test_scatter_nd_op_backward(context_mode, data_type, indices_type):
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32, np.int32])
 @pytest.mark.parametrize("indices_type", [np.int32])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_scatter_nd_op_vmap(context_mode, data_type, indices_type):
     """
     Feature: test vmap function.
@@ -136,7 +136,7 @@ def test_scatter_nd_op_vmap(context_mode, data_type, indices_type):
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [ms.float32, ms.int64])
 @pytest.mark.parametrize("indices_type", [ms.int64, ms.int32])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_scatter_nd_op_dynamic_shape(context_mode, data_type, indices_type):
     """
     Feature: Ops.
@@ -172,7 +172,7 @@ def test_scatter_nd_op_dynamic_shape(context_mode, data_type, indices_type):
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [ms.float32, ms.int64])
 @pytest.mark.parametrize("indices_type", [ms.int64, ms.int32])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_scatter_nd_op_dynamic_rank(context_mode, data_type, indices_type):
     """
     Feature: Ops.
@@ -206,7 +206,7 @@ def test_scatter_nd_op_dynamic_rank(context_mode, data_type, indices_type):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_scatter_nd_op_1d_shape(context_mode):
     """
     Feature: Ops.
@@ -228,7 +228,7 @@ def test_scatter_nd_op_1d_shape(context_mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_scatter_nd_exception(context_mode):
     """
     Feature: test exception case.

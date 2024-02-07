@@ -15,6 +15,7 @@
 import os
 import pytest
 from mindspore import context
+from tests.st.utils import test_utils
 
 
 @pytest.mark.level1
@@ -36,6 +37,7 @@ def test_hccl_allreduce():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
+@test_utils.run_test_with_On
 def test_hccl_reduce():
     """
     Feature: mpi run 8P case of 'Reduce' communication operator.
@@ -50,6 +52,7 @@ def test_hccl_reduce():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
+@test_utils.run_test_with_On
 def test_hccl_barrier():
     """
     Feature: mpi run 8P case of 'Barrier' communication operator.

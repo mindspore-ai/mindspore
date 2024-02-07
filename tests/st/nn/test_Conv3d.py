@@ -20,6 +20,8 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, ops
 
+from tests.st.utils import test_utils
+
 
 class Net(nn.Cell):
     def __init__(self):
@@ -57,6 +59,7 @@ def test_conv3d_para_customed_dtype(mode):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
+@test_utils.run_test_with_On
 def test_conv3d_input_5d():
     """
     Feature: Conv3d 5d input

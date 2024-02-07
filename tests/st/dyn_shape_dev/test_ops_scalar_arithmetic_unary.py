@@ -18,7 +18,7 @@ import mindspore as ms
 from mindspore import context
 from mindspore import ops
 import mindspore.ops.operations.manually_defined as F
-import test_utils
+from tests.st.utils import test_utils
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu

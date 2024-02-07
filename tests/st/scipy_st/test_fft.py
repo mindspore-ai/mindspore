@@ -20,7 +20,7 @@ from mindspore import ops
 from mindspore.scipy.fft import idct
 from scipy.fft import idct as sp_idct
 
-import tests.st.ops.test_utils as test_utils
+import tests.st.utils.test_utils as test_utils
 
 ms.context.set_context(device_target="CPU")
 

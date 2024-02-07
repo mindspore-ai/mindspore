@@ -17,12 +17,14 @@ import mindspore.context as context
 from mindspore import Tensor, ops
 import mindspore as ms
 import numpy as np
+from tests.st.utils import test_utils
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
+@test_utils.run_test_with_On
 def test_hal_event_args():
     """
     Feature: Hal event api.

@@ -21,6 +21,7 @@ from mindspore import Tensor, Parameter, nn, ops
 import mindspore.amp as amp
 import mindspore as ms
 
+from tests.st.utils import test_utils
 
 class Net(nn.Cell):
     def __init__(self, in_features, out_features):
@@ -40,6 +41,7 @@ class Net(nn.Cell):
 @pytest.mark.platform_x86_cpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_with_On
 def test_functional_amp_overflow(mode):
     """
     Feature: mindspore.amp.overflow

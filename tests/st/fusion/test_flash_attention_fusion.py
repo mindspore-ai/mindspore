@@ -20,6 +20,7 @@ import mindspore.nn as nn
 from mindspore import ops, Tensor
 from mindspore import jit
 import mindspore as ms
+from tests.st.utils import test_utils
 
 context.set_context(device_target="Ascend")
 
@@ -118,6 +119,7 @@ class PFA_FusionV2_Net(nn.Cell):
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
+@test_utils.run_test_with_On
 def test_prompt_flash_attention_fusion_v2(mode):
     """
     Feature: test_prompt_flash_attention_fusion_v2

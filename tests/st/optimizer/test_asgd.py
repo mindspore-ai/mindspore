@@ -17,6 +17,7 @@ import pytest
 
 import mindspore.context as context
 from .optimizer_utils import FakeNet, build_network
+from tests.st.utils import test_utils
 
 
 @pytest.mark.level0
@@ -27,6 +28,7 @@ from .optimizer_utils import FakeNet, build_network
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@test_utils.run_test_with_On
 def test_default_asgd(mode):
     """
     Feature: Test ASGD optimizer

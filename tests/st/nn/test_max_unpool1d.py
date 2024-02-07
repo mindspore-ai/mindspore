@@ -18,6 +18,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 import mindspore.context as context
 import mindspore.ops as ops
+from tests.st.utils import test_utils
 
 
 class Net(nn.Cell):
@@ -79,6 +80,7 @@ def test_max_unpool1d_normal_output_size(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@test_utils.run_test_with_On
 def test_f_max_unpool1d_normal(mode):
     """
     Feature: max_unpool1d
