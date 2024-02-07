@@ -176,6 +176,27 @@ bool IsValidTensorInput(const ValuePtr &v) {
   MS_EXCEPTION_IF_NULL(v);
   return v->isa<tensor::Tensor>() || v->isa<tensor::MetaSparseTensor>();
 }
+
+bool IsNeedComputeGrad(const ValuePtr &input) {
+  MS_EXCEPTION_IF_NULL(input);
+  if (input->isa<tensor::Tensor>()) {
+    auto input_tensor = input->cast<tensor::TensorPtr>();
+    auto auto_grad_meta_data = input_tensor->auto_grad_meta_data();
+    MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
+    auto variable = auto_grad_meta_data->variable();
+    if (variable != nullptr && variable->is_need_grad()) {
+      return true;
+    }
+  } else if (input->isa<ValueSequence>()) {
+    auto seq = input->cast<ValueSequencePtr>();
+    if (!seq->value().empty() && !seq->value().front()->isa<tensor::Tensor>()) {
+      return false;
+    }
+    return std::any_of(seq->value().begin(), seq->value().end(),
+                       [](const ValuePtr &val) { return IsNeedComputeGrad(val); });
+  }
+  return false;
+}
 }  // namespace
 
 TensorPtrList FuncBackwardNode::CallBackward(const TensorPtrList &gradients_in) {
@@ -187,7 +208,12 @@ TensorPtrList FuncBackwardNode::CallBackward(const TensorPtrList &gradients_in) 
   const std::vector<NodePtr> cal_grads_node = func()(&ir_builder);
   ValuePtrList cal_grads_values;
   std::transform(cal_grads_node.begin(), cal_grads_node.end(), std::back_inserter(cal_grads_values),
-                 [](const NodePtr &node) { return node->Value(); });
+                 [](const NodePtr &node) -> ValuePtr {
+                   if (node == nullptr) {
+                     return kNone;
+                   }
+                   return node->Value();
+                 });
   auto gradients = PostProcess(cal_grads_values);
   MS_LOG(DEBUG) << "End CallBackward: " << name();
   return gradients;
@@ -197,7 +223,9 @@ NodePtrList FuncBackwardNode::PreProcess(const TensorPtrList &dout, FuncBuilder 
   NodePtrList node_inputs;
   node_inputs.reserve(op_inputs_.size() + kSizeFive);
   for (size_t i = 0; i < op_inputs_.size(); ++i) {
-    (void)node_inputs.emplace_back(emitter->NewFuncNode(op_inputs_[i], input_abstract_[i], grad_type_[i]));
+    auto func_node = emitter->NewFuncNode(op_inputs_[i], input_abstract_[i], grad_type_[i]);
+    func_node->set_need_compute_grad_out(IsNeedComputeGrad(op_inputs_[i]));
+    (void)node_inputs.emplace_back(func_node);
   }
   (void)node_inputs.emplace_back(emitter->NewFuncNode(op_output_, out_abstract_, InputType::kOpOutput));
   if (dout.size() == kSizeOne) {
@@ -730,7 +758,8 @@ void FuncGrad::CheckSensShapeAndType(const ValuePtr &sens_gradient) {
   }
 }
 
-void FuncGrad::PruningGradGraph(const TensorPtrList &weights, const GradAttr &grad_attr, const std::vector<size_t> &grad_position) {
+void FuncGrad::PruningGradGraph(const TensorPtrList &weights, const GradAttr &grad_attr,
+                                const std::vector<size_t> &grad_position) {
   mindspore::HashSet<size_t> grad_pos_list{grad_position.begin(), grad_position.end()};
   // Pruning inputs by position in grad graph
   if (grad_attr.get_by_position) {
@@ -775,7 +804,7 @@ void FuncGrad::PruningGradGraph(const TensorPtrList &weights, const GradAttr &gr
       continue;
     }
     bool is_need_grad = false;
-    for (const auto &edge: variable->func_node()->next_edges()) {
+    for (const auto &edge : variable->func_node()->next_edges()) {
       is_need_grad = is_need_grad || edge.variable->is_need_grad();
     }
     if (!is_need_grad) {

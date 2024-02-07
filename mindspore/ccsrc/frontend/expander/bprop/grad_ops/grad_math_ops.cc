@@ -89,20 +89,27 @@ NodePtrList MinimumMaximumGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr
   auto half_ratio = ib->Emit("FillV2", {ib->Shape(dout), ib->Tensor(2, ib->GetDtype(dout))});
   auto half_dout = ib->Div(dout, half_ratio);
   NodePtr equal_mask = ib->Equal(x, y);
-  auto grad_x = ib->Select(equal_mask, half_dout, dout);
-  auto grad_y = ib->Select(equal_mask, half_dout, dout);
-
   auto zeros = ib->Emit("FillV2", {ib->Shape(dout), ib->Tensor(0, ib->GetDtype(dout))});
   NodePtr is_less = ib->Less(x, y);
   NodePtr is_greater = ib->Greater(x, y);
-  if (is_minimum) {
-    grad_x = ib->Select(is_greater, zeros, grad_x);
-    grad_y = ib->Select(is_less, zeros, grad_y);
-  } else {
-    grad_x = ib->Select(is_less, zeros, grad_x);
-    grad_y = ib->Select(is_greater, zeros, grad_y);
+  NodePtr grad_x = nullptr;
+  NodePtr grad_y = nullptr;
+  if (x->need_compute_grad_out()) {
+    grad_x = ib->Select(equal_mask, half_dout, dout);
+    if (is_minimum) {
+      grad_x = ib->Select(is_greater, zeros, grad_x);
+    } else {
+      grad_x = ib->Select(is_less, zeros, grad_x);
+    }
   }
-
+  if (y->need_compute_grad_out()) {
+    grad_y = ib->Select(equal_mask, half_dout, dout);
+    if (is_minimum) {
+      grad_y = ib->Select(is_less, zeros, grad_y);
+    } else {
+      grad_y = ib->Select(is_greater, zeros, grad_y);
+    }
+  }
   return BinopGradCommon(ib, x, y, grad_x, grad_y);
 }
 
@@ -473,7 +480,15 @@ REG_BPROP_BUILDER("Add").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  return BinopGradCommon(ib, x, y, dout, dout);
+  NodePtr dx = nullptr;
+  NodePtr dy = nullptr;
+  if (x->need_compute_grad_out()) {
+    dx = dout;
+  }
+  if (y->need_compute_grad_out()) {
+    dy = dout;
+  }
+  return BinopGradCommon(ib, x, y, dx, dy);
 });
 
 REG_BPROP_BUILDER("AddExt").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
@@ -526,8 +541,14 @@ REG_BPROP_BUILDER("Mul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
     MS_EXCEPTION(TypeError) << "For 'Mul', gradient not support for complex type currently.";
   }
-  auto bc_dx = ib->Mul(y, dout);
-  auto bc_dy = ib->Mul(x, dout);
+  NodePtr bc_dx = nullptr;
+  NodePtr bc_dy = nullptr;
+  if (x->need_compute_grad_out()) {
+    bc_dx = ib->Mul(y, dout);
+  }
+  if (y->need_compute_grad_out()) {
+    bc_dy = ib->Mul(x, dout);
+  }
   return BinopGradCommon(ib, x, y, bc_dx, bc_dy);
 });
 
@@ -535,7 +556,15 @@ REG_BPROP_BUILDER("Sub").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  return BinopGradCommon(ib, x, y, dout, ib->Emit(kNegOpName, {dout}));
+  NodePtr dx = nullptr;
+  NodePtr dy = nullptr;
+  if (x->need_compute_grad_out()) {
+    dx = dout;
+  }
+  if (y->need_compute_grad_out()) {
+    dy = ib->Emit(kNegOpName, {dout});
+  }
+  return BinopGradCommon(ib, x, y, dout, dy);
 });
 
 REG_BPROP_BUILDER("Div").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
@@ -543,14 +572,20 @@ REG_BPROP_BUILDER("Div").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto bc_x = ib->Emit(kDivOpName, {dout, y});
-  auto bc_y = -(bc_x * out);
+  NodePtr bc_dx = nullptr;
+  NodePtr bc_dy = nullptr;
   auto x_dtype_id = ib->GetDtypeId(x);
-  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
-    auto result = BinopGradCommon(ib, x, y, bc_x, bc_y);
-    return {ib->Conj(result[0]), ib->Conj(result[1])};
+  bc_dx = ib->Emit(kDivOpName, {dout, y});
+  if (y->need_compute_grad_out()) {
+    bc_dy = -(bc_dx * out);
   }
-  return BinopGradCommon(ib, x, y, bc_x, bc_y);
+  auto result = BinopGradCommon(ib, x, y, bc_dx, bc_dy);
+  bool is_complex = (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128);
+  if (is_complex) {
+    result[kIndex0] = ib->Conj(result[kIndex0]);
+    result[kIndex1] = x->need_compute_grad_out() ? ib->Conj(result[kIndex1]) : ib->OutZeros(y);
+  }
+  return result;
 });
 
 REG_BPROP_BUILDER("BitwiseAnd").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
@@ -714,8 +749,14 @@ REG_BPROP_BUILDER("Atan2").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto tmp = ib->RealDiv(dout, (ib->Add((ib->Emit("Square", {x})), (ib->Emit("Square", {y})))));
-  auto bc_dx = ib->Mul(tmp, y);
-  auto bc_dy = ib->Mul(tmp, (ib->Emit("Neg", {x})));
+  NodePtr bc_dx = nullptr;
+  NodePtr bc_dy = nullptr;
+  if (x->need_compute_grad_out()) {
+    bc_dx = ib->Mul(tmp, y);
+  }
+  if (y->need_compute_grad_out()) {
+    bc_dy = ib->Mul(tmp, (ib->Emit("Neg", {x})));
+  }
   return {BinopGradCommon(ib, x, y, bc_dx, bc_dy)};
 });
 
@@ -781,11 +822,17 @@ REG_BPROP_BUILDER("Pow").SetBody(BODYFUNC(ib) {
   if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
     MS_EXCEPTION(TypeError) << "For 'Pow', gradient not support for complex type currently.";
   }
-  auto bc_dx = ib->Mul((ib->Mul(power, (ib->Pow(x, ib->Sub(power, ib->Tensor(1.0, ib->GetDtype(x))))))), dout);
-  x =
-    ib->Select(ib->Less(x, ib->Tensor(0, ib->GetDtype(x))), ib->Fill(1.0, ib->Shape(x), ib->GetDtype(x)->type_id()), x);
-  auto bc_dpower = ib->Mul((ib->Mul(out, (ib->Log(x)))), dout);
-  return {BinopGradCommon(ib, x, power, bc_dx, bc_dpower)};
+  NodePtrList grad_outputs{ib->input_size(), nullptr};
+  if (x->need_compute_grad_out()) {
+    grad_outputs[kIndex0] =
+      ib->Mul((ib->Mul(power, (ib->Pow(x, ib->Sub(power, ib->Tensor(1.0, ib->GetDtype(x))))))), dout);
+  }
+  if (power->need_compute_grad_out()) {
+    x = ib->Select(ib->Less(x, ib->Tensor(0, ib->GetDtype(x))), ib->Fill(1.0, ib->Shape(x), ib->GetDtype(x)->type_id()),
+                   x);
+    grad_outputs[kIndex1] = ib->Mul((ib->Mul(out, (ib->Log(x)))), dout);
+  }
+  return {BinopGradCommon(ib, x, power, grad_outputs[kIndex0], grad_outputs[kIndex1])};
 });
 
 REG_BPROP_BUILDER("Exp").SetBody(BODYFUNC(ib) {
@@ -1148,9 +1195,12 @@ REG_BPROP_BUILDER("RealDiv").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   }
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto bc_x = ib->RealDiv(dout, y);
-  auto bc_y = -(bc_x * out);
-  return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
+  auto bc_dx = ib->RealDiv(dout, y);
+  NodePtr bc_dy = nullptr;
+  if (y->need_compute_grad_out()) {
+    bc_dy = -(bc_dx * out);
+  }
+  return {BinopGradCommon(ib, x, y, bc_dx, bc_dy)};
 });
 
 REG_BPROP_BUILDER("DivNoNan").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
@@ -1158,9 +1208,12 @@ REG_BPROP_BUILDER("DivNoNan").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto bc_x = ib->DivNoNan(dout, y);
-  auto bc_y = -(bc_x * out);
-  return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
+  auto bc_dx = ib->DivNoNan(dout, y);
+  NodePtr bc_dy = nullptr;
+  if (y->need_compute_grad_out()) {
+    bc_dy = -(bc_dx * out);
+  }
+  return {BinopGradCommon(ib, x, y, bc_dx, bc_dy)};
 });
 
 REG_BPROP_BUILDER("Xdivy").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
@@ -1168,10 +1221,16 @@ REG_BPROP_BUILDER("Xdivy").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto x_dtype = ib->GetDtype(x);
-  auto not_zero_x = ib->Cast(ib->NotEqual(x, ib->Tensor(0.0, x_dtype)), x_dtype);
-  auto bc_x = (ib->Xdivy(not_zero_x, y)) * dout;
-  auto bc_y = (ib->Xdivy(-x, ib->Emit("Square", {y}))) * dout;
-  return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
+  NodePtr bc_dx = nullptr;
+  NodePtr bc_dy = nullptr;
+  if (x->need_compute_grad_out()) {
+    auto not_zero_x = ib->Cast(ib->NotEqual(x, ib->Tensor(0.0, x_dtype)), x_dtype);
+    bc_dx = (ib->Xdivy(not_zero_x, y)) * dout;
+  }
+  if (y->need_compute_grad_out()) {
+    bc_dy = (ib->Xdivy(-x, ib->Emit("Square", {y}))) * dout;
+  }
+  return {BinopGradCommon(ib, x, y, bc_dx, bc_dy)};
 });
 
 REG_BPROP_BUILDER("FloorDiv").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
@@ -1180,11 +1239,16 @@ REG_BPROP_BUILDER("FloorMod").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto bc_x = dout;
-  auto bc_y = (-dout) * (ib->FloorDiv(x, y));
-  bc_x = ib->Cast(bc_x, ib->GetDtype(x));
-  bc_y = ib->Cast(bc_y, ib->GetDtype(y));
-  return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
+  NodePtr bc_dx = nullptr;
+  NodePtr bc_dy = nullptr;
+  if (x->need_compute_grad_out()) {
+    bc_dx = ib->Cast(dout, ib->GetDtype(x));
+  }
+  if (y->need_compute_grad_out()) {
+    bc_dy = (-dout) * (ib->FloorDiv(x, y));
+    bc_dy = ib->Cast(bc_dy, ib->GetDtype(y));
+  }
+  return {BinopGradCommon(ib, x, y, bc_dx, bc_dy)};
 });
 
 REG_BPROP_BUILDER("TruncateDiv").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
@@ -1193,20 +1257,31 @@ REG_BPROP_BUILDER("TruncateMod").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto bc_x = dout;
-  auto bc_y = (-dout) * (ib->Emit("TruncateDiv", {x, y}));
-  return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
+  NodePtr bc_dx = nullptr;
+  NodePtr bc_dy = nullptr;
+  if (x->need_compute_grad_out()) {
+    bc_dx = dout;
+  }
+  if (y->need_compute_grad_out()) {
+    bc_dy = (-dout) * (ib->Emit("TruncateDiv", {x, y}));
+  }
+  return {BinopGradCommon(ib, x, y, bc_dx, bc_dy)};
 });
 
 REG_BPROP_BUILDER("Mod").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto bc_x = dout;
-  auto bc_y = (-dout) * (ib->FloorDiv(x, y));
-  bc_x = ib->Cast(bc_x, ib->GetDtype(x));
-  bc_y = ib->Cast(bc_y, ib->GetDtype(y));
-  return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
+  NodePtr bc_dx = nullptr;
+  NodePtr bc_dy = nullptr;
+  if (x->need_compute_grad_out()) {
+    bc_dx = ib->Cast(dout, ib->GetDtype(x));
+  }
+  if (y->need_compute_grad_out()) {
+    bc_dy = (-dout) * (ib->FloorDiv(x, y));
+    bc_dy = ib->Cast(bc_dy, ib->GetDtype(y));
+  }
+  return {BinopGradCommon(ib, x, y, bc_dx, bc_dy)};
 });
 
 REG_BPROP_BUILDER("Xlogy").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
@@ -1214,10 +1289,16 @@ REG_BPROP_BUILDER("Xlogy").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto x_dtype = ib->GetDtype(x);
-  auto not_zero_x = ib->Cast(ib->NotEqual(x, ib->Tensor(0.0, x_dtype)), x_dtype);
-  auto bc_x = ib->Xlogy(not_zero_x, y) * dout;
-  auto bc_y = ib->Xdivy(x, y) * dout;
-  return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
+  NodePtr bc_dx = nullptr;
+  NodePtr bc_dy = nullptr;
+  if (x->need_compute_grad_out()) {
+    auto not_zero_x = ib->Cast(ib->NotEqual(x, ib->Tensor(0.0, x_dtype)), x_dtype);
+    bc_dx = ib->Xlogy(not_zero_x, y) * dout;
+  }
+  if (y->need_compute_grad_out()) {
+    bc_dy = ib->Xdivy(x, y) * dout;
+  }
+  return {BinopGradCommon(ib, x, y, bc_dx, bc_dy)};
 });
 
 REG_BPROP_BUILDER("Sqrt").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
@@ -1307,11 +1388,17 @@ REG_BPROP_BUILDER("Hypot").SetBody(BODYFUNC(ib) {
   auto x2_f32 = ib->Cast(x2, kFloat32);
   auto out_f32 = ib->Cast(out, kFloat32);
   auto dout_f32 = ib->Cast(dout, kFloat32);
-  auto dx1 = ib->Mul(ib->Div(x1_f32, out_f32), dout_f32);
-  auto dx2 = ib->Mul(ib->Div(x2_f32, out_f32), dout_f32);
+  NodePtr dx1 = nullptr;
+  NodePtr dx2 = nullptr;
+  if (x1->need_compute_grad_out()) {
+    dx1 = ib->Mul(ib->Div(x1_f32, out_f32), dout_f32);
+  }
+  if (x2->need_compute_grad_out()) {
+    dx2 = ib->Mul(ib->Div(x2_f32, out_f32), dout_f32);
+  }
   auto tmp = BinopGradCommon(ib, x1_f32, x2_f32, dx1, dx2);
-  auto result_dx1 = ib->Cast(tmp[0], ib->GetDtype(x1));
-  auto result_dx2 = ib->Cast(tmp[1], ib->GetDtype(x2));
+  auto result_dx1 = x1->need_compute_grad_out() ? ib->Cast(tmp[0], ib->GetDtype(x1)) : ib->OutZeros(x1);
+  auto result_dx2 = x2->need_compute_grad_out() ? ib->Cast(tmp[1], ib->GetDtype(x2)) : ib->OutZeros(x2);
   return {result_dx1, result_dx2};
 });
 
@@ -1920,7 +2007,15 @@ REG_BPROP_BUILDER("AddV2").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  return {BinopGradCommon(ib, x, y, dout, dout)};
+  NodePtr bc_dx = nullptr;
+  NodePtr bc_dy = nullptr;
+  if (x->need_compute_grad_out()) {
+    bc_dx = dout;
+  }
+  if (y->need_compute_grad_out()) {
+    bc_dy = dout;
+  }
+  return {BinopGradCommon(ib, x, y, bc_dx, bc_dy)};
 });
 
 REG_BPROP_BUILDER("Addcdiv").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
@@ -2191,20 +2286,22 @@ REG_BPROP_BUILDER("BatchMatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto w = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
 
-  NodePtr dx;
-  if (ta) {
-    dx = ib->BatchMatMul(w, dout, tb, true);
-  } else {
-    dx = ib->BatchMatMul(dout, w, false, !tb);
+  NodePtr dx = nullptr;
+  if (x->need_compute_grad_out()) {
+    if (ta) {
+      dx = ib->BatchMatMul(w, dout, tb, true);
+    } else {
+      dx = ib->BatchMatMul(dout, w, false, !tb);
+    }
   }
-
-  NodePtr dw;
-  if (tb) {
-    dw = ib->BatchMatMul(dout, x, true, ta);
-  } else {
-    dw = ib->BatchMatMul(x, dout, !ta, false);
+  NodePtr dw = nullptr;
+  if (w->need_compute_grad_out()) {
+    if (tb) {
+      dw = ib->BatchMatMul(dout, x, true, ta);
+    } else {
+      dw = ib->BatchMatMul(x, dout, !ta, false);
+    }
   }
-
   return BinopGradCommon(ib, x, w, dx, dw, 2);
 });
 

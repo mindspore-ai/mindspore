@@ -37,6 +37,7 @@ NodePtrList BpropBuilder::Run(const NodePtrList &inputs, const mindspore::HashMa
   inputs_ptr_ = &inputs;
   attrs_ptr_ = &attrs;
   instance_name_ = instance_name;
+  input_size_ = inputs.size() - kIndex2;
   return handle.func(this);
 }
 

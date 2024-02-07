@@ -259,48 +259,62 @@ std::vector<int64_t> GetIntList(const NodePtr &node) {
   return GetIntList(value);
 }
 
-NodePtrList BinopGradCommon(BpropBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
-                            const NodePtr &dy, size_t shift) {
+NodePtr StaticBinopGradCommon(BpropBuilder *ib, const NodePtr &dx, const ShapeArray &shape,
+                              const ShapeArray &broadcast_shape, size_t shift, size_t index, bool *is_dynamic_shape) {
+  NodePtr reduce_dx = dx;
+  if (broadcast_shape[kIndex0].empty() || broadcast_shape[kIndex1].empty()) {
+    if (broadcast_shape[index].empty()) {
+      if (shift) {
+        std::vector<int64_t> axis(broadcast_shape[index ^ 1].size());
+        std::iota(axis.begin(), axis.begin(), 0LL);
+        reduce_dx = ib->ReduceSum(reduce_dx, axis);
+      } else {
+        reduce_dx = ib->ReduceSum(reduce_dx);
+      }
+    }
+  } else if (!IsDynamic(broadcast_shape[0]) && !IsDynamic(broadcast_shape[1])) {
+    std::vector<std::vector<int64_t>> bc_axis = BroadcastGradientArgsInferValue(broadcast_shape[0], broadcast_shape[1]);
+    if (!bc_axis[index].empty()) {
+      reduce_dx = ib->ReduceSum(reduce_dx, bc_axis[index], ib->GetRank(reduce_dx) == shape[index].size());
+    }
+    if (ib->GetRank(reduce_dx) != shape[index].size()) {
+      reduce_dx = ib->Reshape(reduce_dx, shape[index]);
+    }
+  } else {
+    *is_dynamic_shape = true;
+  }
+  return reduce_dx;
+}
+
+NodePtrList BinopGradCommon(BpropBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx, const NodePtr &dy,
+                            size_t shift) {
   // Common grad definition for binary operations with shift.
   // The function is usually used in backprop op to reduce additional dimensions
   // created by broadcasting.
   NodePtrList inputs{x, y};
-  ShapeArray shape{ib->GetShape(inputs[0]), ib->GetShape(inputs[1])};
+  ShapeArray shape{ib->GetShape(inputs[kIndex0]), ib->GetShape(inputs[kIndex1])};
   NodePtrList reduce = {dx, dy};
-  if (IsDynamicRank(shape[0]) || IsDynamicRank(shape[1])) {
+  if (IsDynamicRank(shape[kIndex0]) || IsDynamicRank(shape[kIndex1])) {
     return DynBinopGradCommon(ib, x, y, dx, dy, shift);
   }
   if (shape[kIndex0].size() <= shift && shape[kIndex0].size() == shape[kIndex1].size()) {
     return reduce;
   }
-  ShapeVector broadcast_shape[kDim2];
+  ShapeArray broadcast_shape(kDim2);
   for (size_t i = 0; i < kDim2; i++) {
     broadcast_shape[i] = ShapeVector(shape[i].begin(), shape[i].end() - shift);
   }
-
-  if (broadcast_shape[0].empty() || broadcast_shape[1].empty()) {
-    for (size_t i = 0; i < kDim2; i++) {
-      if (broadcast_shape[i].empty()) {
-        if (shift) {
-          std::vector<int64_t> axis(broadcast_shape[i ^ 1].size());
-          std::iota(axis.begin(), axis.begin(), 0LL);
-          reduce[i] = ib->ReduceSum(reduce[i], axis);
-        } else {
-          reduce[i] = ib->ReduceSum(reduce[i]);
-        }
-      }
-    }
-  } else if (!IsDynamic(broadcast_shape[0]) && !IsDynamic(broadcast_shape[1])) {
-    std::vector<std::vector<int64_t>> bc_axis = BroadcastGradientArgsInferValue(broadcast_shape[0], broadcast_shape[1]);
-    for (size_t i = 0; i < kDim2; i++) {
-      if (!bc_axis[i].empty()) {
-        reduce[i] = ib->ReduceSum(reduce[i], bc_axis[i], ib->GetRank(reduce[i]) == shape[i].size());
-      }
-      if (ib->GetRank(reduce[i]) != shape[i].size()) {
-        reduce[i] = ib->Reshape(reduce[i], shape[i]);
-      }
-    }
-  } else {
+  bool is_x_shape_dynamic = false;
+  bool is_y_shape_dynamic = false;
+  if (dx != nullptr) {
+    reduce[kIndex0] =
+      StaticBinopGradCommon(ib, reduce[kIndex0], shape, broadcast_shape, shift, kIndex0, &is_x_shape_dynamic);
+  }
+  if (dy != nullptr) {
+    reduce[kIndex1] =
+      StaticBinopGradCommon(ib, reduce[kIndex1], shape, broadcast_shape, shift, kIndex1, &is_y_shape_dynamic);
+  }
+  if (is_x_shape_dynamic || is_y_shape_dynamic) {
     return DynBinopGradCommon(ib, x, y, dx, dy, shift);
   }
   return reduce;

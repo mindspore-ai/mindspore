@@ -48,7 +48,6 @@ class COMMON_EXPORT BpropBuilder : public Emitter {
   /// \brief Run irbuilder to generate a graph
   NodePtrList Run(const NodePtrList &inputs, const mindspore::HashMap<std::string, ValuePtr> &attrs,
                   const BpropHandle &handle, const std::string &instance_name);
-
   ValuePtr GetAttr(const std::string &attr) const;
   template <typename S>
   S GetAttr(const std::string &attr) const {
@@ -113,12 +112,14 @@ class COMMON_EXPORT BpropBuilder : public Emitter {
   std::string GetInstanceName() const { return instance_name_; }
   NodePtr TanhGrad(const NodePtr &y, const NodePtr &dy) { return Emit("TanhGrad", {y, dy}); }
   virtual NodePtr OutZeros(const NodePtr &node) { return ZerosLike(node); }
+  size_t input_size() const { return input_size_; }
 
  protected:
   std::string name_;
   std::string instance_name_;
   const NodePtrList *inputs_ptr_{nullptr};
   const mindspore::HashMap<std::string, ValuePtr> *attrs_ptr_{nullptr};
+  size_t input_size_;
 };
 
 class IrBuilder : public BpropBuilder {

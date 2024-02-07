@@ -58,6 +58,7 @@ class COMMON_EXPORT Node : public std::enable_shared_from_this<Node> {
   virtual bool is_used_value() const {
     MS_EXCEPTION(NotImplementedError) << "Base Node not implement is_used_value() method";
   }
+  virtual bool need_compute_grad_out() const { return true; }
 
  protected:
   // hold the emitter who created this node.
@@ -112,10 +113,13 @@ class COMMON_EXPORT FuncNode : public Node {
   std::string ToString() const override { return value_->ToString(); }
   void set_debug_info(const std::string &debug_info) override {}
   std::string debug_info() const override { return ""; }
+  bool need_compute_grad_out() const override { return need_compute_grad_out_; }
+  void set_need_compute_grad_out(bool need_compute_grad_out) { need_compute_grad_out_ = need_compute_grad_out; }
 
  private:
   AbstractBasePtr abstract_;
   InputType input_type_;
+  bool need_compute_grad_out_{true};
 };
 using FuncNodePtr = std::shared_ptr<FuncNode>;
 }  // namespace expander
