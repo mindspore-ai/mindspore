@@ -177,5 +177,5 @@ uint32_t SparseReshapeCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kSparseReshape, SparseReshapeCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSparseReshape, SparseReshapeCpuKernel);
 }  // namespace aicpu

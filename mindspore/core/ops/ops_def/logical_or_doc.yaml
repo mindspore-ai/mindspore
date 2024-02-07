@@ -3,19 +3,19 @@ logical_or:
         Computes the "logical OR" of two tensors element-wise.
 
         Refer to :func:`mindspore.ops.logical_or` for more details.
-
+    
         Inputs:
             - **x** (Union[Tensor, bool]) - The first input is a bool or a tensor whose data type can be implicitly
-            converted to bool.
+              converted to bool.
             - **y** (Union[Tensor, bool]) - The second input is a bool when the first input is a tensor or
-            a tensor whose data type can be implicitly converted to bool.
-
+              a tensor whose data type can be implicitly converted to bool.
+    
         Outputs:
             Tensor, the shape is the same as the `x` and `y` after broadcasting, and the data type is bool.
-
+    
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-
+    
         Examples:
             >>> import mindspore
             >>> import numpy as np

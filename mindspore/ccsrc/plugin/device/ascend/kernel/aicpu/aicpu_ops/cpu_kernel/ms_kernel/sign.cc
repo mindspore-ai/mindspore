@@ -148,5 +148,5 @@ uint32_t SignCpuKernel::SignComputeComplex(const CpuKernelContext &ctx) {
   }
   return static_cast<uint32_t>(KERNEL_STATUS_OK);
 }
-REGISTER_CPU_KERNEL(kSign, SignCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSign, SignCpuKernel);
 }  // namespace aicpu

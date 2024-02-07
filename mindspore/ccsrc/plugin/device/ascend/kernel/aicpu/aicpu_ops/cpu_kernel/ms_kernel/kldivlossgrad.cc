@@ -227,5 +227,5 @@ uint32_t KlDivLossGradCpuKernel::KlDivLossGradCompute(const CpuKernelContext &ct
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kKlDivLossGrad, KlDivLossGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kKlDivLossGrad, KlDivLossGradCpuKernel);
 }  // namespace aicpu

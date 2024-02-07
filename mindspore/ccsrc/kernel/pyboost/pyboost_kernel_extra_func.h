@@ -28,7 +28,9 @@ namespace kernel {
 namespace pyboost {
 class BACKEND_EXPORT PyboostKernelExtraFunc {
  public:
-  virtual void SetThreadPool(const kernel::KernelModPtr &kernel) = 0;
+  virtual ~PyboostKernelExtraFunc() = default;
+  virtual void SetThreadPool(const kernel::KernelModPtr &kernel) {}
+  virtual bool IsKernelModRegistered(const std::string &op_name) = 0;
 };
 
 using PyboostKernelExtraFuncPtr = std::shared_ptr<PyboostKernelExtraFunc>;

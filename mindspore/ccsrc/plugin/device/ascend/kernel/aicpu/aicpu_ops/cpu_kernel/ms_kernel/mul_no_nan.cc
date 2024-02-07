@@ -245,5 +245,5 @@ uint32_t MulNoNanCpuKernel::MulNoNanCompute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kMulNoNan, MulNoNanCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMulNoNan, MulNoNanCpuKernel);
 }  // namespace aicpu

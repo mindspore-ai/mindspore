@@ -239,7 +239,7 @@ std::vector<std::vector<tensor::TensorPtr>> GetRunGraphInputs(const GraphCompile
     MS_EXCEPTION_IF_NULL(kernel_graph);
     bool is_pynative_bprop_kernel_graph = kernel_graph->has_flag(kFlagIsPyNativeBpropKernelGraph);
     for (const auto &input_node : kernel_graph->input_nodes()) {
-      if (GetTensorFromForwardOutputParameter(input_node, &input_tensors)) {
+      if (is_pynative_bprop_kernel_graph && GetTensorFromForwardOutputParameter(input_node, &input_tensors)) {
         continue;
       }
 
@@ -706,6 +706,7 @@ void MindRTBackendBase::CompileSubGraph(const FuncGraphPtr &func_graph, device::
   std::sort(cand_graph.begin(), cand_graph.end(),
             [](const FuncGraphPtr &a, const FuncGraphPtr &b) { return a->ToString() < b->ToString(); });
   for (const auto &sub_graph : cand_graph) {
+    MS_EXCEPTION_IF_NULL(sub_graph);
     bool skip_inline_graph =
       sub_graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE) && context->CellReuseLevel() == CellReuseLevel::kLazyInline;
     if (sub_graph != func_graph && sub_graph != nullptr && !sub_graph->has_flag(kFlagJitCallGraph) &&
@@ -974,7 +975,7 @@ void MindRTBackendBase::ContiguousArgs(const VectorRef &args, const GraphCompile
     GilReleaseWithCheck release_gil;
     MS_LOG(DEBUG) << "Tensor storage_info is not nullptr, id:" << t->id();
 
-    RunContiguousTask(t, stream_id, false);
+    RunContiguousTaskForArgs(t, stream_id, false);
   };
 
   for (const auto &arg : args) {
@@ -1011,6 +1012,8 @@ void MindRTBackendBase::WaitMultiStream(const GraphCompilerInfo &graph_compiler_
 }
 
 void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &args, VectorRef *outputs) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kRuntime, runtime::ProfilerEvent::kBackendGraphRunInner,
+                                     actor_info, true);
   MS_EXCEPTION_IF_NULL(root_graph_);
   if (IsGraphOutputValueNodeOrParameter(root_graph_->output(), args, outputs)) {
     return;
@@ -1061,8 +1064,8 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageRun, 1, 0, 1);
 
   {
-    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kRuntime, runtime::ProfilerEvent::kOutputProcess,
-                                       actor_set->name_);
+    uint64_t start_time = 0;
+    PROFILER_START(start_time);
     MS_EXCEPTION_IF_NULL(graph_compiler_);
     graph_compiler_->Summary(graph_compiler_info.graphs_);
 
@@ -1072,6 +1075,8 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
 
     actor_set->output_actor_->FreeSummaryNodeMem();
     runtime::GraphScheduler::GetInstance().ClearActorData(actor_set);
+    PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kOutputProcess, actor_set->name_,
+                 false);
   }
   // Close abstract_lock for dynamic_shape
   AnfUtils::CloseAbstractLock();

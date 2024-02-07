@@ -83,8 +83,8 @@ cudaError_t CalUpsampleTrilinear3D(const T *input, const int n, const int c, con
     const int out_hw = out_h * out_w;
     const int out_dhw = out_d * out_hw;
     const int num_kernels = out_dhw;
-    const int blockSize = std::min(CUDA_THREADS(device_id), 512);
-    const int gridSize = (num_kernels + blockSize - 1) / blockSize;
+    const size_t blockSize = std::min(CUDA_THREADS(device_id), static_cast<size_t>(512));
+    const size_t gridSize = (num_kernels + blockSize - 1) / blockSize;
     UpsampleTrilinear3DKernel<T, S>
       <<<gridSize, blockSize, 0, cuda_stream>>>(num_kernels, input, output, n, c, in_d, in_h, in_w, out_d, out_h, out_w,
                                                 d_scale, h_scale, w_scale, align_corners, in_dhw, out_hw, out_dhw);

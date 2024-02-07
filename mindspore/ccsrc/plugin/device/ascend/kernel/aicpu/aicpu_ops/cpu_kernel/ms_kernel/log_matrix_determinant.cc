@@ -169,5 +169,5 @@ uint32_t LogMatrixDeterminantCpuKernel::LogMatrixDeterminantCompute(const CpuKer
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kLogMatrixDeterminant, LogMatrixDeterminantCpuKernel);
+REGISTER_MS_CPU_KERNEL(kLogMatrixDeterminant, LogMatrixDeterminantCpuKernel);
 }  // namespace aicpu

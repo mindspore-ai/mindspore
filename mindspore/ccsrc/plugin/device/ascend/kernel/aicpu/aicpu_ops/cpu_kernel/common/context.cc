@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cpu_kernel/inc/cpu_context.h"
+#include "cpu_context.h"
 #include "cpu_kernel/common/cpu_node_def.h"
 #include "cpu_kernel/common/device.h"
 #include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/kernel_log.h"

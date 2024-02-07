@@ -14,12 +14,14 @@
 # ============================================================================
 import pytest
 from ge_test_utils import run_testcase
+from tests.st.utils import test_utils
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
+@test_utils.run_test_with_On
 def test_ge_nested_switch():
     """
     Description: Test GE nested switch.

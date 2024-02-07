@@ -348,4 +348,10 @@ ATTR_MAP(NonZero) = {{"transpose", ATTR_DESC(transpose, AnyTraits<bool>())}};
 OUTPUT_MAP(NonZero) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(NonZeroV2, kNameNonZeroV2, ADPT_DESC(NonZero))
 REG_ADPT_DESC(NonZero, kNameNonZero, ADPT_DESC(NonZero))
+
+// Coalesce
+CUST_INPUT_MAP(Coalesce) = {{1, INPUT_DESC(x_indices)}, {2, INPUT_DESC(x_values)}, {3, INPUT_DESC(x_shape)}};
+CUST_ATTR_MAP(Coalesce) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(Coalesce) = {{0, OUTPUT_DESC(y_indices)}, {1, OUTPUT_DESC(y_values)}, {2, OUTPUT_DESC(y_shape)}};
+REG_ADPT_DESC(Coalesce, prim::kPrimCoalesce->name(), CUST_ADPT_DESC(Coalesce))
 }  // namespace mindspore::transform

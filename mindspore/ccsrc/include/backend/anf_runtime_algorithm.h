@@ -297,6 +297,8 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
     kernel_graph->AddValueNodeToGraph(value_node);
     return value_node;
   }
+  // create type id value node and add it to graph
+  static ValueNodePtr CreateTypeIdValueNodeToGraph(const FuncGraphPtr &func_graph, TypeId data_type);
 };
 }  // namespace session
 

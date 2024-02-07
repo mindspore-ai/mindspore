@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_CORE_EFFECT_INFO_H_
 #define MINDSPORE_CORE_EFFECT_INFO_H_
 
+#include <string>
+
 namespace mindspore {
 struct EffectInfo {
   enum State : unsigned char {
@@ -38,6 +40,21 @@ struct EffectInfo {
     io = io || info.io;
     load = load || info.load;
     back_mem = back_mem || info.back_mem;
+  }
+
+  bool HasEffect() const { return state == kDetected && (memory || io || load || back_mem); }
+
+  std::string ToString() const {
+    std::stringstream ss;
+    if (HasEffect()) {
+      ss << "SideEffect: { " << (memory ? "memory " : "") << (io ? "io " : "") << (load ? "load " : "")
+         << (back_mem ? "back_mem " : "") << "}";
+    } else if (state == kDetected) {
+      ss << "SideEffect: <None>";
+    } else {
+      ss << "SideEffect: <Not Detected>";
+    }
+    return ss.str();
   }
 };
 

@@ -37,7 +37,6 @@
 #include "ops/use_past_embedding.h"
 #include "ops/ops_func_impl/gather.h"
 #include "ops/reshape.h"
-#include "ops/cast.h"
 #include "ops/not_equal.h"
 #include "ops/tuple_get_item.h"
 #include "ops/auto_generate/gen_lite_ops.h"

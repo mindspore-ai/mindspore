@@ -309,8 +309,9 @@ Status FlashAttentionScoreInfo::InferTensorMap() {
 void FlashAttentionScoreInfo::ReplaceNodeInputOrAttrs() {
   for (auto &cnode : cnodes_) {
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    auto clone_prim = prim->Clone();
     MS_EXCEPTION_IF_NULL(prim);
+    auto clone_prim = prim->Clone();
+    MS_EXCEPTION_IF_NULL(clone_prim);
     clone_prim->set_attr(kAttrHeadNum, MakeValue(head_num_ / mp_));
     cnode->set_input(0, NewValueNode(clone_prim)->cast<AnfNodePtr>());
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,7 @@ namespace mindspore {
 namespace ops {
 struct FFTShiftShape {
   ShapeVector x_shape;
-  ValuePtr axes;
-  ValuePtr forward;
+  ValuePtr dim;
   ShapeVector out_shape;
 };
 
@@ -52,9 +51,8 @@ TEST_P(TestFFTShift, dyn_shape) {
   ASSERT_NE(primitive, nullptr);
   auto x = std::make_shared<abstract::AbstractTensor>(type_param.x_type, shape_param.x_shape);
   ASSERT_NE(x, nullptr);
-  auto axes = shape_param.axes->ToAbstract();
-  auto forward = shape_param.forward->ToAbstract();
-  std::vector<AbstractBasePtr> input_args = {x, axes, forward};
+  auto dim = shape_param.dim->ToAbstract();
+  std::vector<AbstractBasePtr> input_args = {x, dim};
 
   // expect output
   auto expect_shape = std::make_shared<abstract::Shape>(shape_param.out_shape);
@@ -73,13 +71,9 @@ TEST_P(TestFFTShift, dyn_shape) {
   ASSERT_TRUE(*out_dtype == *expect_dtype);
 }
 
-auto fftshift_shape_cases =
-  testing::Values(FFTShiftShape{{5, 5}, CreateTuple({0, 1}), CreateScalar(true), {5, 5}},
-                  FFTShiftShape{{-1, -1, -1}, CreateTuple({0, 1}), CreateScalar(true), {-1, -1, -1}},
-                  FFTShiftShape{{-2}, CreateTuple({0, 1}), CreateScalar(true), {-2}},
-                  FFTShiftShape{{5, 5}, CreateTuple({0, 1}), CreateScalar(false), {5, 5}},
-                  FFTShiftShape{{-1, -1, -1}, CreateTuple({0, 1}), CreateScalar(false), {-1, -1, -1}},
-                  FFTShiftShape{{-2}, CreateTuple({0, 1}), CreateScalar(false), {-2}});
+auto fftshift_shape_cases = testing::Values(FFTShiftShape{{5, 5}, CreateTuple({0, 1}), {5, 5}},
+                                            FFTShiftShape{{-1, -1, -1}, CreateTuple({0, 1}), {-1, -1, -1}},
+                                            FFTShiftShape{{-2}, CreateTuple({0, 1}), {-2}});
 
 auto fftshift_type_cases = testing::ValuesIn({
   FFTShiftType{kBool, kBool},

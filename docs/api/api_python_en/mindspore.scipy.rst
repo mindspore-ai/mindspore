@@ -38,3 +38,17 @@ mindspore.scipy.optimize
     mindspore.scipy.optimize.line_search
     mindspore.scipy.optimize.linear_sum_assignment
     mindspore.scipy.optimize.minimize
+
+mindspore.scipy.fft
+------------------------
+
+Fast Fourier Transform(FFT) submodule.
+
+.. automodule:: mindspore.scipy.fft
+
+.. msplatformautosummary::
+    :toctree: scipy
+    :nosignatures:
+    :template: classtemplate_inherited.rst
+
+    mindspore.scipy.fft.idct

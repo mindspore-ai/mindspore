@@ -22,6 +22,7 @@ import mindspore.ops as ops
 from mindspore import Tensor, context, Parameter
 import mindspore.common.dtype as mstype
 from mindspore.ops.operations._inner_ops import PromptKVCache
+from tests.st.utils import test_utils
 
 b = 4
 h = 4
@@ -105,6 +106,7 @@ def create_np_inputs(cache, update, batch_index):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
+@test_utils.run_test_with_On
 def test_prompt_k_v_cache_net():
     """
     Feature: Test PromptKVCache.

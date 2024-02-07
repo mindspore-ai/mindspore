@@ -212,5 +212,5 @@ uint32_t XlogyCpuKernel::XlogyCompute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kXlogy, XlogyCpuKernel);
+REGISTER_MS_CPU_KERNEL(kXlogy, XlogyCpuKernel);
 }  // namespace aicpu

@@ -356,5 +356,5 @@ uint32_t MultiMarginLossGradCpuKernel::MultiMarginLossGradComputeFP16(CpuKernelC
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kMultiMarginLossGrad, MultiMarginLossGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMultiMarginLossGrad, MultiMarginLossGradCpuKernel);
 }  // namespace aicpu

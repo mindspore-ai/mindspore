@@ -21,17 +21,17 @@ import numbers
 import numpy as np
 from mindspore.common import dtype as mstype
 from mindspore import _checkparam as validator
+from mindspore.common._decorator import deprecated
 from mindspore.ops.primitive import prim_attr_register, Primitive
 
 
 class ScalarCast(Primitive):
     """
-    Casts the input scalar to another type.
-
-    Refer to :func:`mindspore.ops.scalar_cast` for more details.
+    'ops.ScalarCast' is deprecated from version 2.3 and will be removed in a future version,
+    please use `int(x)` or `float(x)` instead.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -42,6 +42,7 @@ class ScalarCast(Primitive):
         255
     """
 
+    @deprecated("2.3", "ops.ScalarCast", False)
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['input_x', 'input_y'], outputs=['output_data'])

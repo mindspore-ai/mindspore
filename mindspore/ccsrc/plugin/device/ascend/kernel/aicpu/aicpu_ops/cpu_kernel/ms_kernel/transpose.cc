@@ -179,5 +179,5 @@ uint32_t TransposeCpuKernel::TransposeCompute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kTranspose, TransposeCpuKernel);
+REGISTER_MS_CPU_KERNEL(kTranspose, TransposeCpuKernel);
 }  // namespace aicpu

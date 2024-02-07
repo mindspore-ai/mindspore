@@ -2482,6 +2482,12 @@ class MultiMarginLossGrad(Primitive):
     Supported Platforms:
         ``Ascend``  ``CPU``
     """
+    __mindspore_signature__ = (
+        sig.make_sig('y_grad'),
+        sig.make_sig('x'),
+        sig.make_sig('target'),
+        sig.make_sig('weight', default=None)
+    )
 
     @prim_attr_register
     def __init__(self, p=1, margin=1.0, reduction="mean"):
@@ -3156,3 +3162,20 @@ class FlashAttentionScoreGrad(Primitive):
                                         'softmax_sum', 'dy', 'drop_mask', 'real_shift', "padding_mask", 'softmax_out',
                                         'prefix'],
                                 outputs=['dq', 'dk', 'dv'])
+
+class RmsNormGrad(Primitive):
+    r"""
+    Calculates the gradient of RmsNorm operation.
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Supported Platforms:
+        ``Ascend``
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize RmsNormGrad."""
+        self.init_prim_io_names(inputs=["dy", "x", "rstd", "gamma"],
+                                outputs=["dx", "dgamma"])
+        

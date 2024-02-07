@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_ZEROSLIKE_H
 #define AICPU_KERNELS_NORMALIZED_ZEROSLIKE_H
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class ZerosLikeCpuKernel : public CpuKernel {

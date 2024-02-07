@@ -136,5 +136,5 @@ uint32_t PackCpuKernel::PackCompute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kPack, PackCpuKernel);
+REGISTER_MS_CPU_KERNEL(kPack, PackCpuKernel);
 }  // namespace aicpu

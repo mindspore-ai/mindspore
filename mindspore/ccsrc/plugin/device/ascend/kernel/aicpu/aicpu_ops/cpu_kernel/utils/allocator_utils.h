@@ -19,10 +19,10 @@
 #include <memory>
 #include <vector>
 
-#include "cpu_kernel/inc/cpu_attr_value.h"
-#include "cpu_kernel/inc/cpu_context.h"
+#include "cpu_attr_value.h"
+#include "cpu_context.h"
 #include "cpu_kernel/common/cpu_node_def.h"
-#include "cpu_kernel/inc/cpu_tensor.h"
+#include "cpu_tensor.h"
 
 namespace aicpu {
 class AICPU_VISIBILITY CpuKernelAllocatorUtils {

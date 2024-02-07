@@ -68,6 +68,13 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
 #endif
   // Find the memory buf by tensor size, if not find, then add new memory block and memory buf.
   DeviceMemPtr device_addr = FindAvailableMemBuf(align_size, from_persistent_mem, stream_id);
+  static bool init_recycle_memory = false;
+  if (need_recycle && !init_recycle_memory) {
+    // Force persist memory to be reserved when recycle memory is allocated for the first time
+    init_recycle_memory = true;
+    MS_LOG(INFO) << "Init Recycle Memory";
+    device_addr = nullptr;
+  }
   if (device_addr == nullptr) {
     device_addr = AddMemBlockAndMemBuf(align_size, from_persistent_mem, need_recycle, stream_id);
   }
@@ -79,7 +86,8 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
   if (common::IsNeedProfileMemory()) {
     MS_LOG(WARNING) << "Need Profile Memory, Memory pool alloc, total mem: " << TotalMemStatistics()
                     << ", peak mem: " << UsedMemPeakStatistics() << ", in use mem: " << TotalUsedMemStatistics()
-                    << ", device address addr: " << device_addr << ", size: " << size;
+                    << ", device address addr: " << device_addr << ", size: " << size
+                    << ", from persistent mem: " << from_persistent_mem << ", need recycle: " << need_recycle;
   }
 
   if (IsMemoryPoolRecycle()) {

@@ -22,7 +22,7 @@
 
 #include "aicpu/common/aicpu_task_struct.h"
 #include "cce/fwk_adpt_struct.h"
-#include "cpu_kernel/inc/cpu_context.h"
+#include "cpu_context.h"
 #include "cpu_kernel/common/cpu_node_def.h"
 #include "cpu_kernel/common/kernel_cache.h"
 #include "cpu_kernel/common/device_cpu_kernel.h"

@@ -248,5 +248,5 @@ uint32_t MaxUnpool3DCpuKernel::MaxUnpool3DCompute(const CpuKernelContext &ctx) {
   }
 }
 
-REGISTER_CPU_KERNEL(kMaxUnpool3D, MaxUnpool3DCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMaxUnpool3D, MaxUnpool3DCpuKernel);
 }  // namespace aicpu

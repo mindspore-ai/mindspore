@@ -20,6 +20,7 @@ from mindspore import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import composite as C
 from mindspore.ops.operations import Minimum
+from tests.st.utils import test_utils
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 grad = C.GradOperation(get_all=True, sens_param=True)
@@ -91,6 +92,7 @@ def test_min_tensor_grad_4d():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+@test_utils.run_test_with_On
 def test_min_tensor_grad_with_same_input():
     """
     Feature: test minimum grad on ascend

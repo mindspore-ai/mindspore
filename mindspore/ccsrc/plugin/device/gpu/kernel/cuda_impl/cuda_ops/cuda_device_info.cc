@@ -75,9 +75,9 @@ GPUdeviceInfo::GPUdeviceInfo(const uint32_t device_id) {
   major_sm_ = prop_.major;
   minor_sm_ = prop_.minor;
   max_share_memory_ = prop_.sharedMemPerBlock;
-  const int x_index = 0;
-  const int y_index = 1;
-  const int z_index = 2;
+  const size_t x_index = 0;
+  const size_t y_index = 1;
+  const size_t z_index = 2;
   max_grid_size_.x = prop_.maxGridSize[x_index];
   max_grid_size_.y = prop_.maxGridSize[y_index];
   max_grid_size_.z = prop_.maxGridSize[z_index];

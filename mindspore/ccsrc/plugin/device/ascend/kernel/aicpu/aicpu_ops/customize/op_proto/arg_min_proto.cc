@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "inc/ops/elewise_calculation_ops.h"
+#include "op_proto/inc/elewise_calculation_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/op_const.h"
@@ -42,7 +42,7 @@ IMPLEMT_COMMON_INFERFUNC(ArgMinInferShape) {
   // if x_shape == -2, set output -2
   if (IsUnknownRankShape(x_shape)) {
     y_desc.SetShape(Shape(x_shape));
-    op.UpdateOutputDesc(y_desc.GetName(), y_desc);
+    op.UpdateOutputDesc("y", y_desc);
     return GRAPH_SUCCESS;
   }
 
@@ -50,7 +50,7 @@ IMPLEMT_COMMON_INFERFUNC(ArgMinInferShape) {
   if (x_shape.size() < 2) {
     vector<int64_t> output_shape;
     y_desc.SetShape(Shape(output_shape));
-    op.UpdateOutputDesc(y_desc.GetName(), y_desc);
+    op.UpdateOutputDesc("y", y_desc);
     return GRAPH_SUCCESS;
   }
 
@@ -101,7 +101,7 @@ IMPLEMT_COMMON_INFERFUNC(ArgMinInferShape) {
   MakeUpShapeRange(output_shape, output_range);
   y_desc.SetShape(Shape(output_shape));
   y_desc.SetShapeRange(output_range);
-  op.UpdateOutputDesc(y_desc.GetName(), y_desc);
+  op.UpdateOutputDesc("y", y_desc);
   return GRAPH_SUCCESS;
 }
 

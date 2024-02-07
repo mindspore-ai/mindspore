@@ -55,8 +55,7 @@ IMPLEMT_COMMON_INFERFUNC(ArgMaxInferShape) {
 
   // read dimension const value
   int64_t dimension = 0;
-  static const int64_t dimension_input_idx = 1;
-  if (ops::GetConstInt(op, dimension_input_idx, dimension)) {
+  if (ops::GetConstInt(op, "dimension", dimension)) {
     dimension = dimension < 0 ? dimension + static_cast<int64_t>(x_shape.GetDimNum()) : dimension;
     if ((dimension < 0) || (dimension >= static_cast<int64_t>(x_shape.GetDimNum()))) {
       OP_LOGE(TbeGetName(op), "The dimension value %ld must in range of input shape size %ld.", dimension,
@@ -81,7 +80,7 @@ IMPLEMT_COMMON_INFERFUNC(ArgMaxInferShape) {
       y_desc.SetShapeRange(input_range);
     }
     y_desc.SetShape(output_shape);
-    op.UpdateOutputDesc(y_desc.GetName(), y_desc);
+    op.UpdateOutputDesc("y", y_desc);
     return GRAPH_SUCCESS;
   }
 
@@ -94,7 +93,7 @@ IMPLEMT_COMMON_INFERFUNC(ArgMaxInferShape) {
   MakeUpShapeRange(output_dims, output_range);
   y_desc.SetShape(Shape(output_dims));
   y_desc.SetShapeRange(output_range);
-  op.UpdateOutputDesc(y_desc.GetName(), y_desc);
+  op.UpdateOutputDesc("y", y_desc);
 
   return GRAPH_SUCCESS;
 }

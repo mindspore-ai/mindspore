@@ -173,5 +173,5 @@ uint32_t MulCpuKernel::MulCalculate(BCalcInfo &calcInfo, const int32_t &rank) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kMul, MulCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMul, MulCpuKernel);
 }  // namespace aicpu

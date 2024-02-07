@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "inc/ops/linalg_ops.h"
+#include "op_proto/inc/linalg_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/common_shape_fns.h"
@@ -34,7 +34,7 @@ IMPLEMT_INFERFUNC(Cholesky, CholeskyInfer) {
   auto y_desc = op.GetOutputDesc(0);
   y_desc.SetShape(y_shape);
   y_desc.SetDataType(type);
-  op.UpdateOutputDesc(y_desc.GetName(), y_desc);
+  op.UpdateOutputDesc("y", y_desc);
   return GRAPH_SUCCESS;
 }
 

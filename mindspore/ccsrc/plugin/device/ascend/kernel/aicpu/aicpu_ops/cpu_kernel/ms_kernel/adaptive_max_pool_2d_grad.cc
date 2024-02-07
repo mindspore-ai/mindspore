@@ -201,5 +201,5 @@ uint32_t AdaptiveMaxPool2dGrad::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kAdaptiveMaxPool2dGrad, AdaptiveMaxPool2dGrad);
+REGISTER_MS_CPU_KERNEL(kAdaptiveMaxPool2dGrad, AdaptiveMaxPool2dGrad);
 }  // namespace aicpu

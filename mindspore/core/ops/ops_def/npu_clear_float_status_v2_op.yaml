@@ -1,0 +1,13 @@
+#operator npu_clear_float_status_v2
+npu_clear_float_status_v2:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: NPUClearFloatStatusV2
+    function:
+        disable: True    
+    

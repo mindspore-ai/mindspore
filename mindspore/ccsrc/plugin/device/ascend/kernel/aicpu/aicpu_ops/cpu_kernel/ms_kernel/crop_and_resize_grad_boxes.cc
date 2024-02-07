@@ -224,5 +224,5 @@ uint32_t CropAndResizeGradBoxesCpuKernel::GradOfBoxesCompute(const CpuKernelCont
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kCropAndResizeGradBoxes, CropAndResizeGradBoxesCpuKernel);
+REGISTER_MS_CPU_KERNEL(kCropAndResizeGradBoxes, CropAndResizeGradBoxesCpuKernel);
 }  // namespace aicpu

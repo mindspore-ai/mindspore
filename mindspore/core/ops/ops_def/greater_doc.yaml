@@ -1,18 +1,16 @@
 greater:
     description: |
-        Compare the value of the input parameters :math:`x,y` element-wise, and the output result is a bool value.
+        Compare the value of the input parameters :math:`input > other` element-wise, and the output result is a bool value.
 
         Refer to :func:`mindspore.ops.gt` for more details.
 
         Args:
-            - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
-            a bool or a tensor whose data type is
-            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
-            - **y** (Union[Tensor, number.Number, bool]) - The second input, which is a number.Number or
-            a bool or a tensor whose data type is
-            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+            input (Union[Tensor, Number]): The first input is a Number or a tensor whose data type is
+                `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+                `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+            other (Union[Tensor, Number]): The second input, which is a Number or a tensor whose data type is
+                `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+                `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
 
         Returns:
             Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
@@ -24,9 +22,9 @@ greater:
             >>> import mindspore
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
-            >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
-            >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
+            >>> input = Tensor(np.array([1, 2, 3]), mindspore.int32)
+            >>> other = Tensor(np.array([1, 1, 4]), mindspore.int32)
             >>> greater = ops.greater()
-            >>> output = greater(x, y)
+            >>> output = greater(input, other)
             >>> print(output)
             [False True False]

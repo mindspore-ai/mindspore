@@ -18,7 +18,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import Tensor, context
 from mindspore import ops
-import test_utils
+from tests.st.utils import test_utils
 
 
 @test_utils.run_with_cell
@@ -37,7 +37,7 @@ def prelu_backward_func(x, weight):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_prelu_forward(mode):
     """
     Feature: prelu ops.
@@ -63,7 +63,7 @@ def test_prelu_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_prelu_backward(mode):
     """
     Feature: prelu ops.

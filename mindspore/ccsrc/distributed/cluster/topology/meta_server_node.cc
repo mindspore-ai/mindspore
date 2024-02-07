@@ -50,6 +50,9 @@ MetaServerNode::~MetaServerNode() {
 }
 
 bool MetaServerNode::Initialize() {
+  // Init metadata for the cluster.
+  SetMetaData();
+
   // Init the address of meta server node.
   RETURN_IF_FALSE_WITH_LOG(FillMetaServerAddress(&meta_server_addr_),
                            "Failed to init the address of meta server node.");
@@ -104,6 +107,17 @@ bool MetaServerNode::Finalize(bool force) {
     finalized_ = true;
     MsException::Instance().CheckException();
     return true;
+  }
+}
+
+void MetaServerNode::SetMetaData() {
+  // The validation check happened in cluster_context.cc, so we don't validating in this method.
+  if (!common::GetEnv(kEnvWorkerNum).empty()) {
+    role_expect_num_[kEnvRoleOfWorker] = IntToUint(std::stoi(common::GetEnv(kEnvWorkerNum)));
+  }
+  if (!common::GetEnv(kEnvServerNum).empty()) {
+    role_expect_num_[kEnvRoleOfServer] = IntToUint(std::stoi(common::GetEnv(kEnvServerNum)));
+    role_expect_num_[kEnvRoleOfPServer] = IntToUint(std::stoi(common::GetEnv(kEnvServerNum)));
   }
 }
 
@@ -190,6 +204,17 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
       rank_id = AllocateRankId(role);
     }
 
+    // Check validation of this registered node.
+    std::string reject_reason = "";
+    if (!CheckRankIdValidation(node_id, role, rank_id, host_ip, &reject_reason)) {
+      RegistrationRespMessage reg_resp_msg;
+      reg_resp_msg.set_success(false);
+      reg_resp_msg.set_error_reason(reject_reason);
+      auto response =
+        CreateMessage(meta_server_addr_.GetUrl(), MessageName::kInvalidNode, reg_resp_msg.SerializeAsString());
+      return response.release();
+    }
+
     std::shared_ptr<NodeInfo> node_info = std::make_shared<NodeInfo>(node_id);
     MS_ERROR_IF_NULL_W_RET_VAL(node_info, rpc::NULL_MSG);
     node_info->host_name = host_name;
@@ -213,6 +238,16 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
     MS_EXCEPTION_IF_NULL(message);
     return message.release();
   } else {
+    if (!recovery::IsEnableRecovery()) {
+      MS_LOG(WARNING) << "Node " << node_id << " registered repeatedly. It's host ip is " << host_ip
+                      << ". Reject this node.";
+      RegistrationRespMessage reg_resp_msg;
+      reg_resp_msg.set_success(false);
+      reg_resp_msg.set_error_reason("Repeated registration node: " + node_id);
+      auto response =
+        CreateMessage(meta_server_addr_.GetUrl(), MessageName::kInvalidNode, reg_resp_msg.SerializeAsString());
+      return response.release();
+    }
     auto node_info = nodes_[node_id];
     MS_EXCEPTION_IF_NULL(node_info);
     node_info->host_ip = host_ip;
@@ -579,12 +614,48 @@ bool MetaServerNode::Persist() {
 
 uint32_t MetaServerNode::AllocateRankId(const std::string &role) {
   std::shared_lock<std::shared_mutex> lock(rank_mutex_);
+  if (role_expect_num_.find(role) == role_expect_num_.end()) {
+    MS_LOG(WARNING) << "Role: " << role << " is invalid.";
+    return UINT32_MAX;
+  }
   if (next_rank_ids_.count(role) == 0) {
     next_rank_ids_[role] = 0;
   } else {
+    // If this role's rank id has exceeded, do not increase next_rank_ids_ and return an exceeded rank id. The caller
+    // will check rank id's validation and reject this request.
+    if (next_rank_ids_[role] == role_expect_num_[role] - 1) {
+      return next_rank_ids_[role] + 1;
+    }
     next_rank_ids_[role] += 1;
   }
   return next_rank_ids_[role];
+}
+
+bool MetaServerNode::CheckRankIdValidation(const std::string &node_id, const std::string &role, uint32_t rank_id,
+                                           const std::string &host_ip, std::string *reject_reason) {
+  if (role_expect_num_.find(role) == role_expect_num_.end()) {
+    MS_LOG(WARNING) << "Registered node role: " << role << " is invalid.";
+    return false;
+  }
+  // Whether rank id has already exists.
+  bool rank_id_exist = std::any_of(nodes_.begin(), nodes_.end(), [&role, &rank_id](const auto &n) {
+    return n.second->role == role && n.second->rank_id == rank_id;
+  });
+  // Whether rank id exceeds upper bound.
+  bool is_extra_node = (rank_id >= role_expect_num_[role]);
+  if (rank_id_exist) {
+    *reject_reason = "Rank id:" + std::to_string(rank_id) + " for role:" + role + " exists.";
+  }
+  if (is_extra_node) {
+    *reject_reason = "This node is extra or rank id exceeds. Total node number for role " + role + " is " +
+                     std::to_string(role_expect_num_[role]) + " but got rank id " + std::to_string(rank_id);
+  }
+  if (rank_id_exist || is_extra_node) {
+    MS_LOG(WARNING) << "Rejecting registration request for node " << node_id << " from host " << host_ip
+                    << ". Rejection reason: " << *reject_reason;
+    return false;
+  }
+  return true;
 }
 
 void MetaServerNode::ReassignNodeRank() {

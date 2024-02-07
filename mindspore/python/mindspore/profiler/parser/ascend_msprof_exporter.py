@@ -110,6 +110,10 @@ class AscendMsprofExporter:
             self._run_cmd(msprof_export_cmd)
             self._check_export_files(self.source_path)
 
+        msprof_analyze_cmd = [self._msprof_cmd, "--analyze=on", "--rule=communication,communication_matrix",
+                              "--output={}".format(self.prof_root_dir)]
+        self._run_cmd(msprof_analyze_cmd)
+
         return flag
 
     def _run_cmd(self, cmd):

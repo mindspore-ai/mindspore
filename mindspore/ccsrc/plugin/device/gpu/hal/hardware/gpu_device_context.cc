@@ -19,6 +19,7 @@
 #include <dlfcn.h>
 #include <libgen.h>
 #endif
+#include <tuple>
 #include <utility>
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
 #include "plugin/device/gpu/hal/device/gpu_kernel_build.h"
@@ -69,7 +70,7 @@
 #include "plugin/device/gpu/hal/device/gpu_device_synchronizer.h"
 #include "include/common/profiler.h"
 #include "ops/ascend_op_name.h"
-#include "runtime/pynative/async/kernel_task.h"
+#include "runtime/pipeline/task/kernel_task.h"
 
 namespace mindspore {
 namespace device {
@@ -94,13 +95,13 @@ std::string GetCurrentDir() {
 #endif
 }
 
-pynative::KernelTaskPtr GetTaskByTaskType(const pynative::KernelTaskType &task_type,
-                                          const std::shared_ptr<pynative::KernelTaskContext> &task_context) {
+runtime::KernelTaskPtr GetTaskByTaskType(const runtime::KernelTaskType &task_type,
+                                         const std::shared_ptr<runtime::KernelTaskContext> &task_context) {
   switch (task_type) {
-    case pynative::KernelTaskType::kCONTIGUOUS_TASK:
+    case runtime::KernelTaskType::kCONTIGUOUS_TASK:
       return std::make_shared<GpuContiguousKernelTask>(task_context);
       break;
-    case pynative::KernelTaskType::kCOPY_TASK:
+    case runtime::KernelTaskType::kCOPY_TASK:
       return std::make_shared<GpuCopyWithSliceKernelTask>(task_context);
       break;
     default:
@@ -211,6 +212,7 @@ bool GPUDeviceResManager::InitDevice() {
 }
 
 void GPUDeviceResManager::Destroy() {
+  (void)DestroyAllEvents();
   if (DataQueueMgr::GetInstance().IsInit()) {
     if (!DataQueueMgr::GetInstance().IsClosed() && !DataQueueMgr::GetInstance().CloseNotify()) {
       MS_LOG(ERROR) << "Could not close gpu data queue.";
@@ -242,9 +244,11 @@ void GPUDeviceContext::Destroy() {
   MS_EXCEPTION_IF_NULL(GetKernelExecutor(false));
   GetKernelExecutor(false)->Destroy();
   device_res_manager_->Destroy();
+  initialized_ = false;
 }
 
-void *GPUDeviceResManager::AllocateMemory(size_t size, uint32_t stream_id) const {
+// GPU use default stream id currently, so stream id would be ignored.
+void *GPUDeviceResManager::AllocateMemory(size_t size, uint32_t /*stream_id*/) const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   if (!BindDeviceToCurrentThread(false)) {
     return nullptr;
@@ -252,7 +256,7 @@ void *GPUDeviceResManager::AllocateMemory(size_t size, uint32_t stream_id) const
   if (swap_manager_ != nullptr) {
     return swap_manager_->AllocDeviceMemory(size);
   }
-  return mem_manager_->MallocMemFromMemPool(size, false, false, stream_id);
+  return mem_manager_->MallocMemFromMemPool(size, false, false);
 }
 
 void GPUDeviceResManager::FreeMemory(void *ptr) const {
@@ -283,11 +287,11 @@ bool GPUDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
     return false;
   }
   void *device_ptr;
+  // GPU use default stream id currently, so stream id would be ignored.
   if (swap_manager_ != nullptr) {
     device_ptr = swap_manager_->AllocDeviceMemory(address->GetSize());
   } else {
-    device_ptr = mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem(), false,
-                                                    address->stream_id());
+    device_ptr = mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem(), false);
   }
   if (!device_ptr) {
     return false;
@@ -298,8 +302,9 @@ bool GPUDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   return true;
 }
 
+// GPU use default stream id currently, so stream id would be ignored.
 std::vector<void *> GPUDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list,
-                                                                  uint32_t stream_id) const {
+                                                                  uint32_t /*stream_id*/) const {
   if (!BindDeviceToCurrentThread(false)) {
     std::vector<void *> ptr_list;
     return ptr_list;
@@ -810,17 +815,13 @@ void GPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
 
 bool GPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &workspace,
-                                     const std::vector<KernelTensor *> &outputs, size_t stream_id) const {
+                                     const std::vector<KernelTensor *> &outputs, KernelMod *kernel_mod,
+                                     void *stream) const {
   MS_EXCEPTION_IF_NULL(kernel);
   if (!res_manager_->BindDeviceToCurrentThread(false)) {
     return false;
   }
   bool ret = true;
-
-  auto stream = GPUDeviceManager::GetInstance().GetStream(stream_id);
-  if (stream == nullptr) {
-    stream = GPUDeviceManager::GetInstance().default_stream();
-  }
 
 #ifndef ENABLE_SECURITY
   const auto &profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
@@ -830,13 +831,13 @@ bool GPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<K
 #endif
     auto lock = LockLaunchKernel(stream);
     MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
-    ret = DoLaunchKernel(kernel, inputs, workspace, outputs, stream);
+    ret = DoLaunchKernel(kernel, inputs, workspace, outputs, kernel_mod, stream);
     MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
 #ifndef ENABLE_SECURITY
   } else {
     auto lock = LockLaunchKernel(stream);
     MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
-    ret = LaunchKernelWithProfiling(kernel, inputs, workspace, outputs, stream);
+    ret = LaunchKernelWithProfiling(kernel, inputs, workspace, outputs, kernel_mod, stream);
     MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
   }
 #endif
@@ -851,7 +852,8 @@ bool GPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<K
 #ifndef ENABLE_SECURITY
 bool GPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                                                   const std::vector<KernelTensor *> &workspace,
-                                                  const std::vector<KernelTensor *> &outputs, void *stream) const {
+                                                  const std::vector<KernelTensor *> &outputs, KernelMod *kernel_mod,
+                                                  void *stream) const {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(stream);
 
@@ -868,7 +870,7 @@ bool GPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const 
   }
 
   profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), GPUDeviceManager::GetInstance().default_stream());
-  bool ret = DoLaunchKernel(kernel, inputs, workspace, outputs, stream);
+  bool ret = DoLaunchKernel(kernel, inputs, workspace, outputs, kernel_mod, stream);
   profiler_inst->OpDataProducerEnd();
   profiler_inst->RecordFrameWorkInfo(kernel);
 
@@ -885,11 +887,11 @@ bool GPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const 
 
 bool GPUKernelExecutor::DoLaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                                        const std::vector<KernelTensor *> &workspace,
-                                       const std::vector<KernelTensor *> &outputs, void *stream) const {
+                                       const std::vector<KernelTensor *> &outputs, KernelMod *kernel_mod,
+                                       void *stream) const {
   MS_EXCEPTION_IF_NULL(kernel);
-  MS_EXCEPTION_IF_NULL(stream);
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
+  MS_EXCEPTION_IF_NULL(stream);
 
   uint64_t start_time = 0;
   PROFILER_START(start_time);
@@ -985,24 +987,24 @@ uint32_t GPUKernelExecutor::GetRankID() const {
   return rank_id;
 }
 
-DeviceEventPtr GPUDeviceResManager::CreateEventWithFlag(bool enable_timing, bool blocking) const {
+DeviceEventPtr GPUDeviceResManager::CreateEventWithFlag(bool enable_timing, bool blocking) {
   uint32_t flag =
     (blocking ? cudaEventBlockingSync : cudaEventDefault) | (enable_timing ? cudaEventDefault : cudaEventDisableTiming);
   auto event = std::make_shared<GpuEvent>(flag);
   MS_EXCEPTION_IF_NULL(event);
+  device_events_.push_back(event);
   return event;
 }
 
-bool GPUKernelExecutor::ExecuteKernelTask(const pynative::KernelTaskType &task_type,
+bool GPUKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_type,
                                           const device::DeviceAddressPtrList &input_addr_list,
-                                          const TensorStorageInfoPtrList &input_storage_list,
                                           const device::DeviceAddressPtrList &output_addr_list,
                                           const size_t &stream_id) const {
   auto stream = GPUDeviceManager::GetInstance().GetStream(stream_id);
   MS_EXCEPTION_IF_NULL(stream);
 
-  auto task_context = std::make_shared<pynative::KernelTaskContext>(device_context_, input_addr_list,
-                                                                    input_storage_list, output_addr_list, stream);
+  auto task_context =
+    std::make_shared<runtime::KernelTaskContext>(device_context_, input_addr_list, output_addr_list, stream);
 
   auto task = GetTaskByTaskType(task_type, task_context);
   MS_EXCEPTION_IF_NULL(task);
@@ -1068,10 +1070,10 @@ std::string GPUDeviceContext::GetDeviceName(uint32_t device_id) {
   return GPUdeviceInfo::GetInstance(device_id)->name();
 }
 
-std::vector<int> GPUDeviceContext::GetDeviceCapability(uint32_t device_id) {
+std::tuple<int, int> GPUDeviceContext::GetDeviceCapability(uint32_t device_id) {
   int major_sm = GPUdeviceInfo::GetInstance(device_id)->major_sm();
   int minor_sm = GPUdeviceInfo::GetInstance(device_id)->minor_sm();
-  return {major_sm, minor_sm};
+  return std::make_tuple(major_sm, minor_sm);
 }
 
 cudaDeviceProp GPUDeviceContext::GetDeviceProperties(uint32_t device_id) {

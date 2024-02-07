@@ -61,6 +61,9 @@ using _aclDestroyFloatArray = int (*)(const aclFloatArray *array);
 using _aclDestroyBoolArray = int (*)(const aclBoolArray *array);
 using _aclDestroyTensorList = int (*)(const aclTensorList *array);
 
+extern HashMap<void *, std::string> opapi_lib_handle;
+extern void LoadOpApiLib();
+
 // Get op api func.
 inline std::string GetOpApiLibName() { return "/lib64/libopapi.so"; }
 
@@ -70,7 +73,7 @@ inline void *GetOpApiFuncFromLib(void *handler, const char *lib_name, const char
   MS_EXCEPTION_IF_NULL(handler);
   auto func = dlsym(handler, api_name);
   if (func == nullptr) {
-    MS_LOG(INFO) << "Dlsym " << api_name << " from " << lib_name << " failed!" << dlerror();
+    MS_LOG(DEBUG) << "Dlsym " << api_name << " from " << lib_name << " failed!" << dlerror();
   }
   return func;
 }
@@ -84,38 +87,17 @@ inline void *GetOpApiLibHandler(const std::string &lib_path) {
 }
 
 inline void *GetOpApiFunc(const char *api_name) {
-  static auto cust_paths = common::GetEnv("ASCEND_CUSTOM_OPP_PATH");
-  static std::vector<std::string> cust_path_vec;
-  if (!cust_paths.empty() && cust_path_vec.empty()) {
-    std::regex re{":"};
-    cust_path_vec = {std::sregex_token_iterator(cust_paths.begin(), cust_paths.end(), re, -1),
-                     std::sregex_token_iterator()};
+  if (opapi_lib_handle.size() == 0) {
+    LoadOpApiLib();
   }
-
-  for (const auto &cust_path : cust_path_vec) {
-    if (cust_path.empty()) {
-      continue;
-    }
-    auto cust_lib_path = cust_path + GetCustOpApiLibName();
-    static auto cust_handler = GetOpApiLibHandler(cust_lib_path);
-    if (cust_handler != nullptr) {
-      auto cust_func = GetOpApiFuncFromLib(cust_handler, cust_lib_path.c_str(), api_name);
-      if (cust_func != nullptr) {
-        return cust_func;
-      }
+  for (const auto &handle : opapi_lib_handle) {
+    const auto api_func = GetOpApiFuncFromLib(handle.first, handle.second.c_str(), api_name);
+    if (api_func != nullptr) {
+      return api_func;
     }
   }
-  static auto ascend_path = device::ascend::GetAscendPath();
-  static const std::vector<std::string> depend_libs = {"libdummy_tls.so", "libnnopbase.so"};
-  for (const auto &dep_lib : depend_libs) {
-    (void)GetOpApiLibHandler(ascend_path + "lib64/" + dep_lib);
-  }
-  auto lib_path = ascend_path + GetOpApiLibName();
-  static auto handle = GetOpApiLibHandler(lib_path);
-  if (handle == nullptr) {
-    return nullptr;
-  }
-  return GetOpApiFuncFromLib(handle, lib_path.c_str(), api_name);
+  MS_LOG(WARNING) << "Dlsym " << api_name << " failed!";
+  return nullptr;
 }
 
 #define GET_OP_API_FUNC(func_name) reinterpret_cast<_##func_name>(GetOpApiFunc(#func_name))
@@ -240,17 +222,28 @@ inline aclTensor *ConvertType(mindspore::kernel::KernelTensor *tensor) {
       format = ACL_FORMAT_ND;
   }
 
-  // Create strides.
-  auto strides = shape;
-  if (!strides.empty()) {
-    strides.erase(strides.begin());
+  aclTensor *acl_tensor = nullptr;
+  const auto &storage_info = tensor->tensor_storage_info();
+  if (storage_info == nullptr) {
+    // Create strides.
+    auto strides = shape;
+    if (!strides.empty()) {
+      strides.erase(strides.begin());
+    }
+    strides.push_back(1);
+    for (int i = static_cast<int>(strides.size()) - 2; i >= 0; i--) {
+      strides[i] = strides[i] * strides[i + 1];
+    }
+    acl_tensor = aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), 0, format, shape.data(),
+                                 shape.size(), tensor->device_ptr());
+  } else {
+    const auto &strides = storage_info->strides;
+    const auto &storage_shape = storage_info->ori_shape;
+    acl_tensor =
+      aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), SizeToLong(storage_info->storage_offset),
+                      format, storage_shape.data(), storage_shape.size(), tensor->device_ptr());
   }
-  strides.push_back(1);
-  for (int i = static_cast<int>(strides.size()) - 2; i >= 0; i--) {
-    strides[i] = strides[i] * strides[i + 1];
-  }
-  auto acl_tensor = aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), 0, format, shape.data(),
-                                    shape_size, tensor->device_ptr());
+
   return acl_tensor;
 }
 

@@ -102,6 +102,9 @@ class COMMON_EXPORT ParallelContext {
   void set_pipeline_stage_split_num(const int64_t stage_num);
   int64_t pipeline_stage_split_num() const { return pipeline_stage_split_num_; }
 
+  void set_pipeline_result_broadcast(const bool flag) { pipeline_result_broadcast_ = flag; }
+  bool pipeline_result_broadcast() const { return pipeline_result_broadcast_; }
+
   void set_global_rank(int64_t global_rank);
   int64_t global_rank() const { return global_rank_; }
 
@@ -268,6 +271,7 @@ class COMMON_EXPORT ParallelContext {
   bool stra_file_only_trainable_params_ = true;
   std::string fusion_mode_;
   bool direct_split_ = false;
+  bool pipeline_result_broadcast_ = false;
 };
 }  // namespace mindspore::parallel
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_PARALLEL_CONTEXT_H_

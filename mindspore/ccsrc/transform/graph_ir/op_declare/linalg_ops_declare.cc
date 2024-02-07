@@ -84,7 +84,7 @@ OUTPUT_MAP(MatrixTriangularSolve) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MatrixTriangularSolve, prim::kPrimMatrixTriangularSolve->name(), ADPT_DESC(MatrixTriangularSolve));
 
 // LuUnpack
-CUST_INPUT_MAP(LuUnpack) = {{1, INPUT_DESC(LU_data)}, {1, INPUT_DESC(LU_pivots)}};
+CUST_INPUT_MAP(LuUnpack) = {{1, INPUT_DESC(LU_data)}, {2, INPUT_DESC(LU_pivots)}};
 CUST_ATTR_MAP(LuUnpack) = {{"unpack_data", ATTR_DESC(unpack_data, AnyTraits<bool>())},
                            {"unpack_pivots", ATTR_DESC(unpack_pivots, AnyTraits<bool>())}};
 CUST_OUTPUT_MAP(LuUnpack) = {{0, OUTPUT_DESC(pivots)}, {1, OUTPUT_DESC(L)}, {2, OUTPUT_DESC(U)}};

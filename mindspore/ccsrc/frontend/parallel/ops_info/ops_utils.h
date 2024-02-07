@@ -234,6 +234,7 @@ constexpr char BE_CLONED_INDEX[] = "be_cloned_index";
 constexpr char GROUP_RANKS[] = "group_ranks";
 constexpr char IS_IN_FORWARD[] = "is_in_forward";
 constexpr char DTYPE[] = "dtype";
+constexpr char DTYPETOENUM[] = "_dtype_to_enum";
 constexpr char DEV_NUM[] = "dev_num";
 constexpr char MEAN_FLAG[] = "mean_flag";
 constexpr char GRAD_ACCUMULATION_STEP[] = "grad_accumulation_step";
@@ -258,6 +259,7 @@ constexpr char PARALLEL_OPTIMIZER_COMM_OP[] = "parallel_optimizer_comm_op";
 constexpr char PARALLEL_GLOBALNORM[] = "PARALLEL_GLOBALNORM_IN_STAGES";
 constexpr char PARALLEL_GLOBALNORM_BETWEEN[] = "PARALLEL_GLOBALNORM_BETWEEN_STAGES";
 constexpr char PARALLEL_GLOBALNORM_DIV[] = "PARALLEL_GLOBALNORM_DIV";
+constexpr char PARALLEL_RESULT_BROADCAST[] = "PARALLEL_RESULT_BROADCAST";
 constexpr char GRAD_SCALE[] = "grad_scale";
 constexpr char CELLLIST_KEYWORD_PATTERN[] = "-CellList/(\\d+)-";
 

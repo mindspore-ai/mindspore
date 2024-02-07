@@ -18,7 +18,7 @@
 #define AICPU_KERNELS_NORMALIZED_TRUNCATEDNORMAL_H_
 
 #include <random>
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 

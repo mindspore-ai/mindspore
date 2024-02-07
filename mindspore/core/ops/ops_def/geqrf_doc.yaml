@@ -13,17 +13,17 @@ geqrf:
             This is an experimental API that is subject to change or deletion.
 
         Args:
-            - **x** (Tensor) - Tensor of shape :math:`(*, m, n)`, input must be a matrix greater than or equal to 2D,
-            with dtype of float32, float64, complex64, complex128.
+            input (Tensor): Tensor of shape :math:`(*, m, n)`, input must be a matrix greater than or equal to 2D,
+                with dtype of float32, float64, complex64, complex128.
 
         Returns:
-            - **y** (Tensor) - Tensor of shape :math:`(*, m, n)`, has the same dtype as the `x`.
-            - **tau** (Tensor) - Tensor of shape :math:`(*, p)` and :math:`p = min(m, n)`, has the same dtype as the `x`.
+            - **y** (Tensor) - Tensor of shape :math:`(*, m, n)`, has the same dtype as the `input`.
+            - **tau** (Tensor) - Tensor of shape :math:`(*, p)` and :math:`p = min(m, n)`, has the same dtype as the `input`.
 
         Raises:
-            TypeError: If `x` is not a Tensor.
-            TypeError: If the dtype of `x` is not float32, float64, complex64 or complex128.
-            ValueError: If dimension of `x` is less than 2.
+            TypeError: If `input` is not a Tensor.
+            TypeError: If the dtype of `input` is not float32, float64, complex64 or complex128.
+            ValueError: If dimension of `input` is less than 2.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -31,8 +31,8 @@ geqrf:
         Examples:
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
-            >>> input_x = Tensor(np.array([[-2.0, -1.0], [1.0, 2.0]]).astype(np.float32))
-            >>> y, tau = ops.geqrf(input_x)
+            >>> input = Tensor(np.array([[-2.0, -1.0], [1.0, 2.0]]).astype(np.float32))
+            >>> y, tau = ops.geqrf(input)
             >>> print(y)
             [[ 2.236068   1.7888544]
             [-0.236068   1.3416407]]

@@ -745,6 +745,23 @@ static const std::vector<DataConvertFuncPtr> &GetStubDataConvertFuncs() {
   };
   return data_convert_funcs;
 }
+
+void RemoveRecomputeScope(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto nodes = TopoSort(func_graph->get_return(), SuccDeeperSimple);
+
+  for (const auto &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    const auto &origin_scope_name = node->scope()->name();
+    if (origin_scope_name.compare(0, strlen(kAttrRecompute), kAttrRecompute) == 0) {
+      auto remove_recompute_scope = origin_scope_name.substr(strlen(kAttrRecompute) + 1);
+      node->set_scope(std::make_shared<Scope>(remove_recompute_scope));
+    }
+  }
+}
 }  // namespace
 
 bool ConvertData(const py::object &obj, ValuePtr *data, bool use_signature, const TypePtr &dtype, bool forbid_reuse) {
@@ -825,10 +842,39 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const ValuePtrList &args_
   func_graph->set_python_obj(python_obj);
 
   if (forbid_reuse) {
+    // The function may be set recomputed in parse.
+    if (!data_converter::IsCellInstance(obj)) {
+      RemoveRecomputeScope(func_graph);
+    }
     // Return the clone graph because the graph may be set recomputed later.
     return BasicClone(func_graph);
   }
   return func_graph;
+}
+
+ValuePtr GetArgDefaultValue(const std::string &prim_name, const std::string &arg_name) {
+  py::module mod = py::module::import(PYTHON_MOD_PRIMITIVE_OP_CREATE_INSTANCE_HELPER_MODULE);
+  if (!py::hasattr(mod, PYTHON_MOD_PRIMITIVE_OP_DEFAULT_VALUE_DICT)) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Can not found " << PYTHON_MOD_PRIMITIVE_OP_DEFAULT_VALUE_DICT << "in "
+                               << PYTHON_MOD_PRIMITIVE_OP_CREATE_INSTANCE_HELPER_MODULE << ".";
+  }
+  py::dict op_default_dict = mod.attr(PYTHON_MOD_PRIMITIVE_OP_DEFAULT_VALUE_DICT);
+  if (!op_default_dict.contains(py::str(prim_name))) {
+    return nullptr;
+  }
+  py::dict prim_default_dict = op_default_dict[py::str(prim_name)];
+  if (!prim_default_dict.contains(py::str(arg_name))) {
+    return nullptr;
+  }
+  auto default_value = prim_default_dict[py::str(arg_name)];
+  ValuePtr converted_ret = nullptr;
+  bool converted = ConvertData(default_value, &converted_ret);
+  if (!converted) {
+    const std::string &default_name = py::str(default_value);
+    MS_EXCEPTION(ValueError) << "For Operator[" << prim_name << "], '" << default_name
+                             << "' is not supported as the default value for '" << arg_name << "'.";
+  }
+  return converted_ret;
 }
 
 namespace data_converter {

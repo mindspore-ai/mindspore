@@ -217,5 +217,5 @@ uint32_t ExtractGlimpseCpuKernel::ExtractGlimpseCheck(CpuKernelContext &ctx) {
                      KERNEL_STATUS_PARAM_INVALID, "data type error.")
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kExtractGlimpse, ExtractGlimpseCpuKernel);
+REGISTER_MS_CPU_KERNEL(kExtractGlimpse, ExtractGlimpseCpuKernel);
 }  // namespace aicpu

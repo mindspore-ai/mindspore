@@ -205,5 +205,5 @@ uint32_t NextAfterCpuKernel::NextAfterCompute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kNextAfter, NextAfterCpuKernel);
+REGISTER_MS_CPU_KERNEL(kNextAfter, NextAfterCpuKernel);
 }  // namespace aicpu

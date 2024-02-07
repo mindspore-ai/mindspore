@@ -22,21 +22,21 @@
 #include "include/backend/device_address.h"
 #include "ir/tensor_storage_info.h"
 #include "runtime/hardware/device_context.h"
-#include "runtime/pynative/async/kernel_task.h"
+#include "runtime/pipeline/task/kernel_task.h"
 
 namespace mindspore::device::cpu {
-class CpuContiguousKernelTask : public pynative::KernelTask {
+class CpuContiguousKernelTask : public runtime::KernelTask {
  public:
-  explicit CpuContiguousKernelTask(std::shared_ptr<pynative::KernelTaskContext> context)
-      : pynative::KernelTask(std::move(context)) {}
+  explicit CpuContiguousKernelTask(std::shared_ptr<runtime::KernelTaskContext> context)
+      : runtime::KernelTask(std::move(context)) {}
   ~CpuContiguousKernelTask() = default;
 
   bool RunWithRet() override;
 };
-class CpuCopyWithSliceKernelTask : public pynative::KernelTask {
+class CpuCopyWithSliceKernelTask : public runtime::KernelTask {
  public:
-  explicit CpuCopyWithSliceKernelTask(std::shared_ptr<pynative::KernelTaskContext> context)
-      : pynative::KernelTask(std::move(context)) {}
+  explicit CpuCopyWithSliceKernelTask(std::shared_ptr<runtime::KernelTaskContext> context)
+      : runtime::KernelTask(std::move(context)) {}
   ~CpuCopyWithSliceKernelTask() = default;
 
   bool RunWithRet() override;

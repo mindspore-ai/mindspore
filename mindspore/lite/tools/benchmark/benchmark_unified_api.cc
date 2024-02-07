@@ -1161,9 +1161,6 @@ int BenchmarkUnifiedApi::ParallelInference(std::shared_ptr<mindspore::Context> c
     MS_LOG(WARNING) << "in parallel predict warm up loop count should less than" << kMaxRequestNum;
   }
 
-  (void)std::transform(flags_->resize_dims_.begin(), flags_->resize_dims_.end(), std::back_inserter(resize_dims_),
-                       [&](auto &shapes) { return this->ConverterToInt64Vector<int>(shapes); });
-
   // model runner init
   auto runner_config = std::make_shared<RunnerConfig>();
   runner_config->SetContext(context);
@@ -1180,6 +1177,18 @@ int BenchmarkUnifiedApi::ParallelInference(std::shared_ptr<mindspore::Context> c
   MS_CHECK_FALSE_MSG(ms_inputs_for_api_.empty(), RET_ERROR, "model pool input is empty.");
   ms_outputs_for_api_ = model_runner_.GetOutputs();
   MS_CHECK_FALSE_MSG(ms_outputs_for_api_.empty(), RET_ERROR, "model pool output is empty.");
+
+  if (!flags_->graph_input_shape_map_.empty()) {
+    // parse model input shapes from --inputShape flag
+    std::vector<std::vector<int64_t>> resize_dims = ParseGraphInputShapeMap(model_runner_.GetInputs());
+    MS_CHECK_FALSE_MSG(resize_dims.empty(), RET_ERROR, "resize dims empty.");
+    (void)std::transform(resize_dims.begin(), resize_dims.end(), std::back_inserter(resize_dims_),
+                         [&](const auto &shapes) { return shapes; });
+  } else {
+    (void)std::transform(flags_->resize_dims_.begin(), flags_->resize_dims_.end(), std::back_inserter(resize_dims_),
+                         [&](auto &shapes) { return this->ConverterToInt64Vector<int>(shapes); });
+  }
+
   for (int i = 0; i < flags_->parallel_num_ + flags_->warm_up_loop_count_; i++) {
     status = LoadInput();
     MS_CHECK_FALSE_MSG(status != RET_OK, status, "Generate input data error");
@@ -1308,6 +1317,47 @@ int BenchmarkUnifiedApi::CompileGraph(mindspore::ModelType model_type, const std
   return RET_OK;
 }
 
+std::vector<std::vector<int64_t>> BenchmarkUnifiedApi::ParseGraphInputShapeMap(const std::vector<MSTensor> &inputs) {
+  std::vector<std::vector<int64_t>> resize_dims;
+  if (flags_->graph_input_shape_map_.size() != inputs.size()) {
+    MS_LOG(ERROR) << "The number of inputs in the model does not match the parsed inputShape option. The model has ["
+                  << inputs.size() << "] input(s), while the parsed inputShape has ["
+                  << flags_->graph_input_shape_map_.size() << "] input(s).";
+    return resize_dims;
+  }
+  for (auto &model_input : inputs) {
+    if (flags_->graph_input_shape_map_.find(model_input.Name()) == flags_->graph_input_shape_map_.end()) {
+      MS_LOG(ERROR) << "model input [" << model_input.Name()
+                    << "] is not found in inputShape option, please double check";
+      MS_LOG(ERROR) << "model input names are as follows:";
+      for (auto &mod_input : inputs) {
+        MS_LOG(ERROR) << mod_input.Name();
+      }
+      MS_LOG(ERROR) << "user input names are as follows:";
+      for (auto &user_input : flags_->graph_input_shape_map_) {
+        MS_LOG(ERROR) << user_input.first;
+      }
+      return resize_dims;
+    } else {
+      auto shapes = flags_->graph_input_shape_map_[model_input.Name()];
+      resize_dims.push_back(this->ConverterToInt64Vector(shapes));
+    }
+  }
+  return resize_dims;
+}
+
+#ifdef PARALLEL_INFERENCE
+int BenchmarkUnifiedApi::RunParallelBenchmark(std::shared_ptr<mindspore::Context> context) {
+  if (flags_->resize_dims_.empty() && flags_->graph_input_shape_map_.empty()) {
+    MS_LOG(ERROR) << "model input shapes should be provided when using parallel predict, please specify --inputShape";
+    return RET_ERROR;
+  }
+  auto status = ParallelInference(context);
+  MS_CHECK_FALSE_MSG(status != RET_OK, RET_ERROR, "run model pool failed.");
+  return RET_OK;
+}
+#endif
+
 int BenchmarkUnifiedApi::RunBenchmark() {
   auto start_prepare_time = GetTimeUs();
 
@@ -1361,19 +1411,23 @@ int BenchmarkUnifiedApi::RunBenchmark() {
   UpdateConfigInfo();
 #ifdef PARALLEL_INFERENCE
   if (flags_->enable_parallel_predict_) {
-    MS_CHECK_FALSE_MSG(flags_->resize_dims_.empty(), RET_ERROR, "use parallel predict, inputShapes can not use empty.");
-    status = ParallelInference(context);
-    MS_CHECK_FALSE_MSG(status != RET_OK, RET_ERROR, "run model pool failed.");
+    MS_CHECK_FALSE_MSG(RunParallelBenchmark(context) != RET_OK, RET_ERROR, "run model pool failed.");
     return RET_OK;
   }
 #endif
 
   status = CompileGraph(model_type, context, model_name);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Compile graph failed.";
-    return status;
-  }
-  if (!flags_->resize_dims_.empty()) {
+  MS_CHECK_FALSE_MSG(status != RET_OK, status, "Compile graph failed.");
+  if (!flags_->graph_input_shape_map_.empty()) {
+    std::vector<std::vector<int64_t>> resize_dims = ParseGraphInputShapeMap(ms_model_.GetInputs());
+    MS_CHECK_FALSE_MSG(resize_dims.empty(), RET_ERROR, "resize_dims is empty");
+    auto ret = ms_model_.Resize(ms_model_.GetInputs(), resize_dims);
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "Input tensor resize failed.";
+      std::cout << "Input tensor resize failed.";
+      return RET_ERROR;
+    }
+  } else if (!flags_->resize_dims_.empty()) {
     std::vector<std::vector<int64_t>> resize_dims;
     (void)std::transform(flags_->resize_dims_.begin(), flags_->resize_dims_.end(), std::back_inserter(resize_dims),
                          [&](auto &shapes) { return this->ConverterToInt64Vector<int>(shapes); });

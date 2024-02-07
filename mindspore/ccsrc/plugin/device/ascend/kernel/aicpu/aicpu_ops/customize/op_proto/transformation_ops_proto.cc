@@ -5,6 +5,7 @@
  */
 
 #include "inc/ops/transformation_ops.h"
+#include <numeric>
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/op_const.h"
@@ -256,8 +257,7 @@ IMPLEMT_COMMON_INFERFUNC(TransposeInferShape) {
 
   bool perm_done = true;
   std::vector<int64_t> perm_list;
-  static const int64_t perm_input_index = 1;
-  if (!(ops::GetConstIntData(op, perm_input_index, perm_list))) {
+  if (!(ops::GetConstIntData(op, "perm", perm_list))) {
     perm_done = false;
     OP_LOGW(TbeGetName(op), "Get Const perm value failed ");
   }
@@ -332,4 +332,23 @@ IMPLEMT_COMMON_INFERFUNC(TransposeInferShape) {
 
 COMMON_INFER_FUNC_REG(Transpose, TransposeInferShape);
 // -------------------Transpose END-----------------
+
+// ----------------Flatten-----------------------
+IMPLEMT_INFERFUNC(Flatten, FlattenInfer) {
+  auto input_desc = op.GetInputDescByName("x");
+  auto input_shape = input_desc.GetShape().GetDims();
+  auto input_type = input_desc.GetDataType();
+  Shape output_shape({UNKNOWN_DIM, UNKNOWN_DIM});
+  if (!IsUnknown(input_shape)) {
+    auto batchsize = std::accumulate(input_shape.begin() + 1, input_shape.end(), 1, std::multiplies<int64_t>());
+    output_shape.SetDim(0, input_shape[0]);
+    output_shape.SetDim(1, batchsize);
+  }
+  auto out_desc = op.GetOutputDescByName("y");
+  out_desc.SetShape(output_shape);
+  out_desc.SetDataType(input_type);
+  return op.UpdateOutputDesc("y", out_desc);
+}
+INFER_FUNC_REG(Flatten, FlattenInfer);
+// ----------------Flatten END-----------------------
 }  // namespace ge

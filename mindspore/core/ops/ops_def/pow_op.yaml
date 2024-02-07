@@ -1,14 +1,14 @@
 #operator pow
 pow:
     args:
-        x1:
+        input:
             dtype: tensor
             type_cast: number
-        x2:
+        exponent:
             dtype: tensor
             type_cast: number
     args_signature:
-        dtype_group: (x1, x2)
+        dtype_group: (input, exponent)
     returns:
         y:
             dtype: tensor

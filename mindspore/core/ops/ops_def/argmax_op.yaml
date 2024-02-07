@@ -1,7 +1,7 @@
 #operator argmax
 argmax:
   args:
-    input:
+    input_x:
       dtype: tensor
     axis:
       dtype: int

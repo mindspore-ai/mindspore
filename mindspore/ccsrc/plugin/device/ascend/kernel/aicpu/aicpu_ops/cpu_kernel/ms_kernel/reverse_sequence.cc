@@ -204,5 +204,5 @@ uint32_t ReverseSequenceMsCpuKernel::Compute(CpuKernelContext &ctx) {
   return calls[x_dtype_][seq_lengths_dtype_](seq_dim_, batch_dim_, ioAddrs_, x_shape_, seq_lengths_shape_, ctx);
 }
 
-REGISTER_CPU_KERNEL(kReverseSequence, ReverseSequenceMsCpuKernel);
+REGISTER_MS_CPU_KERNEL(kReverseSequence, ReverseSequenceMsCpuKernel);
 }  // namespace aicpu

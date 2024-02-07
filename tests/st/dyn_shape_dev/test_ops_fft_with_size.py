@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops
-import test_utils
+from tests.st.utils import test_utils
 
 
 @test_utils.run_with_cell

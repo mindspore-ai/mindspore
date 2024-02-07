@@ -169,6 +169,6 @@ void FillCpuKernel::SpecialFillOutput(int64_t start, int64_t end, T *output_data
   }
 }
 
-REGISTER_CPU_KERNEL(kFill, FillCpuKernel);
-REGISTER_CPU_KERNEL(kFillV2, FillCpuKernel);
+REGISTER_MS_CPU_KERNEL(kFill, FillCpuKernel);
+REGISTER_MS_CPU_KERNEL(kFillV2, FillCpuKernel);
 }  // namespace aicpu

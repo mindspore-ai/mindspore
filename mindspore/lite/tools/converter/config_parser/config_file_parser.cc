@@ -271,11 +271,6 @@ int ConfigFileParser::CheckVariableParm(const std::vector<int64_t> &variable_ind
 }
 
 bool ConfigFileParser::CheckPluginCustomOps(const std::vector<std::string> &plugin_custom_ops) {
-  if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end() &&
-      plugin_custom_ops.size() != 1) {
-    MS_LOG(ERROR) << "plugin_custom_ops include All, can not include other param.";
-    return false;
-  }
   if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "None") != plugin_custom_ops.end() &&
       plugin_custom_ops.size() != 1) {
     MS_LOG(ERROR) << "plugin_custom_ops include None, can not include other param.";

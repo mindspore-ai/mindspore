@@ -34,7 +34,7 @@
 #include "backend/common/session/session_basic.h"
 #include "runtime/hardware/device_context.h"
 #include "runtime/graph_scheduler/graph_scheduler.h"
-#include "runtime/pynative/async/device_task.h"
+#include "runtime/pipeline/task/device_task.h"
 #include "runtime/pynative/op_compiler.h"
 #include "include/backend/visible.h"
 
@@ -80,12 +80,12 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   // Clear resource when python exit.
   void ClearOpExecutorResource() const;
 
-  void RunViewKernelTask(const pynative::BaseOpRunInfo &base_op_run_info, const pynative::KernelTaskType &task_type,
+  void RunViewKernelTask(const pynative::BaseOpRunInfo &base_op_run_info, const runtime::KernelTaskType &task_type,
                          bool enable_async);
 
   void RunAllocMemTask(DeviceContext *device_context, const tensor::TensorPtr &tensor, bool enable_async);
 
-  void RunContiguousTask(const tensor::TensorPtr &tensor, size_t stream_id, bool enable_async) override;
+  void RunContiguousTaskForArgs(const tensor::TensorPtr &tensor, size_t stream_id, bool enable_async) override;
 
   device::DeviceAddressPtr RunContiguousTaskByAddress(const device::DeviceAddressPtr &old_device_address,
                                                       const TensorStorageInfoPtr &old_storage_info, size_t stream_id,
@@ -138,16 +138,15 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
 
   void ReleaseForwardOutput(const std::vector<ValuePtr> &input_values);
 
-  void OpRunCallback(const std::shared_ptr<pynative::OpTaskContext> &context);
+  void OpRunCallback(const std::shared_ptr<runtime::OpTaskContext> &context);
 
-  void OpRunCallbackDynamic(const std::shared_ptr<pynative::OpTaskContext> &context);
+  void OpRunCallbackDynamic(const std::shared_ptr<runtime::OpTaskContext> &context);
 
   // Clean the compilation cache to avoid memory leakage in dynamic shape scenarios.
   void ClearResource();
 
-  void RunViewKernelTaskAsyncImpl(const pynative::KernelTaskType &task_type, DeviceContext *device_context,
+  void RunViewKernelTaskAsyncImpl(const runtime::KernelTaskType &task_type, DeviceContext *device_context,
                                   const device::DeviceAddressPtrList &input_addr_list,
-                                  const TensorStorageInfoPtrList &input_storage_list,
                                   const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id);
 
   // Cache output tensor ref count of kernels for back propagation graph in PyNative mode.

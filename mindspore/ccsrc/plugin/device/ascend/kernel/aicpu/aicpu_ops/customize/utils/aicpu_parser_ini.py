@@ -51,16 +51,19 @@ cust_op_lists = [
     "choleskygrad",
     "choleskyinverse",
     "choleskysolve",
+    "coalesce",
     "combinednonmaxsuppression",
     "complex",
     "complexabs",
     "concat",
     "conj",
+    "correlate",
     "cos",
     "cumprod",
     "cumulativelogsumexp",
     "dataformatvecpermute",
     "depthtospace",
+    "dct",
     "diag",
     "diagonal",
     "diagpart",
@@ -74,6 +77,8 @@ cust_op_lists = [
     "expm1",
     "extractglimpse",
     "eye",
+    "fft",
+    "fftshift",
     "filldiagonal",
     "floordiv",
     "fractionalavgpool",
@@ -88,6 +93,8 @@ cust_op_lists = [
     "histogram",
     "hypot",
     "identityn",
+    "ifft",
+    "ifftshift",
     "igamma",
     "im2col",
     "indexfill",
@@ -104,8 +111,10 @@ cust_op_lists = [
     "log1p",
     "lognormalreverse",
     "logspace",
+    "loguniformcandidatesampler",
     "lowerbound",
     "lusolve",
+    "luunpack",
     "luunpackgrad",
     "linearsumassignment",
     "maskedselectgrad",
@@ -140,6 +149,7 @@ cust_op_lists = [
     "padv3grad",
     "parameterizedtruncatednormal",
     "poisson",
+    "polar",
     "qr",
     "raggedrange",
     "randompoisson",
@@ -148,6 +158,7 @@ cust_op_lists = [
     "randomshuffle",
     "randomchoicewithmask",
     "randomuniformint",
+    "real",
     "reciprocal",
     "reciprocalgrad",
     "reducemean",
@@ -207,8 +218,7 @@ cust_op_lists = [
     "environget",
     "environset",
     "layernormgradgrad",
-    "fftshift",
-    "batchnormgradgrad"
+    "batchnormgradgrad",
 ]
 
 
@@ -234,7 +244,7 @@ def parse_ini_to_obj(ini_file, aicpu_ops_info):
             if not line:
                 continue
             if line.startswith("["):
-                if op_name and info: # set info for the last op
+                if op_name and info:  # set info for the last op
                     aicpu_ops_info["Cust"+op_name] = info
                 info = {}
                 op_name = line[1:-1]

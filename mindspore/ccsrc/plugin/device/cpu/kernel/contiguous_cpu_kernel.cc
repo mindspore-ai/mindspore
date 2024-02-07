@@ -43,9 +43,9 @@ std::map<std::pair<TypeId, TypeId>, ContiguousCpuKernel::ContiguousFunc> Contigu
   {std::make_pair(kNumberTypeUInt32, kNumberTypeUInt32), &ContiguousCpuKernel::LaunchContiguousImpl<uint32_t>},
   {std::make_pair(kNumberTypeUInt64, kNumberTypeUInt64), &ContiguousCpuKernel::LaunchContiguousImpl<uint64_t>}};
 
-bool ContiguousCpuKernel::LaunchContiguous(TypeId input_type_id, const kernel::AddressPtr &input,
+bool ContiguousCpuKernel::LaunchContiguous(TypeId input_type_id, const kernel::KernelTensorPtr &input,
                                            const TensorStorageInfoPtr &input_storage_info, TypeId output_type_id,
-                                           const kernel::AddressPtr &output) {
+                                           const kernel::KernelTensorPtr &output) {
   const auto &iter = func_list_.find(std::make_pair(input_type_id, output_type_id));
   if (iter == func_list_.end()) {
     MS_LOG(EXCEPTION) << "type_id:" << input_type_id << " is invalid";
@@ -56,12 +56,12 @@ bool ContiguousCpuKernel::LaunchContiguous(TypeId input_type_id, const kernel::A
 }
 
 template <typename T>
-bool ContiguousCpuKernel::LaunchContiguousImpl(const kernel::AddressPtr &input,
+bool ContiguousCpuKernel::LaunchContiguousImpl(const kernel::KernelTensorPtr &input,
                                                const TensorStorageInfoPtr &input_storage_info,
-                                               const kernel::AddressPtr &output, const int64_t &type_size) {
+                                               const kernel::KernelTensorPtr &output, const int64_t &type_size) {
   MS_EXCEPTION_IF_NULL(input_storage_info);
-  T *input_addr = GetDeviceAddress<T>({input}, 0);
-  T *output_addr = GetDeviceAddress<T>({output}, 0);
+  T *input_addr = GetDeviceAddress<T>({input.get()}, 0);
+  T *output_addr = GetDeviceAddress<T>({output.get()}, 0);
   MS_EXCEPTION_IF_NULL(input_addr);
   MS_EXCEPTION_IF_NULL(output_addr);
   const auto &output_shape = input_storage_info->shape;

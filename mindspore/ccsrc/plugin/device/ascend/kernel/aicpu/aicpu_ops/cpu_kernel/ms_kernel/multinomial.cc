@@ -239,5 +239,5 @@ uint32_t MultinomialCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kMultinomial, MultinomialCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMultinomial, MultinomialCpuKernel);
 }  // namespace aicpu

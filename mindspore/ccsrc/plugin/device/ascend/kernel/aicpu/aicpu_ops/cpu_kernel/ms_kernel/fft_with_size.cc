@@ -378,5 +378,5 @@ uint32_t FFTWithSizeCpuKernel::FFTWithSizeCompute(CpuKernelContext &ctx, bool on
     ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kFFTWithSize, FFTWithSizeCpuKernel);
+REGISTER_MS_CPU_KERNEL(kFFTWithSize, FFTWithSizeCpuKernel);
 }  // namespace aicpu

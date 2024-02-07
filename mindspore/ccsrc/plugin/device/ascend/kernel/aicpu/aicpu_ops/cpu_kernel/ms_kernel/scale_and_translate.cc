@@ -593,6 +593,6 @@ uint32_t GatherSpans<T>::operator()(const aicpu::CpuKernelContext &context, int 
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kScaleAndTranslate, ScaleAndTranslateCpuKernel);
-REGISTER_CPU_KERNEL(kScaleAndTranslateGrad, ScaleAndTranslateGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kScaleAndTranslate, ScaleAndTranslateCpuKernel);
+REGISTER_MS_CPU_KERNEL(kScaleAndTranslateGrad, ScaleAndTranslateGradCpuKernel);
 }  // namespace aicpu

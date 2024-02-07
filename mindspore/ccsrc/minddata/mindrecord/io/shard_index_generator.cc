@@ -412,7 +412,7 @@ Status ShardIndexGenerator::GenerateRowData(int shard_no, const std::map<int, in
   std::shared_ptr<Page> page_ptr;
   RETURN_IF_NOT_OK_MR(shard_header_.GetPage(shard_no, raw_page_id, &page_ptr));
   // related blob page
-  vector<pair<int, uint64_t>> row_group_list = page_ptr->GetRowGroupIds();
+  std::vector<std::pair<int, uint64_t>> row_group_list = page_ptr->GetRowGroupIds();
 
   // pair: row_group id, offset in raw data page
   for (pair<int, int> blob_ids : row_group_list) {

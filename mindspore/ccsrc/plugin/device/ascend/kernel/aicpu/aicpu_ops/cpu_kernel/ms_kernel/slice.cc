@@ -283,5 +283,5 @@ uint32_t SliceCpuKernel::SliceCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kSlice, SliceCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSlice, SliceCpuKernel);
 }  // namespace aicpu

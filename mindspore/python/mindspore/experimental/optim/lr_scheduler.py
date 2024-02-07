@@ -925,7 +925,7 @@ class ReduceLROnPlateau:
         else:
             ops.assign_add(self.wait, self.increase_tensor)
 
-        if self.in_cooldown:
+        if self.in_cooldown():
             ops.assign_sub(self.cooldown_counter, self.increase_tensor)
             ops.assign(self.wait, 0)
 
@@ -944,7 +944,6 @@ class ReduceLROnPlateau:
                 ops.assign(lr, new_lr)
         return True
 
-    @property
     def in_cooldown(self):
         """ Whether in cooldown period. """
         return self.cooldown_counter > 0
@@ -1334,8 +1333,8 @@ class CosineAnnealingLR(LRScheduler):
         [Tensor(shape=[], dtype=Float32, value= 0)]
     """
     def __init__(self, optimizer, T_max, eta_min=0.0, last_epoch=-1):
-        if not isinstance(eta_min, float):
-            raise TypeError(f"For 'CosineAnnealingLR', the 'eta_min' must be float, but got {type(eta_min)}.")
+        if not isinstance(eta_min, (float, int)):
+            raise TypeError(f"For 'CosineAnnealingLR', the 'eta_min' must be float or int, but got {type(eta_min)}.")
         if not isinstance(T_max, int) and not isinstance(T_max, bool):
             raise TypeError(f"For 'CosineAnnealingLR', the 'T_max' must be int, but got {type(eta_min)}.")
         self.T_max = T_max

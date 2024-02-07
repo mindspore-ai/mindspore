@@ -1,20 +1,16 @@
 pow:
     description: |
-        Calculates the `y` power of each element in `x`.
+        Calculates the `exponent` power of each element in `input`.
 
-        Refer to :func:`mindspore.ops.pow` for more details.
+        Args:
+            input (Union[Tensor, Number]): The first input is a Number or a tensor whose data type is
+                `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+                `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+            exponent (Union[Tensor, Number]): The second input is a Number or a tensor whose data type is
+                `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+                `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
 
-        Inputs:
-            - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
-              a bool or a tensor whose data type is
-              `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-              `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-            - **y** (Union[Tensor, number.Number, bool]) - The second input is a number.Number or
-              a bool or a tensor whose data type is
-              `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-              `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-
-        Outputs:
+        Returns:
             Tensor, the shape is the same as the one after broadcasting,
             and the data type is the one with higher precision or higher digits among the two inputs.
 
@@ -25,14 +21,14 @@ pow:
             >>> import mindspore
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
-            >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
-            >>> y = 3.0
-            >>> output = ops.pow(x, y)
+            >>> input = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+            >>> exponent = 3.0
+            >>> output = ops.pow(input, exponent)
             >>> print(output)
             [ 1.  8. 64.]
             >>>
-            >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
-            >>> y = Tensor(np.array([2.0, 4.0, 3.0]), mindspore.float32)
-            >>> output = ops.pow(x, y)
+            >>> input = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+            >>> exponent = Tensor(np.array([2.0, 4.0, 3.0]), mindspore.float32)
+            >>> output = ops.pow(input, exponent)
             >>> print(output)
             [ 1. 16. 64.]

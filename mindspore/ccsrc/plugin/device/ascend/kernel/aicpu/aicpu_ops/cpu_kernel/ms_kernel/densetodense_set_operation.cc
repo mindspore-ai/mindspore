@@ -25,7 +25,6 @@
 #include <vector>
 
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "utils/allocator_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -336,5 +335,5 @@ uint32_t DenseToDenseSetOperationCpuKernel::DoCompute(const CpuKernelContext &ct
   return OutputSparseTensor<T>(ctx, group_shape, num_result_values, group_sets);
 }
 
-REGISTER_CPU_KERNEL(kDenseToDenseSetOperation, DenseToDenseSetOperationCpuKernel);
+REGISTER_MS_CPU_KERNEL(kDenseToDenseSetOperation, DenseToDenseSetOperationCpuKernel);
 }  // namespace aicpu

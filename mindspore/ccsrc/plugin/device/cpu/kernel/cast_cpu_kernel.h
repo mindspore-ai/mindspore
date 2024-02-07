@@ -37,9 +37,13 @@ class CastCpuKernelMod : public NativeCpuKernelMod {
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs) override {
-    const size_t kCastInputsNum = 1;
+    const size_t kCastInputsMinNum = 1;
+    const size_t kCastInputsMaxNum = 2;
     const size_t kCastOutputsNum = 1;
-    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCastInputsNum, kernel_name_);
+    if ((inputs.size() != kCastInputsMinNum) && (inputs.size() != kCastInputsMaxNum)) {
+      MS_LOG(EXCEPTION) << (kernel_name_) << " requires " << (kCastInputsMinNum) << " or " << (kCastInputsMaxNum)
+                        << " inputs, but got " << (inputs.size()) << ".";
+    }
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCastOutputsNum, kernel_name_);
     if (outputs[0]->size() == 0) {
       MS_LOG(WARNING) << "For '" << kernel_name_ << "', the memory size of output must be greater than 0, but got 0.";

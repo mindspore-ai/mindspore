@@ -288,7 +288,8 @@ class _Context:
             'op_precision_mode': (str,),
             'ge_options': (dict,),
             'parallel_speed_up_json_path': (str, None),
-            'host_scheduling_max_threshold': (int,)
+            'host_scheduling_max_threshold': (int,),
+            'topo_order': (dict,)
         }
         ascend_cfg_setters = {
             'precision_mode': self._get_ascend_config_setter('precision_mode'),
@@ -300,7 +301,8 @@ class _Context:
             'op_precision_mode': self._set_op_precision_mode,
             'ge_options': self._set_ge_options,
             'parallel_speed_up_json_path': self._set_speedup_config_path,
-            'host_scheduling_max_threshold': self._get_ascend_config_setter('host_scheduling_max_threshold', str)
+            'host_scheduling_max_threshold': self._get_ascend_config_setter('host_scheduling_max_threshold', str),
+            'topo_order': self._set_topo_order
         }
         ascend_cfg_set = tuple(ascend_cfg_modes.keys())
         for ascend_key, ascend_value in ascend_config.items():
@@ -646,6 +648,28 @@ class _Context:
         options_str = json.dumps(ge_options)
         self.set_param(ms_ctx_param.ge_options, options_str)
 
+    def _set_topo_order(self, topo_order):
+        """
+        Set topo order.
+
+        Args:
+            topo_order (dict):
+                key: str, the name of the graph.
+                value: str, the topo order of the graph, should be one of 'dfs', 'bfs', 'rdfs'.
+        """
+        valid_order = {'dfs', 'bfs', 'rdfs'}
+        if not isinstance(topo_order, dict):
+            raise TypeError(f"For 'ascend_config', the 'topo_order' should be a dict, "
+                            f"got '{type(topo_order)}'.")
+        for k, v in topo_order.items():
+            if not isinstance(k, str):
+                raise TypeError("key {} is not a str".format(k))
+            if v not in valid_order:
+                raise ValueError("value {} should be one of {}.".format(v, valid_order))
+
+        options_str = json.dumps(topo_order)
+        self.set_param(ms_ctx_param.topo_order, options_str)
+
     def _set_speedup_config_path(self, speedup_config_path):
         """"Check and set speedup config for auto parallel."""
         if speedup_config_path is None or speedup_config_path == "":
@@ -708,7 +732,7 @@ def _context():
                  auto_parallel_search_mode=str, search_mode=str, parameter_broadcast=bool, strategy_ckpt_load_file=str,
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool, enable_alltoall=bool,
                  all_reduce_fusion_config=list, pipeline_stages=int, pipeline_segments=int,
-                 parallel_optimizer_config=dict,
+                 pipeline_result_broadcast=bool, parallel_optimizer_config=dict,
                  comm_fusion=dict, strategy_ckpt_config=dict)
 def set_auto_parallel_context(**kwargs):
     r"""
@@ -804,6 +828,8 @@ def set_auto_parallel_context(**kwargs):
                         distributed alone in the pipeline. The total devices will be divided into 'pipeline_stags'
                         stages.
                         Default: ``1`` .
+        pipeline_result_broadcast (bool): A switch that broadcast the last stage result to all other stage in pipeline
+                        parallel inference. Default: ``False`` .
         parallel_optimizer_config (dict): A dict contains the keys and values for setting the parallel optimizer
                         configure. The configure provides more detailed behavior control about parallel training
                         when parallel optimizer is enabled. The configure will be effective when we use
@@ -892,6 +918,7 @@ def set_auto_parallel_context(**kwargs):
         >>> ms.set_auto_parallel_context(enable_alltoall=False)
         >>> ms.set_auto_parallel_context(all_reduce_fusion_config=[8, 160])
         >>> ms.set_auto_parallel_context(pipeline_stages=2)
+        >>> ms.set_auto_parallel_context(pipeline_stages=2, pipeline_result_broadcast=True)
         >>> parallel_config = {"gradient_accumulation_shard": True, "parallel_optimizer_threshold": 24,
         ...                    "optimizer_weight_shard_size": 2}
         >>> ms.set_auto_parallel_context(parallel_optimizer_config=parallel_config, enable_parallel_optimizer=True)
@@ -942,6 +969,7 @@ def reset_auto_parallel_context():
     - enable_parallel_optimizer: False.
     - enable_alltoall: False.
     - pipeline_stages: 1.
+    - pipeline_result_broadcast: False.
     - fusion_threshold: 64.
 
     Examples:

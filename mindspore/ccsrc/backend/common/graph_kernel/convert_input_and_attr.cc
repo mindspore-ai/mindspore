@@ -38,13 +38,14 @@ namespace mindspore::graphkernel {
 namespace {
 const std::set<std::string> &GetConvertInputAttrOps() {
   static const std::set<std::string> convert_input_attr_ops = {
-    prim::kPrimSoftmax->name(),        prim::kPrimReduceSum->name(),   prim::kPrimReduceMax->name(),
-    prim::kPrimReduceMin->name(),      prim::kPrimReduceMean->name(),  prim::kPrimOneHot->name(),
-    prim::kPrimMinimumGrad->name(),    prim::kPrimMaximumGrad->name(), prim::kPrimGather->name(),
-    prim::kPrimCumSum->name(),         prim::kPrimArgmin->name(),      prim::kPrimArgmax->name(),
-    prim::kPrimBiasAdd->name(),        prim::kPrimBiasAddGrad->name(), prim::kPrimLayerNorm->name(),
-    prim::kPrimLayerNormGrad->name(),  prim::kPrimLogSoftmax->name(),  prim::kPrimLogSoftmaxGrad->name(),
-    prim::kPrimAdamWeightDecay->name()};
+    prim::kPrimSoftmax->name(),       prim::kPrimReduceSum->name(),       prim::kPrimReduceMax->name(),
+    prim::kPrimReduceMin->name(),     prim::kPrimReduceMean->name(),      prim::kPrimOneHot->name(),
+    prim::kPrimMinimumGrad->name(),   prim::kPrimMaximumGrad->name(),     prim::kPrimGather->name(),
+    prim::kPrimCumSum->name(),        prim::kPrimArgmin->name(),          prim::kPrimArgmax->name(),
+    prim::kPrimBiasAdd->name(),       prim::kPrimBiasAddGrad->name(),     prim::kPrimLayerNorm->name(),
+    prim::kPrimLayerNormGrad->name(), prim::kPrimLogSoftmax->name(),      prim::kPrimLogSoftmaxGrad->name(),
+    prim::kPrimBroadcastTo->name(),   prim::kPrimAdamWeightDecay->name(),
+  };
   return convert_input_attr_ops;
 }
 

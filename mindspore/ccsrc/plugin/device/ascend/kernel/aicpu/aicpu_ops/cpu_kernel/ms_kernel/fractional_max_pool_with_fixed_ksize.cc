@@ -259,5 +259,5 @@ std::vector<int> FractionalMaxPoolWithFixedKsize::FractionalMaxPoolWithFixedKsiz
   return sequence;
 }
 
-REGISTER_CPU_KERNEL(kFractionalMaxPoolWithFixedKsize, FractionalMaxPoolWithFixedKsize);
+REGISTER_MS_CPU_KERNEL(kFractionalMaxPoolWithFixedKsize, FractionalMaxPoolWithFixedKsize);
 }  // namespace aicpu

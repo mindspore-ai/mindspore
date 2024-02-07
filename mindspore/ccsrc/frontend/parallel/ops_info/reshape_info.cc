@@ -840,6 +840,19 @@ TensorLayout ReshapeInfo::GetOutputLayoutBySWCIndex(int64_t swc_index) const {
   return std::move(swc->outputs_ptr[0].tensor_layout());
 }
 
+StrategyPtr ReshapeInfo::get_input_shard_strategy() {
+  StrategyPtr ret = nullptr;
+  if (input_layout_set_flag_ && g_device_manager != nullptr) {
+    Strategies strategy;
+    Dimensions dim;
+    int64_t stage_id = g_device_manager->stage_id();
+    dim = input_layout_.shard_strategy();
+    strategy.push_back(dim);
+    ret = NewStrategy(stage_id, strategy);
+  }
+  return ret;
+}
+
 REGISTER(ReshapeInfo);
 }  // namespace parallel
 }  // namespace mindspore

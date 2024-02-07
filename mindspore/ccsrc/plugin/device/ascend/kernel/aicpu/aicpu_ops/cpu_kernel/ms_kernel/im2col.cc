@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <complex>
 
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "common/kernel_log.h"
 #include "cpu_kernel/common/status.h"
 #include "utils/kernel_util.h"
@@ -216,5 +216,5 @@ uint32_t Im2colCpuKernel::Compute(CpuKernelContext &ctx) {
   return ret;
 }
 
-REGISTER_CPU_KERNEL(kIm2col, Im2colCpuKernel);
+REGISTER_MS_CPU_KERNEL(kIm2col, Im2colCpuKernel);
 }  // namespace aicpu

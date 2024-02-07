@@ -246,7 +246,7 @@ int AscendDistributeFakeQuantTransform::SetWeightQuantParam(const FuncGraphPtr &
     }
 
     const std::set<PrimitivePtr> support_weight_quant_types = {prim::kPrimMatMul, prim::kPrimBatchMatMul,
-                                                               prim::kPrimGather};
+                                                               prim::kPrimGather, prim::kPrimFFN};
     for (auto &node_user : node_users) {
       auto follow_cnode = node_user.first->cast<CNodePtr>();
       if (!CheckNodeInSet(follow_cnode, support_weight_quant_types)) {

@@ -201,5 +201,5 @@ uint32_t ArgMaxCpuKernel::ArgMaxCompute(const CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kArgMax, ArgMaxCpuKernel);
+REGISTER_MS_CPU_KERNEL(kArgMax, ArgMaxCpuKernel);
 }  // namespace aicpu

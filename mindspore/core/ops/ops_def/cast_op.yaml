@@ -1,0 +1,16 @@
+#operator cast
+cast:
+    args:
+        input_x:
+            dtype: tensor
+            type_cast: number
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+    class:
+        disable: True

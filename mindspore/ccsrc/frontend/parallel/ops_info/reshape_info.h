@@ -59,6 +59,7 @@ class ReshapeInfo : public OperatorInfo {
   void set_next_operator_name(const std::string &next_name) { next_operator_name_ = next_name; }
   void set_pre_operator_index(int64_t pre_index) { pre_operator_index_ = pre_index; }
   void set_next_operator_index(int64_t next_index) { next_operator_index_ = next_index; }
+  StrategyPtr get_input_shard_strategy();
   Status GenerateStrategyCosts(
     const std::vector<std::shared_ptr<StrategyWithCost>> &pre_stra_costs,
     std::vector<std::pair<std::vector<std::shared_ptr<StrategyWithCost>>, int64_t>> next_costs_index, int64_t out_index,

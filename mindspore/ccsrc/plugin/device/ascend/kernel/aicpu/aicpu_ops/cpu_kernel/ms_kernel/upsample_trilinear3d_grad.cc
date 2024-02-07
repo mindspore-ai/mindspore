@@ -365,5 +365,5 @@ uint32_t UpsampleTrilinear3dGradCpuKernel::UpsampleTrilinear3dGradCompute(const 
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kUpsampleTrilinear3dGrad, UpsampleTrilinear3dGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kUpsampleTrilinear3dGrad, UpsampleTrilinear3dGradCpuKernel);
 }  // namespace aicpu

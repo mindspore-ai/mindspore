@@ -21,9 +21,8 @@
 #include <vector>
 
 #include "cpu_kernel_utils.h"
-#include "utils/allocator_utils.h"
-#include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
+#include "utils/eigen_tensor.h"
 namespace {
 const char *kMaxPoolGrad = "MaxPoolGrad";
 constexpr uint32_t kInvalidMaxPoolingIndex = -1;
@@ -433,5 +432,5 @@ uint32_t MaxPoolGradCpuKernel::Compute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kMaxPoolGrad, MaxPoolGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMaxPoolGrad, MaxPoolGradCpuKernel);
 }  // namespace aicpu

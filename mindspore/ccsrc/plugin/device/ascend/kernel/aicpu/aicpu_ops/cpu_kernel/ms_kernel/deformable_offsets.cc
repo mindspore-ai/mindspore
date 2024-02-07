@@ -315,5 +315,5 @@ uint32_t DeformableOffsetsKernel::Compute(CpuKernelContext &ctx) {
   free(position_grid_addr);
   return ret;
 }
-REGISTER_CPU_KERNEL(kDeformableOffsets, DeformableOffsetsKernel);
+REGISTER_MS_CPU_KERNEL(kDeformableOffsets, DeformableOffsetsKernel);
 }  // namespace aicpu

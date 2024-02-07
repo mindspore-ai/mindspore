@@ -20,18 +20,18 @@ namespace kernel {
 
 void SquareAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &outputs) {
-  auto return_value = GEN_EXECUTOR(op_type_, inputs[kIndex0], inputs[kIndex0], outputs[kIndex0]);
+  auto return_value = GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], inputs[kIndex0], outputs[kIndex0]);
   UpdateWorkspace(return_value);
 }
 
 bool SquareAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  ParseGenExecutor(GEN_EXECUTOR(op_type_, inputs[kIndex0], inputs[kIndex0], outputs[kIndex0]));
+  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], inputs[kIndex0], outputs[kIndex0]));
   RunOp(stream_ptr, workspace);
   return true;
 }
 
-MS_ACLLNN_KERNEL_FACTORY_REG(Square, SquareAscend);
+MS_ACLNN_KERNEL_FACTORY_REG(Square, SquareAscend);
 }  // namespace kernel
 }  // namespace mindspore

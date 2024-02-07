@@ -17,6 +17,7 @@ import numpy as np
 from mindspore import context, nn, Tensor, jit, ops
 from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
+from tests.st.utils import test_utils
 
 
 class NetValueNodeWithDepend(nn.Cell):
@@ -103,6 +104,7 @@ def test_runtime_heter():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@test_utils.run_test_with_On
 def test_runtime_fallback_heter():
     """
     Feature: Runtime heter.

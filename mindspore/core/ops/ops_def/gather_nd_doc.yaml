@@ -12,7 +12,8 @@ gather_nd:
           output[(i_0, ..., i_{K-2})] = input\_x[indices[(i_0, ..., i_{K-2})]]
 
       The last dimension of `indices` can not more than the rank of `input_x`:
-          :math:`indices.shape[-1] <= input\_x.rank`.
+
+      :math:`indices.shape[-1] <= input\_x.rank`.
 
       Args:
           input_x (Tensor): The target tensor to gather values.

@@ -39,6 +39,7 @@
 #include "frontend/optimizer/irpass/stopgrad_eliminate.h"
 #include "frontend/optimizer/irpass/incorporate_call.h"
 #include "frontend/optimizer/irpass/item_tuple_or_list_eliminate.h"
+#include "frontend/optimizer/irpass/seqence_to_sequence_op_eliminate.h"
 #include "frontend/optimizer/irpass/item_dict_eliminate.h"
 #include "frontend/optimizer/irpass/merge_addn.h"
 #include "frontend/optimizer/irpass/accumulaten_eliminate.h"

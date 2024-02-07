@@ -72,7 +72,7 @@ class PyBoostCastOperation : public CastBaseOperation {
   template <typename TupleInput>
   void GetEachTypeMaxType(const FrontendOpRunInfoPtr &op_run_info, const std::vector<size_t> &same_type_index,
                           const std::vector<SignatureEnumDType> &dtypes, const TupleInput &input_args,
-                          mindspore::HashMap<SignatureEnumDType, TypeId> *dst_type) {
+                          mindspore::HashMap<SignatureEnumDType, std::pair<TypeId, bool>> *dst_type) {
     MS_EXCEPTION_IF_NULL(op_run_info);
     constexpr size_t index_size = 2;
     const auto &type = dtypes[same_type_index.front()];
@@ -84,6 +84,8 @@ class PyBoostCastOperation : public CastBaseOperation {
     bool has_scalar_float32 = false;
     bool has_scalar_int64 = false;
     bool has_tensor_int8 = false;
+    // The indexes value has tensor input
+    bool has_tensor_input = false;
     // Find the maximum priority of the same dtype
     for (size_t index : same_type_index) {
       const auto &optional_v = Visit(index, input_args);
@@ -92,6 +94,7 @@ class PyBoostCastOperation : public CastBaseOperation {
       }
       auto v = optional_v.value();
       if (v->template isa<tensor::Tensor>()) {
+        has_tensor_input = true;
         auto arg = v->template cast<tensor::TensorPtr>();
         TypeId arg_type_id = arg->data_type();
         auto type_priority = prim::type_map.find(arg_type_id);
@@ -124,24 +127,22 @@ class PyBoostCastOperation : public CastBaseOperation {
 
     max_type = JudgeMaxType(max_type, has_scalar_float32, has_scalar_int64, has_tensor_int8);
     MS_EXCEPTION_IF_NULL(dst_type);
-    (void)dst_type->emplace(std::make_pair(type, max_type));
+    (*dst_type)[type] = std::make_pair(max_type, has_tensor_input);
   }
 
   template <size_t N, typename TupleInput>
-  std::enable_if_t<N == 1> GetDstTypeForEachType(const FrontendOpRunInfoPtr &op_run_info,
-                                                 const std::vector<std::vector<size_t>> &same_type_table,
-                                                 const std::vector<SignatureEnumDType> &dtypes,
-                                                 const TupleInput &input_args,
-                                                 mindspore::HashMap<SignatureEnumDType, TypeId> *dst_type) {
+  std::enable_if_t<N == 1> GetDstTypeForEachType(
+    const FrontendOpRunInfoPtr &op_run_info, const std::vector<std::vector<size_t>> &same_type_table,
+    const std::vector<SignatureEnumDType> &dtypes, const TupleInput &input_args,
+    mindspore::HashMap<SignatureEnumDType, std::pair<TypeId, bool>> *dst_type) {
     GetEachTypeMaxType(op_run_info, same_type_table[N - 1], dtypes, input_args, dst_type);
   }
 
   template <size_t N, typename TupleInput>
-  std::enable_if_t<N != 1> GetDstTypeForEachType(const FrontendOpRunInfoPtr &op_run_info,
-                                                 const std::vector<std::vector<size_t>> &same_type_table,
-                                                 const std::vector<SignatureEnumDType> &dtypes,
-                                                 const TupleInput &input_args,
-                                                 mindspore::HashMap<SignatureEnumDType, TypeId> *dst_type) {
+  std::enable_if_t<N != 1> GetDstTypeForEachType(
+    const FrontendOpRunInfoPtr &op_run_info, const std::vector<std::vector<size_t>> &same_type_table,
+    const std::vector<SignatureEnumDType> &dtypes, const TupleInput &input_args,
+    mindspore::HashMap<SignatureEnumDType, std::pair<TypeId, bool>> *dst_type) {
     GetEachTypeMaxType(op_run_info, same_type_table[N - 1], dtypes, input_args, dst_type);
     GetDstTypeForEachType<N - 1>(op_run_info, same_type_table, dtypes, input_args, dst_type);
   }
@@ -152,7 +153,7 @@ class PyBoostCastOperation : public CastBaseOperation {
                       const std::tuple<InputArgs...> &input_args) {
     MS_EXCEPTION_IF_NULL(op_run_info);
     std::vector<SignatureEnumDType> dtypes;
-    mindspore::HashMap<SignatureEnumDType, TypeId> dst_type;
+    mindspore::HashMap<SignatureEnumDType, std::pair<TypeId, bool>> dst_type;
     const auto &it = implicit_cast_map_.find(op_run_info->base_op_run_info.op_name);
     if (it == implicit_cast_map_.end()) {
       // Get current inputs signatures
@@ -175,7 +176,7 @@ class PyBoostCastOperation : public CastBaseOperation {
  private:
   template <typename TupleInput, size_t... N>
   auto SetImplicitCast(const FrontendOpRunInfoPtr &op_run_info,
-                       const mindspore::HashMap<SignatureEnumDType, TypeId> &dst_type,
+                       const mindspore::HashMap<SignatureEnumDType, std::pair<TypeId, bool>> &dst_type,
                        const std::vector<SignatureEnumDType> &dtypes, const TupleInput &input_args,
                        std::index_sequence<N...>) const {
     MS_EXCEPTION_IF_NULL(op_run_info);
@@ -184,7 +185,7 @@ class PyBoostCastOperation : public CastBaseOperation {
 
   template <typename Item>
   Item DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
-                       const mindspore::HashMap<SignatureEnumDType, TypeId> &dst_type,
+                       const mindspore::HashMap<SignatureEnumDType, std::pair<TypeId, bool>> &dst_type,
                        const std::vector<SignatureEnumDType> &dtypes, size_t index, const Item &t) const {
     // No need to implicit cast if no dtype.
     const auto &signature = op_run_info->signatures;
@@ -192,7 +193,7 @@ class PyBoostCastOperation : public CastBaseOperation {
       return t;
     }
     auto it = dst_type.find(dtypes[index]);
-    if (it == dst_type.end() || it->second == kTypeUnknown) {
+    if (it == dst_type.end() || it->second.first == kTypeUnknown) {
       return t;
     }
 
@@ -204,11 +205,11 @@ class PyBoostCastOperation : public CastBaseOperation {
     // Implicit cast
     bool is_same_type = false;
     if (arg_type_id != kTypeUnknown) {
-      is_same_type = (prim::type_map.find(arg_type_id) == prim::type_map.end() || arg_type_id == it->second);
+      is_same_type = (prim::type_map.find(arg_type_id) == prim::type_map.end() || arg_type_id == it->second.first);
     }
     if (signature[index].rw == SignatureEnumRW::kRWWrite && arg_type_id != kTypeUnknown && !is_same_type) {
       prim::RaiseExceptionForConvertRefDtype(op_run_info->op_grad_info->op_prim, TypeIdToMsTypeStr(arg_type_id),
-                                             TypeIdToMsTypeStr(it->second), index);
+                                             TypeIdToMsTypeStr(it->second.first), index);
     }
     if (is_same_type) {
       return t;
@@ -221,13 +222,14 @@ class PyBoostCastOperation : public CastBaseOperation {
                               << "Its type is " << type_str << ". Only support Tensor or Scalar.";
     }
     MS_LOG(DEBUG) << "Implicit cast for " << op_run_info->base_op_run_info.op_name << " " << index
-                  << "th input, and to type " << TypeIdToType(it->second)->ToString();
+                  << "th input, and to type " << TypeIdToType(it->second.first)->ToString();
+    // Has tensor input
     return DoAutoCast(op_run_info, it->second, index, t);
   }
 
   template <typename Item>
   std::optional<Item> DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
-                                      const mindspore::HashMap<SignatureEnumDType, TypeId> &dst_type,
+                                      const mindspore::HashMap<SignatureEnumDType, std::pair<TypeId, bool>> &dst_type,
                                       const std::vector<SignatureEnumDType> &dtypes, size_t index,
                                       const std::optional<Item> &t) const {
     if (!t.has_value()) {
@@ -245,12 +247,15 @@ class PyBoostCastOperation : public CastBaseOperation {
 
   //  template <class Item, class = typename std::enable_if<std::is_same<Item, tensor::Tensor>::value, Item>::type>
   template <class Item>
-  Item DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const TypeId &type_id, size_t index, const Item &t) const {
+  Item DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const std::pair<TypeId, bool> &dst_type, size_t index,
+                  const Item &t) const {
     return t;
   }
 
-  tensor::TensorPtr DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const TypeId &type_id, size_t index,
-                               const tensor::TensorPtr &t) const;
+  ValuePtr DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const std::pair<TypeId, bool> &dst_type, size_t index,
+                      const ValuePtr &v) const;
+  tensor::TensorPtr DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const std::pair<TypeId, bool> &dst_type,
+                               size_t index, const tensor::TensorPtr &t) const;
   tensor::TensorPtr SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &t,
                                               size_t index) const;
   std::optional<tensor::TensorPtr> SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info,

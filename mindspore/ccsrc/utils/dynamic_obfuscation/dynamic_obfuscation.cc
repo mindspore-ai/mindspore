@@ -191,7 +191,7 @@ ValueNodePtr build_tuple_value_node(const std::vector<int64_t> &values) {
 }
 
 ValueNodePtr make_int_node(const FuncGraphPtr func_graph, int int_value) {
-  ShapeVector int_shape{1, 1};
+  ShapeVector int_shape{1};
   tensor::TensorPtr int_tensor = std::make_shared<Tensor>(mindspore::kNumberTypeInt32, int_shape);
   int *tensor_data = reinterpret_cast<int *>(int_tensor->data_c());
   for (int i = 0; i < int_tensor->data().size(); i++) {
@@ -317,7 +317,7 @@ ObfCase DynamicObfuscator::ObfuscateOpCase(const std::string obf_type) {
 }
 
 CNodePtr DynamicObfuscator::RandomSeedModeControl(const FuncGraphPtr func_graph) {
-  ShapeVector y_shape{1, 1};
+  ShapeVector y_shape{1};
   tensor::TensorPtr y_tensor = std::make_shared<Tensor>(mindspore::kNumberTypeInt32, y_shape);
   if (!has_build_appended_input) {
     MS_LOG(INFO) << "Build parameter y_append.";
@@ -446,7 +446,7 @@ CNodePtr DynamicObfuscator::CustomOpModeControl(const FuncGraphPtr func_graph, c
   auto opaque_v_node = std::make_shared<mindspore::ValueNode>(custom_prim);
   func_graph->AddValueNode(opaque_v_node);
   auto opaque_c_node = func_graph->NewCNode({opaque_v_node, slice_c_node_2, slice_c_node_3});
-  ShapeVector y_shape{1, 1};
+  ShapeVector y_shape{1};
   auto bool_tensor = std::make_shared<Tensor>(mindspore::kNumberTypeBool, y_shape);
   opaque_c_node->set_abstract(bool_tensor->ToAbstract());
   func_graph->AddNode(opaque_c_node);

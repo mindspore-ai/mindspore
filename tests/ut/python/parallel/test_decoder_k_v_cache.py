@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
 import numpy as np
 import mindspore as ms
 from mindspore.nn import Cell
@@ -105,3 +106,23 @@ def test_decoder_k_v_cache_net_3dims_seq_len():
     validator = ParallelValidator(net, phase)
     assert validator.check_parameter_shape('cache', [4, 1024, 1280])
     assert validator.check_parameter_shape('update', [4, 1, 1280])
+
+
+def test_decoder_k_v_cache_strategy_error():
+    """
+    Feature: test invalid strategy for DecoderKVCache
+    Description: illegal strategy
+    Expectation: raise RuntimeError
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy = ((4, 1, 1, 1,), (4, 2, 1, 1,), (4,), (1,), (1,), (1,), (1,))
+    net = DecoderKVCacheNet(strategy)
+    cache = Parameter(Tensor(np.ones([4, 1024, 5120]), dtype=ms.float16), "cache")
+    update = Parameter(Tensor(np.ones([4, 1, 5120]), dtype=ms.float16), "update")
+    valid_seq_len = Parameter(Tensor(np.ones([4]), dtype=ms.int64), "valid_seq_len")
+    batch_index = Parameter(Tensor(np.ones([1]), dtype=ms.int64), "batch_index")
+    seq_len_axis = Parameter(Tensor(np.ones([1]), dtype=ms.int64), "seq_len_axis")
+    new_max_seq_len = Parameter(Tensor(np.ones([1]), dtype=ms.int64), "new_max_seq_len")
+    cur_max_seq_len = Parameter(Tensor(np.ones([1]), dtype=ms.int64), "cur_max_seq_len")
+    with pytest.raises(RuntimeError):
+        compile_net(net, cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len)

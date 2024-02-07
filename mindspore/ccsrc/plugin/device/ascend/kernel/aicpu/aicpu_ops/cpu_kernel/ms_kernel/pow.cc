@@ -204,5 +204,5 @@ uint32_t PowCpuKernel::PowCompute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kPow, PowCpuKernel);
+REGISTER_MS_CPU_KERNEL(kPow, PowCpuKernel);
 }  // namespace aicpu

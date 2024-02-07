@@ -1,0 +1,44 @@
+fft:
+    description: |
+      Calculates the one dimensional discrete Fourier transform of `input`.
+
+      Note:
+          - `fft` is currently only used in `mindscience` scientific computing scenarios and
+            dose not support other usage scenarios.
+          - `fft` is not supported on Windows platform yet.
+
+      Args:
+          input (Tensor): The input tensor.
+          n (int, optional): Length of the transformed `dim` of the result.
+              If given, the input will either be zero-padded or trimmed to this length before computing `fft`.
+              Default: ``None``.
+          dim (int, optional): The dimension along which to take the one dimensional `fft`.
+              Default: ``-1``, which means transform the last dimension of `input`.
+          norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
+              Three modes are defined as,
+
+              - ``"backward"``(no normalization).
+              - ``"forward"`` (normalize by :math:`1/n`).
+              - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
+
+      Returns:
+          Tensor, The result of `fft()` function.
+
+      Raises:
+          TypeError: If the `input` type is not Tensor.
+          TypeError: If the `input` data type is not one of: int32, int64, float32, float64, complex64, complex128.
+          TypeError: If `n` or `dim` type is not int.
+          ValueError: If `dim` is not in the range of "[ `-input.ndim` , `input.ndim` )".
+          ValueError: If `n` is less than 1.
+          ValueError: If `norm` is none of ``"backward"`` , ``"forward"`` or ``"ortho"``.
+
+      Supported Platforms:
+          ``Ascend`` ``CPU``
+
+      Examples:
+          >>> from mindspore import Tensor, ops
+          >>> input = Tensor([ 1.6243454+0.j, -0.6117564+0.j, -0.5281718+0.j, -1.0729686+0.j])
+          >>> y = ops.fft(input)
+          >>> print(y)
+          [-0.5885514+0.j          2.1525172-0.46121222j  2.7808986+0.j
+          2.1525172+0.46121222j]

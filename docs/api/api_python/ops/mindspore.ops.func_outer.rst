@@ -17,4 +17,3 @@ mindspore.ops.outer
 
     异常：
         - **TypeError** - 如果 `input` 或 `vec2` 不是Tensor。
-        - **ValueError** - 如果 `input` 或 `vec2` 不是一维Tensor。

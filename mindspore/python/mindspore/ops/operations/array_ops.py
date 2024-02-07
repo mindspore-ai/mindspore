@@ -41,8 +41,9 @@ from mindspore._c_expression import COOTensor as COOTensor_
 from ..auto_generate import (ExpandDims, Reshape, TensorShape, Transpose, Gather, OnesLike, ZerosLike, Argmax,
                              ReverseV2, Diag, Eye, ScatterNd, ResizeNearestNeighborV2, GatherNd, GatherD,
                              Range, MaskedFill, RightShift, NonZero, ResizeNearestNeighbor, Identity, Split,
-                             CumSum, CumProd, Cummax, Cummin, Argmin, Concat, UnsortedSegmentSum)
-from .manually_defined import Rank, Shape, Tile
+                             CumSum, CumProd, Cummax, Cummin, Argmin, Concat, UnsortedSegmentSum, ScalarToTensor,
+                             BroadcastTo)
+from .manually_defined import Rank, Shape, Tile, Cast
 
 
 class _ScatterOp(PrimitiveWithInfer):
@@ -260,87 +261,6 @@ class CheckNumerics(Primitive):
     def __init__(self):
         """init CheckNumerics"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
-
-
-class Cast(PrimitiveWithCheck):
-    """
-    Returns a tensor with the new specified data type.
-
-    Note:
-        When converting complex numbers to boolean type, the imaginary part of the complex number is not
-        taken into account. As long as the real part is non-zero, it returns True; otherwise, it returns False.
-
-    Inputs:
-        - **input_x** (Union[Tensor, Number]) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-          The tensor to be cast.
-        - **type** (dtype.Number) - The valid data type of the output tensor. Only constant value is allowed.
-
-    Outputs:
-        Tensor, the shape of tensor is the same as `input_x`, :math:`(x_1, x_2, ..., x_R)`.
-
-    Raises:
-        TypeError: If `input_x` is neither Tensor nor Number.
-        TypeError: If `type` is not a Number.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
-        >>> input_x = Tensor(input_np)
-        >>> type_dst = mindspore.int32
-        >>> cast = ops.Cast()
-        >>> output = cast(input_x, type_dst)
-        >>> print(output.dtype)
-        Int32
-        >>> print(output.shape)
-        (2, 3, 4, 5)
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Cast"""
-        self.init_prim_io_names(inputs=['x', 'dst_type'], outputs=['output'])
-
-    def check_elim(self, x, dtype):
-        if isinstance(x, (Tensor, numbers.Number, Parameter)):
-            if isinstance(x, Parameter):
-                data = x.data
-                if data.dtype == dtype:
-                    return (True, x)
-            if isinstance(x, Tensor) and x.dtype == dtype and not PackFunc.is_tracing():
-                x = Tensor(x)
-                x.set_cast_dtype()
-                return (True, x)
-            if isinstance(x, numbers.Number):
-                return (True, Tensor(x, dtype=dtype))
-        return (False, None)
-
-    def infer_value(self, x, dst_type):
-        if x is None:
-            return None
-        src_type = mstype.get_py_obj_dtype(x)
-        validator.check_subclass("input_x", src_type,
-                                 [mstype.tensor_type, mstype.number], self.name)
-        validator.check_subclass("type", dst_type, mstype.number, self.name)
-
-        if isinstance(src_type, type(mstype.tensor_type)):
-            src_type = src_type.element_type()
-        if isinstance(dst_type, type(mstype.tensor_type)):
-            dst_type = dst_type.element_type()
-
-        value = None
-        np_dst_type = mstype.dtype_to_nptype(dst_type)
-        if isinstance(x, (int, float)):
-            value = Tensor(np.array(x).astype(np_dst_type), dtype=dst_type)
-        elif x.dtype == mstype.bfloat16:
-            value = Tensor_(x.float().asnumpy().astype(np_dst_type), dtype=dst_type)
-        else:
-            value = Tensor_(x.asnumpy().astype(np_dst_type), dtype=dst_type)
-        return value
 
 
 class Im2Col(Primitive):
@@ -1502,42 +1422,6 @@ class TupleToArray(PrimitiveWithInfer):
         return _run_op(self, self.name, args)
 
 
-class ScalarToTensor(PrimitiveWithInfer):
-    """
-    Converts a scalar to a `Tensor`, and converts the data type to the specified type.
-
-    Refer to :func:`mindspore.ops.scalar_to_tensor` for more details.
-
-    Inputs:
-        - **input_x** (Union[int, float]) - The input is a scalar. Only constant value is allowed.
-        - **dtype** (mindspore.dtype) - The target data type. Default: ``mindspore.float32`` . Only
-          constant value is allowed.
-
-    Outputs:
-        Tensor. 0-D Tensor and the content is the input.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import ops
-        >>> op = ops.ScalarToTensor()
-        >>> data = 1
-        >>> output = op(data, mindspore.float32)
-        >>> print(output)
-        1.0
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        self.init_prim_io_names(inputs=['input_scalar', 'dtype'], outputs=['output_data'])
-
-    def __call__(self, x, dtype=mstype.float32):
-        validator.check_value_type("x", x, [bool, int, float], self.name)
-        validator.check_subclass("dtype", dtype, mstype.number, self.name)
-        data_type = mstype.dtype_to_nptype(dtype)
-        return Tensor(np.array(x, data_type), dtype=dtype)
 
 
 class InvertPermutation(PrimitiveWithInfer):
@@ -4670,65 +4554,6 @@ class BatchToSpaceNDV2(Primitive):
         self.add_prim_attr('origin_format', 'NHWC')
 
 
-class BroadcastTo(PrimitiveWithCheck):
-    """
-    Broadcasts input tensor to a given shape.
-
-    Refer to :func:`mindspore.ops.broadcast_to` for more details.
-
-    Args:
-        shape (tuple): The target shape to broadcast. Can be fully specified, or have -1 in one position
-            where it will be substituted by the input tensor's shape in that position, see example.
-
-    Inputs:
-        - **input_x** (Tensor) - The input tensor of any dimension.
-
-    Outputs:
-        Tensor, with the given `shape` and the same data type as `input_x`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> shape = (2, 3)
-        >>> x = Tensor(np.array([1, 2, 3]).astype(np.float32))
-        >>> output = ops.BroadcastTo(shape=shape)(x)
-        >>> print(output)
-        [[1. 2. 3.]
-         [1. 2. 3.]]
-        >>>
-        >>> shape = (-1, 2)
-        >>> x = Tensor(np.array([[1], [2]]).astype(np.float32))
-        >>> output = ops.BroadcastTo(shape=shape)(x)
-        >>> print(output)
-        [[1. 1.]
-         [2. 2.]]
-    """
-
-    @prim_attr_register
-    def __init__(self, shape):
-        """Initialize BroadcastTo"""
-        validator.check_value_type("shape", shape, (tuple), self.name)
-        validator.check("dimension of x", len(shape), "", 0, validator.GE, self.name)
-        for ix, i in enumerate(shape):
-            validator.check_value_type('target shape index -> ' + str(ix), i, [int], self.name)
-            validator.check("shape element", i, "shape element min limit", -1, validator.GE, self.name)
-        self.shape = shape
-
-    def infer_value(self, x):
-        if x is None:
-            return None
-        np_data = np.broadcast_to(x.asnumpy(), self.shape)
-        if 0 in self.shape:
-            init_func = Zero()
-            init_func.__enable_zero_dim__ = True
-            out = Tensor(shape=self.shape, dtype=x.dtype, init=init_func)
-            return out
-        return Tensor(np_data)
-
-
 class Meshgrid(PrimitiveWithInfer):
     """
     Generates coordinate matrices from given coordinate tensors.
@@ -5032,8 +4857,8 @@ class Sort(Primitive):
     Sorts the elements of the input tensor along the given dimension in the specified order.
 
     .. warning::
-        Currently, the data types of Float16 is well supported.
-        Using Float32 might cause loss of accuracy.
+        Currently, the data types of float16, uint8, int8, int16, int32, int64 are well supported.
+        If use float32, it may cause loss of accuracy.
 
     Args:
         axis (int, optional): The dimension to sort along. Default: ``-1``, means the last dimension.

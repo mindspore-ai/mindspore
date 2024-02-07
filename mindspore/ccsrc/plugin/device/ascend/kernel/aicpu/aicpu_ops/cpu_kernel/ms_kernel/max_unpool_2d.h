@@ -16,8 +16,8 @@
 #ifndef AICPU_KERNELS_NORMALIZED_MAX_UNPOOL2D_H_
 #define AICPU_KERNELS_NORMALIZED_MAX_UNPOOL2D_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_kernel_utils.h"
+#include "cpu_types.h"
 namespace aicpu {
 class MaxUnpool2DCpuKernel : public CpuKernel {
  public:

@@ -20,7 +20,7 @@
 #include <memory>
 #include <vector>
 
-#include "inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "common/cpu_kernel_utils.h"
 #include "common/kernel_log.h"
 #include "common/status.h"

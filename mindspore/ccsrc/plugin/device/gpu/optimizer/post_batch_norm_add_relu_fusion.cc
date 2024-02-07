@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ const AnfNodePtr PostBatchNormAddReluFusion::Process(const FuncGraphPtr &graph, 
   MS_EXCEPTION_IF_NULL(batch_norm);
   auto kernel_name = common::AnfAlgo::GetCNodeName(batch_norm);
   size_t is_train_idx = ops::GetInputIndexByName(kernel_name, "is_training");
-  size_t format_idx = ops::GetInputIndexByName(kernel_name, "format");
+  size_t format_idx = ops::GetInputIndexByName(kernel_name, "data_format");
   if (is_train_idx == SIZE_MAX || format_idx == SIZE_MAX) {
     return nullptr;
   }

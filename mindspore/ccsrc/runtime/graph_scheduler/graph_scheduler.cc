@@ -553,6 +553,9 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageOptimize, 1, 0, 0);
   Optimize(actor_set);
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageOptimize, 1, 0, 1);
+  if (graph_compiler_info.control_node_parser_ != nullptr && (!graph_compiler_info.control_node_parser_->IsInited())) {
+    DumpFinalActor(actor_set.get(), graph_compiler_info);
+  }
   MS_LOG(INFO) << "Graph(" << graph_compiler_info.name_ << ") transforms actor end.";
 
 #if defined(__linux__) && defined(WITH_BACKEND)
@@ -1335,6 +1338,9 @@ DataPrepareActorPtr GraphScheduler::BuildDataPrepareActor(const GraphCompilerInf
 
       auto &execution_order = graph->execution_order();
       for (auto &kernel : execution_order) {
+        if (common::AnfAlgo::GetCNodeName(kernel) == kFlattenConcatOpName) {
+          data_prepare_actor->exist_flatten_concat_ = true;
+        }
         if (!common::AnfAlgo::IsCommunicationOp(kernel)) {
           continue;
         }
@@ -2722,7 +2728,7 @@ void GraphScheduler::PersistDeviceTensorForParameter(const AnfNodePtr &parameter
     if (front_node->isa<ValueNode>()) {
       const auto &value_node = front_node->cast<ValueNodePtr>();
       MS_EXCEPTION_IF_NULL(value_node);
-      if (value_node->value() != nullptr && value_node->value()) {
+      if (value_node->value() != nullptr) {
         kernel_tensor->set_value(value_node->value());
       }
     }
@@ -2821,6 +2827,34 @@ void GraphScheduler::DumpActor(const ActorSet *actor_set, const GraphCompilerInf
   }
   DumpDeviceTensorStore(graph_compiler_info, ofs);
   SchedulerHelper::DumpActorSet(actor_set, ofs);
+  ChangeFileMode(realpath.value(), S_IRUSR);
+}
+
+void GraphScheduler::DumpFinalActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (!context->CanDump(kIntroductory) || common::GetEnv("MS_DEV_DISABLE_FINAL_ACTOR_IR") == "1") {
+    return;
+  }
+
+  std::string save_name = "actor_set/final_actor_set_" + actor_set->name_;
+  std::string path_name = GetSaveGraphsPathName(save_name + ".ir");
+  auto realpath = Common::CreatePrefixPath(path_name);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path: " << path_name;
+    return;
+  }
+  if (actor_set->output_actor_ == nullptr) {
+    return;
+  }
+  ChangeFileMode(realpath.value(), S_IWUSR);
+  std::ofstream ofs(realpath.value());
+  if (!ofs.is_open()) {
+    MS_LOG(ERROR) << "Open file [" << realpath.value() << "] failed!";
+    return;
+  }
+  SchedulerHelper::DumpFormatActorSet(actor_set, ofs);
   ChangeFileMode(realpath.value(), S_IRUSR);
 }
 

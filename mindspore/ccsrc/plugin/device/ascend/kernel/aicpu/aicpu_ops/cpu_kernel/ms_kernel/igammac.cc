@@ -136,5 +136,5 @@ uint32_t IgammacCpuKernel::IgammacCompute(const CpuKernelContext &ctx, const BCa
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kigammac, IgammacCpuKernel);
+REGISTER_MS_CPU_KERNEL(kigammac, IgammacCpuKernel);
 }  // namespace aicpu

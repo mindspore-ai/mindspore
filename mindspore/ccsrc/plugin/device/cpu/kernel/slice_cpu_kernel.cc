@@ -131,8 +131,25 @@ int SliceCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
                       << "(INT_MAX) bytes, but got " << input_size;
   }
 
-  auto begin = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
-  auto size = inputs[kSliceInputIndex2]->GetValueWithCheck<std::vector<int64_t>>();
+  std::vector<int64_t> begin;
+  std::vector<int64_t> size;
+  if (param_dtype_ == kNumberTypeInt32) {
+    auto begin_int32 = inputs[kIndex1]->GetValueWithCheck<std::vector<int32_t>>();
+    auto size_int32 = inputs[kIndex2]->GetValueWithCheck<std::vector<int32_t>>();
+    if (begin_int32.size() == input_shape.size() && size_int32.size() == input_shape.size()) {
+      for (size_t i = 0; i < input_shape.size(); i++) {
+        begin.push_back(begin_int32.at(i));
+        size.push_back(size_int32.at(i));
+      }
+    }
+  } else if (param_dtype_ == kNumberTypeInt64) {
+    begin = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
+    size = inputs[kIndex2]->GetValueWithCheck<std::vector<int64_t>>();
+  } else {
+    MS_LOG(ERROR) << "Invalid dtype: " << TypeIdLabel(param_dtype_);
+    return false;
+  }
+
   if (!begin.empty() && !size.empty()) {
     if (begin.size() != input_shape.size() || size.size() != input_shape.size()) {
       MS_LOG(ERROR) << "For '" << kernel_name_

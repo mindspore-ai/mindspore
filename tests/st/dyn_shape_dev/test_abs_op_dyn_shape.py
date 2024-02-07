@@ -19,7 +19,7 @@ from mindspore import ops
 import mindspore as ms
 
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
-from test_utils import get_inputs_np, get_inputs_tensor, compare, run_with_cell
+from tests.st.utils.test_utils import get_inputs_np, get_inputs_tensor, compare, run_with_cell
 
 def eltwise_case(prim_func, expect_func, expect_grad_func, mode, inputs_np=None):
     if inputs_np is None:

@@ -35,7 +35,7 @@ int64_t SoftmaxAscend::GetDimValue(KernelTensor *axis_ptr) const noexcept {
 void SoftmaxAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs) {
   auto dim = GetDimValue(inputs[kIndex1]);
-  auto return_value = GEN_EXECUTOR(op_type_, inputs[kIndex0], dim, outputs[kIndex0]);
+  auto return_value = GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], dim, outputs[kIndex0]);
   UpdateWorkspace(return_value);
 }
 
@@ -43,11 +43,11 @@ bool SoftmaxAscend::Launch(const std::vector<KernelTensor *> &inputs, const std:
                            const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
   auto dim = GetDimValue(inputs[kIndex1]);
-  ParseGenExecutor(GEN_EXECUTOR(op_type_, inputs[kIndex0], dim, outputs[kIndex0]));
+  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], dim, outputs[kIndex0]));
   RunOp(stream_ptr, workspace);
   return true;
 }
 
-MS_ACLLNN_KERNEL_FACTORY_REG(Softmax, SoftmaxAscend);
+MS_ACLNN_KERNEL_FACTORY_REG(Softmax, SoftmaxAscend);
 }  // namespace kernel
 }  // namespace mindspore

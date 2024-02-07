@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_HARDWARE_GPU_GPU_DEVICE_CONTEXT_H_
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_GPU_GPU_DEVICE_CONTEXT_H_
 
+#include <tuple>
 #include <vector>
 #include <memory>
 #include <string>
@@ -64,7 +65,7 @@ class GPUDeviceResManager : public DeviceResManager {
   bool SyncNotDefaultStreams() const override;
   size_t DefaultStream() const override;
 
-  DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) const override;
+  DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) override;
 
   bool LoadCollectiveCommLib() override;
 
@@ -104,12 +105,11 @@ class GPUKernelExecutor : public KernelExecutor {
 
   bool LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                     const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &outputs,
-                    size_t stream_id) const override;
+                    KernelMod *kernel_mod, void *stream) const override;
 
   uint32_t GetRankID() const override;
 
-  bool ExecuteKernelTask(const pynative::KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
-                         const TensorStorageInfoPtrList &input_storage_list,
+  bool ExecuteKernelTask(const runtime::KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
                          const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id) const override;
 
  private:
@@ -133,12 +133,12 @@ class GPUKernelExecutor : public KernelExecutor {
   // Launch a kernel and record the elapsed time end to end.
   bool LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &workspace,
-                                 const std::vector<KernelTensor *> &outputs, void *stream) const;
+                                 const std::vector<KernelTensor *> &outputs, KernelMod *kernel_mod, void *stream) const;
 #endif
   // Launch a kernel by 'KernelMod' of the kernel.
   bool DoLaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                       const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &outputs,
-                      void *stream) const;
+                      KernelMod *kernel_mod, void *stream) const;
 
   // The cublas handle is not thread safety specifically, it is not recommended that multiple threads access the same
   // cublas handle at the same time, so need the launch mutex when multiple threads launch the cublas kernels.
@@ -164,7 +164,7 @@ class GPUDeviceContext : public DeviceInterface<GPUKernelExecutor, GPUDeviceResM
 
   static uint32_t GetDeviceCount();
   static std::string GetDeviceName(uint32_t device_id);
-  static std::vector<int> GetDeviceCapability(uint32_t device_id);
+  static std::tuple<int, int> GetDeviceCapability(uint32_t device_id);
   static cudaDeviceProp GetDeviceProperties(uint32_t device_id);
   static std::string GetArchList();
 

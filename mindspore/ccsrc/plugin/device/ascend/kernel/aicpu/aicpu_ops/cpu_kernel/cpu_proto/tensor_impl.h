@@ -19,7 +19,7 @@
 #include <memory>
 #include <string>
 
-#include "cpu_kernel/inc/cpu_tensor_shape.h"
+#include "cpu_tensor_shape.h"
 #include "proto/cpu_tensor.pb.h"
 
 namespace aicpu {

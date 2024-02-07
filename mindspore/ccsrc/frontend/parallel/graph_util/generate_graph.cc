@@ -304,6 +304,11 @@ AnfNodePtr CreateBoolImm(bool value) {
   return ValuePtrToAnfNodePtr(value_ptr);
 }
 
+AnfNodePtr CreateStringImm(std::string value) {
+  ValuePtr value_ptr = MakeValue(std::make_shared<StringImm>(value));
+  return ValuePtrToAnfNodePtr(value_ptr);
+}
+
 AnfNodePtr CreateTuple(const std::vector<int64_t> &tuple) {
   std::vector<ValuePtr> value_list;
   (void)std::transform(tuple.begin(), tuple.end(), std::back_inserter(value_list),

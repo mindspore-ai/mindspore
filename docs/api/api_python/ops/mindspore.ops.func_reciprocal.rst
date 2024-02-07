@@ -9,7 +9,7 @@ mindspore.ops.reciprocal
         out_{i} =  \frac{1}{x_{i}}
 
     参数：
-        - **input** (Tensor) - 输入Tensor。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
+        - **input** (Tensor) - 输入Tensor。
 
     返回：
         Tensor，shape与 `input` 相同。

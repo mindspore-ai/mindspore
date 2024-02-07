@@ -24,12 +24,11 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/stub/runtime/)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/stub/pass/)
 include_directories(${CMAKE_BINARY_DIR})
-include_directories(${CMAKE_BINARY_DIR}/proto/graphengine_protos)
 include_directories(${CMAKE_BINARY_DIR}/proto/metadef_protos)
 include_directories(${CMAKE_BINARY_DIR}/proto/ge)
 include_directories(${CUDA_INCLUDE_DIRS})
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/cpu/kernel)
-# graphengine include directories
+
 include(${CMAKE_SOURCE_DIR}/cmake/graphengine_variables.cmake)
 MESSAGE("check  ut_test ${CMAKE_BINARY_DIR}")
 
@@ -116,6 +115,8 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/runtime/device/kernel_info.cc"
         "../../../mindspore/ccsrc/runtime/device/launch_kernel.cc"
         "../../../mindspore/ccsrc/runtime/graph_scheduler/*.cc"
+        "../../../mindspore/ccsrc/runtime/pipeline/*.cc"
+        "../../../mindspore/ccsrc/runtime/pipeline/task/*.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/profiling/*.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ge_runtime/*.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/kernel_select_ascend.cc"

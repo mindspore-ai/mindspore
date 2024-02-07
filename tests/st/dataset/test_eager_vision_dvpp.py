@@ -19,9 +19,12 @@ import cv2
 import numpy as np
 import pytest
 
+from PIL import Image
+
 from mindspore import log as logger
 import mindspore as ms
 import mindspore.dataset.vision as vision
+import mindspore.dataset.transforms as transforms
 
 # pylint: disable=W0212
 # W0212: protected-access
@@ -1080,7 +1083,49 @@ def test_eager_perspective_dvpp_exception():
         _ = vision.Perspective(start_points, end_points).device("Asscend")
     assert "Input device_target is not within the valid set of ['CPU', 'Ascend']" in str(error_info.value)
 
+    image = Image.open(input_apple_jpg)
+    start_points = [[0, 63], [63, 63], [63, 0], [0, 0]]
+    end_points = [[0, 32], [32, 32], [32, 0], [0, 0]]
+
+    with pytest.raises(TypeError) as error_info:
+        _ = vision.Perspective(start_points, end_points).device("Ascend")(image)
+    assert "The input PIL Image cannot be executed on Ascend, " in str(error_info.value)
+
     os.environ['MS_ENABLE_REF_MODE'] = "0"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_eager_compose_dvpp_ops():
+    """
+    Feature: Compose multi dvpp ops on Ascend910B
+    Description: Test composing multi DVPP ops in eager mode
+    Expectation: Output image info from op is correct
+    """
+    os.environ['MS_ENABLE_REF_MODE'] = "1"
+    ms.set_context(device_target="Ascend")
+
+    # dvpp decode + resize + normaize eager
+    img_bytes = np.fromfile(input_apple_jpg, dtype=np.uint8)
+    mean_vec = [0.475 * 255, 0.451 * 255, 0.392 * 255]
+    std_vec = [0.275 * 255, 0.267 * 255, 0.278 * 255]
+    decode_resize_normalize_compose_dvpp = \
+        transforms.Compose([vision.Decode().device("Ascend"),
+                            vision.Resize(224).device("Ascend"),
+                            vision.Normalize(mean=mean_vec, std=std_vec).device("Ascend")])
+    image_normalize = decode_resize_normalize_compose_dvpp(img_bytes)
+    assert image_normalize.shape == (224, 398, 3)
+    assert image_normalize.dtype == np.float32
+
+    # don't support mix usage
+    with pytest.raises(RuntimeError) as error_info:
+        decode_resize_normalize_compose_dvpp_mixed = \
+            transforms.Compose([vision.Decode(),
+                                vision.Resize(224).device("Ascend"),
+                                vision.Normalize(mean=mean_vec, std=std_vec).device("Ascend")])
+        image_normalize = decode_resize_normalize_compose_dvpp_mixed(img_bytes)
+    assert "Building Transform ops failed!" in str(error_info.value)
 
 
 if __name__ == '__main__':
@@ -1093,6 +1138,7 @@ if __name__ == '__main__':
     test_eager_multi_dvpp_op_dvpp_cpu_dvpp()
     test_eager_multi_dvpp_op_dvpp_dvpp_cpu()
     test_eager_multi_dvpp_op_cpu_dvpp_dvpp()
+    test_eager_compose_dvpp_ops()
     test_eager_horizontal_flip_dvpp()
     test_eager_horizontal_flip_dvpp_exception()
     test_eager_vertical_flip_dvpp()

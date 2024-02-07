@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import pytest
-import test_utils
+from tests.st.utils import test_utils
 
 import mindspore as ms
 from mindspore import ops

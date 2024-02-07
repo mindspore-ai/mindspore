@@ -57,7 +57,11 @@ int AkgTensorRT::AddInnerOp(TensorRTContext *ctx) {
 
   auto attr_map = akg_op->get_attr();
   AkgParamT params;
-  memset_s(&params, sizeof(params), 0, sizeof(params));
+  auto res = memset_s(&params, sizeof(params), 0, sizeof(params));
+  if (res != EOK) {
+    MS_LOG(ERROR) << "memset_s output was truncated or an error occurred.";
+    return RET_ERROR;
+  }
   std::string ptx_path_str =
     std::string(reinterpret_cast<const char *>(attr_map["ptx_path"].data()), attr_map["ptx_path"].size());
   params.ptx_path_len = ptx_path_str.length();

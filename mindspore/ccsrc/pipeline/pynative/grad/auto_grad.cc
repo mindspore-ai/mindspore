@@ -609,7 +609,7 @@ std::string VariableAdjoint::ToString() const {
 }
 
 AutoGradCellImpl::AutoGradCellImpl(const std::vector<ValuePtr> &input_param_values, const AbstractBasePtrList &abs_list,
-                                   size_t op_num_in_bprop_graph, const AsyncHqueuePtr &assist_queue, bool enable_async,
+                                   size_t op_num_in_bprop_graph, const runtime::AsyncHqueuePtr &assist_queue,
                                    bool grad_by_value)
     : ad_param_(std::make_shared<AdParam>()) {
   ad_param()->tape_->debug_info()->set_name("grad_top");
@@ -642,7 +642,6 @@ AutoGradCellImpl::AutoGradCellImpl(const std::vector<ValuePtr> &input_param_valu
   }
 
   assist_queue_ = assist_queue;
-  enable_async_ = enable_async;
   grad_by_value_ = grad_by_value;
   device_target_ = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   pass_forward_ = std::make_shared<bprop_pass::PyNativePassForward>(this, device_target_, grad_by_value_);
@@ -701,13 +700,8 @@ bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
   }
   (void)ad_param()->variable_adjoint_set_.insert(variable_adjoint);
   SetGradMetaData(grad_param->op_grad_info->out_value, variable_adjoint);
-
-  if (enable_async_) {
-    UpdateNextEdgesAsync(variable_adjoint, outputs, grad_param);
-  } else {
-    UpdateNextEdges(variable_adjoint, outputs, grad_param->op_grad_info->input_value,
-                    grad_param->op_grad_info->input_abs, prim->name());
-  }
+  UpdateNextEdges(variable_adjoint, outputs, grad_param->op_grad_info->input_value, grad_param->op_grad_info->input_abs,
+                  prim->name());
   return true;
 }
 
@@ -822,6 +816,7 @@ CNodePtr AutoGradCellImpl::GetBPropFromExpander(const GradParamPtr &grad_param, 
 
 CNodePtr AutoGradCellImpl::GetBPropFromFProp(const GradParamPtr &grad_param, const AnfNodePtrList &args,
                                              AnfNodePtr *const tape_dout) {
+  MS_EXCEPTION_IF_NULL(grad_param);
   FuncGraphPtr after_opt_fg = nullptr;
   // Find ad graph in cache
   const auto it = pass_grad_graph_.find(grad_param->graph_cache_key);
@@ -830,7 +825,6 @@ CNodePtr AutoGradCellImpl::GetBPropFromFProp(const GradParamPtr &grad_param, con
     MS_LOG(DEBUG) << "Get ad grad graph by cache";
     after_opt_fg = BasicClone(it->second);
   } else {
-    MS_EXCEPTION_IF_NULL(grad_param);
     auto bprop_builder = std::make_shared<FuncGraph>();
     bprop_builder->debug_info()->set_name("bprop_builder");
 
@@ -1269,7 +1263,7 @@ void AutoGradCellImpl::BuildKNodeListForHighOrderGraph(const ValuePtrList &input
                                                        AnfNodePtrList *const node_list) {
   for (size_t i = 0; i < input_value.size(); ++i) {
     const auto knode = BuildKNodeForCNodeInput(input_value[i], input_abs[i]);
-    // Convert value sequence to make tuple, so that finalpass can elimnate tuplegetitem.
+    // Convert value sequence to make tuple, so that finalpass can eliminate tuplegetitem.
     // BuildKnodeForTuplgeGetItem now do not support input is valuesequence.
     if (knode->isa<ValueNode>()) {
       auto value_node = knode->cast<ValueNodePtr>();
@@ -1486,18 +1480,6 @@ AnfNodePtr AutoGradCellImpl::BuildKNodeForTupleGetItem(const AnfNodePtr &input_n
   (void)ad_param()->anfnode_to_variable_adjoint_.insert(std::make_pair(input_node, variable_adjoint));
   (void)ad_param()->variable_adjoint_set_.insert(variable_adjoint);
   return k_node;
-}
-
-void AutoGradCellImpl::UpdateNextEdgesAsync(const VariableAdjointPtr &variable, const std::vector<CNodePtr> &dins,
-                                            const GradParamPtr &grad_param) {
-  auto task = [this, variable, dins, grad_param]() {
-    this->UpdateNextEdges(variable, dins, grad_param->op_grad_info->input_value, grad_param->op_grad_info->input_abs,
-                          grad_param->op_grad_info->op_prim->name());
-  };
-  bool success = assist_queue_->Push(new (std::nothrow) BpropTask(std::move(task)));
-  if (!success) {
-    assist_queue_->CheckException();
-  }
 }
 
 void AutoGradCellImpl::UpdateNextEdges(const VariableAdjointPtr &variable, const std::vector<CNodePtr> &dins,

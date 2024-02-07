@@ -19,7 +19,7 @@
 #include <vector>
 #include <complex>
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "common/status.h"
 #include "utils/eigen_tensor.h"
@@ -242,5 +242,5 @@ uint32_t Col2imCpuKernel::Col2imCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kCol2im, Col2imCpuKernel);
+REGISTER_MS_CPU_KERNEL(kCol2im, Col2imCpuKernel);
 }  // namespace aicpu

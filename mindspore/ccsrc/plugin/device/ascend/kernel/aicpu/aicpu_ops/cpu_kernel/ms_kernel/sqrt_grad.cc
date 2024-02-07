@@ -22,7 +22,7 @@
 #include <iostream>
 #include "securec.h"
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "utils/kernel_util.h"
 #include "common/kernel_log.h"
 #include "cpu_kernel/common/status.h"
@@ -239,5 +239,5 @@ uint32_t SqrtGradCpuKernel::SqrtGradComputeComplex(const CpuKernelContext &ctx) 
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kSqrtGrad, SqrtGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSqrtGrad, SqrtGradCpuKernel);
 }  // namespace aicpu

@@ -20,6 +20,6 @@ namespace mindspore {
 namespace transform {
 REGISTER_ACL_OP(StridedSlice).set_extra_supported_datatype({ge::DT_BOOL});
 
-REGISTER_ACL_OP(StridedSliceGrad).set_is_const_input();
+REGISTER_ACL_OP(StridedSliceGrad).set_is_const_input().set_extra_supported_datatype({ge::DT_BOOL});
 }  // namespace transform
 }  // namespace mindspore

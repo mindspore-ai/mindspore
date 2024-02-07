@@ -249,5 +249,5 @@ uint32_t DiagonalCpuKernel::Compute(CpuKernelContext &ctx) {
   return ComputeWithType(ctx);
 }
 
-REGISTER_CPU_KERNEL(kDiagonal, DiagonalCpuKernel);
+REGISTER_MS_CPU_KERNEL(kDiagonal, DiagonalCpuKernel);
 }  // namespace aicpu

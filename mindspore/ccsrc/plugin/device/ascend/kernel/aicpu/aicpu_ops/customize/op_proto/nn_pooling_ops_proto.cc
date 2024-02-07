@@ -4,7 +4,7 @@
  * limitations under the License.
  */
 
-#include "inc/ops/nn_pooling_ops.h"
+#include "op_proto/inc/nn_pooling_ops.h"
 #include "custom_op_proto/cust_nn_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
@@ -295,7 +295,7 @@ IMPLEMT_INFERFUNC(DataFormatVecPermute, DataFormatVecPermuteInfer) {
   y_desc.SetShape(x_desc.GetShape());
   y_desc.SetShapeRange(range);
   y_desc.SetDataType(y_type);
-  UpdateOutputDesc(op, y_desc);
+  op.UpdateOutputDesc("y", y_desc);
   return GRAPH_SUCCESS;
 }
 

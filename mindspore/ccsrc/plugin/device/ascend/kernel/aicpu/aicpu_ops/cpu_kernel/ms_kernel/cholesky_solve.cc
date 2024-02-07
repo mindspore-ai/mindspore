@@ -52,7 +52,7 @@ uint32_t CholeskySolveCpuKernel::Compute(CpuKernelContext &ctx) {
   }
 }
 
-REGISTER_CPU_KERNEL(CholeskySolve, CholeskySolveCpuKernel);
+REGISTER_MS_CPU_KERNEL(CholeskySolve, CholeskySolveCpuKernel);
 
 template <typename T>
 uint32_t CholeskySolveCpuKernel::ComputeKernel(const CpuKernelContext &ctx, const bool &upper) {

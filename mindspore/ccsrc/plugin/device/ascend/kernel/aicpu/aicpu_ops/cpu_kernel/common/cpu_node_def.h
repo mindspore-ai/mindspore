@@ -19,8 +19,8 @@
 #include <string>
 #include <unordered_map>
 
-#include "cpu_kernel/inc/cpu_attr_value.h"
-#include "cpu_kernel/inc/cpu_tensor.h"
+#include "cpu_attr_value.h"
+#include "cpu_tensor.h"
 
 namespace aicpu {
 class NodeDefImpl;

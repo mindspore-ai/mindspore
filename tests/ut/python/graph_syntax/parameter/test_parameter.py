@@ -17,7 +17,7 @@ import mindspore as ms
 from mindspore.nn import Cell
 from mindspore.common.parameter import Parameter
 from mindspore.common import ParameterTuple
-from mindspore import Tensor, context
+from mindspore import Tensor, context, ops
 
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -155,3 +155,22 @@ def test_parameter_parameter_tuple_1():
 
     net = ParamNet()
     net()
+
+
+def test_parameter_assign_in_dict():
+    """
+    Feature: Test parameter.
+    Description: Test parameter assign in dict.
+    Expectation: No exception.
+    """
+    group_params = [
+        {'x': ms.Parameter(ms.Tensor(1), name='x'), 'y': ms.Parameter(ms.Tensor(2), name='y')},
+        {'a': ms.Parameter(ms.Tensor(3), name='a'), 'b': ms.Parameter(ms.Tensor(4), name='b')},
+    ]
+
+    @ms.jit
+    def func(x):
+        ops.assign(group_params[0]['x'], x)
+        return x
+
+    func(ms.Tensor(5))

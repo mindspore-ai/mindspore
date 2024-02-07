@@ -25,37 +25,6 @@ namespace runtime {
 using distributed::collective::CollectiveManager;
 using distributed::recovery::RecoveryContext;
 
-bool IsOutputAddressPersisted(const DeviceTensor *output_device_tensor, const KernelWithIndex &output_node) {
-  MS_EXCEPTION_IF_NULL(output_node.first);
-  MS_EXCEPTION_IF_NULL(output_device_tensor);
-  // The persisted address can't be replaced.
-  if (output_device_tensor->is_ptr_persisted()) {
-    return true;
-  }
-
-  if (output_node.first->isa<ValueNode>()) {
-    return true;
-  }
-
-  // The device address of parameter may come from the device address of input tensor.
-  // In order to avoid mistakenly cleaning up the device data of input tensor, return it as persisted address.
-  if (output_node.first->isa<Parameter>()) {
-    return true;
-  }
-
-  // Ref node need check the origin node.
-  const auto &graph = AnfAlgo::FetchKernelGraph(output_node.first.get());
-  if ((graph != nullptr) && graph->IsInRefOutputMap(output_node)) {
-    const auto &origin_node = graph->GetRefCorrespondOutput(output_node).first;
-    MS_EXCEPTION_IF_NULL(origin_node);
-    if (origin_node->isa<ValueNode>() || origin_node->isa<Parameter>()) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 void UpdateOutputTensorShape(const std::vector<TensorPtr> &output_tensors,
                              const std::vector<KernelWithIndex> &output_nodes) {
   for (size_t i = 0; i < output_tensors.size(); ++i) {
@@ -274,7 +243,10 @@ void OutputActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
   if (tensor == nullptr) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, "Create output tensor failed.");
   }
-  tensor->set_need_release_device_mem(true);
+  // The persisted address can not released by the tensor print.
+  if (!IsOutputAddressPersisted(input_data->data_, node_with_index)) {
+    tensor->set_need_release_device_mem(true);
+  }
   outputs_[output_position] = tensor;
   current_outputs_num_++;
 }
@@ -417,7 +389,7 @@ void OutputActor::UpdateOutputDeviceAddress() {
                           << ", output node: " << output_node->fullname_with_scope();
       }
     } else {
-      MS_LOG(DEBUG) << "Swap ptr:" << tensor_device_address->GetPtr() << " from device tensor:" << device_tensor
+      MS_LOG(DEBUG) << "Swap ptr:" << device_tensor->GetPtr() << " from device tensor:" << device_tensor
                     << " device type:" << device_tensor->GetDeviceType() << " to :" << tensor_device_address
                     << " device type:" << tensor_device_address->GetDeviceType();
       // Move the device ptr from device_tensor to tensor_device_address.

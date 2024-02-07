@@ -14,7 +14,7 @@
 # ============================================================================
 import pytest
 import numpy as np
-from tests.st.dyn_shape_dev import test_utils
+from tests.st.utils import test_utils
 
 import mindspore as ms
 from mindspore import Tensor, context
@@ -35,6 +35,16 @@ def softmax_forward_func(x, axis=-1):
 @test_utils.run_with_cell
 def softmax_backward_func(x, axis=-1):
     return ops.grad(softmax_forward_func, (0,))(x, axis)
+
+
+@test_utils.run_with_cell
+def softmax_backward_forward_func(dout, out, dim=-1):
+    return ops.auto_generate.SoftmaxBackward()(dout, out, dim)
+
+
+@test_utils.run_with_cell
+def softmax_double_backward_func(dout, out, dim=-1):
+    return ops.grad(softmax_backward_forward_func, (0, 1))(dout, out, dim)
 
 
 @test_utils.run_with_cell
@@ -74,7 +84,7 @@ def test_softmax_forward(mode):
 def test_softmax_backward(mode):
     """
     Feature: Auto grad.
-    Description: test auto grad of op softmax pool.
+    Description: test auto grad of op softmax.
     Expectation: expect correct result.
     """
     context.set_context(mode=mode)
@@ -82,6 +92,27 @@ def test_softmax_backward(mode):
     grads = softmax_backward_func(x, 0)
     expect_shape = (10, 36, 12, 12)
     assert grads.asnumpy().shape == expect_shape
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE])
+def test_softmax_double_backward(mode):
+    """
+    Feature: Auto grad.
+    Description: test auto grad of op SoftmaxBackward.
+    Expectation: expect correct result.
+    """
+    context.set_context(mode=mode)
+    dout = Tensor(np.random.rand(10, 10))
+    out = Tensor(np.random.rand(10, 10))
+    dim = -1
+    grads = softmax_double_backward_func(dout, out, dim)
+    print(grads)
 
 
 @pytest.mark.level1
@@ -152,12 +183,12 @@ def test_softmax_dynamic_shape(mode):
     test_cell.set_inputs(x_dyn, axis)
 
     x_1 = Tensor(np.random.rand(10, 36, 12, 12).astype(np.float32))
-    out_1 = test_cell(x_1, axis)
+    out_1 = test_cell(x_1, (-1,))
     expect_shape_1 = (10, 36, 12, 12)
     assert out_1.asnumpy().shape == expect_shape_1
 
     x_2 = Tensor(np.random.rand(6, 20, 10, 10).astype(np.float32))
-    out_2 = test_cell(x_2, axis)
+    out_2 = test_cell(x_2, (-2,))
     expect_shape_2 = (6, 20, 10, 10)
     assert out_2.asnumpy().shape == expect_shape_2
 
@@ -182,12 +213,12 @@ def test_softmax_dynamic_rank(mode):
     test_cell.set_inputs(x_dyn, axis)
 
     x_1 = Tensor(np.random.rand(10, 36, 12).astype(np.float32))
-    out_1 = test_cell(x_1, axis)
+    out_1 = test_cell(x_1, -1)
     expect_shape_1 = (10, 36, 12)
     assert out_1.asnumpy().shape == expect_shape_1
 
     x_2 = Tensor(np.random.rand(6, 20, 10, 10).astype(np.float32))
-    out_2 = test_cell(x_2, axis)
+    out_2 = test_cell(x_2, -2)
     expect_shape_2 = (6, 20, 10, 10)
     assert out_2.asnumpy().shape == expect_shape_2
 
@@ -212,12 +243,12 @@ def test_softmax_backward_dynamic_shape(mode):
     test_cell.set_inputs(x_dyn, axis)
 
     x_1 = Tensor(np.random.rand(10, 36, 12, 12).astype(np.float32))
-    out_1 = test_cell(x_1, axis)
+    out_1 = test_cell(x_1, -1)
     expect_shape_1 = (10, 36, 12, 12)
     assert out_1.asnumpy().shape == expect_shape_1
 
     x_2 = Tensor(np.random.rand(6, 20, 10, 10).astype(np.float32))
-    out_2 = test_cell(x_2, axis)
+    out_2 = test_cell(x_2, -2)
     expect_shape_2 = (6, 20, 10, 10)
     assert out_2.asnumpy().shape == expect_shape_2
 
@@ -243,12 +274,12 @@ def test_softmax_backward_dynamic_rank(mode):
     test_cell.set_inputs(x_dyn, axis)
 
     x_1 = Tensor(np.random.rand(10, 36, 12).astype(np.float32))
-    out_1 = test_cell(x_1, axis)
+    out_1 = test_cell(x_1, (-1,))
     expect_shape_1 = (10, 36, 12)
     assert out_1.asnumpy().shape == expect_shape_1
 
     x_2 = Tensor(np.random.rand(6, 20, 10, 10).astype(np.float32))
-    out_2 = test_cell(x_2, axis)
+    out_2 = test_cell(x_2, (-2,))
     expect_shape_2 = (6, 20, 10, 10)
     assert out_2.asnumpy().shape == expect_shape_2
 

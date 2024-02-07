@@ -31,10 +31,8 @@
 #include "graph/operator.h"
 #include "graph/operator_reg.h"
 #include "transfer_shape_according_to_format.h"
-#include "graph/utils/tensor_utils.h"
-#include "graph/utils/node_utils.h"
 #include "graph/tensor.h"
-#include "graph/node.h"
+#include "graph/operator.h"
 
 #include "op_log.h"
 
@@ -74,6 +72,28 @@ const std::string ATTR_NAME_OP_INFER_DEPENDS = "_op_infer_depends";
       }                                                                                      \
     }                                                                                        \
   } while (0)
+
+#define TWO_IN_ONE_OUT_INFER(name, input1, input2, output)                                          \
+  IMPLEMT_INFERFUNC(name, name##Infer) {                                                            \
+    bool is_dynamic_output = true;                                                                  \
+    if (!InferShapeAndTypeTwoInOneOutBroadcast(op, #input1, #input2, #output, is_dynamic_output)) { \
+      return GRAPH_FAILED;                                                                          \
+    }                                                                                               \
+    return GRAPH_SUCCESS;                                                                           \
+  }                                                                                                 \
+  INFER_FUNC_REG(name, name##Infer)
+
+#define ONE_IN_ONE_OUT_INFER(name, input, output)         \
+  IMPLEMT_INFERFUNC(name, name##Infer) {                  \
+    if (OneInOneOutDynamicInfer(op, #input, {#output})) { \
+      return GRAPH_SUCCESS;                               \
+    }                                                     \
+    return GRAPH_FAILED;                                  \
+  }                                                       \
+  INFER_FUNC_REG(name, name##Infer)
+
+#define CUST_ONE_IN_ONE_OUT_INFER(name, input, output) ONE_IN_ONE_OUT_INFER(Cust##name, input, output)
+#define CUST_TWO_IN_ONE_OUT_INFER(name, input1, input2, output) TWO_IN_ONE_OUT_INFER(Cust##name, input1, input2, output)
 
 namespace ge {
 // enum type and string type mapping
@@ -118,8 +138,6 @@ const size_t DIM_INDEX5 = 5;
 const size_t DIM_INDEX6 = 6;
 const size_t DIM_INDEX7 = 7;
 const size_t DIM_INDEX8 = 8;
-
-ge::graphStatus UpdateOutputDesc(Operator &op, TensorDesc &output_desc);
 
 /*
  * get the datatype of input
@@ -179,18 +197,6 @@ bool InferShapeAndTypeTwoInOneOutBroadcast(Operator &op, const string &input_nam
 bool InferShapeAndTypeTwoInOneOutBroadcast(Operator &op, const string &input_name1, const string &input_name2,
                                            const string &output_name, bool &is_dynamic);
 
-/*
- * infer shape of two input and on output with broadcast use index
- * param[in] op  op desc supply by ge
- * param[in] input_idx_1  first input idx
- * param[in] input_idx_2  second input idx
- * param[in] output_idx  output idx
- * param[in] is_dynamic  whether the shape of output is dynamic shape
- * return SUCCESS:infer success
- *        FAILED:infer failed like unsupported broadcast input shape
- */
-bool InferShapeAndTypeTwoInOneOutBroadcast(Operator &op, const int64_t &input_idx_1, const int64_t &input_idx_2,
-                                           const int64_t &output_idx, bool &is_dynamic);
 bool InferShapeAndTypeBroadcast(Operator &op, std::vector<int64_t> input_idxs, const int64_t &output_idx,
                                 bool &is_dynamic);
 
@@ -356,25 +362,9 @@ bool GetConstAttr(const Operator &op, const std::vector<std::string> &attrNameLi
   return true;
 }
 
-std::string to_string(const vector<int64_t> &shape);
+std::string to_string(const std::vector<int64_t> &shape);
 std::string to_string(const ge::Shape &shape);
-std::string to_string(const ge::GeShape &shape);
-std::string to_string(const vector<pair<int64_t, int64_t>> &ranges);
-
-class DynamicShapeInfer {
- public:
-  std::map<std::string, Format> map_format;
-  std::map<std::string, DataType> map_dtype;
-  std::map<std::string, uint32_t> inputs;
-  std::map<std::string, uint32_t> outputs;
-  Operator &op;
-
-  explicit DynamicShapeInfer(Operator &op_v) : op(op_v) {}
-  bool CatchFormatAndShape();
-  bool UpdateFormatAndShape();
-
-  ~DynamicShapeInfer() { UpdateFormatAndShape(); }
-};
+std::string to_string(const std::vector<std::pair<int64_t, int64_t>> &ranges);
 
 #define PREPARE_DYNAMIC_SHAPE(depend_names)          \
   do {                                               \
@@ -419,16 +409,6 @@ std::string DataTypeToStringDesc(const ge::DataType &dataType);
 bool OneInOneOutDynamicInfer(Operator &op, const std::string &input_name,
                              const std::vector<std::string> &output_name_list);
 
-/*
- * @brief: do infershape for output = input
- * @param [in] op: ge Operator
- * @param [in] input_idx: the input idx
- * @param [in] output_idx_list: the output idx list
- * @return bool: the status of infershape
- */
-
-bool OneInOneOutDynamicInfer(const Operator &op, const int64_t &input_idx, const std::vector<int64_t> &output_idx_list);
-
 bool TwoInOneOutDynamicInferNoBroadcast(Operator &op, const string &input1_name, const string &input2_name,
                                         const std::vector<string> &output_name_list);
 
@@ -439,6 +419,10 @@ void FixShapeRangeWithDims(const std::vector<int64_t> &dims, std::vector<int64_t
 bool IsEmptyTensor(TensorDesc tensor_desc);
 
 bool IsEmptyTensor(const Shape &ge_shape);
+
+std::string GeDataTypeToString(const ge::DataType datatype);
+
+std::string GeFormatToString(const ge::Format format);
 
 namespace array_ops {
 bool CheckInt64MulOverflow(int64_t a, int64_t b);

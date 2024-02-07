@@ -41,7 +41,9 @@ class OpProto:
                  is_view,
                  cpu,
                  gpu,
-                 ascend):
+                 ascend,
+                 prim_init,
+                 is_dispatch):
         self.operator_name = operator_name
         self.class_name = class_name
         self.op_args = op_args
@@ -53,6 +55,18 @@ class OpProto:
         self.cpu = cpu
         self.gpu = gpu
         self.ascend = ascend
+        self.prim_init = prim_init
+        self.is_dispatch = is_dispatch
+
+    @staticmethod
+    def get_device_special_name(dispatch, gpu, cpu, ascend):
+        if 'GPU' in dispatch.keys():
+            gpu = dispatch['GPU']
+        if 'CPU' in dispatch.keys():
+            cpu = dispatch['CPU']
+        if 'Ascend' in dispatch.keys():
+            ascend = dispatch['Ascend']
+        return gpu, cpu, ascend
 
     @staticmethod
     def load_from_yaml(op_name, yaml):
@@ -68,6 +82,7 @@ class OpProto:
         op_args = []
         default_str = 'default'
         is_type_id = False
+        prim_init = False
         for arg_name in args_dict.keys():
             arg_dtype = args_dict[arg_name]['dtype']
             if arg_dtype == 'TypeId':
@@ -79,6 +94,8 @@ class OpProto:
             if default_str in args_dict[arg_name]:
                 default = args_dict[arg_name][default_str]
                 as_init_arg = True
+            if 'prim_init' in args_dict[arg_name]:
+                prim_init = args_dict[arg_name]['prim_init']
             if 'type_cast' in args_dict[arg_name]:
                 type_cast = [cast_type.strip() for cast_type in args_dict[arg_name]['type_cast'].split(',')]
             arg_handler_key = 'arg_handler'
@@ -90,18 +107,15 @@ class OpProto:
             raise TypeError("op define need key 'returns'")
 
         is_pyboost = False
+        is_dispatch = False
         gpu = default_str
         cpu = default_str
         ascend = default_str
         dispatch_key = 'dispatch'
         if dispatch_key in yaml.keys():
-            is_pyboost = True
-            if 'GPU' in yaml[dispatch_key].keys():
-                gpu = yaml[dispatch_key]['GPU']
-            if 'CPU' in yaml[dispatch_key].keys():
-                cpu = yaml[dispatch_key]['CPU']
-            if 'Ascend' in yaml[dispatch_key].keys():
-                ascend = yaml[dispatch_key]['Ascend']
+            is_dispatch = True
+            is_pyboost = yaml[dispatch_key].get('enable')
+            gpu, cpu, ascend = OpProto.get_device_special_name(yaml[dispatch_key], gpu, cpu, ascend)
         return_dict = yaml['returns']
         class_name = convert_python_func_name_to_c(op_name)
         class_key = 'class'
@@ -118,5 +132,6 @@ class OpProto:
         is_view = False
         if 'view' in yaml.keys():
             is_view = True
-        op_proto = OpProto(op_name, op_args, return_args, class_name, is_pyboost, is_view, cpu, gpu, ascend)
+        op_proto = OpProto(op_name, op_args, return_args, class_name,
+                           is_pyboost, is_view, cpu, gpu, ascend, prim_init, is_dispatch)
         return op_proto

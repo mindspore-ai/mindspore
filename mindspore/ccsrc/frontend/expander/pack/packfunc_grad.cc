@@ -228,13 +228,13 @@ GraphGradInfoPtr GenGraphGradInfo(const FuncGraphPtr &func_graph) {
 const mindspore::HashSet<size_t> GetUnusedInputs(const FuncGraphPtr &func_graph) {
   mindspore::HashSet<AnfNodePtr> unused_input_nodes;
   mindspore::HashMap<AnfNodePtr, size_t> node_map_index;
+  MS_EXCEPTION_IF_NULL(func_graph);
   auto parameters = func_graph->parameters();
   for (size_t i = 0; i < parameters.size(); ++i) {
     auto node = parameters[i];
     unused_input_nodes.insert(node);
     node_map_index[node] = i;
   }
-  MS_EXCEPTION_IF_NULL(func_graph);
   const auto &order = TopoSort(func_graph->output());
   // Hard coded and redundant with other code, this code needs to be optimized in the future
   static mindspore::HashSet<std::string> kMulOp{

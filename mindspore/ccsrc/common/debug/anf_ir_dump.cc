@@ -304,7 +304,7 @@ void PrintNodeOutputType(std::ostringstream &buffer, const AnfNodePtr &node) {
       buffer << ", value=...";
     }
     if (ref_key != nullptr) {
-      buffer << ", ref_key=:" << ref_key->value();
+      buffer << ", ref_key=" << ref_key->value();
     }
     PrintTupleNodeUsedFlags(buffer, sequence_abs);
     buffer << ">";
@@ -314,7 +314,7 @@ void PrintNodeOutputType(std::ostringstream &buffer, const AnfNodePtr &node) {
       buffer << ", value=...";
     }
     if (ref_key != nullptr) {
-      buffer << ", ref_key=:" << ref_key->value();
+      buffer << ", ref_key=" << ref_key->value();
     }
     PrintTupleNodeUsedFlags(buffer, sequence_abs);
     buffer << ">";
@@ -362,7 +362,7 @@ void DumpGlobalInfoEntry(const FuncGraphPtr &graph, std::ostringstream &buffer, 
   if (!graph->attrs().empty()) {
     buffer << "# Attrs:" << std::endl;
     for (const auto &attr : graph->attrs()) {
-      buffer << attr.first << " : ";
+      buffer << attr.first << ": ";
       if (attr.second->isa<BoolImm>()) {
         buffer << GetValue<bool>(attr.second);
       } else if (attr.second->isa<StringImm>()) {
@@ -427,7 +427,7 @@ int32_t DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer, Ordere
     if (parameter_ptr == nullptr) {
       MS_LOG(INTERNAL_EXCEPTION) << "param cannot cast to ParameterPtr";
     }
-    buffer << "%para" << para_num << "_" << parameter_ptr->name() << " : ";
+    buffer << "%para" << para_num << "_" << parameter_ptr->name() << ": ";
     // Print parameters' type and shape
     PrintNodeOutputType(buffer, param);
     if (parameter_ptr->has_default()) {
@@ -802,6 +802,30 @@ void DumpDebugInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &
       }
     }
   }
+
+  // Dump side effect info.
+  auto effect_info = node->GetEffectInfo();
+  if (effect_info.HasEffect()) {
+    gsub->buffer << "      # " << effect_info.ToString() << '\n';
+  }
+}
+
+void DumpParameters(const FuncGraphPtr &func_graph, std::ostringstream &oss) {
+  std::vector<AnfNodePtr> parameters = func_graph->parameters();
+  oss << "# Parameters: " << parameters.size() << ", (";
+  if (parameters.size() == 1) {
+    MS_EXCEPTION_IF_NULL(parameters[0]);
+    PrintNodeOutputType(oss, parameters[0]);
+  } else if (parameters.size() > 1) {
+    for (size_t idx = 0; idx < parameters.size() - 1; idx++) {
+      MS_EXCEPTION_IF_NULL(parameters[idx]);
+      PrintNodeOutputType(oss, parameters[idx]);
+      oss << ", ";
+    }
+    MS_EXCEPTION_IF_NULL(parameters[parameters.size() - 1]);
+    PrintNodeOutputType(oss, parameters[parameters.size() - 1]);
+  }
+  oss << ")\n";
 }
 
 void DumpCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph, const OrderedMap<AnfNodePtr, int32_t> &para_map,
@@ -958,7 +982,7 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
     if (format_level > kBasicLevel) {
       oss << "subgraph attr:" << std::endl;
       for (const auto &attr : sg.first->attrs()) {
-        oss << attr.first << " : ";
+        oss << attr.first << ": ";
         if (attr.second->isa<BoolImm>()) {
           oss << GetValue<bool>(attr.second);
         } else if (attr.second->isa<StringImm>()) {
@@ -967,6 +991,16 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
         oss << std::endl;
       }
       oss << "subgraph instance: " << sg.first->ToString() << " : " << sg.first.get() << std::endl;
+
+      // Dump side effect info.
+      auto effect_info = sg.first->GetEffectInfo();
+      if (effect_info.HasEffect()) {
+        oss << "# " << effect_info.ToString() << '\n';
+      }
+      // Dump parameters info.
+      if (sg.first != graph) {
+        DumpParameters(sg.first, oss);
+      }
     }
     if (trace::GetGlobalTraceLabelType() == trace::TraceLabelType::kWithUniqueId) {
       oss << trace::GetDebugInfoStr(sg.first->debug_info(), "# ", kSourceLineTipDiscard) << "#"
@@ -1359,7 +1393,7 @@ void AnfExporter::ExportOneFuncGraph(const FuncGraphPtr &func_graph, const Tagge
   }
   oss << "subgraph attr:" << std::endl;
   for (const auto &attr : func_graph->attrs()) {
-    oss << attr.first << " : ";
+    oss << attr.first << ": ";
     MS_EXCEPTION_IF_NULL(attr.second);
     if (attr.second->isa<BoolImm>()) {
       oss << GetValue<bool>(attr.second);
@@ -1369,6 +1403,13 @@ void AnfExporter::ExportOneFuncGraph(const FuncGraphPtr &func_graph, const Tagge
     oss << std::endl;
   }
   oss << "subgraph instance: " << func_graph->ToString() << " : " << func_graph.get() << std::endl;
+  // Dump side effect info.
+  auto effect_info = func_graph->GetEffectInfo();
+  if (effect_info.HasEffect()) {
+    oss << "# " << effect_info.ToString() << '\n';
+  }
+  // Dump parameters info.
+  DumpParameters(func_graph, oss);
   if (trace::GetGlobalTraceLabelType() == trace::TraceLabelType::kWithUniqueId) {
     oss << trace::GetDebugInfoStr(func_graph->debug_info(), "# ", kSourceLineTipDiscard) << "#"
         << trace::Label(func_graph->debug_info()) << "\n";
@@ -1392,13 +1433,13 @@ void ExportGlobalInfoEntry(const FuncGraphPtr &graph, std::ostringstream &buffer
     return;
   }
 
-  buffer << "#IR entry      : @" << graph->ToString() << std::endl;
-  buffer << "#Total subgraph: " << graph_size;
+  buffer << "# IR entry: @" << graph->ToString() << std::endl;
+  buffer << "# Total subgraph: " << graph_size;
   buffer << std::endl;
   buffer << std::endl;
-  buffer << "#attrs         :" << std::endl;
+  buffer << "# attrs: " << std::endl;
   for (const auto &attr : graph->attrs()) {
-    buffer << attr.first << " : ";
+    buffer << attr.first << ": ";
     MS_EXCEPTION_IF_NULL(attr.second);
     if (attr.second->isa<BoolImm>()) {
       buffer << GetValue<bool>(attr.second);

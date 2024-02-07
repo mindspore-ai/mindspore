@@ -22,7 +22,7 @@
 #include <algorithm>
 
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "common/kernel_log.h"
 #include "common/status.h"
 #include "utils/kernel_util.h"
@@ -120,5 +120,5 @@ std::uint32_t CosCpuKernel::Compute(CpuKernelContext &ctx) {
   return check ? KERNEL_STATUS_PARAM_INVALID : detail::ComputeCos(ctx);
 }
 
-REGISTER_CPU_KERNEL(kCos, CosCpuKernel);
+REGISTER_MS_CPU_KERNEL(kCos, CosCpuKernel);
 }  // namespace aicpu

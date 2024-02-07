@@ -182,5 +182,5 @@ uint32_t LuSolveCpuKernel::LuSolveCompute(const CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kLuSolve, LuSolveCpuKernel);
+REGISTER_MS_CPU_KERNEL(kLuSolve, LuSolveCpuKernel);
 }  // namespace aicpu

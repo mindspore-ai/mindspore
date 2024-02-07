@@ -104,6 +104,7 @@ class SchedulerHelper {
   static void CheckActorValid(const ActorSet *actor_set);
 
   static void DumpActorSet(const ActorSet *actor_set, std::ofstream &ofs);
+  static void DumpFormatActorSet(const ActorSet *actor_set, std::ofstream &ofs);
 
   static size_t fusion_actor_index_;
 };

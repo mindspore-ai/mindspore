@@ -5,7 +5,7 @@
 
     将第一个输入Tensor除以第二个输入Tensor。当 `x` 为零时，则返回零。
 
-    `x` 和 `y` 的输入遵循隐式类型转换规则，使数据类型一致。输入必须是两个Tensor或一个Tensor和一个Scalar。当输入是两个Tensor时，它们的数据类型不能同时为bool，它们的shape可以广播。当输入是一个Tensor和一个Scalar时，Scalar只能是一个常量。
+    `x` 和 `y` 的输入遵循隐式类型转换规则，使数据类型一致。当输入是两个Tensor时，它们的数据类型不能同时为bool，它们的shape可以广播。当某个输入是Scalar时，Scalar只能是一个常量。
 
     .. note::
         当 `x` 和 `y` 数据类型都为复数的时候， 须同时为complex64或者complex128。

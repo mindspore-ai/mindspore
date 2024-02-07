@@ -1,14 +1,14 @@
 #operator logical_and
 logical_and:
     args:
-        input:
+        x:
             dtype: tensor
             type_cast: bool
-        other:
+        y:
             dtype: tensor
             type_cast: bool
     args_signature:
-        dtype_group: (input, other)
+        dtype_group: (x, y)
     returns:
         output:
             dtype: tensor

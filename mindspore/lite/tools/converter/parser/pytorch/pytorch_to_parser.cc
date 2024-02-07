@@ -17,7 +17,7 @@
 #include "tools/converter/parser/pytorch/pytorch_to_parser.h"
 #include "tools/converter/parser/pytorch/pytorch_node_parser.h"
 #include <memory>
-#include "ops/cast.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

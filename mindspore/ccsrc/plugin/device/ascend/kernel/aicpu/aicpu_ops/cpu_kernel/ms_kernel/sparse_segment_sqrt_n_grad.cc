@@ -131,5 +131,5 @@ uint32_t SparseSegmentSqrtNGradCpuKernel::ComputeKernel(const CpuKernelContext &
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(SparseSegmentSqrtNGrad, SparseSegmentSqrtNGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(SparseSegmentSqrtNGrad, SparseSegmentSqrtNGradCpuKernel);
 }  // namespace aicpu

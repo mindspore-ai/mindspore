@@ -410,5 +410,5 @@ uint32_t TridiagonalSolveCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 // 注册该算子实现
-REGISTER_CPU_KERNEL(TRIDIAGONALSOLVE, TridiagonalSolveCpuKernel);
+REGISTER_MS_CPU_KERNEL(TRIDIAGONALSOLVE, TridiagonalSolveCpuKernel);
 }  // namespace aicpu

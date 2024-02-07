@@ -31,8 +31,13 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-void GEGraphOptimization::OptimizeGEGraph(const KernelGraphPtr &graph) {
+void GEGraphOptimization::OptimizeGEGraph(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *const memo) {
   MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(memo);
+  if (memo->find(graph) != memo->end()) {
+    return;
+  }
+  memo->insert(graph);
   MS_LOG(DEBUG) << "Status record: start optimize ge graph. graph id: " << graph->graph_id();
   // empty graph dont entry to backend
   if (graph->execution_order().empty()) {
@@ -46,6 +51,9 @@ void GEGraphOptimization::OptimizeGEGraph(const KernelGraphPtr &graph) {
   if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
     graphkernel::GraphKernelOptimize(graph);
     graph->SetExecOrderByDefault();
+  }
+  for (auto &child_graph : graph->child_graph_order()) {
+    OptimizeGEGraph(child_graph.lock(), memo);
   }
   MS_LOG(DEBUG) << "Status record: end optimize ge graph. graph id: " << graph->graph_id();
 }

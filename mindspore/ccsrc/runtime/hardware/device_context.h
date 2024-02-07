@@ -32,7 +32,7 @@
 #include "runtime/hardware/deprecated_interface.h"
 #include "runtime/device/auto_mem_offload.h"
 #include "include/backend/optimizer/graph_optimizer.h"
-#include "runtime/pynative/async/task.h"
+#include "runtime/pipeline/task/task.h"
 #include "ir/device_event.h"
 #ifdef __APPLE__
 #include "mindrt/include/async/spinlock.h"
@@ -150,6 +150,7 @@ class BACKEND_EXPORT DeviceResManager {
   // Destroy device resource manager and release device resource.
   virtual void Destroy() {}
 
+  virtual void SetDeviceIdToCurrentThread() const {}
   // Bind device to current thread to gain device control privileges
   // If force_bind is true, bind context to current thread every time;
   // Otherwise, only bind context to current thread for the first time.
@@ -250,7 +251,13 @@ class BACKEND_EXPORT DeviceResManager {
   virtual size_t DefaultStream() const { return 0; }
 
   // Create device event with flag.
-  virtual DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) const { return nullptr; };
+  virtual DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) { return nullptr; };
+
+  // Destroy specified device event.
+  virtual bool DestroyEvent(const DeviceEventPtr &event);
+
+  // Destroy all device events.
+  virtual bool DestroyAllEvents();
 
   // Dynamically load collective communication library.
   // Currently, four types are supported: OpenMPI and self developed framework for CPU. NCCL for GPU. HCCL for Ascend.
@@ -271,6 +278,8 @@ class BACKEND_EXPORT DeviceResManager {
   DeviceContext *device_context_{nullptr};
 
   std::shared_ptr<SwapManager> swap_manager_{nullptr};
+
+  DeviceEventPtrList device_events_{};
 
  private:
   template <class... Args>
@@ -323,7 +332,7 @@ class BACKEND_EXPORT KernelExecutor {
   // Launch a kernel via 'KernelMod' of the kernel, use KernelTensor input type.
   virtual bool LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                             const std::vector<KernelTensor *> &workspace, const std::vector<KernelTensor *> &outputs,
-                            size_t stream_id) const {
+                            KernelMod *kernel_mod, void *stream) const {
     MS_LOG(EXCEPTION) << "Unimplemented interface.";
   }
   // Launch callback.
@@ -340,9 +349,8 @@ class BACKEND_EXPORT KernelExecutor {
 
   void SetDeviceContext(DeviceContext *device_context) { device_context_ = device_context; }
 
-  virtual bool ExecuteKernelTask(const pynative::KernelTaskType &task_type,
+  virtual bool ExecuteKernelTask(const runtime::KernelTaskType &task_type,
                                  const device::DeviceAddressPtrList &input_addr_list,
-                                 const TensorStorageInfoPtrList &input_storage_list,
                                  const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id) const {
     return false;
   };

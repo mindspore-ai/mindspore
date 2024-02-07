@@ -19,7 +19,7 @@
 
 #include <vector>
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class LinearSumAssignmentCpuKernel : public CpuKernel {

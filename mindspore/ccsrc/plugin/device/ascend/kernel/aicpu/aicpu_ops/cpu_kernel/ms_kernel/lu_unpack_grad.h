@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_LU_UNPACK_GRAD_H_
 #define AICPU_KERNELS_LU_UNPACK_GRAD_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class LuUnpackGradCpuKernel : public CpuKernel {

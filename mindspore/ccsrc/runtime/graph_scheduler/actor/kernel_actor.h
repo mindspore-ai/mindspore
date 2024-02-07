@@ -227,6 +227,9 @@ class KernelActor : public DebugAwareActor {
 
   bool enable_callback_{false};
   CallbackCounterPtr callback_counter_;
+
+  // The stream resource of the KernelActor to launch kernel.
+  void *stream_{nullptr};
 };
 
 using KernelActorPtr = std::shared_ptr<KernelActor>;

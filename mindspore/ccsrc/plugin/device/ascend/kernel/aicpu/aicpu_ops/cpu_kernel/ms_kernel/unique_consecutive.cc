@@ -495,5 +495,5 @@ uint32_t UniqueConsecutiveCpuKernel::Compute(CpuKernelContext &ctx) {
 
   return DoCompute(ctx);
 }
-REGISTER_CPU_KERNEL(kUniqueConsecutive, UniqueConsecutiveCpuKernel);
+REGISTER_MS_CPU_KERNEL(kUniqueConsecutive, UniqueConsecutiveCpuKernel);
 }  // namespace aicpu

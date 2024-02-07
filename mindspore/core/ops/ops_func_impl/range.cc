@@ -69,6 +69,17 @@ BaseShapePtr CalculateShapeSize(const ValuePtr start_ptr, const ValuePtr limit_p
   return std::make_shared<abstract::TensorShape>(out_shape);
 }
 
+int32_t RangeFuncImpl::CheckValidation(const PrimitivePtr &primitive,
+                                       const std::vector<AbstractBasePtr> &input_args) const {
+  auto maxlen_opt = GetScalarValue<int64_t>(input_args[kIndex3]->GetValue());
+  if (MS_UNLIKELY(!maxlen_opt.has_value())) {
+    return OP_CHECK_RETRY;
+  }
+  MS_CHECK_VALUE(maxlen_opt.value() > 0,
+                 CheckAndConvertUtils::FormatCheckIntegerMsg("maxlen", maxlen_opt.value(), kGreaterThan, 0, primitive));
+  return OP_CHECK_SUCCESS;
+}
+
 BaseShapePtr RangeFuncImpl::InferShape(const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) const {
   ShapeVector out_shape = {};

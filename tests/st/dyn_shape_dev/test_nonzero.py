@@ -15,7 +15,7 @@
 
 import numpy as np
 import pytest
-import test_utils
+from tests.st.utils import test_utils
 
 from mindspore import ops
 import mindspore as ms
@@ -38,7 +38,7 @@ def nonzero_backward_func(x):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_nonzero_op_forward(context_mode, data_type):
     """
     Feature: Ops.
@@ -59,7 +59,7 @@ def test_nonzero_op_forward(context_mode, data_type):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_nonzero_op_backward(context_mode, data_type):
     """
     Feature: Auto grad.

@@ -22,7 +22,7 @@
 #include <algorithm>
 
 #include "common/cpu_kernel_utils.h"
-#include "inc/cpu_types.h"
+#include "cpu_types.h"
 #include "common/kernel_log.h"
 #include "common/status.h"
 #include "utils/eigen_tensor.h"
@@ -180,5 +180,5 @@ void ResizeNearestNeighborV2GradCpuKernel::RealCompute(T *const grads_4d, S *con
   }
 }
 
-REGISTER_CPU_KERNEL(kResizeNearestNeighborV2Grad, ResizeNearestNeighborV2GradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kResizeNearestNeighborV2Grad, ResizeNearestNeighborV2GradCpuKernel);
 }  // namespace aicpu

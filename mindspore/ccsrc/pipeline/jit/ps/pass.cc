@@ -245,11 +245,11 @@ FuncGraphPtr JitBpropGraphPass(const ResourcePtr &resource, bool need_renormaliz
   opt::irpass::OptimizeIRPassLib irpass;
   opt::OptPassConfig grad_graph_opt = opt::OptPassConfig({
     irpass.inline_,
+    irpass.list_to_tuple_eliminator_,
+    irpass.tuple_to_list_eliminator_,
     irpass.tuple_list_get_set_item_eliminator_,
     irpass.tuple_list_get_item_eliminator_,
     irpass.tuple_list_set_item_eliminator_,
-    irpass.list_to_tuple_eliminator_,
-    irpass.tuple_to_list_eliminator_,
     irpass.depend_value_elim_,
     irpass.reshape_eliminate_,
     irpass.switch_simplify_,
@@ -346,14 +346,14 @@ opt::OptPassConfig GetOptPassA1(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.convert_tensor_eliminate_,
 
     // Miscellaneous
+    irpass.list_to_tuple_eliminator_,
+    irpass.tuple_to_list_eliminator_,
     irpass.tuple_list_get_item_eliminator_,
     irpass.make_slice_get_slice_eliminator_,
     irpass.tuple_list_get_item_const_eliminator_,
     irpass.tuple_list_set_item_eliminator_,
     irpass.tuple_list_get_set_item_eliminator_,
     irpass.tuple_list_get_item_depend_reorder_,
-    irpass.list_to_tuple_eliminator_,
-    irpass.tuple_to_list_eliminator_,
     irpass.tuple_list_convert_item_index_to_positive_,
     irpass.dict_get_item_eliminator_,
     irpass.dict_get_item_const_eliminator_,
@@ -522,13 +522,13 @@ OptPassGroupMap GetOptPassesAfterCconv(const opt::irpass::OptimizeIRPassLib &irp
 OptPassGroupMap GetOptPassesTransformGraph(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig d_1 = opt::OptPassConfig({
     irpass.call_graph_tuple_transform_,
+    irpass.list_to_tuple_eliminator_,
+    irpass.tuple_to_list_eliminator_,
     irpass.tuple_list_get_item_eliminator_,
     irpass.tuple_list_get_item_const_eliminator_,
     irpass.tuple_list_set_item_eliminator_,
     irpass.tuple_list_get_set_item_eliminator_,
     irpass.tuple_list_get_item_depend_reorder_,
-    irpass.list_to_tuple_eliminator_,
-    irpass.tuple_to_list_eliminator_,
     irpass.tuple_list_convert_item_index_to_positive_,
   });
 
@@ -541,13 +541,13 @@ OptPassGroupMap GetOptPassesTransformGraph(const opt::irpass::OptimizeIRPassLib 
 
 OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig b_1 = opt::OptPassConfig({irpass.zero_like_fill_zero_,
+                                               irpass.list_to_tuple_eliminator_,
+                                               irpass.tuple_to_list_eliminator_,
                                                irpass.tuple_list_get_item_eliminator_,
                                                irpass.tuple_list_get_item_const_eliminator_,
                                                irpass.tuple_list_set_item_eliminator_,
                                                irpass.tuple_list_get_set_item_eliminator_,
                                                irpass.tuple_list_get_item_depend_reorder_,
-                                               irpass.list_to_tuple_eliminator_,
-                                               irpass.tuple_to_list_eliminator_,
                                                irpass.tuple_list_convert_item_index_to_positive_,
                                                irpass.make_slice_get_slice_eliminator_,
                                                irpass.float_tuple_getitem_switch_,
@@ -912,28 +912,6 @@ bool MetaUnpackPreparePass(const ResourcePtr &resource) {
   auto prepare_map = GetMetaUnpackPreparePhases();
   auto infer_opt_prepare = opt::Optimizer::MakeOptimizer("meta_unpack_prepare", resource, prepare_map);
   (void)infer_opt_prepare->step(func_graph, false);
-  return true;
-}
-
-bool PreSimplifyInlinePass(const ResourcePtr &resource) {
-  MS_EXCEPTION_IF_NULL(resource);
-  FuncGraphPtr func_graph = resource->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-
-  MS_LOG(DEBUG) << "Start, " << func_graph->ToString();
-  opt::irpass::OptimizeIRPassLib irpass;
-  auto simplify_inline_passes = opt::OptPassConfig({irpass.switch_simplify_, irpass.inline_});
-  OptPassGroupMap simplify_inline_map({{"switch_simplify_inline", simplify_inline_passes}});
-  auto simplify_inline =
-    opt::Optimizer::MakeOptimizer("simplify_inline", resource, simplify_inline_map, false, false, false);
-  simplify_inline->step(func_graph, true);
-
-  OptPassGroupMap simplify_inline_renorm_map({{"renormalize", opt::OptPassConfig::Renormalize()}});
-  auto simplify_inline_renorm =
-    opt::Optimizer::MakeOptimizer("simplify_inline_renorm", resource, simplify_inline_renorm_map);
-  auto new_func_graph = simplify_inline_renorm->step(func_graph, true);
-  resource->set_func_graph(new_func_graph);
-  MS_LOG(DEBUG) << "End, " << func_graph->ToString() << ", new_graph: " << new_func_graph->ToString();
   return true;
 }
 

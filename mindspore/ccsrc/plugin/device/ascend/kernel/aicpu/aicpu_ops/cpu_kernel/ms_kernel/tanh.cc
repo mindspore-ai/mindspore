@@ -81,5 +81,5 @@ uint32_t TanhCpuKernel::TanhCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kTanh, TanhCpuKernel);
+REGISTER_MS_CPU_KERNEL(kTanh, TanhCpuKernel);
 }  // namespace aicpu

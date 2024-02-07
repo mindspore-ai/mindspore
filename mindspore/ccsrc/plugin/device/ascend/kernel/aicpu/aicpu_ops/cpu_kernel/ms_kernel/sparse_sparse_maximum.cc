@@ -243,5 +243,5 @@ uint32_t SparseMaximumCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kSparseSparseMaximum, SparseMaximumCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSparseSparseMaximum, SparseMaximumCpuKernel);
 }  // namespace aicpu

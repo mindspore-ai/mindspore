@@ -145,5 +145,5 @@ uint32_t SelectCpuKernel::SelectCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kSelect, SelectCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSelect, SelectCpuKernel);
 }  // namespace aicpu

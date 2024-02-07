@@ -24,7 +24,6 @@
 #include "op_log.h"
 #include "error_util.h"
 #include "util.h"
-#include "common/util/error_manager/error_manager.h"
 
 namespace ge {
 const std::map<std::string, DataType> dtype_maps{{"DT_FLOAT", DT_FLOAT},
@@ -52,6 +51,7 @@ const std::map<std::string, DataType> dtype_maps{{"DT_FLOAT", DT_FLOAT},
                                                  {"DT_RESOURCE", DT_RESOURCE},
                                                  {"DT_STRING_REF", DT_STRING_REF},
                                                  {"DT_DUAL", DT_DUAL},
+                                                 {"DT_BF16", DT_BF16},
                                                  {"DT_UNDEFINED", DT_UNDEFINED}};
 
 graphStatus WithRankAtLeast(const TensorDesc &tensor, int64_t rank, Shape &out, const ge::Operator &op) {

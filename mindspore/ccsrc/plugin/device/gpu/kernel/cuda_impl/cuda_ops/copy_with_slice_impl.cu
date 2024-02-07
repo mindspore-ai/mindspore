@@ -114,8 +114,9 @@ cudaError_t CalCopyWithSlice(const size_t &input_size, const DataType *src_addr,
       input_size, src_addr, self_addr, src_ndim, input_shape, src_strides, src_storage_info->storage_offset,
       dst_storage_info->storage_offset);
   } else if (!dst_is_contiguous && src_is_contiguous) {
+    size_t storage_offset = src_storage_info == nullptr ? 0 : src_storage_info->storage_offset;
     CopyWithSliceKernelDFST<<<GET_BLOCKS(input_size), GET_THREADS, 0, cuda_stream>>>(
-      input_size, src_addr, self_addr, dst_ndim, output_shape, dst_strides, src_storage_info->storage_offset,
+      input_size, src_addr, self_addr, dst_ndim, output_shape, dst_strides, storage_offset,
       dst_storage_info->storage_offset);
   } else {
     VectorWrapper<kMaxDim> input_shape(src_storage_info->shape);

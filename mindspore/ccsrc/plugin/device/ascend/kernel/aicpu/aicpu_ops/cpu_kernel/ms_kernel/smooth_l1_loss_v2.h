@@ -18,7 +18,7 @@
 #define AICPU_KERNELS_NORMALIZED_SMOOTH_L1_LOSS_V2_H_
 
 #include <string>
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class SmoothL1LossV2CpuKernel : public CpuKernel {

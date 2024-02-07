@@ -691,8 +691,7 @@ Tensor::Tensor(const Tensor &tensor)
       auto_grad_meta_data_(tensor.auto_grad_meta_data_),
       compression_type_(tensor.compression_type_),
       tensor_name_(tensor.tensor_name_),
-      address_future_(tensor.address_future_),
-      storage_info_(tensor.storage_info_) {
+      address_future_(tensor.address_future_) {
   user_data_ = tensor.user_data_;
   set_device_info(tensor.device_info());
 }
@@ -719,8 +718,7 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       auto_grad_meta_data_(tensor.auto_grad_meta_data_),
       compression_type_(tensor.compression_type_),
       tensor_name_(tensor.tensor_name_),
-      address_future_(tensor.address_future_),
-      storage_info_(tensor.storage_info_) {
+      address_future_(tensor.address_future_) {
   user_data_ = tensor.user_data_;
   set_device_info(tensor.device_info());
 }
@@ -756,7 +754,6 @@ Tensor &Tensor::operator=(const Tensor &tensor) {
   quant_params_ = tensor.quant_params_;
   updated_by_device_ = tensor.updated_by_device_;
   address_future_ = tensor.address_future_;
-  storage_info_ = tensor.storage_info_;
   return *this;
 }
 
@@ -895,24 +892,17 @@ void Tensor::ExecuteLazyTask() const {
     lazy_callback_();
   }
 
-  if (storage_info_ != nullptr && contiguous_callback_ != nullptr) {
-    device_sync_ = contiguous_callback_(nullptr, device_address(), storage_info());
+  if (contiguous_callback_ != nullptr && storage_info() != nullptr) {
+    device_sync_ = contiguous_callback_(device_address());
     device_sync_->set_original_ref_count(SIZE_MAX);
     device_sync_->ResetRefCount();
     address_future_ = nullptr;
-    storage_info_ = nullptr;
-  }
-}
-
-void Tensor::contiguous() {
-  if (storage_info_ != nullptr) {
-    contiguous_callback_(shared_from_base<Tensor>(), nullptr, nullptr);
   }
 }
 
 bool Tensor::is_contiguous() const {
-  auto storage_info = storage_info_;
-  return storage_info == nullptr || storage_info->is_contiguous;
+  const auto &storage = storage_info();
+  return storage == nullptr || storage->is_contiguous;
 }
 
 DeviceSyncPtr Tensor::device_address() const {
@@ -925,10 +915,10 @@ DeviceSyncPtr Tensor::device_address() const {
   return device_sync_;
 }
 
-std::vector<int64_t> Tensor::stride() {
-  auto storage_info = storage_info_;
-  if (storage_info != nullptr) {
-    return storage_info->strides;
+std::vector<int64_t> Tensor::stride() const {
+  const auto &storage = storage_info();
+  if (storage != nullptr) {
+    return storage->strides;
   }
 
   if (shape_.empty()) {
@@ -941,6 +931,19 @@ std::vector<int64_t> Tensor::stride() {
     ret[i - 1] = stride;
   }
   return ret;
+}
+
+const TensorStorageInfoPtr Tensor::storage_info() const {
+  if (device_sync_ == nullptr) {
+    return nullptr;
+  }
+
+  return device_sync_->GetTensorStorageInfo();
+}
+
+const int64_t Tensor::storage_offset() const {
+  const auto &storage = storage_info();
+  return storage == nullptr ? 0 : SizeToLong(storage->storage_offset);
 }
 
 void Tensor::set_device_address(const DeviceSyncPtr &device_sync, bool need_update_ref_count) {
@@ -960,7 +963,6 @@ Tensor &Tensor::AssignValue(const Tensor &tensor) {
     lazy_callback_ = tensor.lazy_callback_;
     ExecuteLazyTask();
     contiguous_callback_ = tensor.contiguous_callback_;
-    storage_info_ = tensor.storage_info_;
     MetaTensor::operator=(tensor);
     address_future_ = nullptr;
     device_sync_ = tensor.device_address();
@@ -987,6 +989,11 @@ Tensor &Tensor::AssignValue(const Tensor &tensor) {
 }
 
 abstract::AbstractBasePtr Tensor::ToAbstract() {
+  auto abs = abstract_.lock();
+  if (abs != nullptr) {
+    MS_LOG(DEBUG) << "Get cached abstract " << abs->ToString() << " real tensor shape is " << shape_;
+    return abs;
+  }
   auto tens = shared_from_base<Tensor>();
   auto dtype = tens->Dtype();
   if (!IsSubType(dtype, kNumber) && !IsSubType(dtype, kString) && !IsSubType(dtype, kTensorType)) {

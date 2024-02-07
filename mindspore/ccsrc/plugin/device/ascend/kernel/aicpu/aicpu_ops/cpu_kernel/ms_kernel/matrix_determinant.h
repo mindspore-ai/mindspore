@@ -19,7 +19,7 @@
 
 #include <complex>
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "utils/bcast.h"
 
 namespace aicpu {

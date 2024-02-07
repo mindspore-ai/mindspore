@@ -6,11 +6,10 @@ reciprocal:
 
             out_{i} =  \frac{1}{x_{i}}
 
-        Args:
+        Inputs:
             - **x** (Tensor) - The input tensor.
-                :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
 
-        Returns:
+        Outputs:
             Tensor, has the same shape as the `x`.
 
         Raises:
@@ -20,10 +19,11 @@ reciprocal:
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
-            >>> import mindspore as ms
-            >>> import mindspore.ops as ops
+            >>> import mindspore
             >>> import numpy as np
-            >>> input = ms.Tensor(np.array([1.0, 2.0, 4.0]), ms.float32)
-            >>> output = ops.Reciprocal()(input)
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+            >>> reciprocal = ops.Reciprocal()
+            >>> output = reciprocal(x)
             >>> print(output)
             [1.   0.5  0.25]

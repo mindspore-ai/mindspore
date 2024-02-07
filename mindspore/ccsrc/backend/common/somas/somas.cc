@@ -1604,7 +1604,9 @@ std::map<size_t, std::map<size_t, std::set<size_t>>> Somas::GetContiguousRefList
         }
       }
     }
-
+    if (!found_first && !found_second) {
+      continue;
+    }
     if (!found_first) {
       MS_LOG(WARNING) << "Contiguous ref tensor " << ref_first << " not found in any contiguous list";
     }

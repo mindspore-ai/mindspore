@@ -152,5 +152,5 @@ uint32_t TileCpuKernel::TileCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kTile, TileCpuKernel);
+REGISTER_MS_CPU_KERNEL(kTile, TileCpuKernel);
 }  // namespace aicpu

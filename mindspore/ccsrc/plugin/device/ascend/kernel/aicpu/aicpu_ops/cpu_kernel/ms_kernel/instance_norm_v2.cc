@@ -24,7 +24,7 @@
 #include <algorithm>
 
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "utils/kernel_util.h"
 #include "utils/eigen_tensor.h"
 
@@ -378,5 +378,5 @@ uint32_t InstanceNormV2CpuKernel::Compute(CpuKernelContext &ctx) {
   return result;
 }
 
-REGISTER_CPU_KERNEL(kInstanceNormV2, InstanceNormV2CpuKernel);
+REGISTER_MS_CPU_KERNEL(kInstanceNormV2, InstanceNormV2CpuKernel);
 }  // namespace aicpu

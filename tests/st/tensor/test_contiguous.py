@@ -22,58 +22,30 @@ import mindspore.ops as ops
 from mindspore import Tensor
 from mindspore import dtype as mstype
 
-class Net(nn.Cell):
-    def construct(self, x):
-        return x.contiguous()
-
-
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
-def test_contiguous(mode):
-    """
-    Feature: countiguous
-    Description: Verify the result of x
-    Expectation: success
-    """
-    ms.set_context(mode=mode)
-    x = ms.Tensor([[1, 2, 3], [4, 5, 6]], dtype=ms.float32)
-    y = ops.transpose(x, (1, 0))
-    Net()(y)
-    y[:, 1] = 1
-    expect_output = np.array([[1, 2, 3], [4, 5, 6]])
-    assert np.allclose(x.asnumpy(), expect_output)
-
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_contiguous_pynative_and_graph(mode):
+def test_contiguous_pynative():
     """
     Feature: countiguous
     Description: Verify the result of x
     Expectation: success
     """
-    ms.set_context(mode=mode)
+    ms.set_context(mode=ms.PYNATIVE_MODE)
     x = ms.Tensor([[1, 2, 3], [4, 5, 6]], dtype=ms.float32)
     y = ops.transpose(x, (1, 0))
-    y.contiguous()
-    y[:, 1] = 1
-    expect_output = np.array([[1, 2, 3], [4, 5, 6]])
-    assert np.allclose(x.asnumpy(), expect_output)
+    z = y.contiguous()
+    assert not y.is_contiguous()
+    assert z.is_contiguous()
+
 
 class ContiguousNet(nn.Cell):
     def construct(self, x, w):
-        output = ops.conv2d(x, w, padding=2, pad_mode="pad")
-        output = ops.transpose(output, (0, 1, 3, 2))
+        output = ops.matmul(x, w)
+        output = ops.transpose(output, (2, 1, 0))
         output = output[..., 1]
         output = output.contiguous()
         output = output * output
@@ -82,13 +54,13 @@ class ContiguousNet(nn.Cell):
 
 class WithoutContiguousNet(nn.Cell):
     def construct(self, x, w):
-        output = ops.conv2d(x, w, padding=2, pad_mode="pad")
-        output = ops.transpose(output, (0, 1, 3, 2))
+        output = ops.matmul(x, w)
+        output = ops.transpose(output, (2, 1, 0))
         output = output[..., 1]
         output = output * output
         return output
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -101,8 +73,8 @@ def test_contiguous_grad(mode):
     Expectation: success
     """
     ms.set_context(mode=mode)
-    x = Tensor(np.random.randn(1, 16, 12, 12), mstype.float32)
-    weight = Tensor(np.random.randn(33, 16, 5, 5), mstype.float32)
+    x = Tensor(np.random.randn(16, 32, 32), mstype.float32)
+    weight = Tensor(np.random.randn(32, 16), mstype.float32)
 
     contiguous_net = ContiguousNet()
     no_contiguous_net = WithoutContiguousNet()

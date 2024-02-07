@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
 #include <vector>
 #include <tuple>
+#include <unordered_set>
 #include <unordered_map>
 #include <memory>
 #include <set>
@@ -26,7 +27,6 @@
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "include/backend/optimizer/helper.h"
 #include "mindspore/core/ops/framework_ops.h"
-#include "plugin/device/ascend/hal/device/ascend_kernel_task.h"
 #include "plugin/device/ascend/kernel/opapi/aclnn_kernel_build.h"
 #include "plugin/device/ascend/kernel/acl/acl_kernel_build.h"
 #include "plugin/device/ascend/kernel/host/host_kernel_build.h"
@@ -49,28 +49,10 @@ namespace device {
 namespace ascend {
 namespace {
 constexpr uint32_t kFirstItem = 0;
-static const HashMap<::ge::DataType, std::string> kGeTypeToString = {{::ge::DataType::DT_BOOL, "bool"},
-                                                                     {::ge::DataType::DT_INT8, "int8"},
-                                                                     {::ge::DataType::DT_INT16, "int16"},
-                                                                     {::ge::DataType::DT_INT32, "int32"},
-                                                                     {::ge::DataType::DT_INT64, "int64"},
-                                                                     {::ge::DataType::DT_UINT8, "uint8"},
-                                                                     {::ge::DataType::DT_UINT16, "uint16"},
-                                                                     {::ge::DataType::DT_UINT32, "uint32"},
-                                                                     {::ge::DataType::DT_UINT64, "uint64"},
-                                                                     {::ge::DataType::DT_FLOAT16, "float16"},
-                                                                     {::ge::DataType::DT_FLOAT, "float"},
-                                                                     {::ge::DataType::DT_DOUBLE, "double"},
-                                                                     {::ge::DataType::DT_STRING, "string"},
-                                                                     {::ge::DataType::DT_COMPLEX64, "complex64"},
-                                                                     {::ge::DataType::DT_COMPLEX128, "complex128"},
-                                                                     {::ge::DataType::DT_BF16, "bf16"}};
-std::string ConvertGeTypeToString(::ge::DataType type) {
-  if (kGeTypeToString.count(type) != 0) {
-    return kGeTypeToString.at(type);
-  }
-  return "";
-}
+constexpr size_t kAclnnOpSelect = 0;
+constexpr size_t kAclOpSelect = 1;
+constexpr size_t kHcclOpSelect = 2;
+constexpr size_t kHostOpSelect = 3;
 
 std::string KernelSelectDebugString(const kernel::KernelBuildInfo *build_info,
                                     const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &kernel_info_list) {
@@ -127,9 +109,6 @@ void ProcessInconsistentDtype(const AnfNodePtr &node, size_t input_num) {
     if (input_dtype != kTypeUnknown && prev_dtype != kTypeUnknown && input_dtype != prev_dtype) {
       (void)inconsistent_dtype_inputs.emplace_back(i);
     }
-  }
-  if (!inconsistent_dtype_inputs.empty()) {
-    common::AnfAlgo::SetNodeAttr(kAttrAclInconsistentInputDtype, MakeValue(inconsistent_dtype_inputs), node);
   }
 }
 
@@ -319,7 +298,10 @@ std::pair<std::string, ExceptionType> CollectNotMatchMessage(
       for (auto [index, dtypes] : input_supported_dtypes) {
         ss << "InputDesc [" << index << "] support {";
         for (auto dtype : dtypes) {
-          ss << ConvertGeTypeToString(dtype) << ",";
+          std::string dtype_str = transform::ge_dtype_str_map.find(dtype) == transform::ge_dtype_str_map.end()
+                                    ? ""
+                                    : transform::ge_dtype_str_map[dtype];
+          ss << dtype_str << ",";
         }
         ss << "}" << std::endl;
       }
@@ -327,7 +309,10 @@ std::pair<std::string, ExceptionType> CollectNotMatchMessage(
       for (auto [index, dtypes] : output_supported_dtypes) {
         ss << "OutputDesc [" << index << "] support {";
         for (auto dtype : dtypes) {
-          ss << ConvertGeTypeToString(dtype) << ",";
+          std::string dtype_str = transform::ge_dtype_str_map.find(dtype) == transform::ge_dtype_str_map.end()
+                                    ? ""
+                                    : transform::ge_dtype_str_map[dtype];
+          ss << dtype_str << ",";
         }
         ss << "}" << std::endl;
       }
@@ -404,6 +389,38 @@ bool IsEmptyTupleInput(const CNodePtr &kernel, const size_t i, const TypeId cur_
       return true;
     }
   }
+  return false;
+}
+
+static std::once_flag kAclnnEnableListInit;
+static std::unordered_set<std::string> kAclnnEnableList;
+bool ReadAclnnEnableEnv(const AnfNodePtr &node) {
+  static auto enable_aclnn_env = common::GetEnv("MS_ENABLE_ACLNN");
+  if (enable_aclnn_env == "1") {
+    return kernel::IsRegisteredAclnnOp(node) ? true : false;
+  }
+
+  static auto read_config = !enable_aclnn_env.empty() && enable_aclnn_env != "0";
+  if (read_config) {
+    std::call_once(kAclnnEnableListInit, []() {
+      std::ifstream in_file(enable_aclnn_env);
+      if (!in_file.is_open()) {
+        MS_LOG(WARNING) << "MS_ENABLE_ACLNN set path:" << enable_aclnn_env << " is invalid.";
+        return;
+      }
+      std::string line;
+      while (getline(in_file, line)) {
+        kAclnnEnableList.insert(line);
+      }
+      in_file.close();
+    });
+
+    std::string op_name = common::AnfAlgo::GetCNodeName(node);
+    if (kAclnnEnableList.count(op_name) != 0) {
+      return kernel::IsRegisteredAclnnOp(node) ? true : false;
+    }
+  }
+
   return false;
 }
 }  // namespace
@@ -519,24 +536,27 @@ void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node
   }
 }
 
-std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const CNodePtr &node, bool enable_aclnn) {
+std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const KernelGraphPtr &graph,
+                                                                     const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-  static std::set<std::string> kAclnnOpSelectedSet;
+  // The shape op use the cpu kernel priorly.
+  static const std::set<std::string> select_host_priorly = {kShapeOpName};
+  std::string op_name = common::AnfAlgo::GetCNodeName(node);
+  if (select_host_priorly.count(op_name) != 0) {
+    return {false, op_name + " select host kernel priorly.", NotSupportError};
+  }
+
+  static std::vector<std::set<std::string>> op_selected_type(4);
   transform::ErrorAclType acl_err_type = transform::ErrorAclType::kNormalOp;
   std::tuple<bool, std::string, ExceptionType> result = std::make_tuple(true, "", NoExceptionType);
-  if (enable_aclnn && kernel::IsRegisteredAclnnOp(node)) {
+  if (IsEnableAclnn(graph, node)) {
     GenerateKernelBuildInfo(node, KernelType::OPAPI_KERNEL);
-    std::string op_name = common::AnfAlgo::GetCNodeName(node);
-    if (kAclnnOpSelectedSet.count(op_name) == 0) {
-      (void)kAclnnOpSelectedSet.insert(op_name);
+    if (op_selected_type[kAclnnOpSelect].count(op_name) == 0) {
+      (void)op_selected_type[kAclnnOpSelect].insert(op_name);
       MS_LOG(INFO) << op_name << " select aclnn kernel.";
     }
     return result;
-  }
-  // Check must use the aclnn kernel mod.
-  if (enable_aclnn && kernel::IsEnabledAclnnDispatch(node)) {
-    MS_LOG(EXCEPTION) << "Kernel " << AnfUtils::GetCNodeName(node)
-                      << " is enabled dispatch in yaml, but not registered an aclnn kernelmod.";
   }
 
   // for backend inline
@@ -548,6 +568,10 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const CNode
   auto kernel_type = transform::AclHelper::GetKernelInfoFromGe(node, &acl_err_type);
   if (kernel_type == KernelType::ACL_KERNEL) {
     GenerateKernelBuildInfo(node, kernel_type);
+    if (op_selected_type[kAclOpSelect].count(op_name) == 0) {
+      (void)op_selected_type[kAclOpSelect].insert(op_name);
+      MS_LOG(INFO) << op_name << " select aclop kernel.";
+    }
     return result;
   }
 
@@ -555,6 +579,10 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const CNode
   if (kernel_type == KernelType::HCCL_KERNEL) {
     kernel::HcclMetadataInfo(node, &kernel_info_list);
     GenerateKernelBuildInfo(node, kernel_type);
+    if (op_selected_type[kHcclOpSelect].count(op_name) == 0) {
+      (void)op_selected_type[kHcclOpSelect].insert(op_name);
+      MS_LOG(INFO) << op_name << " select hccl kernel.";
+    }
     return result;
   }
 
@@ -562,6 +590,10 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const CNode
   kernel::HostMetadataInfo(node, &host_kernel_info_list);
   auto match_res = SetMatchKernelInfo(node, host_kernel_info_list, KernelType::HOST_KERNEL, &acl_err_type);
   if (match_res) {
+    if (op_selected_type[kHostOpSelect].count(op_name) == 0) {
+      (void)op_selected_type[kHostOpSelect].insert(op_name);
+      MS_LOG(INFO) << op_name << " select host kernel.";
+    }
     return result;
   }
 
@@ -569,26 +601,27 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const CNode
   return {false, msg, etype};
 }
 
-bool IsEnableAclNN(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node) {
+bool IsEnableAclnn(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_EXCEPTION_IF_NULL(node);
   if (kernel_graph->is_from_single_op()) {
     return false;
   }
+
   static bool special_format = common::GetEnv("MS_FORMAT_MODE") == "0";
   if (special_format && !kernel_graph->is_dynamic_shape()) {
     return false;
   }
 
-  if (node != nullptr && kernel::IsEnabledAclnnDispatch(node)) {
+  if (kernel::IsEnabledAclnnDispatch(node)) {
+    if (!kernel::IsRegisteredAclnnOp(node)) {
+      MS_LOG(EXCEPTION) << "Kernel " << node->fullname_with_scope()
+                        << " is enabled dispatch in yaml, but not registered an aclnn kernelmod.";
+    }
     return true;
   }
 
-  static bool enable_aclnn_env = common::GetEnv("MS_ENABLE_ACLNN") == "1";
-  if (enable_aclnn_env) {
-    return true;
-  }
-
-  return false;
+  return ReadAclnnEnableEnv(node);
 }
 
 void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
@@ -601,7 +634,7 @@ void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
 
     const auto &kernel_graph = AnfAlgo::FetchKernelGraph(node.get());
     MS_EXCEPTION_IF_NULL(kernel_graph);
-    auto [select_res, msg, etype] = SelectKernelInfoWithMsg(node, IsEnableAclNN(kernel_graph, node));
+    auto [select_res, msg, etype] = SelectKernelInfoWithMsg(kernel_graph, node);
     if (!select_res) {
       MS_LOG(INFO) << "node is " << node->fullname_with_scope() << " should backoff";
       std::pair<std::string, ExceptionType> failure_info = std::make_pair(msg, etype);

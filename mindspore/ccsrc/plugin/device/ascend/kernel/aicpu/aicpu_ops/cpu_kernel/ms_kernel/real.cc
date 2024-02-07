@@ -97,5 +97,5 @@ uint32_t RealCpuKernel::RealCompute(const CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kReal, RealCpuKernel);
+REGISTER_MS_CPU_KERNEL(kReal, RealCpuKernel);
 }  // namespace aicpu

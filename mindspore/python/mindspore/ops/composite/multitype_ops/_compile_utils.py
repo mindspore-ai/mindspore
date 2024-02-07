@@ -954,6 +954,7 @@ def _tensor_setitem_by_int_tensor_with_tensor(data, index, value):
 
     data_shape = F.shape(data)
     updates_shape = index.shape + data_shape[1:]
+    value = F.cast(value, F.dtype(data))
     updates = ops.broadcast_to(value, updates_shape)
     first_val = data_shape[0]
     index = F.select(index < 0, index + first_val, index)

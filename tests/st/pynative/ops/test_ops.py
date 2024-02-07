@@ -335,3 +335,18 @@ def test_jit_graph_has_no_parameter():
     inputx = [ops.randn(2, 2), ops.randn(2,)]
     ms_output = net(*inputx)
     GradNetWrtX(net)(*inputx, ms_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_pyboost_cache():
+    """
+    Feature: PyNative PyBoost.
+    Description: Test PyBoost ring buffer cache.
+    Expectation: No exception.
+    """
+    x = Tensor(1, dtype=ms.float32)
+    for _ in range(9999):
+        output = ops.sin(x)
+    assert np.allclose(output.asnumpy(), np.array([0.84147096]))

@@ -22,7 +22,7 @@
 #include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "cpu_kernel/inc/cpu_context.h"
+#include "cpu_context.h"
 
 namespace {
 const char *kAdaptiveMaxPool3dGrad = "AdaptiveMaxPool3dGrad";
@@ -262,5 +262,5 @@ uint32_t AdaptiveMaxPool3dGradCpuKernel::AdaptiveMaxPool3dGradCompute(const CpuK
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kAdaptiveMaxPool3dGrad, AdaptiveMaxPool3dGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kAdaptiveMaxPool3dGrad, AdaptiveMaxPool3dGradCpuKernel);
 }  // namespace aicpu

@@ -137,5 +137,5 @@ uint32_t IgammaGradACpuKernel::IgammaGradACompute(const CpuKernelContext &ctx, c
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kigammagrada, IgammaGradACpuKernel);
+REGISTER_MS_CPU_KERNEL(kigammagrada, IgammaGradACpuKernel);
 }  // namespace aicpu

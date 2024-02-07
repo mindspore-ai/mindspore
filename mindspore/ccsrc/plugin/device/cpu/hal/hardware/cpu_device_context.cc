@@ -78,12 +78,12 @@ const char kModelNameCPU[] = "CPU";
 const char kEventOptimizeGraph[] = "OptimizeGraph";
 const char kStageSetKernelInfo[] = "SetKernelInfo";
 
-pynative::KernelTaskPtr GetTaskByTaskType(const pynative::KernelTaskType &task_type,
-                                          const std::shared_ptr<pynative::KernelTaskContext> &task_context) {
+runtime::KernelTaskPtr GetTaskByTaskType(const runtime::KernelTaskType &task_type,
+                                         const std::shared_ptr<runtime::KernelTaskContext> &task_context) {
   switch (task_type) {
-    case pynative::KernelTaskType::kCONTIGUOUS_TASK:
+    case runtime::KernelTaskType::kCONTIGUOUS_TASK:
       return std::make_shared<CpuContiguousKernelTask>(task_context);
-    case pynative::KernelTaskType::kCOPY_TASK:
+    case runtime::KernelTaskType::kCOPY_TASK:
       return std::make_shared<CpuCopyWithSliceKernelTask>(task_context);
     default:
       MS_LOG(EXCEPTION) << "KernelTaskType is invalid, task_type:" << task_type;
@@ -126,6 +126,7 @@ void CPUDeviceContext::Initialize() {
 void CPUDeviceContext::Destroy() {
   MS_EXCEPTION_IF_NULL(device_res_manager_);
   device_res_manager_->Destroy();
+  initialized_ = false;
 }
 
 void CPUDeviceResManager::Initialize() {
@@ -494,7 +495,8 @@ void CPUKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
 
 bool CPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &workspace,
-                                     const std::vector<KernelTensor *> &outputs, size_t /* stream_id */) const {
+                                     const std::vector<KernelTensor *> &outputs, KernelMod *kernel_mod,
+                                     void * /* stream*/) const {
   MS_EXCEPTION_IF_NULL(kernel);
 
 #ifndef ENABLE_SECURITY
@@ -502,24 +504,23 @@ bool CPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<K
   MS_EXCEPTION_IF_NULL(profiler_inst);
   if (profiler_inst->GetEnableFlag() && profiler_inst->GetOpTimeFlag()) {
     MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
-    auto ret = LaunchKernelWithProfiling(kernel, inputs, workspace, outputs);
+    auto ret = LaunchKernelWithProfiling(kernel, inputs, workspace, outputs, kernel_mod);
     MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
     return ret;
   }
 #endif
   MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
-  auto ret = DoLaunchKernel(kernel, inputs, workspace, outputs);
+  auto ret = DoLaunchKernel(kernel, inputs, workspace, outputs, kernel_mod);
   MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
   return ret;
 }
 
-bool CPUKernelExecutor::ExecuteKernelTask(const pynative::KernelTaskType &task_type,
+bool CPUKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_type,
                                           const device::DeviceAddressPtrList &input_addr_list,
-                                          const TensorStorageInfoPtrList &input_storage_list,
                                           const device::DeviceAddressPtrList &output_addr_list,
                                           const size_t &stream_id) const {
-  auto task_context = std::make_shared<pynative::KernelTaskContext>(device_context_, input_addr_list,
-                                                                    input_storage_list, output_addr_list, nullptr);
+  auto task_context =
+    std::make_shared<runtime::KernelTaskContext>(device_context_, input_addr_list, output_addr_list, nullptr);
   auto task = GetTaskByTaskType(task_type, task_context);
   MS_EXCEPTION_IF_NULL(task);
 
@@ -557,7 +558,8 @@ bool CPUDeviceResManager::LoadCollectiveCommLib() {
 
 bool CPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                                                   const std::vector<KernelTensor *> &workspace,
-                                                  const std::vector<KernelTensor *> &outputs) const {
+                                                  const std::vector<KernelTensor *> &outputs,
+                                                  KernelMod *kernel_mod) const {
   MS_EXCEPTION_IF_NULL(kernel);
 
   auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
@@ -566,7 +568,7 @@ bool CPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const 
   uint32_t pid = IntToUint(getpid());
   // cpu support multi-thread with mindrt for profiling.
   profiler_inst->OpDataProducerBeginParallel(kernel->fullname_with_scope(), pid);
-  bool ret = DoLaunchKernel(kernel, inputs, workspace, outputs);
+  bool ret = DoLaunchKernel(kernel, inputs, workspace, outputs, kernel_mod);
   profiler_inst->OpDataProducerEndParallel(kernel->fullname_with_scope());
   profiler_inst->RecordFrameWorkInfo(kernel);
   return ret;
@@ -574,9 +576,8 @@ bool CPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const 
 
 bool CPUKernelExecutor::DoLaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                                        const std::vector<KernelTensor *> &workspace,
-                                       const std::vector<KernelTensor *> &outputs) const {
+                                       const std::vector<KernelTensor *> &outputs, KernelMod *kernel_mod) const {
   MS_EXCEPTION_IF_NULL(kernel);
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   uint64_t start_time = 0;
   PROFILER_START(start_time);

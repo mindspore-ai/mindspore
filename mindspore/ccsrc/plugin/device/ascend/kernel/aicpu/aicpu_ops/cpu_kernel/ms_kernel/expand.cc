@@ -146,5 +146,5 @@ bool ExpandCpuKernel::AlignedCheck(const BCalcInfo &calc_info) {
          AddrAlignedCheck(calc_info.output->GetData());
 }
 
-REGISTER_CPU_KERNEL(kExpand, ExpandCpuKernel);
+REGISTER_MS_CPU_KERNEL(kExpand, ExpandCpuKernel);
 }  // namespace aicpu

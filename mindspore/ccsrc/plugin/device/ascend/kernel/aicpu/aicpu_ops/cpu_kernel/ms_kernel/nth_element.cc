@@ -135,5 +135,5 @@ uint32_t NthElement::NthElementCompute(Tensor *x, Tensor *y, const int32_t n, co
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kNthElement, NthElement);
+REGISTER_MS_CPU_KERNEL(kNthElement, NthElement);
 }  // namespace aicpu

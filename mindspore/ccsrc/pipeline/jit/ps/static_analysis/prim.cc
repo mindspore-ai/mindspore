@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,6 +110,8 @@ AnfNodePtr GetNodeAfterArgHandler(const AnfNodePtr &node, const std::string &op_
     return node;
   }
   const auto arg_handler_func = prim::GetPythonOps(op_arg.arg_handler_, parse::PYTHON_MOD_PRIMITIVE_ARG_HANDLER_MODULE);
+  MS_LOG(DEBUG) << "The arg handler function for '" << op_arg.arg_name_ << "' of Primitive[" << op_name << "] is "
+                << arg_handler_func->ToString() << ".";
   if (arg_handler_func->isa<Primitive>()) {
     auto arg_handler_fg = dyn_cast<Primitive>(arg_handler_func);
     MS_EXCEPTION_IF_NULL(arg_handler_fg);
@@ -1804,7 +1806,7 @@ EvalResultPtr GenerateFuncGraphForOverriddenMethod(AnfNodePtr node, const ValueP
       MS_LOG(DEBUG) << value_obj << " has no attribute getattr.";
     }
   }
-  if (py::isinstance<py::none>(overridden_method) || py::isinstance<py::none>(overridden_method)) {
+  if (py::isinstance<py::none>(overridden_method) || py::isinstance<py::none>(value_obj)) {
     return nullptr;
   }
   {
@@ -2121,6 +2123,16 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
 EvalResultPtr GetClassAttrFromPyObject(const py::object &cls_obj, const std::string &cls_name,
                                        const AbstractBasePtrList &args_abs_list, const AnfNodeConfigPtr &out_conf) {
   py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+  constexpr auto item_index = 1;
+  auto item_arg = args_abs_list.at(item_index);
+  MS_EXCEPTION_IF_NULL(item_arg);
+  auto attr_name = GetValue<string>(item_arg->BuildValue());
+  bool is_property =
+    (python_adapter::CallPyModFn(mod, parse::PYTHON_PARSE_CHECK_ATTR_IS_PROPERTY, cls_obj, attr_name)).cast<bool>();
+  if (is_property) {
+    MS_LOG(EXCEPTION) << "The property decorator is not supported in graph mode.\n"
+                         "You can remove the property decorator and call the function as a method.\n";
+  }
   py::object ns_obj = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, cls_obj);
   auto ns = std::make_shared<parse::NameSpace>(parse::RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, ns_obj);
   return GetEvaluatedValueForNameSpaceString(args_abs_list, ns, out_conf, cls_name);
@@ -2424,30 +2436,6 @@ void AddLabelsToPrimitiveFunction(const PrimitivePtr &prim_func) {
   }
 }
 
-ValueNodePtr GetArgDefaultValue(const std::string &prim_name, const std::string &arg_name) {
-  py::module mod = py::module::import(parse::PYTHON_MOD_PRIMITIVE_OP_CREATE_INSTANCE_HELPER_MODULE);
-  if (!py::hasattr(mod, parse::PYTHON_MOD_PRIMITIVE_OP_DEFAULT_VALUE_DICT)) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Can not found " << parse::PYTHON_MOD_PRIMITIVE_OP_DEFAULT_VALUE_DICT << "in "
-                               << parse::PYTHON_MOD_PRIMITIVE_OP_CREATE_INSTANCE_HELPER_MODULE << ".";
-  }
-  py::dict op_default_dict = mod.attr(parse::PYTHON_MOD_PRIMITIVE_OP_DEFAULT_VALUE_DICT);
-  if (!op_default_dict.contains(py::str(prim_name))) {
-    return nullptr;
-  }
-  py::dict prim_default_dict = op_default_dict[py::str(prim_name)];
-  if (!prim_default_dict.contains(py::str(arg_name))) {
-    return nullptr;
-  }
-  auto default_value = prim_default_dict[py::str(arg_name)];
-  ValuePtr converted_ret = nullptr;
-  bool converted = parse::ConvertData(default_value, &converted_ret);
-  if (!converted) {
-    MS_EXCEPTION(ValueError) << "For Operator[" << prim_name << "], '" << py::str(default_value)
-                             << "' is not supported as the default value for '" << arg_name << "'.";
-  }
-  return NewValueNode(converted_ret);
-}
-
 std::vector<AnfNodePtr> GeneratePrimitiveDefaultArgs(const std::string &op_name,
                                                      const std::vector<AnfNodePtr> &args_list,
                                                      const std::vector<ops::OpInputArg> &op_args, bool check_init) {
@@ -2455,11 +2443,13 @@ std::vector<AnfNodePtr> GeneratePrimitiveDefaultArgs(const std::string &op_name,
   std::vector<AnfNodePtr> nodes(args_list);
   if (args_size < op_args.size()) {
     for (size_t i = args_size; i < op_args.size(); i++) {
-      auto default_arg = GetArgDefaultValue(op_name, op_args[i].arg_name_);
+      auto default_arg = parse::GetArgDefaultValue(op_name, op_args[i].arg_name_);
       if (default_arg == nullptr) {
         break;
       }
-      (void)nodes.emplace_back(default_arg);
+      MS_LOG(DEBUG) << "Get the default value of '" << op_args[i].arg_name_ << "' attribute of Primitive[" << op_name
+                    << "], which is " << default_arg->ToString() << ".";
+      (void)nodes.emplace_back(NewValueNode(default_arg));
     }
   }
   if (nodes.size() != op_args.size()) {
@@ -2560,6 +2550,8 @@ AnfNodePtr CheckAndConvertPrimitiveArgs(const PrimitivePtr &prim,
     }
   }
 
+  MS_LOG(DEBUG) << "For Primitive[" << prim->name() << "], the number of init args is expected to be "
+                << op_init_args.size() << ", and the number of call args is expected to be " << op_call_args.size();
   auto eval_func = [&engine, &out_conf](const AnfNodePtr &node) {
     AnfNodeConfigPtr config = engine->MakeConfig(node, out_conf->context(), out_conf->func_graph());
     MS_EXCEPTION_IF_NULL(config);
@@ -2568,11 +2560,16 @@ AnfNodePtr CheckAndConvertPrimitiveArgs(const PrimitivePtr &prim,
     return eval_result->abstract();
   };
   // Generate primitive default args.
+  MS_LOG(DEBUG) << "For Primitive[ " << prim->name() << "], before processing default args, the number of init args is "
+                << init_args_list.size() << " and the number of call args is " << call_args_list.size();
   auto call_nodes = GeneratePrimitiveDefaultArgs(prim->name(), call_args_list, op_call_args, false);
   auto init_nodes = GeneratePrimitiveDefaultArgs(prim->name(), init_args_list, op_init_args, true);
+  MS_LOG(DEBUG) << "For Primitive[ " << prim->name() << "], after processing default args, the number of init args is "
+                << init_args_list.size() << " and the number of call args is " << call_args_list.size();
   // If it is not preprocessed, signatures and need to be processed.
   if (!is_preprocessed) {
     // Process signatures.
+    MS_LOG(DEBUG) << "Process signatures for Primitive[" << prim->name() << "].";
     AbstractBasePtrList call_abs_list;
     (void)std::transform(call_nodes.cbegin(), call_nodes.cend(), std::back_inserter(call_abs_list), eval_func);
     call_nodes = prim::GetNewInputsBySignatures(fg, prim->name(), prim, call_abs_list, call_nodes);
@@ -2592,6 +2589,8 @@ AnfNodePtr CheckAndConvertPrimitiveArgs(const PrimitivePtr &prim,
   AbstractBasePtrList init_abs_list;
   (void)std::transform(call_nodes.cbegin(), call_nodes.cend(), std::back_inserter(call_abs_list), eval_func);
   (void)std::transform(init_nodes.cbegin(), init_nodes.cend(), std::back_inserter(init_abs_list), eval_func);
+  MS_LOG(DEBUG) << "For Primitive[" << prim->name() << "], the number of init args is " << init_nodes.size()
+                << " and the number of call args is " << call_nodes.size();
   if (!ValidateAndConvertArgsType(op_call_args, call_abs_list, fg, &call_nodes) ||
       !ValidateAndConvertArgsType(op_init_args, init_abs_list, fg, &init_nodes)) {
     std::vector<std::string> op_type_list;

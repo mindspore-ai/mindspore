@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 #define AICPU_KERNELS_NORMALIZED_FFTSHIFT_H_
 
 #include <vector>
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class FFTShiftCpuKernel : public CpuKernel {
@@ -30,6 +30,8 @@ class FFTShiftCpuKernel : public CpuKernel {
  private:
   template <typename T>
   uint32_t FFTShiftCompute(CpuKernelContext &ctx);
+
+  std::string op_name;
 };
 }  // namespace aicpu
 #endif  //  AICPU_FFTSHIFT_H

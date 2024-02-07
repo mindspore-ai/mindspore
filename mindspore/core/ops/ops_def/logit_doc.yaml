@@ -1,7 +1,6 @@
 logit:
     description: |
-        Calculate the logit of a tensor element-wise. When eps is not None, element in `input` is clamped to [eps, 1-eps].
-        When eps is None, input `input` is not clamped.
+        Calculate the logit of a tensor element-wise. 
 
         .. math::
             \begin{align}
@@ -16,8 +15,7 @@ logit:
 
         Args:
             input (Tensor): The input tensor of type float16, float32 or float64.
-            eps (float, optional): The epsilon. If eps is not None, the input clamp bound is defined as [eps, 1-eps],
-                otherwise, the input `input` is not clamped. Default: ``None`` .
+            eps (float, optional): The epsilon, the input clamp bound is defined as [eps, 1-eps]. Default: ``-1.0``.
 
         Returns:
             Tensor, with the same shape and dtype as the `input`.

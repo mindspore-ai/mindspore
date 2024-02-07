@@ -63,6 +63,7 @@
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "include/backend/debug/profiler/profiling.h"
 #include "frontend/optimizer/fallback_rewriter.h"
+#include "pipeline/jit/ps/load_mindir.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/backend/distributed/cluster/cluster_context.h"
 #include "include/backend/distributed/ps/ps_context.h"
@@ -375,7 +376,7 @@ bool ParseAction(const ResourcePtr &resource) {
   if (top_graph == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Object to parse " << std::string(py::str(input)) << " is not function or cell.";
   }
-  if (py::hasattr(input, parse::PYTHON_PARSE_METHOD)) {
+  if (py::hasattr(input, parse::PYTHON_PARSE_METHOD) || py::hasattr(input, "__jit_function__")) {
     (void)std::for_each(top_graph->parameters().begin(), top_graph->parameters().end(),
                         [](const AnfNodePtr &param) { param->cast<ParameterPtr>()->set_is_top_graph_param(true); });
   }
@@ -727,16 +728,6 @@ bool SetMixedPrecisionAction(const ResourcePtr &resource) {
   SetCalledSubGraphMixedPrecisionFlag(func_graph);
   MS_LOG(DEBUG) << "Finish set mixed Precision flag in subgraph. ";
   return true;
-}
-
-bool PreSimplifyInlineAction(const ResourcePtr &resource) {
-#ifndef ENABLE_PRE_SIMPLIFY  // Open pre-simplify in default later.
-  return true;
-#else
-  MS_EXCEPTION_IF_NULL(resource);
-  MS_EXCEPTION_IF_NULL(resource->func_graph());
-  return PreSimplifyInlinePass(resource);
-#endif
 }
 
 bool AutoMonadAction(const ResourcePtr &resource) {
@@ -1661,8 +1652,6 @@ static std::vector<ActionItem> CommonPipeline() {
   if (common::GetEnv("MS_DEV_DISABLE_TRACE") != "on") {
     (void)actions.emplace_back(std::make_pair(kPackExpand, PackExpandAction));
   }
-  // Pre switch simplify and inline.
-  (void)actions.emplace_back(std::make_pair(kPreSimplifyInline, PreSimplifyInlineAction));
   // Auto-monad for side-effects handling.
   (void)actions.emplace_back(std::make_pair(kAutoMonad, AutoMonadAction));
   // Do data structure simplifications and inline.
@@ -1741,6 +1730,8 @@ std::vector<ActionItem> MindIRPipeline() {
   std::vector<ActionItem> actions;
   // Set funcGraph loaded from MindIR to resource.
   (void)actions.emplace_back(std::make_pair(kLoadMindir, SetMindIRGraphAction));
+  (void)actions.emplace_back(std::make_pair(kModifyMindirGraph, ModifyGraphGeneratedByMindIR));
+  (void)actions.emplace_back(std::make_pair(kInferMindir, InferMindIR));
   (void)actions.emplace_back(std::make_pair(kValidate, ValidateAction));
   return actions;
 }

@@ -160,5 +160,5 @@ uint32_t ShuffleChannelCpuKernel::ShuffleChannelCompute(const CpuKernelContext &
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kShuffleChannel, ShuffleChannelCpuKernel);
+REGISTER_MS_CPU_KERNEL(kShuffleChannel, ShuffleChannelCpuKernel);
 }  // namespace aicpu

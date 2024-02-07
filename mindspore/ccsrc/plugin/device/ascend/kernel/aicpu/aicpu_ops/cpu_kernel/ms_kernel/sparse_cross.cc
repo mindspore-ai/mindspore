@@ -479,5 +479,5 @@ uint32_t SparseCrossCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kSparseCross, SparseCrossCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSparseCross, SparseCrossCpuKernel);
 }  // namespace aicpu

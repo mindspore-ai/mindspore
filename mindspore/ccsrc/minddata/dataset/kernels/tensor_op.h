@@ -174,7 +174,7 @@ constexpr char kWhitespaceTokenizerOp[] = "WhitespaceTokenizerOp";
 constexpr char kWordpieceTokenizerOp[] = "WordpieceTokenizerOp";
 constexpr char kRandomChoiceOp[] = "RandomChoiceOp";
 constexpr char kRandomApplyOp[] = "RandomApplyOp";
-constexpr char kComposeOp[] = "Compose";
+constexpr char kComposeOp[] = "ComposeOp";
 constexpr char kRandomSelectSubpolicyOp[] = "RandomSelectSubpolicyOp";
 constexpr char kSentencepieceTokenizerOp[] = "SentencepieceTokenizerOp";
 

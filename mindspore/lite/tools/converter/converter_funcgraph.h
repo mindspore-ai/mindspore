@@ -61,7 +61,7 @@ class ConverterFuncGraph {
 
   static STATUS CheckFuncGraph(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
   static STATUS OptmizedConvert(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
-  static STATUS GEOptmize(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
+  static STATUS QuantizationOptimizeForGE(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
 };
 }  // namespace lite
 }  // namespace mindspore

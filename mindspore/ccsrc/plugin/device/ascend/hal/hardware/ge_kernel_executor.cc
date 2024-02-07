@@ -32,6 +32,7 @@
 #include "plugin/device/ascend/kernel/rts/rt_kernel_build.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_metadata.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_build.h"
+#include "plugin/device/ascend/kernel/pyboost/customize/customize_copy.h"
 
 #ifdef ENABLE_DVM
 #include "plugin/device/ascend/kernel/dvm/dvm_kernel_build.h"
@@ -40,7 +41,6 @@
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "include/backend/optimizer/helper.h"
-#include "plugin/device/ascend/hal/device/ascend_kernel_task.h"
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
 #include "plugin/device/ascend/kernel/opapi/aclnn_kernel_build.h"
 #include "plugin/device/ascend/kernel/acl/acl_kernel_build.h"
@@ -102,18 +102,6 @@ bool GraphWithNoRealKernel(const KernelGraphPtr &kernel_graph) {
   return true;
 }
 
-pynative::KernelTaskPtr GetTaskByTaskType(const pynative::KernelTaskType &task_type,
-                                          const std::shared_ptr<pynative::KernelTaskContext> &context) {
-  switch (task_type) {
-    case pynative::KernelTaskType::kCONTIGUOUS_TASK:
-      return std::make_shared<AscendContiguousKernelTask>(context);
-    case pynative::KernelTaskType::kCOPY_TASK:
-      return std::make_shared<AscendCopyWithSliceKernelTask>(context);
-    default:
-      MS_LOG(EXCEPTION) << "KernelTaskType is invalid, task_type:" << task_type;
-  }
-}
-
 void SetAclOpPrecisionMode() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -148,8 +136,7 @@ void SelectKernel(const KernelGraphPtr &kernel_graph, std::set<KernelGraphPtr> *
   memo->insert(kernel_graph);
   const auto &kernels = kernel_graph->execution_order();
   for (const auto &kernel : kernels) {
-    auto [select_res, msg, etype] =
-      device::ascend::SelectKernelInfoWithMsg(kernel, IsEnableAclNN(kernel_graph, kernel));
+    auto [select_res, msg, etype] = device::ascend::SelectKernelInfoWithMsg(kernel_graph, kernel);
     if (!select_res) {
       MS_LOG(INFO) << "node is " << kernel->fullname_with_scope() << " should backoff";
       std::pair<std::string, ExceptionType> failure_info = std::make_pair(msg, etype);
@@ -400,11 +387,12 @@ void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "GePreprocess", 1, 0, 1);
 }
 
-bool GeKernelExecutor::PySyncRuning(size_t stream_id) const {
+bool GeKernelExecutor::PySyncRuning(void *stream) const {
   MS_EXCEPTION_IF_NULL(res_manager_);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) && !res_manager_->SyncStream(stream_id)) {
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) &&
+      !AscendStreamMng::GetInstance().SyncStream(stream)) {
     return false;
   }
   return true;
@@ -433,31 +421,11 @@ bool GeKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<Kernel
 
 bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelTensor *> &inputs,
                                     const vector<KernelTensor *> &workspace, const vector<KernelTensor *> &outputs,
-                                    size_t stream_id) const {
-  MS_EXCEPTION_IF_NULL(kernel);
-  MS_EXCEPTION_IF_NULL(res_manager_);
+                                    KernelMod *kernel_mod, void *stream) const {
   (void)res_manager_->BindDeviceToCurrentThread(false);
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-
-  // Stream id may not be assigned in some scenarios, such as PyNative. Use the default stream in those cases.
-  auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
-  if (stream == nullptr) {
-    stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
-    stream_id = kDefaultStreamIndex;
-  }
-  MS_EXCEPTION_IF_NULL(stream);
-#ifdef ENABLE_DEBUGGER
-  if (DumpJsonParser::GetInstance().async_dump_enabled()) {
-    MS_LOG(WARNING) << "Dump is currently not support for pynative mode or kernelbykernel mode, skip dump kernel: "
-                    << kernel->fullname_with_scope();
-  }
-#endif
 
   profiler::ascend::ProfilingFrameworkData::RecordLaunchGETaskBegin(kernel);
   // launch kernel
-  // cppcheck-suppress unreadVariable
-  auto lock = device::KernelRuntime::LockRuntime(stream);
   uint64_t start_time = 0;
   PROFILER_START(start_time);
   if (nop_op_to_memcpy_.find(kernel) != nop_op_to_memcpy_.end()) {
@@ -466,7 +434,9 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
       return false;
     }
   } else {
-    MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope() << ", stream id : " << stream_id << ".";
+    MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
+    MS_EXCEPTION_IF_NULL(kernel_mod);
+    MS_EXCEPTION_IF_NULL(stream);
     bool ret = kernel_mod->Launch(inputs, workspace, outputs, stream);
     MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
     if (!ret) {
@@ -477,7 +447,7 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
   }
   profiler::ascend::ProfilingFrameworkData::RecordGETask(kernel);
   // for PyNative Sync Run mode
-  auto ret = PySyncRuning(stream_id);
+  auto ret = PySyncRuning(stream);
   PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelLaunch,
                kernel->fullname_with_scope(), false);
   return ret;
@@ -513,24 +483,29 @@ bool GeKernelExecutor::LaunchCallback(CallbackFunc callback_func, size_t stream_
   return true;
 }
 
-bool GeKernelExecutor::ExecuteKernelTask(const pynative::KernelTaskType &task_type,
+bool GeKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_type,
                                          const device::DeviceAddressPtrList &input_addr_list,
-                                         const TensorStorageInfoPtrList &input_storage_list,
                                          const device::DeviceAddressPtrList &output_addr_list,
                                          const size_t &stream_id) const {
-  auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
-  MS_EXCEPTION_IF_NULL(stream);
-
-  auto task_context = std::make_shared<pynative::KernelTaskContext>(device_context_, input_addr_list,
-                                                                    input_storage_list, output_addr_list, stream);
-
-  auto task = GetTaskByTaskType(task_type, task_context);
-  MS_EXCEPTION_IF_NULL(task);
-  auto ret = task->RunWithRet();
-  if (!ret) {
-    MS_LOG(EXCEPTION) << "Exec task failed, task_type:" << task_type;
+  MS_LOG(DEBUG) << "task_type:" << task_type;
+  if (runtime::KernelTaskType::kCOPY_TASK == task_type) {
+    constexpr size_t kCopyTaskInputsNum = 2;
+    // Copy task is a in-place op, the output is the first input.
+    // To reuse the aclnnInplaceCopy, the first input of Copy is used as the operator output,
+    // and the second input is used as the operator input.
+    if (input_addr_list.size() != kCopyTaskInputsNum) {
+      MS_LOG(EXCEPTION) << "input_addr_list.size() is invalid, input_addr_list.size():" << input_addr_list.size();
+    }
+    kernel::pyboost::CustomizeCopyAscend(device_context_, input_addr_list[1], input_addr_list[0], stream_id);
+  } else {
+    // For contiguous task, there must be at least one input and one output.
+    if (input_addr_list.empty() || output_addr_list.empty()) {
+      MS_LOG(EXCEPTION) << "input_addr_list.size() or output_addr_list.size() is invalid, input_addr_list.size():"
+                        << input_addr_list.size() << ", output_addr_list.size():" << output_addr_list.size();
+    }
+    kernel::pyboost::CustomizeCopyAscend(device_context_, input_addr_list[0], output_addr_list[0], stream_id);
   }
-  return ret;
-}
 
+  return true;
+}
 }  // namespace mindspore::device::ascend

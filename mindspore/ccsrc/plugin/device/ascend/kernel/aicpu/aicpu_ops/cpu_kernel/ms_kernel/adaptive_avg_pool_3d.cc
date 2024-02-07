@@ -227,5 +227,5 @@ uint32_t AdaptiveAvgPool3d::Compute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kAdaptiveAvgPool3d, AdaptiveAvgPool3d);
+REGISTER_MS_CPU_KERNEL(kAdaptiveAvgPool3d, AdaptiveAvgPool3d);
 }  // namespace aicpu

@@ -164,12 +164,12 @@ class PointerRefCount {
       MS_LOG(DEBUG) << op_object << " increases dynamic ref count to:" << dynamic_ref_count_ << " for ptr:" << ptr();
     }
   }
-  void DecreaseDynamicRefCount(const std::string &op_object) {
+  int32_t DecreaseDynamicRefCount(const std::string &op_object) {
     if (dynamic_ref_count_ <= 0) {
       MS_LOG(EXCEPTION) << "The dynamic reference count is invalid value:" << dynamic_ref_count_;
     }
-    (void)--dynamic_ref_count_;
     MS_LOG(DEBUG) << op_object << " The dynamic ref count decreases to:" << dynamic_ref_count_ << " for ptr:" << ptr();
+    return --dynamic_ref_count_;
   }
 
   // Get pointer resource destructor.
@@ -408,9 +408,6 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     return host_info_->type_id_;
   }
 
-  // Set the object enum type id of the KernelTensor.
-  void set_type_id(TypeId type_id) { host_info_->type_id_ = type_id; }
-
   // Get the data enum type id of the KernelTensor.
   TypeId dtype_id() const { return device_info_->dtype_id_; }
 
@@ -627,6 +624,9 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // max shape is only used in compute-depended ops
   ShapeVector GetMaxShape() const;
 
+  const TensorStorageInfoPtr tensor_storage_info() const { return tensor_storage_info_; }
+  void set_tensor_storage_info(const TensorStorageInfoPtr &storage_info) { tensor_storage_info_ = storage_info; }
+
  private:
   // Set the element data type to KernelTensor for Sequence type(Tuple or List).
   void SetSequenceDType(const TypePtr &element_type);
@@ -672,6 +672,9 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   AddressPtr data_{nullptr};
   // Host data address.
   AddressPtr host_data_{nullptr};
+
+  // kernel tensor storage info for view node
+  TensorStorageInfoPtr tensor_storage_info_;
 };
 using KernelTensorPtr = std::shared_ptr<KernelTensor>;
 
@@ -789,34 +792,6 @@ class BACKEND_EXPORT KernelMod {
   bool use_kernel_tensor_{false};
 };
 using KernelModPtr = std::shared_ptr<KernelMod>;
-
-// Delete after KernelMod rectified.
-template <typename T>
-inline T *GetDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t index) {
-  if (index >= addr_list.size()) {
-    MS_LOG(ERROR) << "Address index(" << index << ") out of range(" << addr_list.size() << ")";
-    return nullptr;
-  }
-
-  if (addr_list[index] == nullptr) {
-    MS_LOG(ERROR) << "The device address is nullptr, address index: " << index << ", and the length of 'addr_list' is "
-                  << addr_list.size();
-    return nullptr;
-  }
-
-  if (addr_list[index]->addr == nullptr) {
-    MS_LOG(WARNING) << "The memory of device address is nullptr, address index: " << index
-                    << ", and the length of 'addr_list' is " << addr_list.size();
-    return nullptr;
-  }
-
-  // When the input is an empty tuple, the input size will be 0.
-  if (addr_list[index]->size == 0) {
-    MS_LOG(INFO) << "The size of device address is zero, address index: " << index
-                 << ", and the length of 'addr_list' is " << addr_list.size();
-  }
-  return reinterpret_cast<T *>(addr_list[index]->addr);
-}
 
 template <typename T>
 inline T *GetDeviceAddress(const std::vector<KernelTensor *> &addr_list, size_t index) {

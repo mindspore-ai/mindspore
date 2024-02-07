@@ -18,6 +18,11 @@ elu:
     The picture about ELU looks like this `ELU <https://en.wikipedia.org/wiki/
     Activation_function#/media/File:Activation_elu.svg>`_ .
 
+    ELU function graph:
+
+    .. image:: ../images/ELU.png
+        :align: center
+
     Args:
         input_x (Tensor): The input of ELU is a Tensor of any dimension with data type of float16 or float32.
         alpha (float, optional): The alpha value of ELU, the data type is float. Only support '1.0' currently.

@@ -57,6 +57,7 @@ static const std::map<ProfilerStage, std::string> kProfilerStageString = {
 
 static const std::map<ProfilerModule, std::string> kProfilerModuleString = {
   {ProfilerModule::kDefault, "Default"},
+  {ProfilerModule::kGraphExecutorPy, "GraphExecutorPy"},
   {ProfilerModule::kRuntime, "RuntimeFramework"},
   {ProfilerModule::kPynative, "PynativeFramework"},
   {ProfilerModule::kKernel, "Kernel"},
@@ -87,6 +88,7 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   {ProfilerEvent::kKernelInferInner, "KernelInferInner"},
   {ProfilerEvent::kKernelInferDataSync, "KernelInferDataSync"},
   {ProfilerEvent::kKernelLaunchInner, "KernelLaunchInner"},
+  {ProfilerEvent::kBackendGraphRunInner, "BackendGraphRunInner"},
   // PyNative events
   {ProfilerEvent::kPyNativeFrontendTask, "FrontendTask"},
   {ProfilerEvent::kPyNativeBackendTask, "BackendTask"},

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,26 +236,8 @@ AnfNodePtr ConvertInterpretedObjForResolve(const AnfNodePtr &origin_node, const 
   return nullptr;
 }
 
-bool ContainsParameterConstants(const ValuePtr &value) {
-  auto value_seq = dyn_cast<ValueSequence>(value);
-  if (value_seq != nullptr) {
-    return std::any_of(value_seq->value().begin(), value_seq->value().end(),
-                       [](const auto &v) { return ContainsParameterConstants(v); });
-  }
-  auto value_dict = dyn_cast<ValueDictionary>(value);
-  if (value_dict != nullptr) {
-    return std::any_of(value_dict->value().begin(), value_dict->value().end(),
-                       [](const auto &v) { return ContainsParameterConstants(v.second); });
-  }
-  if (!value->isa<tensor::Tensor>()) {
-    return false;
-  }
-  auto abs = value->ToAbstract();
-  MS_EXCEPTION_IF_NULL(abs);
-  return abs->isa<abstract::AbstractRefTensor>();
-}
-
-AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, const FuncGraphPtr &func_graph) {
+AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, const FuncGraphPtr &func_graph,
+                               bool is_element_obj) {
   // When the cell is set recomputed, it should not use old scope from cache.
   MS_EXCEPTION_IF_NULL(origin_node);
   auto scope = origin_node->scope();
@@ -268,18 +250,13 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
     MS_LOG(ERROR) << "Convert data failed";
     return nullptr;
   }
-  if (IS_OUTPUT_ON(mindspore::kInfo)) {
-    if (ContainsParameterConstants(convert_result)) {
-      MS_LOG(INFO)
-        << "The Parameter in obj '" << py::str(obj)
-        << "' with nested structure is resolved to a constant because we only support single Parameter or tuple/list "
-           "Parameters. Or do you want to use Tensor instead?";
-    }
-  }
 
-  AnfNodePtr interpreted_output = ConvertInterpretedObjForResolve(origin_node, convert_result, func_graph);
-  if (interpreted_output != nullptr) {
-    return interpreted_output;
+  // If obj is an element, do not convert InterpretedObj.
+  if (!is_element_obj) {
+    AnfNodePtr interpreted_output = ConvertInterpretedObjForResolve(origin_node, convert_result, func_graph);
+    if (interpreted_output != nullptr) {
+      return interpreted_output;
+    }
   }
 
   if (convert_result->isa<FuncGraph>() && has_recompute_scope) {
@@ -385,73 +362,118 @@ AnfNodePtr ResolveObjectAndAddToManager(const FuncGraphManagerPtr &manager, cons
   fallback::SetPyObjectToNode(resolved_node, obj);
   return resolved_node;
 }
+
+bool IsParameterObject(const py::object &obj) {
+  return py::hasattr(obj, "__parameter__") && py::isinstance<tensor::MetaTensor>(obj);
+}
+
+std::pair<bool, bool> ContainsParameter(const py::object &obj) {
+  // The output is {has_parameter, all_parameter_sequence}.
+  if (IsParameterObject(obj)) {
+    return {true, false};
+  }
+  if (py::hasattr(obj, "__parameter_tuple__")) {
+    return {true, true};
+  }
+  if ((py::isinstance<py::tuple>(obj) || py::isinstance<py::list>(obj)) && py::len(obj) != 0) {
+    // NamedTuple
+    if (py::hasattr(obj, "_fields")) {
+      return {false, false};
+    }
+    auto tuple = obj.cast<py::tuple>();
+    bool has_parameter = false;
+    bool all_parameter_sequence = true;
+    for (size_t i = 0; i < tuple.size(); ++i) {
+      if (!IsParameterObject(tuple[i])) {
+        all_parameter_sequence = false;
+      }
+      if (ContainsParameter(tuple[i]).first) {
+        has_parameter = true;
+      }
+    }
+    return {has_parameter, all_parameter_sequence};
+  } else if (py::isinstance<py::dict>(obj)) {
+    auto dict = obj.cast<py::dict>();
+    for (auto item : dict) {
+      auto item_value = py::cast<py::object>(item.second);
+      if (ContainsParameter(item_value).first) {
+        return {true, false};
+      }
+    }
+  }
+  return {false, false};
+}
 }  // namespace
 
-bool ResolveObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, AnfNodePtr *const node) {
+bool ResolveObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, AnfNodePtr *const node,
+                         bool is_element_obj) {
   MS_EXCEPTION_IF_NULL(origin_node);
   auto func_graph = origin_node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  AnfNodePtr output = nullptr;
-  if (py::hasattr(obj, "__parameter__") && py::isinstance<tensor::MetaTensor>(obj)) {
+  auto [contains_param, all_parameter_sequence] = ContainsParameter(obj);
+  if (!contains_param) {
+    auto output = ConvertObjectToNode(origin_node, obj, func_graph, is_element_obj);
+    if (output == nullptr) {
+      return false;
+    }
+    *node = output;
+    return true;
+  }
+  if (IsParameterObject(obj)) {
     auto param = ResolveParameterObj(func_graph, obj);
     if (param == nullptr) {
       MS_LOG(ERROR) << "Resolve parameter object failed, got nullptr";
       return false;
     }
     MS_LOG(DEBUG) << "Add param graph:" << func_graph->ToString() << ", " << param->DebugString();
-    output = param;
-    *node = output;
+    *node = param;
     return true;
-  } else if (py::hasattr(obj, "__parameter_tuple__")) {
-    auto tuple = obj.cast<py::tuple>();
+  }
+  if (py::isinstance<py::tuple>(obj) || py::isinstance<py::list>(obj) || py::hasattr(obj, "__parameter_tuple__")) {
     std::vector<AnfNodePtr> args;
-    args.push_back(NewValueNode(prim::kPrimMakeTuple));
+    if (py::isinstance<py::list>(obj) && !all_parameter_sequence) {
+      args.push_back(NewValueNode(prim::kPrimMakeList));
+    } else {
+      args.push_back(NewValueNode(prim::kPrimMakeTuple));
+    }
+    auto tuple = obj.cast<py::tuple>();
     for (size_t i = 0; i < tuple.size(); ++i) {
       AnfNodePtr out = nullptr;
-      bool success = ResolveObjectToNode(origin_node, tuple[i], &out);
+      bool success = ResolveObjectToNode(origin_node, tuple[i], &out, true);
       if (!success) {
         MS_LOG(ERROR) << "Resolve object to node failed";
         return false;
       }
       args.push_back(out);
     }
-    // The ParameterTuple will not be added in order list,
+    // The ParameterTuple/tuple/list will not be added in order list,
     // since we don't want to deal with its RefTensor elements during auto_monad procedure.
-    output = NewCNode(std::move(args), func_graph);
-    *node = output;
+    *node = NewCNode(std::move(args), func_graph);
     return true;
-  } else if ((py::isinstance<py::tuple>(obj) || py::isinstance<py::list>(obj)) && py::len(obj) != 0) {
-    auto tuple = obj.cast<py::tuple>();
-    std::vector<AnfNodePtr> args;
-    args.push_back(NewValueNode(prim::kPrimMakeTuple));
-    bool all_parameter_sequence = true;
-    for (size_t i = 0; i < tuple.size(); ++i) {
-      if (!py::hasattr(tuple[i], "__parameter__") || !py::isinstance<tensor::MetaTensor>(tuple[i])) {
-        all_parameter_sequence = false;
-        break;
-      }
-      AnfNodePtr out = nullptr;
-      bool success = ResolveObjectToNode(origin_node, tuple[i], &out);
+  }
+  if (py::isinstance<py::dict>(obj)) {
+    auto dict = obj.cast<py::dict>();
+    std::vector<AnfNodePtr> keys_tuple{NewValueNode(prim::kPrimMakeTuple)};
+    std::vector<AnfNodePtr> values_tuple{NewValueNode(prim::kPrimMakeTuple)};
+    for (auto item : dict) {
+      AnfNodePtr key = nullptr;
+      AnfNodePtr value = nullptr;
+      bool success = ResolveObjectToNode(origin_node, py::cast<py::object>(item.first), &key, true) &&
+                     ResolveObjectToNode(origin_node, py::cast<py::object>(item.second), &value, true);
       if (!success) {
         MS_LOG(ERROR) << "Resolve object to node failed";
         return false;
       }
-      args.push_back(out);
+      (void)keys_tuple.emplace_back(key);
+      (void)values_tuple.emplace_back(value);
     }
-    if (all_parameter_sequence) {
-      // The Parameter tuple/list will not be added in order list,
-      // since we don't want to deal with its RefTensor elements during auto_monad procedure.
-      output = NewCNode(std::move(args), func_graph);
-      *node = output;
-      return true;
-    }
+    *node = func_graph->NewCNode(
+      {NewValueNode(prim::kPrimMakeDict), func_graph->NewCNode(keys_tuple), func_graph->NewCNode(values_tuple)});
+    return true;
   }
-  output = ConvertObjectToNode(origin_node, obj, func_graph);
-  if (output == nullptr) {
-    return false;
-  }
-  *node = output;
-  return true;
+  MS_EXCEPTION(TypeError) << "The Parameter in obj '" << py::str(obj) << "' with nested structure is not supported."
+                          << "\nCurrently only single Parameter, ParameterTuple or Parameters in tuple/list/dict "
+                             "are supported. Or do you want to use Tensor instead?";
 }
 
 std::pair<NameSpacePtr, SymbolPtr> GetNamespaceAndSymbol(const AnfNodePtr &node) {
@@ -554,6 +576,19 @@ AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::obj
     cur_func->ReplaceInOrder(get_attr_node, res_node);
     return res_node;
   }
+
+  if (IsValueNode<StringImm>(attr)) {
+    const auto &attr_name = GetValue<std::string>(GetValueNode(attr));
+    py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+    bool is_property =
+      (python_adapter::CallPyModFn(mod, parse::PYTHON_PARSE_CHECK_ATTR_IS_PROPERTY, obj, attr_name)).cast<bool>();
+    MS_LOG(DEBUG) << "is_property: " << is_property;
+    if (is_property) {
+      MS_LOG(EXCEPTION) << "The property decorator is not supported in graph mode.\n"
+                           "You can remove the property decorator and call the function as a method.\n";
+    }
+  }
+
   constexpr auto tensors_queue_attr = "__is_tensors_queue__";
   if (py::hasattr(obj, tensors_queue_attr) && IsValueNode<StringImm>(attr)) {
     const auto &attr_name = GetValue<std::string>(GetValueNode(attr));
@@ -579,6 +614,7 @@ AnfNodePtr ResolveClassObjectWithAttr(const py::object &cls_obj, const AnfNodePt
 AnfNodePtr ResolveSequenceWithAttr(const FuncGraphManagerPtr &manager, const py::object &obj,
                                    const AnfNodePtr &resolve_node, const AnfNodePtr &attr,
                                    const CNodePtr &get_attr_node) {
+  MS_EXCEPTION_IF_NULL(get_attr_node);
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
   auto sequence = obj.cast<py::sequence>();
@@ -611,7 +647,6 @@ AnfNodePtr ResolveSequenceWithAttr(const FuncGraphManagerPtr &manager, const py:
 
   constexpr auto prim_index = 0;
   constexpr auto index_index = 2;
-  MS_EXCEPTION_IF_NULL(get_attr_node);
   auto fg = get_attr_node->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
   auto make_tuple_node = fg->NewCNodeInOrder(inputs);

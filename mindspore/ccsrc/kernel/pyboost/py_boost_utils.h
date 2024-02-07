@@ -34,13 +34,10 @@ using AddressInfoPair = std::pair<std::vector<kernel::KernelTensor *>, device::D
 class BACKEND_EXPORT PyBoostUtils {
  public:
   static DeviceContext *GetDeviceContext(const std::string &device_type);
-  static DeviceContext *CreateOrGetDeviceContextAndInit(const std::string &target_device);
   static AbstractBasePtr InferByOpDef(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_abs);
-  static void DispatchRun(const std::shared_ptr<pynative::PyBoostDeviceTask> &task);
+  static void DispatchRun(const std::shared_ptr<runtime::PyBoostDeviceTask> &task);
 
-  static tensor::TensorPtr ContiguousTensor(const tensor::TensorPtr &input_tensor);
-  static device::DeviceAddressPtr ContiguousByDeviceAddress(const device::DeviceAddressPtr &old_device_address,
-                                                            const TensorStorageInfoPtr &old_storage_info);
+  static DeviceSyncPtr ContiguousByDeviceAddress(const DeviceSyncPtr &device_sync);
 
   // Create device address
   static device::DeviceAddressPtrList CreateWorkSpaceDeviceAddress(const KernelModPtr &kernel_mod,
@@ -49,8 +46,8 @@ class BACKEND_EXPORT PyBoostUtils {
 
   // Create output tensors
   static void CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs);
-  static void CreateOutputTensor(const tensor::TensorPtr &input, const TensorStorageInfoPtr &storage_info,
-                                 std::vector<tensor::TensorPtr> *outputs);
+  static void CreateOutputTensor(DeviceContext *device_context, const tensor::TensorPtr &input,
+                                 const TensorStorageInfoPtr &storage_info, std::vector<tensor::TensorPtr> *outputs);
 
   // Create input device address without kernel tensor
   template <typename... Args>
@@ -144,6 +141,9 @@ class BACKEND_EXPORT PyBoostUtils {
   static std::vector<kernel::KernelTensor *> GetKernelTensorFromAddress(
     const device::DeviceAddressPtrList &input_device_address);
 
+  // Check kernel mod is reg
+  static bool IsKernelModRegistered(const std::string &device_name, const std::string &op_name);
+
   static kernel::KernelModPtr CreateKernelMod(const PrimitivePtr &prim, const std::string &op_name,
                                               DeviceContext *device_context, const std::vector<KernelTensor *> &inputs,
                                               const std::vector<KernelTensor *> &outputs);
@@ -197,8 +197,15 @@ class BACKEND_EXPORT PyboostKernelExtraFuncFactory {
     if (iter == kernel_func_map_.end()) {
       return;
     }
-
     iter->second->SetThreadPool(kernel);
+  }
+
+  bool IsKernelModRegistered(const std::string &device_name, const std::string &op_name) {
+    auto iter = kernel_func_map_.find(device_name);
+    if (iter == kernel_func_map_.end()) {
+      return true;
+    }
+    return iter->second->IsKernelModRegistered(op_name);
   }
 
  private:

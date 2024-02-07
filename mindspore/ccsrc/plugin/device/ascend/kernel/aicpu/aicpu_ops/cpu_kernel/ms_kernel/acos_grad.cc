@@ -164,7 +164,7 @@ uint32_t AcosGradCpuKernel::AcosGradComputeFP16(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kACosGrad, AcosGradCpuKernel);
-REGISTER_CPU_KERNEL(kAcosGrad, AcosGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kACosGrad, AcosGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kAcosGrad, AcosGradCpuKernel);
 
 }  // namespace aicpu

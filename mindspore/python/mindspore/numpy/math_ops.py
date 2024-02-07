@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -5800,72 +5800,71 @@ def rint(x, dtype=None):
 
 
 def correlate(a, v, mode='valid'):
-    """
+    r"""
     Cross-correlation of two 1-dimensional sequences.
 
     This function computes the correlation as generally defined in signal processing texts:
 
-    :math:`c_{av}[k] = sum_n a[n+k] * conj(v[n])`
+    :math:`c_{av}[k] = \sum_{n}{a[n+k] * conj(v[n])}`
 
     with `a` and `v` sequences being zero-padded where necessary and conj being the conjugate.
 
     Note:
-        Currently, complex numbers are not supported.
+        - `correlate` is currently only used in `mindscience` scientific computing scenarios and
+          dose not support other usage scenarios.
+        - `correlate` is not supported on Windows platform yet.
 
     Args:
         a (Union[list, tuple, Tensor]): First input sequence.
         v (Union[list, tuple, Tensor]): Second input sequence.
-        mode (str, optional): By default, mode is `\'valid\'`.
-            If `mode` is `\'valid\'`, it returns output of length :math:`max(M, N) - min(M, N) + 1`.
-            The convolution product is only given for points where the signals overlap
-            completely. Values outside the signal boundary have no effect.
-            If `mode` is `\'full\'`, it returns the convolution at each point of overlap, with
-            an output shape of :math:`(N + M - 1,)`.
-            At the end-points of the convolution, the signals do not overlap completely,
-            and boundary effects may be seen.
-            If `mode` is `\'same\'`, it returns output of length :math:`max(M, N)`. Boundary
-            effects are still visible.
+        mode (str, optional): Specifies padding mode. The optional values are
+            ``"same"`` , ``"valid"`` and ``"full"`` . Default: ``"valid"`` .
+
+            - ``"same"``: it returns output of length :math:`max(M, N)`. Boundary
+              effects are still visible.
+
+            - ``"valid"``: it returns output of length :math:`max(M, N) - min(M, N) + 1`.
+              The convolution product is only given for points where the signals overlap
+              completely. Values outside the signal boundary have no effect.
+
+            - ``"full"``: it returns the convolution at each point of overlap, with
+              an output shape of :math:`(N + M - 1,)`.At the end-points of the convolution,
+              the signals do not overlap completely, and boundary effects may be seen.
 
     Returns:
-        Tensor. Discrete cross-correlation of `a` and `v`.
+        Tensor, Discrete cross-correlation of `a` and `v`.
 
     Raises:
-        TypeError: If the inputs can not be converted to tensor.
+        TypeError: If `a` or `v` is not a tensor.
+        TypeError: If `a` and `v` is of different dtype.
         ValueError: If `a` and `v` are empty or have wrong dimensions
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.numpy as np
-        >>> output = np.correlate([1, 2, 3], [0, 1, 0.5])
+        >>> import mindspore.numpy as mnp
+        >>> from mindspore import Tensor
+        >>> output = mnp.correlate(Tensor([1., 2., 3.]), Tensor([0., 1., 0.5]))
         >>> print(output)
         [3.5]
-        >>> output = np.correlate([1, 2, 3], [0, 1, 0.5], mode="same")
+        >>> output = mnp.correlate(Tensor([1., 2., 3.]), Tensor([0., 1., 0.5]), mode="same")
         >>> print(output)
         [2.  3.5 3. ]
-        >>> output = np.correlate([1, 2, 3, 4, 5], [1, 2], mode="same")
+        >>> output = mnp.correlate(Tensor([1., 2., 3., 4., 5.]), Tensor([1., 2.]), mode="full")
         >>> print(output)
-        [ 2.  5.  8. 11. 14.]
+        [ 2.  5.  8. 11. 14.  5.]
     """
-    a, v = _to_tensor(a, v)
-    if a.ndim != 1 or v.ndim != 1:
-        _raise_value_error("only support 1-dimensional inputs.")
-    if a.size == 0 or v.size == 0:
-        _raise_value_error("Inputs cannot be empty.")
+    if isinstance(a, list):
+        a = ops.auto_generate.list_to_tuple(a)
+    if isinstance(a, tuple):
+        a = ops.auto_generate.tuple_to_tensor(a)
+    if isinstance(v, list):
+        v = ops.auto_generate.list_to_tuple(v)
+    if isinstance(v, tuple):
+        v = ops.auto_generate.tuple_to_tensor(v)
+    return ops.auto_generate.correlate(a, v, mode)
 
-    promote_dtype = _promote(a.dtype, v.dtype)
-    # P.Conv2D requires that the two tensors have the same data type.
-    # If the promote data type is not supported, it will be converted to float32.
-    # The supported dtype list may vary in the future.
-    if promote_dtype not in [mstype.float32, mstype.float16]:
-        promote_dtype = mstype.float32
-    a = a.astype(promote_dtype)
-    v = v.astype(promote_dtype)
-    if a.size < v.size:
-        a, v = v, a
-        return _compute_1d_conv(a, v, mode)[::-1]
-    return _compute_1d_conv(a, v, mode)
 
 
 def _compute_1d_conv(a, v, mode):

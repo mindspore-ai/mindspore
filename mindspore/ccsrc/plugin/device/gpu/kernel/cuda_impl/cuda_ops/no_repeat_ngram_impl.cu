@@ -100,7 +100,7 @@ template <typename StateType, typename LogProbType>
 cudaError_t CalculateNoRepeatNGram(const StateType *tokens, LogProbType *lprobs, LogProbType *output,
                                    int batch_mul_beam_size, int no_repeat_ngram_size, const uint32_t &device_id,
                                    int vocab_size, int blocks, int shared_mem_size, cudaStream_t cuda_stream) {
-  int threads = batch_mul_beam_size - no_repeat_ngram_size + 2 - 1;
+  size_t threads = batch_mul_beam_size - no_repeat_ngram_size + 2 - 1;
   if (threads <= 0) return cudaErrorNotReady;
   auto cuda_threads = CUDA_THREADS(device_id);
   if (cuda_threads >= threads) {

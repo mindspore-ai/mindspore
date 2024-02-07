@@ -14,6 +14,7 @@
 # ============================================================================
 """Profiling api file."""
 import os
+import shutil
 import stat
 import time
 import json
@@ -57,6 +58,7 @@ from mindspore.profiler.parser.ascend_steptrace_generator import AscendStepTrace
 from mindspore.profiler.parser.ascend_flops_generator import AscendFlopsGenerator
 from mindspore.profiler.parser.ascend_cluster_generator import AscendClusterGenerator
 from mindspore.profiler.parser.ascend_hccl_generator import AscendHCCLGenerator, AscendHCCLGeneratorOld
+from mindspore.profiler.parser.ascend_communicate_generator import AscendCommunicationGenerator
 
 INIT_OP_NAME = 'Default/InitDataSetQueue'
 
@@ -69,6 +71,7 @@ AICORE_METRICS_DICT = {
     5: "MemoryUB",
     -1: "None"
 }
+
 
 class ModelTraingMode(Enum):
     PYNATIVE = 0
@@ -612,6 +615,7 @@ class Profiler:
             offline_path (Union[str, None], optional): The data path which need to be analysed with offline mode.
                 Offline mode isused in abnormal exit scenario. This parameter should be set to ``None``
                 for online mode. Default: ``None``.
+            pretty (bool, optional): Whether to pretty json files. Default: ``False``.
         """
         self._pretty_json = pretty
         self._analyse(offline_path=offline_path)
@@ -1009,11 +1013,6 @@ class Profiler:
                            f"but got type {type(self._parallel_strategy)}, it will be set to True.")
             self._parallel_strategy = True
 
-        task_sink = os.getenv("GRAPH_OP_RUN")
-        if task_sink and task_sink == "1":
-            logger.warning(f"For '{self.__class__.__name__}', Profiling is not supported if set environment "
-                           f"'GRAPH_OP_RUN' value to 1, which means model training task is not sink.")
-
     def _set_ascend_job_id(self, ascend_job_id):
         """Set output_path for offline parsing performance data."""
         if not ascend_job_id:
@@ -1228,20 +1227,65 @@ class Profiler:
         finally:
             pass
 
-    def _ascend_graph_cluster_analyse(self, source_path):
+    def _ascend_ms_analyze(self, source_path):
+        """Ascend ms generate"""
+
+        dev_id = self._rank_id if self._device_target == DeviceTarget.ASCEND.value else self._dev_id
+        ascend_profiler_output_path = os.path.join(self._ascend_ms_path, 'ASCEND_PROFILER_OUTPUT')
+        os.makedirs(ascend_profiler_output_path, exist_ok=True)
+
+        source_profiler_info_path = os.path.join(self._output_path, f"profiler_info_{dev_id}.json")
+        target_profiler_info_path = os.path.join(self._ascend_ms_path, f"profiler_info_{dev_id}.json")
+        shutil.copy(source_profiler_info_path, target_profiler_info_path)
+
+        source_timeline_path = os.path.join(self._output_path, f"ascend_timeline_display_{dev_id}.json")
+        target_timeline_path = os.path.join(ascend_profiler_output_path, f"trace_view.json")
+        shutil.copy(source_timeline_path, target_timeline_path)
+
+        self._ascend_graph_cluster_analyse(source_path, ascend_profiler_output_path)
+        self._ascend_graph_communicate_analyse(source_path, ascend_profiler_output_path)
+
+    def _ascend_graph_cluster_analyse(self, source_path, ascend_profiler_output_path):
         """Analyse step trace time info"""
 
         try:
             logger.info("Profiling: analyzing the step trace time profiler info.")
-            dev_id = self._rank_id if self._device_target == DeviceTarget.ASCEND.value else self._dev_id
 
-            step_trace_time_path = os.path.join(self._output_path, f'step_trace_time_{dev_id}.csv')
+            step_trace_time_path = os.path.join(ascend_profiler_output_path, f'step_trace_time.csv')
             step_trace_time_path = validate_and_normalize_path(step_trace_time_path)
 
             cluster_analyse = AscendClusterGenerator(os.path.join(source_path, 'timeline'))
             cluster_analyse.parse()
             cluster_analyse.write(step_trace_time_path)
-        except ProfilerException as err:
+        except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
+            logger.warning(err.message)
+        finally:
+            pass
+
+    def _ascend_graph_communicate_analyse(self, source_path, ascend_profiler_output_path):
+        """Analyse communicate info"""
+        if not self._profile_communication:
+            return
+        if self._profile_communication and context.get_context("mode") == context.PYNATIVE_MODE:
+            logger.warning("[Profiler]The parameter profile_communication is not supported on Ascend "
+                           "PyNative mode currently.")
+            return
+
+        try:
+            logger.info("Profiling: analyzing the communicate and communicate_matrix profiler info.")
+
+            communication_file_path = os.path.join(ascend_profiler_output_path, f'communication.json')
+            communication_file_path = validate_and_normalize_path(communication_file_path)
+
+            communication_matrix_file_path = os.path.join(ascend_profiler_output_path,
+                                                          f"communication_matrix.json")
+            communication_matrix_file_path = validate_and_normalize_path(communication_matrix_file_path)
+
+            analyze_path = os.path.join(os.path.dirname(source_path), 'analyze')
+            communicate_analyser = AscendCommunicationGenerator(analyze_path)
+            communicate_analyser.parse()
+            communicate_analyser.write(communication_file_path, communication_matrix_file_path)
+        except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
             logger.warning(err.message)
         finally:
             pass
@@ -1342,7 +1386,7 @@ class Profiler:
                 self._ascend_dynamic_net_analyse(op_summary)
             self._ascend_flops_analyse(op_summary, launch_ops)
             self._ascend_graph_memory_analyse(points)
-            self._ascend_graph_cluster_analyse(source_path)
+            self._ascend_ms_analyze(source_path)
             self._ascend_graph_hccl_analyse(source_path, steptrace, flag)
             self._ascend_graph_msadvisor_analyse(job_id)
             ProfilerInfo.set_graph_ids(graph_ids)
@@ -1690,13 +1734,33 @@ class Profiler:
         else:
             output_path = kwargs.pop("output_path")
             self._output_path = validate_and_normalize_path(output_path)
+
+        time_stamp = time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
+        if self._rank_id:
+            ascend_ms_path = f"rank-{self._rank_id}_{time_stamp}_ascend_ms"
+        else:
+            import socket
+            ascend_ms_path = f"{socket.gethostname()}--{os.getpid()}_{time_stamp}_ascend_ms"
+
         self._output_path = os.path.join(self._output_path, "profiler")
+        self._ascend_ms_path = os.path.join(self._output_path, ascend_ms_path)
         if not os.path.exists(self._output_path):
             os.makedirs(self._output_path, exist_ok=True)
             os.chmod(self._output_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
         else:
             logger.warning("The target dir already exists. "
                            "There may be some old profiling data, and they will be rewritten in the end.")
+        self._framework_path = os.path.join(self._output_path, "FRAMEWORK")
+        if not os.path.exists(self._framework_path):
+            os.makedirs(self._framework_path, exist_ok=True)
+            os.chmod(self._framework_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+        elif os.path.exists(os.path.join(self._framework_path, "op_range_" + str(self._rank_id))):
+            os.remove(self._framework_path, "op_range_" + str(self._rank_id))
+            logger.info("Clear old op range filer.")
+
+        if not os.path.exists(self._ascend_ms_path):
+            os.makedirs(self._ascend_ms_path, exist_ok=True)
+            os.chmod(self._ascend_ms_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
 
     def _parser_kwargs(self, kwargs):
         """Parse kwargs vale."""

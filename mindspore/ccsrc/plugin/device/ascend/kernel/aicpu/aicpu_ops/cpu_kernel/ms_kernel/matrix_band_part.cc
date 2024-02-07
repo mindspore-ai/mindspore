@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 #include "common/kernel_log.h"
@@ -197,5 +197,5 @@ uint32_t MatrixBandPartCpuKernel::BandCompute(Tensor *x, int64_t lower, int64_t 
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kMatrixBandPart, MatrixBandPartCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMatrixBandPart, MatrixBandPartCpuKernel);
 }  // namespace aicpu

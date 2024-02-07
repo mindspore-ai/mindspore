@@ -17,7 +17,6 @@ if(NOT BUILD_LITE)
     file(GLOB_RECURSE PYBOOST_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "pyboost/*.cc"
         "pyboost/auto_generate/*.cc"
-        "pyboost/ops/*.cc"
     )
     list(APPEND KERNEL_SRC_LIST "${PYBOOST_SRC_LIST}")
 endif()

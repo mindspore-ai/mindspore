@@ -60,6 +60,7 @@ void KernelActor::Init() {
   is_dynamic_type_ = common::AnfAlgo::IsAnyTypeOutput(kernel_);
   launch_ignored_inputs_ = kernel_mod_->GetLaunchIgnoredInputAddressIdx();
 
+  stream_ = device_contexts_[0]->device_res_manager_->GetStream(kernel_info_->stream_id());
   // Init the device tensors and kernel launch info.
   InitInputInfo();
   InitOutputInfo();
@@ -191,6 +192,8 @@ void KernelActor::InitWorkspaceInfo() {
 void KernelActor::Run(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+  MS_EXCEPTION_IF_NULL(device_contexts_[0]->device_res_manager_);
+  device_contexts_[0]->device_res_manager_->SetDeviceIdToCurrentThread();
 
   FetchInputDeviceTensor(context);
 
@@ -795,9 +798,9 @@ void KernelActor::InferShape() {
                 << ", inputs: " << input_kernel_tensors_for_infer_;
   // 1. Infer operator's output's Shape.
   auto base_shape = opt::dynamic_shape::InferShape(kernel_mod_->primitive(), input_kernel_tensors_for_infer_);
+  MS_EXCEPTION_IF_NULL(base_shape);
   MS_LOG(DEBUG) << "End InferShape for kernel: " << kernel_->fullname_with_scope()
                 << ", shape: " << base_shape->ToString();
-  MS_EXCEPTION_IF_NULL(base_shape);
 
   // 2. Update shape of output kernel tensor.
   opt::dynamic_shape::UpdateKernelTensorShape(base_shape, output_kernel_tensors_);
@@ -847,7 +850,7 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   MS_LOG(DEBUG) << "Begin launch kernel of actor: " << GetAID().Name() << ", id : " << actor_id() << ".";
   auto ret = device_contexts_[0]->GetKernelExecutor(false)->LaunchKernel(
-    kernel_, input_kernel_tensors_, workspace_kernel_tensors_, output_kernel_tensors_, kernel_info_->stream_id());
+    kernel_, input_kernel_tensors_, workspace_kernel_tensors_, output_kernel_tensors_, kernel_mod_, stream_);
   MS_LOG(DEBUG) << "End launch kernel of actor: " << GetAID().Name() << ", id : " << actor_id() << ".";
   return ret;
 }

@@ -249,5 +249,5 @@ uint32_t SliceGradKernel::Compute(CpuKernelContext &ctx) {
   }
   return func_list[begin_type_][dy_type_](ctx);
 }
-REGISTER_CPU_KERNEL(kSliceGrad, SliceGradKernel);
+REGISTER_MS_CPU_KERNEL(kSliceGrad, SliceGradKernel);
 }  // namespace aicpu

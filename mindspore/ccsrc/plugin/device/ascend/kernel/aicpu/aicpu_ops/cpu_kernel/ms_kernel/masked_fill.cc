@@ -19,7 +19,7 @@
 #include <limits>
 #include <complex>
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
@@ -278,5 +278,5 @@ uint32_t MaskedFillCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kMaskedFill, MaskedFillCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMaskedFill, MaskedFillCpuKernel);
 }  // namespace aicpu

@@ -19,6 +19,7 @@
 #include "mindspore/core/ops/array_ops.h"
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/op_utils.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace opt {
@@ -33,34 +34,24 @@ const AnfNodePtr BroadcastToFusion::Process(const FuncGraphPtr &graph, const Anf
 
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-
   const auto &origin_prim = common::AnfAlgo::GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(origin_prim);
-  const auto &origin_attrs = origin_prim->attrs();
 
-  size_t idx = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(cnode), kShape);
-
-  if (origin_attrs.count(kShape) == 0 && idx == SIZE_MAX) {
-    MS_LOG(DEBUG) << "Origin primitive: " << origin_prim->name() << "has no attr : " << kShape;
+  if (common::AnfAlgo::IsDynamicShape(node)) {
     return node;
   }
-  std::vector<int64_t> input_x;
-  if (origin_attrs.count(kShape)) {
-    auto attr_value = origin_prim->GetAttr(kShape);
-    MS_EXCEPTION_IF_NULL(attr_value);
-    input_x = GetValue<std::vector<int64_t>>(attr_value);
-  } else {
-    auto shape_node = common::AnfAlgo::GetInputNode(cnode, idx);
-    if (!utils::isa<ValueNodePtr>(shape_node)) {
-      return node;
-    }
-    auto shape = ops::GetArrayValue<int64_t>(shape_node->cast<ValueNodePtr>()->value());
-    if (!shape.has_value()) {
-      return node;
-    }
-    input_x = shape.value().ToVector();
+
+  auto input_shape = cnode->input(kIndex2);
+  auto shape_array_opt = ops::GetArrayValue<int64_t>(input_shape->abstract());
+  if (!shape_array_opt.has_value()) {
+    return node;
   }
 
+  auto shape_array = shape_array_opt.value();
+  if (shape_array.HasUnknownValue()) {
+    return node;
+  }
+  std::vector<int64_t> input_x = shape_array.ToVector();
   auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, kIndex0);
   auto outer_dim_offset = input_x.size() - x_shape.size();
   bool flag = true;
@@ -84,11 +75,8 @@ const AnfNodePtr BroadcastToFusion::Process(const FuncGraphPtr &graph, const Anf
       }
     }
   }
-  if (origin_attrs.count(kShape) == 0) {
-    auto shape_node = common::AnfAlgo::GetInputNode(cnode, idx);
-    shape_node->cast<ValueNodePtr>()->set_value(MakeValue(input_x));
-  }
-  common::AnfAlgo::SetNodeAttr(kShape, MakeValue(input_x), cnode);
+  auto new_input = opt::CreateValueNodeWithKernelInfo(graph, MakeValue(input_x));
+  cnode->set_input(kIndex2, new_input);
   return cnode;
 }
 }  // namespace opt

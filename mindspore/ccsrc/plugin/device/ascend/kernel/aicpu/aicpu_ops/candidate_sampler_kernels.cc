@@ -18,6 +18,7 @@
 #include <algorithm>
 #include "common/range_sampler.h"
 #include "common/random_utils.h"
+#include "cpu_kernel/common/status.h"
 
 namespace aicpu {
 namespace {
@@ -84,15 +85,10 @@ uint32_t CandidateSamplerKernel::DoComputeForEachType() {
   std::vector<float> sampled_expected_count(num_sampled_);
 
   // get random generator seed
-  uint32_t kernel_ret = 0;
-  uint64_t rng_seed = random::GetKernelBaseRandomStates(io_addrs_, kCountsIndex, kStatesIndex,
-                                                        static_cast<uint64_t>(seed_), 0, kernel_name_, &kernel_ret);
-  if (kernel_ret != kAicpuKernelStateSucess) {
-    return kAicpuKernelStateFailed;
-  }
+  uint64_t rng_seed = std::random_device()();
+  rng_.seed(rng_seed);
 
   set_sampler(new RangeSamplerType(range_max_));
-
   if (unique_ && num_sampled_ > sampler_->range()) {
     AICPU_LOGE("For AICPU ops ", kernel_name_, ", the sampler's range is too small.");
     return kAicpuKernelStateFailed;
@@ -105,18 +101,17 @@ uint32_t CandidateSamplerKernel::DoComputeForEachType() {
                  [&](int64_t x) { return static_cast<T>(x); });
   int true_count_size = batch_size * num_true_ * sizeof(float);
   int ret1 =
-    memcpy_s(reinterpret_cast<void *>(io_addrs_[3]), num_sampled_ * sizeof(T),
+    memcpy_s(reinterpret_cast<void *>(io_addrs_[1]), num_sampled_ * sizeof(T),
              reinterpret_cast<void *>(&sampled_candidate_raw.front()), sampled_candidate_raw.size() * sizeof(T));
-  int ret2 = memcpy_s(reinterpret_cast<void *>(io_addrs_[4]), true_count_size,
+  int ret2 = memcpy_s(reinterpret_cast<void *>(io_addrs_[2]), true_count_size,
                       reinterpret_cast<void *>(&true_expected_count.front()), true_count_size);
   int ret3 =
-    memcpy_s(reinterpret_cast<void *>(io_addrs_[5]), num_sampled_ * sizeof(float),
+    memcpy_s(reinterpret_cast<void *>(io_addrs_[3]), num_sampled_ * sizeof(float),
              reinterpret_cast<void *>(&sampled_expected_count.front()), sampled_expected_count.size() * sizeof(float));
-  if (ret1 < 0 || ret2 < 0 || ret3 < 0) {
-    AICPU_LOGE("memcpy_s failed!");
-    return kAicpuKernelStateFailed;
+  if (ret1 != EOK || ret2 != EOK || ret3 != EOK) {
+    KERNEL_LOG_ERROR("For 'CandidateSampler', memcpy_s failed.");
+    return KERNEL_STATUS_INNER_ERROR;
   }
-
   return kAicpuKernelStateSucess;
 }
 

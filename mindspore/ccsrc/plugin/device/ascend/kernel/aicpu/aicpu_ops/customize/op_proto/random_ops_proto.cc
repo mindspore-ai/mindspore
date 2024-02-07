@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "inc/ops/random_ops.h"
-#include "inc/ops/stateful_random_ops.h"
+#include "op_proto/inc/random_ops.h"
+#include "op_proto/inc/stateful_random_ops.h"
 #include "custom_op_proto/cust_random_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
@@ -32,15 +32,6 @@ static void RandomOpCalcDims(const Tensor &data, std::vector<int64_t> &vec_dim) 
   }
 }
 }  // namespace
-
-IMPLEMT_COMMON_INFERFUNC(OneInOneOutCommonInferShape) {
-  static const int64_t input_x_idx = 0;
-  static const int64_t output_y_idx = 0;
-  if (OneInOneOutDynamicInfer(op, input_x_idx, {output_y_idx})) {
-    return GRAPH_SUCCESS;
-  }
-  return GRAPH_FAILED;
-}
 
 IMPLEMT_COMMON_INFERFUNC(InputShapeAttrDtypeInfer) {
   Shape shape;
@@ -106,7 +97,7 @@ CUST_IMPLEMT_INFERFUNC(Randperm, RandpermInfer) {
   auto output_shape = Shape({max_length});
   output_desc.SetDataType(dtype);
   output_desc.SetShape(output_shape);
-  return UpdateOutputDesc(op, output_desc);
+  return op.UpdateOutputDesc("output", output_desc);
 }
 CUST_INFER_FUNC_REG(Randperm, RandpermInfer);
 // ----------------Randperm END-------------------
@@ -185,6 +176,62 @@ CUST_IMPLEMT_INFERFUNC(Gamma, GammaInfer) {
 CUST_INFER_FUNC_REG(Gamma, GammaInfer);
 // ----------------Gamma END-------------------
 
+// ----------------LogUniformCandidateSampler-------------------
+CUST_IMPLEMT_INFERFUNC(LogUniformCandidateSampler, LogUniformCandidateSamplerInfer) {
+  // Infer shape
+  int64_t num_sampled;
+  if (op.GetAttr("num_sampled", num_sampled) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Get attr 'num_sampled' failed.");
+    return GRAPH_FAILED;
+  }
+  auto true_classes_desc = op.GetInputDescByName("true_classes");
+  ge::Shape true_classes_shape = true_classes_desc.GetShape();
+  const size_t valid_true_classes_shape_rank = 2;
+  const size_t true_classes_shape_rank = true_classes_shape.GetDims().size();
+  if (!IsUnknownRankShape(true_classes_shape) && true_classes_shape_rank != valid_true_classes_shape_rank) {
+    std::string err_msg = ConcatString(
+      "For 'LogUniformCandidateSampler', the rank of 'true_classes' must be 2, but got ", true_classes_shape_rank, ".");
+    AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+  int64_t num_true;
+  if (op.GetAttr("num_true", num_true) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Get attr 'num_true' failed.");
+    return GRAPH_FAILED;
+  }
+  if (!IsUnknown(true_classes_shape.GetDims()) && num_true != true_classes_shape.GetDim(1)) {
+    std::string err_msg = ConcatString(
+      "For 'LogUniformCandidateSampler', dim[1] of 'true_classes' must be equal to 'num_true', but got "
+      "true_classes[1]: ",
+      true_classes_shape.GetDim(1), ", 'num_true': ", num_true, ".");
+    AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+  auto sampled_candidates_desc = op.GetOutputDesc("sampled_candidates");
+  auto true_expected_count_desc = op.GetOutputDesc("true_expected_count");
+  auto sampled_expected_count_desc = op.GetOutputDesc("sampled_expected_count");
+  ge::Shape sampled_candidates_shape({num_sampled});
+  ge::Shape sampled_expected_count_shape({num_sampled});
+  sampled_candidates_desc.SetShape(sampled_candidates_shape);
+  true_expected_count_desc.SetShape(true_classes_shape);
+  sampled_expected_count_desc.SetShape(sampled_expected_count_shape);
+  // Infer type
+  auto true_classes_type = op.GetInputDescByName("true_classes").GetDataType();
+  if (true_classes_type != DT_INT64) {
+    OP_LOGE(TbeGetName(op).c_str(), "Dtype of 'true_classes' must be DT_INT64.");
+    return GRAPH_FAILED;
+  }
+  sampled_candidates_desc.SetDataType(DT_INT64);
+  true_expected_count_desc.SetDataType(DT_FLOAT);
+  sampled_expected_count_desc.SetDataType(DT_FLOAT);
+  return op.UpdateOutputDesc("sampled_candidates", sampled_candidates_desc) &&
+         op.UpdateOutputDesc("true_expected_count", true_expected_count_desc) &&
+         op.UpdateOutputDesc("sampled_expected_count", sampled_expected_count_desc);
+}
+
+CUST_INFER_FUNC_REG(LogUniformCandidateSampler, LogUniformCandidateSamplerInfer);
+// ----------------LogUniformCandidateSampler END-------------------
+
 IMPLEMT_COMMON_INFERFUNC(BatchSizeAndNumSampleInferShape) {
   auto logits_desc = op.GetInputDescByName("logits");
   auto num_samples_desc = op.GetInputDescByName("num_samples");
@@ -204,16 +251,20 @@ IMPLEMT_COMMON_INFERFUNC(BatchSizeAndNumSampleInferShape) {
     }
     output_shape.SetDim(1, num_samples);
   }
+
+  DataType output_dtype;
+  if (op.GetAttr("dtype", output_dtype) != GRAPH_SUCCESS) {
+    output_dtype = logits_dtype;
+  }
   output_desc.SetShape(output_shape);
-  output_desc.SetDataType(logits_dtype);
+  output_desc.SetDataType(output_dtype);
 
   return op.UpdateOutputDesc("y", output_desc);
 }
 
 CUST_COMMON_INFER_FUNC_REG(Multinomial, BatchSizeAndNumSampleInferShape);
 CUST_COMMON_INFER_FUNC_REG(RandomCategorical, BatchSizeAndNumSampleInferShape);
-
-CUST_COMMON_INFER_FUNC_REG(RandomShuffle, OneInOneOutCommonInferShape);
+CUST_ONE_IN_ONE_OUT_INFER(RandomShuffle, x, y);
 
 // ----------------RandomPoisson-------------------
 CUST_IMPLEMT_INFERFUNC(RandomPoisson, RandomPoissonInfer) {
@@ -279,9 +330,21 @@ CUST_INFER_FUNC_REG(RandomChoiceWithMask, RandomChoiceWithMaskInfer);
 
 // ----------------RandomUniformInt-------------------
 CUST_IMPLEMT_INFERFUNC(RandomUniformInt, RandomUniformIntInfer) {
-  auto shape_desc = op.GetInputDescByName("shape");
-  shape_desc.SetDataType(DT_INT32);
-  return op.UpdateOutputDesc("y", shape_desc);
+  Shape shape;
+  Tensor shape_tensor;
+  if (op.GetInputConstData("shape", shape_tensor) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Get shape_tensor error.");
+    return GRAPH_FAILED;
+  }
+  if (MakeShapeFromShapeTensor(shape_tensor, shape, op) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Get shape error.");
+    return GRAPH_FAILED;
+  }
+
+  TensorDesc outputDesc = op.GetOutputDescByName("y");
+  outputDesc.SetDataType(DT_INT32);
+  outputDesc.SetShape(shape);
+  return op.UpdateOutputDesc("y", outputDesc);
 }
 CUST_INFER_FUNC_REG(RandomUniformInt, RandomUniformIntInfer);
 // ----------------RandomUniformInt End-------------------

@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_EPS_H
 #define AICPU_KERNELS_EPS_H
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class EpsCpuKernel : public CpuKernel {

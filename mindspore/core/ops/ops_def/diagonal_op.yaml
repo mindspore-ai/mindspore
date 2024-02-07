@@ -1,7 +1,7 @@
 #operator diagonal
 diagonal:
   args:
-    x:
+    input:
       dtype: tensor
     offset:
       dtype: int

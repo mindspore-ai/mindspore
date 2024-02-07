@@ -76,6 +76,7 @@ class GeDeviceResManager : public DeviceResManager {
   }
 
   void ResetStreamAndCtx() override;
+  void SetDeviceIdToCurrentThread() const override;
   bool BindDeviceToCurrentThread(bool force_bind) const override;
   void *GetStream() const {
     MS_EXCEPTION_IF_NULL(runtime_instance_);
@@ -107,10 +108,12 @@ class GeDeviceResManager : public DeviceResManager {
   bool SyncNotDefaultStreams() const override;
   size_t DefaultStream() const override;
 
-  DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) const override;
+  DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) override;
 
   bool single_op_multi_stream_enable() const override;
   void set_single_op_multi_stream_enable(bool single_op_multi_stream_enable) override;
+  // Only used in graph_mode with MS_DISABLE_REF_MODE, delete it when delete MS_DISABLE_REF_MODEF
+  void SetCPUMemManager();
 
  private:
   friend class GeGraphExecutor;
@@ -118,6 +121,8 @@ class GeDeviceResManager : public DeviceResManager {
   static void GeSetReuseOptions(const std::string &key, size_t num, transform::SessionOptions *options);
   std::shared_ptr<MemoryManager> mem_manager_ = nullptr;
   KernelRuntime *runtime_instance_ = nullptr;
+  // Only used in graph_mode with MS_DISABLE_REF_MODE, delete it when delete MS_DISABLE_REF_MODE
+  bool is_use_cpu_memory_ = false;
 };
 }  // namespace ascend
 }  // namespace device

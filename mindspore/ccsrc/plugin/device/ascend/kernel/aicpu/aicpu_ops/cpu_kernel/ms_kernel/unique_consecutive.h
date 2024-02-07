@@ -17,7 +17,7 @@
 #include <functional>
 #include <map>
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class UniqueConsecutiveCpuKernel : public CpuKernel {

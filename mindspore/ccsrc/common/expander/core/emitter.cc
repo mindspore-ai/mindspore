@@ -160,7 +160,7 @@ NodePtr Emitter::Cast(const NodePtr &node, const TypePtr &type) {
   if (node->dtype()->type_id() == type->type_id()) {
     return node;
   }
-  return Emit("Cast", {node, EmitValue(type)});
+  return Emit("Cast", {node, Value(static_cast<int64_t>(type->type_id()))});
 }
 
 NodePtr Emitter::Reshape(const NodePtr &node, const NodePtr &shape) {
@@ -252,10 +252,10 @@ NodePtr Emitter::Tile(const NodePtr &node, const NodePtr &multiples) {
 
 NodePtr Emitter::BroadcastTo(const NodePtr &x, const NodePtr &y) {
   if (IsDynamic(x->shape()) || IsDynamic(y->shape())) {
-    return Emit("DynamicBroadcastTo", {x, Shape(y)});
+    return Emit("BroadcastTo", {x, Shape(y)});
   }
 
-  return x->shape() == y->shape() ? x : Emit("BroadcastTo", {x}, {{"shape", MakeValue(y->shape())}});
+  return x->shape() == y->shape() ? x : Emit("BroadcastTo", {x, Shape(y)});
 }
 
 NodePtr Emitter::ZerosLike(const NodePtr &node) {

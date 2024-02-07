@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SCALEANDTRANSLATE_H_
 #define AICPU_KERNELS_NORMALIZED_SCALEANDTRANSLATE_H_
 
-#include "inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 #include "unsupported/Eigen/CXX11/Tensor"

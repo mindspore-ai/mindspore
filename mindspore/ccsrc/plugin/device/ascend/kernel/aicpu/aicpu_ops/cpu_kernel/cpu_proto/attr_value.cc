@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "cpu_kernel/cpu_proto/attr_value_impl.h"
-#include "cpu_kernel/inc/cpu_attr_value.h"
+#include "cpu_attr_value.h"
 
 namespace aicpu {
 AttrValue::AttrValue(AttrValueImpl *impl) : impl_(impl) {}

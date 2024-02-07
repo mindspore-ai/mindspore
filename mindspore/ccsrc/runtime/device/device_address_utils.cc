@@ -1083,7 +1083,7 @@ void DeviceAddressUtils::MallocForOutputs(DeviceContext *device_context,
     auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(output->device_address());
     if (device_address->GetPtr() != nullptr) {
       // ref output
-      return;
+      continue;
     }
     if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
       MS_LOG(EXCEPTION) << "Allocate memory failed";

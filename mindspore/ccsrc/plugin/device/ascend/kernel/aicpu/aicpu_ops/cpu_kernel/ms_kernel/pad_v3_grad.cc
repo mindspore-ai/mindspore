@@ -312,5 +312,5 @@ uint32_t PadV3GradCpuKernel::PadV3GradCompute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kPadV3Grad, PadV3GradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kPadV3Grad, PadV3GradCpuKernel);
 }  // namespace aicpu

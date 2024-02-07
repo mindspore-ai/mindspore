@@ -14,7 +14,7 @@
 # ============================================================================
 import numpy as np
 import pytest
-import test_utils
+from tests.st.utils import test_utils
 
 from mindspore import ops
 import mindspore as ms
@@ -36,7 +36,7 @@ def sqrt_grad_dyn_shape_func(dy, x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_sqrt_grad_forward(mode):
     """
     Feature: Ops.
@@ -58,7 +58,7 @@ def test_sqrt_grad_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_sqrt_grad_vmap(mode):
     """
     Feature: test vmap function.

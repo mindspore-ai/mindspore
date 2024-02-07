@@ -19,8 +19,8 @@
 #include <string>
 
 #include "Eigen/Core"
-#include "inc/cpu_ops_kernel.h"
-#include "inc/cpu_types.h"
+#include "cpu_kernel_utils.h"
+#include "cpu_types.h"
 
 namespace aicpu {
 

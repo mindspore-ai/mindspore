@@ -7,7 +7,6 @@ mindspore.hal.get_device_capability
 
     .. note::
         - 若用户不指定 `device_target` ，将此参数设置为当前已经设置的后端类型。
-        - 对于 ``"CPU"`` 后端，固定返回1。
 
     参数：
         - **device_id** (int) - 要查询的设备id。

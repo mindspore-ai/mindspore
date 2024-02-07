@@ -179,8 +179,9 @@ STATUS ResizeMapper::CalResizeShape(const CNodePtr &cnode, const PrimitivePtr &p
   auto gather_abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(kNumberTypeInt32), gather_shape);
   gather_cnode->set_abstract(gather_abstract);
 
-  auto cast_fp32_node = NewCNode(cnode, prim::kPrimCast, {gather_cnode, NewValueNode(TypeIdToType(kNumberTypeFloat32))},
-                                 {DIMENSION_2D}, kNumberTypeFloat32, cnode->fullname_with_scope() + "_shape_cast_fp32");
+  auto cast_fp32_node =
+    NewCNode(cnode, prim::kPrimCast, {gather_cnode, NewValueNode(static_cast<int64_t>(kNumberTypeFloat32))},
+             {DIMENSION_2D}, kNumberTypeFloat32, cnode->fullname_with_scope() + "_shape_cast_fp32");
   if (!cast_fp32_node) {
     MS_LOG(ERROR) << "Failed to create cast node for node " << cnode->fullname_with_scope();
     return RET_ERROR;
@@ -192,8 +193,9 @@ STATUS ResizeMapper::CalResizeShape(const CNodePtr &cnode, const PrimitivePtr &p
     MS_LOG(ERROR) << "Failed to create mul node for node " << cnode->fullname_with_scope();
     return RET_ERROR;
   }
-  auto cast_int32_node = NewCNode(cnode, prim::kPrimCast, {mul_node, NewValueNode(TypeIdToType(kNumberTypeInt32))},
-                                  {DIMENSION_2D}, kNumberTypeInt32, cnode->fullname_with_scope() + "_shape_cast_int32");
+  auto cast_int32_node =
+    NewCNode(cnode, prim::kPrimCast, {mul_node, NewValueNode(static_cast<int64_t>(kNumberTypeInt32))}, {DIMENSION_2D},
+             kNumberTypeInt32, cnode->fullname_with_scope() + "_shape_cast_int32");
   cnode->set_input(kResizeShapeInputIndex, cast_int32_node);
   return RET_OK;
 }

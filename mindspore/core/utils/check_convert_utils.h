@@ -472,6 +472,7 @@ class MS_CORE_API CheckAndConvertUtils {
   static abstract::AbstractSequencePtr BroadenAllSequenceElements(const abstract::AbstractSequencePtr &sequence);
   static TypePtr CheckTypeSame(const std::map<std::string, TypePtr> &args, const std::string &prim_name,
                                const bool allow_mix = false);
+  static bool CheckPrimAttrConverted(const std::string &op_name);
 
  private:
   static TypePtr CheckTensorSubClass(const std::string &type_name, const TypePtr &type,

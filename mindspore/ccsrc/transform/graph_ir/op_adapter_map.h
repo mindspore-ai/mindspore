@@ -124,6 +124,9 @@ constexpr const char kNameEluGrad[] = "EluGrad";
 constexpr const char kNameTensorScatterUpdate[] = "TensorScatterUpdate";
 constexpr const char kNameTensorScatterElements[] = "TensorScatterElements";
 constexpr const char kNameTensorScatterAdd[] = "TensorScatterAdd";
+constexpr const char kNameTensorScatterSub[] = "TensorScatterSub";
+constexpr const char kNameTensorScatterMin[] = "TensorScatterMin";
+constexpr const char kNameTensorScatterMax[] = "TensorScatterMax";
 constexpr const char kNameTriu[] = "Triu";
 constexpr const char kNameScatterElements[] = "ScatterElements";
 constexpr const char kNameNonZero[] = "NonZero";
@@ -511,6 +514,10 @@ constexpr const char kNameMatMulAllReduce[] = "MatMulAllReduce";
 constexpr const char kNameGamma[] = "Gamma";
 constexpr const char kNameIgamma[] = "Igamma";
 constexpr const char kNamePoisson[] = "Poisson";
+constexpr const char kNamePolar[] = "Polar";
+constexpr const char kNameReal[] = "Real";
+constexpr const char kNameLogUniformCandidateSampler[] = "LogUniformCandidateSampler";
+constexpr const char kNameCoalesce[] = "Coalesce";
 
 class OpAdapterDesc;
 

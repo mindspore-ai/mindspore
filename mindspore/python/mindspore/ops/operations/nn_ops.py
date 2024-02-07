@@ -1437,6 +1437,7 @@ class MaxPoolV1(Primitive):
         self.add_prim_attr("kernel_size", kernel_size_adapted)
         self.add_prim_attr("strides", strides_adapted)
 
+
 class MaxPool3D(Primitive):
     r"""
     Applies a 3D max pooling over an input Tensor which can be regarded as a composition of 3D planes.
@@ -2446,7 +2447,7 @@ class MultiMarginLoss(Primitive):
           or float64.
         - **target** (Tensor) - Ground truth labels, with shape :math:`(N,)`. Data type only support int64. The
           value of target should be non-negative, less than C.
-        - **weight** (Tensor) - The rescaling weight to each class with shape :math:`(C,)`. Data type only
+        - **weight** (Tensor, optional) - The rescaling weight to each class with shape :math:`(C,)`. Data type only
           support float16, float32 or float64.
 
     Outputs:
@@ -2468,6 +2469,11 @@ class MultiMarginLoss(Primitive):
         >>> print(output)
         0.6666667
     """
+    __mindspore_signature__ = (
+        sig.make_sig('x'),
+        sig.make_sig('target'),
+        sig.make_sig('weight', default=None)
+    )
 
     @prim_attr_register
     def __init__(self, p=1, margin=1.0, reduction="mean"):
@@ -7770,8 +7776,10 @@ class Dilation2D(Primitive):
         self.pad_mode = validator.check_string(pad_mode, ['VALID', 'SAME', 'valid', 'same'], 'pad_mode', self.name)
         self.add_prim_attr('pad_mode', self.pad_mode.upper())
         self.stride = _check_format_stride_or_dilation("stride", stride, self.name, self.data_format)
+
         def is_in_range(x):
             return 1 <= x <= 255
+
         if not is_in_range(self.stride[2]) or not is_in_range(self.stride[3]):
             raise ValueError(f'For Dilation2D, size of stride is not supported, '
                              f'stride should be in the range of [1, 255], '
@@ -9967,9 +9975,9 @@ class PromptFlashAttention(Primitive):
           Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
         - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or float32.
           For each element, 0 indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, 1, S, S)`.
-        - **pse_shift** (Tensor) - The position encoding tensor with data type of float16 or float32
         - **actual_seq_lengths** (Tensor): Describe actual sequence length of each input with data type of int64.
         - **actual_seq_lengths_kv** (Tensor): Describe actual sequence length of each input with data type of int64.
+        - **pse_shift** (Tensor) - The position encoding tensor with data type of float16 or float32.
         - **dep_scale1** (Tensor)
         - **quant_scale1** (Tensor)
         - **deq_scale2** (Tensor)
@@ -9996,13 +10004,13 @@ class PromptFlashAttention(Primitive):
         >>> attn_mask = Tensor(np.ones((B, 1, S, S), dtype=np.float16))
         >>> pfa = P.PromptFlashAttention(N, input_layout='BNSD')
         >>> out = pfa(query, key, value, attn_mask, None, None, None, None, None, None, None, None)
-        >>> print(out[0].shape)
+        >>> print(out.shape)
         (1, 16, 256, 16)
     """
 
     @prim_attr_register
     def __init__(self, num_heads, scale_value=1.0, pre_tokens=214748647, next_tokens=0, input_layout='BSH',
-                 num_key_value_heads=1, sparse_mode=0, inner_precise=1):
+                 num_key_value_heads=0, sparse_mode=0, inner_precise=1):
         """Initialize PromptFlashAttention."""
         validator.check_value_type('num_heads', num_heads, [int], self.name)
         validator.check_value_type('scale_value', scale_value, [float], self.name)
@@ -10012,9 +10020,9 @@ class PromptFlashAttention(Primitive):
         validator.check_value_type('num_key_value_heads', num_key_value_heads, [int], self.name)
         validator.check_value_type('sparse_mode', sparse_mode, [int], self.name)
         validator.check_value_type('inner_precise', inner_precise, [int], self.name)
-        self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "pse_shift", "actual_seq_lengths",
-                                        "actual_seq_lengths_kv", "deq_scale1", "quant_scale1", "deq_scale2",
-                                        "quant_scale2", "quant_offset2"],
+        self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "actual_seq_lengths",
+                                        "actual_seq_lengths_kv", "pse_shift", "deq_scale1", "quant_scale1",
+                                        "deq_scale2", "quant_scale2", "quant_offset2"],
                                 outputs=["attention_out"])
 
 class IncreFlashAttention(Primitive):
@@ -10148,3 +10156,40 @@ class FlashAttentionScore(Primitive):
         self.init_prim_io_names(
             inputs=['query', 'key', 'value', 'attn_mask', 'drop_mask', 'real_shift', 'padding_mask', 'prefix'],
             outputs=['attention_out', 'softmax_max', 'softmax_sum'])
+
+
+class RmsNorm(Primitive):
+    r"""
+    The RmsNorm operator is a normalization operation, and its formula is:
+
+    .. math::
+        y=\frac{x_i}{\sqrt{\frac{1}{n}}\sum_{i=1}^{n}{ x_i^2}+\varepsilon  }\gamma_i
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Args:
+        epsilon (float): prevent division by 0, default value is `1e-6`
+
+    Inputs:
+        - **input_x** (Tensor) - Input data of RmsNorm, support data type: float16, float32, bfloat16.
+        - **gamma** (Tensor) - Support data type: float16, float32, bfloat16.
+
+    Outputs:
+        - **y** (Tensor) - Has the same type and shape with `input_x`.
+        - **rstd** (Tensor) - Has the same type with `input_x`, used by gradient calculation.
+
+    Raises:
+        TypeError: If data type of `input_x` is not one of the following: float16, float32, bfloat16.
+        TypeError: If data type of `gamma` is not one of the following: float16, float32, bfloat16.
+        TypeError: If data type of "input_x" is not the same with the data type of "gamma"
+
+    Supported Platforms:
+        ``Ascend``
+    """
+
+    @prim_attr_register
+    def __init__(self, epsilon=1e-6):
+        """Initialize Dense."""
+        validator.check_value_type("epsilon", epsilon, [float], self.name)
+        self.init_prim_io_names(inputs=['x', 'gamma'], outputs=["y", "rstd"])

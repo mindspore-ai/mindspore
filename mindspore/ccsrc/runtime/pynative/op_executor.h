@@ -30,27 +30,21 @@
 #include "runtime/hardware/device_context.h"
 #include "runtime/graph_scheduler/graph_scheduler.h"
 #include "include/backend/visible.h"
-#include "runtime/pynative/async/device_task.h"
-#include "runtime/pynative/async/async_rqueue.h"
+#include "runtime/pipeline/task/device_task.h"
+#include "runtime/pipeline/async_rqueue.h"
 
 namespace mindspore::runtime {
 class BACKEND_EXPORT OpExecutor {
  public:
   static OpExecutor &GetInstance();
 
-  class ExecuteGuard {
-   public:
-    ExecuteGuard() { OpExecutor::GetInstance().executing_ = true; }
-    ~ExecuteGuard() { OpExecutor::GetInstance().executing_ = false; }
-  };
-
   void RegisterForwardCallback(const std::function<void()> &callback);
 
-  void PushOpRunTask(const std::shared_ptr<pynative::DeviceOpRunTask> &op_run_task);
+  void PushOpRunTask(const std::shared_ptr<DeviceOpRunTask> &op_run_task);
 
-  void PushOpRunTask(const std::shared_ptr<pynative::PyBoostDeviceTask> &op_run_task);
+  void PushOpRunTask(const std::shared_ptr<PyBoostDeviceTask> &op_run_task);
 
-  void PushSimpleOpRunTask(const std::shared_ptr<pynative::AsyncTask> &op_run_task);
+  void PushSimpleOpRunTask(const std::shared_ptr<AsyncTask> &op_run_task);
 
   bool RunQueueEmpty();
 
@@ -81,10 +75,6 @@ class BACKEND_EXPORT OpExecutor {
   DISABLE_COPY_AND_ASSIGN(OpExecutor);
 
   void WaitForRun();
-
-  pynative::AsyncRQueue async_queue_{"runop_device", pynative::kThreadWaitLevel::kLevelDevice};
-  inline static size_t kMaxQueueSize = 20;
-  bool executing_{false};
   std::function<void()> forward_callback_{nullptr};
 };
 }  // namespace mindspore::runtime

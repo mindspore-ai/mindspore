@@ -1,23 +1,23 @@
 asinh:
     description: |
         Computes inverse hyperbolic sine of the input element-wise.
-
+        
         .. math::
-
+        
             out_i = \sinh^{-1}(input_i)
-
+        
         Args:
             input (Tensor): The input tensor of inverse hyperbolic sine function.
-
+        
         Returns:
             Tensor, has the same shape and type as `input`.
-
+        
         Raises:
             TypeError: If `input` is not a Tensor.
-
+        
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-
+        
         Examples:
             >>> import mindspore
             >>> import numpy as np

@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_BARTLETT_WINDOW_H_
 #define AICPU_KERNELS_NORMALIZED_BARTLETT_WINDOW_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "utils/bcast.h"
 
 namespace aicpu {

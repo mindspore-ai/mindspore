@@ -181,6 +181,7 @@ bool ClusterContext::BuildCluster() {
     node_base_ = std::make_shared<topology::ComputeGraphNode>(node_id_, node_role_);
   }
   MS_EXCEPTION_IF_NULL(node_base_);
+  // For cgn, 'Initialize' will block until it connect to msn, or time out.
   RETURN_IF_FALSE_WITH_LOG(node_base_->Initialize(), "Failed to initialize the node.");
 
   // Check the state of topology construction.
@@ -189,7 +190,7 @@ bool ClusterContext::BuildCluster() {
     MsException::Instance().CheckException();
     return this->node_base_->Initialized();
   };
-  size_t retry_num = topology::GetClusterTimeoutRetryNum();
+  size_t retry_num = topology::GetClusterTimeout() / topology::kExecuteInterval;
   EXECUTE_WITH_RETRY(check_func, retry_num, topology::kExecuteInterval, "Topology build timed out.");
 
   MS_LOG(WARNING) << "Cluster is successfully initialized.";

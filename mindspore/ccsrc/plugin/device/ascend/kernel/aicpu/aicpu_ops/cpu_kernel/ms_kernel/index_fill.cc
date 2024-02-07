@@ -22,7 +22,7 @@
 
 #include "Eigen/Core"
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "common/kernel_log.h"
 #include "cpu_kernel/common/status.h"
 #include "utils/kernel_util.h"
@@ -226,5 +226,5 @@ uint32_t IndexFillCpuKernel::Compute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kIndexFill, IndexFillCpuKernel);
+REGISTER_MS_CPU_KERNEL(kIndexFill, IndexFillCpuKernel);
 }  // namespace aicpu

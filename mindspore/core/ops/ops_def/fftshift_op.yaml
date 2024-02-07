@@ -1,20 +1,14 @@
 #operator fftshift
 fftshift:
   args:
-    x:
+    input:
       dtype: tensor
-    axes:
+    dim:
       dtype: tuple[int]
       type_cast: int, list[int]
-      default: ()
-    forward:
-      dtype: bool
-      prim_init: True
-      default: True
+      default: None
   returns:
     output:
       dtype: tensor
   class:
     name: FFTShift
-  function:
-    disable: True

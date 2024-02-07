@@ -294,5 +294,5 @@ uint32_t MaxPoolCpuKernel::Compute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(MAXPOOL, MaxPoolCpuKernel);
+REGISTER_MS_CPU_KERNEL(MAXPOOL, MaxPoolCpuKernel);
 }  // namespace aicpu

@@ -14,10 +14,10 @@
 # ============================================================================
 import pytest
 import numpy as np
-import tests.st.ops.test_utils as test_utils
+from tests.st.utils import test_utils
 import mindspore as ms
 from mindspore import ops
-from mindspore.ops.auto_generate.gen_pyboost_func import log
+from mindspore.ops import log
 
 
 def generate_random_input(shape, dtype):

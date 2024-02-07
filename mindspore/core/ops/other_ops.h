@@ -77,6 +77,7 @@ GVAR_DEF(PrimitivePtr, kPrimMirrorMicroStep, std::make_shared<Primitive>("_Mirro
 GVAR_DEF(PrimitivePtr, kPrimBatchNormFold, std::make_shared<Primitive>("BatchNormFold"));
 GVAR_DEF(PrimitivePtr, kPrimFakeQuantWithMinMaxVarsPerChannel,
          std::make_shared<Primitive>("FakeQuantWithMinMaxVarsPerChannel"));
+GVAR_DEF(PrimitivePtr, kPrimQuant, std::make_shared<Primitive>("Quant"));
 
 // RL Ops
 GVAR_DEF(PrimitivePtr, kPrimTensorArrayStack, std::make_shared<Primitive>("TensorArrayStack"));
@@ -99,8 +100,6 @@ GVAR_DEF(PrimitivePtr, kPrimBufferAppend, std::make_shared<Primitive>("BufferApp
 GVAR_DEF(PrimitivePtr, kPrimNPUGetFloatStatus, std::make_shared<Primitive>("NPUGetFloatStatus"));
 GVAR_DEF(PrimitivePtr, kPrimNPUAllocFloatStatus, std::make_shared<Primitive>("NPUAllocFloatStatus"));
 GVAR_DEF(PrimitivePtr, kPrimNPUClearFloatStatus, std::make_shared<Primitive>("NPUClearFloatStatus"));
-GVAR_DEF(PrimitivePtr, kPrimNPUGetFloatStatusV2, std::make_shared<Primitive>("NPUGetFloatStatusV2"));
-GVAR_DEF(PrimitivePtr, kPrimNPUClearFloatStatusV2, std::make_shared<Primitive>("NPUClearFloatStatusV2"));
 GVAR_DEF(PrimitivePtr, kPrimNPUAntiQuant, std::make_shared<Primitive>("AscendAntiQuant"));
 
 // Fusion Inference OP

@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "cpu_kernel_utils.h"
 #include "kernel_log.h"
 #include "securec.h"

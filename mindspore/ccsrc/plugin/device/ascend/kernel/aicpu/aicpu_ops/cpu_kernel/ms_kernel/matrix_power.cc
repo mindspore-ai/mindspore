@@ -128,5 +128,5 @@ uint32_t MatrixPowerCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
   return status;
 }
 
-REGISTER_CPU_KERNEL(kMatrixPower, MatrixPowerCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMatrixPower, MatrixPowerCpuKernel);
 }  // namespace aicpu

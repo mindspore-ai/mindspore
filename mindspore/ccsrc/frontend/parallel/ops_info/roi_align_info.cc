@@ -166,9 +166,11 @@ Status ROIAlignInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   auto strided_slice = gen_g.PushBack(
     {gen_g.NewOpInst(STRIDEDSLICE, strided_slice_attrs), gen_g.virtual_input_node(), begin, end, strides});
   auto dtype_rois = gen_g.PushBack({gen_g.NewOpInst(DTYPE), gen_g.virtual_input_node()});
-  auto cast_bias = gen_g.PushBack({gen_g.NewOpInst(CAST), CreateInt32Tensor(bias_), dtype_rois});
+  auto dtype_id_rois = gen_g.PushBack(
+    {gen_g.NewOpInst(DTYPETOENUM), CreateStringImm("DtypeToEnum"), CreateStringImm("dtype"), dtype_rois});
+  auto cast_bias = gen_g.PushBack({gen_g.NewOpInst(CAST), CreateInt32Tensor(bias_), dtype_id_rois});
   auto cast_slice_max_index =
-    gen_g.PushBack({gen_g.NewOpInst(CAST), CreateInt32Tensor(features_slice_size_ - 1), dtype_rois});
+    gen_g.PushBack({gen_g.NewOpInst(CAST), CreateInt32Tensor(features_slice_size_ - 1), dtype_id_rois});
   auto sub = gen_g.PushBack({gen_g.NewOpInst(SUB), strided_slice, cast_bias});
   auto relu = gen_g.PushBack({gen_g.NewOpInst(RELU), sub});
   auto minimum = gen_g.PushBack({gen_g.NewOpInst(MINIMUM), relu, cast_slice_max_index});
@@ -182,7 +184,9 @@ Status ROIAlignInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
     gen_g.PushBack({gen_g.NewOpInst(ROI_ALIGN, roi_align_attrs), gen_g.virtual_input_node(), tensor_scatter_update});
   auto equal = gen_g.PushBack({gen_g.NewOpInst(EQUAL), sub, minimum});
   auto dtype_features = gen_g.PushBack({gen_g.NewOpInst(DTYPE), gen_g.virtual_input_node()});
-  auto cast_equal = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype_features});
+  auto dtype_id_features = gen_g.PushBack(
+    {gen_g.NewOpInst(DTYPETOENUM), CreateStringImm("DtypeToEnum"), CreateStringImm("dtype"), dtype_features});
+  auto cast_equal = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype_id_features});
   auto expand_dims_0 = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), cast_equal, CreatInt64Imm(-1)});
   auto expand_dims_1 = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), expand_dims_0, CreatInt64Imm(-1)});
   auto expand_dims_2 = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), expand_dims_1, CreatInt64Imm(-1)});

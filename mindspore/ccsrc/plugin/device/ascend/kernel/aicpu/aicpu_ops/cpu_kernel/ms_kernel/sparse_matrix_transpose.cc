@@ -343,5 +343,5 @@ uint32_t SparseMatrixTransposeCpuKernel::SparseMatrixTransposeComputecomplex(con
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(SPARSEMATRIXTRANSPOSE, SparseMatrixTransposeCpuKernel);
+REGISTER_MS_CPU_KERNEL(SPARSEMATRIXTRANSPOSE, SparseMatrixTransposeCpuKernel);
 }  // namespace aicpu

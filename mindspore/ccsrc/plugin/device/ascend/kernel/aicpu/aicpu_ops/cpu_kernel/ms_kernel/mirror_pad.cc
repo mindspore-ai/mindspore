@@ -148,11 +148,15 @@ uint32_t MirrorPadCpuKernel::MirrorPadCompute(T *input_data_ptr, T *output_data_
     index[i - 1].second = index[i].second + output_strides_[i - 1] * padding_[i - 1].second;
   }
   if (dims_ == 1) {
-    memcpy_s(output_data_ptr, padding_[0].first * sizeof(T), input_data_ptr + offset_, padding_[0].first * sizeof(T));
-    memcpy_s(output_data_ptr + padding_[0].first + input_num_elements, padding_[0].second * sizeof(T),
-             input_data_ptr + input_num_elements - padding_[0].second - offset_, padding_[0].second * sizeof(T));
-    memcpy_s(output_data_ptr + padding_[0].first, input_num_elements * sizeof(T), input_data_ptr,
-             input_num_elements * sizeof(T));
+    auto ret1 =
+      memcpy_s(output_data_ptr, padding_[0].first * sizeof(T), input_data_ptr + offset_, padding_[0].first * sizeof(T));
+    auto ret2 =
+      memcpy_s(output_data_ptr + padding_[0].first + input_num_elements, padding_[0].second * sizeof(T),
+               input_data_ptr + input_num_elements - padding_[0].second - offset_, padding_[0].second * sizeof(T));
+    auto ret3 = memcpy_s(output_data_ptr + padding_[0].first, input_num_elements * sizeof(T), input_data_ptr,
+                         input_num_elements * sizeof(T));
+    KERNEL_CHECK_FALSE((ret1 == EOK && ret2 == EOK && ret3 == EOK), KERNEL_STATUS_INNER_ERROR,
+                       "For 'MirrorPad', memcpy_s failed.");
     std::reverse(output_data_ptr, output_data_ptr + padding_[0].first);
     std::reverse(output_data_ptr + padding_[0].first + input_num_elements,
                  output_data_ptr + padding_[0].first + input_num_elements + padding_[0].second);
@@ -167,7 +171,8 @@ uint32_t MirrorPadCpuKernel::MirrorPadCompute(T *input_data_ptr, T *output_data_
   int64_t inx = 0;
   int64_t copy_size = sizeof(T) * input_dim_shape[dims_ - 1];
   while (inx < input_num_elements) {
-    memcpy_s(output_data_ptr + output_index, copy_size, input_data_ptr + inx, copy_size);
+    auto ret = memcpy_s(output_data_ptr + output_index, copy_size, input_data_ptr + inx, copy_size);
+    KERNEL_CHECK_FALSE((ret == EOK), KERNEL_STATUS_INNER_ERROR, "For 'MirrorPad', memcpy_s failed.");
     output_pos.push_back(output_index);
     pos[dims_ - kTwo] += 1;
     int64_t dep = dims_ - 1;
@@ -190,13 +195,15 @@ uint32_t MirrorPadCpuKernel::MirrorPadCompute(T *input_data_ptr, T *output_data_
     for (auto item : output_pos) {
       T *base_output_ptr1 = output_data_ptr + item;
       for (int64_t cnt = 1; cnt <= padding_[i].first; ++cnt) {
-        memcpy_s(base_output_ptr1 - cnt * block_size, copy_size, base_output_ptr1 + (cnt - 1 + offset_) * block_size,
-                 copy_size);
+        auto ret = memcpy_s(base_output_ptr1 - cnt * block_size, copy_size,
+                            base_output_ptr1 + (cnt - 1 + offset_) * block_size, copy_size);
+        KERNEL_CHECK_FALSE((ret == EOK), KERNEL_STATUS_INNER_ERROR, "For 'MirrorPad', memcpy_s failed.");
       }
       T *base_output_ptr2 = output_data_ptr + item + input_dim_shape[i] * block_size;
       for (int64_t cnt = 1; cnt <= padding_[i].second; ++cnt) {
-        memcpy_s(base_output_ptr2 + (cnt - 1) * block_size, copy_size, base_output_ptr2 - (cnt + offset_) * block_size,
-                 copy_size);
+        auto ret = memcpy_s(base_output_ptr2 + (cnt - 1) * block_size, copy_size,
+                            base_output_ptr2 - (cnt + offset_) * block_size, copy_size);
+        KERNEL_CHECK_FALSE((ret == EOK), KERNEL_STATUS_INNER_ERROR, "For 'MirrorPad', memcpy_s failed.");
       }
       if (i > 0 && count % input_dim_shape[i - 1] == 0) {
         tmp_pos.push_back(item - padding_[i].first * block_size);
@@ -252,5 +259,5 @@ uint32_t MirrorPadCpuKernel::Compute(CpuKernelContext &ctx) {
   }
 }
 
-REGISTER_CPU_KERNEL(kMirrorPad, MirrorPadCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMirrorPad, MirrorPadCpuKernel);
 }  // namespace aicpu

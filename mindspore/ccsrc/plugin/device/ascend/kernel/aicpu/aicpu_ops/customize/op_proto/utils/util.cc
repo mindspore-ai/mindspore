@@ -30,19 +30,9 @@
 #include "error_util.h"
 #include "./vector_proto_profiling.h"
 #include "op_common_util.h"
-#include "graph/utils/type_utils.h"
 
 namespace ge {
 using namespace std;
-
-ge::graphStatus UpdateOutputDesc(Operator &op, TensorDesc &output_desc) {
-  auto output_name = output_desc.GetName();
-  if (op.UpdateOutputDesc(output_name, output_desc) == GRAPH_FAILED) {
-    OP_LOGE(op.GetName().c_str(), "Update output_desc '%s' failed.", output_name.c_str());
-    return GRAPH_FAILED;
-  }
-  return GRAPH_SUCCESS;
-}
 
 bool GetInputDataType(const ge::DataType &data_type, const std::vector<ge::DataType> &supportList) {
   std::vector<ge::DataType>::const_iterator supportIter = find(supportList.begin(), supportList.end(), data_type);
@@ -99,8 +89,7 @@ bool CheckInputDataType(const Operator &op, const std::string &input_name,
 
   if (!valid) {
     VECTOR_INFER_SHAPE_INNER_ERR_REPORT(
-      TbeGetName(op),
-      OtherErrMsg(ConcatString("The op do not support the dtype", ge::TypeUtils::DataTypeToSerialString(input_type))));
+      TbeGetName(op), OtherErrMsg(ConcatString("The op do not support the dtype", GeDataTypeToString(input_type))));
     return false;
   }
 
@@ -112,9 +101,9 @@ bool CheckTwoInputDtypeSame(const Operator &op, const string &input_name1, const
   DataType input_type_x2 = op.GetInputDesc(input_name2).GetDataType();
   if (input_type_x1 != input_type_x2) {
     VECTOR_INFER_SHAPE_INNER_ERR_REPORT(
-      TbeGetName(op), OtherErrMsg(ConcatString("The ", TbeGetName(op), " op dtype is not same, type1:",
-                                               ge::TypeUtils::DataTypeToSerialString(input_type_x1),
-                                               ", type2:", ge::TypeUtils::DataTypeToSerialString(input_type_x2))));
+      TbeGetName(op), OtherErrMsg(ConcatString("The ", TbeGetName(op),
+                                               " op dtype is not same, type1:", GeDataTypeToString(input_type_x1),
+                                               ", type2:", GeDataTypeToString(input_type_x2))));
     return false;
   }
 
@@ -128,9 +117,8 @@ bool CheckInputDtypeSame(const Operator &op, const std::vector<std::string> &inp
     const TensorDesc input_desc = op.GetInputDescByName(input_name.c_str());
     auto input_dtype = input_desc.GetDataType();
     if (input_dtype != first_input_dtype) {
-      auto error_ms = ConcatString("dtype of inputs must be same, ", input_name, ":",
-                                   ge::TypeUtils::DataTypeToSerialString(input_dtype), ", ", (*first_name), ":",
-                                   ge::TypeUtils::DataTypeToSerialString(first_input_dtype), ".");
+      auto error_ms = ConcatString("dtype of inputs must be same, ", input_name, ":", GeDataTypeToString(input_dtype),
+                                   ", ", (*first_name), ":", GeDataTypeToString(first_input_dtype), ".");
       VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg(error_ms));
       return false;
     }
@@ -328,54 +316,6 @@ bool InferBroadcastshapeForStatic(const Shape &shape_x, const Shape &shape_y, Sh
   return true;
 }
 
-bool InferShapeAndTypeTwoInOneOutBroadcast(Operator &op, const int64_t &input_idx_1, const int64_t &input_idx_2,
-                                           const int64_t &output_idx, bool &is_dynamic) {
-  PROFILING_PROTO_INIT(TbeGetName(op).c_str());
-  auto tensordesc_input_1 = op.GetInputDesc(input_idx_1);
-  auto tensordesc_input_2 = op.GetInputDesc(input_idx_2);
-  auto tensordesc_output = op.GetOutputDesc(output_idx);
-
-  // set output
-  DataType input_dtype = tensordesc_input_1.GetDataType();
-  tensordesc_output.SetDataType(input_dtype);
-
-  const Shape &shape_x = tensordesc_input_1.GetShape();
-  const Shape &shape_y = tensordesc_input_2.GetShape();
-  OP_LOGI(TbeGetName(op).c_str(), "shape_1: %s, shape_2: %s.", to_string(shape_x).c_str(), to_string(shape_y).c_str());
-
-  PROFILING_PROTO_AFTER_GET_SHAPE_REG();
-
-  if (IsUnknownRankShape(shape_x) || IsUnknownRankShape(shape_y)) {
-    OP_LOGI(TbeGetName(op).c_str(), "do unknownrank infershape for Broadcast");
-    tensordesc_output.SetShape(Shape(UNKNOWN_RANK));
-    is_dynamic = false;
-    return true;
-  }
-  // do static infershape start
-  if ((!IsUnknownShape(shape_x)) && (!IsUnknownShape(shape_y))) {
-    OP_LOGI(TbeGetName(op).c_str(), "do static infershape for Broadcast");
-    Shape shape_output;
-    CHECK(!InferBroadcastshapeForStatic(shape_x, shape_y, shape_output),
-          VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg("infershape failed.")), return false);
-    OP_LOGI(TbeGetName(op).c_str(), "output shape is: %s, output dtype is:%s.", to_string(shape_output).c_str(),
-            ge::TypeUtils::DataTypeToSerialString(input_dtype).c_str());
-    tensordesc_output.SetShape(shape_output);
-    is_dynamic = false;
-    PROFILING_PROTO_AFTER_INFER_SHAPE_REG();
-    PROFILING_PROTO_END();
-    return true;
-  }
-  // do static infershape end
-
-  // dynamic case
-  auto input_name1 = op.GetInputDesc(input_idx_1).GetName();
-  auto input_name2 = op.GetInputDesc(input_idx_2).GetName();
-  auto output_name = op.GetInputDesc(output_idx).GetName();
-  OP_LOGI(TbeGetName(op).c_str(), "get the input name by idx is  %s vs %s vs %s", input_name1.c_str(),
-          input_name2.c_str(), output_name.c_str());
-  return InferShapeAndTypeTwoInOneOutBroadcast(op, input_name1, input_name2, output_name, is_dynamic);
-}
-
 bool InferShapeAndTypeTwoInOneOutBroadcast(Operator &op, const string &input_name1, const string &input_name2,
                                            const string &output_name, bool &is_dynamic) {
   PROFILING_PROTO_INIT(TbeGetName(op).c_str());
@@ -405,7 +345,7 @@ bool InferShapeAndTypeTwoInOneOutBroadcast(Operator &op, const string &input_nam
     OP_LOGI(TbeGetName(op).c_str(), "output shape is: %s, output dtype is:%d.",
             to_string(ge::Shape(UNKNOWN_RANK)).c_str(), input_dtype);
     is_dynamic = false;
-    op.UpdateOutputDesc(tensordesc_output.GetName(), tensordesc_output);
+    op.UpdateOutputDesc(output_name, tensordesc_output);
     return true;
   }
 
@@ -428,7 +368,7 @@ bool InferShapeAndTypeTwoInOneOutBroadcast(Operator &op, const string &input_nam
     PROFILING_PROTO_AFTER_INFER_SHAPE_REG();
     tensordesc_output.SetShape(ge::Shape(dimVec));
     is_dynamic = false;
-    op.UpdateOutputDesc(tensordesc_output.GetName(), tensordesc_output);
+    op.UpdateOutputDesc(output_name, tensordesc_output);
     PROFILING_PROTO_END();
     return true;
   }
@@ -484,14 +424,14 @@ bool InferShapeAndTypeTwoInOneOutBroadcast(Operator &op, const string &input_nam
   tensordesc_output.SetShape(outputShape);
 
   OP_LOGI(TbeGetName(op).c_str(), "output shape is: %s, output dtype is:%s.", to_string(outputShape).c_str(),
-          ge::TypeUtils::DataTypeToSerialString(input_dtype).c_str());
+          GeDataTypeToString(input_dtype).c_str());
   is_dynamic = IsUnknown(dimVec);
   if (is_dynamic) {
     if (!InferShapeRangeTwoInOneOutBroadcast(op, input_name1, input_name2, output_name)) {
       return false;
     }
   }
-  op.UpdateOutputDesc(tensordesc_output.GetName(), tensordesc_output);
+  op.UpdateOutputDesc(output_name, tensordesc_output);
   return true;
 }
 
@@ -522,7 +462,7 @@ bool InferShapeAndTypeTwoInOneOutBroadcast(Operator &op, const string &input_nam
     tensordesc_output.SetDataType(input_dtype);
     OP_LOGI(TbeGetName(op).c_str(), "output shape is: %s, output dtype is:%d.",
             to_string(ge::Shape(UNKNOWN_RANK)).c_str(), input_dtype);
-    op.UpdateOutputDesc(tensordesc_output.GetName(), tensordesc_output);
+    op.UpdateOutputDesc(output_name, tensordesc_output);
     return true;
   }
 
@@ -584,13 +524,13 @@ bool InferShapeAndTypeTwoInOneOutBroadcast(Operator &op, const string &input_nam
   tensordesc_output.SetShape(outputShape);
   tensordesc_output.SetDataType(input_dtype);
   OP_LOGI(TbeGetName(op).c_str(), "output shape is: %s, output dtype is:%s.", to_string(outputShape).c_str(),
-          ge::TypeUtils::DataTypeToSerialString(input_dtype).c_str());
-  op.UpdateOutputDesc(tensordesc_output.GetName(), tensordesc_output);
+          GeDataTypeToString(input_dtype).c_str());
+  op.UpdateOutputDesc(output_name, tensordesc_output);
 
   return true;
 }
 
-std::string ToFormatString(ge::Format format) { return ge::TypeUtils::FormatToSerialString(format); }
+std::string ToFormatString(ge::Format format) { return GeFormatToString(format); }
 
 static void AddToOutputRange(std::vector<std::pair<int64_t, int64_t>> &out_range,
                              const std::pair<int64_t, int64_t> &shape_range_x,
@@ -759,8 +699,7 @@ bool GetConstIntData(const Tensor &data, DataType data_type, std::vector<int64_t
 
   auto found = type_call_map.find(data_type);
   if (found == type_call_map.end()) {
-    USER_GE_LOGE("[ERROR]GetConstIntData is not support data_type[%s]!",
-                 ge::TypeUtils::DataTypeToSerialString(data_type).c_str());
+    USER_GE_LOGE("[ERROR]GetConstIntData is not support data_type[%s]!", GeDataTypeToString(data_type).c_str());
     return false;
   }
 
@@ -822,104 +761,111 @@ bool GetScalerValue(const Operator &op, const Tensor &const_tensor, const DataTy
   return true;
 }
 
-string to_string(const vector<int64_t> &shape) { return ops::to_string(shape); }
+std::string to_string(const std::vector<int64_t> &shape) { return ops::to_string(shape); }
 
 std::string to_string(const ge::Shape &shape) { return to_string(shape.GetDims()); }
 
-bool DynamicShapeInfer::UpdateFormatAndShape() {
-  const int64_t opImplType = EN_IMPL_CUSTOM_TBE;
-  TensorDesc tensor_desc_input;
-  TensorDesc tensor_desc_output;
-  // assign output's after infershape to origin shape
-  for (map<std::string, uint32_t>::iterator it = outputs.begin(); it != outputs.end(); ++it) {
-    tensor_desc_output = op.GetOutputDesc(it->first);
-    tensor_desc_output.SetOriginShape(tensor_desc_output.GetShape());
-    op.UpdateOutputDesc(tensor_desc_output.GetName(), tensor_desc_output);
+std::string to_string(const std::vector<std::pair<int64_t, int64_t>> &ranges) { return ops::to_string(ranges); }
+
+static std::map<ge::DataType, std::string> kDataTypeToStringMap = {{ge::DataType::DT_FLOAT, "float"},
+                                                                   {ge::DataType::DT_FLOAT16, "float16"},
+                                                                   {ge::DataType::DT_INT8, "int8"},
+                                                                   {ge::DataType::DT_INT16, "int16"},
+                                                                   {ge::DataType::DT_UINT16, "uint16"},
+                                                                   {ge::DataType::DT_UINT8, "uint8"},
+                                                                   {ge::DataType::DT_INT32, "int32"},
+                                                                   {ge::DataType::DT_INT64, "int64"},
+                                                                   {ge::DataType::DT_UINT32, "uint32"},
+                                                                   {ge::DataType::DT_UINT64, "uint64"},
+                                                                   {ge::DataType::DT_BOOL, "bool"},
+                                                                   {ge::DataType::DT_DOUBLE, "double"},
+                                                                   {ge::DataType::DT_STRING, "string"},
+                                                                   {ge::DataType::DT_DUAL_SUB_INT8, "dual_sub_int8"},
+                                                                   {ge::DataType::DT_DUAL_SUB_UINT8, "dual_sub_uint8"},
+                                                                   {ge::DataType::DT_COMPLEX64, "complex64"},
+                                                                   {ge::DataType::DT_COMPLEX128, "complex128"},
+                                                                   {ge::DataType::DT_DUAL, "dual"},
+                                                                   {ge::DataType::DT_QINT8, "qint8"},
+                                                                   {ge::DataType::DT_QINT16, "qint16"},
+                                                                   {ge::DataType::DT_QINT32, "qint32"},
+                                                                   {ge::DataType::DT_QUINT8, "quint8"},
+                                                                   {ge::DataType::DT_QUINT16, "quint16"},
+                                                                   {ge::DataType::DT_RESOURCE, "resource"},
+                                                                   {ge::DataType::DT_STRING_REF, "string ref"},
+                                                                   {ge::DataType::DT_VARIANT, "dt_variant"},
+                                                                   {ge::DataType::DT_UNDEFINED, "undefined"},
+                                                                   {ge::DataType::DT_INT4, "int4"},
+                                                                   {ge::DataType::DT_UINT1, "uint1"},
+                                                                   {ge::DataType::DT_INT2, "int2"},
+                                                                   {ge::DataType::DT_UINT2, "uint2"},
+                                                                   {ge::DataType::DT_COMPLEX32, "complex32"},
+                                                                   {ge::DataType::DT_BF16, "bf16"}};
+
+static std::map<ge::Format, std::string> kFormatToStringMap = {
+  {ge::Format::FORMAT_NCHW, "NCHW"},
+  {ge::Format::FORMAT_NHWC, "NHWC"},
+  {ge::Format::FORMAT_ND, "Nd"},
+  {ge::Format::FORMAT_NC1HWC0, "NC1HWC0"},
+  {ge::Format::FORMAT_FRACTAL_Z, "FRACTAL_Z"},
+  {ge::Format::FORMAT_NC1C0HWPAD, "NC1C0HWPAD"},
+  {ge::Format::FORMAT_NHWC1C0, "NHWC1C0"},
+  {ge::Format::FORMAT_FSR_NCHW, "FSR_NCHW"},
+  {ge::Format::FORMAT_FRACTAL_DECONV, "FRACTAL_DECONV"},
+  {ge::Format::FORMAT_C1HWNC0, "C1HWNC0"},
+  {ge::Format::FORMAT_FRACTAL_DECONV_TRANSPOSE, "FRACTAL_DECONV_TRANSPOSE"},
+  {ge::Format::FORMAT_FRACTAL_DECONV_SP_STRIDE_TRANS, "FRACTAL_DECONV_SP_STRIDE_TRANS"},
+  {ge::Format::FORMAT_NC1HWC0_C04, "NC1HWC0_C04"},
+  {ge::Format::FORMAT_FRACTAL_Z_C04, "FRACTAL_Z_C04"},
+  {ge::Format::FORMAT_CHWN, "CHWN"},
+  {ge::Format::FORMAT_FRACTAL_DECONV_SP_STRIDE8_TRANS, "FRACTAL_DECONV_SP_STRIDE8_TRANS"},
+  {ge::Format::FORMAT_HWCN, "HWCN"},
+  {ge::Format::FORMAT_NC1KHKWHWC0, "NC1KHKWHWC0"},
+  {ge::Format::FORMAT_BN_WEIGHT, "BN_WEIGHT"},
+  {ge::Format::FORMAT_FILTER_HWCK, "FILTER_HWCK"},
+  {ge::Format::FORMAT_HASHTABLE_LOOKUP_LOOKUPS, "HASHTABLE_LOOKUP_LOOKUPS"},
+  {ge::Format::FORMAT_HASHTABLE_LOOKUP_KEYS, "HASHTABLE_LOOKUP_KEYS"},
+  {ge::Format::FORMAT_HASHTABLE_LOOKUP_VALUE, "HASHTABLE_LOOKUP_VALUE"},
+  {ge::Format::FORMAT_HASHTABLE_LOOKUP_OUTPUT, "HASHTABLE_LOOKUP_OUTPUT"},
+  {ge::Format::FORMAT_HASHTABLE_LOOKUP_HITS, "HASHTABLE_LOOKUP_HITS"},
+  {ge::Format::FORMAT_C1HWNCoC0, "C1HWNCoC0"},
+  {ge::Format::FORMAT_MD, "MD"},
+  {ge::Format::FORMAT_NDHWC, "NDHWC"},
+  {ge::Format::FORMAT_FRACTAL_ZZ, "FRACTAL_ZZ"},
+  {ge::Format::FORMAT_FRACTAL_NZ, "FRACTAL_NZ"},
+  {ge::Format::FORMAT_NCDHW, "NCDHW"},
+  {ge::Format::FORMAT_DHWCN, "DHWCN"},
+  {ge::Format::FORMAT_NDC1HWC0, "NDC1HWC0"},
+  {ge::Format::FORMAT_FRACTAL_Z_3D, "FRACTAL_Z_3D"},
+  {ge::Format::FORMAT_CN, "CN"},
+  {ge::Format::FORMAT_NC, "NC"},
+  {ge::Format::FORMAT_DHWNC, "DHWNC"},
+  {ge::Format::FORMAT_FRACTAL_Z_3D_TRANSPOSE, "FRACTAL_Z_3D_TRANSPOSE"},
+  {ge::Format::FORMAT_FRACTAL_ZN_LSTM, "FRACTAL_ZN_LSTM"},
+  {ge::Format::FORMAT_FRACTAL_Z_G, "FRACTAL_Z_G"},
+  {ge::Format::FORMAT_RESERVED, "RESERVED"},
+  {ge::Format::FORMAT_ALL, "ALL"},
+  {ge::Format::FORMAT_NULL, "NULL"},
+  {ge::Format::FORMAT_ND_RNN_BIAS, "ND_RNN_BIAS"},
+  {ge::Format::FORMAT_FRACTAL_ZN_RNN, "FRACTAL_ZN_RNN"},
+  {ge::Format::FORMAT_NYUV, "NYUV"},
+  {ge::Format::FORMAT_NYUV_A, "NYUV_A"},
+  {ge::Format::FORMAT_NCL, "NCL"},
+  {ge::Format::FORMAT_FRACTAL_Z_WINO, "FRACTAL_Z_WINO"}};
+
+std::string GeDataTypeToString(const ge::DataType datatype) {
+  auto iter = kDataTypeToStringMap.find(datatype);
+  if (iter != kDataTypeToStringMap.end()) {
+    return iter->second;
   }
+  return "";
+}
 
-  // transfer input's origin shape to current shape
-  Format ori_input_format;
-  Format cur_input_format;
-  Shape ori_infer_shape;
-  Shape current_shape;
-  std::string input_name;
-  for (map<std::string, uint32_t>::iterator it = inputs.begin(); it != inputs.end(); ++it) {
-    input_name = it->first;
-    tensor_desc_input = op.GetInputDesc(input_name);
-    ori_input_format = tensor_desc_input.GetFormat();
-    ori_infer_shape = tensor_desc_input.GetShape();
-    cur_input_format = map_format[input_name];
-
-    // print some info
-    OP_LOGI(TbeGetName(op).c_str(), "origin input shape %s is %s", input_name.c_str(),
-            to_string(ori_infer_shape).c_str());
-
-    ShapeAndFormat shapeAndFormatInfoInput = {ori_infer_shape,  current_shape,         ori_input_format,
-                                              cur_input_format, map_dtype[input_name], opImplType};
-    if (ori_input_format == cur_input_format) {
-      // no need to transfer shape
-      continue;
-    } else {
-      ShapeTransferAccordingToFormat *global_object = new (std::nothrow) ShapeTransferAccordingToFormat();
-      CHECK(
-        global_object == nullptr,
-        VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg("new ShapeTransferAccordingToFormat failed.")),
-        return false);
-      global_object->GetShapeAccordingToFormat(shapeAndFormatInfoInput);
-
-      // print some info
-      OP_LOGI(TbeGetName(op).c_str(), "current input shape %s is %s", input_name.c_str(),
-              to_string(current_shape).c_str());
-
-      tensor_desc_input.SetFormat(cur_input_format);
-      tensor_desc_input.SetShape(current_shape);
-      op.UpdateInputDesc(tensor_desc_input.GetName(), tensor_desc_input);
-      delete global_object;
-    }
+std::string GeFormatToString(const ge::Format format) {
+  auto iter = kFormatToStringMap.find(format);
+  if (iter != kFormatToStringMap.end()) {
+    return iter->second;
   }
-
-  // transfer output's origin shape to current shape
-  Format ori_output_format;
-  Format cur_output_format;
-  Shape ori_infer_out_shape;
-  Shape current_out_shape;
-  std::string output_name;
-  for (map<std::string, uint32_t>::iterator it = outputs.begin(); it != outputs.end(); ++it) {
-    output_name = it->first;
-    tensor_desc_output = op.GetOutputDesc(output_name);
-    ori_output_format = tensor_desc_output.GetFormat();
-    ori_infer_out_shape = tensor_desc_output.GetShape();
-    cur_output_format = map_format[output_name];
-
-    // print some info
-    OP_LOGI(TbeGetName(op).c_str(), "origin output shape %s is %s", output_name.c_str(),
-            to_string(ori_infer_out_shape).c_str());
-
-    ShapeAndFormat shapeAndFormatInfoOutput = {ori_infer_out_shape, current_out_shape,      ori_output_format,
-                                               cur_output_format,   map_dtype[output_name], opImplType};
-    if (ori_output_format == cur_output_format) {
-      // no need to transfer shape
-      continue;
-    } else {
-      ShapeTransferAccordingToFormat *global_object = new (std::nothrow) ShapeTransferAccordingToFormat();
-      CHECK(
-        global_object == nullptr,
-        VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg("new ShapeTransferAccordingToFormat failed.")),
-        return false);
-      global_object->GetShapeAccordingToFormat(shapeAndFormatInfoOutput);
-
-      // print some info
-      OP_LOGI(TbeGetName(op).c_str(), "current output shape %s is %s", output_name.c_str(),
-              to_string(current_out_shape).c_str());
-
-      tensor_desc_output.SetFormat(cur_output_format);
-      tensor_desc_output.SetShape(current_out_shape);
-      op.UpdateOutputDesc(tensor_desc_output.GetName(), tensor_desc_output);
-      delete global_object;
-    }
-  }
-
-  return true;
+  return "";
 }
 
 bool IsEmptyTensor(const std::vector<int64_t> &dims) {
@@ -1040,8 +986,8 @@ bool OneInOneOutDynamicInfer(Operator &op, const std::string &input_name,
       output_desc.SetOriginShape(Shape(input_shape));
       output_desc.SetShapeRange(input_range);
       output_desc.SetDataType(input_dtype);
+      op.UpdateOutputDesc(output_name, output_desc);
     }
-    op.UpdateOutputDesc(output_desc.GetName(), output_desc);
   } else {
     auto output_desc = op.GetOutputDesc(0);
     PROFILING_PROTO_AFTER_GET_SHAPE_REG();
@@ -1050,42 +996,7 @@ bool OneInOneOutDynamicInfer(Operator &op, const std::string &input_name,
       output_desc = op.GetOutputDesc(output_name);
       output_desc.SetShape(Shape(input_shape));
       output_desc.SetDataType(input_dtype);
-    }
-    PROFILING_PROTO_END();
-    op.UpdateOutputDesc(output_desc.GetName(), output_desc);
-  }
-  return true;
-}
-
-bool OneInOneOutDynamicInfer(Operator &op, const int64_t &input_idx, const std::vector<int64_t> &output_idx_list) {
-  // get input desc
-  PROFILING_PROTO_INIT(TbeGetName(op).c_str());
-  auto input_desc = op.GetInputDesc(input_idx);
-  const Shape &input_shape = input_desc.GetShape();
-  DataType input_dtype = input_desc.GetDataType();
-
-  if (IsUnknownShape(input_shape)) {
-    std::vector<std::pair<int64_t, int64_t>> input_range;
-    input_desc.GetShapeRange(input_range);
-    std::vector<int64_t> input_shape_vec = input_shape.GetDims();
-    MakeUpShapeRange(input_shape_vec, input_range);
-
-    for (const int64_t &output_idx : output_idx_list) {
-      auto output_desc = op.GetOutputDesc(output_idx);
-      output_desc.SetShape(input_shape);
-      output_desc.SetShapeRange(input_range);
-      output_desc.SetDataType(input_dtype);
-      op.UpdateOutputDesc(output_desc.GetName(), output_desc);
-    }
-
-  } else {
-    PROFILING_PROTO_AFTER_GET_SHAPE_REG();
-    PROFILING_PROTO_AFTER_INFER_SHAPE_REG();
-    for (const int64_t &output_idx : output_idx_list) {
-      auto output_desc = op.GetOutputDesc(output_idx);
-      output_desc.SetShape(input_shape);
-      output_desc.SetDataType(input_dtype);
-      op.UpdateOutputDesc(output_desc.GetName(), output_desc);
+      op.UpdateOutputDesc(output_name, output_desc);
     }
     PROFILING_PROTO_END();
   }

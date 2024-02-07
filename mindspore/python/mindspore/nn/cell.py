@@ -2612,7 +2612,7 @@ class GraphCell(Cell):
         self._add_attr("graph_load_from_mindir", self.graph)
         if not self.obf_random_seed:
             return self.compile_and_run(*args, **kwargs)
-        append_input = Tensor((numpy.ones((1, 1)) * self._branch_control_input).astype(numpy.int32))
+        append_input = Tensor((numpy.ones((1,)) * self._branch_control_input).astype(numpy.int32))
         return self.compile_and_run(*args, append_input, **kwargs)
 
 

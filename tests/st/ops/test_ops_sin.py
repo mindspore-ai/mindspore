@@ -16,9 +16,9 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops
-from mindspore.ops.auto_generate.gen_pyboost_func import sin
+from mindspore.ops import sin
 
-import tests.st.ops.test_utils as test_utils
+from tests.st.utils import test_utils
 
 
 def generate_random_input(shape, dtype):

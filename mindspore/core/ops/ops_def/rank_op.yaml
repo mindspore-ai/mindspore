@@ -1,7 +1,7 @@
 #operator rank
 rank:
     args:
-        x:
+        input_x:
             dtype: tensor
     returns:
         output:
@@ -9,4 +9,4 @@ rank:
     class:
         disable: true
     function:
-        disable: true
+        disable: True

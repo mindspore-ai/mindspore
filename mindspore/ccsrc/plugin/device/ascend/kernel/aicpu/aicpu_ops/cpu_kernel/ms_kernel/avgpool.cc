@@ -248,5 +248,5 @@ uint32_t AvgPoolCpuKernel::AvgPoolCompute(const CpuKernelContext &ctx) {
   return AvgPoolProcess<T>(ctx, args);
 }
 
-REGISTER_CPU_KERNEL(kAvgPool, AvgPoolCpuKernel);
+REGISTER_MS_CPU_KERNEL(kAvgPool, AvgPoolCpuKernel);
 }  // namespace aicpu

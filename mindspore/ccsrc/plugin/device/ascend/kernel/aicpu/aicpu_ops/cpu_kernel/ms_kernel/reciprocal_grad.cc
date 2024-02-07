@@ -21,7 +21,7 @@
 #include <algorithm>
 
 #include "common/cpu_kernel_utils.h"
-#include "inc/cpu_types.h"
+#include "cpu_types.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -152,5 +152,5 @@ uint32_t ReciprocalGradCpuKernel::ReciprocalGradComputeComplex(Tensor *y, Tensor
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kReciprocalGrad, ReciprocalGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kReciprocalGrad, ReciprocalGradCpuKernel);
 }  // namespace aicpu

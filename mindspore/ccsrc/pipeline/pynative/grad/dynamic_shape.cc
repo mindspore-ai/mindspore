@@ -546,11 +546,11 @@ void TopCellUnknownShapeDetect::UpdateUnknownShapeAbsCache(const std::vector<str
         // Input arg is list or tuple
         const auto &seq_shape = args_base_shape[i]->cast<abstract::SequenceShapePtr>();
         const auto &seq_v = input_arg_value_vec[i]->cast<ValueSequencePtr>();
+        MS_EXCEPTION_IF_NULL(seq_v);
         if (seq_v->size() != seq_shape->size()) {
           MS_LOG(EXCEPTION) << "Sequence value size " << seq_v->size() << " is not equal to seq shape size "
                             << seq_shape->size();
         }
-        MS_EXCEPTION_IF_NULL(seq_v);
         std::vector<std::string> id_vec;
         PyNativeAlgo::Common::SplitString(input_arg_id_vec[i], &id_vec);
         if (id_vec.size() != seq_shape->size()) {
@@ -689,6 +689,7 @@ bool TopCellUnknownShapeDetect::SetTopCellUnknownShape(const TopCellInfoPtr &cur
     } else if (cur_shape->isa<abstract::SequenceShape>() && pre_top_cell_shape->isa<abstract::SequenceShape>()) {
       // Input arg is list or tuple
       const auto &cur_shape_seq = cur_shape->cast<abstract::SequenceShapePtr>();
+      MS_EXCEPTION_IF_NULL(cur_shape_seq);
       const auto &pre_top_cell_shape_seq = pre_top_cell_shape->cast<abstract::SequenceShapePtr>();
       size_t cur_shape_size = cur_shape_seq->size();
       if (cur_shape_size != pre_top_cell_shape_seq->size()) {
@@ -698,7 +699,6 @@ bool TopCellUnknownShapeDetect::SetTopCellUnknownShape(const TopCellInfoPtr &cur
       abstract::BaseShapePtrList shape_ptr_list;
       for (size_t j = 0; j < cur_shape_size; ++j) {
         const auto &cur_shape_elem = cur_shape_seq->shape()[j]->cast<abstract::ShapePtr>();
-        MS_EXCEPTION_IF_NULL(cur_shape_seq);
         const auto &pre_top_cell_shape_elem = pre_top_cell_shape_seq->shape()[j]->cast<abstract::ShapePtr>();
         MS_EXCEPTION_IF_NULL(pre_top_cell_shape_elem);
         ShapeVector new_shape;

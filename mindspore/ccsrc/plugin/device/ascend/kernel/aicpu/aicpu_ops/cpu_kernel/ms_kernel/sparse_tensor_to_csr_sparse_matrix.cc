@@ -121,7 +121,7 @@ uint32_t SparseTensorToCSRSparseMatrixCpuKernel::Compute(CpuKernelContext &ctx) 
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(SparseTensorToCSRSparseMatrix, SparseTensorToCSRSparseMatrixCpuKernel);
+REGISTER_MS_CPU_KERNEL(SparseTensorToCSRSparseMatrix, SparseTensorToCSRSparseMatrixCpuKernel);
 
 template <typename indicesT, typename dataT>
 uint32_t SparseTensorToCSRSparseMatrixCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {

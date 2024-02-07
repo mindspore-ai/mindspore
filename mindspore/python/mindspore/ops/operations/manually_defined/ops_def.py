@@ -16,19 +16,26 @@
 from __future__ import absolute_import
 from __future__ import division
 
-from math import log
+import numbers
+import math
 import numpy as np
 from mindspore.ops import signature as sig
-from mindspore.ops.primitive import Primitive, prim_attr_register, prim_arg_register
+from mindspore.ops.primitive import Primitive, prim_attr_register, prim_arg_register, PrimitiveWithInfer
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.auto_generate import gen_arg_handler as handler
 from mindspore.common import Tensor, CSRTensor, COOTensor
+from mindspore.common._stub_tensor import _convert_stub
+from mindspore._c_expression import typing
+from mindspore._c_expression import pyboost_cast
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._tracefunc import PackFunc
+from mindspore.common import dtype as mstype
 from mindspore.common._utils import is_shape_unknown
 from mindspore import _checkparam as validator
 from mindspore.ops.operations.manually_defined._inner import ScalarCast
+from mindspore.ops_generate.gen_ops_inner_prim import DtypeToEnum
 from mindspore.common.initializer import Zero
+from mindspore.common.parameter import Parameter
 
 
 class ScalarDiv(Primitive):
@@ -187,7 +194,7 @@ class ScalarLog(Primitive):
         """Initialize ScalarAdd"""
 
     def __call__(self, x):
-        return log(x)
+        return math.log(x)
 
 
 class ScalarUadd(Primitive):
@@ -774,7 +781,7 @@ class Rank(Primitive):
         return len(x.shape)
 
 
-def rank(x):
+def rank(input_x):
     """
     Returns the rank of a tensor.
 
@@ -806,7 +813,7 @@ def rank(x):
 
     """
     rank_op = _get_cache_prim(Rank)()
-    return rank_op(x)
+    return rank_op(input_x)
 
 
 class Shape(Primitive):
@@ -876,9 +883,99 @@ def shape_(input_x):
     return shape_op(input_x)
 
 
+class ScalarToTensor(PrimitiveWithInfer):
+    """
+    Converts a scalar to a `Tensor`, and converts the data type to the specified type.
+
+    Refer to :func:`mindspore.ops.scalar_to_tensor` for more details.
+
+    Inputs:
+        - **input_x** (Union[int, float]) - The input is a scalar. Only constant value is allowed.
+        - **dtype** (mindspore.dtype) - The target data type. Default: ``mindspore.float32`` . Only
+          constant value is allowed.
+
+    Outputs:
+        Tensor. 0-D Tensor and the content is the input.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import ops
+        >>> op = ops.ScalarToTensor()
+        >>> data = 1
+        >>> output = op(data, mindspore.float32)
+        >>> print(output)
+        1.0
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['input_scalar', 'dtype'], outputs=['output_data'])
+
+    def __call__(self, x, dtype=mstype.float32):
+        validator.check_value_type("x", x, [bool, int, float], self.name)
+        validator.check_subclass("dtype", dtype, mstype.number, self.name)
+        data_type = mstype.dtype_to_nptype(dtype)
+        return Tensor(np.array(x, data_type), dtype=dtype)
+
 class Tile(Primitive):
     """
-    Tile.
+    Replicates an input tensor with given multiples times.
+
+    Refer to :func:`mindspore.ops.tile` for more details.
+
+    Inputs:
+        - **input_x** (Tensor) - 1-D or higher dimensional Tensor. Set the shape of input tensor as
+          :math:`(x_1, x_2, ..., x_S)` .
+        - **multiples** (tuple[int]) - The parameter that specifies the number of replications,
+          the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
+          The length of `multiples` cannot be smaller than the length of the shape of `input_x`.
+          Only constant value is allowed.
+
+    Outputs:
+        Tensor, has the same data type as the `input_x`. Suppose the length of `multiples` is `d`,
+        the dimension of `input_x` is `input_x.dim`, and the shape of `input_x` is :math:`(x_1, x_2, ..., x_S)`.
+
+        - If `input_x.dim = d`, then the shape of their corresponding positions can be multiplied, and
+          the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_S)`.
+        - If `input_x.dim < d`, fill in multiple 1 in the length of the shape of `input_x` until their
+          lengths are consistent. Such as set the shape of `input_x` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
+          then the shape of their corresponding positions can be multiplied, and the shape of Outputs is
+          :math:`(1*y_1, ..., x_R*y_R, x_S*y_S)`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> tile = ops.Tile()
+        >>> input_x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.float32)
+        >>> multiples = (2, 3)
+        >>> output = tile(input_x, multiples)
+        >>> print(output)
+        [[1.  2.  1.  2.  1.  2.]
+         [3.  4.  3.  4.  3.  4.]
+         [1.  2.  1.  2.  1.  2.]
+         [3.  4.  3.  4.  3.  4.]]
+        >>> multiples = (2, 3, 2)
+        >>> output = tile(input_x, multiples)
+        >>> print(output)
+        [[[1. 2. 1. 2.]
+          [3. 4. 3. 4.]
+          [1. 2. 1. 2.]
+          [3. 4. 3. 4.]
+          [1. 2. 1. 2.]
+          [3. 4. 3. 4.]]
+         [[1. 2. 1. 2.]
+          [3. 4. 3. 4.]
+          [1. 2. 1. 2.]
+          [3. 4. 3. 4.]
+          [1. 2. 1. 2.]
+          [3. 4. 3. 4.]]]
     """
 
     @prim_attr_register
@@ -977,12 +1074,15 @@ def tile(input, multiples):
 
 def scalar_cast(input_x, input_y):
     r"""
+    The interface is deprecated from version 2.3 and will be removed in a future version,
+    please use `int(x)` or `float(x)` instead.
+
     Casts the input scalar to another type.
 
     Args:
-        input_x (scalar): The input scalar. Only constant value is allowed.
+        input_x (scalar): The input scalar.
         input_y (mindspore.dtype): The type to be cast. Only constant value is allowed.
-            The value should only be mindspore.int64, mindspore.float64, or mindspore.bool_.
+            The value should only be mindspore.int64, mindspore.float64, or mindspore.bool\_.
 
     Returns:
         Scalar, the type is the same as the python type corresponding to `input_y`.
@@ -991,7 +1091,7 @@ def scalar_cast(input_x, input_y):
         ValueError: if input_y's value is invalid.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -1002,6 +1102,70 @@ def scalar_cast(input_x, input_y):
     """
     scalar_cast_op = _get_cache_prim(ScalarCast)()
     return scalar_cast_op(input_x, input_y)
+
+
+class Cast(Primitive):
+    """
+    Returns a tensor with the new specified data type.
+
+    Note:
+        When converting complex numbers to boolean type, the imaginary part of the complex number is not
+        taken into account. As long as the real part is non-zero, it returns True; otherwise, it returns False.
+
+    Inputs:
+        - **input_x** (Union[Tensor, Number]) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+          The tensor to be cast.
+        - **type** (dtype.Number) - The valid data type of the output tensor. Only constant value is allowed.
+
+    Outputs:
+        Tensor, the shape of tensor is the same as `input_x`, :math:`(x_1, x_2, ..., x_R)`.
+
+    Raises:
+        TypeError: If `input_x` is neither Tensor nor Number.
+        TypeError: If `type` is not a Number.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
+        >>> input_x = Tensor(input_np)
+        >>> type_dst = mindspore.int32
+        >>> cast = ops.Cast()
+        >>> output = cast(input_x, type_dst)
+        >>> print(output.dtype)
+        Int32
+        >>> print(output.shape)
+        (2, 3, 4, 5)
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Cast"""
+        self.init_prim_io_names(inputs=['x', 'dst_type'], outputs=['output'])
+
+    def check_elim(self, x, dtype):
+        if isinstance(x, (Tensor, numbers.Number, Parameter)):
+            if isinstance(x, Parameter):
+                data = x.data
+                if data.dtype == dtype:
+                    return (True, x)
+            if isinstance(x, Tensor) and x.dtype == dtype and not PackFunc.is_tracing():
+                x = Tensor(x)
+                x.set_cast_dtype()
+                return (True, x)
+            if isinstance(x, numbers.Number):
+                return (True, Tensor(x, dtype=dtype))
+        return (False, None)
+
+    def __call__(self, input_x, dtype):
+        should_elim, output = self.check_elim(input_x, dtype)
+        if should_elim:
+            return output
+        return _convert_stub(pyboost_cast(self, [input_x, DtypeToEnum()('Cast', 'dtype', dtype)]))
 
 # Following is Python Infer Value.
 # A valid infer value function should be:
@@ -1071,6 +1235,31 @@ def _infer_value_for_Reduce(input_x, axis, keep_dims, prim_name):
     return value
 
 
+def infer_value_for_Cast(x, dst_type_enum):
+    """Infer value for Cast op."""
+    if x is None:
+        return None
+    dst_type = typing.type_id_to_type(dst_type_enum)
+    src_type = mstype.get_py_obj_dtype(x)
+    validator.check_subclass("input_x", src_type, [mstype.tensor_type, mstype.number], "Cast")
+    validator.check_subclass("type", dst_type, mstype.number, "Cast")
+
+    if isinstance(src_type, type(mstype.tensor_type)):
+        src_type = src_type.element_type()
+    if isinstance(dst_type, type(mstype.tensor_type)):
+        dst_type = dst_type.element_type()
+
+    value = None
+    np_dst_type = mstype.dtype_to_nptype(dst_type)
+    if isinstance(x, (int, float)):
+        value = Tensor(np.array(x).astype(np_dst_type), dtype=dst_type)
+    elif x.dtype == mstype.bfloat16:
+        value = Tensor_(x.float().asnumpy().astype(np_dst_type), dtype=dst_type)
+    else:
+        value = Tensor_(x.asnumpy().astype(np_dst_type), dtype=dst_type)
+    return value
+
+
 def infer_value_for_ReduceMax(input_x, axis, keep_dims):
     """Infer value for ReduceMax op."""
     return _infer_value_for_Reduce(input_x, axis, keep_dims, 'ReduceMax')
@@ -1110,6 +1299,21 @@ def infer_value_for_Diag(input_x):
         return None
     ret = np.diag(input_x.asnumpy())
     return Tensor(ret)
+
+
+def infer_value_for_BroadcastTo(x, shape):
+    """Infer value for BroadcastTo op."""
+    def none_in_tuple_or_list(x):
+        return isinstance(x, (tuple, list)) and None in x
+    if shape is None or none_in_tuple_or_list(shape) or x is None:
+        return None
+    np_data = np.broadcast_to(x.asnumpy(), shape)
+    if 0 in shape:
+        init_func = Zero()
+        init_func.__enable_zero_dim__ = True
+        out = Tensor(shape=shape, dtype=x.dtype, init=init_func)
+        return out
+    return Tensor(np_data)
 
 
 def infer_value_for_Reshape(x, shape):

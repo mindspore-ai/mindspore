@@ -19,7 +19,6 @@
 #include <vector>
 #include <string>
 #include <cstdint>
-#include "common/kernel_base.h"
 
 namespace aicpu {
 namespace random {

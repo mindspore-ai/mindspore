@@ -9,6 +9,11 @@ fast_gelu:
 
         where :math:`x` is the element of the input.
 
+        FastGelu function graph:
+
+        .. image:: ../images/FastGelu.png
+            :align: center
+
         Args:
             x (Tensor): Input to compute the FastGeLU with data type of float16 or float32.
 

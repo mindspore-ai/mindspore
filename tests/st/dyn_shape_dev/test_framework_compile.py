@@ -16,7 +16,7 @@
 import math
 import pytest
 import numpy as np
-import test_utils
+from tests.st.utils import test_utils
 
 import mindspore as ms
 from mindspore import nn, mutable
@@ -46,7 +46,7 @@ class AvgPoolCreateInstanceNet(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_avg_pool():
     """
     Feature: DynamicShape.
@@ -64,7 +64,7 @@ def test_avg_pool():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_avg_pool_create_instance_const_args():
     """
     Feature: DynamicShape.
@@ -82,7 +82,7 @@ def test_avg_pool_create_instance_const_args():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_avg_pool_create_instance_var_args():
     """
     Feature: DynamicShape.
@@ -114,7 +114,7 @@ class PowCreateInstanceNet(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_pow_type_cast():
     """
     Feature: DynamicShape.
@@ -131,7 +131,7 @@ def test_pow_type_cast():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_pow_create_instance_type_cast():
     """
     Feature: DynamicShape.
@@ -233,7 +233,7 @@ def test_lstm_ops():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_op_with_default_init_args():
     """
     Feature: DynamicShape.
@@ -286,7 +286,7 @@ def test_acos_unsupported_input_type(mode):
     ms.set_context(precompile_only=False, mode=mode)
     with pytest.raises(TypeError) as info:
         ACos()("str")
-    assert "Failed calling ACos with \"ACos()(x=string)\"" in str(info.value)
+    assert "Failed calling ACos with \"ACos()(input=string)\"" in str(info.value)
 
 
 @pytest.mark.level0
@@ -307,4 +307,4 @@ def test_diagonal_unsupported_input_type(mode):
     ms.set_context(precompile_only=False, mode=mode)
     with pytest.raises(TypeError) as info:
         Diagonal()(1.0, 1, 1, -3)
-    assert "Failed calling Diagonal with \"Diagonal(offset=int, dim1=int, dim2=int)(x=float)\"" in str(info.value)
+    assert "Failed calling Diagonal with \"Diagonal(offset=int, dim1=int, dim2=int)(input=float)\"" in str(info.value)

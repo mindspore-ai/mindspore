@@ -228,7 +228,11 @@ uint32_t SetSizeCpuKernel::SetSizeCompute(const CpuKernelContext &ctx, SparseTen
   for (int32_t d = 0; d < dims_ - 1; ++d) {
     output_size = output_size * shape_t[d];
   }
-  memset_s(output_t, sizeof(int32_t) * output_size, 0, sizeof(int32_t) * output_size);
+  auto ret = memset_s(output_t, sizeof(int32_t) * output_size, 0, sizeof(int32_t) * output_size);
+  if (ret != EOK) {
+    KERNEL_LOG_ERROR("For 'SetSize', memset_s failed, ret=%d.", ret);
+    return KERNEL_STATUS_INNER_ERROR;
+  }
   std::unordered_set<T> group_set;
   for (const auto &group : st.group(group_ix)) {
     uint32_t result = PopulateFromSparseGroup<T>(ctx, group, shape_, &group_set);
@@ -260,7 +264,11 @@ uint32_t SetSizeCpuKernel::SetSizeCompute_string(const CpuKernelContext &ctx, Sp
   for (int32_t d = 0; d < dims_ - 1; ++d) {
     output_size = output_size * shape_t[d];
   }
-  memset_s(output_t, sizeof(int32_t) * output_size, 0, sizeof(int32_t) * output_size);
+  auto ret = memset_s(output_t, sizeof(int32_t) * output_size, 0, sizeof(int32_t) * output_size);
+  if (ret != EOK) {
+    KERNEL_LOG_ERROR("For 'SetSize', memset_s failed, ret=%d.", ret);
+    return KERNEL_STATUS_INNER_ERROR;
+  }
   std::unordered_set<std::string> group_set;
   for (const auto &group : st.group(group_ix)) {
     PopulateFromSparseGroup<std::string>(ctx, group, shape_, &group_set);
@@ -270,5 +278,5 @@ uint32_t SetSizeCpuKernel::SetSizeCompute_string(const CpuKernelContext &ctx, Sp
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kSetSize, SetSizeCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSetSize, SetSizeCpuKernel);
 }  // namespace aicpu

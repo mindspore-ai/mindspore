@@ -606,6 +606,18 @@ Status OpAdapterImpl::UpdateMultiOutputDesc(const OperatorPtr &op, const abstrac
     MS_EXCEPTION_IF_NULL(tuple_type);
     TypePtr type_elem = tuple_type->elements()[i];
 
+    if (type_elem == nullptr) {
+      MS_LOG(ERROR) << "Type ptr is nullptr";
+      return FAILED;
+    }
+    TypeId me_type = type_elem->type_id();
+    if (kObjectTypeTensorType == me_type) {
+      me_type = dyn_cast<TensorType>(type_elem)->element()->type_id();
+    }
+    if (me_type == kMetaTypeNone) {
+      continue;
+    }
+
     auto desc = CreateOutputDesc(dyn_cast<abstract::Shape>(tuple_shp->shape()[i]), type_elem, format);
     if (desc == nullptr) {
       MS_LOG(ERROR) << "Create op: " << op->GetName() << " output descriptor failed!";

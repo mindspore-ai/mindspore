@@ -69,6 +69,9 @@
 #include "tools/optimizer/graph/input_and_output_variable_pass.h"
 #include "tools/optimizer/graph/output_variable_pass.h"
 #include "tools/optimizer/graph/args_to_attr_pass.h"
+#include "tools/optimizer/fusion/ffn_antiquant_fusion.h"
+#include "tools/optimizer/common/pass_manager_extends.h"
+#include "load_mindir/infer_mindir.h"
 
 namespace mindspore {
 namespace lite {
@@ -134,6 +137,12 @@ FuncGraphPtr ConverterFuncGraph::Load(const std::shared_ptr<ConverterPara> &para
     MS_LOG(ERROR) << "Load MindIR file failed. Please check model file and decrypt key.";
     return nullptr;
   }
+  auto manager = func_graph->manager();
+  if (manager == nullptr) {
+    manager = MakeManager();
+    manager->AddFuncGraph(func_graph, true);
+  }
+  InferFuncGraphLoaded(func_graph);
   bool is_original = IsOriginalFuncGraph(func_graph);
   if (is_original) {
     func_graph->set_attr("graph_name", MakeValue("main_graph"));
@@ -318,12 +327,74 @@ void SetInputParameterAbstractName(const FuncGraphPtr &func_graph) {
   }
 }
 
+bool CheckNeedQuant(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph) {
+  bool is_ptq_quant = (param->commonQuantParam.quant_type == lite::quant::QUANT_ALL &&
+                       param->fullQuantParam.target_device == lite::quant::ASCEND) ||
+                      (param->commonQuantParam.quant_type == lite::quant::QUANT_WEIGHT &&
+                       param->weightQuantParam.dequant_strategy == lite::quant::ON_THE_FLY);
+  if (is_ptq_quant) {
+    return true;
+  }
+  // Check if the model contains fakequant nodes
+  const std::set<PrimitivePtr> fake_quant_types = {prim::kPrimFakeQuantPerLayer, prim::kPrimFakeQuantPerChannel};
+  for (auto &cnode : func_graph->GetOrderedCnodes()) {
+    auto op_name = cnode->fullname_with_scope();
+    auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+    CHECK_NULL_RETURN(primitive);
+    for (const auto &type : fake_quant_types) {
+      if (opt::CheckPrimitiveType(cnode, type)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+STATUS ConverterFuncGraph::QuantizationOptimizeForGE(const std::shared_ptr<ConverterPara> &param,
+                                                     FuncGraphPtr func_graph) {
+  CHECK_NULL_RETURN(param);
+  CHECK_NULL_RETURN(func_graph);
+  MS_LOG(INFO) << "It will run quant optimize";
+  auto acl_pass_ptr = opt::AclPassPlugin::CreateAclPass(param);
+  if (acl_pass_ptr == nullptr) {
+    MS_LOG(ERROR) << "Failed to create acl pass";
+    return RET_ERROR;
+  }
+  if (!acl_pass_ptr->Run(func_graph)) {
+    MS_LOG(ERROR) << "Acl pass failed.";
+    return RET_ERROR;
+  }
+  std::vector<opt::PassPtr> quant_fusions{std::make_shared<opt::FFNAntiquantFusion>()};
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  CHECK_NULL_RETURN(optimizer);
+  auto fusion_pm = std::make_shared<opt::LitePassManager>("anf fusion pass manager", false);
+  CHECK_NULL_RETURN(fusion_pm);
+  for (size_t index = 0; index < quant_fusions.size(); index++) {
+    auto pass_ptr = quant_fusions.at(index);
+    MS_CHECK_TRUE_RET(pass_ptr != nullptr, RET_ERROR);
+    fusion_pm->AddPass(pass_ptr);
+  }
+  optimizer->AddPassManager(fusion_pm);
+  if (optimizer->Optimize(func_graph) == nullptr) {
+    MS_LOG(ERROR) << "run op fusion failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 STATUS ConverterFuncGraph::OptimizeForGE(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
   AnfTransformForGe transform;
   auto status = transform.Transform(func_graph, param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Transform anf graph for ge failed.";
     return status;
+  }
+  if (CheckNeedQuant(param, func_graph)) {
+    status = QuantizationOptimizeForGE(param, func_graph);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Failed to quantization optimize for GE";
+      return status;
+    }
   }
   auto ret = RunGeOfflineConvert(param, func_graph);
   if (ret != RET_OK) {
@@ -370,6 +441,12 @@ STATUS ConverterFuncGraph::RunGeOfflineConvert(const std::shared_ptr<ConverterPa
   }
   param->config_infos[lite::kConverterParams][lite::kConverterOutputFile] = param->output_file;
   if (!run_aoe) {
+    if (param->config_infos.find(kAscendContextSection) == param->config_infos.end() ||
+        param->config_infos[kAscendContextSection].find(kParameterAsRefData) ==
+          param->config_infos[kAscendContextSection].end()) {
+      MS_LOG(INFO) << "Not find parameter_as_refdata in ascend_context, skip offline build graph";
+      return RET_OK;
+    }
     MS_LOG(INFO) << "GE offline model conversion begin";
     if (!AscendGeExecutorPlugin::GetInstance().OfflineBuildGraph(func_graph, context, param->config_infos)) {
       MS_LOG(ERROR) << "Failed to call GE offline model conversion";
@@ -384,29 +461,6 @@ STATUS ConverterFuncGraph::RunGeOfflineConvert(const std::shared_ptr<ConverterPa
     }
   }
   return RET_OK;
-}
-
-bool CheckNeedQuant(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph) {
-  bool is_ptq_quant = (param->commonQuantParam.quant_type == lite::quant::QUANT_ALL &&
-                       param->fullQuantParam.target_device == lite::quant::ASCEND) ||
-                      (param->commonQuantParam.quant_type == lite::quant::QUANT_WEIGHT &&
-                       param->weightQuantParam.dequant_strategy == lite::quant::ON_THE_FLY);
-  if (is_ptq_quant) {
-    return true;
-  }
-  // Check if the model contains fakequant nodes
-  const std::set<PrimitivePtr> fake_quant_types = {prim::kPrimFakeQuantPerLayer, prim::kPrimFakeQuantPerChannel};
-  for (auto &cnode : func_graph->GetOrderedCnodes()) {
-    auto op_name = cnode->fullname_with_scope();
-    auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-    CHECK_NULL_RETURN(primitive);
-    for (const auto &type : fake_quant_types) {
-      if (opt::CheckPrimitiveType(cnode, type)) {
-        return true;
-      }
-    }
-  }
-  return false;
 }
 
 STATUS ConverterFuncGraph::CheckFuncGraph(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
@@ -432,24 +486,6 @@ STATUS ConverterFuncGraph::OptmizedConvert(const std::shared_ptr<ConverterPara> 
   return RET_OK;
 }
 
-STATUS ConverterFuncGraph::GEOptmize(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
-  MS_LOG(INFO) << "It will run ge optimize";
-  if (CheckNeedQuant(param, func_graph)) {
-    MS_LOG(INFO) << "It will run quant optimize";
-    auto acl_pass_ptr = opt::AclPassPlugin::CreateAclPass(param);
-    if (acl_pass_ptr == nullptr) {
-      MS_LOG(ERROR) << "Failed to create acl pass";
-      return RET_ERROR;
-    }
-    if (!acl_pass_ptr->Run(func_graph)) {
-      MS_LOG(ERROR) << "Acl pass failed.";
-      return RET_ERROR;
-    }
-    return RET_OK;
-  }
-  return OptimizeForGE(param, func_graph);
-}
-
 STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "funcGraph is nullptr";
@@ -472,7 +508,8 @@ STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param,
   }
 
   if (param->provider == "ge") {
-    return GEOptmize(param, func_graph);
+    MS_LOG(INFO) << "It will run ge optimize";
+    return OptimizeForGE(param, func_graph);
   }
   std::vector<std::string> output_names;
   auto status = UnifyFuncGraphForInfer(param, func_graph, &output_names);

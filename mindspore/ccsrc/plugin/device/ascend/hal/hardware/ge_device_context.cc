@@ -28,6 +28,7 @@
 #include "include/common/utils/scoped_long_running.h"
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "plugin/device/ascend/hal/hardware/ge_utils.h"
+#include "include/backend/debug/data_dump/acl_dump_json_writer.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/hal/device/cpu_memory_manager.h"
 #include "include/backend/debug/profiler/profiling.h"
@@ -172,15 +173,13 @@ void GeDeviceContext::Initialize() {
   ms_context->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, false);
   InitGe(ms_context);
 
-  if (IsEnableRefMode()) {
-    MS_EXCEPTION_IF_NULL(GetKernelExecutor(false));
-    GetKernelExecutor(false)->Initialize();
-    // DynamicKernelExecutor and KernenlExecutor should be equal for GE
-    MS_EXCEPTION_IF_CHECK_FAIL(GetKernelExecutor(true) == GetKernelExecutor(false),
-                               "GE dynamic KernelExecutor and KernenlExecutor is not Equal.");
-    MS_EXCEPTION_IF_NULL(GetKernelExecutor(true));
-    GetKernelExecutor(true)->Initialize();
-  }
+  MS_EXCEPTION_IF_NULL(GetKernelExecutor(false));
+  GetKernelExecutor(false)->Initialize();
+  // DynamicKernelExecutor and KernenlExecutor should be equal for GE
+  MS_EXCEPTION_IF_CHECK_FAIL(GetKernelExecutor(true) == GetKernelExecutor(false),
+                             "GE dynamic KernelExecutor and KernenlExecutor is not Equal.");
+  MS_EXCEPTION_IF_NULL(GetKernelExecutor(true));
+  GetKernelExecutor(true)->Initialize();
 
   InitDump();
   if (ms_context->EnableAoeOnline()) {
@@ -199,6 +198,8 @@ void GeDeviceContext::Destroy() {
     transform::DestroyAoeUtil();
   }
   FinalizeDump();
+  // Device resource manager must be destroyed before 'FinalizeGe' unless some runtime APIs will throw exception.
+  device_res_manager_->Destroy();
   (void)FinalizeGe(ms_context);
   if (hccl::HcclAdapter::GetInstance().Inited()) {
     (void)hccl::HcclAdapter::GetInstance().FinalizeHccl();
@@ -206,6 +207,7 @@ void GeDeviceContext::Destroy() {
   if (deprecated_interface_ != nullptr) {
     (void)deprecated_interface_->CloseTsd(MsContext::GetInstance(), true);
   }
+  initialized_ = false;
 }
 
 void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
@@ -373,7 +375,7 @@ void GeDeviceContext::SetDumpOptions(std::map<std::string, std::string> *ge_opti
   // set up dump options
   auto &dump_parser = DumpJsonParser::GetInstance();
   dump_parser.Parse();
-  if (dump_parser.async_dump_enabled()) {
+  if (dump_parser.async_dump_enabled() && !dump_parser.IsKernelByKernel()) {
     (*ge_options)["ge.exec.enableDump"] = std::to_string(static_cast<int>(dump_parser.async_dump_enabled()));
     auto dump_path = FileUtils::CreateNotExistDirs(dump_parser.path());
     if (!dump_path.has_value()) {

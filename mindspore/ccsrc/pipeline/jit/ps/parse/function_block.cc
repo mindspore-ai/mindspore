@@ -547,8 +547,8 @@ std::string GetVariableDefinedLocation(const FunctionBlock *block, const std::st
   std::vector<FunctionBlock *> todo_list = {};
   (void)std::copy(block->prev_blocks().cbegin(), block->prev_blocks().cend(), std::back_inserter(todo_list));
   while (!todo_list.empty()) {
-    auto cur_block = todo_list.back();
-    todo_list.pop_back();
+    auto cur_block = todo_list.front();
+    (void)todo_list.erase(todo_list.begin());
     if (visited.find(cur_block) != visited.cend()) {
       continue;
     }
@@ -703,8 +703,8 @@ CNodePtr FunctionBlock::ForceToCondNode(const AnfNodePtr &cond, bool is_while_co
 
 // Perform a jump from this block to target block
 void FunctionBlock::Jump(const FunctionBlockPtr &target_block, const std::vector<AnfNodePtr> &args) {
-  MS_LOG(DEBUG) << "Jump from block: " << ToString() << " to block: " << target_block->ToString();
   MS_EXCEPTION_IF_NULL(target_block);
+  MS_LOG(DEBUG) << "Jump from block: " << ToString() << " to block: " << target_block->ToString();
   if (is_dead_block_) {
     MS_LOG(DEBUG) << "Dead code block should not jump to other block! block: " << ToString();
     return;

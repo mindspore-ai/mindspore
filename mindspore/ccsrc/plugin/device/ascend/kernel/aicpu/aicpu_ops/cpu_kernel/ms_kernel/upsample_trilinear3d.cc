@@ -16,7 +16,7 @@
 #include "cpu_kernel/ms_kernel/upsample_trilinear3d.h"
 
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "utils/kernel_util.h"
 #include "common/kernel_log.h"
 #include "securec/include/securec.h"
@@ -275,5 +275,5 @@ uint32_t UpsampleTrilinear3dCpuKernel::UpsampleTrilinear3dCompute(const CpuKerne
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kUpsampleTrilinear3d, UpsampleTrilinear3dCpuKernel);
+REGISTER_MS_CPU_KERNEL(kUpsampleTrilinear3d, UpsampleTrilinear3dCpuKernel);
 }  // namespace aicpu

@@ -221,9 +221,9 @@ bool DynamicAkgGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   std::vector<void *> runtimeargs;
   runtimeargs.reserve(inputs.size() + outputs.size() + workspace.size());
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(runtimeargs),
-                       [](const KernelTensor *input) { return input->device_ptr(); });
+                       [](KernelTensor *input) { return input->device_ptr(); });
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
-                       [](const KernelTensor *output) { return output->device_ptr(); });
+                       [](KernelTensor *output) { return output->device_ptr(); });
   if (is_dynamic_) {
     // calculate shape info: [0, dims, strides] and update workspace
     // std::vector<std::vector<int64_t>> arg_size_vec = GetArgSizeVec();
@@ -233,7 +233,7 @@ bool DynamicAkgGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   }
   if (!workspace.empty()) {
     (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(runtimeargs),
-                         [](const KernelTensor *addr) { return addr->device_ptr(); });
+                         [](KernelTensor *addr) { return addr->device_ptr(); });
   }
   result = cuLaunchKernel(kernel_addr_, thread_info_[AKG_KERNEL_MOD_BX_IDX], thread_info_[AKG_KERNEL_MOD_BY_IDX],
                           thread_info_[AKG_KERNEL_MOD_BZ_IDX], thread_info_[AKG_KERNEL_MOD_TX_IDX],

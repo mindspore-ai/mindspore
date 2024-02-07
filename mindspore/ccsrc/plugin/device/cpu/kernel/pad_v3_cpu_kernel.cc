@@ -88,8 +88,10 @@ int PadV3CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
                     << ") is not valid for constant mode!";
       return KRET_RESIZE_FAILED;
     } else if (mode_ != ops::kConstant && !type->isa<TypeNone>()) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', const value(" << inputs[kIndex2]->ToString()
-                    << ") should be None for " << mode_ << " mode!";
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', the input[constant_value] is only valid when the attribute[mode] is `constant`. DO NOT set "
+                       "it in ["
+                    << mode_ << "] mode.";
       return KRET_RESIZE_FAILED;
     }
   }
@@ -101,12 +103,12 @@ template <typename S>
 bool PadV3CpuKernelMod::GetPaddings(const std::vector<KernelTensor *> &inputs) {
   auto paddings_arg = static_cast<S *>(inputs[1]->device_ptr());
   paddings_ = std::vector<int64_t>(input_dim_ * kNum2, 0);
-  for (int64_t i = 0; i < paddings_num_; ++i) {
+  for (int64_t i = 0; i < paddings_num_ && i < input_dim_ * kNum2; ++i) {
     paddings_[i] = int64_t(*(paddings_arg + i));
   }
   if (paddings_contiguous_ == false) {
     std::vector<int64_t> tmp = paddings_;
-    for (int64_t i = 0; i < paddings_num_; ++i) {
+    for (int64_t i = 0; i < paddings_num_ && i < input_dim_ * kNum2; ++i) {
       if (i % kNum2 == 0) {
         paddings_[i] = tmp[i / kNum2];
       } else {

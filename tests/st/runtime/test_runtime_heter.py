@@ -22,6 +22,8 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
 
+from tests.st.utils import test_utils
+
 
 class LeNet(nn.Cell):
     def __init__(self):
@@ -53,6 +55,7 @@ class LeNet(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+@test_utils.run_test_with_On
 def test_lenet():
     """
     Feature: Runtime special format in the heterogeneous scene.

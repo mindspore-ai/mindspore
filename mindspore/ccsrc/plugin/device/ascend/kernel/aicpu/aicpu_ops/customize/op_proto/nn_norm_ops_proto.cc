@@ -4,7 +4,7 @@
  * limitations under the License.
  */
 
-#include "inc/ops/nn_norm_ops.h"
+#include "op_proto/inc/nn_norm_ops.h"
 #include "custom_op_proto/cust_nn_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"

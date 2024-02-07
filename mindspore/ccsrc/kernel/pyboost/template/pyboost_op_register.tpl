@@ -15,7 +15,6 @@
  */
 
 #include "kernel/pyboost/op_register.h"
-#include "kernel/pyboost/ops/cast.h"
 ${op_includes}
 
 namespace mindspore {
@@ -36,7 +35,6 @@ std::shared_ptr<T> OpFactory<T>::Create(const string &name, const string &device
   return iter->second();
 }
 
-template class OpFactory<Cast>;
 ${op_factory_templates}
 }  // namespace pyboost
 }  // namespace kernel

@@ -15,7 +15,7 @@
 
 import pytest
 import numpy as np
-import test_utils
+from tests.st.utils import test_utils
 
 from  mindspore import ops
 import mindspore as ms

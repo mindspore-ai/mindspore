@@ -85,8 +85,8 @@ void AoeUtil::Initialize() {
     std::string aoe_job_type = ms_context->get_param<std::string>(MS_CTX_AOE_JOB_TYPE);
     std::map<::ge::AscendString, ::ge::AscendString> globalOptions = {
       {AoeOptions::JOB_TYPE, ::ge::AscendString(aoe_job_type.c_str())}};
-    const Aoe::AoeStatus status = aoe_initialize_(globalOptions);
-    if (status != Aoe::AOE_SUCCESS) {
+    const AoeStatus status = aoe_initialize_(globalOptions);
+    if (status != AOE_SUCCESS) {
       MS_LOG(ERROR) << "AoeInitialize failed.";
     }
     MS_LOG(INFO) << "AoeInitialize success.";
@@ -101,8 +101,8 @@ void AoeUtil::Destroy() {
   }
   if (IsAscendServer()) {
     try {
-      const Aoe::AoeStatus status = aoe_finalize_();
-      if (status != Aoe::AOE_SUCCESS) {
+      const AoeStatus status = aoe_finalize_();
+      if (status != AOE_SUCCESS) {
         MS_LOG(ERROR) << "AoeFinalize failed. status is " << status;
       }
     } catch (const std::exception &e) {
@@ -136,29 +136,29 @@ AoeUtil &AoeUtil::GetInstance() {
 Status AoeUtil::AoeGeGraph(::ge::Session *ge_session, const transform::DfGraphPtr &graph,
                            const std::map<::ge::AscendString, ::ge::AscendString> &tuningOptions) const {
   uint64_t sessionId = 0;
-  Aoe::AoeStatus status = aoe_create_session_(sessionId);
-  if (status != Aoe::AOE_SUCCESS) {
+  AoeStatus status = aoe_create_session_(sessionId);
+  if (status != AOE_SUCCESS) {
     MS_LOG(ERROR) << "AoeCreateSession failed. error code:" << status;
     return FAILED;
   }
   MS_LOG(DEBUG) << "AoeCreateSession success.";
 
   status = aoe_set_ge_gession_(sessionId, ge_session);
-  if (status != Aoe::AOE_SUCCESS) {
+  if (status != AOE_SUCCESS) {
     MS_LOG(ERROR) << "AoeSetGeSession failed. error code:" << status;
     return FAILED;
   }
   MS_LOG(DEBUG) << "->AoeSetGeSession success.";
 
   status = aoe_set_tuning_graph_(sessionId, *graph);
-  if (status != Aoe::AOE_SUCCESS) {
+  if (status != AOE_SUCCESS) {
     MS_LOG(ERROR) << "AoeSetGraph failed. error code:" << status;
     return FAILED;
   }
   MS_LOG(DEBUG) << "->AoeSetGraph success.";
 
   status = aoe_tuning_graph_(sessionId, tuningOptions);
-  if (status != Aoe::AOE_SUCCESS && status != Aoe::AOE_ERROR_NON_OPTIMIZE_GRAPH) {
+  if (status != AOE_SUCCESS && status != AOE_ERROR_NON_OPTIMIZE_GRAPH) {
     MS_LOG(ERROR) << "AoeTuningGraph failed. error code:" << status;
     (void)aoe_destroy_session_(sessionId);
     return FAILED;
@@ -166,7 +166,7 @@ Status AoeUtil::AoeGeGraph(::ge::Session *ge_session, const transform::DfGraphPt
   MS_LOG(DEBUG) << "->AoeTuningGraph success.";
 
   status = aoe_destroy_session_(sessionId);
-  if (status != Aoe::AOE_SUCCESS) {
+  if (status != AOE_SUCCESS) {
     MS_LOG(ERROR) << "AoeDestroySession failed. error code:" << status;
     return FAILED;
   }
