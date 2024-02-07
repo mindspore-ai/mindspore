@@ -159,6 +159,7 @@ constexpr auto kNgramSize = "ngram_size";
 constexpr auto kEodTokenId = "eod_token_id";
 constexpr auto kNStep = "n_step";
 constexpr auto kNPos = "NPos";
+constexpr auto kNErrorMode = "n_error_mode";
 constexpr auto kNGram = "ngram";
 constexpr auto kNmsThresh = "nms_thresh";
 constexpr auto kNormRegion = "norm_region";

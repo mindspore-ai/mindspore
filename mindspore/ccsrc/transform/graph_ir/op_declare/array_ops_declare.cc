@@ -348,12 +348,12 @@ CUST_ATTR_MAP(NoRepeatNGram) = {{"ngram_size", ATTR_DESC(ngram_size, AnyTraits<i
 CUST_OUTPUT_MAP(NoRepeatNGram) = {{0, OUTPUT_DESC(out)}};
 REG_ADPT_DESC(NoRepeatNGram, prim::kPrimNoRepeatNGram->name(), CUST_ADPT_DESC(NoRepeatNGram));
 
-
 // GenerateEodMask
 CUST_INPUT_MAP(GenerateEodMask) = {{1, INPUT_DESC(inputs_ids)}};
 CUST_ATTR_MAP(GenerateEodMask) = {{"n_pos", ATTR_DESC(n_pos, AnyTraits<int64_t>())},
                                   {"eod_token_id", ATTR_DESC(eod_token_id, AnyTraits<int64_t>())},
-                                  {"n_step", ATTR_DESC(n_step, AnyTraits<int64_t>())}};
+                                  {"n_step", ATTR_DESC(n_step, AnyTraits<std::vector<int64_t>>())},
+                                  {"n_error_mode", ATTR_DESC(n_error_mode, AnyTraits<std::string>())}};
 CUST_OUTPUT_MAP(GenerateEodMask) = {{0, OUTPUT_DESC(position_ids)}};
 REG_ADPT_DESC(GenerateEodMask, prim::kPrimGenerateEodMask->name(), CUST_ADPT_DESC(GenerateEodMask));
 

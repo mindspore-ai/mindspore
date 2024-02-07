@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,7 @@
 #define AICPU_KERNELS_GENERATEEODMASK_H_
 
 #include <vector>
-#include "common/kernel_base.h"
-#include "cpu_ops_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class GenerateEodMaskCpuKernel : public CpuKernel {
@@ -31,9 +30,12 @@ class GenerateEodMaskCpuKernel : public CpuKernel {
 
  private:
   template <typename T, typename M>
-  uint32_t ComputeKernel(CpuKernelContext &ctx, const int64_t &n_pos, const int64_t &eod_token_id, const int64_t &n_step);
-  static  int64_t compute_count;
+  uint32_t ComputeKernel(CpuKernelContext &ctx, const int64_t &n_pos, const int64_t &eod_token_id,
+                         const std::vector<int64_t> &n_step, const int64_t &circle, const bool &enable_mask_nfirst);
+  static int64_t compute_count;
+  static int64_t skip_step;
 };
 int64_t GenerateEodMaskCpuKernel::compute_count = 0;
+int64_t GenerateEodMaskCpuKernel::skip_step = 0;
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_GENERATEEODMASK_H_

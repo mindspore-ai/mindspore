@@ -646,11 +646,12 @@ class GenerateEodMask(Primitive):
         - **ValueError** - If `inputs_ids` is not a 2-D Tensor.
     """
     @prim_attr_register
-    def __init__(self, n_pos, eod_token_id, n_step):
+    def __init__(self, n_pos, eod_token_id, n_step, n_error_mode='specific'):
         """Initialize GenerateEodMask"""
         validator.check_value_type("eod_token_id", eod_token_id, [int], self.name)
         validator.check_value_type("n_pos", n_pos, [int], self.name)
-        validator.check_value_type("n_step", n_step, [int], self.name)
+        validator.check_value_type("n_step", n_step, [list], self.name)
+        validator.check_value_type("n_error_mode", n_error_mode, [str], self.name)
         self.init_prim_io_names(inputs=['inputs_ids'],
                                 outputs=['position_ids'])
 

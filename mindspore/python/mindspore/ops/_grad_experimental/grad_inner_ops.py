@@ -36,7 +36,7 @@ def get_bprop_parallel_resize_bilinear(self):
     return bprop
 
 
-@bprop_getters.register(P.GenerateEodMask)
+@bprop_getters.register(P.inner_ops.GenerateEodMask)
 def get_bprop_generate_eod_mask(self):
 
     def bprop(x, out, dout):

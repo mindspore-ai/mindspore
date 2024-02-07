@@ -20,7 +20,8 @@ generate_eod_mask_op_info = AiCPURegOp("GenerateEodMask") \
     .fusion_type("OPAQUE") \
     .attr("eod_token_id", "int") \
     .attr("n_pos", "int") \
-    .attr("n_step", "int") \
+    .attr("n_step", "listint") \
+    .attr("n_error_mode", "str") \
     .input(0, "inputs_ids", "required") \
     .output(0, "position_ids", "required") \
     .dtype_format(DataType.U16_Default, DataType.U16_Default) \
