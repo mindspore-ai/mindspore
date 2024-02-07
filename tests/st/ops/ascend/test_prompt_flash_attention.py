@@ -104,7 +104,7 @@ def test_prompt_flash_attention_bnsd_mod2_fwd():
     query = Tensor(np.ones((B, N, S, D), dtype=np.float16))
     key = Tensor(np.ones((B, N, S, D), dtype=np.float16))
     value = Tensor(np.ones((B, N, S, D), dtype=np.float16))
-    attn_mask = Tensor(np.ones((2048, 2048), dtype=np.bool))
+    attn_mask = Tensor(np.ones((2048, 2048), dtype=np.float16))
     net = PromptFlashAttention()
     attention_out = net(query, key, value, attn_mask, None, None, None, None, None, None, None, None, N,
                         input_layout='BNSD', sparse_mode=2)
