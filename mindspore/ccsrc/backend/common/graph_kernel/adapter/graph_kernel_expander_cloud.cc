@@ -29,6 +29,22 @@
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 namespace mindspore::graphkernel {
+namespace {
+bool DvmSupported(const AnfNodePtr &node) {
+  if (IsPrimitiveCNode(node, prim::kPrimAddN)) {
+    constexpr auto max_input_num = 10;
+    auto input_num = common::AnfAlgo::GetInputTensorNum(node);
+    if (input_num > max_input_num) {
+      return false;
+    }
+  }
+  auto cb = Callback::Instance();
+  MS_EXCEPTION_IF_NULL(cb);
+  auto node_output_type = cb->GetOutputType(node, 0);
+  return (node_output_type == kNumberTypeFloat16 || node_output_type == kNumberTypeFloat32);
+}
+}  // namespace
+
 std::vector<PrimitivePtr> GraphKernelExpanderCloud::GetExpanderOps() {
   std::vector<OpWithLevel> expand_ops_with_level = {
     {kAllTarget, OpLevel_0, prim::kPrimAddN},
@@ -119,10 +135,14 @@ std::vector<PrimitivePtr> GraphKernelExpanderCloud::GetExpanderOps() {
 std::vector<PrimitivePtr> GraphKernelExpanderCloud::InitOpList() { return GraphKernelExpanderCloud::GetExpanderOps(); }
 
 bool GraphKernelExpanderCloud::CanExpand(const CNodePtr &node) const {
-  if (IsComplexOp(node)) {
+  bool is_dvm = (GraphKernelFlags::GetInstance().kernel_generator == "DVM");
+  if (IsComplexOp(node) && !is_dvm) {
     return true;
   }
   if (!GraphKernelExpander::CanExpand(node)) {
+    return false;
+  }
+  if (is_dvm && !DvmSupported(node)) {
     return false;
   }
   bool enable_dynshape_expander = GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion;
