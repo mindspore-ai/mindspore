@@ -152,25 +152,27 @@ Status LLMEnginePlugin::OnGeStatus(ge::Status ge_status, const std::string &func
     MS_LOG(INFO) << "End call llm::LLMEngine::" << func_s;
     lite_status = kSuccess;
   } else if (ge_status == ge::LLM_WAIT_PROC_TIMEOUT) {
-    MS_LOG(WARNING) << "Failed to call llm::LLMEngine::" << func_s << ", " << phase << " status: LLM_WAIT_PROC_TIMEOUT";
+    MS_LOG(WARNING) << "Failed to call llm::LLMEngine::" << func_s << " "
+                    << ", " << phase << " status: LLM_WAIT_PROC_TIMEOUT";
     lite_status = kLiteLLMWaitProcessTimeOut;
   } else if (ge_status == ge::LLM_KV_CACHE_NOT_EXIST) {
-    MS_LOG(WARNING) << "Failed to call llm::LLMEngine::" << func_s << phase << " status: LLM_KV_CACHE_NOT_EXIST";
+    MS_LOG(WARNING) << "Failed to call llm::LLMEngine::" << func_s << " " << phase << " status: LLM_KV_CACHE_NOT_EXIST";
     lite_status = kLiteLLMKVCacheNotExist;
   } else if (ge_status == ge::LLM_REPEAT_REQUEST) {
-    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << phase << " status: LLM_REPEAT_REQUEST";
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " " << phase << " status: LLM_REPEAT_REQUEST";
     lite_status = kLiteLLMRepeatRequest;
   } else if (ge_status == ge::LLM_REQUEST_ALREADY_COMPLETED) {
-    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << phase << " receive LLM_REQUEST_ALREADY_COMPLETED";
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " " << phase
+                  << " receive LLM_REQUEST_ALREADY_COMPLETED";
     lite_status = kLiteLLMRequestAlreadyCompleted;
   } else if (ge_status == ge::LLM_ENGINE_FINALIZED) {
-    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << phase << " status: LLM_ENGINE_FINALIZED";
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " " << phase << " status: LLM_ENGINE_FINALIZED";
     lite_status = kLiteLLMEngineFinalized;
   } else if (ge_status == ge::LLM_PARAM_INVALID) {
-    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << phase << " status: LLM_PARAM_INVALID";
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " " << phase << " status: LLM_PARAM_INVALID";
     lite_status = kLiteParamInvalid;
   } else {
-    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << phase << " status: " << ge_status;
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " " << phase << " status: " << ge_status;
     lite_status = kLiteError;
   }
   return lite_status;
