@@ -108,8 +108,8 @@ TEST_F(TestOptLib, test_inline) {
   AbstractBasePtr abstract_v2 = abstract::FromValue(y_tensor, true);
   args_spec_list.push_back(abstract_v1);
   args_spec_list.push_back(abstract_v2);
-  AnalysisResult result = pipeline::AbstractAnalyze(res, before1, args_spec_list);
-  FuncGraphPtr new_graph = pipeline::ProgramSpecialize(res, before1, result.context);
+  AnalysisResult result = pipeline::AbstractAnalyze(res->engine(), before1, args_spec_list, res->is_load());
+  FuncGraphPtr new_graph = pipeline::ProgramSpecialize(res->engine(), before1, result.context);
   auto patterns = std::vector<SubstitutionPtr>({irpass.arithmetic_simplify_, irpass.switch_simplify_, irpass.inline_});
   ASSERT_TRUE(CheckOpt(new_graph, after, patterns));
 }

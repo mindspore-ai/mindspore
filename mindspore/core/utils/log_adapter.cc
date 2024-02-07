@@ -666,6 +666,7 @@ const std::string GetSubModuleName(SubModuleId module_id) {
     "VM",                 // SM_VM
     "PROFILER",           // SM_PROFILER
     "PS",                 // SM_PS
+    "PI",                 // SM_PI
     "FL",                 // SM_FL
     "DISTRIBUTED",        // SM_DISTRIBUTED
     "LITE",               // SM_LITE
