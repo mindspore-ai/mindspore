@@ -38,6 +38,7 @@ enum OpType {
   OP_ASSIGN,
   OP_ELEMENY,
   OP_REDUCE,
+  OP_SLICE,
 };
 
 ShapeVector GetAxisList(const AnfNodePtr &axis_input) {
@@ -94,7 +95,9 @@ static std::unordered_map<std::string, std::pair<OpType, int>> op_type_map = {
   {"Assign", {OP_ASSIGN, 0}},
   {"ElemAny", {OP_ELEMENY, 0}},
   {"IsFinite", {OP_UNARY, dvm::UnaryOpType::kIsFinite}},
-  {"ReduceSum", {OP_REDUCE, dvm::ReduceOpType::kSum}}};
+  {"ReduceSum", {OP_REDUCE, dvm::ReduceOpType::kSum}},
+  {"Slice", {OP_SLICE, 0}},
+  {"StridedSlice", {OP_SLICE, 1}}};
 
 TypeId GetValueNodeType(const AnfNodePtr &node) {
   auto valuenode = node->cast<ValueNodePtr>();
@@ -215,6 +218,10 @@ class OpBuilder {
         HandlerReduceOp(node, prim, op_type->second.second);
         break;
       }
+      case OP_SLICE: {
+        HandlerSliceOp(node, op_type->second.second);
+        break;
+      }
       default:
         MS_LOG(EXCEPTION) << op_type->second << " is unsupported op type.";
         break;
@@ -287,6 +294,34 @@ class OpBuilder {
     EmitOp(node, op);
   }
 
+  void HandlerSliceOp(const CNodePtr &node, int op_type) {
+    auto input = node->input(1);
+    auto start_ref = CacheAxis(node, node->input(2));
+    if (op_type) {
+      auto end_ref = CacheAxis(node, node->input(3));
+      auto step_ref = CacheAxis(node, node->input(4));
+      auto op = kernel_->Copy(GetInput(input, start_ref, end_ref, step_ref));
+      EmitOp(node, op);
+    } else {
+      auto size_ref = CacheAxis(node, node->input(3));
+      auto op = kernel_->Copy(GetInput(input, start_ref, size_ref));
+      EmitOp(node, op);
+    }
+  }
+
+  std::pair<dvm::ShapeRef *, dvm::DType> GetNodeShapeAndType(const AnfNodePtr &node) {
+    // hit subgraph input
+    auto type_id = AnfAlgo::GetOutputDeviceDataType(node, 0);
+    auto iter = ms_type_map.find(type_id);
+    if (iter == ms_type_map.end()) {
+      MS_LOG(EXCEPTION) << node->ToString() << " 's type " << TypeIdToString(type_id) << " is unsupported data type.";
+    }
+    auto shape = AnfAlgo::GetOutputDeviceShape(node, 0);
+    shapes_ref_source_->push_back(shape);
+    (*shapes_ref_)[node] = std::make_shared<dvm::ShapeRef>(shapes_ref_source_->back());
+    return {(*shapes_ref_)[node].get(), iter->second};
+  }
+
   dvm::NDObject *GetInput(const AnfNodePtr &node) {
     auto it = ops_map_.find(node);
     if (it == ops_map_.end()) {
@@ -296,17 +331,42 @@ class OpBuilder {
         (*shapes_ref_)[node] = std::make_shared<dvm::ShapeRef>(shapes_ref_source_->back());
         op = EmitScalarBroadcast(node, (*shapes_ref_)[node].get());
       } else if (node->isa<Parameter>()) {
-        // hit subgraph input
-        auto type_id = AnfAlgo::GetOutputDeviceDataType(node, 0);
-        auto iter = ms_type_map.find(type_id);
-        if (iter == ms_type_map.end()) {
-          MS_LOG(EXCEPTION) << node->ToString() << " 's type " << TypeIdToString(type_id)
-                            << " is unsupported data type.";
-        }
-        auto shape = AnfAlgo::GetOutputDeviceShape(node, 0);
-        shapes_ref_source_->push_back(shape);
-        (*shapes_ref_)[node] = std::make_shared<dvm::ShapeRef>(shapes_ref_source_->back());
-        op = kernel_->Load(nullptr, (*shapes_ref_)[node].get(), iter->second);
+        auto [shape_ref, type] = GetNodeShapeAndType(node);
+        op = kernel_->Load(nullptr, shape_ref, type);
+        inputs_[node] = op;
+      } else {
+        MS_LOG(EXCEPTION) << node->DebugString() << " is unsupported node type.";
+      }
+      ops_map_[node] = op;
+      return op;
+    }
+    return it->second;
+  }
+
+  dvm::NDObject *GetInput(const AnfNodePtr &node, dvm::ShapeRef *start, dvm::ShapeRef *size) {
+    auto it = ops_map_.find(node);
+    if (it == ops_map_.end()) {
+      dvm::NDObject *op = nullptr;
+      if (node->isa<Parameter>()) {
+        auto [shape_ref, type] = GetNodeShapeAndType(node);
+        op = kernel_->SliceLoad(nullptr, shape_ref, start, size, type);
+        inputs_[node] = op;
+      } else {
+        MS_LOG(EXCEPTION) << node->DebugString() << " is unsupported node type.";
+      }
+      ops_map_[node] = op;
+      return op;
+    }
+    return it->second;
+  }
+
+  dvm::NDObject *GetInput(const AnfNodePtr &node, dvm::ShapeRef *start, dvm::ShapeRef *end, dvm::ShapeRef *step) {
+    auto it = ops_map_.find(node);
+    if (it == ops_map_.end()) {
+      dvm::NDObject *op = nullptr;
+      if (node->isa<Parameter>()) {
+        auto [shape_ref, type] = GetNodeShapeAndType(node);
+        op = kernel_->StridedSliceLoad(nullptr, shape_ref, start, end, step, type);
         inputs_[node] = op;
       } else {
         MS_LOG(EXCEPTION) << node->DebugString() << " is unsupported node type.";
