@@ -47,7 +47,7 @@ uint64_t TilingCacheMgr::GenTilingCacheKey(const std::string &name, PrimitivePtr
 }
 
 TilingInfo TilingCacheMgr::GetOrCreateTilingInfo(
-  const uint64_t key, const std::function<int(internal::HostRawBuf &, internal::RunInfo &)> &tiling_func,
+  const uint64_t key, const std::function<int(internal::HostRawBuf &, internal::CacheInfo &)> &tiling_func,
   size_t tiling_size) {
   std::lock_guard<std::mutex> lock(cache_mtx_);
   // Check in cache_buf_
@@ -64,7 +64,7 @@ TilingInfo TilingCacheMgr::GetOrCreateTilingInfo(
   host_tiling_buf_.addr_ = host_addr;
   host_tiling_buf_.size_ = tiling_size;
 
-  bool ret = tiling_func(host_tiling_buf_, tiling_cache_elem.run_info_);
+  bool ret = tiling_func(host_tiling_buf_, tiling_cache_elem.cache_info_);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "Tiling failed!";
   }
