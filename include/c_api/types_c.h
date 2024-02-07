@@ -42,6 +42,25 @@ typedef enum MSDeviceType {
   kMSDeviceTypeInvalid = 100,
 } MSDeviceType;
 
+typedef enum MSOptimizationLevel {
+  /** Do not change */
+  kMSKO0 = 0,
+  /** Cast network to float16, keep batchnorm and loss in float32 */
+  kMSKO2 = 2,
+  /** Cast network to float16, including bacthnorm */
+  kMSKO3 = 3,
+  /** Choose optimization based on device */
+  kMSKAUTO = 4,
+  kMSKOPTIMIZATIONTYPE = 0xFFFFFFFF
+} MSOptimizationLevel;
+
+typedef enum MSQuantizationType {
+  kMSNO_QUANT = 0,
+  kMSWEIGHT_QUANT = 1,
+  kMSFULL_QUANT = 2,
+  kMSUNKNOWN_QUANT_TYPE = 0xFFFFFFFF
+} MSQuantizationType;
+
 #ifdef __cplusplus
 }
 #endif

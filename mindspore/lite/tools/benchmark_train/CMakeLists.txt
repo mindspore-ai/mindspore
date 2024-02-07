@@ -9,6 +9,9 @@ set(COMMON_SRC
 set(TEST_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/net_train.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/net_train_base.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/run_net_train.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/net_train_c_api.cc
     )
 
 # add static securec link library
