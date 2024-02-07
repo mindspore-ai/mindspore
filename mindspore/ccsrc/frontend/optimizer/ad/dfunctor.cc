@@ -284,30 +284,17 @@ AnfNodePtr HandleRealToComplex(const AnfNodePtr &input, const CNodePtr &din, con
   return new_din;
 }
 
-// Call FuncGraph which has side effect.
-bool IsSideEffectCallFunc(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
-  if (graph != nullptr) {
-    return std::any_of(cnode->inputs().begin(), cnode->inputs().end(),
-                       [](const AnfNodePtr &input) { return HasAbstractIOMonad(input); });
-  }
-  return false;
-}
-
 void DFunctor::BackPropagate(const CNodePtr &cnode_morph, const CNodePtr &k_app, const AdjointPtr &node_adjoint) {
   auto bprop =
     k_graph_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), k_app, NewValueNode(static_cast<int64_t>(1))});
   // Call with delimited continuation dout.
   CNodePtr bprop_app;
-  if (HasSideEffectBackProp(cnode_morph) || IsSideEffectCallFunc(cnode_morph)) {
+  if (HasSideEffectBackProp(cnode_morph)) {
     // as MapMorphism is called recursively, so the order of bprop_app should reversed as visited order.
     bprop_app = tape_->NewCNodeInFront({bprop, node_adjoint->dout()});
     tape_->set_flag(mindspore::kFuncGraphFlagReAutoMonad, true);
   } else {
-    bprop_app = tape_->NewCNodeInOrder({bprop, node_adjoint->dout()});
-    tape_->set_flag(mindspore::kFuncGraphFlagReAutoMonad, true);
-
+    bprop_app = tape_->NewCNode({bprop, node_adjoint->dout()});
   }
   node_adjoint->RegisterDoutUser(bprop_app, 1);
   // Special case for switch_layer
