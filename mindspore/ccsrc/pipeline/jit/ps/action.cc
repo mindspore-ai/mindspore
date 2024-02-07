@@ -1363,6 +1363,12 @@ void SetRunMode(const ResourcePtr &resource) {
   auto is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
   auto enable_hccl = context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL);
   bool using_cm = common::UseDynamicCluster() && common::GetEnv("MS_HCCL_CM_INIT") == "1";
+  if (using_cm && common::GetEnv("GRAPH_OP_RUN") == "1") {
+    MS_LOG(INTERNAL_EXCEPTION)
+      << "You are setting 'MS_HCCL_CM_INIT' and 'GRAPH_OP_RUN' to 1 at the same time, which will cause confilct "
+         "because 'MS_HCCL_CM_INIT' means running in sink mode, but 'GRAPH_OP_RUN' means running kernel by kernel. "
+         "Please unset either of them and rerun the task.";
+  }
   if (!is_task_sink && mode == kGraphMode && enable_hccl && (!common::UseHostCollective() || using_cm)) {
     MS_LOG(INTERNAL_EXCEPTION) << "Current execution mode is 'kernelbykernel', reason: " << kbk_reason
                                << ", but you're launching job using 'ranktable', which "
