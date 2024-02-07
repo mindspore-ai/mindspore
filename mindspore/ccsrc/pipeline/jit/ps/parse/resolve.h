@@ -211,7 +211,8 @@ bool ResolveFuncGraph(const FuncGraphPtr &func_graph, const pipeline::ResourceBa
 bool ResolveAll(const FuncGraphManagerPtr &manager);
 
 py::object GetSymbolObject(const NameSpacePtr &name_space, const SymbolPtr &symbol, const AnfNodePtr &node);
-bool ResolveObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, AnfNodePtr *const node);
+bool ResolveObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, AnfNodePtr *const node,
+                         bool is_element_obj = false);
 ValuePtr GetParameterValue(const py::object &param_obj);
 }  // namespace parse
 }  // namespace mindspore
