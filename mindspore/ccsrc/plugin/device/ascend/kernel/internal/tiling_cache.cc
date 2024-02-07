@@ -20,16 +20,9 @@
 
 namespace mindspore::kernel {
 
-template <typename... Args>
-uint64_t TilingCacheMgr::GenTilingCacheKey(const std::string &name, const Args &... args) {
-  ResetCacheKey();
-  GenCache(name, args...);
-  uint64_t id = calc_hash_id();
-  return id;
-}
-
 uint64_t TilingCacheMgr::GenTilingCacheKey(const std::string &name, PrimitivePtr prim,
                                            const std::vector<KernelTensor *> &inputs) {
+  std::lock_guard<std::mutex> lock(key_mtx_);
   ResetCacheKey();
   ConcatKey(name.c_str(), static_cast<int64_t>(name.size()));
   std::set<int64_t> value_depend_list = ops::GetInputDependValueList(prim);
@@ -41,13 +34,13 @@ uint64_t TilingCacheMgr::GenTilingCacheKey(const std::string &name, PrimitivePtr
       GenCache(inputs[i]);
     }
   }
-  uint64_t id = calc_hash_id();
-  return id;
+  return calc_hash_id();
 }
 
 TilingInfo TilingCacheMgr::GetOrCreateTilingInfo(
   const uint64_t key, const std::function<int(internal::HostRawBuf &, internal::CacheInfo &)> &tiling_func,
   size_t tiling_size) {
+  std::lock_guard<std::mutex> lock(cache_mtx_);
   // Check in cache_buf_
   auto iter = cache_buf_.find(key);
   if (iter != cache_buf_.end() && key != 0) {
@@ -56,7 +49,7 @@ TilingInfo TilingCacheMgr::GetOrCreateTilingInfo(
   // Need free the dev mem after launch when the cache is full.
   FreeMemoryIfFull();
 
-  // Host addr will be free in tiling_func.
+  // Malloc host tiling_func.
   void *host_addr = malloc(tiling_size);
   TilingInfo tiling_cache_elem;
   host_tiling_buf_.addr_ = host_addr;
@@ -84,6 +77,7 @@ TilingInfo TilingCacheMgr::GetOrCreateTilingInfo(
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "ACL_MEMCPY_HOST_TO_DEVICE failed!";
   }
+  free(host_addr);
   AppendToCache(key, tiling_cache_elem);
   return tiling_cache_elem;
 }

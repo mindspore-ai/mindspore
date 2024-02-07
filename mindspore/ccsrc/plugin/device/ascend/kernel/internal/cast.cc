@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/ascend/kernel/internal/cast.h"
+#include <memory>
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
 #include "include/param/cast_param.h"
 
@@ -34,6 +35,13 @@ void InternalCast::SetInOutIdx() {
   outputsIdxMap_[0] = 0;
 }
 
+uint64_t InternalCast::GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  // User defined CacheKey, the inputs should include all the factors which will affect tiling result.
+  return TilingCacheMgr::GetInstance().GenTilingCacheKey(kernel_name_, inputs[0]->GetShapeVector(),
+                                                         inputs[0]->dtype_id(), outputs[0]->GetShapeVector(),
+                                                         outputs[0]->dtype_id());
+}
 MS_INTERNAL_KERNEL_FACTORY_REG(Cast, InternalCast);
 }  // namespace kernel
 }  // namespace mindspore
