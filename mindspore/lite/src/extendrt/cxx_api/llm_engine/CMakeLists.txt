@@ -13,6 +13,9 @@ list(APPEND LLM_ENGINE_PLUGIN_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir
 add_library(llm_engine_plugin SHARED ${LLM_ENGINE_PLUGIN_SRC})
 
 find_library(llm_engine libllm_engine.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-target_link_libraries(llm_engine_plugin llm_engine mindspore_converter mindspore_core)
+find_library(ge_graph libgraph.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+find_library(acl libascendcl.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+
+target_link_libraries(llm_engine_plugin ${llm_engine} ${ge_graph} ${acl} mindspore_converter mindspore_core)
 
 target_link_libraries(llm_engine_plugin mindspore-extendrt)
