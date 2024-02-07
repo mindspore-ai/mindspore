@@ -435,7 +435,11 @@ std::pair<bool, KernelAttr> PyBoostUtils::SelectKernel(const std::vector<Abstrac
         IsObjectTypeStrictlyMatched(output_dtypes, output_data_types)) {
       return std::make_pair(true, cur_kernel_attr);
     }
+  }
 
+  for (auto &cur_kernel_attr : support_list) {
+    auto data_pair = kernel::GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
+    const auto &[input_data_types, output_data_types] = kernel::GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
     if (IsObjectTypeWeaklyMatched(inputs_dtypes, input_data_types) &&
         IsObjectTypeWeaklyMatched(output_dtypes, output_data_types)) {
       return std::make_pair(false, cur_kernel_attr);
