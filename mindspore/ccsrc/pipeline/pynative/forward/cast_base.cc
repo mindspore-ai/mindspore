@@ -29,27 +29,27 @@ template <typename S>
 ValuePtr CastScalarToScalar(S in, const TypeId &type_id) {
   switch (type_id) {
     case kNumberTypeInt32:
-      MakeValue(static_cast<int>(in));
+      return MakeValue(static_cast<int>(in));
     case kNumberTypeFloat32:
-      MakeValue(static_cast<float>(in));
+      return MakeValue(static_cast<float>(in));
     case kNumberTypeBool:
-      MakeValue(static_cast<bool>(in));
+      return MakeValue(static_cast<bool>(in));
     case kNumberTypeInt64:
-      MakeValue(static_cast<int64_t>(in));
+      return MakeValue(static_cast<int64_t>(in));
     case kNumberTypeFloat64:
-      MakeValue(static_cast<double>(in));
+      return MakeValue(static_cast<double>(in));
     case kNumberTypeInt16:
-      MakeValue(static_cast<int16_t>(in));
+      return MakeValue(static_cast<int16_t>(in));
     case kNumberTypeInt8:
-      MakeValue(static_cast<int8_t>(in));
+      return MakeValue(static_cast<int8_t>(in));
     case kNumberTypeUInt64:
-      MakeValue(static_cast<uint64_t>(in));
+      return MakeValue(static_cast<uint64_t>(in));
     case kNumberTypeUInt32:
-      MakeValue(static_cast<uint32_t>(in));
+      return MakeValue(static_cast<uint32_t>(in));
     case kNumberTypeUInt16:
-      MakeValue(static_cast<uint16_t>(in));
+      return MakeValue(static_cast<uint16_t>(in));
     case kNumberTypeUInt8:
-      MakeValue(static_cast<uint8_t>(in));
+      return MakeValue(static_cast<uint8_t>(in));
     default:
       MS_LOG(DEBUG) << "Not support cast to dst type: " << TypeIdToType(type_id)->ToString();
       return nullptr;
