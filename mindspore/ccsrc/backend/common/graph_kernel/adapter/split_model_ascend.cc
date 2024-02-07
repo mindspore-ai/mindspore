@@ -48,6 +48,23 @@ class FuseReduceBwd : public FusePattern {
   }
 };
 
+class FuseSlice : public FusePattern {
+ public:
+  FuseSlice() : FusePattern("slice") { direction_ = FuseDirection::BACKWARD; }
+  ~FuseSlice() = default;
+
+ protected:
+  bool Check(const AreaPtr &dom) override { return dom->dom()->op() == "Slice" || dom->dom()->op() == "StridedSlice"; }
+  bool Match(const AreaPtr &dom) override {
+    for (auto &[a, r] : dom->users_with_relation()) {
+      if (a->pattern() < NodePattern::BROADCAST && r == EdgeRelation::INJECTIVE && !HasCircle(dom, a)) {
+        (void)fused_areas_.emplace_back(a);
+      }
+    }
+    return !fused_areas_.empty();
+  }
+};
+
 class FuseTransdata : public FusePattern {
  public:
   FuseTransdata() : FusePattern("transdata") {}
@@ -130,6 +147,7 @@ void SplitModelAscend::InitFusePatterns() {
   AddPattern(std::make_shared<inner::ascend::FuseReduceBwd>(), true);
   AddPattern(std::make_shared<inner::ascend::FuseTransdata>(), true);
   AddPattern(std::make_shared<inner::ascend::FuseElemAny>(), is_dvm_);
+  AddPattern(std::make_shared<inner::ascend::FuseSlice>(), is_dvm_);
 }
 
 AreaMode SplitModelAscend::GetDefaultAreaMode(const PrimOpPtr &node) const {

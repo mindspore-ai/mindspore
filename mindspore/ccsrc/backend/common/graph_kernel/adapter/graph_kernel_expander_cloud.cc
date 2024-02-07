@@ -41,7 +41,8 @@ bool DvmSupported(const AnfNodePtr &node) {
   auto cb = Callback::Instance();
   MS_EXCEPTION_IF_NULL(cb);
   auto node_output_type = cb->GetOutputType(node, 0);
-  return (node_output_type == kNumberTypeFloat16 || node_output_type == kNumberTypeFloat32);
+  return (node_output_type == kNumberTypeFloat16 || node_output_type == kNumberTypeFloat32 ||
+          node_output_type == kNumberTypeBool || node_output_type == kNumberTypeInt32);
 }
 }  // namespace
 
