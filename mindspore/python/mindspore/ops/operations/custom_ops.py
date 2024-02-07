@@ -470,7 +470,7 @@ class Custom(ops.PrimitiveWithInfer):
     op_path_in_cache = []  # Save paths for op functions created in the cached.
     custom_aot_warning = True  # Flag to enable warnings about custom aot path white list
 
-    def __init__(self, func, out_shape=None, out_dtype=None, func_type=HYBRID_TYPE, bprop=None, reg_info=None):
+    def __init__(self, func, out_shape=None, out_dtype=None, func_type="hybrid", bprop=None, reg_info=None):
         super().__init__("Custom")
 
         self.supported_targets = [ASCEND, GPU, CPU]
