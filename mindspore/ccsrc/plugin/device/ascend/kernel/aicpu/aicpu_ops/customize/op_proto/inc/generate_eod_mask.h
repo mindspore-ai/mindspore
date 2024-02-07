@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2022-2022 Huawei Technologies Co., Ltd.  All rights reserved.
+ * Copyright (c) 2024 Huawei Technologies Co., Ltd.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,35 +14,35 @@
  * limitations under the License.
  */
 
-#ifndef CUSTOMIZE_OP_PROTO_INC_EIG_OP_H
-#define CUSTOMIZE_OP_PROTO_INC_EIG_OP_H
+#ifndef CUSTOMIZE_OP_PROTO_INC_GENERATE_EOD_MASK_H
+#define CUSTOMIZE_OP_PROTO_INC_GENERATE_EOD_MASK_H
 
 #include "op_proto_macro.h"
 
 namespace ge {
 /**
-* @brief Computes the eigenvalue decomposition of a square matrix. \n
+* @brief flip the bit. \n
 
 * @par Inputs:
 * One input, including:
-* @li x:A Tensor. Must be one of the following types: float32, float64, complex64, complex128.
- Shape is [N, N]. \n
+* @li x:A Tensor. Must be one of the following types: float32, float64, bfloat16.
+ Shape is 2D tensor. \n
 
 * @par Attributes:
 * @li compute_v: A bool. Indicating whether to compute eigenvectors. \n
 
 * @par Outputs:
-* eigen_values: A Tensor. Has the corresponding complex type with "x". Shape is [N, 1].
-* eigen_vectors: A Tensor. Has the corresponding complex type with "x". Shape is [N, N] with compute_v true,
- Shape is empty with compute_v false. \n
+* output: A Tensor. The modified tensor. \n
 */
 
 REG_CUST_OP(GenerateEodMask)
-  .INPUT(inputs_ids, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
-  .OUTPUT(position_ids, TensorType({DT_INT8, DT_UINT8, DT_INT16, DT_INT32, DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+  .INPUT(inputs_ids, TensorType({DT_FLOAT16, DT_BF16, DT_FLOAT, DT_DOUBLE}))
+  .OUTPUT(position_ids,
+          TensorType({DT_INT8, DT_UINT8, DT_INT16, DT_INT32, DT_INT64, DT_FLOAT16, DT_BF16, DT_FLOAT, DT_DOUBLE}))
   .ATTR(n_pos, Int, false)
   .ATTR(eod_token_id, Int, false)
-  .ATTR(n_step, Int, false)
+  .ATTR(n_step, ListInt, {})
+  .ATTR(n_error_mode, String, "specific")
   .CUST_OP_END_FACTORY_REG(GenerateEodMask)
 }  // namespace ge
 #endif

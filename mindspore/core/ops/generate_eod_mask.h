@@ -32,23 +32,22 @@ class MIND_API GenerateEodMask : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(GenerateEodMask);
   /// \brief Constructor.
-  GenerateEodMask() : BaseOperator(kNameGenerateEodMask) {
-    InitIOName({"inputs_ids"}, {"position_ids"});
-  }
+  GenerateEodMask() : BaseOperator(kNameGenerateEodMask) { InitIOName({"inputs_ids"}, {"position_ids"}); }
   /// \brief Init.
   void Init() const {}
   /// \brief Set axis.
   void set_eod_token_id(const int64_t eod_token_id);
   void set_n_pos(const int64_t n_pos);
-  void set_n_step(const int64_t n_step);
+  void set_n_step(const std::vector<int64_t> n_step);
+  void set_n_error_mode(const std::string n_error_mode);
 
   /// \brief Get axis.
   ///
   /// \return axis.
   int64_t get_eod_token_id() const;
   int64_t get_n_pos() const;
-  int64_t get_n_step() const;
-
+  std::vector<int64_t> get_n_step() const;
+  std::string get_n_error_mode() const;
 };
 
 MIND_API abstract::AbstractBasePtr GenerateEodMaskInfer(const abstract::AnalysisEnginePtr &,
