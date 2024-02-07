@@ -113,7 +113,6 @@ class TilingCacheMgr {
   device::DeviceContext *device_context_;
   std::mutex key_mtx_, cache_mtx_;
 
-
   uint64_t calc_hash_id();
 
   inline size_t AlignMemorySize(size_t size) {
@@ -199,6 +198,11 @@ class TilingCacheMgr {
   void GenCache(mindspore::kernel::KernelTensor *input) {
     if (input == nullptr) {
       return;
+    }
+    // input is a type
+    auto obj_type = input->GetType()->type_id();
+    if (obj_type == kMetaTypeType) {
+      GenCache(input->GetValue()->cast<TypePtr>()->type_id());
     }
     // shape
     auto shape = input->GetShapeVector();
