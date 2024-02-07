@@ -44,9 +44,6 @@ update_submodule()
   git submodule update --init graphengine
   cd "${BASEPATH}/graphengine"
   GRAPHENGINE_SUBMODULE="910/metadef"
-  if [[ "X$ASCEND_VERSION" = "X910b" ]]; then
-    GRAPHENGINE_SUBMODULE="910b/metadef"
-  fi
   git submodule update --init ${GRAPHENGINE_SUBMODULE}
   cd "${BASEPATH}"
   if [[ "X$ENABLE_AKG" = "Xon" ]]; then

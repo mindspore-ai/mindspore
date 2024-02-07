@@ -273,9 +273,6 @@ const bool SelectAscendPlugin = []() -> bool {
   if (iter == kAscendSocVersions.end()) {
     exit(0);
   }
-  if (iter->second != std::string(EXPECT_ASCEND_VERSION)) {
-    exit(0);
-  }
   if (iter->second == k910BAscendVersion) {
     common::SetEnv("MS_ENABLE_GE", "1");
     auto format_mode = common::GetEnv("MS_ENABLE_FORMAT_MODE");
