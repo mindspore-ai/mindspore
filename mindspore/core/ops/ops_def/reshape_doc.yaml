@@ -7,8 +7,9 @@ reshape:
 
         Args:
             input (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-            shape (Union[tuple[int], Tensor[int]]): Constructed by multiple
+            shape (Union[tuple[int], list[int], Tensor[int]]): Constructed by multiple
                 integers, i.e., :math:`(y_1, y_2, ..., y_S)`. Only constant value is allowed.
+                Compatible with support for list and Tensor type inputs, but not recommended for use.
 
         Returns:
             Tensor, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.

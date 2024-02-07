@@ -3,7 +3,7 @@ ceil:
         Rounds a tensor up to the closest integer element-wise.
 
         Args:
-            - **input** (Tensor) - The input tensor with a dtype of float16 or float32.
+            input (Tensor): The input tensor with a dtype of float16 or float32.
 
         Returns:
             Tensor, has the same shape as `x`.

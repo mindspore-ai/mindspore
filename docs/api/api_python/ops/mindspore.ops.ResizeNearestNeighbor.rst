@@ -1,7 +1,7 @@
 mindspore.ops.ResizeNearestNeighbor
 =====================================
 
-.. py:class:: mindspore.ops.ResizeNearestNeighbor(size, align_corners=False)
+.. py:class:: mindspore.ops.ResizeNearestNeighbor(size, align_corners=False, half_pixel_centers=False)
 
     使用最近邻插值算法调整输入Tensor为指定大小。最近邻插值算法的具体操作为：选择最近点的值，而不考虑相邻点的值，从而产生分段常数插值。
 

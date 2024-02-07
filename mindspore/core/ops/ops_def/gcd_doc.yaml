@@ -8,8 +8,8 @@ gcd:
             This is an experimental API that is subject to change or deletion.
 
         Args:
-            - **input** (Tensor) - The first input tensor.
-            - **other** (Tensor) - The second input tensor.
+            input (Tensor): The first input tensor.
+            other (Tensor): The second input tensor.
 
         Returns:
             Tensor, the shape is the same as the one after broadcasting, and the data type is one

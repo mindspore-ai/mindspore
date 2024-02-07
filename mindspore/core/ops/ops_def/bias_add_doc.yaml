@@ -4,12 +4,12 @@ bias_add:
         consistent with the shape of the input Tensor.
 
         Args:
-            - **input_x** (Tensor) - The input tensor. The shape can be 2-5 dimensions.
-            - **bias** (Tensor) - The bias tensor, with shape :math:`(C)`. C must be the same as channel dimension C of
+            input_x (Tensor): The input tensor. The shape can be 2-5 dimensions.
+            bias (Tensor): The bias tensor, with shape :math:`(C)`. C must be the same as channel dimension C of
                 `input_x`.
-            - **data_format** (str, optional): The format of input and output data.
-                                It should be ``"NHWC"`` , ``"NCHW"`` or ``"NCDHW"`` .
-                                Default is ``"NCHW"`` .
+            data_format (str, optional): The format of input and output data.
+                It should be ``"NHWC"`` , ``"NCHW"`` or ``"NCDHW"`` .
+                Default is ``"NCHW"`` .
 
         Returns:
             Tensor, with the same shape and data type as `input_x`.
