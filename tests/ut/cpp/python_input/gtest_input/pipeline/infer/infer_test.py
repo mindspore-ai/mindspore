@@ -19,6 +19,17 @@ from mindspore.ops import operations as P
 scala_add = F.scalar_add
 
 
+class FnDict:
+    def __init__(self):
+        self.fnDict = {}
+
+    def __call__(self, fn):
+        self.fnDict[fn.__name__] = fn
+
+    def __getitem__(self, name):
+        return self.fnDict[name]
+
+
 class AddNet(nn.Cell):
     def construct(self, x, y):
         return F.scalar_add(x, y)
@@ -156,3 +167,17 @@ def test_graph_infer_vararg_kwonlyargs_kwarg_defaults():
         return func_call(x, y, *args, p=p, z=10, m=q, **kwargs)
 
     return test_call_variable
+
+
+def eval_test_functions(tag):
+    fns = FnDict()
+    add = P.Add()
+    relu = P.ReLU()
+
+    @fns
+    def func(x, y):
+        res = add(x, y)
+        res = x + res
+        return relu(res)
+
+    return fns[tag]

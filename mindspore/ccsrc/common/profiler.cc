@@ -44,15 +44,11 @@ static const char kSummaryInfoFileName[] = "RuntimeProfilerSummary";
 static const char kDetailInfoFileName[] = "RuntimeProfilerDetail";
 
 static const std::map<ProfilerStage, std::string> kProfilerStageString = {
-  {ProfilerStage::kDefault, "Default"},
-  {ProfilerStage::kPython, "Python"},
-  {ProfilerStage::kRunGraph, "RunGraph"},
-  {ProfilerStage::kRunGradGraph, "RunGradGraph"},
-  {ProfilerStage::kRunOp, "RunOp"},
-  {ProfilerStage::kAsnumpy, "Asnumpy"},
-  {ProfilerStage::kCompileGradGraph, "CompileGradGraph"},
-  {ProfilerStage::kWaitPipeline, "WaitPipeline"},
-  {ProfilerStage::kSyncStream, "SyncStream"},
+  {ProfilerStage::kDefault, "Default"},           {ProfilerStage::kPython, "Python"},
+  {ProfilerStage::kCapture, "Capture"},           {ProfilerStage::kRunGraph, "RunGraph"},
+  {ProfilerStage::kRunGradGraph, "RunGradGraph"}, {ProfilerStage::kRunOp, "RunOp"},
+  {ProfilerStage::kAsnumpy, "Asnumpy"},           {ProfilerStage::kCompileGradGraph, "CompileGradGraph"},
+  {ProfilerStage::kWaitPipeline, "WaitPipeline"}, {ProfilerStage::kSyncStream, "SyncStream"},
 };
 
 static const std::map<ProfilerModule, std::string> kProfilerModuleString = {
@@ -62,6 +58,7 @@ static const std::map<ProfilerModule, std::string> kProfilerModuleString = {
   {ProfilerModule::kPynative, "PynativeFramework"},
   {ProfilerModule::kKernel, "Kernel"},
   {ProfilerModule::kPython, "Python"},
+  {ProfilerModule::kCapture, "Capture"},
   {ProfilerModule::kOther, "Other"},
 };
 
@@ -112,7 +109,11 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   {ProfilerEvent::kPyBoostLaunchAclnn, "LaunchAclnn"},
   // python events
   {ProfilerEvent::kPythonObserved, "PythonObserved"},
-};
+  // Capture events
+  {ProfilerEvent::kCaptureRunGraph, "CaptureRunGraph"},
+  {ProfilerEvent::kCaptureProcess, "CaptureProcess"},
+  {ProfilerEvent::kCaptureCompile, "CaptureCompile"},
+  {ProfilerEvent::kCaptureGuard, "CaptureGuard"}};
 
 namespace {
 std::string GetRealPathName(const std::string &name) {

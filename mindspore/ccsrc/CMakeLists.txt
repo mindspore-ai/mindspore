@@ -355,6 +355,7 @@ set(SUB_COMP
         frontend/operator
         frontend/expander
         pipeline/jit/ps
+        pipeline/jit/pi
         pipeline/pynative
         pybind_api
 )
