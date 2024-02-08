@@ -14,6 +14,7 @@
 # ============================================================================
 import os
 import pytest
+import subprocess
 
 
 @pytest.mark.level0
@@ -32,3 +33,36 @@ def test_msrun():
         "test_msrun.py --device_target=Ascend --dataset_path=/home/workspace/mindspore_dataset/mnist"
     )
     assert return_code == 0
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_single
+def test_msrun_exception():
+    """
+    Feature: 'msrun' launch utility.
+    Description: Create python and cpp exception for msrun respectively and check whether cluster could exit
+                 and filter out the error logs.
+    Expectation: Cluster exits with no process hanging and error log is filtered out.
+    """
+    # Need to set log level so key words could be filtered out.
+    os.environ['GLOG_v'] = str(2)
+    result = subprocess.getoutput(
+        "msrun --worker_num=4 --local_worker_num=4 --master_addr=127.0.0.1 "\
+        "--master_port=10969 --join=True --log_dir=python_exception_log "\
+        "test_msrun_exception.py --device_target=Ascend --dataset_path=/home/workspace/mindspore_dataset/mnist "\
+        "--exception_type='python'"
+    )
+    assert result.find("Rank 0 throw python exception.") != -1
+    assert result.find("The node: 0 is timed out") != -1
+
+
+    result = subprocess.getoutput(
+        "msrun --worker_num=4 --local_worker_num=4 --master_addr=127.0.0.1 "\
+        "--master_port=10969 --join=True --log_dir=cpp_exception_log "\
+        "test_msrun_exception.py --device_target=Ascend --dataset_path=/home/workspace/mindspore_dataset/mnist "\
+        "--exception_type='cpp'"
+    )
+    assert result.find("For 'MatMul' the input dimensions must be equal, but got 'x1_col': 84 and 'x2_row': 64") != -1
+    assert result.find("The node: 1 is timed out") != -1
