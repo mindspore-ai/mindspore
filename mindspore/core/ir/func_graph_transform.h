@@ -32,8 +32,7 @@ class MS_CORE_API FuncGraphTransform {
       : prim_(prim), func_graph_(FuncGraphWeakPtr(func_graph)), primal_cnode_(primal_cnode) {}
 
   explicit FuncGraphTransform(const FuncGraphPtr &func_graph, const PrimitivePtr &prim = func_graph_prim_,
-                              const CNodePtr &primal_cnode = nullptr)
-      : prim_(prim), func_graph_(FuncGraphWeakPtr(func_graph)), primal_cnode_(primal_cnode) {}
+                              const CNodePtr &primal_cnode = nullptr);
 
   explicit FuncGraphTransform(const CNodePtr &primal_cnode, const PrimitivePtr &prim = func_graph_prim_,
                               const FuncGraphPtr &func_graph = nullptr)

@@ -1602,7 +1602,13 @@ bool PipelineSplitAction(const ResourcePtr &resource) { return PipelineSplitPass
 
 bool AutoParallelAction(const ResourcePtr &resource) { return AutoParallelPass(resource); }
 
-bool ValidateAction(const ResourcePtr &resource) { return ValidatePass(resource); }
+bool ValidateAction(const ResourcePtr &resource) {
+  auto res = ValidatePass(resource);
+#ifdef DEBUG
+  FuncGraphLoopBreaker::Inst().Dump();
+#endif
+  return res;
+}
 
 bool SetMindIRGraphAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);

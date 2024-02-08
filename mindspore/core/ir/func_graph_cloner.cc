@@ -146,7 +146,7 @@ void Cloner::CloneCNodeWithoutInputs(const AnfNodePtr &node, const FuncGraphPtr 
     scope = ((node->scope() == kDefaultScope) && (this->scope() != nullptr)) ? this->scope() : node->scope();
   }
   new_node->set_scope(scope);
-  replicated_node_[node] = new_node;
+  replicated_node_[node] = std::move(new_node);
 }
 
 void Cloner::CloneValueNode(const AnfNodePtr &node) {
@@ -259,6 +259,8 @@ void Cloner::CloneFuncGraphValueNodes(const FuncGraphPtr &func_graph, const Func
     auto return_node = iter->second->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(return_node);
     target_func_graph->set_return(return_node);
+  } else {
+    MS_LOG(ERROR) << "Has no return node, func_graph: " << func_graph << "/" << func_graph->ToString();
   }
 
   auto &cnodes = func_graph->func_graph_cnodes_index();
@@ -306,7 +308,6 @@ void Cloner::CloneParameters(const FuncGraphPtr &func_graph, const FuncGraphPtr 
   for (auto &param : params) {
     CloneParameter(param, target_func_graph, true);
   }
-  replicated_func_graph_[func_graph] = target_func_graph;
 }
 
 void Cloner::GenParameters(const FuncGraphPtr &func_graph) {
@@ -860,6 +861,7 @@ void Cloner::CloneNodes() {
       auto target_func_graph = std::make_shared<FuncGraph>(std::move(debug_info));
       SetFuncGraphInfo(func_graph, target_func_graph);
       CloneParameters(func_graph, target_func_graph);
+      replicated_func_graph_[func_graph] = target_func_graph;
       CloneAllNodes(func_graph, target_func_graph);
       CloneFuncGraphValueNodes(func_graph, target_func_graph);
       CloneFuncGraphDefaultValues(func_graph, target_func_graph);
