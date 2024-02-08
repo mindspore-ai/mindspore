@@ -83,7 +83,10 @@ void PyBoostOpExecute::RunOpDeprecated(OpRunnerInfo *op_runner_info, VectorRef *
   backend_op_run_info->base_op_run_info.abstract = op_runner_info->output_abs ;
   // Call single op graph run
   GetMindRtBackend(op_runner_info->device_target);
-  backend_->RunOp(backend_op_run_info, op_outputs);
+  backend_op_run_info->base_op_run_info.use_dynamic_shape_process = true;
+  backend_op_run_info->op_prim = std::make_shared<Primitive>(*op_runner_info->prim);
+  AnfAlgo::SetDynamicAttrToPrim(backend_op_run_info->op_prim);
+  backend_->RunOpDynamic(backend_op_run_info, op_outputs);
 }
 
 void PyBoostOpExecute::RunOpInVm(OpRunnerInfo *op_runner_info, VectorRef *op_outputs) {
