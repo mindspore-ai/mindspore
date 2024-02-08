@@ -1680,8 +1680,23 @@ ValueNode *GetSelfFromMethod(ValueNode *method) {
   return self;
 }
 
+static bool SkipGuardInlinedFunc(ValueNode *func_node) {
+  if (func_node->IsConstantValue()) {
+    return true;
+  }
+  AObject::Type value_type = func_node->GetVobj()->GetType();
+  if (func_node->GetOpcode() == LOAD_ATTR) {
+    AObject *src_info = func_node->input(0)->GetVobj();
+    if (src_info->GetType() == AObject::kTypeTensor && value_type == AObject::kTypeBoundMethod) {
+      // function from Tensor
+      return true;
+    }
+  }
+  return false;
+}
+
 bool GuardInlinedFunc(CallNode *call_node) {
-  if (call_node->input(0)->IsConstantValue()) {
+  if (SkipGuardInlinedFunc(call_node->input(0))) {
     return true;
   }
   AObject::Type func_type = call_node->input(0)->GetVobj()->GetType();
