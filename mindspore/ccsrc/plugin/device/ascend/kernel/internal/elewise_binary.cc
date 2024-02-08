@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace kernel {
 internal::OpParamPtr ElewiseBinary::CreateOpParam(const std::vector<KernelTensor *> &inputs,
-                                                 const std::vector<KernelTensor *> &outputs) {
+                                                  const std::vector<KernelTensor *> &outputs) {
   internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
   SetComputeType(param_ptr);
   return param_ptr;
@@ -42,6 +42,12 @@ class InternalAdd : public ElewiseBinary {
     internal::ElewiseParam op_param;
     op_param.elewiseType = internal::ElewiseParam::ELEWISE_ADD;
     param_ptr->specificParam = op_param;
+  }
+  uint64_t GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
+                             const std::vector<KernelTensor *> &outputs) override {
+    return TilingCacheMgr::GetInstance().GenTilingCacheKey(kernel_name_, inputs[0]->GetShapeVector(),
+                                                           inputs[0]->dtype_id(), inputs[1]->GetShapeVector(),
+                                                           inputs[1]->dtype_id());
   }
 };
 

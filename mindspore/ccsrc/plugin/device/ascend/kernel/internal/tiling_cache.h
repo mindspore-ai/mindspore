@@ -79,8 +79,13 @@ class TilingCacheMgr {
 
   // Generate tiling cache key by input, kernel should provide the specific data which will change
   // the tiling tactics.
-  template <typename... Args>
-  uint64_t GenTilingCacheKey(const std::string &name, const Args &... args);
+  template <typename T, typename... Args>
+  uint64_t GenTilingCacheKey(const T &arg, const Args &... args) {
+    std::lock_guard<std::mutex> lock(key_mtx_);
+    ResetCacheKey();
+    GenCache(arg, args...);
+    return calc_hash_id();
+  }
 
   // Generate tiling cache key by default inputs. All of the input shape, type, format and depend value
   // will be the cache key. It's a normal way, which means some non-essential data will be part of the key.
@@ -179,6 +184,8 @@ class TilingCacheMgr {
       MS_LOG(EXCEPTION) << "Currently not support value: " << scalar->ToString();
     }
   }
+  // end
+  void GenCache() {}
   // cache for type, eg. input type
   void GenCache(const TypePtr &type) {
     const auto type_id = type->type_id();
@@ -193,6 +200,12 @@ class TilingCacheMgr {
   template <typename T>
   void GenCache(const T &value) {
     ConcatKey(&value, sizeof(T));
+  }
+  // vector<KernelTesnor>
+  void GenCache(std::vector<mindspore::kernel::KernelTensor *> inputs) {
+    for (auto item : inputs) {
+      GenCache(item);
+    }
   }
   // cache for KernelTensor, eg. raw depend value
   void GenCache(mindspore::kernel::KernelTensor *input) {
