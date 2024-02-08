@@ -620,6 +620,10 @@ constexpr auto kGeGraphCompilerCacheDir = "ge.graph_compiler_cache_dir";
 constexpr auto kRecomputeInsert = "recompute_insert";
 constexpr auto kAddedRecomputeDependAttr = "added_recompute_depend";
 constexpr auto kCondidateOverlapBlockId = "condidate_overlap_block_id";
+constexpr auto kNcclWorldGroup = "nccl_world_group";
+constexpr auto kHcclWorldGroup = "hccl_world_group";
+constexpr auto kSyncBnGroup = "sync_bn_group";
+constexpr auto kRankID = "RANK_ID";
 
 // User data key for pyexecute.
 constexpr auto kSyncUserDataHandler = "sync_user_data_handler";

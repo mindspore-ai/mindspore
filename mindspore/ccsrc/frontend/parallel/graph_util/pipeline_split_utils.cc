@@ -1154,5 +1154,20 @@ void ReorderForPredict(const FuncGraphPtr &root, const FuncGraphManagerPtr &mana
     InsertDepend(forward_params_pair.second[0], forward_start_pair.first[0], manager, root);
   }
 }
+
+std::string GetWorldGroup() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string world_group;
+  std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (backend == kAscendDevice) {
+    world_group = parallel::HCCL_WORLD_GROUP;
+  } else if (backend == kGPUDevice) {
+    world_group = parallel::NCCL_WORLD_GROUP;
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid backend: " << backend;
+  }
+  return world_group;
+}
 }  // namespace parallel
 }  // namespace mindspore
