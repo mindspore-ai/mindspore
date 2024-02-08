@@ -584,8 +584,8 @@ AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::obj
       (python_adapter::CallPyModFn(mod, parse::PYTHON_PARSE_CHECK_ATTR_IS_PROPERTY, obj, attr_name)).cast<bool>();
     MS_LOG(DEBUG) << "is_property: " << is_property;
     if (is_property) {
-      MS_LOG(EXCEPTION) << "The property decorator is not supported in graph mode.\n"
-                           "You can remove the property decorator and call the function as a method.\n";
+      MS_LOG(INFO) << "The property decorator is not supported in graph mode.\n"
+                      "You can remove the property decorator and call the function as a method.\n";
     }
   }
 
