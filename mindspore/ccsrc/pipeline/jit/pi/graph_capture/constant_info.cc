@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "pipeline/jit/pi/graph_capture/constant_info.h"
+#include <set>
+#include <vector>
 #include "pipeline/jit/pi/pydef.h"
 #include "pipeline/jit/pi/graph_capture/node.h"
 #include "pipeline/jit/pi/graph_capture/graph.h"
@@ -119,13 +121,8 @@ bool CheckConstantAttr(ValueNode *node) {
   if (node->GetVobj() == nullptr || node->input(0)->GetVobj() == nullptr) {
     return false;
   }
-  AObject::Type value_type = node->GetVobj()->GetType();
   AObject *src_info = node->input(0)->GetVobj();
   if (src_info->GetType() == AObject::kTypeTensor) {
-    if (value_type == AObject::kTypeBoundMethod) {
-      // function from Tensor
-      return true;
-    }
     if (name == "shape") {
       MakeShapeInfoOfTensor(node);
     }
