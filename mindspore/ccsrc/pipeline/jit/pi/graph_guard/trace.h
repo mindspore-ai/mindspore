@@ -23,6 +23,7 @@
 #include <functional>
 #include "pipeline/jit/pi/pydef.h"
 #include "pybind11/pybind11.h"
+#include "pipeline/jit/pi/graph_guard/info.h"
 
 namespace py = pybind11;
 
@@ -54,7 +55,7 @@ typedef struct _TraceContext {
   PyObject *f_locals;
   PyObject *const *f_localsplus;
   PyCodeObject *f_code;
-  std::map<std::string, PyObject *> *cache;
+  std::map<size_t, PyObject *> *cache;
 } TraceContext, *PTraceContext;
 
 class Trace {
@@ -71,11 +72,15 @@ class Trace {
   virtual bool operator==(const Trace &trace);
   virtual void Detach();
   /// \brief Get the reference for the object by Py_INCREF and call Py_DECREF by yourself.
+  /// \param[in] context for trace
+  /// \param[in] perf for performance of trace
   /// \param[out] borrow reference for PyObject
-  virtual PyObject *Retrieve(PTraceContext context);
-  virtual std::string ToString() = 0;
+  virtual PyObject *Retrieve(PTraceContext context, bool perf = false);
+  virtual std::string ToString(bool include_param = true) = 0;
   virtual std::string FormatString() = 0;
+  virtual const InfoPack &Info() = 0;
   virtual void Cache(PTraceContext context, PyObject *obj);
+  virtual bool IsConst() const;
 
  protected:
   PyObject *obj_;
@@ -83,6 +88,8 @@ class Trace {
   TraceType originType_;
   TraceType curType_;
   std::string strTrace_;
+  InfoPackPtr info_;
+  bool is_const_;
 };
 using TracePtr = std::shared_ptr<Trace>;
 using TraceVector = std::vector<TracePtr>;
@@ -91,11 +98,12 @@ class RootTrace : public Trace {
  public:
   RootTrace(PyObject *obj, TraceType tt, int index = -1, std::string name = "", std::string module_name = "");
   virtual ~RootTrace() = default;
-  virtual PyObject *Retrieve(PTraceContext context);
-  virtual std::string ToString();
+  virtual PyObject *Retrieve(PTraceContext context, bool perf = false);
+  virtual std::string ToString(bool include_param = true);
   virtual void GetParam(int *index, std::string *name, std::string *module_name);
   virtual bool operator==(const Trace &trace);
   std::string FormatString() override { return ToString(); }
+  virtual const InfoPack &Info();
 
  protected:
   PyObject *RetrieveGlobal(PTraceContext context);
@@ -119,11 +127,12 @@ class ItemTrace : public Trace {
   virtual ~ItemTrace() = default;
   virtual TracePtr GetItem();
   virtual void Replace(std::shared_ptr<Trace> dst, std::shared_ptr<Trace> src);
-  virtual PyObject *Retrieve(PTraceContext context);
-  virtual std::string ToString();
+  virtual PyObject *Retrieve(PTraceContext context, bool perf = false);
+  virtual std::string ToString(bool include_param = true);
   virtual bool operator==(const Trace &trace);
   virtual void Detach();
   std::string FormatString() override { return ToString(); }
+  virtual const InfoPack &Info();
 
  protected:
   TracePtr item_;
@@ -135,10 +144,11 @@ class AttrTrace : public Trace {
   AttrTrace(PyObject *obj, TracePtr origin, std::string attr);
   virtual ~AttrTrace() = default;
   virtual std::string GetAttribute();
-  virtual PyObject *Retrieve(PTraceContext context);
-  virtual std::string ToString();
+  virtual PyObject *Retrieve(PTraceContext context, bool perf = false);
+  virtual std::string ToString(bool include_param = true);
   virtual bool operator==(const Trace &trace);
   std::string FormatString() override { return ToString(); }
+  virtual const InfoPack &Info();
 
  protected:
   std::string attr_;
@@ -150,11 +160,12 @@ class ConstTrace : public Trace {
   ConstTrace(PyObject *obj, int index);
   virtual ~ConstTrace() = default;
   virtual int GetIndex();
-  virtual PyObject *Retrieve(PTraceContext context);
-  virtual std::string ToString();
+  virtual PyObject *Retrieve(PTraceContext context, bool perf = false);
+  virtual std::string ToString(bool include_param = true);
   virtual bool operator==(const Trace &trace);
   virtual void Detach();
   std::string FormatString() override { return ToString(); }
+  virtual const InfoPack &Info();
 
  protected:
   int index_;
@@ -166,10 +177,12 @@ class TypeTrace : public Trace {
   TypeTrace(PyObject *obj, TracePtr origin);
   virtual ~TypeTrace() = default;
   virtual PyTypeObject *GetType();
-  virtual PyObject *Retrieve(PTraceContext context);
-  virtual std::string ToString();
+  virtual PyObject *Retrieve(PTraceContext context, bool perf = false);
+  virtual std::string ToString(bool include_param = true);
   virtual bool operator==(const Trace &trace);
   std::string FormatString() override { return ToString(); }
+  virtual const InfoPack &Info();
+  virtual void Detach();
 
  protected:
   PyTypeObject *pType_;
@@ -181,11 +194,12 @@ class OpTrace : public Trace {
   OpTrace(PyObject *obj, int opcode, int opargs, TraceVector params, std::string name = "");
   virtual ~OpTrace() = default;
   virtual void Replace(std::shared_ptr<Trace> dst, std::shared_ptr<Trace> src);
-  virtual PyObject *Retrieve(PTraceContext context);
-  virtual std::string ToString();
+  virtual PyObject *Retrieve(PTraceContext context, bool perf = false);
+  virtual std::string ToString(bool include_param = true);
   virtual bool operator==(const Trace &trace);
   virtual void Detach();
   std::string FormatString() override;
+  virtual const InfoPack &Info();
 
  protected:
   int opcode_;
@@ -199,14 +213,15 @@ TracePtr CreateOpTrace(PyObject *obj, int opcode, int opargs, TraceVector params
 
 /// \brief retrieve the PyObject with ref count plus 1 which will be minus outside
 typedef std::function<PyObject *(PTraceContext context)> RetrieveFunc;
-typedef std::function<std::string()> ToStringFunc;
+typedef std::function<std::string(bool)> ToStringFunc;
 class CustomizedTrace : public Trace {
  public:
   CustomizedTrace(PyObject *obj, RetrieveFunc rfunc, ToStringFunc sfunc);
   virtual ~CustomizedTrace() = default;
-  virtual PyObject *Retrieve(PTraceContext context);
-  virtual std::string ToString();
+  virtual PyObject *Retrieve(PTraceContext context, bool perf = false);
+  virtual std::string ToString(bool include_param = true);
   std::string FormatString() override { return ToString(); }
+  virtual const InfoPack &Info();
 
  protected:
   RetrieveFunc retrieve_;
@@ -218,11 +233,12 @@ class UnsupportedTrace : public Trace {
  public:
   UnsupportedTrace(PyObject *obj, TraceVector params, int op, int arg);
   virtual ~UnsupportedTrace() = default;
-  virtual PyObject *Retrieve(PTraceContext context);
-  virtual std::string ToString();
+  virtual PyObject *Retrieve(PTraceContext context, bool perf = false);
+  virtual std::string ToString(bool include_param = true);
   virtual TraceVector GetParams();
   virtual void Detach();
   std::string FormatString() override;
+  virtual const InfoPack &Info();
 
  protected:
   TraceVector params_;
@@ -232,8 +248,8 @@ class UnsupportedTrace : public Trace {
 using UnsupportedTracePtr = std::shared_ptr<UnsupportedTrace>;
 
 /// \brief Get the reference for the object by Py_INCREF and call Py_DECREF by yourself.
-PyObject *GetObjectFromTrace(const PyFrameObject *frame, TracePtr trace,
-                             std::map<std::string, PyObject *> *cache = nullptr);
+PyObject *GetObjectFromTrace(const PyFrameObject *frame, TracePtr trace, std::map<size_t, PyObject *> *cache = nullptr,
+                             bool perf = false);
 }  // namespace pijit
 }  // namespace mindspore
 

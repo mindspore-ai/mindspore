@@ -1599,9 +1599,10 @@ bool GraphBuilder::HandleCallClass(CallNode *call_node) {
   const auto &params = call_node->getInputs();
   AObject *instance = nullptr;
   bool support_create_instance = CheckSupportCreateInstance(call_node);
-  bool constant = type == AObject::kTypePrimitive || type == AObject::kTypeTensor || type == AObject::kTypeStubTensor;
+  bool constant = type == AObject::kTypePrimitive || type == AObject::kTypeTensor || type == AObject::kTypeStubTensor ||
+                  IsMsClass(t->GetPyObject().ptr());
   // create instance
-  if (support_create_instance || constant || IsMsClass(t->GetPyObject().ptr())) {
+  if (support_create_instance || constant) {
     std::vector<py::object> args;
     std::transform(params.begin() + 1, params.end(), std::back_inserter(args), [](ValueNode *n) {
       AObject *i = n->GetVobj();
