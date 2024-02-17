@@ -25,13 +25,19 @@ IMPLEMT_COMMON_INFERFUNC(GenerateEodMaskInferShape) {
   DataType x_dtype = op.GetInputDescByName("inputs_ids").GetDataType();
   int64_t eod_token_id;
   int64_t n_pos;
-  int64_t n_step;
+  std::string n_error_mode;
+  vector<int64_t> n_step;
 
   if (op.GetAttr("eod_token_id", eod_token_id) != GRAPH_SUCCESS) {
     OP_LOGE(TbeGetName(op).c_str(), "For Eig, get attr compute_v failed!");
     return GRAPH_FAILED;
   }
   if (op.GetAttr("n_step", n_step) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "For Eig, get attr compute_v failed!");
+    return GRAPH_FAILED;
+  }
+
+  if (op.GetAttr("n_error_mode", n_error_mode) != GRAPH_SUCCESS) {
     OP_LOGE(TbeGetName(op).c_str(), "For Eig, get attr compute_v failed!");
     return GRAPH_FAILED;
   }

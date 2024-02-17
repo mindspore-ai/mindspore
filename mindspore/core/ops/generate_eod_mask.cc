@@ -36,8 +36,11 @@ void GenerateEodMask::set_eod_token_id(const int64_t eod_token_id) {
 void GenerateEodMask::set_n_pos(const int64_t n_pos) {
   (void)this->AddAttr(kNPos, api::MakeValue(n_pos));
 }
-void GenerateEodMask::set_n_step(const int64_t n_step) {
+void GenerateEodMask::set_n_step(const std::vector<int64_t> n_step) {
   (void)this->AddAttr(kNStep, api::MakeValue(n_step));
+}
+void GenerateEodMask::set_n_error_mode(const std::string n_error_mode) {
+  (void)this->AddAttr(kNErrorMode, api::MakeValue(n_error_mode));
 }
 
 /// \brief Get EodTokenId.
@@ -46,7 +49,8 @@ void GenerateEodMask::set_n_step(const int64_t n_step) {
 int64_t GenerateEodMask::get_eod_token_id() const { return GetValue<int64_t>(GetAttr(kEodTokenId)); }
 
 int64_t GenerateEodMask::get_n_pos() const { return GetValue<int64_t>(GetAttr(kNPos)); }
-int64_t GenerateEodMask::get_n_step() const { return GetValue<int64_t>(GetAttr(kNStep)); }
+std::vector<int64_t> GenerateEodMask::get_n_step() const { return GetValue<std::vector<int64_t>>(GetAttr(kNStep)); }
+std::string GenerateEodMask::get_n_error_mode() const { return GetValue<std::string>(GetAttr(kNErrorMode)); }
 
 
 MIND_API_OPERATOR_IMPL(GenerateEodMask, BaseOperator);
@@ -88,7 +92,7 @@ class MIND_API AGGenerateEodMaskInfer : public abstract::OpInferBase {
     std::map<std::string, TypePtr> input_types;
     auto input_ids_type = input_args[0]->BuildType();
     (void)input_types.emplace("inputs_ids", input_ids_type);
-    std::set<TypePtr> valid_input_types = {kInt16, kInt32, kInt64, kUInt16, kUInt32, kUInt64, kFloat16, kFloat32};
+    std::set<TypePtr> valid_input_types = {kInt16, kInt32, kInt64, kUInt16, kUInt32, kUInt64, kBFloat16, kFloat16, kFloat32};
     (void)CheckAndConvertUtils::CheckTensorTypeSame(input_types, valid_input_types, primitive->name());
     return input_ids_type;
   }
