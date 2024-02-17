@@ -19,7 +19,7 @@ import mindspore as ms
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore import ops
-import tests.st.ops.test_utils as test_utils
+import tests.st.utils.test_utils as test_utils
 
 
 @test_utils.run_with_cell
