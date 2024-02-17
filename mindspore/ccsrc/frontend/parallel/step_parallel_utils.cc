@@ -1486,17 +1486,19 @@ AnfNodePtr NewMicroMirrorPrimByMicroMirror(const FuncGraphPtr &func_graph, const
 }
 
 void AddNodeFusionInfo(const CNodePtr &node, const CNodePtr &comm_node, const std::string &backward_comm_name,
-                       int32_t fusion_id) {
-  if (fusion_id <= 0) {
-    return;
-  }
+                       const std::string &param_name, int32_t fusion_id) {
+  auto comm_id = MakeValue<std::string>(param_name);
+  comm_node->AddPrimalAttr(kPrimalAttrMirrorUserId, comm_id);
   if (GetValueNode<PrimitivePtr>(comm_node->input(0))->HasAttr(GROUP)) {
     auto comm_group = GetValue<std::string>(GetValueNode<PrimitivePtr>(comm_node->input(0))->GetAttr(GROUP));
     std::string fusion_key = backward_comm_name + "_" + comm_group + "_" + std::to_string(fusion_id);
     if (!IsPrimitiveCNode(node, prim::kPrimLoad) && !IsPrimitiveCNode(node, prim::kPrimCast)) {
-      node->AddPrimalAttr(kRelatedFusionKey, MakeValue<std::string>(fusion_key));
-      node->AddPrimalAttr(kRelatedNodeId, MakeValue<std::string>(node->UniqueId()));
-      node->AddAttr(kRelatedCommNodeId, MakeValue<std::string>(comm_node->UniqueId()));
+      if (fusion_id > 0) {
+        node->AddPrimalAttr(kRelatedFusionKey, MakeValue<std::string>(fusion_key));
+        node->AddPrimalAttr(kRelatedNodeId, MakeValue<std::string>(node->UniqueId()));
+        node->AddAttr(kRelatedCommNodeId, MakeValue<std::string>(comm_node->UniqueId()));
+      }
+      node->AddPrimalAttr(kPrimalAttrMirrorUserId, comm_id);
       return;
     }
     auto next_nodes = GetOutputNodesWithFilter(node, [&](const AnfNodePtr &anode) {
@@ -1510,9 +1512,12 @@ void AddNodeFusionInfo(const CNodePtr &node, const CNodePtr &comm_node, const st
         continue;
       }
       auto next_cnode = pair.first->cast<CNodePtr>();
-      next_cnode->AddPrimalAttr(kRelatedFusionKey, MakeValue<std::string>(fusion_key));
-      next_cnode->AddPrimalAttr(kRelatedNodeId, MakeValue<std::string>(node->UniqueId()));
-      next_cnode->AddAttr(kRelatedCommNodeId, MakeValue<std::string>(comm_node->UniqueId()));
+      if (fusion_id > 0) {
+        next_cnode->AddPrimalAttr(kRelatedFusionKey, MakeValue<std::string>(fusion_key));
+        next_cnode->AddPrimalAttr(kRelatedNodeId, MakeValue<std::string>(node->UniqueId()));
+        next_cnode->AddAttr(kRelatedCommNodeId, MakeValue<std::string>(comm_node->UniqueId()));
+      }
+      next_cnode->AddPrimalAttr(kPrimalAttrMirrorUserId, comm_id);
     }
   }
 }

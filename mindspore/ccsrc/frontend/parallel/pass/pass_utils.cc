@@ -64,7 +64,8 @@ bool IsDxMatMul(const CNodePtr &matmul_node) {
       return true;
     }
     if (IsPrimitiveCNode(node, prim::kPrimAllGather)) {
-      return true;
+      auto prim = GetCNodePrimitive(node->cast<CNodePtr>());
+      return prim->instance_name().find("parallel_optimizer") != std::string::npos;
     }
   }
   return false;
@@ -117,6 +118,29 @@ void ExtractBackwardMatMul(const std::vector<CNodePtr> &origin_nodes_topological
     }
   }
   MS_LOG(INFO) << "backward_matmul_dx_dw_map size:" << backward_matmul_dx_dw_map->size();
+}
+
+void ExtendDxDwMap(const std::vector<CNodePtr> &origin_nodes_topological,
+                   std::unordered_map<CNodePtr, CNodePtr> *backward_matmul_dx_dw_map) {
+  std::unordered_map<std::string, CNodePtr> unique_id_dw_map;
+  for (const auto &dx_dw : *backward_matmul_dx_dw_map) {
+    if (dx_dw.second->HasPrimalAttr(FORWARD_UNIQUE_ID_LIST)) {
+      auto unique_ids = GetValue<std::vector<std::string>>(dx_dw.second->GetPrimalAttr(FORWARD_UNIQUE_ID_LIST));
+      for (const auto &unique_id : unique_ids) {
+        unique_id_dw_map[unique_id] = dx_dw.second;
+      }
+    }
+  }
+  for (const auto &node : origin_nodes_topological) {
+    if (!node->HasPrimalAttr(kPrimalAttrForwardUniqueId)) {
+      continue;
+    }
+    auto forward_unique_id = GetValue<std::string>(node->GetPrimalAttr(kPrimalAttrForwardUniqueId));
+    if (unique_id_dw_map.count(forward_unique_id) == 0) {
+      continue;
+    }
+    (*backward_matmul_dx_dw_map)[node] = unique_id_dw_map[forward_unique_id];
+  }
 }
 
 std::string AnfNodeInfo(const AnfNodePtr &anf_node) {

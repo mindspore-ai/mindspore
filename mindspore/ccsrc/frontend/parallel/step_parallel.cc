@@ -1134,7 +1134,7 @@ static void DoInsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_
       MS_LOG(INFO) << "Find parameter " << param_name << " for node " << GetPrimName(node->cast<CNodePtr>())
                    << " and insert mirror before Load";
       AddCommOpParamFlag(comm_op);
-      AddNodeFusionInfo(node, comm_op, "all_reduce", fusion_id);
+      AddNodeFusionInfo(node, comm_op, "all_reduce", param_name, fusion_id);
       continue;
     }
     InsertNode(op, node, index, pre_node, func_graph, mirror_op_name, param_name, root);
@@ -1145,7 +1145,7 @@ static void DoInsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_
     // pipeline mirror would not be set, which should be supported later
     auto fusion_id = AddCommOpFusionType(comm_op, param_node_pair.first);
     AddCommOpParamFlag(comm_op);
-    AddNodeFusionInfo(node, comm_op, "all_reduce", fusion_id);
+    AddNodeFusionInfo(node, comm_op, "all_reduce", param_name, fusion_id);
   }
 }
 
@@ -1297,7 +1297,9 @@ void AddAllGatherAttrs(const CNodePtr &allgather, const CNodePtr &cnode, const A
                        const std::string &op_name, bool add_accu, bool is_with_mirror, bool grad_accumulation_shard) {
   // add fusion flag
   auto fusion_id = AddCommOpFusionType(allgather, node);
-  AddNodeFusionInfo(cnode, allgather, "reduce_scatter", fusion_id);
+  auto param_ptr = node->cast<ParameterPtr>();
+  auto param_name = param_ptr->name();
+  AddNodeFusionInfo(cnode, allgather, "reduce_scatter", param_name, fusion_id);
   // add gradients mean
   AddCommOpMeanFlag(allgather);
   AddCNodePrimAttr(allgather, "with_mirror_operator", MakeValue<bool>(is_with_mirror));
