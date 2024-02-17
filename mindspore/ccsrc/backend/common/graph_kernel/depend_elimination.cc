@@ -40,8 +40,31 @@ bool DependElimination::Run(const FuncGraphPtr &func_graph) {
         continue;
       }
       if (inputs[kRealInputIndexInDepend] == inputs[kDependAttachNodeIndex]) {
+        // Optimize cases like %1 = Depend(%0, %0). This depend statement is necessary in frontend, but not here.
         (void)mng->Replace(node, inputs[kRealInputIndexInDepend]);
         MS_LOG(INFO) << "Depend node has been replaced by " << inputs[kRealInputIndexInDepend];
+      } else if (IsPrimitiveCNode(inputs[kDependAttachNodeIndex], prim::kPrimAssign)) {
+        // Optimize cases like %2 = Depend(%0, %1), %1 is a node that has memory side-effect.
+        auto users = mng->node_users()[inputs[kDependAttachNodeIndex]];
+        if (users.size() == 1) {
+          // If the second input of depend is only used by depend, then this depend can not be eliminated.
+          continue;
+        }
+        auto assign_node = inputs[kDependAttachNodeIndex]->cast<CNodePtr>();
+        auto side_effect_node = assign_node->input(1);
+        if (inputs[kRealInputIndexInDepend]->isa<CNode>()) {
+          auto real_input_node = inputs[kRealInputIndexInDepend]->cast<CNodePtr>();
+          for (size_t i = 0; i < real_input_node->inputs().size(); i++) {
+            if (real_input_node->input(i) == side_effect_node) {
+              // If the first input of depend uses side-effect node, then this depend is necessary.
+              continue;
+            }
+          }
+        } else if (inputs[kRealInputIndexInDepend] == side_effect_node) {
+          // If the first input of depend is side-effect node, then this depend is necessary.
+          continue;
+        }
+        mng->Replace(node, inputs[kRealInputIndexInDepend]);
       }
     }
   }
