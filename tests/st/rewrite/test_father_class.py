@@ -177,7 +177,9 @@ def test_net_with_class_var(mode):
     assert codes.count("class NetEOpt(NetE, nn.Cell):") == 1
     assert codes.count("def external_func(x):") == 0
     assert codes.count("var1 = Tensor(1.0)") == 0
+    assert codes.count("self.__class__.var1 = obj.__class__.var1") == 1
     assert codes.count("var2 = external_func") == 0
+    assert codes.count("self.__class__.var2 = obj.__class__.var2") == 1
     new_net = stree.get_network()
     y = new_net(Tensor(1))
     assert y == y0

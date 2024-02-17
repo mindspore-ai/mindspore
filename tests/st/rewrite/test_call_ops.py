@@ -38,7 +38,6 @@ def test_rewrite_ops_reverse(mode):
     net = ReverseNet()
     x = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), ms.int32)
     y0 = net(x)
-    ms.rewrite.parsers.assign_parser.AssignParser._skip_ms_function = False # pylint: disable=protected-access
     stree = SymbolTree.create(net)
     new_net = stree.get_network()
     y = new_net(x)
@@ -63,7 +62,6 @@ def test_rewrite_ops_cov(mode):
     net = CovNet()
     x = ms.Tensor([[0., 3.], [5., 5.], [7., 0.]]).T
     y0 = net(x)
-    ms.rewrite.parsers.assign_parser.AssignParser._skip_ms_function = False # pylint: disable=protected-access
     stree = SymbolTree.create(net)
     new_net = stree.get_network()
     y = new_net(x)
@@ -88,7 +86,6 @@ def test_rewrite_ops_dsplit(mode):
     net = DsplitNet()
     x = Tensor(np.arange(6).reshape((1, 2, 3)).astype('float32'))
     y0 = net(x)
-    ms.rewrite.parsers.assign_parser.AssignParser._skip_ms_function = False # pylint: disable=protected-access
     stree = SymbolTree.create(net)
     new_net = stree.get_network()
     y = new_net(x)
