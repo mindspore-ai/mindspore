@@ -35,18 +35,9 @@
 
 namespace mindspore::graphkernel {
 namespace {
-bool DvmSupported(const AnfNodePtr &node) {
+bool HasSpecialFormat(const AnfNodePtr &node) {
   auto cb = Callback::Instance();
   MS_EXCEPTION_IF_NULL(cb);
-  auto node_output_type = cb->GetOutputType(node, 0);
-  // cast op
-  if (IsPrimitiveCNode(node, prim::kPrimCast)) {
-    static std::set<TypeId> supported_types{kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeBool, kNumberTypeInt32};
-    auto node_input_type = cb->GetInputType(node, 0);
-    return !(supported_types.find(node_input_type) == supported_types.end() ||
-             supported_types.find(node_output_type) == supported_types.end());
-  }
-  // special format
   auto input_num = AnfUtils::GetInputTensorNum(node);
   if (input_num > 0) {
     bool has_special_format = false;
@@ -61,17 +52,45 @@ bool DvmSupported(const AnfNodePtr &node) {
       if (has_special_format) {
         if (input_format != base_format) {
           // mixed special format and default format is not supported, because extra Reshape/TransData is needed
-          return false;
+          return true;
         }
         if (is_dynamic) {
           // dvm kernel infer shape use inputs device shape, but the output abstract shape inferred from device shape is
           // not unique if some shape value are not a multiple of 16
           MS_LOG(DEBUG) << "skip node: " << node->fullname_with_scope()
                         << " because only default format is supported in dynamic shape";
-          return false;
+          return true;
         }
       }
     }
+  }
+  return false;
+}
+bool DvmSupported(const AnfNodePtr &node) {
+  auto cb = Callback::Instance();
+  MS_EXCEPTION_IF_NULL(cb);
+  auto node_output_type = cb->GetOutputType(node, 0);
+  // cast op
+  if (IsPrimitiveCNode(node, prim::kPrimCast)) {
+    static std::set<TypeId> supported_types{kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeBool, kNumberTypeInt32};
+    auto node_input_type = cb->GetInputType(node, 0);
+    return !(supported_types.find(node_input_type) == supported_types.end() ||
+             supported_types.find(node_output_type) == supported_types.end());
+  }
+  // reduceSum op
+  if (IsPrimitiveCNode(node, prim::kPrimReduceSum)) {
+    auto prim = GetCNodePrimitive(node);
+    MS_EXCEPTION_IF_NULL(prim);
+    auto skip_mode_attr = prim->GetAttr(kAttrSkipMode);
+    MS_EXCEPTION_IF_NULL(skip_mode_attr);
+    auto skip_mode = GetValue<bool>(skip_mode_attr);
+    if (skip_mode == true) {
+      return false;
+    }
+  }
+  // special format
+  if (HasSpecialFormat(node)) {
+    return false;
   }
   // compare op
   static std::vector<PrimitivePtr> compare_ops{prim::kPrimEqual,        prim::kPrimNotEqual, prim::kPrimGreater,
@@ -189,9 +208,9 @@ std::vector<PrimitivePtr> StaticShapeCluster::GetClusterOps() {
     {kAscendDevice, OpLevel_0, prim::kPrimGreaterEqual}, {kAscendDevice, OpLevel_0, prim::kPrimLess},
     {kAscendDevice, OpLevel_0, prim::kPrimLessEqual},    {kAscendDevice, OpLevel_0, prim::kPrimLogicalAnd},
     {kAscendDevice, OpLevel_0, prim::kPrimLogicalOr},    {kAscendDevice, OpLevel_0, prim::kPrimLogicalNot},
-    {kAscendDevice, OpLevel_0, prim::kPrimSelect},       {kAscendDevice, OpLevel_1, prim::kPrimAssign},
+    {kAscendDevice, OpLevel_0, prim::kPrimSelect},       {kAscendDevice, OpLevel_0, prim::kPrimAssign},
     {kAscendDevice, OpLevel_1, prim::kPrimReshape},      {kAscendDevice, OpLevel_1, prim::kPrimTranspose},
-    {kAscendDevice, OpLevel_1, prim::kPrimReduceSum},
+    {kAscendDevice, OpLevel_0, prim::kPrimReduceSum},
   };
   const auto &flags = GraphKernelFlags::GetInstance();
   auto ops_with_level = GraphKernelFlags::GetInstance().kernel_generator == "DVM"

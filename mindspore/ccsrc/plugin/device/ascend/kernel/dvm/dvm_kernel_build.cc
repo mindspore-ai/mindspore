@@ -37,8 +37,32 @@ enum OpType {
   OP_RSQRT,
   OP_ASSIGN,
   OP_ELEMENY,
+  OP_REDUCE,
 };
 
+ShapeVector GetAxisList(const AnfNodePtr &axis_input) {
+  ValuePtr value = nullptr;
+  if (axis_input->isa<ValueNode>()) {
+    value = axis_input->cast<ValueNodePtr>()->value();
+  } else if (axis_input->isa<Parameter>()) {
+    value = axis_input->cast<ParameterPtr>()->abstract()->BuildValue();
+  }
+  if (value == nullptr) {
+    MS_LOG(EXCEPTION) << "ReduceOp axis input is not Value.";
+  }
+  if (value->isa<ValueAny>()) {
+    MS_LOG(EXCEPTION) << "ReduceOp axis input is ValueAny.";
+  }
+  ShapeVector result;
+  if (value->isa<ValueSequence>()) {
+    result = GetValue<ShapeVector>(value);
+  } else if (value->isa<tensor::Tensor>()) {
+    result = TensorValueToVector<int64_t>(value->cast<tensor::TensorPtr>());
+  } else {
+    result.push_back(GetValue<int64_t>(value));
+  }
+  return result;
+}
 static std::unordered_map<std::string, std::pair<OpType, int>> op_type_map = {
   {"Abs", {OP_UNARY, dvm::UnaryOpType::kAbs}},
   {"Exp", {OP_UNARY, dvm::UnaryOpType::kExp}},
@@ -69,7 +93,8 @@ static std::unordered_map<std::string, std::pair<OpType, int>> op_type_map = {
   {"Rsqrt", {OP_RSQRT, 0}},
   {"Assign", {OP_ASSIGN, 0}},
   {"ElemAny", {OP_ELEMENY, 0}},
-  {"IsFinite", {OP_UNARY, dvm::UnaryOpType::kIsFinite}}};
+  {"IsFinite", {OP_UNARY, dvm::UnaryOpType::kIsFinite}},
+  {"ReduceSum", {OP_REDUCE, dvm::ReduceOpType::kSum}}};
 
 TypeId GetValueNodeType(const AnfNodePtr &node) {
   auto valuenode = node->cast<ValueNodePtr>();
@@ -186,6 +211,10 @@ class OpBuilder {
         EmitOp(anf_node, op);
         break;
       }
+      case OP_REDUCE: {
+        HandlerReduceOp(node, prim, op_type->second.second);
+        break;
+      }
       default:
         MS_LOG(EXCEPTION) << op_type->second << " is unsupported op type.";
         break;
@@ -241,6 +270,23 @@ class OpBuilder {
   }
 
  private:
+  void HandlerReduceOp(const CNodePtr &node, const PrimitivePtr &prim, int op_type) {
+    auto keep_dims_attr = prim->GetAttr(kAttrKeepDims);
+    MS_EXCEPTION_IF_NULL(keep_dims_attr);
+    auto keep_dims = GetValue<bool>(keep_dims_attr);
+    if (op_type == dvm::ReduceOpType::kSum) {
+      auto skip_mode_attr = prim->GetAttr(kAttrSkipMode);
+      MS_EXCEPTION_IF_NULL(skip_mode_attr);
+      auto skip_mode = GetValue<bool>(skip_mode_attr);
+      if (skip_mode == true) {
+        MS_LOG(EXCEPTION) << node->fullname_with_scope() << " skip_mode == True is unsupported.";
+      }
+    }
+    auto shape_ref = CacheAxis(node, node->input(2));
+    auto op = kernel_->Reduce(op_type, GetInput(node->input(1)), shape_ref, keep_dims);
+    EmitOp(node, op);
+  }
+
   dvm::NDObject *GetInput(const AnfNodePtr &node) {
     auto it = ops_map_.find(node);
     if (it == ops_map_.end()) {
@@ -288,6 +334,18 @@ class OpBuilder {
     shapes_ref_source_->push_back(shape);
     (*shapes_ref_)[node] = std::make_shared<dvm::ShapeRef>(shapes_ref_source_->back());
     return (*shapes_ref_)[node].get();
+  }
+
+  dvm::ShapeRef *CacheAxis(const CNodePtr &node, const AnfNodePtr &axis_input) {
+    if (IsDynamic(AnfAlgo::GetOutputDeviceShape(node, 0)) && axis_input->isa<Parameter>()) {
+      (*shapes_ref_)[axis_input] = std::make_shared<dvm::ShapeRef>();
+      return (*shapes_ref_)[axis_input].get();
+    } else {
+      auto shape = GetAxisList(axis_input);
+      shapes_ref_source_->push_back(shape);
+      (*shapes_ref_)[axis_input] = std::make_shared<dvm::ShapeRef>(shapes_ref_source_->back());
+      return (*shapes_ref_)[axis_input].get();
+    }
   }
 
   dvm::NDObject *EmitScalarBroadcast(const AnfNodePtr &node, dvm::ShapeRef *shape) {
