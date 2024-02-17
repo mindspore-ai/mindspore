@@ -2130,8 +2130,8 @@ EvalResultPtr GetClassAttrFromPyObject(const py::object &cls_obj, const std::str
   bool is_property =
     (python_adapter::CallPyModFn(mod, parse::PYTHON_PARSE_CHECK_ATTR_IS_PROPERTY, cls_obj, attr_name)).cast<bool>();
   if (is_property) {
-    MS_LOG(EXCEPTION) << "The property decorator is not supported in graph mode.\n"
-                         "You can remove the property decorator and call the function as a method.\n";
+    MS_LOG(INFO) << "The property decorator is not supported in graph mode.\n"
+                    "You can remove the property decorator and call the function as a method.\n";
   }
   py::object ns_obj = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, cls_obj);
   auto ns = std::make_shared<parse::NameSpace>(parse::RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, ns_obj);

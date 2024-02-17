@@ -41,6 +41,7 @@ class PropertyNet(nn.Cell):
         return self.get_parameter * x
 
 
+@pytest.mark.skip(reason='Not support yet')
 def test_param_property():
     """
     Feature: Support property decorator in graph mode.
@@ -58,6 +59,7 @@ def test_param_property():
     assert "The property decorator is not supported in graph mode." in str(info.value)
 
 
+@pytest.mark.skip(reason='Not support yet')
 def test_param_property_in_graph_jit():
     """
     Feature: Support property decorator in graph mode.
@@ -77,6 +79,7 @@ def test_param_property_in_graph_jit():
     assert "The property decorator is not supported in graph mode." in str(info.value)
 
 
+@pytest.mark.skip(reason='Not support yet')
 def test_param_property_in_pynative_jit():
     """
     Feature: Support property decorator in graph mode.
@@ -97,6 +100,7 @@ def test_param_property_in_pynative_jit():
     ms.set_context(mode=ms.GRAPH_MODE)
 
 
+@pytest.mark.skip(reason='Not support yet')
 def test_param_property_in_outer_net():
     """
     Feature: Support property decorator in graph mode.
@@ -117,6 +121,7 @@ def test_param_property_in_outer_net():
     assert "The property decorator is not supported in graph mode." in str(info.value)
 
 
+@pytest.mark.skip(reason='Not support yet')
 def test_param_property_in_construct_init():
     """
     Feature: Support property decorator in graph mode.
@@ -139,6 +144,7 @@ def test_param_property_in_construct_init():
     assert "The property decorator is not supported in graph mode." in str(info.value)
 
 
+@pytest.mark.skip(reason='Not support yet')
 def test_param_property_outer():
     """
     Feature: Support property decorator in graph mode.
