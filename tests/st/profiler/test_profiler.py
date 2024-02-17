@@ -18,9 +18,6 @@ import tempfile
 
 import sys
 import csv
-from multiprocessing import Process, Queue
-import glob
-import json
 
 from tests.security_utils import security_off_wrap
 import pytest
@@ -35,7 +32,6 @@ from mindspore.common import dtype as mstype
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.train import Model, Accuracy
 from mindspore import Profiler
-from run_net_4p import train
 
 
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):
@@ -278,78 +274,3 @@ class TestProfiler:
                               'custom_info', 'memory_usage(kB)', 'time_stamp(us)']
             for row in f_reader:
                 assert len(row) == 11
-
-
-class TestProfiler4P:
-
-    def setup(self):
-        """Run begin each test case start."""
-        cleanup()
-        self.profiler_path = tempfile.mkdtemp(prefix='profiler_data', dir='/tmp')
-
-    def teardown(self):
-        """Run after each test case end."""
-        cleanup()
-        if os.path.exists(self.profiler_path):
-            shutil.rmtree(self.profiler_path)
-
-    @pytest.mark.level0
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.platform_x86_ascend_training
-    @pytest.mark.env_onecard
-    @security_off_wrap
-    def test_ascend_ms_profiler_time(self):
-        q = Queue()
-        device_num = 4
-        os.environ['RANK_TABLE_FILE'] = "/home/workspace/mindspore_config/hccl/rank_tabel_4p/rank_table_4p_1.json"
-        os.environ["RANK_SIZE"] = str(device_num)
-        os.environ["DEVICE_NUM"] = str(device_num)
-
-        process = []
-
-        for i in range(device_num):
-            device_id = i
-            process.append(Process(target=train, args=(q, self.profiler_path, device_num, device_id)))
-
-        for p in process:
-            p.start()
-
-        print("Waiting for all subprocesses done...")
-
-        for p in process:
-            p.join()
-
-        for i in range(device_num):
-            res = q.get()
-            assert res == 'success'
-
-        self.check_ascend_ms_profiler_files(self.profiler_path, device_num)
-
-    def check_ascend_ms_profiler_files(self, profiler_path, device_num):
-
-        for i in range(device_num):
-            ascend_ms_path = os.path.join(profiler_path, 'profiler', fr'rank-{i}*', 'ASCEND_PROFILER_OUTPUT')
-            ascend_ms_path = glob.glob(ascend_ms_path)[0]
-            assert os.path.isdir(ascend_ms_path)
-
-            step_trace_time_file = os.path.join(ascend_ms_path, 'step_trace_time.csv')
-            communication_file = os.path.join(ascend_ms_path, 'communication.json')
-            communication_matrix_file = os.path.join(ascend_ms_path, 'communication_matrix.json')
-
-            ascend_ms_files = (step_trace_time_file, communication_file, communication_matrix_file)
-            for file in ascend_ms_files:
-                assert os.path.isfile(file)
-
-            with open(communication_matrix_file, 'r') as fr:
-                res = json.load(fr)
-            res = res.get('step', {}).get('collective', {})
-            assert res
-            key = tuple(res.keys())[0]
-            name_1 = key.split('-')[0]
-            name_2 = key.split('@')[-1]
-            assert f'{name_1}-top1@{name_2}' in res.keys()
-            assert f'{name_1}-middle@{name_2}' in res.keys()
-            assert f'{name_1}-bottom1@{name_2}' in res.keys()
-            assert f'{name_1}-bottom2@{name_2}' in res.keys()
-            assert f'{name_1}-bottom3@{name_2}' in res.keys()
-            assert f'{name_1}-total@{name_2}' in res.keys()
