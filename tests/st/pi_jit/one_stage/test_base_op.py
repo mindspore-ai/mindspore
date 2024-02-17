@@ -201,3 +201,67 @@ def test_list_slice_with_default_parameter_3():
     assert ret[0] == Tensor([1])
     assert ret[1] == Tensor([2])
     assert ret[2] == Tensor([3])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_make_dict():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            m = {"x": x, "y": x+1}
+            return m["x"]
+
+    net = Net()
+    a = Tensor([1])
+    jit(net.construct, mode="PIJit", jit_config=cfg)
+    ret = net(a)
+    assert ret == Tensor([1])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_make_dict_2():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            m = {}
+            m["x"] = x
+            return m["x"]
+
+    net = Net()
+    a = Tensor([1])
+    jit(net.construct, mode="PIJit", jit_config=cfg)
+    ret = net(a)
+    assert ret == Tensor([1])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_make_dict_3():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            m = {"x": x+1}
+            return m["x"]
+
+    net = Net()
+    a = Tensor([1])
+    jit(net.construct, mode="PIJit", jit_config=cfg)
+    ret = net(a)
+    assert ret == Tensor([2])
