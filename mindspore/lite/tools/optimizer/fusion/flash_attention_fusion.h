@@ -54,7 +54,8 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
   CNodePtr CreatePromptFlashAttentionCnodeForBNSD(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                   const AnfNodePtr &q, const AnfNodePtr &k, const AnfNodePtr &v,
                                                   const AnfNodePtr &atten_mask, int64_t num_heads, int64_t next_token,
-                                                  float scale_value, int64_t num_key_value_heads = 1) const;
+                                                  float scale_value, int64_t num_key_value_heads = 1,
+                                                  int64_t inner_precise = 1) const;
 
   CNodePtr CreatePromptFlashAttentionCnodeForBSH(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                  const AnfNodePtr &q, const AnfNodePtr &k, const AnfNodePtr &v,
@@ -92,7 +93,7 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
   float GetScaleValueForDynamicShape(const AnfNodePtr &mul_const_input) const;
   CNodePtr CreateFAForSD15(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const AnfNodePtr &q_trans,
                            const AnfNodePtr &k_trans, const AnfNodePtr &v_trans, int64_t num_head, int64_t next_token,
-                           float scale_value) const;
+                           float scale_value, int64_t inner_precise = 1) const;
   CNodePtr CreateGQACNodeForBNSD(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const CNodePtr &matmul_1,
                                  const CNodePtr &matmul_2, const CNodePtr &attention_mask_mul) const;
   CNodePtr CreateFAForBNSDWithAttenMask(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
