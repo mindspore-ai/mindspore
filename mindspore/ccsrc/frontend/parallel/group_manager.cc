@@ -106,26 +106,37 @@ Status CreateGroups(const std::vector<std::pair<std::string, std::vector<uint32_
   // Create group through the executor
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  std::string device_name = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  auto executor = session::ExecutorManager::Instance().GetExecutor(device_name, device_id);
-  MS_EXCEPTION_IF_NULL(executor);
-  for (auto &group : group_info) {
-    bool ret = true;
-    // The group operation thread must be same with nccl init thread in the GPU device.
-    if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT) ||
-        (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice)) {
-      ret = CommManager::GetInstance().CreateGroupSync(group.first, group.second);
+  auto print_func = [](const auto &group, bool judge) {
+    if (judge) {
+      MS_LOG(INFO) << "Create group success, group name is " << group.first << ", ranks is " << group.second;
     } else {
-      ret = executor->CreateCommGroup(group.first, group.second);
-    }
-    if (!ret) {
       MS_LOG(ERROR) << "Create group failed, group name is " << group.first << ", ranks is " << group.second;
-      return FAILED;
     }
-    MS_LOG(INFO) << "Create group success, group name is " << group.first << ", ranks is " << group.second;
+  };
+  bool ret = true;
+  // The group operation thread must be same with nccl init thread in the GPU device.
+  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT) ||
+      (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice)) {
+    for (auto &group : group_info) {
+      ret = CommManager::GetInstance().CreateGroupSync(group.first, group.second);
+      print_func(group, ret);
+      if (!ret) {
+        return FAILED;
+      }
+    }
+  } else {
+    std::string device_name = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+    uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    auto executor = session::ExecutorManager::Instance().GetExecutor(device_name, device_id);
+    MS_EXCEPTION_IF_NULL(executor);
+    for (auto &group : group_info) {
+      ret = executor->CreateCommGroup(group.first, group.second);
+      print_func(group, ret);
+      if (!ret) {
+        return FAILED;
+      }
+    }
   }
-
   return SUCCESS;
 }
 #else
