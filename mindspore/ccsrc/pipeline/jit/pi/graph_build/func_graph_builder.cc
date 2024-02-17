@@ -139,7 +139,7 @@ py::object ConvertToPythonTensor(const py::object &obj) {
     }
     return py_tensor;
   }
-  if (py::isinstance<py::sequence>(obj)) {
+  if (py::isinstance<py::list>(obj) || py::isinstance<py::tuple>(obj)) {
     auto obj_tuple = py::cast<py::tuple>(obj);
     py::tuple ret(obj_tuple.size());
     for (size_t i = 0; i < obj_tuple.size(); ++i) {
@@ -287,6 +287,7 @@ bool FuncGraphBuilder::GetInputNodesAndAbstracts(const ValuePtr &callable_value,
       auto node = NewValueNode(val);
       auto abs = val->ToAbstract();
       node->set_abstract(abs);
+      node->set_user_data(kPiJitPyObjKey, std::make_shared<py::object>(input_obj));
       (void)py_obj_to_node_.emplace(input_obj.ptr(), node);
       (void)input_node_list->emplace_back(node);
       (void)input_abs_list->emplace_back(abs);
