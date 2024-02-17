@@ -13,48 +13,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_PAD_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_PAD_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_RESIZED_CROP_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_RESIZED_CROP_OP_H_
 
 #include <memory>
 #include <vector>
 #include <string>
 
-#include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/device_tensor_ascend910b.h"
+#include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 
 namespace mindspore {
 namespace dataset {
-class DvppPadOp : public TensorOp {
+class DvppResizedCropOp : public TensorOp {
  public:
-  DvppPadOp(int32_t pad_top, int32_t pad_bottom, int32_t pad_left, int32_t pad_right, BorderType padding_mode,
-            uint8_t fill_r = 0, uint8_t fill_g = 0, uint8_t fill_b = 0);
+  // Default values, also used by python_bindings.cc
+  static const int32_t kDefWidth;
+  static const InterpolationMode kDefInterpolation;
 
-  ~DvppPadOp() override = default;
+  DvppResizedCropOp(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<int32_t> &size,
+                    InterpolationMode interpolation)
+      : top_(top), left_(left), height_(height), width_(width), size_(size), interpolation_(interpolation) {}
+
+  ~DvppResizedCropOp() override = default;
 
   Status Compute(const std::shared_ptr<DeviceTensorAscend910B> &input,
                  std::shared_ptr<DeviceTensorAscend910B> *output) override;
 
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
 
-  Status OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) override;
+  TensorShape ComputeOutputShape(const TensorShape &input, int32_t output_h, int32_t output_w);
 
-  std::string Name() const override { return kDvppCropOp; }
+  std::string Name() const override { return kDvppResizedCropOp; }
 
   bool IsDvppOp() override { return true; }
 
  private:
-  int32_t pad_top_;
-  int32_t pad_bottom_;
-  int32_t pad_left_;
-  int32_t pad_right_;
-  BorderType boarder_type_;
-  uint8_t fill_r_;
-  uint8_t fill_g_;
-  uint8_t fill_b_;
+  int32_t top_;
+  int32_t left_;
+  int32_t height_;
+  int32_t width_;
+  std::vector<int32_t> size_;
+  InterpolationMode interpolation_;
 };
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_PAD_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_RESIZED_CROP_OP_H_

@@ -65,6 +65,8 @@ constexpr dsize_t kChannelIndexNHWC = 3;
 constexpr dsize_t kNHWCImageRank = 4;
 constexpr dsize_t kWidthIndexNHWC = 2;
 constexpr dsize_t kHeightIndexNHWC = 1;
+constexpr dsize_t kWidthIndexNCHW = 3;
+constexpr dsize_t kHeightIndexNCHW = 2;
 
 void JpegErrorExitCustom(j_common_ptr cinfo);
 

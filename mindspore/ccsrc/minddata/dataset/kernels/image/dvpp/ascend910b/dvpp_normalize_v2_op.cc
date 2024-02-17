@@ -19,9 +19,10 @@
 #include <utility>
 
 #ifndef ENABLE_ANDROID
-#include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/kernels/image/dvpp/acl_adapter.h"
+#include "minddata/dataset/kernels/image/dvpp/utils/dvpp_image_utils.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
+#include "minddata/dataset/kernels/image/image_utils.h"
 #else
 #include "minddata/dataset/kernels/image/lite_image_utils.h"
 #endif
@@ -29,6 +30,11 @@
 
 namespace mindspore {
 namespace dataset {
+constexpr int64_t h_lb = 4;     // height lower bound
+constexpr int64_t h_ub = 8192;  // height upper bound
+constexpr int64_t w_lb = 6;     // width lower bound
+constexpr int64_t w_ub = 4096;  // width upper bound
+
 DvppNormalizeV2Op::DvppNormalizeV2Op(std::vector<float> mean, std::vector<float> std, bool is_hwc)
     : mean_(std::move(mean)), std_(std::move(std)), is_hwc_(is_hwc) {}
 
@@ -48,6 +54,11 @@ Status DvppNormalizeV2Op::Compute(const std::shared_ptr<DeviceTensorAscend910B> 
     // the channel should be equal to the size of mean
     CHECK_FAIL_RETURN_UNEXPECTED(mean_.size() == std_.size() && std_.size() == input->GetShape().AsVector()[1],
                                  "DvppNormalize: The channel is not equal to the size of mean or std.");
+
+    // Dvpp Limit
+    int64_t input_h = input->GetShape()[kHeightIndexNCHW];
+    int64_t input_w = input->GetShape()[kWidthIndexNCHW];
+    RETURN_IF_NOT_OK(CheckDvppLimit(input_h, input_w, h_lb, w_lb, h_ub, w_ub, kDvppNormalizeOp));
   } else {
     CHECK_FAIL_RETURN_UNEXPECTED(input->GetShape().AsVector()[kChannelIndexNHWC] == kDefaultImageChannel ||
                                    input->GetShape().AsVector()[kChannelIndexNHWC] == 1,
@@ -57,6 +68,11 @@ Status DvppNormalizeV2Op::Compute(const std::shared_ptr<DeviceTensorAscend910B> 
     CHECK_FAIL_RETURN_UNEXPECTED(
       mean_.size() == std_.size() && std_.size() == input->GetShape().AsVector()[kChannelIndexNHWC],
       "DvppNormalize: The channel is not equal to the size of mean or std.");
+
+    // Dvpp Limit
+    int64_t input_h = input->GetShape()[kHeightIndexNHWC];
+    int64_t input_w = input->GetShape()[kWidthIndexNHWC];
+    RETURN_IF_NOT_OK(CheckDvppLimit(input_h, input_w, h_lb, w_lb, h_ub, w_ub, kDvppNormalizeOp));
   }
 
   CHECK_FAIL_RETURN_UNEXPECTED(input->GetShape().AsVector()[0] == 1,

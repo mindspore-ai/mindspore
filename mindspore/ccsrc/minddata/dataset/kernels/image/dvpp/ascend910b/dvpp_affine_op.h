@@ -13,51 +13,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_RESIZED_CROP_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_RESIZED_CROP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_AFFINE_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_AFFINE_OP_H_
 
 #include <memory>
 #include <vector>
 #include <string>
 
-#include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/device_tensor_ascend910b.h"
+#include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 
 namespace mindspore {
 namespace dataset {
-class DvppResizedCropOp : public TensorOp {
+class DvppAffineOp : public TensorOp {
  public:
-  // Default values, also used by python_bindings.cc
-  static const int32_t kDefWidth;
-  static const InterpolationMode kDefInterpolation;
+  explicit DvppAffineOp(float degrees, const std::vector<float> &translation, float scale,
+                        const std::vector<float> &shear, InterpolationMode interpolation,
+                        const std::vector<uint8_t> &fill_value);
 
-  DvppResizedCropOp(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<int32_t> &size,
-                    InterpolationMode interpolation)
-      : top_(top), left_(left), height_(height), width_(width), size_(size), interpolation_(interpolation) {}
-
-  ~DvppResizedCropOp() override = default;
+  ~DvppAffineOp() override = default;
 
   Status Compute(const std::shared_ptr<DeviceTensorAscend910B> &input,
                  std::shared_ptr<DeviceTensorAscend910B> *output) override;
 
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
 
-  TensorShape ComputeOutputShape(const TensorShape &input, int32_t output_h, int32_t output_w);
+  Status OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) override;
 
-  std::string Name() const override { return kDvppResizedCropOp; }
+  std::string Name() const override { return kDvppAffineOp; }
 
   bool IsDvppOp() override { return true; }
 
  private:
-  int32_t top_;
-  int32_t left_;
-  int32_t height_;
-  int32_t width_;
-  std::vector<int32_t> size_;
+  float degrees_;
+  std::vector<float> translation_;  // translation_x and translation_y
+  float scale_;
+  std::vector<float> shear_;  // shear_x and shear_y
   InterpolationMode interpolation_;
+  std::vector<uint8_t> fill_value_;
 };
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_RESIZED_CROP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_AFFINE_OP_H_

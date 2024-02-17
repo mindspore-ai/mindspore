@@ -5,6 +5,8 @@ mindspore.dataset.vision.GaussianBlur
 
     使用指定的高斯核对输入图像进行模糊处理。
 
+    支持 Ascend 硬件加速，需要通过 `.device("Ascend")` 方式开启。
+
     参数：
         - **kernel_size** (Union[int, Sequence[int, int]]) - 高斯核的大小。需为正奇数。
           若输入类型为int，将同时使用该值作为高斯核的宽、高。
@@ -24,3 +26,14 @@ mindspore.dataset.vision.GaussianBlur
     教程样例：
         - `视觉变换样例库
           <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_
+
+    .. py:method:: device(device_target="CPU")
+
+        指定该变换执行的设备。
+
+        参数：
+            - **device_target** (str, 可选) - 算子将在指定的设备上运行。当前支持 ``CPU`` 和 ``Ascend`` 。默认值： ``CPU`` 。
+
+        异常：
+            - **TypeError** - 当 `device_target` 的类型不为str。
+            - **ValueError** - 当 `device_target` 的取值不为 ``CPU`` / ``Ascend`` 。

@@ -22,7 +22,7 @@
 #include "minddata/dataset/kernels/image/pad_op.h"
 #endif
 #if !defined(BUILD_LITE) && defined(ENABLE_D)
-#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_pad.h"
+#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_pad_op.h"
 #endif
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"

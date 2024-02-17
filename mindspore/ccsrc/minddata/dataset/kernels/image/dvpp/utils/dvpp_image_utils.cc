@@ -49,11 +49,13 @@
 #include "acldvppop/acldvpp_crop.h"
 #include "acldvppop/acldvpp_crop_and_resize.h"
 #include "acldvppop/acldvpp_decode_jpeg.h"
+#include "acldvppop/acldvpp_gaussian_blur.h"
 #include "acldvppop/acldvpp_horizontal_flip.h"
 #include "acldvppop/acldvpp_normalize.h"
 #include "acldvppop/acldvpp_pad.h"
 #include "acldvppop/acldvpp_resize.h"
 #include "acldvppop/acldvpp_vertical_flip.h"
+#include "acldvppop/acldvpp_warp_affine.h"
 #include "acldvppop/acldvpp_warp_perspective.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 
@@ -420,6 +422,123 @@ APP_ERROR DvppAdjustSaturation(const std::shared_ptr<DeviceTensorAscend910B> &in
   return APP_ERR_OK;
 }
 
+APP_ERROR DvppAffine(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                     std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &matrix,
+                     uint32_t interpolation_mode, uint32_t padding_mode, const std::vector<float> &fill) {
+  MS_LOG(DEBUG) << "Begin execute dvpp affine.";
+  if (input == nullptr || output == nullptr) {
+    MS_LOG(ERROR) << "The input or output is nullptr.";
+    return APP_ERR_DVPP_AFFINE_FAIL;
+  }
+
+  // the input should be 1HWC or 1CHW
+  if (input->GetShape().Rank() != kNHWCImageRank) {
+    MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
+    return APP_ERR_DVPP_AFFINE_FAIL;
+  }
+
+  // the channel should be equal to 3 or 1
+  if (input->GetShape().AsVector()[kChannelIndexNHWC] != kDefaultImageChannel &&
+      input->GetShape().AsVector()[kChannelIndexNHWC] != kMinImageChannel) {
+    MS_LOG(ERROR) << "The input data's channel is not 3 or 1.";
+    return APP_ERR_DVPP_AFFINE_FAIL;
+  }
+
+  if (input->GetShape().AsVector()[0] != 1) {
+    MS_LOG(ERROR) << "The input data is not 1HWC or 1CHW.";  // N == 1
+    return APP_ERR_DVPP_AFFINE_FAIL;
+  }
+
+  // the type is uint8 / float
+  if (input->GetType() != DataType::DE_UINT8 && input->GetType() != DataType::DE_FLOAT32) {
+    MS_LOG(ERROR) << "The input data is not uint8 or float32";
+    return APP_ERR_DVPP_AFFINE_FAIL;
+  }
+
+  // create the output shape and type
+  TensorShape shape = input->GetShape();
+  DataType type = input->GetType();
+
+  // create matrix vector
+  aclFloatArray *acl_matrix = aclCreateFloatArray(matrix.data(), matrix.size());
+  if (acl_matrix == nullptr) {
+    MS_LOG(ERROR) << "Call aclCreateFloatArray failed.";
+    return APP_ERR_DVPP_AFFINE_FAIL;
+  }
+
+  // create fill vector
+  aclFloatArray *acl_fill = aclCreateFloatArray(fill.data(), fill.size());
+  if (acl_fill == nullptr) {
+    MS_LOG(ERROR) << "Call aclCreateFloatArray failed.";
+    return APP_ERR_DVPP_AFFINE_FAIL;
+  }
+
+  // the memory will be released when the map / executor is finished
+  if (!input->AddMaintenFloatArrayMemory(reinterpret_cast<void *>(acl_matrix))) {
+    MS_LOG(ERROR) << "Add float array [acl_matrix] to the input failed";
+    return APP_ERR_DVPP_AFFINE_FAIL;
+  }
+
+  if (!input->AddMaintenFloatArrayMemory(reinterpret_cast<void *>(acl_fill))) {
+    MS_LOG(ERROR) << "Add float array [acl_fill] to the input failed";
+    return APP_ERR_DVPP_AFFINE_FAIL;
+  }
+
+  // create output DeviceTensorAscend910B
+  std::shared_ptr<DeviceTensorAscend910B> device_tensor = nullptr;
+  if (DeviceTensorAscend910B::CreateDeviceTensor(shape, type, input->GetDeviceContext(), input->GetStreamID(),
+                                                 &device_tensor, true) != Status::OK()) {
+    MS_LOG(ERROR) << "Create output device tensor failed.";
+    return APP_ERR_DVPP_AFFINE_FAIL;
+  }
+
+  // call DVPP step1
+  uint64_t workspace_size = 0;
+  aclOpExecutor *executor;
+  auto ret = acldvppWarpAffineGetWorkspaceSize(
+    reinterpret_cast<aclTensor *>(input->GetDeviceTensor()), acl_matrix, interpolation_mode, padding_mode, acl_fill,
+    reinterpret_cast<aclTensor *>(device_tensor->GetDeviceTensor()), &workspace_size, &executor);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppWarpAffineGetWorkspaceSize failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_AFFINE_FAIL;
+  }
+
+  // call DVPP step2
+  void *workspace_addr = nullptr;
+  if (workspace_size > 0) {
+    // create new device address for data copy
+    workspace_addr = input->GetDeviceContext()->device_res_manager_->AllocateMemory(workspace_size);
+    if (workspace_addr == nullptr) {
+      MS_LOG(ERROR) << "Allocate dynamic workspace memory failed";
+      return APP_ERR_DVPP_AFFINE_FAIL;
+    }
+
+    // call DVPP step3
+    ret = acldvppWarpAffine(
+      workspace_addr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
+      return APP_ERR_DVPP_AFFINE_FAIL;
+    }
+  } else {
+    // call DVPP step3
+    ret = acldvppWarpAffine(
+      nullptr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+  }
+
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppWarpAffine failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_AFFINE_FAIL;
+  }
+
+  *output = std::move(device_tensor);  // currently the data is still in device
+  return APP_ERR_OK;
+}
+
 APP_ERROR DvppCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
                    std::shared_ptr<DeviceTensorAscend910B> *output, uint32_t top, uint32_t left, uint32_t height,
                    uint32_t width) {
@@ -570,6 +689,123 @@ APP_ERROR DvppDecode(const std::shared_ptr<DeviceTensorAscend910B> &input,
   if (ret != ACL_SUCCESS) {
     MS_LOG(ERROR) << "Call acldvppDecodeJpeg failed, error code: " + std::to_string(ret) + ".";
     return APP_ERR_DVPP_JPEG_DECODE_FAIL;
+  }
+
+  *output = std::move(device_tensor);  // currently the data is still in device
+  return APP_ERR_OK;
+}
+
+APP_ERROR DvppGaussianBlur(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                           std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<int64_t> &kernel_size,
+                           const std::vector<float> &sigma, uint32_t padding_mode) {
+  MS_LOG(DEBUG) << "Begin execute dvpp GaussianBlur.";
+  if (input == nullptr || output == nullptr) {
+    MS_LOG(ERROR) << "The input or output is nullptr.";
+    return APP_ERR_DVPP_GAUSSIAN_BLUR_FAIL;
+  }
+
+  // the input should be 1HWC or 1CHW
+  if (input->GetShape().Rank() != kNHWCImageRank) {
+    MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
+    return APP_ERR_DVPP_GAUSSIAN_BLUR_FAIL;
+  }
+
+  // the channel should be equal to 3 or 1
+  if (input->GetShape().AsVector()[kChannelIndexNHWC] != kDefaultImageChannel &&
+      input->GetShape().AsVector()[kChannelIndexNHWC] != kMinImageChannel) {
+    MS_LOG(ERROR) << "The input data's channel is not 3 or 1.";
+    return APP_ERR_DVPP_GAUSSIAN_BLUR_FAIL;
+  }
+
+  if (input->GetShape().AsVector()[0] != 1) {
+    MS_LOG(ERROR) << "The input data is not 1HWC or 1CHW.";  // N == 1
+    return APP_ERR_DVPP_GAUSSIAN_BLUR_FAIL;
+  }
+
+  // the type is uint8 / float
+  if (input->GetType() != DataType::DE_UINT8 && input->GetType() != DataType::DE_FLOAT32) {
+    MS_LOG(ERROR) << "The input data is not uint8 or float32";
+    return APP_ERR_DVPP_GAUSSIAN_BLUR_FAIL;
+  }
+
+  // create the output shape and type
+  TensorShape shape = input->GetShape();
+  DataType type = input->GetType();
+
+  // create matrix vector
+  aclIntArray *acl_kernel_size = aclCreateIntArray(kernel_size.data(), kernel_size.size());
+  if (acl_kernel_size == nullptr) {
+    MS_LOG(ERROR) << "Call aclCreateIntArray failed.";
+    return APP_ERR_DVPP_GAUSSIAN_BLUR_FAIL;
+  }
+
+  // create fill vector
+  aclFloatArray *acl_sigma = aclCreateFloatArray(sigma.data(), sigma.size());
+  if (acl_sigma == nullptr) {
+    MS_LOG(ERROR) << "Call aclCreateFloatArray failed.";
+    return APP_ERR_DVPP_GAUSSIAN_BLUR_FAIL;
+  }
+
+  // the memory will be released when the map / executor is finished
+  if (!input->AddMaintenIntArrayMemory(reinterpret_cast<void *>(acl_kernel_size))) {
+    MS_LOG(ERROR) << "Add float array [acl_kernel_size] to the input failed";
+    return APP_ERR_DVPP_GAUSSIAN_BLUR_FAIL;
+  }
+
+  if (!input->AddMaintenFloatArrayMemory(reinterpret_cast<void *>(acl_sigma))) {
+    MS_LOG(ERROR) << "Add float array [acl_sigma] to the input failed";
+    return APP_ERR_DVPP_GAUSSIAN_BLUR_FAIL;
+  }
+
+  // create output DeviceTensorAscend910B
+  std::shared_ptr<DeviceTensorAscend910B> device_tensor = nullptr;
+  if (DeviceTensorAscend910B::CreateDeviceTensor(shape, type, input->GetDeviceContext(), input->GetStreamID(),
+                                                 &device_tensor, true) != Status::OK()) {
+    MS_LOG(ERROR) << "Create output device tensor failed.";
+    return APP_ERR_DVPP_GAUSSIAN_BLUR_FAIL;
+  }
+
+  // call DVPP step1
+  uint64_t workspace_size = 0;
+  aclOpExecutor *executor;
+  auto ret = acldvppGaussianBlurGetWorkspaceSize(
+    reinterpret_cast<aclTensor *>(input->GetDeviceTensor()), acl_kernel_size, acl_sigma, padding_mode,
+    reinterpret_cast<aclTensor *>(device_tensor->GetDeviceTensor()), &workspace_size, &executor);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppGaussianBlurGetWorkspaceSize failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_GAUSSIAN_BLUR_FAIL;
+  }
+
+  // call DVPP step2
+  void *workspace_addr = nullptr;
+  if (workspace_size > 0) {
+    // create new device address for data copy
+    workspace_addr = input->GetDeviceContext()->device_res_manager_->AllocateMemory(workspace_size);
+    if (workspace_addr == nullptr) {
+      MS_LOG(ERROR) << "Allocate dynamic workspace memory failed";
+      return APP_ERR_DVPP_GAUSSIAN_BLUR_FAIL;
+    }
+
+    // call DVPP step3
+    ret = acldvppGaussianBlur(
+      workspace_addr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
+      return APP_ERR_DVPP_GAUSSIAN_BLUR_FAIL;
+    }
+  } else {
+    // call DVPP step3
+    ret = acldvppGaussianBlur(
+      nullptr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+  }
+
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppGaussianBlur failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_GAUSSIAN_BLUR_FAIL;
   }
 
   *output = std::move(device_tensor);  // currently the data is still in device

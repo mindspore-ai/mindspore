@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_crop.h"
+#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_crop_op.h"
 
 #include <vector>
 
 #include "minddata/dataset/kernels/data/data_utils.h"
 #ifndef ENABLE_ANDROID
-#include "minddata/dataset/kernels/image/image_utils.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/dvpp_image_utils.h"
 #include "minddata/dataset/kernels/image/dvpp/acl_adapter.h"
+#include "minddata/dataset/kernels/image/dvpp/utils/dvpp_image_utils.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
+#include "minddata/dataset/kernels/image/image_utils.h"
 #else
 #include "minddata/dataset/kernels/image/lite_image_utils.h"
 #endif
@@ -30,6 +30,10 @@
 
 namespace mindspore {
 namespace dataset {
+constexpr int64_t h_lb = 4;      // height lower bound
+constexpr int64_t h_ub = 32768;  // height upper bound
+constexpr int64_t w_lb = 6;      // width lower bound
+constexpr int64_t w_ub = 32768;  // width upper bound
 
 Status DvppCropOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &input,
                            std::shared_ptr<DeviceTensorAscend910B> *output) {
@@ -51,21 +55,8 @@ Status DvppCropOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                  " exceeds image width: " + std::to_string(input_w));
 
   // Dvpp Limit
-  constexpr int32_t h_lb = 4;      // height lower bound
-  constexpr int32_t h_ub = 32768;  // height upper bound
-  constexpr int32_t w_lb = 6;      // width lower bound
-  constexpr int32_t w_ub = 32768;  // width upper bound
-  if ((input_h < h_lb || input_h > h_ub) || (input_w < w_lb || input_w > w_ub)) {
-    auto error = "DvppCrop: due to hardware limit, the input shape should be from [4, 6] to [32768, 32768], but got [" +
-                 std::to_string(input_h) + ", " + std::to_string(input_w) + "].";
-    RETURN_STATUS_UNEXPECTED(error);
-  }
-  if ((height_ < h_lb || height_ > h_ub) || (width_ < w_lb || width_ > w_ub)) {
-    auto error =
-      "DvppCrop: due to hardware limit, the output shape should be from [4, 6] to [32768, 32768], but got [" +
-      std::to_string(height_) + ", " + std::to_string(width_) + "].";
-    RETURN_STATUS_UNEXPECTED(error);
-  }
+  RETURN_IF_NOT_OK(CheckDvppLimit(input_h, input_w, h_lb, w_lb, h_ub, w_ub, kDvppCropOp, "input"));
+  RETURN_IF_NOT_OK(CheckDvppLimit(height_, width_, h_lb, w_lb, h_ub, w_ub, kDvppCropOp, "output"));
 
   APP_ERROR ret = AclAdapter::GetInstance().DvppCrop(input, output, top_, left_, height_, width_);
   if (ret != APP_ERR_OK) {
@@ -76,8 +67,23 @@ Status DvppCropOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &input,
 }
 
 Status DvppCropOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
-  RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
   outputs.clear();
+  int32_t input_h = inputs[0][kHeightIndex];
+  int32_t input_w = inputs[0][kWidthIndex];
+  int32_t output_h = height_;
+  int32_t output_w = width_;
+
+  if ((input_h < h_lb || input_h > h_ub) || (input_w < w_lb || input_w > w_ub)) {
+    auto error = "DvppCrop: the input shape should be from [4, 6] to [32768, 32768], but got [" +
+                 std::to_string(input_h) + ", " + std::to_string(input_w) + "].";
+    RETURN_STATUS_UNEXPECTED(error);
+  }
+  if ((output_h < h_lb || output_h > h_ub) || (output_w < w_lb || output_w > w_ub)) {
+    auto error = "DvppCrop: the output shape should be from [4, 6] to [32768, 32768], but got [" +
+                 std::to_string(output_h) + ", " + std::to_string(output_w) + "].";
+    RETURN_STATUS_UNEXPECTED(error);
+  }
+
   TensorShape out = TensorShape{height_, width_};
   CHECK_FAIL_RETURN_UNEXPECTED(!inputs.empty(), "DvppCrop: inputs cannot be empty.");
   if (inputs[0].Rank() == kMinImageRank) {

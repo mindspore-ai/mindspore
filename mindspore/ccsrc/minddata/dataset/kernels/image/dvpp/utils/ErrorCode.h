@@ -113,6 +113,8 @@ enum {
   APP_ERR_DVPP_PERSPECTIVE_FAIL = APP_ERR_DVPP_BASE + 22,        // DVPP: perspective fail
   APP_ERR_DVPP_RESIZED_CROP_FAIL = APP_ERR_DVPP_BASE + 23,       // DVPP: crop and resize fail
   APP_ERR_DVPP_PAD_FAIL = APP_ERR_DVPP_BASE + 24,                // DVPP: pad fail
+  APP_ERR_DVPP_AFFINE_FAIL = APP_ERR_DVPP_BASE + 25,             // DVPP: affine fail
+  APP_ERR_DVPP_GAUSSIAN_BLUR_FAIL = APP_ERR_DVPP_BASE + 26,      // DVPP: gaussian blur fail
   APP_ERR_DVPP_END,  // Not an error code, define the range of common error code
 
   // define the error code of inference

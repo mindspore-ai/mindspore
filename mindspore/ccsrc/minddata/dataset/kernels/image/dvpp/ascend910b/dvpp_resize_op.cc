@@ -19,10 +19,10 @@
 
 #include "minddata/dataset/kernels/data/data_utils.h"
 #ifndef ENABLE_ANDROID
-#include "minddata/dataset/kernels/image/image_utils.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/dvpp_image_utils.h"
 #include "minddata/dataset/kernels/image/dvpp/acl_adapter.h"
+#include "minddata/dataset/kernels/image/dvpp/utils/dvpp_image_utils.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
+#include "minddata/dataset/kernels/image/image_utils.h"
 #else
 #include "minddata/dataset/kernels/image/lite_image_utils.h"
 #endif
@@ -32,6 +32,10 @@ namespace mindspore {
 namespace dataset {
 const int32_t DvppResizeOp::kDefWidth = 0;
 const InterpolationMode DvppResizeOp::kDefInterpolation = InterpolationMode::kLinear;
+constexpr int64_t h_lb = 4;      // height lower bound
+constexpr int64_t h_ub = 32768;  // height upper bound
+constexpr int64_t w_lb = 6;      // width lower bound
+constexpr int64_t w_ub = 32768;  // width upper bound
 
 Status DvppResizeOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &input,
                              std::shared_ptr<DeviceTensorAscend910B> *output) {
@@ -79,22 +83,8 @@ Status DvppResizeOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &inpu
                                  std::to_string(static_cast<int>(interpolation_)));
 
   // Dvpp Limit
-  constexpr int32_t h_lb = 4;      // height lower bound
-  constexpr int32_t h_ub = 32768;  // height upper bound
-  constexpr int32_t w_lb = 6;      // width lower bound
-  constexpr int32_t w_ub = 32768;  // width upper bound
-  if ((input_h < h_lb || input_h > h_ub) || (input_w < w_lb || input_w > w_ub)) {
-    auto error =
-      "DvppResize: due to hardware limit, the input shape should be from [4, 6] to [32768, 32768], but got [" +
-      std::to_string(input_h) + ", " + std::to_string(input_w) + "].";
-    RETURN_STATUS_UNEXPECTED(error);
-  }
-  if ((output_h < h_lb || output_h > h_ub) || (output_w < w_lb || output_w > w_ub)) {
-    auto error =
-      "DvppResize: due to hardware limit, the output shape should be from [4, 6] to [32768, 32768], but got [" +
-      std::to_string(output_h) + ", " + std::to_string(output_w) + "].";
-    RETURN_STATUS_UNEXPECTED(error);
-  }
+  RETURN_IF_NOT_OK(CheckDvppLimit(input_h, input_w, h_lb, w_lb, h_ub, w_ub, kDvppResizeOp, "input"));
+  RETURN_IF_NOT_OK(CheckDvppLimit(output_h, output_w, h_lb, w_lb, h_ub, w_ub, kDvppResizeOp, "output"));
 
   APP_ERROR ret = AclAdapter::GetInstance().DvppResize(input, output, output_h, output_w, 0, 0, interpolation_);
   if (ret != APP_ERR_OK) {
@@ -127,6 +117,14 @@ Status DvppResizeOp::OutputShape(const std::vector<TensorShape> &inputs, std::ve
     auto out_shape = ComputeOutputShape(inputs[0], outputH, outputW);
     (void)outputs.emplace_back(out_shape);
   }
+
+  int32_t input_h = inputs[0][kHeightIndex];
+  int32_t input_w = inputs[0][kWidthIndex];
+  int32_t output_h = outputs[0][kHeightIndex];
+  int32_t output_w = outputs[0][kWidthIndex];
+  RETURN_IF_NOT_OK(CheckDvppLimit(input_h, input_w, h_lb, w_lb, h_ub, w_ub, kDvppResizeOp, "input"));
+  RETURN_IF_NOT_OK(CheckDvppLimit(output_h, output_w, h_lb, w_lb, h_ub, w_ub, kDvppResizeOp, "output"));
+
   return Status::OK();
 }
 

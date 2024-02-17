@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_pad.h"
+#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_pad_op.h"
 
 #include <vector>
 
 #include "minddata/dataset/kernels/data/data_utils.h"
 #ifndef ENABLE_ANDROID
-#include "minddata/dataset/kernels/image/image_utils.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/dvpp_image_utils.h"
 #include "minddata/dataset/kernels/image/dvpp/acl_adapter.h"
+#include "minddata/dataset/kernels/image/dvpp/utils/dvpp_image_utils.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
+#include "minddata/dataset/kernels/image/image_utils.h"
 #else
 #include "minddata/dataset/kernels/image/lite_image_utils.h"
 #endif
@@ -30,6 +30,12 @@
 
 namespace mindspore {
 namespace dataset {
+constexpr int64_t h_lb = 4;       // height lower bound
+constexpr int64_t h_ub = 32768;   // height upper bound
+constexpr int64_t w_lb = 6;       // width lower bound
+constexpr int64_t w_ub = 32768;   // width upper bound
+constexpr int64_t pad_ub = 2048;  // max padding number
+
 DvppPadOp::DvppPadOp(int32_t pad_top, int32_t pad_bottom, int32_t pad_left, int32_t pad_right, BorderType padding_mode,
                      uint8_t fill_r, uint8_t fill_g, uint8_t fill_b)
     : pad_top_(pad_top),
@@ -66,27 +72,13 @@ Status DvppPadOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &input,
   int64_t output_h = input_h + pad_top_ + pad_bottom_;
   int64_t output_w = input_w + pad_left_ + pad_right_;
 
-  constexpr int32_t h_lb = 4;       // height lower bound
-  constexpr int32_t h_ub = 32768;   // height upper bound
-  constexpr int32_t w_lb = 6;       // width lower bound
-  constexpr int32_t w_ub = 32768;   // width upper bound
-  constexpr int32_t pad_ub = 2048;  // max padding number
-
-  if ((input_h < h_lb || input_h > h_ub) || (input_w < w_lb || input_w > w_ub)) {
-    auto error = "DvppPad: due to hardware limit, the input shape should be from [4, 6] to [32768, 32768], but got [" +
-                 std::to_string(input_h) + ", " + std::to_string(input_w) + "].";
-    RETURN_STATUS_UNEXPECTED(error);
-  }
-  if ((output_h < h_lb || output_h > h_ub) || (output_w < w_lb || output_w > w_ub)) {
-    auto error = "DvppPad: due to hardware limit, the output shape should be from [4, 6] to [32768, 32768], but got [" +
-                 std::to_string(output_h) + ", " + std::to_string(output_w) + "].";
-    RETURN_STATUS_UNEXPECTED(error);
-  }
+  // Dvpp Limit
+  RETURN_IF_NOT_OK(CheckDvppLimit(input_h, input_w, h_lb, w_lb, h_ub, w_ub, kDvppPadOp, "input"));
+  RETURN_IF_NOT_OK(CheckDvppLimit(output_h, output_w, h_lb, w_lb, h_ub, w_ub, kDvppPadOp, "output"));
   for (const int64_t &p : padding) {
     if (p > pad_ub) {
       auto error =
-        "DvppPad: due to hardware limit, the padding pixel number should be less than or equal to 2048, but got" +
-        std::to_string(p);
+        "DvppPad: the padding pixel number should be less than or equal to 2048, but got" + std::to_string(p);
     }
   }
 
@@ -101,10 +93,15 @@ Status DvppPadOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &input,
 
 Status DvppPadOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
   outputs.clear();
-  int32_t height = inputs[0][kHeightIndex];
-  int32_t width = inputs[0][kWidthIndex];
-  TensorShape out = TensorShape{height + pad_top_ + pad_bottom_, width + pad_left_ + pad_right_};
+  int32_t input_h = inputs[0][kHeightIndex];
+  int32_t input_w = inputs[0][kWidthIndex];
+  RETURN_IF_NOT_OK(CheckDvppLimit(input_h, input_w, h_lb, w_lb, h_ub, w_ub, kDvppPadOp, "input"));
 
+  int32_t output_h = input_h + pad_top_ + pad_bottom_;
+  int32_t output_w = input_w + pad_left_ + pad_right_;
+  RETURN_IF_NOT_OK(CheckDvppLimit(output_h, output_w, h_lb, w_lb, h_ub, w_ub, kDvppPadOp, "output"));
+
+  TensorShape out = TensorShape{output_h, output_w};
   if (inputs[0].Rank() == kMinImageRank) {
     (void)outputs.emplace_back(out);
   }

@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_resized_crop.h"
+#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_resized_crop_op.h"
 
 #include <vector>
 
 #include "minddata/dataset/kernels/data/data_utils.h"
 #ifndef ENABLE_ANDROID
-#include "minddata/dataset/kernels/image/image_utils.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/dvpp_image_utils.h"
 #include "minddata/dataset/kernels/image/dvpp/acl_adapter.h"
+#include "minddata/dataset/kernels/image/dvpp/utils/dvpp_image_utils.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
+#include "minddata/dataset/kernels/image/image_utils.h"
 #else
 #include "minddata/dataset/kernels/image/lite_image_utils.h"
 #endif
@@ -32,6 +32,10 @@ namespace mindspore {
 namespace dataset {
 const int32_t DvppResizedCropOp::kDefWidth = 0;
 const InterpolationMode DvppResizedCropOp::kDefInterpolation = InterpolationMode::kLinear;
+constexpr int64_t h_lb = 4;      // height lower bound
+constexpr int64_t h_ub = 32768;  // height upper bound
+constexpr int64_t w_lb = 6;      // width lower bound
+constexpr int64_t w_ub = 32768;  // width upper bound
 
 Status DvppResizedCropOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                   std::shared_ptr<DeviceTensorAscend910B> *output) {
@@ -90,6 +94,16 @@ Status DvppResizedCropOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> 
   CHECK_FAIL_RETURN_UNEXPECTED(GetDVPPInterpolationMode(interpolation_) != kInvalidInterpolationMode,
                                "The current InterpolationMode is not supported by DVPP. It is " +
                                  std::to_string(static_cast<int>(interpolation_)));
+
+  // Dvpp Limit
+  RETURN_IF_NOT_OK(CheckDvppLimit(input_h, input_w, h_lb, w_lb, h_ub, w_ub, kDvppResizedCropOp, "input"));
+  RETURN_IF_NOT_OK(CheckDvppLimit(output_h, output_w, h_lb, w_lb, h_ub, w_ub, kDvppResizedCropOp, "output"));
+  if (output_w > 4096 && (height_ >= 16 || width_ >= 128)) {
+    std::string error =
+      "DvppResizedCrop: when output width > 4096, crop area should smaller than [16, 128], but got [" +
+      std::to_string(height_) + ", " + std::to_string(width_) + "].";
+    RETURN_STATUS_UNEXPECTED(error);
+  }
 
   APP_ERROR ret = AclAdapter::GetInstance().DvppResizedCrop(input, output, top_, left_, height_, width_, output_h,
                                                             output_w, interpolation_);

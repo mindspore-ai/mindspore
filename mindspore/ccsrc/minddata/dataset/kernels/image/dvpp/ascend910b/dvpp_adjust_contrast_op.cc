@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_adjust_brightness.h"
+#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_adjust_contrast_op.h"
 
 #ifndef ENABLE_ANDROID
-#include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/kernels/image/dvpp/acl_adapter.h"
+#include "minddata/dataset/kernels/image/dvpp/utils/dvpp_image_utils.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
+#include "minddata/dataset/kernels/image/image_utils.h"
 #else
 #include "minddata/dataset/kernels/image/lite_image_utils.h"
 #endif
@@ -27,30 +28,40 @@
 
 namespace mindspore {
 namespace dataset {
-Status DvppAdjustBrightnessOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &input,
-                                       std::shared_ptr<DeviceTensorAscend910B> *output) {
+constexpr int64_t h_lb = 4;     // height lower bound
+constexpr int64_t h_ub = 8192;  // height upper bound
+constexpr int64_t w_lb = 6;     // width lower bound
+constexpr int64_t w_ub = 4096;  // width upper bound
+
+Status DvppAdjustContrastOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                     std::shared_ptr<DeviceTensorAscend910B> *output) {
   IO_CHECK(input, output);
   // check the input tensor shape
   if (input->GetShape().Rank() != kNHWCImageRank) {
-    RETURN_STATUS_UNEXPECTED("DvppAdjustBrightness: invalid input shape, only support NHWC input, got rank: " +
+    RETURN_STATUS_UNEXPECTED("DvppAdjustContrast: invalid input shape, only support NHWC input, got rank: " +
                              std::to_string(input->GetShape().Rank()));
   }
 
-  APP_ERROR ret = AclAdapter::GetInstance().DvppAdjustBrightness(input, output, factor_);
+  // Dvpp Limit
+  int64_t input_h = input->GetShape()[kHeightIndexNHWC];
+  int64_t input_w = input->GetShape()[kWidthIndexNHWC];
+  RETURN_IF_NOT_OK(CheckDvppLimit(input_h, input_w, h_lb, w_lb, h_ub, w_ub, kDvppAdjustContrastOp));
+
+  APP_ERROR ret = AclAdapter::GetInstance().DvppAdjustContrast(input, output, factor_);
   if (ret != APP_ERR_OK) {
-    std::string error = "DvppAdjustBrightness: Error in dvpp processing: " + std::to_string(ret);
+    std::string error = "DvppAdjustContrast: Error in dvpp processing: " + std::to_string(ret);
     RETURN_STATUS_UNEXPECTED(error);
   }
 
   return Status::OK();
 }
 
-Status DvppAdjustBrightnessOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
+Status DvppAdjustContrastOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
   return Status::OK();
 }
 
-Status DvppAdjustBrightnessOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {
+Status DvppAdjustContrastOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputType(inputs, outputs));
   return Status::OK();
 }

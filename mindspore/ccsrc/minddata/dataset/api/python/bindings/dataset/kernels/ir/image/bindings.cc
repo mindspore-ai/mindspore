@@ -159,9 +159,9 @@ PYBIND_REGISTER(AffineOperation, 1, ([](const py::module *m) {
                     *m, "AffineOperation")
                     .def(py::init([](float degrees, const std::vector<float> &translation, float scale,
                                      const std::vector<float> &shear, InterpolationMode interpolation,
-                                     const std::vector<uint8_t> &fill_value) {
+                                     const std::vector<uint8_t> &fill_value, const std::string &device_target) {
                       auto affine = std::make_shared<vision::AffineOperation>(degrees, translation, scale, shear,
-                                                                              interpolation, fill_value);
+                                                                              interpolation, fill_value, device_target);
                       THROW_IF_ERROR(affine->ValidateParams());
                       return affine;
                     }));
@@ -312,11 +312,12 @@ PYBIND_REGISTER(
   GaussianBlurOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::GaussianBlurOperation, TensorOperation, std::shared_ptr<vision::GaussianBlurOperation>>(
       *m, "GaussianBlurOperation")
-      .def(py::init([](const std::vector<int32_t> &kernel_size, const std::vector<float> &sigma) {
-        auto gaussian_blur = std::make_shared<vision::GaussianBlurOperation>(kernel_size, sigma);
-        THROW_IF_ERROR(gaussian_blur->ValidateParams());
-        return gaussian_blur;
-      }));
+      .def(py::init(
+        [](const std::vector<int32_t> &kernel_size, const std::vector<float> &sigma, const std::string &device_target) {
+          auto gaussian_blur = std::make_shared<vision::GaussianBlurOperation>(kernel_size, sigma, device_target);
+          THROW_IF_ERROR(gaussian_blur->ValidateParams());
+          return gaussian_blur;
+        }));
   }));
 
 PYBIND_REGISTER(GetImageNumChannels, 1, ([](py::module *m) {

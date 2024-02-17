@@ -1284,7 +1284,156 @@ def test_eager_pad_dvpp_exception():
     img = np.ones([3, 6, 3], dtype=np.uint8)
     with pytest.raises(RuntimeError) as error_info:
         img = vision.Pad([10, 10]).device("Ascend")(img)
-    assert "due to hardware limit, the input shape should be from [4, 6] to [32768, 32768]" in str(error_info.value)
+    assert "the input shape should be from [4, 6] to [32768, 32768]" in str(error_info.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_eager_gaussian_blur_dvpp():
+    """
+    Feature: Gaussian blur op on Ascend910B
+    Description: Test eager support for gaussian blur with Dvpp
+    Expectation: Output image info from op is correct
+    """
+    ms.set_context(device_target="Ascend")
+
+    print("Run testcase: " + sys._getframe().f_code.co_name)
+
+    # HWC input
+    img = cv2.imread(input_apple_jpg)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
+
+    img_transformed = vision.GaussianBlur(5, 5).device("Ascend")(img)
+    logger.info("Image.type: {}, Image.shape: {}".format(img_transformed.dtype, img_transformed.shape))
+
+    assert img_transformed.shape == (2268, 4032, 3)
+
+    # HW input
+    img = np.ones((300, 400)).astype(np.uint8)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
+
+    img_transformed = vision.GaussianBlur(3, 3).device("Ascend")(img)
+    logger.info("Image.type: {}, Image.shape: {}".format(img_transformed.dtype, img_transformed.shape))
+
+    assert img_transformed.shape == (300, 400)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_eager_gaussian_blur_dvpp_exception():
+    """
+    Feature: Gaussian blur op on Ascend910B
+    Description: Test eager support for Gaussian blur with Dvpp when invalid input
+    Expectation: Success
+    """
+    ms.set_context(device_target="Ascend")
+
+    # the input is list
+    img = np.ones([1024], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.GaussianBlur(5, 5).device("Ascend")(img)
+    assert "the input tensor is not HW, HWC or 1HWC," in str(error_info.value)
+
+    # the input is HW2
+    img = np.ones([224, 224, 2], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.GaussianBlur(5, 5).device("Ascend")(img)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(error_info.value)
+
+    # the input is 3HW1
+    img = np.ones([3, 224, 224, 1], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        _ = vision.GaussianBlur(5, 5).device("Ascend")(img)
+    assert "The input tensor NHWC should be 1HWC or HWC." in str(error_info.value)
+
+    # the input is 23HW3
+    img = np.ones([2, 3, 224, 224, 3], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.GaussianBlur(5, 5).device("Ascend")(img)
+    assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(error_info.value)
+
+    # the input is out of [4, 6] to [8192, 4096]
+    img = np.ones([3, 6, 3], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.GaussianBlur(5, 5).device("Ascend")(img)
+    assert "the input shape should be from [4, 6] to [8192, 4096]" in str(error_info.value)
+
+    # the input kernel is invalid
+    img = np.ones([30, 60, 3], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.GaussianBlur(9, 9).device("Ascend")(img)
+    assert "the value of gaussian kernel only supports [1, 3, 5]" in str(error_info.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_eager_affine_dvpp():
+    """
+    Feature: Affine op on Ascend910B
+    Description: Test eager support for affine with Dvpp
+    Expectation: Output image info from op is correct
+    """
+    ms.set_context(device_target="Ascend")
+
+    # HWC input
+    img = cv2.imread(input_apple_jpg)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
+
+    img_transformed = vision.Affine(degrees=15, translate=[0.2, 0.2], scale=1.1, shear=[1, 1]).device("Ascend")(img)
+    logger.info("Image.type: {}, Image.shape: {}".format(img_transformed.dtype, img_transformed.shape))
+
+    assert img_transformed.shape == (2268, 4032, 3)
+
+    # HW input
+    img = np.ones((300, 400)).astype(np.uint8)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
+
+    img_transformed = vision.Affine(degrees=15, translate=[0.2, 0.2], scale=1.1, shear=[1, 1]).device("Ascend")(img)
+    logger.info("Image.type: {}, Image.shape: {}".format(img_transformed.dtype, img_transformed.shape))
+
+    assert img_transformed.shape == (300, 400)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_eager_affine_dvpp_exception():
+    """
+    Feature: Affine op on Ascend910B
+    Description: Test eager support for Affine with Dvpp when invalid input
+    Expectation: Success
+    """
+    ms.set_context(device_target="Ascend")
+
+    # the input is list
+    img = np.ones([1024], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.Affine(degrees=15, translate=[0.2, 0.2], scale=1.1, shear=[1, 1]).device("Ascend")(img)
+    assert "the input tensor is not HW, HWC or 1HWC," in str(error_info.value)
+
+    # the input is 23HW3
+    img = np.ones([2, 3, 224, 224, 3], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.Affine(degrees=15, translate=[0.2, 0.2], scale=1.1, shear=[1, 1]).device("Ascend")(img)
+    assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(error_info.value)
+
+    # the input is out of [4, 6] to [32768, 4096]
+    img = np.ones([4, 5, 3], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.Affine(degrees=15, translate=[0.2, 0.2], scale=1.1, shear=[1, 1]).device("Ascend")(img)
+    assert "the input shape should be from [4, 6] to [32768, 4096]" in str(error_info.value)
+
+    # the input kernel is invalid
+    img = np.ones([30, 60, 3], dtype=np.uint8)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.Affine(degrees=15, translate=[0.2, 0.2], scale=1.1, shear=[1, 1],
+                            resample=vision.Inter.AREA).device("Ascend")(img)
+    assert "Invalid interpolation mode, only support BILINEAR and NEAREST" in str(error_info.value)
 
 
 if __name__ == '__main__':
