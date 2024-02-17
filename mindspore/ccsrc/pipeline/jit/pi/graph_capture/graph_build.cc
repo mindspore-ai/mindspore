@@ -2722,8 +2722,20 @@ AObject *MindGraphBuilder::HandleBuildOp(const Instr &instr, const std::vector<V
       auto value_node = fg_builder_->AddNode(prim::kPrimMakeTuple, value_inputs);
       input_obj = {input_obj.back(), value_node};
     } else {
-      // Graph do not support map with variable key.
-      return AObject::MakeAObject(AObject::kTypeAnyValue);
+      MS_LOG(DEBUG) << "BUILD_KEY_MAP case, need to pack keys and values.";
+      size_t input_len = input_obj.size();
+      if (input_len % 2 != 0) {
+        MS_LOG(INTERNAL_EXCEPTION) << "BUILD_KEY_MAP should have even input, but got: " << input_len;
+      }
+      std::vector<py::object> key_obj;
+      std::vector<py::object> value_obj;
+      for (size_t i = 0; i < input_len / 2; ++i) {
+        key_obj.push_back(input_obj[2 * i]);
+        value_obj.push_back(input_obj[2 * i + 1]);
+      }
+      auto key_node = fg_builder_->AddNode(prim::kPrimMakeTuple, key_obj);
+      auto value_node = fg_builder_->AddNode(prim::kPrimMakeTuple, value_obj);
+      input_obj = {key_node, value_node};
     }
   }
   if (primitive == prim::kPrimMakeSlice) {
