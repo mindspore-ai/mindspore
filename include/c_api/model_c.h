@@ -26,6 +26,8 @@ extern "C" {
 
 typedef void *MSModelHandle;
 
+typedef void *MSTrainCfgHandle;
+
 typedef struct MSTensorHandleArray {
   size_t handle_num;
   MSTensorHandle *handle_list;
@@ -167,6 +169,177 @@ MS_API MSTensorHandle MSModelGetInputByTensorName(const MSModelHandle model, con
 ///
 /// \return The output tensor handle with the given name, if the name is not found, an NULL is returned.
 MS_API MSTensorHandle MSModelGetOutputByTensorName(const MSModelHandle model, const char *tensor_name);
+
+/// \brief Create a TrainCfg object. Only valid for Lite Train.
+///
+/// \return TrainCfg object handle.
+MS_API MSTrainCfgHandle MSTrainCfgCreate();
+
+/// \brief Destroy the train_cfg object. Only valid for Lite Train.
+///
+/// \param[in] train_cfg TrainCfg object handle.
+MS_API void MSTrainCfgDestroy(MSTrainCfgHandle *train_cfg);
+
+/// \brief Obtains part of the name that identify a loss kernel. Only valid for Lite Train.
+///
+/// \param[in] train_cfg TrainCfg object handle.
+/// \param[in] num The num of loss_name.
+///
+/// \return loss_name.
+MS_API char **MSTrainCfgGetLossName(MSTrainCfgHandle train_cfg, size_t *num);
+
+/// \brief Set part of the name that identify a loss kernel. Only valid for Lite Train.
+///
+/// \param[in] train_cfg TrainCfg object handle.
+/// \param[in] loss_name define part of the name that identify a loss kernel.
+/// \param[in] num The num of loss_name.
+MS_API void MSTrainCfgSetLossName(MSTrainCfgHandle train_cfg, const char **loss_name, size_t num);
+
+/// \brief Obtains optimization level of the train_cfg. Only valid for Lite Train.
+///
+/// \param[in] train_cfg TrainCfg object handle.
+///
+/// \return MSOptimizationLevel.
+MS_API MSOptimizationLevel MSTrainCfgGetOptimizationLevel(MSTrainCfgHandle train_cfg);
+
+/// \brief Set optimization level of the train_cfg. Only valid for Lite Train.
+///
+/// \param[in] train_cfg TrainCfg object handle.
+/// \param[in] level The optimization level of train_cfg.
+MS_API void MSTrainCfgSetOptimizationLevel(MSTrainCfgHandle train_cfg, MSOptimizationLevel level);
+
+/// \brief Build the train model from model buffer so that it can run on a device. Only valid for Lite Train.
+///
+/// \param[in] model Model object handle.
+/// \param[in] model_data Define the buffer read from a model file.
+/// \param[in] data_size Define bytes number of model file buffer.
+/// \param[in] model_type Define The type of model file.
+/// \param[in] model_context Define the context used to store options during execution.
+/// \param[in] train_cfg Define the config used by training.
+///
+/// \return MSStatus.
+MS_API MSStatus MSTrainModelBuild(MSModelHandle model, const void *model_data, size_t data_size, MSModelType model_type,
+                                  const MSContextHandle model_context, const MSTrainCfgHandle train_cfg);
+
+/// \brief Build the train model from model file buffer so that it can run on a device. Only valid for Lite Train.
+///
+/// \param[in] model Model object handle.
+/// \param[in] model_path Define the model path.
+/// \param[in] model_type Define The type of model file.
+/// \param[in] model_context Define the context used to store options during execution.
+/// \param[in] train_cfg Define the config used by training.
+///
+/// \return MSStatus.
+MS_API MSStatus MSTrainModelBuildFromFile(MSModelHandle model, const char *model_path, MSModelType model_type,
+                                          const MSContextHandle model_context, const MSTrainCfgHandle train_cfg);
+
+/// \brief Train model by step. Only valid for Lite Train.
+///
+/// \param[in] model Model object handle.
+/// \param[in] before CallBack before predict.
+/// \param[in] after CallBack after predict.
+///
+/// \return MSStatus.
+MS_API MSStatus MSRunStep(MSModelHandle model, const MSKernelCallBackC before, const MSKernelCallBackC after);
+
+/// \brief Sets the Learning Rate of the training. Only valid for Lite Train.
+///
+/// \param[in] learning_rate to set.
+///
+/// \return MSStatus of operation.
+MS_API MSStatus MSModelSetLearningRate(MSModelHandle model, float learning_rate);
+
+/// \brief Obtains the Learning Rate of the optimizer. Only valid for Lite Train.
+///
+/// \return Learning rate. 0.0 if no optimizer was found.
+MS_API float MSModelGetLearningRate(MSModelHandle model);
+
+/// \brief Obtains all weights tensors of the model. Only valid for Lite Train.
+///
+/// \param[in] model Model object handle.
+///
+/// \return The vector that includes all gradient tensors.
+MS_API MSTensorHandleArray MSModelGetWeights(MSModelHandle model);
+
+/// \brief update weights tensors of the model. Only valid for Lite Train.
+///
+/// \param[in] new_weights A vector new weights.
+///
+/// \return MSStatus
+MS_API MSStatus MSModelUpdateWeights(MSModelHandle model, const MSTensorHandleArray new_weights);
+
+/// \brief Get the model running mode.
+///
+/// \param[in] model Model object handle.
+///
+/// \return Is Train Mode or not.
+MS_API bool MSModelGetTrainMode(MSModelHandle model);
+
+/// \brief Set the model running mode. Only valid for Lite Train.
+///
+/// \param[in] model Model object handle.
+/// \param[in] train True means model runs in Train Mode, otherwise Eval Mode.
+///
+/// \return MSStatus.
+MS_API MSStatus MSModelSetTrainMode(MSModelHandle model, bool train);
+
+/// \brief Setup training with virtual batches. Only valid for Lite Train.
+///
+/// \param[in] model Model object handle.
+/// \param[in] virtual_batch_multiplier - virtual batch multiplier, use any number < 1 to disable.
+/// \param[in] lr - learning rate to use for virtual batch, -1 for internal configuration.
+/// \param[in] momentum - batch norm momentum to use for virtual batch, -1 for internal configuration.
+///
+/// \return MSStatus.
+MS_API MSStatus MSModelSetupVirtualBatch(MSModelHandle model, int virtual_batch_multiplier, float lr, float momentum);
+
+/// \brief Export training model from file. Only valid for Lite Train.
+///
+/// \param[in] model The model data.
+/// \param[in] model_type The model file type.
+/// \param[in] model_file The exported model file.
+/// \param[in] quantization_type The quantification type.
+/// \param[in] export_inference_only Whether to export a reasoning only model.
+/// \param[in] output_tensor_name The set the name of the output tensor of the exported reasoning model, default as
+/// empty, and export the complete reasoning model.
+/// \param[in] num The number of output_tensor_name.
+///
+/// \return MSStatus.
+MS_API MSStatus MSExportModel(MSModelHandle model, MSModelType model_type, const char *model_file,
+                              MSQuantizationType quantization_type, bool export_inference_only,
+                              char **output_tensor_name, size_t num);
+
+/// \brief Export training model from buffer. Only valid for Lite Train.
+///
+/// \param[in] model The model data.
+/// \param[in] model_type The model file type.
+/// \param[in] model_data The exported model buffer.
+/// \param[in] data_size The exported model buffer size.
+/// \param[in] quantization_type The quantification type.
+/// \param[in] export_inference_only Whether to export a reasoning only model.
+/// \param[in] output_tensor_name The set the name of the output tensor of the exported reasoning model, default as
+/// empty, and export the complete reasoning model.
+/// \param[in] num The number of output_tensor_name.
+///
+/// \return MSStatus.
+MS_API MSStatus MSExportModelBuffer(MSModelHandle model, MSModelType model_type, char **model_data, size_t *data_size,
+                                    MSQuantizationType quantization_type, bool export_inference_only,
+                                    char **output_tensor_name, size_t num);
+
+/// \brief Export model's weights, which can be used in micro only. Only valid for Lite Train.
+///
+/// \param[in] model The model data.
+/// \param[in] model_type The model file type.
+/// \param[in] weight_file The path of exported weight file.
+/// \param[in] is_inference Whether to export weights from a reasoning model. Currently, only support this is `true`.
+/// \param[in] enable_fp16 Float-weight is whether to be saved in float16 format.
+/// \param[in] changeable_weights_name The set the name of these weight tensors, whose shape is changeable.
+/// \param[in] num The number of changeable_weights_name.
+///
+/// \return MSStatus.
+MS_API MSStatus MSExportWeightsCollaborateWithMicro(MSModelHandle model, MSModelType model_type,
+                                                    const char *weight_file, bool is_inference, bool enable_fp16,
+                                                    char **changeable_weights_name, size_t num);
 
 #ifdef __cplusplus
 }

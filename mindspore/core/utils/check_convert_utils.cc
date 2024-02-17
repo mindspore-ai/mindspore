@@ -162,6 +162,7 @@ static std::map<std::string, std::map<std::string, AttrConverterPair>> PrimAttrC
   {"NLLLoss", ReductionMap},
   {"NLLLossGrad", ReductionMap},
   {"DepthToSpace", FormatAndDataFormatMap},
+  {"SpaceToDepth", FormatAndDataFormatMap},
   {"Pooling", DataFormatMap},
   {"Deconvolution", DataFormatMap},
   {"AvgPoolV2", DataFormatMap},

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_BENCHMARK_TRAIN_NET_TRAIN_H_
-#define MINDSPORE_LITE_TOOLS_BENCHMARK_TRAIN_NET_TRAIN_H_
+#ifndef MINDSPORE_LITE_TOOLS_BENCHMARK_NET_TRAIN_C_API_H
+#define MINDSPORE_LITE_TOOLS_BENCHMARK_NET_TRAIN_C_API_H
 
 #include <getopt.h>
 #include <csignal>
@@ -36,6 +36,9 @@
 #include "include/api/context.h"
 #include "include/api/cfg.h"
 
+#include "include/c_api/model_c.h"
+#include "include/c_api/context_c.h"
+
 #ifdef ENABLE_FP16
 #include <arm_neon.h>
 #endif
@@ -45,13 +48,21 @@
 #include "tools/benchmark_train/net_train_base.h"
 
 namespace mindspore::lite {
-extern const std::unordered_map<int, std::string> kTypeIdMap;
-extern const std::unordered_map<mindspore::Format, std::string> kTensorFormatMap;
+#ifdef __cplusplus
+extern "C" {
+#endif
+bool TimeProfilingBeforeCallback(const MSTensorHandleArray inputs, const MSTensorHandleArray outputs,
+                                 const MSCallBackParamC kernel_Info);
+bool TimeProfilingAfterCallback(const MSTensorHandleArray inputs, const MSTensorHandleArray outputs,
+                                const MSCallBackParamC kernel_Info);
+#ifdef __cplusplus
+}
+#endif
 
-class MS_API NetTrain : public NetTrainBase {
+class MS_API NetTrainCApi : public NetTrainBase {
  public:
-  explicit NetTrain(NetTrainFlags *flags) : NetTrainBase(flags) {}
-  virtual ~NetTrain() {}
+  explicit NetTrainCApi(NetTrainFlags *flags) : NetTrainBase(flags) {}
+  virtual ~NetTrainCApi() {}
 
  protected:
   // call GenerateRandomData to fill inputTensors
@@ -61,18 +72,21 @@ class MS_API NetTrain : public NetTrainBase {
 
   int LoadStepInput(size_t step);
 
-  void InitMSContext(const std::shared_ptr<Context> &context);
+  int InitMSContext();
 
-  void InitTrainCfg(const std::shared_ptr<TrainCfg> &train_cfg);
+  void InitTrainCfg();
+
+  char **TransStrVectorToCharArrays(const std::vector<std::string> &s);
+
+  std::vector<std::string> TransCharArraysToStrVector(char **c, const size_t &num);
 
   int CreateAndRunNetwork(const std::string &filename, const std::string &bb_filename, bool is_train, int epochs,
                           bool check_accuracy = true) override;
 
-  int CreateAndRunNetworkForInference(const std::string &filename, const std::shared_ptr<mindspore::Context> &context);
+  int CreateAndRunNetworkForInference(const std::string &filename, const MSContextHandle &context);
 
   int CreateAndRunNetworkForTrain(const std::string &filename, const std::string &bb_filename,
-                                  const std::shared_ptr<mindspore::Context> &context,
-                                  const std::shared_ptr<TrainCfg> &train_cfg, int epochs);
+                                  const MSContextHandle &context, const MSTrainCfgHandle &train_cfg, int epochs);
 
   int InitDumpTensorDataCallbackParameter() override;
 
@@ -81,37 +95,23 @@ class MS_API NetTrain : public NetTrainBase {
   int PrintResult(const std::vector<std::string> &title,
                   const std::map<std::string, std::pair<int, float>> &result) override;
 
-  template <typename T>
-  void PrintInputData(mindspore::MSTensor *input) {
-    MS_ASSERT(input != nullptr);
-    static int i = 0;
-    auto inData = reinterpret_cast<T *>(input->MutableData());
-    size_t tensorSize = input->ElementNum();
-    size_t len = (tensorSize < 20) ? tensorSize : 20;
-    std::cout << "InData" << i++ << ": ";
-    for (size_t j = 0; j < len; j++) {
-      std::cout << inData[j] << " ";
-    }
-    std::cout << std::endl;
-  }
+  int PrintInputData();
 
   int MarkPerformance() override;
+
   int MarkAccuracy(bool enforce_accuracy = true) override;
+
   int CompareOutput() override;
+
   int SaveModels() override;
 
-  // callback parameters
-  uint64_t op_begin_ = 0;
-  int op_call_times_total_ = 0;
-  float op_cost_total_ = 0.0f;
-  std::map<std::string, std::pair<int, float>> op_times_by_type_;
-  std::map<std::string, std::pair<int, float>> op_times_by_name_;
-
-  std::shared_ptr<mindspore::Model> ms_model_ = nullptr;
-  std::vector<mindspore::MSTensor> ms_inputs_for_api_;
-
-  mindspore::MSKernelCallBack before_call_back_{nullptr};
-  mindspore::MSKernelCallBack after_call_back_{nullptr};
+  MSModelHandle ms_model_;
+  MSTensorHandleArray ms_inputs_for_api_;
+  MSContextHandle context_ = nullptr;
+  MSTrainCfgHandle train_cfg_ = nullptr;
+  MSKernelCallBackC before_call_back_{nullptr};
+  MSKernelCallBackC after_call_back_{nullptr};
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_TOOLS_BENCHMARK_TRAIN_NET_TRAIN_H_
+
+#endif  // MINDSPORE_LITE_TOOLS_BENCHMARK_NET_TRAIN_C_API_H
