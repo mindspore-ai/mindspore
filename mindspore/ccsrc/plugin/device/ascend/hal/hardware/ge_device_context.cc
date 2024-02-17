@@ -420,7 +420,7 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_cont
     env_table_file = common::GetEnv("RANK_TABLE_FILE");
   }
   auto simulation_level = common::GetEnv(kSimulationLevel);
-  if(!simulation_level.empty()) {
+  if (!simulation_level.empty()) {
     env_table_file = "";
   }
   auto env_rank_id = common::GetEnv("RANK_ID");
