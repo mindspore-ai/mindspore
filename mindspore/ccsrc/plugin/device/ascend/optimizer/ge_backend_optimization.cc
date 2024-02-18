@@ -121,6 +121,7 @@ void GEBackendOptimizeACL(const KernelGraphPtr &kernel_graph) {
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto opt_acl_pm = std::make_shared<PassManager>("opt_acl_pm");
   opt_acl_pm->AddPass(std::make_shared<SeedAdapter>());
+  opt_acl_pm->AddPass(std::make_shared<InsertTensorMoveForCommunication>());
   opt_acl_pm->AddPass(std::make_shared<opt::AICpuLibSelectPass>());
   opt_acl_pm->AddPass(std::make_shared<opt::TransDependValueToInt32>());
   opt_acl_pm->AddPass(std::make_shared<opt::ProcessCallInline>());
@@ -159,7 +160,6 @@ void GEBackendOptimizeACLAfterKernelSelect(const KernelGraphPtr &kernel_graph) {
   auto opt_acl_after_kernel_select_pm = std::make_shared<PassManager>("opt_acl_after_kernel_select_pm");
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<SetFraczGroupAttr>());
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<InsertIdentity>());
-  opt_acl_after_kernel_select_pm->AddPass(std::make_shared<InsertTensorMoveForCommunication>());
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<EraseVisitAttr>());
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<DealRefOutput>());
   if (!kernel_graph->is_from_single_op() && !kernel_graph->has_flag(kFlagIsPyNativeBpropKernelGraph)) {
