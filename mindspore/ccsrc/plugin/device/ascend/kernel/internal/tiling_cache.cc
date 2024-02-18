@@ -20,14 +20,6 @@
 
 namespace mindspore::kernel {
 
-template <typename... Args>
-uint64_t TilingCacheMgr::GenTilingCacheKey(const std::string &name, const Args &... args) {
-  ResetCacheKey();
-  GenCache(name, args...);
-  uint64_t id = calc_hash_id();
-  return id;
-}
-
 uint64_t TilingCacheMgr::GenTilingCacheKey(const std::string &name, PrimitivePtr prim,
                                            const std::vector<KernelTensor *> &inputs) {
   std::lock_guard<std::mutex> lock(key_mtx_);
@@ -42,8 +34,7 @@ uint64_t TilingCacheMgr::GenTilingCacheKey(const std::string &name, PrimitivePtr
       GenCache(inputs[i]);
     }
   }
-  uint64_t id = calc_hash_id();
-  return id;
+  return calc_hash_id();
 }
 
 TilingInfo TilingCacheMgr::GetOrCreateTilingInfo(

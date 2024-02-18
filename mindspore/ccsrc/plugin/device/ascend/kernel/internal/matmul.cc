@@ -41,6 +41,13 @@ void InternalMatMul::SetInOutIdx() {
   outputsIdxMap_[0] = 0;
 }
 
+uint64_t InternalMatMul::GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  return TilingCacheMgr::GetInstance().GenTilingCacheKey(kernel_name_, inputs[0]->GetShapeVector(),
+                                                         inputs[0]->dtype_id(), inputs[1]->GetShapeVector(),
+                                                         inputs[1]->dtype_id());
+}
+
 MS_INTERNAL_KERNEL_FACTORY_REG(MatMul, InternalMatMul);
 }  // namespace kernel
 }  // namespace mindspore
