@@ -27,6 +27,7 @@ else:
 
 AST_CONSTANTS = (ast.Constant, ast.Num, ast.Str, ast.NameConstant, ast.Bytes)
 
+
 class AstConverter():
     """
     Get information from ast node and convert to other type.

@@ -68,7 +68,9 @@ _INNER_AMP_BLACK_LIST = []
 
 MS_AMP_BY_REWRITE = False
 
+
 def amp_cast(value, dtype):
+    """This function is used to insert cast operators for tensors during auto mixed precision."""
     if isinstance(value, ms.Tensor):
         return P.Cast()(value, dtype)
     return value
@@ -185,7 +187,7 @@ def _insert_cast_for_operator(node, dtype):
         stree.insert(stree.before(node), incast_node)
         node.set_arg_by_node(idx, incast_node)
     # insert cast fp32 for outputs of node
-    for idx, target in enumerate(node.get_targets()):
+    for _, target in enumerate(node.get_targets()):
         if target.type != ms.rewrite.ValueType.NamingValue:
             continue
         outcast_args = ms.rewrite.ScopedValue.create_name_values([target.value, "float32"],
@@ -202,7 +204,7 @@ def _insert_cast_for_operators(stree, dtype, force_cast, *, white_list=None, bla
     for node in all_nodes:
         if not node.get_targets():
             continue
-        elif _operator_need_cast(node, force_cast, white_list, black_list):
+        if _operator_need_cast(node, force_cast, white_list, black_list):
             _insert_cast_for_operator(node, dtype)
         elif node.get_node_type() == ms.rewrite.NodeType.Tree:
             force_cast = force_cast or _net_need_cast(node, force_cast, white_list, black_list)
@@ -233,14 +235,13 @@ def _need_removed_cast_pair(node, dtype):
         middle_nodes = all_nodes[all_nodes.index(node): all_nodes.index(user)]
         if any([n.get_node_type() == ms.rewrite.NodeType.ControlFlow for n in middle_nodes]):
             return False
-        if user.get_instance_type() == _amp_cast_op:
-            user_cast_type = user.get_args()[1]
-            if user_cast_type != cast_dtype_f16:
-                return False
-            # cast pair detected, check next user
-            continue
-        else:
+        if user.get_instance_type() != _amp_cast_op:
             return False
+        user_cast_type = user.get_args()[1]
+        if user_cast_type != cast_dtype_f16:
+            return False
+        # cast pair detected, check next user
+        continue
     return True
 
 
@@ -801,6 +802,7 @@ def _list_check(custom_list: list, list_name: str):
         for elem in AMP_BLACK_LIST:
             if elem not in custom_list:
                 logger.warning(f"{elem} is removed from internal black list.")
+
 
 def _config_amp(*, enable_rewrite: bool = None, cast_op: types.FunctionType = None): # pylint: disable=unused-variable
     """Configure auto mixed precision."""

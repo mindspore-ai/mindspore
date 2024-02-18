@@ -33,7 +33,7 @@ class WhileParser(Parser):
         # expand codes in ast.While
         ast_while = AstFlattener().transform_control_flow(node, stree)
         # parse ast codes of for branch into ControlFlow Node
-        args = [AstConverter.create_scopedvalue(node.test),]
+        args = [AstConverter.create_scopedvalue(node.test)]
         while_node = ControlFlow("while_node", ast_while, False, args, stree)
         stree.append_origin_field(while_node, node_manager)
         while_node.set_node_manager(node_manager)

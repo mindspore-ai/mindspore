@@ -36,8 +36,8 @@ else:
     import astunparse
 
 
-# used to indicate a local primitive instance
 class LocalPrim(Primitive):
+    """This class is used to indicate a local primitive instance"""
     def __init__(self, prim_obj: type):
         super().__init__("rewrite_local_prim")
         self.prim_obj = prim_obj

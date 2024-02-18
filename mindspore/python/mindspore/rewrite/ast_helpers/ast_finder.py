@@ -394,10 +394,10 @@ class AstImportFinder(ast.NodeVisitor):
 
     def get_import_node(self):
         self.generic_visit(self.ast_root)
-        for Try in self.try_nodes:
-            for body in Try.body:
+        for try_node in self.try_nodes:
+            for body in try_node.body:
                 self._remove_duplicated_import_in_try(body)
-            for handler in Try.handlers:
+            for handler in try_node.handlers:
                 for body in handler.body:
                     self._remove_duplicated_import_in_try(body)
         self.import_nodes.extend(self.try_nodes)

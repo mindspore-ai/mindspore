@@ -282,6 +282,57 @@ class SymbolTree(Observer, Observable, NodeManager):
         return True
 
     @staticmethod
+    def _process_relative_import(import_node: Union[ast.Import, ast.ImportFrom], file_path: str):
+        """Process relative imports"""
+        file_path = os.path.normcase(file_path)
+        file_path = os.path.normpath(file_path)
+        if isinstance(import_node, ast.ImportFrom):
+            # pad the ImportFrom with parent path
+            # e.g. from ..C import xxx -> from A.B.C import xxx
+            import_module = SymbolTree._get_valid_import_info(import_node, file_path)
+            if import_module:
+                import_node = ast.ImportFrom(module=import_module, names=import_node.names, level=0)
+        return import_node
+
+    @staticmethod
+    def _get_valid_import_info(import_node: ast.ImportFrom, file_path: str):
+        """Get valid import info while import_node.module is at form of relative path"""
+        file_path = os.path.dirname(os.path.abspath(file_path))
+        # get real path from import_node.level
+        # from .(A) import xxx: current path
+        # from ..(A) import xxx: last level path
+        level = import_node.level
+        # from A import xxx: it does not need to pad, directly return the module name
+        if level == 0:
+            return import_node.module
+        if level > 1:
+            for _ in range(level - 1):
+                file_path = os.path.dirname(file_path)
+        file_path_tmp = file_path[:]
+        max_level_count = file_path.count(os.path.sep) - 1
+        level_count = 0
+        # suffix is the module_name, e.g. 'A' in 'from ..(A) import xxx'
+        suffix = ''
+        if import_node.module:
+            suffix = '.' + import_node.module
+        while level_count < max_level_count:
+            file_path_tmp = os.path.dirname(file_path_tmp)
+            if file_path_tmp not in sys.path:
+                logger.debug(f"{file_path_tmp} not in sys.path, try upper level.")
+                level_count += 1
+                continue
+            import_module = file_path[len(file_path_tmp) + 1:].replace(os.path.sep, '.') + suffix
+            if SymbolTree._check_import(file_path_tmp, import_module):
+                # try test code success
+                return import_module
+            # test import ast failed, try upper level
+            level_count += 1
+            logger.info(f"Try upper level.")
+        # try codes with all level failed
+        logger.info(f"Test import code: {astunparse.unparse(import_node).strip()} failed, ignore this import code.")
+        return None
+
+    @staticmethod
     def insert_to_ast_while_insert_input(new_node: Node, node_manager: NodeManager):
         """update ast when inserting NodeType.Input node"""
         if not isinstance(node_manager, (SymbolTree, CallFunction)):
@@ -1218,7 +1269,7 @@ class SymbolTree(Observer, Observable, NodeManager):
         # all un-modified ast.ClassDef only keep one instance
         unmodified_strees = self._tmp_unmodified_strees.get(type(stree.get_origin_network()))
         if not unmodified_strees:
-            self._tmp_unmodified_strees[type(stree.get_origin_network())] = [stree,]
+            self._tmp_unmodified_strees[type(stree.get_origin_network())] = [stree]
             logger.debug(f"stree:{stree.get_opt_cls_name()} is the first stree.")
             return False
         # Init function may be different even if stree is not modified, when subnets in stree is
@@ -1450,11 +1501,11 @@ class SymbolTree(Observer, Observable, NodeManager):
             logger.warning("Failed to get module of ast_node.")
             return False, False
         # eval ast_node and get result
+        logger.debug(f"Eval ast node: {astunparse.unparse(ast_node)}")
+        ast_expr = ast.Expression(ast_node)
+        ast_expr = ast.fix_missing_locations(ast_expr)
         try:
             # eval with ast make this operation free of instruction injection
-            logger.debug(f"Eval ast node: {astunparse.unparse(ast_node)}")
-            ast_expr = ast.Expression(ast_node)
-            ast_expr = ast.fix_missing_locations(ast_expr)
             # pylint: disable=eval-used
             result = eval(compile(ast_expr, "eval_ast_result", "eval"), {**globals(), **module.__dict__}, locals())
         except Exception as e: # pylint: disable=broad-except
@@ -1515,12 +1566,9 @@ class SymbolTree(Observer, Observable, NodeManager):
         self.save_file_path_to_sys(0, file_path, belonging_ast)
         if not os.path.exists(file_path):
             raise RuntimeError(f"For MindSpore Rewrite, in module parser, file {file_path} not exist.")
-        try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                source_code = f.read()
-                import_nodes = AstImportFinder(ast.parse(dedent(source_code))).get_import_node()
-        except RuntimeError as err:
-            raise RuntimeError(f"For MindSpore Rewrite, in module parser, get import nodes error: {err}")
+        with open(file_path, "r", encoding="utf-8") as f:
+            source_code = f.read()
+            import_nodes = AstImportFinder(ast.parse(dedent(source_code))).get_import_node()
         if not import_nodes:
             return
         # add imports to import_asts of belonging_ast
@@ -1535,7 +1583,7 @@ class SymbolTree(Observer, Observable, NodeManager):
                         import_node.names.remove(alias)
                 if not import_node.names:
                     continue
-            import_node = self._process_relative_import(import_node, file_path)
+            import_node = SymbolTree._process_relative_import(import_node, file_path)
             if import_node:
                 import_asts.append(import_node)
 
@@ -1590,55 +1638,6 @@ class SymbolTree(Observer, Observable, NodeManager):
             elif belonging_ast in self._external_ast:
                 import_asts = self._external_ast.get(belonging_ast)
         return import_asts
-
-    def _process_relative_import(self, import_node: Union[ast.Import, ast.ImportFrom], file_path: str):
-        """Process relative imports"""
-        file_path = os.path.normcase(file_path)
-        file_path = os.path.normpath(file_path)
-        if isinstance(import_node, ast.ImportFrom):
-            # pad the ImportFrom with parent path
-            # e.g. from ..C import xxx -> from A.B.C import xxx
-            import_module = self._get_valid_import_info(import_node, file_path)
-            if import_module:
-                import_node = ast.ImportFrom(module=import_module, names=import_node.names, level=0)
-        return import_node
-
-    def _get_valid_import_info(self, import_node: ast.ImportFrom, file_path: str):
-        """Get valid import info while import_node.module is at form of relative path"""
-        file_path = os.path.dirname(os.path.abspath(file_path))
-        # get real path from import_node.level
-        # from .(A) import xxx: current path
-        # from ..(A) import xxx: last level path
-        level = import_node.level
-        # from A import xxx: it does not need to pad, directly return the module name
-        if level == 0:
-            return import_node.module
-        if level > 1:
-            for _ in range(level - 1):
-                file_path = os.path.dirname(file_path)
-        file_path_tmp = file_path[:]
-        max_level_count = file_path.count(os.path.sep) - 1
-        level_count = 0
-        # suffix is the module_name, e.g. 'A' in 'from ..(A) import xxx'
-        suffix = ''
-        if import_node.module:
-            suffix = '.' + import_node.module
-        while level_count < max_level_count:
-            file_path_tmp = os.path.dirname(file_path_tmp)
-            if file_path_tmp not in sys.path:
-                logger.debug(f"{file_path_tmp} not in sys.path, try upper level.")
-                level_count += 1
-                continue
-            import_module = file_path[len(file_path_tmp) + 1:].replace(os.path.sep, '.') + suffix
-            if SymbolTree._check_import(file_path_tmp, import_module):
-                # try test code success
-                return import_module
-            # test import ast failed, try upper level
-            level_count += 1
-            logger.info(f"Try upper level.")
-        # try codes with all level failed
-        logger.info(f"Test import code: {astunparse.unparse(import_node).strip()} failed, ignore this import code.")
-        return None
 
     def _get_real_node(self, node_or_name: Union[Node, str]) -> Optional[Node]:
         if isinstance(node_or_name, str):

@@ -21,7 +21,8 @@ import copy
 
 from mindspore import log as logger
 
-FLATTEN_BLACK_LIST = ["set_vertex_attr",]
+FLATTEN_BLACK_LIST = ["set_vertex_attr"]
+
 
 class AstFlattener(ast.NodeTransformer):
     """Ast optimizer for flatten recursive call."""
@@ -80,6 +81,30 @@ class AstFlattener(ast.NodeTransformer):
                 new_assign = ast.Assign(targets=[ast_target], value=ast_node.targets[idx + 1])
                 ast_body.insert(pos + idx + 1, new_assign)
             ast_node.targets = [ast_node.targets[-1]]
+
+    @staticmethod
+    def _save_target_names(ast_body: List[ast.AST]):
+        """Saving target names in ast_body before getting unique names."""
+        target_names = []
+        for child in ast_body:
+            if not isinstance(child, ast.Assign):
+                continue
+            targets = child.targets
+            for target in targets:
+                if isinstance(target, ast.Name) and target.id not in target_names:
+                    target_names.append(target.id)
+                elif isinstance(target, (ast.Tuple, ast.List)):
+                    # get target names from list recursively
+                    ast_queue = [target.elts]
+                    while ast_queue:
+                        elt = ast_queue.pop()
+                        if isinstance(elt, ast.Name) and elt.id not in target_names:
+                            target_names.append(elt.id)
+                        elif isinstance(elt, (ast.Tuple, ast.List)):
+                            ast_queue.extend(elt.elts)
+                        elif isinstance(elt, (list, tuple)):
+                            ast_queue.extend(elt)
+        return target_names
 
     def _generate_target_name(self, node: ast.AST, target_names):
         """Generate unique target name."""
@@ -191,35 +216,12 @@ class AstFlattener(ast.NodeTransformer):
                     results.append(new_assign)
         return results
 
-    def _save_target_names(self, ast_body: List[ast.AST]):
-        """Saving target names in ast_body before getting unique names."""
-        target_names = []
-        for child in ast_body:
-            if not isinstance(child, ast.Assign):
-                continue
-            targets = child.targets
-            for target in targets:
-                if isinstance(target, ast.Name) and target.id not in target_names:
-                    target_names.append(target.id)
-                elif isinstance(target, (ast.Tuple, ast.List)):
-                    # get target names from list recursively
-                    ast_queue = [target.elts,]
-                    while ast_queue:
-                        elt = ast_queue.pop()
-                        if isinstance(elt, ast.Name) and elt.id not in target_names:
-                            target_names.append(elt.id)
-                        elif isinstance(elt, (ast.Tuple, ast.List)):
-                            ast_queue.extend(elt.elts)
-                        elif isinstance(elt, (list, tuple)):
-                            ast_queue.extend(elt)
-        return target_names
-
     def _visit_ast_bodies(self, ast_body: List[ast.AST]):
         """Traverse nodes in ast_body and flatten nodes recursive."""
         # Flatten continuous assign statements in ast_body
         AstFlattener._flatten_continuous_assign(ast_body)
         # save target names, used when create new assign ast node
-        target_names = self._save_target_names(ast_body)
+        target_names = AstFlattener._save_target_names(ast_body)
         index = len(ast_body) - 1
         while index >= 0:
             child = ast_body[index]
