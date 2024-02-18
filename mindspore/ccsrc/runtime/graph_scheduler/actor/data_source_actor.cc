@@ -338,8 +338,6 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
   }
   PROFILER_END(start_time, ProfilerModule::kRuntime, ProfilerEvent::kCopyData, GetAID().Name(), false);
 
-  host_queue_->Pop();
-
   PostRun(context);
 }
 
@@ -369,7 +367,12 @@ bool HostQueueDataSourceActor::IsSameDeviceType() const {
   return true;
 }
 
-void HostQueueDataSourceActor::ReleaseDataNodeAddress() {
+void HostQueueDataSourceActor::ReleaseData() {
+  // The step end need free the host queue tensor.
+  MS_EXCEPTION_IF_NULL(host_queue_);
+  host_queue_->Pop();
+
+  // The step end need release data node address.
   for (auto &data_node_with_index : data_node_with_indexs_) {
     if (!AnfAlgo::OutputAddrExist(data_node_with_index.first, data_node_with_index.second)) {
       continue;
