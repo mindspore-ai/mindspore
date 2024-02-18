@@ -12,13 +12,13 @@ mindspore.train.ModelCheckpoint
         如何在 `model` 方法中使用此回调函数，默认将会把优化器中的参数保存到checkpoint文件中。
 
     参数：
-        - **prefix** (str) - checkpoint文件的前缀名称。默认值：``'CKP'`` 。
-        - **directory** (str) - 保存checkpoint文件的文件夹路径。默认情况下，文件保存在当前目录下。默认值： ``None`` 。
+        - **prefix** (Union[str, callable object]) - checkpoint文件的前缀名称，或者用来生成名称的可调用对象。默认值：``'CKP'`` 。
+        - **directory** (Union[str, callable object]) - 保存checkpoint文件的文件夹路径，或者用来生成路径的可调用对象。默认情况下，文件保存在当前目录下。默认值： ``None`` 。
         - **config** (CheckpointConfig) - checkpoint策略配置。默认值： ``None`` 。
 
     异常：
-        - **ValueError** - 如果prefix参数不是str类型或包含'/'字符。
-        - **ValueError** - 如果directory参数不是str类型。
+        - **ValueError** - 如果prefix参数不是str类型或包含'/'字符，且不是可调用对象。
+        - **ValueError** - 如果directory参数不是str类型，且不是可调用对象。
         - **TypeError** - config不是CheckpointConfig类型。
 
     .. py:method:: end(run_context)
