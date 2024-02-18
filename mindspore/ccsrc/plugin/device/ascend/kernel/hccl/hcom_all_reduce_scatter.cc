@@ -30,6 +30,24 @@ bool HcomAllReduceScatterKernel::Launch(const std::vector<KernelTensor *> &input
   MS_EXCEPTION_IF_NULL(inputs[0]);
   MS_EXCEPTION_IF_NULL(outputs[0]);
   MS_EXCEPTION_IF_NULL(stream_ptr);
+
+#ifdef ENABLE_INTERNAL_KERNELS
+  if (!common::GetEnv("ENABLE_LCCL").empty()) {
+    auto lccl_result = lccl_comm_->ReduceScatter(inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_,
+                                                 hccl_data_type_list_[0], op_type_, stream_ptr);
+    if (lccl_result != Lcal::LCAL_SUCCESS) {
+      MS_LOG(EXCEPTION) << "LCCL ReduceScatter failed.";
+    }
+  } else {
+    auto hccl_result =
+      hccl::HcclAdapter::GetInstance().HcclReduceScatter(inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_,
+                                                         hccl_data_type_list_[0], op_type_, stream_ptr, comm_);
+    if (hccl_result != HCCL_SUCCESS) {
+      MS_LOG(ERROR) << "HcclReduceScatter failed, ret:" << hccl_result;
+      return false;
+    }
+  }
+#else
   auto hccl_result =
     hccl::HcclAdapter::GetInstance().HcclReduceScatter(inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_,
                                                        hccl_data_type_list_[0], op_type_, stream_ptr, comm_);
@@ -37,6 +55,7 @@ bool HcomAllReduceScatterKernel::Launch(const std::vector<KernelTensor *> &input
     MS_LOG(ERROR) << "HcclReduceScatter failed, ret:" << hccl_result;
     return false;
   }
+#endif
   return true;
 }
 }  // namespace kernel
