@@ -30,6 +30,9 @@
 #ifdef _WIN32
 #define BIND_CORE
 #endif
+#ifdef __linux__
+#define BIND_CORE
+#endif
 
 namespace mindspore {
 enum BindMode {

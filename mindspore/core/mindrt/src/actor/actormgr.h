@@ -26,6 +26,7 @@
 #ifndef MS_COMPILE_IOS
 #include <shared_mutex>
 #endif
+#include <vector>
 #include "actor/actor.h"
 #include "thread/actor_threadpool.h"
 #include "thread/hqueue.h"
@@ -54,7 +55,7 @@ class MS_CORE_API ActorMgr {
   void Finalize();
   // initialize actor manager resource, do not create inner thread pool by default
   int Initialize(bool use_inner_pool = false, size_t actor_thread_num = 1, size_t max_thread_num = 1,
-                 size_t actor_queue_size = kMaxHqueueSize);
+                 size_t actor_queue_size = kMaxHqueueSize, const std::vector<int> &core_list = {});
 
   void RemoveActor(const std::string &name);
   ActorReference GetActor(const AID &id);

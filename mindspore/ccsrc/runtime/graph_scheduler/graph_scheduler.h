@@ -263,6 +263,7 @@ class BACKEND_EXPORT GraphScheduler {
   // numa library handle
   std::shared_ptr<void> numa_handle_{};
   size_t defalut_actor_thread_num_{1};
+  std::vector<int> numa_cpus_;
 
   bool init_{false};
 };

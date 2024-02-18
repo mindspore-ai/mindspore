@@ -426,7 +426,8 @@ void GraphScheduler::Initialize() {
   auto actor_manager = ActorMgr::GetActorMgrRef();
   MS_EXCEPTION_IF_NULL(actor_manager);
   size_t actor_queue_size = 81920;
-  auto ret = actor_manager->Initialize(true, actor_thread_num, actor_and_kernel_thread_num, actor_queue_size);
+  auto ret =
+    actor_manager->Initialize(true, actor_thread_num, actor_and_kernel_thread_num, actor_queue_size, numa_cpus_);
   if (ret != MINDRT_OK) {
     MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Actor manager init failed.";
   }
@@ -2941,8 +2942,8 @@ void GraphScheduler::BindNumaNode() {
       MS_LOG(EXCEPTION) << "Load numa library failed.";
     }
   }
-
-  auto ret = NumaBind(numa_handle_.get(), rank_id);
+  (void)LoadNumaCpuInfo(numa_handle_.get(), rank_id + 1, &numa_cpus_);
+  auto ret = NumaBind(numa_handle_.get(), rank_id + 1);
   if (ret != StatusCode::kSuccess) {
     MS_LOG(EXCEPTION) << "Bind numa node failed, ret = " << ret.GetErrDescription();
   }
