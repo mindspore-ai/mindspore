@@ -322,7 +322,10 @@ void AddParallelRenormalize(OptPassGroupMap *map_a) {
     auto parallel_end_opt =
       find_if(map_a->begin(), map_a->end(), [](auto opt_pair) { return opt_pair.first == "meta_fg_expand"; });
     if (parallel_end_opt != map_a->end()) {
-      (void)map_a->insert(parallel_end_opt, {"parallel_renormalize", opt::OptPassConfig::Renormalize()});
+      opt::irpass::OptimizeIRPassLib irpass;
+      opt::OptPassConfig cast_eliminate_pass = opt::OptPassConfig({irpass.cast_eliminate_});
+      auto iter = map_a->insert(parallel_end_opt, {"cast_eliminate", cast_eliminate_pass});
+      (void)map_a->insert(iter, {"parallel_renormalize", opt::OptPassConfig::Renormalize()});
     }
   }
 }
