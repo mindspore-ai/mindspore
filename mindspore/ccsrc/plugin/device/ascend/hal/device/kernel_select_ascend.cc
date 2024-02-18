@@ -397,7 +397,7 @@ static std::unordered_set<std::string> kAclnnEnableList;
 bool ReadAclnnEnableEnv(const AnfNodePtr &node) {
   static auto enable_aclnn_env = common::GetEnv("MS_ENABLE_ACLNN");
   if (enable_aclnn_env == "1") {
-    return kernel::IsRegisteredAclnnOp(node) ? true : false;
+    return kernel::IsRegisteredAclnnOp(node);
   }
 
   static auto read_config = !enable_aclnn_env.empty() && enable_aclnn_env != "0";
@@ -417,7 +417,7 @@ bool ReadAclnnEnableEnv(const AnfNodePtr &node) {
 
     std::string op_name = common::AnfAlgo::GetCNodeName(node);
     if (kAclnnEnableList.count(op_name) != 0) {
-      return kernel::IsRegisteredAclnnOp(node) ? true : false;
+      return kernel::IsRegisteredAclnnOp(node);
     }
   }
 

@@ -21,8 +21,7 @@ namespace kernel {
 
 void CastAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                   const std::vector<KernelTensor *> &outputs) {
-  auto return_value = GEN_EXECUTOR(op_type_, inputs[kIndex0], outputs[0]->dtype_id(), outputs[kIndex0]);
-  UpdateWorkspace(return_value);
+  GetWorkspaceForResize(inputs[kIndex0], outputs[0]->dtype_id(), outputs[kIndex0]);
 }
 
 bool CastAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,

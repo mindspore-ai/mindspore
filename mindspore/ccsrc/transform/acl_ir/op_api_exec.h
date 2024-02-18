@@ -239,7 +239,7 @@ class ApiCachePool {
     transform::aclOpExecutor **executor_addr = &executor;                                                         \
     uint64_t new_hash_id = hash_id;                                                                               \
     if (HitCacheSingle(api_name, executor_addr, workspace_size_addr, &new_hash_id, args...)) {                    \
-      return std::make_tuple(workspace_size, executor, release_func, new_hash_id);                                \
+      return std::make_tuple(workspace_size, executor, release_func, new_hash_id, true);                          \
     }                                                                                                             \
     auto init_mem_func = transform::OpApiDefaultResource::GetInstance().init_mem_func();                          \
     if (init_mem_func) {                                                                                          \
@@ -254,7 +254,7 @@ class ApiCachePool {
     }                                                                                                             \
     auto releas_call = transform::ReleaseCall(std::move(converted_params));                                       \
     release_func = std::function<void()>(releas_call);                                                            \
-    return std::make_tuple(workspace_size, executor, release_func, new_hash_id);                                  \
+    return std::make_tuple(workspace_size, executor, release_func, new_hash_id, false);                           \
   }                                                                                                               \
   (aclnn_api, aclnn_api + "GetWorkspaceSize", hash_id, __VA_ARGS__)
 

@@ -135,6 +135,13 @@ bool HitCache(const char *aclnn_api, aclOpExecutor **executor, uint64_t *workspa
 }
 
 template <typename... Args>
+uint64_t CalcOpApiHash(const Args &... args) {
+  g_hash_offset = 0;
+  GatherInfo(args...);
+  return calc_hash_id();
+}
+
+template <typename... Args>
 bool HitCacheSingle(const char *aclnn_api, aclOpExecutor **executor, uint64_t *workspace_size, uint64_t *hash_id,
                     const Args &... args) {
   static const auto get_exec_cache = transform::GetOpApiFunc("PTAGetExecCache");
