@@ -1856,6 +1856,7 @@ void AutoGradCellImpl::BuildBPropCutCNode(const CNodePtr &cnode, const Primitive
   }
   bprop_cut_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
   ad_param()->tape_->set_flag(kFlagPyNativeBpropGraphWithBpropCut, true);
+  bprop_graph_run_by_single_op_ = true;
 }
 
 void AutoGradCellImpl::BuildCustomBpropCNode(const CNodePtr &cnode, const PrimitivePtr &prim,
@@ -1976,7 +1977,7 @@ void AutoGradCellImpl::BackPropagate() {
     for (const auto &next_edge : next_edges) {
       const auto &last_variable = next_edge.first;
       const auto &din = next_edge.second;
-      pass_forward_->ConvertMakeTupleInputToDynamicInput(din, seen);
+      pass_forward_->ConvertMakeTupleInputToDynamicInput(din, seen, bprop_graph_run_by_single_op_);
       last_variable->fn()->UpdateAccumulativeDout(din);
       last_variable->set_is_need_propagate(true);
     }
