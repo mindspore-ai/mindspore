@@ -186,8 +186,8 @@ inline bool IsStrNumeric(const std::string &str) {
 
 inline bool IsNeedMemoryStatistic() {
   static const char kMemoryStatistic[] = "MS_MEMORY_STATISTIC";
-  static const auto need_statistic = GetEnv(kMemoryStatistic);
-  return need_statistic == "1";
+  static const auto need_statistic = GetEnv(kMemoryStatistic) == "1";
+  return need_statistic;
 }
 
 inline bool IsNeedProfileMemory() {

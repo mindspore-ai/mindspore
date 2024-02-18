@@ -30,10 +30,7 @@ bool ActorDispatcher::is_multi_thread_execution_ = true;
 bool ActorDispatcher::is_memory_allocation_sync_ = true;
 bool ActorDispatcher::is_memory_free_sync_ = true;
 
-bool IsRunningFailed(const OpContext<DeviceTensor> *context) {
-  MS_EXCEPTION_IF_NULL(context);
-  return (context->error_info_ != "");
-}
+bool IsRunningFailed(const OpContext<DeviceTensor> *context) { return (context->error_info_ != ""); }
 
 void ComputeThreadNums(size_t *actor_thread_num, size_t *actor_and_kernel_thread_num) {
   MS_EXCEPTION_IF_NULL(actor_thread_num);
