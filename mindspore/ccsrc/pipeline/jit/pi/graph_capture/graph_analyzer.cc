@@ -362,6 +362,11 @@ void MindGraphAnalyzer::Analyze() {
 bool MindGraphAnalyzer::AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) {
   bool isAllNodesSupportOutput = true;
   for (auto node : aliveNodes) {
+    // If the value can get from local, no need to add to graph output.
+    if (IsNonLocalValue(node)) {
+      MS_LOG(DEBUG) << "Skip non local value used as graph return.";
+      continue;
+    }
     AObject *o = node->GetVobj();
     auto out_py_obj = o->GetPyObject();
     auto mind_graph_builder = std::static_pointer_cast<MindGraphBuilder>(graph_builder_);
@@ -369,10 +374,6 @@ bool MindGraphAnalyzer::AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) 
     auto func_graph_builder = mind_graph_builder->FGBuilder();
     if (func_graph_builder->AddOutput(out_py_obj, false)) {
       MS_LOG(DEBUG) << "Add output success.";
-      continue;
-    }
-    if (IsNonLocalValue(node)) {
-      MS_LOG(DEBUG) << "Skip non local value used as graph return.";
       continue;
     }
     MS_LOG(DEBUG) << "Add output failed.";
