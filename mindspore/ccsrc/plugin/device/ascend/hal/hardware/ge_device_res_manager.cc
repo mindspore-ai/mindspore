@@ -244,6 +244,34 @@ void GeDeviceResManager::CreateSessionAndGraphRunner() {
   transform::SetGraphRunner(graph_runner);
 }
 
+bool GeDeviceResManager::LoadCollectiveCommLib() {
+  // If this is simulation, don't load any collective communication library.
+  if (!common::GetEnv(kSimulationLevel).empty()) {
+    return true;
+  }
+  // Ascend backend supports HCCL and LCCL collective communication libraries.
+  if (!common::GetEnv("ENABLE_LCCL").empty()) {
+    std::string lowlatency_comm_lib_name = "liblowlatency_collective.so";
+    auto loader = std::make_shared<CollectiveCommLibLoader>(lowlatency_comm_lib_name);
+    MS_EXCEPTION_IF_NULL(loader);
+    if (!loader->Initialize()) {
+      MS_LOG(EXCEPTION) << "Loading LCCL collective library failed.";
+      return false;
+    }
+    void *collective_comm_lib_handle = loader->collective_comm_lib_ptr();
+    MS_EXCEPTION_IF_NULL(collective_comm_lib_handle);
+
+    auto instance_func = DlsymFuncObj(communication_lib_instance, collective_comm_lib_handle);
+    collective_comm_lib_ = instance_func();
+    MS_EXCEPTION_IF_NULL(collective_comm_lib_);
+    MS_LOG(WARNING) << "Loading LCCL because env ENABLE_LCCL is set to 1. Pay attention that LCCL only supports "
+                       "single-node-multi-card mode in KernelByKernel for now.";
+  } else {
+    collective_comm_lib_ = &AscendCollectiveCommLib::GetInstance();
+  }
+  return true;
+}
+
 bool GeDeviceResManager::BindDeviceToCurrentThread(bool force_bind) const {
   static thread_local std::once_flag is_set;
   std::call_once(is_set, []() {

@@ -55,6 +55,11 @@ if(ENABLE_D)
                 DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
                 COMPONENT mindspore
         )
+        install(
+                TARGETS lowlatency_collective
+                DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
+                COMPONENT mindspore
+        )
     endif()
     install(
             TARGETS hccl_plugin

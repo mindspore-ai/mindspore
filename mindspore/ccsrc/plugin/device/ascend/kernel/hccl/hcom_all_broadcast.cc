@@ -29,12 +29,30 @@ bool HcomAllBroadCastKernel::Launch(const std::vector<KernelTensor *> &inputs, c
   }
   MS_EXCEPTION_IF_NULL(inputs[0]);
   MS_EXCEPTION_IF_NULL(stream_ptr);
+
+#ifdef ENABLE_INTERNAL_KERNELS
+  if (!common::GetEnv("ENABLE_LCCL").empty()) {
+    auto lccl_result =
+      lccl_comm_->Broadcast(inputs[0]->device_ptr(), hccl_count_, hccl_data_type_list_[0], root_id_, stream_ptr);
+    if (lccl_result != Lcal::LCAL_SUCCESS) {
+      MS_LOG(EXCEPTION) << "LCCL Broadcast failed.";
+    }
+  } else {
+    auto hccl_result = hccl::HcclAdapter::GetInstance().HcclBroadcast(
+      inputs[0]->device_ptr(), hccl_count_, hccl_data_type_list_[0], root_id_, stream_ptr, comm_);
+    if (hccl_result != HCCL_SUCCESS) {
+      MS_LOG(ERROR) << "HcomBroadcastOp : hcom_broadcast failed, return: " << hccl_result;
+      return false;
+    }
+  }
+#else
   auto hccl_result = hccl::HcclAdapter::GetInstance().HcclBroadcast(
     inputs[0]->device_ptr(), hccl_count_, hccl_data_type_list_[0], root_id_, stream_ptr, comm_);
   if (hccl_result != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "HcomBroadcastOp : hcom_broadcast failed, return: " << hccl_result;
     return false;
   }
+#endif
   return true;
 }
 }  // namespace kernel

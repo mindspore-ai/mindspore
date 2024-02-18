@@ -129,13 +129,17 @@ bool HcclKernel::Init(const std::vector<KernelTensor *> &inputs, const std::vect
   if (!HcomUtil::GetHcomAttr<std::string>(primitive_, kAttrGroup, &group_)) {
     return false;
   }
+
   if (common::GetEnv(kSimulationLevel).empty() && !common::IsNeedProfileMemory()) {
-    // pynative with ranktable also need hccl_comm
-    comm_ = AscendCollectiveCommLib::GetInstance().HcclCommunicator(group_);
-    if (common::UseHostCollective() && !hccl::HcclAdapter::GetInstance().UseHcclCM()) {
-      MS_EXCEPTION_IF_NULL(comm_);
-      primitive_->set_attr(kAttrComm, MakeValue<int64_t>(reinterpret_cast<int64_t>(comm_)));
+#ifdef ENABLE_INTERNAL_KERNELS
+    if (!common::GetEnv("ENABLE_LCCL").empty()) {
+      LoadLcclLibrary();
+    } else {
+      LoadHcclLibrary();
     }
+#else
+    LoadHcclLibrary();
+#endif
   }
   CalLoopSize();
 
@@ -269,5 +273,32 @@ int HcclKernel::Resize(const std::vector<KernelTensor *> &inputs, const std::vec
 
   return KRET_OK;
 }
+
+void HcclKernel::LoadHcclLibrary() {
+  comm_ = AscendCollectiveCommLib::GetInstance().HcclCommunicator(group_);
+  if (common::UseHostCollective() && !hccl::HcclAdapter::GetInstance().UseHcclCM()) {
+    MS_EXCEPTION_IF_NULL(comm_);
+    primitive_->set_attr(kAttrComm, MakeValue<int64_t>(reinterpret_cast<int64_t>(comm_)));
+  }
+}
+
+#ifdef ENABLE_INTERNAL_KERNELS
+void HcclKernel::LoadLcclLibrary() {
+  std::string lowlatency_comm_lib_name = "liblowlatency_collective.so";
+  auto loader = std::make_shared<CollectiveCommLibLoader>(lowlatency_comm_lib_name);
+  MS_EXCEPTION_IF_NULL(loader);
+  if (!loader->Initialize()) {
+    MS_LOG(EXCEPTION) << "Loading LCCL collective library failed.";
+  }
+  void *collective_comm_lib_handle = loader->collective_comm_lib_ptr();
+  MS_EXCEPTION_IF_NULL(collective_comm_lib_handle);
+
+  auto instance_func = DlsymFuncObj(communication_lib_instance, collective_comm_lib_handle);
+  collective_comm_lib_ = dynamic_cast<LowlatencyCollectiveCommLib *>(instance_func());
+  MS_EXCEPTION_IF_NULL(collective_comm_lib_);
+  lccl_comm_ = collective_comm_lib_->LcclCommunicator(group_);
+  MS_EXCEPTION_IF_NULL(lccl_comm_);
+}
+#endif
 }  // namespace kernel
 }  // namespace mindspore

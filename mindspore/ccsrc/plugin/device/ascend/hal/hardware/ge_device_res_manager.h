@@ -24,6 +24,7 @@
 #include "utils/ms_context.h"
 #include "include/transform/graph_ir/types.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
+#include "plugin/device/ascend/hal/hardware/lowlatency_collective_comm_lib.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "runtime/device/kernel_runtime_manager.h"
 
@@ -69,12 +70,7 @@ class GeDeviceResManager : public DeviceResManager {
 
   static void CreateSessionAndGraphRunner();
 
-  bool LoadCollectiveCommLib() override {
-    if (common::GetEnv(kSimulationLevel).empty()) {
-      collective_comm_lib_ = &AscendCollectiveCommLib::GetInstance();
-    }
-    return true;
-  }
+  bool LoadCollectiveCommLib() override;
 
   void ResetStreamAndCtx() override;
   bool BindDeviceToCurrentThread(bool force_bind) const override;
