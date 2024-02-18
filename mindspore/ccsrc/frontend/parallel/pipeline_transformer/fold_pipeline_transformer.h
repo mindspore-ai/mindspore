@@ -64,6 +64,7 @@ class FoldPipelineTransformer : public PipelineTransformer {
   void CreateForwardGroup2();
   int64_t ComputeRecvTag(int64_t node_stage, int64_t user_node_stage, int64_t stage_num, int64_t src_rank);
   void ColorForNodes();
+  std::vector<std::string> group_ = {};
 };
 
 class NodeSegmentInfo {
