@@ -49,6 +49,8 @@ struct OpCompilerInfo {
         graph_outputs_padding_type_(std::move(graph_outputs_padding_type)),
         simple_graph_(std::move(simple_graph)) {}
   ~OpCompilerInfo() = default;
+  void UpdateStatus(bool ready);
+  void WaitReady() const;
   const mindspore::GraphInfo graph_info_;
   const GraphId graph_id_;
   const KernelGraphPtr graph_;
@@ -59,6 +61,7 @@ struct OpCompilerInfo {
   const std::vector<size_t> graph_outputs_tensor_num_;
   const std::vector<std::string> graph_outputs_padding_type_;
   const SimpleGraphPtr simple_graph_;
+  alignas(64) std::atomic<bool> ready_{true};
 };
 using OpCompilerInfoPtr = std::shared_ptr<OpCompilerInfo>;
 
