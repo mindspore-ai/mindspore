@@ -929,8 +929,10 @@ AbstractBasePtr ReduceDim(int *axis, const AbstractBasePtr &orig_abs, int *axis_
   MS_EXCEPTION_IF_NULL(orig_abs);
   MS_EXCEPTION_IF_NULL(axis_size);
   if (!orig_abs->isa<AbstractTensor>()) {
-    MS_LOG(EXCEPTION) << "The orig_abs should be AbstractTensor when axis is " << *axis << ", but got a "
-                      << orig_abs->ToString() << ".";
+    MS_LOG(EXCEPTION) << "The orig_abs should be AbstractTensor when corresponding axis is " << *axis << ", but got a "
+                      << orig_abs->ToString() << ". Tip: Please check the correspondence between "
+                      << "vmap's 'in_axes' and inputs. You may want to explicitly specify the 'in_axes' "
+                      << "corresponding to " << orig_abs->ToString() << " as 'None' to solve this problem.";
   }
   auto orig_abs_shape = dyn_cast_ptr<Shape>(orig_abs->BuildShape());
   MS_EXCEPTION_IF_NULL(orig_abs_shape);
