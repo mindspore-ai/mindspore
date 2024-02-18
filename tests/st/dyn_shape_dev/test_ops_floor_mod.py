@@ -22,7 +22,7 @@ from tests.st.utils import test_utils
 
 @test_utils.run_with_cell
 def floor_mod_forward_func(x, y):
-    return ops.auto_generate.floor_mod(x, y)
+    return ops.floor_mod(x, y)
 
 
 @test_utils.run_with_cell

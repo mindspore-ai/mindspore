@@ -20,9 +20,9 @@ floor_div:
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        x (Union[Tensor, Number, bool]): The first input is a number or
+        input (Union[Tensor, Number, bool]): The first input is a number or
             a bool or a tensor whose data type is number or bool.
-        y (Union[Tensor, Number, bool]): The second input is a number or
+        other (Union[Tensor, Number, bool]): The second input is a number or
             a bool or a tensor whose data type is number or bool.
     
     Returns:
@@ -30,7 +30,7 @@ floor_div:
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `x` nor `y` is a Tensor, number.Number or bool.
+        TypeError: If `input` nor `other` is a Tensor, number.Number or bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -39,13 +39,13 @@ floor_div:
         >>> import mindspore
         >>> from mindspore import Tensor, ops
         >>> import numpy as np
-        >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
-        >>> y = Tensor(np.array([3, 3, 3]), mindspore.int32)
-        >>> output = ops.floor_divide(x, y)
+        >>> input = Tensor(np.array([2, 4, -1]), mindspore.int32)
+        >>> other = Tensor(np.array([3, 3, 3]), mindspore.int32)
+        >>> output = ops.floor_divide(input, other)
         >>> print(output)
         [ 0  1 -1]
-        >>> x = Tensor(2.0, mindspore.float32)
-        >>> y = Tensor(2.0, mindspore.float32)
-        >>> output = ops.floor_divide(x, y)
+        >>> input = Tensor(2.0, mindspore.float32)
+        >>> other = Tensor(2.0, mindspore.float32)
+        >>> output = ops.floor_divide(input, other)
         >>> print(output)
         1.0

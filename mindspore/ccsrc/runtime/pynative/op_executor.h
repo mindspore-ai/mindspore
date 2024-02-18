@@ -52,10 +52,6 @@ class BACKEND_EXPORT OpExecutor {
   // Because we may sometimes have to ignore the exception and continue to run other tasks
   void Reset();
 
-  // Determine if there is another task with the same name in execution.
-  // Tasks with the same name use the same CNode cache. So we need to wait.
-  bool ActorInQueue(GraphId graph_id);
-
   // Wait for all OpRunTasks to finish executing.
   void Wait();
 

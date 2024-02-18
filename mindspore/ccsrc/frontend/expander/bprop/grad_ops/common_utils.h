@@ -81,7 +81,6 @@ std::vector<int64_t> GenerateShapeIndex(const std::vector<int64_t> &out_shp, con
                                         int64_t axis_v, int64_t batch_dims = 0);
 std::vector<int64_t> RegenerateOutputShape(const std::vector<int64_t> &x_shp, const std::vector<int64_t> &ind_shp,
                                            int64_t axis_v, int64_t batch_dims = 0);
-std::vector<int64_t> TileShape(const std::vector<int64_t> &multiples, const std::vector<int64_t> &shapex);
 std::vector<int64_t> InvertPermutation(const std::vector<int64_t> &perm);
 std::vector<int64_t> GetTransposition(int64_t axis, int64_t rank);
 

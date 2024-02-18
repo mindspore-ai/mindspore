@@ -364,24 +364,6 @@ void PipelineTransformer::LabelMicroBatch() {
   }
 }
 
-void PipelineTransformer::CreateForwardGroup() {
-  std::vector<int64_t> rank_list = g_device_manager->GetDeviceListBetweenStage();
-  auto dev_list = g_device_manager->CreateDeviceListByRankList(rank_list);
-  Group g;
-  if (g_device_manager->CreateGroup(rank_list, &g) != SUCCESS) {
-    MS_LOG(EXCEPTION) << "Create forward communication group between all pipeline stages failed, the rank_list is: "
-                      << rank_list;
-  }
-  auto g_back_name = g.name() + BACKWARD;
-  Group g_back;
-  if (g_device_manager->CreateGroup(g_back_name, dev_list, &g_back) != SUCCESS) {
-    MS_LOG(EXCEPTION) << "Create backward communication group between all pipeline stages failed, the rank_list is: "
-                      << rank_list;
-  }
-  group_.push_back(g.name());
-  group_.push_back(g_back.name());
-}
-
 void PipelineTransformer::LabelGenMaskFusion() {
   auto fgs = manager_->func_graphs();
   int64_t fusion_id = 0;
@@ -932,9 +914,9 @@ SendAttr PipelineTransformer::InsertSend(const AnfNodePtr &parameter, int64_t us
   int64_t send_tag = send_tag_map[dest_rank];
   send_tag_map[dest_rank]++;
   Attr attr_tag = std::make_pair(SR_TAG, MakeValue(send_tag));
-  Attr attr_rank = std::make_pair(DEST_RANK, MakeValue(user_node_stage));
-  Attr attr_group = std::make_pair(GROUP, MakeValue(group_[0]));
-  Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(group_[1]));
+  Attr attr_rank = std::make_pair(DEST_RANK, MakeValue(dest_rank));
+  Attr attr_group = std::make_pair(GROUP, MakeValue(world_group_));
+  Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(world_group_));
   OperatorAttrs attrs = {attr_tag, attr_rank, attr_group, attr_group_back};
   AnfNodePtr care_node;
   bool is_param = true;
@@ -985,7 +967,7 @@ AnfNodePtr PipelineTransformer::InsertReceive(const FuncGraphPtr &graph, const A
   int64_t recv_tag = recv_tag_map[src_rank];
   recv_tag_map[src_rank]++;
   Attr attr_tag = std::make_pair(SR_TAG, MakeValue(recv_tag));
-  Attr attr_rank = std::make_pair(SRC_RANK, MakeValue(node_stage));
+  Attr attr_rank = std::make_pair(SRC_RANK, MakeValue(src_rank));
   bool is_param = true;
   AnfNodePtr care_node;
   auto op_info_pair = GetOpInfoPair(node, graph_param, &care_node, &is_param);
@@ -995,8 +977,8 @@ AnfNodePtr PipelineTransformer::InsertReceive(const FuncGraphPtr &graph, const A
   auto shape_type_pair = GetShapeType(node, slice_shape, 0);
   Attr attr_shape = std::make_pair(SHAPE, shape_type_pair.first);
   Attr attr_dtype = std::make_pair(DTYPE, shape_type_pair.second);
-  Attr attr_group = std::make_pair(GROUP, MakeValue(group_[0]));
-  Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(group_[1]));
+  Attr attr_group = std::make_pair(GROUP, MakeValue(world_group_));
+  Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(world_group_));
   OperatorAttrs attrs = {attr_tag, attr_rank, attr_shape, attr_dtype, attr_group, attr_group_back};
   std::vector<AnfNodePtr> recv_input;
   if (node->isa<Parameter>()) {
@@ -1312,13 +1294,15 @@ AnfNodePtr PipelineTransformer::GenNewSendFromOld(const AnfNodePtr &node, const 
   const auto &old = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(old);
   auto old_is_pipeline_param = old->HasPrimalAttr(PIPELINE_PARAM);
-  auto dest_rank = old->user_data<int64_t>(DEST_RANK);
-  auto send_tag = send_tag_map[*dest_rank];
-  send_tag_map[*dest_rank]++;
+  auto dest_rank_ptr = old->user_data<int64_t>(DEST_RANK);
+  MS_EXCEPTION_IF_NULL(dest_rank_ptr);
+  auto dest_rank = *dest_rank_ptr;
+  auto send_tag = send_tag_map[dest_rank];
+  send_tag_map[dest_rank]++;
   Attr attr_tag = std::make_pair(SR_TAG, MakeValue(send_tag));
-  Attr attr_rank = std::make_pair(DEST_RANK, MakeValue(*(old->user_data<int64_t>(USER_NODE_STAGE))));
-  Attr attr_group = std::make_pair(GROUP, MakeValue(group_[0]));
-  Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(group_[1]));
+  Attr attr_rank = std::make_pair(DEST_RANK, MakeValue(dest_rank));
+  Attr attr_group = std::make_pair(GROUP, MakeValue(world_group_));
+  Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(world_group_));
   OperatorAttrs attrs = {attr_tag, attr_rank, attr_group, attr_group_back};
   std::vector<AnfNodePtr> send_input{input};
   auto send = CreateCNodeByInputsAndAttr(main_graph_, SEND, SEND, send_input, attrs);
@@ -1444,18 +1428,20 @@ AnfNodePtr PipelineTransformer::GenNewRecvFromOld(const AnfNodePtr &node, const 
                                                   const ValuePtr &value) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto src_rank = *(cnode->user_data<int64_t>(SRC_RANK));
+  auto src_rank_ptr = cnode->user_data<int64_t>(SRC_RANK);
+  MS_EXCEPTION_IF_NULL(src_rank_ptr);
+  auto src_rank = *src_rank_ptr;
   auto recv_tag = recv_tag_map[src_rank];
   recv_tag_map[src_rank]++;
   auto dtype = node->user_data<Type>(SLICE_DTYPE);
   auto slice_shape = *(cnode->user_data<Shape>(SLICE_SHAPE));
   auto shape = GetShapeValue(slice_shape);
   Attr attr_tag = std::make_pair(SR_TAG, MakeValue(recv_tag));
-  Attr attr_rank = std::make_pair(SRC_RANK, MakeValue(*(node->user_data<int64_t>(NODE_STAGE))));
+  Attr attr_rank = std::make_pair(SRC_RANK, MakeValue(src_rank));
   Attr attr_shape = std::make_pair(SHAPE, shape);
   Attr attr_dtype = std::make_pair(DTYPE, dtype);
-  Attr attr_group = std::make_pair(GROUP, MakeValue(group_[0]));
-  Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(group_[1]));
+  Attr attr_group = std::make_pair(GROUP, MakeValue(world_group_));
+  Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(world_group_));
   OperatorAttrs attrs = {attr_tag, attr_rank, attr_shape, attr_dtype, attr_group, attr_group_back};
 
   std::vector<AnfNodePtr> recv_input = {input};
@@ -1666,7 +1652,7 @@ AnfNodePtr PipelineTransformer::CreateTupleZeroTensor(const AnfNodePtr &node, si
 }
 
 void PipelineTransformer::CutGraph() {
-  CreateForwardGroup();
+  world_group_ = GetWorldGroup();
   auto send_recv_shared_param = HandleSharedParameter();
   auto graph = enable_share_cell_ ? shared_cell_ : main_graph_;
   MS_EXCEPTION_IF_NULL(graph);

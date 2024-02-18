@@ -55,8 +55,9 @@
 #include "frontend/expander/pack/pack_expander.h"
 #include "include/common/profiler.h"
 
-namespace py = pybind11;
+#include "pipeline/jit/pi/external.h"
 
+namespace py = pybind11;
 using GraphExecutorPy = mindspore::pipeline::GraphExecutorPy;
 using Pipeline = mindspore::pipeline::Pipeline;
 using PrimitivePy = mindspore::PrimitivePy;
@@ -159,6 +160,7 @@ void RegModule(py::module *m) {
   mindspore::hal::RegEvent(m);
   mindspore::pynative::RegPyNativeExecutor(m);
   mindspore::pynative::RegisterPyBoostFunction(m);
+  mindspore::pijit::RegPIJitInterface(m);
   mindspore::prim::RegCompositeOpsGroup(m);
 #ifndef ENABLE_SECURITY
   mindspore::profiler::RegProfilerManager(m);

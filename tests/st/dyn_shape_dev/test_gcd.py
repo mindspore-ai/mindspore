@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def gcd_forward_func(x1, x2):
-    return ops.auto_generate.gcd(x1, x2)
+    return ops.gcd(x1, x2)
 
 
 @test_utils.run_with_cell

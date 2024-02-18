@@ -20,8 +20,7 @@ namespace kernel {
 
 void SquareAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &outputs) {
-  auto return_value = GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], inputs[kIndex0], outputs[kIndex0]);
-  UpdateWorkspace(return_value);
+  GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex0], outputs[kIndex0]);
 }
 
 bool SquareAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,

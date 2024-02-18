@@ -36,28 +36,14 @@
 #include "include/backend/distributed/ps/util.h"
 #include "include/backend/distributed/ps/ps_context.h"
 #endif
+#include "frontend/parallel/graph_util/pipeline_split_utils.h"
 
 namespace mindspore {
 namespace pipeline {
-std::string GetWorldGroup() {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  std::string world_group;
-  std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (backend == kAscendDevice) {
-    world_group = parallel::HCCL_WORLD_GROUP;
-  } else if (backend == kGPUDevice) {
-    world_group = parallel::NCCL_WORLD_GROUP;
-  } else {
-    MS_LOG(EXCEPTION) << "Invalid backend: " << backend;
-  }
-  return world_group;
-}
-
 static int64_t GetRank() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  auto world_group = GetWorldGroup();
+  auto world_group = mindspore::parallel::GetWorldGroup();
   int64_t global_rank = parallel::ParallelContext::GetInstance()->global_rank();
   uint32_t rank_id = 0;
   if (!parallel::ParallelContext::GetInstance()->global_rank_is_set()) {
@@ -259,7 +245,7 @@ bool PipelineSplit(const ResourcePtr &res) {
     InsertVirtualDataset(root, all_nodes);
   }
   auto global_rank = GetRank();
-  auto world_group = GetWorldGroup();
+  auto world_group = mindspore::parallel::GetWorldGroup();
   uint32_t world_rank_size = 0;
   int64_t device_num = 0;
   if (!parallel::ParallelContext::GetInstance()->device_num_is_set()) {

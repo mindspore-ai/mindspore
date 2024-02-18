@@ -44,18 +44,9 @@ class PyExecuteCpuKernelMod : public NativeCpuKernelMod {
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
               const std::vector<KernelTensor *> &outputs) override;
   bool need_user_data() const override { return true; }
-  // User data is the extra dat-a required when the kernel is launched, It will be set before launch by runtime.
-  void set_input_user_data(UserData *const user_data, size_t input_index) override {
-    input_user_data_[input_index] = user_data;
-  }
-  void set_output_user_data(UserData *const user_data, size_t output_index) override {
-    output_user_data_[output_index] = user_data;
-  }
 
  private:
   bool is_output_any_{true};
-  std::map<size_t, UserData *> input_user_data_;
-  std::map<size_t, UserData *> output_user_data_;
 };
 }  // namespace kernel
 }  // namespace mindspore

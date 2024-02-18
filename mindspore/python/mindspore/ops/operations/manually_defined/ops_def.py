@@ -28,6 +28,7 @@ from mindspore.common._stub_tensor import _convert_stub
 from mindspore._c_expression import typing
 from mindspore._c_expression import pyboost_cast
 from mindspore._c_expression import Tensor as Tensor_
+from mindspore._c_expression import pyboost_tile
 from mindspore.ops._tracefunc import PackFunc
 from mindspore.common import dtype as mstype
 from mindspore.common._utils import is_shape_unknown
@@ -920,30 +921,37 @@ class ScalarToTensor(PrimitiveWithInfer):
         data_type = mstype.dtype_to_nptype(dtype)
         return Tensor(np.array(x, data_type), dtype=dtype)
 
+
 class Tile(Primitive):
-    """
-    Replicates an input tensor with given multiples times.
+    r"""
+    Replicates an input tensor with given multiple times.
 
     Refer to :func:`mindspore.ops.tile` for more details.
 
     Inputs:
-        - **input_x** (Tensor) - 1-D or higher dimensional Tensor. Set the shape of input tensor as
+        - **input** (Tensor) - 1-D or higher dimensional Tensor. Set the shape of input tensor as
           :math:`(x_1, x_2, ..., x_S)` .
-        - **multiples** (tuple[int]) - The parameter that specifies the number of replications,
+        - **dims** (tuple[int]) - The parameter that specifies the number of replications,
           the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
-          The length of `multiples` cannot be smaller than the length of the shape of `input_x`.
           Only constant value is allowed.
 
     Outputs:
-        Tensor, has the same data type as the `input_x`. Suppose the length of `multiples` is `d`,
-        the dimension of `input_x` is `input_x.dim`, and the shape of `input_x` is :math:`(x_1, x_2, ..., x_S)`.
+        Tensor, has the same data type as the `input`. Suppose the length of `dims` is `d`,
+        the dimension of `input` is `input.dim`, and the shape of `input` is :math:`(x_1, x_2, ..., x_S)`.
 
-        - If `input_x.dim = d`, then the shape of their corresponding positions can be multiplied, and
+        - If `input.dim = d`, then the shape of their corresponding positions can be multiplied, and
           the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_S)`.
-        - If `input_x.dim < d`, fill in multiple 1 in the length of the shape of `input_x` until their
-          lengths are consistent. Such as set the shape of `input_x` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
+        - If `input.dim < d`, prepend 1 to the shape of `input` until their lengths are consistent.
+          Such as set the shape of `input` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
           then the shape of their corresponding positions can be multiplied, and the shape of Outputs is
           :math:`(1*y_1, ..., x_R*y_R, x_S*y_S)`.
+        - If `input.dim > d`, prepend 1 to `dims` until their lengths are consistent. Such as set the
+          `dims` as :math:`(1, ..., y_1, y_2, ..., y_S)`, then the shape of their corresponding positions
+          can be multiplied, and the shape of Outputs is :math:`(x_1*1, ..., x_R*y_R, x_S*y_S)`.
+
+    Raises:
+        TypeError: If `dims` is not a tuple or its elements are not all int.
+        ValueError: If the elements of `dims` are not all greater than or equal to 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -953,16 +961,16 @@ class Tile(Primitive):
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
         >>> tile = ops.Tile()
-        >>> input_x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.float32)
-        >>> multiples = (2, 3)
-        >>> output = tile(input_x, multiples)
+        >>> input = Tensor(np.array([[1, 2], [3, 4]]), mindspore.float32)
+        >>> dims = (2, 3)
+        >>> output = tile(input, dims)
         >>> print(output)
         [[1.  2.  1.  2.  1.  2.]
          [3.  4.  3.  4.  3.  4.]
          [1.  2.  1.  2.  1.  2.]
          [3.  4.  3.  4.  3.  4.]]
-        >>> multiples = (2, 3, 2)
-        >>> output = tile(input_x, multiples)
+        >>> dims = (2, 3, 2)
+        >>> output = tile(input, dims)
         >>> print(output)
         [[[1. 2. 1. 2.]
           [3. 4. 3. 4.]
@@ -982,60 +990,58 @@ class Tile(Primitive):
     def __init__(self):
         """Initialize."""
 
+    def __call__(self, input, dims):
+        return _convert_stub(pyboost_tile(self, [input, dims]))
+
     def check_elim(self, *args):
-        """Function for checking eliminate."""
-        base_tensor, multiplier = args
+        base_tensor, dims = args
         if not isinstance(base_tensor, Tensor):
-            raise TypeError(f"For '{self.name}', the type of 'input_x' must be Tensor, "
+            raise TypeError(f"For '{self.name}', the type of 'input' must be Tensor, "
                             f"but got {type(base_tensor).__name__}.")
         if PackFunc.is_tracing() and not PackFunc.current.is_pynative_mode:
             return (False, None)
-        if not isinstance(multiplier, tuple):
-            raise TypeError(f"For '{self.name}', the type of 'multiplier' must be tuple, "
-                            f"but got {type(multiplier).__name__}.")
+        if not isinstance(dims, tuple):
+            raise TypeError(f"For '{self.name}', the type of 'dims' must be tuple, "
+                            f"but got {type(dims).__name__}.")
 
-        if all(v == 1 for v in multiplier) and len(base_tensor.shape) >= len(multiplier):
+        if all(v == 1 for v in dims) and len(base_tensor.shape) >= len(dims):
             from mindspore.ops.auto_generate.gen_ops_def import Identity
             ret = Identity()(base_tensor)
             return (True, ret)
         return (False, None)
 
 
-def tile(input, multiples):
+def tile(input, dims):
     r"""
-    Replicates an input tensor with given multiples times.
-
-    Creates a new tensor by replicating `input` `multiples` times. The i'th dimension of
-    output tensor has `input.shape[i] * multiples[i]` elements, and the values of `input`
-    are replicated `multiples[i]` times along the i'th dimension.
-
-    Note:
-        The length of `multiples` must be greater or equal to the length of dimension in `input`.
+    Creates a new tensor by replicating `input` `dims` times. The i'th dimension of
+    output tensor has `input.shape[i] * dims[i]` elements, and the values of `input`
+    are replicated `dims[i]` times along the i'th dimension.
 
     Args:
         input (Tensor): 1-D or higher dimensional Tensor. Set the shape of input tensor as
             :math:`(x_1, x_2, ..., x_S)` .
 
-        multiples (tuple[int]): The parameter that specifies the number of replications,
+        dims (tuple[int]): The parameter that specifies the number of replications,
             the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
-            The length of `multiples` cannot be smaller than the length of the shape of `input`.
             Only constant value is allowed.
 
     Returns:
-        Tensor, has the same data type as the `input`. Suppose the length of `multiples` is `d`,
+        Tensor, has the same data type as the `input`. Suppose the length of `dims` is `d`,
         the dimension of `input` is `input.dim`, and the shape of `input` is :math:`(x_1, x_2, ..., x_S)`.
 
         - If `input.dim = d`, then the shape of their corresponding positions can be multiplied, and
           the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_S)`.
-        - If `input.dim < d`, fill in multiple 1 in the length of the shape of `input` until their
-          lengths are consistent. Such as set the shape of `input` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
+        - If `input.dim < d`, prepend 1 to the shape of `input` until their lengths are consistent.
+          Such as set the shape of `input` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
           then the shape of their corresponding positions can be multiplied, and the shape of Outputs is
           :math:`(1*y_1, ..., x_R*y_R, x_S*y_S)`.
+        - If `input.dim > d`, prepend 1 to `dims` until their lengths are consistent. Such as set the
+          `dims` as :math:`(1, ..., y_1, y_2, ..., y_S)`, then the shape of their corresponding positions
+          can be multiplied, and the shape of Outputs is :math:`(x_1*1, ..., x_R*y_R, x_S*y_S)`.
 
     Raises:
-        TypeError: If `multiples` is not a tuple or its elements are not all int.
-        ValueError: If the elements of `multiples` are not all greater than 0.
-        ValueError: If the length of `multiples` are smaller than the length of dimension in `input`.
+        TypeError: If `dims` is not a tuple or its elements are not all int.
+        ValueError: If the elements of `dims` are not all greater than or equal to 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1045,15 +1051,15 @@ def tile(input, multiples):
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
         >>> input = Tensor(np.array([[1, 2], [3, 4]]), mindspore.float32)
-        >>> multiples = (2, 3)
-        >>> output = ops.tile(input, multiples)
+        >>> dims = (2, 3)
+        >>> output = ops.tile(input, dims)
         >>> print(output)
         [[1.  2.  1.  2.  1.  2.]
          [3.  4.  3.  4.  3.  4.]
          [1.  2.  1.  2.  1.  2.]
          [3.  4.  3.  4.  3.  4.]]
-        >>> multiples = (2, 3, 2)
-        >>> output = ops.tile(input, multiples)
+        >>> dims = (2, 3, 2)
+        >>> output = ops.tile(input, dims)
         >>> print(output)
         [[[1. 2. 1. 2.]
           [3. 4. 3. 4.]
@@ -1069,7 +1075,7 @@ def tile(input, multiples):
           [3. 4. 3. 4.]]]
     """
     tile_op = _get_cache_prim(Tile)()
-    return tile_op(input, multiples)
+    return tile_op(input, dims)
 
 
 def scalar_cast(input_x, input_y):
@@ -1174,11 +1180,12 @@ class Cast(Primitive):
 # 2. All inputs should pass without default value.
 # 3. If not const input is given, return None. (for now)
 
-def infer_value_for_Tile(x, multiples):
+
+def infer_value_for_Tile(input, dims):
     """Infer value for Tile op."""
-    if x is None or multiples is None or None in multiples:
+    if input is None or dims is None or None in dims:
         return None
-    return Tensor(np.tile(x.asnumpy(), multiples))
+    return Tensor(np.tile(input.asnumpy(), dims))
 
 
 def infer_value_for_Concat(input_x, axis):

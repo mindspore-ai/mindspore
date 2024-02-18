@@ -10,6 +10,10 @@ diag:
 
         Returns:
             Tensor, has the same dtype as the `input`.
+        
+        Raises:
+            TypeError: If `input` is not a Tensor.
+            TypeError: If rank of `input` less than 1.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``

@@ -23,21 +23,21 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def notequal_forward_func(x, y):
-    return ops.auto_generate.not_equal(x, y)
+    return ops.not_equal(x, y)
 
 
 @test_utils.run_with_cell
 def notequal_infervalue_func1():
     x = ms.Tensor(np.array([1, 2, 4]).astype(np.float32))
     y = ms.Tensor(np.array([1, 2, 3]).astype(np.float32))
-    return ops.auto_generate.not_equal(x, y)
+    return ops.not_equal(x, y)
 
 
 @test_utils.run_with_cell
 def notequal_infervalue_func2():
     x = ms.Tensor(np.array([1, 2, 4]).astype(np.float32))
     y = ms.Tensor(np.array([3]).astype(np.float32))
-    return ops.auto_generate.not_equal(x, y)
+    return ops.not_equal(x, y)
 
 
 @test_utils.run_with_cell

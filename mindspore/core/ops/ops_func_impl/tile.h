@@ -17,13 +17,13 @@
 #ifndef MINDSPORE_CORE_OPS_OP_FUNC_IMPL_TILE_H
 #define MINDSPORE_CORE_OPS_OP_FUNC_IMPL_TILE_H
 
-#include <memory>
 #include <set>
+#include <utility>
 #include <vector>
 #include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore::ops {
-class TileFuncImpl : public OpFuncImpl {
+class MIND_API TileFuncImpl : public OpFuncImpl {
  public:
   TileFuncImpl() = default;
   ~TileFuncImpl() = default;
@@ -33,6 +33,15 @@ class TileFuncImpl : public OpFuncImpl {
   std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
 };
 
-using TileFuncImplPtr = std::shared_ptr<TileFuncImpl>;
+/**
+ * @brief Expanding one with heading 1 if it is less than the other. Cases:
+ *        1. input_shape:       [3], dims: [2, 2, 2] ==> <[1, 1, 3], [2, 2, 2]>.
+ *        2. input_shape:    [3, 4], dims:    [2, 2] ==> <   [3, 4],    [2, 2]>.
+ *        3. input_shape: [3, 4, 5], dims:       [2] ==> <[3, 4, 5], [1, 1, 2]>.
+ *
+ * @param input_shape Pointer for input input_shape, must be static rank. Will be expanded if need.
+ * @param dims Pointer for dims. Will be expanded if need.
+ */
+MIND_API void AdaptShapeAndMultipies(ShapeVector *input_shape, ShapeVector *dims);
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OP_FUNC_IMPL_TILE_H

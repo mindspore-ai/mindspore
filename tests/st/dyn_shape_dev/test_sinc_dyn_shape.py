@@ -22,7 +22,7 @@ from mindspore import ops
 
 @test_utils.run_with_cell
 def sinc_forward_func(x):
-    return ops.auto_generate.sinc(x)
+    return ops.sinc(x)
 
 
 @test_utils.run_with_cell
@@ -84,7 +84,7 @@ def test_sinc_dynamic(mode):
     """
     context.set_context(mode=mode)
     x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(ops.auto_generate.sinc)
+    test_cell = test_utils.to_cell_obj(ops.sinc)
     test_cell.set_inputs(x_dyn)
     x1 = Tensor(np.array([0.62, 0.28, 0.43, 0.62]).astype(np.float32))
     output1 = test_cell(x1)

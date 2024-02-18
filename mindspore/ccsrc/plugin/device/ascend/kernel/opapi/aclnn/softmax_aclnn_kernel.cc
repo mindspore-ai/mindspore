@@ -35,8 +35,7 @@ int64_t SoftmaxAscend::GetDimValue(KernelTensor *axis_ptr) const noexcept {
 void SoftmaxAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs) {
   auto dim = GetDimValue(inputs[kIndex1]);
-  auto return_value = GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], dim, outputs[kIndex0]);
-  UpdateWorkspace(return_value);
+  GetWorkspaceForResize(inputs[kIndex0], dim, outputs[kIndex0]);
 }
 
 bool SoftmaxAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,

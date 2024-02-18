@@ -22,7 +22,7 @@ from tests.st.utils import test_utils
 
 @test_utils.run_with_cell
 def floor_forward_func(x):
-    return ops.auto_generate.floor(x)
+    return ops.floor(x)
 
 
 @test_utils.run_with_cell
@@ -31,7 +31,7 @@ def floor_backward_func(x):
 
 
 def floor_dyn_shape_func(x):
-    return ops.auto_generate.floor(x)
+    return ops.floor(x)
 
 
 @pytest.mark.level1

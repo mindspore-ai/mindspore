@@ -73,8 +73,6 @@ class BACKEND_EXPORT AsyncRQueue {
   // Reinit resources after fork occurs.
   void ChildAfterFork();
 
-  bool TaskInQueue(uint32_t task_id);
-
  protected:
   void WorkerLoop();
   void SetThreadName() const;
@@ -87,11 +85,6 @@ class BACKEND_EXPORT AsyncRQueue {
 
  private:
   void ClearTaskWithException();
-
-  // TODO(caifubi): remove this and make AsyncRQueue real lock-free.
-  std::set<uint32_t> task_in_queue_;
-
-  std::mutex set_mutex_;
 
   RingQueue<AsyncTaskPtr, kQueueCapacity> tasks_queue_;
 };

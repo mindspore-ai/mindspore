@@ -42,7 +42,7 @@ struct PyNativePassForward {
   // Pass for expander outputs
   CNodePtr PassForDin(const CNodePtr &cnode, const std::string &op_name, bool is_dynamic_shape);
   // Plant op input which is tuple, and set kAttrDynInputSizes attr
-  void ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node, SeenNum seen);
+  void ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node, SeenNum seen, bool run_by_single_op);
   // Reverse operation for pass in high grad
   void ReversePassFuncGraph(const FuncGraphPtr &func_graph);
   void ReversePassCNode(const CNodePtr &cnode, ValuePtrList *inputs_value, AnfNodePtrList *cnode_inputs);

@@ -64,99 +64,7 @@ void set_pydata_converter(const pyexecute::PyDataConverter &pydata_converter) {
   pyexecute::set_pydata_converter(pydata_converter);
 }
 
-void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs, const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(inputs);
-  if (node != nullptr && node->abstract() != nullptr && common::AnfAlgo::IsDynamicSequence(node)) {
-    MS_LOG(DEBUG) << "node:" << node->fullname_with_scope() << " abs:" << node->abstract()->ToString();
-    if (!utils::isa<ValuePtr>(arg)) {
-      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid input for dynamic sequence node:"
-                                 << node->DebugString();
-    }
-    auto value = utils::cast<ValuePtr>(arg);
-    MS_EXCEPTION_IF_NULL(value);
-    if (!value->isa<ValueSequence>()) {
-      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid value:" << value->ToString()
-                                 << " for dynamic sequence node:" << node->DebugString();
-    }
-    const auto &tensor = AnfAlgo::SequenceToTensor(value);
-    inputs->push_back(tensor);
-    return;
-  }
-
-  if (utils::isa<tensor::TensorPtr>(arg)) {
-    auto value = utils::cast<tensor::TensorPtr>(arg);
-    inputs->push_back(value);
-  } else if (utils::isa<ValuePtr>(arg)) {
-    auto value = utils::cast<ValuePtr>(arg);
-    MS_EXCEPTION_IF_NULL(value);
-    if (value->isa<ValueSequence>()) {
-      auto value_tuple = value->cast<ValueSequencePtr>();
-      MS_EXCEPTION_IF_NULL(value_tuple);
-      auto tuple_value = value_tuple->value();
-      (void)std::transform(tuple_value.begin(), tuple_value.end(), std::back_inserter(*inputs),
-                           [](const ValuePtr &v) { return v->cast<tensor::TensorPtr>(); });
-    } else if (value->isa<Scalar>()) {
-      tensor::TensorPtr scalar_tensor = ScalarToTensor(value->cast<ScalarPtr>());
-      inputs->push_back(scalar_tensor);
-    } else if (value->isa<Monad>()) {
-      // If value is a monad, replace it with an unused tensor.
-      inputs->push_back(std::make_shared<tensor::Tensor>(int64_t(0), kBool));
-    } else {
-      inputs->push_back(value->cast<tensor::TensorPtr>());
-    }
-  } else if (utils::isa<PyObjectRef>(arg)) {
-    auto value = utils::cast<PyObjectRef>(arg).object_;
-    inputs->push_back(py::cast<tensor::TensorPtr>(value));
-  } else if (utils::isa<VectorRefPtr>(arg)) {
-    const auto &args_new = utils::cast<VectorRef>(arg);
-    for (const auto &v : args_new) {
-      PushInputTensor(v, inputs);
-    }
-  } else {
-    MS_LOG(WARNING) << "Invalid input type.";
-  }
-}
-
 namespace {
-void FlattenValue(const BaseRef &arg, ValuePtrList *flatted_value) {
-  MS_EXCEPTION_IF_NULL(flatted_value);
-  if (utils::isa<tensor::Tensor>(arg)) {
-    (void)flatted_value->emplace_back(utils::cast<TensorPtr>(arg));
-  } else if (utils::isa<Scalar>(arg)) {
-    (void)flatted_value->emplace_back(ScalarToTensor(utils::cast<ScalarPtr>(arg)));
-  } else if (utils::isa<ValueSequencePtr>(arg)) {
-    auto value_sequence = utils::cast<ValueSequencePtr>(arg);
-    MS_EXCEPTION_IF_NULL(value_sequence);
-    auto sequence_value = value_sequence->value();
-    for (auto &value : sequence_value) {
-      FlattenValue(value, flatted_value);
-    }
-  } else if (utils::isa<ValueDictionaryPtr>(arg)) {
-    auto value_dict = utils::cast<ValueDictionaryPtr>(arg);
-    MS_EXCEPTION_IF_NULL(value_dict);
-    auto dict_value = value_dict->value();
-    for (auto &iter : dict_value) {
-      FlattenValue(iter.second, flatted_value);
-    }
-  } else if (utils::isa<tensor::COOTensorPtr>(arg)) {
-    auto coo_tensor = utils::cast<tensor::COOTensorPtr>(arg);
-    MS_EXCEPTION_IF_NULL(coo_tensor);
-    for (size_t i = 0; i < coo_tensor->GetTensorLength(); ++i) {
-      (void)flatted_value->emplace_back(coo_tensor->GetTensorAt(i));
-    }
-  } else if (utils::isa<tensor::CSRTensorPtr>(arg)) {
-    auto csr_tensor = utils::cast<tensor::CSRTensorPtr>(arg);
-    MS_EXCEPTION_IF_NULL(csr_tensor);
-    for (size_t i = 0; i < csr_tensor->GetTensorLength(); ++i) {
-      (void)flatted_value->emplace_back(csr_tensor->GetTensorAt(i));
-    }
-  } else {
-    MS_LOG(INTERNAL_EXCEPTION)
-      << "#dmsg#Runtime error info:#dmsg#The value input to flatten should be sequence or dictionary, but it is "
-      << arg.ToString();
-  }
-}
-
 // Insert the front_node related tensor in the input_tensor.
 void PushTensor(const VectorRef &args, const std::vector<AnfNodePtr> &parameters, const AnfNodePtr &front_node,
                 std::vector<tensor::TensorPtr> *input_tensors) {
@@ -168,12 +76,13 @@ void PushTensor(const VectorRef &args, const std::vector<AnfNodePtr> &parameters
   }
   auto position = iter - parameters.begin();
 
-  // If the node is dynamic sequence all the element in tuple should be placed in single tensor.
-  PushInputTensor(args[position], input_tensors, front_node);
+  std::vector<tensor::TensorPtr> flatten_values;
+  AnfAlgo::FlattenInputArg(args[position], front_node, &flatten_values);
+  (void)std::copy(flatten_values.begin(), flatten_values.end(), std::back_inserter(*input_tensors));
 }
 
 void PushTupleTensor(const VectorRef &args, const std::vector<AnfNodePtr> &parameters, const AnfNodePtr &front_node,
-                     size_t index, std::map<size_t, ValuePtrList> *flatten_values,
+                     size_t index, std::map<size_t, std::vector<tensor::TensorPtr>> *flatten_values,
                      std::vector<tensor::TensorPtr> *input_tensors) {
   MS_EXCEPTION_IF_NULL(input_tensors);
   MS_EXCEPTION_IF_NULL(flatten_values);
@@ -192,16 +101,15 @@ void PushTupleTensor(const VectorRef &args, const std::vector<AnfNodePtr> &param
   // Avoid repeating flatten tuple for each args position.
   auto &flatten_value = (*flatten_values)[position];
   if (flatten_value.empty()) {
-    FlattenValue(args[position], &flatten_value);
+    AnfAlgo::FlattenInputArg(args[position], front_node, &flatten_value);
   }
 
   if (index >= flatten_value.size()) {
     MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Index out of flatten_value range, index value is "
                                << index << " and flatten_value size is " << flatten_value.size() << ".";
   }
-  const auto &input = flatten_value[index];
-  MS_EXCEPTION_IF_NULL(input);
-  auto tensor_input = input->cast<tensor::TensorPtr>();
+  auto tensor_input = flatten_value[index];
+  MS_EXCEPTION_IF_NULL(tensor_input);
   input_tensors->push_back(tensor_input);
 }
 }  // namespace
@@ -232,7 +140,7 @@ std::vector<std::vector<tensor::TensorPtr>> GetRunGraphInputs(const GraphCompile
                                      graph_compiler_info.name_);
   const auto &origin_parameters = graph_compiler_info.origin_parameters_order_;
   std::vector<std::vector<tensor::TensorPtr>> input_tensor_lists;
-  std::map<size_t, ValuePtrList> flatten_values;
+  std::map<size_t, std::vector<tensor::TensorPtr>> flatten_values;
 
   for (const auto &kernel_graph : graph_compiler_info.graphs_) {
     std::vector<tensor::TensorPtr> input_tensors;
@@ -1052,7 +960,10 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
   MS_LOG(INFO) << "Status record: start run actor: " << actor_info;
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageRunGraph, 1, 0, 0);
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageGetInputs, 1, 0, 0);
-  auto input_tensors = GetRunGraphInputs(graph_compiler_info, args);
+  std::vector<std::vector<tensor::TensorPtr>> input_tensors;
+  if (graph_compiler_info.exist_flatten_concat_) {
+    input_tensors = GetRunGraphInputs(graph_compiler_info, args);
+  }
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageGetInputs, 1, 0, 1);
   // Release python gil.
   mindspore::ScopedLongRunning long_running;
@@ -1060,7 +971,7 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
   const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
   MS_EXCEPTION_IF_NULL(actor_set);
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageRun, 1, 0, 0);
-  runtime::GraphScheduler::GetInstance().Run(actor_set, input_tensors);
+  runtime::GraphScheduler::GetInstance().Run(actor_set, input_tensors, args);
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageRun, 1, 0, 1);
 
   {

@@ -34,13 +34,13 @@ equal:
         >>> import mindspore
         >>> from mindspore import Tensor, ops
         >>> # case 1: The shape of two inputs are different
-        >>> x = Tensor([1, 2, 3], mindspore.float32)
-        >>> output = ops.eq(x, 2.0)
+        >>> input = Tensor([1, 2, 3], mindspore.float32)
+        >>> output = ops.equal(input, 2.0)
         >>> print(output)
         [False True False]
         >>> # case 2: The shape of two inputs are the same
-        >>> x = Tensor([1, 2, 3], mindspore.int32)
-        >>> y = Tensor([1, 2, 4], mindspore.int32)
-        >>> output = ops.eq(x, y)
+        >>> input = Tensor([1, 2, 3], mindspore.int32)
+        >>> other = Tensor([1, 2, 4], mindspore.int32)
+        >>> output = ops.equal(input, other)
         >>> print(output)
         [ True  True False]

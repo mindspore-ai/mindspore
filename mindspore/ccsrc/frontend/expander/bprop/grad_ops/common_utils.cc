@@ -420,39 +420,6 @@ std::vector<int64_t> RegenerateOutputShape(const std::vector<int64_t> &x_shp, co
   return out_shp;
 }
 
-std::vector<int64_t> TileShape(const std::vector<int64_t> &multiples, const std::vector<int64_t> &shapex) {
-  int64_t len_multi = static_cast<int64_t>(multiples.size());
-  int64_t len_shape = static_cast<int64_t>(shapex.size());
-  int64_t len_cmp = len_multi - len_shape;
-  auto max_len = std::max(len_multi, len_shape);
-  int64_t i = 0;
-  int64_t j = 0;
-  std::vector<int64_t> res;
-  auto res_sz = static_cast<size_t>(2 * max_len);
-  res.reserve(res_sz);
-  while (i < max_len && j < max_len) {
-    auto idx_i = LongToSize(i);
-    auto idx_j = LongToSize(j);
-    if (len_cmp == 0) {
-      res.push_back(multiples[idx_i]);
-      res.push_back(shapex[idx_j]);
-      i++;
-      j++;
-    } else if (len_cmp > 0) {
-      res.push_back(multiples[idx_i]);
-      res.push_back(1);
-      i++;
-      len_cmp--;
-    } else {
-      res.push_back(1);
-      res.push_back(shapex[idx_j]);
-      j++;
-      len_cmp++;
-    }
-  }
-  return res;
-}
-
 std::vector<int64_t> InvertPermutation(const std::vector<int64_t> &perm) {
   std::vector<int64_t> check_perm(perm);
   std::vector<int64_t> res(perm);

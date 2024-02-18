@@ -31,7 +31,6 @@ bool AclnnKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::
 }
 
 int AclnnKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  hash_id_ = 0;
   auto ret = KernelMod::Resize(inputs, outputs);
   GetWorkSpaceInfo(inputs, outputs);
   return ret;

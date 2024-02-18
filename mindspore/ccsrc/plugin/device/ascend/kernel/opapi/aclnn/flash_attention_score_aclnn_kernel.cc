@@ -22,8 +22,16 @@ namespace mindspore {
 namespace kernel {
 void FAScoreAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                              const std::vector<KernelTensor *> &outputs) {
-  auto return_value = FAGenerate(inputs, outputs);
-  UpdateWorkspace(return_value);
+  auto scale_value = static_cast<double>(GetFAAttr<float>("scale_value"));
+  auto keep_prob = static_cast<double>(GetFAAttr<float>("keep_prob"));
+  auto pre_tokens = GetFAAttr<int64_t>("pre_tokens");
+  auto next_tokens = GetFAAttr<int64_t>("next_tokens");
+  auto head_num = GetFAAttr<int64_t>("head_num");
+  auto input_layout = GetFAAttr<std::string>("input_layout");
+  auto inner_precise = GetFAAttr<int64_t>("inner_precise");
+  GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], nullptr, nullptr, nullptr, inputs[kIndex3],
+                        nullptr, scale_value, keep_prob, pre_tokens, next_tokens, head_num, input_layout, inner_precise,
+                        nullptr, outputs[kIndex1], outputs[kIndex2], empty_kernel_tensor_ptr->get(), outputs[kIndex0]);
 }
 
 bool FAScoreAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs,

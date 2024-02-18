@@ -222,17 +222,17 @@ def get_tile_vmap_rule(prim, axis_size):
     """VmapRule for `P.Tile` operation."""
 
     @_primexpr
-    def _get_batch_multiples(input_shape, dim, multiples):
+    def _get_batch_multiples(input_shape, dim, dims):
         input_ndim = len(input_shape)
-        multiples_ndim = len(multiples)
+        multiples_ndim = len(dims)
         if multiples_ndim < input_ndim - 1:
-            multiples = (1,) * (input_ndim - 1 - multiples_ndim) + multiples
+            dims = (1,) * (input_ndim - 1 - multiples_ndim) + dims
 
         rev_dim = input_ndim - 1 - dim
         if rev_dim == 0:
-            return multiples + (1,), multiples_ndim
+            return dims + (1,), multiples_ndim
 
-        batch_multiples = list(multiples)
+        batch_multiples = list(dims)
         batch_multiples.insert(-rev_dim, 1)
         return tuple(batch_multiples), multiples_ndim - rev_dim
 
@@ -242,12 +242,12 @@ def get_tile_vmap_rule(prim, axis_size):
             return result
 
         input_x, dim = input_bdim
-        multiples, multiples_dim = multiples_bdim
-        if multiples_dim is not None:
-            _raise_value_error("The source axis of shape in `Tile` must be None, but got {}.".format(multiples_dim))
+        dims, dims_dim = multiples_bdim
+        if dims_dim is not None:
+            _raise_value_error("The source axis of shape in `Tile` must be None, but got {}.".format(dims_dim))
 
         input_shape = F.shape(input_x)
-        batch_multiples, out_dim = _get_batch_multiples(input_shape, dim, multiples)
+        batch_multiples, out_dim = _get_batch_multiples(input_shape, dim, dims)
         repeat_tensor = prim(input_x, batch_multiples)
         return repeat_tensor, out_dim
 

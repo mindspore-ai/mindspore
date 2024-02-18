@@ -111,7 +111,6 @@ constexpr auto kAttrPyExecuteNeedUpdateShape = "pyexecute_need_update_shape";
 constexpr auto kAttrPyExecuteOutput = "pyexecute_output";
 constexpr auto kAttrSrcFormat = "src_format";
 constexpr auto kAttrDstFormat = "dst_format";
-constexpr auto kAttrMultiples = "multiples";
 constexpr auto kAttrFixPrecision = "fix_precision";
 constexpr auto kAttrOutputPrecision = "output_precision";
 constexpr auto kAttrOutputUsedNum = "output_used_num";
@@ -195,7 +194,7 @@ constexpr auto kAttrSizes = "sizes";
 constexpr auto kAttrKsizes = "ksizes";
 constexpr auto kAttrIsKernelDynamicImpl = "is_kernel_dynamic_impl";
 constexpr auto kAttrIsKernelDynamicShape = "is_kernel_dynamic_shape";
-constexpr auto kAttrIsDynamicShape = "is_ms_function_dynamic_shape";
+constexpr auto kAttrIsPyboostTupleInput = "is_pyboost_tuple_input";
 constexpr auto kAttrIsDynamicRank = "is_dynamic_rank";
 constexpr auto kAttrInputIsDynamicRank = "input_is_dynamic_rank";
 constexpr auto kAttrOutputIsDynamicRank = "output_is_dynamic_rank";
@@ -620,6 +619,10 @@ constexpr auto kGeGraphCompilerCacheDir = "ge.graph_compiler_cache_dir";
 constexpr auto kRecomputeInsert = "recompute_insert";
 constexpr auto kAddedRecomputeDependAttr = "added_recompute_depend";
 constexpr auto kCondidateOverlapBlockId = "condidate_overlap_block_id";
+constexpr auto kNcclWorldGroup = "nccl_world_group";
+constexpr auto kHcclWorldGroup = "hccl_world_group";
+constexpr auto kSyncBnGroup = "sync_bn_group";
+constexpr auto kRankID = "RANK_ID";
 
 // User data key for pyexecute.
 constexpr auto kSyncUserDataHandler = "sync_user_data_handler";

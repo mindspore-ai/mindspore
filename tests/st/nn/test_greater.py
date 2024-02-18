@@ -22,7 +22,7 @@ import mindspore as ms
 
 @ms.jit
 def greater_forward_func(x, y):
-    return ops.auto_generate.greater(x, y)
+    return ops.greater(x, y)
 
 
 @ms.jit

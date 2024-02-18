@@ -23,7 +23,7 @@ ms.context.set_context(ascend_config={"precision_mode": "force_fp32"})
 
 @test_utils.run_with_cell
 def sin_forward_func(x):
-    return ops.auto_generate.sin(x)
+    return ops.sin(x)
 
 
 @test_utils.run_with_cell
@@ -106,7 +106,7 @@ def test_sin_dynamic(mode):
     """
     context.set_context(mode=mode)
     x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(ops.auto_generate.sin)
+    test_cell = test_utils.to_cell_obj(ops.sin)
     test_cell.set_inputs(x_dyn)
     x1 = Tensor(np.array([0.62, 0.28, 0.43, 0.62]).astype(np.float32))
     output1 = test_cell(x1)

@@ -22,8 +22,8 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def grid_sampler_2d_forward_func(input_x, grid):
-    grid_sampler_2d = ops.auto_generate.GridSampler2D(interpolation_mode='bilinear', padding_mode='zeros',
-                                                      align_corners=True)(input_x, grid)
+    grid_sampler_2d = ops.GridSampler2D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)(
+        input_x, grid)
     return grid_sampler_2d
 
 

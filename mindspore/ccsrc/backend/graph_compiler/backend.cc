@@ -302,7 +302,9 @@ VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const s
   // Run graph
   std::vector<tensor::TensorPtr> inputs;
   for (const auto &arg : args) {
-    PushInputTensor(arg, &inputs);
+    std::vector<tensor::TensorPtr> flatten_values;
+    AnfAlgo::FlattenInputArg(arg, nullptr, &flatten_values);
+    (void)std::copy(flatten_values.begin(), flatten_values.end(), std::back_inserter(inputs));
   }
 
   VectorRef outputs;
@@ -762,7 +764,8 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
 
   // Release GIL and run actor DAG.
   GilReleaseWithCheck release_gil;
-  runtime::GraphScheduler::GetInstance().Run(actor_set, input_tensors);
+  VectorRef empty_args;
+  runtime::GraphScheduler::GetInstance().Run(actor_set, input_tensors, empty_args);
 
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   graph_compiler_->Summary(graph_compiler_info.graphs_);
@@ -945,6 +948,7 @@ void MindRTBackend::OpRunCallback(const std::shared_ptr<runtime::OpTaskContext> 
 
   // Reset PyNative infer flag.
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, infer_flag);
+  context->op_compiler_info()->UpdateStatus(true);
   MS_LOG(DEBUG) << "OpRunCallback end";
 }
 
@@ -967,6 +971,7 @@ void MindRTBackend::OpRunCallbackDynamic(const std::shared_ptr<runtime::OpTaskCo
   ClearOpInputOutput(context->op_compiler_info());
   // Reset PyNative infer flag.
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, infer_flag);
+  context->op_compiler_info()->UpdateStatus(true);
   MS_LOG(DEBUG) << "OpRunCallback end";
 }
 
@@ -993,6 +998,8 @@ void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
     CompileSingleOpGraph(op_compiler_info, op_compiler_info->device_context_);
   }
 
+  op_compiler_info->UpdateStatus(false);
+
   auto run_task = std::make_shared<runtime::DeviceOpRunTask>(
     run_op_context, [this](const std::shared_ptr<runtime::OpTaskContext> &ctx) { OpRunCallback(ctx); });
   run_task->set_task_id(op_compiler_info->graph_id_);
@@ -1012,6 +1019,7 @@ void MindRTBackend::DispatchOpTaskDynamic(VectorRef *outputs, const OpCompilerIn
   auto run_op_context =
     std::make_shared<runtime::OpTaskContext>(graph->graph_id(), graph, op_run_info, op_compiler_info, infer_flag);
 
+  op_compiler_info->UpdateStatus(false);
   auto &op_executor = runtime::OpExecutor::GetInstance();
   auto task = std::make_shared<runtime::DeviceOpRunTask>(
     run_op_context, [this](const std::shared_ptr<runtime::OpTaskContext> &ctx) { OpRunCallbackDynamic(ctx); });
@@ -1122,12 +1130,7 @@ void MindRTBackend::RunOp(const session::BackendOpRunInfoPtr &op_run_info, Vecto
   auto op_compiler_info =
     pynative::OpCompiler::GetInstance().Compile(op_run_info, &single_op_cache_hit, device_name_, device_id_);
   MS_EXCEPTION_IF_NULL(op_compiler_info);
-  if (runtime::OpExecutor::GetInstance().ActorInQueue(op_compiler_info->graph_id_)) {
-    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kWaitTaskFinish,
-                                       op_run_info->base_op_run_info.op_name, true);
-    runtime::OpExecutor::GetInstance().Wait();
-  }
-
+  op_compiler_info->WaitReady();
   RunOpImpl(single_op_cache_hit, op_compiler_info, op_run_info, outputs);
 }
 
@@ -1141,12 +1144,7 @@ void MindRTBackend::RunOpDynamic(const session::BackendOpRunInfoPtr &op_run_info
   auto op_compiler_info =
     pynative::OpCompiler::GetInstance().Compile(op_run_info, &single_op_cache_hit, device_name_, device_id_);
   MS_EXCEPTION_IF_NULL(op_compiler_info);
-  if (runtime::OpExecutor::GetInstance().ActorInQueue(op_compiler_info->graph_id_)) {
-    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kWaitTaskFinish,
-                                       op_run_info->base_op_run_info.op_name, true);
-    runtime::OpExecutor::GetInstance().Wait();
-  }
-
+  op_compiler_info->WaitReady();
   RunOpImplDynamic(single_op_cache_hit, op_compiler_info, op_run_info, outputs);
 }
 
