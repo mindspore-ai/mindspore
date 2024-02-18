@@ -71,6 +71,29 @@ static std::unordered_map<std::string, std::pair<OpType, int>> op_type_map = {
   {"ElemAny", {OP_ELEMENY, 0}},
   {"IsFinite", {OP_UNARY, dvm::UnaryOpType::kIsFinite}}};
 
+TypeId GetValueNodeType(const AnfNodePtr &node) {
+  auto valuenode = node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(valuenode);
+  auto input_tensor = valuenode->value()->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  auto type_id = input_tensor->data_type();
+  if (type_id != TypeId::kNumberTypeFloat32 && type_id != TypeId::kNumberTypeFloat16 &&
+      type_id != TypeId::kNumberTypeInt32) {
+    MS_LOG(EXCEPTION) << "Data type of scalar value input only supports float, but got: " << TypeIdToString(type_id)
+                      << " node: " << node->fullname_with_scope();
+  }
+  return type_id;
+}
+
+template <typename T>
+T GetScalarFromNode(const AnfNodePtr &node) {
+  auto valuenode = node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(valuenode);
+  auto input_tensor = valuenode->value()->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  return TensorValueToVector<T>(input_tensor)[0];
+}
+
 class OpBuilder {
  public:
   OpBuilder(dvm::Kernel *kernel, const AnfNodePtrList &outputs, std::unordered_map<AnfNodePtr, ShapeRefPtr> *shapes_ref,
@@ -81,24 +104,6 @@ class OpBuilder {
     }
   }
   ~OpBuilder() = default;
-
-  std::pair<float, TypeId> GetScalarFromTensor(const AnfNodePtr &node) {
-    auto value_node = node->cast<ValueNodePtr>();
-    MS_EXCEPTION_IF_NULL(value_node);
-    auto input_tensor = value_node->value()->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(input_tensor);
-    auto type_id = input_tensor->data_type();
-    float scalar;
-    if (type_id == TypeId::kNumberTypeFloat32) {
-      scalar = static_cast<float *>(input_tensor->data_c())[0];
-    } else if (type_id == TypeId::kNumberTypeFloat16) {
-      scalar = static_cast<float>(static_cast<float16 *>(input_tensor->data_c())[0]);
-    } else {
-      MS_LOG(EXCEPTION) << "Data type of scalar value input only supports float, but got: " << TypeIdToString(type_id)
-                        << " node: " << node->fullname_with_scope();
-    }
-    return {scalar, type_id};
-  }
 
   void Emit(const AnfNodePtr &anf_node) {
     auto node = anf_node->cast<CNodePtr>();
@@ -139,24 +144,7 @@ class OpBuilder {
         break;
       }
       case OP_BINARY: {
-        auto input1 = node->input(1);
-        auto input2 = node->input(2);
-        auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input1->Shape())[kShape];
-        auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input2->Shape())[kShape];
-        auto input1_sz = std::accumulate(input1_shape.begin(), input1_shape.end(), 1, std::multiplies{});
-        auto input2_sz = std::accumulate(input2_shape.begin(), input2_shape.end(), 1, std::multiplies{});
-        bool input1_scalar = (input1_sz == 1 && input1->cast<ValueNodePtr>() != nullptr);
-        bool input2_scalar = (input2_sz == 1 && input2->cast<ValueNodePtr>() != nullptr);
-        dvm::NDObject *op = nullptr;
-        if (input1_scalar) {
-          float scalar = GetScalarFromTensor(input1).first;
-          op = kernel_->Binary(op_type->second.second, scalar, GetInput(input2));
-        } else if (input2_scalar) {
-          float scalar = GetScalarFromTensor(input2).first;
-          op = kernel_->Binary(op_type->second.second, GetInput(input1), scalar);
-        } else {
-          op = kernel_->Binary(op_type->second.second, GetInput(input1), GetInput(input2));
-        }
+        auto op = EmitBinaryOp(node, op_type->second.second);
         EmitOp(anf_node, op);
         break;
       }
@@ -169,9 +157,14 @@ class OpBuilder {
         break;
       }
       case OP_NEG: {
-        auto input = node->input(1);
-        auto op = kernel_->Binary(dvm::BinaryOpType::kMul, GetInput(input), -1.0);
-        EmitOp(anf_node, op);
+        auto obj = GetInput(node->input(1));
+        if (kernel_->GetDType(obj) == dvm::kInt32) {
+          auto op = kernel_->Binary(dvm::BinaryOpType::kMul, obj, -1);
+          EmitOp(anf_node, op);
+        } else {
+          auto op = kernel_->Binary(dvm::BinaryOpType::kMul, obj, -1.0f);
+          EmitOp(anf_node, op);
+        }
         break;
       }
       case OP_ASSIGN: {
@@ -197,6 +190,44 @@ class OpBuilder {
         MS_LOG(EXCEPTION) << op_type->second << " is unsupported op type.";
         break;
     }
+  }
+
+  dvm::NDObject *EmitBinaryOp(const CNodePtr &node, int binary_type) {
+    AnfNodePtr inputs[] = {node->input(1), node->input(2)};
+    int scalar_index = -1;
+    for (int i = 0; i < 2; i++) {
+      auto shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs[i]->Shape())[kShape];
+      auto size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies{});
+      if (inputs[i]->isa<ValueNode>()) {
+        scalar_index = i;
+        if (size != 1) {
+          MS_LOG(EXCEPTION) << "In GraphKernel the input node " << inputs[i]->fullname_with_scope() << " of "
+                            << node->fullname_with_scope() << " should have a size of 1, but get " << size;
+        }
+      }
+    }
+    dvm::NDObject *op = nullptr;
+    if (scalar_index != -1) {
+      auto scalar_node = inputs[scalar_index];
+      auto common_node = inputs[scalar_index ^ 1];
+      auto type_id = GetValueNodeType(scalar_node);
+      if (type_id == kNumberTypeFloat32) {
+        auto scalar = GetScalarFromNode<float>(scalar_node);
+        op = scalar_index ? kernel_->Binary(binary_type, GetInput(common_node), scalar)
+                          : kernel_->Binary(binary_type, scalar, GetInput(common_node));
+      } else if (type_id == kNumberTypeFloat16) {
+        auto scalar = static_cast<float>(GetScalarFromNode<float16>(scalar_node));
+        op = scalar_index ? kernel_->Binary(binary_type, GetInput(common_node), scalar)
+                          : kernel_->Binary(binary_type, scalar, GetInput(common_node));
+      } else if (type_id == kNumberTypeInt32) {
+        auto scalar = GetScalarFromNode<int32_t>(scalar_node);
+        op = scalar_index ? kernel_->Binary(binary_type, GetInput(common_node), scalar)
+                          : kernel_->Binary(binary_type, scalar, GetInput(common_node));
+      }
+    } else {
+      op = kernel_->Binary(binary_type, GetInput(inputs[0]), GetInput(inputs[1]));
+    }
+    return op;
   }
 
   dvm::NDObject *GetLoad(const AnfNodePtr &node) {
@@ -260,9 +291,19 @@ class OpBuilder {
   }
 
   dvm::NDObject *EmitScalarBroadcast(const AnfNodePtr &node, dvm::ShapeRef *shape) {
-    auto [scalar, type_id] = GetScalarFromTensor(node);
+    auto type_id = GetValueNodeType(node);
     auto v_type_id = ms_type_map[type_id];
-    auto op = kernel_->Broadcast(scalar, shape, v_type_id, empty_input_);
+    dvm::NDObject *op = nullptr;
+    if (type_id == kNumberTypeFloat32) {
+      auto scalar = GetScalarFromNode<float>(node);
+      op = kernel_->Broadcast(scalar, shape, v_type_id, empty_input_);
+    } else if (type_id == kNumberTypeFloat16) {
+      auto scalar = static_cast<float>(GetScalarFromNode<float16>(node));
+      op = kernel_->Broadcast(scalar, shape, v_type_id, empty_input_);
+    } else if (type_id == kNumberTypeInt32) {
+      auto scalar = GetScalarFromNode<int32_t>(node);
+      op = kernel_->Broadcast(scalar, shape, v_type_id, empty_input_);
+    }
     if (empty_input_) {
       empty_input_ = false;  // now we have a fake input
     }
