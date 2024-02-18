@@ -27,7 +27,51 @@
 #include "utils/check_convert_utils.h"
 
 namespace mindspore::expander::bprop {
-const auto diag_max_length = 200000000;
+namespace {
+/**
+ * @brief Calculate the shape for gradient of tile to reducing. Cases:
+ *        1. dims:    [2, 3], input_shape:    [4, 5] ==>       [2, 4, 3, 5].
+ *        2. dims:    [2, 3], input_shape: [4, 5, 6] ==> [1, 4, 2, 5, 3, 6].
+ *        3. dims: [2, 3, 4], input_shape:       [5] ==> [2, 1, 3, 1, 4, 5].
+ *
+ * @param dims Dims argument for op Tile.
+ * @param input_shape Shape of input tensor for op Tile.
+ * @return std::vector<int64_t> Return shape.
+ */
+std::vector<int64_t> TileShape(const std::vector<int64_t> &dims, const std::vector<int64_t> &input_shape) {
+  int64_t len_multi = static_cast<int64_t>(dims.size());
+  int64_t len_shape = static_cast<int64_t>(input_shape.size());
+  int64_t len_cmp = len_multi - len_shape;
+  auto max_len = std::max(len_multi, len_shape);
+  int64_t i = 0;
+  int64_t j = 0;
+  std::vector<int64_t> res;
+  auto res_sz = static_cast<size_t>(2 * max_len);
+  res.reserve(res_sz);
+  while (i < max_len && j < max_len) {
+    auto idx_i = LongToSize(i);
+    auto idx_j = LongToSize(j);
+    if (len_cmp == 0) {
+      res.push_back(dims[idx_i]);
+      res.push_back(input_shape[idx_j]);
+      i++;
+      j++;
+    } else if (len_cmp > 0) {
+      res.push_back(dims[idx_i]);
+      res.push_back(1);
+      i++;
+      len_cmp--;
+    } else {
+      res.push_back(1);
+      res.push_back(input_shape[idx_j]);
+      j++;
+      len_cmp++;
+    }
+  }
+
+  return res;
+}
+}  // namespace
 
 DEF_PURE_SHAPE_CALC(g_gather_drop_negative)
   .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
@@ -1432,7 +1476,7 @@ REG_BPROP_BUILDER("Split").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
 
 DEF_PURE_SHAPE_CALC(g_tile)
   .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
-    // {x_shape, multiples}
+    // {x_shape, dims}
     auto r_shape = TileShape(inputs.at(1), inputs.at(0));
     ShapeVector axis;
     size_t axis_sz = r_shape.size() / 2;
@@ -1444,12 +1488,12 @@ DEF_PURE_SHAPE_CALC(g_tile)
   })
   .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &unknown_inputs) -> std::vector<int64_t> {
     auto x = inputs.at(0);
-    auto multiples = inputs.at(1);
-    if (!unknown_inputs.empty() || IsDynamicRank(x) || IsDynamicRank(multiples)) {
+    auto dims = inputs.at(1);
+    if (!unknown_inputs.empty() || IsDynamicRank(x) || IsDynamicRank(dims)) {
       return {-1, -1};
     }
     auto x_sz = static_cast<int64_t>(x.size());
-    auto multiples_sz = static_cast<int64_t>(multiples.size());
+    auto multiples_sz = static_cast<int64_t>(dims.size());
     auto max_sz = x_sz > multiples_sz ? x_sz : multiples_sz;
     return {2 * max_sz, max_sz};
   });

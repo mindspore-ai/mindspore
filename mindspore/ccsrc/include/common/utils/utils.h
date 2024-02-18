@@ -111,7 +111,6 @@ constexpr auto kAttrPyExecuteNeedUpdateShape = "pyexecute_need_update_shape";
 constexpr auto kAttrPyExecuteOutput = "pyexecute_output";
 constexpr auto kAttrSrcFormat = "src_format";
 constexpr auto kAttrDstFormat = "dst_format";
-constexpr auto kAttrMultiples = "multiples";
 constexpr auto kAttrFixPrecision = "fix_precision";
 constexpr auto kAttrOutputPrecision = "output_precision";
 constexpr auto kAttrOutputUsedNum = "output_used_num";

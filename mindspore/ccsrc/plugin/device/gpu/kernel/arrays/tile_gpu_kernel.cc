@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <map>
+#include "pipeline/pynative/pynative_utils.h"
 #include "plugin/device/gpu/kernel/arrays/tile_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
@@ -61,17 +62,20 @@ int TileGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
   if (is_null_input_) {
     return KRET_OK;
   }
-  if (output_shape_.size() < kTileOutputsNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output cannot be less than 1, but got "
-                      << output_shape_.size();
-  }
+
   if (output_shape_.size() > TILE_MAX_DIMENSION) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output cannot be greater than "
                       << TILE_MAX_DIMENSION << ", but got " << output_shape_.size();
   }
-  std::vector<int64_t> multiples = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
-  size_t filling_value = multiples.size() - input_shape_.size();
-  (void)input_shape_.insert(input_shape_.begin(), filling_value, kIndex1);
+
+  // The size of `input_shape_` should be the same as `output_shape_`.
+  if (MS_UNLIKELY(input_shape_.size() > output_shape_.size())) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the output rank must be greater than or equal to input rank, but got " << output_shape_.size()
+                  << " vs " << input_shape_.size();
+  }
+  size_t filling_value = output_shape_.size() - input_shape_.size();
+  (void)input_shape_.insert(input_shape_.begin(), filling_value, 1);
   return KRET_OK;
 }
 

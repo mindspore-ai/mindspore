@@ -84,8 +84,8 @@ class COMMON_EXPORT Emitter {
   NodePtr Log(const NodePtr &x);
   NodePtr Transpose(const NodePtr &node, const NodePtr &perm);
   NodePtr Transpose(const NodePtr &node, const ShapeVector &perm) { return Transpose(node, Value(perm)); }
-  NodePtr Tile(const NodePtr &node, const NodePtr &multiples);
-  NodePtr Tile(const NodePtr &node, const ShapeVector &multiples) { return Tile(node, Value(multiples)); }
+  NodePtr Tile(const NodePtr &node, const NodePtr &dims);
+  NodePtr Tile(const NodePtr &node, const ShapeVector &dims) { return Tile(node, Value(dims)); }
   NodePtr Concat(const NodePtrList &inputs, int64_t axis) {
     return Emit(kConcatOpName, {MakeTuple(inputs), Value(axis)});
   }
