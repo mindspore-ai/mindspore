@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,13 +23,14 @@ from mindspore.ops import operations as P
 
 
 class RandomChoiceWithMaskNet(nn.Cell):
-    def __init__(self):
-        super(RandomChoiceWithMaskNet, self).__init__()
-        self.random_choice_with_mask = P.RandomChoiceWithMask(count=4, seed=1)
-        self.random_choice_with_mask.add_prim_attr("cust_aicpu", "mindspore_aicpu_kernels")
+    def __init__(self, count):
+        super().__init__()
+        self.random_choice_with_mask = P.RandomChoiceWithMask(
+            count=count, seed=1)
 
     def construct(self, x):
         return self.random_choice_with_mask(x)
+
 
 
 @pytest.mark.level0
@@ -37,18 +38,41 @@ class RandomChoiceWithMaskNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_random_choice_with_mask_graph(mode):
+def test_random_choice_with_mask_check_value(mode):
     """
     Feature: Custom aicpu feature.
     Description: Test random_choice_with_mask kernel.
-    Expectation: No exception.
+    Expectation: Output value is the same as expected.
     """
     context.set_context(mode=mode, device_target="Ascend")
-    input_tensor = Tensor(np.array([[1, 0, 1, 0], [0, 0, 0, 1], [1, 1, 1, 1],
-                                    [0, 0, 0, 1]]).astype(np.bool))
-    expect1 = (4, 2)
-    expect2 = (4,)
-    net = RandomChoiceWithMaskNet()
-    output1, output2 = net(input_tensor)
-    assert output1.shape == expect1
-    assert output2.shape == expect2
+    # Sample all
+    x = np.array([[1, 1],
+                  [1, 1]]).astype(np.bool)
+    expect_coordinate = set([(0, 0), (0, 1), (1, 0), (1, 1)])
+    expect_mask = np.array([True, True, True, True], np.bool)
+    net = RandomChoiceWithMaskNet(4)
+    coordinate, mask = net(Tensor(x))
+    coordinate_set = set(tuple(coord) for coord in coordinate.asnumpy())
+    assert coordinate_set == expect_coordinate
+    assert np.all(mask.asnumpy() == expect_mask)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_random_choice_with_mask(mode):
+    """
+    Feature: Custom aicpu feature.
+    Description: Test random_choice_with_mask kernel.
+    Expectation: Output shape is the same as expected.
+    """
+    context.set_context(mode=mode, device_target="Ascend")
+    x = np.array([[1, 0, 1],
+                  [1, 1, 0]]).astype(np.bool)
+    count = 3
+    net = RandomChoiceWithMaskNet(count)
+    coordinate, mask = net(Tensor(x))
+    assert coordinate.shape == (count, len(x.shape))
+    assert mask.shape == (count,)
