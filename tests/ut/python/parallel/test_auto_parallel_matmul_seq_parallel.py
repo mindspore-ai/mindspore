@@ -81,8 +81,8 @@ def test_auto_parallel_two_matmul_seq_parallel():
     _cell_graph_executor.compile(net, x, y, b, p, q, phase='train')
     strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
-        if re.search('Add-op', k) is not None:
-            assert v != [[1, 1], [1, 1]]
+        if re.search('Add-op0', k) is not None:
+            assert v == [[8, 1], [8, 1]]
 
 
 def test_auto_parallel_two_matmul_reshape1_seq_parallel():
@@ -109,8 +109,8 @@ def test_auto_parallel_two_matmul_reshape1_seq_parallel():
     _cell_graph_executor.compile(net, x, y, b, p, r, q, phase='train')
     strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
-        if re.search('Add-op', k) is not None:
-            assert v != [[1, 1], [1, 1]]
+        if re.search('Add-op0', k) is not None:
+            assert v == [[8, 1, 1], [8, 1, 1]]
 
 
 def test_auto_parallel_two_matmul_reshape2_seq_parallel():
@@ -137,5 +137,5 @@ def test_auto_parallel_two_matmul_reshape2_seq_parallel():
     _cell_graph_executor.compile(net, x, y, b, p, r, q, phase='train')
     strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
-        if re.search('Add-op', k) is not None:
-            assert v != [[1, 1], [1, 1]]
+        if re.search('Add-op0', k) is not None:
+            assert v == [[1, 8, 1], [1, 8, 1]]
