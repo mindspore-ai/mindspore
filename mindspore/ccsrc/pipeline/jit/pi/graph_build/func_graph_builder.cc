@@ -373,17 +373,14 @@ bool FuncGraphBuilder::AddOutput(const py::object &output_obj, bool add_repeat) 
   auto node = iter->second;
   MS_EXCEPTION_IF_NULL(node);
   auto abs = node->abstract();
-  if (!CheckGraphOutput(abs)) {
+  if (!add_repeat && !CheckGraphOutput(abs)) {
     MS_LOG(ERROR) << "The output python object " << py::str(output_obj)
                   << " should not be the graph output, abstract: " << (abs == nullptr ? "null" : abs->ToString());
     return false;
   }
-  if (!add_repeat) {
-    auto iter = std::find(output_nodes_.begin(), output_nodes_.end(), node);
-    if (iter != output_nodes_.end()) {
-      MS_LOG(DEBUG) << "Output node " << node->DebugString() << " has already been set as output.";
-      return true;
-    }
+  if (!add_repeat && std::find(output_nodes_.begin(), output_nodes_.end(), node) != output_nodes_.end()) {
+    MS_LOG(DEBUG) << "Output node " << node->DebugString() << " has already been set as output.";
+    return true;
   }
   (void)output_nodes_.emplace_back(node);
   return true;
@@ -450,16 +447,12 @@ void FuncGraphBuilder::EraseUnusedParameter() {
     auto cnode = node->cast<CNodePtr>();
     const auto &cnode_inputs = cnode->inputs();
     (void)std::copy_if(cnode_inputs.begin(), cnode_inputs.end(), std::inserter(used_params, used_params.begin()),
-                       [](const AnfNodePtr &input) {
-                         return input->isa<Parameter>();
-                       });
+                       [](const AnfNodePtr &input) { return input->isa<Parameter>(); });
   }
   std::vector<AnfNodePtr> new_params;
   const auto &origin_params = graph_->parameters();
   (void)std::copy_if(origin_params.begin(), origin_params.end(), std::back_inserter(new_params),
-                     [&used_params](const AnfNodePtr param) {
-                       return used_params.find(param) != used_params.end();
-                     });
+                     [&used_params](const AnfNodePtr param) { return used_params.find(param) != used_params.end(); });
   graph_->set_parameters(new_params);
 }
 
