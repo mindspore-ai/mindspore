@@ -111,19 +111,21 @@ BaseShapePtr BroadcastToFuncImpl::InferShape(const PrimitivePtr &primitive,
     return x_shape_ptr;
   }
 
+  auto outer_dim_offset = shape_array.size() - x_shape.size();
   ShapeVector output_shape;
-  int self_computed_dim_count = 0;
   for (size_t i = 0; i < shape_array.size(); i++) {
     if (shape_array.IsValueUnknown(i)) {
       output_shape.push_back(abstract::Shape::kShapeDimAny);
     } else {
       if (shape_array[i] == -1) {
-        self_computed_dim_count++;
-        if (self_computed_dim_count > 1) {
-          MS_EXCEPTION(ValueError) << "For primitive[" << primitive->name()
-                                   << "], at most one component of shape can be -1.";
+        if (i < outer_dim_offset) {
+          MS_EXCEPTION(ValueError) << "For '" << prim_name
+                                   << "', -1 in init shape is in an incompatible "
+                                      "location with given input tensor, -1 index in init shape: "
+                                   << i << " but -1 can only be in index" << x_shape.size()
+                                   << "onwards for this input.";
         }
-        output_shape.push_back(abstract::Shape::kShapeDimAny);
+        output_shape.push_back(x_shape[i - outer_dim_offset]);
       } else {
         output_shape.push_back(shape_array[i]);
       }
