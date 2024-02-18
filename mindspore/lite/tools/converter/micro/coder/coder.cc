@@ -42,6 +42,34 @@ std::shared_ptr<CoderSession> CreateCoderSession() {
   }
   return session;
 }
+
+int ParseMicroDynamicShape(const schema::MetaGraphT &graph, micro::MicroParam *micro_param) {
+  for (auto index : graph.inputIndex) {
+    auto input_name = graph.allTensors.at(index)->name;
+    if (micro_param->graph_inputs_origin_info.find(input_name) == micro_param->graph_inputs_origin_info.end() ||
+        micro_param->inputs_shape_by_scenes.find(input_name) == micro_param->inputs_shape_by_scenes.end()) {
+      MS_LOG(ERROR) << "Micro param: dynamic inputs name is invalid";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    micro_param->graph_inputs_template.emplace_back(micro_param->graph_inputs_origin_info[input_name]);
+    micro_param->graph_inputs_shape_infos.emplace_back(micro_param->inputs_shape_by_scenes[input_name]);
+  }
+  return RET_OK;
+}
+
+int ParseMicroDynamicShape(const Model &model, micro::MicroParam *micro_param) {
+  for (auto index : model.graph_.input_indices_) {
+    auto input_name = model.graph_.all_tensors_.at(index)->name()->str();
+    if (micro_param->graph_inputs_origin_info.find(input_name) == micro_param->graph_inputs_origin_info.end() ||
+        micro_param->inputs_shape_by_scenes.find(input_name) == micro_param->inputs_shape_by_scenes.end()) {
+      MS_LOG(ERROR) << "Micro param: dynamic inputs name is invalid";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    micro_param->graph_inputs_template.emplace_back(micro_param->graph_inputs_origin_info[input_name]);
+    micro_param->graph_inputs_shape_infos.emplace_back(micro_param->inputs_shape_by_scenes[input_name]);
+  }
+  return RET_OK;
+}
 }  // namespace
 int Coder::Run(const void *model_buff, size_t size, const std::string &model_name, bool end_flag, bool enable_fp16) {
   session_ = CreateCoderSession();
@@ -109,29 +137,37 @@ bool Coder::InitPath(const std::string &output_path) {
   return true;
 }
 
-int Coder::MicroSourceCodeGeneration(const schema::MetaGraphT &graph, const std::string &output_path,
-                                     const MicroParam &param, bool enable_fp16) {
+int Coder::MicroSourceCodeGeneration(const schema::MetaGraphT &graph, const std::string &output_path, MicroParam *param,
+                                     bool enable_fp16) {
   flatbuffers::FlatBufferBuilder builder(kFlatbuffersBuilderInitSize);
   auto offset = schema::MetaGraph::Pack(builder, &graph);
   builder.Finish(offset);
   schema::FinishMetaGraphBuffer(builder, offset);
   size_t size = builder.GetSize();
-  if (ExecuteMicroGeneration(builder.GetBufferPointer(), size, output_path, param, enable_fp16) != RET_OK) {
+  if (!param->dynamic_symbols.empty()) {
+    MS_CHECK_TRUE_MSG(ParseMicroDynamicShape(graph, param) == RET_OK, RET_ERROR, "ParseMicroDynamicShape failed.");
+  }
+  if (ExecuteMicroGeneration(builder.GetBufferPointer(), size, output_path, *param, enable_fp16) != RET_OK) {
     MS_LOG(ERROR) << "Execute Micro failed.";
     return RET_ERROR;
   }
   return RET_OK;
 }
 
-int Coder::MicroSourceCodeGeneration(const std::string &model_file, const std::string &output_path,
-                                     const MicroParam &param, bool enable_fp16) {
+int Coder::MicroSourceCodeGeneration(const std::string &model_file, const std::string &output_path, MicroParam *param,
+                                     bool enable_fp16) {
   size_t buffer_size;
   auto model_buf = lite::ReadFile(model_file.c_str(), &buffer_size);
   if (model_buf == nullptr) {
     MS_LOG(ERROR) << "Read model-file failed.";
     return RET_NULL_PTR;
   }
-  auto ret = ExecuteMicroGeneration(model_buf, buffer_size, output_path, param, enable_fp16);
+  Model *model = lite::Model::Import(model_buf, buffer_size);
+  MS_CHECK_PTR(model);
+  if (!param->dynamic_symbols.empty()) {
+    MS_CHECK_TRUE_MSG(ParseMicroDynamicShape(*model, param) == RET_OK, RET_ERROR, "ParseMicroDynamicShape failed.");
+  }
+  auto ret = ExecuteMicroGeneration(model_buf, buffer_size, output_path, *param, enable_fp16);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Execute Micro failed.";
   }
@@ -199,6 +235,11 @@ int Coder::Init(const MicroParam &param) const {
                         DirectoryGenerator::GetInstance()->project_name());
   config->set_keep_original_weight(param.keep_original_weight);
   config->set_changeable_weights_name(param.changeable_weights_name);
+  config->set_graph_inputs_shape_infos(param.graph_inputs_shape_infos);
+  config->set_dynamic_symbols(param.dynamic_symbols);
+  config->set_dynamic_symbols_num(param.dynamic_symbols_num);
+  config->set_dynamic_symbols_map(param.dynamic_symbols_map);
+  config->set_user_graph_inputs_template(param.graph_inputs_template);
 
   auto print_parameter = [](auto name, auto value) {
     MS_LOG(INFO) << std::setw(20) << std::left << name << "= " << value;

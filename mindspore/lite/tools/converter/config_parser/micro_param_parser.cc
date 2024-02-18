@@ -115,6 +115,80 @@ STATUS MicroParamParser::ParseChangeableWeightsName(const std::string &changeabl
   return RET_OK;
 }
 
+STATUS MicroParamParser::ParseGraphInputsShapeTemplate(
+  const std::string &graph_inputs_shape_template, const std::map<std::string, std::vector<int>> &dynamic_symbols_map,
+  micro::MicroParam *micro_param) {
+  MS_LOG(DEBUG) << "Micro record inputs shape: " << graph_inputs_shape_template;
+  if (!graph_inputs_shape_template.empty()) {
+    auto graph_inputs_shape_vec = SplitStringToVector(graph_inputs_shape_template, ';');
+    std::map<std::string, std::vector<std::string>> graph_inputs_info;
+    std::vector<std::vector<std::string>> graph_inputs_shape;
+    std::vector<std::string> inputs_name;
+    for (const auto &graph_input_shape : graph_inputs_shape_vec) {
+      auto input_shape_info = SplitStringToVector(graph_input_shape, ':');
+      std::string input_name = input_shape_info[0];
+      std::string input_shape = input_shape_info[1].substr(1, input_shape_info[1].size() - C2NUM);
+      auto input_shape_vec = SplitStringToVector(input_shape, ',');
+      graph_inputs_info[input_name] = input_shape_vec;
+      graph_inputs_shape.push_back(input_shape_vec);
+      inputs_name.push_back(input_name);
+    }
+    micro_param->graph_inputs_origin_info = graph_inputs_info;
+    micro_param->inputs_shape_by_scenes.clear();
+    std::map<std::string, std::vector<int>> symbols_to_num;
+    std::map<std::string, int> symbols_index;
+    std::vector<std::string> symbols;
+    std::vector<size_t> scene_num_by_symbol;
+    int index = 0;
+    size_t scene_num = 1;
+    for (const auto &item : dynamic_symbols_map) {
+      symbols_index[item.first] = index++;
+      symbols.push_back(item.first);
+      for (const auto &num : item.second) {
+        symbols_to_num[item.first].push_back(num);
+      }
+      if (symbols_to_num[item.first].empty()) {
+        MS_LOG(ERROR) << "Micro param invalid, dynamic symbol must have value.";
+        return RET_INPUT_PARAM_INVALID;
+      }
+      scene_num_by_symbol.push_back(symbols_to_num[item.first].size());
+      scene_num *= symbols_to_num[item.first].size();
+    }
+    micro_param->dynamic_symbols = symbols;
+    micro_param->dynamic_symbols_num = scene_num_by_symbol;
+    micro_param->dynamic_symbols_map = dynamic_symbols_map;
+    std::vector<size_t> post_multi(symbols.size(), 1);
+    for (int i = static_cast<int>(post_multi.size()) - 2; i >= 0; --i) {
+      post_multi[i] = post_multi[i + 1] * scene_num_by_symbol[i + 1];
+    }
+    std::vector<int> real_num(symbols.size());
+    for (size_t i = 0; i < scene_num; ++i) {
+      size_t remain = i;
+      for (size_t j = 0; j < symbols.size(); ++j) {
+        real_num[j] = remain / post_multi[j];
+        remain %= post_multi[j];
+      }
+      for (size_t j = 0; j < graph_inputs_shape.size(); ++j) {
+        const auto &input_template = graph_inputs_shape[j];
+        std::vector<int> input_shape;
+        for (const auto &dim : input_template) {
+          if (IsNumber(dim)) {
+            input_shape.push_back(std::stoi(dim));
+            continue;
+          }
+          if (symbols_index.find(dim) == symbols_index.end()) {
+            MS_LOG(ERROR) << "Dynamic symbol cannot find real num.";
+            return RET_INPUT_PARAM_INVALID;
+          }
+          input_shape.push_back(symbols_to_num[dim][real_num[symbols_index[dim]]]);
+        }
+        micro_param->inputs_shape_by_scenes[inputs_name[j]].push_back(input_shape);
+      }
+    }
+  }
+  return RET_OK;
+}
+
 STATUS MicroParamParser::ParseMicroParam(const MicroParamString &micro_param_string, micro::MicroParam *micro_param) {
   CHECK_NULL_RETURN(micro_param);
   if (ParseTarget(micro_param_string.target, micro_param) != RET_OK) {
@@ -145,9 +219,11 @@ STATUS MicroParamParser::ParseMicroParam(const MicroParamString &micro_param_str
     MS_LOG(ERROR) << "Parse project name val failed: " << micro_param_string.project_name;
     return RET_INPUT_PARAM_INVALID;
   }
-  if (ParseKeepOriginalWeight(micro_param_string.keep_original_weight, micro_param) != RET_OK) {
-    MS_LOG(ERROR) << "Parse keep_original_weight failed, the val: " << micro_param_string.keep_original_weight;
-    return RET_INPUT_PARAM_INVALID;
+  if (!micro_param_string.keep_original_weight.empty()) {
+    if (ParseKeepOriginalWeight(micro_param_string.keep_original_weight, micro_param) != RET_OK) {
+      MS_LOG(ERROR) << "Parse keep_original_weight failed, the val: " << micro_param_string.keep_original_weight;
+      return RET_INPUT_PARAM_INVALID;
+    }
   }
   if (!micro_param_string.changeable_weights_name.empty() && !micro_param->keep_original_weight) {
     MS_LOG(ERROR) << "When changeable_weights_name is set, the keep_original_weight must be true.";
@@ -155,6 +231,12 @@ STATUS MicroParamParser::ParseMicroParam(const MicroParamString &micro_param_str
   }
   if (ParseChangeableWeightsName(micro_param_string.changeable_weights_name, micro_param) != RET_OK) {
     MS_LOG(ERROR) << "Parse changeable_weights_name failed, the val: " << micro_param_string.changeable_weights_name;
+    return RET_INPUT_PARAM_INVALID;
+  }
+  if (ParseGraphInputsShapeTemplate(micro_param_string.inputs_shape, micro_param_string.dynamic_symbols_map,
+                                    micro_param) != RET_OK) {
+    MS_LOG(ERROR) << "Parse inputs_shape & dynamic_dim_params failed, the inputs_shape val: "
+                  << micro_param_string.inputs_shape;
     return RET_INPUT_PARAM_INVALID;
   }
   return RET_OK;

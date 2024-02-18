@@ -206,11 +206,11 @@ int ScaleTensor(Tensor *tensor, float scale) {
 }
 
 std::vector<Tensor *> TSFindTensors(const kernel::KernelExec *pre_kernel, const kernel::KernelExec *post_kernel) {
-  MS_ASSERT(pre_kernel != nullptr);
-  MS_ASSERT(post_kernel != nullptr);
+  std::vector<Tensor *> res;
+  MS_CHECK_TRUE_RET(pre_kernel != nullptr, res);
+  MS_CHECK_TRUE_RET(post_kernel != nullptr, res);
   auto out_tensors = pre_kernel->out_tensors();
   auto in_tensors = post_kernel->in_tensors();
-  std::vector<Tensor *> res;
   for (auto tensor : out_tensors) {
     if (std::find(in_tensors.begin(), in_tensors.end(), tensor) == in_tensors.end()) {
       continue;

@@ -15,6 +15,7 @@
  */
 
 #include "tools/converter/config_parser/config_file_parser.h"
+#include <set>
 #include "tools/common/parse_config_utils.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
@@ -208,6 +209,75 @@ bool SetDynParams(const std::shared_ptr<mindspore::ConverterPara> &param,
       return false;
   }
   return true;
+}
+
+int ParseInputShapeTemplate(const std::string &shape_template, std::set<std::string> *dynamic_symbols) {
+  // the inputs_shape config is like: input1:[d0,d1,3];input2:[4,d0]
+  auto graph_inputs_shape_vec = SplitStringToVector(shape_template, ';');
+  for (const auto &graph_input_shape : graph_inputs_shape_vec) {
+    auto graph_input_shape_info = SplitStringToVector(graph_input_shape, ':');
+    MS_CHECK_TRUE_MSG(graph_input_shape_info.size() == kIndex2, RET_INPUT_PARAM_INVALID, "the inputs_shape is invalid");
+    auto input_shape = graph_input_shape_info[1];
+    if (input_shape[0] != '[' || input_shape[input_shape.size() - 1] != ']') {
+      MS_LOG(ERROR) << "the inputs_shape is invalid";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    input_shape = input_shape.substr(1, input_shape.size() - kIndex2);
+    auto input_shape_vec = SplitStringToVector(input_shape, ',');
+    for (const auto &shape : input_shape_vec) {
+      if (!IsNumber(shape)) {
+        dynamic_symbols->insert(shape);
+      }
+    }
+  }
+  return RET_OK;
+}
+
+int ParseDynamicDimTemplate(const std::string &dims_template, std::set<std::string> *dynamic_symbols,
+                            MicroParamString *micro_param_string) {
+  // the dynamic_dim_params config is like: d0:[1,3~6];d1:[1~8]
+  auto dim_info_vec = SplitStringToVector(dims_template, ';');
+  MS_CHECK_TRUE_MSG(dim_info_vec.size() <= kIndex2, RET_NOT_SUPPORT, "currently, only support to set two dynamic dims");
+  for (const auto &dim_info : dim_info_vec) {
+    auto dim_vec = SplitStringToVector(dim_info, ':');
+    MS_CHECK_TRUE_MSG(dim_vec.size() == kIndex2, RET_INPUT_PARAM_INVALID, "the dynamic_dim_params is invalid");
+    std::string symbol = dim_vec[0];
+    if (dynamic_symbols->find(symbol) == dynamic_symbols->end()) {
+      MS_LOG(ERROR) << symbol << "is invalid, because it's not set in the inputs_shape.";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    std::string dim_range = dim_vec[1];
+    if (dim_range[0] != '[' || dim_range[dim_range.size() - 1] != ']') {
+      MS_LOG(ERROR) << "the dynamic_dim_params is invalid";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    dim_range = dim_range.substr(1, dim_range.size() - kIndex2);
+    auto discrete_vec = SplitStringToVector(dim_range, ',');
+    for (const auto &dim : discrete_vec) {
+      auto continuous_dim = SplitStringToVector(dim, '~');
+      MS_CHECK_TRUE_MSG(continuous_dim.size() == kIndex1 || continuous_dim.size() == kIndex2, RET_INPUT_PARAM_INVALID,
+                        "the dynamic_dim_params is invalid");
+      if (continuous_dim.size() == kIndex1) {
+        if (!IsNumber(continuous_dim[0]) || std::stoi(continuous_dim[0]) <= 0) {
+          MS_LOG(ERROR) << "the dynamic_dim_params range value must be greater than 0";
+          return RET_INPUT_PARAM_INVALID;
+        }
+        micro_param_string->dynamic_symbols_map[symbol].emplace_back(std::stoi(continuous_dim[0]));
+        continue;
+      }
+      if (!IsNumber(continuous_dim[0]) || std::stoi(continuous_dim[0]) <= 0 || !IsNumber(continuous_dim[1]) ||
+          std::stoi(continuous_dim[1]) <= 0) {
+        MS_LOG(ERROR) << "the dynamic_dim_params range value must be greater than 0";
+        return RET_INPUT_PARAM_INVALID;
+      }
+      auto start = std::stoi(continuous_dim[0]);
+      auto end = std::stoi(continuous_dim[1]);
+      for (auto i = start; i <= end; ++i) {
+        micro_param_string->dynamic_symbols_map[symbol].emplace_back(i);
+      }
+    }
+  }
+  return RET_OK;
 }
 
 void ConfigFileParser::SetVariableParams(const std::shared_ptr<mindspore::ConverterPara> &param,
@@ -644,21 +714,36 @@ int ConfigFileParser::ParseAclOptionCfgString(const std::map<std::string, std::m
 }
 
 int ConfigFileParser::ParseMicroParamString(const std::map<std::string, std::map<std::string, std::string>> &maps) {
-  if (maps.find(kMicroParam) != maps.end()) {
-    const auto &map = maps.at(kMicroParam);
-    std::map<std::string, std::string &> parse_map{
-      {"target", micro_param_string_.target},
-      {"codegen_mode", micro_param_string_.codegen_mode},
-      {"debug_mode", micro_param_string_.debug_mode},
-      {"support_parallel", micro_param_string_.support_parallel},
-      {"enable_micro", micro_param_string_.enable_micro},
-      {"save_path", micro_param_string_.save_path},
-      {"project_name", micro_param_string_.project_name},
-      {"keep_original_weight", micro_param_string_.keep_original_weight},
-      {"changeable_weights_name", micro_param_string_.changeable_weights_name}};
-    return SetMapData(map, parse_map, kMicroParam);
+  if (maps.find(kMicroParam) == maps.end()) {
+    return RET_OK;
   }
-  return RET_OK;
+  const auto &map = maps.at(kMicroParam);
+  const std::string graph_inputs_shape_template = "inputs_shape";
+  std::set<std::string> dynamic_symbols;
+  if (map.find(graph_inputs_shape_template) != map.end()) {
+    const auto &shape_template = map.at(graph_inputs_shape_template);
+    MS_CHECK_TRUE_MSG(ParseInputShapeTemplate(shape_template, &dynamic_symbols) == RET_OK, RET_ERROR,
+                      "ParseInputShapeTemplate failed");
+  }
+  const std::string dynamic_dims = "dynamic_dim_params";
+  if (!dynamic_symbols.empty() && map.find(dynamic_dims) != map.end()) {
+    const auto &dims_template = map.at(dynamic_dims);
+    MS_CHECK_TRUE_MSG(ParseDynamicDimTemplate(dims_template, &dynamic_symbols, &micro_param_string_) == RET_OK,
+                      RET_ERROR, "ParseDynamicDimTemplate failed");
+  }
+  std::map<std::string, std::string &> parse_map{
+    {"target", micro_param_string_.target},
+    {"codegen_mode", micro_param_string_.codegen_mode},
+    {"debug_mode", micro_param_string_.debug_mode},
+    {"support_parallel", micro_param_string_.support_parallel},
+    {"enable_micro", micro_param_string_.enable_micro},
+    {"save_path", micro_param_string_.save_path},
+    {"project_name", micro_param_string_.project_name},
+    {"keep_original_weight", micro_param_string_.keep_original_weight},
+    {"changeable_weights_name", micro_param_string_.changeable_weights_name},
+    {"inputs_shape", micro_param_string_.inputs_shape},
+    {"dynamic_dim_params", micro_param_string_.dynamic_dim_params}};
+  return SetMapData(map, parse_map, kMicroParam);
 }
 
 int ConfigFileParser::ParseWeightQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps) {

@@ -287,7 +287,6 @@ bool FusionPass::MatchTree(const schema::MetaGraphT &graph, size_t nodeIdx, cons
 bool FusionPass::CheckMatchParams(const schema::MetaGraphT &graph, size_t nodeIdx,
                                   const std::shared_ptr<PatternOp> &target, const std::vector<size_t> &sinkIdes,
                                   const std::vector<size_t> &pathSinkIdes) {
-  MS_ASSERT(target != nullptr);
   MS_ASSERT(nodeIdx < graph.nodes.size());
   auto &scope = graph.nodes.at(nodeIdx);
   MS_CHECK_TRUE_MSG(scope != nullptr, false, "Node in graph is nullptr");
