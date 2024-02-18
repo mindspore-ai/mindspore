@@ -33,13 +33,14 @@ class IndexFillCpuKernel : public CpuKernel {
   uint32_t DoCompute(const CpuKernelContext &ctx);
   uint32_t GetInputAndCheck(CpuKernelContext &ctx);
   template <typename T>
-  void SpecialCompute(int64_t start, int64_t end, const int32_t *input_dim, std::map<int32_t, bool> &index_dict);
+  void SpecialCompute(int64_t start, int64_t end, const int32_t input_dim, std::map<int32_t, bool> &index_dict);
   template <typename T>
-  uint32_t SpecialComputeParallel(const CpuKernelContext &ctx, const uint32_t &data_num, const int32_t *input_dim,
+  uint32_t SpecialComputeParallel(const CpuKernelContext &ctx, const uint32_t &data_num, const int32_t input_dim,
                                   std::map<int32_t, bool> &index_dict);
 
   std::vector<Tensor *> inputs_;
   std::vector<Tensor *> outputs_;
+  DataType dim_data_type_{DT_UNDEFINED};
 };
 }  // namespace aicpu
 #endif

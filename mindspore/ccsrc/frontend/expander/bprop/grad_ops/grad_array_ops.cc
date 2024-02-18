@@ -1131,14 +1131,7 @@ REG_BPROP_BUILDER("IndexFill").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex5);
   auto zero_value = ib->ZerosLike(value);
   auto x_grad = ib->Emit("IndexFill", {dout, dim, indices, zero_value});
-  NodePtr value_grad;
-  if (ib->GetShape(x).empty()) {
-    value_grad = dout;
-  } else {
-    auto tmp = ib->Gather(dout, indices, ib->Cast(dim, kInt64));
-    value_grad = ib->ReduceSum(tmp, ShapeVector());
-  }
-  return {x_grad, ib->OutZeros(dim), ib->OutZeros(indices), value_grad};
+  return {x_grad, ib->OutZeros(dim), ib->OutZeros(indices), zero_value};
 });
 
 REG_BPROP_BUILDER("UnsortedSegmentSum").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
