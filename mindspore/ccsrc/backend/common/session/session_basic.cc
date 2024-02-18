@@ -356,41 +356,6 @@ void CheckInputTensorShape(const TensorPtr &tensor, const CNodePtr &kernel, size
   }
 }
 
-void IterateFindTensor(std::vector<ValuePtr> *msTensors, const VectorRef &ref_list) {
-  MS_EXCEPTION_IF_NULL(msTensors);
-  for (size_t i = 0; i < ref_list.size(); ++i) {
-    if (utils::isa<tensor::TensorPtr>(ref_list[i])) {
-      auto tensor_ptr = utils::cast<std::shared_ptr<tensor::Tensor>>(ref_list[i]);
-      MS_EXCEPTION_IF_NULL(tensor_ptr);
-      msTensors->emplace_back(tensor_ptr);
-    } else if (utils::isa<VectorRef>(ref_list[i])) {
-      auto ref_iter = utils::cast<VectorRef>(ref_list[i]);
-      IterateFindTensor(msTensors, ref_iter);
-    } else if (utils::isa<tensor::CSRTensorPtr>(ref_list[i])) {
-      auto csr_tensor = utils::cast<tensor::CSRTensorPtr>(ref_list[i]);
-      MS_EXCEPTION_IF_NULL(csr_tensor);
-      (void)msTensors->emplace_back(csr_tensor);
-    } else {
-      MS_LOG(EXCEPTION) << "The output is not a tensor/sparse tensor";
-    }
-  }
-}
-
-std::vector<ValuePtr> TransformVectorRefToMultiValue(const VectorRef &base_ref) {
-  std::vector<ValuePtr> msTensors;
-  if (utils::isa<VectorRef>(base_ref)) {
-    auto ref_list = utils::cast<VectorRef>(base_ref);
-    IterateFindTensor(&msTensors, ref_list);
-  } else if (utils::isa<tensor::Tensor>(base_ref)) {
-    auto tensor_ptr = utils::cast<std::shared_ptr<tensor::Tensor>>(base_ref);
-    MS_EXCEPTION_IF_NULL(tensor_ptr);
-    (void)msTensors.emplace_back(tensor_ptr);
-  } else {
-    MS_LOG(EXCEPTION) << "The output is not a base ref list or a tensor!";
-  }
-  return msTensors;
-}
-
 bool is_param_scalar(const size_t &param_shape_size, const size_t &input_shape_size) {
   if (param_shape_size == 1 && input_shape_size == 0) {
     return true;
@@ -684,7 +649,7 @@ void SessionBasic::HandleOpOutputs(const AnfNodePtr &kernel, const VectorRef &op
   MS_EXCEPTION_IF_NULL(op_output_map);
   MS_EXCEPTION_IF_NULL(graph_output_info);
   MS_EXCEPTION_IF_NULL(graph_output_info->graph_outputs);
-  auto output_values = TransformVectorRefToMultiValue(op_outputs);
+  auto output_values = common::AnfAlgo::TransformVectorRefToMultiValue(op_outputs);
   if (output_values.size() > op_outputs.size()) {
     MS_LOG(EXCEPTION) << "Op output contains tuple, node = " << kernel->DebugString();
   }

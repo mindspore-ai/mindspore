@@ -268,7 +268,7 @@ TensorPtrList GraphBackwardNode::CallBackward(const TensorPtrList &grads) {
     (void)args_.emplace_back(std::make_shared<ValueTuple>(value_inputs));
   }
   auto gradient_vec_ref = graph_call_back(args_);
-  auto gradient_values = PyNativeAlgo::DataConvert::VectorRefToValuePtrList(gradient_vec_ref);
+  auto gradient_values = common::AnfAlgo::TransformVectorRefToMultiValue(gradient_vec_ref);
   auto gradient_tensors = PostProcess(gradient_values);
   MS_LOG(DEBUG) << "End GraphBackwardNode CallBackward";
   return gradient_tensors;
@@ -732,31 +732,44 @@ void FuncGrad::CheckSensShapeAndType(const ValuePtr &sens_gradient) {
 
 void FuncGrad::PruningGradGraph(const TensorPtrList &weights, const GradAttr &grad_attr, const std::vector<size_t> &grad_position) {
   mindspore::HashSet<size_t> grad_pos_list{grad_position.begin(), grad_position.end()};
-  // Pruning input in grad graph
-  for (size_t i = 0; i < cell_inputs_.size(); ++i) {
-    if (!grad_attr.grad_all_inputs) {
-      if (!grad_attr.get_by_position) {
-        cell_inputs_[i].second->set_is_need_grad(false);
-      } else if (grad_pos_list.find(i) == grad_pos_list.end()) {
+  // Pruning inputs by position in grad graph
+  if (grad_attr.get_by_position) {
+    for (size_t i = 0; i < cell_inputs_.size(); ++i) {
+      if (grad_pos_list.find(i) == grad_pos_list.end()) {
         cell_inputs_[i].second->set_is_need_grad(false);
       }
     }
   }
-  if (weights.size() == weights_used_in_graph_.size()) {
-    return;
+
+  // Pruning first input in grad graph
+  if (!grad_attr.grad_all_inputs && !grad_attr.get_by_position && !grad_attr.grad_weights) {
+    for (size_t i = 1; i < cell_inputs_.size(); ++i) {
+      cell_inputs_[i].second->set_is_need_grad(false);
+    }
   }
+
   // Pruning weights in grad graph
-  mindspore::HashSet<std::string> grad_weights_id;
-  for (const auto &weight: weights) {
-    grad_weights_id.insert(weight->id());
-  }
-  for (const auto &weight: weights_used_in_graph_) {
-    if (grad_weights_id.find(weight->id()) == grad_weights_id.end()) {
+  if (grad_attr.grad_weights) {
+    mindspore::HashSet<std::string> grad_weights_id;
+    for (const auto &weight : weights) {
+      (void)grad_weights_id.emplace(weight->id());
+    }
+    for (const auto &weight : weights_used_in_graph_) {
+      if (grad_weights_id.find(weight->id()) == grad_weights_id.end()) {
+        auto variable = weight->auto_grad_meta_data()->variable();
+        MS_EXCEPTION_IF_NULL(variable);
+        variable->set_is_need_grad(false);
+      }
+    }
+  } else {
+    for (const auto &weight : weights_used_in_graph_) {
       auto variable = weight->auto_grad_meta_data()->variable();
       MS_EXCEPTION_IF_NULL(variable);
       variable->set_is_need_grad(false);
     }
   }
+
+  // Pruning all node in grad graph
   for (const auto &variable: variable_set_) {
     if (variable->is_leaf()) {
       continue;

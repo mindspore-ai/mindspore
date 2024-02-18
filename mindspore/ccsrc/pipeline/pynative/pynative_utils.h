@@ -126,7 +126,6 @@ struct DataConvert {
   static void FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<ValuePtr> *flatten_v, bool has_sens);
   static ValuePtrList FlattenTensorSeqInValue(const ValuePtr &v);
   static ValuePtrList FlattenTensorSeqInValueSeq(const ValuePtrList &v);
-  static ValuePtrList VectorRefToValuePtrList(const VectorRef &vec_ref);
   static void GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const TopCellInfoPtr &top_cell);
   static void ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_run_info,
                                            const tensor::CSRTensorPtr &csr_tensor, const TopCellInfoPtr &top_cell,

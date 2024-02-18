@@ -132,7 +132,7 @@ NodePtr FuncBuilder::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs)
                                                .inputs_mask = input_mask,
                                                .output_abs = nullptr};
   runtime::PyBoostOpExecute::GetInstance().Execute(&op_runner_info, &outputs);
-  auto real_outputs = PyNativeAlgo::DataConvert::VectorRefToValuePtrList(outputs);
+  auto real_outputs = common::AnfAlgo::TransformVectorRefToMultiValue(outputs);
   MS_LOG(DEBUG) << "Get output value size " << real_outputs.size() << ", " << DebugInput<ValuePtr>(real_outputs);
   ValuePtr value_result;
   if (real_outputs.size() != 1) {

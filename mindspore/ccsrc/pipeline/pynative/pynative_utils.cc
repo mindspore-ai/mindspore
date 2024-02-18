@@ -1355,19 +1355,6 @@ ValuePtrList DataConvert::FlattenTensorSeqInValueSeq(const ValuePtrList &v) {
   return outputs;
 }
 
-ValuePtrList DataConvert::VectorRefToValuePtrList(const VectorRef &vec_ref) {
-  MS_EXCEPTION_IF_NULL(vec_ref);
-  ValuePtrList value_ptr_list;
-  value_ptr_list.reserve(vec_ref.size());
-  for (const auto &ref : vec_ref.elements_) {
-    if (!utils::isa<tensor::Tensor>(ref)) {
-      MS_LOG(EXCEPTION) << "Get output is not tensor";
-    }
-    (void)value_ptr_list.emplace_back(utils::cast<ValuePtr>(ref));
-  }
-  return value_ptr_list;
-}
-
 void DataConvert::FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<ValuePtr> *flatten_v, bool has_sens) {
   MS_EXCEPTION_IF_NULL(flatten_v);
   if (v_vec.empty()) {
