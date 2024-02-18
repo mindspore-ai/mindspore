@@ -58,6 +58,7 @@ from mindspore.profiler.parser.ascend_steptrace_generator import AscendStepTrace
 from mindspore.profiler.parser.ascend_flops_generator import AscendFlopsGenerator
 from mindspore.profiler.parser.ascend_cluster_generator import AscendClusterGenerator
 from mindspore.profiler.parser.ascend_hccl_generator import AscendHCCLGenerator, AscendHCCLGeneratorOld
+from mindspore.profiler.parser.ascend_communicate_generator import AscendCommunicationGenerator
 
 INIT_OP_NAME = 'Default/InitDataSetQueue'
 
