@@ -23,6 +23,7 @@
 #include <mutex>
 #include "utils/ms_utils.h"
 #include "include/backend/visible.h"
+#include "ir/dtype.h"
 
 namespace mindspore {
 class Debugger;
@@ -36,7 +37,7 @@ class BACKEND_EXPORT TensorStatDump {
                  uint64_t timestamp, bool input, size_t slot, size_t tensor_loader_slot_);
   TensorStatDump(const std::string &op_type, const std::string &op_name, const std::string &task_id,
                  const std::string &stream_id, const std::string &timestamp, const std::string &io, size_t slot,
-                 size_t tensor_loader_slot);
+                 size_t tensor_loader_slot, const mindspore::TypeId data_type);
   bool DumpTensorStatsToFile(const std::string &dump_path, const std::shared_ptr<TensorData> data);
   bool DumpTensorStatsToFile(const std::string &original_kernel_name, const std::string &dump_path,
                              const Debugger *debugger);
@@ -50,6 +51,7 @@ class BACKEND_EXPORT TensorStatDump {
   std::string io_;
   size_t slot_;
   size_t tensor_loader_slot_;
+  mindspore::TypeId data_type_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_TENSOR_STAT_DUMP_H_
