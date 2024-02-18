@@ -28,8 +28,7 @@ mindspore.scipy.linalg.lu_factor
 
     返回：
         - **lu** (Tensor) - 一个 :math:`(M, M)` 的方阵，在它的上三角中包含 `u`，它的下三角形中包含 `l`。
-            不含 `l` 中对角线全为1的元素。
-
+          不含 `l` 中对角线全为1的元素。
         - **piv** (Tensor) - shape为 :math:`(M,)` 的Tensor，表示置换矩阵 `p` 的索引：索引中的第 `i` 个元素值 `j` 表示矩阵的第 `i` 行与第 `j` 行互换。
 
     异常：
