@@ -22,7 +22,7 @@ from tests.st.utils import test_utils
 
 @test_utils.run_with_cell
 def floor_div_forward_func(x, y):
-    return ops.auto_generate.floor_div(x, y)
+    return ops.floor_div(x, y)
 
 
 @test_utils.run_with_cell

@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def mul_forward_func(x, y):
-    return ops.auto_generate.mul(x, y)
+    return ops.mul(x, y)
 
 
 @test_utils.run_with_cell
@@ -40,14 +40,14 @@ def mul_vmap_func(x, y):
 def mul_infervalue_func1():
     x = ms.Tensor(np.array([1, 2, 4]).astype(np.float32))
     y = ms.Tensor(np.array([2, 4, 3]).astype(np.float32))
-    return ops.auto_generate.mul(x, y)
+    return ops.mul(x, y)
 
 
 @test_utils.run_with_cell
 def mul_infervalue_func2():
     x = ms.Tensor(np.array([1, 2, 4]).astype(np.float32))
     y = ms.Tensor(np.array([3]).astype(np.float32))
-    return ops.auto_generate.mul(x, y)
+    return ops.mul(x, y)
 
 
 @pytest.mark.level1
@@ -155,7 +155,7 @@ def test_mul_op_dynamic_shape(context_mode):
     ms.context.set_context(mode=context_mode)
     x_dyn = ms.Tensor(shape=[None], dtype=ms.float32)
     y_dyn = ms.Tensor(shape=[None], dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(ops.auto_generate.mul)
+    test_cell = test_utils.to_cell_obj(ops.mul)
     test_cell.set_inputs(x_dyn, y_dyn)
     x = ms.Tensor(np.array([1, 2, 4]).astype(np.float32))
     y = ms.Tensor(np.array([2, 4, 3]).astype(np.float32))
@@ -185,7 +185,7 @@ def test_mul_op_dynamic_rank(context_mode):
     ms.context.set_context(mode=context_mode)
     x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
     y_dyn = ms.Tensor(shape=None, dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(ops.auto_generate.mul)
+    test_cell = test_utils.to_cell_obj(ops.mul)
     test_cell.set_inputs(x_dyn, y_dyn)
     x = ms.Tensor(np.array([1, 2, 4]).astype(np.float32))
     y = ms.Tensor(np.array([2, 4, 3]).astype(np.float32))

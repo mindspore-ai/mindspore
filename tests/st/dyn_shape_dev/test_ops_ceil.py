@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def ceil_forward_func(x):
-    return ops.auto_generate.ceil(x)
+    return ops.ceil(x)
 
 
 @test_utils.run_with_cell
@@ -32,7 +32,7 @@ def ceil_backward_func(x):
 
 
 def ceil_dyn_shape_func(x):
-    return ops.auto_generate.ceil(x)
+    return ops.ceil(x)
 
 
 @pytest.mark.level1

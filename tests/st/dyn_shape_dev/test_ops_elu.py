@@ -22,7 +22,7 @@ from tests.st.utils import test_utils
 
 @test_utils.run_with_cell
 def elu_forward_func(x):
-    return ops.auto_generate.elu(x, alpha=1.0)
+    return ops.elu(x, alpha=1.0)
 
 
 @test_utils.run_with_cell

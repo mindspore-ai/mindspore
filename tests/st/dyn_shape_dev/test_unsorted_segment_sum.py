@@ -23,7 +23,7 @@ from mindspore import ops
 
 @test_utils.run_with_cell
 def unsorted_segment_forward_func(x, y, z):
-    return ops.auto_generate.unsorted_segment_sum(x, y, z)
+    return ops.unsorted_segment_sum(x, y, z)
 
 
 @test_utils.run_with_cell

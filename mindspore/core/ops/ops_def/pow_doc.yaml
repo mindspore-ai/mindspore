@@ -1,6 +1,8 @@
 pow:
     description: |
         Calculates the `exponent` power of each element in `input`.
+        
+        When `exponent` is a Tensor, the shapes of `input` and `exponent` must be broadcastable.
 
         Args:
             input (Union[Tensor, Number]): The first input is a Number or a tensor whose data type is

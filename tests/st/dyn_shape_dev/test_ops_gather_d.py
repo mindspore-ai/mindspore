@@ -23,7 +23,7 @@ from tests.st.utils import test_utils
 
 @test_utils.run_with_cell
 def gather_d_forward_func(x, dim, index):
-    return ops.auto_generate.gather_d(x, dim, index)
+    return ops.gather_d(x, dim, index)
 
 
 @test_utils.run_with_cell

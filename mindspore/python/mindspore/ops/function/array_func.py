@@ -6110,7 +6110,7 @@ def argwhere(input):
         [[0 0 0]
          [0 1 0]]
     """
-    return nonzero_(input)
+    return nonzero(input)
 
 
 def column_stack(tensors):

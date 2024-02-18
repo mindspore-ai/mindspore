@@ -22,7 +22,7 @@ from tests.st.utils import test_utils
 
 @test_utils.run_with_cell
 def erfinv_forward_func(x):
-    return ops.auto_generate.erfinv(x)
+    return ops.erfinv(x)
 
 
 @test_utils.run_with_cell

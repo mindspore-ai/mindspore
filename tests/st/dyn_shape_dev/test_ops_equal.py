@@ -22,7 +22,7 @@ from tests.st.utils import test_utils
 
 @test_utils.run_with_cell
 def equal_forward_func(x, y):
-    return ops.auto_generate.equal(x, y)
+    return ops.equal(x, y)
 
 
 @test_utils.run_with_cell
@@ -34,14 +34,14 @@ def equal_backward_func(x, y):
 def equal_infervalue_func1():
     x = ms.Tensor(np.array([1, 2, 4]).astype(np.float32))
     y = ms.Tensor(np.array([1, 2, 3]).astype(np.float32))
-    return ops.auto_generate.equal(x, y)
+    return ops.equal(x, y)
 
 
 @test_utils.run_with_cell
 def equal_infervalue_func2():
     x = ms.Tensor(np.array([3, 2, 4]).astype(np.float32))
     y = ms.Tensor(np.array([3]).astype(np.float32))
-    return ops.auto_generate.equal(x, y)
+    return ops.equal(x, y)
 
 
 @pytest.mark.level1

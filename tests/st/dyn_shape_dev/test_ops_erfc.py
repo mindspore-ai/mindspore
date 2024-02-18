@@ -22,7 +22,7 @@ from tests.st.utils import test_utils
 
 @test_utils.run_with_cell
 def erfc_forward_func(x):
-    return ops.auto_generate.erfc(x)
+    return ops.erfc(x)
 
 
 @test_utils.run_with_cell
