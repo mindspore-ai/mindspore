@@ -16,9 +16,15 @@
 
 #include "plugin/device/ascend/kernel/hccl/hcom_all_reduce.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
+#include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
+#include "runtime/rt.h"
 
 namespace mindspore {
 namespace kernel {
+#define CURRENT_TIMESTAMP_MILLI \
+  (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()))
+// static size_t count = 0;
+// static size_t total_cost = 0;
 bool HcomAllReduceKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
                                  const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_LOG(DEBUG) << "HcclAllReduce launch";
@@ -30,6 +36,24 @@ bool HcomAllReduceKernel::Launch(const std::vector<KernelTensor *> &inputs, cons
   MS_EXCEPTION_IF_NULL(inputs[0]);
   MS_EXCEPTION_IF_NULL(outputs[0]);
   MS_EXCEPTION_IF_NULL(stream_ptr);
+
+#ifdef ENABLE_INTERNAL_KERNELS
+  if (!common::GetEnv("ENABLE_LCCL").empty()) {
+    auto lccl_result = lccl_comm_->AllReduce(inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_,
+                                             hccl_data_type_list_[0], op_type_, stream_ptr);
+    if (lccl_result != Lcal::LCAL_SUCCESS) {
+      MS_LOG(EXCEPTION) << "LCCL AllReduce failed.";
+    }
+  } else {
+    auto hccl_result =
+      hccl::HcclAdapter::GetInstance().HcclAllReduce(inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_,
+                                                     hccl_data_type_list_[0], op_type_, stream_ptr, comm_);
+    if (hccl_result != HCCL_SUCCESS) {
+      MS_LOG(ERROR) << "HcclAllReduce failed, ret:" << hccl_result;
+      return false;
+    }
+  }
+#else
   auto hccl_result =
     hccl::HcclAdapter::GetInstance().HcclAllReduce(inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_,
                                                    hccl_data_type_list_[0], op_type_, stream_ptr, comm_);
@@ -37,6 +61,7 @@ bool HcomAllReduceKernel::Launch(const std::vector<KernelTensor *> &inputs, cons
     MS_LOG(ERROR) << "HcclAllReduce failed, ret:" << hccl_result;
     return false;
   }
+#endif
   return true;
 }
 }  // namespace kernel
