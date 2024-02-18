@@ -1,0 +1,25 @@
+#operator paged_attention_mask
+paged_attention_mask:
+  args:
+    query:
+      dtype: tensor
+    key_cache:
+      dtype: tensor
+    value_cache:
+      dtype: tensor
+    block_tables:
+      dtype: tensor
+    context_lens:
+      dtype: tensor
+    alibi_mask:
+      dtype: tensor
+    head_num:
+      dtype: int
+    scale_value:
+      dtype: float
+    kv_head_num:
+      dtype: int
+
+  returns:
+    attention_out:
+      dtype: tensor
