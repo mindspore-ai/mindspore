@@ -777,7 +777,14 @@ static std::vector<Expression> expressions = {
   {65, "Transpose(A,B)=Reshape(A,C)", EXPR_PATTERN(TransposePatternTree)},
   // reshape
   {66, "Reshape(Reshape(A,B),C)=Reshape(A,C)", EXPR_PATTERN(ReshapePatternTree)},
-  {67, "Transpose(Transpose(Reshape(A,B),C),D)=Reshape(A,E)", EXPR_PATTERN(RTTPatternTree)}};
+  {67, "Transpose(Transpose(Reshape(A,B),C),D)=Reshape(A,E)", EXPR_PATTERN(RTTPatternTree)},
+  // cmp + logical
+  {68, "LogicalNot(Greater(A,B))=LessEqual(A,B)", EXPR_PATTERN(PatternTree)},
+  {69, "LogicalNot(LessEqual(A,B))=Greater(A,B)", EXPR_PATTERN(PatternTree)},
+  {70, "LogicalNot(GreaterEqual(A,B))=Less(A,B)", EXPR_PATTERN(PatternTree)},
+  {71, "LogicalNot(Less(A,B))=GreaterEqual(A,B)", EXPR_PATTERN(PatternTree)},
+  {72, "LogicalNot(NotEqual(A,B))=Equal(A,B)", EXPR_PATTERN(PatternTree)},
+  {73, "LogicalNot(Equal(A,B))=NotEqual(A,B)", EXPR_PATTERN(PatternTree)}};
 
 mindspore::HashMap<std::string, std::vector<PatternTreePtr>> GetExpressions() {
   const auto &flags = GraphKernelFlags::GetInstance();
