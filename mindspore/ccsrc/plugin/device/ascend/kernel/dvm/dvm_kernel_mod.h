@@ -40,7 +40,7 @@ class DvmInfer : public InferShapeFunctor {
 
 class DvmKernelMod : public KernelMod {
  public:
-  explicit DvmKernelMod(bool is_dynamic);
+  explicit DvmKernelMod(dvm::KernelType kernel_type);
   ~DvmKernelMod() = default;
 
   std::vector<KernelAttr> GetOpSupport() override { MS_LOG(EXCEPTION) << "This interface is not support in VKernel."; }
@@ -49,48 +49,112 @@ class DvmKernelMod : public KernelMod {
 
   int Resize(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &) override { return 0; }
 
-  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
-              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
-
-  void Initialize(const std::vector<TypeId> &inputs_type, const std::vector<TypeId> &outputs_type);
+  virtual void Initialize(const std::vector<TypeId> &inputs_type, const std::vector<TypeId> &outputs_type);
 
   // used in static shape
   void CodeGen(const std::vector<ShapeVector> &inputs_shape, const std::vector<ShapeVector> &outputs_shape);
+
+  virtual void UpdateOutputShapes() = 0;
+
+  size_t GetInputNum() { return inputs_addr_.size(); }
+
+  size_t GetOutputNum() { return outputs_addr_.size(); }
 
   // used in dynamic shape
   BaseShapePtr InferShape(const AbstractBasePtrList &inputs_abs);
 
   dvm::Kernel *Kernel() { return &kernel_; }
 
-  std::vector<ShapeVector> *ShapesSource() { return &shapes_ref_source_; }
-
   void CacheShapeRef(const ShapeRefPtr &shape_ref) { shapes_ref_.push_back(shape_ref); }
+
+  virtual void UpdateIO() = 0;
+
+  void UpdateInputShapeRef(size_t input_idx, dvm::ShapeRef *ref);
+
+ protected:
+  std::vector<ShapeVector> inputs_shape_;
+  std::vector<ShapeVector> outputs_shape_;
+  std::vector<ShapeRefPtr> shapes_ref_;            // manage the dynamically allocated ShapeRef
+  std::vector<dvm::ShapeRef *> inputs_shape_ref_;  // point to the latest inputs shape, which is used in infer shape
+  std::vector<void *> inputs_addr_;
+  std::vector<void *> outputs_addr_;
+  dvm::RelocTable reloc_table_;
+  std::vector<size_t> inputs_type_byte_;
+  std::vector<size_t> outputs_type_byte_;
+  dvm::Kernel kernel_;
+};
+
+class SingleDvmKernelMod : public DvmKernelMod {
+ public:
+  explicit SingleDvmKernelMod(dvm::KernelType kernel_type) : DvmKernelMod(kernel_type) {}
+  ~SingleDvmKernelMod() = default;
+
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+
+  void Initialize(const std::vector<TypeId> &inputs_type, const std::vector<TypeId> &outputs_type) override;
+
+  std::vector<ShapeVector> *ShapesSource() { return &shapes_ref_source_; }
 
   void CacheLoad(dvm::NDObject *obj, size_t idx);
 
   void CacheStore(dvm::NDObject *obj, size_t idx);
 
-  void UpdateIO();
+  void UpdateIO() override;
 
-  void UpdateInputShapeRef(size_t input_idx, dvm::ShapeRef *ref);
+  void UpdateOutputShapes() override;
 
  private:
-  std::vector<ShapeVector> inputs_shape_;
-  std::vector<ShapeVector> outputs_shape_;
-  std::vector<ShapeVector> shapes_ref_source_;     // to ensure the shape which is pointed by ShapeRef keeps alive
-  std::vector<ShapeRefPtr> shapes_ref_;            // manage the dynamically allocated ShapeRef
-  std::vector<dvm::ShapeRef *> inputs_shape_ref_;  // point to the latest inputs shape, which is used in infer shape
-  std::vector<dvm::NDObject *> inputs_;            // cache Load
-  std::vector<dvm::NDObject *> outputs_;           // cache Store
-  std::vector<void *> inputs_addr_;
-  std::vector<void *> outputs_addr_;
-  dvm::RelocTable reloc_table_;
+  std::vector<ShapeVector> shapes_ref_source_;  // to ensure the shape which is pointed by ShapeRef keeps alive
+  std::vector<dvm::NDObject *> inputs_;         // cache Load
+  std::vector<dvm::NDObject *> outputs_;        // cache Store
   std::vector<size_t> inputs_idx_;
   std::vector<size_t> outputs_idx_;
-  std::vector<size_t> inputs_type_byte_;
-  std::vector<size_t> outputs_type_byte_;
-  dvm::Kernel kernel_;
 };
+
+class ParallelDvmKernelMod : public DvmKernelMod {
+ public:
+  ParallelDvmKernelMod(dvm::KernelType kernel_type, size_t sub_graph_count)
+      : DvmKernelMod(kernel_type),
+        sub_graph_count_(sub_graph_count),
+        shapes_ref_source_(sub_graph_count),
+        inputs_(sub_graph_count),
+        outputs_(sub_graph_count),
+        inputs_idx_(sub_graph_count),
+        outputs_idx_(sub_graph_count) {}
+  ~ParallelDvmKernelMod() = default;
+
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+
+  std::vector<ShapeVector> *ShapesSource(size_t graph_idx) { return &shapes_ref_source_[graph_idx]; }
+
+  void Initialize(const std::vector<TypeId> &inputs_type, const std::vector<TypeId> &outputs_type) override;
+
+  void CacheLoad(dvm::NDObject *obj, size_t graph_idx, size_t idx);
+
+  void CacheStore(dvm::NDObject *obj, size_t graph_idx, size_t idx);
+
+  void UpdateIO() override;
+
+  void UpdateOutputShapes() override;
+
+ private:
+  size_t sub_graph_count_;
+  // to ensure the shape which is pointed by ShapeRef keeps alive
+  std::vector<std::vector<ShapeVector>> shapes_ref_source_;
+  std::vector<std::vector<dvm::NDObject *>> inputs_;
+  std::vector<std::vector<dvm::NDObject *>> outputs_;
+  std::vector<std::vector<size_t>> inputs_idx_;
+  std::vector<std::vector<size_t>> outputs_idx_;
+  std::vector<dvm::NDObject *> all_inputs_;
+  std::vector<dvm::NDObject *> all_outputs_;
+  // map indices of all_inputs_ to input indices of function graph
+  std::vector<size_t> inputs_map_;
+  // map indices of all_outputs_ to output indices of function graph
+  std::vector<size_t> outputs_map_;
+};
+
 using DvmKernelModPtr = std::shared_ptr<DvmKernelMod>;
 }  // namespace kernel
 }  // namespace mindspore
