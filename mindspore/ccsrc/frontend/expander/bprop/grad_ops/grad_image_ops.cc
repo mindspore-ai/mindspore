@@ -58,9 +58,13 @@ REG_BPROP_BUILDER("CropAndResize").SetUnusedInputs({i3, i4}).SetBody(BODYFUNC(ib
     image_size = ib->Tensor(x_shape, kInt32);
   }
   const auto max_byte = static_cast<int64_t>(2e9);  // max bytes of image gradient
-  auto dimage = ib->Emit("CropAndResizeGradImage", {dout, boxes, box_index, image_size},
-                         {{"method", MakeValue(method)}, {"T", image_type}, {"max_Byte", MakeValue(max_byte)}});
-  auto dbox = ib->Emit("CropAndResizeGradBoxes", {dout, x, boxes, box_index}, {{"method", MakeValue("bilinear")}});
+  NodePtr dimage = x->need_compute_grad_out()
+                     ? ib->Emit("CropAndResizeGradImage", {dout, boxes, box_index, image_size},
+                                {{"method", MakeValue(method)}, {"T", image_type}, {"max_Byte", MakeValue(max_byte)}})
+                     : ib->OutZeros(x);
+  NodePtr dbox = boxes->need_compute_grad_out() ? ib->Emit("CropAndResizeGradBoxes", {dout, x, boxes, box_index},
+                                                           {{"method", MakeValue("bilinear")}})
+                                                : ib->OutZeros(boxes);
   return {dimage, dbox, ib->OutZeros(box_index), ib->OutZeros(crop_size)};
 });
 

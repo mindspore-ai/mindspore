@@ -60,9 +60,12 @@ REG_BPROP_BUILDER("SequenceAdd").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto out_offset = ib->Emit("SequenceAddOffset", {x, y});
-  auto dx = ib->SequenceSlice(dout, ib->TupleGetItem(out_offset, 0), ib->Len(x), ib->Value<int64_t>(1));
-  auto dy = ib->SequenceSlice(dout, ib->TupleGetItem(out_offset, 1), ib->ScalarAdd(ib->Len(x), ib->Len(y)),
-                              ib->Value<int64_t>(1));
+  auto dx = x->need_compute_grad_out()
+              ? ib->SequenceSlice(dout, ib->TupleGetItem(out_offset, 0), ib->Len(x), ib->Value<int64_t>(1))
+              : ib->OutZeros(x);
+  auto dy = y->need_compute_grad_out() ? ib->SequenceSlice(dout, ib->TupleGetItem(out_offset, 1),
+                                                           ib->ScalarAdd(ib->Len(x), ib->Len(y)), ib->Value<int64_t>(1))
+                                       : ib->OutZeros(y);
   return {dx, dy};
 });
 
