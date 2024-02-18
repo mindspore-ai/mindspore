@@ -29,11 +29,12 @@ mindspore.scipy.optimize.minimize
           如果 `jac` 是可执行的，则应该是能返回梯度向量的函数：:math:`jac(x, *args) -> array\_like, shape (n,)`，其中x是一个数组，其shape为 :math:`(n,)`，`args` 是一个具有固定参数的元组。
         - **hess** (Callable, 可选) - 计算Hessian矩阵的方法。当前尚未实现。
         - **hessp** (Callable, 可选) - 目标函数的Hessian乘以任意向量 `p` 。当前尚未实现。
-        - **bounds** (Callable, 可选) - `x` 中的每个元素的 `(min, max)` 对的序列。当前尚未实现。
+        - **bounds** (Sequence, 可选) - `x` 中的每个元素的 `(min, max)` 对的序列。当前尚未实现。
         - **constraints** (Callable, 可选) - 表示不等式的约束，约束中的每个函数都将 `function < 0` 表示为不等式约束。
-        - **tol** (Callable, 可选) - 异常终止的容差范围。如需更具体的操控，请使用求解器里专门的选项。默认值：``None``。
+        - **tol** (float, 可选) - 异常终止的容差范围。如需更具体的操控，请使用求解器里专门的选项。默认值：``None``。
         - **callback** (Callable, 可选) - 每次迭代后调用的可执行函数。当前尚未实现。
         - **options** (Mapping[str, Any], 可选) - 用于保存求解器可选项的字典。所有求解器方法都能支持下述通用选项。默认值：``None``。
+
           - ``"history_size"`` (int) - 用于更新Hession矩阵的逆的缓冲区大小，仅支持与 `method="LBFGS"` 一起使用。默认值：``20``。
           - ``"maxiter"`` (int) - 要执行的最大迭代次数。根据方法的不同，每个迭代可能会使用多个函数进行求值。
 
