@@ -1723,7 +1723,7 @@ class Profiler:
             os.makedirs(self._framework_path, exist_ok=True)
             os.chmod(self._framework_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
         elif os.path.exists(os.path.join(self._framework_path, "op_range_" + str(self._rank_id))):
-            os.remove(self._framework_path, "op_range_" + str(self._rank_id))
+            os.remove(os.path.join(self._framework_path, "op_range_" + str(self._rank_id)))
             logger.info("Clear old op range filer.")
 
         if not os.path.exists(self._ascend_ms_path):
