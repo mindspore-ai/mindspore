@@ -27,7 +27,7 @@ namespace mindspore::graphkernel {
 const BaseRef FloatStatusFusion::DefinePattern() const {
   VectorRef is_finite = VectorRef({prim::kPrimIsFinite, input_});
   VectorRef reduce = VectorRef({prim::kPrimReduceAll, is_finite, axis_, keep_dims_});
-  VectorRef cast = VectorRef({prim::kPrimCast, reduce});
+  VectorRef cast = VectorRef({prim::kPrimCast, reduce, type_});
   VectorRef sub = VectorRef({prim::kPrimSub, s_, cast});
   return VectorRef({prim::kPrimReshape, sub, to_shape_});
 }
@@ -61,7 +61,7 @@ const AnfNodePtr FloatStatusFusion::Process(const FuncGraphPtr &func_graph, cons
   }
   auto input_type = AnfAlgo::GetOutputDeviceDataType(input_node, 0);
   auto output_type = AnfAlgo::GetOutputDeviceDataType(node, 0);
-  if (input_type != output_type) {
+  if (input_type != output_type || output_type != kNumberTypeFloat32) {
     return nullptr;
   }
   auto s_node = opt::GetAnfNodeByVar(equiv, s_);

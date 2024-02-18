@@ -90,6 +90,7 @@ class MindirEmitter : public Emitter {
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::LessEqual
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Log
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::LogicalAnd
+    &MindirEmitter::DefaultEmitFunc,  // MetaOp::LogicalNot
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::LogicalOr
     nullptr,                          // MetaOp::MatMul
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Mul

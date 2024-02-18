@@ -37,6 +37,7 @@ enum class MetaOp : int {
   LessEqual,
   Log,
   LogicalAnd,
+  LogicalNot,
   LogicalOr,
   MatMul,
   Mul,
@@ -79,6 +80,7 @@ inline static std::string MetaOpStr[static_cast<int>(MetaOp::MetaOpNum)] = {
   "LessEqual",         // MetaOp::LessEqual
   "Log",               // MetaOp::Log
   "LogicalAnd",        // MetaOp::LogicalAnd
+  "LogicalNot",        // MetaOp::LogicalNot
   "LogicalOr",         // MetaOp::LogicalOr
   "MatMul",            // MetaOp::MatMul
   "Mul",               // MetaOp::Mul

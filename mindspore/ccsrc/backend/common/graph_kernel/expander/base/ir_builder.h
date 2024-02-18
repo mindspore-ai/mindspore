@@ -114,6 +114,7 @@ class IrBuilder {
   inline NodePtr LogicalOr(const NodePtr &lhs, const NodePtr &rhs) const {
     return e->Emit(MetaOp::LogicalOr, {lhs, rhs});
   }
+  inline NodePtr LogicalNot(const NodePtr &node) const { return e->Emit(MetaOp::LogicalNot, {node}); }
   inline NodePtr MatMul(const NodePtr &a, const NodePtr &b, const NodePtr &transpose_a,
                         const NodePtr &transpose_b) const {
     return e->Emit(MetaOp::MatMul, {a, b, transpose_a, transpose_b});

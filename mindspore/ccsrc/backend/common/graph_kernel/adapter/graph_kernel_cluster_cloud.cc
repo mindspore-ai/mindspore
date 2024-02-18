@@ -111,10 +111,10 @@ bool DvmSupported(const AnfNodePtr &node) {
   static std::vector<PrimitivePtr> int_ops{prim::kPrimAdd,     prim::kPrimSub,        prim::kPrimMul,
                                            prim::kPrimMaximum, prim::kPrimMinimum,    prim::kPrimNeg,
                                            prim::kPrimAssign,  prim::kPrimBroadcastTo};
-  if (std::any_of(int_ops.begin(), int_ops.end(),
+  if (node_output_type == kNumberTypeInt32 &&
+      std::any_of(int_ops.begin(), int_ops.end(),
                   [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); })) {
-    return (node_output_type == kNumberTypeInt32 || node_output_type == kNumberTypeFloat16 ||
-            node_output_type == kNumberTypeFloat32);
+    return true;
   }
   // other op
   return (node_output_type == kNumberTypeFloat16 || node_output_type == kNumberTypeFloat32);
