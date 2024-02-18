@@ -420,6 +420,7 @@ AbstractBasePtr IrBprop::BuildForwardLastNode() {
 }
 
 FuncGraphPtr IrBprop::GetBpropGraphFromFprop(const GradParamPtr &grad_param) {
+  MS_EXCEPTION_IF_NULL(grad_param);
   FuncGraphPtr after_opt_fg = nullptr;
   // Find ad graph in cache
   const auto it = pass_grad_graph_.find(grad_param->graph_cache_key);
@@ -428,7 +429,6 @@ FuncGraphPtr IrBprop::GetBpropGraphFromFprop(const GradParamPtr &grad_param) {
     MS_LOG(DEBUG) << "Get ad grad graph by cache";
     after_opt_fg = BasicClone(it->second);
   } else {
-    MS_EXCEPTION_IF_NULL(grad_param);
     auto bprop_builder = std::make_shared<FuncGraph>();
     bprop_builder->debug_info()->set_name("bprop_builder");
 

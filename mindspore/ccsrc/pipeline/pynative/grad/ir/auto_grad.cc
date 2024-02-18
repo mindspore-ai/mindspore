@@ -186,14 +186,14 @@ void IrFunctionNode::ReplaceEdges() {
 }
 
 IrGrad::IrGrad(const std::vector<ValuePtr> &input_param_values, const AbstractBasePtrList &abs_list,
-               size_t op_num_in_bprop_graph, const runtime::AsyncHqueuePtr &assist_queue, bool enable_async, bool grad_by_value)
+               size_t op_num_in_bprop_graph, const runtime::AsyncHqueuePtr &assist_queue, bool grad_by_value)
     : ad_param_(std::make_shared<AdParam>()) {
   ad_param()->tape_->debug_info()->set_name("grad_top");
   MS_LOG(DEBUG) << "Start IrGrad, input size: " << input_param_values.size();
   ad_param()->variable_adjoint_set_.reserve(op_num_in_bprop_graph);
   ad_param()->anfnode_to_variable_adjoint_.reserve(op_num_in_bprop_graph);
   ad_param()->users_.dout_user_.reserve(op_num_in_bprop_graph);
-  weights_used_in_graph_.reserve(op_num_in_bprop_graph);
+  ad_param()->weights_used_in_graph_.reserve(op_num_in_bprop_graph);
 
   for (size_t i = 0; i < input_param_values.size(); ++i) {
     auto input_parameter = ad_param()->fg_->add_parameter();
@@ -278,13 +278,8 @@ bool IrGrad::KPynativeOp(const GradParamPtr &grad_param) {
   }
   (void)ad_param()->variable_adjoint_set_.insert(variable_adjoint);
   PyNativeAlgo::AutoGrad::SetGradMetaData(grad_param->op_grad_info->out_value, variable_adjoint);
-
-  if (enable_async_) {
-    UpdateNextEdgesAsync(variable_adjoint, outputs, grad_param);
-  } else {
-    ir_bprop()->UpdateNextEdges(variable_adjoint, outputs, grad_param->op_grad_info->input_value,
-                                grad_param->op_grad_info->input_abs, prim->name());
-  }
+  ir_bprop()->UpdateNextEdges(variable_adjoint, outputs, grad_param->op_grad_info->input_value,
+                              grad_param->op_grad_info->input_abs, prim->name());
   return true;
 }
 
@@ -563,18 +558,6 @@ AnfNodePtr IrGrad::BuildKNode(const AnfNodePtr &prim, const GradParamPtr &grad_p
   return k_node;
 }
 
-void IrGrad::UpdateNextEdgesAsync(const VariablePtr &variable, const std::vector<CNodePtr> &dins,
-                                  const GradParamPtr &grad_param) {
-  auto task = [this, variable, dins, grad_param]() {
-    this->ir_bprop()->UpdateNextEdges(variable, dins, grad_param->op_grad_info->input_value,
-                                      grad_param->op_grad_info->input_abs, grad_param->op_grad_info->op_prim->name());
-  };
-  bool success = assist_queue_->Push(new (std::nothrow) BpropTask(std::move(task)));
-  if (!success) {
-    assist_queue_->CheckException();
-  }
-}
-
 void IrGrad::UpdateSensParameter(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::Tensor>()) {
@@ -634,7 +617,7 @@ void IrGrad::SetSensAndWeights(const tensor::TensorPtrList &weights, bool has_se
     (void)need_grad_weights_.emplace(weight_tensor->id());
     UpdateTapeParameter(weight_tensor);
   }
-  for (auto &weight : weights_used_in_graph_) {
+  for (auto &weight : ad_param_->weights_used_in_graph_) {
     auto tensor = PyNativeAlgo::Common::GetTensorFromParam(weight);
     MS_EXCEPTION_IF_NULL(tensor);
     if (need_grad_weights_.find(tensor->id()) == need_grad_weights_.end()) {

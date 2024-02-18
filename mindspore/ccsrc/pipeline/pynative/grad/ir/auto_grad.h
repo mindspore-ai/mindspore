@@ -38,7 +38,7 @@ namespace autograd {
 class IrGrad : public AutoGrad {
  public:
   IrGrad(const std::vector<ValuePtr> &input_param_values, const AbstractBasePtrList &abs_list,
-         size_t op_num_in_bprop_graph, const runtime::AsyncHqueuePtr &assist_queue, bool enable_async, bool grad_by_value);
+         size_t op_num_in_bprop_graph, const runtime::AsyncHqueuePtr &assist_queue, bool grad_by_value);
   ~IrGrad() = default;
 
   // Reverse connect bprop of op
@@ -67,9 +67,6 @@ class IrGrad : public AutoGrad {
   // Construct input as cnode for expander
   CNodePtr ConstructBpropGraphInput(const GradParamPtr &grad_param, const AnfNodePtr &dout,
                                     const VariablePtr &variable_adjoint, const AnfNodePtr &k_node, bool is_custom_prim);
-  // Back propagate for one node;
-  void UpdateNextEdgesAsync(const VariablePtr &variable, const std::vector<CNodePtr> &dins,
-                            const GradParamPtr &grad_param);
   ParameterPtr ExtractParameter(const tensor::TensorPtr &tensor) const;
   void UpdateSensParameter(const ValuePtr &value);
   // Replace input or weights parameter from primal funcgraph to parameters of tape_;
@@ -104,13 +101,12 @@ class IrGrad : public AutoGrad {
   std::vector<std::pair<AnfNodePtr, VariablePtr>> cell_inputs_;
   // These weights need to calculate gradient.
   mindspore::HashSet<std::string> need_grad_weights_;
-  AnfNodePtrList weights_used_in_graph_;
+  // Keep reference for cnode
   AnfNodePtrList k_nodes_used_in_graph_;
   // Flag for ms_funtcion and high order
   bool bprop_graph_run_by_single_op_{false};
   bool need_do_manager_replace_{false};
   runtime::AsyncHqueuePtr assist_queue_{nullptr};
-  bool enable_async_{false};
 };
 }  // namespace autograd
 }  // namespace pynative
