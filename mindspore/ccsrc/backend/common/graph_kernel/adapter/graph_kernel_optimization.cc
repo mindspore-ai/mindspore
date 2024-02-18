@@ -66,6 +66,7 @@
 #include "backend/common/graph_kernel/core/graph_kernel_op_combiner.h"
 #include "backend/common/graph_kernel/convert_custom_for_ge.h"
 #include "backend/common/graph_kernel/convert_input_and_attr.h"
+#include "backend/common/graph_kernel/add_ref_pair.h"
 #ifdef ENABLE_AKG
 #include "backend/common/graph_kernel/graph_kernel_build.h"
 #endif
@@ -94,7 +95,7 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
   pm->Add(std::make_shared<SaveOutputShape>(), OptLevel_1);
 
   // Change Assign(p, a, U) to Assign(Depend(p, U), a)
-  pm->Add(std::make_shared<SplitAssign>(), OptLevel_1, is_gpu);
+  pm->Add(std::make_shared<SplitAssign>(), OptLevel_1, is_gpu || is_dvm);
 
   // Spread the MakeTuple input of UpdateState
   pm->Add(std::make_shared<SpreadUpdateState>(), OptLevel_1);
@@ -240,7 +241,8 @@ PassManagerPtr GraphKernelOptimizer::Build() const {
   auto pm = std::make_shared<GraphKernelPassManager>(6, "build");
   pm->Add(std::make_shared<ExtendOutputForUpdateState>(), OptLevel_1);
   // Reduce fake output memory.
-  pm->Add(std::make_shared<ReduceFakeOutMem>(), OptLevel_1);
+  pm->Add(std::make_shared<ReduceFakeOutMem>(), OptLevel_1, !is_dvm);
+  pm->Add(std::make_shared<AddRefPair>(), OptLevel_1, is_dvm);
   // Compile graph kernel nodes, and inline nodes if compile failed.
   auto enable_dyn_level = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion);
   pm->Add(std::make_shared<DynamicShapeCluster>(), enable_dyn_level, is_cpu || is_gpu);
