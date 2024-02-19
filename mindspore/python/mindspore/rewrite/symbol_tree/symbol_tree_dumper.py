@@ -15,9 +15,9 @@
 """SymbolTree dumper."""
 import inspect
 
-from .node.node import Node
-from .api.node_type import NodeType
-from .api.scoped_value import ScopedValue, ValueType
+from ..node import Node
+from ..api.node_type import NodeType
+from ..api.scoped_value import ScopedValue, ValueType
 
 
 class SymbolTreeDumper:
@@ -45,7 +45,7 @@ class SymbolTreeDumper:
 
     def _dump_inputs(self):
         """Dump inputs of SymbolTree."""
-        inputs = self._symbol_tree.get_inputs()
+        inputs = self._symbol_tree.get_input_nodes()
         self._dump_buffer += f"#Inputs num     : {len(inputs)}\n"
         for single_input in inputs:
             targets = single_input.get_targets()

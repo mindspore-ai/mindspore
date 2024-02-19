@@ -16,12 +16,12 @@
 from typing import Optional
 import ast
 import inspect
+from textwrap import dedent
 
 from mindspore.nn import Cell
 from .symbol_tree import SymbolTree
-from .parsers.parser_register import ParserRegister
-from .parsers.parser import Parser
-from .ast_transformers import FlattenRecursiveStmt
+from ..parsers import Parser, ParserRegister
+from ..ast_helpers import AstFlattener
 
 
 class SymbolTreeBuilder:
@@ -33,14 +33,14 @@ class SymbolTreeBuilder:
     """
 
     # Entry function of the forward computation process
-    entry_function = "construct"
+    entry_functions = ["construct"]
 
     def __init__(self, network: Cell):
         if not isinstance(network, Cell):
-            raise RuntimeError("Only support network with Cell type now, ", network)
+            raise TypeError("Type of network should be Cell, but got ", network)
         self._origin_net = network
         network_str = inspect.getsource(type(network))
-        self._ast_root: ast.Module = ast.parse(network_str)
+        self._ast_root: ast.Module = ast.parse(dedent(network_str))
         self._root_tree: Optional[SymbolTree] = None
 
     @staticmethod
@@ -54,7 +54,7 @@ class SymbolTreeBuilder:
         Returns:
              An instance of ast been optimized.
         """
-        ast_root = FlattenRecursiveStmt().transform(ast_root, [SymbolTreeBuilder.entry_function])
+        ast_root = AstFlattener().transform(ast_root, SymbolTreeBuilder.entry_functions)
         return ast_root
 
     def build(self) -> SymbolTree:
@@ -67,7 +67,7 @@ class SymbolTreeBuilder:
 
         self._ast_root = SymbolTreeBuilder.ast_transform(self._ast_root)
         if not isinstance(self._ast_root, ast.Module):
-            raise RuntimeError("ast_root should be a ast.Module")
+            raise TypeError("Type of ast_root should be ast.Module, but got ", self._ast_root)
         self._root_tree: SymbolTree = SymbolTree(self._origin_net, self._ast_root)
         parser: Parser = ParserRegister.instance().get_parser(ast.Module)
         parser.process(self._root_tree, self._ast_root, None)

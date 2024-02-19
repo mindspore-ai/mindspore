@@ -4,7 +4,6 @@ from collections import OrderedDict
 from mindspore import nn
 from mindspore.ops import operations as P
 from mindspore.rewrite import SymbolTree, PatternEngine, Replacement, PatternNode, Node, ScopedValue
-from mindspore.rewrite.api.tree_node_helper import TreeNodeHelper
 from mindspore.rewrite.api.node_type import NodeType
 
 
@@ -161,7 +160,7 @@ class ForNetWithSubTree(nn.Cell):
 
 def test_erase_subtree_node():
     """
-    Feature: for parser and erase api.
+    Feature: parser and erase api.
     Description: erase a node in subtree of `SymbolTree`.
     Expectation: Success.
     """
@@ -170,8 +169,8 @@ def test_erase_subtree_node():
 
     for node in stree.nodes():
         if node.get_name() == "simple_net":
-            subtree = TreeNodeHelper.get_sub_tree(node)
-            orig_node_num = len(subtree.get_handler()._nodes)
+            subtree = node.get_sub_tree()
+            orig_node_num = len(subtree.get_handler().nodes())
             for n in subtree.nodes():
                 if n.get_instance_type() == nn.MaxPool2d:
                     input_node = n.get_inputs()[0]
@@ -180,13 +179,13 @@ def test_erase_subtree_node():
                         out_node.set_arg_by_node(0, input_node)
                     subtree.erase(n)
                     break
-            assert len(subtree.get_handler()._nodes) == orig_node_num - 1
+            assert len(subtree.get_handler().nodes()) == orig_node_num - 1
             break
 
 
 def test_erase_subtree_node_01():
     """
-    Feature: for parser and erase api.
+    Feature: parser and erase api.
     Description: erase a node in subtree of `SymbolTree`.
     Expectation: Success.
     """
@@ -195,8 +194,8 @@ def test_erase_subtree_node_01():
 
     for node in stree.nodes():
         if node.get_name() == "simple_net":
-            subtree = TreeNodeHelper.get_sub_tree(node)
-            orig_node_num = len(subtree.get_handler()._nodes)
+            subtree = node.get_sub_tree()
+            orig_node_num = len(subtree.get_handler().nodes())
             for n in subtree.nodes():
                 if n.get_name() == "block":
                     input_node = n.get_inputs()[0]
@@ -204,15 +203,15 @@ def test_erase_subtree_node_01():
                     for _nn in output_nodes:
                         _nn.set_arg_by_node(0, input_node)
                     subtree.erase(n)
-                    assert len(subtree.get_handler()._nodes) == orig_node_num - 1
+                    assert len(subtree.get_handler().nodes()) == orig_node_num - 1
                     break
             break
 
 
 def test_erase_subtree_node_02():
     """
-    Feature: for parser and erase api.
-    Description: for parser and erase node in subtree of `SymbolTree`.
+    Feature: parser and erase api.
+    Description: parser and erase node in subtree of `SymbolTree`.
     Expectation: Success.
     """
     def _remove_bn(subtree):
@@ -229,10 +228,10 @@ def test_erase_subtree_node_02():
     stree = SymbolTree.create(net)
     for node in stree.nodes():
         if node.get_name() == "simple_net":
-            subtree = TreeNodeHelper.get_sub_tree(node)
+            subtree = node.get_sub_tree()
             for n in subtree.nodes():
                 if n.get_name() == "block":
-                    subtree1 = TreeNodeHelper.get_sub_tree(n)
+                    subtree1 = n.get_sub_tree()
                     _remove_bn(subtree1)
                     assert subtree1.get_node("bn1") is None
                     break
@@ -240,7 +239,7 @@ def test_erase_subtree_node_02():
 
 def test_insert_subtree_node():
     """
-    Feature: for parser and insert api.
+    Feature: parser and insert api.
     Description: Insert node into subtree in `Symboltree`.
     Expectation: Success.
     """
@@ -257,27 +256,27 @@ def test_insert_subtree_node():
     stree = SymbolTree.create(net)
     for node in stree.nodes():
         if node.get_name() == "simple_net" and  node.get_node_type() == NodeType.Tree:
-            subtree = TreeNodeHelper.get_sub_tree(node)
+            subtree = node.get_sub_tree()
             for n in subtree.nodes():
                 if n.get_name() == "block":
-                    subtree1 = TreeNodeHelper.get_sub_tree(n)
-                    orig_node_num = len(subtree1.get_handler()._nodes)
+                    subtree1 = n.get_sub_tree()
+                    orig_node_num = len(subtree1.get_handler().nodes())
                     _insert_node(subtree1)
-                    assert len(subtree1.get_handler()._nodes) == orig_node_num + 1
+                    assert len(subtree1.get_handler().nodes()) == orig_node_num + 1
 
 
 def test_resnet_replace_121():
     """
-    Feature: for parser and replace api.
-    Description: Replace one node by one nodes in subtree of `SymbolTree`..
+    Feature: parser and replace api.
+    Description: Replace one node by one nodes in subtree of `SymbolTree`.
     Expectation: Success.
     """
     net = ForNetWithSubTree()
     stree: SymbolTree = SymbolTree.create(net)
-    original_nodes_size = len(stree.get_handler()._nodes)
+    original_nodes_size = len(stree.get_handler().nodes())
     for node in stree.nodes():
         if node.get_name() == "simple_net" and  node.get_node_type() == NodeType.Tree:
-            subtree = TreeNodeHelper.get_sub_tree(node)
+            subtree = node.get_sub_tree()
             for n in subtree.nodes():
                 if n.get_instance_type() == nn.Conv2d:
                     conv: nn.Conv2d = n.get_instance()
@@ -286,12 +285,12 @@ def test_resnet_replace_121():
                                                      kwargs=node.get_kwargs(), name="new_conv")
                     subtree.replace(n, [new_conv])
                     break
-    assert len(stree.get_handler()._nodes) == original_nodes_size
+    assert len(stree.get_handler().nodes()) == original_nodes_size
 
 
 def test_resnet_replace_12m():
     """
-    Feature: for parser and replace api.
+    Feature: parser and replace api.
     Description: Replace one node by multi-nodes in subtree of `SymbolTree`.
     Expectation: Success.
     """
@@ -300,8 +299,8 @@ def test_resnet_replace_12m():
 
     for node in stree.nodes():
         if node.get_name() == "simple_net" and  node.get_node_type() == NodeType.Tree:
-            subtree = TreeNodeHelper.get_sub_tree(node)
-            original_nodes_size = len(subtree.get_handler()._nodes)
+            subtree = node.get_sub_tree()
+            original_nodes_size = len(subtree.get_handler().nodes())
             for n in subtree.nodes():
                 if n.get_instance_type() == nn.Conv2d:
                     conv: nn.Conv2d = n.get_instance()
@@ -313,22 +312,22 @@ def test_resnet_replace_12m():
                                                    kwargs={}, name="new_bn")
                     subtree.replace(n, [new_conv, new_bn])
                     break
-            assert len(subtree.get_handler()._nodes) == original_nodes_size + 1
+            assert len(subtree.get_handler().nodes()) == original_nodes_size + 1
 
 
 def test_node_fusion_in_subtree():
     """
-    Feature: for parser and PatternEngine.
+    Feature: parser and PatternEngine.
     Description: Apply PatternEngine on nodes in `SymbolTree`..
     Expectation: Success.
     """
     net = ForNetWithSubTree()
     stree: SymbolTree = SymbolTree.create(net)
-    original_nodes_size = len(stree.get_handler()._nodes)
+    original_nodes_size = len(stree.get_handler().nodes())
     for node in stree.nodes():
         if node.get_name() == "simple_net" and  node.get_node_type() == NodeType.Tree:
-            subtree = TreeNodeHelper.get_sub_tree(node)
-            original_nodes_size = len(subtree.get_handler()._nodes)
+            subtree = node.get_sub_tree()
+            original_nodes_size = len(subtree.get_handler().nodes())
             for n in subtree.nodes():
                 node_: Node = n
                 if node_.get_instance_type() == nn.Conv2d:
@@ -340,8 +339,8 @@ def test_node_fusion_in_subtree():
                     subtree.insert(pos, new_bn)
                     old_bn.set_arg_by_node(0, new_bn)
                     break
-            assert len(subtree.get_handler()._nodes) == original_nodes_size + 1
+            assert len(subtree.get_handler().nodes()) == original_nodes_size + 1
             ConvBnPattern().apply(subtree)
-            assert len(subtree.get_handler()._nodes) == original_nodes_size
+            assert len(subtree.get_handler().nodes()) == original_nodes_size
             assert not subtree.get_node("conv1")
             assert not subtree.get_node("new_bn")

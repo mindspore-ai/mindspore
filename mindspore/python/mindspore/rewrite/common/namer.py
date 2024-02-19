@@ -16,8 +16,8 @@
 
 from typing import Union, Tuple
 
-from .node.node import Node
-from .api.node_type import NodeType
+from ..node import Node
+from ..api.node_type import NodeType
 
 
 class Namer:
@@ -84,7 +84,7 @@ class Namer:
                 # When _names is {x:2} and origin_name is y,
                 # origin_name is not in _names and can be returned.
                 return name
-            if suffix_idx and not self._names.get(real_name, -1) >= suffix_idx:
+            if suffix_idx and not self._names.get(real_name, -1) > suffix_idx:
                 # When _names is {x:2} and origin_name is x_3,
                 # return x_3 and update _names to {x:2, x_3:1}
                 return name
@@ -107,9 +107,6 @@ class Namer:
 
         Args:
             name (str): A name should be unique in current namer.
-
-        Raises:
-            RuntimeError: If name is not unique in current namer.
         """
         if self._names.get(name) is None:
             self._names[name] = 1
@@ -167,13 +164,13 @@ class NodeNamer(Namer):
                 elif node_or_name.get_node_type() == NodeType.MathOps:
                     origin_name = "math_ops"
                 else:
-                    raise RuntimeError("Node type unsupported:", node_or_name.get_node_type())
+                    origin_name = str(node_or_name.get_node_type())
         elif isinstance(node_or_name, str):
             if not node_or_name:
-                raise RuntimeError("input node_name is empty.")
+                raise ValueError("input node_name is empty.")
             origin_name = node_or_name
         else:
-            raise RuntimeError("unexpected type of node_or_name: ", type(node_or_name))
+            raise ValueError("unexpected type of node_or_name:", type(node_or_name))
         return super(NodeNamer, self).get_name(origin_name)
 
 
@@ -202,25 +199,73 @@ class ClassNamer(Namer):
             ClassNamer._instance = ClassNamer()
         return ClassNamer._instance
 
-    def get_name(self, origin_class_name: str) -> str:
+    def get_name(self, origin_name: str) -> str:
         """
-        Unique input `origin_class_name`.
+        Unique input `origin_name`.
 
         Args:
-            origin_class_name (str): A string represents original class name.
+            origin_name (str): A string represents original class name.
 
         Returns:
-            A string represents a unique class name generated from `origin_class_name`.
+            A string represents a unique class name generated from `origin_name`.
         """
 
-        return super(ClassNamer, self).get_name(origin_class_name + self._prefix)
+        return super(ClassNamer, self).get_name(origin_name + self._prefix)
 
-    def add_name(self, class_name: str):
+    def add_name(self, name: str):
         """
-        Declare a `class_name` so that other class can not apply this `class_name` anymore.
+        Declare a `name` so that other class can not apply this `name` anymore.
 
         Args:
-            class_name (str): A string represents a class name.
+            name (str): A string represents a class name.
         """
 
-        super(ClassNamer, self).add_name(class_name + self._prefix)
+        super(ClassNamer, self).add_name(name + self._prefix)
+
+class FunctionNamer(Namer):
+    """
+    Used for unique-ing function name in a network.
+
+    Function name should be unique in a network, in other word, in a Rewrite process. So please do not invoke
+    constructor of `FunctionNamer` and call `instance()` of `FunctionNamer` to obtain singleton of FunctionNamer.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._prefix = ""
+
+    @classmethod
+    def instance(cls):
+        """
+        Class method of `FunctionNamer` for singleton of `FunctionNamer`.
+
+        Returns:
+            An instance of `FunctionNamer` as singleton of `FunctionNamer`.
+        """
+
+        if not hasattr(FunctionNamer, "_instance"):
+            FunctionNamer._instance = FunctionNamer()
+        return FunctionNamer._instance
+
+    def get_name(self, origin_name: str) -> str:
+        """
+        Unique input `origin_name`.
+
+        Args:
+            origin_name (str): A string represents original function name.
+
+        Returns:
+            A string represents a unique function name generated from `origin_name`.
+        """
+
+        return super(FunctionNamer, self).get_name(origin_name + self._prefix)
+
+    def add_name(self, name: str):
+        """
+        Declare a `name` so that other function can not apply this `name` anymore.
+
+        Args:
+            name (str): A string represents a function name.
+        """
+
+        super(FunctionNamer, self).add_name(name + self._prefix)

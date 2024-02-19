@@ -67,7 +67,7 @@ def test_rewrite_apis():
     net = LeNet5()
     stree = SymbolTree.create(net)
     assert isinstance(stree, SymbolTree) is True
-    assert len(list(stree.nodes())) == 17
+    assert len(list(stree.nodes())) == 16
     conv1_node = stree.get_node('conv1')
     assert isinstance(conv1_node, Node) is True
     node_name = conv1_node.get_name()
@@ -80,7 +80,7 @@ def test_rewrite_apis():
     stree.insert(position, new_node)
     assert conv1_node.get_users()[0] == new_node
     assert new_node.get_inputs()[0] == conv1_node
-    assert len(list(stree.nodes())) == 18
+    assert len(list(stree.nodes())) == 17
     conv2_node = stree.get_node('conv2')
     position = stree.before(conv2_node)
     new_node2 = Node.create_call_cell(cell=nn.ReLU(), targets=['x_2'],
@@ -90,10 +90,10 @@ def test_rewrite_apis():
     assert new_node2.get_users()[0] == conv2_node
     assert conv2_node.get_inputs()[0] == new_node2
     relu_node = stree.get_node("relu")
-    assert len(list(stree.nodes())) == 19
+    assert len(list(stree.nodes())) == 18
     assert "relu" in [node.get_name() for node in stree.nodes()]
     stree.erase(relu_node)
-    assert len(list(stree.nodes())) == 18
+    assert len(list(stree.nodes())) == 17
     assert "relu" not in [node.get_name() for node in stree.nodes()]
     new_node3 = Node.create_call_cell(cell=nn.Flatten(), targets=[stree.unique_name('x')],
                                       args=[ScopedValue.create_naming_value('x')], name='new_flatten')

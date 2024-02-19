@@ -19,8 +19,7 @@ import mindspore as ms
 from mindspore.nn import Cell
 from mindspore import _checkparam as Validator
 from .node import Node
-from ..symbol_tree_builder import SymbolTreeBuilder
-from ..symbol_tree import Position, SymbolTree as SymbolTreeImpl
+from ..symbol_tree import Position, SymbolTreeBuilder, SymbolTree as SymbolTreeImpl
 
 ParamTypes = (int, str, float, bool, Node)
 MsDtypes = (ms.float16, ms.float32, ms.float64)
@@ -168,7 +167,7 @@ class SymbolTree:
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> print([node.get_name() for node in stree.nodes()])
-            ['input_x', 'Expr', 'conv1', 'relu', 'max_pool2d', 'conv2', 'relu_1', 'max_pool2d_1', 'attribute_assign',
+            ['input_x', 'conv1', 'relu', 'max_pool2d', 'conv2', 'relu_1', 'max_pool2d_1',
              'unaryop_not', 'if_node', 'flatten', 'fc1', 'relu_2', 'fc2', 'relu_3', 'fc3', 'return_1']
         """
         Validator.check_value_type("all_nodes", all_nodes, [bool], "nodes")
@@ -203,7 +202,7 @@ class SymbolTree:
         return Node(node_impl)
 
     def get_inputs(self) -> List[Node]:
-        return [Node(node_impl) for node_impl in self._symbol_tree.get_inputs()]
+        return [Node(node_impl) for node_impl in self._symbol_tree.get_input_nodes()]
 
     def before(self, node: Union[Node, str]):
         """
@@ -277,7 +276,7 @@ class SymbolTree:
             An instance of Node being inserted.
 
         Raises:
-            RuntimeError: If `position` is not belong to current `SymbolTree`.
+            ValueError: If `position` is not belong to current `SymbolTree`.
             TypeError: If `position` is not a `Position`.
             TypeError: If `node` is not a `Node`.
 
@@ -345,7 +344,6 @@ class SymbolTree:
             An instance of Node represents root of node_tree been replaced in.
 
         Raises:
-            RuntimeError: Old node is not isolated.
             TypeError: If `old_node` is not a `Node`.
             TypeError: If `new_nodes` is not a `list` or node in `new_nodes` is not a `Node`.
 
@@ -405,7 +403,8 @@ class SymbolTree:
             >>> stree.print_node_tabulate()
         """
         Validator.check_value_type("all_nodes", all_nodes, [bool], "print_node_tabulate")
-        self._symbol_tree.print_node_tabulate(all_nodes)
+        dump_str = self._symbol_tree.get_node_tabulate(all_nodes)
+        print(dump_str)
 
     def get_code(self) -> str:
         """
@@ -479,3 +478,20 @@ class SymbolTree:
         """
         Validator.check_value_type("name", name, [str], "SymbolTree")
         return self._symbol_tree.unique_name(name)
+
+    def flatten_nodes(self, node, erase_nodes_after_return: bool = False):
+        Validator.check_value_type("node", node, [Node], "flatten_nodes")
+        Validator.check_value_type("erase_nodes_after_return", erase_nodes_after_return, [bool], "flatten_nodes")
+        return self._symbol_tree.flatten_nodes(node.get_handler(), erase_nodes_after_return)
+
+    def flatten_static_if_control_flow(self):
+        return self._symbol_tree.flatten_static_if_control_flow()
+
+    # pylint: disable=missing-docstring
+    def get_origin_network(self):
+        return self._symbol_tree.get_origin_network()
+
+    # pylint: disable=missing-docstring
+    def all_nodes(self, subtree_nodes: bool = True):
+        Validator.check_value_type("subtree_nodes", subtree_nodes, [bool], "all_nodes")
+        return [Node(n) for n in self._symbol_tree.all_nodes(subtree_nodes)]

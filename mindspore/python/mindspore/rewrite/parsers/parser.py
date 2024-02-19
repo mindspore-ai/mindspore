@@ -14,10 +14,6 @@
 # ============================================================================
 """Base class of parser."""
 import abc
-import ast
-
-from ..symbol_tree import SymbolTree
-from ..node.node_manager import NodeManager
 
 
 class Parser(abc.ABC):
@@ -35,7 +31,7 @@ class Parser(abc.ABC):
         return type(None)
 
     @abc.abstractmethod
-    def process(self, stree: SymbolTree, node: ast.AST, node_manager: NodeManager):
+    def process(self, stree, node, node_manager):
         """
         Parse input ast node and add parse result into SymbolTree.
 

@@ -20,8 +20,7 @@ import numpy as np
 
 from mindspore.common import dtype as mstype
 from mindspore import Tensor, export
-from mindspore.rewrite import SymbolTree, ScopedValue, Node, NodeType, Replacement, PatternEngine, PatternNode, \
-    TreeNodeHelper
+from mindspore.rewrite import SymbolTree, ScopedValue, Node, NodeType, Replacement, PatternEngine, PatternNode
 import mindspore.nn as nn
 import mindspore.ops as ops
 
@@ -106,7 +105,7 @@ def insert_node_to_subtree(stree):
     # 在名称为'simnet'的子网络中插入新节点
     for node in stree.nodes():
         if node.get_node_type() == NodeType.Tree and node.get_name() == "simnet":
-            _insert_conv(TreeNodeHelper.get_sub_tree(node))
+            _insert_conv(node.get_sub_tree())
             break
 
 
@@ -167,7 +166,7 @@ def print_symbol_tree_info(stree):
     for node in stree.nodes():
         if node.get_node_type() == NodeType.Tree:
             print(f"subtree:{node.get_name()}")
-            subtree = TreeNodeHelper.get_sub_tree(node)
+            subtree = node.get_sub_tree()
             subtree.print_node_tabulate()
             break
 

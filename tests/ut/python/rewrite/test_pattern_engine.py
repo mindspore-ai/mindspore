@@ -73,10 +73,8 @@ def test_one_to_one_pattern():
             bn_node: Node = matched.get(pattern.name())
 
             conv = Conv2d(16, 16, 3)
-            print("target:", bn_node.get_targets()[0])
             conv_node = Node.create_call_cell(conv, [bn_node.get_targets()[0]], bn_node.get_args(),
                                               bn_node.get_kwargs(), name="new_conv")
-            print("node name:", conv_node.get_name())
             return [conv_node]
 
     class BnReplace(PatternEngine):

@@ -88,6 +88,13 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
         返回：
             当前节点对应的代码语句里调用的对象类型。
 
+    .. py:method:: mindspore.rewrite.Node.get_kwargs()
+
+        获取当前节点的关键字参数列表。
+
+        返回：
+            一个包含关键字参数的字典，key的类型为str，value的类型为 ``ScopedValue`` 。
+
     .. py:method:: mindspore.rewrite.Node.get_name()
 
         获取当前节点的名称。当节点被插入到SymbolTree时，节点的名称在SymbolTree中应该是唯一的。
@@ -101,6 +108,17 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
 
         返回：
             NodeType，当前节点的类型。
+
+    .. py:method:: mindspore.rewrite.Node.get_sub_tree()
+
+        获取类型为 `NodeType.Tree` 的节点里保存的符号树。节点类型详见 :class:`mindspore.rewrite.NodeType` 。
+
+        返回：
+            保存在Tree类型节点里的符号树。
+
+        异常：
+            - **TypeError** - 如果当前节点的类型不是 `NodeType.Tree` 。
+            - **AttributeError** - 如果当前Tree类型节点里没有保存符号树。
 
     .. py:method:: mindspore.rewrite.Node.get_symbol_tree()
 
@@ -145,7 +163,6 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
             - **out_idx** (int，可选) - 指定输入节点的哪个输出作为当前节点输入，则取第一个输出。默认值： ``None`` 。
 
         异常：
-            - **RuntimeError** - 如果 `src_node` 不属于当前的SymbolTree。
             - **TypeError** - 如果参数 `arg_idx` 不是int类型。
             - **ValueError** - 如果参数 `arg_idx` 超出了当前节点的参数数量。
             - **TypeError** - 如果参数 `src_node` 不是Node类型。
@@ -196,7 +213,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
         异常：
             - **TypeError** - 如果 `names` 不是 `list` 或 `tuple` 或者其中的元素不是str类型。
             - **TypeError** - 如果 `scopes` 不是 `list` 或 `tuple` 或者其中的元素不是str类型。
-            - **RuntimeError** - 如果 `names` 的长度不等于 `scopes` 的长度，而作用域不是None。
+            - **ValueError** - 如果 `names` 的长度不等于 `scopes` 的长度，而作用域不是None。
 
     .. py:method:: mindspore.rewrite.ScopedValue.create_naming_value(name: str, scope: str = "")
         :classmethod:
@@ -369,7 +386,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
             `Node`，被插入的节点。
 
         异常：
-            - **RuntimeError** - 如果 `position` 指定的不是该SymbolTree内的位置。
+            - **ValueError** - 如果 `position` 指定的不是该SymbolTree内的位置。
             - **TypeError** - 如果参数 `position` 不是Position类型。
             - **TypeError** - 如果参数 `node` 不是Node类型。
 
@@ -424,7 +441,6 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
             替换到SymbolTree的节点列表的根节点。
 
         异常：
-            - **RuntimeError** - 如果 `old_node` 仍然被其他节点依赖。
             - **TypeError** - 如果参数 `new_nodes` 不是list，或者列表中的成员不是Node类型。
             - **TypeError** - 如果参数 `old_node` 不是Node类型。
 
