@@ -20,6 +20,7 @@
 #include "pipeline/jit/pi/pi_jit_config.h"
 #include "pipeline/jit/pi/graph_guard/infer.h"
 #include "pipeline/jit/pi/graph_capture/graph.h"
+#include "pipeline/jit/pi/graph_capture/graph_build.h"
 
 namespace mindspore {
 namespace pijit {
@@ -186,6 +187,21 @@ void GraphAnalyzer::AddToEscaped(ValueNode *v) {
 
 extern TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth);
 
+bool CheckSideEffectedFunc(ValueNode *v) {
+  std::vector<std::string> funcs{"set_enable_grad", "__enter__", "__exit__"};
+  auto str = v->getInputs()[0]->GetName();
+  bool flag = false;
+  if (v->GetType() != AbstractNode::Call) {
+    return std::find(funcs.begin(), funcs.end(), v->GetName()) != funcs.end();
+  }
+  flag = std::find(funcs.begin(), funcs.end(), str) != funcs.end();
+  if (v->getInputs()[0]->GetVobj()->GetType() == AObject::kTypeType &&
+      !CheckSupportCreateInstance(dynamic_cast<CallNode *>(v))) {
+    return flag && false;
+  }
+  return flag;
+}
+
 bool GraphAnalyzer::TryToCapture(AbstractNode *n) {
   ValueNode *v = static_cast<ValueNode *>(n);
   AObject *o = v->GetVobj();
@@ -206,6 +222,9 @@ bool GraphAnalyzer::TryToCapture(AbstractNode *n) {
     return true;
   }
   if (v->GetOpcode() == STORE_ATTR || v->GetOpcode() == STORE_DEREF) {
+    return false;
+  }
+  if (!GetCaptureInfo().captured_locals.values.empty() && CheckSideEffectedFunc(v)) {
     return false;
   }
   if (ProduceInterpretValue(v)) {
