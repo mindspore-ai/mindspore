@@ -311,7 +311,7 @@ def generate_dynamic_inputs(B, N, S, D):
     key = Tensor(shape=[B, S, H], dtype=ms.float16)
     value = Tensor(shape=[B, S, H], dtype=ms.float16)
     attn_mask = Tensor(shape=[B, 1, S, S], dtype=ms.uint8)
-    return query, key, value, attn_mask
+    return query, key, value, None, attn_mask
 
 
 @pytest.mark.parametrize('keep_prob', [0.9])
@@ -327,6 +327,6 @@ def test_flash_attention_dynamic_shape_constraint(keep_prob):
     mp = 4
     B, N, S, D = None, 16, 1024, 128
     inputs = generate_dynamic_inputs(B, N, S, D)
-    net = Net(N, keep_prob, dp, mp)
+    net = Net(N, keep_prob, dp=dp, mp=mp)
     with pytest.raises(RuntimeError):
         compile_net(net, *inputs)

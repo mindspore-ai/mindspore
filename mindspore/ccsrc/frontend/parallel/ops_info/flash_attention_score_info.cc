@@ -378,6 +378,9 @@ Status FlashAttentionScoreInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
+  return SUCCESS;
+}
+
 Status FlashAttentionScoreInfo::CheckStrategyForDynamicShape(const StrategyPtr &) {
   for (auto &cnode : cnodes_) {
     // If DropoutGenMask -> Reshape -> FlashAttentionScore
