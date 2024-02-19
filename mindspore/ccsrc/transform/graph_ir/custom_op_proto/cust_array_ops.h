@@ -76,7 +76,7 @@ REG_CUST_OP(HammingWindow)
 REG_CUST_OP(IndexFill)
   .INPUT(x, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT16,
                         DT_UINT32, DT_UINT64, DT_UINT8}))
-  .INPUT(dim, TensorType({DT_INT32}))
+  .INPUT(dim, TensorType({DT_INT64, DT_INT32}))
   .INPUT(indices, TensorType({DT_INT32}))
   .INPUT(value, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT16,
                             DT_UINT32, DT_UINT64, DT_UINT8}))

@@ -22,7 +22,6 @@
 
 #include "Eigen/Core"
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_types.h"
 #include "common/kernel_log.h"
 #include "cpu_kernel/common/status.h"
 #include "utils/kernel_util.h"
@@ -60,11 +59,11 @@ uint32_t IndexFillCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   Tensor *tensor = ctx.Output(0);
   outputs_.push_back(tensor);
 
-  DataType dim_type = inputs_[1]->GetDataType();
+  dim_data_type_ = inputs_[1]->GetDataType();
   DataType index_type = inputs_[2]->GetDataType();
 
-  if (dim_type != DT_INT32) {
-    KERNEL_LOG_ERROR("IndexFill: Expected dtype int32 for dim.");
+  if (dim_data_type_ != DT_INT32 && dim_data_type_ != DT_INT64) {
+    KERNEL_LOG_ERROR("IndexFill: Expected dtype int32 or int64 for dim.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (index_type != DT_INT32) {
@@ -76,7 +75,7 @@ uint32_t IndexFillCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-void IndexFillCpuKernel::SpecialCompute(int64_t start, int64_t end, const int32_t *input_dim,
+void IndexFillCpuKernel::SpecialCompute(int64_t start, int64_t end, const int32_t input_dim,
                                         std::map<int32_t, bool> &index_dict) {
   auto *input_x = reinterpret_cast<T *>(inputs_[0]->GetData());
   auto *input_value = reinterpret_cast<T *>(inputs_[3]->GetData());
@@ -86,7 +85,7 @@ void IndexFillCpuKernel::SpecialCompute(int64_t start, int64_t end, const int32_
 
   int32_t dim_flag;
   if (x_dim_nums != 0) {
-    dim_flag = *input_dim % x_dim_nums + 1;
+    dim_flag = input_dim % x_dim_nums + 1;
   } else {
     dim_flag = 0;
   }
@@ -94,7 +93,7 @@ void IndexFillCpuKernel::SpecialCompute(int64_t start, int64_t end, const int32_
   int32_t remain_dims = 1;
   if (dim_flag == x_dim_nums) {
     if (dim_flag != 0) {
-      remain_dims = x_dims[*input_dim];
+      remain_dims = x_dims[input_dim];
     }
     for (int64_t i = start; i < end; i++) {
       int32_t index_flag = i % remain_dims;
@@ -106,11 +105,11 @@ void IndexFillCpuKernel::SpecialCompute(int64_t start, int64_t end, const int32_
       }
     }
   } else {
-    for (int32_t i = *input_dim + 1; i < x_dim_nums; i++) {
+    for (int32_t i = input_dim + 1; i < x_dim_nums; i++) {
       remain_dims *= x_dims[i];
     }
     for (int64_t i = start; i < end; i++) {
-      int32_t index_flag = (i / remain_dims) % x_dims[*input_dim];
+      int32_t index_flag = (i / remain_dims) % x_dims[input_dim];
       std::map<int32_t, bool>::iterator f = index_dict.find(index_flag);
       if (f != index_dict.end()) {
         output_y[i] = *input_value;
@@ -123,7 +122,7 @@ void IndexFillCpuKernel::SpecialCompute(int64_t start, int64_t end, const int32_
 
 template <typename T>
 uint32_t IndexFillCpuKernel::SpecialComputeParallel(const CpuKernelContext &ctx, const uint32_t &data_num,
-                                                    const int32_t *input_dim, std::map<int32_t, bool> &index_dict) {
+                                                    const int32_t input_dim, std::map<int32_t, bool> &index_dict) {
   uint32_t min_core_num = 1;
   uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - kResvCpuNum);
 
@@ -135,6 +134,7 @@ uint32_t IndexFillCpuKernel::SpecialComputeParallel(const CpuKernelContext &ctx,
   }
   if (max_core_num == 0) {
     KERNEL_LOG_ERROR("The number of available CPU cores must be greater than 0!");
+    return KERNEL_STATUS_INNER_ERROR;
   }
 
   auto sharder_index_fill = [&](int64_t start, int64_t end) { SpecialCompute<T>(start, end, input_dim, index_dict); };
@@ -146,7 +146,13 @@ uint32_t IndexFillCpuKernel::SpecialComputeParallel(const CpuKernelContext &ctx,
 
 template <typename T>
 uint32_t IndexFillCpuKernel::DoCompute(const CpuKernelContext &ctx) {
-  int32_t *input_1 = reinterpret_cast<int32_t *>(inputs_[1]->GetData());
+  int32_t input_dim;
+
+  if (dim_data_type_ == DT_INT32) {
+    input_dim = *reinterpret_cast<int32_t *>(inputs_[1]->GetData());
+  } else {
+    input_dim = static_cast<int32_t>(*reinterpret_cast<int64_t *>(inputs_[1]->GetData()));
+  }
   int32_t *input_2 = reinterpret_cast<int32_t *>(inputs_[2]->GetData());
 
   int32_t x_dim_nums = inputs_[0]->GetTensorShape()->GetDims();
@@ -155,9 +161,9 @@ uint32_t IndexFillCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   uint32_t data_num = outputs_[0]->NumElements();
   int64_t index_num = inputs_[2]->GetTensorShape()->NumElements();
 
-  int32_t cur_dim = *input_1;
-  if (*input_1 < 0) {
-    *input_1 = *input_1 + x_dim_nums;
+  int32_t real_input_dim = input_dim;
+  if (input_dim < 0) {
+    real_input_dim = input_dim + x_dim_nums;
   }
 
   std::map<int32_t, bool> index_dict;
@@ -170,32 +176,32 @@ uint32_t IndexFillCpuKernel::DoCompute(const CpuKernelContext &ctx) {
         index_dict.insert(std::pair<int32_t, bool>(0, true));
       }
     }
-  } else if (cur_dim < -x_dim_nums || cur_dim >= x_dim_nums) {
+  } else if (input_dim < -x_dim_nums || input_dim >= x_dim_nums) {
     KERNEL_LOG_ERROR(
       "Dimension out of range (expected to be in range of "
       "[%d, %d], but got %d).",
-      0 - x_dim_nums, x_dim_nums - 1, cur_dim);
+      0 - x_dim_nums, x_dim_nums - 1, input_dim);
     return KERNEL_STATUS_PARAM_INVALID;
   } else {
     for (int32_t i = 0; i < index_num; i++) {
-      if (input_2[i] < -x_dims[*input_1] || input_2[i] >= x_dims[*input_1]) {
+      if (input_2[i] < -x_dims[real_input_dim] || input_2[i] >= x_dims[real_input_dim]) {
         KERNEL_LOG_ERROR("Invalid argument 3: out of range.");
         return KERNEL_STATUS_PARAM_INVALID;
       } else {
-        input_2[i] = (input_2[i] < 0) ? (input_2[i] + x_dims[*input_1]) : input_2[i];
+        input_2[i] = (input_2[i] < 0) ? (input_2[i] + x_dims[real_input_dim]) : input_2[i];
         index_dict.insert(std::pair<int32_t, bool>(input_2[i], true));
       }
     }
   }
 
   if (data_num >= kParallelDataNum) {
-    uint32_t res = SpecialComputeParallel<T>(ctx, data_num, input_1, index_dict);
+    uint32_t res = SpecialComputeParallel<T>(ctx, data_num, real_input_dim, index_dict);
     if (res != static_cast<uint32_t>(KERNEL_STATUS_OK)) {
       KERNEL_LOG_ERROR("IndexFill kernel SpecialComputeParallel failed.");
       return res;
     }
   } else {
-    SpecialCompute<T>(0, data_num, input_1, index_dict);
+    SpecialCompute<T>(0, data_num, real_input_dim, index_dict);
   }
   return KERNEL_STATUS_OK;
 }
