@@ -28,6 +28,7 @@ from mindspore.ops.operations._grad_ops import MaskedSelectGrad
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations.array_ops import Fills, UniqueConsecutive, Col2Im, NonZero, IndexFill, \
     TensorScatterElements
+from mindspore.ops.auto_generate.gen_ops_def import GatherExt
 from mindspore.ops.operations.random_ops import RandomPoisson
 from mindspore.ops.operations._inner_ops import DynamicBroadcastTo
 from mindspore.ops.primitive import Primitive
@@ -1665,6 +1666,29 @@ def get_gather_vmap_rule(prim, axis_size):
         output = prim(x, indices, axis, batch_dims)
 
         return output, axis
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(GatherExt)
+def get_gather_ext_vmap_rule(prim, axis_size):
+    """VmapRule for `GatherExt` operation. """
+
+    prim_name = prim.name
+    def vmap_rule(input_bdim, dim_bdim, index_bdim):
+        input, input_axis = input_bdim
+        index, _ = index_bdim
+        dim, dim_dim = dim_bdim
+
+        if dim_dim is not None:
+            _raise_value_error("The source dim of `dim` in {} must be None, but got {}.".format(prim_name, dim_dim))
+
+        if dim < input_axis:
+            new_dim = dim
+        else:
+            new_dim = dim + 1
+        output = prim(input, new_dim, index)
+        return output, 0
 
     return vmap_rule
 

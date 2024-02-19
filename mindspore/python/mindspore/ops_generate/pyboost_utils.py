@@ -331,6 +331,8 @@ def convert_types(inputs):
                 logging.warning("Not support tuple[%s]] input.", data_type)
         if inputs_dtypes[i] == 'number':
             inputs_dtypes[i] = 'ScalarPtr'
+        if inputs_dtypes[i] == 'int':
+            inputs_dtypes[i] = 'int64_t'
     return inputs_dtypes, flag
 
 

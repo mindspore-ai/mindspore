@@ -1,0 +1,20 @@
+# operator: Scatter
+scatter:
+    args:
+        input:
+            dtype: tensor
+        dim:
+            dtype: int
+        index:
+            dtype: tensor
+        src:
+            dtype: tensor
+        reduce:
+            dtype: int
+    returns:
+        out:
+            dtype: tensor
+    dispatch:
+        enable: True
+    function:
+        disable: True
