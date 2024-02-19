@@ -52,10 +52,11 @@ class AscendMsprofExporter:
 
         self._check_msprof_env()
 
-    def export(self):
+    def export(self, step_list):
         """start_time is the time to collect PROF data"""
 
-        msprof_export_cmd = self._msprof_command_generator(self.prof_root_dir)
+        step_id = step_list[0] if step_list else None
+        msprof_export_cmd = self._msprof_command_generator(self.prof_root_dir, step_id)
         self._run_cmd(msprof_export_cmd)
         msprof_analyze_cmd = [self._msprof_cmd, "--analyze=on", "--rule=communication,communication_matrix",
                               "--output={}".format(self.prof_root_dir)]
@@ -81,9 +82,12 @@ class AscendMsprofExporter:
             raise RuntimeError(errs)
         return outs
 
-    def _msprof_command_generator(self, output):
+    def _msprof_command_generator(self, output, step_id):
         """msprof export helper"""
-        return [self._msprof_cmd, "--export=on", "--output={}".format(output)]
+        cmd = [self._msprof_cmd, "--export=on", "--output={}".format(output)]
+        if isinstance(step_id, int) and step_id >= 0:
+            cmd.extend(["--model-id=4294967295", "--iteration-id={}".format(step_id)])
+        return cmd
 
     def _check_msprof_env(self):
         """Check the existence of msprof binary tool"""
