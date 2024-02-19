@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <string>
+#include <set>
 #include "mindspore/core/symbolic_shape/symbol.h"
 #include "mindspore/core/abstract/abstract_value.h"
 
@@ -53,6 +54,7 @@ inline bool AsBool(const Symbol *s) {
 inline bool AsBool(const SymbolPtr &s) { return AsBool(s.get()); }
 
 inline int64_t NormAxis(int64_t axis, size_t rank) { return axis >= 0 ? axis : axis + static_cast<int64_t>(rank); }
+MS_CORE_API std::set<int64_t> NormAxis(const ListSymbol *axis, size_t rank);
 
 MS_CORE_API std::string SymbolListToStr(const SymbolPtrList &slist, const std::string &pre, const std::string &post,
                                         bool raw_str = false);

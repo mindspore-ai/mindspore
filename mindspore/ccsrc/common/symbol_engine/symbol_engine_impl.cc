@@ -70,7 +70,7 @@ class ControlFlowJoinNode : public SpecialCNodeHelper {
   static bool Match(const CNodePtr &cnode) { return IsPrimitiveCNode(cnode->input(0), prim::kPrimSwitch); }
   void SetDependStatus(std::map<AnfNodePtr, DependStatus> *depend_status_map) override {
     auto input0 = input();
-    (*depend_status_map)[input0] = (*depend_status_map)[cnode_];
+    (*depend_status_map)[input0->input(kIndex1)].value = true;
     SetFuncGraphDepend(input0->input(kIndex2));
     SetFuncGraphDepend(input0->input(kIndex3));
   }

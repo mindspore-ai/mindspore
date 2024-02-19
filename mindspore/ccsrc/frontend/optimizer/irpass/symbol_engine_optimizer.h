@@ -87,6 +87,13 @@ class FoldConstSymbol : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override;
 };
+
+class ShapeOpCse {
+ public:
+  ShapeOpCse() = default;
+  ~ShapeOpCse() = default;
+  bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer);
+};
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

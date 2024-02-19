@@ -25,17 +25,15 @@
 namespace mindspore {
 namespace symshape {
 namespace {
-SymbolPtr GenValueByTensorShape(const abstract::TensorShapePtr &shape, const TypePtr &type_ptr) {
-  MS_EXCEPTION_IF_NULL(shape);
-  auto &shape_vec = shape->shape();
-  if (IsDynamic(shape_vec)) {
+SymbolPtr GenValueByTensorShape(const ShapeVector &shape, const TypePtr &type_ptr) {
+  if (IsDynamic(shape)) {
     return ListSymbol::Make();
   }
-  if (shape_vec.size() > 1) {
-    MS_LOG(WARNING) << "Symbolic value only support 0-D or 1-D value, but got the shape: " << shape_vec;
+  if (shape.size() > 1) {
+    MS_LOG(WARNING) << "Symbolic value only support 0-D or 1-D value, but got the shape: " << shape;
     return ListSymbol::Make();
   }
-  if (shape_vec.size() == 0) {
+  if (shape.size() == 0) {
     if (type_ptr->generic_type_id() == kNumberTypeBool) {
       return BoolSymbol::Make();
     }
@@ -44,7 +42,7 @@ SymbolPtr GenValueByTensorShape(const abstract::TensorShapePtr &shape, const Typ
     }
     return IntSymbol::Make();
   }
-  SymbolPtrList list(LongToSize(shape_vec[0]));
+  SymbolPtrList list(LongToSize(shape[0]));
   if (type_ptr->generic_type_id() == kNumberTypeBool) {
     std::generate(list.begin(), list.end(), []() { return BoolSymbol::Make(); });
   } else if (type_ptr->generic_type_id() == kNumberTypeFloat) {
@@ -57,12 +55,12 @@ SymbolPtr GenValueByTensorShape(const abstract::TensorShapePtr &shape, const Typ
 
 SymbolPtr GenValueByShape(const BaseShapePtr &baseshape, const TypePtr &type_ptr) {
   if (baseshape->isa<abstract::NoShape>()) {
-    return IntSymbol::Make();
+    return GenValueByTensorShape({}, type_ptr);
   }
   if (baseshape->isa<abstract::TensorShape>()) {
     auto tensor_type = type_ptr->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(tensor_type);
-    return GenValueByTensorShape(baseshape->cast<abstract::TensorShapePtr>(), tensor_type->element());
+    return GenValueByTensorShape(baseshape->cast<abstract::TensorShapePtr>()->shape(), tensor_type->element());
   }
   if (baseshape->isa<abstract::DynamicSequenceShape>()) {
     return ListSymbol::Make();
@@ -212,6 +210,14 @@ int64_t AsInt(const Symbol *s) {
   auto v = s->as<IntSymbol>();
   MS_EXCEPTION_IF_NULL(v);
   return v->value();
+}
+
+std::set<int64_t> NormAxis(const ListSymbol *axis, size_t rank) {
+  std::set<int64_t> result;
+  for (auto &item : axis->symbols()) {
+    result.insert(NormAxis(AsInt(item), rank));
+  }
+  return result;
 }
 
 std::string SymbolListToStr(const SymbolPtrList &slist, const std::string &pre, const std::string &post, bool raw_str) {
