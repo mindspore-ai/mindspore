@@ -124,9 +124,9 @@ void FindBest(size_t total_sol, const vector<std::shared_ptr<SomasSolverCore>> &
   }
 }
 Status SomasSolverPre::Solving(const session::KernelGraph &graph, TensorsDescMap *ptensors,
-                               const std::vector<DynamicBitSet> *pConstraints,
-                               const vector<vector<size_t>> &continuous_v, bool bVerifySolution, bool, SortingType,
-                               FittingType, AlgorithmType) {
+                               const std::vector<VectorBitSet> *pConstraints,
+                               const vector<vector<size_t>> &continuous_v, const std::vector<int> &core_list,
+                               bool bVerifySolution, bool, SortingType, FittingType, AlgorithmType) {
   Status ret = SUCCESS;
   try {
     TensorsDescMap &tensors = *ptensors;
@@ -161,7 +161,8 @@ Status SomasSolverPre::Solving(const session::KernelGraph &graph, TensorsDescMap
         }
       }
     }
-    (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+    (void)common::ThreadPool::GetInstance().SyncRun(tasks, core_list);
+    common::ThreadPool::GetInstance().ClearThreadPool();
     BestInfo best_info;
     FindBest(total_sol, solvers, &best_info);
     auto end = std::chrono::system_clock::now();
@@ -195,7 +196,7 @@ Status SomasSolverPre::Solving(const session::KernelGraph &graph, TensorsDescMap
 }
 
 void SomasSolverPre::Log(const session::KernelGraph &graph, const TensorsDescMap &tensors,
-                         const std::vector<DynamicBitSet> *pConstraints,
+                         const std::vector<VectorBitSet> *pConstraints,
                          const vector<vector<size_t>> &continuous_v) const {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -206,7 +207,7 @@ void SomasSolverPre::Log(const session::KernelGraph &graph, const TensorsDescMap
   }
 }
 
-void SomasSolverPre::TensorRelationLog(const std::vector<DynamicBitSet> *pConstraints,
+void SomasSolverPre::TensorRelationLog(const std::vector<VectorBitSet> *pConstraints,
                                        const session::KernelGraph &graph) const {
   MS_LOG(INFO) << "SomasSolver::Log Writing somas_tensor_relation.ir..";
   auto context_ptr = MsContext::GetInstance();

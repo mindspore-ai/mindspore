@@ -24,7 +24,6 @@ from mindspore.communication._comm_helper import Backend, _get_rank_helper, _get
     _check_mpi_envs, _set_elegant_exit_handle
 from mindspore._c_expression import init_hccl, finalize_hccl, init_cluster, MSContext, ms_ctx_param
 
-
 __all__ = ["init", "release", "get_rank", "get_local_rank", "get_group_size",
            "get_local_rank_size", "get_world_rank_from_group_rank",
            "get_group_rank_from_world_rank", "create_group", "destroy_group",
@@ -97,7 +96,8 @@ def _set_envs():
     This takes compatibility into account because user scripts may get 'DEVICE_ID' or 'RANK_ID' envs.
     """
     os.environ["RANK_ID"] = str(get_rank())
-    os.environ["RANK_SIZE"] = str(get_group_size())
+    if os.getenv("RANK_SIZE") is None:
+        os.environ["RANK_SIZE"] = str(get_group_size())
     os.environ["DEVICE_ID"] = str(get_local_rank())
 
 

@@ -39,6 +39,7 @@ class SomasNode {
 
   // node's dependency including data dependency and time dependency
   std::set<std::shared_ptr<SomasNode>> ancestor_nodes_;
+  std::vector<std::weak_ptr<SomasNode>> user_nodes_;
   // data tensor
   std::vector<SomasTensorPtr> input_tensors_;
   std::vector<SomasTensorPtr> output_tensors_;
