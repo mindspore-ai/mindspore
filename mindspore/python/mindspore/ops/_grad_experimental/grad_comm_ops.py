@@ -312,15 +312,12 @@ def get_bprop_micro_step_all_gather(self):
         do_mirror = self.get_attr_dict()["do_mirror"]
     if do_mirror:
         scale = 1.0 / self.rank_size
-        all_reduce = AllReduce(ReduceOp.SUM, self.group).add_prim_attr("fusion", fusion)
+        reduce_scatter = ReduceScatter(ReduceOp.SUM, self.group).add_prim_attr("fusion", fusion)
         if "segment" in self.get_attr_dict():
-            all_reduce.add_prim_attr("segment", self.get_attr_dict()["segment"])
-        rank = get_rank(self.group)
-        dev_num = get_group_size(self.group)
-        split = P.Split(output_num=dev_num)
+            reduce_scatter.add_prim_attr("segment", self.get_attr_dict()["segment"])
         if self.instance_name:
             instance_name = "grad_" + self.instance_name
-            all_reduce.set_prim_instance_name(instance_name)
+            reduce_scatter.set_prim_instance_name(instance_name)
     cast = P.Cast()
     dtype = P.DType()
     out_tensor = Tensor(1.0, mstype.float16)
@@ -330,16 +327,14 @@ def get_bprop_micro_step_all_gather(self):
         if with_mirror_operator:
             if not do_mirror:
                 return (dout, cast(out_tensor, dtype(z)))
-            real_grad = all_reduce(dout)
-            real_grad = split(real_grad)[rank]
+            real_grad = reduce_scatter(dout)
             if mean_flag:
                 real_grad = F.tensor_mul(real_grad, scale)
             return (real_grad, cast(out_tensor, dtype(z)))
         z = F.depend(z, dout)
         if not do_mirror:
             return (z, cast(out_tensor, dtype(z)))
-        real_grad = all_reduce(z)
-        real_grad = split(real_grad)[rank]
+        real_grad = reduce_scatter(z)
         if mean_flag:
             real_grad = F.tensor_mul(real_grad, scale)
         return (real_grad, cast(out_tensor, dtype(z)))

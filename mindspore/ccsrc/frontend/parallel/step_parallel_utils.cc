@@ -819,24 +819,33 @@ AnfNodePtr GetChildCastNode(const AnfNodePtr &node_ptr, const NodeUsersMap &node
 // Given the cnode ptr, find its users until we find the computation node, then return the type of the
 // computation node. This function is used to find the target type for CreateFP16Cast. Only returns the target type if
 // it is float16, and the source node is float32. If the situation is not matched, then return the nullptr.
-TypePtr FindChildCastWithFP32ToFP16(const CNodePtr &cnode_ptr, const NodeUsersMap &node_users_map) {
-  auto node_ptr = cnode_ptr->cast<AnfNodePtr>();
-  if (!node_ptr) {
+TypePtr FindChildCastWithFP32ToFP16(const std::pair<AnfNodePtr, int> &res, const NodeUsersMap &node_users_map) {
+  auto cnode_ptr = res.first->cast<CNodePtr>();
+  if (!cnode_ptr) {
     return nullptr;
   }
   auto cnode_inputs = cnode_ptr->inputs();
   if (cnode_inputs.size() < TWO_INPUT_SIZE) {
     return nullptr;
   }
-  // As we execute the function IsWeightValidUsed when we start to insert the mirror, so the second parameter
-  // is always the parameter.
-  auto weight = cnode_inputs[1];
-  if (!weight->isa<Parameter>()) {
-    return nullptr;
-  }
-  MS_LOG(INFO) << "Start to search the weight params:" << weight->DebugString();
 
-  AnfNodePtr node = GetChildCastNode(weight, node_users_map);
+  AnfNodePtr node = nullptr;
+  if (IsValueNode<FuncGraph>(cnode_ptr->input(kIndex0))) {
+    auto graph_sub = GetValueNode<FuncGraphPtr>(cnode_ptr->input(0));
+    auto parameters = graph_sub->parameters();
+    auto parameter_sub = parameters[IntToSize(res.second - 1)];
+    node = GetChildCastNode(parameter_sub, node_users_map);
+  } else {
+    // As we execute the function IsWeightValidUsed when we start to insert the mirror, so the second parameter
+    // is always the parameter.
+    auto weight = cnode_inputs[1];
+    if (!weight->isa<Parameter>()) {
+      return nullptr;
+    }
+    MS_LOG(INFO) << "Start to search the weight params:" << weight->DebugString();
+    node = GetChildCastNode(weight, node_users_map);
+  }
+
   if (!node) {
     return nullptr;
   }
@@ -847,14 +856,22 @@ TypePtr FindChildCastWithFP32ToFP16(const CNodePtr &cnode_ptr, const NodeUsersMa
   }
   auto input_element_type = node_type->cast<mindspore::TensorTypePtr>()->element();
   MS_EXCEPTION_IF_NULL(input_element_type);
-  auto source_node_type = node_ptr->Type();
+  if (!IsPrimitiveCNode(node)) {
+    return nullptr;
+  }
+  auto cast_input_cnode = node->cast<CNodePtr>()->input(kIndex1)->cast<CNodePtr>();
+  if (!cast_input_cnode) {
+    return nullptr;
+  }
+  auto source_node_type = cast_input_cnode->Type();
   if (!CheckTensorType(source_node_type)) {
     return nullptr;
   }
   auto source_element_type = source_node_type->cast<mindspore::TensorTypePtr>()->element();
   MS_EXCEPTION_IF_NULL(source_element_type);
   // We only add cast operation when the source is fp32 type, and the users is fp16 type.
-  if (source_element_type->type_id() == kNumberTypeFloat32 && input_element_type->type_id() == kNumberTypeFloat16) {
+  if ((source_element_type->type_id() == kNumberTypeFloat32 && input_element_type->type_id() == kNumberTypeFloat16) ||
+      (source_element_type->type_id() == kNumberTypeFloat32 && input_element_type->type_id() == kNumberTypeBFloat16)) {
     return input_element_type;
   }
   return nullptr;

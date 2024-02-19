@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ADD_DEPEND_FOR_ALL_GATHER_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ADD_DEPEND_FOR_ALL_GATHER_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_INSERT_DEPEND_FOR_ALL_GATHER_GE_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_INSERT_DEPEND_FOR_ALL_GATHER_GE_H_
 #include <string>
 #include <memory>
 #include "include/backend/optimizer/pass.h"
@@ -26,12 +26,12 @@
 
 namespace mindspore {
 namespace opt {
-class AddDependForAllGather : public Pass {
+class InsertDependForAllGatherGe : public Pass {
  public:
-  AddDependForAllGather() : Pass("add_depend_for_all_gather") {}
-  ~AddDependForAllGather() override = default;
+  InsertDependForAllGatherGe() : Pass("insert_depend_for_all_gather_ge") {}
+  ~InsertDependForAllGatherGe() override = default;
   bool Run(const FuncGraphPtr &graph) override;
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ADD_DEPEND_FOR_ALL_GATHER_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_INSERT_DEPEND_FOR_ALL_GATHER_GE_H_

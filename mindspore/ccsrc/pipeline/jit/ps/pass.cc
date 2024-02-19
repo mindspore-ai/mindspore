@@ -51,6 +51,7 @@
 #include "frontend/parallel/pass/micro_interleaved_order_control.h"
 #include "frontend/parallel/pass/full_micro_interleaved_order_control.h"
 #include "frontend/parallel/pass/assign_add_opt.h"
+#include "frontend/parallel/pass/merge_cast_opt.h"
 #include "frontend/parallel/pass/comp_comm_scheduling.h"
 #include "frontend/parallel/pass/overlap_opt_shard_in_pipeline.h"
 #include "frontend/parallel/pass/slice_activation_in_cell_share_recompute.h"
@@ -321,7 +322,10 @@ void AddParallelRenormalize(OptPassGroupMap *map_a) {
     auto parallel_end_opt =
       find_if(map_a->begin(), map_a->end(), [](auto opt_pair) { return opt_pair.first == "meta_fg_expand"; });
     if (parallel_end_opt != map_a->end()) {
-      (void)map_a->insert(parallel_end_opt, {"parallel_renormalize", opt::OptPassConfig::Renormalize()});
+      opt::irpass::OptimizeIRPassLib irpass;
+      opt::OptPassConfig cast_eliminate_pass = opt::OptPassConfig({irpass.cast_eliminate_});
+      auto iter = map_a->insert(parallel_end_opt, {"cast_eliminate", cast_eliminate_pass});
+      (void)map_a->insert(iter, {"parallel_renormalize", opt::OptPassConfig::Renormalize()});
     }
   }
 }
@@ -743,6 +747,12 @@ bool AssignAddOpt(const ResourcePtr &resource) {
   return true;
 }
 
+bool MergeCastOpt(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::MergeCastOpt(resource->func_graph());
+  return true;
+}
+
 bool ReorderSendRecvBetweenFpBpPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::ReorderSendRecvBetweenFpBp(resource->func_graph());
@@ -1075,9 +1085,10 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    {"environ_conv", EnvironConversionPass},
                                    {"label_micro_interleaved_index", LabelMicroInterleavedIndexPass},
                                    {"label_fine_grained_interleaved_index", LabelFineGrainedInterleavedIndexPass},
-                                   {"assign_add_opt", AssignAddOpt},
+                                   {"merge_cast_opt", MergeCastOpt},
                                    {"slice_recompute_activation", SliceRecomputeActivationPass},
                                    {"micro_interleaved_order_control", MicroInterLeavedOrderControlPass},
+                                   {"assign_add_opt", AssignAddOpt},
                                    {"full_micro_interleaved_order_control", FullMicroInterLeavedOrderControlPass},
                                    {"comp_comm_scheduling", CompCommSchedulingPass},
                                    {"reorder_send_recv_between_fp_bp", ReorderSendRecvBetweenFpBpPass},
