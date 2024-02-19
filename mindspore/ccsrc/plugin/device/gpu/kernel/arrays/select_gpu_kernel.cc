@@ -15,7 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/arrays/select_gpu_kernel.h"
-#include "mindspore/core/ops/select.h"
+#include "mindspore/core/ops/ops_func_impl/select.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {

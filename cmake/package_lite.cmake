@@ -115,7 +115,6 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/unsqueeze.h
             ${TOP_DIR}/mindspore/core/ops/unstack.h
             ${TOP_DIR}/mindspore/core/ops/where.h
-            ${TOP_DIR}/mindspore/core/ops/select.h
             ${TOP_DIR}/mindspore/core/ops/scatter_nd_update.h
             ${TOP_DIR}/mindspore/core/ops/gru.h
             ${TOP_DIR}/mindspore/core/ops/invert_permutation.h
