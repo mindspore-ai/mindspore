@@ -161,10 +161,7 @@ bool CallNodeReturnConst(CallNode *call_node, Graph *sub_graph, AObject *value) 
 bool GuardConstCallNodeParam(CallNode *call_node, Graph *sub_graph, int max_guard_depth) {
   std::vector<std::pair<TracePtr, GuardLevel>> traces;
   for (auto i : call_node->getInputs()) {
-    if (i->is_constant()) {
-      continue;
-    }
-    if (i->GetOpcode() == LOAD_CONST) {
+    if (i->IsConstantValue()) {
       continue;
     }
     AObject::Type type = i->GetVobj() ? i->GetVobj()->GetType() : AObject::kTypeAnyValue;
@@ -346,6 +343,7 @@ bool InferPrimitive(CallNode *call_node) {
     {"Prim[DType]", AObject::kTypeAnyValue},
     {"Prim[Partial]<side_effect_propagate=1>", AObject::kTypeAnyValue},
   };
+  Graph *sub_graph = call_node->GetSubGraph();
   call_node->SetVobj(AObject::MakeAObject(AObject::kTypeTensor));
   call_node->SetSubGraph(nullptr);
   PyObject *prim = call_node->input(0)->GetVobj()->GetPyObject().ptr();
@@ -399,10 +397,16 @@ bool InferPrimitive(CallNode *call_node) {
   if (ret == nullptr) {
     return false;
   }
+
   AObject::Type type = AObject::GetPyType(ret);
   AObject *type_info = is_abstract && type != AObject::kTypeTensor ? AObject::MakeAObject(type) : AObject::Convert(ret);
   call_node->SetVobj(type_info);
   Py_DECREF(ret);
+
+  ConstantInfo::CollectPrimitiveConstantInfo(call_node);
+  if (call_node->IsConstantValue()) {
+    return CallNodeReturnConst(call_node, sub_graph, call_node->GetVobj());
+  }
   return false;
 }
 
@@ -819,11 +823,8 @@ static bool InferBuiltinFuncOrMethod(CallNode *call_node) {
       }
     }
   }
+  ConstantInfo::CollectBuiltinFuncConstantInfo(call_node);
   if (!sub_graph->GuardValueNode(call_node)) {
-    return false;
-  }
-  py::object func = call_node->GetVobj()->GetPyObject();
-  if (func.ptr() == nullptr) {
     return false;
   }
   return CallNodeReturnConst(call_node, sub_graph, call_node->GetVobj());

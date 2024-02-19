@@ -107,6 +107,7 @@ class GraphBuilder {
   void ResolveClosure(const py::object &func_info, ValueNode *callable_node, FrameStates *frame);
 
   std::pair<PyObject *, ValueNode *> SearchSelfPyObject(PyCodeObject *co);
+  bool HandleSuper(const Instr &instr, AObject *super);
   AObject *BuildSuperObject(PyCodeObject *co);
 
   /**
@@ -200,7 +201,8 @@ class GraphBuilder {
 
   // pointers
   std::vector<Graph *> graph_pool_;
-  ValueNode *NewValueNode(AObject *o, int op, int arg, const std::vector<ValueNode *> &p = {});
+  ValueNode *NewValueNode(AObject *o, int op, int arg, const std::vector<ValueNode *> &p = {},
+                          const std::string &name = "");
   ValueNode *NewValueNode(AObject *o, const Instr &, const std::vector<ValueNode *> &p = {});
   Graph *NewGraph(PyCodeObject *co, PyObject *f_globals);
 
