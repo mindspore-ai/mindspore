@@ -97,6 +97,10 @@ class IrBprop {
                bool need_update = false);
 
   AdParamPtr ad_param() const { return ad_param_; }
+  inline bool bprop_graph_run_by_single_op() { return bprop_graph_run_by_single_op_; }
+  void set_bprop_graph_run_by_single_op(bool bprop_graph_run_by_single_op) {
+    bprop_graph_run_by_single_op_ |= bprop_graph_run_by_single_op;
+  }
 
  private:
   // Get bprop graph by ad::grad
@@ -168,6 +172,8 @@ class IrBprop {
 
   AdParamPtr ad_param_{nullptr};
   bool grad_by_value_{false};
+  // Flag for ms_funtcion and high order
+  bool bprop_graph_run_by_single_op_{false};
   bprop_pass::PyNativePassForwardPtr pass_forward_;
 };
 using IrBpropPtr = std::unique_ptr<IrBprop>;

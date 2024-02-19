@@ -55,9 +55,10 @@ class IrGrad : public AutoGrad {
     MS_EXCEPTION_IF_NULL(ad_param_);
     return ad_param_;
   }
-  inline bool bprop_graph_run_by_single_op() { return bprop_graph_run_by_single_op_; }
+  inline bool bprop_graph_run_by_single_op() { return ir_bprop()->bprop_graph_run_by_single_op(); }
   void set_bprop_graph_run_by_single_op(bool bprop_graph_run_by_single_op) {
-    bprop_graph_run_by_single_op_ = bprop_graph_run_by_single_op_ || bprop_graph_run_by_single_op;
+    bool flag = ir_bprop()->bprop_graph_run_by_single_op() || bprop_graph_run_by_single_op;
+    ir_bprop()->set_bprop_graph_run_by_single_op(flag);
   }
 
  private:
@@ -103,8 +104,6 @@ class IrGrad : public AutoGrad {
   mindspore::HashSet<std::string> need_grad_weights_;
   // Keep reference for cnode
   AnfNodePtrList k_nodes_used_in_graph_;
-  // Flag for ms_funtcion and high order
-  bool bprop_graph_run_by_single_op_{false};
   bool need_do_manager_replace_{false};
   runtime::AsyncHqueuePtr assist_queue_{nullptr};
 };

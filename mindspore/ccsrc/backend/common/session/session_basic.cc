@@ -956,6 +956,7 @@ void SessionBasic::GetOpInputTensorsFromCNode(const CNodePtr &cnode,
 
   const auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   input_info->input_values.resize(input_num);
+  input_info->input_abs.resize(input_num);
   for (size_t i = 1; i <= input_num; ++i) {
     const auto &input = cnode->input(i);
     KernelWithIndex kernel_with_index;
@@ -970,7 +971,7 @@ void SessionBasic::GetOpInputTensorsFromCNode(const CNodePtr &cnode,
     MS_LOG(DEBUG) << "Get" << i << "th input tensor of " << cnode->fullname_with_scope() << " from "
                   << kernel_with_index.first->fullname_with_scope() << "-" << kernel_with_index.second;
     input_info->input_values[i - 1] = input_value;
-    (void)input_info->input_abs.emplace_back(real_input->abstract());
+    input_info->input_abs[i - 1] = kernel_with_index.first->abstract();
   }
 }
 

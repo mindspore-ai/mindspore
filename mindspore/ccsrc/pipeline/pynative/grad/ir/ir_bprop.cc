@@ -381,7 +381,7 @@ void IrBprop::BackPropagate() {
     for (const auto &next_edge : next_edges) {
       const auto &last_variable = next_edge.first;
       const auto &din = next_edge.second;
-      pass_forward_->ConvertMakeTupleInputToDynamicInput(din, seen);
+      pass_forward_->ConvertMakeTupleInputToDynamicInput(din, seen, bprop_graph_run_by_single_op_);
       last_variable->ir_function_node()->UpdateAccumulativeDout(din);
       last_variable->set_is_need_propagate(true);
     }
