@@ -70,6 +70,12 @@ void GatherInfo(const std::pair<mindspore::kernel::KernelTensor *, bool> &tensor
   MemcpyToBuf(&trans, 1);
 }
 
+void GatherInfo(const std::vector<mindspore::kernel::KernelTensor *> &tensor_list) {
+  for (auto tensor : tensor_list) {
+    GatherInfo(tensor);
+  }
+}
+
 void GatherInfo(const mindspore::tensor::TensorPtr &tensor) {
   if (tensor == nullptr) {
     return;

@@ -34,7 +34,7 @@ namespace {
 transform::aclIntArray *GetAdaptedMultiples(KernelTensor *x_tensor, KernelTensor *multiples_tensor) {
   auto x_shape = x_tensor->GetShape()->GetShapeVector();
   if (MS_UNLIKELY(IsDynamicRank(x_shape))) {
-    MS_LOG(EXCEPTION) << "In Launch, the tensor's shape should not be dynamic rank!";
+    MS_LOG(EXCEPTION) << "For 'Tile', the tensor's shape should not be dynamic rank in launch stage!";
   }
   auto x_dim = LongToSize(x_shape.size());
   auto multiples_vector = multiples_tensor->GetValueWithCheck<std::vector<int64_t>>();

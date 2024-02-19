@@ -14,22 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_CAT_H_
-#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_CAT_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_PYBOOST_CPU_KERNRL_CONCAT_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_PYBOOST_CPU_KERNRL_CONCAT_H_
 
 #include <memory>
-#include <vector>
-#include "mindapi/base/types.h"
-#include "ops/ops_func_impl/op_func_impl.h"
+#include "ir/value.h"
+#include "kernel/pyboost/op_runner.h"
 
 namespace mindspore {
-namespace ops {
-class MIND_API CatFuncImpl : public OpFuncImpl {
- public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-};
-}  // namespace ops
+namespace kernel {
+namespace pyboost {
+void ConcatCpuCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &tensors, const Int64ImmPtr &axis);
+}  // namespace pyboost
+}  // namespace kernel
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_CAT_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_PYBOOST_CPU_KERNRL_CONCAT_H_

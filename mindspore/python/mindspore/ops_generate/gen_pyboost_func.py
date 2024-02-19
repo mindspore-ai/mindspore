@@ -816,19 +816,6 @@ def gen_pyboost_inner_prim(work_path, op_yaml_data):
             continue
         if not op_proto.prim_init:
             continue
-        func_def = operator_data.get('function')
-        func_impl_name = operator_name
-        if func_def is not None:
-            func_disable = get_disable_flag(func_def)
-            if func_disable:
-                continue
-            item = func_def.get("name")
-            if item is not None:
-                func_impl_name = item
-        if func_impl_name.endswith("_ext"):
-            func_impl_name = func_impl_name[:-4]
-        if func_impl_name.endswith("_"):
-            func_impl_name = func_impl_name[:-1]
         gen_header += template.PYBOOST_PY_FUNC_IMPORT_HEADEAR.replace(class_name=op_proto.class_name)
         args = operator_data.get('args')
         input_args = []
@@ -842,7 +829,7 @@ def gen_pyboost_inner_prim(work_path, op_yaml_data):
             input_args.append(input_arg)
 
         gen_py += template.PYTHON_PRIM_TEMPLATE.replace(class_name=op_proto.class_name, input_args=input_args,
-                                                        process_func=process_func, func_impl_name=func_impl_name)
+                                                        process_func=process_func, func_impl_name=operator_name)
     dir_path = os.path.join(work_path, "mindspore/python/mindspore/ops/auto_generate")
     pathlib.Path(dir_path).mkdir(parents=True, exist_ok=True)
     dst_file_path = os.path.join(dir_path, "pyboost_inner_prim.py")

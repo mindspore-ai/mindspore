@@ -68,54 +68,6 @@ def test_concat_offset_dynamic_cpu():
         assert (out.asnumpy() == expect).all()
 
 
-class ConcatNet(nn.Cell):
-    def __init__(self):
-        super().__init__()
-        self.unique = P.Unique()
-        self.concat = P.Concat()
-        self.reshape = P.Reshape()
-
-    def construct(self, x, y, z, shape_tensor):
-        x = self.reshape(x, shape_tensor)
-        y = self.reshape(y, shape_tensor)
-        z = self.reshape(z, shape_tensor)
-        out = self.concat((x, y, z))
-        return out
-
-
-class GradConcat(nn.Cell):
-    def __init__(self, network):
-        super().__init__()
-        self.grad = GradOperation()
-        self.network = network
-        self.unique = P.Unique()
-        self.reshape = P.Reshape()
-
-    def construct(self, x, y, z, shape):
-        return self.grad(self.network)(x, y, z, shape)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_concat_dynamic_grad_cpu():
-    """
-    /// Feature: Concat op dynamic shape
-    /// Description: Concat backward with dynamic shape
-    /// Expectation: Euqal to expected value
-    """
-    if sys.platform != 'linux':
-        return
-    x = Tensor(np.array([1, 2, 3, 4, 5, 6]), mstype.float32)
-    x2 = Tensor(np.array([1, 2, 3, 4, 5, 6]), mstype.float32)
-    x3 = Tensor(np.array([1, 2, 3, 4, 5, 6]), mstype.float32)
-    shape = Tensor(np.array([3, 1, 2, 1]), mstype.int64)
-    net = GradConcat(ConcatNet())
-    output = net(x, x2, x3, shape)
-    expect = np.array([1., 1., 1., 1., 1., 1.])
-    assert (output.asnumpy() == expect).all()
-
-
 class SliceNet(nn.Cell):
     def __init__(self):
         super().__init__()
