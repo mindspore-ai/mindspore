@@ -1261,7 +1261,7 @@ def infer_value_for_Cast(x, dst_type_enum):
     if isinstance(x, (int, float)):
         value = Tensor(np.array(x).astype(np_dst_type), dtype=dst_type)
     elif x.dtype == mstype.bfloat16:
-        value = Tensor_(x.float().asnumpy().astype(np_dst_type), dtype=dst_type)
+        value = None
     else:
         value = Tensor_(x.asnumpy().astype(np_dst_type), dtype=dst_type)
     return value

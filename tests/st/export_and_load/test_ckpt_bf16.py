@@ -61,8 +61,8 @@ class LeNet5(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.platform_x86_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_save_load_checkpoint_with_bf16_graph(mode):
@@ -120,8 +120,8 @@ def test_save_load_checkpoint_with_bf16_graph(mode):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.platform_x86_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_save_load_checkpoint_with_bf16_pynative(mode):
@@ -179,8 +179,8 @@ def test_save_load_checkpoint_with_bf16_pynative(mode):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.platform_x86_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_save_load_checkpoint_with_bf16_pynative_accuracy(mode):
