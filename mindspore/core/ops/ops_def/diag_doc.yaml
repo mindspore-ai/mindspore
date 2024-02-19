@@ -13,7 +13,7 @@ diag:
         
         Raises:
             TypeError: If `input` is not a Tensor.
-            TypeError: If rank of `input` less than 1.
+            ValueError: If rank of `input` less than 1.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``

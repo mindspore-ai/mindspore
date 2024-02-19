@@ -25,7 +25,7 @@ mindspore.scipy.fft.idct
     返回：
         Tensor， `x` 进行逆离散傅里叶变换的结果。
 
-    异常:
+    异常：
         - **TypeError** - 如果 `x` 不是Tensor。
         - **TypeError** - 如果 `axis` 或 `n` 不是int类型。
         - **ValueError** - 如果 `axis` 的值超出： :math:`[-x.ndim, x.ndim)` 范围。
