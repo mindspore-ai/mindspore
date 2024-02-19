@@ -493,7 +493,7 @@ constexpr const char kNameNanToNum[] = "NanToNum";
 constexpr const char kNameSwinAttentionFFN[] = "SwinAttentionFFN";
 constexpr const char kNameSwinTransformerLnQKV[] = "SwinTransformerLnQKV";
 constexpr const char kNameSwinAttentionScore[] = "SwinAttentionScore";
-constexpr const char kSilentCheck[] = "SilentCheck";
+constexpr const char kSilentCheck[] = "SilentCheckV2";
 class OpAdapterDesc;
 
 class OpAdapterMap {
