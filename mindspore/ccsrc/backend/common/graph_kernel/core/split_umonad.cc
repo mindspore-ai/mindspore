@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/common/graph_kernel/split_umonad.h"
+#include "backend/common/graph_kernel/core/split_umonad.h"
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -32,7 +32,7 @@ const BaseRef SplitAssign::DefinePattern() const {
   return VectorRef({v, Xs, Us, UMonad});
 }
 
-bool CanSplit(const AnfNodePtr &node) { return IsPrimitiveCNode(node, prim::kPrimAssign); }
+const bool SplitAssign::CanSplit(const AnfNodePtr &node) const { return IsPrimitiveCNode(node, prim::kPrimAssign); }
 
 AnfNodePtr ProcessNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t input_idx) {
   MS_EXCEPTION_IF_NULL(node);
@@ -63,7 +63,7 @@ AnfNodePtr ProcessNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, s
   return new_cnode;
 }
 
-const AnfNodePtr SplitAssign::Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const {
+const AnfNodePtr SplitNode::Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(node);
   if (!CanSplit(node)) {
     return node;
