@@ -193,7 +193,7 @@ cudaError_t CalSyncBatchNormPost(size_t N, size_t C, size_t H, size_t W, const T
                                  float epsilon, cudaStream_t cuda_stream) {
   SyncBatchNormPost<<<GET_BLOCKS(N * C * H * W), GET_THREADS, 0, cuda_stream>>>(N, C, H, W, input, output, means_local,
                                                                                 invstds_local, scale, bias, epsilon);
-  SyncBatchNormPostBiasScale<<<1, std::min(C, static_cast<size_t>(GET_THREADS)), 0, cuda_stream>>>(
+  SyncBatchNormPostBiasScale<<<1, std::min(C, GET_THREADS), 0, cuda_stream>>>(
     C, scale, bias, output_scale, output_bias);
   return GetCudaStatus();
 }

@@ -278,5 +278,5 @@ uint32_t SetSizeCpuKernel::SetSizeCompute_string(const CpuKernelContext &ctx, Sp
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kSetSize, SetSizeCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSetSize, SetSizeCpuKernel);
 }  // namespace aicpu

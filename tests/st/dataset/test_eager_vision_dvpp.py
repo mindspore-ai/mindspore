@@ -19,6 +19,8 @@ import cv2
 import numpy as np
 import pytest
 
+from PIL import Image
+
 from mindspore import log as logger
 import mindspore as ms
 import mindspore.dataset.vision as vision
@@ -1080,6 +1082,14 @@ def test_eager_perspective_dvpp_exception():
     with pytest.raises(ValueError) as error_info:
         _ = vision.Perspective(start_points, end_points).device("Asscend")
     assert "Input device_target is not within the valid set of ['CPU', 'Ascend']" in str(error_info.value)
+
+    image = Image.open(input_apple_jpg)
+    start_points = [[0, 63], [63, 63], [63, 0], [0, 0]]
+    end_points = [[0, 32], [32, 32], [32, 0], [0, 0]]
+
+    with pytest.raises(TypeError) as error_info:
+        _ = vision.Perspective(start_points, end_points).device("Ascend")(image)
+    assert "The input PIL Image cannot be executed on Ascend, " in str(error_info.value)
 
     os.environ['MS_ENABLE_REF_MODE'] = "0"
 

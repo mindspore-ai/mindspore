@@ -110,7 +110,7 @@ void *GeDeviceResManager::AllocateMemory(size_t size, uint32_t stream_id) const 
   runtime_instance_->SetContext();
   MS_EXCEPTION_IF_NULL(mem_manager_);
   if (swap_manager_ != nullptr) {
-    return swap_manager_->AllocDeviceMemory(size);
+    return swap_manager_->AllocDeviceMemory(size, stream_id);
   }
   return mem_manager_->MallocMemFromMemPool(size, false, false, stream_id);
 }
@@ -150,7 +150,7 @@ std::vector<void *> GeDeviceResManager::AllocateContinuousMemory(const std::vect
     aligned_size_list.emplace_back(align_size);
   }
   if (swap_manager_ != nullptr) {
-    return swap_manager_->AllocDeviceContinuousMem(aligned_size_list);
+    return swap_manager_->AllocDeviceContinuousMem(aligned_size_list, stream_id);
   }
   return mem_manager_->MallocContinuousMemFromMemPool(aligned_size_list, stream_id);
 }
@@ -224,6 +224,19 @@ void GeDeviceResManager::CreateSessionAndGraphRunner() {
   }
   auto graph_runner = transform::NewGraphRunner(options);
   transform::SetGraphRunner(graph_runner);
+}
+
+void GeDeviceResManager::SetDeviceIdToCurrentThread() const {
+  static thread_local std::once_flag is_set;
+  std::call_once(is_set, []() {
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    auto ret = aclrtSetDevice(static_cast<int32_t>(device_id));
+    if (ret != ACL_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "Device " << device_id << " call aclrtSetDevice failed, ret:" << static_cast<int>(ret);
+    }
+  });
 }
 
 bool GeDeviceResManager::BindDeviceToCurrentThread(bool force_bind) const {

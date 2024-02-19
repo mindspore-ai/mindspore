@@ -22,6 +22,8 @@ from mindspore.common.api import jit
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 
+from tests.st.utils import test_utils
+
 context.set_context(device_target="Ascend")
 
 
@@ -51,6 +53,7 @@ def test_net():
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@test_utils.run_test_with_On
 def test_net_bf16(mode):
     """
     Feature: Test matmul bfloat16.

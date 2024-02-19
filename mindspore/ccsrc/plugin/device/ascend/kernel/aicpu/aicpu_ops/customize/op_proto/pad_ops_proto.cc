@@ -19,8 +19,7 @@
 #include <algorithm>
 #include <numeric>
 
-#include "inc/ops/pad_ops.h"
-#include "graph/utils/node_utils.h"
+#include "op_proto/inc/pad_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/common_shape_fns.h"

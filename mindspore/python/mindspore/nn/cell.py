@@ -100,7 +100,7 @@ class Cell(Cell_):
     """
 
     IGNORE_LIST = ['_scope', '_cell_init_args', '_auto_prefix', '_cells', '_params', '_create_time',
-                   '_func_graph_flags', '_parameter_layout_dict', '_params_list', '_tensor_list', '_phase',
+                   '_func_graph_flags', '_parameter_layout_dict', '_params_list', '_phase',
                    '_forward_pre_hook', '_forward_hook', '_enable_forward_pre_hook', '_enable_forward_hook',
                    '_bprop_debug', '_enable_backward_hook', '_cell_backward_hook', '_is_run', '_param_prefix',
                    '_attr_synced', 'pynative', 'requires_grad', 'cell_type']
@@ -110,7 +110,6 @@ class Cell(Cell_):
         self._params = OrderedDict()
         self._cells = OrderedDict()
         self._params_list = OrderedDict()
-        self._tensor_list = OrderedDict()
         self._primitives = OrderedDict()
         self.training = False
         self.requires_grad = False
@@ -369,10 +368,6 @@ class Cell(Cell_):
             cells = self.__dict__['_cells']
             if name in cells:
                 return cells[name]
-        if '_tensor_list' in self.__dict__:
-            tensor_list = self.__dict__['_tensor_list']
-            if name in tensor_list:
-                return tensor_list[name]
         if '_params_list' in self.__dict__:
             params_list = self.__dict__['_params_list']
             if name in params_list:
@@ -398,8 +393,6 @@ class Cell(Cell_):
             del self._cells[name]
         elif '_params_list' in self.__dict__ and name in self._params_list:
             del self._params_list[name]
-        elif '_tensor_list' in self.__dict__ and name in self._tensor_list:
-            del self._tensor_list[name]
         else:
             object.__delattr__(self, name)
         self._attr_synced = False
@@ -828,15 +821,6 @@ class Cell(Cell_):
         else:
             self.insert_param_to_cell(name, None)
 
-    def _set_attr_for_tensor(self, name, value):
-        if context._get_mode() == context.PYNATIVE_MODE:
-            tensor_list = self.__dict__.get('_tensor_list')
-            if name in self.__dict__:
-                del self.__dict__[name]
-            tensor_list[name] = value
-        else:
-            object.__setattr__(self, name, value)
-
     def __setattr__(self, name, value):
         cells = self.__dict__.get('_cells')
         params = self.__dict__.get('_params')
@@ -854,8 +838,6 @@ class Cell(Cell_):
             if value is not None:
                 raise TypeError(f"For 'Cell', the type of {name} must be cell, but got {type(value).__name__}.")
             self._cells[name] = None
-        elif isinstance(value, Tensor):
-            self._set_attr_for_tensor(name, value)
         else:
             if isinstance(value, Primitive):
                 value.set_prim_instance_name(name)
@@ -2612,7 +2594,7 @@ class GraphCell(Cell):
         self._add_attr("graph_load_from_mindir", self.graph)
         if not self.obf_random_seed:
             return self.compile_and_run(*args, **kwargs)
-        append_input = Tensor((numpy.ones((1, 1)) * self._branch_control_input).astype(numpy.int32))
+        append_input = Tensor((numpy.ones((1,)) * self._branch_control_input).astype(numpy.int32))
         return self.compile_and_run(*args, append_input, **kwargs)
 
 

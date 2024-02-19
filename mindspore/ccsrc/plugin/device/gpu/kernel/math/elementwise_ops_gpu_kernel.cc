@@ -123,6 +123,9 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ElementwiseOpsGpuKernel:
       ADD_UNARY_DIFF_TYPE(ElwiseOpType::kReciprocal, kNumberTypeInt16, kNumberTypeFloat32, int16_t, float),
       ADD_UNARY_DIFF_TYPE(ElwiseOpType::kReciprocal, kNumberTypeInt8, kNumberTypeFloat32, int8_t, float),
       ADD_UNARY_DIFF_TYPE(ElwiseOpType::kReciprocal, kNumberTypeUInt8, kNumberTypeFloat32, uint8_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kReciprocal, kNumberTypeUInt16, kNumberTypeFloat32, uint16_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kReciprocal, kNumberTypeUInt32, kNumberTypeFloat32, uint32_t, float),
+      ADD_UNARY_DIFF_TYPE(ElwiseOpType::kReciprocal, kNumberTypeUInt64, kNumberTypeFloat32, uint64_t, float),
       ADD_UNARY_DIFF_TYPE(ElwiseOpType::kReciprocal, kNumberTypeBool, kNumberTypeFloat32, bool, float)}},
     {"Inv",
      {REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kReciprocal), REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kReciprocal),
@@ -209,7 +212,8 @@ bool ElementwiseOpsGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    MS_EXCEPTION(TypeError) << "For '" << kernel_name_
+                            << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
   kernel_func_ = iter->second[index].second;

@@ -26,3 +26,5 @@ layer_norm:
       dtype: tensor
     variance:
       dtype: tensor
+  function:
+    disable: True

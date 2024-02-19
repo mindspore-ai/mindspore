@@ -20,8 +20,8 @@
 #include <string>
 #include <vector>
 
-#include "cpu_kernel/inc/cpu_tensor.h"
-#include "cpu_kernel/inc/cpu_tensor_shape.h"
+#include "cpu_tensor.h"
+#include "cpu_tensor_shape.h"
 #include "proto/cpu_attr.pb.h"
 
 namespace aicpu {

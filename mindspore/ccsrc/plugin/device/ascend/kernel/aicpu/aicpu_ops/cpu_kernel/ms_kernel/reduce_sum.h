@@ -18,7 +18,7 @@
 #define AICPU_KERNELS_NORMALIZED_REDUCE_SUM_H
 
 #include <vector>
-#include "inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class ReduceSumCpuKernel : public CpuKernel {

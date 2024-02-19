@@ -562,9 +562,9 @@ void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_
     (void)abs_list.emplace_back(param_i_abs);
     RecordForwardGraphForInput(v, input_args_info->input_arg_id_vec[i], param_i_abs);
   }
-  top_cell()->set_auto_grad_cell_ptr(std::make_shared<autograd::AutoGradCellImpl>(
-    input_param_values, abs_list, op_num_in_bprop_graph_ * kContainerRatio, assist_queue_, forward()->enable_async(),
-    !top_cell()->is_high_order_top_cell()));
+  top_cell()->set_auto_grad_cell_ptr(
+    std::make_shared<autograd::AutoGradCellImpl>(input_param_values, abs_list, op_num_in_bprop_graph_ * kContainerRatio,
+                                                 assist_queue_, !top_cell()->is_high_order_top_cell()));
 }
 
 void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_info) {
@@ -706,14 +706,14 @@ void GradExecutor::SetForwardLastNodeInfo(const ValuePtr &v) const {
   }
   (void)PyNativeAlgo::Common::SetValueGradInfo(value, top_cell_, TensorGradType::kConstant);
   // Set last output abstract and will be used for sens
+  auto fake_v = PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(value);
+  top_cell()->SetLastOutputValueForwardOutputFlag(fake_v);
   if (forward()->enable_async()) {
     auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
-    auto fake_v = PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(value);
     auto task = [auto_grad_cell_ptr, fake_v]() { auto_grad_cell_ptr->UpdateOutputNodeOfTopCell(fake_v); };
     DispatchGradQueueTask(std::move(task));
   } else {
-    top_cell()->auto_grad_cell_ptr()->UpdateOutputNodeOfTopCell(
-      PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(value));
+    top_cell()->auto_grad_cell_ptr()->UpdateOutputNodeOfTopCell(fake_v);
   }
 }
 
@@ -1204,6 +1204,9 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr,
                                          const std::vector<tensor::TensorPtr> &w_args,
                                          const std::vector<size_t> &p_args) {
   MS_EXCEPTION_IF_NULL(top_input_args_info_);
+  // Update bprop_graph_run_by_single_op for bprop graph, if it is true, pass like ConvertMakeTupleInputToDynamicInput
+  // will not take effect
+  top_cell()->auto_grad_cell_ptr()->set_bprop_graph_run_by_single_op(top_cell()->use_dynamic_shape_process());
   FuncGraphPtr bprop_graph = top_cell()->auto_grad_cell_ptr()->Finish(w_args, p_args, grad_attr);
 
   MS_LOG(DEBUG) << "Top graph input params size " << top_input_args_info_->input_arg_value_vec.size();
@@ -1243,8 +1246,8 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr,
   // Update run graph by single op flag. Has two scenario:
   // 1. Dynamic shape(or structure) or Dynamic structure
   // 2. Has bprop cut op
-  bprop_graph->set_flag(kFlagEnableRunGraphBySingleOp, bprop_graph->has_flag(kFlagPyNativeBpropGraphIsDynamic) ||
-                                                         bprop_graph->has_flag(kFlagPyNativeBpropGraphWithBpropCut));
+  bprop_graph->set_flag(kFlagEnableRunGraphBySingleOp,
+                        top_cell()->auto_grad_cell_ptr()->bprop_graph_run_by_single_op());
   if (top_cell()->has_call_graph()) {
     bprop_graph->set_flag(kFlagPyNativeWithJitCallGraph, true);
   }

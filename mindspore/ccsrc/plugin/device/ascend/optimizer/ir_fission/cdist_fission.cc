@@ -22,6 +22,7 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "backend/operator/ops_backend_infer_function.h"
 #include "include/common/utils/anfalgo.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace opt {
@@ -73,11 +74,11 @@ AnfNodePtr AddBroadCastToNode(const FuncGraphPtr &func_graph, const AnfNodePtr &
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(dim - 1), expand_dims);
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), expand_dims);
   // Add BroadCastTo Node
+  auto shape_node = opt::CreateValueNodeWithKernelInfo(func_graph, MakeValue(need_shape));
   std::vector<AnfNodePtr> broadcast_to_inputs = {
-    NewValueNode(std::make_shared<Primitive>(prim::kPrimBroadcastTo->name())), expand_dims};
+    NewValueNode(std::make_shared<Primitive>(prim::kPrimBroadcastTo->name())), expand_dims, shape_node};
   auto broadcast_to = pass.NewCNode(broadcast_to_inputs, func_graph);
   common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {need_shape}, broadcast_to.get());
-  common::AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(need_shape), broadcast_to);
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), broadcast_to);
   return broadcast_to;
 }

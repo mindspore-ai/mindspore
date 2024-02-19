@@ -18,7 +18,9 @@ import types
 import textwrap
 import inspect
 import os
+import mindspore as ms
 from mindspore import nn
+from mindspore import log as logger
 from mindspore.common.tensor import Tensor
 from mindspore.ops.primitive import _RunOpHook, Primitive
 from mindspore._c_expression import PackExpander, PackNode
@@ -88,6 +90,24 @@ def _trace_cell_call(self, *args, **kwargs):
             output = self._run_construct(args, kwargs)
     return output
 
+class _PrimitiveHook:
+    """PrimitiveHook for trace run"""
+    def __init__(self):
+        self.origin_calls = list()
+        for op in ms.ops.operations.__all__:
+            prim = getattr(ms.ops.auto_generate, op, None)
+            if hasattr(prim, '__call__')  and 'super().__call__' not in inspect.getsource(prim.__call__):
+                self.origin_calls.append((prim, prim.__call__))
+
+    def __enter__(self):
+        for prim, _ in self.origin_calls:
+            prim.__call__ = Primitive.__call__
+        return self
+
+    def __exit__(self, *err):
+        for prim, origin_call in self.origin_calls:
+            prim.__call__ = origin_call
+
 class _PackHook:
     """Hook for trace run"""
 
@@ -154,7 +174,7 @@ class PackFunc(Primitive):
         return _convert_tensor(ret)
 
     def _run_op(self, args):
-        with _RunOpHook(PackFunc._trace_run_op), _PackHook():
+        with _PrimitiveHook(), _RunOpHook(PackFunc._trace_run_op), _PackHook():
             fun_args = [_convert_tensor(a) for a in args]
             ret = self.func(*fun_args, **self.kwargs)
         return ret
@@ -276,9 +296,9 @@ def trace(fn):
             pack_func = PackFunc(fn, f"{id(obj)}_{id(fn)}_{grad_flag_expr}", obj, True)
             setattr(obj, pack_func_name, pack_func)
         return pack_func(*args, **kwargs)
-
-    if "MS_DEV_DISABLE_TRACE" in os.environ and os.environ["MS_DEV_DISABLE_TRACE"] == "on":
-        return fn
-    _trace_wrap.pack_fn = fn
-    _trace_wrap.is_method = None
-    return _trace_wrap
+    logger.warning("The trace feature is not supported in r2.3")
+    if "MS_DEV_ENABLE_TRACE" in os.environ and os.environ["MS_DEV_ENABLE_TRACE"] == "on":
+        trace_wrap.pack_fn = fn
+        _trace_wrap.is_method = None
+        return _trace_wrap
+    return fn

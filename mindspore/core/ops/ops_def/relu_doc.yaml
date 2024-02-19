@@ -3,23 +3,23 @@ relu:
         Computes ReLU (Rectified Linear Unit activation function) of input tensors element-wise.
 
         Refer to :func:`mindspore.ops.relu` for more details.
-
+    
         Inputs:
-            - **input_x** (Tensor) - Input Tensor of numeric types.
-
+            - **input** (Tensor) - The input tensor.
+    
         Outputs:
-            Tensor, has the same dtype and shape as `input_x`.
-
+            Tensor, has the same dtype and shape as `input`.
+    
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-
+    
         Examples:
             >>> import mindspore
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
-            >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+            >>> input = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
             >>> relu = ops.ReLU()
-            >>> output = relu(input_x)
+            >>> output = relu(input)
             >>> print(output)
             [[0. 4. 0.]
-            [2. 0. 9.]]
+             [2. 0. 9.]]

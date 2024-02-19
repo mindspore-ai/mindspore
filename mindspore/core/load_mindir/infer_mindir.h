@@ -22,5 +22,6 @@
 namespace mindspore {
 MS_CORE_API bool InferMindir(const FuncGraphPtr &root, const AbstractBasePtrList &args, bool raise_exception = false);
 MS_CORE_API bool ValidMindir(const FuncGraphPtr &root);
+MS_CORE_API void InferFuncGraphLoaded(const FuncGraphPtr &root);
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_LOAD_MINDIR_INFER_MINDIR_H

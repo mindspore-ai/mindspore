@@ -19,7 +19,7 @@
 
 #include <algorithm>
 #include "ms_kernel/random/utils.h"
-#include "inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "common/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 #include "utils/philox_random.h"

@@ -20,19 +20,23 @@
 #include <memory>
 #include <set>
 #include <string>
-#include "aoe/external/aoe.h"
 #include "include/transform/graph_ir/types.h"
 #include "utils/dlopen_macro.h"
 
 namespace mindspore {
 namespace transform {
-ORIGIN_METHOD(AoeInitialize, Aoe::AoeStatus, const std::map<::ge::AscendString, ::ge::AscendString> &);
-ORIGIN_METHOD(AoeFinalize, Aoe::AoeStatus);
-ORIGIN_METHOD(AoeCreateSession, Aoe::AoeStatus, uint64_t &);
-ORIGIN_METHOD(AoeSetGeSession, Aoe::AoeStatus, uint64_t, ::ge::Session *);
-ORIGIN_METHOD(AoeSetTuningGraph, Aoe::AoeStatus, uint64_t, const ::ge::Graph &);
-ORIGIN_METHOD(AoeTuningGraph, Aoe::AoeStatus, uint64_t, const std::map<::ge::AscendString, ::ge::AscendString> &);
-ORIGIN_METHOD(AoeDestroySession, Aoe::AoeStatus, uint64_t);
+
+using AoeStatus = int32_t;
+constexpr AoeStatus AOE_SUCCESS = 0;
+constexpr AoeStatus AOE_ERROR_NON_OPTIMIZE_GRAPH = 8;
+
+ORIGIN_METHOD(AoeInitialize, AoeStatus, const std::map<::ge::AscendString, ::ge::AscendString> &);
+ORIGIN_METHOD(AoeFinalize, AoeStatus);
+ORIGIN_METHOD(AoeCreateSession, AoeStatus, uint64_t &);
+ORIGIN_METHOD(AoeSetGeSession, AoeStatus, uint64_t, ::ge::Session *);
+ORIGIN_METHOD(AoeSetTuningGraph, AoeStatus, uint64_t, const ::ge::Graph &);
+ORIGIN_METHOD(AoeTuningGraph, AoeStatus, uint64_t, const std::map<::ge::AscendString, ::ge::AscendString> &);
+ORIGIN_METHOD(AoeDestroySession, AoeStatus, uint64_t);
 
 class AoeUtil {
  public:

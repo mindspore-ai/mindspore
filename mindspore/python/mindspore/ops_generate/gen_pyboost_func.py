@@ -400,9 +400,11 @@ def get_convert_tensor_template():
     Get convert tensor template
     """
     convert_to_tensor_template = CppTemplate(
-        'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToTensor(${input}, ${need_contiguous});\n')
+        'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToTensor(${input}, ${need_contiguous}, '\
+        'op_run_info->requires_grad);\n')
     convert_to_tensor_list_template = CppTemplate(
-        'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToValueTuple(${input}, ${need_contiguous});\n')
+        'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToValueTuple(${input}, ${need_contiguous}, '\
+        'op_run_info->requires_grad);\n')
     return convert_to_tensor_template, convert_to_tensor_list_template
 
 
@@ -416,7 +418,7 @@ def generate_pyboost_functions(work_path, yaml_data):
     pyboost_func_include_header_template = CppTemplate("#include \"kernel/pyboost/auto_generate/${operator_name}.h\"\n")
     for operator_name, operator_data in yaml_data.items():
         op_proto = OpProto.load_from_yaml(operator_name, operator_data)
-        if not op_proto.is_pyboost:
+        if not op_proto.is_dispatch:
             continue
         op_def_name_str = f"g{op_proto.class_name}"
         operator_name, op_name_str = convert_op_name(op_proto)
@@ -537,7 +539,7 @@ def generate_pyboost_grad_functions(work_path, yaml_data):
         if not is_pyboost_enable(operator_data):
             continue
         op_proto = OpProto.load_from_yaml(operator_name, operator_data)
-        if not op_proto.is_pyboost:
+        if not op_proto.is_dispatch:
             continue
         operator_name = op_proto.operator_name
         if operator_name.endswith('ext'):
@@ -774,7 +776,7 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data):
     all_functional_names = []
     for operator_name, operator_data in yaml_data.items():
         op_proto = OpProto.load_from_yaml(operator_name, operator_data)
-        if not op_proto.is_pyboost:
+        if not op_proto.is_dispatch:
             continue
         template_paths = get_auto_generate_template()
         converter = OpTemplateConverter(op_proto)
@@ -812,19 +814,8 @@ def gen_pyboost_inner_prim(work_path, op_yaml_data):
         op_proto = OpProto.load_from_yaml(operator_name, operator_data)
         if not op_proto.is_pyboost:
             continue
-        func_def = operator_data.get('function')
-        func_impl_name = operator_name
-        if func_def is not None:
-            func_disable = get_disable_flag(func_def)
-            if func_disable:
-                continue
-            item = func_def.get("name")
-            if item is not None:
-                func_impl_name = item
-        if func_impl_name.endswith("_ext"):
-            func_impl_name = func_impl_name[:-4]
-        if func_impl_name.endswith("_"):
-            func_impl_name = func_impl_name[:-1]
+        if not op_proto.prim_init:
+            continue
         gen_header += template.PYBOOST_PY_FUNC_IMPORT_HEADEAR.replace(class_name=op_proto.class_name)
         args = operator_data.get('args')
         input_args = []
@@ -838,14 +829,14 @@ def gen_pyboost_inner_prim(work_path, op_yaml_data):
             input_args.append(input_arg)
 
         gen_py += template.PYTHON_PRIM_TEMPLATE.replace(class_name=op_proto.class_name, input_args=input_args,
-                                                        process_func=process_func, func_impl_name=func_impl_name)
-        dir_path = os.path.join(work_path, "mindspore/python/mindspore/ops/auto_generate")
-        pathlib.Path(dir_path).mkdir(parents=True, exist_ok=True)
-        dst_file_path = os.path.join(dir_path, "pyboost_inner_prim.py")
-        tmp_file_path = os.path.join(dir_path, "tmp_pyboost_inner_prim.py")
-        with open(tmp_file_path, "w") as f:
-            f.write(gen_header + gen_py)
-        check_change_and_replace_file(dst_file_path, tmp_file_path)
+                                                        process_func=process_func, func_impl_name=operator_name)
+    dir_path = os.path.join(work_path, "mindspore/python/mindspore/ops/auto_generate")
+    pathlib.Path(dir_path).mkdir(parents=True, exist_ok=True)
+    dst_file_path = os.path.join(dir_path, "pyboost_inner_prim.py")
+    tmp_file_path = os.path.join(dir_path, "tmp_pyboost_inner_prim.py")
+    with open(tmp_file_path, "w") as f:
+        f.write(gen_header + gen_py)
+    check_change_and_replace_file(dst_file_path, tmp_file_path)
 
 
 def gen_pyboost_py_func(work_path, op_yaml_data, doc_data):
@@ -873,6 +864,8 @@ def gen_pyboost_py_func(work_path, op_yaml_data, doc_data):
                 func_name = item
         if func_name.endswith("_ext"):
             func_name = func_name[:-4]
+        else:
+            continue
         func_impl_name = func_name
         if func_name.endswith("_"):
             func_impl_name = func_name[:-1]
@@ -903,8 +896,8 @@ def gen_pyboost_py_func(work_path, op_yaml_data, doc_data):
                                                             input_args=input_args)
     dir_path = os.path.join(work_path, "mindspore/python/mindspore/ops/auto_generate")
     pathlib.Path(dir_path).mkdir(parents=True, exist_ok=True)
-    dst_file_path = os.path.join(dir_path, "gen_pyboost_func.py")
-    tmp_file_path = os.path.join(dir_path, "tmp_gen_pyboost_func.py")
+    dst_file_path = os.path.join(dir_path, "gen_extend_func.py")
+    tmp_file_path = os.path.join(dir_path, "tmp_gen_extend_func.py")
     with open(tmp_file_path, "w") as f:
         f.write(py_header + gen_py)
     check_change_and_replace_file(dst_file_path, tmp_file_path)

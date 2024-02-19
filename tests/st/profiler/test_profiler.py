@@ -61,6 +61,7 @@ class LeNet5(nn.Cell):
         super(LeNet5, self).__init__()
         self.num_class = num_class
         self.conv1 = conv(channel, 6, 5)
+        self.conv1.conv2d.add_prim_attr("primitive_target", "CPU")
         self.conv2 = conv(6, 16, 5)
         self.fc1 = fc_with_initialize(16 * 5 * 5, 120)
         self.fc2 = fc_with_initialize(120, 84)
@@ -196,6 +197,23 @@ class TestProfiler:
         self._train_with_profiler(device_target="Ascend", profile_memory=False, only_profile_host=True,
                                   profile_framework=profile_framework)
         self._check_host_profiling_file(profile_framework=profile_framework)
+
+    @pytest.mark.level0
+    @pytest.mark.platform_arm_ascend_training
+    @pytest.mark.platform_x86_ascend_training
+    @pytest.mark.env_onecard
+    @security_off_wrap
+    def test_ascend_kbyk_profiler(self):
+        os.environ['GRAPH_OP_RUN'] = "1"
+        self._train_with_profiler(device_target="Ascend", profile_memory=False)
+        self._check_d_profiling_file()
+        self._check_host_profiling_file()
+        self._check_kbyk_profiling_file()
+        del os.environ['GRAPH_OP_RUN']
+
+    def _check_kbyk_profiling_file(self):
+        op_range_file = os.path.join(self.profiler_path, "FRAMEWORK/op_range_0")
+        assert os.path.isfile(op_range_file)
 
     def _train_with_profiler(self, device_target, profile_memory, context_mode=context.GRAPH_MODE,
                              only_profile_host=False, profile_framework='all'):

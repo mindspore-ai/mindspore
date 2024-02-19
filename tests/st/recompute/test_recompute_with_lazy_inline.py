@@ -18,6 +18,8 @@ import re
 import subprocess
 import pytest
 
+from tests.st.utils import test_utils
+
 match_dyn_mem = re.compile(r'Total Static Memory size: (.*?)M', re.S)
 
 
@@ -66,6 +68,7 @@ def test_recompute_cell_recompute():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
+@test_utils.run_test_with_On
 def test_recompute_op_recompute1():
     """
     Feature: Recompute with lazy inline.
@@ -118,6 +121,7 @@ def test_recompute_cell_and_op_recompute2():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
+@test_utils.run_test_with_On
 def test_recompute_cell_and_op_recompute_with_tuple_outputs1():
     """
     Feature: Recompute with lazy inline.

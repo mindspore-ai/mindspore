@@ -1,14 +1,14 @@
 #operator less_equal
 less_equal:
   args:
-    x:
+    input:
       dtype: tensor
       type_cast: number, bool
-    y:
+    other:
       dtype: tensor
       type_cast: number, bool
   args_signature:
-      dtype_group: (x, y)
+      dtype_group: (input, other)
   returns:
     output:
       dtype: tensor

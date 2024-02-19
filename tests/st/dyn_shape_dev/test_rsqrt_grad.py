@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 import mindspore as ms
 from mindspore import ops
-import test_utils
+from tests.st.utils import test_utils
 
 ms.context.set_context(ascend_config={"precision_mode": "force_fp32"})
 
@@ -32,7 +32,7 @@ def rsqrt_grad_func(dy, x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_rsqrt_grad(mode):
     """
     Feature: Ops.
@@ -59,7 +59,7 @@ def test_rsqrt_grad(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_rsqrt_grad_dyn_rank(mode):
     """
     Feature: Ops.
@@ -94,7 +94,7 @@ def test_rsqrt_grad_dyn_rank(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_rsqrt_grad_vmap(mode):
     """
     Feature: test vmap function.

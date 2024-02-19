@@ -18,11 +18,11 @@
  * \file op_util.cc
  * \brief util function of op
  */
-#include <graph/utils/type_utils.h>
 #include <vector>
 #include <string>
 #include "op_util.h"
 #include "error_util.h"
+#include "util.h"
 
 namespace ops {
 
@@ -31,14 +31,14 @@ namespace ops {
  * @param [in] type: enum datatype
  * @return string: datatype string
  */
-std::string ToString(const ge::DataType &type) { return ge::TypeUtils::DataTypeToSerialString(type); }
+std::string ToString(const ge::DataType &type) { return GeDataTypeToString(type); }
 
 /*
  * @brief: get format string from enum
  * @param [in] format: enum format
  * @return string: format string
  */
-std::string ToString(const ge::Format &format) { return ge::TypeUtils::FormatToSerialString(format); }
+std::string ToString(const ge::Format &format) { return GeFormatToString(format); }
 
 std::vector<int64_t> ToVector(const ge::Shape &shape) {
   size_t shape_size = shape.GetDimNum();

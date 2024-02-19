@@ -22,7 +22,7 @@
 #include "Eigen/Dense"
 #include "Eigen/LU"
 #include "cmath"
-#include "cpu_kernel/inc/cpu_context.h"
+#include "cpu_context.h"
 #include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/eigen_tensor.h"
@@ -132,5 +132,5 @@ uint32_t LogitGradCpuKernel::LogitGradCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kLogitGrad, LogitGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kLogitGrad, LogitGradCpuKernel);
 }  // namespace aicpu

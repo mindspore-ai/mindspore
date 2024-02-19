@@ -44,20 +44,19 @@ class Event(Event_):
         >>> b = Tensor(np.ones([2, 2]), ms.float32)
         >>> c = Tensor(np.ones([2, 2]), ms.float32)
         >>> with ms.hal.StreamCtx(s1):
-        >>>     d = ops.matmul(a, b)
-        >>>     start.record()
+        ...     d = ops.matmul(a, b)
+        ...     start.record()
         >>> c += 2
         >>> end.record()
         >>> with ms.hal.StreamCtx(s2):
-        >>>     start.wait()
-        >>>     end.synchronize()
-        >>>     e = c + d
+        ...     start.wait()
+        ...     end.synchronize()
+        ...     e = c + d
         >>> ms.hal.synchronize()
         >>> print(e)
         [[5. 5.]
-        [5. 5.]]
+         [5. 5.]]
         >>> elapsed_time = start.elapsed_time(end)
-        >>> assert elapsed_time > 0
     """
     def __init__(self, enable_timing=False, blocking=False):
         # pylint: disable=useless-super-delegation
@@ -132,9 +131,8 @@ class Event(Event_):
             >>> b = Tensor(np.ones([2048, 4096]), ms.float32)
             >>> s1 = ms.hal.Stream()
             >>> with ms.hal.StreamCtx(s1):
-            >>>     ops.matmul(a, b)
-            >>>     ev = s1.record_event()
-            >>>     assert not ev.query()
+            ...     c = ops.matmul(a, b)
+            ...     ev = s1.record_event()
             >>> s1.synchronize()
             >>> assert ev.query()
         """

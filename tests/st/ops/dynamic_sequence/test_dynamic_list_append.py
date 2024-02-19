@@ -115,6 +115,6 @@ def test_list_append_grad():
     net_ms = Net()
     seq = mutable((1, 2, 3, 4, 5, 6), True)
     value = 1
-    dout = mutable((1, 2, 3, 4, 5, 6, 1), True)
+    dout = (1, 2, 3, 4, 5, 6, 1)
     grad_func = GradOperation(get_all=True, sens_param=True)(net_ms)
     print("grad out1 = ", grad_func(seq, value, dout))

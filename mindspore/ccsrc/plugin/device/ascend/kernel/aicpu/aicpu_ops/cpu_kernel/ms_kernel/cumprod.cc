@@ -201,5 +201,5 @@ uint32_t CumprodCpuKernel::CumprodCompute(const CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kCumprod, CumprodCpuKernel);
+REGISTER_MS_CPU_KERNEL(kCumprod, CumprodCpuKernel);
 }  // namespace aicpu

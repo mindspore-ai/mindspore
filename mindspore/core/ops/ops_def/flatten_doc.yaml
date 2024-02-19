@@ -2,6 +2,8 @@ flatten:
   description: |
     Flattens a tensor without changing its batch size on the 0-th axis.
 
+    Refer to :func:`mindspore.ops.flatten` for more details.
+
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, \ldots)` to be flattened, where :math:`N` is batch size.
 
@@ -17,6 +19,7 @@ flatten:
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.ones(shape=[1, 2, 3, 4]), mindspore.float32)
-        >>> output = ops.Flatten()(input_x)
+        >>> flatten = ops.Flatten()
+        >>> output = flatten(input_x)
         >>> print(output.shape)
         (1, 24)

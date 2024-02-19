@@ -16,34 +16,49 @@
 
 #include "pipeline/pynative/forward/do_pyboost_cast.h"
 #include "pipeline/pynative/pynative_utils.h"
-#include "kernel/pyboost/ops/cast.h"
+#include "kernel/pyboost/auto_generate/cast.h"
 #include "include/common/utils/stub_tensor.h"
 
 namespace mindspore {
 namespace pynative {
-tensor::TensorPtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const TypeId &type_id,
-                                                   size_t index, const tensor::TensorPtr &t) const {
+ValuePtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info,
+                                          const std::pair<TypeId, bool> &dst_type, size_t index,
+                                          const ValuePtr &v) const {
+  MS_EXCEPTION_IF_NULL(v);
+  ValuePtr dst_value = ScalarToDstDtypeValue(v, dst_type);
+  if (dst_value != nullptr) {
+    MS_LOG(DEBUG) << "Source value: " << v->ToString() << " cast to value: " << dst_value->ToString();
+    return dst_value;
+  }
+  if (v->isa<tensor::Tensor>()) {
+    return DoAutoCast(op_run_info, dst_type, index, v->cast<tensor::TensorPtr>());
+  }
+  return v;
+}
+
+tensor::TensorPtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info,
+                                                   const std::pair<TypeId, bool> &dst_type, size_t index,
+                                                   const tensor::TensorPtr &t) const {
   if (op_run_info->source_type[index] != ops::OP_DTYPE::DT_BEGIN) {
     MS_LOG(DEBUG) << "Try cast Source tensor: " << t->ToString();
-    auto dst_tensor = TensorToDstDtypeValue(t, type_id);
+    auto dst_tensor = TensorToDstDtypeValue(t, dst_type.first);
     MS_LOG(DEBUG) << "Cast to dst tensor: " << dst_tensor->ToString() << " without dispatching cast op";
     return dst_tensor;
   }
-  auto new_type = GetDstTypeValue(type_id);
+  auto type_id64 = std::make_shared<Int64Imm>(static_cast<int64_t>(dst_type.first));
   const auto &cast_run_info = std::make_shared<FrontendOpRunInfo>();
   cast_run_info->requires_grad = op_run_info->requires_grad;
   if (cast_run_info->requires_grad) {
     (void)cast_run_info->op_grad_info->input_value.emplace_back(t);
-    (void)cast_run_info->op_grad_info->input_value.emplace_back(new_type);
+    (void)cast_run_info->op_grad_info->input_value.emplace_back(type_id64);
   }
-  auto cast_prim = GetPrimByTypeId(type_id);
+  auto cast_prim = GetPrimByTypeId(dst_type.first);
   // Use pyboost op call
   cast_run_info->base_op_run_info.device_target =
     PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->GetCurrentDeviceTarget(cast_prim);
   auto cast_op = CREATE_PYBOOST_OP(Cast, cast_run_info->base_op_run_info.device_target);
   cast_op->set_primitive(cast_prim);
-
-  (void)cast_op->Call(t, new_type->cast<TypePtr>());
+  (void)cast_op->Call(t, type_id64);
   PyNativeAlgo::PyBoost::UpdateOpRunInfo(cast_op, cast_run_info->op_grad_info->input_value, cast_run_info);
   if (op_run_info->requires_grad) {
     constexpr auto input_size = 2;
@@ -80,7 +95,7 @@ tensor::TensorPtr PyBoostCastOperation::SetTensorMixPrecisionCast(const Frontend
         *source_dtype != *dst_dtype) {
       MS_LOG(DEBUG) << "MixPrecision cast for " << op_run_info->base_op_run_info.op_name << " " << index
                     << "th input, and to type " << dst_dtype->ToString();
-      auto cast_t = DoAutoCast(op_run_info, dst_dtype->type_id(), index, t);
+      auto cast_t = DoAutoCast(op_run_info, std::make_pair(dst_dtype->type_id(), true), index, t);
       return cast_t;
     }
   }

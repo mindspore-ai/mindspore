@@ -96,7 +96,7 @@ def test_seq_mul_grad():
     """
     x = mutable((1, 2, 3), True)
     y = mutable(2)
-    dout = mutable((4, 5, 6, 7, 8, 9), True)
+    dout = (4, 5, 6, 7, 8, 9)
     net = Net()
     grad_func = GradOperation(get_all=True, sens_param=True)(net)
     grad_func(x, y, dout)
@@ -113,7 +113,7 @@ def test_seq_mul_grad_mutable_scalar():
     """
     x = (1, mutable(2), 3)
     y = mutable(2)
-    dout = mutable((4, 5, 6, 7, 8, 9), True)
+    dout = (4, 5, 6, 7, 8, 9)
     net = Net()
     grad_func = GradOperation(get_all=True, sens_param=True)(net)
     grad_func(x, y, dout)

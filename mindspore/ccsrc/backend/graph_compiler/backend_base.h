@@ -74,7 +74,6 @@ class BACKEND_EXPORT Backend {
 
 BACKEND_EXPORT void set_pydata_converter(const pyexecute::PyDataConverter &pydata_converter);
 
-void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs, const AnfNodePtr &node = nullptr);
 std::vector<std::vector<tensor::TensorPtr>> GetRunGraphInputs(const GraphCompilerInfo &graph_compiler_info,
                                                               const VectorRef &args);
 runtime::KernelMapPosition FetchOriginOutputOrder(const AnfNodePtr &root_output);
@@ -104,7 +103,7 @@ class BACKEND_EXPORT MindRTBackendBase : public Backend {
   virtual void WaitTaskFinish() const {}
   virtual void RunGraphByCondition(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
                                    const VectorRef &args, VectorRef *outputs) {}
-  virtual void RunContiguousTask(const tensor::TensorPtr &tensor, size_t stream_id, bool enable_async) {}
+  virtual void RunContiguousTaskForArgs(const tensor::TensorPtr &tensor, size_t stream_id, bool enable_async) {}
 
  protected:
   // Convert the nodes which are not supported in the backend.

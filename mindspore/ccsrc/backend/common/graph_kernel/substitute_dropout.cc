@@ -17,6 +17,7 @@
 
 #include "ops/array_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/op_utils.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/optimizer/helper.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
@@ -42,11 +43,13 @@ AnfNodePtr DropoutExpanderDeco::Run(const AnfNodePtr &node) {
   auto shape = AnfAlgo::GetInputDeviceShape(cnode, 0);
   // Get seed from original dropout's attrs, rather than set seed by time.
   // Only seed0 and seed1 are all equal to 0, then set seed = time.
-  auto node_prim = GetCNodePrimitive(node);
-  MS_EXCEPTION_IF_NULL(node_prim);
-  int64_t seed0 = GetValue<int64_t>(node_prim->GetAttr("Seed0"));
-  int64_t seed1 = GetValue<int64_t>(node_prim->GetAttr("Seed1"));
-  int64_t seed = (seed0 != 0) ? seed0 : ((seed1 != 0) ? seed1 : seed_ + 1);
+  int64_t seed = ops::GetScalarValue<int64_t>(cnode->input(kIndex3)->cast<ValueNodePtr>()->value()).value();
+  if (seed == 0) {
+    seed = ops::GetScalarValue<int64_t>(cnode->input(kIndex4)->cast<ValueNodePtr>()->value()).value();
+    if (seed == 0) {
+      seed = seed_++;
+    }
+  }
   // Create a uniform_real kernel to generate random value.
   AnfNodePtr uniform_real_shape;
   if (IsDynamic(shape)) {
@@ -72,7 +75,7 @@ AnfNodePtr DropoutExpanderDeco::Run(const AnfNodePtr &node) {
   AnfNodePtrList gkdropout_inputs = {NewValueNode(std::make_shared<Primitive>("GkDropout")), cnode->input(1),
                                      uniform_real_node};
   auto new_dropout_node = func_graph->NewCNode(gkdropout_inputs);
-  SetNodeAttrSafely("keep_prob", MakeValue(common::AnfAlgo::GetNodeAttr<float>(cnode, "keep_prob")), new_dropout_node);
+  SetNodeAttrSafely("keep_prob", cnode->input(kIndex2)->cast<ValueNodePtr>()->value(), new_dropout_node);
   // the output info is unchanged.
   new_dropout_node->set_abstract(node->abstract());
   auto old_kernel_info = AnfAlgo::GetSelectKernelBuildInfo(node);

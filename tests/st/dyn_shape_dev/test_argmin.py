@@ -18,7 +18,7 @@ from mindspore import Tensor, context
 import mindspore.common.dtype as mstype
 from mindspore import ops
 
-from test_utils import to_cell_obj
+from tests.st.utils.test_utils import to_cell_obj
 def argmin_(input_x, axis, output_type):
     return ops.Argmin(axis, output_type)(input_x)
 

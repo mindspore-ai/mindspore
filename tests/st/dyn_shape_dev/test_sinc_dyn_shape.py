@@ -14,7 +14,7 @@
 # ============================================================================
 import pytest
 import numpy as np
-import test_utils
+from tests.st.utils import test_utils
 import mindspore as ms
 from mindspore import Tensor, context
 from mindspore import ops
@@ -22,7 +22,7 @@ from mindspore import ops
 
 @test_utils.run_with_cell
 def sinc_forward_func(x):
-    return ops.auto_generate.sinc(x)
+    return ops.sinc(x)
 
 
 @test_utils.run_with_cell
@@ -36,7 +36,7 @@ def sinc_backward_func(x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_sinc_forward(mode):
     """
     Feature: sinc ops.
@@ -56,7 +56,7 @@ def test_sinc_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_sinc_backward(mode):
     """
     Feature: sinc ops.
@@ -84,7 +84,7 @@ def test_sinc_dynamic(mode):
     """
     context.set_context(mode=mode)
     x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(ops.auto_generate.sinc)
+    test_cell = test_utils.to_cell_obj(ops.sinc)
     test_cell.set_inputs(x_dyn)
     x1 = Tensor(np.array([0.62, 0.28, 0.43, 0.62]).astype(np.float32))
     output1 = test_cell(x1)

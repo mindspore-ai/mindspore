@@ -1,9 +1,9 @@
 #operator tile
 tile:
     args:
-        input_x:
+        input:
             dtype: tensor
-        multiples:
+        dims:
             dtype: tuple[int]
             type_cast: tensor
     returns:
@@ -13,3 +13,6 @@ tile:
         disable: True
     function:
         disable: True
+    dispatch:
+        enable: True
+        Ascend: TileAscend

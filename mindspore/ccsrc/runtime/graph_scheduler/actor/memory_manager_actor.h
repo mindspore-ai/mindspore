@@ -35,7 +35,10 @@ using mindspore::session::SomasInfo;
 // MemoryManagerActor need response to memory alloc and free quickly, so must bind single thread.
 class MemoryManagerActor : public ActorBase {
  public:
-  MemoryManagerActor() : ActorBase("MemoryManagerActor") {}
+  static std::shared_ptr<MemoryManagerActor> &GetInstance() {
+    static std::shared_ptr<MemoryManagerActor> instance = std::shared_ptr<MemoryManagerActor>(new MemoryManagerActor());
+    return instance;
+  }
   ~MemoryManagerActor() override = default;
 
   // The process entry of memory alloc.
@@ -71,6 +74,9 @@ class MemoryManagerActor : public ActorBase {
   void Wait(OpContext<DeviceTensor> *const op_context, const AID &from_aid);
 
  private:
+  MemoryManagerActor() : ActorBase("MemoryManagerActor") {}
+  DISABLE_COPY_AND_ASSIGN(MemoryManagerActor);
+
   void FreeMemoryByRefCount(DeviceTensor *const device_tensor, const DeviceContext *device_context,
                             const std::string &op_name);
 
@@ -83,9 +89,6 @@ class MemoryManagerActor : public ActorBase {
   // fail message again, so we record allocating memory fail event by the uuid of the batch, which is key of the set.
   std::set<int> mem_alloc_failed_step_ids_;
   std::mutex mem_alloc_failed_mutex_;
-
-  // The memory free by the ref count maybe triggered concurrently, and the ref count decreased need the lock.
-  std::mutex mem_free_mutex_;
 };
 }  // namespace runtime
 }  // namespace mindspore

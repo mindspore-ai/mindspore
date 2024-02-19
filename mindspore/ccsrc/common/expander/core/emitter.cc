@@ -160,7 +160,7 @@ NodePtr Emitter::Cast(const NodePtr &node, const TypePtr &type) {
   if (node->dtype()->type_id() == type->type_id()) {
     return node;
   }
-  return Emit("Cast", {node, EmitValue(type)});
+  return Emit("Cast", {node, Value(static_cast<int64_t>(type->type_id()))});
 }
 
 NodePtr Emitter::Reshape(const NodePtr &node, const NodePtr &shape) {
@@ -235,27 +235,27 @@ NodePtr Emitter::Transpose(const NodePtr &node, const NodePtr &perm) {
   return node;
 }
 
-NodePtr Emitter::Tile(const NodePtr &node, const NodePtr &multiples) {
+NodePtr Emitter::Tile(const NodePtr &node, const NodePtr &dims) {
   MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(multiples);
-  auto [success, multiples_list] = GetIntList(multiples);
+  MS_EXCEPTION_IF_NULL(dims);
+  auto [success, multiples_list] = GetIntList(dims);
   if (!success) {
-    auto tuple_multiples = TensorToTuple(multiples);
+    auto tuple_multiples = TensorToTuple(dims);
     return Emit(kTileOpName, {node, tuple_multiples});
   }
   bool is_all_one = std::all_of(multiples_list.begin(), multiples_list.end(), [](int64_t shp) { return shp == 1; });
   if (is_all_one && node->shape().size() >= multiples_list.size()) {
     return node;
   }
-  return Emit(kTileOpName, {node, multiples});
+  return Emit(kTileOpName, {node, dims});
 }
 
 NodePtr Emitter::BroadcastTo(const NodePtr &x, const NodePtr &y) {
   if (IsDynamic(x->shape()) || IsDynamic(y->shape())) {
-    return Emit("DynamicBroadcastTo", {x, Shape(y)});
+    return Emit("BroadcastTo", {x, Shape(y)});
   }
 
-  return x->shape() == y->shape() ? x : Emit("BroadcastTo", {x}, {{"shape", MakeValue(y->shape())}});
+  return x->shape() == y->shape() ? x : Emit("BroadcastTo", {x, Shape(y)});
 }
 
 NodePtr Emitter::ZerosLike(const NodePtr &node) {

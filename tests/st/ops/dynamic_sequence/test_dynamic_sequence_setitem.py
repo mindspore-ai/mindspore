@@ -106,7 +106,7 @@ def test_seq_setitem_grad_0():
     input_x = mutable((1, 2, 3), True)
     idx = mutable(1)
     value = mutable(8)
-    dout = mutable((1, 1, 1), True)
+    dout = (1, 1, 1)
     grad_func = GradOperation(get_all=True, sens_param=True)(net_ms)
     print("grad out0 = ", grad_func(input_x, idx, value, dout))
 
@@ -126,7 +126,7 @@ def test_seq_setitem_grad_1():
     input_x = mutable((1, 2, 3), True)
     idx = 1
     value = 8
-    dout = mutable((1, 1, 1), True)
+    dout = (1, 1, 1)
     grad_func = GradOperation(get_all=True, sens_param=True)(net_ms)
     print("grad out1 = ", grad_func(input_x, idx, value, dout))
 
@@ -144,6 +144,6 @@ def test_seq_setitem_grad_2():
     seq = mutable((Tensor([[1, 2], [2, 3]]), Tensor([[2, 3], [3, 4]]), Tensor([[3, 4], [4, 5]])), True)
     idx = 2
     value = Tensor([[7, 8], [9, 10]])
-    dout = mutable((Tensor([[1, 2], [2, 3]]), Tensor([[2, 3], [3, 4]]), Tensor([[3, 4], [4, 5]])), True)
+    dout = (Tensor([[1, 2], [2, 3]]), Tensor([[2, 3], [3, 4]]), Tensor([[3, 4], [4, 5]]))
     grad_func = GradOperation(get_all=True, sens_param=True)(net_ms)
     print("grad out1 = ", grad_func(seq, idx, value, dout))

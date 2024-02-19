@@ -14,7 +14,7 @@
 # ============================================================================
 import pytest
 import numpy as np
-import test_utils
+from tests.st.utils import test_utils
 import mindspore as ms
 from mindspore import Tensor, context
 from mindspore import ops
@@ -22,7 +22,7 @@ from mindspore import ops
 
 @test_utils.run_with_cell
 def masked_fill_forward_func(input_x, mask, value):
-    return ops.auto_generate.masked_fill(input_x, mask, value)
+    return ops.masked_fill(input_x, mask, value)
 
 
 @test_utils.run_with_cell
@@ -36,7 +36,7 @@ def masked_fill_backward_func(input_x, mask, value):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_masked_fill_forward(mode):
     """
     Feature: masked_fill ops.
@@ -57,7 +57,7 @@ def test_masked_fill_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_masked_fill_backward(mode):
     """
     Feature: masked_fill ops.
@@ -80,7 +80,7 @@ def test_masked_fill_backward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_masked_fill_vmap(mode):
     """
     Feature: test vmap function.
@@ -103,7 +103,7 @@ def test_masked_fill_vmap(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_masked_fill_dynamic(mode):
     """
     Feature: masked_fill ops.
@@ -113,7 +113,7 @@ def test_masked_fill_dynamic(mode):
     context.set_context(mode=mode)
     input_x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
     mask_dyn = ms.Tensor(shape=None, dtype=ms.bool_)
-    test_cell = test_utils.to_cell_obj(ops.auto_generate.masked_fill)
+    test_cell = test_utils.to_cell_obj(ops.masked_fill)
     test_cell.set_inputs(input_x_dyn, mask_dyn, 0.5)
     input_x1 = Tensor(np.array([1., 2., 3., 4.]).astype(np.float32))
     mask1 = Tensor(np.array([True, True, False, True]).astype(np.bool_))

@@ -36,6 +36,8 @@
 #include "ops/other_ops.h"
 #include "pipeline/pynative/predict_out_type_map.h"
 #include "kernel/pyboost/auto_generate/contiguous.h"
+#include "runtime/pipeline/pipeline.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore {
 namespace pynative {
@@ -145,7 +147,7 @@ void RefreshGradContiguousTensor(const FrontendOpRunInfoPtr &op_run_info, size_t
     return;
   }
 
-  auto contiguous_tensor = [&op_run_info](const ValuePtr &v) -> ValuePtr {
+  auto contiguous_tensor = [](const ValuePtr &v) -> ValuePtr {
     const auto &tensor = v->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
     if (tensor->storage_info() == nullptr) {
@@ -211,6 +213,26 @@ const mindspore::HashSet<std::string> kNotRealOP{
   kSequenceMulOpName,
   kPyExecuteOpName,
 };
+
+tensor::TensorPtr GetContiguousTensor(const tensor::TensorPtr &input_tensor, const std::string &device_target,
+                                      bool requires_grad) {
+  auto contiguous_op = CREATE_PYBOOST_OP(Contiguous, device_target);
+  auto contiguous_tensor = contiguous_op->Call(input_tensor);
+  if (requires_grad) {
+    const auto &contiguous_run_info = std::make_shared<FrontendOpRunInfo>();
+    contiguous_run_info->requires_grad = true;
+    contiguous_run_info->op_grad_info->input_value = {input_tensor};
+    PyNativeAlgo::PyBoost::UpdateOpRunInfo(contiguous_op, contiguous_run_info->op_grad_info->input_value,
+                                           contiguous_run_info);
+    contiguous_run_info->base_op_run_info.device_target = device_target;
+    contiguous_run_info->input_size = 1;
+    contiguous_run_info->base_op_run_info.op_name = ops::kNameContiguous;
+    contiguous_run_info->op_grad_info->op_prim = prim::kPrimContiguous;
+    PyNativeAlgo::PyBoost::DoGrad(contiguous_run_info);
+  }
+  return contiguous_tensor;
+}
+
 }  // namespace
 
 AbstractBasePtr Common::SetAbstractValueToAnyValue(const AbstractBasePtr &abs) {
@@ -562,6 +584,10 @@ void Common::StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info->op_grad_info);
   for (size_t i = 0; i < op_run_info->input_size; i++) {
     op_run_info->op_grad_info->input_value[i] = StubNodeToValueInner(op_run_info->op_grad_info->input_value[i]);
+    if (!op_run_info->is_view_op) {
+      op_run_info->op_grad_info->input_value[i] =
+        ConvertToContiguousValue(op_run_info->op_grad_info->input_value[i], op_run_info->requires_grad);
+    }
   }
 }
 
@@ -576,9 +602,56 @@ TensorPtr Common::StubNodeToTensor(const ValuePtr &v) {
   MS_LOG(EXCEPTION) << "It should be stub tensor, but got " << v->ToString();
 }
 
-tensor::TensorPtr Common::ConvertToContiguousTensor(const tensor::TensorPtr &tensor) {
+ValuePtr Common::ConvertToContiguousValue(const ValuePtr &v, bool requires_grad) {
+  MS_EXCEPTION_IF_NULL(v);
+  if (v->isa<tensor::Tensor>()) {
+    auto tensor = v->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    if (tensor->storage_info() == nullptr) {
+      return tensor;
+    }
+
+    auto contiguous_tensor = ConvertToContiguousTensor(tensor, requires_grad);
+    MS_LOG(DEBUG) << "ConvertToContiguousValue, old tensor id:" << tensor->id()
+                  << ", new tensor id:" << contiguous_tensor->id();
+    return contiguous_tensor;
+  } else if (utils::isa<ValueSequence>(v)) {
+    const auto &value_seq = utils::cast<ValueSequencePtr>(v);
+    const auto &values = value_seq->value();
+    if (values.empty() || utils::isa<Scalar>(values[0])) {
+      return v;
+    }
+    ValuePtrList value_list;
+    (void)std::transform(
+      values.begin(), values.end(), std::back_inserter(value_list),
+      [requires_grad](const ValuePtr &value) { return ConvertToContiguousValue(value, requires_grad); });
+    if (utils::isa<ValueTuple>(v)) {
+      return std::make_shared<ValueTuple>(value_list);
+    } else if (utils::isa<ValueList>(v)) {
+      return std::make_shared<ValueList>(value_list);
+    } else {
+      MS_LOG(EXCEPTION) << "Not support ValueSequence " << v->ToString();
+    }
+  } else {
+    return v;
+  }
+}
+
+tensor::TensorPtr Common::ConvertToContiguousTensor(const tensor::TensorPtr &tensor, bool requires_grad) {
   MS_EXCEPTION_IF_NULL(tensor);
-  if (tensor->storage_info() == nullptr) {
+
+  // Tensor with storage info, need covert to contiguous in no-view op.
+  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  MS_EXCEPTION_IF_NULL(device_address);
+  const auto &device_target = device_address->device_name();
+
+  return GetContiguousTensor(tensor, device_target, requires_grad);
+}
+
+TensorPtr Common::ConvertStubNodeToTensor(const ValuePtr &v, bool need_contiguous, bool requires_grad) {
+  const auto &tensor = StubNodeToTensor(v);
+  MS_EXCEPTION_IF_NULL(tensor);
+  if (!need_contiguous || tensor->storage_info() == nullptr) {
     return tensor;
   }
 
@@ -589,34 +662,26 @@ tensor::TensorPtr Common::ConvertToContiguousTensor(const tensor::TensorPtr &ten
     return tensor;
   }
 
-  auto contiguous_op = CREATE_PYBOOST_OP(Contiguous, device_target);
-  return contiguous_op->Call(tensor);
+  return GetContiguousTensor(tensor, device_target, requires_grad);
 }
 
-TensorPtr Common::ConvertStubNodeToTensor(const ValuePtr &v, bool need_contiguous) {
-  const auto &tensor = StubNodeToTensor(v);
-  if (!need_contiguous) {
-    return tensor;
-  }
-  return ConvertToContiguousTensor(tensor);
-}
-
-std::optional<tensor::TensorPtr> Common::ConvertStubNodeToTensor(const std::optional<ValuePtr> &v,
-                                                                 bool need_contiguous) {
+std::optional<tensor::TensorPtr> Common::ConvertStubNodeToTensor(const std::optional<ValuePtr> &v, bool need_contiguous,
+                                                                 bool requires_grad) {
   if (!v.has_value()) {
     return std::nullopt;
   }
-  return std::make_optional(ConvertStubNodeToTensor(v.value(), need_contiguous));
+  return std::make_optional(ConvertStubNodeToTensor(v.value(), need_contiguous, requires_grad));
 }
 
-ValueTuplePtr Common::ConvertStubNodeToValueTuple(const ValuePtr &v, bool need_contiguous) {
+ValueTuplePtr Common::ConvertStubNodeToValueTuple(const ValuePtr &v, bool need_contiguous, bool requires_grad) {
   if (utils::isa<ValueSequence>(v)) {
     const auto &value_seq = utils::cast<ValueSequencePtr>(v);
     const auto &values = value_seq->value();
     std::vector<ValuePtr> tensor_list;
-    (void)std::transform(
-      values.begin(), values.end(), std::back_inserter(tensor_list),
-      [need_contiguous](const ValuePtr &value) { return ConvertStubNodeToTensor(value, need_contiguous); });
+    (void)std::transform(values.begin(), values.end(), std::back_inserter(tensor_list),
+                         [need_contiguous, requires_grad](const ValuePtr &value) {
+                           return ConvertStubNodeToTensor(value, need_contiguous, requires_grad);
+                         });
     return std::make_shared<ValueTuple>(tensor_list);
   }
   MS_LOG(EXCEPTION) << "It should be stub tensor sequence, but got " << v->ToString();
@@ -668,7 +733,6 @@ tensor::TensorPtr Common::CreateFakeTensorWithoutDeviceAddress(const tensor::Ten
     t->set_param_info(tensor->param_info());
   }
   t->set_device_address(nullptr);
-  t->set_storage_info(nullptr);
   return t;
 }
 
@@ -681,7 +745,6 @@ ValuePtr Common::CreateFakeValueWithoutDeviceAddress(const ValuePtr &value) {
       t->set_param_info(v_t->param_info());
     }
     t->set_device_address(nullptr);
-    t->set_storage_info(nullptr);
     return t;
   } else if (value->isa<ValueSequence>()) {
     const auto &value_seq = value->cast<ValueSequencePtr>();
@@ -1664,15 +1727,14 @@ void GradCommon::GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const mindspore
 }
 }  // namespace PyNativeAlgo
 
-void DispatchOp(const std::shared_ptr<AsyncTask> &task) {
-  auto forward_executor = PyNativeExecutor::GetInstance()->forward_executor();
+void DispatchOp(const std::shared_ptr<runtime::AsyncTask> &task) {
   static bool need_sync = runtime::OpExecutor::NeedSync();
   if (need_sync) {
     MS_LOG(INFO) << "PyBoost sync run frontend task";
     runtime::OpExecutor::GetInstance().WaitAll();
     task->Run();
   } else {
-    forward_executor->frontend_queue()->Push(task);
+    runtime::Pipeline::Get().frontend_stage()->Push(task);
   }
 }
 }  // namespace pynative

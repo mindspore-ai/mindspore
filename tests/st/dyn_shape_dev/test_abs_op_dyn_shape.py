@@ -19,7 +19,7 @@ from mindspore import ops
 import mindspore as ms
 
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
-from test_utils import get_inputs_np, get_inputs_tensor, compare, run_with_cell
+from tests.st.utils.test_utils import get_inputs_np, get_inputs_tensor, compare, run_with_cell
 
 def eltwise_case(prim_func, expect_func, expect_grad_func, mode, inputs_np=None):
     if inputs_np is None:
@@ -57,19 +57,19 @@ def eltwise_case_vmap(prim_func, mode, inputs_np=None):
 
 
 def abs_func(x):
-    return ops.auto_generate.abs(x)
+    return ops.abs(x)
 
 
 @run_with_cell
 def abs_infervalue_func1():
     x = ms.Tensor(np.array([-1, 2, -3]), ms.int32)
-    return ops.auto_generate.abs(x)
+    return ops.abs(x)
 
 
 @run_with_cell
 def abs_infervalue_func2():
     x = ms.Tensor(np.array([3, -5, 4]), ms.int32)
-    return ops.auto_generate.abs(x)
+    return ops.abs(x)
 
 
 @pytest.mark.level1

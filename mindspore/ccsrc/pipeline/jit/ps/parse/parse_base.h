@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,6 +105,8 @@ const char PYTHON_MOD_GET_CONST_ROUND[] = "get_const_round";
 const char PYTHON_MOD_GET_CONST_LEN[] = "get_const_len";
 const char PYTHON_MOD_CHECK_ATTRS[] = "check_attrs";
 const char PYTHON_MOD_CHECK_IS_SUBCLASS[] = "check_is_subclass";
+const char PYTHON_MOD_GET_METHOD_INFO[] = "get_method_info";
+const char PYTHON_MOD_CAN_CONSTANT_FOLD[] = "can_constant_fold";
 
 const char PYTHON_PARSE_GET_ARGS[] = "get_args";
 const char PYTHON_PARSE_GET_ARGS_DEFAULT_VALUES[] = "get_args_default_values";
@@ -123,6 +125,7 @@ const char PYTHON_PARSE_GET_SCOPE_NAME[] = "get_scope_name";
 const char PYTHON_PARSE_GET_TYPE[] = "get_type";
 const char PYTHON_PARSE_ANALYZE_SUPER[] = "analyze_super";
 const char PYTHON_PARSE_CHECK_THIRD_PARTY_LIBRARY_SIDE_EFFECT[] = "check_third_party_library_side_effect";
+const char PYTHON_PARSE_CHECK_ATTR_IS_PROPERTY[] = "check_attr_is_property";
 
 const char PYTHON_PARSE_CLASS_SLICE[] = "create_slice_obj";
 const char PYTHON_PARSE_CLASS_ELLIPSIS[] = "create_ellipsis_obj";
@@ -249,6 +252,7 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const ValuePtrList &args_
 FuncGraphPtr ParsePythonCode(const py::object &obj,
                              const std::string &python_mod_get_parse_method = PYTHON_MOD_GET_PARSE_METHOD,
                              const ValuePtrList &args_value_list = {});
+ValuePtr GetArgDefaultValue(const std::string &prim_name, const std::string &arg_name);
 }  // namespace parse
 }  // namespace mindspore
 

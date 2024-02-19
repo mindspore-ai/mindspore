@@ -51,6 +51,7 @@ const std::map<std::string, DataType> dtype_maps{{"DT_FLOAT", DT_FLOAT},
                                                  {"DT_RESOURCE", DT_RESOURCE},
                                                  {"DT_STRING_REF", DT_STRING_REF},
                                                  {"DT_DUAL", DT_DUAL},
+                                                 {"DT_BF16", DT_BF16},
                                                  {"DT_UNDEFINED", DT_UNDEFINED}};
 
 graphStatus WithRankAtLeast(const TensorDesc &tensor, int64_t rank, Shape &out, const ge::Operator &op) {
@@ -770,13 +771,6 @@ graphStatus ValidateSparseTensor(const TensorDesc &indices, const TensorDesc &va
     }
   }
   return GRAPH_SUCCESS;
-}
-
-void InferShapeErrorReport(const std::string &op_name, const std::string &op_type, const std::string &value,
-                           const std::string &reason) {
-  std::string report_error_code = "E14001";
-  ErrorManager::GetInstance().ATCReportErrMessage(report_error_code, {"opname", "optype", "value", "reason"},
-                                                  {op_name, op_type, value, reason});
 }
 
 std::string DTypeStr(DataType dtype) {

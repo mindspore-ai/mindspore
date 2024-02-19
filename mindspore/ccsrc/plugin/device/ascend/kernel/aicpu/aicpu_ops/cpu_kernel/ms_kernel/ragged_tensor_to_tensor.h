@@ -21,7 +21,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
-#include "inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "common/cpu_kernel_utils.h"
 #include "common/kernel_log.h"
 #include "common/status.h"

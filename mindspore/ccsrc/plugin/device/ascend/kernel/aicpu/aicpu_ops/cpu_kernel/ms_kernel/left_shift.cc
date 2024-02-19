@@ -225,5 +225,5 @@ uint32_t LeftShiftCpuKernel::LeftShiftCompute(const CpuKernelContext &ctx) {
   }
 }
 
-REGISTER_CPU_KERNEL(kLeftShift, LeftShiftCpuKernel);
+REGISTER_MS_CPU_KERNEL(kLeftShift, LeftShiftCpuKernel);
 }  // namespace aicpu

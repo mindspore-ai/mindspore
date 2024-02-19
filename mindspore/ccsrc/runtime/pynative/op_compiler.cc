@@ -107,6 +107,16 @@ OpCompiler &OpCompiler::GetInstance() {
   return instance;
 }
 
+void OpCompilerInfo::UpdateStatus(bool ready) { ready_.store(ready, std::memory_order_release); }
+
+void OpCompilerInfo::WaitReady() const {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kWaitTaskFinish,
+                                     graph_info_, true);
+  while (!ready_.load(std::memory_order_acquire)) {
+    std::this_thread::yield();
+  }
+}
+
 bool OpCompiler::IsInvalidInferResultOp(const std::string &op_name) const {
   static const std::unordered_set<std::string> kInvalidInferResultOp = {kDropoutOpName, kMaxPoolWithArgmaxOpName,
                                                                         kLSTMOpName};

@@ -355,6 +355,7 @@ set(SUB_COMP
         frontend/operator
         frontend/expander
         pipeline/jit/ps
+        pipeline/jit/pi
         pipeline/pynative
         pybind_api
 )
@@ -428,6 +429,7 @@ set(BACKEND_SUB_COMP
         runtime/graph_scheduler
         runtime/hardware
         runtime/pynative
+        runtime/pipeline
         runtime/data_queue
         plugin/device/cpu/hal/device
         plugin/device/cpu/hal/hardware

@@ -15,7 +15,7 @@
 
 import numpy as np
 import pytest
-import test_utils
+from tests.st.utils import test_utils
 
 from mindspore import ops, context
 import mindspore as ms
@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def diag_forward_func(input_x):
-    return ops.auto_generate.diag(input_x)
+    return ops.diag(input_x)
 
 
 @test_utils.run_with_cell

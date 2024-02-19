@@ -14,7 +14,7 @@
 # ============================================================================
 import pytest
 import numpy as np
-import test_utils
+from tests.st.utils import test_utils
 import mindspore as ms
 from mindspore import Tensor, context
 from mindspore import ops
@@ -36,7 +36,7 @@ def reciprocal_backward_func(x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_reciprocal_forward(mode):
     """
     Feature: reciprocal ops.
@@ -56,7 +56,7 @@ def test_reciprocal_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_reciprocal_backward(mode):
     """
     Feature: reciprocal ops.
@@ -76,7 +76,7 @@ def test_reciprocal_backward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_reciprocal_vmap(mode):
     """
     Feature: test vmap function.
@@ -97,7 +97,7 @@ def test_reciprocal_vmap(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_reciprocal_dynamic(mode):
     """
     Feature: reciprocal ops.

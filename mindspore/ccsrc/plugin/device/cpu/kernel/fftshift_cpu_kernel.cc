@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-#include "plugin/device/cpu/kernel/fftshift_cpu_kernel.h"
 #include <functional>
 #include <algorithm>
 #include <utility>
 #include <memory>
 #include <complex>
+#include "ops/op_utils.h"
+#include "kernel/kernel.h"
+#include "plugin/device/cpu/kernel/fftshift_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
@@ -51,17 +53,18 @@ int FFTShiftCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     return KRET_OK;
   }
 
-  // Get or set attribute axes
-  axes_ = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
-  if (axes_.empty()) {
+  // Get or set attribute dim
+  auto dim_opt = inputs[kIndex1]->GetOptionalValueWithCheck<std::vector<int64_t>>();
+  if (!dim_opt.has_value()) {
     // Process all dimensions.
     for (int64_t i = 0; i < x_rank_; ++i) {
-      (void)axes_.emplace_back(i);
+      (void)dim_.emplace_back(i);
     }
   } else {
-    (void)std::for_each(axes_.begin(), axes_.end(), [this](auto &axis) { axis = axis < 0 ? x_rank_ + axis : axis; });
+    dim_ = dim_opt.value();
+    (void)std::for_each(dim_.begin(), dim_.end(), [this](auto &axis) { axis = axis < 0 ? x_rank_ + axis : axis; });
   }
-  forward_ = inputs[kIndex2]->GetValueWithCheck<bool>();
+  forward_ = (kernel_name_ == prim::kPrimFFTShift->name()) ? true : false;
   element_nums_ = SizeOf(tensor_shape_);
 
   return KRET_OK;
@@ -79,10 +82,10 @@ bool FFTShiftCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *
   }
   // Calculate the offset of input[i]
   std::vector<int64_t> offsets_(element_nums_, 0);
-  for (size_t j = 0; j < axes_.size(); j++) {
-    int64_t size_j = tensor_shape_[axes_[j]];
+  for (size_t j = 0; j < dim_.size(); j++) {
+    int64_t size_j = tensor_shape_[dim_[j]];
     int64_t size_back =
-      std::accumulate(tensor_shape_.begin() + axes_[j] + 1, tensor_shape_.end(), 1, std::multiplies<int64_t>());
+      std::accumulate(tensor_shape_.begin() + dim_[j] + 1, tensor_shape_.end(), 1, std::multiplies<int64_t>());
     int64_t size_tmp1 = size_j * size_back;
     int64_t size_tmp2 = size_j / 2 * size_back;
 
@@ -111,12 +114,11 @@ bool FFTShiftCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *
   return true;
 }
 
-#define FFTSHIFT_CPU_REG(T1, T2)                                    \
-  KernelAttr()                                                      \
-    .AddInputAttr(T1)                                 /* x */       \
-    .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64) /* axes */    \
-    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool) /* forward */ \
-    .AddOutputAttr(T1),                                             \
+#define FFTSHIFT_CPU_REG(T1, T2)                      \
+  KernelAttr()                                        \
+    .AddInputAttr(T1)                       /* x */   \
+    .AddOptionalInputAttr(kNumberTypeInt64) /* dim */ \
+    .AddOutputAttr(T1),                               \
     &FFTShiftCpuKernelMod::LaunchKernel<T2>
 
 std::vector<std::pair<KernelAttr, FFTShiftCpuKernelMod::FFTShiftFunc>> FFTShiftCpuKernelMod::func_list_ = {
@@ -136,5 +138,6 @@ std::vector<KernelAttr> FFTShiftCpuKernelMod::GetOpSupport() {
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, FFTShift, FFTShiftCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IFFTShift, FFTShiftCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

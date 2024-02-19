@@ -160,5 +160,5 @@ uint32_t GcdCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kGcd, GcdCpuKernel);
+REGISTER_MS_CPU_KERNEL(kGcd, GcdCpuKernel);
 }  // namespace aicpu

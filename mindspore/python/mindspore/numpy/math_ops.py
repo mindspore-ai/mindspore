@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,8 +27,6 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore.ops.primitive import constexpr, _primexpr
-from mindspore.ops.auto_generate import Correlate
-from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.common import dtype as mstype
 from mindspore.common import Tensor
 from mindspore._c_expression import typing
@@ -5845,20 +5843,27 @@ def correlate(a, v, mode='valid'):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.numpy as np
+        >>> import mindspore.numpy as mnp
         >>> from mindspore import Tensor
-        >>> output = np.correlate(Tensor([1., 2., 3.]), Tensor([0., 1., 0.5]))
+        >>> output = mnp.correlate(Tensor([1., 2., 3.]), Tensor([0., 1., 0.5]))
         >>> print(output)
         [3.5]
-        >>> output = np.correlate(Tensor([1., 2., 3.]), Tensor([0., 1., 0.5]), mode="same")
+        >>> output = mnp.correlate(Tensor([1., 2., 3.]), Tensor([0., 1., 0.5]), mode="same")
         >>> print(output)
         [2.  3.5 3. ]
-        >>> output = np.correlate(Tensor([1., 2., 3., 4., 5.]), Tensor([1., 2.]), mode="full")
+        >>> output = mnp.correlate(Tensor([1., 2., 3., 4., 5.]), Tensor([1., 2.]), mode="full")
         >>> print(output)
         [ 2.  5.  8. 11. 14.  5.]
     """
-    correlate_op = _get_cache_prim(Correlate)(mode=mode)
-    return correlate_op(a, v)
+    if isinstance(a, list):
+        a = ops.auto_generate.list_to_tuple(a)
+    if isinstance(a, tuple):
+        a = ops.auto_generate.tuple_to_tensor(a)
+    if isinstance(v, list):
+        v = ops.auto_generate.list_to_tuple(v)
+    if isinstance(v, tuple):
+        v = ops.auto_generate.tuple_to_tensor(v)
+    return ops.auto_generate.correlate(a, v, mode)
 
 
 

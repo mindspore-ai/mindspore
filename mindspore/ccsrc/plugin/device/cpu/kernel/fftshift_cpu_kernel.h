@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ class FFTShiftCpuKernelMod : public NativeCpuKernelMod {
   FFTShiftFunc kernel_func_;
 
   std::vector<int64_t> tensor_shape_;
-  std::vector<int64_t> axes_;
+  std::vector<int64_t> dim_;
   int64_t x_rank_;
   int64_t element_nums_;
   bool forward_;

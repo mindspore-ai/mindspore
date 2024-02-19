@@ -20,10 +20,9 @@
 #include <algorithm>
 #include <string>
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "common/kernel_log.h"
 #include "cpu_kernel/common/status.h"
-#include "utils/allocator_utils.h"
 #include "utils/kernel_util.h"
 
 namespace aicpu {
@@ -81,5 +80,5 @@ uint32_t SparseMatrixNNZCpuKernel::DoCompute(const CpuKernelContext &ctx) {
 }
 
 // register the opetaor
-REGISTER_CPU_KERNEL(SparseMatrixNNZ, SparseMatrixNNZCpuKernel);
+REGISTER_MS_CPU_KERNEL(SparseMatrixNNZ, SparseMatrixNNZCpuKernel);
 }  // namespace aicpu

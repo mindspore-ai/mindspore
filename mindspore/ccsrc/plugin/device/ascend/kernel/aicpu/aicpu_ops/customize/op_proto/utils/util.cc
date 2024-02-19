@@ -30,7 +30,6 @@
 #include "error_util.h"
 #include "./vector_proto_profiling.h"
 #include "op_common_util.h"
-#include "graph/utils/type_utils.h"
 
 namespace ge {
 using namespace std;
@@ -90,8 +89,7 @@ bool CheckInputDataType(const Operator &op, const std::string &input_name,
 
   if (!valid) {
     VECTOR_INFER_SHAPE_INNER_ERR_REPORT(
-      TbeGetName(op),
-      OtherErrMsg(ConcatString("The op do not support the dtype", ge::TypeUtils::DataTypeToSerialString(input_type))));
+      TbeGetName(op), OtherErrMsg(ConcatString("The op do not support the dtype", GeDataTypeToString(input_type))));
     return false;
   }
 
@@ -103,9 +101,9 @@ bool CheckTwoInputDtypeSame(const Operator &op, const string &input_name1, const
   DataType input_type_x2 = op.GetInputDesc(input_name2).GetDataType();
   if (input_type_x1 != input_type_x2) {
     VECTOR_INFER_SHAPE_INNER_ERR_REPORT(
-      TbeGetName(op), OtherErrMsg(ConcatString("The ", TbeGetName(op), " op dtype is not same, type1:",
-                                               ge::TypeUtils::DataTypeToSerialString(input_type_x1),
-                                               ", type2:", ge::TypeUtils::DataTypeToSerialString(input_type_x2))));
+      TbeGetName(op), OtherErrMsg(ConcatString("The ", TbeGetName(op),
+                                               " op dtype is not same, type1:", GeDataTypeToString(input_type_x1),
+                                               ", type2:", GeDataTypeToString(input_type_x2))));
     return false;
   }
 
@@ -119,9 +117,8 @@ bool CheckInputDtypeSame(const Operator &op, const std::vector<std::string> &inp
     const TensorDesc input_desc = op.GetInputDescByName(input_name.c_str());
     auto input_dtype = input_desc.GetDataType();
     if (input_dtype != first_input_dtype) {
-      auto error_ms = ConcatString("dtype of inputs must be same, ", input_name, ":",
-                                   ge::TypeUtils::DataTypeToSerialString(input_dtype), ", ", (*first_name), ":",
-                                   ge::TypeUtils::DataTypeToSerialString(first_input_dtype), ".");
+      auto error_ms = ConcatString("dtype of inputs must be same, ", input_name, ":", GeDataTypeToString(input_dtype),
+                                   ", ", (*first_name), ":", GeDataTypeToString(first_input_dtype), ".");
       VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), OtherErrMsg(error_ms));
       return false;
     }
@@ -427,7 +424,7 @@ bool InferShapeAndTypeTwoInOneOutBroadcast(Operator &op, const string &input_nam
   tensordesc_output.SetShape(outputShape);
 
   OP_LOGI(TbeGetName(op).c_str(), "output shape is: %s, output dtype is:%s.", to_string(outputShape).c_str(),
-          ge::TypeUtils::DataTypeToSerialString(input_dtype).c_str());
+          GeDataTypeToString(input_dtype).c_str());
   is_dynamic = IsUnknown(dimVec);
   if (is_dynamic) {
     if (!InferShapeRangeTwoInOneOutBroadcast(op, input_name1, input_name2, output_name)) {
@@ -527,13 +524,13 @@ bool InferShapeAndTypeTwoInOneOutBroadcast(Operator &op, const string &input_nam
   tensordesc_output.SetShape(outputShape);
   tensordesc_output.SetDataType(input_dtype);
   OP_LOGI(TbeGetName(op).c_str(), "output shape is: %s, output dtype is:%s.", to_string(outputShape).c_str(),
-          ge::TypeUtils::DataTypeToSerialString(input_dtype).c_str());
+          GeDataTypeToString(input_dtype).c_str());
   op.UpdateOutputDesc(output_name, tensordesc_output);
 
   return true;
 }
 
-std::string ToFormatString(ge::Format format) { return ge::TypeUtils::FormatToSerialString(format); }
+std::string ToFormatString(ge::Format format) { return GeFormatToString(format); }
 
 static void AddToOutputRange(std::vector<std::pair<int64_t, int64_t>> &out_range,
                              const std::pair<int64_t, int64_t> &shape_range_x,
@@ -702,8 +699,7 @@ bool GetConstIntData(const Tensor &data, DataType data_type, std::vector<int64_t
 
   auto found = type_call_map.find(data_type);
   if (found == type_call_map.end()) {
-    USER_GE_LOGE("[ERROR]GetConstIntData is not support data_type[%s]!",
-                 ge::TypeUtils::DataTypeToSerialString(data_type).c_str());
+    USER_GE_LOGE("[ERROR]GetConstIntData is not support data_type[%s]!", GeDataTypeToString(data_type).c_str());
     return false;
   }
 
@@ -765,11 +761,112 @@ bool GetScalerValue(const Operator &op, const Tensor &const_tensor, const DataTy
   return true;
 }
 
-string to_string(const vector<int64_t> &shape) { return ops::to_string(shape); }
+std::string to_string(const std::vector<int64_t> &shape) { return ops::to_string(shape); }
 
 std::string to_string(const ge::Shape &shape) { return to_string(shape.GetDims()); }
 
-std::string to_string(const vector<pair<int64_t, int64_t>> &ranges) { return ops::to_string(ranges); }
+std::string to_string(const std::vector<std::pair<int64_t, int64_t>> &ranges) { return ops::to_string(ranges); }
+
+static std::map<ge::DataType, std::string> kDataTypeToStringMap = {{ge::DataType::DT_FLOAT, "float"},
+                                                                   {ge::DataType::DT_FLOAT16, "float16"},
+                                                                   {ge::DataType::DT_INT8, "int8"},
+                                                                   {ge::DataType::DT_INT16, "int16"},
+                                                                   {ge::DataType::DT_UINT16, "uint16"},
+                                                                   {ge::DataType::DT_UINT8, "uint8"},
+                                                                   {ge::DataType::DT_INT32, "int32"},
+                                                                   {ge::DataType::DT_INT64, "int64"},
+                                                                   {ge::DataType::DT_UINT32, "uint32"},
+                                                                   {ge::DataType::DT_UINT64, "uint64"},
+                                                                   {ge::DataType::DT_BOOL, "bool"},
+                                                                   {ge::DataType::DT_DOUBLE, "double"},
+                                                                   {ge::DataType::DT_STRING, "string"},
+                                                                   {ge::DataType::DT_DUAL_SUB_INT8, "dual_sub_int8"},
+                                                                   {ge::DataType::DT_DUAL_SUB_UINT8, "dual_sub_uint8"},
+                                                                   {ge::DataType::DT_COMPLEX64, "complex64"},
+                                                                   {ge::DataType::DT_COMPLEX128, "complex128"},
+                                                                   {ge::DataType::DT_DUAL, "dual"},
+                                                                   {ge::DataType::DT_QINT8, "qint8"},
+                                                                   {ge::DataType::DT_QINT16, "qint16"},
+                                                                   {ge::DataType::DT_QINT32, "qint32"},
+                                                                   {ge::DataType::DT_QUINT8, "quint8"},
+                                                                   {ge::DataType::DT_QUINT16, "quint16"},
+                                                                   {ge::DataType::DT_RESOURCE, "resource"},
+                                                                   {ge::DataType::DT_STRING_REF, "string ref"},
+                                                                   {ge::DataType::DT_VARIANT, "dt_variant"},
+                                                                   {ge::DataType::DT_UNDEFINED, "undefined"},
+                                                                   {ge::DataType::DT_INT4, "int4"},
+                                                                   {ge::DataType::DT_UINT1, "uint1"},
+                                                                   {ge::DataType::DT_INT2, "int2"},
+                                                                   {ge::DataType::DT_UINT2, "uint2"},
+                                                                   {ge::DataType::DT_COMPLEX32, "complex32"},
+                                                                   {ge::DataType::DT_BF16, "bf16"}};
+
+static std::map<ge::Format, std::string> kFormatToStringMap = {
+  {ge::Format::FORMAT_NCHW, "NCHW"},
+  {ge::Format::FORMAT_NHWC, "NHWC"},
+  {ge::Format::FORMAT_ND, "Nd"},
+  {ge::Format::FORMAT_NC1HWC0, "NC1HWC0"},
+  {ge::Format::FORMAT_FRACTAL_Z, "FRACTAL_Z"},
+  {ge::Format::FORMAT_NC1C0HWPAD, "NC1C0HWPAD"},
+  {ge::Format::FORMAT_NHWC1C0, "NHWC1C0"},
+  {ge::Format::FORMAT_FSR_NCHW, "FSR_NCHW"},
+  {ge::Format::FORMAT_FRACTAL_DECONV, "FRACTAL_DECONV"},
+  {ge::Format::FORMAT_C1HWNC0, "C1HWNC0"},
+  {ge::Format::FORMAT_FRACTAL_DECONV_TRANSPOSE, "FRACTAL_DECONV_TRANSPOSE"},
+  {ge::Format::FORMAT_FRACTAL_DECONV_SP_STRIDE_TRANS, "FRACTAL_DECONV_SP_STRIDE_TRANS"},
+  {ge::Format::FORMAT_NC1HWC0_C04, "NC1HWC0_C04"},
+  {ge::Format::FORMAT_FRACTAL_Z_C04, "FRACTAL_Z_C04"},
+  {ge::Format::FORMAT_CHWN, "CHWN"},
+  {ge::Format::FORMAT_FRACTAL_DECONV_SP_STRIDE8_TRANS, "FRACTAL_DECONV_SP_STRIDE8_TRANS"},
+  {ge::Format::FORMAT_HWCN, "HWCN"},
+  {ge::Format::FORMAT_NC1KHKWHWC0, "NC1KHKWHWC0"},
+  {ge::Format::FORMAT_BN_WEIGHT, "BN_WEIGHT"},
+  {ge::Format::FORMAT_FILTER_HWCK, "FILTER_HWCK"},
+  {ge::Format::FORMAT_HASHTABLE_LOOKUP_LOOKUPS, "HASHTABLE_LOOKUP_LOOKUPS"},
+  {ge::Format::FORMAT_HASHTABLE_LOOKUP_KEYS, "HASHTABLE_LOOKUP_KEYS"},
+  {ge::Format::FORMAT_HASHTABLE_LOOKUP_VALUE, "HASHTABLE_LOOKUP_VALUE"},
+  {ge::Format::FORMAT_HASHTABLE_LOOKUP_OUTPUT, "HASHTABLE_LOOKUP_OUTPUT"},
+  {ge::Format::FORMAT_HASHTABLE_LOOKUP_HITS, "HASHTABLE_LOOKUP_HITS"},
+  {ge::Format::FORMAT_C1HWNCoC0, "C1HWNCoC0"},
+  {ge::Format::FORMAT_MD, "MD"},
+  {ge::Format::FORMAT_NDHWC, "NDHWC"},
+  {ge::Format::FORMAT_FRACTAL_ZZ, "FRACTAL_ZZ"},
+  {ge::Format::FORMAT_FRACTAL_NZ, "FRACTAL_NZ"},
+  {ge::Format::FORMAT_NCDHW, "NCDHW"},
+  {ge::Format::FORMAT_DHWCN, "DHWCN"},
+  {ge::Format::FORMAT_NDC1HWC0, "NDC1HWC0"},
+  {ge::Format::FORMAT_FRACTAL_Z_3D, "FRACTAL_Z_3D"},
+  {ge::Format::FORMAT_CN, "CN"},
+  {ge::Format::FORMAT_NC, "NC"},
+  {ge::Format::FORMAT_DHWNC, "DHWNC"},
+  {ge::Format::FORMAT_FRACTAL_Z_3D_TRANSPOSE, "FRACTAL_Z_3D_TRANSPOSE"},
+  {ge::Format::FORMAT_FRACTAL_ZN_LSTM, "FRACTAL_ZN_LSTM"},
+  {ge::Format::FORMAT_FRACTAL_Z_G, "FRACTAL_Z_G"},
+  {ge::Format::FORMAT_RESERVED, "RESERVED"},
+  {ge::Format::FORMAT_ALL, "ALL"},
+  {ge::Format::FORMAT_NULL, "NULL"},
+  {ge::Format::FORMAT_ND_RNN_BIAS, "ND_RNN_BIAS"},
+  {ge::Format::FORMAT_FRACTAL_ZN_RNN, "FRACTAL_ZN_RNN"},
+  {ge::Format::FORMAT_NYUV, "NYUV"},
+  {ge::Format::FORMAT_NYUV_A, "NYUV_A"},
+  {ge::Format::FORMAT_NCL, "NCL"},
+  {ge::Format::FORMAT_FRACTAL_Z_WINO, "FRACTAL_Z_WINO"}};
+
+std::string GeDataTypeToString(const ge::DataType datatype) {
+  auto iter = kDataTypeToStringMap.find(datatype);
+  if (iter != kDataTypeToStringMap.end()) {
+    return iter->second;
+  }
+  return "";
+}
+
+std::string GeFormatToString(const ge::Format format) {
+  auto iter = kFormatToStringMap.find(format);
+  if (iter != kFormatToStringMap.end()) {
+    return iter->second;
+  }
+  return "";
+}
 
 bool IsEmptyTensor(const std::vector<int64_t> &dims) {
   if (dims.size() == 1 && dims[0] == 0) {

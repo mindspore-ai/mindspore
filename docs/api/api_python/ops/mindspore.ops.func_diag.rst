@@ -7,6 +7,9 @@ mindspore.ops.diag
 
     假设输入Tensor维度为 :math:`(D_1,... D_k)` ，则输出是一个rank为2k的Tensor，其维度为 :math:`(D_1,..., D_k, D_1,..., D_k)` ，其中 :math:`output[i_1,..., i_k, i_1,..., i_k] = input[i_1,..., i_k]` 并且其他位置的值为0。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **input** (Tensor) - 输入Tensor。
 

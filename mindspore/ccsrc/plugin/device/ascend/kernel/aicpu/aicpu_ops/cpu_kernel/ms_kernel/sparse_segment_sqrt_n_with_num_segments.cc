@@ -118,7 +118,7 @@ uint32_t SparseSegmentSqrtNWithNumSegmentsCpuKernel::Compute(CpuKernelContext &c
   }
 }
 
-REGISTER_CPU_KERNEL(SparseSegmentSqrtNWithNumSegments, SparseSegmentSqrtNWithNumSegmentsCpuKernel);
+REGISTER_MS_CPU_KERNEL(SparseSegmentSqrtNWithNumSegments, SparseSegmentSqrtNWithNumSegmentsCpuKernel);
 
 template <typename T1, typename T2, typename T3, typename T4>
 uint32_t SparseSegmentSqrtNWithNumSegmentsCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {

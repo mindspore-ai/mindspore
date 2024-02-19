@@ -67,10 +67,13 @@ bool GpuContiguousKernelTask::RunWithRet() {
 
   const auto &input_address = context_->GetInputAddr(0);
   const auto &output_address = context_->GetOutputAddr(0);
-  const auto &input_storage_info = context_->GetInputStorage(0);
+  const auto &input_storage_info = context_->GetInputAddr(0)->GetTensorStorageInfo();
   auto stream = context_->stream();
   MS_EXCEPTION_IF_NULL(stream);
 
+  MS_LOG(DEBUG) << "Input_storage_info:" << (input_storage_info == nullptr ? "" : input_storage_info->ToString())
+                << ", input_address size:" << input_address->GetSize()
+                << ", output_address size:" << output_address->GetSize();
   auto input = MallocMemoryForDeviceAddress(input_address, device_context);
   auto output = MallocMemoryForDeviceAddress(output_address, device_context);
 
@@ -117,10 +120,14 @@ bool GpuCopyWithSliceKernelTask::RunWithRet() {
   const auto &dst_device_address = context_->GetInputAddr(0);
   const auto &src_device_address = context_->GetInputAddr(1);
 
-  const auto &dst_storage_info = context_->GetInputStorage(0);
-  const auto &src_storage_info = context_->GetInputStorage(1);
+  const auto &dst_storage_info = context_->GetInputAddr(0)->GetTensorStorageInfo();
+  const auto &src_storage_info = context_->GetInputAddr(1)->GetTensorStorageInfo();
   auto stream = context_->stream();
   MS_EXCEPTION_IF_NULL(stream);
+  MS_LOG(DEBUG) << "Src_storage_info:" << (src_storage_info == nullptr ? "" : src_storage_info->ToString())
+                << ", dst_storage_info:" << (dst_storage_info == nullptr ? "" : dst_storage_info->ToString())
+                << ", src address size:" << src_device_address->GetSize()
+                << ", dst address size:" << dst_device_address->GetSize();
 
   auto dst_addr = MallocMemoryForDeviceAddress(dst_device_address, device_context);
   auto src_addr = MallocMemoryForDeviceAddress(src_device_address, device_context);

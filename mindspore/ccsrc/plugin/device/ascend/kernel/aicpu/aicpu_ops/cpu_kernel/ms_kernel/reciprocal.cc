@@ -21,7 +21,7 @@
 #include <algorithm>
 
 #include "common/cpu_kernel_utils.h"
-#include "inc/cpu_types.h"
+#include "cpu_types.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -158,5 +158,5 @@ uint32_t ReciprocalCpuKernel::ReciprocalComputeComplex(Tensor *x, Tensor *y, uin
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kReciprocal, ReciprocalCpuKernel);
+REGISTER_MS_CPU_KERNEL(kReciprocal, ReciprocalCpuKernel);
 }  // namespace aicpu

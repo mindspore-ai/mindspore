@@ -19,12 +19,12 @@ import mindspore as ms
 from mindspore import context, Tensor
 from mindspore.common import dtype as mstype
 from mindspore import ops
-import test_utils
+from tests.st.utils import test_utils
 
 
 @test_utils.run_with_cell
 def range_forward_func(start, limit, delta):
-    return ops.auto_generate.range(start, limit, delta, maxlen=10)
+    return ops.range(start, limit, delta, maxlen=10)
 
 
 @test_utils.run_with_cell
@@ -36,7 +36,7 @@ def range_backward_func(start, limit, delta):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_range_forward_tensor_input(mode):
     """
     Feature: range ops.
@@ -59,7 +59,7 @@ def test_range_forward_tensor_input(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_range_forward(mode):
     """
     Feature: range ops.
@@ -82,7 +82,7 @@ def test_range_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_range_backward(mode):
     """
     Feature: range ops.
@@ -101,7 +101,7 @@ def test_range_backward(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_range_dynamic(mode):
     """
     Feature: range ops.

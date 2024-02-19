@@ -1,7 +1,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_TRIDIAGONAL_SOLVE_H
 #define AICPU_KERNELS_NORMALIZED_TRIDIAGONAL_SOLVE_H
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include <vector>
 
 namespace aicpu {

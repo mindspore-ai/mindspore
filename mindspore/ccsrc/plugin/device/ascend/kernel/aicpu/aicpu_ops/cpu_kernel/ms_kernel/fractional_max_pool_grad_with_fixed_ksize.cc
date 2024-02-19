@@ -194,5 +194,5 @@ uint32_t FractionalMaxPoolGradWithFixedKsize::ComputeSingleBatch(T *out_backprop
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kFractionalMaxPoolGradWithFixedKsize, FractionalMaxPoolGradWithFixedKsize);
+REGISTER_MS_CPU_KERNEL(kFractionalMaxPoolGradWithFixedKsize, FractionalMaxPoolGradWithFixedKsize);
 }  // namespace aicpu

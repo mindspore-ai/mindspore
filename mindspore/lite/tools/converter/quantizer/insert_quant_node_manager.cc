@@ -34,7 +34,7 @@
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "ops/fse_decode.h"
 #include "ops/op_name.h"
-#include "ops/cast.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/mul_fusion.h"
 #include "ops/fusion/add_fusion.h"
 #include "ops/fusion/mat_mul_fusion.h"
@@ -786,39 +786,6 @@ int InsertQuantNodeManager::SetParallelStrategy(const CNodePtr &cnode,
   CHECK_NULL_RETURN(primitive);
   primitive->AddAttr(IN_STRATEGY, MakeValue(in_strategy));
   return RET_OK;
-}
-
-std::vector<std::vector<int64_t>> InsertQuantNodeManager::ExtractStrategy(const ValuePtr &stra) {
-  if (stra == nullptr) {
-    return {};
-  }
-
-  auto var = stra->cast<ValueTuplePtr>();
-  if (var == nullptr) {
-    return {};
-  }
-  std::vector<std::vector<int64_t>> strategy;
-  MS_LOG(INFO) << "Extract information: strategy " << stra->ToString();
-  if (var->size() > 0) {
-    std::vector<ValuePtr> elements = var->value();
-    for (uint64_t index = 0; index < elements.size(); ++index) {
-      std::vector<int64_t> dim;
-      if (elements[index]->isa<ValueSequence>()) {
-        auto value_tuple = elements[index]->cast<ValueTuplePtr>();
-        std::vector<ValuePtr> value_vector = value_tuple->value();
-        (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(dim),
-                             [](const ValuePtr &value) { return static_cast<int64_t>(GetValue<int64_t>(value)); });
-        strategy.push_back(dim);
-      } else {
-        MS_LOG(EXCEPTION) << "Failure: Strategy's format is wrong! Need ValueSequence";
-      }
-    }
-    if (strategy.empty()) {
-      MS_LOG(EXCEPTION) << "ExtractStrategy: failed to extract strategy";
-    }
-  }
-
-  return strategy;
 }
 
 std::vector<std::vector<int64_t>> InsertQuantNodeManager::GetAddMulNodeParallelStrategy(

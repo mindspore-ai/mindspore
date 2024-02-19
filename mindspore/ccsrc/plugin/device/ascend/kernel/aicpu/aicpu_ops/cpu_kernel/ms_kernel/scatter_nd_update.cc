@@ -209,5 +209,5 @@ uint32_t ScatterNdUpdateCpuKernel::ScatterNdUpdateComputeRealKernel(const CpuKer
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kScatterNdUpdate, ScatterNdUpdateCpuKernel);
+REGISTER_MS_CPU_KERNEL(kScatterNdUpdate, ScatterNdUpdateCpuKernel);
 }  // namespace aicpu

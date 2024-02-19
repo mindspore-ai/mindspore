@@ -156,5 +156,5 @@ uint32_t LuCpuKernel::LuCompute(const CpuKernelContext &ctx) {
 
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kLu, LuCpuKernel);
+REGISTER_MS_CPU_KERNEL(kLu, LuCpuKernel);
 }  // namespace aicpu

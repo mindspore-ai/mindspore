@@ -15,7 +15,7 @@
 # pylint: disable=unused-variable
 import pytest
 import numpy as np
-import test_utils
+from tests.st.utils import test_utils
 import mindspore as ms
 from mindspore import Tensor, context
 from mindspore import ops
@@ -23,7 +23,7 @@ from mindspore import ops
 
 @test_utils.run_with_cell
 def unsorted_segment_forward_func(x, y, z):
-    return ops.auto_generate.unsorted_segment_sum(x, y, z)
+    return ops.unsorted_segment_sum(x, y, z)
 
 
 @test_utils.run_with_cell
@@ -58,7 +58,7 @@ def test_unsorted_segment_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_assign_backward(mode):
     """
     Feature: assign ops.

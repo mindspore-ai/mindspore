@@ -24,7 +24,7 @@ asin:
             >>> import mindspore
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
-            >>> x = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), mindspore.float32)
-            >>> output = ops.asin(x)
+            >>> input = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), mindspore.float32)
+            >>> output = ops.asin(input)
             >>> print(output)
             [0.8330704  0.04001067  0.30469266  0.5943858 ]

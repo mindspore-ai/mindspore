@@ -15,7 +15,7 @@
 
 import numpy as np
 import pytest
-import test_utils
+from tests.st.utils import test_utils
 
 from mindspore import ops
 from mindspore import Tensor
@@ -25,7 +25,7 @@ ms.context.set_context(ascend_config={"precision_mode": "force_fp32"})
 
 @test_utils.run_with_cell
 def cosh_forward_func(x):
-    return ops.auto_generate.cosh(x)
+    return ops.cosh(x)
 
 
 @test_utils.run_with_cell
@@ -39,7 +39,7 @@ def cosh_backward_func(x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_cosh_forward(mode):
     """
     Feature: Ops.
@@ -60,7 +60,7 @@ def test_cosh_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_cosh_backward(mode):
     """
     Feature: Auto grad.
@@ -81,7 +81,7 @@ def test_cosh_backward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_cosh_vmap(mode):
     """
     Feature: test vmap function.

@@ -127,5 +127,5 @@ uint32_t LogNormalReverseCpuKernel::Compute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kLogNormalReverse, LogNormalReverseCpuKernel);
+REGISTER_MS_CPU_KERNEL(kLogNormalReverse, LogNormalReverseCpuKernel);
 }  // namespace aicpu

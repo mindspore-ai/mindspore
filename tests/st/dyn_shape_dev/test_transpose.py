@@ -17,12 +17,12 @@ import numpy as np
 import pytest
 from mindspore import ops
 import mindspore as ms
-import test_utils
+from tests.st.utils import test_utils
 
 
 @test_utils.run_with_cell
 def transpose_forward_func(x):
-    return ops.auto_generate.transpose(x, (1, 2, 0))
+    return ops.transpose(x, (1, 2, 0))
 
 
 @test_utils.run_with_cell
@@ -36,7 +36,7 @@ def transpose_backward_func(x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_transpose_forward(mode):
     """
     Feature: Ops.
@@ -61,7 +61,7 @@ def test_transpose_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_transpose_backward(mode):
     """
     Feature: Auto grad.
@@ -81,7 +81,7 @@ def test_transpose_backward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_transpose_vmap(mode):
     """
     Feature: test vmap function.

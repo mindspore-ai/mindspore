@@ -1,7 +1,7 @@
 #operator cos
 cos:
   args:
-    x:
+    input:
       dtype: tensor
   returns:
     output:

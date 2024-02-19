@@ -8,3 +8,5 @@ next_after:
     returns:
         output: 
             dtype: tensor
+    function:
+        name: nextafter

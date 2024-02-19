@@ -1076,14 +1076,11 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             >>> from mindspore import Tensor, ops
             >>> x = Tensor([[1, 2, 3], [4, 5, 6]], dtype=ms.float32)
             >>> y = ops.transpose(x, (1, 0))
-            >>> y.contiguous()
-            >>> y[:, 1] = 1
-            >>> print(x)
-            [[1. 2. 3.]
-             [4. 5. 6.]]
+            >>> z = y.contiguous()
+            >>> print(z.is_contiguous())
+            True
         """
-        Tensor_.contiguous(self)
-        return self
+        return tensor_operator_registry.get('contiguous')(self)
 
     def is_contiguous(self):
         """

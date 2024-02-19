@@ -10,7 +10,7 @@ mindspore.ops.HistogramFixedWidth
         - **dtype** (str, 可选) - 可选属性。数据类型必须为str。默认值： ``'int32'`` 。
 
     输入：
-        - **x** (Tensor) - HistogramFixedWidth的输入，为一个Tensor。数据类型必须为int32、float32或float16。
+        - **x** (Tensor) - HistogramFixedWidth的输入，为一个Tensor。数据类型必须为int32、float32、float16或float64。
         - **range** (Tensor) - 数据类型与 `x` 相同，shape为 :math:`(2,)` 。x <= range[0] 将映射到histogram[0]，x >= range[1]将映射到histogram[-1]。
 
     输出：

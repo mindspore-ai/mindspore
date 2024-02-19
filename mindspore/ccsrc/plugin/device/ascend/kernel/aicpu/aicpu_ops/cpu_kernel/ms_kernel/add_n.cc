@@ -20,11 +20,11 @@
 #include <unsupported/Eigen/CXX11/Tensor>
 
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "common/kernel_log.h"
 #include "cpu_kernel/common/status.h"
 #include "utils/kernel_util.h"
-#include "cpu_kernel/inc/cpu_context.h"
+#include "cpu_context.h"
 
 namespace {
 const std::uint32_t kAddNInputNum{aicpu::kDynamicInput};
@@ -137,5 +137,5 @@ std::uint32_t AddNCpuKernel::Compute(CpuKernelContext &ctx) {
   return detail::CheckAddN(ctx, kAddNInputNum, kAddNOutputNum) ? KERNEL_STATUS_PARAM_INVALID : detail::ComputeAddN(ctx);
 }
 
-REGISTER_CPU_KERNEL(kAddN, AddNCpuKernel);
+REGISTER_MS_CPU_KERNEL(kAddN, AddNCpuKernel);
 }  // namespace aicpu

@@ -198,5 +198,5 @@ uint32_t AcoshGradCpuKernel::AcoshGradCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kAcoshGrad, AcoshGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kAcoshGrad, AcoshGradCpuKernel);
 }  // namespace aicpu

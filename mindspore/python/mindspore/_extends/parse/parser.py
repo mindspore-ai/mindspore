@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020-2023 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ from mindspore._checkparam import is_stub_tensor
 from mindspore.ops._tracefunc import _PackSourceBuilder
 from .namespace import Namespace, CellNamespace, ClosureNamespace, ClassMemberNamespace
 from .resources import parse_object_map, ops_symbol_map, convert_object_map, convert_class_to_function_map, trope_ns
-from .resources import SYMBOL_UNDEFINE
+from .resources import SYMBOL_UNDEFINE, constant_fold_functions
 from ...common.api import _convert_python_data
 
 # Define resolve type
@@ -163,6 +163,25 @@ def get_attr_from_object(obj, attr_name=None):
     if obj is not None and attr_name is not None and hasattr(obj, attr_name):
         return getattr(obj, attr_name)
     return None
+
+
+def check_attr_is_property(obj, attr_name):
+    """
+    Check if the attribute is decorated by @property.
+
+    Args:
+        obj(Object): Instance of a class.
+        attr_name(str): Attribute name to check.
+
+    Returns:
+        obj(bool): If the attribute is decorated by @property.
+    """
+    logger.debug(f"attr_name:{attr_name}")
+    logger.debug(f"obj.__class__.__dict__.keys():{obj.__class__.__dict__.keys()}")
+    if attr_name in obj.__class__.__dict__.keys() and isinstance(obj.__class__.__dict__[attr_name], property):
+        logger.debug(f'The attribute {attr_name} is decorated by @property.')
+        return True
+    return False
 
 
 def get_parse_method_of_class(obj, parse_method=None):
@@ -1023,6 +1042,19 @@ def get_const_round(obj):
 def get_const_len(obj):
     """Get the length of const object."""
     return len(obj)
+
+
+def get_method_info(obj):
+    """Get the class name of the object from its method."""
+    if not (inspect.ismethod(obj) or 'built-in method' in repr(obj) or 'method-wrapper' in repr(obj)):
+        return None, None
+    class_name_and_method_name = obj.__qualname__.split('.')
+    return class_name_and_method_name[0], class_name_and_method_name[1]
+
+
+def can_constant_fold(obj):
+    """Check if the obj is the function can be constantly folded."""
+    return obj in constant_fold_functions
 
 
 class Parser:

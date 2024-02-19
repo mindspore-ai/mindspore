@@ -32,8 +32,7 @@ void BMMAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inpu
   }
   input_a_ = std::pair<KernelTensor *, bool>(inputs[kIndex0], trans_a);
   input_b_ = std::pair<KernelTensor *, bool>(inputs[kIndex1], trans_b);
-  auto return_value = GEN_EXECUTOR(op_type_, input_a_, input_b_, outputs[kIndex0], OpApiUtil::GetCubeMathType());
-  UpdateWorkspace(return_value);
+  GetWorkspaceForResize(input_a_, input_b_, outputs[kIndex0], OpApiUtil::GetCubeMathType());
 }
 
 bool BMMAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
@@ -41,10 +40,11 @@ bool BMMAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const 
   MS_EXCEPTION_IF_NULL(stream_ptr);
   input_a_.first = inputs[kIndex0];
   input_b_.first = inputs[kIndex1];
-  ParseGenExecutor(GEN_EXECUTOR(op_type_, input_a_, input_b_, outputs[kIndex0], OpApiUtil::GetCubeMathType()));
+  ParseGenExecutor(
+    GEN_EXECUTOR_BOOST(op_type_, hash_id_, input_a_, input_b_, outputs[kIndex0], OpApiUtil::GetCubeMathType()));
   RunOp(stream_ptr, workspace);
   return true;
 }
-MS_ACLLNN_KERNEL_FACTORY_REG(BatchMatMul, BMMAclnnKernelMod);
+MS_ACLNN_KERNEL_FACTORY_REG(BatchMatMul, BMMAclnnKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

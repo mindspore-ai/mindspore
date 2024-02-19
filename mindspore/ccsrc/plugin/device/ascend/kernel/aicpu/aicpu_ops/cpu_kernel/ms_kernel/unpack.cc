@@ -205,5 +205,5 @@ uint32_t UnpackCpuKernel::Compute(CpuKernelContext &ctx) {
   }
 }
 
-REGISTER_CPU_KERNEL(kUnpack, UnpackCpuKernel);
+REGISTER_MS_CPU_KERNEL(kUnpack, UnpackCpuKernel);
 }  // namespace aicpu

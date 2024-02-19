@@ -15,7 +15,7 @@
 
 import numpy as np
 import pytest
-import test_utils
+from tests.st.utils import test_utils
 
 from mindspore import ops
 import mindspore as ms
@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def ceil_forward_func(x):
-    return ops.auto_generate.ceil(x)
+    return ops.ceil(x)
 
 
 @test_utils.run_with_cell
@@ -32,7 +32,7 @@ def ceil_backward_func(x):
 
 
 def ceil_dyn_shape_func(x):
-    return ops.auto_generate.ceil(x)
+    return ops.ceil(x)
 
 
 @pytest.mark.level1
@@ -41,7 +41,7 @@ def ceil_dyn_shape_func(x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_ceil_forward(mode):
     """
     Feature: Ops.
@@ -62,7 +62,7 @@ def test_ceil_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_ceil_backward(mode):
     """
     Feature: Auto grad.
@@ -83,7 +83,7 @@ def test_ceil_backward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_ceil_vmap(mode):
     """
     Feature: test vmap function.
@@ -109,7 +109,7 @@ def test_ceil_vmap(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_ceil_dynamic(mode):
     """
     Feature: test dynamic tensor of ceil.
@@ -138,7 +138,7 @@ def test_ceil_dynamic(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_ceil_dynamic_rank(mode):
     """
     Feature: test dynamic rank tensor of ceil.

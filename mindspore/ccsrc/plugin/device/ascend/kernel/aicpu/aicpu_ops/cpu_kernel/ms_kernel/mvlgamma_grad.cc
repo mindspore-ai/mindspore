@@ -126,5 +126,5 @@ uint32_t MvlgammaGradCpuKernel::MvlgammaGradCompute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kMvlgammaGrad, MvlgammaGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMvlgammaGrad, MvlgammaGradCpuKernel);
 }  // namespace aicpu

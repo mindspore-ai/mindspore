@@ -19,6 +19,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
+from tests.st.utils import test_utils
 
 
 class Net(nn.Cell):
@@ -36,6 +37,7 @@ class Net(nn.Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@test_utils.run_test_with_On
 def test_net_1D(mode):
     """
     Feature: test UniformInt op.

@@ -207,5 +207,5 @@ uint32_t MedianCpuKernel::MedianCompute(CpuKernelContext &ctx) {
 
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kMedian, MedianCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMedian, MedianCpuKernel);
 }  // namespace aicpu

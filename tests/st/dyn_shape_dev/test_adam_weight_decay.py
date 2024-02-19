@@ -16,7 +16,7 @@
 import copy
 import numpy as np
 import pytest
-import test_utils
+from tests.st.utils import test_utils
 
 from mindspore import ops, context, Parameter, Tensor
 import mindspore.nn as nn
@@ -39,7 +39,7 @@ class OriNet(nn.Cell):
 
 @test_utils.run_with_cell
 def adam_weight_decay_forward_func(param, m, v, lr, beta1, beta2, eps, weight_decay, gradient):
-    adam_weight_decay = ops.auto_generate.AdamWeightDecay()
+    adam_weight_decay = ops.AdamWeightDecay()
     out = adam_weight_decay(param, m, v, lr, beta1, beta2, eps, weight_decay, gradient)
     return out[0]
 

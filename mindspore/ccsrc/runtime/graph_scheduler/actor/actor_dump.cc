@@ -15,8 +15,11 @@
  */
 
 #include "runtime/graph_scheduler/actor/actor_dump.h"
-#include "runtime/graph_scheduler/scheduler_helper.h"
+#include <map>
+#include <utility>
+#include <deque>
 
+#include "runtime/graph_scheduler/scheduler_helper.h"
 namespace mindspore {
 namespace runtime {
 namespace {
@@ -812,6 +815,447 @@ void DumpControlActors(const ControlActorSetPtr &control_actor_set, std::ofstrea
   DumpGatherActors(control_actor_set->gather_actors_, ofs);
   DumpStackActors(control_actor_set->stack_actors_, ofs);
   DumpExitActors(control_actor_set->exit_actors_, ofs);
+}
+
+namespace {
+std::string GetActorSubName(AbstractActor *actor) {
+  MS_EXCEPTION_IF_NULL(actor);
+  if (actor->type() == KernelTransformType::kCopyActor) {
+    return std::string("CopyActor");
+  }
+  const auto &name = actor->GetAID().Name();
+  std::string kernel_graph_name;
+  if (actor->type() == KernelTransformType::kKernelActor) {
+    const auto &kernel_actor = dynamic_cast<KernelActor *>(actor);
+    if (kernel_actor != nullptr && kernel_actor->kernel() != nullptr &&
+        kernel_actor->kernel()->func_graph() != nullptr) {
+      kernel_graph_name = kernel_actor->kernel()->func_graph()->ToString() + ":";
+    }
+  }
+  if (name.find("/") == std::string::npos) {
+    return kernel_graph_name + name;
+  }
+  const auto &pos = name.find_last_of("/");
+  return kernel_graph_name + name.substr(pos + 1);
+}
+using ActorInputMap = std::map<size_t, std::tuple<std::string, BaseShapePtr, TypePtr>>;
+void AddInputActorInfo(ActorInputMap *actor_inputs, AbstractActor *input_actor, const AbstractActor *const actor,
+                       const ActorInfoMap &actor_info, size_t from_index, size_t to_index) {
+  MS_EXCEPTION_IF_NULL(actor_inputs);
+  MS_EXCEPTION_IF_NULL(actor);
+  if (actor_inputs->find(to_index) != actor_inputs->end()) {
+    MS_LOG(INFO) << "Invalid index:" << to_index << " for actor:" << actor->GetAID()
+                 << " input aid:" << input_actor->GetAID() << " same to:" << std::get<0>((*actor_inputs)[to_index]);
+    return;
+  }
+  const auto &input_iter = actor_info.find(input_actor);
+  if (input_iter != actor_info.end()) {
+    const auto &input_name =
+      "%" + std::to_string(std::get<0>(input_iter->second)) + "[" + std::to_string(from_index) + "]";
+    const auto &input_shapes = std::get<1>(input_iter->second);
+    const auto &input_types = std::get<2>(input_iter->second);
+    auto shape =
+      ((from_index < input_shapes.size() && input_shapes[from_index] != nullptr) ? input_shapes[from_index] : nullptr);
+    auto type =
+      ((from_index < input_types.size() && input_types[from_index] != nullptr) ? input_types[from_index] : nullptr);
+    (*actor_inputs)[to_index] = {input_name, shape, type};
+  } else {
+    (*actor_inputs)[to_index] = {input_actor->GetAID().Name() + "[" + std::to_string(from_index) + "]", nullptr,
+                                 nullptr};
+  }
+}
+
+size_t GetFromIndexInHostQueueDataSourceActor(AbstractActor *input_actor, const DataArrow *const data_arrow) {
+  MS_EXCEPTION_IF_NULL(input_actor);
+  MS_EXCEPTION_IF_NULL(data_arrow);
+  const auto &host_ds_actor = dynamic_cast<HostQueueDataSourceActor *>(input_actor);
+  MS_EXCEPTION_IF_NULL(host_ds_actor);
+  const auto &iter =
+    std::find_if(host_ds_actor->output_data_arrows().begin(), host_ds_actor->output_data_arrows().end(),
+                 [data_arrow](const auto &arrow) { return arrow.get() == data_arrow; });
+  if (iter == host_ds_actor->output_data_arrows().end()) {
+    MS_LOG(INFO) << "Failed to find output data arrow from index" << data_arrow->from_output_index_
+                 << " to aid:" << data_arrow->to_op_id_ << " to index:" << data_arrow->to_op_id_
+                 << " in host data source actor:" << input_actor->GetAID();
+    return IntToSize(data_arrow->from_output_index_);
+  }
+  size_t node_index = iter - host_ds_actor->output_data_arrows().begin();
+  if (node_index >= host_ds_actor->output_data_nodes().size()) {
+    MS_LOG(INFO) << "Invalid node index:" << node_index << " total:" << host_ds_actor->output_data_nodes().size()
+                 << " for actor:" << input_actor->GetAID();
+    return IntToSize(data_arrow->from_output_index_);
+  }
+  return host_ds_actor->FetchNodePosition(
+    {host_ds_actor->output_data_nodes()[node_index], IntToSize(data_arrow->from_output_index_)});
+}
+
+size_t GetFromIndexInSuperKernelActor(AbstractActor *input_actor, const AbstractActor *const actor,
+                                      const DataArrow *const data_arrow) {
+  MS_EXCEPTION_IF_NULL(input_actor);
+  MS_EXCEPTION_IF_NULL(data_arrow);
+  if (input_actor->output_data_arrows().size() != input_actor->output_data_nodes().size()) {
+    MS_LOG(INFO) << "For actor:" << input_actor->GetAID()
+                 << " output arrow size:" << input_actor->output_data_arrows().size()
+                 << " not equal to node size:" << input_actor->output_data_nodes().size();
+    return IntToSize(data_arrow->from_output_index_);
+  }
+  const auto &super_kernel_actor = dynamic_cast<SuperKernelActor *>(input_actor);
+  MS_EXCEPTION_IF_NULL(super_kernel_actor);
+  const auto &graph = super_kernel_actor->graph();
+  if (graph == nullptr) {
+    MS_LOG(INFO) << "Failed to get graph in actor:" << input_actor->GetAID();
+    return IntToSize(data_arrow->from_output_index_);
+  }
+  const auto &output_pairs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
+  const auto &data_iter =
+    std::find_if(input_actor->output_data_arrows().begin(), input_actor->output_data_arrows().end(),
+                 [data_arrow](const auto &arrow) { return arrow.get() == data_arrow; });
+  if (data_iter == input_actor->output_data_arrows().end()) {
+    MS_LOG(INFO) << "Failed to find output data arrow from index" << data_arrow->from_output_index_
+                 << " to aid:" << data_arrow->to_op_id_ << " to index:" << data_arrow->to_op_id_
+                 << " in host data source actor:" << input_actor->GetAID();
+    return IntToSize(data_arrow->from_output_index_);
+  }
+  size_t node_index = data_iter - input_actor->output_data_arrows().begin();
+  if (node_index >= input_actor->output_data_nodes().size() ||
+      input_actor->output_data_nodes()[node_index] == nullptr) {
+    MS_LOG(INFO) << "Invalid node index:" << node_index << " total:" << input_actor->output_data_nodes().size()
+                 << " for actor:" << input_actor->GetAID() << " graph:" << graph->ToString();
+    return IntToSize(data_arrow->from_output_index_);
+  }
+  const auto &output_iter =
+    std::find(output_pairs.begin(), output_pairs.end(),
+              std::make_pair(input_actor->output_data_nodes()[node_index], IntToSize(data_arrow->from_output_index_)));
+  if (output_iter == output_pairs.end()) {
+    MS_LOG(INFO) << "Failed to find output node:" << input_actor->output_data_nodes()[node_index]->fullname_with_scope()
+                 << " in graph:" << graph->ToString() << " for actor:" << actor->GetAID();
+    return IntToSize(data_arrow->from_output_index_);
+  }
+  return output_iter - output_pairs.begin();
+}
+
+void FetchInputActor(std::string input_aid, ActorInputMap *actor_inputs, const AbstractActor *const actor,
+                     const ActorInfoMap &actor_info, const DataArrow *const data_arrow) {
+  MS_EXCEPTION_IF_NULL(data_arrow);
+  size_t to_index = IntToSize(data_arrow->to_input_index_);
+  size_t from_index = IntToSize(data_arrow->from_output_index_);
+  auto input_actor = FetchActor(input_aid);
+  if (input_actor == nullptr) {
+    MS_LOG(INFO) << "Failed to fetch input actor:" << input_aid;
+    return;
+  }
+  if (input_actor->type() == KernelTransformType::kHostDataSourceActor) {
+    from_index = GetFromIndexInHostQueueDataSourceActor(input_actor, data_arrow);
+  } else if (input_actor->type() == KernelTransformType::kSuperKernelActor) {
+    from_index = GetFromIndexInSuperKernelActor(input_actor, actor, data_arrow);
+  } else if (actor->type() != KernelTransformType::kFusionActor &&
+             data_arrow->to_op_id_.Name().find(kFusionActorNameSuffix) != std::string::npos) {
+    const auto &fusion_aid = data_arrow->to_op_id_.Name();
+    const auto &from_actor = FetchActor(fusion_aid);
+    if (from_actor == nullptr) {
+      MS_LOG(INFO) << "Failed to fetch actor:" << fusion_aid;
+      return;
+    }
+    input_actor = from_actor;
+    from_index = to_index;
+    const auto &fusion_actor = dynamic_cast<FusionActor *>(from_actor);
+    MS_EXCEPTION_IF_NULL(fusion_actor);
+    const auto &real_input_data = fusion_actor->real_input_data();
+    if (to_index >= real_input_data.size()) {
+      MS_LOG(INFO) << "Failed to find to index in fusion actor:" << input_aid << " for actor:" << actor->GetAID()
+                   << " to index:" << to_index;
+      return;
+    }
+    to_index = real_input_data[to_index].second;
+  }
+  AddInputActorInfo(actor_inputs, input_actor, actor, actor_info, from_index, to_index);
+}
+
+void FetchInputDeviceTensorStore(const AnfNodePtr &key, size_t index, const AbstractActor *const actor,
+                                 ActorInputMap *actor_inputs) {
+  MS_EXCEPTION_IF_NULL(key);
+  MS_EXCEPTION_IF_NULL(actor_inputs);
+  std::string input_name = "%";
+  if (key->isa<Parameter>()) {
+    input_name += key->DebugString(0);
+  } else if (key->isa<ValueNode>()) {
+    const auto &value_node = key->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
+    if (value_node->value() == nullptr) {
+      input_name += value_node->DebugString();
+    } else {
+      if (value_node->value()->isa<Scalar>()) {
+        input_name = value_node->value()->DumpText();
+      } else {
+        input_name = value_node->value()->ToString();
+      }
+    }
+  } else {
+    input_name += key->DebugString();
+  }
+  if (actor_inputs->find(index) != actor_inputs->end()) {
+    MS_LOG(INFO) << "Invalid index:" << index << " for actor:" << actor->GetAID() << " input aid:" << key->DebugString()
+                 << " same to:" << std::get<0>((*actor_inputs)[index]);
+    return;
+  }
+  (*actor_inputs)[index] = {input_name, key->Shape() == nullptr ? nullptr : key->Shape(),
+                            key->Type() == nullptr ? nullptr : key->Type()};
+}
+
+void FetchInputForHostQueueDSActor(AbstractActor *actor, ActorInputMap *actor_inputs) {
+  MS_EXCEPTION_IF_NULL(actor);
+  MS_EXCEPTION_IF_NULL(actor_inputs);
+  const auto &ds_actor = dynamic_cast<HostQueueDataSourceActor *>(actor);
+  MS_EXCEPTION_IF_NULL(ds_actor);
+  for (size_t i = 0; i < ds_actor->data_nodes().size(); ++i) {
+    const auto &node_pair = ds_actor->data_nodes()[i];
+    if (node_pair.first == nullptr) {
+      (*actor_inputs)[i] = {"null", nullptr, nullptr};
+      continue;
+    }
+    auto device_address = AnfAlgo::GetMutableOutputAddr(node_pair.first, node_pair.second, false);
+    if (device_address == nullptr || device_address->kernel_tensor() == nullptr) {
+      (*actor_inputs)[i] = {"null", nullptr, nullptr};
+      continue;
+    }
+    const auto &kernel_tensor = device_address->kernel_tensor();
+    (*actor_inputs)[i] = {node_pair.first->DebugString(0),
+                          kernel_tensor->GetShape() == nullptr ? nullptr : kernel_tensor->GetShape(),
+                          kernel_tensor->GetType() == nullptr ? nullptr : kernel_tensor->GetType()};
+  }
+}
+
+void FetchInputData(AbstractActor *actor, ActorInputMap *actor_inputs, ActorInfoMap *actor_info) {
+  MS_EXCEPTION_IF_NULL(actor);
+  MS_EXCEPTION_IF_NULL(actor_info);
+  MS_EXCEPTION_IF_NULL(actor_inputs);
+  for (const auto &pair : actor->input_data_arrow_aids()) {
+    if (pair.second == nullptr) {
+      MS_LOG(INFO) << "Invalid input data arrow for actor:" << actor->GetAID() << " input actor:" << pair.first;
+      continue;
+    }
+    FetchInputActor(pair.first.Name(), actor_inputs, actor, *actor_info, pair.second);
+  }
+
+  for (const auto &pair : actor->device_tensor_store_keys()) {
+    MS_EXCEPTION_IF_NULL(pair.second);
+    FetchInputDeviceTensorStore(pair.second, pair.first, actor, actor_inputs);
+  }
+
+  if (actor->type() == KernelTransformType::kHostDataSourceActor) {
+    FetchInputForHostQueueDSActor(actor, actor_inputs);
+  }
+}
+
+void FetchOutputInfo(AbstractActor *actor, std::vector<BaseShapePtr> *output_shapes, std::vector<TypePtr> *output_types,
+                     const ActorInputMap &actor_inputs) {
+  MS_EXCEPTION_IF_NULL(actor);
+  MS_EXCEPTION_IF_NULL(output_shapes);
+  MS_EXCEPTION_IF_NULL(output_types);
+  if (actor->type() == KernelTransformType::kKernelActor) {
+    const auto &kernel_actor = dynamic_cast<KernelActor *>(actor);
+    if (kernel_actor != nullptr && kernel_actor->kernel() != nullptr &&
+        kernel_actor->kernel()->kernel_info() != nullptr) {
+      const auto &kernel_info = dynamic_cast<KernelInfo *>(kernel_actor->kernel()->kernel_info());
+      MS_EXCEPTION_IF_NULL(kernel_info);
+      const auto &device_addresses = kernel_info->output_address_list();
+      for (const auto &device_address : device_addresses) {
+        if (device_address != nullptr && device_address->kernel_tensor() != nullptr) {
+          output_shapes->emplace_back(device_address->kernel_tensor()->GetShape());
+          output_types->emplace_back(device_address->kernel_tensor()->GetType());
+        }
+      }
+    }
+  } else if (actor->type() == KernelTransformType::kSuperKernelActor) {
+    if (actor->output_data_arrows().size() != actor->output_data_nodes().size()) {
+      MS_LOG(INFO) << "For actor:" << actor->GetAID() << " output arrow size:" << actor->output_data_arrows().size()
+                   << " not equal to node size:" << actor->output_data_nodes().size();
+      return;
+    }
+    const auto &super_kernel_actor = dynamic_cast<SuperKernelActor *>(actor);
+    MS_EXCEPTION_IF_NULL(super_kernel_actor);
+    const auto &graph = super_kernel_actor->graph();
+    if (graph == nullptr) {
+      MS_LOG(INFO) << "Failed to get graph in actor:" << actor->GetAID();
+      return;
+    }
+    const auto &output_pairs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
+    for (size_t i = 0; i < output_pairs.size(); ++i) {
+      const auto &output_pair = output_pairs[i];
+      MS_EXCEPTION_IF_NULL(output_pair.first);
+      const auto &node_index = common::AnfAlgo::VisitKernelWithReturnType(output_pair.first, output_pair.second, false);
+      MS_EXCEPTION_IF_NULL(node_index.first);
+      auto device_address = AnfAlgo::GetMutableOutputAddr(node_index.first, node_index.second, false);
+      if (device_address == nullptr || device_address->kernel_tensor() == nullptr) {
+        MS_LOG(INFO) << "For actor:" << actor->GetAID() << " output node:" << node_index.first->fullname_with_scope()
+                     << " has invalid device address:" << device_address;
+        output_shapes->emplace_back(nullptr);
+        output_types->emplace_back(nullptr);
+        continue;
+      }
+      output_shapes->emplace_back(device_address->kernel_tensor()->GetShape());
+      output_types->emplace_back(device_address->kernel_tensor()->GetType());
+    }
+  } else {
+    for_each(actor_inputs.begin(), actor_inputs.end(), [output_shapes, output_types](const auto &pair) {
+      output_shapes->emplace_back(std::get<1>(pair.second));
+      output_types->emplace_back(std::get<2>(pair.second));
+    });
+  }
+}
+
+void DumpActorInfo(AbstractActor *actor, std::ofstream &ofs) {
+  MS_EXCEPTION_IF_NULL(actor);
+  if (actor->type() == KernelTransformType::kKernelActor || actor->type() == KernelTransformType::kSuperKernelActor ||
+      actor->type() == KernelTransformType::kOutputActor) {
+    ofs << "\t# device context: ";
+    std::for_each(actor->device_contexts().begin(), actor->device_contexts().end(), [&ofs](const auto &device_context) {
+      ofs << (device_context == nullptr ? "null" : device_context->device_context_key().ToString()) << " ";
+    });
+    ofs << "\n";
+  } else if (actor->type() == KernelTransformType::kCopyActor) {
+    if (actor->device_contexts().size() >= 2 && actor->device_contexts()[0] != nullptr &&
+        actor->device_contexts()[1] != nullptr) {
+      ofs << "\t# device context: " << actor->device_contexts()[0]->device_context_key().ToString() << " -> "
+          << actor->device_contexts()[1]->device_context_key().ToString() << "\n";
+    }
+  }
+}
+}  // namespace
+
+std::vector<AbstractActor *> TopoSortForActor(AbstractActor *root) {
+  std::vector<AbstractActor *> actors;
+  auto seen = NewSeenGeneration();
+  std::deque<AbstractActor *> todo;
+  (void)todo.emplace_back(root);
+
+  mindspore::HashMap<AbstractActor *, SeenNum> seen_map;
+  mindspore::HashMap<AbstractActor *, SeenNum> extra_seen_map;
+  seen_map[root] = 0;
+  extra_seen_map[root] = 0;
+  while (!todo.empty()) {
+    AbstractActor *actor = todo.back();
+    if (extra_seen_map[actor] == seen) {
+      todo.pop_back();
+      continue;
+    }
+    if (seen_map[actor] == seen) {
+      extra_seen_map[actor] = seen;
+      (void)actors.emplace_back(actor);
+      todo.pop_back();
+      continue;
+    }
+    seen_map[actor] = seen;
+    std::vector<std::string> input_aids;
+    std::for_each(
+      actor->input_data_arrow_aids().begin(), actor->input_data_arrow_aids().end(),
+      [&input_aids, actor](const auto &pair) {
+        input_aids.emplace_back((actor->type() != KernelTransformType::kFusionActor && pair.second != nullptr &&
+                                 pair.second->to_op_id_.Name().find(kFusionActorNameSuffix) != std::string::npos)
+                                  ? pair.second->to_op_id_.Name()
+                                  : pair.first.Name());
+      });
+    std::for_each(
+      actor->input_control_arrow_aids().begin(), actor->input_control_arrow_aids().end(),
+      [&input_aids, actor](const auto &pair) {
+        input_aids.emplace_back((actor->type() != KernelTransformType::kFusionActor && pair.second != nullptr &&
+                                 pair.second->to_op_id_.Name().find(kFusionActorNameSuffix) != std::string::npos)
+                                  ? pair.second->to_op_id_.Name()
+                                  : pair.first.Name());
+      });
+    for (auto aid : input_aids) {
+      const auto &input_actor = FetchActor(aid);
+      if (input_actor == nullptr) {
+        MS_LOG(INFO) << "Failed to get actor:" << aid;
+        continue;
+      }
+      if (seen_map.find(input_actor) == seen_map.end()) {
+        seen_map[input_actor] = 0;
+      }
+      if (extra_seen_map.find(input_actor) == extra_seen_map.end()) {
+        extra_seen_map[input_actor] = 0;
+      }
+      if (extra_seen_map[input_actor] == seen) {
+        continue;
+      }
+      if (seen_map[input_actor] != seen) {
+        (void)todo.emplace_back(input_actor);
+        continue;
+      }
+      // Loop count has a cycle input and skip it.
+      if (input_actor != root && input_actor->type() != KernelTransformType::kLoopCountActor) {
+        MS_LOG(EXCEPTION) << "Actor cycle exists in actor:" << input_actor->GetAID();
+      }
+    }
+  }
+  return actors;
+}
+
+void DumpActorInfo(AbstractActor *actor, size_t index, ActorInfoMap *actor_info, std::ofstream &ofs) {
+  MS_EXCEPTION_IF_NULL(actor);
+  MS_EXCEPTION_IF_NULL(actor_info);
+  ActorInputMap actor_inputs;
+  FetchInputData(actor, &actor_inputs, actor_info);
+
+  std::vector<BaseShapePtr> output_shapes;
+  std::vector<TypePtr> output_types;
+  FetchOutputInfo(actor, &output_shapes, &output_types, actor_inputs);
+  (*actor_info)[actor] = {index, output_shapes, output_types};
+
+  // Dump input data.
+  ofs << "%" << index << " = " << GetActorSubName(actor) << "(";
+  for (const auto &pair : actor_inputs) {
+    ofs << std::get<0>(pair.second);
+    if (pair.first < actor_inputs.size() - 1) {
+      ofs << ", ";
+    }
+  }
+
+  // Dump input control.
+  if (!actor->input_control_arrow_aids().empty()) {
+    ofs << ") op control(";
+    for (const auto &pair : actor->input_control_arrow_aids()) {
+      auto aid = pair.first.Name();
+      if (actor->type() != KernelTransformType::kFusionActor && pair.second != nullptr &&
+          pair.second->to_op_id_.Name().find(kFusionActorNameSuffix) != std::string::npos) {
+        aid = pair.second->to_op_id_.Name();
+      }
+      const auto &input_actor = FetchActor(aid);
+      ofs << "%";
+      if ((*actor_info).find(input_actor) != (*actor_info).end()) {
+        ofs << std::get<0>((*actor_info)[input_actor]);
+      } else {
+        ofs << aid;
+      }
+      if (pair != actor->input_control_arrow_aids().back()) {
+        ofs << ", ";
+      }
+    }
+  }
+  ofs << ")\n";
+
+  if (actor->type() == KernelTransformType::kDataPrepareActor) {
+    return;
+  }
+  // Dump device context;
+  DumpActorInfo(actor, ofs);
+
+  // Dump output info.
+  std::string shape = "\t# shape : ";
+  std::string type = "\t# type : ";
+  for (const auto &pair : actor_inputs) {
+    shape = shape + "<" + (std::get<1>(pair.second) == nullptr ? "null" : std::get<1>(pair.second)->ToString()) + "> ";
+    type = type + "<" + (std::get<2>(pair.second) == nullptr ? "null" : std::get<2>(pair.second)->ToString()) + "> ";
+  }
+  shape += "-> ";
+  type += "-> ";
+  for_each(output_shapes.begin(), output_shapes.end(), [&shape](const auto &shape_ptr) {
+    shape = shape + "<" + (shape_ptr == nullptr ? "null" : shape_ptr->ToString()) + "> ";
+  });
+  for_each(output_types.begin(), output_types.end(), [&type](const auto &type_ptr) {
+    type = type + "<" + (type_ptr == nullptr ? "null" : type_ptr->ToString()) + "> ";
+  });
+  ofs << shape << "\n" << type << "\n";
 }
 }  // namespace runtime
 }  // namespace mindspore

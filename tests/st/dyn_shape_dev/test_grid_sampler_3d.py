@@ -14,7 +14,7 @@
 # ============================================================================
 import numpy as np
 import pytest
-import test_utils
+from tests.st.utils import test_utils
 
 from mindspore import ops
 from mindspore import Tensor
@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def grid_sampler_3d_forward_func(input_x, grid):
-    grid_sampler_3d = ops.auto_generate.GridSampler3D(
+    grid_sampler_3d = ops.GridSampler3D(
         interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)(input_x, grid)
     return grid_sampler_3d
 

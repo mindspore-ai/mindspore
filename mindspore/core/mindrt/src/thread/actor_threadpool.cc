@@ -183,7 +183,22 @@ int ActorThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_nu
   }
 
   if (kernel_thread_num > 0) {
-    return ThreadPool::CreateThreads<Worker>(kernel_thread_num, core_list);
+    // Skip actor core list to make sure that actor thread occupy core exclusively.
+    std::vector<int> candidates;
+    for (size_t i = actor_thread_num_; i < core_list.size(); i++) {
+      (void)candidates.emplace_back(core_list[i]);
+    }
+    std::vector<int> kernel_thread_core_list;
+    size_t size = candidates.size();
+    if (size > 0) {
+      for (size_t i = 0; i < actor_thread_num_; i++) {
+        (void)kernel_thread_core_list.emplace_back(candidates[i % size]);
+      }
+      for (size_t i = 0; i < size; i++) {
+        (void)kernel_thread_core_list.emplace_back(candidates[i]);
+      }
+    }
+    return ThreadPool::CreateThreads<Worker>(kernel_thread_num, kernel_thread_core_list);
   }
   return THREAD_OK;
 }

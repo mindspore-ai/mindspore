@@ -250,5 +250,5 @@ uint32_t HeavisideCpuKernel::HeavisideCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kHeaviside, HeavisideCpuKernel);
+REGISTER_MS_CPU_KERNEL(kHeaviside, HeavisideCpuKernel);
 }  // namespace aicpu

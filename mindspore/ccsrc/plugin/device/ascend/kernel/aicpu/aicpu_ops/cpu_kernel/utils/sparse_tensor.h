@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-#include "cpu_kernel/inc/cpu_tensor.h"
+#include "cpu_tensor.h"
 #include "cpu_kernel/utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 #include "cpu_kernel/common/cpu_kernel_utils.h"

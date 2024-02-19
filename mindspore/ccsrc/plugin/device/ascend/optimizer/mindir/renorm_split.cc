@@ -22,6 +22,7 @@
 #include "ops/nn_op_name.h"
 #include "ops/array_ops.h"
 #include "ops/nn_ops.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace opt {
@@ -88,11 +89,11 @@ const AnfNodePtr RenormSplit::Process(const FuncGraphPtr &func_graph, const AnfN
   if (common::AnfAlgo::IsDynamicShape(cnode)) {
     common::AnfAlgo::SetNodeAttr(kAttrRecomputeShape, MakeValue(true), cnode);
   }
+  auto shape_node = opt::CreateValueNodeWithKernelInfo(func_graph, MakeValue(in_shape));
   std::vector<AnfNodePtr> broadcast_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimBroadcastTo->name())),
-                                              node};
+                                              node, shape_node};
   auto broadcast_node = NewCNode(broadcast_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(broadcast_node);
-  common::AnfAlgo::SetNodeAttr("shape", MakeValue(in_shape), broadcast_node);
   common::AnfAlgo::SetOutputInferTypeAndShape({type}, {in_shape}, broadcast_node.get());
 
   std::vector<AnfNodePtr> mul_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimMul->name())),

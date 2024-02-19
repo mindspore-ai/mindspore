@@ -18,7 +18,7 @@
 #include <string>
 
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/kernel_log.h"
 #include "proto/cpu_tensor_shape.pb.h"
 #include "cpu_kernel/cpu_proto/tensor_shape_impl.h"

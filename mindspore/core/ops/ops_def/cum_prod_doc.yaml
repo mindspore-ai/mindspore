@@ -7,13 +7,16 @@ cum_prod:
             y_i = x_1 * x_2 * x_3 * ... * x_i
 
         Args:
-            x (Tensor[Number]): The input tensor.
-            axis (int): The dimensions to compute the cumulative product.
-                Only constant value is allowed.
             exclusive (bool): If ``True`` , perform exclusive cumulative product. Default: ``False`` .
             reverse (bool): If ``True`` , reverse the result along axis. Default: ``False`` .
 
-        Returns:
+        Inputs:
+            - **x** (Tensor[Number]) - The input Tensor with shape
+              :math:`(N, *)` where :math:`*` means any number of additional dimensions.
+            - **axis** (int) - The dimensions to compute the cumulative product.
+              Only constant value is allowed.
+
+        Outputs:
             Tensor, has the same shape and dtype as the `x`.
 
         Raises:
@@ -29,10 +32,14 @@ cum_prod:
             >>> from mindspore import Tensor, ops
             >>> a, b, c, = 1, 2, 3
             >>> x = Tensor(np.array([a, b, c]).astype(np.float32))
-            >>> output0 = ops.cum_prod(x, 0, False, False) # output=[a, a * b, a * b * c]
-            >>> output1 = ops.cum_prod(x, 0, True, False) # output=[1, a, a * b]
-            >>> output2 = ops.cum_prod(x, 0, False, True) # output=[a * b * c, b * c, c]
-            >>> output3 = ops.cum_prod(x, 0, True, True) # output=[b * c, c, 1]
+            >>> op0 = ops.CumProd()
+            >>> output0 = op0(x, 0) # output=[a, a * b, a * b * c]
+            >>> op1 = ops.CumProd(exclusive=True)
+            >>> output1 = op1(x, 0) # output=[1, a, a * b]
+            >>> op2 = ops.CumProd(reverse=True)
+            >>> output2 = op2(x, 0) # output=[a * b * c, b * c, c]
+            >>> op3 = ops.CumProd(exclusive=True, reverse=True)
+            >>> output3 = op3(x, 0) # output=[b * c, c, 1]
             >>> print(output0)
             [1. 2. 6.]
             >>> print(output1)
@@ -42,8 +49,8 @@ cum_prod:
             >>> print(output3)
             [6. 3. 1.]
             >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [5, 3, 5]]).astype(np.float32))
-            >>> output4 = ops.cum_prod(x, 0, False, False)
-            >>> output5 = ops.cum_prod(x, 1, False, False)
+            >>> output4 = op0(x, 0)
+            >>> output5 = op0(x, 1)
             >>> print(output4)
             [[ 1.  2.  3.]
              [ 4. 10. 18.]

@@ -23,7 +23,7 @@
 #include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "cpu_kernel/inc/cpu_context.h"
+#include "cpu_context.h"
 
 namespace {
 constexpr char const *kAdaptiveMaxPool3d = "AdaptiveMaxPool3d";
@@ -286,5 +286,5 @@ uint32_t AdaptiveMaxPool3dCpuKernel::AdaptiveMaxPool3dCompute(const CpuKernelCon
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kAdaptiveMaxPool3d, AdaptiveMaxPool3dCpuKernel);
+REGISTER_MS_CPU_KERNEL(kAdaptiveMaxPool3d, AdaptiveMaxPool3dCpuKernel);
 }  // namespace aicpu

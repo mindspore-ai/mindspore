@@ -361,6 +361,20 @@ void SchedulerHelper::AddControlArrow(AbstractActor *const from_actor, AbstractA
     return;
   }
 
+  // No need add control arrow if already exists data arrow in from and to actor.
+  if (from_actor->type() == KernelTransformType::kKernelActor &&
+      to_actor->type() == KernelTransformType::kKernelActor) {
+    const auto &input_data_arrows = to_actor->input_data_arrow_aids();
+    if (std::any_of(input_data_arrows.begin(), input_data_arrows.end(),
+                    [&from_actor](const std::pair<AID, DataArrow *> &input_data_arrow_pair) {
+                      return input_data_arrow_pair.first.Name() == from_actor->GetAID().Name();
+                    })) {
+      MS_LOG(INFO) << "No need add control arrow, because already exists data arrow in from actor: "
+                   << from_actor->GetAID().Name() << " and to actor: " << to_actor->GetAID().Name();
+      return;
+    }
+  }
+
   auto control_arrow = std::make_shared<ControlArrow>(to_actor->GetAID());
   (void)from_actor->output_control_arrows_.emplace_back(control_arrow);
   to_actor->input_controls_num_++;
@@ -1026,6 +1040,21 @@ void SchedulerHelper::DumpActorSet(const ActorSet *actor_set, std::ofstream &ofs
   DumpControlActors(actor_set->control_actors_, ofs);
   DumpCustomActors(actor_set->custom_actors_, ofs);
   DumpSwapActors(actor_set->swap_actors_, ofs);
+}
+
+void SchedulerHelper::DumpFormatActorSet(const ActorSet *actor_set, std::ofstream &ofs) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  try {
+    MS_LOG(DEBUG) << "Start dump format actor set:" << actor_set->name_;
+    auto actors = TopoSortForActor(actor_set->output_actor_.get());
+    ActorInfoMap actor_info;
+    for (size_t i = 0; i < actors.size(); ++i) {
+      DumpActorInfo(actors[i], i, &actor_info, ofs);
+    }
+    MS_LOG(DEBUG) << "End dump format actor set:" << actor_set->name_;
+  } catch (const std::exception &e) {
+    MS_LOG(INFO) << "Failed to dump actor set:" << actor_set->name_ << ", msg: " << e.what();
+  }
 }
 }  // namespace runtime
 }  // namespace mindspore

@@ -122,5 +122,5 @@ uint32_t SelfAdjointEigCpuKernel::SelfAdjointEigCompute(const CpuKernelContext &
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kSelfAdjointEig, SelfAdjointEigCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSelfAdjointEig, SelfAdjointEigCpuKernel);
 }  // namespace aicpu

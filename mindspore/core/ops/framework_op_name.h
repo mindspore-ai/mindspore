@@ -73,6 +73,8 @@ constexpr auto kSendOpName = "Send";
 constexpr auto kReceiveOpName = "Receive";
 constexpr auto kStreamSendOpName = "StreamSend";
 constexpr auto kStreamRecvOpName = "StreamRecv";
+constexpr auto kRaiseOpName = "raise";
+constexpr auto kFormatOpName = "Format";
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_BASE_FRAMEWORK_OP_NAME_H_

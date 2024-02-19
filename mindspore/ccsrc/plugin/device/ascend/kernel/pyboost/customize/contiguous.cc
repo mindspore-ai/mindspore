@@ -18,6 +18,7 @@
 #include "kernel/pyboost/op_register.h"
 #include "kernel/pyboost/py_boost_utils.h"
 #include "kernel/pyboost/auto_generate/copy.h"
+#include "kernel/pyboost/customize/op_common.h"
 
 namespace mindspore {
 namespace kernel {
@@ -26,16 +27,14 @@ tensor::TensorPtr ContiguousAscendCustomize(const std::shared_ptr<OpRunner> &op,
   MS_LOG(DEBUG) << "Call start";
   MS_EXCEPTION_IF_NULL(input_tensor);
 
-  auto old_storage_info = input_tensor->storage_info();
-  if (old_storage_info == nullptr || old_storage_info->is_contiguous) {
-    // tensor is contiguous, no need contiguous
-    op->set_outputs({input_tensor});
-    op->set_output_abs(input_tensor->ToAbstract());
-    return input_tensor;
+  auto output_tensor = ContiguousTensorOpProcess(op, input_tensor);
+  if (output_tensor != nullptr) {
+    return output_tensor;
   }
 
   auto copy_op = CREATE_PYBOOST_OP(Copy, kAscendDevice);
-  auto output_tensor = copy_op->Call(input_tensor);
+  output_tensor = copy_op->Call(input_tensor);
+  op->set_input_abs(copy_op->input_abs());
   op->set_outputs(copy_op->outputs());
   op->set_output_abs(copy_op->output_abs());
   return output_tensor;

@@ -25,7 +25,7 @@ atan:
             >>> import mindspore
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
-            >>> x = Tensor(np.array([1.0, 0.0]), mindspore.float32)
-            >>> output = ops.atan(x)
+            >>> input = Tensor(np.array([1.0, 0.0]), mindspore.float32)
+            >>> output = ops.atan(input)
             >>> print(output)
             [0.7853982 0.       ]

@@ -170,5 +170,5 @@ uint32_t Expm1CpuKernel::Expm1Compute3(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kExpm1, Expm1CpuKernel);
+REGISTER_MS_CPU_KERNEL(kExpm1, Expm1CpuKernel);
 }  // namespace aicpu

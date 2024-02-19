@@ -22,8 +22,17 @@ namespace mindspore {
 namespace kernel {
 void FAScoreGradAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                                  const std::vector<KernelTensor *> &outputs) {
-  auto return_value = FAGradGenerate(inputs, outputs);
-  UpdateWorkspace(return_value);
+  auto scale_value = static_cast<double>(GetFAGradAttr<float>("scale_value"));
+  auto keep_prob = static_cast<double>(GetFAGradAttr<float>("keep_prob"));
+  auto pre_tokens = GetFAGradAttr<int64_t>("pre_tokens");
+  auto next_tokens = GetFAGradAttr<int64_t>("next_tokens");
+  auto head_num = GetFAGradAttr<int64_t>("head_num");
+  auto input_layout = GetFAGradAttr<std::string>("input_layout");
+  auto inner_precise = GetFAGradAttr<int64_t>("inner_precise");
+  GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex7], nullptr, nullptr, nullptr,
+                        inputs[kIndex3], inputs[kIndex5], inputs[kIndex6], nullptr, inputs[kIndex4], nullptr,
+                        scale_value, keep_prob, pre_tokens, next_tokens, head_num, input_layout, inner_precise, nullptr,
+                        outputs[kIndex0], outputs[kIndex1], outputs[kIndex2], empty_kernel_tensor_ptr->get());
 }
 
 bool FAScoreGradAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
@@ -35,6 +44,6 @@ bool FAScoreGradAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs
   return true;
 }
 
-MS_ACLLNN_KERNEL_FACTORY_REG(FlashAttentionScoreGrad, FAScoreGradAclnnKernelMod);
+MS_ACLNN_KERNEL_FACTORY_REG(FlashAttentionScoreGrad, FAScoreGradAclnnKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

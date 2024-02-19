@@ -182,5 +182,5 @@ uint32_t AsinhGradCpuKernel::AsinhGradComputeComplex(const CpuKernelContext &ctx
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kAsinhGrad, AsinhGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kAsinhGrad, AsinhGradCpuKernel);
 }  // namespace aicpu

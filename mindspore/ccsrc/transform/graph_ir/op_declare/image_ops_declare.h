@@ -39,6 +39,18 @@ DECLARE_OP_USE_OUTPUT(ResizeArea)
 DECLARE_OP_ADAPTER(ResizeBicubic)
 DECLARE_OP_USE_OUTPUT(ResizeBicubic)
 
+DECLARE_OP_ADAPTER(UpsampleTrilinear3d)
+DECLARE_OP_USE_OUTPUT(UpsampleTrilinear3d)
+
+DECLARE_OP_ADAPTER(UpsampleTrilinear3dGrad)
+DECLARE_OP_USE_OUTPUT(UpsampleTrilinear3dGrad)
+
+DECLARE_OP_ADAPTER(UpsampleNearest3d)
+DECLARE_OP_USE_OUTPUT(UpsampleNearest3d)
+
+DECLARE_OP_ADAPTER(UpsampleNearest3dGrad)
+DECLARE_OP_USE_OUTPUT(UpsampleNearest3dGrad)
+
 DECLARE_OP_ADAPTER(Resize)
 DECLARE_OP_USE_OUTPUT(Resize)
 

@@ -24,12 +24,11 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/stub/runtime/)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/stub/pass/)
 include_directories(${CMAKE_BINARY_DIR})
-include_directories(${CMAKE_BINARY_DIR}/proto/graphengine_protos)
 include_directories(${CMAKE_BINARY_DIR}/proto/metadef_protos)
 include_directories(${CMAKE_BINARY_DIR}/proto/ge)
 include_directories(${CUDA_INCLUDE_DIRS})
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/cpu/kernel)
-# graphengine include directories
+
 include(${CMAKE_SOURCE_DIR}/cmake/graphengine_variables.cmake)
 MESSAGE("check  ut_test ${CMAKE_BINARY_DIR}")
 
@@ -48,7 +47,7 @@ file(GLOB_RECURSE UT_MINDDATA_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./datase
 file(GLOB_RECURSE UT_MINDDATA_COMMON_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./dataset/common/*.cc)
 file(GLOB_RECURSE UT_API_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./cxx_api/*.cc)
 file(GLOB_RECURSE UT_FRONTEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./operator/*.cc ./optimizer/*.cc
-        ./parallel/*.cc ./pipeline/*.cc ./pynative/*.cc)
+        ./parallel/*.cc ./pipeline/*.cc ./pynative/*.cc ./func_graph_builder/*.cc)
 file(GLOB_RECURSE UT_OLD_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./device/*.cc ./kernel/*.cc
         ./pre_activate/common/*.cc  ./session/*.cc
         ./transform/*.cc ./vm/*.cc ./runtime/graph_scheduler/*.cc
@@ -116,6 +115,8 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/runtime/device/kernel_info.cc"
         "../../../mindspore/ccsrc/runtime/device/launch_kernel.cc"
         "../../../mindspore/ccsrc/runtime/graph_scheduler/*.cc"
+        "../../../mindspore/ccsrc/runtime/pipeline/*.cc"
+        "../../../mindspore/ccsrc/runtime/pipeline/task/*.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/profiling/*.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ge_runtime/*.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/kernel_select_ascend.cc"

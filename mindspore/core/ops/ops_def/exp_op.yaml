@@ -1,7 +1,7 @@
 #operator exp
 exp:
   args:
-    x:
+    input:
       dtype: tensor
   returns:
     output:

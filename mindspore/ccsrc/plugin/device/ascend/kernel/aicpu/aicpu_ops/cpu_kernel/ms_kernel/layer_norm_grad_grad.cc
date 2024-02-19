@@ -275,5 +275,5 @@ uint32_t LayerNormGradGradCpuKernel::LayerNormGradGradCompute(const CpuKernelCon
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kLayerNormGradGrad, LayerNormGradGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kLayerNormGradGrad, LayerNormGradGradCpuKernel);
 }  // namespace aicpu

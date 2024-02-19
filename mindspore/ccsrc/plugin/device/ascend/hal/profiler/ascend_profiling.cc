@@ -160,14 +160,6 @@ void AscendProfiler::Start() {
 
   profiler::ascend::ParallelStrategy::GetInstance()->SaveParallelStrategyToFile();
   std::string op_range_dir = profile_data_path_ + "/FRAMEWORK";
-  if (access(op_range_dir.c_str(), 0) != 0) {
-    static const int DEFAULT_MKDIR_MODE = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
-    auto result = mkdir(op_range_dir.c_str(), DEFAULT_MKDIR_MODE);
-    if (result != 0) {
-      MS_LOG(ERROR) << "create op range dir failed, op_range_dir: " << op_range_dir;
-      return;
-    }
-  }
   uint32_t global_rank_id_ = 0;
   device::DeviceContextKey host_key = {"CPU", 0};
   auto host_ctx_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
@@ -198,10 +190,6 @@ void AscendProfiler::Stop() {
   if (aclRet != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Failed to call aclprofStop function.";
   }
-  aclRet = aclprofDestroyConfig(acl_config_);
-  if (aclRet != ACL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Failed to call aclprofDestroyConfig function.";
-  }
 
   MemoryProfiling::GetInstance().StopMemoryProfiling();
 
@@ -209,8 +197,12 @@ void AscendProfiler::Stop() {
 }
 
 void AscendProfiler::Finalize() {
+  aclError aclRet = aclprofDestroyConfig(acl_config_);
+  if (aclRet != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Failed to call aclprofDestoryConfig function.";
+  }
   MS_LOG(INFO) << "Begin to finalize profiling";
-  aclError aclRet = aclprofFinalize();
+  aclRet = aclprofFinalize();
   if (aclRet != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Failed to call aclprofDestroyConfig function.";
   }

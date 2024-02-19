@@ -1,9 +1,9 @@
 #operator transpose
 transpose:
   args:
-    x:
+    input:
       dtype: tensor
-    perm:
+    input_perm:
       dtype: tuple[int]
   returns:
     output:

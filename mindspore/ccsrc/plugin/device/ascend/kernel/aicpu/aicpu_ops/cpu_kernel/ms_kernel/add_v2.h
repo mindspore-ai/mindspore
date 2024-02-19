@@ -18,7 +18,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_ADD_V2_H_
 #define AICPU_KERNELS_NORMALIZED_ADD_V2_H_
 
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class AddV2CpuKernel final : public CpuKernel {

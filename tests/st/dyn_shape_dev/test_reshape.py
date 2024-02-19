@@ -17,12 +17,12 @@ import numpy as np
 import pytest
 from mindspore import ops
 import mindspore as ms
-import test_utils
+from tests.st.utils import test_utils
 
 
 @test_utils.run_with_cell
 def reshape_forward_func(x, shape):
-    return ops.auto_generate.reshape(x, shape)
+    return ops.reshape(x, shape)
 
 
 @test_utils.run_with_cell
@@ -36,7 +36,7 @@ def reshape_backward_func(x, shape):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_reshape_op(mode):
     """
     Feature: Ops.
@@ -62,7 +62,7 @@ def test_reshape_op(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_reshape_vmap(mode):
     """
     Feature: test vmap function.

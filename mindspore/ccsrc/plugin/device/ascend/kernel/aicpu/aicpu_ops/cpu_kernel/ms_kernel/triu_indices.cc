@@ -107,5 +107,5 @@ uint32_t TriuIndicesCpuKernel::TriuIndicesAttrOutputCheck(CpuKernelContext &ctx)
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kTriuIndices, TriuIndicesCpuKernel);
+REGISTER_MS_CPU_KERNEL(kTriuIndices, TriuIndicesCpuKernel);
 }  // namespace aicpu

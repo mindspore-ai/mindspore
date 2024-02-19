@@ -205,5 +205,5 @@ uint32_t SparseSparseMinimumCpuKernel::SparseSparseMinimumCompute(const CpuKerne
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kSparseSparseMinimum, SparseSparseMinimumCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSparseSparseMinimum, SparseSparseMinimumCpuKernel);
 }  // namespace aicpu

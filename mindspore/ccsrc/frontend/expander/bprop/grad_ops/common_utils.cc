@@ -186,40 +186,6 @@ std::pair<ShapeVector, ShapeVector> SplitShapeIndex(const ShapeVector &input_sha
   return std::make_pair(pack_shape, perm);
 }
 
-std::vector<std::vector<int64_t>> BroadcastGradientArgs(const std::vector<int64_t> &x_shape,
-                                                        const std::vector<int64_t> &y_shape) {
-  std::vector<std::vector<int64_t>> bc_axis;
-  if (x_shape == y_shape) {
-    (void)bc_axis.emplace_back(std::vector<int64_t>{});
-    (void)bc_axis.emplace_back(std::vector<int64_t>{});
-    return bc_axis;
-  }
-  std::vector<int64_t> grad_x_reduce_idx;
-  std::vector<int64_t> grad_y_reduce_idy;
-  auto x_size = x_shape.size();
-  auto y_size = y_shape.size();
-  auto n = std::max(x_size, y_size);
-  for (size_t i = n; i >= 1; i--) {
-    auto x_i = x_size < i ? 1 : x_shape[x_size - i];
-    auto y_i = y_size < i ? 1 : y_shape[y_size - i];
-    const int64_t reduce_idx = SizeToLong(n - i);
-    if (x_i == y_i) {
-      continue;
-    } else if (x_i == 1) {
-      grad_x_reduce_idx.push_back(reduce_idx);
-    } else if (y_i == 1) {
-      grad_y_reduce_idy.push_back(reduce_idx);
-    } else {
-      MS_LOG(EXCEPTION) << "not compatible shape input(" << x_shape << ", " << y_shape
-                        << ") for BroadcastGradientArgs.";
-    }
-  }
-
-  (void)bc_axis.emplace_back(std::move(grad_x_reduce_idx));
-  (void)bc_axis.emplace_back(std::move(grad_y_reduce_idy));
-  return bc_axis;
-}
-
 std::vector<int64_t> TupleDiv(const std::vector<int64_t> &x, const std::vector<int64_t> &y) {
   std::vector<int64_t> out;
   if (x.size() != y.size()) {
@@ -326,7 +292,7 @@ NodePtrList BinopGradCommon(BpropIRBuilder *ib, const NodePtr &x, const NodePtr 
       }
     }
   } else if (!IsDynamic(broadcast_shape[0]) && !IsDynamic(broadcast_shape[1])) {
-    std::vector<std::vector<int64_t>> bc_axis = BroadcastGradientArgs(broadcast_shape[0], broadcast_shape[1]);
+    std::vector<std::vector<int64_t>> bc_axis = BroadcastGradientArgsInferValue(broadcast_shape[0], broadcast_shape[1]);
     for (size_t i = 0; i < kDim2; i++) {
       if (!bc_axis[i].empty()) {
         reduce[i] = ib->ReduceSum(reduce[i], bc_axis[i], ib->GetRank(reduce[i]) == shape[i].size());
@@ -452,39 +418,6 @@ std::vector<int64_t> RegenerateOutputShape(const std::vector<int64_t> &x_shp, co
   (void)std::copy(ind_shp.begin() + batch_dims, ind_shp.end(), std::back_inserter(out_shp));
   (void)std::copy(start, x_shp.end(), std::back_inserter(out_shp));
   return out_shp;
-}
-
-std::vector<int64_t> TileShape(const std::vector<int64_t> &multiples, const std::vector<int64_t> &shapex) {
-  int64_t len_multi = static_cast<int64_t>(multiples.size());
-  int64_t len_shape = static_cast<int64_t>(shapex.size());
-  int64_t len_cmp = len_multi - len_shape;
-  auto max_len = std::max(len_multi, len_shape);
-  int64_t i = 0;
-  int64_t j = 0;
-  std::vector<int64_t> res;
-  auto res_sz = static_cast<size_t>(2 * max_len);
-  res.reserve(res_sz);
-  while (i < max_len && j < max_len) {
-    auto idx_i = LongToSize(i);
-    auto idx_j = LongToSize(j);
-    if (len_cmp == 0) {
-      res.push_back(multiples[idx_i]);
-      res.push_back(shapex[idx_j]);
-      i++;
-      j++;
-    } else if (len_cmp > 0) {
-      res.push_back(multiples[idx_i]);
-      res.push_back(1);
-      i++;
-      len_cmp--;
-    } else {
-      res.push_back(1);
-      res.push_back(shapex[idx_j]);
-      j++;
-      len_cmp++;
-    }
-  }
-  return res;
 }
 
 std::vector<int64_t> InvertPermutation(const std::vector<int64_t> &perm) {

@@ -323,6 +323,7 @@ class DfGraphConvertor {
   bool ref_mode_ = false;
   std::vector<std::string> extra_variables_names_;
   std::vector<std::string> ref_data_names_;
+  std::set<std::string> unsupported_ops_names_;
 
   std::shared_ptr<DfGraph> df_graph_{nullptr};
   std::shared_ptr<DfGraph> init_graph_{nullptr};

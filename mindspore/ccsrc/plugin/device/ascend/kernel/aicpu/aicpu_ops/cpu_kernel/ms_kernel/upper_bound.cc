@@ -149,5 +149,5 @@ uint32_t UpperBoundCpuKernel::UpperBoundCompute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kUpperBound, UpperBoundCpuKernel);
+REGISTER_MS_CPU_KERNEL(kUpperBound, UpperBoundCpuKernel);
 }  // namespace aicpu

@@ -19,7 +19,7 @@
 
 #include "Eigen/Core"
 #include "securec/include/securec.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "common/kernel_log.h"
 #include "cpu_kernel/common/status.h"
 #include "utils/broadcast_iterator.h"
@@ -129,5 +129,5 @@ uint32_t MaskedSelectGradCpuKernel::MaskedSelectGradCompute(const CpuKernelConte
 
   return static_cast<uint32_t>(KERNEL_STATUS_OK);
 }
-REGISTER_CPU_KERNEL(kMaskedSelectGrad, MaskedSelectGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMaskedSelectGrad, MaskedSelectGradCpuKernel);
 }  // namespace aicpu

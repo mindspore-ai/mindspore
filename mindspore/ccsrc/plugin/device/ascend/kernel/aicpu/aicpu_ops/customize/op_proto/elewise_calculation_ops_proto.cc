@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "inc/ops/elewise_calculation_ops.h"
-#include "inc/ops/nonlinear_fuc_ops.h"
+#include "op_proto/inc/elewise_calculation_ops.h"
+#include "op_proto/inc/nonlinear_fuc_ops.h"
 #include "custom_op_proto/cust_math_ops.h"
 #include "custom_op_proto/cust_elewise_calculation_ops.h"
 
@@ -27,11 +27,6 @@
 #include "utils/util.h"
 #include "utils/error_util.h"
 #include "utils/reduce_infer_util.h"
-#include "graph/utils/node_utils.h"
-#include "graph/utils/node_utils_ex.h"
-#include "register/infer_data_slice_registry.h"
-#include "graph/debug/ge_attr_define.h"
-#include "graph/axis_type_info.h"
 
 namespace ge {
 // ----------------------------------OneInOneOutCommonInfer-----------------------------

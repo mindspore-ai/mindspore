@@ -56,10 +56,12 @@ REG_ADPT_DESC(ParallelConcat, kNameParallelConcat, ADPT_DESC(ParallelConcat))
 // ConcatD
 INPUT_MAP(ConcatD) = EMPTY_INPUT_MAP;
 DYN_INPUT_MAP(ConcatD) = {{1, DYN_INPUT_DESC(x)}};
-ATTR_MAP(ConcatD) = {{kAttrDynInputSizes, ATTR_DESC(N, AnyTraits<std::vector<int64_t>>(), 0)}};
-INPUT_ATTR_MAP(ConcatD) = {{kIndex2, ATTR_DESC(concat_dim, AnyTraits<int64_t>())}};
+ATTR_MAP(ConcatD) = {
+  {"axis", ATTR_DESC(concat_dim, AnyTraits<int64_t>())},
+  {kAttrDynInputSizes, ATTR_DESC(N, AnyTraits<std::vector<int64_t>>(), 0)},
+};
 OUTPUT_MAP(ConcatD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ConcatD, prim::kPrimConcat->name(), ADPT_DESC(ConcatD))
+REG_ADPT_DESC(ConcatD, prim::kPrimConcatD->name(), ADPT_DESC(ConcatD))
 
 // Concat
 INPUT_MAP(Concat) = {{2, INPUT_DESC(concat_dim)}};
@@ -67,7 +69,7 @@ DYN_INPUT_MAP(Concat) = {{1, DYN_INPUT_DESC(x)}};
 ATTR_MAP(Concat) = {{kAttrDynInputSizes, ATTR_DESC(N, AnyTraits<std::vector<int64_t>>(), 0)}};
 OUTPUT_MAP(Concat) = {{0, OUTPUT_DESC(y)}};
 // Rollback to ConcatD for the support of dynamic input scene is incomplete.
-REG_ADPT_DESC(Concat, prim::kPrimConcat->name(), ADPT_DESC(ConcatD))
+REG_ADPT_DESC(Concat, prim::kPrimConcat->name(), ADPT_DESC(Concat))
 
 // ConcatV2 Inference for tf
 DYN_INPUT_MAP(ConcatV2) = {{1, DYN_INPUT_DESC(x)}};

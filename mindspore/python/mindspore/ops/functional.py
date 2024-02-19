@@ -33,6 +33,7 @@ from mindspore.ops.operations.math_ops import Roll
 from mindspore.ops.composite.math_ops import mm
 from mindspore.ops.function.math_func import dot
 from mindspore.ops import auto_generate
+from mindspore.ops_generate.gen_ops_inner_prim import DtypeToEnum
 from mindspore.ops.operations.manually_defined.ops_def import scalar_div, scalar_mod, scalar_add, scalar_mul,\
     scalar_sub, scalar_gt, scalar_ge, scalar_le, scalar_lt, scalar_eq, scalar_floordiv, scalar_log, scalar_pow,\
     scalar_uadd, scalar_usub
@@ -54,6 +55,7 @@ tensor_scatter_update = P.TensorScatterUpdate()
 scatter_nd_update = P.ScatterNdUpdate()
 mixed_precision_cast = _inner_ops.MixedPrecisionCast()
 _py_interpret = other_ops.PyInterpret()
+_dtype_to_enum = DtypeToEnum()
 
 # Dynamic shape
 is_sequence_value_unknown = Primitive("IsShapeUnKnown")
@@ -308,6 +310,7 @@ tensor_operator_registry.register('shape', shape)
 tensor_operator_registry.register('squeeze', squeeze)
 tensor_operator_registry.register('unsqueeze', unsqueeze)
 tensor_operator_registry.register('expand_dims', expand_dims)
+tensor_operator_registry.register('contiguous', auto_generate.contiguous)
 # support GE backend for no compare operators
 tensor_operator_registry.register('cast', cast)
 tensor_operator_registry.register('shape_mul', shape_mul)

@@ -26,7 +26,7 @@
 
 #include "common/kernel_log.h"
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "frontend/parallel/status.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/eigen_tensor.h"
@@ -238,5 +238,5 @@ uint32_t SparseApplyCenteredRMSPropCpuKernel::DoCompute(const CpuKernelContext &
                      copy_size);
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kSparseApplyCenteredRMSProp, SparseApplyCenteredRMSPropCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSparseApplyCenteredRMSProp, SparseApplyCenteredRMSPropCpuKernel);
 }  // namespace aicpu

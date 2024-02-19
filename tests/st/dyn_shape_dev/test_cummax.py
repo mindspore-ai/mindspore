@@ -14,7 +14,7 @@
 # ============================================================================
 import numpy as np
 import pytest
-import test_utils
+from tests.st.utils import test_utils
 
 from mindspore import ops
 from mindspore import Tensor
@@ -22,7 +22,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def cummax_forward_func(x, axis):
-    return ops.auto_generate.cummax(x, axis)
+    return ops.cummax(x, axis)
 
 
 @test_utils.run_with_cell
@@ -31,7 +31,7 @@ def cummax_vmap_func(x, axis):
 
 @test_utils.run_with_cell
 def cummax_dyn_shape_func(x, axis):
-    return ops.auto_generate.cummax(x, axis)
+    return ops.cummax(x, axis)
 
 
 @pytest.mark.level0

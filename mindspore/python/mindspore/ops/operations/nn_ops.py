@@ -33,7 +33,7 @@ from mindspore.ops.primitive import prim_attr_register
 from ..auto_generate import (CeLU, Flatten, LogSoftmax, ReLU, ReLU6,
                              Elu, Sigmoid, Softmax, HSwish, HSigmoid, AvgPool, BiasAdd,
                              NLLLoss, OneHot, GeLU, FastGeLU, PReLU,
-                             GridSampler3D, GridSampler2D, LayerNorm, HShrink, AdamWeightDecay)
+                             GridSampler3D, GridSampler2D, LayerNorm, HShrink, AdamWeightDecay, Dropout)
 from .manually_defined import BatchNorm
 
 
@@ -1436,6 +1436,7 @@ class MaxPoolV1(Primitive):
 
         self.add_prim_attr("kernel_size", kernel_size_adapted)
         self.add_prim_attr("strides", strides_adapted)
+
 
 class MaxPool3D(Primitive):
     r"""
@@ -5941,69 +5942,6 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         return var_dtype, accum_dtype, linear_dtype
 
 
-class Dropout(PrimitiveWithCheck):
-    r"""
-    During training, randomly zeroes some of the elements of the input tensor
-    with probability :math:`1 - keep\_prob` from a Bernoulli distribution. It plays the
-    role of reducing neuron correlation and avoid overfitting.
-
-    Refer to :func:`mindspore.ops.dropout` for more details.
-
-    Args:
-        keep_prob (float, optional): The keep rate, between 0 and 1, e.g. keep_prob = 0.9,
-            means dropping out 10% of input units. Default: ``0.5`` .
-        Seed0 (int, optional): Seed0 value for random generating. Default: ``0`` .
-        Seed1 (int, optional): Seed1 value for random generating. Default: ``0`` .
-
-    Inputs:
-        - **x** (Tensor) - The input Tensor of shape :math:`(*, N)`, with data type of float16, float32 or float64.
-
-    Outputs:
-        - **output** (Tensor) - With the same shape and data type as `x`.
-        - **mask** (Tensor) - The mask applied to `x`.
-
-          - On GPU and CPU, `mask` has the same shape and data type as `x`.
-          - On Ascend, to achieve a better performance, it is denoted as a 1-D Tensor
-            with Uint8 data type. It has shape :math:`(byte\_counts, )` where :math:`byte\_counts` is the
-            number of bytes needed to mask the input `x`, :math:`byte\_counts` is calculated using the
-            following formula:
-
-            .. math::
-
-                byte\_counts = \text{ceil}(\text{cumprod}(x.shape) / 128) * 16
-
-            If shape of `x` is :math:`(2, 3, 4, 5, 6)`, the shape of `mask` will be :math:`(96, )`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> dropout = ops.Dropout(keep_prob=0.5)
-        >>> x = Tensor(np.ones([1, 2, 3, 4, 5]), mindspore.float32)
-        >>> output, mask = dropout(x)
-        >>> print(output.shape, mask.shape, mask.dtype)
-        (1, 2, 3, 4, 5) (16,) UInt8
-    """
-
-    @prim_attr_register
-    def __init__(self, keep_prob=0.5, Seed0=0, Seed1=0):
-        """Initialize Dropout."""
-        self.seed0 = validator.check_value_type("Seed0", Seed0, [int], self.name)
-        self.seed1 = validator.check_value_type("Seed1", Seed1, [int], self.name)
-        self.keep_prob = validator.check_float_range(keep_prob, 0, 1, validator.INC_RIGHT, "keep_prob", self.name)
-        self.add_prim_attr("side_effect_hidden", True)
-
-    def check_shape(self, x_shape):
-        validator.check_int(len(x_shape), 1, validator.GE, "x_shape", self.name)
-
-    def check_dtype(self, x_dtype):
-        valid_dtypes = (mstype.float16, mstype.bfloat16, mstype.float32, mstype.float64)
-        validator.check_tensor_dtype_valid("x", x_dtype, valid_dtypes, self.name)
-
-
 class Dropout2D(PrimitiveWithInfer):
     r"""
     During training, randomly zeroes some channels of the input tensor with probability :math:`1-keep\_prob`
@@ -7775,8 +7713,10 @@ class Dilation2D(Primitive):
         self.pad_mode = validator.check_string(pad_mode, ['VALID', 'SAME', 'valid', 'same'], 'pad_mode', self.name)
         self.add_prim_attr('pad_mode', self.pad_mode.upper())
         self.stride = _check_format_stride_or_dilation("stride", stride, self.name, self.data_format)
+
         def is_in_range(x):
             return 1 <= x <= 255
+
         if not is_in_range(self.stride[2]) or not is_in_range(self.stride[3]):
             raise ValueError(f'For Dilation2D, size of stride is not supported, '
                              f'stride should be in the range of [1, 255], '
@@ -9972,9 +9912,9 @@ class PromptFlashAttention(Primitive):
           Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
         - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or float32.
           For each element, 0 indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, 1, S, S)`.
-        - **pse_shift** (Tensor) - The position encoding tensor with data type of float16 or float32
         - **actual_seq_lengths** (Tensor): Describe actual sequence length of each input with data type of int64.
         - **actual_seq_lengths_kv** (Tensor): Describe actual sequence length of each input with data type of int64.
+        - **pse_shift** (Tensor) - The position encoding tensor with data type of float16 or float32.
         - **dep_scale1** (Tensor)
         - **quant_scale1** (Tensor)
         - **deq_scale2** (Tensor)
@@ -10001,13 +9941,13 @@ class PromptFlashAttention(Primitive):
         >>> attn_mask = Tensor(np.ones((B, 1, S, S), dtype=np.float16))
         >>> pfa = P.PromptFlashAttention(N, input_layout='BNSD')
         >>> out = pfa(query, key, value, attn_mask, None, None, None, None, None, None, None, None)
-        >>> print(out[0].shape)
+        >>> print(out.shape)
         (1, 16, 256, 16)
     """
 
     @prim_attr_register
     def __init__(self, num_heads, scale_value=1.0, pre_tokens=214748647, next_tokens=0, input_layout='BSH',
-                 num_key_value_heads=1, sparse_mode=0, inner_precise=1):
+                 num_key_value_heads=0, sparse_mode=0, inner_precise=1):
         """Initialize PromptFlashAttention."""
         validator.check_value_type('num_heads', num_heads, [int], self.name)
         validator.check_value_type('scale_value', scale_value, [float], self.name)
@@ -10017,9 +9957,9 @@ class PromptFlashAttention(Primitive):
         validator.check_value_type('num_key_value_heads', num_key_value_heads, [int], self.name)
         validator.check_value_type('sparse_mode', sparse_mode, [int], self.name)
         validator.check_value_type('inner_precise', inner_precise, [int], self.name)
-        self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "pse_shift", "actual_seq_lengths",
-                                        "actual_seq_lengths_kv", "deq_scale1", "quant_scale1", "deq_scale2",
-                                        "quant_scale2", "quant_offset2"],
+        self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "actual_seq_lengths",
+                                        "actual_seq_lengths_kv", "pse_shift", "deq_scale1", "quant_scale1",
+                                        "deq_scale2", "quant_scale2", "quant_offset2"],
                                 outputs=["attention_out"])
 
 class IncreFlashAttention(Primitive):
@@ -10153,3 +10093,40 @@ class FlashAttentionScore(Primitive):
         self.init_prim_io_names(
             inputs=['query', 'key', 'value', 'attn_mask', 'drop_mask', 'real_shift', 'padding_mask', 'prefix'],
             outputs=['attention_out', 'softmax_max', 'softmax_sum'])
+
+
+class RmsNorm(Primitive):
+    r"""
+    The RmsNorm operator is a normalization operation, and its formula is:
+
+    .. math::
+        y=\frac{x_i}{\sqrt{\frac{1}{n}}\sum_{i=1}^{n}{ x_i^2}+\varepsilon  }\gamma_i
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Args:
+        epsilon (float): prevent division by 0, default value is `1e-6`
+
+    Inputs:
+        - **input_x** (Tensor) - Input data of RmsNorm, support data type: float16, float32, bfloat16.
+        - **gamma** (Tensor) - Support data type: float16, float32, bfloat16.
+
+    Outputs:
+        - **y** (Tensor) - Has the same type and shape with `input_x`.
+        - **rstd** (Tensor) - Has the same type with `input_x`, used by gradient calculation.
+
+    Raises:
+        TypeError: If data type of `input_x` is not one of the following: float16, float32, bfloat16.
+        TypeError: If data type of `gamma` is not one of the following: float16, float32, bfloat16.
+        TypeError: If data type of "input_x" is not the same with the data type of "gamma"
+
+    Supported Platforms:
+        ``Ascend``
+    """
+
+    @prim_attr_register
+    def __init__(self, epsilon=1e-6):
+        """Initialize Dense."""
+        validator.check_value_type("epsilon", epsilon, [float], self.name)
+        self.init_prim_io_names(inputs=['x', 'gamma'], outputs=["y", "rstd"])

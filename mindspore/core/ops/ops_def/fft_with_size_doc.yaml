@@ -32,7 +32,6 @@ fft_with_size:
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        x (Tensor): The dimension of the input tensor must be greater than or equal to signal_ndim.
         signal_ndim (int): The number of dimensions in each signal, this controls how many dimensions
             of the fourier transform are realized, can only be 1, 2 or 3.
         inverse (bool): Whether it is the inverse transformation, used to select from FFT and RFFT or IFFT and IRFFT.
@@ -68,6 +67,9 @@ fft_with_size:
             - `signal_sizes` has exactly the same dimensions as the input shape
               except for the last dimension: :math:`signal\_sizes[:-1]=x.shape[:-1]`.
 
+    Inputs:
+        - **x** (Tensor) - The dimension of the input tensor must be greater than or equal to signal_ndim.
+
     Outputs:
         A tensor containing the complex-to-complex, real-to-complex or complex-to-real Fourier transform result.
 
@@ -87,24 +89,28 @@ fft_with_size:
         >>> from mindspore import Tensor, ops
         >>> # case FFT: signal_ndim: 1, inverse: False, real: False.
         >>> fft_in = Tensor(np.array([2, 1, 2]), mindspore.complex64)
-        >>> fft_output = ops.fft_with_size_(fft_in, signal_ndim=1, inverse=False, real=False)
+        >>> fft_net = ops.FFTWithSize(signal_ndim=1, inverse=False, real=False)
+        >>> fft_output = fft_net(fft_in)
         >>> print(fft_output)
         [5.        +0.j         0.5       +0.86602545j 0.50000006-0.8660255j ]
         >>> # case IFFT: signal_ndim: 1, inverse: True, real: False.
         >>> ifft_in = fft_output
-        >>> ifft_output = ops.fft_with_size_(ifft_in, signal_ndim=1, inverse=True, real=False)
+        >>> ifft_net = ops.FFTWithSize(signal_ndim=1, inverse=True, real=False)
+        >>> ifft_output = ifft_net(ifft_in)
         >>> print(ifft_output)
         [2.        -1.9868216e-08j 0.99999994+0.0000000e+00j
          1.9999999 +7.9472862e-08j]
         >>> # case RFFT2D: signal_ndim: 2, inverse: False, real: True.
         >>> rfft_in = Tensor(np.array([[2, 1, 2], [3, 1, 6]]), mindspore.float32)
-        >>> rfft_output = ops.FFTWithSize(signal_ndim=2, inverse=False, real=True)(rfft_in)
+        >>> rfft_net = ops.FFTWithSize(signal_ndim=2, inverse=False, real=True)
+        >>> rfft_output = rfft_net(rfft_in)
         >>> print(rfft_output)
         [[ 1.5000000e+01+1.1920929e-07j -2.3841858e-07+5.1961522e+00j]
          [-5.0000000e+00-2.9802322e-08j  9.9999988e-01-3.4641016e+00j]]
         >>> # case IRFFT2D: signal_ndim: 2, inverse: True, real: True.
         >>> irfft_in = rfft_output
-        >>> irfft_output = ops.fft_with_size_(irfft_in, signal_ndim=2, inverse=True, real=True, signal_sizes=rfft_in.shape)
+        >>> irfft_net = ops.FFTWithSize(signal_ndim=2, inverse=True, real=True, signal_sizes=rfft_in.shape)
+        >>> irfft_output = irfft_net(irfft_in)
         >>> print(irfft_output)
         [[2.         1.         2.        ]
          [3.         0.99999994 5.9999995 ]]

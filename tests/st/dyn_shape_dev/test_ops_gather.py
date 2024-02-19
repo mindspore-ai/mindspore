@@ -17,12 +17,12 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops, Tensor
-import test_utils
+from tests.st.utils import test_utils
 
 
 @test_utils.run_with_cell
 def gather_forward_func(input_params, input_indices, axis, batch_dims=0):
-    return ops.auto_generate.gather(input_params, input_indices, axis, batch_dims)
+    return ops.gather(input_params, input_indices, axis, batch_dims)
 
 
 @test_utils.run_with_cell
@@ -36,7 +36,7 @@ def gather_backward_func(input_params, input_indices, axis, batch_dims=0):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_gather_forward(mode):
     """
     Feature: Ops.
@@ -59,7 +59,7 @@ def test_gather_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_gather_backward(mode):
     """
     Feature: Auto grad.
@@ -78,7 +78,7 @@ def test_gather_backward(mode):
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_gather_vmap(mode):
     """
     Feature: test vmap function.

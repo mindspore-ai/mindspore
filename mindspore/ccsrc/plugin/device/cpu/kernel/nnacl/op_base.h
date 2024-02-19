@@ -562,6 +562,9 @@ enum PrimType {
   PrimType_Inner_CastGatherReduceFusion = 10011,
   PrimType_Inner_ReduceConcatFusion = 10012,
   PrimType_Inner_AclCustomOp = 10013,
+  PrimType_Inner_CustomMaskedFill = 10014,
+  PrimType_Inner_CustomTensorScatterMax = 10015,
+  PrimType_Inner_CustomIsInf = 10016,
   PrimType_InnerOpMax,
   PrimType_InnerOpMin = PrimType_Inner_ToFormat
 };

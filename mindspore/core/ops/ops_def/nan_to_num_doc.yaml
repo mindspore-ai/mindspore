@@ -9,7 +9,7 @@ nan_to_num:
         Refer to :func:`mindspore.ops.nan_to_num` for more details.
 
         Args:
-            nan (float, optional): The value to replace `NaN`. Default value is ``0.0`` .
+            nan (float, optional): The value to replace `NaN`. Default value is ``None`` .
             posinf (float, optional): If a Number, the value to replace positive infinity values with. If None, positive
                 infinity values are replaced with the greatest finite value representable by `x`'s dtype.
                 Default value is ``None`` .

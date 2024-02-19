@@ -316,7 +316,7 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
     new_device_tensor->ResetRefCount();
 
     // If the address ptr can't be changed, then alloc the new device memory and copy the data.
-    if (input_device_tensor->is_ptr_persisted()) {
+    if (IsOutputAddressPersisted(input_device_tensor, node_with_index)) {
       device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name(), device::AllocatorType::kOther);
       if (!device_context->device_res_manager_->AllocateMemory(new_device_tensor.get())) {
         SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_context,

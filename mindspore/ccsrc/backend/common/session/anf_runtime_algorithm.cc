@@ -45,6 +45,9 @@
 #include "utils/trace_base.h"
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
+#ifndef BUILD_LITE
+#include "pybind_api/ir/base_ref_py.h"
+#endif
 
 namespace mindspore::session {
 using abstract::AbstractTensor;
@@ -139,7 +142,10 @@ tensor::TensorPtr GetForwardOutputTensor(const AnfNodePtr &node) {
     if (value->isa<tensor::Tensor>()) {
       auto tensor = value->cast<tensor::TensorPtr>();
       MS_EXCEPTION_IF_NULL(tensor);
-      if (tensor->is_forward_output()) {
+      // If output used as sens, output will create(clone) a fake tensor with device address is nullptr for memory
+      // usage. It has is_forward_output flag, which will be used for tensor input mask, and affect single op graph
+      // cache.
+      if (tensor->is_forward_output() && tensor->device_address() != nullptr) {
         return tensor;
       }
     }
@@ -2034,34 +2040,6 @@ bool AnfRuntimeAlgorithm::IsScalarConvertToTensor(const AnfNodePtr &input_node, 
   return true;
 }
 
-tensor::TensorPtr AnfRuntimeAlgorithm::CreateMapTensor(const DeviceAddressPtr &output_device_address) {
-  MS_EXCEPTION_IF_NULL(output_device_address);
-  const auto &user_data = output_device_address->user_data();
-  MS_EXCEPTION_IF_NULL(user_data);
-  const auto &user_data_type = user_data->get<UserDataType>(kUserDataType);
-  MS_EXCEPTION_IF_NULL(user_data_type);
-  if (*user_data_type == UserDataType::kUserTypeHashTable) {
-    auto shape_vector = user_data->get<ShapeVector>(kHashTableShapeVector);
-    auto key_type = user_data->get<TypeId>(kHashTableKeyType);
-    auto value_type = user_data->get<TypeId>(kHashTableValueType);
-    auto default_value = user_data->get<Value>(kHashTableDefaultValue);
-    MS_EXCEPTION_IF_NULL(shape_vector);
-    MS_EXCEPTION_IF_NULL(key_type);
-    MS_EXCEPTION_IF_NULL(value_type);
-    MS_EXCEPTION_IF_NULL(default_value);
-    auto map_tensor = std::make_shared<tensor::MapTensor>(*key_type, *value_type, *shape_vector, default_value);
-    map_tensor->set_device_address(output_device_address);
-    return map_tensor;
-  }
-  MS_LOG(WARNING) << "Invalid user data type:" << *user_data_type;
-  return nullptr;
-}
-
-tensor::TensorPtr AnfRuntimeAlgorithm::CreateMapTensor(const AnfNodePtr &output_node, size_t output_index) {
-  const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
-  return CreateMapTensor(device_tensor);
-}
-
 bool AnfRuntimeAlgorithm::IsSequenceOutputOfScalar(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   const auto &abs = node->abstract();
@@ -2166,6 +2144,34 @@ void SetScalarToTensor(const std::vector<ValuePtr> &values, const tensor::Tensor
 }
 }  // namespace
 
+tensor::TensorPtr AnfRuntimeAlgorithm::CreateMapTensor(const DeviceAddressPtr &output_device_address) {
+  MS_EXCEPTION_IF_NULL(output_device_address);
+  const auto &user_data = output_device_address->user_data();
+  MS_EXCEPTION_IF_NULL(user_data);
+  const auto &user_data_type = user_data->get<UserDataType>(kUserDataType);
+  MS_EXCEPTION_IF_NULL(user_data_type);
+  if (*user_data_type == UserDataType::kUserTypeHashTable) {
+    auto shape_vector = user_data->get<ShapeVector>(kHashTableShapeVector);
+    auto key_type = user_data->get<TypeId>(kHashTableKeyType);
+    auto value_type = user_data->get<TypeId>(kHashTableValueType);
+    auto default_value = user_data->get<Value>(kHashTableDefaultValue);
+    MS_EXCEPTION_IF_NULL(shape_vector);
+    MS_EXCEPTION_IF_NULL(key_type);
+    MS_EXCEPTION_IF_NULL(value_type);
+    MS_EXCEPTION_IF_NULL(default_value);
+    auto map_tensor = std::make_shared<tensor::MapTensor>(*key_type, *value_type, *shape_vector, default_value);
+    map_tensor->set_device_address(output_device_address);
+    return map_tensor;
+  }
+  MS_LOG(WARNING) << "Invalid user data type:" << *user_data_type;
+  return nullptr;
+}
+
+tensor::TensorPtr AnfRuntimeAlgorithm::CreateMapTensor(const AnfNodePtr &output_node, size_t output_index) {
+  const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
+  return CreateMapTensor(device_tensor);
+}
+
 // In dynamic sequence, since the number of members is not determined in compile time, the entire sequence needs
 // to be placed in single tensor, and the shape of the tuple needs to be recorded in the tensor, so that the shape
 // of the tensor can be accurately restored during the dynamic shape derivation process in runtime.
@@ -2242,6 +2248,85 @@ tensor::TensorPtr AnfRuntimeAlgorithm::SequenceToTensor(const ValuePtr &value) {
   const auto &element_shapes = std::vector<abstract::BaseShapePtr>(values.size(), element_shape);
   tensor->set_base_shape(std::make_shared<abstract::TupleShape>(element_shapes));
   return tensor;
+}
+
+void AnfRuntimeAlgorithm::FlattenDynamicInputArg(const BaseRef &arg, const AnfNodePtr &node,
+                                                 std::vector<tensor::TensorPtr> *flatten_tensors) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(flatten_tensors);
+  MS_LOG(DEBUG) << "Dynamic sequence node:" << node->fullname_with_scope() << " abs:" << node->abstract()->ToString();
+  if (!utils::isa<ValuePtr>(arg)) {
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid input for dynamic sequence node:"
+                               << node->DebugString();
+  }
+  auto value = utils::cast<ValuePtr>(arg);
+  MS_EXCEPTION_IF_NULL(value);
+  if (!value->isa<ValueSequence>()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid value:" << value->ToString()
+                               << " for dynamic sequence node:" << node->DebugString();
+  }
+  const auto &tensor = AnfAlgo::SequenceToTensor(value);
+  flatten_tensors->emplace_back(tensor);
+}
+
+void AnfRuntimeAlgorithm::FlattenInputArg(const BaseRef &arg, const AnfNodePtr &node,
+                                          std::vector<tensor::TensorPtr> *flatten_tensors) {
+  MS_EXCEPTION_IF_NULL(flatten_tensors);
+  if (node != nullptr && node->abstract() != nullptr && common::AnfAlgo::IsDynamicSequence(node)) {
+    FlattenDynamicInputArg(arg, node, flatten_tensors);
+    return;
+  }
+
+#ifndef BUILD_LITE
+  if (utils::isa<PyObjectRef>(arg)) {
+    auto value = utils::cast<PyObjectRef>(arg).object_;
+    flatten_tensors->push_back(py::cast<tensor::TensorPtr>(value));
+    return;
+  }
+#endif
+
+  if (utils::isa<tensor::Tensor>(arg)) {
+    (void)flatten_tensors->emplace_back(utils::cast<tensor::TensorPtr>(arg));
+  } else if (utils::isa<Scalar>(arg)) {
+    (void)flatten_tensors->emplace_back(ScalarToTensor(utils::cast<ScalarPtr>(arg)));
+  } else if (utils::isa<Monad>(arg)) {
+    // If value is a monad, replace it with an unused tensor.
+    flatten_tensors->push_back(std::make_shared<tensor::Tensor>(int64_t(0), kBool));
+  } else if (utils::isa<ValueSequencePtr>(arg)) {
+    auto value_sequence = utils::cast<ValueSequencePtr>(arg);
+    MS_EXCEPTION_IF_NULL(value_sequence);
+    auto sequence_value = value_sequence->value();
+    for (auto &value : sequence_value) {
+      FlattenInputArg(value, node, flatten_tensors);
+    }
+  } else if (utils::isa<ValueDictionaryPtr>(arg)) {
+    auto value_dict = utils::cast<ValueDictionaryPtr>(arg);
+    MS_EXCEPTION_IF_NULL(value_dict);
+    auto dict_value = value_dict->value();
+    for (auto &iter : dict_value) {
+      FlattenInputArg(iter.second, node, flatten_tensors);
+    }
+  } else if (utils::isa<tensor::COOTensorPtr>(arg)) {
+    auto coo_tensor = utils::cast<tensor::COOTensorPtr>(arg);
+    MS_EXCEPTION_IF_NULL(coo_tensor);
+    for (size_t i = 0; i < coo_tensor->GetTensorLength(); ++i) {
+      (void)flatten_tensors->emplace_back(coo_tensor->GetTensorAt(i));
+    }
+  } else if (utils::isa<tensor::CSRTensorPtr>(arg)) {
+    auto csr_tensor = utils::cast<tensor::CSRTensorPtr>(arg);
+    MS_EXCEPTION_IF_NULL(csr_tensor);
+    for (size_t i = 0; i < csr_tensor->GetTensorLength(); ++i) {
+      (void)flatten_tensors->emplace_back(csr_tensor->GetTensorAt(i));
+    }
+  } else if (utils::isa<VectorRefPtr>(arg)) {
+    const auto &args_new = utils::cast<VectorRef>(arg);
+    for (const auto &arg_new : args_new) {
+      FlattenInputArg(arg_new, node, flatten_tensors);
+    }
+  } else {
+    MS_LOG(INTERNAL_EXCEPTION)
+      << "#dmsg#Runtime error info:#dmsg#The value input to flatten tensor not supported for type " << arg.ToString();
+  }
 }
 
 void AnfRuntimeAlgorithm::UpdateValueNodeShape(const AnfNodePtr &node) {
@@ -2329,5 +2414,15 @@ abstract::AbstractBasePtr AnfRuntimeAlgorithm::GetNodeAbstractByIndex(const AnfN
     return sub_abstract;
   }
   return elements[index];
+}
+ValueNodePtr AnfRuntimeAlgorithm::CreateTypeIdValueNodeToGraph(const FuncGraphPtr &func_graph, TypeId data_type) {
+  auto type_id_value_node = NewValueNode(static_cast<int64_t>(data_type));
+  auto type_id_value = std::make_shared<Int64Imm>(static_cast<int64_t>(data_type));
+  type_id_value_node->set_abstract(type_id_value->ToAbstract());
+  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  type_id_value_node = kernel_graph->NewValueNode(type_id_value_node);
+  kernel_graph->AddValueNodeToGraph(type_id_value_node);
+  return type_id_value_node;
 }
 }  // namespace mindspore::session

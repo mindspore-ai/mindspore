@@ -18,6 +18,7 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include <vector>
 
 #include "actor/actormgr.h"
 #include "actor/iomgr.h"
@@ -49,7 +50,11 @@ ActorMgr::~ActorMgr() {
   }
 }
 
-int ActorMgr::Initialize(bool use_inner_pool, size_t actor_thread_num, size_t max_thread_num, size_t actor_queue_size) {
+int ActorMgr::Initialize(bool use_inner_pool, size_t actor_thread_num, size_t max_thread_num, size_t actor_queue_size,
+                         const std::vector<int> &core_list) {
+  MS_LOG(DEBUG) << "ActorMgr Initialize, use_inner_pool : " << use_inner_pool
+                << ", actor_thread_num : " << actor_thread_num << ", max_thread_num : " << max_thread_num
+                << ", actor_queue_size : " << actor_queue_size << ", core_list size : " << core_list.size();
   std::unique_lock lock(actorsMutex);
   if (initialized_) {
     MS_LOG(DEBUG) << "Actor Manager has been initialized before";
@@ -66,7 +71,9 @@ int ActorMgr::Initialize(bool use_inner_pool, size_t actor_thread_num, size_t ma
         return MINDRT_ERROR;
       }
     } else {
-      inner_pool_ = ActorThreadPool::CreateThreadPool(actor_thread_num, max_thread_num, {});
+      inner_pool_ =
+        ActorThreadPool::CreateThreadPool(actor_thread_num, max_thread_num, core_list,
+                                          !core_list.empty() ? BindMode::Power_Higher : BindMode::Power_NoBind);
       if (inner_pool_ == nullptr) {
         MS_LOG(ERROR) << "ActorMgr CreateThreadPool failed";
         return MINDRT_ERROR;

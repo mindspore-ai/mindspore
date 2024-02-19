@@ -168,7 +168,7 @@ REG_ADPT_DESC(RandomPoisson, prim::kPrimRandomPoisson->name(), CUST_ADPT_DESC(Ra
 
 // RandomCategorical
 CUST_INPUT_MAP(RandomCategorical) = {{1, INPUT_DESC(logits)}, {2, INPUT_DESC(num_samples)}, {3, INPUT_DESC(seed)}};
-CUST_ATTR_MAP(RandomCategorical) = EMPTY_ATTR_MAP;
+CUST_ATTR_MAP(RandomCategorical) = {{"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 CUST_OUTPUT_MAP(RandomCategorical) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(RandomCategorical, prim::kPrimRandomCategorical->name(), CUST_ADPT_DESC(RandomCategorical));
 
@@ -191,4 +191,17 @@ CUST_ATTR_MAP(Poisson) = {{"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
                           {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
 CUST_OUTPUT_MAP(Poisson) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(Poisson, kNamePoisson, CUST_ADPT_DESC(Poisson));
+
+// LogUniformCandidateSampler
+CUST_INPUT_MAP(LogUniformCandidateSampler) = {{1, INPUT_DESC(true_classes)}};
+CUST_ATTR_MAP(LogUniformCandidateSampler) = {{"num_true", ATTR_DESC(num_true, AnyTraits<int64_t>())},
+                                             {"num_sampled", ATTR_DESC(num_sampled, AnyTraits<int64_t>())},
+                                             {"unique", ATTR_DESC(unique, AnyTraits<bool>())},
+                                             {"range_max", ATTR_DESC(range_max, AnyTraits<int64_t>())},
+                                             {"seed", ATTR_DESC(seed, AnyTraits<int64_t>())}};
+CUST_OUTPUT_MAP(LogUniformCandidateSampler) = {{0, OUTPUT_DESC(sampled_candidates)},
+                                               {1, OUTPUT_DESC(true_expected_count)},
+                                               {2, OUTPUT_DESC(sampled_expected_count)}};
+REG_ADPT_DESC(LogUniformCandidateSampler, kNameLogUniformCandidateSampler, CUST_ADPT_DESC(LogUniformCandidateSampler));
+
 }  // namespace mindspore::transform

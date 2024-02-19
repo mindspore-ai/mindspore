@@ -1,0 +1,26 @@
+#operator dropout
+dropout:
+  args:
+    x:
+      dtype: tensor
+    keep_prob:
+      dtype: float
+      default: 0.5
+      prim_init: True
+    Seed0:
+      dtype: int
+      default: 0
+      prim_init: True
+    Seed1:
+      dtype: int
+      default: 0
+      prim_init: True
+  labels:
+    side_effect_hidden: True
+  returns:
+    output:
+      dtype: tensor
+    mask:
+      dtype: tensor
+  function:
+    disable: True

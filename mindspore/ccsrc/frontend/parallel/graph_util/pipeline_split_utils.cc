@@ -327,7 +327,12 @@ void SetStridedSliceStrategy(const AnfNodePtr &node) {
     }
     static const auto skip_redis = (common::GetEnv("PIPELINE_SLICE_SKIP_REDISTRIBUTION") == "1");
     if (skip_redis && !full_batch && input_strategy.size() > 0) {
-      input_strategy[0] = dev_num < shape_list[1][0][0] ? dev_num : shape_list[1][0][0];
+      auto dim = shape_list[1][0][0];
+      if (dev_num <= dim && ((dim % dev_num) == 0)) {
+        input_strategy[0] = dev_num;
+      } else if (dim < dev_num && ((dev_num % dim) == 0)) {
+        input_strategy[0] = dim;
+      }
       auto prim = GetCNodePrimitive(node);
       if (prim->HasAttr("out_shard_size")) {
         auto out_shard_size = GetValue<int64_t>(prim->GetAttr("out_shard_size"));
@@ -1153,6 +1158,21 @@ void ReorderForPredict(const FuncGraphPtr &root, const FuncGraphManagerPtr &mana
   if (!forward_start.empty() && !forward_params.empty()) {
     InsertDepend(forward_params_pair.second[0], forward_start_pair.first[0], manager, root);
   }
+}
+
+std::string GetWorldGroup() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string world_group;
+  std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (backend == kAscendDevice) {
+    world_group = parallel::HCCL_WORLD_GROUP;
+  } else if (backend == kGPUDevice) {
+    world_group = parallel::NCCL_WORLD_GROUP;
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid backend: " << backend;
+  }
+  return world_group;
 }
 }  // namespace parallel
 }  // namespace mindspore

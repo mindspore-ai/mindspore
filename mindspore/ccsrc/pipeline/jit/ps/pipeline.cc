@@ -93,6 +93,7 @@
 
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/acl_dump_json_writer.h"
 #include "abstract/abstract_value.h"
 #endif
 #if defined(__linux__) && defined(WITH_BACKEND)
@@ -367,6 +368,8 @@ py::object GetVectorRefPyData(const VectorRef &value_list, const AbstractBasePtr
 }
 
 py::object BaseRefToPyDataWithUserData(const BaseRef &value, const AbstractBasePtr &abs) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kGraphExecutorPy, runtime::ProfilerEvent::kOutputProcess,
+                                     "BaseRefToPyData");
   const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
   if (!allow_fallback_runtime) {
     return BaseRefToPyData(value, abs);
@@ -958,6 +961,68 @@ void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   MS_LOG(INFO) << "Clean compile resource end";
 }
 
+bool GraphExecutorPy::CompileInner(const FuncGraphPtr &graph, const py::tuple &args, const py::dict &kwargs,
+                                   const std::string &phase, bool use_vm) {
+  PhaseManager::GetInstance().set_phase(phase);
+  phase_ = phase;
+
+  ExecutorInfoPtr executor_info = std::make_shared<ExecutorInfo>();
+  ResourcePtr resource = std::make_shared<Resource>();
+  resource->set_func_graph(graph);
+  InitCompileCacheInfo(resource, phase);
+  bool use_compile_cache = resource->EnableCompileCache() && resource->func_graph();
+  ConfigManager::GetInstance().ResetQueue(queue_name_);
+
+  auto actions = GetPipeline(resource, phase, use_vm);
+  for (auto iter = actions.begin(); iter != actions.end();) {
+    if (iter->first == "parse") {
+      iter = actions.erase(iter);
+    } else {
+      iter++;
+    }
+  }
+  std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(actions, phase));
+
+  if (pip->NeedCreateBackend()) {
+    // Create backend asynchronously.
+    resource->SetBackendAsync([]() {
+      auto backend = compile::CreateBackend();
+#ifdef ENABLE_DEBUGGER
+      // Connect session to debugger.
+      backend->SetDebugger();
+#endif
+      return backend;
+    });
+  }
+
+  // Get the parameters items and add the value to args_abs.
+  abstract::AbstractBasePtrList args_abs;
+  std::vector<ValuePtr> arguments;
+  MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
+  bool is_auto_parallel = (parallel::ParallelContext::GetInstance()->parallel_mode() == parallel::kSemiAutoParallel ||
+                           parallel::ParallelContext::GetInstance()->parallel_mode() == parallel::kAutoParallel);
+  ConvertArgs(args, kwargs, is_auto_parallel, &args_abs, &arguments);
+  resource->set_arguments(arguments);
+  resource->set_args_abs(args_abs);
+  executor_info->arg_list_size = args.size() + kwargs.size();
+  executor_info->resource = resource;
+  info_[phase] = executor_info;
+  pip->Run();
+
+  // Save the compiled graph to MsPipeLine.
+  SaveCompiledGraph(phase);
+  if (is_auto_parallel) {
+    ParallelPostProcess(phase, use_compile_cache);
+  }
+#ifdef ENABLE_DUMP_IR
+  mindspore::RDR::Snapshot();
+#endif
+  CleanCompileRes(resource);
+  PhaseManager::GetInstance().ClearPhase();
+  MS_LOG(INFO) << "Finish compiling.";
+  return true;
+}
+
 bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &args, const py::dict &kwargs,
                                    const py::object &phase, bool use_vm) {
   // Check if the phase is valid.
@@ -1497,6 +1562,8 @@ void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef 
 }
 
 void GraphExecutorPy::ProcessVmArg(const py::tuple &args, const std::string &phase, VectorRef *const arg_list) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kGraphExecutorPy, runtime::ProfilerEvent::kInputProcess,
+                                     phase);
   ProcessVmArgInner(args, GetResource(phase), arg_list);
 }
 
@@ -1606,36 +1673,20 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
   if (run == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Can't find run graph func for " << phase;
   }
-  // Set loopsink size for each phase.
-  bool vm_loop_flag = info_[phase]->resource->vm_loop_flag();
-  int64_t loop_size = info_[phase]->resource->loop_size();
-  int64_t vm_loop = 1;
-  if (vm_loop_flag) {
-    vm_loop = loop_size;
-  } else {
-    // Set the loop size in config if graphs nums is 1(is_loop_sin=True), then there will be a loop embrace
-    // 'Execute(graph)' in GPUSession.
-    ConfigManager::GetInstance().set_gpu_loopsink_size(loop_size);
-  }
-  MS_LOG(INFO) << "VM loop size " << vm_loop << ", loopsink size " << vm_loop;
-  py::object res;
+
   MS_LOG(DEBUG) << "Eval run " << ms_context->backend_policy();
   const auto &output = execute_info->func_graph->output();
   MS_EXCEPTION_IF_NULL(output);
-
   const auto &output_abs = output->abstract();
   MS_EXCEPTION_IF_NULL(output_abs);
-  BaseRef value;
-  for (int64_t i = 0; i < vm_loop; i++) {
-    value = (*run)(execute_info->arg_list);
-    bool need_recovery = distributed::recovery::RecoveryContext::GetInstance()->enable_recovery() &&
-                         distributed::recovery::RecoveryContext::GetInstance()->need_reset();
-    if (need_recovery) {
-      // In recovery scenario, the output value could be empty, do not transform return data.
-      return py::none();
-    }
-    res = BaseRefToPyDataWithUserData(value, output_abs);
+  BaseRef value = (*run)(execute_info->arg_list);
+  bool need_recovery = distributed::recovery::RecoveryContext::GetInstance()->enable_recovery() &&
+                       distributed::recovery::RecoveryContext::GetInstance()->need_reset();
+  if (need_recovery) {
+    // In recovery scenario, the output value could be empty, do not transform return data.
+    return py::none();
   }
+  py::object res = BaseRefToPyDataWithUserData(value, output_abs);
 
   MS_LOG(DEBUG) << "Run end";
   return res;
@@ -2117,7 +2168,7 @@ FuncGraphPtr SplitDynamicMindIR(const std::string &file_name, size_t device_num,
       return nullptr;
     }
     pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
-    resource->set_is_load(False);
+    resource->set_is_load(false);
     resource->set_manager(func_graph_manager);
     resource->set_func_graph(tmp_func_graph);
     // Get the parameters items and add the value to args_abs.
@@ -2388,6 +2439,7 @@ void ClearSingleton() {
   OpPrimPyRegister::GetInstance().Clear();
 #ifndef ENABLE_SECURITY
   DumpJsonParser::Finalize();
+  AclDumpJsonWriter::Finalize();
 #endif
   CommManager::Clear();
   expander::ClearAllCache();

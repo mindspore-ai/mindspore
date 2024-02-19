@@ -31,6 +31,10 @@ static const std::map<std::string, std::vector<string>> kAttrMapNeedAdjust = {
      "axis",
      "output_type",
    }},
+  {"BroadcastTo",
+   {
+     "shape",
+   }},
   {"ArgMaxV2",
    {
      "axis",

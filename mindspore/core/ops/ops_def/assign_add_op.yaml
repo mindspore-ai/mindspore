@@ -1,14 +1,14 @@
 #operator assign_add
 assign_add:
     args:
-        ref:
+        variable:
             dtype: tensor
         value:
             dtype: tensor
             type_cast: number
     args_signature:
-        rw_write: ref
-        dtype_group: (ref, value)
+        rw_write: variable
+        dtype_group: (variable, value)
     labels:
         side_effect_mem: True
     returns:

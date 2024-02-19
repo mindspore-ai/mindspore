@@ -74,7 +74,7 @@ class BACKEND_EXPORT GraphScheduler {
   void Schedule(const ActorSet *actor_set);
 
   // The processing entry of actors running. The fourth parameter is used only in the step execution strategy.
-  void Run(ActorSet *constactor_set, const std::vector<std::vector<TensorPtr>> &input_tensors,
+  void Run(ActorSet *constactor_set, const std::vector<std::vector<TensorPtr>> &input_tensors, const VectorRef &args,
            GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
 
   // Fetch the actor set by actor info.
@@ -220,7 +220,7 @@ class BACKEND_EXPORT GraphScheduler {
   // Display the actor information of corresponding kernel graph.
   void DumpActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) const;
   void DumpDeviceTensorStore(const GraphCompilerInfo &graph_compiler_info, std::ofstream &ofs) const;
-
+  void DumpFinalActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info);
   // bind thread pool to same numa node
   void BindNumaNode();
 
@@ -263,6 +263,7 @@ class BACKEND_EXPORT GraphScheduler {
   // numa library handle
   std::shared_ptr<void> numa_handle_{};
   size_t defalut_actor_thread_num_{1};
+  std::vector<int> numa_cpus_;
 
   bool init_{false};
 };

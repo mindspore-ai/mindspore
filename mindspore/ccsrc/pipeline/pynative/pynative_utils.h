@@ -63,10 +63,10 @@ struct Common {
   static const std::shared_ptr<PyNativeExecutor> &GetPyNativeExecutor();
   static void StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info);
   static TensorPtr StubNodeToTensor(const ValuePtr &value);
-  static TensorPtr ConvertStubNodeToTensor(const ValuePtr &v, bool need_contiguous);
+  static TensorPtr ConvertStubNodeToTensor(const ValuePtr &v, bool need_contiguous, bool requires_grad);
   static std::optional<tensor::TensorPtr> ConvertStubNodeToTensor(const std::optional<ValuePtr> &v,
-                                                                  bool need_contiguous);
-  static ValueTuplePtr ConvertStubNodeToValueTuple(const ValuePtr &v, bool need_contiguous);
+                                                                  bool need_contiguous, bool requires_grad);
+  static ValueTuplePtr ConvertStubNodeToValueTuple(const ValuePtr &v, bool need_contiguous, bool requires_grad);
   static void GetConstInputToAttr(const PrimitivePtr &op_prim, const std::string &op_name,
                                   const std::string &device_target, bool is_dynamic_shape,
                                   mindspore::HashSet<size_t> *input_to_attr_index);
@@ -85,7 +85,8 @@ struct Common {
   static void ProcessTupleParam(const FuncGraphPtr &bprop_graph, size_t position);
   static void ProcessDictParam(const FuncGraphPtr &bprop_graph, size_t position);
   static void FreeFuncGraphForwardNodes(const FuncGraphPtr &func_graph);
-  static tensor::TensorPtr ConvertToContiguousTensor(const tensor::TensorPtr &tensor);
+  static tensor::TensorPtr ConvertToContiguousTensor(const tensor::TensorPtr &tensor, bool requires_grad);
+  static ValuePtr ConvertToContiguousValue(const ValuePtr &v, bool requires_grad);
 };
 
 // Parser python
@@ -125,7 +126,7 @@ struct PyParser {
         return ss.str();
       };
       if (tensor != nullptr) {
-        MS_EXCEPTION(ValueError) << "For " << op_def->name_ << ", the " << idx
+        MS_EXCEPTION(ValueError) << "For " << op_def->name_ << ", the " << idx + 1
                                  << "'th input is a Tensor whose shape is " << PrintVectorFunc(tensor->shape())
                                  << " and dtype is [" << TypeIdToString(tensor->data_type())
                                  << "], which can not be converted to " << ops::EnumToString(op_arg.arg_dtype_) << ".";
@@ -199,12 +200,12 @@ struct PyBoost {
   static auto SetPyBoostCastForInputs(const FrontendOpRunInfoPtr &op_run_info,
                                       const std::vector<std::vector<size_t>> &same_type_table, T... t) {
     MS_EXCEPTION_IF_NULL(op_run_info);
+    op_run_info->input_size = sizeof...(t);
     if (op_run_info->op_grad_info->op_prim->name() == kCast) {
       return std::make_tuple(t...);
     }
     const auto &pyboost_cast_operation = Common::GetPyNativeExecutor()->forward_executor()->pyboost_cast_operation();
     const auto &ret = pyboost_cast_operation->DoMixPrecisionCast(op_run_info, t...);
-    op_run_info->input_size = sizeof...(t);
     if constexpr (N != 0) {
       return pyboost_cast_operation->DoImplicitCast<N>(op_run_info, same_type_table, ret);
     }
@@ -221,7 +222,7 @@ struct GradCommon {
 };
 };  // namespace PyNativeAlgo
 
-void DispatchOp(const std::shared_ptr<AsyncTask> &task);
+void DispatchOp(const std::shared_ptr<runtime::AsyncTask> &task);
 }  // namespace pynative
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_UTILS_H_

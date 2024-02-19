@@ -159,19 +159,18 @@ void InsertDepend(const FuncGraphManagerPtr &manager, const CNodePtr &comm_i1, c
   auto matmul_i_input = matmul_i->input(1);
   std::vector<AnfNodePtr> depend1_inputs{NewValueNode(prim::kPrimDepend), matmul_i_input, comm_i1_input};
   auto depend_node1 = matmul_i_input->func_graph()->NewCNode(depend1_inputs);
+  MS_EXCEPTION_IF_NULL(depend_node1);
   depend_node1->set_abstract(matmul_i_input->abstract()->Clone());
   depend_node1->AddAttr("matmul_grad_depend1", MakeValue(true));
   depend_node1->AddAttr(kAttrCommInputDepend, MakeValue(true));
-  MS_EXCEPTION_IF_NULL(depend_node1);
   manager->SetEdge(matmul_i, 1, depend_node1);
 
   auto comm_i1_output = manager->node_users()[comm_i1].front().first;
   std::vector<AnfNodePtr> depend2_inputs{NewValueNode(prim::kPrimDepend), comm_i1, matmul_i};
   auto depend_node2 = comm_i1->func_graph()->NewCNode(depend2_inputs);
-
+  MS_EXCEPTION_IF_NULL(depend_node2);
   depend_node2->set_abstract(comm_i1->abstract()->Clone());
   depend_node2->AddAttr("matmul_grad_depend2", MakeValue(true));
-  MS_EXCEPTION_IF_NULL(depend_node2);
   manager->SetEdge(comm_i1_output, manager->node_users()[comm_i1].front().second, depend_node2);
 }
 

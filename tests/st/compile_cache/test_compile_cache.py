@@ -19,6 +19,7 @@ import subprocess
 import pytest
 import numpy as np
 from tests.st.networks import utils
+from tests.st.utils import test_utils
 
 match_output = re.compile(r'AAA(.*?)BBB', re.S)
 match_num = re.compile(r'\d+\.?\d*', re.S)
@@ -369,6 +370,7 @@ def test_compile_cache_lenet():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
+@test_utils.run_test_with_On
 def test_compile_cache_lenet_with_force_use_compile_cache():
     """
     Feature: Compile cache.
@@ -382,6 +384,7 @@ def test_compile_cache_lenet_with_force_use_compile_cache():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
+@test_utils.run_test_with_On
 def test_compile_cache_net_with_control_flow():
     """
     Feature: Compile cache.
@@ -469,7 +472,7 @@ def test_compile_cache_run_two_cells_once():
     run_two_cells_networks_once("run_lenet_two_cells.py", "./lenet_two_cells", "lenet_two_cells.txt")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_single

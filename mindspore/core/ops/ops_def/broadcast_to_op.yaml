@@ -1,0 +1,12 @@
+#operator broadcast_to
+broadcast_to:
+  args:
+    input:
+      dtype: tensor
+    shape:
+      dtype: tuple[int]
+      prim_init: True
+      type_cast: list[int], tensor
+  returns:
+    output:
+      dtype: tensor

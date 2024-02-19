@@ -63,6 +63,7 @@
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "include/backend/debug/profiler/profiling.h"
 #include "frontend/optimizer/fallback_rewriter.h"
+#include "pipeline/jit/ps/load_mindir.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/backend/distributed/cluster/cluster_context.h"
 #include "include/backend/distributed/ps/ps_context.h"
@@ -132,7 +133,7 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph, const std::vector<
 
     AbstractBasePtr param_abs = param_node->abstract();
     MS_EXCEPTION_IF_NULL(param_abs);
-    if ((param_abs->BuildValue()->ContainsValueAny() && !ContainsAbstractFunction(param_abs)) ||
+    if ((param_abs->BuildValue() == kValueAny && !ContainsAbstractFunction(param_abs)) ||
         EnableGradForScalar(param_abs) || EnableSequenceBroaden(param_abs)) {
       new_paras.push_back(param_node);
     } else {
@@ -227,6 +228,21 @@ void ExecuteActionForMindRT(const ResourcePtr &resource) {
     });
   resource->SetResult(kOutput, run);
 }
+
+FuncGraphPtr ConstructGraphForEval(const ValuePtr &func, const abstract::AbstractBasePtrList &args_abs) {
+  auto func_abs = func->ToAbstract();
+  if (!func_abs->isa<abstract::AbstractFunction>()) {
+    MS_LOG(EXCEPTION) << "The value : " << func->ToString() << " is not a callable object.";
+  }
+  // construct a function graph.
+  auto infer_graph = std::make_shared<FuncGraph>();
+  std::vector<AnfNodePtr> inputs = {std::make_shared<ValueNode>(func)};
+  std::transform(args_abs.begin(), args_abs.end(), std::back_inserter(inputs),
+                 [infer_graph](const AbstractBasePtr &) -> AnfNodePtr { return infer_graph->add_parameter(); });
+  auto infer_node = infer_graph->NewCNode(inputs);
+  infer_graph->set_return(infer_node);
+  return infer_graph;
+}
 }  // namespace
 using CompileGraphs = compile::CompileGraphs;
 using abstract::AnalysisResult;
@@ -235,23 +251,22 @@ using mindspore::abstract::AnalysisContextPtr;
 // Whether this process in a MindSpore cluster.
 static bool is_cluster_initialized = false;
 
-abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &resource, const FuncGraphPtr &func_graph,
-                                         const abstract::AbstractBasePtrList &args_abs, bool clear) {
+abstract::AnalysisResult AbstractAnalyze(const abstract::AnalysisEnginePtr &engine, const FuncGraphPtr &func_graph,
+                                         const abstract::AbstractBasePtrList &args_abs, bool is_load_resoure,
+                                         bool clear) {
   MS_LOG(DEBUG) << "AbstractAnalyze start";
   py::gil_scoped_acquire gil;
-  auto engine = resource->engine();
   MS_EXCEPTION_IF_NULL(engine);
-  if (clear || resource->is_load()) {
-    auto manager = resource->manager();
+  if (clear || is_load_resoure) {
+    auto manager = engine->func_graph_manager();
     MS_EXCEPTION_IF_NULL(manager);
     engine->Clear();
     static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
     for (auto &node : manager->all_nodes()) {
       MS_EXCEPTION_IF_NULL(node);
-
       // Handle previous inferred value for CNode if is loaded from MindIR
-      if (resource->is_load()) {
-        // If the primitive is not defined in front end, keep the inferred value loaded from MindIR.
+      // If the primitive is not defined in front end, keep the inferred value loaded from MindIR.
+      if (is_load_resoure) {
         auto primitive = GetCNodePrimitive(node);
         if (primitive != nullptr) {
           auto is_load = primitive->GetAttr("is_load");
@@ -286,13 +301,21 @@ abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &resource, const Func
   return res;
 }
 
-FuncGraphPtr ProgramSpecialize(const ResourcePtr &resource, const FuncGraphPtr &func_graph,
+abstract::AnalysisResult AbstractAnalyze(const ValuePtr &func, const abstract::AbstractBasePtrList &args_abs,
+                                         bool clear) {
+  auto infer_graph = ConstructGraphForEval(func, args_abs);
+  auto manager = Manage(infer_graph, true);
+  auto engine = std::make_shared<abstract::AnalysisEngine>(abstract::GetPrimEvaluatorConstructors(), manager);
+  return AbstractAnalyze(engine, infer_graph, args_abs, false, clear);
+}
+
+FuncGraphPtr ProgramSpecialize(const abstract::AnalysisEnginePtr &engine, const FuncGraphPtr &func_graph,
                                const abstract::AnalysisContextPtr &context) {
-  MS_EXCEPTION_IF_NULL(resource);
+  MS_EXCEPTION_IF_NULL(engine);
   MS_LOG(DEBUG) << "ProgramSpecialize start";
-  abstract::ProgramSpecializer specializer(resource->engine());
+  abstract::ProgramSpecializer specializer(engine);
   FuncGraphPtr result = specializer.Run(func_graph, context);
-  auto manager = resource->manager();
+  auto manager = engine->func_graph_manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->KeepRoots({result});
   specializer.SpecializeCNodeInput0FuncGraph();
@@ -304,14 +327,15 @@ FuncGraphPtr Renormalize(const ResourcePtr &resource, const FuncGraphPtr &func_g
                          const abstract::AbstractBasePtrList &args_abs) {
   MS_EXCEPTION_IF_NULL(resource);
   MS_LOG(DEBUG) << "Renormalize start";
+  auto engine = resource->engine();
 #ifdef ENABLE_PROFILE
   double t1 = GetTime();
 #endif
-  abstract::AnalysisResult result = AbstractAnalyze(resource, func_graph, args_abs, true);
+  abstract::AnalysisResult result = AbstractAnalyze(engine, func_graph, args_abs, resource->is_load(), true);
 #ifdef ENABLE_PROFILE
   double t2 = GetTime();
 #endif
-  auto res = ProgramSpecialize(resource, func_graph, result.context);
+  auto res = ProgramSpecialize(engine, func_graph, result.context);
   resource->set_func_graph(res);
 #ifdef ENABLE_PROFILE
   double t3 = GetTime();
@@ -322,6 +346,31 @@ FuncGraphPtr Renormalize(const ResourcePtr &resource, const FuncGraphPtr &func_g
   MS_LOG(DEBUG) << "Renormalize end";
 
   return res;
+}
+
+FuncGraphPtr Renormalize(const ValuePtr &func, const abstract::AbstractBasePtrList &args_abs) {
+  auto func_abs = func->ToAbstract();
+  if (!func_abs->isa<abstract::AbstractFunction>()) {
+    MS_LOG(EXCEPTION) << "The value: " << func->ToString() << " is not a callable object.";
+  }
+  auto infer_graph = ConstructGraphForEval(func, args_abs);
+  auto manager = Manage(infer_graph, true);
+  auto engine = std::make_shared<abstract::AnalysisEngine>(abstract::GetPrimEvaluatorConstructors(), manager);
+#ifdef ENABLE_PROFILE
+  double t1 = GetTime();
+#endif
+  auto res = AbstractAnalyze(engine, infer_graph, args_abs, false);
+#ifdef ENABLE_PROFILE
+  double t2 = GetTime();
+#endif
+
+  auto spec_graph = ProgramSpecialize(engine, infer_graph, res.context);
+#ifdef ENABLE_PROFILE
+  double t3 = GetTime();
+  MsProfile::StatTime("renormalize.infer", t2 - t1);
+  MsProfile::StatTime("renormalize.specialize", t3 - t2);
+#endif
+  return spec_graph;
 }
 
 void SetMindIRLoadFlag(const ResourcePtr &resource) {
@@ -375,7 +424,7 @@ bool ParseAction(const ResourcePtr &resource) {
   if (top_graph == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Object to parse " << std::string(py::str(input)) << " is not function or cell.";
   }
-  if (py::hasattr(input, parse::PYTHON_PARSE_METHOD)) {
+  if (py::hasattr(input, parse::PYTHON_PARSE_METHOD) || py::hasattr(input, "__jit_function__")) {
     (void)std::for_each(top_graph->parameters().begin(), top_graph->parameters().end(),
                         [](const AnfNodePtr &param) { param->cast<ParameterPtr>()->set_is_top_graph_param(true); });
   }
@@ -729,16 +778,6 @@ bool SetMixedPrecisionAction(const ResourcePtr &resource) {
   return true;
 }
 
-bool PreSimplifyInlineAction(const ResourcePtr &resource) {
-#ifndef ENABLE_PRE_SIMPLIFY  // Open pre-simplify in default later.
-  return true;
-#else
-  MS_EXCEPTION_IF_NULL(resource);
-  MS_EXCEPTION_IF_NULL(resource->func_graph());
-  return PreSimplifyInlinePass(resource);
-#endif
-}
-
 bool AutoMonadAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   if (resource->manager() == nullptr) {
@@ -830,11 +869,12 @@ bool AbstractSpecializeAction(const ResourcePtr &resource) {
   engine->set_check_side_effect(true);
   // Analyze
   (void)profiler::CollectHostInfo(kCompiler, kAbstractSpecialize, kAbstractAnalyze, 0, 0, 0);
-  AnalysisResult result = AbstractAnalyze(resource, resource->func_graph(), GetArgsAbs(resource));
+  AnalysisResult result =
+    AbstractAnalyze(resource->engine(), resource->func_graph(), GetArgsAbs(resource), resource->is_load());
   (void)profiler::CollectHostInfo(kCompiler, kAbstractSpecialize, kAbstractAnalyze, 0, 0, 1);
   // Specialize
   (void)profiler::CollectHostInfo(kCompiler, kAbstractSpecialize, kProgramSpecialize, 0, 0, 0);
-  FuncGraphPtr new_fg = ProgramSpecialize(resource, result.context->func_graph(), result.context);
+  FuncGraphPtr new_fg = ProgramSpecialize(resource->engine(), result.context->func_graph(), result.context);
   (void)profiler::CollectHostInfo(kCompiler, kAbstractSpecialize, kProgramSpecialize, 0, 0, 1);
   // Update the top func graph with the specialized graph.
   parse::Parser::UpdateTopFuncGraph(new_fg);
@@ -1372,6 +1412,12 @@ void SetRunMode(const ResourcePtr &resource) {
   auto is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
   auto enable_hccl = context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL);
   bool using_cm = common::UseDynamicCluster() && common::GetEnv("MS_HCCL_CM_INIT") == "1";
+  if (using_cm && common::GetEnv("GRAPH_OP_RUN") == "1") {
+    MS_LOG(INTERNAL_EXCEPTION)
+      << "You are setting 'MS_HCCL_CM_INIT' and 'GRAPH_OP_RUN' to 1 at the same time, which will cause confilct "
+         "because 'MS_HCCL_CM_INIT' means running in sink mode, but 'GRAPH_OP_RUN' means running kernel by kernel. "
+         "Please unset either of them and rerun the task.";
+  }
   if (!is_task_sink && mode == kGraphMode && enable_hccl && (!common::UseHostCollective() || using_cm)) {
     MS_LOG(INTERNAL_EXCEPTION) << "Current execution mode is 'kernelbykernel', reason: " << kbk_reason
                                << ", but you're launching job using 'ranktable', which "
@@ -1661,8 +1707,6 @@ static std::vector<ActionItem> CommonPipeline() {
   if (common::GetEnv("MS_DEV_DISABLE_TRACE") != "on") {
     (void)actions.emplace_back(std::make_pair(kPackExpand, PackExpandAction));
   }
-  // Pre switch simplify and inline.
-  (void)actions.emplace_back(std::make_pair(kPreSimplifyInline, PreSimplifyInlineAction));
   // Auto-monad for side-effects handling.
   (void)actions.emplace_back(std::make_pair(kAutoMonad, AutoMonadAction));
   // Do data structure simplifications and inline.
@@ -1741,6 +1785,8 @@ std::vector<ActionItem> MindIRPipeline() {
   std::vector<ActionItem> actions;
   // Set funcGraph loaded from MindIR to resource.
   (void)actions.emplace_back(std::make_pair(kLoadMindir, SetMindIRGraphAction));
+  (void)actions.emplace_back(std::make_pair(kModifyMindirGraph, ModifyGraphGeneratedByMindIR));
+  (void)actions.emplace_back(std::make_pair(kInferMindir, InferMindIR));
   (void)actions.emplace_back(std::make_pair(kValidate, ValidateAction));
   return actions;
 }

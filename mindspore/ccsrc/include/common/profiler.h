@@ -41,6 +41,7 @@ static const size_t kPercent = 100;
 enum class ProfilerStage {
   kDefault,
   kPython,
+  kCapture,
   kRunGraph,
   kRunGradGraph,
   kRunOp,
@@ -50,7 +51,7 @@ enum class ProfilerStage {
   kSyncStream,
 };
 
-enum class ProfilerModule { kDefault, kRuntime, kPynative, kKernel, kPython, kOther };
+enum class ProfilerModule { kDefault, kGraphExecutorPy, kRuntime, kPynative, kKernel, kPython, kCapture, kOther };
 
 enum class ProfilerEvent {
   kDefault,
@@ -76,6 +77,7 @@ enum class ProfilerEvent {
   kKernelInferInner,
   kKernelInferDataSync,
   kKernelLaunchInner,
+  kBackendGraphRunInner,
 
   // PyNative Pipeline
   kPyNativeFrontendTask,
@@ -101,6 +103,11 @@ enum class ProfilerEvent {
   kPyBoostLaunchAclnn,
   // Python
   kPythonObserved,
+  // Capture Event
+  kCaptureRunGraph,
+  kCaptureProcess,
+  kCaptureCompile,
+  kCaptureGuard,
 };
 
 #define PROFILER_START(start_time)                                          \

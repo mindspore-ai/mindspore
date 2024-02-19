@@ -21,16 +21,16 @@
 #include <utility>
 #include <vector>
 #include <memory>
-#include "runtime/pynative/async/task.h"
+#include "runtime/pipeline/task/task.h"
 #include "pipeline/pynative/base.h"
 #include "backend/common/session/session_basic.h"
 
 namespace mindspore {
 namespace pynative {
-class FrontendTask : public AsyncTask {
+class FrontendTask : public runtime::AsyncTask {
  public:
   FrontendTask(std::function<void(const FrontendOpRunInfoPtr &op_run_info)> run_func, FrontendOpRunInfoPtr op_run_info)
-      : AsyncTask(kFrontendTask), run_func_(std::move(run_func)), op_run_info_(std::move(op_run_info)) {}
+      : AsyncTask(runtime::kFrontendTask), run_func_(std::move(run_func)), op_run_info_(std::move(op_run_info)) {}
   ~FrontendTask() override = default;
   void Run() override;
   void SetException(const std::exception_ptr &e) override;
@@ -40,10 +40,10 @@ class FrontendTask : public AsyncTask {
   FrontendOpRunInfoPtr op_run_info_;
 };
 
-class PassthroughFrontendTask : public AsyncTask {
+class PassthroughFrontendTask : public runtime::AsyncTask {
  public:
   explicit PassthroughFrontendTask(std::function<void(void)> run_func)
-      : AsyncTask(kFrontendTask), run_func_(std::move(run_func)) {}
+      : AsyncTask(runtime::kFrontendTask), run_func_(std::move(run_func)) {}
   ~PassthroughFrontendTask() override = default;
   void Run() override;
 
@@ -51,7 +51,7 @@ class PassthroughFrontendTask : public AsyncTask {
   std::function<void(void)> run_func_;
 };
 
-class SliceOpFrontendTask : public AsyncTask {
+class SliceOpFrontendTask : public runtime::AsyncTask {
  public:
   SliceOpFrontendTask(
     std::function<void(const std::vector<ValuePtr> &input_values, const std::vector<SliceOpInfoPtr> &slice_op_infos,
@@ -59,7 +59,7 @@ class SliceOpFrontendTask : public AsyncTask {
       run_func,
     std::vector<ValuePtr> input_values, std::vector<SliceOpInfoPtr> slice_op_infos, bool requires_grad,
     const stub::StubNodePtr &stub_output)
-      : AsyncTask(kFrontendTask),
+      : AsyncTask(runtime::kFrontendTask),
         run_func_(std::move(run_func)),
         input_values_(std::move(input_values)),
         slice_op_infos_(std::move(slice_op_infos)),
@@ -80,13 +80,13 @@ class SliceOpFrontendTask : public AsyncTask {
 };
 
 using BackendOpRunInfoPtr = session::BackendOpRunInfoPtr;
-class BackendTask : public AsyncTask {
+class BackendTask : public runtime::AsyncTask {
  public:
   BackendTask(
     std::function<void(const FrontendOpRunInfoPtr &op_run_info, const BackendOpRunInfoPtr &backend_op_run_info)>
       run_func,
     FrontendOpRunInfoPtr op_run_info, BackendOpRunInfoPtr backend_op_run_info)
-      : AsyncTask(kBackendTask),
+      : AsyncTask(runtime::kBackendTask),
         run_func_(std::move(run_func)),
         op_run_info_(std::move(op_run_info)),
         backend_op_run_info_(std::move(backend_op_run_info)) {}
@@ -101,12 +101,12 @@ class BackendTask : public AsyncTask {
   BackendOpRunInfoPtr backend_op_run_info_;
 };
 
-class ViewKernelBackendTask : public AsyncTask {
+class ViewKernelBackendTask : public runtime::AsyncTask {
  public:
   ViewKernelBackendTask(
-    std::function<void(const FrontendOpRunInfoPtr &op_run_info, const KernelTaskType &task_type)> run_func,
-    FrontendOpRunInfoPtr op_run_info, const KernelTaskType &task_type)
-      : AsyncTask(kBackendTask),
+    std::function<void(const FrontendOpRunInfoPtr &op_run_info, const runtime::KernelTaskType &task_type)> run_func,
+    FrontendOpRunInfoPtr op_run_info, const runtime::KernelTaskType &task_type)
+      : AsyncTask(runtime::kBackendTask),
         run_func_(std::move(run_func)),
         op_run_info_(std::move(op_run_info)),
         task_type_(task_type) {}
@@ -114,19 +114,19 @@ class ViewKernelBackendTask : public AsyncTask {
   void Run() override;
 
  private:
-  std::function<void(const FrontendOpRunInfoPtr &op_run_info, const KernelTaskType &task_type)> run_func_;
+  std::function<void(const FrontendOpRunInfoPtr &op_run_info, const runtime::KernelTaskType &task_type)> run_func_;
   FrontendOpRunInfoPtr op_run_info_;
-  KernelTaskType task_type_;
+  runtime::KernelTaskType task_type_;
 };
 
-class AllocViewMemBackendTask : public AsyncTask {
+class AllocViewMemBackendTask : public runtime::AsyncTask {
  public:
   AllocViewMemBackendTask(
     std::function<void(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
                        const size_t &input_idx, bool need_wait)>
       run_func,
     FrontendOpRunInfoPtr op_run_info, const tensor::TensorPtr &input_tensor, const size_t &input_idx, bool need_wait)
-      : AsyncTask(kBackendTask),
+      : AsyncTask(runtime::kBackendTask),
         run_func_(std::move(run_func)),
         op_run_info_(std::move(op_run_info)),
         input_tensor_(input_tensor),
@@ -146,10 +146,10 @@ class AllocViewMemBackendTask : public AsyncTask {
   bool need_wait_{false};
 };
 
-class ContiguousBackendTask : public AsyncTask {
+class ContiguousBackendTask : public runtime::AsyncTask {
  public:
   ContiguousBackendTask(std::function<void(const tensor::TensorPtr &tensor)> run_func, const tensor::TensorPtr &tensor)
-      : AsyncTask(kBackendTask), run_func_(std::move(run_func)), tensor_(tensor) {}
+      : AsyncTask(runtime::kBackendTask), run_func_(std::move(run_func)), tensor_(tensor) {}
   ~ContiguousBackendTask() override = default;
   void Run() override;
 

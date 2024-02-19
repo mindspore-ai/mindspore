@@ -17,8 +17,8 @@ import os
 import numpy as np
 import mindspore as ms
 from mindspore import ops
-from mindspore.ops.auto_generate.gen_pyboost_func import silu
-import tests.st.ops.test_utils as test_utils
+from mindspore.ops import silu
+from tests.st.utils import test_utils
 
 def generate_random_input(shape, dtype):
     return np.random.randn(*shape).astype(dtype)

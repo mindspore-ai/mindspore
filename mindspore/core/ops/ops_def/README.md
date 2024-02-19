@@ -61,22 +61,30 @@
     # Optional. Rename the function but not use function name from <op_name>.
     <function>:
       # Optional. The 'name' is a fixed key. Value is the new function name to replace <op_name>.
+      # Default: `op_name`.
       <name>: <value>
 
       # Optional. The 'disable' is a fixed key. Value is 'True' or 'False', the function will not be generated if it is 'True'.
+      # Default: False
       <disable>: <value>
 
     # Optional. Reaname the primitive class name but not use class name from <op_name>.
     <class>:
       # Optional. The 'name' is a fixed key. Value is the new class name to replace <op_name>.
+      # Default: Transformed from `op_name`. For example, `op_name` is 'avg_pool', then the class name is 'AvgPool'.
       <name>: <value>
+      # Optional. The 'disable' is a fixed key. Value is 'True' or 'False', the primitive definition will not be generated if it is 'True'.
+      # Default: False.
+      <disable>: <value>
 
     # Optional. The 'view' is a fixed key. Value should be set as 'True' if this is a view operator.
+    # Default: False.
     <view>: <value>
 
     # Optional. The 'dispatch' is a fixed key. The item is used to control whether generate pyboost codes.
     <dispatch>:
       # Optional. The 'enable' is a fixed key. Pyboost codes will be auto generated if value is True.
+      # Default: False.
       <enable>: <value>
 
       # Optional. The 'device_name' can be set as 'CPU', 'GPU' or 'Ascend' and the value is a function name. If this item eixst, it means pyboost function cannot be

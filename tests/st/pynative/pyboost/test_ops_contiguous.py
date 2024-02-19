@@ -14,7 +14,7 @@
 # ============================================================================
 import pytest
 from mindspore import ops
-from mindspore.ops.auto_generate.gen_pyboost_func import contiguous
+from mindspore.ops.auto_generate import contiguous
 from mindspore import Tensor
 import numpy as np
 

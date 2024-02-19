@@ -4,7 +4,7 @@
  * limitations under the License.
  */
 
-#include "inc/ops/selection_ops.h"
+#include "op_proto/inc/selection_ops.h"
 #include "custom_op_proto/cust_array_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
@@ -428,7 +428,7 @@ IMPLEMT_COMMON_INFERFUNC(UnsortedSegmentSumInferShape) {
   output_desc.SetShape(output_shape);
   output_desc.SetDataType(input_dtype);
   output_desc.SetShapeRange(out_range);
-  op.UpdateOutputDesc(0, output_desc);
+  op.UpdateOutputDesc("y", output_desc);
   PROFILING_PROTO_END();
   return GRAPH_SUCCESS;
 }
@@ -502,7 +502,7 @@ IMPLEMT_COMMON_INFERFUNC(SliceInferShape) {
   size_t dimNum = shape_dims.size();
   std::vector<int64_t> outputList;
 
-  vector<pair<int64_t, int64_t>> ranges;
+  std::vector<std::pair<int64_t, int64_t>> ranges;
   input_desc.GetShapeRange(ranges);
   if (ranges.empty()) {
     MakeUpShapeRange(shape_dims, ranges);

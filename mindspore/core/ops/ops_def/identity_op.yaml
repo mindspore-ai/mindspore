@@ -1,7 +1,7 @@
 #operator identity
 identity:
   args:
-    x:
+    input_x:
       dtype: tensor
   returns:
     output:
@@ -9,5 +9,5 @@ identity:
   function:
     name: deepcopy
   dispatch:
-    enable: True
+    enable: False
     Ascend: IdentityAscend

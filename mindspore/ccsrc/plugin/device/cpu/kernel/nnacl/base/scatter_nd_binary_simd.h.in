@@ -38,6 +38,20 @@ static inline int ScatterNDAddInt32@SIMD_INSTRUCTION@(int index, const int *upda
   return index;
 }
 
+static inline int ScatterNDMaxFp32@SIMD_INSTRUCTION@(int index, const float *update, int size, float *output) {
+  for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_ST_F32(output + index, SIMD_MAX_F32(SIMD_LD_F32(output + index), SIMD_LD_F32(update + index)));
+  }
+  return index;
+}
+
+static inline int ScatterNDMaxInt32@SIMD_INSTRUCTION@(int index, const int *update, int size, int *output) {
+  for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_ST_EPI32(output + index, SIMD_MAX_EPI32(SIMD_LD_EPI32(output + index), SIMD_LD_EPI32(update + index)));
+  }
+  return index;
+}
+
 @SIMD_INSTRUCTION_END@
 #ifdef __cplusplus
 }

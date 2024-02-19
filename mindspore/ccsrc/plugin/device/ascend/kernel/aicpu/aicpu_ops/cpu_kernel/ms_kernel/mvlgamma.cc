@@ -127,5 +127,5 @@ uint32_t MvlgammaCpuKernel::MvlgammaCompute(CpuKernelContext &ctx) {
   }
 }
 
-REGISTER_CPU_KERNEL(kMvlgamma, MvlgammaCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMvlgamma, MvlgammaCpuKernel);
 }  // namespace aicpu

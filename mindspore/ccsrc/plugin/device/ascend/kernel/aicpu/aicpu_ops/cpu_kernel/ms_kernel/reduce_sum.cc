@@ -285,5 +285,5 @@ uint32_t ReduceSumCpuKernel::ReduceSumParseAxes(std::vector<int64_t> &input_shap
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kReduceSum, ReduceSumCpuKernel);
+REGISTER_MS_CPU_KERNEL(kReduceSum, ReduceSumCpuKernel);
 }  // namespace aicpu

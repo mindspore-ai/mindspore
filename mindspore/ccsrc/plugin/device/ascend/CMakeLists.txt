@@ -28,7 +28,6 @@ endif()
 
 ### cxx api need file ###
 if(ENABLE_ACL)
-    include_directories(${GRAPHENGINE_PATH}/ge)
     include_directories(${CMAKE_BINARY_DIR}/proto/ge)
     file(GLOB_RECURSE API_INFER_D
             "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/cxx_api/graph/ascend/*.cc"
@@ -98,12 +97,6 @@ if(ENABLE_DEBUGGER)
     # debugger: link grpc
     if(ENABLE_D)
         target_link_libraries(mindspore_ascend PRIVATE -Wl,--no-as-needed mindspore::grpc++)
-    endif()
-endif()
-
-if(NOT ENABLE_SECURITY)
-    if(ENABLE_D)
-        target_link_libraries(mindspore_ascend PRIVATE _mindspore_debug_obj)
     endif()
 endif()
 

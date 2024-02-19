@@ -98,7 +98,7 @@ class _ProcessManager:
             args: An object containing the command-line arguments.
 
         """
-        self.msn_process = []
+        self.msn_process = None
         self.cgn_processes = []
 
         """`is_master` flags whether the current node is the master node."""
@@ -115,8 +115,8 @@ class _ProcessManager:
         self.join = args.join
         self.cluster_time_out = args.cluster_time_out
 
-        self.cmd = args.training_script
-        self.cmd_args = args.training_script_args
+        self.cmd = args.task_script
+        self.cmd_args = args.task_script_args
 
         """`is_scale` flags whether the current task is a scaling task and there is already a
         manager on the current node."""
@@ -138,6 +138,7 @@ class _ProcessManager:
         Runs the process manager.
 
         """
+        os.environ["RANK_SIZE"] = str(self.worker_num)
         if self.is_scale:
             response_message = _send_scale_num(self.scheduler_url, self.scale_num)
             is_first_manager = response_message
@@ -159,6 +160,8 @@ class _ProcessManager:
         Starts the scheduler node.
 
         """
+        # For Scheduler, 'RANK_ID' is always 0.
+        os.environ['RANK_ID'] = str(0)
         msn = _MetaServerNode(self.worker_num, self.master_addr, self.master_port, self.cluster_time_out,
                               _generate_cmd_args_list(self.cmd, self.cmd_args),
                               os.path.join(self.log_dir, "scheduler.log"))
@@ -169,17 +172,32 @@ class _ProcessManager:
         Starts the worker nodes.
 
         """
+        if self.local_worker_num == self.worker_num and self.node_rank not in [0, -1]:
+            # If only one node is involved, ignore invalid 'node_rank'.
+            logger.warning("All workers will be spawned on this node, "
+                           f"so 'node_rank': [{self.node_rank}] will be ignored.")
+        if self.local_worker_num < self.worker_num and self.node_rank == -1:
+            logger.warning("You are running distributed job with multiple nodes but not setting '--node_rank'. So "
+                           "'rank_id' of each process will be assigned after cluster is successfully built.\n"
+                           "You can access 'RANK_ID' environment variable after calling "
+                           "'mindspore.communication.init()'")
+
         for i in range(self.local_worker_num):
             node_id, log_name = self._get_node_id_and_log_path(i)
+            if node_id is None:
+                logger.warning(f"Rank ids will be assigned automatically, "
+                               "please use 'grep -rn 'rank id:' command to check each worker log's rank id.")
+            else:
+                # If node_id is generated in '_get_node_id_and_log_path' method, export 'RANK_ID' environment variable.
+                # This is for rank_table method's compatibility consideration.
+                os.environ["RANK_ID"] = str(node_id)
+                logger.warning(f"Start worker process with rank id:{node_id}, log file:{log_name}. "
+                               "Environment variable [RANK_ID] is exported.")
+
             cgn = _ComputeGraphNode(self.worker_num, self.master_addr, self.master_port, self.cluster_time_out,
                                     node_id, _generate_cmd_args_list(self.cmd, self.cmd_args), log_name)
             process = cgn.run()
             self.cgn_processes.append(process)
-            if node_id is None:
-                logger.warning(f"Rank ids will be assigned automatically, "
-                               "please use 'grep -rn 'rank id:'' command to check each worker log's rank id.")
-            else:
-                logger.warning(f"Start worker process with rank id:{node_id}, log file:{log_name}")
 
     def heartbeat_with_scheduler(self):
         """
@@ -207,10 +225,11 @@ class _ProcessManager:
                 has_exception = True
                 logger.error(f"Worker process {p.pid} exit with exception.")
 
-        self.msn_process.wait()
-        if self.msn_process.returncode != 0:
-            has_exception = True
-            logger.error(f"Scheduler process {self.msn_process.pid} exit with exception.")
+        if self.msn_process:
+            self.msn_process.wait()
+            if self.msn_process.returncode != 0:
+                has_exception = True
+                logger.error(f"Scheduler process {self.msn_process.pid} exit with exception.")
 
         if has_exception:
             logger.warning("Analyzing exception log...")
@@ -227,8 +246,9 @@ class _ProcessManager:
             p.terminate()
             p.join()
 
-        self.msn_process.terminate()
-        self.msn_process.join()
+        if self.msn_process:
+            self.msn_process.terminate()
+            self.msn_process.join()
 
     def stop_and_restart(self):
         """
@@ -244,8 +264,10 @@ class _ProcessManager:
         """
         Generate node id and log path for corresponding process.
         """
+        if self.local_worker_num > self.worker_num:
+            raise ValueError(f"Total worker number is {self.worker_num}, "
+                             f"but got exceeded local worker number: {self.local_worker_num}.")
         if self.local_worker_num == self.worker_num:
-            # This means only one node is involved.
             return index, os.path.join(self.log_dir, "worker_" + str(index) + ".log")
 
         if self.node_rank >= 0:
@@ -263,7 +285,6 @@ class _ProcessManager:
         Analyze exception logs.
         """
         scheduler_log_path = os.path.join(self.log_dir, "scheduler.log")
-        os.system(f"cat {scheduler_log_path}|grep -E 'ERROR|CRITICAL|Traceback|RuntimeError' -C 10")
         time_out_node_ids = []
         with open(scheduler_log_path, "r") as log:
             scheduler_log = log.read()
@@ -277,15 +298,16 @@ class _ProcessManager:
         # If 'time_out_node_ids' is not empty, only analyze logs of these time out nodes.
         # Unless get the error logs of all workers.
         if time_out_node_ids:
+            os.system(f"cat {scheduler_log_path}|grep -E 'ERROR|CRITICAL|Traceback|Error' -C 5")
             logger.error(f"Time out nodes are {time_out_node_ids}")
             # Get the logs which have these timeout node ids.
             grepper = lambda id: subprocess.getoutput(f"grep -rn 'This node {id}' {self.log_dir}"
                                                       "|awk -F: '{print $1}'")
             log_names = list(grepper(id) for id in time_out_node_ids)
             for log in log_names:
-                logger.warning(f"cat log {log} error info and tail log:")
+                logger.warning(f"cat log {log} error info and tail log:"
+                               "==========================")
                 os.system(f"cat {os.path.join(self.log_dir, log)}"
-                          "|grep -E 'ERROR|CRITICAL|Traceback|RuntimeError' -C 10")
-                os.system(f"tail {os.path.join(self.log_dir, log)}")
+                          "|grep -E 'ERROR|CRITICAL|Traceback|Error' -C 5")
         else:
-            os.system(f"grep -rn -E 'ERROR|CRITICAL|Traceback|RuntimeError' -C 10 {self.log_dir}")
+            os.system(f"grep -rn -E 'ERROR|CRITICAL|Traceback|Error' -C 5 {self.log_dir}")

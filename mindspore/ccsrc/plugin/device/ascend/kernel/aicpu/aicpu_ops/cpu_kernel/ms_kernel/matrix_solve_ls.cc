@@ -133,7 +133,7 @@ uint32_t MatrixSolveLsCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(MatrixSolveLs, MatrixSolveLsCpuKernel);
+REGISTER_MS_CPU_KERNEL(MatrixSolveLs, MatrixSolveLsCpuKernel);
 
 template <typename T>
 void MatrixSolveLsCpuKernel::RealCholeskySingleCompute(T *aptr, T *bptr, T *xptr, double *l2, int64_t m, int64_t k,

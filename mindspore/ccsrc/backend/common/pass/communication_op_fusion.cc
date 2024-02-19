@@ -592,7 +592,6 @@ bool CommunicationOpFusion::DoFusion(const FuncGraphPtr &func_graph, const Commu
             auto depend_node = cnode->func_graph()->NewCNode(depend_inputs);
             depend_node->set_abstract(cnode->input(1)->cast<CNodePtr>()->abstract()->Clone());
             depend_node->AddAttr("comp_comm_scheduling_depend", MakeValue(true));
-            MS_EXCEPTION_IF_NULL(depend_node);
             if (!manager->Replace(cnode, depend_node)) {
               MS_LOG(INTERNAL_EXCEPTION) << "Manager replace node failed";
             }

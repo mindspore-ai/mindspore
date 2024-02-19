@@ -23,6 +23,7 @@ import mindspore.common.dtype as mstype
 
 from src.navier_stokes2d import NavierStokes2D
 
+from tests.st.utils import test_utils
 
 set_seed(123456)
 np.random.seed(123456)
@@ -45,11 +46,12 @@ class Net(nn.Cell):
         return self.layers(x)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@test_utils.run_test_with_On
 def test_mindflow_navier_stokes():
     """
     Feature: navier_stokes pinns

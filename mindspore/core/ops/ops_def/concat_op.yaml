@@ -1,7 +1,7 @@
 #operator concat
 concat:
     args:
-        x:
+        tensors:
             dtype: tuple[tensor]
             type_cast: list[tensor]
         axis:
@@ -9,7 +9,10 @@ concat:
             default: 0
             prim_init: True
     returns:
-        output:
+        out:
             dtype: tensor
+    function:
+        name: cat
     dispatch:
-      enable: False
+        enable: True
+        CPU: ConcatCpu

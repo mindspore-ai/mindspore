@@ -74,25 +74,5 @@ void AclnnKernelMod::RunOpSync(void *stream_ptr, const std::vector<KernelTensor 
     RUN_OP_API_SYNC(op_type_, workspace_tensor->device_ptr(), workspace_size_list_[0], executor_, stream_ptr);
   }
 }
-
-void AclnnKernelMod::UpdateWorkspace(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args) {
-  auto call_back_func = std::get<2>(args);
-  if (call_back_func != nullptr) {
-    call_back_func();
-  }
-  auto real_workspace_size = static_cast<size_t>(std::get<0>(args));
-  if (real_workspace_size != 0) {
-    std::vector<size_t> workspace_size_list = {real_workspace_size};
-    SetWorkspaceSizeList(workspace_size_list);
-  }
-}
-
-void AclnnKernelMod::ParseGenExecutor(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args) {
-  executor_ = std::get<1>(args);
-  if (executor_ == nullptr) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Please check op api's generate!";
-  }
-  release_func_ = std::get<2>(args);
-}
 }  // namespace kernel
 }  // namespace mindspore

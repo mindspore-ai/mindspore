@@ -1,7 +1,7 @@
 #SiLU operator
 silu:
     args:
-        x:
+        input:
             dtype: tensor
     returns:
         output:

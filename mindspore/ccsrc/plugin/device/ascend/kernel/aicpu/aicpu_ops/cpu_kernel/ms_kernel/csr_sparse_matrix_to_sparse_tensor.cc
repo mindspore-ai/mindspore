@@ -133,7 +133,7 @@ uint32_t CSRSparseMatrixToSparseTensorCpuKernel::Compute(CpuKernelContext &ctx) 
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(CSRSparseMatrixToSparseTensor, CSRSparseMatrixToSparseTensorCpuKernel);
+REGISTER_MS_CPU_KERNEL(CSRSparseMatrixToSparseTensor, CSRSparseMatrixToSparseTensorCpuKernel);
 
 template <typename indicesT, typename dataT>
 uint32_t CSRSparseMatrixToSparseTensorCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {

@@ -116,5 +116,5 @@ uint32_t UnravelIndexCpuKernel ::UnravelCompute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(KUnravelIndex, UnravelIndexCpuKernel);
+REGISTER_MS_CPU_KERNEL(KUnravelIndex, UnravelIndexCpuKernel);
 }  // namespace aicpu

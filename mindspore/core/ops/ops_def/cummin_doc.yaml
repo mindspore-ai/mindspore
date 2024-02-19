@@ -5,7 +5,7 @@ cummin:
         .. warning::
             This is an experimental API that is subject to change or deletion.
 
-        Refer to :func:mindspore.ops.cummin for more detail.
+        Refer to :func:`mindspore.ops.cummin` for more detail.
         
         Args:
             axis (int): The axis to accumulate the tensor's value. Must be in the range [-rank(input), rank(input)).
@@ -15,7 +15,7 @@ cummin:
 
         Outputs:
             A tuple of 2 Tensors(values, indices), containing the cumulative minimum of elements and the index,
-            The shape of each output tensor is the same as input `input`.
+            the shape of each output tensor is the same as input `input`.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``

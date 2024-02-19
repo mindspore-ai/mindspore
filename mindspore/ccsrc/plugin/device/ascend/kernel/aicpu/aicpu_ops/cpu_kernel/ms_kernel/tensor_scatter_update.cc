@@ -205,6 +205,6 @@ uint32_t TensorScatterUpdateCpuKernel::TensorScatterUpdateComputeRealKernel(cons
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kTensorScatterUpdate, TensorScatterUpdateCpuKernel);
+REGISTER_MS_CPU_KERNEL(kTensorScatterUpdate, TensorScatterUpdateCpuKernel);
 
 }  // namespace aicpu

@@ -152,7 +152,8 @@ Status CropAndResizeInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   auto relu = gen_g.PushBack({gen_g.NewOpInst(RELU), sub});
   auto minimum = gen_g.PushBack({gen_g.NewOpInst(MINIMUM), relu, CreateInt32Tensor(slice_size_ - 1)});
   auto equal = gen_g.PushBack({gen_g.NewOpInst(EQUAL), minimum, sub});
-  auto cast_equal = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, CreateTypeFloat(32)});
+  auto cast_equal =
+    gen_g.PushBack({gen_g.NewOpInst(CAST), equal, CreatInt64Imm(static_cast<int64_t>(kNumberTypeFloat32))});
   auto crop_and_resize = gen_g.PushBack({gen_g.NewOpInst(CROP_AND_RESIZE), gen_g.virtual_input_node(),
                                          gen_g.virtual_input_node(), minimum, gen_g.virtual_input_node()});
   auto expand_dims_0 = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), cast_equal, CreatInt64Imm(-1)});

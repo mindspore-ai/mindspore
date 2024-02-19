@@ -21,7 +21,7 @@ Copyright (c) Huawei Technologies Co., Ltd. 2021-2023. All rights reserved.
 #include <vector>
 #include "securec.h"
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "common/kernel_log.h"
 #include "cpu_kernel/common/status.h"
 #include "utils/eigen_tensor.h"
@@ -250,5 +250,5 @@ uint32_t SparseSoftmaxCrossEntropyWithLogitsCpuKernel::Compute(CpuKernelContext 
   }
 }
 
-REGISTER_CPU_KERNEL(kSparseSoftmaxCrossEntropyWithLogits, SparseSoftmaxCrossEntropyWithLogitsCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSparseSoftmaxCrossEntropyWithLogits, SparseSoftmaxCrossEntropyWithLogitsCpuKernel);
 }  // namespace aicpu

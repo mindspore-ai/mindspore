@@ -69,7 +69,7 @@ class BNTrainingUpdate(Primitive):
 
 class MaxPoolWithArgmax(Primitive):
     """
-    Please use MaxPoolWithArgmaxV2 instead.
+    Please use :class:`mindspore.ops.MaxPoolWithArgmaxV2` instead.
 
     Supported Platforms:
         Deprecated
@@ -162,7 +162,7 @@ class TensorAdd(_MathBinaryOp):
 
 class InplaceUpdate(Primitive):
     """
-    Please use InplaceUpdateV2 instead.
+    Please use :class:`mindspore.ops.InplaceUpdateV2` instead.
 
     Supported Platforms:
         Deprecated

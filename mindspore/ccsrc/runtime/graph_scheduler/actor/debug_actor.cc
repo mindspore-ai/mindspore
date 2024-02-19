@@ -30,9 +30,36 @@
 #include "include/backend/debug/debugger/debugger.h"
 #include "debug/debugger/debugger_utils.h"
 #endif
+#include "debug/data_dump/data_dumper.h"
+#include "include/common/debug/common.h"
+#include "utils/file_utils.h"
 
 namespace mindspore {
 namespace runtime {
+void DebugActor::ACLDump(uint32_t device_id) {
+  std::string env_enable_str = common::GetEnv("GRAPH_OP_RUN");
+  if (env_enable_str == "1") {
+    auto step_count_num = 0;
+    step_count_num = step_count + 1;
+    if (DumpJsonParser::GetInstance().async_dump_enabled() &&
+        DumpJsonParser::GetInstance().IsDumpIter(step_count_num)) {
+      dump_flag = 1;
+      std::string dump_path = DumpJsonParser::GetInstance().path();
+      std::string dump_path_step = dump_path + "/" + std::to_string(step_count_num);
+      auto real_path = FileUtils::CreateNotExistDirs(dump_path_step, false);
+      if (!real_path.has_value()) {
+        MS_LOG(WARNING) << "fail to create aoe dump dir " << real_path.value();
+        return;
+      }
+      auto registered_dumper =
+        datadump::DataDumperRegister::Instance().GetDumperForBackend(device::DeviceType::kAscend);
+      if (registered_dumper != nullptr) {
+        registered_dumper->Initialize();
+        registered_dumper->EnableDump(device_id, step_count_num);
+      }
+    }
+  }
+}
 /*
  * Feature group: Dump, Online debugger.
  * Target device group: GPU.
@@ -120,6 +147,18 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
                                   const std::vector<AnfNodePtr> &origin_parameters_order,
                                   std::vector<DeviceContext *> device_contexts,
                                   OpContext<DeviceTensor> *const op_context, const AID *) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  std::string backend = context->backend_policy();
+  auto device_context = device_contexts[0];
+  if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
+    auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    ACLDump(device_id);
+  }
+  if (backend == "ge") {
+    MS_LOG(INFO) << "On GE backend, debug_actor is not supported.";
+    return;
+  }
   MS_EXCEPTION_IF_NULL(op_context);
   std::lock_guard<std::mutex> locker(debug_mutex_);
 
@@ -138,7 +177,6 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
     debugger->PreExecuteGraphDebugger(graphs, origin_parameters_order);
   }
 #endif
-
 #ifndef ENABLE_SECURITY
   if (DumpJsonParser::GetInstance().e2e_dump_enabled()) {
     DumpJsonParser::GetInstance().ClearGraph();
@@ -168,7 +206,22 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
  * Description: Dump parameters and constants and update dump iter for CPU. Call PostExecuteGraph Debugger for GPU and
  * Ascend and update step number of online debugger GPU.
  */
-void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *) {
+void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *, int total_running_count_) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  std::string backend = context->backend_policy();
+  step_count = total_running_count_;
+  if (dump_flag == 1) {
+    auto registered_dumper = datadump::DataDumperRegister::Instance().GetDumperForBackend(device::DeviceType::kAscend);
+    if (registered_dumper != nullptr) {
+      registered_dumper->Finalize();
+    }
+    dump_flag = 0;
+  }
+  if (backend == "ge") {
+    MS_LOG(INFO) << "On GE backend, debug_actor is not supported.";
+    return;
+  }
   MS_EXCEPTION_IF_NULL(op_context);
   std::lock_guard<std::mutex> locker(debug_mutex_);
 

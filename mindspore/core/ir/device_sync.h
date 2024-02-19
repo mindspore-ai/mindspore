@@ -23,6 +23,7 @@
 
 #include "ir/dtype/type.h"
 #include "utils/shape_utils.h"
+#include "ir/tensor_storage_info.h"
 
 using std::string;
 
@@ -45,6 +46,7 @@ class DeviceSync {
 
   virtual void *GetMutablePtr() const = 0;
   virtual void ClearDeviceMemory() = 0;
+  virtual const TensorStorageInfoPtr GetTensorStorageInfo() const = 0;
 
   // The related interface of reference count operation.
   virtual void set_original_ref_count(size_t original_ref_count) const = 0;
@@ -55,13 +57,8 @@ class DeviceSync {
 
   virtual ~DeviceSync() {}
 
-  void set_is_view(bool is_view) { is_view_ = is_view; }
-  bool is_view() const { return is_view_; }
   virtual const UserDataPtr &user_data() const { MS_LOG(EXCEPTION) << "Not implement exception"; }
   virtual void set_user_data(const UserDataPtr &user_data) { MS_LOG(EXCEPTION) << "Not implement exception"; }
-
- protected:
-  bool is_view_{false};
 };
 using DeviceSyncPtr = std::shared_ptr<DeviceSync>;
 }  // namespace mindspore

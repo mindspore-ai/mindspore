@@ -23,10 +23,9 @@
 #include <string>
 
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "common/kernel_log.h"
 #include "common/status.h"
-#include "utils/allocator_utils.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -122,5 +121,5 @@ uint32_t CSRSparseMatrixToDenseCpuKernel::DoCompute(const CpuKernelContext &ctx)
 }
 
 // register the opetaor
-REGISTER_CPU_KERNEL(CSRSparseMatrixToDense, CSRSparseMatrixToDenseCpuKernel);
+REGISTER_MS_CPU_KERNEL(CSRSparseMatrixToDense, CSRSparseMatrixToDenseCpuKernel);
 }  // namespace aicpu

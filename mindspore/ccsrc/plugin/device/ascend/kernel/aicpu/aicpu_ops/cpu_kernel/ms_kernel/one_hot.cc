@@ -162,5 +162,5 @@ uint32_t OneHotCpuKernel::OneHotCompute(CpuKernelContext &ctx) {
   return run_state ? KERNEL_STATUS_OK : KERNEL_STATUS_INNER_ERROR;
 }
 
-REGISTER_CPU_KERNEL(kOneHot, OneHotCpuKernel);
+REGISTER_MS_CPU_KERNEL(kOneHot, OneHotCpuKernel);
 }  // namespace aicpu

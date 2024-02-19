@@ -15,7 +15,7 @@
  */
 
 #include "custom_op_proto/cust_array_ops.h"
-#include "inc/ops/array_ops.h"
+#include "op_proto/inc/array_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/common_shape_fns.h"
 #include "utils/util.h"

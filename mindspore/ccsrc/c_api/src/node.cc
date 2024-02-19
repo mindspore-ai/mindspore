@@ -380,8 +380,8 @@ NodeHandle MSNewWhile(ResMgrHandle res_mgr, GraphHandle graph, Handle cond, Grap
     }
     auto body_func_call = body_fg->NewCNodeInOrder(sub_input_nodes);
     MS_EXCEPTION_IF_NULL(src_cond_graph->output());
-    body_func_call->set_abstract(src_cond_graph->output()->abstract());
     MS_EXCEPTION_IF_NULL(body_func_call);
+    body_func_call->set_abstract(src_cond_graph->output()->abstract());
     body_fg->set_output(body_func_call);
     return main_func_call;
   } catch (const std::exception &e) {

@@ -21,7 +21,7 @@
 #include "iostream"
 
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "common/kernel_log.h"
 #include "common/status.h"
 #include "securec/include/securec.h"
@@ -182,5 +182,5 @@ uint32_t BiasAddCpuKernel::BiasAddCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kBiasAdd, BiasAddCpuKernel);
+REGISTER_MS_CPU_KERNEL(kBiasAdd, BiasAddCpuKernel);
 }  // namespace aicpu

@@ -26,7 +26,7 @@ from mindspore import Tensor, jit, ops
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import _run_op
 from tests.security_utils import security_off_wrap
-import test_utils
+from tests.st.utils import test_utils
 
 
 class Capture():
@@ -71,7 +71,7 @@ def check_output(output, patterns):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_print(mode):
     """
     Feature: Print string type.
@@ -111,7 +111,7 @@ def test_print(mode):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_print_addn(mode):
     """
     Feature: Print string type ixed with addn output.

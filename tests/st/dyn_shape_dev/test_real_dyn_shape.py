@@ -17,12 +17,12 @@ import numpy as np
 import mindspore as ms
 from mindspore import Tensor, context
 from mindspore import ops
-import test_utils
+from tests.st.utils import test_utils
 
 
 @test_utils.run_with_cell
 def real_forward_func(x):
-    return ops.auto_generate.real(x)
+    return ops.real(x)
 
 
 @test_utils.run_with_cell
@@ -36,7 +36,7 @@ def real_backward_func(x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_real_forward(mode):
     """
     Feature: real ops.
@@ -56,7 +56,7 @@ def test_real_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_real_backward(mode):
     """
     Feature: real ops.
@@ -84,7 +84,7 @@ def test_real_dynamic(mode):
     """
     context.set_context(mode=mode)
     x_dyn = Tensor(shape=None, dtype=ms.complex64)
-    test_cell = test_utils.to_cell_obj(ops.auto_generate.real)
+    test_cell = test_utils.to_cell_obj(ops.real)
     test_cell.set_inputs(x_dyn)
     x1 = Tensor(np.asarray(np.complex(1.3 + 0.4j)).astype(np.complex64))
     output1 = test_cell(x1)

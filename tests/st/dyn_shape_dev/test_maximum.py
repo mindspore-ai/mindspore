@@ -15,7 +15,7 @@
 
 import numpy as np
 import pytest
-import test_utils
+from tests.st.utils import test_utils
 
 from mindspore import ops
 import mindspore as ms
@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def maximum_forward_func(x, y):
-    return ops.auto_generate.Maximum()(x, y)
+    return ops.Maximum()(x, y)
 
 
 @test_utils.run_with_cell

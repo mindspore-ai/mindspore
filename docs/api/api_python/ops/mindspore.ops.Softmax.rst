@@ -8,7 +8,7 @@
     更多参考详见 :func:`mindspore.ops.softmax` 。
 
     参数：
-        - **axis** (int，可选) - 指定Softmax操作的轴。默认值： ``-1`` 。
+        - **axis** (Union[int, tuple]，可选) - 指定Softmax操作的轴。默认值： ``-1`` 。
 
     输入：
         - **input** (Tensor) - shape：:math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。

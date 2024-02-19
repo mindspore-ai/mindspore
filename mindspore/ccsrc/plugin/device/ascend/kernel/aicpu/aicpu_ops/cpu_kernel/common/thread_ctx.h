@@ -18,7 +18,7 @@
 
 #include <string>
 
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "aicpu_sharder/aicpu_context.h"
 
 namespace aicpu {

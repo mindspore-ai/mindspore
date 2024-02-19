@@ -16,12 +16,12 @@
 #include <functional>
 #include <algorithm>
 #include "plugin/device/gpu/kernel/nn/dropout_gpu_kernel.h"
-#include "mindspore/core/ops/dropout.h"
+#include "mindspore/core/ops/ops_func_impl/dropout.h"
 #include "kernel/philox_random.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kDropoutInputNum = 1;
+constexpr size_t kDropoutInputNum = 4;
 constexpr size_t kDropoutOutputNum = 2;
 
 bool DropoutFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
@@ -36,8 +36,8 @@ bool DropoutFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  uint64_t seed0 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("Seed0")));
-  uint64_t seed1 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("Seed1")));
+  uint64_t seed0 = static_cast<uint64_t>(inputs[kIndex2]->GetValueWithCheck<int64_t>());
+  uint64_t seed1 = static_cast<uint64_t>(inputs[kIndex3]->GetValueWithCheck<int64_t>());
   seed_ = random::GetSeed(seed0, seed1);
   return true;
 }
@@ -58,7 +58,7 @@ int DropoutFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   input_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id()) * num_count_;
   output_size_ = abstract::TypeIdSize(outputs[kIndex0]->dtype_id()) * num_count_;
   InitSizeLists();
-  keep_prob_ = GetValue<float>(primitive_->GetAttr("keep_prob"));
+  keep_prob_ = inputs[kIndex1]->GetValueWithCheck<float>();
   input_shape_ = inputs[kIndex0]->GetShapeVector();
   num_count_ = std::accumulate(input_shape_.begin(), input_shape_.end(), int64_t(1), std::multiplies<int64_t>());
   if (num_count_ % kDropoutTileSize == 0) {
@@ -151,11 +151,29 @@ bool DropoutFwdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inp
 }
 
 std::vector<std::pair<KernelAttr, DropoutFwdGpuKernelMod::DropoutFunc>> DropoutFwdGpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16)
+     .AddOutputAttr(kNumberTypeFloat16),
    &DropoutFwdGpuKernelMod::LaunchKernel<half>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32),
    &DropoutFwdGpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64),
    &DropoutFwdGpuKernelMod::LaunchKernel<double>}};
 
 std::vector<KernelAttr> DropoutFwdGpuKernelMod::GetOpSupport() {

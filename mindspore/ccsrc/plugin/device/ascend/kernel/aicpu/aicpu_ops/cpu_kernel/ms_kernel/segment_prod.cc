@@ -352,5 +352,5 @@ uint32_t SegmentProdCpuKernel::SegmentProdCompute_Complex(const CpuKernelContext
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kSegmentProd, SegmentProdCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSegmentProd, SegmentProdCpuKernel);
 }  // namespace aicpu

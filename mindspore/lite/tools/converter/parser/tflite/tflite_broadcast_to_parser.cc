@@ -18,7 +18,7 @@
 #include "tools/converter/parser/tflite/tflite_broadcast_to_parser.h"
 #include <vector>
 #include <memory>
-#include "ops/broadcast_to.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

@@ -16,7 +16,7 @@
 #ifndef AICPU_OPS_CPU_KERNEL_MS_KERNEL_DROPOUT2D_KERNELS_H_
 #define AICPU_OPS_CPU_KERNEL_MS_KERNEL_DROPOUT2D_KERNELS_H_
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 class Dropout2dCpuKernel : public CpuKernel {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "inc/ops/split_combination_ops.h"
+#include "op_proto/inc/split_combination_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/common_shape_fns.h"
@@ -22,8 +22,8 @@
 #include "utils/op_const.h"
 
 namespace ge {
-static void JoinShapeRanges(vector<pair<int64_t, int64_t>> &dest_ranges,
-                            const vector<pair<int64_t, int64_t>> &src_ranges) {
+static void JoinShapeRanges(std::vector<std::pair<int64_t, int64_t>> &dest_ranges,
+                            const std::vector<std::pair<int64_t, int64_t>> &src_ranges) {
   auto dest_size = dest_ranges.size();
   auto src_size = src_ranges.size();
   if (dest_size != src_size) {
@@ -36,10 +36,10 @@ static void JoinShapeRanges(vector<pair<int64_t, int64_t>> &dest_ranges,
   }
 }
 
-static vector<pair<int64_t, int64_t>> GetShapeRangesWithUnKnowConcatDim(Operator &op, int64_t num_concat) {
-  vector<pair<int64_t, int64_t>> input_shape_ranges;
-  vector<vector<pair<int64_t, int64_t>>> all_input_shape_ranges;
-  vector<pair<int64_t, int64_t>> output_shape_ranges;
+static std::vector<std::pair<int64_t, int64_t>> GetShapeRangesWithUnKnowConcatDim(Operator &op, int64_t num_concat) {
+  std::vector<std::pair<int64_t, int64_t>> input_shape_ranges;
+  std::vector<std::vector<std::pair<int64_t, int64_t>>> all_input_shape_ranges;
+  std::vector<std::pair<int64_t, int64_t>> output_shape_ranges;
   bool has_shape_ranges = false;
   for (int32_t i = 0; i < num_concat; i++) {
     const auto input_desc = op.GetDynamicInputDesc("x", i);
@@ -273,9 +273,9 @@ static graphStatus ConcatInferShapeCommon(Operator &op, const int64_t dy_input_s
   OP_LOGD(TbeGetName(op).c_str(), "output shape:%s", to_string(output_desc.GetShape()).c_str());
 
   if (IsUnKnownShape(output_shape_dims)) {
-    vector<pair<int64_t, int64_t>> input_shape_ranges;
-    vector<pair<int64_t, int64_t>> output_shape_ranges;
-    pair<int64_t, int64_t> output_concat_dim_range(0, 0);
+    std::vector<std::pair<int64_t, int64_t>> input_shape_ranges;
+    std::vector<std::pair<int64_t, int64_t>> output_shape_ranges;
+    std::pair<int64_t, int64_t> output_concat_dim_range(0, 0);
     for (const auto &input_desc : input_x_desc) {
       if (IsUnknownRankShape(input_desc.GetShape())) {
         output_concat_dim_range = {0, -1};

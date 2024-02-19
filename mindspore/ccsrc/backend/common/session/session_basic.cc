@@ -926,17 +926,24 @@ void SessionBasic::GetOpInputTensorsFromCNode(const CNodePtr &cnode,
                                               InputInfo *input_info) const {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(input_info);
-  const auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
-  input_info->input_values.resize(input_num);
-  for (size_t i = 1; i <= input_num; ++i) {
-    const auto &input = cnode->input(i);
-    auto kernel_with_index = common::AnfAlgo::VisitKernel(input, 0);
+  std::function<ValuePtr(const KernelWithIndex &)> fn = [&](const KernelWithIndex &kernel_with_index) -> ValuePtr {
     auto real_input = kernel_with_index.first;
     MS_EXCEPTION_IF_NULL(real_input);
     ValuePtr input_value = nullptr;
     if (real_input->isa<CNode>()) {
-      input_value = GetCNodeOutputTensor(kernel_with_index, op_output);
-      input_info->input_kernel.insert(kernel_with_index);
+      if (IsPrimitiveCNode(real_input, prim::kPrimMakeTuple)) {
+        const auto &c_make_tuple = real_input->cast<CNodePtr>();
+        ValuePtrList v_list;
+        for (size_t j = 1; j < c_make_tuple->size(); ++j) {
+          auto kernel_with_index_input = common::AnfAlgo::VisitKernel(c_make_tuple->input(j), 0);
+          (void)v_list.emplace_back(fn(kernel_with_index_input));
+          input_info->input_kernel.insert(kernel_with_index_input);
+        }
+        input_value = std::make_shared<ValueTuple>(v_list);
+      } else {
+        input_value = GetCNodeOutputTensor(kernel_with_index, op_output);
+        input_info->input_kernel.insert(kernel_with_index);
+      }
     } else if (real_input->isa<ValueNode>()) {
       input_value = GetValueNodeOutput(real_input, kernel_with_index.second);
     } else if (real_input->isa<Parameter>()) {
@@ -945,9 +952,24 @@ void SessionBasic::GetOpInputTensorsFromCNode(const CNodePtr &cnode,
     } else {
       MS_LOG(EXCEPTION) << "Invalid input node, node = " << real_input->DebugString();
     }
+    return input_value;
+  };
+
+  const auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
+  input_info->input_values.resize(input_num);
+  for (size_t i = 1; i <= input_num; ++i) {
+    const auto &input = cnode->input(i);
+    KernelWithIndex kernel_with_index;
+    // Pyboost tuple inputs can not plant, like op concat, addn, filln and so on
+    if (cnode->HasAttr(kAttrIsPyboostTupleInput)) {
+      kernel_with_index = common::AnfAlgo::VisitKernelWithReturnType(input, 0, false, {prim::kPrimMakeTuple});
+    } else {
+      kernel_with_index = common::AnfAlgo::VisitKernel(input, 0);
+    }
+    ValuePtr input_value = fn(kernel_with_index);
     MS_EXCEPTION_IF_NULL(input_value);
     MS_LOG(DEBUG) << "Get" << i << "th input tensor of " << cnode->fullname_with_scope() << " from "
-                  << real_input->fullname_with_scope() << "-" << kernel_with_index.second;
+                  << kernel_with_index.first->fullname_with_scope() << "-" << kernel_with_index.second;
     input_info->input_values[i - 1] = input_value;
   }
 }

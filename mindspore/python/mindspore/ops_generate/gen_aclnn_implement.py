@@ -26,6 +26,7 @@ from pyboost_utils import AclnnUtils, get_dtypes
 
 auto_gen = ''
 
+
 def gen_h(op_name, aclnn_name, op_yaml, kernelmod_h_path, need_update_shape):
     """generate h files"""
     kernelmod_name = op_yaml.get('dispatch').get("Ascend")
@@ -55,16 +56,33 @@ class {kernelmod_name} : public AclnnKernelMod {{
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
   void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   {update_shape}
+
+ private:
+  template <typename... Args>
+  void GetWorkspaceForResize(const Args &... args) {{
+    hash_id_ = transform::CalcOpApiHash(args...);
+    if (cache_hash_.count(hash_id_) == 0) {{
+      auto return_value = GEN_EXECUTOR_CUST(op_type_, args...);
+      UpdateWorkspace(return_value);
+    }} else {{
+      auto return_value = GEN_EXECUTOR_BOOST(op_type_, hash_id_, args...);
+      UpdateWorkspace(return_value);
+    }}
+  }}
 }};
 }}  // namespace kernel
 }}  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_{op_name.upper()}_ACLNN{auto_gen.upper()}_KERNEL_MOD_H_
 """
-    fd = os.open(kernelmod_h_path, os.O_WRONLY | os.O_CREAT, 0o644)
+    temp_file = kernelmod_h_path + "_tmp.h"
+    old_file = kernelmod_h_path + ".h"
+    fd = os.open(temp_file, os.O_WRONLY | os.O_CREAT, 0o644)
     h_file = os.fdopen(fd, 'w')
     h_file.write(gen_utils.cc_license_str + h_head + h_body)
     h_file.close()
+    gen_utils.check_change_and_replace_file(old_file, temp_file)
+
 
 def gen_cc(op_name, class_name, op_yaml, kernelmod_cc_path, need_update_shape):
     """generate cc files"""
@@ -73,12 +91,10 @@ def gen_cc(op_name, class_name, op_yaml, kernelmod_cc_path, need_update_shape):
 #include "plugin/device/ascend/kernel/opapi/aclnn{auto_gen}/{op_name}_aclnn_kernel.h"
 #include <algorithm>
 #include <vector>
-#include <map>
 #include <memory>
 #include <functional>
 #include "ir/tensor.h"
 #include "runtime/device/kernel_runtime.h"
-#include "transform/acl_ir/acl_helper.h"
 #include "transform/acl_ir/op_api_convert.h"
 #include "abstract/ops/primitive_infer_map.h"
 
@@ -95,6 +111,8 @@ namespace kernel {{
         input_name = "inputs[kIndex" + str(idx) + "], "
         dtype = input_dtypes.get(n)
         if dtype != 'tensor':
+            if dtype == 'int':
+                dtype = 'int64_t'
             input_templete += "  auto {} = transform::ConvertKernelTensor<{}>(inputs[kIndex{}]);\n".format(
                 n, dtype, idx)
             input_name = n + ", "
@@ -106,6 +124,8 @@ namespace kernel {{
         output_name = "outputs[kIndex" + str(idx) + "], "
         dtype = output_dtypes.get(n)
         if dtype != 'tensor':
+            if dtype == 'int':
+                dtype = 'int64_t'
             input_templete += "  auto {} = transform::ConvertKernelTensor<{}>(outputs[kIndex{}]);\n".format(
                 n, dtype, idx)
             output_name = n + ", "
@@ -117,8 +137,7 @@ namespace kernel {{
 void {kernelmod_name}::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                         const std::vector<KernelTensor *> &outputs) {{
   {input_templete}
-  auto return_value = GEN_EXECUTOR(op_type_, {inputs});
-  UpdateWorkspace(return_value);
+  GetWorkspaceForResize({inputs});
 }}
 """
     launch = f"""
@@ -126,7 +145,7 @@ bool {kernelmod_name}::Launch(const std::vector<KernelTensor *> &inputs, const s
                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {{
   MS_EXCEPTION_IF_NULL(stream_ptr);
   {input_templete}
-  ParseGenExecutor(GEN_EXECUTOR(op_type_, {inputs}));
+  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, {inputs}));
   RunOp(stream_ptr, workspace);
   return true;
 }}
@@ -142,27 +161,30 @@ void {kernelmod_name}::UpdateOutputShapeAndSize(const std::vector<KernelTensor *
         update_shape = ""
 
     reg = f"""
-MS_ACLLNN_KERNEL_FACTORY_REG({class_name}, {kernelmod_name});
+MS_ACLNN_KERNEL_FACTORY_REG({class_name}, {kernelmod_name});
 }}  // namespace kernel
 }}  // namespace mindspore
 
     """
-    fd = os.open(kernelmod_cc_path, os.O_WRONLY | os.O_CREAT, 0o644)
+    temp_file = kernelmod_cc_path + "_tmp.cc"
+    old_file = kernelmod_cc_path + ".cc"
+    fd = os.open(temp_file, os.O_WRONLY | os.O_CREAT, 0o644)
     cc_file = os.fdopen(fd, 'w')
     cc_file.write(gen_utils.cc_license_str + cc_head + workspace_info + launch + update_shape + reg)
     cc_file.close()
+    gen_utils.check_change_and_replace_file(old_file, temp_file)
+
 
 def generate(op_name, class_name, op_yaml, h_and_cc, need_update_shape):
     """generate cc and h files"""
-    kernelmod_h_path = h_and_cc[0]
-    kernelmod_cc_path = h_and_cc[1]
     aclnn_name = AclnnUtils.get_aclnn_interface(class_name)
-    gen_h(op_name, aclnn_name, op_yaml, kernelmod_h_path, need_update_shape)
-    gen_cc(op_name, class_name, op_yaml, kernelmod_cc_path, need_update_shape)
+    gen_h(op_name, aclnn_name, op_yaml, h_and_cc, need_update_shape)
+    gen_cc(op_name, class_name, op_yaml, h_and_cc, need_update_shape)
+
 
 def gen_aclnn_kernel(op_name, need_update_shape=False, auto=False):
     """gen_aclnn_kernel function"""
-    if check_op_registed(op_name):
+    if check_op_registed(op_name) and not auto:
         logging.warning("Kernel {%s} is already registered.", op_name)
         return
     current_path = os.path.dirname(os.path.abspath(__file__))
@@ -170,17 +192,24 @@ def gen_aclnn_kernel(op_name, need_update_shape=False, auto=False):
 
     # get ops yaml
     ops_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/ops.yaml')
+    inner_ops_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/inner_ops.yaml')
     aclnn_path = 'mindspore/ccsrc/plugin/device/ascend/kernel/opapi/aclnn/'
     yaml_str = gen_utils.safe_load_yaml(ops_yaml_path)
+    inner_yaml_str = gen_utils.safe_load_yaml(inner_ops_yaml_path)
+    # merge inner ops
+    yaml_str.update(inner_yaml_str)
     op_yaml = yaml_str.get(op_name)
     class_name = ''.join(word.capitalize() for word in op_name.split('_'))
-    if  op_yaml is None:
+    if op_yaml is None:
         raise ValueError("Input op {} is not find in ops.yaml.".format(op_name))
     dispatch = op_yaml.get("dispatch")
     if not dispatch or not dispatch.get("enable"):
         raise ValueError("Op {} is not enabled dispatch, please check.".format(op_name))
     global auto_gen
     if auto:
+        if check_op_registed(op_name, True):
+            # Don't auto generate kernelmod if it is achieved manually.
+            return
         auto_gen = "_auto_gen"
         dispatch['Ascend'] = class_name + "Ascend"
         aclnn_path = 'mindspore/ccsrc/plugin/device/ascend/kernel/opapi/aclnn_auto_gen/'
@@ -191,17 +220,16 @@ def gen_aclnn_kernel(op_name, need_update_shape=False, auto=False):
     op_class = op_yaml.get("class")
     if op_class is not None and op_class.get("name") is not None:
         class_name = op_class.get("name")
-    kernelmod_cc_path = os.path.join(work_path, aclnn_path + '{}_aclnn_kernel.cc'.format(op_name))
-    kernelmod_h_path = os.path.join(work_path, aclnn_path + '{}_aclnn_kernel.h'.format(op_name))
-    h_and_cc = [kernelmod_h_path, kernelmod_cc_path]
-    generate(op_name, class_name, op_yaml, h_and_cc, need_update_shape)
+    kernelmod_h_and_cc_path = os.path.join(work_path, aclnn_path + '{}_aclnn_kernel'.format(op_name))
+    generate(op_name, class_name, op_yaml, kernelmod_h_and_cc_path, need_update_shape)
 
-def get_registed_ops():
+
+def get_registed_ops(file_path='mindspore/ccsrc/plugin/device/ascend/kernel/opapi/'):
     '''get registered ops by search files'''
-    # search in 'mindspore/ccsrc/plugin/device/ascend/kernel/opapi/'
+    # default search in 'mindspore/ccsrc/plugin/device/ascend/kernel/opapi/'
     current_path = os.path.dirname(os.path.abspath(__file__))
     work_path = os.path.join(current_path, '../../../../')
-    search_path = os.path.join(work_path, 'mindspore/ccsrc/plugin/device/ascend/kernel/opapi/')
+    search_path = os.path.join(work_path, file_path)
     ret = []
     try:
         for root_path, _, files in os.walk(search_path):
@@ -216,13 +244,18 @@ def get_registed_ops():
         return ret
     return ret
 
-registed_ops = get_registed_ops()
 
-def check_op_registed(op_name):
+registed_ops = get_registed_ops()
+manual_registed_ops = get_registed_ops('mindspore/ccsrc/plugin/device/ascend/kernel/opapi/aclnn/')
+
+
+def check_op_registed(op_name, manual=False):
     '''if op already registered return true'''
     global registed_ops
+    global manual_registed_ops
     class_name = ''.join(word.capitalize() for word in op_name.split('_'))
-    return class_name in registed_ops
+    return (class_name in manual_registed_ops) if manual else (class_name in registed_ops)
+
 
 def main(op_name, need_update_shape):
     '''main func'''
@@ -242,5 +275,5 @@ if __name__ == "__main__":
             raise ValueError("Please provide op name to generate aclnn kernelmod.")
         is_need_update_shape = options.need_update_shape
         main(name, is_need_update_shape)
-    except Exception as e: # pylint: disable=W0703
+    except Exception as e:  # pylint: disable=W0703
         logging.exception("Generate aclnn kernelmod failed, err info: %s", e)

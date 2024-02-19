@@ -42,18 +42,21 @@ void GatherInfo(mindspore::kernel::KernelTensor *tensor) {
   if (!shape.empty()) {
     MemcpyToBuf(shape.data(), static_cast<int64_t>(shape_size * sizeof(int64_t)));
   }
+
   // data type
   auto dtype = tensor->dtype_id();
   MemcpyToBuf(&dtype, sizeof(int));
-  // separator
-  MemcpyToBuf(",", 1);
-  // strides(current hasn't uncontinus tensor)
-  MemcpyToBuf(",", 1);
-  // offset(current hasn't uncontinus tensor)
-  MemcpyToBuf(",", 1);
-  // storage shape(current hasn't special format)
-  if (!shape.empty()) {
-    MemcpyToBuf(shape.data(), static_cast<int64_t>(shape_size * sizeof(int64_t)));
+
+  const auto &storage_info = tensor->tensor_storage_info();
+  if (storage_info != nullptr) {
+    // strides
+    MemcpyToBuf(storage_info->strides.data(), static_cast<int64_t>(storage_info->strides.size() * sizeof(int64_t)));
+
+    // offset
+    MemcpyToBuf(&storage_info->storage_offset, sizeof(int64_t));
+
+    // origin shape
+    MemcpyToBuf(storage_info->ori_shape.data(), static_cast<int64_t>(storage_info->ori_shape.size()) * sizeof(int64_t));
   }
 
   add_tensor_addr_to_cached_list_func(tensor->device_ptr());
@@ -65,6 +68,12 @@ void GatherInfo(const std::pair<mindspore::kernel::KernelTensor *, bool> &tensor
   GatherInfo(tensor);
   // trans
   MemcpyToBuf(&trans, 1);
+}
+
+void GatherInfo(const std::vector<mindspore::kernel::KernelTensor *> &tensor_list) {
+  for (auto tensor : tensor_list) {
+    GatherInfo(tensor);
+  }
 }
 
 void GatherInfo(const mindspore::tensor::TensorPtr &tensor) {
@@ -172,6 +181,26 @@ void GatherInfo(const std::optional<string> &s) {
 }
 
 void GatherInfo() {}
+
+void RefreshAddr(mindspore::kernel::KernelTensor *tensor) {
+  if (tensor == nullptr) {
+    return;
+  }
+
+  static const auto add_tensor_addr_to_cached_list = transform::GetOpApiFunc("AddTensorAddrToCachedList");
+  if (add_tensor_addr_to_cached_list == nullptr) {
+    MS_LOG(EXCEPTION) << "AddTensorAddrToCachedList not in " << transform::GetOpApiLibName() << ", please check!";
+  }
+  AddTensorAddrToCachedList add_tensor_addr_to_cached_list_func =
+    reinterpret_cast<AddTensorAddrToCachedList>(add_tensor_addr_to_cached_list);
+  MS_EXCEPTION_IF_NULL(add_tensor_addr_to_cached_list_func);
+
+  add_tensor_addr_to_cached_list_func(tensor->device_ptr());
+}
+
+void RefreshAddr(const std::pair<mindspore::kernel::KernelTensor *, bool> &tensor_and_trans) {
+  RefreshAddr(tensor_and_trans.first);
+}
 
 constexpr int g_rShift33Bits = 33;
 constexpr uint64_t MIX_STEP1 = 18397679294719823053LLU;

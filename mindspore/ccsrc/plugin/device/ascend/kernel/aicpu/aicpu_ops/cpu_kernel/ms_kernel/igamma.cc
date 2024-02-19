@@ -241,5 +241,5 @@ uint32_t IgammaCpuKernel::IgammaCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kigamma, IgammaCpuKernel);
+REGISTER_MS_CPU_KERNEL(kigamma, IgammaCpuKernel);
 }  // namespace aicpu

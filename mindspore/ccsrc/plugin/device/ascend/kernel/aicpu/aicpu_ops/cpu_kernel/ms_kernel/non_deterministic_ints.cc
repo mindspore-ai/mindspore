@@ -20,7 +20,7 @@
 #include <iostream>
 #include <random>
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 
@@ -123,5 +123,5 @@ uint32_t NonDeterministicIntsCpuKernel::Compute(CpuKernelContext &ctx) {
   KERNEL_CHECK_FALSE((ret == KERNEL_STATUS_OK), ret, "Compute failed.");
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kNonDeterministicInts, NonDeterministicIntsCpuKernel);
+REGISTER_MS_CPU_KERNEL(kNonDeterministicInts, NonDeterministicIntsCpuKernel);
 }  // namespace aicpu

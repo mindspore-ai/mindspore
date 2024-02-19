@@ -1,6 +1,12 @@
 # path variables for graphengine submodule, it has to be included after mindspore/core
 # and minspore/ccsrc to prevent conflict of op headers
 
+if(MSLITE_ENABLE_ACL)
+    set(GRAPHENGINE_PATH "${TOP_DIR}/graphengine/910")
+else()
+    set(GRAPHENGINE_PATH "${CMAKE_SOURCE_DIR}/graphengine/910")
+endif()
+
 if(ENABLE_TESTCASES OR ENABLE_CPP_ST OR ENABLE_C_ST)
     message("Note: compile ut & st with include file to mock: ${GRAPHENGINE_PATH}/third_party/fwkacllib/inc/runtime")
     include_directories(${GRAPHENGINE_PATH}/third_party/fwkacllib/inc)

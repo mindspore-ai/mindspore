@@ -19,14 +19,14 @@
 
 #include <functional>
 #include <utility>
-#include "runtime/pynative/async/task.h"
+#include "runtime/pipeline/task/task.h"
 
 namespace mindspore {
 namespace pynative {
-class BpropTask : public AsyncTask {
+class BpropTask : public runtime::AsyncTask {
  public:
-  explicit BpropTask(const std::function<void(void)> &task) : AsyncTask(kBpropTask), run_task_(task) {}
-  explicit BpropTask(std::function<void(void)> &&task) : AsyncTask(kBpropTask), run_task_(std::move(task)) {}
+  explicit BpropTask(const std::function<void(void)> &task) : AsyncTask(runtime::kBpropTask), run_task_(task) {}
+  explicit BpropTask(std::function<void(void)> &&task) : AsyncTask(runtime::kBpropTask), run_task_(std::move(task)) {}
   ~BpropTask() override = default;
   void Run() override;
 

@@ -38,10 +38,9 @@ from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize, Fra
 from mindspore.ops.operations.nn_ops import PadV3
 from mindspore.ops.operations.nn_ops import ChannelShuffle
 from mindspore.ops.operations.nn_ops import TripletMarginLoss
-from mindspore.ops.operations._inner_ops import SiLU
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
-from mindspore.ops.auto_generate import log_softmax, prelu, celu, fast_gelu
+from mindspore.ops.auto_generate import log_softmax, prelu, celu, fast_gelu, silu, elu, sigmoid, bias_add, relu6
 
 abs_ = P.Abs()
 add_ = P.Add()
@@ -2605,7 +2604,7 @@ def softmax(input, axis=-1, *, dtype=None):
         raise TypeError(f" the type of 'axis' must be 'int', but got '{axis}' with type '{type_axis}'.")
     if dtype is not None:
         input = ops.cast(input, dtype)
-    softmax_ = _get_cache_prim(P.Softmax)(axis=axis)
+    softmax_ = _get_cache_prim(P.Softmax)(axis)
     return softmax_(input)
 
 
@@ -2653,7 +2652,7 @@ def softmin(x, axis=-1, *, dtype=None):
 
     if dtype is not None:
         x = ops.cast(x, dtype)
-    softmax_ = _get_cache_prim(P.Softmax)(axis=axis)
+    softmax_ = _get_cache_prim(P.Softmax)(axis)
     return softmax_(-1*x)
 
 
@@ -2761,51 +2760,6 @@ def softplus(input, beta=1, threshold=20): # pylint:disable=redefined-outer-name
     return ops.select(input * beta > threshold, input, op_output)
 
 
-def silu(x):
-    r"""
-    Computes Sigmoid Linear Unit of input element-wise. The SiLU function is defined as:
-
-    .. math::
-
-        \text{SiLU}(x) = x * \sigma(x),
-
-    where :math:`x` is an element of the input, :math:`\sigma(x)` is Sigmoid function.
-
-    .. math::
-
-        \text{sigma}(x_i) = \frac{1}{1 + \exp(-x_i)},
-
-    SiLU Activation Function Graph:
-
-    .. image:: ../images/SiLU.png
-        :align: center
-
-    Args:
-        input (Tensor): `input` is `x` in the preceding formula. Input with the data type
-            float16 or float32.
-
-    Returns:
-        Tensor, with the same type and shape as the `input`.
-
-    Raises:
-        TypeError: If dtype of `input` is neither float16 nor float32.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> import numpy as np
-        >>> input = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
-        >>> output = ops.silu(input)
-        >>> print(output)
-        [-0.269  1.762  -0.1423  1.762  -0.269]
-    """
-    silu_ = _get_cache_prim(SiLU)()
-    return silu_(x)
-
-
 def selu(input_x):
     r"""
     Activation function SeLU (Scaled exponential Linear Unit).
@@ -2853,47 +2807,6 @@ def selu(input_x):
         [ 2.101402 -1.7462534 9.456309 ]]
     """
     return selu_(input_x)
-
-
-def sigmoid(input):
-    r"""
-    Computes Sigmoid of input element-wise. The Sigmoid function is defined as:
-
-    .. math::
-
-        \text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)}
-
-    where :math:`x_i` is an element of `x`.
-
-    Sigmoid Activation Function Graph:
-
-    .. image:: ../images/Sigmoid.png
-        :align: center
-
-    Args:
-        input (Tensor): `input` is `x` in the preceding formula. Tensor of any dimension,
-            the data type is float16, float32, float64, complex64 or complex128.
-
-    Returns:
-        Tensor, with the same type and shape as the input.
-
-    Raises:
-        TypeError: If dtype of `input` is not float16, float32, float64, complex64 or complex128.
-        TypeError: If `input` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
-        >>> output = ops.sigmoid(input)
-        >>> print(output)
-        [0.7310586  0.880797   0.95257413 0.98201376 0.9933072 ]
-    """
-    return _get_cache_prim(NN_OPS.Sigmoid)()(input)
 
 
 def logsigmoid(x):
@@ -3423,50 +3336,6 @@ def relu(input):
     """
     relu_ = _get_cache_prim(NN_OPS.ReLU)()
     return relu_(input)
-
-
-def relu6(x):
-    r"""
-    Computes ReLU (Rectified Linear Unit) upper bounded by 6 of input tensors element-wise.
-
-    .. math::
-
-        \text{ReLU6}(x) = \min(\max(0,x), 6)
-
-    It returns :math:`\min(\max(0,x), 6)` element-wise.
-
-    ReLU6 Activation Function Graph:
-
-    .. image:: ../images/ReLU6.png
-        :align: center
-
-    Args:
-        x (Tensor): Tensor of shape :math:`(N, *)`,
-            where :math:`*` means any number of additional dimensions.
-            Data type must be float16, float32.
-
-    Returns:
-        Tensor, with the same dtype and shape as the `x`.
-
-    Raises:
-        TypeError: If dtype of `x` is neither float16 nor float32.
-        TypeError: If `x` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> result = ops.relu6(input_x)
-        >>> print(result)
-        [[0. 4. 0.]
-         [2. 0. 6.]]
-    """
-    relu6_ = _get_cache_prim(NN_OPS.ReLU6)()
-    return relu6_(x)
 
 
 def rrelu(input, lower=1.0 / 8, upper=1.0 / 3):
@@ -5689,45 +5558,6 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
     return output[0]
 
 
-def bias_add(input_x, bias):
-    r"""
-    Returns the sum of the `input_x` and the `bias` Tensor. Before adding, the `bias` Tensor will be broadcasted to be
-    consistent with the shape of the `input_x` Tensor.
-
-    Args:
-        input_x (Tensor): The input tensor. The shape can be 2-5 dimensions. Supported dtypes:
-
-            - Ascend/CPU: all Number type.
-            - GPU: float16, float32, int8.
-
-        bias (Tensor): The bias tensor, with shape :math:`(C)`. C must be the same as channel dimension C of
-            `input_x`. It has the same type as `input_x`.
-
-    Returns:
-        Tensor, with the same shape and data type as `input_x`.
-
-    Raises:
-        TypeError: If `input_x` or `bias` is not a Tensor.
-        TypeError: If dtype of `input_x` and `bias` is inconsistent.
-        TypeError: If dimension of `input_x` is not in the range [2, 5].
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.arange(6).reshape((2, 3)), mindspore.float32)
-        >>> bias = Tensor(np.random.random(3).reshape((3)), mindspore.float32)
-        >>> output = ops.bias_add(input_x, bias)
-        >>> print(output.shape)
-        (2, 3)
-    """
-    bias_add_op = _get_cache_prim(P.BiasAdd)(data_format="NCHW")
-    return bias_add_op(input_x, bias)
-
-
 def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
     r"""
     Computes the binary cross entropy(Measure the difference information between two probability distributions) between
@@ -6352,60 +6182,6 @@ def multilabel_soft_margin_loss(input, target, weight=None, reduction='mean'):
     class_dim = input.ndim - 1
     loss = loss.sum(axis=class_dim) / input_shape[class_dim]
     return _get_loss(loss, reduction, cls_name)
-
-
-def elu(input_x, alpha=1.0):
-    r"""
-    Exponential Linear Unit activation function.
-
-    Applies the exponential linear unit function element-wise.
-    The activation function is defined as:
-
-    .. math::
-
-        \text{ELU}(x)= \left\{
-        \begin{array}{align}
-            \alpha(e^{x}  - 1) & \text{if } x \le 0\\
-            x & \text{if } x \gt 0\\
-        \end{array}\right.
-
-    Where :math:`x` is the element of input Tensor `input_x`, :math:`\alpha` is param `alpha`,
-    it determines the smoothness of ELU.
-    The picture about ELU looks like this `ELU <https://en.wikipedia.org/wiki/
-    Activation_function#/media/File:Activation_elu.svg>`_ .
-
-    ELU Activation Function Graph:
-
-    .. image:: ../images/ELU.png
-        :align: center
-
-    Args:
-        input_x (Tensor): The input of ELU is a Tensor of any dimension with data type of float16 or float32.
-        alpha (float, optional): The alpha value of ELU, the data type is float. Only support '1.0' currently.
-            Default: ``1.0`` .
-
-    Returns:
-        Tensor, has the same shape and data type as `input_x`.
-
-    Raises:
-        TypeError: If `alpha` is not a float.
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
-        ValueError: If `alpha` is not equal to 1.0.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> output = ops.elu(x)
-        >>> print(output)
-        [[-0.63212055  4.         -0.99966455]
-         [ 2.         -0.99326205  9.        ]]
-    """
-    return _get_cache_prim(P.Elu)(alpha=alpha)(input_x)
 
 
 def gelu(input_x, approximate='none'):
@@ -7267,7 +7043,7 @@ def max_pool2d(x, kernel_size, stride=None, padding=0, dilation=1, return_indice
     return out
 
 
-def prompt_flash_attention(query, key, value, padding_mask, attn_mask, actual_seq_lengths, actual_seq_lengths_kv,
+def prompt_flash_attention(query, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, pse_shift,
                            deq_scale1, quant_scale1, deq_scale2, quant_scale2, quant_offset2, num_heads,
                            scale_value=1.0, pre_tokens=2147483547, next_tokens=0, input_layout='BSH',
                            num_key_value_heads=0, sparse_mode=0, inner_precise=1):
@@ -7290,11 +7066,11 @@ def prompt_flash_attention(query, key, value, padding_mask, attn_mask, actual_se
           Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
         value (Tensor) - The value tensor with data type of float16 or float32.
           Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
-        padding_mask (Tensor) - The padding mask tensor with data type of float16 or float32
         attn_mask (Tensor) - The attention mask tensor with data type of float16 or float32.
           For each element, 0 indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, 1, S, S)`.
         actual_seq_lengths (Tensor): Describe actual sequence length of each input with data type of int64.
         actual_seq_lengths_kv (Tensor): Describe actual sequence length of each input with data type of int64.
+        pse_shift (Tensor) - The position encoding tensor with data type of float16 or float32.
         dep_scale1 (Tensor)
         quant_scale1 (Tensor)
         deq_scale2 (Tensor)
@@ -7333,13 +7109,13 @@ def prompt_flash_attention(query, key, value, padding_mask, attn_mask, actual_se
         >>> value = Tensor(np.ones((B, N, S, D), dtype=np.float16))
         >>> out = ops.prompt_flash_attention(query, key, value, None, None, None, None, None, None, None, None,
                                              None, N, input_layout='BNSD')
-        >>> print(out[0].shape)
+        >>> print(out.shape)
         (1, 16, 256, 16)
     """
 
     pfa = _get_cache_prim(NN_OPS.PromptFlashAttention)(num_heads, scale_value, pre_tokens, next_tokens, input_layout,
                                                        num_key_value_heads, sparse_mode, inner_precise)
-    return pfa(query, key, value, padding_mask, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, deq_scale1,
+    return pfa(query, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, pse_shift, deq_scale1,
                quant_scale1, deq_scale2, quant_scale2, quant_offset2)
 
 

@@ -12,3 +12,5 @@ floor_div:
     returns:
         output:
             dtype: tensor
+    function:
+        name: floor_divide

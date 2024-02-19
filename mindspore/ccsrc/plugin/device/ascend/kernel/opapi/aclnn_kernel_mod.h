@@ -20,6 +20,7 @@
 #include <map>
 #include <string>
 #include <tuple>
+#include <unordered_set>
 #include <utility>
 #include "ops/base_operator.h"
 #include "ops/op_def.h"
@@ -43,19 +44,15 @@ class EmptyKernelTensor {
  public:
   EmptyKernelTensor() { tensor_ = new KernelTensor(); }
   EmptyKernelTensor(TypeId type_id, TypeId dtype_id) {
-    tensor_ = new KernelTensor();
-    set_type_id(type_id);
-    set_dtype_id(dtype_id);
-    set_empty_shape();
+    if (type_id == kObjectTypeTensorType) {
+      tensor_ = new KernelTensor();
+      auto tensor_shape = std::make_shared<abstract::TensorShape>();
+      tensor_shape->SetShapeVector({0});
+      tensor_->SetType(std::make_shared<TensorType>(TypeIdToType(dtype_id)));
+      tensor_->SetShape(tensor_shape);
+    }
   }
   ~EmptyKernelTensor() { delete tensor_; }
-  void set_dtype_id(TypeId dtype_id) { tensor_->set_dtype_id(dtype_id); }
-  void set_type_id(TypeId type_id) { tensor_->set_type_id(type_id); }
-  void set_empty_shape() {
-    auto tensor_shape = std::make_shared<abstract::TensorShape>();
-    tensor_shape->SetShapeVector({0});
-    tensor_->SetShape(tensor_shape);
-  }
   KernelTensor *get() const { return tensor_; }
 
  private:
@@ -77,12 +74,45 @@ class AclnnKernelMod : public KernelMod {
 
   void ResetDeivceAddress(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {}
 
-  void ParseGenExecutor(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args);
-
   bool IsNeedUpdateOutputShapeAndSize() override { return false; }
   std::vector<KernelAttr> GetOpSupport() override { MS_LOG(EXCEPTION) << "This interface is not support in aclnn."; }
 
-  void UpdateWorkspace(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args);
+  template <typename... Args>
+  void UpdateWorkspace(const std::tuple<Args...> &args) {
+    auto real_workspace_size = static_cast<size_t>(std::get<0>(args));
+    if (real_workspace_size != 0) {
+      std::vector<size_t> workspace_size_list = {real_workspace_size};
+      SetWorkspaceSizeList(workspace_size_list);
+    }
+
+    constexpr size_t kBoostGeneratorSize = 5;
+    if constexpr (std::tuple_size_v<std::tuple<Args...>> == kBoostGeneratorSize) {
+      constexpr size_t kHashIdIndex = 3;
+      hash_id_ = std::get<kHashIdIndex>(args);
+    }
+  }
+
+  template <typename... Args>
+  void ParseGenExecutor(const std::tuple<Args...> &args) {
+    executor_ = std::get<1>(args);
+    if (executor_ == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Please check op api's generate!";
+    }
+    release_func_ = std::get<2>(args);
+
+    constexpr size_t kBoostGeneratorSize = 5;
+    if constexpr (std::tuple_size_v<std::tuple<Args...>> == kBoostGeneratorSize) {
+      constexpr size_t kHashIdIndex = 3;
+      hash_id_ = std::get<kHashIdIndex>(args);
+      if (cache_hash_.count(hash_id_) != 0) {
+        return;
+      }
+      constexpr size_t kHitIndex = 4;
+      if (std::get<kHitIndex>(args)) {
+        cache_hash_.insert(hash_id_);
+      }
+    }
+  }
 
   void RunOp(void *stream_ptr, const std::vector<KernelTensor *> &workspace);
   void RunOpSync(void *stream_ptr, const std::vector<KernelTensor *> &workspace);
@@ -127,42 +157,57 @@ class AclnnKernelMod : public KernelMod {
   aclOpExecutor *executor_{nullptr};
   CallBackFunc release_func_{nullptr};
   std::string op_type_;
+  uint64_t hash_id_{0};
+  std::unordered_set<uint64_t> cache_hash_;
 };
 
 using AclnnKernelModPtr = std::shared_ptr<AclnnKernelMod>;
 using AclnnKernelModPtrList = std::vector<AclnnKernelModPtr>;
 
-#define REGISTER_ACLNN_CLASS(TYPE)                                                                          \
-  template <size_t N>                                                                                       \
-  class Aclnn##TYPE##KernelMod : public AclnnKernelMod {                                                    \
-   public:                                                                                                  \
-    explicit Aclnn##TYPE##KernelMod(std::string &&op_type) : AclnnKernelMod(std::move(op_type)) {}          \
-    ~Aclnn##TYPE##KernelMod() = default;                                                                    \
-    void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,                                        \
-                          const std::vector<KernelTensor *> &outputs) override {                            \
-      auto executor_info = GenExecutor(inputs, outputs);                                                    \
-      this->UpdateWorkspace(executor_info);                                                                 \
-    }                                                                                                       \
-    bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,    \
-                const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {                    \
-      this->ParseGenExecutor(GenExecutor(inputs, outputs));                                                 \
-      this->RunOp(stream_ptr, workspace);                                                                   \
-      return true;                                                                                          \
-    }                                                                                                       \
-                                                                                                            \
-   private:                                                                                                 \
-    template <typename... Ts>                                                                               \
-    auto GenExecutor(const std::vector<Ts> &... vecs) {                                                     \
-      const auto &op_type = this->op_type_;                                                                 \
-      const auto &res_tuple = this->GetKernelTuple<N>(vecs...);                                             \
-      auto executor_info =                                                                                  \
-        std::apply([&op_type](const auto &... args) { return GEN_EXECUTOR(op_type, args...); }, res_tuple); \
-      return executor_info;                                                                                 \
-    }                                                                                                       \
+#define REGISTER_ACLNN_CLASS(TYPE)                                                                            \
+  template <size_t N>                                                                                         \
+  class Aclnn##TYPE##KernelMod : public AclnnKernelMod {                                                      \
+   public:                                                                                                    \
+    explicit Aclnn##TYPE##KernelMod(std::string &&op_type) : AclnnKernelMod(std::move(op_type)) {}            \
+    ~Aclnn##TYPE##KernelMod() = default;                                                                      \
+    void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,                                          \
+                          const std::vector<KernelTensor *> &outputs) override {                              \
+      const auto &res_tuple = this->GetKernelTuple<N>(inputs, outputs);                                       \
+      std::apply(                                                                                             \
+        [this](const auto &... args) {                                                                        \
+          hash_id_ = transform::CalcOpApiHash(args...);                                                       \
+          if (cache_hash_.count(hash_id_) == 0) {                                                             \
+            auto return_value = GEN_EXECUTOR_CUST(op_type_, args...);                                         \
+            UpdateWorkspace(return_value);                                                                    \
+          } else {                                                                                            \
+            auto return_value = GEN_EXECUTOR_BOOST(op_type_, hash_id_, args...);                              \
+            UpdateWorkspace(return_value);                                                                    \
+          }                                                                                                   \
+        },                                                                                                    \
+        res_tuple);                                                                                           \
+    }                                                                                                         \
+    bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,      \
+                const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {                      \
+      this->ParseGenExecutor(GenExecutor(inputs, outputs));                                                   \
+      this->RunOp(stream_ptr, workspace);                                                                     \
+      return true;                                                                                            \
+    }                                                                                                         \
+                                                                                                              \
+   private:                                                                                                   \
+    template <typename... Ts>                                                                                 \
+    auto GenExecutor(const std::vector<Ts> &... vecs) {                                                       \
+      const auto &op_type = this->op_type_;                                                                   \
+      const auto &hash_id = this->hash_id_;                                                                   \
+      const auto &res_tuple = this->GetKernelTuple<N>(vecs...);                                               \
+      auto executor_info = std::apply(                                                                        \
+        [&op_type, &hash_id](const auto &... args) { return GEN_EXECUTOR_BOOST(op_type, hash_id, args...); }, \
+        res_tuple);                                                                                           \
+      return executor_info;                                                                                   \
+    }                                                                                                         \
   };
 
-#define MS_ACLLNN_KERNEL_FACTORY_REG(NAME, DERIVE_CLASS) MS_KERNEL_FACTORY_REG(AclnnKernelMod, NAME, DERIVE_CLASS)
-#define MS_ACLLNN_COMMON_KERNEL_FACTORY_REG(NAME, TYPE, N)                    \
+#define MS_ACLNN_KERNEL_FACTORY_REG(NAME, DERIVE_CLASS) MS_KERNEL_FACTORY_REG(AclnnKernelMod, NAME, DERIVE_CLASS)
+#define MS_ACLNN_COMMON_KERNEL_FACTORY_REG(NAME, TYPE, N)                     \
   REGISTER_ACLNN_CLASS(NAME)                                                  \
   static const KernelRegistrar<AclnnKernelMod> g_##NAME##_AclnnKernelMod_reg( \
     #NAME, []() { return std::make_shared<Aclnn##NAME##KernelMod<N>>(#TYPE); });

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cpu_kernel/inc/cpu_tensor.h"
+#include "cpu_tensor.h"
 #include "cpu_kernel/cpu_proto/tensor_impl.h"
 
 namespace aicpu {

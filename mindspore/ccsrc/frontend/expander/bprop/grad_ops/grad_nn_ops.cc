@@ -457,11 +457,11 @@ REG_BPROP_BUILDER("LRN").SetBody(BODYFUNC(ib) {
 });
 
 REG_BPROP_BUILDER("Dropout").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
-  auto out = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex2);
+  auto out = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex5);
   auto mask = ib->TupleGetItem(out, 1);
   auto dy = ib->TupleGetItem(dout, 0);
-  auto dx = ib->Emit(kDropoutGradOpName, {dy, mask}, {{"keep_prob", ib->GetAttr("keep_prob")}});
+  auto dx = ib->Emit(kDropoutGradOpName, {dy, mask}, {{"keep_prob", ib->GetInput(kIndex1)->BuildValue()}});
   return {dx};
 });
 
@@ -1375,6 +1375,29 @@ REG_BPROP_BUILDER("Softmax").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   return {dx, ib->OutZeros(axis)};
 });
 
+REG_BPROP_BUILDER("SoftmaxBackward").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+  auto grad_output = ib->GetInput(kIndex0);
+  auto output = ib->GetInput(kIndex1);
+  auto dim = ib->GetInput(kIndex2);
+  auto grad = ib->GetInput(kIndex4);
+
+  auto grad_dout = ib->Emit("SoftmaxBackward", {grad, output, dim});
+
+  // grad_out = grad_output * grad - (output * grad_output).sum(dim, true) * grad -
+  // grad_output * (output * grad).sum(dim, true)
+  auto softmax_double_backward_func = [&]() -> NodePtr {
+    auto dims = ib->MakeTuple({dim});
+    auto part1 = ib->Mul(grad_output, grad);
+    auto part2 = ib->Mul(ib->ReduceSum(ib->Mul(output, grad_output), dims, true), grad);
+    auto part3 = ib->Mul(grad_output, ib->ReduceSum(ib->Mul(output, grad), dims, true));
+    auto grad_out = part1 - part2 - part3;
+    return grad_out;
+  };
+  auto grad_out = softmax_double_backward_func();
+
+  return {grad_dout, grad_out, ib->OutZeros(dim)};
+});
+
 REG_BPROP_BUILDER("SparseSoftmaxCrossEntropyWithLogits").SetBody(BODYFUNC(ib) {
   auto is_grad = ib->GetAttr<bool>(kAttrIsGrad);
   auto labels = ib->GetInput(kIndex1);
@@ -2065,5 +2088,20 @@ REG_BPROP_BUILDER("FlashAttentionScore").SetBody((BODYFUNC(ib) {
   auto g_prefix = ib->ZerosLike(prefix);
   return {g_query, g_key, g_value, g_attn_mask, g_drop_mask, g_pse_shift, g_padding_mask, g_prefix};
 }));
+
+REG_BPROP_BUILDER("RmsNorm").SetBody((BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto gamma = ib->GetInput(kIndex1);
+  auto out = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
+  auto rstd = ib->TupleGetItem(out, kIndex1);
+  auto dy = ib->TupleGetItem(dout, kIndex0);
+
+  auto grad = ib->Emit("RmsNormGrad", {dy, x, rstd, gamma});
+  auto dx = ib->TupleGetItem(grad, kIndex0);
+  auto dgamma = ib->TupleGetItem(grad, kIndex1);
+  return {dx, dgamma};
+}));
+
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

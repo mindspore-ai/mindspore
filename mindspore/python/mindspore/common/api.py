@@ -40,7 +40,7 @@ from mindspore.common.sparse_tensor import COOTensor as PythonCOOTensor
 from mindspore.common.sparse_tensor import RowTensor as PythonRowTensor
 from mindspore._c_expression import GraphExecutor_, Tensor, CSRTensor, RowTensor, COOTensor, \
     PyNativeExecutor_, verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline, \
-    _ms_memory_recycle, _bind_device_ctx
+    _ms_memory_recycle, _bind_device_ctx, jit_mode_pi_enable, jit_mode_pi_compile
 from mindspore.parallel._ps_context import _is_role_sched
 from mindspore.parallel._utils import _check_full_batch, _get_parameter_broadcast, _is_pynative_parallel, \
     _is_in_auto_parallel_mode
@@ -63,6 +63,13 @@ BROADCAST_PHASE = "_broadcast_"
 _PYNATIVE_PARALLEL_FUNC_NAME = "after_shard"
 
 
+def _ms_adapter_tensor_as_parameter_output(data):
+    """Check whether the data is an output from a parameter which is a ms_adapter tensor."""
+    # pylint: disable=unidiomatic-typecheck
+    return ms_adapter_registry.is_registered and type(data) == ms_adapter_registry.tensor \
+           and hasattr(data, "__ms_parameter_output__") and getattr(data, "__ms_parameter_output__")
+
+
 def _convert_python_data(data):
     """
     Convert C++ data to python.
@@ -75,6 +82,8 @@ def _convert_python_data(data):
     """
     if isinstance(data, Tensor) and data.adapter_flag:
         return ms_adapter_registry.tensor(data)
+    if _ms_adapter_tensor_as_parameter_output(data):
+        return data.tensor
     if isinstance(data, Tensor) and not isinstance(data, PythonTensor):
         return PythonTensor(data, internal=True)
     if isinstance(data, CSRTensor) and not isinstance(data, PythonCSRTensor):
@@ -600,7 +609,7 @@ def _get_jit_hash(hash_input):
     return _get_obj_id(hash_input)
 
 
-def jit(fn=None, input_signature=None, hash_args=None, jit_config=None, compile_once=False):
+def jit(fn=None, mode="PSJit", input_signature=None, hash_args=None, jit_config=None, compile_once=False):
     """
     Create a callable MindSpore graph from a Python function.
 
@@ -612,6 +621,7 @@ def jit(fn=None, input_signature=None, hash_args=None, jit_config=None, compile_
 
     Args:
         fn (Function): The Python function that will be run as a graph. Default: ``None`` .
+        mode (str): The type of jit used, the value of mode should be ``PIJit`` or ``PSJit``. Default: ``PSJit`` .
         input_signature (Tensor): The Tensor which describes the input arguments. The shape and dtype of the Tensor
             will be supplied to this function. If input_signature is specified, each input to `fn` must be a `Tensor`.
             And the input parameters of `fn` cannot accept `**kwargs`. The shape and dtype of actual inputs should
@@ -724,9 +734,41 @@ def jit(fn=None, input_signature=None, hash_args=None, jit_config=None, compile_
 
         return staging_specialize
 
+    def pi_wrap_mindspore(decorated):
+        func = decorated
+        if isinstance(func, ms.nn.Cell):
+            func = func.construct
+        if isinstance(func, type) and issubclass(func, ms.nn.Cell):
+            func = func.construct
+        if isinstance(func, types.MethodType):
+            func = func.__func__
+        if not isinstance(func, types.FunctionType):
+            logger.warning("only support function and mindspore.nn.Cell instance")
+            return decorated
+
+        # generator, coroutine, awaitable and a function that return them is unsupported
+        UNSUPPORTED_CODE_TYPE = (inspect.CO_GENERATOR | inspect.CO_COROUTINE |
+                                 inspect.CO_ASYNC_GENERATOR | inspect.CO_ITERABLE_COROUTINE)
+        if func.__code__.co_flags & UNSUPPORTED_CODE_TYPE:
+            return decorated
+
+        config = dict()
+        if jit_config is not None:
+            config.update(jit_config)
+        jit_mode_pi_enable()
+
+        if jit_mode_pi_compile(func, config) is False:
+            logger.warning('add fn {} to compile failed '.format(func))
+
+        return decorated
+
+    wrap_func = wrap_mindspore
+    if mode == "PIJit":
+        wrap_func = pi_wrap_mindspore
+
     if fn is not None:
-        return wrap_mindspore(fn)
-    return wrap_mindspore
+        return wrap_func(fn)
+    return wrap_func
 
 
 def ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None):

@@ -15,7 +15,7 @@
 
 import numpy as np
 import pytest
-import test_utils
+from tests.st.utils import test_utils
 
 from mindspore import ops
 import mindspore as ms
@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def lin_space_forward_func(start, stop, num=5):
-    return ops.auto_generate.LinSpace()(start, stop, num)
+    return ops.LinSpace()(start, stop, num)
 
 
 @test_utils.run_with_cell
@@ -32,7 +32,7 @@ def lin_space_backward_func(start, stop, num=5):
 
 
 def lin_space_dyn_shape_func(start, stop, num=5):
-    return ops.auto_generate.LinSpace()(start, stop, num)
+    return ops.LinSpace()(start, stop, num)
 
 
 @pytest.mark.level1
@@ -41,7 +41,7 @@ def lin_space_dyn_shape_func(start, stop, num=5):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_lin_space_forward(mode):
     """
     Feature: Ops.
@@ -61,7 +61,7 @@ def test_lin_space_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_lin_space_backward(mode):
     """
     Feature: Auto grad.
@@ -79,7 +79,7 @@ def test_lin_space_backward(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_lin_space_vmap(mode):
     """
     Feature: test vmap function.
@@ -105,7 +105,7 @@ def test_lin_space_vmap(mode):
 @pytest.mark.platform_x86_gpu_training
 #@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_lin_sapce_dynamic(mode):
     """
     Feature: test dynamic tensor of lin_sapce.

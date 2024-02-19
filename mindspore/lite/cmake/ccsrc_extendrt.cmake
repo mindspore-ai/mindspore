@@ -35,8 +35,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
     ms_protobuf_generate(RPC_PROTO_SRCS RPC_PROTO_HDRS ${RPC_PROTO})
     list(APPEND MSLITE_PROTO_SRC ${RPC_PROTO_SRCS})
 
-    include_directories(${TOP_DIR}/graphengine/910/inc/external/hccl)
-
     add_library(mindspore-lite-proto STATIC ${MSLITE_PROTO_SRC})
 
     set(ANF_ALG_SRC

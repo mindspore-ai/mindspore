@@ -53,7 +53,7 @@ REG_BPROP_BUILDER("CropAndResize").SetUnusedInputs({i3, i4}).SetBody(BODYFUNC(ib
   auto x_shape = ib->GetShape(x);
   NodePtr image_size{nullptr};
   if (IsDynamic(x_shape)) {
-    image_size = ib->Emit("TupleToTensor", {ib->Shape(x), ib->EmitValue(kInt32)});
+    image_size = ib->Emit("TupleToTensor", {ib->Shape(x), ib->Value<int64_t>(kInt32->type_id())});
   } else {
     image_size = ib->Tensor(x_shape, kInt32);
   }

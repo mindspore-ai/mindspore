@@ -4,8 +4,8 @@
  * limitations under the License.
  */
 #include "custom_op_proto/cust_math_ops.h"
-#include "inc/ops/math_ops.h"
-#include "inc/ops/ragged_math_ops.h"
+#include "op_proto/inc/math_ops.h"
+#include "op_proto/inc/ragged_math_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/common_shape_fns.h"

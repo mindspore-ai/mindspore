@@ -229,5 +229,5 @@ uint32_t SparseTensorDenseMatMulCpuKernel::SparseTensorDenseMatMulCheck(const Cp
   KERNEL_CHECK_FALSE(x1_col == x2_row, KERNEL_STATUS_PARAM_INVALID, "can not do matrix multiplication.")
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kSparseTensorDenseMatMul, SparseTensorDenseMatMulCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSparseTensorDenseMatMul, SparseTensorDenseMatMulCpuKernel);
 }  // namespace aicpu

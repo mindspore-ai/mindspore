@@ -15,7 +15,7 @@
 # pylint: disable=unused-variable
 import numpy as np
 import pytest
-import test_utils
+from tests.st.utils import test_utils
 
 from mindspore import ops
 import mindspore as ms
@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def gcd_forward_func(x1, x2):
-    return ops.auto_generate.gcd(x1, x2)
+    return ops.gcd(x1, x2)
 
 
 @test_utils.run_with_cell
@@ -37,7 +37,7 @@ def gcd_backward_func(x1, x2):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_gcd_forward(mode):
     """
     Feature: Ops.
@@ -58,7 +58,7 @@ def test_gcd_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_gcd_backward(mode):
     """
     Feature: Auto grad.
@@ -78,7 +78,7 @@ def test_gcd_backward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_gcd_vmap(mode):
     """
     Feature: test vmap function.

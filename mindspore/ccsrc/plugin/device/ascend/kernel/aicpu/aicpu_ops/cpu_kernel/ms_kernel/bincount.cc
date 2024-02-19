@@ -168,5 +168,5 @@ uint32_t BincountCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kBincount, BincountCpuKernel);
+REGISTER_MS_CPU_KERNEL(kBincount, BincountCpuKernel);
 }  // namespace aicpu

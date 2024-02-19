@@ -23,6 +23,8 @@
 
 #include "utils/kernel_util.h"
 #include "cpu_kernel_utils.h"
+#include "securec/include/securec.h"
+#include "common/kernel_log.h"
 
 #define FLT_MAX __FLT_MAX__
 namespace {
@@ -109,5 +111,5 @@ uint32_t NoRepeatNGramCpuKernel::ComputeKernel(CpuKernelContext &ctx, const int6
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kNoRepeatNGram, NoRepeatNGramCpuKernel);
+REGISTER_MS_CPU_KERNEL(kNoRepeatNGram, NoRepeatNGramCpuKernel);
 }  // namespace aicpu

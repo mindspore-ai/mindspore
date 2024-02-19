@@ -120,12 +120,6 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_ENABLE_GRAD_COMM_OPT, false);
   set_param<bool>(MS_CTX_INTERLEAVED_MATMUL_COMM, false);
   set_param<bool>(MS_CTX_INTERLEAVED_LAYERNORM_COMM, false);
-  if (target == kAscendDevice || target == kDavinciDevice) {
-    // enable somas by default on ascend
-    set_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL, kOptimizeO1);
-  } else {
-    set_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL, kOptimizeO0);
-  }
   set_param<uint32_t>(MS_CTX_OP_TIMEOUT, kOpTimeout);
   set_param<int>(MS_CTX_JIT_SYNTAX_LEVEL, kLax);
   set_param<std::string>(MS_CTX_CONV_FPROP_ALGO, "normal");
@@ -146,6 +140,10 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   ascend_soc_version_ = "";
 
   params_read_status_ = std::vector<bool>(
+    static_cast<size_t>(MsCtxParam::NUM_BOOL_PARAMS + MsCtxParam::NUM_UINT32_PARAMS + MsCtxParam::NUM_INT_PARAMS +
+                        MsCtxParam::NUM_FLOAT_PARAMS + MsCtxParam::NUM_STRING_PARAMS),
+    false);
+  params_write_status_ = std::vector<bool>(
     static_cast<size_t>(MsCtxParam::NUM_BOOL_PARAMS + MsCtxParam::NUM_UINT32_PARAMS + MsCtxParam::NUM_INT_PARAMS +
                         MsCtxParam::NUM_FLOAT_PARAMS + MsCtxParam::NUM_STRING_PARAMS),
     false);
@@ -374,6 +372,13 @@ void MsContext::SetDeviceTargetFromInner(const std::string &device_target) {
     MS_LOG(INFO) << "ms set context device target:" << device_target;
     seter_(device_target);
   }
+  if (device_target == "Ascend" && !CheckWriteStatus(MS_CTX_MEMORY_OPTIMIZE_LEVEL)) {
+    MS_LOG(INFO) << "Set memory_optimize_level to O1 as default on ascend";
+    int_params_[MS_CTX_MEMORY_OPTIMIZE_LEVEL - MS_CTX_TYPE_INT_BEGIN] = kOptimizeO1;
+  } else if (!CheckWriteStatus(MS_CTX_MEMORY_OPTIMIZE_LEVEL)) {
+    MS_LOG(INFO) << "Set memory_optimize_level to O0 as default on other device";
+    int_params_[MS_CTX_MEMORY_OPTIMIZE_LEVEL - MS_CTX_TYPE_INT_BEGIN] = kOptimizeO0;
+  }
   string_params_[MS_CTX_DEVICE_TARGET - MS_CTX_TYPE_STRING_BEGIN] = device_target;
 }
 
@@ -445,6 +450,12 @@ void MsContext::MarkReadStatus(MsCtxParam param) const {
 #endif
 }
 
+void MsContext::MarkWriteStatus(MsCtxParam param) const {
+  if (static_cast<size_t>(param) < params_write_status_.size()) {
+    params_write_status_[static_cast<size_t>(param)] = true;
+  }
+}
+
 template <typename T>
 void MsContext::CheckReadStatus(MsCtxParam param, const T &value) const {
 #if !(defined(ENABLE_TEST) || defined(ENABLE_TESTCASES) || defined(BUILD_LITE))
@@ -467,11 +478,22 @@ void MsContext::CheckReadStatus(MsCtxParam param, const T &value) const {
 #endif
 }
 
+bool MsContext::CheckWriteStatus(MsCtxParam param) const {
+  if (static_cast<size_t>(param) >= params_write_status_.size()) {
+    return false;
+  }
+  return params_write_status_[static_cast<size_t>(param)];
+}
+
 // Reset ms context. Only called in child process after fork occurs.
 void MsContext::ChildAfterFork() {
   MS_LOG(DEBUG) << "Reset context after fork.";
   // configs can be modified again.
   params_read_status_ = std::vector<bool>(
+    static_cast<size_t>(MsCtxParam::NUM_BOOL_PARAMS + MsCtxParam::NUM_UINT32_PARAMS + MsCtxParam::NUM_INT_PARAMS +
+                        MsCtxParam::NUM_FLOAT_PARAMS + MsCtxParam::NUM_STRING_PARAMS),
+    false);
+  params_write_status_ = std::vector<bool>(
     static_cast<size_t>(MsCtxParam::NUM_BOOL_PARAMS + MsCtxParam::NUM_UINT32_PARAMS + MsCtxParam::NUM_INT_PARAMS +
                         MsCtxParam::NUM_FLOAT_PARAMS + MsCtxParam::NUM_STRING_PARAMS),
     false);

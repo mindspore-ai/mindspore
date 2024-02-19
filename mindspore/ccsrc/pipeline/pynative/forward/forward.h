@@ -28,9 +28,9 @@
 #include "pipeline/pynative/forward/do_infer.h"
 #include "backend/graph_compiler/backend.h"
 #include "ir/cell.h"
-#include "runtime/pynative/async/async_hqueue.h"
+#include "runtime/pipeline/async_hqueue.h"
 #include "ops/view/view_strides_calculator.h"
-#include "runtime/pynative/async/async_rqueue.h"
+#include "runtime/pipeline/async_rqueue.h"
 
 namespace mindspore {
 namespace pynative {
@@ -45,8 +45,7 @@ class ForwardExecutor {
   ForwardExecutor()
       : cast_operation_(std::make_shared<CastOperation>()),
         pyboost_cast_operation_(std::make_shared<PyBoostCastOperation>()),
-        infer_operation_(std::make_shared<InferOperation>()),
-        frontend_queue_(std::make_shared<AsyncRQueue>("frontend_queue", kThreadWaitLevel::kLevelFrontend)) {}
+        infer_operation_(std::make_shared<InferOperation>()) {}
   ~ForwardExecutor() = default;
 
   void Init();
@@ -96,15 +95,11 @@ class ForwardExecutor {
   inline void set_is_jit_compiling(bool is_jit_compiling) { is_jit_compiling_ = is_jit_compiling; }
   bool is_jit_compiling() const { return is_jit_compiling_; }
 
-  const AsyncRQueuePtr &frontend_queue() const { return frontend_queue_; }
-  void WorkerJoin() { frontend_queue_->WorkerJoin(); }
-  void ClearForwardTask();
   void WaitForwardTask();
   bool IsVmOp(const std::string &op_name) const;
   std::string GetCurrentCellObjId() const;
   std::string GetCurrentDeviceTarget(const PrimitivePtr &op_prim) const;
   void ReInit();
-  void RunContiguousTaskForTensor(const tensor::TensorPtr &tensor, const size_t &stream_id);
   void ForwardOpGradImpl(const FrontendOpRunInfoPtr &op_run_info);
   GradExecutorPtr grad() const;
   void InitOpRunInfo(const FrontendOpRunInfoPtr &op_run_info);
@@ -138,35 +133,27 @@ class ForwardExecutor {
   void PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info);
   void PrepareOpOutputs(const FrontendOpRunInfoPtr &op_run_info) const;
   void OpRunInfoUsePrimC(const FrontendOpRunInfoPtr &op_run_info) const;
-  void CreateInputAddressForViewOp(const tensor::TensorPtr &input_tensor, const FrontendOpRunInfoPtr &op_run_info,
-                                   const size_t &input_idx);
-  void DispatchViewKernelTask(const FrontendOpRunInfoPtr &op_run_info, const KernelTaskType &task_type);
-  void ForwardRunViewKernelTask(const FrontendOpRunInfoPtr &op_run_info, const KernelTaskType &task_type,
+  void CreateInputAddressForViewOp(const tensor::TensorPtr &input_tensor, const FrontendOpRunInfoPtr &op_run_info);
+  void DispatchViewKernelTask(const FrontendOpRunInfoPtr &op_run_info, const runtime::KernelTaskType &task_type);
+  void ForwardRunViewKernelTask(const FrontendOpRunInfoPtr &op_run_info, const runtime::KernelTaskType &task_type,
                                 bool enable_async);
 
   bool ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info, const ops::StridesCalcFunc &func_info,
                      bool is_tuple_output);
-  void RefreshTensorContiguous(const tensor::TensorPtr &tensor, const size_t &stream_id);
   device::DeviceAddressPtr TensorContiguousCallback(const DeviceSyncPtr &device_address,
                                                     const TensorStorageInfoPtr &storage_info);
 
   void CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
-                              const TensorStorageInfoPtr &storage_info,
-                              const std::shared_ptr<tensor::FutureBase<DeviceSync>> &input_origin_address_future,
-                              const DeviceSyncPtr &input_origin_device_address, const TypePtr &real_type);
+                              const TensorStorageInfoPtr &storage_info, runtime::KernelTaskType task_type);
 
   void DispatchAllocateMemTask(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
                                const size_t &input_idx, bool need_wait = false);
-  void CreateDeviceAddressForViewInput(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
-                                       const size_t &input_idx, bool enable_async, bool need_wait = false);
-  void RunContiguousTask(const tensor::TensorPtr &tensor, const size_t &stream_id, bool enable_async);
-  PrimitivePtr GetSlicePrimFromCache(const std::string &op_name, bool is_input_to_attr);
+  PrimitivePtr GetSlicePrimFromCache(const std::string &op_name);
   FrontendOpRunInfoPtr GenerateSliceOpRunInfo(const std::string &op_name, bool requires_grad,
                                               const stub::StubNodePtr &stub_output);
   void CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &view_input_tensor,
-                           const TensorStorageInfoPtrList &storage_infos,
-                           const std::shared_ptr<tensor::FutureBase<DeviceSync>> &input_origin_address_future,
-                           const DeviceSyncPtr &input_origin_device_address, bool is_tuple_output);
+                           runtime::KernelTaskType task_type, const TensorStorageInfoPtrList &storage_infos,
+                           bool is_tuple_output);
 
  private:
   bool init_{false};
@@ -180,7 +167,6 @@ class ForwardExecutor {
   PyBoostCastOperationPtr pyboost_cast_operation_;
   InferOperationPtr infer_operation_;
   MindrtBackendMap mindrt_backends_;
-  AsyncRQueuePtr frontend_queue_;
   mindspore::HashMap<std::string, PrimitivePtr> slice_prim_cache_;
 };
 }  // namespace pynative

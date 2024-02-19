@@ -20,7 +20,6 @@
 #include <memory>
 #include <functional>
 #include "ir/tensor.h"
-#include "runtime/stream.h"
 #include "runtime/device/kernel_runtime.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -30,18 +29,17 @@ namespace kernel {
 
 void SigmoidGradAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {
-  auto return_value = GEN_EXECUTOR(op_type_, inputs[kIndex1], inputs[kIndex0], outputs[kIndex0]);
-  UpdateWorkspace(return_value);
+  GetWorkspaceForResize(inputs[kIndex1], inputs[kIndex0], outputs[kIndex0]);
 }
 
 bool SigmoidGradAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                                const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  ParseGenExecutor(GEN_EXECUTOR(op_type_, inputs[kIndex1], inputs[kIndex0], outputs[kIndex0]));
+  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex1], inputs[kIndex0], outputs[kIndex0]));
   RunOp(stream_ptr, workspace);
   return true;
 }
 
-MS_ACLLNN_KERNEL_FACTORY_REG(SigmoidGrad, SigmoidGradAscend);
+MS_ACLNN_KERNEL_FACTORY_REG(SigmoidGrad, SigmoidGradAscend);
 }  // namespace kernel
 }  // namespace mindspore

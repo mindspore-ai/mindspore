@@ -15,7 +15,7 @@
 import numpy as np
 import mindspore as ms
 from mindspore import ops
-import test_utils
+from tests.st.utils import test_utils
 import pytest
 
 
@@ -37,7 +37,7 @@ def nllloss_grad_vmap_func(logits, loss_grad, labels, weight, total_weight):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('data_type', [np.float32])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_nllloss_grad(mode, data_type):
     """
     Feature: DynamicShape.
@@ -94,7 +94,7 @@ def get_grad_inputs_and_output(nptype_input, nptype_weight, reduction, input_typ
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('data_type', [np.float32])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_nllloss_grad_vmap(mode, data_type):
     """
     Feature: test NLLLossGrad vmap interface.

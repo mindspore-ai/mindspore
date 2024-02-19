@@ -20,7 +20,7 @@
 #include <vector>
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "securec.h"
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "cpu_kernel/common/cpu_kernel_utils.h"
 #include "common/kernel_log.h"
 #include "cpu_kernel/common/status.h"

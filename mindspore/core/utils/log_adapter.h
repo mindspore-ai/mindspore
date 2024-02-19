@@ -189,6 +189,7 @@ enum SubModuleId : int {
   SM_VM,                 // VM
   SM_PROFILER,           // profiler
   SM_PS,                 // Parameter Server
+  SM_PI,                 // PIJIT
   SM_FL,                 // Federated Learning
   SM_DISTRIBUTED,        // Distributed
   SM_LITE,               // LITE

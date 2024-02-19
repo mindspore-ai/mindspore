@@ -40,9 +40,14 @@ class StridedSliceGradCPUKernel : public LiteKernel {
   void FillEmptyDims();
   void FillOutputDim();
   void ParseMasks();
+  int CalStridedSliceGrad(float *input, float *output);
+  void FreeRunBuffer();
 
   StridedSliceParameter *param_;
   std::vector<int> output_shape_;
+  float *res_arr_ = nullptr;
+  float *temp_input_ = nullptr;
+  float *temp_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

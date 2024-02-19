@@ -17,12 +17,12 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops, Tensor
-import test_utils
+from tests.st.utils import test_utils
 
 
 @test_utils.run_with_cell
 def floor_div_forward_func(x, y):
-    return ops.auto_generate.floor_div(x, y)
+    return ops.floor_div(x, y)
 
 
 @test_utils.run_with_cell
@@ -36,7 +36,7 @@ def floor_div_backward_func(x, y):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_floor_div_forward(mode):
     """
     Feature: Ops.
@@ -57,7 +57,7 @@ def test_floor_div_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_floor_div_backward(mode):
     """
     Feature: Auto grad.
@@ -78,7 +78,7 @@ def test_floor_div_backward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_floor_div_vmap(mode):
     """
     Feature: test vmap function.

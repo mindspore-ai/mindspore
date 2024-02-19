@@ -157,5 +157,5 @@ uint32_t MatrixSolveCpuKernel::MatrixSolveCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kMatrixSolve, MatrixSolveCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMatrixSolve, MatrixSolveCpuKernel);
 }  // namespace aicpu

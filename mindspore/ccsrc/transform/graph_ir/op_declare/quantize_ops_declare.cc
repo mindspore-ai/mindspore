@@ -23,7 +23,8 @@ INPUT_MAP(AscendQuant) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(AscendQuant) = {{"scale", ATTR_DESC(scale, AnyTraits<float>())},
                          {"offset", ATTR_DESC(offset, AnyTraits<float>())},
                          {"sqrt_mode", ATTR_DESC(sqrt_mode, AnyTraits<bool>())},
-                         {"round_mode", ATTR_DESC(round_mode, AnyTraits<std::string>())}};
+                         {"round_mode", ATTR_DESC(round_mode, AnyTraits<std::string>())},
+                         {"dst_type", ATTR_DESC(dst_type, AnyTraits<GEType>())}};
 OUTPUT_MAP(AscendQuant) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(AscendQuant, kNameAscendQuant, ADPT_DESC(AscendQuant))
 

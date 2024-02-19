@@ -14,7 +14,7 @@
 # ============================================================================
 
 import pytest
-import test_utils
+from tests.st.utils import test_utils
 import numpy as np
 import mindspore as ms
 from mindspore import ops, Tensor
@@ -22,7 +22,7 @@ from mindspore import ops, Tensor
 
 @test_utils.run_with_cell
 def exp_forward_func(x):
-    return ops.auto_generate.exp(x)
+    return ops.exp(x)
 
 
 @test_utils.run_with_cell
@@ -36,7 +36,7 @@ def exp_backward_func(x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_exp_forward(mode):
     """
     Feature: Ops.
@@ -56,7 +56,7 @@ def test_exp_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_exp_backward(mode):
     """
     Feature: Auto grad.
@@ -76,7 +76,7 @@ def test_exp_backward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_exp_vmap(mode):
     """
     Feature: test vmap function.

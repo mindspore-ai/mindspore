@@ -56,7 +56,6 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/batch_to_space_nd.h
             ${TOP_DIR}/mindspore/core/ops/binary_cross_entropy.h
             ${TOP_DIR}/mindspore/core/ops/broadcast.h
-            ${TOP_DIR}/mindspore/core/ops/cast.h
             ${TOP_DIR}/mindspore/core/ops/clip.h
             ${TOP_DIR}/mindspore/core/ops/attention.h
             ${TOP_DIR}/mindspore/core/ops/constant_of_shape.h
@@ -67,7 +66,6 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/depend.h
             ${TOP_DIR}/mindspore/core/ops/depth_to_space.h
             ${TOP_DIR}/mindspore/core/ops/detection_post_process.h
-            ${TOP_DIR}/mindspore/core/ops/dropout.h
             ${TOP_DIR}/mindspore/core/ops/eltwise.h
             ${TOP_DIR}/mindspore/core/ops/fake_quant_with_min_max_vars.h
             ${TOP_DIR}/mindspore/core/ops/fake_quant_with_min_max_vars_per_channel.h
@@ -124,7 +122,6 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/size.h
             ${TOP_DIR}/mindspore/core/ops/random_standard_normal.h
             ${TOP_DIR}/mindspore/core/ops/crop_and_resize.h
-            ${TOP_DIR}/mindspore/core/ops/is_finite.h
             ${TOP_DIR}/mindspore/core/ops/uniform_real.h
             ${TOP_DIR}/mindspore/core/ops/splice.h
             ${TOP_DIR}/mindspore/core/ops/call.h

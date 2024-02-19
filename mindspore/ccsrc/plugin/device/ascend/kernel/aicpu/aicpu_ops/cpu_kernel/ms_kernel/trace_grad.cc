@@ -174,5 +174,5 @@ uint32_t TraceGradCpuKernel::TraceGradCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kTraceGrad, TraceGradCpuKernel);
+REGISTER_MS_CPU_KERNEL(kTraceGrad, TraceGradCpuKernel);
 }  // namespace aicpu

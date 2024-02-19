@@ -37,7 +37,6 @@
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 #include "include/backend/data_queue/data_queue_mgr.h"
-#include "aicpu/common/aicpu_task_struct.h"
 #include "external/graph/types.h"
 
 namespace mindspore {
@@ -339,6 +338,8 @@ bool AicpuOpKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const s
   if (need_skip_execute_) {
     // Skip reduce if axis is a empty Tensor (shape = 0)
     MS_LOG(INFO) << "For AICPU ,The node " << node_scope_name_ << " Need Skip.";
+    // cppcheck-suppress unreadVariable
+    auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
     aclError status = aclrtMemcpyAsync(outputs[0]->device_ptr(), inputs[0]->size(), inputs[0]->device_ptr(),
                                        inputs[0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
     if (status != ACL_ERROR_NONE) {
@@ -362,6 +363,8 @@ bool AicpuOpKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const s
 
   // copy extinfo to device
   if (ext_info_handler_ != nullptr) {
+    // cppcheck-suppress unreadVariable
+    auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
     auto ret = aclrtMemcpyAsync(ext_info_addr_dev_, ext_info_size_, ext_info_handler_->GetExtInfo(),
                                 ext_info_handler_->GetExtInfoLen(), ACL_MEMCPY_HOST_TO_DEVICE, stream_ptr);
     if (ret != ACL_ERROR_NONE) {
@@ -390,6 +393,8 @@ bool AicpuOpKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const s
   }
   MS_LOG(DEBUG) << "Aicpu launch, node_so_:" << node_so_ << ", node name:" << node_name_
                 << ", args_size:" << args_.length();
+  // cppcheck-suppress unreadVariable
+  auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
   rtArgsEx_t argsInfo = {};
   argsInfo.args = args_.data();
   argsInfo.argsSize = static_cast<uint32_t>(args_.length());

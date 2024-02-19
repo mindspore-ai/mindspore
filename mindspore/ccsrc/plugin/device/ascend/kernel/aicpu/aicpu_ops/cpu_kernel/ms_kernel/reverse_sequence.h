@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_REVERSE_SEQUENCE_H
 #define AICPU_KERNELS_NORMALIZED_REVERSE_SEQUENCE_H
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "status.h"
 
 namespace aicpu {

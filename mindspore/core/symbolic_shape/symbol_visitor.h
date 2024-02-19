@@ -23,7 +23,7 @@ namespace symshape {
 class MS_CORE_API SymbolVisitor {
  public:
   SymbolVisitor() = default;
-  ~SymbolVisitor() = default;
+  virtual ~SymbolVisitor() = default;
 
   void Visit(Symbol *symbol);
   virtual void VisitImpl(DynamicSymbol *symbol) {}

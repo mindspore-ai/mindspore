@@ -107,5 +107,5 @@ uint32_t ConjCpuKernel::ConjCompute(const CpuKernelContext &ctx) const {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kConj, ConjCpuKernel);
+REGISTER_MS_CPU_KERNEL(kConj, ConjCpuKernel);
 }  // namespace aicpu

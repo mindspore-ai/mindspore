@@ -117,6 +117,11 @@ static std::map<std::string, AttrConverterPair> DataFormatMap = {
   {ops::kFormat, DataFormatConverter},
 };
 
+static std::map<std::string, AttrConverterPair> FormatAndDataFormatMap = {
+  {ops::kFormat, DataFormatConverter},
+  {ops::kDataFormat, DataFormatConverter},
+};
+
 static std::map<std::string, AttrConverterPair> ReductionMap = {
   {ops::kReduction, ReductionConverter},
 };
@@ -156,13 +161,18 @@ static std::map<std::string, std::map<std::string, AttrConverterPair>> PrimAttrC
   {"BinaryCrossEntropyGrad", ReductionMap},
   {"NLLLoss", ReductionMap},
   {"NLLLossGrad", ReductionMap},
-  {"DepthToSpace", DataFormatMap},
+  {"DepthToSpace", FormatAndDataFormatMap},
+  {"SpaceToDepth", FormatAndDataFormatMap},
   {"Pooling", DataFormatMap},
   {"Deconvolution", DataFormatMap},
   {"AvgPoolV2", DataFormatMap},
   {"MaxPoolV3", DataFormatMap},
   {"FusedBatchNorm", DataFormatMap},
   {"DeformableConv2d", DataFormatMap}};
+
+bool CheckAndConvertUtils::CheckPrimAttrConverted(const std::string &op_name) {
+  return PrimAttrConvertMap.find(op_name) != PrimAttrConvertMap.end();
+}
 
 bool CheckAndConvertUtils::GetDataFormatEnumValue(const ValuePtr &value, int64_t *enum_value) {
   MS_EXCEPTION_IF_NULL(value);
@@ -1465,7 +1475,21 @@ size_t CheckAndConvertUtils::GetRemoveMonadAbsNum(const AbstractBasePtrList &abs
   }
   return remove_monad_count;
 }
+size_t CheckAndConvertUtils::GetRemoveUMonadAbsNum(const AbstractBasePtrList &abs_list) {
+  size_t remove_umonad_count = abs_list.size();
+  for (const auto &item : abs_list) {
+    if (item->isa<abstract::AbstractUMonad>()) {
+      --remove_umonad_count;
+    }
+  }
 
+  for (size_t i = 0; i < remove_umonad_count; ++i) {
+    if (abs_list[i]->isa<abstract::AbstractUMonad>()) {
+      MS_EXCEPTION(UnknownError) << "The umonad inputs of the node must at last of the node inputs.";
+    }
+  }
+  return remove_umonad_count;
+}
 bool CheckAndConvertUtils::HasDynamicShapeInput(const AbstractBasePtrList &abs_list) {
   for (const auto &item : abs_list) {
     MS_EXCEPTION_IF_NULL(item);

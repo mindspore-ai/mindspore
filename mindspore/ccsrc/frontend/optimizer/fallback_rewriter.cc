@@ -255,10 +255,16 @@ class BeforeOptARewriter : public BaseRewriter {
  protected:
   void ConvertParameter() {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
-    if (!allow_fallback_runtime || !is_dict_output_) {
-      return;
-    }
     for (const auto &para : root_graph_->parameters()) {
+      auto abs = para->abstract();
+      MS_EXCEPTION_IF_NULL(abs);
+      if (abs->isa<abstract::AbstractKeywordArg>()) {
+        auto kw_abs = abs->cast_ptr<abstract::AbstractKeywordArg>();
+        para->set_abstract(kw_abs->get_arg());
+      }
+      if (!allow_fallback_runtime || !is_dict_output_) {
+        continue;
+      }
       auto new_node_and_abs = ConvertParameterDictAbstract(para, para->abstract());
       if (new_node_and_abs.first == para) {
         continue;
@@ -829,7 +835,11 @@ class AfterOptARewriter : public BaseRewriter {
   using ThisClass = AfterOptARewriter;
   AfterOptARewriter(const FuncGraphPtr &root_graph, const FuncGraphManagerPtr &manager,
                     const StringSetPtr &value_with_inplace)
-      : BaseRewriter(root_graph, manager), data_with_inplace_(value_with_inplace) {}
+      : BaseRewriter(root_graph, manager), data_with_inplace_(value_with_inplace) {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    not_convert_jit_ = context->not_convert_jit();
+  }
   ~AfterOptARewriter() override = default;
 
  protected:
@@ -886,10 +896,8 @@ class AfterOptARewriter : public BaseRewriter {
 
   // DictGetItem --> PyExecute()
   AnfNodePtr ConvertDictGetItem(const CNodePtr &cnode) const {
-    auto context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context);
-    if (context->not_convert_jit()) {
-      return nullptr;
+    if (not_convert_jit_) {
+      return cnode;
     }
     MS_EXCEPTION_IF_NULL(cnode);
     // Inputs should be [dict_setitem, dict, item]
@@ -954,10 +962,8 @@ class AfterOptARewriter : public BaseRewriter {
 
   // DictSetItem --> PyExecute()
   AnfNodePtr ConvertDictSetItem(const CNodePtr &cnode) const {
-    auto context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context);
-    if (context->not_convert_jit()) {
-      return nullptr;
+    if (not_convert_jit_) {
+      return cnode;
     }
     MS_EXCEPTION_IF_NULL(cnode);
     // Inputs should be [dict_setitem, dict, item, value]
@@ -1069,10 +1075,8 @@ class AfterOptARewriter : public BaseRewriter {
 
   // MakeDict(keys, values) --> PyExecute('dict(zip(keys, values))', ...)
   AnfNodePtr ConvertMakeDict(const CNodePtr &node) const {
-    auto context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context);
-    if (context->not_convert_jit()) {
-      return nullptr;
+    if (not_convert_jit_) {
+      return node;
     }
     const auto &fg = node->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
@@ -2284,10 +2288,8 @@ class AfterOptARewriter : public BaseRewriter {
   // otherwise:
   //   dict(k0:v0, k1:v1, ...) --> PyExecute('dict(zip(keys, values))', ...)
   AnfNodePtr RebuildValueDict(const FuncGraphPtr &fg, const ValueNodePtr &value_node, const ValueDictionaryPtr &dict) {
-    auto context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context);
-    if (context->not_convert_jit()) {
-      return nullptr;
+    if (not_convert_jit_) {
+      return value_node;
     }
     auto abs = value_node->abstract();
     MS_EXCEPTION_IF_NULL(abs);
@@ -2466,6 +2468,7 @@ class AfterOptARewriter : public BaseRewriter {
 
  private:
   StringSetPtr data_with_inplace_;
+  bool not_convert_jit_{false};
 };
 
 void FindValueWithInplaceInner(const FuncGraphPtr &graph, const StringSetPtr &value_with_inplace) {

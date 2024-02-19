@@ -16,7 +16,7 @@
 #include <map>
 #include <set>
 #include <vector>
-#include "cpu_kernel/inc/cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 #include "utils/sparse_group.h"
 #include "utils/sparse_tensor.h"
 // 定义命名空间aicpu

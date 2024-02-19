@@ -68,8 +68,9 @@ class BACKEND_EXPORT SwapManager {
   SwapManager(size_t stream_id, DynamicMemPoolBestFit *device_memory_pool, PinMemPool *pin_mem_pool);
   ~SwapManager() = default;
   // Device memory
-  void *AllocDeviceMemory(size_t size);
-  std::vector<void *> AllocDeviceContinuousMem(const std::vector<size_t> &size_list);
+  void *AllocDeviceMemory(size_t size, uint32_t stream_id = kDefaultStreamIndex);
+  std::vector<void *> AllocDeviceContinuousMem(const std::vector<size_t> &size_list,
+                                               uint32_t stream_id = kDefaultStreamIndex);
   void FreeDeviceMemory(void *ptr);
 
   // Host memory
@@ -96,19 +97,20 @@ class BACKEND_EXPORT SwapManager {
   PinMemPool *GetPinMemPool() { return pin_mem_pool_; }
 
  private:
-  void *AllocDeviceMemorySimply(const size_t &size);
-  std::vector<void *> AllocDeviceContinuousMemSimply(const std::vector<size_t> &size_list);
-  void *AllocHostMemorySimply(const size_t &size);
-  bool EnoughFileSpace(const size_t &size);
+  void *AllocDeviceMemorySimply(const size_t &size, uint32_t stream_id = kDefaultStreamIndex);
+  std::vector<void *> AllocDeviceContinuousMemSimply(const std::vector<size_t> &size_list,
+                                                     uint32_t stream_id = kDefaultStreamIndex);
+  void *AllocHostMemorySimply(const size_t &size, uint32_t /*stream_id*/);
+  bool EnoughFileSpace(const size_t &size, uint32_t /*stream_id*/);
 
   template <class Input, class Output>
-  bool TryAllocate(std::queue<const DeviceAddress *> queue, const Input &input,
-                   Output (SwapManager::*allocate_func)(const Input &), const std::function<bool(Output)> &success,
-                   Output *output);
+  bool TryAllocate(std::queue<const DeviceAddress *> queue, const Input &input, uint32_t stream_id,
+                   Output (SwapManager::*allocate_func)(const Input &, uint32_t),
+                   const std::function<bool(Output)> &success, Output *output);
   template <class Input, class Output>
   bool SwapOutTemp(const std::pair<DeviceAddressStatus, StorageType> &swap_type, size_t total_size, const Input &input,
-                   Output (SwapManager::*allocate_func)(const Input &), const std::function<bool(Output)> &success,
-                   Output *output);
+                   uint32_t stream_id, Output (SwapManager::*allocate_func)(const Input &, uint32_t),
+                   const std::function<bool(Output)> &success, Output *output);
 
  private:
   size_t stream_id_;

@@ -20,6 +20,7 @@
 #include <numeric>
 #include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "ops/ops_func_impl/tile.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,12 +32,7 @@ constexpr size_t kIndex1 = 1;
 }  // namespace
 
 void TileCpuKernelMod::TileMultipleCompute() {
-  size_t ones = multiples_.size() - x_shape_.size();
-  if (ones > 0) {
-    for (size_t i = 0; i < ones; ++i) {
-      x_shape_.insert(x_shape_.begin(), 1);
-    }
-  }
+  ops::AdaptShapeAndMultipies(&x_shape_, &multiples_);
   if (x_shape_.size() > MAX_SHAPE_SIZE || x_shape_.size() > y_shape_.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', input shape can not be greater than default max size: " << MAX_SHAPE_SIZE
@@ -63,7 +59,7 @@ void TileCpuKernelMod::TileMultipleCompute() {
   int multiple = 0;
   size_t mul_index = 0;
   for (size_t i = 0; i < multiples_.size(); i++) {
-    tile_struct_.multiples_[i] = multiples_[i];
+    tile_struct_.multiples_[i] = static_cast<int>(multiples_[i]);
     if (tile_struct_.multiples_[i] > 1) {
       large_one_multiple_count_++;
       multiple = tile_struct_.multiples_[i];
@@ -124,8 +120,9 @@ int TileCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
 
   x_shape_ = inputs[kIndex0]->GetShapeVector();
   y_shape_ = outputs[kIndex0]->GetShapeVector();
-  multiple_shape_ = inputs[kIndex1]->GetShapeVector();
-  multiple_dtype_ = inputs[kIndex1]->dtype_id();
+  auto multiple_shape = inputs[kIndex1]->GetShapeVector();
+  multiple_num_ =
+    LongToSize(std::accumulate(multiple_shape.begin(), multiple_shape.end(), 1, std::multiplies<int64_t>()));
 
   return KRET_OK;
 }
@@ -148,17 +145,9 @@ void TileCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
   auto x_addr = reinterpret_cast<T *>(inputs[0]->device_ptr());
   auto y_addr = reinterpret_cast<T *>(outputs[0]->device_ptr());
   multiples_.clear();
-  auto multiple_nums = std::accumulate(multiple_shape_.begin(), multiple_shape_.end(), 1, std::multiplies<int64_t>());
-  if (multiple_dtype_ == kNumberTypeInt32) {
-    auto multiples_addr = GetDeviceAddress<int32_t>(inputs, 1);
-    for (size_t i = 0; i < LongToSize(multiple_nums); ++i) {
-      (void)multiples_.emplace_back(multiples_addr[i]);
-    }
-  } else {
-    auto multiples_addr = GetDeviceAddress<int64_t>(inputs, 1);
-    for (size_t i = 0; i < LongToSize(multiple_nums); ++i) {
-      (void)multiples_.emplace_back(multiples_addr[i]);
-    }
+  auto multiples_addr = GetDeviceAddress<int64_t>(inputs, 1);
+  for (size_t i = 0; i < multiple_num_; ++i) {
+    (void)multiples_.emplace_back(multiples_addr[i]);
   }
   TileMultipleCompute();
 

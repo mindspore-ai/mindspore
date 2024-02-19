@@ -87,7 +87,7 @@ def test_roll_exception_1():
     axis = (0, -1, 0)
     try:
         _ = ms.ops.roll(Tensor(x_np), shift, dims=axis)
-    except TypeError:
+    except ValueError:
         assert True
 
 
@@ -105,5 +105,5 @@ def test_roll_exception_2():
     axis = 0
     try:
         _ = ms.ops.roll(input_x, shifts, dims=axis)
-    except TypeError:
+    except ValueError:
         assert True

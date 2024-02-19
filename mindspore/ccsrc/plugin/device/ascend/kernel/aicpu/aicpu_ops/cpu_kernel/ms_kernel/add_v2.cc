@@ -20,12 +20,12 @@
 #include <unsupported/Eigen/CXX11/Tensor>
 #include <algorithm>
 #include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/inc/cpu_types.h"
+#include "cpu_types.h"
 #include "common/kernel_log.h"
 #include "cpu_kernel/common/status.h"
 #include "utils/bcast.h"
 #include "utils/kernel_util.h"
-#include "cpu_kernel/inc/cpu_context.h"
+#include "cpu_context.h"
 
 namespace {
 const std::uint32_t kAddV2InputNum{2u};
@@ -159,5 +159,5 @@ std::uint32_t AddV2CpuKernel::Compute(CpuKernelContext &ctx) {
                                                                   : detail::ComputeAddV2(ctx);
 }
 
-REGISTER_CPU_KERNEL(kAddV2, AddV2CpuKernel);
+REGISTER_MS_CPU_KERNEL(kAddV2, AddV2CpuKernel);
 }  // namespace aicpu

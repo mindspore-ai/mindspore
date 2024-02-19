@@ -441,5 +441,5 @@ uint32_t CombinedNonMaxSuppressionCpuKernel::CombinedNonMaxSuppressionCompute(co
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kCombinedNonMaxSuppression, CombinedNonMaxSuppressionCpuKernel);
+REGISTER_MS_CPU_KERNEL(kCombinedNonMaxSuppression, CombinedNonMaxSuppressionCpuKernel);
 }  // namespace aicpu

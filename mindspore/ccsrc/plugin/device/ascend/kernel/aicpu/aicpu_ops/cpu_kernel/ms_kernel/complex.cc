@@ -98,5 +98,5 @@ uint32_t ComplexCpuKernel::ComplexCompute(const CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kComplex, ComplexCpuKernel);
+REGISTER_MS_CPU_KERNEL(kComplex, ComplexCpuKernel);
 }  // namespace aicpu

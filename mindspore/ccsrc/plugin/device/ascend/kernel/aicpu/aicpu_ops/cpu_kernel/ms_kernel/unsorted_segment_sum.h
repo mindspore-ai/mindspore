@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_UNSORTED_SEGMENT_SUM_H
 #define AICPU_KERNELS_NORMALIZED_UNSORTED_SEGMENT_SUM_H
 
-#include "cpu_ops_kernel.h"
+#include "cpu_kernel_utils.h"
 
 namespace aicpu {
 

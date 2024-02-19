@@ -2373,6 +2373,10 @@ static bool IsGatherInfo(const std::string &name) {
 }
 
 static void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {
+  if (!StrategyCheckpoint::GetInstance().SaveCheckPointOn()) {
+    return;
+  }
+
   StrategyMap stra_map;
   TensorInfoMap tensor_info_map;
   ManualShapeMap manual_shape_map;
@@ -2986,6 +2990,30 @@ static void MoveMicroMirrorOutCallFunc(const FuncGraphPtr &root) {
   }
 }
 
+static void BroadcastLastResult(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
+  auto stage_num = parallel::ParallelContext::GetInstance()->pipeline_stage_split_num();
+  auto pipeline_result_broadcast = parallel::ParallelContext::GetInstance()->pipeline_result_broadcast();
+  if (IsTraining(manager) || stage_num <= 1 || pipeline_result_broadcast == false) {
+    return;
+  }
+
+  auto return_node = root->get_return();
+  const auto &abstract = return_node->abstract();
+  if (abstract->isa<abstract::AbstractTuple>()) {
+    return;
+  }
+
+  std::vector<int64_t> rank_list = g_device_manager->GetDeviceListBetweenStage();
+  Group group;
+  if (g_device_manager->CreateGroup(rank_list, &group) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Create communication group between all pipeline stages failed, the rank_list is: "
+                      << rank_list;
+  }
+
+  InsertAllReduceToNodeInput(return_node, group.name(), PARALLEL_RESULT_BROADCAST);
+  return_node->input(1)->set_abstract(abstract);
+}
+
 bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
 #if defined(__linux__) && defined(WITH_BACKEND)
   if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
@@ -3093,14 +3121,15 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   bool is_apply_adasum = HandleAdaSum(root, all_nodes, &adasum_param_tensor_layout_map);
 
   // save strategy as checkpoint for multi-train
-  if (StrategyCheckpoint::GetInstance().SaveCheckPointOn()) {
-    CheckpointStrategy(all_nodes, root);
-  }
+  CheckpointStrategy(all_nodes, root);
+
   // ForwardCommunication BackwardCommunication TensorRedistribution
   ParallelCommunication(root, all_nodes, manager);
   if (is_apply_adasum) {
     HandleMirrorInAdaSum(root, &adasum_param_tensor_layout_map);
   }
+
+  BroadcastLastResult(root, manager);
 
   MicroBatchPostProcess(root, all_nodes);
 

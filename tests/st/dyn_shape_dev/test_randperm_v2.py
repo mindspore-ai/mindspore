@@ -19,12 +19,12 @@ import mindspore as ms
 from mindspore import context, Tensor
 from mindspore import ops
 from mindspore.common import dtype as mstype
-import test_utils
+from tests.st.utils import test_utils
 
 
 @test_utils.run_with_cell
 def randperm_v2_forward_func(n):
-    return ops.auto_generate.randperm(n, seed=0, offset=0, dtype=mstype.float16)
+    return ops.randperm(n, seed=0, offset=0, dtype=mstype.float16)
 
 
 @test_utils.run_with_cell
@@ -37,7 +37,7 @@ def randperm_v2_backward_func(n):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_randperm_v2_forward(mode):
     """
     Feature: randperm_v2 ops.
@@ -55,7 +55,7 @@ def test_randperm_v2_forward(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_randperm_v2_backward(mode):
     """
     Feature: randperm_v2 ops.
@@ -71,7 +71,7 @@ def test_randperm_v2_backward(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_randperm_v2_dynamic(mode):
     """
     Feature: randperm_v2 ops.

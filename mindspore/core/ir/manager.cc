@@ -1182,7 +1182,7 @@ void RecursiveComputer::RealRecompute(FuncGraphPtr fg) {
 void RecursiveComputer::CheckRecursiveGraphs(const FuncGraphPtr &fg, std::list<FuncGraphPtr> *trace) {
   MS_EXCEPTION_IF_NULL(trace);
   auto res = std::find(trace->begin(), trace->end(), fg);
-  // find recursive
+  // Find recursive
   if (res != trace->end()) {
     auto recur_ptr = std::make_shared<std::list<FuncGraphPtr>>(res, trace->end());
     for (auto iter = res; iter != trace->end(); (void)iter++) {

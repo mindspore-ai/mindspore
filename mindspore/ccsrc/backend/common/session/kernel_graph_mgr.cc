@@ -2047,7 +2047,7 @@ void KernelGraphMgr::ConstructKernelGraphInner(const FuncGraphPtr &func_graph,
   }
 
   std::vector<ParameterPtr> added_parameters;
-
+  std::vector<std::weak_ptr<KernelGraph>> child_kernel_graphs;
   for (const auto &node : node_list) {
     MS_EXCEPTION_IF_NULL(node);
     if (node->isa<Parameter>()) {
@@ -2067,9 +2067,10 @@ void KernelGraphMgr::ConstructKernelGraphInner(const FuncGraphPtr &func_graph,
       }
       // Create child kernel graph according ValueNode<FuncGraph>
       FuncGraphPtr child_graph = common::AnfAlgo::GetValueNodeFuncGraph(node);
-      if (front_backend_graph_map_.find(child_graph.get()) == front_backend_graph_map_.end()) {
-        (void)ConstructKernelGraph(child_graph, all_out_graph, device_target);
-      }
+      auto child_kernel_graph = front_backend_graph_map_.find(child_graph.get()) == front_backend_graph_map_.end()
+                                  ? ConstructKernelGraph(child_graph, all_out_graph, device_target)
+                                  : front_backend_graph_map_[child_graph.get()];
+      (void)child_kernel_graphs.emplace_back(std::weak_ptr<KernelGraph>(child_kernel_graph));
       (void)CreateValueNodeKernelGraph(node, graph.get());
       continue;
     }
@@ -2104,6 +2105,7 @@ void KernelGraphMgr::ConstructKernelGraphInner(const FuncGraphPtr &func_graph,
 
   all_out_graph->push_back(graph);
   graph->set_parameters(graph->inputs());
+  graph->set_child_graph_order(child_kernel_graphs);
 }
 
 void HandleGraphInputsOutputs(const nlohmann::json &graph_json, KernelGraph *graph) {

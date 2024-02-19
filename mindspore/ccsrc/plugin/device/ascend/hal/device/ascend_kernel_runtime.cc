@@ -122,7 +122,6 @@ AscendKernelRuntime::~AscendKernelRuntime() {
 }
 
 void AscendKernelRuntime::SetContext() {
-  ErrorManagerAdapter::BindToCurrentThread();
   if (rt_context_ == nullptr) {
     return;
   }

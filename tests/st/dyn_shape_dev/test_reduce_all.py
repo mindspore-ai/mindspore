@@ -15,7 +15,7 @@
 
 import numpy as np
 import pytest
-import test_utils
+from tests.st.utils import test_utils
 
 from mindspore import ops
 import mindspore as ms
@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def reduce_all_forward_func(x):
-    return ops.auto_generate.ReduceAll(True)(x, 0)
+    return ops.ReduceAll(True)(x, 0)
 
 
 @test_utils.run_with_cell
@@ -37,7 +37,7 @@ def reduce_all_backward_func(x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_reduce_all(mode):
     """
     Feature: Ops.
@@ -62,7 +62,7 @@ def test_reduce_all(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_func
+@test_utils.run_test_with_On
 def test_reduce_all_vmap(mode):
     """
     Feature: test vmap function.

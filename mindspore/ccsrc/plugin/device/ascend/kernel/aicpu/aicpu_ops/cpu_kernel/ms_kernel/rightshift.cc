@@ -235,5 +235,5 @@ uint32_t RightShiftCpuKernel::RightShiftCompute(const CpuKernelContext &ctx) {
   }
 }
 
-REGISTER_CPU_KERNEL(kRightShift, RightShiftCpuKernel);
+REGISTER_MS_CPU_KERNEL(kRightShift, RightShiftCpuKernel);
 }  // namespace aicpu

@@ -480,6 +480,13 @@ void DeviceContextManager::ClearDeviceContexts() {
   device_contexts_.clear();
 }
 
+void DeviceContextManager::ChildAfterFork() {
+  MS_LOG(DEBUG) << "DeviceContextManager reinitialize after fork.";
+  MS_LOG(DEBUG) << "Clear device_contexts_.";
+  device_contexts_.clear();
+  MS_LOG(DEBUG) << "DeviceContextManager reinitialize after fork done.";
+}
+
 void DeviceContextManager::BindDeviceCtx() const {
   for (auto &iter : device_contexts_) {
     MS_EXCEPTION_IF_NULL(iter.second);
@@ -560,6 +567,15 @@ void DeviceContextManager::WaitTaskFinishOnDevice() const {
     } catch (const std::exception &ex) {
       MS_LOG(ERROR) << "SyncStream failed, exception:" << ex.what();
       return;
+    }
+  }
+}
+
+void DeviceContextManager::SyncAllStreams() const {
+  for (const auto &item : device_contexts_) {
+    auto device_context = item.second;
+    if (device_context != nullptr && !device_context->device_res_manager_->SyncAllStreams()) {
+      MS_LOG(EXCEPTION) << "SyncStream failed, device info: " << device_context->device_context_key().ToString();
     }
   }
 }

@@ -177,5 +177,5 @@ uint32_t MatrixTriangularSolveCpuKernel::MatrixTriangularSolveCompute(const CpuK
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kMatrixTriangularSolve, MatrixTriangularSolveCpuKernel);
+REGISTER_MS_CPU_KERNEL(kMatrixTriangularSolve, MatrixTriangularSolveCpuKernel);
 }  // namespace aicpu

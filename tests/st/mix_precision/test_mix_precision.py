@@ -34,6 +34,7 @@ from utils import FakeDataInitMode
 from utils import find_newest_validateir_file
 from utils import clean_all_ir_files
 from functools import wraps
+from tests.st.utils import test_utils
 
 def security_off_wrap(func):
     """Wrapper for tests which do not need to run security on."""
@@ -364,6 +365,7 @@ class AddNet(ms.nn.Cell):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dst_type', [ms.float16, ms.bfloat16])
+@test_utils.run_test_with_On
 def test_to_float(mode, dst_type):
     """
     Feature: to_float

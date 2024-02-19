@@ -155,5 +155,5 @@ uint32_t RGBToHSVCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_PARAM_INVALID;
 }
 
-REGISTER_CPU_KERNEL(kRGBToHSV, RGBToHSVCpuKernel);
+REGISTER_MS_CPU_KERNEL(kRGBToHSV, RGBToHSVCpuKernel);
 }  // namespace aicpu

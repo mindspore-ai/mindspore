@@ -165,5 +165,5 @@ uint32_t GluCpuKernel::Compute(CpuKernelContext &ctx) {
   }
 }
 
-REGISTER_CPU_KERNEL(GLU, GluCpuKernel);
+REGISTER_MS_CPU_KERNEL(GLU, GluCpuKernel);
 }  // namespace aicpu

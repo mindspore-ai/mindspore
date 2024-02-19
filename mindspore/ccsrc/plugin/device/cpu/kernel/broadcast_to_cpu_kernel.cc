@@ -29,108 +29,97 @@ using complex128 = std::complex<double>;
 constexpr size_t kBroadcastToOutputsNum = 1;
 }  // namespace
 
+#define BROADCAST_TO_CPU_REG(MS_T, T)                                                                   \
+  KernelAttr().AddInputAttr(MS_T).AddInputAttr(kObjectTypeTuple, kNumberTypeInt64).AddOutputAttr(MS_T), \
+    &BroadcastToCpuKernelMod::LaunchKernel<T>
+
 std::map<std::string, std::vector<std::pair<KernelAttr, BroadcastToCpuKernelMod::BroadcastToFunc>>>
-  BroadcastToCpuKernelMod::func_list_ = {
-    {kBroadcastTo,
-     {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-       &BroadcastToCpuKernelMod::LaunchKernel<int8_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-       &BroadcastToCpuKernelMod::LaunchKernel<int16_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-       &BroadcastToCpuKernelMod::LaunchKernel<int32_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-       &BroadcastToCpuKernelMod::LaunchKernel<int64_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-       &BroadcastToCpuKernelMod::LaunchKernel<uint8_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-       &BroadcastToCpuKernelMod::LaunchKernel<uint16_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-       &BroadcastToCpuKernelMod::LaunchKernel<uint32_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-       &BroadcastToCpuKernelMod::LaunchKernel<uint64_t>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-       &BroadcastToCpuKernelMod::LaunchKernel<float16>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-       &BroadcastToCpuKernelMod::LaunchKernel<float>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-       &BroadcastToCpuKernelMod::LaunchKernel<double>},
-      {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-       &BroadcastToCpuKernelMod::LaunchKernel<complex64>},
-      {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-       &BroadcastToCpuKernelMod::LaunchKernel<complex128>},
-      {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-       &BroadcastToCpuKernelMod::LaunchKernel<bool>}}},
-    {kDynamicBroadcastTo,
-     {{KernelAttr()
-         .AddInputAttr(kNumberTypeFloat32)
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
-         .AddOutputAttr(kNumberTypeFloat32),
-       &BroadcastToCpuKernelMod::LaunchKernel<float>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat32)
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-         .AddOutputAttr(kNumberTypeFloat32),
-       &BroadcastToCpuKernelMod::LaunchKernel<float>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
-         .AddOutputAttr(kNumberTypeInt32),
-       &BroadcastToCpuKernelMod::LaunchKernel<int>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeBool)
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
-         .AddOutputAttr(kNumberTypeBool),
-       &BroadcastToCpuKernelMod::LaunchKernel<bool>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt8)
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
-         .AddOutputAttr(kNumberTypeInt8),
-       &BroadcastToCpuKernelMod::LaunchKernel<int>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat32)
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-         .AddOutputAttr(kNumberTypeFloat32),
-       &BroadcastToCpuKernelMod::LaunchKernel<float>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-         .AddOutputAttr(kNumberTypeInt32),
-       &BroadcastToCpuKernelMod::LaunchKernel<int>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeBool)
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-         .AddOutputAttr(kNumberTypeBool),
-       &BroadcastToCpuKernelMod::LaunchKernel<bool>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt8)
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-         .AddOutputAttr(kNumberTypeInt8),
-       &BroadcastToCpuKernelMod::LaunchKernel<int>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeUInt8)
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-         .AddOutputAttr(kNumberTypeUInt8),
-       &BroadcastToCpuKernelMod::LaunchKernel<int>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeUInt16)
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-         .AddOutputAttr(kNumberTypeUInt16),
-       &BroadcastToCpuKernelMod::LaunchKernel<int>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeUInt32)
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-         .AddOutputAttr(kNumberTypeUInt32),
-       &BroadcastToCpuKernelMod::LaunchKernel<int>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeUInt64)
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-         .AddOutputAttr(kNumberTypeUInt64),
-       &BroadcastToCpuKernelMod::LaunchKernel<int>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-         .AddOutputAttr(kNumberTypeUInt64),
-       &BroadcastToCpuKernelMod::LaunchKernel<int64_t>}}}};
+  BroadcastToCpuKernelMod::func_list_ = {{kBroadcastTo,
+                                          {{BROADCAST_TO_CPU_REG(kNumberTypeInt8, int8_t)},
+                                           {BROADCAST_TO_CPU_REG(kNumberTypeInt16, int16_t)},
+                                           {BROADCAST_TO_CPU_REG(kNumberTypeInt32, int32_t)},
+                                           {BROADCAST_TO_CPU_REG(kNumberTypeInt64, int64_t)},
+                                           {BROADCAST_TO_CPU_REG(kNumberTypeUInt8, uint8_t)},
+                                           {BROADCAST_TO_CPU_REG(kNumberTypeUInt16, uint16_t)},
+                                           {BROADCAST_TO_CPU_REG(kNumberTypeUInt32, uint32_t)},
+                                           {BROADCAST_TO_CPU_REG(kNumberTypeUInt64, uint64_t)},
+                                           {BROADCAST_TO_CPU_REG(kNumberTypeFloat16, float16)},
+                                           {BROADCAST_TO_CPU_REG(kNumberTypeFloat32, float)},
+                                           {BROADCAST_TO_CPU_REG(kNumberTypeFloat64, double)},
+                                           {BROADCAST_TO_CPU_REG(kNumberTypeComplex64, complex64)},
+                                           {BROADCAST_TO_CPU_REG(kNumberTypeComplex128, complex128)},
+                                           {BROADCAST_TO_CPU_REG(kNumberTypeBool, bool)}}},
+                                         {kDynamicBroadcastTo,
+                                          {{KernelAttr()
+                                              .AddInputAttr(kNumberTypeFloat32)
+                                              .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+                                              .AddOutputAttr(kNumberTypeFloat32),
+                                            &BroadcastToCpuKernelMod::LaunchKernel<float>},
+                                           {KernelAttr()
+                                              .AddInputAttr(kNumberTypeFloat32)
+                                              .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                              .AddOutputAttr(kNumberTypeFloat32),
+                                            &BroadcastToCpuKernelMod::LaunchKernel<float>},
+                                           {KernelAttr()
+                                              .AddInputAttr(kNumberTypeInt32)
+                                              .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+                                              .AddOutputAttr(kNumberTypeInt32),
+                                            &BroadcastToCpuKernelMod::LaunchKernel<int>},
+                                           {KernelAttr()
+                                              .AddInputAttr(kNumberTypeBool)
+                                              .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+                                              .AddOutputAttr(kNumberTypeBool),
+                                            &BroadcastToCpuKernelMod::LaunchKernel<bool>},
+                                           {KernelAttr()
+                                              .AddInputAttr(kNumberTypeInt8)
+                                              .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+                                              .AddOutputAttr(kNumberTypeInt8),
+                                            &BroadcastToCpuKernelMod::LaunchKernel<int>},
+                                           {KernelAttr()
+                                              .AddInputAttr(kNumberTypeFloat32)
+                                              .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                              .AddOutputAttr(kNumberTypeFloat32),
+                                            &BroadcastToCpuKernelMod::LaunchKernel<float>},
+                                           {KernelAttr()
+                                              .AddInputAttr(kNumberTypeInt32)
+                                              .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                              .AddOutputAttr(kNumberTypeInt32),
+                                            &BroadcastToCpuKernelMod::LaunchKernel<int>},
+                                           {KernelAttr()
+                                              .AddInputAttr(kNumberTypeBool)
+                                              .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                              .AddOutputAttr(kNumberTypeBool),
+                                            &BroadcastToCpuKernelMod::LaunchKernel<bool>},
+                                           {KernelAttr()
+                                              .AddInputAttr(kNumberTypeInt8)
+                                              .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                              .AddOutputAttr(kNumberTypeInt8),
+                                            &BroadcastToCpuKernelMod::LaunchKernel<int>},
+                                           {KernelAttr()
+                                              .AddInputAttr(kNumberTypeUInt8)
+                                              .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                              .AddOutputAttr(kNumberTypeUInt8),
+                                            &BroadcastToCpuKernelMod::LaunchKernel<int>},
+                                           {KernelAttr()
+                                              .AddInputAttr(kNumberTypeUInt16)
+                                              .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                              .AddOutputAttr(kNumberTypeUInt16),
+                                            &BroadcastToCpuKernelMod::LaunchKernel<int>},
+                                           {KernelAttr()
+                                              .AddInputAttr(kNumberTypeUInt32)
+                                              .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                              .AddOutputAttr(kNumberTypeUInt32),
+                                            &BroadcastToCpuKernelMod::LaunchKernel<int>},
+                                           {KernelAttr()
+                                              .AddInputAttr(kNumberTypeUInt64)
+                                              .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                              .AddOutputAttr(kNumberTypeUInt64),
+                                            &BroadcastToCpuKernelMod::LaunchKernel<int>},
+                                           {KernelAttr()
+                                              .AddInputAttr(kNumberTypeInt64)
+                                              .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                              .AddOutputAttr(kNumberTypeUInt64),
+                                            &BroadcastToCpuKernelMod::LaunchKernel<int64_t>}}}};
 
 bool BroadcastToCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &outputs) {

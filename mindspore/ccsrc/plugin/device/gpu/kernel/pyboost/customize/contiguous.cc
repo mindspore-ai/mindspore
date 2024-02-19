@@ -24,6 +24,11 @@ namespace pyboost {
 
 tensor::TensorPtr ContiguousGPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor) {
   MS_LOG(DEBUG) << "Call start";
+  auto output_tensor = ContiguousTensorOpProcess(op, input_tensor);
+  if (output_tensor != nullptr) {
+    return output_tensor;
+  }
+
   // No need to get default_stream here, after the multi-stream feature is complete.
   auto stream = device::gpu::GPUDeviceManager::GetInstance().default_stream();
   return CopyCustomizeCall(op, input_tensor, stream);

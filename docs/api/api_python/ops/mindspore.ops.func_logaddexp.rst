@@ -4,6 +4,7 @@ mindspore.ops.logaddexp
 .. py:function:: mindspore.ops.logaddexp(input, other)
 
     计算输入的指数和的对数。
+    该函数可以很好地解决统计学中计算得到的事件概率可能小到超过了正常浮点数表达的范围的问题。
 
     .. math::
 

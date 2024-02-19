@@ -60,5 +60,5 @@ uint32_t SparseDenseCwiseAddKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kSparseDenseCwiseAdd, SparseDenseCwiseAddKernel);
+REGISTER_MS_CPU_KERNEL(kSparseDenseCwiseAdd, SparseDenseCwiseAddKernel);
 }  // namespace aicpu

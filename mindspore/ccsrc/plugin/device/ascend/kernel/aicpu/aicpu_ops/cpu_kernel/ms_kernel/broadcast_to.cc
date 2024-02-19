@@ -125,5 +125,5 @@ uint32_t BroadcastToCpuKernel::BcastCompute(const CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kBroadcastTo, BroadcastToCpuKernel);
+REGISTER_MS_CPU_KERNEL(kBroadcastTo, BroadcastToCpuKernel);
 }  // namespace aicpu

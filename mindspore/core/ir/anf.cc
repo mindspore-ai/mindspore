@@ -1001,7 +1001,12 @@ bool IsPolyNode(const AnfNodePtr &node) {
 
 SeenNum NewSeenGeneration() {
   static SeenNum seen_generation = 0;
-  return ++seen_generation;
+  ++seen_generation;
+  // 0 is invalid number.
+  if (seen_generation == 0) {
+    ++seen_generation;
+  }
+  return seen_generation;
 }
 
 namespace id_generator {

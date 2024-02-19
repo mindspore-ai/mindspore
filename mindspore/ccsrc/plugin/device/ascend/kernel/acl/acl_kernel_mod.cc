@@ -218,6 +218,8 @@ bool AclKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::
   converter_->ConvertToAclInput(primitive_, inputs, input_params_);
   converter_->ConvertToAclOutput(kernel_name_, outputs, output_params_);
   converter_->SetRunnerSpecialInfo();
+  // cppcheck-suppress unreadVariable
+  auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
   MS_LOG(DEBUG) << this->DebugString();
   MS_LOG(DEBUG) << converter_->DebugString();
   // release gil before run
@@ -229,6 +231,15 @@ bool AclKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::
     return false;
   }
   return true;
+}
+
+std::vector<size_t> AclKernelMod::GetLaunchIgnoredInputAddressIdx() const {
+  static const std::map<std::string, std::vector<size_t>> launch_ignored_input_addr_idx = {{kReshapeOpName, {kIndex1}}};
+  if (launch_ignored_input_addr_idx.count(kernel_name_) > 0) {
+    return launch_ignored_input_addr_idx.at(kernel_name_);
+  } else {
+    return {};
+  }
 }
 
 void AclKernelMod::SetDeviceInfo(const std::vector<std::string> &input_device_formats,

@@ -922,6 +922,19 @@ DfGraphConvertor &DfGraphConvertor::GenerateBroadcastGraph(const TensorOrderMap 
 DfGraphConvertor &DfGraphConvertor::GenerateCheckpointGraph() {
   if (error_ != SUCCESS) {
     MS_LOG(ERROR) << "Generate checkpoint graph failed, found error code " << error_ << ".";
+    if (!unsupported_ops_names_.empty()) {
+      MS_LOG(ERROR) << "===========================================";
+      MS_LOG(ERROR) << unsupported_ops_names_.size() << " Operator(s) cannot be converted:";
+      std::string unsupported_ops_list;
+      for (const auto &unsupported_ops : unsupported_ops_names_) {
+        if (!unsupported_ops_list.empty()) {
+          unsupported_ops_list += ", ";
+        }
+        unsupported_ops_list += unsupported_ops;
+      }
+      MS_LOG(ERROR) << "Unsupported op type list: " << unsupported_ops_list;
+      MS_LOG(ERROR) << "===========================================";
+    }
     return *this;
   }
   if (anf_graph_ == nullptr || anf_graph_->output() == nullptr) {
@@ -1620,6 +1633,8 @@ void DfGraphConvertor::GetBranchNodeInput(const CNodePtr node) {
   std::vector<AnfNodePtr> branch_inputs;
   const size_t branch_index = 1;
 
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(node->input(0));
   CNodePtr sw_node = is_kernel_graph_ ? node : node->input(0)->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(sw_node);
   AnfNodePtr branch_index_iter = sw_node->input(branch_index);
@@ -1637,7 +1652,6 @@ void DfGraphConvertor::GetBranchNodeInput(const CNodePtr node) {
       auto pred = node->input(i);
       (void)(branch_inputs.emplace_back(pred));
     }
-    MS_EXCEPTION_IF_NULL(node->input(0));
     input_node = node->input(0)->cast<CNodePtr>();
   }
   MS_EXCEPTION_IF_NULL(input_node);
@@ -3314,7 +3328,8 @@ void DfGraphConvertor::ConvertTopK(const CNodePtr &node) {
 AnfNodePtr DfGraphConvertor::CreateCast(const AnfNodePtr &input, const TypePtr &dst_type) const {
   auto func_graph = input->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  AnfNodePtrList inputs = {NewValueNode(prim::kPrimCast), input, NewValueNode(dst_type)};
+  AnfNodePtrList inputs = {NewValueNode(prim::kPrimCast), input,
+                           NewValueNode(static_cast<int64_t>(dst_type->type_id()))};
   auto cnode = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cnode);
   auto abs_tensor = std::make_shared<abstract::AbstractTensor>(dst_type, input->Shape());
@@ -3420,14 +3435,6 @@ void DfGraphConvertor::TransAttrDataType(const CNodePtr &node, const std::string
 void DfGraphConvertor::TransDataType(const FuncGraphPtr &anf_graph) const {
   MS_EXCEPTION_IF_NULL(anf_graph);
   MS_LOG(DEBUG) << "TransDataType begin. graph:" << anf_graph->ToString();
-#ifdef ENABLE_DUMP_IR
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->CanDump(kIntroductory)) {
-    std::string file_name = "ge_trans_data_type_before_graph_" + anf_graph->ToString() + ".ir";
-    DumpIR(file_name, anf_graph);
-  }
-#endif
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph);
   for (auto &it : nodes) {
     if (it->isa<CNode>()) {
@@ -3438,12 +3445,6 @@ void DfGraphConvertor::TransDataType(const FuncGraphPtr &anf_graph) const {
       TransAttrDataType(node, name);
     }
   }
-#ifdef ENABLE_DUMP_IR
-  if (context_ptr->CanDump(kIntroductory)) {
-    std::string file_name = "ge_trans_data_type_after_graph_" + anf_graph->ToString() + ".ir";
-    DumpIR(file_name, anf_graph);
-  }
-#endif
   MS_LOG(DEBUG) << "TransDataType end. graph:" << anf_graph->ToString();
 }
 
@@ -3848,6 +3849,7 @@ OperatorPtr DfGraphConvertor::ConvertCNode(const CNodePtr node) {
   OpAdapterPtr adpt = FindAdapter(node, training_);
   if (adpt == nullptr) {
     MS_LOG(ERROR) << "Cannot get adapter for " << node->fullname_with_scope();
+    unsupported_ops_names_.insert(name);
     error_ = NOT_FOUND;
     return nullptr;
   }

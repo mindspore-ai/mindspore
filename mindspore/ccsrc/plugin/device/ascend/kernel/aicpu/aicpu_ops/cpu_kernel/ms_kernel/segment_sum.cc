@@ -217,5 +217,5 @@ uint32_t SegmentSumCpuKernel::SegmentSumCompute(const CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kSegmentSum, SegmentSumCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSegmentSum, SegmentSumCpuKernel);
 }  // namespace aicpu

@@ -775,6 +775,8 @@ void ArithmeticSelfCpuKernelFuncBool<T, S>::LaunchKernel(const std::vector<Kerne
   const size_t lens = outputs[0]->size() / sizeof(S);
   if (this->kernel_name_ == kAbsOpName) {
     return LogicalEqual<T, S>(this, input, output, lens);
+  } else if (this->kernel_name_ == kReciprocal) {
+    return Reciprocal<T, S>(this, input, output, lens);
   } else {
     return LogicalNot<T, S>(this, input, output, lens);
   }
@@ -1041,7 +1043,13 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeFloat32),
      &CreateArithSelfFuncCommon<int8_t, float>},
     {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeFloat32),
-     &CreateArithSelfFuncCommon<int, float>},
+     &CreateArithSelfFuncCommon<uint8_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<uint16_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<uint32_t, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<uint64_t, float>},
     {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeFloat32),
      &CreateArithSelfFuncBool<bool, float>}}},
   {kInv,

@@ -266,7 +266,7 @@ Status BatchImpl::CheckStrategy(const Shape &param_strategy, const Shape &indice
     return FAILED;
   }
 
-  for (size_t i = 0; i < LongToSize(axis_); ++i) {
+  for (size_t i = 0; i < LongToSize(batch_dims_); ++i) {
     if (param_strategy[i] != indices_strategy[i]) {
       MS_LOG(ERROR)
         << name_
@@ -1006,7 +1006,9 @@ Status ShardAxisImpl::InferReplaceGraph(const CNodePtr &cnode) {
   }
 
   auto dtype = gen_g.PushBack({gen_g.NewOpInst(DTYPE), gather_v2});
-  auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype});
+  auto dtype_id =
+    gen_g.PushBack({gen_g.NewOpInst(DTYPETOENUM), CreateStringImm("DtypeToEnum"), CreateStringImm("dtype"), dtype});
+  auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype_id});
   auto expand_dims = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), cast, CreatInt64Imm(axis_ - 1)});
   auto mul = gen_g.PushBack({gen_g.NewOpInst(MUL), gather_v2, expand_dims});
   // don't need expand dim, if param_size = 1

@@ -264,5 +264,5 @@ uint32_t SincCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-REGISTER_CPU_KERNEL(kSinc, SincCpuKernel);
+REGISTER_MS_CPU_KERNEL(kSinc, SincCpuKernel);
 }  // namespace aicpu

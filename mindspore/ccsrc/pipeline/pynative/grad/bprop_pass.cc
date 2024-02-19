@@ -23,6 +23,7 @@
 #include "ops/nn_ops.h"
 #include "ops/op_utils.h"
 #include "include/backend/optimizer/helper.h"
+#include "runtime/pynative/op_function/pyboost_grad_functions.h"
 
 namespace mindspore {
 namespace pynative {
@@ -462,7 +463,8 @@ AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR(const AnfNodePtr &
 }
 }  // namespace
 
-void PyNativePassForward::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node, SeenNum seen) {
+void PyNativePassForward::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node, SeenNum seen,
+                                                              bool run_by_single_op) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return;
@@ -475,11 +477,11 @@ void PyNativePassForward::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &
   }
   cnode->seen_ = seen;
   if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem)) {
-    ConvertMakeTupleInputToDynamicInput(cnode->input(kIndex1), seen);
+    ConvertMakeTupleInputToDynamicInput(cnode->input(kIndex1), seen, run_by_single_op);
     return;
   }
   for (size_t i = 1; i < cnode->size(); ++i) {
-    ConvertMakeTupleInputToDynamicInput(cnode->input(i), seen);
+    ConvertMakeTupleInputToDynamicInput(cnode->input(i), seen, run_by_single_op);
   }
 
   if (!IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) &&
@@ -502,6 +504,13 @@ void PyNativePassForward::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &
     }
     // If there is dynamic input, set the dyn_input_sizes as an attribute and update the inputs.
     if (std::any_of(dyn_input_sizes.begin(), dyn_input_sizes.end(), [](int64_t s) { return s >= 0; })) {
+      // Pyboost op no need plant tuple inputs
+      auto prim = GetCNodePrimitive(cnode);
+      MS_EXCEPTION_IF_NULL(prim);
+      if (run_by_single_op && runtime::PyBoostOpExecute::GetInstance().IsPyBoostOpRegistered(prim->name())) {
+        cnode->AddAttr(kAttrIsPyboostTupleInput, MakeValue(true));
+        return;
+      }
       cnode->AddAttr(kTupleToMakeTuple, MakeValue(true));
       common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), cnode);
       MS_LOG(DEBUG) << "Change node to dynamic len " << cnode->DebugString();
@@ -637,14 +646,14 @@ void PyNativePassForward::ReverseMakeTupleNode(const CNodePtr &cnode, ValuePtrLi
       auto knode_input = auto_grad_cell_ptr_->ad_param()->tape_->FuncGraph::NewCNode(knode_inputs);
       knode_input->set_abstract(abs);
       size_t begin_index = i + kIndex1;
-      (void)cnode_inputs->erase(cnode_inputs->begin() + SizeToLong(begin_index),
-                                cnode_inputs->begin() + SizeToLong(begin_index) + dyn_input_sizes[i]);
-      (void)cnode_inputs->emplace_back(knode_input);
+      auto it = cnode_inputs->erase(cnode_inputs->begin() + SizeToLong(begin_index),
+                                    cnode_inputs->begin() + SizeToLong(begin_index) + dyn_input_sizes[i]);
+      (void)cnode_inputs->insert(it, knode_input);
 
       // Update input value
-      (void)inputs_value->erase(inputs_value->begin() + SizeToLong(begin_index),
-                                inputs_value->begin() + SizeToLong(begin_index) + dyn_input_sizes[i]);
-      (void)inputs_value->emplace_back(std::make_shared<ValueTuple>(value_tuple));
+      auto item = inputs_value->erase(inputs_value->begin() + SizeToLong(kIndex0),
+                                      inputs_value->begin() + SizeToLong(kIndex0) + dyn_input_sizes[i]);
+      (void)inputs_value->insert(item, std::make_shared<ValueTuple>(value_tuple));
     } else {
       (void)new_inputs.emplace_back(cnode->input(i + kIndex1));
     }

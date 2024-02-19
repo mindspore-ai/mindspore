@@ -188,5 +188,5 @@ uint32_t XdivyCpuKernel::XdivyCompute(CpuKernelContext &ctx) {
   }
   return KERNEL_STATUS_OK;
 }
-REGISTER_CPU_KERNEL(kXdivy, XdivyCpuKernel);
+REGISTER_MS_CPU_KERNEL(kXdivy, XdivyCpuKernel);
 }  // namespace aicpu

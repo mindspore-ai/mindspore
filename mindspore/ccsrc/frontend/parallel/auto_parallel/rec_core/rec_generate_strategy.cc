@@ -36,6 +36,9 @@
 namespace mindspore {
 namespace parallel {
 namespace {
+using PrepareStraFuncPtr = Strategies (*)(const std::shared_ptr<OperatorInfo> &, Dimensions, bool);
+std::map<std::string, PrepareStraFuncPtr> g_prepare_stra_map;
+
 std::optional<bool> GetKeepDimsFromAttrs(const std::shared_ptr<OperatorInfo> &op) {
   auto keep_dims_iter = op->attrs().find(KEEP_DIMS);
   if (keep_dims_iter == op->attrs().end()) {
@@ -211,7 +214,7 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
   }
 }
 
-Strategies PrepareFillV2(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra) {
+Strategies PrepareFillV2(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra, bool dyn_shape_tmp_fix) {
   Strategies strategies;
 
   if (op->outputs_shape().size() == 0) {
@@ -256,7 +259,11 @@ Strategies PrepareMatMul(Graph::NodeType *node, const std::shared_ptr<OperatorIn
   return strategies;
 }
 
-Strategies PreparePropagateBatchMatMul(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra) {
+Strategies PreparePropagateBatchMatMul(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra,
+                                       bool dyn_shape_tmp_fix) {
+  if (dyn_shape_tmp_fix) {
+    return CheckDivisible(op, basic_stra);
+  }
   // This backward propagation does NOT complete strategy on k. Could be done later
   Strategies stra;
   auto attrs = op->attrs();
@@ -343,7 +350,8 @@ Strategies PrepareBatchMatMul(Graph::NodeType *node, const std::shared_ptr<Opera
   return strategies;
 }
 
-Strategies PrepareBiasAdd(const std::shared_ptr<Dimensions> &strategy) {
+Strategies PrepareBiasAdd(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra, bool dyn_shape_tmp_fix) {
+  auto strategy = std::make_shared<Dimensions>(basic_stra);
   Strategies strategies;
   strategies.push_back(*strategy);
   Dimensions s_biasadd;
@@ -367,7 +375,7 @@ Strategies PrepareStandAlone(const std::shared_ptr<OperatorInfo> &op) {
   return strategies;
 }
 
-Strategies PrepareDataParallel(const std::shared_ptr<OperatorInfo> &op) {
+Strategies PrepareDataParallel(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra, bool dyn_shape_tmp_fix) {
   size_t numDev = g_device_manager->stage_device_num();
 
   Strategies strategies;
@@ -455,7 +463,7 @@ std::vector<int64_t> FindAxisProperty(const std::shared_ptr<OperatorInfo> &op) {
   return axis_list;
 }
 
-Strategies PrepareSoftMax(const std::shared_ptr<OperatorInfo> &op, const Dimensions &basic_stra) {
+Strategies PrepareSoftMax(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra, bool dyn_shape_tmp_fix) {
   Strategies strategies;
   strategies.push_back(basic_stra);
   std::vector<int64_t> axis_list = FindAxisProperty(op);
@@ -486,7 +494,7 @@ Strategies PrepareSoftMax(const std::shared_ptr<OperatorInfo> &op, const Dimensi
   return strategies;
 }
 
-Strategies PrepareLayerNorm(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra) {
+Strategies PrepareLayerNorm(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra, bool dyn_shape_tmp_fix) {
   Strategies strategies;
   strategies.push_back(basic_stra);
   std::vector<int64_t> axis_list;
@@ -532,7 +540,7 @@ Strategies PrepareLayerNorm(const std::shared_ptr<OperatorInfo> &op, Dimensions 
   return strategies;
 }
 
-Strategies PrepareOneHot(const std::shared_ptr<OperatorInfo> &op, Dimensions strategy) {
+Strategies PrepareOneHot(const std::shared_ptr<OperatorInfo> &op, Dimensions strategy, bool dyn_shape_tmp_fix) {
   Strategies strategies;
 
   // OneHot's strategy depends on its output shape.
@@ -633,17 +641,13 @@ Strategies PrepareGather(const std::shared_ptr<OperatorInfo> &op, Dimensions str
   }
 
   int64_t batch_dims = -1;
-  auto attrs = op->attrs();
-  auto attr_iter = attrs.find("batch_dims");
-  if (attr_iter != attrs.end()) {
-    MS_EXCEPTION_IF_NULL(attr_iter->second);
-    if (!attr_iter->second->isa<Int64Imm>()) {
-      MS_LOG(EXCEPTION) << op->name() << ": The value of batch dims is not int";
-    }
-
-    batch_dims = attr_iter->second->cast<Int64ImmPtr>()->value();
-    MS_LOG(INFO) << op->name() << ": batch dims is " << batch_dims;
+  auto batch_dims_val = GetScalarValueFromInputs<int64_t>(op->input_value(), op->name(), BATCH_DIMS);
+  if (batch_dims_val.has_value()) {
+    batch_dims = batch_dims_val.value();
+  } else {
+    MS_LOG(EXCEPTION) << op->name() << ": Failed to fetch the value of batch dims";
   }
+
   if (batch_dims > 1) {
     for (size_t i = 0; i < op->inputs_shape().size(); i++) {
       strategies.push_back(strategie);
@@ -686,7 +690,7 @@ Dimensions PrepareGatherV2OutputStrategy(const std::shared_ptr<OperatorInfo> &op
   return strategie;
 }
 
-Strategies PrepareL2Normalize(const std::shared_ptr<OperatorInfo> &op, Dimensions strategy) {
+Strategies PrepareL2Normalize(const std::shared_ptr<OperatorInfo> &op, Dimensions strategy, bool dyn_shape_tmp_fix) {
   int64_t axis = 0;
   auto iter = op->attrs().find(AXIS);
   if (iter != op->attrs().end()) {
@@ -1454,73 +1458,17 @@ Dimensions CopyIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<O
   return strategy;
 }
 
-Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                                          Dimensions basic_stra, bool dyn_shape_tmp_fix) {
-  MS_EXCEPTION_IF_NULL(ops[iter_ops]);
-
-  if (iter_ops >= ops.size()) {
-    MS_LOG(EXCEPTION) << "Failure: Operators' elements out of range.";
-  }
-
-  auto type = ops[iter_ops]->type();
-  if (type == FILLV2) {
-    auto stra = PrepareFillV2(ops[iter_ops], basic_stra);
-    return stra;
-  }
-
-  Strategies strategies;
-  if (basic_stra.size() == 0) {
-    for (size_t iter_op_inputs = 0; iter_op_inputs < (size_t)ops[iter_ops]->inputs_shape().size(); iter_op_inputs++) {
-      strategies.push_back(basic_stra);
-    }
-    return strategies;
-  }
-
-  auto s_ptr = std::make_shared<Dimensions>(basic_stra);
-  if (type == BIAS_ADD) {
-    return PrepareBiasAdd(s_ptr);
-  }
-  if (type == STRIDED_SLICE) {
-    return PrepareStridedSlice(ops[iter_ops], basic_stra, dyn_shape_tmp_fix);
-  }
-  if (type == GATHERV2) {
-    return PrepareGather(ops[iter_ops], basic_stra, dyn_shape_tmp_fix);
-  }
-  if (type == ONEHOT) {
-    return PrepareOneHot(ops[iter_ops], basic_stra);
-  }
-  if (type == L2_NORMALIZE) {
-    return PrepareL2Normalize(ops[iter_ops], basic_stra);
-  }
-  std::set<std::string> broadcast_ops = {ADD, SUB, MUL, DIV};
-  auto has_target = std::find(broadcast_ops.begin(), broadcast_ops.end(), type);
-  if (has_target != broadcast_ops.end()) {
-    return CheckBroadcast(ops[iter_ops], basic_stra);
-  }
-  if (type == SOFTMAX || type == LOG_SOFTMAX) {
-    return PrepareSoftMax(ops[iter_ops], basic_stra);
-  }
-  if (type == FLATTEN || type == GATHERD) {
-    return PrepareDataParallel(ops[iter_ops]);
-  }
-  if (type == LAYER_NORM) {
-    return PrepareLayerNorm(ops[iter_ops], basic_stra);
-  }
+Strategies PrepareDropoutDoMask(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra,
+                                bool dyn_shape_tmp_fix) {
   // Dropout's strategy shape must be 1.
-  if (type == DROPOUT_DO_MASK) {
-    strategies.clear();
-    strategies.push_back(basic_stra);
-    return strategies;
-  }
-  if (!dyn_shape_tmp_fix && type == BATCH_MATMUL) {
-    return PreparePropagateBatchMatMul(ops[iter_ops], basic_stra);
-  }
-
-  return CheckDivisible(ops[iter_ops], basic_stra);
+  Strategies strategies;
+  strategies.clear();
+  strategies.push_back(basic_stra);
+  return strategies;
 }
 
 // Function to deal with ops with broadcasting, like TensorAdd/Sub/Mul/Div etc.
-Strategies CheckBroadcast(const std::shared_ptr<OperatorInfo> &op, const Dimensions &strategy) {
+Strategies CheckBroadcast(const std::shared_ptr<OperatorInfo> &op, Dimensions strategy, bool dyn_shape_tmp_fix) {
   Strategies strategies;
 
   size_t first_tensor_dim = op->inputs_shape()[0].size();
@@ -1564,6 +1512,55 @@ Strategies CheckBroadcast(const std::shared_ptr<OperatorInfo> &op, const Dimensi
   }
 
   return strategies;
+}
+
+void InitializeStrategyMap() {
+  if (g_prepare_stra_map.empty()) {
+    g_prepare_stra_map = std::map<std::string, PrepareStraFuncPtr>{{FILLV2, &PrepareFillV2},
+                                                                   {BIAS_ADD, &PrepareBiasAdd},
+                                                                   {STRIDED_SLICE, &PrepareStridedSlice},
+                                                                   {GATHERV2, &PrepareGather},
+                                                                   {ONEHOT, &PrepareOneHot},
+                                                                   {L2_NORMALIZE, &PrepareL2Normalize},
+                                                                   {ADD, &CheckBroadcast},
+                                                                   {SUB, &CheckBroadcast},
+                                                                   {MUL, &CheckBroadcast},
+                                                                   {DIV, &CheckBroadcast},
+                                                                   {SOFTMAX, &PrepareSoftMax},
+                                                                   {LOG_SOFTMAX, &PrepareSoftMax},
+                                                                   {FLATTEN, &PrepareDataParallel},
+                                                                   {GATHERD, &PrepareDataParallel},
+                                                                   {LAYER_NORM, &PrepareLayerNorm},
+                                                                   {BATCH_MATMUL, &PreparePropagateBatchMatMul},
+                                                                   {DROPOUT_DO_MASK, &PrepareDropoutDoMask}};
+  }
+}
+
+Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                                          Dimensions basic_stra, bool dyn_shape_tmp_fix) {
+  MS_EXCEPTION_IF_NULL(ops[iter_ops]);
+
+  if (iter_ops >= ops.size()) {
+    MS_LOG(EXCEPTION) << "Failure: Operators' elements out of range.";
+  }
+
+  Strategies strategies;
+  if (basic_stra.size() == 0) {
+    for (size_t iter_op_inputs = 0; iter_op_inputs < (size_t)ops[iter_ops]->inputs_shape().size(); iter_op_inputs++) {
+      strategies.push_back(basic_stra);
+    }
+    return strategies;
+  }
+  InitializeStrategyMap();
+  auto type = ops[iter_ops]->type();
+
+  auto iter_stra_func = g_prepare_stra_map.find(type);
+  if (iter_stra_func != g_prepare_stra_map.end()) {
+    auto stra = iter_stra_func->second(ops[iter_ops], basic_stra, dyn_shape_tmp_fix);
+    return stra;
+  }
+
+  return CheckDivisible(ops[iter_ops], basic_stra);
 }
 
 Dimensions ApplyBroadcast(const std::shared_ptr<OperatorInfo> &op, const Dimensions &strategy, size_t first_tensor_dim,
@@ -2380,7 +2377,7 @@ size_t RecStrategyPropagator::AssignStandaloneAndBatchParallelOpStrategy() {
       MS_LOG(INFO) << ops_[iter_ops]->name() << " assigned strategy " << StrategyToString(strategies);
     }
     if (name == BATCH_PARALLEL) {
-      Strategies strategies = PrepareDataParallel(ops_[iter_ops]);
+      Strategies strategies = PrepareDataParallel(ops_[iter_ops], {}, false);
       ApplyStrategy(iter_ops, strategies);
       changes++;
       MS_LOG(INFO) << ops_[iter_ops]->name() << " assigned strategy " << StrategyToString(strategies);

@@ -26,17 +26,16 @@ def get_args():
     parser.add_argument(
         "--worker_num",
         type=int,
-        default=1,
+        default=8,
         help="the total number of nodes participating in the training, an integer variable, "
-        "with a default value of 1."
+        "with a default value of 8."
     )
     parser.add_argument(
         "--local_worker_num",
         type=int,
-        default=1,
+        default=8,
         help="the number of nodes participating in local training, an integer variable, "
-        "with a default value of 1."
-        "Worker number on each node is identical on physical nodes in current MindSpore version."
+        "with a default value of 8."
     )
     parser.add_argument(
         "--master_addr",
@@ -61,7 +60,6 @@ def get_args():
         " This parameter is used for rank id assignment for each process on the node."
         " If not set, MindSpore will assign rank ids automatically and"
         " rank id of each process on the same node will be continuous."
-        " Allowed values: port numbers within the."
     )
     parser.add_argument(
         "--log_dir",
@@ -73,6 +71,7 @@ def get_args():
         "--join",
         default=False,
         type=ast.literal_eval,
+        choices=[True, False],
         help="specifies whether msrun should join spawned processes and return distributed job results."
              "If set to True, msrun will check process status and parse the log files."
     )
@@ -86,14 +85,14 @@ def get_args():
              "If this value is negative, other processes will wait infinitely."
     )
     parser.add_argument(
-        "training_script",
+        "task_script",
         type=str,
-        help="The full path to the training script that will be executed in parallel, followed "
+        help="The full path to the script that will be launched in distributed manner, followed "
              "by any additional arguments required by the script."
     )
     parser.add_argument(
-        "training_script_args", nargs=REMAINDER,
-        help="Arguments for user-defined training script."
+        "task_script_args", nargs=REMAINDER,
+        help="Arguments for user-defined script."
     )
     return parser.parse_args()
 
