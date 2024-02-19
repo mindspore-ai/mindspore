@@ -66,7 +66,6 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/depend.h
             ${TOP_DIR}/mindspore/core/ops/depth_to_space.h
             ${TOP_DIR}/mindspore/core/ops/detection_post_process.h
-            ${TOP_DIR}/mindspore/core/ops/dropout.h
             ${TOP_DIR}/mindspore/core/ops/eltwise.h
             ${TOP_DIR}/mindspore/core/ops/fake_quant_with_min_max_vars.h
             ${TOP_DIR}/mindspore/core/ops/fake_quant_with_min_max_vars_per_channel.h

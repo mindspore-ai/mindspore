@@ -361,6 +361,7 @@ class DropoutInfo : public ActivationOther {
   Status InferAsLossDivisor() override;
 
  private:
+  float keep_prob_ = 0.5;
   int64_t seed0_ = 0;
   int64_t seed1_ = 0;
   int64_t get_seed() const {

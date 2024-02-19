@@ -21,13 +21,13 @@
 #include <functional>
 #include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/core/ops/dropout.h"
+#include "mindspore/core/ops/ops_func_impl/dropout.h"
 #include "kernel/philox_random.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kDropoutInputsNum = 1;
+constexpr size_t kDropoutInputsNum = 4;
 constexpr size_t kDropoutOutputsNum = 2;
 }  // namespace
 
@@ -39,12 +39,12 @@ bool DropoutCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const 
                   << " and " << kDropoutOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
     return false;
   }
-  keep_prob_ = GetValue<float>(primitive_->GetAttr(ops::kKeepProb));
+  keep_prob_ = inputs[kIndex1]->GetValueWithCheck<float>();
   if (keep_prob_ <= 0.0 || keep_prob_ > 1.0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'keep_prob' must be in (0.0, 1.0], but got " << keep_prob_;
   }
-  uint64_t seed0 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("Seed0")));
-  uint64_t seed1 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("Seed1")));
+  uint64_t seed0 = static_cast<uint64_t>(inputs[kIndex2]->GetValueWithCheck<int64_t>());
+  uint64_t seed1 = static_cast<uint64_t>(inputs[kIndex3]->GetValueWithCheck<int64_t>());
   uint64_t init_seed = random::GetSeed(seed0, seed1);
   rng_.seed(init_seed);
   return MatchKernelFunc(kernel_name_, inputs, outputs);
@@ -86,11 +86,29 @@ bool DropoutCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *>
 
 FuncVec &DropoutCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, DropoutCpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16),
      &DropoutCpuKernelMod::LaunchKernel<float16>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
      &DropoutCpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat64)
+       .AddOutputAttr(kNumberTypeFloat64),
      &DropoutCpuKernelMod::LaunchKernel<double>},
   };
   return func_list;

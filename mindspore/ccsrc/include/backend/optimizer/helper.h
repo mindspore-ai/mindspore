@@ -46,7 +46,7 @@ constexpr size_t kMatMulInputTensorNum = 2;
 constexpr size_t kMulInputTensorNum = 2;
 constexpr size_t kSubInputTensorNum = 2;
 constexpr size_t kAssignSubInputTensorNum = 2;
-constexpr size_t kDropoutInputTensorNum = 1;
+constexpr size_t kDropoutInputTensorNum = 4;
 constexpr size_t kAssignInputTensorNum = 2;
 
 constexpr size_t kGradIndex = 3;
