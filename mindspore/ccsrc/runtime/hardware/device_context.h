@@ -150,7 +150,6 @@ class BACKEND_EXPORT DeviceResManager {
   // Destroy device resource manager and release device resource.
   virtual void Destroy() {}
 
-  virtual void SetDeviceIdToCurrentThread() const {}
   // Bind device to current thread to gain device control privileges
   // If force_bind is true, bind context to current thread every time;
   // Otherwise, only bind context to current thread for the first time.
