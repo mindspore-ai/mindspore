@@ -1,0 +1,28 @@
+argmax_ext:
+    description: |
+        Return the indices of the maximum values of a tensor across a dimension.
+
+        Args:
+            input (Tensor): Input tensor.
+            dim (Union[int, None], optional): The dimension to reduce. If `dim` is ``None`` , the indices of the maximum
+                value within the flattened input will be returned. Default: ``None`` .
+            keepdim (bool, optional): Whether the output tensor retains the specified
+                dimension. Ignored if `dim` is None. Default: ``False`` .
+
+        Returns:
+            Tensor, indices of the maximum values across a dimension.
+
+        Raises:
+            TypeError: If `keepdim` is not bool.
+            ValueError: If `dim` is out of range.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]]).astype(np.float32))
+            >>> output = ops.argmax(x, dim=-1)
+            >>> print(output)
+            [1 0 0]

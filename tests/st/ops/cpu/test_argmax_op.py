@@ -48,8 +48,7 @@ class DynRankNet(nn.Cell):
         return res
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.level1
 @pytest.mark.env_onecard
 def test_argmax_1d():
     x = Tensor(np.array([1., 20., 5.]).astype(np.float32))
@@ -59,8 +58,7 @@ def test_argmax_1d():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.level1
 @pytest.mark.env_onecard
 def test_argmax_2d():
     x = np.array([[1., 20., 5.],
@@ -78,7 +76,6 @@ def test_argmax_2d():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_argmax_high_dims():
     for dim in range(3, 10):
@@ -100,8 +97,7 @@ def adaptive_argmax_functional(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.level1
 @pytest.mark.env_onecard
 def test_argmax_float32_functional():
     """
@@ -116,7 +112,6 @@ def test_argmax_float32_functional():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_argmax_dynamic_shape():
     """
@@ -146,8 +141,7 @@ def test_argmax_dynamic_shape():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.level1
 @pytest.mark.env_onecard
 def test_argmax_support_types():
     """
@@ -216,8 +210,7 @@ def test_argmax_support_types():
     assert out2_uint64 == 1 and out2_uint64.dtype == mstype.int64
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.level1
 @pytest.mark.env_onecard
 def test_argmax_functional():
     """

@@ -55,6 +55,38 @@ std::vector<int64_t> GetTransposeAxis(const std::vector<int64_t> &x_shape, int64
 }
 }  // namespace
 
+REG_FALLBACK_BUILDER("ArgMaxExt").SetBody(BODYFUNC(ib) {
+  auto input_x = ib->GetInput(kIndex0);
+  auto dim = ib->GetInput(kIndex1);
+  auto keepdim = ib->GetInput(kIndex2);
+  if (input_x->dtype() == kBool) {
+    input_x = ib->Cast(input_x, kInt32);
+  }
+  bool is_dim_none = True;
+  auto dim_value = ib->Value(0);
+  auto dim_value_ptr = dim->BuildValue();
+  if (dim_value_ptr->isa<None>()) {
+    input_x = ib->Reshape(input_x, {-1});
+  } else {
+    dim_value = dim;
+    is_dim_none = False;
+  }
+  auto res = ib->Emit("Argmax", {input_x, dim_value, ib->Value<int64_t>(kInt64->type_id())});
+  auto keepdim_value = ops::GetScalarValue<bool>(keepdim->BuildValue());
+  if (!keepdim_value.has_value()) {
+    auto true_case = [&res, &dim](Emitter *e) -> NodePtrList { return {e->Emit("ExpandDims", {res, dim})}; };
+    auto false_case = [&res](Emitter *e) -> NodePtrList { return {res}; };
+    if (!is_dim_none) {
+      res = ib->Conditional(keepdim, true_case, false_case);
+    }
+  } else {
+    if (keepdim_value.value() && !is_dim_none) {
+      res = ib->Emit("ExpandDims", {res, dim});
+    }
+  }
+  return {res};
+});
+
 REG_FALLBACK_BUILDER("SiLU").SetBody(BODYFUNC(ib) {
   auto input_x = ib->GetInput(kIndex0);
   auto s = ib->Emit("Sigmoid", {ib->GetInput(kIndex0)});
