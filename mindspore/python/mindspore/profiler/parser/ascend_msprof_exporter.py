@@ -60,14 +60,20 @@ class AscendMsprofExporter:
 
     def get_drv_version(self):
         """Get the drv_version for choosing the export mode."""
+        script_path = self._get_msprof_info_path()
+        if not script_path:
+            logger.warning("Can`t find get_msprof_info.py path, use single-export mode instead.")
+            return False
+
+        logger.info("get_msprof_info.py path is : %s", script_path)
         host_dir = os.path.join(self.prof_root_dir, 'host')
         cmd = ['python',
-               '/usr/local/Ascend/latest/tools/profiler/profiler_tool/analysis/interface/get_msprof_info.py',
+               script_path,
                '-dir', host_dir]
         try:
             outs, _ = self._run_cmd(cmd)
             if not outs:
-                logger.warning('Check the drvVersion can`t find the result, use single export mode instead.')
+                logger.warning('Check the drvVersion can`t find the result, use single-export mode instead.')
                 return False
             result = json.loads(outs)
             logger.info('get drv_version result is : %s', result)
@@ -179,6 +185,18 @@ class AscendMsprofExporter:
             raise FileNotFoundError("The msprof command was not found!")
 
         logger.info("The msprof command has been added to the path!")
+
+    def _get_msprof_info_path(self):
+        """Check the existence of get_msprof_info.py script"""
+        outs, _ = self._run_cmd(['which', self._msprof_cmd])
+        if not outs:
+            return ""
+        msprof_path = os.path.realpath(outs.strip())
+        sup_path = msprof_path.split('tools')[0]
+        script_path = os.path.join(sup_path, 'tools/profiler/profiler_tool/analysis/interface/get_msprof_info.py')
+        if not os.path.exists(script_path):
+            return ""
+        return script_path
 
     def _generate_step_trace(self, prof_path, device_path):
         """"generate model_id iteration_id dict"""
