@@ -24,4 +24,4 @@ mindspore.ops.CumProd
     异常：
         - **TypeError** - `exclusive` 或 `reverse` 不是bool类型。
         - **TypeError** - `axis` 不是int。
-        - **ValueError** - `axis` 不是None。
+        - **ValueError** - `axis` 是None。

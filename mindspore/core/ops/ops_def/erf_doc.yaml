@@ -7,8 +7,12 @@ erf:
         erf(x)=\frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
 
     Args:
-        input (Tensor): The input tensor of Gaussian error function. Its data type
-            must be float16 float32 or float64.
+        input (Tensor): The input tensor of Gaussian error function. :math:`x` in the following formula.
+        
+        Supported dtypes: 
+
+            - Ascend: float16, float32.
+            - GPU/CPU: float16, float32, float64.
 
     Returns:
         Tensor, has the same shape and dtype as the `input`.
