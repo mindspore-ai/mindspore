@@ -359,6 +359,7 @@ constexpr const char kAttrNodeWithoutOutput[] = "node_without_output";
 constexpr char kAttrInputLayout[] = "input_layout";
 constexpr char kAttrKeepProb[] = "keep_prob";
 constexpr char kAttrHeadNum[] = "head_num";
+constexpr char kAttrSparseMode[] = "sparse_mode";
 
 // FuncGraph Flags
 constexpr auto kFlagIsPynativeBpropGraph = "is_pynative_bprop_graph";

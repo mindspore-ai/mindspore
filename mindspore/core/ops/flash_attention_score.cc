@@ -30,6 +30,8 @@ namespace {
 constexpr size_t kFlashAttentionScoreSoftmaxLastDim = 8;
 constexpr size_t kInputFlashAttentionScoreQueryBSHRank = 3;
 constexpr size_t kInputFlashAttentionScoreQueryBNSDRank = 4;
+constexpr size_t kRealShiftCompressionDim = 1024;
+constexpr size_t kInputFlashAttentionScoreAttnMaskCompressionDim = 2048;
 constexpr char kInputFlashAttentionScoreLayoutBSH[] = "BSH";
 constexpr char kInputFlashAttentionScoreLayoutBNSD[] = "BNSD";
 
@@ -68,96 +70,141 @@ void CheckFlashAttentionScoreInputShape(const AbstractBasePtr &input, const std:
   }
 }
 
+void CheckFlashAttentionScoreAttnMaskShape(const AbstractBasePtr &attn_mask, const std::string &op_name,
+                                           int64_t sparse_mode, int64_t batch_size, int64_t q_head_num,
+                                           int64_t q_seq_len, int64_t kv_seq_len) {
+  const std::vector<int64_t> need_compress_attn_mask_mode = {kSparseLeftDownCausal, kSparseRightDownCausal, kSparseBand,
+                                                             kSparsePrefix};
+  if (std::find(need_compress_attn_mask_mode.begin(), need_compress_attn_mask_mode.end(), sparse_mode) !=
+      need_compress_attn_mask_mode.end()) {
+    CheckFlashAttentionScoreInputShape(
+      attn_mask, {kInputFlashAttentionScoreAttnMaskCompressionDim, kInputFlashAttentionScoreAttnMaskCompressionDim},
+      op_name, "attn_mask");
+  } else {
+    auto is_attn_mask_optional = sparse_mode == kSparseDefaultMask;
+    CheckFlashAttentionScoreInputShape(attn_mask,
+                                       {{batch_size, q_head_num, q_seq_len, kv_seq_len},
+                                        {batch_size, 1, q_seq_len, kv_seq_len},
+                                        {q_seq_len, kv_seq_len}},
+                                       op_name, "attn_mask", is_attn_mask_optional);
+  }
+}
+
+void CheckFlashAttentionScorePrefixShape(const AbstractBasePtr &prefix, const std::string &op_name, int64_t sparse_mode,
+                                         int64_t batch_size) {
+  if (sparse_mode == kSparsePrefix) {
+    CheckFlashAttentionScoreInputShape(prefix, ShapeVector{batch_size}, op_name, "prefix");
+  } else {
+    if (!IsFlashAttentionScoreOptionalInputNotPass(prefix)) {
+      MS_LOG(EXCEPTION) << op_name << ": 'prefix' must be None if sparse_mode is not " << kSparsePrefix;
+    }
+  }
+}
+
 abstract::TupleShapePtr FlashAttentionScoreInferShape(const PrimitivePtr &primitive,
                                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kFlashAttentionScoreInputsNum, op_name);
-
+  auto input_layout = GetValue<std::string>(primitive->GetAttr(kAttrInputLayout));
+  const std::vector valid_layout = {kInputFlashAttentionScoreLayoutBSH, kInputFlashAttentionScoreLayoutBNSD};
+  if (std::find(valid_layout.begin(), valid_layout.end(), input_layout) == valid_layout.end()) {
+    MS_LOG(EXCEPTION) << op_name << ": The value of attribute 'input_layout' must be one of" << valid_layout
+                      << ", but got " << input_layout;
+  }
   int64_t batch_size;
-  int64_t seq_len;
-  int64_t head_size;
-  int64_t head_num = GetValue<int64_t>(primitive->GetAttr("head_num"));
+  int64_t q_seq_len;
+  auto q_head_num = GetValue<int64_t>(primitive->GetAttr(kAttrHeadNum));
+  int64_t kv_seq_len;
+  int64_t kv_head_num;
   auto query_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
     input_args[kFlashAttentionScoreInputQueryIndex]->BuildShape())[kShape];
-  auto input_layout = GetValue<std::string>(primitive->GetAttr("input_layout"));
+  auto key_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
+    input_args[kFlashAttentionScoreInputKeyIndex]->BuildShape())[kShape];
   if (input_layout == kInputFlashAttentionScoreLayoutBSH) {
-    if (query_shape.size() != kInputFlashAttentionScoreQueryBSHRank) {
-      MS_LOG(EXCEPTION) << op_name << ": The rank of 'query' must be " << kInputFlashAttentionScoreQueryBSHRank
-                        << ", but got " << query_shape.size();
+    if (query_shape.size() != kInputFlashAttentionScoreQueryBSHRank || key_shape.size() != query_shape.size()) {
+      MS_LOG(EXCEPTION) << op_name << ": The rank of 'query' and 'key' must be "
+                        << kInputFlashAttentionScoreQueryBSHRank << ", but got " << query_shape.size() << " and "
+                        << key_shape.size();
     }
     batch_size = query_shape[0];
-    seq_len = query_shape[1];
-    auto hidden_size = query_shape[2];
-    if (hidden_size % head_num != 0) {
-      MS_LOG(EXCEPTION) << op_name << ": 'hidden_size` must be divisible by `head_num`, but got " << H << " and " << N;
+    q_seq_len = query_shape[1];
+    auto q_hidden_size = query_shape[2];
+    if (q_hidden_size % q_head_num != 0) {
+      MS_LOG(EXCEPTION) << op_name << ": 'hidden_size` must be divisible by `head_num`, but got " << q_hidden_size
+                        << " and " << q_head_num;
     }
-    head_size = hidden_size / head_num;
-    CheckFlashAttentionScoreInputShape(input_args[kFlashAttentionScoreInputKeyIndex],
-                                       {{batch_size, seq_len, hidden_size}, {batch_size, seq_len, head_size}}, op_name,
-                                       "key");
-    CheckFlashAttentionScoreInputShape(input_args[kFlashAttentionScoreInputValueIndex],
-                                       {{batch_size, seq_len, hidden_size}, {batch_size, seq_len, head_size}}, op_name,
-                                       "value");
-  } else if (input_layout == kInputFlashAttentionScoreLayoutBNSD) {
+    int64_t head_size = q_hidden_size / q_head_num;
+    kv_seq_len = key_shape[kIndex1];
+    kv_head_num = key_shape[kIndex2] / head_size;
+  } else {
     if (query_shape.size() != kInputFlashAttentionScoreQueryBNSDRank) {
       MS_LOG(EXCEPTION) << op_name << ": The rank of 'query' must be " << kInputFlashAttentionScoreQueryBNSDRank
                         << ", but got " << query_shape.size();
     }
     batch_size = query_shape[kIndex0];
-    if (head_num != query_shape[kIndex1]) {
+    if (q_head_num != query_shape[kIndex1]) {
       MS_LOG(EXCEPTION) << op_name << ": query_shape[1] must be equal to attribute 'head_num', but got "
-                        << query_shape[1] << " and " << head_num;
+                        << query_shape[1] << " and " << q_head_num;
     }
-    seq_len = query_shape[kIndex2];
-    head_size = query_shape[kIndex3];
-    CheckFlashAttentionScoreInputShape(
-      input_args[kFlashAttentionScoreInputKeyIndex],
-      {{batch_size, head_num, seq_len, head_size}, {batch_size, 1, seq_len, head_size}}, op_name, "key");
-    CheckFlashAttentionScoreInputShape(
-      input_args[kFlashAttentionScoreInputValueIndex],
-      {{batch_size, head_num, seq_len, head_size}, {batch_size, 1, seq_len, head_size}}, op_name, "value");
-  } else {
-    MS_LOG(EXCEPTION) << op_name << ": The value of attribute 'input_layout' must be one of ["
-                      << kInputFlashAttentionScoreLayoutBNSD << ", " << kInputFlashAttentionScoreLayoutBSH
-                      << "], but got " << input_layout;
+    q_seq_len = query_shape[kIndex2];
+    kv_seq_len = key_shape[kIndex2];
+    kv_head_num = key_shape[kIndex1];
   }
-  CheckFlashAttentionScoreInputShape(input_args[kFlashAttentionScoreInputAttnMaskIndex],
-                                     {batch_size, 1, seq_len, seq_len}, op_name, "attn_mask");
+  if (q_head_num % kv_head_num != 0) {
+    MS_LOG(EXCEPTION) << op_name << ": The head num of 'key' must be a factor of the head num of 'query', but got "
+                      << kv_head_num << " and " << q_head_num;
+  }
+  CheckFlashAttentionScoreInputShape(input_args[kFlashAttentionScoreInputValueIndex], key_shape, op_name, "value");
+  CheckFlashAttentionScoreInputShape(input_args[kFlashAttentionScoreInputRealShiftIndex],
+                                     {{batch_size, q_head_num, q_seq_len, kv_seq_len},
+                                      {1, q_head_num, q_seq_len, kv_seq_len},
+                                      {batch_size, q_head_num, kRealShiftCompressionDim, kv_seq_len},
+                                      {1, q_head_num, kRealShiftCompressionDim, kv_seq_len}},
+                                     op_name, "real_shift", true);
   CheckFlashAttentionScoreInputShape(input_args[kFlashAttentionScoreInputDropMaskIndex],
-                                     {batch_size, head_num, seq_len, seq_len / 8}, op_name, "drop_mask", true);
+                                     {batch_size, q_head_num, q_seq_len, kv_seq_len / 8}, op_name, "drop_mask", true);
+  auto sparse_mode = GetValue<int64_t>(primitive->GetAttr(kAttrSparseMode));
+  CheckFlashAttentionScoreAttnMaskShape(input_args[kFlashAttentionScoreInputAttnMaskIndex], op_name, sparse_mode,
+                                        batch_size, q_head_num, q_seq_len, kv_seq_len);
+  CheckFlashAttentionScorePrefixShape(input_args[kFlashAttentionScoreInputPrefixIndex], op_name, sparse_mode,
+                                      batch_size);
 
   abstract::BaseShapePtrList output_shape_ptr_list(kFlashAttentionScoreOutputsNum);
+  output_shape_ptr_list[kFlashAttentionScoreOutputSoftmaxMaxIndex] = std::make_shared<abstract::Shape>(
+    ShapeVector{batch_size, q_head_num, q_seq_len, kFlashAttentionScoreSoftmaxLastDim});
+  output_shape_ptr_list[kFlashAttentionScoreOutputSoftmaxSumIndex] = std::make_shared<abstract::Shape>(
+    ShapeVector{batch_size, q_head_num, q_seq_len, kFlashAttentionScoreSoftmaxLastDim});
+  output_shape_ptr_list[kFlashAttentionScoreOutputSoftmaxOutIndex] = std::make_shared<abstract::Shape>(ShapeVector{1});
   output_shape_ptr_list[kFlashAttentionScoreOutputAttentionOutIndex] = std::make_shared<abstract::Shape>(query_shape);
-  output_shape_ptr_list[kFlashAttentionScoreOutputSoftmaxMaxIndex] =
-    std::make_shared<abstract::Shape>(ShapeVector{batch_size, head_num, seq_len, kFlashAttentionScoreSoftmaxLastDim});
-  output_shape_ptr_list[kFlashAttentionScoreOutputSoftmaxSumIndex] =
-    std::make_shared<abstract::Shape>(ShapeVector{batch_size, head_num, seq_len, kFlashAttentionScoreSoftmaxLastDim});
   return std::make_shared<abstract::TupleShape>(output_shape_ptr_list);
 }
 
 TuplePtr FlashAttentionScoreInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set valid_types = {kFloat16, kFloat32, kBFloat16};
+  const std::set valid_types = {kFloat16, kBFloat16};
   auto op_name = prim->name();
   std::map<std::string, TypePtr> types;
   // "x", "kernel_query", "kernel_key", "kernel_value", "gamma", " beta", "bias_query", "bias_key", "bias_value"
   (void)types.emplace("query", input_args[kFlashAttentionScoreInputQueryIndex]->BuildType());
   (void)types.emplace("key", input_args[kFlashAttentionScoreInputKeyIndex]->BuildType());
   (void)types.emplace("value", input_args[kFlashAttentionScoreInputValueIndex]->BuildType());
+  if (!IsFlashAttentionScoreOptionalInputNotPass(input_args[kFlashAttentionScoreInputRealShiftIndex])) {
+    (void)types.emplace("real_shift", input_args[kFlashAttentionScoreInputRealShiftIndex]->BuildType());
+  }
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
-  auto attn_mask_type = input_args[kFlashAttentionScoreInputAttnMaskIndex]->BuildType();
-  CheckAndConvertUtils::CheckTensorTypeValid("attn_mask", attn_mask_type, {kUInt8, kFloat16}, op_name);
   if (!IsFlashAttentionScoreOptionalInputNotPass(input_args[kFlashAttentionScoreInputPaddingMaskIndex])) {
     MS_LOG(EXCEPTION) << op_name << ": 'padding_mask' must be None currently.";
   }
-  if (!IsFlashAttentionScoreOptionalInputNotPass(input_args[kFlashAttentionScoreInputRealShiftIndex])) {
-    MS_LOG(EXCEPTION) << op_name << ": 'real_shift' must be None currently.";
+  if (!IsFlashAttentionScoreOptionalInputNotPass(input_args[kFlashAttentionScoreInputAttnMaskIndex])) {
+    auto attn_mask_type = input_args[kFlashAttentionScoreInputAttnMaskIndex]->BuildType();
+    CheckAndConvertUtils::CheckTensorTypeValid("attn_mask", attn_mask_type, {kUInt8}, op_name);
   }
-  if (!IsFlashAttentionScoreOptionalInputNotPass(input_args[kFlashAttentionScoreInputPrefix])) {
-    MS_LOG(EXCEPTION) << op_name << ": 'prefix' must be None currently.";
+  if (!IsFlashAttentionScoreOptionalInputNotPass(input_args[kFlashAttentionScoreInputPrefixIndex])) {
+    auto prefix_type = input_args[kFlashAttentionScoreInputPrefixIndex]->BuildType();
+    CheckAndConvertUtils::CheckTensorTypeValid("prefix", prefix_type, {kInt64}, op_name);
   }
 
-  auto keep_prob_value_ptr = prim->GetAttr("keep_prob");
+  auto keep_prob_value_ptr = prim->GetAttr(kAttrKeepProb);
   MS_EXCEPTION_IF_NULL(keep_prob_value_ptr);
   auto keep_prob = GetValue<float>(keep_prob_value_ptr);
   if (keep_prob > 1 || keep_prob < 0) {
@@ -174,9 +221,10 @@ TuplePtr FlashAttentionScoreInferType(const PrimitivePtr &prim, const std::vecto
   }
 
   TypePtrList output_type_ptr_list(kFlashAttentionScoreOutputsNum);
-  output_type_ptr_list[kFlashAttentionScoreOutputAttentionOutIndex] = type;
   output_type_ptr_list[kFlashAttentionScoreOutputSoftmaxMaxIndex] = kFloat32;
   output_type_ptr_list[kFlashAttentionScoreOutputSoftmaxSumIndex] = kFloat32;
+  output_type_ptr_list[kFlashAttentionScoreOutputSoftmaxOutIndex] = type;
+  output_type_ptr_list[kFlashAttentionScoreOutputAttentionOutIndex] = type;
   return std::make_shared<Tuple>(output_type_ptr_list);
 }
 }  // namespace

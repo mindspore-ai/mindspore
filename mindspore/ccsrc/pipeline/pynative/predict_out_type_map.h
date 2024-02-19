@@ -290,8 +290,8 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"ScalarLt", kTypeNone},
                                                        {"sequence_len", kTypeNone},
                                                        {"tuple_setitem", kTypeNone},
-                                                       {"FlashAttentionScore", kTupleTensor3},
-                                                       {"FlashAttentionScoreGrad", kTupleTensor3},
+                                                       {"FlashAttentionScore", kTupleTensor4},
+                                                       {"FlashAttentionScoreGrad", kTupleTensor4},
                                                        {"SplitTensor", kTypeAny},
                                                        {"SplitWithSize", kTypeAny}};
 
