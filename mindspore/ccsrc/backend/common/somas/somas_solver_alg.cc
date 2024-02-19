@@ -127,7 +127,7 @@ bool FootPrint::findFirst(vector<Interval> *interval_v, const BlockTensor &block
   return bfound;
 }
 
-bool FootPrint::findOffset(const std::vector<DynamicBitSet> *constraints, const BlockTensor &block, size_t *offset) {
+bool FootPrint::findOffset(const std::vector<VectorBitSet> *constraints, const BlockTensor &block, size_t *offset) {
   MS_EXCEPTION_IF_NULL(offset);
   vector<Interval> l_interval;
 
@@ -222,7 +222,7 @@ void FootPrint::printStats() {
   MS_LOG(DEBUG) << "Footprint blocks: " << m_starts_.size() << " \toffset: " << m_offset_;
 }
 bool FastHeuristic::Eval(vector<BlockTensor> *block_tensors_v, const std::shared_ptr<FootPrint> &foot_print,
-                         const std::vector<DynamicBitSet> *pConstraints) {
+                         const std::vector<VectorBitSet> *pConstraints) {
   MS_EXCEPTION_IF_NULL(foot_print);
   auto start = std::chrono::system_clock::now();
 
