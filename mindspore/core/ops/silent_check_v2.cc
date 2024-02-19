@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ops/silent_check.h"
+#include "ops/silent_check_v2.h"
 
 #include <map>
 #include <memory>
@@ -44,24 +44,24 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::TupleShapePtr SilentCheckInferShape(const PrimitivePtr &primitive,
-                                              const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr SilentCheckV2InferShape(const PrimitivePtr &primitive,
+                                                const std::vector<AbstractBasePtr> &input_args) {
   auto pre_val_shape_ptr = input_args[kInputIndex1]->BuildShape();
   auto min_val_shape_ptr = input_args[kInputIndex2]->BuildShape();
   auto max_val_shape_ptr = input_args[kInputIndex3]->BuildShape();
   auto result_shape_ptr = input_args[kInputIndex5]->BuildShape();
   return std::make_shared<abstract::TupleShape>(
-    std::vector<abstract::BaseShapePtr>{result_shape_ptr, pre_val_shape_ptr, min_val_shape_ptr, max_val_shape_ptr});
+    std::vector<abstract::BaseShapePtr>{pre_val_shape_ptr, min_val_shape_ptr, max_val_shape_ptr, result_shape_ptr});
 }
 
-TuplePtr SilentCheckInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TuplePtr SilentCheckV2InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto pre_val_type_ptr = input_args[kInputIndex1]->BuildType();
   auto min_val_type_ptr = input_args[kInputIndex2]->BuildType();
   auto max_val_type_ptr = input_args[kInputIndex3]->BuildType();
   auto result_type_ptr = input_args[kInputIndex5]->BuildType();
 
-  (void)CheckAndConvertUtils::CheckTypeValid("result", result_type_ptr, {kBool}, prim_name);
+  (void)CheckAndConvertUtils::CheckTypeValid("result", result_type_ptr, {kInt32}, prim_name);
   const std::map<std::string, TypePtr> types = {
     {"pre_val", pre_val_type_ptr},
     {"min_val", min_val_type_ptr},
@@ -69,62 +69,83 @@ TuplePtr SilentCheckInferType(const PrimitivePtr &primitive, const std::vector<A
   };
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, {kFloat32}, prim_name);
   return std::make_shared<Tuple>(
-    std::vector<TypePtr>{result_type_ptr, pre_val_type_ptr, min_val_type_ptr, max_val_type_ptr});
+    std::vector<TypePtr>{pre_val_type_ptr, min_val_type_ptr, max_val_type_ptr, result_type_ptr});
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(SilentCheck, BaseOperator);
-void SilentCheck::Init(const int64_t c_min_steps, const float c_thresh, const float c_coeff) {
+MIND_API_OPERATOR_IMPL(SilentCheckV2, BaseOperator);
+void SilentCheckV2::Init(const int64_t c_min_steps, const float c_thresh_l1, const float c_coeff_l1,
+                         const float c_thresh_l2, const float c_coeff_l2) {
   this->set_c_min_steps(c_min_steps);
-  this->set_c_thresh(c_thresh);
-  this->set_c_coeff(c_coeff);
+  this->set_c_thresh_l1(c_thresh_l1);
+  this->set_c_coeff_l1(c_coeff_l1);
+  this->set_c_thresh_l2(c_thresh_l2);
+  this->set_c_coeff_l2(c_coeff_l2);
 }
 
-void SilentCheck::set_c_min_steps(const int64_t c_min_steps) {
+void SilentCheckV2::set_c_min_steps(const int64_t c_min_steps) {
   (void)this->AddAttr(kCMinSteps, api::MakeValue(c_min_steps));
 }
-int64_t SilentCheck::get_c_min_steps() const {
+int64_t SilentCheckV2::get_c_min_steps() const {
   auto value_ptr = GetAttr(kCMinSteps);
   return GetValue<int64_t>(value_ptr);
 }
-void SilentCheck::set_c_thresh(const float c_thresh) { (void)this->AddAttr(kCThresh, api::MakeValue(c_thresh)); }
-float SilentCheck::get_c_thresh() const {
-  auto value_ptr = GetAttr(kCThresh);
+void SilentCheckV2::set_c_thresh_l1(const float c_thresh_l1) {
+  (void)this->AddAttr(kCThreshL1, api::MakeValue(c_thresh_l1));
+}
+float SilentCheckV2::get_c_thresh_l1() const {
+  auto value_ptr = GetAttr(kCThreshL1);
   return GetValue<float>(value_ptr);
 }
-void SilentCheck::set_c_coeff(const float c_coeff) { (void)this->AddAttr(kCCoeff, api::MakeValue(c_coeff)); }
-float SilentCheck::get_c_coeff() const {
-  auto value_ptr = GetAttr(kCCoeff);
+void SilentCheckV2::set_c_coeff_l1(const float c_coeff_l1) {
+  (void)this->AddAttr(kCCoeffL1, api::MakeValue(c_coeff_l1));
+}
+float SilentCheckV2::get_c_coeff_l1() const {
+  auto value_ptr = GetAttr(kCCoeffL1);
+  return GetValue<float>(value_ptr);
+}
+void SilentCheckV2::set_c_thresh_l2(const float c_thresh_l2) {
+  (void)this->AddAttr(kCThreshL2, api::MakeValue(c_thresh_l2));
+}
+float SilentCheckV2::get_c_thresh_l2() const {
+  auto value_ptr = GetAttr(kCThreshL2);
+  return GetValue<float>(value_ptr);
+}
+void SilentCheckV2::set_c_coeff_l2(const float c_coeff_l2) {
+  (void)this->AddAttr(kCCoeffL2, api::MakeValue(c_coeff_l2));
+}
+float SilentCheckV2::get_c_coeff_l2() const {
+  auto value_ptr = GetAttr(kCCoeffL2);
   return GetValue<float>(value_ptr);
 }
 
-AbstractBasePtr SilentCheckInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args) {
+AbstractBasePtr SilentCheckV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   constexpr int64_t kInputNum = 6;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
-  auto type = SilentCheckInferType(primitive, input_args);
-  auto shape = SilentCheckInferShape(primitive, input_args);
+  auto type = SilentCheckV2InferType(primitive, input_args);
+  auto shape = SilentCheckV2InferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
 
 // AG means auto generated
-class MIND_API AGSilentCheckInfer : public abstract::OpInferBase {
+class MIND_API AGSilentCheckV2Infer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SilentCheckInferShape(primitive, input_args);
+    return SilentCheckV2InferShape(primitive, input_args);
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SilentCheckInferType(primitive, input_args);
+    return SilentCheckV2InferType(primitive, input_args);
   }
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
-    return SilentCheckInfer(engine, primitive, input_args);
+    return SilentCheckV2Infer(engine, primitive, input_args);
   }
 };
 
-REGISTER_PRIMITIVE_OP_INFER_IMPL(SilentCheck, prim::kPrimSilentCheck, AGSilentCheckInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SilentCheckV2, prim::kPrimSilentCheckV2, AGSilentCheckV2Infer, false);
 }  // namespace ops
 }  // namespace mindspore
