@@ -73,6 +73,10 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
                                                     const AnfNodePtr &node, const EquivPtr &equiv) const;
   CNodePtr CreateFlashAttentionNodeForSD(const std::string &pattern_name, const FuncGraphPtr &func_graph,
                                          const AnfNodePtr &node, const EquivPtr &equiv) const;
+  CNodePtr CreateFlashAttentionNodeForSDPreMul(const std::string &pattern_name, const FuncGraphPtr &func_graph,
+                                               const AnfNodePtr &node, const EquivPtr &equiv) const;
+  CNodePtr CreateFlashAttentionNodeForSDWithoutCast(const std::string &pattern_name, const FuncGraphPtr &func_graph,
+                                                    const AnfNodePtr &node, const EquivPtr &equiv) const;
   CNodePtr CreateFlashAttentionNodeForPanGu(const std::string &pattern_name, const FuncGraphPtr &func_graph,
                                             const AnfNodePtr &node, const EquivPtr &equiv) const;
   CNodePtr CreateFlashAttentionNodeForLLAMAPatternV1(const std::string &pattern_name, const FuncGraphPtr &func_graph,
@@ -104,6 +108,8 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
   const VectorRef DefineFlashAttentionPatternForMsSDXL() const;
   const VectorRef DefineFlashAttentionPatternForSDBNSD() const;
   const VectorRef DefineFlashAttentionPatternForSDBSH() const;
+  const VectorRef DefineFlashAttentionPatternForSDPreMul() const;
+  const VectorRef DefineFlashAttentionPatternForSDWithoutCast() const;
   const VectorRef DefineFlashAttentionPatternForPanGu() const;
   const VectorRef DefineFlashAttentionPatternForLLAMAPatternV1() const;
   const VectorRef DefineFlashAttentionPatternForLLAMAPatternV2() const;
