@@ -421,10 +421,8 @@ class TrainOneStepCell(Cell):
         Init silent detect.
         """
         self._enable_npu_silent_detect = os.environ.get('NPU_DETECT') == "1"
-        self._enable_npu_silent_recovery = os.environ.get('NPU_RECOVERY') == "1"
 
         if not self._enable_npu_silent_detect:
-            self._enable_npu_silent_recovery = False
             self._silent_check_list = []
             return
 
@@ -443,7 +441,7 @@ class TrainOneStepCell(Cell):
         Therefore, the results need to be reset after a fault is detected.
         """
         for param in self._silent_check_list:
-            F.assign(param, Tensor(False, mstype.bool_))
+            F.assign(param, Tensor(0, mstype.int32))
 
     def construct(self, *inputs):
         if not self.sense_flag:
@@ -451,10 +449,9 @@ class TrainOneStepCell(Cell):
         loss = self.network(*inputs)
         sens = F.fill(loss.dtype, loss.shape, self.sens)
         grads = self.grad(self.network, self.weights)(*inputs, sens)
-        is_silent_fault = self._get_silent_check_status()
+        self._get_silent_check_status()
         grads = self.grad_reducer(grads)
-        if not self._enable_npu_silent_recovery or not is_silent_fault:
-            loss = F.depend(loss, self.optimizer(grads))
+        loss = F.depend(loss, self.optimizer(grads))
         if self.return_grad:
             return loss, self._get_grad_name(grads)
         return loss
@@ -463,11 +460,9 @@ class TrainOneStepCell(Cell):
         """construct implementation when the 'sens' parameter is passed in."""
         loss = self.network(*inputs)
         grads = self.grad_no_sens(self.network, self.weights)(*inputs)
-        is_silent_fault = self._get_silent_check_status()
-        grads = F.depend(grads, is_silent_fault)
+        self._get_silent_check_status()
         grads = self.grad_reducer(grads)
-        if not self._enable_npu_silent_recovery or not is_silent_fault:
-            loss = F.depend(loss, self.optimizer(grads))
+        loss = F.depend(loss, self.optimizer(grads))
         if self.return_grad:
             return loss, self._get_grad_name(grads)
         return loss
@@ -487,23 +482,24 @@ class TrainOneStepCell(Cell):
         """
         Get silent check status.
         """
-        status = False
+        status = Tensor(False, mstype.bool_)
         if not self._enable_npu_silent_detect:
             return status
         if not self._silent_check_list:
-            status = False
+            status = Tensor(False, mstype.bool_)
         else:
-            result_list = [res.unsqueeze(0) for res in self._silent_check_list]
-            status = ops.concat(result_list).any()
+            result = ops.concat([res.unsqueeze(0) for res in self._silent_check_list])
+            if result.equal(0).all():
+                status = Tensor(False, mstype.bool_)
+            elif result.greater(1).any():
+                status = Tensor(True, mstype.bool_)
+                print(f"NPUCheckEvent:AICore Numerical error happen, retValue=2, globalrank={self._rank_id}.")
+                self._reset_silent_check_result()
+            else:
+                status = Tensor(False, mstype.bool_)
+                print(f"NPUCheckEvent:AICore Numerical warning happen, retValue=1, globalrank={self._rank_id}.")
+                self._reset_silent_check_result()
 
-        if status:
-            print(f"NPUCheckEvent:AICore Numerical error happen, retValue=False, globalrank={self._rank_id}.")
-            self._reset_silent_check_result()
-
-        if self._is_distributed:
-            status = self._silent_allreduce(status.int()).bool()
-        if self._enable_npu_silent_recovery and status:
-            print("NPUCheckEvent:AICore Numerical error happen, skip this step!")
         return status
 
     def _get_grad_name(self, grads):

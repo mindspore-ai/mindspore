@@ -22,7 +22,7 @@ import mindspore.ops as ops
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore import Tensor
-from mindspore.ops.operations.math_ops import SilentCheck
+from mindspore.ops.operations.math_ops import SilentCheckV2
 from mindspore.ops.operations._inner_ops import _MirrorSilentCheck
 from mindspore.ops.operations.math_ops import CumulativeLogsumexp
 from mindspore.ops.operations.math_ops import MatrixSolve
@@ -797,7 +797,7 @@ def get_bprop_tensor_add(self):
 @bprop_getters.register(_MirrorSilentCheck)
 def get_bprop_mirror_silent_check(self):
     """Grad definition for '_MirrorSilentCheck' op"""
-    silent_check = SilentCheck(self.min_steps, self.thresh, self.coeff)
+    silent_check = SilentCheckV2(self.min_steps, self.thresh_l1, self.coeff_l1, self.thresh_l2, self.coeff_l2)
     out_tensor = Tensor([0.0], mstype.float32)
 
     def bporp(x, pre_val, min_val, max_val, n_step, res, loss_scale, out, dout):
