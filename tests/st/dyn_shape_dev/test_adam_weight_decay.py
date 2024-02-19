@@ -45,7 +45,6 @@ def adam_weight_decay_forward_func(param, m, v, lr, beta1, beta2, eps, weight_de
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
