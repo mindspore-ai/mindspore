@@ -24,7 +24,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "common/util/error_manager/error_manager.h"
 #include "error_code.h"
 #include "graph/operator.h"
 #include "op_proto/utils/op_log.h"
@@ -200,19 +199,6 @@ template <typename T>
 std::string GetParamOutRangeErrMsg(const std::string &param_name, const T &real_value, const T &min, const T &max);
 
 std::string OtherErrMsg(const std::string &error_detail);
-
-void TbeInputDataTypeErrReport(const std::string &op_name, const std::string &param_name,
-                               const std::string &expected_dtype_list, const std::string &dtype);
-
-void GeInfershapeErrReport(const std::string &op_name, const std::string &op_type, const std::string &value,
-                           const std::string &reason);
-/*
- * log common runtime error
- * param[in] opname op name
- * param[in] error description
- * return void
- */
-void CommonRuntimeErrLog(const std::string &opname, const std::string &description);
 }  // namespace ge
 
 #endif  // CUSTOMIZE_OP_PROTO_UTILS_ERROR_UTIL_H_

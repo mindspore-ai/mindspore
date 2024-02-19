@@ -391,16 +391,6 @@ graphStatus ValidateSparseTensor(const TensorDesc &indices, const TensorDesc &va
                                  const ge::Operator &op);
 
 /**
- * InferShapeErrorReport info
- * @param op_name Operator name
- * @param op_type Operator type
- * @param value Operator value
- * @param reason error reason
- */
-void InferShapeErrorReport(const std::string &op_name, const std::string &op_type, const std::string &value,
-                           const std::string &reason);
-
-/**
  * @brief get string from data type
  * @param dtype data type
  * @return string of data type

@@ -773,13 +773,6 @@ graphStatus ValidateSparseTensor(const TensorDesc &indices, const TensorDesc &va
   return GRAPH_SUCCESS;
 }
 
-void InferShapeErrorReport(const std::string &op_name, const std::string &op_type, const std::string &value,
-                           const std::string &reason) {
-  std::string report_error_code = "E14001";
-  ErrorManager::GetInstance().ATCReportErrMessage(report_error_code, {"opname", "optype", "value", "reason"},
-                                                  {op_name, op_type, value, reason});
-}
-
 std::string DTypeStr(DataType dtype) {
   auto iter =
     std::find_if(dtype_maps.begin(), dtype_maps.end(),
