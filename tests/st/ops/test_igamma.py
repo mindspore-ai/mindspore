@@ -24,6 +24,8 @@ from mindspore.common import dtype as mstype
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_igamma_functional_api_modes(mode):
@@ -32,7 +34,7 @@ def test_igamma_functional_api_modes(mode):
     Description: Test igamma functional api for Graph and PyNative modes.
     Expectation: The result match to the expect value.
     """
-    context.set_context(mode=mode, device_target="CPU")
+    context.set_context(mode=mode)
     a = Tensor([2.0, 4.0, 6.0, 8.0], mstype.float32)
     x = Tensor([2.0, 3.0, 4.0, 5.0], mstype.float32)
     output = F.igamma(a, x)
@@ -58,8 +60,10 @@ def test_igamma_tensor_api_modes(mode):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_igammac_functional_api_modes(mode):
@@ -68,7 +72,7 @@ def test_igammac_functional_api_modes(mode):
     Description: Test igamma functional api for Graph and PyNative modes.
     Expectation: The result match to the expect value.
     """
-    context.set_context(mode=mode, device_target="CPU")
+    context.set_context(mode=mode)
     a = Tensor([2.0, 4.0, 6.0, 8.0], mstype.float32)
     x = Tensor([2.0, 3.0, 4.0, 5.0], mstype.float32)
     output = F.igammac(a, x)

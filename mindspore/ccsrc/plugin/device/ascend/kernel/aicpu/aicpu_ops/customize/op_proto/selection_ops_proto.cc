@@ -571,10 +571,22 @@ IMPLEMT_COMMON_INFERFUNC(SliceInferShape) {
   OP_LOGD(TbeGetName(op).c_str(), "offset:%s", to_string(input_begin).c_str());
   OP_LOGD(TbeGetName(op).c_str(), "size:%s", to_string(input_size).c_str());
   OP_LOGD(TbeGetName(op).c_str(), "output_shape:%s", to_string(tensordesc_output.GetShape()).c_str());
-  (void)op.UpdateOutputDesc("y", tensordesc_output);
-  return GRAPH_SUCCESS;
+  return op.UpdateOutputDesc("y", tensordesc_output);
 }
 
 COMMON_INFER_FUNC_REG(Slice, SliceInferShape);
 // ----------------Slice Op END ----------------------
+
+// ----------------SearchSorted-------------------
+IMPLEMT_COMMON_INFERFUNC(SearchSortedInferShape) {
+  TensorDesc output_desc = op.GetOutputDescByName("out");
+  output_desc.SetShape(op.GetInputDescByName("value").GetShape());
+  DataType dtype;
+  RETURN_IF_FAILURE(op.GetAttr("dtype", dtype));
+  output_desc.SetDataType(dtype);
+  return op.UpdateOutputDesc("out", output_desc);
+}
+
+COMMON_INFER_FUNC_REG(SearchSorted, SearchSortedInferShape);
+// ----------------SearchSorted END-------------------
 }  // namespace ge

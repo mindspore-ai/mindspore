@@ -351,4 +351,13 @@ ATTR_INPUT_MAP(SparseApplyAdadelta) = {{"epsilon", "epsilon"}};
 ATTR_MAP(SparseApplyAdadelta) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(SparseApplyAdadelta) = {{0, OUTPUT_DESC(var)}};
 REG_ADPT_DESC(SparseApplyAdadelta, kSparseApplyAdadeltaDOpName, ADPT_DESC(SparseApplyAdadelta))
+
+// FusedSparseProximalAdagrad
+CUST_INPUT_MAP(FusedSparseProximalAdagrad) = {{1, INPUT_DESC(var)},    {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)},
+                                              {4, INPUT_DESC(l1)},     {5, INPUT_DESC(l2)},    {6, INPUT_DESC(grad)},
+                                              {7, INPUT_DESC(indices)}};
+CUST_ATTR_MAP(FusedSparseProximalAdagrad) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+CUST_OUTPUT_MAP(FusedSparseProximalAdagrad) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}};
+REG_ADPT_DESC(FusedSparseProximalAdagrad, prim::kPrimFusedSparseProximalAdagrad->name(),
+              CUST_ADPT_DESC(FusedSparseProximalAdagrad));
 }  // namespace mindspore::transform

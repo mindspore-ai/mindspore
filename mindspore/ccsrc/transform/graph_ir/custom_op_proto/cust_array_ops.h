@@ -129,5 +129,13 @@ REG_CUST_OP(Coalesce)
   .OUTPUT(y_values, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16}))
   .OUTPUT(y_shape, TensorType({DT_INT64}))
   .CUST_OP_END_FACTORY_REG(Coalesce)
+
+REG_CUST_OP(Padding)
+  .INPUT(x, TensorType({DT_BOOL, DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT16,
+                        DT_UINT32, DT_UINT64, DT_UINT8}))
+  .OUTPUT(y, TensorType({DT_BOOL, DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT16,
+                         DT_UINT32, DT_UINT64, DT_UINT8}))
+  .REQUIRED_ATTR(pad_dim_size, Int)
+  .CUST_OP_END_FACTORY_REG(Padding)
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_ARRAY_OPS_H_

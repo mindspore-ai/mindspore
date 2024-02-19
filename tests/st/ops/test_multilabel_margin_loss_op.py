@@ -74,7 +74,8 @@ def multilabel_margin_loss_template(nptype_input, reduction):
         loss_np = loss.asnumpy()
         expected_loss = np.array(
             answer_dic.get(idx)[reduction]).astype(nptype_input)
-        expected_tar = Tensor(np.array(answer_dic.get(idx)['tar']).astype(np.int32))
+        expected_tar = Tensor(
+            np.array(answer_dic.get(idx)['tar']).astype(np.int32))
 
         if nptype_input == np.float64:
             ertol_loss = 1e-05
@@ -138,6 +139,23 @@ def multilabel_margin_loss_grad_template(nptype_input, reduction):
         assert x_grad_np.dtype == expected_x_grad.dtype
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multilabel_margin_loss_graph_float32():
+    """
+    Feature: multilabelmarginloss float32
+    Description: all dtype of input with all reduction
+    Expectation: success
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    for reduction in ['none', 'sum', 'mean']:
+        multilabel_margin_loss_template(np.float32, reduction)
+        multilabel_margin_loss_grad_template(np.float32, reduction)
+
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -147,9 +165,8 @@ def test_multilabel_margin_loss_graph():
     Description: all dtype of input with all reduction
     Expectation: success
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE)
     for reduction in ['none', 'sum', 'mean']:
-        multilabel_margin_loss_template(np.float32, reduction)
         multilabel_margin_loss_template(np.float16, reduction)
         multilabel_margin_loss_template(np.float64, reduction)
 
@@ -165,7 +182,6 @@ def test_multilabel_margin_loss_grad_graph():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     for reduction in ['none', 'sum', 'mean']:
-        multilabel_margin_loss_grad_template(np.float32, reduction)
         multilabel_margin_loss_grad_template(np.float16, reduction)
         multilabel_margin_loss_grad_template(np.float64, reduction)
 

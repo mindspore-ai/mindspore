@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,36 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
 import pytest
+import numpy as np
 
 import mindspore as ms
-import mindspore.nn as nn
+import mindspore.context as context
+from mindspore import Tensor
 from mindspore import ops
+import tests.st.utils.test_utils as test_utils
 
-
-class Net(nn.Cell):
-    def construct(self, x):
-        return ops.digamma(x)
+@test_utils.run_with_cell
+def angle_forward_func(x):
+    return ops.angle(x)
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_digamma(mode):
+@pytest.mark.parametrize("context_mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_angle(context_mode):
     """
-    Feature: ops.digamma
-    Description: Verify the result of digamma
-    Expectation: success
+    Feature: angle
+    Description: test angle
+    Expectation: match to np benchmark.
     """
-    ms.set_context(mode=mode)
-    x = ms.Tensor([-0.5, 0.5, 10, 1.0], ms.float32)
-    net = Net()
-    output = net(x)
-    expect_output = [0.03648978, -1.9635109, 2.2517526, -0.5772159]
-    assert np.allclose(output.asnumpy(), expect_output)
+    context.set_context(mode=context_mode, device_target="Ascend")
+    x = Tensor([-1.5 + 7.8j, 3 + 5.75j], ms.complex64)
+    output = angle_forward_func(x)
+    expected = np.array([1.7607845, 1.0899091], np.float32)
+    np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-3)

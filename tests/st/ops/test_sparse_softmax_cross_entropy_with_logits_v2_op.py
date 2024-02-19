@@ -34,14 +34,16 @@ class Net(nn.Cell):
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sparse_softmax_cross_entropy_with_logits_v2_dyn():
     """
-    Feature: test SparseSoftmaxCrossEntropyWithLogitsV2 ops in cpu.
+    Feature: test SparseSoftmaxCrossEntropyWithLogitsV2 ops.
     Description: test the ops in dynamic shape.
     Expectation: expect correct shape result.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    context.set_context(mode=context.GRAPH_MODE)
     net = Net()
 
     logits_dyn = Tensor(shape=[None, None], dtype=ms.float32)

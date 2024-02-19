@@ -19,7 +19,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops.operations.math_ops import Polygamma
 
-context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+context.set_context(mode=context.GRAPH_MODE)
 
 
 class PolygammaNet(nn.Cell):
@@ -32,8 +32,10 @@ class PolygammaNet(nn.Cell):
         return self.polygamma(a, x)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_polygamma_1d_a_1_int64_float16():
     """

@@ -289,6 +289,8 @@ ATTR_MAP(SparseSoftmaxCrossEntropyWithLogits) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(SparseSoftmaxCrossEntropyWithLogits) = {{0, OUTPUT_DESC(loss)}, {1, OUTPUT_DESC(backprop)}};
 REG_ADPT_DESC(SparseSoftmaxCrossEntropyWithLogits, prim::kPrimSparseSoftmaxCrossEntropyWithLogits->name(),
               ADPT_DESC(SparseSoftmaxCrossEntropyWithLogits))
+REG_ADPT_DESC(SparseSoftmaxCrossEntropyWithLogitsV2, prim::kPrimSparseSoftmaxCrossEntropyWithLogitsV2->name(),
+              ADPT_DESC(SparseSoftmaxCrossEntropyWithLogits))
 
 // MultiMarginLossGrad
 CUST_INPUT_MAP(MultiMarginLossGrad) = {
@@ -322,4 +324,11 @@ OUTPUT_MAP(RmsNormGrad) = {
 };
 REG_ADPT_DESC(RmsNormGrad, prim::kPrimRmsNormGrad->name(), ADPT_DESC(RmsNormGrad))
 
+// MultilabelMarginLossGrad
+CUST_INPUT_MAP(MultilabelMarginLossGrad) = {
+  {1, INPUT_DESC(y_grad)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(target)}, {4, INPUT_DESC(is_target)}};
+CUST_ATTR_MAP(MultilabelMarginLossGrad) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
+CUST_OUTPUT_MAP(MultilabelMarginLossGrad) = {{0, OUTPUT_DESC(x_grad)}};
+REG_ADPT_DESC(MultilabelMarginLossGrad, prim::kPrimMultilabelMarginLossGrad->name(),
+              CUST_ADPT_DESC(MultilabelMarginLossGrad));
 }  // namespace mindspore::transform
