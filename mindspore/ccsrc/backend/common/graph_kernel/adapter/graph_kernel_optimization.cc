@@ -192,7 +192,7 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
   pm->Add(std::make_shared<GraphKernelRecompute>(), recompute_lv);
 
   // Enable atomic add
-  pm->Add(std::make_shared<AtomicCleanInserter>(), OptLevel_2, is_gpu || (is_ascend && !is_ge));
+  pm->Add(std::make_shared<AtomicCleanInserter>(), OptLevel_2, is_gpu || (is_ascend && !is_ge && !is_dvm));
 
   // Enable atomic add for stitch nodes.
   auto level = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_stitch_fusion);
