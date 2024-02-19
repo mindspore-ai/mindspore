@@ -1,0 +1,21 @@
+#operator argmax
+argmax_ext:
+  args:
+    input:
+      dtype: tensor
+    dim:
+      dtype: int
+      default: None
+    keepdim:
+      dtype: bool
+      default: False
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: ArgMaxExt
+  function:
+    name: argmax
+  dispatch:
+    enable: True
+    Ascend: ArgMaxAscend
