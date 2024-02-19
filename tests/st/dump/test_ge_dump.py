@@ -21,7 +21,9 @@ import numpy as np
 import pytest
 import time
 import mindspore.context as context
+import csv
 
+import mindspore
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
@@ -45,6 +47,15 @@ class Net(nn.Cell):
 
     def construct(self, x_, y_):
         return self.add(x_, y_)
+
+
+class NetMul(nn.Cell):
+    def __init__(self):
+        super(NetMul, self).__init__()
+        self.mul = P.Mul()
+
+    def construct(self, x_, y_):
+        return self.mul(x_, y_)
 
 
 x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
@@ -321,6 +332,64 @@ def run_overflow_dump():
         print("output_np: ", output_np)
         check_ge_dump_structure(dump_path, 1, 1, True)
         del os.environ['MINDSPORE_DUMP_CONFIG']
+
+
+def run_saved_data_dump_test_bf16(scenario, saved_data):
+    """Run dump on GE backend, testing statistic dump"""
+    if sys.platform != 'linux':
+        return
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        dump_path = os.path.join(tmp_dir, 'test_saved_data')
+        dump_config_path = os.path.join(tmp_dir, 'test_saved_data.json')
+        generate_statistic_dump_json(dump_path, dump_config_path, scenario, saved_data)
+        os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        if os.path.isdir(dump_path):
+            shutil.rmtree(dump_path)
+
+        x_np = np.array([1.1, 2.3, 3.7])
+        y_np = np.array([4.1, 5.3, 6.7])
+        x_tensor = Tensor(x_np, mindspore.bfloat16)
+        y_tensor = Tensor(y_np, mindspore.bfloat16)
+
+        mul = NetMul()
+        mul(x_tensor, y_tensor)
+
+        for _ in range(3):
+            if not os.path.exists(dump_path):
+                time.sleep(2)
+        find_x_cmd = 'find {0} -name "Data.x_*.output.*.npy"'.format(dump_path)
+        x_file_path = os.popen(find_x_cmd).read()
+        x_file_path = x_file_path.replace('\n', '')
+        statistic_cmd = 'find {0} -name "statistic.csv"'.format(dump_path)
+        statistic_file_path = os.popen(statistic_cmd).read()
+        statistic_files_path = statistic_file_path.split('\n')
+
+        x_output = np.load(x_file_path)
+        x_float32 = Tensor(x_tensor, mindspore.float32).asnumpy()
+        assert (x_float32 == x_output).all()
+        with open(statistic_files_path[0], 'r') as csvfile:
+            csv_reader = csv.reader(csvfile)
+            _ = next(csv_reader)
+            for row in csv_reader:
+                if row[0] == "Data" and row[1] == "x_":
+                    assert row[8] == "bfloat16"
+                    break
+        del os.environ['MINDSPORE_DUMP_CONFIG']
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ge_statistic_dump_bfloat16():
+    """
+    Feature: Ascend Statistics Dump on GE backend
+    Description: Test Ascend statistics dump
+    Expectation: Statistics are stored in statistic.csv files
+    """
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    run_saved_data_dump_test_bf16('test_ge_dump', 'full')
 
 
 @pytest.mark.level0
