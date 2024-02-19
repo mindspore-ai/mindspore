@@ -38,6 +38,7 @@ constexpr auto kObjectAttrChange = "object_attr_change";
 constexpr auto kCheckListDictInplace = "check_list_dict_inplace";
 constexpr auto kLocalDictCheck = "local_dict_check";
 constexpr auto kIsAdapter = "is_adapter";
+constexpr auto kAdapterTensor = "adapter_tensor";
 
 // Create a PyExecute CNode by old node or debug_info.
 CNodePtr CreatePyExecuteCNode(const FuncGraphPtr &fg, const AnfNodePtr &script, const AnfNodePtr &keys,

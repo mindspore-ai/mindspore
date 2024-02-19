@@ -115,7 +115,7 @@ const char PYTHON_PARSE_GET_AST_TYPE[] = "get_ast_type";
 const char PYTHON_PARSE_GET_AST_NAMESPACE_SYMBOL[] = "get_ast_namespace_symbol";
 const char PYTHON_PARSE_GET_OPERATION_SYMBOL[] = "get_operation_symbol";
 const char PYTHON_PARSE_GET_OPERATION_NAMESPACE_SYMBOL[] = "get_operation_namespace_symbol";
-const char PYTHON_PARSE_IS_CLASS_TENSOR_TYPE[] = "is_tensor_class_type";
+const char PYTHON_PARSE_GET_CLASS_TENSOR_TYPE[] = "get_tensor_class_type";
 const char PYTHON_PARSE_GET_NAMESPACE_SYMBOL[] = "get_namespace_symbol";
 const char PYTHON_PARSE_IS_BUILTIN_FUNCTION_NAME[] = "is_builtin_function_name";
 const char PYTHON_PARSE_GET_LOCATION[] = "get_location";
@@ -221,9 +221,11 @@ enum ResolveType : int64_t {
 
 // Define the class instance detail type When the type is RESOLVE_TYPE_CLASS_INSTANCE.
 enum ClassInstanceType {
-  CLASS_INSTANCE_TYPE_CELL = 0,         // Class instance type is Cell.
-  CLASS_INSTANCE_TYPE_PRIMITIVE = 1,    // Class instance type is Primitive.
-  CLASS_INSTANCE_TYPE_NUMPY_ARRAY = 2,  // Class instance type is Numpy Array.
+  CLASS_INSTANCE_TYPE_CELL = 0,            // Class instance type is Cell.
+  CLASS_INSTANCE_TYPE_PRIMITIVE = 1,       // Class instance type is Primitive.
+  CLASS_INSTANCE_TYPE_NUMPY_ARRAY = 2,     // Class instance type is Numpy Array.
+  CLASS_INSTANCE_TYPE_TENSOR = 3,          // Class instance type is Tensor
+  CLASS_INSTANCE_TYPE_ADAPTER_TENSOR = 4,  // Class instance type is Adapter Tensor
   CLASS_INSTANCE_TYPE_INVALID = 0xFF
 };
 

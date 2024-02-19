@@ -531,7 +531,7 @@ constexpr auto kSliceStop = "stop";
 constexpr auto kSliceStep = "step";
 
 // graph parse
-constexpr auto kClassTensorType = "class_tensor_type";
+constexpr auto kClassTensorObject = "class_tensor_object";
 
 // graph type
 constexpr auto kFuncGraphTypeName = "FuncGraph";

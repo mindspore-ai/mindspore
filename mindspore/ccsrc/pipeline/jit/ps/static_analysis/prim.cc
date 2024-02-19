@@ -3012,6 +3012,11 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
     const auto &real_shape = fallback::GetRealShape<AnfNode, BaseShape>(node);
     fallback::SetRealShape<AbstractBase, BaseShape>(res, real_shape);
   }
+  if (res->isa<AbstractTensor>() && node->has_user_data(fallback::kAdapterTensor) &&
+      *node->user_data<bool>(fallback::kAdapterTensor)) {
+    auto res_tensor = res->cast<AbstractTensorPtr>();
+    res_tensor->set_is_adapter(true);
+  }
   auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
   evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
   return infer_result;
