@@ -194,6 +194,22 @@ void TopCellInfo::SaveForwardOutputTensorInfoInBpropGraph(const FuncGraphPtr &fu
   SaveForwardOutputTensorInfo(func_graph, !use_dynamic_shape_process_, &replace_info_);
 }
 
+void TopCellInfo::SetLastOutputValueForwardOutputFlag(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<tensor::Tensor>()) {
+    auto tensor = value->cast<tensor::TensorPtr>();
+    const auto it = replace_info_.id_with_op_info.find(tensor->id());
+    if (it != replace_info_.id_with_op_info.end()) {
+      tensor->set_is_forward_output(true);
+    }
+  } else if (value->isa<ValueSequence>()) {
+    const auto &value_seq = value->cast<ValueSequencePtr>();
+    for (const auto &v : value_seq->value()) {
+      SetLastOutputValueForwardOutputFlag(v);
+    }
+  }
+}
+
 void TopCellInfo::ChangeTopCellInfo(const std::vector<BaseShapePtr> &args_new_shape) {
   input_args_info_->input_arg_base_shape_vec = args_new_shape;
   // Update cell id

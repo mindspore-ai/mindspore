@@ -160,6 +160,7 @@ class TopCellInfo {
     SetIdWithOpInfo(v, op_info, kIndex0, &(replace_info_.id_with_op_info));
   }
   void SaveForwardOutputTensorInfoInBpropGraph(const FuncGraphPtr &func_graph);
+  void SetLastOutputValueForwardOutputFlag(const ValuePtr &v);
   void ChangeTopCellInfo(const std::vector<BaseShapePtr> &args_new_shape);
   const std::vector<std::string> &output_ids() const { return output_ids_; }
   void set_outputs_ids(std::vector<std::string> output_ids) { output_ids_ = std::move(output_ids); }
