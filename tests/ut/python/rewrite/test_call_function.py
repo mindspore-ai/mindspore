@@ -392,7 +392,7 @@ class AbsNet(nn.Cell):
         x = _absolute(x)
         return x
 
-def test_local_var_type():
+def test_call_ops_local():
     """
     Feature: Python Rewrite api.
     Description: Test rewrite get node type of local variable.
@@ -402,8 +402,10 @@ def test_local_var_type():
     stree = SymbolTree.create(net)
     node = stree.get_node("_absolute")
     assert node is not None
+    assert isinstance(node.get_instance(), ops.Primitive)
     assert isinstance(node.get_instance(), LocalPrim)
     assert issubclass(node.get_instance_type(), ops.Abs)
+    assert node.get_node_type() == NodeType.CallPrimitive
 
 
 def closure_func(x):
