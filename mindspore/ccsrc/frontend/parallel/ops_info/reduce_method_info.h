@@ -93,6 +93,7 @@ class ArgmaxInfo : public ReduceMethod {
     reduce_method_ = REDUCE_OP_MAX;
   }
 
+  std::shared_ptr<Strategies> GenerateBatchStrategies() override;
   ~ArgmaxInfo() override = default;
 
  protected:

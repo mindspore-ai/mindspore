@@ -380,6 +380,7 @@ constexpr char VIRTUAL_OUTPUT[] = "_VirtualOutput";
 constexpr char VIRTUAL_DATA_SET_INFO[] = "VirtualDatasetInfo";
 constexpr char SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS[] = "SparseSoftmaxCrossEntropyWithLogits";
 constexpr char RELU[] = "ReLU";
+constexpr char SILU[] = "SiLU";
 constexpr char REPEAT_ELEMENTS[] = "RepeatElements";
 constexpr char TENSOR_DOT[] = "TensorDot";
 constexpr char RANGE[] = "Range";

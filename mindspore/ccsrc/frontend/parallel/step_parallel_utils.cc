@@ -966,7 +966,7 @@ bool IsSplittableOperator(const std::string &op_name) {
      TENSOR_SCATTER_UPDATE, TENSOR_SCATTER_ADD, TENSOR_SCATTER_SUB, TENSOR_SCATTER_MAX, TENSOR_SCATTER_MIN, WKV,
      TENSOR_SCATTER_MUL, TENSOR_SCATTER_DIV, VIRTUAL_OUTPUT, CONV2D_BACK_PROP_INPUT, CONV2D_TRANSPOSE, SORT, PAD_V3,
      MATMUL_DDS, DSD_MATMUL, UNIFORMREAL, STANDARD_NORMAL, RESIZE_BILINEAR_V2, RESIZE_NEAREST_NEIGHBOR, FAST_GELU, IOU,
-     BOUNDING_BOX_ENCODE, UNSORTED_SEGMENT_PROD, SQUARE_SUM_ALL, UNIQUE_CONSECUTIVE,
+     BOUNDING_BOX_ENCODE, UNSORTED_SEGMENT_PROD, SQUARE_SUM_ALL, UNIQUE_CONSECUTIVE, SILU,
      RANDOM_CHOICE_WITH_MASK, CROP_AND_RESIZE, ROI_ALIGN, REDUCE_PROD, REDUCE_ANY, REDUCE_ALL, ARGMAX, ARGMIN, ARGMINV2,
      RESIZE_NEAREST_NEIGHBOR, CUM_SUM, FAST_GELU, IOU, BOUNDING_BOX_ENCODE, RANDOM_CHOICE_WITH_MASK, CROP_AND_RESIZE,
      ROI_ALIGN, IS_FINITE, RINT, HSHRINK, HSIGMOID, MISH, SELU, SOFT_SHRINK, XLOGY, XDIVY, CUM_PROD, BITWISE_AND,
@@ -1062,31 +1062,31 @@ OperatorInfoPtr OperatorInstanceByName(const std::string &name, const PrimitiveA
     return nullptr;
   }
   std::string distribute_opname = GetDisOpName(name);
-  OperatorInfoPtr operator_ =
+  OperatorInfoPtr op_info =
     (OperatorInfoPtr)DynCreator::Instance().Create(distribute_opname, shape_list[0], shape_list[1], attrs, TOTAL_OPS);
-  if (operator_ == nullptr) {
+  if (op_info == nullptr) {
     MS_LOG(INFO) << "Create " << name << " failed";
     return nullptr;
   }
-  std::string origin_name = operator_->name();
-  operator_->set_name(origin_name + std::to_string(TOTAL_OPS));
+  std::string origin_name = op_info->name();
+  op_info->set_name(origin_name + std::to_string(TOTAL_OPS));
   MS_LOG(INFO) << "Successfully created operator " << origin_name;
   ++TOTAL_OPS;
-  return operator_;
+  return op_info;
 }
 
 OperatorInfoPtr OperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs &attrs,
                                  const std::vector<Shapes> &shape_list) {
   MS_EXCEPTION_IF_NULL(prim);
-  OperatorInfoPtr operator_ = OperatorInstanceByName(prim->name(), attrs, shape_list);
-  if (operator_) {
-    return operator_;
+  OperatorInfoPtr op_info = OperatorInstanceByName(prim->name(), attrs, shape_list);
+  if (op_info) {
+    return op_info;
   }
   if (IsInBatchParallelBlackList(prim)) {
-    operator_ = OperatorInstanceByName(STAND_ALONE, attrs, shape_list);
+    op_info = OperatorInstanceByName(STAND_ALONE, attrs, shape_list);
     prim->AddAttr(STAND_ALONE, MakeValue<bool>(true));
     MS_LOG(INFO) << "Operator " << prim->name() << " is not supported yet in auto parallel mode. Use Stand Alone";
-    return operator_;
+    return op_info;
   }
   auto input_shape = shape_list[0];
   auto output_shape = shape_list[1];
@@ -1097,14 +1097,14 @@ OperatorInfoPtr OperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs 
       output_shape[0][0] % device_num != 0) {
     MS_LOG(INFO) << "Operator " << prim->name() << " use Stand Alone, the input shape is " << input_shape
                  << ", the output shape is " << output_shape;
-    operator_ = OperatorInstanceByName(STAND_ALONE, attrs, shape_list);
+    op_info = OperatorInstanceByName(STAND_ALONE, attrs, shape_list);
     prim->AddAttr(STAND_ALONE, MakeValue<bool>(true));
-    return operator_;
+    return op_info;
   }
   MS_LOG(INFO) << "Operator " << prim->name() << " use Batch Parallel";
-  operator_ = OperatorInstanceByName(BATCH_PARALLEL, attrs, shape_list);
+  op_info = OperatorInstanceByName(BATCH_PARALLEL, attrs, shape_list);
   prim->AddAttr(BATCH_PARALLEL, MakeValue<bool>(true));
-  return operator_;
+  return op_info;
 }
 
 static Shapes GetRefKeyNodeShape(const AnfNodePtr &node, const FuncGraphPtr &func_graph) {

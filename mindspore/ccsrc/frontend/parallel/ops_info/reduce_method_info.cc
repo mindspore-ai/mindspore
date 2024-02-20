@@ -391,6 +391,20 @@ Status ArgMaxWithValueInfo::InferAsLossDivisor() {
   return SUCCESS;
 }
 
+std::shared_ptr<Strategies> ArgmaxInfo::GenerateBatchStrategies() {
+  if (GetAttrs() != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << ": Get attr failed";
+  }
+  Dimensions input_strategy(inputs_shape_[0].size(), 1);
+  // axis can't split
+  const auto axis = reduce_dim()[0];
+  if (axis != 0 && inputs_shape_[0].size() > 1) {
+    input_strategy[0] = stage_device_size_;
+  }
+  Strategies strategy_v = {input_strategy};
+  return std::make_shared<Strategies>(strategy_v);
+}
+
 const size_t ValidInputNum = 3;
 std::vector<int64_t> ArgmaxInfo::reduce_dim() {
   auto axis_opt = GetScalarValueFromInputsWithCheck<int64_t>(input_value_, name_, AXIS);
