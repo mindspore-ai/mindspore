@@ -1611,7 +1611,7 @@ static bool CheckExtractInformation(const CNodePtr &cnode) {
   }
 
   return IsParallelCareNode(cnode);
-  }
+}
 
 static void ExtractStrategyAndInit(const CNodePtr &cnode, const PrimitivePtr &prim, const OperatorInfoPtr &op_info) {
   StrategyPtr in_strategy = nullptr, out_strategy = nullptr;
@@ -3104,7 +3104,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   // set the shape for optimizer's clone tensor
   SetClonedTensorShapeForOptimizer(root);
 
-  HandleAdaFactorOpt(root);
+  HandleCameAndAdaFactorOpt(root, all_nodes, manager);
 
   InsertUniformRealForTaggedNodes(manager, all_nodes);
 
