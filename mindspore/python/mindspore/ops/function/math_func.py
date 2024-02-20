@@ -169,7 +169,6 @@ digamma_ = P.Digamma()
 div_ = P.Div()
 dtype_ = P.DType()
 eps_ = P.Eps()
-equal_ = P.Equal()
 erf_ = P.Erf()
 erfc_ = P.Erfc()
 erfinv_ = P.Erfinv()
@@ -3215,7 +3214,7 @@ def eq(input, other):
         >>> print(output)
         [ True  True False]
     """
-    return equal_(input, other)
+    return equal(input, other)
 
 
 def ne(input, other):
