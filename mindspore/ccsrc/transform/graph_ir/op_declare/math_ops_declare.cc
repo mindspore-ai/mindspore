@@ -356,13 +356,15 @@ ATTR_MAP(Real) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Real) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(Real, prim::kPrimReal->name(), ADPT_DESC(Real));
 
-// SilentCheck
-INPUT_MAP(SilentCheck) = {{1, INPUT_DESC(val)},     {2, INPUT_DESC(pre_val)}, {3, INPUT_DESC(min_val)},
-                          {4, INPUT_DESC(max_val)}, {5, INPUT_DESC(n_step)},  {6, INPUT_DESC(result)}};
-OUTPUT_MAP(SilentCheck) = {
-  {0, OUTPUT_DESC(result)}, {1, OUTPUT_DESC(pre_val)}, {2, OUTPUT_DESC(min_val)}, {3, OUTPUT_DESC(max_val)}};
-ATTR_MAP(SilentCheck) = {{"c_min_steps", ATTR_DESC(c_min_steps, AnyTraits<int64_t>())},
-                         {"c_thresh", ATTR_DESC(c_thresh, AnyTraits<float>())},
-                         {"c_coeff", ATTR_DESC(c_coeff, AnyTraits<float>())}};
-REG_ADPT_DESC(SilentCheck, prim::kPrimSilentCheck->name(), ADPT_DESC(SilentCheck))
+// SilentCheckV2
+INPUT_MAP(SilentCheckV2) = {{1, INPUT_DESC(val)},     {2, INPUT_DESC(pre_val)}, {3, INPUT_DESC(min_val)},
+                            {4, INPUT_DESC(max_val)}, {5, INPUT_DESC(n_step)},  {6, INPUT_DESC(result)}};
+OUTPUT_MAP(SilentCheckV2) = {
+  {0, OUTPUT_DESC(pre_val)}, {1, OUTPUT_DESC(min_val)}, {2, OUTPUT_DESC(max_val)}, {3, OUTPUT_DESC(result)}};
+ATTR_MAP(SilentCheckV2) = {{"c_min_steps", ATTR_DESC(c_min_steps, AnyTraits<int64_t>())},
+                           {"c_thresh_l1", ATTR_DESC(c_thresh_l1, AnyTraits<float>())},
+                           {"c_coeff_l1", ATTR_DESC(c_coeff_l1, AnyTraits<float>())},
+                           {"c_thresh_l2", ATTR_DESC(c_thresh_l2, AnyTraits<float>())},
+                           {"c_coeff_l2", ATTR_DESC(c_coeff_l2, AnyTraits<float>())}};
+REG_ADPT_DESC(SilentCheckV2, prim::kPrimSilentCheckV2->name(), ADPT_DESC(SilentCheckV2))
 }  // namespace mindspore::transform
