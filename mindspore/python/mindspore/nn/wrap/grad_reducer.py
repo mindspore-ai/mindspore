@@ -18,17 +18,40 @@ from __future__ import absolute_import
 from mindspore import context
 from mindspore import log as logger
 from mindspore.nn.cell import Cell
+from mindspore.nn.layer import Identity
 from mindspore.communication.management import GlobalComm, get_group_size
 from mindspore.common.sparse_tensor import RowTensorInner
-from mindspore.ops import functional as F, composite as C
+from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.ops.operations.comm_ops import AllReduce, AllGather
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 import mindspore.common.dtype as mstype
 from mindspore.common.sparse_tensor import Tensor
 from mindspore.common.api import jit
-
+from mindspore.common.parameter import Parameter
+from mindspore.parallel._utils import _get_enable_parallel_optimizer
 
 reduce_opt = C.MultitypeFuncGraph("reduce_opt")
+grad_scale = C.MultitypeFuncGraph("grad_scale")
+shard_grad_scale = C.MultitypeFuncGraph("shard_grad_scale")
+reciprocal = P.Reciprocal()
+
+
+@grad_scale.register("Tensor", "Tensor", "Tensor")
+def tensor_grad_scale_pipeline(scale, grad, accu_grad):
+    accu_grad = F.depend(accu_grad, grad)
+    new_grad = accu_grad * reciprocal(scale)
+    accu_grad = F.depend(accu_grad, new_grad)
+    zeros = F.tensor_mul(accu_grad, 0.0)
+    new_grad = F.depend(new_grad, F.assign(accu_grad, zeros))
+    return new_grad
+
+
+@shard_grad_scale.register("Tensor", "Tensor", "Tensor")
+def tensor_shard_grad_scale_pipeline(scale, grad, accu_grad):
+    new_grad = grad * reciprocal(scale)
+    accu_grad = F.depend(accu_grad, new_grad)
+    new_grad = F.depend(new_grad, F.assign(accu_grad, F.zeros_like(accu_grad)))
+    return new_grad
 
 
 def _init_allreduce_operators(length, split_indices, group=GlobalComm.WORLD_COMM_GROUP):
@@ -466,3 +489,48 @@ class DistributedGradReducer(Cell):
         if context.get_context('mode') == context.GRAPH_MODE and parallel_mode in (
                 context.ParallelMode.SEMI_AUTO_PARALLEL, context.ParallelMode.AUTO_PARALLEL):
             raise RuntimeError("{} can not use DistributedGradReducer in graph mode".format(parallel_mode))
+
+
+class PipelineGradReducer(Cell):
+    """
+    PipelineGradReducer is a gradient reducer for pipeline parallelism.
+
+    Args:
+        parameters (list): the parameters to be updated.
+        scale_sense (float): the scale sense of the gradient. Default: 1.0.
+
+    Raise:
+        RuntimeError:
+            1. If the mode is not graph mode.
+            2. If the parallel mode is not semi auto parallel or auto parallel.
+    """
+    def __init__(self, parameters, scale_sense=1.0):
+        super(PipelineGradReducer, self).__init__(auto_prefix=False)
+        self._check_mode()
+        self.accu_grads = parameters.clone(prefix="accu_grads", init="zeros")
+        self.grad_reducer = Identity()
+        self.degree = Tensor(1, mstype.float32)
+        self.scale_sense = Parameter(scale_sense, name='scale_sense')
+        self.hyper_map = C.HyperMap()
+        self.opt_shard = _get_enable_parallel_optimizer()
+
+    @jit
+    def construct(self, grads):
+        new_grads = None
+        if self.opt_shard:
+            grads = self.grad_reducer(grads)
+            new_grads = self.hyper_map(F.partial(shard_grad_scale, self.scale_sense * self.degree),
+                                       grads, self.accu_grads)
+        else:
+            accu_grads = self.grad_reducer(self.accu_grads)
+            new_grads = self.hyper_map(F.partial(grad_scale, self.scale_sense * self.degree), grads, accu_grads)
+        return new_grads
+
+    def _check_mode(self):
+        """check parallel mode"""
+        mode = context.get_context('mode')
+        if mode != context.GRAPH_MODE:
+            raise RuntimeError(f"PipelineGradReducer only support graph mode, but get {mode}")
+        parallel_mode = context.get_auto_parallel_context('parallel_mode')
+        if parallel_mode not in (context.ParallelMode.SEMI_AUTO_PARALLEL, context.ParallelMode.AUTO_PARALLEL):
+            raise RuntimeError(f"{parallel_mode} can not use PipelineGradReducer in graph mode")
