@@ -30,10 +30,10 @@ def test_concatenate_op_all():
     Expectation: Output is equal to the expected output
     """
     def gen():
-        yield (np.array([5., 6., 7., 8.], dtype=np.float),)
+        yield (np.array([5., 6., 7., 8.], dtype=float),)
 
-    prepend_tensor = np.array([1.4, 2., 3., 4., 4.5], dtype=np.float)
-    append_tensor = np.array([9., 10.3, 11., 12.], dtype=np.float)
+    prepend_tensor = np.array([1.4, 2., 3., 4., 4.5], dtype=float)
+    append_tensor = np.array([9., 10.3, 11., 12.], dtype=float)
     data = ds.GeneratorDataset(gen, column_names=["col"])
     concatenate_op = data_trans.Concatenate(0, prepend_tensor, append_tensor)
     data = data.map(operations=concatenate_op, input_columns=["col"])
@@ -50,14 +50,14 @@ def test_concatenate_op_none():
     Expectation: Output is equal to the expected output
     """
     def gen():
-        yield (np.array([5., 6., 7., 8.], dtype=np.float),)
+        yield (np.array([5., 6., 7., 8.], dtype=float),)
 
     data = ds.GeneratorDataset(gen, column_names=["col"])
     concatenate_op = data_trans.Concatenate()
 
     data = data.map(operations=concatenate_op, input_columns=["col"])
     for data_row in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
-        np.testing.assert_array_equal(data_row[0], np.array([5., 6., 7., 8.], dtype=np.float))
+        np.testing.assert_array_equal(data_row[0], np.array([5., 6., 7., 8.], dtype=float))
 
 
 def test_concatenate_op_string():
@@ -129,7 +129,7 @@ def test_concatenate_op_type_mismatch():
     Expectation: Error is raised as expected
     """
     def gen():
-        yield (np.array([3, 4], dtype=np.float),)
+        yield (np.array([3, 4], dtype=float),)
 
     prepend_tensor = np.array(["ss", "ad"], dtype='S')
     data = ds.GeneratorDataset(gen, column_names=["col"])
@@ -152,7 +152,7 @@ def test_concatenate_op_type_mismatch2():
     def gen():
         yield (np.array(["ss", "ad"], dtype='S'),)
 
-    prepend_tensor = np.array([3, 5], dtype=np.float)
+    prepend_tensor = np.array([3, 5], dtype=float)
     data = ds.GeneratorDataset(gen, column_names=["col"])
     concatenate_op = data_trans.Concatenate(0, prepend_tensor)
 
@@ -201,10 +201,10 @@ def test_concatenate_op_negative_axis():
     Expectation: Output is equal to the expected output
     """
     def gen():
-        yield (np.array([5., 6., 7., 8.], dtype=np.float),)
+        yield (np.array([5., 6., 7., 8.], dtype=float),)
 
-    prepend_tensor = np.array([1.4, 2., 3., 4., 4.5], dtype=np.float)
-    append_tensor = np.array([9., 10.3, 11., 12.], dtype=np.float)
+    prepend_tensor = np.array([1.4, 2., 3., 4., 4.5], dtype=float)
+    append_tensor = np.array([9., 10.3, 11., 12.], dtype=float)
     data = ds.GeneratorDataset(gen, column_names=["col"])
     concatenate_op = data_trans.Concatenate(-1, prepend_tensor, append_tensor)
     data = data.map(operations=concatenate_op, input_columns=["col"])
