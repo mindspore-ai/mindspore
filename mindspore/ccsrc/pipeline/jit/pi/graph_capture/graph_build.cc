@@ -877,7 +877,7 @@ bool MindGraphBuilder::DoIsOp(const Instr &instr) {
   auto r = pop();
   auto l = pop();
   AObject *o;
-  if (l->is_constant() && r->is_constant()) {
+  if (l->IsConstantValue() && r->IsConstantValue()) {
     o = static_cast<AbstractObject *>(l->GetVobj())->AbstractObject::Binary(r->GetVobj(), opcode);
   } else {
     o = l->GetVobj() ? l->GetVobj()->Binary(r->GetVobj(), opcode) : AObject::MakeAObject(AObject::kTypeAnyValue);
