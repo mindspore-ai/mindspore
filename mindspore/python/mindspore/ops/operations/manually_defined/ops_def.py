@@ -1260,9 +1260,10 @@ def infer_value_for_Cast(x, dst_type_enum):
     np_dst_type = mstype.dtype_to_nptype(dst_type)
     if isinstance(x, (int, float)):
         value = Tensor(np.array(x).astype(np_dst_type), dtype=dst_type)
-    elif x.dtype == mstype.bfloat16:
-        value = None
     else:
+        if x.dtype == mstype.bfloat16:
+            cpu_cast = Cast().set_device("CPU")
+            x = cpu_cast(x, mstype.float32)
         value = Tensor_(x.asnumpy().astype(np_dst_type), dtype=dst_type)
     return value
 
