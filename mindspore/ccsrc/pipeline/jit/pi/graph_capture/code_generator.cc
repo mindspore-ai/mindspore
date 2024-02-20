@@ -1184,12 +1184,12 @@ void CodeBreakGenerator::Init(const Graph *graph, const GraphAnalyzer::CapturedI
   auto liveness = graph->GetCFG()->GetLiveness();
   std::vector<ValueNode *> alive_nodes = liveness->CollectAliveNode(graph, break_bci_, &alive_locals_);
   // top_graph_side_effect_vector;
-  for (auto item : graph->GetSideEffectNodes()) {
-    alive_nodes.push_back(item);
-  }
-  for (auto replace_map : graph->GetSideEffectReplacedMap()) {
-    alive_nodes.push_back(replace_map.second);
-  }
+  std::transform(graph->GetSideEffectNodes().begin(), graph->GetSideEffectNodes().end(),
+                 std::back_inserter(alive_nodes), [](ValueNode *valueNode) { return valueNode; });
+
+  std::transform(graph->GetSideEffectReplacedMap().begin(), graph->GetSideEffectReplacedMap().end(),
+                 std::back_inserter(alive_nodes),
+                 [](std::pair<ValueNode *, ValueNode *> value_node_map) { return value_node_map.second; });
 
   interpret_.inputs = graph->GetFrame(0).GetLocals();
   interpret_.outputs = std::move(alive_nodes);
