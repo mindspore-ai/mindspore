@@ -341,7 +341,6 @@ CUST_ATTR_MAP(NoRepeatNGram) = {{"ngram_size", ATTR_DESC(ngram_size, AnyTraits<i
 CUST_OUTPUT_MAP(NoRepeatNGram) = {{0, OUTPUT_DESC(out)}};
 REG_ADPT_DESC(NoRepeatNGram, prim::kPrimNoRepeatNGram->name(), CUST_ADPT_DESC(NoRepeatNGram));
 
-
 // GenerateEodMask
 CUST_INPUT_MAP(GenerateEodMask) = {{1, INPUT_DESC(inputs_ids)}};
 CUST_ATTR_MAP(GenerateEodMask) = {{"n_pos", ATTR_DESC(n_pos, AnyTraits<int64_t>())},
