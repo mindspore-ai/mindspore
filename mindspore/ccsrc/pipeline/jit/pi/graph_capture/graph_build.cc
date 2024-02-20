@@ -2355,6 +2355,7 @@ std::vector<py::object> MindGraphBuilder::GetNewArgs(CallNode *call_node) {
   std::vector<py::object> new_args;
   auto new_callable_info = GetFuncInfo(call_node->input(0));
   FrameStates f;
+  ResolveClosure(new_callable_info, call_node->input(0), &f);
   if (!HandleCallParameters(new_callable_info, call_node, &f)) {
     MS_LOG(ERROR) << "HandleCallParameters error" << std::endl;
   }
@@ -2398,7 +2399,8 @@ py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReaso
     }
     return FGAddNode(call_node, callable_info, args, stop_reason);
   }
-  if (FGBuilder()->CanConstantFoldFunc(callable_info)) {
+  if (FGBuilder()->CanConstantFoldFunc(callable_info) ||
+      (CheckCell(callable_info) && callable->GetTpye() == AObject::kTypeType)) {
     MS_LOG(INFO) << "CanConstantFoldFunc for: " << py::str(callable_info);
     JustCallAndSetRes(call_node);
     *stop_reason = StopTraceReason::kNonStopTrace;
