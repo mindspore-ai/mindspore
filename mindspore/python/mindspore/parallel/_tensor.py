@@ -224,7 +224,8 @@ def _load_tensor(tensor, dev_mat, tensor_map, rank_id=-1):
     tensor_slice_index = _get_tensor_slice_index(dev_mat, tensor_strategy, tensor_map, rank)
     if tensor.dtype == mstype.bfloat16:
         from mindspore.ops.operations import Cast
-        tensor = Cast()(tensor, mstype.float32)
+        cpu_cast = Cast().set_device("CPU")
+        tensor = cpu_cast(tensor, mstype.float32)
     np_tensor = tensor.asnumpy()
     np_tensor_list = _chunk_tensor_by_strategy(np_tensor, tensor_strategy)
     np_tensor_slice = np_tensor_list[int(tensor_slice_index)]
