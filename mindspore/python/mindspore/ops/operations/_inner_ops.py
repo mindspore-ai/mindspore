@@ -2863,10 +2863,12 @@ class _MirrorSilentCheck(PrimitiveWithInfer):
     MirrorOperator for SilentCheck, do SilentCheck in backpropagator.
     """
     @prim_attr_register
-    def __init__(self, min_steps=8, thresh=1000000.0, coeff=100000.0):
+    def __init__(self, min_steps=8, thresh_l1=100000.0, coeff_l1=100.0, thresh_l2=1000000.0, coeff_l2=10000.0):
         self.min_steps = min_steps
-        self.thresh = thresh
-        self.coeff = coeff
+        self.thresh_l1 = thresh_l1
+        self.coeff_l1 = coeff_l1
+        self.thresh_l2 = thresh_l2
+        self.coeff_l2 = coeff_l2
         self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, x_shape, pre_shape, min_shape, max_shape, n_step, res_shape, loss_sale_shape):
