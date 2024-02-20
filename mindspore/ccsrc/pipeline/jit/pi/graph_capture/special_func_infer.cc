@@ -639,7 +639,7 @@ static bool CheckJitFunc(const py::object &o) {
   return size > except_size && !strncmp(file + (size - except_size), except_file, except_size);
 }
 
-static bool CheckCell(const py::object &callable_info) {
+bool CheckCell(const py::object &callable_info) {
   PyTypeObject *cell_type = PyType_Check(callable_info.ptr()) ? reinterpret_cast<PyTypeObject *>(callable_info.ptr())
                                                               : Py_TYPE(callable_info.ptr());
   if (!IsCellType<true>(cell_type)) {
