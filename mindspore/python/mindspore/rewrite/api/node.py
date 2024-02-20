@@ -114,8 +114,7 @@ class Node:
     def create_call_function(function: FunctionType, targets: List[Union[ScopedValue, str]],
                              args: List[ScopedValue] = None, kwargs: Dict[str, ScopedValue] = None) -> 'Node':
         """
-        Create a node that corresponds to a function call. The `function` object is saved into network, and used via
-        getting object from `self.` .
+        Create a node that corresponds to a function call.
 
         Args:
             function (FunctionType): The function to be called.
