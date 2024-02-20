@@ -638,7 +638,7 @@ class Profiler:
         ProfilerInfo.set_heterogeneous(self._is_heterogeneous)
         if offline_path:
             ProfilerInfo.set_analyse_start_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-            self._ascend_graph_analyse()
+            self._ascend_graph_analyse(offline_path=offline_path)
             ProfilerInfo.set_analyse_end_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
             ProfilerInfo.save(self._output_path)
             _offline_parse(offline_path)
@@ -960,9 +960,6 @@ class Profiler:
         if self._profile_communication:
             hccl_option = {"output": self._output_path, "task_trace": "on"}
             os.environ['PROFILING_OPTIONS'] = json.dumps(hccl_option)
-            if not self.start_profile:
-                raise RuntimeError(f"For '{self.__class__.__name__}', the parameter profile_communication can "
-                                   f"not be True while starting profiler in the process of training.")
 
         self._profile_memory = kwargs.pop("profile_memory", False)
         if not isinstance(self._profile_memory, bool):
@@ -1556,7 +1553,7 @@ class Profiler:
         """
 
         if offline_path:
-            self._output_path = offline_path
+            self._output_path = os.path.join(offline_path, 'profiler')
 
         job_id = ""
         job_dirs = filter(lambda item: item.startswith('JOB') or item.startswith('PROF') and os.path.isdir(
