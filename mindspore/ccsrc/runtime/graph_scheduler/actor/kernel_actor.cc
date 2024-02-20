@@ -202,7 +202,7 @@ void KernelActor::InitWorkspaceInfo() {
 
 void KernelActor::Run(OpContext<DeviceTensor> *const context) {
   try {
-    device_contexts_[0]->device_res_manager_->SetDeviceIdToCurrentThread();
+    (void)device_contexts_[0]->device_res_manager_->BindDeviceToCurrentThread(false);
     FetchInputDeviceTensor(context);
 
     if (has_dynamic_) {

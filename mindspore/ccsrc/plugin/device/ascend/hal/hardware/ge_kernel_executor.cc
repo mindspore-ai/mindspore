@@ -447,8 +447,6 @@ bool GeKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<Kernel
 bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelTensor *> &inputs,
                                     const vector<KernelTensor *> &workspace, const vector<KernelTensor *> &outputs,
                                     KernelMod *kernel_mod, void *stream) const {
-  (void)res_manager_->BindDeviceToCurrentThread(false);
-
   profiler::ascend::ProfilingFrameworkData::RecordLaunchGETaskBegin(kernel);
   // launch kernel
   uint64_t start_time = 0;

@@ -50,8 +50,7 @@ transform::aclIntArray *GetAdaptedMultiples(KernelTensor *x_tensor, KernelTensor
 void TileAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                   const std::vector<KernelTensor *> &outputs) {
   auto dims = GetAdaptedMultiples(inputs[kIndex0], inputs[kIndex1]);
-  auto return_value = GEN_EXECUTOR(op_type_, inputs[kIndex0], dims, outputs[kIndex0]);
-  UpdateWorkspace(return_value);
+  GetWorkspaceForResize(inputs[kIndex0], dims, outputs[kIndex0]);
 }
 
 bool TileAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
