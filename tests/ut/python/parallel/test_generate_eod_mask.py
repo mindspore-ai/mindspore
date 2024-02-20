@@ -27,7 +27,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 class Net(nn.Cell):
     def __init__(self, eod_token_id):
         super(Net, self).__init__()
-        self.mask = P.GenerateEodMask(eod_token_id=eod_token_id)
+        self.mask = P.inner_ops.GenerateEodMask(eod_token_id=eod_token_id)
 
     def construct(self, tensor):
         return self.mask(tensor)

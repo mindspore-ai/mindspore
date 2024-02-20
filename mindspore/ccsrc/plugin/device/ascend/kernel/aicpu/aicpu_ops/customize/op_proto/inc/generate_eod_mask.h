@@ -38,11 +38,12 @@ namespace ge {
 */
 
 REG_CUST_OP(GenerateEodMask)
-  .INPUT(inputs_ids, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
-  .OUTPUT(position_ids, TensorType({DT_INT8, DT_UINT8, DT_INT16, DT_INT32, DT_INT64, DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+  .INPUT(inputs_ids, TensorType({DT_FLOAT16, DT_BF16, DT_FLOAT, DT_DOUBLE}))
+  .OUTPUT(position_ids, TensorType({DT_INT8, DT_UINT8, DT_INT16, DT_INT32, DT_INT64, DT_FLOAT16, DT_BF16, DT_FLOAT, DT_DOUBLE}))
   .ATTR(n_pos, Int, false)
   .ATTR(eod_token_id, Int, false)
-  .ATTR(n_step, Int, false)
+  .ATTR(n_step, ListInt, {})
+  .ATTR(n_error_mode, String, "specific")
   .CUST_OP_END_FACTORY_REG(GenerateEodMask)
 }  // namespace ge
 #endif
