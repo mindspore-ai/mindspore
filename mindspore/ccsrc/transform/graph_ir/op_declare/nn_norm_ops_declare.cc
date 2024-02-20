@@ -331,4 +331,11 @@ CUST_ATTR_MAP(MultilabelMarginLossGrad) = {{"reduction", ATTR_DESC(reduction, An
 CUST_OUTPUT_MAP(MultilabelMarginLossGrad) = {{0, OUTPUT_DESC(x_grad)}};
 REG_ADPT_DESC(MultilabelMarginLossGrad, prim::kPrimMultilabelMarginLossGrad->name(),
               CUST_ADPT_DESC(MultilabelMarginLossGrad));
+
+// RNNTLoss
+INPUT_MAP(RNNTLoss) = {
+  {1, INPUT_DESC(acts)}, {2, INPUT_DESC(labels)}, {3, INPUT_DESC(input_lengths)}, {4, INPUT_DESC(label_lengths)}};
+ATTR_MAP(RNNTLoss) = {{"blank_label", ATTR_DESC(blank_label, AnyTraits<int64_t>())}};
+OUTPUT_MAP(RNNTLoss) = {{0, OUTPUT_DESC(costs)}, {1, OUTPUT_DESC(grads)}};
+REG_ADPT_DESC(RNNTLoss, prim::kPrimRNNTLoss->name(), ADPT_DESC(RNNTLoss))
 }  // namespace mindspore::transform
