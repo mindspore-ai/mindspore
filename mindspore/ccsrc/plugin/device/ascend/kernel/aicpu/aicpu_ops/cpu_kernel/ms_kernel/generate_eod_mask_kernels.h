@@ -31,7 +31,8 @@ class GenerateEodMaskCpuKernel : public CpuKernel {
 
  private:
   template <typename T, typename M>
-  uint32_t ComputeKernel(CpuKernelContext &ctx, const int64_t &n_pos, const int64_t &eod_token_id, const std::vector<int64_t> &n_step, const int64_t &circle, const bool &enable_mask_nfirst);
+  uint32_t ComputeKernel(CpuKernelContext &ctx, const int64_t &n_pos, const int64_t &eod_token_id,
+                         const std::vector<int64_t> &n_step, const int64_t &circle, const bool &enable_mask_nfirst);
   static int64_t compute_count;
   static int64_t skip_step;
 };

@@ -43,10 +43,10 @@ uint32_t GenerateEodMaskCpuKernel::Compute(CpuKernelContext &ctx) {
   AttrValue *n_pos_value = ctx.GetAttr("n_pos");
   AttrValue *n_step_value = ctx.GetAttr("n_step");
   AttrValue *n_error_mode = ctx.GetAttr("n_error_mode");
-  int64_t eod_token_id = (eod_token_value == nullptr) ? 0 : eod_token_value->GetInt(); // whcih bit of the element
-  int64_t n_pos = (n_pos_value == nullptr) ? 0 : n_pos_value->GetInt(); // which element of tensor
-  std::vector<int64_t> n_step = (n_step_value == nullptr) ? std::vector<int64_t> {-1} : n_step_value->GetListInt();
-  std::string error_mode = n_error_mode == nullptr ? "specific": n_error_mode->GetString();
+  int64_t eod_token_id = (eod_token_value == nullptr) ? 0 : eod_token_value->GetInt();  // whcih bit of the element
+  int64_t n_pos = (n_pos_value == nullptr) ? 0 : n_pos_value->GetInt();                 // which element of tensor
+  std::vector<int64_t> n_step = (n_step_value == nullptr) ? std::vector<int64_t>{-1} : n_step_value->GetListInt();
+  std::string error_mode = n_error_mode == nullptr ? "specific" : n_error_mode->GetString();
   auto pos = error_mode.find("-");
   std::string mask_nfirst = "";
   bool enable_mask_nfirst = false;
@@ -61,7 +61,7 @@ uint32_t GenerateEodMaskCpuKernel::Compute(CpuKernelContext &ctx) {
   int64_t circle = -1;
 
   if (error_mode.compare("circle") == 0) {
-    if (n_step.size() >=2 ||  n_step[0] <=0) {
+    if (n_step.size() >= 2 || n_step[0] <= 0) {
       return KERNEL_STATUS_PARAM_INVALID;
     }
     circle = n_step[0];
@@ -93,8 +93,9 @@ uint32_t GenerateEodMaskCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T, typename M>
-uint32_t GenerateEodMaskCpuKernel::ComputeKernel(CpuKernelContext &ctx, const int64_t &n_pos, const int64_t &eod_token_id, const std::vector<int64_t> &n_step, const int64_t &circle, const bool &enable_mask_nfirst) {
-
+uint32_t GenerateEodMaskCpuKernel::ComputeKernel(CpuKernelContext &ctx, const int64_t &n_pos,
+                                                 const int64_t &eod_token_id, const std::vector<int64_t> &n_step,
+                                                 const int64_t &circle, const bool &enable_mask_nfirst) {
   auto input_idsptr = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto input_positionptr = reinterpret_cast<T *>(ctx.Output(0)->GetData());
 
@@ -116,21 +117,21 @@ uint32_t GenerateEodMaskCpuKernel::ComputeKernel(CpuKernelContext &ctx, const in
   KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, batch_size, get_per_unit_size(batch_size), shard_generate_tril),
                       "GenerateEodMask kernel compute failed.");
   for (uint32_t i = 0; i < n_step.size(); ++i) {
-    if ((circle >=1 && compute_count % circle == 0) || compute_count == n_step[i] || n_step[i] == -1) {
-      auto new_ds = reinterpret_cast<M*>(&input_positionptr[n_pos]);
+    if ((circle >= 1 && compute_count % circle == 0) || compute_count == n_step[i] || n_step[i] == -1) {
+      auto new_ds = reinterpret_cast<M *>(&input_positionptr[n_pos]);
       if (enable_mask_nfirst) {
         // flip the last n pos if 1
         int64_t bit_size = sizeof(*new_ds) * 8;
         auto total_length = std::min(eod_token_id + 1, bit_size - 1);
         // j=1 to skip the flag bit
         for (uint32_t j = 1; j < total_length; ++j) {
-          if (((*new_ds) & (1<< (bit_size -1 -j))) == 0) {
-            (*new_ds) = (*new_ds) ^ (1<< (bit_size -1 -j));
+          if (((*new_ds) & (1 << (bit_size - 1 - j))) == 0) {
+            (*new_ds) = (*new_ds) ^ (1 << (bit_size - 1 - j));
             break;
           }
         }
       } else {
-        *new_ds = (*new_ds) ^ (1<< eod_token_id);
+        *new_ds = (*new_ds) ^ (1 << eod_token_id);
       }
       break;
     }
