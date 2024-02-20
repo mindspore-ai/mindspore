@@ -596,6 +596,8 @@ constexpr char KV_CACHE_MGR[] = "KVCacheMgr";
 // pipeline
 constexpr size_t PIPELINE_FUSTION_OFFSET = 100;
 constexpr char MICRO[] = "micro";
+constexpr char NO_UPDATE[] = "no_update";
+constexpr char HAS_ATTACHED[] = "has_attached";
 constexpr auto MICRO_INTERLEAVED_TAG = "micro_interleaved_tag";
 constexpr char DEST_RANK[] = "dest_rank";
 constexpr char SRC_RANK[] = "src_rank";

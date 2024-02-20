@@ -665,6 +665,9 @@ static void StepSplitTensor(const AnfNodePtr &node, const FuncGraphManagerPtr &m
       continue;
     }
     if (IsParallelCareNode(use_cnode)) {
+      if (IsPrimitiveCNode(use_cnode, prim::kPrimReceive)) {
+        continue;
+      }
       if (IsValueNode<ValueList>(node) || IsValueNode<ValueTuple>(node)) {
         SplitTensorList(node, use_cnode, node_pair.second);
       } else {
@@ -1611,7 +1614,7 @@ static bool CheckExtractInformation(const CNodePtr &cnode) {
   }
 
   return IsParallelCareNode(cnode);
-  }
+}
 
 static void ExtractStrategyAndInit(const CNodePtr &cnode, const PrimitivePtr &prim, const OperatorInfoPtr &op_info) {
   StrategyPtr in_strategy = nullptr, out_strategy = nullptr;
@@ -2195,7 +2198,7 @@ static void StepReplace(const std::vector<AnfNodePtr> &all_nodes) {
   }
 }
 
-static std::set<FuncGraphPtr> FindForwardGraphByRootNodes(const AnfNodeSet &root_all_nodes) {
+static std::set<FuncGraphPtr> FindForwardGraphByRootNodes(const std::vector<AnfNodePtr> &root_all_nodes) {
   // J->CNode->Graph
   std::set<FuncGraphPtr> graph_set;
   for (auto &node : root_all_nodes) {
@@ -2474,12 +2477,16 @@ static void SetForwardFlag(const AnfNodeSet &all_nodes) {
 
 std::set<FuncGraphPtr> ForwardGraph(const FuncGraphPtr &root) {
   MS_EXCEPTION_IF_NULL(root);
-  const auto &all_nodes = root->nodes();
+  auto ret = root->get_return();
+  MS_EXCEPTION_IF_NULL(ret);
+  auto all_nodes = DeepScopedGraphSearch(ret);
+  std::reverse(all_nodes.begin(), all_nodes.end());
   std::set<FuncGraphPtr> graph_set = FindForwardGraphByRootNodes(all_nodes);
   return graph_set;
 }
 
-static std::vector<AnfNodePtr> FindRootForwardCNode(const FuncGraphPtr &graph, const AnfNodeSet &all_nodes) {
+static std::vector<AnfNodePtr> FindRootForwardCNode(const FuncGraphPtr &graph,
+                                                    const std::vector<AnfNodePtr> &all_nodes) {
   MS_EXCEPTION_IF_NULL(graph);
   std::vector<AnfNodePtr> root_forward_nodes;
   auto loss_cnode = FindLossCNode(graph).loss_node;
@@ -2581,7 +2588,10 @@ static void HandleRootReshapeAndSaveStrategy(const std::vector<AnfNodePtr> &all_
 
 void MarkForwardCNode(const FuncGraphPtr &root) {
   MS_EXCEPTION_IF_NULL(root);
-  auto all_nodes = root->nodes();
+  auto ret = root->get_return();
+  MS_EXCEPTION_IF_NULL(ret);
+  auto all_nodes = DeepScopedGraphSearch(ret);
+  std::reverse(all_nodes.begin(), all_nodes.end());
   auto graph_set = FindForwardGraphByRootNodes(all_nodes);
 
   if (graph_set.empty()) {
