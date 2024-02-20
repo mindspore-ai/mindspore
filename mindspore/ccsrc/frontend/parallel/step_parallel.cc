@@ -2610,6 +2610,39 @@ void MarkForwardCNode(const FuncGraphPtr &root) {
   }
 }
 
+OperatorInfoPtr set_make_list_for_ifa(CNodePtr make_list, const CNodePtr &next_node) {
+  ValueNodePtr anf_node = next_node->input(0)->cast<ValueNodePtr>();
+  if (!anf_node) {
+    return nullptr;
+  }
+  PrimitivePtr prim = anf_node->value()->cast<PrimitivePtr>();
+  if (!prim) {
+    return nullptr;
+  }
+  if (prim->name() != INCRE_FLASH_ATTENTION) {
+    return nullptr;
+  }
+
+  int kv_index = 1;
+  OperatorInfoPtr operator_make_list = CreateOperatorInfo(make_list);
+  auto make_list_prim = GetValueNode<PrimitivePtr>(make_list->input(0));
+  if (make_list_prim->HasAttr(STAND_ALONE)) {
+    (void)make_list_prim->DelAttr(STAND_ALONE);
+  }
+  OperatorInfoPtr next_operator = next_node->user_data<OperatorInfo>();
+  StrategyPtr next_node_strategy = next_operator->strategy();
+  Strategies key_value_strategies;
+  Dimensions key_value_dim = next_node_strategy->GetInputDim().at(kv_index);
+  key_value_strategies.push_back(key_value_dim);
+  auto make_list_stage = next_node_strategy->GetInputStage();
+  auto make_list_new_in_stra = NewStrategy(make_list_stage, key_value_strategies);
+  operator_make_list->set_strategy(make_list_new_in_stra);
+
+  std::vector<TensorInfo> kv_in_tensor_info(1, next_operator->inputs_tensor_info()[kv_index]);
+  operator_make_list->set_inputs_tensor_info(kv_in_tensor_info);
+  return operator_make_list;
+}
+
 static void HandleForwardMakeTupleAndMakeList(const std::vector<AnfNodePtr> &all_nodes) {
   for (auto &node : all_nodes) {
     if (!AnfNodeIsPrimitive(node, MAKE_TUPLE) && !AnfNodeIsPrimitive(node, MAKE_LIST)) {
@@ -2636,7 +2669,10 @@ static void HandleForwardMakeTupleAndMakeList(const std::vector<AnfNodePtr> &all
       continue;
     }
 
-    OperatorInfoPtr op_info = GetDistributeOperator(make_tuple_list_next_cnode);
+    OperatorInfoPtr op_info = set_make_list_for_ifa(cnode, make_tuple_list_next_cnode);
+    if (op_info == nullptr) {
+      op_info = GetDistributeOperator(make_tuple_list_next_cnode);
+    }
     MS_EXCEPTION_IF_NULL(op_info);
     cnode->set_user_data<OperatorInfo>(op_info);
   }
