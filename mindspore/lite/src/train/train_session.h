@@ -116,6 +116,7 @@ class TrainSession : virtual public lite::LiteSession {
  protected:
   int AllocWorkSpace();
   bool IsLossKernel(const kernel::KernelExec *kernel) const;
+  bool IsLossInKernel(const kernel::KernelExec *kernel) const;
   bool IsGradKernel(const kernel::KernelExec *kernel) const;
   bool IsOptimizer(kernel::KernelExec *kernel) const;
   bool IsMaskOutput(kernel::KernelExec *kernel) const;
