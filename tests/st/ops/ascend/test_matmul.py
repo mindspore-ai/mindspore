@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import os
 import numpy as np
 import pytest
 
@@ -71,7 +72,7 @@ def test_matmul_tensor_api_modes(mode):
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -81,6 +82,11 @@ def test_matmul_dtypes():
     Description: Test matmul dtypes for Graph mode.
     Expectation: The result match to the expect value.
     """
+    os.environ['MS_ENABLE_GE'] = '1'
+    os.environ['MS_GE_TRAIN'] = '1'
+    os.environ['MS_ENABLE_REF_MODE'] = '1'
+    os.environ['MS_DEV_FORCE_ACL'] = '1'
+    os.environ['MS_ENABLE_FORMAT_MODE'] = '1'
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     m = 3
     n = 3
@@ -90,7 +96,7 @@ def test_matmul_dtypes():
     x_np.shape = m, k
     y_np.shape = k, n
     matmul = Net()
-    valid_dtypes = (mstype.uint8, mstype.int32, mstype.int64, mstype.float16, mstype.float32)
+    valid_dtypes = (mstype.int8, mstype.int32, mstype.float16, mstype.float32)
     all_dtypes = mstype.all_types
     for dtype in all_dtypes:
         # bfloat16 is not supported yet
@@ -99,7 +105,11 @@ def test_matmul_dtypes():
         x_ms = Tensor(x_np).astype(dtype)
         y_ms = Tensor(y_np).astype(dtype)
         if dtype in valid_dtypes:
-            matmul(x_ms, y_ms)
+            out = matmul(x_ms, y_ms)
+            if x_ms.dtype == mstype.int8:
+                assert out.dtype == mstype.int32
+            else:
+                assert out.dtype == x_ms.dtype
         else:
-            with pytest.raises(TypeError):
+            with pytest.raises((RuntimeError, TypeError)):
                 matmul(x_ms, y_ms)
