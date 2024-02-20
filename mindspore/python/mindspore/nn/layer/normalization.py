@@ -274,8 +274,8 @@ class BatchNorm2d(_BatchNorm):
         Note that the formula for updating the :math:`moving\_mean` and :math:`moving\_var` is
 
         .. math::
-            \text{moving_mean}=\text{moving_mean*momentum}+μ_β\text{*(1−momentum)}\\
-            \text{moving_var}=\text{moving_var*momentum}+σ^2_β\text{*(1−momentum)}
+            \text{moving_mean}=\text{moving_mean*momentum}+μ_β\text{*(1-momentum)}\\
+            \text{moving_var}=\text{moving_var*momentum}+σ^2_β\text{*(1-momentum)}
 
         where :math:`moving\_mean` is the updated mean, :math:`moving\_var` is the updated variance,
         :math:`μ_β, σ^2_β` are the observed value (mean and variance) of each batch of data.

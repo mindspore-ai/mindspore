@@ -240,7 +240,7 @@ class COOTensor(COOTensor_):
             Please make sure that the indices are in range of the given shape.
         values (Tensor): A 1-D tensor of any type and shape :math:`(N)`, which
             supplies the values for each element in `indices`. Default: ``None`` .
-        shape (tuple(int)): An integer tuple of size `ndims`,
+        shape (tuple(int)): An integer tuple of shape :math:`(ndims)`,
             which specifies the dense_shape of the sparse tensor. Default: ``None`` .
         coo_tensor (COOTensor): A COOTensor object. Default: ``None`` .
 
@@ -670,10 +670,10 @@ class CSRTensor(CSRTensor_):
             must be int16, int32 or int64.
         values (Tensor): Tensor, which has the same length as `indices` (values.shape[0] == indices.shape[0]).
             `values`  stores the data for CSRTensor. Default: ``None``.
-        shape (tuple(int)): A tuple indicates the shape of the CSRTensor, and `shape[0]` must equal to `M - 1`,
+        shape (tuple(int)): An integer tuple of shape :math:`(ndims)`, and `shape[0]` must equal to `M - 1`,
             which all equal to number of rows of the CSRTensor. Default: ``None``.
         csr_tensor (CSRTensor): A CSRTensor object.  Values' feature dimension should match with
-            CSRTensor's feature dimension (values.shape[1:] == csr_tensor.shape[2:]). Default: ``None``.
+            CSRTensor's feature dimension :math:`(values.shape[1:] == csr_tensor.shape[2:])` . Default: ``None``.
 
     Outputs:
         CSRTensor, with shape defined by `shape`, and dtype inferred from `value`.

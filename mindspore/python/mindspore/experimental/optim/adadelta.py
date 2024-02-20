@@ -69,9 +69,9 @@ class Adadelta(Optimizer):
             parameter groups.
         lr (Union[int, float, Tensor], optional): learning rate. Default: ``1.0``.
         rho (float, optional): coefficient used for computing a running average
-            of squared gradients. Default: ``0.9``.
+            of squared gradients. :math:`\rho` in the formula above. Default: ``0.9``.
         eps (float, optional): term added to the denominator to improve
-            numerical stability. Default: ``1e-6``.
+            numerical stability. :math:`\epsilon` in the formula above. Default: ``1e-6``.
         weight_decay (float, optional): weight decay (L2 penalty). Default: ``0.``.
 
     Keyword Args:

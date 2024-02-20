@@ -83,7 +83,7 @@ class ExponentialDecayLR(LearningRateSchedule):
         is_stair (bool): If true, learning rate is decayed once every `decay_steps` time. Default: ``False`` .
 
     Inputs:
-        - **global_step** (Tensor) - The current step number.
+        - **global_step** (Tensor) - The current step number. :math:`current\_step` in the above formula.
 
     Outputs:
         Tensor. The learning rate value for the current step with shape :math:`()`.

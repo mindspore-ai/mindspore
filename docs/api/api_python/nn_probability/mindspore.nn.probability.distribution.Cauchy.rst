@@ -7,7 +7,7 @@ mindspore.nn.probability.distribution.Cauchy
     连续随机分布，取值范围为所有实数，概率密度函数为
 
     .. math:: 
-        f(x, a, b) = 1 / \pi b(1 - ((x - a)/b)^2).
+        f(x, a, b) = 1 / \pi b(1 - ((x - a)/b)^2)
 
     其中 :math:`a, b` 为分别为柯西分布的位置参数和比例参数。
 
