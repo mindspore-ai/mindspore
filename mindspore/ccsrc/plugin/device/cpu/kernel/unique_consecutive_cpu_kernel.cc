@@ -320,7 +320,13 @@ bool UniqueConsecutiveCpuKernelMod::LaunchKernel(const std::vector<KernelTensor 
   } else {
     UniqueConsecutiveDim<T1, T2>(inputs, outputs);
   }
-  // Update output shape and type
+
+  return true;
+}
+
+void UniqueConsecutiveCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                             const std::vector<KernelTensor *> &outputs) {
+  // Update output shape and size
   outputs[kIndex0]->SetShapeVector(output_shape_);
   auto ele_size =
     LongToSize(std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<int64_t>()));
@@ -331,8 +337,6 @@ bool UniqueConsecutiveCpuKernelMod::LaunchKernel(const std::vector<KernelTensor 
   outputs[kIndex2]->SetShapeVector(count_shape_);
   ele_size = LongToSize(std::accumulate(count_shape_.begin(), count_shape_.end(), 1, std::multiplies<int64_t>()));
   outputs[kIndex2]->set_size(ele_size * UnitSizeInBytes(outputs[kIndex2]->dtype_id()));
-
-  return true;
 }
 
 #define CPU_UNIQUE_CONSECUTIVE_KERNEL_REGISTER(ms_index_type, ms_value_type, index_type, value_type) \
