@@ -17,9 +17,14 @@
 #include <memory>
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "common/common_test.h"
 #include "ir/dtype/type.h"
 #include "ir/primitive.h"
+#include "ir/tensor.h"
+#include "mindapi/base/shape_vector.h"
+#include "mindapi/base/type_id.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "ops/ops_func_impl/not_equal.h"
 #include "ops/test_ops.h"
 
@@ -52,11 +57,60 @@ TEST_P(TestNotEqual, not_equal_dyn_shape) {
 }
 
 INSTANTIATE_TEST_CASE_P(TestNotEqualGroup, TestNotEqual,
-                        testing::Values(
-                          BroadcastOpParams{{1, 3}, kFloat, {2, 1}, kFloat, {2, 3}, kBool},
-                          BroadcastOpParams{{-1, 3}, kFloat, {-1, 1}, kFloat, {-1, 3}, kBool},
-                          BroadcastOpParams{{-1, 1, 3}, kFloat, {1, -1, 3}, kFloat, {-1, -1, 3}, kBool},
-                          BroadcastOpParams{{-1, 2, 3}, kFloat, {2, -1, 3}, kFloat, {2, 2, 3}, kBool},
-                          BroadcastOpParams{{-2}, kFloat, {2, 3}, kFloat, {-2}, kBool}));
+                        testing::Values(BroadcastOpParams{{1, 3}, kFloat, {2, 1}, kFloat, {2, 3}, kBool},
+                                        BroadcastOpParams{{-1, 3}, kFloat, {-1, 1}, kFloat, {-1, 3}, kBool},
+                                        BroadcastOpParams{{-1, 1, 3}, kFloat, {1, -1, 3}, kFloat, {-1, -1, 3}, kBool},
+                                        BroadcastOpParams{{-1, 2, 3}, kFloat, {2, -1, 3}, kFloat, {2, 2, 3}, kBool},
+                                        BroadcastOpParams{{-2}, kFloat, {2, 3}, kFloat, {-2}, kBool}));
+
+struct NotEqualInferValueParams {
+  ShapeVector x_shape;
+  TypeId x_type;
+  std::vector<float> x_data;
+  ShapeVector y_shape;
+  TypeId y_type;
+  std::vector<float> y_data;
+  std::vector<bool> out_data;
+};
+
+class TestNotEqualInferValue : public TestOps, public testing::WithParamInterface<NotEqualInferValueParams> {};
+
+TEST_P(TestNotEqualInferValue, not_equal_infer_value) {
+  auto &param = GetParam();
+  auto x_tensor = std::make_shared<tensor::Tensor>(param.x_type, param.x_shape, (void *)&param.x_data[0], param.x_type);
+  auto x = x_tensor->ToAbstract();
+  ASSERT_NE(x, nullptr);
+  auto y_tensor = std::make_shared<tensor::Tensor>(param.y_type, param.y_shape, (void *)&param.y_data[0], param.y_type);
+  auto y = y_tensor->ToAbstract();
+  ASSERT_NE(y, nullptr);
+  std::vector<abstract::AbstractBasePtr> input_args{std::move(x), std::move(y)};
+  auto value_op = abstract::InferValueByFuncImpl(prim::kPrimNotEqual, input_args);
+  ASSERT_TRUE(value_op.has_value());
+  auto value = value_op.value();
+  ASSERT_NE(value, nullptr);
+  auto value_tensor = value->cast<tensor::TensorPtr>();
+  ASSERT_NE(value_tensor, nullptr);
+
+  auto out = static_cast<bool *>(value_tensor->data_c());
+  for (int i = 0; i < param.out_data.size(); i++) {
+    ASSERT_TRUE(param.out_data[i] == out[i]);
+  }
+}
+
+INSTANTIATE_TEST_CASE_P(TestNotEqualInferValue, TestNotEqualInferValue,
+                        testing::Values(NotEqualInferValueParams{ShapeVector{2, 2},
+                                                                 kNumberTypeFloat32,
+                                                                 {2, 2, 3, 3},
+                                                                 ShapeVector{2, 2},
+                                                                 kNumberTypeFloat32,
+                                                                 {3, 3, 2, 2},
+                                                                 {true, true, true, true}},
+                                        NotEqualInferValueParams{ShapeVector{1},
+                                                                 kNumberTypeFloat32,
+                                                                 {2},
+                                                                 ShapeVector{1},
+                                                                 kNumberTypeFloat32,
+                                                                 {2},
+                                                                 {false}}));
 }  // namespace ops
 }  // namespace mindspore
