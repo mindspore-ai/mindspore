@@ -3405,7 +3405,7 @@ def isclose(input, other, rtol=1e-05, atol=1e-08, equal_nan=False):
     is “close” to the corresponding element of `other`. Closeness is defined as:
 
     .. math::
-        ∣input−other∣  ≤  atol + rtol × ∣other∣
+        |input-other| ≤ atol + rtol × |other|
 
     Args:
         input (Tensor): First Tensor to compare, with data type belongs to float32, float16, int32.
