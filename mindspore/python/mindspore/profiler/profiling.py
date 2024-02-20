@@ -962,9 +962,6 @@ class Profiler:
         if self._profile_communication:
             hccl_option = {"output": self._output_path, "task_trace": "on"}
             os.environ['PROFILING_OPTIONS'] = json.dumps(hccl_option)
-            if not self.start_profile:
-                raise RuntimeError(f"For '{self.__class__.__name__}', the parameter profile_communication can "
-                                   f"not be True while starting profiler in the process of training.")
 
         self._profile_memory = kwargs.pop("profile_memory", False)
         if not isinstance(self._profile_memory, bool):
