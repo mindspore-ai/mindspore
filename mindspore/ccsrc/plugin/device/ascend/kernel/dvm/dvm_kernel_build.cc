@@ -410,10 +410,24 @@ std::unordered_map<TypeId, dvm::DType> OpBuilder::ms_type_map = {{TypeId::kNumbe
                                                                  {TypeId::kNumberTypeBool, dvm::DType::kInt8},
                                                                  {TypeId::kNumberTypeInt32, dvm::DType::kInt32}};
 
+size_t GetSubGraphNums(FuncGraphPtr graph_kernel) {
+  auto output = graph_kernel->get_return()->cast<CNodePtr>()->input(1);
+  MS_EXCEPTION_IF_NULL(output);
+  auto maketuple = output->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(maketuple);
+  auto prim = GetCNodePrimitive(maketuple->inputs().back());
+  MS_EXCEPTION_IF_NULL(prim);
+  auto value = prim->GetAttr("parallel_dim_info");
+  auto info = GetValue<std::vector<size_t>>(value);
+  return info[0] + 1;
+}
 class DvmKernelBuilder {
  public:
-  DvmKernelBuilder() = default;
+  DvmKernelBuilder(const AnfNodePtr &node, bool is_dynamic) : node_(node), is_dynamic_(is_dynamic) {}
   ~DvmKernelBuilder() = default;
+
+  virtual void BuildKernel(const FuncGraphPtr &graph, const CNodePtr &out_node,
+                           const std::vector<AnfNodePtr> &outputs) = 0;
 
   void Construct(const FuncGraphPtr &graph) {
     MS_EXCEPTION_IF_NULL(graph);
@@ -429,63 +443,28 @@ class DvmKernelBuilder {
       for (size_t i = 1; i < tuple->size(); ++i) {
         outputs.emplace_back(tuple->input(i));
       }
-      end_node = out_node;
     } else {
       outputs.emplace_back(out_node);
     }
-    const auto &params = graph->parameters();
-    std::unordered_map<AnfNodePtr, ShapeRefPtr> shapes_ref;
-    OpBuilder builder(kernel_mod_->Kernel(), outputs, &shapes_ref, kernel_mod_->ShapesSource(), params.empty());
-    auto nodes = TopoSort(ret_node);
-    for (const auto &node : nodes) {
-      if (node == end_node) break;
-      if (node->isa<CNode>()) {
-        builder.Emit(node);
-      }
-    }
-    for (const auto &iter : shapes_ref) {
-      kernel_mod_->CacheShapeRef(iter.second);
-    }
-    // cache kernel's inputs and outputs from subgraph's inputs and outputs
-    for (size_t i = 0; i < params.size(); ++i) {
-      auto shape_iter = shapes_ref.find(params[i]);
-      auto ref = shape_iter == shapes_ref.end() ? nullptr : shape_iter->second.get();
-      kernel_mod_->UpdateInputShapeRef(i, ref);
-      if (auto load = builder.GetLoad(params[i]); load != nullptr) {
-        kernel_mod_->CacheLoad(load, i);
-      }
-    }
-    for (size_t i = 0; i < outputs.size(); ++i) {
-      if (auto store = builder.GetStore(outputs[i]); store != nullptr) {
-        kernel_mod_->CacheStore(store, i);
-      }
-    }
-    kernel_mod_->UpdateIO();
+    BuildKernel(graph, out_node, outputs);
   }
 
-  KernelModPtr Create(const AnfNodePtr &anf_node) {
-    MS_EXCEPTION_IF_NULL(anf_node);
-    auto cnode = anf_node->cast<CNodePtr>();
+  KernelModPtr Create() {
+    auto cnode = node_->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto scope = cnode->fullname_with_scope();
     MS_LOG(INFO) << "Start creating kernel module for node: " << scope;
-    // Create kernel mod
-    auto is_dynamic = common::AnfAlgo::IsDynamicShape(anf_node);
-    kernel_mod_ = std::make_shared<DvmKernelMod>(is_dynamic);
-    auto inputs_type = AnfAlgo::GetAllInputDeviceTypes(cnode);
-    auto outputs_type = AnfAlgo::GetAllOutputDeviceTypes(cnode);
-    kernel_mod_->Initialize(inputs_type, outputs_type);
     // FuncGraph --> Dvm Kernel
     auto func_graph = GetCNodeFuncGraph(cnode);
     Construct(func_graph);
-    if (!is_dynamic) {
+    if (!is_dynamic_) {
       // Static shape need codegen
-      std::vector<ShapeVector> inputs_shape(inputs_type.size());
-      for (size_t i = 0; i < inputs_type.size(); ++i) {
+      std::vector<ShapeVector> inputs_shape(kernel_mod_->GetInputNum());
+      for (size_t i = 0; i < inputs_shape.size(); ++i) {
         inputs_shape[i] = AnfAlgo::GetInputDeviceShape(cnode, i);
       }
-      std::vector<ShapeVector> outputs_shape(outputs_type.size());
-      for (size_t i = 0; i < outputs_type.size(); ++i) {
+      std::vector<ShapeVector> outputs_shape(kernel_mod_->GetOutputNum());
+      for (size_t i = 0; i < outputs_shape.size(); ++i) {
         outputs_shape[i] = AnfAlgo::GetOutputDeviceShape(cnode, i);
       }
       kernel_mod_->CodeGen(inputs_shape, outputs_shape);
@@ -501,14 +480,178 @@ class DvmKernelBuilder {
     return kernel_mod_;
   }
 
- private:
+ protected:
+  const AnfNodePtr node_;
+  bool is_dynamic_;
   DvmKernelModPtr kernel_mod_;
+};
+
+class SingleDvmKernelBuilder : public DvmKernelBuilder {
+ public:
+  SingleDvmKernelBuilder(const AnfNodePtr anf_node, bool is_dynamic) : DvmKernelBuilder(anf_node, is_dynamic) {}
+  ~SingleDvmKernelBuilder() = default;
+
+  void BuildKernel(const FuncGraphPtr &graph, const CNodePtr &out_node,
+                   const std::vector<AnfNodePtr> &outputs) override {
+    // Create kernel mod
+    auto kernel_type = is_dynamic_ ? dvm::KernelType::kDynShape : dvm::KernelType::kStaticShape;
+    kernel_mod_ = std::make_shared<SingleDvmKernelMod>(kernel_type);
+    auto inputs_type = AnfAlgo::GetAllInputDeviceTypes(node_);
+    auto outputs_type = AnfAlgo::GetAllOutputDeviceTypes(node_);
+    kernel_mod_->Initialize(inputs_type, outputs_type);
+    const auto &params = graph->parameters();
+    std::unordered_map<AnfNodePtr, ShapeRefPtr> shapes_ref;
+    auto kernel_mod = std::static_pointer_cast<SingleDvmKernelMod>(kernel_mod_);
+    OpBuilder builder(kernel_mod_->Kernel(), outputs, &shapes_ref, kernel_mod->ShapesSource(), params.empty());
+    auto nodes = TopoSort(out_node);
+    if (outputs.size() > 1) {
+      nodes.pop_back();  // exclude maketuple
+    }
+    for (const auto &node : nodes) {
+      if (node->isa<CNode>()) {
+        builder.Emit(node);
+      }
+    }
+    for (const auto &iter : shapes_ref) {
+      kernel_mod->CacheShapeRef(iter.second);
+    }
+    // cache kernel's inputs and outputs from subgraph's inputs and outputs
+    for (size_t i = 0; i < params.size(); ++i) {
+      auto shape_iter = shapes_ref.find(params[i]);
+      auto ref = shape_iter == shapes_ref.end() ? nullptr : shape_iter->second.get();
+      kernel_mod->UpdateInputShapeRef(i, ref);
+      if (auto load = builder.GetLoad(params[i]); load != nullptr) {
+        kernel_mod->CacheLoad(load, i);
+      }
+    }
+    for (size_t i = 0; i < outputs.size(); ++i) {
+      if (auto store = builder.GetStore(outputs[i]); store != nullptr) {
+        kernel_mod->CacheStore(store, i);
+      }
+    }
+    kernel_mod->UpdateIO();
+  }
+};
+
+class ParallelDvmKernelBuilder : public DvmKernelBuilder {
+ public:
+  explicit ParallelDvmKernelBuilder(const AnfNodePtr anf_node, bool is_dynamic, size_t sub_graph_count)
+      : DvmKernelBuilder(anf_node, is_dynamic), sub_graph_count_(sub_graph_count) {}
+  ~ParallelDvmKernelBuilder() = default;
+
+  void BuildKernel(const FuncGraphPtr &graph, const CNodePtr &out_node,
+                   const std::vector<AnfNodePtr> &outputs) override {
+    // Create kernel mod
+    kernel_mod_ = std::make_shared<ParallelDvmKernelMod>(dvm::KernelType::kStaticParallel, sub_graph_count_);
+    auto inputs_type = AnfAlgo::GetAllInputDeviceTypes(node_);
+    auto outputs_type = AnfAlgo::GetAllOutputDeviceTypes(node_);
+    kernel_mod_->Initialize(inputs_type, outputs_type);
+    const auto &output_groups = GetOutputGroups(sub_graph_count_, outputs);
+    const auto &total_nodes = GetSubGraphs(output_groups);
+    std::vector<OpBuilder> builders;
+    builders.reserve(sub_graph_count_);
+    const auto &params = graph->parameters();
+    auto kernel_mod = std::static_pointer_cast<ParallelDvmKernelMod>(kernel_mod_);
+    std::vector<std::unordered_map<AnfNodePtr, ShapeRefPtr>> shapes_ref(sub_graph_count_);
+    for (size_t i = 0; i < sub_graph_count_; i++) {
+      size_t param_input_num = std::count_if(total_nodes[i].begin(), total_nodes[i].end(),
+                                             [](const AnfNodePtr &node) { return node->isa<Parameter>(); });
+      builders.emplace_back(kernel_mod_->Kernel(), output_groups[i], &shapes_ref[i], kernel_mod->ShapesSource(i),
+                            param_input_num == 0);
+    }
+    for (size_t i = 0; i < sub_graph_count_; i++) {
+      const auto &nodes = total_nodes[i];
+      for (const auto &node : nodes) {
+        if (node->isa<CNode>()) {
+          builders[i].Emit(node);
+        }
+      }
+      if (i != sub_graph_count_ - 1) {
+        (void)kernel_mod_->Kernel()->ParallelNext();
+      }
+    }
+    for (size_t graph_idx = 0; graph_idx < sub_graph_count_; ++graph_idx) {
+      for (const auto &iter : shapes_ref[graph_idx]) {
+        kernel_mod->CacheShapeRef(iter.second);
+      }
+    }
+
+    // cache kernel's inputs and outputs from subgraph's inputs and outputs
+    for (size_t i = 0; i < params.size(); ++i) {
+      for (size_t graph_idx = 0; graph_idx < sub_graph_count_; ++graph_idx) {
+        auto shape_iter = shapes_ref[graph_idx].find(params[i]);
+        auto ref = shape_iter == shapes_ref[graph_idx].end() ? nullptr : shape_iter->second.get();
+        kernel_mod->UpdateInputShapeRef(i, ref);
+        if (auto load = builders[graph_idx].GetLoad(params[i]); load != nullptr) {
+          kernel_mod->CacheLoad(load, graph_idx, i);
+        }
+      }
+    }
+    for (size_t i = 0; i < outputs.size(); ++i) {
+      for (size_t graph_idx = 0; graph_idx < sub_graph_count_; ++graph_idx) {
+        if (auto store = builders[graph_idx].GetStore(outputs[i]); store != nullptr) {
+          kernel_mod->CacheStore(store, graph_idx, i);
+        }
+      }
+    }
+    kernel_mod->UpdateIO();
+  }
+
+ private:
+  const std::vector<std::vector<AnfNodePtr>> GetOutputGroups(size_t sub_graph_count,
+                                                             const std::vector<AnfNodePtr> &outputs) {
+    std::vector<std::vector<AnfNodePtr>> output_groups(sub_graph_count, std::vector<AnfNodePtr>());
+    for (auto output : outputs) {
+      auto attrs = GetCNodePrimitive(output)->attrs();
+      if (attrs.find("parallel_dim_info") == attrs.end()) {
+        MS_LOG(EXCEPTION) << "Can't find parallel_dim_info for parallel fusion, please check";
+      }
+      auto value = attrs["parallel_dim_info"];
+      auto info = GetValue<std::vector<size_t>>(value);
+      output_groups[info[0]].push_back(output);
+    }
+    return output_groups;
+  }
+
+  const std::vector<std::vector<AnfNodePtr>> GetSubGraphs(const std::vector<std::vector<AnfNodePtr>> &output_groups) {
+    std::vector<std::vector<AnfNodePtr>> total_nodes(output_groups.size());
+    for (size_t i = 0; i < output_groups.size(); i++) {
+      const auto &output_group = output_groups[i];
+      if (output_group.size() == 1) {
+        auto output = output_group[0];
+        auto subgraph = TopoSort(output);
+        total_nodes[i] = subgraph;
+      } else {
+        auto maketuple = std::make_shared<CNode>(output_group, output_group[0]->func_graph());
+        auto subgraph = TopoSort(maketuple);
+        subgraph.pop_back();  // exclude maketuple
+        total_nodes[i] = subgraph;
+      }
+    }
+    return total_nodes;
+  }
+
+  size_t sub_graph_count_{0};
 };
 }  // namespace
 
 KernelModPtr DvmOpBuild(const AnfNodePtr &anf_node) {
-  DvmKernelBuilder kernel_builder;
-  return kernel_builder.Create(anf_node);
+  MS_EXCEPTION_IF_NULL(anf_node);
+  auto cnode = anf_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto func_graph = GetCNodeFuncGraph(cnode);
+  MS_EXCEPTION_IF_NULL(func_graph);
+  std::shared_ptr<DvmKernelBuilder> kernel_builder{nullptr};
+  auto is_dynamic = common::AnfAlgo::IsDynamicShape(anf_node);
+  if (func_graph->has_attr(kAttrCompositeType) &&
+      GetValue<std::string>(func_graph->get_attr(kAttrCompositeType)) == "parallel_fusion") {
+    MS_EXCEPTION_IF_CHECK_FAIL(!is_dynamic, "Parallel fusion only supports static shape situations");
+    auto sub_graph_count = GetSubGraphNums(func_graph);
+    kernel_builder = std::make_shared<ParallelDvmKernelBuilder>(anf_node, is_dynamic, sub_graph_count);
+  } else {
+    kernel_builder = std::make_shared<SingleDvmKernelBuilder>(anf_node, is_dynamic);
+  }
+  return kernel_builder->Create();
 }
 }  // namespace kernel
 }  // namespace mindspore
