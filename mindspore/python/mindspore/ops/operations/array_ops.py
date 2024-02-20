@@ -1283,6 +1283,8 @@ class FillV2(PrimitiveWithCheck):
     def infer_value(self, dims, x):
         if x is None or dims is None or isinstance(dims, (Tensor, Tensor_)):
             return None
+        if isinstance(dims, (tuple, list)) and None in dims:
+            return None
         if 0 in dims:
             init_func = Zero()
             init_func.__enable_zero_dim__ = True
