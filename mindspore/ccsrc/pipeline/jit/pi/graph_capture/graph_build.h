@@ -30,6 +30,16 @@ class GraphBuilder;
 class MindGraphBuilder;
 using GraphBuilderPtr = std::shared_ptr<GraphBuilder>;
 using MindGraphBuilderPtr = std::shared_ptr<MindGraphBuilder>;
+
+struct TryBlock {
+  int type;       /*what kind of block this is*/
+  int bci;        /*where to jump to find handler*/
+  int checkpoint; /*the handler to be rolled back*/
+  // int level;   /* value stack level to pop toe*/
+  bool withOrException; /*record this block is in with block or try_exception block*/
+};
+
+bool CheckSupportCreateInstance(CallNode* call_node);
 class GraphBuilder {
  public:
   static const char *ID___self__;
@@ -69,6 +79,13 @@ class GraphBuilder {
 
   static bool IsByteCodeImplemented(int bytecode);
 
+  // TryBlockStack operation
+  TryBlock &PeekStack(int p);
+  void PushStack(TryBlock tb) { tryBlockStacks_.push_back(tb); }
+  int StackSize() { return tryBlockStacks_.size(); }
+  std::vector<TryBlock> &GetTryBlockStacks() { return tryBlockStacks_; }
+  TryBlock &PopStack();
+
  protected:
   std::vector<py::object> args_;  // inputs
   GraphBuilder *root_;
@@ -77,6 +94,7 @@ class GraphBuilder {
   FrameStates frame_;
   Block *current_block_;
   int cur_bci_;
+  std::vector<TryBlock> tryBlockStacks_{};
 
   // loop analyze
   void HandleLoop();
@@ -107,6 +125,7 @@ class GraphBuilder {
   void ResolveClosure(const py::object &func_info, ValueNode *callable_node, FrameStates *frame);
 
   std::pair<PyObject *, ValueNode *> SearchSelfPyObject(PyCodeObject *co);
+  bool HandleSuper(const Instr &instr, AObject *super);
   AObject *BuildSuperObject(PyCodeObject *co);
 
   /**
@@ -200,7 +219,8 @@ class GraphBuilder {
 
   // pointers
   std::vector<Graph *> graph_pool_;
-  ValueNode *NewValueNode(AObject *o, int op, int arg, const std::vector<ValueNode *> &p = {});
+  ValueNode *NewValueNode(AObject *o, int op, int arg, const std::vector<ValueNode *> &p = {},
+                          const std::string &name = "");
   ValueNode *NewValueNode(AObject *o, const Instr &, const std::vector<ValueNode *> &p = {});
   Graph *NewGraph(PyCodeObject *co, PyObject *f_globals);
 
@@ -238,6 +258,8 @@ class GraphBuilder {
   bool DoFormatValue(const Instr &instr);
   bool DoImport(const Instr &instr);
   bool DoYieldValue(const Instr &instr);
+  bool DoException(const Instr &instr);
+  bool DoWith(const Instr &instr);
   bool NotImplementBytecode(const Instr &instr);
   static const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> bytecode_meth_map_;
 

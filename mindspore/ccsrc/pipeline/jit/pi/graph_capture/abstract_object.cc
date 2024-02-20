@@ -927,6 +927,7 @@ AbstractTuple::AbstractTuple(Type type, py::object seq, RecMap *rec)
       element_type_(kTypeAnyValue),
       element_valid_(false),
       modify_(false) {
+  type_object_ = (type == kTypeList) ? &PyList_Type : &PyTuple_Type;
   if (!seq.ptr()) {
     return;
   }
@@ -956,6 +957,7 @@ AbstractDict::AbstractDict(Type type, py::object seq, RecMap *rec)
       v_type_(kTypeAnyValue),
       element_valid_(false),
       modify_(false) {
+  type_object_ = &PyDict_Type;
   if (!seq.ptr()) {
     return;
   }
@@ -1302,13 +1304,11 @@ bool AbstractTuple::Update() {
   // copy it
   PyObject *c = (this->type_ == kTypeTuple) ? PyTuple_New(items_.size()) : PyList_New(items_.size());
   modify_ = false;
-  type_object_ = Py_TYPE(c);
   value_ = py::reinterpret_steal<py::object>(c);
   for (size_t i = 0; i < items_.size(); i++) {
     py::object item = (items_[i] != nullptr) ? items_[i]->GetPyObject() : py::object();
     if (item.ptr() == nullptr) {
       value_ = py::object();
-      type_object_ = nullptr;
       return false;
     }
     if (this->type_ == kTypeTuple) {

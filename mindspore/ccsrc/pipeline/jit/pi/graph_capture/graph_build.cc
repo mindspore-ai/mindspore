@@ -146,6 +146,9 @@ const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> GraphBuilde
   {JUMP_FORWARD, &GraphBuilder::TraceRunControl},
   {JUMP_ABSOLUTE, &GraphBuilder::TraceRunControl},
   {YIELD_VALUE, &GraphBuilder::DoYieldValue},
+  {POP_BLOCK, &GraphBuilder::DoException},
+  {SETUP_WITH, &GraphBuilder::DoException},
+  {SETUP_FINALLY, &GraphBuilder::DoException},
   // not implement
   {LOAD_CLASSDEREF, &GraphBuilder::NotImplementBytecode},
   {LOAD_BUILD_CLASS, &GraphBuilder::NotImplementBytecode},
@@ -156,7 +159,6 @@ const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> GraphBuilde
   {GET_ANEXT, &GraphBuilder::NotImplementBytecode},
   {YIELD_FROM, &GraphBuilder::NotImplementBytecode},
   {PRINT_EXPR, &GraphBuilder::NotImplementBytecode},
-  {POP_BLOCK, &GraphBuilder::NotImplementBytecode},
   {POP_EXCEPT, &GraphBuilder::NotImplementBytecode},
   {WITH_EXCEPT_START, &GraphBuilder::NotImplementBytecode},
   {SETUP_ANNOTATIONS, &GraphBuilder::NotImplementBytecode},
@@ -166,20 +168,18 @@ const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> GraphBuilde
   {LOAD_NAME, &GraphBuilder::NotImplementBytecode},
   {STORE_NAME, &GraphBuilder::NotImplementBytecode},
   {DELETE_NAME, &GraphBuilder::NotImplementBytecode},
-  {SETUP_WITH, &GraphBuilder::NotImplementBytecode},
-  {SETUP_FINALLY, &GraphBuilder::NotImplementBytecode},
   {JUMP_IF_NOT_EXC_MATCH, &GraphBuilder::NotImplementBytecode},
   {RERAISE, &GraphBuilder::NotImplementBytecode},
   {RAISE_VARARGS, &GraphBuilder::NotImplementBytecode},
 
 #if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 7)
   {BREAK_LOOP, &GraphBuilder::NotImplementBytecode},
-  {WITH_CLEANUP_START, &GraphBuilder::NotImplementBytecode},
-  {WITH_CLEANUP_FINISH, &GraphBuilder::NotImplementBytecode},
-  {END_FINALLY, &GraphBuilder::NotImplementBytecode},
+  {WITH_CLEANUP_START, &GraphBuilder::DoException},
+  {WITH_CLEANUP_FINISH, &GraphBuilder::DoException},
+  {END_FINALLY, &GraphBuilder::DoException},
   {CONTINUE_LOOP, &GraphBuilder::NotImplementBytecode},
   {SETUP_LOOP, &GraphBuilder::NotImplementBytecode},
-  {SETUP_EXCEPT, &GraphBuilder::NotImplementBytecode},
+  {SETUP_EXCEPT, &GraphBuilder::DoException},
   {BUILD_LIST_UNPACK, &GraphBuilder::NotImplementBytecode},
   {BUILD_MAP_UNPACK, &GraphBuilder::NotImplementBytecode},
   {BUILD_MAP_UNPACK_WITH_CALL, &GraphBuilder::NotImplementBytecode},
@@ -221,20 +221,20 @@ bool GraphBuilder::ReplaceAll(ValueNode *old_node, ValueNode *new_node) {
   return true;
 }
 
-ValueNode *GraphBuilder::NewValueNode(AObject *o, int op, int arg, const std::vector<ValueNode *> &p) {
+ValueNode *GraphBuilder::NewValueNode(AObject *o, int op, int arg, const std::vector<ValueNode *> &p,
+                                      const std::string &name) {
   ValueNode *v;
   if (Utils::IsCallOp(op)) {
     v = graph_->NewCallNode(op, arg, p);
     v->SetVobj(o);
   } else {
-    v = graph_->NewValueNode(o, op, arg, p);
+    v = graph_->NewValueNode(o, op, arg, p, name);
   }
   return v;
 }
 
 ValueNode *GraphBuilder::NewValueNode(AObject *o, const Instr &i, const std::vector<ValueNode *> &p) {
-  ValueNode *v = NewValueNode(o, i.op(), i.arg(), p);
-  v->SetName(i.name());
+  ValueNode *v = NewValueNode(o, i.op(), i.arg(), p, i.name());
   v->SetLineNo(i.line());
   v->set_bci(i.bci());
   if (o && o->GetType() == AObject::kTypeTensor) {
@@ -387,7 +387,9 @@ bool GraphBuilder::DoUnpack(const Instr &instr) {
     case AObject::kTypeList:
     case AObject::kTypeNNCellList:
     case AObject::kTypeTensor: {
-      if (!iterable->is_constant()) {
+      const auto &cnst = iterable->GetConstantInfo();
+      // guard sequence length
+      if (cnst == nullptr || (cnst->value().ptr() == nullptr && cnst->len() == -1)) {
         auto tr = this->graph_->TraceValueNode(iterable);
         if (tr == nullptr) {
           return false;
@@ -462,6 +464,7 @@ bool GraphBuilder::DoReturn(const Instr &instr) {
     tuple_node->SetOparg(tuple_node->getInputs().size());
     graph_->GetTracedNodes().push_back(tuple_node);
     graph_->SetRetVal(tuple_node);
+    ConstantInfo::CollectConstantInfo(tuple_node);
   }
   return true;
 }
@@ -517,6 +520,111 @@ bool GraphBuilder::DoCellAccess(const Instr &instr) {
   return true;
 }
 
+// Parse byteCode -- SETUP_WITH
+bool GraphBuilder::DoWith(const Instr &instr) {
+  auto state = py::error_already_set();
+  if (graph_->Config().GetBoolConfig(GraphJitConfig::kSkipException) || state.type().ptr() == PyExc_RuntimeError) {
+    graph_->StopTraceAt(cur_bci_, StopTraceReason::kStopTraceSkip_Exception);
+    return false;
+  }
+  auto node = pop();
+  auto vobj = node->GetVobj();
+  auto func_enter = vobj->GetAttr("__enter__");
+  MS_EXCEPTION_IF_NULL(func_enter);
+  auto func_exit = vobj->GetAttr("__exit__");
+  MS_EXCEPTION_IF_NULL(func_exit);
+
+  auto func_node_exit = NewValueNode(func_exit, LOAD_ATTR, -1, {node});
+  func_node_exit->SetName("__exit__");
+  func_node_exit->SetLineNo(instr.bci());
+  graph_->GetTracedNodes().push_back(func_node_exit);
+  push(func_node_exit);
+
+  auto func_node_enter = NewValueNode(func_enter, LOAD_ATTR, -1, {node});
+  func_node_enter->SetName("__enter__");
+  func_node_enter->SetLineNo(instr.bci());
+  graph_->GetTracedNodes().push_back(func_node_enter);
+  push(func_node_enter);
+
+  auto newInstr = Instr(instr.bci(), CALL_FUNCTION, 0);
+  newInstr.set_line(instr.line());
+  if (!DoCall(newInstr)) {
+    MS_LOG(ERROR) << "funtion '__enter__' runs failed here, it should be successful!";
+    return false;
+  }
+  PushStack(TryBlock{SETUP_FINALLY, instr.extra_jump()->bci(), instr.bci(), True});
+  cur_bci_++;
+  return true;
+}
+
+bool GraphBuilder::DoException(const Instr &instr) {
+  int opCode = instr.op();
+  switch (opCode) {
+    case SETUP_WITH:
+      return DoWith(instr);
+    case POP_BLOCK: {
+      PopStack();
+      return true;
+    }
+    case SETUP_FINALLY: {
+      // TODO: implement try_exception
+      return false;
+    }
+#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 7)
+    case WITH_CLEANUP_START: {
+      ValueNode *exc = seek(0);
+      ValueNode *exit_func = seek(1);
+      if (exc->GetVobj()->GetType() != AObject::kTypeNone) {
+        return false;
+      }
+      if (exit_func->GetName() != "__exit__") {
+        MS_LOG(ERROR) << "it should call funtion '__exit__' here!";
+        return false;
+      }
+      // run exit func
+      push(exc);
+      push(exc);
+      auto newInstr = Instr(instr.bci(), CALL_FUNCTION, 3);
+      newInstr.set_line(instr.line());
+      if (!DoCall(newInstr)) {
+        MS_LOG(ERROR) << "funtion '__exit__' runs failed here, it should be successful!";
+        return false;
+      }
+      push(exc);
+      return true;
+    }
+    case WITH_CLEANUP_FINISH: {
+      auto exc = pop();
+      (void)pop();
+      push(exc);
+      return true;
+    }
+    case END_FINALLY: {
+      (void)pop();
+      return true;
+    }
+    case SETUP_EXCEPT: {
+      break;
+    }
+#endif
+    default:
+      break;
+  }
+  return false;
+}
+
+TryBlock &GraphBuilder::PeekStack(int p) {
+  MS_ASSERT(tryBlockStacks_.size() > p);
+  return tryBlockStacks_[tryBlockStacks_.size() - p - 1];
+}
+
+TryBlock &GraphBuilder::PopStack() {
+  MS_ASSERT(tryBlockStacks_.size() > 0);
+  auto &tb = tryBlockStacks_[tryBlockStacks_.size() - 1];
+  tryBlockStacks_.pop_back();
+  return tb;
+}
+
 bool GraphBuilder::DoGlobalAccess(const Instr &instr) {
   int opcode = instr.op();
   int oparg = instr.arg();
@@ -547,6 +655,45 @@ bool GraphBuilder::DoGlobalAccess(const Instr &instr) {
       return false;
   }
   return true;
+}
+
+bool GraphBuilder::HandleSuper(const Instr &instr, AObject *super) {
+  if (super->GetTypeObject() != &PySuper_Type) {
+    return false;
+  }
+  ValueNode *self_super = SearchSelfPyObject(graph_->GetCodeObj()).second;
+  auto &nodes = this->graph_->GetTracedNodes();
+  auto mtype_obj = reinterpret_cast<PyObject *>(&PyMethod_Type);
+  py::object method = super->GetPyObject().attr(instr.name().c_str());
+  if (PyMethod_Check(method.ptr())) {
+    PyObject *m = PyMethod_GET_FUNCTION(method.ptr());
+    AObject *m_tp = AObject::Convert(mtype_obj);
+
+    // method type object
+    ValueNode *global_node = NewValueNode(m_tp, LOAD_CONST, -1, {});
+    nodes.push_back(global_node);
+
+    // function object
+    ValueNode *method_node = NewValueNode(AObject::Convert(m), LOAD_CONST, -1, {});
+    nodes.push_back(method_node);
+
+    // call method type
+    py::tuple tuple_obj(2);
+    tuple_obj[0] = m;
+    tuple_obj[1] = self_super->GetVobj()->GetPyObject();
+    PyObject *ret = PyObject_Call(mtype_obj, tuple_obj.ptr(), nullptr);
+    py::object mh = py::reinterpret_steal<py::object>(ret);
+    PyErr_Clear();
+
+    AObject *mh_info = AObject::Convert(mh);
+    ValueNode *func_node = NewValueNode(mh_info, CALL_FUNCTION, 2, {global_node, method_node, self_super});
+    func_node->set_bci(instr.bci());
+    func_node->SetLineNo(instr.line());
+    nodes.push_back(func_node);
+    push(func_node);
+    return true;
+  }
+  return false;
 }
 
 PyObject *SetLocalPyObject(ValueNode *node) {
@@ -587,47 +734,15 @@ bool GraphBuilder::DoAttrAccess(const Instr &instr) {
     case LOAD_METHOD: /* fall-through */
     case LOAD_ATTR: {
       auto o = pop();
-      AObject *super = o->GetVobj();
-      if (super->GetTypeObject() == &PySuper_Type) {
-        ValueNode *self_super = SearchSelfPyObject(graph_->GetCodeObj()).second;
-        auto &nodes = this->graph_->GetTracedNodes();
-        auto mtype_obj = reinterpret_cast<PyObject *>(&PyMethod_Type);
-        py::object method = super->GetPyObject().attr(instr.name().c_str());
-        if (PyMethod_Check(method.ptr())) {
-          PyObject *m = PyMethod_GET_FUNCTION(method.ptr());
-          AObject *m_tp = AObject::Convert(mtype_obj);
-
-          // method type object
-          ValueNode *global_node = NewValueNode(m_tp, LOAD_CONST, -1, {});
-          nodes.push_back(global_node);
-
-          // function object
-          ValueNode *method_node = NewValueNode(AObject::Convert(m), LOAD_CONST, -1, {});
-          nodes.push_back(method_node);
-
-          // call method type
-          py::tuple tuple_obj(2);
-          tuple_obj[0] = m;
-          tuple_obj[1] = self_super->GetVobj()->GetPyObject();
-          PyObject *ret = PyObject_Call(mtype_obj, tuple_obj.ptr(), nullptr);
-          py::object mh = py::reinterpret_steal<py::object>(ret);
-          PyErr_Clear();
-
-          AObject *mh_info = AObject::Convert(mh);
-          ValueNode *func_node = NewValueNode(mh_info, CALL_FUNCTION, 2, {global_node, method_node, self_super});
-          func_node->set_bci(instr.bci());
-          func_node->SetLineNo(instr.line());
-          nodes.push_back(func_node);
-          push(func_node);
-        }
+      if (HandleSuper(instr, o->GetVobj())) {
+        break;
+      }
+      auto attrs = o->GetAttrs();
+      if (attrs.find(instr.name().c_str()) != attrs.end()) {
+        push(attrs[instr.name().c_str()]);
       } else {
-        auto attrs = o->GetAttrs();
-        if (attrs.find(instr.name().c_str()) != attrs.end()) {
-          push(attrs[instr.name().c_str()]);
-        } else {
-          auto n = NewValueNode(o->get_attr(instr.name()), instr, {o});
-          push(n);
-        }
+        auto n = NewValueNode(o->get_attr(instr.name()), instr, {o});
+        push(n);
       }
       break;
     }
@@ -679,6 +794,7 @@ static ValueNode *TupleDictItemAccess(ValueNode *container, ValueNode *index) {
 }
 
 bool GraphBuilder::DoGetItem(const Instr &instr) {
+  constexpr const char *kNameGetItem = "__getitem__";
   auto r = pop();
   auto l = pop();
   ValueNode *v = TupleDictItemAccess(l, r);
@@ -696,7 +812,7 @@ bool GraphBuilder::DoGetItem(const Instr &instr) {
     call_getitem = PyDict_Check(op) || PyTuple_Check(op) || PyList_Check(op);
   }
   if (!call_getitem) {
-    meth = container->GetAttr("__getitem__");
+    meth = container->GetAttr(kNameGetItem);
     PyObject *m = meth ? meth->GetPyObject().ptr() : nullptr;
     call_getitem = m == nullptr || !PyMethod_Check(m) || !PyFunction_Check(PyMethod_GET_FUNCTION(m));
   }
@@ -711,8 +827,7 @@ bool GraphBuilder::DoGetItem(const Instr &instr) {
     return true;
   }
 
-  ValueNode *meth_node = NewValueNode(meth, LOAD_ATTR, 0, {l});
-  meth_node->SetName("__getitem__");
+  ValueNode *meth_node = NewValueNode(meth, LOAD_ATTR, 0, {l}, kNameGetItem);
   ValueNode *call_node = NewValueNode(AObject::MakeAObject(AObject::kTypeAnyValue), CALL_FUNCTION, 1, {meth_node, r});
   this->graph_->GetTracedNodes().push_back(meth_node);
   this->graph_->GetTracedNodes().push_back(call_node);
@@ -899,7 +1014,7 @@ bool GraphBuilder::DoBinary(const Instr &instr) {
   auto r = pop();
   auto l = pop();
   AObject *o;
-  if (l->is_constant() && r->is_constant()) {
+  if (l->IsConstantValue() && r->IsConstantValue()) {
     o = static_cast<AbstractObject *>(l->GetVobj())->AbstractObject::Binary(r->GetVobj(), opcode);
   } else {
     o = l->GetVobj() ? l->GetVobj()->Binary(r->GetVobj(), opcode) : AObject::MakeAObject(AObject::kTypeAnyValue);
@@ -916,7 +1031,7 @@ bool GraphBuilder::DoBinary(const Instr &instr) {
 bool GraphBuilder::DoBinaryMul(const Instr &instr) {
   auto r = pop();
   auto l = pop();
-  PyObject *r_object = r->is_constant() ? r->GetVobj()->GetPyObject().ptr() : nullptr;
+  PyObject *r_object = r->IsConstantValue() ? r->GetVobj()->GetPyObject().ptr() : nullptr;
   bool is_simplify = l->GetOpcode() == BUILD_LIST || l->GetOpcode() == BUILD_TUPLE;
   if (is_simplify) {
     is_simplify = r_object && PyLong_Check(r_object) && (Py_ABS(Py_SIZE(r_object)) < 2);
@@ -1030,7 +1145,7 @@ ValueNode *GraphBuilder::ReplaceMergeOp(int opcode, const std::vector<ValueNode 
       div = 1;
       break;
     case LIST_EXTEND:
-      if (arg->is_constant()) {
+      if (arg->IsConstantValue()) {
         for (auto item : arg->GetVobj()->GetPyObject()) {
           ValueNode *v = NewValueNode(AObject::Convert(item.ptr()), LOAD_CONST, -1);
           build_inputs.push_back(v);
@@ -1697,8 +1812,23 @@ ValueNode *GetSelfFromMethod(ValueNode *method) {
   return self;
 }
 
+static bool SkipGuardInlinedFunc(ValueNode *func_node) {
+  if (func_node->IsConstantValue()) {
+    return true;
+  }
+  AObject::Type value_type = func_node->GetVobj()->GetType();
+  if (func_node->GetOpcode() == LOAD_ATTR) {
+    AObject *src_info = func_node->input(0)->GetVobj();
+    if (src_info->GetType() == AObject::kTypeTensor && value_type == AObject::kTypeBoundMethod) {
+      // function from Tensor
+      return true;
+    }
+  }
+  return false;
+}
+
 bool GuardInlinedFunc(CallNode *call_node) {
-  if (call_node->input(0)->is_constant()) {
+  if (SkipGuardInlinedFunc(call_node->input(0))) {
     return true;
   }
   AObject::Type func_type = call_node->input(0)->GetVobj()->GetType();
@@ -1724,10 +1854,10 @@ bool GuardInlinedFunc(CallNode *call_node) {
     }
     tr = CreateOpTrace(PyFunction_GET_CODE(callable), LOAD_ATTR, 0, {tr}, "", "__code__", strict);
     call_node->GetGraph()->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GId);
+    call_node->input(0)->SetConstantValue(true);
   } else {
     return false;
   }
-  call_node->input(0)->set_is_constant(true);
   return true;
 }
 
@@ -1755,8 +1885,8 @@ bool GraphBuilder::ReplaceCall(CallNode *call_node, const py::object &old_func) 
     ValueNode *func_val = call_node->input(0);
     self = GetSelfFromMethod(func_val);
     if (self == nullptr) {
-      ValueNode *node = NewValueNode(func_val->get_attr(GraphBuilder::ID___self__), LOAD_ATTR, -1, {func_val});
-      node->SetName(GraphBuilder::ID___self__);
+      ValueNode *node = NewValueNode(func_val->get_attr(GraphBuilder::ID___self__), LOAD_ATTR, -1, {func_val},
+                                     GraphBuilder::ID___self__);
       node->SetGraph(call_node->GetGraph());
       nodes.insert(nodes.end() - 1, node);
       self = node;
@@ -2176,11 +2306,10 @@ ValueNode *GetBoundSelf(CallNode *call_node) {
   switch (vo->GetType()) {
     case AObject::kTypeBoundMethod: {
       self = GetSelfFromMethod(func_val);
-      AObject *tmp = func_val->get_attr(GraphBuilder::ID___self__);
-      ValueNode *node = graph->NewValueNode(tmp, LOAD_ATTR, -1, std::vector<ValueNode *>({func_val}));
-      node->SetName(GraphBuilder::ID___self__);
-      node->SetGraph(call_node->GetGraph());
       if (self == nullptr) {
+        AObject *tmp = func_val->get_attr(GraphBuilder::ID___self__);
+        ValueNode *node = graph->NewValueNode(tmp, LOAD_ATTR, -1, {func_val}, GraphBuilder::ID___self__);
+        node->SetGraph(call_node->GetGraph());
         call_node->AddParam(node);
         self = node;
       }
@@ -2190,8 +2319,9 @@ ValueNode *GetBoundSelf(CallNode *call_node) {
     case AObject::kTypeAnyValue:
       self = func_val;
       break;
-    case AObject::kTypeFunction:
+    case AObject::kTypeFunction: {
       break;
+    }
     default:
       MS_LOG(INTERNAL_EXCEPTION) << "unimplemented type " << vo->ToString();
       break;
@@ -2902,6 +3032,25 @@ bool GraphBuilder::TraceRunForIter(const Instr &instr) {
   return succ;
 }
 
+static bool IsConstantBoolValue(ValueNode *node) {
+  const auto &cnst_info = node->GetConstantInfo();
+  if (cnst_info == nullptr) {
+    return false;
+  }
+  if (cnst_info->value().ptr() != nullptr) {
+    return true;
+  }
+  PyTypeObject *tp = cnst_info->type();
+  if (tp == nullptr) {
+    return false;
+  }
+  static const std::set<PyTypeObject *> len_to_bool = {&PyTuple_Type, &PyList_Type, &PyDict_Type};
+  if (len_to_bool.find(tp) != len_to_bool.end() && cnst_info->len() != -1) {
+    return true;
+  }
+  return false;
+}
+
 bool IsSatisfyPruneLimit(int cond, Graph *graph_, ValueNode *cond_node) {
   if (cond == -1) {
     return false;
@@ -2910,7 +3059,7 @@ bool IsSatisfyPruneLimit(int cond, Graph *graph_, ValueNode *cond_node) {
   if (limit_prune >= 0 && limit_prune < graph_->GetPruneBranchCount()) {
     return false;
   }
-  if (cond_node->is_constant()) {
+  if (IsConstantBoolValue(cond_node)) {
     return true;
   }
   auto tr = graph_->TraceValueNode(cond_node);
@@ -2922,11 +3071,10 @@ bool IsSatisfyPruneLimit(int cond, Graph *graph_, ValueNode *cond_node) {
     bool strict = graph_->Config().GetBoolConfig(GraphJitConfig::kStrictTrace);
     auto bool_type = CreateOpTrace(reinterpret_cast<PyObject *>(&PyBool_Type), LOAD_CONST, -1, {}, "", "", strict);
     tr = CreateOpTrace(cond ? Py_True : Py_False, CALL_FUNCTION, 1, {bool_type, tr}, "", "", strict);
+  } else {
+    cond_node->SetConstantValue(true);
   }
-  if (!graph_->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GId)) {
-    return false;
-  }
-  cond_node->set_is_constant(true);
+  graph_->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GId);
   return true;
 }
 
