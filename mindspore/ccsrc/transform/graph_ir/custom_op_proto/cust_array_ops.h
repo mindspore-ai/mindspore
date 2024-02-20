@@ -58,6 +58,13 @@ REG_CUST_OP(GatherDGradV2)
                               DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
   .CUST_OP_END_FACTORY_REG(GatherDGradV2)
 
+REG_CUST_OP(AffineGrid)
+  .INPUT(theta, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .INPUT(output_size, TensorType({DT_INT32, DT_INT64}))
+  .OUTPUT(output, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .REQUIRED_ATTR(align_corners, Bool)
+  .CUST_OP_END_FACTORY_REG(AffineGrid)
+
 REG_CUST_OP(AffineGridGrad)
   .INPUT(y_grad, TensorType({DT_FLOAT, DT_FLOAT16}))
   .INPUT(x_size, TensorType({DT_INT32, DT_INT64}))
