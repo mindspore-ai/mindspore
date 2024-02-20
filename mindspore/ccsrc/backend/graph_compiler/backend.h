@@ -36,6 +36,7 @@
 #include "runtime/graph_scheduler/graph_scheduler.h"
 #include "runtime/pipeline/task/device_task.h"
 #include "runtime/pynative/op_compiler.h"
+#include "runtime/pynative/graph_adapter.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
@@ -154,6 +155,8 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
 
   // Cache forward op output value node tensor ref count of kernels for back propagation graph in PyNative mode.
   std::map<std::string, size_t> forward_op_output_tensor_id_;
+
+  pynative::GraphAdapter graph_adapter_;
 };
 using MindRTBackendPtr = std::shared_ptr<compile::MindRTBackend>;
 }  // namespace compile

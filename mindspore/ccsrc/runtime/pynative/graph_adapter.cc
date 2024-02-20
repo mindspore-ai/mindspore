@@ -27,6 +27,8 @@
 #include "runtime/graph_scheduler/device_tensor_store.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
+#include "runtime/graph_scheduler/scheduler_helper.h"
+#include "runtime/device/device_address_utils.h"
 
 namespace mindspore::pynative {
 namespace {
@@ -174,7 +176,8 @@ void GraphAdapter::RemoveUnusedValueNodes(const KernelGraphPtr &graph) {
   }
 }
 
-void GraphAdapter::ClearForwardOutputValueNodeDeviceAddress(const KernelGraphPtr &graph) {
+void GraphAdapter::ClearForwardOutputValueNodeDeviceAddress(const KernelGraphPtr &graph,
+                                                            const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(graph);
   for (auto &value_node : graph->graph_value_nodes()) {
     MS_EXCEPTION_IF_NULL(value_node);
@@ -183,9 +186,17 @@ void GraphAdapter::ClearForwardOutputValueNodeDeviceAddress(const KernelGraphPtr
     if (value->isa<tensor::Tensor>()) {
       auto tensor = value->cast<tensor::TensorPtr>();
       MS_EXCEPTION_IF_NULL(tensor);
-      if (tensor->is_forward_output()) {
-        AnfAlgo::SetOutputAddr(nullptr, 0, value_node.get());
+      if (!tensor->is_forward_output()) {
+        continue;
       }
+
+      if (!AnfAlgo::OutputAddrExist(value_node, 0)) {
+        MS_LOG(DEBUG) << "Output addr is not exist for ValueNode " << value_node->ToString();
+        continue;
+      }
+      const auto &device_address = AnfAlgo::GetMutableOutputAddr(value_node, 0);
+      auto new_device_address = runtime::DeviceAddressUtils::CloneEmptyDeviceAddress(device_address, device_context);
+      AnfAlgo::SetOutputAddr(new_device_address, 0, value_node.get());
     }
   }
 }
@@ -226,6 +237,63 @@ void GraphAdapter::GenerateRefCountForBpropValueNode(const KernelGraphPtr &graph
   graph->set_attr(kAttrValueNodeForwardOuputFlags, MakeValue(value_node_forward_output_flags));
 }
 
+void GraphAdapter::GenerateBackoffValueNodeOwners(const KernelGraphPtr &graph) {
+  for (auto &kernel : graph->execution_order()) {
+    if (!AnfAlgo::IsKernelSelectBackoffOp(kernel)) {
+      continue;
+    }
+    for (size_t j = 0; j < common::AnfAlgo::GetInputTensorNum(kernel); ++j) {
+      const auto &input_node = common::AnfAlgo::GetInputNode(kernel, j);
+      const auto &real_input_node = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false).first;
+      MS_EXCEPTION_IF_NULL(real_input_node);
+      if (real_input_node->isa<ValueNode>()) {
+        node_to_backoff_kernels_[real_input_node.get()].insert(kernel);
+        MS_LOG(DEBUG) << "Generate backoff ValueNode " << real_input_node->DebugString() << " with kernel "
+                      << kernel->DebugString();
+      }
+    }
+  }
+}
+
+void GraphAdapter::HandleBackoffValueNode(const ValueNodePtr &value_node, const AnfNodePtr &front_node,
+                                          const DeviceContext *device_context) const {
+  auto iter = node_to_backoff_kernels_.find(value_node.get());
+  if (iter == node_to_backoff_kernels_.end()) {
+    return;
+  }
+
+  MS_LOG(DEBUG) << "Backoff ValueNode " << value_node->ToString();
+  const auto &kernels = iter->second;
+  for (const auto &kernel : kernels) {
+    const auto &real_device_context = device::FetchRealDeviceContext(kernel, device_context);
+    MS_EXCEPTION_IF_NULL(real_device_context);
+
+    if (!AnfAlgo::OutputAddrExist(value_node, 0)) {
+      MS_LOG(EXCEPTION) << "The device address is not exist: " << value_node->ToString();
+    }
+    auto device_tensor = AnfAlgo::GetMutableOutputAddr(value_node, 0, false);
+    MS_EXCEPTION_IF_NULL(device_tensor);
+
+    auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+      nullptr, device_tensor->GetSize(), device_tensor->kernel_tensor()->format(), device_tensor->type_id(),
+      device_tensor->host_shape(), device_context->device_context_key().device_name_,
+      device_context->device_context_key().device_id_);
+
+    kernel_tensor->SetHostInfo(
+      std::make_shared<abstract::TensorShape>(device_tensor->kernel_tensor()->GetShapeVector()),
+      std::make_shared<TensorType>(TypeIdToType(device_tensor->kernel_tensor()->dtype_id())), nullptr);
+
+    kernel_tensor->set_stream_id(device_tensor->stream_id());
+    auto new_device_tensor = real_device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+    MS_EXCEPTION_IF_NULL(new_device_tensor);
+    new_device_tensor->SetNodeIndex(value_node, 0);
+    new_device_tensor->set_from_persistent_mem(true);
+    MS_LOG(DEBUG) << "Create backoff device tensor:" << new_device_tensor << " type:" << new_device_tensor->type_id()
+                  << " for ValueNode " << value_node->ToString();
+    runtime::SchedulerHelper::AddDeviceTensorStore(front_node.get(), new_device_tensor);
+  }
+}
+
 void GraphAdapter::UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph,
                                                    const device::DeviceContext *device_context, bool no_control_flow) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -262,6 +330,7 @@ void GraphAdapter::UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph,
       device_address->AddHeldByNode(front_node->cast<ValueNodePtr>());
     }
     runtime::DeviceTensorStore::GetInstance().Insert(front_node.get(), device_address);
+    HandleBackoffValueNode(value_node, front_node, device_context);
   }
 
   for (auto &[address, ref_count] : address_ref_count) {

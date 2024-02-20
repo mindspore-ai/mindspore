@@ -721,9 +721,10 @@ runtime::ActorSet *MindRTBackend::RealCompileGraphBeforeRunActor(const GraphComp
   }
   runtime::GraphScheduler::GetInstance().Schedule(actor_set);
 
-  for (auto &graph : graphs) {
-    pynative::GraphAdapter::ClearForwardOutputValueNodeDeviceAddress(graph);
-    pynative::GraphAdapter::GenerateRefCountForBpropValueNode(graph);
+  for (size_t i = 0; i < graphs.size(); ++i) {
+    pynative::GraphAdapter::ClearForwardOutputValueNodeDeviceAddress(graphs[i], device_contexts[i]);
+    pynative::GraphAdapter::GenerateRefCountForBpropValueNode(graphs[i]);
+    graph_adapter_.GenerateBackoffValueNodeOwners(graphs[i]);
   }
   return actor_set;
 }
@@ -750,7 +751,7 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
 
   if (root_graph_->has_flag(kFlagIsPynativeBpropGraph)) {
     for (size_t i = 0; i < graphs.size(); ++i) {
-      pynative::GraphAdapter::UpdateForwardOutputInBpropGraph(graphs[i], device_contexts[i], no_multi_graph);
+      graph_adapter_.UpdateForwardOutputInBpropGraph(graphs[i], device_contexts[i], no_multi_graph);
       pynative::GraphAdapter::UpdateDynamicValueNodeAbstract(graphs[i]);
     }
   }
