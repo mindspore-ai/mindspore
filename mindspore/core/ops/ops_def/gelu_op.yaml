@@ -10,3 +10,5 @@ gelu:
         name: GeLU
     function:
         disable: True
+    dispatch:
+        enable: True
