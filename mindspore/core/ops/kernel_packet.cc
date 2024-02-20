@@ -28,7 +28,8 @@
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/base_operator.h"
 #include "mindapi/src/helper.h"
-#include "symbolic_shape/symbol_engine.h"
+#include "mindspore/core/symbolic_shape/symbol_engine.h"
+#include "mindspore/core/symbolic_shape/utils.h"
 
 namespace mindspore::ops {
 class MIND_API KernelPacketInfer : public abstract::OpInferBase {
@@ -41,7 +42,7 @@ class MIND_API KernelPacketInfer : public abstract::OpInferBase {
     if (!shape_mng->Infer(input_args)) {
       return nullptr;
     }
-    return shape_mng->QueryShape(output);
+    return symshape::QueryShape(output->abstract());
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {

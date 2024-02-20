@@ -205,7 +205,7 @@ AnfNodePtr FoldConstSymbol::operator()(const OptimizerPtr &, const AnfNodePtr &n
   if (op_def == nullptr) {
     return nullptr;
   }
-  if (node->abstract() != nullptr && !symbol_engine->QueryValue(node)->isa<ValueAny>()) {
+  if (node->abstract() != nullptr && !symshape::QueryValue(node->abstract())->isa<ValueAny>()) {
     return nullptr;
   }
   auto cnode = node->cast<CNodePtr>();
@@ -217,7 +217,7 @@ AnfNodePtr FoldConstSymbol::operator()(const OptimizerPtr &, const AnfNodePtr &n
     if (!inp->isa<CNode>() || inp->abstract() == nullptr || i - 1 >= op_def->args_.size()) {
       continue;
     }
-    auto v = symbol_engine->QueryValue(inp);
+    auto v = symshape::QueryValue(inp->abstract());
     if (v->isa<ValueAny>()) {
       continue;
     }

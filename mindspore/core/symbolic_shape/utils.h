@@ -56,6 +56,9 @@ inline int64_t NormAxis(int64_t axis, size_t rank) { return axis >= 0 ? axis : a
 
 MS_CORE_API std::string SymbolListToStr(const SymbolPtrList &slist, const std::string &pre, const std::string &post,
                                         bool raw_str = false);
+
+MS_CORE_API BaseShapePtr QueryShape(const AbstractBasePtr &abs);
+MS_CORE_API ValuePtr QueryValue(const AbstractBasePtr &abs);
 }  // namespace symshape
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_SYMBOLIC_SHAPE_UTILS_H_

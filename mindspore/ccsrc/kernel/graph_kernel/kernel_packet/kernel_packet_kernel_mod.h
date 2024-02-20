@@ -25,20 +25,44 @@
 #include "kernel/kernel.h"
 #include "base/base.h"
 #include "kernel/framework_utils.h"
-#include "mindspore/core/symbolic_shape/symbol_engine.h"
 
 namespace mindspore {
 constexpr auto kAttrKernelPacketNode = "kernel_packet_node";
 
 namespace kernel {
 using MemcpyAsyncFunc = std::function<bool(void *, const void *, size_t, void *)>;
+class KernelPacketInner;
+namespace kernelpacket {
+struct SimpleNodeWithIndex {
+  AbstractBasePtr abs;
+  size_t idx = -1;
+  std::string debug_info;
+};
+BACKEND_EXPORT bool Init(KernelPacketInner *kernel_packet, const CNodePtr &real_node);
+}  // namespace kernelpacket
+
+struct KernelPacketInner {
+  friend bool kernelpacket::Init(KernelPacketInner *kernel_packet, const CNodePtr &node);
+
+ protected:
+  HashMap<size_t, size_t> input_map_;            // Map inner_kernel's input index to outer input index
+  HashMap<size_t, size_t> input_workspace_map_;  // Map inner kernel's input index to workspace index
+  HashMap<size_t, kernelpacket::SimpleNodeWithIndex>
+    input_shape_map_;  // Map inner kernel's input(which semantically is shape) index to node's output
+  HashMap<size_t, ShapeVector> shape_cache_;  // cache shape of inner kernel's input, key is inner kernel's input index
+  std::vector<size_t> workspace_;
+
+  KernelModPtr real_kernel_mod_;
+  std::string real_node_name_;
+  size_t real_node_input_num_ = 0;
+  std::vector<KernelTensorPtr> inputs_cache_;
+};
+
 /// \brief Kernel Mod of subgraph into which shape calc is clustered
-class BACKEND_EXPORT KernelPacketKernelMod : public KernelMod {
+class BACKEND_EXPORT KernelPacketKernelMod : public KernelMod, public KernelPacketInner {
  public:
   explicit KernelPacketKernelMod(const MemcpyAsyncFunc &memcpy_async) : memcpy_async_(memcpy_async) {}
   ~KernelPacketKernelMod() override = default;
-
-  bool Init(const CNodePtr &node);
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     return true;
@@ -57,17 +81,6 @@ class BACKEND_EXPORT KernelPacketKernelMod : public KernelMod {
   AddressArgs GetLaunchArgs(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspaces,
                             const std::vector<KernelTensor *> &outputs);
 
-  HashMap<size_t, size_t> input_map_;                         // Map inner_kernel's input index to outer input index
-  HashMap<size_t, size_t> input_workspace_map_;               // Map inner kernel's input index to workspace index
-  HashMap<size_t, common::KernelWithIndex> input_shape_map_;  // Map inner kernel's input index to node's output
-  HashMap<size_t, ShapeVector> shape_cache_;  // cache shape of inner kernel's input, key is inner kernel's input index
-  std::vector<size_t> workspace_;
-  SymbolEnginePtr symbol_engine_;
-
-  KernelModPtr real_kernel_mod_;
-  std::string real_node_name_;
-  size_t real_node_input_num_;
-  std::vector<KernelTensorPtr> inputs_cache_;
   MemcpyAsyncFunc memcpy_async_;
 };
 
