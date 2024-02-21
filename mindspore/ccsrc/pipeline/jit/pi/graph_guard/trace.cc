@@ -369,7 +369,7 @@ std::string RootTrace::ToString(bool include_param) {
 const InfoPack &RootTrace::Info() {
   if (info_ == nullptr) {
     InfoPack info;
-    info << size_t(curType_);
+    info << uint8_t(curType_);
     info.Begin();
     switch (curType_) {
       case TraceType::Global:
@@ -474,7 +474,7 @@ std::string ItemTrace::ToString(bool include_param) {
 const InfoPack &ItemTrace::Info() {
   if (info_ == nullptr) {
     InfoPack info;
-    info << size_t(curType_);
+    info << uint8_t(curType_);
     info.Begin();
     if (origin_ != nullptr && item_ != nullptr) {
       auto ori = origin_->Info();
@@ -556,7 +556,7 @@ std::string AttrTrace::ToString(bool include_param) {
 const InfoPack &AttrTrace::Info() {
   if (info_ == nullptr) {
     InfoPack info;
-    info << size_t(curType_);
+    info << uint8_t(curType_);
     info.Begin();
     if (origin_ != nullptr) {
       auto ori = origin_->Info();
@@ -626,7 +626,7 @@ std::string ConstTrace::ToString(bool include_param) {
 const InfoPack &ConstTrace::Info() {
   if (info_ == nullptr) {
     InfoPack info;
-    info << size_t(curType_);
+    info << uint8_t(curType_);
     info.Begin();
     if (index_ != -1) {
       info << index_;
@@ -701,7 +701,7 @@ std::string TypeTrace::ToString(bool include_param) {
 const InfoPack &TypeTrace::Info() {
   if (info_ == nullptr) {
     InfoPack info;
-    info << size_t(curType_);
+    info << uint8_t(curType_);
     info.Begin();
     info << reinterpret_cast<PyObject *>(pType_);
     if (origin_ != nullptr) {
@@ -1648,7 +1648,7 @@ std::string OpTrace::FormatString() {
 const InfoPack &OpTrace::Info() {
   if (info_ == nullptr) {
     InfoPack info;
-    info << size_t(curType_);
+    info << uint8_t(curType_);
     info.Begin();
     info << opcode_;
     info << opargs_;
@@ -1793,7 +1793,7 @@ std::string CustomizedTrace::ToString(bool include_param) {
 const InfoPack &CustomizedTrace::Info() {
   if (info_ == nullptr) {
     InfoPack info;
-    info << size_t(curType_);
+    info << uint8_t(curType_);
     info.Begin();
     info << tostring_(true);
     info.End();
@@ -1880,7 +1880,7 @@ std::string UnsupportedTrace::FormatString() {
 const InfoPack &UnsupportedTrace::Info() {
   if (info_ == nullptr) {
     InfoPack info;
-    info << size_t(curType_);
+    info << uint8_t(curType_);
     info.Begin();
     info << op_;
     info << arg_;

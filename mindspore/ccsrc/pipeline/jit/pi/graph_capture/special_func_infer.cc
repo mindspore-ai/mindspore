@@ -391,8 +391,8 @@ bool InferPrimitive(CallNode *call_node) {
   try {
     ret = inst->InferPrimitive(prim, list, &is_abstract);
   } catch (std::exception &e) {
-    MS_LOG(INFO) << "infer primitive failed. reason:";
-    MS_LOG(INFO) << e.what();
+    MS_LOG(ERROR) << "infer primitive failed. reason:";
+    MS_LOG(ERROR) << e.what();
     ret = nullptr;
   }
   if (ret == nullptr) {

@@ -118,7 +118,7 @@ class ItemData {
   virtual const InfoPack &Info() {
     if (info_ == nullptr) {
       InfoPack info;
-      info << size_t(tp_);
+      info << uint8_t(tp_);
       info.Begin();
       if (tp_ != ItemType::PyNull && tp_ != ItemType::PyUnknown) {
         info << specialized_ << recurseDepth_;
@@ -161,7 +161,7 @@ class IntData : public ItemData {
   std::string ToString() override { return DESC_STRING(intVar_) + DESC_END; }
 
  protected:
-  virtual void SubInfo(InfoPack *info) { (*info) << intVar_; }
+  void SubInfo(InfoPack *info) override { (*info) << intVar_; }
   int64_t intVar_;
 };
 
@@ -179,7 +179,7 @@ class FloatData : public ItemData {
   std::string ToString() override { return DESC_STRING(floatVar_) + DESC_END; }
 
  protected:
-  virtual void SubInfo(InfoPack *info) { (*info) << floatVar_; }
+  void SubInfo(InfoPack *info) override { (*info) << floatVar_; }
   double floatVar_;
 };
 
@@ -197,7 +197,7 @@ class BoolData : public ItemData {
   std::string ToString() override { return DESC_STRING(boolVar_) + DESC_END; }
 
  protected:
-  virtual void SubInfo(InfoPack *info) { (*info) << boolVar_; }
+  void SubInfo(InfoPack *info) override { (*info) << boolVar_; }
   bool boolVar_;
 };
 
@@ -239,7 +239,7 @@ class BytesData : public ItemData {
   }
 
  protected:
-  virtual void SubInfo(InfoPack *info) { (*info) << len_ << (void *)(buf_.get()); }
+  void SubInfo(InfoPack *info) override { (*info) << (uint64_t)len_ << reinterpret_cast<void *>(buf_.get()); }
   Py_ssize_t len_;
   std::unique_ptr<uint8_t[]> buf_;
 };
@@ -261,7 +261,7 @@ class StringData : public ItemData {
   std::string ToString() override { return DESC(strVal_) + DESC_END; }
 
  protected:
-  virtual void SubInfo(InfoPack *info) { (*info) << strVal_; }
+  void SubInfo(InfoPack *info) override { (*info) << strVal_; }
   std::string strVal_;
 };
 
@@ -385,8 +385,8 @@ class ListData : public ItemData {
   }
 
  protected:
-  virtual void SubInfo(InfoPack *info) {
-    (*info) << size_t(tp_);
+  void SubInfo(InfoPack *info) override {
+    (*info) << uint8_t(tp_);
     for (auto v : listVar_) {
       (*info) << v->Info();
     }
@@ -413,7 +413,7 @@ class ComplexData : public ItemData {
   }
 
  protected:
-  virtual void SubInfo(InfoPack *info) { (*info) << complexVar_.first << complexVar_.second; }
+  void SubInfo(InfoPack *info) override { (*info) << complexVar_.first << complexVar_.second; }
   std::pair<double, double> complexVar_;
 };
 
@@ -424,9 +424,9 @@ class SliceData : public ItemData {
     Py_ssize_t start = 0, stop = 0, step = 0;
     if (needSpecialize) {
       PySlice_Unpack(obj, &start, &stop, &step);
-      sliceVar_.push_back(start);
-      sliceVar_.push_back(stop);
-      sliceVar_.push_back(step);
+      sliceVar_.push_back((int64_t)start);
+      sliceVar_.push_back((int64_t)stop);
+      sliceVar_.push_back((int64_t)step);
     }
   }
 
@@ -448,8 +448,8 @@ class SliceData : public ItemData {
   }
 
  protected:
-  virtual void SubInfo(InfoPack *info) { (*info) << sliceVar_; }
-  std::vector<Py_ssize_t> sliceVar_;
+  void SubInfo(InfoPack *info) override { (*info) << sliceVar_; }
+  std::vector<int64_t> sliceVar_;
 };
 
 typedef enum _DictType {
@@ -567,7 +567,7 @@ class DictData : public ItemData {
   }
 
  protected:
-  virtual void SubInfo(InfoPack *info) {
+  void SubInfo(InfoPack *info) override {
     (*info) << dt_;
     for (auto i : listK_) {
       (*info) << i->Info();
@@ -619,7 +619,7 @@ class FunctionData : public ItemData {
   }
 
  protected:
-  virtual void SubInfo(InfoPack *info) {
+  void SubInfo(InfoPack *info) override {
     (*info) << (defaults_ != nullptr);
     if (defaults_ != nullptr) {
       (*info) << defaults_->Info();
@@ -660,7 +660,7 @@ class MethodData : public ItemData {
   }
 
  protected:
-  virtual void SubInfo(InfoPack *info) {
+  void SubInfo(InfoPack *info) override {
     (*info) << (refFunc_ != nullptr);
     if (refFunc_ != nullptr) {
       (*info) << refFunc_->Info();
@@ -694,7 +694,7 @@ class InstanceMethodData : public ItemData {
   }
 
  protected:
-  virtual void SubInfo(InfoPack *info) {
+  void SubInfo(InfoPack *info) override {
     (*info) << (refFunc_ != nullptr);
     if (refFunc_ != nullptr) {
       (*info) << refFunc_->Info();
@@ -728,7 +728,7 @@ class TypeData : public ItemData {
   }
 
  protected:
-  virtual void SubInfo(InfoPack *info) { (*info) << refType_->tp_name; }
+  void SubInfo(InfoPack *info) override { (*info) << refType_->tp_name; }
   PyTypeObject *refType_;
 };
 
@@ -738,13 +738,13 @@ class NumpyData : public ItemData {
       : ItemData(ItemType::PyNumpy, needSpecialize, recurseDepth) {
     py::array arr = py::cast<py::array>(obj);
     dtype_ = arr.dtype();
-    size_ = arr.size();
-    itemsize_ = arr.itemsize();
-    ndim_ = arr.ndim();
-    nbytes_ = arr.nbytes();
+    size_ = (uint64_t)arr.size();
+    itemsize_ = (uint64_t)arr.itemsize();
+    ndim_ = (int64_t)arr.ndim();
+    nbytes_ = (uint64_t)arr.nbytes();
     for (ssize_t i = 0; i < ndim_; ++i) {
-      shape_.push_back(arr.shape()[i]);
-      strides_.push_back(arr.strides()[i]);
+      shape_.push_back((int64_t)arr.shape()[i]);
+      strides_.push_back((int64_t)arr.strides()[i]);
     }
     if (arr.data() != nullptr) {
       if (needSpecialize) {
@@ -785,16 +785,16 @@ class NumpyData : public ItemData {
   }
 
  protected:
-  virtual void SubInfo(InfoPack *info) {
+  void SubInfo(InfoPack *info) override {
     (*info) << dtype_.kind() << size_ << itemsize_ << ndim_ << nbytes_ << shape_ << strides_;
   }
   py::dtype dtype_;
-  ssize_t size_;
-  ssize_t itemsize_;
-  ssize_t ndim_;
-  ssize_t nbytes_;
-  std::vector<ssize_t> shape_;
-  std::vector<ssize_t> strides_;
+  uint64_t size_;
+  uint64_t itemsize_;
+  int64_t ndim_;
+  uint64_t nbytes_;
+  std::vector<int64_t> shape_;
+  std::vector<int64_t> strides_;
   std::unique_ptr<uint8_t[]> buf_;
 };
 
@@ -816,7 +816,7 @@ class TensorTypeData : public ItemData {
   }
 
  protected:
-  virtual void SubInfo(InfoPack *info) { (*info) << tpp_; }
+  void SubInfo(InfoPack *info) override { (*info) << tpp_; }
   mindspore::TypePtr tpp_;
 };
 
@@ -888,7 +888,7 @@ class ParamInfoData : public ItemData {
   }
 
  protected:
-  virtual void SubInfo(InfoPack *info) { SubInfo(info, param_); }
+  void SubInfo(InfoPack *info) override { SubInfo(info, param_); }
   mindspore::ParamInfoPtr param_;
 };
 
@@ -1061,8 +1061,8 @@ class MetaTensorData : public ItemData {
     }
   }
 
-  virtual void SubInfo(InfoPack *info) {
-    (*info) << size_t(tid_) << format_ << host_format_ << data_type_ << is_parameter_ << shape_ << is_stubtensor_;
+  void SubInfo(InfoPack *info) override {
+    (*info) << uint8_t(tid_) << format_ << host_format_ << data_type_ << is_parameter_ << shape_ << is_stubtensor_;
     ParamInfoData::SubInfo(info, param_);
   }
 
@@ -1239,10 +1239,10 @@ class TensorData : public MetaTensorData {
     }
   }
 
-  virtual void SubInfo(InfoPack *info) {
+  void SubInfo(InfoPack *info) override {
     MetaTensorData::SubInfo(info);
     (*info) << is_forward_output_ << init_flag_ << graph_output_ << cast_dtype_ << base_shape_ptr_
-            << size_t(compression_type_) << tensor_name_;
+            << uint8_t(compression_type_) << tensor_name_;
     for (auto qp : quant_params_) {
       (*info) << qp;
     }
@@ -1355,7 +1355,7 @@ class MapTensorData : public TensorData {
            DESC_TOSTRING(value_tensor_) + DESC_TOSTRING(status_tensor_) + DESC_END;
   }
 
-  virtual void SubInfo(InfoPack *info) {
+  void SubInfo(InfoPack *info) override {
     TensorData::SubInfo(info);
     (*info) << key_dtype_ << default_value_ << permit_filter_value_ << evict_filter_value_ << value_shape_
             << key_tensor_->Info() << value_tensor_->Info() << status_tensor_->Info();
@@ -1399,7 +1399,7 @@ class RowTensorData : public ItemData {
   }
 
  protected:
-  virtual void SubInfo(InfoPack *info) { (*info) << indices_->Info() << values_->Info() << data_type_ << shape_; }
+  void SubInfo(InfoPack *info) override { (*info) << indices_->Info() << values_->Info() << data_type_ << shape_; }
   TensorDataPtr indices_;
   TensorDataPtr values_;
   mindspore::TypeId data_type_;
@@ -1433,7 +1433,7 @@ class COOTensorData : public ItemData {
   }
 
  protected:
-  virtual void SubInfo(InfoPack *info) { (*info) << indices_->Info() << values_->Info() << data_type_ << shape_; }
+  void SubInfo(InfoPack *info) override { (*info) << indices_->Info() << values_->Info() << data_type_ << shape_; }
   TensorDataPtr indices_;
   TensorDataPtr values_;
   mindspore::TypeId data_type_;
@@ -1470,7 +1470,7 @@ class CSRTensorData : public ItemData {
   }
 
  protected:
-  virtual void SubInfo(InfoPack *info) {
+  void SubInfo(InfoPack *info) override {
     (*info) << indices_->Info() << values_->Info() << indptr_->Info() << data_type_ << shape_;
   }
   TensorDataPtr indices_;
@@ -1486,10 +1486,10 @@ class TensorDataData : public ItemData {
       : ItemData(ItemType::Tensordata, needSpecialize, recurseDepth) {
     auto pyObj = py::cast<py::object>(obj);
     auto data = pyObj.cast<mindspore::tensor::TensorDataPtr>();
-    size_ = data->size();
-    itemsize_ = data->itemsize();
-    nbytes_ = data->nbytes();
-    ndim_ = data->ndim();
+    size_ = (uint64_t)data->size();
+    itemsize_ = (uint64_t)data->itemsize();
+    nbytes_ = (uint64_t)data->nbytes();
+    ndim_ = (int64_t)data->ndim();
     if (specialized_) {
       data_ptr_ = std::make_unique<uint8_t[]>(nbytes_);
       if (data_ptr_ != nullptr) {
@@ -1522,12 +1522,12 @@ class TensorDataData : public ItemData {
   }
 
  protected:
-  virtual void SubInfo(InfoPack *info) { (*info) << size_ << itemsize_ << nbytes_ << ndim_; }
+  void SubInfo(InfoPack *info) override { (*info) << size_ << itemsize_ << nbytes_ << ndim_; }
   std::unique_ptr<uint8_t[]> data_ptr_;
-  ssize_t size_;
-  ssize_t itemsize_;
-  ssize_t nbytes_;
-  ssize_t ndim_;
+  uint64_t size_;
+  uint64_t itemsize_;
+  uint64_t nbytes_;
+  int64_t ndim_;
 };
 
 class PrimitiveData : public ItemData {
@@ -1582,7 +1582,7 @@ class PrimitiveData : public ItemData {
   }
 
  protected:
-  virtual void SubInfo(InfoPack *info) {
+  void SubInfo(InfoPack *info) override {
     for (auto item : listK_) {
       (*info) << item->Info();
     }
@@ -1660,7 +1660,7 @@ class CellData : public ItemData {
   }
 
  protected:
-  virtual void SubInfo(InfoPack *info) {
+  void SubInfo(InfoPack *info) override {
     for (auto item : listK_) {
       (*info) << item->Info();
     }
@@ -1838,7 +1838,7 @@ class EqGuard : public GuardItem {
   virtual const InfoPack &Info() {
     if (info_ == nullptr) {
       InfoPack info;
-      info << size_t(type_);
+      info << uint8_t(type_);
       info.Begin();
       info << var_->Info() << dp_->Info();
       info.End();
@@ -1937,7 +1937,7 @@ class TypeGuard : public GuardItem {
   virtual const InfoPack &Info() {
     if (info_ == nullptr) {
       InfoPack info;
-      info << size_t(type_);
+      info << uint8_t(type_);
       info.Begin();
       info << var_->Info() << refType_->tp_name;
       info.End();
@@ -1997,9 +1997,9 @@ class IdGuard : public GuardItem {
   virtual const InfoPack &Info() {
     if (info_ == nullptr) {
       InfoPack info;
-      info << size_t(type_);
+      info << uint8_t(type_);
       info.Begin();
-      info << var_->Info() << (void *)refId_;
+      info << var_->Info() << reinterpret_cast<void *>(refId_);
       info.End();
       info_ = std::make_shared<InfoPack>(info);
       info_->Update();
@@ -2068,7 +2068,7 @@ class ReprGuard : public GuardItem {
   virtual const InfoPack &Info() {
     if (info_ == nullptr) {
       InfoPack info;
-      info << size_t(type_);
+      info << uint8_t(type_);
       info.Begin();
       info << std::string(PyUnicode_AsUTF8(refRepr_));
       info.End();
@@ -2175,7 +2175,7 @@ class AttrGuard : public GuardItem {
   virtual const InfoPack &Info() {
     if (info_ == nullptr) {
       InfoPack info;
-      info << size_t(type_);
+      info << uint8_t(type_);
       info.Begin();
       info << var_->Info() << nameAttr_ << hasAttr_;
       info.End();
