@@ -388,7 +388,7 @@ class NonMaxSuppressionV3(Primitive):
           single score associated with each box (i.e., each row of the `boxes` Tensor).
           It is required that the number of scores in `scores` must be equal to the number of boxes in `boxes`.
           The supported data type is float32.
-        - **max_output_size** (Union[Tensor, Number.Int]) - A scalar integer Tensor representing the maximum
+        - **max_output_size** (Union[Tensor, Number.int]) - A scalar integer Tensor representing the maximum
           number of boxes to be selected by non max suppression. The supported data type is int32.
         - **iou_threshold** (Union[Tensor, Number.Float]) - A scalar float Tensor represents the threshold
           used for determining if the intersection over union (IOU) between boxes is too high.
@@ -459,7 +459,7 @@ class NonMaxSuppressionWithOverlaps(Primitive):
           single score associated with each box (i.e., each row of the `boxes` Tensor).
           It is required that the number of scores in `scores` must be equal to the number of boxes in `boxes`.
           The supported data type is float32.
-        - **max_output_size** (Union[Tensor, Number.Int]) - A scalar integer Tensor representing the maximum
+        - **max_output_size** (Union[Tensor, Number.int]) - A scalar integer Tensor representing the maximum
           number of boxes to be selected by non max suppression, and max_output_size must be equal to or greater
           than 0.
           Types allowed:int32.
