@@ -28,4 +28,12 @@ REG_EXPANDER_FUNC("Cosh").SetBody(BODYFUNC(ib) {
   auto result = ib->Cosh(ib->input(kIndex0));
   return {result};
 });
+REG_EXPANDER_FUNC("LogicalXor").SetBody(BODYFUNC(ib) {
+  const auto &input_x = ib->input(kIndex0);
+  const auto &input_y = ib->input(kIndex1);
+
+  auto result_b = ib->LogicalAnd(input_x, ib->LogicalNot(input_y));
+  auto result_a = ib->LogicalAnd(input_y, ib->LogicalNot(input_x));
+  return {ib->LogicalOr(result_a, result_b)};
+});
 }  // namespace mindspore::graphkernel::expander
