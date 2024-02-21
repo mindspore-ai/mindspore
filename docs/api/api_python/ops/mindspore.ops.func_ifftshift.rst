@@ -7,7 +7,7 @@ mindspore.ops.ifftshift
 
     .. note::
         - `ifftshift` 目前仅用于 `mindscience` 科学计算场景，尚不支持其他使用场景。
-        - `ifftshift` 尚不支持Windows平台.
+        - `ifftshift` 尚不支持Windows平台。
 
     参数：
         - **input** (Tensor) - 输入的Tensor。

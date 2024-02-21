@@ -6917,7 +6917,7 @@ class TopK(Primitive):
 
     .. math::
 
-        values.shape = indices.shape = input.shape[:-1] + [k].
+        values.shape = indices.shape = input.shape[:-1] + [k]
 
     If the two compared elements are the same, the one with the smaller index value is returned first.
 

@@ -13,7 +13,7 @@
         - **threshold** (Tensor) - 0D Tensor，数据类型需与 `x` 相同。
 
     输出：
-        Tensor，数据类型为uint8.
+        Tensor，数据类型为uint8。
 
     异常：
         - **TypeError** - 输入 `x` 和 `threshold` 不是Tensor。
