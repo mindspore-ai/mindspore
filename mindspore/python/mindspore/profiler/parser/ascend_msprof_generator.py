@@ -136,6 +136,13 @@ class AscendMsprofDataGeneratorOld:
         type_value = [value['dtype'] for value in self.op_summary_name.values()]
         type_value += [('Task Start Time(us)', object)]
         op_summary_dt = np.dtype(type_value)
+
+        for i in range(0, len(op_summary)):
+            if len(op_summary[i]) < len(op_summary_dt):
+                new_raw = [j for j in op_summary[i]]
+                new_raw.extenx([0 for _ in range(len(op_summary_dt) - len(op_summary[i]))])
+                op_summary[i] = tuple(new_raw)
+
         self.op_summary = np.array(op_summary, dtype=op_summary_dt)
         high_acc_time = self.op_summary['Task Start Time'].copy()
         self.op_summary['Task Start Time(us)'] = high_acc_time
