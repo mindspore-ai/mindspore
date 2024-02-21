@@ -148,6 +148,7 @@ class SortInfo : public Softmax {
  protected:
   Status InferTensorMap() override;
   Status InferAsLossDivisor() override;
+  Status GetAttrs() override;
 };
 
 class ReverseV2Info : public Softmax {
