@@ -97,6 +97,9 @@ const std::map<uint32_t, std::string> error_msg = {
 };
 
 constexpr auto kUnknowErrorString = "Unknown error occurred";
+
+bool g_acl_initialized = false;
+std::mutex g_acl_init_mutex;
 }  // namespace
 
 std::mutex ErrorManagerAdapter::initialized_mutex_;
@@ -172,6 +175,20 @@ void *callback_thread_func(void *data) {
   MS_LOG(INFO) << "Exit callback thread loop.";
 #endif
   return data;
+}
+
+void InitializeAcl() {
+  std::lock_guard<std::mutex> lock(g_acl_init_mutex);
+  if (g_acl_initialized) {
+    return;
+  }
+
+  if (aclInit(nullptr) != ACL_ERROR_NONE) {
+    MS_LOG(WARNING) << "Call aclInit failed, acl data dump function will be unusable.";
+  } else {
+    MS_LOG(INFO) << "Call aclInit successfully";
+  }
+  g_acl_initialized = true;
 }
 }  // namespace ascend
 }  // namespace device
