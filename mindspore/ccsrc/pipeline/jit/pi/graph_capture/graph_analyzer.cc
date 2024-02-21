@@ -304,13 +304,48 @@ void GraphAnalyzer::UseDefAnalyze() {
   // UD analyze: alive nodes analysis
   std::vector<ValueNode *> aliveLocals = GetAliveLocals(graph_);
   if (!aliveLocals.empty()) {
-    bool isStopAnalyze = false;
-    while (!isStopAnalyze) {
-      isStopAnalyze = AnalyzeAliveLocals(aliveLocals);
-      if (isStopAnalyze) {
+    bool stop_analyze = false;
+    while (!stop_analyze) {
+      stop_analyze = AnalyzeAliveLocals(aliveLocals);
+      if (stop_analyze) {
         break;
       }
       aliveLocals = GetAliveLocals(graph_);
+    }
+  }
+}
+
+void MindGraphAnalyzer::UpdateCapturedOrder() {
+  const auto &traced_nodes = graph_->GetTracedNodes();
+  auto stop_bci = graph_->GetStopTraceBci();
+  if (stop_bci == -1) {
+    GetCaptureInfo().captured_locals.order = traced_nodes;
+  } else {
+    GetCaptureInfo().captured_locals.order.clear();
+    for (const auto &traced_node : traced_nodes) {
+      if (traced_node->bci() >= stop_bci) {
+        break;
+      }
+      GetCaptureInfo().captured_locals.order.push_back(traced_node);
+    }
+  }
+  const auto &captured_local_order = GetCaptureInfo().captured_locals.order;
+  std::set<ValueNode *> new_capture_local_values(captured_local_order.begin(), captured_local_order.end());
+  GetCaptureInfo().captured_locals.values = new_capture_local_values;
+}
+
+void MindGraphAnalyzer::UseDefAnalyze() {
+  // UD analyze: alive nodes analysis
+  std::vector<ValueNode *> aliveLocals = GetAliveLocals(graph_);
+  if (!aliveLocals.empty()) {
+    bool stop_analyze = false;
+    while (!stop_analyze) {
+      UpdateCapturedOrder();
+      // Add graph output according to leaf nodes.
+      stop_analyze = AnalyzeAliveLocals(aliveLocals);
+      if (!stop_analyze) {
+        aliveLocals = GetAliveLocals(graph_);
+      }
     }
   }
 }
@@ -344,9 +379,46 @@ void GraphAnalyzer::Analyze() {
   }
 }
 
+void MindGraphAnalyzer::CollectInputs() {
+  auto &values = GetCaptureInfo().captured_locals.values;
+  auto &inputs = GetCaptureInfo().captured_locals.inputs;
+  for (ValueNode *i : GetCaptureInfo().captured_locals.order) {
+    for (auto input : i->getInputs()) {
+      if (values.find(input) != values.end() || IsNonLocalValue(input)) {
+        continue;
+      }
+      inputs.insert(input);
+    }
+  }
+}
+
 void MindGraphAnalyzer::Analyze() {
+  auto origin_stop_bci = graph_->GetStopTraceBci();
   UseDefAnalyze();
   CollectInputs();
+
+  const FrameStates &enter_frame = graph_->GetFrame(0);
+  GetCaptureInfo().escaped_locals.insert(enter_frame.GetLocals().begin(), enter_frame.GetLocals().end());
+
+  auto mind_graph_builder = std::static_pointer_cast<MindGraphBuilder>(graph_builder_);
+  MS_EXCEPTION_IF_NULL(mind_graph_builder);
+  auto func_graph_builder = mind_graph_builder->FGBuilder();
+  if (func_graph_builder->graph() == nullptr) {
+    // Graph build failed, add all nodes to ordered_escaped_locals.
+    MS_LOG(DEBUG) << "Failed to build graph";
+    GetCaptureInfo().ordered_escaped_locals.clear();
+    for (const auto &traced_node : graph_->GetTracedNodes()) {
+      if (origin_stop_bci != -1 && traced_node->bci() >= origin_stop_bci) {
+        break;
+      }
+      AddToEscaped(traced_node);
+    }
+    need_interpret_ = true;
+    GetCaptureInfo().captured_locals.order.clear();
+    GetCaptureInfo().captured_locals.values.clear();
+    GetCaptureInfo().captured_locals.inputs.clear();
+    return;
+  }
 
   need_interpret_ = true;
   if (graph_->GetStopTraceBci() != -1 || !GetCaptureInfo().ordered_escaped_locals.empty()) {
@@ -367,6 +439,10 @@ bool MindGraphAnalyzer::AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) 
       MS_LOG(DEBUG) << "Skip non local value used as graph return.";
       continue;
     }
+    auto capturedLocals = info_.captured_locals.order;
+    if (std::find(capturedLocals.begin(), capturedLocals.end(), node) == capturedLocals.end()) {
+      continue;
+    }
     AObject *o = node->GetVobj();
     auto out_py_obj = o->GetPyObject();
     auto mind_graph_builder = std::static_pointer_cast<MindGraphBuilder>(graph_builder_);
@@ -381,7 +457,11 @@ bool MindGraphAnalyzer::AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) 
     isAllNodesSupportOutput = false;
     int new_break_point = node->bci();
     auto curNode = node;
-    MS_EXCEPTION_IF_CHECK_FAIL(new_break_point != -1, "break point cannot be -1");
+    if (new_break_point == -1) {
+      // No node is unsupported output since no node in captured output.
+      isAllNodesSupportOutput = true;
+      break;
+    }
     MS_EXCEPTION_IF_NULL(curNode->GetGraph());
     if (this->graph_->Config().GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
       GRAPH_JIT_LOG_F("reset break point: %d", new_break_point);
