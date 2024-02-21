@@ -126,6 +126,7 @@ class FuncGrad : public AutoGrad {
 
   ValuePtr Finish(const TensorPtrList &weights, const std::vector<size_t> &grad_position, const GradAttr &grad_attr,
                   const ValuePtr &sens = nullptr);
+
  private:
   void BackPropagate();
   void BuildForwardLastNode(const ValuePtr &sens_gradient);
@@ -147,7 +148,8 @@ class FuncGrad : public AutoGrad {
   void ClearGrads(const TensorPtrList &weights);
   ValuePtrList OnsLike(const ValuePtr &value);
   void CheckSensShapeAndType(const ValuePtr &sens_gradient);
-  void PruningGradGraph(const TensorPtrList &weights, const GradAttr &grad_attr, const std::vector<size_t> &grad_position);
+  void PruningGradGraph(const TensorPtrList &weights, const GradAttr &grad_attr,
+                        const std::vector<size_t> &grad_position);
   std::shared_ptr<FuncBuilder> func_impl_;
   OrderedSet<FuncVariablePtr> variable_set_;
   std::vector<std::pair<ValuePtr, FuncVariablePtr>> cell_inputs_;

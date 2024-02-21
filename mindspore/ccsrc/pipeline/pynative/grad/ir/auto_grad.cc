@@ -566,7 +566,7 @@ void IrGrad::UpdateSensParameter(const ValuePtr &value) {
     MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
     const auto variable = auto_grad_meta_data->variable();
     // Return input parameter or weight parameter for net, if v is parameter just entry once
-    if (PyNativeAlgo::Common::IsParam(auto_grad_meta_data->input_type()) && variable == nullptr) {
+    if (auto_grad_meta_data->input_type() == InputType::kParameter && variable == nullptr) {
       (void)ir_bprop()->AddParameterNode(sens_tensor,
                                          PyNativeAlgo::Common::SetAbstractValueToAnyValue(sens_tensor->ToAbstract()));
     }

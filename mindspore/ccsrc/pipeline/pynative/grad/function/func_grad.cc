@@ -342,11 +342,6 @@ bool FuncGrad::KPynativeOp(const GradParamPtr &grad_param) {
     MS_LOG(DEBUG) << "Prim " << prim->name() << " does not need to do op grad.";
     return true;
   }
-  //  auto cloned_value = grad_param->op_grad_info->out_value;
-  //  if (grad_param->op_grad_info->out_value->isa<ValueSequence>()) {
-  //    cloned_value = ShallowCopyTensorValue(grad_param->op_grad_info->out_value);
-  //    PyNativeAlgo::Common::ClearDeviceAddress(cloned_value);
-  //  }
   auto flatten_inputs = PyNativeAlgo::DataConvert::FlattenTensorSeqInValueSeq(grad_param->op_grad_info->input_value);
   ConstructParameterNodes(flatten_inputs);
   BackwardNodePtr fn = nullptr;
@@ -460,7 +455,6 @@ void FuncGrad::BackPropagate() {
     if (static_cast<bool>(MS_UNLIKELY(variable->is_fake_bprop()))) {
       MS_LOG(EXCEPTION) << "Illegal primitive " << variable->fake_prim_name() << "'s bprop not defined";
     }
-
     if (input_buffer.find(fn.get()) == input_buffer.end()) {
       MS_LOG(EXCEPTION) << "Fn not has gradient";
     }
@@ -799,7 +793,7 @@ void FuncGrad::PruningGradGraph(const TensorPtrList &weights, const GradAttr &gr
   }
 
   // Pruning all node in grad graph
-  for (const auto &variable: variable_set_) {
+  for (const auto &variable : variable_set_) {
     if (variable->is_leaf()) {
       continue;
     }

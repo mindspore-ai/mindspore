@@ -958,10 +958,19 @@ size_t Common::GetValueSize(const ValuePtr &v) {
   if (v->isa<tensor::Tensor>() || v->isa<Scalar>()) {
     return 1;
   } else if (v->isa<ValueSequence>()) {
-    return v->cast<ValueSequencePtr>()->size();
+    auto seq = v->cast<ValueSequencePtr>();
+    size_t output_size = 0;
+    for (const auto &val : seq->value()) {
+      output_size += GetValueSize(val);
+    }
+    return output_size;
   } else if (v->isa<ValueDictionary>()) {
     const auto &v_dict = v->cast<ValueDictionaryPtr>();
-    return v_dict->size();
+    size_t output_size = 0;
+    for (const auto &val : v_dict->value()) {
+      output_size += GetValueSize(val.second);
+    }
+    return output_size;
   }
   return 0;
 }

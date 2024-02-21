@@ -30,8 +30,13 @@ namespace pyboost {
 std::tuple<tensor::TensorPtr, tensor::TensorPtr> ArgMinWithValueAscendCustomize(const std::shared_ptr<OpRunner> &op,
                                                                                 const TensorPtr &input_tensor,
                                                                                 const Int64ImmPtr &axis,
-                                                                                const BoolImmPtr &keep_dims) {
-  OpRunner::InferOpOutput(op, input_tensor, axis, keep_dims);
+                                                                                const BoolImmPtr &keep_dims,
+                                                                                OpRunnerInfo *op_runner_info) {
+  if (op_runner_info != nullptr) {
+    OpRunner::InferOpOutput(op, op_runner_info);
+  } else {
+    OpRunner::InferOpOutput(op, input_tensor, axis, keep_dims);
+  }
 
   // Convert ValuePtr to c++ scalar
   auto axis_imm = GetValue<int64_t>(axis);

@@ -31,7 +31,8 @@ namespace pyboost {
 std::tuple<tensor::TensorPtr, tensor::TensorPtr> ArgMinWithValueAscendCustomize(const std::shared_ptr<OpRunner> &op,
                                                                                 const TensorPtr &input_tensor,
                                                                                 const Int64ImmPtr &axis,
-                                                                                const BoolImmPtr &keep_dims);
+                                                                                const BoolImmPtr &keep_dims,
+                                                                                OpRunnerInfo *op_runner_info);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

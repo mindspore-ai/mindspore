@@ -463,8 +463,7 @@ AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR(const AnfNodePtr &
 }
 }  // namespace
 
-void IrPassForward::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node, SeenNum seen,
-                                                              bool run_by_single_op) {
+void IrPassForward::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node, SeenNum seen, bool run_by_single_op) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return;

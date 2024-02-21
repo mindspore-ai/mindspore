@@ -26,9 +26,13 @@
 
 namespace mindspore::kernel::pyboost {
 void TileAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_x_tensor,
-                         const ValueTuplePtr &dims) {
+                         const ValueTuplePtr &dims, OpRunnerInfo *op_runner_info) {
   MS_EXCEPTION_IF_NULL(op);
-  OpRunner::InferOpOutput(op, input_x_tensor, dims);
+  if (op_runner_info != nullptr) {
+    OpRunner::InferOpOutput(op, op_runner_info);
+  } else {
+    OpRunner::InferOpOutput(op, input_x_tensor, dims);
+  }
   std::vector<int64_t> multiples_vector = ConvertValueTupleToVector<int64_t>(dims);
 
   // Expand dims with 1 in head when its length is less than x rank.

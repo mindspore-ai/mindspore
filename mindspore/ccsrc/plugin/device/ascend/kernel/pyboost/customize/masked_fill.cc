@@ -35,8 +35,13 @@ tensor::TensorPtr MaskedFillAscendCall(const std::shared_ptr<OpRunner> &op, cons
 }  // namespace
 
 tensor::TensorPtr MaskedFillAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                            const TensorPtr &mask_tensor, const TensorPtr &value_tensor) {
-  OpRunner::InferOpOutput(op, input_tensor, mask_tensor, value_tensor);
+                                            const TensorPtr &mask_tensor, const TensorPtr &value_tensor,
+                                            OpRunnerInfo *op_runner_info) {
+  if (op_runner_info != nullptr) {
+    OpRunner::InferOpOutput(op, op_runner_info);
+  } else {
+    OpRunner::InferOpOutput(op, input_tensor, mask_tensor, value_tensor);
+  }
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, mask_tensor, value_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
   // Async

@@ -198,7 +198,7 @@ class BpropIRBuilderRegHelper {
 #define BPROP_EXPANDER_UNIQUE_NAME(prefix, cnt) BPROP_EXPANDER_JOIN(prefix, cnt)
 #define REG_BPROP_BUILDER(name) \
   const BpropIRBuilderRegHelper BPROP_EXPANDER_UNIQUE_NAME(g_bprop, __COUNTER__) = BpropIRBuilderRegHelper(name)
-#define BODYFUNC(v) [](BpropBuilder * v) -> NodePtrList
+#define BODYFUNC(v) [](BpropBuilder * (v)) -> NodePtrList
 
 #ifdef _MSC_VER
 #define REG_BPROP_BUILDERS_BEGIN(func_name) void Reg##func_name() {
