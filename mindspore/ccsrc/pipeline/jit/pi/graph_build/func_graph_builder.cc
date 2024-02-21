@@ -330,10 +330,24 @@ py::object FuncGraphBuilder::TryToAddNode(const ValuePtr &callable_value, const 
 
   auto new_node = graph_->NewCNode(input_node_list);
   // Return the converted python object.
-  py::object output_py_obj = ConvertToPyObj(abs);
-  if (output_py_obj.ptr() == nullptr) {
-    MS_LOG(ERROR) << "Convert abs " << abs->ToString() << " to python object failed.";
-    return py::object();
+  py::object output_py_obj;
+  if (abs->isa<abstract::FuncGraphAbstractClosure>()) {
+    auto abs_func = abs->cast<abstract::FuncGraphAbstractClosurePtr>();
+    auto fg = abs_func->func_graph();
+    if (fg == nullptr) {
+      return py::object();
+    }
+    auto obj = fg->python_obj();
+    if (obj == nullptr || !obj->isa<parse::PyObjectWrapper>()) {
+      return py::object();
+    }
+    output_py_obj = obj->cast_ptr<parse::PyObjectWrapper>()->obj();
+  } else {
+    output_py_obj = ConvertToPyObj(abs);
+    if (output_py_obj.ptr() == nullptr) {
+      MS_LOG(ERROR) << "Convert abs " << abs->ToString() << " to python object failed.";
+      return py::object();
+    }
   }
 
   new_node->set_abstract(abs);

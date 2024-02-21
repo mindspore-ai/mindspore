@@ -60,9 +60,12 @@ class GraphAnalyzer {
   virtual bool NeedInterpret() const { return need_interpret_; }
 
  protected:
+  void AddToEscaped(ValueNode *value);
   // UD analyze
-  void UseDefAnalyze();
-  void CollectInputs();
+  virtual void UseDefAnalyze();
+  std::vector<ValueNode *> GetAliveLocals(Graph *g);
+  virtual bool AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes);
+  virtual void CollectInputs();
   bool need_interpret_;
   Graph *graph_;
   CapturedInfo info_;
@@ -73,11 +76,8 @@ class GraphAnalyzer {
   bool TryToCapture(AbstractNode *value);
   bool AddToCaptured(ValueNode *value);
   bool HandleCallableToGraph(AObject *f);
-  void AddToEscaped(ValueNode *value);
   bool ProduceInterpretValue(ValueNode *v);
   void CleanCapturedValue();
-  std::vector<ValueNode *> GetAliveLocals(Graph *g);
-  virtual bool AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes);
   void ClearCapturedInfo();
 };
 
@@ -87,6 +87,10 @@ class MindGraphAnalyzer : public GraphAnalyzer {
   void Analyze() override;
 
  protected:
+  // UD analyze
+  void UseDefAnalyze() override;
+  void CollectInputs() override;
+  void UpdateCapturedOrder();
   bool AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) override;
   GraphBuilderPtr graph_builder_ = nullptr;
 };
