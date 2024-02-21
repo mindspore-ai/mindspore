@@ -50,9 +50,11 @@ from mindspore.common.api import _generate_branch_control_input
 from mindspore.common.initializer import initializer, One
 from mindspore.common.parameter import Parameter, _offload_if_config
 from mindspore.common.tensor import Tensor
+from mindspore._c_expression import Tensor as Tensor_
 from mindspore.common._utils import is_shape_unknown
 from mindspore.communication.management import get_rank, get_group_size
 from mindspore.experimental import MapParameter
+from mindspore.ops import cat, reshape
 from mindspore.parallel._cell_wrapper import get_allgather_cell
 from mindspore.parallel._tensor import _load_tensor, _get_tensor_strategy, _get_tensor_slice_index
 from mindspore.parallel._tensor import _reshape_param_data, _reshape_param_data_with_weight
@@ -69,7 +71,7 @@ from ..ops.operations._opaque_predicate_registry import add_opaque_predicate, cl
 tensor_to_ms_type = {"Int8": mstype.int8, "UInt8": mstype.uint8, "Int16": mstype.int16, "UInt16": mstype.uint16,
                      "Int32": mstype.int32, "UInt32": mstype.uint32, "Int64": mstype.int64, "UInt64": mstype.uint64,
                      "Float16": mstype.float16, "Float32": mstype.float32, "Float64": mstype.float64,
-                     "Bool": mstype.bool_, "str": mstype.string}
+                     "Bool": mstype.bool_, "str": mstype.string, "BFloat16": mstype.bfloat16}
 
 tensor_to_np_type = {"Int8": np.int8, "UInt8": np.uint8, "Int16": np.int16, "UInt16": np.uint16,
                      "Int32": np.int32, "UInt32": np.uint32, "Int64": np.int64, "UInt64": np.uint64,
@@ -107,9 +109,9 @@ def _special_process_par(par, new_par):
         if new_par.data.shape[par_shape_len + i] != 1:
             return False
 
-    new_val = new_par.data.asnumpy()
-    new_val = new_val.reshape(par.data.shape)
-    par.set_data(Tensor(new_val, par.data.dtype))
+    new_val = reshape(new_par, par.data.shape)
+    new_val = new_val.astype(par.data.dtype)
+    par.set_data(new_val)
     return True
 
 
@@ -128,7 +130,7 @@ def _update_param(param, new_param, strict_load):
 
         if param.data.dtype != new_param.data.dtype:
             if _type_convert(param, new_param, strict_load):
-                new_tensor = Tensor(new_param.data.asnumpy(), param.data.dtype)
+                new_tensor = new_param.data.astype(param.data.dtype)
                 param.set_data(new_tensor, param.sliced)
                 return
 
@@ -165,7 +167,7 @@ def _update_param(param, new_param, strict_load):
 
 def _type_convert(param, new_param, strict_load):
     """Whether to convert parameter's type during load checkpoint into network."""
-    float_type = (mstype.float16, mstype.float32, mstype.float64)
+    float_type = (mstype.float16, mstype.float32, mstype.float64, mstype.bfloat16)
     int_type = (mstype.int8, mstype.int16, mstype.int32, mstype.int64)
     if not strict_load and ({param.data.dtype, new_param.data.dtype}.issubset(float_type) or
                             {param.data.dtype, new_param.data.dtype}.issubset(int_type)):
@@ -232,14 +234,17 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM", map_
                     if value[0] == "offload_parameter":
                         new_value = value[1:]
                         new_value[2] = value[3].asnumpy().reshape(-1)
-                        _write_parameter_data(name, new_value, f, enc_key, plain_data)
+                        _write_parameter_bytes_data(name, new_value, f, enc_key, plain_data)
                         _offload_if_config(value[3])
                         continue
-                    if isinstance(value[2], Tensor):
+                    if value[1] == "str":
+                        _write_parameter_data(name, value, f, enc_key, plain_data)
+                        continue
+                    if isinstance(value[2], Tensor) and hasattr(value[2], "slice_num") and value[2].slice_num > 1:
                         _write_hugeparameter(name, value, f)
                         continue
 
-                    _write_parameter_data(name, value, f, enc_key, plain_data)
+                    _write_parameter_bytes_data(name, value, f, enc_key, plain_data)
 
                 if enc_key is not None:
                     plain_data.seek(0)
@@ -286,6 +291,26 @@ def _write_parameter_data(name, value, f, enc_key, plain_data):
         param_tensor.dims.extend(value[0])
         param_tensor.tensor_type = value[1]
         param_tensor.tensor_content = param_slice.tobytes()
+
+        if enc_key is None:
+            f.write(checkpoint_list.SerializeToString())
+        else:
+            plain_data.write(checkpoint_list.SerializeToString())
+
+
+def _write_parameter_bytes_data(name, value, f, enc_key, plain_data):
+    """Write parameter bytes data into protobuf file."""
+    bytes_value = value[2].get_bytes()
+    chunk_size = 1024 * SLICE_SIZE
+
+    for i in range(0, len(bytes_value), chunk_size):
+        checkpoint_list = Checkpoint()
+        param_value = checkpoint_list.value.add()
+        param_value.tag = name
+        param_tensor = param_value.tensor
+        param_tensor.dims.extend(value[0])
+        param_tensor.tensor_type = value[1]
+        param_tensor.tensor_content = bytes_value[i:i + chunk_size]
 
         if enc_key is None:
             f.write(checkpoint_list.SerializeToString())
@@ -457,15 +482,12 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                 if isinstance(param["data"], Parameter):
                     param["data"].init_data()
                 dims = []
-                if param['data'].shape == ():
-                    dims.append(0)
-                else:
-                    for dim in param['data'].shape:
-                        dims.append(dim)
+                for dim in param['data'].shape:
+                    dims.append(dim)
                 data_list[key].append(dims)
                 tensor_type = str(param["data"].dtype)
                 data_list[key].append(tensor_type)
-                data = param["data"].asnumpy().reshape(-1)
+                data = Tensor_(param["data"])
                 data_list[key].append(data)
 
     if async_save:
@@ -572,7 +594,7 @@ def _convert_cell_to_param_list(save_obj, integrated_save, append_dict, choice_f
             param_data.append(str(param_tensor.dtype))
             param_data.append(value.key)
         else:
-            param_data = Tensor(value.data.asnumpy())
+            param_data = Tensor(value)
 
             # in automatic model parallel scenario, some parameters were split to all the devices,
             # which should be combined before saving
@@ -1069,24 +1091,20 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
             if data_type == 'str':
                 str_length = int(len(data) / 4)
                 np_type = np_type + str(str_length)
-            element_data = np.frombuffer(data, np_type)
-            param_data_list.append(element_data)
+            param_data_list.append(data)
             if (element_id == len(checkpoint_list.value) - 1) or \
                     (element.tag != checkpoint_list.value[element_id + 1].tag):
                 new_data = b"".join(param_data_list)
-                param_data = np.frombuffer(new_data, np_type)
                 param_data_list.clear()
                 dims = element.tensor.dims
                 if dims == [0] and data_type == 'str':
-                    parameter_dict[element.tag] = str(element_data[0])
+                    str_value = np.frombuffer(new_data, np_type)
+                    parameter_dict[element.tag] = str(str_value[0])
                 else:
-                    if dims == [0] and 'Float' in data_type:
-                        param_data = float(param_data[0])
-                    if dims == [0] and 'Int' in data_type:
-                        param_data = int(param_data[0])
-                    if dims not in ([0], [1]):
-                        param_data = param_data.reshape(list(dims))
-                    parameter = Parameter(Tensor(param_data, ms_type), name=element.tag)
+                    if dims == [0]:
+                        dims = []
+                    param_data = Tensor_.convert_bytes_to_tensor(new_data, tuple(dims), ms_type)
+                    parameter = Parameter(param_data, name=element.tag)
                     parameter_dict[element.tag] = parameter
                     _offload_if_config(parameter)
 
@@ -2336,18 +2354,23 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
 
     layerwise_parallel = sliced_parameters[0].layerwise_parallel
     requires_grad = sliced_parameters[0].requires_grad
-    sliced_data = [parameter.data.asnumpy() for parameter in sliced_parameters]
+    sliced_data = []
+    for parameter in sliced_parameters:
+        if parameter.data.dtype == mstype.bfloat16:
+            sliced_data.append(parameter.data.float().asnumpy())
+        else:
+            sliced_data.append(parameter.data.asnumpy())
 
     if not strategy:
         merged_tensor = Tensor(np.concatenate(sliced_data))
-        merged_parameter = Parameter(merged_tensor, parameter_name, requires_grad, layerwise_parallel)
-
     else:
         if parameter_name not in strategy.keys():
             raise KeyError(f"For 'merge_sliced_parameter', the parameter name {parameter_name} should be a key in "
                            f"the 'strategy'. Please check 'sliced_parameter' and 'strategy'.")
         merged_tensor = _merge_param_with_strategy(sliced_data, parameter_name, strategy, is_even)
-        merged_parameter = Parameter(merged_tensor, parameter_name, requires_grad, layerwise_parallel)
+    if parameter.data.dtype == mstype.bfloat16:
+        merged_tensor = merged_tensor.astype(mstype.bfloat16)
+    merged_parameter = Parameter(merged_tensor, parameter_name, requires_grad, layerwise_parallel)
 
     return merged_parameter
 
@@ -2542,9 +2565,10 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
                 param_index = list(set(param_index))
                 param_index.sort()
                 for rank_num in param_index:
-                    param_stride.append(param_total_dict[param.name][rank_num].data.asnumpy())
-
-                sliced_param = Parameter(Tensor(np.concatenate(param_stride)), name=param.name)
+                    param_stride.append(param_total_dict[param.name][rank_num])
+                if not param_stride:
+                    param_stride = cat(param_stride)
+                sliced_param = Parameter(param_stride, name=param.name)
             else:
                 sliced_param = param_total_dict[param.name][rank]
 
@@ -2557,19 +2581,17 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
             split_param = _merge_and_split(sliced_params, _param_unique_strategy, predict_strategy)
         opt_shard_group = predict_strategy[param.name][5] if predict_strategy else None
         if opt_shard_group:
-            data = split_param.data.asnumpy()
             rank = get_rank(opt_shard_group)
             size = get_group_size(opt_shard_group)
             try:
-                data_slice = np.split(data, size)[rank]
+                data_slice = split_param.data.split(size)[rank]
             except BaseException as e:
                 logger.critical("Failed to load opt shard slice in load distributed checkpoint for {}. Data shape is {}"
                                 " and group is {}".format(param.name, split_param.data.shape, opt_shard_group))
                 raise RuntimeError(e.__str__() + f"\nFor 'load_distributed_checkpoint', failed to load opt shard slice"
                                                  f" in load distributed checkpoint for {param.name}. Data shape is "
                                                  f"{split_param.data.shape} and group is {opt_shard_group}.") from e
-            split_param = Parameter(Tensor(data_slice), param.name,
-                                    split_param.requires_grad, split_param.layerwise_parallel)
+            split_param = Parameter(data_slice, param.name, split_param.requires_grad, split_param.layerwise_parallel)
         param_dict[param.name] = split_param
 
     if param_not_in_strategy:
@@ -2659,7 +2681,10 @@ def _merge_and_split(sliced_params, train_strategy, predict_strategy):
     split_tensor = _load_tensor(merged_param.data, tensor_layout[0], tensor_layout[1], rank)
     requires_grad = merged_param.requires_grad
     layerwise_parallel = merged_param.layerwise_parallel
-    split_param = Parameter(split_tensor, param_name, requires_grad, layerwise_parallel)
+    if merged_param.data.dtype == mstype.bfloat16:
+        split_param = Parameter(Tensor(split_tensor, mstype.bfloat16), param_name, requires_grad, layerwise_parallel)
+    else:
+        split_param = Parameter(split_tensor, param_name, requires_grad, layerwise_parallel)
     return split_param
 
 
@@ -2668,7 +2693,7 @@ def _calculation_net_size(net):
     data_total = 0
     net_dict = net.parameters_dict()
     for name in net_dict:
-        data_total += sys.getsizeof(net_dict[name].data.asnumpy().tobytes()) / 1024
+        data_total += sys.getsizeof(net_dict[name].data.get_bytes()) / 1024
 
     return data_total
 
