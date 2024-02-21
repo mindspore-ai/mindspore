@@ -21,13 +21,6 @@ from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False)
 
-"""_summary_
-
-How to run this:
-python test_op.py
-"""
-
-
 class Net(nn.Cell):
     """
     Examples:
@@ -56,7 +49,9 @@ class Net(nn.Cell):
     """
     def __init__(self, n_pos, eod_token_id, n_step, n_error_mode="specific"):
         super(Net, self).__init__()
-        self.mask = P.inner_ops.GenerateEodMask(n_pos, eod_token_id=eod_token_id, n_step=n_step, n_error_mode=n_error_mode)
+        self.mask = P.inner_ops.GenerateEodMask(n_pos,
+                                                eod_token_id=eod_token_id, n_step=n_step,
+                                                n_error_mode=n_error_mode)
 
     def construct(self, tensor):
         return self.mask(tensor)
