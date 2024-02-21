@@ -2637,7 +2637,7 @@ py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReaso
     return FGAddNode(call_node, callable_info, args, stop_reason);
   }
   if (FGBuilder()->CanConstantFoldFunc(callable_info) ||
-      (CheckCell(callable_info) && callable->GetTpye() == AObject::kTypeType)) {
+      (CheckCell(callable_info) && callable->GetType() == AObject::kTypeType)) {
     MS_LOG(INFO) << "CanConstantFoldFunc for: " << py::str(callable_info);
     JustCallAndSetRes(call_node);
     *stop_reason = StopTraceReason::kNonStopTrace;
