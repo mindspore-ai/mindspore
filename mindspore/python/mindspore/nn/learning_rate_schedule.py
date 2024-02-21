@@ -332,12 +332,13 @@ class CosineDecayLR(LearningRateSchedule):
         self.math_pi = math.pi
         self.delta = 0.5 * (max_lr - min_lr)
         self.cos = P.Cos()
+        self.sin = P.Sin()
         self.min = P.Minimum()
         self.cast = P.Cast()
 
     def construct(self, global_step):
         p = self.cast(self.min(global_step, self.decay_steps), mstype.float32)
-        return self.min_lr + self.delta * (1.0 + self.cos(self.math_pi * p / self.decay_steps))
+        return self.min_lr + self.delta * (1.0 + self.sin(self.math_pi * (p / self.decay_steps + 0.5)))
 
 
 class PolynomialDecayLR(LearningRateSchedule):
