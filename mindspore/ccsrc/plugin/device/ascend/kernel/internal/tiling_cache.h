@@ -137,15 +137,17 @@ class TilingCacheMgr {
   inline void SetDevAddr(TilingInfo *tiling_cache_elem, size_t tiling_size) {
     tiling_cache_elem->device_buf_.size_ = tiling_size;
     auto aligned_size = AlignMemorySize(tiling_size);
+    void *tiling_cache_addr = nullptr;
     if (dev_addr_ != nullptr && dev_offset_ + aligned_size < kMaxDevBlockSize && cache_buf_.size() < kMaxSize) {
-      dev_addr_ = static_cast<void *>(static_cast<char *>(dev_addr_) + dev_offset_);
+      tiling_cache_addr = static_cast<void *>(static_cast<char *>(dev_addr_) + dev_offset_);
     } else {
       dev_addr_ = nullptr;
       dev_offset_ = 0;
       device::ascend::AscendMemoryPool::GetInstance().AllocDeviceMem(kMaxDevBlockSize, &dev_addr_);
+      tiling_cache_addr = dev_addr_;
     }
     dev_offset_ += aligned_size;
-    tiling_cache_elem->device_buf_.addr_ = dev_addr_;
+    tiling_cache_elem->device_buf_.addr_ = tiling_cache_addr;
   }
 
   // concat all the data which influence tiling result into an array[char].
