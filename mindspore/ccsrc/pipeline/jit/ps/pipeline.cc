@@ -2183,7 +2183,6 @@ void ClearResPart1() {
   mindspore::RDR::Snapshot();
   mindspore::RDR::ResetRecorder();
 #endif
-  session::ExecutorManager::Instance().Clear();
   runtime::GraphScheduler::GetInstance().Clear();
   runtime::ProfilerAnalyzer::GetInstance().Clear();
 
@@ -2240,6 +2239,7 @@ void ClearResPart2() {
   MS_LOG(INFO) << "End clear ConfigManager.";
 #endif
 
+  session::ExecutorManager::Instance().Clear();
   // for GE, HcclCommDestroy should after RemoveGraph in ClearGraphWrapper
   (void)distributed::collective::CollectiveManager::instance()->Finalize();
 
