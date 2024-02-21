@@ -20,21 +20,21 @@
 #include <functional>
 #include <memory>
 #include <utility>
-#include "runtime/pynative/async/async_queue.h"
+#include "runtime/pipeline/async_rqueue.h"
 #include "pybind11/stl.h"
 
 namespace mindspore {
 namespace pijit {
 namespace py = pybind11;
-using AsyncTask = pynative::AsyncTask;
-using AsyncQueue = pynative::AsyncQueue;
-using AsyncQueuePtr = pynative::AsyncQueuePtr;
+using AsyncTask = runtime::AsyncTask;
+using AsyncQueue = runtime::AsyncRQueue;
+using AsyncQueuePtr = AsyncRQueuePtr;
 using RecordFunc = std::function<void(const py::object &prim, const py::object &out, const py::list &inputs)>;
 
 class RecordTask : public AsyncTask {
  public:
   explicit RecordTask(RecordFunc task, const py::object &prim, const py::object &out, const py::list &inputs)
-      : AsyncTask(pynative::kBpropTask), run_task_(std::move(task)), prim_(prim), out_(out), inputs_(inputs) {}
+      : AsyncTask(runtime::kBpropTask), run_task_(std::move(task)), prim_(prim), out_(out), inputs_(inputs) {}
   ~RecordTask() override = default;
   void Run() override;
 
@@ -49,7 +49,7 @@ using RecordTaskPtr = std::shared_ptr<RecordTask>;
 
 class RunBpropTask : public AsyncTask {
  public:
-  explicit RunBpropTask(std::function<void()> task) : AsyncTask(pynative::kBpropTask), run_task_(std::move(task)) {}
+  explicit RunBpropTask(std::function<void()> task) : AsyncTask(runtime::kBpropTask), run_task_(std::move(task)) {}
   ~RunBpropTask() override = default;
   void Run() override;
 
@@ -59,7 +59,7 @@ class RunBpropTask : public AsyncTask {
 
 using RunBpropTaskPtr = std::shared_ptr<RunBpropTask>;
 
-using Level = pynative::kThreadWaitLevel;
+using Level = runtime::kThreadWaitLevel;
 class AsyncTaskManager {
  public:
   AsyncTaskManager()

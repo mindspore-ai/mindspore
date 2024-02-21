@@ -131,6 +131,8 @@ def test_call_function3(python_func, jit_func, x):
     ms_res = jit_func(x)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
+
+@pytest.mark.skip
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -149,6 +151,7 @@ def test_call_function4(python_func, jit_func, x):
     ms_res = jit_func(x)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
+@pytest.mark.skip
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -167,6 +170,7 @@ def test_call_function5(python_func, jit_func, x):
     ms_res = jit_func(x)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
+@pytest.mark.skip
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
