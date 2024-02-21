@@ -3531,6 +3531,7 @@ AnfNodePtr Parser::ParseDictCompIfs(const FunctionBlockPtr &dict_body_block, con
   }
 
   // Create if-true graph.
+  MS_EXCEPTION_IF_NULL(dict_body_block->func_graph());
   FunctionBlockPtr if_true_block =
     MakeFunctionBlock(std::make_shared<TraceIfStmtTrueBranch>(dict_body_block->func_graph()->debug_info()));
   if_true_block->AddPrevBlock(dict_body_block);
@@ -3540,7 +3541,6 @@ AnfNodePtr Parser::ParseDictCompIfs(const FunctionBlockPtr &dict_body_block, con
   py::object value_obj = python_adapter::GetPyObjAttr(node, "value");
   AnfNodePtr value_node = ParseExprNode(dict_body_block, value_obj);
   // update dict.
-  MS_EXCEPTION_IF_NULL(dict_body_block->func_graph());
   std::vector<AnfNodePtr> key_vec;
   std::vector<AnfNodePtr> value_vec;
   std::vector<AnfNodePtr> dict_vec;

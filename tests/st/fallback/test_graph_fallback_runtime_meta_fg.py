@@ -1259,3 +1259,31 @@ def test_multitype_generated_by_inner_method_2():
     net = Net()
     res = net(x)
     assert np.allclose(res.asnumpy(), np.array([0, 1, 2, 2]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multitype_funcgraph_with_slice_in_tuple():
+    """
+    Feature: multitype_funcgraph_with_slice_in_tuple
+    Description: test multitype funcgraph with slice in tuple
+    Expectation: throw RuntimeError
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.a = 3
+
+        def construct(self, x):
+            self.a = 0
+            res = x[:, (self.a)]
+            return res
+
+    x = Tensor([[0, 1], [1, 0], [2, 0], [2, 2]])
+    net = Net()
+    res = net(x)
+    assert np.allclose(res.asnumpy(), np.array([0, 1, 2, 2]))

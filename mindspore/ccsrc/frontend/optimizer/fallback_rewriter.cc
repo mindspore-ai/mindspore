@@ -1793,6 +1793,12 @@ class AfterOptARewriter : public BaseRewriter {
   //        , (__inner_str__, __format_list_str__, __format_kwargs__str__), (str, B, A));
   // Replace(C -> Format).
   AnfNodePtr ConvertFormat(const CNodePtr &cnode) const {
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the format statement with some syntaxes that is not supported in graph mode, "
+                      << "it is best to set jit_syntax_level to LAX.\n";
+      return nullptr;
+    }
     auto fg = cnode->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
 
@@ -2085,6 +2091,53 @@ class AfterOptARewriter : public BaseRewriter {
     return true;
   }
 
+  AnfNodePtr ConvertValueSlice(const FuncGraphPtr &func_graph, const AnfNodePtr &slice_node,
+                               const ValueSlicePtr &value_slice) {
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    bool is_start_none = value_slice->start()->isa<None>();
+    bool is_stop_none = value_slice->stop()->isa<None>();
+    bool is_step_none = value_slice->step()->isa<None>();
+    auto start_str = is_start_none ? "None" : "__start__";
+    auto stop_str = is_stop_none ? "None" : "__stop__";
+    auto step_str = is_step_none ? "None" : "__step__";
+    // Script
+    std::stringstream script_buffer;
+    script_buffer << "slice(" << start_str << ", " << stop_str << ", " << step_str << ")";
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+
+    // Pack local parameters keys and values.
+    (void)key_value_names_list.emplace_back(NewValueNode(start_str));
+    (void)key_value_names_list.emplace_back(NewValueNode(stop_str));
+    (void)key_value_names_list.emplace_back(NewValueNode(step_str));
+    AnfNodePtr start_node;
+    AnfNodePtr end_node;
+    AnfNodePtr step_node;
+    if (!is_start_none) {
+      start_node = func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), slice_node, NewValueNode("start")});
+    } else {
+      start_node = NewValueNode(start_str);
+    }
+    if (!is_stop_none) {
+      end_node = func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), slice_node, NewValueNode("stop")});
+    } else {
+      end_node = NewValueNode(stop_str);
+    }
+    if (!is_step_none) {
+      step_node = func_graph->NewCNode({NewValueNode(prim::kPrimSliceGetItem), slice_node, NewValueNode("step")});
+    } else {
+      step_node = NewValueNode(stop_str);
+    }
+    (void)key_value_list.emplace_back(start_node);
+    (void)key_value_list.emplace_back(end_node);
+    (void)key_value_list.emplace_back(step_node);
+    const auto key_value_name_tuple = func_graph->NewCNode(key_value_names_list);
+    const auto key_value_tuple = func_graph->NewCNode(key_value_list);
+    return fallback::CreatePyExecuteCNodeInOrder(func_graph, NewValueNode(script_str), key_value_name_tuple,
+                                                 key_value_tuple, key_value_tuple->debug_info());
+  }
+
   AnfNodePtr GetPyExecuteFromValue(const FuncGraphPtr &fg, const ValueNodePtr &value_node, const ValuePtr &value,
                                    bool py_execute_input) {
     MS_EXCEPTION_IF_NULL(fg);
@@ -2132,6 +2185,9 @@ class AfterOptARewriter : public BaseRewriter {
     }
     if (value->isa<ValueDictionary>()) {
       return RebuildValueDict(fg, value_node, value->cast<ValueDictionaryPtr>());
+    }
+    if (value->isa<ValueSlice>()) {
+      return ConvertValueSlice(fg, value_node, value->cast<ValueSlicePtr>());
     }
     return value_node;
   }
