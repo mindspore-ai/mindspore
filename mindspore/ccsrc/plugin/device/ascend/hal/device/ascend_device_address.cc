@@ -899,12 +899,18 @@ void AscendDeviceAddress::CopyHostToDevice(const void *src, uint64_t size,
   } else {
     MS_EXCEPTION_IF_NULL(GetDevicePtr());
     if (type_id() == kObjectTypeString) {
-      ge::StringHead head{.addr = sizeof(ge::StringHead), static_cast<int64_t>(size)};
+      // NOTE: For string type, ge::StringHead.len does not include '\0', since kernel_tensor allocated size including
+      // '\0', see method `CreateDeviceAddressForScalarAndString` defined in `device_address_utils.cc`, and method
+      // `PrepareDataForStringValue` defined in `device_address_utils.cc`, so here pass `size - 1` to `head.len`.
+      ge::StringHead head{.addr = sizeof(ge::StringHead), .len = static_cast<int64_t>(size) - 1};
       // sync string head info from device to host
       SyncMemory(GetDevicePtr(), &head, sizeof(ge::StringHead), ACL_MEMCPY_HOST_TO_DEVICE, nullptr);
       // sync string body (real contents) from device to host
       SyncMemory(static_cast<void *>(static_cast<char *>(GetDevicePtr()) + sizeof(ge::StringHead)), src, size,
                  ACL_MEMCPY_HOST_TO_DEVICE, tensor_data);
+      MS_LOG(DEBUG) << "Copy string info to device, ge::StringHead.len=" << head.len
+                    << ", text=" << std::string(static_cast<const char *>(src), head.len)
+                    << ", device_addr=" << GetDevicePtr();
     } else {
       SyncMemory(GetDevicePtr(), src, size, ACL_MEMCPY_HOST_TO_DEVICE, tensor_data);
     }

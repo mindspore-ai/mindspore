@@ -60,8 +60,10 @@ def capture(cap):
 
 def check_output(output, patterns):
     assert output, "Capture output failed!"
+    index = 0
     for pattern in patterns:
-        assert output.find(pattern) != -1, "Unexpected output:\n" + output + "\n--- pattern ---\n" + pattern
+        index = output.find(pattern, index)
+        assert index != -1, "Unexpected output:\n" + output + "\n--- pattern ---\n" + pattern
 
 
 @security_off_wrap
@@ -242,4 +244,47 @@ def test_run_op_print():
     patterns = ['TensorStart',
                 'Tensor(shape=[3], dtype=Int64, value=[1 2 3])',
                 'TheEnd']
+    check_output(cap.output, patterns)
+
+
+@security_off_wrap
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_with_On
+def test_print_none(mode):
+    """
+    Feature: Print None and "None".
+    Description: Print None and string "None", and verify print result.
+    Expectation: No exception and result is correct.
+    """
+    ms.set_context(mode=mode)
+    if mode == ms.GRAPH_MODE:
+        os.environ['GRAPH_OP_RUN'] = '1'
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.print = P.Print()
+
+        def construct(self, y=None):
+            if y is not None:
+                self.print("y:", y)
+            else:
+                print("y is", y)
+            return y
+
+    cap = Capture()
+    with capture(cap):
+        net = Net()
+        net()
+        out2 = net("None")
+        assert out2 == "None"
+        sys.stdout.flush()
+        time.sleep(0.1)
+
+    patterns = ['y is', 'None',
+                'y:', 'None']
     check_output(cap.output, patterns)
