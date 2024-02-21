@@ -13,10 +13,12 @@
 # limitations under the License.
 # ============================================================================
 
+import random
+import os
 import numpy as np
 import mindspore.nn as nn
 import mindspore.ops as ops
-from mindspore import Tensor
+from mindspore import Tensor, Profiler
 import mindspore.common.dtype as mstype
 
 class CastNet(nn.Cell):
@@ -29,6 +31,18 @@ class CastNet(nn.Cell):
         return out
 
 
+def random_int_list(start, stop, length):
+    """
+    Feature: random_int_list
+    Description: random_int_list
+    Expectation: start <= out <= stop
+    """
+    random_list = []
+    for i in range(length):
+        random_list.append(random.randint(start, stop))
+    return random_list
+
+
 def test_cast_net():
     """
     Feature: cast test case
@@ -37,12 +51,42 @@ def test_cast_net():
     """
     net = CastNet()
     size = 10
+
     # np_data = np.random.randn(size).astype(np.float32) * 10
     np_data = np.arange(size).astype(np.float32)
+    np_data_bool = random_int_list(0, 1, size)
+
+    print("test size : [", size ,"]")
+
+    bool_tensor = Tensor(np_data_bool, mstype.bool_)
+    fp32_tensor = Tensor(np_data_bool, mstype.float32)
+    fp16_tensor = Tensor(np_data_bool, mstype.float16)
+    bf16_tensor = Tensor(np_data_bool, mstype.bfloat16)
+
+    fp32_out = net(bool_tensor, mstype.float32)
+    assert fp32_out.dtype == fp32_tensor.dtype
+    assert np.allclose(fp32_out.asnumpy(), fp32_tensor.asnumpy(), 0.01, 0.01)
+    print("bool to fp32 success.")
+
+    fp16_out = net(bool_tensor, mstype.float16)
+    assert fp16_out.dtype == fp16_tensor.dtype
+    assert np.allclose(fp16_out.asnumpy(), fp16_tensor.asnumpy(), 0.01, 0.01)
+    print("bool to fp16 success.")
+
+    bf16_out = net(bool_tensor, mstype.bfloat16)
+    assert bf16_out.dtype == bf16_tensor.dtype
+    fp32_out = net(bf16_out, mstype.float32)
+    assert np.allclose(fp32_out.asnumpy(), fp32_tensor.asnumpy(), 0.01, 0.01)
+    print("bool to bf16 to fp32 success.")
 
 
+    int8_tensor = Tensor(np_data, mstype.int8)
     int32_tensor = Tensor(np_data, mstype.int32)
     int64_tensor = Tensor(np_data, mstype.int64)
+
+    fp32_tensor = Tensor(np_data, mstype.float32)
+    fp16_tensor = Tensor(np_data, mstype.float16)
+    bf16_tensor = Tensor(np_data, mstype.bfloat16)
 
     int64_out = net(int32_tensor, mstype.int64)
     assert int64_out.dtype == int64_tensor.dtype
@@ -53,11 +97,6 @@ def test_cast_net():
     assert int32_out.dtype == int32_tensor.dtype
     assert np.allclose(int32_out.asnumpy(), int32_tensor.asnumpy(), 0.01, 0.01)
     print("int64 to int32 success.")
-
-
-    fp32_tensor = Tensor(np_data, mstype.float32)
-    fp16_tensor = Tensor(np_data, mstype.float16)
-    bf16_tensor = Tensor(np_data, mstype.bfloat16)
 
     fp16_out = net(fp32_tensor, mstype.float16)
     assert fp16_out.dtype == fp16_tensor.dtype
@@ -91,3 +130,23 @@ def test_cast_net():
     assert fp16_out.dtype == fp16_tensor.dtype
     assert np.allclose(fp16_out.asnumpy(), fp16_tensor.asnumpy(), 0.01, 0.01)
     print("bf16 to fp16 success.")
+
+    fp32_tensor = Tensor(np_data.astype(np.int8), mstype.float32)
+    fp16_tensor = Tensor(np_data.astype(np.int8), mstype.float16)
+    bf16_tensor = Tensor(np_data.astype(np.int8), mstype.bfloat16)
+
+    fp32_out = net(int8_tensor, mstype.float32)
+    assert fp32_out.dtype == fp32_tensor.dtype
+    assert np.allclose(fp32_out.asnumpy(), fp32_tensor.asnumpy(), 0.01, 0.01)
+    print("int8 to fp32 success.")
+
+    fp16_out = net(int8_tensor, mstype.float16)
+    assert fp16_out.dtype == fp16_tensor.dtype
+    assert np.allclose(fp16_out.asnumpy(), fp16_tensor.asnumpy(), 0.01, 0.01)
+    print("int8 to fp16 success.")
+
+    bf16_out = net(int8_tensor, mstype.bfloat16)
+    assert bf16_out.dtype == bf16_tensor.dtype
+    fp32_out = net(bf16_out, mstype.float32)
+    assert np.allclose(fp32_out.asnumpy(), fp32_tensor.asnumpy(), 0.01, 0.01)
+    print("int8 to bf16 to fp32 success.")
