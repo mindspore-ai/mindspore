@@ -23,7 +23,7 @@ mindspore.ops.MaxPoolWithArgmaxV2
         - **argmax_type** (mindspore.dtype，可选) - 指定输出 `argmax` 的数据类型。默认值： ``mstype.int64`` 。【该参数在Ascend上不生效。】
 
     输入：
-        - **x** (Tensor) - shape为 :math:`(N_{in}, C_{in}, H_{in}, W_{in})` 的Tensor。在CPU和GPU上，支持的数据类型包括：int8，int16，int32，int64，uint8，uint16，uint32，uint64，float16，float32和float64。在Ascend上，数据类型仅支持Float16。
+        - **x** (Tensor) - shape为 :math:`(N_{in}, C_{in}, H_{in}, W_{in})` 的Tensor。在CPU和GPU上，支持的数据类型包括：int8，int16，int32，int64，uint8，uint16，uint32，uint64，float16，float32和float64。在Ascend上，数据类型仅支持float16。
 
     输出：
         包含两个Tensor的tuple，分别表示最大值结果和最大值对应的索引。
