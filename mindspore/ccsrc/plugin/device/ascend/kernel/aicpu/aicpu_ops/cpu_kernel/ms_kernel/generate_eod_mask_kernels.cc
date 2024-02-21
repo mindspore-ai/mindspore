@@ -43,7 +43,7 @@ uint32_t GenerateEodMaskCpuKernel::Compute(CpuKernelContext &ctx) {
   AttrValue *n_pos_value = ctx.GetAttr("n_pos");
   AttrValue *n_step_value = ctx.GetAttr("n_step");
   AttrValue *n_error_mode = ctx.GetAttr("n_error_mode");
-  int64_t eod_token_id = (eod_token_value == nullptr) ? 0 : eod_token_value->GetInt();  // whcih bit of the element
+  int64_t eod_token_id = (eod_token_value == nullptr) ? 0 : eod_token_value->GetInt();  // which bit of the element
   int64_t n_pos = (n_pos_value == nullptr) ? 0 : n_pos_value->GetInt();                 // which element of tensor
   std::vector<int64_t> n_step = (n_step_value == nullptr) ? std::vector<int64_t>{-1} : n_step_value->GetListInt();
   std::string error_mode = n_error_mode == nullptr ? "specific" : n_error_mode->GetString();
