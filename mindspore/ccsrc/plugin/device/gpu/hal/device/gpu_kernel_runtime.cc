@@ -230,8 +230,7 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
 #endif
 }  // namespace
 
-bool GPUKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) {
-  auto &stream = GPUDeviceManager::GetInstance().default_stream();
+bool GPUKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind, void *stream) {
   MS_EXCEPTION_IF_NULL(stream);
   auto ret = GPUDeviceManager::GetInstance().CopyHostMemToDeviceAsync(dst, src, size, stream);
   if (!ret) {

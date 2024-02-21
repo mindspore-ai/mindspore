@@ -324,8 +324,8 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
       // Sync data from host_tensor to device_tensor.
       if (!device_tensor->SyncHostToDevice(
             trans::GetRuntimePaddingShape(data_node_with_indexs_[i].first, data_node_with_indexs_[i].second),
-            LongToSize(host_tensor->data().nbytes()), host_tensor->data_type(), host_tensor->data_c(),
-            host_tensor->device_info().host_format_)) {
+            LongToSize(host_tensor->data().nbytes()), host_tensor->data_type(), host_tensor->device_info().host_format_,
+            host_tensor->data_ptr())) {
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "SyncHostToDevice failed.");
       }
       if (IsDynamic(device_tensor->host_shape())) {

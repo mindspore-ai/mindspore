@@ -386,7 +386,8 @@ void PrepareDataForValueNode(const AnfNodePtr &node, const DeviceContext *const 
       MS_LOG(EXCEPTION) << "Invalid value:" << value->ToString();
     }
 
-    if (!device_tensor->SyncHostToDevice(tensor->shape(), tensor->Size(), tensor->data_type(), tensor->data_c())) {
+    if (!device_tensor->SyncHostToDevice(tensor->shape(), tensor->Size(), tensor->data_type(), kOpFormat_DEFAULT,
+                                         tensor->data_ptr())) {
       MS_LOG(EXCEPTION) << "Failed to sync data for value node:" << node->DebugString();
     }
     MS_LOG(DEBUG) << "Device address:" << device_tensor << " ptr:" << device_tensor->GetPtr()
