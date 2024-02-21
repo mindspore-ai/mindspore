@@ -690,4 +690,167 @@ ValuePtr UpdateValueByAttrDataType(const ValuePtr &value, const std::string &att
   }
   return ret;
 }
+
+static const std::map<std::pair<TypeId, TypeId>, TypeId> tensor_tensor_convert_map = {
+  // Bool
+  {std::make_pair(kNumberTypeBool, kNumberTypeBool), kNumberTypeBool},
+  {std::make_pair(kNumberTypeBool, kNumberTypeInt8), kNumberTypeInt8},
+  {std::make_pair(kNumberTypeBool, kNumberTypeInt16), kNumberTypeInt16},
+  {std::make_pair(kNumberTypeBool, kNumberTypeInt32), kNumberTypeInt32},
+  {std::make_pair(kNumberTypeBool, kNumberTypeInt64), kNumberTypeInt64},
+  {std::make_pair(kNumberTypeBool, kNumberTypeUInt8), kNumberTypeUInt8},
+  {std::make_pair(kNumberTypeBool, kNumberTypeFloat16), kNumberTypeFloat16},
+  {std::make_pair(kNumberTypeBool, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {std::make_pair(kNumberTypeBool, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeBool, kNumberTypeFloat64), kNumberTypeFloat64},
+  {std::make_pair(kNumberTypeBool, kNumberTypeComplex64), kNumberTypeComplex64},
+  {std::make_pair(kNumberTypeBool, kNumberTypeComplex128), kNumberTypeComplex128},
+  // Int8
+  {std::make_pair(kNumberTypeInt8, kNumberTypeInt8), kNumberTypeInt8},
+  {std::make_pair(kNumberTypeInt8, kNumberTypeInt16), kNumberTypeInt16},
+  {std::make_pair(kNumberTypeInt8, kNumberTypeInt32), kNumberTypeInt32},
+  {std::make_pair(kNumberTypeInt8, kNumberTypeInt64), kNumberTypeInt64},
+  {std::make_pair(kNumberTypeInt8, kNumberTypeUInt8), kNumberTypeInt16},
+  {std::make_pair(kNumberTypeInt8, kNumberTypeFloat16), kNumberTypeFloat16},
+  {std::make_pair(kNumberTypeInt8, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {std::make_pair(kNumberTypeInt8, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeInt8, kNumberTypeFloat64), kNumberTypeFloat64},
+  {std::make_pair(kNumberTypeInt8, kNumberTypeComplex64), kNumberTypeComplex64},
+  {std::make_pair(kNumberTypeInt8, kNumberTypeComplex128), kNumberTypeComplex128},
+  // Int16
+  {std::make_pair(kNumberTypeInt16, kNumberTypeInt16), kNumberTypeInt16},
+  {std::make_pair(kNumberTypeInt16, kNumberTypeInt32), kNumberTypeInt32},
+  {std::make_pair(kNumberTypeInt16, kNumberTypeInt64), kNumberTypeInt64},
+  {std::make_pair(kNumberTypeInt16, kNumberTypeUInt8), kNumberTypeInt16},
+  {std::make_pair(kNumberTypeInt16, kNumberTypeFloat16), kNumberTypeFloat16},
+  {std::make_pair(kNumberTypeInt16, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {std::make_pair(kNumberTypeInt16, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeInt16, kNumberTypeFloat64), kNumberTypeFloat64},
+  {std::make_pair(kNumberTypeInt16, kNumberTypeComplex64), kNumberTypeComplex64},
+  {std::make_pair(kNumberTypeInt16, kNumberTypeComplex128), kNumberTypeComplex128},
+  // Int32
+  {std::make_pair(kNumberTypeInt32, kNumberTypeInt32), kNumberTypeInt32},
+  {std::make_pair(kNumberTypeInt32, kNumberTypeInt64), kNumberTypeInt64},
+  {std::make_pair(kNumberTypeInt32, kNumberTypeUInt8), kNumberTypeInt32},
+  {std::make_pair(kNumberTypeInt32, kNumberTypeFloat16), kNumberTypeFloat16},
+  {std::make_pair(kNumberTypeInt32, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {std::make_pair(kNumberTypeInt32, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeInt32, kNumberTypeFloat64), kNumberTypeFloat64},
+  {std::make_pair(kNumberTypeInt32, kNumberTypeComplex64), kNumberTypeComplex64},
+  {std::make_pair(kNumberTypeInt32, kNumberTypeComplex128), kNumberTypeComplex128},
+  // Int64
+  {std::make_pair(kNumberTypeInt64, kNumberTypeInt64), kNumberTypeInt64},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeUInt8), kNumberTypeInt64},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeFloat16), kNumberTypeFloat16},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeFloat64), kNumberTypeFloat64},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeComplex64), kNumberTypeComplex64},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeComplex128), kNumberTypeComplex128},
+  // UInt8
+  {std::make_pair(kNumberTypeUInt8, kNumberTypeUInt8), kNumberTypeUInt8},
+  {std::make_pair(kNumberTypeUInt8, kNumberTypeFloat16), kNumberTypeFloat16},
+  {std::make_pair(kNumberTypeUInt8, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {std::make_pair(kNumberTypeUInt8, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeUInt8, kNumberTypeFloat64), kNumberTypeFloat64},
+  {std::make_pair(kNumberTypeUInt8, kNumberTypeComplex64), kNumberTypeComplex64},
+  {std::make_pair(kNumberTypeUInt8, kNumberTypeComplex128), kNumberTypeComplex128},
+  // UInt16
+  {std::make_pair(kNumberTypeUInt16, kNumberTypeUInt16), kNumberTypeUInt16},
+  // UInt32
+  {std::make_pair(kNumberTypeUInt32, kNumberTypeUInt32), kNumberTypeUInt32},
+  // UInt64
+  {std::make_pair(kNumberTypeUInt64, kNumberTypeUInt64), kNumberTypeUInt64},
+  // Float16
+  {std::make_pair(kNumberTypeFloat16, kNumberTypeFloat16), kNumberTypeFloat16},
+  {std::make_pair(kNumberTypeFloat16, kNumberTypeBFloat16), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeFloat16, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeFloat16, kNumberTypeFloat64), kNumberTypeFloat64},
+  {std::make_pair(kNumberTypeFloat16, kNumberTypeComplex64), kNumberTypeComplex64},
+  {std::make_pair(kNumberTypeFloat16, kNumberTypeComplex128), kNumberTypeComplex128},
+  // BFloat16
+  {std::make_pair(kNumberTypeBFloat16, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {std::make_pair(kNumberTypeBFloat16, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeBFloat16, kNumberTypeFloat64), kNumberTypeFloat64},
+  {std::make_pair(kNumberTypeBFloat16, kNumberTypeComplex64), kNumberTypeComplex64},
+  {std::make_pair(kNumberTypeBFloat16, kNumberTypeComplex128), kNumberTypeComplex128},
+  // Float32
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeFloat64), kNumberTypeFloat64},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeComplex64), kNumberTypeComplex64},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeComplex128), kNumberTypeComplex128},
+  // Float64
+  {std::make_pair(kNumberTypeFloat64, kNumberTypeFloat64), kNumberTypeFloat64},
+  {std::make_pair(kNumberTypeFloat64, kNumberTypeComplex64), kNumberTypeComplex128},
+  {std::make_pair(kNumberTypeFloat64, kNumberTypeComplex128), kNumberTypeComplex128},
+  // Complex64
+  {std::make_pair(kNumberTypeComplex64, kNumberTypeComplex64), kNumberTypeComplex64},
+  {std::make_pair(kNumberTypeComplex64, kNumberTypeComplex128), kNumberTypeComplex128},
+  // Complex128
+  {std::make_pair(kNumberTypeComplex128, kNumberTypeComplex128), kNumberTypeComplex128},
+};
+
+static const std::map<std::pair<TypeId, TypeId>, TypeId> scalar_tensor_convert_map = {
+  // Scalar is bool.
+  {std::make_pair(kNumberTypeBool, kNumberTypeBool), kNumberTypeBool},
+  {std::make_pair(kNumberTypeBool, kNumberTypeInt8), kNumberTypeInt8},
+  {std::make_pair(kNumberTypeBool, kNumberTypeInt16), kNumberTypeInt16},
+  {std::make_pair(kNumberTypeBool, kNumberTypeInt32), kNumberTypeInt32},
+  {std::make_pair(kNumberTypeBool, kNumberTypeInt64), kNumberTypeInt64},
+  {std::make_pair(kNumberTypeBool, kNumberTypeUInt8), kNumberTypeUInt8},
+  {std::make_pair(kNumberTypeBool, kNumberTypeFloat16), kNumberTypeFloat16},
+  {std::make_pair(kNumberTypeBool, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {std::make_pair(kNumberTypeBool, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeBool, kNumberTypeFloat64), kNumberTypeFloat64},
+  {std::make_pair(kNumberTypeBool, kNumberTypeComplex64), kNumberTypeComplex64},
+  {std::make_pair(kNumberTypeBool, kNumberTypeComplex128), kNumberTypeComplex128},
+  // Scalar is int.
+  {std::make_pair(kNumberTypeInt64, kNumberTypeBool), kNumberTypeInt64},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeInt8), kNumberTypeInt8},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeInt16), kNumberTypeInt16},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeInt32), kNumberTypeInt32},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeInt64), kNumberTypeInt64},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeUInt8), kNumberTypeUInt8},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeFloat16), kNumberTypeFloat16},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeFloat64), kNumberTypeFloat64},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeComplex64), kNumberTypeComplex64},
+  {std::make_pair(kNumberTypeInt64, kNumberTypeComplex128), kNumberTypeComplex128},
+  // Scalar is float.
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeBool), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeInt8), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeInt16), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeInt32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeInt64), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeUInt8), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeFloat16), kNumberTypeFloat16},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeFloat32), kNumberTypeFloat32},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeFloat64), kNumberTypeFloat64},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeComplex64), kNumberTypeComplex64},
+  {std::make_pair(kNumberTypeFloat32, kNumberTypeComplex128), kNumberTypeComplex128},
+};
+
+TypeId ConvertTypeForTensorsOrScalars(const TypeId &current, const TypeId &other) {
+  auto iter = tensor_tensor_convert_map.find(std::make_pair(current, other));
+  if (iter != tensor_tensor_convert_map.end()) {
+    return iter->second;
+  }
+  auto iter_reverse = tensor_tensor_convert_map.find(std::make_pair(other, current));
+  if (iter_reverse != tensor_tensor_convert_map.end()) {
+    return iter_reverse->second;
+  }
+  MS_EXCEPTION(TypeError) << "Type implicit conversion between " << TypeIdToString(current) << " and "
+                          << TypeIdToString(other) << " is not supported.";
+}
+
+TypeId ConvertTypeBetweenTensorAndScalar(const TypeId &tensor_type_id, const TypeId &scalar_type_id) {
+  auto iter = scalar_tensor_convert_map.find(std::make_pair(scalar_type_id, tensor_type_id));
+  if (iter != scalar_tensor_convert_map.end()) {
+    return iter->second;
+  }
+  MS_EXCEPTION(TypeError) << "Type implicit conversion between Tensor[" << TypeIdToString(tensor_type_id) << "] and "
+                          << TypeIdToString(scalar_type_id) << " is not supported.";
+}
 }  // namespace mindspore
