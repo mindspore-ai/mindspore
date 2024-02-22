@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2023-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.common.initializer import Normal
+from mindspore.train.serialization import load_checkpoint_async
 
 
 class LeNet5(nn.Cell):
@@ -105,3 +106,32 @@ def test_ops_save_checkpoint(mode):
         if os.path.exists(file_name):
             os.chmod(file_name, stat.S_IWRITE)
             os.remove(file_name)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_load_checkpoint_async(mode):
+    """
+    Feature: mindspore.load_checkpoint_async
+    Description: load checkpoint async.
+    Expectation: success
+    """
+    context.set_context(mode=mode, device_target="Ascend")
+    net = LeNet5()
+    ms.save_checkpoint(net, "./lenet.ckpt",
+                       choice_func=lambda x: x.startswith("conv") and not x.startswith("conv1"))
+    output_param_dict_fu = load_checkpoint_async("./lenet.ckpt")
+    output_param_dict = output_param_dict_fu.result()
+    file_list = os.listdir(os.getcwd())
+    ckpt_list = [k for k in file_list if k.endswith(".ckpt")]
+    for file_name in ckpt_list:
+        if os.path.exists(file_name):
+            os.chmod(file_name, stat.S_IWRITE)
+            os.remove(file_name)
+
+    assert 'conv2.weight' in output_param_dict
+    assert 'conv1.weight' not in output_param_dict
+    assert 'fc1.bias' not in output_param_dict
